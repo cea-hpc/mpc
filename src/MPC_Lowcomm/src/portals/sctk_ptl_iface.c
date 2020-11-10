@@ -494,7 +494,7 @@ sctk_ptl_local_data_t* sctk_ptl_me_create_with_cnt(sctk_ptl_rail_info_t* srail, 
 void sctk_ptl_me_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t* user_ptr, sctk_ptl_pte_t* pte)
 {
 	assert(user_ptr);
-	assert(user_ptr->slot.me.start);
+	assert((NULL != user_ptr->slot.me.start) || (0 == user_ptr->slot.me.length));
 	sctk_ptl_chk(PtlMEAppend(
 		srail->iface,         /* the NI handler */
 		pte->idx,             /* the targeted PT entry */

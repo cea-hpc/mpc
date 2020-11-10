@@ -391,6 +391,11 @@
 #pragma weak MPI_Rget = PMPI_Rget
 #pragma weak MPI_Raccumulate = PMPI_Raccumulate
 #pragma weak MPI_Rget_accumulate = PMPI_Rget_accumulate
+#pragma weak MPI_File_create_errhandler = PMPI_File_create_errhandler
+#pragma weak MPI_File_set_errhandler = PMPI_File_set_errhandler
+#pragma weak MPI_File_get_errhandler = PMPI_File_get_errhandler
+#pragma weak MPI_File_call_errhandler = PMPI_File_call_errhandler
+
 /************************************************************************/
 /*  NOT IMPLEMENTED                                                     */
 /************************************************************************/

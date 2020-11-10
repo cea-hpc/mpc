@@ -567,6 +567,69 @@ extern "C"
 #include <linux/futex.h>
 #include <sys/syscall.h>
 
+/* Futex Opcodes */
+
+#undef FUTEX_WAIT
+#define FUTEX_WAIT SCTK_FUTEX_WAIT
+#undef FUTEX_WAKE
+#define FUTEX_WAKE SCTK_FUTEX_WAKE
+#undef FUTEX_REQUEUE
+#define FUTEX_REQUEUE SCTK_FUTEX_REQUEUE
+#undef FUTEX_CMP_REQUEUE
+#define FUTEX_CMP_REQUEUE SCTK_FUTEX_CMP_REQUEUE
+#undef FUTEX_WAKE_OP
+#define FUTEX_WAKE_OP SCTK_FUTEX_WAKE_OP
+#undef FUTEX_WAIT_BITSET
+#define FUTEX_WAIT_BITSET SCTK_FUTEX_WAIT_BITSET
+#undef FUTEX_WAKE_BITSET
+#define FUTEX_WAKE_BITSET SCTK_FUTEX_WAKE_BITSET
+#undef FUTEX_LOCK_PI
+#define FUTEX_LOCK_PI SCTK_FUTEX_LOCK_PI
+#undef FUTEX_TRYLOCK_PI
+#define FUTEX_TRYLOCK_PI SCTK_FUTEX_TRYLOCK_PI
+#undef FUTEX_UNLOCK_PI
+#define FUTEX_UNLOCK_PI SCTK_FUTEX_UNLOCK_PI
+#undef FUTEX_CMP_REQUEUE_PI
+#define FUTEX_CMP_REQUEUE_PI SCTK_FUTEX_CMP_REQUEUE_PI
+#undef FUTEX_WAIT_REQUEUE_PI
+#define FUTEX_WAIT_REQUEUE_PI SCTK_FUTEX_WAIT_REQUEUE_PI
+
+/* WAITERS */
+#undef FUTEX_WAITERS
+#define FUTEX_WAITERS SCTK_FUTEX_WAITERS
+
+/* OPS */
+
+#undef FUTEX_OP_SET
+#define FUTEX_OP_SET SCTK_FUTEX_OP_SET
+#undef FUTEX_OP_ADD
+#define FUTEX_OP_ADD SCTK_FUTEX_OP_ADD
+#undef FUTEX_OP_OR
+#define FUTEX_OP_OR SCTK_FUTEX_OP_OR
+#undef FUTEX_OP_ANDN
+#define FUTEX_OP_ANDN SCTK_FUTEX_OP_ANDN
+#undef FUTEX_OP_XOR
+#define FUTEX_OP_XOR SCTK_FUTEX_OP_XOR
+#undef FUTEX_OP_ARG_SHIFT
+#define FUTEX_OP_ARG_SHIFT SCTK_FUTEX_OP_ARG_SHIFT
+
+/* CMP */
+
+#undef FUTEX_OP_CMP_EQ
+#define FUTEX_OP_CMP_EQ SCTK_FUTEX_OP_CMP_EQ
+#undef FUTEX_OP_CMP_NE
+#define FUTEX_OP_CMP_NE SCTK_FUTEX_OP_CMP_NE
+#undef FUTEX_OP_CMP_LT
+#define FUTEX_OP_CMP_LT SCTK_FUTEX_OP_CMP_LT
+#undef FUTEX_OP_CMP_LE
+#define FUTEX_OP_CMP_LE SCTK_FUTEX_OP_CMP_LE
+#undef FUTEX_OP_CMP_GT
+#define FUTEX_OP_CMP_GT SCTK_FUTEX_OP_CMP_GT
+#undef FUTEX_OP_CMP_GE
+#define FUTEX_OP_CMP_GE SCTK_FUTEX_OP_CMP_GE
+
+/* Futex Redirect */
+
 #ifdef __cplusplus
 
 static inline long int __sctk_cpp_scope_dereferencing_proxy(long int a)
@@ -585,6 +648,7 @@ static inline long int __sctk_cpp_scope_dereferencing_proxy(long int a)
 #define syscall(op, ...) \
 	( (op == SYS_futex) ? mpc_thread_futex_with_vaargs(op, ## __VA_ARGS__) : syscall(op, ## __VA_ARGS__) )
 #endif /* __cplusplus */
+
 #endif /* SCTK_FUTEX_SUPPORTED */
 
 #ifdef __cplusplus

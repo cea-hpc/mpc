@@ -300,8 +300,6 @@ int _mpc_cl_recv( void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype
  * WAIT OPERATIONS *
  *******************/
 
-int _mpc_cl_wait( mpc_lowcomm_request_t *request, mpc_lowcomm_status_t *status );
-
 /** \brief Internal MPI_Waitall implementation relying on pointer to requests
  *
  *  This function is needed in order to call the MPC interface from
@@ -324,16 +322,6 @@ int _mpc_cl_waitsome( mpc_lowcomm_msg_count_t incount, mpc_lowcomm_request_t arr
 
 int _mpc_cl_waitany( mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t array_of_requests[],
                      mpc_lowcomm_msg_count_t *index, mpc_lowcomm_status_t *status );
-
-
-
-int _mpc_cl_test( mpc_lowcomm_request_t *request, int *flag, mpc_lowcomm_status_t *status );
-
-int _mpc_cl_iprobe( int source, int tag, mpc_lowcomm_communicator_t comm, int *flag,
-                    mpc_lowcomm_status_t *status );
-
-int _mpc_cl_probe( int source, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_status_t *status );
-
 
 /*****************
  * COMMUNICATORS *

@@ -446,7 +446,6 @@ __check_or_infer_prefix_include()
 
         if test "x$hfound" = "xyes"; then
                 check_or_infer_prefix_include=yes
-                AC_MSG_RESULT([System-wide])
                 return
         fi
 
@@ -593,6 +592,7 @@ extract_integer_define_value()
 # $4 LIBCODE (ex XML, HWLOC, ...)
 # $5 optionnal library version (need pkg-config)
 # $6 optionnal lib_prefix
+# $7 optionnal alternative lib name (when different from pkg_config)
 #
 AC_DEFUN([MPC_DETECT_DEPENDENCY],
          [
@@ -616,6 +616,7 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                 check_or_infer_prefix_result="no"
                 header_name=$1
                 libname=$2
+                alt_libname=$7
                 function_name=$3
                 var_prefix=$4
                 version="$5"
@@ -667,6 +668,11 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -698,7 +704,7 @@ MPC_REQUIRED_DEPENDENCY([libxml-2.0], [$mpc_dep_found])
 MPC_DETECT_DEPENDENCY([hwloc.h],[hwloc], [hwloc_topology_init], [HWLOC], [< 2.0.0])
 MPC_REQUIRED_DEPENDENCY([hwloc], [$mpc_dep_found])
 
-MPC_DETECT_DEPENDENCY([opa_config.h],[openpa], [OPA_load_int], [OPA])
+MPC_DETECT_DEPENDENCY([opa_config.h],[openpa], [OPA_Queue_init], [OPA], [], [], [opa])
 MPC_REQUIRED_DEPENDENCY([openpa], [$mpc_dep_found])
 
 
@@ -753,12 +759,7 @@ AC_MSG_CHECKING([support for libunwind library])
 mpc_libunwind="no"
 
 # First use the pkgconfig naming scheme
-MPC_DETECT_DEPENDENCY([libunwind.h], [libunwind], [unw_init_local], [UNW])
-
-if test "x$mpc_dep_found" = "xno"; then
-        # Try to find the library
-        MPC_DETECT_DEPENDENCY([libunwind.h], [unwind], [unw_init_local], [UNW])
-fi
+MPC_DETECT_DEPENDENCY([libunwind.h], [libunwind], [unw_init_local], [UNW], [], [], [unwind])
 
 #AC_MSG_CHECKING([support for libunwind library])
 if test "x$mpc_dep_found" = "xyes"; then
@@ -1758,7 +1759,7 @@ AC_SUBST([MPC_LOWCOMM_ENABLED])
 
 AC_ARG_ENABLE([mpi],
 [AS_HELP_STRING([--enable-mpi],
-                [Compile MPC's MPI interface])],
+                [Compile MPC MPI interface])],
 [MPC_MPI_ENABLED=$enableval],
 [])
 
@@ -1780,7 +1781,7 @@ AC_SUBST([MPC_MPI_ENABLED])
 
 AC_ARG_ENABLE([openmp],
 [AS_HELP_STRING([--enable-openmp],
-                [Compile MPC's OpenMP interface])],
+                [Compile MPC OpenMP interface])],
 [MPC_OPENMP_ENABLED=$enableval],
 [])
 
@@ -1801,6 +1802,114 @@ AC_SUBST([MPC_OPENMP_ENABLED])
 # MPC_Fortran
 #
 
+# Create a temporary file
+# Args:
+#  - $1 : suffix (ex .c) (optionnal)
+# Returns the file in TMP
+create_temp_file()
+{
+    # HAS Suffix
+    if test $# -gt 0; then
+        SUFFIX=$1
+        SUFFIX_ARG="--suffix=${SUFFIX}"
+    fi
+
+    TMP=$(mktemp ${SUFFIX_ARG} || true)
+
+    if test ! -f "${TMP}"; then
+        TMP="/tmp/tmp_$(date +%s%N).${SUFFIX}"
+        touch "${TMP}"
+    fi
+
+}
+
+# Read symbols from a binary file
+# Args:
+#  - $1 : binary to be read
+# Returns SYMBOL_LIST (empty in case of error)
+read_symbols()
+{
+    SYMBOL_LIST=""
+    # Ensure a path was passed
+    if test $# -eq 0; then
+        echo "read_symbols expects an argument"
+        return
+    fi
+
+    EXE_PATH="$1"
+
+    if test ! -f "${EXE_PATH}"; then
+        echo "Could not find ${EXE_PATH}"
+        return
+    fi
+
+    if command -v nm > /dev/null 2>&1; then
+        SYMBOL_LIST=$(nm "${EXE_PATH}" | cut -d " " -f 3)
+    elif command -v strings > /dev/null 2>&1; then
+        SYMBOL_LIST=$(strings "${EXE_PATH}")
+    elif command -v cat > /dev/null 2>&1; then
+        # Last resort use cat
+        SYMBOL_LIST=$(cat "${EXE_PATH}")
+    fi
+
+}
+
+
+check_fortran_naming_convention()
+{
+    create_temp_file ".f90"
+
+    FSRC="$TMP"
+
+cat << EOF > "${FSRC}"
+
+    subroutine fortran_name( a )
+        integer a
+        a = 1
+        return
+    end
+
+EOF
+
+    AC_MSG_CHECKING([Fortran symbol format])
+
+    create_temp_file ".o"
+    TMPO="$TMP"
+
+    $FC -c "${FSRC}" -o "${TMPO}"
+
+    if test "x$?" = "x0"; then
+
+        read_symbols "${TMPO}"
+
+        rm -fr "${FSRC}" "${TMPO}"
+
+        FORTRAN_NAMING=""
+
+        if echo "${SYMBOL_LIST}" | grep "fortran_name__" > /dev/null 2>&1; then
+            FORTRAN_NAMING"__"
+            AC_DEFINE([FORTRANDOUBLEUNDERSCORE], [1], [Fortran naming uses double underscores])
+        elif echo "${SYMBOL_LIST}" | grep "fortran_name_" > /dev/null 2>&1; then
+            FORTRAN_NAMING="_"
+            AC_DEFINE([FORTRANUNDERSCORE], [1], [Fortran naming uses underscores])
+        elif echo "${SYMBOL_LIST}" | grep "fortran_name" > /dev/null 2>&1; then
+            FORTRAN_NAMING="lowercase"
+            AC_DEFINE([FORTRANLOWER], [1], [Fortran naming uses lowercase])
+        elif echo "${SYMBOL_LIST}" | grep "FORTRAN_NAME" > /dev/null 2>&1; then
+            FORTRAN_NAMING="uppercase"
+            AC_DEFINE([FORTRANCAPS], [1], [Fortran naming uses uppercase])
+
+        fi
+
+        AC_MSG_RESULT([${FORTRAN_NAMING}])
+
+    else
+        AC_MSG_ERROR(["Failed to build test fortran program"])
+    fi
+
+}
+
+
 AC_ARG_ENABLE([fortran],
 [AS_HELP_STRING([--enable-fortran],
                 [Compile MPC Fortran support])],
@@ -1814,6 +1923,8 @@ if test "x${MPC_FORTRAN_ENABLED}" = "xyes"; then
         fi
 
         AC_DEFINE([MPC_FORTRAN], [1], [MPC_Fortran module was enabled])
+
+        check_fortran_naming_convention
 fi
 
 AM_CONDITIONAL([MPC_FORTRAN_ENABLED], [test "x${MPC_FORTRAN_ENABLED}" = "xyes"])

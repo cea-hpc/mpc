@@ -22,6 +22,8 @@
 #ifndef MPI_HANDLE_H
 #define MPI_HANDLE_H
 
+#include <stdio.h>
+
 /************************************************************************/
 /* Error Handler                                                        */
 /************************************************************************/
@@ -41,7 +43,7 @@ int sctk_errhandler_free(sctk_errhandler_t errh);
 
 #define SCTK_BOOKED_HANDLES (10000)
 
-typedef int sctk_handle;
+typedef size_t sctk_handle;
 
 struct sctk_handle_context {
   sctk_handle id;

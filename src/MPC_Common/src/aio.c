@@ -871,18 +871,6 @@ int mpc_common_aio_threads_release()
 		return 0;
 	}
 
-	if ( pthread_cond_destroy( &__mpc_aio_threads.cond ) < 0 )
-	{
-		pthread_mutex_unlock( &__mpc_aio_threads_initialized_lock );
-		return 1;
-	}
-
-	if ( pthread_mutex_destroy( &__mpc_aio_threads.condlock ) < 0 )
-	{
-		pthread_mutex_unlock( &__mpc_aio_threads_initialized_lock );
-		return 1;
-	}
-
 	/* Flag threads as running */
 	mpc_common_aio_thread_stop_condition = 1;
 
@@ -910,6 +898,19 @@ int mpc_common_aio_threads_release()
 
 	/* Initialize the joblist */
 	if ( __mpc_aio_joblist_release( &__mpc_aio_threads.jobs ) )
+	{
+		pthread_mutex_unlock( &__mpc_aio_threads_initialized_lock );
+		return 1;
+	}
+
+
+	if ( pthread_cond_destroy( &__mpc_aio_threads.cond ) < 0 )
+	{
+		pthread_mutex_unlock( &__mpc_aio_threads_initialized_lock );
+		return 1;
+	}
+
+	if ( pthread_mutex_destroy( &__mpc_aio_threads.condlock ) < 0 )
 	{
 		pthread_mutex_unlock( &__mpc_aio_threads_initialized_lock );
 		return 1;
@@ -1056,7 +1057,6 @@ int mpc_common_aio_lio_listio( int mode, struct aiocb *const aiocb_list[], int n
 	return 0;
 }
 
-#ifdef MPC_AIO_ENABLED
 static void __release_AIO_threads(void)
 {
 	mpc_common_aio_threads_release();
@@ -1072,5 +1072,3 @@ void mpc_common_AIO_registration()
 
         mpc_common_init_callback_register("Base Runtime Finalize", "Release AIO threads", __release_AIO_threads, 77);
 }
-
-#endif

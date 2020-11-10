@@ -100,7 +100,7 @@ append_to()
 {
 	val=$(eval "echo \"\$${1}\"")
 
-	if test -n "val"; then
+	if test -n "$val"; then
 		val="${val} "
 	fi
 

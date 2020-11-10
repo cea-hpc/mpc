@@ -376,6 +376,11 @@ module procedure MPI_Type_create_hindexed_f08
 end interface
 
 
+interface MPI_File_set_errhandler
+module procedure MPI_File_set_errhandler_f08
+end interface
+
+
 interface MPI_Group_difference
 module procedure MPI_Group_difference_f08
 end interface
@@ -413,6 +418,11 @@ end interface
 
 interface MPI_Get_version
 module procedure MPI_Get_version_f08
+end interface
+
+
+interface MPI_File_call_errhandler
+module procedure MPI_File_call_errhandler_f08
 end interface
 
 
@@ -603,6 +613,11 @@ end interface
 
 interface MPI_Alltoall
 module procedure MPI_Alltoall_f08
+end interface
+
+
+interface MPI_File_create_errhandler
+module procedure MPI_File_create_errhandler_f08
 end interface
 
 
@@ -881,6 +896,11 @@ module procedure MPI_Group_size_f08
 end interface
 
 
+interface MPI_File_get_errhandler
+module procedure MPI_File_get_errhandler_f08
+end interface
+
+
 interface MPI_Attr_put
 module procedure MPI_Attr_put_f08
 end interface
@@ -1064,6 +1084,7 @@ private :: MPI_Cart_shift_f08
 private :: MPI_Group_incl_f08
 private :: MPI_Comm_size_f08
 private :: MPI_Type_create_hindexed_f08
+private :: MPI_File_set_errhandler_f08
 private :: MPI_Group_difference_f08
 private :: MPI_Attr_get_f08
 private :: MPI_Type_create_f90_real_f08
@@ -1072,6 +1093,7 @@ private :: MPI_Wait_f08
 private :: MPI_Testall_f08
 private :: MPI_Irsend_f08
 private :: MPI_Get_version_f08
+private :: MPI_File_call_errhandler_f08
 private :: MPI_Comm_create_errhandler_f08
 private :: MPI_Group_compare_f08
 private :: MPI_Address_f08
@@ -1110,6 +1132,7 @@ private :: MPI_Isend_f08
 private :: MPI_Type_get_envelope_f08
 private :: MPI_Group_rank_f08
 private :: MPI_Alltoall_f08
+private :: MPI_File_create_errhandler_f08
 private :: MPI_Group_intersection_f08
 private :: MPI_Type_free_keyval_f08
 private :: MPI_Type_create_struct_f08
@@ -1165,6 +1188,7 @@ private :: MPI_Waitall_f08
 private :: MPI_Comm_delete_attr_f08
 private :: MPI_Ssend_f08
 private :: MPI_Group_size_f08
+private :: MPI_File_get_errhandler_f08
 private :: MPI_Attr_put_f08
 private :: MPI_Barrier_f08
 private :: MPI_Win_free_f08
@@ -4197,8 +4221,40 @@ end subroutine MPI_Type_create_hindexed_f08
 ! MPI_File_iread_shared NOT IMPLEMENTED in MPC
 
 
-! MPI_File_set_errhandler NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_set_errhandler_f08( file,&
+errhandler,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: file
+type(MPI_Errhandler), intent(in) :: errhandler
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: file_c     !MPI_File file
+integer(c_int) :: errhandler_c     !MPI_Errhandler errhandler
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+file_c = file%val
+errhandler_c = errhandler%val
+
+ret = MPI_File_set_errhandler_c(file_c,&
+errhandler_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_set_errhandler_f08
 
 !Skipped convert function in MPI_Register_datarep
 
@@ -4573,8 +4629,40 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Get_version_f08
 
-! MPI_File_call_errhandler NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_call_errhandler_f08( fh,&
+errorcode,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: fh
+integer, intent(in) :: errorcode
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: fh_c     !MPI_File fh
+integer(c_int) :: errorcode_c     !int errorcode
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+fh_c = fh%val
+errorcode_c = errorcode
+
+ret = MPI_File_call_errhandler_c(fh_c,&
+errorcode_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_call_errhandler_f08
 
 
 subroutine MPI_Comm_create_errhandler_f08( function,&
@@ -6241,8 +6329,40 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Alltoall_f08
 
-! MPI_File_create_errhandler NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_create_errhandler_f08( function,&
+errhandler,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File_errhandler_function), intent(in) :: function
+type(MPI_Errhandler), intent(out) :: errhandler
+integer, optional, intent(out) :: ierror
+
+
+type(c_ptr) :: function_c     !MPI_File_errhandler_function* function
+integer(c_int) :: errhandler_c     !MPI_Errhandler* errhandler
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+function_c = function%val
+
+ret = MPI_File_create_errhandler_c(function_c,&
+errhandler_c,&
+ierror_c)
+
+errhandler%val = errhandler_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_create_errhandler_f08
 
 !Skipped convert function in MPI_Info_get
 
@@ -8754,8 +8874,40 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Group_size_f08
 
-! MPI_File_get_errhandler NOT IMPLEMENTED in MPC
 
+subroutine MPI_File_get_errhandler_f08( file,&
+errhandler,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File), intent(in) :: file
+type(MPI_Errhandler), intent(out) :: errhandler
+integer, optional, intent(out) :: ierror
+
+
+integer(c_int) :: file_c     !MPI_File file
+integer(c_int) :: errhandler_c     !MPI_Errhandler* errhandler
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+file_c = file%val
+
+ret = MPI_File_get_errhandler_c(file_c,&
+errhandler_c,&
+ierror_c)
+
+errhandler%val = errhandler_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_get_errhandler_f08
 
 
 subroutine MPI_Attr_put_f08( comm,&

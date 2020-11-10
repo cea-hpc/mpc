@@ -34,6 +34,10 @@ if MPC_THREAD_ENABLED
         AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/
 endif
 
+if MPC_MPI_ENABLED
+        AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_MPI/include/
+endif
+
 lib_LTLIBRARIES = libmpclowcomm.la
 
 # low-level communication #

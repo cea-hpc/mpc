@@ -6875,6 +6875,62 @@ double MPI_Wtime();
 double PMPI_Wtime();
 
 
+/*MPI_File_call_errhandler*/
+
+/**
+ * @brief MPI function MPI_File_call_errhandler
+ * 
+ * @param fh file with error handler
+ * @param errorcode 
+ *
+ * @return int MPI_SUCCESS on success other MPI_* error code otherwise 
+ */
+int MPI_File_call_errhandler(MPI_File fh, int errorcode);
+int PMPI_File_call_errhandler(MPI_File fh, int errorcode);
+
+
+/*MPI_File_create_errhandler*/
+
+/**
+ * @brief MPI function MPI_File_create_errhandler
+ * 
+ * @param file_errhandler_fn user defined error handling procedure
+ * @param errhandler 
+ *
+ * @return int MPI_SUCCESS on success other MPI_* error code otherwise 
+ */
+int MPI_File_create_errhandler(MPI_File_errhandler_function *file_errhandler_fn, MPI_Errhandler *errhandler);
+int PMPI_File_create_errhandler(MPI_File_errhandler_function *file_errhandler_fn, MPI_Errhandler *errhandler);
+
+
+/*MPI_File_get_errhandler*/
+
+/**
+ * @brief MPI function MPI_File_get_errhandler
+ * 
+ * @param file 
+ * @param errhandler error handler currently associated with file
+ *
+ * @return int MPI_SUCCESS on success other MPI_* error code otherwise 
+ */
+int MPI_File_get_errhandler(MPI_File file, MPI_Errhandler *errhandler);
+int PMPI_File_get_errhandler(MPI_File file, MPI_Errhandler *errhandler);
+
+
+/*MPI_File_set_errhandler*/
+
+/**
+ * @brief MPI function MPI_File_set_errhandler
+ * 
+ * @param file 
+ * @param errhandler new error handler for file
+ *
+ * @return int MPI_SUCCESS on success other MPI_* error code otherwise 
+ */
+int MPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler);
+int PMPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler);
+
+
 /******************************
  * EXTENSIONS TO THE STANDARD *
  ******************************/

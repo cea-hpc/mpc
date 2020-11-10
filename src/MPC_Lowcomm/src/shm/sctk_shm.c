@@ -306,7 +306,7 @@ sctk_shm_add_region_slave(sctk_size_t size, sctk_alloc_mapper_handler_t *handler
 	assert(size > 0 && size % SCTK_SHM_MAPPER_PAGE_SIZE == 0);
 
 	//get filename
-	filename = handler->recv_handler(handler->key, handler->master_rank);
+	filename = handler->recv_handler(handler->key, &handler->master_rank);
 	assume_m(filename != NULL, "Failed to get the SHM filename.");
 
 	// firt try to map
@@ -336,7 +336,7 @@ sctk_shm_add_region_master(sctk_size_t size, sctk_alloc_mapper_handler_t *handle
 	assert(size > 0 && size % SCTK_SHM_MAPPER_PAGE_SIZE == 0);
 
 	//get filename
-	filename = handler->gen_filename(handler->key, handler->master_rank);
+	filename = handler->gen_filename(handler->key, &handler->master_rank);
 
 	// create file and map it
 	fd  = sctk_shm_mapper_create_shm_file(filename, size);
@@ -344,7 +344,7 @@ sctk_shm_add_region_master(sctk_size_t size, sctk_alloc_mapper_handler_t *handle
 
 	// sync filename
 	status =
-		handler->send_handler(filename, handler->key, handler->master_rank);
+		handler->send_handler(filename, handler->key, &handler->master_rank);
 	assume_m(status,
 	         "Fail to send the SHM filename to other participants.");
 

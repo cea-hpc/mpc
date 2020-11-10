@@ -1015,9 +1015,6 @@ with_mpcalloc_libs
 with_libunwind
 with_libunwind_include
 with_libunwind_libs
-with_unwind
-with_unwind_include
-with_unwind_libs
 with_ibverbs
 with_ibverbs_include
 with_ibverbs_libs
@@ -1748,8 +1745,8 @@ Optional Features:
                           Compile MPC with Message Passing Support (same as
                           lowcomm)
   --enable-lowcomm        Compile MPC with Lowcomm Support
-  --enable-mpi            Compile MPC's MPI interface
-  --enable-openmp         Compile MPC's OpenMP interface
+  --enable-mpi            Compile MPC MPI interface
+  --enable-openmp         Compile MPC OpenMP interface
   --enable-fortran        Compile MPC Fortran support
   --enable-mpiio          Compile MPI IO support in MPC (romio)
   --enable-process-mode   Compile MPC in process mode
@@ -1787,9 +1784,6 @@ Optional Packages:
   --with-libunwind        Provide prefix for libunwind
   --with-libunwind-inc    Provide include path for libunwind
   --with-libunwind-libs   Provide library path for libunwind
-  --with-unwind           Provide prefix for unwind
-  --with-unwind-inc       Provide include path for unwind
-  --with-unwind-libs      Provide library path for unwind
   --with-ibverbs          Provide prefix for ibverbs
   --with-ibverbs-inc      Provide include path for ibverbs
   --with-ibverbs-libs     Provide library path for ibverbs
@@ -23532,8 +23526,6 @@ fi
 
         if test "x$hfound" = "xyes"; then
                 check_or_infer_prefix_include=yes
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: System-wide" >&5
-$as_echo "System-wide" >&6; }
                 return
         fi
 
@@ -23815,6 +23807,7 @@ $as_echo "$MACRO_VALUE ($1)" >&6; }
 # $4 LIBCODE (ex XML, HWLOC, ...)
 # $5 optionnal library version (need pkg-config)
 # $6 optionnal lib_prefix
+# $7 optionnal alternative lib name (when different from pkg_config)
 #
 
 
@@ -23972,6 +23965,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=libxml/tree.h
                 libname=libxml-2.0
+                alt_libname=
                 function_name=xmlStrcmp
                 var_prefix=XML2
                 version=""
@@ -24093,6 +24087,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -24149,6 +24148,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=hwloc.h
                 libname=hwloc
+                alt_libname=
                 function_name=hwloc_topology_init
                 var_prefix=HWLOC
                 version="< 2.0.0"
@@ -24270,6 +24270,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -24326,7 +24331,8 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=opa_config.h
                 libname=openpa
-                function_name=OPA_load_int
+                alt_libname=opa
+                function_name=OPA_Queue_init
                 var_prefix=OPA
                 version=""
 
@@ -24447,6 +24453,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -24523,6 +24534,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=mpcalloc.h
                 libname=mpcalloc
+                alt_libname=
                 function_name=sctk_malloc
                 var_prefix=ALLOC
                 version=""
@@ -24644,6 +24656,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -24723,6 +24740,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=libunwind.h
                 libname=libunwind
+                alt_libname=unwind
                 function_name=unw_init_local
                 var_prefix=UNW
                 version=""
@@ -24844,6 +24862,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -24856,174 +24879,6 @@ fi
 
                 mpc_dep_found=$check_or_infer_prefix_result
 
-
-if test "x$mpc_dep_found" = "xno"; then
-        # Try to find the library
-
-
-
-# Check whether --with-unwind was given.
-if test "${with_unwind+set}" = set; then :
-  withval=$with_unwind; whole_prefix=$withval
-else
-  whole_prefix="/usr/"
-fi
-
-
-                inc_prefix=""
-
-# Check whether --with-unwind-include was given.
-if test "${with_unwind_include+set}" = set; then :
-  withval=$with_unwind_include; inc_prefix=$withval
-fi
-
-                lib_prefix=""
-
-# Check whether --with-unwind-libs was given.
-if test "${with_unwind_libs+set}" = set; then :
-  withval=$with_unwind_libs; lib_prefix=$withval
-else
-  lib_prefix=""
-fi
-
-
-                check_or_infer_prefix_result="no"
-                header_name=libunwind.h
-                libname=unwind
-                function_name=unw_init_local
-                var_prefix=UNW
-                version=""
-
-                if test -z "$lib_prefix"
-                then
-                        lib_prefix="$whole_prefix/lib"
-                else
-                        if test -d "${lib_prefix}/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${lib_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
-                        fi
-                fi
-
-                if test ! -z "$whole_prefix"
-                then
-                        if test -d "${whole_prefix}/lib/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${whole_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
-                        fi
-                fi
-
-                if test -z "$inc_prefix"
-                then
-                        inc_prefix="$whole_prefix/include/"
-                fi
-
-
-
-
-                #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
-
-                # First try with PKG config
-
-pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for UNW" >&5
-$as_echo_n "checking for UNW... " >&6; }
-
-if test -n "$UNW_CFLAGS"; then
-    pkg_cv_UNW_CFLAGS="$UNW_CFLAGS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_UNW_CFLAGS=`$PKG_CONFIG --cflags "$libname $version" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-if test -n "$UNW_LIBS"; then
-    pkg_cv_UNW_LIBS="$UNW_LIBS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_UNW_LIBS=`$PKG_CONFIG --libs "$libname $version" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-
-
-
-if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
-        _pkg_short_errors_supported=yes
-else
-        _pkg_short_errors_supported=no
-fi
-        if test $_pkg_short_errors_supported = yes; then
-	        UNW_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$libname $version" 2>&1`
-        else
-	        UNW_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$libname $version" 2>&1`
-        fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$UNW_PKG_ERRORS" >&5
-
-	pkg_found=0
-elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	pkg_found=0
-else
-	UNW_CFLAGS=$pkg_cv_UNW_CFLAGS
-	UNW_LIBS=$pkg_cv_UNW_LIBS
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-	pkg_found=1
-fi
-
-                if test "x$pkg_found" = "x1"
-                then
-                        # Ensure PKG config dependencies are also
-                        # injected using RPATH
-                        UNW_LIBS=$(promote_to_rpath ${UNW_LIBS})
-
-                        #Insert flags
-                        CPPFLAGS="${UNW_CFLAGS} $CPPFLAGS"
-                        LDFLAGS="${UNW_LIBS} $LDFLAGS"
-
-
-
-
-                        #AC_MSG_NOTICE([$libname found using pkg-config])
-                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
-                        check_or_infer_prefix_result="yes"
-                else
-                        __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
-                        __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
-
-                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
-                        then
-                                check_or_infer_prefix_result="yes"
-                        else
-                                check_or_infer_prefix_result="no"
-                        fi
-                fi
-
-                mpc_dep_found=$check_or_infer_prefix_result
-
-fi
 
 #AC_MSG_CHECKING([support for libunwind library])
 if test "x$mpc_dep_found" = "xyes"; then
@@ -25078,6 +24933,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=infiniband/verbs.h
                 libname=ibverbs
+                alt_libname=
                 function_name=ibv_query_qp
                 var_prefix=IBV
                 version=""
@@ -25199,6 +25055,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -25265,6 +25126,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=portals4.h
                 libname=portals
+                alt_libname=
                 function_name=PtlGet
                 var_prefix=PORTALS
                 version=""
@@ -25386,6 +25248,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -25516,6 +25383,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=pmi.h
                 libname=pmi
+                alt_libname=
                 function_name=PMI_Finalize
                 var_prefix=PMI
                 version=""
@@ -25637,6 +25505,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -25697,6 +25570,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=pmix.h
                 libname=pmix
+                alt_libname=
                 function_name=PMIx_Finalize
                 var_prefix=PMIX
                 version=""
@@ -25818,6 +25692,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -25984,6 +25863,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=cuda.h
                 libname=cuda
+                alt_libname=
                 function_name=cuMemFree
                 var_prefix=CUDA
                 version=""
@@ -26105,6 +25985,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -26162,6 +26047,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=cuda_runtime.h
                 libname=cudart
+                alt_libname=
                 function_name=cudaDeviceSetLimit
                 var_prefix=CUDART
                 version=""
@@ -26283,6 +26169,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
@@ -29614,6 +29505,124 @@ fi
 # MPC_Fortran
 #
 
+# Create a temporary file
+# Args:
+#  - $1 : suffix (ex .c) (optionnal)
+# Returns the file in TMP
+create_temp_file()
+{
+    # HAS Suffix
+    if test $# -gt 0; then
+        SUFFIX=$1
+        SUFFIX_ARG="--suffix=${SUFFIX}"
+    fi
+
+    TMP=$(mktemp ${SUFFIX_ARG} || true)
+
+    if test ! -f "${TMP}"; then
+        TMP="/tmp/tmp_$(date +%s%N).${SUFFIX}"
+        touch "${TMP}"
+    fi
+
+}
+
+# Read symbols from a binary file
+# Args:
+#  - $1 : binary to be read
+# Returns SYMBOL_LIST (empty in case of error)
+read_symbols()
+{
+    SYMBOL_LIST=""
+    # Ensure a path was passed
+    if test $# -eq 0; then
+        echo "read_symbols expects an argument"
+        return
+    fi
+
+    EXE_PATH="$1"
+
+    if test ! -f "${EXE_PATH}"; then
+        echo "Could not find ${EXE_PATH}"
+        return
+    fi
+
+    if command -v nm > /dev/null 2>&1; then
+        SYMBOL_LIST=$(nm "${EXE_PATH}" | cut -d " " -f 3)
+    elif command -v strings > /dev/null 2>&1; then
+        SYMBOL_LIST=$(strings "${EXE_PATH}")
+    elif command -v cat > /dev/null 2>&1; then
+        # Last resort use cat
+        SYMBOL_LIST=$(cat "${EXE_PATH}")
+    fi
+
+}
+
+
+check_fortran_naming_convention()
+{
+    create_temp_file ".f90"
+
+    FSRC="$TMP"
+
+cat << EOF > "${FSRC}"
+
+    subroutine fortran_name( a )
+        integer a
+        a = 1
+        return
+    end
+
+EOF
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking Fortran symbol format" >&5
+$as_echo_n "checking Fortran symbol format... " >&6; }
+
+    create_temp_file ".o"
+    TMPO="$TMP"
+
+    $FC -c "${FSRC}" -o "${TMPO}"
+
+    if test "x$?" = "x0"; then
+
+        read_symbols "${TMPO}"
+
+        rm -fr "${FSRC}" "${TMPO}"
+
+        FORTRAN_NAMING=""
+
+        if echo "${SYMBOL_LIST}" | grep "fortran_name__" > /dev/null 2>&1; then
+            FORTRAN_NAMING"__"
+
+$as_echo "#define FORTRANDOUBLEUNDERSCORE 1" >>confdefs.h
+
+        elif echo "${SYMBOL_LIST}" | grep "fortran_name_" > /dev/null 2>&1; then
+            FORTRAN_NAMING="_"
+
+$as_echo "#define FORTRANUNDERSCORE 1" >>confdefs.h
+
+        elif echo "${SYMBOL_LIST}" | grep "fortran_name" > /dev/null 2>&1; then
+            FORTRAN_NAMING="lowercase"
+
+$as_echo "#define FORTRANLOWER 1" >>confdefs.h
+
+        elif echo "${SYMBOL_LIST}" | grep "FORTRAN_NAME" > /dev/null 2>&1; then
+            FORTRAN_NAMING="uppercase"
+
+$as_echo "#define FORTRANCAPS 1" >>confdefs.h
+
+
+        fi
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${FORTRAN_NAMING}" >&5
+$as_echo "${FORTRAN_NAMING}" >&6; }
+
+    else
+        as_fn_error $? "\"Failed to build test fortran program\"" "$LINENO" 5
+    fi
+
+}
+
+
 # Check whether --enable-fortran was given.
 if test "${enable_fortran+set}" = set; then :
   enableval=$enable_fortran; MPC_FORTRAN_ENABLED=$enableval
@@ -29629,6 +29638,8 @@ if test "x${MPC_FORTRAN_ENABLED}" = "xyes"; then
 
 $as_echo "#define MPC_FORTRAN 1" >>confdefs.h
 
+
+        check_fortran_naming_convention
 fi
 
  if test "x${MPC_FORTRAN_ENABLED}" = "xyes"; then
@@ -30737,6 +30748,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=extls.h
                 libname=autopriv
+                alt_libname=
                 function_name=extls_init
                 var_prefix=EXTLS
                 version=""
@@ -30858,6 +30870,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"

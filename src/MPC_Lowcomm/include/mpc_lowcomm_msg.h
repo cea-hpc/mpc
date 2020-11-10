@@ -440,10 +440,6 @@ void mpc_lowcomm_perform_idle(volatile int *data, int value, void (*func)(void *
 /* mpc_lowcomm_request_t                                                                    */
 /************************************************************************/
 
-void mpc_lowcomm_request_wait(mpc_lowcomm_request_t *request);
-int mpc_lowcomm_request_cancel(mpc_lowcomm_request_t *msg);
-void mpc_lowcomm_request_init(mpc_lowcomm_request_t *request, mpc_lowcomm_communicator_t comm, int request_type);
-
 static inline int mpc_lowcomm_request_get_completion(mpc_lowcomm_request_t *request)
 {
 	return request->completion_flag;
@@ -490,10 +486,6 @@ static inline void mpc_lowcomm_request_set_null(mpc_lowcomm_request_t *request, 
 {
 	request->is_null = val;
 }
-
-int mpc_lowcomm_request_cancel(mpc_lowcomm_request_t *request);
-
-int mpc_lowcomm_request_free(mpc_lowcomm_request_t *request);
 
 /************************************************************************/
 /* MPI Status Modification and Query                                    */

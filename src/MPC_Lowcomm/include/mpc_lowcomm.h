@@ -35,12 +35,12 @@
 /** Get MPC_COMM_WORLD rank
  * @return the comm world rank
  */
-int mpc_lowcomm_get_rank();
+int mpc_lowcomm_get_rank(void);
 
 /** Get MPC_COMM_WORLD rank
  * @return the comm world size
  */
-int mpc_lowcomm_get_size();
+int mpc_lowcomm_get_size(void);
 
 /** Get Rank in a communicator
  * @arg communicator Communicator from which to get the rank
@@ -59,14 +59,55 @@ int mpc_lowcomm_get_comm_size(const mpc_lowcomm_communicator_t communicator);
  * @brief Return the total number of UNIX processes
  * @return number of UNIX processes
  */
-int mpc_lowcomm_get_process_count();
+int mpc_lowcomm_get_process_count(void);
 
 /**
  * @brief Return the UNIX process rank
  *
  * @return int UNIX process rank
  */
-int mpc_lowcomm_get_process_rank();
+int mpc_lowcomm_get_process_rank(void);
+
+/************
+ * REQUESTS *
+ ************/
+
+/**
+ * @brief Extract status information from a request
+ *    @warning request should be completed or canceled
+ * 
+ * @param request request to extract information from
+ * @param status status to be filled
+ * @return int SCTK_SUCCESS if all ok
+ */
+int mpc_lowcomm_commit_status_from_request(mpc_lowcomm_request_t *request,
+                                           mpc_lowcomm_status_t *status);
+
+/**
+ * @brief Wait for a request completion (or cancelation)
+ * 
+ * @param request request to be waited
+ * @return int SCTK_SUCCESS if all ok
+ */
+int mpc_lowcomm_request_wait(mpc_lowcomm_request_t *request);
+
+/**
+ * @brief Cancel a request
+ * 
+ * @param request the request to be cancelled
+ * @return int SCTK_SUCCESS if all ok
+ */
+int mpc_lowcomm_request_cancel(mpc_lowcomm_request_t *request);
+
+/**
+ * @brief Initalize a request (internal use)
+ * 
+ * @param request request to be initialized
+ * @param comm communicator to rely on
+ * @param request_type request type
+ */
+void mpc_lowcomm_request_init(mpc_lowcomm_request_t *request, mpc_lowcomm_communicator_t comm, int request_type);
+
 
 /************************************************************************/
 /* Communicators                                                        */
@@ -104,17 +145,29 @@ mpc_lowcomm_communicator_t mpc_lowcomm_delete_comm(const mpc_lowcomm_communicato
  * comm interface MUST be waited
  *
  * @param request The request to be waited
+ * @param status status to be filled (can be NULL)
  */
-void mpc_lowcomm_wait(mpc_lowcomm_request_t *request);
+int mpc_lowcomm_wait(mpc_lowcomm_request_t *request, mpc_lowcomm_status_t *status);
+
+/**
+ * @brief Test and progress a request for completion
+ * 
+ * @param request Request to be tested
+ * @param completed 1 if the request did complete/was cancelled 0 if not
+ * @param status status to be filled (only valid if completed can be NULL)
+ * 
+ */
+int mpc_lowcomm_test(mpc_lowcomm_request_t * request, int * completed, mpc_lowcomm_status_t *status);
 
 /** Wait for a set of communication completion
  * @warning All communications issuing a request in the low-level
  * comm interface MUST be waited
  *
- * @param requests The array of request to be waited
  * @param count number of requests in the array
+ * @param requests The array of request to be waited
+ * @param status array of statuses to be filled (can be NULL)
  */
-void mpc_lowcomm_waitall(mpc_lowcomm_request_t *requests, int count);
+int mpc_lowcomm_waitall(int count, mpc_lowcomm_request_t *requests, mpc_lowcomm_status_t *statuses);
 
 /** Send an asynchronous message
  *
@@ -165,6 +218,44 @@ void mpc_lowcomm_recv(int src, void *buffer, size_t size, int tag, mpc_lowcomm_c
  * @param comm Communicator of the message
  */
 void mpc_lowcomm_sendrecv(void *sendbuf, size_t size, int dest, int tag, void *recvbuf, int src, mpc_lowcomm_communicator_t comm);
+
+/**
+ * @brief Probe for a given message as both a given source and destination (advanced thread-based use)
+ * 
+ * @param world_source Source IN COMM WORLD
+ * @param world_destination Destination IN COMM WORLD
+ * @param tag message tag
+ * @param comm communicator to test for
+ * @param flag set to 1 if the message is found
+ * @param status status (similar to MPI filled with message infos)
+ * @return int SCTK_SUCCESS if no error
+ */
+int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destination, const int tag,
+                                const mpc_lowcomm_communicator_t comm, int *flag, mpc_lowcomm_status_t *status);
+
+/**
+ * @brief Non-blocking probe for a message to local rank
+ * 
+ * @param source message source (in comm)
+ * @param tag message tag
+ * @param comm message communicator
+ * @param flag set to 1 if message is found
+ * @param status status (similar to MPI filled with message infos)
+ * @return int SCTK_SUCCESS if no error
+ */
+int mpc_lowcomm_iprobe(int source, int tag, mpc_lowcomm_communicator_t comm, int *flag, mpc_lowcomm_status_t *status);
+
+/**
+ * @brief Blocking probe for a message to local rank
+ * 
+ * @param source message source (in comm)
+ * @param tag message tag
+ * @param comm message communicator
+ * @param flag set to 1 if message is found
+ * @param status status (similar to MPI filled with message infos)
+ * @return int SCTK_SUCCESS if no error
+ */
+int mpc_lowcomm_probe(int source, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_status_t *status);
 
 /************************************************************************/
 /* Collective Operations                                                */
@@ -242,6 +333,14 @@ void mpc_lowcomm_rdma_MPI_windows_in_use(void);
 void mpc_lowcomm_set_request_completion_trampoline(int trampoline(mpc_lowcomm_request_t *) );
 
 /**
+ * @brief Set the function to be called on this request completion
+ * Note: deactivated without MPI_MPC. Unused without RMA Windows
+ *
+ * @param callback request completion callback
+ */
+void mpc_lowcomm_set_request_completion_callback(mpc_lowcomm_request_t *req, int callback(mpc_lowcomm_request_t *) );
+
+/**
  * @brief Notify the completion of a request from lowcomm to MPC MPI
  *
  * @param req request to be completed
@@ -274,7 +373,7 @@ void mpc_lowcomm_rdma_MPC_MPI_notify_dest_ctx_set_trampoline(void (*trampoline)(
    * If mpc is without threads: gcc `mpc_cflags` `mpc_ldflags` ./a.c
 */
 
-void mpc_lowcomm_init();
-void mpc_lowcomm_release();
+void mpc_lowcomm_init(void);
+void mpc_lowcomm_release(void);
 
 #endif /* SCTK_COMM_H */

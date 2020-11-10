@@ -67,7 +67,8 @@ typedef int sctk_Grequest_wait_fn( int count, void **array_of_states, double tim
 typedef int sctk_Request_class;
 
 /** Request definition **/
-typedef struct
+typedef struct mpc_lowcomm_request_t mpc_lowcomm_request_t;
+struct mpc_lowcomm_request_t
 {
 	volatile int completion_flag;
     char pad[128];
@@ -101,7 +102,8 @@ typedef struct
 	/* This is a pointer to the registered memory region
 	 * in order to unpin when request completes */
 	void *ptr_to_pin_ctx;
-} mpc_lowcomm_request_t;
+        int (*request_completion_fn)(mpc_lowcomm_request_t *);
+};
 
 /** Reduction Operations **/
 typedef void ( *sctk_Op_f ) ( const void *, void *, size_t, mpc_lowcomm_datatype_t );
