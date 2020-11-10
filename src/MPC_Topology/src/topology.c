@@ -1006,7 +1006,7 @@ int mpc_topology_guided_compute_color(char *value)
     hwloc_topology_t topology;
     topology = mpc_topology_global_get();
     hwloc_obj_t obj;
-    int id_pu = mpc_thread_get_global_pu();
+    int id_pu = mpc_topology_get_global_current_cpu();
     hwloc_obj_t ancestor = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, id_pu);
     if(ancestor == NULL)
     {

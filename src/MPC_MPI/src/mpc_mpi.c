@@ -16949,7 +16949,7 @@ static int __split_unguided(MPI_Comm comm, int split_type, int key, __UNUSED__ M
         return MPI_PROC_NULL;
     }
     int *tab_cpuid, *tab_color;
-    int cpu_this = mpc_thread_get_global_pu();
+    int cpu_this = mpc_topology_get_global_current_cpu();
 
     /* send to root cpu id and node rank */
     int root = 0;
