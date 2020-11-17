@@ -169,14 +169,15 @@ void ____mpcomp_barrier(void);
    __mpcomp_barrier() ;
  */
 
-#if 0
 /* See p34 for variable definition */
   int __mpcomp_static_schedule_get_single_chunk (long lb, long b, long incr, long
 						  *from, long *to);
 
+#if 0
   int __mpcomp_static_schedule_get_single_chunk_ull (unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long
 						  *from, unsigned long long *to);
 #endif
+
   /*
      Forced chunk size
      pragma omp for schedule(static,chunk_size)

@@ -301,6 +301,12 @@ static inline int __loop_static_schedule_get_single_chunk( long lb, long b, long
 	return 1;
 }
 
+void __mpcomp_static_schedule_get_single_chunk( long lb, long b, long incr,
+        long *from, long *to )
+{
+  __loop_static_schedule_get_single_chunk(lb, b, incr, from, to);
+}
+
 /* Return the number of chunks that a static schedule would create */
 static inline int __loop_static_schedule_get_nb_chunks( long lb, long b, long incr,
         long chunk_size )
@@ -415,7 +421,7 @@ int __mpcomp_static_loop_begin( long lb, long b, long incr, long chunk_size,
 	{
    	if( OMPT_Callbacks )
    	{
-			ompt_callback_work_t callback; 
+			ompt_callback_work_t callback;
 			callback = (ompt_callback_work_t) OMPT_Callbacks[ompt_callback_work];
 			if( callback )
 			{
