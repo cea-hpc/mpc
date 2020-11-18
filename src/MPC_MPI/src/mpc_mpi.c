@@ -11154,7 +11154,7 @@ int PMPI_Testsome(int incount, MPI_Request array_of_requests[], int *outcount, i
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 
-	int res = MPI_ERR_INTERN;
+	int res = MPI_SUCCESS;
 
 	if( (array_of_requests == NULL) && (incount != 0) )
 	{
