@@ -11199,7 +11199,16 @@ int PMPI_Testsome(int incount, MPI_Request array_of_requests[], int *outcount, i
 			}
 			else
 			{
-				tmp = mpc_lowcomm_test(req, &loc_flag, (array_of_statuses == MPI_STATUSES_IGNORE) ? SCTK_STATUS_NULL : &(array_of_statuses[done]) );
+                MPI_internal_request_t *req_internal;
+                req_internal = __sctk_convert_mpc_request_internal(&array_of_requests[i], requests);
+                if( (req_internal != NULL) && (req_internal->is_nbc == 1) )
+                {
+                    tmp = NBC_Test(&(req_internal ->nbc_handle), &loc_flag, (array_of_statuses == MPI_STATUSES_IGNORE) ? SCTK_STATUS_NULL : &(array_of_statuses[done]));
+                }
+                else
+                {
+                    tmp = mpc_lowcomm_test(req, &loc_flag, (array_of_statuses == MPI_STATUSES_IGNORE) ? SCTK_STATUS_NULL : &(array_of_statuses[done]));
+                }
 			}
 			if(loc_flag)
 			{
