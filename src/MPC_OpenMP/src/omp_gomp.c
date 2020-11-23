@@ -1590,7 +1590,7 @@ bool mpcomp_GOMP_sections_end_cancel( void )
 
 void mpcomp_GOMP_sections_end_nowait( void )
 {
-	mpc_common_debug_error( "[Redirect GOMP]%s:\tBegin", __func__ );
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	/* Nothing to do */
 	__mpcomp_sections_end_nowait();
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
