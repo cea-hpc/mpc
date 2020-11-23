@@ -669,6 +669,8 @@ static inline void __team_reset( mpcomp_team_t *team )
 	OPA_store_int( last_array_slot, MPCOMP_NOWAIT_STOP_SYMBOL );
 	team->id = OPA_fetch_and_incr_int( &nb_teams );
 	mpc_common_spinlock_init( &team->lock, 0 );
+	mpc_common_spinlock_init( &team->atomic_lock, 0 );
+	mpc_common_spinlock_init( &team->critical_lock, 0 );
 }
 
 static inline void __mvp_del_saved_ctx( mpcomp_mvp_t *mvp )

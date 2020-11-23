@@ -741,7 +741,11 @@ typedef struct mpcomp_team_s
 	volatile long next_ordered_offset;
 	volatile unsigned long long next_ordered_offset_ull;
 	OPA_int_t next_ordered_offset_finalized;
-
+  
+	/* ATOMIC/CRITICAL CONSTRUCT */
+  mpc_common_spinlock_t atomic_lock;
+  mpc_common_spinlock_t critical_lock;
+  
 #if MPCOMP_TASK
 	struct mpcomp_task_team_infos_s task_infos;
 #endif // MPCOMP_TASK

@@ -55,56 +55,24 @@ TODO( "OpenMP: Anonymous critical and global atomic are not per-task locks" )
 
 /* Atomic emulated */
 __UNUSED__ static ompt_wait_id_t __mpcomp_ompt_atomic_lock_wait_id = 0;
-static OPA_int_t __mpcomp_atomic_lock_init_once 		= OPA_INT_T_INITIALIZER( 0 );
+//static OPA_int_t __mpcomp_atomic_lock_init_once 		= OPA_INT_T_INITIALIZER( 0 );
 /* Critical anonymous */
 __UNUSED__  static ompt_wait_id_t __mpcomp_ompt_critical_lock_wait_id = 0;
-static OPA_int_t __mpcomp_critical_lock_init_once 	= OPA_INT_T_INITIALIZER( 0 );
+//static OPA_int_t __mpcomp_critical_lock_init_once 	= OPA_INT_T_INITIALIZER( 0 );
 
-static mpc_common_spinlock_t *__mpcomp_omp_global_atomic_lock = NULL;
-static mpcomp_lock_t 	*__mpcomp_omp_global_critical_lock = NULL;
+//static mpc_common_spinlock_t *__mpcomp_omp_global_atomic_lock = NULL;
+//static mpcomp_lock_t 	*__mpcomp_omp_global_critical_lock = NULL;
 static mpc_common_spinlock_t 	__mpcomp_global_init_critical_named_lock = SCTK_SPINLOCK_INITIALIZER;
 
 void __mpcomp_atomic_begin( void )
 {
-	if ( OPA_load_int( &__mpcomp_atomic_lock_init_once ) < 2 )
-	{
-		//prevent multi call to init
-		if ( !OPA_cas_int( &__mpcomp_atomic_lock_init_once, 0, 1 ) )
-		{
-			__mpcomp_omp_global_atomic_lock = (mpc_common_spinlock_t*) sctk_malloc(sizeof(mpc_common_spinlock_t));
-			assert( __mpcomp_omp_global_atomic_lock );
-			mpc_common_spinlock_init( __mpcomp_omp_global_atomic_lock, 0 );
-#if OMPT_SUPPORT
+  mpcomp_team_t *team ;
+  __mpcomp_init() ;
 
-			if ( _mpc_omp_ompt_is_enabled() )
-			{
-				if ( OMPT_Callbacks )
-				{
-					ompt_callback_lock_init_t callback_init;
-					/* Prevent non thread safe wait_id init */
-					__mpcomp_ompt_atomic_lock_wait_id = mpcomp_OMPT_gen_wait_id();
-					callback_init = ( ompt_callback_lock_init_t ) OMPT_Callbacks[ompt_callback_lock_init];
-
-					if ( callback_init )
-					{
-						const void *code_ra = __builtin_return_address( 0 );
-						callback_init( ompt_mutex_atomic, omp_lock_hint_none, mpcomp_spinlock, __mpcomp_ompt_atomic_lock_wait_id, code_ra );
-					}
-				}
-			}
-
-#endif //OMPT_SUPPORT
-			OPA_store_int( &__mpcomp_atomic_lock_init_once, 2 );
-		}
-		else
-		{
-			/* Wait lock init */
-			while ( OPA_load_int( &__mpcomp_atomic_lock_init_once ) != 2 )
-			{
-				sctk_cpu_relax();
-			}
-		}
-	}
+  mpcomp_thread_t *t = mpcomp_get_thread_tls();
+  assert( t->instance != NULL ) ;
+  team = t->instance->team ;
+  assert( team != NULL ) ;
 
 #if OMPT_SUPPORT
 
@@ -124,7 +92,7 @@ void __mpcomp_atomic_begin( void )
 	}
 
 #endif //OMPT_SUPPORT
-	mpc_common_spinlock_lock( __mpcomp_omp_global_atomic_lock );
+	mpc_common_spinlock_lock( &(team->atomic_lock ));
 #if OMPT_SUPPORT
 
 	if ( _mpc_omp_ompt_is_enabled() )
@@ -147,7 +115,13 @@ void __mpcomp_atomic_begin( void )
 
 void __mpcomp_atomic_end( void )
 {
-	mpc_common_spinlock_unlock( __mpcomp_omp_global_atomic_lock );
+  mpcomp_thread_t *t = mpcomp_get_thread_tls();
+  mpcomp_team_t *team ;
+  assert( t->instance != NULL ) ;
+  team = t->instance->team ;
+  assert( team != NULL ) ;
+
+	mpc_common_spinlock_unlock( &(team->atomic_lock ));
 #if OMPT_SUPPORT
 
 	if ( _mpc_omp_ompt_is_enabled() )
@@ -179,50 +153,13 @@ TODO( "BUG w/ nested anonymous critical (and maybe named critical) -> need neste
 
 void __mpcomp_anonymous_critical_begin( void )
 {
-	if ( OPA_load_int( &__mpcomp_critical_lock_init_once )  != 2 )
-	{
-		//prevent multi call to init
-		if ( !OPA_cas_int( &__mpcomp_critical_lock_init_once, 0, 1 ) )
-		{
-			__mpcomp_omp_global_critical_lock = (mpcomp_lock_t *) sctk_malloc( sizeof( mpcomp_lock_t ));
-			assert( __mpcomp_omp_global_critical_lock );
-			memset( __mpcomp_omp_global_critical_lock, 0, sizeof( mpcomp_lock_t ) );
-			mpc_common_spinlock_init( &( __mpcomp_omp_global_critical_lock->lock ), 0 );
-#if OMPT_SUPPORT
+  mpcomp_team_t *team ;
+  __mpcomp_init() ;
 
-			if ( _mpc_omp_ompt_is_enabled() )
-			{
-				/* Prevent non thread safe wait_id init */
-				__mpcomp_omp_global_critical_lock->wait_id = mpcomp_OMPT_gen_wait_id();
-				__mpcomp_omp_global_critical_lock->hint = omp_lock_hint_none;
-
-				if ( OMPT_Callbacks )
-				{
-					ompt_callback_lock_init_t callback_init;
-					callback_init = ( ompt_callback_lock_init_t ) OMPT_Callbacks[ompt_callback_lock_init];
-
-					if ( callback_init )
-					{
-						const void *code_ra = __builtin_return_address( 0 );
-						const omp_lock_hint_t hint = __mpcomp_omp_global_critical_lock->hint;
-						const ompt_wait_id_t wait_id  = __mpcomp_omp_global_critical_lock->wait_id;
-						callback_init( ompt_mutex_critical, hint, mpcomp_mutex, wait_id, code_ra );
-					}
-				}
-			}
-
-#endif //OMPT_SUPPORT
-			OPA_store_int( &__mpcomp_critical_lock_init_once, 2 );
-		}
-		else
-		{
-			/* Wait lock init */
-			while ( OPA_load_int( &__mpcomp_critical_lock_init_once ) != 2 )
-			{
-				sctk_cpu_relax();
-			}
-		}
-	}
+  mpcomp_thread_t *t = mpcomp_get_thread_tls();
+  assert( t->instance != NULL ) ;
+  team = t->instance->team ;
+  assert( team != NULL ) ;
 
 #if OMPT_SUPPORT
 
@@ -236,16 +173,14 @@ void __mpcomp_anonymous_critical_begin( void )
 			if ( callback_acquire )
 			{
 				const void *code_ra = __builtin_return_address( 0 );
-				const omp_lock_hint_t hint = __mpcomp_omp_global_critical_lock->hint;
-				const ompt_wait_id_t wait_id  = __mpcomp_omp_global_critical_lock->wait_id;
-				callback_acquire( ompt_mutex_critical, hint, mpcomp_mutex, wait_id, code_ra );
+				callback_acquire( ompt_mutex_critical, omp_lock_hint_none, mpcomp_spinlock, __mpcomp_ompt_critical_lock_wait_id, code_ra );
 			}
 		}
 	}
 
 #endif //OMPT_SUPPORT
-	mpc_common_spinlock_lock( &( __mpcomp_omp_global_critical_lock->lock ) );
-#if  OMPT_SUPPORT
+	mpc_common_spinlock_lock( &(team->critical_lock ));
+#if OMPT_SUPPORT
 
 	if ( _mpc_omp_ompt_is_enabled() )
 	{
@@ -257,8 +192,7 @@ void __mpcomp_anonymous_critical_begin( void )
 			if ( callback_acquired )
 			{
 				const void *code_ra = __builtin_return_address( 0 );
-				const ompt_wait_id_t wait_id  = __mpcomp_omp_global_critical_lock->wait_id;
-				callback_acquired( ompt_mutex_critical, wait_id, code_ra );
+				callback_acquired( ompt_mutex_critical, __mpcomp_ompt_critical_lock_wait_id, code_ra );
 			}
 		}
 	}
@@ -268,7 +202,13 @@ void __mpcomp_anonymous_critical_begin( void )
 
 void __mpcomp_anonymous_critical_end( void )
 {
-	mpc_common_spinlock_unlock( &( __mpcomp_omp_global_critical_lock->lock ) );
+  mpcomp_thread_t *t = mpcomp_get_thread_tls();
+  mpcomp_team_t *team ;
+  assert( t->instance != NULL ) ;
+  team = t->instance->team ;
+  assert( team != NULL ) ;
+
+	mpc_common_spinlock_unlock( &(team->critical_lock ));
 #if OMPT_SUPPORT
 
 	if ( _mpc_omp_ompt_is_enabled() )
@@ -281,8 +221,7 @@ void __mpcomp_anonymous_critical_end( void )
 			if ( callback_released )
 			{
 				const void *code_ra = __builtin_return_address( 0 );
-				const ompt_wait_id_t wait_id  = __mpcomp_omp_global_critical_lock->wait_id;
-				callback_released( ompt_mutex_critical, wait_id, code_ra );
+				callback_released( ompt_mutex_critical, __mpcomp_ompt_critical_lock_wait_id, code_ra );
 			}
 		}
 	}
