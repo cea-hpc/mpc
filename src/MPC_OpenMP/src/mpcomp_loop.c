@@ -738,7 +738,7 @@ int __mpcomp_guided_loop_next( long *from, long *to )
 	*from = anc_from;
 	*to = new_from;
 
-	if ( *from < ( *to && loop->incr > 0 ) || ( *from > *to && loop->incr < 0 ) )
+	if (( *from < *to && loop->incr > 0 ) || ( *from > *to && loop->incr < 0 ) )
 	{
 		return 1;
 	}
