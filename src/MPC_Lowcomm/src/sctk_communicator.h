@@ -114,8 +114,6 @@ struct shared_mem_gatherv
 	void *target_buff;
 	const int *counts;
 	int *send_count;
-	mpc_lowcomm_datatype_t recv_type;
-	mpc_lowcomm_datatype_t *send_types;
 	size_t *send_type_size;
 	const int *disps;
 	size_t rtype_size;

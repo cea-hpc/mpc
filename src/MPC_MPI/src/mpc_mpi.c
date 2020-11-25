@@ -3588,7 +3588,6 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(const void *sendbuf, int sendcnt,
 	}
 	int did_allocate_send = 0;
 
-	gv_ctx->send_types[rank] = sendtype;
 	gv_ctx->send_type_size[rank] = stsize;
 
 	/* Does root need to pack ? */
@@ -3634,7 +3633,6 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(const void *sendbuf, int sendcnt,
 		gv_ctx->target_buff = recvbuf;
 		gv_ctx->counts      = recvcnts;
 		gv_ctx->disps       = displs;
-		gv_ctx->recv_type   =  recvtype;
 
 		MPI_Aint rtsize = 0;
 		res = PMPI_Type_extent(recvtype, &rtsize);
@@ -3670,18 +3668,6 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(const void *sendbuf, int sendcnt,
 			}
 		}
 	}
-
-	/* Now check that types are compatible */
-	int i;
-	for(i = 0 ; i < coll->comm_size; i++)
-	{
-		int err = mpc_lowcomm_check_type_compat(gv_ctx->send_types[i], gv_ctx->recv_type);
-		if(err != MPI_SUCCESS)
-		{
-			return err;
-		}
-	}
-
 
 	/* if some other processes don't have contig mem we should also unpack */
 	if(!_mpc_dt_is_contig_mem(sendtype) && rank != root)
@@ -14186,6 +14172,7 @@ int PMPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 
 	/* Profiling */
 	SCTK_PROFIL_END(MPI_Gather);
+
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
