@@ -32,18 +32,18 @@ extern "C" {
 /********
  * BOOL *
  ********/
-#ifndef __cplusplus
+//#ifndef __cplusplus
 
 /* HAVE_STDBOOL_H */
-#if @HAVE_STDBOOL_H@ == 1
-	#include <stdbool.h>
-#else /* HAVE_STDBOOL_H */
+//#if @HAVE_STDBOOL_H@ == 1
+	//#include <stdbool.h>
+//#else /* HAVE_STDBOOL_H */
 	#define bool unsigned char
 	#define true 1
 	#define false 0
-#endif /* HAVE_STDBOOL_H */
+//#endif /* HAVE_STDBOOL_H */
 
-#endif
+//#endif
 
 /**********
  * STDINT *
