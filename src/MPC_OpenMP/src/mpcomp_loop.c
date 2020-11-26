@@ -1731,7 +1731,6 @@ static int __loop_dyn_get_chunk_from_rank_ull(
 	const unsigned long long rank = ( unsigned long long ) target->rank;
 	const unsigned long long num_threads =
 	    ( unsigned long long ) t->info.num_threads;
-	assert( t->info.loop_infos.type == MPCOMP_LOOP_TYPE_ULL );
 	mpcomp_loop_ull_iter_t *loop = &( t->info.loop_infos.loop.mpcomp_ull );
 	cur = __loop_dyn_get_chunk_from_target( t, target );
 
