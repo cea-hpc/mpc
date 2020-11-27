@@ -581,22 +581,19 @@ void mpc_lowcomm_rdma_window_RDMA_emulated_write_ctrl_msg_handler(
 
 	int remote_rank = mpc_lowcomm_communicator_rank(win->comm, erma->source_rank);
 
-	mpc_lowcomm_request_t req;
+	mpc_lowcomm_request_t req[2];
 	mpc_lowcomm_irecv_class_dest(remote_rank,
 	                             win->comm_rank, win->start_addr + offset,
 	                             erma->size, TAG_RDMA_WRITE, win->comm,
-	                             MPC_LOWCOMM_RDMA_WINDOW_MESSAGES, &req);
-
-	mpc_lowcomm_request_wait(&req);
+	                             MPC_LOWCOMM_RDMA_WINDOW_MESSAGES, &req[0]);
 
 
-	mpc_lowcomm_request_t response_req;
 	int dummy;
 	mpc_lowcomm_isend_class_src(
 		win->comm_rank, remote_rank,
 		&dummy,  sizeof(int), TAG_RDMA_WRITE_ACK, win->comm,
-		MPC_LOWCOMM_RDMA_WINDOW_MESSAGES, &req);
-	mpc_lowcomm_request_wait(&response_req);
+		MPC_LOWCOMM_RDMA_WINDOW_MESSAGES, &req[1]);
+	mpc_lowcomm_waitall(2, req, SCTK_STATUS_NULL);
 
 	OPA_incr_int(&win->incoming_emulated_rma[erma->source_rank]);
 
