@@ -17470,9 +17470,27 @@ int PMPI_Attr_delete(MPI_Comm comm, int keyval)
 			{
 				mpc_common_spinlock_unlock(&(tmp_per_comm->lock) );
 				mpc_common_spinlock_unlock(&(tmp->lock) );
-				res = tmp->attrs_fn[keyval].delete_fn(comm, keyval + MPI_MAX_KEY_DEFINED,
-				                                      tmp_per_comm->key_vals[keyval].attr,
-				                                      tmp->attrs_fn[keyval].extra_state);
+				if(mpc_common_get_flags()->is_fortran)
+				{
+					void (*fort_delete)(int *pcomm, int *keyval, void *attr, void *state, int * ierr);
+
+					fort_delete = (void (*)(int *, int *, void *, void *, int * ))tmp->attrs_fn[keyval].delete_fn;
+
+					int fcomm = MPI_Comm_c2f(comm);
+					int fkeyval = keyval + MPI_MAX_KEY_DEFINED;
+
+					fort_delete(&fcomm, &fkeyval,
+										tmp_per_comm->key_vals[keyval].attr,
+										tmp->attrs_fn[keyval].extra_state,
+										&res);
+				}
+				else
+				{
+					res = tmp->attrs_fn[keyval].delete_fn(comm, keyval + MPI_MAX_KEY_DEFINED,
+														tmp_per_comm->key_vals[keyval].attr,
+														tmp->attrs_fn[keyval].extra_state);
+				}
+
 				mpc_common_spinlock_lock(&(tmp_per_comm->lock) );
 				mpc_common_spinlock_lock(&(tmp->lock) );
 			}
