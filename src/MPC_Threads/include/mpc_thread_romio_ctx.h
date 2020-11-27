@@ -87,7 +87,21 @@ struct mpc_thread_romio_ctx_s
 
 extern __thread struct mpc_thread_romio_ctx_s * mpc_thread_romio_ctx_storage;
 
-#define _MPC_THREAD_ROMIO_CTX_GET(member) (void*)(&mpc_thread_romio_ctx_storage->member)
+
+struct mpc_thread_romio_ctx_s *_mpc_thread_romio_ctx_init(void);
+
+static inline struct mpc_thread_romio_ctx_s * mpc_thread_romio_ctx_storage_get()
+{
+	if(!mpc_thread_romio_ctx_storage)
+	{
+		mpc_thread_romio_ctx_storage = _mpc_thread_romio_ctx_init();
+	}
+
+	return mpc_thread_romio_ctx_storage;
+}
+
+
+#define _MPC_THREAD_ROMIO_CTX_GET(member) (void*)(&(mpc_thread_romio_ctx_storage_get())->member)
 #define MPC_THREAD_ROMIO_CTX_GET(member, type) *((type *)_MPC_THREAD_ROMIO_CTX_GET(member))
 
 #endif /* MPC_THREAD_ROMIO_CTX_H_ */
