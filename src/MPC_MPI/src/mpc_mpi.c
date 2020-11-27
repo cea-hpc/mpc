@@ -4267,9 +4267,6 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 
 	void *data_buff = sendbuf;
 
-	sv_ctx->recv_types[rank] = recvtype;
-
-
 	MPI_Aint rtype_size = 0;
 	if(rank != root)
 	{
@@ -4390,17 +4387,6 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 			{
 				sctk_cpu_relax();
 			}
-		}
-	}
-
-	/* Now check that types are compatible */
-	int i;
-	for(i = 0 ; i < coll->comm_size; i++)
-	{
-		int err = mpc_lowcomm_check_type_compat(sv_ctx->recv_types[i], sv_ctx->send_type);
-		if(err != MPI_SUCCESS)
-		{
-			return err;
 		}
 	}
 
