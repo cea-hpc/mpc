@@ -9125,3 +9125,32 @@ void mpi_win_null_copy_fn__ ( MPI_Fint*v1, MPI_Fint*v2, void*v3, void*v4, void*v
         *ierr = MPI_SUCCESS;
         *v6 = 0;
 }
+
+void mpi_pcontrol_ ( MPI_Fint *v1, MPI_Fint *ierr ){
+     *ierr = MPI_Pcontrol( (int)*v1 );
+}
+
+void mpi_pcontrol__ ( MPI_Fint *v1, MPI_Fint *ierr ){
+     mpi_pcontrol_(v1, ierr);
+}
+
+void mpi_address_ ( void*v1, MPI_Fint *v2, MPI_Fint *ierr ){
+     MPI_Aint a, b;
+     *ierr = MPI_Address( v1, &a );
+ 
+     *v2 = (MPI_Fint)( a );
+
+}
+
+void mpi_address__ ( void*v1, MPI_Fint *v2, MPI_Fint *ierr ){
+	mpi_address_(v1, v2, ierr);
+}
+
+
+void mpi_errhandler_create_ ( MPI_Handler_function*v1, MPI_Fint *v2, MPI_Fint *ierr ){
+     *ierr = MPI_Errhandler_create( v1, v2 );
+}
+
+void mpi_errhandler_create__ ( MPI_Handler_function*v1, MPI_Fint *v2, MPI_Fint *ierr ){
+     mpi_errhandler_create_( v1, v2, ierr );
+}
