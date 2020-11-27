@@ -178,6 +178,31 @@ scan_cli_for_obj_and_extract_sources()
 	done
 }
 
+# Create a temporary file anticipating for no /tmp
+#
+# Args:
+#  - $1 : the suffix for the TMP file
+#
+# Output Variable:
+#  - TMP_FILE: the temporary file
+create_tmp_file()
+{
+	SUFFIX=$1
+	TMP_FILE=$(mktemp --suffix=.${SUFFIX})
+
+	if test "x$?" != "x0"; then
+		echo "Could not write in /tmp using local directory" > 2
+		# There was a problem creating the file
+		# maybe no right in /tmp so we use local
+		TMP_FILE=$(mktemp -p . --suffix=.${SUFFIX})
+		if test "x$?" != "x0"; then
+			echo "Could not create a temporary object file" > 2
+			exit 1
+		fi
+	fi
+}
+
+
 # Convert and patch all source files to .o files
 # Once called all source files are now .o files
 # 
@@ -201,7 +226,9 @@ compile_and_patch_source_files()
 	then
 		for source_file in ${SOURCE_FILES}
 		do
-			TMP_OBJ_FILE=$(mktemp --suffix=.o)
+			create_tmp_file "o"
+			TMP_OBJ_FILE="$TMP_FILE"
+
 			append_to "FAKE_OBJECT_FILE_LIST" "$TMP_OBJ_FILE"
 
 			# Compile source file
@@ -242,10 +269,11 @@ compile_fortran_main()
 	# Cflags to be used for the main file
 	CFLAGS_FORTRAN_MAIN=""
 	# Name of the main fortran file
-	FORTRAN_MAIN="/tmp/tmp_mpc_fortran_$$.f"
+	create_tmp_file "f"
+	FORTRAN_MAIN="$TMP_FILE"
 	# Name of the main fortran obj
-	FORTRAN_MAIN_OBJ="/tmp/tmp_mpc_fortran_$$.o"
-
+	create_tmp_file "o"
+	FORTRAN_MAIN_OBJ="$TMP_FILE"
 cat <<THIS_EOF > $FORTRAN_MAIN
       subroutine mpc_user_main_
       call mpc_user_main()
