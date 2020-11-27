@@ -1141,7 +1141,6 @@ int sctk_shared_mem_scatterv_init( struct shared_mem_scatterv *shmsv,
 	shmsv->tollgate = sctk_malloc( nb_task * sizeof( int ) );
 	assume( shmsv->tollgate != NULL );
 	OPA_store_int( &shmsv->fare, 0 );
-	shmsv->recv_types = sctk_malloc( nb_task * sizeof( mpc_lowcomm_datatype_t ) );
 
 	/* Root CTX */
 	shmsv->send_type = -1;
@@ -1170,8 +1169,6 @@ int sctk_shared_mem_scatterv_release( struct shared_mem_scatterv *shmsv )
 	shmsv->tollgate = NULL;
 	sctk_free( shmsv->src_buffs );
 	shmsv->src_buffs = NULL;
-	sctk_free(shmsv->recv_types);
-	shmsv->recv_types = NULL;
 	return 0;
 }
 
