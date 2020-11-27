@@ -15,9 +15,6 @@
 #include "adio.h"
 #include "mpio.h"
 
-void mpc_io_critical_section_enter();
-void mpc_io_critical_section_leave();
-
 #ifdef ROMIO_INSIDE_MPICH
 #include "mpir_ext.h"
 
@@ -36,6 +33,9 @@ void mpc_io_critical_section_leave();
    error reporting features provided by MPICH must implement these
    four functions.  Defining these as empty should not change the behavior
    of correct programs */
+void mpc_io_critical_section_enter();
+void mpc_io_critical_section_leave();
+
 #define ROMIO_THREAD_CS_ENTER() mpc_io_critical_section_enter()
 #define ROMIO_THREAD_CS_EXIT() mpc_io_critical_section_leave()
 #define ROMIO_THREAD_CS_YIELD() MPIR_Ext_cs_yield()

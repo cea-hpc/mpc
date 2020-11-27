@@ -155,26 +155,34 @@ void ADIOI_IOStridedColl(ADIO_File fd, void *buf, int count, int rdwr,
             if (file_ptr_type == ADIO_EXPLICIT_OFFSET) {
                 off = fd->disp + (fd->etype_size) * offset;
                 if (rdwr == ADIOI_READ)
+                {
                     ADIO_ReadContig(fd, buf, count, datatype,
                                     ADIO_EXPLICIT_OFFSET, off, status, error_code);
-                else
+                } else {
                     ADIO_WriteContig(fd, buf, count, datatype,
                                      ADIO_EXPLICIT_OFFSET, off, status, error_code);
+                }
             } else {
                 if (rdwr == ADIOI_READ)
+                {
                     ADIO_ReadContig(fd, buf, count, datatype, ADIO_INDIVIDUAL,
                                     0, status, error_code);
+                }
                 else
+                {
                     ADIO_WriteContig(fd, buf, count, datatype, ADIO_INDIVIDUAL,
                                      0, status, error_code);
+                }
             }
         } else {
             if (rdwr == ADIOI_READ)
+            {
                 ADIO_ReadStrided(fd, buf, count, datatype, file_ptr_type,
                                  offset, status, error_code);
-            else
+            } else {
                 ADIO_WriteStrided(fd, buf, count, datatype, file_ptr_type,
                                   offset, status, error_code);
+            }
         }
         return;
     }
@@ -903,15 +911,19 @@ void ADIOI_IOFiletype(ADIO_File fd, void *buf, int count,
     if (f_is_contig && m_is_contig) {
         fd->disp = 0;
         if (rdwr == ADIOI_READ)
+        {
             ADIO_ReadContig(fd, buf, count, datatype, file_ptr_type, offset, status, error_code);
-        else
+        } else {
             ADIO_WriteContig(fd, buf, count, datatype, file_ptr_type, offset, status, error_code);
+        }
     } else {
         fd->disp = offset;
         if (rdwr == ADIOI_READ)
+        {
             ADIO_ReadStrided(fd, buf, count, datatype, file_ptr_type, 0, status, error_code);
-        else
+        } else {
             ADIO_WriteStrided(fd, buf, count, datatype, file_ptr_type, 0, status, error_code);
+        }
     }
 
 

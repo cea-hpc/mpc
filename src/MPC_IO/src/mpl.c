@@ -56,3 +56,50 @@ void mpc_io_critical_section_leave()
 {
 	//mpc_common_spinlock_unlock(&__cslock);
 }
+
+static mpc_common_rwlock_t __io_rw_lock_read_write = SCTK_SPIN_RWLOCK_INITIALIZER;
+
+
+void mpc_rwlock_read()
+{
+	mpc_common_spinlock_read_lock_yield(&__io_rw_lock_read_write);
+}
+
+void mpc_rwlock_read_unlock()
+{
+	mpc_common_spinlock_read_unlock(&__io_rw_lock_read_write);
+}
+
+void mpc_rwlock_write()
+{
+	mpc_common_spinlock_write_lock_yield(&__io_rw_lock_read_write);
+}
+
+void mpc_rwlock_write_unlock()
+{
+	mpc_common_spinlock_write_unlock(&__io_rw_lock_read_write);
+}
+
+
+static mpc_common_rwlock_t __io_rwlock_stride_read_write = SCTK_SPIN_RWLOCK_INITIALIZER;
+
+
+void mpc_rwlock_strided_read()
+{
+	mpc_common_spinlock_read_lock_yield(&__io_rwlock_stride_read_write);
+}
+
+void mpc_rwlock_strided_read_unlock()
+{
+	mpc_common_spinlock_read_unlock(&__io_rwlock_stride_read_write);
+}
+
+void mpc_rwlock_strided_write()
+{
+	mpc_common_spinlock_write_lock_yield(&__io_rwlock_stride_read_write);
+}
+
+void mpc_rwlock_strided_write_unlock()
+{
+	mpc_common_spinlock_write_unlock(&__io_rwlock_stride_read_write);
+}

@@ -258,13 +258,19 @@ struct ADIOI_Fns_struct {
     (*(fd->fns->ADIOI_xxx_OpenColl))(fd, rank, access_mode, error_code)
 
 #define ADIO_ReadContig(fd,buf,count,datatype,file_ptr_type,offset,status,error_code) \
-    (*(fd->fns->ADIOI_xxx_ReadContig))(fd,buf,count,datatype,file_ptr_type,offset,status,error_code)
+    mpc_rwlock_read();\
+    (*(fd->fns->ADIOI_xxx_ReadContig))(fd,buf,count,datatype,file_ptr_type,offset,status,error_code);\
+    mpc_rwlock_read_unlock()
 
 #define ADIO_WriteContig(fd,buf,count,datatype,file_ptr_type,offset,status,error_code) \
-    (*(fd->fns->ADIOI_xxx_WriteContig))(fd,buf,count,datatype,file_ptr_type,offset,status,error_code)
+    mpc_rwlock_write();\
+    (*(fd->fns->ADIOI_xxx_WriteContig))(fd,buf,count,datatype,file_ptr_type,offset,status,error_code);\
+    mpc_rwlock_write_unlock()
 
 #define ADIO_SeekIndividual(fd,offset,whence,error_code)                \
-    (*(fd->fns->ADIOI_xxx_SeekIndividual))(fd,offset,whence,error_code)
+    mpc_rwlock_write();\
+    (*(fd->fns->ADIOI_xxx_SeekIndividual))(fd,offset,whence,error_code);\
+    mpc_rwlock_write_unlock()
 
 #define ADIO_Fcntl(fd,flag,fcntl_struct,error_code)                     \
     (*(fd->fns->ADIOI_xxx_Fcntl))(fd,flag,fcntl_struct,error_code)
@@ -295,10 +301,14 @@ struct ADIOI_Fns_struct {
     (*((*(request))->fd->fns->ADIOI_xxx_WriteComplete))(request,status,error_code)
 
 #define ADIO_ReadStrided(fd,buf,count,datatype,file_ptr_type,offset,status,error_code) \
-    (*(fd->fns->ADIOI_xxx_ReadStrided))(fd,buf,count,datatype,file_ptr_type,offset,status,error_code)
+    mpc_rwlock_strided_read();\
+    (*(fd->fns->ADIOI_xxx_ReadStrided))(fd,buf,count,datatype,file_ptr_type,offset,status,error_code);\
+    mpc_rwlock_strided_read_unlock()
 
 #define ADIO_WriteStrided(fd,buf,count,datatype,file_ptr_type,offset,status,error_code) \
-    (*(fd->fns->ADIOI_xxx_WriteStrided))(fd,buf,count,datatype,file_ptr_type,offset,status,error_code)
+    mpc_rwlock_strided_write();\
+    (*(fd->fns->ADIOI_xxx_WriteStrided))(fd,buf,count,datatype,file_ptr_type,offset,status,error_code);\
+    mpc_rwlock_strided_write_unlock()
 
 #define ADIO_ReadStridedColl(fd,buf,count,datatype,file_ptr_type,offset,status,error_code) \
     (*(fd->fns->ADIOI_xxx_ReadStridedColl))(fd,buf,count,datatype,file_ptr_type,offset,status,error_code)

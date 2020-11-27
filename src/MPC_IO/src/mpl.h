@@ -36,10 +36,22 @@ void MPL_create_pathname(char *dest_filename, const char *dirname,
  * LOCKS *
  *********/
 
-void MPIO_lock_strided();
-void MPIO_unlock_strided();
+void mpc_io_read_lock();
+void mpc_io_write_lock();
+void mpc_io_unlock();
 
-void MPIO_lock_shared();
-void MPIO_unlock_shared();
+void mpc_rwlock_read();
+void mpc_rwlock_read_unlock();
+
+void mpc_rwlock_write();
+void mpc_rwlock_write_unlock();
+
+
+void mpc_rwlock_strided_read();
+void mpc_rwlock_strided_read_unlock();
+
+void mpc_rwlock_strided_write();
+void mpc_rwlock_strided_write_unlock();
+
 
 #endif /* MPL_H_ */
