@@ -183,7 +183,7 @@ struct sctk_handle_context *sctk_handle_context(sctk_handle id,
   return ret;
 }
 
-sctk_handle sctk_handle_new_from_id(int previous_id, sctk_handle_type type) {
+sctk_handle sctk_handle_new_from_id(sctk_handle previous_id, sctk_handle_type type) {
   sctk_handle new_handle_id;
 
   mpc_mpi_err_init_once();

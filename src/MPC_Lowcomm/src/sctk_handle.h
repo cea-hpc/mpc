@@ -66,7 +66,7 @@ typedef enum {
 
 struct sctk_handle_context *sctk_handle_context_new(sctk_handle id);
 int sctk_handle_context_release(struct sctk_handle_context *hctx);
-sctk_handle sctk_handle_new_from_id(int previous_id, sctk_handle_type type);
+sctk_handle sctk_handle_new_from_id(sctk_handle previous_id, sctk_handle_type type);
 sctk_handle sctk_handle_new(sctk_handle_type type);
 int sctk_handle_free(sctk_handle id, sctk_handle_type type);
 
