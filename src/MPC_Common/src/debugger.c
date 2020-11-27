@@ -377,7 +377,7 @@ void sctk_vprint_backtrace( const char *format, va_list ap )
 	mpc_common_io_noalloc_fprintf( stderr, "---------- EVENT TRACE START ----------\n" );
 	mpc_common_io_noalloc_vfprintf( stderr, format, ap );
 
-#ifdef MPC_HAVE_LIBUNWIND && 0
+#ifdef MPC_HAVE_LIBUNWIND
 	__libunwind_backtrace();
 #else
 	__execinfo_backtrace();
