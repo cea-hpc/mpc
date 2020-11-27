@@ -37,9 +37,9 @@
 /** Global variable to store mpc runtime configuration loaded from XML. **/
 struct sctk_runtime_config __sctk_global_runtime_config__;
 /** To know if already init. **/
-bool __sctk_global_runtime_config_init__ = false;
+short int __sctk_global_runtime_config_init__ = 0;
 /** To avoid crash on symbol load when running mpc_print_config (mpc not linked). **/
-bool sctk_crash_on_symbol_load = true;
+short int sctk_crash_on_symbol_load = 1;
 
 /********************************  CONSTS  **********************************/
 /**
@@ -202,7 +202,7 @@ void sctk_runtime_config_init(void)
 
 
         /* if already done do nothing */
-        if (__sctk_global_runtime_config_init__ == false) {
+        if (__sctk_global_runtime_config_init__ == 0) {
           disable_config =
               sctk_runtime_config_get_env_or_value("MPC_DISABLE_CONFIG", "0");
           if (strcmp(disable_config, "1") == 0) {
@@ -213,7 +213,7 @@ void sctk_runtime_config_init(void)
             sctk_runtime_config_validate(&__sctk_global_runtime_config__);
 
             /* mark as init */
-            __sctk_global_runtime_config_init__ = true;
+            __sctk_global_runtime_config_init__ = 1;
           } else {
             /* init libxml (safer to manually call it in multi-thread
              * environment as not threadsafe) */
@@ -248,7 +248,7 @@ void sctk_runtime_config_init(void)
             sctk_runtime_config_validate(&__sctk_global_runtime_config__);
 
             /* mark as init */
-            __sctk_global_runtime_config_init__ = true;
+            __sctk_global_runtime_config_init__ = 1;
           }
         }
 }

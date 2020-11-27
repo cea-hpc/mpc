@@ -31,7 +31,7 @@
  * Structure to store current display state.
 **/
 struct display_state_sh {
-	bool is_simple_array;
+	short int is_simple_array;
 	const char * names[32];
 };
 

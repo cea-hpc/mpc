@@ -33,7 +33,7 @@ char *sctk_mpi_handler_gen_filename(void *option, void *option1);
  * @param option No option implemented 
  */
 
-bool sctk_mpi_handler_send_filename(char *filename, void *option,
+short int sctk_mpi_handler_send_filename(char *filename, void *option,
                                     void *option1);
 
 /*! \brief Recv filename via mpi, filename size must be lesser than 64 bytes  

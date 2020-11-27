@@ -100,7 +100,7 @@ void sctk_runtime_config_map_array(const struct sctk_runtime_config_entry_meta *
 void sctk_runtime_config_map_value(
     const struct sctk_runtime_config_entry_meta *config_meta, void *value,
     const char *type_name, xmlNodePtr node);
-bool sctk_runtime_config_map_plain_type(void * value, const char * type_name,xmlNodePtr node);
+short int sctk_runtime_config_map_plain_type(void * value, const char * type_name,xmlNodePtr node);
 void sctk_runtime_config_map_struct( const struct sctk_runtime_config_entry_meta *config_meta,
                                      void * struct_ptr,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node);
 void sctk_runtime_config_map_union( const struct sctk_runtime_config_entry_meta *config_meta,
@@ -109,7 +109,7 @@ void* sctk_runtime_config_get_symbol(char * symbol_name);
 /********************************* FUNCTION *********************************/
 /* type supports */
 int sctk_runtime_config_map_entry_to_int(xmlNodePtr node);
-bool sctk_runtime_config_map_entry_to_bool(xmlNodePtr node);
+short int sctk_runtime_config_map_entry_to_bool(xmlNodePtr node);
 double sctk_runtime_config_map_entry_to_double(xmlNodePtr node);
 float sctk_runtime_config_map_entry_to_float(xmlNodePtr node);
 size_t sctk_runtime_config_map_entry_parse_size( const char *value );

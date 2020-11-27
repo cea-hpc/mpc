@@ -58,7 +58,7 @@
 #endif
 
 
-void mpc_launch_print_banner(bool restart)
+void mpc_launch_print_banner(short int restart)
 {
 	if(mpc_common_get_process_rank() == 0)
 	{

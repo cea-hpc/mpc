@@ -89,6 +89,6 @@ void sctk_runtime_config_walk_tree(const struct sctk_runtime_config_entry_meta *
 
 /********************************* FUNCTION *********************************/
 /* some helper functions */
-bool sctk_runtime_config_is_basic_type(const char * type_name);
+short int sctk_runtime_config_is_basic_type(const char * type_name);
 
 #endif /* SCTK_RUNTIME_CONFIG_WALK_H */

@@ -35,12 +35,12 @@ static const xmlChar * SCKT_CONFIG_XML_NODE_SELECTOR_ENV = BAD_CAST("env");
  * @param selector Define the XML node to validation as a selector.
  * @return True if valid, false otherwise.
 **/
-bool sctk_runtime_config_xml_selector_env_check(xmlNodePtr selector)
+short int sctk_runtime_config_xml_selector_env_check(xmlNodePtr selector)
 {
 	/* vars */
 	xmlChar * env_name;
 	xmlChar * expected_value;
-	bool res;
+	short int res;
 
 	/* error */
 	assert(xmlStrcmp(selector->name,SCKT_CONFIG_XML_NODE_SELECTOR_ENV) == 0);
@@ -71,7 +71,7 @@ bool sctk_runtime_config_xml_selector_env_check(xmlNodePtr selector)
  * @param selector Define the XML node to validation as a selector.
  * @return True if valid, false otherwise.
 **/
-bool sctk_runtime_config_xml_selector_check(xmlNodePtr selector)
+short int sctk_runtime_config_xml_selector_check(xmlNodePtr selector)
 {
 	/* errors */
 	assert(selector != NULL);
@@ -85,7 +85,7 @@ bool sctk_runtime_config_xml_selector_check(xmlNodePtr selector)
 	else
 	{
 		mpc_common_debug_fatal("Invalid selector in mappings : %s.",selector->name);
-		return false;
+		return 0;
 	}
 }
 
@@ -95,7 +95,7 @@ bool sctk_runtime_config_xml_selector_check(xmlNodePtr selector)
  * @param selectors Define the &lt;selectors&gt; node to check. It must contain some selector elements.
  * @return True if find one valid, false otherwise.
 **/
-bool sctk_runtime_config_xml_selectors_check(xmlNodePtr selectors)
+short int sctk_runtime_config_xml_selectors_check(xmlNodePtr selectors)
 {
 	/* vars */
 	xmlNodePtr selector;
@@ -109,9 +109,9 @@ bool sctk_runtime_config_xml_selectors_check(xmlNodePtr selectors)
 	selector = xmlFirstElementChild(selectors);
 	while (selector != NULL) {
 		if (sctk_runtime_config_xml_selector_check(selector) == 0)
-			return false;
+			return 0;
 		selector = xmlNextElementSibling(selector);
 	}
 
-	return true;
+	return 1;
 }

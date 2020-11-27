@@ -29,13 +29,13 @@
 
 /******************************** STRUCTURE *********************************/
 struct sctk_runtime_config_display_state {
-	bool is_simple_array;
+	short int is_simple_array;
 };
 
 /********************************* FUNCTION *********************************/
 /* helpers */
 void sctk_runtime_config_display_indent(int level);
-bool sctk_runtime_config_display_plain_type( const char * type_name,void *value);
+short int sctk_runtime_config_display_plain_type( const char * type_name,void *value);
 void sctk_runtime_config_display_handler(enum sctk_runtime_config_walk_type type,
         const char * name,
         const char * type_name,

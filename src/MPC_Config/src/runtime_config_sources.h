@@ -115,12 +115,12 @@ struct sctk_runtime_config_sources {
 /* functions to manage the sctk_runtime_config_sources structure */
 void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * config_sources);
 void sctk_runtime_config_sources_close(struct sctk_runtime_config_sources * config_sources);
-bool sctk_runtime_config_sources_validate(struct sctk_runtime_config_sources * config_sources,const char * xml_shema_path);
+short int sctk_runtime_config_sources_validate(struct sctk_runtime_config_sources * config_sources,const char * xml_shema_path);
 
 /********************************* FUNCTION *********************************/
 /* function to manage open operations of a specific xml file. */
 void sctk_runtime_config_source_xml_open(struct sctk_runtime_config_source_xml * source,const char * filename,enum sctk_runtime_config_open_error_level level);
-bool sctk_runtime_config_source_xml_is_open( struct sctk_runtime_config_source_xml * source );
+short int sctk_runtime_config_source_xml_is_open( struct sctk_runtime_config_source_xml * source );
 
 /********************************* FUNCTION *********************************/
 /* functions to manage selection of profiles in XML DOM tree */

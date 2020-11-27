@@ -67,12 +67,12 @@ SCTK_STATIC void sctk_shm_mapper_fake_handler_reset(void)
 
 /************************* FUNCTION ************************/
 /** Fake sync handler used for unit test only as it count on a shared (in sense of thread) global pointer. **/
-SCTK_STATIC bool sctk_shm_mapper_fake_handler_send(const char *filename,
+SCTK_STATIC short int sctk_shm_mapper_fake_handler_send(const char *filename,
                                                    __UNUSED__ void *option,
                                                    __UNUSED__ void *option1) {
   assert(filename != NULL);
   sctk_shm_mapper_fake_glob = filename;
-  return true;
+  return 1;
 }
 
 /************************* FUNCTION ************************/
@@ -412,7 +412,7 @@ SCTK_STATIC void * sctk_shm_mapper_master(sctk_size_t size,int participants,sctk
 	char * filename;
 
 	int fd;
-	bool status;
+	short int status;
 	void * ptr;
 	sctk_shm_mapper_sync_header_t * sync_header;
 

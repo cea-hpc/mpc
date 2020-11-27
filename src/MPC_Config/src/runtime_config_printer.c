@@ -98,31 +98,31 @@ char * sctk_runtime_config_display_size(size_t value)
  * @param value Value to display.
  * @return true if the type value is a basic type, false otherwise.
 **/
-bool sctk_runtime_config_display_plain_type( const char * type_name,void *value)
+short int sctk_runtime_config_display_plain_type( const char * type_name,void *value)
 {
 	if (strcmp(type_name,"int") == 0) {
 		printf("%d",*(int*)value);
-		return true;
+		return 1;
 	} else if (strcmp(type_name,"bool") == 0) {
-		printf("%s",(*(bool*)value)?"true":"false");
-		return true;
+		printf("%s",(*(short int*)value)?"true":"false");
+		return 1;
 	} else if (strcmp(type_name,"float") == 0) {
 		printf("%f",(double)*(float*)value);
-		return true;
+		return 1;
 	} else if (strcmp(type_name,"double") == 0) {
 		printf("%g",*(double*)value);
-		return true;
+		return 1;
 	} else if (strcmp(type_name,"char *") == 0) {
 		if (*((char **)value) == NULL)
 			printf("%s",sctk_cst_string_undefined);
 		else
 			printf("%s",*((char **)value));
-		return true;
+		return 1;
 	} else if (strcmp(type_name,"size_t") == 0) {
 		printf("%s", sctk_runtime_config_display_size( *( (size_t *)value ) ) );
-		return true;
+		return 1;
 	} else {
-		return false;
+		return 0;
 	}
 }
 
@@ -155,7 +155,7 @@ void sctk_runtime_config_display_handler(enum sctk_runtime_config_walk_type type
 		/* close only simple array as it was name: {v1,v2,v3} */
 		if (state->is_simple_array && type == SCTK_RUNTIME_CONFIG_WALK_ARRAY) {
 			printf("}\n");
-			state->is_simple_array = false;
+			state->is_simple_array = 0;
 		}
 	} else {
 		switch(type) {
@@ -180,7 +180,7 @@ void sctk_runtime_config_display_handler(enum sctk_runtime_config_walk_type type
 				/* detect siple array to change the display mode of values to be more compact. */
 				if (sctk_runtime_config_is_basic_type(type_name)) {
 					printf("%s : {",name);
-					state->is_simple_array = true;
+					state->is_simple_array = 1;
 				} else {
 					printf("%s : \n",name);
 				}
@@ -209,6 +209,6 @@ void sctk_runtime_config_display_tree(const struct sctk_runtime_config_entry_met
                                       void * root_struct)
 {
 	struct sctk_runtime_config_display_state state;
-	state.is_simple_array = false;
+	state.is_simple_array = 0;
 	sctk_runtime_config_walk_tree(config_meta,sctk_runtime_config_display_handler,root_name,root_struct_name,root_struct,&state);
 }

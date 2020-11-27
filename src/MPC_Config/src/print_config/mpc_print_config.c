@@ -60,13 +60,13 @@ struct command_options {
 	/** Setup manual path to XSD file (--schema). **/
 	char * schema;
 	/** Request the help of the command (--help). **/
-	bool help;
+	short int help;
 	/** request the version to be printed (--version) **/
-	bool version;
+	short int version;
   /** Disable the loading of config files (--nofile). **/
-  bool nofile;
+  short int nofile;
   /** Display all the available profile names. **/
-  bool list_profiles;
+  short int list_profiles;
 };
 
 /********************************  CONSTS  **********************************/
@@ -187,20 +187,20 @@ void init_default_options(struct command_options * options)
 	assert(options != NULL);
 
 	/* default values */
-	options->help          = false;
-	options->version       = false;
+	options->help          = 0;
+	options->version       = 0;
 	options->mode          = OUTPUT_MODE_TEXT;
 	options->system_file   = NULL;
 	options->user_file     = NULL;
 	options->user_profiles = NULL;
 	options->schema        = NULL;
-	options->nofile        = false;
-	options->list_profiles = false;
+	options->nofile        = 0;
+	options->list_profiles = 0;
 }
 
 /********************************* FUNCTION *********************************/
 /** Function to parse command line arguments. **/
-bool parse_args(struct command_options * options,int argc, char ** argv)
+short int parse_args(struct command_options * options,int argc, char ** argv)
 {
 	/* vars */
 	int i;
@@ -218,13 +218,13 @@ bool parse_args(struct command_options * options,int argc, char ** argv)
 		if (argv[i][0] != '-' || argv[i][1] != '-') {
 			/* error */
 			fprintf(stderr,"Error : invalid argument %s\n",argv[i]);
-			return false;
+			return 0;
 		} else {
 			/* find the good one */
 			if (strcmp(argv[i],"--help") == 0) {
-			  options->help = true;
+			  options->help = 1;
 			} else if (strcmp(argv[i],"--nofile") == 0) {
-			  options->nofile = true;
+			  options->nofile = 1;
 			} else if (strcmp(argv[i],"--text") == 0) {
 			  options->mode = OUTPUT_MODE_TEXT;
 			} else if (strcmp(argv[i],"--xml") == 0) {
@@ -240,18 +240,18 @@ bool parse_args(struct command_options * options,int argc, char ** argv)
 			} else if (strncmp(argv[i],"--schema=",9) == 0) {
 				options->schema = strdup(argv[i]+9);
 			} else if (strncmp(argv[i],"--list-profiles",15) == 0) {
-				options->list_profiles = true;
+				options->list_profiles = 1;
 			} else if (strncmp(argv[i],"--version",9) == 0) {
-				options->version = true;
+				options->version = 1;
 
 			} else {
 			  fprintf(stderr,"Error : invalid argument %s\n",argv[i]);
-			  return false;
+			  return 0;
 			}
 		}
 	}
 
-	return true;
+	return 1;
 }
 
 /********************************* FUNCTION *********************************/
@@ -350,7 +350,7 @@ int main(int argc, char ** argv)
 	const struct sctk_runtime_config *config;
 
 	/** To avoid crash on symbol load when running mpc_print_config (mpc not linked). **/
-	sctk_crash_on_symbol_load = false;
+	sctk_crash_on_symbol_load = 0;
 
 	/* parse options */
 	if (parse_args(&options,argc,argv)) {

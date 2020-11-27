@@ -30,11 +30,11 @@
 
 /********************************* FUNCTION *********************************/
 /* selector functions */
-bool sctk_runtime_config_xml_selectors_check(xmlNodePtr selectors);
-bool sctk_runtime_config_xml_selector_check(xmlNodePtr selector);
+short int sctk_runtime_config_xml_selectors_check(xmlNodePtr selectors);
+short int sctk_runtime_config_xml_selector_check(xmlNodePtr selector);
 
 /********************************* FUNCTION *********************************/
 /* specific selector rules implementation. */
-bool sctk_runtime_config_xml_selector_env_check(xmlNodePtr selector);
+short int sctk_runtime_config_xml_selector_env_check(xmlNodePtr selector);
 
 #endif /* SCTK_RUNTIME_CONFIG_SELECTORS_H */

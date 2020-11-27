@@ -276,7 +276,7 @@ void sctk_runtime_config_walk_tree(const struct sctk_runtime_config_entry_meta *
  * Test if the given type name is a basic one or not.
  * @param type_name The type name to test (int, double ...)
 **/
-bool sctk_runtime_config_is_basic_type(const char * type_name)
+short int sctk_runtime_config_is_basic_type(const char * type_name)
 {
 	return (strcmp(type_name,"int")    == 0   || strcmp(type_name,"bool")   == 0
 	        ||  strcmp(type_name,"double") == 0   || strcmp(type_name,"char *") == 0

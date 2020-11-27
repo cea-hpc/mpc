@@ -29,9 +29,6 @@
 #include "mpc_common_types.h"
 #include <stdio.h>
 #include <stdlib.h>
-//#define bool unsigned char
-//#define true 1
-//#define false 0
 
 #ifdef __cplusplus
 extern "C"
@@ -53,7 +50,7 @@ extern "C"
  * @param filename Define the name of the file used to find the SHM segment.
  * @param option Optional parameter to transmit to handler implementation.
 **/
-typedef bool (*sctk_shm_mapper_send_handler)(const char *filename, void *option,
+typedef short int (*sctk_shm_mapper_send_handler)(const char *filename, void *option,
                                              void *option1);
 /**
  * Define a handler to receive the name of shm file on all participant (except the master).
@@ -237,7 +234,7 @@ SCTK_STATIC void * sctk_shm_mapper_find_common_addr(sctk_size_t size,int * pids,
 /************************* FUNCTION ************************/
 //fake handler for test with a global variable, please not use this
 SCTK_STATIC void sctk_shm_mapper_fake_handler_reset(void);
-SCTK_STATIC bool sctk_shm_mapper_fake_handler_send(const char *filename,
+SCTK_STATIC short int sctk_shm_mapper_fake_handler_send(const char *filename,
                                                    void *option, void *option1);
 SCTK_STATIC char *sctk_shm_mapper_fake_handler_recv(void *option,
                                                     void *option1);

@@ -200,10 +200,10 @@ int sctk_ft_no_suspend_start()
                 if(mpc_common_spinlock_read_trylock(&checkpoint_lock) != 0)
                 {
                         sctk_ft_critical_section--;
-                        return false;
+                        return 0;
                 }
         }
-        return true;
+        return 1;
 }
 
 /**

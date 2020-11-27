@@ -209,7 +209,7 @@
 	<xsl:template name="gen-type-name">
 		<xsl:choose>
 			<xsl:when test="@type = 'int'">int</xsl:when>
-			<xsl:when test="@type = 'bool'">int</xsl:when>
+			<xsl:when test="@type = 'bool'">short int</xsl:when>
 			<xsl:when test="@type = 'float'">float</xsl:when>
 			<xsl:when test="@type = 'double'">double</xsl:when>
 			<xsl:when test="@type = 'string'">char *</xsl:when>

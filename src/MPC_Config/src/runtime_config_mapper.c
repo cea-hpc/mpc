@@ -30,7 +30,7 @@
 #include "runtime_config_printer.h"
 #include "mpc_config_struct_defaults.h"
 
-extern bool sctk_crash_on_symbol_load;
+extern short int sctk_crash_on_symbol_load;
 
 /********************************* CONSTS **********************************/
 /** Special string value to set string pointer to NULL in config management. **/
@@ -42,14 +42,14 @@ const char * sctk_cst_string_undefined = "undefined";
  * @param node XML entry to map.
  * @return The boolean mapped value.
  */
-bool sctk_runtime_config_map_entry_to_bool(xmlNodePtr node)
+short int sctk_runtime_config_map_entry_to_bool(xmlNodePtr node)
 {
-	bool res;
+	short int res;
 	xmlChar * value = xmlNodeGetContent(node);
 	if (xmlStrcmp(value,BAD_CAST("true")) == 0 || xmlStrcmp(value,BAD_CAST("0")) == 0 ) {
-		res = true;
+		res = 1;
 	} else if (xmlStrcmp(value,BAD_CAST("false")) == 0 || xmlStrcmp(value,BAD_CAST("1")) == 0) {
-		res = false;
+		res = 0;
 	} else {
 		mpc_common_debug_fatal("Invalid boolean value (true|false) : %s",value);
 	}
@@ -509,7 +509,7 @@ void sctk_runtime_config_map_union( const struct sctk_runtime_config_entry_meta 
 void sctk_runtime_config_map_value( const struct sctk_runtime_config_entry_meta *config_meta, void * value, const char * type_name,xmlNodePtr node)
 {
 	/* vars */
-	bool is_plain_type;
+	short int is_plain_type;
 	const struct sctk_runtime_config_entry_meta * entry;
 
 	/* errors */
@@ -565,7 +565,7 @@ void sctk_runtime_config_map_value( const struct sctk_runtime_config_entry_meta 
  * @param type_name Define the type name of the value to know how to map.
  * @param node Define the XML node in which to take the value.
 **/
-bool sctk_runtime_config_map_plain_type(void * value, const char * type_name,xmlNodePtr node)
+short int sctk_runtime_config_map_plain_type(void * value, const char * type_name,xmlNodePtr node)
 {
 	/* errors */
 	assert(value != NULL);
@@ -576,24 +576,24 @@ bool sctk_runtime_config_map_plain_type(void * value, const char * type_name,xml
 	   check type name */
 	if (strcmp(type_name,"int") == 0) {
 		*(int*)value = sctk_runtime_config_map_entry_to_int(node);
-		return true;
+		return 1;
 	} else if (strcmp(type_name,"bool") == 0) {
-		*(bool*)value = sctk_runtime_config_map_entry_to_bool(node);
-		return true;
+		*(short int*)value = sctk_runtime_config_map_entry_to_bool(node);
+		return 1;
 	} else if (strcmp(type_name,"double") == 0) {
 		*(double*)value = sctk_runtime_config_map_entry_to_double(node);
-		return true;
+		return 1;
 	} else if (strcmp(type_name,"float") == 0) {
 		*(float*)value = sctk_runtime_config_map_entry_to_float(node);
-		return true;
+		return 1;
 	} else if (strcmp(type_name,"char *") == 0) {
 		*((char **)value) = sctk_runtime_config_map_entry_to_string(node);
-		return true;
+		return 1;
 	} else if (strcmp(type_name,"size_t") == 0) {
 		*((size_t *)value) = sctk_runtime_config_map_entry_to_size(node);
-		return true;
+		return 1;
 	} else {
-		return false;
+		return 0;
 	}
 }
 

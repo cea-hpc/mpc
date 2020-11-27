@@ -29,7 +29,7 @@
 #include "mpc_common_helper.h"
 #include <zlib.h>
 
-static bool checksum_enabled;
+static short int checksum_enabled;
 
 unsigned long sctk_checksum_message ( mpc_lowcomm_ptp_message_t *send,
                                       mpc_lowcomm_ptp_message_t *recv )

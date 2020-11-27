@@ -264,7 +264,7 @@ void sctk_runtime_config_sources_insert_profile_node(struct sctk_runtime_config_
 {
 	/* vars */
 	unsigned int i;
-	bool present = false;
+	short int present = 0;
 
 	/* trivial cas */
 	if (node == NULL)
@@ -276,7 +276,7 @@ void sctk_runtime_config_sources_insert_profile_node(struct sctk_runtime_config_
 	/* search to check if already in list */
 	for (i = 0 ; i < config_sources->cnt_profile_nodes ; ++i)
 		if (config_sources->profile_nodes[i] == node)
-			present = true;
+			present = 1;
 
 	/* if not present, can insert */
 	if ( ! present )
@@ -295,7 +295,7 @@ void sctk_runtime_config_sources_select_profile_nodes(struct sctk_runtime_config
 {
 	/* vars */
 	xmlNodePtr node;
-	bool find_once = false;
+	short int find_once = 0;
 	int i = 0;
 
 	/* errors */
@@ -306,7 +306,7 @@ void sctk_runtime_config_sources_select_profile_nodes(struct sctk_runtime_config
 		if( sctk_runtime_config_source_xml_is_open(&config_sources->sources[i]) ) {
 			node = sctk_runtime_config_sources_find_profile_node(&config_sources->sources[i],name);
 			if (node != NULL) {
-				find_once = true;
+				find_once = 1;
 				sctk_runtime_config_sources_insert_profile_node(config_sources,node);
 			}
 		}
@@ -376,9 +376,9 @@ void sctk_runtime_config_sources_select_profiles(struct sctk_runtime_config_sour
  * @param filename Name of the file to check.
  * @return true if it exists, false otherwise.
 **/
-bool sckt_runtime_config_file_exist(const char * filename)
+short int sckt_runtime_config_file_exist(const char * filename)
 {
-	bool exist = false;
+	short int exist = 0;
 	#ifdef HAVE_SYS_STAT_H
 	struct stat value;
 	#else
@@ -452,7 +452,7 @@ void sctk_runtime_config_source_xml_open(struct sctk_runtime_config_source_xml *
  * @param source Define the configuration source to check.
  * @return true if yes, false otherwise.
 **/
-bool sctk_runtime_config_source_xml_is_open( struct sctk_runtime_config_source_xml * source )
+short int sctk_runtime_config_source_xml_is_open( struct sctk_runtime_config_source_xml * source )
 {
 	return (source->document != NULL);
 }
@@ -493,12 +493,12 @@ const char * sctk_runtime_config_get_env_or_value(const char * env_name,const ch
  * @param xml_shema_path Define the path to XML schema file to use for validation.
  * @return true if all XML sources are valid, false otherwise.
 **/
-bool sctk_runtime_config_sources_validate(struct sctk_runtime_config_sources * config_sources,const char * xml_shema_path)
+short int sctk_runtime_config_sources_validate(struct sctk_runtime_config_sources * config_sources,const char * xml_shema_path)
 {
 	/* vars */
 	int i;
-	bool status = true;
-	bool has_one = false;
+	short int status = 1;
+	short int has_one = 0;
 	xmlSchemaPtr schema;
 	xmlSchemaValidCtxtPtr vctxt;
 	xmlSchemaParserCtxtPtr pctxt;
@@ -513,7 +513,7 @@ bool sctk_runtime_config_sources_validate(struct sctk_runtime_config_sources * c
 
 	/* if not can skip */
 	if ( ! has_one )
-		return true;
+		return 1;
 
 	/* Open XML schema file */
 	pctxt = xmlSchemaNewParserCtxt(xml_shema_path);
@@ -555,7 +555,7 @@ bool sctk_runtime_config_sources_validate(struct sctk_runtime_config_sources * c
 void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * config_sources)
 {
 	/* vars */
-	bool status;
+	short int status;
 	const char * config_silent;
 	const char * config_system;
 	const char * config_schema;

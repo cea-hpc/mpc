@@ -25,18 +25,18 @@ char *sctk_mpi_handler_gen_filename(void *option, __UNUSED__ void *option1) {
  * @param option No option implemented 
  */
 
-  bool sctk_mpi_handler_send_filename(const char *filename, void *option,
+  short int sctk_mpi_handler_send_filename(const char *filename, void *option,
                                       void *option1) {
     if (option == NULL || filename == NULL) {
       printf("Can't send filename : incorrect key or filename\n");
-      return false;
+      return 0;
     }
 
     long long int icomm = (long long int)option1;
     mpc_lowcomm_communicator_t comm = (mpc_lowcomm_communicator_t)icomm;
 
     mpc_lowcomm_bcast((void *)filename, 128 * sizeof(char), 0, (mpc_lowcomm_communicator_t)comm);
-    return true;
+    return 1;
   }
 
 /*! \brief Recv filename via mpi, filename size must be lesser than 64 bytes  

@@ -36,7 +36,7 @@ extern "C"
 *
 * @param restarting true if from checkpoint
 */
-void mpc_launch_print_banner( bool restarting );
+void mpc_launch_print_banner( short int restarting );
 
 /**
 * @brief This is the main entry point to initialize MPC

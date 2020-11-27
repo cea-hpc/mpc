@@ -327,7 +327,7 @@ sctk_shm_add_region_master(sctk_size_t size, sctk_alloc_mapper_handler_t *handle
 	char *filename;
 	int   fd;
 	void *ptr;
-	bool  status;
+	short int  status;
 
 	//check args
 	assert(handler != NULL);

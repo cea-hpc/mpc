@@ -31,6 +31,8 @@
 
 void * sctk_handler;
 struct enum_type * enums_types;
+#define true 1;
+#define false 0;
 
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_debugger(void * struct_ptr)

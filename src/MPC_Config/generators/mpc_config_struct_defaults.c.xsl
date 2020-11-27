@@ -39,6 +39,8 @@
 		<xsl:text>#include "runtime_config_mapper.h"&#10;</xsl:text>
 		<xsl:text>&#10;void * sctk_handler;&#10;</xsl:text>
 		<xsl:text>struct enum_type * enums_types;&#10;</xsl:text>
+		<xsl:text>#define true 1;&#10;</xsl:text>
+		<xsl:text>#define false 0;&#10;</xsl:text>
 		<xsl:apply-templates select='config'/>
 		<xsl:call-template name="gen-main-reset-function"/>
 		<xsl:call-template name="gen-struct-default"/>
@@ -261,7 +263,7 @@
 		<xsl:text> = </xsl:text>
 		<xsl:choose>
 			<xsl:when test='@default'><xsl:value-of select="@default"/></xsl:when>
-			<xsl:otherwise>false</xsl:otherwise>
+			<xsl:otherwise>0</xsl:otherwise>
 		</xsl:choose>
 		<xsl:text>;&#10;</xsl:text>
 	</xsl:template>

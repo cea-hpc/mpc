@@ -90,7 +90,7 @@ void display_handler_sh(enum sctk_runtime_config_walk_type type,
 	if (status == SCTK_RUNTIME_CONFIG_WALK_CLOSE) {
 		/* close only simple array as it was name: {v1,v2,v3} */
 		if (state->is_simple_array && type == SCTK_RUNTIME_CONFIG_WALK_ARRAY) {
-			state->is_simple_array = false;
+			state->is_simple_array = 0;
 		} else if (type == SCTK_RUNTIME_CONFIG_WALK_VALUE) {
 			printf("\"\n");
 		}
@@ -111,7 +111,7 @@ void display_handler_sh(enum sctk_runtime_config_walk_type type,
 				/* detect simple array to change the display mode of values to be more compact. */
 				if (sctk_runtime_config_is_basic_type(type_name)) {
 					print_var_name_sh(state,name,level);
-					state->is_simple_array = true;
+					state->is_simple_array = 1;
 				} else {
 					mpc_common_debug_warning("Can't display array of struct in sh compatible output mode.");
 				}
@@ -140,7 +140,7 @@ void display_tree_sh(const struct sctk_runtime_config_entry_meta * config_meta,
                      void * root_struct)
 {
 	struct display_state_sh state;
-	state.is_simple_array = false;
+	state.is_simple_array = 0;
 	memset(state.names,0,sizeof(state.names));
 	sctk_runtime_config_walk_tree(config_meta,display_handler_sh,root_name,root_struct_name,root_struct,&state);
 }

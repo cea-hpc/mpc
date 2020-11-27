@@ -26,7 +26,7 @@ char *sctk_pmi_handler_gen_filename(void *key, __UNUSED__ void * master_rank)
  * @param key No key implemented
  */
 
-bool sctk_pmi_handler_send_filename(const char *filename, void *key, __UNUSED__ void * dummy)
+short int sctk_pmi_handler_send_filename(const char *filename, void *key, __UNUSED__ void * dummy)
 {
 	if(key == NULL || filename == NULL)
 	{

@@ -12,7 +12,7 @@ char *sctk_pmi_handler_gen_filename(void * option);
  * @param option No option implemented 
  */
 
-bool sctk_pmi_handler_send_filename(const char *filename, void* option);
+short int sctk_pmi_handler_send_filename(const char *filename, void* option);
 
 /*! \brief Recv filename via pmi, filename size must be lesser than 64 bytes  
  * @param option No option implemented 
