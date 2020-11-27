@@ -41,7 +41,7 @@ struct sctk_runtime_config_funcptr
 struct sctk_runtime_config_struct_debugger
 {	int init_done;
 	/**Print colored text in terminal**/
-	short int colors;
+	int colors;
 	/****/
 	int max_filename_size;
 	/**Should MPC capture common signals also connected to the MPC_BT_SIG environment variable which supersedes the config**/
@@ -55,13 +55,13 @@ struct sctk_runtime_config_struct_launcher
 	/**Default verbosity level from 0 to 3. Can be override by -vv on mpcrun.**/
 	int verbosity;
 	/**Display the MPC banner at launch time to print some informations about the topology. Can be override by MPC_DISABLE_BANNER.**/
-	short int banner;
+	int banner;
 	/**Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT.**/
 	int autokill;
 	/**Permit to extend the launchers available via 'mpcrun -l=...' by providing scripts (named mpcrun_XXXX) in a user directory. Can be override by MPC_USER_LAUNCHERS.**/
 	char * user_launchers;
 	/**Deactivate randomization of base addresses**/
-	short int disable_rand_addr;
+	int disable_rand_addr;
 	/**Initialize multithreading mode**/
 	struct sctk_runtime_config_funcptr thread_init;
 	/**Define the number of MPI tasks**/
@@ -77,11 +77,11 @@ struct sctk_runtime_config_struct_launcher
 	/**Select the type of outputs for the profiling**/
 	char * profiling;
 	/**Enable usage of hyperthreaded cores if available on current architecture.**/
-	short int enable_smt;
+	int enable_smt;
 	/**Restart MPC from a previous checkpoint**/
-	short int restart;
+	int restart;
 	/**Enable MPC checkpointing**/
-	short int checkpoint;
+	int checkpoint;
 };
 
 /********************************** ENUM ************************************/
@@ -109,7 +109,7 @@ enum rail_topological_polling_level
 struct sctk_runtime_config_struct_ft
 {	int init_done;
 	/**Set to true to enable Fault-Tolerance support**/
-	short int enabled;
+	int enabled;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -181,7 +181,7 @@ struct sctk_runtime_config_struct_net_driver_infiniband
 	/**Defines the number of entries for the CQ dedicated to sent messages.**/
 	int wc_out_number;
 	/**Defines if the low memory mode should be activated**/
-	short int low_memory;
+	int low_memory;
 	/**Defines the Rendezvous protocol to use (IBV_RDVZ_WRITE_PROTOCOL or IBV_RDVZ_READ_PROTOCOL)**/
 	enum ibv_rdvz_protocol rdvz_protocol;
 	/**Defines the minimum size for the Eager RDMA buffers**/
@@ -223,9 +223,9 @@ struct sctk_runtime_config_struct_ib_global
 struct sctk_runtime_config_struct_offload_ops_t
 {	int init_done;
 	/**Enable on-demand optimization through ID hardware propagation**/
-	short int ondemand;
+	int ondemand;
 	/**Enable collective optimization for Portals**/
-	short int collectives;
+	int collectives;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -269,9 +269,9 @@ struct sctk_runtime_config_struct_net_driver_shm
 	/**Defines the min size for the SHM buffered message**/
 	int buffered_max_size;
 	/**Defines if mode zerocopy should be actived for SHM buffered message**/
-	short int buffered_zerocopy;
+	int buffered_zerocopy;
 	/****/
-	short int cma_enable;
+	int cma_enable;
 	/**Defines priority for the SHM CMA message**/
 	int cma_priority;
 	/**Defines the min size for the SHM CMA message**/
@@ -279,7 +279,7 @@ struct sctk_runtime_config_struct_net_driver_shm
 	/**Defines the min size for the SHM CMA message**/
 	int cma_max_size;
 	/**Defines if mode zerocopy should be actived for SHM CMA message**/
-	short int cma_zerocopy;
+	int cma_zerocopy;
 	/**Defines priority for the SHM fragmented message**/
 	int frag_priority;
 	/**Defines the min size for the SHM fragmented message**/
@@ -287,7 +287,7 @@ struct sctk_runtime_config_struct_net_driver_shm
 	/**Defines the min size for the SHM fragmented message**/
 	int frag_max_size;
 	/**Defines if mode zerocopy should be actived for SHM fragmented message**/
-	short int frag_zerocopy;
+	int frag_zerocopy;
 	/**Size of shared memory region.**/
 	int shmem_size;
 	/**Size of shared memory region.**/
@@ -523,15 +523,15 @@ struct sctk_runtime_config_struct_inter_thread_comm
 struct sctk_runtime_config_struct_low_level_comm
 {	int init_done;
 	/****/
-	short int checksum;
+	int checksum;
 	/****/
 	struct sctk_runtime_config_funcptr send_msg;
 	/****/
 	char * network_mode;
 	/****/
-	short int dyn_reordering;
+	int dyn_reordering;
 	/**Enable usage of polling during idle.**/
-	short int enable_idle_polling;
+	int enable_idle_polling;
 	/**Global parameters for IB**/
 	struct sctk_runtime_config_struct_ib_global ib_global;
 };
@@ -567,9 +567,9 @@ struct sctk_runtime_config_struct_collectives_shm
 	/**Arrity being used to build topological communicators  '-1' means auto-compute to match processes and NUMA**/
 	int topo_tree_arity;
 	/**Dump topological comm tree in DOT (fname topoN.cdat) with N the communicator size**/
-	short int topo_tree_dump;
+	int topo_tree_dump;
 	/**Force the use of deterministic algorithms**/
-	short int coll_force_nocommute;
+	int coll_force_nocommute;
 	/**Number of blocks for pipelined Reduce**/
 	int reduce_pipelined_blocks;
 	/**Size required to rely on pipelined reduce**/
@@ -709,7 +709,7 @@ struct sctk_runtime_config_struct_mpi_rma
 struct sctk_runtime_config_struct_mpc
 {	int init_done;
 	/**If MPI is allowed to buffer small messages**/
-	short int disable_message_buffering;
+	int disable_message_buffering;
 };
 
 /********************************** ENUM ************************************/
@@ -737,11 +737,11 @@ struct sctk_runtime_config_struct_openmp
 	/**Number of threads to use during execution**/
 	int nb_threads;
 	/**Dynamic adjustment of the number of threads**/
-	short int adjustment;
+	int adjustment;
 	/**Bind threads to processor core**/
-	short int proc_bind;
+	int proc_bind;
 	/**Nested parallelism**/
-	short int nested;
+	int nested;
 	/**Stack size for OpenMP threads**/
 	int stack_size;
 	/**Behavior of threads while waiting**/
@@ -763,7 +763,7 @@ struct sctk_runtime_config_struct_openmp
 	/**Maximum number of alive single construct**/
 	int max_alive_single;
 	/**Emit warning when entering nested parallelism**/
-	short int warn_nested;
+	int warn_nested;
 	/**MPI/OpenMP hybrid mode (simple-mixed, alternating)**/
 	char * mode;
 	/**Affinity of threads for parallel regions (COMPACT, SCATTER, BALANCED)**/
@@ -779,11 +779,11 @@ struct sctk_runtime_config_struct_openmp
 	/** Max tasks in mpcomp list**/
 	int mpcomp_task_max_delayed;
 	/**Try to steal to same list than last successful stealing**/
-	short int omp_task_steal_last_stolen_list;
+	int omp_task_steal_last_stolen_list;
 	/**Try to steal to the last thread that stole a task to current thread**/
-	short int omp_task_resteal_to_last_thief;
+	int omp_task_resteal_to_last_thief;
 	/**Use lockfree_queue or not**/
-	short int omp_task_use_lockfree_queue;
+	int omp_task_use_lockfree_queue;
 	/**OpenMP places**/
 	char * places;
 };
@@ -835,7 +835,7 @@ struct sctk_runtime_config_struct_scheduler
 struct sctk_runtime_config_struct_accl_cuda
 {	int init_done;
 	/**Set to true to enable CUDA context-switch**/
-	short int enabled;
+	int enabled;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -843,7 +843,7 @@ struct sctk_runtime_config_struct_accl_cuda
 struct sctk_runtime_config_struct_accl_openacc
 {	int init_done;
 	/**Set to true to enable OpenACC in MPC**/
-	short int enabled;
+	int enabled;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -851,7 +851,7 @@ struct sctk_runtime_config_struct_accl_openacc
 struct sctk_runtime_config_struct_accl_opencl
 {	int init_done;
 	/**Set to true to enable OpenCL in MPC**/
-	short int enabled;
+	int enabled;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -859,7 +859,7 @@ struct sctk_runtime_config_struct_accl_opencl
 struct sctk_runtime_config_struct_accl
 {	int init_done;
 	/**Set to true to enable Accelerators support**/
-	short int enabled;
+	int enabled;
 	/**Define CUDA-specific configuration**/
 	struct sctk_runtime_config_struct_accl_cuda cuda;
 	/**Define OpenACC-specific configuration**/
