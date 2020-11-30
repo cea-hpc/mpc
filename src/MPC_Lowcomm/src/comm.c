@@ -3388,6 +3388,7 @@ static void __initialize_drivers()
 static void __finalize_driver()
 {
 	mpc_lowcomm_rdma_window_release_ht();
+	_mpc_lowcomm_communicator_release();
 }
 
 #ifdef MPC_USE_DMTCP

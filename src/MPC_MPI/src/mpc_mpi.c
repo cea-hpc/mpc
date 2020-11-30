@@ -13976,7 +13976,6 @@ int PMPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
                 void *recvbuf, int recvcnt, MPI_Datatype recvtype,
                 int root, MPI_Comm comm)
 {
-	mpc_common_debug_error("START GATHER");
 	int res = MPI_ERR_INTERN;
 	int size, rank;
 
@@ -14102,8 +14101,6 @@ int PMPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 
 	/* Profiling */
 	SCTK_PROFIL_END(MPI_Gather);
-
-	mpc_common_debug_error("END GATHER");
 
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }

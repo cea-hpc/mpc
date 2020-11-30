@@ -5,6 +5,7 @@
 #include <mpc_lowcomm_types.h>
 #include <mpc_common_asm.h>
 #include <mpc_common_spinlock.h>
+#include <mpc_common_debug.h>
 
 /****************************************
 * _MPC_LOWCOMM_GROUP_RANK_DESCRIPTOR_S *
@@ -27,9 +28,11 @@ int _mpc_lowcomm_group_rank_descriptor_set(_mpc_lowcomm_group_rank_descriptor_t 
 struct _mpc_lowcomm_group_s
 {
 	OPA_int_t                             refcount;
+	int                                   do_not_free;
 
 	unsigned int                          size;
 	_mpc_lowcomm_group_rank_descriptor_t *ranks;
+
     int                                  *global_to_local;
 
 	mpc_common_spinlock_t                 process_lock;
@@ -58,30 +61,21 @@ int _mpc_lowcomm_group_process_count(mpc_lowcomm_group_t * g);
 int * _mpc_lowcomm_group_process_list(mpc_lowcomm_group_t * g);
 int _mpc_lowcomm_group_local_process_count(mpc_lowcomm_group_t * g);
 
-/*****************************
-*  mpc_lowcomm_group_list_t *
-*****************************/
-
-struct _mpc_lowcomm_group_entry_s
-{
-	struct _mpc_lowcomm_group_s *      group;
-	struct _mpc_lowcomm_group_entry_s *next;
-};
-
-typedef struct _mpc_lowcomm_group_list_s
-{
-	struct _mpc_lowcomm_group_entry_s *entries;
-	mpc_common_spinlock_t              lock;
-}_mpc_lowcomm_group_list_t;
+/*******************
+ * LIST MANAGEMENT *
+ *******************/
 
 mpc_lowcomm_group_t *_mpc_lowcomm_group_list_register(mpc_lowcomm_group_t *group);
 int _mpc_lowcomm_group_list_pop(mpc_lowcomm_group_t *group);
+
 
 /*************
  * UTILITIES *
  *************/
 
 void _mpc_lowcomm_group_create_world(void);
+void _mpc_lowcomm_group_release_world(void);
+
 mpc_lowcomm_group_t * _mpc_lowcomm_group_world(void);
 
 mpc_lowcomm_group_t * _mpc_lowcomm_group_create_from_world_ranks(int size, int * world_ranks);

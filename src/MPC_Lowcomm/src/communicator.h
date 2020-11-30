@@ -21,6 +21,8 @@ typedef struct mpc_lowcomm_internal_communicator_s
 	mpc_lowcomm_group_t *      group;			/**< Group supporting the comm */
 	OPA_int_t                  refcount;		/**< Number of ref to the comm freed when 0 */
 
+	OPA_int_t                  free_count;      /**< Local synchronization for free */
+
 	unsigned int               process_span;	/**< Number of UNIX processes in the group */
 	int *                      process_array;	/**< Array of the processes in the group */
 
@@ -49,6 +51,12 @@ typedef struct mpc_lowcomm_internal_communicator_s
  * 
  */
 void _mpc_lowcomm_communicator_init(void);
+
+/**
+ * @brief Release the base communicators
+ * 
+ */
+void _mpc_lowcomm_communicator_release(void);
 
 /**
  * @brief Icrement refcounting on a comm

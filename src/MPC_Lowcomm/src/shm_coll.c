@@ -189,9 +189,6 @@ int sctk_shared_mem_gatherv_release( struct shared_mem_gatherv *shmgv )
 	sctk_free( shmgv->send_type_size );
 	shmgv->send_type_size = NULL;
 	sctk_free( shmgv->send_count );
-	shmgv->send_count = NULL;
-	sctk_free(shmgv->send_types);
-	shmgv->send_types = NULL;
 	return 0;
 }
 
