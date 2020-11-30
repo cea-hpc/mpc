@@ -3578,7 +3578,7 @@ int _mpc_cl_comm_split(mpc_lowcomm_communicator_t comm, int color, int key, mpc_
 {
 	*comm_out = mpc_lowcomm_communicator_split(comm, color, key);
 
-	mpc_common_debug_error("Split comm %p col %d key %d == %p == %u", comm, color, key, *comm_out, mpc_lowcomm_communicator_id(comm));
+	mpc_common_debug("Split comm %p col %d key %d == %p == %u", comm, color, key, *comm_out, mpc_lowcomm_communicator_id(comm));
 
 	if(comm_out != MPC_COMM_NULL)
 	{

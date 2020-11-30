@@ -377,6 +377,11 @@ _mpc_lowcomm_group_rank_descriptor_t * mpc_lowcomm_group_descriptor(mpc_lowcomm_
 
 int mpc_lowcomm_group_world_rank(mpc_lowcomm_group_t *g, int rank)
 {
+	if(rank == MPC_PROC_NULL)
+	{
+		return MPC_PROC_NULL;
+	}
+
 	_mpc_lowcomm_group_rank_descriptor_t * desc = mpc_lowcomm_group_descriptor(g, rank);
 	return desc->comm_world_rank;
 }

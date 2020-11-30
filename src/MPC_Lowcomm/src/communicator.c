@@ -219,6 +219,9 @@ static inline void __communicator_id_register(mpc_lowcomm_communicator_t comm)
 {
 	uint64_t key = comm->id;
 
+	/* It is forbidden to add an existing comm */
+	assume(mpc_common_hashtable_get(&__id_factory.id_table, key) == NULL);
+
 	mpc_common_hashtable_set(&__id_factory.id_table, key, (void *)comm);
 	mpc_common_hashtable_set(&__id_factory.comm_table, (uint64_t)comm, (void *)comm);
 	mpc_common_nodebug("New reg comm %d", key);
@@ -365,8 +368,6 @@ int mpc_lowcomm_communicator_free(mpc_lowcomm_communicator_t *pcomm)
 	return SCTK_SUCCESS;
 }
 
-#define LOCAL_COMM_ID_CELLS    1024
-
 static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communicator_t comm,
                                                             mpc_lowcomm_group_t *group,
                                                             mpc_lowcomm_communicator_t left_comm,
@@ -377,15 +378,10 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 {
 	/* Only the group leader should allocate and register the others should wait */
 	static mpc_common_spinlock_t lock = { 0 };
-	static mpc_lowcomm_internal_communicator_t *new_comm[LOCAL_COMM_ID_CELLS] = { 0 };
-
-	assume(mpc_common_get_local_task_count() <= LOCAL_COMM_ID_CELLS);
 
 	mpc_lowcomm_internal_communicator_t *ret = NULL;
 
 	unsigned int new_id = forced_id;
-
-	mpc_common_debug_warning("New ID generation asked for on %u", comm->id);
 
 	/* We need a new context ID */
 	if(new_id == MPC_LOWCOMM_COMM_NULL_ID)
@@ -393,8 +389,10 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 		new_id = __communicator_id_new_for_comm(comm);
 	}
 
+	mpc_common_debug("New ID  %u => %u (forced : %u) is inter ? %d", comm->id, new_id, forced_id, mpc_lowcomm_communicator_is_intercomm(comm));
+
+
 	int comm_local_lead    = mpc_lowcomm_communicator_local_lead(comm);
-	int comm_local_mailbox = mpc_lowcomm_communicator_world_rank(comm, comm_local_lead) % LOCAL_COMM_ID_CELLS;
 	int my_rank            = mpc_lowcomm_communicator_rank(comm);
 
 	if(group == NULL)
@@ -412,31 +410,40 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 		assume(!left_comm && !right_comm);
 	}
 
+	//mpc_common_debug_error("LOCAL LEAD %d MY RANK %d", comm_local_lead, my_rank);
+
 	if(comm_local_lead == my_rank)
 	{
+		/* I am a local lead in my comm I take the lock 
+		   to see if the new communicator is known */
 		mpc_common_spinlock_lock_yield(&lock);
-		/* We can then directly create a new group using the current group */
+	
+		ret = _mpc_lowcomm_get_communicator_from_id(new_id);
 
-		new_comm[comm_local_mailbox] = __init_communicator_with_id(new_id, group);
-
-		ret = new_comm[comm_local_mailbox];
-		/* Make sure that dups of comm self behave as comm self */
-		ret->is_comm_self = is_comm_self;
-
-		/* Intercommm ctx we acquire a ref to inner comms */
-
-		ret->left_comm = left_comm;
-
-		if(ret->left_comm != MPC_COMM_NULL)
+		/* It is not known so I do create it I'm sure I'm the only
+		  as I hold the creation lock */
+		if(ret == MPC_COMM_NULL)
 		{
-			_mpc_lowcomm_communicator_acquire(ret->left_comm);
-		}
+			/* We can then directly create a new group using the current group */
+			ret = __init_communicator_with_id(new_id, group);;
+			/* Make sure that dups of comm self behave as comm self */
+			ret->is_comm_self = is_comm_self;
 
-		ret->right_comm = right_comm;
+			/* Intercommm ctx we acquire a ref to inner comms */
 
-		if(ret->right_comm != MPC_COMM_NULL)
-		{
-			_mpc_lowcomm_communicator_acquire(ret->right_comm);
+			ret->left_comm = left_comm;
+
+			if(ret->left_comm != MPC_COMM_NULL)
+			{
+				_mpc_lowcomm_communicator_acquire(ret->left_comm);
+			}
+
+			ret->right_comm = right_comm;
+
+			if(ret->right_comm != MPC_COMM_NULL)
+			{
+				_mpc_lowcomm_communicator_acquire(ret->right_comm);
+			}
 		}
 
 		mpc_common_spinlock_unlock(&lock);
@@ -447,9 +454,9 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 
 	if(comm_local_lead != my_rank)
 	{
-		assume(new_comm[comm_local_mailbox] != NULL);
-		assume(new_comm[comm_local_mailbox]->id == new_id);
-		ret = new_comm[comm_local_mailbox];
+		ret = _mpc_lowcomm_get_communicator_from_id(new_id);
+		assume(ret != NULL);
+		assume(ret->id == new_id);
 		/* Acquire the comm handle */
 		_mpc_lowcomm_communicator_acquire(ret);
 	}
@@ -569,17 +576,30 @@ int mpc_lowcomm_communicator_local_task_count(mpc_lowcomm_communicator_t comm)
 int mpc_lowcomm_communicator_local_lead(mpc_lowcomm_communicator_t comm)
 {
 	assert(comm != NULL);
-	mpc_lowcomm_communicator_t tcomm = mpc_lowcomm_communicator_get_local(comm);
-	assert(tcomm != NULL);
 
-	if(tcomm->is_comm_self)
+	if(comm->is_comm_self)
 	{
 		return 0;
 	}
 
-	assert(tcomm->group != NULL);
+	if(mpc_lowcomm_communicator_is_intercomm(comm))
+	{
+		if(!mpc_lowcomm_communicator_in_left_group(comm))
+		{
+			return MPC_PROC_NULL;
+		}
 
-	return mpc_lowcomm_group_get_local_leader(tcomm->group);
+		return mpc_lowcomm_communicator_local_lead(comm->left_comm);
+	}
+	else
+	{
+		assert(comm->group != NULL);
+		return mpc_lowcomm_group_get_local_leader(comm->group);
+	}
+	
+	not_reachable();
+
+	return MPC_PROC_NULL;
 }
 
 
@@ -901,7 +921,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_commu
 
 		for( i = 0 ; i < cnt; i++)
 		{
-			mpc_common_debug_error("MERGING %d is %d", i, remote_descriptors[i].comm_world_rank );
+			mpc_common_debug("MERGING %d is %d", i, remote_descriptors[i].comm_world_rank );
 		}
 
 		/* ########################################
@@ -948,6 +968,8 @@ mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_commu
 															  1,
 															  intracomm_id);
 	mpc_lowcomm_group_free(&intracomm_group);
+
+	mpc_lowcomm_barrier(local_comm);
 
 	return intracomm;
 }
@@ -1178,7 +1200,23 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_intercomm_create(const mpc_l
 								intercomm_id);
 	}
 
-	mpc_lowcomm_barrier(ret);
+	/****************************************************
+	 * MANUAL BARRIER ON COMM TO ENSURE GLOBAL CREATION *
+	 ****************************************************/
+	mpc_lowcomm_barrier(left_comm);
+	int dummy;
+	if(local_comm_rank == local_leader)
+	{
+		mpc_lowcomm_sendrecv(&dummy,
+							sizeof(int),
+							remote_leader,
+							tag,
+							&dummy,
+							remote_leader,
+							peer_comm);
+	}
+	mpc_lowcomm_barrier(left_comm);
+
 
 	return ret;
 }
