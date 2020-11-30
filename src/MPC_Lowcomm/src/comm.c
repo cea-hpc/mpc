@@ -44,6 +44,7 @@
 #include <mpc_common_flags.h>
 #include <mpc_topology.h>
 
+#include <group.h>
 
 
 #ifdef MPC_USE_INFINIBAND
@@ -3356,6 +3357,7 @@ static void __initialize_drivers()
 	mpc_lowcomm_rdma_window_init_ht();
 
 	mpc_lowcomm_coll_init_hook = *( void ** )(&sctk_runtime_config_get()->modules.inter_thread_comm.collectives_init_hook.value);
+  
 	sctk_communicator_world_init(mpc_common_get_flags()->task_number);
 	sctk_communicator_self_init();
 }
