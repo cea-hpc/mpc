@@ -45,12 +45,6 @@ void _mpc_lowcomm_communicator_init(void);
 void _mpc_lowcomm_communicator_acquire(mpc_lowcomm_internal_communicator_t *comm);
 int _mpc_lowcomm_communicator_relax(mpc_lowcomm_internal_communicator_t *comm);
 
-/**************
-* ID FACTORY *
-**************/
-
-mpc_lowcomm_communicator_t _mpc_lowcomm_get_communicator_from_id(uint32_t id);
-
 /***************************
 * LOCAL PLACEMENT GETTERS *
 ***************************/

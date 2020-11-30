@@ -7,6 +7,8 @@
 
 #include <uthash.h>
 
+#include <mpc_lowcomm_communicator.h>
+
 /*******************
  * FORTRAN SUPPORT *
  *******************/
@@ -136,29 +138,17 @@ static void __initialize_handle_factories()
 
 MPI_Comm PMPI_Comm_f2c(MPI_Fint comm)
 {
-#if 0
-	_fortran_handle_storage_t pcomm = NULL;
-	pcomm = _mpc_handle_factory_get(&__comm_factory, comm);
+	if(comm == MPC_LOWCOMM_COMM_NULL_ID)
+	{
+		return MPI_COMM_NULL;
+	}
 
-	MPI_Comm ret = MPI_COMM_NULL;
-	memcpy(&ret, &pcomm, sizeof(MPI_Comm));
-
-	return ret;
-#else
-	return comm;
-#endif
+	return mpc_lowcomm_get_communicator_from_id(comm);
 }
 
 MPI_Fint PMPI_Comm_c2f(MPI_Comm comm)
 {
-#if 0
-	_fortran_handle_storage_t pcomm = NULL;
-	memcpy(&pcomm, &comm, sizeof(MPI_Comm));
-
-	return _mpc_handle_factory_set(&__comm_factory, pcomm);
-#else
-	return comm;
-#endif
+	return mpc_lowcomm_communicator_id(comm);
 }
 
 void mpc_fortran_comm_delete(__UNUSED__ MPI_Fint comm)

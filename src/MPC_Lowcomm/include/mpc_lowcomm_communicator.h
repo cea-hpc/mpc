@@ -30,6 +30,14 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_self();
 /** Define the NULL communicator number */
 #define MPC_COMM_NULL     (NULL)
 
+
+/**************
+* ID FACTORY *
+**************/
+
+mpc_lowcomm_communicator_t mpc_lowcomm_get_communicator_from_id(uint32_t id);
+
+
 /**************
 * INTRACOMMS *
 **************/

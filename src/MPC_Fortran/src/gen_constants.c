@@ -21,6 +21,7 @@
 /* ######################################################################## */
 #include <stdio.h>
 #include <assert.h>
+#include <mpc_lowcomm.h>
 #include <mpc_mpi.h>
 
 int is_mpif_only = 0;
@@ -149,8 +150,8 @@ int generate_mpi_fortran_constants()
         MPI_INTEGER_VAL("MPI_UNDEFINED", MPI_UNDEFINED);
 
         /* Default Comms */
-        MPI_TYPE_VAL("MPI_COMM_WORLD", MPI_COMM_WORLD, "MPI_Comm");
-        MPI_TYPE_VAL("MPI_COMM_SELF", MPI_COMM_SELF, "MPI_Comm");
+        MPI_TYPE_VAL("MPI_COMM_WORLD", MPC_LOWCOMM_COMM_WORLD_ID, "MPI_Comm");
+        MPI_TYPE_VAL("MPI_COMM_SELF", MPC_LOWCOMM_COMM_SELF_ID, "MPI_Comm");
 
         /* Topologies */
         MPI_INTEGER_VAL("MPI_CART", MPI_CART);

@@ -235,7 +235,7 @@ static inline void __communicator_id_release(mpc_lowcomm_communicator_t comm)
 	mpc_common_hashtable_delete(&__id_factory.comm_table, (uint64_t)comm);
 }
 
-mpc_lowcomm_communicator_t _mpc_lowcomm_get_communicator_from_id(uint32_t id)
+mpc_lowcomm_communicator_t mpc_lowcomm_get_communicator_from_id(uint32_t id)
 {
 	mpc_lowcomm_communicator_t ret = NULL;
 
@@ -418,7 +418,7 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 		   to see if the new communicator is known */
 		mpc_common_spinlock_lock_yield(&lock);
 	
-		ret = _mpc_lowcomm_get_communicator_from_id(new_id);
+		ret = mpc_lowcomm_get_communicator_from_id(new_id);
 
 		/* It is not known so I do create it I'm sure I'm the only
 		  as I hold the creation lock */
@@ -454,7 +454,7 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 
 	if(comm_local_lead != my_rank)
 	{
-		ret = _mpc_lowcomm_get_communicator_from_id(new_id);
+		ret = mpc_lowcomm_get_communicator_from_id(new_id);
 		assume(ret != NULL);
 		assume(ret->id == new_id);
 		/* Acquire the comm handle */
@@ -1067,7 +1067,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_intercomm_create(const mpc_l
 	mpc_lowcomm_bcast(&right_comm_id, sizeof(uint32_t), local_leader, left_comm);
 
 	/* One possibility is that the right comm is locally known thanks to global ids */
-	mpc_lowcomm_communicator_t right_comm = _mpc_lowcomm_get_communicator_from_id(right_comm_id);
+	mpc_lowcomm_communicator_t right_comm = mpc_lowcomm_get_communicator_from_id(right_comm_id);
 
 	/* We now want to make sure the comm is known on the whole local comm*/
 	int right_comm_missing            = (right_comm == MPC_COMM_NULL);

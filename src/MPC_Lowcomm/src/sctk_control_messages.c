@@ -440,7 +440,7 @@ void sctk_control_message_fence_handler( struct sctk_control_message_fence_ctx *
 
   sctk_control_message_process_local( mpc_common_get_task_rank());
 
-  mpc_lowcomm_communicator_t comm = _mpc_lowcomm_get_communicator_from_id(ctx->comm);
+  mpc_lowcomm_communicator_t comm = mpc_lowcomm_get_communicator_from_id(ctx->comm);
 
   mpc_lowcomm_isend_class_src(ctx->remote, ctx->source, &dummy, sizeof(int),
                                ctx->source, comm,
