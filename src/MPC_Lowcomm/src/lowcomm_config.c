@@ -147,11 +147,305 @@ void mpc_lowcomm_coll_init_hook(mpc_lowcomm_communicator_t id)
 	(__coll_conf.mpc_lowcomm_coll_init_hook)(id);
 }
 
+
+/************************
+ * DRIVER CONFIGURATION *
+ ************************/
+
+static struct sctk_runtime_config_struct_networks __net_config;
+
+static inline void __mpc_lowcomm_driver_conf_default(void)
+{
+    memset(__net_config.configs, 0, MPC_CONF_MAX_CONFIG_COUNT * sizeof(struct sctk_runtime_config_struct_net_driver_config *));
+	__net_config.configs_size = 0;
+}
+
+struct sctk_runtime_config_struct_net_driver_config * _mpc_lowcomm_conf_driver_unfolded_get(char * name)
+{
+	int i;
+
+	for(i = 0 ; i < __net_config.configs_size; i++)
+	{
+		if(!strcmp(name, __net_config.configs[i]->name))
+		{
+			return __net_config.configs[i];
+		}
+	}
+
+	return NULL;
+}
+
+
+static inline void __append_new_driver_to_unfolded(struct sctk_runtime_config_struct_net_driver_config * driver_config)
+{
+    if(__net_config.configs_size == MPC_CONF_MAX_CONFIG_COUNT)
+    {
+        bad_parameter("Cannot create more than %d driver config when processing config %s.\n", MPC_CONF_MAX_CONFIG_COUNT, driver_config->name);
+    }
+
+
+    if(_mpc_lowcomm_conf_driver_unfolded_get(driver_config->name))
+    {
+        bad_parameter("Cannot append the '%s' driver configuration twice", driver_config->name);
+    }
+
+    __net_config.configs[ __net_config.configs_size ] = driver_config;
+    __net_config.configs_size++;
+}
+
+
+static inline mpc_conf_config_type_t *__init_driver_shm(struct sctk_runtime_config_struct_net_driver *driver)
+{
+	driver->type = SCTK_RTCFG_net_driver_shm;
+
+	/* 
+	Set defaults
+	*/
+	
+	struct sctk_runtime_config_struct_net_driver_shm *shm = &driver->value.shm;
+
+	/* Buffered */
+
+	shm->buffered_priority = 0;
+	shm->buffered_min_size = 0;
+	shm->buffered_max_size = 4096;
+	shm->buffered_zerocopy = 0;
+
+	/* CMA */
+
+#ifdef MPC_USE_CMA
+	shm->cma_enable = 1;
+#else
+	shm->cma_enable = 0;
+#endif
+	shm->cma_priority = 1;
+	shm->cma_min_size = 4096;
+	shm->cma_max_size = 0;
+	shm->cma_zerocopy = 0;
+
+
+	/* Frag */
+	shm->frag_priority = 2;
+	shm->frag_min_size = 4096;
+	shm->frag_max_size = 0;
+	shm->frag_zerocopy = 0;
+
+	/* Size parameters */
+	shm->shmem_size = 1024;
+	shm->cells_num  = 2048;
+
+	/*
+	  Create the config object
+	*/
+
+	mpc_conf_config_type_t *buffered = mpc_conf_config_type_init("buffered",
+	                                                             PARAM("priority", &shm->buffered_priority, MPC_CONF_INT, "Defines priority for the SHM buffered message"),
+	                                                             PARAM("minsize", &shm->buffered_min_size, MPC_CONF_INT, "Defines the min size for the SHM buffered message"),
+	                                                             PARAM("maxsize", &shm->buffered_max_size, MPC_CONF_INT, "Defines the max size for the SHM buffered message"),
+	                                                             PARAM("zerocopy", &shm->buffered_zerocopy, MPC_CONF_BOOL, "Defines if mode zerocopy should be actived for SHM buffered message"),
+	                                                             NULL);
+
+	#ifdef MPC_USE_CMA
+	mpc_conf_config_type_t *cma = mpc_conf_config_type_init("cma",
+	                                                        PARAM("enabled", &shm->cma_enable, MPC_CONF_BOOL, "Enable messages through Cross Memory Attach (CMA)"),
+	                                                        PARAM("priority", &shm->cma_priority, MPC_CONF_INT, "Defines priority for the SHM CMA message"),
+	                                                        PARAM("minsize", &shm->cma_min_size, MPC_CONF_INT, "Defines the min size for the SHM CMA message"),
+	                                                        PARAM("maxsize", &shm->cma_max_size, MPC_CONF_INT, "Defines the max size for the SHM CMA message"),
+	                                                        PARAM("zerocopy", &shm->cma_zerocopy, MPC_CONF_BOOL, "Defines if mode zerocopy should be actived for SHM CMA message"),
+	                                                        NULL);
+	#endif
+
+	mpc_conf_config_type_t *frag = mpc_conf_config_type_init("frag",
+	                                                         PARAM("priority", &shm->frag_priority, MPC_CONF_INT, "Defines priority for the SHM frag message"),
+	                                                         PARAM("minsize", &shm->frag_min_size, MPC_CONF_INT, "Defines the min size for the SHM frag message"),
+	                                                         PARAM("maxsize", &shm->frag_max_size, MPC_CONF_INT, "Defines the max size for the SHM frag message"),
+	                                                         PARAM("zerocopy", &shm->frag_zerocopy, MPC_CONF_BOOL, "Defines if mode zerocopy should be actived for SHM frag message"),
+	                                                         NULL);
+
+	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("shm",
+	                                                        PARAM("buffered", buffered, MPC_CONF_TYPE, "Configuration for Buffered Messages"),
+	#ifdef MPC_USE_CMA
+	                                                        PARAM("cma", cma, MPC_CONF_TYPE, "Configuration for CMA Messages"),
+	#endif
+															PARAM("frag", frag, MPC_CONF_TYPE, "Configuration for fragmented Messages"),
+															PARAM("size", &shm->shmem_size, MPC_CONF_INT, "Size of the memory region"),
+															PARAM("cellnum", &shm->cells_num, MPC_CONF_INT, "Number of cells in the memory region"),
+	                                                        NULL);
+
+	return ret;
+}
+
+
+static inline mpc_conf_config_type_t *__init_driver_tcp(struct sctk_runtime_config_struct_net_driver *driver)
+{
+	driver->type = SCTK_RTCFG_net_driver_tcp;
+
+	/* 
+	Set defaults
+	*/
+	
+	struct sctk_runtime_config_struct_net_driver_tcp *tcp = &driver->value.tcp;
+
+	tcp->tcpoib = 1;
+
+	/*
+	  Create the config object
+	*/
+
+	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("tcp",
+															PARAM("tcpoib", &tcp->tcpoib, MPC_CONF_BOOL, "Enable TCP over Infiniband (if elligible)."),
+	                                                        NULL);
+
+	return ret;
+}
+
+
+static inline mpc_conf_config_type_t *__init_driver_tcprdma(struct sctk_runtime_config_struct_net_driver *driver)
+{
+	driver->type = SCTK_RTCFG_net_driver_tcprdma;
+
+	/* 
+	Set defaults
+	*/
+	
+	struct sctk_runtime_config_struct_net_driver_tcp_rdma *tcp = &driver->value.tcprdma;
+
+	tcp->tcpoib = 1;
+
+	/*
+	  Create the config object
+	*/
+
+	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("tcprdma",
+															PARAM("tcpoib", &tcp->tcpoib, MPC_CONF_BOOL, "Enable TCP over Infiniband (if elligible)."),
+	                                                        NULL);
+
+	return ret;
+}
+
+static inline mpc_conf_config_type_t *__init_driver_portals(struct sctk_runtime_config_struct_net_driver *driver)
+{
+	driver->type = SCTK_RTCFG_net_driver_portals;
+
+	/* 
+	Set defaults
+	*/
+	
+	struct sctk_runtime_config_struct_net_driver_portals *portals = &driver->value.portals;
+
+	portals->eager_limit = 8192;
+	portals->min_comms = 1;
+	portals->block_cut = 2147483648;
+	portals->offloading.collectives = 0;
+	portals->offloading.ondemand = 0;
+
+	/*
+	  Create the config object
+	*/
+
+	mpc_conf_config_type_t *offload = mpc_conf_config_type_init("offload",
+															PARAM("collective", &portals->offloading.collectives, MPC_CONF_BOOL, "Enable on-demand optimization through ID hardware propagation."),
+															PARAM("ondemand", &portals->offloading.ondemand, MPC_CONF_BOOL, "Enable collective optimization for Portals."),
+	                                                        NULL);
+
+
+	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("portals",
+															PARAM("eagerlimit", &portals->eager_limit, MPC_CONF_LONG_INT, "Max size of messages allowed to use the eager protocol."),
+															PARAM("mincomm", &portals->min_comms, MPC_CONF_INT, "Min number of communicators (help to avoid dynamic PT entry allocation)"),
+															PARAM("blockcut", &portals->block_cut, MPC_CONF_LONG_INT, "Above this value, RDV messages will be split in multiple GET requests"),
+															PARAM("offload", offload, MPC_CONF_TYPE, "List of available optimizations taking advantage of triggered Ops"),
+	                                                        NULL);
+
+	return ret;
+}
+
+static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_default_driver(char * config_name, char * driver_type)
+{
+	struct sctk_runtime_config_struct_net_driver_config * new_conf = sctk_malloc(sizeof(struct sctk_runtime_config_struct_net_driver_config));
+	assume(new_conf != NULL);
+
+	memset(new_conf, 0, sizeof(struct sctk_runtime_config_struct_net_driver_config));
+
+	snprintf(new_conf->name, MPC_CONF_STRING_SIZE, config_name);
+
+	mpc_conf_config_type_t *driver = NULL;
+
+	if(!strcmp(driver_type, "shm"))
+	{
+		driver = __init_driver_shm(&new_conf->driver);
+	}
+	else if(!strcmp(driver_type, "tcp"))
+	{
+		driver = __init_driver_tcp(&new_conf->driver);
+	}
+	else if(!strcmp(driver_type, "tcprdma"))
+	{
+		driver = __init_driver_tcprdma(&new_conf->driver);
+	}
+	else if(!strcmp(driver_type, "ofi"))
+	{
+
+	}
+#if defined(MPC_USE_INFINIBAND)
+	else if(!strcmp(driver_type, "ib"))
+	{
+
+	}
+#endif
+#if defined(MPC_USE_PORTALS)
+	else if(!strcmp(driver_type, "portals"))
+	{
+		driver = __init_driver_portals(&new_conf->driver);
+	}
+#endif
+
+	if(!driver)
+	{
+		bad_parameter("Cannot create default config for driver '%s': no such driver", driver_type);
+	}
+	else
+	{
+		assume(!strcmp(driver_type, driver->name) );
+	}
+
+	mpc_conf_config_type_t *ret = mpc_conf_config_type_init(config_name,
+															PARAM(driver->name, driver, MPC_CONF_TYPE, "Driver configuration"),
+	                                                        NULL);	
+
+	__append_new_driver_to_unfolded(new_conf);
+
+	return ret;
+}
+
+
+static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_init()
+{
+	__mpc_lowcomm_driver_conf_default();
+
+	mpc_conf_config_type_t * shm = __mpc_lowcomm_driver_conf_default_driver("shmconfigmpi", "shm");
+	mpc_conf_config_type_t * tcp = __mpc_lowcomm_driver_conf_default_driver("tcpconfigmpi", "tcp");
+	mpc_conf_config_type_t * tcprma = __mpc_lowcomm_driver_conf_default_driver("tcprdmaconfigmpi", "tcprdma");
+
+#if defined(MPC_USE_PORTALS)
+	mpc_conf_config_type_t * portals = __mpc_lowcomm_driver_conf_default_driver("portalsconfigmpi", "portals");
+#endif
+
+
+	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("configs",
+	                                                        PARAM("shmconfigmpi", shm, MPC_CONF_TYPE, "Default configuration for the SHM driver"),
+	                                                        PARAM("tcpconfigmpi", tcp, MPC_CONF_TYPE, "Default configuration for the TCP driver"),
+	                                                        PARAM("tcprdmaconfigmpi", tcprma, MPC_CONF_TYPE, "Default configuration for the TCP zero-copy driver"),
+#if defined(MPC_USE_PORTALS)
+	                                                        PARAM("portalsconfigmpi", portals, MPC_CONF_TYPE, "Default configuration for the Portals4 Driver"),
+#endif
+	                                                        NULL);	
+
+	return ret;
+}
+
 /*************************
 * NETWORK CONFIGURATION *
 *************************/
-
-static struct sctk_runtime_config_struct_networks __net_config;
 
 struct sctk_runtime_config_struct_networks *_mpc_lowcomm_config_net_get(void)
 {
@@ -473,11 +767,9 @@ static inline int ___parse_rail_gate(struct sctk_runtime_config_struct_net_gate 
 
 		mpc_conf_config_type_elem_set_doc(fname, "Function used to filter our messages int func( sctk_rail_info_t * rail, mpc_lowcomm_ptp_message_t * message , void * gate_config )");
 
-
 		if(fname->type != MPC_CONF_STRING)
 		{
-		bad_parameter("In gate '%s' entry 'funcname' should be STRING not '%s'", name, mpc_conf_type_name(fname->type));
-
+			bad_parameter("In gate '%s' entry 'funcname' should be STRING not '%s'", name, mpc_conf_type_name(fname->type));
 		}
 
 		char * gate_name = mpc_conf_type_elem_get_as_string(fname);
@@ -491,14 +783,8 @@ static inline int ___parse_rail_gate(struct sctk_runtime_config_struct_net_gate 
 		bad_parameter("Cannot parse gate type '%s' available types are:\n[%s]", name, "boolean, probabilistic, minsize, maxsize, msgtype, user");
 	}
 
-
 	return 0;
 }
-
-
-
-
-
 
 static inline void __mpc_lowcomm_rail_unfold_gates(struct sctk_runtime_config_struct_net_rail *unfolded_rail,
 												   mpc_conf_config_type_t *gates_type)
@@ -523,8 +809,6 @@ static inline void __mpc_lowcomm_rail_unfold_gates(struct sctk_runtime_config_st
 	}
 
 }
-
-
 
 static inline void ___mpc_lowcomm_rail_conf_validate(void)
 {
@@ -665,7 +949,10 @@ static mpc_conf_config_type_t *__mpc_lowcomm_network_conf_init(void)
 
 	mpc_conf_config_type_t *rails = __mpc_lowcomm_rail_conf_init();
 
+	mpc_conf_config_type_t *configs = __mpc_lowcomm_driver_conf_init();
+
 	mpc_conf_config_type_t *network = mpc_conf_config_type_init("networking",
+	                                                            PARAM("configs", configs, MPC_CONF_TYPE, "Driver configurations for Networks"),
 	                                                            PARAM("rails", rails, MPC_CONF_TYPE, "Rail definitions for Networks"),
 	                                                            PARAM("cli", cli, MPC_CONF_TYPE, "Name definitions for networks"),
 	                                                            NULL);

@@ -133,6 +133,10 @@ static inline void sctk_gate_get_context( struct sctk_runtime_config_struct_net_
 		break;
 		case MPC_CONF_RAIL_GATE_USER:
 			ctx->func = (int (*)( sctk_rail_info_t *, mpc_lowcomm_ptp_message_t *, void *))gate->value.user.gatefunc.value;
+			if(!ctx->func)
+			{
+				bad_parameter("Could not resolve user-defined rail gate function %s == %p", gate->value.user.gatefunc.name, gate->value.user.gatefunc.value);
+			}
 			ctx->params = (void *)&gate->value.user;		
 		break;
 		

@@ -461,11 +461,12 @@ struct sctk_runtime_config_struct_net_rail
 /**Base structure to contain the network configuration**/
 
 #define MPC_CONF_MAX_RAIL_COUNT 128
+#define MPC_CONF_MAX_CONFIG_COUNT 128
 
 struct sctk_runtime_config_struct_networks
 {
 	/**Define the configuration driver list to reuse in rail definitions.**/
-	struct sctk_runtime_config_struct_net_driver_config *configs;
+	struct sctk_runtime_config_struct_net_driver_config * configs[MPC_CONF_MAX_CONFIG_COUNT];
 	/** Number of elements in configs array. **/
 	int                                                  configs_size;
 
