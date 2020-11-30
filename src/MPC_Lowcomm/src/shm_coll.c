@@ -162,8 +162,6 @@ int sctk_shared_mem_gatherv_init( struct shared_mem_gatherv *shmgv,
 	shmgv->rtype_size = 0;
 	shmgv->rcount = 0;
 	shmgv->let_me_unpack = 0;
-	shmgv->recv_type = -1;
-	shmgv->send_types = sctk_malloc( nb_task * sizeof( mpc_lowcomm_datatype_t ) );
 	shmgv->send_type_size = sctk_malloc( nb_task * sizeof( size_t ) );
 	assume( shmgv->send_type_size != NULL );
 	shmgv->send_count = sctk_malloc( nb_task * sizeof( int ) );
