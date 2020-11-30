@@ -24,9 +24,9 @@
 /************************** HEADERS **************************/
 #include <stdlib.h>
 
+#include <mpc_lowcomm_communicator.h>
+
 /************************** TYPES **************************/
-/** define the communicator number type **/
-typedef int mpc_lowcomm_communicator_t;
 /** define a data-type **/
 typedef int mpc_lowcomm_datatype_t;
 /** Message count **/
@@ -39,7 +39,7 @@ typedef struct
 	int destination_task;
 	int source_task;
 	int message_tag;
-	mpc_lowcomm_communicator_t communicator;
+	unsigned int communicator_id;
 	mpc_lowcomm_msg_count_t msg_size;
 } sctk_header_t;
 /** Status Definition **/
@@ -70,6 +70,7 @@ typedef int sctk_Request_class;
 typedef struct mpc_lowcomm_request_t mpc_lowcomm_request_t;
 struct mpc_lowcomm_request_t
 {
+	mpc_lowcomm_communicator_t comm;
 	volatile int completion_flag;
     char pad[128];
 	int request_type;
@@ -104,6 +105,9 @@ struct mpc_lowcomm_request_t
 	void *ptr_to_pin_ctx;
         int (*request_completion_fn)(mpc_lowcomm_request_t *);
 };
+
+mpc_lowcomm_request_t* mpc_lowcomm_request_null(void);
+#define MPC_REQUEST_NULL (*mpc_lowcomm_request_null())
 
 /** Reduction Operations **/
 typedef void ( *sctk_Op_f ) ( const void *, void *, size_t, mpc_lowcomm_datatype_t );
@@ -176,13 +180,12 @@ typedef enum sctk_ft_state_e
 	MPC_STATE_COUNT
 } mpc_lowcomm_checkpoint_state_t;
 
+
+
 /************************** MACROS *************************/
-/** define the MPI_COMM_WORLD internal communicator number **/
-#define MPC_COMM_WORLD 0
-/** define the MPI_COMM_SELF internal communicator number **/
-#define MPC_COMM_SELF 1
-/** Define the NULL communicator number */
-#define MPC_COMM_NULL  ((mpc_lowcomm_communicator_t)(-1))
+
+#define MPC_ROOT -4
+
 /** Define the NULL error handler */
 #define SCTK_ERRHANDLER_NULL 0
 /** Not using datatypes */
@@ -198,6 +201,16 @@ typedef enum sctk_ft_state_e
 /** Wildcards **/
 #define MPC_ANY_TAG -1
 #define MPC_ANY_SOURCE -1
-#define MPC_ANY_COMM -99
+
+/****************************
+ * SPECIALIZED MESSAGE TAGS *
+ ****************************/
+
+/* Ensure sync with comm_lib.h */
+#define MPC_GATHER_TAG -3
+#define MPC_BROADCAST_TAG -9
+#define MPC_BARRIER_TAG -10
+#define MPC_ALLGATHER_TAG -11
+
 
 #endif /* SCTK_TYPES_H */

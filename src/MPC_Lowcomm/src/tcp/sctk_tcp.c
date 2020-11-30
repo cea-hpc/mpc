@@ -93,11 +93,6 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 		SCTK_MSG_COMPLETION_FLAG_SET ( msg , NULL );
 		msg->tail.message_type = MPC_LOWCOMM_MESSAGE_NETWORK;
 
-		if ( SCTK_MSG_COMMUNICATOR ( msg ) < 0 )
-		{
-			mpc_common_debug_fatal("BAD communicator %d",  SCTK_MSG_COMMUNICATOR ( msg ) );
-		}
-
 		/* Recv body*/
 		size = size - sizeof ( mpc_lowcomm_ptp_message_t );
 		

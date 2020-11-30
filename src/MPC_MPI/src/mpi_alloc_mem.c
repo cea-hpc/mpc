@@ -177,27 +177,28 @@ int mpc_MPI_allocmem_pool_init()
 			is_master = 1;
 		}
 
-		int process_on_node_count = 0;
 		MPI_Comm process_master_comm;
+
 		PMPI_Comm_split( node_comm, is_master, cw_rank, &process_master_comm );
-		PMPI_Comm_size( process_master_comm, &process_on_node_count );
 
 		if ( is_master )
 		{
+			int process_on_node_count = 0;
+			PMPI_Comm_size( process_master_comm, &process_on_node_count );
 			size_t to_map_size = ( ( inner_size / SCTK_SHM_MAPPER_PAGE_SIZE ) + 1 ) *
 			                     SCTK_SHM_MAPPER_PAGE_SIZE;
 			____mpc_sctk_mpi_alloc_mem_pool.mapped_size = to_map_size;
 			/* Prepare to use the MPI handlers */
-			sctk_alloc_mapper_handler_t *handler =
-			    sctk_shm_mpi_handler_init( process_master_comm );
+			sctk_alloc_mapper_handler_t *handler = sctk_shm_mpi_handler_init( process_master_comm );
 			/* Here we need to map a shared segment */
 			____mpc_sctk_mpi_alloc_mem_pool._pool = sctk_shm_mapper_create(
 			        to_map_size, role, process_on_node_count, handler );
 			sctk_shm_mpi_handler_free( handler );
+			PMPI_Comm_free( &process_master_comm );
 		}
 
 		PMPI_Comm_free( &node_comm );
-		PMPI_Comm_free( &process_master_comm );
+
 	}
 
 	mpc_lowcomm_barrier( MPI_COMM_WORLD );

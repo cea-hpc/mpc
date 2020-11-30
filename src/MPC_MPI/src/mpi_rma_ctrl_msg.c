@@ -81,7 +81,7 @@ void mpc_MPI_Win_handle_win_flush(void *data ) {
 
 
   int source_cw_rank =
-      sctk_get_comm_world_rank(desc->comm, message->source_rank);
+      mpc_lowcomm_communicator_world_rank(desc->comm, message->source_rank);
 
   incoming_rma =
       OPA_load_int(&low_win->incoming_emulated_rma[source_cw_rank]);

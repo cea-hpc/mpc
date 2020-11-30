@@ -42,15 +42,12 @@ extern "C" {
  ****************************/
 
 #define MPC_GATHERV_TAG -2
-#define MPC_GATHER_TAG -3
+
 #define MPC_SCATTERV_TAG -4
 #define MPC_SCATTER_TAG -5
 #define MPC_ALLTOALL_TAG -6
 #define MPC_ALLTOALLV_TAG -7
 #define MPC_ALLTOALLW_TAG -8
-#define MPC_BROADCAST_TAG -9
-#define MPC_BARRIER_TAG -10
-#define MPC_ALLGATHER_TAG -11
 #define MPC_ALLGATHERV_TAG -12
 #define MPC_REDUCE_TAG -13
 #define MPC_ALLREDUCE_TAG -14
@@ -222,10 +219,6 @@ int _mpc_cl_info_get_valuelen( MPC_Info, const char *, int *, int * );
  * REQUEST AND STATUS MANAGEMENT *
  *********************************/
 
-extern mpc_lowcomm_request_t mpc_request_null;
-
-#define MPC_REQUEST_NULL mpc_request_null
-
 int _mpc_cl_request_get_status( mpc_lowcomm_request_t request, int *flag, mpc_lowcomm_status_t *status );
 
 int _mpc_cl_status_set_elements_x( mpc_lowcomm_status_t *status, mpc_lowcomm_datatype_t datatype, size_t count );
@@ -246,18 +239,6 @@ int _mpc_cl_get_processor_name( char *name, int *resultlen );
 /*************************
  * COLLECTIVE OPERATIONS *
  *************************/
-
-int _mpc_cl_barrier( mpc_lowcomm_communicator_t comm );
-int _mpc_cl_bcast( void *buffer, mpc_lowcomm_msg_count_t count,
-                   mpc_lowcomm_datatype_t datatype, int root, mpc_lowcomm_communicator_t comm );
-int _mpc_cl_gather( void *sendbuf, mpc_lowcomm_msg_count_t sendcnt,
-                    mpc_lowcomm_datatype_t sendtype, void *recvbuf,
-                    mpc_lowcomm_msg_count_t recvcount, mpc_lowcomm_datatype_t recvtype,
-                    int root, mpc_lowcomm_communicator_t comm );
-int _mpc_cl_allgather( void *sendbuf, mpc_lowcomm_msg_count_t sendcount,
-                       mpc_lowcomm_datatype_t sendtype, void *recvbuf,
-                       mpc_lowcomm_msg_count_t recvcount,
-                       mpc_lowcomm_datatype_t recvtype, mpc_lowcomm_communicator_t comm );
 
 int _mpc_cl_op_create( sctk_Op_User_function *, int, sctk_Op * );
 int _mpc_cl_op_free( sctk_Op * );
@@ -333,9 +314,7 @@ int _mpc_cl_intercomm_create( mpc_lowcomm_communicator_t local_comm,
                               int local_leader, mpc_lowcomm_communicator_t peer_comm,
                               int remote_leader, int tag, mpc_lowcomm_communicator_t *newintercomm );
 
-int _mpc_cl_comm_create_from_intercomm( mpc_lowcomm_communicator_t comm,
-                                        _mpc_cl_group_t *group,
-                                        mpc_lowcomm_communicator_t *comm_out );
+int _mpc_cl_intercommcomm_merge(mpc_lowcomm_communicator_t intercomm, int high, mpc_lowcomm_communicator_t *newintracomm);
 
 int _mpc_cl_comm_free( mpc_lowcomm_communicator_t *comm );
 

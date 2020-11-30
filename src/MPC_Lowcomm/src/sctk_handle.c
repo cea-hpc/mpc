@@ -187,7 +187,7 @@ sctk_handle sctk_handle_new_from_id(sctk_handle previous_id, sctk_handle_type ty
   sctk_handle new_handle_id;
 
   mpc_mpi_err_init_once();
-
+  
   mpc_common_spinlock_lock_yield(&handle_mod_lock);
 
   new_handle_id = -1;

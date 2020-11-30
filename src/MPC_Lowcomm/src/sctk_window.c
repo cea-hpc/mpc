@@ -31,6 +31,7 @@
 #include <mpc_common_types.h>
 #include "sctk_handle.h"
 
+#include <group.h>
 #include <sctk_communicator.h>
 
 /*********************************************
@@ -222,7 +223,7 @@ mpc_lowcomm_rdma_window_t mpc_lowcomm_rdma_window_init(void *addr, size_t size, 
 	/* Set window owner task */
 	win->owner     = mpc_common_get_task_rank();
 	win->comm      = comm;
-	win->comm_rank = mpc_lowcomm_communicator_rank(win->comm, win->owner);
+	win->comm_rank = mpc_lowcomm_communicator_rank_of(win->comm, win->owner);
 
 	/* Save CTX */
 	win->start_addr = addr;
@@ -296,7 +297,7 @@ void mpc_lowcomm_rdma_window_release(mpc_lowcomm_rdma_window_t win_id)
 
 		/* Signal release to remote */
 		sctk_control_messages_send_process(
-			sctk_get_process_rank_from_task_rank(win->owner),
+			mpc_lowcomm_group_process_rank_from_world(win->owner),
 			SCTK_PROCESS_RDMA_WIN_RELAX, 0, (void *)&win->remote_id,
 			sizeof(int) );
 	}
@@ -411,7 +412,7 @@ int mpc_lowcomm_rdma_window_map_remote(int remote_rank, mpc_lowcomm_communicator
 
 	/* Case where we are local */
 	if( (mr.source_rank == mr.remote_rank) ||
-	    (!mpc_lowcomm_is_remote_rank(sctk_get_comm_world_rank(
+	    (!mpc_lowcomm_is_remote_rank(mpc_lowcomm_communicator_world_rank(
 						 comm, mr.remote_rank) ) ) ) /* If the target is in the same proces
 	                                                                      * just work locally */
 	{
@@ -435,10 +436,10 @@ int mpc_lowcomm_rdma_window_map_remote(int remote_rank, mpc_lowcomm_communicator
 		                        MPC_LOWCOMM_RDMA_WINDOW_MESSAGES, &req);
 
 		/* Send a map request to remote task */
-		int cw_rank = sctk_get_comm_world_rank(comm, remote_rank);
+		int cw_rank = mpc_lowcomm_communicator_world_rank(comm, remote_rank);
 
 		sctk_control_messages_send_process(
-			sctk_get_process_rank_from_task_rank(cw_rank),
+			mpc_lowcomm_group_process_rank_from_world(cw_rank),
 			SCTK_PROCESS_RDMA_WIN_MAPTO, 0, &mr,
 			sizeof(struct mpc_lowcomm_rdma_window_map_request) );
 
@@ -579,7 +580,7 @@ void mpc_lowcomm_rdma_window_RDMA_emulated_write_ctrl_msg_handler(
 		mpc_common_debug_fatal("Error RDMA emulated write operation overflows the window");
 	}
 
-	int remote_rank = mpc_lowcomm_communicator_rank(win->comm, erma->source_rank);
+	int remote_rank = mpc_lowcomm_communicator_rank_of(win->comm, erma->source_rank);
 
 	mpc_lowcomm_request_t req[2];
 	mpc_lowcomm_irecv_class_dest(remote_rank,
@@ -642,7 +643,7 @@ static inline void mpc_lowcomm_rdma_window_RDMA_write_net(struct mpc_lowcomm_rdm
 	mpc_lowcomm_ptp_message_t *msg =
 		mpc_lowcomm_ptp_message_header_create(MPC_LOWCOMM_MESSAGE_CONTIGUOUS);
 	mpc_lowcomm_ptp_message_header_init(
-		msg, -8, win->comm, mpc_lowcomm_communicator_rank(win->comm, mpc_common_get_task_rank() ),
+		msg, -8, win->comm, mpc_lowcomm_communicator_rank_of(win->comm, mpc_common_get_task_rank() ),
 		win->comm_rank, req, size, MPC_LOWCOMM_RDMA_MESSAGE, MPC_DATATYPE_IGNORE, REQUEST_RDMA);
 
 	/* Pin local segment */
@@ -703,7 +704,7 @@ static inline void __mpc_lowcomm_rdma_window_RDMA_write(mpc_lowcomm_rdma_window_
 		mpc_common_nodebug("WRITE to rank %d (%d) in %d", win->comm_rank, win->owner,
 		                   win->comm);
 		sctk_control_messages_send_process(
-			sctk_get_process_rank_from_task_rank(win->owner),
+			mpc_lowcomm_group_process_rank_from_world(win->owner),
 			SCTK_PROCESS_RDMA_EMULATED_WRITE, 0, &erma,
 			sizeof(struct mpc_lowcomm_rdma_window_emulated_RDMA) );
 
@@ -780,7 +781,7 @@ void mpc_lowcomm_rdma_window_RDMA_emulated_read_ctrl_msg_handler(struct mpc_lowc
 
 	mpc_lowcomm_request_t req;
 	mpc_lowcomm_isend_class_src(
-		win->comm_rank, mpc_lowcomm_communicator_rank(win->comm, erma->source_rank),
+		win->comm_rank, mpc_lowcomm_communicator_rank_of(win->comm, erma->source_rank),
 		win->start_addr + offset, erma->size, TAG_RDMA_READ, win->comm,
 		MPC_LOWCOMM_RDMA_WINDOW_MESSAGES, &req);
 	mpc_lowcomm_request_wait(&req);
@@ -822,7 +823,7 @@ void mpc_lowcomm_rdma_window_RDMA_read_net(struct mpc_lowcomm_rdma_window *win, 
 		mpc_lowcomm_ptp_message_header_create(MPC_LOWCOMM_MESSAGE_CONTIGUOUS);
 
 	mpc_lowcomm_ptp_message_header_init(
-		msg, -8, win->comm, mpc_lowcomm_communicator_rank(win->comm, mpc_common_get_task_rank() ),
+		msg, -8, win->comm, mpc_lowcomm_communicator_rank_of(win->comm, mpc_common_get_task_rank() ),
 		win->comm_rank, req, size, MPC_LOWCOMM_RDMA_MESSAGE, MPC_DATATYPE_IGNORE, REQUEST_RDMA);
 
 	/* Pin local segment */
@@ -879,7 +880,7 @@ void __mpc_lowcomm_rdma_window_RDMA_read(mpc_lowcomm_rdma_window_t win_id, sctk_
 		                        MPC_LOWCOMM_RDMA_WINDOW_MESSAGES, req);
 
 		sctk_control_messages_send_process(
-			sctk_get_process_rank_from_task_rank(win->owner),
+			mpc_lowcomm_group_process_rank_from_world(win->owner),
 			SCTK_PROCESS_RDMA_EMULATED_READ, 0, &erma,
 			sizeof(struct mpc_lowcomm_rdma_window_emulated_RDMA) );
 	}
@@ -1345,7 +1346,7 @@ void mpc_lowcomm_rdma_window_RDMA_fetch_and_op_ctrl_msg_handler(struct mpc_lowco
 	                                             win->start_addr + offset, &fetch);
 
 	mpc_lowcomm_isend_class_src(
-		win->comm_rank, mpc_lowcomm_communicator_rank(win->comm, fop->rdma.source_rank),
+		win->comm_rank, mpc_lowcomm_communicator_rank_of(win->comm, fop->rdma.source_rank),
 		&fetch, fop->rdma.size, TAG_RDMA_FETCH_AND_OP, win->comm,
 		MPC_LOWCOMM_RDMA_MESSAGE, NULL);
 }
@@ -1411,7 +1412,7 @@ static inline void mpc_lowcomm_rdma_window_RDMA_fetch_and_op_net(
 		mpc_lowcomm_ptp_message_header_create(MPC_LOWCOMM_MESSAGE_CONTIGUOUS);
 
 	mpc_lowcomm_ptp_message_header_init(msg, -8, win->comm,
-	                                    mpc_lowcomm_communicator_rank(win->comm, mpc_common_get_task_rank() ),
+	                                    mpc_lowcomm_communicator_rank_of(win->comm, mpc_common_get_task_rank() ),
 	                                    win->comm_rank, req, RDMA_type_size(type),
 	                                    MPC_LOWCOMM_RDMA_MESSAGE, MPC_DATATYPE_IGNORE, REQUEST_RDMA);
 
@@ -1492,7 +1493,7 @@ static inline void __mpc_lowcomm_rdma_window_RDMA_fetch_and_op(
 		                        TAG_RDMA_FETCH_AND_OP, win->comm,
 		                        MPC_LOWCOMM_RDMA_MESSAGE, req);
 		sctk_control_messages_send_process(
-			sctk_get_process_rank_from_task_rank(win->owner),
+			mpc_lowcomm_group_process_rank_from_world(win->owner),
 			SCTK_PROCESS_RDMA_EMULATED_FETCH_AND_OP, 0, &fop,
 			sizeof(struct mpc_lowcomm_rdma_window_emulated_fetch_and_op_RDMA) );
 	}
@@ -1668,7 +1669,7 @@ void mpc_lowcomm_rdma_window_RDMA_CAS_ctrl_msg_handler(struct mpc_lowcomm_rdma_w
 	                                       fcas->comp, fcas->new, res, fcas->type);
 
 	mpc_lowcomm_isend_class_src(
-		win->comm_rank, mpc_lowcomm_communicator_rank(win->comm, fcas->rdma.source_rank),
+		win->comm_rank, mpc_lowcomm_communicator_rank_of(win->comm, fcas->rdma.source_rank),
 		&res, fcas->rdma.size, TAG_RDMA_CAS, win->comm, MPC_LOWCOMM_RDMA_MESSAGE,
 		NULL);
 }
@@ -1702,7 +1703,7 @@ void mpc_lowcomm_rdma_window_RDMA_CAS_net(mpc_lowcomm_rdma_window_t remote_win_i
 		mpc_lowcomm_ptp_message_header_create(MPC_LOWCOMM_MESSAGE_CONTIGUOUS);
 
 	mpc_lowcomm_ptp_message_header_init(msg, -8, win->comm,
-	                                    mpc_lowcomm_communicator_rank(win->comm, win->owner),
+	                                    mpc_lowcomm_communicator_rank_of(win->comm, win->owner),
 	                                    win->comm_rank, req, RDMA_type_size(type),
 	                                    MPC_LOWCOMM_RDMA_MESSAGE, MPC_DATATYPE_IGNORE, REQUEST_RDMA);
 
@@ -1779,7 +1780,7 @@ void __mpc_lowcomm_rdma_window_RDMA_CAS(mpc_lowcomm_rdma_window_t remote_win_id,
 		                        TAG_RDMA_CAS, win->comm, MPC_LOWCOMM_RDMA_MESSAGE,
 		                        req);
 		sctk_control_messages_send_process(
-			sctk_get_process_rank_from_task_rank(win->owner),
+			mpc_lowcomm_group_process_rank_from_world(win->owner),
 			SCTK_PROCESS_RDMA_EMULATED_CAS, 0, &fcas,
 			sizeof(struct mpc_lowcomm_rdma_window_emulated_CAS_RDMA) );
 	}

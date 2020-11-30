@@ -181,9 +181,9 @@ libmpclowcomm_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	../../MPC_Launch/src/libmpclaunch.la
 am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c sctk_checksum.c \
 	sctk_communicator.c sctk_control_messages.c ft.c group.c \
-	sctk_handle.c sctk_low_level_comm.c sctk_multirail.c \
-	sctk_net_tools.c sctk_net_topology.c sctk_polling.c \
-	sctk_rail.c sctk_reorder.c sctk_route.c \
+	communicator.c shm_coll.c sctk_handle.c sctk_low_level_comm.c \
+	sctk_multirail.c sctk_net_tools.c sctk_net_topology.c \
+	sctk_polling.c sctk_rail.c sctk_reorder.c sctk_route.c \
 	sctk_topological_polling.c sctk_topological_rail.c \
 	sctk_window.c ./tcp/sctk_tcp.c ./tcp/sctk_tcp_rdma.c \
 	./tcp/sctk_tcp_toolkit.c ./shm/sctk_handler_mpi.c \
@@ -238,18 +238,18 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals_am/arpc_weak.lo
 am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo \
 	sctk_communicator.lo sctk_control_messages.lo ft.lo group.lo \
-	sctk_handle.lo sctk_low_level_comm.lo sctk_multirail.lo \
-	sctk_net_tools.lo sctk_net_topology.lo sctk_polling.lo \
-	sctk_rail.lo sctk_reorder.lo sctk_route.lo \
-	sctk_topological_polling.lo sctk_topological_rail.lo \
-	sctk_window.lo ./tcp/sctk_tcp.lo ./tcp/sctk_tcp_rdma.lo \
-	./tcp/sctk_tcp_toolkit.lo ./shm/sctk_handler_mpi.lo \
-	./shm/sctk_shm.lo ./shm/sctk_shm_eager.lo \
-	./shm/sctk_shm_mapper.lo ./shm/sctk_shm_raw_queues.lo \
-	./shm/sctk_handler_pmi.lo ./shm/sctk_shm_cma.lo \
-	./shm/sctk_shm_frag.lo ./shm/sctk_shm_qemu.lo \
-	./shm/sctk_shm_raw_queues_internals.lo $(am__objects_1) \
-	$(am__objects_2)
+	communicator.lo shm_coll.lo sctk_handle.lo \
+	sctk_low_level_comm.lo sctk_multirail.lo sctk_net_tools.lo \
+	sctk_net_topology.lo sctk_polling.lo sctk_rail.lo \
+	sctk_reorder.lo sctk_route.lo sctk_topological_polling.lo \
+	sctk_topological_rail.lo sctk_window.lo ./tcp/sctk_tcp.lo \
+	./tcp/sctk_tcp_rdma.lo ./tcp/sctk_tcp_toolkit.lo \
+	./shm/sctk_handler_mpi.lo ./shm/sctk_shm.lo \
+	./shm/sctk_shm_eager.lo ./shm/sctk_shm_mapper.lo \
+	./shm/sctk_shm_raw_queues.lo ./shm/sctk_handler_pmi.lo \
+	./shm/sctk_shm_cma.lo ./shm/sctk_shm_frag.lo \
+	./shm/sctk_shm_qemu.lo ./shm/sctk_shm_raw_queues_internals.lo \
+	$(am__objects_1) $(am__objects_2)
 libmpclowcomm_la_OBJECTS = $(am_libmpclowcomm_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -627,9 +627,9 @@ lib_LTLIBRARIES = libmpclowcomm.la
 # SHM driver #
 libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c \
 	sctk_communicator.c sctk_control_messages.c ft.c group.c \
-	sctk_handle.c sctk_low_level_comm.c sctk_multirail.c \
-	sctk_net_tools.c sctk_net_topology.c sctk_polling.c \
-	sctk_rail.c sctk_reorder.c sctk_route.c \
+	communicator.c shm_coll.c sctk_handle.c sctk_low_level_comm.c \
+	sctk_multirail.c sctk_net_tools.c sctk_net_topology.c \
+	sctk_polling.c sctk_rail.c sctk_reorder.c sctk_route.c \
 	sctk_topological_polling.c sctk_topological_rail.c \
 	sctk_window.c ./tcp/sctk_tcp.c ./tcp/sctk_tcp_rdma.c \
 	./tcp/sctk_tcp_toolkit.c ./shm/sctk_handler_mpi.c \
@@ -834,6 +834,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/coll.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/comm.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/communicator.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ft.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/group.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_checksum.Plo@am__quote@
@@ -851,6 +852,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_topological_polling.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_topological_rail.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_window.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/shm_coll.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_async.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_buffered.Plo@am__quote@

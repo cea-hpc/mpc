@@ -29,10 +29,13 @@
 #include <uthash.h>
 #include <opa_primitives.h>
 #include <comm.h>
+#include <mpc_common_rank.h>
 
 #ifdef MPC_USE_INFINIBAND
 #include <sctk_ib_buffered.h>
 #endif
+
+#include <group.h>
 
 #include <sctk_alloc.h>
 
@@ -146,6 +149,8 @@ int sctk_send_message_from_network_reorder(mpc_lowcomm_ptp_message_t *msg)
 
 	mpc_common_nodebug("Recv message from [%d,%d] to [%d,%d] (number: %d)", SCTK_MSG_SRC_PROCESS(msg), src_task, SCTK_MSG_DEST_PROCESS(msg), dest_task, SCTK_MSG_NUMBER(msg) );
 
+	_mpc_comm_ptp_message_reinit_comm(msg);
+
 	int dest_process;
 	int number;
 	sctk_reorder_table_t *tmp = NULL;
@@ -157,7 +162,7 @@ int sctk_send_message_from_network_reorder(mpc_lowcomm_ptp_message_t *msg)
 	}
 	else
 	{
-		dest_process = sctk_get_process_rank_from_task_rank(dest_task);
+		dest_process = mpc_lowcomm_group_process_rank_from_world(dest_task);
 		mpc_common_debug("Recv message from %d to %d (number:%d)",
 		                 SCTK_MSG_SRC_TASK(msg),
 		                 SCTK_MSG_DEST_TASK(msg), SCTK_MSG_NUMBER(msg) );
@@ -240,7 +245,7 @@ int sctk_prepare_send_message_to_network_reorder(mpc_lowcomm_ptp_message_t *msg)
 
 	/* Indirect messages */
 	int src_process;
-	src_process = sctk_get_process_rank_from_task_rank(src_task);
+	src_process = mpc_lowcomm_group_process_rank_from_world(src_task);
 
 	if(mpc_common_get_process_rank() != src_process)
 	{

@@ -110,31 +110,6 @@ void mpc_lowcomm_request_init(mpc_lowcomm_request_t *request, mpc_lowcomm_commun
 
 
 /************************************************************************/
-/* Communicators                                                        */
-/************************************************************************/
-
-/** These functions provide communicator primitives to the low-level interface */
-
-/** Create a new communicator from a task list
- *
- * @arg origin_communicator Source communicator
- * @arg nb_task_involved Number of tasks
- * @arg task_list List of tasks to include is the new communicator
- *
- * @return Return a new communicator ID usable inside comm calls
- */
-mpc_lowcomm_communicator_t mpc_lowcomm_create_comm(const mpc_lowcomm_communicator_t origin_communicator,
-                                                   const int nb_task_involved,
-                                                   const int *task_list);
-
-/** Delete a given communicator
- * @param comm Communicator to be deleted
- *
- * @return MPC_COMM_NULL if the comm has been deleted the comm otherwise (immutable comm)
- */
-mpc_lowcomm_communicator_t mpc_lowcomm_delete_comm(const mpc_lowcomm_communicator_t comm);
-
-/************************************************************************/
 /* P2P Messages                                                         */
 /************************************************************************/
 
@@ -278,13 +253,18 @@ struct shared_mem_barrier;
 int mpc_lowcomm_barrier_shm_on_context(struct shared_mem_barrier *barrier_ctx,
                                        int comm_size);
 
+
+int mpc_lowcomm_gather(void *sendbuf, void *recvbuf, const size_t size, int root, mpc_lowcomm_communicator_t comm);
+
+int mpc_lowcomm_allgather(void *sendbuf,  void *recvbuf, size_t data_size, mpc_lowcomm_communicator_t comm);
+
 /** Do a broadcast on a communicator
  * @param buffer Buffer to be broadcasted from root and filled on others
  * @param size Size of the buffer
  * @param root Root from which to read the buffer
  * @param communicator Communicator on which to broadcast
  */
-void mpc_lowcomm_bcast(void *buffer, const size_t size,
+int mpc_lowcomm_bcast(void *buffer, const size_t size,
                        const int root, const mpc_lowcomm_communicator_t communicator);
 
 /** Do an allreduce on a communicator

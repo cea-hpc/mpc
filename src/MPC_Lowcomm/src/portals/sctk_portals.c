@@ -29,6 +29,7 @@
 #include "sctk_ptl_rdma.h"
 #include "sctk_route.h"
 
+#include <mpc_common_types.h>
 #include <mpc_common_rank.h>
 
 static volatile short rail_is_ready = 0;
@@ -123,7 +124,7 @@ static void sctk_network_notify_probe_message_ptl (sctk_rail_info_t* rail, mpc_l
  * \param[in] comm_idx the communicator ID
  * \param[in] comm_size number of processes in this comm
  */
-static void sctk_network_notify_new_communicator_ptl(sctk_rail_info_t* rail, int comm_idx, size_t comm_size)
+static void sctk_network_notify_new_communicator_ptl(sctk_rail_info_t* rail, uint32_t comm_idx, size_t comm_size)
 {
 	sctk_ptl_comm_register(&rail->network.ptl, comm_idx, comm_size);
 }

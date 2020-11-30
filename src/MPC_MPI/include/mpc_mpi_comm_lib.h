@@ -25,6 +25,7 @@
 
 #include <mpc_lowcomm_types.h>
 #include <mpc_common_types.h>
+#include <mpc_lowcomm_group.h>
 
 /************************************************************************/
 /* Per thread context                                                   */
@@ -116,8 +117,6 @@ int mpc_mpi_cl_get_activity( int nb_item, mpc_mpi_cl_activity_t *tab, double *pr
  * MISC DEFINES *
  ****************/
 
-#define MPC_UNDEFINED ( -1 )
-#define MPC_ROOT -4
 #define MPC_KEYVAL_INVALID -1
 
 /****************

@@ -181,11 +181,14 @@ static inline void _mpc_comm_ptp_message_set_copy_and_free( mpc_lowcomm_ptp_mess
 		msg->body.header.destination_task = dest; \
 	} while ( 0 )
 
-#define SCTK_MSG_COMMUNICATOR( msg ) msg->body.header.communicator
+#define SCTK_MSG_COMMUNICATOR_ID( msg ) msg->body.header.communicator_id
+#define SCTK_MSG_COMMUNICATOR( msg ) msg->tail.communicator
+
 #define SCTK_MSG_COMMUNICATOR_SET( msg, comm ) \
 	do                                         \
 	{                                          \
-		msg->body.header.communicator = comm;  \
+		msg->body.header.communicator_id = comm->id;  \
+		msg->tail.communicator = comm;  \
 	} while ( 0 )
 
 #define SCTK_DATATYPE( msg ) msg->body.header.datatype
@@ -266,6 +269,8 @@ static inline void _mpc_comm_ptp_message_set_copy_and_free( mpc_lowcomm_ptp_mess
 
 struct mpc_comm_ptp_s *_mpc_comm_ptp_array_get( mpc_lowcomm_communicator_t comm, int rank );
 sctk_reorder_list_t *_mpc_comm_ptp_array_get_reorder( mpc_lowcomm_communicator_t communicator, int rank );
+
+void _mpc_comm_ptp_message_reinit_comm(mpc_lowcomm_ptp_message_t *msg);
 
 #define SCTK_PARALLEL_COMM_QUEUES_NUMBER 8
 

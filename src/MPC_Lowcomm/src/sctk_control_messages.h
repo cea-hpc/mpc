@@ -73,7 +73,7 @@ struct sctk_control_message_fence_ctx
 {
 	int source;
 	int remote;
-        int comm;
+  unsigned int comm;
 };
 
 void sctk_control_message_fence(int target_task, mpc_lowcomm_communicator_t comm);

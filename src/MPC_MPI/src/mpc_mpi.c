@@ -28,6 +28,7 @@
 #include <mpc_common_datastructure.h>
 #include <mpc_common_profiler.h>
 #include <mpc_common_debug.h>
+#include <mpc_common_rank.h>
 
 #include "sctk_handle.h"
 #include "mpc_mpi_halo.h"
@@ -179,10 +180,6 @@ static int __INTERNAL__PMPI_Neighbor_alltoallv_graph(const void *, const int [],
 static int __INTERNAL__PMPI_Neighbor_alltoallw_cart(const void *, const int [], const MPI_Aint [], const MPI_Datatype [], void *, const int [], const MPI_Aint [], const MPI_Datatype [], MPI_Comm comm);
 static int __INTERNAL__PMPI_Neighbor_alltoallw_graph(const void *, const int [], const MPI_Aint [], const MPI_Datatype [], void *, const int [], const MPI_Aint [], const MPI_Datatype [], MPI_Comm comm);
 
-
-
-static int __cached_comm_size(MPI_Comm, int *);
-static int __cached_comm_rank(MPI_Comm, int *);
 
 static inline int __PMPI_Cart_rank_locked(MPI_Comm, const int *, int *);
 static int __PMPI_Cart_coords_locked(MPI_Comm, int, int, int *);
@@ -444,7 +441,7 @@ static int is_initialized = 0;
 	if( (is_finalized != 0) || (is_initialized != 1) ){                              \
 		MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_OTHER, "The runtime is not initialized");                     \
 	} \
-	else if((com == MPI_COMM_NULL) || (!_mpc_lowcomm_comm_exists(com)) ) \
+	else if((com == MPI_COMM_NULL) || (!mpc_lowcomm_communicator_exists(com)) ) \
 	{                                                 \
 		MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_COMM, "Error in communicator"); \
 	}
@@ -464,7 +461,7 @@ static int is_initialized = 0;
 
 #define mpi_check_rank(task, max_rank, comm) \
 	do{ \
-		if( !sctk_is_inter_comm(comm) ) {\
+		if( !mpc_lowcomm_communicator_is_intercomm(comm) ) {\
 			if( (task != MPI_ANY_SOURCE) && (task != MPI_PROC_NULL) ) \
 			{\
 				if( ( (task < 0) || (task >= max_rank) )) \
@@ -477,7 +474,7 @@ static int is_initialized = 0;
 
 #define mpi_check_rank_send(task, max_rank, comm) \
 	do{ \
-		if( !sctk_is_inter_comm(comm) ) {\
+		if( !mpc_lowcomm_communicator_is_intercomm(comm) ) {\
 			if(task != MPI_PROC_NULL)\
 			{\
 				if( (task < 0) || (task >= max_rank) ) \
@@ -2493,7 +2490,7 @@ int mpc_mpi_cl_egreq_progress_poll();
 
 int __INTERNAL__PMPI_Barrier_intra_shm_sig(MPI_Comm comm)
 {
-	struct sctk_comm_coll *        coll        = sctk_communicator_get_coll(comm);
+	struct sctk_comm_coll *        coll        = mpc_communicator_shm_coll_get(comm);
 	struct shared_mem_barrier_sig *barrier_ctx = &coll->shm_barrier_sig;
 
 	// mpc_common_debug_error("BARRIER CTX : %p", barrier_ctx	);
@@ -2504,7 +2501,7 @@ int __INTERNAL__PMPI_Barrier_intra_shm_sig(MPI_Comm comm)
 	}
 
 	int rank;
-	__cached_comm_rank(comm, &rank);
+	_mpc_cl_comm_rank(comm, &rank);
 
 	volatile int the_signal = 0;
 
@@ -2656,8 +2653,8 @@ int __INTERNAL__PMPI_Barrier_intra(MPI_Comm comm)
 #ifdef MPC_USE_PORTALS
 	int res;
 	int rank, size;
-	__cached_comm_size(comm, &size);
-	__cached_comm_rank(comm, &rank);
+	_mpc_cl_comm_size(comm, &size);
+	_mpc_cl_comm_rank(comm, &rank);
 
 	if(ptl_offcoll_enabled() )
 	{
@@ -2671,7 +2668,7 @@ int __INTERNAL__PMPI_Barrier_intra(MPI_Comm comm)
 
 int __INTERNAL__PMPI_Barrier_intra_shared_node(MPI_Comm comm)
 {
-	struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
+	struct sctk_comm_coll *coll = mpc_communicator_shm_coll_get(comm);
 
 	if(__MPC_node_comm_coll_check(coll, comm) )
 	{
@@ -2689,12 +2686,12 @@ int __INTERNAL__PMPI_Barrier_inter(MPI_Comm comm)
 	int root = 0, buf = 0, rank, size;
 	int res = MPI_ERR_INTERN;
 
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -2703,7 +2700,7 @@ int __INTERNAL__PMPI_Barrier_inter(MPI_Comm comm)
 	/* Barrier on local intracomm */
 	if(size > 1)
 	{
-		res = PMPI_Barrier(sctk_get_local_comm_id(comm) );
+		res = PMPI_Barrier(mpc_lowcomm_communicator_get_local(comm) );
 		if(res != MPI_SUCCESS)
 		{
 			return res;
@@ -2711,7 +2708,7 @@ int __INTERNAL__PMPI_Barrier_inter(MPI_Comm comm)
 	}
 
 	/* Broadcasts between local and remote groups */
-	if(sctk_is_in_local_group(comm) )
+	if(mpc_lowcomm_communicator_in_master_group(comm) )
 	{
 		root = (rank == 0) ? MPI_ROOT : MPI_PROC_NULL;
 		res  = PMPI_Bcast(&buf, 1, MPI_INT, root, comm);
@@ -2765,10 +2762,11 @@ int __INTERNAL__PMPI_Bcast_inter(void *buffer, int count, MPI_Datatype datatype,
 		{
 			return res;
 		}
+
 	}
 	else
 	{
-		res = __cached_comm_rank(comm, &rank);
+		res = _mpc_cl_comm_rank(comm, &rank);
 		if(res != MPI_SUCCESS)
 		{
 			return res;
@@ -2783,10 +2781,11 @@ int __INTERNAL__PMPI_Bcast_inter(void *buffer, int count, MPI_Datatype datatype,
 			{
 				return res;
 			}
+
 		}
 		/* Intracomm broadcast */
 		res = PMPI_Bcast(buffer, count, datatype, 0,
-		                 sctk_get_local_comm_id(comm) );
+		                 mpc_lowcomm_communicator_get_local(comm) );
 		if(res != MPI_SUCCESS)
 		{
 			return res;
@@ -2799,7 +2798,7 @@ int __INTERNAL__PMPI_Bcast_intra_shm(void *buffer, int count,
                                      MPI_Datatype datatype, int root,
                                      MPI_Comm comm)
 {
-	struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
+	struct sctk_comm_coll *coll = mpc_communicator_shm_coll_get(comm);
 
 	int rank, res;
 
@@ -3098,7 +3097,7 @@ int __INTERNAL__PMPI_Bcast_intra_shared_node_impl(void *buffer, int count, MPI_D
 int __INTERNAL__PMPI_Bcast_intra_shared_node(void *buffer, int count, MPI_Datatype datatype,
                                              int root, MPI_Comm comm)
 {
-	struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
+	struct sctk_comm_coll *coll = mpc_communicator_shm_coll_get(comm);
 
 	//TODO to expose as config vars
 	if(__MPC_node_comm_coll_check(coll, comm) &&
@@ -3117,12 +3116,12 @@ int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
 {
 	int res = MPI_ERR_INTERN, size, rank;
 
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -3408,12 +3407,12 @@ int __INTERNAL__PMPI_Gather_intra(const void *sendbuf, int sendcnt,
 	MPI_Request *recvrequest;
 	MPI_Status *recvstatus;
 
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{ 
 		return res;
@@ -3552,7 +3551,7 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(const void *sendbuf, int sendcnt,
                                        MPI_Datatype recvtype, int root,
                                        MPI_Comm comm)
 {
-	struct sctk_comm_coll *coll       = sctk_communicator_get_coll(comm);
+	struct sctk_comm_coll *coll       = mpc_communicator_shm_coll_get(comm);
 	struct shared_mem_gatherv *gv_ctx = &coll->shm_gatherv;
 
 	volatile int rank, res;
@@ -3803,12 +3802,12 @@ int __INTERNAL__PMPI_Gatherv_intra(void *sendbuf, int sendcnt,
 	MPI_Request request;
 	MPI_Request *recvrequest;
 
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -3962,12 +3961,12 @@ int __INTERNAL__PMPI_Scatter_intra(void *sendbuf, int sendcnt,
 	MPI_Request *sendrequest;
 	MPI_Status *sendstatus;
 
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -4195,7 +4194,7 @@ int __INTERNAL__PMPI_Scatter_intra_shared_node(void *sendbuf, int sendcnt, MPI_D
                                                void *recvbuf, int recvcnt, MPI_Datatype recvtype,
                                                int root, MPI_Comm comm)
 {
-	struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
+	struct sctk_comm_coll *coll = mpc_communicator_shm_coll_get(comm);
 
 	//TODO to expose as config vars
 	if(__MPC_node_comm_coll_check(coll, comm) &&
@@ -4236,7 +4235,7 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
                                         MPI_Datatype recvtype, int root,
                                         MPI_Comm comm)
 {
-	struct sctk_comm_coll *coll        = sctk_communicator_get_coll(comm);
+	struct sctk_comm_coll *coll        = mpc_communicator_shm_coll_get(comm);
 	struct shared_mem_scatterv *sv_ctx = &coll->shm_scatterv;
 
 	mpc_common_nodebug("SCATTER SEND %d CNT %d RECV %d CNT %d", sendtype, sendcnts[0],
@@ -4522,12 +4521,12 @@ int __INTERNAL__PMPI_Scatterv_intra(void *sendbuf, int *sendcnts, int *displs,
 	MPI_Request request;
 	MPI_Request *sendrequest;
 
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -4676,12 +4675,12 @@ int __INTERNAL__PMPI_Allgather_intra(void *sendbuf, int sendcount,
 {
 	int root = 0, size, rank, res = MPI_ERR_INTERN;
 
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -4738,12 +4737,12 @@ int __INTERNAL__PMPI_Allgather_inter(void *sendbuf, int sendcount,
 	MPI_Aint slb, sextent;
 	void *tmp_buf = NULL;
 
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -4775,14 +4774,14 @@ int __INTERNAL__PMPI_Allgather_inter(void *sendbuf, int sendcount,
 	{
 		res = PMPI_Gather(sendbuf, sendcount, sendtype, tmp_buf,
 		                  sendcount, sendtype, 0,
-		                  sctk_get_local_comm_id(comm) );
+		                  mpc_lowcomm_communicator_get_local(comm) );
 		if(res != MPI_SUCCESS)
 		{
 			return res;
 		}
 	}
 
-	if(sctk_is_in_local_group(comm) )
+	if(mpc_lowcomm_communicator_in_master_group(comm) )
 	{
 		if(sendcount != 0)
 		{
@@ -4843,10 +4842,10 @@ int __INTERNAL__PMPI_Allgatherv_intra(void *sendbuf, int sendcount,
 	MPI_Aint extent, sendtype_extent;
 	int res = MPI_ERR_INTERN;
 
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	MPI_HANDLE_ERROR(res, comm, "Could not retrieve comm rank");
 
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	MPI_HANDLE_ERROR(res, comm, "Could not retrieve comm size");
 
 	res = PMPI_Type_extent(recvtype, &extent);
@@ -4911,12 +4910,12 @@ int __INTERNAL__PMPI_Allgatherv_inter(const void *sendbuf, int sendcount,
 	MPI_Aint extent;
 	mpc_lowcomm_communicator_t local_comm;
 
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -4927,7 +4926,7 @@ int __INTERNAL__PMPI_Allgatherv_inter(const void *sendbuf, int sendcount,
 		return res;
 	}
 
-	if(sctk_is_in_local_group(comm) )
+	if(mpc_lowcomm_communicator_in_master_group(comm) )
 	{
 		root = (rank == 0) ? MPI_ROOT : MPI_PROC_NULL;
 		res  = PMPI_Gatherv(sendbuf, sendcount, sendtype, recvbuf,
@@ -4966,7 +4965,7 @@ int __INTERNAL__PMPI_Allgatherv_inter(const void *sendbuf, int sendcount,
 
 	rsize--;
 	root       = 0;
-	local_comm = sctk_get_local_comm_id(comm);
+	local_comm = mpc_lowcomm_communicator_get_local(comm);
 	res        = PMPI_Type_extent(recvtype, &extent);
 	for(; rsize >= 0; rsize--)
 	{
@@ -4999,12 +4998,12 @@ int __INTERNAL__PMPI_Alltoall_intra(void *sendbuf, int sendcount,
 	int dst;
 	MPI_Aint d_send, d_recv;
 
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -5082,12 +5081,12 @@ int __INTERNAL__PMPI_Alltoall_inter(void *sendbuf, int sendcount,
 	int src, dst, rank;
 	char *sendaddr, *recvaddr;
 
-	res = __cached_comm_size(comm, &local_size);
+	res = _mpc_cl_comm_size(comm, &local_size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -5156,7 +5155,7 @@ int __INTERNAL__PMPI_Alltoall_intra_shared_node(void *sendbuf, int sendcount,
 	bool_val &= (sendtype == recvtype);
 	bool_val &= (sendcount == recvcount);
 
-	struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
+	struct sctk_comm_coll *coll = mpc_communicator_shm_coll_get(comm);
 
 	if(!__MPC_node_comm_coll_check(coll, comm) )
 	{
@@ -5193,12 +5192,12 @@ int __INTERNAL__PMPI_Alltoallv_intra_shm(const void *sendbuf, const int *sendcnt
                                          const int *rdispls, MPI_Datatype recvtype,
                                          MPI_Comm comm)
 {
-	struct sctk_comm_coll *coll   = sctk_communicator_get_coll(comm);
+	struct sctk_comm_coll *coll   = mpc_communicator_shm_coll_get(comm);
 	struct shared_mem_a2a *aa_ctx = &coll->shm_a2a;
 
 	int rank;
 
-	__cached_comm_rank(comm, &rank);
+	_mpc_cl_comm_rank(comm, &rank);
 
 	struct sctk_shared_mem_a2a_infos info;
 	int is_in_place = 0;
@@ -5405,12 +5404,12 @@ int __INTERNAL__PMPI_Alltoallv_intra(void *sendbuf, int *sendcnts, int *sdispls,
 	MPI_Request requests[2 * bblock * sizeof(MPI_Request)];
 	MPI_Aint d_send, d_recv;
 
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -5498,12 +5497,12 @@ int __INTERNAL__PMPI_Alltoallv_inter(const void *sendbuf, int *sendcnts, int *sd
 	int src, dst, rank, sendcount, recvcount;
 	char *sendaddr, *recvaddr;
 
-	res = __cached_comm_size(comm, &local_size);
+	res = _mpc_cl_comm_size(comm, &local_size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -5574,12 +5573,12 @@ int __INTERNAL__PMPI_Alltoallw_intra(void *sendbuf, int *sendcnts, int *sdispls,
 	MPI_Request *reqarray;
 	int outstanding_requests;
 
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -5699,12 +5698,12 @@ int __INTERNAL__PMPI_Alltoallw_inter(void *sendbuf, int *sendcnts, int *sdispls,
 	int src, dst, rank, sendcount, recvcount;
 	char *sendaddr, *recvaddr;
 
-	res = __cached_comm_size(comm, &local_size);
+	res = _mpc_cl_comm_size(comm, &local_size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -5762,7 +5761,7 @@ int __INTERNAL__PMPI_Alltoallw(const void *sendbuf, const int *sendcnts, const i
 	int res = MPI_ERR_INTERN;
 
 	/* Intercomm */
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		if(alltoallw_inter == NULL)
 		{
@@ -7559,11 +7558,11 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
                                 MPI_Datatype datatype, MPI_Op op, int root,
                                 MPI_Comm comm)
 {
-	struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
+	struct sctk_comm_coll *coll = mpc_communicator_shm_coll_get(comm);
 
 	int rank;
 
-	__cached_comm_rank(comm, &rank);
+	_mpc_cl_comm_rank(comm, &rank);
 
 	struct shared_mem_reduce *reduce_ctx = sctk_comm_coll_get_red(coll, rank);
 
@@ -7922,12 +7921,12 @@ int __INTERNAL__PMPI_Reduce_intra(void *sendbuf, void *recvbuf, int count,
 	mpi_op = sctk_convert_to_mpc_op(op);
 	mpc_op = mpi_op->op;
 
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -7977,7 +7976,7 @@ int __INTERNAL__PMPI_Reduce_intra(void *sendbuf, void *recvbuf, int count,
 			assume(reduce_intra_shm != NULL);
 		}
 
-		if(sctk_is_shared_mem(comm) &&
+		if(mpc_lowcomm_communicator_is_shared_mem(comm) &&
 		   !_mpc_dt_is_struct(datatype) &&
 		   (mpi_op->op.u_func == NULL) )
 		{
@@ -8020,7 +8019,7 @@ int __INTERNAL__PMPI_Reduce_inter(void *sendbuf, void *recvbuf, int count,
 	int rank;
 	void *tmp_buf;
 
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -8050,7 +8049,7 @@ int __INTERNAL__PMPI_Reduce_inter(void *sendbuf, void *recvbuf, int count,
 
 		size    = count * type_size;
 		tmp_buf = (void *)sctk_malloc(size);
-		res     = PMPI_Reduce(sendbuf, tmp_buf, count, datatype, op, 0, sctk_get_local_comm_id(comm) );
+		res     = PMPI_Reduce(sendbuf, tmp_buf, count, datatype, op, 0, mpc_lowcomm_communicator_get_local(comm) );
 		if(res != MPI_SUCCESS)
 		{
 			return res;
@@ -8126,9 +8125,9 @@ int __INTERNAL__PMPI_Allreduce_intra_pipeline(void *sendbuf, void *recvbuf, int 
 
 
 	int size;
-	__cached_comm_size(comm, &size);
+	_mpc_cl_comm_size(comm, &size);
 	int rank;
-	__cached_comm_rank(comm, &rank);
+	_mpc_cl_comm_rank(comm, &rank);
 
 	int left_to_send = count;
 	int sent         = 0;
@@ -8313,12 +8312,12 @@ int __INTERNAL__PMPI_Allreduce_intra_binary_tree(void *sendbuf, void *recvbuf, i
 	mpi_op = sctk_convert_to_mpc_op(op);
 	mpc_op = mpi_op->op;
 
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -8462,13 +8461,13 @@ int __INTERNAL__PMPI_Allreduce_inter(void *sendbuf, void *recvbuf, int count,
 {
 	int root, rank, res = MPI_ERR_INTERN;
 
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
 
-	if(sctk_is_in_local_group(comm) )
+	if(mpc_lowcomm_communicator_in_master_group(comm) )
 	{
 		root = (rank == 0) ? MPC_ROOT : MPC_PROC_NULL;
 		res  = PMPI_Reduce(sendbuf, recvbuf, count, datatype,
@@ -8506,7 +8505,7 @@ int __INTERNAL__PMPI_Allreduce_inter(void *sendbuf, void *recvbuf, int count,
 	}
 
 	res = PMPI_Bcast(recvbuf, count, datatype, 0,
-	                 sctk_get_local_comm_id(comm) );
+	                 mpc_lowcomm_communicator_get_local(comm) );
 	return res;
 }
 
@@ -8520,7 +8519,7 @@ int __INTERNAL__PMPI_Reduce_scatter_intra(void *sendbuf, void *recvbuf, int *rec
 	int size;
 	int acc = 0;
 
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -8573,12 +8572,12 @@ int __INTERNAL__PMPI_Reduce_scatter_inter(void *sendbuf, void *recvbuf, int *rec
 	mpi_op = sctk_convert_to_mpc_op(op);
 	mpc_op = mpi_op->op;
 
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_size(comm, &lsize);
+	res = _mpc_cl_comm_size(comm, &lsize);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -8671,7 +8670,7 @@ int __INTERNAL__PMPI_Reduce_scatter_inter(void *sendbuf, void *recvbuf, int *rec
 	}
 
 	res = PMPI_Scatterv(tmpbuf2, recvcnts, disps, datatype,
-	                    recvbuf, recvcnts[rank], datatype, 0, sctk_get_local_comm_id(comm) );
+	                    recvbuf, recvcnts[rank], datatype, 0, mpc_lowcomm_communicator_get_local(comm) );
 
 	return res;
 }
@@ -8684,12 +8683,12 @@ int __INTERNAL__PMPI_Reduce_scatter_block_intra(void *sendbuf, void *recvbuf, in
 	MPI_Aint true_lb, true_extent, lb, extent, buf_size;
 	char *recv_buf = NULL, *recv_buf_free = NULL;
 
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -8746,12 +8745,12 @@ int __INTERNAL__PMPI_Reduce_scatter_block_inter(void *sendbuf, void *recvbuf, in
 	mpi_op = sctk_convert_to_mpc_op(op);
 	mpc_op = mpi_op->op;
 
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_size(comm, &lsize);
+	res = _mpc_cl_comm_size(comm, &lsize);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -8830,7 +8829,7 @@ int __INTERNAL__PMPI_Reduce_scatter_block_inter(void *sendbuf, void *recvbuf, in
 	}
 
 	res = PMPI_Scatter(tmpbuf2, recvcnt, datatype, recvbuf, recvcnt,
-	                   datatype, 0, sctk_get_local_comm_id(comm) );
+	                   datatype, 0, mpc_lowcomm_communicator_get_local(comm) );
 
 	return res;
 }
@@ -8855,12 +8854,12 @@ int __INTERNAL__PMPI_Scan_intra(void *sendbuf, void *recvbuf, int count,
 	mpi_op = sctk_convert_to_mpc_op(op);
 	mpc_op = mpi_op->op;
 
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -8952,12 +8951,12 @@ int __INTERNAL__PMPI_Exscan_intra(void *sendbuf, void *recvbuf, int count,
 	mpi_op = sctk_convert_to_mpc_op(op);
 	mpc_op = mpi_op->op;
 
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -9193,76 +9192,6 @@ __sctk_delete_mpc_group(MPI_Group *group)
 	mpc_common_spinlock_unlock(&(groups->lock) );
 }
 
-static int __cached_comm_size(MPI_Comm comm, int *size)
-{
-	static int comm_world_size = -1;
-	int ret = MPI_SUCCESS;
-
-	if( (comm == MPI_COMM_WORLD) && (0 < comm_world_size) )
-	{
-		*size = comm_world_size;
-	}
-	else
-	{
-		static __thread int last_comm = -1;
-		static __thread int last_rank = -1;
-		static __thread int last_size = -1;
-
-		if(last_comm == comm)
-		{
-			if(last_rank == mpc_common_get_task_rank() )
-			{
-				*size = last_size;
-				return ret;
-			}
-		}
-
-		ret = _mpc_cl_comm_size(comm, size);
-
-		last_rank = mpc_common_get_task_rank();
-		last_comm = comm;
-		last_size = *size;
-
-		if(comm == MPI_COMM_WORLD)
-		{
-			comm_world_size = *size;
-		}
-	}
-
-	return ret;
-}
-
-static int __cached_comm_rank(MPI_Comm comm, int *rank)
-{
-	static __thread int last_comm  = -1;
-	static __thread int last_rank  = -1;
-	static __thread int last_crank = -1;
-
-	if(last_comm == comm)
-	{
-		if(last_rank == mpc_common_get_task_rank() )
-		{
-			if(!mpc_common_flags_disguised_get() )
-			{
-				*rank = last_crank;
-				return MPI_SUCCESS;
-			}
-		}
-	}
-
-	int ret = _mpc_cl_comm_rank(comm, rank);
-
-	if( (ret == MPI_SUCCESS) && (!mpc_common_flags_disguised_get() ) )
-	{
-		//mpc_common_debug_error("SAVE %d@%d %p", *rank , comm,  rank);
-		last_rank  = mpc_common_get_task_rank();
-		last_comm  = comm;
-		last_crank = *rank;
-	}
-
-	return ret;
-}
-
 static int SCTK__MPI_Comm_communicator_dup(MPI_Comm comm, MPI_Comm newcomm);
 static int SCTK__MPI_Comm_communicator_free(MPI_Comm comm);
 
@@ -9342,6 +9271,13 @@ static int SCTK__MPI_Attr_clean_communicator(MPI_Comm comm)
 	tmp = __get_per_task_data();
 	mpc_common_spinlock_lock(&(tmp->lock) );
 	tmp_per_comm = __get_per_comm_data(comm);
+
+	if(!tmp_per_comm)
+	{
+		mpc_common_spinlock_unlock(&(tmp->lock) );
+		return MPI_SUCCESS;
+	}
+
 	mpc_common_spinlock_lock(&(tmp_per_comm->lock) );
 
 	for(i = 0; i < tmp_per_comm->max_number; i++)
@@ -9506,6 +9442,12 @@ static int SCTK__MPI_Comm_communicator_free(MPI_Comm comm)
 	mpi_topology_per_comm_t *topo;
 
 	tmp  = __get_per_comm_data(comm);
+
+	if(!tmp)
+	{
+		return MPI_SUCCESS;
+	}
+
 	topo = &(tmp->topo);
 
 	mpc_common_spinlock_lock(&(topo->lock) );
@@ -9908,7 +9850,7 @@ int PMPIX_Swap(void **sendrecv_buf, int remote_rank, MPI_Count size, MPI_Comm co
 
 	/* First resolve the source and dest rank
 	 * in the comm_world */
-	int remote = sctk_get_comm_world_rank( (const mpc_lowcomm_communicator_t)comm, remote_rank);
+	int remote = mpc_lowcomm_communicator_world_rank( (const mpc_lowcomm_communicator_t)comm, remote_rank);
 
 	/* Now check if we are on the same node for both communications */
 	if(!mpc_lowcomm_is_remote_rank(remote) )
@@ -9981,7 +9923,7 @@ int PMPIX_Exchange(void **send_buf, void **recvbuff, int remote_rank, MPI_Count 
 
 	/* First resolve the source and dest rank
 	 * in the comm_world */
-	int remote = sctk_get_comm_world_rank( (const mpc_lowcomm_communicator_t)comm, remote_rank);
+	int remote = mpc_lowcomm_communicator_world_rank( (const mpc_lowcomm_communicator_t)comm, remote_rank);
 
 	/* Now check if we are on the same node for both communications */
 	if(!mpc_lowcomm_is_remote_rank(remote) )
@@ -10033,7 +9975,7 @@ int PMPI_Send_internal(const void *buf, int count, MPI_Datatype datatype, int de
 
 	mpi_check_comm(comm, comm);
 	int size;
-	__cached_comm_size(comm, &size);
+	_mpc_cl_comm_size(comm, &size);
 	mpi_check_rank_send(dest, size, comm);
 	mpi_check_type(datatype, comm);
 	mpi_check_count(count, comm);
@@ -10136,7 +10078,7 @@ int PMPI_Recv_internal(void *buf, int count, MPI_Datatype datatype, int source, 
 	mpi_check_count(count, comm);
 	mpc_common_nodebug("tag %d", tag);
 	int size;
-	__cached_comm_size(comm, &size);
+	_mpc_cl_comm_size(comm, &size);
 	mpi_check_rank(source, size, comm);
 
 	if(count != 0)
@@ -10247,7 +10189,7 @@ int PMPI_Bsend(const void *buf, int count, MPI_Datatype datatype, int dest, int 
 	{
 		mpi_check_comm(comm, comm);
 		int size;
-		__cached_comm_size(comm, &size);
+		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank_send(dest, size, comm);
 		mpi_check_type(datatype, comm);
 		mpi_check_count(count, comm);
@@ -10282,7 +10224,7 @@ int PMPI_Ssend(const void *buf, int count, MPI_Datatype datatype, int dest, int 
 	{
 		mpi_check_comm(comm, comm);
 		int size;
-		__cached_comm_size(comm, &size);
+		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank_send(dest, size, comm);
 		mpi_check_type(datatype, comm);
 		mpi_check_count(count, comm);
@@ -10325,7 +10267,7 @@ int PMPI_Rsend(const void *buf, int count, MPI_Datatype datatype, int dest, int 
 	{
 		mpi_check_comm(comm, comm);
 		int size;
-		__cached_comm_size(comm, &size);
+		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank_send(dest, size, comm);
 		mpi_check_type(datatype, comm);
 		mpi_check_count(count, comm);
@@ -10437,7 +10379,7 @@ int PMPI_Isend_internal(const void *buf, int count, MPI_Datatype datatype, int d
 
 	mpi_check_comm(comm, comm);
 	int size;
-	__cached_comm_size(comm, &size);
+	_mpc_cl_comm_size(comm, &size);
 	mpi_check_rank_send(dest, size, comm);
 	mpi_check_type(datatype, comm);
 	mpi_check_count(count, comm);
@@ -10475,7 +10417,7 @@ int PMPI_Ibsend(const void *buf, int count, MPI_Datatype datatype, int dest, int
 	{
 		mpi_check_comm(comm, comm);
 		int size;
-		__cached_comm_size(comm, &size);
+		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank_send(dest, size, comm);
 		mpi_check_type(datatype, comm);
 		mpi_check_count(count, comm);
@@ -10524,7 +10466,7 @@ int PMPI_Irecv_internal(void *buf, int count, MPI_Datatype datatype, int source,
 		mpi_check_type(datatype, comm);
 		mpi_check_count(count, comm);
 		mpc_common_nodebug("tag %d", tag);
-		__cached_comm_size(comm, &size);
+		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank(source, size, comm);
 
 
@@ -11231,7 +11173,7 @@ int PMPI_Iprobe(int source, int tag, MPI_Comm comm, int *flag,
 
 	mpi_check_comm(comm, comm);
 	mpi_check_tag(tag, comm);
-	__cached_comm_size(comm, &size);
+	_mpc_cl_comm_size(comm, &size);
 
 	mpi_check_rank(source, size, comm);
 
@@ -11254,7 +11196,7 @@ int PMPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status)
 
 	mpi_check_comm(comm, comm);
 	mpi_check_tag(tag, comm);
-	__cached_comm_size(comm, &size);
+	_mpc_cl_comm_size(comm, &size);
 
 	mpi_check_rank(source, size, comm);
 
@@ -11299,7 +11241,7 @@ int PMPI_Send_init(const void *buf, int count, MPI_Datatype datatype, int dest,
 	{
 		mpi_check_comm(comm, comm);
 		int size;
-		__cached_comm_size(comm, &size);
+		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank_send(dest, size, comm);
 		mpi_check_type(datatype, comm);
 		mpi_check_count(count, comm);
@@ -11352,7 +11294,7 @@ int PMPI_Bsend_init(const void *buf, int count, MPI_Datatype datatype,
 	{
 		mpi_check_comm(comm, comm);
 		int size;
-		__cached_comm_size(comm, &size);
+		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank_send(dest, size, comm);
 		mpi_check_type(datatype, comm);
 		mpi_check_count(count, comm);
@@ -11406,7 +11348,7 @@ int PMPI_Ssend_init(const void *buf, int count, MPI_Datatype datatype, int dest,
 	{
 		mpi_check_comm(comm, comm);
 		int size;
-		__cached_comm_size(comm, &size);
+		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank_send(dest, size, comm);
 		mpi_check_type(datatype, comm);
 		mpi_check_count(count, comm);
@@ -11459,7 +11401,7 @@ int PMPI_Rsend_init(const void *buf, int count, MPI_Datatype datatype, int dest,
 	{
 		mpi_check_comm(comm, comm);
 		int size;
-		__cached_comm_size(comm, &size);
+		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank_send(dest, size, comm);
 		mpi_check_type(datatype, comm);
 		mpi_check_count(count, comm);
@@ -11516,7 +11458,7 @@ int PMPI_Recv_init(void *buf, int count, MPI_Datatype datatype, int source,
 		mpi_check_count(count, comm);
 		mpc_common_nodebug("tag %d", tag);
 		mpi_check_tag(tag, comm);
-		__cached_comm_size(comm, &size);
+		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank(source, size, comm);
 
 		if(count != 0)
@@ -11667,7 +11609,7 @@ int PMPI_Sendrecv_internal(const void *sendbuf, int sendcount, MPI_Datatype send
 	int size;
 
 	mpi_check_comm(comm, comm);
-	__cached_comm_size(comm, &size);
+	_mpc_cl_comm_size(comm, &size);
 
 	mpi_check_type(sendtype, comm);
 	mpi_check_type(recvtype, comm);
@@ -11740,7 +11682,7 @@ int PMPI_Sendrecv_replace(void *buf, int count, MPI_Datatype datatype,
 	mpi_check_count(count, comm);
 	mpi_check_tag_send(sendtag, comm);
 	mpi_check_tag(recvtag, comm);
-	__cached_comm_size(comm, &size);
+	_mpc_cl_comm_size(comm, &size);
 	mpi_check_rank_send(dest, size, comm);
 	mpi_check_rank(source, size, comm);
 	if(count != 0)
@@ -13262,7 +13204,7 @@ int PMPI_Type_create_darray(int size,
 	mpi_check_type(oldtype, comm);
 
 	int csize;
-	__cached_comm_size(comm, &csize);
+	_mpc_cl_comm_size(comm, &csize);
 	mpi_check_rank(rank, size, comm);
 
 
@@ -13854,7 +13796,7 @@ int PMPI_Barrier(MPI_Comm comm)
 	int res = MPI_ERR_INTERN;
 
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
 	}
@@ -13870,7 +13812,7 @@ int PMPI_Barrier(MPI_Comm comm)
 	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
 
 	/* Intercomm */
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		if(barrier_inter == NULL)
 		{
@@ -13900,7 +13842,7 @@ int PMPI_Barrier(MPI_Comm comm)
 				->modules.collectives_intra.barrier_intra.value);
 		}
 
-		if(sctk_is_shared_node(comm) )
+		if(mpc_lowcomm_communicator_is_shared_node(comm) )
 		{
 			res = (barrier_intra_shared_node)(comm);
 		}
@@ -13925,7 +13867,7 @@ int PMPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Com
 	int size;
 
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
 	}
@@ -13941,7 +13883,7 @@ int PMPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Com
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
 	}
 
-	__cached_comm_size(comm, &size);
+	_mpc_cl_comm_size(comm, &size);
 	mpi_check_root(root, size, comm);
 	mpi_check_rank_send(root, size, comm);
 	mpi_check_buf(buffer, comm);
@@ -13962,7 +13904,7 @@ int PMPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Com
 	}
 
 	/* Intercomm */
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		if(bcast_inter == NULL)
 		{
@@ -13977,7 +13919,7 @@ int PMPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Com
 	{
 		/* Intracomm */
 		int size;
-		__cached_comm_size(comm, &size);
+		_mpc_cl_comm_size(comm, &size);
 
 		if(size == 1)
 		{
@@ -14008,12 +13950,12 @@ int PMPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Com
 				->modules.collectives_intra.bcast_intra.value);
 		}
 
-		if(sctk_is_shared_mem(comm) )
+		if(mpc_lowcomm_communicator_is_shared_mem(comm) )
 		{
 			/* Here only work in shared-mem */
 			res = (bcast_intra_shm)(buffer, count, datatype, root, comm);
 		}
-		else if(sctk_is_shared_node(comm) && _mpc_dt_is_contig_mem(datatype) )
+		else if(mpc_lowcomm_communicator_is_shared_node(comm) && _mpc_dt_is_contig_mem(datatype) )
 		{
 			res = (bcast_intra_shared_node)(buffer, count, datatype, root, comm);
 		}
@@ -14037,7 +13979,7 @@ int PMPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	int size, rank;
 
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
 	}
@@ -14047,18 +13989,18 @@ int PMPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	SCTK_PROFIL_START(MPI_Gather);
 
 	mpi_check_comm(comm, comm);
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
 
-	if( (sendcnt == 0 || recvcnt == 0) && !sctk_is_inter_comm(comm) )
+	if( (sendcnt == 0 || recvcnt == 0) && !mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		return MPI_SUCCESS;
 	}
@@ -14107,7 +14049,7 @@ int PMPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
 
 	/* Intercomm */
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		if(gather_inter == NULL)
 		{
@@ -14142,7 +14084,7 @@ int PMPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 				->modules.collectives_intra.gather_intra.value;
 		}
 
-		if(sctk_is_shared_mem(comm) )
+		if(mpc_lowcomm_communicator_is_shared_mem(comm) )
 		{
 			res = (gatherv_intra_shm)(sendbuf, sendcnt, sendtype, recvbuf, &recvcnt,
 			                          NULL, recvtype, root, comm);
@@ -14170,7 +14112,7 @@ int PMPI_Gatherv(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	int size, rank;
 
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
 	}
@@ -14179,12 +14121,12 @@ int PMPI_Gatherv(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	SCTK_PROFIL_START(MPI_Gatherv);
 
 	mpi_check_comm(comm, comm);
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -14213,7 +14155,7 @@ int PMPI_Gatherv(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
 
 	/* Intercomm */
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		if(gatherv_inter == NULL)
 		{
@@ -14249,7 +14191,7 @@ int PMPI_Gatherv(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 				->modules.collectives_intra.gatherv_intra.value;
 		}
 
-		if(sctk_is_shared_mem(comm) )
+		if(mpc_lowcomm_communicator_is_shared_mem(comm) )
 		{
 			res = (gatherv_intra_shm)(sendbuf, sendcnt, sendtype, recvbuf, recvcnts,
 			                          displs, recvtype, root, comm);
@@ -14283,7 +14225,7 @@ int PMPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	int size, rank;
 
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
 	}
@@ -14292,12 +14234,12 @@ int PMPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	SCTK_PROFIL_START(MPI_Scatter);
 
 	mpi_check_comm(comm, comm);
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -14346,7 +14288,7 @@ int PMPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
 
 	/* Intercomm */
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		if(scatter_inter == NULL)
 		{
@@ -14391,14 +14333,14 @@ int PMPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 
 		/* Note there is a bug we did not find with derived data-types
 		 * on the scatter(v) operation deactivated for now */
-		//if (sctk_is_shared_mem(comm) && _mpc_dt_is_contig_mem(sendtype) &&
+		//if (mpc_lowcomm_communicator_is_shared_mem(comm) && _mpc_dt_is_contig_mem(sendtype) &&
 		//_mpc_dt_is_contig_mem(recvtype))
-		if(sctk_is_shared_mem(comm) )
+		if(mpc_lowcomm_communicator_is_shared_mem(comm) )
 		{
 			res = (scatterv_intra_shm)(sendbuf, &sendcnt, NULL, sendtype, recvbuf,
 			                           recvcnt, recvtype, root, comm);
 		}
-		else if(sctk_is_shared_node(comm) )
+		else if(mpc_lowcomm_communicator_is_shared_node(comm) )
 		{
 			res = (scatter_intra_shared_node)(sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
 			                                  recvtype, root, comm);
@@ -14426,7 +14368,7 @@ int PMPI_Scatterv(const void *sendbuf, const int *sendcnts, const int *displs,
 	MPI_Aint extent;
 
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
 	}
@@ -14439,11 +14381,11 @@ int PMPI_Scatterv(const void *sendbuf, const int *sendcnts, const int *displs,
 
 	/* Error checking */
 	mpi_check_comm(comm, comm);
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	MPI_HANDLE_ERROR(res, comm, "Error getting size");
 
 
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 
 	MPI_HANDLE_ERROR(res, comm, "Error getting rank");
 
@@ -14452,7 +14394,7 @@ int PMPI_Scatterv(const void *sendbuf, const int *sendcnts, const int *displs,
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
 	}
 
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		res = PMPI_Comm_remote_size(comm, &rsize);
 		MPI_HANDLE_ERROR(res, comm, "Error getting remote size");
@@ -14510,7 +14452,7 @@ int PMPI_Scatterv(const void *sendbuf, const int *sendcnts, const int *displs,
 	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
 	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
 	/* Intercomm */
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		if(scatterv_inter == NULL)
 		{
@@ -14541,7 +14483,7 @@ int PMPI_Scatterv(const void *sendbuf, const int *sendcnts, const int *displs,
 				->modules.collectives_intra.scatterv_intra.value;
 		}
 
-		if(sctk_is_shared_mem(comm) )
+		if(mpc_lowcomm_communicator_is_shared_mem(comm) )
 		{
 			res = (scatterv_intra_shm)(sendbuf, sendcnts, displs, sendtype, recvbuf,
 			                           recvcnt, recvtype, root, comm);
@@ -14587,7 +14529,7 @@ int PMPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	mpi_check_count(recvcount, comm);
 	mpi_check_type(recvtype, comm);
 
-	int is_intercomm = sctk_is_inter_comm(comm);
+	int is_intercomm = mpc_lowcomm_communicator_is_intercomm(comm);
 
 	if(is_intercomm)
 	{
@@ -14659,7 +14601,7 @@ int PMPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	int res = MPI_ERR_INTERN;
 
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
 	}
@@ -14694,7 +14636,7 @@ int PMPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
 
 	/* Intercomm */
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		if(allgatherv_inter == NULL)
 		{
@@ -14737,7 +14679,7 @@ int PMPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	int res = MPI_ERR_INTERN;
 
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
 	}
@@ -14776,7 +14718,7 @@ int PMPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
 
 	/* Intercomm */
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		if(alltoall_inter == NULL)
 		{
@@ -14822,12 +14764,12 @@ int PMPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 		}
 
 
-		if(sctk_is_shared_mem(comm) )
+		if(mpc_lowcomm_communicator_is_shared_mem(comm) )
 		{
 			res = (alltoallv_intra_shm)(sendbuf, &sendcount, NULL, sendtype, recvbuf,
 			                            &recvcount, NULL, recvtype, comm);
 		}
-		else if(sctk_is_shared_node(comm) )
+		else if(mpc_lowcomm_communicator_is_shared_node(comm) )
 		{
 			res = (alltoall_intra_shared_node)(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
 		}
@@ -14855,7 +14797,7 @@ int PMPI_Alltoallv(const void *sendbuf, const int *sendcnts, const int *sdispls,
 	int i;
 
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
 	}
@@ -14865,7 +14807,7 @@ int PMPI_Alltoallv(const void *sendbuf, const int *sendcnts, const int *sdispls,
 
 	/* Error checking */
 	mpi_check_comm(comm, comm);
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -14898,7 +14840,7 @@ int PMPI_Alltoallv(const void *sendbuf, const int *sendcnts, const int *sdispls,
 
 
 	/* Intercomm */
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		if(alltoallv_inter == NULL)
 		{
@@ -14933,7 +14875,7 @@ int PMPI_Alltoallv(const void *sendbuf, const int *sendcnts, const int *sdispls,
 				->modules.collectives_intra.alltoallv_intra.value);
 		}
 
-		if(sctk_is_shared_mem(comm) )
+		if(mpc_lowcomm_communicator_is_shared_mem(comm) )
 		{
 			res = alltoallv_intra_shm(sendbuf, sendcnts, sdispls, sendtype, recvbuf,
 			                          recvcnts, rdispls, recvtype, comm);
@@ -14963,7 +14905,7 @@ int PMPI_Alltoallw(const void *sendbuf, const int *sendcnts, const int *sdispls,
 	MPI_Aint sextent, rextent;
 
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
 	}
@@ -14971,7 +14913,7 @@ int PMPI_Alltoallw(const void *sendbuf, const int *sendcnts, const int *sdispls,
 	/* Profiling */
 	SCTK_PROFIL_START(MPI_Alltoallw);
 
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -14981,7 +14923,7 @@ int PMPI_Alltoallw(const void *sendbuf, const int *sendcnts, const int *sdispls,
 	//{
 	//	return res;
 	//}
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -14992,7 +14934,7 @@ int PMPI_Alltoallw(const void *sendbuf, const int *sendcnts, const int *sdispls,
 	}
 	/* Error checking */
 	mpi_check_comm(comm, comm);
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -15058,7 +15000,7 @@ int PMPI_Neighbor_allgather(const void *sendbuf, int sendcount, MPI_Datatype sen
 
 	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
-	__cached_comm_rank(comm, &rank);
+	_mpc_cl_comm_rank(comm, &rank);
 
 	if(recvtype == MPI_DATATYPE_NULL)
 	{
@@ -15069,7 +15011,7 @@ int PMPI_Neighbor_allgather(const void *sendbuf, int sendcount, MPI_Datatype sen
 		MPI_ERROR_REPORT(comm, MPI_ERR_COUNT, "recvcount must be superior or equal to zero");
 	}
 
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		if(sendcount == 0 && recvcount == 0)
 		{
@@ -15112,11 +15054,11 @@ int PMPI_Neighbor_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype se
 	mpc_mpi_per_communicator_t *tmp;
 	mpi_topology_per_comm_t *topo;
 
-	__cached_comm_size(comm, &size);
+	_mpc_cl_comm_size(comm, &size);
 
 	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
-	__cached_comm_rank(comm, &rank);
+	_mpc_cl_comm_rank(comm, &rank);
 
 	if(!(topo->type == MPI_CART || topo->type == MPI_GRAPH) )
 	{
@@ -15140,7 +15082,7 @@ int PMPI_Neighbor_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype se
 		MPI_ERROR_REPORT(comm, MPI_ERR_BUFFER, "displs must be valid");
 	}
 
-	if(!sctk_is_inter_comm(comm) )
+	if(!mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		for(i = 0; i < size; ++i)
 		{
@@ -15185,7 +15127,7 @@ int PMPI_Neighbor_alltoall(const void *sendbuf, int sendcount, MPI_Datatype send
 
 	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
-	__cached_comm_rank(comm, &rank);
+	_mpc_cl_comm_rank(comm, &rank);
 
 	if(!(topo->type == MPI_CART || topo->type == MPI_GRAPH) )
 	{
@@ -15233,7 +15175,7 @@ int PMPI_Neighbor_alltoallv(const void *sendbuf, const int sendcounts[], const i
 
 	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
-	__cached_comm_rank(comm, &rank);
+	_mpc_cl_comm_rank(comm, &rank);
 
 	if(!(topo->type == MPI_CART || topo->type == MPI_GRAPH) )
 	{
@@ -15244,7 +15186,7 @@ int PMPI_Neighbor_alltoallv(const void *sendbuf, const int sendcounts[], const i
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "Invalid arg");
 	}
 
-	__cached_comm_rank(comm, &size);
+	_mpc_cl_comm_rank(comm, &size);
 	for(i = 0; i < size; i++)
 	{
 		if(recvcounts[i] < 0)
@@ -15285,7 +15227,7 @@ int PMPI_Neighbor_alltoallw(const void *sendbuf, const int sendcounts[], const M
 
 	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
-	__cached_comm_rank(comm, &rank);
+	_mpc_cl_comm_rank(comm, &rank);
 
 	if( (NULL == sendcounts) || (NULL == sdispls) || (NULL == sendtypes) ||
 	    (NULL == recvcounts) || (NULL == rdispls) || (NULL == recvtypes) )
@@ -15293,7 +15235,7 @@ int PMPI_Neighbor_alltoallw(const void *sendbuf, const int sendcounts[], const M
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "Invalid arg");
 	}
 
-	__cached_comm_rank(comm, &size);
+	_mpc_cl_comm_rank(comm, &size);
 	for(i = 0; i < size; i++)
 	{
 		if(recvcounts[i] < 0)
@@ -15331,7 +15273,7 @@ int PMPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype data
 	int size, rank;
 
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
 	}
@@ -15341,12 +15283,12 @@ int PMPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype data
 
 	/* Error checking */
 	mpi_check_comm(comm, comm);
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-	res = __cached_comm_rank(comm, &rank);
+	res = _mpc_cl_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -15356,7 +15298,7 @@ int PMPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype data
 	mpi_check_count(count, comm);
 	mpi_check_type(datatype, comm);
 	mpi_check_op(op, datatype, comm);
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		if(root == MPI_ROOT)
 		{
@@ -15402,7 +15344,7 @@ int PMPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype data
 	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
 
 	/* Intercomm */
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		if(reduce_inter == NULL)
 		{
@@ -15519,7 +15461,7 @@ int PMPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
 	int res = MPI_ERR_INTERN;
 
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
 	}
@@ -15556,7 +15498,7 @@ int PMPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
 	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
 
 /* Intercomm */
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		if(allreduce_inter == NULL)
 		{
@@ -15592,7 +15534,7 @@ int PMPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcnts[]
 	int res = MPI_ERR_INTERN;
 
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
 	}
@@ -15609,7 +15551,7 @@ int PMPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcnts[]
 	mpi_check_buf(sendbuf, comm);
 	mpi_check_buf(recvbuf, comm);
 
-	res = __cached_comm_size(comm, &size);
+	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
@@ -15626,7 +15568,7 @@ int PMPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcnts[]
 	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
 
 	/* Intercomm */
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		if(reduce_scatter_inter == NULL)
 		{
@@ -15661,7 +15603,7 @@ int PMPI_Reduce_scatter_block(const void *sendbuf, void *recvbuf, int recvcnt,
 	int res = MPI_ERR_INTERN;
 
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
 	}
@@ -15674,7 +15616,7 @@ int PMPI_Reduce_scatter_block(const void *sendbuf, void *recvbuf, int recvcnt,
 	mpi_check_buf(sendbuf, comm);
 	mpi_check_buf(recvbuf, comm);
 
-	__cached_comm_size(comm, &size);
+	_mpc_cl_comm_size(comm, &size);
 
 	if(MPI_IN_PLACE == recvbuf || sendbuf == recvbuf)
 	{
@@ -15689,7 +15631,7 @@ int PMPI_Reduce_scatter_block(const void *sendbuf, void *recvbuf, int recvcnt,
 
 
 	/* Intercomm */
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		if(reduce_scatter_block_inter == NULL)
 		{
@@ -15732,7 +15674,7 @@ int PMPI_Scan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype dataty
 	mpi_check_op(op, datatype, comm);
 
 	/* Invalid operation for intercommunicators */
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
 	}
@@ -15768,7 +15710,7 @@ int PMPI_Exscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype data
 {
 	int res = MPI_ERR_INTERN;
 
-	if(sctk_is_inter_comm(comm) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
 	}
@@ -15836,7 +15778,7 @@ int PMPI_Group_rank(MPI_Group group, int *rank)
 	int grank;
 
 	_mpc_cl_group_t *pgroup = __sctk_convert_mpc_group(group);
-	__cached_comm_rank(MPI_COMM_WORLD, &grank);
+	_mpc_cl_comm_rank(MPI_COMM_WORLD, &grank);
 	*rank = MPI_UNDEFINED;
 
 	for(i = 0; i < pgroup->task_nb; i++)
@@ -16210,7 +16152,7 @@ int PMPI_Group_incl(MPI_Group mpi_group, int n, const int ranks[], MPI_Group *mp
 	int i;
 	int size;
 
-	__cached_comm_size(comm, &size);
+	_mpc_cl_comm_size(comm, &size);
 	for(i = 0; i < n; i++)
 	{
 		if( (ranks[i] < 0) || (ranks[i] >= size) )
@@ -16814,7 +16756,7 @@ int PMPI_Comm_size(MPI_Comm comm, int *size)
 	mpc_common_nodebug("Enter Comm_size comm %d", comm);
 	int res = MPI_ERR_INTERN;
 	mpi_check_comm(comm, comm);
-	res = __cached_comm_size(comm, size);
+	res = _mpc_cl_comm_size(comm, size);
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
@@ -16823,7 +16765,7 @@ int PMPI_Comm_rank(MPI_Comm comm, int *rank)
 	mpc_common_nodebug("Enter Comm_rank comm %d", comm);
 	int res = MPI_ERR_INTERN;
 	mpi_check_comm(comm, comm);
-	res = __cached_comm_rank(comm, rank);
+	res = _mpc_cl_comm_rank(comm, rank);
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
@@ -16831,9 +16773,7 @@ int PMPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result)
 {
 	mpc_common_nodebug("Enter Comm_compare");
 
-
-
-	if(comm1 < 0 || comm2 < 0)
+	if(comm1 == MPI_COMM_NULL || comm2  == MPI_COMM_NULL)
 	{
 		if(comm1 != comm2)
 		{
@@ -16853,7 +16793,7 @@ int PMPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result)
 
 	*result = MPI_UNEQUAL;
 
-	if(sctk_is_inter_comm(comm1) != sctk_is_inter_comm(comm2) )
+	if(mpc_lowcomm_communicator_is_intercomm(comm1) != mpc_lowcomm_communicator_is_intercomm(comm2) )
 	{
 		*result = MPI_UNEQUAL;
 		return MPI_SUCCESS;
@@ -16985,16 +16925,16 @@ int PMPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
 	mpi_check_comm(local_comm, local_comm);
 	mpi_check_comm(peer_comm, peer_comm);
 
-	__cached_comm_size(local_comm, &size);
+	_mpc_cl_comm_size(local_comm, &size);
 
-	if(sctk_is_inter_comm(local_comm) == 0)
+	if(mpc_lowcomm_communicator_is_intercomm(local_comm) == 0)
 	{
 		mpi_check_rank_send(local_leader, size, comm);
 	}
 
-	__cached_comm_size(peer_comm, &size);
+	_mpc_cl_comm_size(peer_comm, &size);
 
-	if(sctk_is_inter_comm(peer_comm) == 0)
+	if(mpc_lowcomm_communicator_is_intercomm(peer_comm) == 0)
 	{
 		mpi_check_rank_send(remote_leader, size, comm);
 	}
@@ -17019,7 +16959,6 @@ int PMPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
 	}
 	res = _mpc_cl_comm_split(comm, color, key, newcomm);
-	mpc_common_nodebug("SPLIT Com %d Color %d, key %d newcomm %d", comm, color, key, *newcomm);
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
@@ -17043,7 +16982,6 @@ int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_
 
 int PMPI_Comm_free(MPI_Comm *comm)
 {
-	mpc_common_nodebug("Enter Comm_free");
 	int res = MPI_ERR_INTERN;
 	if(comm == NULL)
 	{
@@ -17057,6 +16995,7 @@ int PMPI_Comm_free(MPI_Comm *comm)
 
 	mpi_check_comm(*comm, *comm);
 
+#if 0
 	res = SCTK__MPI_Attr_clean_communicator(*comm);
 	if(res != MPI_SUCCESS)
 	{
@@ -17067,6 +17006,7 @@ int PMPI_Comm_free(MPI_Comm *comm)
 	{
 		return res;
 	}
+#endif
 
 	res = _mpc_cl_comm_free(comm);
 	MPI_HANDLE_RETURN_VAL(res, *comm);
@@ -17077,7 +17017,7 @@ int PMPI_Comm_test_inter(MPI_Comm comm, int *flag)
 	mpc_common_nodebug("Enter Comm_test_inter");
 
 	mpi_check_comm(comm, comm);
-	*flag = sctk_is_inter_comm(comm);
+	*flag = mpc_lowcomm_communicator_is_intercomm(comm);
 	return MPI_SUCCESS;
 }
 
@@ -17086,7 +17026,7 @@ int PMPI_Comm_remote_size(MPI_Comm comm, int *size)
 	mpc_common_nodebug("Enter Comm_remote_size comm %d", comm);
 	int res = MPI_ERR_INTERN;
 	mpi_check_comm(comm, comm);
-	if(sctk_is_inter_comm(comm) == 0)
+	if(mpc_lowcomm_communicator_is_intercomm(comm) == 0)
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
 	}
@@ -17101,7 +17041,7 @@ int PMPI_Comm_remote_group(MPI_Comm comm, MPI_Group *mpi_group)
 	mpc_common_nodebug("Enter Comm_remote_group");
 	int res = MPI_ERR_INTERN;
 	mpi_check_comm(comm, comm);
-	if(sctk_is_inter_comm(comm) == 0)
+	if(mpc_lowcomm_communicator_is_intercomm(comm) == 0)
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
 	}
@@ -17116,92 +17056,7 @@ int PMPI_Comm_remote_group(MPI_Comm comm, MPI_Group *mpi_group)
 
 int PMPI_Intercomm_merge(MPI_Comm intercomm, int high, MPI_Comm *newintracomm)
 {
-	MPI_Comm comm = MPI_COMM_WORLD;
-	int res       = MPI_ERR_INTERN;
-
-	mpi_check_comm(intercomm, comm);
-
-	if(sctk_is_inter_comm(intercomm) == 0)
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
-	}
-
-	MPI_Group new_group;
-	mpc_lowcomm_status_t status;
-
-	int grank;
-	_mpc_cl_comm_rank(intercomm, &grank);
-
-	MPI_Group local_group;
-	PMPI_Comm_group(intercomm, &local_group);
-
-	MPI_Group remote_group;
-	PMPI_Comm_remote_group(intercomm, &remote_group);
-
-	int remote_leader = sctk_get_remote_leader(intercomm);
-	int local_leader  = sctk_get_local_leader(intercomm);
-	mpc_lowcomm_communicator_t peer_comm = sctk_get_peer_comm(intercomm);
-
-	int remote_high;
-
-	if(grank == local_leader)
-	{
-		mpc_common_nodebug("grank = %d, rank %d : local_leader %d send %d to remote_leader %d", grank, rank, local_leader, high, remote_leader);
-		PMPI_Sendrecv_internal(&high, 1, MPC_INT, remote_leader, 629, &remote_high, 1, MPC_INT, remote_leader, 629, peer_comm, &status);
-	}
-
-	mpc_lowcomm_bcast(&remote_high, sizeof(int), 0, sctk_get_local_comm_id(intercomm) );
-
-	if(sctk_is_in_local_group(intercomm) )
-	{
-		if(high && !remote_high)
-		{
-			mpc_common_nodebug("high && !remote_high && in local_group");
-			PMPI_Group_union(remote_group, local_group, &new_group);
-		}
-		else if(!high && remote_high)
-		{
-			mpc_common_nodebug("!high && remote_high && in local_group");
-			PMPI_Group_union(local_group, remote_group, &new_group);
-		}
-		else if(high && remote_high)
-		{
-			mpc_common_nodebug("high && remote_high && in local_group");
-			PMPI_Group_union(local_group, remote_group, &new_group);
-		}
-		else
-		{
-			mpc_common_nodebug("!high && !remote_high && in local_group");
-			PMPI_Group_union(local_group, remote_group, &new_group);
-		}
-	}
-	else
-	{
-		if(high && !remote_high)
-		{
-			mpc_common_nodebug("high && !remote_high && in remote_group");
-			PMPI_Group_union(remote_group, local_group, &new_group);
-		}
-		else if(!high && remote_high)
-		{
-			mpc_common_nodebug("!high && remote_high && in remote_group");
-			PMPI_Group_union(local_group, remote_group, &new_group);
-		}
-		else if(high && remote_high)
-		{
-			mpc_common_nodebug("high && remote_high && in remote_group");
-			PMPI_Group_union(remote_group, local_group, &new_group);
-		}
-		else
-		{
-			mpc_common_nodebug("!high && !remote_high && in remote_group");
-			PMPI_Group_union(remote_group, local_group, &new_group);
-		}
-	}
-
-	res = _mpc_cl_comm_create_from_intercomm(intercomm, __sctk_convert_mpc_group(new_group),
-	                                         newintracomm);
-	MPI_HANDLE_RETURN_VAL(res, comm);
+	return _mpc_cl_intercommcomm_merge(intercomm, high, newintracomm);
 }
 
 /**************************
@@ -17603,7 +17458,7 @@ int PMPI_Cart_create(MPI_Comm comm_old, int ndims, const int dims[], const int p
 			MPI_ERROR_REPORT(comm_old, MPI_ERR_COMM, "");
 		}
 
-		__cached_comm_size(comm_old, &size);
+		_mpc_cl_comm_size(comm_old, &size);
 
 		if(ndims >= 1 &&
 		   (periods == NULL || comm_cart == NULL) )
@@ -17636,7 +17491,7 @@ int PMPI_Cart_create(MPI_Comm comm_old, int ndims, const int dims[], const int p
 	int i;
 	int rank;
 
-	__cached_comm_rank(comm_old, &rank);
+	_mpc_cl_comm_rank(comm_old, &rank);
 
 	for(i = 0; i < ndims; i++)
 	{
@@ -17648,7 +17503,7 @@ int PMPI_Cart_create(MPI_Comm comm_old, int ndims, const int dims[], const int p
 		mpc_common_nodebug("dims[%d] = %d", i, dims[i]);
 	}
 
-	__cached_comm_size(comm_old, &size);
+	_mpc_cl_comm_size(comm_old, &size);
 
 	mpc_common_nodebug("%d <= %d", nb_tasks, size);
 	if(nb_tasks > size)
@@ -17818,7 +17673,7 @@ int PMPI_Graph_create(MPI_Comm comm_old, int nnodes, const int index[], const in
 		int size;
 		int nb_edge = 0;
 
-		__cached_comm_size(comm_old, &size);
+		_mpc_cl_comm_size(comm_old, &size);
 
 		if( (nnodes < 0) || (nnodes > size) )
 		{
@@ -17850,7 +17705,7 @@ int PMPI_Graph_create(MPI_Comm comm_old, int nnodes, const int index[], const in
 	mpi_topology_per_comm_t *topo;
 	int size;
 
-	__cached_comm_size(comm_old, &size);
+	_mpc_cl_comm_size(comm_old, &size);
 
 	INFO("Very simple approach never reorder nor take care of hardware topology")
 	if(nnodes == size)
@@ -17886,7 +17741,7 @@ int PMPI_Graph_create(MPI_Comm comm_old, int nnodes, const int index[], const in
 		MPI_HANDLE_ERROR(res, comm_old, "PMPI_Group_free failed");
 	}
 
-	if(*comm_graph >= 0)
+	if(*comm_graph)
 	{
 		tmp  = __get_per_comm_data(*comm_graph);
 		topo = &(tmp->topo);
@@ -18001,7 +17856,7 @@ int PMPI_Cart_get(MPI_Comm comm, int maxdims, int *dims, int *periods,
 	int res = MPI_ERR_INTERN;
 	mpi_check_comm(comm, comm);  {
 		int size;
-		__cached_comm_size(comm, &size);
+		_mpc_cl_comm_size(comm, &size);
 	}
 
 	mpc_mpi_per_communicator_t *tmp;
@@ -18011,7 +17866,7 @@ int PMPI_Cart_get(MPI_Comm comm, int maxdims, int *dims, int *periods,
 
 	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
-	__cached_comm_rank(comm, &rank);
+	_mpc_cl_comm_rank(comm, &rank);
 
 	mpc_common_spinlock_lock(&(topo->lock) );
 	if(topo->type != MPI_CART)
@@ -18164,7 +18019,7 @@ int PMPI_Cart_shift(MPI_Comm comm, int direction, int displ, int *source,
 
 	mpc_common_spinlock_lock(&(topo->lock) );
 
-	__cached_comm_rank(comm, &rank);
+	_mpc_cl_comm_rank(comm, &rank);
 
 
 	if(topo->type != MPI_CART)
@@ -18309,7 +18164,7 @@ int PMPI_Cart_sub(MPI_Comm comm, const int remain_dims[], MPI_Comm *comm_new)
 
 	tmp  = __get_per_comm_data(comm);
 	topo = &(tmp->topo);
-	__cached_comm_rank(comm, &rank);
+	_mpc_cl_comm_rank(comm, &rank);
 	mpc_common_spinlock_lock(&(topo->lock) );
 
 	if(remain_dims == NULL)
@@ -18423,8 +18278,8 @@ int PMPI_Cart_sub(MPI_Comm comm, const int remain_dims[], MPI_Comm *comm_new)
 		}
 	}
 
-	__cached_comm_size(*comm_new, &size);
-	__cached_comm_rank(*comm_new, &rank);
+	_mpc_cl_comm_size(*comm_new, &size);
+	_mpc_cl_comm_rank(*comm_new, &rank);
 	mpc_common_nodebug("%d on %d new rank", rank, size);
 	mpc_common_spinlock_unlock(&(topo->lock) );
 	return MPI_SUCCESS;
@@ -18439,7 +18294,7 @@ int PMPI_Cart_map(MPI_Comm comm_old, int ndims, const int dims[], __UNUSED__ con
 		int i;
 		int size;
 		int sum = 1;
-		__cached_comm_size(comm_old, &size);
+		_mpc_cl_comm_size(comm_old, &size);
 		if(ndims < 0)
 		{
 			MPI_ERROR_REPORT(comm_old, MPI_ERR_DIMS, "");
@@ -18471,7 +18326,7 @@ int PMPI_Cart_map(MPI_Comm comm_old, int ndims, const int dims[], __UNUSED__ con
 	}
 
 	TODO("Should be optimized why period is unused ?")
-	res = __cached_comm_rank(comm_old, newrank);
+	res = _mpc_cl_comm_rank(comm_old, newrank);
 
 	if(*newrank >= nnodes)
 	{
@@ -18493,7 +18348,7 @@ int PMPI_Graph_map(MPI_Comm comm_old, int nnodes, __UNUSED__ const int index[], 
 	{
 		int i;
 		int size;
-		__cached_comm_size(comm_old, &size);
+		_mpc_cl_comm_size(comm_old, &size);
 		if( (nnodes < 0) || (nnodes > size) )
 		{
 			MPI_ERROR_REPORT(comm_old, MPI_ERR_ARG, "");
@@ -18512,7 +18367,7 @@ int PMPI_Graph_map(MPI_Comm comm_old, int nnodes, __UNUSED__ const int index[], 
 	}
 
 	TODO("Should be optimized, Index and Edges are unused")
-	__cached_comm_rank(comm_old, newrank);
+	_mpc_cl_comm_rank(comm_old, newrank);
 
 	if(nnodes <= *newrank)
 	{
@@ -18859,8 +18714,8 @@ int PMPI_Init(int *argc, char ***argv)
 
 		MPI_APPNUM_VALUE       = 0;
 		MPI_LASTUSEDCODE_VALUE = MPI_ERR_LASTCODE;
-		__cached_comm_size(MPI_COMM_WORLD, &MPI_UNIVERSE_SIZE_VALUE);
-		__cached_comm_rank(MPI_COMM_WORLD, &rank);
+		_mpc_cl_comm_size(MPI_COMM_WORLD, &MPI_UNIVERSE_SIZE_VALUE);
+		_mpc_cl_comm_rank(MPI_COMM_WORLD, &rank);
 	}
 
 	MPI_HANDLE_RETURN_VAL(res, MPI_COMM_WORLD);
@@ -19369,7 +19224,7 @@ int PMPI_Comm_set_name(MPI_Comm comm, const char *comm_name)
  *  NULL Delete handlers              *
  **************************************/
 
-int MPI_NULL_DELETE_FN(__UNUSED__ MPI_Datatype datatype, __UNUSED__ int type_keyval, __UNUSED__ void *attribute_val_out, __UNUSED__ void *extra_state)
+int MPI_NULL_DELETE_FN(__UNUSED__ MPI_Comm datatype, __UNUSED__ int type_keyval, __UNUSED__ void *attribute_val_out, __UNUSED__ void *extra_state)
 {
 	mpc_common_nodebug("MPC_Mpi_null_delete_fn");
 	return MPI_SUCCESS;
@@ -19404,7 +19259,7 @@ int MPI_TYPE_NULL_COPY_FN(__UNUSED__ MPI_Datatype oldtype, __UNUSED__ int type_k
 	return MPI_SUCCESS;
 }
 
-int MPI_TYPE_DUP_FN(__UNUSED__ MPI_Comm comm, __UNUSED__ int comm_keyval, __UNUSED__ void *extra_state, void *attribute_val_in, void *attribute_val_out, __UNUSED__ int *flag)
+int MPI_TYPE_DUP_FN(__UNUSED__ MPI_Datatype comm, __UNUSED__ int comm_keyval, __UNUSED__ void *extra_state, void *attribute_val_in, void *attribute_val_out, __UNUSED__ int *flag)
 {
 	mpc_common_nodebug("MPC_Mpi_type_dup_fn");
 	*flag = 1;
@@ -19413,7 +19268,7 @@ int MPI_TYPE_DUP_FN(__UNUSED__ MPI_Comm comm, __UNUSED__ int comm_keyval, __UNUS
 }
 
 /* comm */
-int MPI_COMM_NULL_DELETE_FN(__UNUSED__ MPI_Datatype datatype, __UNUSED__ int type_keyval, __UNUSED__ void *attribute_val_out, __UNUSED__ void *extra_state)
+int MPI_COMM_NULL_DELETE_FN(__UNUSED__ MPI_Comm datatype, __UNUSED__ int type_keyval, __UNUSED__ void *attribute_val_out, __UNUSED__ void *extra_state)
 {
 	mpc_common_nodebug("MPC_Mpi_comm_null_delete_fn");
 	return MPI_SUCCESS;
@@ -19435,20 +19290,20 @@ int MPI_COMM_DUP_FN(__UNUSED__ MPI_Comm comm, __UNUSED__ int comm_keyval, __UNUS
 }
 
 /* win */
-int MPI_WIN_NULL_DELETE_FN(__UNUSED__ MPI_Datatype datatype, __UNUSED__ int type_keyval, __UNUSED__ void *attribute_val_out, __UNUSED__ void *extra_state)
+int MPI_WIN_NULL_DELETE_FN(__UNUSED__ MPI_Win win, __UNUSED__ int type_keyval, __UNUSED__ void *attribute_val_out, __UNUSED__ void *extra_state)
 {
 	mpc_common_nodebug("MPC_Mpi_win_null_delete_fn");
 	return MPI_SUCCESS;
 }
 
-int MPI_WIN_NULL_COPY_FN(__UNUSED__ MPI_Comm comm, __UNUSED__ int comm_keyval, __UNUSED__ void *extra_state, __UNUSED__ void *attribute_val_in, __UNUSED__ void *attribute_val_out, int *flag)
+int MPI_WIN_NULL_COPY_FN(__UNUSED__ MPI_Win win, __UNUSED__ int comm_keyval, __UNUSED__ void *extra_state, __UNUSED__ void *attribute_val_in, __UNUSED__ void *attribute_val_out, int *flag)
 {
 	mpc_common_nodebug("MPC_Mpi_win_null_copy_fn");
 	*flag = 0;
 	return MPI_SUCCESS;
 }
 
-int MPI_WIN_DUP_FN(__UNUSED__ MPI_Comm comm, __UNUSED__ int comm_keyval, __UNUSED__ void *extra_state, void *attribute_val_in, void *attribute_val_out, int *flag)
+int MPI_WIN_DUP_FN(__UNUSED__ MPI_Win win, __UNUSED__ int comm_keyval, __UNUSED__ void *extra_state, void *attribute_val_in, void *attribute_val_out, int *flag)
 {
 	mpc_common_nodebug("MPC_Mpi_win_dup_fn");
 	*flag = 1;

@@ -168,7 +168,7 @@ static inline int mpc_common_get_task_rank( void )
 }
 
 /**
- * @brief Get the number of tasks on local node
+ * @brief Get the number of tasks in current process
  *
  * @return int number of tasks on node
  */
@@ -178,7 +178,7 @@ static inline int mpc_common_get_local_task_count( void )
 }
 
 /**
- * @brief Get the task rank of given thread on local node
+ * @brief Get the task rank of given thread in curent process
  *
  * @return int task rank on node
  */

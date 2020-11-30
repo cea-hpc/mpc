@@ -1617,7 +1617,7 @@ static inline int __mpc_MPI_Win_flush(int rank, MPI_Win win, int remote,
   mpc_MPI_Win_request_array_fence(&desc->source.requests);
   mpc_MPI_Win_request_array_fence(&desc->target.requests);
 
-  if (!mpc_lowcomm_is_remote_rank(sctk_get_comm_world_rank(desc->comm, rank))) {
+  if (!mpc_lowcomm_is_remote_rank(mpc_lowcomm_communicator_world_rank(desc->comm, rank))) {
     desc->tainted_wins[rank] = 0;
     return MPI_SUCCESS;
   }

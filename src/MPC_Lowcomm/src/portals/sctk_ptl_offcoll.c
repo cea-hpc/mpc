@@ -246,7 +246,7 @@ static inline void __sctk_ptl_offcoll_build_tree(sctk_ptl_rail_info_t* srail, sc
                         if(local_rank != 0)
                         {
 	                        parent_rank = (int)((local_rank + (COLL_ARITY - 1)) / COLL_ARITY) - 1;
-                                parent_rank = sctk_get_comm_world_rank(pte->idx - SCTK_PTL_PTE_HIDDEN, parent_rank);
+                                parent_rank = mpc_lowcomm_communicator_world_rank(pte->idx - SCTK_PTL_PTE_HIDDEN, parent_rank);
                                 node->parent = sctk_ptl_map_id(
 					rail,
 					__sctk_ptl_offcoll_rotate_ranks(parent_rank, root)
@@ -263,7 +263,7 @@ static inline void __sctk_ptl_offcoll_build_tree(sctk_ptl_rail_info_t* srail, sc
                                 node->children = sctk_malloc(sizeof(int) * nb_children);
                                 for (i = 0; i < nb_children; ++i) 
                                 {
-                                        child_rank = sctk_get_comm_world_rank(pte->idx - SCTK_PTL_PTE_HIDDEN, l_child + i);
+                                        child_rank = mpc_lowcomm_communicator_world_rank(pte->idx - SCTK_PTL_PTE_HIDDEN, l_child + i);
                                         node->children[i] = sctk_ptl_map_id(
 						rail, 
 						__sctk_ptl_offcoll_rotate_ranks(child_rank, root)

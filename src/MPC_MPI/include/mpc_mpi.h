@@ -424,7 +424,7 @@ extern "C"
 /************************************************************************/
 
 typedef mpc_lowcomm_datatype_t MPI_Datatype; /* unsigned int */
-typedef mpc_lowcomm_communicator_t MPI_Comm; /* unsigned int */
+typedef mpc_lowcomm_communicator_t MPI_Comm; /* pointer */
 typedef int MPI_Request;
 typedef ssize_t MPI_Aint;
 typedef ssize_t MPI_Count;

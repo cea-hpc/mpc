@@ -144,7 +144,7 @@ typedef struct mpc_lowcomm_ptp_message_header_s
 	int                                          destination_task;      /**< Destination Task ID */
 	/* Context */
 	int                                          message_tag;           /**< Message TAG */
-	mpc_lowcomm_communicator_t                   communicator;          /**< Message communicator */
+	unsigned int                                 communicator_id;       /**< Message communicator */
 	struct mpc_lowcomm_ptp_ctrl_message_header_s message_type;          /**< Control Message Infos */
 	/* Content */
 	mpc_lowcomm_datatype_t                       datatype;              /**< Caried data-type (for matching check) */
@@ -221,7 +221,7 @@ typedef struct
 	unsigned int count;
 	long *       begins;
 	long *       ends;
-	const void *       addr;
+	const void * addr;
 	size_t       elem_size;
 } mpc_lowcomm_ptp_message_pack_absolute_list_t;
 
@@ -297,8 +297,10 @@ typedef struct
 	OPA_int_t                                 matching_id;  /**< 0 By default unique id otherwise */
 	mpc_lowcomm_ptp_message_type_t            message_type;
 
+	mpc_lowcomm_communicator_t                communicator;
+
 	/* Pointer to the local ptp list if local */
-	struct mpc_comm_ptp_s *			  internal_ptp;
+	struct mpc_comm_ptp_s *                   internal_ptp;
 
 	mpc_lowcomm_request_t *                   request;
 

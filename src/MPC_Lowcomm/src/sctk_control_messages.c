@@ -40,6 +40,7 @@
 #include <mpc_lowcomm_rdma.h>
 #include "sctk_topological_polling.h"
 
+#include <communicator.h>
 
 /************************************************************************/
 /* Control Messages Context                                             */
@@ -168,7 +169,7 @@ void __sctk_control_messages_send(int dest, int dest_task,
                                   int param, void *buffer, size_t size,
                                   int rail_id) {
   mpc_lowcomm_communicator_t communicator = comm;
-  mpc_lowcomm_communicator_t tag = 16000;
+  int tag = 16000;
 
   mpc_lowcomm_request_t request;
 
@@ -189,9 +190,9 @@ void __sctk_control_messages_send(int dest, int dest_task,
   int source = -1;
 
   if (dest < 0) {
-    int cw_rank = sctk_get_comm_world_rank(comm, dest_task);
-    dest = sctk_get_process_rank_from_task_rank(cw_rank);
-    source = mpc_lowcomm_communicator_rank(communicator, mpc_common_get_task_rank());
+    int cw_rank = mpc_lowcomm_communicator_world_rank(comm, dest_task);
+    dest = mpc_lowcomm_group_process_rank_from_world(cw_rank);
+    source = mpc_lowcomm_communicator_rank_of(communicator, mpc_common_get_task_rank());
   } else {
     source = mpc_common_get_process_rank();
   }
@@ -201,7 +202,7 @@ void __sctk_control_messages_send(int dest, int dest_task,
   //~ {
   //~ /* If so we call directly */
   //~ control_message_submit( message_class, rail_id, mpc_common_get_process_rank(),
-  // mpc_lowcomm_communicator_rank(communicator, mpc_common_get_task_rank() ), subtype, param, buffer,
+  // mpc_lowcomm_communicator_rank_of(communicator, mpc_common_get_task_rank() ), subtype, param, buffer,
   // size );
   //~ return;
   //~ }
@@ -406,9 +407,9 @@ void sctk_control_message_fence_req(int target_task, mpc_lowcomm_communicator_t 
 
   return;
 
-  ctx.source = mpc_lowcomm_communicator_rank(comm, mpc_common_get_task_rank());
-  ctx.remote = mpc_lowcomm_communicator_rank(comm, target_task);
-  ctx.comm = comm;
+  ctx.source = mpc_lowcomm_communicator_rank_of(comm, mpc_common_get_task_rank());
+  ctx.remote = mpc_lowcomm_communicator_rank_of(comm, target_task);
+  ctx.comm = comm->id;
 
   static int dummy = 0;
 
@@ -417,8 +418,8 @@ void sctk_control_message_fence_req(int target_task, mpc_lowcomm_communicator_t 
                                 req);
 
   sctk_control_messages_send_process(
-      sctk_get_process_rank_from_task_rank(
-          sctk_get_comm_world_rank(target_task, comm)),
+      mpc_lowcomm_group_process_rank_from_world(
+          mpc_lowcomm_communicator_world_rank(comm, target_task)),
       SCTK_PROCESS_FENCE, 0, &ctx,
       sizeof(struct sctk_control_message_fence_ctx));
 }
@@ -439,8 +440,10 @@ void sctk_control_message_fence_handler( struct sctk_control_message_fence_ctx *
 
   sctk_control_message_process_local( mpc_common_get_task_rank());
 
+  mpc_lowcomm_communicator_t comm = _mpc_lowcomm_get_communicator_from_id(ctx->comm);
+
   mpc_lowcomm_isend_class_src(ctx->remote, ctx->source, &dummy, sizeof(int),
-                               ctx->source, ctx->comm,
+                               ctx->source, comm,
                                MPC_LOWCOMM_CONTROL_MESSAGE_FENCE, NULL);
 }
 

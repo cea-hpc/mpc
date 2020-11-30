@@ -44,7 +44,7 @@ int mpc_MPI_Win_progress_probe(struct mpc_MPI_Win *desc, void *prebuff,
   int have_msg = 0;
   MPI_Status st;
 
-  int dest = sctk_get_comm_world_rank(desc->comm, desc->comm_rank);
+  int dest = mpc_lowcomm_communicator_world_rank(desc->comm, desc->comm_rank);
 
   mpc_lowcomm_iprobe_src_dest(MPC_ANY_SOURCE, dest, 16008, desc->comm, &have_msg, &st);
 

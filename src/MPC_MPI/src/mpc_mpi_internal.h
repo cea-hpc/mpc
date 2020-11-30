@@ -26,8 +26,6 @@
 #include "nbc.h"
 #include "sctk_alloc.h"
 #include "mpc_lowcomm.h"
-#include "sctk_communicator.h"
-#include "sctk_communicator.h"
 #include "mpc_common_debug.h"
 #include "sctk_handle.h"
 #include <mpc_lowcomm_msg.h>
@@ -44,6 +42,10 @@
 #include <string.h>
 #include <uthash.h>
 #include <utlist.h>
+
+TODO("Expose this header cleanly");
+#include <shm_coll.h>
+
 
 #define ENABLE_COLLECTIVES_ON_INTERCOMM
 //#define MPC_MPI_USE_REQUEST_CACHE
@@ -292,7 +294,7 @@ sctk_Op_f sctk_get_common_function(mpc_lowcomm_datatype_t datatype, sctk_Op op);
 */
 
 static inline int sctk_mpi_type_is_shared_mem(MPI_Datatype type, int count) {
-  if (SHM_COLL_BUFF_MAX_SIZE <= count) {
+  if (MPC_LOWCOMM_COMM_SHM_COLL_BUFF_MAX_SIZE <= count) {
     return 0;
   }
 

@@ -870,7 +870,7 @@ sctk_endpoint_t * sctk_rail_get_any_route_to_task_or_on_demand ( sctk_rail_info_
 	sctk_endpoint_t *tmp;
 	int process;
 
-	process = sctk_get_process_rank_from_task_rank ( dest );
+	process = mpc_lowcomm_group_process_rank_from_world ( dest );
 	tmp = sctk_rail_get_any_route_to_process_or_on_demand ( rail, process );
 	return tmp;
 }
