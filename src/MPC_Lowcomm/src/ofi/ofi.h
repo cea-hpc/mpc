@@ -29,6 +29,7 @@ extern "C"
 #endif
 
 #include "ofi_types.h"
+#include "lowcomm_config.h"
 
 /* avoid header inclusion cycle */
 typedef struct sctk_rail_info_s sctk_rail_info_t;
