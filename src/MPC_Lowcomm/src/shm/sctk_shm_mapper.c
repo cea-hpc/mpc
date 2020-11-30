@@ -60,14 +60,14 @@ sctk_alloc_mapper_handler_t sctk_shm_mapper_fake_handler = {
 
 /************************* FUNCTION ************************/
 /** Reset the global variable of fake handler, need to be done each time before using it. **/
-SCTK_STATIC void sctk_shm_mapper_fake_handler_reset(void)
+void sctk_shm_mapper_fake_handler_reset(void)
 {
 	sctk_shm_mapper_fake_glob = 0;
 }
 
 /************************* FUNCTION ************************/
 /** Fake sync handler used for unit test only as it count on a shared (in sense of thread) global pointer. **/
-SCTK_STATIC short int sctk_shm_mapper_fake_handler_send(const char *filename,
+short int sctk_shm_mapper_fake_handler_send(const char *filename,
                                                    __UNUSED__ void *option,
                                                    __UNUSED__ void *option1) {
   assert(filename != NULL);
@@ -77,7 +77,7 @@ SCTK_STATIC short int sctk_shm_mapper_fake_handler_send(const char *filename,
 
 /************************* FUNCTION ************************/
 /** Fake sync handler used for unit test only as it count on a shared (in sense of thread) global pointer. **/
-SCTK_STATIC char *sctk_shm_mapper_fake_handler_recv(__UNUSED__ void *option,
+char *sctk_shm_mapper_fake_handler_recv(__UNUSED__ void *option,
                                                     __UNUSED__ void *option1) {
   while (sctk_shm_mapper_fake_glob == NULL) {
   };
@@ -90,7 +90,7 @@ SCTK_STATIC char *sctk_shm_mapper_fake_handler_recv(__UNUSED__ void *option,
  * The caller need to free the string it return.
  * @TODO ensure to try another filename if file already exist (with a warning)
 **/
-SCTK_STATIC char *sctk_shm_mapper_get_filename(__UNUSED__ void *option, __UNUSED__ void *option1) {
+char *sctk_shm_mapper_get_filename(__UNUSED__ void *option, __UNUSED__ void *option1) {
   char *buffer = malloc(64);
   int res;
   res = sprintf(buffer, "sctk_shm_mapper_%06d.raw", getpid());
@@ -107,7 +107,7 @@ SCTK_STATIC char *sctk_shm_mapper_get_filename(__UNUSED__ void *option, __UNUSED
  * @param size Define the size of the shared segment.
  * @param participants Define the number of participants to allocate ensure enough place to store pids.
 **/
-SCTK_STATIC sctk_shm_mapper_sync_header_t *
+sctk_shm_mapper_sync_header_t *
 sctk_shm_mapper_sync_header_init(void *ptr, sctk_size_t size,
                                  int participants) {
   // vars
@@ -162,48 +162,50 @@ sctk_shm_mapper_sync_header_init(void *ptr, sctk_size_t size,
  * @TODO rewrite with MPC functions and remove need of role.
 **/
 
-static OPA_int_t local_gen;
+static OPA_int_t             local_gen;
 static mpc_common_spinlock_t gen_lock = SCTK_SPINLOCK_INITIALIZER;
 static int gen_init_done = 0;
 
-SCTK_STATIC void sctk_shm_mapper_barrier( sctk_shm_mapper_sync_header_t * sync_header,__UNUSED__ sctk_shm_mapper_role_t role,int participants)
+void sctk_shm_mapper_barrier(sctk_shm_mapper_sync_header_t *sync_header,
+										 __UNUSED__ sctk_shm_mapper_role_t role,
+										 int participants)
 {
 	//errors
 	assert(sync_header != NULL);
 
-        mpc_common_spinlock_lock(&gen_lock);
-        if (gen_init_done == 0) {
-          OPA_store_int(&local_gen, -1);
-          gen_init_done = 1;
-        }
-        mpc_common_spinlock_unlock(&gen_lock);
+	mpc_common_spinlock_lock(&gen_lock);
+	if(gen_init_done == 0)
+	{
+		OPA_store_int(&local_gen, -1);
+		gen_init_done = 1;
+	}
+	mpc_common_spinlock_unlock(&gen_lock);
 
-        OPA_incr_int(&local_gen);
+	OPA_incr_int(&local_gen);
 
-        mpc_common_nodebug("ROLE %d PART %d (GEN %d VAL %d)", role, participants,
-         						local_gen, OPA_load_int
-        						(&sync_header->barrier_cnt));
+	mpc_common_nodebug("ROLE %d PART %d (GEN %d VAL %d)", role, participants,
+	                   local_gen, OPA_load_int
+	                           (&sync_header->barrier_cnt) );
 
-        while (OPA_load_int(&local_gen) !=
-               OPA_load_int(&sync_header->barrier_gen)) {
-          OPA_read_write_barrier();
-        }
+	while(OPA_load_int(&local_gen) != OPA_load_int(&sync_header->barrier_gen) )
+	{
+		OPA_read_write_barrier();
+	}
 
-        // mpc_common_debug_error("VAL %d",OPA_load_int( &sync_header->barrier_cnt
-        // ) );
+	if(OPA_fetch_and_add_int(&sync_header->barrier_cnt, -1) ==
+	   1)
+	{
+		OPA_incr_int(&sync_header->barrier_gen);
+		OPA_store_int(&sync_header->barrier_cnt, participants);
+	}
 
-        // loop until pids equal to 0
-
-        if (OPA_fetch_and_add_int(&sync_header->barrier_cnt, -1) ==
-            1) {
-          OPA_incr_int(&sync_header->barrier_gen);
-          OPA_store_int(&sync_header->barrier_cnt, participants);
-        }
-
-        while (OPA_load_int(&sync_header->barrier_gen) !=
-               (OPA_load_int(&local_gen) + 1)) {
-          OPA_read_write_barrier();
-        }
+#if 0
+	while(OPA_load_int(&sync_header->barrier_gen) !=
+	      (OPA_load_int(&local_gen) + 1) )
+	{
+		OPA_read_write_barrier();
+	}
+#endif
 }
 
 
@@ -215,7 +217,7 @@ SCTK_STATIC void sctk_shm_mapper_barrier( sctk_shm_mapper_sync_header_t * sync_h
  * @param size Size of the segment (for check).
  * @param participant Number of participants (for check).
 **/
-SCTK_STATIC sctk_shm_mapper_sync_header_t * sctk_shm_mapper_sync_header_slave_update(void * ptr,sctk_size_t size,int participants)
+sctk_shm_mapper_sync_header_t * sctk_shm_mapper_sync_header_slave_update(void * ptr,sctk_size_t size,int participants)
 {
 	//vars
 	sctk_shm_mapper_sync_header_t * sync_header = ptr;
@@ -249,7 +251,7 @@ SCTK_STATIC sctk_shm_mapper_sync_header_t * sctk_shm_mapper_sync_header_slave_up
  * @param participants Total number of participants (1 master + slaves).
  * @param handler List of functions to use the initial exchange of SHM filename. By this way one can use MPI, PMI, ....
 **/
-SCTK_PUBLIC void * sctk_shm_mapper_create(sctk_size_t size,sctk_shm_mapper_role_t role,int participants,sctk_alloc_mapper_handler_t  * handler)
+void * sctk_shm_mapper_create(sctk_size_t size,sctk_shm_mapper_role_t role,int participants,sctk_alloc_mapper_handler_t  * handler)
 {
 	//errors
 	assume_m(participants > 0,"Number of participant must be greater than 0.");
@@ -284,7 +286,7 @@ SCTK_PUBLIC void * sctk_shm_mapper_create(sctk_size_t size,sctk_shm_mapper_role_
  * @param ptr Base address returned by sctk_shm_mapper_create().
  * @param size Size of the segment (same than the one passed to sctk_shm_mapper_create()).
 **/
-SCTK_PUBLIC void sctk_alloc_shm_remove(void * ptr,sctk_size_t size)
+void sctk_alloc_shm_remove(void * ptr,sctk_size_t size)
 {
 	//vars
 	int status;
@@ -310,7 +312,7 @@ SCTK_PUBLIC void sctk_alloc_shm_remove(void * ptr,sctk_size_t size)
  *    - Close the shm file.
  * For parameteres, see sctk_shm_mapper_create().
 **/
-SCTK_STATIC void * sctk_shm_mapper_slave(sctk_size_t size,int participants,sctk_alloc_mapper_handler_t * handler)
+void * sctk_shm_mapper_slave(sctk_size_t size,int participants,sctk_alloc_mapper_handler_t * handler)
 {
 	//vars
 	char * filename;
@@ -372,7 +374,7 @@ SCTK_STATIC void * sctk_shm_mapper_slave(sctk_size_t size,int participants,sctk_
  * to create shm..... directly map a new segment with MPC_SHARED property in case of fork.
  * @param size Define the size of the requested segment. Required multiple of page size.
 **/
-SCTK_STATIC void * sctk_shm_mapper_master_trivial(sctk_size_t size)
+void * sctk_shm_mapper_master_trivial(sctk_size_t size)
 {
 	//vars
 	void * ptr;
@@ -406,7 +408,7 @@ SCTK_STATIC void * sctk_shm_mapper_master_trivial(sctk_size_t size)
  *    - Remove the SHM file and close the file descriptor.
  * For parameteres, see sctk_shm_mapper_create().
 **/
-SCTK_STATIC void * sctk_shm_mapper_master(sctk_size_t size,int participants,sctk_alloc_mapper_handler_t * handler)
+void * sctk_shm_mapper_master(sctk_size_t size,int participants,sctk_alloc_mapper_handler_t * handler)
 {
 	//vars
 	char * filename;
@@ -477,7 +479,7 @@ SCTK_STATIC void * sctk_shm_mapper_master(sctk_size_t size,int participants,sctk
 /**
  * Just a helper function to setup a new entry for free segment's table.
 **/
-SCTK_STATIC sctk_shm_mapper_segment_t * sctk_alloc_shm_create_free_segment(sctk_addr_t start, sctk_addr_t end)
+sctk_shm_mapper_segment_t * sctk_alloc_shm_create_free_segment(sctk_addr_t start, sctk_addr_t end)
 {
 	//vars
 	sctk_shm_mapper_segment_t * segment;
@@ -498,7 +500,7 @@ SCTK_STATIC sctk_shm_mapper_segment_t * sctk_alloc_shm_create_free_segment(sctk_
 /**
  * Update the previous free segment and if NULL, update the head pointer of the list.
 **/
-SCTK_STATIC void sctk_shm_mapper_update_prev_segment(sctk_shm_mapper_segment_t ** free_segments,sctk_shm_mapper_segment_t * prev,sctk_shm_mapper_segment_t * new_next)
+void sctk_shm_mapper_update_prev_segment(sctk_shm_mapper_segment_t ** free_segments,sctk_shm_mapper_segment_t * prev,sctk_shm_mapper_segment_t * new_next)
 {
 	if (prev == NULL)
 		*free_segments = new_next;
@@ -514,7 +516,7 @@ SCTK_STATIC void sctk_shm_mapper_update_prev_segment(sctk_shm_mapper_segment_t *
  * @param start Starting address of the mapped segment.
  * @param start End address of the mapped segment.
 **/
-SCTK_STATIC void sctk_alloc_shm_create_merge_used_segment(sctk_shm_mapper_segment_t ** free_segments,sctk_addr_t start, sctk_addr_t end)
+void sctk_alloc_shm_create_merge_used_segment(sctk_shm_mapper_segment_t ** free_segments,sctk_addr_t start, sctk_addr_t end)
 {
 	//vars
 	sctk_shm_mapper_segment_t * seg = *free_segments;
@@ -581,7 +583,7 @@ SCTK_STATIC void sctk_alloc_shm_create_merge_used_segment(sctk_shm_mapper_segmen
  * @param pid Pid for which to read the table.
  * @param start Ignore all addresses between this one (avoid to fall on head and other strange mappings).
 **/
-SCTK_STATIC void sctk_shm_mapper_merge_map(sctk_shm_mapper_segment_t ** free_segments,int pid,void * start)
+void sctk_shm_mapper_merge_map(sctk_shm_mapper_segment_t ** free_segments,int pid,void * start)
 {
 	//vars
 	char filename[128];
@@ -625,7 +627,7 @@ SCTK_STATIC void sctk_shm_mapper_merge_map(sctk_shm_mapper_segment_t ** free_seg
  * Once the global table is fully merged, we can search for a free segment in it with a simple loop
  * over free segments.
 **/
-SCTK_STATIC void * sctk_shm_mapper_find_common_addr_in_table(sctk_shm_mapper_segment_t * free_segments,sctk_size_t size)
+void * sctk_shm_mapper_find_common_addr_in_table(sctk_shm_mapper_segment_t * free_segments,sctk_size_t size)
 {
 	//vars
 	sctk_shm_mapper_segment_t * seg = free_segments;
@@ -646,7 +648,7 @@ SCTK_STATIC void * sctk_shm_mapper_find_common_addr_in_table(sctk_shm_mapper_seg
 /**
  * Free the memmory used by the table.
 **/
-SCTK_STATIC void sctk_shm_mapper_free_table(sctk_shm_mapper_segment_t* free_segments)
+void sctk_shm_mapper_free_table(sctk_shm_mapper_segment_t* free_segments)
 {
 	//vars
 	sctk_shm_mapper_segment_t * seg = free_segments;
@@ -668,7 +670,7 @@ SCTK_STATIC void sctk_shm_mapper_free_table(sctk_shm_mapper_segment_t* free_segm
  * @param start Ignore all addresses smaller than this one to avoid falling on heap and others. Can use
  * the default address we obtain with first non forced mapping.
 **/
-SCTK_STATIC void * sctk_shm_mapper_find_common_addr(sctk_size_t size,int * pids,int participants,void * start)
+void * sctk_shm_mapper_find_common_addr(sctk_size_t size,int * pids,int participants,void * start)
 {
 	//vars
 	sctk_shm_mapper_segment_t * free_segments;
@@ -701,7 +703,7 @@ SCTK_STATIC void * sctk_shm_mapper_find_common_addr(sctk_size_t size,int * pids,
 }
 
 /************************* FUNCTION ************************/
-SCTK_STATIC void sctk_shm_mapper_remap(int fd,void * old_addr,void * new_addr,sctk_size_t size)
+void sctk_shm_mapper_remap(int fd,void * old_addr,void * new_addr,sctk_size_t size)
 {
 	//vars
 
@@ -721,7 +723,7 @@ SCTK_STATIC void sctk_shm_mapper_remap(int fd,void * old_addr,void * new_addr,sc
 }
 
 /************************* FUNCTION ************************/
-SCTK_STATIC void * sctk_shm_mapper_mmap(void * addr,int fd,sctk_size_t size)
+void * sctk_shm_mapper_mmap(void * addr,int fd,sctk_size_t size)
 {
 	//vars
 	void * ptr;
@@ -748,7 +750,7 @@ SCTK_STATIC void * sctk_shm_mapper_mmap(void * addr,int fd,sctk_size_t size)
 }
 
 /************************* FUNCTION ************************/
-SCTK_STATIC void sctk_shm_mapper_unlink(const char * filename)
+void sctk_shm_mapper_unlink(const char * filename)
 {
 	//vars
 	int res;
@@ -762,7 +764,7 @@ SCTK_STATIC void sctk_shm_mapper_unlink(const char * filename)
 }
 
 /************************* FUNCTION ************************/
-SCTK_STATIC int sctk_shm_mapper_slave_open(const char * filename)
+int sctk_shm_mapper_slave_open(const char * filename)
 {
 	//vars
 	int fd;
@@ -778,7 +780,7 @@ SCTK_STATIC int sctk_shm_mapper_slave_open(const char * filename)
 }
 
 /************************* FUNCTION ************************/
-SCTK_STATIC int sctk_shm_mapper_create_shm_file(const char * filename,sctk_size_t size)
+int sctk_shm_mapper_create_shm_file(const char * filename,sctk_size_t size)
 {
 	//vars
 	int fd;
