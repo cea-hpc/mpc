@@ -193,7 +193,9 @@ FORTRAN_API void FORT_CALL mpi_file_open_(MPI_Fint * comm, char *filename FORT_M
     ADIOI_Strncpy(newfname, filename, real_len);
     newfname[real_len] = '\0';
 
-    *ierr = MPI_File_open((MPI_Comm) (*comm), newfname, *amode, info_c, &fh_c);
+    MPI_Comm c_comm = MPI_Comm_f2c(*comm);
+
+    *ierr = MPI_File_open(c_comm, newfname, *amode, info_c, &fh_c);
 
     *fh = MPI_File_c2f(fh_c);
     ADIOI_Free(newfname);
