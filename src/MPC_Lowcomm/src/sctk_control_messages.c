@@ -24,7 +24,7 @@
 #include <stdio.h>
 
 #include <sctk_low_level_comm.h>
-#include <sctk_communicator.h>
+#include "communicator.h"
 
 #include <mpc_common_debug.h>
 #include <mpc_common_spinlock.h>

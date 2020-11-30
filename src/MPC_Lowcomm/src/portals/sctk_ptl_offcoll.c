@@ -26,7 +26,7 @@
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_toolkit.h"
 #include "sctk_ptl_offcoll.h"
-#include "sctk_communicator.h"
+#include "communicator.h"
 
 //#include "comm.h"
 

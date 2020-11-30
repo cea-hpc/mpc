@@ -32,7 +32,7 @@
 #include "sctk_handle.h"
 
 #include <group.h>
-#include <sctk_communicator.h>
+#include <communicator.h>
 
 /*********************************************
 * TRAMPOLINE FUNCTION FOR MPI ALLOCMEM POOL *

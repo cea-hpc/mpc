@@ -28,7 +28,7 @@
 #include <mpc_launch_pmi.h>
 #include <mpc_common_rank.h>
 #include <mpc_common_flags.h>
-#include <sctk_communicator.h>
+#include "communicator.h"
 
 #include <stdio.h>
 #include <unistd.h>

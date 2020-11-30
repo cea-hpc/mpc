@@ -25,7 +25,6 @@
 #include "datatype.h"
 #include "mpc_mpi_internal.h"
 #include "comm_lib.h"
-#include "sctk_communicator.h"
 #include "sctk_control_messages.h"
 #include "sctk_low_level_comm.h"
 #include <string.h>

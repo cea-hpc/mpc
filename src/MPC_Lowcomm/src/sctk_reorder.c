@@ -24,7 +24,7 @@
 #include <mpc_common_debug.h>
 #include <sctk_route.h>
 #include <sctk_reorder.h>
-#include <sctk_communicator.h>
+#include <communicator.h>
 #include <mpc_common_spinlock.h>
 #include <uthash.h>
 #include <opa_primitives.h>

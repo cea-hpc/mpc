@@ -26,7 +26,6 @@
 
 
 #include <mpc_config.h>
-#include <sctk_communicator.h>
 
 #include <mpc_launch.h>
 #include <mpc_launch_pmi.h>
