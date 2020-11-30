@@ -194,6 +194,8 @@ struct __communicator_id_factory
 	mpc_common_spinlock_t       lock;
 	struct mpc_common_hashtable id_table;
 	struct mpc_common_hashtable comm_table;
+	struct mpc_common_bit_array comm_bit_array;
+
 };
 
 struct __communicator_id_factory __id_factory = { 0 };
@@ -223,12 +225,14 @@ static inline void __communicator_id_factory_init(void)
 
 	mpc_common_hashtable_init(&__id_factory.id_table, 4096);
 	mpc_common_hashtable_init(&__id_factory.comm_table, 4096);
+	mpc_common_bit_array_init(&__id_factory.comm_bit_array, 8192);
 }
 
 static inline void __communicator_id_factory_release(void)
 {
 	mpc_common_hashtable_release(&__id_factory.id_table);
 	mpc_common_hashtable_release(&__id_factory.comm_table);
+	mpc_common_bit_array_release(&__id_factory.comm_bit_array);
 }
 
 static inline void __communicator_id_register(mpc_lowcomm_communicator_t comm)
@@ -240,6 +244,7 @@ static inline void __communicator_id_register(mpc_lowcomm_communicator_t comm)
 
 	mpc_common_hashtable_set(&__id_factory.id_table, key, (void *)comm);
 	mpc_common_hashtable_set(&__id_factory.comm_table, (uint64_t)comm, (void *)comm);
+	mpc_common_bit_array_set(&__id_factory.comm_bit_array, (uint64_t)comm, 1);
 	mpc_common_nodebug("New reg comm %d", key);
 }
 
@@ -249,6 +254,7 @@ static inline void __communicator_id_release(mpc_lowcomm_communicator_t comm)
 
 	mpc_common_hashtable_delete(&__id_factory.id_table, key);
 	mpc_common_hashtable_delete(&__id_factory.comm_table, (uint64_t)comm);
+	mpc_common_bit_array_set(&__id_factory.comm_bit_array, (uint64_t)comm, 0);
 }
 
 mpc_lowcomm_communicator_t mpc_lowcomm_get_communicator_from_id(uint32_t id)
@@ -262,7 +268,16 @@ mpc_lowcomm_communicator_t mpc_lowcomm_get_communicator_from_id(uint32_t id)
 
 int mpc_lowcomm_communicator_exists(mpc_lowcomm_communicator_t comm)
 {
-	return mpc_common_hashtable_get(&__id_factory.comm_table, (uint64_t)comm) != NULL;
+	if(!mpc_common_bit_array_get(&__id_factory.comm_bit_array,(uint64_t)comm ))
+	{
+		return mpc_common_hashtable_get(&__id_factory.comm_table, (uint64_t)comm) != NULL;
+	}
+
+	/* In debug we actually check */
+	assert(mpc_common_hashtable_get(&__id_factory.comm_table, (uint64_t)comm) != NULL);
+
+	/* Assume it exits in fast path */
+	return 1;
 }
 
 static inline unsigned int  __communicator_id_new(void)
