@@ -66,13 +66,6 @@ int mpc_mpi_cl_isend_pack( int dest, int tag, mpc_lowcomm_communicator_t comm,
 int mpc_mpi_cl_irecv_pack( int source, int tag, mpc_lowcomm_communicator_t comm,
                         mpc_lowcomm_request_t *request );
 
-/*******************
- * WAIT OPERATIONS *
- *******************/
-
-int mpc_mpi_cl_wait_pending( mpc_lowcomm_communicator_t comm );
-
-int mpc_mpi_cl_wait_pending_all_comm( void );
 
 /*******************
  * RANK CONVERSION *

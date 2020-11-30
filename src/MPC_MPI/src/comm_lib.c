@@ -3167,35 +3167,6 @@ int _mpc_cl_waitany(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t array_o
 	}
 }
 
-int mpc_mpi_cl_wait_pending(mpc_lowcomm_communicator_t comm)
-{
-	int src;
-	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific;
-
-	task_specific = _mpc_cl_per_mpi_process_ctx_get();
-	src           = mpc_lowcomm_communicator_rank_of(comm, task_specific->task_id);
-	mpc_lowcomm_request_wait_all_msgs(src, comm);
-	MPC_ERROR_SUCESS();
-}
-
-int mpc_mpi_cl_wait_pending_all_comm()
-{
-	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = _mpc_cl_per_mpi_process_ctx_get();
-
-	SCTK_PROFIL_START(MPC_Wait_pending_all_comm);
-	mpc_per_communicator_t *per_communicator;
-	mpc_per_communicator_t *per_communicator_tmp;
-	mpc_common_spinlock_lock(&(task_specific->per_communicator_lock) );
-	HASH_ITER(hh, task_specific->per_communicator, per_communicator,
-	          per_communicator_tmp)
-	{
-		mpc_mpi_cl_wait_pending(per_communicator->key);
-	}
-	mpc_common_spinlock_unlock(&(task_specific->per_communicator_lock) );
-	SCTK_PROFIL_END(MPC_Wait_pending_all_comm);
-	MPC_ERROR_SUCESS();
-}
-
 /*******************
 * RANK CONVERSION *
 *******************/
