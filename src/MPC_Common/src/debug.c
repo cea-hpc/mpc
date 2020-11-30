@@ -81,7 +81,7 @@ static inline char *__debug_print_info( char *buffer )
 void mpc_common_debug_abort( void )
 {
 	mpc_common_debug_error("######## Program will now abort ########");
-	abort();
+	MPC_CRASH();
 }
 
 

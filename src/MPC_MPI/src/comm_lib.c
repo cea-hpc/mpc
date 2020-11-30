@@ -3496,34 +3496,13 @@ int _mpc_cl_intercomm_create(mpc_lowcomm_communicator_t local_comm, int local_le
                              mpc_lowcomm_communicator_t peer_comm, int remote_leader,
                              int tag, mpc_lowcomm_communicator_t *newintercomm)
 {
-	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = _mpc_cl_per_mpi_process_ctx_get();
-
 	assert(local_comm != MPC_COMM_NULL);
-
-	int rank  = mpc_common_get_task_rank();
-	int grank = mpc_lowcomm_communicator_rank_of(local_comm, rank);
-	int size  = mpc_lowcomm_communicator_size(local_comm);
-
-	int *task_list = __mpc_cl_comm_task_list(local_comm, size);
 
 	*newintercomm = mpc_lowcomm_communicator_intercomm_create(local_comm, local_leader, peer_comm, remote_leader, tag);
 
-	int present = 0;
-	int i;
-
-	for(i = 0; i < size; i++)
+	if(*newintercomm != MPC_COMM_NULL)
 	{
-		if(task_list[i] == rank)
-		{
-			present = 1;
-			break;
-		}
-	}
-
-	sctk_free(task_list);
-
-	if(present)
-	{
+		mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = _mpc_cl_per_mpi_process_ctx_get();
 		__mpc_cl_per_communicator_alloc_from_existing(task_specific, *newintercomm, local_comm);
 	}
 

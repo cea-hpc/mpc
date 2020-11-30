@@ -523,7 +523,7 @@ mpc_lowcomm_group_t * mpc_lowcomm_group_create(unsigned int size, int *comm_worl
 
     assume(cw_desc != NULL);
 
-	int i;
+	unsigned int i;
 
     for(i = 0 ; i < size; i++)
     {

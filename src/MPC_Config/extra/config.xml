@@ -140,8 +140,12 @@
 							<rail>opa_mpi</rail>
 						</rails>
 					</cli_option>
-
-
+					<cli_option>
+						<name>tcponly</name>
+						<rails>
+							<rail>tcp_mpi</rail>
+						</rails>
+					</cli_option>
 					<cli_option>
 						<name>tcp</name>
 						<rails>

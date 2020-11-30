@@ -69,6 +69,10 @@ void mpc_lowcomm_communicator_print(mpc_lowcomm_communicator_t comm,  int root_o
 
 int mpc_lowcomm_communicator_rank_of(const mpc_lowcomm_communicator_t comm, const int comm_world_rank);
 
+int mpc_lowcomm_communicator_rank_of_as(const mpc_lowcomm_communicator_t comm,
+										const int comm_world_rank,
+										const int lookup_cw_rank);
+
 int mpc_lowcomm_communicator_world_rank(const mpc_lowcomm_communicator_t comm, int rank);
 
 int mpc_lowcomm_communicator_rank(const mpc_lowcomm_communicator_t comm);
@@ -114,6 +118,8 @@ int mpc_lowcomm_communicator_in_right_group_rank(const mpc_lowcomm_communicator_
 /* Accessors */
 
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_local(mpc_lowcomm_communicator_t comm);
+mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_local_as(mpc_lowcomm_communicator_t comm,
+																 int lookup_cw_rank);
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote(mpc_lowcomm_communicator_t comm);
 
 int mpc_lowcomm_communicator_remote_size(mpc_lowcomm_communicator_t comm);

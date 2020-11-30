@@ -144,7 +144,7 @@ static inline mpc_lowcomm_internal_communicator_t *__init_communicator_with_id(u
 		/* SET SHM Collective context if needed */
 		if(ret->process_span == 1)
 		{
-			ret->shm_coll = NULL;//sctk_comm_coll_init(group->size);
+			ret->shm_coll = sctk_comm_coll_init(group->size);
 		}
 	}
 
@@ -509,8 +509,8 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_create(const mpc_lowcomm_com
 	}
 	else
 	{
-		assume(members[i] == mpc_lowcomm_get_rank());
-		_mpc_lowcomm_group_rank_descriptor_set(&rank_desc[i], mpc_lowcomm_get_rank() );
+		assume(members[0] == mpc_lowcomm_get_rank());
+		_mpc_lowcomm_group_rank_descriptor_set(&rank_desc[0], mpc_lowcomm_get_rank() );
 	}
 
 	mpc_lowcomm_group_t *new = _mpc_lowcomm_group_create(size, rank_desc);
@@ -602,11 +602,12 @@ int mpc_lowcomm_communicator_local_lead(mpc_lowcomm_communicator_t comm)
 	return MPC_PROC_NULL;
 }
 
-
-int mpc_lowcomm_communicator_rank_of(const mpc_lowcomm_communicator_t comm, const int comm_world_rank)
+int mpc_lowcomm_communicator_rank_of_as(const mpc_lowcomm_communicator_t comm,
+										const int comm_world_rank,
+										const int lookup_cw_rank)
 {
 	assert(comm != NULL);
-	mpc_lowcomm_communicator_t tcomm = mpc_lowcomm_communicator_get_local(comm);
+	mpc_lowcomm_communicator_t tcomm = mpc_lowcomm_communicator_get_local_as(comm, lookup_cw_rank);
 	assert(tcomm != NULL);
 
 	if(tcomm->is_comm_self)
@@ -617,6 +618,12 @@ int mpc_lowcomm_communicator_rank_of(const mpc_lowcomm_communicator_t comm, cons
 	//mpc_common_debug_error("GET RANK from %p targets %p", comm, tcomm);
 
 	return mpc_lowcomm_group_rank_for(tcomm->group, comm_world_rank);
+}
+
+int mpc_lowcomm_communicator_rank_of(const mpc_lowcomm_communicator_t comm,
+										const int comm_world_rank)
+{
+	return mpc_lowcomm_communicator_rank_of_as(comm, comm_world_rank, mpc_lowcomm_get_rank());
 }
 
 int mpc_lowcomm_communicator_rank(const mpc_lowcomm_communicator_t comm)
@@ -919,10 +926,12 @@ mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_commu
 			cnt++;
 		}
 
+	#if 0
 		for( i = 0 ; i < cnt; i++)
 		{
 			mpc_common_debug("MERGING %d is %d", i, remote_descriptors[i].comm_world_rank );
 		}
+	#endif
 
 		/* ########################################
 		   Elect who is going to choose the ID 
@@ -1269,20 +1278,18 @@ int mpc_lowcomm_communicator_in_master_group(const mpc_lowcomm_communicator_t co
 	return 0;
 }
 
-mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_local(mpc_lowcomm_communicator_t comm)
+mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_local_as(mpc_lowcomm_communicator_t comm,
+																 int lookup_cw_rank)
 {
 	assert(comm != NULL);
 
 	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
-		/* Intercomm we need to see where we are in left and right */
-		int rank = mpc_lowcomm_get_rank();
-
-		if(mpc_lowcomm_communicator_in_left_group_rank(comm, rank) )
+		if(mpc_lowcomm_communicator_in_left_group_rank(comm, lookup_cw_rank) )
 		{
 			return comm->left_comm;
 		}
-		else if(mpc_lowcomm_communicator_in_right_group_rank(comm, rank) )
+		else if(mpc_lowcomm_communicator_in_right_group_rank(comm, lookup_cw_rank) )
 		{
 			return comm->right_comm;
 		}
@@ -1295,6 +1302,12 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_local(mpc_lowcomm_commun
 
 	not_reachable();
 	return comm;
+}
+
+
+mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_local(mpc_lowcomm_communicator_t comm)
+{
+	return mpc_lowcomm_communicator_get_local_as(comm, mpc_lowcomm_get_rank());
 }
 
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote(mpc_lowcomm_communicator_t comm)
