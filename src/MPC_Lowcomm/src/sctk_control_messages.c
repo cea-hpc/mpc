@@ -190,7 +190,7 @@ void __sctk_control_messages_send(int dest, int dest_task,
   int source = -1;
 
   if (dest < 0) {
-    int cw_rank = mpc_lowcomm_communicator_world_rank(comm, dest_task);
+    int cw_rank = mpc_lowcomm_communicator_world_rank_of(comm, dest_task);
     dest = mpc_lowcomm_group_process_rank_from_world(cw_rank);
     source = mpc_lowcomm_communicator_rank_of(communicator, mpc_common_get_task_rank());
   } else {
@@ -419,7 +419,7 @@ void sctk_control_message_fence_req(int target_task, mpc_lowcomm_communicator_t 
 
   sctk_control_messages_send_process(
       mpc_lowcomm_group_process_rank_from_world(
-          mpc_lowcomm_communicator_world_rank(comm, target_task)),
+          mpc_lowcomm_communicator_world_rank_of(comm, target_task)),
       SCTK_PROCESS_FENCE, 0, &ctx,
       sizeof(struct sctk_control_message_fence_ctx));
 }

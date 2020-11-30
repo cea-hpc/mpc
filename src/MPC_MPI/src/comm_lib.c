@@ -426,7 +426,7 @@ int MPCX_Disguise(mpc_lowcomm_communicator_t comm, int target_rank)
 		}
 
 		/* Retrieve the ctx pointer */
-		int cwr         = mpc_lowcomm_communicator_world_rank( ( mpc_lowcomm_communicator_t )comm, target_rank);
+		int cwr         = mpc_lowcomm_communicator_world_rank_of( ( mpc_lowcomm_communicator_t )comm, target_rank);
 		int local_count = mpc_common_get_local_task_count();
 		int i;
 
@@ -3202,7 +3202,7 @@ int mpc_mpi_cl_wait_pending_all_comm()
 
 int mpc_mpi_cl_world_rank(mpc_lowcomm_communicator_t comm, int rank)
 {
-	return mpc_lowcomm_communicator_world_rank(comm, rank);
+	return mpc_lowcomm_communicator_world_rank_of(comm, rank);
 }
 
 /************************************************************************/
@@ -3316,7 +3316,7 @@ int _mpc_cl_comm_group(mpc_lowcomm_communicator_t comm, _mpc_cl_group_t **group)
 
 	for(i = 0; i < size; i++)
 	{
-		(*group)->task_list_in_global_ranks[i] = mpc_lowcomm_communicator_world_rank(comm, i);
+		(*group)->task_list_in_global_ranks[i] = mpc_lowcomm_communicator_world_rank_of(comm, i);
 	}
 
 	MPC_ERROR_SUCESS();
@@ -3486,7 +3486,7 @@ static inline int *__mpc_cl_comm_task_list(mpc_lowcomm_communicator_t comm, int 
 
 	for(i = 0; i < size; i++)
 	{
-		task_list[i] = mpc_lowcomm_communicator_world_rank(comm, i);
+		task_list[i] = mpc_lowcomm_communicator_world_rank_of(comm, i);
 	}
 
 	return task_list;

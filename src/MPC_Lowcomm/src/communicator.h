@@ -10,21 +10,25 @@
 #include "coll.h"
 #include "shm_coll.h"
 
+
+/**
+ * @brief This is the struct defining a lowcomm communicator
+ * 
+ */
 typedef struct mpc_lowcomm_internal_communicator_s
 {
-	unsigned int               id;
-	/* This is the group supporting the comm */
-	mpc_lowcomm_group_t *      group;
-	OPA_int_t                  refcount;
+	unsigned int               id;				/**< Integer unique identifier of the comm */	
+	mpc_lowcomm_group_t *      group;			/**< Group supporting the comm */
+	OPA_int_t                  refcount;		/**< Number of ref to the comm freed when 0 */
 
-	unsigned int               process_span;
-	int *                      process_array;
+	unsigned int               process_span;	/**< Number of UNIX processes in the group */
+	int *                      process_array;	/**< Array of the processes in the group */
 
-	int                        is_comm_self;
+	int                        is_comm_self;	/**< 1 if the group is comm_self */
 
 	/* Collective comm */
-	struct mpc_lowcomm_coll_s *coll;
-	struct sctk_comm_coll *    shm_coll;
+	struct mpc_lowcomm_coll_s *coll;			/**< This holds the collectives for this comm */
+	struct sctk_comm_coll *    shm_coll;		/**< This holds the SHM collectives for this comm */
 
 	/* Intercomms */
 
@@ -32,24 +36,51 @@ typedef struct mpc_lowcomm_internal_communicator_s
 	 * intercomms. If the group is NULL
 	 * it means the communicator is an intercomm
 	 * and then functions will refer to this functions */
-	mpc_lowcomm_communicator_t left_comm;
-	mpc_lowcomm_communicator_t right_comm;
-	int is_intercomm_lead;
+	mpc_lowcomm_communicator_t left_comm;		/**< The left comm for intercomms */
+	mpc_lowcomm_communicator_t right_comm;		/**< The right comm for intercomms */
 }mpc_lowcomm_internal_communicator_t;
 
 /*********************************
 * COMMUNICATOR INIT AND RELEASE *
 *********************************/
 
+/**
+ * @brief Initialize base communicators (WORLD and SELF)
+ * 
+ */
 void _mpc_lowcomm_communicator_init(void);
+
+/**
+ * @brief Icrement refcounting on a comm
+ * 
+ * @param comm the comm to acquire
+ */
 void _mpc_lowcomm_communicator_acquire(mpc_lowcomm_internal_communicator_t *comm);
+
+/**
+ * @brief Decrement refcounting on a comm
+ * 
+ * @param comm the comm to relax
+ * @return int the value before decrementing
+ */
 int _mpc_lowcomm_communicator_relax(mpc_lowcomm_internal_communicator_t *comm);
 
 /***************************
 * LOCAL PLACEMENT GETTERS *
 ***************************/
 
+/**
+ * @brief Get the first local task in comm_world for this process
+ * 
+ * @return int id of the first task in the process
+ */
 int _mpc_lowcomm_communicator_world_first_local_task();
+
+/**
+ * @brief Get the last local task in comm_world for this process
+ * 
+ * @return int id of the last task in the process
+ */
 int _mpc_lowcomm_communicator_world_last_local_task();
 
 /**********************
@@ -77,6 +108,12 @@ static inline void _mpc_comm_set_internal_coll(mpc_lowcomm_communicator_t comm, 
 	comm->coll = coll;
 }
 
+/**
+ * @brief Inline version of the communicator ID getter
+ * 
+ * @param comm the communicator
+ * @return uint32_t the corresponding ID of the given comm
+ */
 static inline uint32_t _mpc_lowcomm_communicator_id(mpc_lowcomm_internal_communicator_t *comm)
 {
 	if(comm != MPC_COMM_NULL)

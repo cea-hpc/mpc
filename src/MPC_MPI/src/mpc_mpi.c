@@ -9851,7 +9851,7 @@ int PMPIX_Swap(void **sendrecv_buf, int remote_rank, MPI_Count size, MPI_Comm co
 
 	/* First resolve the source and dest rank
 	 * in the comm_world */
-	int remote = mpc_lowcomm_communicator_world_rank( (const mpc_lowcomm_communicator_t)comm, remote_rank);
+	int remote = mpc_lowcomm_communicator_world_rank_of( (const mpc_lowcomm_communicator_t)comm, remote_rank);
 
 	/* Now check if we are on the same node for both communications */
 	if(!mpc_lowcomm_is_remote_rank(remote) )
@@ -9924,7 +9924,7 @@ int PMPIX_Exchange(void **send_buf, void **recvbuff, int remote_rank, MPI_Count 
 
 	/* First resolve the source and dest rank
 	 * in the comm_world */
-	int remote = mpc_lowcomm_communicator_world_rank( (const mpc_lowcomm_communicator_t)comm, remote_rank);
+	int remote = mpc_lowcomm_communicator_world_rank_of( (const mpc_lowcomm_communicator_t)comm, remote_rank);
 
 	/* Now check if we are on the same node for both communications */
 	if(!mpc_lowcomm_is_remote_rank(remote) )

@@ -413,7 +413,7 @@ int mpc_lowcomm_rdma_window_map_remote(int remote_rank, mpc_lowcomm_communicator
 
 	/* Case where we are local */
 	if( (mr.source_rank == mr.remote_rank) ||
-	    (!mpc_lowcomm_is_remote_rank(mpc_lowcomm_communicator_world_rank(
+	    (!mpc_lowcomm_is_remote_rank(mpc_lowcomm_communicator_world_rank_of(
 						 comm, mr.remote_rank) ) ) ) /* If the target is in the same proces
 	                                                                      * just work locally */
 	{
@@ -437,7 +437,7 @@ int mpc_lowcomm_rdma_window_map_remote(int remote_rank, mpc_lowcomm_communicator
 		                        MPC_LOWCOMM_RDMA_WINDOW_MESSAGES, &req);
 
 		/* Send a map request to remote task */
-		int cw_rank = mpc_lowcomm_communicator_world_rank(comm, remote_rank);
+		int cw_rank = mpc_lowcomm_communicator_world_rank_of(comm, remote_rank);
 
 		sctk_control_messages_send_process(
 			mpc_lowcomm_group_process_rank_from_world(cw_rank),

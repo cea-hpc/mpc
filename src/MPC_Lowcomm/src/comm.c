@@ -1712,12 +1712,12 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 				else if(request_type == REQUEST_SEND)
 				{
 					/* If this is a SEND make sure the translation is done on the dest according to remote */
-					source_task = mpc_lowcomm_communicator_world_rank(communicator, source);
+					source_task = mpc_lowcomm_communicator_world_rank_of(communicator, source);
 				}
 			}
 			else
 			{
-				source_task = mpc_lowcomm_communicator_world_rank(communicator, source);
+				source_task = mpc_lowcomm_communicator_world_rank_of(communicator, source);
 			}
 
 		}
@@ -1733,7 +1733,7 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 			if(request_type == REQUEST_RECV)
 			{
 				/* If this is a RECV make sure the translation is done on the source according to remote */
-				dest_task   = mpc_lowcomm_communicator_world_rank(communicator, destination);
+				dest_task   = mpc_lowcomm_communicator_world_rank_of(communicator, destination);
 			}
 			else if(request_type == REQUEST_SEND)
 			{
@@ -1743,7 +1743,7 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 		}
 		else
 		{
-			dest_task = mpc_lowcomm_communicator_world_rank(communicator, destination);
+			dest_task = mpc_lowcomm_communicator_world_rank_of(communicator, destination);
 		}
 
 		SCTK_MSG_SRC_TASK_SET(msg, source_task);
@@ -3223,7 +3223,7 @@ int mpc_lowcomm_iprobe(int source, int tag, mpc_lowcomm_communicator_t comm, int
 		}
 		else
 		{
-			source = mpc_lowcomm_communicator_world_rank(comm, source);
+			source = mpc_lowcomm_communicator_world_rank_of(comm, source);
 		}
 	}
 	else
@@ -3262,7 +3262,7 @@ int mpc_lowcomm_probe(int source, int tag, mpc_lowcomm_communicator_t comm, mpc_
 		}
 		else
 		{
-			probe_struct.source = mpc_lowcomm_communicator_world_rank(comm, source);
+			probe_struct.source = mpc_lowcomm_communicator_world_rank_of(comm, source);
 		}
 	}
 	else

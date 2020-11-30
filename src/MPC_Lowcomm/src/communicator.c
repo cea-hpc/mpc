@@ -11,6 +11,8 @@
 
 #include <mpc_common_datastructure.h>
 
+#include <sctk_low_level_comm.h>
+
 /*************************
  * COMMUNICATOR PRINTING *
  *************************/
@@ -58,7 +60,7 @@ void mpc_lowcomm_communicator_print(mpc_lowcomm_communicator_t comm, int root_on
 		int i;
 		for(i = 0 ; i < size; i++)
 		{
-			mpc_common_debug_error("COMM %d is CW %d", i, mpc_lowcomm_communicator_world_rank(comm, i));
+			mpc_common_debug_error("COMM %d is CW %d", i, mpc_lowcomm_communicator_world_rank_of(comm, i));
 		}
 		mpc_common_debug_error("-----------------");
 
@@ -180,7 +182,7 @@ static inline int __get_comm_world_lead(mpc_lowcomm_communicator_t comm)
 {
 	int group_local_lead = mpc_lowcomm_group_get_local_leader(comm->group);
 
-	return mpc_lowcomm_communicator_world_rank(comm, group_local_lead);
+	return mpc_lowcomm_communicator_world_rank_of(comm, group_local_lead);
 }
 
 struct __communicator_id_factory
@@ -451,6 +453,9 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 			{
 				_mpc_lowcomm_communicator_acquire(ret->right_comm);
 			}
+
+			/* Notify communicator creation to lowcomm drivers */
+			sctk_network_notify_new_communicator(new_id, mpc_lowcomm_communicator_size(ret));
 		}
 
 		mpc_common_spinlock_unlock(&lock);
@@ -652,7 +657,7 @@ int mpc_lowcomm_communicator_size(const mpc_lowcomm_communicator_t comm)
 	return mpc_lowcomm_group_size(tcomm->group);
 }
 
-int mpc_lowcomm_communicator_world_rank(const mpc_lowcomm_communicator_t comm, int rank)
+int mpc_lowcomm_communicator_world_rank_of(const mpc_lowcomm_communicator_t comm, int rank)
 {
 	assert(comm != NULL);
 	mpc_lowcomm_communicator_t tcomm = mpc_lowcomm_communicator_get_local(comm);
@@ -808,7 +813,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_split(mpc_lowcomm_communicat
 			{
 				if(tab[i].color == tmp_color)
 				{
-					comm_world_ranks[j] = mpc_lowcomm_communicator_world_rank(comm, tab[i].rank);
+					comm_world_ranks[j] = mpc_lowcomm_communicator_world_rank_of(comm, tab[i].rank);
 					//mpc_common_debug_error("Thread %d color (%d) size %d on %d rank %d", tmp_color,
 					//                   k, j, group_size, tab[i].rank);
 					j++;
@@ -873,7 +878,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_commu
 		int remote_high = 0;
 		mpc_lowcomm_sendrecv(&high, sizeof(int), 0, 0, &remote_high, 0, intercomm);
 
-		int local_root_rank = mpc_lowcomm_communicator_world_rank(intercomm, 0);
+		int local_root_rank = mpc_lowcomm_communicator_world_rank_of(intercomm, 0);
 		int remote_root_rank = mpc_lowcomm_communicator_remote_world_rank(intercomm, 0);
 
 		mpc_lowcomm_group_t *first  = NULL;
@@ -944,7 +949,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_commu
 		   Elect who is going to choose the ID 
         ########################################### */
 
-		int my_world_rank = mpc_lowcomm_communicator_world_rank(intercomm, 0);
+		int my_world_rank = mpc_lowcomm_communicator_world_rank_of(intercomm, 0);
 		int remote_world_rank = mpc_lowcomm_communicator_remote_world_rank(intercomm, 0);
 
 		if(my_world_rank < remote_world_rank)
@@ -1006,7 +1011,7 @@ static inline uint32_t __intercomm_root_id_exchange(const mpc_lowcomm_communicat
 		/* We are local leaders */
 
 		/* Get remote world rank */
-		int remote_cw_rank = mpc_lowcomm_communicator_world_rank(peer_comm, remote_leader);
+		int remote_cw_rank = mpc_lowcomm_communicator_world_rank_of(peer_comm, remote_leader);
 
 		assume(cw_rank != remote_cw_rank);
 
@@ -1270,7 +1275,7 @@ int mpc_lowcomm_communicator_in_master_group(const mpc_lowcomm_communicator_t co
 {
 	assume(mpc_lowcomm_communicator_is_intercomm(communicator));
 	int remote_master_rank = mpc_lowcomm_communicator_remote_world_rank(communicator, 0);
-	int local_master_rank = mpc_lowcomm_communicator_world_rank(communicator, 0);
+	int local_master_rank = mpc_lowcomm_communicator_world_rank_of(communicator, 0);
 
 	if(local_master_rank < remote_master_rank)
 	{
@@ -1351,7 +1356,7 @@ int mpc_lowcomm_communicator_remote_size(const mpc_lowcomm_communicator_t comm)
 int mpc_lowcomm_communicator_remote_world_rank(const mpc_lowcomm_communicator_t comm, const int rank)
 {
 	mpc_lowcomm_communicator_t remote_comm = mpc_lowcomm_communicator_get_remote(comm);
-	return mpc_lowcomm_communicator_world_rank(remote_comm, rank);
+	return mpc_lowcomm_communicator_world_rank_of(remote_comm, rank);
 }
 
 int mpc_lowcomm_communicator_is_intercomm(mpc_lowcomm_communicator_t comm)

@@ -79,7 +79,7 @@ sctk_network_eager_msg_shm_recv(sctk_shm_cell_t *cell, int copy_enabled) {
 
   SCTK_MSG_COMPLETION_FLAG_SET(msg, NULL);
   msg->tail.message_type = MPC_LOWCOMM_MESSAGE_NETWORK;
-  if (SCTK_MSG_COMMUNICATOR(msg) < 0)
+  if (SCTK_MSG_COMMUNICATOR_ID(msg) == MPC_LOWCOMM_COMM_NULL_ID)
     return NULL;
 
   _mpc_comm_ptp_message_clear_request(msg);
