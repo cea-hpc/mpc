@@ -9090,58 +9090,76 @@ void pmpi_type_null_copy_fn__( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, v
 	*v6 = 0;
 }
 
-void mpi_win_null_delete_fn_ ( MPI_Fint*v1, MPI_Fint*v2, void*v3, void*v4, int *ierr )
+#pragma weak mpi_win_null_delete_fn_ = pmpi_win_null_delete_fn_
+void pmpi_win_null_delete_fn_ ( MPI_Fint*v1, MPI_Fint*v2, void*v3, void*v4, int *ierr )
 {
         *ierr = MPI_SUCCESS;
 }
 
-void mpi_win_null_delete_fn__ ( MPI_Fint*v1, MPI_Fint*v2, void*v3, void*v4, int *ierr )
+#pragma weak mpi_win_null_delete_fn__ = pmpi_win_null_delete_fn__
+void pmpi_win_null_delete_fn__ ( MPI_Fint*v1, MPI_Fint*v2, void*v3, void*v4, int *ierr )
 {
         *ierr = MPI_SUCCESS;
 }
 
-void mpi_win_dup_fn_ ( MPI_Fint v1, MPI_Fint*v2, void*v3, void**v4, void**v5, MPI_Fint*v6, int *ierr )
-{
-        *v5 = *v4;
-        *v6 = 1;
-        *ierr = MPI_SUCCESS;
-}
-
-void mpi_win_dup_fn__ ( MPI_Fint v1, MPI_Fint*v2, void*v3, void**v4, void**v5, MPI_Fint*v6, int *ierr )
+#pragma weak mpi_win_dup_fn_ = pmpi_win_dup_fn_
+void pmpi_win_dup_fn_ ( MPI_Fint v1, MPI_Fint*v2, void*v3, void**v4, void**v5, MPI_Fint*v6, int *ierr )
 {
         *v5 = *v4;
         *v6 = 1;
         *ierr = MPI_SUCCESS;
 }
 
-void mpi_win_null_copy_fn_ ( MPI_Fint*v1, MPI_Fint*v2, void*v3, void*v4, void*v5, MPI_Fint *v6, int *ierr )
+#pragma weak mpi_win_dup_fn__ = pmpi_win_dup_fn__
+void pmpi_win_dup_fn__ ( MPI_Fint v1, MPI_Fint*v2, void*v3, void**v4, void**v5, MPI_Fint*v6, int *ierr )
+{
+        *v5 = *v4;
+        *v6 = 1;
+        *ierr = MPI_SUCCESS;
+}
+
+#pragma weak mpi_win_null_copy_fn_ = pmpi_win_null_copy_fn_
+void pmpi_win_null_copy_fn_ ( MPI_Fint*v1, MPI_Fint*v2, void*v3, void*v4, void*v5, MPI_Fint *v6, int *ierr )
 {
         *ierr = MPI_SUCCESS;
         *v6 = 0;
 }
 
-void mpi_win_null_copy_fn__ ( MPI_Fint*v1, MPI_Fint*v2, void*v3, void*v4, void*v5, MPI_Fint *v6, int *ierr )
+#pragma weak mpi_win_null_copy_fn__ = pmpi_win_null_copy_fn__
+void pmpi_win_null_copy_fn__ ( MPI_Fint*v1, MPI_Fint*v2, void*v3, void*v4, void*v5, MPI_Fint *v6, int *ierr )
 {
         *ierr = MPI_SUCCESS;
         *v6 = 0;
 }
 
-#pragma weak mpi_pcontrol__ = mpi_pcontrol_
-void mpi_pcontrol_ ( MPI_Fint *v1, MPI_Fint *ierr ){
+#pragma weak mpi_pcontrol_ = pmpi_pcontrol_
+void pmpi_pcontrol_ ( MPI_Fint *v1, MPI_Fint *ierr ){
      *ierr = MPI_Pcontrol( (int)*v1 );
 }
 
-#pragma weak mpi_address__ = mpi_address_
-void mpi_address_ ( void*v1, MPI_Fint *v2, MPI_Fint *ierr ){
-     MPI_Aint a, b;
-     *ierr = MPI_Address( v1, &a );
- 
-     *v2 = (MPI_Fint)( a );
-
+#pragma weak mpi_pcontrol__ = pmpi_pcontrol__
+void pmpi_pcontrol__ ( MPI_Fint *v1, MPI_Fint *ierr ){
+     pmpi_pcontrol_(v1, ierr);
 }
 
-#pragma weak mpi_errhandler_create__ = mpi_errhandler_create_
-void mpi_errhandler_create_ ( MPI_Handler_function*v1, MPI_Fint *v2, MPI_Fint *ierr ){
+#pragma weak mpi_address_ = pmpi_address_
+void pmpi_address_ ( void*v1, MPI_Fint *v2, MPI_Fint *ierr ){
+     MPI_Aint a, b;
+     *ierr = MPI_Address( v1, &a );
+     *v2 = (MPI_Fint)( a );
+}
+
+#pragma weak mpi_address__ = pmpi_address__
+void pmpi_address__ ( void*v1, MPI_Fint *v2, MPI_Fint *ierr ){
+	pmpi_address_(v1, v2, ierr);
+}
+
+#pragma weak mpi_errhandler_create_ = pmpi_errhandler_create_
+void pmpi_errhandler_create_ ( MPI_Handler_function*v1, MPI_Fint *v2, MPI_Fint *ierr ){
      *ierr = MPI_Errhandler_create( v1, v2 );
 }
 
+#pragma weak mpi_errhandler_create__ = pmpi_errhandler_create__
+void pmpi_errhandler_create__ ( MPI_Handler_function*v1, MPI_Fint *v2, MPI_Fint *ierr ){
+     pmpi_errhandler_create_( v1, v2, ierr );
+}
