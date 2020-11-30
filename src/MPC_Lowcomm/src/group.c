@@ -160,7 +160,7 @@ int _mpc_lowcomm_group_local_process_count(mpc_lowcomm_group_t *g)
 
 	__fill_process_info(g);
 
-	assume(0 < g->tasks_count_in_process);
+	assume(0 <= g->tasks_count_in_process);
 
 	mpc_common_spinlock_unlock(&g->process_lock);
 
