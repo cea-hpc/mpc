@@ -212,6 +212,56 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
+  <xs:simpleType name="user_type_net_driver_ofi_mode">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="MPC_LOWCOMM_OFI_CONNECTED"/>
+      <xs:enumeration value="MPC_LOWCOMM_OFI_CONNECTIONLESS"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <!-- ********************************************************* -->
+  <xs:simpleType name="user_type_net_driver_ofi_ep_type">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="MPC_LOWCOMM_OFI_EP_MSG"/>
+      <xs:enumeration value="MPC_LOWCOMM_OFI_EP_RDM"/>
+      <xs:enumeration value="MPC_LOWCOMM_OFI_EP_UNSPEC"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <!-- ********************************************************* -->
+  <xs:simpleType name="user_type_net_driver_ofi_av_type">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="MPC_LOWCOMM_OFI_AV_TABLE"/>
+      <xs:enumeration value="MPC_LOWCOMM_OFI_AV_MAP"/>
+      <xs:enumeration value="MPC_LOWCOMM_OFI_AV_UNSPEC"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <!-- ********************************************************* -->
+  <xs:simpleType name="user_type_net_driver_ofi_progress">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="MPC_LOWCOMM_OFI_PROGRESS_MANUAL"/>
+      <xs:enumeration value="MPC_LOWCOMM_OFI_PROGRESS_AUTO"/>
+      <xs:enumeration value="MPC_LOWCOMM_OFI_PROGRESS_UNSPEC"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <!-- ********************************************************* -->
+  <xs:simpleType name="user_type_net_driver_ofi_rm_type">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="MPC_LOWCOMM_OFI_RM_ENABLED"/>
+      <xs:enumeration value="MPC_LOWCOMM_OFI_RM_DISABLED"/>
+      <xs:enumeration value="MPC_LOWCOMM_OFI_RM_UNSPEC"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_net_driver_ofi">
+    <xs:all>
+      <xs:element minOccurs="0" name="link" type="user_type_net_driver_ofi_mode"/>
+      <xs:element minOccurs="0" name="progress" type="user_type_net_driver_ofi_progress"/>
+      <xs:element minOccurs="0" name="ep_type" type="user_type_net_driver_ofi_ep_type"/>
+      <xs:element minOccurs="0" name="av_type" type="user_type_net_driver_ofi_av_type"/>
+      <xs:element minOccurs="0" name="rm_type" type="user_type_net_driver_ofi_rm_type"/>
+      <xs:element minOccurs="0" name="provider" type="xs:string"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
   <xs:complexType name="user_type_net_driver_tcp">
     <xs:all>
       <xs:element minOccurs="0" name="tcpoib" type="xs:integer"/>
@@ -248,6 +298,7 @@
     <xs:choice>
       <xs:element name="infiniband" type="user_type_net_driver_infiniband"/>
       <xs:element name="portals" type="user_type_net_driver_portals"/>
+      <xs:element name="ofi" type="user_type_net_driver_ofi"/>
       <xs:element name="tcp" type="user_type_net_driver_tcp"/>
       <xs:element name="tcprdma" type="user_type_net_driver_tcp_rdma"/>
       <xs:element name="shm" type="user_type_net_driver_shm"/>

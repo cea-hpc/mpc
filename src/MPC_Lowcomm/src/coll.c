@@ -1984,7 +1984,7 @@ void mpc_lowcomm_terminaison_barrier( void )
 		 * simply ignore it )*/
 		if ( mpc_common_get_process_count() > 1 )
 		{
-			mpc_common_nodebug( "sctk_pmi_barrier" );
+			mpc_common_nodebug( "mpc_launch_pmi_barrier" );
 			mpc_launch_pmi_barrier();
 		}
 

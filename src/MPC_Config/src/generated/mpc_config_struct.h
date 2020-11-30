@@ -93,6 +93,50 @@ enum ibv_rdvz_protocol
 };
 
 /********************************** ENUM ************************************/
+/****/
+enum net_driver_ofi_mode
+{
+	MPC_LOWCOMM_OFI_CONNECTED,
+	MPC_LOWCOMM_OFI_CONNECTIONLESS
+};
+
+/********************************** ENUM ************************************/
+/****/
+enum net_driver_ofi_ep_type
+{
+	MPC_LOWCOMM_OFI_EP_MSG,
+	MPC_LOWCOMM_OFI_EP_RDM,
+	MPC_LOWCOMM_OFI_EP_UNSPEC
+};
+
+/********************************** ENUM ************************************/
+/****/
+enum net_driver_ofi_av_type
+{
+	MPC_LOWCOMM_OFI_AV_TABLE,
+	MPC_LOWCOMM_OFI_AV_MAP,
+	MPC_LOWCOMM_OFI_AV_UNSPEC
+};
+
+/********************************** ENUM ************************************/
+/****/
+enum net_driver_ofi_progress
+{
+	MPC_LOWCOMM_OFI_PROGRESS_MANUAL,
+	MPC_LOWCOMM_OFI_PROGRESS_AUTO,
+	MPC_LOWCOMM_OFI_PROGRESS_UNSPEC
+};
+
+/********************************** ENUM ************************************/
+/****/
+enum net_driver_ofi_rm_type
+{
+	MPC_LOWCOMM_OFI_RM_ENABLED,
+	MPC_LOWCOMM_OFI_RM_DISABLED,
+	MPC_LOWCOMM_OFI_RM_UNSPEC
+};
+
+/********************************** ENUM ************************************/
 /**Values used for topological polling in the rail configuration**/
 enum rail_topological_polling_level
 {
@@ -243,6 +287,24 @@ struct sctk_runtime_config_struct_net_driver_portals
 };
 
 /******************************** STRUCTURE *********************************/
+/**OFI-based driver**/
+struct sctk_runtime_config_struct_net_driver_ofi
+{	int init_done;
+	/****/
+	enum net_driver_ofi_mode link;
+	/****/
+	enum net_driver_ofi_progress progress;
+	/****/
+	enum net_driver_ofi_ep_type ep_type;
+	/****/
+	enum net_driver_ofi_av_type av_type;
+	/****/
+	enum net_driver_ofi_rm_type rm_type;
+	/****/
+	char * provider;
+};
+
+/******************************** STRUCTURE *********************************/
 /**TCP-based driver**/
 struct sctk_runtime_config_struct_net_driver_tcp
 {	int init_done;
@@ -301,6 +363,7 @@ enum sctk_runtime_config_struct_net_driver_type
 	SCTK_RTCFG_net_driver_NONE,
 	SCTK_RTCFG_net_driver_infiniband,
 	SCTK_RTCFG_net_driver_portals,
+	SCTK_RTCFG_net_driver_ofi,
 	SCTK_RTCFG_net_driver_tcp,
 	SCTK_RTCFG_net_driver_tcprdma,
 	SCTK_RTCFG_net_driver_shm,
@@ -315,6 +378,7 @@ struct sctk_runtime_config_struct_net_driver
 	union {
 		struct sctk_runtime_config_struct_net_driver_infiniband infiniband;
 		struct sctk_runtime_config_struct_net_driver_portals portals;
+		struct sctk_runtime_config_struct_net_driver_ofi ofi;
 		struct sctk_runtime_config_struct_net_driver_tcp tcp;
 		struct sctk_runtime_config_struct_net_driver_tcp_rdma tcprdma;
 		struct sctk_runtime_config_struct_net_driver_shm shm;

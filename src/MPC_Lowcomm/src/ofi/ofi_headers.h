@@ -16,30 +16,16 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
+/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - ADAM Julien adamj@paratools.com                                  # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef SCTK_DRIVER_LIST_H
-#define SCTK_DRIVER_LIST_H
 
-#include <mpc_config.h>
+/* ONLY HEADERS HERE.... */
 
-/* Networks */
-#include <sctk_tcp.h>
-
-#ifdef MPC_USE_INFINIBAND
-#include <sctk_ib.h>
-#endif
-
-#ifdef MPC_USE_PORTALS
-#include <sctk_portals.h>
-#endif
-
-#ifdef MPC_USE_OFI
-#include <ofi.h>
-#endif
-
-#include <sctk_shm.h>
-#include <sctk_topological_rail.h>
-
-#endif
+#include <rdma/fabric.h>
+#include <rdma/fi_domain.h>
+#include <rdma/fi_cm.h>
+#include <rdma/fi_endpoint.h>
+#include <rdma/fi_atomic.h>
+#include <rdma/fi_errno.h>

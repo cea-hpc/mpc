@@ -46,7 +46,19 @@
 							<infiniband/>
 						</driver>
 					</config>
-
+					<config>
+						<name>tcp_ofi_config_mpi</name>
+						<driver>
+							<ofi>
+								<link>MPC_LOWCOMM_OFI_CONNECTED</link>
+								<progress>MPC_LOWCOMM_OFI_PROGRESS_AUTO</progress>
+								<ep_type>MPC_LOWCOMM_OFI_EP_MSG</ep_type>
+								<av_type>MPC_LOWCOMM_OFI_AV_MAP</av_type>
+								<rm_type>MPC_LOWCOMM_OFI_RM_ENABLED</rm_type>
+								<provider>sockets</provider>
+							</ofi>
+						</driver>
+					</config>
 					<config>
 						<name>tcp_config_mpi</name>
 						<driver>
@@ -87,6 +99,13 @@
 						<ondemand>1</ondemand>
 						<topology>ring</topology>
 						<config>opa_config_mpi</config>
+					</rail>
+					<rail>
+						<name>tcp_ofi_mpi</name>
+						<priority>9</priority>
+						<ondemand>1</ondemand>
+						<topology>ring</topology>
+						<config>tcp_ofi_config_mpi</config>
 					</rail>
 					<rail>
 						<name>tcp_mpi</name>
@@ -141,9 +160,16 @@
 						</rails>
 					</cli_option>
 					<cli_option>
-						<name>tcponly</name>
+						<name>tcp_ofi_only</name>
 						<rails>
-							<rail>tcp_mpi</rail>
+							<rail>tcp_ofi_mpi</rail>
+						</rails>
+					</cli_option>
+					<cli_option>
+						<name>tcp_ofi</name>
+						<rails>
+							<rail>shm_mpi</rail>
+							<rail>tcp_ofi_mpi</rail>
 						</rails>
 					</cli_option>
 					<cli_option>

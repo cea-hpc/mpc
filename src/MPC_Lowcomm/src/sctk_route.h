@@ -58,6 +58,9 @@ typedef union
 #ifdef MPC_USE_PORTALS
 	sctk_ptl_route_info_t ptl; /*< Portals route info */
 #endif
+#ifdef MPC_USE_OFI
+	mpc_lowcomm_ofi_route_info_t ofi; /*< OFI-specific route info */
+#endif
 } sctk_route_info_spec_t;
 
 

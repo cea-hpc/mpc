@@ -498,6 +498,47 @@ Type is offload_ops_t.
 .Pp offloading
 List of available optimizations taking advantage of triggered Ops
 .El
+.Sh ENTRIES OF TYPE net_driver_ofi
+OFI-based driver
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm link
+Type is enum net_driver_ofi_mode. Possible values are : MPC_LOWCOMM_OFI_CONNECTED, MPC_LOWCOMM_OFI_CONNECTIONLESS.
+
+Default value is MPC_LOWCOMM_OFI_CONNECTED. 
+.Pp link
+
+.It Cm progress
+Type is enum net_driver_ofi_progress. Possible values are : MPC_LOWCOMM_OFI_PROGRESS_MANUAL, MPC_LOWCOMM_OFI_PROGRESS_AUTO, MPC_LOWCOMM_OFI_PROGRESS_UNSPEC.
+
+Default value is MPC_LOWCOMM_OFI_PROGRESS_UNSPEC. 
+.Pp progress
+
+.It Cm ep_type
+Type is enum net_driver_ofi_ep_type. Possible values are : MPC_LOWCOMM_OFI_EP_MSG, MPC_LOWCOMM_OFI_EP_RDM, MPC_LOWCOMM_OFI_EP_UNSPEC.
+
+Default value is MPC_LOWCOMM_OFI_EP_UNSPEC. 
+.Pp ep_type
+
+.It Cm av_type
+Type is enum net_driver_ofi_av_type. Possible values are : MPC_LOWCOMM_OFI_AV_TABLE, MPC_LOWCOMM_OFI_AV_MAP, MPC_LOWCOMM_OFI_AV_UNSPEC.
+
+Default value is MPC_LOWCOMM_OFI_AV_UNSPEC. 
+.Pp av_type
+
+.It Cm rm_type
+Type is enum net_driver_ofi_rm_type. Possible values are : MPC_LOWCOMM_OFI_RM_ENABLED, MPC_LOWCOMM_OFI_RM_DISABLED, MPC_LOWCOMM_OFI_RM_UNSPEC.
+
+Default value is MPC_LOWCOMM_OFI_RM_UNSPEC. 
+.Pp rm_type
+
+.It Cm provider
+Type is string. 
+.Pp provider
+
+.El
 .Sh ENTRIES OF TYPE net_driver_tcp
 TCP-based driver
 .Pp
@@ -597,6 +638,8 @@ It can contain a node of type :
  of type net_driver_infiniband. 
 .It Cm portals
  of type net_driver_portals. 
+.It Cm ofi
+ of type net_driver_ofi. 
 .It Cm tcp
  of type net_driver_tcp. 
 .It Cm tcprdma

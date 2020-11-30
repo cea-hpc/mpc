@@ -121,6 +121,43 @@
 			<param name="offloading" type="offload_ops_t" doc="List of available optimizations taking advantage of triggered Ops" />
 		</struct>
 
+		<enum name="net_driver_ofi_mode" doc="">
+			<value>MPC_LOWCOMM_OFI_CONNECTED</value>
+			<value>MPC_LOWCOMM_OFI_CONNECTIONLESS</value>
+		</enum>
+
+		<enum name="net_driver_ofi_ep_type" doc="">
+			<value>MPC_LOWCOMM_OFI_EP_MSG</value>
+			<value>MPC_LOWCOMM_OFI_EP_RDM</value>
+			<value>MPC_LOWCOMM_OFI_EP_UNSPEC</value>
+		</enum>
+		<enum name="net_driver_ofi_av_type" doc="">
+			<value>MPC_LOWCOMM_OFI_AV_TABLE</value>
+			<value>MPC_LOWCOMM_OFI_AV_MAP</value>
+			<value>MPC_LOWCOMM_OFI_AV_UNSPEC</value>
+		</enum>
+		<enum name="net_driver_ofi_progress" doc="">
+			<value>MPC_LOWCOMM_OFI_PROGRESS_MANUAL</value>
+			<value>MPC_LOWCOMM_OFI_PROGRESS_AUTO</value>
+			<value>MPC_LOWCOMM_OFI_PROGRESS_UNSPEC</value>
+		</enum>
+		<enum name="net_driver_ofi_rm_type" doc="">
+			<value>MPC_LOWCOMM_OFI_RM_ENABLED</value>
+			<value>MPC_LOWCOMM_OFI_RM_DISABLED</value>
+			<value>MPC_LOWCOMM_OFI_RM_UNSPEC</value>
+		</enum>
+
+		<!-- Structure for OFI driver -->
+		<struct name="net_driver_ofi" doc="OFI-based driver">
+			<param name="link" type="net_driver_ofi_mode" doc="" default="MPC_LOWCOMM_OFI_CONNECTED" />
+			<param name="progress" type="net_driver_ofi_progress" doc="" default="MPC_LOWCOMM_OFI_PROGRESS_UNSPEC" />
+			<param name="ep_type" type="net_driver_ofi_ep_type" doc="" default="MPC_LOWCOMM_OFI_EP_UNSPEC" />
+			<param name="av_type" type="net_driver_ofi_av_type" doc="" default="MPC_LOWCOMM_OFI_AV_UNSPEC" />
+			<param name="rm_type" type="net_driver_ofi_rm_type" doc="" default="MPC_LOWCOMM_OFI_RM_UNSPEC" />
+			<param name="provider" type="string" doc="" />
+		</struct>
+
+
 		<!-- Structure for TCP driver -->
 		<struct name="net_driver_tcp" doc="TCP-based driver">
 			<param name="tcpoib" type="int" doc="Enable TCP over Infiniband (if elligible)." default="1" />
@@ -154,6 +191,7 @@
 		<union name="net_driver" doc="Define a specific configuration for a network driver to apply in rails.">
 			<choice name="infiniband" type="net_driver_infiniband" />
 			<choice name="portals" type="net_driver_portals" />
+			<choice name="ofi" type="net_driver_ofi" />
 			<choice name="tcp" type="net_driver_tcp" />
 			<choice name="tcprdma" type="net_driver_tcp_rdma" />
 			<choice name="shm" type="net_driver_shm" />

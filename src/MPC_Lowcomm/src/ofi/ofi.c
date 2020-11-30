@@ -16,30 +16,32 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
+/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - ADAM Julien adamj@paratools.com                                  # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef SCTK_DRIVER_LIST_H
-#define SCTK_DRIVER_LIST_H
 
-#include <mpc_config.h>
+#include "ofi.h"
+#include "ofi_msg.h"
+#include "ofi_rdma.h"
 
-/* Networks */
-#include <sctk_tcp.h>
-
-#ifdef MPC_USE_INFINIBAND
-#include <sctk_ib.h>
-#endif
-
-#ifdef MPC_USE_PORTALS
-#include <sctk_portals.h>
-#endif
-
-#ifdef MPC_USE_OFI
-#include <ofi.h>
-#endif
-
-#include <sctk_shm.h>
-#include <sctk_topological_rail.h>
-
-#endif
+/**
+ * @brief Redirect to the driver to initialize from configuration set by user
+ * 
+ * @param rail the rail owning the driver to inialize
+ */
+void sctk_network_init_ofi( sctk_rail_info_t *rail )
+{
+	switch(rail->runtime_config_driver_config->driver.value.ofi.link)
+	{
+		case MPC_LOWCOMM_OFI_CONNECTED:
+			sctk_network_init_ofi_msg(rail);
+			break;
+		case MPC_LOWCOMM_OFI_CONNECTIONLESS:
+			sctk_network_init_ofi_rdma(rail);
+			break;
+		default:
+			mpc_common_debug_fatal("'%s' is not a supported OFI driver");
+			not_reachable();
+	}
+}

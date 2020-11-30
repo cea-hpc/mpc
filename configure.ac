@@ -652,6 +652,7 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
                 # First try with PKG config
+                AC_MSG_NOTICE([Locating $libname$version with pkg-config])
                 PKG_CHECK_MODULES([$4], [$libname $version], [pkg_found=1], [pkg_found=0])
 
                 if test "x$pkg_found" = "x1"
@@ -834,6 +835,23 @@ if test "x$mpc_dep_found" = "xyes"; then
 fi
 
 AM_CONDITIONAL([INFINIBAND_DRIVER_ENABLED], [test "x$infiniband_enabled" = "xyes"])
+
+#
+# Detect LibFabric
+#
+
+ofi_enabled="no"
+
+MPC_DETECT_DEPENDENCY([fabric.h], [libfabric], [ofi_wait_init], [OFI], [], [], [fabric])
+if test "x$mpc_dep_found" = "xyes"; then
+        MPC_NETWORK_LIST="$MPC_NETWORK_LIST ofi"
+        AC_DEFINE([MPC_USE_OFI], [1], [Libfabric support is enabled])
+        ofi_enabled="yes"
+fi
+
+AM_CONDITIONAL([OFI_DRIVER_ENABLED], [test "x$ofi_enabled" = "xyes"])
+
+AC_SUBST([MPC_NETWORK_LIST])
 
 #
 # Detect Portals4

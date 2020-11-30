@@ -85,6 +85,14 @@ meta.types = {
 		block_cut: {mode: 'param', name: "block_cut", type: "size", doc: "Above this value, RDV messages will be split in multiple GET requests", dflt: "2 GB", },
 		offloading: {mode: 'param', name: "offloading", type: "offload_ops_t", doc: "List of available optimizations taking advantage of triggered Ops", dflt: null},
 	}},
+	net_driver_ofi : {type: 'struct', name: "net_driver_ofi", childs: {
+		link: {mode: 'param', name: "link", type: "net_driver_ofi_mode", doc: "", dflt: "MPC_LOWCOMM_OFI_CONNECTED", },
+		progress: {mode: 'param', name: "progress", type: "net_driver_ofi_progress", doc: "", dflt: "MPC_LOWCOMM_OFI_PROGRESS_UNSPEC", },
+		ep_type: {mode: 'param', name: "ep_type", type: "net_driver_ofi_ep_type", doc: "", dflt: "MPC_LOWCOMM_OFI_EP_UNSPEC", },
+		av_type: {mode: 'param', name: "av_type", type: "net_driver_ofi_av_type", doc: "", dflt: "MPC_LOWCOMM_OFI_AV_UNSPEC", },
+		rm_type: {mode: 'param', name: "rm_type", type: "net_driver_ofi_rm_type", doc: "", dflt: "MPC_LOWCOMM_OFI_RM_UNSPEC", },
+		provider: {mode: 'param', name: "provider", type: "string", doc: "", dflt: null},
+	}},
 	net_driver_tcp : {type: 'struct', name: "net_driver_tcp", childs: {
 		tcpoib: {mode: 'param', name: "tcpoib", type: "int", doc: "Enable TCP over Infiniband (if elligible).", dflt: "1", },
 	}},
@@ -111,6 +119,7 @@ meta.types = {
 	net_driver : {type: 'union', name: "net_driver", choice: {
 		infiniband: {name: "infiniband", type: "net_driver_infiniband"},
 		portals: {name: "portals", type: "net_driver_portals"},
+		ofi: {name: "ofi", type: "net_driver_ofi"},
 		tcp: {name: "tcp", type: "net_driver_tcp"},
 		tcprdma: {name: "tcprdma", type: "net_driver_tcp_rdma"},
 		shm: {name: "shm", type: "net_driver_shm"},
@@ -373,6 +382,30 @@ meta.enum = {
 	ibv_rdvz_protocol : {type: 'enum', name: "ibv_rdvz_protocol", doc: "", values: {
 		IBV_RDVZ_WRITE_PROTOCOL: "IBV_RDVZ_WRITE_PROTOCOL",
 		IBV_RDVZ_READ_PROTOCOL: "IBV_RDVZ_READ_PROTOCOL",
+	}},
+	net_driver_ofi_mode : {type: 'enum', name: "net_driver_ofi_mode", doc: "", values: {
+		MPC_LOWCOMM_OFI_CONNECTED: "MPC_LOWCOMM_OFI_CONNECTED",
+		MPC_LOWCOMM_OFI_CONNECTIONLESS: "MPC_LOWCOMM_OFI_CONNECTIONLESS",
+	}},
+	net_driver_ofi_ep_type : {type: 'enum', name: "net_driver_ofi_ep_type", doc: "", values: {
+		MPC_LOWCOMM_OFI_EP_MSG: "MPC_LOWCOMM_OFI_EP_MSG",
+		MPC_LOWCOMM_OFI_EP_RDM: "MPC_LOWCOMM_OFI_EP_RDM",
+		MPC_LOWCOMM_OFI_EP_UNSPEC: "MPC_LOWCOMM_OFI_EP_UNSPEC",
+	}},
+	net_driver_ofi_av_type : {type: 'enum', name: "net_driver_ofi_av_type", doc: "", values: {
+		MPC_LOWCOMM_OFI_AV_TABLE: "MPC_LOWCOMM_OFI_AV_TABLE",
+		MPC_LOWCOMM_OFI_AV_MAP: "MPC_LOWCOMM_OFI_AV_MAP",
+		MPC_LOWCOMM_OFI_AV_UNSPEC: "MPC_LOWCOMM_OFI_AV_UNSPEC",
+	}},
+	net_driver_ofi_progress : {type: 'enum', name: "net_driver_ofi_progress", doc: "", values: {
+		MPC_LOWCOMM_OFI_PROGRESS_MANUAL: "MPC_LOWCOMM_OFI_PROGRESS_MANUAL",
+		MPC_LOWCOMM_OFI_PROGRESS_AUTO: "MPC_LOWCOMM_OFI_PROGRESS_AUTO",
+		MPC_LOWCOMM_OFI_PROGRESS_UNSPEC: "MPC_LOWCOMM_OFI_PROGRESS_UNSPEC",
+	}},
+	net_driver_ofi_rm_type : {type: 'enum', name: "net_driver_ofi_rm_type", doc: "", values: {
+		MPC_LOWCOMM_OFI_RM_ENABLED: "MPC_LOWCOMM_OFI_RM_ENABLED",
+		MPC_LOWCOMM_OFI_RM_DISABLED: "MPC_LOWCOMM_OFI_RM_DISABLED",
+		MPC_LOWCOMM_OFI_RM_UNSPEC: "MPC_LOWCOMM_OFI_RM_UNSPEC",
 	}},
 	rail_topological_polling_level : {type: 'enum', name: "rail_topological_polling_level", doc: "Values used for topological polling in the rail configuration", values: {
 		RAIL_POLL_NONE: "RAIL_POLL_NONE",

@@ -60,6 +60,7 @@ void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr);
 void sctk_runtime_config_struct_init_ib_global(void * struct_ptr);
 void sctk_runtime_config_struct_init_offload_ops_t(void * struct_ptr);
 void sctk_runtime_config_struct_init_net_driver_portals(void * struct_ptr);
+void sctk_runtime_config_struct_init_net_driver_ofi(void * struct_ptr);
 void sctk_runtime_config_struct_init_net_driver_tcp(void * struct_ptr);
 void sctk_runtime_config_struct_init_net_driver_tcp_rdma(void * struct_ptr);
 void sctk_runtime_config_struct_init_net_driver_shm(void * struct_ptr);

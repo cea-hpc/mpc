@@ -127,7 +127,7 @@ libmpccommon_la_DEPENDENCIES =  \
 am__libmpccommon_la_SOURCES_DIST = aio.c bit_array.c fifo.c \
 	hashtable.c io_helper.c rank.c debug.c sctk_no_alloc.c \
 	sctk_pm_json.c flags.c debugger.c elf_32.c elf_64.c spinlock.c \
-	./profiler/sctk_internal_profiler.c \
+	base64.c ./profiler/sctk_internal_profiler.c \
 	./profiler/sctk_performance_tree.c \
 	./profiler/sctk_profile_meta.c \
 	./profiler/sctk_profiler_array.c \
@@ -148,7 +148,7 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_profile_render_xml.lo
 am_libmpccommon_la_OBJECTS = aio.lo bit_array.lo fifo.lo hashtable.lo \
 	io_helper.lo rank.lo debug.lo sctk_no_alloc.lo sctk_pm_json.lo \
-	flags.lo debugger.lo elf_32.lo elf_64.lo spinlock.lo \
+	flags.lo debugger.lo elf_32.lo elf_64.lo spinlock.lo base64.lo \
 	$(am__objects_1)
 libmpccommon_la_OBJECTS = $(am_libmpccommon_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -364,6 +364,8 @@ NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
+OFI_CFLAGS = @OFI_CFLAGS@
+OFI_LIBS = @OFI_LIBS@
 OPA_CFLAGS = @OPA_CFLAGS@
 OPA_LIBS = @OPA_LIBS@
 OTOOL = @OTOOL@
@@ -519,7 +521,7 @@ noinst_LTLIBRARIES = libmpccommon.la
 CLEANFILES = elf_64.c
 libmpccommon_la_SOURCES = aio.c bit_array.c fifo.c hashtable.c \
 	io_helper.c rank.c debug.c sctk_no_alloc.c sctk_pm_json.c \
-	flags.c debugger.c elf_32.c elf_64.c spinlock.c \
+	flags.c debugger.c elf_32.c elf_64.c spinlock.c base64.c \
 	$(am__append_3)
 libmpccommon_la_LIBADD = $(abs_top_builddir)/src/MPC_Arch/src/libmpcarch.la $(OPENPA_LIBS) $(ALLOC_LIBS)
 all: all-am
@@ -603,6 +605,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/aio.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/base64.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bit_array.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/debug.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/debugger.Plo@am__quote@

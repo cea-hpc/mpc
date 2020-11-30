@@ -13,6 +13,10 @@
 #include <sctk_portals.h>
 #endif
 
+#ifdef MPC_USE_OFI
+#include "ofi_types.h"
+#endif
+
 /************************************************************************/
 /* mpc_lowcomm_request_t		                                                    */
 /************************************************************************/
@@ -336,6 +340,9 @@ typedef struct
 
 #ifdef MPC_USE_INFINIBAND
 	struct mpc_lowcomm_ib_tail_s              ib;
+#endif
+#ifdef MPC_USE_OFI /* all of these should be replaced w/ union */
+	struct mpc_lowcomm_ofi_tail_s ofi;
 #endif
 	char                                      remote_source;
 } mpc_lowcomm_ptp_message_tail_t;

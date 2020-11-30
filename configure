@@ -798,11 +798,15 @@ PMIX_LIBS
 PMIX_CFLAGS
 PMI_LIBS
 PMI_CFLAGS
-MPC_NETWORK_LIST
 PORTALS4_DRIVER_ENABLED_FALSE
 PORTALS4_DRIVER_ENABLED_TRUE
 PORTALS_LIBS
 PORTALS_CFLAGS
+MPC_NETWORK_LIST
+OFI_DRIVER_ENABLED_FALSE
+OFI_DRIVER_ENABLED_TRUE
+OFI_LIBS
+OFI_CFLAGS
 INFINIBAND_DRIVER_ENABLED_FALSE
 INFINIBAND_DRIVER_ENABLED_TRUE
 IBV_LIBS
@@ -1028,6 +1032,9 @@ with_libunwind_libs
 with_ibverbs
 with_ibverbs_include
 with_ibverbs_libs
+with_libfabric
+with_libfabric_include
+with_libfabric_libs
 with_portals
 with_portals_include
 with_portals_libs
@@ -1104,6 +1111,8 @@ UNW_CFLAGS
 UNW_LIBS
 IBV_CFLAGS
 IBV_LIBS
+OFI_CFLAGS
+OFI_LIBS
 PORTALS_CFLAGS
 PORTALS_LIBS
 PMI_CFLAGS
@@ -1817,6 +1826,9 @@ Optional Packages:
   --with-ibverbs          Provide prefix for ibverbs
   --with-ibverbs-inc      Provide include path for ibverbs
   --with-ibverbs-libs     Provide library path for ibverbs
+  --with-libfabric        Provide prefix for libfabric
+  --with-libfabric-inc    Provide include path for libfabric
+  --with-libfabric-libs   Provide library path for libfabric
   --with-portals          Provide prefix for portals
   --with-portals-inc      Provide include path for portals
   --with-portals-libs     Provide library path for portals
@@ -1884,6 +1896,8 @@ Some influential environment variables:
   UNW_LIBS    linker flags for UNW, overriding pkg-config
   IBV_CFLAGS  C compiler flags for IBV, overriding pkg-config
   IBV_LIBS    linker flags for IBV, overriding pkg-config
+  OFI_CFLAGS  C compiler flags for OFI, overriding pkg-config
+  OFI_LIBS    linker flags for OFI, overriding pkg-config
   PORTALS_CFLAGS
               C compiler flags for PORTALS, overriding pkg-config
   PORTALS_LIBS
@@ -24033,6 +24047,8 @@ fi
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
                 # First try with PKG config
+                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+$as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XML2" >&5
@@ -24216,6 +24232,8 @@ fi
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
                 # First try with PKG config
+                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+$as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for HWLOC" >&5
@@ -24399,6 +24417,8 @@ fi
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
                 # First try with PKG config
+                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+$as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for OPA" >&5
@@ -24602,6 +24622,8 @@ fi
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
                 # First try with PKG config
+                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+$as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ALLOC" >&5
@@ -25027,6 +25049,8 @@ fi
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
                 # First try with PKG config
+                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+$as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for UNW" >&5
@@ -25225,6 +25249,8 @@ fi
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
                 # First try with PKG config
+                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+$as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for IBV" >&5
@@ -25350,6 +25376,203 @@ fi
 
 
 #
+# Detect LibFabric
+#
+
+ofi_enabled="no"
+
+
+
+
+# Check whether --with-libfabric was given.
+if test "${with_libfabric+set}" = set; then :
+  withval=$with_libfabric; whole_prefix=$withval
+else
+  whole_prefix="/usr/"
+fi
+
+
+                inc_prefix=""
+
+# Check whether --with-libfabric-include was given.
+if test "${with_libfabric_include+set}" = set; then :
+  withval=$with_libfabric_include; inc_prefix=$withval
+fi
+
+                lib_prefix=""
+
+# Check whether --with-libfabric-libs was given.
+if test "${with_libfabric_libs+set}" = set; then :
+  withval=$with_libfabric_libs; lib_prefix=$withval
+else
+  lib_prefix=""
+fi
+
+
+                check_or_infer_prefix_result="no"
+                header_name=fabric.h
+                libname=libfabric
+                alt_libname=fabric
+                function_name=ofi_wait_init
+                var_prefix=OFI
+                version=""
+
+                if test -z "$lib_prefix"
+                then
+                        lib_prefix="$whole_prefix/lib"
+                else
+                        if test -d "${lib_prefix}/pkgconfig"; then
+                            export PKG_CONFIG_PATH="${lib_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
+                        fi
+                fi
+
+                if test ! -z "$whole_prefix"
+                then
+                        if test -d "${whole_prefix}/lib/pkgconfig"; then
+                            export PKG_CONFIG_PATH="${whole_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
+                        fi
+                fi
+
+                if test -z "$inc_prefix"
+                then
+                        inc_prefix="$whole_prefix/include/"
+                fi
+
+
+
+
+                #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
+
+                # First try with PKG config
+                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+$as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for OFI" >&5
+$as_echo_n "checking for OFI... " >&6; }
+
+if test -n "$OFI_CFLAGS"; then
+    pkg_cv_OFI_CFLAGS="$OFI_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_OFI_CFLAGS=`$PKG_CONFIG --cflags "$libname $version" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$OFI_LIBS"; then
+    pkg_cv_OFI_LIBS="$OFI_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_OFI_LIBS=`$PKG_CONFIG --libs "$libname $version" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        OFI_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$libname $version" 2>&1`
+        else
+	        OFI_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$libname $version" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$OFI_PKG_ERRORS" >&5
+
+	pkg_found=0
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	pkg_found=0
+else
+	OFI_CFLAGS=$pkg_cv_OFI_CFLAGS
+	OFI_LIBS=$pkg_cv_OFI_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	pkg_found=1
+fi
+
+                if test "x$pkg_found" = "x1"
+                then
+                        # Ensure PKG config dependencies are also
+                        # injected using RPATH
+                        OFI_LIBS=$(promote_to_rpath ${OFI_LIBS})
+
+                        #Insert flags
+                        CPPFLAGS="${OFI_CFLAGS} $CPPFLAGS"
+                        LDFLAGS="${OFI_LIBS} $LDFLAGS"
+
+
+
+
+                        #AC_MSG_NOTICE([$libname found using pkg-config])
+                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                        check_or_infer_prefix_result="yes"
+                else
+                        __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
+                        __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
+
+                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                        then
+                                check_or_infer_prefix_result="yes"
+                        else
+                                check_or_infer_prefix_result="no"
+                        fi
+                fi
+
+                mpc_dep_found=$check_or_infer_prefix_result
+
+if test "x$mpc_dep_found" = "xyes"; then
+        MPC_NETWORK_LIST="$MPC_NETWORK_LIST ofi"
+
+$as_echo "#define MPC_USE_OFI 1" >>confdefs.h
+
+        ofi_enabled="yes"
+fi
+
+ if test "x$ofi_enabled" = "xyes"; then
+  OFI_DRIVER_ENABLED_TRUE=
+  OFI_DRIVER_ENABLED_FALSE='#'
+else
+  OFI_DRIVER_ENABLED_TRUE='#'
+  OFI_DRIVER_ENABLED_FALSE=
+fi
+
+
+
+
+#
 # Detect Portals4
 #
 
@@ -25418,6 +25641,8 @@ fi
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
                 # First try with PKG config
+                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+$as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PORTALS" >&5
@@ -25675,6 +25900,8 @@ fi
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
                 # First try with PKG config
+                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+$as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PMI" >&5
@@ -25862,6 +26089,8 @@ fi
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
                 # First try with PKG config
+                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+$as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PMIX" >&5
@@ -26155,6 +26384,8 @@ fi
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
                 # First try with PKG config
+                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+$as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CUDA" >&5
@@ -26339,6 +26570,8 @@ fi
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
                 # First try with PKG config
+                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+$as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CUDART" >&5
@@ -31078,6 +31311,8 @@ fi
                 #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
                 # First try with PKG config
+                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+$as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for EXTLS" >&5
@@ -31835,6 +32070,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${INFINIBAND_DRIVER_ENABLED_TRUE}" && test -z "${INFINIBAND_DRIVER_ENABLED_FALSE}"; then
   as_fn_error $? "conditional \"INFINIBAND_DRIVER_ENABLED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${OFI_DRIVER_ENABLED_TRUE}" && test -z "${OFI_DRIVER_ENABLED_FALSE}"; then
+  as_fn_error $? "conditional \"OFI_DRIVER_ENABLED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${PORTALS4_DRIVER_ENABLED_TRUE}" && test -z "${PORTALS4_DRIVER_ENABLED_FALSE}"; then

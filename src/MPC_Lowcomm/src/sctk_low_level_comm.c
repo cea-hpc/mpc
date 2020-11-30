@@ -410,6 +410,10 @@ int sctk_unfold_rails( struct sctk_runtime_config_struct_net_cli_option *cli_opt
 		/* Get the rail */
 		struct sctk_runtime_config_struct_net_rail *rail = sctk_get_rail_config_by_name ( cli_option->rails[k] );
 		
+		if(!rail)
+		{
+			bad_parameter("Could not find a rail config named %s", rail);
+		}
 		/* Here we have two cases, first the rail device name is a regexp (begins with !)
 		 * or the subrails are already defined with their device manually set  */
 		
@@ -495,6 +499,11 @@ void sctk_rail_init_driver( sctk_rail_info_t * rail, int driver_type )
 #ifdef MPC_USE_PORTALS
         	case SCTK_RTCFG_net_driver_portals: /* PORTALS */
 			sctk_network_init_ptl ( rail );
+		break;
+#endif
+#ifdef MPC_USE_OFI
+        	case SCTK_RTCFG_net_driver_ofi: /* OFI */
+			sctk_network_init_ofi ( rail );
 		break;
 #endif
 		case SCTK_RTCFG_net_driver_topological:

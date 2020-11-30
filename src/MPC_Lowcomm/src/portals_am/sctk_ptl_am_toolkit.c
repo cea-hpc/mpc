@@ -115,7 +115,7 @@ void sctk_ptl_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_rail_info_t* rail
  */
 void sctk_ptl_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t* endpoint)
 {
-	int process_rank            = sctk_get_process_rank();
+	int process_rank            = mpc_common_get_process_rank();
 	sctk_ptl_rail_info_t* srail = &endpoint->rail->network.ptl;
 
 	assert(SCTK_PTL_PTE_EXIST(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg)));
@@ -343,7 +343,7 @@ void sctk_ptl_create_ring ( sctk_rail_info_t *rail )
 			0 /* Not local */
 	);
 	assert(tmp_ret == 0);
-	ranks_ids_map[sctk_get_process_rank()] = srail->id;
+	ranks_ids_map[mpc_common_get_process_rank()] = srail->id;
 
 	/* what are my neighbour ranks ? */
 	right_rank = ( mpc_common_get_process_rank() + 1 ) % mpc_common_get_process_count();
@@ -481,7 +481,7 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 
 	if(!ranks_ids_map)
 	{
-		ranks_ids_map = sctk_calloc(sctk_get_process_number(), sizeof(sctk_ptl_id_t));
+		ranks_ids_map = sctk_calloc(mpc_common_get_process_count(), sizeof(sctk_ptl_id_t));
 	}
 
 	comm_recovery_pte = mpc_common_hashtable_get(&rail->network.ptl.pt_table, SCTK_PTL_PTE_RECOVERY);

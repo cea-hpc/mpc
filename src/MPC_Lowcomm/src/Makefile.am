@@ -74,9 +74,14 @@ libmpclowcomm_la_SOURCES += ./portals/sctk_ptl_rdv.c ./portals/sctk_ptl_toolkit.
 libmpclowcomm_la_SOURCES += ./portals_am/sctk_ptl_am_iface.c  ./portals_am/sctk_ptl_am_toolkit.c ./portals_am/sctk_ptl_am_arpc_api.c ./portals_am/arpc_weak.c
 endif
 
+if OFI_DRIVER_ENABLED
+AM_CPPFLAGS += -I$(abs_srcdir)/ofi/
+libmpclowcomm_la_SOURCES +=./ofi/ofi.c ./ofi/ofi_msg.c ./ofi/ofi_rdma.c ./ofi/ofi_toolkit.c
+endif
+
+
 # library dependency #
 libmpclowcomm_la_LIBADD =  $(ALLOC_LIBS) ../../MPC_Launch/src/libmpclaunch.la -lm -lrt
-
 
 if MPC_HAVE_AM
  # Active message support (ffi)

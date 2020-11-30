@@ -52,6 +52,9 @@ typedef union
 #ifdef MPC_USE_PORTALS
 	sctk_ptl_rail_info_t ptl; /**< Portals Info */
 #endif
+#ifdef MPC_USE_OFI
+	mpc_lowcomm_ofi_rail_info_t ofi; /**< OFI info */
+#endif
 	sctk_topological_rail_info_t topological; /**< Topological rail info */
 } sctk_rail_info_spec_t;
 
@@ -75,6 +78,10 @@ struct sctk_rail_ib_pin_ctx
 #include "sctk_ptl_types.h"
 #endif
 
+#ifdef MPC_USE_OFI
+#include "ofi_types.h"
+#endif
+
 typedef union
 {
 #ifdef MPC_USE_INFINIBAND
@@ -83,6 +90,9 @@ typedef union
 #ifdef MPC_USE_PORTALS
 	struct sctk_ptl_rdma_ctx ptl;
 #endif /* MPC_USE_PORTALS */
+#ifdef MPC_USE_OFI
+	struct mpc_lowcomm_ofi_rma_ctx ofi;
+#endif /* MPC_USE_OFI */
 }sctk_rail_pin_ctx_internal_t;
 
 struct sctk_rail_pin_ctx_list

@@ -399,6 +399,155 @@ void sctk_runtime_config_struct_init_net_driver_portals(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_enum_init_net_driver_ofi_mode()
+{
+	struct enum_type * current_enum = (struct enum_type *) malloc(sizeof(struct enum_type));
+	struct enum_value * current_value, * values = NULL;
+
+	strncpy(current_enum->name, "enum net_driver_ofi_mode", 50);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPC_LOWCOMM_OFI_CONNECTED", 50);
+	current_value->value = MPC_LOWCOMM_OFI_CONNECTED;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPC_LOWCOMM_OFI_CONNECTIONLESS", 50);
+	current_value->value = MPC_LOWCOMM_OFI_CONNECTIONLESS;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_enum->values = values;
+	HASH_ADD_STR(enums_types, name, current_enum);
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_enum_init_net_driver_ofi_ep_type()
+{
+	struct enum_type * current_enum = (struct enum_type *) malloc(sizeof(struct enum_type));
+	struct enum_value * current_value, * values = NULL;
+
+	strncpy(current_enum->name, "enum net_driver_ofi_ep_type", 50);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPC_LOWCOMM_OFI_EP_MSG", 50);
+	current_value->value = MPC_LOWCOMM_OFI_EP_MSG;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPC_LOWCOMM_OFI_EP_RDM", 50);
+	current_value->value = MPC_LOWCOMM_OFI_EP_RDM;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPC_LOWCOMM_OFI_EP_UNSPEC", 50);
+	current_value->value = MPC_LOWCOMM_OFI_EP_UNSPEC;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_enum->values = values;
+	HASH_ADD_STR(enums_types, name, current_enum);
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_enum_init_net_driver_ofi_av_type()
+{
+	struct enum_type * current_enum = (struct enum_type *) malloc(sizeof(struct enum_type));
+	struct enum_value * current_value, * values = NULL;
+
+	strncpy(current_enum->name, "enum net_driver_ofi_av_type", 50);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPC_LOWCOMM_OFI_AV_TABLE", 50);
+	current_value->value = MPC_LOWCOMM_OFI_AV_TABLE;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPC_LOWCOMM_OFI_AV_MAP", 50);
+	current_value->value = MPC_LOWCOMM_OFI_AV_MAP;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPC_LOWCOMM_OFI_AV_UNSPEC", 50);
+	current_value->value = MPC_LOWCOMM_OFI_AV_UNSPEC;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_enum->values = values;
+	HASH_ADD_STR(enums_types, name, current_enum);
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_enum_init_net_driver_ofi_progress()
+{
+	struct enum_type * current_enum = (struct enum_type *) malloc(sizeof(struct enum_type));
+	struct enum_value * current_value, * values = NULL;
+
+	strncpy(current_enum->name, "enum net_driver_ofi_progress", 50);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPC_LOWCOMM_OFI_PROGRESS_MANUAL", 50);
+	current_value->value = MPC_LOWCOMM_OFI_PROGRESS_MANUAL;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPC_LOWCOMM_OFI_PROGRESS_AUTO", 50);
+	current_value->value = MPC_LOWCOMM_OFI_PROGRESS_AUTO;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPC_LOWCOMM_OFI_PROGRESS_UNSPEC", 50);
+	current_value->value = MPC_LOWCOMM_OFI_PROGRESS_UNSPEC;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_enum->values = values;
+	HASH_ADD_STR(enums_types, name, current_enum);
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_enum_init_net_driver_ofi_rm_type()
+{
+	struct enum_type * current_enum = (struct enum_type *) malloc(sizeof(struct enum_type));
+	struct enum_value * current_value, * values = NULL;
+
+	strncpy(current_enum->name, "enum net_driver_ofi_rm_type", 50);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPC_LOWCOMM_OFI_RM_ENABLED", 50);
+	current_value->value = MPC_LOWCOMM_OFI_RM_ENABLED;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPC_LOWCOMM_OFI_RM_DISABLED", 50);
+	current_value->value = MPC_LOWCOMM_OFI_RM_DISABLED;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPC_LOWCOMM_OFI_RM_UNSPEC", 50);
+	current_value->value = MPC_LOWCOMM_OFI_RM_UNSPEC;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_enum->values = values;
+	HASH_ADD_STR(enums_types, name, current_enum);
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_net_driver_ofi(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_net_driver_ofi * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->link = MPC_LOWCOMM_OFI_CONNECTED;
+	obj->progress = MPC_LOWCOMM_OFI_PROGRESS_UNSPEC;
+	obj->ep_type = MPC_LOWCOMM_OFI_EP_UNSPEC;
+	obj->av_type = MPC_LOWCOMM_OFI_AV_UNSPEC;
+	obj->rm_type = MPC_LOWCOMM_OFI_RM_UNSPEC;
+	obj->provider = NULL;
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_net_driver_tcp(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_net_driver_tcp * obj = struct_ptr;
@@ -1299,6 +1448,11 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 	sctk_runtime_config_struct_init_low_level_comm(&config->modules.low_level_comm);
 	sctk_runtime_config_struct_init_ft(&config->modules.ft_system);
 	sctk_runtime_config_enum_init_ibv_rdvz_protocol();
+	sctk_runtime_config_enum_init_net_driver_ofi_mode();
+	sctk_runtime_config_enum_init_net_driver_ofi_ep_type();
+	sctk_runtime_config_enum_init_net_driver_ofi_av_type();
+	sctk_runtime_config_enum_init_net_driver_ofi_progress();
+	sctk_runtime_config_enum_init_net_driver_ofi_rm_type();
 	sctk_runtime_config_enum_init_rail_topological_polling_level();
 	sctk_runtime_config_struct_init_collectives_shm_shared(&config->modules.collectives_shm_shared);
 	sctk_runtime_config_struct_init_collectives_shm(&config->modules.collectives_shm);
@@ -1382,6 +1536,12 @@ void sctk_runtime_config_reset_struct_default_if_needed(const char * structname,
 	if( !strcmp( structname , "sctk_runtime_config_struct_net_driver_portals") )
 	{
 		sctk_runtime_config_struct_init_net_driver_portals( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_net_driver_ofi") )
+	{
+		sctk_runtime_config_struct_init_net_driver_ofi( ptr );
 		return;
 	}
 

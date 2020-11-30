@@ -16,30 +16,25 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
+/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - ADAM Julien adamj@paratools.com                                  # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef SCTK_DRIVER_LIST_H
-#define SCTK_DRIVER_LIST_H
 
-#include <mpc_config.h>
+#ifndef __MPC_LOWCOMM_OFI_RDMA_H_
+#define __MPC_LOWCOMM_OFI_RDMA_H_
 
-/* Networks */
-#include <sctk_tcp.h>
+#include <sctk_rail.h>
 
-#ifdef MPC_USE_INFINIBAND
-#include <sctk_ib.h>
+#ifdef __cplusplus
+extern "C"
+{
 #endif
 
-#ifdef MPC_USE_PORTALS
-#include <sctk_portals.h>
-#endif
+void sctk_network_init_ofi_rdma( sctk_rail_info_t *rail );
+void sctk_network_finalize_ofi_rdma(sctk_rail_info_t *rail);
 
-#ifdef MPC_USE_OFI
-#include <ofi.h>
-#endif
-
-#include <sctk_shm.h>
-#include <sctk_topological_rail.h>
-
-#endif
+#ifdef __cplusplus
+}
+#endif /* C++ */
+#endif /* Guard */
