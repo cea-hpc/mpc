@@ -1,6 +1,10 @@
 #ifndef MPC_LOWCOMM_COMMUNICATOR_H
 #define MPC_LOWCOMM_COMMUNICATOR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <mpc_lowcomm_group.h>
 #include <mpc_common_types.h>
 
@@ -134,5 +138,9 @@ int mpc_lowcomm_communicator_is_shared_node(const mpc_lowcomm_communicator_t com
 
 struct sctk_comm_coll;
 struct sctk_comm_coll *mpc_communicator_shm_coll_get(const mpc_lowcomm_communicator_t comm);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MPC_LOWCOMM_COMMUNICATOR_H */

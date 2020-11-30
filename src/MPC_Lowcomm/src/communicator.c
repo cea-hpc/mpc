@@ -24,6 +24,13 @@ void mpc_lowcomm_communicator_print(mpc_lowcomm_communicator_t comm, int root_on
 
 	int is_lead = (mpc_lowcomm_communicator_rank(comm) == 0);
 
+	int is_intercomm = mpc_lowcomm_communicator_is_intercomm(comm);
+
+	if(is_intercomm)
+	{
+		is_lead &= mpc_lowcomm_communicator_in_master_group(comm);
+	}
+
 	if(!is_lead && root_only)
 	{
 		return;
@@ -33,7 +40,7 @@ void mpc_lowcomm_communicator_print(mpc_lowcomm_communicator_t comm, int root_on
 	
 	mpc_common_debug_error("TYPE: %s", (comm->group || comm->is_comm_self)?"intracomm":"intercomm");
 	
-	if(mpc_lowcomm_communicator_is_intercomm(comm))
+	if(is_intercomm)
 	{
 		mpc_common_debug_error("LEFT");
 		mpc_lowcomm_communicator_print(comm->left_comm, 0);

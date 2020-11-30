@@ -437,11 +437,11 @@ static void __sctk_init_mpi_errors()
 static int is_finalized   = 0;
 static int is_initialized = 0;
 
-#define mpi_check_comm(com, comm)                                                        \
+#define mpi_check_comm(comm)                                                        \
 	if( (is_finalized != 0) || (is_initialized != 1) ){                              \
 		MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_OTHER, "The runtime is not initialized");                     \
 	} \
-	else if((com == MPI_COMM_NULL) || (!mpc_lowcomm_communicator_exists(com)) ) \
+	else if((comm == MPI_COMM_NULL) || (!mpc_lowcomm_communicator_exists(comm)) ) \
 	{                                                 \
 		MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_COMM, "Error in communicator"); \
 	}
@@ -9468,7 +9468,8 @@ static int SCTK__MPI_Comm_communicator_free(MPI_Comm comm)
 
 	mpc_common_spinlock_unlock(&(topo->lock) );
 
-	sctk_free(tmp->key_vals);
+	TODO("There is a problem with this free this should be refactored to lowcomm BTW");
+	//sctk_free(tmp->key_vals);
 	sctk_free(tmp);
 	return MPI_SUCCESS;
 }
@@ -9846,7 +9847,7 @@ int PMPIX_Swap(void **sendrecv_buf, int remote_rank, MPI_Count size, MPI_Comm co
 		MPI_HANDLE_RETURN_VAL(res, comm);
 	}
 
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 
 	/* First resolve the source and dest rank
 	 * in the comm_world */
@@ -9919,7 +9920,7 @@ int PMPIX_Exchange(void **send_buf, void **recvbuff, int remote_rank, MPI_Count 
 		MPI_HANDLE_RETURN_VAL(res, comm);
 	}
 
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 
 	/* First resolve the source and dest rank
 	 * in the comm_world */
@@ -9973,7 +9974,7 @@ int PMPI_Send_internal(const void *buf, int count, MPI_Datatype datatype, int de
 		return MPI_SUCCESS;
 	}
 
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	int size;
 	_mpc_cl_comm_size(comm, &size);
 	mpi_check_rank_send(dest, size, comm);
@@ -10073,7 +10074,7 @@ int PMPI_Recv_internal(void *buf, int count, MPI_Datatype datatype, int source, 
 
 
 
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	mpi_check_type(datatype, comm);
 	mpi_check_count(count, comm);
 	mpc_common_nodebug("tag %d", tag);
@@ -10187,7 +10188,7 @@ int PMPI_Bsend(const void *buf, int count, MPI_Datatype datatype, int dest, int 
 		MPI_HANDLE_RETURN_VAL(res, comm);
 	}
 	{
-		mpi_check_comm(comm, comm);
+		mpi_check_comm(comm);
 		int size;
 		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank_send(dest, size, comm);
@@ -10222,7 +10223,7 @@ int PMPI_Ssend(const void *buf, int count, MPI_Datatype datatype, int dest, int 
 		MPI_HANDLE_RETURN_VAL(res, comm);
 	}
 	{
-		mpi_check_comm(comm, comm);
+		mpi_check_comm(comm);
 		int size;
 		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank_send(dest, size, comm);
@@ -10265,7 +10266,7 @@ int PMPI_Rsend(const void *buf, int count, MPI_Datatype datatype, int dest, int 
 		MPI_HANDLE_RETURN_VAL(res, comm);
 	}
 	{
-		mpi_check_comm(comm, comm);
+		mpi_check_comm(comm);
 		int size;
 		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank_send(dest, size, comm);
@@ -10377,7 +10378,7 @@ int PMPI_Isend_internal(const void *buf, int count, MPI_Datatype datatype, int d
 	}
 
 
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	int size;
 	_mpc_cl_comm_size(comm, &size);
 	mpi_check_rank_send(dest, size, comm);
@@ -10415,7 +10416,7 @@ int PMPI_Ibsend(const void *buf, int count, MPI_Datatype datatype, int dest, int
 	}
 
 	{
-		mpi_check_comm(comm, comm);
+		mpi_check_comm(comm);
 		int size;
 		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank_send(dest, size, comm);
@@ -10462,7 +10463,7 @@ int PMPI_Irecv_internal(void *buf, int count, MPI_Datatype datatype, int source,
 
 	{
 		int size;
-		mpi_check_comm(comm, comm);
+		mpi_check_comm(comm);
 		mpi_check_type(datatype, comm);
 		mpi_check_count(count, comm);
 		mpc_common_nodebug("tag %d", tag);
@@ -11171,7 +11172,7 @@ int PMPI_Iprobe(int source, int tag, MPI_Comm comm, int *flag,
 	int size;
 	int res = MPI_ERR_INTERN;
 
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	mpi_check_tag(tag, comm);
 	_mpc_cl_comm_size(comm, &size);
 
@@ -11194,7 +11195,7 @@ int PMPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status)
 	int size;
 	int res = MPI_ERR_INTERN;
 
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	mpi_check_tag(tag, comm);
 	_mpc_cl_comm_size(comm, &size);
 
@@ -11239,7 +11240,7 @@ int PMPI_Send_init(const void *buf, int count, MPI_Datatype datatype, int dest,
                    int tag, MPI_Comm comm, MPI_Request *request)
 {
 	{
-		mpi_check_comm(comm, comm);
+		mpi_check_comm(comm);
 		int size;
 		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank_send(dest, size, comm);
@@ -11292,7 +11293,7 @@ int PMPI_Bsend_init(const void *buf, int count, MPI_Datatype datatype,
                     int dest, int tag, MPI_Comm comm, MPI_Request *request)
 {
 	{
-		mpi_check_comm(comm, comm);
+		mpi_check_comm(comm);
 		int size;
 		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank_send(dest, size, comm);
@@ -11346,7 +11347,7 @@ int PMPI_Ssend_init(const void *buf, int count, MPI_Datatype datatype, int dest,
                     int tag, MPI_Comm comm, MPI_Request *request)
 {
 	{
-		mpi_check_comm(comm, comm);
+		mpi_check_comm(comm);
 		int size;
 		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank_send(dest, size, comm);
@@ -11399,7 +11400,7 @@ int PMPI_Rsend_init(const void *buf, int count, MPI_Datatype datatype, int dest,
                     int tag, MPI_Comm comm, MPI_Request *request)
 {
 	{
-		mpi_check_comm(comm, comm);
+		mpi_check_comm(comm);
 		int size;
 		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank_send(dest, size, comm);
@@ -11453,7 +11454,7 @@ int PMPI_Recv_init(void *buf, int count, MPI_Datatype datatype, int source,
 {
 	{
 		int size;
-		mpi_check_comm(comm, comm);
+		mpi_check_comm(comm);
 		mpi_check_type(datatype, comm);
 		mpi_check_count(count, comm);
 		mpc_common_nodebug("tag %d", tag);
@@ -11608,7 +11609,7 @@ int PMPI_Sendrecv_internal(const void *sendbuf, int sendcount, MPI_Datatype send
 	int res = MPI_ERR_INTERN;
 	int size;
 
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	_mpc_cl_comm_size(comm, &size);
 
 	mpi_check_type(sendtype, comm);
@@ -11677,7 +11678,7 @@ int PMPI_Sendrecv_replace(void *buf, int count, MPI_Datatype datatype,
 	int res = MPI_ERR_INTERN;
 	int size;
 
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	mpi_check_type(datatype, comm);
 	mpi_check_count(count, comm);
 	mpi_check_tag_send(sendtag, comm);
@@ -13335,7 +13336,7 @@ int PMPI_Pack(const
               MPI_Datatype datatype,
               void *outbuf, int outcount, int *position, MPI_Comm comm)
 {
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	mpi_check_type(datatype, comm);
 	if( (NULL == outbuf) || (NULL == position) )
 	{
@@ -13442,7 +13443,7 @@ int PMPI_Unpack(const void *inbuf,
                 MPI_Datatype datatype,
                 MPI_Comm comm)
 {
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	mpi_check_type(datatype, comm);
 	if( (NULL == inbuf) || (NULL == position) )
 	{
@@ -13517,7 +13518,7 @@ int *sctk_group_raw_ranks(MPI_Group group)
 
 int PMPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm, int *size)
 {
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	mpi_check_type(datatype, comm);
 	mpi_check_count(incount, comm);
 
@@ -13805,7 +13806,7 @@ int PMPI_Barrier(MPI_Comm comm)
 	SCTK_PROFIL_START(MPI_Barrier);
 
 	/* Error checking */
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 
 
 	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
@@ -13876,7 +13877,7 @@ int PMPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Com
 	SCTK_PROFIL_START(MPI_Bcast);
 
 	/* Error checking */
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 
 	if(MPI_IN_PLACE == buffer)
 	{
@@ -13988,7 +13989,7 @@ int PMPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 
 	SCTK_PROFIL_START(MPI_Gather);
 
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
@@ -14120,7 +14121,7 @@ int PMPI_Gatherv(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	/* Profiling */
 	SCTK_PROFIL_START(MPI_Gatherv);
 
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
@@ -14233,7 +14234,7 @@ int PMPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	/* Profiling */
 	SCTK_PROFIL_START(MPI_Scatter);
 
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
@@ -14380,7 +14381,7 @@ int PMPI_Scatterv(const void *sendbuf, const int *sendcnts, const int *displs,
 	MPI_HANDLE_ERROR(res, comm, "Error getting extent");
 
 	/* Error checking */
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	res = _mpc_cl_comm_size(comm, &size);
 	MPI_HANDLE_ERROR(res, comm, "Error getting size");
 
@@ -14512,7 +14513,7 @@ int PMPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	SCTK_PROFIL_START(MPI_Allgather);
 
 	/* Error checking */
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 
 	if(sendbuf != MPI_IN_PLACE)
 	{
@@ -14610,7 +14611,7 @@ int PMPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	/* Profiling */
 	SCTK_PROFIL_START(MPI_Allgatherv);
 
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 
 	if(sendbuf != MPI_IN_PLACE)
 	{
@@ -14692,7 +14693,7 @@ int PMPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	{
 		return MPI_SUCCESS;
 	}
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	if(sendbuf != MPI_IN_PLACE)
 	{
 		mpi_check_buf(sendbuf, comm);
@@ -14806,7 +14807,7 @@ int PMPI_Alltoallv(const void *sendbuf, const int *sendcnts, const int *sdispls,
 	SCTK_PROFIL_START(MPI_Alltoallv);
 
 	/* Error checking */
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
@@ -14933,7 +14934,7 @@ int PMPI_Alltoallw(const void *sendbuf, const int *sendcnts, const int *sdispls,
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
 	}
 	/* Error checking */
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
@@ -15282,7 +15283,7 @@ int PMPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype data
 	SCTK_PROFIL_START(MPI_Reduce);
 
 	/* Error checking */
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	res = _mpc_cl_comm_size(comm, &size);
 	if(res != MPI_SUCCESS)
 	{
@@ -15470,7 +15471,7 @@ int PMPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
 	SCTK_PROFIL_START(MPI_Allreduce);
 
 	/* Error checking */
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	mpi_check_buf(sendbuf, comm);
 	mpi_check_buf(recvbuf, comm);
 	mpi_check_count(count, comm);
@@ -15543,7 +15544,7 @@ int PMPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcnts[]
 	SCTK_PROFIL_START(MPI_Reduce_scatter);
 
 	/* Error checking */
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	if(MPI_IN_PLACE == recvbuf || sendbuf == recvbuf)
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
@@ -15612,7 +15613,7 @@ int PMPI_Reduce_scatter_block(const void *sendbuf, void *recvbuf, int recvcnt,
 	SCTK_PROFIL_START(MPI_Reduce_scatter_block);
 
 	/* Error checking */
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	mpi_check_buf(sendbuf, comm);
 	mpi_check_buf(recvbuf, comm);
 
@@ -15666,7 +15667,7 @@ int PMPI_Scan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype dataty
 	int res = MPI_ERR_INTERN;
 
 	/* Error checking */
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	mpi_check_buf(sendbuf, comm);
 	mpi_check_buf(recvbuf, comm);
 	mpi_check_count(count, comm);
@@ -15723,7 +15724,7 @@ int PMPI_Exscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype data
 	}
 
 	/* Error checking */
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	mpi_check_buf(sendbuf, comm);
 	mpi_check_buf(recvbuf, comm);
 	mpi_check_count(count, comm);
@@ -15976,7 +15977,7 @@ int PMPI_Group_compare(MPI_Group mpi_group1, MPI_Group mpi_group2, int *result)
 int PMPI_Comm_group(MPI_Comm comm, MPI_Group *mpi_group)
 {
 	mpc_common_nodebug("Enter Comm_group");
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 
 	MPI_internal_group_t *newgroup;
 
@@ -16755,7 +16756,7 @@ int PMPI_Comm_size(MPI_Comm comm, int *size)
 {
 	mpc_common_nodebug("Enter Comm_size comm %d", comm);
 	int res = MPI_ERR_INTERN;
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	res = _mpc_cl_comm_size(comm, size);
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
@@ -16764,7 +16765,7 @@ int PMPI_Comm_rank(MPI_Comm comm, int *rank)
 {
 	mpc_common_nodebug("Enter Comm_rank comm %d", comm);
 	int res = MPI_ERR_INTERN;
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	res = _mpc_cl_comm_rank(comm, rank);
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
@@ -16786,8 +16787,8 @@ int PMPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result)
 		return MPI_ERR_ARG;
 	}
 
-	mpi_check_comm(comm1, comm1);
-	mpi_check_comm(comm2, comm2);
+	mpi_check_comm(comm1);
+	mpi_check_comm(comm2);
 
 	int result_group;
 
@@ -16857,7 +16858,7 @@ int PMPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
 {
 	mpc_common_nodebug("Enter Comm_dup");
 	int res = MPI_ERR_INTERN;
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	if(newcomm == NULL)
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
@@ -16901,7 +16902,7 @@ int PMPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm)
 {
 	mpc_common_nodebug("Enter Comm_create");
 	int res = MPI_ERR_INTERN;
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	if(newcomm == NULL)
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
@@ -16922,8 +16923,8 @@ int PMPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
 	int res       = MPI_ERR_INTERN;
 	int size;
 
-	mpi_check_comm(local_comm, local_comm);
-	mpi_check_comm(peer_comm, peer_comm);
+	mpi_check_comm(local_comm);
+	mpi_check_comm(peer_comm);
 
 	_mpc_cl_comm_size(local_comm, &size);
 
@@ -16953,7 +16954,7 @@ int PMPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
 {
 	mpc_common_nodebug("Enter Comm_split");
 	int res = MPI_ERR_INTERN;
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	if(newcomm == NULL)
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
@@ -16993,20 +16994,23 @@ int PMPI_Comm_free(MPI_Comm *comm)
 		MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_COMM, "");
 	}
 
-	mpi_check_comm(*comm, *comm);
+	mpi_check_comm(*comm);
 
-#if 0
+
 	res = SCTK__MPI_Attr_clean_communicator(*comm);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
+
+	PMPI_Barrier(*comm);
+
 	res = SCTK__MPI_Comm_communicator_free(*comm);
 	if(res != MPI_SUCCESS)
 	{
 		return res;
 	}
-#endif
+
 
 	res = _mpc_cl_comm_free(comm);
 	MPI_HANDLE_RETURN_VAL(res, *comm);
@@ -17016,7 +17020,7 @@ int PMPI_Comm_test_inter(MPI_Comm comm, int *flag)
 {
 	mpc_common_nodebug("Enter Comm_test_inter");
 
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	*flag = mpc_lowcomm_communicator_is_intercomm(comm);
 	return MPI_SUCCESS;
 }
@@ -17025,7 +17029,7 @@ int PMPI_Comm_remote_size(MPI_Comm comm, int *size)
 {
 	mpc_common_nodebug("Enter Comm_remote_size comm %d", comm);
 	int res = MPI_ERR_INTERN;
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	if(mpc_lowcomm_communicator_is_intercomm(comm) == 0)
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
@@ -17040,7 +17044,7 @@ int PMPI_Comm_remote_group(MPI_Comm comm, MPI_Group *mpi_group)
 {
 	mpc_common_nodebug("Enter Comm_remote_group");
 	int res = MPI_ERR_INTERN;
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	if(mpc_lowcomm_communicator_is_intercomm(comm) == 0)
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
@@ -17056,6 +17060,51 @@ int PMPI_Comm_remote_group(MPI_Comm comm, MPI_Group *mpi_group)
 
 int PMPI_Intercomm_merge(MPI_Comm intercomm, int high, MPI_Comm *newintracomm)
 {
+	mpi_check_comm(intercomm);
+
+	if(!mpc_lowcomm_communicator_is_intercomm(intercomm))
+	{
+		MPI_ERROR_REPORT(intercomm, MPI_ERR_COMM, "MPI_Intercomm_merge expects a communicator");
+	}
+
+	/************************
+	 * CHECK HIGH COHERENCY *
+	 ************************/
+	int rank = mpc_lowcomm_communicator_rank(intercomm);
+	MPI_Comm local_comm = mpc_lowcomm_communicator_get_local(intercomm);
+
+
+	/* Normalize to 1 */
+	high = !!high;
+	int test_high = high;
+
+	PMPI_Allreduce(&high, &test_high, 1, MPI_INT, MPI_BAND, local_comm);
+
+	int in_error = 0;
+
+	if(test_high != high)
+	{
+		in_error = 1;
+	}
+
+	if(rank == 0)
+	{	
+		int remote_in_error = 0;
+		PMPI_Sendrecv(&in_error, 1, MPI_INT, 0, 123, &remote_in_error, 1, MPI_INT, 0, 123, intercomm, MPI_STATUS_IGNORE);
+		in_error |= remote_in_error;
+	}
+
+	PMPI_Bcast(&in_error, 1, MPI_INT, 0, local_comm);
+
+	if(in_error)
+	{
+		MPI_ERROR_REPORT(intercomm, MPI_ERR_ARG, "MPI_Intercomm_merge mismatchinh high values");
+	}
+
+	/********************
+	 * PROCEED TO MERGE *
+	 ********************/
+
 	return _mpc_cl_intercommcomm_merge(intercomm, high, newintracomm);
 }
 
@@ -17122,7 +17171,7 @@ int PMPI_Attr_put(MPI_Comm comm, int keyval, void *attr_value)
 {
 	int res = MPI_SUCCESS;
 
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 
 	mpc_mpi_data_t *tmp;
 	mpc_mpi_per_communicator_t *tmp_per_comm;
@@ -17209,7 +17258,7 @@ int PMPI_Attr_get(MPI_Comm comm, int keyval, void *attr_value, int *flag)
 {
 	int res = MPI_SUCCESS;
 
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 
 	mpc_mpi_data_t *tmp;
 	mpc_mpi_per_communicator_t *tmp_per_comm;
@@ -17288,7 +17337,7 @@ int PMPI_Attr_get(MPI_Comm comm, int keyval, void *attr_value, int *flag)
 
 int PMPI_Attr_delete(MPI_Comm comm, int keyval)
 {
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 
 	int res = MPI_SUCCESS;
 	mpc_mpi_data_t *tmp;
@@ -17418,7 +17467,7 @@ int PMPI_Comm_delete_attr(MPI_Comm comm, int comm_keyval)
 
 int PMPI_Topo_test(MPI_Comm comm, int *topo_type)
 {
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 
 	mpc_mpi_per_communicator_t *tmp = __get_per_comm_data(comm);
 	assume(tmp != NULL);
@@ -17447,7 +17496,7 @@ int PMPI_Cart_create(MPI_Comm comm_old, int ndims, const int dims[], const int p
 {
 	int res = MPI_ERR_INTERN;
 
-	mpi_check_comm(comm_old, comm_old);
+	mpi_check_comm(comm_old);
 	{
 		int i;
 		int size;
@@ -17667,7 +17716,7 @@ int PMPI_Graph_create(MPI_Comm comm_old, int nnodes, const int index[], const in
 {
 	mpc_common_nodebug("Enter PMPI_Graph_create");
 	int res = MPI_ERR_INTERN;
-	mpi_check_comm(comm_old, comm_old);
+	mpi_check_comm(comm_old);
 	{
 		int i;
 		int size;
@@ -17765,7 +17814,7 @@ int PMPI_Graphdims_get(MPI_Comm comm, int *nnodes, int *nedges)
 {
 	mpc_common_nodebug("Enter PMPI_Graphdims_get");
 
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 
 	mpc_mpi_per_communicator_t *tmp;
 	mpi_topology_per_comm_t *topo;
@@ -17792,7 +17841,7 @@ int PMPI_Graph_get(MPI_Comm comm, int maxindex, int maxedges,
 {
 	mpc_common_nodebug("Enter PMPI_Graph_get");
 
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	mpc_mpi_per_communicator_t *tmp;
 	mpi_topology_per_comm_t *topo;
 	int i;
@@ -17827,7 +17876,7 @@ int PMPI_Cartdim_get(MPI_Comm comm, int *ndims)
 {
 	mpc_common_nodebug("Enter PMPI_Cartdim_get");
 
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 
 	mpc_mpi_per_communicator_t *tmp;
 	mpi_topology_per_comm_t *topo;
@@ -17854,7 +17903,7 @@ int PMPI_Cart_get(MPI_Comm comm, int maxdims, int *dims, int *periods,
 {
 	mpc_common_nodebug("Enter PMPI_Cart_get");
 	int res = MPI_ERR_INTERN;
-	mpi_check_comm(comm, comm);  {
+	mpi_check_comm(comm);  {
 		int size;
 		_mpc_cl_comm_size(comm, &size);
 	}
@@ -17893,7 +17942,7 @@ int PMPI_Cart_rank(MPI_Comm comm, const int coords[], int *rank)
 {
 	mpc_common_nodebug("Enter PMPI_Cart_rank");
 	int res = MPI_ERR_INTERN;
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 
 	mpc_mpi_per_communicator_t *tmp = __get_per_comm_data(comm);
 	mpi_topology_per_comm_t *topo   = &(tmp->topo);
@@ -17911,7 +17960,7 @@ int PMPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int *coords)
 {
 	mpc_common_nodebug("Enter PMPI_Cart_coords");
 	int res = MPI_ERR_INTERN;
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 
 	mpc_mpi_per_communicator_t *tmp = __get_per_comm_data(comm);
 	mpi_topology_per_comm_t *topo   = &(tmp->topo);
@@ -17926,7 +17975,7 @@ int PMPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int *coords)
 
 int PMPI_Graph_neighbors_count(MPI_Comm comm, int rank, int *nneighbors)
 {
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	int start;
 	int end;
 	mpc_mpi_per_communicator_t *tmp;
@@ -17960,7 +18009,7 @@ int PMPI_Graph_neighbors_count(MPI_Comm comm, int rank, int *nneighbors)
 int PMPI_Graph_neighbors(MPI_Comm comm, int rank, int maxneighbors,
                          int *neighbors)
 {
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	int start;
 	int i;
 	mpc_mpi_per_communicator_t *tmp;
@@ -17995,7 +18044,7 @@ int PMPI_Graph_neighbors(MPI_Comm comm, int rank, int maxneighbors,
 int PMPI_Cart_shift(MPI_Comm comm, int direction, int displ, int *source,
                     int *dest)
 {
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	if(direction < 0)
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_DIMS, "");
@@ -18148,7 +18197,7 @@ int PMPI_Cart_sub(MPI_Comm comm, const int remain_dims[], MPI_Comm *comm_new)
 {
 	mpc_common_nodebug("Enter PMPI_Cart_sub");
 	int res = MPI_ERR_INTERN;
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 
 	int nb_comm;
 	int i;
@@ -18289,7 +18338,7 @@ int PMPI_Cart_map(MPI_Comm comm_old, int ndims, const int dims[], __UNUSED__ con
 {
 	mpc_common_nodebug("Enter PMPI_Cart_map");
 	int res = MPI_ERR_INTERN;
-	mpi_check_comm(comm_old, comm_old);
+	mpi_check_comm(comm_old);
 	{
 		int i;
 		int size;
@@ -18340,7 +18389,7 @@ int PMPI_Graph_map(MPI_Comm comm_old, int nnodes, __UNUSED__ const int index[], 
 {
 	mpc_common_nodebug("Enter PMPI_Graph_map");
 
-	mpi_check_comm(comm_old, comm_old);
+	mpi_check_comm(comm_old);
 	if(nnodes <= 0)
 	{
 		MPI_ERROR_REPORT(comm_old, MPI_ERR_ARG, "");
@@ -18420,7 +18469,7 @@ int PMPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhandler)
 		return MPI_ERR_ARG;
 	}
 
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	sctk_handle_set_errhandler( (sctk_handle)comm, SCTK_HANDLE_COMM,
 	                            (sctk_errhandler_t)errhandler);
 	MPI_ERROR_SUCESS();
@@ -18428,7 +18477,7 @@ int PMPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhandler)
 
 int PMPI_Errhandler_get(MPI_Comm comm, MPI_Errhandler *errhandler)
 {
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	*errhandler = (MPI_Errhandler)sctk_handle_get_errhandler( (sctk_handle)comm,
 	                                                          SCTK_HANDLE_COMM);
 
@@ -18770,7 +18819,7 @@ int PMPI_Initialized(int *flag)
 
 int PMPI_Abort(MPI_Comm comm, int errorcode)
 {
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 
 	return _mpc_cl_abort(comm, errorcode);
 }
@@ -19154,7 +19203,7 @@ int PMPI_Imrecv(void *buf, int count, MPI_Datatype datatype,
 
 int PMPI_Comm_get_name(MPI_Comm comm, char *comm_name, int *resultlen)
 {
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	mpc_mpi_per_communicator_t *tmp;
 	mpi_topology_per_comm_t *topo;
 	int len;
@@ -19198,7 +19247,7 @@ int PMPI_Comm_get_name(MPI_Comm comm, char *comm_name, int *resultlen)
 
 int PMPI_Comm_set_name(MPI_Comm comm, const char *comm_name)
 {
-	mpi_check_comm(comm, comm);
+	mpi_check_comm(comm);
 	mpc_mpi_per_communicator_t *tmp;
 	mpi_topology_per_comm_t *topo;
 	int len;

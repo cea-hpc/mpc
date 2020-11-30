@@ -19,8 +19,12 @@
 /* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef SCTK_COMM_H
-#define SCTK_COMM_H
+#ifndef MPC_LOWCOMM_MAIN_HEADER_INC_H
+#define MPC_LOWCOMM_MAIN_HEADER_INC_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <mpc_lowcomm_types.h>
 
@@ -361,4 +365,8 @@ void mpc_lowcomm_rdma_MPC_MPI_notify_dest_ctx_set_trampoline(void (*trampoline)(
 void mpc_lowcomm_init(void);
 void mpc_lowcomm_release(void);
 
-#endif /* SCTK_COMM_H */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* MPC_LOWCOMM_MAIN_HEADER_INC_H */

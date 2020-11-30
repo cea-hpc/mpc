@@ -1,6 +1,10 @@
 #ifndef MPC_LOWCOMM_GROUP_INC_H
 #define MPC_LOWCOMM_GROUP_INC_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /************************
 * _MPC_LOWCOMM_GROUP_T *
 ************************/
@@ -43,5 +47,9 @@ int mpc_lowcomm_group_includes(mpc_lowcomm_group_t *g, int cw_rank);
 int mpc_lowcomm_group_get_local_leader(mpc_lowcomm_group_t *g);
 
 mpc_lowcomm_group_t * mpc_lowcomm_group_dup(mpc_lowcomm_group_t * g);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MPC_LOWCOMM_GROUP_INC_H */

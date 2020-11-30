@@ -162,7 +162,15 @@ int sctk_send_message_from_network_reorder(mpc_lowcomm_ptp_message_t *msg)
 	}
 	else
 	{
-		dest_process = mpc_lowcomm_group_process_rank_from_world(dest_task);
+		if( 0 <= dest_task)
+		{
+			dest_process = mpc_lowcomm_group_process_rank_from_world(dest_task);
+		}
+		else
+		{
+			dest_process = -1;
+		}
+
 		mpc_common_debug("Recv message from %d to %d (number:%d)",
 		                 SCTK_MSG_SRC_TASK(msg),
 		                 SCTK_MSG_DEST_TASK(msg), SCTK_MSG_NUMBER(msg) );
