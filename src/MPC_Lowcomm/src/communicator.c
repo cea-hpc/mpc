@@ -1190,7 +1190,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_intercomm_create(const mpc_l
 	 #################################### */
 
 	/* First step is to duplicate the local_comm which is left */
-	mpc_lowcomm_communicator_t left_comm = mpc_lowcomm_communicator_dup(local_comm);
+	mpc_lowcomm_communicator_t left_comm = local_comm;
 
 	if(left_comm == MPC_COMM_NULL)
 	{
