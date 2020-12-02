@@ -88,6 +88,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@MPC_HAVE_AM_TRUE@am__append_1 = ./include/mpc_lowcomm_am.h
 subdir = src/MPC_Lowcomm
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_gcc_builtin.m4 \
@@ -103,7 +104,7 @@ am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_gcc_builtin.m4 \
 	$(top_srcdir)/config/m4/pkg.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
-DIST_COMMON = $(srcdir)/Makefile.am $(mpc_header_HEADERS) \
+DIST_COMMON = $(srcdir)/Makefile.am $(am__mpc_header_HEADERS_DIST) \
 	$(am__DIST_COMMON)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/mpc_config.h
@@ -136,6 +137,11 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
+am__mpc_header_HEADERS_DIST = ./include/mpc_lowcomm.h \
+	./include/mpc_lowcomm_rdma.h \
+	./include/mpc_lowcomm_communicator.h \
+	./include/mpc_lowcomm_group.h ./include/mpc_lowcomm_types.h \
+	./include/mpc_lowcomm_arpc.h ./include/mpc_lowcomm_am.h
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -269,6 +275,8 @@ EXTLS_CFLAGS = @EXTLS_CFLAGS@
 EXTLS_LIBS = @EXTLS_LIBS@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
+FFI_CFLAGS = @FFI_CFLAGS@
+FFI_LIBS = @FFI_LIBS@
 FGREP = @FGREP@
 FORTRAN_ARG_MISMATCH_ARG = @FORTRAN_ARG_MISMATCH_ARG@
 GREP = @GREP@
@@ -509,7 +517,11 @@ top_srcdir = @top_srcdir@
 #                                                                      #
 ########################################################################
 mpc_headerdir = $(pkgincludedir)
-mpc_header_HEADERS = ./include/mpc_lowcomm.h  ./include/mpc_lowcomm_rdma.h ./include/mpc_lowcomm_communicator.h ./include/mpc_lowcomm_group.h ./include/mpc_lowcomm_types.h ./include/mpc_lowcomm_arpc.h
+mpc_header_HEADERS = ./include/mpc_lowcomm.h \
+	./include/mpc_lowcomm_rdma.h \
+	./include/mpc_lowcomm_communicator.h \
+	./include/mpc_lowcomm_group.h ./include/mpc_lowcomm_types.h \
+	./include/mpc_lowcomm_arpc.h $(am__append_1)
 SUBDIRS = src
 all: all-recursive
 

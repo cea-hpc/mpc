@@ -127,6 +127,8 @@ host_triplet = @host@
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals_am/sctk_ptl_am_toolkit.c \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals_am/sctk_ptl_am_arpc_api.c \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals_am/arpc_weak.c
+@MPC_HAVE_AM_TRUE@am__append_7 = am.c
+@MPC_HAVE_AM_TRUE@am__append_8 = $(FFI_LIBS)
 subdir = src/MPC_Lowcomm/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_gcc_builtin.m4 \
@@ -177,8 +179,9 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
+@MPC_HAVE_AM_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
 libmpclowcomm_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	../../MPC_Launch/src/libmpclaunch.la
+	../../MPC_Launch/src/libmpclaunch.la $(am__DEPENDENCIES_2)
 am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c sctk_checksum.c \
 	sctk_control_messages.c ft.c group.c communicator.c shm_coll.c \
 	sctk_handle.c sctk_low_level_comm.c sctk_multirail.c \
@@ -204,7 +207,8 @@ am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c sctk_checksum.c \
 	./portals/sctk_ptl_rdv.c ./portals/sctk_ptl_toolkit.c \
 	./portals_am/sctk_ptl_am_iface.c \
 	./portals_am/sctk_ptl_am_toolkit.c \
-	./portals_am/sctk_ptl_am_arpc_api.c ./portals_am/arpc_weak.c
+	./portals_am/sctk_ptl_am_arpc_api.c ./portals_am/arpc_weak.c \
+	am.c
 am__dirstamp = $(am__leading_dot)dirstamp
 @INFINIBAND_DRIVER_ENABLED_TRUE@am__objects_1 = ./ib/sctk_ib_async.lo \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_buffered.lo \
@@ -236,6 +240,7 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals_am/sctk_ptl_am_toolkit.lo \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals_am/sctk_ptl_am_arpc_api.lo \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals_am/arpc_weak.lo
+@MPC_HAVE_AM_TRUE@am__objects_3 = am.lo
 am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo \
 	sctk_control_messages.lo ft.lo group.lo communicator.lo \
 	shm_coll.lo sctk_handle.lo sctk_low_level_comm.lo \
@@ -249,7 +254,7 @@ am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo \
 	./shm/sctk_handler_pmi.lo ./shm/sctk_shm_cma.lo \
 	./shm/sctk_shm_frag.lo ./shm/sctk_shm_qemu.lo \
 	./shm/sctk_shm_raw_queues_internals.lo $(am__objects_1) \
-	$(am__objects_2)
+	$(am__objects_2) $(am__objects_3)
 libmpclowcomm_la_OBJECTS = $(am_libmpclowcomm_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -366,6 +371,8 @@ EXTLS_CFLAGS = @EXTLS_CFLAGS@
 EXTLS_LIBS = @EXTLS_LIBS@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
+FFI_CFLAGS = @FFI_CFLAGS@
+FFI_LIBS = @FFI_LIBS@
 FGREP = @FGREP@
 FORTRAN_ARG_MISMATCH_ARG = @FORTRAN_ARG_MISMATCH_ARG@
 GREP = @GREP@
@@ -639,10 +646,11 @@ libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c \
 	./shm/sctk_handler_pmi.c ./shm/sctk_shm_cma.c \
 	./shm/sctk_shm_frag.c ./shm/sctk_shm_qemu.c \
 	./shm/sctk_shm_raw_queues_internals.c $(am__append_4) \
-	$(am__append_6)
+	$(am__append_6) $(am__append_7)
 
 # library dependency #
-libmpclowcomm_la_LIBADD = $(ALLOC_LIBS) ../../MPC_Launch/src/libmpclaunch.la -lm -lrt
+libmpclowcomm_la_LIBADD = $(ALLOC_LIBS) \
+	../../MPC_Launch/src/libmpclaunch.la -lm -lrt $(am__append_8)
 all: all-am
 
 .SUFFIXES:
@@ -833,6 +841,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/am.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/coll.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/comm.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/communicator.Plo@am__quote@
@@ -1149,6 +1158,8 @@ uninstall-am: uninstall-libLTLIBRARIES
 
 .PRECIOUS: Makefile
 
+
+@MPC_HAVE_AM_TRUE@ # Active message support (ffi)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

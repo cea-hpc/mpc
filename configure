@@ -24770,6 +24770,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=ffi.h
                 libname=libffi
+                alt_libname=
                 function_name=ffi_prep_cif
                 var_prefix=FFI
                 version=""
@@ -24891,6 +24892,11 @@ fi
                         check_or_infer_prefix_result="yes"
                 else
                         __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                        if test -n "${alt_libname}"; then
+                                libname="${alt_libname}"
+                        fi
+
                         __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
 
                         if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"

@@ -7,9 +7,8 @@
 #include <dlfcn.h>
 #include <sctk_alloc.h>
 
+#include <mpc_lowcomm_communicator.h>
 #include <mpc_common_debug.h>
-
-mpc_lowcomm_communicator_t active_message_comm;
 
 /* TODO need more types */
 
@@ -120,7 +119,8 @@ struct active_message_rpc_desc *active_message_rpc_desc_eof()
 
 #define MPC_LOWCOMM_RPC_TAG 16
 
-static inline struct active_message_rpc_desc *active_message_rpc_desc_init(char *function,
+static inline struct active_message_rpc_desc *active_message_rpc_desc_init(mpc_lowcomm_am_ctx_t ctx,
+																		   char *function,
                                                                            mpc_lowcomm_am_type_t *send_types,
                                                                            void **buffers,
                                                                            int send_count,
@@ -171,7 +171,7 @@ static inline struct active_message_rpc_desc *active_message_rpc_desc_init(char 
 
 	expected_response_tag = (expected_response_tag + 1) % (1024*1024) + MPC_LOWCOMM_RPC_TAG + 1;
 
-	rpcd->source = mpc_lowcomm_get_comm_rank(active_message_comm);
+	rpcd->source = mpc_lowcomm_get_comm_rank(ctx->active_message_comm);
 
 	rpcd->end_of_rpc = end_of_rpc;
 
@@ -276,9 +276,8 @@ static inline int active_message_process_rpc(struct active_message_rpc_desc *rpc
 
 		if(!fn)
 		{
-			fprintf(stderr, "Could not resolve function '%s'\n", rpcd->function);
 			active_message_rpc_desc_print(rpcd);
-			abort();
+			bad_parameter("Could not resolve function '%s'", rpcd->function);
 		}
 	}
 
@@ -303,10 +302,11 @@ void *active_message_progress_loop(void *pctx)
 		size_t msg_size = 0;
 
 		mpc_lowcomm_request_t req;
+		mpc_lowcomm_status_t status;
 		mpc_lowcomm_irecv(MPC_ANY_SOURCE, tmp_buffer, MPC_LOWCOMM_AM_MAX_PAYLOAD, MPC_LOWCOMM_RPC_TAG, ctx->active_message_comm, &req);
-		mpc_lowcomm_wait(&req);
+		mpc_lowcomm_wait(&req, &status);
 
-		msg_size = mpc_lowcomm_get_req_size(&req);
+		msg_size = status.size;
 
 		if(MPC_LOWCOMM_AM_MAX_PAYLOAD < msg_size)
 		{
@@ -357,7 +357,7 @@ pthread_t acc_progress_thread;
 mpc_lowcomm_am_ctx_t mpc_lowcomm_am_init()
 {
 	struct mpc_lowcomm_am_ctx_s * ctx = sctk_malloc(sizeof(struct mpc_lowcomm_am_ctx_s));
-	ctx->active_message_comm = mpc_lowcomm_duplicate_comm(MPC_COMM_WORLD);
+	ctx->active_message_comm = mpc_lowcomm_communicator_dup(MPC_COMM_WORLD);
 	pthread_create(&ctx->acc_progress_thread, NULL, active_message_progress_loop, (void*)ctx);
 	mpc_lowcomm_barrier(ctx->active_message_comm);
 
@@ -389,7 +389,7 @@ int mpc_lowcomm_am_release(mpc_lowcomm_am_ctx_t *pctx)
 
 	mpc_lowcomm_barrier(ctx->active_message_comm);
 
-	mpc_lowcomm_delete_comm(ctx->active_message_comm);
+	mpc_lowcomm_communicator_free(&ctx->active_message_comm);
 
 	sctk_free(ctx);
 
@@ -416,7 +416,8 @@ int mpc_lowcomm_iam(mpc_lowcomm_am_ctx_t ctx,
 
 	char static_comm_buff[MPC_LOWCOMM_AM_STATIC_COMM_BUFF];
 
-	struct active_message_rpc_desc *rpcd = active_message_rpc_desc_init(fname,
+	struct active_message_rpc_desc *rpcd = active_message_rpc_desc_init(ctx,
+																		fname,
 	                                                                    datatypes,
 	                                                                    buffers,
 	                                                                    sendcount,
@@ -473,7 +474,6 @@ int mpc_lowcomm_am(mpc_lowcomm_am_ctx_t ctx,
 	                fname,
 	                dest,
 	                &req);
-	mpc_lowcomm_wait(&req);
-
-	return 0;
+	
+	return mpc_lowcomm_wait(&req, SCTK_STATUS_NULL);
 }
