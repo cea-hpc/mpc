@@ -74,15 +74,16 @@ enum ibv_rdvz_protocol
 
 /********************************** ENUM ************************************/
 /**Values used for topological polling in the rail configuration**/
-enum rail_topological_polling_level
+typedef enum
 {
-	RAIL_POLL_NONE,
-	RAIL_POLL_PU,
-	RAIL_POLL_CORE,
-	RAIL_POLL_SOCKET,
-	RAIL_POLL_NUMA,
-	RAIL_POLL_MACHINE
-};
+	RAIL_POLL_NOT_SET = 0,  /**< This is for error handling */
+	RAIL_POLL_NONE,  /**< This is to deactivate polling */
+	RAIL_POLL_PU,  /**< This is for polling at core level */
+	RAIL_POLL_CORE,  /**< This is for polling at core level */
+	RAIL_POLL_SOCKET, /**< Socket level */
+	RAIL_POLL_NUMA, /**< Numa level */
+	RAIL_POLL_MACHINE /**< Machine level */
+}rail_topological_polling_level_t;
 
 /******************************** STRUCTURE *********************************/
 /**Options for MPC Fault-Tolerance module.**/
@@ -479,12 +480,12 @@ struct sctk_runtime_config_struct_topological_polling
 	/** Polling range as string */
 	char srange[MPC_CONF_STRING_SIZE];
 	/**Define the subset of cores involved in the polling.**/
-	enum rail_topological_polling_level range;
+	rail_topological_polling_level_t range;
 
 	/** Polling trigger as string */
 	char strigger[MPC_CONF_STRING_SIZE];
 	/**Define the subset of cores involved in the polling.**/
-	enum rail_topological_polling_level trigger;
+	rail_topological_polling_level_t trigger;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -577,6 +578,9 @@ struct _mpc_lowcomm_conf
 };
 
 struct _mpc_lowcomm_conf *_mpc_lowcomm_conf_get(void);
+
+struct sctk_runtime_config_struct_net_driver_config * _mpc_lowcomm_conf_driver_unfolded_get(char * name);
+
 
 void _mpc_lowcomm_config_register(void);
 void _mpc_lowcomm_config_validate(void);

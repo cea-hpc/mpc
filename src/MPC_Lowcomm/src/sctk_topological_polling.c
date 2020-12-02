@@ -35,7 +35,7 @@
 void sctk_topological_polling_cell_init( struct sctk_topological_polling_cell * cell )
 {
 	OPA_store_int( &cell->polling_counter, 0);
-	cell->cell_id = SCTK_POLL_IGNORE;
+	cell->cell_id = RAIL_POLL_IGNORE;
 }
 
 
@@ -48,107 +48,79 @@ struct sctk_topological_polling_tree
 {
 	struct sctk_polling_cell * cells; /**< Polling cells (one for each VP) */
 	int cell_count; /**< Cell count, in fact the number of VPs */
-	sctk_topological_polling_set_t polling_trigger; /**< Trigger is the value defining at which level the polling is done */
-	sctk_topological_polling_set_t polling_range; /**< Range defines how far from the root PU we do POLL */
+	rail_topological_polling_level_t polling_trigger; /**< Trigger is the value defining at which level the polling is done */
+	rail_topological_polling_level_t polling_range; /**< Range defines how far from the root PU we do POLL */
 	int root_pu_id; /**< This is the ID of the core which is the closest from the polling target */
 };
 #endif
 
 
 
-static inline hwloc_obj_type_t sctk_topological_polling_trigget_to_hwloc_type( sctk_topological_polling_set_t trigger )
+static inline hwloc_obj_type_t sctk_topological_polling_trigget_to_hwloc_type( rail_topological_polling_level_t trigger )
 {
 	switch( trigger )
 	{
-		case SCTK_POLL_PU:
+		case RAIL_POLL_PU:
 			return HWLOC_OBJ_PU;
 		break;
-		case SCTK_POLL_CORE:
+		case RAIL_POLL_CORE:
 			return HWLOC_OBJ_CORE;
 		break;
-		case SCTK_POLL_SOCKET:
+		case RAIL_POLL_SOCKET:
 			return HWLOC_OBJ_SOCKET;
 		break;
-		case SCTK_POLL_NUMA:
+		case RAIL_POLL_NUMA:
 			return HWLOC_OBJ_NODE;
 		break;
-		case SCTK_POLL_MACHINE:
+		case RAIL_POLL_MACHINE:
 			return HWLOC_OBJ_MACHINE;
 		break;
 		
 		default:
-		case SCTK_POLL_NOT_SET:
+		case RAIL_POLL_NOT_SET:
 			mpc_common_debug_fatal("Bad polling trigger provided");
 		break;
 	}
 	return HWLOC_OBJ_MACHINE;
 }
 
-sctk_topological_polling_set_t sctk_rail_convert_polling_set_from_string( char * poll )
+rail_topological_polling_level_t sctk_rail_convert_polling_set_from_string( char * poll )
 {
 	if(!strcmp("none", poll))
 	{
-			return SCTK_POLL_NONE;
+			return RAIL_POLL_NONE;
 
 	}else if(!strcmp("pu", poll))
 	{
-			return SCTK_POLL_PU;
+			return RAIL_POLL_PU;
 		
 	}else if(!strcmp("core", poll))
 	{
-			return SCTK_POLL_CORE;
+			return RAIL_POLL_CORE;
 
 	}else if(!strcmp("socket", poll))
 	{
-			return SCTK_POLL_SOCKET;
+			return RAIL_POLL_SOCKET;
 
 	}else if(!strcmp("numa", poll))
 	{
-			return SCTK_POLL_NUMA;
+			return RAIL_POLL_NUMA;
 
 	}else if(!strcmp("machine", poll))
 	{
-			return SCTK_POLL_MACHINE;
+			return RAIL_POLL_MACHINE;
 	}
 	else
 	{
 		bad_parameter("Could not convert polling level supported values are (none, pu, core, socket, numa, machine) got '%s'", poll);
 	}
 
-	return SCTK_POLL_MACHINE;
-}
-
-sctk_topological_polling_set_t sctk_rail_convert_polling_set_from_config( enum rail_topological_polling_level poll )
-{
-	switch( poll )
-	{
-		case RAIL_POLL_NONE:
-			return SCTK_POLL_NONE;
-		break;
-		case RAIL_POLL_PU:
-			return SCTK_POLL_PU;
-		break;
-		case RAIL_POLL_CORE:
-			return SCTK_POLL_CORE;
-		break;
-		case RAIL_POLL_SOCKET:
-			return SCTK_POLL_SOCKET;
-		break;
-		case RAIL_POLL_NUMA:
-			return SCTK_POLL_NUMA;
-		break;
-		case RAIL_POLL_MACHINE:
-			return SCTK_POLL_MACHINE;
-		break;
-		default:
-			mpc_common_debug_fatal("Error converting polling value from config");
-	}
-	return SCTK_POLL_MACHINE;
+	return RAIL_POLL_MACHINE;
 }
 
 int init_done = 0;
 
-void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * tree,  sctk_topological_polling_set_t trigger, sctk_topological_polling_set_t range, int root_pu )
+void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * tree,  rail_topological_polling_level_t trigger, rail_topological_polling_level_t range, int root_pu )
 {
 	int number_of_vp = mpc_topology_get_pu_count();
 	assume( number_of_vp != 0 );
@@ -169,28 +141,28 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
 
 	switch( range )
 	{
-		case SCTK_POLL_NONE:
+		case RAIL_POLL_NONE:
 			/* Nothing in range and there will be not trigger */
 			return;
 		break;
-		case SCTK_POLL_PU:
+		case RAIL_POLL_PU:
 			range_cpuset = mpc_topology_get_pu_cpuset(root_pu);
 		break;
-		case SCTK_POLL_CORE:
+		case RAIL_POLL_CORE:
 			range_cpuset = mpc_topology_get_parent_core_cpuset(root_pu);
 		break;
-		case SCTK_POLL_SOCKET:
+		case RAIL_POLL_SOCKET:
 			range_cpuset = mpc_topology_get_parent_socket_cpuset(root_pu);
 		break;
-		case SCTK_POLL_NUMA:
+		case RAIL_POLL_NUMA:
 			range_cpuset = mpc_topology_get_parent_numa_cpuset(root_pu);
 		break;
-		case SCTK_POLL_MACHINE:
+		case RAIL_POLL_MACHINE:
 			range_cpuset = mpc_topology_get_process_cpuset(root_pu);
 		break;
 
 		default:
-		case SCTK_POLL_NOT_SET:
+		case RAIL_POLL_NOT_SET:
 			mpc_common_debug_fatal("Bad polling range provided");
 		break;
 	}
@@ -208,7 +180,7 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
 	
 	/* Now do the same for the trigger */
 		
-	if( trigger == SCTK_POLL_NONE )
+	if( trigger == RAIL_POLL_NONE )
 	{
 		/* There is nothing to do here */
 		return;
@@ -243,7 +215,7 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
 	
 	if( ( 0 <= trigger_logical_index ) && ( trigger_logical_index < tree->cell_count ) )
 	{
-		tree->cells[trigger_logical_index].cell_id = SCTK_POLL_TRIGGER;
+		tree->cells[trigger_logical_index].cell_id = RAIL_POLL_TRIGGER;
 	}
 	else
 	{
@@ -265,7 +237,7 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
 	int in_trigger_range = 0;
 	for( i= 0 ; i < tree->cell_count ; i++ )
 	{
-		if( tree->cells[i].cell_id == SCTK_POLL_TRIGGER )
+		if( tree->cells[i].cell_id == RAIL_POLL_TRIGGER )
 		{
 			in_trigger_range = 1;
 			tree_id = 2;
@@ -289,7 +261,7 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
 		if( !hwloc_bitmap_isset(range_cpuset, os_index) )
 		{
 			mpc_common_nodebug("Outside of range : %d",  i );
-			tree->cells[i].cell_id = SCTK_POLL_IGNORE;
+			tree->cells[i].cell_id = RAIL_POLL_IGNORE;
 		}
 	}
 	for( i= 0 ; i < tree->cell_count ; i++ )
@@ -324,7 +296,7 @@ static inline void sctk_topological_polling_cell_poll( struct sctk_topological_p
 	if(  polling_counter == 0 )
 	{
 		/* Did we reach the calling point ? */
-		if( cell->cell_id == SCTK_POLL_TRIGGER )
+		if( cell->cell_id == RAIL_POLL_TRIGGER )
 		{
 			/* Yes */
 			(func)( arg );
@@ -374,7 +346,7 @@ void sctk_topological_polling_tree_poll( struct sctk_topological_polling_tree * 
 	struct sctk_topological_polling_cell * cell = &cells[cpu_id];
 
 	/* Am I inside the range ? */
-	if( cell->cell_id == SCTK_POLL_IGNORE )
+	if( cell->cell_id == RAIL_POLL_IGNORE )
 	{
 		/* Nothing to do */
 		return;

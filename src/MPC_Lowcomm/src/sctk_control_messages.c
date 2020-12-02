@@ -568,5 +568,5 @@ void sctk_control_message_process()
 
 void sctk_control_message_init()
 {
-	sctk_topological_polling_tree_init(  &___control_message_list_polling_tree, SCTK_POLL_SOCKET, SCTK_POLL_MACHINE,  0 );
+	sctk_topological_polling_tree_init(  &___control_message_list_polling_tree, RAIL_POLL_SOCKET, RAIL_POLL_MACHINE,  0 );
 }

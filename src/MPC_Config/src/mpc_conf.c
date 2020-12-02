@@ -10,6 +10,7 @@
 #include <dlfcn.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <limits.h>
 #include <pwd.h>
 
 #include "utils.h"
@@ -224,9 +225,40 @@ int mpc_conf_config_type_elem_set_from_elem(mpc_conf_config_type_elem_t *elem, m
 
 int mpc_conf_config_type_elem_set(mpc_conf_config_type_elem_t *elem, mpc_conf_type_t type, void *ptr)
 {
-	if(elem->type != type)
+
+	if( (elem->type == MPC_CONF_INT) && (type == MPC_CONF_LONG_INT) )
 	{
-		_utils_verbose_output(0, "%s mismatching types between %s and %s\n", elem->name, mpc_conf_type_name(elem->type), mpc_conf_type_name(type) );
+		/* Handle LONG to int conversion if it fits */
+		long source_value = *((long*)ptr);
+		int int_storage = 0;
+
+
+		if(source_value <= INT_MAX)
+		{
+			int_storage = source_value;
+			_utils_verbose_output(2, "ELEM: set %d to %s (LONG -> INT conversion)\n", int_storage, elem->name);
+
+			ptr = &int_storage;
+		}
+		else
+		{
+			_utils_verbose_output(0, "ELEM: cannot set %ld to %s as it is larger than what MPC_CONF_INT can store\n", source_value, elem->name);
+			abort();
+		}
+	} 
+	else if( (elem->type == MPC_CONF_LONG_INT) && (type == MPC_CONF_INT) )
+	{
+		/* Promote int to long when needed */
+		int long_storage = *((int*)ptr);
+		_utils_verbose_output(2, "ELEM: set %ld to %s (INT -> LONG conversion)\n", long_storage, elem->name);
+		ptr = &long_storage;
+	}
+	else if(elem->type != type)
+	{
+		_utils_verbose_output(0, "%s mismatching types between %s and %s\n", elem->name,
+																			 mpc_conf_type_name(elem->type),
+																			 mpc_conf_type_name(type) );
+					abort();
 		return 1;
 	}
 

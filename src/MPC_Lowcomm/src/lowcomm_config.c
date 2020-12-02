@@ -162,6 +162,11 @@ static inline void __mpc_lowcomm_driver_conf_default(void)
 
 struct sctk_runtime_config_struct_net_driver_config * _mpc_lowcomm_conf_driver_unfolded_get(char * name)
 {
+	if(!name)
+	{
+		return NULL;
+	}
+
 	int i;
 
 	for(i = 0 ; i < __net_config.configs_size; i++)
@@ -417,6 +422,60 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_default_driver(c
 	return ret;
 }
 
+
+static inline mpc_conf_config_type_t *___mpc_lowcomm_driver_all(void)
+{
+	mpc_conf_config_type_elem_t *eall_configs = mpc_conf_root_config_get("mpcframework.lowcomm.networking.configs");
+
+    assume(eall_configs != NULL);
+    assume(eall_configs->type == MPC_CONF_TYPE);
+
+	return  mpc_conf_config_type_elem_get_inner(eall_configs);
+}
+
+static inline mpc_conf_config_type_t * ___mpc_lowcomm_driver_instanciate_from_default(mpc_conf_config_type_t * config)
+{
+
+	if(mpc_conf_config_type_count(config) != 1)
+	{
+		bad_parameter("Config %s should only contain a single driver configuration", config->name);
+	}
+
+	mpc_conf_config_type_elem_t *driver_dest = mpc_conf_config_type_nth(config, 0);
+
+	/* Here we get the name of the inner driver */
+	if(driver_dest->type != MPC_CONF_TYPE)
+	{
+		bad_parameter("Config %s.%s should only contain a driver definition (expected MPC_CONF_TYPE not %s)", config->name, driver_dest->name, mpc_conf_type_name(driver_dest->type) );
+	}
+
+	mpc_conf_config_type_t *default_config = __mpc_lowcomm_driver_conf_default_driver(config->name, driver_dest->name);
+   
+    return mpc_conf_config_type_elem_update(default_config, config, 16);
+}
+
+
+
+void ___mpc_lowcomm_driver_conf_validate()
+{
+	int i;
+
+	mpc_conf_config_type_t *all_configs = ___mpc_lowcomm_driver_all();
+
+	/* Here we merge new driver config with defaults from the driver */
+	for(i = 0; i < mpc_conf_config_type_count(all_configs); i++)
+	{
+		mpc_conf_config_type_elem_t *confige = mpc_conf_config_type_nth(all_configs, i);
+		mpc_conf_config_type_t *     config  = mpc_conf_config_type_elem_get_inner(confige);
+
+		if(!_mpc_lowcomm_conf_driver_unfolded_get(config->name) )
+		{
+			mpc_conf_config_type_t * new_config = ___mpc_lowcomm_driver_instanciate_from_default(config);
+			mpc_conf_config_type_release( (mpc_conf_config_type_t **)&all_configs->elems[i]->addr);
+			all_configs->elems[i]->addr = new_config;
+		}
+	}
+}
 
 static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_init()
 {
@@ -1034,6 +1093,7 @@ void __mpc_lowcomm_network_conf_validate(void)
 	/* Validate and unfold CLI Options */
 	___mpc_lowcomm_cli_conf_validate();
     ___mpc_lowcomm_rail_conf_validate();
+	___mpc_lowcomm_driver_conf_validate();
 }
 
 /************************************

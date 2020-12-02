@@ -30,30 +30,13 @@
 #include "lowcomm_config.h"
 
 /************************************************************************/
-/* ENUM DEFINITION                                                      */
-/************************************************************************/
-
-/** This enum defines the range and coverage of polling
- * according to the allowed topology */
-typedef enum
-{
-	SCTK_POLL_NOT_SET = 0,  /**< This is for error handling */
-	SCTK_POLL_NONE,  /**< This is to deactivate polling */
-	SCTK_POLL_PU,  /**< This is for polling at core level */
-	SCTK_POLL_CORE,  /**< This is for polling at core level */
-	SCTK_POLL_SOCKET, /**< Socket level */
-	SCTK_POLL_NUMA, /**< Numa level */
-	SCTK_POLL_MACHINE, /**< Machine level */
-}sctk_topological_polling_set_t;
-
-/************************************************************************/
 /* CONSTANTS                                                            */
 /************************************************************************/
 
 /** This constant means that this cell triggers the polling call */
-#define SCTK_POLL_TRIGGER (-1)
+#define RAIL_POLL_TRIGGER (-1)
 /** This constant means that the cells is ignored */
-#define SCTK_POLL_IGNORE  (-2)
+#define RAIL_POLL_IGNORE  (-2)
 
 
 /************************************************************************/
@@ -66,7 +49,7 @@ struct sctk_topological_polling_cell
 	OPA_int_t polling_counter; /**< Counter when doing the polling */
 	int cell_id; /**< This is the ID of the cell relatively to the closest trigger
 	              * cell, see the polling function implementation for details
-	              * note that this field can take the special values SCTK_POLL_TRIGGER and SCTK_POLL_IGNORE */
+	              * note that this field can take the special values RAIL_POLL_TRIGGER and RAIL_POLL_IGNORE */
 };
 
 void sctk_topological_polling_cell_init( struct sctk_topological_polling_cell * cell );
@@ -79,18 +62,17 @@ struct sctk_topological_polling_tree
 {
 	struct sctk_topological_polling_cell * cells; /**< Polling cells (one for each VP) */
 	int cell_count; /**< Cell count, in fact the number of VPs */
-	sctk_topological_polling_set_t polling_trigger; /**< Trigger is the value defining at which level the polling is done */
-	sctk_topological_polling_set_t polling_range; /**< Range defines how far from the root PU we do POLL */
+	rail_topological_polling_level_t polling_trigger; /**< Trigger is the value defining at which level the polling is done */
+	rail_topological_polling_level_t polling_range; /**< Range defines how far from the root PU we do POLL */
 	int root_pu_id; /**< This is the ID of the core which is the closest from the polling target */
 };
 
 void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * tree,
-                                         sctk_topological_polling_set_t trigger,
-                                         sctk_topological_polling_set_t range,
+                                         rail_topological_polling_level_t trigger,
+                                         rail_topological_polling_level_t range,
                                          int root_pu );
 
-sctk_topological_polling_set_t sctk_rail_convert_polling_set_from_string( char * poll );
-sctk_topological_polling_set_t sctk_rail_convert_polling_set_from_config( enum rail_topological_polling_level poll );
+rail_topological_polling_level_t sctk_rail_convert_polling_set_from_string( char * poll );
 
 void sctk_topological_polling_tree_poll( struct sctk_topological_polling_tree * tree,  void (*func)( void *), void * arg );
 

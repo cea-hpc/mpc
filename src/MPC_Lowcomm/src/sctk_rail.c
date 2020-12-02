@@ -133,8 +133,8 @@ static inline sctk_rail_info_t * sctk_rail_register_with_parent( struct sctk_run
 
 	/* Set any source Polling */
 	sctk_topological_polling_tree_init( &new_rail->any_source_polling_tree,
-				      sctk_rail_convert_polling_set_from_config(any_source->trigger),
-	                                    sctk_rail_convert_polling_set_from_config(any_source->range),
+				      					any_source->trigger,
+	                                    any_source->range,
 	                                    target_core );
 
 	/* Checkout is RDMA */

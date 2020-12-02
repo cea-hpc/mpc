@@ -334,22 +334,7 @@ static inline  const struct sctk_runtime_config_struct_networks *sctk_net_get_co
 */
 struct sctk_runtime_config_struct_net_driver_config *sctk_get_driver_config_by_name ( char *name )
 {
-	int j = 0;
-	struct sctk_runtime_config_struct_net_driver_config *ret = NULL;
-
-	if( ! name )
-		return NULL;
-
-	for ( j = 0; j < sctk_net_get_config()->configs_size; ++j )
-	{
-		if ( strcmp ( name, sctk_net_get_config()->configs[j]->name ) == 0 )
-		{
-			ret = sctk_net_get_config()->configs[j];
-			break;
-		}
-	}
-
-	return ret;
+	return _mpc_lowcomm_conf_driver_unfolded_get(name);
 }
 
 
