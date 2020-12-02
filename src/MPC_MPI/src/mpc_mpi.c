@@ -14957,7 +14957,8 @@ int PMPI_Alltoallw(const void *sendbuf, const int *sendcnts, const int *sdispls,
                    void *recvbuf, const int *recvcnts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm)
 {
 	int res = MPI_ERR_INTERN;
-	int size, rsize, rank;
+	//int size, rsize, rank;
+	int size, rank;
 	int i;
 	MPI_Aint sextent, rextent;
 
@@ -14975,11 +14976,11 @@ int PMPI_Alltoallw(const void *sendbuf, const int *sendcnts, const int *sdispls,
 	{
 		return res;
 	}
-	res = PMPI_Comm_remote_size(comm, &rsize);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
+	//res = PMPI_Comm_remote_size(comm, &rsize);
+	//if(res != MPI_SUCCESS)
+	//{
+	//	return res;
+	//}
 	res = __cached_comm_rank(comm, &rank);
 	if(res != MPI_SUCCESS)
 	{
