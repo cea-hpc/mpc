@@ -917,6 +917,24 @@ static inline void ___mpc_lowcomm_rail_conf_validate(void)
 			bad_parameter("There should be a gate entry in rail %s", rail->name );
 		}
 	}
+
+	/* Now check that rail configs are known */
+	for(i = 0 ; i < mpc_conf_config_type_count(all_rails); i++)
+    {
+        mpc_conf_config_type_elem_t* rail = mpc_conf_config_type_nth(all_rails, i);
+		mpc_conf_config_type_t *rail_type = mpc_conf_config_type_elem_get_inner(rail);
+
+		mpc_conf_config_type_elem_t *config  = mpc_conf_config_type_get(rail_type, "config");
+		assume(config != NULL);
+		char * conf_val = mpc_conf_type_elem_get_as_string(config);
+
+		if(!_mpc_lowcomm_conf_driver_unfolded_get(conf_val))
+		{
+			mpc_conf_config_type_elem_print(rail, MPC_CONF_FORMAT_XML);
+			bad_parameter("There is no driver configuration %s in mpcframework.lowcomm.networing.configs", conf_val);
+		}
+
+	}
 }
 
 /*_
@@ -1091,9 +1109,9 @@ static inline void ___mpc_lowcomm_cli_conf_validate(void)
 void __mpc_lowcomm_network_conf_validate(void)
 {
 	/* Validate and unfold CLI Options */
-	___mpc_lowcomm_cli_conf_validate();
-    ___mpc_lowcomm_rail_conf_validate();
 	___mpc_lowcomm_driver_conf_validate();
+    ___mpc_lowcomm_rail_conf_validate();
+	___mpc_lowcomm_cli_conf_validate();
 }
 
 /************************************
