@@ -56,10 +56,10 @@ void mpc_lowcomm_ofi_init_provider(mpc_lowcomm_ofi_rail_info_t* orail, struct fi
 #ifndef NDEBUG
 	if(!mpc_common_get_process_rank())
 	{
-		sctk_debug("found providers:");
+		mpc_common_debug("found providers:");
 		while(list)
 		{
-			sctk_debug(" - '%s' (d=%s)", list->fabric_attr->prov_name, list->domain_attr->name);
+			mpc_common_debug(" - '%s' (d=%s)", list->fabric_attr->prov_name, list->domain_attr->name);
 			list = list->next;
 		}
 	}

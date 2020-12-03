@@ -47,7 +47,7 @@ mpc_lowcomm_ofi_ep_t* *ctx_ep_table = NULL;
 static inline mpc_lowcomm_ofi_ep_t* __mpc_lowcomm_ofi_get_ctx_from_process_rank(int rank)
 {
 	assert(rank >= 0);
-	assert(rank < sctk_process_number);
+	assert(rank < mpc_common_get_process_count());
 	return ctx_ep_table[rank];
 }
 
@@ -62,7 +62,7 @@ static inline void __mpc_lowcomm_ofi_set_ctx_from_process_rank(int rank, mpc_low
 {
 	assert(ctx);
 	assert(rank >= 0);
-	assert(rank < sctk_process_number);
+	assert(rank < mpc_common_get_process_count());
 	assert(!ctx_ep_table[rank]);
 	ctx_ep_table[rank] = ctx;
 }
