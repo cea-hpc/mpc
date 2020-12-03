@@ -538,7 +538,7 @@ static inline mpc_conf_config_type_t *__init_driver_ofi(struct _mpc_lowcomm_conf
 	snprintf(ofi->sep_type, MPC_CONF_STRING_SIZE, "unspecified");
 	snprintf(ofi->sav_type, MPC_CONF_STRING_SIZE, "unspecified");
 	snprintf(ofi->srm_type, MPC_CONF_STRING_SIZE, "unspecified");
-	snprintf(ofi->provider, MPC_CONF_STRING_SIZE, "");
+	snprintf(ofi->provider, MPC_CONF_STRING_SIZE, "tcp");
 
 	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("ofi",
 															PARAM("link", ofi->slink, MPC_CONF_STRING, "Link protocol (connected, connectionless)."),
