@@ -34,6 +34,7 @@
 #include "sctk_ptl_types.h"
 #include "mpc_common_debug.h"
 #include "sctk_rail.h"
+#include <sctk_alloc.h>
 
 #if !defined(NDEBUG)
 #define SCTK_PTL_STR_PROT(i) __sctk_ptl_str_prot[i]
