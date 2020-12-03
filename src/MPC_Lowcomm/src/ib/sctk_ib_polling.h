@@ -34,7 +34,7 @@
 #include "sctk_ib_qp.h"
 #include "utlist.h"
 
-#include "mpc_runtime_config.h"
+#include "mpc_conf.h"
 
 typedef struct sctk_ib_polling_s
 {

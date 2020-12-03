@@ -383,34 +383,37 @@ void sctk_ib_qp_free_all(struct sctk_ib_rail_info_s *rail_ib)
 	assert(HASH_CNT(hh, head) == 0);
 }
 
-struct ibv_qp_init_attr sctk_ib_qp_init_attr ( struct sctk_ib_rail_info_s *rail_ib )
+struct ibv_qp_init_attr sctk_ib_qp_init_attr(struct sctk_ib_rail_info_s *rail_ib)
 {
-	LOAD_DEVICE ( rail_ib );
-	LOAD_CONFIG ( rail_ib );
+	LOAD_DEVICE(rail_ib);
+	LOAD_CONFIG(rail_ib);
 	struct ibv_qp_init_attr attr;
-	memset ( &attr, 0, sizeof ( struct ibv_qp_init_attr ) );
+	memset(&attr, 0, sizeof(struct ibv_qp_init_attr) );
 
-	attr.send_cq  = device->send_cq;
-	attr.recv_cq  = device->recv_cq;
-	attr.srq      = device->srq;
-	attr.cap.max_send_wr  = config->qp_tx_depth;
-        if (attr.cap.max_send_wr > (unsigned int)device->dev_attr.max_qp_wr) {
-          attr.cap.max_send_wr = device->dev_attr.max_qp_wr;
-        }
-        attr.cap.max_recv_wr = config->qp_rx_depth;
-        if (attr.cap.max_recv_wr > (unsigned int)device->dev_attr.max_qp_wr) {
-          attr.cap.max_recv_wr = device->dev_attr.max_qp_wr;
-        }
-        attr.cap.max_send_sge = config->max_sg_sq;
-        attr.cap.max_recv_sge = config->max_sg_rq;
-        attr.cap.max_inline_data = config->max_inline;
-        /* RC Transport by default */
-        attr.qp_type = IBV_QPT_RC;
-        /* if this value is set to 1, all work requests (WR) will
-        * generate completion queue events (CQE). If this value is set to 0,
-        * only WRs that are flagged will generate CQE's*/
-        attr.sq_sig_all = 0;
-        return attr;
+	attr.send_cq         = device->send_cq;
+	attr.recv_cq         = device->recv_cq;
+	attr.srq             = device->srq;
+	attr.cap.max_send_wr = config->qp_tx_depth;
+	if(attr.cap.max_send_wr > (unsigned int)device->dev_attr.max_qp_wr)
+	{
+		attr.cap.max_send_wr = device->dev_attr.max_qp_wr;
+	}
+	attr.cap.max_recv_wr = config->qp_rx_depth;
+	if(attr.cap.max_recv_wr > (unsigned int)device->dev_attr.max_qp_wr)
+	{
+		attr.cap.max_recv_wr = device->dev_attr.max_qp_wr;
+	}
+	attr.cap.max_send_sge    = config->max_sg_sq;
+	attr.cap.max_recv_sge    = config->max_sg_rq;
+	attr.cap.max_inline_data = config->max_inline;
+	/* RC Transport by default */
+	attr.qp_type = IBV_QPT_RC;
+
+	/* if this value is set to 1, all work requests (WR) will
+	 * generate completion queue events (CQE). If this value is set to 0,
+	 * only WRs that are flagged will generate CQE's*/
+	attr.sq_sig_all = 0;
+	return attr;
 }
 
 struct ibv_qp_attr sctk_ib_qp_state_init_attr ( struct sctk_ib_rail_info_s *rail_ib, int *flags )
@@ -556,7 +559,6 @@ struct ibv_srq *sctk_ib_srq_init ( struct sctk_ib_rail_info_s *rail_ib, struct i
 	//  config->max_srq_ibufs_posted = attr->attr.max_wr;
 	sctk_ib_debug ( "Initializing SRQ with %d entries (max:%d)",
 	                attr->attr.max_wr, sctk_ib_srq_get_max_srq_wr ( rail_ib ) );
-	config->srq_credit_limit = config->max_srq_ibufs_posted / 2;
 
 	return device->srq;
 }

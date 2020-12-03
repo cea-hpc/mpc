@@ -109,8 +109,7 @@ static __thread __mpc_lowcomm_ib_numa_t **__vp_numa_descriptor = NULL;
 
 #define CHECK_AND_QUIT(rail_ib)    do {    \
 		LOAD_CONFIG(rail_ib);      \
-		int steal = config->steal; \
-		if(steal < 0){ return; } } while(0)
+} while(0)
 
 OPA_int_t cp_nb_pending_msg;
 

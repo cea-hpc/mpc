@@ -506,7 +506,6 @@ static inline void __check_wc(struct sctk_ib_rail_info_s *rail_ib, struct ibv_wc
 #define WC_COUNT    32
 static inline void __poll_cq(sctk_rail_info_t *rail,
                              struct ibv_cq *cq,
-                             __UNUSED__ const int poll_nb,
                              struct sctk_ib_polling_s *poll,
                              int (*ptr_func)(sctk_rail_info_t *rail, struct ibv_wc *) )
 {
@@ -554,7 +553,7 @@ static inline void __poll_send(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
     if(polling < POLL_CQ_CONCURENCY)
     {
 	    /* Poll sent messages */
-        __poll_cq(rail, device->send_cq, config->wc_out_number, poll, sctk_network_poll_send);
+        __poll_cq(rail, device->send_cq, poll, sctk_network_poll_send);
     }
 
     OPA_decr_int(&max_cq_poll);
@@ -575,7 +574,7 @@ static inline void __poll_recv(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
     if(polling < POLL_CQ_CONCURENCY)
     {
 	    /* Poll received messages */
-	    __poll_cq(rail, device->recv_cq, config->wc_in_number, poll, sctk_network_poll_recv);
+	    __poll_cq(rail, device->recv_cq, poll, sctk_network_poll_recv);
     }
 
     OPA_decr_int(&max_cq_poll);

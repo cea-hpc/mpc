@@ -22,7 +22,7 @@
 
 #include "sctk_ib_mmu.h"
 #include "sctk_ib_device.h"
-#include "mpc_runtime_config.h"
+#include "mpc_conf.h"
 #include "mpc_common_asm.h"
 
 #include <infiniband/verbs.h>
@@ -34,6 +34,8 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <stdlib.h>
+
+#include "lowcomm_config.h"
 
 #include <sctk_alloc.h>
 
@@ -48,8 +50,8 @@ _mpc_lowcomm_ib_mmu_entry_t * _mpc_lowcomm_ib_mmu_entry_new(sctk_ib_rail_info_t 
 	new->size = size;
 	new->rail = rail_ib;
 
-	const struct sctk_runtime_config *config = sctk_runtime_config_get();
-	const struct sctk_runtime_config_struct_ib_global *ib_global_config = &config->modules.low_level_comm.ib_global;
+	struct _mpc_lowcomm_conf *lowcomm_conf = _mpc_lowcomm_conf_get();
+	const struct sctk_runtime_config_struct_ib_global *ib_global_config = &lowcomm_conf->infiniband;
 
 
 	if( (ib_global_config->mmu_cache_maximum_pin_size) < size)
@@ -193,8 +195,8 @@ void _mpc_lowcomm_ib_mmu_entry_relax(_mpc_lowcomm_ib_mmu_entry_t *entry)
 
 void __mpc_lowcomm_ib_mmu_init(struct _mpc_lowcomm_ib_mmu *mmu)
 {
-	const struct sctk_runtime_config *config = sctk_runtime_config_get();
-	const struct sctk_runtime_config_struct_ib_global *ib_global_config = &config->modules.low_level_comm.ib_global;
+	struct _mpc_lowcomm_conf *lowcomm_conf = _mpc_lowcomm_conf_get();
+	const struct sctk_runtime_config_struct_ib_global *ib_global_config = &lowcomm_conf->infiniband;
 
 	/* Clear the MMU (particularly the fast cache) */
 	memset(mmu, 0, sizeof(struct _mpc_lowcomm_ib_mmu) );

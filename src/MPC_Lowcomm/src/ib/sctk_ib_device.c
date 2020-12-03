@@ -24,6 +24,8 @@
 /* ######################################################################## */
 
 #include "sctk_ib_device.h"
+
+#include <lowcomm_config.h>
 #include "sctk_ib_toolkit.h"
 
 #include <mpc_topology_device.h>

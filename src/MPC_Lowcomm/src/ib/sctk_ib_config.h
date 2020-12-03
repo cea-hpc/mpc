@@ -54,7 +54,6 @@ typedef struct sctk_ib_config_s
   unsigned int  max_inline;
   unsigned int  max_srq_ibufs_posted;
   unsigned int  max_srq_ibufs;
-  unsigned int  srq_credit_limit;
   unsigned int  srq_credit_thread_limit;
   unsigned int  max_srq_wr_handle_by_thread;
   unsigned int  size_ibufs_chunk;;
@@ -64,7 +63,6 @@ typedef struct sctk_ib_config_s
   unsigned int  verbose_level;
   unsigned int  wc_in_number;
   unsigned int  wc_out_number;
-  unsigned int  init_mr;
   unsigned int  adm_port;
   unsigned int  rdma_depth;
   unsigned int  rdma_depth;
@@ -72,7 +70,6 @@ typedef struct sctk_ib_config_s
   unsigned int  adaptive_polling;
   unsigned int  secure_polling;
   unsigned int  steal;
-  unsigned int  low_memory;
   unsigned int  quiet_crash;
   unsigned int  match;
   unsigned int  async_thread;

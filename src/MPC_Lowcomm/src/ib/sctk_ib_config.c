@@ -35,33 +35,14 @@
 #include "sctk_ib_eager.h"
 #include "sctk_ibufs_rdma.h"
 #include "sctk_ib_buffered.h"
-#include "mpc_runtime_config.h"
+#include "mpc_conf.h"
 
 #include <mpc_common_rank.h>
-
-static const char *steal_names[2] =
-{
-	"Normal mode",
-	"Collaborative-polling mode"
-};
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
 
-void sctk_ib_config_check ( sctk_ib_rail_info_t *rail_ib )
-{
-	LOAD_CONFIG ( rail_ib );
-
-	if ( ( mpc_common_get_process_rank() == 0 )
-	        && ( config->low_memory ) )
-	{
-		mpc_common_debug_error ( "LOW mem module enabled: use it at your own risk!" );
-	}
-
-	/* Good conf, we return */
-	return;
-}
 
 #define EXPERIMENTAL(str) #str" (experimental)"
 void sctk_ib_config_print ( sctk_ib_rail_info_t *rail_ib )
@@ -93,23 +74,14 @@ void sctk_ib_config_print ( sctk_ib_rail_info_t *rail_ib )
 		          "init_ibufs        = %d\n"
 		          "init_recv_ibufs        = %d\n"
 		          "max_srq_ibufs_posted    = %d\n"
-		          "max_srq_ibufs    = %d\n"
 		          "size_ibufs_chunk = %d\n"
 		          "size_recv_ibufs_chunk = %d\n"
-		          "srq_credit_limit = %d\n"
 		          "srq_credit_thread_limit = %d\n"
-		          "rdvz_protocol    = %d\n"
-		          "wc_in_number     = %d\n"
-		          "wc_out_number    = %d\n"
-		          "init_mr          = %d\n"
 		          "adm_port         = %d\n"
 		          "rdma_depth       = %d\n"
 		          "rdma_depth  = %d\n"
 		          "quiet_crash      = %d\n"
 		          "async_thread     = %d\n"
-		          EXPERIMENTAL ( steal ) "            = %d\n"
-		          "Stealing desc        = %s\n"
-		          EXPERIMENTAL ( low_memory ) "            = %d\n"
 		          "#############\n",
 		          config->eager_limit,
 		          config->buffered_limit,
@@ -131,22 +103,14 @@ void sctk_ib_config_print ( sctk_ib_rail_info_t *rail_ib )
 		          config->init_ibufs,
 		          config->init_recv_ibufs,
 		          config->max_srq_ibufs_posted,
-		          config->max_srq_ibufs,
 		          config->size_ibufs_chunk,
 		          config->size_recv_ibufs_chunk,
-		          config->srq_credit_limit,
 		          config->srq_credit_thread_limit,
-		          config->rdvz_protocol,
-		          config->wc_in_number,
-		          config->wc_out_number,
-		          config->init_mr,
 		          config->adm_port,
 		          config->rdma_depth,
 		          config->rdma_depth,
 		          config->quiet_crash,
-		          config->async_thread,
-		          config->steal, steal_names[config->steal],
-		          config->low_memory );
+		          config->async_thread);
 	}
 }
 
@@ -164,7 +128,4 @@ void sctk_ib_config_init ( sctk_ib_rail_info_t *rail_ib, __UNUSED__ char *networ
 
 	rail_ib->config = &rail_ib->rail->runtime_config_driver_config->driver.value.infiniband;
 	sctk_ib_config_mutate ( rail_ib );
-
-	//Check if the variables are well set
-	sctk_ib_config_check ( rail_ib );
 }
