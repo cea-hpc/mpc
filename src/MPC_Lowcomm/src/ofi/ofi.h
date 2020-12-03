@@ -34,6 +34,46 @@ extern "C"
 /* avoid header inclusion cycle */
 typedef struct sctk_rail_info_s sctk_rail_info_t;
 
+/**
+ * @brief Decode protocol type from string to enum (for config)
+ * 
+ * @param value input value
+ * @return enum _mpc_lowcomm_ofi_rm_type corresponding enum type
+ */
+enum _mpc_lowcomm_ofi_mode mpc_lowcomm_ofi_decode_mode(char *value);
+
+/**
+ * @brief Decode ressource management type from string to enum (for config)
+ * 
+ * @param value input value
+ * @return enum _mpc_lowcomm_ofi_rm_type corresponding enum type
+ */
+enum _mpc_lowcomm_ofi_rm_type mpc_lowcomm_ofi_decode_rmtype(char *value);
+
+/**
+ * @brief Decode address vector type from string to enum (for config)
+ * 
+ * @param value input value
+ * @return enum _mpc_lowcomm_ofi_av_type corresponding enum type
+ */
+enum _mpc_lowcomm_ofi_av_type mpc_lowcomm_ofi_decode_avtype(char *value);
+
+/**
+ * @brief Decode endpoint type from string to enum (for config)
+ * 
+ * @param value input value
+ * @return enum _mpc_lowcomm_ofi_ep_type corresponding enum type
+ */
+enum _mpc_lowcomm_ofi_ep_type mpc_lowcomm_ofi_decode_eptype(char *value);
+
+/**
+ * @brief Decode progress type from string to enum (for config)
+ * 
+ * @param value input value
+ * @return enum _mpc_lowcomm_ofi_progress corresponding enum type
+ */
+enum _mpc_lowcomm_ofi_progress mpc_lowcomm_ofi_decode_progress(char *value);
+
 #ifdef __cplusplus
 }
 #endif

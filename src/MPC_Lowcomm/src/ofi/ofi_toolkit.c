@@ -66,6 +66,99 @@ void mpc_lowcomm_ofi_init_provider(mpc_lowcomm_ofi_rail_info_t* orail, struct fi
 #endif
 }
 
+enum _mpc_lowcomm_ofi_mode mpc_lowcomm_ofi_decode_mode(char *value)
+{
+	if(!strcasecmp(value, "connected"))
+	{
+		return MPC_LOWCOMM_OFI_CONNECTED;
+	}
+	else if(!strcasecmp(value, "connectionless"))
+	{
+		return MPC_LOWCOMM_OFI_CONNECTIONLESS;
+	}
+	else
+	{
+		bad_parameter("OFI mode value '%s' is not supported. Correct values are:\n\t- 'connected': use connected protocols (default)\n\t- 'connectionless': use connectionless protocols", value);
+	}
+}
+
+enum _mpc_lowcomm_ofi_progress mpc_lowcomm_ofi_decode_progress(char *value)
+{
+	if(!strcasecmp(value, "auto"))
+	{
+		return MPC_LOWCOMM_OFI_PROGRESS_AUTO;
+	}
+	else if(!strcasecmp(value, "inline"))
+	{
+		return MPC_LOWCOMM_OFI_PROGRESS_MANUAL;
+	}
+	else
+	{
+		bad_parameter("OFI progress value '%s' is not supported. Correct values are:\n\t- 'auto': use a dedicated progress thread (default)\n\t- 'inline': proceed to progress inside OFI calls", value);
+	}
+}
+
+enum _mpc_lowcomm_ofi_ep_type mpc_lowcomm_ofi_decode_eptype(char *value)
+{
+	if(!strcasecmp(value, "datagram"))
+	{
+		return MPC_LOWCOMM_OFI_EP_MSG;
+	}
+	else if(!strcasecmp(value, "connected"))
+	{
+		return MPC_LOWCOMM_OFI_EP_RDM;
+	}
+	else if(!strcasecmp(value, "unspecified"))
+	{
+		return MPC_LOWCOMM_OFI_EP_UNSPEC;
+	}
+	else
+	{
+		bad_parameter("OFI endpoint type value '%s' is not supported. Correct values are:\n\t- 'connected': reliable & connected mode (default)\n\t- 'datagram': reliable & datagram mode\n\t- 'unspecified': let OFI choose the best model", value);
+	}
+}
+
+enum _mpc_lowcomm_ofi_av_type mpc_lowcomm_ofi_decode_avtype(char *value)
+{
+	if(!strcasecmp(value, "map"))
+	{
+		return MPC_LOWCOMM_OFI_AV_MAP;
+	}
+	else if(!strcasecmp(value, "table"))
+	{
+		return MPC_LOWCOMM_OFI_AV_TABLE;
+	}
+	else if(!strcasecmp(value, "unspecified"))
+	{
+		return MPC_LOWCOMM_OFI_AV_UNSPEC;
+	}
+	else
+	{
+		bad_parameter("OFI address vector type value '%s' is not supported. Correct values are:\n\t- 'map': use a hash-table\n\t- 'table': use a table\n\t- 'unspecified': let OFI choose the best model (default)", value);
+	}
+}
+
+enum _mpc_lowcomm_ofi_rm_type mpc_lowcomm_ofi_decode_rmtype(char *value)
+{
+	if(!strcasecmp(value, "enabled"))
+	{
+		return MPC_LOWCOMM_OFI_RM_ENABLED;
+	}
+	else if(!strcasecmp(value, "disabled"))
+	{
+		return MPC_LOWCOMM_OFI_RM_DISABLED;
+	}
+	else if(!strcasecmp(value, "unspecified"))
+	{
+		return MPC_LOWCOMM_OFI_RM_UNSPEC;
+	}
+	else
+	{
+		bad_parameter("OFI ressource management type value '%s' is not supported. Correct values are:\n\t- 'enabled': request ressource management in the OFI driver\n\t- 'disabled': disable ressource management in the driver\n\t- 'unspecified': let OFI choose the best model (default)", value);
+	}
+}
+
+
 /**
  * @brief Set the provider hints from information read into user config.
  * 

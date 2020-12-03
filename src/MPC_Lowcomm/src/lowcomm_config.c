@@ -11,6 +11,10 @@
 
 #include "sctk_topological_polling.h"
 
+#ifdef MPC_USE_OFI
+#include "ofi.h"
+#endif
+
 
 /***********
  * HELPERS *
@@ -506,7 +510,69 @@ static inline mpc_conf_config_type_t *__init_driver_ib(struct _mpc_lowcomm_confi
 
 #ifdef MPC_USE_OFI
 
+static inline void __driver_ofi_unfold(struct _mpc_lowcomm_config_struct_net_driver *driver)
+{
+	assume(driver->type == SCTK_RTCFG_net_driver_ofi);
+	struct _mpc_lowcomm_config_struct_net_driver_ofi *ofi = &driver->value.ofi;
+
+	ofi->link = mpc_lowcomm_ofi_decode_mode(ofi->slink);
+	ofi->progress = mpc_lowcomm_ofi_decode_progress(ofi->sprogress);
+	ofi->ep_type = mpc_lowcomm_ofi_decode_eptype(ofi->sep_type);
+	ofi->av_type = mpc_lowcomm_ofi_decode_avtype(ofi->sav_type);
+	ofi->rm_type = mpc_lowcomm_ofi_decode_rmtype(ofi->srm_type);
+}
+
+
+static inline mpc_conf_config_type_t *__init_driver_ofi(struct _mpc_lowcomm_config_struct_net_driver *driver)
+{
+	driver->type = SCTK_RTCFG_net_driver_ofi;
+
+	/* 
+	Set defaults
+	*/
+	
+	struct _mpc_lowcomm_config_struct_net_driver_ofi *ofi = &driver->value.ofi;
+
+	snprintf(ofi->slink, MPC_CONF_STRING_SIZE, "connected");
+	snprintf(ofi->sprogress, MPC_CONF_STRING_SIZE, "auto");
+	snprintf(ofi->sep_type, MPC_CONF_STRING_SIZE, "unspecified");
+	snprintf(ofi->sav_type, MPC_CONF_STRING_SIZE, "unspecified");
+	snprintf(ofi->srm_type, MPC_CONF_STRING_SIZE, "unspecified");
+	snprintf(ofi->provider, MPC_CONF_STRING_SIZE, "");
+
+	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("ofi",
+															PARAM("link", ofi->slink, MPC_CONF_STRING, "Link protocol (connected, connectionless)."),
+															PARAM("progress", ofi->sprogress, MPC_CONF_STRING, "Progress model (inline, auto)."),
+															PARAM("endpoints", ofi->sep_type, MPC_CONF_STRING, "Enpoint types (connected, datagram, unspecified)."),
+															PARAM("address", ofi->sav_type, MPC_CONF_STRING, "Address vector types (map, table, unspecified)."),
+															PARAM("ressource", ofi->srm_type, MPC_CONF_STRING, "Ressource management types (enabled, disabled, unspecified)."),
+															PARAM("provider", ofi->provider, MPC_CONF_STRING, "Provider to use (as shown in 'fi_info' command)"),
+	                                                        NULL);
+
+	__driver_ofi_unfold(driver);
+
+	return ret;	
+}
 #endif
+
+/**
+ * @brief This updates string values to enum values
+ * 
+ * @param driver driver to update
+ */
+static inline void __mpc_lowcomm_driver_conf_unfold_values(struct _mpc_lowcomm_config_struct_net_driver *driver)
+{
+	switch (driver->type)
+	{
+	case SCTK_RTCFG_net_driver_ofi:
+		__driver_ofi_unfold(driver);
+		break;
+	
+	default:
+		return;
+	}
+}
+
 
 static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_default_driver(char * config_name, char * driver_type)
 {
@@ -534,7 +600,7 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_default_driver(c
 #ifdef MPC_USE_OFI
 	else if(!strcmp(driver_type, "ofi"))
 	{
-		not_implemented();
+		driver = __init_driver_ofi(&new_conf->driver);
 	}
 #endif
 #if defined(MPC_USE_INFINIBAND)
@@ -614,12 +680,20 @@ void ___mpc_lowcomm_driver_conf_validate()
 		mpc_conf_config_type_elem_t *confige = mpc_conf_config_type_nth(all_configs, i);
 		mpc_conf_config_type_t *     config  = mpc_conf_config_type_elem_get_inner(confige);
 
-		if(!_mpc_lowcomm_conf_driver_unfolded_get(config->name) )
+		struct _mpc_lowcomm_config_struct_net_driver_config * unfold = _mpc_lowcomm_conf_driver_unfolded_get(config->name);
+
+		if(!unfold)
 		{
 			mpc_conf_config_type_t * new_config = ___mpc_lowcomm_driver_instanciate_from_default(config);
 			mpc_conf_config_type_release( (mpc_conf_config_type_t **)&all_configs->elems[i]->addr);
 			all_configs->elems[i]->addr = new_config;
+			/* Reget new conf */
+			unfold = _mpc_lowcomm_conf_driver_unfolded_get(config->name);
+			assume(unfold != NULL);
 		}
+
+		/* This updates enums from string values */
+		__mpc_lowcomm_driver_conf_unfold_values(&unfold->driver);
 	}
 }
 
@@ -637,6 +711,9 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_init()
 #if defined(MPC_USE_INFINIBAND)
 	mpc_conf_config_type_t * ib = __mpc_lowcomm_driver_conf_default_driver("ibconfigmpi", "ib");
 #endif
+#if defined(MPC_USE_OFI)
+	mpc_conf_config_type_t * ofi = __mpc_lowcomm_driver_conf_default_driver("oficonfigmpi", "ofi");
+#endif
 
 	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("configs",
 	                                                        PARAM("shmconfigmpi", shm, MPC_CONF_TYPE, "Default configuration for the SHM driver"),
@@ -647,6 +724,9 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_init()
 #endif
 #if defined(MPC_USE_INFINIBAND)
 	                                                        PARAM("ibconfigmpi", ib, MPC_CONF_TYPE, "Default configuration for the Infiniband Driver"),
+#endif
+#if defined(MPC_USE_OFI)
+	                                                        PARAM("oficonfigmpi", ofi, MPC_CONF_TYPE, "Default configuration for the OFI Driver"),
 #endif
 	                                                        NULL);	
 
@@ -786,7 +866,9 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_rail_conf_init()
 #ifdef MPC_USE_INFINIBAND
     mpc_conf_config_type_t *ib_mpi = __new_rail_conf_instance("ibmpi", 1, "!mlx.*", "machine", "socket", "ring", 1, 1, "ibconfigmpi");
 #endif
-
+#ifdef MPC_USE_OFI
+    mpc_conf_config_type_t *ofi_mpi = __new_rail_conf_instance("ofimpi", 1, "default", "machine", "socket", "ring", 1, 1, "oficonfigmpi");
+#endif
 
   	mpc_conf_config_type_t *rails = mpc_conf_config_type_init("rails",
 	                                                         PARAM("shmmpi", shm_mpi, MPC_CONF_TYPE, "A rail with only SHM"),
@@ -795,7 +877,10 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_rail_conf_init()
                                                              PARAM("portalsmpi", portals_mpi, MPC_CONF_TYPE, "A rail with Portals 4"),
 #endif
 #ifdef MPC_USE_INFINIBAND
-                                                             PARAM("ibmpi", ib_mpi, MPC_CONF_TYPE, "A rail with Infiniband and SHM"),
+                                                             PARAM("ibmpi", ib_mpi, MPC_CONF_TYPE, "A rail with Infiniband"),
+#endif
+#ifdef MPC_USE_OFI
+                                                             PARAM("ofimpi", ofi_mpi, MPC_CONF_TYPE, "A rail with OFI"),
 #endif
 	                                                         NULL);  
 
@@ -1140,10 +1225,13 @@ static mpc_conf_config_type_t *__mpc_lowcomm_cli_conf_init(void)
 {
 	mpc_conf_config_type_t *cliopt = mpc_conf_config_type_init("options",
 #ifdef MPC_USE_PORTALS
-	                                                           PARAM("portals", ___mpc_lowcomm_cli_conf_option_init("tcp", "portalsmpi", NULL), MPC_CONF_TYPE, "Combination of TCP and SHM"),
+	                                                           PARAM("portals", ___mpc_lowcomm_cli_conf_option_init("tcp", "portalsmpi", NULL), MPC_CONF_TYPE, "Combination of Portals and SHM"),
 #endif
 #ifdef MPC_USE_INFINIBAND
-	                                                           PARAM("ib", ___mpc_lowcomm_cli_conf_option_init("ib", "shmmpi", "ibmpi"), MPC_CONF_TYPE, "Combination of TCP and SHM"),
+	                                                           PARAM("ib", ___mpc_lowcomm_cli_conf_option_init("ib", "shmmpi", "ibmpi"), MPC_CONF_TYPE, "Combination of Infiniband and SHM"),
+#endif
+#ifdef MPC_USE_OFI
+	                                                           PARAM("ofi", ___mpc_lowcomm_cli_conf_option_init("ofi", "shmmpi", "ofimpi"), MPC_CONF_TYPE, "Combination of OFI and SHM"),
 #endif
 	                                                           PARAM("tcp", ___mpc_lowcomm_cli_conf_option_init("tcp", "shmmpi", "tcpmpi"), MPC_CONF_TYPE, "Combination of TCP and SHM"),
 	                                                           PARAM("shm", ___mpc_lowcomm_cli_conf_option_init("shm", "shmmpi", NULL), MPC_CONF_TYPE, "SHM Only"),

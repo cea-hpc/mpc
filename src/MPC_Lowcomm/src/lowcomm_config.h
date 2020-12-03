@@ -88,7 +88,7 @@ struct _mpc_lowcomm_config_struct_ft
 
 /********************************** ENUM ************************************/
 /****/
-enum net_driver_ofi_mode
+enum _mpc_lowcomm_ofi_mode
 {
 	MPC_LOWCOMM_OFI_CONNECTED,
 	MPC_LOWCOMM_OFI_CONNECTIONLESS
@@ -96,7 +96,7 @@ enum net_driver_ofi_mode
 
 /********************************** ENUM ************************************/
 /****/
-enum net_driver_ofi_ep_type
+enum _mpc_lowcomm_ofi_ep_type
 {
 	MPC_LOWCOMM_OFI_EP_MSG,
 	MPC_LOWCOMM_OFI_EP_RDM,
@@ -105,7 +105,7 @@ enum net_driver_ofi_ep_type
 
 /********************************** ENUM ************************************/
 /****/
-enum net_driver_ofi_av_type
+enum _mpc_lowcomm_ofi_av_type
 {
 	MPC_LOWCOMM_OFI_AV_TABLE,
 	MPC_LOWCOMM_OFI_AV_MAP,
@@ -114,7 +114,7 @@ enum net_driver_ofi_av_type
 
 /********************************** ENUM ************************************/
 /****/
-enum net_driver_ofi_progress
+enum _mpc_lowcomm_ofi_progress
 {
 	MPC_LOWCOMM_OFI_PROGRESS_MANUAL,
 	MPC_LOWCOMM_OFI_PROGRESS_AUTO,
@@ -123,7 +123,7 @@ enum net_driver_ofi_progress
 
 /********************************** ENUM ************************************/
 /****/
-enum net_driver_ofi_rm_type
+enum _mpc_lowcomm_ofi_rm_type
 {
 	MPC_LOWCOMM_OFI_RM_ENABLED,
 	MPC_LOWCOMM_OFI_RM_DISABLED,
@@ -131,19 +131,24 @@ enum net_driver_ofi_rm_type
 };
 
 struct _mpc_lowcomm_config_struct_net_driver_ofi
-{	int init_done;
+{
 	/****/
-	enum net_driver_ofi_mode link;
+	char                           slink[MPC_CONF_STRING_SIZE];
+	enum _mpc_lowcomm_ofi_mode     link;
 	/****/
-	enum net_driver_ofi_progress progress;
+	char                           sprogress[MPC_CONF_STRING_SIZE];
+	enum _mpc_lowcomm_ofi_progress progress;
 	/****/
-	enum net_driver_ofi_ep_type ep_type;
+	char                           sep_type[MPC_CONF_STRING_SIZE];
+	enum _mpc_lowcomm_ofi_ep_type  ep_type;
 	/****/
-	enum net_driver_ofi_av_type av_type;
+	char                           sav_type[MPC_CONF_STRING_SIZE];
+	enum _mpc_lowcomm_ofi_av_type  av_type;
 	/****/
-	enum net_driver_ofi_rm_type rm_type;
+	char                           srm_type[MPC_CONF_STRING_SIZE];
+	enum _mpc_lowcomm_ofi_rm_type  rm_type;
 	/****/
-	char * provider;
+	char                           provider[MPC_CONF_STRING_SIZE];
 };
 
 
