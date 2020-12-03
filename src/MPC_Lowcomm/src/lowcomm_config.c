@@ -1225,7 +1225,7 @@ static mpc_conf_config_type_t *__mpc_lowcomm_cli_conf_init(void)
 {
 	mpc_conf_config_type_t *cliopt = mpc_conf_config_type_init("options",
 #ifdef MPC_USE_PORTALS
-	                                                           PARAM("portals", ___mpc_lowcomm_cli_conf_option_init("tcp", "portalsmpi", NULL), MPC_CONF_TYPE, "Combination of Portals and SHM"),
+	                                                           PARAM("portals4", ___mpc_lowcomm_cli_conf_option_init("portals4", "portalsmpi", NULL), MPC_CONF_TYPE, "Combination of Portals and SHM"),
 #endif
 #ifdef MPC_USE_INFINIBAND
 	                                                           PARAM("ib", ___mpc_lowcomm_cli_conf_option_init("ib", "shmmpi", "ibmpi"), MPC_CONF_TYPE, "Combination of Infiniband and SHM"),
@@ -1249,7 +1249,7 @@ static mpc_conf_config_type_t *__mpc_lowcomm_cli_conf_init(void)
 static inline void _mpc_lowcomm_net_config_default(void)
 {
 #ifdef MPC_USE_PORTALS
-	snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "portals");
+	snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "portals4");
 #elif defined(MPC_USE_INFINIBAND)
 	snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "ib");
 #else
