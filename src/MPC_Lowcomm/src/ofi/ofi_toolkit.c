@@ -27,6 +27,8 @@
 #include <sctk_route.h>
 #include <sctk_alloc.h>
 
+#include <mpc_common_rank.h>
+
 /**
  * @brief Find a provider fulfilling the requirements.
  * 
@@ -52,7 +54,7 @@ void mpc_lowcomm_ofi_init_provider(mpc_lowcomm_ofi_rail_info_t* orail, struct fi
 	}
 
 #ifndef NDEBUG
-	if(!sctk_process_rank)
+	if(!mpc_common_get_process_rank())
 	{
 		sctk_debug("found providers:");
 		while(list)
