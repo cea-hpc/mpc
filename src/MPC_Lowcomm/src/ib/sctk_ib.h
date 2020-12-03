@@ -75,7 +75,7 @@ typedef struct sctk_ib_rail_info_s
 	struct _mpc_lowcomm_ib_ibuf_poll_s *                     pool_buffers;
 	/* struct _mpc_lowcomm_ib_mmu_s    *mmu; */
 	struct _mpc_lowcomm_ib_topology_s *                      topology;
-	struct sctk_runtime_config_struct_net_driver_infiniband *config;
+	struct _mpc_lowcomm_config_struct_net_driver_infiniband *config;
 	struct sctk_ib_device_s *                                device;
 	/* Collaborative polling */
 	struct _mpc_lowcomm_ib_cp_ctx_s *                        cp;

@@ -56,8 +56,8 @@ void sctk_rail_allocate ( int count )
 
 
 
-static inline sctk_rail_info_t * sctk_rail_register_with_parent( struct sctk_runtime_config_struct_net_rail *runtime_config_rail,
-                                         struct sctk_runtime_config_struct_net_driver_config *runtime_config_driver_config,
+static inline sctk_rail_info_t * sctk_rail_register_with_parent( struct _mpc_lowcomm_config_struct_net_rail *runtime_config_rail,
+                                         struct _mpc_lowcomm_config_struct_net_driver_config *runtime_config_driver_config,
                                          sctk_rail_info_t * parent,
                                          int subrail_id,
 					 int reuse_id)
@@ -129,7 +129,7 @@ static inline sctk_rail_info_t * sctk_rail_register_with_parent( struct sctk_run
 	}
 
 	/* Load Polling Config */
-	struct sctk_runtime_config_struct_topological_polling * any_source = &runtime_config_rail->any_source_polling;
+	struct _mpc_lowcomm_config_struct_topological_polling * any_source = &runtime_config_rail->any_source_polling;
 
 	/* Set any source Polling */
 	sctk_topological_polling_tree_init( &new_rail->any_source_polling_tree,
@@ -157,9 +157,9 @@ static inline sctk_rail_info_t * sctk_rail_register_with_parent( struct sctk_run
 		int i;
 		for( i = 0 ; i < runtime_config_rail->subrails_size ; i++ )
 		{
-			struct sctk_runtime_config_struct_net_rail *subrail_rail_conf = &runtime_config_rail->subrails[i];
+			struct _mpc_lowcomm_config_struct_net_rail *subrail_rail_conf = &runtime_config_rail->subrails[i];
 			/* Here we have to query in order to handle hierachies with different drivers */
-			struct sctk_runtime_config_struct_net_driver_config  * subrail_driver_conf = sctk_get_driver_config_by_name( subrail_rail_conf->config );
+			struct _mpc_lowcomm_config_struct_net_driver_config  * subrail_driver_conf = sctk_get_driver_config_by_name( subrail_rail_conf->config );
 
 			if( !subrail_driver_conf )
 			{
@@ -187,8 +187,8 @@ static inline sctk_rail_info_t * sctk_rail_register_with_parent( struct sctk_run
 }
 
 
-sctk_rail_info_t * sctk_rail_register( struct sctk_runtime_config_struct_net_rail *runtime_config_rail,
-                                         struct sctk_runtime_config_struct_net_driver_config *runtime_config_driver_config )
+sctk_rail_info_t * sctk_rail_register( struct _mpc_lowcomm_config_struct_net_rail *runtime_config_rail,
+                                         struct _mpc_lowcomm_config_struct_net_driver_config *runtime_config_driver_config )
 {
 	return sctk_rail_register_with_parent( runtime_config_rail, runtime_config_driver_config, NULL, -1, -1 );
 }

@@ -152,15 +152,15 @@ void mpc_lowcomm_coll_init_hook(mpc_lowcomm_communicator_t id)
  * DRIVER CONFIGURATION *
  ************************/
 
-static struct sctk_runtime_config_struct_networks __net_config;
+static struct _mpc_lowcomm_config_struct_networks __net_config;
 
 static inline void __mpc_lowcomm_driver_conf_default(void)
 {
-    memset(__net_config.configs, 0, MPC_CONF_MAX_CONFIG_COUNT * sizeof(struct sctk_runtime_config_struct_net_driver_config *));
+    memset(__net_config.configs, 0, MPC_CONF_MAX_CONFIG_COUNT * sizeof(struct _mpc_lowcomm_config_struct_net_driver_config *));
 	__net_config.configs_size = 0;
 }
 
-struct sctk_runtime_config_struct_net_driver_config * _mpc_lowcomm_conf_driver_unfolded_get(char * name)
+struct _mpc_lowcomm_config_struct_net_driver_config * _mpc_lowcomm_conf_driver_unfolded_get(char * name)
 {
 	if(!name)
 	{
@@ -181,7 +181,7 @@ struct sctk_runtime_config_struct_net_driver_config * _mpc_lowcomm_conf_driver_u
 }
 
 
-static inline void __append_new_driver_to_unfolded(struct sctk_runtime_config_struct_net_driver_config * driver_config)
+static inline void __append_new_driver_to_unfolded(struct _mpc_lowcomm_config_struct_net_driver_config * driver_config)
 {
     if(__net_config.configs_size == MPC_CONF_MAX_CONFIG_COUNT)
     {
@@ -199,7 +199,7 @@ static inline void __append_new_driver_to_unfolded(struct sctk_runtime_config_st
 }
 
 
-static inline mpc_conf_config_type_t *__init_driver_shm(struct sctk_runtime_config_struct_net_driver *driver)
+static inline mpc_conf_config_type_t *__init_driver_shm(struct _mpc_lowcomm_config_struct_net_driver *driver)
 {
 	driver->type = SCTK_RTCFG_net_driver_shm;
 
@@ -207,7 +207,7 @@ static inline mpc_conf_config_type_t *__init_driver_shm(struct sctk_runtime_conf
 	Set defaults
 	*/
 	
-	struct sctk_runtime_config_struct_net_driver_shm *shm = &driver->value.shm;
+	struct _mpc_lowcomm_config_struct_net_driver_shm *shm = &driver->value.shm;
 
 	/* Buffered */
 
@@ -281,7 +281,7 @@ static inline mpc_conf_config_type_t *__init_driver_shm(struct sctk_runtime_conf
 }
 
 
-static inline mpc_conf_config_type_t *__init_driver_tcp(struct sctk_runtime_config_struct_net_driver *driver)
+static inline mpc_conf_config_type_t *__init_driver_tcp(struct _mpc_lowcomm_config_struct_net_driver *driver)
 {
 	driver->type = SCTK_RTCFG_net_driver_tcp;
 
@@ -289,7 +289,7 @@ static inline mpc_conf_config_type_t *__init_driver_tcp(struct sctk_runtime_conf
 	Set defaults
 	*/
 	
-	struct sctk_runtime_config_struct_net_driver_tcp *tcp = &driver->value.tcp;
+	struct _mpc_lowcomm_config_struct_net_driver_tcp *tcp = &driver->value.tcp;
 
 	tcp->tcpoib = 1;
 
@@ -305,7 +305,7 @@ static inline mpc_conf_config_type_t *__init_driver_tcp(struct sctk_runtime_conf
 }
 
 
-static inline mpc_conf_config_type_t *__init_driver_tcprdma(struct sctk_runtime_config_struct_net_driver *driver)
+static inline mpc_conf_config_type_t *__init_driver_tcprdma(struct _mpc_lowcomm_config_struct_net_driver *driver)
 {
 	driver->type = SCTK_RTCFG_net_driver_tcprdma;
 
@@ -313,7 +313,7 @@ static inline mpc_conf_config_type_t *__init_driver_tcprdma(struct sctk_runtime_
 	Set defaults
 	*/
 	
-	struct sctk_runtime_config_struct_net_driver_tcp_rdma *tcp = &driver->value.tcprdma;
+	struct _mpc_lowcomm_config_struct_net_driver_tcp_rdma *tcp = &driver->value.tcprdma;
 
 	tcp->tcpoib = 1;
 
@@ -331,7 +331,7 @@ static inline mpc_conf_config_type_t *__init_driver_tcprdma(struct sctk_runtime_
 #ifdef MPC_USE_PORTALS
 
 
-static inline mpc_conf_config_type_t *__init_driver_portals(struct sctk_runtime_config_struct_net_driver *driver)
+static inline mpc_conf_config_type_t *__init_driver_portals(struct _mpc_lowcomm_config_struct_net_driver *driver)
 {
 	driver->type = SCTK_RTCFG_net_driver_portals;
 
@@ -339,7 +339,7 @@ static inline mpc_conf_config_type_t *__init_driver_portals(struct sctk_runtime_
 	Set defaults
 	*/
 	
-	struct sctk_runtime_config_struct_net_driver_portals *portals = &driver->value.portals;
+	struct _mpc_lowcomm_config_struct_net_driver_portals *portals = &driver->value.portals;
 
 	portals->eager_limit = 8192;
 	portals->min_comms = 1;
@@ -371,7 +371,7 @@ static inline mpc_conf_config_type_t *__init_driver_portals(struct sctk_runtime_
 
 #ifdef MPC_USE_INFINIBAND
 
-static inline mpc_conf_config_type_t *__init_driver_ib(struct sctk_runtime_config_struct_net_driver *driver)
+static inline mpc_conf_config_type_t *__init_driver_ib(struct _mpc_lowcomm_config_struct_net_driver *driver)
 {
 	driver->type = SCTK_RTCFG_net_driver_infiniband;
 
@@ -379,7 +379,7 @@ static inline mpc_conf_config_type_t *__init_driver_ib(struct sctk_runtime_confi
 	Set defaults
 	*/
 	
-	struct sctk_runtime_config_struct_net_driver_infiniband *ib = &driver->value.infiniband;
+	struct _mpc_lowcomm_config_struct_net_driver_infiniband *ib = &driver->value.infiniband;
 
 	/* Debug */
 	ib->verbose_level = 0;
@@ -504,12 +504,16 @@ static inline mpc_conf_config_type_t *__init_driver_ib(struct sctk_runtime_confi
 
 #endif
 
+#ifdef MPC_USE_OFI
+
+#endif
+
 static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_default_driver(char * config_name, char * driver_type)
 {
-	struct sctk_runtime_config_struct_net_driver_config * new_conf = sctk_malloc(sizeof(struct sctk_runtime_config_struct_net_driver_config));
+	struct _mpc_lowcomm_config_struct_net_driver_config * new_conf = sctk_malloc(sizeof(struct _mpc_lowcomm_config_struct_net_driver_config));
 	assume(new_conf != NULL);
 
-	memset(new_conf, 0, sizeof(struct sctk_runtime_config_struct_net_driver_config));
+	memset(new_conf, 0, sizeof(struct _mpc_lowcomm_config_struct_net_driver_config));
 
 	snprintf(new_conf->name, MPC_CONF_STRING_SIZE, config_name);
 
@@ -642,7 +646,7 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_init()
 	                                                        PARAM("portalsconfigmpi", portals, MPC_CONF_TYPE, "Default configuration for the Portals4 Driver"),
 #endif
 #if defined(MPC_USE_INFINIBAND)
-	                                                        PARAM("ibconfigmpi", ib, MPC_CONF_TYPE, "Default configuration for the Portals4 Driver"),
+	                                                        PARAM("ibconfigmpi", ib, MPC_CONF_TYPE, "Default configuration for the Infiniband Driver"),
 #endif
 	                                                        NULL);	
 
@@ -653,7 +657,7 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_init()
 * NETWORK CONFIGURATION *
 *************************/
 
-struct sctk_runtime_config_struct_networks *_mpc_lowcomm_config_net_get(void)
+struct _mpc_lowcomm_config_struct_networks *_mpc_lowcomm_config_net_get(void)
 {
 	return &__net_config;
 }
@@ -662,10 +666,10 @@ struct sctk_runtime_config_struct_networks *_mpc_lowcomm_config_net_get(void)
  *  RAILS defines instance of configurations
  */
 
-struct sctk_runtime_config_struct_net_rail * _mpc_lowcomm_conf_rail_unfolded_get ( char *name )
+struct _mpc_lowcomm_config_struct_net_rail * _mpc_lowcomm_conf_rail_unfolded_get ( char *name )
 {
     int l = 0;
-	struct sctk_runtime_config_struct_net_rail *ret = NULL;
+	struct _mpc_lowcomm_config_struct_net_rail *ret = NULL;
 
 	for ( l = 0; l < __net_config.rails_size; ++l )
 	{
@@ -687,11 +691,11 @@ mpc_conf_config_type_t *_mpc_lowcomm_conf_conf_rail_get ( char *name )
 
 static inline void __mpc_lowcomm_rail_conf_default(void)
 {
-    memset(__net_config.rails, 0, MPC_CONF_MAX_RAIL_COUNT * sizeof(struct sctk_runtime_config_struct_net_rail *));
+    memset(__net_config.rails, 0, MPC_CONF_MAX_RAIL_COUNT * sizeof(struct _mpc_lowcomm_config_struct_net_rail *));
 	__net_config.rails_size = 0;
 }
 
-static inline void __append_new_rail_to_unfolded(struct sctk_runtime_config_struct_net_rail * rail)
+static inline void __append_new_rail_to_unfolded(struct _mpc_lowcomm_config_struct_net_rail * rail)
 {
     if(__net_config.rails_size == MPC_CONF_MAX_RAIL_COUNT)
     {
@@ -719,7 +723,7 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
 	int rdma,
 	char *config)
 {
-    struct sctk_runtime_config_struct_net_rail * ret = sctk_malloc(sizeof(struct sctk_runtime_config_struct_net_rail));
+    struct _mpc_lowcomm_config_struct_net_rail * ret = sctk_malloc(sizeof(struct _mpc_lowcomm_config_struct_net_rail));
     assume(ret != NULL);
 
     if(_mpc_lowcomm_conf_rail_unfolded_get(name))
@@ -729,7 +733,7 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
 
     /* This fills in the struct */
 
-    memset(ret, 0, sizeof(struct sctk_runtime_config_struct_net_rail));
+    memset(ret, 0, sizeof(struct _mpc_lowcomm_config_struct_net_rail));
 
     /* For unfolded retrieval */
     snprintf(ret->name, MPC_CONF_STRING_SIZE, name);
@@ -908,7 +912,7 @@ static inline int __gate_get_bool(mpc_conf_config_type_t * gate, char * val_key,
 }
 
 
-static inline int ___parse_rail_gate(struct sctk_runtime_config_struct_net_gate * cur_unfolded_gate,
+static inline int ___parse_rail_gate(struct _mpc_lowcomm_config_struct_net_gate * cur_unfolded_gate,
 								 mpc_conf_config_type_elem_t* tgate)
 {
 	mpc_conf_config_type_t * gate = mpc_conf_config_type_elem_get_inner(tgate);
@@ -992,7 +996,7 @@ static inline int ___parse_rail_gate(struct sctk_runtime_config_struct_net_gate 
 	return 0;
 }
 
-static inline void __mpc_lowcomm_rail_unfold_gates(struct sctk_runtime_config_struct_net_rail *unfolded_rail,
+static inline void __mpc_lowcomm_rail_unfold_gates(struct _mpc_lowcomm_config_struct_net_rail *unfolded_rail,
 												   mpc_conf_config_type_t *gates_type)
 {
 	int i;
@@ -1000,7 +1004,7 @@ static inline void __mpc_lowcomm_rail_unfold_gates(struct sctk_runtime_config_st
 	for(i = 0 ; i < mpc_conf_config_type_count(gates_type); i++)
     {
         mpc_conf_config_type_elem_t* gate = mpc_conf_config_type_nth(gates_type, i);
-		struct sctk_runtime_config_struct_net_gate * cur_unfolded_gate = &unfolded_rail->gates[unfolded_rail->gates_size];
+		struct _mpc_lowcomm_config_struct_net_gate * cur_unfolded_gate = &unfolded_rail->gates[unfolded_rail->gates_size];
 
 		if(___parse_rail_gate(cur_unfolded_gate, gate) == 0)
 		{
@@ -1054,7 +1058,7 @@ static inline void ___mpc_lowcomm_rail_conf_validate(void)
 
 		if(gates)
 		{
-			struct sctk_runtime_config_struct_net_rail *unfolded_rail = _mpc_lowcomm_conf_rail_unfolded_get(rail->name);
+			struct _mpc_lowcomm_config_struct_net_rail *unfolded_rail = _mpc_lowcomm_conf_rail_unfolded_get(rail->name);
 			mpc_conf_config_type_t *gates_type = mpc_conf_config_type_elem_get_inner(gates);
 			
 			__mpc_lowcomm_rail_unfold_gates(unfolded_rail, gates_type);
@@ -1265,9 +1269,9 @@ void __mpc_lowcomm_network_conf_validate(void)
 * GLOBAL CONFIGURATION FOR LOWCOMM *
 ************************************/
 
-struct _mpc_lowcomm_conf __lowcomm_conf;
+struct _mpc_lowcomm_config __lowcomm_conf;
 
-struct _mpc_lowcomm_conf *_mpc_lowcomm_conf_get(void)
+struct _mpc_lowcomm_config *_mpc_lowcomm_conf_get(void)
 {
 	return &__lowcomm_conf;
 }
@@ -1275,7 +1279,7 @@ struct _mpc_lowcomm_conf *_mpc_lowcomm_conf_get(void)
 #ifdef MPC_USE_INFINIBAND
 static inline mpc_conf_config_type_t * __init_infiniband_global_conf(void)
 {
-	struct sctk_runtime_config_struct_ib_global *ibg = &__lowcomm_conf.infiniband;
+	struct _mpc_lowcomm_config_struct_ib_global *ibg = &__lowcomm_conf.infiniband;
 
 	ibg->mmu_cache_enabled = 1;
 	ibg->mmu_cache_entry_count = 1024;

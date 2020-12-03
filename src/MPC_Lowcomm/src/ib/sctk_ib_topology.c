@@ -92,7 +92,7 @@ void _mpc_lowcomm_ib_topology_init_task(struct sctk_rail_info_s *rail, int vp)
 {
 	sctk_ib_rail_info_t *rail_ib            = &rail->network.ib;
 	struct _mpc_lowcomm_ib_topology_s *topo = rail_ib->topology;
-	struct sctk_runtime_config_struct_net_driver_infiniband *config = rail_ib->config;
+	struct _mpc_lowcomm_config_struct_net_driver_infiniband *config = rail_ib->config;
 	int node_nb         = mpc_topology_get_numa_node_from_cpu(vp);
 	int numa_node_count = topo->numa_node_count;
 

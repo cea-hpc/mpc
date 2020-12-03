@@ -79,7 +79,7 @@ typedef enum
 
 /******************************** STRUCTURE *********************************/
 /**Options for MPC Fault-Tolerance module.**/
-struct sctk_runtime_config_struct_ft
+struct _mpc_lowcomm_config_struct_ft
 {
 	/**Set to true to enable Fault-Tolerance support**/
 	int enabled;
@@ -130,7 +130,7 @@ enum net_driver_ofi_rm_type
 	MPC_LOWCOMM_OFI_RM_UNSPEC
 };
 
-struct sctk_runtime_config_struct_net_driver_ofi
+struct _mpc_lowcomm_config_struct_net_driver_ofi
 {	int init_done;
 	/****/
 	enum net_driver_ofi_mode link;
@@ -149,7 +149,7 @@ struct sctk_runtime_config_struct_net_driver_ofi
 
 /******************************** STRUCTURE *********************************/
 /**Declare a fake driver to test the configuration system.**/
-struct sctk_runtime_config_struct_net_driver_infiniband
+struct _mpc_lowcomm_config_struct_net_driver_infiniband
 {
 	/**Define the pkey value**/
 	char                   pkey[MPC_CONF_STRING_SIZE];
@@ -215,7 +215,7 @@ struct sctk_runtime_config_struct_net_driver_infiniband
 
 /******************************** STRUCTURE *********************************/
 /**Global Parameters for IB common structs.**/
-struct sctk_runtime_config_struct_ib_global
+struct _mpc_lowcomm_config_struct_ib_global
 {
 	/**Defines if the MMU cache is enabled.**/
 	int    mmu_cache_enabled;
@@ -229,7 +229,7 @@ struct sctk_runtime_config_struct_ib_global
 
 /******************************** STRUCTURE *********************************/
 /****/
-struct sctk_runtime_config_struct_offload_ops_t
+struct _mpc_lowcomm_config_struct_offload_ops_t
 {
 	/**Enable on-demand optimization through ID hardware propagation**/
 	int ondemand;
@@ -239,7 +239,7 @@ struct sctk_runtime_config_struct_offload_ops_t
 
 /******************************** STRUCTURE *********************************/
 /**Portals-based driver**/
-struct sctk_runtime_config_struct_net_driver_portals
+struct _mpc_lowcomm_config_struct_net_driver_portals
 {
 	/**Max size of messages allowed to use the eager protocol.**/
 	size_t                                          eager_limit;
@@ -248,12 +248,12 @@ struct sctk_runtime_config_struct_net_driver_portals
 	/**Above this value, RDV messages will be split in multiple GET requests**/
 	size_t                                          block_cut;
 	/**List of available optimizations taking advantage of triggered Ops**/
-	struct sctk_runtime_config_struct_offload_ops_t offloading;
+	struct _mpc_lowcomm_config_struct_offload_ops_t offloading;
 };
 
 /******************************** STRUCTURE *********************************/
 /**TCP-based driver**/
-struct sctk_runtime_config_struct_net_driver_tcp
+struct _mpc_lowcomm_config_struct_net_driver_tcp
 {
 	/**Enable TCP over Infiniband (if elligible).**/
 	int tcpoib;
@@ -261,7 +261,7 @@ struct sctk_runtime_config_struct_net_driver_tcp
 
 /******************************** STRUCTURE *********************************/
 /**TCP-Based RDMA implementation**/
-struct sctk_runtime_config_struct_net_driver_tcp_rdma
+struct _mpc_lowcomm_config_struct_net_driver_tcp_rdma
 {
 	/**Enable TCP over Infiniband (if elligible).**/
 	int tcpoib;
@@ -269,7 +269,7 @@ struct sctk_runtime_config_struct_net_driver_tcp_rdma
 
 /******************************** STRUCTURE *********************************/
 /**Inter-Process shared memory communication implementation**/
-struct sctk_runtime_config_struct_net_driver_shm
+struct _mpc_lowcomm_config_struct_net_driver_shm
 {
 	/**Defines priority for the SHM buffered message**/
 	int buffered_priority;
@@ -305,7 +305,7 @@ struct sctk_runtime_config_struct_net_driver_shm
 
 /********************************** ENUM ************************************/
 /**Define a specific configuration for a network driver to apply in rails.**/
-enum sctk_runtime_config_struct_net_driver_type
+enum _mpc_lowcomm_config_struct_net_driver_type
 {
 	SCTK_RTCFG_net_driver_NONE,
 	SCTK_RTCFG_net_driver_infiniband,
@@ -319,34 +319,34 @@ enum sctk_runtime_config_struct_net_driver_type
 
 /******************************** STRUCTURE *********************************/
 /**Define a specific configuration for a network driver to apply in rails.**/
-struct sctk_runtime_config_struct_net_driver
+struct _mpc_lowcomm_config_struct_net_driver
 {
-	enum sctk_runtime_config_struct_net_driver_type type;
+	enum _mpc_lowcomm_config_struct_net_driver_type type;
 	union
 	{
 #ifdef MPC_USE_INFINIBAND
-		struct sctk_runtime_config_struct_net_driver_infiniband  infiniband;
+		struct _mpc_lowcomm_config_struct_net_driver_infiniband  infiniband;
 #endif
 #ifdef MPC_USE_PORTALS
-		struct sctk_runtime_config_struct_net_driver_portals     portals;
+		struct _mpc_lowcomm_config_struct_net_driver_portals     portals;
 #endif
 #ifdef MPC_USE_OFI
-		struct sctk_runtime_config_struct_net_driver_ofi ofi;
+		struct _mpc_lowcomm_config_struct_net_driver_ofi ofi;
 #endif
-		struct sctk_runtime_config_struct_net_driver_tcp         tcp;
-		struct sctk_runtime_config_struct_net_driver_tcp_rdma    tcprdma;
-		struct sctk_runtime_config_struct_net_driver_shm         shm;
+		struct _mpc_lowcomm_config_struct_net_driver_tcp         tcp;
+		struct _mpc_lowcomm_config_struct_net_driver_tcp_rdma    tcprdma;
+		struct _mpc_lowcomm_config_struct_net_driver_shm         shm;
 	}                                               value;
 };
 
 /******************************** STRUCTURE *********************************/
 /**Contain a list of driver configuration reused by rail definitions.**/
-struct sctk_runtime_config_struct_net_driver_config
+struct _mpc_lowcomm_config_struct_net_driver_config
 {
 	/**Name of the driver configuration to be referenced in rail definitions.**/
 	char                                        name[MPC_CONF_STRING_SIZE];
 	/**Define the related driver to use and its configuration.**/
-	struct sctk_runtime_config_struct_net_driver driver;
+	struct _mpc_lowcomm_config_struct_net_driver driver;
 };
 
 
@@ -363,7 +363,7 @@ struct sctk_runtime_config_funcptr
 
 /******************************** STRUCTURE *********************************/
 /**This gate applies given thruth value to messages.**/
-struct sctk_runtime_config_struct_gate_boolean
+struct _mpc_lowcomm_config_struct_gate_boolean
 {
 	/**whereas to accept input messages or not**/
 	int value;
@@ -371,7 +371,7 @@ struct sctk_runtime_config_struct_gate_boolean
 
 /******************************** STRUCTURE *********************************/
 /**This gate uses a given rail with a parametrized probability.**/
-struct sctk_runtime_config_struct_gate_probabilistic
+struct _mpc_lowcomm_config_struct_gate_probabilistic
 {
 	/**Probability to choose this rail in percents (ralatively to this single rail, integer)**/
 	int probability;
@@ -379,7 +379,7 @@ struct sctk_runtime_config_struct_gate_probabilistic
 
 /******************************** STRUCTURE *********************************/
 /**This gate uses a given rail if size is at least a given value.**/
-struct sctk_runtime_config_struct_gate_min_size
+struct _mpc_lowcomm_config_struct_gate_min_size
 {
 	/**Minimum size to choose this rail (with units)**/
 	size_t value;
@@ -387,7 +387,7 @@ struct sctk_runtime_config_struct_gate_min_size
 
 /******************************** STRUCTURE *********************************/
 /**This gate uses a given rail if size is at most a given value.**/
-struct sctk_runtime_config_struct_gate_max_size
+struct _mpc_lowcomm_config_struct_gate_max_size
 {
 	/**Maximum size to choose this rail (with units)**/
 	size_t value;
@@ -395,7 +395,7 @@ struct sctk_runtime_config_struct_gate_max_size
 
 /******************************** STRUCTURE *********************************/
 /**This gate can be used define which type of message can use a given rail.**/
-struct sctk_runtime_config_struct_gate_message_type
+struct _mpc_lowcomm_config_struct_gate_message_type
 {
 	/**Process Specific Messages can use this rail**/
 	int process;
@@ -409,7 +409,7 @@ struct sctk_runtime_config_struct_gate_message_type
 
 /******************************** STRUCTURE *********************************/
 /**This gate uses a given rail with a user defined function.**/
-struct sctk_runtime_config_struct_gate_user
+struct _mpc_lowcomm_config_struct_gate_user
 {
 	/**Function to be called for this gate**/
 	struct sctk_runtime_config_funcptr gatefunc;
@@ -417,7 +417,7 @@ struct sctk_runtime_config_struct_gate_user
 
 /********************************** ENUM ************************************/
 /**Defines gates and their configuration.**/
-enum sctk_runtime_config_struct_net_gate_type
+enum _mpc_lowcomm_config_struct_net_gate_type
 {
 	MPC_CONF_RAIL_GATE_NONE,
 	MPC_CONF_RAIL_GATE_BOOLEAN,
@@ -430,23 +430,23 @@ enum sctk_runtime_config_struct_net_gate_type
 
 /******************************** STRUCTURE *********************************/
 /**Defines gates and their configuration.**/
-struct sctk_runtime_config_struct_net_gate
+struct _mpc_lowcomm_config_struct_net_gate
 {
-	enum sctk_runtime_config_struct_net_gate_type type;
+	enum _mpc_lowcomm_config_struct_net_gate_type type;
 	union
 	{
-		struct sctk_runtime_config_struct_gate_boolean       boolean;
-		struct sctk_runtime_config_struct_gate_probabilistic probabilistic;
-		struct sctk_runtime_config_struct_gate_min_size      minsize;
-		struct sctk_runtime_config_struct_gate_max_size      maxsize;
-		struct sctk_runtime_config_struct_gate_message_type  msgtype;
-		struct sctk_runtime_config_struct_gate_user          user;
+		struct _mpc_lowcomm_config_struct_gate_boolean       boolean;
+		struct _mpc_lowcomm_config_struct_gate_probabilistic probabilistic;
+		struct _mpc_lowcomm_config_struct_gate_min_size      minsize;
+		struct _mpc_lowcomm_config_struct_gate_max_size      maxsize;
+		struct _mpc_lowcomm_config_struct_gate_message_type  msgtype;
+		struct _mpc_lowcomm_config_struct_gate_user          user;
 	}                                             value;
 };
 
 /******************************** STRUCTURE *********************************/
 /**Defines a topological polling configuration.**/
-struct sctk_runtime_config_struct_topological_polling
+struct _mpc_lowcomm_config_struct_topological_polling
 {
 	/** Polling range as string */
 	char srange[MPC_CONF_STRING_SIZE];
@@ -464,7 +464,7 @@ struct sctk_runtime_config_struct_topological_polling
 
 #define MPC_CONF_MAX_RAIL_GATE 16
 
-struct sctk_runtime_config_struct_net_rail
+struct _mpc_lowcomm_config_struct_net_rail
 {
 	/**Define the name of current rail.**/
 	char                                                  name[MPC_CONF_STRING_SIZE];
@@ -473,7 +473,7 @@ struct sctk_runtime_config_struct_net_rail
 	/**Define the name of the device to use in this rail.**/
 	char                                                 device[MPC_CONF_STRING_SIZE];
 	/**Define how the any-source polling is done.**/
-	struct sctk_runtime_config_struct_topological_polling any_source_polling;
+	struct _mpc_lowcomm_config_struct_topological_polling any_source_polling;
 	/**Define the network topology to apply on this rail.**/
 	char                                                  topology[MPC_CONF_STRING_SIZE];
 	/**Define if on-demand connections are allowed on this rail.**/
@@ -483,11 +483,11 @@ struct sctk_runtime_config_struct_net_rail
 	/**Define the driver config to use for this rail.**/
 	char                                                 config[MPC_CONF_STRING_SIZE];
 	/**List of gates to be applied in this config.**/
-	struct sctk_runtime_config_struct_net_gate            gates[MPC_CONF_MAX_RAIL_GATE];
+	struct _mpc_lowcomm_config_struct_net_gate            gates[MPC_CONF_MAX_RAIL_GATE];
 	/** Number of elements in gates array. **/
 	int                                                   gates_size;
 	/**Used for topological rail selection**/
-	struct sctk_runtime_config_struct_net_rail *          subrails;
+	struct _mpc_lowcomm_config_struct_net_rail *          subrails;
 	/** Number of elements in subrails array. **/
 	int                                                   subrails_size;
 };
@@ -499,15 +499,15 @@ struct sctk_runtime_config_struct_net_rail
 #define MPC_CONF_MAX_RAIL_COUNT 128
 #define MPC_CONF_MAX_CONFIG_COUNT 128
 
-struct sctk_runtime_config_struct_networks
+struct _mpc_lowcomm_config_struct_networks
 {
 	/**Define the configuration driver list to reuse in rail definitions.**/
-	struct sctk_runtime_config_struct_net_driver_config * configs[MPC_CONF_MAX_CONFIG_COUNT];
+	struct _mpc_lowcomm_config_struct_net_driver_config * configs[MPC_CONF_MAX_CONFIG_COUNT];
 	/** Number of elements in configs array. **/
 	int                                                  configs_size;
 
 	/**List of rails to declare in MPC.**/
-	struct sctk_runtime_config_struct_net_rail *         rails[MPC_CONF_MAX_RAIL_COUNT];
+	struct _mpc_lowcomm_config_struct_net_rail *         rails[MPC_CONF_MAX_RAIL_COUNT];
 	/** Number of elements in rails array. **/
 	int                                                  rails_size;
 
@@ -516,7 +516,7 @@ struct sctk_runtime_config_struct_networks
 };
 
 
-struct sctk_runtime_config_struct_networks *_mpc_lowcomm_config_net_get(void);
+struct _mpc_lowcomm_config_struct_networks *_mpc_lowcomm_config_net_get(void);
 
 /** @brief Get a pointer to a given CLI configuration
 *   @param name Name of the requested configuration
@@ -534,26 +534,26 @@ mpc_conf_config_type_t *_mpc_lowcomm_conf_conf_rail_get ( char *name );
 *   @param name Name of the requested rail
 *   @return The rail or NULL
 */
-struct sctk_runtime_config_struct_net_rail * _mpc_lowcomm_conf_rail_unfolded_get ( char *name );
+struct _mpc_lowcomm_config_struct_net_rail * _mpc_lowcomm_conf_rail_unfolded_get ( char *name );
 
 
 /************************************
 * GLOBAL CONFIGURATION FOR LOWCOMM *
 ************************************/
 
-struct _mpc_lowcomm_conf
+struct _mpc_lowcomm_config
 {
 #ifdef SCTK_USE_CHECKSUM
 	int checksum;
 #endif
 #ifdef MPC_USE_INFINIBAND
-	struct sctk_runtime_config_struct_ib_global infiniband;
+	struct _mpc_lowcomm_config_struct_ib_global infiniband;
 #endif
 };
 
-struct _mpc_lowcomm_conf *_mpc_lowcomm_conf_get(void);
+struct _mpc_lowcomm_config *_mpc_lowcomm_conf_get(void);
 
-struct sctk_runtime_config_struct_net_driver_config * _mpc_lowcomm_conf_driver_unfolded_get(char * name);
+struct _mpc_lowcomm_config_struct_net_driver_config * _mpc_lowcomm_conf_driver_unfolded_get(char * name);
 
 
 void _mpc_lowcomm_config_register(void);

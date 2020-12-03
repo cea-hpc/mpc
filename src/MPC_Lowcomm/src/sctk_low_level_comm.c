@@ -322,7 +322,7 @@ void sctk_network_notify_new_communicator_set( void (*func)(int, size_t))
 /** \brief Get a pointer to the global network configuration
 *   \return the network config (static struct)
 */
-static inline  const struct sctk_runtime_config_struct_networks *sctk_net_get_config()
+static inline  const struct _mpc_lowcomm_config_struct_networks *sctk_net_get_config()
 {
 	return _mpc_lowcomm_config_net_get();
 }
@@ -332,7 +332,7 @@ static inline  const struct sctk_runtime_config_struct_networks *sctk_net_get_co
 *   \param name Name of the requested driver config
 *   \return The driver config or NULL
 */
-struct sctk_runtime_config_struct_net_driver_config *sctk_get_driver_config_by_name ( char *name )
+struct _mpc_lowcomm_config_struct_net_driver_config *sctk_get_driver_config_by_name ( char *name )
 {
 	return _mpc_lowcomm_conf_driver_unfolded_get(name);
 }
@@ -356,7 +356,7 @@ static inline int __unfold_rails( mpc_conf_config_type_t *cli_option )
 		mpc_conf_config_type_elem_t *erail = mpc_conf_config_type_nth(cli_option, k);
 
 		/* Get the rail */
-		struct sctk_runtime_config_struct_net_rail *rail = _mpc_lowcomm_conf_rail_unfolded_get ( mpc_conf_type_elem_get_as_string(erail) );
+		struct _mpc_lowcomm_config_struct_net_rail *rail = _mpc_lowcomm_conf_rail_unfolded_get ( mpc_conf_type_elem_get_as_string(erail) );
 		
 		if(!rail)
 		{
@@ -390,15 +390,15 @@ static inline int __unfold_rails( mpc_conf_config_type_t *cli_option )
 					 * we duplicate the config of current rail
 					 * while just overriding device name with the 
 					 * one we extracted from the device array */
-					struct sctk_runtime_config_struct_net_rail * subrails = 
-					     sctk_malloc( sizeof(  struct sctk_runtime_config_struct_net_rail ) * matching_rails );
+					struct _mpc_lowcomm_config_struct_net_rail * subrails = 
+					     sctk_malloc( sizeof(  struct _mpc_lowcomm_config_struct_net_rail ) * matching_rails );
 					
 					int i;
 					
 					for( i =  0 ; i < matching_rails ; i++ )
 					{
 						/* Copy Current rail (note that at this point the rail has no subrails ) */
-						memcpy( &subrails[i], rail, sizeof( struct sctk_runtime_config_struct_net_rail ) );
+						memcpy( &subrails[i], rail, sizeof( struct _mpc_lowcomm_config_struct_net_rail ) );
 						
 						/* Update device name with matching device */
 						snprintf(subrails[i].device, MPC_CONF_STRING_SIZE, matching_device[i]->name);
@@ -620,7 +620,7 @@ void sctk_net_init_driver ( char *name )
 		char * rail_name = mpc_conf_type_elem_get_as_string(erail);
 
 		/* For each RAIL */
-		struct sctk_runtime_config_struct_net_rail *rail_config_struct;
+		struct _mpc_lowcomm_config_struct_net_rail *rail_config_struct;
 #ifndef MPC_USE_INFINIBAND
 		if(strcmp(rail_name,"ib_mpi") == 0) {
 		  mpc_common_debug_warning("Network support %s not available switching to tcp_mpi", rail_name);
@@ -642,7 +642,7 @@ void sctk_net_init_driver ( char *name )
 		}
 
 		/* For this rail retrieve the config */
-		struct sctk_runtime_config_struct_net_driver_config *driver_config = sctk_get_driver_config_by_name ( rail_config_struct->config );
+		struct _mpc_lowcomm_config_struct_net_driver_config *driver_config = sctk_get_driver_config_by_name ( rail_config_struct->config );
 
 		if ( driver_config == NULL )
 		{

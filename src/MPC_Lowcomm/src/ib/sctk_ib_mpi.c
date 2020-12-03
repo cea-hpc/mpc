@@ -460,7 +460,7 @@ static int sctk_network_poll_send(sctk_rail_info_t *rail, struct ibv_wc *wc)
 
 static inline void __check_wc(struct sctk_ib_rail_info_s *rail_ib, struct ibv_wc wc)
 {
-	struct sctk_runtime_config_struct_net_driver_infiniband *config = (rail_ib)->config;
+	struct _mpc_lowcomm_config_struct_net_driver_infiniband *config = (rail_ib)->config;
 	struct _mpc_lowcomm_ib_ibuf_s *ibuf;
 	char host[HOSTNAME];
 	char ibuf_desc[4096];
@@ -903,7 +903,7 @@ void sctk_network_init_mpi_ib(sctk_rail_info_t *rail)
 	char *network_name = sctk_malloc(256);
 
 	/* Retrieve config pointers */
-	struct sctk_runtime_config_struct_net_rail *rail_config = rail->runtime_config_rail;
+	struct _mpc_lowcomm_config_struct_net_rail *rail_config = rail->runtime_config_rail;
 
 	/* init the first time the rail is enabled */
 	if(!vps_reset)

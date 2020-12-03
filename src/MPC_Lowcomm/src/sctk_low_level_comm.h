@@ -34,7 +34,7 @@ struct sctk_rail_info_s;
  *
  *  \param rail Rail structure to be initialized
  *  \param driver_type the type of driver to load 
- *         (follows enum sctk_runtime_config_struct_net_driver_type from the config)
+ *         (follows enum _mpc_lowcomm_config_struct_net_driver_type from the config)
  *          with the extra SCTK_RAIL_TOPOLOGICAL value (9999) to identify topo rails
  * 
  */
@@ -54,13 +54,13 @@ void sctk_net_finalize_task_level(int taskid, int vp);
 *   \param name Name of the requested rail
 *   \return The rail or NULL
 */
-struct sctk_runtime_config_struct_net_rail *sctk_get_rail_config_by_name ( char *name );
+struct _mpc_lowcomm_config_struct_net_rail *sctk_get_rail_config_by_name ( char *name );
 
 /** \brief Get a pointer to a driver config
 *   \param name Name of the requested driver config
 *   \return The driver config or NULL
 */
-struct sctk_runtime_config_struct_net_driver_config *sctk_get_driver_config_by_name ( char *name );
+struct _mpc_lowcomm_config_struct_net_driver_config *sctk_get_driver_config_by_name ( char *name );
 
 void sctk_network_send_message ( mpc_lowcomm_ptp_message_t *msg );
 void sctk_network_send_message_set ( void ( *sctk_network_send_message_val ) ( mpc_lowcomm_ptp_message_t * ) );

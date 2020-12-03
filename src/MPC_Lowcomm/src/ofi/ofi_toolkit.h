@@ -40,7 +40,7 @@ extern "C"
 #define MPC_LOWCOMM_OFI_MAX_INTERLEAVE 16
 
 
-void mpc_lowcomm_ofi_setup_hints_from_config(struct fi_info* hint, struct sctk_runtime_config_struct_net_driver_ofi config);
+void mpc_lowcomm_ofi_setup_hints_from_config(struct fi_info* hint, struct _mpc_lowcomm_config_struct_net_driver_ofi config);
 void mpc_lowcomm_ofi_init_provider(mpc_lowcomm_ofi_rail_info_t* rail, struct fi_info* hint);
 sctk_endpoint_t* mpc_lowcomm_ofi_add_route(int dest, void* ctx, sctk_rail_info_t* rail, sctk_route_origin_t origin, sctk_endpoint_state_t state);
 

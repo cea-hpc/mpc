@@ -50,8 +50,8 @@ _mpc_lowcomm_ib_mmu_entry_t * _mpc_lowcomm_ib_mmu_entry_new(sctk_ib_rail_info_t 
 	new->size = size;
 	new->rail = rail_ib;
 
-	struct _mpc_lowcomm_conf *lowcomm_conf = _mpc_lowcomm_conf_get();
-	const struct sctk_runtime_config_struct_ib_global *ib_global_config = &lowcomm_conf->infiniband;
+	struct _mpc_lowcomm_config *lowcomm_conf = _mpc_lowcomm_conf_get();
+	const struct _mpc_lowcomm_config_struct_ib_global *ib_global_config = &lowcomm_conf->infiniband;
 
 
 	if( (ib_global_config->mmu_cache_maximum_pin_size) < size)
@@ -195,8 +195,8 @@ void _mpc_lowcomm_ib_mmu_entry_relax(_mpc_lowcomm_ib_mmu_entry_t *entry)
 
 void __mpc_lowcomm_ib_mmu_init(struct _mpc_lowcomm_ib_mmu *mmu)
 {
-	struct _mpc_lowcomm_conf *lowcomm_conf = _mpc_lowcomm_conf_get();
-	const struct sctk_runtime_config_struct_ib_global *ib_global_config = &lowcomm_conf->infiniband;
+	struct _mpc_lowcomm_config *lowcomm_conf = _mpc_lowcomm_conf_get();
+	const struct _mpc_lowcomm_config_struct_ib_global *ib_global_config = &lowcomm_conf->infiniband;
 
 	/* Clear the MMU (particularly the fast cache) */
 	memset(mmu, 0, sizeof(struct _mpc_lowcomm_ib_mmu) );

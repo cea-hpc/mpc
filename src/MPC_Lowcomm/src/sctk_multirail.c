@@ -34,13 +34,13 @@
 
 int sctk_rail_gate_boolean( __UNUSED__ sctk_rail_info_t * rail, __UNUSED__ mpc_lowcomm_ptp_message_t * message , void * gate_config )
 {
-	struct sctk_runtime_config_struct_gate_boolean * conf = (struct sctk_runtime_config_struct_gate_boolean *)gate_config;
+	struct _mpc_lowcomm_config_struct_gate_boolean * conf = (struct _mpc_lowcomm_config_struct_gate_boolean *)gate_config;
 	return conf->value;
 }
 
 int sctk_rail_gate_probabilistic(  __UNUSED__ sctk_rail_info_t * rail, __UNUSED__ mpc_lowcomm_ptp_message_t * message , void * gate_config )
 {
-	struct sctk_runtime_config_struct_gate_probabilistic * conf = (struct sctk_runtime_config_struct_gate_probabilistic *)gate_config;
+	struct _mpc_lowcomm_config_struct_gate_probabilistic * conf = (struct _mpc_lowcomm_config_struct_gate_probabilistic *)gate_config;
 	
 	int num = ( rand() % 100 );
 
@@ -49,7 +49,7 @@ int sctk_rail_gate_probabilistic(  __UNUSED__ sctk_rail_info_t * rail, __UNUSED_
 
 int sctk_rail_gate_minsize( __UNUSED__ sctk_rail_info_t * rail, mpc_lowcomm_ptp_message_t * message , void * gate_config )
 {
-	struct sctk_runtime_config_struct_gate_min_size * conf = (struct sctk_runtime_config_struct_gate_min_size *)gate_config;
+	struct _mpc_lowcomm_config_struct_gate_min_size * conf = (struct _mpc_lowcomm_config_struct_gate_min_size *)gate_config;
 	
 	size_t message_size = SCTK_MSG_SIZE( message );
 	
@@ -58,7 +58,7 @@ int sctk_rail_gate_minsize( __UNUSED__ sctk_rail_info_t * rail, mpc_lowcomm_ptp_
 
 int sctk_rail_gate_maxsize( __UNUSED__ sctk_rail_info_t * rail, mpc_lowcomm_ptp_message_t * message , void * gate_config )
 {
-	struct sctk_runtime_config_struct_gate_max_size * conf = (struct sctk_runtime_config_struct_gate_max_size *)gate_config;
+	struct _mpc_lowcomm_config_struct_gate_max_size * conf = (struct _mpc_lowcomm_config_struct_gate_max_size *)gate_config;
 	
 	size_t message_size = SCTK_MSG_SIZE( message );
 	
@@ -68,7 +68,7 @@ int sctk_rail_gate_maxsize( __UNUSED__ sctk_rail_info_t * rail, mpc_lowcomm_ptp_
 
 int sctk_rail_gate_msgtype( __UNUSED__ sctk_rail_info_t * rail, mpc_lowcomm_ptp_message_t * message , void * gate_config )
 {
-	struct sctk_runtime_config_struct_gate_message_type * conf = (struct sctk_runtime_config_struct_gate_message_type *)gate_config;
+	struct _mpc_lowcomm_config_struct_gate_message_type * conf = (struct _mpc_lowcomm_config_struct_gate_message_type *)gate_config;
 	
 	int is_process_specific = sctk_is_process_specific_message ( SCTK_MSG_HEADER ( message ) );
         int tag = SCTK_MSG_TAG(message);
@@ -105,7 +105,7 @@ struct sctk_gate_context
 };
 
 
-static inline void sctk_gate_get_context( struct sctk_runtime_config_struct_net_gate * gate , struct sctk_gate_context * ctx )
+static inline void sctk_gate_get_context( struct _mpc_lowcomm_config_struct_net_gate * gate , struct sctk_gate_context * ctx )
 {
 	ctx->func = NULL;
 	ctx->params = NULL;
@@ -660,7 +660,7 @@ void sctk_multirail_on_demand_connection( mpc_lowcomm_ptp_message_t *msg )
 		 * ############################################################################### */
 		
 		/* Retrieve data from CTX */
-		struct sctk_runtime_config_struct_net_gate * gates = rail->runtime_config_rail->gates;
+		struct _mpc_lowcomm_config_struct_net_gate * gates = rail->runtime_config_rail->gates;
 		int gate_count = rail->runtime_config_rail->gates_size;
 		
 		int priority = rail->runtime_config_rail->priority;

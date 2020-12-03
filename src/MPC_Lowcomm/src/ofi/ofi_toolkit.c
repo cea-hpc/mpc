@@ -72,7 +72,7 @@ void mpc_lowcomm_ofi_init_provider(mpc_lowcomm_ofi_rail_info_t* orail, struct fi
  * @param hint the hint structure to set
  * @param config the OFI-specific configuration.
  */
-void mpc_lowcomm_ofi_setup_hints_from_config(struct fi_info* hint, struct sctk_runtime_config_struct_net_driver_ofi config)
+void mpc_lowcomm_ofi_setup_hints_from_config(struct fi_info* hint, struct _mpc_lowcomm_config_struct_net_driver_ofi config)
 {
 
 	switch(config.progress)

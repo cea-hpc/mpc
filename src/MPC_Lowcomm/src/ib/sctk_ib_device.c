@@ -277,7 +277,7 @@ struct ibv_comp_channel *sctk_ib_comp_channel_init ( sctk_ib_device_t *device )
 /** \brief Create a completion queue and associate it a completion channel.
 */
 struct ibv_cq *sctk_ib_cq_init ( sctk_ib_device_t *device,
-                                 struct sctk_runtime_config_struct_net_driver_infiniband *config,
+                                 struct _mpc_lowcomm_config_struct_net_driver_infiniband *config,
                                  struct ibv_comp_channel *comp_channel )
 {
 	struct ibv_cq *cq;

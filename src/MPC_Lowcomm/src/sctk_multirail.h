@@ -37,7 +37,7 @@ typedef struct sctk_endpoint_list_s
 	int priority;
 	sctk_endpoint_t * endpoint;
 	
-	struct sctk_runtime_config_struct_net_gate * gates;
+	struct _mpc_lowcomm_config_struct_net_gate * gates;
 	int gate_count;
 	
 	struct sctk_endpoint_list_s * next;

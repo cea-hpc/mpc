@@ -154,8 +154,8 @@ struct sctk_rail_info_s
 	char is_rdma;        /**< If the rail supports RDMA operations */
 
 	/* Configuration Info */
-	struct sctk_runtime_config_struct_net_rail *runtime_config_rail;  /**< Rail config */
-	struct sctk_runtime_config_struct_net_driver_config *runtime_config_driver_config;  /**< Driver config */
+	struct _mpc_lowcomm_config_struct_net_rail *runtime_config_rail;  /**< Rail config */
+	struct _mpc_lowcomm_config_struct_net_driver_config *runtime_config_driver_config;  /**< Driver config */
 
 	/* Route table */
 	sctk_route_table_t * route_table;
@@ -261,8 +261,8 @@ struct sctk_rail_array
 
 void sctk_rail_allocate ( int count );
 
-sctk_rail_info_t *sctk_rail_register( struct sctk_runtime_config_struct_net_rail *runtime_config_rail,
-                                  struct sctk_runtime_config_struct_net_driver_config *runtime_config_driver_config );
+sctk_rail_info_t *sctk_rail_register( struct _mpc_lowcomm_config_struct_net_rail *runtime_config_rail,
+                                  struct _mpc_lowcomm_config_struct_net_driver_config *runtime_config_driver_config );
 void sctk_rail_unregister(sctk_rail_info_t* rail);
 int sctk_rail_count();
 sctk_rail_info_t * sctk_rail_get_by_id ( int i );
