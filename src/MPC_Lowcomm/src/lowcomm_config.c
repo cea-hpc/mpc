@@ -564,10 +564,11 @@ static inline void __mpc_lowcomm_driver_conf_unfold_values(struct _mpc_lowcomm_c
 {
 	switch (driver->type)
 	{
+#ifdef MPC_USE_OFI
 	case SCTK_RTCFG_net_driver_ofi:
 		__driver_ofi_unfold(driver);
 		break;
-	
+#endif
 	default:
 		return;
 	}
