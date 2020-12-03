@@ -275,6 +275,10 @@ AC_CHECK_HEADERS([ aio.h \
 
 #### EXTERNAL LIBRARIES #### {sec:libraries}
 ############################
+
+#Add user local to search path
+CFLAGS="-L/usr/local/lib/ -Wl,-rpath=/usr/local/lib/ ${CFLAGS}"
+
 AC_CHECK_LIB([m],[log])
 AC_CHECK_LIB(pthread, pthread_create)
 AC_CHECK_SIZEOF(pthread_t,,[#include <pthread.h>])

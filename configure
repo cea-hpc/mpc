@@ -21587,6 +21587,10 @@ done
 
 #### EXTERNAL LIBRARIES #### {sec:libraries}
 ############################
+
+#Add user local to search path
+CFLAGS="-L/usr/local/lib/ -Wl,-rpath=/usr/local/lib/ ${CFLAGS}"
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for log in -lm" >&5
 $as_echo_n "checking for log in -lm... " >&6; }
 if ${ac_cv_lib_m_log+:} false; then :
