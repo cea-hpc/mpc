@@ -2649,14 +2649,14 @@ static __inline__ int red_sched_chain(int rank, int p, int root, const void *sen
 
     /* last node does not recv */
     if(vrank != p-1) {
-      res = NBC_Sched_recv((char*)offset, true, thiscount, datatype, rpeer, schedule);
+      res = NBC_Sched_recv((char*)offset, 1, thiscount, datatype, rpeer, schedule);
       if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
       res = NBC_Sched_barrier(schedule);
       /* root reduces into receivebuf */
       if(vrank == 0) {
-        res = NBC_Sched_op((char*)recvbuf+offset, false, (char*)sendbuf+offset, false, (char*)offset, true, thiscount, datatype, op, schedule);
+        res = NBC_Sched_op((char*)recvbuf+offset, 0, (char*)sendbuf+offset, 0, (char*)offset, 1, thiscount, datatype, op, schedule);
       } else {
-        res = NBC_Sched_op((char*)offset, true, (char*)sendbuf+offset, false, (char*)offset, true, thiscount, datatype, op, schedule);
+        res = NBC_Sched_op((char*)offset, 1, (char*)sendbuf+offset, 0, (char*)offset, 1, thiscount, datatype, op, schedule);
       }
       res = NBC_Sched_barrier(schedule);
     }
@@ -2665,9 +2665,9 @@ static __inline__ int red_sched_chain(int rank, int p, int root, const void *sen
     if(vrank != 0) {
       /* rank p-1 has to send out of sendbuffer :) */
       if(vrank == p-1) {
-        res = NBC_Sched_send((char*)sendbuf+offset, false, thiscount, datatype, speer, schedule);
+        res = NBC_Sched_send((char*)sendbuf+offset, 0, thiscount, datatype, speer, schedule);
       } else {
-        res = NBC_Sched_send((char*)offset, true, thiscount, datatype, speer, schedule);
+        res = NBC_Sched_send((char*)offset, 1, thiscount, datatype, speer, schedule);
       }
       if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
       /* this barrier here seems awkward but isn't!!!! */
