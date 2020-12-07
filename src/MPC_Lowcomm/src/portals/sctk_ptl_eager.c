@@ -95,7 +95,7 @@ static inline void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_
 	SCTK_MSG_SRC_TASK_SET        ( net_msg ,  match.data.rank);
 	SCTK_MSG_DEST_PROCESS_SET    ( net_msg ,  mpc_common_get_process_rank());
 	SCTK_MSG_DEST_TASK_SET       ( net_msg ,  mpc_common_get_process_rank());
-	SCTK_MSG_COMMUNICATOR_SET    ( net_msg ,  ev.pt_index - SCTK_PTL_PTE_HIDDEN);
+	SCTK_MSG_COMMUNICATOR_ID_SET ( net_msg ,  ev.pt_index - SCTK_PTL_PTE_HIDDEN);
 	SCTK_MSG_TAG_SET             ( net_msg ,  match.data.tag);
 	SCTK_MSG_NUMBER_SET          ( net_msg ,  match.data.uid);
 	SCTK_MSG_MATCH_SET           ( net_msg ,  0);
@@ -172,7 +172,7 @@ void sctk_ptl_eager_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t
 	match.data.rank        = SCTK_MSG_SRC_PROCESS(msg)    % SCTK_PTL_MAX_RANKS;
 	match.data.uid         = SCTK_MSG_NUMBER(msg)         % SCTK_PTL_MAX_UIDS;
 	match.data.type        = SCTK_MSG_SPECIFIC_CLASS(msg) % SCTK_PTL_MAX_TYPES;
-	pte                    = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
+	pte                    = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR_ID(msg));
 	remote                 = infos->dest;
 	request                = sctk_ptl_md_create(srail, start, size, flags);
 
@@ -245,7 +245,7 @@ void sctk_ptl_eager_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_ptl_rail_in
 
 	/* complete the ME data, this ME will be appended to the PRIORITY_LIST */
 	size     = SCTK_MSG_SIZE(msg);
-	pte      = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
+	pte      = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR_ID(msg));
 	flags    = SCTK_PTL_ME_PUT_FLAGS | SCTK_PTL_ONCE;
 	user_ptr = sctk_ptl_me_create(start, size, remote, match, ign, flags); assert(user_ptr);
 

@@ -182,8 +182,14 @@ static inline void _mpc_comm_ptp_message_set_copy_and_free( mpc_lowcomm_ptp_mess
 	} while ( 0 )
 
 #define SCTK_MSG_COMMUNICATOR_ID( msg ) msg->body.header.communicator_id
-#define SCTK_MSG_COMMUNICATOR( msg ) msg->tail.communicator
+#define SCTK_MSG_COMMUNICATOR_ID_SET( msg, id ) \
+	do                                         \
+	{                                          \
+		msg->body.header.communicator_id = id; \
+	} while ( 0 )
 
+
+#define SCTK_MSG_COMMUNICATOR( msg ) msg->tail.communicator
 #define SCTK_MSG_COMMUNICATOR_SET( msg, comm ) \
 	do                                         \
 	{                                          \

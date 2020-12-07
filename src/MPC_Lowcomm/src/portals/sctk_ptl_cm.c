@@ -75,7 +75,7 @@ static inline void sctk_ptl_cm_recv_message(sctk_rail_info_t* rail, sctk_ptl_eve
 	SCTK_MSG_SRC_TASK_SET        ( net_msg ,  match.data.rank);
 	SCTK_MSG_DEST_PROCESS_SET    ( net_msg ,  mpc_common_get_process_rank());
 	SCTK_MSG_DEST_TASK_SET       ( net_msg ,  -1);
-	SCTK_MSG_COMMUNICATOR_SET    ( net_msg ,  0);
+	SCTK_MSG_COMMUNICATOR_ID_SET ( net_msg ,  0);
 	SCTK_MSG_TAG_SET             ( net_msg ,  match.data.tag);
 	SCTK_MSG_NUMBER_SET          ( net_msg ,  match.data.uid);
 	SCTK_MSG_SPECIFIC_CLASS_SET  ( net_msg ,  match.data.type);

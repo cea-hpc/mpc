@@ -121,7 +121,7 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	}
 
 	/* configure the MD */
-	pte       = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
+	pte       = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR_ID(msg));
 	flags     = SCTK_PTL_MD_GET_FLAGS;
 	sz_sent  = *(size_t*)ev.start;
 	assert(pte);
@@ -205,7 +205,7 @@ static inline void sctk_ptl_rdv_reply_message(sctk_rail_info_t* rail, sctk_ptl_e
 	SCTK_MSG_SRC_TASK_SET        ( net_msg ,  ptr->match.data.rank);
 	SCTK_MSG_DEST_PROCESS_SET    ( net_msg ,  mpc_common_get_process_rank());
 	SCTK_MSG_DEST_TASK_SET       ( net_msg ,  mpc_common_get_process_rank());
-	SCTK_MSG_COMMUNICATOR_SET    ( net_msg ,  SCTK_MSG_COMMUNICATOR(recv_msg));
+	SCTK_MSG_COMMUNICATOR_ID_SET ( net_msg ,  SCTK_MSG_COMMUNICATOR_ID(recv_msg));
 	SCTK_MSG_TAG_SET             ( net_msg ,  ptr->match.data.tag);
 	SCTK_MSG_NUMBER_SET          ( net_msg ,  ptr->msg_seq_nb);
 	SCTK_PTL_TYPE_RDV_UNSET(ptr->match.data.type); /* this infomation should be removed before rebuilding the message */
@@ -283,7 +283,7 @@ void sctk_ptl_rdv_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t* 
 	match.data.type = SCTK_MSG_SPECIFIC_CLASS(msg) % SCTK_PTL_MAX_TYPES;
 	SCTK_PTL_TYPE_RDV_UNSET(match.data.type); /* the PUT does not carry that information */
 	ign             = SCTK_PTL_MATCH_INIT;
-	pte             = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
+	pte             = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR_ID(msg));
 
 	/************************/
 	/* 1. Configure the PUT */
@@ -365,7 +365,7 @@ void sctk_ptl_rdv_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_ptl_rail_info
 	int put_flags;
 
 	/****** INIT COMMON ATTRIBUTES ******/
-	pte             = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
+	pte             = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR_ID(msg));
 	match.data.tag  = SCTK_MSG_TAG(msg)            % SCTK_PTL_MAX_TAGS;
 	match.data.rank = SCTK_MSG_SRC_PROCESS(msg)    % SCTK_PTL_MAX_RANKS;
 	match.data.uid  = SCTK_MSG_NUMBER(msg)         % SCTK_PTL_MAX_UIDS;

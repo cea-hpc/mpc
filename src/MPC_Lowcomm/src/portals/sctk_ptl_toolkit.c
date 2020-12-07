@@ -85,7 +85,7 @@ void sctk_ptl_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_rail_info_t* rail
 	assert(msg);
 	assert(rail);
 	assert(srail);
-	assert(SCTK_PTL_PTE_EXIST(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg)));
+	assert(SCTK_PTL_PTE_EXIST(srail->pt_table, SCTK_MSG_COMMUNICATOR_ID(msg)));
 	if(SCTK_MSG_SIZE(msg) <= srail->eager_limit)
 	{
 		sctk_ptl_eager_notify_recv(msg, srail);
@@ -106,7 +106,7 @@ void sctk_ptl_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t* endp
 {
 	sctk_ptl_rail_info_t* srail = &endpoint->rail->network.ptl;
 
-	assert(SCTK_PTL_PTE_EXIST(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg)));
+	assert(SCTK_PTL_PTE_EXIST(srail->pt_table, SCTK_MSG_COMMUNICATOR_ID(msg)));
 
 	/* specific cases: control messages */
 	if(_mpc_comm_ptp_message_is_for_control(SCTK_MSG_SPECIFIC_CLASS(msg)))
@@ -455,7 +455,7 @@ void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, int comm_idx, size_t co
  */
 int sctk_ptl_pending_me_probe(sctk_rail_info_t* rail, mpc_lowcomm_ptp_message_header_t* hdr, int probe_level)
 {
-	mpc_lowcomm_communicator_t comm = hdr->communicator;
+	uint32_t comm = hdr->communicator_id;
 	int rank = hdr->source_task;
 	int tag = hdr->message_tag;
 	int ret = -1;
