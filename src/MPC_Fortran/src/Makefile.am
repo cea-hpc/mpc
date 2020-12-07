@@ -6,7 +6,7 @@ AM_CPPFLAGS += -I$(abs_top_builddir)/src/MPC_Fortran/src/
 AM_FCFLAGS=-I$(abs_top_builddir)/src/MPC_Fortran/src/
 
 constants.json: gen_constants.c
-	$(CC) $(LDFLAGS) $(AM_CPPFLAGS) $^ -o ./gen_constants
+	$(CC) $(LDFLAGS) $(CFLAGS) $(AM_CPPFLAGS) $^ -o ./gen_constants
 	./gen_constants > constants.json
 
 preparsed_mpih.dat: preparsed_mpih.c

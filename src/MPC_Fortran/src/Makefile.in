@@ -947,7 +947,7 @@ uninstall-am: uninstall-libLTLIBRARIES \
 
 
 constants.json: gen_constants.c
-	$(CC) $(LDFLAGS) $(AM_CPPFLAGS) $^ -o ./gen_constants
+	$(CC) $(LDFLAGS) $(CFLAGS) $(AM_CPPFLAGS) $^ -o ./gen_constants
 	./gen_constants > constants.json
 
 preparsed_mpih.dat: preparsed_mpih.c
