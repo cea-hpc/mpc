@@ -3145,20 +3145,8 @@ int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
 		return res;
 	}
 	int derived_ret = 0;
-	int vec_size;
-	_mpc_dt_derived_t input_datatype;
-	if(_mpc_dt_is_derived(datatype) )
-	{
-		_mpc_cl_derived_datatype_try_get_info(datatype, &derived_ret, &input_datatype);
-		vec_size = input_datatype.size * count;
-	}
-	else
-	{
-		vec_size = tsize * count;
-	}
 
-	if( (size < sctk_runtime_config_get()->modules.collectives_intra.bcast_intra_for_trsh) &&
-	    (vec_size < sctk_runtime_config_get()->modules.collectives_intra.bcast_intra_for_count_trsh * 4) )
+	if( size < sctk_runtime_config_get()->modules.collectives_intra.bcast_intra_for_trsh )
 	{
 		int          i, j;
 		MPI_Request  req_recv;
