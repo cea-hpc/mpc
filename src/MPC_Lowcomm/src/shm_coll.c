@@ -2,7 +2,7 @@
 
 #include <string.h>
 #include <sctk_alloc.h>
-#include <mpc_runtime_config.h>
+#include <lowcomm_config.h>
 #include <mpc_common_debug.h>
 
 /************
@@ -81,7 +81,7 @@ int sctk_shared_mem_reduce_init( struct shared_mem_reduce *shmr, int nb_task )
 	OPA_store_int( &shmr->owner, -1 );
 	OPA_store_int( &shmr->left_to_push, nb_task );
 	shmr->target_buff = NULL;
-	int pipelined_blocks = sctk_runtime_config_get()->modules.collectives_shm.reduce_pipelined_blocks;
+	int pipelined_blocks = _mpc_lowcomm_coll_conf_get()->shm_reduce_pipelined_blocks;
 	shmr->buff_lock = sctk_malloc( sizeof( mpc_common_spinlock_t ) * pipelined_blocks );
 	assume( shmr->buff_lock != NULL );
 	shmr->pipelined_blocks = pipelined_blocks;
@@ -286,8 +286,7 @@ struct sctk_comm_coll * sctk_comm_coll_init(int nb_task )
 	/* The Signalled Barrier */
 	sctk_shared_mem_barrier_sig_init( &coll->shm_barrier_sig, nb_task );
 	/* The reduce structure */
-	coll->reduce_interleave =
-		sctk_runtime_config_get()->modules.collectives_shm.reduce_interleave;
+	coll->reduce_interleave = _mpc_lowcomm_coll_conf_get()->shm_reduce_interleave;
 
 	if ( !powerof2( coll->reduce_interleave ) )
 	{
@@ -306,8 +305,7 @@ struct sctk_comm_coll * sctk_comm_coll_init(int nb_task )
 	}
 
 	/* The reduce structure */
-	coll->bcast_interleave =
-		sctk_runtime_config_get()->modules.collectives_shm.bcast_interleave;
+	coll->bcast_interleave = _mpc_lowcomm_coll_conf_get()->shm_bcast_interleave;
 
 	if ( !powerof2( coll->bcast_interleave ) )
 	{

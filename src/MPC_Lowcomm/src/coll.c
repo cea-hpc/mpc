@@ -22,9 +22,6 @@
 
 #include "coll.h"
 
-#include <mpc_runtime_config.h>
-
-
 #include <math.h>
 #include <mpc_launch_pmi.h>
 #include <sctk_low_level_comm.h>
@@ -340,12 +337,14 @@ static void _mpc_coll_message_table_init( _mpc_coll_messages_table_t *tab )
 static void _mpc_coll_opt_barrier( const mpc_lowcomm_communicator_t communicator, __UNUSED__ struct mpc_lowcomm_coll_s *tmp )
 {
 	if ( !mpc_lowcomm_communicator_is_intercomm( communicator ) )
-
 	{
 		int myself;
 		int total;
 		int total_max;
 		int i;
+
+		int barrier_arity = _mpc_lowcomm_coll_conf_get()->barrier_arity;
+
 		_mpc_coll_messages_table_t table;
 		char c = 'c';
 		mpc_common_nodebug( "_mpc_coll_opt_barrier() begin:" ); //AMAHEO
@@ -1467,6 +1466,9 @@ static void _mpc_coll_noalloc_barrier(const mpc_lowcomm_communicator_t communica
 	char c = 'c';
 	_mpc_coll_message_table_init(&table);
 	total  = mpc_lowcomm_communicator_size(communicator);
+
+	int barrier_arity = _mpc_lowcomm_coll_conf_get()->barrier_arity;
+
 
 	if(total == 1)
 	{

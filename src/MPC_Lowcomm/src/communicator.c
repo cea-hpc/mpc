@@ -31,7 +31,7 @@
 #include <mpc_common_rank.h>
 
 #include <mpc_common_datastructure.h>
-
+#include <lowcomm_config.h>
 #include <sctk_low_level_comm.h>
 
 /*************************
