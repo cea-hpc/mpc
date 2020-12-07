@@ -209,6 +209,7 @@ am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c sctk_checksum.c \
 	./portals_am/sctk_ptl_am_toolkit.c \
 	./portals_am/sctk_ptl_am_arpc_api.c ./portals_am/arpc_weak.c \
 	am.c
+	./ofi/ofi_toolkit.c
 am__dirstamp = $(am__leading_dot)dirstamp
 @INFINIBAND_DRIVER_ENABLED_TRUE@am__objects_1 = ./ib/sctk_ib_async.lo \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_buffered.lo \
@@ -241,6 +242,8 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals_am/sctk_ptl_am_arpc_api.lo \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals_am/arpc_weak.lo
 @MPC_HAVE_AM_TRUE@am__objects_3 = am.lo
+@OFI_DRIVER_ENABLED_TRUE@	./ofi/ofi_rdma.lo \
+@OFI_DRIVER_ENABLED_TRUE@	./ofi/ofi_toolkit.lo
 am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo \
 	sctk_control_messages.lo ft.lo group.lo communicator.lo \
 	shm_coll.lo sctk_handle.lo sctk_low_level_comm.lo \
@@ -469,6 +472,8 @@ NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
+OFI_CFLAGS = @OFI_CFLAGS@
+OFI_LIBS = @OFI_LIBS@
 OPA_CFLAGS = @OPA_CFLAGS@
 OPA_LIBS = @OPA_LIBS@
 OTOOL = @OTOOL@
@@ -626,7 +631,7 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Launch/include/ \
 	-I$(abs_top_builddir)/src/include/ -I$(abs_srcdir)/tcp/ \
 	-I$(abs_srcdir)/shm/ $(am__append_1) $(am__append_2) \
-	$(am__append_3) $(am__append_5)
+	$(am__append_3) $(am__append_5) $(am__append_7)
 lib_LTLIBRARIES = libmpclowcomm.la
 
 # low-level communication #
@@ -822,6 +827,17 @@ portals_am/$(DEPDIR)/$(am__dirstamp):
 	portals_am/$(DEPDIR)/$(am__dirstamp)
 ./portals_am/arpc_weak.lo: portals_am/$(am__dirstamp) \
 	portals_am/$(DEPDIR)/$(am__dirstamp)
+ofi/$(am__dirstamp):
+	@$(MKDIR_P) ./ofi
+	@: > ofi/$(am__dirstamp)
+ofi/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) ./ofi/$(DEPDIR)
+	@: > ofi/$(DEPDIR)/$(am__dirstamp)
+./ofi/ofi.lo: ofi/$(am__dirstamp) ofi/$(DEPDIR)/$(am__dirstamp)
+./ofi/ofi_msg.lo: ofi/$(am__dirstamp) ofi/$(DEPDIR)/$(am__dirstamp)
+./ofi/ofi_rdma.lo: ofi/$(am__dirstamp) ofi/$(DEPDIR)/$(am__dirstamp)
+./ofi/ofi_toolkit.lo: ofi/$(am__dirstamp) \
+	ofi/$(DEPDIR)/$(am__dirstamp)
 
 libmpclowcomm.la: $(libmpclowcomm_la_OBJECTS) $(libmpclowcomm_la_DEPENDENCIES) $(EXTRA_libmpclowcomm_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) -rpath $(libdir) $(libmpclowcomm_la_OBJECTS) $(libmpclowcomm_la_LIBADD) $(LIBS)
@@ -830,6 +846,8 @@ mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f ./ib/*.$(OBJEXT)
 	-rm -f ./ib/*.lo
+	-rm -f ./ofi/*.$(OBJEXT)
+	-rm -f ./ofi/*.lo
 	-rm -f ./portals/*.$(OBJEXT)
 	-rm -f ./portals/*.lo
 	-rm -f ./portals_am/*.$(OBJEXT)
@@ -880,6 +898,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_topology.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ibufs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ibufs_rdma.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ofi/$(DEPDIR)/ofi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ofi/$(DEPDIR)/ofi_msg.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ofi/$(DEPDIR)/ofi_rdma.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ofi/$(DEPDIR)/ofi_toolkit.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./portals/$(DEPDIR)/sctk_portals.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./portals/$(DEPDIR)/sctk_ptl_cm.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./portals/$(DEPDIR)/sctk_ptl_eager.Plo@am__quote@
@@ -936,6 +958,7 @@ mostlyclean-libtool:
 clean-libtool:
 	-rm -rf .libs _libs
 	-rm -rf ./ib/.libs ./ib/_libs
+	-rm -rf ./ofi/.libs ./ofi/_libs
 	-rm -rf ./portals/.libs ./portals/_libs
 	-rm -rf ./portals_am/.libs ./portals_am/_libs
 	-rm -rf ./shm/.libs ./shm/_libs
@@ -1058,6 +1081,8 @@ distclean-generic:
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
 	-rm -f ib/$(DEPDIR)/$(am__dirstamp)
 	-rm -f ib/$(am__dirstamp)
+	-rm -f ofi/$(DEPDIR)/$(am__dirstamp)
+	-rm -f ofi/$(am__dirstamp)
 	-rm -f portals/$(DEPDIR)/$(am__dirstamp)
 	-rm -f portals/$(am__dirstamp)
 	-rm -f portals_am/$(DEPDIR)/$(am__dirstamp)
@@ -1076,7 +1101,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR) ./ib/$(DEPDIR) ./portals/$(DEPDIR) ./portals_am/$(DEPDIR) ./shm/$(DEPDIR) ./tcp/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) ./ib/$(DEPDIR) ./ofi/$(DEPDIR) ./portals/$(DEPDIR) ./portals_am/$(DEPDIR) ./shm/$(DEPDIR) ./tcp/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -1122,7 +1147,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR) ./ib/$(DEPDIR) ./portals/$(DEPDIR) ./portals_am/$(DEPDIR) ./shm/$(DEPDIR) ./tcp/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) ./ib/$(DEPDIR) ./ofi/$(DEPDIR) ./portals/$(DEPDIR) ./portals_am/$(DEPDIR) ./shm/$(DEPDIR) ./tcp/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
