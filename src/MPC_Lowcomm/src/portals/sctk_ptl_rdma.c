@@ -671,6 +671,7 @@ void sctk_ptl_rdma_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 				sctk_free(ptr); /* just for the temp MD buffer */
 				break;
 			}
+			/* FALLTHROUGH */
 			/* else, complete_and_free_message */
 		case PTL_EVENT_REPLY:  /* READ || CAS || FETCH_AND_OP */
 			mpc_lowcomm_ptp_message_complete_and_free(msg);

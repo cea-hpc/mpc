@@ -116,9 +116,9 @@ static inline int __sctk_ptl_am_id_undefined(sctk_ptl_id_t r)
  * @brief Decode the return code provided by Portals code, to display them as string
  * 
  * @param rc the rc to decode
- * @return const char const* the actual string
+ * @return const char * the actual string
  */
-static inline const char const * sctk_ptl_am_rc_decode(int rc)
+static inline const char * sctk_ptl_am_rc_decode(int rc)
 {
 	switch(rc)
 	{
@@ -156,9 +156,9 @@ static inline const char const * sctk_ptl_am_rc_decode(int rc)
  * @brief decode an event to display its type as a string.
  * 
  * @param ev the event to stringify
- * @return const char const* the actual string.
+ * @return const char  * the actual string.
  */
-static inline const char const * sctk_ptl_am_event_decode(sctk_ptl_event_t ev)
+static inline const char * sctk_ptl_am_event_decode(sctk_ptl_event_t ev)
 {
 	switch(ev.type)
 	{
@@ -322,7 +322,7 @@ static inline int sctk_ptl_am_eq_poll_me(sctk_ptl_am_rail_info_t* srail, sctk_pt
  * \param[in] m the match_bits to format
  * \return buf (first parameter)
  */
-static inline const char const* __sctk_ptl_am_match_str(char*buf, size_t s, ptl_match_bits_t m)
+static inline const char * __sctk_ptl_am_match_str(char*buf, size_t s, ptl_match_bits_t m)
 {
 	sctk_ptl_am_matchbits_t m2;
 	m2.raw = m;
@@ -336,7 +336,7 @@ static inline const char const* __sctk_ptl_am_match_str(char*buf, size_t s, ptl_
 	return buf;
 }
 
-static inline const char const* __sctk_ptl_am_ign_str(char*buf, size_t s, ptl_match_bits_t m)
+static inline const char * __sctk_ptl_am_ign_str(char*buf, size_t s, ptl_match_bits_t m)
 {
 	sctk_ptl_am_matchbits_t m2;
 	m2.raw = m;

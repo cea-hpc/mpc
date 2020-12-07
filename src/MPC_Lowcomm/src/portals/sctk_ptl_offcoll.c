@@ -220,7 +220,7 @@ static inline void __sctk_ptl_offcoll_build_tree(sctk_ptl_rail_info_t* srail, sc
         size_t i, nb_children;
         assert(srail);
         sctk_rail_info_t* rail = sctk_ptl_promote_to_rail(srail);
-	sctk_ptl_offcoll_tree_node_t* node = pte->node + collective;
+		sctk_ptl_offcoll_tree_node_t* node = pte->node + collective;
         assert(rail);
 
 	/* if no tree has been built yet OR if the currently saved tree is not the one we want => built it */
@@ -239,6 +239,10 @@ static inline void __sctk_ptl_offcoll_build_tree(sctk_ptl_rail_info_t* srail, sc
                         node->leaf = (l_child >= size);
 			node->root = root;
 
+
+			mpc_lowcomm_communicator_t comm = mpc_lowcomm_get_communicator_from_id(pte->idx - SCTK_PTL_PTE_HIDDEN);
+			assume(comm != MPC_COMM_NULL);
+
 			/* as ranks are "rotated" the rank 0 is now the tree root (whatever its 
 			 * initial MPI rank was).
 			 * If not the root, compute the parent rank.
@@ -246,7 +250,7 @@ static inline void __sctk_ptl_offcoll_build_tree(sctk_ptl_rail_info_t* srail, sc
                         if(local_rank != 0)
                         {
 	                        parent_rank = (int)((local_rank + (COLL_ARITY - 1)) / COLL_ARITY) - 1;
-                                parent_rank = mpc_lowcomm_communicator_world_rank_of(pte->idx - SCTK_PTL_PTE_HIDDEN, parent_rank);
+                                parent_rank = mpc_lowcomm_communicator_world_rank_of(comm, parent_rank);
                                 node->parent = sctk_ptl_map_id(
 					rail,
 					__sctk_ptl_offcoll_rotate_ranks(parent_rank, root)
@@ -263,7 +267,7 @@ static inline void __sctk_ptl_offcoll_build_tree(sctk_ptl_rail_info_t* srail, sc
                                 node->children = sctk_malloc(sizeof(int) * nb_children);
                                 for (i = 0; i < nb_children; ++i) 
                                 {
-                                        child_rank = mpc_lowcomm_communicator_world_rank_of(pte->idx - SCTK_PTL_PTE_HIDDEN, l_child + i);
+                                        child_rank = mpc_lowcomm_communicator_world_rank_of(comm, l_child + i);
                                         node->children[i] = sctk_ptl_map_id(
 						rail, 
 						__sctk_ptl_offcoll_rotate_ranks(child_rank, root)
@@ -643,6 +647,7 @@ void sctk_ptl_offcoll_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			assert(ev.mlength <= user_ptr->slot.me.length);
 			if(user_ptr->prot == SCTK_PTL_PROT_EAGER && ev.mlength > 0)
 				memcpy(user_ptr->slot.me.start, ev.start, ev.mlength);
+			/* FALLTHROUGH */
 		case PTL_EVENT_PUT:                  /* a Put() reached the local process */
 			if(user_ptr->prot == SCTK_PTL_PROT_EAGER &&
 				((sctk_ptl_matchbits_t)ev.match_bits).offload.type == MPC_LOWCOMM_BROADCAST_OFFLOAD_MESSAGE)

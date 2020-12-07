@@ -471,7 +471,7 @@ sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int
 	assert( srail );
 	assert( srv >= 0 && rpc >= 0 );
 	assert( msg );
-	assert( sz_in >= 0 );
+
 
 	sctk_ptl_am_pte_t *pte = srail->pte_table[srv];
 	sctk_ptl_am_msg_t *msg_resp = NULL;
@@ -529,7 +529,7 @@ sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int
 		} while ( !found_space );
 
 		assert( rep_me );
-		assert( req_imm.data.offset >= 0 );
+
 		assert( req_imm.data.offset <= SCTK_PTL_AM_CHUNK_SZ - SCTK_PTL_AM_REP_CELL_SZ );
 
 		/* save the tag of the found ME-REP */
