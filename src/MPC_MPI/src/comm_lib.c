@@ -27,6 +27,9 @@
 
 #include <mpc_config.h>
 
+#include <mpi_conf.h>
+
+
 #include <mpc_launch.h>
 #include <mpc_launch_pmi.h>
 #include <mpc_lowcomm_msg.h>
@@ -66,7 +69,6 @@ sctk_Op_f sctk_get_common_function(mpc_lowcomm_datatype_t datatype, sctk_Op op);
 /************************************************************************/
 
 static mpc_thread_keys_t sctk_func_key;
-static int __mpc_cl_buffering_enabled = 1;
 
 const _mpc_cl_group_t mpc_group_empty = { 0, NULL };
 const _mpc_cl_group_t mpc_group_null = { -1, NULL };
@@ -824,20 +826,6 @@ static inline int __MPC_ERROR_REPORT__(mpc_lowcomm_communicator_t comm, int erro
 #define MPC_ERROR_SUCESS()    return SCTK_SUCCESS;
 
 
-/*******************
-* VARIOUS GETTERS *
-*******************/
-
-
-static void __mpc_cl_disable_buffering()
-{
-	if(mpc_common_get_task_rank() == 0)
-	{
-		mpc_common_debug_warning("Message Buffering has been disabled in configuration");
-	}
-
-	__mpc_cl_buffering_enabled = 0;
-}
 
 /***************************************
 * GENERALIZED REQUEST PROGRESS ENGINE *
@@ -2537,7 +2525,7 @@ int _mpc_cl_isend(const void *buf, mpc_lowcomm_msg_count_t count,
 	/* Here we see if we can get a slot to buffer small message content
 	 * otherwise we simply get a regular message header */
 
-	if( (msg_size > MAX_MPC_BUFFERED_SIZE) || !__mpc_cl_buffering_enabled)
+	if( (msg_size > MAX_MPC_BUFFERED_SIZE) || !_mpc_mpi_config()->message_buffering)
 	{
 FALLBACK_TO_UNBUFERED_ISEND:
 		msg = mpc_lowcomm_ptp_message_header_create(MPC_LOWCOMM_MESSAGE_CONTIGUOUS);
@@ -2666,7 +2654,7 @@ int _mpc_cl_send(const void *buf, mpc_lowcomm_msg_count_t count,
 	mpc_lowcomm_ptp_message_t *msg = NULL;
 	mpc_lowcomm_ptp_message_t  header;
 
-	if( (msg_size >= MAX_MPC_BUFFERED_SIZE) || !__mpc_cl_buffering_enabled)
+	if( (msg_size >= MAX_MPC_BUFFERED_SIZE) || !_mpc_mpi_config()->message_buffering)
 	{
 FALLBACK_TO_BLOCKING_SEND:
 		msg = &header;
@@ -4321,14 +4309,6 @@ static void __init_basic_checks()
 	mpc_common_debug_check_type_equal(mpc_lowcomm_msg_count_t, unsigned int);
 }
 
-static void __init_buffering()
-{
-	if(sctk_runtime_config_get()->modules.mpc.disable_message_buffering)
-	{
-		__mpc_cl_disable_buffering();
-	}
-}
-
 static void __release_barrier()
 {
 	mpc_lowcomm_barrier( ( mpc_lowcomm_communicator_t )MPC_COMM_WORLD);
@@ -4354,6 +4334,9 @@ void mpc_cl_comm_lib_init() __attribute__( (constructor) );
 void mpc_cl_comm_lib_init()
 {
 	MPC_INIT_CALL_ONLY_ONCE
+
+	/* Register MPC MPi Config */
+	_mpc_mpi_config_init();
 
 	/* Before Starting MPI tasks */
 #ifdef MPC_Threads
@@ -4393,10 +4376,6 @@ void mpc_cl_comm_lib_init()
 	mpc_common_init_callback_register("Starting Main",
 	                                  "MPI Process CTX Init",
 	                                  __mpc_cl_per_mpi_process_ctx_init, 22);
-
-	mpc_common_init_callback_register("Starting Main",
-	                                  "Set Buffering Mode",
-	                                  __init_buffering, 23);
 
 	mpc_common_init_callback_register("Starting Main",
 	                                  "Enter TMP Directory",

@@ -24,6 +24,9 @@
 //#define SCTK_DEBUG_SCHEDULER
 
 #include <mpc_mpi_internal.h>
+
+#include <mpi_conf.h>
+
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
 #include "mpc_nbc_weak.h"
 #endif
@@ -4002,8 +4005,7 @@ void *NBC_Pthread_func( __UNUSED__ void *ptr ) {
 
   mpc_threads_generic_kind_mask_self(KIND_MASK_PROGRESS_THREAD);
 
-  int basic_prio = sctk_runtime_config_get()
-          ->modules.scheduler.sched_NBC_Pthread_basic_priority;
+  int basic_prio = _mpc_mpi_config()->nbc.thread_basic_prio;
 
   mpc_threads_generic_kind_current_priority(basic_prio);
   mpc_threads_generic_kind_basic_priority(basic_prio);
@@ -4437,7 +4439,7 @@ static inline int NBC_Sched_commit_pos(NBC_Schedule *schedule) {
  * to be called *only* from the progress thread !!! */
 static inline int NBC_Free(NBC_Handle* handle) {
   int use_progress_thread = 0;
-  use_progress_thread = sctk_runtime_config_get()->modules.nbc.use_progress_thread;
+  use_progress_thread = _mpc_mpi_config()->nbc.progress_thread;
 
   if (use_progress_thread == 1) {
 
@@ -4830,7 +4832,7 @@ static inline int NBC_Start_round( NBC_Handle *handle )
 }
 
 static inline int NBC_Initialize() {
-  if(sctk_runtime_config_get()->modules.nbc.use_progress_thread == 1)
+  if(_mpc_mpi_config()->nbc.progress_thread == 1)
   { 
   struct mpc_mpi_cl_per_mpi_process_ctx_s * task_specific;
   task_specific = mpc_cl_per_mpi_process_ctx_get ();
@@ -4843,8 +4845,9 @@ static inline int NBC_Initialize() {
 
   int (*sctk_get_progress_thread_binding)(void);
   sctk_get_progress_thread_binding =
-      (int (*)(void))sctk_runtime_config_get()
-          ->modules.nbc.progress_thread_binding.value;
+      (int (*)(void))_mpc_mpi_config()->nbc.thread_bind_function;
+
+  assume(sctk_get_progress_thread_binding != NULL);
 
   int cpu_id_to_bind_progress_thread = sctk_get_progress_thread_binding();
 
@@ -4887,9 +4890,9 @@ static inline int NBC_Init_handle( NBC_Handle *handle, MPI_Comm comm, int tag )
 	int res;
 
 	// fprintf(stderr,"DEBUG######################
-	// %d\n",sctk_runtime_config_get()->modules.nbc.use_progress_thread);
+	// %d\n",_mpc_mpi_config()->nbc.progress_thread);
 
-	if ( sctk_runtime_config_get()->modules.nbc.use_progress_thread == 1 )
+	if ( _mpc_mpi_config()->nbc.progress_thread == 1 )
 	{
   struct mpc_mpi_cl_per_mpi_process_ctx_s * task_specific;
   task_specific = mpc_cl_per_mpi_process_ctx_get ();
@@ -4938,7 +4941,7 @@ static inline int NBC_Start( NBC_Handle *handle, NBC_Schedule *schedule )
 
 	handle->schedule = schedule;
 
-	if ( sctk_runtime_config_get()->modules.nbc.use_progress_thread == 1 )
+	if ( _mpc_mpi_config()->nbc.progress_thread == 1 )
 	{
 		/* add handle to open handles - and give the control to the progress
    * thread - the handle must not be touched by the user thread from now
@@ -5013,7 +5016,7 @@ static inline int NBC_Start( NBC_Handle *handle, NBC_Schedule *schedule )
 
 int NBC_Wait(NBC_Handle *handle, MPI_Status *status) {
 	int use_progress_thread = 0;
-	use_progress_thread = sctk_runtime_config_get()->modules.nbc.use_progress_thread;
+	use_progress_thread = _mpc_mpi_config()->nbc.progress_thread;
 
 
 	if( status != MPI_STATUS_IGNORE )
@@ -5056,7 +5059,7 @@ int NBC_Wait(NBC_Handle *handle, MPI_Status *status) {
 int NBC_Test(NBC_Handle *handle, int *flag, __UNUSED__ MPI_Status *status) {
   int use_progress_thread = 0;
   use_progress_thread =
-      sctk_runtime_config_get()->modules.nbc.use_progress_thread;
+      _mpc_mpi_config()->nbc.progress_thread;
   int ret = NBC_CONTINUE;
 
   if (use_progress_thread == 1) {
@@ -5660,7 +5663,7 @@ int NBC_Operation(void *buf3, void *buf1, void *buf2, MPI_Op op, MPI_Datatype ty
 
 int NBC_Finalize(__UNUSED__ mpc_thread_t * NBC_thread)
 {
-  if(sctk_runtime_config_get()->modules.nbc.use_progress_thread == 1)
+  if(_mpc_mpi_config()->nbc.progress_thread == 1)
   {
   int ret = 0;
 //  ret = mpc_thread_join( *NBC_thread, NULL);
@@ -5691,7 +5694,7 @@ int NBC_Finalize(__UNUSED__ mpc_thread_t * NBC_thread)
 int
 PMPI_Ibarrier (MPI_Comm comm, MPI_Request *request)
 {
-  if( sctk_runtime_config_get()->modules.nbc.use_egreq_barrier )
+  if( _mpc_mpi_config()->nbc.use_egreq_barrier )
   {
       return MPI_Ixbarrier( comm, request );
   }
@@ -5723,7 +5726,7 @@ int
 PMPI_Ibcast (void *buffer, int count, MPI_Datatype datatype, int root,
 	    MPI_Comm comm, MPI_Request *request)
 {
-  if( sctk_runtime_config_get()->modules.nbc.use_egreq_bcast )
+  if( _mpc_mpi_config()->nbc.use_egreq_bcast )
   {
     return MPI_Ixbcast( buffer, count, datatype, root, comm, request );
   }
@@ -5757,7 +5760,7 @@ PMPI_Igather (const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	     int root, MPI_Comm comm, MPI_Request * request)
 {
 
-  if( sctk_runtime_config_get()->modules.nbc.use_egreq_gather )
+  if( _mpc_mpi_config()->nbc.use_egreq_gather )
   {
     return MPI_Ixgather(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype, root, comm, request);
   }
@@ -5835,7 +5838,7 @@ PMPI_Iscatter (const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	      MPI_Comm comm, MPI_Request * request)
 {
 
-  if( sctk_runtime_config_get()->modules.nbc.use_egreq_scatter )
+  if( _mpc_mpi_config()->nbc.use_egreq_scatter )
   {
     return MPI_Ixscatter(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype, root, comm, request);
   }
@@ -6081,7 +6084,7 @@ PMPI_Ireduce (const void *sendbuf, void *recvbuf, int count, MPI_Datatype dataty
 	     MPI_Op op, int root, MPI_Comm comm, MPI_Request *request)
 {
 
-  if( sctk_runtime_config_get()->modules.nbc.use_egreq_reduce )
+  if( _mpc_mpi_config()->nbc.use_egreq_reduce )
   {
     return MPI_Ixreduce( sendbuf, recvbuf, count, datatype, op, root, comm, request);
   }
