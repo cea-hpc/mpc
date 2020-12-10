@@ -718,8 +718,12 @@ void _mpc_comm_ptp_message_commit_request(mpc_lowcomm_ptp_message_t *send,
 		/* Make sure to do the communicator translation here
 		 * as messages are sent with their comm_world rank this is required
 		 * when matching ANY_SOURCE messages in order to fill accordingly
-		 * the MPI_Status object from the request data */
-		recv->tail.request->header.source_task = mpc_lowcomm_communicator_rank_of_as(SCTK_MSG_COMMUNICATOR(send), SCTK_MSG_SRC_TASK(send),  SCTK_MSG_DEST_TASK(send) );
+		 * the MPI_Status object from the request data 
+		 * therefore we translate the rank as seen from the source (for intercomm)
+		 * for intracomm as there is a single group it is not important */
+		recv->tail.request->header.source_task = mpc_lowcomm_communicator_rank_of_as(SCTK_MSG_COMMUNICATOR(send), SCTK_MSG_SRC_TASK(send),  SCTK_MSG_SRC_TASK(send) );
+		assume(recv->tail.request->header.source_task  != MPC_PROC_NULL);
+
 		recv->tail.request->header.source      = SCTK_MSG_SRC_PROCESS(send);
 		recv->tail.request->header.message_tag = SCTK_MSG_TAG(send);
 		recv->tail.request->header.msg_size    = SCTK_MSG_SIZE(send);

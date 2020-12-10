@@ -45,13 +45,21 @@ void mpc_lowcomm_communicator_print(mpc_lowcomm_communicator_t comm, int root_on
 		return;
 	}
 
-	int is_lead = (mpc_lowcomm_communicator_rank(comm) == 0);
-
+	int is_lead = 1;
 	int is_intercomm = mpc_lowcomm_communicator_is_intercomm(comm);
-
-	if(is_intercomm)
+	
+	/* In the low level layers of MPC the rank might not be availaible
+	   in this case we print for all */
+	if(0 <= mpc_lowcomm_get_rank())
 	{
-		is_lead &= mpc_lowcomm_communicator_in_master_group(comm);
+
+		is_lead = (mpc_lowcomm_communicator_rank(comm) == 0);
+
+		if(is_intercomm)
+		{
+			is_lead &= mpc_lowcomm_communicator_in_master_group(comm);
+		}
+
 	}
 
 	if(!is_lead && root_only)
@@ -62,7 +70,8 @@ void mpc_lowcomm_communicator_print(mpc_lowcomm_communicator_t comm, int root_on
 	mpc_common_debug_error("========COMM %u @ %p=======", comm->id, comm);
 	
 	mpc_common_debug_error("TYPE: %s", (comm->group || comm->is_comm_self)?"intracomm":"intercomm");
-	
+	mpc_common_debug_error("IS SELF: %s", (comm->is_comm_self)?"yes":"no");
+
 	if(is_intercomm)
 	{
 		mpc_common_debug_error("LEFT");
@@ -1459,7 +1468,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_local(mpc_lowcomm_commun
 	return mpc_lowcomm_communicator_get_local_as(comm, mpc_lowcomm_get_rank());
 }
 
-mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote(mpc_lowcomm_communicator_t comm)
+mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote_as(mpc_lowcomm_communicator_t comm, int lookup_cw_rank)
 {
 	/* Only meaningfull for intercomms */
 	if(!mpc_lowcomm_communicator_is_intercomm(comm) )
@@ -1467,7 +1476,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote(mpc_lowcomm_commu
 		return MPC_COMM_NULL;
 	}
 
-	mpc_lowcomm_communicator_t local = mpc_lowcomm_communicator_get_local(comm);
+	mpc_lowcomm_communicator_t local = mpc_lowcomm_communicator_get_local_as(comm, lookup_cw_rank);
 
 	/* The remote is the non-local one */
 	if(local == comm->left_comm)
@@ -1482,6 +1491,13 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote(mpc_lowcomm_commu
 	not_reachable();
 	return comm;
 }
+
+mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote(mpc_lowcomm_communicator_t comm)
+{
+	return mpc_lowcomm_communicator_get_remote_as(comm, mpc_lowcomm_get_rank());
+}
+
+
 
 int mpc_lowcomm_communicator_remote_size(const mpc_lowcomm_communicator_t comm)
 {

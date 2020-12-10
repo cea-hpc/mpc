@@ -340,7 +340,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_local(mpc_lowcomm_commun
  * @brief Get the local communicator (on intracomm returns intracomm) for a given rank
  * 
  * @param comm the communicator to querry
- * @param lookup_cw_rank the rank to check for membership in the comm
+ * @param lookup_cw_rank the rank to check for membership in the comm (in comm_world)
  * @return mpc_lowcomm_communicator_t the local comm for lookup_cw_rank
  */
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_local_as(mpc_lowcomm_communicator_t comm,
@@ -353,6 +353,15 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_local_as(mpc_lowcomm_com
  * @return mpc_lowcomm_communicator_t the remote comm for current rank
  */
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote(mpc_lowcomm_communicator_t comm);
+
+/**
+ * @brief Get the remote communicator (on intracomm returns intracomm) from a given cw rank
+ * 
+ * @param comm the communicator to querry
+ * @param lookup_cw_rank the rank to check for membership in the comm (in comm_world)
+ * @return mpc_lowcomm_communicator_t the remote comm for current rank
+ */
+mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote_as(mpc_lowcomm_communicator_t comm, int lookup_cw_rank);
 
 /**
  * @brief Get the size for the remote comm
