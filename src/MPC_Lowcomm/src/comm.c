@@ -2985,6 +2985,12 @@ int mpc_lowcomm_test(mpc_lowcomm_request_t * request, int * completed, mpc_lowco
 {
 	*completed = 0;
 
+	/* Always make sure to start on clean grounds */
+	if(status)
+	{
+		status->MPC_ERROR=SCTK_SUCCESS;
+	}
+
 	struct mpc_lowcomm_ptp_msg_progress_s wait;
 
 	if(__request_is_null_or_cancelled(request))
