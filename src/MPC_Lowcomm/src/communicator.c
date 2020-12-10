@@ -617,7 +617,6 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_from_group(mpc_lowcomm_communicator_t comm,
                                                                mpc_lowcomm_group_t *group)
 {
-	assume(!mpc_lowcomm_communicator_is_intercomm(comm));
 	/* This is necessarily an intracomm */
 	return __new_communicator(comm, group, NULL, NULL, comm->is_comm_self, 1, MPC_LOWCOMM_COMM_NULL_ID);
 }
