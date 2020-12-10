@@ -2991,6 +2991,14 @@ int mpc_lowcomm_test(mpc_lowcomm_request_t * request, int * completed, mpc_lowco
 		status->MPC_ERROR=SCTK_SUCCESS;
 	}
 
+	TODO("UNDERSTAND why this happens");
+	if(!request->comm)
+	{
+		/* We stop here as if we go waiting we crash */
+		*completed = (request->completion_flag == MPC_LOWCOMM_MESSAGE_DONE);
+		return SCTK_SUCCESS;
+	}
+
 	struct mpc_lowcomm_ptp_msg_progress_s wait;
 
 	if(__request_is_null_or_cancelled(request))
