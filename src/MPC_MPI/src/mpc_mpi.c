@@ -10633,12 +10633,14 @@ int PMPI_Request_free(MPI_Request *request)
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
-int PMPI_Waitany(int count, MPI_Request array_of_requests[], int *index,
+int PMPI_Waitany(int count,
+				 MPI_Request array_of_requests[],
+				 int *index,
                  MPI_Status *status)
 {
 	mpc_common_nodebug("entering PMPI_Waitany");
 	MPI_Comm comm = MPI_COMM_WORLD;
-	int res       = MPI_ERR_INTERN;
+	int res       = MPI_SUCCESS;
 
 	int flag = 0;
 
@@ -10663,11 +10665,14 @@ int PMPI_Waitany(int count, MPI_Request array_of_requests[], int *index,
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
-int PMPI_Testany(int count, MPI_Request array_of_requests[], int *index,
-                 int *flag, MPI_Status *status)
+int PMPI_Testany(int count,
+				 MPI_Request array_of_requests[],
+				 int *index,
+                 int *flag,
+				 MPI_Status *status)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
-	int res       = MPI_ERR_INTERN;
+	int res       = MPI_SUCCESS;
 
 	int i;
 
@@ -10736,12 +10741,9 @@ int PMPI_Testany(int count, MPI_Request array_of_requests[], int *index,
 		{
 			__sctk_delete_mpc_request(&(array_of_requests[i]), requests);
 			*index = i;
+			break;
 		}
 	}
-
-	return MPI_SUCCESS;
-
-
 
 	if(status != MPI_STATUS_IGNORE)
 	{
