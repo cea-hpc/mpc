@@ -2658,7 +2658,7 @@ int __INTERNAL__PMPI_Barrier_intra(MPI_Comm comm)
 
 	if(ptl_offcoll_enabled() )
 	{
-		res = ptl_offcoll_barrier(comm, rank, size);
+		res = ptl_offcoll_barrier(mpc_lowcomm_communicator_id(comm), rank, size);
 		return res;
 	}
 #endif
@@ -3133,7 +3133,7 @@ int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
 		_mpc_cl_type_size(datatype, &tmp_size);
 		size_t length = ( (size_t)count) * ( (size_t)tmp_size);
 
-		res = ptl_offcoll_bcast(comm, rank, size, buffer, length, root);
+		res = ptl_offcoll_bcast(mpc_lowcomm_communicator_id(comm), rank, size, buffer, length, root);
 		return res;
 	}
 #endif
