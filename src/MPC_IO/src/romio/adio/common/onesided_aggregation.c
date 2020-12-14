@@ -1024,12 +1024,14 @@ void ADIOI_OneSidedWriteAggregation(ADIO_File fd,
                 // pre-read the entire batch of stripes we will do before writing
                 int stripeIter = 0;
                 for (stripeIter = 0; stripeIter < numStripesUsed; stripeIter++)
+                {
                     ADIO_ReadContig(fd,
                                     (char *) write_buf +
                                     ((ADIO_Offset) stripeIter *
                                      (ADIO_Offset) stripe_parms.stripeSize),
                                     stripeWriteLens[stripeIter], MPI_BYTE, ADIO_EXPLICIT_OFFSET,
                                     stripeWriteOffsets[stripeIter], &status, error_code);
+                }
             }
         }
     }   // if iAmUsedAgg

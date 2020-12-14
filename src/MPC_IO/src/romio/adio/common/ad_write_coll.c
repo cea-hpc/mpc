@@ -145,9 +145,13 @@ void ADIOI_GEN_WriteStridedColl(ADIO_File fd, const void *buf, int count,
                 ADIO_WriteContig(fd, buf, count, datatype,
                                  ADIO_EXPLICIT_OFFSET, off, status, error_code);
             } else
+            {
                 ADIO_WriteContig(fd, buf, count, datatype, ADIO_INDIVIDUAL, 0, status, error_code);
+            }
         } else
+        {
             ADIO_WriteStrided(fd, buf, count, datatype, file_ptr_type, offset, status, error_code);
+        }
 
         return;
     }

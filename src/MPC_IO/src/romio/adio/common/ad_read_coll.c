@@ -172,9 +172,13 @@ void ADIOI_GEN_ReadStridedColl(ADIO_File fd, void *buf, int count,
                 ADIO_ReadContig(fd, buf, count, datatype, ADIO_EXPLICIT_OFFSET,
                                 off, status, error_code);
             } else
+            {
                 ADIO_ReadContig(fd, buf, count, datatype, ADIO_INDIVIDUAL, 0, status, error_code);
+            }
         } else
+        {
             ADIO_ReadStrided(fd, buf, count, datatype, file_ptr_type, offset, status, error_code);
+        }
 
         return;
     }
