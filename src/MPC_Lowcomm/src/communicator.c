@@ -154,6 +154,7 @@ static inline mpc_lowcomm_internal_communicator_t *__init_communicator_with_id(u
 	ret->id           = comm_id;
 	ret->group        = group;
 	ret->is_comm_self = 0;
+	ret->process_span = 1;
 	ret->shm_coll     = NULL;
 
 	/* Intercomm ctx */
