@@ -23,6 +23,8 @@
 #include "mpioprof.h"
 #endif
 
+#undef MPIO_Testall
+
 /*
   This is a temporary function until we switch to using MPI-2's generalized
   requests.

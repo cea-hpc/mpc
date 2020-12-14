@@ -23,6 +23,8 @@
 #include "mpioprof.h"
 #endif
 
+#undef MPIO_Wait
+
 /* status object not filled currently */
 
 /*@
