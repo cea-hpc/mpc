@@ -762,7 +762,6 @@ int mpc_Win_target_ctx_start_exposure_no_lock(MPI_Win win, mpc_Win_arity arity,
     for (i = 0; i < ctx->remote_count; i++) {
       for (j = 0; j < remote_count; j++) {
         if (ctx->remote_ranks[i] == remotes[j]) {
-          mpc_common_debug_error("LOL");
           mpc_MPI_win_locks_push_delayed(&ctx->locks, remotes[j],
                                          MPI_LOCK_SHARED);
           remotes[j] = -1;

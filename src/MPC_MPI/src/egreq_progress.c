@@ -378,7 +378,6 @@ int _mpc_egreq_progress_pool_poll( struct _mpc_egreq_progress_pool *p, int my_id
 	//    return ret;
 	/* Try to steal progress neighbor */
 	targ = rand() % p->booked;
-	//mpc_common_debug_error("LOL");
 
 	ret = _mpc_egreq_progress_list_poll( &p->lists[targ] );
 
