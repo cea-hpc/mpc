@@ -45,7 +45,19 @@ void ADIO_Close(ADIO_File fd, int *error_code)
 
     }
 
-    if (fd->access_mode & ADIO_DELETE_ON_CLOSE) {
+
+    int is_lead_rank = 1;
+
+    if(fd && fd->comm != MPC_COMM_NULL)
+    {
+        if(!mpc_lowcomm_communicator_local_lead(fd->comm))
+        {
+            is_lead_rank = 0;
+        }
+    }
+
+
+    if ((fd->access_mode & ADIO_DELETE_ON_CLOSE) && is_lead_rank) {
         /* if we are doing aggregation and deferred open, then it's possible
          * that rank 0 does not have access to the file. make sure only an
          * aggregator deletes the file.*/

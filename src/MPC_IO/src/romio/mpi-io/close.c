@@ -38,6 +38,8 @@ int MPI_File_close(MPI_File * fh)
     int error_code;
     ADIO_File adio_fh;
     static char myname[] = "MPI_FILE_CLOSE";
+
+
 #ifdef MPI_hpux
     int fl_xmpi;
 
