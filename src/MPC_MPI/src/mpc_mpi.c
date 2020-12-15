@@ -12365,6 +12365,7 @@ int PMPI_Type_struct(int count,
 		new_lb = 0;
 	}
 
+	int all_common_types = 1;
 
 	// find malloc size
 	for(i = 0; i < count; i++)
@@ -12381,6 +12382,7 @@ int PMPI_Type_struct(int count,
 				_mpc_cl_derived_datatype_try_get_info(old_types[i], &derived_ret, &input_datatype);
 				count_in = input_datatype.count;
 				mpc_common_nodebug("[%d]Derived length %d", old_types[i], count_in);
+				all_common_types = 0;
 			}
 			else
 			{
@@ -12390,9 +12392,63 @@ int PMPI_Type_struct(int count,
 
 			my_count_out += count_in * blocklens[i];
 		}
+		else
+		{
+			all_common_types = 0;
+		}
 	}
 
+TODO("VALIDATE");
+#if 0
+	if(all_common_types)
+	{
+		/* All type are common we need to check if we are candidate to become
+		   a contiguous data-types (when the user creates a contig struct ...) */
+		size_t total_size = 0;
+		size_t tsize = 0;
+		int did_merge = 1;
+		for(i = 0; i < count - 1; i++)
+		{
+			_mpc_cl_type_size(old_types[i], &tsize );
+			total_size += blocklens[i]*tsize;
+			//mpc_common_debug_error("LEN[%d] = %d INDICES[%d] = %ld TYPE[%d] = %d SZ[%d] = %d", i, blocklens[i], i, indices[i], i, old_types[i], i , tsize);
+			if( (indices[i] + blocklens[i]*tsize) != indices[i+1])
+			{
+				did_merge =0;
+				break;
+			}
+		}
 
+		if(did_merge)
+		{
+			_mpc_cl_type_size(old_types[count - 1], &tsize );
+			//mpc_common_debug_error("LEN[%d] = %d INDICES[%d] = %ld TYPE[%d] = %d SZ[%d] = %d", count - 1, blocklens[count - 1], count - 1, indices[count - 1], count - 1, old_types[count - 1], count - 1 , tsize);
+			total_size += blocklens[count - 1]*tsize;
+
+			//mpc_common_debug_error("DID MERGE the type size %ld", total_size);
+			MPI_Datatype tmp_type;
+			int ret = PMPI_Type_contiguous(total_size, MPI_CHAR, &tmp_type);
+
+			if(ret != MPI_SUCCESS)
+			{
+				return ret;
+			}
+
+			if(indices[0] != 0)
+			{
+			 	ret =  PMPI_Type_create_resized(tmp_type, indices[0], total_size, newtype);
+				PMPI_Type_free(&tmp_type);
+				return ret;
+			}
+			else
+			{
+				*newtype = tmp_type;
+				return MPI_SUCCESS;
+			}
+		}
+
+	}
+#endif
 
 	mpc_common_nodebug("my_count_out = %d", my_count_out);
 	long *begins_out = sctk_malloc(my_count_out * sizeof(long) );
