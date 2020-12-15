@@ -13463,6 +13463,15 @@ int PMPI_Unpack(const void *inbuf,
 		_mpc_dt_derived_t output_datatype;
 
 		_mpc_cl_derived_datatype_try_get_info(datatype, &derived_ret, &output_datatype);
+
+
+		size_t lb = 0;
+
+		if(output_datatype.is_lb)
+		{
+			lb = output_datatype.lb;
+		}
+
 		for(j = 0; j < outcount; j++)
 		{
 			for(i = 0; i < output_datatype.opt_count; i++)
@@ -13473,7 +13482,7 @@ int PMPI_Unpack(const void *inbuf,
 				mpc_common_nodebug("Unpack %lu %lu, ==> %lu->%lu", *position, size, output_datatype.opt_begins[i] + extent * j, output_datatype.ends[i] + extent * j);
 				if(size != 0)
 				{
-					memcpy(&( ( (char *)outbuf)[output_datatype.opt_begins[i]]), &( ( (char *)inbuf)[*position]), size);
+					memcpy(&( ( (char *)outbuf + lb)[output_datatype.opt_begins[i]]), &( ( (char *)inbuf)[*position]), size);
 				}
 				mpc_common_nodebug("Unpack %lu %lu, ==> %lu->%lu done", *position, size, output_datatype.opt_begins[i] + extent * j, output_datatype.opt_ends[i] + extent * j);
 				*position = *position + size;
