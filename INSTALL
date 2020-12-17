@@ -11,6 +11,7 @@ In order to be able to install MPC you will need the following dependencies:
 - `which`
 - `make`
 - a base compiler (`gcc`, `icc`...)
+- `hwloc 1.11.11`
 - `python` (can be optional)`
 - `libncurses-devel` (to have full GDB support)
 - `libibverbs` (for Infiniband support)
@@ -92,6 +93,7 @@ case loading and installing dependencies is to be done manually.
 MPC can build with the following REQUIRED dependencies:
 
 - OpenPA (spack install openpa or https://github.com/pmodels/openpa/)
+- HWLOC 1.11.x (spack install hwloc or http://www.open-mpi.org/software/hwloc/v1.11/downloads/hwloc-1.11.11.tar.gz)
 - A launcher:
    * Hydra (spack install hydra or http://www.mpich.org/static/downloads/3.2/hydra-3.2.tar.gz)
    * PMI (requires libpmi.so --with-slurm / --with-pmi1)
