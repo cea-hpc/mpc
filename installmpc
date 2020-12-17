@@ -1089,7 +1089,7 @@ Defaults for the options are specified in brackets.
   --disable-spack-arch                    : do not pass architecture specifiers to spack descriptors
 
 # Features
-  --process-mode                      : Build MPC in process-mode (1 MPI process = 1 UNIX process)
+  --process-mode                          : Build MPC in process-mode (1 MPI process = 1 UNIX process)
   --{enable,disable}-mpc-ft               : Activate/Deactivate checkpoint/restart support
   --{enable,disable}-color                : Disable colors in display
   --enable-debug                          : Enable maximum debug (symbols, messages)
@@ -1230,7 +1230,7 @@ do
 		--autopriv=*)
 			extractAndAddPackageOption 'AUTOPRIV_BUILD_PARAMETERS' 'autopriv=' "$arg"
 			;;
-		--disable-mpc-gcc|--disable-autopriv|--disable-mpc-autopriv)
+		--disable-mpc-gcc|--disable-autopriv|--disable-mpc-autopriv|--process-mode)
 			AUTOPRIV_PREFIX='disabled'
 			add_process_mode_flag_to_mpc
 			;;
