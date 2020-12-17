@@ -2,26 +2,50 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog][Keep a Changelog].
 
-## [Unreleased]
 
-This release was subject to a deep refactoring, after many years of intense development. While trying to keep this changelog as exhaustive as possible, some changes might be missing.
+## [4.0.0] - 2020-12-16
+
+**This is a BETA release**
+
+For this release MPC has undergone a massive refactoring. It is in some aspects not compatible with previous versions of MPC. It should bring several enhancements in terms of installation process and modularity. One should not expect binary compatibility with a previous version of MPC. Due to the massive changes, this changelog cannot be fully exhaustive.
 
 ### Added
 
+- **PMIX**: PMIX is now supported through `--with-pmix`
+- **PRIV**: Support for new GCCs (using now external autopriv) up to 10.2.0 (using `--gcc-version=X.X.X`)
+- **MODULAR**: MPC is now modular and comes in several components (`lowcomm`, `threads`, `mpi`, `mpiio`, `fortran`, `openmp`). Such components can be enabled and disabled using `--enable/disable-XX`
+- **STATUS**: the `mpc_status` command can be used to print current MPC configuration
+- **BUILD**: once installed with `./installmpc` MPC can be reconfigured with `./reconfigure` in the build directory. MPC is now longer in an `mpcframework` subdirectory
+
 ### Changed
 
-- **BUILD**: Installation process compatible w/ Spack to manage package dependencies
+- **BUILD**: Installation process compatible with Spack to manage package dependencies
+- **BUILD**: MPC now relies on autottols as its build system
+- **BUILD**: It is possible to directly call `./configure` to use MPC in a modular way
+- **DEPS**: dependencies can be downloaded on demand, a `light` version is a version not providing the dependencies. `./installmpc --download-missing-deps` can be used to retrieve the dependencies for a given configuration. Conversely a `full` version includes all dependencies for the default configuration
+- **COMM**: communicator management was fully rewritten. The MPI_Comm is now a pointer (instead of an integer)
+- **MPCRUN**: mpcrun has been fully rewritten
+- **MPIIO**: MPI-IO support (ROMIO) is now integrated in MPC
+- **FORTRAN**: the Fortran interface is now external and optionnal (MPC_Fortran)
 
 ### Deprecated
 
-- **RUN**: Many `mpcrun` options will provide a warning
+- **mpcrun**: several options from `mpcrun` were deprectated they should now be no-op
+- **installmpc**: several options from `./installmpc` were deprecated they should now be no-op
 
 ### Removed
 
-- **PRIV**: Compiler manager
-- **PRIV**: installation cleaner (?)
+- **mpc_compiler_manager**: the `mpc_compiler_manager` command is no longer provided. MPC is now compiled against a **single** compiler
+- **mpc_icc** and compiler specific wrappers: MPC now provides only `mpc_{cc,cxx,f77}` and `mpi{cc,cxx,f77}` wrappers
+- **PRIV**: all privatization has been externalized in **autopriv**, including, compilers, plugins, TLS library and privatized getopt
 
 ### Fixed
+
+- **COMM**: Default communicator attributes were fixed (APP_NUM, MPI_IO, MPI_HOST)
+- **COLL**: fixed several collectives
+- **COMM**: Major fixes in communicator management (free, creation and reuse)
+- **MISC**: less contention on large SMP (various optimizations)
+- **MISC**: various fixes in the lowcomm and MPI layers
 
 ## [3.4.0] - 2020-04-27
 
@@ -333,3 +357,4 @@ This release was subject to a deep refactoring, after many years of intense deve
 [3.3.0]: https://france.paratools.com/mpc/releases/MPC_3.3.0.tar.gz
 [3.3.1]: https://france.paratools.com/mpc/releases/MPC_3.3.1.tar.gz
 [3.4.0]: https://france.paratools.com/mpc/releases/mpcframework-3.4.0.tar.gz
+[4.0.0]: https://france.paratools.com/mpc/releases/mpcframework-4.0.0.tar.gz
