@@ -2486,6 +2486,9 @@ fi
 AC_ARG_ENABLE([shell-colors], [AS_HELP_STRING([--enable-shell-colors], [Activate Color Output in MPC])],
 [mpc_shell_color=$enableval], [mpc_shell_color="no"])
 
+AC_ARG_ENABLE([color], [AS_HELP_STRING([--enable-color], [Activate Color Output in MPC (same as --enable-shell-colors)])],
+[mpc_shell_color=$enableval], [])
+
 if test "x${mpc_shell_color}" = "xyes"; then
         AC_DEFINE([MPC_ENABLE_SHELL_COLORS], [1], [MPC Colored output])
 fi

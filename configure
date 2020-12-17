@@ -1051,6 +1051,7 @@ with_autopriv
 with_autopriv_include
 with_autopriv_libs
 enable_shell_colors
+enable_color
 enable_cma
 enable_optim
 enable_opt_native
@@ -1752,6 +1753,8 @@ Optional Features:
   --enable-mpiio          Compile MPI IO support in MPC (romio)
   --enable-process-mode   Compile MPC in process mode
   --enable-shell-colors   Activate Color Output in MPC
+  --enable-color          Activate Color Output in MPC (same as
+                          --enable-shell-colors)
   --enable-cma            Activate Cross Memory Attach for SHM communications
   --enable-optim          Enable standard optimizations to build MPC
   --enable-opt-native     Build MPC for current architecture
@@ -30992,6 +30995,12 @@ if test "${enable_shell_colors+set}" = set; then :
   enableval=$enable_shell_colors; mpc_shell_color=$enableval
 else
   mpc_shell_color="no"
+fi
+
+
+# Check whether --enable-color was given.
+if test "${enable_color+set}" = set; then :
+  enableval=$enable_color; mpc_shell_color=$enableval
 fi
 
 
