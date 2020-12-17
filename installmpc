@@ -1162,7 +1162,7 @@ MPC_DMTCP_PREFIX="disabled"
 MPC_GDB_PREFIX='disabled'
 TBB_PREFIX="disabled"
 
-# Empty means Autopriv's default
+# Empty means mpc-compiler-additions's default
 GCC_VERSION=""
 
 #
@@ -1584,21 +1584,7 @@ check_glibc_is_compatible()
                GLIBC=$(ldd --version | head -n 1 | rev | cut -d " " -f 1 | rev | sed "s/\.//g")
                # Check for incompatibilities in versions >= 2.27
                if test $GLIBC -gt 227; then
-			   		   if test -z "${AUTOPRIV_GCC_VERSION}"; then
-							info "############################################################"
-							info "Your glibc $GLIBC is too recent for the current GCC version "
-							info "fully supported by MPC (7.3.0) we will target a more recent "
-							info "version 10.2.0 but some parts of OpenMP could be missing    "
-							info "the next release of MPC should address this issue, install  "
-							info "might have to **download** the corresponding sources.       "
-							info "                                                            "
-							info "NOTE: you can change the autopriv GCC version built with :  "
-							info "     --gcc-version=X.X.X                                    "
-							info "                                                            "
-							info "If you want to bypass this check set MPC_NOGLIBC_CHECK=1    "
-							info "############################################################"
-							AUTOPRIV_GCC_VERSION="10.2.0"
-					    elif test "x${AUTOPRIV_GCC_VERSION}" = "x7.3.0"; then
+			   		    if test "x${GCC_VERSION}" = "x7.3.0"; then
                        		die "GLIBC $GLIBC not compatible with GCC 7.3.0 you may choose another version with --gcc-version=10.2.0 for example)"
 						fi
                fi
@@ -1617,13 +1603,13 @@ if test -n "${GCC_VERSION}"; then
 
 	# This will need to be updated for workshare
 	if test "x${GCC_VERSION}" != "x7.3.0"; then
-		info "Building GCC ${AUTOPRIV_GCC_VERSION}: disabling workshare extensions only supported in GCC 7.3.0"
+		info "Building GCC ${GCC_VERSION}: disabling workshare extensions only supported in GCC 7.3.0"
 		DISABLE_WORKSHARE=" -workshare"
 		DISABLE_WORKSHARE_ARG=" --disable-workshare"
 	fi
 
 	GCC_VERSION_SPACK=" ${DISABLE_WORKSHARE} gcc_version=${GCC_VERSION}"
-	GCC_VERSION_ARG="--gcc-version=${AUTOPRIV_GCC_VERSION} ${DISABLE_WORKSHARE_ARG}"
+	GCC_VERSION_ARG="--gcc-version=${GCC_VERSION} ${DISABLE_WORKSHARE_ARG}"
 fi
 
 
