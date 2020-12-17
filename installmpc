@@ -1078,6 +1078,7 @@ You may track issued commands using the "-v" flag.
 # Build & Installation
   --prefix=PREFIX                         : Install architecture-independent files in PREFIX [/usr/local]
   --disable-prefix-check                  : Force install of MPC over an existing install (not recommended)
+  --download-missing-deps                 : Ask MPC to download dependencies for offline install
   --verbose=1|2|3                         : Level of verbosity
   -v|-vv|-vvv                             : Level of verbosity
   -jN                                     : Allow N jobs at once (parallel install)
