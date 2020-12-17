@@ -1875,7 +1875,7 @@ cat << EOF > "${FSRC}"
 
 EOF
 
-    AC_MSG_CHECKING([Fortran symbol format])
+    AC_MSG_CHECKING([fortran symbol format])
 
     create_temp_file ".o"
     TMPO="$TMP"
@@ -1885,8 +1885,6 @@ EOF
     if test "x$?" = "x0"; then
 
         read_symbols "${TMPO}"
-
-        rm -fr "${FSRC}" "${TMPO}"
 
         FORTRAN_NAMING=""
 
@@ -1911,6 +1909,42 @@ EOF
         AC_MSG_ERROR(["Failed to build test fortran program"])
     fi
 
+    rm -fr "${FSRC}" "${TMPO}"
+}
+
+check_fortran_argument_mismatch()
+{
+    HAVE_FORTRAN_ARG_MISMATCH=""
+
+    create_temp_file ".f90"
+
+    FSRC="$TMP"
+
+cat << EOF > "${FSRC}"
+PROGRAM foo
+END PROGRAM
+EOF
+
+    create_temp_file ".o"
+    TMPO="$TMP"
+
+    AC_MSG_CHECKING([presence of fortran -fallow-argument-mismatch])
+
+    $FC -fallow-argument-mismatch -c "${FSRC}" -o "${TMPO}" > /dev/null 2>&1
+
+    if test "x$?" = "x0"; then
+        FORTRAN_ARG_MISMATCH_ARG="-fallow-argument-mismatch"
+        AC_MSG_RESULT([yes])
+
+    else
+        FORTRAN_ARG_MISMATCH_ARG=""
+        AC_MSG_RESULT([no])
+    fi
+
+
+    AC_SUBST([FORTRAN_ARG_MISMATCH_ARG])
+
+    rm -fr "${FSRC}" "${TMPO}"
 }
 
 
@@ -1929,6 +1963,7 @@ if test "x${MPC_FORTRAN_ENABLED}" = "xyes"; then
         AC_DEFINE([MPC_FORTRAN], [1], [MPC_Fortran module was enabled])
 
         check_fortran_naming_convention
+        check_fortran_argument_mismatch
 fi
 
 AM_CONDITIONAL([MPC_FORTRAN_ENABLED], [test "x${MPC_FORTRAN_ENABLED}" = "xyes"])

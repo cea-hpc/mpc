@@ -250,14 +250,14 @@ guess_cpu_count()
 			NCPU="$TMP"
 			return
 		fi
-	fi	
+	fi
 
 	have_cmd "nproc"
 
 	if test "x${HAVE_CMD}" = "xyes"; then
 		show_run_cmd "nproc"
 		TMP=$(nproc 2> /dev/null || true)
-		
+
 		if test "x${?}" = "x0"; then
 			ok
 			NCPU="$TMP"
@@ -265,7 +265,7 @@ guess_cpu_count()
 		fi
 	fi
 
-	# Could not guess stay serial 
+	# Could not guess stay serial
 	nok
 	NCPU="1"
 	info "Failed at guessing number of cores use -jX for parallel build"
@@ -390,31 +390,11 @@ propagate_build_env()
 	export LD_LIBRARY_PATH
 }
 
-#
-# Check for avoiding GLIBC 2.28
-#
-check_glibc_is_compatible_with_priv()
-{
-	have_cmd "ldd"
-
-	if test "x${MPC_NOGLIBC_CHECK}" = "x1"; then
-		return
-	fi
-
-	if test "x${HAVE_CMD}" = "xyes"; then
-		GLIBC=$(ldd --version | head -n 1 | rev | cut -d " " -f 1 | rev | sed "s/\.//g")
-		# Check for incompatibilities in versions >= 2.27
-		if test $GLIBC -gt 227; then
-			echo "If you want to bypass this check set MPC_NOGLIBC_CHECK=1"
-			die "GLIBC $GLIBC is not compatible with privarization yet (consider disabling autopriv)" || true
-		fi
-	fi
-}
-
 # Build spack package name
 # Args:
 # -$1 : package
 # -$2 : version
+# -$3 : variant
 #
 SPECIFY_SPACK_ARCH="yes"
 build_package_name()
@@ -434,10 +414,17 @@ build_package_name()
 
 	fi
 
+	VARIANT=""
+
+	if test -n "$3"; then
+		VARIANT=" $3"
+	fi
+
+
 	if test -n "$2"; then
-		echo "${1}@${2}${SPACK_ARCH}"
+		echo "${1}@${2}${VARIANT}${SPACK_ARCH}"
 	else
-		echo "$1${SPACK_ARCH}"
+		echo "$1${VARIANT}${SPACK_ARCH}"
 	fi
 }
 
@@ -453,6 +440,7 @@ build_package_name()
 # Args:
 #  -$1 package name
 #  -$2 package version
+#  -$3 variant
 #
 # Fils in concretized_package with either $1@$2 or overrid if exists
 #
@@ -460,7 +448,7 @@ OVERRIDEN_SPACK_PKGS=""
 #
 check_if_spack_package_is_overriden()
 {
-	concretized_package="$(build_package_name "$1" "$2")"
+	concretized_package="$(build_package_name "$1" "$2" "$3")"
 
 	if test -z "$OVERRIDEN_SPACK_PKGS"; then
 		return
@@ -503,6 +491,7 @@ check_if_spack_package_is_overriden()
 # Args:
 # -$1 : package
 # -$2 : version
+# -$3 : variant (optionnal)
 #
 DEP_FOUND="no"
 find_dep_with_spack()
@@ -515,26 +504,26 @@ find_dep_with_spack()
 		return
 	fi
 
-	PKG_NAME="$(build_package_name "$1" "$2")"
+	PKG_NAME="$(build_package_name "$1" "$2" "$3")"
 
 	checking "load $PKG_NAME using spack"
 
-	show_run_cmd "spack info  $PKG_NAME"
-	spack info "$PKG_NAME" > /dev/null 2>&1 || notapplicable
+	show_run_cmd "spack info  $1"
+	spack info "$1" > /dev/null 2>&1 || notapplicable
 
 	if test "x${LAST_RESULT}" = "xna"; then
 		return
 	fi
 
 	# Now check if dependency has been forced
-	check_if_spack_package_is_overriden "$1" "$2"
+	check_if_spack_package_is_overriden "$1" "$2" "$3"
 	TO_LOAD_NAME="$concretized_package"
 
 	show_run_cmd "spack load --sh $TO_LOAD_NAME"
 
 	set +e
 
-	LOAD_CMD=$(spack load --sh "$TO_LOAD_NAME" 2> /dev/null)
+	LOAD_CMD=$(spack load --sh $TO_LOAD_NAME 2> /dev/null)
 	check_retcode "$?"
 
 	set -e
@@ -554,10 +543,10 @@ install_dep_with_spack()
 {
 	assert_cmd "spack"
 
-	PKG_NAME="$(build_package_name "$1" "$2")"
+	PKG_NAME="$(build_package_name "$1" "$2" "$3")"
 	checking "install $PKG_NAME using spack"
 
-	check_if_spack_package_is_overriden "$1" "$2"
+	check_if_spack_package_is_overriden "$1" "$2" "$3"
 	PKG_NAME="$concretized_package"
 
 	show_run_cmd "spack info  $PKG_NAME"
@@ -568,11 +557,12 @@ install_dep_with_spack()
 	fi
 
 	show_run_cmd "spack install -j ${MAKE_J} $PKG_NAME"
-	wrap_output spack install -j "${MAKE_J}" "$PKG_NAME"
+	# We need to allow expansion here as PKG_NAME can contain multiple params
+	wrap_output spack install -j "${MAKE_J}" $PKG_NAME
 	check_retcode "$?"
 
 	if test "x${LAST_RESULT}" = "xok"; then
-		find_dep_with_spack "$1" "$2"
+		find_dep_with_spack "$1" "$2" "$3"
 	fi
 }
 
@@ -984,6 +974,7 @@ build_configure_based_package()
 #	* "nobuild" meaning that we only try with spack load
 #       * "spackonly" meaning that we only wish to install through spack if present
 #       * "" meaning that we also try to build from sources (using local deps)
+# - $5 : the spack variant to pass around
 
 
 SPACK_LOCATE_DEPENDENCY="yes"
@@ -995,6 +986,7 @@ find_in_prefix_or_use_spack_internal()
 	version="$2"
 	can_build="$3"
 	candidate_prefix="$4"
+	variant="$5"
 
 	if test "x${candidate_prefix}" = "xdisabled"; then
 		#Not an error (disable legacy build also)
@@ -1013,7 +1005,7 @@ find_in_prefix_or_use_spack_internal()
 
 	# use spack to locate in existing packages
 	if test "x${SPACK_LOCATE_DEPENDENCY}" = "xyes"; then
-		find_dep_with_spack "$package" "$version"
+		find_dep_with_spack "$package" "$version" "$variant"
 	fi
 
 	# If dep is found we are done
@@ -1025,7 +1017,7 @@ find_in_prefix_or_use_spack_internal()
 
 
 	if test "x${SPACK_INSTALL_DEPENDENCY}" = "xyes"; then
-		install_dep_with_spack "$package" "$version"
+		install_dep_with_spack "$package" "$version" "$variant"
 	fi
 
 	# Did we install with spack ?
@@ -1043,10 +1035,11 @@ find_in_prefix_or_use_spack_internal()
 # - $1: package name
 # - $2: package version
 # - $3: candidate_prefix
+# - $4: variant (optionnal)
 
 find_in_prefix_or_use_spack()
 {
-	find_in_prefix_or_use_spack_internal "$1" "$2" "yes" "$3"
+	find_in_prefix_or_use_spack_internal "$1" "$2" "yes" "$3" "$4"
 }
 
 # Deploy an MPC dependency using various methods (spack or not)
@@ -1054,13 +1047,13 @@ find_in_prefix_or_use_spack()
 # - $1: package name
 # - $2: package version
 # - $3: candidate_prefix
-
+# - $4: variant (optionnal)
 find_in_prefix_or_use_spack_optionnal()
 {
 	required="no"
 	candidate_prefix="$3"
 
-	find_in_prefix_or_use_spack_internal "$1" "$2" "$required" "$candidate_prefix"
+	find_in_prefix_or_use_spack_internal "$1" "$2" "$required" "$candidate_prefix" "$4"
 }
 
 
@@ -1124,6 +1117,10 @@ Defaults for the options are specified in brackets.
   --with-tbb=*                            : Specify TBB prefix on the system
   --with-{dmtcp,hbict}=*                  : Specify DMTCP/HBICT prefix on the system
 
+# Autopriv specifics (requires autopriv)
+
+  --gcc-version=X.X.X                     : Compile autopriv with a given GCC version (autopriv's default otherwise)
+
 # Options to transmit to subpackages (only if not using SPACK)
   --autopriv=*                            : Add options to autopriv configure
   --gdb=*                                 : Add options to gdb configure
@@ -1161,6 +1158,9 @@ MPCALLOC_PREFIX=""
 MPC_DMTCP_PREFIX="disabled"
 MPC_GDB_PREFIX='disabled'
 TBB_PREFIX="disabled"
+
+# Empty means Autopriv's default
+AUTOPRIV_GCC_VERSION=""
 
 #
 # Argument parsing
@@ -1218,6 +1218,9 @@ do
 			enable_debug
 			;;
 		################### MPC GCC #################
+		--gcc-version=*)
+			extractParamValue 'AUTOPRIV_GCC_VERSION' 'gcc-version' "$arg"
+			;;
 		--with-autopriv=*)
 			extractParamValue 'AUTOPRIV_PREFIX' 'with-autopriv' "$arg"
 			;;
@@ -1540,15 +1543,75 @@ if test "x${DEP_FOUND}" = "xno"; then
 	build_configure_based_package "mpcalloc" "$(package_version "mpcalloc")" "$MPCALLOC_BUILD_PARAMETERS"
 fi
 
+
+#
+# Check for avoiding GLIBC 2.28 for GCC 7.3.0
+#
+check_glibc_is_compatible()
+{
+       have_cmd "ldd"
+
+       if test "x${MPC_NOGLIBC_CHECK}" = "x1"; then
+               return
+       fi
+
+       if test "x${HAVE_CMD}" = "xyes"; then
+               GLIBC=$(ldd --version | head -n 1 | rev | cut -d " " -f 1 | rev | sed "s/\.//g")
+               # Check for incompatibilities in versions >= 2.27
+               if test $GLIBC -gt 227; then
+			   		   if test -z "${AUTOPRIV_GCC_VERSION}"; then
+							info "############################################################"
+							info "Your glibc $GLIBC is too recent for the current GCC version "
+							info "fully supported by MPC (7.3.0) we will target a more recent "
+							info "version 10.2.0 but some parts of OpenMP could be missing    "
+							info "the next release of MPC should address this issue, install  "
+							info "might have to **download** the corresponding sources.       "
+							info "                                                            "
+							info "NOTE: you can change the autopriv GCC version built with :  "
+							info "     --gcc-version=X.X.X                                    "
+							info "                                                            "
+							info "If you want to bypass this check set MPC_NOGLIBC_CHECK=1    "
+							info "############################################################"
+							AUTOPRIV_GCC_VERSION="10.2.0"
+					    elif test "x${AUTOPRIV_GCC_VERSION}" = "x7.3.0"; then
+                       		die "GLIBC $GLIBC not compatible with GCC 7.3.0 you may choose another version with --gcc-version=10.2.0 for example)"
+						fi
+               fi
+       fi
+}
+
+check_glibc_is_compatible
+
+#If a default GCC version is passed 
+AUTOPRIV_GCC_VERSION_SPACK=""
+AUTOPRIV_GCC_VERSION_ARG=""
+if test -n "${AUTOPRIV_GCC_VERSION}"; then
+
+	DISABLE_WORKSHARE=""
+	DISABLE_WORKSHARE_ARG=""
+
+	# This will need to be updated for workshare
+	if test "x${AUTOPRIV_GCC_VERSION}" != "x7.3.0"; then
+		info "Building GCC ${AUTOPRIV_GCC_VERSION}: disabling workshare extensions only supported in GCC 7.3.0"
+		DISABLE_WORKSHARE=" -workshare"
+		DISABLE_WORKSHARE_ARG=" --disable-workshare"
+	fi
+
+	AUTOPRIV_GCC_VERSION_SPACK=" ${DISABLE_WORKSHARE} gcc_version=${AUTOPRIV_GCC_VERSION}"
+	AUTOPRIV_GCC_VERSION_ARG="--gcc-version=${AUTOPRIV_GCC_VERSION} ${DISABLE_WORKSHARE_ARG}"
+fi
+
+
 # Dependencies which can be deactivated
-find_in_prefix_or_use_spack "autopriv" "" "${AUTOPRIV_PREFIX}"
+AUTOPRIV_VERSION="$(package_version "autopriv")"
+
+find_in_prefix_or_use_spack "autopriv" "${AUTOPRIV_VERSION}" "${AUTOPRIV_PREFIX}" "$AUTOPRIV_GCC_VERSION_SPACK"
 
 if test "x${DEP_FOUND}" = "xno"; then
 	assert_cmd "gcc"
 	assert_cmd "g++"
-	check_glibc_is_compatible_with_priv
 	# Could not use spack now installing manually
-	build_configure_based_package "autopriv" "$(package_version "autopriv")" "$AUTOPRIV_BUILD_PARAMETERS"
+	build_configure_based_package "autopriv" "${AUTOPRIV_VERSION}" "$AUTOPRIV_BUILD_PARAMETERS $AUTOPRIV_GCC_VERSION_ARG"
 fi
 
 

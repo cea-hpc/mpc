@@ -712,6 +712,7 @@ MPC_MPIIO_ENABLED_TRUE
 MPC_FORTRAN_ENABLED
 MPC_FORTRAN_ENABLED_FALSE
 MPC_FORTRAN_ENABLED_TRUE
+FORTRAN_ARG_MISMATCH_ARG
 MPC_OPENMP_ENABLED
 MPC_OPENMP_ENABLED_FALSE
 MPC_OPENMP_ENABLED_TRUE
@@ -29578,8 +29579,8 @@ cat << EOF > "${FSRC}"
 
 EOF
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking Fortran symbol format" >&5
-$as_echo_n "checking Fortran symbol format... " >&6; }
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking fortran symbol format" >&5
+$as_echo_n "checking fortran symbol format... " >&6; }
 
     create_temp_file ".o"
     TMPO="$TMP"
@@ -29589,8 +29590,6 @@ $as_echo_n "checking Fortran symbol format... " >&6; }
     if test "x$?" = "x0"; then
 
         read_symbols "${TMPO}"
-
-        rm -fr "${FSRC}" "${TMPO}"
 
         FORTRAN_NAMING=""
 
@@ -29624,6 +29623,45 @@ $as_echo "${FORTRAN_NAMING}" >&6; }
         as_fn_error $? "\"Failed to build test fortran program\"" "$LINENO" 5
     fi
 
+    rm -fr "${FSRC}" "${TMPO}"
+}
+
+check_fortran_argument_mismatch()
+{
+    HAVE_FORTRAN_ARG_MISMATCH=""
+
+    create_temp_file ".f90"
+
+    FSRC="$TMP"
+
+cat << EOF > "${FSRC}"
+PROGRAM foo
+END PROGRAM
+EOF
+
+    create_temp_file ".o"
+    TMPO="$TMP"
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking presence of fortran -fallow-argument-mismatch" >&5
+$as_echo_n "checking presence of fortran -fallow-argument-mismatch... " >&6; }
+
+    $FC -fallow-argument-mismatch -c "${FSRC}" -o "${TMPO}" > /dev/null 2>&1
+
+    if test "x$?" = "x0"; then
+        FORTRAN_ARG_MISMATCH_ARG="-fallow-argument-mismatch"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+    else
+        FORTRAN_ARG_MISMATCH_ARG=""
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    fi
+
+
+
+
+    rm -fr "${FSRC}" "${TMPO}"
 }
 
 
@@ -29644,6 +29682,7 @@ $as_echo "#define MPC_FORTRAN 1" >>confdefs.h
 
 
         check_fortran_naming_convention
+        check_fortran_argument_mismatch
 fi
 
  if test "x${MPC_FORTRAN_ENABLED}" = "xyes"; then
