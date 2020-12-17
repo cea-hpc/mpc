@@ -747,7 +747,7 @@ locate_tarball()
 	# Now attempt to locate archive
 	tarball="$PKG-$VERS"
 
-	TARBALL_PATH=$(find "$HOME/.mpcdep/" -iname "${tarball}*tar*" 2> /dev/null || true)
+	TARBALL_PATH=$( (find "$HOME/.mpcdep/" -iname "${tarball}*tar*" 2> /dev/null | head -n 1) || true)
 
 	if test -f "$TARBALL_PATH"; then
 		# Found in .mpcdep in $HOME
