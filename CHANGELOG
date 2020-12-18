@@ -9,28 +9,41 @@ All notable changes to this project will be documented in this file. The format 
 
 For this release MPC has undergone a massive refactoring. It is in some aspects not compatible with previous versions of MPC. It should bring several enhancements in terms of installation process and modularity. One should not expect binary compatibility with a previous version of MPC. Due to the massive changes, this changelog cannot be fully exhaustive.
 
+### Modularity
+MPC is now modular and comes in several components:
+
+- `lowcomm` : component handling and providing the networks interfaces
+- `threads` : component handling and providing the user-level thread scheduler
+- `mpi` : component handling and providing the MPI standard API
+- `mpiio` :  component handling and providing the IO part of the MPI standard API
+- `openmp` :  component handling and providing the OpenMP standard API
+- `fortran` : component handling and providing the Fortran interface for the above parallel programming APIs
+- ... and other internal components
+
+Such aforementioned components can be enabled and disabled using `--enable/disable-XX` as mpc-options in the installation script, or through variants in the new Spack building recipe.
+Note that some components are dependent and cannot be installed if the dependencies are disabled (e.g., `mpiio` depends on `mpi`, and cannot be installed if `mpi` is disabled).
+
 ### Added
 
 - **PMIX**: PMIX is now supported through `--with-pmix`
 - **PRIV**: Support for new GCCs (using now external autopriv) up to 10.2.0 (using `--gcc-version=X.X.X`)
-- **MODULAR**: MPC is now modular and comes in several components (`lowcomm`, `threads`, `mpi`, `mpiio`, `fortran`, `openmp`). Such components can be enabled and disabled using `--enable/disable-XX`
 - **STATUS**: the `mpc_status` command can be used to print current MPC configuration
 - **BUILD**: once installed with `./installmpc` MPC can be reconfigured with `./reconfigure` in the build directory. MPC is now longer in an `mpcframework` subdirectory
 
 ### Changed
 
 - **BUILD**: Installation process compatible with Spack to manage package dependencies
-- **BUILD**: MPC now relies on autottols as its build system
+- **BUILD**: MPC now relies on autotools as its build system
 - **BUILD**: It is possible to directly call `./configure` to use MPC in a modular way
 - **DEPS**: dependencies can be downloaded on demand, a `light` version is a version not providing the dependencies. `./installmpc --download-missing-deps` can be used to retrieve the dependencies for a given configuration. Conversely a `full` version includes all dependencies for the default configuration
 - **COMM**: communicator management was fully rewritten. The MPI_Comm is now a pointer (instead of an integer)
 - **MPCRUN**: mpcrun has been fully rewritten
 - **MPIIO**: MPI-IO support (ROMIO) is now integrated in MPC
-- **FORTRAN**: the Fortran interface is now external and optionnal (MPC_Fortran)
+- **FORTRAN**: the Fortran interface is now external and optional (MPC_Fortran)
 
 ### Deprecated
 
-- **mpcrun**: several options from `mpcrun` were deprectated they should now be no-op
+- **mpcrun**: several options from `mpcrun` were deprecated they should now be no-op
 - **installmpc**: several options from `./installmpc` were deprecated they should now be no-op
 
 ### Removed
