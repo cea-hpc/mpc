@@ -57,6 +57,10 @@ if test ! -e .git; then
 	exit 1
 fi
 
+if test -d ~/.mpcdep; then
+	echo "Please temporarily disable your ~/.mpcdep cache to build the tarballs"
+	exit 1
+fi
 
 ############### ARGUMENT PARSING #########################
 
