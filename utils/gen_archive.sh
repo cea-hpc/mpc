@@ -134,8 +134,8 @@ echo "MPC version for this archive will be $VERSION"
 
 test -f "${FILE}" && echo "A file named ${FILE} already exist!" && exit 1
 
-echo "git archive --format=tar.gz --prefix=mpcframework-${VERSION}/ HEAD > ${FILE}"
-git archive --format=tar.gz --prefix="mpcframework-${VERSION}/" HEAD > "${FILE}" || exit 1
+echo "git archive --format=tar.gz --prefix=mpcframework-${VERSION}${LIGHT_FLAG}/ HEAD > ${FILE}"
+git archive --format=tar.gz --prefix="mpcframework-${VERSION}${LIGHT_FLAG}/" HEAD > "${FILE}" || exit 1
 
 if test "x${ADD_DEP}" = "xyes"; then
 	# Now enrich archive with deps
