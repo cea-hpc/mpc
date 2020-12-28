@@ -3,6 +3,7 @@
 
 #include <mpc_conf.h>
 #include <mpc_mpi.h>
+#include <mpc_common_debug.h>
 #include <mpc_lowcomm_communicator.h>
 
 
@@ -104,6 +105,8 @@ static inline void _mpc_mpi_config_coll_route(MPI_Comm comm,
                                         &is_intercomm,
                                         &is_shm,
                                         &is_shared_node);
+
+    //mpc_common_debug_error("IC %d SHM %d shared %d (IC %p SH %p SHAN %p INT %p", is_intercomm, is_shm, is_shared_node, inter, intra_shm, intra_shared_node, intra);
 
     if(is_intercomm)
     {

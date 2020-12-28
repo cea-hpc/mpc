@@ -159,7 +159,7 @@ static inline void __coll_intracomm_defaults( void )
 
 static inline void __coll_intracomm_shm_defaults( void )
 {
-	struct _mpc_mpi_config_coll_array *coll = &__mpc_mpi_config.coll_intracomm;
+	struct _mpc_mpi_config_coll_array *coll = &__mpc_mpi_config.coll_intracomm_shm;
 
 	snprintf( coll->barrier_name, MPC_CONF_STRING_SIZE, "" );
 	snprintf( coll->bcast_name, MPC_CONF_STRING_SIZE, "__INTERNAL__PMPI_Bcast_intra_shm" );
@@ -182,7 +182,7 @@ static inline void __coll_intracomm_shm_defaults( void )
 
 static inline void __coll_intracomm_shared_node_defaults( void )
 {
-	struct _mpc_mpi_config_coll_array *coll = &__mpc_mpi_config.coll_intracomm;
+	struct _mpc_mpi_config_coll_array *coll = &__mpc_mpi_config.coll_intracomm_shared_node;
 
 	snprintf( coll->barrier_name, MPC_CONF_STRING_SIZE, "__INTERNAL__PMPI_Barrier_intra_shared_node" );
 	snprintf( coll->bcast_name, MPC_CONF_STRING_SIZE, "__INTERNAL__PMPI_Bcast_intra_shared_node" );
@@ -212,12 +212,18 @@ static inline void __load_coll_function(char * family, char * func_name, int (**
     {
         *func = NULL;
     }
-
-	*func = dlsym( NULL, func_name);
-
-	if ( !(*func))
+	else
 	{
-		bad_parameter( "Failled resolving collective '%s' for '%s'", func_name, family );
+		*func = dlsym( NULL, func_name);
+
+		if ( !(*func))
+		{
+			bad_parameter( "CONFIG: failed resolving collective '%s' for '%s'", func_name, family );
+		}
+		else
+		{
+			mpc_common_debug("CONFIG %s == %p", func_name, *func);
+		}
 	}
 }
 
