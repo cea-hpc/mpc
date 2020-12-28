@@ -898,7 +898,7 @@ mpc_conf_config_type_t * ___new_default_rail(char * name)
                                     "ring",
                                     1,
                                     0,
-                                    "tcp_mpi");
+                                    "tcpconfigmpi");
 }
 
 
