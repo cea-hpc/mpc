@@ -111,7 +111,7 @@ struct sctk_alloc_chain *mpc_thread_tls = NULL;
 
 struct mpc_thread_config __thread_module_config;
 
-struct mpc_thread_config  * _mpc_thread_confif_get(void)
+struct mpc_thread_config  * _mpc_thread_config_get(void)
 {
 	return &__thread_module_config;
 }
@@ -140,6 +140,13 @@ static inline void __thread_module_config_defaults(void)
 	__thread_module_config.scheduler_posix_basic_prio = 20;
 	__thread_module_config.scheduler_progress_basic_prio = 20;
 }
+
+int mpc_thread_get_progress_basic_prio(void)
+{
+	return __thread_module_config.scheduler_progress_basic_prio;
+}
+
+
 
 static inline void __init_thread_module_config(void)
 {

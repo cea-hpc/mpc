@@ -113,6 +113,8 @@ static inline void mpc_threads_generic_kind_priorities_incr(int increment)
 	mpc_threads_generic_kind_basic_priority(basic + increment);
 }
 
+int mpc_thread_get_progress_basic_prio(void);
+
 
 #define MPC_GENERIC_THREAD_ENTER_PROGRESS(kind, priority) int __new_sched = mpc_common_get_flags()->new_scheduler_engine_enabled; \
 							  int ___prio_save = priority; \

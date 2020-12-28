@@ -2,6 +2,13 @@
 #define MPC_MPI_CONFIG_H_
 
 #include <mpc_conf.h>
+#include <mpc_mpi.h>
+#include <mpc_lowcomm_communicator.h>
+
+
+/****************************
+ * NON-BLOCKING COLLECTIVES *
+ ****************************/
 
 struct _mpc_mpi_config_nbc
 {
@@ -20,18 +27,181 @@ struct _mpc_mpi_config_nbc
 
 };
 
+/***************
+ * COLLECTIVES *
+ ***************/
+
+struct _mpc_mpi_config_coll_array
+{
+    char barrier_name[MPC_CONF_STRING_SIZE];
+    int (*barrier)(MPI_Comm);
+
+    char bcast_name[MPC_CONF_STRING_SIZE];
+    int (*bcast)(void *, int, MPI_Datatype, int, MPI_Comm);
+
+    char allgather_name[MPC_CONF_STRING_SIZE];
+    int (*allgather)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm);
+
+    char allgatherv_name[MPC_CONF_STRING_SIZE];
+    int (*allgatherv)(const void *, int, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm);
+
+    char alltoall_name[MPC_CONF_STRING_SIZE];
+    int (*alltoall)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm); 
+
+    char alltoallv_name[MPC_CONF_STRING_SIZE];
+    int (*alltoallv)(const void *, const int *, const int *, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm);
+
+    char alltoallw_name[MPC_CONF_STRING_SIZE];
+    int (*alltoallw)(const void *, const int *, const int *, const MPI_Datatype *, void *, const int *, const int *, const MPI_Datatype *, MPI_Comm);
+
+    char gather_name[MPC_CONF_STRING_SIZE];
+    int (*gather)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
+
+    char gatherv_name[MPC_CONF_STRING_SIZE];
+    int (*gatherv)(const void *, int, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, int, MPI_Comm);
+
+    char scatter_name[MPC_CONF_STRING_SIZE];
+    int (*scatter)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
+
+    char scatterv_name[MPC_CONF_STRING_SIZE];
+    int (*scatterv)(const void *, const int *, const int *, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
+
+    char reduce_name[MPC_CONF_STRING_SIZE];
+    int (*reduce)(const void *, void *, int, MPI_Datatype, MPI_Op, int, MPI_Comm);
+
+    char allreduce_name[MPC_CONF_STRING_SIZE];
+    int (*allreduce)(const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
+
+    char reduce_scatter_name[MPC_CONF_STRING_SIZE];
+    int (*reduce_scatter)(const void *, void *, const int *, MPI_Datatype, MPI_Op, MPI_Comm);
+
+    char reduce_scatter_block_name[MPC_CONF_STRING_SIZE];
+    int (*reduce_scatter_block)(const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
+
+    char scan_name[MPC_CONF_STRING_SIZE];
+    int (*scan)(const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
+
+    char exscan_name[MPC_CONF_STRING_SIZE];
+    int (*exscan)(const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
+
+};
+
+void _mpc_mpi_config_coll_array_resolve(struct _mpc_mpi_config_coll_array *coll, char *family);
 
 
+static inline void _mpc_mpi_config_coll_route(MPI_Comm comm,
+                                              int (*inter)(),
+                                              int (*intra_shm)(),
+                                              int (*intra_shared_node)(),
+                                              int (*intra)(),
+                                              int (**out_func)())
+{
+    int is_intercomm = 0;
+    int is_shm = 0;
+    int is_shared_node = 0;
+
+    mpc_lowcomm_communicator_attributes(comm,
+                                        &is_intercomm,
+                                        &is_shm,
+                                        &is_shared_node);
+
+    if(is_intercomm)
+    {
+        *out_func = inter;
+    }
+    else
+    {
+        if(is_shm && intra_shm)
+        {
+            *out_func = intra_shm;
+        }
+        else if(is_shared_node && intra_shared_node)
+        {
+            *out_func = intra_shared_node;
+        }
+        else
+        {
+            *out_func = intra;
+        }
+    }
+}
+
+
+#define MPC_MPI_CONFIG_ROUTE_COLL(pointer, comm, coll_name) do{\
+                                                            _mpc_mpi_config_coll_route(comm, \
+                                                                                       _mpc_mpi_config()->coll_intercomm.coll_name,  \
+                                                                                       _mpc_mpi_config()->coll_intracomm_shm.coll_name, \
+                                                                                       _mpc_mpi_config()->coll_intracomm_shared_node.coll_name,\
+                                                                                       _mpc_mpi_config()->coll_intracomm.coll_name, \
+                                                                                       (int (**)())&pointer);\
+                                                            assume(pointer != NULL);\
+                                                            }while(0)
+
+
+/**********************
+ * COLLECTIVE OPTIONS *
+ **********************/
+
+struct _mpc_mpi_config_coll_opts
+{
+    int force_nocommute;
+
+    /* Intra barrier */
+    int barrier_intra_for_trsh;
+
+    /* Intra reduce */
+    int reduce_intra_count_trsh;
+    int reduce_intra_for_trsh;
+
+    /* Intra bcast */
+    int bcast_intra_count_trsh;
+    int bcast_intra_for_trsh;
+
+    /* SHM */
+    
+    /* Reduce */
+    int reduce_pipelined_blocks;
+    long int reduce_pipelined_tresh;
+    int reduce_interleave;
+
+    /* Bcast */
+    int bcast_interleave;
+
+};
+
+/***************
+ * MEMORY POOL *
+ ***************/
+
+struct _mpc_mpi_config_mem_pool
+{
+    int enabled;
+    long int size;
+    int autodetect;
+    int force_process_linear;
+    long int per_proc_size;
+};
+
+/************************************
+ * GENERAL MPI MODULE CONFIGURATION *
+ ************************************/
 
 struct _mpc_mpi_config
 {
     int message_buffering;
     struct _mpc_mpi_config_nbc nbc;
-    
+
+    struct _mpc_mpi_config_coll_opts coll_opts;
+
+    struct _mpc_mpi_config_coll_array coll_intercomm;
+    struct _mpc_mpi_config_coll_array coll_intracomm_shm;
+    struct _mpc_mpi_config_coll_array coll_intracomm_shared_node;
+    struct _mpc_mpi_config_coll_array coll_intracomm;
+
+    struct _mpc_mpi_config_mem_pool mempool;
 };
 
 struct _mpc_mpi_config * _mpc_mpi_config(void);
-
 
 void _mpc_mpi_config_init(void);
 void _mpc_mpi_config_check();

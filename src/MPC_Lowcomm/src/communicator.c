@@ -138,6 +138,18 @@ int mpc_lowcomm_communicator_is_shared_node(const mpc_lowcomm_communicator_t com
 	return 0;
 }
 
+int mpc_lowcomm_communicator_attributes(const mpc_lowcomm_communicator_t comm,
+                                        int *is_intercomm,
+                                        int *is_shm,
+                                        int *is_shared_node)
+{
+	*is_intercomm = mpc_lowcomm_communicator_is_intercomm(comm);
+	*is_shm = mpc_lowcomm_communicator_is_shared_mem(comm);
+	*is_shared_node = mpc_lowcomm_communicator_is_shared_node(comm);
+
+	return SCTK_SUCCESS;
+}
+
 /***************************
 * BASIC COMMUNICATOR INIT *
 ***************************/

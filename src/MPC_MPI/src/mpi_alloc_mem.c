@@ -22,6 +22,8 @@
 
 #include "mpi_alloc_mem.h"
 
+#include "mpi_conf.h"
+
 #include <mpc_common_rank.h>
 
 #include <sctk_alloc.h>
@@ -38,7 +40,6 @@
 #endif
 
 #include "sctk_handler_mpi.h"
-#include "mpc_runtime_config.h"
 #include "sctk_shm_mapper.h"
 #include "mpc_thread.h"
 #include "string.h"
@@ -63,10 +64,12 @@ void mpc_MPI_allocmem_adapt( char *exename )
 		return;
 	}
 
-	int is_linear = sctk_runtime_config_get()
-	                ->modules.rma.alloc_mem_pool_force_process_linear;
+	struct _mpc_mpi_config_mem_pool * mempool_conf = &(_mpc_mpi_config()->mempool);
 
-	if ( sctk_runtime_config_get()->modules.rma.alloc_mem_pool_autodetect )
+
+	int is_linear = mempool_conf->force_process_linear;
+
+	if ( mempool_conf->autodetect )
 	{
 		if ( !strstr( exename, "IMB" ) )
 		{
@@ -77,8 +80,7 @@ void mpc_MPI_allocmem_adapt( char *exename )
 
 	if ( is_linear )
 	{
-		_forced_pool_size =
-		    sctk_runtime_config_get()->modules.rma.alloc_mem_pool_per_process_size *
+		_forced_pool_size = mempool_conf->per_proc_size *
 		    mpc_common_get_local_process_count();
 		mpc_common_debug( "Info : setting MPI_Alloc_mem pool size to %d MB",
 		           _forced_pool_size / ( 1024 * 1024 ) );
@@ -92,7 +94,7 @@ size_t mpc_MPI_allocmem_get_pool_size()
 		return _forced_pool_size;
 	}
 
-	return sctk_runtime_config_get()->modules.rma.alloc_mem_pool_size;
+	return _mpc_mpi_config()->mempool.size;
 }
 
 int mpc_MPI_allocmem_pool_init()
@@ -144,11 +146,11 @@ int mpc_MPI_allocmem_pool_init()
 				mpc_common_debug_warning( "Shared-Node memory RMA are not supported when C/R is enabled" );
 			}
 
-			*( ( int * )&sctk_runtime_config_get()->modules.rma.alloc_mem_pool_enable ) = 0;
+			
+			_mpc_mpi_config()->mempool.enabled = 0;
 		}
 
-		int alloc_mem_enabled =
-		    sctk_runtime_config_get()->modules.rma.alloc_mem_pool_enable;
+		int alloc_mem_enabled = _mpc_mpi_config()->mempool.enabled;
 		int tot_size = 0;
 
 		PMPI_Allreduce( &comm_size, &tot_size, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );

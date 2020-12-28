@@ -77,7 +77,7 @@ struct mpc_thread_config
 	int scheduler_progress_basic_prio;
 };
 
-struct mpc_thread_config  * _mpc_thread_confif_get(void);
+struct mpc_thread_config  * _mpc_thread_config_get(void);
 
 
 int mpc_thread_dump(char *file);

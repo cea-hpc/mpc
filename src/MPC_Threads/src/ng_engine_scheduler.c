@@ -1123,9 +1123,9 @@ void sctk_multiple_queues_priority_dyn_sorted_list_sched_NBC_Pthread_sched_incre
 
 	sctk_multiple_queues_sched_lists[sched->th->attr.bind_to]
 	.sctk_multiple_queues_sched_NBC_Pthread_sched->th->attr
-	.current_priority += _mpc_thread_confif_get()->scheduler_nbc_current_prio;
+	.current_priority += _mpc_thread_config_get()->scheduler_nbc_current_prio;
 	sctk_multiple_queues_sched_lists[sched->th->attr.bind_to]
-	.sctk_multiple_queues_sched_NBC_Pthread_sched->th->attr.basic_priority += _mpc_thread_confif_get()->scheduler_nbc_basic_prio;
+	.sctk_multiple_queues_sched_NBC_Pthread_sched->th->attr.basic_priority += _mpc_thread_config_get()->scheduler_nbc_basic_prio;
 	// sort the list to have a sorted ready list
 	mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[sched->th->attr.bind_to]
 	                         .sctk_multiple_queues_sched_list_lock);
@@ -1149,10 +1149,10 @@ void sctk_multiple_queues_with_priority_dyn_sorted_list_sched_NBC_Pthread_sched_
 	assert(sched->th->attr.bind_to >= 0);
 	sctk_multiple_queues_sched_lists[sched->th->attr.bind_to]
 	.sctk_multiple_queues_sched_NBC_Pthread_sched->th->attr
-	.current_priority -= _mpc_thread_confif_get()->scheduler_nbc_current_prio;
+	.current_priority -= _mpc_thread_config_get()->scheduler_nbc_current_prio;
 	sctk_multiple_queues_sched_lists[sched->th->attr.bind_to]
 	.sctk_multiple_queues_sched_NBC_Pthread_sched->th->attr.basic_priority -=
-	        _mpc_thread_confif_get()->scheduler_nbc_step_prio;
+	        _mpc_thread_config_get()->scheduler_nbc_step_prio;
 }
 
 // increase priority of the mpc polling threads
@@ -1164,10 +1164,10 @@ void sctk_multiple_queues_priority_dyn_sorted_list_task_polling_thread_sched_inc
 	{
 		sctk_multiple_queues_task_lists[bind_to]
 		.sctk_multiple_queues_task_polling_thread_sched->th->attr
-		.current_priority += _mpc_thread_confif_get()->scheduler_polling_current_prio;
+		.current_priority += _mpc_thread_config_get()->scheduler_polling_current_prio;
 		sctk_multiple_queues_task_lists[bind_to]
 		.sctk_multiple_queues_task_polling_thread_sched->th->attr
-		.basic_priority += _mpc_thread_confif_get()->scheduler_polling_step_prio;
+		.basic_priority += _mpc_thread_config_get()->scheduler_polling_step_prio;
 
 		mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[bind_to]
 		                         .sctk_multiple_queues_sched_list_lock);
@@ -1219,10 +1219,10 @@ void sctk_multiple_queues_priority_dyn_sorted_list_task_polling_thread_sched_dec
 	{
 		sctk_multiple_queues_task_lists[core]
 		.sctk_multiple_queues_task_polling_thread_sched->th->attr
-		.current_priority -= _mpc_thread_confif_get()->scheduler_polling_current_prio;
+		.current_priority -= _mpc_thread_config_get()->scheduler_polling_current_prio;
 		sctk_multiple_queues_task_lists[core]
 		.sctk_multiple_queues_task_polling_thread_sched->th->attr
-		.basic_priority -= _mpc_thread_confif_get()->scheduler_polling_step_prio;
+		.basic_priority -= _mpc_thread_config_get()->scheduler_polling_step_prio;
 
 #ifdef SCTK_DEBUG_SCHEDULER
 		{
@@ -2326,7 +2326,7 @@ quick_swap:
 			// timers
 			if(sched->th->attr.timestamp_base == -1)
 			{
-				sched->th->attr.timestamp_threshold = _mpc_thread_confif_get()->scheduler_quantum;
+				sched->th->attr.timestamp_threshold = _mpc_thread_config_get()->scheduler_quantum;
 				sched->th->attr.timestamp_base  = mpc_arch_get_timestamp_gettimeofday();
 				sched->th->attr.timestamp_begin = sched->th->attr.timestamp_base;
 			}
@@ -2943,9 +2943,9 @@ void _mpc_threads_ng_engine_polling_init(int vp_number)
 	if(mpc_common_get_flags()->new_scheduler_engine_enabled)
 	{
 		attr_intern->ptr->kind.mask      = KIND_MASK_MPC_POLLING_THREAD;
-		attr_intern->ptr->basic_priority = _mpc_thread_confif_get()->scheduler_polling_basic_prio;
-		attr_intern->ptr->kind.priority = _mpc_thread_confif_get()->scheduler_polling_basic_prio;
-		attr_intern->ptr->current_priority = _mpc_thread_confif_get()->scheduler_polling_basic_prio;
+		attr_intern->ptr->basic_priority = _mpc_thread_config_get()->scheduler_polling_basic_prio;
+		attr_intern->ptr->kind.priority = _mpc_thread_config_get()->scheduler_polling_basic_prio;
+		attr_intern->ptr->current_priority = _mpc_thread_config_get()->scheduler_polling_basic_prio;
 	}
 
 	for(i = 0; i < vp_number; i++)

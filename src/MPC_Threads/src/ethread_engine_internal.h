@@ -1052,7 +1052,7 @@ static inline int ___mpc_thread_ethread_mutex_spinlock(_mpc_thread_ethread_virtu
 
 	if(lock->lock >= 1)
 	{
-		long int _spin_delay = _mpc_thread_confif_get()->ethread_spin_delay;
+		long int _spin_delay = _mpc_thread_config_get()->ethread_spin_delay;
 
 		long int i = _spin_delay;
 		long int j = _spin_delay;

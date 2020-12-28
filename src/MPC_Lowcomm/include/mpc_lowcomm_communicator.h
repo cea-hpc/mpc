@@ -385,6 +385,20 @@ int mpc_lowcomm_communicator_remote_world_rank(const mpc_lowcomm_communicator_t 
 ***********************************/
 
 /**
+ * @brief Retrieve all infos about a comm in one call (fastpath for collectives)
+ * 
+ * @param comm the communicator of interest
+ * @param is_intercomm set to true if it is an intercomm
+ * @param is_shm set to true if the comm resides in shared memory
+ * @param is_shared_node set to true if the comm is on a single node
+ * @return int SCTK_SUCCESS if all OK
+ */
+int mpc_lowcomm_communicator_attributes(const mpc_lowcomm_communicator_t comm,
+                                        int *is_intercomm,
+                                        int *is_shm,
+                                        int *is_shared_node);
+
+/**
  * @brief Check if the communicator is in shared memory
  * 
  * @param comm the communicator  

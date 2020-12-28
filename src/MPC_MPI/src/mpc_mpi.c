@@ -22,7 +22,11 @@
 /* ######################################################################## */
 #include <math.h>
 #include <string.h>
+#include <dlfcn.h>
+
+#include "mpi_conf.h"
 #include <mpc_mpi_internal.h>
+
 #include <mpc_common_helper.h>
 #include <mpc_launch.h>
 #include <mpc_common_datastructure.h>
@@ -39,8 +43,6 @@
 #endif
 
 #include "mpc_thread_ng_engine.h"
-
-#include "mpit_internal.h"
 
 #if defined(MPC_Accelerators)
 #include <mpc_thread_accelerator.h>
@@ -2419,70 +2421,9 @@ static inline MPI_Datatype *__get_typemask(MPI_Datatype datatype, int *type_mask
 #define MPI_MAX_CONCURENT    128
 
 /* Function pointer for user collectives */
-int (*barrier_intra)(MPI_Comm);
-int (*barrier_intra_shared_node)(MPI_Comm);
-int (*barrier_inter)(MPI_Comm);
-int (*barrier_offload)(int, int, int);
-int (*bcast_offload)(int, int, int, void *, int, int);
 
-int (*bcast_intra_shm)(void *, int, MPI_Datatype, int, MPI_Comm);
-int (*bcast_intra_shared_node)(void *, int, MPI_Datatype, int, MPI_Comm);
-int (*bcast_intra)(void *, int, MPI_Datatype, int, MPI_Comm);
-int (*bcast_inter)(void *, int, MPI_Datatype, int, MPI_Comm);
 
-int (*gather_intra)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
-int (*gather_inter)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
 
-int (*gatherv_intra)(const void *, int, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, int, MPI_Comm);
-int (*gatherv_intra_shm)(const void *, int, MPI_Datatype, void *, const int *, const int *,
-                         MPI_Datatype, int, MPI_Comm);
-int (*gatherv_inter)(const void *, int, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, int, MPI_Comm);
-
-int (*scatter_intra)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
-int (*scatter_intra_shared_node)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
-int (*scatter_inter)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
-
-int (*scatterv_intra)(const void *, const int *, const int *, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
-int (*scatterv_intra_shm)(const void *, const int *, const int *, MPI_Datatype, void *, int,
-                          MPI_Datatype, int, MPI_Comm);
-int (*scatterv_inter)(const void *, const int *, const int *, MPI_Datatype, void *, int,
-                      MPI_Datatype, int, MPI_Comm);
-
-int (*allgather_intra)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm);
-int (*allgather_inter)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm);
-
-int (*allgatherv_intra)(const void *, int, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm);
-int (*allgatherv_inter)(const void *, int, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm);
-
-int (*alltoall_inter)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm);
-int (*alltoall_intra)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm);
-int (*alltoall_intra_shared_node)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm);
-
-int (*alltoallv_intra)(const void *, const int *, const int *, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm);
-int (*alltoallv_intra_shm)(const void *, const int *, const int *, MPI_Datatype, void *, const int *,
-                           const int *, MPI_Datatype, MPI_Comm);
-int (*alltoallv_inter)(const void *, const int *, const int *, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm);
-
-int (*alltoallw_intra)(const void *, const int *, const int *, const MPI_Datatype *, void *, const int *, const int *, const MPI_Datatype *, MPI_Comm);
-int (*alltoallw_inter)(const void *, const int *, const int *, const MPI_Datatype *, void *, const int *, const int *, const MPI_Datatype *, MPI_Comm);
-
-int (*reduce_intra)(const void *, void *, int, MPI_Datatype, MPI_Op, int, MPI_Comm);
-int (*reduce_intra_shm)(const void *, void *, int, MPI_Datatype, MPI_Op, int,
-                        MPI_Comm);
-int (*reduce_inter)(const void *, void *, int, MPI_Datatype, MPI_Op, int, MPI_Comm);
-
-int (*allreduce_intra)(const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
-int (*allreduce_inter)(const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
-
-int (*reduce_scatter_intra)(const void *, void *, const int *, MPI_Datatype, MPI_Op, MPI_Comm);
-int (*reduce_scatter_inter)(const void *, void *, const int *, MPI_Datatype, MPI_Op, MPI_Comm);
-
-int (*reduce_scatter_block_intra)(const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
-int (*reduce_scatter_block_inter)(const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
-
-int (*scan_intra)(const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
-
-int (*exscan_intra)(const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
 
 
 /* Collectives */
@@ -3020,6 +2961,9 @@ struct shared_node_coll_data
 };
 
 
+int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
+                                 int root, MPI_Comm comm);
+
 int __INTERNAL__PMPI_Bcast_intra_shared_node_impl(void *buffer, int count, MPI_Datatype datatype,
                                                   int root, MPI_Comm comm, struct sctk_comm_coll *coll)
 {
@@ -3063,7 +3007,7 @@ int __INTERNAL__PMPI_Bcast_intra_shared_node_impl(void *buffer, int count, MPI_D
 		}
 	}
 
-	(bcast_intra)(&cdata.buffer_addr, sizeof(struct shared_node_coll_data), MPI_CHAR, root, comm);
+	__INTERNAL__PMPI_Bcast_intra(&cdata.buffer_addr, sizeof(struct shared_node_coll_data), MPI_CHAR, root, comm);
 
 	if(cdata.buffer_addr != NULL)
 	{
@@ -3088,7 +3032,7 @@ int __INTERNAL__PMPI_Bcast_intra_shared_node_impl(void *buffer, int count, MPI_D
 	else
 	{
 		/* Fallback to regular bcast */
-		return (bcast_intra)(buffer, count, datatype, root, comm);
+		return __INTERNAL__PMPI_Bcast_intra(buffer, count, datatype, root, comm);
 	}
 
 	return MPI_SUCCESS;
@@ -3107,7 +3051,7 @@ int __INTERNAL__PMPI_Bcast_intra_shared_node(void *buffer, int count, MPI_Dataty
 	}
 	else
 	{
-		return (bcast_intra)(buffer, count, datatype, root, comm);
+		return __INTERNAL__PMPI_Bcast_intra(buffer, count, datatype, root, comm);
 	}
 }
 
@@ -3146,7 +3090,7 @@ int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
 	}
 	int derived_ret = 0;
 
-	if( size < sctk_runtime_config_get()->modules.collectives_intra.bcast_intra_for_trsh )
+	if( size < _mpc_mpi_config()->coll_opts.reduce_intra_for_trsh )
 	{
 		int          i, j;
 		MPI_Request  req_recv;
@@ -3779,6 +3723,16 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(const void *sendbuf, int sendcnt,
 	return MPI_SUCCESS;
 }
 
+int __INTERNAL__PMPI_Gather_intra_shm(const void *sendbuf, int sendcnt,
+                                       MPI_Datatype sendtype, void *recvbuf,
+                                       const int recvcnt,
+                                       MPI_Datatype recvtype, int root,
+                                       MPI_Comm comm)
+{
+	return __INTERNAL__PMPI_Gatherv_intra_shm(sendbuf, sendcnt, sendtype, recvbuf,
+                                      		  &recvcnt, NULL, recvtype, root, comm);
+}
+
 int __INTERNAL__PMPI_Gatherv_intra(void *sendbuf, int sendcnt,
                                    MPI_Datatype sendtype, void *recvbuf,
                                    int *recvcnts, int *displs,
@@ -4099,6 +4053,12 @@ int __INTERNAL__PMPI_Scatter_inter(void *sendbuf, int sendcnt,
 	return res;
 }
 
+
+int __INTERNAL__PMPI_Scatter_intra(void *sendbuf, int sendcnt,
+                                   MPI_Datatype sendtype, void *recvbuf,
+                                   int recvcnt, MPI_Datatype recvtype, int root,
+                                   MPI_Comm comm);
+
 int __INTERNAL__PMPI_Scatter_intra_shared_node_impl(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
                                                     void *recvbuf, int recvcnt, MPI_Datatype recvtype,
                                                     int root, MPI_Comm comm, struct sctk_comm_coll *coll)
@@ -4172,7 +4132,7 @@ int __INTERNAL__PMPI_Scatter_intra_shared_node_impl(void *sendbuf, int sendcnt, 
 	else
 	{
 		/* Fallback to regular bcast */
-		return (scatter_intra)(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype, root, comm);
+		return __INTERNAL__PMPI_Scatter_intra(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype, root, comm);
 	}
 
 	return MPI_SUCCESS;
@@ -4198,7 +4158,7 @@ int __INTERNAL__PMPI_Scatter_intra_shared_node(void *sendbuf, int sendcnt, MPI_D
 
 		if(!rez)
 		{
-			return (scatter_intra)(sendbuf, sendcnt, sendtype,
+			return __INTERNAL__PMPI_Scatter_intra(sendbuf, sendcnt, sendtype,
 			                       recvbuf, recvcnt, recvtype,
 			                       root, comm);
 		}
@@ -4211,7 +4171,7 @@ int __INTERNAL__PMPI_Scatter_intra_shared_node(void *sendbuf, int sendcnt, MPI_D
 	}
 	else
 	{
-		return (scatter_intra)(sendbuf, sendcnt, sendtype,
+		return __INTERNAL__PMPI_Scatter_intra(sendbuf, sendcnt, sendtype,
 		                       recvbuf, recvcnt, recvtype,
 		                       root, comm);
 	}
@@ -4499,6 +4459,16 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 
 	return MPI_SUCCESS;
 }
+
+int __INTERNAL__PMPI_Scatter_intra_shm(void *sendbuf, int sendcnt,
+										MPI_Datatype sendtype,
+                                        void *recvbuf, int recvcnt,
+                                        MPI_Datatype recvtype, int root,
+                                        MPI_Comm comm)
+{
+	return __INTERNAL__PMPI_Scatterv_intra_shm(sendbuf, &sendcnt, NULL,  sendtype, recvbuf, recvcnt, recvtype, root, comm);
+}
+
 
 int __INTERNAL__PMPI_Scatterv_intra(void *sendbuf, int *sendcnts, int *displs,
                                     MPI_Datatype sendtype, void *recvbuf,
@@ -5147,7 +5117,7 @@ int __INTERNAL__PMPI_Alltoall_intra_shared_node(void *sendbuf, int sendcount,
 
 	if(!__MPC_node_comm_coll_check(coll, comm) )
 	{
-		return (alltoall_intra)(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+		return __INTERNAL__PMPI_Alltoall_intra(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
 	}
 
 	int rez = 0;
@@ -5156,7 +5126,7 @@ int __INTERNAL__PMPI_Alltoall_intra_shared_node(void *sendbuf, int sendcount,
 
 	if(!rez)
 	{
-		return (alltoall_intra)(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+		return __INTERNAL__PMPI_Alltoall_intra(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
 	}
 	else
 	{
@@ -5741,50 +5711,6 @@ int __INTERNAL__PMPI_Alltoallw_inter(void *sendbuf, int *sendcnts, int *sdispls,
 	return res;
 }
 
-int __INTERNAL__PMPI_Alltoallw(const void *sendbuf, const int *sendcnts, const int *sdispls,
-                               const MPI_Datatype *sendtypes, void *recvbuf,
-                               const int *recvcnts, const int *rdispls,
-                               const MPI_Datatype *recvtypes, MPI_Comm comm)
-{
-	int res = MPI_ERR_INTERN;
-
-	/* Intercomm */
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		if(alltoallw_inter == NULL)
-		{
-			alltoallw_inter = (int (*)(const void *, const int *, const int *, const MPI_Datatype *, void *,
-			                           const int *, const int *, const MPI_Datatype *, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_inter.alltoallw_inter.value);
-		}
-		res = alltoallw_inter(sendbuf, sendcnts, sdispls, sendtypes, recvbuf,
-		                      recvcnts, rdispls, recvtypes, comm);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-	}
-	else
-	{
-		/* Intracomm */
-		if(alltoallw_intra == NULL)
-		{
-			alltoallw_intra = (int (*)(const void *, const int *, const int *, const MPI_Datatype *, void *,
-			                           const int *, const int *, const MPI_Datatype *, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_intra.alltoallw_intra.value);
-		}
-		res = alltoallw_intra(sendbuf, sendcnts, sdispls, sendtypes, recvbuf,
-		                      recvcnts, rdispls, recvtypes, comm);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-	}
-
-	return res;
-}
 
 /* Neighbor collectives */
 static int __INTERNAL__PMPI_Neighbor_allgather_cart(
@@ -7277,9 +7203,9 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute(
 {
 	int res;
 
-	if(1 || ( (size < sctk_runtime_config_get()->modules.collectives_intra.reduce_intra_for_trsh) &&
+	if(1 || ( (size < _mpc_mpi_config()->coll_opts.reduce_intra_for_trsh) &&
 	          _mpc_dt_is_contig_mem(datatype) &&
-	          (count < sctk_runtime_config_get()->modules.collectives_intra.reduce_intra_for_count_trsh) ) )
+	          (count < _mpc_mpi_config()->coll_opts.reduce_intra_count_trsh) ) )
 	{
 		res = __INTERNAL__PMPI_Reduce_derived_no_commute_for(
 			sendbuf, recvbuf, count, datatype, op,
@@ -7703,8 +7629,8 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 	}
 
 	/* If we are here the buffer is probably too large */
-	reduce_pipelined_tresh = sctk_runtime_config_get()->modules.collectives_shm.reduce_pipelined_tresh;
-	reduce_force_nocommute = sctk_runtime_config_get()->modules.collectives_shm.coll_force_nocommute;
+	reduce_pipelined_tresh = _mpc_mpi_config()->coll_opts.reduce_pipelined_tresh;
+	reduce_force_nocommute = _mpc_mpi_config()->coll_opts.force_nocommute;
 
 	mpi_op = sctk_convert_to_mpc_op(op);
 	mpc_op = mpi_op->op;
@@ -7955,23 +7881,6 @@ int __INTERNAL__PMPI_Reduce_intra(void *sendbuf, void *recvbuf, int count,
 	}
 	else
 	{
-		if(reduce_intra_shm == NULL)
-		{
-			reduce_intra_shm = (int (*)(const void *, void *, int, MPI_Datatype,
-			                            MPI_Op, int, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_shm.reduce_intra_shm.value);
-			assume(reduce_intra_shm != NULL);
-		}
-
-		if(mpc_lowcomm_communicator_is_shared_mem(comm) &&
-		   !_mpc_dt_is_struct(datatype) &&
-		   (mpi_op->op.u_func == NULL) )
-		{
-			return (reduce_intra_shm)(sendbuf, recvbuf, count, datatype, op,
-			                          root, comm);
-		}
-
 		if(!sctk_op_can_commute(mpi_op, datatype) || !_mpc_dt_is_contig_mem(datatype) )
 		{
 			res = __INTERNAL__PMPI_Reduce_derived_no_commute(
@@ -13847,1204 +13756,45 @@ int PMPI_Type_get_name(MPI_Datatype datatype, char *name, int *resultlen)
 	return _mpc_cl_type_get_name(datatype, name, resultlen);
 }
 
-int PMPI_Barrier(MPI_Comm comm)
-{
-	int res = MPI_ERR_INTERN;
-
-#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
-	}
-#endif
-	/* Profiling */
-	SCTK_PROFIL_START(MPI_Barrier);
-
-	/* Error checking */
-	mpi_check_comm(comm);
-
-
-	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
-	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
-
-	/* Intercomm */
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		if(barrier_inter == NULL)
-		{
-			barrier_inter = (int (*)(MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_inter.barrier_inter.value);
-		}
-
-		res = (barrier_inter)(comm);
-	}
-	else
-	{
-		/* Intracomm */
-
-
-		if(barrier_intra_shared_node == NULL)
-		{
-			barrier_intra_shared_node = (int (*)(MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_shm_shared.barrier_intra_shared_node.value);
-		}
-
-		if(barrier_intra == NULL)
-		{
-			barrier_intra = (int (*)(MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_intra.barrier_intra.value);
-		}
-
-		if(mpc_lowcomm_communicator_is_shared_node(comm) )
-		{
-			res = (barrier_intra_shared_node)(comm);
-		}
-		else
-		{
-			/* Use a full net barrier */
-			res = (barrier_intra)(comm);
-		}
-	}
-
-
-	MPC_GENERIC_THREAD_END_PROGRESS();
-
-	/* Profiling */
-	SCTK_PROFIL_END(MPI_Barrier);
-	MPI_HANDLE_RETURN_VAL(res, comm);
-}
-
-int PMPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm)
-{
-	int res = MPI_ERR_INTERN;
-	int size;
-
-#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
-	}
-#endif
-	/* Profiling */
-	SCTK_PROFIL_START(MPI_Bcast);
-
-	/* Error checking */
-	mpi_check_comm(comm);
-
-	if(MPI_IN_PLACE == buffer)
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
-	}
-
-	_mpc_cl_comm_size(comm, &size);
-	mpi_check_root(root, size, comm);
-	mpi_check_rank_send(root, size, comm);
-	mpi_check_buf(buffer, comm);
-	mpi_check_count(count, comm);
-	mpi_check_type(datatype, comm);
-
-
-	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
-	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
-
-
-	/* Bast is not synchronous, the collective can end directly if nothing
-	 * has to be sent/received
-	 */
-	if(count <= 0)
-	{
-		return MPI_SUCCESS;
-	}
-
-	/* Intercomm */
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		if(bcast_inter == NULL)
-		{
-			bcast_inter = (int (*)(void *, int, MPI_Datatype, int, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_inter.bcast_inter.value);
-		}
-
-		res = bcast_inter(buffer, count, datatype, root, comm);
-	}
-	else
-	{
-		/* Intracomm */
-		int size;
-		_mpc_cl_comm_size(comm, &size);
-
-		if(size == 1)
-		{
-			/* Nothing to do */
-			return MPI_SUCCESS;
-		}
-
-		if(bcast_intra_shm == NULL)
-		{
-			bcast_intra_shm = (int (*)(void *, int, MPI_Datatype, int, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_shm.bcast_intra_shm.value);
-		}
-
-
-		if(bcast_intra_shared_node == NULL)
-		{
-			bcast_intra_shared_node = (int (*)(void *, int, MPI_Datatype, int, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_shm_shared.bcast_intra_shared_node.value);
-		}
-
-
-		if(bcast_intra == NULL)
-		{
-			bcast_intra = (int (*)(void *, int, MPI_Datatype, int, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_intra.bcast_intra.value);
-		}
-
-		if(mpc_lowcomm_communicator_is_shared_mem(comm) )
-		{
-			/* Here only work in shared-mem */
-			res = (bcast_intra_shm)(buffer, count, datatype, root, comm);
-		}
-		else if(mpc_lowcomm_communicator_is_shared_node(comm) && _mpc_dt_is_contig_mem(datatype) )
-		{
-			res = (bcast_intra_shared_node)(buffer, count, datatype, root, comm);
-		}
-		else
-		{
-			res = (bcast_intra)(buffer, count, datatype, root, comm);
-		}
-	}
-
-	MPC_GENERIC_THREAD_END_PROGRESS();
-	/* Profiling */
-	SCTK_PROFIL_END(MPI_Bcast);
-	MPI_HANDLE_RETURN_VAL(res, comm);
-}
-
-int PMPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
-                void *recvbuf, int recvcnt, MPI_Datatype recvtype,
-                int root, MPI_Comm comm)
-{
-	int res = MPI_ERR_INTERN;
-	int size, rank;
-
-#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
-	}
-#endif
-	/* Profiling */
-
-	SCTK_PROFIL_START(MPI_Gather);
-
-	mpi_check_comm(comm);
-	res = _mpc_cl_comm_size(comm, &size);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-	res = _mpc_cl_comm_rank(comm, &rank);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-
-	if( (sendcnt == 0 || recvcnt == 0) && !mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		return MPI_SUCCESS;
-	}
-
-	if(sendbuf == recvbuf && rank == root)
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
-	}
-
-	/* Error checking */
-	mpi_check_root(root, size, comm);
-	if(rank != root)
-	{
-		mpi_check_buf(sendbuf, comm);
-		mpi_check_count(sendcnt, comm);
-		mpi_check_type(sendtype, comm);
-	}
-	else
-	{
-		if(MPI_IN_PLACE != sendbuf)
-		{
-			mpi_check_buf(sendbuf, comm);
-			mpi_check_count(sendcnt, comm);
-			mpi_check_type(sendtype, comm);
-		}
-		mpi_check_buf(recvbuf, comm);
-		mpi_check_count(recvcnt, comm);
-		mpi_check_type(recvtype, comm);
-	}
-
-	if( (0 == sendcnt && MPI_ROOT != root &&
-	     (rank != root ||
-	      (rank == root && MPI_IN_PLACE != sendbuf)
-	     )
-	     ) ||
-	    (rank == root && MPI_IN_PLACE == sendbuf && 0 == recvcnt) ||
-	    (0 == recvcnt &&
-	     (MPI_ROOT == root || MPI_PROC_NULL == root)
-	    )
-	    )
-	{
-		return MPI_SUCCESS;
-	}
-
-	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
-	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
-
-	/* Intercomm */
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		if(gather_inter == NULL)
-		{
-			gather_inter = (int (*)(const void *, int, MPI_Datatype, void *, int,
-			                        MPI_Datatype, int, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_inter.gather_inter.value);
-		}
-		res = gather_inter(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype,
-		                   root, comm);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-	}
-	else
-	{
-		/* Intracomm */
-		if(gatherv_intra_shm == NULL)
-		{
-			gatherv_intra_shm =
-				(int (*)(const void *, int, MPI_Datatype, void *, const int *, const int *,
-				         MPI_Datatype, int, MPI_Comm) )sctk_runtime_config_get()
-				->modules.collectives_shm.gatherv_intra_shm.value;
-		}
-
-		if(gather_intra == NULL)
-		{
-			gather_intra =
-				(int (*)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, int,
-				         MPI_Comm) )sctk_runtime_config_get()
-				->modules.collectives_intra.gather_intra.value;
-		}
-
-		if(mpc_lowcomm_communicator_is_shared_mem(comm) )
-		{
-			res = (gatherv_intra_shm)(sendbuf, sendcnt, sendtype, recvbuf, &recvcnt,
-			                          NULL, recvtype, root, comm);
-		}
-		else
-		{
-			res = (gather_intra)(sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
-			                     recvtype, root, comm);
-		}
-	}
-
-	MPC_GENERIC_THREAD_END_PROGRESS();
-
-	/* Profiling */
-	SCTK_PROFIL_END(MPI_Gather);
-
-	MPI_HANDLE_RETURN_VAL(res, comm);
-}
-
-int PMPI_Gatherv(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
-                 void *recvbuf, const int *recvcnts, const int *displs,
-                 MPI_Datatype recvtype, int root, MPI_Comm comm)
-{
-	int res = MPI_ERR_INTERN;
-	int size, rank;
-
-#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
-	}
-#endif
-	/* Profiling */
-	SCTK_PROFIL_START(MPI_Gatherv);
-
-	mpi_check_comm(comm);
-	res = _mpc_cl_comm_size(comm, &size);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-	res = _mpc_cl_comm_rank(comm, &rank);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-
-	/* Error checking */
-	mpi_check_root(root, size, comm);
-	mpi_check_buf(sendbuf, comm);
-	mpi_check_count(sendcnt, comm);
-	mpi_check_type(sendtype, comm);
-	mpi_check_buf(recvbuf, comm);
-	mpi_check_type(recvtype, comm);
-
-	if(sendbuf == recvbuf && rank == root)
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
-	}
-
-	if( (rank != root && MPI_IN_PLACE == sendbuf) ||
-	    (rank == root && MPI_IN_PLACE == recvbuf) )
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
-	}
-
-	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
-	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
-
-	/* Intercomm */
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		if(gatherv_inter == NULL)
-		{
-			gatherv_inter = (int (*)(const void *, int, MPI_Datatype, void *, const int *, const int *,
-			                         MPI_Datatype, int, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_inter.gatherv_inter.value);
-		}
-		res = gatherv_inter(sendbuf, sendcnt, sendtype, recvbuf, recvcnts, displs,
-		                    recvtype, root, comm);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-	}
-	else
-	{
-		/* Intracomm */
-
-		if(gatherv_intra_shm == NULL)
-		{
-			gatherv_intra_shm =
-				(int (*)(const void *, int, MPI_Datatype, void *, const int *, const int *,
-				         MPI_Datatype, int, MPI_Comm) )sctk_runtime_config_get()
-				->modules.collectives_shm.gatherv_intra_shm.value;
-		}
-
-		if(gatherv_intra == NULL)
-		{
-			gatherv_intra =
-				(int (*)(const void *, int, MPI_Datatype, void *, const int *, const int *,
-				         MPI_Datatype, int, MPI_Comm) )sctk_runtime_config_get()
-				->modules.collectives_intra.gatherv_intra.value;
-		}
-
-		if(mpc_lowcomm_communicator_is_shared_mem(comm) )
-		{
-			res = (gatherv_intra_shm)(sendbuf, sendcnt, sendtype, recvbuf, recvcnts,
-			                          displs, recvtype, root, comm);
-		}
-		else
-		{
-			res = (gatherv_intra)(sendbuf, sendcnt, sendtype, recvbuf, recvcnts,
-			                      displs, recvtype, root, comm);
-		}
-
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-	}
-
-
-
-	MPC_GENERIC_THREAD_END_PROGRESS();
-
-	/* Profiling */
-	SCTK_PROFIL_END(MPI_Gatherv);
-	MPI_HANDLE_RETURN_VAL(res, comm);
-}
-
-int PMPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
-                 void *recvbuf, int recvcnt, MPI_Datatype recvtype, int root,
-                 MPI_Comm comm)
-{
-	int res = MPI_ERR_INTERN;
-	int size, rank;
-
-#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
-	}
-#endif
-	/* Profiling */
-	SCTK_PROFIL_START(MPI_Scatter);
-
-	mpi_check_comm(comm);
-	res = _mpc_cl_comm_size(comm, &size);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-	res = _mpc_cl_comm_rank(comm, &rank);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-
-	/* Error checking */
-	mpi_check_root(root, size, comm);
-	if(rank == root)
-	{
-		mpi_check_buf(sendbuf, comm);
-		mpi_check_count(sendcnt, comm);
-		mpi_check_type(sendtype, comm);
-		if(recvbuf == sendbuf)
-		{
-			MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
-		}
-	}
-	else
-	{
-		mpi_check_buf(recvbuf, comm);
-		mpi_check_count(recvcnt, comm);
-		mpi_check_type(recvtype, comm);
-	}
-
-	if( (rank != root && MPI_IN_PLACE == recvbuf) ||
-	    (rank == root && MPI_IN_PLACE == sendbuf) )
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
-	}
-
-	if( (0 == recvcnt && MPI_ROOT != root &&
-	     (rank != root ||
-	      (rank == root && MPI_IN_PLACE != recvbuf)
-	     )
-	     ) ||
-	    (rank == root && MPI_IN_PLACE == recvbuf && 0 == sendcnt) ||
-	    (0 == sendcnt &&
-	     (MPI_ROOT == root || MPI_PROC_NULL == root)
-	    )
-	    )
-	{
-		return MPI_SUCCESS;
-	}
-
-	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
-	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
-
-	/* Intercomm */
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		if(scatter_inter == NULL)
-		{
-			scatter_inter = (int (*)(const void *, int, MPI_Datatype, void *, int,
-			                         MPI_Datatype, int, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_inter.scatter_inter.value);
-		}
-
-		res = scatter_inter(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype, root, comm);
-	}
-	else
-	{
-		/* Intracomm */
-
-		if(scatterv_intra_shm == NULL)
-		{
-			scatterv_intra_shm =
-				(int (*)(const void *, const int *, const int *, MPI_Datatype, void *, int,
-				         MPI_Datatype, int, MPI_Comm) )sctk_runtime_config_get()
-				->modules.collectives_shm.scatterv_intra_shm.value;
-		}
-
-		if(scatter_intra == NULL)
-		{
-			scatter_intra = (int (*)(const void *, int, MPI_Datatype, void *, int,
-			                         MPI_Datatype, int, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_intra.scatter_intra.value);
-		}
-
-
-		if(scatter_intra_shared_node == NULL)
-		{
-			scatter_intra_shared_node = (int (*)(const void *, int, MPI_Datatype, void *, int,
-			                                     MPI_Datatype, int, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_shm_shared.scatter_intra_shared_node.value);
-		}
-
-
-
-		/* Note there is a bug we did not find with derived data-types
-		 * on the scatter(v) operation deactivated for now */
-		//if (mpc_lowcomm_communicator_is_shared_mem(comm) && _mpc_dt_is_contig_mem(sendtype) &&
-		//_mpc_dt_is_contig_mem(recvtype))
-		if(mpc_lowcomm_communicator_is_shared_mem(comm) )
-		{
-			res = (scatterv_intra_shm)(sendbuf, &sendcnt, NULL, sendtype, recvbuf,
-			                           recvcnt, recvtype, root, comm);
-		}
-		else if(mpc_lowcomm_communicator_is_shared_node(comm) )
-		{
-			res = (scatter_intra_shared_node)(sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
-			                                  recvtype, root, comm);
-		}
-		else
-		{
-			res = (scatter_intra)(sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
-			                      recvtype, root, comm);
-		}
-	}
-
-	MPC_GENERIC_THREAD_END_PROGRESS();
-
-	/* Profiling */
-	SCTK_PROFIL_END(MPI_Scatter);
-	MPI_HANDLE_RETURN_VAL(res, comm);
-}
-
-int PMPI_Scatterv(const void *sendbuf, const int *sendcnts, const int *displs,
-                  MPI_Datatype sendtype, void *recvbuf, int recvcnt,
-                  MPI_Datatype recvtype, int root, MPI_Comm comm)
-{
-	int res = MPI_ERR_INTERN;
-	int size, rsize, rank, i;
-	MPI_Aint extent;
-
-#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
-	}
-#endif
-	/* Profiling */
-	SCTK_PROFIL_START(MPI_Scatterv);
-
-	res = PMPI_Type_extent(sendtype, &extent);
-	MPI_HANDLE_ERROR(res, comm, "Error getting extent");
-
-	/* Error checking */
-	mpi_check_comm(comm);
-	res = _mpc_cl_comm_size(comm, &size);
-	MPI_HANDLE_ERROR(res, comm, "Error getting size");
-
-
-	res = _mpc_cl_comm_rank(comm, &rank);
-
-	MPI_HANDLE_ERROR(res, comm, "Error getting rank");
-
-	if(sendbuf == recvbuf && rank == root)
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
-	}
-
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		res = PMPI_Comm_remote_size(comm, &rsize);
-		MPI_HANDLE_ERROR(res, comm, "Error getting remote size");
-
-		mpi_check_root(root, rsize, comm);
-		if(root == MPI_ROOT)
-		{
-			mpi_check_type(sendtype, comm);
-			for(i = 0; i < size; i++)
-			{
-				mpi_check_buf( (char *)(sendbuf) + displs[i] * extent, comm);
-				mpi_check_count(sendcnts[i], comm);
-			}
-		}
-		else if(root != MPI_PROC_NULL)
-		{
-			mpi_check_buf(recvbuf, comm);
-			mpi_check_count(recvcnt, comm);
-			mpi_check_type(recvtype, comm);
-		}
-	}
-	else
-	{
-		mpi_check_root(root, size, comm);
-		if(rank == root)
-		{
-			mpi_check_type(sendtype, comm);
-			for(i = 0; i < size; i++)
-			{
-				mpi_check_buf( (char *)(sendbuf) + displs[i] * extent, comm);
-				mpi_check_count(sendcnts[i], comm);
-			}
-			if(recvbuf != MPI_IN_PLACE)
-			{
-				mpi_check_buf(recvbuf, comm);
-				mpi_check_count(recvcnt, comm);
-				mpi_check_type(recvtype, comm);
-			}
-		}
-		else
-		{
-			mpi_check_buf(recvbuf, comm);
-			mpi_check_count(recvcnt, comm);
-			mpi_check_type(recvtype, comm);
-		}
-	}
-
-	if( (rank != root && MPI_IN_PLACE == recvbuf) ||
-	    (rank == root && MPI_IN_PLACE == sendbuf) )
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
-	}
-
-
-	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
-	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
-	/* Intercomm */
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		if(scatterv_inter == NULL)
-		{
-			scatterv_inter = (int (*)(const void *, const int *, const int *, MPI_Datatype, void *, int,
-			                          MPI_Datatype, int, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_inter.scatterv_inter.value);
-		}
-		res = scatterv_inter(sendbuf, sendcnts, displs, sendtype, recvbuf,
-		                     recvcnt, recvtype, root, comm);
-	}
-	else
-	{
-		/* Intracomm */
-		if(scatterv_intra_shm == NULL)
-		{
-			scatterv_intra_shm =
-				(int (*)(const void *, const int *, const int *, MPI_Datatype, void *, int,
-				         MPI_Datatype, int, MPI_Comm) )sctk_runtime_config_get()
-				->modules.collectives_shm.scatterv_intra_shm.value;
-		}
-
-		if(scatterv_intra == NULL)
-		{
-			scatterv_intra =
-				(int (*)(const void *, const int *, const int *, MPI_Datatype, void *, int,
-				         MPI_Datatype, int, MPI_Comm) )sctk_runtime_config_get()
-				->modules.collectives_intra.scatterv_intra.value;
-		}
-
-		if(mpc_lowcomm_communicator_is_shared_mem(comm) )
-		{
-			res = (scatterv_intra_shm)(sendbuf, sendcnts, displs, sendtype, recvbuf,
-			                           recvcnt, recvtype, root, comm);
-		}
-		else
-		{
-			res = (scatterv_intra)(sendbuf, sendcnts, displs, sendtype, recvbuf,
-			                       recvcnt, recvtype, root, comm);
-		}
-	}
-
-	MPC_GENERIC_THREAD_END_PROGRESS();
-
-	/* Profiling */
-	SCTK_PROFIL_END(MPI_Scatterv);
-	MPI_HANDLE_RETURN_VAL(res, comm);
-}
-
-int PMPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
-                   void *recvbuf, int recvcount, MPI_Datatype recvtype,
-                   MPI_Comm comm)
-{
-	int res = MPI_ERR_INTERN;
-
-	/* Profiling */
-	SCTK_PROFIL_START(MPI_Allgather);
-
-	/* Error checking */
-	mpi_check_comm(comm);
-
-	if(sendbuf != MPI_IN_PLACE)
-	{
-		mpi_check_buf(sendbuf, comm);
-		mpi_check_count(sendcount, comm);
-		mpi_check_type(sendtype, comm);
-	}
-
-	if(sendbuf == recvbuf)
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
-	}
-	mpi_check_buf(recvbuf, comm);
-	mpi_check_count(recvcount, comm);
-	mpi_check_type(recvtype, comm);
-
-	int is_intercomm = mpc_lowcomm_communicator_is_intercomm(comm);
-
-	if(is_intercomm)
-	{
-		if(0 == sendcount && 0 == recvcount)
-		{
-			return MPI_SUCCESS;
-		}
-#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-		else
-		{
-			MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
-		}
-#endif
-	}
-	else
-	{
-		if( (MPI_IN_PLACE != sendbuf && 0 == sendcount) || (0 == recvcount) )
-		{
-			return MPI_SUCCESS;
-		}
-	}
-
-	if(MPI_IN_PLACE == recvbuf)
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
-	}
-
-	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
-	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
-
-	/* Intercomm */
-	if(is_intercomm)
-	{
-		if(allgather_inter == NULL)
-		{
-			allgather_inter = (int (*)(const void *, int, MPI_Datatype, void *, int,
-			                           MPI_Datatype, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_inter.allgather_inter.value);
-		}
-		res = allgather_inter(sendbuf, sendcount, sendtype, recvbuf, recvcount,
-		                      recvtype, comm);
-	}
-	else
-	{
-		/* Intracomm */
-		if(allgather_intra == NULL)
-		{
-			allgather_intra = (int (*)(const void *, int, MPI_Datatype, void *, int,
-			                           MPI_Datatype, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_intra.allgather_intra.value);
-		}
-		res = allgather_intra(sendbuf, sendcount, sendtype, recvbuf, recvcount,
-		                      recvtype, comm);
-	}
-
-	MPC_GENERIC_THREAD_END_PROGRESS();
-
-	/* Profiling */
-	SCTK_PROFIL_END(MPI_Allgather);
-	MPI_HANDLE_RETURN_VAL(res, comm);
-}
-
-int PMPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
-                    void *recvbuf, const int *recvcount, const int *displs,
-                    MPI_Datatype recvtype, MPI_Comm comm)
-{
-	int res = MPI_ERR_INTERN;
-
-#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
-	}
-#endif
-
-	/* Profiling */
-	SCTK_PROFIL_START(MPI_Allgatherv);
-
-	mpi_check_comm(comm);
-
-	if(sendbuf != MPI_IN_PLACE)
-	{
-		mpi_check_buf(sendbuf, comm);
-		mpi_check_count(sendcount, comm);
-		mpi_check_type(sendtype, comm);
-	}
-
-	if(sendbuf == recvbuf)
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "Sendbuf is equal to Recv Buff");
-	}
-
-	mpi_check_buf(recvbuf, comm);
-	mpi_check_type(recvtype, comm);
-
-	if(MPI_IN_PLACE == recvbuf)
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "RecvBuff is MPI_IN_PLACE");
-	}
-
-	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
-	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
-
-	/* Intercomm */
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		if(allgatherv_inter == NULL)
-		{
-			allgatherv_inter = (int (*)(const void *, int, MPI_Datatype,
-			                            void *, const int *, const int *,
-			                            MPI_Datatype, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_inter.allgatherv_inter.value);
-		}
-		res = allgatherv_inter(sendbuf, sendcount, sendtype, recvbuf, recvcount, displs,
-		                       recvtype, comm);
-	}
-	else
-	{
-		/* Intracomm */
-		if(allgatherv_intra == NULL)
-		{
-			allgatherv_intra = (int (*)(const void *, int, MPI_Datatype,
-			                            void *, const int *, const int *,
-			                            MPI_Datatype, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_intra.allgatherv_intra.value);
-		}
-		res = allgatherv_intra(sendbuf, sendcount, sendtype, recvbuf, recvcount, displs,
-		                       recvtype, comm);
-	}
-
-
-	MPC_GENERIC_THREAD_END_PROGRESS();
-
-	/* Profiling */
-	SCTK_PROFIL_END(MPI_Allgatherv);
-	MPI_HANDLE_RETURN_VAL(res, comm);
-}
-
-int PMPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
-                  void *recvbuf, int recvcount, MPI_Datatype recvtype,
-                  MPI_Comm comm)
-{
-	int res = MPI_ERR_INTERN;
-
-#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
-	}
-#endif
-	/* Profiling */
-	SCTK_PROFIL_START(MPI_Alltoall);
-
-	/* Error checking */
-	if(sendcount == 0 && recvcount == 0)
-	{
-		return MPI_SUCCESS;
-	}
-	mpi_check_comm(comm);
-	if(sendbuf != MPI_IN_PLACE)
-	{
-		mpi_check_buf(sendbuf, comm);
-		mpi_check_count(sendcount, comm);
-		mpi_check_type(sendtype, comm);
-	}
-	mpi_check_buf(recvbuf, comm);
-	mpi_check_count(recvcount, comm);
-	mpi_check_type(recvtype, comm);
-
-	if(MPI_IN_PLACE == sendbuf)
-	{
-		sendcount = recvcount;
-		sendtype  = recvtype;
-	}
-
-	if(recvbuf == MPI_IN_PLACE || sendbuf == recvbuf)
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
-	}
-
-	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
-	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
-
-	/* Intercomm */
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		if(alltoall_inter == NULL)
-		{
-			alltoall_inter = (int (*)(const void *, int, MPI_Datatype, void *, int,
-			                          MPI_Datatype, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_inter.alltoall_inter.value);
-		}
-		res = alltoall_inter(sendbuf, sendcount, sendtype, recvbuf, recvcount,
-		                     recvtype, comm);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-	}
-	else
-	{
-		/* Intracomm */
-
-		if(alltoallv_intra_shm == NULL)
-		{
-			alltoallv_intra_shm = (int (*)(const void *, const int *, const int *, MPI_Datatype, void *,
-			                               const int *, const int *, MPI_Datatype, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_shm.alltoallv_intra_shm.value);
-		}
-
-		if(alltoall_intra == NULL)
-		{
-			alltoall_intra = (int (*)(const void *, int, MPI_Datatype, void *, int,
-			                          MPI_Datatype, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_intra.alltoall_intra.value);
-		}
-
-
-		if(alltoall_intra_shared_node == NULL)
-		{
-			alltoall_intra_shared_node = (int (*)(const void *, int, MPI_Datatype, void *, int,
-			                                      MPI_Datatype, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_shm_shared.alltoall_intra_shared_node.value);
-		}
-
-
-		if(mpc_lowcomm_communicator_is_shared_mem(comm) )
-		{
-			res = (alltoallv_intra_shm)(sendbuf, &sendcount, NULL, sendtype, recvbuf,
-			                            &recvcount, NULL, recvtype, comm);
-		}
-		else if(mpc_lowcomm_communicator_is_shared_node(comm) )
-		{
-			res = (alltoall_intra_shared_node)(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
-		}
-		else
-		{
-			res = (alltoall_intra)(sendbuf, sendcount, sendtype, recvbuf, recvcount,
-			                       recvtype, comm);
-		}
-	}
-
-
-	MPC_GENERIC_THREAD_END_PROGRESS();
-
-	/* Profiling */
-	SCTK_PROFIL_END(MPI_Alltoall);
-	MPI_HANDLE_RETURN_VAL(res, comm);
-}
-
-int PMPI_Alltoallv(const void *sendbuf, const int *sendcnts, const int *sdispls,
-                   MPI_Datatype sendtype, void *recvbuf, const int *recvcnts,
-                   const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm)
-{
-	int res = MPI_ERR_INTERN;
-	int size;
-	int i;
-
-#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
-	}
-#endif
-	/* Profiling */
-	SCTK_PROFIL_START(MPI_Alltoallv);
-
-	/* Error checking */
-	mpi_check_comm(comm);
-	res = _mpc_cl_comm_size(comm, &size);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-
-	if(MPI_IN_PLACE == sendbuf)
-	{
-		sendcnts = recvcnts;
-		sdispls  = rdispls;
-		sendtype = recvtype;
-	}
-
-	for(i = 0; i < size; i++)
-	{
-		mpi_check_count(sendcnts[i], comm);
-		mpi_check_count(recvcnts[i], comm);
-	}
-	mpi_check_buf(sendbuf, comm);
-	mpi_check_type(sendtype, comm);
-	mpi_check_buf(recvbuf, comm);
-	mpi_check_type(recvtype, comm);
-
-	if(MPI_IN_PLACE == recvbuf || recvbuf == sendbuf)
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
-	}
-
-	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
-	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
-
-
-	/* Intercomm */
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		if(alltoallv_inter == NULL)
-		{
-			alltoallv_inter = (int (*)(const void *, const int *, const int *, MPI_Datatype, void *,
-			                           const int *, const int *, MPI_Datatype, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_inter.alltoallv_inter.value);
-		}
-		res = alltoallv_inter(sendbuf, sendcnts, sdispls, sendtype, recvbuf,
-		                      recvcnts, rdispls, recvtype, comm);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-	}
-	else
-	{
-		/* Intracomm */
-		if(alltoallv_intra_shm == NULL)
-		{
-			alltoallv_intra_shm = (int (*)(const void *, const int *, const int *, MPI_Datatype, void *,
-			                               const int *, const int *, MPI_Datatype, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_shm.alltoallv_intra_shm.value);
-		}
-
-		if(alltoallv_intra == NULL)
-		{
-			alltoallv_intra = (int (*)(const void *, const int *, const int *, MPI_Datatype, void *,
-			                           const int *, const int *, MPI_Datatype, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_intra.alltoallv_intra.value);
-		}
-
-		if(mpc_lowcomm_communicator_is_shared_mem(comm) )
-		{
-			res = alltoallv_intra_shm(sendbuf, sendcnts, sdispls, sendtype, recvbuf,
-			                          recvcnts, rdispls, recvtype, comm);
-		}
-		else
-		{
-			res = alltoallv_intra(sendbuf, sendcnts, sdispls, sendtype, recvbuf,
-			                      recvcnts, rdispls, recvtype, comm);
-		}
-	}
-
-
-	MPC_GENERIC_THREAD_END_PROGRESS();
-
-	/* Profiling */
-	SCTK_PROFIL_END(MPI_Alltoallv);
-	MPI_HANDLE_RETURN_VAL(res, comm);
-}
-
-int PMPI_Alltoallw(const void *sendbuf, const int *sendcnts, const int *sdispls, const MPI_Datatype *sendtypes,
-                   void *recvbuf, const int *recvcnts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm)
-{
-	int res = MPI_ERR_INTERN;
-	//int size, rsize, rank;
-	int size, rank;
-	int i;
-	MPI_Aint sextent, rextent;
-
-#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
-	}
-#endif
-	/* Profiling */
-	SCTK_PROFIL_START(MPI_Alltoallw);
-
-	res = _mpc_cl_comm_size(comm, &size);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-	//res = PMPI_Comm_remote_size(comm, &rsize);
-	//if(res != MPI_SUCCESS)
-	//{
-	//	return res;
-	//}
-	res = _mpc_cl_comm_rank(comm, &rank);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-	if(sendbuf == recvbuf)
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
-	}
-	/* Error checking */
-	mpi_check_comm(comm);
-	res = _mpc_cl_comm_size(comm, &size);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-
-	for(i = 0; i < size; i++)
-	{
-		if(sendbuf != MPI_IN_PLACE)
-		{
-			mpi_check_type(sendtypes[i], comm);
-			res = PMPI_Type_extent(sendtypes[i], &sextent);
-			if(res != MPI_SUCCESS)
-			{
-				return res;
-			}
-			mpi_check_buf( (char *)(sendbuf) + sdispls[i] * sextent, comm);
-			mpi_check_count(sendcnts[i], comm);
-		}
-		mpi_check_type(recvtypes[i], comm);
-		res = PMPI_Type_extent(recvtypes[i], &rextent);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-		mpi_check_buf( (char *)(recvbuf) + rdispls[i] * rextent, comm);
-		mpi_check_count(recvcnts[i], comm);
-	}
-
-	if(MPI_IN_PLACE == sendbuf)
-	{
-		sendcnts  = recvcnts;
-		sdispls   = rdispls;
-		sendtypes = recvtypes;
-	}
-
-	if( (NULL == sendcnts) || (NULL == sdispls) || (NULL == sendtypes) ||
-	    (NULL == recvcnts) || (NULL == rdispls) || (NULL == recvtypes) ||
-	    recvbuf == MPI_IN_PLACE)
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
-	}
-
-
-	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
-	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
-	res = __INTERNAL__PMPI_Alltoallw(sendbuf, sendcnts, sdispls, sendtypes,
-	                                 recvbuf, recvcnts, rdispls, recvtypes,
-	                                 comm);
-	MPC_GENERIC_THREAD_END_PROGRESS();
-
-	/* Profiling */
-	SCTK_PROFIL_END(MPI_Alltoallw);
-	MPI_HANDLE_RETURN_VAL(res, comm);
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* Neighbors collectives */
 int PMPI_Neighbor_allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm)
@@ -15323,113 +14073,6 @@ int PMPI_Neighbor_alltoallw(const void *sendbuf, const int sendcounts[], const M
 	return res;
 }
 
-int PMPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm)
-{
-	int res = MPI_ERR_INTERN;
-	int size, rank;
-
-#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
-	}
-#endif
-	/* Profiling */
-	SCTK_PROFIL_START(MPI_Reduce);
-
-	/* Error checking */
-	mpi_check_comm(comm);
-	res = _mpc_cl_comm_size(comm, &size);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-	res = _mpc_cl_comm_rank(comm, &rank);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-
-	mpi_check_root(root, size, comm);
-	mpi_check_count(count, comm);
-	mpi_check_type(datatype, comm);
-	mpi_check_op(op, datatype, comm);
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		if(root == MPI_ROOT)
-		{
-			mpi_check_buf(recvbuf, comm);
-		}
-		else if(root != MPI_PROC_NULL)
-		{
-			mpi_check_buf(sendbuf, comm);
-		}
-	}
-	else
-	{
-		if(rank == root)
-		{
-			if(sendbuf == MPI_IN_PLACE)
-			{
-				mpi_check_buf(recvbuf, comm);
-			}
-			else
-			{
-				mpi_check_buf(sendbuf, comm);
-			}
-			mpi_check_buf(recvbuf, comm);
-		}
-		else
-		{
-			mpi_check_buf(sendbuf, comm);
-		}
-	}
-
-	if(rank == root &&
-	   ( (MPI_IN_PLACE == recvbuf) || (sendbuf == recvbuf) ) )
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
-	}
-
-	if(0 == count)
-	{
-		return MPI_SUCCESS;
-	}
-
-	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
-	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
-
-	/* Intercomm */
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		if(reduce_inter == NULL)
-		{
-			reduce_inter = (int (*)(const void *, void *, int, MPI_Datatype,
-			                        MPI_Op, int, MPI_Comm) )(sctk_runtime_config_get()->modules.collectives_inter.reduce_inter.value);
-		}
-		res = (reduce_inter)(sendbuf, recvbuf, count, datatype, op, root, comm);
-	}
-	else
-	{
-		/* Intracomm */
-		if(reduce_intra == NULL)
-		{
-			reduce_intra = (int (*)(const void *, void *, int, MPI_Datatype, MPI_Op,
-			                        int, MPI_Comm) )(
-				sctk_runtime_config_get()
-				->modules.collectives_intra.reduce_intra.value);
-		}
-
-		res = (reduce_intra)(sendbuf, recvbuf, count, datatype, op, root, comm);
-	}
-
-	MPC_GENERIC_THREAD_END_PROGRESS();
-
-	/* Profiling */
-	SCTK_PROFIL_END(MPI_Reduce);
-	MPI_HANDLE_RETURN_VAL(res, comm);
-}
-
 int PMPI_Op_create(MPI_User_function *function, int commute, MPI_Op *op)
 {
 	sctk_Op *mpc_op = NULL;
@@ -15509,300 +14152,6 @@ int PMPI_Op_free(MPI_Op *op)
 int PMPI_Op_commutative(__UNUSED__ MPI_Op op, __UNUSED__ int *commute)
 {
 	not_implemented(); return MPI_ERR_INTERN;
-}
-
-int PMPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
-                   MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
-{
-	int res = MPI_ERR_INTERN;
-
-#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
-	}
-#endif
-	/* Profiling */
-	SCTK_PROFIL_START(MPI_Allreduce);
-
-	/* Error checking */
-	mpi_check_comm(comm);
-	mpi_check_buf(sendbuf, comm);
-	mpi_check_buf(recvbuf, comm);
-	mpi_check_count(count, comm);
-	mpi_check_type(datatype, comm);
-	mpi_check_op(op, datatype, comm);
-
-	if(MPI_IN_PLACE == recvbuf)
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_BUFFER, "");
-	}
-	if(0 == count)
-	{
-		return MPI_SUCCESS;
-	}
-
-	if(recvbuf != MPI_BOTTOM)
-	{
-		if(recvbuf == sendbuf)
-		{
-			MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
-		}
-	}
-
-	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
-	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
-
-/* Intercomm */
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		if(allreduce_inter == NULL)
-		{
-			allreduce_inter = (int (*)(const void *, void *, int, MPI_Datatype,
-			                           MPI_Op, MPI_Comm) )(sctk_runtime_config_get()->modules.collectives_inter.allreduce_inter.value);
-		}
-		res = allreduce_inter(sendbuf, recvbuf, count, datatype, op,
-		                      comm);
-	}
-	else
-	{
-		/* Intracomm */
-		if(allreduce_intra == NULL)
-		{
-			allreduce_intra = (int (*)(const void *, void *, int, MPI_Datatype,
-			                           MPI_Op, MPI_Comm) )(sctk_runtime_config_get()->modules.collectives_intra.allreduce_intra.value);
-		}
-		res = allreduce_intra(sendbuf, recvbuf, count, datatype, op, comm);
-	}
-
-	MPC_GENERIC_THREAD_END_PROGRESS();
-
-	/* Profiling */
-	SCTK_PROFIL_END(MPI_Allreduce);
-	MPI_HANDLE_RETURN_VAL(res, comm);
-}
-
-int PMPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcnts[],
-                        MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
-{
-	int i;
-	int size;
-	int res = MPI_ERR_INTERN;
-
-#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
-	}
-#endif
-	/* Profiling */
-	SCTK_PROFIL_START(MPI_Reduce_scatter);
-
-	/* Error checking */
-	mpi_check_comm(comm);
-	if(MPI_IN_PLACE == recvbuf || sendbuf == recvbuf)
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
-	}
-	mpi_check_buf(sendbuf, comm);
-	mpi_check_buf(recvbuf, comm);
-
-	res = _mpc_cl_comm_size(comm, &size);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-
-	for(i = 0; i < size; i++)
-	{
-		mpi_check_count(recvcnts[i], comm);
-	}
-	mpi_check_type(datatype, comm);
-	mpi_check_op(op, datatype, comm);
-
-	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
-	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
-
-	/* Intercomm */
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		if(reduce_scatter_inter == NULL)
-		{
-			reduce_scatter_inter = (int (*)(const void *, void *, const int *, MPI_Datatype,
-			                                MPI_Op, MPI_Comm) )(sctk_runtime_config_get()->modules.collectives_inter.reduce_scatter_inter.value);
-		}
-		res = reduce_scatter_inter(sendbuf, recvbuf, recvcnts, datatype,
-		                           op, comm);
-	}
-	else
-	{
-		/* Intracomm */
-		if(reduce_scatter_intra == NULL)
-		{
-			reduce_scatter_intra = (int (*)(const void *, void *, const int *, MPI_Datatype,
-			                                MPI_Op, MPI_Comm) )(sctk_runtime_config_get()->modules.collectives_intra.reduce_scatter_intra.value);
-		}
-		res = reduce_scatter_intra(sendbuf, recvbuf, recvcnts, datatype,
-		                           op, comm);
-	}
-	MPC_GENERIC_THREAD_END_PROGRESS();
-
-	/* Profiling */
-	SCTK_PROFIL_END(MPI_Reduce_scatter);
-	MPI_HANDLE_RETURN_VAL(res, comm);
-}
-
-int PMPI_Reduce_scatter_block(const void *sendbuf, void *recvbuf, int recvcnt,
-                              MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
-{
-	int size;
-	int res = MPI_ERR_INTERN;
-
-#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
-	}
-#endif
-	/* Profiling */
-	SCTK_PROFIL_START(MPI_Reduce_scatter_block);
-
-	/* Error checking */
-	mpi_check_comm(comm);
-	mpi_check_buf(sendbuf, comm);
-	mpi_check_buf(recvbuf, comm);
-
-	_mpc_cl_comm_size(comm, &size);
-
-	if(MPI_IN_PLACE == recvbuf || sendbuf == recvbuf)
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
-	}
-	mpi_check_count(recvcnt, comm);
-	mpi_check_type(datatype, comm);
-	mpi_check_op(op, datatype, comm);
-
-	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
-	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
-
-
-	/* Intercomm */
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		if(reduce_scatter_block_inter == NULL)
-		{
-			reduce_scatter_block_inter = (int (*)(const void *, void *, int, MPI_Datatype,
-			                                      MPI_Op, MPI_Comm) )(sctk_runtime_config_get()->modules.collectives_inter.reduce_scatter_block_inter.value);
-		}
-		res = reduce_scatter_block_inter(sendbuf, recvbuf, recvcnt, datatype,
-		                                 op, comm);
-	}
-	else
-	{
-		/* Intracomm */
-		if(reduce_scatter_block_intra == NULL)
-		{
-			reduce_scatter_block_intra = (int (*)(const void *, void *, int, MPI_Datatype,
-			                                      MPI_Op, MPI_Comm) )(sctk_runtime_config_get()->modules.collectives_intra.reduce_scatter_block_intra.value);
-		}
-		res = reduce_scatter_block_intra(sendbuf, recvbuf, recvcnt, datatype,
-		                                 op, comm);
-	}
-
-	MPC_GENERIC_THREAD_END_PROGRESS();
-
-	/* Profiling */
-	SCTK_PROFIL_END(MPI_Reduce_scatter_block);
-	MPI_HANDLE_RETURN_VAL(res, comm);
-}
-
-int PMPI_Scan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
-              MPI_Op op, MPI_Comm comm)
-{
-	int res = MPI_ERR_INTERN;
-
-	/* Error checking */
-	mpi_check_comm(comm);
-	mpi_check_buf(sendbuf, comm);
-	mpi_check_buf(recvbuf, comm);
-	mpi_check_count(count, comm);
-	mpi_check_type(datatype, comm);
-	mpi_check_op(op, datatype, comm);
-
-	/* Invalid operation for intercommunicators */
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
-	}
-	/* Profiling */
-	SCTK_PROFIL_START(MPI_Scan);
-
-	if(sendbuf == recvbuf)
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
-	}
-
-
-	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
-	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
-	/* Only on Intracomm */
-	if(scan_intra == NULL)
-	{
-		scan_intra = (int (*)(const void *, void *, int, MPI_Datatype,
-		                      MPI_Op, MPI_Comm) )(sctk_runtime_config_get()->modules.collectives_intra.scan_intra.value);
-	}
-
-	res = scan_intra(sendbuf, recvbuf, count, datatype, op, comm);
-
-	MPC_GENERIC_THREAD_END_PROGRESS();
-
-	/* Profiling */
-	SCTK_PROFIL_END(MPI_Scan);
-	MPI_HANDLE_RETURN_VAL(res, comm);
-}
-
-int PMPI_Exscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
-                MPI_Op op, MPI_Comm comm)
-{
-	int res = MPI_ERR_INTERN;
-
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
-	}
-	/* Profiling */
-	SCTK_PROFIL_START(MPI_Exscan);
-
-	if(sendbuf == recvbuf)
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
-	}
-
-	/* Error checking */
-	mpi_check_comm(comm);
-	mpi_check_buf(sendbuf, comm);
-	mpi_check_buf(recvbuf, comm);
-	mpi_check_count(count, comm);
-	mpi_check_type(datatype, comm);
-	mpi_check_op(op, datatype, comm);
-
-
-	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
-	                                  sctk_runtime_config_get()->modules.scheduler.progress_basic_priority);
-
-	/* Only on Intracomm */
-	if(exscan_intra == NULL)
-	{
-		exscan_intra = (int (*)(const void *, void *, int, MPI_Datatype,
-		                        MPI_Op, MPI_Comm) )(sctk_runtime_config_get()->modules.collectives_intra.exscan_intra.value);
-	}
-	res = exscan_intra(sendbuf, recvbuf, count, datatype, op, comm);
-
-	MPC_GENERIC_THREAD_END_PROGRESS();
-
-	/* Profiling */
-	SCTK_PROFIL_END(MPI_Exscan);
-	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
 int PMPI_Group_size(MPI_Group group, int *size)
@@ -18771,8 +17120,8 @@ int PMPI_Init(int *argc, char ***argv)
 		task_specific->mpc_mpi_data->groups   = NULL;
 		task_specific->mpc_mpi_data->buffers  = NULL;
 		task_specific->mpc_mpi_data->ops      = NULL;
-		if(sctk_runtime_config_get()
-		   ->modules.nbc.use_progress_thread == 1)
+
+		if(_mpc_mpi_config()->nbc.progress_thread)
 		{
 			task_specific->mpc_mpi_data->NBC_Pthread_handles = NULL;
 			mpc_thread_mutex_init(&(task_specific->mpc_mpi_data->list_handles_lock),
@@ -18781,6 +17130,7 @@ int PMPI_Init(int *argc, char ***argv)
 			mpc_thread_mutex_init(
 				&(task_specific->mpc_mpi_data->nbc_initializer_lock), NULL);
 		}
+
 		__sctk_init_mpc_request();
 		__buffer_init();
 		__sctk_init_mpi_errors();
@@ -19752,29 +18102,29 @@ int PMPIX_Halo_cell_bind_remote(MPI_Halo_exchange ex, MPI_Halo halo, int remote,
 
 int PMPI_T_init_thread(int required, int *provided)
 {
-	return mpc_MPI_T_init_thread(required, provided);
+	not_implemented();
 }
 
 int PMPI_T_finalize(void)
 {
-	return mpc_MPI_T_finalize();
+	not_implemented();
 }
 
 int PMPI_T_enum_get_info(MPI_T_enum enumtype, int *num, char *name,
                          int *name_len)
 {
-	return mpc_MPI_T_enum_get_info(enumtype, num, name, name_len);
+	not_implemented();
 }
 
 int PMPI_T_enum_get_item(MPI_T_enum enumtype, int index, int *value, char *name,
                          int *name_len)
 {
-	return mpc_MPI_T_enum_get_item(enumtype, index, value, name, name_len);
+	not_implemented();
 }
 
 int PMPI_T_cvar_get_num(int *num_cvar)
 {
-	return mpc_MPI_T_cvar_get_num(num_cvar);
+	not_implemented();
 }
 
 int PMPI_T_cvar_get_info(int cvar_index, char *name, int *name_len,
@@ -19782,153 +18132,144 @@ int PMPI_T_cvar_get_info(int cvar_index, char *name, int *name_len,
                          MPI_T_enum *enumtype, char *desc, int *desc_len,
                          int *bind, int *scope)
 {
-	return mpc_MPI_T_cvar_get_info(cvar_index, name, name_len, verbosity,
-	                               datatype, enumtype, desc, desc_len, bind,
-	                               scope);
+	not_implemented();
 }
 
 int PMPI_T_cvar_get_index(const char *name, int *cvar_index)
 {
-	return mpc_MPI_T_cvar_get_index(name, cvar_index);
+	not_implemented();
 }
 
 int PMPI_T_cvar_handle_alloc(int cvar_index, void *obj_handle,
                              MPI_T_cvar_handle *handle, int *count)
 {
-	return mpc_MPI_T_cvar_handle_alloc(cvar_index, obj_handle, handle, count);
+	not_implemented();
 }
 
 int PMPI_T_cvar_handle_free(MPI_T_cvar_handle *handle)
 {
-	return mpc_MPI_T_cvar_handle_free(handle);
+	not_implemented();
 }
 
 int PMPI_T_cvar_read(MPI_T_cvar_handle handle, void *buff)
 {
-	return mpc_MPI_T_cvar_read(handle, buff);
+	not_implemented();
 }
 
 int PMPI_T_cvar_write(MPI_T_cvar_handle handle, const void *buff)
 {
-	return mpc_MPI_T_cvar_write(handle, buff);
+	not_implemented();
 }
 
 int PMPI_T_pvar_get_num(int *num_pvar)
 {
-	return mpc_MPI_T_pvar_get_num(num_pvar);
+	not_implemented();
 }
-
 int PMPI_T_pvar_get_info(int pvar_index, char *name, int *name_len,
                          int *verbosity, int *var_class, MPI_Datatype *datatype,
                          MPI_T_enum *enumtype, char *desc, int *desc_len,
                          int *bind, int *readonly, int *continuous,
                          int *atomic)
 {
-	return mpc_MPI_T_pvar_get_info(pvar_index, name, name_len, verbosity,
-	                               var_class, datatype, enumtype, desc, desc_len,
-	                               bind, readonly, continuous, atomic);
+	not_implemented();
 }
 
 int PMPI_T_pvar_get_index(const char *name, __UNUSED__ int pvar_class, int *pvar_index)
 {
-	int _pvar_class;
-
-	return mpc_MPI_T_pvar_get_index(name, &_pvar_class, pvar_index);
+	not_implemented();
 }
 
 int PMPI_T_pvar_session_create(MPI_T_pvar_session *session)
 {
-	return mpc_MPI_T_pvar_session_create(session);
+	not_implemented();
 }
 
 int PMPI_T_pvar_session_free(MPI_T_pvar_session *session)
 {
-	return mpc_MPI_T_pvar_session_free(session);
+	not_implemented();
 }
 
 int PMPI_T_pvar_handle_alloc(MPI_T_pvar_session session, int pvar_index,
                              void *obj_handle, MPI_T_pvar_handle *handle,
                              int *count)
 {
-	return mpc_MPI_T_pvar_handle_alloc(session, pvar_index, obj_handle, handle,
-	                                   count);
+	not_implemented();
 }
 
 int PMPI_T_pvar_handle_free(MPI_T_pvar_session session,
                             MPI_T_pvar_handle *handle)
 {
-	return mpc_MPI_T_pvar_handle_free(session, handle);
+	not_implemented();
 }
 
 int PMPI_T_pvar_start(MPI_T_pvar_session session, MPI_T_pvar_handle handle)
 {
-	return mpc_MPI_T_pvar_start(session, handle);
+	not_implemented();
 }
 
 int PMPI_T_pvar_stop(MPI_T_pvar_session session, MPI_T_pvar_handle handle)
 {
-	return mpc_MPI_T_pvar_stop(session, handle);
+	not_implemented();
 }
 
 int PMPI_T_pvar_read(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
                      void *buff)
 {
-	return mpc_MPI_T_pvar_read(session, handle, buff);
+	not_implemented();
 }
 
 int PMPI_T_pvar_readreset(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
                           void *buff)
 {
-	return mpc_MPI_T_pvar_readreset(session, handle, buff);
+	not_implemented();
 }
 
 int PMPI_T_pvar_write(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
                       const void *buff)
 {
-	return mpc_MPI_T_pvar_write(session, handle, buff);
+	not_implemented();
 }
 
 int PMPI_T_pvar_reset(MPI_T_pvar_session session, MPI_T_pvar_handle handle)
 {
-	return mpc_MPI_T_pvar_reset(session, handle);
+	not_implemented();
 }
 
 int PMPI_T_category_get_num(int *num_cat)
 {
-	return mpc_MPI_T_category_get_num(num_cat);
+	not_implemented();
 }
 
 int PMPI_T_category_get_info(int cat_index, char *name, int *name_len,
                              char *desc, int *desc_len, int *num_cvars,
                              int *num_pvars, int *num_categories)
 {
-	return mpc_MPI_T_category_get_info(cat_index, name, name_len, desc, desc_len,
-	                                   num_cvars, num_pvars, num_categories);
+	not_implemented();
 }
 
 int PMPI_T_category_get_index(const char *name, int *cat_index)
 {
-	return mpc_MPI_T_category_get_index(name, cat_index);
+	not_implemented();
 }
 
 int PMPI_T_category_get_cvars(int cat_index, int len, int indices[])
 {
-	return mpc_MPI_T_category_get_cvars(cat_index, len, indices);
+	not_implemented();
 }
 
 int PMPI_T_category_get_pvars(int cat_index, int len, int indices[])
 {
-	return mpc_MPI_T_category_get_pvars(cat_index, len, indices);
+	not_implemented();
 }
 
 int PMPI_T_category_get_categories(int cat_index, int len, int indices[])
 {
-	return mpc_MPI_T_category_get_categories(cat_index, len, indices);
+	not_implemented();
 }
 
 int PMPI_T_category_changed(int *stamp)
 {
-	return mpc_MPI_T_category_changed(stamp);
+	not_implemented();
 }
 
 /* Error Handling */
@@ -20732,4 +19073,1137 @@ void mpc_mpi_init()
 	mpc_common_init_callback_register("MPC_MPI Force Yield",
 	                                  "Force Yield as condition was met",
 	                                  __force_yield, 0);
+}
+
+
+/***************
+ * COLLECTIVES *
+ ***************/
+
+
+int PMPI_Barrier(MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
+	}
+#endif
+	/* Profiling */
+	SCTK_PROFIL_START(MPI_Barrier);
+
+	/* Error checking */
+	mpi_check_comm(comm);
+
+
+	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
+	                                  mpc_thread_get_progress_basic_prio());
+
+	
+	int (*barrier_ptr)(MPI_Comm) = NULL;
+	MPC_MPI_CONFIG_ROUTE_COLL(barrier_ptr, comm, barrier); 
+	assume(barrier_ptr != NULL);
+	
+	res = (barrier_ptr)(comm);
+
+	MPC_GENERIC_THREAD_END_PROGRESS();
+
+	/* Profiling */
+	SCTK_PROFIL_END(MPI_Barrier);
+	MPI_HANDLE_RETURN_VAL(res, comm);
+}
+
+
+int PMPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+	int size;
+
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
+	}
+#endif
+	/* Profiling */
+	SCTK_PROFIL_START(MPI_Bcast);
+
+	/* Error checking */
+	mpi_check_comm(comm);
+
+	if(MPI_IN_PLACE == buffer)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+	}
+
+	_mpc_cl_comm_size(comm, &size);
+	mpi_check_root(root, size, comm);
+	mpi_check_rank_send(root, size, comm);
+	mpi_check_buf(buffer, comm);
+	mpi_check_count(count, comm);
+	mpi_check_type(datatype, comm);
+
+
+	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
+	                                  mpc_thread_get_progress_basic_prio());
+
+
+	/* Bast is not synchronous, the collective can end directly if nothing
+	 * has to be sent/received
+	 */
+	if(count <= 0)
+	{
+		return MPI_SUCCESS;
+	}
+
+	int (*bcast_ptr)(void *, int , MPI_Datatype, int , MPI_Comm comm) = NULL;
+	MPC_MPI_CONFIG_ROUTE_COLL(bcast_ptr, comm, bcast); 
+	assume(bcast_ptr != NULL);
+	
+	res = (bcast_ptr)(buffer, count, datatype, root, comm);
+
+	MPC_GENERIC_THREAD_END_PROGRESS();
+	/* Profiling */
+	SCTK_PROFIL_END(MPI_Bcast);
+	MPI_HANDLE_RETURN_VAL(res, comm);
+}
+
+
+
+int PMPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
+                void *recvbuf, int recvcnt, MPI_Datatype recvtype,
+                int root, MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+	int size, rank;
+
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
+	}
+#endif
+	/* Profiling */
+
+	SCTK_PROFIL_START(MPI_Gather);
+
+	mpi_check_comm(comm);
+	res = _mpc_cl_comm_size(comm, &size);
+	if(res != MPI_SUCCESS)
+	{
+		return res;
+	}
+	res = _mpc_cl_comm_rank(comm, &rank);
+	if(res != MPI_SUCCESS)
+	{
+		return res;
+	}
+
+	if( (sendcnt == 0 || recvcnt == 0) && !mpc_lowcomm_communicator_is_intercomm(comm) )
+	{
+		return MPI_SUCCESS;
+	}
+
+	if(sendbuf == recvbuf && rank == root)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+	}
+
+	/* Error checking */
+	mpi_check_root(root, size, comm);
+	if(rank != root)
+	{
+		mpi_check_buf(sendbuf, comm);
+		mpi_check_count(sendcnt, comm);
+		mpi_check_type(sendtype, comm);
+	}
+	else
+	{
+		if(MPI_IN_PLACE != sendbuf)
+		{
+			mpi_check_buf(sendbuf, comm);
+			mpi_check_count(sendcnt, comm);
+			mpi_check_type(sendtype, comm);
+		}
+		mpi_check_buf(recvbuf, comm);
+		mpi_check_count(recvcnt, comm);
+		mpi_check_type(recvtype, comm);
+	}
+
+	if( (0 == sendcnt && MPI_ROOT != root &&
+	     (rank != root ||
+	      (rank == root && MPI_IN_PLACE != sendbuf)
+	     )
+	     ) ||
+	    (rank == root && MPI_IN_PLACE == sendbuf && 0 == recvcnt) ||
+	    (0 == recvcnt &&
+	     (MPI_ROOT == root || MPI_PROC_NULL == root)
+	    )
+	    )
+	{
+		return MPI_SUCCESS;
+	}
+
+	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
+	                                  mpc_thread_get_progress_basic_prio());
+
+
+	int (*gather_ptr)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm) = NULL;
+	MPC_MPI_CONFIG_ROUTE_COLL(gather_ptr, comm, gather); 
+	assume(gather_ptr != NULL);
+	
+	res = (gather_ptr)(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype,  root, comm);
+
+	MPC_GENERIC_THREAD_END_PROGRESS();
+
+	/* Profiling */
+	SCTK_PROFIL_END(MPI_Gather);
+
+	MPI_HANDLE_RETURN_VAL(res, comm);
+}
+
+
+int PMPI_Gatherv(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
+                 void *recvbuf, const int *recvcnts, const int *displs,
+                 MPI_Datatype recvtype, int root, MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+	int size, rank;
+
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
+	}
+#endif
+	/* Profiling */
+	SCTK_PROFIL_START(MPI_Gatherv);
+
+	mpi_check_comm(comm);
+	res = _mpc_cl_comm_size(comm, &size);
+	if(res != MPI_SUCCESS)
+	{
+		return res;
+	}
+	res = _mpc_cl_comm_rank(comm, &rank);
+	if(res != MPI_SUCCESS)
+	{
+		return res;
+	}
+
+	/* Error checking */
+	mpi_check_root(root, size, comm);
+	mpi_check_buf(sendbuf, comm);
+	mpi_check_count(sendcnt, comm);
+	mpi_check_type(sendtype, comm);
+	mpi_check_buf(recvbuf, comm);
+	mpi_check_type(recvtype, comm);
+
+	if(sendbuf == recvbuf && rank == root)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+	}
+
+	if( (rank != root && MPI_IN_PLACE == sendbuf) ||
+	    (rank == root && MPI_IN_PLACE == recvbuf) )
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+	}
+
+	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
+	                                  mpc_thread_get_progress_basic_prio());
+
+	int (*gatherv_ptr)(const void *, int, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, int, MPI_Comm) = NULL;
+
+	MPC_MPI_CONFIG_ROUTE_COLL(gatherv_ptr, comm, gatherv); 
+	assume(gatherv_ptr != NULL);
+	
+	res = (gatherv_ptr)(sendbuf, sendcnt, sendtype, recvbuf, recvcnts, displs, recvtype,  root, comm);
+
+
+	MPC_GENERIC_THREAD_END_PROGRESS();
+
+	/* Profiling */
+	SCTK_PROFIL_END(MPI_Gatherv);
+	MPI_HANDLE_RETURN_VAL(res, comm);
+}
+
+int PMPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
+                 void *recvbuf, int recvcnt, MPI_Datatype recvtype, int root,
+                 MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+	int size, rank;
+
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
+	}
+#endif
+	/* Profiling */
+	SCTK_PROFIL_START(MPI_Scatter);
+
+	mpi_check_comm(comm);
+	res = _mpc_cl_comm_size(comm, &size);
+	if(res != MPI_SUCCESS)
+	{
+		return res;
+	}
+	res = _mpc_cl_comm_rank(comm, &rank);
+	if(res != MPI_SUCCESS)
+	{
+		return res;
+	}
+
+	/* Error checking */
+	mpi_check_root(root, size, comm);
+	if(rank == root)
+	{
+		mpi_check_buf(sendbuf, comm);
+		mpi_check_count(sendcnt, comm);
+		mpi_check_type(sendtype, comm);
+		if(recvbuf == sendbuf)
+		{
+			MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+		}
+	}
+	else
+	{
+		mpi_check_buf(recvbuf, comm);
+		mpi_check_count(recvcnt, comm);
+		mpi_check_type(recvtype, comm);
+	}
+
+	if( (rank != root && MPI_IN_PLACE == recvbuf) ||
+	    (rank == root && MPI_IN_PLACE == sendbuf) )
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+	}
+
+	if( (0 == recvcnt && MPI_ROOT != root &&
+	     (rank != root ||
+	      (rank == root && MPI_IN_PLACE != recvbuf)
+	     )
+	     ) ||
+	    (rank == root && MPI_IN_PLACE == recvbuf && 0 == sendcnt) ||
+	    (0 == sendcnt &&
+	     (MPI_ROOT == root || MPI_PROC_NULL == root)
+	    )
+	    )
+	{
+		return MPI_SUCCESS;
+	}
+
+	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
+	                                  mpc_thread_get_progress_basic_prio());
+
+	int (*scatter_ptr)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm) = NULL;
+	
+	MPC_MPI_CONFIG_ROUTE_COLL(scatter_ptr, comm, scatter); 
+	assume(scatter_ptr != NULL);
+	
+	res = (scatter_ptr)(sendbuf, sendcnt, sendtype,recvbuf, recvcnt, recvtype, root, comm);
+
+	MPC_GENERIC_THREAD_END_PROGRESS();
+
+	/* Profiling */
+	SCTK_PROFIL_END(MPI_Scatter);
+	MPI_HANDLE_RETURN_VAL(res, comm);
+}
+
+int PMPI_Scatterv(const void *sendbuf, const int *sendcnts, const int *displs,
+                  MPI_Datatype sendtype, void *recvbuf, int recvcnt,
+                  MPI_Datatype recvtype, int root, MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+	int size, rsize, rank, i;
+	MPI_Aint extent;
+
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
+	}
+#endif
+	/* Profiling */
+	SCTK_PROFIL_START(MPI_Scatterv);
+
+	res = PMPI_Type_extent(sendtype, &extent);
+	MPI_HANDLE_ERROR(res, comm, "Error getting extent");
+
+	/* Error checking */
+	mpi_check_comm(comm);
+	res = _mpc_cl_comm_size(comm, &size);
+	MPI_HANDLE_ERROR(res, comm, "Error getting size");
+
+
+	res = _mpc_cl_comm_rank(comm, &rank);
+
+	MPI_HANDLE_ERROR(res, comm, "Error getting rank");
+
+	if(sendbuf == recvbuf && rank == root)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+	}
+
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
+	{
+		res = PMPI_Comm_remote_size(comm, &rsize);
+		MPI_HANDLE_ERROR(res, comm, "Error getting remote size");
+
+		mpi_check_root(root, rsize, comm);
+		if(root == MPI_ROOT)
+		{
+			mpi_check_type(sendtype, comm);
+			for(i = 0; i < size; i++)
+			{
+				mpi_check_buf( (char *)(sendbuf) + displs[i] * extent, comm);
+				mpi_check_count(sendcnts[i], comm);
+			}
+		}
+		else if(root != MPI_PROC_NULL)
+		{
+			mpi_check_buf(recvbuf, comm);
+			mpi_check_count(recvcnt, comm);
+			mpi_check_type(recvtype, comm);
+		}
+	}
+	else
+	{
+		mpi_check_root(root, size, comm);
+		if(rank == root)
+		{
+			mpi_check_type(sendtype, comm);
+			for(i = 0; i < size; i++)
+			{
+				mpi_check_buf( (char *)(sendbuf) + displs[i] * extent, comm);
+				mpi_check_count(sendcnts[i], comm);
+			}
+			if(recvbuf != MPI_IN_PLACE)
+			{
+				mpi_check_buf(recvbuf, comm);
+				mpi_check_count(recvcnt, comm);
+				mpi_check_type(recvtype, comm);
+			}
+		}
+		else
+		{
+			mpi_check_buf(recvbuf, comm);
+			mpi_check_count(recvcnt, comm);
+			mpi_check_type(recvtype, comm);
+		}
+	}
+
+	if( (rank != root && MPI_IN_PLACE == recvbuf) ||
+	    (rank == root && MPI_IN_PLACE == sendbuf) )
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+	}
+
+
+	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
+	                                  mpc_thread_get_progress_basic_prio());
+
+
+	int (*scatterv_ptr)(const void *, const int *, const int *, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm) = NULL;
+	
+	MPC_MPI_CONFIG_ROUTE_COLL(scatterv_ptr, comm, scatterv); 
+	assume(scatterv_ptr != NULL);
+	
+	res = (scatterv_ptr)(sendbuf, sendcnts, displs, sendtype,recvbuf, recvcnt, recvtype, root, comm);
+
+	MPC_GENERIC_THREAD_END_PROGRESS();
+
+
+	MPC_GENERIC_THREAD_END_PROGRESS();
+
+	/* Profiling */
+	SCTK_PROFIL_END(MPI_Scatterv);
+	MPI_HANDLE_RETURN_VAL(res, comm);
+}
+
+
+
+int PMPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                   void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                   MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+
+	/* Profiling */
+	SCTK_PROFIL_START(MPI_Allgather);
+
+	/* Error checking */
+	mpi_check_comm(comm);
+
+	if(sendbuf != MPI_IN_PLACE)
+	{
+		mpi_check_buf(sendbuf, comm);
+		mpi_check_count(sendcount, comm);
+		mpi_check_type(sendtype, comm);
+	}
+
+	if(sendbuf == recvbuf)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+	}
+	mpi_check_buf(recvbuf, comm);
+	mpi_check_count(recvcount, comm);
+	mpi_check_type(recvtype, comm);
+
+	int is_intercomm = mpc_lowcomm_communicator_is_intercomm(comm);
+
+	if(is_intercomm)
+	{
+		if(0 == sendcount && 0 == recvcount)
+		{
+			return MPI_SUCCESS;
+		}
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
+		else
+		{
+			MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
+		}
+#endif
+	}
+	else
+	{
+		if( (MPI_IN_PLACE != sendbuf && 0 == sendcount) || (0 == recvcount) )
+		{
+			return MPI_SUCCESS;
+		}
+	}
+
+	if(MPI_IN_PLACE == recvbuf)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+	}
+
+	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
+	                                  mpc_thread_get_progress_basic_prio());
+
+	int (*allgather_ptr)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm) = NULL;
+	
+	MPC_MPI_CONFIG_ROUTE_COLL(allgather_ptr, comm, allgather); 
+	assume(allgather_ptr != NULL);
+	
+	res = (allgather_ptr)(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+
+	MPC_GENERIC_THREAD_END_PROGRESS();
+
+	/* Profiling */
+	SCTK_PROFIL_END(MPI_Allgather);
+	MPI_HANDLE_RETURN_VAL(res, comm);
+}
+
+
+
+int PMPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                    void *recvbuf, const int *recvcount, const int *displs,
+                    MPI_Datatype recvtype, MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
+	}
+#endif
+
+	/* Profiling */
+	SCTK_PROFIL_START(MPI_Allgatherv);
+
+	mpi_check_comm(comm);
+
+	if(sendbuf != MPI_IN_PLACE)
+	{
+		mpi_check_buf(sendbuf, comm);
+		mpi_check_count(sendcount, comm);
+		mpi_check_type(sendtype, comm);
+	}
+
+	if(sendbuf == recvbuf)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "Sendbuf is equal to Recv Buff");
+	}
+
+	mpi_check_buf(recvbuf, comm);
+	mpi_check_type(recvtype, comm);
+
+	if(MPI_IN_PLACE == recvbuf)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "RecvBuff is MPI_IN_PLACE");
+	}
+
+	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
+	                                  mpc_thread_get_progress_basic_prio());
+
+	int (*allgatherv_ptr)(const void *, int, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm) = NULL;
+	
+	MPC_MPI_CONFIG_ROUTE_COLL(allgatherv_ptr, comm, allgatherv); 
+	assume(allgatherv_ptr != NULL);
+	
+	res = (allgatherv_ptr)(sendbuf, sendcount, sendtype, recvbuf, recvcount, displs, recvtype, comm);
+
+	MPC_GENERIC_THREAD_END_PROGRESS();
+
+	/* Profiling */
+	SCTK_PROFIL_END(MPI_Allgatherv);
+	MPI_HANDLE_RETURN_VAL(res, comm);
+}
+
+int PMPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                  void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                  MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
+	}
+#endif
+	/* Profiling */
+	SCTK_PROFIL_START(MPI_Alltoall);
+
+	/* Error checking */
+	if(sendcount == 0 && recvcount == 0)
+	{
+		return MPI_SUCCESS;
+	}
+	mpi_check_comm(comm);
+	if(sendbuf != MPI_IN_PLACE)
+	{
+		mpi_check_buf(sendbuf, comm);
+		mpi_check_count(sendcount, comm);
+		mpi_check_type(sendtype, comm);
+	}
+	mpi_check_buf(recvbuf, comm);
+	mpi_check_count(recvcount, comm);
+	mpi_check_type(recvtype, comm);
+
+	if(MPI_IN_PLACE == sendbuf)
+	{
+		sendcount = recvcount;
+		sendtype  = recvtype;
+	}
+
+	if(recvbuf == MPI_IN_PLACE || sendbuf == recvbuf)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+	}
+
+	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
+	                                  mpc_thread_get_progress_basic_prio());
+
+
+	int (*alltoall_ptr)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm) = NULL;
+	
+	MPC_MPI_CONFIG_ROUTE_COLL(alltoall_ptr, comm, alltoall); 
+	assume(alltoall_ptr != NULL);
+	
+	res = (alltoall_ptr)(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+
+	MPC_GENERIC_THREAD_END_PROGRESS();
+
+	/* Profiling */
+	SCTK_PROFIL_END(MPI_Alltoall);
+	MPI_HANDLE_RETURN_VAL(res, comm);
+}
+
+
+
+int PMPI_Alltoallv(const void *sendbuf, const int *sendcnts, const int *sdispls,
+                   MPI_Datatype sendtype, void *recvbuf, const int *recvcnts,
+                   const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+	int size;
+	int i;
+
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
+	}
+#endif
+	/* Profiling */
+	SCTK_PROFIL_START(MPI_Alltoallv);
+
+	/* Error checking */
+	mpi_check_comm(comm);
+	res = _mpc_cl_comm_size(comm, &size);
+	if(res != MPI_SUCCESS)
+	{
+		return res;
+	}
+
+	if(MPI_IN_PLACE == sendbuf)
+	{
+		sendcnts = recvcnts;
+		sdispls  = rdispls;
+		sendtype = recvtype;
+	}
+
+	for(i = 0; i < size; i++)
+	{
+		mpi_check_count(sendcnts[i], comm);
+		mpi_check_count(recvcnts[i], comm);
+	}
+	mpi_check_buf(sendbuf, comm);
+	mpi_check_type(sendtype, comm);
+	mpi_check_buf(recvbuf, comm);
+	mpi_check_type(recvtype, comm);
+
+	if(MPI_IN_PLACE == recvbuf || recvbuf == sendbuf)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+	}
+
+	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
+	                                  mpc_thread_get_progress_basic_prio());
+
+	int (*alltoallv_ptr)(const void *, const int *, const int *, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm) = NULL;
+	
+	MPC_MPI_CONFIG_ROUTE_COLL(alltoallv_ptr, comm, alltoallv); 
+	assume(alltoallv_ptr != NULL);	
+	res = (alltoallv_ptr)(sendbuf, sendcnts, sdispls, sendtype, recvbuf, recvcnts, rdispls, recvtype, comm);
+
+	MPC_GENERIC_THREAD_END_PROGRESS();
+
+	/* Profiling */
+	SCTK_PROFIL_END(MPI_Alltoallv);
+	MPI_HANDLE_RETURN_VAL(res, comm);
+}
+
+int PMPI_Alltoallw(const void *sendbuf, const int *sendcnts, const int *sdispls, const MPI_Datatype *sendtypes,
+                   void *recvbuf, const int *recvcnts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+	//int size, rsize, rank;
+	int size, rank;
+	int i;
+	MPI_Aint sextent, rextent;
+
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
+	}
+#endif
+	/* Profiling */
+	SCTK_PROFIL_START(MPI_Alltoallw);
+
+	res = _mpc_cl_comm_size(comm, &size);
+	if(res != MPI_SUCCESS)
+	{
+		return res;
+	}
+	//res = PMPI_Comm_remote_size(comm, &rsize);
+	//if(res != MPI_SUCCESS)
+	//{
+	//	return res;
+	//}
+	res = _mpc_cl_comm_rank(comm, &rank);
+	if(res != MPI_SUCCESS)
+	{
+		return res;
+	}
+	if(sendbuf == recvbuf)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+	}
+	/* Error checking */
+	mpi_check_comm(comm);
+	res = _mpc_cl_comm_size(comm, &size);
+	if(res != MPI_SUCCESS)
+	{
+		return res;
+	}
+
+	for(i = 0; i < size; i++)
+	{
+		if(sendbuf != MPI_IN_PLACE)
+		{
+			mpi_check_type(sendtypes[i], comm);
+			res = PMPI_Type_extent(sendtypes[i], &sextent);
+			if(res != MPI_SUCCESS)
+			{
+				return res;
+			}
+			mpi_check_buf( (char *)(sendbuf) + sdispls[i] * sextent, comm);
+			mpi_check_count(sendcnts[i], comm);
+		}
+		mpi_check_type(recvtypes[i], comm);
+		res = PMPI_Type_extent(recvtypes[i], &rextent);
+		if(res != MPI_SUCCESS)
+		{
+			return res;
+		}
+		mpi_check_buf( (char *)(recvbuf) + rdispls[i] * rextent, comm);
+		mpi_check_count(recvcnts[i], comm);
+	}
+
+	if(MPI_IN_PLACE == sendbuf)
+	{
+		sendcnts  = recvcnts;
+		sdispls   = rdispls;
+		sendtypes = recvtypes;
+	}
+
+	if( (NULL == sendcnts) || (NULL == sdispls) || (NULL == sendtypes) ||
+	    (NULL == recvcnts) || (NULL == rdispls) || (NULL == recvtypes) ||
+	    recvbuf == MPI_IN_PLACE)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+	}
+
+
+	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
+	                                  mpc_thread_get_progress_basic_prio());
+
+	int (*alltoallw_ptr)(const void *, const int *, const int *, const MPI_Datatype *, void *, const int *, const int *, const MPI_Datatype *, MPI_Comm) = NULL;
+	
+	MPC_MPI_CONFIG_ROUTE_COLL(alltoallw_ptr, comm, alltoallw); 
+	assume(alltoallw_ptr != NULL);	
+	res = (alltoallw_ptr)(sendbuf, sendcnts, sdispls, sendtypes, recvbuf, recvcnts, rdispls, recvtypes, comm);
+
+	MPC_GENERIC_THREAD_END_PROGRESS();
+
+	/* Profiling */
+	SCTK_PROFIL_END(MPI_Alltoallw);
+	MPI_HANDLE_RETURN_VAL(res, comm);
+}
+
+int PMPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+	int size, rank;
+
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
+	}
+#endif
+	/* Profiling */
+	SCTK_PROFIL_START(MPI_Reduce);
+
+	/* Error checking */
+	mpi_check_comm(comm);
+	res = _mpc_cl_comm_size(comm, &size);
+	if(res != MPI_SUCCESS)
+	{
+		return res;
+	}
+	res = _mpc_cl_comm_rank(comm, &rank);
+	if(res != MPI_SUCCESS)
+	{
+		return res;
+	}
+
+	mpi_check_root(root, size, comm);
+	mpi_check_count(count, comm);
+	mpi_check_type(datatype, comm);
+	mpi_check_op(op, datatype, comm);
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
+	{
+		if(root == MPI_ROOT)
+		{
+			mpi_check_buf(recvbuf, comm);
+		}
+		else if(root != MPI_PROC_NULL)
+		{
+			mpi_check_buf(sendbuf, comm);
+		}
+	}
+	else
+	{
+		if(rank == root)
+		{
+			if(sendbuf == MPI_IN_PLACE)
+			{
+				mpi_check_buf(recvbuf, comm);
+			}
+			else
+			{
+				mpi_check_buf(sendbuf, comm);
+			}
+			mpi_check_buf(recvbuf, comm);
+		}
+		else
+		{
+			mpi_check_buf(sendbuf, comm);
+		}
+	}
+
+	if(rank == root &&
+	   ( (MPI_IN_PLACE == recvbuf) || (sendbuf == recvbuf) ) )
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+	}
+
+	if(0 == count)
+	{
+		return MPI_SUCCESS;
+	}
+
+	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
+	                                  mpc_thread_get_progress_basic_prio());
+
+	int (*reduce_ptr)(const void *, void *, int, MPI_Datatype, MPI_Op, int, MPI_Comm) = NULL;
+	MPC_MPI_CONFIG_ROUTE_COLL(reduce_ptr, comm, reduce); 
+	assume(reduce_ptr != NULL);	
+	res = (reduce_ptr)(sendbuf, recvbuf, count, datatype, op, root, comm);
+
+	MPC_GENERIC_THREAD_END_PROGRESS();
+
+
+	MPC_GENERIC_THREAD_END_PROGRESS();
+
+	/* Profiling */
+	SCTK_PROFIL_END(MPI_Reduce);
+	MPI_HANDLE_RETURN_VAL(res, comm);
+}
+
+
+int PMPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
+                   MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
+	}
+#endif
+	/* Profiling */
+	SCTK_PROFIL_START(MPI_Allreduce);
+
+	/* Error checking */
+	mpi_check_comm(comm);
+	mpi_check_buf(sendbuf, comm);
+	mpi_check_buf(recvbuf, comm);
+	mpi_check_count(count, comm);
+	mpi_check_type(datatype, comm);
+	mpi_check_op(op, datatype, comm);
+
+	if(MPI_IN_PLACE == recvbuf)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_BUFFER, "");
+	}
+	if(0 == count)
+	{
+		return MPI_SUCCESS;
+	}
+
+	if(recvbuf != MPI_BOTTOM)
+	{
+		if(recvbuf == sendbuf)
+		{
+			MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+		}
+	}
+
+	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
+	                                  mpc_thread_get_progress_basic_prio());
+
+	int (*allreduce_ptr)(const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm) = NULL;
+	MPC_MPI_CONFIG_ROUTE_COLL(allreduce_ptr, comm, allreduce); 
+	assume(allreduce_ptr != NULL);	
+	res = (allreduce_ptr)(sendbuf, recvbuf, count, datatype, op, comm);
+
+	MPC_GENERIC_THREAD_END_PROGRESS();
+
+	/* Profiling */
+	SCTK_PROFIL_END(MPI_Allreduce);
+	MPI_HANDLE_RETURN_VAL(res, comm);
+}
+
+
+int PMPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcnts[],
+                        MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
+{
+	int i;
+	int size;
+	int res = MPI_ERR_INTERN;
+
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
+	}
+#endif
+	/* Profiling */
+	SCTK_PROFIL_START(MPI_Reduce_scatter);
+
+	/* Error checking */
+	mpi_check_comm(comm);
+	if(MPI_IN_PLACE == recvbuf || sendbuf == recvbuf)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+	}
+	mpi_check_buf(sendbuf, comm);
+	mpi_check_buf(recvbuf, comm);
+
+	res = _mpc_cl_comm_size(comm, &size);
+	if(res != MPI_SUCCESS)
+	{
+		return res;
+	}
+
+	for(i = 0; i < size; i++)
+	{
+		mpi_check_count(recvcnts[i], comm);
+	}
+	mpi_check_type(datatype, comm);
+	mpi_check_op(op, datatype, comm);
+
+	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
+	                                  mpc_thread_get_progress_basic_prio());
+
+	int (*reduce_scatter_ptr)(const void *, void *, const int *, MPI_Datatype, MPI_Op, MPI_Comm) = NULL;
+	MPC_MPI_CONFIG_ROUTE_COLL(reduce_scatter_ptr, comm, reduce_scatter); 
+	assume(reduce_scatter_ptr != NULL);	
+	res = (reduce_scatter_ptr)(sendbuf, recvbuf, recvcnts, datatype, op, comm);
+
+	MPC_GENERIC_THREAD_END_PROGRESS();
+
+	/* Profiling */
+	SCTK_PROFIL_END(MPI_Reduce_scatter);
+	MPI_HANDLE_RETURN_VAL(res, comm);
+}
+
+int PMPI_Reduce_scatter_block(const void *sendbuf, void *recvbuf, int recvcnt,
+                              MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
+{
+	int size;
+	int res = MPI_ERR_INTERN;
+
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
+	}
+#endif
+	/* Profiling */
+	SCTK_PROFIL_START(MPI_Reduce_scatter_block);
+
+	/* Error checking */
+	mpi_check_comm(comm);
+	mpi_check_buf(sendbuf, comm);
+	mpi_check_buf(recvbuf, comm);
+
+	_mpc_cl_comm_size(comm, &size);
+
+	if(MPI_IN_PLACE == recvbuf || sendbuf == recvbuf)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+	}
+	mpi_check_count(recvcnt, comm);
+	mpi_check_type(datatype, comm);
+	mpi_check_op(op, datatype, comm);
+
+	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
+	                                  mpc_thread_get_progress_basic_prio());
+
+	int (*reduce_scatter_block_ptr)(const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm) = NULL;
+	MPC_MPI_CONFIG_ROUTE_COLL(reduce_scatter_block_ptr, comm, reduce_scatter_block); 
+	assume(reduce_scatter_block_ptr != NULL);	
+	res = (reduce_scatter_block_ptr)(sendbuf, recvbuf, recvcnt, datatype, op, comm);
+
+	MPC_GENERIC_THREAD_END_PROGRESS();
+
+	/* Profiling */
+	SCTK_PROFIL_END(MPI_Reduce_scatter_block);
+	MPI_HANDLE_RETURN_VAL(res, comm);
+}
+
+int PMPI_Scan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+              MPI_Op op, MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+
+	/* Error checking */
+	mpi_check_comm(comm);
+	mpi_check_buf(sendbuf, comm);
+	mpi_check_buf(recvbuf, comm);
+	mpi_check_count(count, comm);
+	mpi_check_type(datatype, comm);
+	mpi_check_op(op, datatype, comm);
+
+	/* Invalid operation for intercommunicators */
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
+	}
+	/* Profiling */
+	SCTK_PROFIL_START(MPI_Scan);
+
+	if(sendbuf == recvbuf)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+	}
+
+
+	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
+	                                  mpc_thread_get_progress_basic_prio());
+
+	int (*scan_ptr)(const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm) = NULL;
+	MPC_MPI_CONFIG_ROUTE_COLL(scan_ptr, comm, scan); 
+	assume(scan_ptr != NULL);	
+	res = (scan_ptr)(sendbuf, recvbuf, count, datatype, op, comm);
+
+	MPC_GENERIC_THREAD_END_PROGRESS();
+
+	/* Profiling */
+	SCTK_PROFIL_END(MPI_Scan);
+	MPI_HANDLE_RETURN_VAL(res, comm);
+}
+
+int PMPI_Exscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+                MPI_Op op, MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
+	}
+	/* Profiling */
+	SCTK_PROFIL_START(MPI_Exscan);
+
+	if(sendbuf == recvbuf)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+	}
+
+	/* Error checking */
+	mpi_check_comm(comm);
+	mpi_check_buf(sendbuf, comm);
+	mpi_check_buf(recvbuf, comm);
+	mpi_check_count(count, comm);
+	mpi_check_type(datatype, comm);
+	mpi_check_op(op, datatype, comm);
+
+
+	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
+	                                  mpc_thread_get_progress_basic_prio());
+
+	int (*exscan_ptr)(const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm) = NULL;
+	MPC_MPI_CONFIG_ROUTE_COLL(exscan_ptr, comm, exscan); 
+	assume(exscan_ptr != NULL);	
+	res = (exscan_ptr)(sendbuf, recvbuf, count, datatype, op, comm);
+
+	MPC_GENERIC_THREAD_END_PROGRESS();
+
+	/* Profiling */
+	SCTK_PROFIL_END(MPI_Exscan);
+	MPI_HANDLE_RETURN_VAL(res, comm);
 }
