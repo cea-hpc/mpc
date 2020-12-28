@@ -371,6 +371,10 @@ static inline int ___mpc_conf_config_load_file_ini(char * conf_name, char * path
 		{
 			*line_end = '\0';
 		}
+		else
+		{
+			break;
+		}
 
 		/* Now try  to detect a section header */
 		char * line = _utils_trim(line_start);
