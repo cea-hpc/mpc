@@ -4335,8 +4335,8 @@ void mpc_cl_comm_lib_init()
 {
 	MPC_INIT_CALL_ONLY_ONCE
 
-	/* Register MPC MPi Config */
-	_mpc_mpi_config_init();
+	/* Register MPC MPI Config */
+	mpc_common_init_callback_register("Config Sources", "MPC MPI Config Registration", _mpc_mpi_config_init, 256);
 
 	/* Before Starting MPI tasks */
 #ifdef MPC_Threads
