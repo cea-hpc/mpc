@@ -314,32 +314,9 @@ fi
 # Display MPC's Help #
 ######################
 
-
-expand_net_rail_list()
-{
-	eval echo \$NETWORKING_CLI_$(eval echo "$1")_RAILS
-}
-
 print_network_list()
 {
-	if test -z "${NETWORKING_CLI_OPTION_LIST}"; then
-		return
-	fi
-
-	echo ""
-	echo "	Configured CLI switches for network configurations:"
-	echo ""
-	for net in $NETWORKING_CLI_OPTION_LIST
-	do
-		echo "		- $net:"
-		CNT=0
-		for rail in $(expand_net_rail_list $net)
-		do
-			echo "			* Rail $CNT: $rail"
-			CNT=$((CNT + 1))
-		done
-	done
-	echo ""
+	mpc_print_config --cli
 }
 
 print_help(){
@@ -359,7 +336,8 @@ Multithreading:
                                         modes: $MODES_MULTITHREAD
 
 Network:
-	-net=n, --net=, --network=n     Define Network mode (TCP + SHM by default)
+	-net=n, --net=, --network=n     Define Network mode
+
 EOF
 
 print_network_list

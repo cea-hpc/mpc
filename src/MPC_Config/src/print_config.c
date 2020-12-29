@@ -1,8 +1,7 @@
 #include <mpc.h>
 #include <mpc_conf.h>
 #include <string.h>
-
-
+#include <stdlib.h>
 
 mpc_conf_output_type_t       output_format = MPC_CONF_FORMAT_XML;
 int did_print = 0;
@@ -23,14 +22,79 @@ void print_help(void)
 }
 
 
+void print_cli_options(void)
+{
+	/* This prints all netowkring options */
 
+#if 0
+	Configured CLI switches for network configurations:
+
+		- ib:
+			* Rail 0: shm_mpi
+			* Rail 1: ib_mpi
+		- opa:
+			* Rail 0: shm_mpi
+			* Rail 1: opa_mpi
+		- tcponly:
+			* Rail 0: tcp_mpi
+		- tcp:
+			* Rail 0: shm_mpi
+			* Rail 1: tcp_mpi
+		- multirail_tcp:
+			* Rail 0: shm_mpi
+			* Rail 1: tcp_large
+		- portals:
+			* Rail 0: portals_mpi
+		- shm:
+			* Rail 0: shm_mpi
+		- default:
+			* Rail 0: shm_mpi
+			* Rail 1: ib_mpi
+#endif
+	mpc_conf_config_type_elem_t * def = mpc_conf_root_config_get_sep("mpcframework.lowcomm.networking.cli.default", ".");
+	char * default_cli = mpc_conf_type_elem_get_as_string(def);
+
+	printf("\tConfigured CLI switches for network configurations (default: %s):\n\n", default_cli);
+
+
+	mpc_conf_config_type_elem_t * options = mpc_conf_root_config_get_sep("mpcframework.lowcomm.networking.cli.options", ".");
+	mpc_conf_config_type_t * cli = mpc_conf_config_type_elem_get_inner(options);
+
+	int len = mpc_conf_config_type_count(cli);
+
+	unsigned int i;
+
+	for(i = 0 ; i < len; i++ )
+	{
+		mpc_conf_config_type_t * param = mpc_conf_config_type_elem_get_inner(mpc_conf_config_type_nth(cli, i));
+
+		printf("\t- %s:\n", param->name);
+
+		int param_len = mpc_conf_config_type_count(param);
+
+		unsigned int j;
+		for(j = 0 ; j < param_len; j++ )
+		{
+			mpc_conf_config_type_elem_t * rail = mpc_conf_config_type_nth(param, j);
+			printf("\t\t* %s\n", mpc_conf_type_elem_get_as_string(rail));
+		}
+
+		printf("\n");
+	}
+
+}
 
 
 
 
 int parse_arg(char *arg)
 {
-	if(!strcmp(arg, "--xml") )
+	if(!strcmp(arg, "--cli"))
+	{
+		print_cli_options();
+		exit(0);
+	}
+	else if(!strcmp(arg, "--xml") )
 	{
 		output_format = MPC_CONF_FORMAT_XML;
 	}

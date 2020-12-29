@@ -348,7 +348,7 @@ void _mpc_topology_apply_mpc_process_constraints(hwloc_topology_t target_topolog
 			}
 			else if ( requested_processor_per_process < processor_per_process )
 			{
-				mpc_common_debug_warning("Process %d does not use all avaiable CPUs (%d/%d)",
+				mpc_common_debug_log("Process %d does not use all CPUs (%d/%d)",
 							 mpc_common_get_process_rank(),
 							 requested_processor_per_process, processor_per_process );
 

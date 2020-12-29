@@ -857,7 +857,7 @@ mpc_conf_config_type_elem_t *mpc_conf_config_type_nth(mpc_conf_config_type_t *ty
 {
 	if(type->elem_count <= id)
 	{
-		return 0;
+		return NULL;
 	}
 
 	return type->elems[id];
