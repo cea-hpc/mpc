@@ -149,17 +149,23 @@ int parse_args(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+	 mpc_lowcomm_init();
+
+	int ret = 0;
+
 	if(parse_args(argc, argv) )
 	{
-		return 1;
+		ret = 1;
 	}
 
-
-	if(!did_print)
+	if( (ret  == 0) && !did_print)
 	{
 		/* No argument print all */
-		return mpc_conf_root_config_print(output_format);
+		ret = mpc_conf_root_config_print(output_format);
 	}
 
-	return 0;
+
+	mpc_lowcomm_release();
+
+	return ret;
 }

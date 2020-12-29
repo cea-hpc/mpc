@@ -166,7 +166,7 @@ static inline void __set_thread_engine(void)
 
 static inline void __set_thread_engine(void)
 {
-	mpc_common_get_flags()->thread_library_kind = "NA";
+	snprintf(mpc_common_get_flags()->thread_library_kind, MPC_CONF_STRING_SIZE, "NA");
 	mpc_common_get_flags()->thread_library_init = NULL;
 }
 
@@ -554,7 +554,6 @@ static inline void __set_default_values()
 #endif
 }
 
-
 static inline void __register_config(void)
 {
 	__set_default_values();
@@ -594,7 +593,6 @@ static inline void __register_config(void)
 														   PARAM("debug", debug, MPC_CONF_TYPE, "MPC debug parameters"),
 	                                                       PARAM("mpcrun", mpcrun, MPC_CONF_TYPE, "Default values for MPCRUN"),
 	                                                       NULL);
-
 	mpc_conf_root_config_append("mpcframework", mc, "MPC Laucher Configuration");
 
 	/* Trigger all other configs */
