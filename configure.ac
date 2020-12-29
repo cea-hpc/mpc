@@ -219,11 +219,6 @@ fi
 
 AM_CONDITIONAL([HAVE_PYTHON], [test "x$HAVE_PYTHON" = "xyes" -a "x${HAVE_PYMOD_JSON}" = "xyes" -a "x${HAVE_PYMOD_ARGPARSE}" = "xyes"])
 
-# Optional XML generators (dynamically regen config)
-AC_PATH_PROG([XSLTPROC],[xsltproc],[:])
-AC_PATH_PROG([XMLLINT],[xmllint],[:])
-AM_CONDITIONAL([CAN_GENERATE_CONFIG], [test "x$xsltproc" != "x:" -a "x$xmllint" != "x:"])
-
 # Optional Pandoc Generator (dynamically regen manpages
 AC_PATH_PROG([PANDOC],[pandoc],[:])
 AM_CONDITIONAL([CAN_USE_PANDOC], [test "x$PANDOC" != "x:"])
@@ -708,9 +703,6 @@ AC_DEFUN([MPC_REQUIRED_DEPENDENCY],
                         AC_MSG_ERROR([Failed to locate required dependency $1])
                 fi
          ])
-
-MPC_DETECT_DEPENDENCY([libxml/tree.h],[libxml-2.0], [xmlStrcmp], [XML2])
-MPC_REQUIRED_DEPENDENCY([libxml-2.0], [$mpc_dep_found])
 
 MPC_DETECT_DEPENDENCY([hwloc.h],[hwloc], [hwloc_topology_init], [HWLOC], [> 2.0.0])
 MPC_REQUIRED_DEPENDENCY([hwloc], [$mpc_dep_found])

@@ -65,6 +65,6 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Config/include/ -I$(abs_top_builddir)/
 bin_PROGRAMS = mpc_print_config
 
 mpc_print_config_SOURCES = ./MPC_Config/src/print_config.c
-mpc_print_config_LDADD = $(XML2_LIBS) $(ALLOC_LIBS)
+mpc_print_config_LDADD = $(ALLOC_LIBS)
 
 mpc_print_config_LDADD += @ALL_MPC_LIBS@

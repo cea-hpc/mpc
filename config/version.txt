@@ -1,5 +1,4 @@
 #PACKAGE    VERSION
-libxml2     2.9.3
 hwloc       2.2.0
 openpa      1.0.4
 hydra       3.2

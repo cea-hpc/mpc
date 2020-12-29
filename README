@@ -123,7 +123,6 @@ Specify external libraries used by MPC:
 
 * `--with-hwloc=prefix`: Specify the prefix of hwloc library
 * `--with-openpa=prefix`: Specify the prefix of OpenPA library
-* `--with-libxml2=prefix`: Specify the prefix of libxml2 library
 * `--with-mpc-binutils=prefix`: Specify the prefix of the binutils
 
 Specify external libraries for gcc compilation:

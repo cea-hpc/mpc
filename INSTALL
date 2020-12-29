@@ -47,7 +47,7 @@ avoid any ambiguous detection, one can specify the specific compiler to use
 through the `--compiler` option. For example, using such command with the Intel
 compiler will avoid MPC to build the embedded patched GCC compiler.
 
-MPC relies on a number of dependencies (libxml, hwloc...) and some may be
+MPC relies on a number of dependencies (openpa, hwloc...) and some may be
 missing in the archive you downloaded (for archive size reasons). Considering
 the current installation process can have an internet connection, on might
 consider using the `--download-missing-deps` option. Any of the dependency can

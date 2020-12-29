@@ -121,8 +121,7 @@ am__dirstamp = $(am__leading_dot)dirstamp
 am_mpc_print_config_OBJECTS = ./MPC_Config/src/print_config.$(OBJEXT)
 mpc_print_config_OBJECTS = $(am_mpc_print_config_OBJECTS)
 am__DEPENDENCIES_1 =
-mpc_print_config_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+mpc_print_config_DEPENDENCIES = $(am__DEPENDENCIES_1)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -435,10 +434,6 @@ UNW_CFLAGS = @UNW_CFLAGS@
 UNW_LIBS = @UNW_LIBS@
 USING_ASAN = @USING_ASAN@
 VERSION = @VERSION@
-XML2_CFLAGS = @XML2_CFLAGS@
-XML2_LIBS = @XML2_LIBS@
-XMLLINT = @XMLLINT@
-XSLTPROC = @XSLTPROC@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -538,7 +533,7 @@ SUBDIRS = MPC_Doc MPC_Arch MPC_Common MPC_Config MPC_Topology \
 #
 AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Config/include/ -I$(abs_top_builddir)/src/include/ -I$(abs_top_srcdir)/src/include/
 mpc_print_config_SOURCES = ./MPC_Config/src/print_config.c
-mpc_print_config_LDADD = $(XML2_LIBS) $(ALLOC_LIBS) @ALL_MPC_LIBS@
+mpc_print_config_LDADD = $(ALLOC_LIBS) @ALL_MPC_LIBS@
 all: all-recursive
 
 .SUFFIXES:

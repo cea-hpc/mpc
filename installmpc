@@ -42,7 +42,6 @@ ALL_PACKAGE_ARGS=""
 AUTOPRIV_BUILD_PARAMETERS=""
 OPENPA_BUILD_PARAMETERS=""
 MPCALLOC_BUILD_PARAMETERS=""
-LIBXML2_BUILD_PARAMETERS="--without-zlib --without-python"
 HWLOC_BUILD_PARAMETERS="--disable-werror --enable-static"
 HYDRA_BUILD_PARAMETERS=""
 MPC_DMTCP_BUILD_PARAMETERS="--enable-pthread-mutex-wrappers"
@@ -1103,7 +1102,6 @@ You may track issued commands using the "-v" flag.
   --with-autopriv=*                       : Specify autopriv prefix on the system
   --with-openpa=*                         : Specify openpa prefix on the system
   --with-hwloc=*                          : Specify hwloc prefix on the system
-  --with-libxml2=*                        : Specify libxml2 prefix on the system
   --with-cuda=*                           : Specify Cuda prefix on the system
   --with-openacc=*                        : Specify OpenACC prefix on the system (NIMPL)
   --with-opencl=*                         : Specify OpenCL prefix on the system (NIMPL)
@@ -1131,7 +1129,6 @@ You may track issued commands using the "-v" flag.
   --autopriv=*                            : Add options to autopriv configure
   --gdb=*                                 : Add options to gdb configure
   --openpa=*                              : Add options to openpa configure
-  --libxml2=*                             : Add options to libxml2 configure
   --hydra=*                               : Add options to Hydra configure
   --hwloc=*                               : Add options to hwloc configure
   --tbb=*                                 : Add options to TBB configure
@@ -1157,7 +1154,6 @@ EOF
 #       * "" meaning that we also try to build from sources (using local deps)
 
 OPENPA_PREFIX=""
-LIBXML2_PREFIX=""
 
 MPCALLOC_PREFIX=""
 
@@ -1243,13 +1239,6 @@ do
 		################# FORTRAN GCC ###############
 		--disable-mpc-fortran|--disable-fortran)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-fortran"
-			;;
-		################## LIBXML2 ##################
-		--with-libxml2=*)
-			extractParamValue 'LIBXML2_PREFIX' 'with-libxml2' "$arg"
-			;;
-		--libxml2=*)
-			extractAndAddPackageOption 'LIBXML2_BUILD_PARAMETERS' 'libxml2=' "$arg"
 			;;
 		################### HWLOC ###################
 		--with-hwloc=*)
@@ -1440,7 +1429,7 @@ do
 			make distclean
 			;;
 		# Deprecated options
-		--mirror=*|--with-sctk-arch=*|--sctk-arch-*|--with-mpfr=*|--mpfr-*|--with-gmp=*|--with-hbict=*|--hbict-*|--gmp-*|--with-mpc-binutils=*|--mpc-binutils-*|--disable-mpc-binutils|--with-libextls=*|--libextls-*|--with-mpc=*|--enable-check-deps|--disable-check-deps|--host=*|--target=*|--arch-library-path=*|--with-sysroot=*)
+		--mirror=*|--with-sctk-arch=*|--sctk-arch-*|--with-mpfr=*|--mpfr-*|--with-gmp=*|--with-hbict=*|--hbict-*|--gmp-*|--with-mpc-binutils=*|--mpc-binutils-*|--disable-mpc-binutils|--with-libextls=*|--libextls-*|--with-mpc=*|--enable-check-deps|--disable-check-deps|--host=*|--target=*|--arch-library-path=*|--with-sysroot=*|--with-libxml2=*|--libxml2=*)
 			info "$arg is deprecated"
 			;;
 		*)
@@ -1520,13 +1509,6 @@ find_in_prefix_or_use_spack "openpa" "" "${OPENPA_PREFIX}"
 if test "x${DEP_FOUND}" = "xno"; then
 	# Could not use spack now installing manually
 	build_configure_based_package "openpa" "$(package_version "openpa")" "$OPENPA_BUILD_PARAMETERS"
-fi
-
-find_in_prefix_or_use_spack "libxml2" "" "${LIBXML2_PREFIX}"
-
-if test "x${DEP_FOUND}" = "xno"; then
-	# Could not use spack now installing manually
-	build_configure_based_package "libxml2" "$(package_version "libxml2")" "$LIBXML2_BUILD_PARAMETERS"
 fi
 
 find_in_prefix_or_use_spack "hwloc" "$(package_version "hwloc")" "${HWLOC_PREFIX}"
