@@ -271,7 +271,6 @@ for arg in "$@" ; do
 		--config=*)
 			MPC_USER_CONFIG="$(echo "A$arg" | sed -e 's/A--config=//g')"
 			echo "#Use config file $MPC_USER_CONFIG"
-			export MPC_USER_CONFIG
 			;;
 		--profiles=*)
 			MPC_USER_PROFILES="$(echo "A$arg" | sed -e 's/A--profiles=//g')"
@@ -281,9 +280,14 @@ for arg in "$@" ; do
 done
 
 #check that we have the file
-if [ ! -z "${MPC_USER_CONFIG}" ] && [ ! -e "${MPC_USER_CONFIG}" ]; then
-	echo "ERROR : Configuration file '${MPC_USER_CONFIG}' provided by --config or MPC_USER_CONFIG doesn't exist." 1>&2
-	exit 1
+if test ! -z "${MPC_USER_CONFIG}"; then
+
+	if test ! -e "${MPC_USER_CONFIG}"; then
+		echo "ERROR : Configuration file '${MPC_USER_CONFIG}' provided by --config or MPC_USER_CONFIG doesn't exist." 1>&2
+	else
+		export CONF_PATHS_MPCFRAMEWORK_MANUAL="$MPC_USER_CONFIG"
+	fi
+
 fi
 
 

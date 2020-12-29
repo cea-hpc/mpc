@@ -75,10 +75,15 @@ mpc_conf_config_type_t *mpc_conf_config_loader_paths(char *conf_name,
 	char * acan_create = malloc(sizeof(char) * MPC_CONF_STRING_SIZE);
 	snprintf(acan_create, MPC_CONF_STRING_SIZE, can_create);
 
+
+	char * amanual_prefix = malloc(sizeof(char) * MPC_CONF_STRING_SIZE);
+	snprintf(amanual_prefix, MPC_CONF_STRING_SIZE, "");
+
+
 	mpc_conf_config_type_t *type = mpc_conf_config_type_init(conf_name, PARAM("cancreate",
 	                                                                        acan_create,
 	                                                                        MPC_CONF_STRING,
-	                                                                        "Which config is allowed to create elements"),
+	                                                                        "Which config is allowed to create elements (between system and user/manual)"),
 																			PARAM("system",
 																			asystem_prefix,
 																			MPC_CONF_STRING,
@@ -87,6 +92,10 @@ mpc_conf_config_type_t *mpc_conf_config_loader_paths(char *conf_name,
 																			auser_prefix,
 																			MPC_CONF_STRING,
 																			"User level configuration prefix/file"),
+																			PARAM("manual",
+																			amanual_prefix,
+																			MPC_CONF_STRING,
+																			"Manual override configuration prefix/file"),
 																		NULL);
 
 	int i;
@@ -561,6 +570,8 @@ int mpc_conf_config_load(char *conf_name)
 	mpc_conf_config_type_elem_t *erights = mpc_conf_config_type_get(paths, "cancreate");
 	mpc_conf_config_type_elem_t *esystem = mpc_conf_config_type_get(paths, "system");
 	mpc_conf_config_type_elem_t *euser   = mpc_conf_config_type_get(paths, "user");
+	mpc_conf_config_type_elem_t *emanual   = mpc_conf_config_type_get(paths, "manual");
+
 
 	if(!erights || !esystem || !euser)
 	{
@@ -595,6 +606,37 @@ int mpc_conf_config_load(char *conf_name)
 		}
 	}
 
+
+	/* Now load the manual prefix if present */
+	char overrive_env_var[200];
+	char * conf_name_upper = strdup(conf_name);
+	_utils_upper_string(conf_name_upper);
+	snprintf(overrive_env_var, 200, "CONF_PATHS_%s_MANUAL", conf_name_upper);
+	free(conf_name_upper);
+
+	/* We do a manual getenv as env parsing is done after this phase */
+	char * manual_conf = getenv(overrive_env_var);
+
+	/* This is for retrocompat when not invoking mpcrun */
+	if(!manual_conf)
+	{
+		manual_conf = getenv("MPC_USER_CONFIG");
+	}
+
+	if(manual_conf)
+	{
+		/* We do a set as MPC_USER_CONFIG would not override automagically */
+		char mconf[MPC_CONF_STRING_SIZE];
+		snprintf(mconf, MPC_CONF_STRING_SIZE, manual_conf);
+		mpc_conf_config_type_elem_set(emanual, MPC_CONF_STRING, mconf);
+
+		/* Now try to load the manual config / prefix */
+
+		if(__mpc_conf_config_load_prefix(conf_name, manual_conf, (rights == MPC_CONF_MOD_USER) || (rights == MPC_CONF_MOD_BOTH) ) )
+		{
+			ret |= _utils_verbose_output(0, "failed to load part of the config in %s for %s\n", manual_conf, conf_name);
+		}
+	}
 
 	return ret;
 }

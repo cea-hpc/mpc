@@ -63,6 +63,18 @@ void _utils_lower_string(char *string)
 	}
 }
 
+void _utils_upper_string(char *string)
+{
+	int i;
+	int len = strlen(string);
+
+	for(i = 0; i < len; i++)
+	{
+		string[i] = toupper(string[i]);
+	}
+}
+
+
 
 char * _utils_get_extension(char * path)
 {

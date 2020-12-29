@@ -47,6 +47,8 @@ char *_utils_gen_spaces(int count, char *buf, int len);
 
 void _utils_lower_string(char *string);
 
+void _utils_upper_string(char *string);
+
 char * _utils_get_extension(char * path);
 
 char * _utils_trim(char * path);
