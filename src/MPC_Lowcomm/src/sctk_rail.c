@@ -622,8 +622,10 @@ void sctk_rail_pin_ctx_init( sctk_rail_pin_ctx_t * ctx, void * addr, size_t size
 		ctx->size = 1;
 	}
 
-	rdma_rail->rail_pin_region( rdma_rail, ctx->list, addr, size );
+	/* Make sure the rail did define pin */
+	assume(rdma_rail->rail_pin_region != NULL);
 
+	rdma_rail->rail_pin_region( rdma_rail, ctx->list, addr, size );
 	assume( ctx->list != NULL );
 }
 
@@ -637,6 +639,9 @@ void sctk_rail_pin_ctx_release( sctk_rail_pin_ctx_t * ctx )
 		return;
 	}
 
+	/* Make sure the rail did define unpin */
+	assume(rdma_rail->rail_unpin_region != NULL);
+	
 	rdma_rail->rail_unpin_region( rdma_rail, ctx->list );
 }
 

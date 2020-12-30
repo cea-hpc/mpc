@@ -843,7 +843,7 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
 	                                                         PARAM("idlepoll", idle_poll, MPC_CONF_TYPE, "Parameters for idle polling"),
 	                                                         PARAM("topology", ret->topology, MPC_CONF_STRING, "Topology to be bootstrapped on this network"),
 	                                                         PARAM("ondemand", &ret->ondemand, MPC_CONF_BOOL, "Are on-demmand connections allowed on this network"),
-	                                                         PARAM("rdma", &ret->ondemand, MPC_CONF_BOOL, "Can this rail provide RDMA capabilities"),
+	                                                         PARAM("rdma", &ret->rdma, MPC_CONF_BOOL, "Can this rail provide RDMA capabilities"),
 	                                                         PARAM("config", ret->config, MPC_CONF_STRING, "Name of the rail configuration to be used for this rail"),
 	                                                         PARAM("gates", gates, MPC_CONF_TYPE, "Gates to check before taking this rail"),
 	                                                         NULL);  
@@ -860,7 +860,7 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_rail_conf_init()
 
     /* Here we instanciate default rails */
     mpc_conf_config_type_t *shm_mpi = __new_rail_conf_instance("shmmpi", 99, "default", "machine", "socket", "fully", 0, 0, "shmconfigmpi");
-    mpc_conf_config_type_t *tcp_mpi = __new_rail_conf_instance("tcpmpi", 9, "default", "machine", "socket", "ring", 1, 1, "tcpconfigmpi");
+    mpc_conf_config_type_t *tcp_mpi = __new_rail_conf_instance("tcpmpi", 9, "default", "machine", "socket", "ring", 1, 0, "tcpconfigmpi");
 #ifdef MPC_USE_PORTALS
     mpc_conf_config_type_t *portals_mpi = __new_rail_conf_instance("portalsmpi", 6, "default", "machine", "socket", "ring", 1, 1, "portalsconfigmpi");
 #endif
