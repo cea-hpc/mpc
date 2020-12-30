@@ -110,7 +110,7 @@ void mpc_launch_print_banner(short int restart)
 			                     mpc_common_get_flags()->process_number,
 			                     mpc_topology_get_pu_count() );
 			mpc_common_debug_log("Threading  : '%s'", mpc_common_get_flags()->thread_library_kind);
-			mpc_common_debug_log("Allocator  : %s %s %s", sctk_alloc_mode(), SCTK_DEBUG_MODE, mpc_common_get_flags()->checkpoint_model);
+			mpc_common_debug_log("Allocator  : %s %s", sctk_alloc_mode(), SCTK_DEBUG_MODE);
 			mpc_common_debug_log("C/R        : %s", mpc_common_get_flags()->checkpoint_model);
 			mpc_common_debug_log("Debug      : %s", SCTK_DEBUG_MODE);
 			mpc_common_debug_log("Networks   : %s", mpc_common_get_flags()->sctk_network_description_string);
