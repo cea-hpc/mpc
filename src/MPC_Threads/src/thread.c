@@ -3263,6 +3263,13 @@ void mpc_thread_kernel_wait_for_value_and_poll(int *data, int value,
 	}
 }
 
+/** This overrides a weak function in EXTLS to redirect WFV to MPC
+ * as extls is otherwise compiled against pthread */
+void extls_wait_for_value(volatile int* addr_val, int threshold)
+{
+	mpc_thread_wait_for_value_and_poll( (int*)addr_val, threshold, NULL, NULL);
+}
+
 /***********
 * FUTEXES *
 ***********/
