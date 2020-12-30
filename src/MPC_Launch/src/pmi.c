@@ -612,6 +612,17 @@ int mpc_launch_pmi_init()
 {
 	__mpc_launch_pmi_context_clear();
 
+	if ( mpc_common_get_flags()->process_number == 1 )
+	{
+
+		// no need of KVS for infos initialization
+		pmi_context.local_process_rank = 0;
+		pmi_context.node_rank = 0;
+		pmi_context.node_count = 1;
+		pmi_context.local_process_count = 1;
+		PMI_RETURN( PMI_SUCCESS );
+	}
+
 	int rc = _pmi_initialize(&pmi_context);
 
 	if( rc != MPC_LAUNCH_PMI_SUCCESS)
@@ -623,17 +634,6 @@ int mpc_launch_pmi_init()
 	// launched without mpiexec)
 	__mpc_pmi_get_process_rank(&pmi_context.process_rank);
 	__mpc_pmi_get_process_count(&pmi_context.process_count);
-
-	if ( pmi_context.process_count == 1 )
-	{
-
-		// no need of KVS for infos initialization
-		pmi_context.local_process_rank = 0;
-		pmi_context.node_rank = 0;
-		pmi_context.node_count = 1;
-		pmi_context.local_process_count = 1;
-		PMI_RETURN( rc );
-	}
 
 	__process_layout_init();
 
