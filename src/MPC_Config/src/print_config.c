@@ -1,4 +1,5 @@
 #include <mpc.h>
+#include <mpc_config.h>
 #include <mpc_conf.h>
 #include <string.h>
 #include <stdlib.h>
@@ -149,7 +150,9 @@ int parse_args(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+#ifdef MPC_Lowcomm
 	 mpc_lowcomm_init();
+#endif
 
 	int ret = 0;
 
@@ -164,8 +167,9 @@ int main(int argc, char **argv)
 		ret = mpc_conf_root_config_print(output_format);
 	}
 
-
+#ifdef MPC_Lowcomm
 	mpc_lowcomm_release();
+#endif
 
 	return ret;
 }
