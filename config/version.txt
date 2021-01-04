@@ -1,8 +1,8 @@
-#PACKAGE    VERSION
-hwloc       2.2.0
-openpa      1.0.4
-hydra       3.2
-mpcalloc    0.2
-autopriv    0.6.3
-mpc-dmtcp   2.5.0
-gdb         7.7
+#PACKAGE                  VERSION
+hwloc                     2.2.0
+openpa                    1.0.4
+hydra                     3.2
+mpcalloc                  0.2
+mpc-compiler-additions    0.6.3
+mpc-dmtcp                 2.5.0
+gdb                       7.7

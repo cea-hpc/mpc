@@ -39,7 +39,7 @@ USE_COLOR="no"
 # NOTE: these are only meaningfull when not using spack
 MAKE_J=""
 ALL_PACKAGE_ARGS=""
-AUTOPRIV_BUILD_PARAMETERS=""
+MPC_COMP_ADD_BUILD_PARAMETERS=""
 OPENPA_BUILD_PARAMETERS=""
 MPCALLOC_BUILD_PARAMETERS=""
 HWLOC_BUILD_PARAMETERS="--disable-werror --enable-static"
@@ -1091,7 +1091,7 @@ You may track issued commands using the "-v" flag.
   --enable-debug                          : Enable maximum debug (symbols, messages)
 
 # Disable sub packages
-  --disable-autopriv                      : Disable privatizing compiler support
+  --disable-mpc-comp                      : Disable MPC compiler additions support
   --disable-fortran                       : Disable fortran
   --disable-hydra                         : Disable Hydra
   --disable-romio                         : Disable ROMIO MPI-IO support
@@ -1099,7 +1099,7 @@ You may track issued commands using the "-v" flag.
   --{enable,disable}-tbb                  : Enable/Disable TBB
 
 # Specify system subpackages
-  --with-autopriv=*                       : Specify autopriv prefix on the system
+  --with-mpc-comp=*                       : Specify mpc compiler additions prefix on the system
   --with-openpa=*                         : Specify openpa prefix on the system
   --with-hwloc=*                          : Specify hwloc prefix on the system
   --with-cuda=*                           : Specify Cuda prefix on the system
@@ -1109,9 +1109,9 @@ You may track issued commands using the "-v" flag.
   --with-tbb=*                            : Specify TBB prefix on the system
   --with-{dmtcp,hbict}=*                  : Specify DMTCP/HBICT prefix on the system
 
-# Autopriv specifics (requires autopriv)
+# MPC Compiler Additions specifics (requires mpc-compiler-additions)
 
-  --gcc-version=X.X.X                     : Compile autopriv with a given GCC version (autopriv's default otherwise)
+  --gcc-version=X.X.X                     : Compile mpc-compiler-additions with a given GCC version (default otherwise)
 
 # Spack Related Options
   --enable-spack                          : Allow MPC to use spack for locating depencies (default)
@@ -1121,12 +1121,12 @@ You may track issued commands using the "-v" flag.
   --disable-build                         : Prevent MPC from compiling embedded version of its dependencies
   --force-spack-package=*                 : Force a given version of dependencies loaded/installed with spack
                                             syntax is comma a separated list of DEP:SPACK descriptors for example
-                                            openpa:/ffefdkk,autopriv:autopriv@2.0.0, ...
+                                            openpa:/ffefdkk,mpc-compiler-additions:mpc-compiler-additions@2.0.0, ...
   --enable-spack-arch                     : add architecture specifiers to spack descriptors (default)
   --disable-spack-arch                    : do not pass architecture specifiers to spack descriptors
 
 # Options to transmit to subpackages (only if not using SPACK)
-  --autopriv=*                            : Add options to autopriv configure
+  --mpc-comp=*                            : Add options to mpc-compiler-additions' configure
   --gdb=*                                 : Add options to gdb configure
   --openpa=*                              : Add options to openpa configure
   --hydra=*                               : Add options to Hydra configure
@@ -1162,7 +1162,7 @@ MPC_GDB_PREFIX='disabled'
 TBB_PREFIX="disabled"
 
 # Empty means Autopriv's default
-AUTOPRIV_GCC_VERSION=""
+GCC_VERSION=""
 
 #
 # Argument parsing
@@ -1176,7 +1176,7 @@ add_process_mode_flag_to_mpc()
 enable_debug()
 {
 	MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-debug --enable-debug-messages"
-	AUTOPRIV_BUILD_PARAMETERS="${AUTOPRIV_BUILD_PARAMETERS} --opts=--enable-debug"
+	BUILD_PARAMETERS="${MPC_COMP_ADD_BUILD_PARAMETERS} --opts=--enable-debug"
 }
 
 #
@@ -1221,19 +1221,25 @@ do
 			;;
 		################### MPC GCC #################
 		--gcc-version=*)
-			extractParamValue 'AUTOPRIV_GCC_VERSION' 'gcc-version' "$arg"
+			extractParamValue 'GCC_VERSION' 'gcc-version' "$arg"
+			;;
+		--with-mpc-comp=*)
+			extractParamValue 'MPC_COMP_ADD_PREFIX' 'with-mpc-comp' "$arg"
 			;;
 		--with-autopriv=*)
-			extractParamValue 'AUTOPRIV_PREFIX' 'with-autopriv' "$arg"
+			extractParamValue 'MPC_COMP_ADD_PREFIX' 'with-autopriv' "$arg"
+			;;
+		--mpc-comp=*)
+			extractAndAddPackageOption 'MPC_COMP_ADD_BUILD_PARAMETERS' 'mpc-comp=' "$arg"
 			;;
 		--mpc-autopriv=*)
-			extractAndAddPackageOption 'AUTOPRIV_BUILD_PARAMETERS' 'mpc-autopriv=' "$arg"
+			extractAndAddPackageOption 'MPC_COMP_ADD_BUILD_PARAMETERS' 'mpc-autopriv=' "$arg"
 			;;
 		--autopriv=*)
-			extractAndAddPackageOption 'AUTOPRIV_BUILD_PARAMETERS' 'autopriv=' "$arg"
+			extractAndAddPackageOption 'MPC_COMP_ADD_BUILD_PARAMETERS' 'autopriv=' "$arg"
 			;;
-		--disable-mpc-gcc|--disable-autopriv|--disable-mpc-autopriv|--process-mode)
-			AUTOPRIV_PREFIX='disabled'
+		--disable-mpc-gcc|--disable-mpc-comp|--disable-autopriv|--disable-mpc-autopriv|--process-mode|--mpc-process-mode)
+			MPC_COMP_ADD_PREFIX='disabled'
 			add_process_mode_flag_to_mpc
 			;;
 		################# FORTRAN GCC ###############
@@ -1303,7 +1309,7 @@ do
 		############### MPCFRAMEWORK ################
 		--enable-color)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-shell-colors"
-			AUTOPRIV_BUILD_PARAMETERS="${AUTOPRIV_BUILD_PARAMETERS} --opts=--enable-color"
+			BUILD_PARAMETERS="${MPC_COMP_ADD_BUILD_PARAMETERS} --opts=--enable-color"
 			USE_COLOR="yes"
 			;;
 		--disable-color)
@@ -1342,10 +1348,6 @@ do
 			;;
 		--disable-romio)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-mpiio"
-			;;
-		--mpc-process-mode)
-			AUTOPRIV_PREFIX='disabled'
-			add_process_mode_flag_to_mpc
 			;;
 		--disable-prefix-check|--disable-check-install)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-prefix-check"
@@ -1566,7 +1568,7 @@ check_glibc_is_compatible()
                GLIBC=$(ldd --version | head -n 1 | rev | cut -d " " -f 1 | rev | sed "s/\.//g")
                # Check for incompatibilities in versions >= 2.27
                if test $GLIBC -gt 227; then
-			   		   if test -z "${AUTOPRIV_GCC_VERSION}"; then
+			   		   if test -z "${GCC_VERSION}"; then
 							info "############################################################"
 							info "Your glibc $GLIBC is too recent for the current GCC version "
 							info "fully supported by MPC (7.3.0) we will target a more recent "
@@ -1574,13 +1576,14 @@ check_glibc_is_compatible()
 							info "the next release of MPC should address this issue, install  "
 							info "might have to **download** the corresponding sources.       "
 							info "                                                            "
-							info "NOTE: you can change the autopriv GCC version built with :  "
-							info "     --gcc-version=X.X.X                                    "
+							info "NOTE: you can change the mpc-compiler-additions             "
+						        info "	    GCC version built with :                              "
+							info "          --gcc-version=X.X.X                               "
 							info "                                                            "
 							info "If you want to bypass this check set MPC_NOGLIBC_CHECK=1    "
 							info "############################################################"
-							AUTOPRIV_GCC_VERSION="10.2.0"
-					    elif test "x${AUTOPRIV_GCC_VERSION}" = "x7.3.0"; then
+							GCC_VERSION="10.2.0"
+					    elif test "x${GCC_VERSION}" = "x7.3.0"; then
                        		die "GLIBC $GLIBC not compatible with GCC 7.3.0 you may choose another version with --gcc-version=10.2.0 for example)"
 						fi
                fi
@@ -1590,39 +1593,39 @@ check_glibc_is_compatible()
 check_glibc_is_compatible
 
 #If a default GCC version is passed 
-AUTOPRIV_GCC_VERSION_SPACK=""
-AUTOPRIV_GCC_VERSION_ARG=""
-if test -n "${AUTOPRIV_GCC_VERSION}"; then
+GCC_VERSION_SPACK=""
+GCC_VERSION_ARG=""
+if test -n "${GCC_VERSION}"; then
 
 	DISABLE_WORKSHARE=""
 	DISABLE_WORKSHARE_ARG=""
 
 	# This will need to be updated for workshare
-	if test "x${AUTOPRIV_GCC_VERSION}" != "x7.3.0"; then
-		info "Building GCC ${AUTOPRIV_GCC_VERSION}: disabling workshare extensions only supported in GCC 7.3.0"
+	if test "x${GCC_VERSION}" != "x7.3.0"; then
+		info "Building GCC ${GCC_VERSION}: disabling workshare extensions only supported in GCC 7.3.0"
 		DISABLE_WORKSHARE=" -workshare"
 		DISABLE_WORKSHARE_ARG=" --disable-workshare"
 	fi
 
-	AUTOPRIV_GCC_VERSION_SPACK=" ${DISABLE_WORKSHARE} gcc_version=${AUTOPRIV_GCC_VERSION}"
-	AUTOPRIV_GCC_VERSION_ARG="--gcc-version=${AUTOPRIV_GCC_VERSION} ${DISABLE_WORKSHARE_ARG}"
+	GCC_VERSION_SPACK=" ${DISABLE_WORKSHARE} gcc_version=${GCC_VERSION}"
+	GCC_VERSION_ARG="--gcc-version=${GCC_VERSION} ${DISABLE_WORKSHARE_ARG}"
 fi
 
 
 # Dependencies which can be deactivated
-AUTOPRIV_VERSION="$(package_version "autopriv")"
+VERSION="$(package_version "mpc-compiler-additions")"
 
-find_in_prefix_or_use_spack "autopriv" "${AUTOPRIV_VERSION}" "${AUTOPRIV_PREFIX}" "$AUTOPRIV_GCC_VERSION_SPACK"
+find_in_prefix_or_use_spack "mpc-compiler-additions" "${VERSION}" "${MPC_COMP_ADD_PREFIX}" "$GCC_VERSION_SPACK"
 
 if test "x${DEP_FOUND}" = "xno"; then
 	assert_cmd "gcc"
 	assert_cmd "g++"
 	# Could not use spack now installing manually
-	build_configure_based_package "autopriv" "${AUTOPRIV_VERSION}" "$AUTOPRIV_BUILD_PARAMETERS $AUTOPRIV_GCC_VERSION_ARG"
+	build_configure_based_package "mpc-compiler-additions" "${VERSION}" "$MPC_COMP_ADD_BUILD_PARAMETERS $GCC_VERSION_ARG"
 fi
 
 
-# Make sure to load libunwind after autopriv (https://trac.macports.org/ticket/43869)
+# Make sure to load libunwind after compiler-additions (https://trac.macports.org/ticket/43869)
 find_in_prefix_or_use_spack_optionnal "libunwind" "" "spackonly" "${LIBUNWIND_PREFIX}"
 
 # It is now time to configure MPC
@@ -1648,13 +1651,13 @@ MPC_CONFIGURE_OPTS="--prefix=${PREFIX} $MPCFRAMEWORK_BUILD_PARAMETERS"
 checking "Configuring MPC"
 
 
-if test "x${AUTOPRIV_PREFIX}" = "xdisabled"; then
+if test "x${PREFIX}" = "xdisabled"; then
 	# we want parameter expansion
 	# shellcheck disable=SC2086
 	wrap_output "$SCRIPTPATH/configure" $MPC_CONFIGURE_OPTS $ALL_PACKAGE_ARGS
 	ok
 else
-	# We have autopriv so we explicitly set CC CXX and FC
+	# We have mpc-compiler-additions so we explicitly set CC CXX and FC
 	# we want parameter expansion
 	# shellcheck disable=SC2086
 	wrap_output "$SCRIPTPATH/configure" $MPC_CONFIGURE_OPTS CC=$(command -v apcc) CXX=$(command -v ap++) FC=$(command -v apfortran)

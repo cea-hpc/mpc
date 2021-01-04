@@ -1,7 +1,7 @@
-#PACKAGE    SOURCE_URL
+#PACKAGE                  SOURCE_URL
 hwloc       http://www.open-mpi.org/software/hwloc/v2.2/downloads/hwloc-VERSION.tar.gz
-openpa      https://github.com/pmodels/openpa/releases/download/vVERSION/openpa-VERSION.tar.gz
-hydra       http://www.mpich.org/static/downloads/3.2/hydra-VERSION.tar.gz
-mpcalloc    https://france.paratools.com/mpcalloc-VERSION.tar.gz
-autopriv    https://france.paratools.com/autopriv/autopriv-VERSION.tar.gz
-gdb         https://ftpmirror.gnu.org/gdb/gdb-7.7.tar.gz
+openpa                    https://github.com/pmodels/openpa/releases/download/vVERSION/openpa-VERSION.tar.gz
+hydra                     http://www.mpich.org/static/downloads/3.2/hydra-VERSION.tar.gz
+mpcalloc                  https://france.paratools.com/mpcalloc-VERSION.tar.gz
+mpc-compiler-additions    https://france.paratools.com/mpc/mpc-compiler-additions-VERSION.tar.gz
+gdb                       https://ftpmirror.gnu.org/gdb/gdb-7.7.tar.gz
