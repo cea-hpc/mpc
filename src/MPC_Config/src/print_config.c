@@ -148,6 +148,11 @@ int parse_args(int argc, char **argv)
 	return 0;
 }
 
+#ifdef MPC_Lowcomm
+	void mpc_lowcomm_init();
+	void mpc_lowcomm_release();
+#endif
+
 int main(int argc, char **argv)
 {
 #ifdef MPC_Lowcomm
