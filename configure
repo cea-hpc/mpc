@@ -21533,9 +21533,6 @@ done
 #### EXTERNAL LIBRARIES #### {sec:libraries}
 ############################
 
-#Add user local to search path
-CFLAGS="-L/usr/local/lib/ -Wl,-rpath=/usr/local/lib/ ${CFLAGS}"
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for log in -lm" >&5
 $as_echo_n "checking for log in -lm... " >&6; }
 if ${ac_cv_lib_m_log+:} false; then :
@@ -23748,6 +23745,24 @@ $as_echo "$MACRO_VALUE ($1)" >&6; }
         fi
 }
 
+# Add a pkg-config search path if not already here
+# $1 : search path to add
+#
+append_to_pkg_config_if_needed()
+{
+        TSOURCE=$(echo "$1" | xargs)
+        for p in $(echo "$PKG_CONFIG_PATH" | sed "s/:/ /g")
+        do
+                TPATH=$(echo   "$p" | xargs)
+                if test "x${TSOURCE}" = "x${TPATH}"; then
+                        return
+                fi
+        done
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: ${TSOURCE} prepended to pkg-config search paths" >&5
+$as_echo "$as_me: ${TSOURCE} prepended to pkg-config search paths" >&6;}
+        export PKG_CONFIG_PATH=${TSOURCE}:$PKG_CONFIG_PATH
+}
 
 #
 # $1 header_name (ex. hwloc.h)
@@ -23922,16 +23937,16 @@ fi
                 if test -z "$lib_prefix"
                 then
                         lib_prefix="$whole_prefix/lib"
-                else
-                        if test -d "${lib_prefix}/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${lib_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
-                        fi
                 fi
 
-                if test ! -z "$whole_prefix"
+                if test -d "${lib_prefix}/pkgconfig"; then
+                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                fi
+
+                if test -n "$whole_prefix"
                 then
                         if test -d "${whole_prefix}/lib/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${whole_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
+                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
                         fi
                 fi
 
@@ -24025,6 +24040,8 @@ fi
                         # Ensure PKG config dependencies are also
                         # injected using RPATH
                         HWLOC_LIBS=$(promote_to_rpath ${HWLOC_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: HWLOC FLAGS are ${HWLOC_LIBS}" >&5
+$as_echo "$as_me: HWLOC FLAGS are ${HWLOC_LIBS}" >&6;}
 
                         #Insert flags
                         CPPFLAGS="${HWLOC_CFLAGS} $CPPFLAGS"
@@ -24107,16 +24124,16 @@ fi
                 if test -z "$lib_prefix"
                 then
                         lib_prefix="$whole_prefix/lib"
-                else
-                        if test -d "${lib_prefix}/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${lib_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
-                        fi
                 fi
 
-                if test ! -z "$whole_prefix"
+                if test -d "${lib_prefix}/pkgconfig"; then
+                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                fi
+
+                if test -n "$whole_prefix"
                 then
                         if test -d "${whole_prefix}/lib/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${whole_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
+                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
                         fi
                 fi
 
@@ -24210,6 +24227,8 @@ fi
                         # Ensure PKG config dependencies are also
                         # injected using RPATH
                         OPA_LIBS=$(promote_to_rpath ${OPA_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: OPA FLAGS are ${OPA_LIBS}" >&5
+$as_echo "$as_me: OPA FLAGS are ${OPA_LIBS}" >&6;}
 
                         #Insert flags
                         CPPFLAGS="${OPA_CFLAGS} $CPPFLAGS"
@@ -24312,16 +24331,16 @@ fi
                 if test -z "$lib_prefix"
                 then
                         lib_prefix="$whole_prefix/lib"
-                else
-                        if test -d "${lib_prefix}/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${lib_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
-                        fi
                 fi
 
-                if test ! -z "$whole_prefix"
+                if test -d "${lib_prefix}/pkgconfig"; then
+                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                fi
+
+                if test -n "$whole_prefix"
                 then
                         if test -d "${whole_prefix}/lib/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${whole_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
+                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
                         fi
                 fi
 
@@ -24415,6 +24434,8 @@ fi
                         # Ensure PKG config dependencies are also
                         # injected using RPATH
                         ALLOC_LIBS=$(promote_to_rpath ${ALLOC_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: ALLOC FLAGS are ${ALLOC_LIBS}" >&5
+$as_echo "$as_me: ALLOC FLAGS are ${ALLOC_LIBS}" >&6;}
 
                         #Insert flags
                         CPPFLAGS="${ALLOC_CFLAGS} $CPPFLAGS"
@@ -24932,16 +24953,16 @@ fi
                 if test -z "$lib_prefix"
                 then
                         lib_prefix="$whole_prefix/lib"
-                else
-                        if test -d "${lib_prefix}/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${lib_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
-                        fi
                 fi
 
-                if test ! -z "$whole_prefix"
+                if test -d "${lib_prefix}/pkgconfig"; then
+                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                fi
+
+                if test -n "$whole_prefix"
                 then
                         if test -d "${whole_prefix}/lib/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${whole_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
+                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
                         fi
                 fi
 
@@ -25035,6 +25056,8 @@ fi
                         # Ensure PKG config dependencies are also
                         # injected using RPATH
                         UNW_LIBS=$(promote_to_rpath ${UNW_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: UNW FLAGS are ${UNW_LIBS}" >&5
+$as_echo "$as_me: UNW FLAGS are ${UNW_LIBS}" >&6;}
 
                         #Insert flags
                         CPPFLAGS="${UNW_CFLAGS} $CPPFLAGS"
@@ -25131,16 +25154,16 @@ fi
                 if test -z "$lib_prefix"
                 then
                         lib_prefix="$whole_prefix/lib"
-                else
-                        if test -d "${lib_prefix}/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${lib_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
-                        fi
                 fi
 
-                if test ! -z "$whole_prefix"
+                if test -d "${lib_prefix}/pkgconfig"; then
+                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                fi
+
+                if test -n "$whole_prefix"
                 then
                         if test -d "${whole_prefix}/lib/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${whole_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
+                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
                         fi
                 fi
 
@@ -25234,6 +25257,8 @@ fi
                         # Ensure PKG config dependencies are also
                         # injected using RPATH
                         IBV_LIBS=$(promote_to_rpath ${IBV_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: IBV FLAGS are ${IBV_LIBS}" >&5
+$as_echo "$as_me: IBV FLAGS are ${IBV_LIBS}" >&6;}
 
                         #Insert flags
                         CPPFLAGS="${IBV_CFLAGS} $CPPFLAGS"
@@ -25326,16 +25351,16 @@ fi
                 if test -z "$lib_prefix"
                 then
                         lib_prefix="$whole_prefix/lib"
-                else
-                        if test -d "${lib_prefix}/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${lib_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
-                        fi
                 fi
 
-                if test ! -z "$whole_prefix"
+                if test -d "${lib_prefix}/pkgconfig"; then
+                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                fi
+
+                if test -n "$whole_prefix"
                 then
                         if test -d "${whole_prefix}/lib/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${whole_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
+                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
                         fi
                 fi
 
@@ -25429,6 +25454,8 @@ fi
                         # Ensure PKG config dependencies are also
                         # injected using RPATH
                         OFI_LIBS=$(promote_to_rpath ${OFI_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: OFI FLAGS are ${OFI_LIBS}" >&5
+$as_echo "$as_me: OFI FLAGS are ${OFI_LIBS}" >&6;}
 
                         #Insert flags
                         CPPFLAGS="${OFI_CFLAGS} $CPPFLAGS"
@@ -25523,16 +25550,16 @@ fi
                 if test -z "$lib_prefix"
                 then
                         lib_prefix="$whole_prefix/lib"
-                else
-                        if test -d "${lib_prefix}/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${lib_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
-                        fi
                 fi
 
-                if test ! -z "$whole_prefix"
+                if test -d "${lib_prefix}/pkgconfig"; then
+                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                fi
+
+                if test -n "$whole_prefix"
                 then
                         if test -d "${whole_prefix}/lib/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${whole_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
+                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
                         fi
                 fi
 
@@ -25626,6 +25653,8 @@ fi
                         # Ensure PKG config dependencies are also
                         # injected using RPATH
                         PORTALS_LIBS=$(promote_to_rpath ${PORTALS_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: PORTALS FLAGS are ${PORTALS_LIBS}" >&5
+$as_echo "$as_me: PORTALS FLAGS are ${PORTALS_LIBS}" >&6;}
 
                         #Insert flags
                         CPPFLAGS="${PORTALS_CFLAGS} $CPPFLAGS"
@@ -25746,6 +25775,7 @@ if test "x$mpc_pmi1_enabled" != "xno"; then
 
 
 
+
 # Check whether --with-pmi was given.
 if test "${with_pmi+set}" = set; then :
   withval=$with_pmi; whole_prefix=$withval
@@ -25782,16 +25812,16 @@ fi
                 if test -z "$lib_prefix"
                 then
                         lib_prefix="$whole_prefix/lib"
-                else
-                        if test -d "${lib_prefix}/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${lib_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
-                        fi
                 fi
 
-                if test ! -z "$whole_prefix"
+                if test -d "${lib_prefix}/pkgconfig"; then
+                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                fi
+
+                if test -n "$whole_prefix"
                 then
                         if test -d "${whole_prefix}/lib/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${whole_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
+                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
                         fi
                 fi
 
@@ -25885,6 +25915,8 @@ fi
                         # Ensure PKG config dependencies are also
                         # injected using RPATH
                         PMI_LIBS=$(promote_to_rpath ${PMI_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: PMI FLAGS are ${PMI_LIBS}" >&5
+$as_echo "$as_me: PMI FLAGS are ${PMI_LIBS}" >&6;}
 
                         #Insert flags
                         CPPFLAGS="${PMI_CFLAGS} $CPPFLAGS"
@@ -25971,16 +26003,16 @@ fi
                 if test -z "$lib_prefix"
                 then
                         lib_prefix="$whole_prefix/lib"
-                else
-                        if test -d "${lib_prefix}/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${lib_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
-                        fi
                 fi
 
-                if test ! -z "$whole_prefix"
+                if test -d "${lib_prefix}/pkgconfig"; then
+                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                fi
+
+                if test -n "$whole_prefix"
                 then
                         if test -d "${whole_prefix}/lib/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${whole_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
+                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
                         fi
                 fi
 
@@ -26074,6 +26106,8 @@ fi
                         # Ensure PKG config dependencies are also
                         # injected using RPATH
                         PMIX_LIBS=$(promote_to_rpath ${PMIX_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: PMIX FLAGS are ${PMIX_LIBS}" >&5
+$as_echo "$as_me: PMIX FLAGS are ${PMIX_LIBS}" >&6;}
 
                         #Insert flags
                         CPPFLAGS="${PMIX_CFLAGS} $CPPFLAGS"
@@ -26272,16 +26306,16 @@ fi
                 if test -z "$lib_prefix"
                 then
                         lib_prefix="$whole_prefix/lib"
-                else
-                        if test -d "${lib_prefix}/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${lib_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
-                        fi
                 fi
 
-                if test ! -z "$whole_prefix"
+                if test -d "${lib_prefix}/pkgconfig"; then
+                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                fi
+
+                if test -n "$whole_prefix"
                 then
                         if test -d "${whole_prefix}/lib/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${whole_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
+                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
                         fi
                 fi
 
@@ -26375,6 +26409,8 @@ fi
                         # Ensure PKG config dependencies are also
                         # injected using RPATH
                         CUDA_LIBS=$(promote_to_rpath ${CUDA_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: CUDA FLAGS are ${CUDA_LIBS}" >&5
+$as_echo "$as_me: CUDA FLAGS are ${CUDA_LIBS}" >&6;}
 
                         #Insert flags
                         CPPFLAGS="${CUDA_CFLAGS} $CPPFLAGS"
@@ -26458,16 +26494,16 @@ fi
                 if test -z "$lib_prefix"
                 then
                         lib_prefix="$whole_prefix/lib"
-                else
-                        if test -d "${lib_prefix}/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${lib_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
-                        fi
                 fi
 
-                if test ! -z "$whole_prefix"
+                if test -d "${lib_prefix}/pkgconfig"; then
+                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                fi
+
+                if test -n "$whole_prefix"
                 then
                         if test -d "${whole_prefix}/lib/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${whole_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
+                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
                         fi
                 fi
 
@@ -26561,6 +26597,8 @@ fi
                         # Ensure PKG config dependencies are also
                         # injected using RPATH
                         CUDART_LIBS=$(promote_to_rpath ${CUDART_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: CUDART FLAGS are ${CUDART_LIBS}" >&5
+$as_echo "$as_me: CUDART FLAGS are ${CUDART_LIBS}" >&6;}
 
                         #Insert flags
                         CPPFLAGS="${CUDART_CFLAGS} $CPPFLAGS"
@@ -31199,16 +31237,16 @@ fi
                 if test -z "$lib_prefix"
                 then
                         lib_prefix="$whole_prefix/lib"
-                else
-                        if test -d "${lib_prefix}/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${lib_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
-                        fi
                 fi
 
-                if test ! -z "$whole_prefix"
+                if test -d "${lib_prefix}/pkgconfig"; then
+                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                fi
+
+                if test -n "$whole_prefix"
                 then
                         if test -d "${whole_prefix}/lib/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${whole_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
+                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
                         fi
                 fi
 
@@ -31302,6 +31340,8 @@ fi
                         # Ensure PKG config dependencies are also
                         # injected using RPATH
                         EXTLS_LIBS=$(promote_to_rpath ${EXTLS_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: EXTLS FLAGS are ${EXTLS_LIBS}" >&5
+$as_echo "$as_me: EXTLS FLAGS are ${EXTLS_LIBS}" >&6;}
 
                         #Insert flags
                         CPPFLAGS="${EXTLS_CFLAGS} $CPPFLAGS"

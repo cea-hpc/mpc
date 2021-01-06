@@ -277,9 +277,6 @@ AC_CHECK_HEADERS([ aio.h \
 #### EXTERNAL LIBRARIES #### {sec:libraries}
 ############################
 
-#Add user local to search path
-CFLAGS="-L/usr/local/lib/ -Wl,-rpath=/usr/local/lib/ ${CFLAGS}"
-
 AC_CHECK_LIB([m],[log])
 AC_CHECK_LIB(pthread, pthread_create)
 AC_CHECK_SIZEOF(pthread_t,,[#include <pthread.h>])
@@ -589,6 +586,23 @@ extract_integer_define_value()
         fi
 }
 
+# Add a pkg-config search path if not already here
+# $1 : search path to add
+#
+append_to_pkg_config_if_needed()
+{
+        TSOURCE=$(echo "$1" | xargs)
+        for p in $(echo "$PKG_CONFIG_PATH" | sed "s/:/ /g")
+        do
+                TPATH=$(echo   "$p" | xargs)
+                if test "x${TSOURCE}" = "x${TPATH}"; then
+                        return
+                fi
+        done
+
+        AC_MSG_NOTICE([${TSOURCE} prepended to pkg-config search paths])
+        export PKG_CONFIG_PATH=${TSOURCE}:$PKG_CONFIG_PATH
+}
 
 #
 # $1 header_name (ex. hwloc.h)
@@ -629,16 +643,16 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                 if test -z "$lib_prefix"
                 then
                         lib_prefix="$whole_prefix/lib"
-                else
-                        if test -d "${lib_prefix}/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${lib_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
-                        fi
                 fi
 
-                if test ! -z "$whole_prefix"
+                if test -d "${lib_prefix}/pkgconfig"; then
+                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                fi
+
+                if test -n "$whole_prefix"
                 then
                         if test -d "${whole_prefix}/lib/pkgconfig"; then
-                            export PKG_CONFIG_PATH="${whole_prefix}/lib/pkgconfig":${PKG_CONFIG_PATH}
+                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
                         fi
                 fi
 
@@ -661,6 +675,7 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                         # Ensure PKG config dependencies are also
                         # injected using RPATH
                         $4_LIBS=$(promote_to_rpath ${$4_LIBS})
+                        AC_MSG_NOTICE([$4 FLAGS are ${$4_LIBS}])
 
                         #Insert flags
                         CPPFLAGS="${$4_CFLAGS} $CPPFLAGS"
@@ -938,6 +953,7 @@ ensure_only_one_launcher
 
 if test "x$mpc_pmi1_enabled" != "xno"; then
         MPC_LAUNCHER="PMI1"
+
         MPC_DETECT_DEPENDENCY([pmi.h],[pmi], [PMI_Finalize], [PMI])
         MPC_REQUIRED_DEPENDENCY([pmi], [$mpc_dep_found])
         AC_DEFINE([MPC_USE_PMI1], [1], [PMI1 will be used to launch parallel programs])
