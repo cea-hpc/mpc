@@ -135,7 +135,12 @@ static inline pmix_status_t __pmix_get_attribute(int rank_level, const char key[
 	pmix_value_t *val = NULL;
 
 	pmix_status_t rc = PMIx_Get(proc, key, NULL, 0, &val);
-	PMI_CHECK_RC( rc, "PMIx_Get" );
+
+	if(rc != PMI_SUCCESS)
+	{
+		return rc;
+	}
+
 	assume(val != NULL);
 
 	switch (val->type)
@@ -182,7 +187,6 @@ static inline int __mpc_pmi_get_process_rank( int *rank )
 	int rc;
 	// Get the rank of the current process
 	rc = PMI_Get_rank( rank );
-	PMI_CHECK_RC( rc, "PMI_Get_rank" );
 	PMI_RETURN( rc );
 #endif
 }
@@ -203,7 +207,6 @@ static inline int __mpc_pmi_get_process_rank( int *rank )
 	int rc;
 	// Get the total number of processes
 	rc = PMI_Get_size( size );
-	PMI_CHECK_RC( rc, "PMI_Get_size" );
 	PMI_RETURN( rc );
 #endif
 }
@@ -282,6 +285,7 @@ static inline int __mpc_pmi_get_local_process_count( int *size )
 #endif
 }
 
+static inline int __get_node_rank_from_process_rank_fallback(int process_rank);
 
 /*! \brief Get the rank of this node
  * @param rank Pointer to store the rank of the node
@@ -308,10 +312,25 @@ static inline int __mpc_pmi_get_node_rank( int *rank )
 
 	return MPC_LAUNCH_PMI_SUCCESS;
 #elif defined(MPC_USE_PMIX)
+
 	uint32_t urank;
 	*rank = -1;
 	pmix_status_t rc = __pmix_get_attribute(0, PMIX_NODEID, PMIX_UINT32, &urank);
-	PMI_CHECK_RC( rc, "__pmix_get_attribute" );
+
+	if(rc != PMI_SUCCESS)
+	{
+		mpc_common_tracepoint("PMI: using fallback nodeid");
+		/* Note this may fail on some PMIx versions (not sure why)
+		possible pointer is https://github.com/openpmix/openpmix/issues/1965
+		for example on 3.2.2rc1 it works in slurm but not with prrte
+		we then use the fallback lookup inside the local process map */
+		int prank = -1;
+		rc = __mpc_pmi_get_local_process_rank( &prank );
+		PMI_CHECK_RC( rc, "__mpc_pmi_get_local_process_rank for Node Rank" );
+		*rank = __get_node_rank_from_process_rank_fallback(prank);
+		PMI_RETURN( rc );
+	}
+
 	*rank = urank;
 	PMI_RETURN( rc );
 #else
@@ -362,19 +381,58 @@ static inline int __mpc_pmi_get_node_count( int *size )
  * INITIALIZATION AND RELEASE *
  ******************************/
 
-
-static inline int _pmi_initialize(struct mpc_pmi_context *ctx)
+static inline void __set_ctx_to_serial(struct mpc_pmi_context *ctx)
 {
+	ctx->local_process_rank = 0;
+	ctx->node_rank = 0;
+	ctx->node_count = 1;
+	ctx->local_process_count = 1;
+
+	/* Now proceed to add a single node to process layout */
+	struct mpc_launch_pmi_process_layout *tmp = ( struct mpc_launch_pmi_process_layout * ) sctk_malloc(	sizeof( struct mpc_launch_pmi_process_layout ) );
+	tmp->node_rank = 0;
+	tmp->nb_process = 1;
+	tmp->process_list = ( int * ) sctk_malloc( sizeof( int ) * 1 );
+	tmp->process_list[0] = 0;
+	HASH_ADD_INT( ctx->process_nb_from_node_rank, node_rank, tmp );
+}
+
+
+static inline int _pmi_initialize(struct mpc_pmi_context *ctx, int * unreachable)
+{
+
+	char * exename = mpc_common_get_flags()->exename;
+
+	if( exename )
+	{
+		//If the command is mpc_print_config do not even try to bootstrap PMIx
+		if(strstr(exename, "mpc_print_config"))
+		{
+			goto PMI_INIT_SERIAL;
+		}
+	}
+
 	#ifdef MPC_USE_PMIX
 
-		pmix_status_t rc = PMIX_SUCCESS;
+		pmix_status_t rc = PMI_SUCCESS;
 
 		rc = PMIx_Init(&ctx->pmix_proc,
                        NULL,
 					   0);
-		PMI_CHECK_RC( rc, "PMIx_Init" );
+		if( (rc == PMIX_ERR_UNREACH) || (rc == PMIX_ERR_INVALID_NAMESPACE) )
+		{
+			mpc_common_debug("PMIx was unreachable");
+			goto PMI_INIT_SERIAL;
+		}
+		else
+		{
+			PMI_CHECK_RC( rc, "PMIx_Init" );
+		}
 
 		ctx->initialized = PMIx_Initialized();
+
+		mpc_common_tracepoint_fmt("PMI: init done ? %d", ctx->initialized);
+
 
 		if ( ctx->initialized != 1 )
 		{
@@ -384,6 +442,12 @@ static inline int _pmi_initialize(struct mpc_pmi_context *ctx)
 
 	#else /* PMI / HYDRA */
 		int rc;
+
+		/* For PMI1 we do not support the Unreachable PMI case */
+		if( mpc_common_get_flags()->process_number == 1)
+		{
+			goto PMI_INIT_SERIAL;
+		}
 
 		// Initialized PMI/SLURM
 		rc = PMI_Init( &ctx->spawned );
@@ -415,13 +479,29 @@ static inline int _pmi_initialize(struct mpc_pmi_context *ctx)
 
 	#endif
 
-	rc = __mpc_pmi_get_process_rank( &ctx->process_rank );
-	PMI_CHECK_RC( rc, "mpc_launch_pmi_get_process_rank" );
-	rc = __mpc_pmi_get_process_count( &ctx->process_count );
-	PMI_CHECK_RC( rc, "mpc_launch_pmi_get_process_count" );
+	/* There should be no error but PMIX could be surprising */ 
 
+	rc = __mpc_pmi_get_process_rank( &ctx->process_rank );
+	
+	if(rc != PMI_SUCCESS )
+	{
+		goto PMI_INIT_SERIAL;
+	}
+	
+	rc = __mpc_pmi_get_process_count( &ctx->process_count );
+	
+	if(rc != PMI_SUCCESS )
+	{
+		goto PMI_INIT_SERIAL;
+	}
+	
 	return MPC_LAUNCH_PMI_SUCCESS;
 
+PMI_INIT_SERIAL:
+	*unreachable = 1;
+	/* This is the case where we have no PMI server assume SERIAL */
+	__set_ctx_to_serial(ctx);
+	PMI_RETURN( PMI_SUCCESS );
 }
 
 
@@ -603,6 +683,24 @@ int mpc_launch_pmi_get_process_layout( struct mpc_launch_pmi_process_layout **la
 	return MPC_LAUNCH_PMI_SUCCESS;
 }
 
+/** This is the fallback code when the nodeid attribute is buggy */
+static inline int __get_node_rank_from_process_rank_fallback(int process_rank)
+{
+	struct mpc_launch_pmi_process_layout * tmp = NULL, *current = NULL;
+
+	HASH_ITER(hh, pmi_context.process_nb_from_node_rank, current, tmp)
+	{
+		int i;
+		for(i = 0 ; i < current->nb_process; i++)
+		{
+			if(i == process_rank){
+				return current->node_rank;
+			}
+		}
+	}
+
+	not_reachable();
+}
 
 
 /*! \brief Initialization function
@@ -612,40 +710,43 @@ int mpc_launch_pmi_init()
 {
 	__mpc_launch_pmi_context_clear();
 
-	if ( mpc_common_get_flags()->process_number == 1 )
-	{
-
-		// no need of KVS for infos initialization
-		pmi_context.local_process_rank = 0;
-		pmi_context.node_rank = 0;
-		pmi_context.node_count = 1;
-		pmi_context.local_process_count = 1;
-		PMI_RETURN( PMI_SUCCESS );
-	}
-
-	int rc = _pmi_initialize(&pmi_context);
+	int unreachable = 0;
+	int rc = _pmi_initialize(&pmi_context, &unreachable);
 
 	if( rc != MPC_LAUNCH_PMI_SUCCESS)
 	{
+		mpc_common_tracepoint_fmt("PMI: Failed initializing PMI (ret %d)", rc);
+
 		return MPC_LAUNCH_PMI_FAIL;
+	}
+
+	/* In this case PMI_Init instructed to skip init */
+	if(unreachable)
+	{
+		PMI_RETURN( rc );
+	}
+
+	__mpc_pmi_get_process_count(&pmi_context.process_count);
+
+	/* This is a fastpath for the serial case */
+	if(pmi_context.process_count == 1)
+	{
+		__set_ctx_to_serial(&pmi_context);
+		PMI_RETURN( PMI_SUCCESS );
 	}
 
 	// check if PMI_Get_size is equal to 1 (could mean application
 	// launched without mpiexec)
 	__mpc_pmi_get_process_rank(&pmi_context.process_rank);
-	__mpc_pmi_get_process_count(&pmi_context.process_count);
+
+
+	mpc_common_tracepoint_fmt("PMI: this is process %d/%d", pmi_context.process_rank, pmi_context.process_count);
 
 	__process_layout_init();
 
 	/* Set the whole context */
 	mpc_common_set_process_rank( pmi_context.process_rank );
 	mpc_common_set_process_count( pmi_context.process_count );
-
-	if( 0 < mpc_common_get_flags()->process_number)
-	{
-		/* Ensure coherency if a process number was on CLI */
-		assume(mpc_common_get_flags()->process_number == pmi_context.process_count);
-	}
 
 	/* Get process number from PMI */
 	mpc_common_get_flags()->process_number = pmi_context.process_count;

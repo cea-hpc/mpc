@@ -895,6 +895,9 @@
 /* Portals support is enabled */
 #undef MPC_USE_PORTALS
 
+/* PMIx Runtime PRTE will be considered to launch parallel programs */
+#undef MPC_USE_PRTE
+
 /* MPC Major Version */
 #undef MPC_VERSION_MAJOR
 

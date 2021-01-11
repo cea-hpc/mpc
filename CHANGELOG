@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## [Unreleased]
 
 - Active Message engine based on libffi
+- `PRRTE` implement support for the PMIx standard runtime.
 - Add libfabric support (OFI)
 - Add new configuration system inside MPC (only at runtime)
 - Autopriv dependency has been renamed to mpc-compiler-additions

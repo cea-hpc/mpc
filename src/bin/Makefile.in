@@ -99,7 +99,10 @@ host_triplet = @host@
 # Cuda support
 #
 @MPC_CUDA_ENABLED_TRUE@am__append_2 = mpc_nvcc
-bin_PROGRAMS = mpirun$(EXEEXT)
+@PRRTE_LAUNCHER_ENABLED_FALSE@bin_PROGRAMS = mpirun$(EXEEXT)
+@MPC_HAS_SRUN_SUPPORT_TRUE@am__append_3 = mpcrun_opt/mpcrun_srun
+@HYDRA_LAUNCHER_ENABLED_TRUE@am__append_4 = mpcrun_opt/mpcrun_hydra mpcrun_opt/mpcrun_salloc_hydra 
+@PRRTE_LAUNCHER_ENABLED_TRUE@am__append_5 = mpcrun_opt/mpcrun_prrte
 subdir = src/bin
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_gcc_builtin.m4 \
@@ -125,8 +128,9 @@ am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)" \
 	"$(DESTDIR)$(mpcrun_plugindir)" "$(DESTDIR)$(pkgdatadir)" \
 	"$(DESTDIR)$(prefix_bindir)"
 PROGRAMS = $(bin_PROGRAMS)
+am__mpirun_SOURCES_DIST = ./mpirun.c
 am__dirstamp = $(am__leading_dot)dirstamp
-am_mpirun_OBJECTS = ./mpirun.$(OBJEXT)
+@PRRTE_LAUNCHER_ENABLED_FALSE@am_mpirun_OBJECTS = ./mpirun.$(OBJEXT)
 mpirun_OBJECTS = $(am_mpirun_OBJECTS)
 mpirun_LDADD = $(LDADD)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -197,7 +201,7 @@ am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(mpirun_SOURCES)
-DIST_SOURCES = $(mpirun_SOURCES)
+DIST_SOURCES = $(am__mpirun_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -352,6 +356,7 @@ MPC_HAVE_DMTCP = @MPC_HAVE_DMTCP@
 MPC_HAVE_PROFILER = @MPC_HAVE_PROFILER@
 MPC_IN_PROCESS_MODE = @MPC_IN_PROCESS_MODE@
 MPC_LAUNCHER = @MPC_LAUNCHER@
+MPC_LAUNCHER_PROGRAM = @MPC_LAUNCHER_PROGRAM@
 MPC_LOWCOMM_ENABLED = @MPC_LOWCOMM_ENABLED@
 MPC_MODULE_DEFINES = @MPC_MODULE_DEFINES@
 MPC_MODULE_LIST = @MPC_MODULE_LIST@
@@ -367,7 +372,6 @@ MPC_VERSION_MINOR = @MPC_VERSION_MINOR@
 MPC_VERSION_PATCH = @MPC_VERSION_PATCH@
 MPC_VERSION_PRE = @MPC_VERSION_PRE@
 MPC_VERSION_STRING = @MPC_VERSION_STRING@
-MPIEXEC_HYDDRA = @MPIEXEC_HYDDRA@
 MPIEXEC_HYDRA = @MPIEXEC_HYDRA@
 NEEDS_MPI_FINT = @NEEDS_MPI_FINT@
 NM = @NM@
@@ -400,6 +404,7 @@ PMI_CFLAGS = @PMI_CFLAGS@
 PMI_LIBS = @PMI_LIBS@
 PORTALS_CFLAGS = @PORTALS_CFLAGS@
 PORTALS_LIBS = @PORTALS_LIBS@
+PRTERUN = @PRTERUN@
 PYTHON = @PYTHON@
 PYTHON_EXEC_PREFIX = @PYTHON_EXEC_PREFIX@
 PYTHON_PLATFORM = @PYTHON_PLATFORM@
@@ -424,6 +429,7 @@ SIZEOF_PTHREAD_RWLOCKATTR_T = @SIZEOF_PTHREAD_RWLOCKATTR_T@
 SIZEOF_PTHREAD_RWLOCK_T = @SIZEOF_PTHREAD_RWLOCK_T@
 SIZEOF_PTHREAD_SPINLOCK_T = @SIZEOF_PTHREAD_SPINLOCK_T@
 SIZEOF_SEM_T = @SIZEOF_SEM_T@
+SRUN_IN_PATH = @SRUN_IN_PATH@
 STRIP = @STRIP@
 UNW_CFLAGS = @UNW_CFLAGS@
 UNW_LIBS = @UNW_LIBS@
@@ -508,9 +514,11 @@ pkgdata_SCRIPTS = mpc_compiler_common.sh
 # It duplicates mpcvarsh.sh but is needed for retrocompat
 prefix_bindir = $(prefix)
 prefix_bin_SCRIPTS = mpcvars.sh
-mpirun_SOURCES = ./mpirun.c
+@PRRTE_LAUNCHER_ENABLED_FALSE@mpirun_SOURCES = ./mpirun.c
 mpcrun_plugindir = $(pkgdatadir)/mpcrun_opt/
-mpcrun_plugin_SCRIPTS = mpcrun_opt/mpcrun_default mpcrun_opt/mpcrun_hydra mpcrun_opt/mpcrun_mpiexec mpcrun_opt/mpcrun_mpiexec_allinea mpcrun_opt/mpcrun_mpiexec_gdb mpcrun_opt/mpcrun_none mpcrun_opt/mpcrun_none_ddd mpcrun_opt/mpcrun_none_gdb mpcrun_opt/mpcrun_none_mpc-gdb mpcrun_opt/mpcrun_none_totalview mpcrun_opt/mpcrun_none_valgrind mpcrun_opt/mpcrun_propagate_env mpcrun_opt/mpcrun_remote mpcrun_opt/mpcrun_remote_launcher mpcrun_opt/mpcrun_salloc_hydra mpcrun_opt/mpcrun_srun mpcrun_opt/mpcrun_srun_gdb mpcrun_opt/mpcrun_srun_mpcdb mpcrun_opt/mpcrun_srun_totalview
+mpcrun_plugin_SCRIPTS = mpcrun_opt/mpcrun_none \
+	mpcrun_opt/mpcrun_none_mpc-gdb $(am__append_3) $(am__append_4) \
+	$(am__append_5)
 all: all-am
 
 .SUFFIXES:
@@ -993,6 +1001,7 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+@PRRTE_LAUNCHER_ENABLED_FALSE@install-exec-hook:
 clean: clean-am
 
 clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
@@ -1023,7 +1032,8 @@ install-dvi: install-dvi-am
 install-dvi-am:
 
 install-exec-am: install-binPROGRAMS install-binSCRIPTS
-
+	@$(NORMAL_INSTALL)
+	$(MAKE) $(AM_MAKEFLAGS) install-exec-hook
 install-html: install-html-am
 
 install-html-am:
@@ -1068,7 +1078,7 @@ uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
 	uninstall-mpcrun_pluginSCRIPTS uninstall-pkgdataSCRIPTS \
 	uninstall-prefix_binSCRIPTS
 
-.MAKE: install-am install-strip
+.MAKE: install-am install-exec-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am check check-am clean \
 	clean-binPROGRAMS clean-generic clean-libtool cscopelist-am \
@@ -1076,11 +1086,12 @@ uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
 	distclean-libtool distclean-tags distdir dvi dvi-am html \
 	html-am info info-am install install-am install-binPROGRAMS \
 	install-binSCRIPTS install-data install-data-am install-dvi \
-	install-dvi-am install-exec install-exec-am install-html \
-	install-html-am install-info install-info-am install-man \
-	install-mpcrun_pluginSCRIPTS install-pdf install-pdf-am \
-	install-pkgdataSCRIPTS install-prefix_binSCRIPTS install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
+	install-dvi-am install-exec install-exec-am install-exec-hook \
+	install-html install-html-am install-info install-info-am \
+	install-man install-mpcrun_pluginSCRIPTS install-pdf \
+	install-pdf-am install-pkgdataSCRIPTS \
+	install-prefix_binSCRIPTS install-ps install-ps-am \
+	install-strip installcheck installcheck-am \
 	installcheck-binPROGRAMS installcheck-binSCRIPTS \
 	installcheck-mpcrun_pluginSCRIPTS installcheck-pkgdataSCRIPTS \
 	installcheck-prefix_binSCRIPTS installdirs maintainer-clean \
@@ -1092,6 +1103,14 @@ uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
 
 .PRECIOUS: Makefile
 
+
+#
+# mpirun
+#
+
+@PRRTE_LAUNCHER_ENABLED_TRUE@install-exec-hook:
+@PRRTE_LAUNCHER_ENABLED_TRUE@	$(MKDIR_P) $(prefix)/bin
+@PRRTE_LAUNCHER_ENABLED_TRUE@	rm -fr  $(prefix)/bin/mpirun; $(LN_S) @PRTERUN@ $(prefix)/bin/mpirun
 
 #CLEANFILES += $(bin_SCRIPTS) $(mpcrun_plugin_SCRIPTS)
 

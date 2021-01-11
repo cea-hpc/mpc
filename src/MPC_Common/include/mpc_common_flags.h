@@ -12,6 +12,8 @@ struct mpc_common_flags
 {
         /* Verbosity level */
         int verbosity;
+        /** Print callbacks debug information */
+	int debug_callbacks;
 
         /* Launch command */
         char * exename;

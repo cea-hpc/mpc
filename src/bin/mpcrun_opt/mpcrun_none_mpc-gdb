@@ -21,4 +21,4 @@
 #                                                                      # 
 ######################################################################## 
 
-LAUNCH_COMMAND="$DEBUG $MPC_GDB_DEBUG_ARGS --args $LAUNCHER_OPTION_WRAPPER $LAUNCHER_OPTION_BINARY $LAUNCHER_OPTION_BINARY_ARGS $SCTK_ARGS"
+LAUNCH_COMMAND="$DEBUG $MPC_GDB_DEBUG_ARGS --args $LAUNCHER_OPTION_WRAPPER $LAUNCHER_OPTION_BINARY $LAUNCHER_OPTION_BINARY_ARGS"

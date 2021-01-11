@@ -209,6 +209,8 @@ AC_PROG_FC([gfortran apfortran ifort pgfortran pgf77 flang])
 
 AC_PROG_INSTALL
 AM_PROG_AS
+AC_PROG_LN_S
+AC_PROG_MKDIR_P
 
 AM_PATH_PYTHON([],[HAVE_PYTHON="yes"],[HAVE_PYTHON="no"])
 
@@ -521,8 +523,7 @@ __check_or_infer_prefix_lib()
 
 
                         OLD_LDFLAGS=$LDFLAGS
-
-                        LDFLAGS=" -L$pref/$suffix/ -Wl,-rpath=$pref/$suffix/ -l$1 $LDFLAGS"
+                        LDFLAGS=$(promote_to_rpath " -L$pref/$suffix/ -Wl,-rpath=$pref/$suffix/ -l$1 $LDFLAGS")
 
                         ___unset_lib_cache
                         AC_CHECK_LIB($looked_up_lib, $looked_up_function, [lib_found=1], [lib_found=0])
@@ -951,6 +952,8 @@ ensure_only_one_launcher()
 
 ensure_only_one_launcher
 
+MPC_LAUNCHER_PROGRAM="none"
+
 if test "x$mpc_pmi1_enabled" != "xno"; then
         MPC_LAUNCHER="PMI1"
 
@@ -962,6 +965,18 @@ elif test "x$mpc_pmix_enabled" != "xno"; then
         MPC_DETECT_DEPENDENCY([pmix.h],[pmix], [PMIx_Finalize], [PMIX])
         MPC_REQUIRED_DEPENDENCY([pmix], [$mpc_dep_found])
         AC_DEFINE([MPC_USE_PMIX], [1], [PMIX will be used to launch parallel programs])
+
+        # In the PMIX configuration check for the PMIx Runtime
+        AC_PATH_PROG([PRTERUN], [prterun], [no])
+        if test "x$PRTERUN" = "xno"
+        then
+                AC_MSG_WARN([Could not locate 'PMIx Runtime PRTE' in PATH. support will not be built.])
+        else
+                MPC_LAUNCHER_PROGRAM="PRRTE"
+                AC_DEFINE([MPC_USE_PRTE], [1], [PMIx Runtime PRTE will be considered to launch parallel programs])
+        fi
+
+
 elif test "x$mpc_hydra_enabled" != "xno"; then
         AC_PATH_PROG([MPIEXEC_HYDRA], [mpiexec.hydra], [no])
         if test "x$MPIEXEC_HYDRA" = "xno"
@@ -979,15 +994,37 @@ elif test "x$mpc_hydra_enabled" != "xno"; then
                 AC_MSG_ERROR([Hydra requires socket support])
         fi
 
+        MPC_LAUNCHER_PROGRAM="HYDRA"
         AC_DEFINE([MPC_USE_HYDRA], [1], [Hydra will be used to launch parallel programs])
 else
         AC_MSG_ERROR([No launcher was selected use either --with-slurm, --with-hydra or --with-pmix])
 fi
 
-AM_CONDITIONAL([HYDRA_LAUNCHER_ENABLED], [test "x$MPC_LAUNCHER" = "xHYDRA"])
+# For the srun launcher we want srun and one of the PMI compiled in
 
-AC_SUBST([MPIEXEC_HYDDRA])
+AC_PATH_PROG([SRUN_IN_PATH], [srun], [no])
+
+SRUN_LAUNCH_SUPPORT="no"
+
+if test "x${SRUN_IN_PATH}" != "xno"; then
+        AC_MSG_CHECKING([SRUN launcher deployed])
+        if test "x$MPC_LAUNCHER" = "xPMIX" -o "x$MPC_LAUNCHER" = "xPMI1"; then
+                AC_MSG_RESULT([yes])
+                SRUN_LAUNCH_SUPPORT="yes"
+        else
+                AC_MSG_RESULT([no])
+        fi
+fi
+
+AM_CONDITIONAL([MPC_HAS_SRUN_SUPPORT], [test "x${SRUN_LAUNCH_SUPPORT}" = "xyes"])
+AM_CONDITIONAL([HYDRA_LAUNCHER_ENABLED], [test "x$MPC_LAUNCHER_PROGRAM" = "xHYDRA"])
+AM_CONDITIONAL([PRRTE_LAUNCHER_ENABLED], [test "x$MPC_LAUNCHER_PROGRAM" = "xPRRTE"])
+
+AC_SUBST([PRTERUN])
+AC_SUBST([MPIEXEC_HYDRA])
 AC_SUBST([MPC_LAUNCHER])
+AC_SUBST([MPC_LAUNCHER_PROGRAM])
+
 
 AC_DEFINE_UNQUOTED([MPC_LAUNCHER], [$MPC_LAUNCHER], [Default launcher configured for MPC])
 
@@ -2877,6 +2914,7 @@ MPC_CONFIG_RESULT="\
 ### OTHER OPTIONS SET ###\n\
 #\n\
 # Launcher............. $MPC_LAUNCHER\n\
+# Launcher Program..... $MPC_LAUNCHER_PROGRAM\n\
 # Allocator............ $MPC_ALLOCATOR\n\
 # libunwind............ $mpc_libunwind\n\
 # libvmem.............. $mpc_libvmem\n\

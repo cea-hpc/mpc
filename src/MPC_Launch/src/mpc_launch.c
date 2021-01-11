@@ -71,7 +71,6 @@
  */
 struct mpc_launch_config{
 	int bt_sig_enabled; /** Produce backtraces on error */
-	int debug_callbacks; /** Print callbacks debug information */
 	int banner_enabled; /** Should MPC's banner be dispayed */
 	int autokill_timer; /** What is the kill timer in seconds (0 means none) */
 	char mpcrun_launcher[MPC_CONF_STRING_SIZE]; /** What is the default launcher for MPCRUN */
@@ -523,7 +522,7 @@ static inline void __set_default_values()
 
 	/* Set default configuration */
 	__launch_config.bt_sig_enabled = 1;
-	__launch_config.debug_callbacks = 0;
+	mpc_common_get_flags()->debug_callbacks = 0;
 	__launch_config.banner_enabled = 1;
 	__launch_config.autokill_timer = 0;
 	snprintf(__launch_config.mpcrun_launcher, MPC_CONF_STRING_SIZE, "none");
@@ -569,7 +568,7 @@ static inline void __register_config(void)
 	mpc_conf_config_type_t *debug = mpc_conf_config_type_init("debug",	
 	                                                       PARAM("backtrace", &__launch_config.bt_sig_enabled ,MPC_CONF_BOOL, "Produce backtraces on error"),
 														   PARAM("verbosity", &mpc_common_get_flags()->verbosity, MPC_CONF_INT, "Should debug messages be displayed (1-3)"),
-														   PARAM("callbacks", &__launch_config.debug_callbacks, MPC_CONF_BOOL, "Print callbacks debug information"),
+														   PARAM("callbacks", &mpc_common_get_flags()->debug_callbacks, MPC_CONF_BOOL, "Print callbacks debug information"),
 														   NULL);
 
 	/* Register Launch Config */
@@ -726,7 +725,7 @@ void mpc_launch_init_runtime()
 
 	mpc_common_init_trigger("Base Runtime Init with Config");
 
-	if( __launch_config.debug_callbacks )
+	if( mpc_common_get_flags()->debug_callbacks )
 	{
 		mpc_common_init_print();
 	}
@@ -744,12 +743,12 @@ void mpc_launch_release_runtime()
 
 int mpc_launch_main(int argc, char **argv)
 {
+	mpc_common_get_flags()->exename = strdup(argv[0]);
+
 	/* Initialize return code to -1 (as not set) */
 	OPA_store_int(&__mpc_main_return_code, -1);
 
 	mpc_launch_init_runtime();
-
-	mpc_common_get_flags()->exename = argv[0];
 
 	startup_arg_t arg;
 	arg.argc = argc;

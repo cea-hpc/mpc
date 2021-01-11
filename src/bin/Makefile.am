@@ -30,8 +30,15 @@ endif
 # mpirun
 #
 
+
+if PRRTE_LAUNCHER_ENABLED
+install-exec-hook:
+	$(MKDIR_P) $(prefix)/bin
+	rm -fr  $(prefix)/bin/mpirun; $(LN_S) @PRTERUN@ $(prefix)/bin/mpirun
+else
 bin_PROGRAMS=mpirun
 mpirun_SOURCES=./mpirun.c
+endif
 
 #
 # mpcrun
@@ -39,6 +46,18 @@ mpirun_SOURCES=./mpirun.c
 bin_SCRIPTS += mpcrun
 
 mpcrun_plugindir = $(pkgdatadir)/mpcrun_opt/
-mpcrun_plugin_SCRIPTS = mpcrun_opt/mpcrun_default mpcrun_opt/mpcrun_hydra mpcrun_opt/mpcrun_mpiexec mpcrun_opt/mpcrun_mpiexec_allinea mpcrun_opt/mpcrun_mpiexec_gdb mpcrun_opt/mpcrun_none mpcrun_opt/mpcrun_none_ddd mpcrun_opt/mpcrun_none_gdb mpcrun_opt/mpcrun_none_mpc-gdb mpcrun_opt/mpcrun_none_totalview mpcrun_opt/mpcrun_none_valgrind mpcrun_opt/mpcrun_propagate_env mpcrun_opt/mpcrun_remote mpcrun_opt/mpcrun_remote_launcher mpcrun_opt/mpcrun_salloc_hydra mpcrun_opt/mpcrun_srun mpcrun_opt/mpcrun_srun_gdb mpcrun_opt/mpcrun_srun_mpcdb mpcrun_opt/mpcrun_srun_totalview
+mpcrun_plugin_SCRIPTS = mpcrun_opt/mpcrun_none mpcrun_opt/mpcrun_none_mpc-gdb
+
+if MPC_HAS_SRUN_SUPPORT
+mpcrun_plugin_SCRIPTS += mpcrun_opt/mpcrun_srun
+endif
+
+if HYDRA_LAUNCHER_ENABLED
+mpcrun_plugin_SCRIPTS += mpcrun_opt/mpcrun_hydra mpcrun_opt/mpcrun_salloc_hydra 
+endif
+
+if PRRTE_LAUNCHER_ENABLED
+mpcrun_plugin_SCRIPTS +=  mpcrun_opt/mpcrun_prrte
+endif
 
 #CLEANFILES += $(bin_SCRIPTS) $(mpcrun_plugin_SCRIPTS)

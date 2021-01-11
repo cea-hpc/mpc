@@ -21,7 +21,7 @@
 #                                                                      # 
 ######################################################################## 
 #echo "$LAUNCH_COMMAND"
-if [ "$LAUNCHER_CONFIG_JOB_MANAGER" = "SLURM" ]; then
+if test "x${MPC_LAUNCHER}" = "xPMI1" -o "x${MPC_LAUNCHER}" = "xPMIX"; then
 	if test "$MPC_AUTO_KILL_TIMEOUT" = "0"  || test  -z "$MPC_AUTO_KILL_TIMEOUT"; then
 		autokill_opt=""
 	else
@@ -34,8 +34,8 @@ if [ "$LAUNCHER_CONFIG_JOB_MANAGER" = "SLURM" ]; then
                     LAUNCHER_OPTION_CPU_NB=1
                 fi
 	fi
-	LAUNCH_COMMAND="srun ${autokill_opt} $LAUNCH_OPTIONS --ntasks=$LAUNCHER_OPTION_PROCESS_NB --nodes=$LAUNCHER_OPTION_NODE_NB --cpus-per-task=$LAUNCHER_OPTION_CPU_NB $LAUNCHER_OPTION_WRAPPER $LAUNCHER_OPTION_BINARY $LAUNCHER_OPTION_BINARY_ARGS $SCTK_ARGS"
+	LAUNCH_COMMAND="srun ${autokill_opt} $LAUNCH_OPTIONS --ntasks=$LAUNCHER_OPTION_PROCESS_NB --nodes=$LAUNCHER_OPTION_NODE_NB --cpus-per-task=$LAUNCHER_OPTION_CPU_NB $LAUNCHER_OPTION_WRAPPER $LAUNCHER_OPTION_BINARY $LAUNCHER_OPTION_BINARY_ARGS"
 else
-	echo  "ERROR mpc is compiled without slurm support" 1>&2
+	echo  "ERROR mpc is compiled without any PMI (--with-pmi1/--with-slurm or --with-pmix) support cannot use bare srun" 1>&2
 	exit 1
 fi

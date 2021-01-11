@@ -20,7 +20,7 @@
 #   - PERACHE Marc marc.perache@cea.fr                                 #
 #                                                                      #
 ########################################################################
-if [ "$LAUNCHER_CONFIG_JOB_MANAGER" = "HYDRA" ]; then
+if test -f "${LAUNCHER_CONFIG_MPIEXEC_HYDRA_PATH}"; then
 	if test "$MPC_AUTO_KILL_TIMEOUT" = "0"  || test  -z "$MPC_AUTO_KILL_TIMEOUT"; then
 		autokill_opt=""
 	else
@@ -34,7 +34,7 @@ if [ "$LAUNCHER_CONFIG_JOB_MANAGER" = "HYDRA" ]; then
 		opt_core="-c ${LAUNCHER_OPTION_CPU_NB}"
 	fi  
 
-	LAUNCH_COMMAND="salloc $LAUNCH_OPTIONS -n $LAUNCHER_OPTION_PROCESS_NB -N $LAUNCHER_OPTION_NODE_NB ${opt_core} ${autokill_opt} ${LAUNCHER_CONFIG_MPIEXEC_HYDRA_PATH} -n $LAUNCHER_OPTION_PROCESS_NB $LAUNCHER_OPTION_WRAPPER $LAUNCHER_OPTION_BINARY $LAUNCHER_OPTION_BINARY_ARGS $SCTK_ARGS"
+	LAUNCH_COMMAND="salloc $LAUNCH_OPTIONS -n $LAUNCHER_OPTION_PROCESS_NB -N $LAUNCHER_OPTION_NODE_NB ${opt_core} ${autokill_opt} ${LAUNCHER_CONFIG_MPIEXEC_HYDRA_PATH} -n $LAUNCHER_OPTION_PROCESS_NB $LAUNCHER_OPTION_WRAPPER $LAUNCHER_OPTION_BINARY $LAUNCHER_OPTION_BINARY_ARGS"
 else
 	echo  "ERROR mpc is compiled without Hydra support" 1>&2
 	exit 1

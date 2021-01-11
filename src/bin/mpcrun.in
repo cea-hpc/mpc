@@ -64,24 +64,21 @@ export PATH="${MPC_BIN_DIR}:${PATH}"
 
 MPC_IN_PROCESS_MODE="@MPC_IN_PROCESS_MODE@"
 
+# What MPC is using to start (PMIx, PMI1 or HYDRA client)
 MPC_LAUNCHER="@MPC_LAUNCHER@"
+# What is detected as launcher program (HYDRA / PRRTE)
+MPC_LAUNCHER_PROGRAM="@MPC_LAUNCHER_PROGRAM@"
 
-if test "x${MPC_LAUNCHER}" = "xPMI1" -o "x${MPC_LAUNCHER}" = "xPMIX"; then
-	# We run over SLURM
-	LAUNCHER_CONFIG_JOB_MANAGER="SLURM"
-else
-	# Otherwise it is HYDRA
-	LAUNCHER_CONFIG_JOB_MANAGER="HYDRA"
-fi
 
 LAUNCHER_CONFIG_MPIEXEC_HYDRA_PATH="@MPIEXEC_HYDRA@"
+LAUNCHER_CONFIG_PRTERUN_PATH="@PRTERUN@"
 
 # Default Launcher and launch mode
 
 LAUNCHER_SHOW_CMD=""
-
-LAUNCHER_PLUGIN="mpiexec"
 LAUNCHER_CONFIG_LAUNCH_MODE="exec"
+
+
 
 # Where to find the specialized launchers
 LAUNCHER_CONFIG_BINS_HOME="${MPC_SHARE_DIR}/mpcrun_opt/mpcrun"
@@ -251,7 +248,17 @@ load_mpc_configuration()
 		LAUNCHER_PLUGIN="${MPCFRAMEWORK_LAUNCH_MPCRUN_PLUGIN}"
 
 		if test "$LAUNCHER_PLUGIN" = 'none'; then
-			LAUNCHER_PLUGIN='mpiexec'
+			case "$MPC_LAUNCHER_PROGRAM" in
+				HYDRA)
+				LAUNCHER_PLUGIN="hydra"
+				;;
+				PRRTE)
+				LAUNCHER_PLUGIN="prrte"
+				;;
+				none)
+				LAUNCHER_PLUGIN="srun"
+				;;
+			esac
 		fi
 	else
 		# Call again to display the error (usually link error)
@@ -349,6 +356,9 @@ print_network_list
 cat << EOF
 Launcher:
 	-l=n, --launcher=n              Define launcher
+
+	$(list_available_mpc_launchers)
+
 	--opt=<options>                 Launcher specific options
 	--launchlist                    Print available launch methods
 	--config=<file>                 Configuration file to load.
@@ -409,15 +419,15 @@ fi
 
 list_available_mpc_launchers()
 {
-	echo "Available launch method"
+	echo "Available launch methods (default is ${LAUNCHER_PLUGIN}):"
 	for i in ${MPC_SHARE_DIR}/mpcrun_opt/*
 	do
-		echo "    - $(basename "$i")" | sed s/mpcrun_//g  | grep -v default_param | grep -v propagate_env | grep -v "~"
+		echo "\t   - $(basename "$i")" | sed s/mpcrun_//g  | grep -v default_param | grep -v propagate_env | grep -v "~"
 	done
-	if [ -n "${CONFIG_USER_LAUNCHERS}" ] && [ -e "${CONFIG_USER_LAUNCHERS}" ]; then
+	if test -n "${CONFIG_USER_LAUNCHERS}" -a -e "${CONFIG_USER_LAUNCHERS}"; then
 		for i in "${CONFIG_USER_LAUNCHERS}"/mpcrun_* ;
 		do
-			echo "    - $(basename "$i")" | sed s/mpcrun_//g  | grep -v default_param | grep -v propagate_env | grep -v "~"
+			echo "\t   - $(basename "$i") # from ~/.mpc/" | sed s/mpcrun_//g  | grep -v default_param | grep -v propagate_env | grep -v "~"
 		done
 	fi
 	exit 0
@@ -769,45 +779,41 @@ add_arg "--profiling" "$CONFIG_PROFILING"
 # Configure Debugger Support #
 ##############################
 
-# Activave custom MPC_THREAD_DB only for user-level threads
+if test -n "${DEBUG}"; then
+	
+	# Activave custom MPC_THREAD_DB only for user-level threads
+	echo "$MPC_ARG_THREAD_TYPE" | grep "pthread" > /dev/null 2>&1
 
-echo "$MPC_ARG_THREAD_TYPE" | grep "pthread" > /dev/null 2>&1
-
-if test "x$?" = "x0"; then
-	GDB_LIBTHREAD_DB=""
-else
-	GDB_LIBTHREAD_DB="${MPC_LIB_DIR}/libmpc_thread_db.so"
-fi
-
-DEBUGGER_LIST=""
-
-if test "${DEBUG}" = "mpc-gdb"; then
-	if test "$DEBUGGER_LIST" = "" ; then 
-		DEBUG=gdb
+	if test "x$?" = "x0"; then
+		GDB_LIBTHREAD_DB=""
 	else
-		DEBUG="${MPC_BIN_DIR}/../mpc-gdb-${DEBUGGER_LIST}/bin/mpc-gdb"
+		GDB_LIBTHREAD_DB="${MPC_LIB_DIR}/libmpc_thread_db.so"
 	fi
-fi
 
+	DEBUGGER_LIST=""
 
-#compute suffix
-if test "$DEBUG" = "" ; then
-	LAUNCH_SUFFIX="$LAUNCHER_PLUGIN"
-else
-	echo "Using $DEBUG as debugger"
-	LAUNCH_SUFFIX="${LAUNCHER_PLUGIN}_$(basename ${DEBUG})"
+	if test "${DEBUG}" = "mpc-gdb"; then
+		if test "$DEBUGGER_LIST" = "" ; then 
+			DEBUG=gdb
+		else
+			DEBUG="${MPC_BIN_DIR}/../mpc-gdb-${DEBUGGER_LIST}/bin/mpc-gdb"
+		fi
+	fi
+
+	#Now add debugger to wrapper
+	LAUNCHER_OPTION_WRAPPER="${LAUNCHER_OPTION_WRAPPER} ${DEBUG}"
 fi
 
 ###########################################
 # Now Proceed to load the Launcher Plugin #
 ###########################################
 
-if test -n "${CONFIG_USER_LAUNCHERS}" -a -f "${CONFIG_USER_LAUNCHERS}/mpcrun_${LAUNCH_SUFFIX}"; then
-	. "${CONFIG_USER_LAUNCHERS}/mpcrun_${LAUNCH_SUFFIX}"
-elif test -f "${LAUNCHER_CONFIG_BINS_HOME}_${LAUNCH_SUFFIX}"; then
-	. "${LAUNCHER_CONFIG_BINS_HOME}_${LAUNCH_SUFFIX}"
+if test -n "${CONFIG_USER_LAUNCHERS}" -a -f "${CONFIG_USER_LAUNCHERS}/mpcrun_${LAUNCHER_PLUGIN}"; then
+	. "${CONFIG_USER_LAUNCHERS}/mpcrun_${LAUNCHER_PLUGIN}"
+elif test -f "${LAUNCHER_CONFIG_BINS_HOME}_${LAUNCHER_PLUGIN}"; then
+	. "${LAUNCHER_CONFIG_BINS_HOME}_${LAUNCHER_PLUGIN}"
 else
-	echo "Invalid launcher : ${LAUNCH_SUFFIX}" 1>&2
+	echo "Invalid launcher : ${LAUNCHER_PLUGIN}" 1>&2
 	exit 1
 fi
 
@@ -821,7 +827,6 @@ export MPC_LAUNCH_COMMAND="${LAUNCH_COMMAND}"
 export MPC_STARTUP_ARGS
 export LAUNCHER_OPTION_PROCESS_NB
 export LAUNCHED_WITH_MPCRUN=1
-export LAUNCHER_CONFIG_JOB_MANAGER
 test -n "$GDB_LIBTHREAD_DB" && export GDB_LIBTHREAD_DB
 
 #########################################
