@@ -171,6 +171,7 @@ extern "C"
 #define MPI_T_ERR_PVAR_NO_WRITE MPC_T_ERR_PVAR_NO_WRITE
 #define MPI_T_ERR_PVAR_NO_ATOMIC MPC_T_ERR_PVAR_NO_ATOMIC
 #define MPI_T_ERR_INVALID_NAME MPC_T_ERR_INVALID_NAME
+#define MPI_T_ERR_INVALID MPC_T_ERR_INVALID
 
 /* Data-type Handling */
 #define MPI_DATATYPE_NULL MPC_DATATYPE_NULL
@@ -578,9 +579,8 @@ typedef enum {
   MPI_T_PVAR_CLASS_GENERIC /**<< A generic class */
 } MPC_T_pvar_class;
 
-/** Internal storage class (see mpit_internal.h) */
 /** MPI Storage (just a pointer as no Fortran) */
-typedef struct MPC_T_enum *MPI_T_enum;
+typedef void *MPI_T_enum;
 
 
 /** This defines the scope of a cvar */
@@ -601,24 +601,22 @@ typedef enum {
 
 /** CVAR Handles */
 
-#define MPI_T_CVAR_HANDLE_NULL ((MPI_T_cvar_handle)NULL)
+#define MPI_T_CVAR_HANDLE_NULL ((MPI_T_cvar_handle)-1)
 
-typedef struct MPC_T_cvar *MPI_T_cvar_handle;
+typedef int MPI_T_cvar_handle;
 
 /* Forward declaration of the session container */
 
-#define MPI_T_PVAR_SESSION_NULL (-2)
+#define MPI_T_PVAR_SESSION_NULL (-1)
 
 typedef int MPI_T_pvar_session;
 
 /** PVAR Handle allocation */
 
-#define MPI_T_PVAR_ALL_HANDLES ((MPI_T_pvar_handle)-1)
-#define MPI_T_PVAR_HANDLE_NULL ((MPI_T_pvar_handle)NULL)
+#define MPI_T_PVAR_ALL_HANDLES ((MPI_T_pvar_handle)-2)
+#define MPI_T_PVAR_HANDLE_NULL ((MPI_T_pvar_handle)-1)
 
-typedef struct MPC_T_pvar_handle *MPI_T_pvar_handle;
-
-
+typedef int MPI_T_pvar_handle;
 
 /* ######################################
    #  NULL delete handlers              #

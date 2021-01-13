@@ -301,33 +301,7 @@
 #pragma weak MPI_Type_create_f90_complex = PMPI_Type_create_f90_complex
 #pragma weak MPI_Type_create_f90_integer = PMPI_Type_create_f90_integer
 #pragma weak MPI_Type_create_f90_real = PMPI_Type_create_f90_real
-/* MPI_T methods */
-// PROFILER MPI_T MPI_T methods
-#pragma weak MPI_T_init_thread = PMPI_T_init_thread
-#pragma weak MPI_T_finalize = PMPI_T_finalize
-#pragma weak MPI_T_pvar_read = PMPI_T_pvar_read
-#pragma weak MPI_T_pvar_write = PMPI_T_pvar_write
-#pragma weak MPI_T_pvar_reset = PMPI_T_pvar_reset
-#pragma weak MPI_T_pvar_get_num = PMPI_T_pvar_get_num
-#pragma weak MPI_T_pvar_get_info = PMPI_T_pvar_get_info
-#pragma weak MPI_T_pvar_session_create = PMPI_T_pvar_session_create
-#pragma weak MPI_T_pvar_session_free = PMPI_T_pvar_session_free
-#pragma weak MPI_T_pvar_handle_alloc = PMPI_T_pvar_handle_alloc
-#pragma weak MPI_T_pvar_handle_free = PMPI_T_pvar_handle_free
-#pragma weak MPI_T_pvar_start = PMPI_T_pvar_start
-#pragma weak MPI_T_pvar_stop = PMPI_T_pvar_stop
-#pragma weak MPI_T_cvar_read = PMPI_T_cvar_read
-#pragma weak MPI_T_cvar_write = PMPI_T_cvar_write
-#pragma weak MPI_T_cvar_get_num = PMPI_T_cvar_get_num
-#pragma weak MPI_T_cvar_get_info = PMPI_T_cvar_get_info
-#pragma weak MPI_T_cvar_handle_alloc = PMPI_T_cvar_handle_alloc
-#pragma weak MPI_T_cvar_handle_free = PMPI_T_cvar_handle_free
-#pragma weak MPI_T_category_get_pvars = PMPI_T_category_get_pvars
-#pragma weak MPI_T_category_get_num = PMPI_T_category_get_num
-#pragma weak MPI_T_category_get_categories = PMPI_T_category_get_categories
-#pragma weak MPI_T_category_get_info = PMPI_T_category_get_info
-#pragma weak MPI_T_category_get_cvars = PMPI_T_category_get_pvars
-#pragma weak MPI_T_enum_get_info = PMPI_T_enum_get_info
+
 //-----
 //-----
 /* MPIX methods */

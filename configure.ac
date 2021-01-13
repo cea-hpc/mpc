@@ -1963,7 +1963,7 @@ EOF
         FORTRAN_NAMING=""
 
         if echo "${SYMBOL_LIST}" | grep "fortran_name__" > /dev/null 2>&1; then
-            FORTRAN_NAMING"__"
+            FORTRAN_NAMING="__"
             AC_DEFINE([FORTRANDOUBLEUNDERSCORE], [1], [Fortran naming uses double underscores])
         elif echo "${SYMBOL_LIST}" | grep "fortran_name_" > /dev/null 2>&1; then
             FORTRAN_NAMING="_"

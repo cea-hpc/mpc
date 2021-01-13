@@ -53,7 +53,11 @@ int mpc_conf_config_type_elem_print_fd(mpc_conf_config_type_elem_t *elem, FILE *
 
 int mpc_conf_config_type_elem_print(mpc_conf_config_type_elem_t *elem, mpc_conf_output_type_t output_type);
 
+int mpc_conf_type_elem_get_as_int(mpc_conf_config_type_elem_t * elem);
+
 char * mpc_conf_type_elem_get_as_string(mpc_conf_config_type_elem_t * elem);
+
+int mpc_conf_config_type_elem_get_path_to(mpc_conf_config_type_elem_t *elem, char * path, int len, char * separator);
 
 /**********************
 * CONFIGURATION TYPE *
@@ -101,6 +105,8 @@ int mpc_conf_config_type_count(mpc_conf_config_type_t *type);
 
 mpc_conf_config_type_elem_t *mpc_conf_config_type_nth(mpc_conf_config_type_t *type, unsigned int id);
 
+mpc_conf_config_type_t *  mpc_conf_type_elem_get_root(mpc_conf_config_type_elem_t * elem);
+
 mpc_conf_config_type_t *mpc_conf_config_type_elem_get_inner(mpc_conf_config_type_elem_t *elem);
 
 
@@ -124,6 +130,8 @@ mpc_conf_self_config_t * mpc_conf_self_config_get(void);
 **********************/
 
 int mpc_conf_root_config_append(char *conf_name, mpc_conf_config_type_t *conf, char *doc);
+
+mpc_conf_config_type_elem_t * mpc_conf_root_elem(char * conf_name);
 
 mpc_conf_config_type_t *mpc_conf_root_config(char *conf_name);
 

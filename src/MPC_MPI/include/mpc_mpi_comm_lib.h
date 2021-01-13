@@ -249,12 +249,13 @@ end of execution */
 #define MPC_T_ERR_PVAR_NO_WRITE 71	 /* Pvar can't be written or reset */
 #define MPC_T_ERR_PVAR_NO_ATOMIC 72	/* Pvar can't be R/W atomically */
 #define MPC_T_ERR_INVALID_NAME 73	  /* Requested name is invalid */
+#define MPC_T_ERR_INVALID 74         /* Item is invalid */
 
-#define MPC_ERR_RMA_RANGE 74
-#define MPC_ERR_RMA_ATTACH 75
-#define MPC_ERR_RMA_SHARED 76
+#define MPC_ERR_RMA_RANGE 75
+#define MPC_ERR_RMA_ATTACH 76
+#define MPC_ERR_RMA_SHARED 77
 
-#define MPC_ERR_LASTCODE 77
+#define MPC_ERR_LASTCODE 78
 
 int mpc_mpi_cl_error_string( int code, char *str, int *len );
 

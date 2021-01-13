@@ -172,7 +172,7 @@ use :: mpi_f08_types
 	integer, parameter :: MPI_ERR_DUP_DATAREP = 51
 	integer, parameter :: MPI_ERR_CONVERSION = 52
 	integer, parameter :: MPI_ERR_IO = 53
-	integer, parameter :: MPI_ERR_LASTCODE = 77
+	integer, parameter :: MPI_ERR_LASTCODE = 78
 	integer, parameter :: MPI_NOT_IMPLEMENTED = 56
 	type(MPI_Errhandler) :: MPI_ERRORS_RETURN = MPI_Errhandler(-6)
 	type(MPI_Errhandler) :: MPI_ERRORS_ARE_FATAL = MPI_Errhandler(-7)

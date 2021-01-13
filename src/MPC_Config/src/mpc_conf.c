@@ -863,6 +863,37 @@ mpc_conf_config_type_elem_t *mpc_conf_config_type_nth(mpc_conf_config_type_t *ty
 	return type->elems[id];
 }
 
+mpc_conf_config_type_t *  mpc_conf_type_elem_get_root(mpc_conf_config_type_elem_t * elem)
+{
+	mpc_conf_config_type_elem_t * cur = elem;
+
+	while(cur->parent)
+	{
+		cur = cur->parent;
+	}
+
+	if(cur->type == MPC_CONF_TYPE)
+	{
+		return mpc_conf_config_type_elem_get_inner(cur);
+	}
+	else
+	{
+		/* Should never happen */
+		return NULL;
+	}
+}
+
+int mpc_conf_type_elem_get_as_int(mpc_conf_config_type_elem_t * elem)
+{
+	if(elem->type != MPC_CONF_INT)
+	{
+		_utils_verbose_output(0, "trying to get an int from a non int type %s\n", elem->name);
+		abort();
+	}
+
+	return *((int*)elem->addr);
+}
+
 
 char * mpc_conf_type_elem_get_as_string(mpc_conf_config_type_elem_t * elem)
 {
@@ -1283,9 +1314,21 @@ static inline int __append_global_config(char *name, mpc_conf_config_type_elem_t
 	return 0;
 }
 
-mpc_conf_config_type_t *mpc_conf_root_config(char *conf_name)
+mpc_conf_config_type_elem_t * mpc_conf_root_elem(char * conf_name)
 {
 	mpc_conf_config_type_elem_t *conf_root_elem = __get_global_config_by_name(conf_name);
+
+	if(!conf_root_elem)
+	{
+		return NULL;
+	}
+
+	return conf_root_elem;
+}
+
+mpc_conf_config_type_t *mpc_conf_root_config(char *conf_name)
+{
+	mpc_conf_config_type_elem_t * conf_root_elem = mpc_conf_root_elem(conf_name);
 
 	if(!conf_root_elem)
 	{
