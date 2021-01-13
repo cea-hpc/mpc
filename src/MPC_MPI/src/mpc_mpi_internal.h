@@ -145,6 +145,22 @@ typedef struct mpc_mpi_data_s{
 
 typedef enum
 { 
+	Bcast_init,
+	Gather_init,
+	Allgather_init,
+	Alltoall_init,
+	Alltoallv_init,
+	Alltoallw_init,
+	Reduce_init,
+	Scan_init,
+	Exscan_init,
+	Reduce_scatter_init,
+	Reduce_scatter_block_init,
+	Allreduce_init,
+	Scatter_init,
+	Scatterv_init,
+	Gatherv_init,
+	Allgatherv_init,
 	Send_init,
 	Bsend_init,
 	Rsend_init,
@@ -161,6 +177,21 @@ typedef struct MPI_Persistant_s
 	int tag;
 	MPI_Comm comm;
 	MPI_Persistant_op_t op;
+	/* collective */
+	void *sendbuf;
+	void *recvbuf;
+	int root;
+	int sendcount;
+	int recvcount;
+	int *sendcounts;
+	int *recvcounts;
+	int *sdispls;
+	int *rdispls;
+	MPI_Datatype sendtype;
+	MPI_Datatype recvtype;
+	MPI_Datatype *sendtypes;
+	MPI_Datatype *recvtypes;
+	MPI_Op op_coll;
 } MPI_Persistant_t;
 
 typedef struct MPI_internal_request_s
@@ -176,6 +207,8 @@ typedef struct MPI_internal_request_s
 	MPI_Persistant_t persistant;
 	int freeable;
 	int is_active;
+	int is_persistent;
+	int is_intermediate_nbc_persistent;
 
 	/*Datatypes */
 	void *saved_datatype;

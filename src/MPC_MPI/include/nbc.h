@@ -81,11 +81,18 @@ typedef struct {
 	mpc_thread_sem_t semid;
 	volatile int actual_req_count;
 	MPI_Request *req_array;
+	volatile int *req_count_persistent; /* number of requests for each round 
+                                           used by persistent */
+	volatile int array_offset; /* current offset in req_array for progress 
+                                  used by persistent */
+	int num_rounds; /* numero of round for progress used by persistent */
+	int is_persistent; /* to differentiate nbc from persistent using nbc */
 	NBC_Comminfo *comminfo;
 	volatile NBC_Schedule *schedule;
 	void *tmpbuf; /* temporary buffer e.g. used for Reduce */
 /* TODO: we should make a handle pointer to a state later (that the user
  * can move request handles) */
+	void *tmpbuf_gather; /* temporary buffer e.g. used for Gather */
 } NBC_Handle;
 typedef NBC_Handle NBC_Request;
 
