@@ -10672,6 +10672,95 @@ int PMPI_Testany(int count,
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
+static int __mpc_testall(int count, MPI_Request array_of_requests[], int *flag,
+                 MPI_Status array_of_statuses[])
+{
+	MPI_Comm comm = MPI_COMM_WORLD;
+	int res       = MPI_ERR_INTERN;
+
+
+	int i;
+	int done = 0;
+	int loc_flag;
+	MPI_request_struct_t *requests;
+
+	requests = __sctk_internal_get_MPC_requests();
+	*flag    = 0;
+	if(array_of_statuses != SCTK_STATUS_NULL)
+	{
+		for(i = 0; i < count; i++)
+		{
+			array_of_statuses[i].MPI_ERROR = MPI_SUCCESS;
+		}
+	}
+
+	for(i = 0; i < count; i++)
+	{
+		if(array_of_requests[i] == MPI_REQUEST_NULL)
+		{
+			done++;
+			loc_flag = 0;
+			res      = MPI_SUCCESS;
+		}
+		else
+		{
+			MPI_internal_request_t *reqtmp;
+			reqtmp = __sctk_convert_mpc_request_internal(
+				&(array_of_requests[i]), requests);
+			mpc_lowcomm_request_t *req;
+			req = &reqtmp->req;
+
+			if(req == &MPC_REQUEST_NULL)
+			{
+				done++;
+				loc_flag = 0;
+				res      = MPI_SUCCESS;
+			}
+			else
+			{
+				if( (reqtmp != NULL) && (reqtmp->is_nbc == 1) )
+				{
+					res = NBC_Test(
+						&(reqtmp->nbc_handle), &loc_flag,
+						(array_of_statuses == MPI_STATUSES_IGNORE)
+						? MPI_STATUS_IGNORE
+						: &(array_of_statuses[i]) );
+					if(loc_flag)
+					{
+						array_of_requests[i] = MPI_REQUEST_NULL;
+					}
+				}
+				else
+				{
+					res = mpc_lowcomm_test(
+						req, &loc_flag,
+						(array_of_statuses == SCTK_STATUS_NULL)
+						? SCTK_STATUS_NULL
+						: &(array_of_statuses[i]) );
+				}
+			}
+		}
+		if(loc_flag)
+		{
+			done++;
+		}
+		if(res != MPI_SUCCESS)
+		{
+			break;
+		}
+	}
+
+	mpc_common_nodebug("done %d tot %d", done, count);
+	*flag = (done == count);
+	if(*flag == 0)
+	{
+		mpc_thread_yield();
+	}
+
+
+	MPI_HANDLE_RETURN_VAL(res, comm);
+}
+
 #define PMPI_WAIT_ALL_STATIC_TRSH    32
 
 int PMPI_Waitall(int count, MPI_Request array_of_requests[],
@@ -10773,9 +10862,7 @@ int PMPI_Waitall(int count, MPI_Request array_of_requests[],
 
 		while(!nbc_flag)
 		{
-			//__mpc_testall(count, mpc_array_of_requests_nbc,
-			//             &nbc_flag, MPI_STATUSES_IGNORE);
-			PMPI_Testall(count, mpc_array_of_requests_nbc,
+			__mpc_testall(count, mpc_array_of_requests_nbc,
 			             &nbc_flag, MPI_STATUSES_IGNORE);
 		}
 	}
