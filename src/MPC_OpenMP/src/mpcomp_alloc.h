@@ -16,39 +16,17 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
+/* #   - ROUSSEL Adrien adrien.roussel@cea.fr                             # */
 /* #   - CAPRA Antoine capra@paratools.com                                # */
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __MPCOMP_CORE_H__
-#define __MPCOMP_CORE_H__
+#ifndef __MPCOMP_ALLOC_H__
+#define __MPCOMP_ALLOC_H__
 
 #include "mpcomp_types.h" /* need mpcomp_mvp_t && mpcomp_instance_t */
 
-/**************
- * ALLOC HOOK *
- **************/
+void mpcomp_alloc_init_allocators();
 
-static inline void* mpcomp_alloc( int size )
-{
-  return sctk_malloc(size);
-}
-
-static inline void mpcomp_free( void *p )
-{
-    sctk_free(p);
-}
-
-/*******************************
- * INITIALIZATION AND FINALIZE *
- *******************************/
-
-void __mpcomp_init(void);
-void __mpcomp_exit(void);
-void __mpcomp_instance_init(mpcomp_instance_t *, int, mpcomp_team_t *);
-void __mpcomp_in_order_scheduler(mpcomp_thread_t *);
-void __mpcomp_flush(void);
-
-#endif /* __MPCOMP_CORE_H__ */
+#endif /* __MPCOMP_ALLOC_H__ */

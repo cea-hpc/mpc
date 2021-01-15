@@ -125,6 +125,89 @@ int omp_get_team_size( int level );
 int omp_get_active_level( void );
 int omp_in_final();
 
+/* OpenMP 5.0 API */
+
+  /*
+   * define memory management types
+   */
+
+  typedef uintptr_t omp_uintptr_t;
+
+  typedef enum omp_memspace_handle_t {
+    omp_default_mem_space,
+    omp_large_cap_mem_space,
+    omp_const_mem_space,
+    omp_high_bw_mem_space,
+    omp_low_lat_mem_space
+    /* Add vendor specific constants for memory spaces here.  */
+  } omp_memspace_handle_t;
+
+  typedef enum omp_allocator_handle_t {
+    omp_null_allocator = 0,
+    /* The rest of the enumerators have
+     implementation specific values.  */
+    // omp_default_mem_alloc = -12,
+    omp_default_mem_alloc, // Utile ?
+    omp_large_cap_mem_alloc,
+    omp_const_mem_alloc,
+    omp_high_bw_mem_alloc,
+    omp_low_lat_mem_alloc,
+    omp_cgroup_mem_alloc,
+    omp_pteam_mem_alloc,
+    omp_thread_mem_alloc
+    /* Some range for dynamically allocated handles.  */
+  } omp_allocator_handle_t;
+
+  typedef enum omp_alloctrait_key_t {
+    omp_atk_sync_hint = 1,
+    omp_atk_alignment = 2,
+    omp_atk_access = 3,
+    omp_atk_pool_size = 4,
+    omp_atk_fallback = 5,
+    omp_atk_fb_data = 6,
+    omp_atk_pinned = 7,
+    omp_atk_partition = 8
+  } omp_alloctrait_key_t;
+
+  typedef enum omp_alloctrait_value_t {
+    omp_atv_false = 0,
+    omp_atv_true = 1,
+    omp_atv_default = 2,
+    omp_atv_contended = 3,
+    omp_atv_uncontended = 4,
+    omp_atv_sequential = 5,
+    omp_atv_private = 6,
+    omp_atv_all = 7,
+    omp_atv_thread = 8,
+    omp_atv_pteam = 9,
+    omp_atv_cgroup = 10,
+    omp_atv_default_mem_fb = 11,
+    omp_atv_null_fb = 12,
+    omp_atv_abort_fb = 13,
+    omp_atv_allocator_fb = 14,
+    omp_atv_environment = 15,
+    omp_atv_nearest = 16,
+    omp_atv_blocked = 17,
+    omp_atv_interleaved = 18
+  } omp_alloctrait_value_t;
+
+  typedef struct omp_alloctrait_t {
+    omp_alloctrait_key_t key;
+    omp_uintptr_t value;
+  } omp_alloctrait_t;
+
+  omp_allocator_handle_t omp_init_allocator (
+      omp_memspace_handle_t memspace,
+      int ntraits,
+      const omp_alloctrait_t traits[]
+      );
+
+  void omp_destroy_allocator (omp_allocator_handle_t allocator);
+  void omp_set_default_allocator (omp_allocator_handle_t allocator);
+  omp_allocator_handle_t omp_get_default_allocator (void);
+  void *omp_alloc (size_t size, omp_allocator_handle_t allocator);
+  void omp_free (void *ptr, omp_allocator_handle_t allocator);
+
 #ifdef __cplusplus
 }
 #endif

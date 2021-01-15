@@ -1218,6 +1218,10 @@ static inline void __tree_master_thread_init( mpcomp_node_t *root, __UNUSED__ mp
 	master->info.icvs = *icvs;
 	master->info.num_threads = 1;
 	assert( root->mvp );
+
+  /* Initialize the various allocators (OpenMP 5.0 Mem Management) */
+  master->default_allocator = icvs->def_allocator_var;
+
 #if defined( MPCOMP_OPENMP_3_0 )
 	_mpc_task_tree_array_thread_init( master );
 #endif /* MPCOMP_OPENMP_3_0 */
@@ -1288,6 +1292,7 @@ void _mpc_omp_tree_alloc( int *shape, int max_depth, const int *cpus_order, cons
 	__tree_mvp_init( &( args[0] ) );
 	__tree_master_thread_init( root, tree_array, icvs );
 	sctk_openmp_thread_tls = ( void * ) root->mvp->threads;
+  mpcomp_alloc_init_allocators();
 
 #if OMPT_SUPPORT
 	mpcomp_thread_t *t = (mpcomp_thread_t*) mpc_thread_tls;

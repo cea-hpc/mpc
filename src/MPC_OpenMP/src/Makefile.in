@@ -153,8 +153,8 @@ am_libmpcomp_la_OBJECTS = mpcomp_api.lo mpcomp_core.lo \
 	mpcomp_fortran.lo mpcomp_loop.lo mpcomp_parallel_region.lo \
 	mpcomp_places_env.lo mpcomp_spinning_core.lo mpcomp_stack.lo \
 	mpcomp_stack_node_leaf.lo mpcomp_sync.lo mpcomp_task.lo \
-	mpcomp_tree.lo omp_gomp.lo omp_intel_atomics.lo omp_intel.lo \
-	omp_ompt.lo
+	mpcomp_tree.lo mpcomp_alloc.lo omp_gomp.lo omp_intel_atomics.lo \
+	omp_intel.lo omp_ompt.lo
 libmpcomp_la_OBJECTS = $(am_libmpcomp_la_OBJECTS)
 libmpcomp_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -532,7 +532,7 @@ lib_LTLIBRARIES = libmpcomp.la libiomp5.la libgomp.la
 libmpcomp_la_SOURCES = mpcomp_api.c mpcomp_core.c mpcomp_fortran.c \
 	mpcomp_loop.c mpcomp_parallel_region.c mpcomp_places_env.c \
 	mpcomp_spinning_core.c mpcomp_stack.c mpcomp_stack_node_leaf.c \
-	mpcomp_sync.c mpcomp_task.c mpcomp_tree.c omp_gomp.c \
+	mpcomp_sync.c mpcomp_task.c mpcomp_tree.c mpcomp_alloc.c omp_gomp.c \
 	omp_intel_atomics.c omp_intel.c omp_ompt.c
 libmpcomp_la_LDFLAGS = -Wl,--version-script=$(abs_top_srcdir)/src/MPC_OpenMP/version_gomp.txt
 libmpcomp_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la
@@ -644,6 +644,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpcomp_sync.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpcomp_task.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpcomp_tree.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpcomp_alloc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/omp_gomp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/omp_intel.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/omp_intel_atomics.Plo@am__quote@

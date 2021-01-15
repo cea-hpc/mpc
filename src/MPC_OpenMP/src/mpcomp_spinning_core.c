@@ -811,6 +811,9 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
 	cur_thread =  __mvp_wakeup( mvp );
 	assert( cur_thread->mvp );
 	sctk_openmp_thread_tls = ( void * ) cur_thread;
+#ifdef TLS_ALLOCATORS
+  mpcomp_init_allocators();
+#endif
 	__scatter_instance_post_init( cur_thread );
 	__mpcomp_in_order_scheduler( ( mpcomp_thread_t * )sctk_openmp_thread_tls );
 	/* Must be set before barrier for thread safety*/

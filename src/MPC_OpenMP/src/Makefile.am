@@ -35,7 +35,7 @@ lib_LTLIBRARIES = libmpcomp.la
 libmpcomp_la_SOURCES = mpcomp_api.c mpcomp_core.c mpcomp_fortran.c mpcomp_loop.c
 libmpcomp_la_SOURCES += mpcomp_parallel_region.c mpcomp_places_env.c mpcomp_spinning_core.c
 libmpcomp_la_SOURCES += mpcomp_stack.c mpcomp_stack_node_leaf.c mpcomp_sync.c mpcomp_task.c
-libmpcomp_la_SOURCES += mpcomp_tree.c omp_gomp.c omp_intel_atomics.c omp_intel.c omp_ompt.c
+libmpcomp_la_SOURCES += mpcomp_tree.c mpcomp_alloc.c omp_gomp.c omp_intel_atomics.c omp_intel.c omp_ompt.c
 
 libmpcomp_la_LDFLAGS = -Wl,--version-script=$(abs_top_srcdir)/src/MPC_OpenMP/version_gomp.txt
 libmpcomp_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la

@@ -25,7 +25,7 @@
 #ifndef __MPCOMP_TYPES_H__
 #define __MPCOMP_TYPES_H__
 
-#include <stdbool.h>
+#define AD_USE_LOCK
 
 #include "mpc_common_debug.h"
 #include <mpc_common_asm.h>
@@ -38,6 +38,8 @@
 #include "sctk_alloc.h"
 
 #include "mpc_common_mcs.h"
+
+// #define TLS_ALLOCATORS
 
 #ifdef MPCOMP_USE_INTEL_ABI
 	#include "omp_intel_types.h"
@@ -149,6 +151,9 @@
 
 
 #endif
+
+/* OpenMP 5.0 Memory Management */
+#define MPCOMP_MAX_ALLOCATORS 256
 
 /****************
  * OPENMP ENUMS *
@@ -366,6 +371,9 @@ typedef struct mpcomp_local_icv_s
                                 regions 			*/
 	int levels_var;			   /**< Number of nested enclosing parallel regions
                                 */
+  omp_allocator_handle_t def_allocator_var ; /**< Memory allocator to be used by
+											   memory allocation routines
+											   */
 } mpcomp_local_icv_t;
 
 #if MPCOMP_TASK
@@ -657,6 +665,33 @@ typedef struct mpcomp_loop_gen_info_s
 } mpcomp_loop_gen_info_t;
 
 /********************
+ ****** OpenMP 5.0
+ ****** Memory Management
+ ********************/
+
+/* Combine a memspace to a full set of traits */
+typedef struct mpcomp_alloc_s
+{
+  omp_memspace_handle_t memspace;
+  omp_alloctrait_t traits[omp_atk_partition]; // Assume here that omp_atk_partition is the last argument of the omp_alloctrait_t enum
+} mpcomp_alloc_t;
+
+typedef struct mpcomp_recycl_alloc_info_s
+{
+  int idx_list[MPCOMP_MAX_ALLOCATORS];
+  int nb_recycl_allocators;
+} mpcomp_recycl_alloc_info_t;
+
+typedef struct mpcomp_alloc_list_s
+{
+  mpcomp_alloc_t list[MPCOMP_MAX_ALLOCATORS];
+  int nb_init_allocators;
+  int last_index;
+  mpcomp_recycl_alloc_info_t recycling_info;
+	mpc_common_spinlock_t lock;
+} mpcomp_alloc_list_t;
+
+/********************
  ****** Threadprivate
  ********************/
 
@@ -840,6 +875,16 @@ typedef struct mpcomp_thread_s
 	/** Thread data for OMPT */
 	ompt_data_t ompt_thread_data;
 #endif /* OMPT_SUPPORT */
+
+  /* OpenMP 5.0 -- Memory Management */
+
+  omp_allocator_handle_t default_allocator;
+  // Allocators set (including default memory allocator)
+  //  - 1 x (Memspace + Traits) / allocator_handle
+  // struct mpcomp_alloc_s *alloc_set;
+#ifdef TLS_ALLOCATORS
+  struct mpcomp_alloc_list_s allocators;
+#endif
 
 	/* MVP prev context */
 	//int instance_ghost_rank;
@@ -1110,5 +1155,6 @@ typedef struct mpcomp_stack
 
 extern __thread void *sctk_openmp_thread_tls;
 extern mpcomp_global_icv_t mpcomp_global_icvs;
+// extern mpcomp_alloc_list_t mpcomp_global_allocators;
 
 #endif /* __MPCOMP_TYPES_H__ */

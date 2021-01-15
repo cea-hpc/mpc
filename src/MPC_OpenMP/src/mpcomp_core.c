@@ -311,7 +311,11 @@ int __mpcomp_restrict_topology_for_mpcomp( hwloc_topology_t *restrictedTopology,
 		return -1;
 	}
 
+#if (HWLOC_API_VERSION < 0x00020000)
 	if ( ( err = hwloc_topology_restrict( *restrictedTopology, final_cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES ) ) )
+#else
+	if ( ( err = hwloc_topology_restrict( *restrictedTopology, final_cpuset, 0 ) ) )
+#endif
 	{
 		return -1;
 	}
