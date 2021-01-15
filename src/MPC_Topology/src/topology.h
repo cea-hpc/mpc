@@ -154,6 +154,16 @@ hwloc_cpuset_t _mpc_topology_get_first_pu_for_level(hwloc_topology_t topology, h
 */
 int _mpc_topology_get_distance_from_pu(hwloc_topology_t topology, int source_pu, hwloc_obj_t target_obj);
 
+#if (HWLOC_API_VERSION >= 0x00020000)
+/** @brief Detect if MCDRAM memory bank is available and save MCDRAM node identifier
+*/
+void _mpc_topology_mcdram_detection(hwloc_topology_t topology);
+
+/** @brief Detect if the system is equiped with NVDIMM storage and save OS device identifiers
+*/
+void _mpc_topology_nvdimm_detection(hwloc_topology_t topology);
+#endif
+
 /* End local_topology_interface */
 /**
  * @}

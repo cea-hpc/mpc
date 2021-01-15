@@ -664,8 +664,14 @@ static void print_children(hwloc_topology_t hwtopology, hwloc_obj_t obj,
     if(already_begining_done){
         hwloc_obj_t lower_index_obj_pu = hwloc_get_obj_by_type(hwtopology, HWLOC_OBJ_PU, lower_logical);
         /* if ancestor of the first pu booked */
+#if (HWLOC_API_VERSION < 0x00020000)
         if(hwloc_get_ancestor_obj_by_type(hwtopology, obj->type, lower_index_obj_pu)->logical_index == obj->logical_index
-        && obj->type != HWLOC_OBJ_MACHINE && obj->type != HWLOC_OBJ_NODE && obj->type != HWLOC_OBJ_SOCKET && obj->type != HWLOC_OBJ_SYSTEM){
+        && obj->type != HWLOC_OBJ_MACHINE && obj->type != HWLOC_OBJ_NODE && obj->type != HWLOC_OBJ_SOCKET && obj->type != HWLOC_OBJ_SYSTEM)
+#else
+        if(hwloc_get_ancestor_obj_by_type(hwtopology, obj->type, lower_index_obj_pu)->logical_index == obj->logical_index
+        && obj->type != HWLOC_OBJ_MACHINE && obj->type != HWLOC_OBJ_PACKAGE && obj->type != HWLOC_OBJ_SOCKET && obj->type != HWLOC_OBJ_SYSTEM)
+#endif
+        {
             fprintf(f,"\n\n|------------------------------BEGINING RESERVATION HOST %s-------------------------|\n", HostName); 
             already_begining_done = 0;
         }
@@ -849,7 +855,11 @@ restart_restrict:
             hwloc_bitmap_or(cpuset, cpuset, set);
         }
         /* restrict the topology to physical CPUs */
+#if (HWLOC_API_VERSION < 0x00020000)
         err = hwloc_topology_restrict(topology_compute_node, cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES);
+#else
+        err = hwloc_topology_restrict(topology_compute_node, cpuset, 0);
+#endif
         if(err)
         {
             hwloc_bitmap_free(cpuset);
@@ -930,7 +940,11 @@ void topology_graph_enable_graphic_placement( void )
 
 		name_and_date_file_text( file_placement );
 		strcat( file_placement, ".xml" );
+#if (HWLOC_API_VERSION < 0x00020000)
 		hwloc_topology_export_xml( mpc_topology_get(), file_placement );
+#else
+    hwloc_topology_export_xml( mpc_topology_get(), file_placement, HWLOC_TOPOLOGY_EXPORT_XML_FLAG_V1); 
+#endif
 		if ( 1 )
 		{ //TODO one among each nodes
 			fprintf( stdout, "/* --graphic-placement : \n.xml dated file has been generated for each compute node to vizualise topology and thread placement with their infos.\nYou can use the command \"lstopo -i file.xml\" to vizualise graphicaly */\n" );

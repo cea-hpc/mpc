@@ -705,7 +705,7 @@ AC_DEFUN([MPC_REQUIRED_DEPENDENCY],
 MPC_DETECT_DEPENDENCY([libxml/tree.h],[libxml-2.0], [xmlStrcmp], [XML2])
 MPC_REQUIRED_DEPENDENCY([libxml-2.0], [$mpc_dep_found])
 
-MPC_DETECT_DEPENDENCY([hwloc.h],[hwloc], [hwloc_topology_init], [HWLOC], [< 2.0.0])
+MPC_DETECT_DEPENDENCY([hwloc.h],[hwloc], [hwloc_topology_init], [HWLOC], [> 2.0.0])
 MPC_REQUIRED_DEPENDENCY([hwloc], [$mpc_dep_found])
 
 MPC_DETECT_DEPENDENCY([opa_config.h],[openpa], [OPA_Queue_init], [OPA], [], [], [opa])

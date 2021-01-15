@@ -49,6 +49,10 @@
 #include <string.h>
 #include <unistd.h>
 
+#if (HWLOC_API_VERSION >= 0x00020000)
+  #define HWLOC_OBJ_SOCKET HWLOC_OBJ_PACKAGE
+#endif
+
 /*********************************
  * MPC TOPOLOGY OBJECT INTERFACE *
  *********************************/
@@ -92,9 +96,15 @@ void _mpc_topology_map_and_restrict_by_cpuset(hwloc_topology_t target_topology,
 		hwloc_bitmap_copy( cpuset, pinning_constraints);
 	}
 
+#if (HWLOC_API_VERSION < 0x00020000)
 	int err = hwloc_topology_restrict( target_topology,
 									   cpuset,
 									   HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES | HWLOC_RESTRICT_FLAG_ADAPT_IO );
+#else
+	int err = hwloc_topology_restrict( target_topology,
+									   cpuset,
+									   HWLOC_RESTRICT_FLAG_ADAPT_IO );
+#endif
 	assume( !err );
 
 	hwloc_bitmap_free(cpuset);
@@ -207,9 +217,15 @@ restart_restrict:
 		}
 
 		/* restrict the topology to physical CPUs */
+#if (HWLOC_API_VERSION < 0x00020000)
 		int err = hwloc_topology_restrict( target_topology,
 			    						   topology_cpuset,
 										   HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES );
+#else
+		int err = hwloc_topology_restrict( target_topology,
+			    						   topology_cpuset,
+										   0 );
+#endif
 
 		if ( err )
 		{
@@ -332,10 +348,17 @@ void _mpc_topology_print( hwloc_topology_t target_topology, FILE *fd )
 		hwloc_obj_t pu = hwloc_get_obj_by_type( target_topology, HWLOC_OBJ_PU, i );
 		hwloc_obj_t tmp[3];
 		unsigned int node_os_index;
+#if (HWLOC_API_VERSION < 0x00020000)
 		tmp[0] = hwloc_get_ancestor_obj_by_type( target_topology, HWLOC_OBJ_NODE, pu );
+#else
+    // As HWLOC_OBJ_NUMANODE has no attached cores since Hwloc 2.0.0
+    // It it not possible to retrieve numa node id from pu ancestor
+		tmp[0] = hwloc_get_ancestor_obj_by_type( target_topology, HWLOC_OBJ_NUMANODE, pu );
+#endif
 		tmp[1] = hwloc_get_ancestor_obj_by_type( target_topology, HWLOC_OBJ_SOCKET, pu );
 		tmp[2] = hwloc_get_ancestor_obj_by_type( target_topology, HWLOC_OBJ_CORE, pu );
 
+#if (HWLOC_API_VERSION < 0x00020000)
 		if ( tmp[0] == NULL )
 		{
 			node_os_index = 0;
@@ -344,6 +367,16 @@ void _mpc_topology_print( hwloc_topology_t target_topology, FILE *fd )
 		{
 			node_os_index = tmp[0]->os_index;
 		}
+#else
+    hwloc_obj_t parent = pu->parent;
+    while (parent && !parent->memory_arity)
+    {
+      parent = parent->parent; /* no memory child, walk up */
+    }
+    assume( parent );
+    node_os_index = parent->logical_index;
+
+#endif
 
 		fprintf( fd, "\tProcessor %4u real (%4u:%4u:%4u)\n", pu->os_index,
 				 node_os_index, tmp[1]->logical_index, tmp[2]->logical_index );
@@ -354,6 +387,10 @@ void _mpc_topology_print( hwloc_topology_t target_topology, FILE *fd )
 	if ( _mpc_topology_has_numa_nodes(target_topology) )
 	{
 		fprintf( fd, "\t\t* Node nb %d\n", _mpc_topology_get_numa_node_count(target_topology) );
+    for(int i = 0; i < _mpc_topology_get_numa_node_count(target_topology); ++i)
+    {
+      fprintf(fd, "Numa %d starts at %d\n", i, _mpc_topology_get_first_cpu_in_numa_node(target_topology,i));
+    }
 	}
 
 	return;
@@ -399,13 +436,33 @@ hwloc_cpuset_t _mpc_topology_get_pu_parent_cpuset_by_type(hwloc_topology_t targe
 
 	hwloc_obj_t parent = target_pu->parent;
 
+#if (HWLOC_API_VERSION < 0x00020000)
 	while ( parent->type != parent_type )
 	{
 		if ( !parent )
-			break;
+	  	break;
 
-		parent = parent->parent;
+	 	parent = parent->parent;
 	}
+#else
+  if(parent_type == HWLOC_OBJ_NUMANODE)
+  {
+    while (parent && !parent->memory_arity)
+    {
+      parent = parent->parent; /* no memory child, walk up */
+    }
+  }
+  else
+  {
+	  while ( parent->type != parent_type )
+	  {
+	  	if ( !parent )
+	  		break;
+
+	  	parent = parent->parent;
+	  }
+  }
+#endif
 
 	assume( parent != NULL );
 
@@ -426,7 +483,11 @@ hwloc_cpuset_t _mpc_topology_get_parent_numa_cpuset( hwloc_topology_t target_top
 	}
 	else
 	{
+#if (HWLOC_API_VERSION < 0x00020000)
 		return _mpc_topology_get_pu_parent_cpuset_by_type(target_topo, HWLOC_OBJ_NODE, cpuid);
+#else
+		return _mpc_topology_get_pu_parent_cpuset_by_type(target_topo, HWLOC_OBJ_NUMANODE, cpuid);
+#endif
 	}
 
 	not_reachable();
@@ -434,7 +495,7 @@ hwloc_cpuset_t _mpc_topology_get_parent_numa_cpuset( hwloc_topology_t target_top
 
 hwloc_cpuset_t _mpc_topology_get_parent_socket_cpuset( hwloc_topology_t target_topo, int cpuid )
 {
-	return _mpc_topology_get_pu_parent_cpuset_by_type(target_topo, HWLOC_OBJ_SOCKET, cpuid);
+	return _mpc_topology_get_pu_parent_cpuset_by_type(target_topo, HWLOC_OBJ_PACKAGE, cpuid);
 }
 
 
@@ -733,7 +794,20 @@ int _mpc_topology_bind_to_pu(hwloc_topology_t target_topo, int cpuid)
  */
 int _mpc_topology_get_first_cpu_in_numa_node(hwloc_topology_t target_topo, int node)
 {
+#if (HWLOC_API_VERSION < 0x00020000)
 	hwloc_obj_t currentNode = hwloc_get_obj_by_type(target_topo, HWLOC_OBJ_NODE, node);
+#else
+	hwloc_obj_t currentNode = hwloc_get_obj_by_type(target_topo, HWLOC_OBJ_NUMANODE, node);
+
+  // HWLOC_OBJ_NUMANODE has no children as it is not placed in the main tree
+  // Need to go up to find the main node at an intersection that contains the cpuset
+  hwloc_obj_t tmp = currentNode->parent;
+  while (hwloc_obj_type_is_memory(tmp->type))
+  {
+    tmp = tmp->parent;
+  }
+  currentNode = tmp;
+#endif
 
 	while ( currentNode->type != HWLOC_OBJ_CORE )
 	{
@@ -775,13 +849,21 @@ int _mpc_topology_set_process_pu_count(hwloc_topology_t target_topo, int n)
 
 int _mpc_topology_has_numa_nodes(hwloc_topology_t target_topo)
 {
+#if (HWLOC_API_VERSION < 0x00020000)
 	return hwloc_get_nbobjs_by_type( target_topo, HWLOC_OBJ_NODE ) != 0;
+#else
+  return hwloc_get_nbobjs_by_type( target_topo, HWLOC_OBJ_NUMANODE ) != 0;
+#endif
 }
 
 
 int _mpc_topology_get_numa_node_count(hwloc_topology_t target_topo)
 {
+#if (HWLOC_API_VERSION < 0x00020000)
 	return hwloc_get_nbobjs_by_type( target_topo, HWLOC_OBJ_NODE );
+#else
+  return hwloc_get_nbobjs_by_type( target_topo, HWLOC_OBJ_NUMANODE );
+#endif
 }
 
 
@@ -791,9 +873,20 @@ int _mpc_topology_get_numa_node_from_cpu(hwloc_topology_t target_topo, const int
 	{
 		const hwloc_obj_t pu = hwloc_get_obj_by_type( target_topo, HWLOC_OBJ_PU, cpuid );
 		assume( pu );
+#if (HWLOC_API_VERSION < 0x00020000)
 		const hwloc_obj_t node = hwloc_get_ancestor_obj_by_type( target_topo, HWLOC_OBJ_NODE, pu );
-
 		return node->logical_index;
+#else
+    hwloc_obj_t parent = pu->parent;
+    while (parent && !parent->memory_arity)
+    {
+      parent = parent->parent; /* no memory child, walk up */
+    }
+    assume( parent );
+
+    return parent->logical_index;
+#endif
+
 	}
 	else
 	{
@@ -806,8 +899,14 @@ void _topo_print_cpu_neighborhood(hwloc_topology_t target_topo, int cpuid, int n
 {
 	int i;
 	hwloc_obj_t currentCPU = hwloc_get_obj_by_type( target_topo, HWLOC_OBJ_PU, cpuid );
+
+#if (HWLOC_API_VERSION < 0x00020000)
 	hwloc_obj_type_t type = ( mpc_topology_has_numa_nodes() ) ? HWLOC_OBJ_NODE : HWLOC_OBJ_MACHINE;
 	int currentCPU_node_id = hwloc_get_ancestor_obj_by_type( target_topo, type, currentCPU )->logical_index;
+#else
+	hwloc_obj_type_t type = ( mpc_topology_has_numa_nodes() ) ? HWLOC_OBJ_NUMANODE : HWLOC_OBJ_MACHINE;
+	int currentCPU_node_id = _mpc_topology_get_numa_node_from_cpu(target_topo, cpuid);
+#endif
 	int currentCPU_socket_id = hwloc_get_ancestor_obj_by_type( target_topo, HWLOC_OBJ_SOCKET, currentCPU )->logical_index;
 	int currentCPU_core_id = hwloc_get_ancestor_obj_by_type( target_topo, HWLOC_OBJ_CORE, currentCPU )->logical_index;
 
@@ -818,9 +917,20 @@ void _topo_print_cpu_neighborhood(hwloc_topology_t target_topo, int cpuid, int n
 	{
 		hwloc_obj_t current = objs[i];
 
+    hwloc_obj_t cur_node = hwloc_get_ancestor_obj_by_type( target_topo, type, current );
+#if (HWLOC_API_VERSION >= 0x00020000)
+    hwloc_obj_t parent = cur_node->parent;
+    while (parent && !parent->memory_arity)
+    {
+      parent = parent->parent; /* no memory child, walk up */
+    }
+    assume( parent );
+    cur_node = parent;
+#endif
+
 		fprintf( stderr, "\tNeighbor[%d] -> CPU %d: (Node:%d, Socket: %d, Core: %d)\n",
 				 i, neighborhood[i],
-				 hwloc_get_ancestor_obj_by_type( target_topo, type, current )->logical_index,
+				 cur_node->logical_index,
 				 hwloc_get_ancestor_obj_by_type( target_topo, HWLOC_OBJ_SOCKET, current )->logical_index,
 				 hwloc_get_ancestor_obj_by_type( target_topo, HWLOC_OBJ_CORE, current )->logical_index );
 	}
@@ -877,6 +987,8 @@ void _mpc_topology_get_pu_neighborhood(hwloc_topology_t target_topo, int cpuid, 
  **************************/
 
 static hwloc_topology_t __mpc_module_topology;
+static int __mpc_module_mcdram_node = -1;
+static int __mpc_module_avail_nvdimm = 0;
 
 hwloc_topology_t mpc_topology_get()
 {
@@ -896,7 +1008,13 @@ void mpc_topology_init()
 
 	hwloc_topology_init( &__mpc_module_topology );
 
+#if (HWLOC_API_VERSION < 0x00020000)
 	hwloc_topology_set_flags( __mpc_module_topology, HWLOC_TOPOLOGY_FLAG_IO_DEVICES );
+#else
+	hwloc_topology_set_flags( __mpc_module_topology, HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM );
+  hwloc_topology_set_io_types_filter(__mpc_module_topology, HWLOC_TYPE_FILTER_KEEP_ALL);
+  hwloc_topology_set_type_filter(__mpc_module_topology, HWLOC_OBJ_GROUP, HWLOC_TYPE_FILTER_KEEP_ALL);
+#endif
 
 	if ( xml_path != NULL )
 	{
@@ -913,10 +1031,69 @@ void mpc_topology_init()
 	/*  load devices */
 	_mpc_topology_device_init( __mpc_module_topology );
 
+
+#if (HWLOC_API_VERSION >= 0x00020000)
+  /* MCDRAM Detection */
+  _mpc_topology_mcdram_detection(__mpc_module_topology);
+
+  /* NVDIMM Detection*/
+  _mpc_topology_nvdimm_detection(__mpc_module_topology);
+#endif
+
 #if defined(MPC_USE_EXTLS) && !defined(MPC_DISABLE_HLS)
 	extls_set_topology_addr((void*(*)(void))__extls_get_topology_addr);
 	extls_hls_topology_construct();
 #endif
+}
+
+#if (HWLOC_API_VERSION >= 0x00020000)
+void _mpc_topology_mcdram_detection(hwloc_topology_t topology)
+{
+  hwloc_obj_t current = NULL;
+  hwloc_obj_t prev = NULL;
+  while(current = hwloc_get_next_obj_by_type(topology, HWLOC_OBJ_NUMANODE, prev))
+  {
+    if(current->subtype != NULL)
+    {
+      if(strcmp(current->subtype, "MCDRAM") == 0)
+      {
+        fprintf(stdout, "<Topology> %s Found ! (NUMA NODE #%d)\n", current->subtype, current->logical_index);
+        __mpc_module_mcdram_node = current->logical_index;
+      }
+    }
+    prev = current;
+    current = NULL;
+  }
+}
+
+void _mpc_topology_nvdimm_detection(hwloc_topology_t topology)
+{
+  hwloc_obj_t current = NULL;
+  hwloc_obj_t prev = NULL;
+  while(current = hwloc_get_next_obj_by_type(topology, HWLOC_OBJ_OS_DEVICE, prev))
+  {
+    if(current->subtype != NULL)
+    {
+      if(strcmp(current->subtype, "NVDIMM") == 0)
+      {
+        fprintf(stdout, "<Topology> %s Found ! (OS Device #%d)\n", current->subtype, current->logical_index);
+        ++__mpc_module_avail_nvdimm;
+      }
+    }
+    prev = current;
+    current = NULL;
+  }
+}
+#endif
+
+int sctk_topology_get_mcdram_node()
+{
+  return __mpc_module_mcdram_node;
+}
+
+int sctk_check_nvdimm()
+{
+  return __mpc_module_avail_nvdimm;
 }
 
 void mpc_topology_destroy( void )

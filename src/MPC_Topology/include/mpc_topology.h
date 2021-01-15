@@ -269,6 +269,10 @@ void mpc_topology_clear_cpu_pinning_cache();
 */
 int mpc_topology_set_pu_count(int n);
 
+
+int sctk_topology_get_mcdram_node();
+int sctk_check_nvdimm();
+
 /* End topology_interface_getters */
 /**
  * @}
