@@ -472,8 +472,8 @@
                 <param name="warn_nested" type="bool" default="false" doc="Emit warning when entering nested parallelism"/>
                 <param name="mode" type="string" default="simple-mixed" doc="MPI/OpenMP hybrid mode (simple-mixed, alternating)"/>
                 <param name="affinity" type="string" default="balanced" doc="Affinity of threads for parallel regions (COMPACT, SCATTER, BALANCED)"/>
-			
-				<!--  task static variables -->	
+
+				<!--  task static variables -->
 				<param name="omp_new_task_depth" 		type="int" default="10"	doc="Depth of the new tasks lists in the tree" />
 				<param name="omp_untied_task_depth" 	type="int" default="10"  doc="Depth of the untied tasks lists in the tree" />
 				<param name="omp_task_larceny_mode" 	type="mpcomp_task_larceny_mode_t" default="MPCOMP_TASK_LARCENY_MODE_PRODUCER" doc="Task stealing policy"/>
@@ -482,11 +482,13 @@
 				<param name="omp_task_steal_last_stolen_list"  type="bool" default="false" doc="Try to steal to same list than last successful stealing" />
 				<param name="omp_task_resteal_to_last_thief"  type="bool" default="false" doc="Try to steal to the last thread that stole a task to current thread" />
 				<param name="omp_task_use_lockfree_queue"  type="bool" default="true" doc="Use lockfree_queue or not" />
-       
 
-				<!--  OpenMP places -->	
+
+				<!--  OpenMP places -->
                 <param name="places" type="string" default="cores" doc="OpenMP places"/>
-					
+				<!--  OpenMP allocator -->
+                <param name="allocator" type="string" default="omp_default_mem_alloc" doc="OpenMP allocator"/>
+
             </struct>
 
             <!-- </enum> -->

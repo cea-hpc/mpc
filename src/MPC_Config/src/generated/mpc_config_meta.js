@@ -308,6 +308,7 @@ meta.types = {
 		omp_task_resteal_to_last_thief: {mode: 'param', name: "omp_task_resteal_to_last_thief", type: "bool", doc: "Try to steal to the last thread that stole a task to current thread", dflt: "false", },
 		omp_task_use_lockfree_queue: {mode: 'param', name: "omp_task_use_lockfree_queue", type: "bool", doc: "Use lockfree_queue or not", dflt: "true", },
 		places: {mode: 'param', name: "places", type: "string", doc: "OpenMP places", dflt: "cores", },
+		allocator: {mode: 'param', name: "allocator", type: "string", doc: "OpenMP allocator", dflt: "omp_default_mem_alloc", },
 	}},
 	thread : {type: 'struct', name: "thread", childs: {
 		spin_delay: {mode: 'param', name: "spin_delay", type: "int", doc: "Max number of accesses to the lock before calling thread_yield", dflt: "10", },

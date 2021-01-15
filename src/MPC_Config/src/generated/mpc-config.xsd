@@ -901,6 +901,7 @@
       <xs:element minOccurs="0" name="omp_task_resteal_to_last_thief" type="xs:boolean"/>
       <xs:element minOccurs="0" name="omp_task_use_lockfree_queue" type="xs:boolean"/>
       <xs:element minOccurs="0" name="places" type="xs:string"/>
+      <xs:element minOccurs="0" name="allocator" type="xs:string"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->

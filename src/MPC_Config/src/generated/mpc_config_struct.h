@@ -786,6 +786,8 @@ struct sctk_runtime_config_struct_openmp
 	int omp_task_use_lockfree_queue;
 	/**OpenMP places**/
 	char * places;
+	/**OpenMP allocator**/
+	char * allocator;
 };
 
 /******************************** STRUCTURE *********************************/

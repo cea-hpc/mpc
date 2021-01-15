@@ -1183,6 +1183,7 @@ void sctk_runtime_config_struct_init_openmp(void * struct_ptr)
 	obj->omp_task_resteal_to_last_thief = false;
 	obj->omp_task_use_lockfree_queue = true;
 	obj->places = "cores";
+	obj->allocator = "omp_default_mem_alloc";
 	obj->init_done = 1;
 }
 
