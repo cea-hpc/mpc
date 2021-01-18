@@ -163,8 +163,6 @@ int mpc_topology_get_current_cpu(void);
 */
 int mpc_topology_get_global_current_cpu(void);
 
-#ifndef MPC_Threads
-
 /**
  * @brief Return the PU executing current thread
  * @note This version relies on HWLOC as MPC has no scheduler
@@ -180,37 +178,6 @@ static inline int mpc_topology_get_global_pu( void )
 {
         return mpc_topology_get_global_current_cpu();
 }
-
-#else
-
-int mpc_thread_get_pu(void);
-int mpc_thread_get_global_pu(void);
-#include "mpc_thread_accessor.h"
-
-/**
- * @brief Return the PU executing current thread
- * @note This version relies on MPC scheduler
- *
- * @return int current PU executing this thread
- */
-static inline int mpc_topology_get_pu( void )
-{
-        return mpc_thread_get_pu();
-}
-
-/**
- * @brief Return the PU executing current thread
- * @note This version relies on MPC scheduler
- *
- * @return int current PU executing this thread
- */
-static inline int mpc_topology_get_global_pu( void )
-{
-        return mpc_thread_get_global_pu();
-}
-
-#endif
-
 
 /**
  * @brief Convert a PU id from OS to logical numbering
