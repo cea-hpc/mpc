@@ -25,20 +25,20 @@ typedef enum
 
 /**
  * @brief Forward declaration for the internal opaque AM context
- * 
+ *
  */
 struct mpc_lowcomm_am_ctx_s;
 
 /**
  * @brief Opaque Context for active messages
- * 
+ *
  */
 typedef struct mpc_lowcomm_am_ctx_s * mpc_lowcomm_am_ctx_t;
 
 /**
- * @brief Initalize RPC engine 
+ * @brief Initalize RPC engine
  * @warning Requires mpc_lowcomm_init to be called
- * 
+ *
  * @return mpc_lowcomm_am_ctx_t Opaque context handle
  *         needs to be freed with mpc_lowcomm_am_finalize
  */
@@ -47,7 +47,7 @@ mpc_lowcomm_am_ctx_t mpc_lowcomm_am_init();
 /**
  * @brief Release the RPC engine while ensuring completion
  * @warning Needs to be called *before* mpc_lowcomm_release
- * 
+ *
  * @param ctx RPC context handle to be freed (initialized with mpc_lowcomm_am_init)
  * @return int 0 on success
  */
@@ -59,7 +59,7 @@ int mpc_lowcomm_am_release(mpc_lowcomm_am_ctx_t * ctx);
 
 /**
  * @brief Remotely call a function without blocking (i)
- * 
+ *
  * @warning The function needs to be resolvable with dlsym
  *          (you may need to compile with -rdynamic)
  *
@@ -86,7 +86,7 @@ int mpc_lowcomm_iam(mpc_lowcomm_am_ctx_t ctx,
 
 /**
  * @brief Remotely call a function (blocking version)
- * 
+ *
  * @warning The function needs to be resolvable with dlsym
  *          (you may need to compile with -rdynamic)
  *
