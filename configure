@@ -29994,7 +29994,7 @@ $as_echo_n "checking fortran symbol format... " >&6; }
         FORTRAN_NAMING=""
 
         if echo "${SYMBOL_LIST}" | grep "fortran_name__" > /dev/null 2>&1; then
-            FORTRAN_NAMING"__"
+            FORTRAN_NAMING="__"
 
 $as_echo "#define FORTRANDOUBLEUNDERSCORE 1" >>confdefs.h
 
