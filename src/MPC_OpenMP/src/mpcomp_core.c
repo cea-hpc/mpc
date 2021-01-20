@@ -68,7 +68,7 @@ static inline void __omp_conf_set_default(void)
 	__omp_conf.OMP_MAX_ACTIVE_LEVELS=0;
 	__omp_conf.OMP_WARN_NESTED=0;
 	snprintf(__omp_conf.places, MPC_CONF_STRING_SIZE, "cores");
-
+	snprintf(__omp_conf.allocator, MPC_CONF_STRING_SIZE, "omp_default_mem_alloc");
 
 	/* Schedule */
 	__omp_conf.OMP_MODIFIER_SCHEDULE = 0;
@@ -131,6 +131,7 @@ static inline void __omp_conf_init(void)
 	                                PARAM("number", &__omp_conf.OMP_MAX_ACTIVE_LEVELS , MPC_CONF_INT, "Maximum depth of nested parallelism"),
 									PARAM("nested", &__omp_conf.OMP_WARN_NESTED , MPC_CONF_BOOL, "Emit warning when entering nested parallelism"),
 									PARAM("places", &__omp_conf.places , MPC_CONF_STRING, "OpenMP Places configuration OMP_PLACES"),
+									PARAM("allocator", &__omp_conf.allocator , MPC_CONF_STRING, "OpenMP allocator"),
 									PARAM("schedule", schedule , MPC_CONF_TYPE, "Parameters associated with OpenMP schedules"),
 									PARAM("thread", thread , MPC_CONF_TYPE, "Parameters associated with OpenMP threads"),
 									PARAM("task", task , MPC_CONF_TYPE, "Parameters associated with OpenMP tasks"),

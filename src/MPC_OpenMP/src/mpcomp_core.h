@@ -58,6 +58,9 @@ struct mpc_omp_conf
 	/* OMP places configuration */
 	char places[MPC_CONF_STRING_SIZE];
 
+	/* OpenMP allocator" */
+	char allocator[MPC_CONF_STRING_SIZE];
+
 	/* Schedule modifier */
 
 	int OMP_MODIFIER_SCHEDULE ;
