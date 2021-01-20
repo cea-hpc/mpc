@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file. The format 
 - Autopriv dependency has been renamed to mpc-compiler-additions
 - Add OMP 5.0 memory management support (includes HWLOC 2+ support)
 - Point to mpcallocator 0.2 using HWLOC 2+
+- MPIT rewrite mirrorring the new configuration system
 
 ## [4.0.0] - 2020-12-16
 

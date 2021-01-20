@@ -818,6 +818,42 @@ int PMPI_T_pvar_get_info(int pvar_index,
                          int *continuous,
                          int *atomic)
 {
+    if(__mpit.pvar_count <= pvar_index)
+    {
+        MPI_ERROR_REPORT(MPI_COMM_SELF, MPI_T_ERR_INVALID_INDEX, "Bad cvar index");
+    }
+
+    _mpc_mpi_mpit_var_t * var = __mpit.pvars[pvar_index];
+
+    snprintf(name, *name_len, var->elem_node->name);
+    *name_len = strlen(var->elem_node->name);
+
+    /* Not supported yet */
+    *verbosity = MPI_T_VERBOSITY_USER_ALL;
+
+    /* Not supported yet */
+    *var_class = MPI_T_PVAR_CLASS_STATE;
+
+    *datatype = __conf_type_to_mpi(var->elem_node->type);
+
+    /* Not supported yet (needs choices inside the config) */
+    *enumtype = NULL;
+
+    snprintf(desc, *desc_len, var->elem_node->doc);
+    *desc_len = strlen(var->elem_node->doc);
+
+    /* Not supported */
+    *bind = MPI_T_BIND_NO_OBJECT;
+
+    *readonly = var->elem_node->is_locked;
+
+    /* Not supported otherwise all vars are continuous */
+    *continuous = 1;
+
+    /* Not supported otherwise */
+    *atomic = 0;
+
+
     return MPI_SUCCESS;
 }
 
