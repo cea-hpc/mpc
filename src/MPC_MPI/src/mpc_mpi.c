@@ -10786,7 +10786,7 @@ int PMPI_Waitall(int count, MPI_Request array_of_requests[],
 	/* Convert MPI resquests to MPC ones */
 
 	/* Prepare arrays for MPC requests */
-	int *array_is_persitent; /*avoid retrieving request at freeing (costly) when it is a persitent*/
+	int *array_is_persistent; /*avoid retrieving request at freeing (costly) when it is a persitent*/
 	int static_is_persistent[PMPI_WAIT_ALL_STATIC_TRSH];
 
 	mpc_lowcomm_request_t **mpc_array_of_requests;
@@ -10797,7 +10797,7 @@ int PMPI_Waitall(int count, MPI_Request array_of_requests[],
 
 	if(count < PMPI_WAIT_ALL_STATIC_TRSH)
 	{
-		array_is_persitent = static_is_persistent;
+		array_is_persistent = static_is_persistent;
 
 		mpc_array_of_requests_nbc = static_array_of_requests_nbc;
 
@@ -10805,8 +10805,8 @@ int PMPI_Waitall(int count, MPI_Request array_of_requests[],
 	}
 	else
 	{
-		array_is_persitent = sctk_malloc(sizeof(int) * count);
-		assume(array_is_persitent != NULL);
+		array_is_persistent = sctk_malloc(sizeof(int) * count);
+		assume(array_is_persistent != NULL);
 
 		mpc_array_of_requests_nbc = sctk_malloc(sizeof(MPI_Request) * count);
 		assume(mpc_array_of_requests_nbc != NULL);
@@ -10825,13 +10825,13 @@ int PMPI_Waitall(int count, MPI_Request array_of_requests[],
 		tmp = __sctk_convert_mpc_request_internal(&(array_of_requests[i]),
 		                                          requests);
 
-		if(tmp->is_persistent || tmp->is_intermediate_nbc_persistent)
+		if(tmp && (tmp->is_persistent || tmp->is_intermediate_nbc_persistent))
 		{
-			array_is_persitent[i] = 1;
+			array_is_persistent[i] = 1;
 		}
 		else
 		{
-			array_is_persitent[i] = 0;
+			array_is_persistent[i] = 0;
 		}
 
 		if( (tmp != NULL) && (tmp->is_nbc == 1) )
@@ -10878,7 +10878,7 @@ int PMPI_Waitall(int count, MPI_Request array_of_requests[],
 	/* Delete the MPI requests */
 	for(i = 0; i < count; i++)
 	{
-		if(!array_is_persitent[i])
+		if(!array_is_persistent[i])
 		{
 			__sctk_delete_mpc_request(&(array_of_requests[i]), requests);
 		}
@@ -10891,7 +10891,7 @@ int PMPI_Waitall(int count, MPI_Request array_of_requests[],
 		sctk_free(mpc_array_of_requests_nbc);
 	}
 
-	if(array_of_statuses != MPI_STATUSES_IGNORE)
+	if(array_of_statuses && (array_of_statuses != MPI_STATUSES_IGNORE))
 	{
 		int i;
 		for(i = 0; i < count; i++)
