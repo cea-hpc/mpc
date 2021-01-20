@@ -220,7 +220,7 @@ static inline void __expandable_array_free(volatile void ***parray, int *pcount)
 
 void _mpit_state_add_var(_mpc_mpi_mpit_var_t *var)
 {
-    mpc_common_debug_error("ADD VAR %s", var->elem_node->name);
+    mpc_common_debug("ADD VAR %s", var->elem_node->name);
     volatile void ***parray = NULL;
     int *pcount = NULL;
     int *psize = NULL;
@@ -249,7 +249,7 @@ void _mpit_state_add_var(_mpc_mpi_mpit_var_t *var)
 
 void _mpit_state_add_cat(_mpc_mpi_mpit_cat_t *cat)
 {
-    mpc_common_debug_error("ADD CAT %s", cat->name);
+    mpc_common_debug("ADD CAT %s", cat->name);
 
     int new_id = __expandable_array_add((volatile void ***)&__mpit.categories,
                                         &__mpit.categories_size,
@@ -277,7 +277,7 @@ void _mpi_t_state_init(void)
         return;
     }
 
-    mpc_common_debug_error("INIT");
+    mpc_common_debug("MPIT INIT");
 
     /* Storage base */
     __expandable_array_init((volatile void ***)&__mpit.categories, &__mpit.categories_size);
@@ -289,7 +289,7 @@ void _mpi_t_state_init(void)
     __expandable_array_init((volatile void ***)&__mpit.pvars, &__mpit.pvar_size);
     __mpit.pvar_count = 0;
 
-    mpc_common_debug_error("INIT DONE");
+    mpc_common_debug("MPIT INIT DONE");
 
 
     /* Now register each main component of the config */
