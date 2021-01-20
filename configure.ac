@@ -795,6 +795,22 @@ AC_MSG_RESULT([$MPC_HAVE_AM])
 AM_CONDITIONAL([MPC_HAVE_AM], [test "x$MPC_HAVE_AM" = "xyes"])
 
 #
+# Detect libvmem
+#
+mpc_libvmem="no"
+
+# First use the pkgconfig naming scheme
+MPC_DETECT_DEPENDENCY([libvmem.h], [libvmem], [vmem_create], [VMEM])
+
+if test "x$mpc_dep_found" = "xyes"; then
+        AC_DEFINE([MPC_HAVE_LIBVMEM], [1], [libvmem support is enabled])
+        mpc_libvmem="yes"
+fi
+
+AC_MSG_CHECKING([Building libvmem support])
+AC_MSG_RESULT([$mpc_libvmem])
+
+#
 # Detect libunwind
 #
 mpc_libunwind="no"
@@ -802,7 +818,6 @@ mpc_libunwind="no"
 # First use the pkgconfig naming scheme
 MPC_DETECT_DEPENDENCY([libunwind.h], [libunwind], [unw_init_local], [UNW], [], [], [unwind])
 
-#AC_MSG_CHECKING([support for libunwind library])
 if test "x$mpc_dep_found" = "xyes"; then
         AC_DEFINE([MPC_HAVE_LIBUNWIND], [1], [libunwind support is enabled])
         mpc_libunwind="yes"
@@ -2848,6 +2863,7 @@ MPC_CONFIG_RESULT="\
 # Launcher............. $MPC_LAUNCHER\n\
 # Allocator............ $MPC_ALLOCATOR\n\
 # libunwind............ $mpc_libunwind\n\
+# libvmem.............. $mpc_libvmem\n\
 # libffi............... $HAVE_LIB_FFI\n\
 # DMTPC c/r............ $MPC_HAVE_DMTCP\n\
 #\n\

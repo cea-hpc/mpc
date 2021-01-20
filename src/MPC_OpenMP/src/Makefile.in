@@ -148,7 +148,9 @@ am__v_lt_1 =
 libiomp5_la_LIBADD =
 am_libiomp5_la_OBJECTS = ./fakelib/fakelib.lo
 libiomp5_la_OBJECTS = $(am_libiomp5_la_OBJECTS)
-libmpcomp_la_DEPENDENCIES = ../../MPC_Launch/src/libmpclaunch.la
+am__DEPENDENCIES_1 =
+libmpcomp_la_DEPENDENCIES = ../../MPC_Launch/src/libmpclaunch.la \
+	$(am__DEPENDENCIES_1)
 am_libmpcomp_la_OBJECTS = mpcomp_api.lo mpcomp_core.lo \
 	mpcomp_fortran.lo mpcomp_loop.lo mpcomp_parallel_region.lo \
 	mpcomp_places_env.lo mpcomp_spinning_core.lo mpcomp_stack.lo \
@@ -425,6 +427,8 @@ UNW_CFLAGS = @UNW_CFLAGS@
 UNW_LIBS = @UNW_LIBS@
 USING_ASAN = @USING_ASAN@
 VERSION = @VERSION@
+VMEM_CFLAGS = @VMEM_CFLAGS@
+VMEM_LIBS = @VMEM_LIBS@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -525,7 +529,7 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	-I$(abs_top_builddir)/src/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Threads/src/ \
 	-I$(abs_top_srcdir)/src/MPC_Threads/include/ \
-	-I$(abs_top_srcdir)/src/MPC_OpenMP/include/
+	-I$(abs_top_srcdir)/src/MPC_OpenMP/include/ $(VMEM_CFLAGS)
 lib_LTLIBRARIES = libmpcomp.la libiomp5.la libgomp.la
 libmpcomp_la_SOURCES = mpcomp_api.c mpcomp_core.c mpcomp_fortran.c \
 	mpcomp_loop.c mpcomp_parallel_region.c mpcomp_places_env.c \
@@ -533,7 +537,7 @@ libmpcomp_la_SOURCES = mpcomp_api.c mpcomp_core.c mpcomp_fortran.c \
 	mpcomp_sync.c mpcomp_task.c mpcomp_tree.c mpcomp_alloc.c \
 	omp_gomp.c omp_intel_atomics.c omp_intel.c omp_ompt.c
 libmpcomp_la_LDFLAGS = -Wl,--version-script=$(abs_top_srcdir)/src/MPC_OpenMP/version_gomp.txt
-libmpcomp_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la
+libmpcomp_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la $(VMEM_LIBS)
 libiomp5_la_SOURCES = ./fakelib/fakelib.c
 libgomp_la_SOURCES = ./fakelib/fakelib.c
 all: all-am

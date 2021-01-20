@@ -832,6 +832,9 @@
 /* libunwind support is enabled */
 #undef MPC_HAVE_LIBUNWIND
 
+/* libvmem support is enabled */
+#undef MPC_HAVE_LIBVMEM
+
 /* MPC compiled in process mode */
 #undef MPC_IN_PROCESS_MODE
 

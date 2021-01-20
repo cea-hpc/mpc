@@ -20,15 +20,15 @@
 /* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-// #define ENABLE_VMEM 1
-
+#include <mpc_config.h>
 #include "mpcomp_alloc.h"
 #include "mpcomp_core.h"
+
 #include <mpc_topology.h>
 
 static mpcomp_alloc_list_t mpcomp_global_allocators;
 
-#if ENABLE_VMEM
+#if MPC_HAVE_LIBVMEM
   #include <libvmem.h>
   static VMEM *vmp;
 #endif
@@ -123,7 +123,7 @@ mpcomp_alloc_init_allocators()
   alloc_set[omp_pteam_mem_alloc].traits[omp_atk_access - 1].value = omp_atv_pteam;
   alloc_set[omp_thread_mem_alloc].traits[omp_atk_access - 1].value = omp_atv_thread;
 
-#if ENABLE_VMEM /* if nvmem lib is found */
+#if MPC_HAVE_LIBVMEM /* if nvmem lib is found */
   int is_nvdimm = mpc_topology_has_nvdimm();
   if(is_nvdimm)
   {

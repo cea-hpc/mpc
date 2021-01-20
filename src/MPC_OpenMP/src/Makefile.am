@@ -28,7 +28,7 @@ AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Topology/include/ -I$(abs_top_srcdir)
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Launch/include/ -I$(abs_top_builddir)/src/include/
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/
 
-AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_OpenMP/include/
+AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_OpenMP/include/ $(VMEM_CFLAGS)
 
 lib_LTLIBRARIES = libmpcomp.la
 
@@ -38,7 +38,7 @@ libmpcomp_la_SOURCES += mpcomp_stack.c mpcomp_stack_node_leaf.c mpcomp_sync.c mp
 libmpcomp_la_SOURCES += mpcomp_tree.c mpcomp_alloc.c omp_gomp.c omp_intel_atomics.c omp_intel.c omp_ompt.c
 
 libmpcomp_la_LDFLAGS = -Wl,--version-script=$(abs_top_srcdir)/src/MPC_OpenMP/version_gomp.txt
-libmpcomp_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la
+libmpcomp_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la $(VMEM_LIBS)
 
 lib_LTLIBRARIES += libiomp5.la libgomp.la
 
