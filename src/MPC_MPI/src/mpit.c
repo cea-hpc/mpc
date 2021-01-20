@@ -436,7 +436,7 @@ int PMPI_T_category_changed(int *stamp)
     return MPI_SUCCESS;
 }
 
-#pragma MPI_T_category_get_categories = PMPI_T_category_get_categories
+#pragma weak MPI_T_category_get_categories = PMPI_T_category_get_categories
 
 int PMPI_T_category_get_categories(int cat_index, int len, int indices[])
 {
@@ -527,7 +527,12 @@ int PMPI_T_category_get_index(const char *name, int *cat_index)
 
 #pragma weak MPI_T_category_get_info = PMPI_T_category_get_info
 
-int PMPI_T_category_get_info(int cat_index, char *name, int *name_len, char *desc, int *desc_len, int *num_cvars, int *num_pvars, int *num_categories)
+int PMPI_T_category_get_info(int cat_index,
+                             char *name, int *name_len,
+                             char *desc, int *desc_len,
+                             int *num_cvars,
+                             int *num_pvars,
+                             int *num_categories)
 {
     if(__mpit.categories_count <= cat_index)
     {
