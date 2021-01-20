@@ -24,6 +24,7 @@
 
 #include "mpcomp_alloc.h"
 #include "mpcomp_core.h"
+#include <mpc_topology.h>
 
 static mpcomp_alloc_list_t mpcomp_global_allocators;
 
@@ -123,7 +124,7 @@ mpcomp_alloc_init_allocators()
   alloc_set[omp_thread_mem_alloc].traits[omp_atk_access - 1].value = omp_atv_thread;
 
 #if ENABLE_VMEM /* if nvmem lib is found */
-  int is_nvdimm = sctk_check_nvdimm();
+  int is_nvdimm = mpc_topology_has_nvdimm();
   if(is_nvdimm)
   {
     if ((vmp = vmem_create("/pmem/node0", VMEM_MIN_POOL)) == NULL)
@@ -317,7 +318,7 @@ main_treat :
 
   if(memspace ==  omp_high_bw_mem_space)
   {
-    int mcdram_node = sctk_topology_get_mcdram_node();
+    int mcdram_node = mpc_topology_get_mcdram_node();
     if(mcdram_node != -1)
     {
       ret = (void*) sctk_malloc_on_node(size, mcdram_node);
@@ -332,7 +333,7 @@ main_treat :
   }
   else if(memspace == omp_large_cap_mem_space)
   {
-    if(sctk_check_nvdimm() != 0)
+    if(mpc_topology_has_nvdimm() != 0)
     {
 #if ENABLE_NVMEM
       ret = (void*) vmem_malloc(vmp, size);

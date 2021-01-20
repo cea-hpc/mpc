@@ -1130,12 +1130,12 @@ void _mpc_topology_nvdimm_detection(hwloc_topology_t topology)
 }
 #endif
 
-int sctk_topology_get_mcdram_node()
+int mpc_topology_get_mcdram_node()
 {
   return __mpc_module_mcdram_node;
 }
 
-int sctk_check_nvdimm()
+int mpc_topology_has_nvdimm()
 {
   return __mpc_module_avail_nvdimm;
 }

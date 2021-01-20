@@ -35,7 +35,7 @@
 #include "mpc_common_asm.h"
 #include "mpc_launch_pmi.h"
 #include "mpc_common_rank.h"
-
+#include "mpc_lowcomm_arpc.h"
 
 /** threshold for large ARPC request */
 static size_t sctk_ptl_am_req_max_small_size = 0;

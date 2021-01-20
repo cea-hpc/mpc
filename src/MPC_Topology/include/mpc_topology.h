@@ -269,9 +269,19 @@ void mpc_topology_clear_cpu_pinning_cache();
 */
 int mpc_topology_set_pu_count(int n);
 
+/**
+ * @brief Return the node ID for the MCDRAM
+ *
+ * @return int MCDRAM node ID (-1 if none)
+ */
+int mpc_topology_get_mcdram_node();
 
-int sctk_topology_get_mcdram_node();
-int sctk_check_nvdimm();
+/**
+ * @brief Check if the machine has NVDIMMs
+ *
+ * @return int non zero if NVDIMMs are found
+ */
+int mpc_topology_has_nvdimm();
 
 /* End topology_interface_getters */
 /**

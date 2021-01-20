@@ -127,8 +127,10 @@ host_triplet = @host@
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals_am/sctk_ptl_am_toolkit.c \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals_am/sctk_ptl_am_arpc_api.c \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals_am/arpc_weak.c
-@MPC_HAVE_AM_TRUE@am__append_7 = am.c
-@MPC_HAVE_AM_TRUE@am__append_8 = $(FFI_LIBS)
+@OFI_DRIVER_ENABLED_TRUE@am__append_7 = -I$(abs_srcdir)/ofi/
+@OFI_DRIVER_ENABLED_TRUE@am__append_8 = ./ofi/ofi.c ./ofi/ofi_msg.c ./ofi/ofi_rdma.c ./ofi/ofi_toolkit.c
+@MPC_HAVE_AM_TRUE@am__append_9 = am.c
+@MPC_HAVE_AM_TRUE@am__append_10 = $(FFI_LIBS)
 subdir = src/MPC_Lowcomm/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_gcc_builtin.m4 \
@@ -208,8 +210,8 @@ am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c sctk_checksum.c \
 	./portals_am/sctk_ptl_am_iface.c \
 	./portals_am/sctk_ptl_am_toolkit.c \
 	./portals_am/sctk_ptl_am_arpc_api.c ./portals_am/arpc_weak.c \
-	am.c
-	./ofi/ofi_toolkit.c
+	./ofi/ofi.c ./ofi/ofi_msg.c ./ofi/ofi_rdma.c \
+	./ofi/ofi_toolkit.c am.c
 am__dirstamp = $(am__leading_dot)dirstamp
 @INFINIBAND_DRIVER_ENABLED_TRUE@am__objects_1 = ./ib/sctk_ib_async.lo \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_buffered.lo \
@@ -241,9 +243,10 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals_am/sctk_ptl_am_toolkit.lo \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals_am/sctk_ptl_am_arpc_api.lo \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals_am/arpc_weak.lo
-@MPC_HAVE_AM_TRUE@am__objects_3 = am.lo
+@OFI_DRIVER_ENABLED_TRUE@am__objects_3 = ./ofi/ofi.lo ./ofi/ofi_msg.lo \
 @OFI_DRIVER_ENABLED_TRUE@	./ofi/ofi_rdma.lo \
 @OFI_DRIVER_ENABLED_TRUE@	./ofi/ofi_toolkit.lo
+@MPC_HAVE_AM_TRUE@am__objects_4 = am.lo
 am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo \
 	sctk_control_messages.lo ft.lo group.lo communicator.lo \
 	shm_coll.lo lowcomm_config.lo sctk_handle.lo \
@@ -257,7 +260,8 @@ am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo \
 	./shm/sctk_shm_raw_queues.lo ./shm/sctk_handler_pmi.lo \
 	./shm/sctk_shm_cma.lo ./shm/sctk_shm_frag.lo \
 	./shm/sctk_shm_qemu.lo ./shm/sctk_shm_raw_queues_internals.lo \
-	$(am__objects_1) $(am__objects_2) $(am__objects_3)
+	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
+	$(am__objects_4)
 libmpclowcomm_la_OBJECTS = $(am_libmpclowcomm_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -581,7 +585,6 @@ program_transform_name = @program_transform_name@
 psdir = @psdir@
 pyexecdir = @pyexecdir@
 pythondir = @pythondir@
-runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
@@ -648,11 +651,11 @@ libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c \
 	./shm/sctk_handler_pmi.c ./shm/sctk_shm_cma.c \
 	./shm/sctk_shm_frag.c ./shm/sctk_shm_qemu.c \
 	./shm/sctk_shm_raw_queues_internals.c $(am__append_4) \
-	$(am__append_6) $(am__append_7)
+	$(am__append_6) $(am__append_8) $(am__append_9)
 
 # library dependency #
 libmpclowcomm_la_LIBADD = $(ALLOC_LIBS) \
-	../../MPC_Launch/src/libmpclaunch.la -lm -lrt $(am__append_8)
+	../../MPC_Launch/src/libmpclaunch.la -lm -lrt $(am__append_10)
 all: all-am
 
 .SUFFIXES:

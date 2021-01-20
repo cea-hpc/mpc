@@ -7,6 +7,7 @@
 #include <assert.h>
 
 #include <mpc_topology.h>
+#include "mpcomp_alloc.h"
 #include "mpcomp_core.h"
 #include "mpc_common_asm.h"
 #include "mpcomp_types.h"
