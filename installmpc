@@ -1504,7 +1504,7 @@ assert_cmd "bzip2"
 assert_cmd "pkg-config"
 
 # Basic dependencies
-find_in_prefix_or_use_spack "openpa" "" "${OPENPA_PREFIX}"
+find_in_prefix_or_use_spack "openpa" "$(package_version "openpa")" "${OPENPA_PREFIX}"
 
 if test "x${DEP_FOUND}" = "xno"; then
 	# Could not use spack now installing manually
@@ -1518,7 +1518,7 @@ if test "x${DEP_FOUND}" = "xno"; then
 	build_configure_based_package "hwloc" "$(package_version "hwloc")" "$HWLOC_BUILD_PARAMETERS"
 fi
 
-find_in_prefix_or_use_spack "hydra" "" "${HYDRA_PREFIX}"
+find_in_prefix_or_use_spack "hydra" "$(package_version "hydra")" "${HYDRA_PREFIX}"
 
 if test "x${DEP_FOUND}" = "xno"; then
 	# Could not use spack now installing manually
@@ -1526,7 +1526,7 @@ if test "x${DEP_FOUND}" = "xno"; then
 fi
 
 
-find_in_prefix_or_use_spack "gdb" "" "${MPC_GDB_PREFIX}"
+find_in_prefix_or_use_spack "gdb" "$(package_version "gdb")" "${MPC_GDB_PREFIX}"
 
 if test "x${DEP_FOUND}" = "xno"; then
 	# Could not use spack now installing manually
@@ -1534,7 +1534,7 @@ if test "x${DEP_FOUND}" = "xno"; then
 fi
 
 
-find_in_prefix_or_use_spack "mpc-dmtcp" "" "${MPC_DMTCP_PREFIX}"
+find_in_prefix_or_use_spack "mpc-dmtcp" "$(package_version "mpc-dmtcp")" "${MPC_DMTCP_PREFIX}"
 
 if test "x${DEP_FOUND}" = "xno"; then
 	# Could not use spack now installing manually
