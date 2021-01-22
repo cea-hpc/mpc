@@ -92,11 +92,34 @@ void mpc_topology_module_register()
  * MPC TOPOLOGY OBJECT INTERFACE *
  *********************************/
 
+static inline void __restrict_topo_to_cpuset(hwloc_topology_t target_topology, hwloc_bitmap_t cpuset)
+{
+
+#if (HWLOC_API_VERSION < 0x00020000)
+	int err = hwloc_topology_restrict( target_topology,
+									   cpuset,
+									   HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES | HWLOC_RESTRICT_FLAG_ADAPT_IO );
+#else
+	int err = hwloc_topology_restrict( target_topology,
+									   cpuset,
+									   HWLOC_RESTRICT_FLAG_ADAPT_IO );
+#endif
+    assume( !err );
+}
+
+
 void _mpc_topology_map_and_restrict_by_cpuset(hwloc_topology_t target_topology,
 								const int processor_count,
 								const unsigned int index_first_processor,
 								hwloc_cpuset_t pinning_constraints)
 {
+
+    /* First make sure that the topology matches the allowed topology
+     * as what we are willing to do here is pin our cores */
+    hwloc_bitmap_t allowed_topo = hwloc_topology_get_allowed_cpuset (target_topology);
+
+    __restrict_topo_to_cpuset(target_topology, allowed_topo);
+
 	hwloc_bitmap_t cpuset = hwloc_bitmap_alloc();
 	hwloc_bitmap_zero( cpuset );
 
@@ -105,7 +128,7 @@ void _mpc_topology_map_and_restrict_by_cpuset(hwloc_topology_t target_topology,
 		unsigned int i;
 		for ( i = index_first_processor; i < index_first_processor + processor_count; ++i )
 		{
-			hwloc_obj_t pu = hwloc_get_obj_by_type( target_topology, HWLOC_OBJ_PU, i );
+            hwloc_obj_t pu = hwloc_get_obj_by_type( target_topology, HWLOC_OBJ_PU, i );
 			hwloc_cpuset_t set = hwloc_bitmap_dup( pu->cpuset );
 			hwloc_bitmap_singlify( set );
 			hwloc_bitmap_or( cpuset, cpuset, set );
@@ -130,17 +153,8 @@ void _mpc_topology_map_and_restrict_by_cpuset(hwloc_topology_t target_topology,
 
 		hwloc_bitmap_copy( cpuset, pinning_constraints);
 	}
-
-#if (HWLOC_API_VERSION < 0x00020000)
-	int err = hwloc_topology_restrict( target_topology,
-									   cpuset,
-									   HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES | HWLOC_RESTRICT_FLAG_ADAPT_IO );
-#else
-	int err = hwloc_topology_restrict( target_topology,
-									   cpuset,
-									   HWLOC_RESTRICT_FLAG_ADAPT_IO );
-#endif
-	assume( !err );
+        
+    __restrict_topo_to_cpuset(target_topology, cpuset);
 
 	hwloc_bitmap_free(cpuset);
 }
@@ -1049,8 +1063,8 @@ void mpc_topology_init()
 	hwloc_topology_set_flags( __mpc_module_topology, HWLOC_TOPOLOGY_FLAG_IO_DEVICES );
 #else
 	hwloc_topology_set_flags( __mpc_module_topology, HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM );
-  hwloc_topology_set_io_types_filter(__mpc_module_topology, HWLOC_TYPE_FILTER_KEEP_ALL);
-  hwloc_topology_set_type_filter(__mpc_module_topology, HWLOC_OBJ_GROUP, HWLOC_TYPE_FILTER_KEEP_ALL);
+    hwloc_topology_set_io_types_filter(__mpc_module_topology, HWLOC_TYPE_FILTER_KEEP_ALL);
+    hwloc_topology_set_type_filter(__mpc_module_topology, HWLOC_OBJ_GROUP, HWLOC_TYPE_FILTER_KEEP_ALL);
 #endif
 
 	if ( __mpc_topo_config.hwloc_xml != NULL )
