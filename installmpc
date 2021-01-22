@@ -1542,7 +1542,7 @@ if test "x${DEP_FOUND}" = "xno"; then
 fi
 
 
-find_in_prefix_or_use_spack "mpcalloc" "" "$MPCALLOC_PREFIX"
+find_in_prefix_or_use_spack "mpcalloc" "$(package_version "mpcalloc")" "$MPCALLOC_PREFIX"
 
 if test "x${DEP_FOUND}" = "xno"; then
 	assert_cmd "cmake"
