@@ -5899,100 +5899,100 @@ int NBC_Iscan_init(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatyp
 	if(handle->tmpbuf == NULL)
     { printf("Error in sctk_malloc()\n"); return NBC_OOR; }
 
-		schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
-		if (NULL == schedule)
-        { printf("Error in sctk_malloc()\n"); return res; }
+    schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
+    if (NULL == schedule)
+    { printf("Error in sctk_malloc()\n"); return res; }
 
-                int alloc_size = sizeof(int) + sizeof(int) + sizeof(char);
+    int alloc_size = sizeof(int) + sizeof(int) + sizeof(char);
 
-                if (rank != 0)
-                  alloc_size += (sizeof(NBC_Args) + sizeof(NBC_Fn_type) +
-                                 sizeof(int) + sizeof(char)) +
-                                (sizeof(NBC_Args) + sizeof(NBC_Fn_type) +
-                                 sizeof(int) + sizeof(char));
-                if (rank != p - 1)
-                  alloc_size += (sizeof(NBC_Args) + sizeof(NBC_Fn_type));
+    if (rank != 0)
+        alloc_size += (sizeof(NBC_Args) + sizeof(NBC_Fn_type) +
+                sizeof(int) + sizeof(char)) +
+            (sizeof(NBC_Args) + sizeof(NBC_Fn_type) +
+             sizeof(int) + sizeof(char));
+    if (rank != p - 1)
+        alloc_size += (sizeof(NBC_Args) + sizeof(NBC_Fn_type));
 
-                *schedule = sctk_malloc(alloc_size);
-                *(int *)*schedule = alloc_size;
+    *schedule = sctk_malloc(alloc_size);
+    *(int *)*schedule = alloc_size;
 
-                int pos = 0;
-                int pos_rounds = pos;
-                pos += sizeof(int);
-                if (rank != 0)
-                {
-                  *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 1;
-                  res = NBC_Sched_recv_pos(pos, 0, 1, count, datatype, rank - 1,
-                                           schedule);
-                  pos += (sizeof(NBC_Args) + sizeof(NBC_Fn_type));
-                  if (NBC_OK != res)
-                  {
-                    sctk_free(handle->tmpbuf);
-                    printf("Error in NBC_Sched_recv() (%i)\n", res);
-                    return res;
-                  }
-                  /* we have to wait until we have the data */
-                  res = NBC_Sched_barrier_pos(pos, schedule);
-                  pos += sizeof(char);
-                  pos_rounds = pos;
-                  pos += sizeof(int);
+    int pos = 0;
+    int pos_rounds = pos;
+    pos += sizeof(int);
+    if (rank != 0)
+    {
+        *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 1;
+        res = NBC_Sched_recv_pos(pos, 0, 1, count, datatype, rank - 1,
+                schedule);
+        pos += (sizeof(NBC_Args) + sizeof(NBC_Fn_type));
+        if (NBC_OK != res)
+        {
+            sctk_free(handle->tmpbuf);
+            printf("Error in NBC_Sched_recv() (%i)\n", res);
+            return res;
+        }
+        /* we have to wait until we have the data */
+        res = NBC_Sched_barrier_pos(pos, schedule);
+        pos += sizeof(char);
+        pos_rounds = pos;
+        pos += sizeof(int);
 
-                  if (NBC_OK != res)
-                  {
-                    sctk_free(handle->tmpbuf);
-                    printf("Error in NBC_Sched_barrier() (%i)\n", res);
-                    return res;
-                  }
-                  /* perform the reduce in my local buffer */
+        if (NBC_OK != res)
+        {
+            sctk_free(handle->tmpbuf);
+            printf("Error in NBC_Sched_barrier() (%i)\n", res);
+            return res;
+        }
+        /* perform the reduce in my local buffer */
 
-                  *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 1;
-                  res = NBC_Sched_op_pos(pos, recvbuf, 0, sendbuf, 0, 0, 1,
-                                         count, datatype, op, schedule);
-                  pos += (sizeof(NBC_Args) + sizeof(NBC_Fn_type));
-                  if (NBC_OK != res)
-                  {
-                    sctk_free(handle->tmpbuf);
-                    printf("Error in NBC_Sched_op() (%i)\n", res);
-                    return res;
-                  }
-                  /* this cannot be done until handle->tmpbuf is unused :-( */
-                  res = NBC_Sched_barrier_pos(pos, schedule);
-                  pos += sizeof(char);
-                  pos_rounds = pos;
-                  pos += sizeof(int);
-                  if (NBC_OK != res)
-                  {
-                    sctk_free(handle->tmpbuf);
-                    printf("Error in NBC_Sched_barrier() (%i)\n", res);
-                    return res;
-                  }
-                  *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 0;
-                }
-                if (rank != p - 1)
-                {
-                  *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 1;
-                  res = NBC_Sched_send_pos(pos, recvbuf, 0, count, datatype,
-                                           rank + 1, schedule);
-                  pos += (sizeof(NBC_Args) + sizeof(NBC_Fn_type));
-                  if (NBC_OK != res)
-                  {
-                    sctk_free(handle->tmpbuf);
-                    printf("Error in NBC_Sched_send() (%i)\n", res);
-                    return res;
-                  }
-                }
+        *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 1;
+        res = NBC_Sched_op_pos(pos, recvbuf, 0, sendbuf, 0, 0, 1,
+                count, datatype, op, schedule);
+        pos += (sizeof(NBC_Args) + sizeof(NBC_Fn_type));
+        if (NBC_OK != res)
+        {
+            sctk_free(handle->tmpbuf);
+            printf("Error in NBC_Sched_op() (%i)\n", res);
+            return res;
+        }
+        /* this cannot be done until handle->tmpbuf is unused :-( */
+        res = NBC_Sched_barrier_pos(pos, schedule);
+        pos += sizeof(char);
+        pos_rounds = pos;
+        pos += sizeof(int);
+        if (NBC_OK != res)
+        {
+            sctk_free(handle->tmpbuf);
+            printf("Error in NBC_Sched_barrier() (%i)\n", res);
+            return res;
+        }
+        *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 0;
+    }
+    if (rank != p - 1)
+    {
+        *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 1;
+        res = NBC_Sched_send_pos(pos, recvbuf, 0, count, datatype,
+                rank + 1, schedule);
+        pos += (sizeof(NBC_Args) + sizeof(NBC_Fn_type));
+        if (NBC_OK != res)
+        {
+            sctk_free(handle->tmpbuf);
+            printf("Error in NBC_Sched_send() (%i)\n", res);
+            return res;
+        }
+    }
 
-                res = NBC_Sched_commit_pos(schedule);
-                if (NBC_OK != res)
-                {
-                  sctk_free(handle->tmpbuf);
-                  printf("Error in NBC_Sched_commit() (%i)\n", res);
-                  return res;
-                }
+    res = NBC_Sched_commit_pos(schedule);
+    if (NBC_OK != res)
+    {
+        sctk_free(handle->tmpbuf);
+        printf("Error in NBC_Sched_commit() (%i)\n", res);
+        return res;
+    }
 
-                handle->schedule = schedule;
-                /* tmpbuf is freed with the handle */
-                return MPI_SUCCESS;
+    handle->schedule = schedule;
+    /* tmpbuf is freed with the handle */
+    return MPI_SUCCESS;
 }
 
 
@@ -6055,11 +6055,21 @@ int NBC_Iscatter(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recv
         int round_size = -1;
         if (rank == root)
         {
-            alloc_size =
-                sizeof(int) + sizeof(int) +
-                (p - 1) * (sizeof(NBC_Args) + sizeof(NBC_Fn_type)) +
-                sizeof(char);
-            round_size = p - 1;
+            if(p >= 64)
+            {
+                alloc_size =
+                    sizeof(int) + 
+                    (p - 1) * (sizeof(int) + sizeof(NBC_Args) + sizeof(NBC_Fn_type) + sizeof(char));
+                round_size = 1;
+            }
+            else
+            {
+                alloc_size =
+                    sizeof(int) + sizeof(int) +
+                    (p - 1) * (sizeof(NBC_Args) + sizeof(NBC_Fn_type)) +
+                    sizeof(char);
+                round_size = p - 1;
+            }
         }
         else
         {
@@ -6073,11 +6083,11 @@ int NBC_Iscatter(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recv
         *(int *)*schedule = alloc_size;
         *(((int *)*schedule) + 1) = round_size;
 
-        int pos = sizeof(int);
 
         /* receive from root */
         if (rank != root)
         {
+            int pos = sizeof(int);
             /* recv msg from root */
             res = NBC_Sched_recv_pos(pos, recvbuf, 0, recvcount, recvtype,
                     root, schedule);
@@ -6090,21 +6100,54 @@ int NBC_Iscatter(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recv
         }
         else
         {
-            for (i = 0; i < p; i++)
+            if(p >= 64)
             {
-                sbuf = ((char *)sendbuf) + (i * sendcount * sndext);
-                if (i != root)
+                int pos = 0;
+                int pos_rounds = pos;
+                pos += sizeof(int);
+                for (i = 0; i < p; i++)
                 {
-                    /* root sends the right buffer to the right receiver */
-                    res = NBC_Sched_send_pos(pos, sbuf, 0, sendcount,
-                            sendtype, i, schedule);
-                    pos += sizeof(NBC_Args) + sizeof(NBC_Fn_type);
-                    if (NBC_OK != res)
+                    sbuf = ((char *)sendbuf) + (i * sendcount * sndext);
+                    if (i != root)
                     {
-                        printf("Error in NBC_Sched_send() "
-                                "(%i)\n",
-                                res);
-                        return res;
+                        *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 1 ;
+                        /* root sends the right buffer to the right receiver */
+                        res = NBC_Sched_send_pos(pos, sbuf, 0, sendcount,
+                                sendtype, i, schedule);
+                        pos += sizeof(NBC_Args) + sizeof(NBC_Fn_type);
+                        res = NBC_Sched_barrier_pos(pos, schedule);
+                        pos += sizeof(char);
+                        pos_rounds = pos;
+                        pos += sizeof(int);
+                        if (NBC_OK != res)
+                        {
+                            printf("Error in NBC_Sched_send() "
+                                    "(%i)\n",
+                                    res);
+                            return res;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                int pos = sizeof(int);
+                for (i = 0; i < p; i++)
+                {
+                    sbuf = ((char *)sendbuf) + (i * sendcount * sndext);
+                    if (i != root)
+                    {
+                        /* root sends the right buffer to the right receiver */
+                        res = NBC_Sched_send_pos(pos, sbuf, 0, sendcount,
+                                sendtype, i, schedule);
+                        pos += sizeof(NBC_Args) + sizeof(NBC_Fn_type);
+                        if (NBC_OK != res)
+                        {
+                            printf("Error in NBC_Sched_send() "
+                                    "(%i)\n",
+                                    res);
+                            return res;
+                        }
                     }
                 }
             }
@@ -6192,61 +6235,161 @@ int NBC_Iscatter_init(void* sendbuf, int sendcount, MPI_Datatype sendtype, void*
                 int round_size = -1;
                 if (rank == root)
                 {
-                  alloc_size =
-                      sizeof(int) + sizeof(int) +
-                      (p - 1) * (sizeof(NBC_Args) + sizeof(NBC_Fn_type)) +
-                      sizeof(char);
-                  round_size = p - 1;
+                    if(p >= 64)
+                    {
+                        alloc_size =
+                            sizeof(int) + 
+                            (p - 1) * (sizeof(int) + sizeof(NBC_Args) + sizeof(NBC_Fn_type) + sizeof(char));
+                        round_size = 1;
+                    }
+                    else
+                    {
+                        alloc_size =
+                            sizeof(int) + sizeof(int) +
+                            (p - 1) * (sizeof(NBC_Args) + sizeof(NBC_Fn_type)) +
+                            sizeof(char);
+                        round_size = p - 1;
+                    }
                 }
                 else
                 {
-                  alloc_size = sizeof(int) + sizeof(int) +
-                               (sizeof(NBC_Args) + sizeof(NBC_Fn_type)) +
-                               sizeof(char);
-                  round_size = 1;
+                    alloc_size = sizeof(int) + sizeof(int) +
+                        (sizeof(NBC_Args) + sizeof(NBC_Fn_type)) +
+                        sizeof(char);
+                    round_size = 1;
                 }
 
                 *schedule = sctk_malloc(alloc_size);
                 *(int *)*schedule = alloc_size;
                 *(((int *)*schedule) + 1) = round_size;
 
-                int pos = sizeof(int);
-
 
                 /* receive from root */
-		if (rank != root)
-		{
-			/* recv msg from root */
-			res = NBC_Sched_recv_pos(pos, recvbuf, 0, recvcount, recvtype,
-					root, schedule);
-			pos += sizeof(NBC_Args) + sizeof(NBC_Fn_type);
-			if (NBC_OK != res)
-			{
-				printf("Error in NBC_Sched_recv() (%i)\n", res);
-				return res;
-			}
-		}
+                if (rank != root)
+                {
+                    int pos = sizeof(int);
+                    /* recv msg from root */
+                    res = NBC_Sched_recv_pos(pos, recvbuf, 0, recvcount, recvtype,
+                            root, schedule);
+                    pos += sizeof(NBC_Args) + sizeof(NBC_Fn_type);
+                    if (NBC_OK != res)
+                    {
+                        printf("Error in NBC_Sched_recv() (%i)\n", res);
+                        return res;
+                    }
+                }
                 else
                 {
-			for (i = 0; i < p; i++)
-			{
-				sbuf = ((char *)sendbuf) + (i * sendcount * sndext);
-				if (i != root)
-				{
-					/* root sends the right buffer to the right receiver */
-					res = NBC_Sched_send_pos(pos, sbuf, 0, sendcount,
-							sendtype, i, schedule);
-					pos += sizeof(NBC_Args) + sizeof(NBC_Fn_type);
-					if (NBC_OK != res)
-					{
-						printf("Error in NBC_Sched_send() "
-								"(%i)\n",
-								res);
-						return res;
-					}
-				}
-			}
-		}
+                    if(p >= 64)
+                    {
+                        int pos = 0;
+                        int pos_rounds = pos;
+                        pos += sizeof(int);
+                        for (i = 0; i < p; i++)
+                        {
+                            sbuf = ((char *)sendbuf) + (i * sendcount * sndext);
+                            if (i != root)
+                            {
+                                *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 1 ;
+                                /* root sends the right buffer to the right receiver */
+                                res = NBC_Sched_send_pos(pos, sbuf, 0, sendcount,
+                                        sendtype, i, schedule);
+                                pos += sizeof(NBC_Args) + sizeof(NBC_Fn_type);
+                                res = NBC_Sched_barrier_pos(pos, schedule);
+                                pos += sizeof(char);
+                                pos_rounds = pos;
+                                pos += sizeof(int);
+                                if (NBC_OK != res)
+                                {
+                                    printf("Error in NBC_Sched_send() "
+                                            "(%i)\n",
+                                            res);
+                                    return res;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        int pos = sizeof(int);
+                        for (i = 0; i < p; i++)
+                        {
+                            sbuf = ((char *)sendbuf) + (i * sendcount * sndext);
+                            if (i != root)
+                            {
+                                /* root sends the right buffer to the right receiver */
+                                res = NBC_Sched_send_pos(pos, sbuf, 0, sendcount,
+                                        sendtype, i, schedule);
+                                pos += sizeof(NBC_Args) + sizeof(NBC_Fn_type);
+                                if (NBC_OK != res)
+                                {
+                                    printf("Error in NBC_Sched_send() "
+                                            "(%i)\n",
+                                            res);
+                                    return res;
+                                }
+                            }
+                        }
+                    }
+                }
+
+//                if (rank == root)
+//                {
+//                  alloc_size =
+//                      sizeof(int) + sizeof(int) +
+//                      (p - 1) * (sizeof(NBC_Args) + sizeof(NBC_Fn_type)) +
+//                      sizeof(char);
+//                  round_size = p - 1;
+//                }
+//                else
+//                {
+//                  alloc_size = sizeof(int) + sizeof(int) +
+//                               (sizeof(NBC_Args) + sizeof(NBC_Fn_type)) +
+//                               sizeof(char);
+//                  round_size = 1;
+//                }
+//
+//                *schedule = sctk_malloc(alloc_size);
+//                *(int *)*schedule = alloc_size;
+//                *(((int *)*schedule) + 1) = round_size;
+//
+//                int pos = sizeof(int);
+//
+//
+//                /* receive from root */
+//		if (rank != root)
+//		{
+//			/* recv msg from root */
+//			res = NBC_Sched_recv_pos(pos, recvbuf, 0, recvcount, recvtype,
+//					root, schedule);
+//			pos += sizeof(NBC_Args) + sizeof(NBC_Fn_type);
+//			if (NBC_OK != res)
+//			{
+//				printf("Error in NBC_Sched_recv() (%i)\n", res);
+//				return res;
+//			}
+//		}
+//                else
+//                {
+//			for (i = 0; i < p; i++)
+//			{
+//				sbuf = ((char *)sendbuf) + (i * sendcount * sndext);
+//				if (i != root)
+//				{
+//					/* root sends the right buffer to the right receiver */
+//					res = NBC_Sched_send_pos(pos, sbuf, 0, sendcount,
+//							sendtype, i, schedule);
+//					pos += sizeof(NBC_Args) + sizeof(NBC_Fn_type);
+//					if (NBC_OK != res)
+//					{
+//						printf("Error in NBC_Sched_send() "
+//								"(%i)\n",
+//								res);
+//						return res;
+//					}
+//				}
+//			}
+//		}
 
                 res = NBC_Sched_commit_pos(schedule);
                 if (NBC_OK != res)
@@ -6315,10 +6458,21 @@ int NBC_Iscatterv(void* sendbuf, int *sendcounts, int *displs, MPI_Datatype send
         int round_size = -1;
         if (rank == root)
         {
-            alloc_size = sizeof(int) + sizeof(int) +
-                (p - 1) * (sizeof(NBC_Args) + sizeof(NBC_Fn_type)) +
-                sizeof(char);
-            round_size = p - 1;
+            if(p >= 64)
+            {
+                alloc_size =
+                    sizeof(int) + 
+                    (p - 1) * (sizeof(int) + sizeof(NBC_Args) + sizeof(NBC_Fn_type) + sizeof(char));
+                round_size = 1;
+            }
+            else
+            {
+                alloc_size =
+                    sizeof(int) + sizeof(int) +
+                    (p - 1) * (sizeof(NBC_Args) + sizeof(NBC_Fn_type)) +
+                    sizeof(char);
+                round_size = p - 1;
+            }
         }
         else
         {
@@ -6332,11 +6486,11 @@ int NBC_Iscatterv(void* sendbuf, int *sendcounts, int *displs, MPI_Datatype send
         *(int *)*schedule = alloc_size;
         *(((int *)*schedule) + 1) = round_size;
 
-        int pos = sizeof(int);
 
         /* receive from root */
         if (rank != root)
         {
+            int pos = sizeof(int);
             /* recv msg from root */
             res = NBC_Sched_recv_pos(pos, recvbuf, 0, recvcount, recvtype, root,
                     schedule);
@@ -6349,33 +6503,54 @@ int NBC_Iscatterv(void* sendbuf, int *sendcounts, int *displs, MPI_Datatype send
         }
         else
         {
-            for (i = 0; i < p; i++)
+            if(p >= 64)
             {
-                sbuf = ((char *)sendbuf) + (displs[i] * sndext);
-                if (i == root)
+                int pos = 0;
+                int pos_rounds = pos;
+                pos += sizeof(int);
+                for (i = 0; i < p; i++)
                 {
-                    if (!inplace)
+                    sbuf = ((char *)sendbuf) + (displs[i] * sndext);
+                    if (i != root)
                     {
-                        /* if I am the root - just copy the message */
-                        res = NBC_Copy(sbuf, sendcounts[i], sendtype, recvbuf,
-                                recvcount, recvtype, comm);
+                        *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 1 ;
+                        /* root sends the right buffer to the right receiver */
+                        res = NBC_Sched_send_pos(pos, sbuf, 0, sendcounts[i], sendtype, i,
+                                schedule);
+                        pos += sizeof(NBC_Args) + sizeof(NBC_Fn_type);
+                        res = NBC_Sched_barrier_pos(pos, schedule);
+                        pos += sizeof(char);
+                        pos_rounds = pos;
+                        pos += sizeof(int);
                         if (NBC_OK != res)
                         {
-                            printf("Error in NBC_Copy() (%i)\n", res);
+                            printf("Error in NBC_Sched_send() "
+                                    "(%i)\n",
+                                    res);
                             return res;
                         }
                     }
                 }
-                else
+            }
+            else
+            {
+                int pos = sizeof(int);
+                for (i = 0; i < p; i++)
                 {
-                    /* root sends the right buffer to the right receiver */
-                    res = NBC_Sched_send_pos(pos, sbuf, 0, sendcounts[i], sendtype, i,
-                            schedule);
-                    pos += sizeof(NBC_Args) + sizeof(NBC_Fn_type);
-                    if (NBC_OK != res)
+                    sbuf = ((char *)sendbuf) + (displs[i] * sndext);
+                    if (i != root)
                     {
-                        printf("Error in NBC_Sched_send() (%i)\n", res);
-                        return res;
+                        /* root sends the right buffer to the right receiver */
+                        res = NBC_Sched_send_pos(pos, sbuf, 0, sendcounts[i], sendtype, i,
+                                schedule);
+                        pos += sizeof(NBC_Args) + sizeof(NBC_Fn_type);
+                        if (NBC_OK != res)
+                        {
+                            printf("Error in NBC_Sched_send() "
+                                    "(%i)\n",
+                                    res);
+                            return res;
+                        }
                     }
                 }
             }
@@ -6486,10 +6661,21 @@ int NBC_Iscatterv_init(void* sendbuf, int *sendcounts, int *displs, MPI_Datatype
         int round_size = -1;
         if (rank == root)
         {
-          alloc_size = sizeof(int) + sizeof(int) +
-                       (p - 1) * (sizeof(NBC_Args) + sizeof(NBC_Fn_type)) +
-                       sizeof(char);
-          round_size = p - 1;
+            if(p >= 64)
+            {
+                alloc_size =
+                    sizeof(int) + 
+                    (p - 1) * (sizeof(int) + sizeof(NBC_Args) + sizeof(NBC_Fn_type) + sizeof(char));
+                round_size = p - 1;
+            }
+            else
+            {
+                alloc_size =
+                    sizeof(int) + sizeof(int) +
+                    (p - 1) * (sizeof(NBC_Args) + sizeof(NBC_Fn_type)) +
+                    sizeof(char);
+                round_size = p - 1;
+            }
         }
         else
         {
@@ -6509,6 +6695,7 @@ int NBC_Iscatterv_init(void* sendbuf, int *sendcounts, int *displs, MPI_Datatype
         /* receive from root */
         if (rank != root)
         {
+            int pos = sizeof(int);
           /* recv msg from root */
           res = NBC_Sched_recv_pos(pos, recvbuf, 0, recvcount, recvtype, root,
                                    schedule);
@@ -6521,22 +6708,57 @@ int NBC_Iscatterv_init(void* sendbuf, int *sendcounts, int *displs, MPI_Datatype
         }
         else
         {
-          for (i = 0; i < p; i++)
-          {
-            sbuf = ((char *)sendbuf) + (displs[i] * sndext);
-            if (i != root)
+            if(p >= 64)
             {
-              /* root sends the right buffer to the right receiver */
-              res = NBC_Sched_send_pos(pos, sbuf, 0, sendcounts[i], sendtype, i,
-                                       schedule);
-              pos += sizeof(NBC_Args) + sizeof(NBC_Fn_type);
-              if (NBC_OK != res)
-              {
-                printf("Error in NBC_Sched_send() (%i)\n", res);
-                return res;
-              }
+                int pos = 0;
+                int pos_rounds = pos;
+                pos += sizeof(int);
+                for (i = 0; i < p; i++)
+                {
+                    sbuf = ((char *)sendbuf) + (displs[i] * sndext);
+                    if (i != root)
+                    {
+                        *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 1 ;
+                        /* root sends the right buffer to the right receiver */
+                        res = NBC_Sched_send_pos(pos, sbuf, 0, sendcounts[i], sendtype, i,
+                                schedule);
+                        pos += sizeof(NBC_Args) + sizeof(NBC_Fn_type);
+                        res = NBC_Sched_barrier_pos(pos, schedule);
+                        pos += sizeof(char);
+                        pos_rounds = pos;
+                        pos += sizeof(int);
+                        if (NBC_OK != res)
+                        {
+                            printf("Error in NBC_Sched_send() "
+                                    "(%i)\n",
+                                    res);
+                            return res;
+                        }
+                    }
+                }
             }
-          }
+            else
+            {
+                int pos = sizeof(int);
+                for (i = 0; i < p; i++)
+                {
+                    sbuf = ((char *)sendbuf) + (displs[i] * sndext);
+                    if (i != root)
+                    {
+                        /* root sends the right buffer to the right receiver */
+                        res = NBC_Sched_send_pos(pos, sbuf, 0, sendcounts[i], sendtype, i,
+                                schedule);
+                        pos += sizeof(NBC_Args) + sizeof(NBC_Fn_type);
+                        if (NBC_OK != res)
+                        {
+                            printf("Error in NBC_Sched_send() "
+                                    "(%i)\n",
+                                    res);
+                            return res;
+                        }
+                    }
+                }
+            }
         }
 
         res = NBC_Sched_commit_pos(schedule);
