@@ -20424,6 +20424,7 @@ int PMPI_Alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype
 	req->persistant.recvtype = recvtype;
 	req->persistant.comm = comm;
 	req->persistant.op = Alltoall_init;
+	req->persistant.info = info;
 	/* Init metadata for nbc */
 	NBC_Ialltoall_init (sendbuf, sendcount, sendtype, recvbuf, recvcount,
 			recvtype,  comm, &(req->nbc_handle));
@@ -20470,6 +20471,7 @@ int PMPI_Exscan_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype
     req->persistant.comm = comm;
     req->persistant.op_coll = op;
     req->persistant.op = Exscan_init;
+	req->persistant.info = info;
     /* Init metadat for nbc */
     NBC_Iexscan_init (sendbuf, recvbuf, count,
     		     datatype, op, comm, &(req->nbc_handle));
@@ -20523,6 +20525,7 @@ int PMPI_Allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtyp
     req->persistant.recvtype = recvtype;
     req->persistant.comm = comm;
     req->persistant.op = Allgather_init;
+	req->persistant.info = info;
     /* Init metadata for nbc */
     NBC_Iallgather_init (sendbuf, sendcount, sendtype, recvbuf, recvcount,
 			     recvtype,  comm, &(req->nbc_handle));
@@ -20586,6 +20589,7 @@ int PMPI_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendty
     req->persistant.recvtype = recvtype;
     req->persistant.comm = comm;
     req->persistant.op = Allgatherv_init;
+	req->persistant.info = info;
     /* Init metadat for nbc */
     NBC_Iallgatherv_init (sendbuf, sendcount,  sendtype, recvbuf, recvcounts, displs,
 			     recvtype, comm, &(req->nbc_handle));
@@ -20644,6 +20648,7 @@ int PMPI_Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
     req->persistant.root = root;
     req->persistant.comm = comm;
     req->persistant.op = Gather_init;
+	req->persistant.info = info;
     /* Init metadat for nbc */
     NBC_Igather_init (sendbuf, sendcount, sendtype, recvbuf, recvcount,
 			     recvtype, root, comm, &(req->nbc_handle));
@@ -20689,6 +20694,7 @@ int PMPI_Bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MP
     req->persistant.datatype = datatype;
     req->persistant.root = root;
     req->persistant.op = Bcast_init;
+	req->persistant.info = info;
     req->persistant.comm = comm;
     /* Init metadata for nbc */
     NBC_Ibcast_init (buffer, count, datatype, root,
@@ -20736,6 +20742,7 @@ int PMPI_Allreduce_init(const void *sendbuf, void *recvbuf, int count, MPI_Datat
     req->persistant.comm = comm;
     req->persistant.op_coll = op;
     req->persistant.op = Allreduce_init;
+	req->persistant.info = info;
     /* Init metadat for nbc */
     NBC_Iallreduce_init (sendbuf, recvbuf, count,
 			     datatype, op,  comm, &(req->nbc_handle));
@@ -20801,6 +20808,7 @@ int PMPI_Alltoallv_init(const void *sendbuf, const int sendcounts[], const int s
     req->persistant.recvtype = recvtype;
     req->persistant.comm = comm;
     req->persistant.op = Alltoallv_init;
+	req->persistant.info = info;
     /* Init metadata for nbc */
     NBC_Ialltoallv_init (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls,
 			     recvtype,  comm, &(req->nbc_handle));
@@ -20867,6 +20875,7 @@ int PMPI_Alltoallw_init(const void *sendbuf, const int sendcounts[], const int s
     req->persistant.recvtypes = recvtypes;
     req->persistant.comm = comm;
     req->persistant.op = Alltoallw_init;
+	req->persistant.info = info;
     /* Init metadata for nbc */
     NBC_Ialltoallw_init (sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls,
 			     recvtypes,  comm, &(req->nbc_handle));
@@ -20930,6 +20939,7 @@ int PMPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     req->persistant.root = root;
     req->persistant.comm = comm;
     req->persistant.op = Gatherv_init;
+	req->persistant.info = info;
     /* Init metadat for nbc */
     NBC_Igatherv_init (sendbuf, sendcount,  sendtype, recvbuf, recvcounts, displs,
 			     recvtype, root, comm, &(req->nbc_handle));
@@ -20976,6 +20986,7 @@ int PMPI_Scan_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype d
     req->persistant.comm = comm;
     req->persistant.op_coll = op;
     req->persistant.op = Scan_init;
+	req->persistant.info = info;
     /* Init metadat for nbc */
     NBC_Iscan_init (sendbuf, recvbuf, count,
 			     datatype, op, comm, &(req->nbc_handle));
@@ -21022,6 +21033,7 @@ int PMPI_Reduce_scatter_block_init(const void *sendbuf, void *recvbuf, int recvc
     req->persistant.comm = comm;
     req->persistant.op_coll = op;
     req->persistant.op = Reduce_scatter_block_init;
+	req->persistant.info = info;
     /* Init metadat for nbc */
     NBC_Ireduce_scatter_block_init (sendbuf,  recvbuf, recvcount,
 			     datatype, op, comm, &(req->nbc_handle));
@@ -21075,6 +21087,7 @@ int PMPI_Scatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     req->persistant.root = root;
     req->persistant.comm = comm;
     req->persistant.op = Scatter_init;
+	req->persistant.info = info;
     /* Init metadat for nbc */
     NBC_Iscatter_init (sendbuf, sendcount, sendtype, recvbuf, recvcount,
 			     recvtype, root, comm, &(req->nbc_handle));
@@ -21183,6 +21196,7 @@ int PMPI_Scatterv_init(const void *sendbuf, const int sendcounts[], const int di
     req->persistant.root = root;
     req->persistant.comm = comm;
     req->persistant.op = Scatterv_init;
+	req->persistant.info = info;
     /* Init metadat for nbc */
     NBC_Iscatterv_init (sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount,
 			     recvtype, root, comm, &(req->nbc_handle));
@@ -21236,6 +21250,7 @@ int PMPI_Reduce_scatter_init(const void *sendbuf, void *recvbuf, const int recvc
     req->persistant.comm = comm;
     req->persistant.op_coll = op;
     req->persistant.op = Reduce_scatter_init;
+	req->persistant.info = info;
     /* Init metadat for nbc */
     NBC_Ireduce_scatter_init (sendbuf,  recvbuf, recvcounts,
 			     datatype, op, comm, &(req->nbc_handle));
@@ -21287,6 +21302,7 @@ int PMPI_Reduce_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype
     req->persistant.comm = comm;
     req->persistant.op_coll = op;
     req->persistant.op = Reduce_init;
+	req->persistant.info = info;
     /* Init metadat for nbc */
     NBC_Ireduce_init (sendbuf, recvbuf, count,
 			     datatype, op, root, comm, &(req->nbc_handle));

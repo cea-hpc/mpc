@@ -81,7 +81,7 @@ typedef struct {
 	mpc_thread_sem_t semid;
 	volatile int actual_req_count;
 	MPI_Request *req_array;
-	volatile int *req_count_persistent; /* number of requests for each round 
+	int *req_count_persistent; /* number of requests for each round 
                                            used by persistent */
 	volatile int array_offset; /* current offset in req_array for progress 
                                   used by persistent */
@@ -432,6 +432,78 @@ static inline int NBC_Copy(const void *src, int srccount, MPI_Datatype srctype, 
 
 	return NBC_OK;
 }
+
+/* NBC prototypes */
+
+int NBC_Ialltoallw(const void* sendbuf, const int *sendcounts, const int *sdispls,
+        const MPI_Datatype *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
+        const MPI_Datatype *recvtypes, MPI_Comm comm, NBC_Handle* handle);
+int NBC_Iallgather(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, 
+        MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
+int NBC_Iallgatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, 
+        const int *displs, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
+int NBC_Iallreduce(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, 
+        NBC_Handle* handle);
+int NBC_Ialltoall( const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, 
+        MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle );
+int NBC_Ialltoallv(const void* sendbuf, const int *sendcounts, const int *sdispls,
+        MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *rdispls,
+        MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle);
+int NBC_Ibcast( void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle *handle );
+int NBC_Igather(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, 
+        MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
+int NBC_Igatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, 
+        const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
+int NBC_Ireduce( const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, 
+        MPI_Comm comm, NBC_Handle *handle );
+int NBC_Ireduce_scatter(const void* sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, 
+        MPI_Op op, MPI_Comm comm, NBC_Handle* handle);
+int NBC_Iscan(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, 
+        NBC_Handle* handle);
+int NBC_Iscatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, 
+        MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
+int NBC_Iscatterv(const void* sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, 
+        void* recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
+int NBC_Ireduce_scatter_block(const void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype, 
+        MPI_Op op, MPI_Comm comm, NBC_Handle* handle);
+int NBC_Iexscan(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, 
+        NBC_Handle* handle);
+
+/* NBC persitent prototypes */
+
+int NBC_Iallgather_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, 
+        MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
+int NBC_Iallgatherv_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, 
+        const int *displs, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
+int NBC_Iallreduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, 
+        NBC_Handle* handle);
+int NBC_Ialltoall_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, 
+        MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
+int NBC_Ialltoallv_init(const void* sendbuf, const int *sendcounts, const int *sdispls,
+        MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *rdispls,
+        MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle);
+int NBC_Ibcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle* handle);
+int NBC_Igather_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, 
+        int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
+int NBC_Igatherv_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, 
+        const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
+int NBC_Ireduce_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, 
+        MPI_Comm comm, NBC_Handle* handle);
+int NBC_Ireduce_scatter_init(const void* sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, 
+        MPI_Op op, MPI_Comm comm, NBC_Handle* handle);
+int NBC_Iscan_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, 
+        NBC_Handle* handle);
+int NBC_Iscatter_init(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, 
+        MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
+int NBC_Iscatterv_init(const void* sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, 
+        void* recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
+int NBC_Ialltoallw_init(const void* sendbuf, const int *sendcounts, const int *sdispls,
+        const MPI_Datatype *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
+        const MPI_Datatype *recvtypes, MPI_Comm comm, NBC_Handle* handle);
+int NBC_Ireduce_scatter_block_init(const void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype, MPI_Op op, 
+        MPI_Comm comm, NBC_Handle* handle);
+int NBC_Iexscan_init(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, 
+        NBC_Handle* handle);
 
 static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void *tgt, MPI_Comm comm) {
 	int size, pos, res;

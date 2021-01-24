@@ -178,20 +178,21 @@ typedef struct MPI_Persistant_s
 	MPI_Comm comm;
 	MPI_Persistant_op_t op;
 	/* collective */
-	void *sendbuf;
+	const void *sendbuf;
 	void *recvbuf;
 	int root;
 	int sendcount;
 	int recvcount;
-	int *sendcounts;
-	int *recvcounts;
-	int *sdispls;
-	int *rdispls;
+	const int *sendcounts;
+	const int *recvcounts;
+	const int *sdispls;
+	const int *rdispls;
 	MPI_Datatype sendtype;
 	MPI_Datatype recvtype;
-	MPI_Datatype *sendtypes;
-	MPI_Datatype *recvtypes;
+	const MPI_Datatype *sendtypes;
+	const MPI_Datatype *recvtypes;
 	MPI_Op op_coll;
+	MPI_Info info;
 } MPI_Persistant_t;
 
 typedef struct MPI_internal_request_s
