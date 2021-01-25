@@ -20414,7 +20414,7 @@ int PMPI_Alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype
 	req->is_active = 0;
 	req->is_nbc = 1;
 	req->is_persistent = 1;
-	req->req.request_type = REQUEST_SEND; /* TODO change request type */ 
+	req->req.request_type = REQUEST_GENERALIZED;
 
 	req->persistant.sendbuf = sendbuf;
 	req->persistant.recvbuf= recvbuf;
@@ -20462,7 +20462,7 @@ int PMPI_Exscan_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype
     req->is_active = 0;
     req->is_nbc = 1;
     req->is_persistent = 1;
-    req->req.request_type = REQUEST_SEND; /*TODO change request type */ 
+    req->req.request_type = REQUEST_GENERALIZED;
 
     req->persistant.sendbuf = sendbuf;
     req->persistant.recvbuf = recvbuf;
@@ -20472,7 +20472,7 @@ int PMPI_Exscan_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype
     req->persistant.op_coll = op;
     req->persistant.op = Exscan_init;
 	req->persistant.info = info;
-    /* Init metadat for nbc */
+    /* Init metadata for nbc */
     NBC_Iexscan_init (sendbuf, recvbuf, count,
     		     datatype, op, comm, &(req->nbc_handle));
         req->nbc_handle.is_persistent = 1;
@@ -20515,7 +20515,7 @@ int PMPI_Allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtyp
     req->is_active = 0;
     req->is_nbc = 1;
     req->is_persistent = 1;
-    req->req.request_type = REQUEST_SEND; /* TODO change request type */ 
+    req->req.request_type = REQUEST_GENERALIZED;
 
     req->persistant.sendbuf = sendbuf;
     req->persistant.recvbuf= recvbuf;
@@ -20578,7 +20578,7 @@ int PMPI_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendty
     req->is_active = 0;
     req->is_nbc = 1;
     req->is_persistent = 1;
-    req->req.request_type = REQUEST_SEND; /*TODO change request type */ 
+    req->req.request_type = REQUEST_GENERALIZED;
 
     req->persistant.sendbuf = sendbuf;
     req->persistant.recvbuf = recvbuf;
@@ -20590,7 +20590,7 @@ int PMPI_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendty
     req->persistant.comm = comm;
     req->persistant.op = Allgatherv_init;
 	req->persistant.info = info;
-    /* Init metadat for nbc */
+    /* Init metadata for nbc */
     NBC_Iallgatherv_init (sendbuf, sendcount,  sendtype, recvbuf, recvcounts, displs,
 			     recvtype, comm, &(req->nbc_handle));
         req->nbc_handle.is_persistent = 1;
@@ -20637,7 +20637,7 @@ int PMPI_Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
     req->is_active = 0;
     req->is_nbc = 1;
     req->is_persistent = 1;
-    req->req.request_type = REQUEST_SEND; /*TODO change request type */ 
+    req->req.request_type = REQUEST_GENERALIZED;
 
     req->persistant.sendbuf = sendbuf;
     req->persistant.recvbuf = recvbuf;
@@ -20649,7 +20649,7 @@ int PMPI_Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
     req->persistant.comm = comm;
     req->persistant.op = Gather_init;
 	req->persistant.info = info;
-    /* Init metadat for nbc */
+    /* Init metadata for nbc */
     NBC_Igather_init (sendbuf, sendcount, sendtype, recvbuf, recvcount,
 			     recvtype, root, comm, &(req->nbc_handle));
         req->nbc_handle.is_persistent = 1;
@@ -20687,7 +20687,7 @@ int PMPI_Bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MP
     req->is_active = 0;
     req->is_nbc = 1;
     req->is_persistent = 1;
-    req->req.request_type = REQUEST_SEND; /* TODO change request type */ 
+    req->req.request_type = REQUEST_GENERALIZED;
 
     req->persistant.buf = buffer;
     req->persistant.count = count;
@@ -20733,7 +20733,7 @@ int PMPI_Allreduce_init(const void *sendbuf, void *recvbuf, int count, MPI_Datat
     req->is_active = 0;
     req->is_nbc = 1;
     req->is_persistent = 1;
-    req->req.request_type = REQUEST_SEND; /*TODO change request type */ 
+    req->req.request_type = REQUEST_GENERALIZED;
 
     req->persistant.sendbuf = sendbuf;
     req->persistant.recvbuf = recvbuf;
@@ -20743,7 +20743,7 @@ int PMPI_Allreduce_init(const void *sendbuf, void *recvbuf, int count, MPI_Datat
     req->persistant.op_coll = op;
     req->persistant.op = Allreduce_init;
 	req->persistant.info = info;
-    /* Init metadat for nbc */
+    /* Init metadata for nbc */
     NBC_Iallreduce_init (sendbuf, recvbuf, count,
 			     datatype, op,  comm, &(req->nbc_handle));
         req->nbc_handle.is_persistent = 1;
@@ -20796,7 +20796,7 @@ int PMPI_Alltoallv_init(const void *sendbuf, const int sendcounts[], const int s
     req->is_active = 0;
     req->is_nbc = 1;
     req->is_persistent = 1;
-    req->req.request_type = REQUEST_SEND; /* TODO change request type */ 
+    req->req.request_type = REQUEST_GENERALIZED;
 
     req->persistant.sendbuf = sendbuf;
     req->persistant.recvbuf= recvbuf;
@@ -20863,7 +20863,7 @@ int PMPI_Alltoallw_init(const void *sendbuf, const int sendcounts[], const int s
     req->is_active = 0;
     req->is_nbc = 1;
     req->is_persistent = 1;
-    req->req.request_type = REQUEST_SEND; /* TODO change request type */ 
+    req->req.request_type = REQUEST_GENERALIZED;
 
     req->persistant.sendbuf = sendbuf;
     req->persistant.recvbuf= recvbuf;
@@ -20927,7 +20927,7 @@ int PMPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     req->is_active = 0;
     req->is_nbc = 1;
     req->is_persistent = 1;
-    req->req.request_type = REQUEST_SEND; /*TODO change request type */ 
+    req->req.request_type = REQUEST_GENERALIZED;
 
     req->persistant.sendbuf = sendbuf;
     req->persistant.recvbuf = recvbuf;
@@ -20940,7 +20940,7 @@ int PMPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     req->persistant.comm = comm;
     req->persistant.op = Gatherv_init;
 	req->persistant.info = info;
-    /* Init metadat for nbc */
+    /* Init metadata for nbc */
     NBC_Igatherv_init (sendbuf, sendcount,  sendtype, recvbuf, recvcounts, displs,
 			     recvtype, root, comm, &(req->nbc_handle));
         req->nbc_handle.is_persistent = 1;
@@ -20977,7 +20977,7 @@ int PMPI_Scan_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype d
     req->is_active = 0;
     req->is_nbc = 1;
     req->is_persistent = 1;
-    req->req.request_type = REQUEST_SEND; /*TODO change request type */ 
+    req->req.request_type = REQUEST_GENERALIZED;
 
     req->persistant.sendbuf = sendbuf;
     req->persistant.recvbuf = recvbuf;
@@ -20987,7 +20987,7 @@ int PMPI_Scan_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype d
     req->persistant.op_coll = op;
     req->persistant.op = Scan_init;
 	req->persistant.info = info;
-    /* Init metadat for nbc */
+    /* Init metadata for nbc */
     NBC_Iscan_init (sendbuf, recvbuf, count,
 			     datatype, op, comm, &(req->nbc_handle));
         req->nbc_handle.is_persistent = 1;
@@ -21024,7 +21024,7 @@ int PMPI_Reduce_scatter_block_init(const void *sendbuf, void *recvbuf, int recvc
     req->is_active = 0;
     req->is_nbc = 1;
     req->is_persistent = 1;
-    req->req.request_type = REQUEST_SEND; /*TODO change request type */ 
+    req->req.request_type = REQUEST_GENERALIZED;
 
     req->persistant.sendbuf = sendbuf;
     req->persistant.recvbuf = recvbuf;
@@ -21034,7 +21034,7 @@ int PMPI_Reduce_scatter_block_init(const void *sendbuf, void *recvbuf, int recvc
     req->persistant.op_coll = op;
     req->persistant.op = Reduce_scatter_block_init;
 	req->persistant.info = info;
-    /* Init metadat for nbc */
+    /* Init metadata for nbc */
     NBC_Ireduce_scatter_block_init (sendbuf,  recvbuf, recvcount,
 			     datatype, op, comm, &(req->nbc_handle));
         req->nbc_handle.is_persistent = 1;
@@ -21076,7 +21076,7 @@ int PMPI_Scatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     req->is_active = 0;
     req->is_nbc = 1;
     req->is_persistent = 1;
-    req->req.request_type = REQUEST_SEND; /*TODO change request type */ 
+    req->req.request_type = REQUEST_GENERALIZED;
 
     req->persistant.sendbuf = sendbuf;
     req->persistant.recvbuf = recvbuf;
@@ -21088,7 +21088,7 @@ int PMPI_Scatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     req->persistant.comm = comm;
     req->persistant.op = Scatter_init;
 	req->persistant.info = info;
-    /* Init metadat for nbc */
+    /* Init metadata for nbc */
     NBC_Iscatter_init (sendbuf, sendcount, sendtype, recvbuf, recvcount,
 			     recvtype, root, comm, &(req->nbc_handle));
         req->nbc_handle.is_persistent = 1;
@@ -21184,7 +21184,7 @@ int PMPI_Scatterv_init(const void *sendbuf, const int sendcounts[], const int di
     req->is_active = 0;
     req->is_nbc = 1;
     req->is_persistent = 1;
-    req->req.request_type = REQUEST_SEND; /*TODO change request type */ 
+    req->req.request_type = REQUEST_GENERALIZED;
 
     req->persistant.sendbuf = sendbuf;
     req->persistant.recvbuf = recvbuf;
@@ -21197,7 +21197,7 @@ int PMPI_Scatterv_init(const void *sendbuf, const int sendcounts[], const int di
     req->persistant.comm = comm;
     req->persistant.op = Scatterv_init;
 	req->persistant.info = info;
-    /* Init metadat for nbc */
+    /* Init metadata for nbc */
     NBC_Iscatterv_init (sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount,
 			     recvtype, root, comm, &(req->nbc_handle));
         req->nbc_handle.is_persistent = 1;
@@ -21241,7 +21241,7 @@ int PMPI_Reduce_scatter_init(const void *sendbuf, void *recvbuf, const int recvc
     req->is_active = 0;
     req->is_nbc = 1;
     req->is_persistent = 1;
-    req->req.request_type = REQUEST_SEND; /*TODO change request type */ 
+    req->req.request_type = REQUEST_GENERALIZED;
 
     req->persistant.sendbuf = sendbuf;
     req->persistant.recvbuf = recvbuf;
@@ -21251,7 +21251,7 @@ int PMPI_Reduce_scatter_init(const void *sendbuf, void *recvbuf, const int recvc
     req->persistant.op_coll = op;
     req->persistant.op = Reduce_scatter_init;
 	req->persistant.info = info;
-    /* Init metadat for nbc */
+    /* Init metadata for nbc */
     NBC_Ireduce_scatter_init (sendbuf,  recvbuf, recvcounts,
 			     datatype, op, comm, &(req->nbc_handle));
         req->nbc_handle.is_persistent = 1;
@@ -21292,7 +21292,7 @@ int PMPI_Reduce_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype
     req->is_active = 0;
     req->is_nbc = 1;
     req->is_persistent = 1;
-    req->req.request_type = REQUEST_SEND; /*TODO change request type */ 
+    req->req.request_type = REQUEST_GENERALIZED;
 
     req->persistant.sendbuf = sendbuf;
     req->persistant.recvbuf = recvbuf;
@@ -21303,7 +21303,7 @@ int PMPI_Reduce_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype
     req->persistant.op_coll = op;
     req->persistant.op = Reduce_init;
 	req->persistant.info = info;
-    /* Init metadat for nbc */
+    /* Init metadata for nbc */
     NBC_Ireduce_init (sendbuf, recvbuf, count,
 			     datatype, op, root, comm, &(req->nbc_handle));
         req->nbc_handle.is_persistent = 1;
