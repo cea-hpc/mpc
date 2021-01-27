@@ -385,7 +385,12 @@ static inline int __unfold_rails( mpc_conf_config_type_t *cli_option )
 					/* +1 to skip the ! */
 				 	mpc_topology_device_t ** matching_device = mpc_topology_device_get_from_handle_regexp( rail->device + 1,
 					 																					   &matching_rails );
-					
+				
+                    if(matching_rails == 0)
+                    {
+                        bad_parameter("Could not locate any device matching the '%s' regular expression in rail %s", rail->device + 1, rail->name);
+                    }
+
 					/* Now we build the subrail array
 					 * we duplicate the config of current rail
 					 * while just overriding device name with the 
