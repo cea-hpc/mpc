@@ -92,7 +92,7 @@ void mpc_topology_module_register()
  * MPC TOPOLOGY OBJECT INTERFACE *
  *********************************/
 
-static inline void __restrict_topo_to_cpuset(hwloc_topology_t target_topology, hwloc_bitmap_t cpuset)
+static inline void __restrict_topo_to_cpuset(hwloc_topology_t target_topology, hwloc_const_bitmap_t cpuset)
 {
 
 #if (HWLOC_API_VERSION < 0x00020000)
@@ -113,13 +113,6 @@ void _mpc_topology_map_and_restrict_by_cpuset(hwloc_topology_t target_topology,
 								const unsigned int index_first_processor,
 								hwloc_cpuset_t pinning_constraints)
 {
-
-    /* First make sure that the topology matches the allowed topology
-     * as what we are willing to do here is pin our cores */
-    hwloc_bitmap_t allowed_topo = hwloc_topology_get_allowed_cpuset (target_topology);
-
-    __restrict_topo_to_cpuset(target_topology, allowed_topo);
-
 	hwloc_bitmap_t cpuset = hwloc_bitmap_alloc();
 	hwloc_bitmap_zero( cpuset );
 
@@ -129,7 +122,8 @@ void _mpc_topology_map_and_restrict_by_cpuset(hwloc_topology_t target_topology,
 		for ( i = index_first_processor; i < index_first_processor + processor_count; ++i )
 		{
             hwloc_obj_t pu = hwloc_get_obj_by_type( target_topology, HWLOC_OBJ_PU, i );
-			hwloc_cpuset_t set = hwloc_bitmap_dup( pu->cpuset );
+			assume(pu != NULL);
+            hwloc_cpuset_t set = hwloc_bitmap_dup( pu->cpuset );
 			hwloc_bitmap_singlify( set );
 			hwloc_bitmap_or( cpuset, cpuset, set );
 			hwloc_bitmap_free( set );
@@ -1081,6 +1075,12 @@ void mpc_topology_init()
 	}
 
 	hwloc_topology_load( __mpc_module_topology );
+
+    /* First make sure that the topology matches the allowed topology
+     * as what we are willing to do here is pin our cores */
+    hwloc_const_bitmap_t allowed_topo = hwloc_topology_get_allowed_cpuset (__mpc_module_topology);
+
+    __restrict_topo_to_cpuset(__mpc_module_topology, allowed_topo);
 
 	_mpc_topology_render_init();
 
