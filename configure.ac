@@ -968,14 +968,25 @@ elif test "x$mpc_pmix_enabled" != "xno"; then
 
         # In the PMIX configuration check for the PMIx Runtime
         AC_PATH_PROG([PRTERUN], [prterun], [no])
+        
         if test "x$PRTERUN" = "xno"
+	then
+		# Try with the PRUN name if prterun is not found
+        	AC_PATH_PROG([PRUN], [prun], [no])
+
+		if test "x${PRUN}" != "xno"
+		then
+			PRTERUN="${PRUN}"
+		fi
+	fi
+	
+	if test "x$PRTERUN" = "xno"
         then
                 AC_MSG_WARN([Could not locate 'PMIx Runtime PRTE' in PATH. support will not be built.])
         else
                 MPC_LAUNCHER_PROGRAM="PRRTE"
                 AC_DEFINE([MPC_USE_PRTE], [1], [PMIx Runtime PRTE will be considered to launch parallel programs])
         fi
-
 
 elif test "x$mpc_hydra_enabled" != "xno"; then
         AC_PATH_PROG([MPIEXEC_HYDRA], [mpiexec.hydra], [no])

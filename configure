@@ -799,6 +799,7 @@ MPC_HAS_SRUN_SUPPORT_FALSE
 MPC_HAS_SRUN_SUPPORT_TRUE
 SRUN_IN_PATH
 MPIEXEC_HYDRA
+PRUN
 PRTERUN
 PMIX_LIBS
 PMIX_CFLAGS
@@ -26219,7 +26220,59 @@ $as_echo "no" >&6; }
 fi
 
 
+
         if test "x$PRTERUN" = "xno"
+	then
+		# Try with the PRUN name if prterun is not found
+        	# Extract the first word of "prun", so it can be a program name with args.
+set dummy prun; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_PRUN+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PRUN in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PRUN="$PRUN" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PRUN="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_PRUN" && ac_cv_path_PRUN="no"
+  ;;
+esac
+fi
+PRUN=$ac_cv_path_PRUN
+if test -n "$PRUN"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PRUN" >&5
+$as_echo "$PRUN" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+
+		if test "x${PRUN}" != "xno"
+		then
+			PRTERUN="${PRUN}"
+		fi
+	fi
+
+	if test "x$PRTERUN" = "xno"
         then
                 { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Could not locate 'PMIx Runtime PRTE' in PATH. support will not be built." >&5
 $as_echo "$as_me: WARNING: Could not locate 'PMIx Runtime PRTE' in PATH. support will not be built." >&2;}
@@ -26229,7 +26282,6 @@ $as_echo "$as_me: WARNING: Could not locate 'PMIx Runtime PRTE' in PATH. support
 $as_echo "#define MPC_USE_PRTE 1" >>confdefs.h
 
         fi
-
 
 elif test "x$mpc_hydra_enabled" != "xno"; then
         # Extract the first word of "mpiexec.hydra", so it can be a program name with args.
