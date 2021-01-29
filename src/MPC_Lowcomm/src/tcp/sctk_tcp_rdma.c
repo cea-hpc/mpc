@@ -158,7 +158,7 @@ static void *sctk_tcp_rdma_thread ( _mpc_lowcomm_endpoint_t *tmp )
  * \param[in] msg the message to send
  * \param[in] endpoint the route to use
  */
-static void sctk_network_send_message_tcp_rdma_endpoint ( mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint )
+static void _mpc_lowcomm_tcprdma_send_message ( mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint )
 {
 	int fd;
 
@@ -181,14 +181,14 @@ static void sctk_network_send_message_tcp_rdma_endpoint ( mpc_lowcomm_ptp_messag
  * \param[in] msg not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_recv_message_tcp_rdma ( __UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail ) {}
+static void _mpc_lowcomm_tcp_notify_receive_rdma ( __UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /**
  * Not used for this network.
  * \param[in] msg not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_matching_message_tcp_rdma ( __UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail ) {}
+static void _mpc_lowcomm_tcp_notify_matching_rdma ( __UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /**
  * Not used for this network.
@@ -198,20 +198,20 @@ static void sctk_network_notify_matching_message_tcp_rdma ( __UNUSED__ mpc_lowco
  * \param[in] blocking not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_perform_message_tcp_rdma ( __UNUSED__ int remote, __UNUSED__ int remote_task_id,__UNUSED__ int polling_task_id, __UNUSED__  int blocking, __UNUSED__ sctk_rail_info_t *rail ) {}
+static void _mpc_lowcomm_tcp_notify_perform_rdma ( __UNUSED__ int remote, __UNUSED__ int remote_task_id,__UNUSED__ int polling_task_id, __UNUSED__  int blocking, __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /**
  * Not used for this network.
  * \param[in] rail not used
  */
-static void sctk_network_notify_idle_message_tcp_rdma ( __UNUSED__ sctk_rail_info_t *rail ) {}
+static void _mpc_lowcomm_tcprdma_notify_idle ( __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /**
  * Not used for this network.
  * \param[in] msg not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_any_source_message_tcp_rdma ( __UNUSED__ int polling_task_id, __UNUSED__ int blocking,__UNUSED__  sctk_rail_info_t *rail ) {}
+static void _mpc_lowcomm_tcp_notify_anysource_rdma ( __UNUSED__ int polling_task_id, __UNUSED__ int blocking,__UNUSED__  sctk_rail_info_t *rail ) {}
 
 /************************************************************************/
 /* TCP RDMA Init                                                        */
@@ -231,12 +231,12 @@ void sctk_network_finalize_tcp_rdma(__UNUSED__ sctk_rail_info_t* rail)
 void sctk_network_init_tcp_rdma ( sctk_rail_info_t *rail )
 {
 	/* Init RDMA specific infos */
-	rail->send_message_endpoint     = sctk_network_send_message_tcp_rdma_endpoint;
-	rail->notify_recv_message       = sctk_network_notify_recv_message_tcp_rdma;
-	rail->notify_matching_message   = sctk_network_notify_matching_message_tcp_rdma;
-	rail->notify_perform_message    = sctk_network_notify_perform_message_tcp_rdma;
-	rail->notify_idle_message       = sctk_network_notify_idle_message_tcp_rdma;
-	rail->notify_any_source_message = sctk_network_notify_any_source_message_tcp_rdma;
+	rail->send_message_endpoint     = _mpc_lowcomm_tcprdma_send_message;
+	rail->notify_recv_message       = _mpc_lowcomm_tcp_notify_receive_rdma;
+	rail->notify_matching_message   = _mpc_lowcomm_tcp_notify_matching_rdma;
+	rail->notify_perform_message    = _mpc_lowcomm_tcp_notify_perform_rdma;
+	rail->notify_idle_message       = _mpc_lowcomm_tcprdma_notify_idle;
+	rail->notify_any_source_message = _mpc_lowcomm_tcp_notify_anysource_rdma;
 	rail->driver_finalize           = sctk_network_finalize_tcp_rdma;
 
 	int sctk_use_tcp_o_ib = rail->runtime_config_driver_config->driver.value.tcp.tcpoib;

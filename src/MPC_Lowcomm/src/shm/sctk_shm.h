@@ -1,6 +1,8 @@
 #ifndef __SCTK_SHM_H__
 #define __SCTK_SHM_H__
 
+#include <mpc_common_spinlock.h>
+
 #include "sctk_shm_eager.h"
 #include "sctk_shm_frag.h"
 #include "sctk_shm_cma.h"
@@ -28,6 +30,12 @@ typedef struct
 
 typedef struct
 {
+	int			 cma_enabled;
+	volatile int driver_initialized;
+	unsigned int          pending_msg_num;
+	mpc_common_spinlock_t polling_lock;
+	mpc_common_spinlock_t pending_lock;
+	sctk_shm_msg_list_t *pending_msg_list;
 } sctk_shm_rail_info_t;
 
 void sctk_network_init_shm ( sctk_rail_info_t *rail );

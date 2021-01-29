@@ -789,7 +789,7 @@ void sctk_ib_qp_release_entry ( __UNUSED__ struct sctk_ib_rail_info_s *rail_ib, 
 	not_implemented();
 }
 
-extern void sctk_network_notify_idle_message_multirail_ib_wait_send ();
+extern void _mpc_lowcomm_ib_notify_idle_wait_send ();
 
 static void *wait_send ( void *arg )
 {
@@ -813,7 +813,7 @@ static void *wait_send ( void *arg )
 	}
 	else
 	{
-		sctk_network_notify_idle_message_multirail_ib_wait_send();
+		_mpc_lowcomm_ib_notify_idle_wait_send();
 	}
 
 	return NULL;

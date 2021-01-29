@@ -729,7 +729,7 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 			}
 
 			/* Notify communicator creation to lowcomm drivers */
-			sctk_network_notify_new_communicator(new_id, mpc_lowcomm_communicator_size(ret));
+			_mpc_lowcomm_multirail_notify_new_comm(new_id, mpc_lowcomm_communicator_size(ret));
 		}
 
 		mpc_common_spinlock_unlock(&lock);
@@ -870,7 +870,7 @@ int mpc_lowcomm_communicator_local_lead(mpc_lowcomm_communicator_t comm)
 		assert(comm->group != NULL);
 		return mpc_lowcomm_group_get_local_leader(comm->group);
 	}
-	
+
 	not_reachable();
 
 	return MPC_PROC_NULL;

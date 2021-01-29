@@ -24,7 +24,7 @@
 
 #include <mpc_common_rank.h>
 #include <mpc_topology.h>
-#include <sctk_multirail.h>
+#include <multirail.h>
 
 #include <sctk_alloc.h>
 
@@ -102,7 +102,7 @@ _mpc_lowcomm_endpoint_t * sctk_topological_rail_ellect_endpoint( int remote , mp
 
 
 
-static void sctk_network_send_message_endpoint_topological ( mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint )
+static void _mpc_lowcomm_topological_send_message ( mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint )
 {
 	_mpc_lowcomm_endpoint_t * topo_endpoint = sctk_topological_rail_ellect_endpoint( SCTK_MSG_DEST_PROCESS( msg ) , msg, endpoint );
 	
@@ -115,33 +115,33 @@ static void sctk_network_send_message_endpoint_topological ( mpc_lowcomm_ptp_mes
 	endpoint_rail->send_message_endpoint( msg, topo_endpoint );
 }
 
-static void sctk_network_notify_recv_message_topological ( __UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail )
+static void _mpc_lowcomm_topological_notify_receive ( __UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail )
 {
 	/* Done in subrails */
 }
 
-static void sctk_network_notify_matching_message_topological ( __UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail )
+static void _mpc_lowcomm_topological_notify_matching ( __UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail )
 {
 	/* Done in subrails */
 }
 
-static void sctk_network_notify_perform_message_topological ( __UNUSED__ int remote, __UNUSED__ int remote_task_id, __UNUSED__ int polling_task_id, __UNUSED__ int blocking, __UNUSED__ sctk_rail_info_t *rail )
+static void _mpc_lowcomm_topological_notify_perform ( __UNUSED__ int remote, __UNUSED__ int remote_task_id, __UNUSED__ int polling_task_id, __UNUSED__ int blocking, __UNUSED__ sctk_rail_info_t *rail )
 {
 	/* Done in subrails */
 }
 
-static void sctk_network_notify_idle_message_topological ()
+static void _mpc_lowcomm_topological_notify_idle ()
 {
 	/* Done in subrails */
 }
 
-static void sctk_network_notify_probe_message_topological (__UNUSED__ sctk_rail_info_t* rail, __UNUSED__ mpc_lowcomm_ptp_message_header_t* hdr, __UNUSED__ int* status)
+static void _mpc_lowcomm_topological_notify_probe (__UNUSED__ sctk_rail_info_t* rail, __UNUSED__ mpc_lowcomm_ptp_message_header_t* hdr, __UNUSED__ int* status)
 {
 	/* Done in subrails */
 }
 
 
-static void sctk_network_notify_any_source_message_topological ( __UNUSED__ int polling_task_id, __UNUSED__ int blocking, __UNUSED__ sctk_rail_info_t *rail )
+static void _mpc_lowcomm_topological_notify_anysource ( __UNUSED__ int polling_task_id, __UNUSED__ int blocking, __UNUSED__ sctk_rail_info_t *rail )
 {
 	/* Done in subrails */
 }
@@ -618,13 +618,13 @@ int sctk_topological_rail_rdma_cas_gate( sctk_rail_info_t *rail, size_t size, RD
 void sctk_network_init_topological ( sctk_rail_info_t *rail )
 {
 	/* Register Hooks in rail */
-	rail->send_message_endpoint = sctk_network_send_message_endpoint_topological;
-	rail->notify_recv_message = sctk_network_notify_recv_message_topological;
-	rail->notify_matching_message = sctk_network_notify_matching_message_topological;
-	rail->notify_perform_message = sctk_network_notify_perform_message_topological;
-	rail->notify_idle_message = sctk_network_notify_idle_message_topological;
-	rail->notify_probe_message = sctk_network_notify_probe_message_topological;
-	rail->notify_any_source_message = sctk_network_notify_any_source_message_topological;
+	rail->send_message_endpoint = _mpc_lowcomm_topological_send_message;
+	rail->notify_recv_message = _mpc_lowcomm_topological_notify_receive;
+	rail->notify_matching_message = _mpc_lowcomm_topological_notify_matching;
+	rail->notify_perform_message = _mpc_lowcomm_topological_notify_perform;
+	rail->notify_idle_message = _mpc_lowcomm_topological_notify_idle;
+	rail->notify_probe_message = _mpc_lowcomm_topological_notify_probe;
+	rail->notify_any_source_message = _mpc_lowcomm_topological_notify_anysource;
 	rail->send_message_from_network = sctk_send_message_from_network_topological;
 	rail->control_message_handler = topological_control_message_handler;
 	rail->connect_to = sctk_network_connection_to_topological;

@@ -320,6 +320,7 @@ void mpc_topology_device_print( mpc_topology_device_t *dev )
 	fprintf(  stderr, "#######################################\n" );
 }
 
+#if (HWLOC_API_VERSION > 0x00020000)
 hwloc_obj_t __get_nth_io_child(hwloc_obj_t obj, int n)
 {
     hwloc_obj_t io = NULL;
@@ -336,7 +337,7 @@ hwloc_obj_t __get_nth_io_child(hwloc_obj_t obj, int n)
 
     return NULL;
 }
-
+#endif
 
 static void __topology_device_init( hwloc_topology_t topology, mpc_topology_device_t *dev, hwloc_obj_t obj, int os_dev_offset, int io_dev_offset )
 {

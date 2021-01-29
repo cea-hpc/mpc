@@ -40,7 +40,7 @@ static volatile short rail_is_ready = 0;
  * @param[in,out] msg message to send
  * @param[in]  endpoint connection handler to take for routing
  */
-static void sctk_network_send_message_endpoint_ptl ( mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint )
+static void _mpc_lowcomm_portals_send_message ( mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint )
 {
 	sctk_ptl_send_message(msg, endpoint);
 }
@@ -50,7 +50,7 @@ static void sctk_network_send_message_endpoint_ptl ( mpc_lowcomm_ptp_message_t *
  * \param[in] msg the posted msdg
  * \param[in] rail the Portals rail
  */
-static void sctk_network_notify_recv_message_ptl ( mpc_lowcomm_ptp_message_t *msg, sctk_rail_info_t *rail )
+static void _mpc_lowcomm_portals_notify_receive ( mpc_lowcomm_ptp_message_t *msg, sctk_rail_info_t *rail )
 {
 	/* by construction, a network-received CM will generate a local recv
 	 * So, in this case, we have nothing to do here
@@ -66,7 +66,7 @@ static void sctk_network_notify_recv_message_ptl ( mpc_lowcomm_ptp_message_t *ms
 
 /**
  * Not relevant in this implementation */
-static void sctk_network_notify_matching_message_ptl ( mpc_lowcomm_ptp_message_t *msg, sctk_rail_info_t *rail )
+static void _mpc_lowcomm_portals_notify_matching ( mpc_lowcomm_ptp_message_t *msg, sctk_rail_info_t *rail )
 {
 	/* nothing to do */
 	UNUSED(msg);
@@ -74,7 +74,7 @@ static void sctk_network_notify_matching_message_ptl ( mpc_lowcomm_ptp_message_t
 }
 
 /** Not relevant in this implementation */
-static void sctk_network_notify_perform_message_ptl ( int remote, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t *rail )
+static void _mpc_lowcomm_portals_notify_perform ( int remote, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t *rail )
 {
 	/* nothing to do */
 	UNUSED(remote);
@@ -90,7 +90,7 @@ static void sctk_network_notify_perform_message_ptl ( int remote, int remote_tas
  *
  * @param[in,out] rail driver data from current network
  */
-static void sctk_network_notify_idle_message_ptl (sctk_rail_info_t* rail)
+static void _mpc_lowcomm_portals_notify_idle (sctk_rail_info_t* rail)
 {
 	/* '5' has been chosen arbitrarly for now */
 	sctk_ptl_eqs_poll( rail, 5 );
@@ -104,14 +104,14 @@ static void sctk_network_notify_idle_message_ptl (sctk_rail_info_t* rail)
  * @param[in] blocking not used by Portals implementation
  * @param[in,out] rail associated rail
  */
-static void sctk_network_notify_any_source_message_ptl ( int polling_task_id, int blocking, sctk_rail_info_t *rail )
+static void _mpc_lowcomm_portals_notify_anysource ( int polling_task_id, int blocking, sctk_rail_info_t *rail )
 {
 	UNUSED(polling_task_id);
 	UNUSED(blocking);
 	UNUSED(rail);
 }
 
-static void sctk_network_notify_probe_message_ptl (sctk_rail_info_t* rail, mpc_lowcomm_ptp_message_header_t* hdr, int *status)
+static void _mpc_lowcomm_portals_notify_probe (sctk_rail_info_t* rail, mpc_lowcomm_ptp_message_header_t* hdr, int *status)
 {
 	*status = sctk_ptl_pending_me_probe(rail, hdr, SCTK_PTL_ME_PROBE_ONLY);
 }
@@ -124,7 +124,7 @@ static void sctk_network_notify_probe_message_ptl (sctk_rail_info_t* rail, mpc_l
  * \param[in] comm_idx the communicator ID
  * \param[in] comm_size number of processes in this comm
  */
-static void sctk_network_notify_new_communicator_ptl(sctk_rail_info_t* rail, uint32_t comm_idx, size_t comm_size)
+static void _mpc_lowcomm_portals_notify_newcomm(sctk_rail_info_t* rail, uint32_t comm_idx, size_t comm_size)
 {
 	sctk_ptl_comm_register(&rail->network.ptl, comm_idx, comm_size);
 }
@@ -261,15 +261,15 @@ void sctk_network_init_ptl (sctk_rail_info_t *rail)
 	rail->network_name                 = "Portals Process-Based optimization";
 
 	/* Register msg hooks in rail */
-	rail->send_message_endpoint     = sctk_network_send_message_endpoint_ptl;
-	rail->notify_recv_message       = sctk_network_notify_recv_message_ptl;
-	rail->notify_matching_message   = sctk_network_notify_matching_message_ptl;
-	rail->notify_perform_message    = sctk_network_notify_perform_message_ptl;
-	rail->notify_idle_message       = sctk_network_notify_idle_message_ptl;
-	rail->notify_any_source_message = sctk_network_notify_any_source_message_ptl;
-	rail->notify_new_comm           = sctk_network_notify_new_communicator_ptl;
+	rail->send_message_endpoint     = _mpc_lowcomm_portals_send_message;
+	rail->notify_recv_message       = _mpc_lowcomm_portals_notify_receive;
+	rail->notify_matching_message   = _mpc_lowcomm_portals_notify_matching;
+	rail->notify_perform_message    = _mpc_lowcomm_portals_notify_perform;
+	rail->notify_idle_message       = _mpc_lowcomm_portals_notify_idle;
+	rail->notify_any_source_message = _mpc_lowcomm_portals_notify_anysource;
+	rail->notify_new_comm           = _mpc_lowcomm_portals_notify_newcomm;
 	rail->send_message_from_network = sctk_send_message_from_network_ptl;
-	rail->notify_probe_message      = sctk_network_notify_probe_message_ptl;
+	rail->notify_probe_message      = _mpc_lowcomm_portals_notify_probe;
 
 	/* RDMA */
 	rail->rail_pin_region        = sctk_ptl_pin_region;

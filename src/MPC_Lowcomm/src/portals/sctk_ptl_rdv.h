@@ -25,6 +25,8 @@
 #ifndef __SCTK_PTL_RDV_H_
 #define __SCTK_PTL_RDV_H_
 
+#include <mpc_lowcomm_msg.h>
+
 void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev);
 void sctk_ptl_rdv_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev);
 

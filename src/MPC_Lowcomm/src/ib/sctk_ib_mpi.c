@@ -87,7 +87,7 @@ static char *sctk_ib_protocol_print(_mpc_lowcomm_ib_protocol_t prot)
 
 
 
-static void sctk_network_send_message_ib_endpoint(mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint)
+static void _mpc_lowcomm_ib_send_message(mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint)
 {
 	sctk_rail_info_t *   rail    = endpoint->rail;
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
@@ -182,7 +182,7 @@ _mpc_lowcomm_endpoint_t *sctk_on_demand_connection_ib(struct sctk_rail_info_s *r
 			if(state != _MPC_LOWCOMM_ENDPOINT_DECONNECTED && state != _MPC_LOWCOMM_ENDPOINT_CONNECTED &&
 			   state != _MPC_LOWCOMM_ENDPOINT_RECONNECTING)
 			{
-				sctk_network_notify_idle_message();
+				_mpc_lowcomm_multirail_notify_idle();
 				mpc_thread_yield();
 			}
 		} while(state != _MPC_LOWCOMM_ENDPOINT_DECONNECTED && state != _MPC_LOWCOMM_ENDPOINT_CONNECTED && state != _MPC_LOWCOMM_ENDPOINT_RECONNECTING);
@@ -198,7 +198,7 @@ _mpc_lowcomm_endpoint_t *sctk_on_demand_connection_ib(struct sctk_rail_info_s *r
 		//	mpc_common_debug_warning("YA WAIT");
 
 
-		sctk_network_notify_idle_message();
+		_mpc_lowcomm_multirail_notify_idle();
 
 		if(_mpc_lowcomm_endpoint_get_state(tmp) != _MPC_LOWCOMM_ENDPOINT_CONNECTED)
 		{
@@ -593,7 +593,7 @@ static inline void __poll_all_cq(sctk_rail_info_t *rail, sctk_ib_polling_t *poll
     _mpc_lowcomm_ib_cp_ctx_poll_global_list(poll);
  }
 
-static void sctk_network_notify_recv_message_ib(__UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail)
+static void _mpc_lowcomm_ib_receive_message(__UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail)
 {
     struct sctk_ib_polling_s poll;
 
@@ -608,12 +608,12 @@ static void sctk_network_notify_recv_message_ib(__UNUSED__ mpc_lowcomm_ptp_messa
 	}
 }
 
-static void sctk_network_notify_matching_message_ib(__UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail)
+static void _mpc_lowcomm_ib_notify_matching(__UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail)
 {
 }
 
 /* WARNING: This function can be called with dest == mpc_common_get_process_rank() */
-static void sctk_network_notify_perform_message_ib(__UNUSED__ int remote_process, __UNUSED__ int remote_task_id, __UNUSED__ int polling_task_id, __UNUSED__ int blocking, sctk_rail_info_t *rail)
+static void _mpc_lowcomm_ib_notify_perform(__UNUSED__ int remote_process, __UNUSED__ int remote_task_id, __UNUSED__ int polling_task_id, __UNUSED__ int blocking, sctk_rail_info_t *rail)
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 
@@ -654,7 +654,7 @@ static void sctk_network_notify_perform_message_ib(__UNUSED__ int remote_process
 
 __thread int idle_poll_all  = 0;
 __thread int idle_poll_freq = 100;
-static void sctk_network_notify_idle_message_ib(sctk_rail_info_t *rail)
+static void _mpc_lowcomm_ib_notify_idle(sctk_rail_info_t *rail)
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 
@@ -723,7 +723,7 @@ static void sctk_network_notify_idle_message_ib(sctk_rail_info_t *rail)
 	}
 }
 
-static void sctk_network_notify_any_source_message_ib(int polling_task_id, __UNUSED__ int blocking, sctk_rail_info_t *rail)
+static void _mpc_lowcomm_ib_notify_anysource(int polling_task_id, __UNUSED__ int blocking, sctk_rail_info_t *rail)
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 
@@ -987,13 +987,13 @@ void sctk_network_init_mpi_ib(sctk_rail_info_t *rail)
 	rail->connect_on_demand = sctk_connect_on_demand_mpi_ib;
 	rail->driver_finalize   = sctk_network_finalize_mpi_ib;
 
-	rail->send_message_endpoint = sctk_network_send_message_ib_endpoint;
+	rail->send_message_endpoint = _mpc_lowcomm_ib_send_message;
 
-	rail->notify_recv_message       = sctk_network_notify_recv_message_ib;
-	rail->notify_matching_message   = sctk_network_notify_matching_message_ib;
-	rail->notify_perform_message    = sctk_network_notify_perform_message_ib;
-	rail->notify_idle_message       = sctk_network_notify_idle_message_ib;
-	rail->notify_any_source_message = sctk_network_notify_any_source_message_ib;
+	rail->notify_recv_message       = _mpc_lowcomm_ib_receive_message;
+	rail->notify_matching_message   = _mpc_lowcomm_ib_notify_matching;
+	rail->notify_perform_message    = _mpc_lowcomm_ib_notify_perform;
+	rail->notify_idle_message       = _mpc_lowcomm_ib_notify_idle;
+	rail->notify_any_source_message = _mpc_lowcomm_ib_notify_anysource;
 
 	/* PIN */
 	rail->rail_pin_region   = sctk_ib_pin_region;

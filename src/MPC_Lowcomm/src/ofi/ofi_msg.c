@@ -486,7 +486,7 @@ static inline void __sctk_network_ofi_bootstrap(sctk_rail_info_t* rail)
  * @param msg the MPC message to send.
  * @param endpoint the endpoint elected by the low_level_comm to be used for the transfer
  */
-static void sctk_network_send_message_endpoint_ofi_msg ( mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint )
+static void _mpc_lowcomm_ofi_send_message ( mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint )
 {
 	assert(endpoint);
 	assert(msg);
@@ -541,14 +541,14 @@ static void sctk_network_send_message_endpoint_ofi_msg ( mpc_lowcomm_ptp_message
  * \param[in] msg not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_recv_message_ofi_msg ( __UNUSED__ mpc_lowcomm_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail ) {}
+static void _mpc_lowcomm_ofi_notify_receive ( __UNUSED__ mpc_lowcomm_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /**
  * Not used for this network.
  * \param[in] msg not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_matching_message_ofi_msg (  __UNUSED__ mpc_lowcomm_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail ) {}
+static void _mpc_lowcomm_ofi_notify_matching (  __UNUSED__ mpc_lowcomm_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /**
  * Not used for this network.
@@ -558,20 +558,20 @@ static void sctk_network_notify_matching_message_ofi_msg (  __UNUSED__ mpc_lowco
  * \param[in] blocking not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_perform_message_ofi_msg (  __UNUSED__ int remote,  __UNUSED__ int remote_task_id,  __UNUSED__ int polling_task_id,  __UNUSED__ int blocking, __UNUSED__  sctk_rail_info_t *rail ) {}
+static void _mpc_lowcomm_ofi_notify_perform (  __UNUSED__ int remote,  __UNUSED__ int remote_task_id,  __UNUSED__ int polling_task_id,  __UNUSED__ int blocking, __UNUSED__  sctk_rail_info_t *rail ) {}
 
 /**
  * Not used for this network.
  * \param[in] msg not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_any_source_message_ofi_msg ( __UNUSED__  int polling_task_id, __UNUSED__ int blocking,  __UNUSED__ sctk_rail_info_t *rail ) {}
+static void _mpc_lowcomm_ofi_notify_anysource ( __UNUSED__  int polling_task_id, __UNUSED__ int blocking,  __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /**
  * Called by idle threads to progress messages.
  * \param[in] rail the rail where communications should be progressed on
  */
-static void sctk_network_notify_idle_message_ofi_msg(struct sctk_rail_info_s* rail)
+static void _mpc_lowcomm_ofi_notify_idle(struct sctk_rail_info_s* rail)
 {
 	assert(rail);
 	static volatile int val = 0;
@@ -839,12 +839,12 @@ void sctk_network_init_ofi_msg( sctk_rail_info_t *rail )
 	mpc_lowcomm_ofi_rail_info_t* orail = &rail->network.ofi;
 
 	/* Register Hooks in rail */
-	rail->send_message_endpoint     = sctk_network_send_message_endpoint_ofi_msg;
-	rail->notify_recv_message       = sctk_network_notify_recv_message_ofi_msg;
-	rail->notify_matching_message   = sctk_network_notify_matching_message_ofi_msg;
-	rail->notify_perform_message    = sctk_network_notify_perform_message_ofi_msg;
-	rail->notify_idle_message       = sctk_network_notify_idle_message_ofi_msg;
-	rail->notify_any_source_message = sctk_network_notify_any_source_message_ofi_msg;
+	rail->send_message_endpoint     = _mpc_lowcomm_ofi_send_message;
+	rail->notify_recv_message       = _mpc_lowcomm_ofi_notify_receive;
+	rail->notify_matching_message   = _mpc_lowcomm_ofi_notify_matching;
+	rail->notify_perform_message    = _mpc_lowcomm_ofi_notify_perform;
+	rail->notify_idle_message       = _mpc_lowcomm_ofi_notify_idle;
+	rail->notify_any_source_message = _mpc_lowcomm_ofi_notify_anysource;
 	rail->send_message_from_network = sctk_send_message_from_network_ofi_msg;
 	rail->driver_finalize           = sctk_network_finalize_ofi_msg;
 	rail->control_message_handler   = sctk_network_ofi_control_message_handler;

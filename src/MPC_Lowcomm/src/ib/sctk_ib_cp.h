@@ -102,7 +102,7 @@ int _mpc_lowcomm_ib_cp_ctx_get_nb_pending_msg();
  *  FUNCTIONS
  *----------------------------------------------------------*/
 
-void sctk_network_notify_idle_message_multirail_ib_wait_send ();
+void _mpc_lowcomm_ib_notify_idle_wait_send ();
 
 void sctk_network_initialize_task_collaborative_ib ( sctk_rail_info_t *rail, int rank, int vp );
 void sctk_network_finalize_task_collaborative_ib ( sctk_rail_info_t *rail, int rank , int vp);

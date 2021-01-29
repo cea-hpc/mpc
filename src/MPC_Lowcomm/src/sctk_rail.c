@@ -34,7 +34,7 @@
 
 #include <sctk_alloc.h>
 
-#include "sctk_multirail.h"
+#include "multirail.h"
 
 /************************************************************************/
 /* Rails Storage                                                        */
@@ -219,7 +219,7 @@ void sctk_rail_disable(sctk_rail_info_t* rail)
 	_mpc_lowcomm_endpoint_table_free(&rail->route_table);
 
 	/* TODO: We have to remove routes from topological rails ! */
-	sctk_multirail_destination_table_prune();
+	_mpc_lowcomm_multirail_table_prune();
 }
 
 void sctk_rail_enable(sctk_rail_info_t *rail)
@@ -723,13 +723,13 @@ void sctk_rail_add_static_route (sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_t
 		/* Add in parent rail without pushing in multirail */
 		_mpc_lowcomm_endpoint_table_add_static_route ( rail->parent_rail->route_table, tmp);
 		/* Push in multirail */
-		sctk_multirail_destination_table_push_endpoint( tmp );
+		_mpc_lowcomm_multirail_table_push_endpoint( tmp );
 	}
 	else
 	{
 		/* NO PARENT : Just add the route and register in multirail */
 		_mpc_lowcomm_endpoint_table_add_static_route ( rail->route_table, tmp);
-		sctk_multirail_destination_table_push_endpoint(tmp);
+		_mpc_lowcomm_multirail_table_push_endpoint(tmp);
 	}
 }
 
@@ -750,13 +750,13 @@ void sctk_rail_add_dynamic_route ( sctk_rail_info_t *rail, _mpc_lowcomm_endpoint
 		/* Add in parent rail without pushing in multirail */
 		_mpc_lowcomm_endpoint_table_add_dynamic_route ( rail->parent_rail->route_table, tmp);
 		/* Push in multirail */
-		sctk_multirail_destination_table_push_endpoint( tmp );
+		_mpc_lowcomm_multirail_table_push_endpoint( tmp );
 	}
 	else
 	{
 		/* NO PARENT : Just add the route and register in multirail */
 		_mpc_lowcomm_endpoint_table_add_dynamic_route (  rail->route_table, tmp);
-		sctk_multirail_destination_table_push_endpoint(tmp);
+		_mpc_lowcomm_multirail_table_push_endpoint(tmp);
 	}
 
 }
@@ -776,13 +776,13 @@ void sctk_rail_add_dynamic_route_no_lock (  sctk_rail_info_t * rail, _mpc_lowcom
 		/* Add in parent rail without pushing in multirail */
 		_mpc_lowcomm_endpoint_table_add_dynamic_route_no_lock ( rail->parent_rail->route_table, tmp);
 		/* Push in multirail */
-		sctk_multirail_destination_table_push_endpoint( tmp );
+		_mpc_lowcomm_multirail_table_push_endpoint( tmp );
 	}
 	else
 	{
 		/* NO PARENT : Just add the route and register in multirail */
 		_mpc_lowcomm_endpoint_table_add_dynamic_route_no_lock (  rail->route_table, tmp);
-		sctk_multirail_destination_table_push_endpoint(tmp);
+		_mpc_lowcomm_multirail_table_push_endpoint(tmp);
 	}
 
 }

@@ -629,7 +629,7 @@ int _mpc_lowcomm_ib_cp_ctx_handle_message(_mpc_lowcomm_ib_ibuf_t *ibuf, int dest
 
 /** Collaborative Polling Init and release */
 
-void sctk_network_notify_idle_message_multirail_ib_wait_send()
+void _mpc_lowcomm_ib_notify_idle_wait_send()
 {
 	int i;
 

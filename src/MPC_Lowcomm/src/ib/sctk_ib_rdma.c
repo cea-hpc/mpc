@@ -82,7 +82,7 @@ mpc_lowcomm_ptp_message_t *_mpc_lowcomm_ib_rdma_recv_done_remote_imm(__UNUSED__ 
 
 
 	mpc_lowcomm_perform_idle( ( int * )&rdma->local.ready, 1,
-	                          (void (*)(void *) )sctk_network_notify_idle_message, NULL);
+	                          (void (*)(void *) )_mpc_lowcomm_multirail_notify_idle, NULL);
 
 	send = rdma->copy_ptr->msg_send;
 	recv = rdma->copy_ptr->msg_recv;
@@ -121,7 +121,7 @@ static inline mpc_lowcomm_ptp_message_t *__rdma_recv_done_remote(__UNUSED__ sctk
 
 	mpc_lowcomm_perform_idle(
 		(int *)&dest_msg_header->tail.ib.rdma.local.ready, 1,
-		(void (*)(void *) )sctk_network_notify_idle_message, NULL);
+		(void (*)(void *) )_mpc_lowcomm_multirail_notify_idle, NULL);
 
 	mpc_lowcomm_ptp_message_t *send = rdma->copy_ptr->msg_send;
 	mpc_lowcomm_ptp_message_t *recv = rdma->copy_ptr->msg_recv;
@@ -578,7 +578,7 @@ _mpc_lowcomm_ib_rdma_rendezvous_recv_ack(__UNUSED__ sctk_rail_info_t *rail, _mpc
 	/* Wait while the message becomes ready */
 	mpc_lowcomm_perform_idle(
 		(int *)&rdma->local.ready, 1,
-		(void (*)(void *) )sctk_network_notify_idle_message, NULL);
+		(void (*)(void *) )_mpc_lowcomm_multirail_notify_idle, NULL);
 
 	mpc_common_nodebug("Remote addr: %p", rdma_ack->addr);
 	rdma->remote.addr       = rdma_ack->addr;

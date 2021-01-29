@@ -124,7 +124,7 @@ static void *sctk_tcp_thread ( _mpc_lowcomm_endpoint_t *tmp )
  * \param[in] msg the message to send
  * \param[in] endpoint the route to use
  */
-static void sctk_network_send_message_endpoint_tcp ( mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint )
+static void _mpc_lowcomm_tcp_send_message ( mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint )
 {
 	size_t size;
 	int fd;
@@ -154,14 +154,14 @@ static void sctk_network_send_message_endpoint_tcp ( mpc_lowcomm_ptp_message_t *
  * \param[in] msg not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_recv_message_tcp ( __UNUSED__ mpc_lowcomm_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail ) {}
+static void _mpc_lowcomm_tcp_notify_receive ( __UNUSED__ mpc_lowcomm_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /**
  * Not used for this network.
  * \param[in] msg not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_matching_message_tcp (  __UNUSED__ mpc_lowcomm_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail ) {}
+static void _mpc_lowcomm_tcp_notify_matching (  __UNUSED__ mpc_lowcomm_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /**
  * Not used for this network.
@@ -171,14 +171,14 @@ static void sctk_network_notify_matching_message_tcp (  __UNUSED__ mpc_lowcomm_p
  * \param[in] blocking not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_perform_message_tcp (  __UNUSED__ int remote,  __UNUSED__ int remote_task_id,  __UNUSED__ int polling_task_id,  __UNUSED__ int blocking, __UNUSED__  sctk_rail_info_t *rail ) {}
+static void _mpc_lowcomm_tcp_notify_perform (  __UNUSED__ int remote,  __UNUSED__ int remote_task_id,  __UNUSED__ int polling_task_id,  __UNUSED__ int blocking, __UNUSED__  sctk_rail_info_t *rail ) {}
 
 /**
  * Not used for this network.
  * \param[in] msg not used
  * \param[in] rail not used
  */
-static void sctk_network_notify_any_source_message_tcp ( __UNUSED__  int polling_task_id, __UNUSED__ int blocking,  __UNUSED__ sctk_rail_info_t *rail ) {}
+static void _mpc_lowcomm_tcp_notify_anysource ( __UNUSED__  int polling_task_id, __UNUSED__ int blocking,  __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /**
  * Handler triggering the send_message_from_network call, before reaching the inter_thread_comm matching process.
@@ -223,12 +223,12 @@ void sctk_network_finalize_tcp(sctk_rail_info_t *rail)
 void sctk_network_init_tcp ( sctk_rail_info_t *rail )
 {
 	/* Register Hooks in rail */
-	rail->send_message_endpoint     = sctk_network_send_message_endpoint_tcp;
-	rail->notify_recv_message       = sctk_network_notify_recv_message_tcp;
-	rail->notify_matching_message   = sctk_network_notify_matching_message_tcp;
-	rail->notify_perform_message    = sctk_network_notify_perform_message_tcp;
+	rail->send_message_endpoint     = _mpc_lowcomm_tcp_send_message;
+	rail->notify_recv_message       = _mpc_lowcomm_tcp_notify_receive;
+	rail->notify_matching_message   = _mpc_lowcomm_tcp_notify_matching;
+	rail->notify_perform_message    = _mpc_lowcomm_tcp_notify_perform;
 	rail->notify_idle_message       = NULL;
-	rail->notify_any_source_message = sctk_network_notify_any_source_message_tcp;
+	rail->notify_any_source_message = _mpc_lowcomm_tcp_notify_anysource;
 	rail->send_message_from_network = sctk_send_message_from_network_tcp;
 	rail->driver_finalize           = sctk_network_finalize_tcp;
 

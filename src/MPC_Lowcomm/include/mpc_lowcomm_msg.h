@@ -128,7 +128,7 @@ struct mpc_lowcomm_ptp_ctrl_message_header_s
 	char subtype; /**< Subtype of the message (can be freely set -- usually to do a switch) */
 	char param;   /**< Parameter value (depending on type and subtypes)
 	               *                             for rails it is used to store rail number */
-	char rail_id; /**< The id of the rail sending the message (set during multirail selection \ref sctk_multirail_send_message)
+	char rail_id; /**< The id of the rail sending the message (set during multirail selection \ref _mpc_lowcomm_multirail_send_message)
 	               *                             it allows RAIL level messages to be routed accordingly */
 };
 

@@ -42,7 +42,7 @@ lib_LTLIBRARIES = libmpclowcomm.la
 
 # low-level communication #
 libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c sctk_control_messages.c ft.c group.c communicator.c shm_coll.c lowcomm_config.c
-libmpclowcomm_la_SOURCES += sctk_handle.c sctk_low_level_comm.c sctk_multirail.c sctk_net_tools.c sctk_net_topology.c
+libmpclowcomm_la_SOURCES += sctk_handle.c sctk_low_level_comm.c multirail.c sctk_net_tools.c sctk_net_topology.c
 libmpclowcomm_la_SOURCES +=.sctk_rail.c sctk_reorder.c endpoint.c sctk_topological_polling.c sctk_topological_rail.c sctk_window.c workshare.c
 
 # TCP driver #

@@ -30,6 +30,7 @@
 #define _MPC_LOWCOMM_ENDPOINT_H_
 
 #include <mpc_common_spinlock.h>
+#include <mpc_common_types.h>
 
 /* Typedefs for this file are in the central
  * header to allow later references avoiding
@@ -88,7 +89,7 @@ struct sctk_rail_info_s;
  */
 struct _mpc_lowcomm_endpoint_s
 {
-	int                          dest;              /**< Target CW rank */
+	int64_t                      dest;              /**< Target CW rank */
 	_mpc_lowcomm_endpoint_info_t data;              /**< Rail level content */
 	struct sctk_rail_info_s *    parent_rail;       /**< Pointer to the parent rail (called by default if present) */
 	struct sctk_rail_info_s *    rail;              /**< Pointer to the rail owning this endpoint */

@@ -216,7 +216,7 @@ int mpc_MPI_Win_request_array_fence_no_ops(
   while (OPA_load_int(&ra->available_req) != MAX_PENDING_RMA) {
     mpc_MPI_Win_request_array_test(ra);
 
-    sctk_network_notify_idle_message();
+    _mpc_lowcomm_multirail_notify_idle();
     mpc_thread_yield();
   }
 
@@ -1739,7 +1739,7 @@ int mpc_Win_contexes_fence_control(MPI_Win win) {
     {
       sctk_control_message_process_all();
       sctk_control_message_process_local(mpc_common_get_task_rank());
-      sctk_network_notify_idle_message();
+      _mpc_lowcomm_multirail_notify_idle();
       mpc_thread_yield();
     }
 
