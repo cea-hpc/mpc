@@ -26,6 +26,8 @@
 
 #include <sctk_alloc.h>
 
+#include "sctk_rail.h"
+
 /**
  * Define TCP RDMA values
  */
@@ -42,7 +44,7 @@ typedef enum
  */
 static void sctk_tcp_rdma_message_copy ( mpc_lowcomm_ptp_message_content_to_copy_t *tmp )
 {
-	sctk_endpoint_t *route;
+	_mpc_lowcomm_endpoint_t *route;
 	int fd;
 
 	route = tmp->msg_send->tail.route_table;
@@ -67,7 +69,7 @@ static void sctk_tcp_rdma_message_copy ( mpc_lowcomm_ptp_message_content_to_copy
  * Polling function created for each route.
  * \param[in] tmp the endpoint to progress.
  */
-static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
+static void *sctk_tcp_rdma_thread ( _mpc_lowcomm_endpoint_t *tmp )
 {
 	int fd;
 	fd = tmp->data.tcp.fd;
@@ -156,7 +158,7 @@ static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
  * \param[in] msg the message to send
  * \param[in] endpoint the route to use
  */
-static void sctk_network_send_message_tcp_rdma_endpoint ( mpc_lowcomm_ptp_message_t *msg, sctk_endpoint_t *endpoint )
+static void sctk_network_send_message_tcp_rdma_endpoint ( mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint )
 {
 	int fd;
 

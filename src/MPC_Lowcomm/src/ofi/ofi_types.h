@@ -132,7 +132,7 @@ typedef union mpc_lowcomm_ofi_rail_spec_u
 typedef struct mpc_lowcomm_ofi_route_info_s
 {
 	void* ctx; /**< an opaque pointer, impl. determined */
-} mpc_lowcomm_ofi_route_info_t;
+} _mpc_lowcomm_endpoint_info_ofi_t;
 
 /**
  * @brief Generic information describing an OFI driver

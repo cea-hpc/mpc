@@ -187,7 +187,6 @@ enum
 	MPC_LOWCOMM_ERR_LASTCODE
 };
 
-
 /*******************
  * FAULT TOLERANCE *
  *******************/

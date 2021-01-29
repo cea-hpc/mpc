@@ -337,7 +337,7 @@ typedef struct sctk_ptl_route_info_s
 {
 	sctk_ptl_id_t dest; /**< the remote process the route is connected to */
 }
-sctk_ptl_route_info_t;
+_mpc_lowcomm_endpoint_info_portals_t;
 
 /**
  * Offcoll-barrier specific information, stored in a local_data obj

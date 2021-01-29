@@ -22,6 +22,8 @@
 #ifndef SCTK_TOPOLOGICAL_RAIL
 #define SCTK_TOPOLOGICAL_RAIL
 
+#include "lowcomm_types_internal.h"
+
 typedef struct
 {
 	int max_vp;

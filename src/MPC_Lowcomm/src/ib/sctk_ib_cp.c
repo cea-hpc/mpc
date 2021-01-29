@@ -28,7 +28,6 @@
 #include "sctk_ib_cp.h"
 #include "sctk_ib_polling.h"
 #include "sctk_ibufs.h"
-#include "sctk_route.h"
 #include "sctk_ib_mmu.h"
 #include "sctk_net_tools.h"
 #include "sctk_ib_eager.h"
@@ -37,7 +36,7 @@
 #include "sctk_ib_mpi.h"
 #include "sctk_ib_rdma.h"
 #include "sctk_ib_topology.h"
-
+#include "sctk_rail.h"
 
 #include <mpc_topology.h>
 #include <sctk_alloc.h>

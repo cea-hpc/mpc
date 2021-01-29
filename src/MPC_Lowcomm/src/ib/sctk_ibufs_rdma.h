@@ -217,39 +217,39 @@ void _mpc_lowcomm_ib_ibuf_rdma_fill_remote_addr(sctk_ib_qp_t *remote,
 *  ACESSORS
 *----------------------------------------------------------*/
 
-static __UNUSED__ void _mpc_lowcomm_ib_ibuf_rdma_set_remote_state_rtr(sctk_ib_qp_t *remote, sctk_endpoint_state_t state)
+static __UNUSED__ void _mpc_lowcomm_ib_ibuf_rdma_set_remote_state_rtr(sctk_ib_qp_t *remote, _mpc_lowcomm_endpoint_state_t state)
 {
 	OPA_store_int(&remote->rdma.state_rtr, ( int )state);
 }
 
-static __UNUSED__ sctk_endpoint_state_t _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rtr(sctk_ib_qp_t *remote)
+static __UNUSED__ _mpc_lowcomm_endpoint_state_t _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rtr(sctk_ib_qp_t *remote)
 {
-	return ( sctk_endpoint_state_t )OPA_load_int(&remote->rdma.state_rtr);
+	return ( _mpc_lowcomm_endpoint_state_t )OPA_load_int(&remote->rdma.state_rtr);
 }
 
 /* Return the old value */
-static __UNUSED__ sctk_endpoint_state_t _mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rtr(sctk_ib_qp_t *remote,
-                                    sctk_endpoint_state_t oldv, sctk_endpoint_state_t newv)
+static __UNUSED__ _mpc_lowcomm_endpoint_state_t _mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rtr(sctk_ib_qp_t *remote,
+                                    _mpc_lowcomm_endpoint_state_t oldv, _mpc_lowcomm_endpoint_state_t newv)
 {
-	return ( sctk_endpoint_state_t )OPA_cas_int(&remote->rdma.state_rtr, oldv, newv);
+	return ( _mpc_lowcomm_endpoint_state_t )OPA_cas_int(&remote->rdma.state_rtr, oldv, newv);
 }
 
-static __UNUSED__ void _mpc_lowcomm_ib_ibuf_rdma_set_remote_state_rts(sctk_ib_qp_t *remote, sctk_endpoint_state_t state)
+static __UNUSED__ void _mpc_lowcomm_ib_ibuf_rdma_set_remote_state_rts(sctk_ib_qp_t *remote, _mpc_lowcomm_endpoint_state_t state)
 {
 	OPA_store_int(&remote->rdma.state_rts, ( int )state);
 }
 
-static __UNUSED__ sctk_endpoint_state_t _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts(sctk_ib_qp_t *remote)
+static __UNUSED__ _mpc_lowcomm_endpoint_state_t _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts(sctk_ib_qp_t *remote)
 {
-	return ( sctk_endpoint_state_t )OPA_load_int(&remote->rdma.state_rts);
+	return ( _mpc_lowcomm_endpoint_state_t )OPA_load_int(&remote->rdma.state_rts);
 }
 
 /* Return the old value */
-static __UNUSED__ sctk_endpoint_state_t
+static __UNUSED__ _mpc_lowcomm_endpoint_state_t
 _mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rts(sctk_ib_qp_t *remote,
-                                    sctk_endpoint_state_t oldv, sctk_endpoint_state_t newv)
+                                    _mpc_lowcomm_endpoint_state_t oldv, _mpc_lowcomm_endpoint_state_t newv)
 {
-	return ( sctk_endpoint_state_t )OPA_cas_int(&remote->rdma.state_rts, oldv, newv);
+	return ( _mpc_lowcomm_endpoint_state_t )OPA_cas_int(&remote->rdma.state_rts, oldv, newv);
 }
 
 void _mpc_lowcomm_ib_ibuf_rdma_flush_recv(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote);

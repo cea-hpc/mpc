@@ -31,7 +31,8 @@ extern "C"
 {
 #endif
 
-#include <sctk_route.h>
+#include "lowcomm_types_internal.h"
+
 #include <sctk_ibufs.h>
 #include <mpc_common_spinlock.h>
 #include <mpc_common_helper.h>

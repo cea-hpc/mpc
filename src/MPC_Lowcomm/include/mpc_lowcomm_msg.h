@@ -74,7 +74,7 @@ typedef enum
 	MPC_LOWCOMM_CONTROL_MESSAGE_RAIL,     /**< This message goes to a rail */
 	MPC_LOWCOMM_CONTROL_MESSAGE_PROCESS,  /**< This message goes to a process (\ref sctk_control_message_process_level) */
 	MPC_LOWCOMM_CONTROL_MESSAGE_TASK,     /**< This message goes to a task */
-	MPC_LOWCOMM_CONTROL_MESSAGE_USER,     /**< This message goes to the application using an optionnal handler */
+
 	MPC_LOWCOMM_MESSAGE_CLASS_COUNT       /**< This value allows to track the  number of control message types */
 } mpc_lowcomm_ptp_message_class_t;
 
@@ -105,8 +105,7 @@ static const char *const mpc_lowcomm_ptp_message_class_name[MPC_LOWCOMM_MESSAGE_
 	"MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL",
 	"MPC_LOWCOMM_CONTROL_MESSAGE_RAIL",
 	"MPC_LOWCOMM_CONTROL_MESSAGE_PROCESS",
-	"MPC_LOWCOMM_CONTROL_MESSAGE_TASK",
-	"MPC_LOWCOMM_CONTROL_MESSAGE_USER"
+	"MPC_LOWCOMM_CONTROL_MESSAGE_TASK"
 };
 
 /************************************************************************/

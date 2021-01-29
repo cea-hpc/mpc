@@ -22,7 +22,7 @@
 
 
 #include <mpc_common_debug.h>
-#include <sctk_route.h>
+
 #include <sctk_reorder.h>
 #include <communicator.h>
 #include <mpc_common_spinlock.h>

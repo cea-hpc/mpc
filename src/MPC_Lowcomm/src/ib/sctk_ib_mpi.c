@@ -25,7 +25,7 @@
 
 #include <mpc_common_debug.h>
 #include <sctk_ib_toolkit.h>
-#include <sctk_route.h>
+#include "endpoint.h"
 #include <sctk_net_tools.h>
 #include "sctk_ib.h"
 #include <sctk_ibufs.h>
@@ -43,6 +43,7 @@
 #include "sctk_ib_topology.h"
 #include "sctk_ib_cp.h"
 #include "mpc_common_asm.h"
+#include "sctk_rail.h"
 
 #include <sctk_alloc.h>
 
@@ -86,19 +87,19 @@ static char *sctk_ib_protocol_print(_mpc_lowcomm_ib_protocol_t prot)
 
 
 
-static void sctk_network_send_message_ib_endpoint(mpc_lowcomm_ptp_message_t *msg, sctk_endpoint_t *endpoint)
+static void sctk_network_send_message_ib_endpoint(mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint)
 {
 	sctk_rail_info_t *   rail    = endpoint->rail;
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 
 	LOAD_CONFIG(rail_ib);
-	sctk_ib_route_info_t *  route_data;
+	_mpc_lowcomm_endpoint_info_ib_t *  route_data;
 	sctk_ib_qp_t *          remote;
 	_mpc_lowcomm_ib_ibuf_t *ibuf;
 	size_t size;
 
 
-	assume(sctk_endpoint_get_state(endpoint) == STATE_CONNECTED);
+	assume(_mpc_lowcomm_endpoint_get_state(endpoint) == _MPC_LOWCOMM_ENDPOINT_CONNECTED);
 
 	route_data = &endpoint->data.ib;
 	remote     = route_data->remote;
@@ -112,7 +113,7 @@ static void sctk_network_send_message_ib_endpoint(mpc_lowcomm_ptp_message_t *msg
 	 *  We switch between available protocols
 	 *
 	 * */
-	if( ( (_mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts(remote) == STATE_CONNECTED) &&
+	if( ( (_mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts(remote) == _MPC_LOWCOMM_ENDPOINT_CONNECTED) &&
 	      (size + IBUF_GET_EAGER_SIZE + IBUF_RDMA_GET_SIZE <= _mpc_lowcomm_ib_ibuf_rdma_eager_limit_get(remote) ) ) ||
 	    (size + IBUF_GET_EAGER_SIZE <= config->eager_limit) )
 	{
@@ -162,29 +163,29 @@ exit:
 	// PROF_TIME_END ( rail, ib_send_message );
 }
 
-sctk_endpoint_t *sctk_on_demand_connection_ib(struct sctk_rail_info_s *rail, int dest)
+_mpc_lowcomm_endpoint_t *sctk_on_demand_connection_ib(struct sctk_rail_info_s *rail, int dest)
 {
-	sctk_endpoint_t *tmp = NULL;
+	_mpc_lowcomm_endpoint_t *tmp = NULL;
 
 	/* Wait until we reach the 'deconnected' state */
 	tmp = sctk_rail_get_dynamic_route_to_process(rail, dest);
 
 	if(tmp)
 	{
-		sctk_endpoint_state_t state;
-		state = sctk_endpoint_get_state(tmp);
+		_mpc_lowcomm_endpoint_state_t state;
+		state = _mpc_lowcomm_endpoint_get_state(tmp);
 
 		do
 		{
-			state = sctk_endpoint_get_state(tmp);
+			state = _mpc_lowcomm_endpoint_get_state(tmp);
 
-			if(state != STATE_DECONNECTED && state != STATE_CONNECTED &&
-			   state != STATE_RECONNECTING)
+			if(state != _MPC_LOWCOMM_ENDPOINT_DECONNECTED && state != _MPC_LOWCOMM_ENDPOINT_CONNECTED &&
+			   state != _MPC_LOWCOMM_ENDPOINT_RECONNECTING)
 			{
 				sctk_network_notify_idle_message();
 				mpc_thread_yield();
 			}
-		} while(state != STATE_DECONNECTED && state != STATE_CONNECTED && state != STATE_RECONNECTING);
+		} while(state != _MPC_LOWCOMM_ENDPOINT_DECONNECTED && state != _MPC_LOWCOMM_ENDPOINT_CONNECTED && state != _MPC_LOWCOMM_ENDPOINT_RECONNECTING);
 	}
 
 	/* We send the request using the signalization rail */
@@ -192,14 +193,14 @@ sctk_endpoint_t *sctk_on_demand_connection_ib(struct sctk_rail_info_s *rail, int
 	assume(tmp);
 
 	/* If route not connected, so we wait for until it is connected */
-	while(sctk_endpoint_get_state(tmp) != STATE_CONNECTED)
+	while(_mpc_lowcomm_endpoint_get_state(tmp) != _MPC_LOWCOMM_ENDPOINT_CONNECTED)
 	{
 		//	mpc_common_debug_warning("YA WAIT");
 
 
 		sctk_network_notify_idle_message();
 
-		if(sctk_endpoint_get_state(tmp) != STATE_CONNECTED)
+		if(_mpc_lowcomm_endpoint_get_state(tmp) != _MPC_LOWCOMM_ENDPOINT_CONNECTED)
 		{
 			mpc_thread_yield();
 		}

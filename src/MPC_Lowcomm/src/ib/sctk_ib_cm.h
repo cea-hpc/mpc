@@ -26,7 +26,7 @@
 #ifndef __SCTK__IB_CM_H_
 #define __SCTK__IB_CM_H_
 
-#include "sctk_route.h"
+#include "endpoint.h"
 #include "comm.h"
 /*-----------------------------------------------------------
  *  MACROS
@@ -131,10 +131,10 @@ int sctk_ib_cm_on_demand_recv_check ( mpc_lowcomm_ptp_message_body_t *msg );
  
 void sctk_ib_cm_control_message_handler( struct sctk_rail_info_s * rail, int process_src, int source_rank, char subtype,  char param, void * payload, size_t size );
 
-sctk_endpoint_t *sctk_ib_cm_on_demand_request ( int dest, sctk_rail_info_t *rail );
+_mpc_lowcomm_endpoint_t *sctk_ib_cm_on_demand_request ( int dest, sctk_rail_info_t *rail );
 
 void sctk_ib_cm_deco_ack ( sctk_rail_info_t *rail,
-                           sctk_endpoint_t *route_table, int ack );
+                           _mpc_lowcomm_endpoint_t *route_table, int ack );
 
 /* RDMA resizing */
 int sctk_ib_cm_resizing_rdma_request ( sctk_rail_info_t *rail_targ, struct sctk_ib_qp_s *remote,
@@ -152,10 +152,10 @@ void sctk_ib_cm_resizing_rdma_ack ( sctk_rail_info_t *rail_targ,  struct sctk_ib
 //void sctk_ib_cm_deco_done_request_recv ( sctk_rail_info_t *rail, void *ack, int src );
 
 /* Send */
-//void sctk_ib_cm_deco_request_send ( sctk_rail_info_t *rail, sctk_endpoint_t *route_table );
-//void sctk_ib_cm_deco_done_request_send ( sctk_rail_info_t *rail, sctk_endpoint_t *route_table );
-//void sctk_ib_cm_deco_ack_send ( sctk_rail_info_t *rail, sctk_endpoint_t *route_table, int ack );
-//void sctk_ib_cm_deco_done_ack_send ( sctk_rail_info_t *rail, sctk_endpoint_t *route_table, int ack );
+//void sctk_ib_cm_deco_request_send ( sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_t *route_table );
+//void sctk_ib_cm_deco_done_request_send ( sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_t *route_table );
+//void sctk_ib_cm_deco_ack_send ( sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_t *route_table, int ack );
+//void sctk_ib_cm_deco_done_ack_send ( sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_t *route_table, int ack );
 
 int sctk_ib_cm_on_demand_rdma_check_request (
     sctk_rail_info_t *rail_targ, struct sctk_ib_qp_s *remote );

@@ -28,6 +28,8 @@
 
 #include <sctk_alloc.h>
 
+#include "sctk_rail.h"
+
 /********************************************************************/
 /* Inter Thread Comm Hooks                                          */
 /********************************************************************/
@@ -36,7 +38,7 @@
  * \param[in] tmp the route to progress
  * \return NULL
  */
-static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
+static void *sctk_tcp_thread ( _mpc_lowcomm_endpoint_t *tmp )
 {
 	int fd = tmp->data.tcp.fd;
 
@@ -122,7 +124,7 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
  * \param[in] msg the message to send
  * \param[in] endpoint the route to use
  */
-static void sctk_network_send_message_endpoint_tcp ( mpc_lowcomm_ptp_message_t *msg, sctk_endpoint_t *endpoint )
+static void sctk_network_send_message_endpoint_tcp ( mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint )
 {
 	size_t size;
 	int fd;

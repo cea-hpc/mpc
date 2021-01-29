@@ -29,17 +29,18 @@ extern "C"
 
 #include <mpc_common_spinlock.h>
 #include <mpc_common_helper.h>
+#include "lowcomm_types_internal.h"
 
 /** \brief ROUTE level data structure for TCP
 *
-*   This structure is stored in each \ref sctk_endpoint_s structure
-*   using the \ref sctk_route_info_spec_t union
+*   This structure is stored in each \ref _mpc_lowcomm_endpoint_s structure
+*   using the \ref _mpc_lowcomm_endpoint_info_t union
 */
 typedef struct
 {
 	mpc_common_spinlock_t lock; /**< Client socket write lock */
 	int fd;               /**< Client socket */
-} sctk_tcp_route_info_t;
+} _mpc_lowcomm_endpoint_info_tcp_t;
 
 /** \brief RAIL level info data structure for TCP
  *
@@ -53,7 +54,7 @@ typedef struct
 	int portno;                                          /**< Listening socket port number */
 	char connection_infos[MPC_COMMON_MAX_STRING_SIZE];              /**< Connection info for this listening socket */
 	size_t connection_infos_size;                        /**< Length of the connection_info field */
-	void * ( *tcp_thread ) ( struct sctk_endpoint_s * ); /**< Function to call when registering a route (RDMA/MULTIRAIL/TCP) */
+	void * ( *tcp_thread ) ( struct _mpc_lowcomm_endpoint_s * ); /**< Function to call when registering a route (RDMA/MULTIRAIL/TCP) */
 } sctk_tcp_rail_info_t;
 
 

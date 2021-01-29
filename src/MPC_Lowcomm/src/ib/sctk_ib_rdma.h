@@ -32,8 +32,8 @@
 #include "sctk_ibufs.h"
 #include "sctk_ib_qp.h"
 #include "mpc_launch_pmi.h"
-#include "sctk_route.h"
 #include "utlist.h"
+#include "sctk_rail.h"
 
 /* XXX: Packed structures */
 typedef enum _mpc_lowcomm_ib_rdma_type_e

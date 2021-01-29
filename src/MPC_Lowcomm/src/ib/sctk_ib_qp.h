@@ -30,7 +30,6 @@
 #include "sctk_ib_buffered.h"
 #include "mpc_common_spinlock.h"
 #include "sctk_ibufs.h"
-#include "sctk_route.h"
 #include "sctk_ib_cm.h"
 #include "sctk_ib_device.h"
 
@@ -45,8 +44,8 @@ typedef struct _mpc_lowcomm_ib_ibuf_rdma_s
 	mpc_common_spinlock_t polling_lock;
 	char dummy2[64];
 	struct _mpc_lowcomm_ib_ibuf_rdma_pool_s *pool;
-	OPA_int_t state_rtr; 			/**< If remote is RTR. Type: sctk_endpoint_state_t */
-	OPA_int_t state_rts;			/**< If remote is RTS. Type: sctk_endpoint_state_t */
+	OPA_int_t state_rtr; 			/**< If remote is RTR. Type: _mpc_lowcomm_endpoint_state_t */
+	OPA_int_t state_rts;			/**< If remote is RTS. Type: _mpc_lowcomm_endpoint_state_t */
 	mpc_common_spinlock_t pending_data_lock;
 	OPA_int_t       resizing_nb;			/**< Number of resizing */
 	OPA_int_t       cancel_nb; 			/**< Number of Connection cancels */
@@ -92,7 +91,7 @@ typedef struct sctk_ib_qp_s
 	unsigned int            free_nb;    /**< Number of pending entries free in QP */
 	mpc_common_spinlock_t         post_lock;  /**< Lock when posting an element */
 	OPA_int_t               pending_data; 	/**< Number of pending requests */
-	sctk_endpoint_t      * endpoint; /** Routes */
+	_mpc_lowcomm_endpoint_t      * endpoint; /** Routes */
 	/* For linked-list */
 	struct sctk_ib_qp_s *prev;
 	struct sctk_ib_qp_s *next;
@@ -156,7 +155,7 @@ struct ibv_qp_attr sctk_ib_qp_state_rts_attr ( struct sctk_ib_rail_info_s *rail_
 
 void sctk_ib_qp_modify ( sctk_ib_qp_t *remote, struct ibv_qp_attr *attr, int flags );
 
-void sctk_ib_qp_allocate_init ( struct sctk_ib_rail_info_s *rail_ib, int rank, sctk_ib_qp_t *remote, int ondemand, sctk_endpoint_t *route );
+void sctk_ib_qp_allocate_init ( struct sctk_ib_rail_info_s *rail_ib, int rank, sctk_ib_qp_t *remote, int ondemand, _mpc_lowcomm_endpoint_t *route );
 
 void sctk_ib_qp_allocate_rtr ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, sctk_ib_cm_qp_connection_t *keys );
 
@@ -258,7 +257,7 @@ __UNUSED__ static inline int sctk_ib_qp_allocate_get_rts ( sctk_ib_qp_t *remote 
 }
 
 void sctk_ib_qp_select_victim ( struct sctk_ib_rail_info_s *rail_ib );
-void sctk_ib_qp_deco_victim ( struct sctk_ib_rail_info_s *rail_ib, sctk_endpoint_t *endpoint );
+void sctk_ib_qp_deco_victim ( struct sctk_ib_rail_info_s *rail_ib, _mpc_lowcomm_endpoint_t *endpoint );
 
 int sctk_ib_qp_check_flush ( struct sctk_ib_rail_info_s *rail_ib,  sctk_ib_qp_t *remote );
 

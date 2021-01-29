@@ -97,7 +97,7 @@ typedef struct sctk_ib_rail_info_s
 typedef struct sctk_ib_route_info_s
 {
 	struct sctk_ib_qp_s *remote;
-} sctk_ib_route_info_t;
+} _mpc_lowcomm_endpoint_info_ib_t;
 
 /* ib protocol used */
 typedef enum sctk_ib_protocol_e
@@ -199,13 +199,13 @@ typedef struct mpc_lowcomm_ib_tail_s
 } sctk_ib_msg_header_t;
 
 /* XXX: Should not be declared here but in CM */
-struct sctk_endpoint_s *sctk_ib_create_remote();
-void sctk_ib_init_remote(int dest, struct sctk_rail_info_s *rail, struct sctk_endpoint_s *route_table, int ondemand);
+struct _mpc_lowcomm_endpoint_s *sctk_ib_create_remote();
+void sctk_ib_init_remote(int dest, struct sctk_rail_info_s *rail, struct _mpc_lowcomm_endpoint_s *route_table, int ondemand);
 
-void sctk_ib_add_static_route(int dest, struct sctk_endpoint_s *tmp, struct sctk_rail_info_s *rail);
-void sctk_ib_add_dynamic_route(int dest, struct sctk_endpoint_s *tmp, struct sctk_rail_info_s *rail);
-int sctk_ib_route_dynamic_is_connected(struct sctk_endpoint_s *tmp);
-void sctk_ib_route_dynamic_set_connected(struct sctk_endpoint_s *tmp, int connected);
+void sctk_ib_add_static_route(int dest, struct _mpc_lowcomm_endpoint_s *tmp, struct sctk_rail_info_s *rail);
+void sctk_ib_add_dynamic_route(int dest, struct _mpc_lowcomm_endpoint_s *tmp, struct sctk_rail_info_s *rail);
+int sctk_ib_route_dynamic_is_connected(struct _mpc_lowcomm_endpoint_s *tmp);
+void sctk_ib_route_dynamic_set_connected(struct _mpc_lowcomm_endpoint_s *tmp, int connected);
 
 
 

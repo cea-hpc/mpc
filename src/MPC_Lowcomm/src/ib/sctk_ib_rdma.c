@@ -474,7 +474,7 @@ _mpc_lowcomm_ib_rdma_rendezvous_recv_req(sctk_rail_info_t *rail, _mpc_lowcomm_ib
 
 		/* Get the remote QP from the remote rail */
 		int src_process;
-		sctk_endpoint_t *route;
+		_mpc_lowcomm_endpoint_t *route;
 		src_process = msg->body.header.source;
 		assume(src_process != -1);
 		route = sctk_rail_get_any_route_to_process_or_on_demand(rdma->remote_rail,
@@ -596,7 +596,7 @@ void _mpc_lowcomm_ib_rdma_rendezvous_prepare_data_write(
 	sctk_ib_header_rdma_t *            rdma = &src_msg_header->tail.ib.rdma;
 	_mpc_lowcomm_ib_ibuf_t *           ibuf;
 
-	sctk_endpoint_t *route;
+	_mpc_lowcomm_endpoint_t *route;
 
 	route = sctk_rail_get_any_route_to_process_or_on_demand(
 		rdma->remote_rail, rdma->remote_peer->rank);
@@ -737,7 +737,7 @@ void _mpc_lowcomm_ib_rdma_write(sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_
 	LOAD_RAIL(rail);
 
 
-	sctk_endpoint_t *route = sctk_rail_get_any_route_to_process_or_on_demand(rail, SCTK_MSG_DEST_PROCESS(msg) );
+	_mpc_lowcomm_endpoint_t *route = sctk_rail_get_any_route_to_process_or_on_demand(rail, SCTK_MSG_DEST_PROCESS(msg) );
 
 	_mpc_lowcomm_ib_ibuf_t *ibuf = _mpc_lowcomm_ib_ibuf_pick_send_sr(rail_ib);
 	assume(ibuf);
@@ -771,7 +771,7 @@ void _mpc_lowcomm_ib_rdma_read(sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t
 	LOAD_RAIL(rail);
 
 
-	sctk_endpoint_t *route =
+	_mpc_lowcomm_endpoint_t *route =
 		sctk_rail_get_any_route_to_process_or_on_demand(
 			rail, SCTK_MSG_DEST_PROCESS(msg) );
 
@@ -819,7 +819,7 @@ void _mpc_lowcomm_ib_rdma_fetch_and_op(sctk_rail_info_t *rail,
 	}
 
 
-	sctk_endpoint_t *route = sctk_rail_get_any_route_to_process_or_on_demand(
+	_mpc_lowcomm_endpoint_t *route = sctk_rail_get_any_route_to_process_or_on_demand(
 		rail, SCTK_MSG_DEST_PROCESS(msg) );
 
 	_mpc_lowcomm_ib_ibuf_t *ibuf = _mpc_lowcomm_ib_ibuf_pick_send_sr(rail_ib);
@@ -867,7 +867,7 @@ void _mpc_lowcomm_ib_rdma_cas(sctk_rail_info_t *rail,
 	}
 
 
-	sctk_endpoint_t *route =
+	_mpc_lowcomm_endpoint_t *route =
 		sctk_rail_get_any_route_to_process_or_on_demand(
 			rail, SCTK_MSG_DEST_PROCESS(msg) );
 

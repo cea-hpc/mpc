@@ -1,16 +1,17 @@
 #include <mpc_common_debug.h>
 #include <mpc_config.h>
-#include "sctk_route.h"
+#include "endpoint.h"
 #include "mpc_launch_pmi.h"
 #include <mpc_launch_shm.h>
 #include "sctk_alloc.h"
 
 #include <sctk_net_tools.h>
-#include <sctk_route.h>
 #include "sctk_shm_raw_queues.h"
 #include "sctk_shm.h"
 #include "utlist.h"
 #include "sctk_shm_raw_queues_internals.h"
+
+#include "sctk_rail.h"
 
 #include <mpc_common_rank.h>
 
@@ -172,7 +173,7 @@ sctk_network_send_message_from_pending_shm_list(void)
 }
 
 static void
-sctk_network_send_message_endpoint_shm(mpc_lowcomm_ptp_message_t *msg, sctk_endpoint_t *endpoint)
+sctk_network_send_message_endpoint_shm(mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint)
 {
 	sctk_network_send_message_dest_shm(msg, endpoint->data.shm.dest, 1);
 }
@@ -292,13 +293,13 @@ sctk_network_notify_any_source_message_shm(__UNUSED__ int polling_task_id, __UNU
 
 static void sctk_shm_add_route(int dest, int shm_dest, sctk_rail_info_t *rail)
 {
-	sctk_endpoint_t *new_route;
+	_mpc_lowcomm_endpoint_t *new_route;
 
 	/* Allocate a new route */
-	new_route = sctk_malloc(sizeof(sctk_endpoint_t) );
+	new_route = sctk_malloc(sizeof(_mpc_lowcomm_endpoint_t) );
 	assume(new_route != NULL);
 
-	sctk_endpoint_init(new_route, dest, rail, ROUTE_ORIGIN_STATIC);
+	_mpc_lowcomm_endpoint_init(new_route, dest, rail, _MPC_LOWCOMM_ENDPOINT_STATIC);
 
 	new_route->data.shm.dest = shm_dest;
 
@@ -306,7 +307,7 @@ static void sctk_shm_add_route(int dest, int shm_dest, sctk_rail_info_t *rail)
 	sctk_rail_add_static_route(rail, new_route);
 
 	/* set the route as connected */
-	sctk_endpoint_set_state(new_route, STATE_CONNECTED);
+	_mpc_lowcomm_endpoint_set_state(new_route, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
 
 	//fprintf(stdout, "Add route to %d with endpoint %d\n", dest, shm_dest);
 	return;

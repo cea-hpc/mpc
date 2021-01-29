@@ -36,34 +36,34 @@
 #include <netdb.h>
 #include <mpc_common_spinlock.h>
 #include <sctk_net_tools.h>
-#include <sctk_route.h>
 #include <sctk_ib.h>
 #include <sctk_ib_qp.h>
 #include <sctk_ib_cp.h>
 #include <sctk_ib_toolkit.h>
 #include <sctk_ib_rdma.h>
 #include <sctk_ib_eager.h>
-#include <sctk_route.h>
+
+#include "sctk_rail.h"
 #include <sctk_ibufs_rdma.h>
 #include <mpc_common_helper.h>
 #include <sctk_alloc.h>
 
 
 /* Initialize a new route table */
-void sctk_ib_init_remote ( int dest, sctk_rail_info_t *rail, struct sctk_endpoint_s *route_table, int ondemand )
+void sctk_ib_init_remote ( int dest, sctk_rail_info_t *rail, struct _mpc_lowcomm_endpoint_s *route_table, int ondemand )
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-	sctk_ib_route_info_t *route_ib;
+	_mpc_lowcomm_endpoint_info_ib_t *route_ib;
 
 	/* Init endpoint */
-	sctk_route_origin_t origin = ROUTE_ORIGIN_STATIC;
+	_mpc_lowcomm_endpoint_type_t origin = _MPC_LOWCOMM_ENDPOINT_STATIC;
 	
 	if( ondemand )
 	{
-		 origin = ROUTE_ORIGIN_DYNAMIC;
+		 origin = _MPC_LOWCOMM_ENDPOINT_DYNAMIC;
 	}
 		
-	sctk_endpoint_init( route_table,  dest, rail, origin );
+	_mpc_lowcomm_endpoint_init( route_table,  dest, rail, origin );
 
 	/* Fill IB dependent CTX */
 
@@ -79,12 +79,12 @@ void sctk_ib_init_remote ( int dest, sctk_rail_info_t *rail, struct sctk_endpoin
 }
 
 /* Create a new route table */
-sctk_endpoint_t * sctk_ib_create_remote()
+_mpc_lowcomm_endpoint_t * sctk_ib_create_remote()
 {
-	sctk_endpoint_t *tmp;
+	_mpc_lowcomm_endpoint_t *tmp;
 
 
-	tmp = sctk_malloc ( sizeof ( sctk_endpoint_t ) );
+	tmp = sctk_malloc ( sizeof ( _mpc_lowcomm_endpoint_t ) );
 
 	assume( tmp != NULL );
 

@@ -26,7 +26,7 @@
 
 #include <sctk_alloc.h>
 #include <sctk_rail.h>
-#include <sctk_route.h>
+#include "endpoint.h"
 #include <sctk_net_tools.h>
 #include <mpc_common_spinlock.h>
 #include <sctk_control_messages.h>
@@ -126,7 +126,7 @@ static inline void __mpc_lowcomm_ofi_msg_post_recv(mpc_lowcomm_ofi_ep_t* ep_ctx)
  * @param infos actual infos used to initialize a fabric endpoint (content depends on the 'side' parameter)
  * @return mpc_lowcomm_ofi_ep_t* the newly allocated context for the created endpoint/route
  */
-static inline mpc_lowcomm_ofi_ep_t* __mpc_lowcomm_ofi_register_endpoint(sctk_rail_info_t* rail, int remote, int side, sctk_route_origin_t origin, char* infos)
+static inline mpc_lowcomm_ofi_ep_t* __mpc_lowcomm_ofi_register_endpoint(sctk_rail_info_t* rail, int remote, int side, _mpc_lowcomm_endpoint_type_t origin, char* infos)
 {
 	assert(rail);
 	assert(remote >= 0 && remote !=  mpc_common_get_process_rank());
@@ -202,7 +202,7 @@ static inline mpc_lowcomm_ofi_ep_t* __mpc_lowcomm_ofi_register_endpoint(sctk_rai
 	fi_poll_add(orail->spec.msg.cq_recv_pollset, &cq_recv->fid, 0);
 	mpc_common_spinlock_write_unlock(&orail->spec.msg.pollset_lock);
 
-	ep_ctx->sctk_ep = mpc_lowcomm_ofi_add_route(remote, ep_ctx, rail, origin, STATE_CONNECTING);
+	ep_ctx->sctk_ep = mpc_lowcomm_ofi_add_route(remote, ep_ctx, rail, origin, _MPC_LOWCOMM_ENDPOINT_CONNECTING);
 	return ep_ctx;
 }
 
@@ -232,20 +232,20 @@ static inline mpc_lowcomm_ofi_ep_t* __mpc_lowcomm_ofi_poll_eq(sctk_rail_info_t* 
 			{
 				/* retrieve the remote rank ID for this connection request (written in immediata data) */
 				int remote_rank = *((int*)entry->data);
-				ep_new = __mpc_lowcomm_ofi_register_endpoint(rail, remote_rank, MPC_LOWCOMM_OFI_PASSIVE_SIDE, ROUTE_ORIGIN_DYNAMIC, (char*)entry->info);
+				ep_new = __mpc_lowcomm_ofi_register_endpoint(rail, remote_rank, MPC_LOWCOMM_OFI_PASSIVE_SIDE, _MPC_LOWCOMM_ENDPOINT_DYNAMIC, (char*)entry->info);
 				break;
 			}
 			case FI_CONNECTED: /* the endpoint can be now enabled */
 			{
 				/* both the passive and active side receive such event. As the behavior for handling immediate data
-				is different, we are not relying on it. A connection should already be pending (STATE_CONNECTING).
+				is different, we are not relying on it. A connection should already be pending (_MPC_LOWCOMM_ENDPOINT_CONNECTING).
 				By retrieving the endpoint, we just set the route as usable now
 				*/
 				mpc_lowcomm_ofi_ep_t* ep_ctx = (mpc_lowcomm_ofi_ep_t*)entry->fid->context;
-				sctk_endpoint_t* ep = (sctk_endpoint_t*)ep_ctx->sctk_ep;
+				_mpc_lowcomm_endpoint_t* ep = (_mpc_lowcomm_endpoint_t*)ep_ctx->sctk_ep;
 				/* post a first recv() to be able to poll new event for incoming msgs */
 				__mpc_lowcomm_ofi_msg_post_recv(ep_ctx);
-				sctk_endpoint_set_state(ep, STATE_CONNECTED);
+				_mpc_lowcomm_endpoint_set_state(ep, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
 				__mpc_lowcomm_ofi_set_ctx_from_process_rank(ep->dest, ep_ctx);
 				break;
 			}
@@ -451,7 +451,7 @@ static inline void __sctk_network_ofi_bootstrap(sctk_rail_info_t* rail)
 	{
 		assume ( mpc_launch_pmi_get_as_rank ( (char *)raw_connection_infos, MPC_COMMON_MAX_STRING_SIZE, rail->rail_number, right_rank ) == 0 );
 		connection_infos = mpc_common_datastructure_base64_decode((unsigned char*)raw_connection_infos, strlen((char*)raw_connection_infos), NULL);
-		ctx_connect = __mpc_lowcomm_ofi_register_endpoint(rail, right_rank, MPC_LOWCOMM_OFI_ACTIVE_SIDE, ROUTE_ORIGIN_STATIC, (char*)connection_infos);
+		ctx_connect = __mpc_lowcomm_ofi_register_endpoint(rail, right_rank, MPC_LOWCOMM_OFI_ACTIVE_SIDE, _MPC_LOWCOMM_ENDPOINT_STATIC, (char*)connection_infos);
 		sctk_free(connection_infos);
 	}
 
@@ -470,8 +470,8 @@ static inline void __sctk_network_ofi_bootstrap(sctk_rail_info_t* rail)
 	{
 		(void) __mpc_lowcomm_ofi_poll_eq(rail);
 	}
-	while((	ctx_connect && sctk_endpoint_get_state((sctk_endpoint_t*)ctx_connect->sctk_ep) != STATE_CONNECTED) ||
-		(	ctx_accept  && sctk_endpoint_get_state((sctk_endpoint_t*)ctx_accept->sctk_ep) != STATE_CONNECTED));
+	while((	ctx_connect && _mpc_lowcomm_endpoint_get_state((_mpc_lowcomm_endpoint_t*)ctx_connect->sctk_ep) != _MPC_LOWCOMM_ENDPOINT_CONNECTED) ||
+		(	ctx_accept  && _mpc_lowcomm_endpoint_get_state((_mpc_lowcomm_endpoint_t*)ctx_accept->sctk_ep) != _MPC_LOWCOMM_ENDPOINT_CONNECTED));
 	
 	/* the ring need to be fully initialized before continuing...
 	 * Could this be replaced with a OFI-based barrier ? 
@@ -486,7 +486,7 @@ static inline void __sctk_network_ofi_bootstrap(sctk_rail_info_t* rail)
  * @param msg the MPC message to send.
  * @param endpoint the endpoint elected by the low_level_comm to be used for the transfer
  */
-static void sctk_network_send_message_endpoint_ofi_msg ( mpc_lowcomm_ptp_message_t *msg, sctk_endpoint_t *endpoint )
+static void sctk_network_send_message_endpoint_ofi_msg ( mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint )
 {
 	assert(endpoint);
 	assert(msg);
@@ -631,10 +631,10 @@ void mpc_lowcomm_ofi_msg_on_demand_handler( sctk_rail_info_t *rail, int dest_pro
 	/* initiate a new connection attempt to the remote side */
 	assume ( mpc_launch_pmi_get_as_rank ((char *)raw_connection_infos, MPC_COMMON_MAX_STRING_SIZE, rail->rail_number, dest_process ) == 0 );
 	connection_infos = mpc_common_datastructure_base64_decode(raw_connection_infos, strlen((char*)raw_connection_infos), NULL);
-	ep_ctx = __mpc_lowcomm_ofi_register_endpoint(rail, dest_process, MPC_LOWCOMM_OFI_ACTIVE_SIDE, ROUTE_ORIGIN_DYNAMIC, (char*)connection_infos);
+	ep_ctx = __mpc_lowcomm_ofi_register_endpoint(rail, dest_process, MPC_LOWCOMM_OFI_ACTIVE_SIDE, _MPC_LOWCOMM_ENDPOINT_DYNAMIC, (char*)connection_infos);
 	
 	/* Wait for route completion, this function cannot be exited without this guarantee... */
-	while(sctk_endpoint_get_state((sctk_endpoint_t*)ep_ctx->sctk_ep) != STATE_CONNECTED)
+	while(_mpc_lowcomm_endpoint_get_state((_mpc_lowcomm_endpoint_t*)ep_ctx->sctk_ep) != _MPC_LOWCOMM_ENDPOINT_CONNECTED)
 	{
 		mpc_thread_yield();
 	}

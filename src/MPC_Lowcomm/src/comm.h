@@ -75,7 +75,6 @@ static inline int _mpc_comm_ptp_message_is_for_process( mpc_lowcomm_ptp_message_
 		case MPC_LOWCOMM_ALLREDUCE_OFFLOAD_MESSAGE:
 		case MPC_LOWCOMM_CONTROL_MESSAGE_RAIL:
 		case MPC_LOWCOMM_CONTROL_MESSAGE_PROCESS:
-		case MPC_LOWCOMM_CONTROL_MESSAGE_USER:
 			return 1;
 
 		case MPC_LOWCOMM_MESSAGE_CLASS_COUNT:
@@ -114,7 +113,6 @@ static inline int _mpc_comm_ptp_message_is_for_control( mpc_lowcomm_ptp_message_
 		case MPC_LOWCOMM_CONTROL_MESSAGE_TASK:
 		case MPC_LOWCOMM_CONTROL_MESSAGE_RAIL:
 		case MPC_LOWCOMM_CONTROL_MESSAGE_PROCESS:
-		case MPC_LOWCOMM_CONTROL_MESSAGE_USER:
 			return 1;
 
 		case MPC_LOWCOMM_MESSAGE_CLASS_COUNT:

@@ -25,19 +25,6 @@
 
 #include <comm.h>
 
-
-/************************************************************************/
-/* Control Messages Types                                               */
-/************************************************************************/
-
-/** This is the context of the control message engine */
-struct sctk_control_message_context
-{
-	void (*sctk_user_control_message)( int source_process, int source_rank, char subtype, char param, void * data, size_t size ); /**< This function is called when the application has registered a function */
-};
-
-void sctk_control_message_context_set_user( void (*fn)( int , int , char , char , void * , size_t ) );
-
 /************************************************************************/
 /* Process Level Control messages                                       */
 /************************************************************************/

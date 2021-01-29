@@ -19,15 +19,18 @@
 /* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include <sctk_route.h>
 #include "sctk_topological_rail.h"
+
+
 #include <mpc_common_rank.h>
 #include <mpc_topology.h>
 #include <sctk_multirail.h>
 
 #include <sctk_alloc.h>
 
-sctk_endpoint_t * sctk_topological_rail_ellect_endpoint( int remote , mpc_lowcomm_ptp_message_t *msg, sctk_endpoint_t *endpoint )
+#include "sctk_rail.h"
+
+_mpc_lowcomm_endpoint_t * sctk_topological_rail_ellect_endpoint( int remote , mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint )
 {
 	int vp_id = mpc_topology_get_pu();
 	
@@ -63,10 +66,10 @@ sctk_endpoint_t * sctk_topological_rail_ellect_endpoint( int remote , mpc_lowcom
 		/* Here the first endpoint is not the topological
 		 * one, we have to look in the topological rail
 		 * to see if this endpoint exists */
-		sctk_endpoint_t * topological_endpoint = sctk_rail_get_any_route_to_process ( topological_rail, remote );
+		_mpc_lowcomm_endpoint_t * topological_endpoint = sctk_rail_get_any_route_to_process ( topological_rail, remote );
 		
 		/* Did we find one ? Is it connected yet ? */
-		if( sctk_endpoint_get_state( topological_endpoint ) == STATE_CONNECTED )
+		if( _mpc_lowcomm_endpoint_get_state( topological_endpoint ) == _MPC_LOWCOMM_ENDPOINT_CONNECTED )
 		{
 			/* YES Send through it */
 			return topological_endpoint;
@@ -99,9 +102,9 @@ sctk_endpoint_t * sctk_topological_rail_ellect_endpoint( int remote , mpc_lowcom
 
 
 
-static void sctk_network_send_message_endpoint_topological ( mpc_lowcomm_ptp_message_t *msg, sctk_endpoint_t *endpoint )
+static void sctk_network_send_message_endpoint_topological ( mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint )
 {
-	sctk_endpoint_t * topo_endpoint = sctk_topological_rail_ellect_endpoint( SCTK_MSG_DEST_PROCESS( msg ) , msg, endpoint );
+	_mpc_lowcomm_endpoint_t * topo_endpoint = sctk_topological_rail_ellect_endpoint( SCTK_MSG_DEST_PROCESS( msg ) , msg, endpoint );
 	
 	assume( topo_endpoint != NULL );
 	
@@ -417,7 +420,7 @@ void sctk_topological_rail_rdma_write(
     sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg, void *src_addr,
     struct sctk_rail_pin_ctx_list *local_key, void *dest_addr,
     struct sctk_rail_pin_ctx_list *remote_key, size_t size) {
-  sctk_endpoint_t *topo_endpoint =
+  _mpc_lowcomm_endpoint_t *topo_endpoint =
       sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS(msg));
 
   if (!topo_endpoint) {
@@ -451,7 +454,7 @@ void sctk_topological_rail_rdma_read(   sctk_rail_info_t *rail, mpc_lowcomm_ptp_
                          void * dest_addr, struct  sctk_rail_pin_ctx_list * local_key,
                          size_t size )
 {
-  sctk_endpoint_t *topo_endpoint =
+  _mpc_lowcomm_endpoint_t *topo_endpoint =
       sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS(msg));
 
   if (!topo_endpoint) {
@@ -490,7 +493,7 @@ void sctk_topological_rail_rdma_fetch_and_op(   sctk_rail_info_t *rail,
 												RDMA_op op,
 												RDMA_type type )
 {
-  sctk_endpoint_t *topo_endpoint =
+  _mpc_lowcomm_endpoint_t *topo_endpoint =
       sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS(msg));
 
   if (!topo_endpoint) {
@@ -529,7 +532,7 @@ void sctk_topological_rail_cas(   sctk_rail_info_t *rail,
 								  void * new,
 								  RDMA_type type )
 {
-  sctk_endpoint_t *topo_endpoint =
+  _mpc_lowcomm_endpoint_t *topo_endpoint =
       sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS(msg));
 
   if (!topo_endpoint) {

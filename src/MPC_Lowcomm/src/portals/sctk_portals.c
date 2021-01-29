@@ -27,7 +27,7 @@
 #include "sctk_ptl_toolkit.h"
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_rdma.h"
-#include "sctk_route.h"
+#include "endpoint.h"
 
 #include <mpc_common_types.h>
 #include <mpc_common_rank.h>
@@ -40,7 +40,7 @@ static volatile short rail_is_ready = 0;
  * @param[in,out] msg message to send
  * @param[in]  endpoint connection handler to take for routing
  */
-static void sctk_network_send_message_endpoint_ptl ( mpc_lowcomm_ptp_message_t *msg, sctk_endpoint_t *endpoint )
+static void sctk_network_send_message_endpoint_ptl ( mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint )
 {
 	sctk_ptl_send_message(msg, endpoint);
 }
@@ -190,7 +190,7 @@ void sctk_network_initialize_task_ptl(sctk_rail_info_t* rail, int taskid, int vp
 static void sctk_network_connect_on_demand_ptl ( struct sctk_rail_info_s * rail , int dest )
 {
 	sctk_ptl_id_t id = sctk_ptl_map_id(rail, dest);
-	sctk_ptl_add_route(dest, id, rail, ROUTE_ORIGIN_DYNAMIC, STATE_CONNECTED);
+	sctk_ptl_add_route(dest, id, rail, _MPC_LOWCOMM_ENDPOINT_DYNAMIC, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
 }
 
 /**

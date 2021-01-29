@@ -24,7 +24,7 @@
 #include "ofi_toolkit.h"
 #include "ofi_rdma_types.h"
 #include <sctk_rail.h>
-#include <sctk_route.h>
+
 #include <sctk_net_tools.h>
 #include <mpc_common_spinlock.h>
 #include <mpc_common_datastructure.h>
@@ -125,7 +125,7 @@ static inline void __mpc_lowcomm_ofi_rdv_message_copy(mpc_lowcomm_ptp_message_co
 }
 
 
-static inline mpc_lowcomm_ofi_ep_t* __mpc_lowcomm_ofi_rdma_register_endpoint(sctk_rail_info_t* rail, int remote, sctk_route_origin_t origin, char* infos)
+static inline mpc_lowcomm_ofi_ep_t* __mpc_lowcomm_ofi_rdma_register_endpoint(sctk_rail_info_t* rail, int remote, _mpc_lowcomm_endpoint_type_t origin, char* infos)
 {
 	mpc_lowcomm_ofi_ep_t* ctx = sctk_malloc(sizeof(mpc_lowcomm_ofi_ep_t));
 	*ctx = (mpc_lowcomm_ofi_ep_t)
@@ -139,7 +139,7 @@ static inline mpc_lowcomm_ofi_ep_t* __mpc_lowcomm_ofi_rdma_register_endpoint(sct
 	MPC_LOWCOMM_OFI_CHECK_RC(fi_av_insert(rail->network.ofi.spec.rdma.av, infos, 1, &ctx->spec.rdma.av_root, 0, NULL));
 	__mpc_lowcomm_ofi_rdma_set_peer(remote, ctx->spec.rdma.av_root);
 
-	ctx->sctk_ep = mpc_lowcomm_ofi_add_route(remote, ctx, rail, origin, STATE_CONNECTED);
+	ctx->sctk_ep = mpc_lowcomm_ofi_add_route(remote, ctx, rail, origin, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
 	return ctx;
 }
 
@@ -271,14 +271,14 @@ static inline void __sctk_network_ofi_rdma_bootstrap(sctk_rail_info_t* rail)
 	{
 		assume ( mpc_launch_pmi_get_as_rank ((char *)raw_connection_infos, MPC_COMMON_MAX_STRING_SIZE, rail->rail_number, right_rank ) == 0 );
 		connection_infos = mpc_common_datastructure_base64_decode((unsigned char*)raw_connection_infos, strlen((char*)raw_connection_infos), NULL);
-		__mpc_lowcomm_ofi_rdma_register_endpoint(rail, right_rank, ROUTE_ORIGIN_STATIC, (char*)connection_infos);
+		__mpc_lowcomm_ofi_rdma_register_endpoint(rail, right_rank, _MPC_LOWCOMM_ENDPOINT_STATIC, (char*)connection_infos);
 		sctk_free(connection_infos);
 	}
 	if(need_left)
 	{
 		assume ( mpc_launch_pmi_get_as_rank ((char *)raw_connection_infos, MPC_COMMON_MAX_STRING_SIZE, rail->rail_number, left_rank ) == 0 );
 		connection_infos = mpc_common_datastructure_base64_decode((unsigned char*)raw_connection_infos, strlen((char*)raw_connection_infos), NULL);
-		__mpc_lowcomm_ofi_rdma_register_endpoint(rail, left_rank, ROUTE_ORIGIN_STATIC, (char*)connection_infos);
+		__mpc_lowcomm_ofi_rdma_register_endpoint(rail, left_rank, _MPC_LOWCOMM_ENDPOINT_STATIC, (char*)connection_infos);
 		sctk_free(connection_infos);
 	}
 
@@ -291,7 +291,7 @@ static inline void __sctk_network_ofi_rdma_bootstrap(sctk_rail_info_t* rail)
  * \param[in] msg the message to send
  * \param[in] endpoint the route to use
  */
-static void sctk_network_send_message_endpoint_ofi_rdma ( mpc_lowcomm_ptp_message_t *msg, sctk_endpoint_t *endpoint )
+static void sctk_network_send_message_endpoint_ofi_rdma ( mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint )
 {
 	mpc_lowcomm_ofi_rail_info_t* orail = &endpoint->rail->network.ofi;
 	fi_addr_t remote = FI_ADDR_UNSPEC;
@@ -510,7 +510,7 @@ void mpc_lowcomm_ofi_rdma_on_demand_handler( sctk_rail_info_t *rail, int dest_pr
 	/* initiate a new connection attempt to the remote side */
 	assume ( mpc_launch_pmi_get_as_rank ((char *)raw_connection_infos, MPC_COMMON_MAX_STRING_SIZE, rail->rail_number, dest_process ) == 0 );
 	connection_infos = mpc_common_datastructure_base64_decode(raw_connection_infos, strlen((char*)raw_connection_infos), NULL);
-	__mpc_lowcomm_ofi_rdma_register_endpoint(rail, dest_process, ROUTE_ORIGIN_DYNAMIC, (char*)connection_infos);
+	__mpc_lowcomm_ofi_rdma_register_endpoint(rail, dest_process, _MPC_LOWCOMM_ENDPOINT_DYNAMIC, (char*)connection_infos);
 }
 
 void sctk_network_ofi_rdma_control_message_handler( __UNUSED__ struct sctk_rail_info_s * rail, __UNUSED__ int source_process, __UNUSED__ int source_rank, __UNUSED__ char subtype, __UNUSED__ char param, __UNUSED__ void * data, __UNUSED__ size_t size )

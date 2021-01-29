@@ -26,6 +26,7 @@
 
 #include <sctk_alloc.h>
 
+
 /************************************************************************/
 /* Rail Gates                                                           */
 /************************************************************************/
@@ -152,10 +153,10 @@ static inline void sctk_gate_get_context( struct _mpc_lowcomm_config_struct_net_
 }
 
 /************************************************************************/
-/* sctk_endpoint_list                                                   */
+/* _mpc_lowcomm_endpoint_list                                                   */
 /************************************************************************/
 
-int sctk_endpoint_list_init_entry( sctk_endpoint_list_t * entry, sctk_endpoint_t * endpoint )
+int _mpc_lowcomm_endpoint_list_init_entry( _mpc_lowcomm_endpoint_list_t * entry, _mpc_lowcomm_endpoint_t * endpoint )
 {
 	if( !endpoint )
 	{
@@ -184,13 +185,13 @@ int sctk_endpoint_list_init_entry( sctk_endpoint_list_t * entry, sctk_endpoint_t
 }
 
 
-sctk_endpoint_list_t * sctk_endpoint_list_new_entry( sctk_endpoint_t * endpoint )
+_mpc_lowcomm_endpoint_list_t * _mpc_lowcomm_endpoint_list_new_entry( _mpc_lowcomm_endpoint_t * endpoint )
 {
-	sctk_endpoint_list_t *  ret = sctk_malloc( sizeof( sctk_endpoint_list_t ) );
+	_mpc_lowcomm_endpoint_list_t *  ret = sctk_malloc( sizeof( _mpc_lowcomm_endpoint_list_t ) );
 	
 	assume( ret != NULL );
 	
-	if( sctk_endpoint_list_init_entry( ret, endpoint ) )
+	if( _mpc_lowcomm_endpoint_list_init_entry( ret, endpoint ) )
 	{
 		sctk_free( ret );
 		return NULL;
@@ -200,10 +201,10 @@ sctk_endpoint_list_t * sctk_endpoint_list_new_entry( sctk_endpoint_t * endpoint 
 }
 
 
-sctk_endpoint_list_t * sctk_endpoint_list_push( sctk_endpoint_list_t * list, sctk_endpoint_t * endpoint )
+_mpc_lowcomm_endpoint_list_t * _mpc_lowcomm_endpoint_list_push( _mpc_lowcomm_endpoint_list_t * list, _mpc_lowcomm_endpoint_t * endpoint )
 {
-	sctk_endpoint_list_t * table_start = list;
-	sctk_endpoint_list_t * new = sctk_endpoint_list_new_entry( endpoint );
+	_mpc_lowcomm_endpoint_list_t * table_start = list;
+	_mpc_lowcomm_endpoint_list_t * new = _mpc_lowcomm_endpoint_list_new_entry( endpoint );
 
 	if( !new )
 	{
@@ -211,7 +212,7 @@ sctk_endpoint_list_t * sctk_endpoint_list_push( sctk_endpoint_list_t * list, sct
 		return list;
 	}
 	
-	sctk_endpoint_list_t * insertion_point = table_start;
+	_mpc_lowcomm_endpoint_list_t * insertion_point = table_start;
 	
 	/* If list already contains elements */
 	if( insertion_point )
@@ -273,9 +274,9 @@ sctk_endpoint_list_t * sctk_endpoint_list_push( sctk_endpoint_list_t * list, sct
 	return table_start;
 }
 
-sctk_endpoint_list_t * sctk_endpoint_list_pop( sctk_endpoint_list_t * list, sctk_endpoint_list_t * topop )
+_mpc_lowcomm_endpoint_list_t * _mpc_lowcomm_endpoint_list_pop( _mpc_lowcomm_endpoint_list_t * list, _mpc_lowcomm_endpoint_list_t * topop )
 {
-	sctk_endpoint_list_t * table_start = list;
+	_mpc_lowcomm_endpoint_list_t * table_start = list;
 	
 	if( topop->prev )
 	{
@@ -292,14 +293,14 @@ sctk_endpoint_list_t * sctk_endpoint_list_pop( sctk_endpoint_list_t * list, sctk
 		topop->next->prev = topop->prev;
 	}
 	
-	sctk_endpoint_list_free_entry( topop );
+	_mpc_lowcomm_endpoint_list_free_entry( topop );
 	
 	return table_start;
 }
 
-sctk_endpoint_list_t * sctk_endpoint_list_pop_endpoint( sctk_endpoint_list_t * list, sctk_endpoint_t * topop )
+_mpc_lowcomm_endpoint_list_t * _mpc_lowcomm_endpoint_list_pop_endpoint( _mpc_lowcomm_endpoint_list_t * list, _mpc_lowcomm_endpoint_t * topop )
 {
-	sctk_endpoint_list_t * topop_list_entry = NULL;
+	_mpc_lowcomm_endpoint_list_t * topop_list_entry = NULL;
 	
 	while( list )
 	{
@@ -316,39 +317,39 @@ sctk_endpoint_list_t * sctk_endpoint_list_pop_endpoint( sctk_endpoint_list_t * l
 		return list;
 	}
 	
-	return sctk_endpoint_list_pop( list, topop_list_entry );
+	return _mpc_lowcomm_endpoint_list_pop( list, topop_list_entry );
 }
 
-void sctk_endpoint_list_free_entry( sctk_endpoint_list_t * entry )
+void _mpc_lowcomm_endpoint_list_free_entry( _mpc_lowcomm_endpoint_list_t * entry )
 {
 	if( ! entry )
 		return;
 	
-	memset( entry, 0, sizeof( sctk_endpoint_list_t) );
+	memset( entry, 0, sizeof( _mpc_lowcomm_endpoint_list_t) );
 	/* Release the entry */
 	sctk_free( entry );
 }
 
-void sctk_endpoint_list_release( sctk_endpoint_list_t ** list )
+void _mpc_lowcomm_endpoint_list_release( _mpc_lowcomm_endpoint_list_t ** list )
 {
-	sctk_endpoint_list_t * tofree = NULL;
-	sctk_endpoint_list_t * head = *list;
+	_mpc_lowcomm_endpoint_list_t * tofree = NULL;
+	_mpc_lowcomm_endpoint_list_t * head = *list;
 
 	while( head )
 	{
 		tofree = head;
 		head = head->next;
-		sctk_endpoint_list_free_entry( tofree );
+		_mpc_lowcomm_endpoint_list_free_entry( tofree );
 	};
 
 	*list = NULL;
 }
 
-void sctk_endpoint_list_prune( sctk_endpoint_list_t ** list)
+void _mpc_lowcomm_endpoint_list_prune( _mpc_lowcomm_endpoint_list_t ** list)
 {
-	sctk_endpoint_list_t *entry = *list;
-	sctk_endpoint_list_t *tofree = NULL;
-	sctk_endpoint_t *route;
+	_mpc_lowcomm_endpoint_list_t *entry = *list;
+	_mpc_lowcomm_endpoint_list_t *tofree = NULL;
+	_mpc_lowcomm_endpoint_t *route;
 
 	while( entry )
 	{
@@ -359,7 +360,7 @@ void sctk_endpoint_list_prune( sctk_endpoint_list_t ** list)
 		
 		if(route->rail->state == SCTK_RAIL_ST_DISABLED)
 		{
-			*list = sctk_endpoint_list_pop(*list, tofree);
+			*list = _mpc_lowcomm_endpoint_list_pop(*list, tofree);
 		}
 	}
 }
@@ -384,7 +385,7 @@ void sctk_multirail_destination_table_entry_release( sctk_multirail_destination_
 	/* Make sure that we are not acquired */
 	mpc_common_spinlock_write_lock( &entry->endpoints_lock );
 	
-	sctk_endpoint_list_release( &entry->endpoints );
+	_mpc_lowcomm_endpoint_list_release( &entry->endpoints );
 	entry->destination = -1;
 }
 
@@ -397,7 +398,7 @@ void sctk_multirail_destination_table_entry_free( sctk_multirail_destination_tab
 void sctk_multirail_destination_table_entry_prune(sctk_multirail_destination_table_entry_t * entry)
 {
 	mpc_common_spinlock_write_lock(&entry->endpoints_lock);
-	sctk_endpoint_list_prune(&entry->endpoints);
+	_mpc_lowcomm_endpoint_list_prune(&entry->endpoints);
 	mpc_common_spinlock_write_unlock(&entry->endpoints_lock);
 }
 
@@ -412,17 +413,17 @@ sctk_multirail_destination_table_entry_t * sctk_multirail_destination_table_entr
 	return ret;
 }
 
-void sctk_multirail_destination_table_entry_push_endpoint( sctk_multirail_destination_table_entry_t * entry, sctk_endpoint_t * endpoint )
+void sctk_multirail_destination_table_entry_push_endpoint( sctk_multirail_destination_table_entry_t * entry, _mpc_lowcomm_endpoint_t * endpoint )
 {
 	mpc_common_spinlock_write_lock( &entry->endpoints_lock );
-	entry->endpoints =  sctk_endpoint_list_push( entry->endpoints, endpoint );
+	entry->endpoints =  _mpc_lowcomm_endpoint_list_push( entry->endpoints, endpoint );
 	mpc_common_spinlock_write_unlock( &entry->endpoints_lock );
 }
 
-void sctk_multirail_destination_table_entry_pop_endpoint( sctk_multirail_destination_table_entry_t * entry, sctk_endpoint_t * endpoint )
+void sctk_multirail_destination_table_entry_pop_endpoint( sctk_multirail_destination_table_entry_t * entry, _mpc_lowcomm_endpoint_t * endpoint )
 {
 	mpc_common_spinlock_write_lock( &entry->endpoints_lock );
-	entry->endpoints =  sctk_endpoint_list_pop_endpoint( entry->endpoints, endpoint );
+	entry->endpoints =  _mpc_lowcomm_endpoint_list_pop_endpoint( entry->endpoints, endpoint );
 	mpc_common_spinlock_write_unlock( &entry->endpoints_lock );
 }
 
@@ -455,13 +456,13 @@ static inline struct sctk_multirail_destination_table * sctk_multirail_destinati
  * \param[in] ext_routes route array to iterate with (will be locked).
  * \return a pointer to the matching route, NULL otherwise (the route lock will NOT be hold in case of match)
  */
-sctk_endpoint_t * sctk_multirail_ellect_endpoint( mpc_lowcomm_ptp_message_t *msg, int destination_process, int is_process_specific, int is_for_on_demand, sctk_multirail_destination_table_entry_t ** ext_routes )
+_mpc_lowcomm_endpoint_t * sctk_multirail_ellect_endpoint( mpc_lowcomm_ptp_message_t *msg, int destination_process, int is_process_specific, int is_for_on_demand, sctk_multirail_destination_table_entry_t ** ext_routes )
 {
 	
 	sctk_multirail_destination_table_entry_t * routes = sctk_multirail_destination_table_acquire_routes( destination_process );
 	*ext_routes = routes;
 
-	sctk_endpoint_list_t * cur = NULL;
+	_mpc_lowcomm_endpoint_list_t * cur = NULL;
 	
 	if( routes )
 	{
@@ -492,7 +493,7 @@ sctk_endpoint_t * sctk_multirail_ellect_endpoint( mpc_lowcomm_ptp_message_t *msg
 			 
 			do
 			{
-				if(  sctk_endpoint_get_state ( cur->endpoint ) == STATE_CONNECTING )
+				if(  _mpc_lowcomm_endpoint_get_state ( cur->endpoint ) == _MPC_LOWCOMM_ENDPOINT_CONNECTING )
 				{
 					wait_connecting = 1;
 					sctk_network_notify_idle_message ();
@@ -507,7 +508,7 @@ sctk_endpoint_t * sctk_multirail_ellect_endpoint( mpc_lowcomm_ptp_message_t *msg
 			
 			
 			/* Now that we wait for the connection only try an endpoint if it is connected */
-			if( sctk_endpoint_get_state ( cur->endpoint ) == STATE_CONNECTED )
+			if( _mpc_lowcomm_endpoint_get_state ( cur->endpoint ) == _MPC_LOWCOMM_ENDPOINT_CONNECTED )
 			{
 				/* Note that no gate is equivalent to being elected */
 				for( cur_gate = 0 ; cur_gate < cur->gate_count ; cur_gate++ )
@@ -599,7 +600,7 @@ void sctk_pending_on_demand_process()
 	while( pod )
 	{
 		/* Check if the endpoint exist in the rail */
-		sctk_endpoint_t * previous_endpoint = sctk_rail_get_any_route_to_process (  pod->rail, pod->dest );
+		_mpc_lowcomm_endpoint_t * previous_endpoint = sctk_rail_get_any_route_to_process (  pod->rail, pod->dest );
 		
 		/* No endpoint ? then its worth locking */
 		if( !previous_endpoint )
@@ -729,7 +730,7 @@ void sctk_multirail_on_demand_connection( mpc_lowcomm_ptp_message_t *msg )
 	/* First retry to acquire a route for on-demand
 	 * in order to avoid double connections */
 	sctk_multirail_destination_table_entry_t * routes = NULL;
-	sctk_endpoint_t * previous_endpoint = sctk_multirail_ellect_endpoint( msg, dest_process, 0 /* Not Process Specific */, 1 /* For On-Demand */ , &routes );
+	_mpc_lowcomm_endpoint_t * previous_endpoint = sctk_multirail_ellect_endpoint( msg, dest_process, 0 /* Not Process Specific */, 1 /* For On-Demand */ , &routes );
 
 	/* We need to relax the routes before pushing the endpoint as the new entry
 	 * will end in the same endpoint list */ 	
@@ -791,7 +792,7 @@ void sctk_multirail_send_message( mpc_lowcomm_ptp_message_t *msg )
 		 * able to relax it after use */
 		sctk_multirail_destination_table_entry_t * routes = NULL;
 		
-		sctk_endpoint_t * endpoint = sctk_multirail_ellect_endpoint( msg, destination_process, is_process_specific, 0 /* Not for On-Demand */ , &routes );
+		_mpc_lowcomm_endpoint_t * endpoint = sctk_multirail_ellect_endpoint( msg, destination_process, is_process_specific, 0 /* Not for On-Demand */ , &routes );
 		
 		if( endpoint )
 		{
@@ -1091,7 +1092,7 @@ void sctk_multirail_destination_table_relax_routes( sctk_multirail_destination_t
 	mpc_common_spinlock_read_unlock( &entry->endpoints_lock );
 }
 
-void sctk_multirail_destination_table_push_endpoint(sctk_endpoint_t * endpoint )
+void sctk_multirail_destination_table_push_endpoint(_mpc_lowcomm_endpoint_t * endpoint )
 {
 	struct sctk_multirail_destination_table * table = sctk_multirail_destination_table_get();
 	sctk_multirail_destination_table_entry_t * dest_entry = NULL;
@@ -1113,7 +1114,7 @@ void sctk_multirail_destination_table_push_endpoint(sctk_endpoint_t * endpoint )
 	
 }
 
-void sctk_multirail_destination_table_pop_endpoint( sctk_endpoint_t * topop )
+void sctk_multirail_destination_table_pop_endpoint( _mpc_lowcomm_endpoint_t * topop )
 {
 	struct sctk_multirail_destination_table * table = sctk_multirail_destination_table_get();
 	sctk_multirail_destination_table_entry_t * dest_entry = NULL;
@@ -1166,9 +1167,9 @@ void sctk_multirail_destination_table_route_to_process( int destination, int * n
 		if( entry->endpoints )
 		{
 			
-			mpc_common_nodebug("STATE %d == %d", entry->destination, sctk_endpoint_get_state ( entry->endpoints->endpoint ) );
+			mpc_common_nodebug("STATE %d == %d", entry->destination, _mpc_lowcomm_endpoint_get_state ( entry->endpoints->endpoint ) );
 	
-			if( sctk_endpoint_get_state ( entry->endpoints->endpoint ) == STATE_CONNECTED )
+			if( _mpc_lowcomm_endpoint_get_state ( entry->endpoints->endpoint ) == _MPC_LOWCOMM_ENDPOINT_CONNECTED )
 			{
 			
 				mpc_common_nodebug( " %d --- %d" , destination, entry->destination  );

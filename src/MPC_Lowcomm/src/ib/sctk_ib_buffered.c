@@ -25,13 +25,13 @@
 
 #include "sctk_ib.h"
 #include "sctk_ib_buffered.h"
-#include "sctk_route.h"
+#include "endpoint.h"
 #include "sctk_ib_qp.h"
 
 #include <sctk_net_tools.h>
 #include <sctk_alloc.h>
 
-
+#include "sctk_rail.h"
 /* XXX: Modifications required:
  * - copy in user buffer if the message has already been posted - DONE
  * - Support of fragmented copy
@@ -317,7 +317,7 @@ void _mpc_lowcomm_ib_buffered_poll_recv(sctk_rail_info_t *rail, _mpc_lowcomm_ib_
 	int src_process = body->header.source;
 	ib_assume(src_process != -1);
 	/* Determine if the message is expected or not (good sequence number) */
-	sctk_endpoint_t *route_table = sctk_rail_get_any_route_to_process(rail, src_process);
+	_mpc_lowcomm_endpoint_t *route_table = sctk_rail_get_any_route_to_process(rail, src_process);
 	ib_assume(route_table);
 	sctk_ib_qp_t * remote = route_table->data.ib.remote;
 

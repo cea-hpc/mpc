@@ -39,6 +39,8 @@
 #include <errno.h>
 #include <string.h>
 
+#include "sctk_rail.h"
+
 /* IB debug macros */
 #if defined MPC_LOWCOMM_IB_MODULE_NAME
 #error "MPC_LOWCOMM_IB_MODULE already defined"
@@ -517,7 +519,7 @@ struct ibv_qp_attr sctk_ib_qp_state_rts_attr ( struct sctk_ib_rail_info_s *rail_
 	return attr;
 }
 
-struct ibv_qp_attr sctk_ib_qp_STATE_RESET_attr ( int *flags )
+struct ibv_qp_attr sctk_ib_qp__MPC_LOWCOMM_ENDPOINT_RESET_attr ( int *flags )
 {
 	struct ibv_qp_attr attr;
 	memset ( &attr, 0, sizeof ( struct ibv_qp_attr ) );
@@ -628,7 +630,7 @@ char * sctk_ib_qp_print_state( struct ibv_qp *qp)
 /*-----------------------------------------------------------
  *  ALLOCATION
  *----------------------------------------------------------*/
-void sctk_ib_qp_allocate_init ( struct sctk_ib_rail_info_s *rail_ib, int rank, sctk_ib_qp_t *remote, int ondemand, sctk_endpoint_t *endpoint )
+void sctk_ib_qp_allocate_init ( struct sctk_ib_rail_info_s *rail_ib, int rank, sctk_ib_qp_t *remote, int ondemand, _mpc_lowcomm_endpoint_t *endpoint )
 {
 	LOAD_CONFIG ( rail_ib );
 	LOAD_DEVICE ( rail_ib );
@@ -719,7 +721,7 @@ void sctk_ib_qp_allocate_reset ( __UNUSED__ struct sctk_ib_rail_info_s *rail_ib,
 
 	int flags;
 
-	attr = sctk_ib_qp_STATE_RESET_attr ( &flags );
+	attr = sctk_ib_qp__MPC_LOWCOMM_ENDPOINT_RESET_attr ( &flags );
 	mpc_common_nodebug ( "Modify QR RESET for rank %d", remote->rank );
 	sctk_ib_qp_modify ( remote, &attr, flags );
 

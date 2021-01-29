@@ -28,7 +28,8 @@
 #include <mpc_launch.h>
 #include <mpc_common_flags.h>
 #include "sctk_ft_types.h"
-#include "sctk_multirail.h"
+
+#include "sctk_rail.h"
 
 #ifdef MPC_USE_DMTCP
 #include <dmtcp.h>

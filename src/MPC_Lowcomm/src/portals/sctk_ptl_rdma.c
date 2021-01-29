@@ -23,7 +23,7 @@
 /* ######################################################################## */
 
 #include "mpc_lowcomm_types.h"
-#include "sctk_route.h"
+#include "endpoint.h"
 #include "sctk_ptl_rdma.h"
 #include "sctk_ptl_iface.h"
 #include "mpc_common_asm.h"

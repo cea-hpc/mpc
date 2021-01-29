@@ -33,7 +33,7 @@
 #include "sctk_ib_topology.h"
 #include "sctk_ibufs_rdma.h"
 #include "utlist.h"
-
+#include "sctk_rail.h"
 #include <sctk_alloc.h>
 
 
@@ -626,19 +626,19 @@ _mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send(struct sctk_ib_rail_info_
 	_mpc_lowcomm_ib_ibuf_t *         ibuf = NULL;
 	size_t                s;
 	size_t                limit;
-	sctk_endpoint_state_t state;
+	_mpc_lowcomm_endpoint_state_t state;
 
 	s = *size;
 	/***** RDMA CHANNEL *****/
 	state = _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts(remote);
 
-	if(state == STATE_CONNECTED)
+	if(state == _MPC_LOWCOMM_ENDPOINT_CONNECTED)
 	{
 		/* Double lock checking */
 		mpc_common_spinlock_lock(&remote->rdma.flushing_lock);
 		state = _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts(remote);
 
-		if(state == STATE_CONNECTED)
+		if(state == _MPC_LOWCOMM_ENDPOINT_CONNECTED)
 		{
 			/* WARNING: 'free_nb' must be decremented just after
 			 * checking the state of the RDMA buffer. */
@@ -664,9 +664,9 @@ _mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send(struct sctk_ib_rail_info_
 				{
 					mpc_common_nodebug("Picking from RDMA %d", ibuf->index);
 #ifdef DEBUG_IB_BUFS
-					sctk_endpoint_state_t state = _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts(remote);
+					_mpc_lowcomm_endpoint_state_t state = _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts(remote);
 
-					if( (state != STATE_CONNECTED) && (state != STATE_FLUSHING) )
+					if( (state != _MPC_LOWCOMM_ENDPOINT_CONNECTED) && (state != _MPC_LOWCOMM_ENDPOINT_FLUSHING) )
 					{
 						mpc_common_debug_error("Got a wrong state : %d", state);
 						not_reachable();

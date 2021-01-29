@@ -28,7 +28,6 @@ extern "C"
 {
 #endif
 #include <sctk_rail.h>
-#include <sctk_route.h>
 #include <mpc_lowcomm_types.h>
 #include <mpc_common_asm.h>
 #include "ofi_types.h"
@@ -42,7 +41,7 @@ extern "C"
 
 void mpc_lowcomm_ofi_setup_hints_from_config(struct fi_info* hint, struct _mpc_lowcomm_config_struct_net_driver_ofi config);
 void mpc_lowcomm_ofi_init_provider(mpc_lowcomm_ofi_rail_info_t* rail, struct fi_info* hint);
-sctk_endpoint_t* mpc_lowcomm_ofi_add_route(int dest, void* ctx, sctk_rail_info_t* rail, sctk_route_origin_t origin, sctk_endpoint_state_t state);
+_mpc_lowcomm_endpoint_t* mpc_lowcomm_ofi_add_route(int dest, void* ctx, sctk_rail_info_t* rail, _mpc_lowcomm_endpoint_type_t origin, _mpc_lowcomm_endpoint_state_t state);
 
 /**
  * @brief elect the proper fabric datatype from MPC datatype

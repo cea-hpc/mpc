@@ -22,7 +22,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "sctk_route.h"
+#include "endpoint.h"
 #include "sctk_ptl_cm.h"
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_types.h"
@@ -108,7 +108,7 @@ static inline void sctk_ptl_cm_recv_message(sctk_rail_info_t* rail, sctk_ptl_eve
  * \param[in] msg the message to send.
  * \param[in] endpoint the route to use.
  */
-void sctk_ptl_cm_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t* endpoint)
+void sctk_ptl_cm_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_endpoint_t* endpoint)
 {
 	sctk_ptl_local_data_t* request = NULL;
 	sctk_ptl_rail_info_t* srail    = &endpoint->rail->network.ptl;
@@ -118,7 +118,7 @@ void sctk_ptl_cm_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t* e
 	sctk_ptl_matchbits_t match     = SCTK_PTL_MATCH_INIT;
 	sctk_ptl_pte_t* pte            = NULL;
 	sctk_ptl_id_t remote           = SCTK_PTL_ANY_PROCESS;
-	sctk_ptl_route_info_t* infos   = &endpoint->data.ptl;
+	_mpc_lowcomm_endpoint_info_portals_t* infos   = &endpoint->data.ptl;
 	sctk_ptl_imm_data_t hdr;
 
 	/* CM are always contiguous `*/

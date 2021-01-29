@@ -24,7 +24,6 @@
 
 #if defined(MPC_USE_PORTALS) && defined(MPC_Active_Message) && 0
 
-#include "sctk_route.h"
 #include "sctk_net_tools.h"
 #include "mpc_common_helper.h" /* for MPC_COMMON_MAX_STRING_SIZE */
 #include "sctk_ptl_am_types.h"
@@ -50,20 +49,20 @@ static sctk_ptl_pte_t* comm_rdma_pte = NULL;
  * \param[in] origin route type
  * \param[in] state route initial state
  */
-void sctk_ptl_add_route(int dest, sctk_ptl_id_t id, sctk_rail_info_t* rail, sctk_route_origin_t origin, sctk_endpoint_state_t state)
+void sctk_ptl_add_route(int dest, sctk_ptl_id_t id, sctk_rail_info_t* rail, _mpc_lowcomm_endpoint_type_t origin, _mpc_lowcomm_endpoint_state_t state)
 {
-	sctk_endpoint_t * route;
+	_mpc_lowcomm_endpoint_t * route;
 
-	route = sctk_malloc(sizeof(sctk_endpoint_t));
+	route = sctk_malloc(sizeof(_mpc_lowcomm_endpoint_t));
 	assert(route);
 
-	sctk_endpoint_init(route, dest, rail, origin);
-	sctk_endpoint_set_state(route, state);
+	_mpc_lowcomm_endpoint_init(route, dest, rail, origin);
+	_mpc_lowcomm_endpoint_set_state(route, state);
 
 	route->data.ptl.dest = id;
 	ranks_ids_map[dest] = id;
 
-	if(origin == ROUTE_ORIGIN_STATIC)
+	if(origin == _MPC_LOWCOMM_ENDPOINT_STATIC)
 	{
 		sctk_rail_add_static_route (  rail, route );
 	}
@@ -113,7 +112,7 @@ void sctk_ptl_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_rail_info_t* rail
  * \param[in] msg the message to send
  * \param[in] endpoint the route to use
  */
-void sctk_ptl_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t* endpoint)
+void sctk_ptl_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_endpoint_t* endpoint)
 {
 	int process_rank            = mpc_common_get_process_rank();
 	sctk_ptl_rail_info_t* srail = &endpoint->rail->network.ptl;
@@ -390,10 +389,10 @@ void sctk_ptl_create_ring ( sctk_rail_info_t *rail )
 	}
 
 	/* add routes */
-	sctk_ptl_add_route (right_rank, right_id, rail, ROUTE_ORIGIN_STATIC, STATE_CONNECTED);
+	sctk_ptl_add_route (right_rank, right_id, rail, _MPC_LOWCOMM_ENDPOINT_STATIC, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
 	if ( mpc_common_get_process_count() > 2 )
 	{
-		sctk_ptl_add_route (left_rank, left_id, rail, ROUTE_ORIGIN_STATIC, STATE_CONNECTED);
+		sctk_ptl_add_route (left_rank, left_id, rail, _MPC_LOWCOMM_ENDPOINT_STATIC, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
 	}
 
 	//Wait for all processes to complete the ring topology init */

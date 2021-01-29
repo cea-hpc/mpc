@@ -29,7 +29,6 @@
 #include "sctk_ib_eager.h"
 
 #include "sctk_ibufs_rdma.h"
-#include "sctk_route.h"
 #include "mpc_common_asm.h"
 
 #include <mpc_launch_pmi.h>
@@ -42,7 +41,9 @@
 #define MPC_LOWCOMM_IB_MODULE_NAME "CM"
 #include "sctk_ib_toolkit.h"
 
+#include "mpc_lowcomm_msg.h"
 #include "sctk_control_messages.h"
+#include "sctk_rail.h"
 
 /*-----------------------------------------------------------
  *  Interface for Infiniband connexions.
@@ -60,30 +61,30 @@ struct sctk_ib_qp_s;
  *----------------------------------------------------------*/
 
 /* Change the state of a remote process */
-static void sctk_ib_cm_change_state_connected ( sctk_rail_info_t *rail,  sctk_endpoint_t *endpoint )
+static void sctk_ib_cm_change_state_connected ( sctk_rail_info_t *rail,  _mpc_lowcomm_endpoint_t *endpoint )
 {
     struct sctk_ib_qp_s *remote = endpoint->data.ib.remote;
 
-    sctk_endpoint_state_t state_before_connexion;
-    state_before_connexion = sctk_endpoint_get_state ( endpoint );
+    _mpc_lowcomm_endpoint_state_t state_before_connexion;
+    state_before_connexion = _mpc_lowcomm_endpoint_get_state ( endpoint );
 
-    switch ( sctk_endpoint_get_origin ( endpoint ) )
+    switch ( _mpc_lowcomm_endpoint_get_type ( endpoint ) )
     {
 
-        case ROUTE_ORIGIN_STATIC: /* Static route */
-            ROUTE_LOCK ( endpoint );
-            sctk_endpoint_set_state ( endpoint, STATE_CONNECTED );
-            ROUTE_UNLOCK ( endpoint );
+        case _MPC_LOWCOMM_ENDPOINT_STATIC: /* Static route */
+            _MPC_LOWCOMM_ENDPOINT_LOCK ( endpoint );
+            _mpc_lowcomm_endpoint_set_state ( endpoint, _MPC_LOWCOMM_ENDPOINT_CONNECTED );
+            _MPC_LOWCOMM_ENDPOINT_UNLOCK ( endpoint );
 
             sctk_ib_debug ( "[%d] Static QP connected to process %d", rail->rail_number, remote->rank );
             break;
 
-        case ROUTE_ORIGIN_DYNAMIC: /* Dynamic route */
-            ROUTE_LOCK ( endpoint );
-            sctk_endpoint_set_state ( endpoint, STATE_CONNECTED );
-            ROUTE_UNLOCK ( endpoint );
+        case _MPC_LOWCOMM_ENDPOINT_DYNAMIC: /* Dynamic route */
+            _MPC_LOWCOMM_ENDPOINT_LOCK ( endpoint );
+            _mpc_lowcomm_endpoint_set_state ( endpoint, _MPC_LOWCOMM_ENDPOINT_CONNECTED );
+            _MPC_LOWCOMM_ENDPOINT_UNLOCK ( endpoint );
 
-            if ( state_before_connexion == STATE_RECONNECTING )
+            if ( state_before_connexion == _MPC_LOWCOMM_ENDPOINT_RECONNECTING )
                 sctk_ib_debug ( "[%d] OD QP reconnected to process %d", rail->rail_number, remote->rank );
             else
                 sctk_ib_debug ( "[%d] OD QP connected to process %d", rail->rail_number, remote->rank );
@@ -100,20 +101,20 @@ static void sctk_ib_cm_change_state_connected ( sctk_rail_info_t *rail,  sctk_en
 
 /* Change the state of a remote process */
 static void sctk_ib_cm_change_state_to_rtr ( sctk_rail_info_t *rail,
-        sctk_endpoint_t *endpoint,
+        _mpc_lowcomm_endpoint_t *endpoint,
         enum sctk_ib_cm_change_state_type_e type )
 {
     struct sctk_ib_qp_s *remote = endpoint->data.ib.remote;
-    sctk_endpoint_state_t state;
+    _mpc_lowcomm_endpoint_state_t state;
     char txt[256];
     sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
     LOAD_DEVICE ( rail_ib );
 
     if ( type == CONNECTION )
     {
-        state = _mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rtr ( remote, STATE_CONNECTING, STATE_CONNECTED );
+        state = _mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rtr ( remote, _MPC_LOWCOMM_ENDPOINT_CONNECTING, _MPC_LOWCOMM_ENDPOINT_CONNECTED );
         sprintf ( txt, MPC_COLOR_GREEN ( RTR CONNECTED ) );
-        assume ( state == STATE_CONNECTING );
+        assume ( state == _MPC_LOWCOMM_ENDPOINT_CONNECTING );
 
     }
     else
@@ -123,19 +124,19 @@ static void sctk_ib_cm_change_state_to_rtr ( sctk_rail_info_t *rail,
             {
                 /* We deconnect */
                 /* Change the state of the route */
-                state = _mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rtr ( remote, STATE_FLUSHED, STATE_DECONNECTED );
+                state = _mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rtr ( remote, _MPC_LOWCOMM_ENDPOINT_FLUSHED, _MPC_LOWCOMM_ENDPOINT_DECONNECTED );
                 sprintf ( txt, MPC_COLOR_RED ( RTR DECONNECTED ) );
 
             }
             else
             {
                 /* We connect */
-                state = _mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rtr ( remote, STATE_FLUSHED, STATE_CONNECTED );
+                state = _mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rtr ( remote, _MPC_LOWCOMM_ENDPOINT_FLUSHED, _MPC_LOWCOMM_ENDPOINT_CONNECTED );
                 sprintf ( txt, MPC_COLOR_BLUE ( RTR RESIZED ) );
 
             }
 
-            assume ( state == STATE_FLUSHED );
+            assume ( state == _MPC_LOWCOMM_ENDPOINT_FLUSHED );
         }
         else
         {
@@ -154,20 +155,20 @@ static void sctk_ib_cm_change_state_to_rtr ( sctk_rail_info_t *rail,
 
 /* Change the state of a remote process */
 static void sctk_ib_cm_change_state_to_rts ( sctk_rail_info_t *rail,
-        sctk_endpoint_t *endpoint,
+        _mpc_lowcomm_endpoint_t *endpoint,
         enum sctk_ib_cm_change_state_type_e type )
 {
     struct sctk_ib_qp_s *remote = endpoint->data.ib.remote;
     sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
     LOAD_DEVICE ( rail_ib );
-    sctk_endpoint_state_t state;
+    _mpc_lowcomm_endpoint_state_t state;
     char txt[256];
 
     if ( type == CONNECTION )
     {
-        state = _mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rts ( remote, STATE_CONNECTING, STATE_CONNECTED );
+        state = _mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rts ( remote, _MPC_LOWCOMM_ENDPOINT_CONNECTING, _MPC_LOWCOMM_ENDPOINT_CONNECTED );
         sprintf ( txt, MPC_COLOR_GREEN ( RTS CONNECTED ) );
-        assume ( state == STATE_CONNECTING );
+        assume ( state == _MPC_LOWCOMM_ENDPOINT_CONNECTING );
 
     }
     else
@@ -176,19 +177,19 @@ static void sctk_ib_cm_change_state_to_rts ( sctk_rail_info_t *rail,
             if ( remote->rdma.pool->resizing_request.send_keys.nb == 0 )
             {
                 /* We deconnect */
-                state = _mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rts ( remote, STATE_FLUSHED, STATE_DECONNECTED );
+                state = _mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rts ( remote, _MPC_LOWCOMM_ENDPOINT_FLUSHED, _MPC_LOWCOMM_ENDPOINT_DECONNECTED );
                 sprintf ( txt, MPC_COLOR_RED ( RTS DISCONNECTED ) );
 
             }
             else
             {
                 /* We connect */
-                state = _mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rts ( remote, STATE_FLUSHED, STATE_CONNECTED );
+                state = _mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rts ( remote, _MPC_LOWCOMM_ENDPOINT_FLUSHED, _MPC_LOWCOMM_ENDPOINT_CONNECTED );
                 sprintf ( txt, MPC_COLOR_BLUE ( RTS RESIZED ) );
 
             }
 
-            assume ( state == STATE_FLUSHED );
+            assume ( state == _MPC_LOWCOMM_ENDPOINT_FLUSHED );
         }
         else
         {
@@ -218,8 +219,8 @@ void sctk_ib_cm_connect_ring ( sctk_rail_info_t *rail )
     sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
     int dest_rank;
     int src_rank;
-    sctk_endpoint_t *endpoint_src, *endpoint_dest;
-    sctk_ib_route_info_t *route_dest, *route_src;
+    _mpc_lowcomm_endpoint_t *endpoint_src, *endpoint_dest;
+    _mpc_lowcomm_endpoint_info_ib_t *route_dest, *route_src;
     sctk_ib_cm_qp_connection_t keys;
 
     ib_assume ( rail->send_message_from_network != NULL );
@@ -306,7 +307,7 @@ void sctk_ib_cm_connect_to ( int from, int to, sctk_rail_info_t *rail )
     assume ( from != to );
     sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
     LOAD_DEVICE ( rail_ib );
-    sctk_endpoint_t *endpoint;
+    _mpc_lowcomm_endpoint_t *endpoint;
     struct sctk_ib_qp_s *remote;
     sctk_ib_cm_qp_connection_t send_keys;
     sctk_ib_cm_qp_connection_t recv_keys;
@@ -319,16 +320,43 @@ void sctk_ib_cm_connect_to ( int from, int to, sctk_rail_info_t *rail )
     remote = endpoint->data.ib.remote;
     sctk_ib_debug ( "[%d] QP connection request to process %d", rail->rail_number, remote->rank );
 
-    sctk_route_messages_recv ( from, to, MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL, CM_OD_STATIC_TAG, &recv_keys, sizeof ( sctk_ib_cm_qp_connection_t ) );
+    mpc_lowcomm_request_t req;
+    mpc_lowcomm_irecv_class_dest(from,
+                                 to,
+                                 &recv_keys,
+                                 sizeof ( sctk_ib_cm_qp_connection_t ),
+                                 CM_OD_STATIC_TAG,
+                                 MPC_COMM_WORLD,
+                                 MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL,
+                                 &req);
+    mpc_lowcomm_wait(&req, SCTK_STATUS_NULL);
+
     sctk_ib_qp_allocate_rtr ( rail_ib, remote, &recv_keys );
 
     sctk_ib_qp_key_fill ( &send_keys, device->port_attr.lid,
             remote->qp->qp_num, remote->psn );
     send_keys.rail_id = rail->rail_number;
 
-    sctk_route_messages_send ( to, from, MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL, CM_OD_STATIC_TAG , &send_keys, sizeof ( sctk_ib_cm_qp_connection_t ) );
-    sctk_route_messages_recv ( from, to, MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL, CM_OD_STATIC_TAG , &done,
-            sizeof ( sctk_ib_cm_done_t ) );
+    mpc_lowcomm_isend_class_src(to,
+                                from,
+                                &send_keys,
+                                sizeof ( sctk_ib_cm_qp_connection_t ),
+                                CM_OD_STATIC_TAG,
+                                MPC_COMM_WORLD,
+                                MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL,
+                                &req);
+    mpc_lowcomm_wait(&req, SCTK_STATUS_NULL);
+
+    mpc_lowcomm_irecv_class_dest(from,
+                                 to,
+                                 &done,
+                                 sizeof ( sctk_ib_cm_done_t ),
+                                 CM_OD_STATIC_TAG,
+                                 MPC_COMM_WORLD,
+                                 MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL,
+                                 &req);
+    mpc_lowcomm_wait(&req, SCTK_STATUS_NULL);
+
     sctk_ib_qp_allocate_rts ( rail_ib, remote );
     /* Add route */
     sctk_rail_add_static_route (  rail, endpoint );
@@ -342,7 +370,7 @@ void sctk_ib_cm_connect_from ( int from, int to, sctk_rail_info_t *rail )
     assume ( from != to );
     sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
     LOAD_DEVICE ( rail_ib );
-    sctk_endpoint_t *endpoint;
+    _mpc_lowcomm_endpoint_t *endpoint;
     struct sctk_ib_qp_s *remote;
     sctk_ib_cm_qp_connection_t send_keys;
     sctk_ib_cm_qp_connection_t recv_keys;
@@ -366,14 +394,41 @@ void sctk_ib_cm_connect_from ( int from, int to, sctk_rail_info_t *rail )
             remote->qp->qp_num, remote->psn );
     send_keys.rail_id = rail->rail_number;
 
-    sctk_route_messages_send ( from, to, MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL, CM_OD_STATIC_TAG, &send_keys, sizeof ( sctk_ib_cm_qp_connection_t ) );
-    sctk_route_messages_recv ( to, from, MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL, CM_OD_STATIC_TAG, &recv_keys, sizeof ( sctk_ib_cm_qp_connection_t ) );
+    mpc_lowcomm_request_t req;
+    mpc_lowcomm_isend_class_src(from,
+                                to,
+                                &send_keys,
+                                sizeof ( sctk_ib_cm_qp_connection_t ),
+                                CM_OD_STATIC_TAG,
+                                MPC_COMM_WORLD,
+                                MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL,
+                                &req);
+    mpc_lowcomm_wait(&req, SCTK_STATUS_NULL);
+
+    mpc_lowcomm_irecv_class_dest(to,
+                                 from,
+                                 &recv_keys,
+                                 sizeof ( sctk_ib_cm_qp_connection_t ),
+                                 CM_OD_STATIC_TAG,
+                                 MPC_COMM_WORLD,
+                                 MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL,
+                                 &req);
+    mpc_lowcomm_wait(&req, SCTK_STATUS_NULL);
+
     sctk_ib_qp_allocate_rtr ( rail_ib, remote, &recv_keys );
     sctk_ib_qp_allocate_rts ( rail_ib, remote );
     mpc_common_nodebug ( "FROM: Ready to send to %d", to );
 
-    sctk_route_messages_send ( from, to, MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL, CM_OD_STATIC_TAG, &done,
-            sizeof ( sctk_ib_cm_done_t ) );
+    mpc_lowcomm_isend_class_src(from,
+                                to,
+                                &done,
+                                sizeof ( sctk_ib_cm_done_t ),
+                                CM_OD_STATIC_TAG,
+                                MPC_COMM_WORLD,
+                                MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL,
+                                &req);
+    mpc_lowcomm_wait(&req, SCTK_STATUS_NULL);
+
     /* Add route */
     sctk_rail_add_static_route (  rail, endpoint );
     /* Change to connected */
@@ -389,7 +444,7 @@ static inline void sctk_ib_cm_on_demand_recv_done ( sctk_rail_info_t *rail, int 
 {
     sctk_ib_rail_info_t *rail_ib_targ = &rail->network.ib;
 
-    sctk_endpoint_t *endpoint = sctk_rail_get_dynamic_route_to_process ( rail, src );
+    _mpc_lowcomm_endpoint_t *endpoint = sctk_rail_get_dynamic_route_to_process ( rail, src );
     ib_assume ( endpoint );
     struct sctk_ib_qp_s *remote = endpoint->data.ib.remote;
     ib_assume ( remote );
@@ -413,7 +468,7 @@ static inline void sctk_ib_cm_on_demand_recv_ack ( sctk_rail_info_t *rail, void 
     };
 
     sctk_ib_nodebug ( "OD QP connexion ACK received from process %d %s", src, ack );
-    sctk_endpoint_t *endpoint = sctk_rail_get_dynamic_route_to_process ( rail, src );
+    _mpc_lowcomm_endpoint_t *endpoint = sctk_rail_get_dynamic_route_to_process ( rail, src );
     ib_assume ( endpoint );
     struct sctk_ib_qp_s *remote = endpoint->data.ib.remote;
     ib_assume ( remote );
@@ -441,27 +496,27 @@ int sctk_ib_cm_on_demand_recv_request ( sctk_rail_info_t *rail, void *request, i
     int added;
 
     /* create remote for source */
-    sctk_endpoint_t *endpoint = sctk_rail_add_or_reuse_route_dynamic ( rail, src, sctk_ib_create_remote, sctk_ib_init_remote, &added, 0 );
+    _mpc_lowcomm_endpoint_t *endpoint = sctk_rail_add_or_reuse_route_dynamic ( rail, src, sctk_ib_create_remote, sctk_ib_init_remote, &added, 0 );
     ib_assume ( endpoint );
 
-    ROUTE_LOCK ( endpoint );
+    _MPC_LOWCOMM_ENDPOINT_LOCK ( endpoint );
 
-    if ( sctk_endpoint_get_state ( endpoint ) == STATE_DECONNECTED )
+    if ( _mpc_lowcomm_endpoint_get_state ( endpoint ) == _MPC_LOWCOMM_ENDPOINT_DECONNECTED )
     {
-        sctk_endpoint_set_state ( endpoint, STATE_CONNECTING );
+        _mpc_lowcomm_endpoint_set_state ( endpoint, _MPC_LOWCOMM_ENDPOINT_CONNECTING );
     }
 
-    ROUTE_UNLOCK ( endpoint );
+    _MPC_LOWCOMM_ENDPOINT_UNLOCK ( endpoint );
 
     sctk_ib_debug ( "[%d] OD QP connexion request from %d (initiator:%d) START",
-            rail->rail_number, src, sctk_endpoint_get_is_initiator ( endpoint ) );
+            rail->rail_number, src, _mpc_lowcomm_endpoint_is_initiator ( endpoint ) );
 
     /* RACE CONDITION AVOIDING -> positive ACK */
-    if ( sctk_endpoint_get_is_initiator ( endpoint ) == 0 || mpc_common_get_process_rank() > src )
+    if ( _mpc_lowcomm_endpoint_is_initiator ( endpoint ) == 0 || mpc_common_get_process_rank() > src )
     {
         struct sctk_ib_qp_s *remote = endpoint->data.ib.remote;
         sctk_ib_debug ( "[%d] OD QP connexion request to process %d (initiator:%d)",
-                rail->rail_number, remote->rank, sctk_endpoint_get_is_initiator ( endpoint ) );
+                rail->rail_number, remote->rank, _mpc_lowcomm_endpoint_is_initiator ( endpoint ) );
         memcpy ( &recv_keys, request, sizeof ( sctk_ib_cm_qp_connection_t ) );
 
         ib_assume ( sctk_ib_qp_allocate_get_rtr ( remote ) == 0 );
@@ -484,11 +539,11 @@ int sctk_ib_cm_on_demand_recv_request ( sctk_rail_info_t *rail, void *request, i
 /*
  * Send a connexion request to the process 'dest'
  */
-sctk_endpoint_t *sctk_ib_cm_on_demand_request ( int dest, sctk_rail_info_t *rail )
+_mpc_lowcomm_endpoint_t *sctk_ib_cm_on_demand_request ( int dest, sctk_rail_info_t *rail )
 {
     sctk_ib_rail_info_t *rail_ib_targ = &rail->network.ib;
     LOAD_DEVICE ( rail_ib_targ );
-    sctk_endpoint_t *endpoint;
+    _mpc_lowcomm_endpoint_t *endpoint;
     sctk_ib_cm_qp_connection_t send_keys;
     /* Message to exchange to the peer */
     int added;
@@ -499,15 +554,15 @@ sctk_endpoint_t *sctk_ib_cm_on_demand_request ( int dest, sctk_rail_info_t *rail
     endpoint = sctk_rail_add_or_reuse_route_dynamic ( rail, dest, sctk_ib_create_remote, sctk_ib_init_remote, &added, 1 );
     ib_assume ( endpoint );
 
-    ROUTE_LOCK ( endpoint );
+    _MPC_LOWCOMM_ENDPOINT_LOCK ( endpoint );
 
-    if ( sctk_endpoint_get_state ( endpoint ) == STATE_DECONNECTED )
+    if ( _mpc_lowcomm_endpoint_get_state ( endpoint ) == _MPC_LOWCOMM_ENDPOINT_DECONNECTED )
     {
-        sctk_endpoint_set_state ( endpoint, STATE_CONNECTING );
+        _mpc_lowcomm_endpoint_set_state ( endpoint, _MPC_LOWCOMM_ENDPOINT_CONNECTING );
         send_request = 1;
     }
 
-    ROUTE_UNLOCK ( endpoint );
+    _MPC_LOWCOMM_ENDPOINT_UNLOCK ( endpoint );
 
     /* If we are the first to access the route and if the state
      * is deconnected, so we can proceed to a connection*/
@@ -536,19 +591,19 @@ sctk_endpoint_t *sctk_ib_cm_on_demand_request ( int dest, sctk_rail_info_t *rail
 int sctk_ib_cm_on_demand_rdma_check_request ( __UNUSED__ sctk_rail_info_t *rail, struct sctk_ib_qp_s *remote )
 {
     int send_request = 0;
-    ib_assume ( sctk_endpoint_get_state ( remote->endpoint ) == STATE_CONNECTED );
+    ib_assume ( _mpc_lowcomm_endpoint_get_state ( remote->endpoint ) == _MPC_LOWCOMM_ENDPOINT_CONNECTED );
 
     /* If several threads call this function, only 1 will send a request to
      * the remote process */
-    ROUTE_LOCK ( remote->endpoint );
+    _MPC_LOWCOMM_ENDPOINT_LOCK ( remote->endpoint );
 
-    if ( _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts ( remote ) == STATE_DECONNECTED )
+    if ( _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts ( remote ) == _MPC_LOWCOMM_ENDPOINT_DECONNECTED )
     {
-        _mpc_lowcomm_ib_ibuf_rdma_set_remote_state_rts ( remote, STATE_CONNECTING );
+        _mpc_lowcomm_ib_ibuf_rdma_set_remote_state_rts ( remote, _MPC_LOWCOMM_ENDPOINT_CONNECTING );
         send_request = 1;
     }
 
-    ROUTE_UNLOCK ( remote->endpoint );
+    _MPC_LOWCOMM_ENDPOINT_UNLOCK ( remote->endpoint );
 
     return send_request;
 }
@@ -564,7 +619,7 @@ int sctk_ib_cm_on_demand_rdma_request ( sctk_rail_info_t *rail, struct sctk_ib_q
     sctk_ib_rail_info_t *rail_ib_targ = &rail->network.ib;
     LOAD_DEVICE ( rail_ib_targ );
     /* If we need to send the request */
-    ib_assume ( sctk_endpoint_get_state ( remote->endpoint ) == STATE_CONNECTED );
+    ib_assume ( _mpc_lowcomm_endpoint_get_state ( remote->endpoint ) == _MPC_LOWCOMM_ENDPOINT_CONNECTED );
 
 
     /* If we are the first to access the route and if the state
@@ -595,7 +650,7 @@ int sctk_ib_cm_on_demand_rdma_request ( sctk_rail_info_t *rail, struct sctk_ib_q
         mpc_common_debug( "[%d] Cannot connect to remote %d", rail->rail_number, remote->rank );
         /* We reset the state to deconnected */
         /* FIXME: state to reset */
-        _mpc_lowcomm_ib_ibuf_rdma_set_remote_state_rts ( remote, STATE_DECONNECTED );
+        _mpc_lowcomm_ib_ibuf_rdma_set_remote_state_rts ( remote, _MPC_LOWCOMM_ENDPOINT_DECONNECTED );
     }
 
     return 1;
@@ -607,7 +662,7 @@ static inline void sctk_ib_cm_on_demand_rdma_done_recv ( sctk_rail_info_t *rail,
     sctk_ib_cm_rdma_connection_t *recv_keys = ( sctk_ib_cm_rdma_connection_t * ) done;
 
     /* get the route to process */
-    sctk_endpoint_t *endpoint = sctk_rail_get_any_route_to_process ( rail, src );
+    _mpc_lowcomm_endpoint_t *endpoint = sctk_rail_get_any_route_to_process ( rail, src );
     ib_assume ( endpoint );
     struct sctk_ib_qp_s *remote = endpoint->data.ib.remote;
     ib_assume ( remote );
@@ -628,7 +683,7 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_ack ( sctk_rail_info_t *rail, 
     sctk_ib_cm_rdma_connection_t *recv_keys = ( sctk_ib_cm_rdma_connection_t * ) ack;
 
     /* get the route to process */
-    sctk_endpoint_t *endpoint = sctk_rail_get_any_route_to_process ( rail, src );
+    _mpc_lowcomm_endpoint_t *endpoint = sctk_rail_get_any_route_to_process ( rail, src );
     ib_assume ( endpoint );
     struct sctk_ib_qp_s *remote = endpoint->data.ib.remote;
     ib_assume ( remote );
@@ -682,21 +737,21 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_request ( sctk_rail_info_t *ra
     memset ( &send_keys, 0, sizeof ( sctk_ib_cm_rdma_connection_t ) );
 
     /* get the route to process */
-    sctk_endpoint_t *endpoint = sctk_rail_get_any_route_to_process ( rail, src );
+    _mpc_lowcomm_endpoint_t *endpoint = sctk_rail_get_any_route_to_process ( rail, src );
     ib_assume ( endpoint );
     /* We assume the route is connected */
     struct sctk_ib_qp_s *remote = endpoint->data.ib.remote;
-    ib_assume ( sctk_endpoint_get_state ( endpoint ) == STATE_CONNECTED );
+    ib_assume ( _mpc_lowcomm_endpoint_get_state ( endpoint ) == _MPC_LOWCOMM_ENDPOINT_CONNECTED );
 
 
-    ROUTE_LOCK ( endpoint );
+    _MPC_LOWCOMM_ENDPOINT_LOCK ( endpoint );
 
-    if ( _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rtr ( remote ) == STATE_DECONNECTED )
+    if ( _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rtr ( remote ) == _MPC_LOWCOMM_ENDPOINT_DECONNECTED )
     {
-        _mpc_lowcomm_ib_ibuf_rdma_set_remote_state_rtr ( remote, STATE_CONNECTING );
+        _mpc_lowcomm_ib_ibuf_rdma_set_remote_state_rtr ( remote, _MPC_LOWCOMM_ENDPOINT_CONNECTING );
     }
 
-    ROUTE_UNLOCK ( endpoint );
+    _MPC_LOWCOMM_ENDPOINT_UNLOCK ( endpoint );
 
     sctk_ib_cm_rdma_connection_t *recv_keys = ( sctk_ib_cm_rdma_connection_t * ) request;
     sctk_ib_debug ( "[%d] OD RDMA connexion REQUEST to process %d (connected:%d size:%d nb:%d )",
@@ -761,7 +816,7 @@ int sctk_ib_cm_resizing_rdma_request ( sctk_rail_info_t *rail, struct sctk_ib_qp
 {
 
     /* Assume that the route is in a flushed state */
-    ib_assume ( _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts ( remote ) == STATE_FLUSHED );
+    ib_assume ( _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts ( remote ) == _MPC_LOWCOMM_ENDPOINT_FLUSHED );
     /* Assume there is no more pending messages */
     ib_assume ( OPA_load_int ( &remote->rdma.pool->busy_nb[REGION_SEND] ) == 0 );
 
@@ -784,9 +839,9 @@ int sctk_ib_cm_resizing_rdma_request ( sctk_rail_info_t *rail, struct sctk_ib_qp
 void sctk_ib_cm_resizing_rdma_ack ( sctk_rail_info_t *rail,  struct sctk_ib_qp_s *remote, sctk_ib_cm_rdma_connection_t *send_keys )
 {
 
-    ib_assume ( sctk_endpoint_get_state ( remote->endpoint ) == STATE_CONNECTED );
+    ib_assume ( _mpc_lowcomm_endpoint_get_state ( remote->endpoint ) == _MPC_LOWCOMM_ENDPOINT_CONNECTED );
     /* Assume that the route is in a flushed state */
-    ib_assume ( _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rtr ( remote ) == STATE_FLUSHED );
+    ib_assume ( _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rtr ( remote ) == _MPC_LOWCOMM_ENDPOINT_FLUSHED );
     /* Assume there is no more pending messages */
     ib_assume ( OPA_load_int ( &remote->rdma.pool->busy_nb[REGION_RECV] ) == 0 );
 
@@ -802,7 +857,7 @@ static inline void sctk_ib_cm_resizing_rdma_done_recv ( sctk_rail_info_t *rail, 
     sctk_ib_cm_rdma_connection_t *recv_keys = ( sctk_ib_cm_rdma_connection_t * ) done;
 
     /* get the route to process */
-    sctk_endpoint_t *endpoint = sctk_rail_get_any_route_to_process ( rail, src );
+    _mpc_lowcomm_endpoint_t *endpoint = sctk_rail_get_any_route_to_process ( rail, src );
     ib_assume ( endpoint );
     struct sctk_ib_qp_s *remote = endpoint->data.ib.remote;
     ib_assume ( remote );
@@ -825,7 +880,7 @@ static inline void sctk_ib_cm_resizing_rdma_ack_recv ( sctk_rail_info_t *rail, v
     sctk_ib_cm_rdma_connection_t *recv_keys = ( sctk_ib_cm_rdma_connection_t * ) ack;
 
     /* get the route to process */
-    sctk_endpoint_t *endpoint = sctk_rail_get_any_route_to_process_or_forward ( rail, src );
+    _mpc_lowcomm_endpoint_t *endpoint = sctk_rail_get_any_route_to_process_or_forward ( rail, src );
     ib_assume ( endpoint );
     struct sctk_ib_qp_s *remote = endpoint->data.ib.remote;
     ib_assume ( remote );
@@ -871,10 +926,10 @@ static inline int sctk_ib_cm_resizing_rdma_recv_request ( sctk_rail_info_t *rail
     memset ( &send_keys, 0, sizeof ( sctk_ib_cm_rdma_connection_t ) );
 
     /* get the route to process */
-    sctk_endpoint_t *endpoint = sctk_rail_get_any_route_to_process_or_forward ( rail, src );
+    _mpc_lowcomm_endpoint_t *endpoint = sctk_rail_get_any_route_to_process_or_forward ( rail, src );
     ib_assume ( endpoint );
     /* We assume the route is connected */
-    ib_assume ( sctk_endpoint_get_state ( endpoint ) == STATE_CONNECTED );
+    ib_assume ( _mpc_lowcomm_endpoint_get_state ( endpoint ) == _MPC_LOWCOMM_ENDPOINT_CONNECTED );
     struct sctk_ib_qp_s *remote = endpoint->data.ib.remote;
     ib_assume ( remote );
 

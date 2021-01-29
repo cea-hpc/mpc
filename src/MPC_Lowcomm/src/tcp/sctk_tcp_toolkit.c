@@ -23,7 +23,6 @@
 
 
 #include <mpc_common_debug.h>
-#include <sctk_route.h>
 #include <sctk_tcp.h>
 #include <mpc_launch_pmi.h>
 #include <unistd.h>
@@ -32,7 +31,7 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <stdio.h>
-
+#include "sctk_tcp_toolkit.h"
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <netdb.h>
@@ -44,6 +43,8 @@
 #include <mpc_thread.h>
 #include <mpc_common_rank.h>
 #include <sctk_alloc.h>
+
+#include "sctk_rail.h"
 
 /********************************************************************/
 /* Connection Setup                                                 */
@@ -295,17 +296,17 @@ static void sctk_client_create_recv_socket ( sctk_rail_info_t *rail )
  * \param[in] route_type route type (DYNAMIC,STATIC)
  */
 static void sctk_tcp_add_route ( int dest, int fd, sctk_rail_info_t *rail,
-					   void * ( *tcp_thread ) ( sctk_endpoint_t * ) , sctk_route_origin_t route_type )
+					   void * ( *tcp_thread ) ( _mpc_lowcomm_endpoint_t * ) , _mpc_lowcomm_endpoint_type_t route_type )
 {
-	sctk_endpoint_t *new_route;
+	_mpc_lowcomm_endpoint_t *new_route;
 
 	/* Allocate a new route */
-	new_route = sctk_malloc ( sizeof ( sctk_endpoint_t ) );
+	new_route = sctk_malloc ( sizeof ( _mpc_lowcomm_endpoint_t ) );
 	assume ( new_route != NULL );
-	sctk_endpoint_init ( new_route,  dest, rail, route_type );
+	_mpc_lowcomm_endpoint_init ( new_route,  dest, rail, route_type );
 	
 	/* Make sure the route is flagged connected */
-	sctk_endpoint_set_state ( new_route, STATE_CONNECTED );
+	_mpc_lowcomm_endpoint_set_state ( new_route, _MPC_LOWCOMM_ENDPOINT_CONNECTED );
 
 	mpc_common_nodebug ( "Register fd %d", fd );
 	new_route->data.tcp.fd = fd;
@@ -313,7 +314,7 @@ static void sctk_tcp_add_route ( int dest, int fd, sctk_rail_info_t *rail,
 	mpc_common_spinlock_init(&new_route->data.tcp.lock, 0);
 
 	/* Add the new route */
-	if( route_type == ROUTE_ORIGIN_STATIC )
+	if( route_type == _MPC_LOWCOMM_ENDPOINT_STATIC )
 	{
 		sctk_rail_add_static_route (  rail, new_route );
 	}
@@ -323,7 +324,7 @@ static void sctk_tcp_add_route ( int dest, int fd, sctk_rail_info_t *rail,
 	}
 	
 	/* set the route as connected */
-	sctk_endpoint_set_state ( new_route, STATE_CONNECTED );
+	_mpc_lowcomm_endpoint_set_state ( new_route, _MPC_LOWCOMM_ENDPOINT_CONNECTED );
 
 #ifdef MPC_Threads
 	mpc_thread_t pidt;
@@ -367,12 +368,12 @@ typedef enum
  * \param[in] ctx the sctk_tcp_connection_context sent by the remote
  * \param[in] route_type route type to create
  */
-static void sctk_network_connection_to_ctx( sctk_rail_info_t *rail, struct sctk_tcp_connection_context * ctx, sctk_route_origin_t route_type )
+static void sctk_network_connection_to_ctx( sctk_rail_info_t *rail, struct sctk_tcp_connection_context * ctx, _mpc_lowcomm_endpoint_type_t route_type )
 {
 	/*Recv id from the connected process*/
 	int dest_socket = sctk_tcp_connect_to ( ctx->dest_connection_infos, rail );
 
-	sctk_tcp_add_route ( ctx->from, dest_socket, rail, ( void * ( * ) ( sctk_endpoint_t * ) ) ( rail->network.tcp.tcp_thread ), route_type );
+	sctk_tcp_add_route ( ctx->from, dest_socket, rail, ( void * ( * ) ( _mpc_lowcomm_endpoint_t * ) ) ( rail->network.tcp.tcp_thread ), route_type );
 }
 
 /**
@@ -391,7 +392,7 @@ static void sctk_network_connection_to_tcp ( __UNUSED__ int from, __UNUSED__ int
  * \param[in] rail the TCP rail
  * \param[in] route_type route type to create
  */
-static void __sctk_network_connection_from_tcp( int from, int to, sctk_rail_info_t *rail, sctk_route_origin_t route_type )
+static void __sctk_network_connection_from_tcp( int from, int to, sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_type_t route_type )
 {
 	int src_socket;
 	/*Send connection informations*/
@@ -402,7 +403,7 @@ static void __sctk_network_connection_from_tcp( int from, int to, sctk_rail_info
 	ctx.to = to;
 	snprintf( ctx.dest_connection_infos, MPC_COMMON_MAX_STRING_SIZE, "%s", rail->network.tcp.connection_infos);
 
-	if( route_type == ROUTE_ORIGIN_STATIC )
+	if( route_type == _MPC_LOWCOMM_ENDPOINT_STATIC )
 	{
 		sctk_control_messages_send_rail ( to, SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_STATIC, 0, &ctx, sizeof( struct sctk_tcp_connection_context ) , rail->rail_number);
 	}
@@ -419,7 +420,7 @@ static void __sctk_network_connection_from_tcp( int from, int to, sctk_rail_info
 		mpc_common_debug_abort();
 	}
 
-	sctk_tcp_add_route ( to, src_socket, rail, ( void * ( * ) ( sctk_endpoint_t * ) ) ( rail->network.tcp.tcp_thread ), route_type );
+	sctk_tcp_add_route ( to, src_socket, rail, ( void * ( * ) ( _mpc_lowcomm_endpoint_t * ) ) ( rail->network.tcp.tcp_thread ), route_type );
 }
 
 /**
@@ -430,7 +431,7 @@ static void __sctk_network_connection_from_tcp( int from, int to, sctk_rail_info
  */
 static void sctk_network_connection_from_tcp ( int from, int to, sctk_rail_info_t *rail )
 {
-	__sctk_network_connection_from_tcp( from, to, rail, ROUTE_ORIGIN_STATIC );
+	__sctk_network_connection_from_tcp( from, to, rail, _MPC_LOWCOMM_ENDPOINT_STATIC );
 }
 
 /**
@@ -450,10 +451,10 @@ void tcp_control_message_handler( struct sctk_rail_info_s * rail, __UNUSED__ int
 	switch( action )
 	{
 		case SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_STATIC :
-			sctk_network_connection_to_ctx( rail, (struct sctk_tcp_connection_context *) data, ROUTE_ORIGIN_STATIC );
+			sctk_network_connection_to_ctx( rail, (struct sctk_tcp_connection_context *) data, _MPC_LOWCOMM_ENDPOINT_STATIC );
 		break;
 		case SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_DYNAMIC :
-			sctk_network_connection_to_ctx( rail, (struct sctk_tcp_connection_context *) data, ROUTE_ORIGIN_DYNAMIC );
+			sctk_network_connection_to_ctx( rail, (struct sctk_tcp_connection_context *) data, _MPC_LOWCOMM_ENDPOINT_DYNAMIC );
 		break;
 	}
 }
@@ -465,7 +466,7 @@ void tcp_control_message_handler( struct sctk_rail_info_s * rail, __UNUSED__ int
  */
 void tcp_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_process )
 {
-	__sctk_network_connection_from_tcp ( mpc_common_get_process_rank(), dest_process, rail, ROUTE_ORIGIN_DYNAMIC );
+	__sctk_network_connection_from_tcp ( mpc_common_get_process_rank(), dest_process, rail, _MPC_LOWCOMM_ENDPOINT_DYNAMIC );
 }
 
 
@@ -480,7 +481,7 @@ void tcp_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_process 
  * \param[in] route_init the function registering a new TCP route
  */
 void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
-                                 void * ( *tcp_thread ) ( sctk_endpoint_t * ) )
+                                 void * ( *tcp_thread ) ( _mpc_lowcomm_endpoint_t * ) )
 {
 	char right_rank_connection_infos[MPC_COMMON_MAX_STRING_SIZE];
 	int right_rank;
@@ -609,11 +610,11 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
  mpc_launch_pmi_barrier();
 
 	/* We are all done, now register the routes and create the polling threads */
-	sctk_tcp_add_route ( right_rank, right_socket, rail, tcp_thread, ROUTE_ORIGIN_STATIC );
+	sctk_tcp_add_route ( right_rank, right_socket, rail, tcp_thread, _MPC_LOWCOMM_ENDPOINT_STATIC );
 
 	if ( mpc_common_get_process_count() > 2 )
 	{
-		sctk_tcp_add_route ( left_rank, left_socket, rail, tcp_thread, ROUTE_ORIGIN_STATIC );
+		sctk_tcp_add_route ( left_rank, left_socket, rail, tcp_thread, _MPC_LOWCOMM_ENDPOINT_STATIC );
 	}
 
  mpc_launch_pmi_barrier();

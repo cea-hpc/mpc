@@ -23,37 +23,38 @@
 #define SCTK_MULTIRAIL
 
 #include <uthash.h>
-
-#include <sctk_route.h>
 #include <mpc_common_spinlock.h>
 #include <lowcomm_config.h>
 
+#include "sctk_rail.h"
+
+
 /************************************************************************/
-/* sctk_endpoint_list                                                   */
+/* _mpc_lowcomm_endpoint_list                                                   */
 /************************************************************************/
 
-typedef struct sctk_endpoint_list_s
+typedef struct _mpc_lowcomm_endpoint_list_s
 {
 	int priority;
-	sctk_endpoint_t * endpoint;
+	_mpc_lowcomm_endpoint_t * endpoint;
 	
 	struct _mpc_lowcomm_config_struct_net_gate * gates;
 	int gate_count;
 	
-	struct sctk_endpoint_list_s * next;
-	struct sctk_endpoint_list_s * prev;
-}sctk_endpoint_list_t;
+	struct _mpc_lowcomm_endpoint_list_s * next;
+	struct _mpc_lowcomm_endpoint_list_s * prev;
+}_mpc_lowcomm_endpoint_list_t;
 
-int sctk_endpoint_list_init_entry( sctk_endpoint_list_t * list, sctk_endpoint_t * endpoint );
-sctk_endpoint_list_t * sctk_endpoint_list_new_entry( sctk_endpoint_t * endpoint );
+int _mpc_lowcomm_endpoint_list_init_entry( _mpc_lowcomm_endpoint_list_t * list, _mpc_lowcomm_endpoint_t * endpoint );
+_mpc_lowcomm_endpoint_list_t * _mpc_lowcomm_endpoint_list_new_entry( _mpc_lowcomm_endpoint_t * endpoint );
 
-sctk_endpoint_list_t * sctk_endpoint_list_push( sctk_endpoint_list_t * list, sctk_endpoint_t * endpoint );
+_mpc_lowcomm_endpoint_list_t * _mpc_lowcomm_endpoint_list_push( _mpc_lowcomm_endpoint_list_t * list, _mpc_lowcomm_endpoint_t * endpoint );
 
-sctk_endpoint_list_t * sctk_endpoint_list_pop( sctk_endpoint_list_t * list, sctk_endpoint_list_t * topop );
-sctk_endpoint_list_t * sctk_endpoint_list_pop_endpoint( sctk_endpoint_list_t * list, sctk_endpoint_t * topop );
+_mpc_lowcomm_endpoint_list_t * _mpc_lowcomm_endpoint_list_pop( _mpc_lowcomm_endpoint_list_t * list, _mpc_lowcomm_endpoint_list_t * topop );
+_mpc_lowcomm_endpoint_list_t * _mpc_lowcomm_endpoint_list_pop_endpoint( _mpc_lowcomm_endpoint_list_t * list, _mpc_lowcomm_endpoint_t * topop );
 
-void sctk_endpoint_list_free_entry( sctk_endpoint_list_t * entry );
-void sctk_endpoint_list_release( sctk_endpoint_list_t ** list );
+void _mpc_lowcomm_endpoint_list_free_entry( _mpc_lowcomm_endpoint_list_t * entry );
+void _mpc_lowcomm_endpoint_list_release( _mpc_lowcomm_endpoint_list_t ** list );
 
 
 /************************************************************************/
@@ -64,7 +65,7 @@ typedef struct sctk_multirail_destination_table_entry_s
 {
 	UT_hash_handle hh;
 	
-	sctk_endpoint_list_t * endpoints;
+	_mpc_lowcomm_endpoint_list_t * endpoints;
 	mpc_common_rwlock_t endpoints_lock;
 	
 	int destination;
@@ -76,8 +77,8 @@ void sctk_multirail_destination_table_entry_free( sctk_multirail_destination_tab
 
 sctk_multirail_destination_table_entry_t * sctk_multirail_destination_table_entry_new(int destination);
 
-void sctk_multirail_destination_table_entry_push_endpoint( sctk_multirail_destination_table_entry_t * entry, sctk_endpoint_t * endpoint );
-void sctk_multirail_destination_table_entry_pop_endpoint( sctk_multirail_destination_table_entry_t * entry, sctk_endpoint_t * endpoint );
+void sctk_multirail_destination_table_entry_push_endpoint( sctk_multirail_destination_table_entry_t * entry, _mpc_lowcomm_endpoint_t * endpoint );
+void sctk_multirail_destination_table_entry_pop_endpoint( sctk_multirail_destination_table_entry_t * entry, _mpc_lowcomm_endpoint_t * endpoint );
 
 struct sctk_multirail_destination_table
 {
@@ -91,8 +92,8 @@ void sctk_multirail_destination_table_release();
 sctk_multirail_destination_table_entry_t * sctk_multirail_destination_table_acquire_routes(int destination );
 void sctk_multirail_destination_table_relax_routes( sctk_multirail_destination_table_entry_t * entry );
 
-void sctk_multirail_destination_table_push_endpoint(sctk_endpoint_t * endpoint );
-void sctk_multirail_destination_table_pop_endpoint(sctk_endpoint_t * topop );
+void sctk_multirail_destination_table_push_endpoint(_mpc_lowcomm_endpoint_t * endpoint );
+void sctk_multirail_destination_table_pop_endpoint(_mpc_lowcomm_endpoint_t * topop );
 void sctk_multirail_destination_table_route_to_process( int destination, int * new_destination );
 void sctk_multirail_destination_table_prune(void);
 
@@ -114,6 +115,6 @@ void sctk_pending_on_demand_process();
 void sctk_multirail_on_demand_connection(mpc_lowcomm_ptp_message_t*);
 void sctk_multirail_on_demand_disconnection_process(int);
 void sctk_multirail_on_demand_disconnection_rail(sctk_rail_info_t*);
-void sctk_multirail_on_demand_disconnection_routes(sctk_route_origin_t);
+void sctk_multirail_on_demand_disconnection_routes(_mpc_lowcomm_endpoint_type_t);
 
 #endif /* SCTK_MULTIRAIL */

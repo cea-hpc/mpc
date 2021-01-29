@@ -24,7 +24,6 @@
 /* ######################################################################## */
 
 
-#include "sctk_route.h"
 #include "sctk_ib_polling.h"
 #include "sctk_ibufs.h"
 

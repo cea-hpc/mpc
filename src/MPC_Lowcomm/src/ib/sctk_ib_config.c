@@ -36,7 +36,7 @@
 #include "sctk_ibufs_rdma.h"
 #include "sctk_ib_buffered.h"
 #include "mpc_conf.h"
-
+#include "sctk_rail.h"
 #include <mpc_common_rank.h>
 
 /*-----------------------------------------------------------
