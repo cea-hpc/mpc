@@ -1,67 +1,48 @@
 #include <mpc_common_debug.h>
 #include <mpc_config.h>
-#include "endpoint.h"
-#include "mpc_launch_pmi.h"
+#include <mpc_common_helper.h>
+#include <mpc_launch_pmi.h>
+#include <sctk_alloc.h>
 #include <mpc_launch_shm.h>
-#include "sctk_alloc.h"
+#include <mpc_common_rank.h>
+#include <utlist.h>
 
-#include <sctk_net_tools.h>
-#include "sctk_shm_raw_queues.h"
-#include "sctk_shm.h"
-#include "utlist.h"
 #include "sctk_shm_raw_queues_internals.h"
+
+
+#include "sctk_shm_eager.h"
+#include "sctk_shm_frag.h"
+#include "sctk_shm_cma.h"
+#include "sctk_shm_raw_queues.h"
+
 
 #include "sctk_rail.h"
 
-#include <mpc_common_rank.h>
+#include "sctk_shm.h"
 
 
-static unsigned int sctk_shm_send_max_try = 2;
+static unsigned int sctk_shm_send_max_try = 4;
 
-// FROM Henry S. Warren, Jr.'s "Hacker's Delight."
-static long sctk_shm_roundup_powerof2(unsigned long n)
+
+static void __add_to_pending_msg(mpc_lowcomm_ptp_message_t *msg,
+                                 sctk_rail_info_t *rail,
+                                 int sctk_shm_dest,
+                                 int with_lock)
 {
-	assume(n < (unsigned long)(1 << 31) );
-	--n;
-	n |= n >> 1;
-	n |= n >> 2;
-	n |= n >> 4;
-	n |= n >> 8;
-	n |= n >> 16;
-	return n + 1;
-}
-
-#if 0
-void sctk_shm_network_rdma_write(sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg,
-                                 void *src_addr, struct sctk_rail_pin_ctx_list *local_key,
-                                 void *dest_addr, struct  sctk_rail_pin_ctx_list *remote_key,
-                                 size_t size)
-{
-}
-void sctk_shm_network_rdma_read(sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg,
-                                void *src_addr, struct  sctk_rail_pin_ctx_list *remote_key,
-                                void *dest_addr, struct  sctk_rail_pin_ctx_list *local_key,
-                                size_t size)
-{
-}
-
-#endif
-
-static void
-sctk_network_add_message_to_pending_shm_list(mpc_lowcomm_ptp_message_t *msg, sctk_rail_info_t *rail, int sctk_shm_dest, int with_lock)
-{
-	sctk_shm_msg_list_t *tmp = sctk_malloc(sizeof(sctk_shm_msg_list_t) );
+	sctk_shm_msg_list_t * tmp             = sctk_malloc(sizeof(sctk_shm_msg_list_t) );
 	sctk_shm_rail_info_t *shm_driver_info = &rail->network.shm;
-
 
 	tmp->msg           = msg;
 	tmp->sctk_shm_dest = sctk_shm_dest;
+
 	if(with_lock)
 	{
 		mpc_common_spinlock_lock(&shm_driver_info->pending_lock);
 	}
+
 	DL_APPEND(shm_driver_info->pending_msg_list, tmp);
 	shm_driver_info->pending_msg_num++;
+
 	if(with_lock)
 	{
 		mpc_common_spinlock_unlock(&shm_driver_info->pending_lock);
@@ -74,7 +55,7 @@ static int __send_message_dest(mpc_lowcomm_ptp_message_t *msg,
                                int with_lock)
 {
 	sctk_shm_cell_t *cell = NULL;
-	unsigned int     sctk_shm_send_cur_try;
+	unsigned int     sctk_shm_send_cur_try = 0;
 	int is_message_control = 0;
 	sctk_shm_rail_info_t *shm_driver_info = &rail->network.shm;
 
@@ -84,7 +65,6 @@ static int __send_message_dest(mpc_lowcomm_ptp_message_t *msg,
 		is_message_control = 1;
 	}
 
-	sctk_shm_send_cur_try = 0;
 	while(!cell && sctk_shm_send_cur_try++ < sctk_shm_send_max_try)
 	{
 		cell = sctk_shm_get_cell(sctk_shm_dest, is_message_control);
@@ -92,7 +72,7 @@ static int __send_message_dest(mpc_lowcomm_ptp_message_t *msg,
 
 	if(!cell)
 	{
-		sctk_network_add_message_to_pending_shm_list(msg, rail, sctk_shm_dest, with_lock);
+		__add_to_pending_msg(msg, rail, sctk_shm_dest, with_lock);
 		return 1;
 	}
 
@@ -115,15 +95,15 @@ static int __send_message_dest(mpc_lowcomm_ptp_message_t *msg,
 	}
 
 	sctk_shm_release_cell(cell);
-	sctk_network_add_message_to_pending_shm_list(msg, rail, sctk_shm_dest, with_lock);
+	__add_to_pending_msg(msg, rail, sctk_shm_dest, with_lock);
 
 	return 1;
 }
 
 static void __send_msg_from_pending_list(sctk_rail_info_t *rail)
 {
-	sctk_shm_msg_list_t *elt = NULL;
-	sctk_shm_msg_list_t *tmp = NULL;
+	sctk_shm_msg_list_t * elt             = NULL;
+	sctk_shm_msg_list_t * tmp             = NULL;
 	sctk_shm_rail_info_t *shm_driver_info = &rail->network.shm;
 
 	if(!shm_driver_info->pending_msg_num)
@@ -169,8 +149,8 @@ static void __send_msg_from_pending_list(sctk_rail_info_t *rail)
 	mpc_common_spinlock_unlock(&shm_driver_info->pending_lock);
 }
 
-static void
-_mpc_lowcomm_shm_send_message(mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint)
+static void _mpc_lowcomm_shm_send_message(mpc_lowcomm_ptp_message_t *msg,
+										  _mpc_lowcomm_endpoint_t *endpoint)
 {
 	__send_message_dest(msg, endpoint->rail, endpoint->data.shm.dest, 1);
 }
@@ -195,7 +175,7 @@ static inline void __shm_poll(sctk_rail_info_t *rail)
 {
 	sctk_shm_cell_t *          cell;
 	mpc_lowcomm_ptp_message_t *msg;
-	sctk_shm_rail_info_t *shm_driver_info = &rail->network.shm;
+	sctk_shm_rail_info_t *     shm_driver_info = &rail->network.shm;
 
 	if(!shm_driver_info->driver_initialized)
 	{
@@ -394,7 +374,8 @@ void sctk_network_init_shm(sctk_rail_info_t *rail)
 	/* Init driver info */
 
 	shm_driver_info->driver_initialized = 0;
-	shm_driver_info->pending_msg_num = 0;
+	shm_driver_info->pending_msg_num    = 0;
+	shm_driver_info->regions_infos = NULL;
 	mpc_common_spinlock_init(&shm_driver_info->polling_lock, 0);
 	mpc_common_spinlock_init(&shm_driver_info->pending_lock, 0);
 	shm_driver_info->pending_msg_list = NULL;
@@ -404,7 +385,7 @@ void sctk_network_init_shm(sctk_rail_info_t *rail)
 
 	sctk_shmem_cells_num = rail->runtime_config_driver_config->driver.value.shm.cells_num;
 	sctk_shmem_size      = sctk_shm_get_region_size(sctk_shmem_cells_num);
-	sctk_shmem_size      = sctk_shm_roundup_powerof2(sctk_shmem_size);
+	sctk_shmem_size      = mpc_common_roundum_powerof2(sctk_shmem_size);
 
 	local_process_rank   = mpc_common_get_local_process_rank();
 	local_process_number = mpc_common_get_local_process_count();

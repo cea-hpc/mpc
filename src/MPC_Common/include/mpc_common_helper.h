@@ -120,6 +120,21 @@ static inline uint64_t mpc_common_hash( uint64_t val )
 	h ^= h >> 33;
 	return h;
 }
+/****************************
+ * ROUND TO NEXT POWER OF 2 *
+ ****************************/
+
+// FROM Henry S. Warren, Jr.'s "Hacker's Delight."
+static long mpc_common_roundum_powerof2(unsigned long n)
+{
+	--n;
+	n |= n >> 1;
+	n |= n >> 2;
+	n |= n >> 4;
+	n |= n >> 8;
+	n |= n >> 16;
+	return n + 1;
+}
 
 /**
  * @brief Check if a value is a power of 2

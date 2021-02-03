@@ -3,11 +3,6 @@
 
 #include <mpc_common_spinlock.h>
 
-#include "sctk_shm_eager.h"
-#include "sctk_shm_frag.h"
-#include "sctk_shm_cma.h"
-#include "sctk_shm_raw_queues.h"
-
 
 /** \brief ROUTE level data structure for SHM 
 *
@@ -36,6 +31,7 @@ typedef struct
 	mpc_common_spinlock_t polling_lock;
 	mpc_common_spinlock_t pending_lock;
 	sctk_shm_msg_list_t *pending_msg_list;
+	void                *regions_infos;
 } sctk_shm_rail_info_t;
 
 void sctk_network_init_shm ( sctk_rail_info_t *rail );

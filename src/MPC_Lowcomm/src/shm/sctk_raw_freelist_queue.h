@@ -45,11 +45,7 @@ typedef struct sctk_shm_cell_s{
     size_t size_to_copy;
     int src;
     int dest;
-    char pad1[1024];
-    void *opaque_send;                  /* Opaque data used by the sender       */
-    void *opaque_recv;                  /* Opaque data used by the recver       */
     int frag_hkey;
-    char pad2[1024];
     char data[SCTK_SHM_CELL_SIZE];      /* Actual data transferred              */
 } sctk_shm_cell_t;
 typedef struct sctk_shm_cell_s sctk_shm_cell_t;
