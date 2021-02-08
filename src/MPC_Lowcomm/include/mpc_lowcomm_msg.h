@@ -147,7 +147,7 @@ typedef struct mpc_lowcomm_ptp_message_header_s
 	int                                          destination_task;      /**< Destination Task ID */
 	/* Context */
 	int                                          message_tag;           /**< Message TAG */
-	unsigned int                                 communicator_id;       /**< Message communicator */
+	mpc_lowcomm_communicator_id_t                communicator_id;       /**< Message communicator */
 	struct mpc_lowcomm_ptp_ctrl_message_header_s message_type;          /**< Control Message Infos */
 	/* Content */
 	mpc_lowcomm_datatype_t                       datatype;              /**< Caried data-type (for matching check) */

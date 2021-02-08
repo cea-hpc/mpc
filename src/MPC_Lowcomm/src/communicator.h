@@ -50,7 +50,8 @@ typedef struct mpc_lowcomm_topo_comms
  */
 typedef struct mpc_lowcomm_internal_communicator_s
 {
-	unsigned int               id;				/**< Integer unique identifier of the comm */	
+	mpc_lowcomm_communicator_id_t               id;				/**< Integer unique identifier of the comm */
+	int                        linear_comm_id;  /** Linear communicator id on int32 used for FORTRAN */
 	mpc_lowcomm_group_t *      group;			/**< Group supporting the comm */
 	OPA_int_t                  refcount;		/**< Number of ref to the comm freed when 0 */
 
@@ -85,26 +86,26 @@ typedef struct mpc_lowcomm_internal_communicator_s
 
 /**
  * @brief Initialize base communicators (WORLD and SELF)
- * 
+ *
  */
 void _mpc_lowcomm_communicator_init(void);
 
 /**
  * @brief Release the base communicators
- * 
+ *
  */
 void _mpc_lowcomm_communicator_release(void);
 
 /**
- * @brief Icrement refcounting on a comm
- * 
+ * @brief Increment refcounting on a comm
+ *
  * @param comm the comm to acquire
  */
 void _mpc_lowcomm_communicator_acquire(mpc_lowcomm_internal_communicator_t *comm);
 
 /**
  * @brief Decrement refcounting on a comm
- * 
+ *
  * @param comm the comm to relax
  * @return int the value before decrementing
  */
@@ -116,14 +117,14 @@ int _mpc_lowcomm_communicator_relax(mpc_lowcomm_internal_communicator_t *comm);
 
 /**
  * @brief Get the first local task in comm_world for this process
- * 
+ *
  * @return int id of the first task in the process
  */
 int _mpc_lowcomm_communicator_world_first_local_task();
 
 /**
  * @brief Get the last local task in comm_world for this process
- * 
+ *
  * @return int id of the last task in the process
  */
 int _mpc_lowcomm_communicator_world_last_local_task();

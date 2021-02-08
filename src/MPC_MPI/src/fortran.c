@@ -138,17 +138,12 @@ static void __initialize_handle_factories()
 
 MPI_Comm PMPI_Comm_f2c(MPI_Fint comm)
 {
-	if(comm == MPC_LOWCOMM_COMM_NULL_ID)
-	{
-		return MPI_COMM_NULL;
-	}
-
-	return mpc_lowcomm_get_communicator_from_id(comm);
+	return mpc_lowcomm_get_communicator_from_linear_id(comm);
 }
 
 MPI_Fint PMPI_Comm_c2f(MPI_Comm comm)
 {
-	return mpc_lowcomm_communicator_id(comm);
+	return mpc_lowcomm_communicator_linear_id(comm);
 }
 
 void mpc_fortran_comm_delete(__UNUSED__ MPI_Fint comm)

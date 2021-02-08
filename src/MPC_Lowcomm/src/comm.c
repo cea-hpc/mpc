@@ -50,6 +50,7 @@
 
 #include "mpc_lowcomm_workshare.h"
 #include "lowcomm_config.h"
+#include "monitor.h"
 
 /********************************************************************/
 /*Structures                                                        */
@@ -394,7 +395,7 @@ sctk_reorder_list_t *_mpc_comm_ptp_array_get_reorder(mpc_lowcomm_communicator_t 
 void _mpc_comm_ptp_message_reinit_comm(mpc_lowcomm_ptp_message_t *msg)
 {
 	assert(msg != NULL);
-	uint32_t comm_id = SCTK_MSG_COMMUNICATOR_ID(msg);
+	mpc_lowcomm_communicator_id_t comm_id = SCTK_MSG_COMMUNICATOR_ID(msg);
 
 	mpc_lowcomm_communicator_t comm = mpc_lowcomm_get_communicator_from_id(comm_id);
 
@@ -2572,7 +2573,7 @@ void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_r
  * */
 void mpc_lowcomm_ptp_message_send(mpc_lowcomm_ptp_message_t *msg)
 {
-	mpc_common_debug("SEND to %d (size %ld) %s COMM %d T %d", SCTK_MSG_DEST_TASK(msg),
+	mpc_common_debug("SEND to %d (size %ld) %s COMM %lu T %d", SCTK_MSG_DEST_TASK(msg),
 	                 SCTK_MSG_SIZE(msg),
 	                 mpc_lowcomm_ptp_message_class_name[(int)SCTK_MSG_SPECIFIC_CLASS(msg)],
 	                 SCTK_MSG_COMMUNICATOR_ID(msg),
@@ -3326,7 +3327,10 @@ static void __lowcomm_init_per_task()
 		mpc_lowcomm_init_per_task(task_rank);
 
 		mpc_lowcomm_terminaison_barrier();
+
+		_mpc_lowcomm_monitor_setup_per_task();
 	}
+
 }
 
 static void __lowcomm_release_per_task()
@@ -3340,6 +3344,9 @@ static void __lowcomm_release_per_task()
 		mpc_lowcomm_terminaison_barrier();
 		mpc_lowcomm_release_per_task(task_rank);
 		mpc_common_nodebug("mpc_lowcomm_terminaison_barrier done");
+
+		_mpc_lowcomm_monitor_teardown_per_task();
+
 	}
 	else
 	{
@@ -3366,7 +3373,9 @@ static void __initialize_drivers()
 	}
 
 	mpc_lowcomm_rdma_window_init_ht();
-  
+
+	_mpc_lowcomm_monitor_setup();
+
 	_mpc_lowcomm_communicator_init();
 
 	__init_request_null();
@@ -3374,6 +3383,7 @@ static void __initialize_drivers()
 
 static void __finalize_driver()
 {
+	_mpc_lowcomm_monitor_teardown();
 	mpc_lowcomm_rdma_window_release_ht();
 	_mpc_lowcomm_communicator_release();
 }

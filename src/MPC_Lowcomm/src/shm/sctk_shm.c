@@ -385,7 +385,7 @@ void sctk_network_init_shm(sctk_rail_info_t *rail)
 
 	sctk_shmem_cells_num = rail->runtime_config_driver_config->driver.value.shm.cells_num;
 	sctk_shmem_size      = sctk_shm_get_region_size(sctk_shmem_cells_num);
-	sctk_shmem_size      = mpc_common_roundum_powerof2(sctk_shmem_size);
+	sctk_shmem_size      = mpc_common_roundup_powerof2(sctk_shmem_size);
 
 	local_process_rank   = mpc_common_get_local_process_rank();
 	local_process_number = mpc_common_get_local_process_count();

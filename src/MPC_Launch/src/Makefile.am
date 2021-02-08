@@ -45,5 +45,4 @@ if HYDRA_LAUNCHER_ENABLED
         libmpclaunch_la_SOURCES += ./hydra_client/safestr2.c  ./hydra_client/simple_pmi.c  ./hydra_client/simple_pmiutil.c
 endif
 
-
 libmpclaunch_la_LIBADD = ../../MPC_Topology/src/libmpctopology.la -ldl -lrt $(PMIX_LIBS) $(PMI_LIBS)

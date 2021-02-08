@@ -104,6 +104,9 @@
  */
 #define mpc_common_min( a, b ) ( ( a ) < ( b ) ? ( a ) : ( b ) )
 
+
+#define mpc_common_abs(a) ((a < 0)?(-a):(a) )
+
 /*********************
  * HASHING FUNCTIONS *
  *********************/
@@ -125,7 +128,7 @@ static inline uint64_t mpc_common_hash( uint64_t val )
  ****************************/
 
 // FROM Henry S. Warren, Jr.'s "Hacker's Delight."
-static long mpc_common_roundum_powerof2(unsigned long n)
+static inline long mpc_common_roundup_powerof2(unsigned long n)
 {
 	--n;
 	n |= n >> 1;

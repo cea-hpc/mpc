@@ -31,6 +31,7 @@
 
 #include <mpc_common_spinlock.h>
 #include <mpc_common_types.h>
+#include <mpc_common_datastructure.h>
 
 /* Typedefs for this file are in the central
  * header to allow later references avoiding

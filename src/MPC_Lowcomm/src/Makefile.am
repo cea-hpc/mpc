@@ -29,6 +29,7 @@ AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Launch/include/  -I$(abs_top_builddir
 
 AM_CPPFLAGS += -I$(abs_srcdir)/tcp/
 AM_CPPFLAGS += -I$(abs_srcdir)/shm/
+AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/cplane/
 
 if MPC_THREAD_ENABLED
         AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/
@@ -79,6 +80,7 @@ AM_CPPFLAGS += -I$(abs_srcdir)/ofi/
 libmpclowcomm_la_SOURCES +=./ofi/ofi.c ./ofi/ofi_msg.c ./ofi/ofi_rdma.c ./ofi/ofi_toolkit.c
 endif
 
+libmpclowcomm_la_SOURCES += ./cplane/auth.c ./cplane/peer.c  ./cplane/proto.c  ./cplane/monitor.c  ./cplane/set.c ./cplane/uid.c
 
 # library dependency #
 libmpclowcomm_la_LIBADD =  $(ALLOC_LIBS) ../../MPC_Launch/src/libmpclaunch.la -lm -lrt

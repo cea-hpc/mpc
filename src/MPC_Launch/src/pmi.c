@@ -160,6 +160,9 @@ static inline pmix_status_t __pmix_get_attribute(int rank_level, const char key[
 		case PMIX_PROC_RANK:
 			memcpy(out, &val->data.rank, sizeof(pmix_rank_t));
 		break;
+		case PMIX_SIZE:
+			memcpy(out, &val->data.size, sizeof(size_t));
+		break;
 	}
 
 	if(!rank_level)
@@ -718,6 +721,7 @@ int mpc_launch_pmi_init()
 		mpc_common_tracepoint_fmt("PMI: Failed initializing PMI (ret %d)", rc);
 
 		return MPC_LAUNCH_PMI_FAIL;
+		pmi_context.kvsname = "singleton";
 	}
 
 	/* In this case PMI_Init instructed to skip init */
@@ -865,12 +869,37 @@ void mpc_launch_pmi_abort()
 /*! \brief Get the job id
  * @param id Pointer to store the job id
 */
-int mpc_launch_pmi_get_job_id( int *id )
+int mpc_launch_pmi_get_job_id( uint64_t *id )
 {
 #if MPC_USE_HYDRA
 	/* in mpich with pmi1, kvs name is used as job id. */
-	*id = atoi( pmi_context.kvsname );
+
+	/* ID is in the form kvs_XXX_X */
+
+	char _tmp[512];
+	char * tmp = _tmp;
+	snprintf(tmp, 512, pmi_context.kvsname);
+	char * last_ = strrchr(tmp, '_');
+	if(last_)
+	{
+		*last_ = '\0';
+	}
+	char * first_ = strchr(tmp, '_');
+	if(first_)
+	{
+		tmp = first_ + 1;
+	}
+
+	*id = atoi( tmp );
+
 	return MPC_LAUNCH_PMI_SUCCESS;
+#elif defined(MPC_USE_PMIX)
+	size_t uid;
+	*id = -1;
+	pmix_status_t rc = __pmix_get_attribute(0, PMIX_GROUP_CONTEXT_ID, PMIX_SIZE, &uid);
+	PMI_CHECK_RC( rc, "__pmix_get_attribute" );
+	*id = uid;
+	PMI_RETURN( rc );
 #elif defined( MPC_USE_PMI1 )
 	char *env = NULL;
 	env = getenv( "SLURM_JOB_ID" );

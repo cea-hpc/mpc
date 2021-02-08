@@ -210,7 +210,9 @@ am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c sctk_checksum.c \
 	./portals_am/sctk_ptl_am_toolkit.c \
 	./portals_am/sctk_ptl_am_arpc_api.c ./portals_am/arpc_weak.c \
 	./ofi/ofi.c ./ofi/ofi_msg.c ./ofi/ofi_rdma.c \
-	./ofi/ofi_toolkit.c am.c
+	./ofi/ofi_toolkit.c ./cplane/auth.c ./cplane/peer.c \
+	./cplane/proto.c ./cplane/monitor.c ./cplane/set.c \
+	./cplane/uid.c am.c
 am__dirstamp = $(am__leading_dot)dirstamp
 @INFINIBAND_DRIVER_ENABLED_TRUE@am__objects_1 = ./ib/sctk_ib_async.lo \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_buffered.lo \
@@ -258,8 +260,9 @@ am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo \
 	./shm/sctk_shm_eager.lo ./shm/sctk_shm_raw_queues.lo \
 	./shm/sctk_shm_cma.lo ./shm/sctk_shm_frag.lo \
 	./shm/sctk_shm_qemu.lo ./shm/sctk_shm_raw_queues_internals.lo \
-	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
-	$(am__objects_4)
+	$(am__objects_2) $(am__objects_3) ./cplane/auth.lo \
+	./cplane/peer.lo ./cplane/proto.lo ./cplane/monitor.lo \
+	./cplane/set.lo ./cplane/uid.lo $(am__objects_4)
 libmpclowcomm_la_OBJECTS = $(am_libmpclowcomm_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -636,8 +639,10 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Lowcomm/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Launch/include/ \
 	-I$(abs_top_builddir)/src/include/ -I$(abs_srcdir)/tcp/ \
-	-I$(abs_srcdir)/shm/ $(am__append_1) $(am__append_2) \
-	$(am__append_3) $(am__append_5) $(am__append_7)
+	-I$(abs_srcdir)/shm/ \
+	-I$(abs_top_srcdir)/src/MPC_Lowcomm/src/cplane/ \
+	$(am__append_1) $(am__append_2) $(am__append_3) \
+	$(am__append_5) $(am__append_7)
 lib_LTLIBRARIES = libmpclowcomm.la
 
 # low-level communication #
@@ -657,7 +662,9 @@ libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c \
 	./shm/sctk_shm_raw_queues.c ./shm/sctk_shm_cma.c \
 	./shm/sctk_shm_frag.c ./shm/sctk_shm_qemu.c \
 	./shm/sctk_shm_raw_queues_internals.c $(am__append_4) \
-	$(am__append_6) $(am__append_8) $(am__append_9)
+	./cplane/auth.c ./cplane/peer.c ./cplane/proto.c \
+	./cplane/monitor.c ./cplane/set.c ./cplane/uid.c \
+	$(am__append_9)
 
 # library dependency #
 libmpclowcomm_la_LIBADD = $(ALLOC_LIBS) \
@@ -837,12 +844,32 @@ ofi/$(DEPDIR)/$(am__dirstamp):
 ./ofi/ofi_rdma.lo: ofi/$(am__dirstamp) ofi/$(DEPDIR)/$(am__dirstamp)
 ./ofi/ofi_toolkit.lo: ofi/$(am__dirstamp) \
 	ofi/$(DEPDIR)/$(am__dirstamp)
+cplane/$(am__dirstamp):
+	@$(MKDIR_P) ./cplane
+	@: > cplane/$(am__dirstamp)
+cplane/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) ./cplane/$(DEPDIR)
+	@: > cplane/$(DEPDIR)/$(am__dirstamp)
+./cplane/auth.lo: cplane/$(am__dirstamp) \
+	cplane/$(DEPDIR)/$(am__dirstamp)
+./cplane/peer.lo: cplane/$(am__dirstamp) \
+	cplane/$(DEPDIR)/$(am__dirstamp)
+./cplane/proto.lo: cplane/$(am__dirstamp) \
+	cplane/$(DEPDIR)/$(am__dirstamp)
+./cplane/monitor.lo: cplane/$(am__dirstamp) \
+	cplane/$(DEPDIR)/$(am__dirstamp)
+./cplane/set.lo: cplane/$(am__dirstamp) \
+	cplane/$(DEPDIR)/$(am__dirstamp)
+./cplane/uid.lo: cplane/$(am__dirstamp) \
+	cplane/$(DEPDIR)/$(am__dirstamp)
 
 libmpclowcomm.la: $(libmpclowcomm_la_OBJECTS) $(libmpclowcomm_la_DEPENDENCIES) $(EXTRA_libmpclowcomm_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) -rpath $(libdir) $(libmpclowcomm_la_OBJECTS) $(libmpclowcomm_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f ./cplane/*.$(OBJEXT)
+	-rm -f ./cplane/*.lo
 	-rm -f ./ib/*.$(OBJEXT)
 	-rm -f ./ib/*.lo
 	-rm -f ./ofi/*.$(OBJEXT)
@@ -880,7 +907,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_topological_rail.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_window.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/shm_coll.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/workshare.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/auth.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/monitor.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/peer.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/proto.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/set.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/uid.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_async.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_buffered.Plo@am__quote@
@@ -954,6 +986,7 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+	-rm -rf ./cplane/.libs ./cplane/_libs
 	-rm -rf ./ib/.libs ./ib/_libs
 	-rm -rf ./ofi/.libs ./ofi/_libs
 	-rm -rf ./portals/.libs ./portals/_libs
@@ -1076,6 +1109,8 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f cplane/$(DEPDIR)/$(am__dirstamp)
+	-rm -f cplane/$(am__dirstamp)
 	-rm -f ib/$(DEPDIR)/$(am__dirstamp)
 	-rm -f ib/$(am__dirstamp)
 	-rm -f ofi/$(DEPDIR)/$(am__dirstamp)
@@ -1098,7 +1133,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR) ./ib/$(DEPDIR) ./ofi/$(DEPDIR) ./portals/$(DEPDIR) ./portals_am/$(DEPDIR) ./shm/$(DEPDIR) ./tcp/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) ./cplane/$(DEPDIR) ./ib/$(DEPDIR) ./ofi/$(DEPDIR) ./portals/$(DEPDIR) ./portals_am/$(DEPDIR) ./shm/$(DEPDIR) ./tcp/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -1144,7 +1179,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR) ./ib/$(DEPDIR) ./ofi/$(DEPDIR) ./portals/$(DEPDIR) ./portals_am/$(DEPDIR) ./shm/$(DEPDIR) ./tcp/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) ./cplane/$(DEPDIR) ./ib/$(DEPDIR) ./ofi/$(DEPDIR) ./portals/$(DEPDIR) ./portals_am/$(DEPDIR) ./shm/$(DEPDIR) ./tcp/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

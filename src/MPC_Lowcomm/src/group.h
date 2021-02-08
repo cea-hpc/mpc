@@ -28,6 +28,8 @@
 #include <mpc_common_spinlock.h>
 #include <mpc_common_debug.h>
 
+#include <mpc_lowcomm_monitor.h>
+
 /****************************************
 * _MPC_LOWCOMM_GROUP_RANK_DESCRIPTOR_S *
 ****************************************/
@@ -35,12 +37,18 @@
 typedef struct _mpc_lowcomm_group_rank_descriptor_s
 {
 	int comm_world_rank;
+	mpc_lowcomm_set_uid_t uid;
 }_mpc_lowcomm_group_rank_descriptor_t;
 
 int _mpc_lowcomm_group_rank_descriptor_equal(_mpc_lowcomm_group_rank_descriptor_t *a,
                                              _mpc_lowcomm_group_rank_descriptor_t *b);
 
 int _mpc_lowcomm_group_rank_descriptor_set(_mpc_lowcomm_group_rank_descriptor_t *rd, int comm_world_rank);
+
+int _mpc_lowcomm_group_rank_descriptor_set_in_grp(_mpc_lowcomm_group_rank_descriptor_t *rd,
+											      mpc_lowcomm_set_uid_t set,
+											      int group_rank);
+
 
 /************************
 * _MPC_LOWCOMM_GROUP_T *

@@ -35,18 +35,27 @@ extern "C" {
 
 struct mpc_lowcomm_internal_communicator_s;
 typedef struct mpc_lowcomm_internal_communicator_s *mpc_lowcomm_communicator_t;
+typedef uint64_t mpc_lowcomm_communicator_id_t;
 
 
 /************************
 * COMMON COMMUNICATORS *
 ************************/
 
+/** This is the id of COMM world */
+#define MPC_LOWCOMM_COMM_WORLD_NUMERIC_ID    1
+/** This is the ID of COMM self */
+#define MPC_LOWCOMM_COMM_SELF_NUMERIC_ID     2
+
+mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_world_id(void);
+mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_self_id(void);
+
 /** define the ID of a NULL communicator */
 #define MPC_LOWCOMM_COMM_NULL_ID     0
 /** This is the id of COMM world */
-#define MPC_LOWCOMM_COMM_WORLD_ID    1
+#define MPC_LOWCOMM_COMM_WORLD_ID    (mpc_lowcomm_get_comm_world_id())
 /** This is the ID of COMM self */
-#define MPC_LOWCOMM_COMM_SELF_ID     2
+#define MPC_LOWCOMM_COMM_SELF_ID     (mpc_lowcomm_get_comm_self_id())
 /** This is the wildcard for COMMs to be used as ANY source/tag */
 #define MPC_ANY_COMM                 3
 
@@ -81,7 +90,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_self();
  * @param id iteger identifier of the comm
  * @return mpc_lowcomm_communicator_t pointer to the comm NULL is not existing
  */
-mpc_lowcomm_communicator_t mpc_lowcomm_get_communicator_from_id(uint32_t id);
+mpc_lowcomm_communicator_t mpc_lowcomm_get_communicator_from_id(mpc_lowcomm_communicator_id_t id);
 
 /**
  * @brief Get the numerical identifier of a communicator
@@ -89,7 +98,26 @@ mpc_lowcomm_communicator_t mpc_lowcomm_get_communicator_from_id(uint32_t id);
  * @param comm communicator to get the ID from
  * @return uint32_t Communicator ID (MPC_LOWCOMM_COMM_NULL_ID if error)
  */
-uint32_t mpc_lowcomm_communicator_id(mpc_lowcomm_communicator_t comm);
+mpc_lowcomm_communicator_id_t mpc_lowcomm_communicator_id(mpc_lowcomm_communicator_t comm);
+
+
+/**
+ * @brief Retrieve a local communicator from its linear id (useful for FORTRAN)
+ *
+ * @param id the linear id to use
+ * @return mpc_lowcomm_communicator_t pointer to the comm NULL is not existing
+ */
+mpc_lowcomm_communicator_t mpc_lowcomm_get_communicator_from_linear_id(int linear_id);
+
+/**
+ * @brief Return a  linear integer ID for comm (only valid locally)
+ *        mostly useful for FORTRAN
+ *
+ * @param comm communicator to translate
+ * @return int linear local id
+ */
+int mpc_lowcomm_communicator_linear_id(mpc_lowcomm_communicator_t comm);
+
 
 /**************
 * INTRACOMMS *

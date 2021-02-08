@@ -29,6 +29,8 @@
 #include <mpc_common_rank.h>
 #include <mpc_common_datastructure.h>
 
+#include "peer.h"
+
 /*******************************
 * COMMUNICATORS AND PROCESSES *
 *******************************/
@@ -273,17 +275,29 @@ int _mpc_lowcomm_group_rank_descriptor_equal(_mpc_lowcomm_group_rank_descriptor_
 	return memcmp( (void *)a, (void *)b, sizeof(_mpc_lowcomm_group_rank_descriptor_t) ) == 0;
 }
 
-int _mpc_lowcomm_group_rank_descriptor_set(_mpc_lowcomm_group_rank_descriptor_t *rd, int comm_world_rank)
+int _mpc_lowcomm_group_rank_descriptor_set_in_grp(_mpc_lowcomm_group_rank_descriptor_t *rd,
+											      mpc_lowcomm_set_uid_t set,
+											      int cw_rank)
 {
 	if(!rd)
 	{
 		return SCTK_ERROR;
 	}
 
-	rd->comm_world_rank = comm_world_rank;
+	rd->comm_world_rank = cw_rank;
+	rd->uid = mpc_lowcomm_monitor_get_uid_of(set, cw_rank);
+
 
 	return SCTK_SUCCESS;
 }
+
+int _mpc_lowcomm_group_rank_descriptor_set(_mpc_lowcomm_group_rank_descriptor_t *rd, int cw_rank)
+{
+	return _mpc_lowcomm_group_rank_descriptor_set_in_grp(rd, mpc_lowcomm_monitor_get_gid(), cw_rank);
+}
+
+
+
 
 uint32_t _mpc_lowcomm_group_rank_descriptor_hash(_mpc_lowcomm_group_rank_descriptor_t *rd)
 {
