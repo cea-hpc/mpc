@@ -779,6 +779,30 @@ static inline int _mpc_topology_get_current_cpu(hwloc_topology_t target_topo)
 	return pu->logical_index;
 }
 
+/*! \brief Return the current global core_id
+*/
+static inline int _mpc_topology_get_global_current_cpu(hwloc_topology_t target_topo)
+{
+	hwloc_cpuset_t set = hwloc_bitmap_alloc();
+
+	int ret = hwloc_get_last_cpu_location( target_topo, set, HWLOC_CPUBIND_THREAD );
+
+	assume( ret != -1 );
+	assume( !hwloc_bitmap_iszero( set ) );
+
+	hwloc_obj_t pu = hwloc_get_obj_inside_cpuset_by_type( target_topo, set, HWLOC_OBJ_PU, 0 );
+
+	if ( !pu )
+	{
+		hwloc_bitmap_free( set );
+        return 0;
+	}
+
+	hwloc_bitmap_free( set );
+
+	return pu->logical_index;
+}
+
 int _mpc_topology_get_pu_per_core_count(hwloc_topology_t target_topo, int cpuid)
 {
 	int pu_per_core;
@@ -1029,6 +1053,207 @@ void _mpc_topology_get_pu_neighborhood(hwloc_topology_t target_topo, int cpuid, 
 	sctk_free( objs );
 }
 
+/***************************************
+ * MPC TOPOLOGY HARDWARE TOPOLOGY SPLIT*
+ ***************************************/
+
+static hwloc_obj_type_t __mpc_find_split_type(char *value, hwloc_obj_type_t *type_split)
+{
+        /* if new level added, change enum and arrays in mpc_topology.h accordingly */
+        int i;
+        for(i = 0; i < HW_TYPE_COUNT; i++)
+        {
+            if(!strcmp(value,mpc_topology_split_hardware_type_name[i]))
+            {
+                *type_split = mpc_topology_split_hardware_hwloc_type[i];
+                return 1;
+            }
+        }
+        return 0;
+}
+
+int mpc_topology_unguided_compute_color(int *colors, int *cpuids, int size)
+{
+    int root = 0;
+    int k;
+    /* find common ancestor */
+    hwloc_topology_t topology;
+    topology = mpc_topology_global_get();
+    hwloc_obj_t ancestor;
+    hwloc_obj_t new_ancestor;
+    int previous_ancestor_level = -1;
+    hwloc_obj_t pivot = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpuids[root]);
+    for(k = 0; k < size; k++)
+    {
+        if(k == root) continue;
+        hwloc_obj_t core_compare = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpuids[2*k]);
+        ancestor = hwloc_get_common_ancestor_obj(topology, core_compare, pivot);   
+        if(ancestor->depth < previous_ancestor_level || previous_ancestor_level < 0)
+        {
+            new_ancestor = ancestor;
+            previous_ancestor_level = ancestor->depth;
+        }
+    }
+
+    /* check oversuscribing */
+    int split_over = 0;
+    if(new_ancestor->type == HWLOC_OBJ_CORE || new_ancestor->type == HWLOC_OBJ_PU)
+    {
+        for(k = 0; k < size; k++)
+        {
+            colors[k] = -1;
+        }
+        split_over = 1;
+    }
+
+    /* find child common ancestor */
+    if(!split_over){
+        for(k = 0; k < new_ancestor->arity; k++) /* each child ancestor */
+        {
+            int j; 
+            hwloc_obj_t child = new_ancestor->children[k];
+            hwloc_cpuset_t child_set;
+            child_set = child->cpuset; 
+            for(j = 0; j < size; j++) /* each rank calling split */
+            {
+                int is_inside = hwloc_bitmap_isincluded (hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpuids[j*2])->cpuset, child_set);
+                if(is_inside) /* if MPI process inside child ancestor */
+                {
+                    if(mpc_common_get_node_count() > 1)
+                    {
+                        /* create color with node id and pu id to be globaly unique */
+                        char str_logical_idx[512];
+                        char str_node_idx[512];
+                        sprintf(str_logical_idx, "%d", k); 
+                        sprintf(str_node_idx, "%d", mpc_common_get_node_rank()); 
+                        strcat(str_node_idx, str_logical_idx);
+                        colors[j] = atoi(str_node_idx);
+
+                    }
+                    else
+                    {
+                        /* only need local object id to create color */
+                        colors[j] = k;
+                    }
+                }
+            }
+
+        }
+    }
+}
+
+int mpc_topology_guided_compute_color(char *value)
+{
+    hwloc_obj_type_t type_split;
+    int ret = __mpc_find_split_type(value, &type_split);
+    if(ret < 0)
+    {
+        fprintf(stderr, "machine\n");
+        return -1;
+    }
+    int color = -1;
+    if(!ret) /* info value not find */
+    {
+        fprintf(stderr, "0\n");
+        return -1;
+    }
+    if(type_split ==  HWLOC_OBJ_MACHINE)
+    {
+        color = mpc_common_get_node_rank();
+        fprintf(stderr, "1\n");
+        return color;
+    }
+#if (HWLOC_API_VERSION >= 0x00020000)
+    // As HWLOC_OBJ_NUMANODE has no attached cores since Hwloc 2.0.0
+    // It it not possible to retrieve numa node id from pu ancestor
+    if(type_split ==  HWLOC_OBJ_NUMANODE)
+    {
+        int nb_numa = 2;
+        int i;
+        for(i = 0; i < nb_numa; i++)
+        {
+            hwloc_topology_t topology;
+            topology = mpc_topology_global_get();
+            int id_pu = mpc_topology_get_global_current_cpu();
+            color = _mpc_topology_get_numa_node_from_cpu(topology, id_pu);
+        }
+        return color;
+    }
+#endif
+    hwloc_topology_t topology;
+    topology = mpc_topology_global_get();
+    hwloc_obj_t obj;
+    int id_pu = mpc_topology_get_global_current_cpu();
+    hwloc_obj_t ancestor = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, id_pu);
+    if(ancestor == NULL)
+    {
+        fprintf(stderr, "2\n");
+        return -1;
+    }
+#if (HWLOC_API_VERSION < 0x00020000)
+    // As HWLOC_OBJ_CACHE has no specific level before Hwloc 2.0.0
+    // It it not possible to retrieve specific level of cache id from pu ancestor
+    if(type_split != HWLOC_OBJ_CACHE)
+    {
+        __mpc_find_ancestor_by_type(topology, ancestor, type_split);
+        while(ancestor->type != type_split)
+        {
+            ancestor = ancestor->parent;
+            if(ancestor == NULL)
+            {
+                fprintf(stderr, "4, ancestor %p type_split %d\n", ancestor, type_split);
+                return -1;
+            }
+        }
+    }
+    else
+    {
+        int cache_lvl;
+        if(!strcmp(value,"L3Cache"))
+        {
+            cache_lvl = 3;
+        }
+        if(!strcmp(value,"L2Cache"))
+        {
+            cache_lvl = 2;
+        }
+        if(!strcmp(value,"L1Cache"))
+        {
+            cache_lvl = 1;
+        }
+        int cache_iterator = 0;
+        if(ancestor->type == type_split)
+        {
+            cache_iterator++;
+        }
+        while(cache_lvl != cache_iterator)
+        {
+            ancestor = ancestor->parent;
+            if(ancestor == NULL)
+            {
+                return -1;
+            }
+            if(ancestor->type == type_split)
+            {
+                cache_iterator++;
+            }
+        }
+    }
+#else
+    while(ancestor->type != type_split)
+    {
+        ancestor = ancestor->parent;
+        if(ancestor == NULL)
+        {
+            fprintf(stderr, "4, ancestor %p type_split %d\n", ancestor, type_split);
+            return -1;
+        }
+    }
+#endif
+    color = ancestor->logical_index;
+    return color;
+}
+
 /**************************
  * MPC TOPOLOGY ACCESSORS *
  **************************/
@@ -1036,10 +1261,16 @@ void _mpc_topology_get_pu_neighborhood(hwloc_topology_t target_topo, int cpuid, 
 static hwloc_topology_t __mpc_module_topology;
 static int __mpc_module_mcdram_node = -1;
 static int __mpc_module_avail_nvdimm = 0;
+static hwloc_topology_t __mpc_module_topology_global;
 
 hwloc_topology_t mpc_topology_get()
 {
 	return __mpc_module_topology;
+}
+
+hwloc_topology_t mpc_topology_global_get()
+{
+	return __mpc_module_topology_global;
 }
 
 #ifdef MPC_USE_EXTLS
@@ -1047,13 +1278,20 @@ static hwloc_topology_t* __extls_get_topology_addr(void)
 {
 	return &__mpc_module_topology;
 }
+
+static hwloc_topology_t* __extls_get_topology_global_addr(void)
+{
+	return &__mpc_module_topology_global;
+}
 #endif
 
 void mpc_topology_init()
 {
 	hwloc_topology_init( &__mpc_module_topology );
+	hwloc_topology_init( &__mpc_module_topology_global );
 
 #if (HWLOC_API_VERSION < 0x00020000)
+
 	hwloc_topology_set_flags( __mpc_module_topology, HWLOC_TOPOLOGY_FLAG_IO_DEVICES );
 #else
 	hwloc_topology_set_flags( __mpc_module_topology, HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM );
@@ -1081,6 +1319,8 @@ void mpc_topology_init()
     hwloc_const_bitmap_t allowed_topo = hwloc_topology_get_allowed_cpuset (__mpc_module_topology);
 
     __restrict_topo_to_cpuset(__mpc_module_topology, allowed_topo);
+
+	hwloc_topology_load( __mpc_module_topology_global );
 
 	_mpc_topology_render_init();
 
@@ -1160,6 +1400,8 @@ void mpc_topology_destroy( void )
 	//_mpc_topology_device_release();
 
 	hwloc_topology_destroy( __mpc_module_topology );
+
+	hwloc_topology_destroy( __mpc_module_topology_global );
 }
 
 void mpc_topology_get_pu_neighborhood( int cpuid, unsigned int nb_cpus, int *neighborhood )
@@ -1229,6 +1471,11 @@ int mpc_topology_get_current_cpu()
 	{
 		return __topo_cpu_pinning_caching_value;
 	}
+}
+
+int mpc_topology_get_global_current_cpu()
+{
+    return _mpc_topology_get_global_current_cpu(__mpc_module_topology_global);
 }
 
 void mpc_topology_print(FILE *fd)

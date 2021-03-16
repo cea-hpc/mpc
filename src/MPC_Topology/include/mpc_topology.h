@@ -110,6 +110,13 @@ void mpc_topology_destroy(void);
  */
 hwloc_topology_t mpc_topology_get(void);
 
+/**
+ * @brief Retrieve the Main not restricted Topology Object from MPC
+ *
+ * @return hwloc_topology_t MPC's main topology object
+ */
+hwloc_topology_t mpc_topology_global_get(void);
+
 /** @brief Return the closest core_id
  * @param cpuid Main core_id
  * @param nb_cpus Number of neighbor
@@ -152,7 +159,9 @@ int mpc_topology_get_pu_count(void);
 */
 int mpc_topology_get_current_cpu(void);
 
-#ifndef MPC_Threads
+/** @brief Return the current global core_id
+*/
+int mpc_topology_get_global_current_cpu(void);
 
 /**
  * @brief Return the PU executing current thread
@@ -165,24 +174,10 @@ static inline int mpc_topology_get_pu( void )
         return mpc_topology_get_current_cpu();
 }
 
-#else
-
-int mpc_thread_get_pu(void);
-#include "mpc_thread_accessor.h"
-
-/**
- * @brief Return the PU executing current thread
- * @note This version relies on MPC scheduler
- *
- * @return int current PU executing this thread
- */
-static inline int mpc_topology_get_pu( void )
+static inline int mpc_topology_get_global_pu( void )
 {
-        return mpc_thread_get_pu();
+        return mpc_topology_get_global_current_cpu();
 }
-
-#endif
-
 
 /**
  * @brief Convert a PU id from OS to logical numbering
@@ -282,6 +277,63 @@ int mpc_topology_get_mcdram_node();
  * @return int non zero if NVDIMMs are found
  */
 int mpc_topology_has_nvdimm();
+/***************************************
+ * MPC TOPOLOGY HARDWARE TOPOLOGY SPLIT*
+ ***************************************/
+
+
+typedef enum
+{
+    HW_NODE = 0,
+    HW_PACKAGE,
+    HW_NUMANODE,
+    HW_CACHEL3,
+    HW_CACHEL2,
+    HW_CACHEL1,
+    HW_TYPE_COUNT
+} mpc_topology_split_hardware_type_t;
+
+static const char *const mpc_topology_split_hardware_type_name[HW_TYPE_COUNT] =
+{
+        "Node",
+        "Package",
+        "NUMANode",
+        "L3Cache",
+        "L2Cache",
+        "L1Cache"
+};
+
+#if (HWLOC_API_VERSION < 0x00020000)
+// As HWLOC_OBJ_CACHE has no specific level before Hwloc 2.0.0
+// It it not possible to retrieve specific level of cache id from pu ancestor
+static const hwloc_obj_type_t mpc_topology_split_hardware_hwloc_type[HW_TYPE_COUNT] =
+{
+        HWLOC_OBJ_MACHINE,
+        HWLOC_OBJ_PACKAGE,
+        HWLOC_OBJ_NUMANODE,
+        HWLOC_OBJ_CACHE,
+        HWLOC_OBJ_CACHE,
+        HWLOC_OBJ_CACHE
+};
+#else
+static const hwloc_obj_type_t mpc_topology_split_hardware_hwloc_type[HW_TYPE_COUNT] =
+{
+        HWLOC_OBJ_MACHINE,
+        HWLOC_OBJ_PACKAGE,
+        HWLOC_OBJ_NUMANODE,
+        HWLOC_OBJ_L3CACHE,
+        HWLOC_OBJ_L2CACHE,
+        HWLOC_OBJ_L1CACHE
+};
+#endif
+
+/** @brief Return logical id of a hardware instance for guided topological split
+*/
+int mpc_topology_guided_compute_color(char *);
+
+/** @brief Return logical id of a hardware instance for unguided topological split
+*/
+int mpc_topology_unguided_compute_color(int *, int *, int);
 
 /* End topology_interface_getters */
 /**

@@ -386,6 +386,8 @@ extern "C"
 #define MPI_COMM_TYPE_NUMA_TR MPC_COMM_TYPE_NUMA_TR
 #define MPI_COMM_TYPE_MPC_PROCESS MPC_COMM_TYPE_MPC_PROCESS
 #define MPI_COMM_TYPE_MPC_PROCESS_TR MPC_COMM_TYPE_MPC_PROCESS_TR
+#define MPI_COMM_TYPE_HW_UNGUIDED MPC_COMM_TYPE_HW_UNGUIDED
+#define MPI_COMM_TYPE_HW_SUBDOMAIN MPC_COMM_TYPE_HW_SUBDOMAIN
 
 /*
 * * MPI-2 One-Sided Communications asserts
@@ -2131,6 +2133,16 @@ int PMPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm);
 int MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info, MPI_Comm *newcomm);
 int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info, MPI_Comm *newcomm);
 
+/*MPIX_Get_hwsubdomain_types*/
+
+/**
+ * @brief MPI function MPIX_Get_hwsubdomain_types
+ * 
+ * @param value split level available separated with comma
+ *
+ */
+void MPIX_Get_hwsubdomain_types(char *value);
+void PMPIX_Get_hwsubdomain_types(char *value);
 
 /*MPI_Comm_test_inter*/
 

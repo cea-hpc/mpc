@@ -15367,24 +15367,6 @@ int PMPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
-int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_Info info,
-                         MPI_Comm *newcomm)
-{
-	int color = 0;
-
-	if(split_type == MPI_COMM_TYPE_SHARED)
-	{
-		color = mpc_common_get_node_rank();
-
-		/* char hname[200];
-		 * gethostname(hname, 200);
-		 * mpc_common_debug_error("Color %d on %s", color, hname); */
-	}
-
-	TODO("Handle info in Comm_split_type");
-	return PMPI_Comm_split(comm, color, key, newcomm);
-}
-
 int PMPI_Comm_free(MPI_Comm *comm)
 {
 	int res = MPI_ERR_INTERN;
@@ -16375,6 +16357,173 @@ int PMPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int *coords)
 
 	mpc_common_spinlock_unlock(&topo->lock);
 	MPI_HANDLE_RETURN_VAL(res, comm);
+}
+
+void PMPIX_Get_hwsubdomain_types(char * value)
+{
+        /* if new level added, change enum and arrays in mpc_topology.h accordingly */
+    int buflen = 1024;
+    int i;
+    for(i = 0; i < HW_TYPE_COUNT; ++i)
+    {
+        if(i == 0)
+        {
+            snprintf(value, buflen, "%s ", mpc_topology_split_hardware_type_name[i]);  
+        }
+        else 
+        {
+            strcat(value, mpc_topology_split_hardware_type_name[i]);  
+            if(i != HW_TYPE_COUNT - 1)
+            {
+                strcat(value, " ");  
+            }
+        }
+    }
+}
+
+static int __split_guided(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_Info info,
+                         int * guided_shared_memory, MPI_Comm *newcomm)
+{
+    int buflen = 1024;
+    char value[1024];
+    int flag;
+    int color = MPC_PROC_NULL;
+    _mpc_cl_info_get(info, "mpi_hw_subdomain_type", &buflen, value, &flag);
+    if(!strcmp(value,"mpi_shared_memory")) /* ensure consistency MPI standard 4.0 */
+    {
+        *guided_shared_memory = 1;
+        return 0;
+    }
+    int size = mpc_lowcomm_communicator_size(comm);
+    if(size == 1) 
+    {
+        fprintf(stderr, "5\n");
+        return MPI_PROC_NULL;
+    }
+    color = mpc_topology_guided_compute_color(value);
+    if(color < 0) 
+    {
+        fprintf(stderr, "6\n");
+        return MPI_PROC_NULL;
+    }
+    if(mpc_common_get_node_count() > 1)/* create color with node id */
+    {
+        char str_logical_idx[512];
+        char str_node_idx[512];
+        char tmp[512];
+        sprintf(str_logical_idx, "%d", color); 
+        sprintf(str_node_idx, "%d", mpc_common_get_node_rank()); 
+        sprintf(tmp, "%d", mpc_common_get_node_rank()); 
+        /* add node number enough time to be sure id not interfere between nodes */
+        strcat(str_node_idx, tmp);
+        strcat(str_node_idx, tmp);
+        strcat(str_node_idx, tmp);
+        strcat(str_node_idx, str_logical_idx);
+        color = atoi(str_node_idx);
+    }
+    return color;
+}
+
+static int __split_unguided(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_Info info,
+                         MPI_Comm *newcomm)
+{
+    int size = mpc_lowcomm_communicator_size(comm);
+    int color = MPC_PROC_NULL;
+    if(size == 1) 
+    {
+        return MPI_PROC_NULL;
+    }
+    int *tab_cpuid, *tab_color;
+    int cpu_this = mpc_topology_get_global_current_cpu();
+
+    /* send to root cpu id and node rank */
+    int root = 0;
+    int rank;
+	_mpc_cl_comm_rank(comm, &rank);
+    if(rank == root)
+    {
+        tab_cpuid            = ( int* )sctk_malloc(2 * size * sizeof(int));
+    }
+    else
+    {
+        tab_cpuid            = ( int* )sctk_malloc(2 * sizeof(int));
+    }
+    tab_cpuid[0] = cpu_this;
+    tab_cpuid[1] = mpc_common_get_node_rank();
+    tab_color = ( int* )sctk_malloc(size * sizeof(int) );
+    mpc_lowcomm_gather(tab_cpuid, tab_cpuid, 2*sizeof(int), root, comm);
+
+    /* root computes color with infos gathered*/
+    if(key == root)
+    {
+        int k;
+        int is_multinode = 0;
+
+        /* if callers on several nodes, split with node number */
+        for(k = 0; k < size; k++)
+        {
+            if(tab_cpuid[1] != tab_cpuid[2 * k + 1]) /* one rank is not on the same node */
+            {
+                is_multinode = 1;
+                break;
+            }
+        }
+        if(is_multinode)
+        {
+            for(k = 0; k < size; k++)
+            {
+                tab_color[k] = tab_cpuid[2 * k + 1]; /* color is node rank */
+            }
+        }
+        else
+        {
+            mpc_topology_unguided_compute_color(tab_color, tab_cpuid, size);
+        }
+    }
+
+    /* root sends color computed */ //TODO scatter
+    mpc_lowcomm_bcast( ( void * )tab_color, size*sizeof(int), root, comm);
+
+    if(tab_color[key] == -1)
+    {
+        return MPI_PROC_NULL;
+    }
+    color = tab_color[key];
+    sctk_free(tab_color);
+    sctk_free(tab_cpuid);
+    return color;
+}
+
+int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_Info info,
+                         MPI_Comm *newcomm)
+{
+	int color = MPC_PROC_NULL;
+    int guided_shared_memory = 0; /* ensure consistency MPI standard 4.0 */
+
+    if(split_type == MPI_COMM_TYPE_HW_SUBDOMAIN)
+    {
+        color = __split_guided(comm, split_type, key, info,
+                         &guided_shared_memory, newcomm);
+    }
+    if(split_type == MPI_COMM_TYPE_HW_UNGUIDED)
+    {
+        color = __split_unguided(comm, split_type, key, info,
+                         newcomm);
+    }
+	if(split_type == MPI_COMM_TYPE_SHARED || guided_shared_memory)
+	{
+		color = mpc_common_get_node_rank();
+
+		/* char hname[200];
+		 * gethostname(hname, 200);
+		 * mpc_common_debug_error("Color %d on %s", color, hname); */
+	}
+    if(color == MPC_PROC_NULL)
+    {
+        *newcomm = MPI_COMM_NULL;
+        return;
+    }
+    return PMPI_Comm_split(comm, color, key, newcomm);
 }
 
 int PMPI_Graph_neighbors_count(MPI_Comm comm, int rank, int *nneighbors)

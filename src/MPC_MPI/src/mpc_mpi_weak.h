@@ -267,6 +267,7 @@
 #pragma weak MPI_Comm_get_errhandler = PMPI_Comm_get_errhandler
 #pragma weak MPI_Comm_call_errhandler = PMPI_Comm_call_errhandler
 #pragma weak MPI_Comm_set_errhandler = PMPI_Comm_set_errhandler
+#pragma weak MPIX_Get_hwsubdomain_types = PMPIX_Get_hwsubdomain_types
 // PROFILER MPI_TYPE_ENV MPI datatype handling
 /* MPI environmental management */
 // PROFILER MPI_ENV_MAN MPI environmental management
