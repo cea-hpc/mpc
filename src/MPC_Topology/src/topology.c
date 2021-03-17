@@ -1168,15 +1168,10 @@ int mpc_topology_guided_compute_color(char *value)
     // It it not possible to retrieve numa node id from pu ancestor
     if(type_split ==  HWLOC_OBJ_NUMANODE)
     {
-        int nb_numa = 2;
-        int i;
-        for(i = 0; i < nb_numa; i++)
-        {
-            hwloc_topology_t topology;
-            topology = mpc_topology_global_get();
-            int id_pu = mpc_topology_get_global_current_cpu();
-            color = _mpc_topology_get_numa_node_from_cpu(topology, id_pu);
-        }
+        hwloc_topology_t topology;
+        topology = mpc_topology_global_get();
+        int id_pu = mpc_topology_get_global_current_cpu();
+        color = _mpc_topology_get_numa_node_from_cpu(topology, id_pu);
         return color;
     }
 #endif
