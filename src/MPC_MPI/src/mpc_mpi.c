@@ -16397,13 +16397,11 @@ static int __split_guided(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI
     int size = mpc_lowcomm_communicator_size(comm);
     if(size == 1) 
     {
-        fprintf(stderr, "5\n");
         return MPI_PROC_NULL;
     }
     color = mpc_topology_guided_compute_color(value);
     if(color < 0) 
     {
-        fprintf(stderr, "6\n");
         return MPI_PROC_NULL;
     }
     if(mpc_common_get_node_count() > 1)/* create color with node id */

@@ -1148,19 +1148,16 @@ int mpc_topology_guided_compute_color(char *value)
     int ret = __mpc_find_split_type(value, &type_split);
     if(ret < 0)
     {
-        fprintf(stderr, "machine\n");
         return -1;
     }
     int color = -1;
     if(!ret) /* info value not find */
     {
-        fprintf(stderr, "0\n");
         return -1;
     }
     if(type_split ==  HWLOC_OBJ_MACHINE)
     {
         color = mpc_common_get_node_rank();
-        fprintf(stderr, "1\n");
         return color;
     }
 #if (HWLOC_API_VERSION >= 0x00020000)
@@ -1182,7 +1179,6 @@ int mpc_topology_guided_compute_color(char *value)
     hwloc_obj_t ancestor = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, id_pu);
     if(ancestor == NULL)
     {
-        fprintf(stderr, "2\n");
         return -1;
     }
 #if (HWLOC_API_VERSION < 0x00020000)
@@ -1196,7 +1192,6 @@ int mpc_topology_guided_compute_color(char *value)
             ancestor = ancestor->parent;
             if(ancestor == NULL)
             {
-                fprintf(stderr, "4, ancestor %p type_split %d\n", ancestor, type_split);
                 return -1;
             }
         }
@@ -1240,7 +1235,6 @@ int mpc_topology_guided_compute_color(char *value)
         ancestor = ancestor->parent;
         if(ancestor == NULL)
         {
-            fprintf(stderr, "4, ancestor %p type_split %d\n", ancestor, type_split);
             return -1;
         }
     }
