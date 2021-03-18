@@ -331,15 +331,13 @@ typedef int MPC_Message;
 
 /* for comm_split method */
 #define MPC_COMM_TYPE_SHARED 1
-#define MPC_COMM_TYPE_SHARED_TR 2
-#define MPC_COMM_TYPE_SOCKET 3
-#define MPC_COMM_TYPE_SOCKET_TR 4
-#define MPC_COMM_TYPE_NUMA 5
-#define MPC_COMM_TYPE_NUMA_TR 6
-#define MPC_COMM_TYPE_MPC_PROCESS 7
-#define MPC_COMM_TYPE_MPC_PROCESS_TR 8
-#define MPC_COMM_TYPE_HW_UNGUIDED 9
-#define MPC_COMM_TYPE_HW_SUBDOMAIN 10
+#define MPC_COMM_TYPE_SOCKET 2
+#define MPC_COMM_TYPE_NUMA 3
+#define MPC_COMM_TYPE_UNIX_PROCESS 4
+#define MPC_COMM_TYPE_HW_UNGUIDED 5
+#define MPC_COMM_TYPE_HW_SUBDOMAIN 6
+#define MPC_COMM_TYPE_APP 7
+#define MPC_COMM_TYPE_NODE 8
 
 /* BE VERY CAREFUL HERE /!\/!\/!\/!\/!\/!\/!\/!\
  *  You have to note that these types
