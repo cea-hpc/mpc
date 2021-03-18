@@ -15745,6 +15745,42 @@ int PMPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
+int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_Info info,
+                         MPI_Comm *newcomm)
+{
+	int color = 0, ret, cpu;
+
+	switch(split_type){
+		case MPI_COMM_TYPE_SHARED:
+			cpu = mpc_topology_get_current_cpu();
+			color = mpc_topology_get_numa_node_from_cpu(cpu);
+			/* char hname[200];
+			* gethostname(hname, 200);
+			* mpc_common_debug_error("Color %d on %s", color, hname); */
+		break;
+		case MPI_COMM_TYPE_APP:
+			if(!mpc_launch_pmi_get_app_rank(&color)) mpc_common_debug_warning("app rank not properly assigned");
+		break;
+		case MPI_COMM_TYPE_NUMA:
+			cpu = mpc_topology_get_current_cpu();
+			color = mpc_topology_get_numa_node_from_cpu(cpu);
+		break;
+		case MPI_COMM_TYPE_SOCKET:
+			cpu = mpc_topology_get_current_cpu();
+			color = mpc_topology_get_parent_socket_cpuset(cpu);
+		break;
+		case MPI_COMM_TYPE_PROCESS:
+			color = mpc_common_get_process_rank();
+		break;
+		case MPI_COMM_TYPE_NODE:
+			color = mpc_common_get_node_rank();
+		break;
+	}
+
+	TODO("Handle info in Comm_split_type");
+	return PMPI_Comm_split(comm, color, key, newcomm);
+}
+
 int PMPI_Comm_free(MPI_Comm *comm)
 {
 	int res = MPI_ERR_INTERN;
