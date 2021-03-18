@@ -228,6 +228,19 @@ int mpc_launch_pmi_get_job_id( int *id );
  * @}
  */
 
+
+int mpc_launch_pmi_get_univ_size(int* univsize);
+
+int mpc_launch_pmi_get_app_rank(int* appname);
+
+int mpc_launch_pmi_get_app_size(int* appsize);
+
+int mpc_launch_pmi_get_app_num(int* appnum);
+
+int mpc_launch_pmi_get_pset(char** pset);
+
+int mpc_launch_pmi_get_pset_list(char** psetlist);
+
 #ifdef __cplusplus
 }
 #endif

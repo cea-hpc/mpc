@@ -439,7 +439,6 @@ static inline int _pmi_initialize(struct mpc_pmi_context *ctx, int * unreachable
 			fprintf( stderr, "FAILURE (mpc_launch_pmi): PMIx_Initialized returned false\n" );
 			return MPC_LAUNCH_PMI_FAIL;
 		}
-
 	#else /* PMI / HYDRA */
 		int rc;
 
@@ -494,7 +493,7 @@ static inline int _pmi_initialize(struct mpc_pmi_context *ctx, int * unreachable
 	{
 		goto PMI_INIT_SERIAL;
 	}
-	
+
 	return MPC_LAUNCH_PMI_SUCCESS;
 
 PMI_INIT_SERIAL:
@@ -995,3 +994,99 @@ int mpc_launch_pmi_get_as_rank( char *value, size_t size, int tag, int rank )
 	PMI_RETURN( rc );
 }
 
+int mpc_launch_pmi_get_univ_size(int* univsize){
+	#if defined(MPC_USE_PMIX)
+		pmix_proc_t proc;
+		pmix_status_t ret;
+		pmix_value_t* val;
+		PMIX_PROC_LOAD(&proc, pmi_context.pmix_proc.nspace, PMIX_RANK_WILDCARD);
+		ret = PMIx_Get(&proc, PMIX_UNIV_SIZE, NULL, 0 , &val);
+		if(PMIX_SUCCESS == ret) *univsize = val->data.uint32;
+		return ret == PMIX_SUCCESS;
+	#else
+	// TODO
+	#endif
+}
+
+
+int mpc_launch_pmi_get_app_rank(int* appname){
+	#if defined(MPC_USE_PMIX)
+		pmix_status_t ret;
+		pmix_value_t* val;
+		ret = PMIx_Get(&pmi_context.pmix_proc, PMIX_APPNUM, NULL, 0 , &val);
+		if(PMIX_SUCCESS == ret) *appname = val->data.uint32;
+		else printf("get appnum returned %d", ret);
+		return ret == PMIX_SUCCESS;
+	#else
+	// TODO
+	#endif
+}
+
+int mpc_launch_pmi_get_app_size(int* appsize){
+	#if defined(MPC_USE_PMIX)
+		pmix_proc_t proc;
+		pmix_status_t ret;
+		pmix_value_t* val;
+		PMIX_PROC_LOAD(&proc, pmi_context.pmix_proc.nspace, PMIX_RANK_WILDCARD);
+		ret = PMIx_Get(&proc, PMIX_APP_SIZE, NULL, 0 , &val);
+		if(PMIX_SUCCESS == ret) *appsize = val->data.uint32;
+		// else printf("get app_size returned %d", ret);
+		return ret == PMIX_SUCCESS;
+	#else
+	// TODO
+	#endif
+}
+
+// does not work
+
+int mpc_launch_pmi_get_app_num(int* appnum){
+	#if defined(MPC_USE_PMIX)
+		pmix_proc_t proc;
+		pmix_status_t ret;
+		pmix_value_t* val;
+		PMIX_PROC_LOAD(&proc, pmi_context.pmix_proc.nspace, PMIX_RANK_WILDCARD);
+		ret = PMIx_Get(&proc, PMIX_JOB_NUM_APPS, NULL, 0 , &val);
+		if(PMIX_SUCCESS == ret) *appnum = val->data.uint32;
+		// else printf("get job_num_apps returned %d", ret);
+		return ret == PMIX_SUCCESS;
+	#else
+	// TODO
+	#endif
+}
+
+// get with PMIX_SET_NAMES does not work
+int mpc_launch_pmi_get_pset(char** pset){
+	#if defined(MPC_USE_PMIX)
+	pmix_value_t* val;
+	pmix_status_t ret;
+	char* my_set;
+
+	ret = PMIx_Get(&pmi_context.pmix_proc, PMIX_PSET_NAMES, NULL, 0, &val); // fonctionne pas ?
+	if(ret == PMIX_SUCCESS) my_set = val->data.string;
+	// else printf("get pmix_pset_names returned %d", ret);
+	return ret == PMIX_SUCCESS;
+	#else
+	// TODO
+	#endif
+}
+
+int mpc_launch_pmi_get_pset_list(char** psetlist){
+	#if defined(MPC_USE_PMIX)
+		pmix_value_t* val;
+		pmix_status_t ret;
+		pmix_query_t query;
+
+		PMIX_QUERY_CONSTRUCT(&query);
+		PMIX_ARGV_APPEND(ret, query.keys, PMIX_QUERY_NUM_PSETS);
+		PMIX_ARGV_APPEND(ret, query.keys, PMIX_QUERY_PSET_NAMES);
+		pmix_info_t* result = NULL;
+		size_t result_size;
+
+		ret = PMIx_Query_info(&query, 1, &result, &result_size);
+		if(ret == PMIX_SUCCESS) *psetlist = result[1].value.data.string;
+		else printf("query returned %d", ret);
+		return ret;
+	#else
+	// TODO
+	#endif
+}
