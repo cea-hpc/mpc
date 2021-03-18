@@ -20,7 +20,6 @@
 #   - PERACHE Marc marc.perache@cea.fr                                 # 
 #                                                                      # 
 ######################################################################## 
-#echo "$LAUNCH_COMMAND"
 
 if test "x${MPC_LAUNCHER}" = "xPMIX" -a -f "${LAUNCHER_CONFIG_PRTERUN_PATH}"; then
 	
@@ -37,8 +36,20 @@ if test "x${MPC_LAUNCHER}" = "xPMIX" -a -f "${LAUNCHER_CONFIG_PRTERUN_PATH}"; th
     if test "x${LAUNCHER_OPTION_NODE_NB}" != "x1"; then
         echo "Warning: for PRRTE NODE number is derived from process number and slot counts (option ignored)"
     fi
-
-	LAUNCH_COMMAND="${LAUNCHER_CONFIG_PRTERUN_PATH} ${autokill_opt} $LAUNCH_OPTIONS -np $LAUNCHER_OPTION_PROCESS_NB --map-by :PE=$LAUNCHER_OPTION_CPU_NB $LAUNCHER_OPTION_WRAPPER $LAUNCHER_OPTION_BINARY $LAUNCHER_OPTION_BINARY_ARGS"
+	if test "$MPMD_COMMAND" = "" ; then
+		LAUNCH_COMMAND="${LAUNCHER_CONFIG_PRTERUN_PATH} ${autokill_opt} $LAUNCH_OPTIONS -np $LAUNCHER_OPTION_PROCESS_NB --map-by :PE=$LAUNCHER_OPTION_CPU_NB $LAUNCHER_OPTION_WRAPPER $LAUNCHER_OPTION_BINARY $LAUNCHER_OPTION_BINARY_ARGS"
+	else
+		LAUNCHER_OPTION_WRAPPER=""
+		MPMD=""
+		for i in $(seq 1 $MPMD_LEN); do
+			if test $i = 1 ; then
+				MPMD="-np $(echo $MPMD_PROC_NUM | cut -d' ' -f$i) $(echo $MPMD_COMMAND | cut -d: -f$i)"
+			else
+				MPMD="$MPMD : -np $(echo $MPMD_PROC_NUM | cut -d' ' -f$i) $(echo $MPMD_COMMAND | cut -d: -f$i)"
+			fi
+		done
+		LAUNCH_COMMAND="${LAUNCHER_CONFIG_PRTERUN_PATH} ${autokill_opt} $LAUNCH_OPTIONS --map-by :PE=$LAUNCHER_OPTION_CPU_NB $LAUNCHER_OPTION_WRAPPER $MPMD"
+	fi
 else
 	echo  "ERROR mpc is compiled without slurm support" 1>&2
 	exit 1

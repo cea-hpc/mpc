@@ -312,7 +312,6 @@ if test "x${CONFIG_DISABLE_ASLR}" = "xtrue"; then
 	if test "x$?" = "x0"; then
 		# Now pass to setarch
 		setarch "$(uname -m)" -R true > /dev/null 2>&1
-
 		if test "x$?" = "x0"; then
 			# Here we have setarch -R
 			LAUNCHER_OPTION_WRAPPER="setarch $(uname -m) -R "
@@ -433,6 +432,14 @@ list_available_mpc_launchers()
 	exit 0
 }
 
+remove_first(){
+	shift
+	echo $@
+}
+get_first(){
+	echo $1
+}
+
 print_version()
 {
 	echo "mpcrun @MPC_VERSION_STRING@"
@@ -440,8 +447,6 @@ print_version()
 	echo "Please report bugs at @PACKAGE_BUGREPORT@"
 	exit 0
 }
-
-
 DEBUG=""
 
 #########################
@@ -451,172 +456,198 @@ DEBUG=""
 ARG_PARSING_ENABLED="true"
 LAUNCHER_CPU_NB_WAS_SET="0"
 LAUNCH_OPTIONS=""
+MPMD_COMMAND=""
+MPMD_PROC_NUM=""
+MPMD_LEN=0
+MPMD="false"
 
 # Parse command options
 for arg in "$@" ; do
 	if test "$ARG_PARSING_ENABLED" = "true" ; then
-		case $arg in
-			-h|--help)
-				print_help;
-				exit 0;
-				;;
-			-v|--verbose)
-				CONFIG_MPC_VERBOSE="1"
-				;;
-			-vv)
-				CONFIG_MPC_VERBOSE="2"
-				;;
-			-vvv)
-				CONFIG_MPC_VERBOSE="3"
-				;;
-			--verbose=*)
-				CONFIG_MPC_VERBOSE="`echo A$arg | sed -e 's/A--verbose=//g'`"
-				;;
-			--profiling=*)
-				CONFIG_PROFILING="`echo A$arg | sed -e 's/A--profiling=//g'`"
-				;;
-			--show)
-				LAUNCHER_SHOW_CMD=echo
-				;;
-			--version|-V)
-				print_version
-				;;
-			--launch_list|--launchlist|-l=help|--launcher=help)
-				list_available_mpc_launchers
-				;;
-			--disable-smt)
-				CONFIG_ENABLE_SMT="0"
-				;;
-			--enable-smt)
-				CONFIG_ENABLE_SMT="1"
-				;;
-			--graphic-placement)
-				CONFIG_TOPOLOGY_DUMP_GRAPHIC="1"
-				;;
-			--text-placement)
-				CONFIG_TOPOLOGY_DUMP_TEXT="1"
-				;;
-			--use-accl|--accl|-accl)
-				CONFIG_ACCELERATOR_SUPPORT="1"
-				;;
-			--dbg=*)
-				DEBUG="`echo A$arg | sed -e 's/A--dbg=//g'`"
-				;;
-			--dbg_opt=*)
-				MPC_GDB_DEBUG_ARGS="`echo A$arg | sed -e 's/A--dbg_opt=//g'`"
-				;;
-			--autokill=*)
-				CONFIG_AUTOKILL="`echo A$arg | sed -e 's/A--autokill=//g'`"
-				;;
-			--opt=*)
-				LAUNCH_OPTIONS="$LAUNCH_OPTIONS `echo A$arg | sed -e 's/A--opt=//g'`"
-				;;
+		if test $MPMD = "false" ; then
+			case $arg in
+				-h|--help)
+					print_help;
+					exit 0;
+					;;
+				-v|--verbose)
+					CONFIG_MPC_VERBOSE="1"
+					;;
+				-vv)
+					CONFIG_MPC_VERBOSE="2"
+					;;
+				-vvv)
+					CONFIG_MPC_VERBOSE="3"
+					;;
+				--verbose=*)
+					CONFIG_MPC_VERBOSE="`echo A$arg | sed -e 's/A--verbose=//g'`"
+					;;
+				--profiling=*)
+					CONFIG_PROFILING="`echo A$arg | sed -e 's/A--profiling=//g'`"
+					;;
+				--show)
+					LAUNCHER_SHOW_CMD=echo
+					;;
+				--version|-V)
+					print_version
+					;;
+				--launch_list|--launchlist|-l=help|--launcher=help)
+					list_available_mpc_launchers
+					;;
+				--disable-smt)
+					CONFIG_ENABLE_SMT="0"
+					;;
+				--enable-smt)
+					CONFIG_ENABLE_SMT="1"
+					;;
+				--graphic-placement)
+					CONFIG_TOPOLOGY_DUMP_GRAPHIC="1"
+					;;
+				--text-placement)
+					CONFIG_TOPOLOGY_DUMP_TEXT="1"
+					;;
+				--use-accl|--accl|-accl)
+					CONFIG_ACCELERATOR_SUPPORT="1"
+					;;
+				--dbg=*)
+					DEBUG="`echo A$arg | sed -e 's/A--dbg=//g'`"
+					;;
+				--dbg_opt=*)
+					MPC_GDB_DEBUG_ARGS="`echo A$arg | sed -e 's/A--dbg_opt=//g'`"
+					;;
+				--autokill=*)
+					CONFIG_AUTOKILL="`echo A$arg | sed -e 's/A--autokill=//g'`"
+					;;
+				--opt=*)
+					LAUNCH_OPTIONS="$LAUNCH_OPTIONS `echo A$arg | sed -e 's/A--opt=//g'`"
+					;;
 
-			--task-nb=*)
-				MPC_ARG_TASK_NB="`echo A$arg | sed -e 's/A--task-nb=//g'`"
+				--task-nb=*)
+					MPC_ARG_TASK_NB="`echo A$arg | sed -e 's/A--task-nb=//g'`"
+					;;
+				-n=*)
+					MPC_ARG_TASK_NB="`echo A$arg | sed -e 's/A-n=//g'`"
+					;;
+				--process-nb=*)
+					check_process_nb "`echo A$arg | sed -e 's/A--process-nb=//g'`"
+					;;
+				-p=*)
+					check_process_nb "`echo A$arg | sed -e 's/A-p=//g'`"
+					;;
+				--cpu-nb=*)
+					LAUNCHER_OPTION_CPU_NB="`echo A$arg | sed -e 's/A--cpu-nb=//g'`"
+					LAUNCHER_CPU_NB_WAS_SET="1"
+					;;
+				--cpu-nb-mpc=*)
+					MPC_ARG_FORCE_CPU_NB="`echo A$arg | sed -e 's/A--cpu-nb-mpc=//g'`"
+					;;
+				-c=*)
+					LAUNCHER_OPTION_CPU_NB="`echo A$arg | sed -e 's/A-c=//g'`"
+					LAUNCHER_CPU_NB_WAS_SET="1"
+					;;
+				--node-nb=*)
+					LAUNCHER_OPTION_NODE_NB="`echo A$arg | sed -e 's/A--node-nb=//g'`"
+					;;
+				-N=*)
+					LAUNCHER_OPTION_NODE_NB="`echo A$arg | sed -e 's/A-N=//g'`"
+					;;
+				--multithreading=*)
+					check_thread "`echo A$arg | sed -e 's/A--multithreading=//g'`"
+					;;
+				-m=*)
+					check_thread "`echo A$arg | sed -e 's/A-m=//g'`"
+					;;
+				--network=*)
+					check_net "`echo A$arg | sed -e 's/A--network=//g'`"
+					;;
+				-net=*)
+					check_net "`echo A$arg | sed -e 's/A-net=//g'`"
+					;;
+				--net=*)
+					check_net "`echo A$arg | sed -e 's/A--net=//g'`"
+					;;
+				-l=*)
+					LAUNCHER_PLUGIN="`echo A$arg | sed -e 's/A-l=//g'`"
+					;;
+				--launcher=*)
+					LAUNCHER_PLUGIN="`echo A$arg | sed -e 's/A--launcher=//g'`"
+					;;
+				--mpmd=*)
+					MPMD="true"
+					MPMD_PROC_NUM="`echo A$arg | sed -e 's/A--mpmd=//g'`"
+					;;
+				--config=* | --profiles=*)
+					#Already processed in a previous loop on arguments, but need to capture them otherwise
+					#it will be propagated as exe options.
+					;;
+				--arch-library-path=*)
+					SCTK_ARCH_LIBRARY_PATH="`echo A$arg | sed -e 's/A--arch-library-path=//g'`"
+					export SCTK_ARCH_LIBRARY_PATH
+					echo "Arch library path updated : $SCTK_ARCH_LIBRARY_PATH" >&2
+					;;
+				--tempdir)
+					export MPC_MOVE_TO_TEMP="1"
+					;;
+				--checkpoint|--ckpt)
+					assert_have_dmtcp $arg
+					MPC_ARG_FAULT_TOLERANCE="--checkpoint"
+					;;
+				--restart*|--rstr*)
+					assert_have_dmtcp $arg
+					MPC_ARG_FAULT_TOLERANCE="--restart"
+					MPC_ARG_FT_SCRIPT_PATH="`echo "A$arg" | sed -re 's/A--re?sta?rt?=?//g'`"
+					#if the optioanl argument is a relative path -> expand it
+					test -n "$MPC_ARG_FT_SCRIPT_PATH" && test -z "`echo "$MPC_ARG_FT_SCRIPT_PATH" | egrep "^/"`" && MPC_ARG_FT_SCRIPT_PATH="$PWD/$MPC_ARG_FT_SCRIPT_PATH"
+					;;
+				--ft-host=*)
+					assert_have_dmtcp "$arg"
+					DMTCP_ARG_FT_HOST="$(echo "A$arg" | sed -e 's/A--ft-host=//g')"
+					;;
+				--ft-port=*)
+					assert_have_dmtcp "$arg"
+					DMTCP_ARG_FT_PORT="$(echo "A$arg" | sed -e 's/A--ft-port=//g')"
+					;;
+				--noversion-details|\
+				--version-details|\
+				--clean|\
+				--tmp_dir=*|\
+				--mic-nb-task=*|\
+				--host-nb-task=*|\
+				--nb-host=*|\
+				--nb-mic=*|\
+				--report|\
+				--migration|\
+				--noreport|\
+				--disable-share-node|\
+				--share-node|\
+				-mpi-only)
+					echo "INFO: $arg option is deprectated"
 				;;
-			-n=*)
-				MPC_ARG_TASK_NB="`echo A$arg | sed -e 's/A-n=//g'`"
-				;;
-			--process-nb=*)
-				check_process_nb "`echo A$arg | sed -e 's/A--process-nb=//g'`"
-				;;
-			-p=*)
-				check_process_nb "`echo A$arg | sed -e 's/A-p=//g'`"
-				;;
-			--cpu-nb=*)
-				LAUNCHER_OPTION_CPU_NB="`echo A$arg | sed -e 's/A--cpu-nb=//g'`"
-				LAUNCHER_CPU_NB_WAS_SET="1"
-				;;
-			--cpu-nb-mpc=*)
-				MPC_ARG_FORCE_CPU_NB="`echo A$arg | sed -e 's/A--cpu-nb-mpc=//g'`"
-				;;
-			-c=*)
-				LAUNCHER_OPTION_CPU_NB="`echo A$arg | sed -e 's/A-c=//g'`"
-				LAUNCHER_CPU_NB_WAS_SET="1"
-				;;
-			--node-nb=*)
-				LAUNCHER_OPTION_NODE_NB="`echo A$arg | sed -e 's/A--node-nb=//g'`"
-				;;
-			-N=*)
-				LAUNCHER_OPTION_NODE_NB="`echo A$arg | sed -e 's/A-N=//g'`"
-				;;
-			--multithreading=*)
-				check_thread "`echo A$arg | sed -e 's/A--multithreading=//g'`"
-				;;
-			-m=*)
-				check_thread "`echo A$arg | sed -e 's/A-m=//g'`"
-				;;
-			--network=*)
-				check_net "`echo A$arg | sed -e 's/A--network=//g'`"
-				;;
-			-net=*)
-				check_net "`echo A$arg | sed -e 's/A-net=//g'`"
-				;;
-			--net=*)
-				check_net "`echo A$arg | sed -e 's/A--net=//g'`"
-				;;
-			-l=*)
-				LAUNCHER_PLUGIN="`echo A$arg | sed -e 's/A-l=//g'`"
-				;;
-			--launcher=*)
-				LAUNCHER_PLUGIN="`echo A$arg | sed -e 's/A--launcher=//g'`"
-				;;
-			--config=* | --profiles=*)
-				#Already processed in a previous loop on arguments, but need to capture them otherwise
-				#it will be propagated as exe options.
-				;;
-			--arch-library-path=*)
-				SCTK_ARCH_LIBRARY_PATH="`echo A$arg | sed -e 's/A--arch-library-path=//g'`"
-				export SCTK_ARCH_LIBRARY_PATH
-				echo "Arch library path updated : $SCTK_ARCH_LIBRARY_PATH" >&2
-				;;
-			--tempdir)
-				export MPC_MOVE_TO_TEMP="1"
-				;;
-			--checkpoint|--ckpt)
-				assert_have_dmtcp $arg
-				MPC_ARG_FAULT_TOLERANCE="--checkpoint"
-				;;
-			--restart*|--rstr*)
-				assert_have_dmtcp $arg
-				MPC_ARG_FAULT_TOLERANCE="--restart"
-				MPC_ARG_FT_SCRIPT_PATH="`echo "A$arg" | sed -re 's/A--re?sta?rt?=?//g'`"
-				#if the optioanl argument is a relative path -> expand it
-				test -n "$MPC_ARG_FT_SCRIPT_PATH" && test -z "`echo "$MPC_ARG_FT_SCRIPT_PATH" | egrep "^/"`" && MPC_ARG_FT_SCRIPT_PATH="$PWD/$MPC_ARG_FT_SCRIPT_PATH"
-				;;
-			--ft-host=*)
-				assert_have_dmtcp "$arg"
-				DMTCP_ARG_FT_HOST="$(echo "A$arg" | sed -e 's/A--ft-host=//g')"
-				;;
-			--ft-port=*)
-				assert_have_dmtcp "$arg"
-				DMTCP_ARG_FT_PORT="$(echo "A$arg" | sed -e 's/A--ft-port=//g')"
-				;;
-			--noversion-details|\
-			--version-details|\
-			--clean|\
-			--tmp_dir=*|\
-			--mic-nb-task=*|\
-			--host-nb-task=*|\
-			--nb-host=*|\
-			--nb-mic=*|\
-			--report|\
-			--migration|\
-			--noreport|\
-			--disable-share-node|\
-			--share-node|\
-			-mpi-only)
-				echo "INFO: $arg option is deprectated"
-			;;
-			--)
-				ARG_PARSING_ENABLED="false"
-				;;
-			*)
-				LAUNCHER_OPTION_BINARY="$LAUNCHER_OPTION_BINARY $arg"
-				ARG_PARSING_ENABLED="false"
-				;;
-		esac
+				--)
+					ARG_PARSING_ENABLED="false"
+					;;
+				*)
+					LAUNCHER_OPTION_BINARY="$LAUNCHER_OPTION_BINARY $arg"
+					ARG_PARSING_ENABLED="false"
+					;;
+			esac
+		else
+			case $arg in
+				--mpmd=*)
+						MPMD_PROC_NUM="$MPMD_PROC_NUM `echo A$arg | sed -e 's/A--mpmd=//g'`"
+						if test "$MPMD_COMMAND" = "" ; then
+							MPMD_COMMAND="$tmp"
+						else
+							MPMD_COMMAND="$MPMD_COMMAND : $tmp"
+						fi;
+						tmp=""
+						MPMD_LEN=$(($MPMD_LEN + 1))
+					;;
+				*)
+						tmp="$tmp $arg"
+					;;
+			esac
+		fi
 	else
 		if test "$LAUNCHER_OPTION_BINARY" = "" ; then
 			LAUNCHER_OPTION_BINARY="$arg"
@@ -626,6 +657,18 @@ for arg in "$@" ; do
 		fi
 	fi
 done
+
+if test $tmp != ""; then
+	MPMD_LEN=$(($MPMD_LEN + 1))
+	MPMD_COMMAND="$MPMD_COMMAND : $tmp"
+	tot=0
+	for i in $MPMD_PROC_NUM; do
+		tot=$((tot + $i))
+	done
+	if test $tot -ne $check_process_nb; then
+		echo "ERROR wrong task number (TODO)"
+	fi
+fi
 
 ############################
 # Fault Tollerance Support #
@@ -768,6 +811,7 @@ append_arg "$MPC_ARG_FAULT_TOLERANCE" "1"
 
 add_arg "--task-number" "$MPC_ARG_TASK_NB"
 add_arg "--process-number" "$LAUNCHER_OPTION_PROCESS_NB"
+add_arg "--mpmd" "$MPMD_LAUNCH"
 add_arg "--node-number" "$LAUNCHER_OPTION_NODE_NB"
 add_arg "--node-number" "$LAUNCHER_OPTION_NODE_NB"
 
@@ -826,6 +870,9 @@ export MPC_SYMBOL_REGEX="MPI_Init"
 export MPC_LAUNCH_COMMAND="${LAUNCH_COMMAND}"
 export MPC_STARTUP_ARGS
 export LAUNCHER_OPTION_PROCESS_NB
+export MPMD_COMMAND
+export MPMD_PROC_NUM
+export MPMD_LEN
 export LAUNCHED_WITH_MPCRUN=1
 test -n "$GDB_LIBTHREAD_DB" && export GDB_LIBTHREAD_DB
 
@@ -838,7 +885,6 @@ trap "kill -s 2 0" INT
 ##################################################
 # Run the actuall command as generated by Plugin #
 ##################################################
-
 $LAUNCHER_SHOW_CMD $LAUNCH_COMMAND
 
 exit $?
