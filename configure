@@ -24088,6 +24088,18 @@ $as_echo "$as_me: HWLOC FLAGS are ${HWLOC_LIBS}" >&6;}
                         fi
                 fi
 
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking hwloc cflags" >&5
+$as_echo_n "checking hwloc cflags... " >&6; }
+                XXTMP=$(eval echo \${HWLOC_CFLAGS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking hwloc ldflags" >&5
+$as_echo_n "checking hwloc ldflags... " >&6; }
+                XXTMP=$(eval echo \${HWLOC_LIBS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
+
                 mpc_dep_found=$check_or_infer_prefix_result
 
 
@@ -24274,6 +24286,18 @@ $as_echo "$as_me: OPA FLAGS are ${OPA_LIBS}" >&6;}
                                 check_or_infer_prefix_result="no"
                         fi
                 fi
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking openpa cflags" >&5
+$as_echo_n "checking openpa cflags... " >&6; }
+                XXTMP=$(eval echo \${OPA_CFLAGS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking openpa ldflags" >&5
+$as_echo_n "checking openpa ldflags... " >&6; }
+                XXTMP=$(eval echo \${OPA_LIBS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
 
                 mpc_dep_found=$check_or_infer_prefix_result
 
@@ -24481,6 +24505,18 @@ $as_echo "$as_me: ALLOC FLAGS are ${ALLOC_LIBS}" >&6;}
                                 check_or_infer_prefix_result="no"
                         fi
                 fi
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking mpcalloc cflags" >&5
+$as_echo_n "checking mpcalloc cflags... " >&6; }
+                XXTMP=$(eval echo \${ALLOC_CFLAGS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking mpcalloc ldflags" >&5
+$as_echo_n "checking mpcalloc ldflags... " >&6; }
+                XXTMP=$(eval echo \${ALLOC_LIBS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
 
                 mpc_dep_found=$check_or_infer_prefix_result
 
@@ -24697,6 +24733,18 @@ $as_echo "$as_me: FFI FLAGS are ${FFI_LIBS}" >&6;}
                                 check_or_infer_prefix_result="no"
                         fi
                 fi
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking libffi cflags" >&5
+$as_echo_n "checking libffi cflags... " >&6; }
+                XXTMP=$(eval echo \${FFI_CFLAGS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking libffi ldflags" >&5
+$as_echo_n "checking libffi ldflags... " >&6; }
+                XXTMP=$(eval echo \${FFI_LIBS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
 
                 mpc_dep_found=$check_or_infer_prefix_result
 
@@ -24915,6 +24963,18 @@ $as_echo "$as_me: VMEM FLAGS are ${VMEM_LIBS}" >&6;}
                         fi
                 fi
 
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking libvmem cflags" >&5
+$as_echo_n "checking libvmem cflags... " >&6; }
+                XXTMP=$(eval echo \${VMEM_CFLAGS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking libvmem ldflags" >&5
+$as_echo_n "checking libvmem ldflags... " >&6; }
+                XXTMP=$(eval echo \${VMEM_LIBS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
+
                 mpc_dep_found=$check_or_infer_prefix_result
 
 
@@ -24967,7 +25027,7 @@ fi
                 check_or_infer_prefix_result="no"
                 header_name=libunwind.h
                 libname=libunwind
-                alt_libname=unwind
+                alt_libname=
                 function_name=unw_init_local
                 var_prefix=UNW
                 version=""
@@ -25107,6 +25167,18 @@ $as_echo "$as_me: UNW FLAGS are ${UNW_LIBS}" >&6;}
                                 check_or_infer_prefix_result="no"
                         fi
                 fi
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking libunwind cflags" >&5
+$as_echo_n "checking libunwind cflags... " >&6; }
+                XXTMP=$(eval echo \${UNW_CFLAGS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking libunwind ldflags" >&5
+$as_echo_n "checking libunwind ldflags... " >&6; }
+                XXTMP=$(eval echo \${UNW_LIBS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
 
                 mpc_dep_found=$check_or_infer_prefix_result
 
@@ -25309,6 +25381,18 @@ $as_echo "$as_me: IBV FLAGS are ${IBV_LIBS}" >&6;}
                         fi
                 fi
 
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking ibverbs cflags" >&5
+$as_echo_n "checking ibverbs cflags... " >&6; }
+                XXTMP=$(eval echo \${IBV_CFLAGS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking ibverbs ldflags" >&5
+$as_echo_n "checking ibverbs ldflags... " >&6; }
+                XXTMP=$(eval echo \${IBV_LIBS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
+
                 mpc_dep_found=$check_or_infer_prefix_result
 
 if test "x$mpc_dep_found" = "xyes"; then
@@ -25505,6 +25589,18 @@ $as_echo "$as_me: OFI FLAGS are ${OFI_LIBS}" >&6;}
                                 check_or_infer_prefix_result="no"
                         fi
                 fi
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking libfabric cflags" >&5
+$as_echo_n "checking libfabric cflags... " >&6; }
+                XXTMP=$(eval echo \${OFI_CFLAGS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking libfabric ldflags" >&5
+$as_echo_n "checking libfabric ldflags... " >&6; }
+                XXTMP=$(eval echo \${OFI_LIBS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
 
                 mpc_dep_found=$check_or_infer_prefix_result
 
@@ -25704,6 +25800,18 @@ $as_echo "$as_me: PORTALS FLAGS are ${PORTALS_LIBS}" >&6;}
                                 check_or_infer_prefix_result="no"
                         fi
                 fi
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking portals cflags" >&5
+$as_echo_n "checking portals cflags... " >&6; }
+                XXTMP=$(eval echo \${PORTALS_CFLAGS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking portals ldflags" >&5
+$as_echo_n "checking portals ldflags... " >&6; }
+                XXTMP=$(eval echo \${PORTALS_LIBS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
 
                 mpc_dep_found=$check_or_infer_prefix_result
 
@@ -25969,6 +26077,18 @@ $as_echo "$as_me: PMI FLAGS are ${PMI_LIBS}" >&6;}
                         fi
                 fi
 
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking pmi cflags" >&5
+$as_echo_n "checking pmi cflags... " >&6; }
+                XXTMP=$(eval echo \${PMI_CFLAGS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking pmi ldflags" >&5
+$as_echo_n "checking pmi ldflags... " >&6; }
+                XXTMP=$(eval echo \${PMI_LIBS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
+
                 mpc_dep_found=$check_or_infer_prefix_result
 
 
@@ -26159,6 +26279,18 @@ $as_echo "$as_me: PMIX FLAGS are ${PMIX_LIBS}" >&6;}
                                 check_or_infer_prefix_result="no"
                         fi
                 fi
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking pmix cflags" >&5
+$as_echo_n "checking pmix cflags... " >&6; }
+                XXTMP=$(eval echo \${PMIX_CFLAGS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking pmix ldflags" >&5
+$as_echo_n "checking pmix ldflags... " >&6; }
+                XXTMP=$(eval echo \${PMIX_LIBS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
 
                 mpc_dep_found=$check_or_infer_prefix_result
 
@@ -26648,6 +26780,18 @@ $as_echo "$as_me: CUDA FLAGS are ${CUDA_LIBS}" >&6;}
                         fi
                 fi
 
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking cuda cflags" >&5
+$as_echo_n "checking cuda cflags... " >&6; }
+                XXTMP=$(eval echo \${CUDA_CFLAGS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking cuda ldflags" >&5
+$as_echo_n "checking cuda ldflags... " >&6; }
+                XXTMP=$(eval echo \${CUDA_LIBS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
+
                 mpc_dep_found=$check_or_infer_prefix_result
 
 
@@ -26835,6 +26979,18 @@ $as_echo "$as_me: CUDART FLAGS are ${CUDART_LIBS}" >&6;}
                                 check_or_infer_prefix_result="no"
                         fi
                 fi
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking cudart cflags" >&5
+$as_echo_n "checking cudart cflags... " >&6; }
+                XXTMP=$(eval echo \${CUDART_CFLAGS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking cudart ldflags" >&5
+$as_echo_n "checking cudart ldflags... " >&6; }
+                XXTMP=$(eval echo \${CUDART_LIBS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
 
                 mpc_dep_found=$check_or_infer_prefix_result
 
@@ -31578,6 +31734,18 @@ $as_echo "$as_me: EXTLS FLAGS are ${EXTLS_LIBS}" >&6;}
                                 check_or_infer_prefix_result="no"
                         fi
                 fi
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking autopriv cflags" >&5
+$as_echo_n "checking autopriv cflags... " >&6; }
+                XXTMP=$(eval echo \${EXTLS_CFLAGS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
+
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking autopriv ldflags" >&5
+$as_echo_n "checking autopriv ldflags... " >&6; }
+                XXTMP=$(eval echo \${EXTLS_LIBS})
+                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+$as_echo "$XXTMP" >&6; }
 
                 mpc_dep_found=$check_or_infer_prefix_result
 

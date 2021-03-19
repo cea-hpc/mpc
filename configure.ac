@@ -705,6 +705,14 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                         fi
                 fi
 
+                AC_MSG_CHECKING([$2 cflags])
+                XXTMP=$(eval echo \${$4_CFLAGS})
+                AC_MSG_RESULT([$XXTMP])
+
+                AC_MSG_CHECKING([$2 ldflags])
+                XXTMP=$(eval echo \${$4_LIBS})
+                AC_MSG_RESULT([$XXTMP])
+
                 AS_VAR_SET([dep_found], [$check_or_infer_prefix_result])
          ])
 
@@ -832,7 +840,7 @@ AC_MSG_RESULT([$mpc_libvmem])
 mpc_libunwind="no"
 
 # First use the pkgconfig naming scheme
-MPC_DETECT_DEPENDENCY([libunwind.h], [libunwind], [unw_init_local], [UNW], [], [], [unwind])
+MPC_DETECT_DEPENDENCY([libunwind.h], [libunwind], [unw_init_local], [UNW])
 
 if test "x$mpc_dep_found" = "xyes"; then
         AC_DEFINE([MPC_HAVE_LIBUNWIND], [1], [libunwind support is enabled])
