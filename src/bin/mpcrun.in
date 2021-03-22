@@ -665,7 +665,7 @@ if test $tmp != ""; then
 	for i in $MPMD_PROC_NUM; do
 		tot=$((tot + $i))
 	done
-	if test $tot -ne $check_process_nb; then
+	if [ "$tot" != "$LAUNCHER_OPTION_PROCESS_NB" ]; then
 		echo "ERROR wrong task number (TODO)"
 	fi
 fi
