@@ -17,6 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - JAEGER Julien julien.jaeger@cea.fr                               # */
+/* #   - PEPIN Thibaut thibaut.pepin@cea.fr                               # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -37,6 +38,36 @@
 
 #define SCTK_MPI_CHECK_RETURN_VAL(res,comm)do{if(res == MPI_SUCCESS){return res;} else {MPI_ERROR_REPORT(comm,res,"Generic error retrun");}}while(0)
 
+
+/**
+  \enum MPC_COLL_TYPE
+  \brief Define the type of a collective communication operation.
+  */
+typedef enum MPC_COLL_TYPE {
+  MPC_COLL_TYPE_BLOCKING,     /**< Blocking collective communication. */
+  MPC_COLL_TYPE_NONBLOCKING,  /**< Non-blocking collective communication. */
+  MPC_COLL_TYPE_PERSISTENT,   /**< Persistent collective communication. */
+  MPC_COLL_TYPE_COUNT         /**< Simulated collective communication used to count the number of operations made, the necessary number of round and the needed temporary buffer. */
+} MPC_COLL_TYPE;
+
+/**
+  \struct Sched_info
+  \brief Hold schedule informations
+  */
+typedef struct {
+  int pos;                    /**< Current offset from the starting adress of the schedule. */
+
+  int round_start_pos;        /**< Offset from the starting adress of the schedule to the starting adress of the current round. */
+  int round_comm_count;       /**< Number of operations in the current round. */
+
+  int round_count;            /**< Number of rounds in the schedule. */
+  int comm_count;             /**< Number of operations in the schedule. */
+  int alloc_size;             /**< Allocation size for the schedule. */
+
+  void *tmpbuf;               /**< Adress of the temporary buffer for the schedule. */
+  int tmpbuf_size;            /**< Size of the temporary buffer for the schedule. */
+  int tmpbuf_pos;             /**< Offset from the staring adress of the temporary buffer to the current position. */
+} Sched_info;
 
 
 
@@ -506,7 +537,8 @@ int PMPI_Ibcast (void *buffer, int count, MPI_Datatype datatype, int root, MPI_C
 int __INTERNAL__Ibcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 int __INTERNAL__Bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle* handle);
-int __INTERNAL__Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+int __INTERNAL__Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
+static inline int __INTERNAL__Bcast_switch(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Bcast_linear(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Bcast_binomial(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Bcast_scatter_allgather(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -574,11 +606,11 @@ int __INTERNAL__Ibcast( void *buffer, int count, MPI_Datatype datatype, int root
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __INTERNAL__Bcast(buffer, count, datatype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  __INTERNAL__Bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
   sched_alloc_init(handle, schedule, &info);
 
-  __INTERNAL__Bcast(buffer, count, datatype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  __INTERNAL__Bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
   res = my_NBC_Sched_commit(schedule, &info);
   if (NBC_OK != res)
@@ -671,11 +703,11 @@ int __INTERNAL__Bcast_init(void *buffer, int count, MPI_Datatype datatype, int r
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __INTERNAL__Bcast(buffer, count, datatype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  __INTERNAL__Bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   
   sched_alloc_init(handle, schedule, &info);
   
-  __INTERNAL__Bcast(buffer, count, datatype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  __INTERNAL__Bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
   res = my_NBC_Sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
@@ -691,6 +723,20 @@ int __INTERNAL__Bcast_init(void *buffer, int count, MPI_Datatype datatype, int r
 
 
 /**
+  \brief Blocking bcast
+  \param buffer Adress of the buffer used to send/recv data during the broadcast
+  \param count Number of elements in buffer
+  \param datatype Type of the data elements in the buffer
+  \param root Rank root of the broadcast
+  \param comm Target communicator
+  \return error code
+  */
+int __INTERNAL__Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm) {
+  return __INTERNAL__Bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL); 
+}
+
+
+/**
   \brief Swith between the different broadcast algorithms
   \param buffer Adress of the buffer used to send/recv data during the broadcast
   \param count Number of elements in buffer
@@ -702,7 +748,7 @@ int __INTERNAL__Bcast_init(void *buffer, int count, MPI_Datatype datatype, int r
   \param info Adress on the information structure about the schedule
   \return error code
   */
-int __INTERNAL__Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Bcast_switch(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   enum {
     NBC_BCAST_LINEAR,
@@ -870,7 +916,8 @@ int PMPI_Ireduce (const void *sendbuf, void* recvbuf, int count, MPI_Datatype da
 int __INTERNAL__Ireduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Reduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 int __INTERNAL__Reduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, NBC_Handle* handle);
-int __INTERNAL__Reduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+int __INTERNAL__Reduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm);
+static inline int __INTERNAL__Reduce_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Reduce_linear(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Reduce_binomial(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Reduce_reduce_scatter_allgather(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -948,11 +995,11 @@ int __INTERNAL__Ireduce(const void *sendbuf, void* recvbuf, int count, MPI_Datat
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __INTERNAL__Reduce(sendbuf, recvbuf, count, datatype, op, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  __INTERNAL__Reduce_switch(sendbuf, recvbuf, count, datatype, op, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
   sched_alloc_init(handle, schedule, &info);
 
-  __INTERNAL__Reduce(sendbuf, recvbuf, count, datatype, op, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  __INTERNAL__Reduce_switch(sendbuf, recvbuf, count, datatype, op, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
   res = my_NBC_Sched_commit(schedule, &info);
   if (NBC_OK != res)
@@ -1051,11 +1098,11 @@ int __INTERNAL__Reduce_init(const void *sendbuf, void* recvbuf, int count, MPI_D
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __INTERNAL__Reduce(sendbuf, recvbuf, count, datatype, op, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  __INTERNAL__Reduce_switch(sendbuf, recvbuf, count, datatype, op, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   
   sched_alloc_init(handle, schedule, &info);
   
-  __INTERNAL__Reduce(sendbuf, recvbuf, count, datatype, op, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  __INTERNAL__Reduce_switch(sendbuf, recvbuf, count, datatype, op, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
   res = my_NBC_Sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
@@ -1067,6 +1114,22 @@ int __INTERNAL__Reduce_init(const void *sendbuf, void* recvbuf, int count, MPI_D
   handle->schedule = schedule;
 
   return MPI_SUCCESS;
+}
+
+
+/**
+  \brief Blocking reduce
+  \param sendbuf Adress of the buffer used to send data during the reduce
+  \param recvbuf Adress of the buffer used to recv data during the reduce
+  \param count Number of elements in the buffers
+  \param datatype Type of the data elements in the buffers
+  \param op Operator to use in the reduction operation
+  \param root Rank root of the reduce
+  \param comm Target communicator
+  \return error code
+  */
+int __INTERNAL__Reduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm) {
+  return __INTERNAL__Reduce_switch(sendbuf, recvbuf, count, datatype, op, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
 }
 
 
@@ -1084,7 +1147,7 @@ int __INTERNAL__Reduce_init(const void *sendbuf, void* recvbuf, int count, MPI_D
   \param info Adress on the information structure about the schedule
   \return error code
   */
-int __INTERNAL__Reduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Reduce_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
   enum {
     NBC_REDUCE_LINEAR,
     NBC_REDUCE_BINOMIAL,
@@ -1359,7 +1422,8 @@ int PMPI_Iallreduce (const void *sendbuf, void* recvbuf, int count, MPI_Datatype
 int __INTERNAL__Iallreduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Allreduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 int __INTERNAL__Allreduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle);
-int __INTERNAL__Allreduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+int __INTERNAL__Allreduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
+static inline int __INTERNAL__Allreduce_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Allreduce_reduce_broadcast(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Allreduce_distance_doubling(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Allreduce_vector_halving_distance_doubling(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -1431,11 +1495,11 @@ int __INTERNAL__Iallreduce(const void *sendbuf, void* recvbuf, int count, MPI_Da
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __INTERNAL__Allreduce(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  __INTERNAL__Allreduce_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
   sched_alloc_init(handle, schedule, &info);
 
-  __INTERNAL__Allreduce(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  __INTERNAL__Allreduce_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
   res = my_NBC_Sched_commit(schedule, &info);
   if (NBC_OK != res)
@@ -1527,11 +1591,11 @@ int __INTERNAL__Allreduce_init(const void *sendbuf, void* recvbuf, int count, MP
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __INTERNAL__Allreduce(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  __INTERNAL__Allreduce_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   
   sched_alloc_init(handle, schedule, &info);
   
-  __INTERNAL__Allreduce(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  __INTERNAL__Allreduce_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
   res = my_NBC_Sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
@@ -1543,6 +1607,21 @@ int __INTERNAL__Allreduce_init(const void *sendbuf, void* recvbuf, int count, MP
   handle->schedule = schedule;
 
   return MPI_SUCCESS;
+}
+
+
+/**
+  \brief Blocking Allreduce
+  \param sendbuf Adress of the buffer used to send data during the allreduce
+  \param recvbuf Adress of the buffer used to recv data during the allreduce
+  \param count Number of elements in the buffers
+  \param datatype Type of the data elements in the buffers
+  \param op Operator to use in the reduction operation
+  \param comm Target communicator
+  \return error code
+  */
+int __INTERNAL__Allreduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
+  return __INTERNAL__Allreduce_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
 }
 
 
@@ -1559,7 +1638,7 @@ int __INTERNAL__Allreduce_init(const void *sendbuf, void* recvbuf, int count, MP
   \param info Adress on the information structure about the schedule
   \return error code
   */
-int __INTERNAL__Allreduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Allreduce_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
   enum {
     NBC_ALLREDUCE_REDUCE_BROADCAST,
     NBC_ALLREDUCE_DISTANCE_DOUBLING,
@@ -1609,9 +1688,9 @@ int __INTERNAL__Allreduce(const void *sendbuf, void* recvbuf, int count, MPI_Dat
   */
 static inline int __INTERNAL__Allreduce_reduce_broadcast(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-  __INTERNAL__Reduce(sendbuf, recvbuf, count, datatype, op, 0, comm, coll_type, schedule, info);
+  __INTERNAL__Reduce_switch(sendbuf, recvbuf, count, datatype, op, 0, comm, coll_type, schedule, info);
   __INTERNAL__Barrier_type(coll_type, schedule, info);
-  __INTERNAL__Bcast(recvbuf, count, datatype, 0, comm, coll_type, schedule, info);
+  __INTERNAL__Bcast_switch(recvbuf, count, datatype, 0, comm, coll_type, schedule, info);
 
   return MPI_SUCCESS;
 }
@@ -1832,7 +1911,8 @@ int PMPI_Iscatter (const void *sendbuf, int sendcount, MPI_Datatype sendtype, vo
 int __INTERNAL__Iscatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Scatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 int __INTERNAL__Scatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
-int __INTERNAL__Scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+int __INTERNAL__Scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm);
+static inline int __INTERNAL__Scatter_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Scatter_linear(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Scatter_binomial(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
@@ -1910,11 +1990,11 @@ int __INTERNAL__Iscatter(const void *sendbuf, int sendcount, MPI_Datatype sendty
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __INTERNAL__Scatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  __INTERNAL__Scatter_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
   sched_alloc_init(handle, schedule, &info);
 
-  __INTERNAL__Scatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  __INTERNAL__Scatter_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
   res = my_NBC_Sched_commit(schedule, &info);
   if (NBC_OK != res)
@@ -2017,11 +2097,11 @@ int __INTERNAL__Scatter_init(const void *sendbuf, int sendcount, MPI_Datatype se
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __INTERNAL__Scatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  __INTERNAL__Scatter_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   
   sched_alloc_init(handle, schedule, &info);
   
-  __INTERNAL__Scatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  __INTERNAL__Scatter_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
   res = my_NBC_Sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
@@ -2033,6 +2113,23 @@ int __INTERNAL__Scatter_init(const void *sendbuf, int sendcount, MPI_Datatype se
   handle->schedule = schedule;
 
   return MPI_SUCCESS;
+}
+
+
+/**
+  \brief Blocking Scatter
+  \param sendbuf Adress of the buffer used to send data during the scatter
+  \param sendcount Number of elements in the send buffer
+  \param sendtype Type of the data elements in the send buffer
+  \param recvbuf Adress of the buffer used to send data during the scatter
+  \param recvcount Number of elements in the recv buffer
+  \param recvtype Type of the data elements in the recv buffer
+  \param root Rank root of the Scatter
+  \param comm Target communicator
+  \return error code
+  */
+int __INTERNAL__Scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm) {
+  return __INTERNAL__Scatter_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL); 
 }
 
 
@@ -2051,7 +2148,7 @@ int __INTERNAL__Scatter_init(const void *sendbuf, int sendcount, MPI_Datatype se
   \param info Adress on the information structure about the schedule
   \return error code
   */
-int __INTERNAL__Scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Scatter_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   enum {
     NBC_SCATTER_LINEAR,
@@ -2259,7 +2356,8 @@ int PMPI_Igather (const void *sendbuf, int sendcount, MPI_Datatype sendtype, voi
 int __INTERNAL__Igather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 int __INTERNAL__Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
-int __INTERNAL__Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+int __INTERNAL__Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm);
+static inline int __INTERNAL__Gather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Gather_linear(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Gather_binomial(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
@@ -2337,11 +2435,11 @@ int __INTERNAL__Igather(const void *sendbuf, int sendcount, MPI_Datatype sendtyp
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __INTERNAL__Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  __INTERNAL__Gather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
   sched_alloc_init(handle, schedule, &info);
 
-  __INTERNAL__Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  __INTERNAL__Gather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
   res = my_NBC_Sched_commit(schedule, &info);
   if (NBC_OK != res)
@@ -2449,11 +2547,11 @@ int __INTERNAL__Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sen
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __INTERNAL__Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  __INTERNAL__Gather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   
   sched_alloc_init(handle, schedule, &info);
   
-  __INTERNAL__Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  __INTERNAL__Gather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
   res = my_NBC_Sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
@@ -2465,6 +2563,23 @@ int __INTERNAL__Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sen
   handle->schedule = schedule;
 
   return MPI_SUCCESS;
+}
+
+
+/**
+  \brief Blocking Gather
+  \param sendbuf Adress of the buffer used to send data during the Gather
+  \param sendcount Number of elements in the send buffer
+  \param sendtype Type of the data elements in the send buffer
+  \param recvbuf Adress of the buffer used to send data during the Gather
+  \param recvcount Number of elements in the recv buffer
+  \param recvtype Type of the data elements in the recv buffer
+  \param root Rank root of the Gather
+  \param comm Target communicator
+  \return error code
+  */
+int __INTERNAL__Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm) {
+  return __INTERNAL__Gather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
 }
 
 
@@ -2483,7 +2598,7 @@ int __INTERNAL__Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sen
   \param info Adress on the information structure about the schedule
   \return error code
   */
-int __INTERNAL__Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Gather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   enum {
     NBC_GATHER_LINEAR,
@@ -2685,7 +2800,8 @@ int PMPI_Ireduce_scatter_block(const void *sendbuf, void* recvbuf, int count, MP
 int __INTERNAL__Ireduce_scatter_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Reduce_scatter_block_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 int __INTERNAL__Reduce_scatter_block_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle);
-int __INTERNAL__Reduce_scatter_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+int __INTERNAL__Reduce_scatter_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
+static inline int __INTERNAL__Reduce_scatter_block_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Reduce_scatter_block_reduce_scatter(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Reduce_scatter_block_distance_doubling(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Reduce_scatter_block_distance_halving(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -2755,11 +2871,11 @@ int __INTERNAL__Ireduce_scatter_block (const void *sendbuf, void* recvbuf, int c
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __INTERNAL__Reduce_scatter_block(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  __INTERNAL__Reduce_scatter_block_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
   sched_alloc_init(handle, schedule, &info);
 
-  __INTERNAL__Reduce_scatter_block(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  __INTERNAL__Reduce_scatter_block_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
   res = my_NBC_Sched_commit(schedule, &info);
   if (NBC_OK != res)
@@ -2851,11 +2967,11 @@ int __INTERNAL__Reduce_scatter_block_init(const void *sendbuf, void* recvbuf, in
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __INTERNAL__Reduce_scatter_block(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  __INTERNAL__Reduce_scatter_block_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   
   sched_alloc_init(handle, schedule, &info);
   
-  __INTERNAL__Reduce_scatter_block(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  __INTERNAL__Reduce_scatter_block_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
   res = my_NBC_Sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
@@ -2867,6 +2983,21 @@ int __INTERNAL__Reduce_scatter_block_init(const void *sendbuf, void* recvbuf, in
   handle->schedule = schedule;
 
   return MPI_SUCCESS;
+}
+
+
+/**
+  \brief Blocking Reduce_scatter_block
+  \param sendbuf Adress of the buffer used to send data during the Reduce_scatter_block
+  \param recvbuf Adress of the buffer used to recv data during the Reduce_scatter_block
+  \param count Number of elements in the buffers
+  \param datatype Type of the data elements in the buffers
+  \param op Operator to use in the reduction operation
+  \param comm Target communicator
+  \return error code
+  */
+int __INTERNAL__Reduce_scatter_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
+  return __INTERNAL__Reduce_scatter_block_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
 }
 
 
@@ -2883,7 +3014,7 @@ int __INTERNAL__Reduce_scatter_block_init(const void *sendbuf, void* recvbuf, in
   \param info Adress on the information structure about the schedule
   \return error code
   */
-int __INTERNAL__Reduce_scatter_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Reduce_scatter_block_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
   enum {
     NBC_REDUCE_SCATTER_BLOCK_REDUCE_SCATTER,
     NBC_REDUCE_SCATTER_BLOCK_DISTANCE_DOUBLING, // difficile a mettre en place
@@ -2960,14 +3091,14 @@ static inline int __INTERNAL__Reduce_scatter_block_reduce_scatter(const void *se
   }
 
   if(sendbuf != MPI_IN_PLACE) {
-    __INTERNAL__Reduce(sendbuf, tmpbuf, count * size, datatype, op, 0, comm, coll_type, schedule, info); 
+    __INTERNAL__Reduce_switch(sendbuf, tmpbuf, count * size, datatype, op, 0, comm, coll_type, schedule, info); 
   } else {
-    __INTERNAL__Reduce(recvbuf, tmpbuf, count * size, datatype, op, 0, comm, coll_type, schedule, info); 
+    __INTERNAL__Reduce_switch(recvbuf, tmpbuf, count * size, datatype, op, 0, comm, coll_type, schedule, info); 
   }
 
   __INTERNAL__Barrier_type(coll_type, schedule, info);
 
-  __INTERNAL__Scatter(tmpbuf, count, datatype, recvbuf, count, datatype, 0, comm, coll_type, schedule, info);
+  __INTERNAL__Scatter_switch(tmpbuf, count, datatype, recvbuf, count, datatype, 0, comm, coll_type, schedule, info);
 
 
   if(coll_type == MPC_COLL_TYPE_BLOCKING) {
@@ -3125,7 +3256,8 @@ int PMPI_Iallgather (const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
 int __INTERNAL__Iallgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 int __INTERNAL__Allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle);
-int __INTERNAL__Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+int __INTERNAL__Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
+static inline int __INTERNAL__Allgather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Allgather_gather_broadcast(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Allgather_distance_doubling(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Allgather_bruck(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -3200,11 +3332,11 @@ int __INTERNAL__Iallgather(const void *sendbuf, int sendcount, MPI_Datatype send
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __INTERNAL__Allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  __INTERNAL__Allgather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
   sched_alloc_init(handle, schedule, &info);
 
-  __INTERNAL__Allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  __INTERNAL__Allgather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
   res = my_NBC_Sched_commit(schedule, &info);
   if (NBC_OK != res)
@@ -3306,11 +3438,11 @@ int __INTERNAL__Allgather_init(const void *sendbuf, int sendcount, MPI_Datatype 
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __INTERNAL__Allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  __INTERNAL__Allgather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   
   sched_alloc_init(handle, schedule, &info);
   
-  __INTERNAL__Allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  __INTERNAL__Allgather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
   res = my_NBC_Sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
@@ -3322,6 +3454,22 @@ int __INTERNAL__Allgather_init(const void *sendbuf, int sendcount, MPI_Datatype 
   handle->schedule = schedule;
 
   return MPI_SUCCESS;
+}
+
+
+/**
+  \brief Blocking Allgather
+  \param sendbuf Adress of the buffer used to send data during the Allgather
+  \param sendcount Number of elements in the send buffer
+  \param sendtype Type of the data elements in the send buffer
+  \param recvbuf Adress of the buffer used to send data during the Allgather
+  \param recvcount Number of elements in the recv buffer
+  \param recvtype Type of the data elements in the recv buffer
+  \param comm Target communicator
+  \return error code
+  */
+int __INTERNAL__Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm) {
+  return __INTERNAL__Allgather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
 }
 
 
@@ -3339,7 +3487,7 @@ int __INTERNAL__Allgather_init(const void *sendbuf, int sendcount, MPI_Datatype 
   \param info Adress on the information structure about the schedule
   \return error code
   */
-int __INTERNAL__Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Allgather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   enum {
     NBC_ALLGATHER_GATHER_BROADCAST,
@@ -3390,9 +3538,9 @@ static inline int __INTERNAL__Allgather_gather_broadcast(const void *sendbuf, in
   int size;
   _mpc_cl_comm_size(comm, &size);
 
- __INTERNAL__Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, comm, coll_type, schedule, info);
+ __INTERNAL__Gather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, comm, coll_type, schedule, info);
  __INTERNAL__Barrier_type(coll_type, schedule, info);
- __INTERNAL__Bcast(recvbuf, recvcount * size, recvtype, 0, comm, coll_type, schedule, info);
+ __INTERNAL__Bcast_switch(recvbuf, recvcount * size, recvtype, 0, comm, coll_type, schedule, info);
 
   return MPI_SUCCESS;
 }
@@ -3629,7 +3777,8 @@ int PMPI_Ialltoall (const void *sendbuf, int sendcount, MPI_Datatype sendtype, v
 int __INTERNAL__Ialltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 int __INTERNAL__Alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle);
-int __INTERNAL__Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+int __INTERNAL__Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
+static inline int __INTERNAL__Alltoall_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Alltoall_cluster(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Alltoall_bruck(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Alltoall_pairwise(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -3701,11 +3850,11 @@ int __INTERNAL__Ialltoall(const void *sendbuf, int sendcount, MPI_Datatype sendt
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __INTERNAL__Alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  __INTERNAL__Alltoall_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
   sched_alloc_init(handle, schedule, &info);
 
-  __INTERNAL__Alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  __INTERNAL__Alltoall_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
   res = my_NBC_Sched_commit(schedule, &info);
   if (NBC_OK != res)
@@ -3805,11 +3954,11 @@ int __INTERNAL__Alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype s
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __INTERNAL__Alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  __INTERNAL__Alltoall_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   
   sched_alloc_init(handle, schedule, &info);
   
-  __INTERNAL__Alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  __INTERNAL__Alltoall_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
   res = my_NBC_Sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
@@ -3821,6 +3970,31 @@ int __INTERNAL__Alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype s
   handle->schedule = schedule;
 
   return MPI_SUCCESS;
+}
+
+
+/**
+  \brief Blocking Alltoall
+  \param sendbuf Adress of the buffer used to send data during the Alltoall
+  \param sendcount Number of elements in the send buffer
+  \param sendtype Type of the data elements in the send buffer
+  \param recvbuf Adress of the buffer used to send data during the Alltoall
+  \param recvcount Number of elements in the recv buffer
+  \param recvtype Type of the data elements in the recv buffer
+  \param comm Target communicator
+  \return error code
+  */
+int __INTERNAL__Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm) {
+  //return __INTERNAL__Alltoall_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+
+
+  MPI_Request req;
+  MPI_Status status;
+
+  MPI_Ialltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, &req);
+  MPI_Wait(&req, &status);
+
+  return status.MPI_ERROR;
 }
 
 
@@ -3838,7 +4012,7 @@ int __INTERNAL__Alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype s
   \param info Adress on the information structure about the schedule
   \return error code
   */
-int __INTERNAL__Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Alltoall_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   enum {
     NBC_ALLTOALL_CLUSTER,

@@ -17,56 +17,21 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - JAEGER Julien julien.jaeger@cea.fr                               # */
+/* #   - PEPIN Thibaut thibaut.pepin@cea.fr                               # */
 /* #                                                                      # */
 /* ######################################################################## */
-
 
 
 #ifndef __COLL_H__
 #define __COLL_H__
 
-/**
-  \enum MPC_COLL_TYPE
-  \brief Define the type of a collective communication operation.
-  */
-typedef enum MPC_COLL_TYPE {
-  MPC_COLL_TYPE_BLOCKING,     /**< Blocking collective communication. */
-  MPC_COLL_TYPE_NONBLOCKING,  /**< Non-blocking collective communication. */
-  MPC_COLL_TYPE_PERSISTENT,   /**< Persistent collective communication. */
-  MPC_COLL_TYPE_COUNT         /**< Simulated collective communication used to count the number of operations made, the necessary number of round and the needed temporary buffer. */
-} MPC_COLL_TYPE;
-
-
-/**
-  \struct Sched_info
-  \brief Hold schedule informations
-  */
-typedef struct {
-  int pos;                    /**< Current offset from the starting adress of the schedule. */
-
-  int round_start_pos;        /**< Offset from the starting adress of the schedule to the starting adress of the current round. */
-  int round_comm_count;       /**< Number of operations in the current round. */
-
-  int round_count;            /**< Number of rounds in the schedule. */
-  int comm_count;             /**< Number of operations in the schedule. */
-  int alloc_size;             /**< Allocation size for the schedule. */
-
-  void *tmpbuf;               /**< Adress of the temporary buffer for the schedule. */
-  int tmpbuf_size;            /**< Size of the temporary buffer for the schedule. */
-  int tmpbuf_pos;             /**< Offset from the staring adress of the temporary buffer to the current position. */
-} Sched_info;
-
-
-
-int __INTERNAL__Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-int __INTERNAL__Reduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-int __INTERNAL__Allreduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-int __INTERNAL__Scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-int __INTERNAL__Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-int __INTERNAL__Reduce_scatter_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-int __INTERNAL__Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-int __INTERNAL__Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-
-
+int __INTERNAL__Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
+int __INTERNAL__Reduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm);
+int __INTERNAL__Allreduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
+int __INTERNAL__Scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm);
+int __INTERNAL__Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm);
+int __INTERNAL__Reduce_scatter_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
+int __INTERNAL__Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
+int __INTERNAL__Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
 
 #endif

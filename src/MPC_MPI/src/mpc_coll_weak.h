@@ -17,6 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - JAEGER Julien julien.jaeger@cea.fr                               # */
+/* #   - PEPIN Thibaut thibaut.pepin@cea.fr                               # */
 /* #                                                                      # */
 /* ######################################################################## */
 
