@@ -30,6 +30,7 @@
 #include "sctk_handle.h"
 #include <mpc_lowcomm_msg.h>
 #include "mpc_common_spinlock.h"
+#include "mpc_coll.h"
 
 #include "mpc_topology.h"
 #include <mpc.h>
@@ -451,3 +452,126 @@ int PMPI_Isend_internal(const void *buf, int count, MPI_Datatype datatype, int d
 
 int PMPI_Irecv_internal(void *buf, int count, MPI_Datatype datatype, int source,
                int tag, MPI_Comm comm, MPI_Request *request);
+
+/* error handling */
+
+extern int is_finalized;
+extern int is_initialized;
+
+#define MPI_ERROR_SUCESS()    return MPI_SUCCESS
+
+#define mpi_check_status_error(status) do{\
+	if( (status)->MPI_ERROR != MPI_SUCCESS )\
+	{\
+		return (status)->MPI_ERROR; \
+	}\
+	}while(0)
+
+#define mpi_check_status_array_error(size, statusses) \
+	do{\
+		int ___i;\
+		for(___i = 0 ; ___i < size ; ___i++)\
+		{\
+			mpi_check_status_error(&statusses[___i]);\
+		}\
+	}while(0)
+
+#define mpi_check_type(datatype, comm)     \
+	if(datatype == MPI_DATATYPE_NULL){ \
+		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Bad datatype provided"); }
+
+#define mpi_check_type_create(datatype, comm)                                                                                                                                              \
+	if( (datatype >= SCTK_USER_DATA_TYPES_MAX) && (_mpc_dt_is_derived(datatype) != 1) && (_mpc_dt_is_contiguous(datatype) != 1) && ( (datatype != MPI_UB) && (datatype != MPI_LB) ) ){ \
+		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, ""); }
+
+
+#define mpi_check_comm(comm)                                                        \
+	if( (is_finalized != 0) || (is_initialized != 1) ){                              \
+		MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_OTHER, "The runtime is not initialized");                     \
+	} \
+	else if((comm == MPI_COMM_NULL) || (!mpc_lowcomm_communicator_exists(comm)) ) \
+	{                                                 \
+		MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_COMM, "Error in communicator"); \
+	}
+
+#define mpi_check_status(status, comm)  \
+	if(status == MPI_STATUS_IGNORE) \
+		MPI_ERROR_REPORT(comm, MPI_ERR_IN_STATUS, "Error status is MPI_STATUS_IGNORE")
+
+#define mpi_check_buf(buf, comm)                   \
+	if( (buf == NULL) && (buf != MPI_BOTTOM) ) \
+		MPI_ERROR_REPORT(comm, MPI_ERR_BUFFER, "")
+
+
+#define mpi_check_count(count, comm) \
+	if(count < 0)                \
+		MPI_ERROR_REPORT(comm, MPI_ERR_COUNT, "Error count cannot be negative")
+
+#define mpi_check_rank(task, max_rank, comm) \
+	do{ \
+		if( !mpc_lowcomm_communicator_is_intercomm(comm) ) {\
+			if( (task != MPI_ANY_SOURCE) && (task != MPI_PROC_NULL) ) \
+			{\
+				if( ( (task < 0) || (task >= max_rank) )) \
+				{ \
+					MPI_ERROR_REPORT(comm, MPI_ERR_RANK, "Error bad rank provided"); \
+				}\
+			}\
+		} \
+	}while(0)
+
+#define mpi_check_rank_send(task, max_rank, comm) \
+	do{ \
+		if( !mpc_lowcomm_communicator_is_intercomm(comm) ) {\
+			if(task != MPI_PROC_NULL)\
+			{\
+				if( (task < 0) || (task >= max_rank) ) \
+				{ \
+					MPI_ERROR_REPORT(comm, MPI_ERR_RANK, "Error bad rank provided"); \
+				}\
+			}\
+		} \
+	}while(0)
+
+#define mpi_check_root(task, max_rank, comm)                                                        \
+	if( ( (task < 0) || (task >= max_rank) ) && (task != MPI_PROC_NULL) && (task != MPI_ROOT) ) \
+		MPI_ERROR_REPORT(comm, MPI_ERR_ROOT, "Error bad root rank provided")
+
+#define mpi_check_tag(tag, comm)                                   \
+	do { \
+		if( tag != MPI_ANY_TAG ) \
+		{ \
+			if( (tag < 0) || (tag > MPI_TAG_UB_VALUE) ) \
+			{ \
+				MPI_ERROR_REPORT(comm, MPI_ERR_TAG, "Error bad tag provided"); \
+			}\
+		}\
+	}\
+	while(0)
+
+#define mpi_check_tag_send(tag, comm)  \
+	if( (tag < 0) || (tag > MPI_TAG_UB_VALUE) ) \
+		MPI_ERROR_REPORT(comm, MPI_ERR_TAG, "Error bad tag provided")
+
+#define mpi_check_op_type_func(t)             case t: return mpi_check_op_type_func_ ## t(datatype)
+#define mpi_check_op_type_func_notavail(t)    case t: return 1
+
+#if 0
+static int mpi_check_op_type_func_MPI_(MPI_Datatype datatype)
+{
+	switch(datatype)
+	{
+		default: return 0;
+	}
+	return 0;
+}
+
+#endif
+#define mpi_check_op_type_func_integer()          \
+	mpi_check_op_type_func_notavail(MPC_INT); \
+	mpi_check_op_type_func_notavail(MPC_LONG)
+
+#define mpi_check_op_type_func_float()               \
+	mpi_check_op_type_func_notavail(MPC_FLOAT);  \
+	mpi_check_op_type_func_notavail(MPC_DOUBLE); \
+	mpi_check_op_type_func_notavail(MPC_LONG_DOUBLE)

@@ -146,16 +146,16 @@ libmpcmpi_la_DEPENDENCIES = ../../MPC_Lowcomm/src/libmpclowcomm.la
 am__libmpcmpi_la_SOURCES_DIST = comm_lib.c egreq_nbc.c mpc_extern32.c \
 	mpc_mpi_halo.c mpc_reduction.c mpi_rma.c mpi_rma_win.c mpit.c \
 	datatype.c egreq_progress.c mpc_info.c mpc_nbc.c \
-	mpi_rma_ctrl_msg.c mpi_conf.c egreq_classes.c mpc_cs.c \
-	mpc_mpi.c mpc_nbc_progress_thread_binding.c mpi_alloc_mem.c \
-	mpi_rma_epoch.c fortran.c
+	mpi_rma_ctrl_msg.c mpi_conf.c mpc_coll.c egreq_classes.c \
+	mpc_cs.c mpc_mpi.c mpc_nbc_progress_thread_binding.c \
+	mpi_alloc_mem.c mpi_rma_epoch.c fortran.c
 @MPC_FORTRAN_ENABLED_TRUE@am__objects_1 = fortran.lo
 am_libmpcmpi_la_OBJECTS = comm_lib.lo egreq_nbc.lo mpc_extern32.lo \
 	mpc_mpi_halo.lo mpc_reduction.lo mpi_rma.lo mpi_rma_win.lo \
 	mpit.lo datatype.lo egreq_progress.lo mpc_info.lo mpc_nbc.lo \
-	mpi_rma_ctrl_msg.lo mpi_conf.lo egreq_classes.lo mpc_cs.lo \
-	mpc_mpi.lo mpc_nbc_progress_thread_binding.lo mpi_alloc_mem.lo \
-	mpi_rma_epoch.lo $(am__objects_1)
+	mpi_rma_ctrl_msg.lo mpi_conf.lo mpc_coll.lo egreq_classes.lo \
+	mpc_cs.lo mpc_mpi.lo mpc_nbc_progress_thread_binding.lo \
+	mpi_alloc_mem.lo mpi_rma_epoch.lo $(am__objects_1)
 libmpcmpi_la_OBJECTS = $(am_libmpcmpi_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -540,9 +540,9 @@ lib_LTLIBRARIES = libmpcmpi.la
 libmpcmpi_la_SOURCES = comm_lib.c egreq_nbc.c mpc_extern32.c \
 	mpc_mpi_halo.c mpc_reduction.c mpi_rma.c mpi_rma_win.c mpit.c \
 	datatype.c egreq_progress.c mpc_info.c mpc_nbc.c \
-	mpi_rma_ctrl_msg.c mpi_conf.c egreq_classes.c mpc_cs.c \
-	mpc_mpi.c mpc_nbc_progress_thread_binding.c mpi_alloc_mem.c \
-	mpi_rma_epoch.c $(am__append_5)
+	mpi_rma_ctrl_msg.c mpi_conf.c mpc_coll.c egreq_classes.c \
+	mpc_cs.c mpc_mpi.c mpc_nbc_progress_thread_binding.c \
+	mpi_alloc_mem.c mpi_rma_epoch.c $(am__append_5)
 libmpcmpi_la_LIBADD = ../../MPC_Lowcomm/src/libmpclowcomm.la -lrt
 all: all-am
 
@@ -628,6 +628,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/egreq_nbc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/egreq_progress.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fortran.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_coll.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_cs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_extern32.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_info.Plo@am__quote@

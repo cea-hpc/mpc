@@ -197,11 +197,13 @@ typedef struct {
 	char tmpinbuf;
 	void *outbuf; 
 	char tmpoutbuf;
+  MPI_Comm comm;
 } NBC_Args;
 
 
 /* internal function prototypes */
-
+int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule);
+int NBC_Init_handle(NBC_Handle *handle, MPI_Comm comm, int tag);
 
 /* some macros */
 

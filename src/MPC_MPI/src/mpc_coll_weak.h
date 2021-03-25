@@ -20,15 +20,27 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-// PROFILER MPI_NBC MPI Non Blocking Collectives
-/* Non Blocking Collectives  */
-#pragma weak MPI_Ibarrier = PMPI_Ibarrier
-#pragma weak MPI_Igatherv = PMPI_Igatherv
-#pragma weak MPI_Iscatterv = PMPI_Iscatterv
-#pragma weak MPI_Iallgatherv = PMPI_Iallgatherv
-#pragma weak MPI_Ialltoallv = PMPI_Ialltoallv
-#pragma weak MPI_Ialltoallw = PMPI_Ialltoallw
-#pragma weak MPI_Ireduce_scatter = PMPI_Ireduce_scatter
-#pragma weak MPI_Iscan = PMPI_Iscan
-#pragma weak MPI_Iexscan = PMPI_Iexscan
+/* Collectives  */
+#pragma weak MPI_Ibcast = PMPI_Ibcast
+#pragma weak MPI_Bcast_init = PMPI_Bcast_init
 
+#pragma weak MPI_Ireduce = PMPI_Ireduce
+#pragma weak MPI_Reduce_init = PMPI_Reduce_init
+
+#pragma weak MPI_Iallreduce = PMPI_Iallreduce
+#pragma weak MPI_Allreduce_init = PMPI_Allreduce_init
+
+#pragma weak MPI_Iscatter = PMPI_Iscatter
+#pragma weak MPI_Scatter_init = PMPI_Scatter_init
+
+#pragma weak MPI_Igather = PMPI_Igather
+#pragma weak MPI_Gather_init = PMPI_Gather_init
+
+#pragma weak MPI_Ireduce_scatter_block = PMPI_Ireduce_scatter_block
+#pragma weak MPI_Reduce_scatter_block_init = PMPI_Reduce_scatter_block_init
+
+#pragma weak MPI_Iallgather = PMPI_Iallgather
+#pragma weak MPI_Allgather_init = PMPI_Allgather_init
+
+#pragma weak MPI_Ialltoall = PMPI_Ialltoall
+#pragma weak MPI_Alltoall_init = PMPI_Alltoall_init

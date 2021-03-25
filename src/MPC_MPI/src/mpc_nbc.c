@@ -56,10 +56,10 @@ static inline int NBC_Sched_barrier(NBC_Schedule *schedule);
 static inline int NBC_Sched_commit(NBC_Schedule *schedule);
 
 static inline int NBC_Progress(NBC_Handle *handle);
-static inline int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule);
+inline int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule);
 static inline int NBC_Start_round(NBC_Handle *handle);
 static inline int NBC_Start_round_persistent(NBC_Handle *handle);
-static inline int NBC_Init_handle(NBC_Handle *handle, MPI_Comm comm, int tag);
+inline int NBC_Init_handle(NBC_Handle *handle, MPI_Comm comm, int tag);
 static inline int NBC_Type_intrinsic(MPI_Datatype type);
 static inline int NBC_Copy(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm);
 /*static inline NBC_Comminfo* NBC_Init_comm(MPI_Comm comm, int keyval);*/
@@ -8596,6 +8596,7 @@ static inline int NBC_Sched_send(void* buf, char tmpbuf, int count, MPI_Datatype
   send_args->count=count;
   send_args->datatype=datatype;
   send_args->dest=dest;
+  send_args->comm=MPI_COMM_NULL;
 
   /* increase number of elements in schedule */
   NBC_INC_NUM_ROUND(*schedule);
@@ -8623,6 +8624,7 @@ static inline int NBC_Sched_send_pos(int pos, const void* buf, char tmpbuf, int 
   send_args->count=count;
   send_args->datatype=datatype;
   send_args->dest=dest;
+  send_args->comm=MPI_COMM_NULL;
 
   return NBC_OK;
 }
@@ -8649,6 +8651,7 @@ static inline int NBC_Sched_recv(void* buf, char tmpbuf, int count, MPI_Datatype
   recv_args->count=count;
   recv_args->datatype=datatype;
   recv_args->source=source;
+  recv_args->comm=MPI_COMM_NULL;
 
   /* increase number of elements in schedule */
   NBC_INC_NUM_ROUND(*schedule);
@@ -8676,6 +8679,7 @@ static inline int NBC_Sched_recv_pos(int pos, void* buf, char tmpbuf, int count,
   recv_args->count=count;
   recv_args->datatype=datatype;
   recv_args->source=source;
+  recv_args->comm=MPI_COMM_NULL;
 
   return NBC_OK;
 }
@@ -8768,6 +8772,7 @@ static inline int NBC_Sched_copy(void *src, char tmpsrc, int srccount, MPI_Datat
   copy_args->tmptgt=tmptgt;
   copy_args->tgtcount=tgtcount;
   copy_args->tgttype=tgttype;
+  copy_args->comm=MPI_COMM_NULL;
 
   /* increase number of elements in schedule */
   NBC_INC_NUM_ROUND(*schedule);
@@ -8802,6 +8807,7 @@ static inline int NBC_Sched_copy_pos(int pos, void *src, char tmpsrc,
   copy_args->tmptgt = tmptgt;
   copy_args->tgtcount = tgtcount;
   copy_args->tgttype = tgttype;
+  copy_args->comm=MPI_COMM_NULL;
 
   return NBC_OK;
 }
@@ -8829,6 +8835,7 @@ static inline int NBC_Sched_unpack(void *inbuf, char tmpinbuf, int count, MPI_Da
   unpack_args->datatype=datatype;
   unpack_args->outbuf=outbuf;
   unpack_args->tmpoutbuf=tmpoutbuf;
+  unpack_args->comm=MPI_COMM_NULL;
 
   /* increase number of elements in schedule */
   NBC_INC_NUM_ROUND(*schedule);
@@ -9120,288 +9127,316 @@ static inline int NBC_Progress(NBC_Handle *handle)
 
 static inline int __NBC_Start_round_persistent( NBC_Handle *handle, int depth )
 {
-	int *numptr; /* number of operations */
-	int i, res, ret = NBC_OK;
-	NBC_Fn_type *typeptr;
-	NBC_Args *sendargs;
-	NBC_Args *recvargs;
-	NBC_Args *opargs;
-	NBC_Args *copyargs;
-	NBC_Args *unpackargs;
-	NBC_Schedule myschedule;
-	void *buf1, *buf2, *buf3;
+  int *numptr; /* number of operations */
+  int i, res, ret = NBC_OK;
+  NBC_Fn_type *typeptr;
+  NBC_Args *sendargs;
+  NBC_Args *recvargs;
+  NBC_Args *opargs;
+  NBC_Args *copyargs;
+  NBC_Args *unpackargs;
+  NBC_Schedule myschedule;
+  void *buf1, *buf2, *buf3;
+  MPI_Comm comm;
 
-	MPI_request_struct_t *requests = __sctk_internal_get_MPC_requests();
+  MPI_request_struct_t *requests = __sctk_internal_get_MPC_requests();
 
-	/* get schedule address */
-	myschedule = (NBC_Schedule *) ( (char *) *handle->schedule + handle->row_offset );
+  /* get schedule address */
+  myschedule = (NBC_Schedule *) ( (char *) *handle->schedule + handle->row_offset );
 
   //mpc_common_debug_error("=> %p + %d", *handle->schedule,  handle->row_offset);
 
-	numptr = (int *) myschedule;
+  numptr = (int *) myschedule;
 
-	int req_cpt = 0;
-	int old_req_count = handle->req_count;
+  int req_cpt = 0;
+  int old_req_count = handle->req_count;
 
-	typeptr = (NBC_Fn_type*)(numptr+1);
-    if(handle->is_persistent != 2)
+  typeptr = (NBC_Fn_type*)(numptr+1);
+  if(handle->is_persistent != 2)
+  {
+
+    for (i=0; i<*numptr; i++)
     {
-
-        for (i=0; i<*numptr; i++)
-        {
-            switch(*typeptr)
-            {
-                case SEND:
-                    req_cpt++;
-                    break;
-                case RECV:
-                    req_cpt ++;
-                    break;
-                case OP:
-                case COPY:
-                case UNPACK:
-                    break;
-                default:
-                    printf("--NBC_Start_round: bad type %li at offset %li rank %d\n", (long)*typeptr, (long)typeptr-(long)myschedule, mpc_common_get_task_rank());
-                    ret=NBC_BAD_SCHED;
-                    goto error;
-            }
-            typeptr = (NBC_Fn_type*)(((NBC_Args*)typeptr)+1);
-            /* increase ptr by size of fn_type enum */
-            typeptr = (NBC_Fn_type*)((NBC_Fn_type*)typeptr+1);
-        }
-
-        handle->req_count +=  req_cpt;
-
-        if( old_req_count != handle->req_count )
-        {
-            if( handle->actual_req_count <= handle->req_count )
-            {
-                if(!handle->actual_req_count)
-                {
-                    handle->actual_req_count = handle->req_count;
-                }
-                else
-                {
-                    handle->actual_req_count += 10;
-
-                }
-
-                handle->req_array = (MPI_Request *)sctk_realloc(handle->req_array, ( handle->actual_req_count ) * sizeof( MPI_Request ) );
-
-                for( i = old_req_count ; i < handle->actual_req_count; i++ )
-                    handle->req_array[i] = MPI_REQUEST_NULL;
-            }
-        }
+      switch(*typeptr)
+      {
+        case SEND:
+          req_cpt++;
+          break;
+        case RECV:
+          req_cpt ++;
+          break;
+        case OP:
+        case COPY:
+        case UNPACK:
+          break;
+        default:
+          printf("--NBC_Start_round: bad type %li at offset %li rank %d\n", (long)*typeptr, (long)typeptr-(long)myschedule, mpc_common_get_task_rank());
+          ret=NBC_BAD_SCHED;
+          goto error;
+      }
+      typeptr = (NBC_Fn_type*)(((NBC_Args*)typeptr)+1);
+      /* increase ptr by size of fn_type enum */
+      typeptr = (NBC_Fn_type*)((NBC_Fn_type*)typeptr+1);
     }
 
-  
-	req_cpt = 0;
+    handle->req_count +=  req_cpt;
 
-	/* typeptr is increased by sizeof(int) bytes to point to type */
-	typeptr = (NBC_Fn_type *) ( numptr + 1 );
-
-	for ( i = 0; i < *numptr; i++ )
-	{
-		/* go sizeof op-data forward */
-		switch ( *typeptr )
-		{
-			case SEND:
-				sendargs = (NBC_Args *) ( typeptr + 1 );
-
-				/* get an additional request */
-				req_cpt++;
-				/* get buffer */
-				if ( sendargs->tmpbuf )
-					buf1 = (char *) handle->tmpbuf + (long) sendargs->buf;
-				else
-					buf1 = sendargs->buf;
-				NBC_CHECK_NULL( handle->req_array );
-                if(handle->is_persistent != 2)
-                {
-                    res = _mpc_cl_isend(buf1, sendargs->count, sendargs->datatype, sendargs->dest, handle->tag, handle->mycomm, __sctk_new_mpc_request (handle->req_array+(old_req_count+req_cpt-1), requests));
-		    /*mark new intermediate nbc request to keep it as long as collective isn't free*/
-		    requests->tab[*(handle->req_array+(old_req_count+req_cpt-1))]->is_persistent = 1;
-                    if(handle->is_persistent == 1)
-                    {
-                                requests->tab[*(handle->req_array+req_cpt-1)]->is_persistent = 2;
-                                requests->tab[*(handle->req_array+req_cpt-1)]->used = 1;
-                                requests->tab[*(handle->req_array+req_cpt-1)]->nbc_handle.schedule = handle->schedule;
-                    }
-                }
-                else
-                {
-                                requests->tab[*(handle->req_array+req_cpt-1)]->is_persistent = 2;
-                                requests->tab[*(handle->req_array+req_cpt-1)]->used = 1;
-                                requests->tab[*(handle->req_array+req_cpt-1)]->nbc_handle.schedule = handle->schedule;
-                    res = _mpc_cl_isend(buf1, sendargs->count, sendargs->datatype, sendargs->dest, handle->tag, handle->mycomm, &((requests->tab[(int)*(handle->req_array+(handle->array_offset+req_cpt-1))])->req));
-                }
-				if ( MPI_SUCCESS != res )
-				{
-					ret = res;
-					goto error;
-				}
-				break;
-			case RECV:
-				recvargs = (NBC_Args *) ( typeptr + 1 );
-				
-				/* get an additional request - TODO: req_count NOT thread safe */
-				req_cpt++;
-				/* get buffer */
-				if ( recvargs->tmpbuf )
-				{
-					buf1 = (char *) handle->tmpbuf + (long) recvargs->buf;
-				}
-				else
-				{
-					buf1 = recvargs->buf;
-				}
-				NBC_CHECK_NULL( handle->req_array );
-                if(handle->is_persistent != 2)
-                {
-                  res = _mpc_cl_irecv(buf1, recvargs->count, recvargs->datatype, recvargs->source, handle->tag, handle->mycomm, __sctk_new_mpc_request (handle->req_array+(old_req_count+req_cpt-1), requests));
-		    /*mark new intermediate nbc request to keep it as long as collective isn't free*/
-		    requests->tab[*(handle->req_array+(old_req_count+req_cpt-1))]->is_persistent = 1;
-                    if(handle->is_persistent == 1)
-                    {
-                        requests->tab[*(handle->req_array+handle->array_offset+req_cpt-1)]->is_persistent = 2;
-                        requests->tab[*(handle->req_array+handle->array_offset+req_cpt-1)]->used = 1;
-                        requests->tab[*(handle->req_array+handle->array_offset+req_cpt-1)]->nbc_handle.schedule = handle->schedule;
-                    }
-                }
-                else
-                {
-                        requests->tab[*(handle->req_array+handle->array_offset+req_cpt-1)]->is_persistent = 2;
-                        requests->tab[*(handle->req_array+handle->array_offset+req_cpt-1)]->used = 1;
-                        requests->tab[*(handle->req_array+handle->array_offset+req_cpt-1)]->nbc_handle.schedule = handle->schedule;
-                    res = _mpc_cl_irecv(buf1, recvargs->count, recvargs->datatype, recvargs->source, handle->tag, handle->mycomm, &((requests->tab[(int)*(handle->req_array+(handle->array_offset+req_cpt-1))])->req));
-                }
- 
-				if ( MPI_SUCCESS != res )
-				{
-					printf( "Error in MPI_Irecv(%lu, %i, %lu, %i, %i, %lu) (%i)\n", (unsigned long) buf1, recvargs->count, (unsigned long) recvargs->datatype, recvargs->source, handle->tag, (unsigned long) handle->mycomm, res );
-					ret = res;
-					goto error;
-				}
-				break;
-			case OP:
-				opargs = (NBC_Args *) ( typeptr + 1 );
-
-				/* get buffers */
-				if ( opargs->tmpbuf1 )
-					buf1 = (char *) handle->tmpbuf + (long) opargs->buf1;
-				else
-					buf1 = opargs->buf1;
-				if ( opargs->tmpbuf2 )
-					buf2 = (char *) handle->tmpbuf + (long) opargs->buf2;
-				else
-					buf2 = opargs->buf2;
-				if ( opargs->tmpbuf3 )
-					buf3 = (char *) handle->tmpbuf + (long) opargs->buf3;
-				else
-					buf3 = opargs->buf3;
-				res = NBC_Operation( buf3, buf1, buf2, opargs->op, opargs->datatype, opargs->count );
-				if ( res != NBC_OK )
-				{
-					printf( "NBC_Operation() failed (code: %i)\n", res );
-					ret = res;
-					goto error;
-				}
-				break;
-			case COPY:
-				copyargs = (NBC_Args *) ( typeptr + 1 );
-
-				/* get buffers */
-				if ( copyargs->tmpsrc )
-					buf1 = (char *) handle->tmpbuf + (long) copyargs->src;
-				else
-					buf1 = copyargs->src;
-				if ( copyargs->tmptgt )
-					buf2 = (char *) handle->tmpbuf + (long) copyargs->tgt;
-				else
-					buf2 = copyargs->tgt;
-				res = NBC_Copy( buf1, copyargs->srccount, copyargs->srctype, buf2, copyargs->tgtcount, copyargs->tgttype, handle->mycomm );
-				if ( res != NBC_OK )
-				{
-					printf( "NBC_Copy() failed (code: %i)\n", res );
-					ret = res;
-					goto error;
-				}
-				break;
-			case UNPACK:
-				unpackargs = (NBC_Args *) ( typeptr + 1 );
-
-				/* get buffers */
-				if ( unpackargs->tmpinbuf )
-					buf1 = (char *) handle->tmpbuf + (long) unpackargs->inbuf;
-				else
-					buf1 = unpackargs->outbuf;
-				if ( unpackargs->tmpoutbuf )
-					buf2 = (char *) handle->tmpbuf + (long) unpackargs->outbuf;
-				else
-					buf2 = unpackargs->outbuf;
-				res = NBC_Unpack( buf1, unpackargs->count, unpackargs->datatype, buf2, handle->mycomm );
-				if ( res != NBC_OK )
-				{
-					printf( "NBC_Unpack() failed (code: %i)\n", res );
-					ret = res;
-					goto error;
-				}
-				break;
-			default:
-				printf( "NBC_Start_round: bad type %li at offset %li rank %d\n", (long) *typeptr, (long) typeptr - (long) myschedule , mpc_common_get_task_rank());
-				ret = NBC_BAD_SCHED;
-				goto error;
-		}
-    /* Move forward of both ARG and  TYPE size */
-    typeptr = (NBC_Fn_type *) ( ( (NBC_Args *) typeptr ) + 1 ) + 1;
-	}
-
-    if(handle->is_persistent == 1)
+    if( old_req_count != handle->req_count )
     {
-        if(!handle->num_rounds)
+      if( handle->actual_req_count <= handle->req_count )
+      {
+        if(!handle->actual_req_count)
         {
-            handle->req_count_persistent = (int*)sctk_malloc(sizeof(int));
+          handle->actual_req_count = handle->req_count;
         }
         else
         {
-//            volatile int *tmp_reqs = handle->req_count_persistent; 
-//            handle->req_count_persistent = (volatile int*)sctk_malloc((handle->num_rounds+1)*sizeof(volatile int));
-//            handle->req_count_persistent[handle->num_rounds] = req_cpt;
-//            for(i=0; i<handle->num_rounds; i++)
-//            {
-//                handle->req_count_persistent[i] = tmp_reqs[i]; 
-//            }
-//            sctk_free(tmp_reqs);
-
-
-                handle->req_count_persistent = (int*)sctk_realloc((int*)(handle->req_count_persistent), (handle->num_rounds+1)*sizeof(volatile int) );
-            handle->req_count_persistent[handle->num_rounds] = req_cpt;
-
+          handle->actual_req_count += 10;
 
         }
-        handle->req_count_persistent[handle->num_rounds] = req_cpt;
-    }
 
-	/* check if we can make progress - not in the first round, this allows us to leave the
+        handle->req_array = (MPI_Request *)sctk_realloc(handle->req_array, ( handle->actual_req_count ) * sizeof( MPI_Request ) );
+
+        for( i = old_req_count ; i < handle->actual_req_count; i++ )
+          handle->req_array[i] = MPI_REQUEST_NULL;
+      }
+    }
+  }
+
+
+  req_cpt = 0;
+
+  /* typeptr is increased by sizeof(int) bytes to point to type */
+  typeptr = (NBC_Fn_type *) ( numptr + 1 );
+
+  for ( i = 0; i < *numptr; i++ )
+  {
+    /* go sizeof op-data forward */
+    switch ( *typeptr )
+    {
+      case SEND:
+        sendargs = (NBC_Args *) ( typeptr + 1 );
+
+        /* get an additional request */
+        req_cpt++;
+        /* get buffer */
+        if ( sendargs->tmpbuf )
+          buf1 = (char *) handle->tmpbuf + (long) sendargs->buf;
+        else
+          buf1 = sendargs->buf;
+
+        if( sendargs->comm == MPI_COMM_NULL )
+          comm = handle->comm;
+        else
+          comm = sendargs->comm;
+
+        NBC_CHECK_NULL( handle->req_array );
+        if(handle->is_persistent != 2)
+        {
+          res = _mpc_cl_isend(buf1, sendargs->count, sendargs->datatype, sendargs->dest, handle->tag, comm, __sctk_new_mpc_request (handle->req_array+(old_req_count+req_cpt-1), requests));
+          /*mark new intermediate nbc request to keep it as long as collective isn't free*/
+          requests->tab[*(handle->req_array+(old_req_count+req_cpt-1))]->is_persistent = 1;
+          if(handle->is_persistent == 1)
+          {
+            requests->tab[*(handle->req_array+req_cpt-1)]->is_persistent = 2;
+            requests->tab[*(handle->req_array+req_cpt-1)]->used = 1;
+            requests->tab[*(handle->req_array+req_cpt-1)]->nbc_handle.schedule = handle->schedule;
+          }
+        }
+        else
+        {
+          requests->tab[*(handle->req_array+req_cpt-1)]->is_persistent = 2;
+          requests->tab[*(handle->req_array+req_cpt-1)]->used = 1;
+          requests->tab[*(handle->req_array+req_cpt-1)]->nbc_handle.schedule = handle->schedule;
+          res = _mpc_cl_isend(buf1, sendargs->count, sendargs->datatype, sendargs->dest, handle->tag, comm, &((requests->tab[(int)*(handle->req_array+(handle->array_offset+req_cpt-1))])->req));
+        }
+        if ( MPI_SUCCESS != res )
+        {
+          ret = res;
+          goto error;
+        }
+        break;
+      case RECV:
+        recvargs = (NBC_Args *) ( typeptr + 1 );
+
+        /* get an additional request - TODO: req_count NOT thread safe */
+        req_cpt++;
+        /* get buffer */
+        if ( recvargs->tmpbuf )
+        {
+          buf1 = (char *) handle->tmpbuf + (long) recvargs->buf;
+        }
+        else
+        {
+          buf1 = recvargs->buf;
+        }
+
+        if( recvargs->comm == MPI_COMM_NULL )
+          comm = handle->comm;
+        else
+          comm = recvargs->comm;
+
+
+        NBC_CHECK_NULL( handle->req_array );
+        if(handle->is_persistent != 2)
+        {
+          res = _mpc_cl_irecv(buf1, recvargs->count, recvargs->datatype, recvargs->source, handle->tag, comm, __sctk_new_mpc_request (handle->req_array+(old_req_count+req_cpt-1), requests));
+          /*mark new intermediate nbc request to keep it as long as collective isn't free*/
+          requests->tab[*(handle->req_array+(old_req_count+req_cpt-1))]->is_persistent = 1;
+          if(handle->is_persistent == 1)
+          {
+            requests->tab[*(handle->req_array+handle->array_offset+req_cpt-1)]->is_persistent = 2;
+            requests->tab[*(handle->req_array+handle->array_offset+req_cpt-1)]->used = 1;
+            requests->tab[*(handle->req_array+handle->array_offset+req_cpt-1)]->nbc_handle.schedule = handle->schedule;
+          }
+        }
+        else
+        {
+          requests->tab[*(handle->req_array+handle->array_offset+req_cpt-1)]->is_persistent = 2;
+          requests->tab[*(handle->req_array+handle->array_offset+req_cpt-1)]->used = 1;
+          requests->tab[*(handle->req_array+handle->array_offset+req_cpt-1)]->nbc_handle.schedule = handle->schedule;
+          res = _mpc_cl_irecv(buf1, recvargs->count, recvargs->datatype, recvargs->source, handle->tag, comm, &((requests->tab[(int)*(handle->req_array+(handle->array_offset+req_cpt-1))])->req));
+        }
+
+        if ( MPI_SUCCESS != res )
+        {
+          printf( "Error in MPI_Irecv(%lu, %i, %lu, %i, %i, %lu) (%i)\n", (unsigned long) buf1, recvargs->count, (unsigned long) recvargs->datatype, recvargs->source, handle->tag, (unsigned long) handle->mycomm, res );
+          ret = res;
+          goto error;
+        }
+        break;
+      case OP:
+        opargs = (NBC_Args *) ( typeptr + 1 );
+
+        /* get buffers */
+        if ( opargs->tmpbuf1 )
+          buf1 = (char *) handle->tmpbuf + (long) opargs->buf1;
+        else
+          buf1 = opargs->buf1;
+        if ( opargs->tmpbuf2 )
+          buf2 = (char *) handle->tmpbuf + (long) opargs->buf2;
+        else
+          buf2 = opargs->buf2;
+        if ( opargs->tmpbuf3 )
+          buf3 = (char *) handle->tmpbuf + (long) opargs->buf3;
+        else
+          buf3 = opargs->buf3;
+        res = NBC_Operation( buf3, buf1, buf2, opargs->op, opargs->datatype, opargs->count );
+        if ( res != NBC_OK )
+        {
+          printf( "NBC_Operation() failed (code: %i)\n", res );
+          ret = res;
+          goto error;
+        }
+        break;
+      case COPY:
+        copyargs = (NBC_Args *) ( typeptr + 1 );
+
+        /* get buffers */
+        if ( copyargs->tmpsrc )
+          buf1 = (char *) handle->tmpbuf + (long) copyargs->src;
+        else
+          buf1 = copyargs->src;
+
+        if( copyargs->comm == MPI_COMM_NULL )
+          comm = handle->comm;
+        else
+          comm = copyargs->comm;
+
+        if ( copyargs->tmptgt )
+          buf2 = (char *) handle->tmpbuf + (long) copyargs->tgt;
+        else
+          buf2 = copyargs->tgt;
+
+        res = NBC_Copy( buf1, copyargs->srccount, copyargs->srctype, buf2, copyargs->tgtcount, copyargs->tgttype, comm );
+        if ( res != NBC_OK )
+        {
+          printf( "NBC_Copy() failed (code: %i)\n", res );
+          ret = res;
+          goto error;
+        }
+        break;
+      case UNPACK:
+        unpackargs = (NBC_Args *) ( typeptr + 1 );
+
+        /* get buffers */
+        if ( unpackargs->tmpinbuf )
+          buf1 = (char *) handle->tmpbuf + (long) unpackargs->inbuf;
+        else
+          buf1 = unpackargs->outbuf;
+
+        if( unpackargs->comm == MPI_COMM_NULL )
+          comm = handle->comm;
+        else
+          comm = unpackargs->comm;
+
+        if ( unpackargs->tmpoutbuf )
+          buf2 = (char *) handle->tmpbuf + (long) unpackargs->outbuf;
+        else
+          buf2 = unpackargs->outbuf;
+
+        res = NBC_Unpack( buf1, unpackargs->count, unpackargs->datatype, buf2, comm );
+        if ( res != NBC_OK )
+        {
+          printf( "NBC_Unpack() failed (code: %i)\n", res );
+          ret = res;
+          goto error;
+        }
+        break;
+      default:
+        printf( "NBC_Start_round: bad type %li at offset %li rank %d\n", (long) *typeptr, (long) typeptr - (long) myschedule , mpc_common_get_task_rank());
+        ret = NBC_BAD_SCHED;
+        goto error;
+    }
+    /* Move forward of both ARG and  TYPE size */
+    typeptr = (NBC_Fn_type *) ( ( (NBC_Args *) typeptr ) + 1 ) + 1;
+  }
+
+  if(handle->is_persistent == 1)
+  {
+    if(!handle->num_rounds)
+    {
+      handle->req_count_persistent = (int*)sctk_malloc(sizeof(int));
+    }
+    else
+    {
+      //            volatile int *tmp_reqs = handle->req_count_persistent; 
+      //            handle->req_count_persistent = (volatile int*)sctk_malloc((handle->num_rounds+1)*sizeof(volatile int));
+      //            handle->req_count_persistent[handle->num_rounds] = req_cpt;
+      //            for(i=0; i<handle->num_rounds; i++)
+      //            {
+      //                handle->req_count_persistent[i] = tmp_reqs[i]; 
+      //            }
+      //            sctk_free(tmp_reqs);
+
+
+      handle->req_count_persistent = (int*)sctk_realloc((int*)(handle->req_count_persistent), (handle->num_rounds+1)*sizeof(volatile int) );
+      handle->req_count_persistent[handle->num_rounds] = req_cpt;
+
+
+    }
+    handle->req_count_persistent[handle->num_rounds] = req_cpt;
+  }
+
+  /* check if we can make progress - not in the first round, this allows us to leave the
    * initialization faster and to reach more overlap 
    *
    * threaded case: calling progress in the first round can lead to a
    * deadlock if NBC_Free is called in this round :-( */
-	if ( (handle->row_offset != sizeof( int ))
-  && (depth < 20)  )
-	{
-		res = __NBC_Progress( handle , depth + 1);
-		if ( ( NBC_OK != res ) && ( NBC_CONTINUE != res ) )
-		{
-			printf( "Error in NBC_Progress() (%i)\n", res );
-			ret = res;
-			goto error;
-		}
-	}
+  if ( (handle->row_offset != sizeof( int ))
+      && (depth < 20)  )
+  {
+    res = __NBC_Progress( handle , depth + 1);
+    if ( ( NBC_OK != res ) && ( NBC_CONTINUE != res ) )
+    {
+      printf( "Error in NBC_Progress() (%i)\n", res );
+      ret = res;
+      goto error;
+    }
+  }
 
 error:
-	return ret;
+  return ret;
 }
 static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
 {
@@ -9415,6 +9450,7 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
 	NBC_Args *unpackargs;
 	NBC_Schedule myschedule;
 	void *buf1, *buf2, *buf3;
+  MPI_Comm comm;
 
 	MPI_request_struct_t *requests = __sctk_internal_get_MPC_requests();
 
@@ -9500,9 +9536,15 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
 					buf1 = (char *) handle->tmpbuf + (long) sendargs->buf;
 				else
 					buf1 = sendargs->buf;
+
+        if( sendargs->comm == MPI_COMM_NULL )
+          comm = handle->mycomm;
+        else 
+          comm = sendargs->comm;
+
 				NBC_CHECK_NULL( handle->req_array );
                 //fprintf(stderr, "rank %d send to rank %d datatype %d count %d\n", mpc_common_get_task_rank(), sendargs->dest, sendargs->datatype, sendargs->count);
-        res = _mpc_cl_isend(buf1, sendargs->count, sendargs->datatype, sendargs->dest, handle->tag, handle->mycomm, __sctk_new_mpc_request (handle->req_array+(old_req_count+req_cpt-1), requests));
+        res = _mpc_cl_isend(buf1, sendargs->count, sendargs->datatype, sendargs->dest, handle->tag, comm, __sctk_new_mpc_request (handle->req_array+(old_req_count+req_cpt-1), requests));
 				if ( MPI_SUCCESS != res )
 				{
 					printf( "Error in MPI_Isend(%lu, %i, %lu, %i, %i, %lu) (%i)\n", (unsigned long) buf1, sendargs->count, (unsigned long) sendargs->datatype, sendargs->dest, handle->tag, (unsigned long) handle->mycomm, res );
@@ -9524,9 +9566,15 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
 				{
 					buf1 = recvargs->buf;
 				}
+
+        if( recvargs->comm == MPI_COMM_NULL )
+          comm = handle->mycomm;
+        else 
+          comm = recvargs->comm;
+
 				NBC_CHECK_NULL( handle->req_array );
                 //fprintf(stderr, "rank %d recv from rank %d datatype %d count %d\n", mpc_common_get_task_rank(), recvargs->source, recvargs->datatype, recvargs->count);
-        res = _mpc_cl_irecv(buf1, recvargs->count, recvargs->datatype, recvargs->source, handle->tag, handle->mycomm, __sctk_new_mpc_request (handle->req_array+(old_req_count+req_cpt-1), requests));
+        res = _mpc_cl_irecv(buf1, recvargs->count, recvargs->datatype, recvargs->source, handle->tag, comm, __sctk_new_mpc_request (handle->req_array+(old_req_count+req_cpt-1), requests));
  
 				if ( MPI_SUCCESS != res )
 				{
@@ -9571,7 +9619,13 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
 					buf2 = (char *) handle->tmpbuf + (long) copyargs->tgt;
 				else
 					buf2 = copyargs->tgt;
-				res = NBC_Copy( buf1, copyargs->srccount, copyargs->srctype, buf2, copyargs->tgtcount, copyargs->tgttype, handle->mycomm );
+
+        if( copyargs->comm == MPI_COMM_NULL )
+          comm = handle->mycomm;
+        else 
+          comm = copyargs->comm;
+
+				res = NBC_Copy( buf1, copyargs->srccount, copyargs->srctype, buf2, copyargs->tgtcount, copyargs->tgttype, comm );
 				if ( res != NBC_OK )
 				{
 					printf( "NBC_Copy() failed (code: %i)\n", res );
@@ -9591,7 +9645,13 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
 					buf2 = (char *) handle->tmpbuf + (long) unpackargs->outbuf;
 				else
 					buf2 = unpackargs->outbuf;
-				res = NBC_Unpack( buf1, unpackargs->count, unpackargs->datatype, buf2, handle->mycomm );
+
+        if( unpackargs->comm == MPI_COMM_NULL )
+          comm = handle->mycomm;
+        else 
+          comm = unpackargs->comm;
+
+				res = NBC_Unpack( buf1, unpackargs->count, unpackargs->datatype, buf2, comm );
 				if ( res != NBC_OK )
 				{
 					printf( "NBC_Unpack() failed (code: %i)\n", res );
@@ -9695,7 +9755,7 @@ static inline int NBC_Initialize()
   return NBC_OK;
 }
 
-static inline int NBC_Init_handle( NBC_Handle *handle, MPI_Comm comm, int tag )
+inline int NBC_Init_handle( NBC_Handle *handle, MPI_Comm comm, int tag )
 {
 	int res;
 
@@ -9747,7 +9807,7 @@ static inline int NBC_Init_handle( NBC_Handle *handle, MPI_Comm comm, int tag )
 	return NBC_OK;
 }
 
-static inline int NBC_Start( NBC_Handle *handle, NBC_Schedule *schedule )
+inline int NBC_Start( NBC_Handle *handle, NBC_Schedule *schedule )
 {
 	int res;
 	int tmp_send = 0;
@@ -10885,83 +10945,6 @@ PMPI_Ibarrier (MPI_Comm comm, MPI_Request *request)
   SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
-
-int
-PMPI_Ibcast (void *buffer, int count, MPI_Datatype datatype, int root,
-	    MPI_Comm comm, MPI_Request *request)
-{
-  if( _mpc_mpi_config()->nbc.use_egreq_bcast )
-  {
-    return MPI_Ixbcast( buffer, count, datatype, root, comm, request );
-  }
-
-
-  int res = MPI_ERR_INTERN;
-  mpc_common_nodebug ("Entering IBCAST %d with count %d", comm, count);
-  SCTK__MPI_INIT_REQUEST (request);
-  int csize;
-  MPI_Comm_size(comm, &csize);
-  if(csize == 1)
-  {
-    res = PMPI_Bcast (buffer, count, datatype, root, comm);
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
-  }
-  else
-  {
-  MPI_internal_request_t *tmp;
-  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-  tmp->is_nbc = 1;
-  tmp->nbc_handle.is_persistent = 0;
-    res = NBC_Ibcast (buffer, count, datatype, root, comm, &(tmp->nbc_handle));
-  }
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
-}
-
-int
-PMPI_Igather (const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
-	     void *recvbuf, int recvcnt, MPI_Datatype recvtype,
-	     int root, MPI_Comm comm, MPI_Request * request)
-{
-
-  if( _mpc_mpi_config()->nbc.use_egreq_gather )
-  {
-    return MPI_Ixgather(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype, root, comm, request);
-  }
-
-  int res = MPI_ERR_INTERN;
-  mpc_common_nodebug ("Entering IGATHER %d", comm);
-  SCTK__MPI_INIT_REQUEST (request);
-
-  int csize,rank;
-  MPI_Comm_size(comm, &csize);
-  MPI_Comm_rank (comm, &rank);
-  if(recvbuf == sendbuf && rank == root)
-  {
-    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
-  }
-  if(csize == 1)
-  {
-    res = PMPI_Gather (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
-			     recvtype, root, comm);
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
-  }
-  else
-  {
-  MPI_internal_request_t *tmp;
-  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-  tmp->is_nbc = 1;
-  tmp->nbc_handle.is_persistent = 0;
-  res =
-    NBC_Igather (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
-			     recvtype, root, comm, &(tmp->nbc_handle));
-  }
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
-}
-
 int
 PMPI_Igatherv (const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	      void *recvbuf, const int *recvcnts, const int *displs,
@@ -10997,49 +10980,6 @@ PMPI_Igatherv (const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 res =
     NBC_Igatherv (sendbuf, sendcnt, sendtype, recvbuf, recvcnts,
 			      displs, recvtype, root, comm, &(tmp->nbc_handle));
-  }
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
-}
-
-int
-PMPI_Iscatter (const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
-	      void *recvbuf, int recvcnt, MPI_Datatype recvtype, int root,
-	      MPI_Comm comm, MPI_Request * request)
-{
-
-  if( _mpc_mpi_config()->nbc.use_egreq_scatter )
-  {
-    return MPI_Ixscatter(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype, root, comm, request);
-  }
-
-  int res = MPI_ERR_INTERN;
-  mpc_common_nodebug ("Entering ISCATTER %d", comm);
-  SCTK__MPI_INIT_REQUEST (request);
-
-  int csize,rank;
-  MPI_Comm_size(comm, &csize);
-  MPI_Comm_rank (comm, &rank);
-  if(recvbuf == sendbuf && rank == root)
-  {
-    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
-  }
-  if(csize == 1)
-  {
-    res = PMPI_Scatter (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
-			      recvtype, root, comm);
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
-  }
-  else
-  {
-  MPI_internal_request_t *tmp;
-  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-  tmp->is_nbc = 1;
-  tmp->nbc_handle.is_persistent = 0;
-  res =
-    NBC_Iscatter (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
-			      recvtype, root, comm, &(tmp->nbc_handle));
   }
   SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
@@ -11084,42 +11024,6 @@ PMPI_Iscatterv (const void *sendbuf, const int *sendcnts, const int *displs,
 }
 
 int
-PMPI_Iallgather (const void *sendbuf, int sendcount, MPI_Datatype sendtype,
-		void *recvbuf, int recvcount, MPI_Datatype recvtype,
-		MPI_Comm comm, MPI_Request *request)
-{
-  int res = MPI_ERR_INTERN;
-  mpc_common_nodebug ("Entering IALLGATHER %d", comm);
-  SCTK__MPI_INIT_REQUEST (request);
-  
-  int csize;
-  MPI_Comm_size(comm, &csize);
-  if(recvbuf == sendbuf)
-  {
-    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
-  }
-
-  if(csize == 1)
-  {
-    res = PMPI_Allgather (sendbuf, sendcount, sendtype, recvbuf,
-				recvcount, recvtype, comm);
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
-  }
-  else
-  {
-  MPI_internal_request_t *tmp;
-  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-  tmp->is_nbc = 1;
-
-  tmp->nbc_handle.is_persistent = 0;
-  res =  NBC_Iallgather (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, &(tmp->nbc_handle));
-  }
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
-}
-
-int
 PMPI_Iallgatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 		 void *recvbuf, const int *recvcounts, const int *displs,
 		 MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request)
@@ -11151,42 +11055,6 @@ PMPI_Iallgatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype,
   res =
     NBC_Iallgatherv (sendbuf, sendcount, sendtype, recvbuf,
 				 recvcounts, displs, recvtype, comm, &(tmp->nbc_handle));
-  }
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
-}
-
-int
-PMPI_Ialltoall (const void *sendbuf, int sendcount, MPI_Datatype sendtype,
-	       void *recvbuf, int recvcount, MPI_Datatype recvtype,
-	       MPI_Comm comm, MPI_Request *request)
-{
-  int res = MPI_ERR_INTERN;
-  mpc_common_nodebug ("Entering IALLTOALL %d", comm);
-  SCTK__MPI_INIT_REQUEST (request);
-
-  int csize;
-  MPI_Comm_size(comm, &csize);
-  if(recvbuf == sendbuf)
-  {
-    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
-  }
-  if(csize == 1)
-  {
-    res = PMPI_Alltoall (sendbuf, sendcount, sendtype, recvbuf,
-			       recvcount, recvtype, comm);
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
-  }
-  else
-  {
-  MPI_internal_request_t *tmp;
-  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-  tmp->is_nbc = 1;
-  tmp->nbc_handle.is_persistent = 0;
-  res =
-    NBC_Ialltoall (sendbuf, sendcount, sendtype, recvbuf,
-			       recvcount, recvtype, comm, &(tmp->nbc_handle));
   }
   SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
@@ -11263,82 +11131,6 @@ int PMPI_Ialltoallw(const void *sendbuf, const int *sendcnts, const int *sdispls
 }
 
 int
-PMPI_Ireduce (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
-	     MPI_Op op, int root, MPI_Comm comm, MPI_Request *request)
-{
-
-  if( _mpc_mpi_config()->nbc.use_egreq_reduce )
-  {
-    return MPI_Ixreduce( sendbuf, recvbuf, count, datatype, op, root, comm, request);
-  }
-
-  int res = MPI_ERR_INTERN;
-  mpc_common_nodebug ("Entering IREDUCE %d", comm);
-  SCTK__MPI_INIT_REQUEST (request);
-
-  int csize,rank;
-  MPI_Comm_rank(comm,&rank);
-  MPI_Comm_size(comm, &csize);
-  if(recvbuf == sendbuf && rank == root)
-  {
-    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
-  }
-  if(csize == 1)
-  {
-    res = PMPI_Reduce (sendbuf, recvbuf, count, datatype, op, root,
-			     comm);
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
-  }
-  else
-  {
-  MPI_internal_request_t *tmp;
-  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-  tmp->is_nbc = 1;
-  tmp->nbc_handle.is_persistent = 0;
-  res =
-    NBC_Ireduce (sendbuf, recvbuf, count, datatype, op, root,
-			     comm, &(tmp->nbc_handle));
-  }
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
-}
-
-
-int
-PMPI_Iallreduce (const void *sendbuf, void *recvbuf, int count,
-		MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
-{
-  int res = MPI_ERR_INTERN;
-  mpc_common_nodebug ("Entering IALLREDUCE %d", comm);
-  SCTK__MPI_INIT_REQUEST (request);
-
-  int csize;
-  MPI_Comm_size(comm, &csize);
-  if(recvbuf == sendbuf)
-  {
-    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
-  }
-  if(csize == 1)
-  {
-    res = PMPI_Allreduce (sendbuf, recvbuf, count, datatype, op, comm);
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
-  }
-  else
-  {
-  MPI_internal_request_t *tmp;
-  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-  tmp->is_nbc = 1;
-  tmp->nbc_handle.is_persistent = 0;
-  res =
-    NBC_Iallreduce (sendbuf, recvbuf, count, datatype, op, comm, &(tmp->nbc_handle));
-  }
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
-}
-
-int
 PMPI_Ireduce_scatter (const void *sendbuf, void *recvbuf, const int *recvcnts,
 		     MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
 {
@@ -11401,41 +11193,6 @@ PMPI_Iscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype
   tmp->is_nbc = 1;
   tmp->nbc_handle.is_persistent = 0;
     res = NBC_Iscan (sendbuf, recvbuf, count, datatype, op, comm, &(tmp->nbc_handle));
-  }
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
-}
-
-int
-PMPI_Ireduce_scatter_block (const void *sendbuf, void *recvbuf, int recvcnt,
-		     MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
-{
-  int res = MPI_ERR_INTERN;
-  mpc_common_nodebug ("Entering IREDUCE_SCATTER_BLOCK %d", comm);
-  SCTK__MPI_INIT_REQUEST (request);
-
-  int csize;
-  MPI_Comm_size(comm, &csize);
-  if(recvbuf == sendbuf)
-  {
-    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
-  }
-  if(csize == 1)
-  {
-    res = PMPI_Reduce_scatter_block (sendbuf, recvbuf, recvcnt, datatype, op,
-				     comm);
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
-  }
-  else
-  {
-  MPI_internal_request_t *tmp;
-  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-  tmp->is_nbc = 1;
-  tmp->nbc_handle.is_persistent = 0;
-    res =
-    NBC_Ireduce_scatter_block (sendbuf, recvbuf, recvcnt, datatype, op,
-				     comm, &(tmp->nbc_handle));
   }
   SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
