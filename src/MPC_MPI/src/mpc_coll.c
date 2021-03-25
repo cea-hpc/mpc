@@ -350,7 +350,7 @@ static inline int __INTERNAL__Send_type(void *buffer, int count, MPI_Datatype da
 
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
-      res = PMPI_Send(buffer, count, datatype, dest, tag, comm);
+      res = _mpc_cl_send(buffer, count, datatype, dest, tag, comm);
       break;
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
@@ -382,7 +382,7 @@ static inline int __INTERNAL__Recv_type(void *buffer, int count, MPI_Datatype da
   
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
-      res = PMPI_Recv(buffer, count, datatype, source, tag, comm, MPI_STATUS_IGNORE);
+      res = _mpc_cl_recv(buffer, count, datatype, source, tag, comm, MPI_STATUS_IGNORE);
       break;
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
@@ -1091,13 +1091,13 @@ int __INTERNAL__Reduce(const void *sendbuf, void* recvbuf, int count, MPI_Dataty
     NBC_REDUCE_REDUCE_SCATTER_ALLGATHER
   } alg;
 
-  int size;
-  _mpc_cl_comm_size(comm, &size);
-  if(size < 4) {
-    alg = NBC_REDUCE_LINEAR;
-  } else {
+  //int size;
+  //_mpc_cl_comm_size(comm, &size);
+  //if(size < 4) {
+  //  alg = NBC_REDUCE_LINEAR;
+  //} else {
     alg = NBC_REDUCE_BINOMIAL;
-  }
+  //}
 
   int res;
 
@@ -1246,11 +1246,14 @@ static inline int __INTERNAL__Reduce_binomial(const void *sendbuf, void* recvbuf
   int first_access = 1;
 
   int vrank, vroot, peer, maxr;
+  
   vroot = root;
   if(!can_commute) {
     vroot = 0;
   }
-  RANK2VRANK(rank, vrank, root);
+  
+  RANK2VRANK(rank, vrank, vroot);
+  
   maxr = (int)ceil((log(size)/LOG2));
 
   switch(coll_type) {
@@ -1276,12 +1279,11 @@ static inline int __INTERNAL__Reduce_binomial(const void *sendbuf, void* recvbuf
   } else {
     tmp_sendbuf = sendbuf;
   }
-  
 
   for(int i = 0; i < maxr; i++) {
     if(vrank & (1 << i)) {
       VRANK2RANK(peer, vrank ^ (1 << i), vroot);
-      
+     
       __INTERNAL__Send_type(tmp_sendbuf, count, datatype, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
       
       break;
@@ -1308,7 +1310,7 @@ static inline int __INTERNAL__Reduce_binomial(const void *sendbuf, void* recvbuf
       if(rank == 0) {
         __INTERNAL__Send_type(tmp_sendbuf, count, datatype, root, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
       } else if(rank == root) {
-        __INTERNAL__Recv_type(recvbuf, count, datatype, root, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
+        __INTERNAL__Recv_type(recvbuf, count, datatype, 0, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
       }
     }
   } else if (rank == root){
