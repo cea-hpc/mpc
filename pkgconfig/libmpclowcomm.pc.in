@@ -1,0 +1,11 @@
+prefix=@prefix@
+includedir=@PKG_INCDIR@
+libdir=${prefix}/lib/
+version=@MPC_VERSION_MAJOR@.@MPC_VERSION_MINOR@.@MPC_VERSION_PATCH@
+
+Name: libmpclowcomm
+Description: The Communication Library for the Multi-Processor Computing Runtime
+Requires: @MPC_THREAD_PKGCONFIG_DEP@
+Version: ${version}
+Cflags: -I${includedir}
+Libs: -L${libdir} -Wl,-rpath,${libdir} -lmpclowcomm -lmpclaunch

@@ -2856,6 +2856,37 @@ fi
 AC_SUBST([MPC_GENERATION_DATE])
 
 #
+# Generate Conditionnal Substitutions for PKG-CONFIG
+#
+
+MPC_THREAD_PKGCONFIG_DEP=""
+
+if test "x${MPC_THREAD_ENABLED}" = "xyes"; then
+        MPC_THREAD_PKGCONFIG_DEP="libmpcthread = ${MPC_VERSION_MAJOR}.${MPC_VERSION_MINOR}.${MPC_VERSION_PATCH}"
+fi
+
+AC_SUBST([MPC_THREAD_PKGCONFIG_DEP])
+
+MPC_IO_PKGCONFIG_LIB=""
+
+if test "x${MPC_MPIIO_ENABLED}" = "xyes"; then
+        MPC_IO_PKGCONFIG_LIB="-lmpcio"
+fi
+
+AC_SUBST([MPC_IO_PKGCONFIG_LIB])
+
+MPC_FORTRAN_PKGCONFIG_LIB=""
+MPC_FORTRAN_PKGCONFIG_CFLAGS=""
+
+if test "x${MPC_FORTRAN_ENABLED}" = "xyes"; then
+        MPC_FORTRAN_PKGCONFIG_LIB="-lmpcfortran"
+        MPC_FORTRAN_PKGCONFIG_CFLAGS="-I${prefix}/include/${PACKAGE_TARNAME}/fortran/"
+fi
+
+AC_SUBST([MPC_FORTRAN_PKGCONFIG_LIB])
+AC_SUBST([MPC_FORTRAN_PKGCONFIG_CFLAGS])
+
+#
 # Generate the Reconfigure Script
 #
 cat << EOF > ./reconfigure
@@ -3002,7 +3033,11 @@ AC_OUTPUT([Makefile
            src/bin/mpc_ldflags
            src/bin/mpcrun
            src/bin/mpcvars.sh
-           src/bin/mpc_status])
+           src/bin/mpc_status
+           pkgconfig/Makefile
+           pkgconfig/libmpclowcomm.pc
+           pkgconfig/libmpcthread.pc
+           pkgconfig/libmpcmpi.pc])
 
 
 

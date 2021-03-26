@@ -1,0 +1,10 @@
+prefix=@prefix@
+includedir=@PKG_INCDIR@
+libdir=${prefix}/lib/
+version=@MPC_VERSION_MAJOR@.@MPC_VERSION_MINOR@.@MPC_VERSION_PATCH@
+
+Name: libmpcthread
+Description: The Threading Library for the Multi-Processor Computing Runtime
+Version: ${version}
+Cflags: -I${includedir} -include mpc_main.h
+Libs: -L${libdir} -Wl,-rpath,${libdir} -lmpclaunch -lmpcthread

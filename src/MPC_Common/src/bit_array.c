@@ -64,7 +64,7 @@ void mpc_common_bit_array_release(struct mpc_common_bit_array *ba) {
   ba->size = 0;
   ba->real_size = 0;
 
-  free(ba->array);
+  sctk_free(ba->array);
   ba->array = NULL;
 }
 

@@ -41,4 +41,7 @@ if test -d "${MPC_INSTALL_DIR_PREFIX}/libsgcc" ; then
 	export LD_LIBRARY_PATH
 fi
 
+PKG_CONFIG_PATH="${MPC_INSTALL_DIR_PREFIX}/lib/pkgconfig/:${PKG_CONFIG_PATH}"
+export PKG_CONFIG_PATH
+
 echo "Loading MPC ${MPC_VERSION} from ${MPC_INSTALL_DIR_PREFIX}"
