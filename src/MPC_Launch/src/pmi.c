@@ -493,7 +493,6 @@ static inline int _pmi_initialize(struct mpc_pmi_context *ctx, int * unreachable
 	{
 		goto PMI_INIT_SERIAL;
 	}
-
 	return MPC_LAUNCH_PMI_SUCCESS;
 
 PMI_INIT_SERIAL:
