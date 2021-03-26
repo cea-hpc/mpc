@@ -34,8 +34,14 @@
 #pragma weak MPI_Iscatter = PMPI_Iscatter
 #pragma weak MPI_Scatter_init = PMPI_Scatter_init
 
+#pragma weak MPI_Iscatterv = PMPI_Iscatterv
+#pragma weak MPI_Scatterv_init = PMPI_Scatterv_init
+
 #pragma weak MPI_Igather = PMPI_Igather
 #pragma weak MPI_Gather_init = PMPI_Gather_init
+
+#pragma weak MPI_Igatherv = PMPI_Igatherv
+#pragma weak MPI_Gatherv_init = PMPI_Gatherv_init
 
 #pragma weak MPI_Ireduce_scatter_block = PMPI_Ireduce_scatter_block
 #pragma weak MPI_Reduce_scatter_block_init = PMPI_Reduce_scatter_block_init

@@ -3746,91 +3746,93 @@ int __INTERNAL__PMPI_Gatherv_intra(void *sendbuf, int sendcnt,
                                    MPI_Datatype recvtype, int root,
                                    MPI_Comm comm)
 {
-	MPI_Aint dsize;
-	int res = MPI_ERR_INTERN, rank, size;
-	MPI_Request request;
-	MPI_Request *recvrequest;
+//  MPI_Aint dsize;
+//  int res = MPI_ERR_INTERN, rank, size;
+//  MPI_Request request;
+//  MPI_Request *recvrequest;
+//
+//  res = _mpc_cl_comm_size(comm, &size);
+//  if(res != MPI_SUCCESS)
+//  {
+//    return res;
+//  }
+//  res = _mpc_cl_comm_rank(comm, &rank);
+//  if(res != MPI_SUCCESS)
+//  {
+//    return res;
+//  }
+//
+//  if( (rank != root) || (MPI_IN_PLACE != sendbuf) )
+//  {
+//    res = PMPI_Isend_internal(sendbuf, sendcnt, sendtype, root,
+//        MPC_GATHERV_TAG, comm, &request);
+//    if(res != MPI_SUCCESS)
+//    {
+//      return res;
+//    }
+//  }
+//  else
+//  {
+//    request = MPI_REQUEST_NULL;
+//  }
+//
+//  recvrequest = (MPI_Request *)sctk_malloc(size * sizeof(MPI_Request) );
+//
+//  if(rank == root)
+//  {
+//    int i = 0;
+//    int j;
+//    res = PMPI_Type_extent(recvtype, &dsize);
+//    if(res != MPI_SUCCESS)
+//    {
+//      sctk_free(recvrequest);
+//      return res;
+//    }
+//
+//    while(i < size)
+//    {
+//      for(j = 0; i < size;)
+//      {
+//        if( (i != root) || (MPI_IN_PLACE != sendbuf) )
+//        {
+//          res = PMPI_Irecv_internal(
+//              ( (char *)recvbuf) + (displs[i] * dsize), recvcnts[i], recvtype, i,
+//              MPC_GATHERV_TAG, comm, &(recvrequest[j]) );
+//          if(res != MPI_SUCCESS)
+//          {
+//            sctk_free(recvrequest);
+//            return res;
+//          }
+//        }
+//        else
+//        {
+//          recvrequest[j] = MPI_REQUEST_NULL;
+//        }
+//        i++;
+//        j++;
+//      }
+//      j--;
+//      res = PMPI_Waitall(size, recvrequest, MPI_STATUSES_IGNORE);
+//      if(res != MPI_SUCCESS)
+//      {
+//        sctk_free(recvrequest);
+//        return res;
+//      }
+//    }
+//  }
+//
+//  res = PMPI_Wait(&(request), MPI_STATUS_IGNORE);
+//  if(res != MPI_SUCCESS)
+//  {
+//    sctk_free(recvrequest);
+//    return res;
+//  }
+//
+//  res = PMPI_Barrier(comm);
+//  sctk_free(recvrequest);
+//  return res;
 
-	res = _mpc_cl_comm_size(comm, &size);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-	res = _mpc_cl_comm_rank(comm, &rank);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-
-	if( (rank != root) || (MPI_IN_PLACE != sendbuf) )
-	{
-		res = PMPI_Isend_internal(sendbuf, sendcnt, sendtype, root,
-		                 MPC_GATHERV_TAG, comm, &request);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-	}
-	else
-	{
-		request = MPI_REQUEST_NULL;
-	}
-
-	recvrequest = (MPI_Request *)sctk_malloc(size * sizeof(MPI_Request) );
-
-	if(rank == root)
-	{
-		int i = 0;
-		int j;
-		res = PMPI_Type_extent(recvtype, &dsize);
-		if(res != MPI_SUCCESS)
-		{
-			sctk_free(recvrequest);
-			return res;
-		}
-
-		while(i < size)
-		{
-			for(j = 0; i < size;)
-			{
-				if( (i != root) || (MPI_IN_PLACE != sendbuf) )
-				{
-					res = PMPI_Irecv_internal(
-						( (char *)recvbuf) + (displs[i] * dsize), recvcnts[i], recvtype, i,
-						MPC_GATHERV_TAG, comm, &(recvrequest[j]) );
-					if(res != MPI_SUCCESS)
-					{
-						sctk_free(recvrequest);
-						return res;
-					}
-				}
-				else
-				{
-					recvrequest[j] = MPI_REQUEST_NULL;
-				}
-				i++;
-				j++;
-			}
-			j--;
-			res = PMPI_Waitall(size, recvrequest, MPI_STATUSES_IGNORE);
-			if(res != MPI_SUCCESS)
-			{
-				sctk_free(recvrequest);
-				return res;
-			}
-		}
-	}
-
-	res = PMPI_Wait(&(request), MPI_STATUS_IGNORE);
-	if(res != MPI_SUCCESS)
-	{
-		sctk_free(recvrequest);
-		return res;
-	}
-
-	res = PMPI_Barrier(comm);
-	sctk_free(recvrequest);
-	return res;
+  return  __INTERNAL__Gatherv(sendbuf, sendcnt, sendtype, recvbuf, recvcnts, displs, recvtype, root, comm);
 }
 
 int __INTERNAL__PMPI_Gatherv_inter(const void *sendbuf, int sendcnt,
@@ -4483,90 +4485,92 @@ int __INTERNAL__PMPI_Scatterv_intra(void *sendbuf, int *sendcnts, int *displs,
                                     int recvcnt, MPI_Datatype recvtype,
                                     int root, MPI_Comm comm)
 {
-	int size, rank, i, j, res = MPI_ERR_INTERN;
-	MPI_Request request;
-	MPI_Request *sendrequest;
+//  int size, rank, i, j, res = MPI_ERR_INTERN;
+//  MPI_Request request;
+//  MPI_Request *sendrequest;
+//
+//  res = _mpc_cl_comm_size(comm, &size);
+//  if(res != MPI_SUCCESS)
+//  {
+//    return res;
+//  }
+//  res = _mpc_cl_comm_rank(comm, &rank);
+//  if(res != MPI_SUCCESS)
+//  {
+//    return res;
+//  }
+//
+//  sendrequest = (MPI_Request *)sctk_malloc(size * sizeof(MPI_Request) );
+//
+//  if( (recvbuf == MPI_IN_PLACE) && (rank == root) )
+//  {
+//    request = MPI_REQUEST_NULL;
+//  }
+//  else
+//  {
+//    res = PMPI_Irecv_internal(recvbuf, recvcnt, recvtype, root,
+//        MPC_SCATTERV_TAG, comm, &request);
+//    if(res != MPI_SUCCESS)
+//    {
+//      sctk_free(sendrequest);
+//      return res;
+//    }
+//  }
+//
+//  if(rank == root)
+//  {
+//    MPI_Aint send_type_size;
+//    res = PMPI_Type_extent(sendtype, &send_type_size);
+//    if(res != MPI_SUCCESS)
+//    {
+//      sctk_free(sendrequest);
+//      return res;
+//    }
+//
+//    i = 0;
+//    while(i < size)
+//    {
+//      for(j = 0; i < size;)
+//      {
+//        if( (recvbuf == MPI_IN_PLACE) && (i == root) )
+//        {
+//          sendrequest[j] = MPI_REQUEST_NULL;
+//        }
+//        else
+//        {
+//          res = PMPI_Isend_internal(
+//              ( (char *)sendbuf) + (displs[i] * send_type_size), sendcnts[i],
+//              sendtype, i, MPC_SCATTERV_TAG, comm, &(sendrequest[j]) );
+//          if(res != MPI_SUCCESS)
+//          {
+//            sctk_free(sendrequest);
+//            return res;
+//          }
+//        }
+//        i++;
+//        j++;
+//      }
+//      j--;
+//      res = PMPI_Waitall(size, sendrequest, MPI_STATUSES_IGNORE);
+//      if(res != MPI_SUCCESS)
+//      {
+//        sctk_free(sendrequest);
+//        return res;
+//      }
+//    }
+//  }
+//
+//  res = PMPI_Wait(&(request), MPI_STATUS_IGNORE);
+//  if(res != MPI_SUCCESS)
+//  {
+//    sctk_free(sendrequest);
+//    return res;
+//  }
+//  res = PMPI_Barrier(comm);
+//  sctk_free(sendrequest);
+//  return res;
 
-	res = _mpc_cl_comm_size(comm, &size);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-	res = _mpc_cl_comm_rank(comm, &rank);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-
-	sendrequest = (MPI_Request *)sctk_malloc(size * sizeof(MPI_Request) );
-
-	if( (recvbuf == MPI_IN_PLACE) && (rank == root) )
-	{
-		request = MPI_REQUEST_NULL;
-	}
-	else
-	{
-		res = PMPI_Irecv_internal(recvbuf, recvcnt, recvtype, root,
-		                 MPC_SCATTERV_TAG, comm, &request);
-		if(res != MPI_SUCCESS)
-		{
-			sctk_free(sendrequest);
-			return res;
-		}
-	}
-
-	if(rank == root)
-	{
-		MPI_Aint send_type_size;
-		res = PMPI_Type_extent(sendtype, &send_type_size);
-		if(res != MPI_SUCCESS)
-		{
-			sctk_free(sendrequest);
-			return res;
-		}
-
-		i = 0;
-		while(i < size)
-		{
-			for(j = 0; i < size;)
-			{
-				if( (recvbuf == MPI_IN_PLACE) && (i == root) )
-				{
-					sendrequest[j] = MPI_REQUEST_NULL;
-				}
-				else
-				{
-					res = PMPI_Isend_internal(
-						( (char *)sendbuf) + (displs[i] * send_type_size), sendcnts[i],
-						sendtype, i, MPC_SCATTERV_TAG, comm, &(sendrequest[j]) );
-					if(res != MPI_SUCCESS)
-					{
-						sctk_free(sendrequest);
-						return res;
-					}
-				}
-				i++;
-				j++;
-			}
-			j--;
-			res = PMPI_Waitall(size, sendrequest, MPI_STATUSES_IGNORE);
-			if(res != MPI_SUCCESS)
-			{
-				sctk_free(sendrequest);
-				return res;
-			}
-		}
-	}
-
-	res = PMPI_Wait(&(request), MPI_STATUS_IGNORE);
-	if(res != MPI_SUCCESS)
-	{
-		sctk_free(sendrequest);
-		return res;
-	}
-	res = PMPI_Barrier(comm);
-	sctk_free(sendrequest);
-	return res;
+  return __INTERNAL__Scatterv(sendbuf, sendcnts, displs, sendtype, recvbuf, recvcnt, recvtype, root, comm);
 }
 
 int __INTERNAL__PMPI_Scatterv_inter(const void *sendbuf, const int *sendcnts, const int *displs,
@@ -11644,31 +11648,31 @@ int PMPI_Start(MPI_Request *request)
             req->persistant.comm, 
             &(req->nbc_handle));
       break;
-    case MPC_MPI_PERSISTENT_GATHERV_INIT:
-      res = 
-        NBC_Igatherv(req->persistant.sendbuf, 
-            req->persistant.sendcount, 
-            req->persistant.sendtype, 
-            req->persistant.recvbuf,
-            req->persistant.recvcounts,
-            req->persistant.rdispls,
-            req->persistant.recvtype, 
-            req->persistant.root, 
-            req->persistant.comm, 
-            &(req->nbc_handle));
-      break;
-    case MPC_MPI_PERSISTENT_SCATTERV_INIT:
-      res = 
-        NBC_Iscatterv(req->persistant.sendbuf, 
-            req->persistant.sendcounts,
-            req->persistant.sdispls, 
-            req->persistant.sendtype, 
-            req->persistant.recvbuf, 
-            req->persistant.recvcount,
-            req->persistant.recvtype, 
-            req->persistant.root, 
-            req->persistant.comm, &(req->nbc_handle));
-      break;
+    // case MPC_MPI_PERSISTENT_GATHERV_INIT:
+    //   res = 
+    //     NBC_Igatherv(req->persistant.sendbuf, 
+    //         req->persistant.sendcount, 
+    //         req->persistant.sendtype, 
+    //         req->persistant.recvbuf,
+    //         req->persistant.recvcounts,
+    //         req->persistant.rdispls,
+    //         req->persistant.recvtype, 
+    //         req->persistant.root, 
+    //         req->persistant.comm, 
+    //         &(req->nbc_handle));
+    //   break;
+    // case MPC_MPI_PERSISTENT_SCATTERV_INIT:
+    //   res = 
+    //     NBC_Iscatterv(req->persistant.sendbuf, 
+    //         req->persistant.sendcounts,
+    //         req->persistant.sdispls, 
+    //         req->persistant.sendtype, 
+    //         req->persistant.recvbuf, 
+    //         req->persistant.recvcount,
+    //         req->persistant.recvtype, 
+    //         req->persistant.root, 
+    //         req->persistant.comm, &(req->nbc_handle));
+    //   break;
     // case MPC_MPI_PERSISTENT_SCATTER_INIT:
     //   res = 
     //     NBC_Iscatter(req->persistant.sendbuf, 
@@ -11769,7 +11773,9 @@ int PMPI_Start(MPI_Request *request)
     case MPC_MPI_PERSISTENT_REDUCE_INIT:
     case MPC_MPI_PERSISTENT_ALLREDUCE_INIT:
     case MPC_MPI_PERSISTENT_SCATTER_INIT:
+    case MPC_MPI_PERSISTENT_SCATTERV_INIT:
     case MPC_MPI_PERSISTENT_GATHER_INIT:
+    case MPC_MPI_PERSISTENT_GATHERV_INIT:
     case MPC_MPI_PERSISTENT_REDUCE_SCATTER_BLOCK_INIT:
     case MPC_MPI_PERSISTENT_ALLGATHER_INIT:
     case MPC_MPI_PERSISTENT_ALLTOALL_INIT:
@@ -20562,68 +20568,6 @@ int PMPI_Alltoallw_init(const void *sendbuf, const int sendcounts[], const int s
 	return MPI_SUCCESS;
 }
 
-/** \brief Initialize MPC internal structures used for persistent Gatherv
- *  \param sendbuf Adress of the pointer to the buffer used to send data
- *  \param sendcount Number of elements in sendbuf
- *  \param sendtype Type of the data elements in sendbuf
- *  \param recvbuf Adress of the pointer to the buffer used to receive data
- *  \param recvcounts Array (of length group size) containing the number of elements received from each process
- *  \param rdispls Array (of length group size) specifying at entry i the the displacement relative to recvbuf at which to place the received data from process i
- *  \param recvtype Type of the data elements in recvbuf
- *  \param root Rank root of the gatherv
- *  \param comm Target communicator
- *  \param info MPI_Info
- *  \param request Pointer to the MPI_Request
- */
-int PMPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
-{
-    int size;
-    mpi_check_comm(comm);
-    _mpc_cl_comm_size(comm, &size);
-    mpi_check_root(root, size, comm);
-    mpi_check_type(sendtype, comm);
-    mpi_check_type(recvtype, comm);
-    mpi_check_count(sendcount, comm);
-    int i;
-    for(i = 0; i < size; i++)
-    {
-        if(recvcounts[i] != 0)
-        {
-            mpi_check_buf(recvbuf, comm);
-        }
-    }
-    if(sendcount != 0)
-    {
-        mpi_check_buf(sendbuf, comm);
-    }
-
-    MPI_internal_request_t *req;
-    SCTK__MPI_INIT_REQUEST (request);
-	req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
-    req->freeable = 0;
-    req->is_active = 0;
-    req->is_nbc = 1;
-    req->is_persistent = 1;
-    req->req.request_type = REQUEST_GENERALIZED;
-
-    req->persistant.sendbuf = sendbuf;
-    req->persistant.recvbuf = recvbuf;
-    req->persistant.sendcount = sendcount;
-    req->persistant.rdispls = displs;
-    req->persistant.recvcounts = recvcounts;
-    req->persistant.sendtype = sendtype;
-    req->persistant.recvtype = recvtype;
-    req->persistant.root = root;
-    req->persistant.comm = comm;
-    req->persistant.op = MPC_MPI_PERSISTENT_GATHERV_INIT;
-	req->persistant.info = info;
-    /* Init metadata for nbc */
-    NBC_Igatherv_init (sendbuf, sendcount,  sendtype, recvbuf, recvcounts, displs,
-			     recvtype, root, comm, &(req->nbc_handle));
-        req->nbc_handle.is_persistent = 1;
-	return MPI_SUCCESS;
-}
-
 /** \brief Initialize MPC internal structures used for persistent Scan
  *  \param sendbuf Adress of the pointer to the buffer used to send data
  *  \param recvbuf Adress of the pointer to the buffer used to receive data
@@ -20710,71 +20654,6 @@ int PMPI_Scan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype dataty
 	/* Profiling */
 	SCTK_PROFIL_END(MPI_Scan);
 	MPI_HANDLE_RETURN_VAL(res, comm);
-}
-
-/** \brief Initialize MPC internal structures used for persistent Scatterv
- *  \param sendbuf Adress of the pointer to the buffer used to send data
- *  \param sendcounts Array (of length group size) containing the number of elements send to each process
- *  \param displs Array (of length group size) specifying at entry i the the displacement relative to sendbuf from which to take the sent data for process i
- *  \param sendtype Type of the data elements in sendbuf
- *  \param recvbuf Adress of the pointer to the buffer used to receive data
- *  \param recvcount Number of elements in recvbuf
- *  \param recvtype Type of the data elements in recvbuf
- *  \param root Rank root of the broadcast
- *  \param comm Target communicator
- *  \param info MPI_Info
- *  \param request Pointer to the MPI_Request
- */
-int PMPI_Scatterv_init(const void *sendbuf, const int sendcounts[], const int displs[], MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
-{
-    int size;
-    int rank;
-    mpi_check_comm(comm);
-    _mpc_cl_comm_rank(comm, &rank);
-    _mpc_cl_comm_size(comm, &size);
-    mpi_check_root(root, size, comm);
-    mpi_check_type(sendtype, comm);
-    mpi_check_type(recvtype, comm);
-    mpi_check_count(recvcount, comm);
-    int i;
-    for(i = 0; i < size; i++)
-    {
-        mpi_check_count(sendcounts[i], comm);
-    }
-    if(recvcount != 0)
-    {
-        mpi_check_buf(recvbuf, comm);
-    }
-    if(sendcounts[rank] != 0)
-    {
-        mpi_check_buf(sendbuf, comm);
-    }
-
-	MPI_internal_request_t *req;
-    SCTK__MPI_INIT_REQUEST (request);
-    req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
-    req->freeable = 0;
-    req->is_active = 0;
-    req->is_nbc = 1;
-    req->is_persistent = 1;
-    req->req.request_type = REQUEST_GENERALIZED;
-
-    req->persistant.sendbuf = sendbuf;
-    req->persistant.recvbuf = recvbuf;
-    req->persistant.sendcounts = sendcounts;
-    req->persistant.sdispls = displs;
-    req->persistant.recvcount = recvcount;
-    req->persistant.sendtype = sendtype;
-    req->persistant.recvtype = recvtype;
-    req->persistant.root = root;
-    req->persistant.comm = comm;
-    req->persistant.op = MPC_MPI_PERSISTENT_SCATTERV_INIT;
-	req->persistant.info = info;
-    /* Init metadata for nbc */
-    NBC_Iscatterv_init (sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount,
-			     recvtype, root, comm, &(req->nbc_handle));
-        req->nbc_handle.is_persistent = 1;
-	return MPI_SUCCESS;
 }
 
 /** \brief Initialize MPC internal structures used for persistent Reduce_scatter

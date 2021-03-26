@@ -2197,6 +2197,13 @@ static inline int __INTERNAL__Scatter_linear(const void *sendbuf, int sendcount,
 
   int res = MPI_SUCCESS;
 
+  void *tmp_sendbuf = NULL;
+  if(sendbuf == MPI_IN_PLACE) {
+    tmp_sendbuf = recvbuf;
+  } else {
+    tmp_sendbuf = sendbuf;
+  }
+
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
     case MPC_COLL_TYPE_NONBLOCKING:
@@ -2205,7 +2212,7 @@ static inline int __INTERNAL__Scatter_linear(const void *sendbuf, int sendcount,
 
     case MPC_COLL_TYPE_COUNT:
       if(rank == root) {
-        info->comm_count += size - 1;
+        info->comm_count += size;
       } else {
         info->comm_count += 1;
       }
@@ -2225,13 +2232,15 @@ static inline int __INTERNAL__Scatter_linear(const void *sendbuf, int sendcount,
         continue;
       }
 
-      res = __INTERNAL__Send_type(sendbuf + i * ext * sendcount, sendcount, sendtype, i, MPC_SCATTER_TAG, comm, coll_type, schedule, info);
+      res = __INTERNAL__Send_type(tmp_sendbuf + i * ext * sendcount, sendcount, sendtype, i, MPC_SCATTER_TAG, comm, coll_type, schedule, info);
       if(res != MPI_SUCCESS) {
         return res;
       }
     }
 
-    __INTERNAL__Copy_type(sendbuf + rank * ext * sendcount, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+    if(sendbuf != MPI_IN_PLACE) {
+      __INTERNAL__Copy_type(tmp_sendbuf + rank * ext * sendcount, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+    }
   }
 
   return res;
@@ -2342,6 +2351,390 @@ static inline int __INTERNAL__Scatter_binomial(const void *sendbuf, int sendcoun
     free(tmpbuf);
   }
 
+  return MPI_SUCCESS;
+}
+
+
+
+
+/***********
+  SCATTERV
+  ***********/
+
+int PMPI_Iscatterv (const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request * request);
+int __INTERNAL__Iscatterv(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
+int PMPI_Scatterv_init(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
+int __INTERNAL__Scatterv_init(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
+int __INTERNAL__Scatterv(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm);
+static inline int __INTERNAL__Scatterv_switch(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __INTERNAL__Scatterv_linear(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __INTERNAL__Scatterv_binomial(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+
+
+/**
+  \brief Initialize NBC structures used in call of non-blocking Scatterv
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param displs Array (of length group size) specifying at entry i the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcount Number of elements in recvbuf
+  \param recvtype Type of the data elements in recvbuf
+  \param root Rank root of the broadcast
+  \param comm Target communicator
+  \param request Pointer to the MPI_Request
+  \return error code
+  */
+int PMPI_Iscatterv (const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request) {
+  
+  int res = MPI_ERR_INTERN;
+  mpc_common_nodebug ("Entering ISCATTERV %d", comm);
+  SCTK__MPI_INIT_REQUEST (request);
+
+  int csize,rank;
+  MPI_Comm_size(comm, &csize);
+  MPI_Comm_rank (comm, &rank);
+  if(recvbuf == sendbuf && rank == root)
+  {
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
+  if(csize == 1)
+  {
+    res = PMPI_Scatterv (sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+  }
+  else
+  {
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->is_nbc = 1;
+    tmp->nbc_handle.is_persistent = 0;
+    res = __INTERNAL__Iscatterv (sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, &(tmp->nbc_handle));
+  }
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+/**
+  \brief Initialize NBC structures used in call of non-blocking Scatterv
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param displs Array (of length group size) specifying at entry i the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcount Number of elements in recvbuf
+  \param recvtype Type of the data elements in recvbuf
+  \param root Rank root of the broadcast
+  \param comm Target communicator
+  \param handle Pointer to the NBC_Handle
+  \return error code
+  */
+int __INTERNAL__Iscatterv(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle) {
+
+  int res;
+  NBC_Schedule *schedule;
+  Sched_info info;
+  sched_info_init(&info);
+
+  res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  handle->tmpbuf = NULL;
+  schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
+
+  __INTERNAL__Scatterv_switch(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+
+  sched_alloc_init(handle, schedule, &info);
+
+  __INTERNAL__Scatterv_switch(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  
+  res = my_NBC_Sched_commit(schedule, &info);
+  if (NBC_OK != res)
+  {
+    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    return res;
+  }
+
+  res = NBC_Start(handle, schedule);
+  if (NBC_OK != res)
+  {
+    printf("Error in NBC_Start() (%i)\n", res);
+    return res;
+  }
+
+  return MPI_SUCCESS;
+}
+
+
+/**
+  \brief Initialize NBC structures used in call of persistent Scatterv
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param displs Array (of length group size) specifying at entry i the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcount Number of elements in recvbuf
+  \param recvtype Type of the data elements in recvbuf
+  \param root Rank root of the broadcast
+  \param comm Target communicator
+  \param info MPI_Info
+  \param request Pointer to the MPI_Request
+  \return error code
+  */
+int PMPI_Scatterv_init(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request) {
+  
+  {
+    int size;
+    int rank;
+    mpi_check_comm(comm);
+    _mpc_cl_comm_rank(comm, &rank);
+    _mpc_cl_comm_size(comm, &size);
+    mpi_check_root(root, size, comm);
+    mpi_check_type(sendtype, comm);
+    mpi_check_type(recvtype, comm);
+    mpi_check_count(recvcount, comm);
+    int i;
+    for(i = 0; i < size; i++)
+    {
+      mpi_check_count(sendcounts[i], comm);
+    }
+    if(recvcount != 0)
+    {
+      mpi_check_buf(recvbuf, comm);
+    }
+    if(sendcounts[rank] != 0)
+    {
+      mpi_check_buf(sendbuf, comm);
+    }
+
+  }
+  MPI_internal_request_t *req;
+  SCTK__MPI_INIT_REQUEST (request);
+  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  req->freeable = 0;
+  req->is_active = 0;
+  req->is_nbc = 1;
+  req->is_persistent = 1;
+  req->req.request_type = REQUEST_GENERALIZED;
+
+//  req->persistant.sendbuf = sendbuf;
+//  req->persistant.recvbuf = recvbuf;
+//  req->persistant.sendcounts = sendcounts;
+//  req->persistant.sdispls = displs;
+//  req->persistant.recvcount = recvcount;
+//  req->persistant.sendtype = sendtype;
+//  req->persistant.recvtype = recvtype;
+//  req->persistant.root = root;
+//  req->persistant.comm = comm;
+//  req->persistant.op = MPC_MPI_PERSISTENT_SCATTERV_INIT;
+  req->persistant.info = info;
+
+  /* Init metadata for nbc */
+  __INTERNAL__Scatterv_init (sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, &(req->nbc_handle));
+  req->nbc_handle.is_persistent = 1;
+  return MPI_SUCCESS;
+}
+
+/**
+  \brief Initialize NBC structures used in call of persistent Scatterv
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param displs Array (of length group size) specifying at entry i the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcount Number of elements in recvbuf
+  \param recvtype Type of the data elements in recvbuf
+  \param root Rank root of the broadcast
+  \param comm Target communicator
+  \param handle Pointer to the NBC_Handle
+  \return error code
+  */
+int __INTERNAL__Scatterv_init(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle) {
+  
+  int res;
+  NBC_Schedule *schedule;
+  Sched_info info;
+  sched_info_init(&info);
+
+  res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+
+  handle->tmpbuf = NULL;
+
+  /* alloc schedule */
+  schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
+
+  __INTERNAL__Scatterv_switch(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  
+  sched_alloc_init(handle, schedule, &info);
+  
+  __INTERNAL__Scatterv_switch(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+
+  res = my_NBC_Sched_commit(schedule, &info);
+  if (res != MPI_SUCCESS)
+  {
+    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    return res;
+  }
+
+  handle->schedule = schedule;
+
+  return MPI_SUCCESS;
+}
+
+
+/**
+  \brief Blocking Scatterv
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param displs Array (of length group size) specifying at entry i the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcount Number of elements in recvbuf
+  \param recvtype Type of the data elements in recvbuf
+  \param root Rank root of the broadcast
+  \param comm Target communicator
+  \return error code
+  */
+int __INTERNAL__Scatterv(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm) {
+  return __INTERNAL__Scatterv_switch(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL); 
+}
+
+
+/**
+  \brief Swith between the different Scatterv algorithms
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param displs Array (of length group size) specifying at entry i the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcount Number of elements in recvbuf
+  \param recvtype Type of the data elements in recvbuf
+  \param root Rank root of the broadcast
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Scatterv_switch(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  enum {
+    NBC_SCATTERV_LINEAR,
+    NBC_SCATTERV_BINOMIAL
+  } alg;
+
+  alg = NBC_SCATTERV_LINEAR;
+
+  int res;
+
+  switch(alg) {
+    case NBC_SCATTERV_LINEAR:
+      res = __INTERNAL__Scatterv_linear(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, coll_type, schedule, info);
+      break;
+    case NBC_SCATTERV_BINOMIAL:
+      res = __INTERNAL__Scatterv_binomial(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, coll_type, schedule, info);
+      break;
+  }
+
+  return res; 
+}
+
+/**
+  \brief Execute or schedule a Scatterv using the linear algorithm
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param displs Array (of length group size) specifying at entry i the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcount Number of elements in recvbuf
+  \param recvtype Type of the data elements in recvbuf
+  \param root Rank root of the broadcast
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Scatterv_linear(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  int rank, size;
+  MPI_Aint ext;
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+  PMPI_Type_extent(sendtype, &ext);
+
+  int res = MPI_SUCCESS;
+
+  void *tmp_sendbuf = NULL;
+  if(sendbuf == MPI_IN_PLACE) {
+    tmp_sendbuf = recvbuf;
+  } else {
+    tmp_sendbuf = sendbuf;
+  }
+
+  switch(coll_type) {
+    case MPC_COLL_TYPE_BLOCKING:
+    case MPC_COLL_TYPE_NONBLOCKING:
+    case MPC_COLL_TYPE_PERSISTENT:
+      break;
+
+    case MPC_COLL_TYPE_COUNT:
+      if(rank == root) {
+        info->comm_count += size;
+      } else {
+        info->comm_count += 1;
+      }
+
+      return MPI_SUCCESS;
+  }
+
+
+  if(rank != root) {
+    res = __INTERNAL__Recv_type(recvbuf, recvcount, recvtype, root, MPC_SCATTER_TAG, comm, coll_type, schedule, info);
+    if(res != MPI_SUCCESS) {
+      return res;
+    }
+  } else {
+    for(int i = 0; i < size; i++) {
+      if(i == rank) {
+        continue;
+      }
+
+      res = __INTERNAL__Send_type(tmp_sendbuf + displs[i], sendcounts[i], sendtype, i, MPC_SCATTER_TAG, comm, coll_type, schedule, info);
+      if(res != MPI_SUCCESS) {
+        return res;
+      }
+    }
+
+    if(sendbuf != MPI_IN_PLACE) {
+      __INTERNAL__Copy_type(tmp_sendbuf + displs[rank], sendcounts[rank], sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+    }
+  }
+
+  return res;
+}
+
+/**
+  \brief Execute or schedule a Scatterv using the binomial algorithm
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param displs Array (of length group size) specifying at entry i the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcount Number of elements in recvbuf
+  \param recvtype Type of the data elements in recvbuf
+  \param root Rank root of the broadcast
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Scatterv_binomial(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  not_implemented();
+  
   return MPI_SUCCESS;
 }
 
@@ -2655,7 +3048,7 @@ static inline int __INTERNAL__Gather_linear(const void *sendbuf, int sendcount, 
 
     case MPC_COLL_TYPE_COUNT:
       if(rank == root) {
-        info->comm_count += size - 1;
+        info->comm_count += size;
       } else {
         info->comm_count += 1;
       }
@@ -2681,7 +3074,9 @@ static inline int __INTERNAL__Gather_linear(const void *sendbuf, int sendcount, 
       }
     }
 
-    __INTERNAL__Copy_type(sendbuf, sendcount, sendtype, recvbuf + rank * ext * recvcount, recvcount, recvtype, comm, coll_type, schedule, info);
+    if(sendbuf != MPI_IN_PLACE) {
+      __INTERNAL__Copy_type(sendbuf, sendcount, sendtype, recvbuf + rank * ext * recvcount, recvcount, recvtype, comm, coll_type, schedule, info);
+    }
   }
 
   return res;
@@ -2785,6 +3180,380 @@ static inline int __INTERNAL__Gather_binomial(const void *sendbuf, int sendcount
   if(coll_type == MPC_COLL_TYPE_BLOCKING) {
     free(tmpbuf);
   }
+
+  return MPI_SUCCESS;
+}
+
+
+
+
+/***********
+  GATHERV
+  ***********/
+
+int PMPI_Igatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request);
+int __INTERNAL__Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
+int PMPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
+int __INTERNAL__Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
+int __INTERNAL__Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm);
+static inline int __INTERNAL__Gatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __INTERNAL__Gatherv_linear(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __INTERNAL__Gatherv_binomial(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+
+
+/**
+  \brief Initialize NBC structures used in call of non-blocking Gatherv
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcount Number of elements in sendbuf
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtype Type of the data elements in recvbuf
+  \param root Rank root of the gatherv
+  \param comm Target communicator
+  \param request Pointer to the MPI_Request
+  \return error code
+  */
+int PMPI_Igatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request) {
+  
+  int res = MPI_ERR_INTERN;
+  mpc_common_nodebug ("Entering IGATHERV %d", comm);
+  SCTK__MPI_INIT_REQUEST (request);
+
+  int csize,rank;
+  MPI_Comm_size(comm, &csize);
+  MPI_Comm_rank (comm, &rank);
+  if(recvbuf == sendbuf && rank == root)
+  {
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
+  if(csize == 1)
+  {
+    res = PMPI_Gatherv (sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+  }
+  else
+  {
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->is_nbc = 1;
+    tmp->nbc_handle.is_persistent = 0;
+    res = __INTERNAL__Igatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, &(tmp->nbc_handle));
+  }
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+/**
+  \brief Initialize NBC structures used in call of non-blocking Gatherv
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcount Number of elements in sendbuf
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtype Type of the data elements in recvbuf
+  \param root Rank root of the gatherv
+  \param comm Target communicator
+  \param handle Pointer to the NBC_Handle
+  \return error code
+  */
+int __INTERNAL__Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle) {
+
+  int res;
+  NBC_Schedule *schedule;
+  Sched_info info;
+  sched_info_init(&info);
+
+  res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  handle->tmpbuf = NULL;
+  schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
+
+  __INTERNAL__Gatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+
+  sched_alloc_init(handle, schedule, &info);
+
+  __INTERNAL__Gatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  
+  res = my_NBC_Sched_commit(schedule, &info);
+  if (NBC_OK != res)
+  {
+    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    return res;
+  }
+
+  res = NBC_Start(handle, schedule);
+  if (NBC_OK != res)
+  {
+    printf("Error in NBC_Start() (%i)\n", res);
+    return res;
+  }
+
+  return MPI_SUCCESS;
+}
+
+
+/**
+  \brief Initialize NBC structures used in call of persistent Gatherv
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcount Number of elements in sendbuf
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtype Type of the data elements in recvbuf
+  \param root Rank root of the gatherv
+  \param comm Target communicator
+  \param info MPI_Info
+  \param request Pointer to the MPI_Request
+  \return error code
+  */
+int PMPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request) {
+  
+  {
+    int size;
+    mpi_check_comm(comm);
+    _mpc_cl_comm_size(comm, &size);
+    mpi_check_root(root, size, comm);
+    mpi_check_type(sendtype, comm);
+    mpi_check_type(recvtype, comm);
+    mpi_check_count(sendcount, comm);
+    int i;
+    for(i = 0; i < size; i++)
+    {
+      if(recvcounts[i] != 0)
+      {
+        mpi_check_buf(recvbuf, comm);
+      }
+    }
+    if(sendcount != 0)
+    {
+      mpi_check_buf(sendbuf, comm);
+    }
+
+  }
+  MPI_internal_request_t *req;
+  SCTK__MPI_INIT_REQUEST (request);
+  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  req->freeable = 0;
+  req->is_active = 0;
+  req->is_nbc = 1;
+  req->is_persistent = 1;
+  req->req.request_type = REQUEST_GENERALIZED;
+
+  //req->persistant.sendbuf = sendbuf;
+  //req->persistant.recvbuf = recvbuf;
+  //req->persistant.sendcount = sendcount;
+  //req->persistant.rdispls = displs;
+  //req->persistant.recvcounts = recvcounts;
+  //req->persistant.sendtype = sendtype;
+  //req->persistant.recvtype = recvtype;
+  //req->persistant.root = root;
+  //req->persistant.comm = comm;
+  //req->persistant.op = MPC_MPI_PERSISTENT_GATHERV_INIT;
+  req->persistant.info = info;
+
+  /* Init metadat for nbc */
+  __INTERNAL__Gatherv_init (sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, &(req->nbc_handle));
+  req->nbc_handle.is_persistent = 1;
+  return MPI_SUCCESS;
+}
+
+/**
+  \brief Initialize NBC structures used in call of persistent Gatherv
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcount Number of elements in sendbuf
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtype Type of the data elements in recvbuf
+  \param root Rank root of the gatherv
+  \param comm Target communicator
+  \param handle Pointer to the NBC_Handle
+  \return error code
+  */
+int __INTERNAL__Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle) {
+  
+  int res;
+  NBC_Schedule *schedule;
+  Sched_info info;
+  sched_info_init(&info);
+
+  res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+
+  handle->tmpbuf = NULL;
+
+  /* alloc schedule */
+  schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
+
+  __INTERNAL__Gatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  
+  sched_alloc_init(handle, schedule, &info);
+  
+  __INTERNAL__Gatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+
+  res = my_NBC_Sched_commit(schedule, &info);
+  if (res != MPI_SUCCESS)
+  {
+    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    return res;
+  }
+
+  handle->schedule = schedule;
+
+  return MPI_SUCCESS;
+}
+
+
+/**
+  \brief Blocking Gatherv
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcount Number of elements in sendbuf
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtype Type of the data elements in recvbuf
+  \param root Rank root of the gatherv
+  \param comm Target communicator
+  \return error code
+  */
+int __INTERNAL__Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm) {
+  return __INTERNAL__Gatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+}
+
+
+/**
+  \brief Swith between the different Gatherv algorithms
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcount Number of elements in sendbuf
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtype Type of the data elements in recvbuf
+  \param root Rank root of the gatherv
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Gatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  enum {
+    NBC_GATHERV_LINEAR,
+    NBC_GATHERV_BINOMIAL
+  } alg;
+
+  alg = NBC_GATHERV_LINEAR;
+
+  int res;
+
+  switch(alg) {
+    case NBC_GATHERV_LINEAR:
+      res = __INTERNAL__Gatherv_linear(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, coll_type, schedule, info);
+      break;
+    case NBC_GATHERV_BINOMIAL:
+      res = __INTERNAL__Gatherv_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, coll_type, schedule, info);
+      break;
+  }
+
+  return res; 
+}
+
+/**
+  \brief Execute or schedule a Gatherv using the linear algorithm
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcount Number of elements in sendbuf
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtype Type of the data elements in recvbuf
+  \param root Rank root of the gatherv
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Gatherv_linear(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  int rank, size;
+  MPI_Aint ext;
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+  PMPI_Type_extent(recvtype, &ext);
+
+  int res = MPI_SUCCESS;
+
+  switch(coll_type) {
+    case MPC_COLL_TYPE_BLOCKING:
+    case MPC_COLL_TYPE_NONBLOCKING:
+    case MPC_COLL_TYPE_PERSISTENT:
+      break;
+
+    case MPC_COLL_TYPE_COUNT:
+      if(rank == root) {
+        info->comm_count += size;
+      } else {
+        info->comm_count += 1;
+      }
+
+      return MPI_SUCCESS;
+  }
+
+
+  if(rank != root) {
+    res = __INTERNAL__Send_type(sendbuf, sendcount, sendtype, root, MPC_GATHER_TAG, comm, coll_type, schedule, info);
+    if(res != MPI_SUCCESS) {
+      return res;
+    }
+  } else {
+    for(int i = 0; i < size; i++) {
+      if(i == rank) {
+        continue;
+      }
+
+      res = __INTERNAL__Recv_type(recvbuf + displs[i], recvcounts[i], recvtype, i, MPC_GATHER_TAG, comm, coll_type, schedule, info);
+      if(res != MPI_SUCCESS) {
+        return res;
+      }
+    }
+
+    if(sendbuf != MPI_IN_PLACE) {
+      __INTERNAL__Copy_type(sendbuf, sendcount, sendtype, recvbuf + displs[rank], recvcounts[rank], recvtype, comm, coll_type, schedule, info);
+    }
+  }
+
+  return res;
+}
+
+/**
+  \brief Execute or schedule a Gatherv using the binomial algorithm
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcount Number of elements in sendbuf
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtype Type of the data elements in recvbuf
+  \param root Rank root of the gatherv
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Gatherv_binomial(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  not_implemented();
 
   return MPI_SUCCESS;
 }
@@ -3649,13 +4418,13 @@ static inline int __INTERNAL__Allgather_distance_doubling(const void *sendbuf, i
 
 
       if(peer < rank) {
-        __INTERNAL__Send_type(tmpbuf, count, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
-        __INTERNAL__Recv_type(tmpbuf - peer_count * recvcount * recvext, peer_count, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
+        __INTERNAL__Send_type(tmpbuf, count * recvcount, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
+        __INTERNAL__Recv_type(tmpbuf - peer_count * recvcount * recvext, peer_count * recvcount, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
 
         tmpbuf -= peer_count * recvcount * recvext;
       } else {
-        __INTERNAL__Recv_type(tmpbuf + count * recvcount * recvext, peer_count, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
-        __INTERNAL__Send_type(tmpbuf, count, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
+        __INTERNAL__Recv_type(tmpbuf + count * recvcount * recvext, peer_count * recvcount, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
+        __INTERNAL__Send_type(tmpbuf, count * recvcount, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
       }
 
       __INTERNAL__Barrier_type(coll_type, schedule, info);

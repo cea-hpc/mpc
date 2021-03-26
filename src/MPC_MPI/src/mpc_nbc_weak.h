@@ -23,8 +23,6 @@
 // PROFILER MPI_NBC MPI Non Blocking Collectives
 /* Non Blocking Collectives  */
 #pragma weak MPI_Ibarrier = PMPI_Ibarrier
-#pragma weak MPI_Igatherv = PMPI_Igatherv
-#pragma weak MPI_Iscatterv = PMPI_Iscatterv
 #pragma weak MPI_Iallgatherv = PMPI_Iallgatherv
 #pragma weak MPI_Ialltoallv = PMPI_Ialltoallv
 #pragma weak MPI_Ialltoallw = PMPI_Ialltoallw
