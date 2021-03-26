@@ -32267,7 +32267,7 @@ PKG_INCDIR="${prefix}/include/${PACKAGE_TARNAME}/"
 ac_config_headers="$ac_config_headers mpc_config.h"
 
 
-ac_config_files="$ac_config_files Makefile src/MPC_Arch/include/mpc_arch.h src/Makefile src/lib/Makefile src/MPC_Doc/Makefile src/MPC_Arch/Makefile src/MPC_Arch/src/Makefile src/MPC_Common/Makefile src/MPC_Common/src/Makefile src/MPC_Common/include/mpc_common_types.h src/MPC_Common/include/mpc_common_spinlock.h src/MPC_Common/include/mpc_keywords.h src/MPC_Config/Makefile src/MPC_Config/src/Makefile src/MPC_Config/conf/Makefile src/MPC_Launch/Makefile src/MPC_Launch/src/Makefile src/MPC_Lowcomm/Makefile src/MPC_Lowcomm/src/Makefile src/MPC_MPI/Makefile src/MPC_MPI/src/Makefile src/MPC_OpenMP/src/Makefile src/MPC_OpenMP/Makefile src/MPC_Topology/Makefile src/MPC_Topology/src/Makefile src/MPC_Threads/Makefile src/MPC_Threads/src/Makefile src/MPC_IO/Makefile src/MPC_IO/src/Makefile src/MPC_IO/include/mpio.h src/MPC_IO/src/romio/Makefile src/MPC_Fortran/Makefile src/MPC_Fortran/src/Makefile src/include/mpc_threads_config.h src/include/mpc.h src/bin/Makefile src/bin/mpc_build_env.sh src/bin/mpc_cflags src/bin/mpc_ldflags src/bin/mpcrun src/bin/mpcvars.sh src/bin/mpc_status pkgconfig/Makefile pkgconfig/libmpclowcomm.pc pkgconfig/libmpcthread.pc pkgconfig/libmpcmpi.pc"
+ac_config_files="$ac_config_files Makefile src/MPC_Arch/include/mpc_arch.h src/Makefile src/lib/Makefile src/MPC_Doc/Makefile src/MPC_Arch/Makefile src/MPC_Arch/src/Makefile src/MPC_Common/Makefile src/MPC_Common/src/Makefile src/MPC_Common/include/mpc_common_types.h src/MPC_Common/include/mpc_common_spinlock.h src/MPC_Common/include/mpc_keywords.h src/MPC_Config/Makefile src/MPC_Config/src/Makefile src/MPC_Config/conf/Makefile src/MPC_Launch/Makefile src/MPC_Launch/src/Makefile src/MPC_Lowcomm/Makefile src/MPC_Lowcomm/src/Makefile src/MPC_MPI/Makefile src/MPC_MPI/src/Makefile src/MPC_OpenMP/src/Makefile src/MPC_OpenMP/Makefile src/MPC_Topology/Makefile src/MPC_Topology/src/Makefile src/MPC_Threads/Makefile src/MPC_Threads/src/Makefile src/MPC_IO/Makefile src/MPC_IO/src/Makefile src/MPC_IO/include/mpio.h src/MPC_IO/src/romio/Makefile src/MPC_Fortran/Makefile src/MPC_Fortran/src/Makefile src/include/mpc_threads_config.h src/include/mpc.h src/bin/Makefile src/bin/mpc_build_env.sh src/bin/mpc_cflags src/bin/mpc_ldflags src/bin/mpcrun src/bin/mpcvars.sh src/bin/mpc_status pkgconfig/Makefile pkgconfig/libmpclowcomm.pc pkgconfig/libmpcthread.pc pkgconfig/libmpcmpi.pc cmake/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -33744,6 +33744,7 @@ do
     "pkgconfig/libmpclowcomm.pc") CONFIG_FILES="$CONFIG_FILES pkgconfig/libmpclowcomm.pc" ;;
     "pkgconfig/libmpcthread.pc") CONFIG_FILES="$CONFIG_FILES pkgconfig/libmpcthread.pc" ;;
     "pkgconfig/libmpcmpi.pc") CONFIG_FILES="$CONFIG_FILES pkgconfig/libmpcmpi.pc" ;;
+    "cmake/Makefile") CONFIG_FILES="$CONFIG_FILES cmake/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

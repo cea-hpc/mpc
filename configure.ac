@@ -3037,7 +3037,8 @@ AC_OUTPUT([Makefile
            pkgconfig/Makefile
            pkgconfig/libmpclowcomm.pc
            pkgconfig/libmpcthread.pc
-           pkgconfig/libmpcmpi.pc])
+           pkgconfig/libmpcmpi.pc
+           cmake/Makefile])
 
 
 

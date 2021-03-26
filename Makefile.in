@@ -531,7 +531,7 @@ top_srcdir = @top_srcdir@
 #                                                                      #
 ########################################################################
 ACLOCAL_AMFLAGS = -I config/m4
-SUBDIRS = src pkgconfig
+SUBDIRS = src pkgconfig cmake
 all: mpc_config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
