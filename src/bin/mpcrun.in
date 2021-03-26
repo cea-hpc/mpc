@@ -180,6 +180,7 @@ check_thread(){
 
 check_process_nb()
 {
+	P_SET="true"
 	if test "$MPC_IN_PROCESS_MODE" = "yes"; then
 		echo "MPC is in process mode, process number will be set automatically"
 	fi
@@ -340,6 +341,7 @@ Launch Configuration:
 	-c=n, --cpu-nb=n                Number of cpus per UNIX process
 	--cpu-nb-mpc=n                  Number of cpus per process for the MPC process
 	--enable-smt                    Enable SMT capabilities (disabled by default)
+	--mpmd							Use mpmd mode (replaces binary)
 
 Multithreading:
 	-m=n, --multithreading=n        Define multithreading mode
@@ -456,6 +458,7 @@ DEBUG=""
 ARG_PARSING_ENABLED="true"
 LAUNCHER_CPU_NB_WAS_SET="0"
 LAUNCH_OPTIONS=""
+P_SET="false"
 MPMD_COMMAND=""
 MPMD_PROC_NUM=""
 MPMD_LEN=0
@@ -658,15 +661,19 @@ for arg in "$@" ; do
 	fi
 done
 
-if test $tmp != ""; then
+if test "$tmp" != ""; then
 	MPMD_LEN=$(($MPMD_LEN + 1))
 	MPMD_COMMAND="$MPMD_COMMAND : $tmp"
 	tot=0
 	for i in $MPMD_PROC_NUM; do
 		tot=$((tot + $i))
 	done
+	if test $P_SET = "false" ; then
+		LAUNCHER_OPTION_PROCESS_NB=$tot
+	fi
 	if [ "$tot" != "$LAUNCHER_OPTION_PROCESS_NB" ]; then
-		echo "ERROR wrong task number (TODO)"
+		echo "ERROR wrong task number : -p = $LAUNCHER_OPTION_PROCESS_NB, --mpmd sum = $tot"
+		exit
 	fi
 fi
 
