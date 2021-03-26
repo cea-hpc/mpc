@@ -142,120 +142,127 @@ typedef int MPC_Errhandler;
 #define MPC_ERRORS_RETURN -6
 #define MPC_ERRORS_ARE_FATAL -7
 
-/* Communication argument parameters */
-#define MPC_ERR_BUFFER 1	/* Invalid buffer pointer */
-#define MPC_ERR_COUNT 2		/* Invalid count argument */
-#define MPC_ERR_TYPE 3		/* Invalid datatype argument */
-#define MPC_ERR_TAG 4		/* Invalid tag argument */
-#define MPC_ERR_COMM 5		/* Invalid communicator */
-#define MPC_ERR_RANK 6		/* Invalid rank */
-#define MPC_ERR_ROOT 8		/* Invalid root */
-#define MPC_ERR_TRUNCATE 15 /* Message truncated on receive */
-#define MPC_ERR_NOT_SAME 39 /* Collective argument not identical on all processess, \
-							   or collective routines called in a different order   \
-by different processes */
+enum
+{
+/***********************************************
+ *     CODES BELOW ARE SHARE WITH LOWCOMM      *
+ * AND THEY SHOULD BE MAINTAINED FIRST IN LIST *
+ ***********************************************/
+	MPC_ERR_TRUNCATE = MPC_LOWCOMM_ERR_TRUNCATE,	/* Message truncated on receive */
+	MPC_ERR_TYPE = MPC_LOWCOMM_ERR_TYPE,	/* Invalid datatype argument */
+	MPC_ERR_PENDING = MPC_LOWCOMM_ERR_PENDING,	/* Pending request */
+/***********************
+ * END OF SHARED CODES *
+ ***********************/
 
-/* MPC Objects (other than COMM) */
-#define MPC_ERR_GROUP 9   /* Invalid group */
-#define MPC_ERR_OP 10	 /* Invalid operation */
-#define MPC_ERR_REQUEST 7 /* Invalid mpc_request handle */
+	/* Communication argument parameters */
+	MPC_ERR_BUFFER,	/* Invalid buffer pointer */
+	MPC_ERR_COUNT,	/* Invalid count argument */
+	MPC_ERR_TAG,	/* Invalid tag argument */
+	MPC_ERR_COMM,	/* Invalid communicator */
+	MPC_ERR_RANK,	/* Invalid rank */
+	MPC_ERR_ROOT,	/* Invalid root */
+	MPC_ERR_NOT_SAME,	/* Collective argument not identical on all processess, \
+								or collective routines called in a different order   \
+	by different processes */
 
-/* Special topology argument parameters */
-#define MPC_ERR_TOPOLOGY 11 /* Invalid topology */
-#define MPC_ERR_DIMS 12		/* Invalid dimension argument */
+	/* MPC Objects (other than COMM) */
+	MPC_ERR_GROUP,	/* Invalid group */
+	MPC_ERR_OP,	/* Invalid operation */
+	MPC_ERR_REQUEST,	/* Invalid mpc_request handle */
 
-/* All other arguments.  This is a class with many kinds */
-#define MPC_ERR_ARG 13		/* Invalid argument */
-#define MPC_ERR_PORT 27		/* Invalid port name passed to MPI_COMM_CONNECT */
-#define MPC_ERR_SERVICE 28  /* Invalid service name passed to MPI_UNPUBLISH_NAME */
-#define MPC_ERR_NAME 29		/* Invalid service name passed to MPI_LOOKUP_NAME */
-#define MPC_ERR_WIN 30		/* Invalid win argument */
-#define MPC_ERR_SIZE 31		/* Invalid size argument */
-#define MPC_ERR_DISP 32		/* Invalid disp argument */
-#define MPC_ERR_INFO 33		/* Invalid info argument */
-#define MPC_ERR_LOCKTYPE 34 /* Invalid locktype argument */
-#define MPC_ERR_ASSERT 35   /* Invalid assert argument */
+	/* Special topology argument parameters */
+	MPC_ERR_TOPOLOGY,	/* Invalid topology */
+	MPC_ERR_DIMS,	/* Invalid dimension argument */
 
-/* Error on File handling*/
-#define MPC_ERR_FILE 38				   /* Invalid file handle */
-#define MPC_ERR_AMODE 40			   /* Error related to the amode passed to MPI_FILE_OPEN */
-#define MPC_ERR_UNSUPPORTED_DATAREP 41 /* Unsupported datarep passed to MPI_FILE_SET_VIEW */
-#define MPC_ERR_NO_SUCH_FILE 43		   /* File does not exist */
-#define MPC_ERR_FILE_EXISTS 44		   /* File exists */
-#define MPC_ERR_BAD_FILE 45			   /* Invalid file name (e.g., path name too long) */
-#define MPC_ERR_ACCESS 46			   /* Permission denied */
-#define MPC_ERR_READ_ONLY 49		   /* Read-only file or file system */
-#define MPC_ERR_FILE_IN_USE 50		   /* File operation could not completed, as the file is \
-currently open by some process */
-#define MPC_ERR_IO 53				   /* Other I/O error */
+	/* All other arguments.  This is a class with many kinds */
+	MPC_ERR_ARG,	/* Invalid argument */
+	MPC_ERR_PORT,	/* Invalid port name passed to MPI_COMM_CONNECT */
+	MPC_ERR_SERVICE,	/* Invalid service name passed to MPI_UNPUBLISH_NAME */
+	MPC_ERR_NAME,	/* Invalid service name passed to MPI_LOOKUP_NAME */
+	MPC_ERR_WIN,	/* Invalid win argument */
+	MPC_ERR_SIZE,	/* Invalid size argument */
+	MPC_ERR_DISP,	/* Invalid disp argument */
+	MPC_ERR_INFO,	/* Invalid info argument */
+	MPC_ERR_LOCKTYPE,	/* Invalid locktype argument */
+	MPC_ERR_ASSERT,	/* Invalid assert argument */
 
-/* Multiple completion has two special error classes */
-#define MPC_ERR_IN_STATUS 18 /* Look in status for error value */
-#define MPC_ERR_PENDING 19   /* Pending request */
+	/* Error on File handling*/
+	MPC_ERR_FILE,	/* Invalid file handle */
+	MPC_ERR_AMODE,	/* Error related to the amode passed to MPI_FILE_OPEN */
+	MPC_ERR_UNSUPPORTED_DATAREP,	/* Unsupported datarep passed to MPI_FILE_SET_VIEW */
+	MPC_ERR_NO_SUCH_FILE,	/* File does not exist */
+	MPC_ERR_FILE_EXISTS,	/* File exists */
+	MPC_ERR_BAD_FILE,	/* Invalid file name (e.g., path name too long) */
+	MPC_ERR_ACCESS,	/* Permission denied */
+	MPC_ERR_READ_ONLY,	/* Read-only file or file system */
+	MPC_ERR_FILE_IN_USE,	/* File operation could not completed, as the file is \
+	currently open by some process */
+	MPC_ERR_IO,	/* Other I/O error */
 
-/* Error with comm attributes (keyval) */
-#define MPC_ERR_KEYVAL 20	 /* Invalid keyval has been passed */
-#define MPC_ERR_INFO_KEY 23   /* Key onger than MPI_MAX_INFO_KEY */
-#define MPC_ERR_INFO_VALUE 24 /* Value longer than MPI_MAX_INFO_VAL */
-#define MPC_ERR_INFO_NOKEY 25 /* Invalid key passed to MPI_INFO_DELETE */
+	/* Multiple completion has two special error classes */
+	MPC_ERR_IN_STATUS,	/* Look in status for error value */
 
-/* Error with memory */
-#define MPC_ERR_NO_MEM 21 /* MPI_ALLOC_MEM failed because memory is exhausted */
-#define MPC_ERR_BASE 22   /* Invalid base passed to MPI_FREE_MEM */
+	/* Error with comm attributes (keyval) */
+	MPC_ERR_KEYVAL,	/* Invalid keyval has been passed */
+	MPC_ERR_INFO_KEY,	/* Key onger than MPI_MAX_INFO_KEY */
+	MPC_ERR_INFO_VALUE,	/* Value longer than MPI_MAX_INFO_VAL */
+	MPC_ERR_INFO_NOKEY,	/* Invalid key passed to MPI_INFO_DELETE */
 
-/* Other errors that are not simply an invalid argument */
-#define MPC_ERR_SPAWN 26				 /* Error in spawning processes */
-#define MPC_ERR_RMA_CONFLICT 36			 /* Conflicting accesses to window */
-#define MPC_ERR_RMA_SYNC 37				 /* Wrong synchronization of RMA calls */
-#define MPC_ERR_UNSUPPORTED_OPERATION 42 /* Unsupported operation, such as seeking on a file which \
-supports sequential access only*/
-#define MPC_ERR_NO_SPACE 47				 /* Not enough space */
-#define MPC_ERR_QUOTA 48				 /* Quota exceeded */
-#define MPC_ERR_DUP_DATAREP 51			 /* Conversion functions could not be regiestered because a \
-                                                        data representation identifier that was already defined \
-was passed to MPI_REGISTER_DATAREP */
-#define MPC_ERR_CONVERSION 52			 /* An error occured in a user supplied data conversion function */
-#define MPC_ERR_OTHER 16				 /* Other error; use Error_string */
+	/* Error with memory */
+	MPC_ERR_NO_MEM,	/* MPI_ALLOC_MEM failed because memory is exhausted */
+	MPC_ERR_BASE,	/* Invalid base passed to MPI_FREE_MEM */
 
-#define MPC_ERR_UNKNOWN 14 /* Unknown error */
-#define MPC_ERR_INTERN 17  /* Internal error code    */
+	/* Other errors that are not simply an invalid argument */
+	MPC_ERR_SPAWN,	/* Error in spawning processes */
+	MPC_ERR_RMA_CONFLICT,	/* Conflicting accesses to window */
+	MPC_ERR_RMA_SYNC,	/* Wrong synchronization of RMA calls */
+	MPC_ERR_UNSUPPORTED_OPERATION,	/* Unsupported operation, such as seeking on a file which \
+	supports sequential access only*/
+	MPC_ERR_NO_SPACE,	/* Not enough space */
+	MPC_ERR_QUOTA,	/* Quota exceeded */
+	MPC_ERR_DUP_DATAREP,	/* Conversion functions could not be regiestered because a \
+															data representation identifier that was already defined \
+	was passed to MPI_REGISTER_DATAREP */
+	MPC_ERR_CONVERSION,	/* An error occured in a user supplied data conversion function */
+	MPC_ERR_OTHER,	/* Other error; use Error_string */
 
-#define MPCR_ERRORS_THROW_EXCEPTIONS 55
+	MPC_ERR_UNKNOWN,	/* Unknown error */
+	MPC_ERR_INTERN,	/* Internal error code    */
 
-#define MPC_NOT_IMPLEMENTED 56
+	MPCR_ERRORS_THROW_EXCEPTIONS,
 
-#define MPC_ERR_RMA_FLAVOR 57 /* Wrong type of RMA window */
+	MPC_NOT_IMPLEMENTED,
 
-/* HOLE @ 58 */
+	MPC_ERR_RMA_FLAVOR,	/* Wrong type of RMA window */
 
-#define MPC_T_ERR_MEMORY 59			 /* Out of memory */
-#define MPC_T_ERR_NOT_INITIALIZED 60 /* Interface not initialized */
-#define MPC_T_ERR_CANNOT_INIT           \
-	61 /* Interface not in the state to \
-be initialized */
-#define MPC_T_ERR_INVALID_INDEX                                  \
-	62								  /* The index is invalid or \
-has been deleted  */
-#define MPC_T_ERR_INVALID_ITEM 63	 /* Item index queried is out of range */
-#define MPC_T_ERR_INVALID_HANDLE 64   /* The handle is invalid */
-#define MPC_T_ERR_OUT_OF_HANDLES 65   /* No more handles available */
-#define MPC_T_ERR_OUT_OF_SESSIONS 66  /* No more sessions available */
-#define MPC_T_ERR_INVALID_SESSION 67  /* Session argument is not valid */
-#define MPC_T_ERR_CVAR_SET_NOT_NOW 68 /* Cvar can't be set at this moment */
-#define MPC_T_ERR_CVAR_SET_NEVER                                  \
-	69								   /* Cvar can't be set until \
-end of execution */
-#define MPC_T_ERR_PVAR_NO_STARTSTOP 70 /* Pvar can't be started or stopped */
-#define MPC_T_ERR_PVAR_NO_WRITE 71	 /* Pvar can't be written or reset */
-#define MPC_T_ERR_PVAR_NO_ATOMIC 72	/* Pvar can't be R/W atomically */
-#define MPC_T_ERR_INVALID_NAME 73	  /* Requested name is invalid */
-#define MPC_T_ERR_INVALID 74         /* Item is invalid */
+	/* HOLE @,	*/
 
-#define MPC_ERR_RMA_RANGE 75
-#define MPC_ERR_RMA_ATTACH 76
-#define MPC_ERR_RMA_SHARED 77
+	MPC_T_ERR_MEMORY,	/* Out of memory */
+	MPC_T_ERR_NOT_INITIALIZED,	/* Interface not initialized */
+	MPC_T_ERR_CANNOT_INIT,    /* Interface not in the state to \
+	be initialized */
+	MPC_T_ERR_INVALID_INDEX,		  /* The index is invalid or \
+	has been deleted  */
+	MPC_T_ERR_INVALID_ITEM,	/* Item index queried is out of range */
+	MPC_T_ERR_INVALID_HANDLE,	/* The handle is invalid */
+	MPC_T_ERR_OUT_OF_HANDLES,	/* No more handles available */
+	MPC_T_ERR_OUT_OF_SESSIONS,	/* No more sessions available */
+	MPC_T_ERR_INVALID_SESSION,	/* Session argument is not valid */
+	MPC_T_ERR_CVAR_SET_NOT_NOW,	/* Cvar can't be set at this moment */
+	MPC_T_ERR_CVAR_SET_NEVER ,		   /* Cvar can't be set until \
+	end of execution */
+	MPC_T_ERR_PVAR_NO_STARTSTOP,	/* Pvar can't be started or stopped */
+	MPC_T_ERR_PVAR_NO_WRITE,	/* Pvar can't be written or reset */
+	MPC_T_ERR_PVAR_NO_ATOMIC,	/* Pvar can't be R/W atomically */
+	MPC_T_ERR_INVALID_NAME,	/* Requested name is invalid */
+	MPC_T_ERR_INVALID,	/* Item is invalid */
 
-#define MPC_ERR_LASTCODE 78
+	MPC_ERR_RMA_RANGE,
+	MPC_ERR_RMA_ATTACH,
+	MPC_ERR_RMA_SHARED,
+	MPC_ERR_LASTCODE
+};
 
 int mpc_mpi_cl_error_string( int code, char *str, int *len );
 
@@ -273,8 +280,12 @@ typedef int MPC_Message;
 #define MPC_DATATYPE_NULL ( (mpc_lowcomm_datatype_t) -1 )
 #define MPC_UB ( (mpc_lowcomm_datatype_t) -2 )
 #define MPC_LB ( (mpc_lowcomm_datatype_t) -3 )
+
+/* These are in lowcomm other to move soon
 #define MPC_PACKED 0
 #define MPC_BYTE 1
+*/
+
 #define MPC_SHORT 2
 #define MPC_INT 3
 #define MPC_LONG 4

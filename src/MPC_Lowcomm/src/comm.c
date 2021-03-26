@@ -137,35 +137,42 @@ static inline void __mpc_comm_request_init(mpc_lowcomm_request_t *request,
 	}\
 	while(0)
 
+static int (*mpc_lowcomm_type_is_common)(mpc_lowcomm_datatype_t datatype) = NULL;
 
-#ifdef MPC_MPI
-#include <mpc_mpi_comm_lib.h>
-#endif
+void mpc_lowcomm_register_type_is_common( int (*type_ptr)(mpc_lowcomm_datatype_t) )
+{
+	assume(type_ptr != NULL);
+	mpc_lowcomm_type_is_common = type_ptr;
+}
 
 int mpc_lowcomm_check_type_compat(mpc_lowcomm_datatype_t src, mpc_lowcomm_datatype_t dest)
 {
 	//mpc_common_debug_error("COMPAT %d %d", src, dest);
-#ifdef MPC_MPI
-	if(src != dest)
-	{
-		if( (src != MPC_DATATYPE_IGNORE) && (dest != MPC_DATATYPE_IGNORE))
-		{
-			/* See page 33 of 3.0 PACKED and BYTE are exceptions */
-			if((src != MPC_PACKED) && (dest != MPC_PACKED))
-			{
-				if((src != MPC_BYTE) && (dest != MPC_BYTE))
-				{
-					if(mpc_mpi_cl_type_is_common(src) &&
-						mpc_mpi_cl_type_is_common(dest) )
-					{
 
-						return MPC_ERR_TYPE;
+	if(mpc_lowcomm_type_is_common != NULL)
+	{
+		TODO("THIS WILL BE FIXED WHEN DT will be at the right place");
+		if(src != dest)
+		{
+			if( (src != MPC_DATATYPE_IGNORE) && (dest != MPC_DATATYPE_IGNORE))
+			{
+				/* See page 33 of 3.0 PACKED and BYTE are exceptions */
+				if((src != MPC_PACKED) && (dest != MPC_PACKED))
+				{
+					if((src != MPC_BYTE) && (dest != MPC_BYTE))
+					{
+						if((mpc_lowcomm_type_is_common)(src) &&
+						   (mpc_lowcomm_type_is_common)(dest) )
+						{
+
+							return MPC_LOWCOMM_ERR_TYPE;
+						}
 					}
 				}
 			}
 		}
+
 	}
-#endif
 
 	return SCTK_SUCCESS;
 }
@@ -216,7 +223,7 @@ int mpc_lowcomm_commit_status_from_request(mpc_lowcomm_request_t *request,
 #ifdef MPC_MPI
 		if(request->truncated)
 		{
-			status->MPC_ERROR = MPC_ERR_TRUNCATE;
+			status->MPC_ERROR = MPC_LOWCOMM_ERR_TRUNCATE;
 		}
 #endif
 
@@ -3163,7 +3170,7 @@ int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destinat
 			status->size       = ( mpc_lowcomm_msg_count_t )msg.msg_size;
 			status->MPC_ERROR = SCTK_SUCCESS;
 #ifdef MPC_MPI
-			status->MPC_ERROR  = MPC_ERR_PENDING;
+			status->MPC_ERROR  = MPC_LOWCOMM_ERR_TYPE;
 #endif
 		}
 

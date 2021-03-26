@@ -4394,4 +4394,8 @@ void mpc_cl_comm_lib_init()
 	mpc_common_init_callback_register("Ending Main",
 	                                  "Per MPI Process CTX Release",
 	                                  __mpc_cl_per_mpi_process_ctx_release, 0);
+
+	/* Temporary before moving types down */
+	mpc_lowcomm_register_type_is_common(mpc_mpi_cl_type_is_common);
+
 }
