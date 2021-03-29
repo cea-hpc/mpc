@@ -388,7 +388,6 @@
 #pragma weak MPI_Comm_idup_with_info = PMPI_Comm_idup_with_info
 #pragma weak MPI_Aint_diff = PMPI_Aint_diff
 #pragma weak MPI_Aint_add = PMPI_Aint_add
-#pragma weak MPI_Allgatherv_init = PMPI_Allgatherv_init
 #pragma weak MPI_Alltoallw_init = PMPI_Alltoallw_init
 #pragma weak MPI_Neighbor_alltoallv_init = PMPI_Neighbor_alltoallv_init
 #pragma weak MPI_Neighbor_alltoallw_init = PMPI_Neighbor_alltoallw_init

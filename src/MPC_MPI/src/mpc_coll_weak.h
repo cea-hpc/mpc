@@ -49,5 +49,8 @@
 #pragma weak MPI_Iallgather = PMPI_Iallgather
 #pragma weak MPI_Allgather_init = PMPI_Allgather_init
 
+#pragma weak MPI_Iallgatherv = PMPI_Iallgatherv
+#pragma weak MPI_Allgatherv_init = PMPI_Allgatherv_init
+
 #pragma weak MPI_Ialltoall = PMPI_Ialltoall
 #pragma weak MPI_Alltoall_init = PMPI_Alltoall_init

@@ -9591,15 +9591,18 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
 					buf1 = (char *) handle->tmpbuf + (long) opargs->buf1;
 				else
 					buf1 = opargs->buf1;
+
 				if ( opargs->tmpbuf2 )
 					buf2 = (char *) handle->tmpbuf + (long) opargs->buf2;
 				else
 					buf2 = opargs->buf2;
-				if ( opargs->tmpbuf3 )
+				
+        if ( opargs->tmpbuf3 )
 					buf3 = (char *) handle->tmpbuf + (long) opargs->buf3;
 				else
 					buf3 = opargs->buf3;
-				res = NBC_Operation( buf3, buf1, buf2, opargs->op, opargs->datatype, opargs->count );
+				
+        res = NBC_Operation( buf3, buf1, buf2, opargs->op, opargs->datatype, opargs->count );
 				if ( res != NBC_OK )
 				{
 					printf( "NBC_Operation() failed (code: %i)\n", res );
@@ -10941,42 +10944,6 @@ PMPI_Ibarrier (MPI_Comm comm, MPI_Request *request)
   tmp->is_nbc = 1;
   tmp->nbc_handle.is_persistent = 0;
   res = NBC_Ibarrier (comm, &(tmp->nbc_handle));
-  }
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
-}
-
-int
-PMPI_Iallgatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype,
-		 void *recvbuf, const int *recvcounts, const int *displs,
-		 MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request)
-{
-  int res = MPI_ERR_INTERN;
-  mpc_common_nodebug ("Entering IALLGATHERV %d", comm);
-  SCTK__MPI_INIT_REQUEST (request);
-
-  int csize;
-  MPI_Comm_size(comm, &csize);
-  if(recvbuf == sendbuf)
-  {
-    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
-  }
-  if(csize == 1)
-  {
-    res = PMPI_Allgatherv (sendbuf, sendcount, sendtype, recvbuf,
-				 recvcounts, displs, recvtype, comm);
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
-  }
-  else
-  {
-  MPI_internal_request_t *tmp;
-  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-  tmp->is_nbc = 1;
-  tmp->nbc_handle.is_persistent = 0;
-  res =
-    NBC_Iallgatherv (sendbuf, sendcount, sendtype, recvbuf,
-				 recvcounts, displs, recvtype, comm, &(tmp->nbc_handle));
   }
   SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }

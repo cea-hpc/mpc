@@ -4808,67 +4808,69 @@ int __INTERNAL__PMPI_Allgatherv_intra(void *sendbuf, int sendcount,
                                       int *recvcounts, int *displs,
                                       MPI_Datatype recvtype, MPI_Comm comm)
 {
-	int size, rank;
-	int root = 0;
-	MPI_Aint extent, sendtype_extent;
-	int res = MPI_ERR_INTERN;
+//   int size, rank;
+//   int root = 0;
+//   MPI_Aint extent, sendtype_extent;
+//   int res = MPI_ERR_INTERN;
+// 
+//   res = _mpc_cl_comm_rank(comm, &rank);
+//   MPI_HANDLE_ERROR(res, comm, "Could not retrieve comm rank");
+// 
+//   res = _mpc_cl_comm_size(comm, &size);
+//   MPI_HANDLE_ERROR(res, comm, "Could not retrieve comm size");
+// 
+//   res = PMPI_Type_extent(recvtype, &extent);
+//   MPI_HANDLE_ERROR(res, comm, "Could not retrieve type extent");
+// 
+//   res = PMPI_Type_extent(sendtype, &sendtype_extent);
+//   MPI_HANDLE_ERROR(res, comm, "Could not retrieve type extent");
+// 
+// 
+//   int free_sendbuf = 0;
+//   int i;
+// 
+//   if(sendbuf == MPI_IN_PLACE)
+//   {
+//     void *my_rcv_pointer = recvbuf;
+//     for(i = 0; i < rank; i++)
+//     {
+//       my_rcv_pointer += extent * recvcounts[i];
+//     }
+// 
+//     if(my_rcv_pointer == recvbuf)
+//     {
+//       void *tmp = sctk_malloc(sendtype_extent * sendcount);
+//       assume(sendbuf != NULL);
+//       memcpy(tmp, my_rcv_pointer, sendtype_extent * sendcount);
+//       sendbuf      = tmp;
+//       free_sendbuf = 1;
+//     }
+//     else
+//     {
+//       sendbuf = my_rcv_pointer;
+//     }
+//   }
+// 
+//   res = PMPI_Gatherv(sendbuf, sendcount, sendtype, recvbuf,
+//       recvcounts, displs, recvtype, root, comm);
+//   MPI_HANDLE_ERROR(res, comm, "Gatherv failed");
+// 
+//   if(free_sendbuf)
+//   {
+//     sctk_free(sendbuf);
+//   }
+// 
+//   size--;
+//   for(; size >= 0; size--)
+//   {
+//     res = PMPI_Bcast( ( (char *)recvbuf) + (displs[size] * extent),
+//         recvcounts[size], recvtype, root, comm);
+//     MPI_HANDLE_ERROR(res, comm, "Bcast failed");
+//   }
+// 
+//   return res;
 
-	res = _mpc_cl_comm_rank(comm, &rank);
-	MPI_HANDLE_ERROR(res, comm, "Could not retrieve comm rank");
-
-	res = _mpc_cl_comm_size(comm, &size);
-	MPI_HANDLE_ERROR(res, comm, "Could not retrieve comm size");
-
-	res = PMPI_Type_extent(recvtype, &extent);
-	MPI_HANDLE_ERROR(res, comm, "Could not retrieve type extent");
-
-	res = PMPI_Type_extent(sendtype, &sendtype_extent);
-	MPI_HANDLE_ERROR(res, comm, "Could not retrieve type extent");
-
-
-	int free_sendbuf = 0;
-	int i;
-
-	if(sendbuf == MPI_IN_PLACE)
-	{
-		void *my_rcv_pointer = recvbuf;
-		for(i = 0; i < rank; i++)
-		{
-			my_rcv_pointer += extent * recvcounts[i];
-		}
-
-		if(my_rcv_pointer == recvbuf)
-		{
-			void *tmp = sctk_malloc(sendtype_extent * sendcount);
-			assume(sendbuf != NULL);
-			memcpy(tmp, my_rcv_pointer, sendtype_extent * sendcount);
-			sendbuf      = tmp;
-			free_sendbuf = 1;
-		}
-		else
-		{
-			sendbuf = my_rcv_pointer;
-		}
-	}
-
-	res = PMPI_Gatherv(sendbuf, sendcount, sendtype, recvbuf,
-	                   recvcounts, displs, recvtype, root, comm);
-	MPI_HANDLE_ERROR(res, comm, "Gatherv failed");
-
-	if(free_sendbuf)
-	{
-		sctk_free(sendbuf);
-	}
-
-	size--;
-	for(; size >= 0; size--)
-	{
-		res = PMPI_Bcast( ( (char *)recvbuf) + (displs[size] * extent),
-		                  recvcounts[size], recvtype, root, comm);
-		MPI_HANDLE_ERROR(res, comm, "Bcast failed");
-	}
-
-	return res;
+  return __INTERNAL__Allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm);
 }
 
 int __INTERNAL__PMPI_Allgatherv_inter(const void *sendbuf, int sendcount,
@@ -11636,18 +11638,18 @@ int PMPI_Start(MPI_Request *request)
     //         req->persistant.comm, 
     //         &(req->nbc_handle));
     //   break;
-    case MPC_MPI_PERSISTENT_ALLGATHERV_INIT:
-      res = 
-        NBC_Iallgatherv(req->persistant.sendbuf, 
-            req->persistant.sendcount , 
-            req->persistant.sendtype, 
-            req->persistant.recvbuf,
-            req->persistant.recvcounts,
-            req->persistant.rdispls,
-            req->persistant.recvtype, 
-            req->persistant.comm, 
-            &(req->nbc_handle));
-      break;
+    // case MPC_MPI_PERSISTENT_ALLGATHERV_INIT:
+    //   res = 
+    //     NBC_Iallgatherv(req->persistant.sendbuf, 
+    //         req->persistant.sendcount , 
+    //         req->persistant.sendtype, 
+    //         req->persistant.recvbuf,
+    //         req->persistant.recvcounts,
+    //         req->persistant.rdispls,
+    //         req->persistant.recvtype, 
+    //         req->persistant.comm, 
+    //         &(req->nbc_handle));
+    //   break;
     // case MPC_MPI_PERSISTENT_GATHERV_INIT:
     //   res = 
     //     NBC_Igatherv(req->persistant.sendbuf, 
@@ -11778,6 +11780,7 @@ int PMPI_Start(MPI_Request *request)
     case MPC_MPI_PERSISTENT_GATHERV_INIT:
     case MPC_MPI_PERSISTENT_REDUCE_SCATTER_BLOCK_INIT:
     case MPC_MPI_PERSISTENT_ALLGATHER_INIT:
+    case MPC_MPI_PERSISTENT_ALLGATHERV_INIT:
     case MPC_MPI_PERSISTENT_ALLTOALL_INIT:
       handle = &(req->nbc_handle);
       handle->row_offset = sizeof(int);
@@ -20374,68 +20377,6 @@ int PMPI_Exscan_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype
     /* Init metadata for nbc */
     NBC_Iexscan_init (sendbuf, recvbuf, count,
     		     datatype, op, comm, &(req->nbc_handle));
-        req->nbc_handle.is_persistent = 1;
-	return MPI_SUCCESS;
-}
-
-/** \brief Initialize MPC internal structures used for persistent Allgatherv
- *  \param sendbuf Adress of the pointer to the buffer used to send data
- *  \param sendcount Number of elements in sendbuf
- *  \param sendtype Type of the data elements in sendbuf
- *  \param recvbuf Adress of the pointer to the buffer used to receive data
- *  \param recvcounts Array (of length group size) containing the number of elements received from each process
- *  \param displs Array (of length group size) specifying at entry i the the displacement relative to recvbuf at which to place the received data from process i
- *  \param recvtype Type of the data elements in recvbuf
- *  \param comm Target communicator
- *  \param info MPI_Info
- *  \param request Pointer to the MPI_Request
- */
-int PMPI_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request)
-{
-    int size;
-    int rank;
-    mpi_check_comm(comm);
-    _mpc_cl_comm_size(comm, &size);
-    _mpc_cl_comm_rank(comm, &rank);
-    mpi_check_type(sendtype, comm);
-    mpi_check_type(recvtype, comm);
-    int i;
-    for(i = 0; i < size; i++)
-    {
-        mpi_check_count(recvcounts[i], comm);
-    }
-    mpi_check_count(sendcount, comm);
-    if(recvcounts[rank] != 0)
-    {
-        mpi_check_buf(recvbuf, comm);
-    }
-    if(sendcount != 0)
-    {
-        mpi_check_buf(sendbuf, comm);
-    }
-
-    MPI_internal_request_t *req;
-    SCTK__MPI_INIT_REQUEST (request);
-    req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
-    req->freeable = 0;
-    req->is_active = 0;
-    req->is_nbc = 1;
-    req->is_persistent = 1;
-    req->req.request_type = REQUEST_GENERALIZED;
-
-    req->persistant.sendbuf = sendbuf;
-    req->persistant.recvbuf = recvbuf;
-    req->persistant.sendcount = sendcount;
-    req->persistant.rdispls = displs;
-    req->persistant.recvcounts = recvcounts;
-    req->persistant.sendtype = sendtype;
-    req->persistant.recvtype = recvtype;
-    req->persistant.comm = comm;
-    req->persistant.op = MPC_MPI_PERSISTENT_ALLGATHERV_INIT;
-	req->persistant.info = info;
-    /* Init metadata for nbc */
-    NBC_Iallgatherv_init (sendbuf, sendcount,  sendtype, recvbuf, recvcounts, displs,
-			     recvtype, comm, &(req->nbc_handle));
         req->nbc_handle.is_persistent = 1;
 	return MPI_SUCCESS;
 }
