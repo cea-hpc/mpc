@@ -22,20 +22,9 @@ int _mpc_lowcomm_peer_teardown();
 * REGISTRATION *
 ****************/
 
-static inline mpc_lowcomm_peer_uid_t _mpc_lowcomm_peer_uid(uint32_t set_uid, uint32_t peer_rank)
-{
-	uint64_t ret = 0;
-	uint64_t lset_uid = set_uid;
-
-	ret |= lset_uid << 32;
-	ret |= peer_rank;
-
-	return ret;
-}
-
 static inline mpc_lowcomm_peer_uid_t _mpc_lowcomm_set_root(uint32_t set_uid)
 {
-	return _mpc_lowcomm_peer_uid(set_uid, 0);
+	return mpc_lowcomm_monitor_uid_of(set_uid, 0);
 }
 
 _mpc_lowcomm_peer_t *_mpc_lowcomm_peer_register(mpc_lowcomm_peer_uid_t uid,

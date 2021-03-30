@@ -179,8 +179,8 @@ int sctk_send_message_from_network_reorder(mpc_lowcomm_ptp_message_t *msg)
 
 		/* Indirect messages, we do not check PSN */
 		if( (mpc_common_get_process_rank() != dest_process)
-		    /* Process level messages we do not check the PSN */
-		    || (_mpc_comm_ptp_message_is_for_process(SCTK_MSG_SPECIFIC_CLASS(msg) ) ) )
+		/* Process level messages we do not check the PSN */
+		|| (_mpc_comm_ptp_message_is_for_process(SCTK_MSG_SPECIFIC_CLASS(msg) ) ) )
 		{
 			return REORDER_NO_NUMBERING;
 		}

@@ -39,7 +39,7 @@
 #include <sctk_net_tools.h>
 #include <errno.h>
 #include <sctk_control_messages.h>
-
+#include <mpc_lowcomm_monitor.h>
 #include <mpc_thread.h>
 #include <mpc_common_rank.h>
 #include <sctk_alloc.h>
@@ -49,38 +49,40 @@
 /********************************************************************/
 /* Connection Setup                                                 */
 /********************************************************************/
+
 /**
  * Called when initializing the remote side of a connection.
  * This function emits a connect() call to the requested process.
- * It is generally called for creating the initial topology (above the 
+ * It is generally called for creating the initial topology (above the
  * standard ring) and for the on-demand.
  * \param[in] name_init combination of host:port, the remote process to connect to
  * \param[in] rail the TCP rail
  * \return the newly created FD, -1 otherwise.
  */
-static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
+static int __connect_to(char *name_init, sctk_rail_info_t *rail)
 {
-	int clientsock_fd;
+	int             clientsock_fd;
 	struct hostent *server;
 
-	char name[MPC_COMMON_MAX_STRING_SIZE];
+	char  name[MPC_COMMON_MAX_STRING_SIZE];
 	char *portno = NULL;
-	int i;
+	int   i;
 
-	sprintf ( name, "%s", name_init );
+	sprintf(name, "%s", name_init);
 
 	/* Extract server name and port */
 
-	for ( i = 0; i < MPC_COMMON_MAX_STRING_SIZE; i++ )
+	for(i = 0; i < MPC_COMMON_MAX_STRING_SIZE; i++)
 	{
-		if ( name[i] == ':' )
+		if(name[i] == ':')
 		{
-			name[i] = '\0';
+			name[i]      = '\0';
 			name_init[i] = '\0';
+
 			/* Make sure we hold the right port-no (from original buffer)
 			 * as it might be overwriten if we fallback network */
-			portno = name_init + ( i + 1 );
-			mpc_common_nodebug ( "%s Port no %s", name, portno );
+			portno = name_init + (i + 1);
+			mpc_common_nodebug("%s Port no %s", name, portno);
 			break;
 		}
 	}
@@ -88,7 +90,7 @@ static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
 	char * preferred_network = "";
 
 	/* Rely on IP over IB if possible */
-	if ( rail->network.tcp.sctk_use_tcp_o_ib )
+	if(rail->network.tcp.sctk_use_tcp_o_ib)
 	{
 		/* Make sure to match network with ib in their name first */
 		preferred_network = "ib";
@@ -96,16 +98,16 @@ static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
 
 	/* Start Name Resolution */
 
-	mpc_common_nodebug ( "Try connection to |%s| on port %s type %d", name, portno, AF_INET );
+	mpc_common_nodebug("Try connection to |%s| on port %s type %d", name, portno, AF_INET);
 	struct addrinfo *results;
 
 
 	/* First use getaddrinfo to extract connection type */
 	int ret = mpc_common_getaddrinfo(name, portno, NULL, &results, preferred_network);
 
-	if ( ret != 0 )
+	if(ret != 0)
 	{
-		printf ( "Error resolving name : %s\n", gai_strerror ( ret ) );
+		printf("Error resolving name : %s\n", gai_strerror(ret) );
 		return -1;
 	}
 
@@ -114,31 +116,31 @@ static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
 	int connected = 0;
 
 	/* Walk getaddrinfo configurations */
-	while ( current )
+	while(current)
 	{
 		errno = 0;
 		/* First open a socket */
-		clientsock_fd = socket ( current->ai_family, current->ai_socktype, current->ai_protocol );
+		clientsock_fd = socket(current->ai_family, current->ai_socktype, current->ai_protocol);
 
-		if ( clientsock_fd < 0 )
+		if(clientsock_fd < 0)
 		{
-			perror ( "socket" );
+			perror("socket");
 		}
 		else
 		{
 			/* Modify the socket to force the flush of messages. Increase the
-			* performance for short messages. See http://www.ibm.com/developerworks/library/l-hisock/index.html */
+			 * performance for short messages. See http://www.ibm.com/developerworks/library/l-hisock/index.html */
 			int one = 1;
 
-			if ( setsockopt ( clientsock_fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof ( one ) ) == -1 )
+			if(setsockopt(clientsock_fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one) ) == -1)
 			{
-				mpc_common_debug_error ( "Cannot modify the socket options!" );
+				mpc_common_debug_error("Cannot modify the socket options!");
 			}
 
 			/* Try to connect */
 			errno = 0;
 
-			if ( connect ( clientsock_fd, current->ai_addr, current->ai_addrlen ) != -1 )
+			if(connect(clientsock_fd, current->ai_addr, current->ai_addrlen) != -1)
 			{
 				connected = 1;
 				/* We are connected all ok */
@@ -146,11 +148,11 @@ static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
 			}
 			else
 			{
-				perror ( "connect" );
+				perror("connect");
 				mpc_common_debug_abort();
 			}
 
-			close ( clientsock_fd );
+			close(clientsock_fd);
 		}
 
 		/* Lets try next connection type */
@@ -160,9 +162,9 @@ static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
 	mpc_common_freeaddrinfo(results);
 
 	/* Did we fail ? */
-	if ( connected == 0 )
+	if(connected == 0)
 	{
-		mpc_common_debug_error ( "Failed to connect to %s:%s\n", name, portno );
+		mpc_common_debug_error("Failed to connect to %s:%s\n", name, portno);
 		mpc_common_debug_abort();
 	}
 
@@ -174,7 +176,7 @@ static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
  * This function DOES NOT call a blocking accept().
  * \param[in] rail the TCP rail.
  */
-static void sctk_client_create_recv_socket ( sctk_rail_info_t *rail )
+static void __create_listening_socket(sctk_rail_info_t *rail)
 {
 	errno = 0;
 
@@ -182,17 +184,17 @@ static void sctk_client_create_recv_socket ( sctk_rail_info_t *rail )
 	struct addrinfo hints, *results;
 
 	/* Initialize addrinfo struct */
-	memset ( &hints, 0, sizeof ( struct addrinfo ) );
-	hints.ai_family = AF_UNSPEC; /* Any network */
+	memset(&hints, 0, sizeof(struct addrinfo) );
+	hints.ai_family   = AF_UNSPEC;   /* Any network */
 	hints.ai_socktype = SOCK_STREAM; /* Stream TCP socket */
-	hints.ai_flags = AI_PASSIVE; /* We are going to bind this socket */
+	hints.ai_flags    = AI_PASSIVE;  /* We are going to bind this socket */
 
 	/* We set port "0" in order to get a free port without linear scanning */
-	int ret = getaddrinfo ( NULL, "0", &hints, &results );
+	int ret = getaddrinfo(NULL, "0", &hints, &results);
 
-	if ( ret != 0 )
+	if(ret != 0)
 	{
-		printf ( "Failed to create a bindable socket : %s\n", gai_strerror ( ret ) );
+		printf("Failed to create a bindable socket : %s\n", gai_strerror(ret) );
 		mpc_common_debug_abort();
 	}
 
@@ -202,84 +204,82 @@ static void sctk_client_create_recv_socket ( sctk_rail_info_t *rail )
 	rail->network.tcp.sockfd = -1;
 
 	/* Iterate over results picking the first working candidate */
-	while ( current )
+	while(current)
 	{
 		errno = 0;
 		/* First try to open a socket */
-		rail->network.tcp.sockfd = socket ( current->ai_family, current->ai_socktype, current->ai_protocol );
+		rail->network.tcp.sockfd = socket(current->ai_family, current->ai_socktype, current->ai_protocol);
 
-		if ( rail->network.tcp.sockfd < 0 )
+		if(rail->network.tcp.sockfd < 0)
 		{
-			perror ( "socket" );
+			perror("socket");
 		}
 		else
 		{
 			/* Modify the socket to force the flush of messages. Increase the
-			* performance for short messages. See http://www.ibm.com/developerworks/library/l-hisock/index.html */
+			 * performance for short messages. See http://www.ibm.com/developerworks/library/l-hisock/index.html */
 			int one = 1;
 
-			if ( setsockopt ( rail->network.tcp.sockfd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof ( one ) ) == -1 )
+			if(setsockopt(rail->network.tcp.sockfd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one) ) == -1)
 			{
-				mpc_common_debug_error ( "Cannot modify the socket options!" );
+				mpc_common_debug_error("Cannot modify the socket options!");
 			}
 
 			errno = 0;
 
 			/* Bind the socket to the port */
-			if ( bind ( rail->network.tcp.sockfd, current->ai_addr, current->ai_addrlen ) != -1 )
+			if(bind(rail->network.tcp.sockfd, current->ai_addr, current->ai_addrlen) != -1)
 			{
 				/* Start listening on that port */
-				if ( listen ( rail->network.tcp.sockfd,  512 ) != -1 )
+				if(listen(rail->network.tcp.sockfd, 512) != -1)
 				{
 					/* As we are bound to "0" we want to get the actual port */
 					struct sockaddr_in socket_infos;
-					socklen_t infolen = sizeof ( struct sockaddr );
+					socklen_t          infolen = sizeof(struct sockaddr);
 
-					if ( getsockname ( rail->network.tcp.sockfd, ( struct sockaddr * ) &socket_infos, &infolen ) == -1 )
+					if(getsockname(rail->network.tcp.sockfd, ( struct sockaddr * )&socket_infos, &infolen) == -1)
 					{
-						perror ( "getsockname" );
+						perror("getsockname");
 						mpc_common_debug_abort();
 					}
 					else
 					{
-						if ( infolen == sizeof ( struct sockaddr_in ) )
+						if(infolen == sizeof(struct sockaddr_in) )
 						{
-							rail->network.tcp.portno = ntohs ( socket_infos.sin_port );
+							rail->network.tcp.portno = ntohs(socket_infos.sin_port);
 						}
 						else
 						{
-							mpc_common_debug_error ( "Could not retrieve port number\n" );
-							close ( rail->network.tcp.sockfd );
+							mpc_common_debug_error("Could not retrieve port number\n");
+							close(rail->network.tcp.sockfd);
 							mpc_common_debug_abort();
 						}
 					}
 
 					break;
-
 				}
 				else
 				{
-					perror ( "listen" );
-					close ( rail->network.tcp.sockfd );
-
+					perror("listen");
+					close(rail->network.tcp.sockfd);
 				}
 			}
 			else
 			{
-				perror ( "bind" );
-				close ( rail->network.tcp.sockfd );
+				perror("bind");
+				close(rail->network.tcp.sockfd);
 			}
 		}
 
 		current = current->ai_next;
 	}
 
-	freeaddrinfo ( results );
+	freeaddrinfo(results);
 
 	/* Did we fail ? */
-	if ( rail->network.tcp.sockfd < 0 )
+	if(rail->network.tcp.sockfd < 0)
 	{
-		mpc_common_debug_error ( "Failed to set a listening socket\n" );
+		mpc_common_debug_error("Failed to set a listening socket\n");
 		mpc_common_debug_abort();
 	}
 }
@@ -287,69 +287,71 @@ static void sctk_client_create_recv_socket ( sctk_rail_info_t *rail )
 /********************************************************************/
 /* Route Initializer                                                */
 /********************************************************************/
+
 /**
  * Create a new TCP-specific route.
  * \param[in] dest the remote process id
  * \param[in] fd the associated FD
  * \param[in] rail the TCP rail
- * \param[in] tcp_thread the polling routine
+ * \param[in] tcp_thread_loop the polling routine
  * \param[in] route_type route type (DYNAMIC,STATIC)
  */
-static void sctk_tcp_add_route ( int dest, int fd, sctk_rail_info_t *rail,
-					   void * ( *tcp_thread ) ( _mpc_lowcomm_endpoint_t * ) , _mpc_lowcomm_endpoint_type_t route_type )
+static void sctk_tcp_add_route(int dest, int fd, sctk_rail_info_t *rail,
+                               void * (*tcp_thread_loop)(_mpc_lowcomm_endpoint_t *), _mpc_lowcomm_endpoint_type_t route_type)
 {
 	_mpc_lowcomm_endpoint_t *new_route;
 
 	/* Allocate a new route */
-	new_route = sctk_malloc ( sizeof ( _mpc_lowcomm_endpoint_t ) );
-	assume ( new_route != NULL );
-	_mpc_lowcomm_endpoint_init ( new_route,  dest, rail, route_type );
-	
-	/* Make sure the route is flagged connected */
-	_mpc_lowcomm_endpoint_set_state ( new_route, _MPC_LOWCOMM_ENDPOINT_CONNECTED );
+	new_route = sctk_malloc(sizeof(_mpc_lowcomm_endpoint_t) );
+	assume(new_route != NULL);
+	_mpc_lowcomm_endpoint_init(new_route, mpc_lowcomm_monitor_local_uid_of(dest), rail, route_type);
 
-	mpc_common_nodebug ( "Register fd %d", fd );
+	/* Make sure the route is flagged connected */
+	_mpc_lowcomm_endpoint_set_state(new_route, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
+
+	mpc_common_nodebug("Register fd %d", fd);
 	new_route->data.tcp.fd = fd;
 
 	mpc_common_spinlock_init(&new_route->data.tcp.lock, 0);
 
 	/* Add the new route */
-	if( route_type == _MPC_LOWCOMM_ENDPOINT_STATIC )
+	if(route_type == _MPC_LOWCOMM_ENDPOINT_STATIC)
 	{
-		sctk_rail_add_static_route (  rail, new_route );
+		sctk_rail_add_static_route(rail, new_route);
 	}
 	else
 	{
-		sctk_rail_add_dynamic_route(  rail, new_route );
+		sctk_rail_add_dynamic_route(rail, new_route);
 	}
-	
+
 	/* set the route as connected */
-	_mpc_lowcomm_endpoint_set_state ( new_route, _MPC_LOWCOMM_ENDPOINT_CONNECTED );
+	_mpc_lowcomm_endpoint_set_state(new_route, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
 
 #ifdef MPC_Threads
-	mpc_thread_t pidt;
+	mpc_thread_t      pidt;
 	mpc_thread_attr_t attr;
 
 	/* Launch the polling thread */
-	mpc_thread_attr_init ( &attr );
-	mpc_thread_attr_setscope ( &attr, SCTK_THREAD_SCOPE_SYSTEM );
-	mpc_thread_core_thread_create ( &pidt, &attr, ( void * ( * ) ( void * ) ) tcp_thread , new_route );
+	mpc_thread_attr_init(&attr);
+	mpc_thread_attr_setscope(&attr, SCTK_THREAD_SCOPE_SYSTEM);
+	mpc_thread_core_thread_create(&pidt, &attr, (void * (*)(void *) )tcp_thread_loop, new_route);
 #else
 	pthread_t pidt;
-	pthread_create ( &pidt, NULL, ( void * ( * ) ( void * ) ) tcp_thread , new_route );
+	pthread_create(&pidt, NULL, (void * (*)(void *) )tcp_thread_loop, new_route);
 #endif
 }
 
 /********************************************************************/
 /* Route Hooks (Dynamic routes)                                     */
 /********************************************************************/
+
 /**
  * Map a connection context, exchanged for on-demand procedure.
  */
 struct sctk_tcp_connection_context
 {
-	int from;                            /**< the process id that initiated the request */
-	int to;                              /**< the process id to be notified from the request */
+	int  from;                                              /**< the process id that initiated the request */
+	int  to;                                                /**< the process id to be notified from the request */
 	char dest_connection_infos[MPC_COMMON_MAX_STRING_SIZE]; /**< the connection string( host:port) */
 };
 
@@ -368,12 +370,12 @@ typedef enum
  * \param[in] ctx the sctk_tcp_connection_context sent by the remote
  * \param[in] route_type route type to create
  */
-static void sctk_network_connection_to_ctx( sctk_rail_info_t *rail, struct sctk_tcp_connection_context * ctx, _mpc_lowcomm_endpoint_type_t route_type )
+static void sctk_network_connection_to_ctx(sctk_rail_info_t *rail, struct sctk_tcp_connection_context *ctx, _mpc_lowcomm_endpoint_type_t route_type)
 {
 	/*Recv id from the connected process*/
-	int dest_socket = sctk_tcp_connect_to ( ctx->dest_connection_infos, rail );
+	int dest_socket = __connect_to(ctx->dest_connection_infos, rail);
 
-	sctk_tcp_add_route ( ctx->from, dest_socket, rail, ( void * ( * ) ( _mpc_lowcomm_endpoint_t * ) ) ( rail->network.tcp.tcp_thread ), route_type );
+	sctk_tcp_add_route(ctx->from, dest_socket, rail, rail->network.tcp.tcp_thread_loop, route_type);
 }
 
 /**
@@ -382,9 +384,11 @@ static void sctk_network_connection_to_ctx( sctk_rail_info_t *rail, struct sctk_
  * \param[in] to not used
  * \param[in] rail ont used.
  */
-static void sctk_network_connection_to_tcp ( __UNUSED__ int from, __UNUSED__ int to, __UNUSED__ sctk_rail_info_t *rail ) {}
+static void sctk_network_connection_to_tcp(__UNUSED__ int from, __UNUSED__ int to, __UNUSED__ sctk_rail_info_t *rail)
+{
+}
 
-/** 
+/**
  * Initiate a connection with a peer process.
  * This imeplementation relies on CMs.
  * \param[in] from the current process
@@ -392,35 +396,36 @@ static void sctk_network_connection_to_tcp ( __UNUSED__ int from, __UNUSED__ int
  * \param[in] rail the TCP rail
  * \param[in] route_type route type to create
  */
-static void __sctk_network_connection_from_tcp( int from, int to, sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_type_t route_type )
+static void __sctk_network_connection_from_tcp(int from, int to, sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_type_t route_type)
 {
 	int src_socket;
 	/*Send connection informations*/
 
 	struct sctk_tcp_connection_context ctx;
-	memset(&ctx, 0, sizeof(struct sctk_tcp_connection_context ));
-	ctx.from = from;
-	ctx.to = to;
-	snprintf( ctx.dest_connection_infos, MPC_COMMON_MAX_STRING_SIZE, "%s", rail->network.tcp.connection_infos);
 
-	if( route_type == _MPC_LOWCOMM_ENDPOINT_STATIC )
+	memset(&ctx, 0, sizeof(struct sctk_tcp_connection_context) );
+	ctx.from = from;
+	ctx.to   = to;
+	snprintf(ctx.dest_connection_infos, MPC_COMMON_MAX_STRING_SIZE, "%s", rail->network.tcp.connection_infos);
+
+	if(route_type == _MPC_LOWCOMM_ENDPOINT_STATIC)
 	{
-		sctk_control_messages_send_rail ( to, SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_STATIC, 0, &ctx, sizeof( struct sctk_tcp_connection_context ) , rail->rail_number);
+		sctk_control_messages_send_rail(to, SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_STATIC, 0, &ctx, sizeof(struct sctk_tcp_connection_context), rail->rail_number);
 	}
 	else
 	{
-		sctk_control_messages_send_rail ( to, SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_DYNAMIC, 0, &ctx, sizeof( struct sctk_tcp_connection_context )  , rail->rail_number);
+		sctk_control_messages_send_rail(to, SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_DYNAMIC, 0, &ctx, sizeof(struct sctk_tcp_connection_context), rail->rail_number);
 	}
 
-	src_socket = accept ( rail->network.tcp.sockfd, NULL, 0 );
+	src_socket = accept(rail->network.tcp.sockfd, NULL, 0);
 
-	if ( src_socket < 0 )
+	if(src_socket < 0)
 	{
-		perror ( "Connection error" );
+		perror("Connection error");
 		mpc_common_debug_abort();
 	}
 
-	sctk_tcp_add_route ( to, src_socket, rail, ( void * ( * ) ( _mpc_lowcomm_endpoint_t * ) ) ( rail->network.tcp.tcp_thread ), route_type );
+	sctk_tcp_add_route(to, src_socket, rail, rail->network.tcp.tcp_thread_loop, route_type);
 }
 
 /**
@@ -429,9 +434,9 @@ static void __sctk_network_connection_from_tcp( int from, int to, sctk_rail_info
  * \param[in] to the process we want to be connected to
  * \param[in] rail the TCP rail
  */
-static void sctk_network_connection_from_tcp ( int from, int to, sctk_rail_info_t *rail )
+static void sctk_network_connection_from_tcp(int from, int to, sctk_rail_info_t *rail)
 {
-	__sctk_network_connection_from_tcp( from, to, rail, _MPC_LOWCOMM_ENDPOINT_STATIC );
+	__sctk_network_connection_from_tcp(from, to, rail, _MPC_LOWCOMM_ENDPOINT_STATIC);
 }
 
 /**
@@ -444,18 +449,19 @@ static void sctk_network_connection_from_tcp ( int from, int to, sctk_rail_info_
  * \param[in] data the TCP context, sent from the remote
  * \param[in] size size of the message sent (should be sizeof(struct sctk_tcp_connection_context))
  */
-void tcp_control_message_handler( struct sctk_rail_info_s * rail, __UNUSED__ int source_process, __UNUSED__ int source_rank, char subtype, __UNUSED__ char param, void * data, __UNUSED__ size_t size )
+void tcp_control_message_handler(struct sctk_rail_info_s *rail, __UNUSED__ int source_process, __UNUSED__ int source_rank, char subtype, __UNUSED__ char param, void *data, __UNUSED__ size_t size)
 {
 	sctk_tcp_control_message_t action = subtype;
 
-	switch( action )
+	switch(action)
 	{
-		case SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_STATIC :
-			sctk_network_connection_to_ctx( rail, (struct sctk_tcp_connection_context *) data, _MPC_LOWCOMM_ENDPOINT_STATIC );
-		break;
-		case SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_DYNAMIC :
-			sctk_network_connection_to_ctx( rail, (struct sctk_tcp_connection_context *) data, _MPC_LOWCOMM_ENDPOINT_DYNAMIC );
-		break;
+		case SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_STATIC:
+			sctk_network_connection_to_ctx(rail, (struct sctk_tcp_connection_context *)data, _MPC_LOWCOMM_ENDPOINT_STATIC);
+			break;
+
+		case SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_DYNAMIC:
+			sctk_network_connection_to_ctx(rail, (struct sctk_tcp_connection_context *)data, _MPC_LOWCOMM_ENDPOINT_DYNAMIC);
+			break;
 	}
 }
 
@@ -464,118 +470,118 @@ void tcp_control_message_handler( struct sctk_rail_info_s * rail, __UNUSED__ int
  * \param[in] rail the TCP rail
  * \param[in] dest_process the process to be connected with.
  */
-void tcp_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_process )
+void tcp_on_demand_connection_handler(sctk_rail_info_t *rail, int dest_process)
 {
-	__sctk_network_connection_from_tcp ( mpc_common_get_process_rank(), dest_process, rail, _MPC_LOWCOMM_ENDPOINT_DYNAMIC );
+	__sctk_network_connection_from_tcp(mpc_common_get_process_rank(), dest_process, rail, _MPC_LOWCOMM_ENDPOINT_DYNAMIC);
 }
-
 
 /********************************************************************/
 /* TCP Ring Init Function                                           */
 /********************************************************************/
+
 /**
  * End of TCP rail initialization and create the first topology: the ring.
  * \param[in,out] rail the TCP rail
  * \param[in] sctk_use_tcp_o_ib Is a TCP_O_IB configuration ?
- * \param[in] tcp_thread the polling routine function.
+ * \param[in] tcp_thread_loop the polling routine function.
  * \param[in] route_init the function registering a new TCP route
  */
-void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
-                                 void * ( *tcp_thread ) ( _mpc_lowcomm_endpoint_t * ) )
+void sctk_network_init_tcp_all(sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
+                               void * (*tcp_thread_loop)(_mpc_lowcomm_endpoint_t *) )
 {
 	char right_rank_connection_infos[MPC_COMMON_MAX_STRING_SIZE];
-	int right_rank;
-	int right_socket = -1;
-	int left_rank;
-	int left_socket = -1;
+	int  right_rank;
+	int  right_socket = -1;
+	int  left_rank;
+	int  left_socket = -1;
 
-	assume ( rail->send_message_from_network != NULL );
+	assume(rail->send_message_from_network != NULL);
 
 	/* Fill in common rail info */
-	rail->connect_from = sctk_network_connection_from_tcp;
-	rail->connect_to = sctk_network_connection_to_tcp;
+	rail->connect_from            = sctk_network_connection_from_tcp;
+	rail->connect_to              = sctk_network_connection_to_tcp;
 	rail->control_message_handler = tcp_control_message_handler;
 
 	rail->network.tcp.sctk_use_tcp_o_ib = sctk_use_tcp_o_ib;
-	rail->network.tcp.tcp_thread = tcp_thread;
+	rail->network.tcp.tcp_thread_loop        = tcp_thread_loop;
 
 	/* Start listening TCP socket */
-	sctk_client_create_recv_socket ( rail );
+	__create_listening_socket(rail);
 
 	/* Fill HOST info */
-	gethostname ( rail->network.tcp.connection_infos, MPC_COMMON_MAX_STRING_SIZE - 100 );
-	rail->network.tcp.connection_infos_size = strlen ( rail->network.tcp.connection_infos );
+	gethostname(rail->network.tcp.connection_infos, MPC_COMMON_MAX_STRING_SIZE - 100);
+	rail->network.tcp.connection_infos_size = strlen(rail->network.tcp.connection_infos);
 	/* Add port info */
-	sprintf ( rail->network.tcp.connection_infos + rail->network.tcp.connection_infos_size, ":%d", rail->network.tcp.portno );
-	rail->network.tcp.connection_infos_size = strlen ( rail->network.tcp.connection_infos ) + 1;
+	sprintf(rail->network.tcp.connection_infos + rail->network.tcp.connection_infos_size, ":%d", rail->network.tcp.portno);
+	rail->network.tcp.connection_infos_size = strlen(rail->network.tcp.connection_infos) + 1;
 
-	assume ( rail->network.tcp.connection_infos_size < MPC_COMMON_MAX_STRING_SIZE );
+	assume(rail->network.tcp.connection_infos_size < MPC_COMMON_MAX_STRING_SIZE);
 
 	/* If this rail does not require the bootstrap ring just return */
-	if( rail->requires_bootstrap_ring == 0 )
+	if(rail->requires_bootstrap_ring == 0)
 	{
 		return;
 	}
 
 	/* Otherwise BUILD a TCP bootstrap ring */
-	right_rank = ( mpc_common_get_process_rank() + 1 ) % mpc_common_get_process_count();
-	left_rank = ( mpc_common_get_process_rank() + mpc_common_get_process_count() - 1 ) % mpc_common_get_process_count();
+	right_rank = (mpc_common_get_process_rank() + 1) % mpc_common_get_process_count();
+	left_rank  = (mpc_common_get_process_rank() + mpc_common_get_process_count() - 1) % mpc_common_get_process_count();
 
-	mpc_common_nodebug ( "Connection Infos (%d): %s", mpc_common_get_process_rank(), rail->network.tcp.connection_infos );
+	mpc_common_nodebug("Connection Infos (%d): %s", mpc_common_get_process_rank(), rail->network.tcp.connection_infos);
 
 	/* Register connection info inside the PMPI */
-	assume ( mpc_launch_pmi_put_as_rank ( rail->network.tcp.connection_infos, rail->rail_number, 0 /* Not local */ ) == 0 );
+	assume(mpc_launch_pmi_put_as_rank(rail->network.tcp.connection_infos, rail->rail_number, 0 /* Not local */) == 0);
 
- mpc_launch_pmi_barrier();
+	mpc_launch_pmi_barrier();
 
 	/* Retrieve Connection info to dest rank from the PMI */
-	assume ( mpc_launch_pmi_get_as_rank ( right_rank_connection_infos, MPC_COMMON_MAX_STRING_SIZE, rail->rail_number, right_rank ) == 0 );
+	assume(mpc_launch_pmi_get_as_rank(right_rank_connection_infos, MPC_COMMON_MAX_STRING_SIZE, rail->rail_number, right_rank) == 0);
 
- 	mpc_launch_pmi_barrier();
+	mpc_launch_pmi_barrier();
 
-	mpc_common_nodebug ( "DEST Connection Infos(%d) to %d: %s", mpc_common_get_process_rank(), right_rank, right_rank_connection_infos );
+	mpc_common_nodebug("DEST Connection Infos(%d) to %d: %s", mpc_common_get_process_rank(), right_rank, right_rank_connection_infos);
 
 
 	/* Intiate ring connection */
-	if ( mpc_common_get_process_count() > 2 )
+	if(mpc_common_get_process_count() > 2)
 	{
-		if ( mpc_common_get_process_rank() % 2 == 0 )
+		if(mpc_common_get_process_rank() % 2 == 0)
 		{
-			mpc_common_nodebug ( "Connect to %d", right_rank );
-			right_socket = sctk_tcp_connect_to ( right_rank_connection_infos, rail );
+			mpc_common_nodebug("Connect to %d", right_rank);
+			right_socket = __connect_to(right_rank_connection_infos, rail);
 
-			if ( right_socket < 0 )
+			if(right_socket < 0)
 			{
-				perror ( "Connection error" );
+				perror("Connection error");
 				mpc_common_debug_abort();
 			}
 
-			mpc_common_nodebug ( "Wait connection" );
-			left_socket = accept ( rail->network.tcp.sockfd, NULL, 0 );
+			mpc_common_nodebug("Wait connection");
+			left_socket = accept(rail->network.tcp.sockfd, NULL, 0);
 
-			if ( left_socket < 0 )
+			if(left_socket < 0)
 			{
-				perror ( "Connection error" );
+				perror("Connection error");
 				mpc_common_debug_abort();
 			}
 		}
 		else
 		{
-			mpc_common_nodebug ( "Wait connection" );
-			left_socket = accept ( rail->network.tcp.sockfd, NULL, 0 );
+			mpc_common_nodebug("Wait connection");
+			left_socket = accept(rail->network.tcp.sockfd, NULL, 0);
 
-			if ( left_socket < 0 )
+			if(left_socket < 0)
 			{
-				perror ( "Connection error" );
+				perror("Connection error");
 				mpc_common_debug_abort();
 			}
 
-			mpc_common_nodebug ( "Connect to %d", right_rank );
-			right_socket = sctk_tcp_connect_to ( right_rank_connection_infos, rail );
+			mpc_common_nodebug("Connect to %d", right_rank);
+			right_socket = __connect_to(right_rank_connection_infos, rail);
 
-			if ( right_socket < 0 )
+			if(right_socket < 0)
 			{
-				perror ( "Connection error" );
+				perror("Connection error");
 				mpc_common_debug_abort();
 			}
 		}
@@ -583,40 +589,39 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	else
 	{
 		/* Here particular case of two processes (not to loop) */
-		if ( mpc_common_get_process_rank() == 0 )
+		if(mpc_common_get_process_rank() == 0)
 		{
-			mpc_common_nodebug ( "Connect to %d", right_rank );
-			right_socket = sctk_tcp_connect_to ( right_rank_connection_infos, rail );
+			mpc_common_nodebug("Connect to %d", right_rank);
+			right_socket = __connect_to(right_rank_connection_infos, rail);
 
-			if ( right_socket < 0 )
+			if(right_socket < 0)
 			{
-				perror ( "Connection error" );
+				perror("Connection error");
 				mpc_common_debug_abort();
 			}
 		}
 		else
 		{
-			mpc_common_nodebug ( "Wait connection" );
-			right_socket = accept ( rail->network.tcp.sockfd, NULL, 0 );
+			mpc_common_nodebug("Wait connection");
+			right_socket = accept(rail->network.tcp.sockfd, NULL, 0);
 
-			if ( right_socket < 0 )
+			if(right_socket < 0)
 			{
-				perror ( "Connection error" );
+				perror("Connection error");
 				mpc_common_debug_abort();
 			}
 		}
 	}
 
- mpc_launch_pmi_barrier();
+	mpc_launch_pmi_barrier();
 
 	/* We are all done, now register the routes and create the polling threads */
-	sctk_tcp_add_route ( right_rank, right_socket, rail, tcp_thread, _MPC_LOWCOMM_ENDPOINT_STATIC );
+	sctk_tcp_add_route(right_rank, right_socket, rail, tcp_thread_loop, _MPC_LOWCOMM_ENDPOINT_STATIC);
 
-	if ( mpc_common_get_process_count() > 2 )
+	if(mpc_common_get_process_count() > 2)
 	{
-		sctk_tcp_add_route ( left_rank, left_socket, rail, tcp_thread, _MPC_LOWCOMM_ENDPOINT_STATIC );
+		sctk_tcp_add_route(left_rank, left_socket, rail, tcp_thread_loop, _MPC_LOWCOMM_ENDPOINT_STATIC);
 	}
 
- mpc_launch_pmi_barrier();
+	mpc_launch_pmi_barrier();
 }
-

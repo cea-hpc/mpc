@@ -28,6 +28,7 @@ extern "C" {
 
 #include <mpc_lowcomm_group.h>
 #include <mpc_common_types.h>
+#include <mpc_lowcomm_monitor.h>
 
 /*********************************
 * PUBLIC TYPE FOR COMMUNICATORS *
@@ -270,6 +271,15 @@ int mpc_lowcomm_communicator_get_process_count(const mpc_lowcomm_communicator_t 
  * @return int* list of processes
  */
 int *mpc_lowcomm_communicator_get_process_list(const mpc_lowcomm_communicator_t comm);
+
+/**
+ * @brief Get the process UID for a given rank
+ *
+ * @param comm the communicator to look into
+ * @param rank the task rank to target
+ * @return mpc_lowcomm_peer_uid_t the corresponding process UID
+ */
+mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_uid_for(const mpc_lowcomm_communicator_t comm, int rank);
 
 /*********************
 * INTERCOMM SUPPORT *

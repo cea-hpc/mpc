@@ -30,32 +30,34 @@
 
 #include "sctk_rail.h"
 
-_mpc_lowcomm_endpoint_t * sctk_topological_rail_ellect_endpoint( int remote , mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint )
+_mpc_lowcomm_endpoint_t *sctk_topological_rail_ellect_endpoint(int remote, mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint)
 {
 	int vp_id = mpc_topology_get_pu();
-	
-	if( vp_id < 0 )
+
+	if(vp_id < 0)
 	{
 		/* If not on VP assume 0 */
 		vp_id = 0;
 	}
-	
-	assume( endpoint->parent_rail != NULL );
-	
-	sctk_topological_rail_info_t  * topo_infos = &endpoint->parent_rail->network.topological;
-	int target_subrail = topo_infos->vp_to_subrail[ vp_id ];
-	
+
+	assume(endpoint->parent_rail != NULL);
+
+	sctk_topological_rail_info_t *topo_infos = &endpoint->parent_rail->network.topological;
+	int target_subrail = topo_infos->vp_to_subrail[vp_id];
+
 	/* If everything goes bad */
-	if( target_subrail < 0 )
+	if(target_subrail < 0)
+	{
 		target_subrail = 0;
-	
-	
-	sctk_rail_info_t * topological_rail = endpoint->parent_rail->subrails[ target_subrail ];
-	assume( 0 <= endpoint->subrail_id );
-	sctk_rail_info_t * endpoint_rail = endpoint->rail;
-	
+	}
+
+
+	sctk_rail_info_t *topological_rail = endpoint->parent_rail->subrails[target_subrail];
+	assume(0 <= endpoint->subrail_id);
+	sctk_rail_info_t *endpoint_rail = endpoint->rail;
+
 	/* Do we match ? */
-	if( topological_rail == endpoint_rail )
+	if(topological_rail == endpoint_rail)
 	{
 		/* It means that the endpoint found by the multirail
 		 * is already topological, just send through it */
@@ -66,178 +68,122 @@ _mpc_lowcomm_endpoint_t * sctk_topological_rail_ellect_endpoint( int remote , mp
 		/* Here the first endpoint is not the topological
 		 * one, we have to look in the topological rail
 		 * to see if this endpoint exists */
-		_mpc_lowcomm_endpoint_t * topological_endpoint = sctk_rail_get_any_route_to_process ( topological_rail, remote );
-		
+		_mpc_lowcomm_endpoint_t *topological_endpoint = sctk_rail_get_any_route_to_process(topological_rail, remote);
+
 		/* Did we find one ? Is it connected yet ? */
-		if( _mpc_lowcomm_endpoint_get_state( topological_endpoint ) == _MPC_LOWCOMM_ENDPOINT_CONNECTED )
+		if(_mpc_lowcomm_endpoint_get_state(topological_endpoint) == _MPC_LOWCOMM_ENDPOINT_CONNECTED)
 		{
 			/* YES Send through it */
 			return topological_endpoint;
 		}
 		else
 		{
-						
-			if( !_mpc_comm_ptp_message_is_for_control( SCTK_MSG_SPECIFIC_CLASS( msg ) ) )
+			if(!_mpc_comm_ptp_message_is_for_control(SCTK_MSG_SPECIFIC_CLASS(msg) ) )
 			{
 				/* Intiate an on-demand connection to the remote on the topological rail (to keep connection balanced) */
-				if( topological_rail->on_demand )
+				if(topological_rail->on_demand)
 				{
 					/* Note that here we push the pending connection in
 					 * a list as we cannot create connection while holding
 					 * the route table in read (in the middle of a send )
 					 * this will be done just before leaving the multirail-send function */
-					sctk_pending_on_demand_push( topological_rail, remote );
+					sctk_pending_on_demand_push(topological_rail, remote);
 				}
 			}
-			
+
 			/* Fallback to the original endpoint (we pay the NUMA not to delay the message) */
 			return endpoint;
 		}
 	}
-	
+
 	return NULL;
 }
 
-
-
-
-
-static void _mpc_lowcomm_topological_send_message ( mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint )
+static void _mpc_lowcomm_topological_send_message(mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint)
 {
-	_mpc_lowcomm_endpoint_t * topo_endpoint = sctk_topological_rail_ellect_endpoint( SCTK_MSG_DEST_PROCESS( msg ) , msg, endpoint );
-	
-	assume( topo_endpoint != NULL );
-	
-	sctk_rail_info_t * endpoint_rail = endpoint->rail;
-	
-	assume( endpoint_rail != NULL );
-	
-	endpoint_rail->send_message_endpoint( msg, topo_endpoint );
+	_mpc_lowcomm_endpoint_t *topo_endpoint = sctk_topological_rail_ellect_endpoint(SCTK_MSG_DEST_PROCESS(msg), msg, endpoint);
+
+	assume(topo_endpoint != NULL);
+
+	sctk_rail_info_t *endpoint_rail = endpoint->rail;
+
+	assume(endpoint_rail != NULL);
+
+	endpoint_rail->send_message_endpoint(msg, topo_endpoint);
 }
 
-static void _mpc_lowcomm_topological_notify_receive ( __UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail )
-{
-	/* Done in subrails */
-}
-
-static void _mpc_lowcomm_topological_notify_matching ( __UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail )
-{
-	/* Done in subrails */
-}
-
-static void _mpc_lowcomm_topological_notify_perform ( __UNUSED__ int remote, __UNUSED__ int remote_task_id, __UNUSED__ int polling_task_id, __UNUSED__ int blocking, __UNUSED__ sctk_rail_info_t *rail )
-{
-	/* Done in subrails */
-}
-
-static void _mpc_lowcomm_topological_notify_idle ()
-{
-	/* Done in subrails */
-}
-
-static void _mpc_lowcomm_topological_notify_probe (__UNUSED__ sctk_rail_info_t* rail, __UNUSED__ mpc_lowcomm_ptp_message_header_t* hdr, __UNUSED__ int* status)
-{
-	/* Done in subrails */
-}
-
-
-static void _mpc_lowcomm_topological_notify_anysource ( __UNUSED__ int polling_task_id, __UNUSED__ int blocking, __UNUSED__ sctk_rail_info_t *rail )
-{
-	/* Done in subrails */
-}
-
-static int sctk_send_message_from_network_topological ( __UNUSED__ mpc_lowcomm_ptp_message_t *msg )
-{
-	/* Done in subrails */
-	return 1;
-}
-
-void topological_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_process )
+void topological_on_demand_connection_handler(sctk_rail_info_t *rail, int dest_process)
 {
 	int vp_id = mpc_topology_get_pu();
-	
-	if( vp_id < 0 )
+
+	if(vp_id < 0)
 	{
 		/* If not on VP assume 0 */
 		vp_id = 0;
 	}
-	sctk_topological_rail_info_t  * topo_infos = &rail->network.topological;
-	int target_subrail = topo_infos->vp_to_subrail[ vp_id ];
-	
-	/* If everything goes bad */
-	if( target_subrail < 0 )
-		target_subrail = 0;
+	sctk_topological_rail_info_t *topo_infos = &rail->network.topological;
+	int target_subrail = topo_infos->vp_to_subrail[vp_id];
 
-	sctk_rail_info_t *topological_subrail = rail->subrails[ target_subrail ];
-	
-	if( topological_subrail->connect_on_demand )
+	/* If everything goes bad */
+	if(target_subrail < 0)
 	{
-		topological_subrail->connect_on_demand( topological_subrail, dest_process );
+		target_subrail = 0;
+	}
+
+	sctk_rail_info_t *topological_subrail = rail->subrails[target_subrail];
+
+	if(topological_subrail->connect_on_demand)
+	{
+		topological_subrail->connect_on_demand(topological_subrail, dest_process);
 	}
 }
 
-void topological_control_message_handler( __UNUSED__ struct sctk_rail_info_s * rail, __UNUSED__ int source_process, __UNUSED__ int source_rank, __UNUSED__ char subtype, __UNUSED__ char param, __UNUSED__ void * data, __UNUSED__ size_t size )
-{
-	/* Done in subrails */
-}
-
-
-void sctk_network_connection_to_topological( __UNUSED__ int from, __UNUSED__ int to, __UNUSED__ sctk_rail_info_t *rail )
-{
-	/* Done in subrails */
-}
-
-
-void sctk_network_connection_from_topological( __UNUSED__ int from, __UNUSED__ int to, __UNUSED__ sctk_rail_info_t *rail )
-{
-	/* Done in subrails */
-}
 
 /********************************************************************/
 /* TOPOLOGICAL Rail Init                                            */
 /********************************************************************/
 
-void sctk_network_init_topological_rail_info(  sctk_rail_info_t *rail )
+void sctk_network_init_topological_rail_info(sctk_rail_info_t *rail)
 {
-	sctk_topological_rail_info_t  * infos = &rail->network.topological;
-	
+	sctk_topological_rail_info_t *infos = &rail->network.topological;
+
 	/* Allocate an array of CPU size */
 	infos->max_vp = mpc_topology_get_pu_count();
-	
-	infos->vp_to_subrail = sctk_malloc( infos->max_vp * sizeof( int ) );
-	assume( infos->vp_to_subrail != NULL );
-	
+
+	infos->vp_to_subrail = sctk_malloc(infos->max_vp * sizeof(int) );
+	assume(infos->vp_to_subrail != NULL);
+
 	/* Now fill it according to different cases */
 	int i;
-	
+
 	/* First put -1 everywhere */
-	for( i = 0 ; i < infos->max_vp ; i++ )
+	for(i = 0; i < infos->max_vp; i++)
 	{
 		infos->vp_to_subrail[i] = -1;
 	}
-	
+
 	/* First case there is a single rail to choose */
-	if( rail->subrail_count == 1 )
+	if(rail->subrail_count == 1)
 	{
-		for( i = 0 ; i < infos->max_vp ; i++ )
+		for(i = 0; i < infos->max_vp; i++)
 		{
 			/* Always choose first rail */
 			infos->vp_to_subrail[i] = 0;
 		}
-		
+
 		/* Done */
 		return;
 	}
-	
-	char * device_regexp = NULL;
-	int device_reg_exp_allocated = 0;
-	
+
+	char *device_regexp            = NULL;
+	int   device_reg_exp_allocated = 0;
+
 	/* Prepare to switch between the two last cases */
-	if( sctk_rail_device_is_regexp( rail ) )
+	if(sctk_rail_device_is_regexp(rail) )
 	{
 		/* Second case the topology is defined with a regexp */
-		
-		 device_regexp = sctk_rail_get_device_name( rail );
+
+		device_regexp = sctk_rail_get_device_name(rail);
 		/* Increment by 1 to skip the '!' */
 		device_regexp++;
 	}
@@ -246,405 +192,414 @@ void sctk_network_init_topological_rail_info(  sctk_rail_info_t *rail )
 		/* Third case, the topology is defined as a list of subrails
 		 * the tips here is to build a regexp from it this list
 		 * to use the same code as if it was a regexp */
-		 
+
 		/* Allocate the device name list */
-		char ** device_name_list = sctk_malloc( sizeof( char * ) * rail->subrail_count );
-		int j;
-		
+		char **device_name_list = sctk_malloc(sizeof(char *) * rail->subrail_count);
+		int    j;
+
 		/* Retrieve names */
-		for( i = 0 ; i < rail->subrail_count ; i++ )
+		for(i = 0; i < rail->subrail_count; i++)
 		{
-			if( sctk_rail_device_is_regexp( rail->subrails[i] ) )
+			if(sctk_rail_device_is_regexp(rail->subrails[i]) )
 			{
 				mpc_common_debug_fatal("Device names with regular expressions are not allowed in subrails");
 			}
-			
-			device_name_list[i] =  sctk_rail_get_device_name( rail->subrails[i] );
+
+			device_name_list[i] = sctk_rail_get_device_name(rail->subrails[i]);
 		}
-		
+
 		/* Bubble sort names (as a shorter regexp with the same name could match */
-		
+
 		int total_name_len = 0;
-		
-		for( i = 0 ; i < rail->subrail_count ; i++ )
+
+		for(i = 0; i < rail->subrail_count; i++)
 		{
-			char * name_i = device_name_list[i];
-			
+			char *name_i = device_name_list[i];
+
 			int len_i = 0;
-			if( name_i )
+			if(name_i)
 			{
-				len_i = strlen( name_i );
+				len_i = strlen(name_i);
 			}
-			
+
 			/* In the mean time do total name len computation */
 			total_name_len += len_i;
-			
-			for( j = i + 1 ; j < rail->subrail_count ; j++ )
+
+			for(j = i + 1; j < rail->subrail_count; j++)
 			{
-				char * name_j = device_name_list[j];
-			
+				char *name_j = device_name_list[j];
+
 				int len_j = 0;
-				if( name_j )
+				if(name_j)
 				{
-					len_j = strlen( name_j );
+					len_j = strlen(name_j);
 				}
-				
-				if( len_i < len_j )
+
+				if(len_i < len_j)
 				{
-					char * tmp = name_i;
+					char *tmp = name_i;
 					device_name_list[i] = name_j;
 					device_name_list[j] = tmp;
 				}
 			}
 		}
-		
+
 		/* Allocate space for the regexp (add 3*count for the \\|) */
 		device_reg_exp_allocated = 1;
 		int device_regexp_length = total_name_len + 3 * rail->subrail_count + 100 /* Some margin never killed */;
 		device_regexp = sctk_malloc(device_regexp_length);
-		assume( device_regexp != NULL );
-		
+		assume(device_regexp != NULL);
+
 		device_regexp[0] = '\0';
-		
+
 		/* Build the regexp */
-		for( i = 0 ; i < rail->subrail_count ; i++ )
+		for(i = 0; i < rail->subrail_count; i++)
 		{
-			if( !device_name_list[i] )
-				continue;
-			
-			char local[500];
-			snprintf(local, 500, "%s", device_name_list[i] );
-			
-			strncat( device_regexp, local, device_regexp_length);
-			
-			if( i != (rail->subrail_count - 1) )
+			if(!device_name_list[i])
 			{
-				strncat( device_regexp, "\\|", device_regexp_length);
+				continue;
 			}
-			
+
+			char local[500];
+			snprintf(local, 500, "%s", device_name_list[i]);
+
+			strncat(device_regexp, local, device_regexp_length);
+
+			if(i != (rail->subrail_count - 1) )
+			{
+				strncat(device_regexp, "\\|", device_regexp_length);
+			}
 		}
-		
 	}
-		
+
 	/* Is the topology flat ? */
-	if( mpc_topology_device_matrix_is_equidistant( device_regexp ) )
+	if(mpc_topology_device_matrix_is_equidistant(device_regexp) )
 	{
 		/* In this case we split the devices among the PUs as the topology
 		 * is flat therefore no need to think of distances just split
 		 * devices envenly among the CPUS */
 		int cpu_per_device = infos->max_vp / rail->subrail_count;
-		 
+
 		/* If there are more devices than CPU */
-		if( ! cpu_per_device )
+		if(!cpu_per_device)
 		{
 			cpu_per_device = 1;
 		}
-		
-		for( i = 0 ; i < infos->max_vp ; i++ )
+
+		for(i = 0; i < infos->max_vp; i++)
 		{
 			/* Comput ehte device bucket */
 			infos->vp_to_subrail[i] = i / cpu_per_device;
-			
+
 			/* Should NEVER happen due to integer computation */
-			if( rail->subrail_count <= infos->vp_to_subrail[i] )
+			if(rail->subrail_count <= infos->vp_to_subrail[i])
 			{
 				infos->vp_to_subrail[i] = rail->subrail_count - 1;
 			}
 		}
-		
+
 		/* Done */
 	}
 	else
 	{
 		/* Here we have to think of distance */
-		for( i = 0 ; i < infos->max_vp ; i++ )
+		for(i = 0; i < infos->max_vp; i++)
 		{
 			/* Always choose first rail */
-		 mpc_topology_device_t * dev = mpc_topology_device_get_closest_from_pu( i, device_regexp );
+			mpc_topology_device_t *dev = mpc_topology_device_get_closest_from_pu(i, device_regexp);
 			/* Map device to subrail */
-			infos->vp_to_subrail[i] = sctk_rail_get_subrail_id_with_device( rail, dev );
+			infos->vp_to_subrail[i] = sctk_rail_get_subrail_id_with_device(rail, dev);
 		}
-		
+
 		/* Done */
 	}
 
-	if( device_reg_exp_allocated )
+	if(device_reg_exp_allocated)
 	{
-		sctk_free( device_regexp );
+		sctk_free(device_regexp);
 	}
 }
 
-
-void sctk_topological_rail_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list, void * addr, size_t size )
+void sctk_topological_rail_pin_region(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list, void *addr, size_t size)
 {
-
 	int i;
 
 	/* Build a pinning list involving all subrails */
-	for( i = 0 ; i < rail->subrail_count ; i++ )
+	for(i = 0; i < rail->subrail_count; i++)
 	{
-		struct sctk_rail_info_s * subrail = rail->subrails[i];
-		
-		if( !subrail->rail_pin_region || !subrail->rail_unpin_region )
+		struct sctk_rail_info_s *subrail = rail->subrails[i];
+
+		if(!subrail->rail_pin_region || !subrail->rail_unpin_region)
 		{
 			mpc_common_debug_fatal("To be RDMA capable a topological rail must\n"
-				 "only contain RDMA capable networks (error %s)", subrail->network_name );
+			                       "only contain RDMA capable networks (error %s)", subrail->network_name);
 		}
-		
-		/* Here we fill the individual pin infos for subrails */
-		subrail->rail_pin_region( subrail, list + i, addr, size );
-	}
 
+		/* Here we fill the individual pin infos for subrails */
+		subrail->rail_pin_region(subrail, list + i, addr, size);
+	}
 }
 
-void sctk_topological_rail_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list )
+void sctk_topological_rail_unpin_region(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list)
 {
-
 	int i;
-	
-	for( i = 0 ; i < rail->subrail_count ; i++ )
+
+	for(i = 0; i < rail->subrail_count; i++)
 	{
-		sctk_rail_info_t * subrail = rail->subrails[i];
-		
-		if( !subrail->rail_pin_region || !subrail->rail_unpin_region )
+		sctk_rail_info_t *subrail = rail->subrails[i];
+
+		if(!subrail->rail_pin_region || !subrail->rail_unpin_region)
 		{
 			mpc_common_debug_fatal("To be RDMA capable a topological rail must\n"
-				 "only contain RDMA capable networks (error %s)", subrail->network_name );
+			                       "only contain RDMA capable networks (error %s)", subrail->network_name);
 		}
-		
-		subrail->rail_unpin_region( subrail, list + i );
+
+		subrail->rail_unpin_region(subrail, list + i);
 	}
 }
 
 void sctk_topological_rail_rdma_write(
-    sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg, void *src_addr,
-    struct sctk_rail_pin_ctx_list *local_key, void *dest_addr,
-    struct sctk_rail_pin_ctx_list *remote_key, size_t size) {
-  _mpc_lowcomm_endpoint_t *topo_endpoint =
-      sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS(msg));
-
-  if (!topo_endpoint) {
-    topological_on_demand_connection_handler(rail, SCTK_MSG_DEST_PROCESS(msg));
-  } else {
-    topo_endpoint = sctk_topological_rail_ellect_endpoint(
-        SCTK_MSG_DEST_PROCESS(msg), msg, topo_endpoint);
-  }
-
-  /* By default use rail 0 */
-  sctk_rail_info_t *endpoint_rail = rail->subrails[0];
-
-  /* If we found a topo endpoint, override the 0 */
-  if (topo_endpoint)
-    endpoint_rail = topo_endpoint->rail;
-
-  assume(endpoint_rail != NULL);
-  assume(endpoint_rail->rdma_write != NULL);
-
-  int subrail_id = endpoint_rail->subrail_id;
-  assume(0 <= subrail_id);
-  assume(subrail_id < rail->subrail_count);
-
-  endpoint_rail->rdma_write(endpoint_rail, msg, src_addr,
-                            local_key + subrail_id, dest_addr,
-                            remote_key + subrail_id, size);
-}
-
-void sctk_topological_rail_rdma_read(   sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg,
-                         void * src_addr, struct  sctk_rail_pin_ctx_list * remote_key,
-                         void * dest_addr, struct  sctk_rail_pin_ctx_list * local_key,
-                         size_t size )
+	sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg, void *src_addr,
+	struct sctk_rail_pin_ctx_list *local_key, void *dest_addr,
+	struct sctk_rail_pin_ctx_list *remote_key, size_t size)
 {
-  _mpc_lowcomm_endpoint_t *topo_endpoint =
-      sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS(msg));
+	_mpc_lowcomm_endpoint_t *topo_endpoint =
+		sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS(msg) );
 
-  if (!topo_endpoint) {
-    topological_on_demand_connection_handler(rail, SCTK_MSG_DEST_PROCESS(msg));
-  } else {
-    topo_endpoint = sctk_topological_rail_ellect_endpoint(
-        SCTK_MSG_DEST_PROCESS(msg), msg, topo_endpoint);
-  }
+	if(!topo_endpoint)
+	{
+		topological_on_demand_connection_handler(rail, SCTK_MSG_DEST_PROCESS(msg) );
+	}
+	else
+	{
+		topo_endpoint = sctk_topological_rail_ellect_endpoint(
+			SCTK_MSG_DEST_PROCESS(msg), msg, topo_endpoint);
+	}
 
-  /* By default use rail 0 */
-  sctk_rail_info_t *endpoint_rail = rail->subrails[0];
+	/* By default use rail 0 */
+	sctk_rail_info_t *endpoint_rail = rail->subrails[0];
 
-  /* If we found a topo endpoint, override the 0 */
-  if (topo_endpoint)
-    endpoint_rail = topo_endpoint->rail;
+	/* If we found a topo endpoint, override the 0 */
+	if(topo_endpoint)
+	{
+		endpoint_rail = topo_endpoint->rail;
+	}
 
-  assume(endpoint_rail != NULL);
-  assume(endpoint_rail->rdma_read != NULL);
+	assume(endpoint_rail != NULL);
+	assume(endpoint_rail->rdma_write != NULL);
 
-  int subrail_id = endpoint_rail->subrail_id;
-  assume(0 <= subrail_id);
-  assume(subrail_id < rail->subrail_count);
+	int subrail_id = endpoint_rail->subrail_id;
+	assume(0 <= subrail_id);
+	assume(subrail_id < rail->subrail_count);
 
-  endpoint_rail->rdma_read(endpoint_rail, msg, src_addr,
-                           remote_key + subrail_id, dest_addr,
-                           local_key + subrail_id, size);
+	endpoint_rail->rdma_write(endpoint_rail, msg, src_addr,
+	                          local_key + subrail_id, dest_addr,
+	                          remote_key + subrail_id, size);
 }
 
-void sctk_topological_rail_rdma_fetch_and_op(   sctk_rail_info_t *rail,
-												mpc_lowcomm_ptp_message_t *msg,
-												void * fetch_addr,
-												struct  sctk_rail_pin_ctx_list * local_key,
-												void * remote_addr,
-												struct  sctk_rail_pin_ctx_list * remote_key,
-												void * add,
-												RDMA_op op,
-												RDMA_type type )
+void sctk_topological_rail_rdma_read(sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg,
+                                     void *src_addr, struct  sctk_rail_pin_ctx_list *remote_key,
+                                     void *dest_addr, struct  sctk_rail_pin_ctx_list *local_key,
+                                     size_t size)
 {
-  _mpc_lowcomm_endpoint_t *topo_endpoint =
-      sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS(msg));
+	_mpc_lowcomm_endpoint_t *topo_endpoint =
+		sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS(msg) );
 
-  if (!topo_endpoint) {
-    topological_on_demand_connection_handler(rail, SCTK_MSG_DEST_PROCESS(msg));
-  } else {
-    topo_endpoint = sctk_topological_rail_ellect_endpoint(
-        SCTK_MSG_DEST_PROCESS(msg), msg, topo_endpoint);
-  }
+	if(!topo_endpoint)
+	{
+		topological_on_demand_connection_handler(rail, SCTK_MSG_DEST_PROCESS(msg) );
+	}
+	else
+	{
+		topo_endpoint = sctk_topological_rail_ellect_endpoint(
+			SCTK_MSG_DEST_PROCESS(msg), msg, topo_endpoint);
+	}
 
-  /* By default use rail 0 */
-  sctk_rail_info_t *endpoint_rail = rail->subrails[0];
+	/* By default use rail 0 */
+	sctk_rail_info_t *endpoint_rail = rail->subrails[0];
 
-  /* If we found a topo endpoint, override the 0 */
-  if (topo_endpoint)
-    endpoint_rail = topo_endpoint->rail;
+	/* If we found a topo endpoint, override the 0 */
+	if(topo_endpoint)
+	{
+		endpoint_rail = topo_endpoint->rail;
+	}
 
-  assume(endpoint_rail != NULL);
-  assume(endpoint_rail->rdma_read != NULL);
+	assume(endpoint_rail != NULL);
+	assume(endpoint_rail->rdma_read != NULL);
 
-  int subrail_id = endpoint_rail->subrail_id;
-  assume(0 <= subrail_id);
-  assume(subrail_id < rail->subrail_count);
+	int subrail_id = endpoint_rail->subrail_id;
+	assume(0 <= subrail_id);
+	assume(subrail_id < rail->subrail_count);
 
-  endpoint_rail->rdma_fetch_and_op(endpoint_rail, msg, fetch_addr,
-                                   local_key + subrail_id, remote_addr,
-                                   remote_key + subrail_id, add, op, type);
+	endpoint_rail->rdma_read(endpoint_rail, msg, src_addr,
+	                         remote_key + subrail_id, dest_addr,
+	                         local_key + subrail_id, size);
 }
 
-void sctk_topological_rail_cas(   sctk_rail_info_t *rail,
-								  mpc_lowcomm_ptp_message_t *msg,
-								  void *  res_addr,
-						          struct  sctk_rail_pin_ctx_list * local_key,
-								  void * remote_addr,
-								  struct  sctk_rail_pin_ctx_list * remote_key,
-								  void * comp,
-								  void * new,
-								  RDMA_type type )
+void sctk_topological_rail_rdma_fetch_and_op(sctk_rail_info_t *rail,
+                                             mpc_lowcomm_ptp_message_t *msg,
+                                             void *fetch_addr,
+                                             struct  sctk_rail_pin_ctx_list *local_key,
+                                             void *remote_addr,
+                                             struct  sctk_rail_pin_ctx_list *remote_key,
+                                             void *add,
+                                             RDMA_op op,
+                                             RDMA_type type)
 {
-  _mpc_lowcomm_endpoint_t *topo_endpoint =
-      sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS(msg));
+	_mpc_lowcomm_endpoint_t *topo_endpoint =
+		sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS(msg) );
 
-  if (!topo_endpoint) {
-    topological_on_demand_connection_handler(rail, SCTK_MSG_DEST_PROCESS(msg));
-  } else {
-    topo_endpoint = sctk_topological_rail_ellect_endpoint(
-        SCTK_MSG_DEST_PROCESS(msg), msg, topo_endpoint);
-  }
+	if(!topo_endpoint)
+	{
+		topological_on_demand_connection_handler(rail, SCTK_MSG_DEST_PROCESS(msg) );
+	}
+	else
+	{
+		topo_endpoint = sctk_topological_rail_ellect_endpoint(
+			SCTK_MSG_DEST_PROCESS(msg), msg, topo_endpoint);
+	}
 
-  /* By default use rail 0 */
-  sctk_rail_info_t *endpoint_rail = rail->subrails[0];
+	/* By default use rail 0 */
+	sctk_rail_info_t *endpoint_rail = rail->subrails[0];
 
-  /* If we found a topo endpoint, override the 0 */
-  if (topo_endpoint)
-    endpoint_rail = topo_endpoint->rail;
+	/* If we found a topo endpoint, override the 0 */
+	if(topo_endpoint)
+	{
+		endpoint_rail = topo_endpoint->rail;
+	}
 
-  assume(endpoint_rail != NULL);
-  assume(endpoint_rail->rdma_read != NULL);
+	assume(endpoint_rail != NULL);
+	assume(endpoint_rail->rdma_read != NULL);
 
-  int subrail_id = endpoint_rail->subrail_id;
-  assume(0 <= subrail_id);
-  assume(subrail_id < rail->subrail_count);
+	int subrail_id = endpoint_rail->subrail_id;
+	assume(0 <= subrail_id);
+	assume(subrail_id < rail->subrail_count);
 
-  endpoint_rail->rdma_cas(endpoint_rail, msg, res_addr, local_key + subrail_id,
-                          remote_addr, remote_key + subrail_id, comp, new,
-                          type);
+	endpoint_rail->rdma_fetch_and_op(endpoint_rail, msg, fetch_addr,
+	                                 local_key + subrail_id, remote_addr,
+	                                 remote_key + subrail_id, add, op, type);
 }
 
+void sctk_topological_rail_cas(sctk_rail_info_t *rail,
+                               mpc_lowcomm_ptp_message_t *msg,
+                               void *res_addr,
+                               struct  sctk_rail_pin_ctx_list *local_key,
+                               void *remote_addr,
+                               struct  sctk_rail_pin_ctx_list *remote_key,
+                               void *comp,
+                               void *new,
+                               RDMA_type type)
+{
+	_mpc_lowcomm_endpoint_t *topo_endpoint =
+		sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS(msg) );
 
+	if(!topo_endpoint)
+	{
+		topological_on_demand_connection_handler(rail, SCTK_MSG_DEST_PROCESS(msg) );
+	}
+	else
+	{
+		topo_endpoint = sctk_topological_rail_ellect_endpoint(
+			SCTK_MSG_DEST_PROCESS(msg), msg, topo_endpoint);
+	}
 
-int sctk_topological_rail_rdma_fetch_and_op_gate( sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type )
+	/* By default use rail 0 */
+	sctk_rail_info_t *endpoint_rail = rail->subrails[0];
+
+	/* If we found a topo endpoint, override the 0 */
+	if(topo_endpoint)
+	{
+		endpoint_rail = topo_endpoint->rail;
+	}
+
+	assume(endpoint_rail != NULL);
+	assume(endpoint_rail->rdma_read != NULL);
+
+	int subrail_id = endpoint_rail->subrail_id;
+	assume(0 <= subrail_id);
+	assume(subrail_id < rail->subrail_count);
+
+	endpoint_rail->rdma_cas(endpoint_rail, msg, res_addr, local_key + subrail_id,
+	                        remote_addr, remote_key + subrail_id, comp, new,
+	                        type);
+}
+
+int sctk_topological_rail_rdma_fetch_and_op_gate(sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type)
 {
 	/* Check on all rails */
 	int i;
-	
-	for( i = 0 ; i < rail->subrail_count ; i++ )
+
+	for(i = 0; i < rail->subrail_count; i++)
 	{
-		sctk_rail_info_t * subrail = rail->subrails[i];
-		
-		if( !subrail->rdma_fetch_and_op_gate )
+		sctk_rail_info_t *subrail = rail->subrails[i];
+
+		if(!subrail->rdma_fetch_and_op_gate)
 		{
 			return 0;
 		}
-		
-		if( (subrail->rdma_fetch_and_op_gate)( subrail, size, op, type ) == 0 )
+
+		if( (subrail->rdma_fetch_and_op_gate)(subrail, size, op, type) == 0)
 		{
 			return 0;
 		}
 	}
-	
+
 	return 1;
 }
 
-int sctk_topological_rail_rdma_cas_gate( sctk_rail_info_t *rail, size_t size, RDMA_type type )
+int sctk_topological_rail_rdma_cas_gate(sctk_rail_info_t *rail, size_t size, RDMA_type type)
 {
 	/* Check on all rails */
 	int i;
-	
-	for( i = 0 ; i < rail->subrail_count ; i++ )
+
+	for(i = 0; i < rail->subrail_count; i++)
 	{
-		sctk_rail_info_t * subrail = rail->subrails[i];
-		
-		if( !subrail->rdma_cas_gate )
+		sctk_rail_info_t *subrail = rail->subrails[i];
+
+		if(!subrail->rdma_cas_gate)
 		{
 			return 0;
 		}
-		
-		if( (subrail->rdma_cas_gate)( subrail, size, type ) == 0 )
+
+		if( (subrail->rdma_cas_gate)(subrail, size, type) == 0)
 		{
 			return 0;
 		}
 	}
-	
+
 	return 1;
 }
 
-
-
-
-
-
-
-void sctk_network_init_topological ( sctk_rail_info_t *rail )
+void sctk_network_init_topological(sctk_rail_info_t *rail)
 {
 	/* Register Hooks in rail */
-	rail->send_message_endpoint = _mpc_lowcomm_topological_send_message;
-	rail->notify_recv_message = _mpc_lowcomm_topological_notify_receive;
-	rail->notify_matching_message = _mpc_lowcomm_topological_notify_matching;
-	rail->notify_perform_message = _mpc_lowcomm_topological_notify_perform;
-	rail->notify_idle_message = _mpc_lowcomm_topological_notify_idle;
-	rail->notify_probe_message = _mpc_lowcomm_topological_notify_probe;
-	rail->notify_any_source_message = _mpc_lowcomm_topological_notify_anysource;
-	rail->send_message_from_network = sctk_send_message_from_network_topological;
-	rail->control_message_handler = topological_control_message_handler;
-	rail->connect_to = sctk_network_connection_to_topological;
-	rail->connect_from = sctk_network_connection_from_topological;
-	rail->rail_pin_region = sctk_topological_rail_pin_region;
+	rail->send_message_endpoint     = _mpc_lowcomm_topological_send_message;
+	rail->notify_recv_message       = NULL;
+	rail->notify_matching_message   = NULL;
+	rail->notify_perform_message    = NULL;
+	rail->notify_idle_message       = NULL;
+	rail->notify_probe_message      = NULL;
+	rail->notify_any_source_message = NULL;
+	rail->send_message_from_network = NULL;
+	rail->control_message_handler   = NULL;
+	rail->connect_to        = NULL;
+	rail->connect_from      = NULL;
+	rail->rail_pin_region   = sctk_topological_rail_pin_region;
 	rail->rail_unpin_region = sctk_topological_rail_unpin_region;
-	
+
 	rail->rdma_write = sctk_topological_rail_rdma_write;
-	rail->rdma_read = sctk_topological_rail_rdma_read;
-	
+	rail->rdma_read  = sctk_topological_rail_rdma_read;
+
 	rail->rdma_fetch_and_op_gate = sctk_topological_rail_rdma_fetch_and_op_gate;
-	rail->rdma_fetch_and_op = sctk_topological_rail_rdma_fetch_and_op;
-	
+	rail->rdma_fetch_and_op      = sctk_topological_rail_rdma_fetch_and_op;
+
 	rail->rdma_cas_gate = sctk_topological_rail_rdma_cas_gate;
-	rail->rdma_cas = sctk_topological_rail_cas;
-	
+	rail->rdma_cas      = sctk_topological_rail_cas;
+
 	rail->network_name = "Topological RAIL";
 
-	sctk_network_init_topological_rail_info( rail );
-	
+	sctk_network_init_topological_rail_info(rail);
+
 	/* Init Routes (intialize on-demand context) */
-	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, topological_on_demand_connection_handler );
+	sctk_rail_init_route(rail, rail->runtime_config_rail->topology, topological_on_demand_connection_handler);
 }

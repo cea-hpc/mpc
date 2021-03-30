@@ -608,12 +608,8 @@ static void _mpc_lowcomm_ib_receive_message(__UNUSED__ mpc_lowcomm_ptp_message_t
 	}
 }
 
-static void _mpc_lowcomm_ib_notify_matching(__UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail)
-{
-}
-
 /* WARNING: This function can be called with dest == mpc_common_get_process_rank() */
-static void _mpc_lowcomm_ib_notify_perform(__UNUSED__ int remote_process, __UNUSED__ int remote_task_id, __UNUSED__ int polling_task_id, __UNUSED__ int blocking, sctk_rail_info_t *rail)
+static void _mpc_lowcomm_ib_notify_perform(__UNUSED__ mpc_lowcomm_peer_uid_t remote_process, __UNUSED__ int remote_task_id, __UNUSED__ int polling_task_id, __UNUSED__ int blocking, sctk_rail_info_t *rail)
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 
@@ -990,7 +986,7 @@ void sctk_network_init_mpi_ib(sctk_rail_info_t *rail)
 	rail->send_message_endpoint = _mpc_lowcomm_ib_send_message;
 
 	rail->notify_recv_message       = _mpc_lowcomm_ib_receive_message;
-	rail->notify_matching_message   = _mpc_lowcomm_ib_notify_matching;
+	rail->notify_matching_message   = NULL;
 	rail->notify_perform_message    = _mpc_lowcomm_ib_notify_perform;
 	rail->notify_idle_message       = _mpc_lowcomm_ib_notify_idle;
 	rail->notify_any_source_message = _mpc_lowcomm_ib_notify_anysource;

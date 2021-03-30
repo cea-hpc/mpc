@@ -197,6 +197,7 @@ void mpc_common_debug_assert_print(FILE *stream, const int line,
 #if !defined(NDEBUG)
 	#undef assert
 	#undef assert_func
+	#define MPC_IN_DEBUG_MODE
 	#define assert(op)                                                                  \
 	do                                                                                  \
 	{                                                                                   \
@@ -210,6 +211,7 @@ void mpc_common_debug_assert_print(FILE *stream, const int line,
 		  op                                              \
 	  } while(0)
 #else
+  #undef MPC_IN_DEBUG_MODE
   #undef assert_func
   #define assert_func(op)    (void)(0)
   #undef assert

@@ -46,7 +46,7 @@ char _mpc_lowcomm_endpoint_is_initiator(_mpc_lowcomm_endpoint_t *edp)
 	return is_initiator;
 }
 
-void _mpc_lowcomm_endpoint_init(_mpc_lowcomm_endpoint_t *edp, int dest, sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_type_t type)
+void _mpc_lowcomm_endpoint_init(_mpc_lowcomm_endpoint_t *edp, mpc_lowcomm_peer_uid_t dest, sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_type_t type)
 {
 	memset(edp, 0, sizeof(_mpc_lowcomm_endpoint_t) );
 	edp->dest        = dest;

@@ -22,6 +22,8 @@
 #ifndef MPC_LOWCOMM_GROUP_INC_H
 #define MPC_LOWCOMM_GROUP_INC_H
 
+#include <mpc_lowcomm_monitor.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -163,6 +165,15 @@ int mpc_lowcomm_group_get_local_leader(mpc_lowcomm_group_t *g);
  * @return int the process rank
  */
 int mpc_lowcomm_group_process_rank_from_world(int comm_world_rank);
+
+/**
+ * @brief Get host process UID for a given rank
+ *
+ * @param g the group to look into
+ * @param rank the rank of interest
+ * @return int the corresponding process UID
+ */
+mpc_lowcomm_peer_uid_t mpc_lowcomm_group_process_uid_for_rank(mpc_lowcomm_group_t * g, int rank);
 
 #ifdef __cplusplus
 }

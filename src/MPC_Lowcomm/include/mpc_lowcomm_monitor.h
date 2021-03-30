@@ -3,7 +3,6 @@
 
 #include <stdlib.h>
 #include <mpc_common_types.h>
-#include <mpc_lowcomm_monitor.h>
 
 /***************
 * ERROR CODES *
@@ -34,15 +33,29 @@ static inline mpc_lowcomm_set_uid_t mpc_lowcomm_peer_get_set(mpc_lowcomm_peer_ui
 	return uid >> 32;
 }
 
-static inline mpc_lowcomm_peer_uid_t mpc_lowcomm_peer_get_rank(mpc_lowcomm_peer_uid_t uid)
+static inline int mpc_lowcomm_peer_get_rank(mpc_lowcomm_peer_uid_t uid)
 {
-	return (uint32_t)uid;
+	return (int)uid;
+}
+
+static inline mpc_lowcomm_peer_uid_t mpc_lowcomm_monitor_uid_of(uint32_t set_uid, int peer_rank)
+{
+	uint64_t ret = 0;
+	uint64_t lset_uid = set_uid;
+
+	ret |= lset_uid << 32;
+	ret |= peer_rank;
+
+	return ret;
 }
 
 mpc_lowcomm_peer_uid_t mpc_lowcomm_monitor_get_uid();
 mpc_lowcomm_set_uid_t mpc_lowcomm_monitor_get_gid();
-mpc_lowcomm_peer_uid_t mpc_lowcomm_monitor_get_uid_of(mpc_lowcomm_set_uid_t set, int rank);
 
+static inline mpc_lowcomm_peer_uid_t mpc_lowcomm_monitor_local_uid_of(int peer_rank)
+{
+	return mpc_lowcomm_monitor_uid_of(mpc_lowcomm_monitor_get_gid(), peer_rank);
+}
 
 int mpc_lowcomm_peer_closer(mpc_lowcomm_peer_uid_t dest, mpc_lowcomm_peer_uid_t current, mpc_lowcomm_peer_uid_t candidate);
 
@@ -58,7 +71,8 @@ typedef enum
 	MPC_LAUNCH_MONITOR_COMMAND_NONE,
 	MPC_LAUNCH_MONITOR_COMMAND_REQUEST_PEER_INFO,
 	MPC_LAUNCH_MONITOR_COMMAND_REQUEST_SET_INFO,
-	MPC_LAUNCH_MONITOR_PING
+	MPC_LAUNCH_MONITOR_PING,
+	MPC_LAUNCH_MONITOR_ON_DEMAND
 }mpc_lowcomm_monitor_command_t;
 
 #define MPC_LAUNCH_MONITOR_KEY_LEN    128
@@ -76,7 +90,7 @@ typedef struct mpc_lowcomm_monitor_peer_info_s
 	char                   uri[MPC_LOWCOMM_PEER_URI_SIZE];
 }mpc_lowcomm_monitor_peer_info_t;
 
-
+	
 typedef union
 {
 	struct
@@ -137,9 +151,10 @@ typedef int (*mpc_lowcomm_on_demand_callback_t)(char *out_data,
 												int return_data_len);
 
 int mpc_lowcomm_monitor_register_on_demand_callback(char *target,
-                                                    mpc_lowcomm_on_demand_callback_t callback);
+                                                    mpc_lowcomm_on_demand_callback_t callback,
+													void * ctx);
 
-mpc_lowcomm_on_demand_callback_t mpc_lowcomm_monitor_get_on_demand_callback(char *target);
+mpc_lowcomm_on_demand_callback_t mpc_lowcomm_monitor_get_on_demand_callback(char *target, void **ctx);
 
 int mpc_lowcomm_monitor_unregister_on_demand_callback(char * target);
 

@@ -26,6 +26,7 @@
 #include <mpc_common_spinlock.h>
 #include <mpc_common_types.h>
 #include <mpc_common_datastructure.h>
+#include <mpc_lowcomm_monitor.h>
 
 #include "sctk_rail.h"
 
@@ -111,14 +112,14 @@ typedef struct _mpc_lowcomm_multirail_table_entry_s
 	_mpc_lowcomm_multirail_endpoint_list_t endpoints;
 	mpc_common_rwlock_t                    endpoints_lock;
 
-	int64_t                                destination;
+	mpc_lowcomm_peer_uid_t                 destination;
 }_mpc_lowcomm_multirail_table_entry_t;
 
-void _mpc_lowcomm_multirail_table_entry_init(_mpc_lowcomm_multirail_table_entry_t *entry, int destination);
+void _mpc_lowcomm_multirail_table_entry_init(_mpc_lowcomm_multirail_table_entry_t *entry, mpc_lowcomm_peer_uid_t destination);
 void _mpc_lowcomm_multirail_table_entry_release(_mpc_lowcomm_multirail_table_entry_t *entry);
 void _mpc_lowcomm_multirail_table_entry_free(_mpc_lowcomm_multirail_table_entry_t *entry);
 
-_mpc_lowcomm_multirail_table_entry_t *_mpc_lowcomm_multirail_table_entry_new(int destination);
+_mpc_lowcomm_multirail_table_entry_t *_mpc_lowcomm_multirail_table_entry_new(mpc_lowcomm_peer_uid_t destination);
 
 void _mpc_lowcomm_multirail_table_entry_push_endpoint(_mpc_lowcomm_multirail_table_entry_t *entry, _mpc_lowcomm_endpoint_t *endpoint);
 void _mpc_lowcomm_multirail_table_entry_pop_endpoint(_mpc_lowcomm_multirail_table_entry_t *entry, _mpc_lowcomm_endpoint_t *endpoint);
@@ -132,12 +133,11 @@ struct _mpc_lowcomm_multirail_table
 void _mpc_lowcomm_multirail_table_init();
 void _mpc_lowcomm_multirail_table_release();
 
-_mpc_lowcomm_multirail_table_entry_t *_mpc_lowcomm_multirail_table_acquire_routes(int64_t destination);
+_mpc_lowcomm_multirail_table_entry_t *_mpc_lowcomm_multirail_table_acquire_routes(mpc_lowcomm_peer_uid_t destination);
 void _mpc_lowcomm_multirail_table_relax_routes(_mpc_lowcomm_multirail_table_entry_t *entry);
 
 void _mpc_lowcomm_multirail_table_push_endpoint(_mpc_lowcomm_endpoint_t *endpoint);
 void _mpc_lowcomm_multirail_table_pop_endpoint(_mpc_lowcomm_endpoint_t *topop);
-void _mpc_lowcomm_multirail_table_route_to_process(int destination, int *new_destination);
 void _mpc_lowcomm_multirail_table_prune(void);
 
 /************************************************************************/
@@ -147,11 +147,11 @@ void _mpc_lowcomm_multirail_table_prune(void);
 typedef struct sctk_pending_on_demand_s
 {
 	sctk_rail_info_t *               rail;
-	int                              dest;
+	mpc_lowcomm_peer_uid_t           dest;
 	struct sctk_pending_on_demand_s *next;
 }sctk_pending_on_demand_t;
 
-void sctk_pending_on_demand_push(sctk_rail_info_t *rail, int dest);
+void sctk_pending_on_demand_push(sctk_rail_info_t *rail, mpc_lowcomm_peer_uid_t dest);
 
 /******************************
 * MULTIRAIL DRIVER INTERFACE *
@@ -160,7 +160,7 @@ void sctk_pending_on_demand_push(sctk_rail_info_t *rail, int dest);
 void _mpc_lowcomm_multirail_send_message(mpc_lowcomm_ptp_message_t *msg);
 void _mpc_lowcomm_multirail_notify_receive(mpc_lowcomm_ptp_message_t *msg);
 void _mpc_lowcomm_multirail_notify_matching(mpc_lowcomm_ptp_message_t *msg);
-void _mpc_lowcomm_multirail_notify_perform(int remote_process, int remote_task_id, int polling_task_id, int blocking);
+void _mpc_lowcomm_multirail_notify_perform(mpc_lowcomm_peer_uid_t remote_process, int remote_task_id, int polling_task_id, int blocking);
 void _mpc_lowcomm_multirail_notify_idle();
 void _mpc_lowcomm_multirail_notify_anysource(int polling_task_id, int blocking);
 void _mpc_lowcomm_multirail_notify_new_comm(int comm_idx, size_t comm_size);

@@ -63,7 +63,7 @@ void sctk_ib_init_remote ( int dest, sctk_rail_info_t *rail, struct _mpc_lowcomm
 		 origin = _MPC_LOWCOMM_ENDPOINT_DYNAMIC;
 	}
 		
-	_mpc_lowcomm_endpoint_init( route_table,  dest, rail, origin );
+	_mpc_lowcomm_endpoint_init( route_table,  mpc_lowcomm_monitor_local_uid_of(dest), rail, origin );
 
 	/* Fill IB dependent CTX */
 

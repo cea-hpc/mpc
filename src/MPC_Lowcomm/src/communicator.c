@@ -900,21 +900,6 @@ void _mpc_lowcomm_communicator_init(void)
 	__comm_self = __init_communicator_with_id(MPC_LOWCOMM_COMM_SELF_ID, NULL, MPC_LOWCOMM_COMM_SELF_NUMERIC_ID);
 }
 
-void _mpc_lowcomm_communicator_init_task(void)
-{
-	/* Make sure UIDs are filled in WORLD */
-	mpc_lowcomm_group_t *cw_group = _mpc_lowcomm_group_world();
-
-	unsigned int i;
-
-	for(i = 0 ; i < cw_group->size; i++)
-	{
-		_mpc_lowcomm_group_rank_descriptor_t *rd = mpc_lowcomm_group_descriptor(cw_group, i);
-		assume(rd != NULL);
-		rd->uid = mpc_lowcomm_monitor_get_uid_of(mpc_lowcomm_monitor_get_gid(), i);
-	}
-
-}
 
 void _mpc_lowcomm_communicator_release(void)
 {
@@ -1071,6 +1056,20 @@ int *mpc_lowcomm_communicator_get_process_list(const mpc_lowcomm_communicator_t 
 	}
 
 	return _mpc_lowcomm_group_process_list(tcomm->group);
+}
+
+mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_uid_for(const mpc_lowcomm_communicator_t comm, int rank)
+{
+	assert(comm != NULL);
+	mpc_lowcomm_communicator_t tcomm = mpc_lowcomm_communicator_get_local(comm);
+	assert(tcomm != NULL);
+
+	if(tcomm->is_comm_self)
+	{
+		return mpc_lowcomm_monitor_get_uid();
+	}
+
+	return mpc_lowcomm_group_process_uid_for_rank(tcomm->group, rank);
 }
 
 typedef struct

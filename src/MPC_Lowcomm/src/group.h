@@ -37,7 +37,7 @@
 typedef struct _mpc_lowcomm_group_rank_descriptor_s
 {
 	int comm_world_rank;
-	mpc_lowcomm_set_uid_t uid;
+	mpc_lowcomm_peer_uid_t host_process_uid;
 }_mpc_lowcomm_group_rank_descriptor_t;
 
 int _mpc_lowcomm_group_rank_descriptor_equal(_mpc_lowcomm_group_rank_descriptor_t *a,
@@ -106,6 +106,7 @@ void _mpc_lowcomm_group_create_world(void);
 void _mpc_lowcomm_group_release_world(void);
 
 mpc_lowcomm_group_t * _mpc_lowcomm_group_world(void);
+mpc_lowcomm_group_t * _mpc_lowcomm_group_world_no_assert(void);
 
 mpc_lowcomm_group_t * _mpc_lowcomm_group_create_from_world_ranks(int size, int * world_ranks);
 

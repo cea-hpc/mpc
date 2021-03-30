@@ -32,6 +32,7 @@
 #include <mpc_common_spinlock.h>
 #include <mpc_common_types.h>
 #include <mpc_common_datastructure.h>
+#include <mpc_lowcomm_monitor.h>
 
 /* Typedefs for this file are in the central
  * header to allow later references avoiding
@@ -90,7 +91,7 @@ struct sctk_rail_info_s;
  */
 struct _mpc_lowcomm_endpoint_s
 {
-	int64_t                      dest;              /**< Target CW rank */
+	mpc_lowcomm_peer_uid_t       dest;              /**< Target UID */
 	_mpc_lowcomm_endpoint_info_t data;              /**< Rail level content */
 	struct sctk_rail_info_s *    parent_rail;       /**< Pointer to the parent rail (called by default if present) */
 	struct sctk_rail_info_s *    rail;              /**< Pointer to the rail owning this endpoint */
@@ -126,7 +127,7 @@ struct _mpc_lowcomm_endpoint_s
  * @param type type of the endpoint
  */
 void _mpc_lowcomm_endpoint_init(_mpc_lowcomm_endpoint_t *edp,
-                                int dest,
+                                mpc_lowcomm_peer_uid_t dest,
                                 struct sctk_rail_info_s *rail,
                                 _mpc_lowcomm_endpoint_type_t type);
 

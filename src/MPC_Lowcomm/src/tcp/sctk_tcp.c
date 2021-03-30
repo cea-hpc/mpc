@@ -33,25 +33,26 @@
 /********************************************************************/
 /* Inter Thread Comm Hooks                                          */
 /********************************************************************/
+
 /**
  * Function called by each started polling thread, processing message on the given route.
  * \param[in] tmp the route to progress
  * \return NULL
  */
-static void *sctk_tcp_thread ( _mpc_lowcomm_endpoint_t *tmp )
+static void *__tcp_thread_loop(_mpc_lowcomm_endpoint_t *tmp)
 {
 	int fd = tmp->data.tcp.fd;
 
-	mpc_common_debug( "Rail %d from %d launched", tmp->rail->rail_number, tmp->dest );
+	mpc_common_debug("Rail %d from %d launched", tmp->rail->rail_number, tmp->dest);
 
-	while ( 1 )
+	while(1)
 	{
 		mpc_lowcomm_ptp_message_t *msg;
-		void *body;
-		size_t size;
+		void *  body;
+		size_t  size;
 		ssize_t res;
 
-		res = mpc_common_io_safe_read ( fd, ( char * ) &size, sizeof ( size_t ) );
+		res = mpc_common_io_safe_read(fd, ( char * )&size, sizeof(size_t) );
 
 		if( (res <= 0) )
 		{
@@ -59,27 +60,27 @@ static void *sctk_tcp_thread ( _mpc_lowcomm_endpoint_t *tmp )
 			break;
 		}
 
-		if ( res < (ssize_t)sizeof ( size_t ) )
+		if(res < (ssize_t)sizeof(size_t) )
 		{
 			break;
 		}
 
-		if ( size < sizeof ( mpc_lowcomm_ptp_message_body_t ) )
+		if(size < sizeof(mpc_lowcomm_ptp_message_body_t) )
 		{
 			break;
 		}
 
-		size = size - sizeof ( mpc_lowcomm_ptp_message_body_t ) + sizeof ( mpc_lowcomm_ptp_message_t );
+		size = size - sizeof(mpc_lowcomm_ptp_message_body_t) + sizeof(mpc_lowcomm_ptp_message_t);
 
-		msg = sctk_malloc ( size );
-		
-		assume( msg != NULL );
-		
-		body = ( char * ) msg + sizeof ( mpc_lowcomm_ptp_message_t );
+		msg = sctk_malloc(size);
+
+		assume(msg != NULL);
+
+		body = ( char * )msg + sizeof(mpc_lowcomm_ptp_message_t);
 
 
 		/* Recv header*/
-		res = mpc_common_io_safe_read ( fd, ( char * ) msg, sizeof ( mpc_lowcomm_ptp_message_body_t ) );
+		res = mpc_common_io_safe_read(fd, ( char * )msg, sizeof(mpc_lowcomm_ptp_message_body_t) );
 
 		if( (res <= 0) )
 		{
@@ -87,18 +88,18 @@ static void *sctk_tcp_thread ( _mpc_lowcomm_endpoint_t *tmp )
 			break;
 		}
 
-		if ( res != sizeof ( mpc_lowcomm_ptp_message_body_t ) )
+		if(res != sizeof(mpc_lowcomm_ptp_message_body_t) )
 		{
 			break;
 		}
 
-		SCTK_MSG_COMPLETION_FLAG_SET ( msg , NULL );
+		SCTK_MSG_COMPLETION_FLAG_SET(msg, NULL);
 		msg->tail.message_type = MPC_LOWCOMM_MESSAGE_NETWORK;
 
 		/* Recv body*/
-		size = size - sizeof ( mpc_lowcomm_ptp_message_t );
-		
-		res = mpc_common_io_safe_read ( fd, ( char * ) body, size );
+		size = size - sizeof(mpc_lowcomm_ptp_message_t);
+
+		res = mpc_common_io_safe_read(fd, ( char * )body, size);
 
 		if( (res <= 0) )
 		{
@@ -106,16 +107,16 @@ static void *sctk_tcp_thread ( _mpc_lowcomm_endpoint_t *tmp )
 			break;
 		}
 
-		_mpc_comm_ptp_message_clear_request ( msg );
-		_mpc_comm_ptp_message_set_copy_and_free ( msg, sctk_free, sctk_net_message_copy );
+		_mpc_comm_ptp_message_clear_request(msg);
+		_mpc_comm_ptp_message_set_copy_and_free(msg, sctk_free, sctk_net_message_copy);
 
 
-		tmp->rail->send_message_from_network ( msg );
+		tmp->rail->send_message_from_network(msg);
 	}
-	
+
 	mpc_common_debug("TCP THREAD LEAVING");
 
-	pthread_exit( NULL );
+	pthread_exit(NULL);
 	return NULL;
 }
 
@@ -124,120 +125,88 @@ static void *sctk_tcp_thread ( _mpc_lowcomm_endpoint_t *tmp )
  * \param[in] msg the message to send
  * \param[in] endpoint the route to use
  */
-static void _mpc_lowcomm_tcp_send_message ( mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint )
+static void _mpc_lowcomm_tcp_send_message(mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint)
 {
 	size_t size;
-	int fd;
+	int    fd;
 
-	mpc_common_spinlock_lock ( & ( endpoint->data.tcp.lock ) );
+	mpc_common_spinlock_lock(&(endpoint->data.tcp.lock) );
 
 	fd = endpoint->data.tcp.fd;
 
-	size = SCTK_MSG_SIZE ( msg ) + sizeof ( mpc_lowcomm_ptp_message_body_t );
+	size = SCTK_MSG_SIZE(msg) + sizeof(mpc_lowcomm_ptp_message_body_t);
 
 	mpc_common_nodebug("SEND MSG of size %d ENDPOINT TCP to %d", size, endpoint->dest);
 
-	mpc_common_io_safe_write ( fd, ( char * ) &size, sizeof ( size_t ) );
+	mpc_common_io_safe_write(fd, ( char * )&size, sizeof(size_t) );
 
-	mpc_common_io_safe_write ( fd, ( char * ) msg, sizeof ( mpc_lowcomm_ptp_message_body_t ) );
+	mpc_common_io_safe_write(fd, ( char * )msg, sizeof(mpc_lowcomm_ptp_message_body_t) );
 
-	sctk_net_write_in_fd ( msg, fd );
-	mpc_common_spinlock_unlock ( & ( endpoint->data.tcp.lock ) );
+	sctk_net_write_in_fd(msg, fd);
+	mpc_common_spinlock_unlock(&(endpoint->data.tcp.lock) );
 
 	mpc_common_nodebug("SEND MSG ENDPOINT TCP to %d DONE", endpoint->dest);
 
-	mpc_lowcomm_ptp_message_complete_and_free ( msg );
+	mpc_lowcomm_ptp_message_complete_and_free(msg);
 }
-
-/**
- * Not used for this network.
- * \param[in] msg not used
- * \param[in] rail not used
- */
-static void _mpc_lowcomm_tcp_notify_receive ( __UNUSED__ mpc_lowcomm_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail ) {}
-
-/**
- * Not used for this network.
- * \param[in] msg not used
- * \param[in] rail not used
- */
-static void _mpc_lowcomm_tcp_notify_matching (  __UNUSED__ mpc_lowcomm_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail ) {}
-
-/**
- * Not used for this network.
- * \param[in] remote not used
- * \param[in] remote_task_id not used
- * \param[in] polling_task_id not used
- * \param[in] blocking not used
- * \param[in] rail not used
- */
-static void _mpc_lowcomm_tcp_notify_perform (  __UNUSED__ int remote,  __UNUSED__ int remote_task_id,  __UNUSED__ int polling_task_id,  __UNUSED__ int blocking, __UNUSED__  sctk_rail_info_t *rail ) {}
-
-/**
- * Not used for this network.
- * \param[in] msg not used
- * \param[in] rail not used
- */
-static void _mpc_lowcomm_tcp_notify_anysource ( __UNUSED__  int polling_task_id, __UNUSED__ int blocking,  __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /**
  * Handler triggering the send_message_from_network call, before reaching the inter_thread_comm matching process.
  * \param[in] msg the message received from the network, to be matched w/ a local RECV.
  */
-static int sctk_send_message_from_network_tcp ( mpc_lowcomm_ptp_message_t *msg )
+static int _mpc_lowcomm_tcp_send_message_from_network(mpc_lowcomm_ptp_message_t *msg)
 {
-	if ( sctk_send_message_from_network_reorder ( msg ) == REORDER_NO_NUMBERING )
+	if(sctk_send_message_from_network_reorder(msg) == REORDER_NO_NUMBERING)
 	{
 		/* No reordering */
-		_mpc_comm_ptp_message_send_check ( msg, 1 );
+		_mpc_comm_ptp_message_send_check(msg, 1);
 	}
 
 	return 1;
 }
 
-
 /********************************************************************/
 /* TCP Init                                                         */
 /********************************************************************/
+
 /**
  * Procedure to clear the TCP rail.
  * \param[in,out] rail the rail to close.
  */
-void sctk_network_finalize_tcp(sctk_rail_info_t *rail)
+void _mpc_lowcomm_tcp_finalize(sctk_rail_info_t *rail)
 {
 	sctk_tcp_rail_info_t *rail_tcp = &rail->network.tcp;
 
 	shutdown(rail_tcp->sockfd, SHUT_RDWR);
 	close(rail_tcp->sockfd);
-	rail_tcp->sockfd                = -1;
-	rail_tcp->portno                = -1;
+	rail_tcp->sockfd = -1;
+	rail_tcp->portno = -1;
 	rail_tcp->connection_infos[0]   = '\0';
 	rail_tcp->connection_infos_size = 0;
-
 }
 
 /**
  * Procedure to initialize a new TCP rail.
  * \param[in] rail the TCP rail
  */
-void sctk_network_init_tcp ( sctk_rail_info_t *rail )
+void sctk_network_init_tcp(sctk_rail_info_t *rail)
 {
 	/* Register Hooks in rail */
 	rail->send_message_endpoint     = _mpc_lowcomm_tcp_send_message;
-	rail->notify_recv_message       = _mpc_lowcomm_tcp_notify_receive;
-	rail->notify_matching_message   = _mpc_lowcomm_tcp_notify_matching;
-	rail->notify_perform_message    = _mpc_lowcomm_tcp_notify_perform;
+	rail->notify_recv_message       = NULL;
+	rail->notify_matching_message   = NULL;
+	rail->notify_perform_message    = NULL;
 	rail->notify_idle_message       = NULL;
-	rail->notify_any_source_message = _mpc_lowcomm_tcp_notify_anysource;
-	rail->send_message_from_network = sctk_send_message_from_network_tcp;
-	rail->driver_finalize           = sctk_network_finalize_tcp;
+	rail->notify_any_source_message = NULL;
+	rail->send_message_from_network = _mpc_lowcomm_tcp_send_message_from_network;
+	rail->driver_finalize           = _mpc_lowcomm_tcp_finalize;
 
-	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, tcp_on_demand_connection_handler );
+	sctk_rail_init_route(rail, rail->runtime_config_rail->topology, tcp_on_demand_connection_handler);
 
-	int sctk_use_tcp_o_ib = rail->runtime_config_driver_config->driver.value.tcp.tcpoib;
+	int try_tcp_o_ib = rail->runtime_config_driver_config->driver.value.tcp.tcpoib;
 
 	/* Handle the IPoIB case */
-	if ( sctk_use_tcp_o_ib == 0 )
+	if(try_tcp_o_ib == 0)
 	{
 		rail->network_name = "TCP";
 	}
@@ -247,5 +216,5 @@ void sctk_network_init_tcp ( sctk_rail_info_t *rail )
 	}
 
 	/* Actually initialize the network (note TCP kind specific functions) */
-	sctk_network_init_tcp_all ( rail, sctk_use_tcp_o_ib, sctk_tcp_thread);
+	sctk_network_init_tcp_all(rail, try_tcp_o_ib, __tcp_thread_loop);
 }

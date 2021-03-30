@@ -113,7 +113,7 @@ static inline int __load_set_from_uid(uint32_t uid, char * path)
 
 	/* If we have a set we need to register its main peer for later connections
 	   if it is not already known */
-	mpc_lowcomm_peer_uid_t main_peer = _mpc_lowcomm_peer_uid(sd.set_uid, 0);
+	mpc_lowcomm_peer_uid_t main_peer = mpc_lowcomm_monitor_uid_of(sd.set_uid, 0);
 
 	if(!_mpc_lowcomm_peer_get(main_peer))
 	{

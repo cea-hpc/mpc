@@ -5,6 +5,8 @@
 #include <mpc_lowcomm_types.h>
 #include <sctk_reorder.h>
 
+#include <mpc_lowcomm_monitor.h>
+
 #ifdef MPC_USE_INFINIBAND
 #include "ib/sctk_ib.h"
 #endif
@@ -140,8 +142,8 @@ struct mpc_lowcomm_ptp_ctrl_message_header_s
 typedef struct mpc_lowcomm_ptp_message_header_s
 {
 	/* Process */
-	int                                          source;                /**< Source Process */
-	int                                          destination;           /**< Destination Process */
+	mpc_lowcomm_peer_uid_t                       source;                /**< Source Process */
+	mpc_lowcomm_peer_uid_t                       destination;           /**< Destination Process */
 	/* Task */
 	int                                          source_task;           /**< Source Task id */
 	int                                          destination_task;      /**< Destination Task ID */

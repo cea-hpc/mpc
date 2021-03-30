@@ -29,6 +29,7 @@
 #include "sctk_ptl_am_types.h"
 #include "sctk_ptl_am_iface.h"
 #include "sctk_ptl_am_toolkit.h"
+#include <mpc_lowcomm_monitor.h>
 
 /** global shortcut, where each cell maps to the portals process object */
 sctk_ptl_id_t* ranks_ids_map = NULL;
@@ -56,7 +57,7 @@ void sctk_ptl_add_route(int dest, sctk_ptl_id_t id, sctk_rail_info_t* rail, _mpc
 	route = sctk_malloc(sizeof(_mpc_lowcomm_endpoint_t));
 	assert(route);
 
-	_mpc_lowcomm_endpoint_init(route, dest, rail, origin);
+	_mpc_lowcomm_endpoint_init(route, mpc_lowcomm_monitor_local_uid_of(dest), rail, origin);
 	_mpc_lowcomm_endpoint_set_state(route, state);
 
 	route->data.ptl.dest = id;
@@ -437,7 +438,7 @@ sctk_ptl_id_t sctk_ptl_map_id(sctk_rail_info_t* rail, int dest)
  * \param[in] com_idx the communicator ID
  * \param[in] comm_size the number of processes in that communicator
  */
-void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, int comm_idx, size_t comm_size)
+void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, mpc_lowcomm_communicator_id_t comm_idx, size_t comm_size)
 {
 	if(!SCTK_PTL_PTE_EXIST(srail->pt_table, comm_idx))
 	{

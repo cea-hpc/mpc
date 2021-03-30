@@ -34,8 +34,8 @@ typedef int mpc_lowcomm_msg_count_t;
 /** A message header to be put in the request **/
 typedef struct
 {
-	int source;
-	int destination;
+	mpc_lowcomm_peer_uid_t source;
+	mpc_lowcomm_peer_uid_t destination;
 	int destination_task;
 	int source_task;
 	int message_tag;

@@ -347,39 +347,6 @@ static void _mpc_lowcomm_ofirdma_send_message ( mpc_lowcomm_ptp_message_t *msg, 
 	MPC_LOWCOMM_OFI_CHECK_RC(fi_sendmsg(target_ep, &msg_v, FI_COMPLETION ));
 }
 
-/**
- * Not used for this network.
- * \param[in] msg not used
- * \param[in] rail not used
- */
-static void _mpc_lowcomm_ofirdma_notify_receive ( __UNUSED__ mpc_lowcomm_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail ) {}
-
-/**
- * Not used for this network.
- * \param[in] msg not used
- * \param[in] rail not used
- */
-static void _mpc_lowcomm_ofirdma_notify_matching (  __UNUSED__ mpc_lowcomm_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail ) {}
-
-/**
- * Not used for this network.
- * \param[in] remote not used
- * \param[in] remote_task_id not used
- * \param[in] polling_task_id not used
- * \param[in] blocking not used
- * \param[in] rail not used
- */
-static void _mpc_lowcomm_ofirdma_notify_perform (  __UNUSED__ int remote,  __UNUSED__ int remote_task_id,  __UNUSED__ int polling_task_id,  __UNUSED__ int blocking, __UNUSED__  sctk_rail_info_t *rail ) {}
-
-/**
- * Not used for this network.
- * \param[in] msg not used
- * \param[in] rail not used
- */
-static void _mpc_lowcomm_ofirdma_notify_anysource ( __UNUSED__  int polling_task_id, __UNUSED__ int blocking,  __UNUSED__ sctk_rail_info_t *rail ) {}
-
-
-
 static inline void __mpc_lowcomm_ofi_progress_recv(sctk_rail_info_t* rail)
 {
 	mpc_lowcomm_ptp_message_t* msg = NULL;
@@ -523,11 +490,11 @@ void sctk_network_init_ofi_rdma( sctk_rail_info_t *rail )
 	mpc_lowcomm_ofi_rail_info_t* orail = &rail->network.ofi;
 	/* Register Hooks in rail */
 	rail->send_message_endpoint     = _mpc_lowcomm_ofirdma_send_message;
-	rail->notify_recv_message       = _mpc_lowcomm_ofirdma_notify_receive;
-	rail->notify_matching_message   = _mpc_lowcomm_ofirdma_notify_matching;
-	rail->notify_perform_message    = _mpc_lowcomm_ofirdma_notify_perform;
+	rail->notify_recv_message       = NULL;
+	rail->notify_matching_message   = NULL;
+	rail->notify_perform_message    = NULL;
 	rail->notify_idle_message       = _mpc_lowcomm_ofirdma_notify_idle;
-	rail->notify_any_source_message = _mpc_lowcomm_ofirdma_notify_anysource;
+	rail->notify_any_source_message = NULL;
 	rail->send_message_from_network = sctk_send_message_from_network_ofi_rdma;
 	rail->driver_finalize           = sctk_network_finalize_ofi_rdma;
 	rail->control_message_handler   = sctk_network_ofi_rdma_control_message_handler;

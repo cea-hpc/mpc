@@ -158,9 +158,9 @@ static inline void _mpc_comm_set_internal_coll(mpc_lowcomm_communicator_t comm, 
  * @brief Inline version of the communicator ID getter
  * 
  * @param comm the communicator
- * @return uint32_t the corresponding ID of the given comm
+ * @return mpc_lowcomm_communicator_id_t the corresponding ID of the given comm
  */
-static inline uint32_t _mpc_lowcomm_communicator_id(mpc_lowcomm_internal_communicator_t *comm)
+static inline mpc_lowcomm_communicator_id_t _mpc_lowcomm_communicator_id(mpc_lowcomm_internal_communicator_t *comm)
 {
 	if(comm != MPC_COMM_NULL)
 	{

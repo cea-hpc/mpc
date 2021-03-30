@@ -148,4 +148,8 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_ping_info(mpc_l
 int _mpc_lowcomm_monitor_on_demand_callbacks_init(void);
 int _mpc_lowcomm_monitor_on_demand_callbacks_teardown(void);
 
+_mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_process_ondemand(mpc_lowcomm_peer_uid_t dest,
+																		   uint64_t response_index,
+                                                                           mpc_lowcomm_monitor_args_t *ondemand);
+
 #endif /* _MPC_LOWCOMM_MONITOR_H_ */

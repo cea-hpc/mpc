@@ -20,6 +20,9 @@
 
 #include "sctk_shm.h"
 
+#include <mpc_lowcomm_monitor.h>
+
+
 
 static unsigned int sctk_shm_send_max_try = 4;
 
@@ -155,11 +158,6 @@ static void _mpc_lowcomm_shm_send_message(mpc_lowcomm_ptp_message_t *msg,
 	__send_message_dest(msg, endpoint->rail, endpoint->data.shm.dest, 1);
 }
 
-static void
-_mpc_lowcomm_shm_notify_matching(__UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail)
-{
-}
-
 static int
 sctk_send_message_from_network_shm(mpc_lowcomm_ptp_message_t *msg)
 {
@@ -249,14 +247,11 @@ static void _mpc_lowcomm_shm_notify_idle(sctk_rail_info_t *rail)
 }
 
 static void
-_mpc_lowcomm_shm_notify_perform(__UNUSED__ int remote, __UNUSED__ int remote_task_id, __UNUSED__ int polling_task_id, __UNUSED__ int blocking, sctk_rail_info_t *rail)
+_mpc_lowcomm_shm_notify_perform(__UNUSED__ mpc_lowcomm_peer_uid_t remote, __UNUSED__ int remote_task_id, __UNUSED__ int polling_task_id, __UNUSED__ int blocking, sctk_rail_info_t *rail)
 {
 	__shm_poll(rail);
 }
 
-static void _mpc_lowcomm_shm_notify_receive(__UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail)
-{
-}
 
 static void
 _mpc_lowcomm_shm_notify_anysource(__UNUSED__ int polling_task_id, __UNUSED__ int blocking, sctk_rail_info_t *rail)
@@ -277,7 +272,10 @@ static void sctk_shm_add_route(int dest, int shm_dest, sctk_rail_info_t *rail)
 	new_route = sctk_malloc(sizeof(_mpc_lowcomm_endpoint_t) );
 	assume(new_route != NULL);
 
-	_mpc_lowcomm_endpoint_init(new_route, dest, rail, _MPC_LOWCOMM_ENDPOINT_STATIC);
+	mpc_lowcomm_peer_uid_t tuid = mpc_lowcomm_monitor_local_uid_of(dest);
+
+	mpc_common_debug_warning("SHM TUID is %lu", tuid);
+	_mpc_lowcomm_endpoint_init(new_route, tuid, rail, _MPC_LOWCOMM_ENDPOINT_STATIC);
 
 	new_route->data.shm.dest = shm_dest;
 
@@ -357,8 +355,8 @@ void sctk_network_init_shm(sctk_rail_info_t *rail)
 
 	/* Register Hooks in rail */
 	rail->send_message_endpoint     = _mpc_lowcomm_shm_send_message;
-	rail->notify_recv_message       = _mpc_lowcomm_shm_notify_receive;
-	rail->notify_matching_message   = _mpc_lowcomm_shm_notify_matching;
+	rail->notify_recv_message       = NULL;
+	rail->notify_matching_message   = NULL;
 	rail->notify_any_source_message = _mpc_lowcomm_shm_notify_anysource;
 	rail->notify_perform_message    = _mpc_lowcomm_shm_notify_perform;
 	rail->notify_idle_message       = _mpc_lowcomm_shm_notify_idle;
@@ -412,6 +410,7 @@ void sctk_network_init_shm(sctk_rail_info_t *rail)
 		sctk_shm_init_raw_queue(sctk_shmem_size, sctk_shmem_cells_num, i);
 		if(i != local_process_rank)
 		{
+			mpc_common_debug_warning("SHM add route to %d", i);
 			sctk_shm_add_route(tmp->process_list[i], i, rail);
 		}
 	}

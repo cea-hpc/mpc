@@ -230,7 +230,7 @@ _mpc_lowcomm_endpoint_t* mpc_lowcomm_ofi_add_route(int dest, void* ctx, sctk_rai
 	_mpc_lowcomm_endpoint_t * route = sctk_malloc(sizeof(_mpc_lowcomm_endpoint_t));
 	assert(route);
 
-	_mpc_lowcomm_endpoint_init(route, dest, rail, origin);
+	_mpc_lowcomm_endpoint_init(route, mpc_lowcomm_monitor_local_uid_of(dest), rail, origin);
 	_mpc_lowcomm_endpoint_set_state(route, state);
 
 	route->data.ofi.ctx = ctx;

@@ -226,13 +226,15 @@ int _mpc_lowcomm_multirail_endpoint_list_release(_mpc_lowcomm_multirail_endpoint
 {
 	sctk_free(list->entries);
 	memset(list, 0, list->size * sizeof(_mpc_lowcomm_multirail_endpoint_list_t) );
+
+	return 0;
 }
 
 int _mpc_lowcomm_multirail_endpoint_list_push(_mpc_lowcomm_multirail_endpoint_list_t *list,
                                               _mpc_lowcomm_endpoint_t *endpoint)
 {
 	int new_prio = endpoint->rail->priority;
-	int i;
+	unsigned int i;
 
 	/* Are we at the last element ? */
 	if(list->elem_count == (list->size - 1) )
@@ -297,7 +299,8 @@ int _mpc_lowcomm_multirail_endpoint_list_push(_mpc_lowcomm_multirail_endpoint_li
 static inline int __endpoint_list_pop(_mpc_lowcomm_multirail_endpoint_list_t *list,
                                       int entry_offet)
 {
-	assume(entry_offet <= list->elem_count);
+	assume(0 <= entry_offet);
+	assume((unsigned int)entry_offet <= list->elem_count);
 
 	/* Free the elem */
 	_mpc_lowcomm_multirail_endpoint_list_entry_release(&list->entries[entry_offet]);
@@ -317,7 +320,7 @@ int _mpc_lowcomm_multirail_endpoint_list_pop_endpoint(_mpc_lowcomm_multirail_end
                                                       _mpc_lowcomm_endpoint_t *topop)
 {
 	int topop_offset = -1;
-	int i;
+	unsigned int i;
 
 	for(i = 0; i < list->elem_count; i++)
 	{
@@ -339,7 +342,7 @@ int _mpc_lowcomm_multirail_endpoint_list_pop_endpoint(_mpc_lowcomm_multirail_end
 
 void _mpc_lowcomm_multirail_endpoint_list_prune(_mpc_lowcomm_multirail_endpoint_list_t *list)
 {
-	int i;
+	unsigned int i;
 	int did_free = 0;
 
 	do
@@ -360,7 +363,7 @@ void _mpc_lowcomm_multirail_endpoint_list_prune(_mpc_lowcomm_multirail_endpoint_
 /* _mpc_lowcomm_multirail_table_entry                               */
 /************************************************************************/
 
-void _mpc_lowcomm_multirail_table_entry_init(_mpc_lowcomm_multirail_table_entry_t *entry, int destination)
+void _mpc_lowcomm_multirail_table_entry_init(_mpc_lowcomm_multirail_table_entry_t *entry, mpc_lowcomm_peer_uid_t destination)
 {
 	_mpc_lowcomm_multirail_endpoint_list_init(&entry->endpoints);
 	mpc_common_rwlock_t lckinit = SCTK_SPIN_RWLOCK_INITIALIZER;
@@ -395,7 +398,7 @@ void _mpc_lowcomm_multirail_table_entry_prune(_mpc_lowcomm_multirail_table_entry
 	mpc_common_spinlock_write_unlock(&entry->endpoints_lock);
 }
 
-_mpc_lowcomm_multirail_table_entry_t *_mpc_lowcomm_multirail_table_entry_new(int destination)
+_mpc_lowcomm_multirail_table_entry_t *_mpc_lowcomm_multirail_table_entry_new(mpc_lowcomm_peer_uid_t destination)
 {
 	_mpc_lowcomm_multirail_table_entry_t *ret = sctk_malloc(sizeof(_mpc_lowcomm_multirail_table_entry_t) );
 
@@ -447,8 +450,8 @@ static inline struct _mpc_lowcomm_multirail_table *_mpc_lowcomm_multirail_table_
  * \param[in] ext_routes route array to iterate with (will be locked).
  * \return a pointer to the matching route, NULL otherwise (the route lock will NOT be hold in case of match)
  */
-_mpc_lowcomm_endpoint_t *_mpc_lowcomm_multirail_ellect_endpoint(mpc_lowcomm_ptp_message_t *msg,
-                                                        int destination_process,
+static inline _mpc_lowcomm_endpoint_t *__elect_endpoint(mpc_lowcomm_ptp_message_t *msg,
+                                                        mpc_lowcomm_peer_uid_t destination_process,
                                                         int is_process_specific,
                                                         int is_for_on_demand,
                                                         _mpc_lowcomm_multirail_table_entry_t **ext_routes)
@@ -459,11 +462,11 @@ _mpc_lowcomm_endpoint_t *_mpc_lowcomm_multirail_ellect_endpoint(mpc_lowcomm_ptp_
 
 	_mpc_lowcomm_multirail_endpoint_list_entry_t *cur = NULL;
 
-	int current_route = 0;
+	unsigned int current_route = 0;
 
 	if(routes)
 	{
-		if(0 <= routes->endpoints.elem_count)
+		if(0 < routes->endpoints.elem_count)
 		{
 			cur = &routes->endpoints.entries[current_route];
 		}
@@ -560,7 +563,7 @@ mpc_common_spinlock_t on_demand_connection_lock = SCTK_SPINLOCK_INITIALIZER;
 /* Per VP pending on-demand connection list */
 static __thread sctk_pending_on_demand_t *__pending_on_demand = NULL;
 
-void sctk_pending_on_demand_push(sctk_rail_info_t *rail, int dest)
+void sctk_pending_on_demand_push(sctk_rail_info_t *rail, mpc_lowcomm_peer_uid_t dest)
 {
 	/* Is the rail on demand ? */
 	if(!rail->connect_on_demand)
@@ -729,12 +732,12 @@ static inline void __on_demand_connection(mpc_lowcomm_ptp_message_t *msg)
 	 * newly created rail by first checking if it is not already present */
 	mpc_common_spinlock_lock(&on_demand_connection_lock);
 
-	int dest_process = SCTK_MSG_DEST_PROCESS(msg);
+	mpc_lowcomm_peer_uid_t dest_process = SCTK_MSG_DEST_PROCESS_UID(msg);
 
 	/* First retry to acquire a route for on-demand
 	 * in order to avoid double connections */
 	_mpc_lowcomm_multirail_table_entry_t *routes = NULL;
-	_mpc_lowcomm_endpoint_t *previous_endpoint   = _mpc_lowcomm_multirail_ellect_endpoint(msg, dest_process, 0 /* Not Process Specific */, 1 /* For On-Demand */, &routes);
+	_mpc_lowcomm_endpoint_t *previous_endpoint   = __elect_endpoint(msg, dest_process, 0 /* Not Process Specific */, 1 /* For On-Demand */, &routes);
 
 	/* We need to relax the routes before pushing the endpoint as the new entry
 	 * will end in the same endpoint list */
@@ -757,6 +760,79 @@ static inline void __on_demand_connection(mpc_lowcomm_ptp_message_t *msg)
 /* _mpc_lowcomm_multirail_hooks                                                 */
 /************************************************************************/
 
+
+/**
+ * Compute the closest neighbor to the final destination.
+ * This function is called when an on-demand route cannot be crated or a CM message
+ * is sent but no direct routes exist. It assumes that at least one rail has a connected (no singleton)
+ * and that the topology is at least based on a ring (be aware of potential deadlocks if not)
+ *
+ * The distance between the destination and the new destination is computed by substracting
+ * the final destination rank by the best intermediate one. The destination with the lowest result will
+ * be elected.
+ *
+ * \param[in] the final destination process to reach
+ * \param[out] new_destination the next process to target (can be the final destination)
+ */
+static inline void __route_to_process(mpc_lowcomm_peer_uid_t destination, mpc_lowcomm_peer_uid_t *new_destination)
+{
+	struct _mpc_lowcomm_multirail_table * table = _mpc_lowcomm_multirail_table_get();
+	_mpc_lowcomm_multirail_table_entry_t *entry;
+
+	int distance = -1;
+
+	mpc_common_spinlock_read_lock(&table->table_lock);
+
+
+	MPC_HT_ITER(&table->destination_table, entry)
+	{
+		/* Only test connected endpoint as some networks
+		 * might create the endpoint before sending
+		 * the control message to the target process.
+		 * In such case it would be selected (dist == 0)
+		 * but would not be connected ! */
+
+
+		if(entry->endpoints.elem_count)
+		{
+			mpc_common_nodebug("STATE %d == %d", entry->destination, _mpc_lowcomm_endpoint_get_state(entry->endpoints->endpoint) );
+
+			if(_mpc_lowcomm_endpoint_get_state(entry->endpoints.entries[0].endpoint) == _MPC_LOWCOMM_ENDPOINT_CONNECTED)
+			{
+				mpc_common_nodebug(" %d --- %d", destination, entry->destination);
+				if(destination == entry->destination)
+				{
+					distance         = 0;
+					*new_destination = destination;
+					break;
+				}
+
+				int cdistance = entry->destination - destination;
+
+				if(cdistance < 0)
+				{
+					cdistance = -cdistance;
+				}
+
+				if( (distance < 0) || (cdistance < distance) )
+				{
+					distance         = cdistance;
+					*new_destination = entry->destination;
+				}
+			}
+		}
+	}
+	MPC_HT_ITER_END
+
+	mpc_common_spinlock_read_unlock(&table->table_lock);
+
+	if(distance == -1)
+	{
+		mpc_common_debug_fatal("No route to host %d ", destination);
+	}
+}
+
+
 /**
  * Main entry point in low_level_comm for sending a message.
  * \param[in] msg the message to send.
@@ -764,7 +840,7 @@ static inline void __on_demand_connection(mpc_lowcomm_ptp_message_t *msg)
 void _mpc_lowcomm_multirail_send_message(mpc_lowcomm_ptp_message_t *msg)
 {
 	int retry;
-	int destination_process;
+	mpc_lowcomm_peer_uid_t destination_process;
 
 	int is_process_specific = sctk_is_process_specific_message(SCTK_MSG_HEADER(msg) );
 
@@ -772,12 +848,12 @@ void _mpc_lowcomm_multirail_send_message(mpc_lowcomm_ptp_message_t *msg)
 	if(is_process_specific)
 	{
 		/* Find the process to which to route to */
-		_mpc_lowcomm_multirail_table_route_to_process(SCTK_MSG_DEST_PROCESS(msg), &destination_process);
+		__route_to_process(SCTK_MSG_DEST_PROCESS_UID(msg), &destination_process);
 	}
 	else
 	{
 		/* We want to reach the desitination of the Message */
-		destination_process = SCTK_MSG_DEST_PROCESS(msg);
+		destination_process = SCTK_MSG_DEST_PROCESS_UID(msg);
 	}
 
 	int no_existing_route_matched = 0;
@@ -796,7 +872,7 @@ void _mpc_lowcomm_multirail_send_message(mpc_lowcomm_ptp_message_t *msg)
 		 * able to relax it after use */
 		_mpc_lowcomm_multirail_table_entry_t *routes = NULL;
 
-		_mpc_lowcomm_endpoint_t *endpoint = _mpc_lowcomm_multirail_ellect_endpoint(msg, destination_process, is_process_specific, 0 /* Not for On-Demand */, &routes);
+		_mpc_lowcomm_endpoint_t *endpoint = __elect_endpoint(msg, destination_process, is_process_specific, 0 /* Not for On-Demand */, &routes);
 
 		if(endpoint)
 		{
@@ -871,27 +947,27 @@ void _mpc_lowcomm_multirail_notify_matching(mpc_lowcomm_ptp_message_t *msg)
 	}
 }
 
-void _mpc_lowcomm_multirail_notify_perform(int remote, int remote_task_id, int polling_task_id, int blocking)
+void _mpc_lowcomm_multirail_notify_perform(mpc_lowcomm_peer_uid_t remote, int remote_task_id, int polling_task_id, int blocking)
 {
 #ifdef MPC_USE_DMTCP
 	if(sctk_ft_no_suspend_start() )
 	{
 #endif
-		int count = sctk_rail_count();
-		int i;
+	int count = sctk_rail_count();
+	int i;
 
-		for(i = 0; i < count; i++)
+	for(i = 0; i < count; i++)
+	{
+		sctk_rail_info_t *rail = sctk_rail_get_by_id(i);
+
+		if(rail->notify_perform_message)
 		{
-			sctk_rail_info_t *rail = sctk_rail_get_by_id(i);
-
-			if(rail->notify_perform_message)
-			{
-				(rail->notify_perform_message)(remote, remote_task_id, polling_task_id, blocking, rail);
-			}
+			(rail->notify_perform_message)(remote, remote_task_id, polling_task_id, blocking, rail);
 		}
-#ifdef MPC_USE_DMTCP
-		sctk_ft_no_suspend_end();
 	}
+#ifdef MPC_USE_DMTCP
+	sctk_ft_no_suspend_end();
+}
 #endif
 }
 
@@ -901,55 +977,55 @@ void _mpc_lowcomm_multirail_notify_probe(mpc_lowcomm_ptp_message_header_t *hdr, 
 	if(sctk_ft_no_suspend_start() )
 	{
 #endif
-		int        count = sctk_rail_count();
-		int        i;
-		int        ret = 0, tmp_ret = -1;
-		static int no_rail_support = 0;
+	int count = sctk_rail_count();
+	int i;
+	int ret = 0, tmp_ret = -1;
+	static int no_rail_support = 0;
 
-		if(no_rail_support) /* shortcut when no rail support probing at all */
+	if(no_rail_support)         /* shortcut when no rail support probing at all */
+	{
+		*status = -1;
+		return;
+	}
+
+	for(i = 0; i < count; i++)
+	{
+		sctk_rail_info_t *rail = sctk_rail_get_by_id(i);
+		tmp_ret = -1;         /* re-init for next rail */
+
+		/* if current driver can handle a probing procedure... */
+		if(rail->notify_probe_message)
 		{
-			*status = -1;
+			/* possible values of tmp_ret:
+			 * -1 -> driver-specific probing not handled (either because no function pointer set or the function returns -1)
+			 * 0 -> No matching message found
+			 * 1 -> At least one message found based on requirements
+			 */
+			(rail->notify_probe_message)(rail, hdr, &tmp_ret);
+		}
+
+		assert(tmp_ret == -1 || tmp_ret == 1 || tmp_ret == 0);
+
+		/* three scenarios based on that :
+		 * - If a rail found a matching message -> returns 1
+		 * - If all rails support probing, and returns 0 -> returns 0
+		 * - If at least one rail returns -1 AND probing failed -> returns -1, meaning that the previous behavior (logical header lookup through perform()) should be run.
+		 */
+		if(tmp_ret == 1)         /* found */
+		{
+			*status = 1;
 			return;
 		}
-
-		for(i = 0; i < count; i++)
-		{
-			sctk_rail_info_t *rail = sctk_rail_get_by_id(i);
-			tmp_ret = -1; /* re-init for next rail */
-
-			/* if current driver can handle a probing procedure... */
-			if(rail->notify_probe_message)
-			{
-				/* possible values of tmp_ret:
-				* -1 -> driver-specific probing not handled (either because no function pointer set or the function returns -1)
-				* 0 -> No matching message found
-				* 1 -> At least one message found based on requirements
-				*/
-				(rail->notify_probe_message)(rail, hdr, &tmp_ret);
-			}
-
-			assert(tmp_ret == -1 || tmp_ret == 1 || tmp_ret == 0);
-
-			/* three scenarios based on that :
-			* - If a rail found a matching message -> returns 1
-			* - If all rails support probing, and returns 0 -> returns 0
-			* - If at least one rail returns -1 AND probing failed -> returns -1, meaning that the previous behavior (logical header lookup through perform()) should be run.
-			*/
-			if(tmp_ret == 1) /* found */
-			{
-				*status = 1;
-				return;
-			}
-			ret += tmp_ret;
-		}
-		*status = ret;
-		if(ret == -count) /* not a single rail support probing: stop running this function */
-		{
-			no_rail_support = 1;
-		}
-#ifdef MPC_USE_DMTCP
-		sctk_ft_no_suspend_end();
+		ret += tmp_ret;
 	}
+	*status = ret;
+	if(ret == -count)         /* not a single rail support probing: stop running this function */
+	{
+		no_rail_support = 1;
+	}
+#ifdef MPC_USE_DMTCP
+	sctk_ft_no_suspend_end();
+}
 #endif
 }
 
@@ -962,21 +1038,21 @@ void _mpc_lowcomm_multirail_notify_idle()
 	if(sctk_ft_no_suspend_start() )
 	{
 #endif
-		int count = sctk_rail_count();
-		int i;
+	int count = sctk_rail_count();
+	int i;
 
-		for(i = 0; i < count; i++)
+	for(i = 0; i < count; i++)
+	{
+		sctk_rail_info_t *rail = sctk_rail_get_by_id(i);
+
+		if(rail->state == SCTK_RAIL_ST_ENABLED && rail->notify_idle_message)
 		{
-			sctk_rail_info_t *rail = sctk_rail_get_by_id(i);
-
-			if(rail->state == SCTK_RAIL_ST_ENABLED && rail->notify_idle_message)
-			{
-				(rail->notify_idle_message)(rail);
-			}
+			(rail->notify_idle_message)(rail);
 		}
-#ifdef MPC_USE_DMTCP
-		sctk_ft_no_suspend_end();
 	}
+#ifdef MPC_USE_DMTCP
+	sctk_ft_no_suspend_end();
+}
 #endif
 }
 
@@ -1080,7 +1156,7 @@ void _mpc_lowcomm_multirail_table_prune(void)
 	mpc_common_spinlock_write_unlock(&table->table_lock);
 }
 
-_mpc_lowcomm_multirail_table_entry_t *_mpc_lowcomm_multirail_table_acquire_routes(int64_t destination)
+_mpc_lowcomm_multirail_table_entry_t *_mpc_lowcomm_multirail_table_acquire_routes(mpc_lowcomm_peer_uid_t destination)
 {
 	struct _mpc_lowcomm_multirail_table * table      = _mpc_lowcomm_multirail_table_get();
 	_mpc_lowcomm_multirail_table_entry_t *dest_entry = NULL;
@@ -1149,75 +1225,4 @@ void _mpc_lowcomm_multirail_table_pop_endpoint(_mpc_lowcomm_endpoint_t *topop)
 	}
 
 	mpc_common_spinlock_write_unlock(&table->table_lock);
-}
-
-/**
- * Compute the closest neighbor to the final destination.
- * This function is called when an on-demand route cannot be crated or a CM message
- * is sent but no direct routes exist. It assumes that at least one rail has a connected (no singleton)
- * and that the topology is at least based on a ring (be aware of potential deadlocks if not)
- *
- * The distance between the destination and the new destination is computed by substracting
- * the final destination rank by the best intermediate one. The destination with the lowest result will
- * be elected.
- *
- * \param[in] the final destination process to reach
- * \param[out] new_destination the next process to target (can be the final destination)
- */
-void _mpc_lowcomm_multirail_table_route_to_process(int destination, int *new_destination)
-{
-	struct _mpc_lowcomm_multirail_table * table = _mpc_lowcomm_multirail_table_get();
-	_mpc_lowcomm_multirail_table_entry_t *entry;
-
-	int distance = -1;
-
-	mpc_common_spinlock_read_lock(&table->table_lock);
-
-
-	MPC_HT_ITER(&table->destination_table, entry)
-	{
-		/* Only test connected endpoint as some networks
-		 * might create the endpoint before sending
-		 * the control message to the target process.
-		 * In such case it would be selected (dist == 0)
-		 * but would not be connected ! */
-
-
-		if(entry->endpoints.elem_count)
-		{
-			mpc_common_nodebug("STATE %d == %d", entry->destination, _mpc_lowcomm_endpoint_get_state(entry->endpoints->endpoint) );
-
-			if(_mpc_lowcomm_endpoint_get_state(entry->endpoints.entries[0].endpoint) == _MPC_LOWCOMM_ENDPOINT_CONNECTED)
-			{
-				mpc_common_nodebug(" %d --- %d", destination, entry->destination);
-				if(destination == entry->destination)
-				{
-					distance         = 0;
-					*new_destination = destination;
-					break;
-				}
-
-				int cdistance = entry->destination - destination;
-
-				if(cdistance < 0)
-				{
-					cdistance = -cdistance;
-				}
-
-				if( (distance < 0) || (cdistance < distance) )
-				{
-					distance         = cdistance;
-					*new_destination = entry->destination;
-				}
-			}
-		}
-	}
-	MPC_HT_ITER_END
-
-	mpc_common_spinlock_read_unlock(&table->table_lock);
-
-	if(distance == -1)
-	{
-		mpc_common_debug_warning("No route to host %d ", destination);
-	}
 }

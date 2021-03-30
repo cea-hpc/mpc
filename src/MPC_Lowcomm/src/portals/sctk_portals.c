@@ -74,7 +74,7 @@ static void _mpc_lowcomm_portals_notify_matching ( mpc_lowcomm_ptp_message_t *ms
 }
 
 /** Not relevant in this implementation */
-static void _mpc_lowcomm_portals_notify_perform ( int remote, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t *rail )
+static void _mpc_lowcomm_portals_notify_perform ( mpc_lowcomm_peer_uid_t remote, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t *rail )
 {
 	/* nothing to do */
 	UNUSED(remote);
@@ -124,7 +124,7 @@ static void _mpc_lowcomm_portals_notify_probe (sctk_rail_info_t* rail, mpc_lowco
  * \param[in] comm_idx the communicator ID
  * \param[in] comm_size number of processes in this comm
  */
-static void _mpc_lowcomm_portals_notify_newcomm(sctk_rail_info_t* rail, uint32_t comm_idx, size_t comm_size)
+static void _mpc_lowcomm_portals_notify_newcomm(sctk_rail_info_t* rail, mpc_lowcomm_communicator_id_t comm_idx, size_t comm_size)
 {
 	sctk_ptl_comm_register(&rail->network.ptl, comm_idx, comm_size);
 }

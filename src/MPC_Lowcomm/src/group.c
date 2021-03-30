@@ -35,13 +35,6 @@
 * COMMUNICATORS AND PROCESSES *
 *******************************/
 
-struct __rank_to_process_map
-{
-	int           size;
-	unsigned int *process_id;
-};
-
-struct __rank_to_process_map __process_map = { 0 };
 
 
 static inline int ___process_rank_from_world_rank(int world_rank)
@@ -82,36 +75,26 @@ static inline int ___process_rank_from_world_rank(int world_rank)
 	return proc_rank;
 }
 
-void __rank_to_process_map_init(void)
+mpc_lowcomm_peer_uid_t mpc_lowcomm_group_process_uid_for_rank(mpc_lowcomm_group_t * g, int rank)
 {
-	assume(__process_map.process_id == 0);
-
-	__process_map.size       = mpc_lowcomm_get_size();
-	__process_map.process_id = sctk_malloc(__process_map.size * sizeof(unsigned int) );
-
-	assume(__process_map.process_id != NULL);
-
-	int i;
-
-	for(i = 0; i < __process_map.size; i++)
-	{
-		__process_map.process_id[i] = ___process_rank_from_world_rank(i);
-	}
-}
-
-void __rank_to_process_map_release(void)
-{
-	__process_map.size = 0;
-	sctk_free(__process_map.process_id);
-	__process_map.process_id = NULL;
+	_mpc_lowcomm_group_rank_descriptor_t * desc = mpc_lowcomm_group_descriptor(g, rank);
+	assume(desc != NULL);
+	return desc->host_process_uid;
 }
 
 int mpc_lowcomm_group_process_rank_from_world(int comm_world_rank)
 {
-	assert(__process_map.size != 0);
 	assert(comm_world_rank < mpc_lowcomm_get_size() );
 
-	return __process_map.process_id[comm_world_rank];
+	mpc_lowcomm_group_t * gworld = _mpc_lowcomm_group_world_no_assert();
+
+	if(!gworld)
+	{
+		/* World is not ready yet use computation */
+		return mpc_lowcomm_peer_get_rank(___process_rank_from_world_rank(comm_world_rank));
+	}
+
+	return mpc_lowcomm_group_process_uid_for_rank(gworld, comm_world_rank);
 }
 
 static inline void __fill_process_info(mpc_lowcomm_group_t *g)
@@ -171,8 +154,6 @@ static inline void __fill_process_info(mpc_lowcomm_group_t *g)
 
 int _mpc_lowcomm_group_local_process_count(mpc_lowcomm_group_t *g)
 {
-	assert(__process_map.size != 0);
-
 	mpc_common_spinlock_lock(&g->process_lock);
 	/* Already computed */
 	if(0 < g->tasks_count_in_process)
@@ -192,8 +173,6 @@ int _mpc_lowcomm_group_local_process_count(mpc_lowcomm_group_t *g)
 
 int _mpc_lowcomm_group_process_count(mpc_lowcomm_group_t *g)
 {
-	assert(__process_map.size != 0);
-
 	mpc_common_spinlock_lock(&g->process_lock);
 	/* Already computed */
 	if(0 < g->process_count)
@@ -213,8 +192,6 @@ int _mpc_lowcomm_group_process_count(mpc_lowcomm_group_t *g)
 
 int *_mpc_lowcomm_group_process_list(mpc_lowcomm_group_t *g)
 {
-	assert(__process_map.size != 0);
-
 	mpc_common_spinlock_lock(&g->process_lock);
 	/* Already computed */
 	if(g->process_list != NULL)
@@ -285,7 +262,7 @@ int _mpc_lowcomm_group_rank_descriptor_set_in_grp(_mpc_lowcomm_group_rank_descri
 	}
 
 	rd->comm_world_rank = cw_rank;
-	rd->uid = mpc_lowcomm_monitor_get_uid_of(set, cw_rank);
+	rd->host_process_uid = mpc_lowcomm_monitor_uid_of(set, ___process_rank_from_world_rank(cw_rank));
 
 
 	return SCTK_SUCCESS;
@@ -296,12 +273,9 @@ int _mpc_lowcomm_group_rank_descriptor_set(_mpc_lowcomm_group_rank_descriptor_t 
 	return _mpc_lowcomm_group_rank_descriptor_set_in_grp(rd, mpc_lowcomm_monitor_get_gid(), cw_rank);
 }
 
-
-
-
 uint32_t _mpc_lowcomm_group_rank_descriptor_hash(_mpc_lowcomm_group_rank_descriptor_t *rd)
 {
-	return (uint32_t)rd->comm_world_rank;
+	return (uint32_t)rd->comm_world_rank ^ rd->host_process_uid ^ rd->host_process_uid >> 32;
 }
 
 /************************
@@ -450,6 +424,7 @@ unsigned int mpc_lowcomm_group_size(mpc_lowcomm_group_t *g)
 
 _mpc_lowcomm_group_rank_descriptor_t *mpc_lowcomm_group_descriptor(mpc_lowcomm_group_t *g, int rank)
 {
+	//mpc_common_debug_warning("GET %d / %d", rank, g->size);
 	assert(g != NULL);
 	assert(0 <= rank);
 	assert(rank < (int)g->size);
@@ -765,20 +740,22 @@ int _mpc_lowcomm_group_list_pop(mpc_lowcomm_group_t *group)
 
 static mpc_lowcomm_group_t *__world_group = NULL;
 
+mpc_lowcomm_group_t *_mpc_lowcomm_group_world_no_assert(void)
+{
+	return __world_group;
+}
+
+
 mpc_lowcomm_group_t *_mpc_lowcomm_group_world(void)
 {
 	assume(__world_group != NULL);
-	return __world_group;
+	return _mpc_lowcomm_group_world_no_assert();
 }
 
 void _mpc_lowcomm_group_create_world(void)
 {
 	/* This creates the group list */
 	__group_list_init();
-
-	/* This map holds world rank to process translations */
-	__rank_to_process_map_init();
-
 
 	/* Comm world */
 	int i;
@@ -805,7 +782,6 @@ void _mpc_lowcomm_group_release_world(void)
 {
 	mpc_lowcomm_group_free(&__world_group);
 	__group_list_release();
-	__rank_to_process_map_release();
 }
 
 int _mpc_lowcomm_communicator_world_first_local_task()
