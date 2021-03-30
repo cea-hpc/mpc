@@ -35,7 +35,7 @@
 #define COMM_SCHED_SIZE (sizeof(NBC_Fn_type) + sizeof(NBC_Args))
 #define ROUND_SCHED_SIZE (SCHED_SIZE + BARRIER_SCHED_SIZE)
 
-
+// TODO : error handling & config handling
 #define SCTK_MPI_CHECK_RETURN_VAL(res,comm)do{if(res == MPI_SUCCESS){return res;} else {MPI_ERROR_REPORT(comm,res,"Generic error retrun");}}while(0)
 
 
@@ -534,6 +534,7 @@ static inline int __INTERNAL__Scatterv_switch(const void *sendbuf, const int *se
 static inline int __INTERNAL__Gather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Gatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Reduce_scatter_block_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __INTERNAL__Reduce_scatter_switch(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Allgather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Allgatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Alltoall_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -3934,6 +3935,403 @@ static inline int __INTERNAL__Reduce_scatter_block_pairwise(const void *sendbuf,
     __INTERNAL__Op_type(NULL, tmp_left_resbuf, tmp_right_resbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
     __INTERNAL__Copy_type(tmp_right_resbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
   }
+  
+  return MPI_SUCCESS;
+}
+
+
+
+
+/***********
+  REDUCE SCATTER
+  ***********/
+
+int PMPI_Ireduce_scatter(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
+int __INTERNAL__Ireduce_scatter(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle);
+int PMPI_Reduce_scatter_init(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request);
+int __INTERNAL__Reduce_scatter_init(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle);
+int __INTERNAL__Reduce_scatter(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
+static inline int __INTERNAL__Reduce_scatter_reduce_scatterv(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __INTERNAL__Reduce_scatter_distance_doubling(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __INTERNAL__Reduce_scatter_distance_halving(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __INTERNAL__Reduce_scatter_pairwise(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+
+
+/**
+  \brief Initialize NBC structures used in call of non-blocking Reduce_scatter
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \param request Pointer to the MPI_Request
+  \return error code
+  */
+int PMPI_Ireduce_scatter (const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request) {
+
+  int res = MPI_ERR_INTERN;
+  mpc_common_nodebug ("Entering IREDUCE_SCATTER %d", comm);
+  SCTK__MPI_INIT_REQUEST (request);
+
+  int csize;
+  MPI_Comm_size(comm, &csize);
+
+  if(recvbuf == sendbuf)
+  {
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
+
+  if(csize == 1)
+  {
+    res = PMPI_Reduce_scatter (sendbuf, recvbuf, recvcounts, datatype, op, comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+  }
+  else
+  {
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->is_nbc = 1;
+    tmp->nbc_handle.is_persistent = 0;
+
+    res = __INTERNAL__Ireduce_scatter (sendbuf, recvbuf, recvcounts, datatype, op, comm, &(tmp->nbc_handle));
+  }
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+/**
+  \brief Initialize NBC structures used in call of non-blocking Reduce_scatter
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \param handle Pointer to the NBC_Handle
+  \return error code
+  */
+int __INTERNAL__Ireduce_scatter (const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle) {
+  
+  int res;
+  NBC_Schedule *schedule;
+  Sched_info info;
+  sched_info_init(&info);
+
+  res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
+  handle->tmpbuf = NULL;
+  schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
+
+  __INTERNAL__Reduce_scatter_switch(sendbuf, recvbuf, recvcounts, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+
+  sched_alloc_init(handle, schedule, &info);
+
+  __INTERNAL__Reduce_scatter_switch(sendbuf, recvbuf, recvcounts, datatype, op, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  
+  res = my_NBC_Sched_commit(schedule, &info);
+  if (NBC_OK != res)
+  {
+    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    return res;
+  }
+
+  res = NBC_Start(handle, schedule);
+  if (NBC_OK != res)
+  {
+    printf("Error in NBC_Start() (%i)\n", res);
+    return res;
+  }
+
+  return MPI_SUCCESS;
+}
+
+
+/**
+  \brief Initialize NBC structures used in call of persistent Reduce_scatter
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \param request Pointer to the MPI_Request
+  \return error code
+  */
+int PMPI_Reduce_scatter_init(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, __UNUSED__ MPI_Info info, MPI_Request *request) {
+
+  {
+    int size;
+    mpi_check_comm(comm);
+    _mpc_cl_comm_size(comm, &size);
+    mpi_check_type(datatype, comm);
+    int i;
+    for(i = 0; i < size; i++)
+    {
+      mpi_check_count(recvcounts[i], comm);
+      if(recvcounts[i] != 0)
+      {
+        mpi_check_buf(recvbuf, comm);
+        mpi_check_buf(sendbuf, comm);
+      }
+    }
+    mpi_check_type(datatype, comm);
+
+  }
+  MPI_internal_request_t *req;
+  SCTK__MPI_INIT_REQUEST (request);
+  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  req->freeable = 0;
+  req->is_active = 0;
+  req->is_nbc = 1;
+  req->is_persistent = 1;
+  req->req.request_type = REQUEST_GENERALIZED;
+
+  req->persistant.op = MPC_MPI_PERSISTENT_REDUCE_SCATTER_INIT;
+  req->persistant.info = info;
+
+  /* Init metadat for nbc */
+  __INTERNAL__Reduce_scatter_init (sendbuf,  recvbuf, recvcounts, datatype, op, comm, &(req->nbc_handle));
+  req->nbc_handle.is_persistent = 1;
+  return MPI_SUCCESS;
+}
+
+/**
+  \brief Initialize NBC structures used in call of persistent Reduce_scatter
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \param handle Pointer to the NBC_Handle
+  \return error code
+  */
+int __INTERNAL__Reduce_scatter_init(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle) {
+  int res;
+  NBC_Schedule *schedule;
+  Sched_info info;
+  sched_info_init(&info);
+
+  res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
+
+  handle->tmpbuf = NULL;
+
+  /* alloc schedule */
+  schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
+
+  __INTERNAL__Reduce_scatter_switch(sendbuf, recvbuf, recvcounts, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  
+  sched_alloc_init(handle, schedule, &info);
+  
+  __INTERNAL__Reduce_scatter_switch(sendbuf, recvbuf, recvcounts, datatype, op, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+
+  res = my_NBC_Sched_commit(schedule, &info);
+  if (res != MPI_SUCCESS)
+  {
+    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    return res;
+  }
+
+  handle->schedule = schedule;
+
+  return MPI_SUCCESS;
+}
+
+
+/**
+  \brief Blocking Reduce_scatter
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \return error code
+  */
+int __INTERNAL__Reduce_scatter(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
+  return __INTERNAL__Reduce_scatter_switch(sendbuf, recvbuf, recvcounts, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+}
+
+
+/**
+  \brief Swith between the different Reduce_scatter algorithms
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Reduce_scatter_switch(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+  enum {
+    NBC_REDUCE_SCATTER_REDUCE_SCATTERV,
+    NBC_REDUCE_SCATTER_DISTANCE_DOUBLING, // difficile a mettre en place
+    NBC_REDUCE_SCATTER_DISTANCE_HALVING, // necessite operateur commutatif & associatif
+    NBC_REDUCE_SCATTER_PAIRWISE // seulement en non bloquant
+  } alg;
+
+  alg = NBC_REDUCE_SCATTER_REDUCE_SCATTERV;
+
+  int res;
+
+  switch(alg) {
+    case NBC_REDUCE_SCATTER_REDUCE_SCATTERV:
+      res = __INTERNAL__Reduce_scatter_reduce_scatterv(sendbuf, recvbuf, recvcounts, datatype, op, comm, coll_type, schedule, info);
+      break;
+    case NBC_REDUCE_SCATTER_DISTANCE_DOUBLING:
+      res = __INTERNAL__Reduce_scatter_distance_doubling(sendbuf, recvbuf, recvcounts, datatype, op, comm, coll_type, schedule, info);
+      break;
+    case NBC_REDUCE_SCATTER_DISTANCE_HALVING:
+      res = __INTERNAL__Reduce_scatter_distance_halving(sendbuf, recvbuf, recvcounts, datatype, op, comm, coll_type, schedule, info);
+      break;
+    case NBC_REDUCE_SCATTER_PAIRWISE:
+      res = __INTERNAL__Reduce_scatter_pairwise(sendbuf, recvbuf, recvcounts, datatype, op, comm, coll_type, schedule, info);
+      break;
+  }
+
+  return res;
+}
+
+/**
+  \brief Execute or schedule a Reduce_scatter using the reduce scatter algorithm
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Reduce_scatter_reduce_scatterv(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  int rank, size;
+  MPI_Aint ext;
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+  PMPI_Type_extent(datatype, &ext);
+
+  void *tmpbuf = NULL;
+  int *displs = NULL;
+
+  int count = 0;
+  for(int i = 0; i < size; i++) {
+    count += recvcounts[i];
+  }
+
+  switch(coll_type) {
+    case MPC_COLL_TYPE_BLOCKING:
+      if(rank == 0) {
+        tmpbuf = sctk_malloc(ext * count + size * sizeof(int));
+        displs = tmpbuf + ext * count;
+      }
+      break;
+
+    case MPC_COLL_TYPE_NONBLOCKING:
+    case MPC_COLL_TYPE_PERSISTENT:
+      if(rank == 0) {
+        tmpbuf = info->tmpbuf + info->tmpbuf_pos;
+        displs = tmpbuf + ext * count;
+        info->tmpbuf_pos += ext * count + size * sizeof(int);
+      }
+      break;
+
+    case MPC_COLL_TYPE_COUNT:
+      if(rank == 0) {
+        info->tmpbuf_size += ext * count + size * sizeof(int);
+      }
+      break;
+  }
+
+  for(int i = 0; i < size; i++) {
+    displs[i] = i * ext;
+  }
+
+  if(sendbuf != MPI_IN_PLACE) {
+    __INTERNAL__Reduce_switch(sendbuf, tmpbuf, count, datatype, op, 0, comm, coll_type, schedule, info); 
+  } else {
+    __INTERNAL__Reduce_switch(recvbuf, tmpbuf, count, datatype, op, 0, comm, coll_type, schedule, info); 
+  }
+
+  __INTERNAL__Barrier_type(coll_type, schedule, info);
+
+  __INTERNAL__Scatterv_switch(tmpbuf, recvcounts, displs, datatype, recvbuf, recvcounts, datatype, 0, comm, coll_type, schedule, info);
+
+
+  if(coll_type == MPC_COLL_TYPE_BLOCKING) {
+    free(tmpbuf);
+  }
+
+  return MPI_SUCCESS;
+}
+
+/**
+  \brief Execute or schedule a Reduce_scatter using the distance doubling algorithm
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Reduce_scatter_distance_doubling(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  not_implemented();
+  
+  return MPI_SUCCESS;
+}
+
+/**
+  \brief Execute or schedule a Reduce_scatter using the distance halving algorithm
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Reduce_scatter_distance_halving(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  not_implemented();
+  
+  return MPI_SUCCESS;
+}
+
+/**
+  \brief Execute or schedule a Reduce_scatter using the pairwise algorithm
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Reduce_scatter_pairwise(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  not_implemented();
   
   return MPI_SUCCESS;
 }

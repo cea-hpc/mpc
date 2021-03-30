@@ -46,6 +46,9 @@
 #pragma weak MPI_Ireduce_scatter_block = PMPI_Ireduce_scatter_block
 #pragma weak MPI_Reduce_scatter_block_init = PMPI_Reduce_scatter_block_init
 
+#pragma weak MPI_Ireduce_scatter = PMPI_Ireduce_scatter
+#pragma weak MPI_Reduce_scatter_init = PMPI_Reduce_scatter_init
+
 #pragma weak MPI_Iallgather = PMPI_Iallgather
 #pragma weak MPI_Allgather_init = PMPI_Allgather_init
 
