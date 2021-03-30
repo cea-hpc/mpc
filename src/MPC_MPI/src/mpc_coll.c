@@ -39,6 +39,7 @@
 #define SCTK_MPI_CHECK_RETURN_VAL(res,comm)do{if(res == MPI_SUCCESS){return res;} else {MPI_ERROR_REPORT(comm,res,"Generic error retrun");}}while(0)
 
 
+
 /**
   \enum MPC_COLL_TYPE
   \brief Define the type of a collective communication operation.
@@ -70,6 +71,12 @@ typedef struct {
 } Sched_info;
 
 
+#define pointer_swap(a, b, swap) \
+{                                \
+  swap = (a);                    \
+  a = (b);                       \
+  b = (swap);                    \
+}
 
 #ifndef RANK2VRANK
 #define RANK2VRANK(rank, vrank, root) \
@@ -109,18 +116,6 @@ static inline int rmb_index(int a) {
   */
 static inline int fill_rmb(int a, int index) {
   return a | ((1 << index) - 1);
-}
-
-/**
-  \brief Swap two pointers
-  \param a Adress of the first pointer to swap
-  \param b Adress of the second pointer to swap
-  \param swap Adress of the pointer used for the swap
-  */
-static inline void pointer_swap(void **a, void **b, void **swap) {
-  *swap = *a;
-  *a = *b;
-  *b = *swap;
 }
 
 /**
@@ -542,6 +537,8 @@ static inline int __INTERNAL__Reduce_scatter_block_switch(const void *sendbuf, v
 static inline int __INTERNAL__Allgather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Allgatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Alltoall_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __INTERNAL__Alltoallv_switch(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __INTERNAL__Alltoallw_switch(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
 
@@ -682,13 +679,8 @@ int PMPI_Bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MP
   req->is_persistent = 1;
   req->req.request_type = REQUEST_GENERALIZED;
 
-  req->persistant.buf = buffer;
-  req->persistant.count = count;
-  req->persistant.datatype = datatype;
-  req->persistant.root = root;
   req->persistant.op = MPC_MPI_PERSISTENT_BCAST_INIT;
   req->persistant.info = info;
-  req->persistant.comm = comm;
 
   __INTERNAL__Bcast_init(buffer, count, datatype, root, comm, &(req->nbc_handle));
   req->nbc_handle.is_persistent = 1;
@@ -1072,13 +1064,6 @@ int PMPI_Reduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype
   req->is_persistent = 1;
   req->req.request_type = REQUEST_GENERALIZED;
 
-  req->persistant.sendbuf = sendbuf;
-  req->persistant.recvbuf = recvbuf;
-  req->persistant.count = count;
-  req->persistant.datatype = datatype;
-  req->persistant.root = root;
-  req->persistant.comm = comm;
-  req->persistant.op_coll = op;
   req->persistant.op = MPC_MPI_PERSISTENT_REDUCE_INIT;
   req->persistant.info = info;
 
@@ -1355,7 +1340,7 @@ static inline int __INTERNAL__Reduce_binomial(const void *sendbuf, void* recvbuf
         first_access = 0;
       }
 
-      pointer_swap(&tmp_sendbuf, &tmp_recvbuf, &swap);
+      pointer_swap(tmp_sendbuf, tmp_recvbuf, swap);
     }
   }
 
@@ -1542,12 +1527,6 @@ int PMPI_Allreduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datat
   req->is_persistent = 1;
   req->req.request_type = REQUEST_GENERALIZED;
 
-  req->persistant.sendbuf = sendbuf;
-  req->persistant.recvbuf = recvbuf;
-  req->persistant.count = count;
-  req->persistant.datatype = datatype;
-  req->persistant.comm = comm;
-  req->persistant.op_coll = op;
   req->persistant.op = MPC_MPI_PERSISTENT_ALLREDUCE_INIT;
   req->persistant.info = info;
 
@@ -1769,7 +1748,7 @@ static inline int __INTERNAL__Allreduce_distance_doubling(const void *sendbuf, v
         first_access = 0;
       }
 
-      pointer_swap(&tmp_sendbuf, &tmp_recvbuf, &swap);
+      pointer_swap(tmp_sendbuf, tmp_recvbuf, swap);
     }
   }
 
@@ -1802,7 +1781,7 @@ static inline int __INTERNAL__Allreduce_distance_doubling(const void *sendbuf, v
           first_access = 0;
         }
       
-        pointer_swap(&tmp_sendbuf, &tmp_recvbuf, &swap);
+        pointer_swap(tmp_sendbuf, tmp_recvbuf, swap);
       }
     }
   }
@@ -2042,14 +2021,6 @@ int PMPI_Scatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
   req->is_persistent = 1;
   req->req.request_type = REQUEST_GENERALIZED;
 
-  req->persistant.sendbuf = sendbuf;
-  req->persistant.recvbuf = recvbuf;
-  req->persistant.sendcount = sendcount;
-  req->persistant.recvcount = recvcount;
-  req->persistant.sendtype = sendtype;
-  req->persistant.recvtype = recvtype;
-  req->persistant.root = root;
-  req->persistant.comm = comm;
   req->persistant.op = MPC_MPI_PERSISTENT_SCATTER_INIT;
   req->persistant.info = info;
 
@@ -2504,16 +2475,7 @@ int PMPI_Scatterv_init(const void *sendbuf, const int *sendcounts, const int *di
   req->is_persistent = 1;
   req->req.request_type = REQUEST_GENERALIZED;
 
-//  req->persistant.sendbuf = sendbuf;
-//  req->persistant.recvbuf = recvbuf;
-//  req->persistant.sendcounts = sendcounts;
-//  req->persistant.sdispls = displs;
-//  req->persistant.recvcount = recvcount;
-//  req->persistant.sendtype = sendtype;
-//  req->persistant.recvtype = recvtype;
-//  req->persistant.root = root;
-//  req->persistant.comm = comm;
-//  req->persistant.op = MPC_MPI_PERSISTENT_SCATTERV_INIT;
+  req->persistant.op = MPC_MPI_PERSISTENT_SCATTERV_INIT;
   req->persistant.info = info;
 
   /* Init metadata for nbc */
@@ -2883,14 +2845,6 @@ int PMPI_Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
   req->is_persistent = 1;
   req->req.request_type = REQUEST_GENERALIZED;
 
-  req->persistant.sendbuf = sendbuf;
-  req->persistant.recvbuf = recvbuf;
-  req->persistant.sendcount = sendcount;
-  req->persistant.recvcount = recvcount;
-  req->persistant.sendtype = sendtype;
-  req->persistant.recvtype = recvtype;
-  req->persistant.root = root;
-  req->persistant.comm = comm;
   req->persistant.op = MPC_MPI_PERSISTENT_GATHER_INIT;
   req->persistant.info = info;
 
@@ -3329,16 +3283,7 @@ int PMPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
   req->is_persistent = 1;
   req->req.request_type = REQUEST_GENERALIZED;
 
-  //req->persistant.sendbuf = sendbuf;
-  //req->persistant.recvbuf = recvbuf;
-  //req->persistant.sendcount = sendcount;
-  //req->persistant.rdispls = displs;
-  //req->persistant.recvcounts = recvcounts;
-  //req->persistant.sendtype = sendtype;
-  //req->persistant.recvtype = recvtype;
-  //req->persistant.root = root;
-  //req->persistant.comm = comm;
-  //req->persistant.op = MPC_MPI_PERSISTENT_GATHERV_INIT;
+  req->persistant.op = MPC_MPI_PERSISTENT_GATHERV_INIT;
   req->persistant.info = info;
 
   /* Init metadat for nbc */
@@ -3682,12 +3627,6 @@ int PMPI_Reduce_scatter_block_init(const void *sendbuf, void* recvbuf, int count
   req->is_persistent = 1;
   req->req.request_type = REQUEST_GENERALIZED;
 
-  req->persistant.sendbuf = sendbuf;
-  req->persistant.recvbuf = recvbuf;
-  req->persistant.recvcount = count;
-  req->persistant.datatype = datatype;
-  req->persistant.comm = comm;
-  req->persistant.op_coll = op;
   req->persistant.op = MPC_MPI_PERSISTENT_REDUCE_SCATTER_BLOCK_INIT;
   req->persistant.info = info;
 
@@ -3926,7 +3865,7 @@ static inline int __INTERNAL__Reduce_scatter_block_pairwise(const void *sendbuf,
   _mpc_cl_comm_rank(comm, &rank);
   PMPI_Type_extent(datatype, &ext);
 
-  int send_peer, recv_peer, peer;
+  int send_peer, recv_peer;
 
   void* tmpbuf = NULL;
 
@@ -4149,13 +4088,6 @@ int PMPI_Allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtyp
   req->is_persistent = 1;
   req->req.request_type = REQUEST_GENERALIZED;
 
-  req->persistant.sendbuf = sendbuf;
-  req->persistant.recvbuf= recvbuf;
-  req->persistant.sendcount = sendcount;
-  req->persistant.recvcount = recvcount;
-  req->persistant.sendtype = sendtype;
-  req->persistant.recvtype = recvtype;
-  req->persistant.comm = comm;
   req->persistant.op = MPC_MPI_PERSISTENT_ALLGATHER_INIT;
   req->persistant.info = info;
 
@@ -4324,7 +4256,7 @@ static inline int __INTERNAL__Allgather_distance_doubling(const void *sendbuf, i
 
   int res = MPI_SUCCESS;
 
-  int vrank, vsize, peer, maxr, count, peer_count;
+  int vrank, vsize, peer, maxr, count = 0, peer_count = 0;
   maxr = (int)floor((log(size)/LOG2));
   vsize = (1 << maxr);
   int group = 2 * (size - (1 << maxr));
@@ -4414,7 +4346,7 @@ static inline int __INTERNAL__Allgather_distance_doubling(const void *sendbuf, i
       __INTERNAL__Barrier_type(coll_type, schedule, info);
 
       if(coll_type != MPC_COLL_TYPE_COUNT) {
-        pointer_swap(&countbuf, &prev_countbuf, &swap);
+        pointer_swap(countbuf, prev_countbuf, swap);
         for(int j = 0; j < vsize; j++) {
           peer = j ^ (1 << i);
           countbuf[j] = prev_countbuf[j] + prev_countbuf[peer];
@@ -4487,8 +4419,6 @@ static inline int __INTERNAL__Allgather_ring(const void *sendbuf, int sendcount,
   _mpc_cl_comm_rank(comm, &rank);
   PMPI_Type_extent(sendtype, &sendext);
   PMPI_Type_extent(recvtype, &recvext);
-
-  int res = MPI_SUCCESS;
 
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
@@ -4682,6 +4612,7 @@ int PMPI_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendty
   req->is_persistent = 1;
   req->req.request_type = REQUEST_GENERALIZED;
 
+  req->persistant.op = Allgatherv_init;
   req->persistant.info = info;
 
   /* Init metadata for nbc */
@@ -5046,13 +4977,6 @@ int PMPI_Alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype
   req->is_persistent = 1;
   req->req.request_type = REQUEST_GENERALIZED;
 
-  req->persistant.sendbuf = sendbuf;
-  req->persistant.recvbuf= recvbuf;
-  req->persistant.sendcount = sendcount;
-  req->persistant.recvcount = recvcount;
-  req->persistant.sendtype = sendtype;
-  req->persistant.recvtype = recvtype;
-  req->persistant.comm = comm;
   req->persistant.op = MPC_MPI_PERSISTENT_ALLTOALL_INIT;
   req->persistant.info = info;
 
@@ -5200,9 +5124,7 @@ static inline int __INTERNAL__Alltoall_cluster(const void *sendbuf, int sendcoun
   PMPI_Type_extent(sendtype, &sendext);
   PMPI_Type_extent(recvtype, &recvext);
 
-  int res = MPI_SUCCESS;
-
-  void *tmpbuf = sendbuf;
+  void *tmpbuf = NULL;
   
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
@@ -5213,33 +5135,44 @@ static inline int __INTERNAL__Alltoall_cluster(const void *sendbuf, int sendcoun
     case MPC_COLL_TYPE_PERSISTENT:
       if(sendbuf == MPI_IN_PLACE) {
         tmpbuf = info->tmpbuf + info->tmpbuf_pos;
-        info->tmpbuf_pos += sendext * sendcount * size; 
+        info->tmpbuf_pos += recvext * sendcount * size; 
       }
       break;
 
     case MPC_COLL_TYPE_COUNT:
       info->comm_count += 2 * (size - 1) + 1;
+
       if(sendbuf == MPI_IN_PLACE) {
-        info->comm_count += 1;
-        info->tmpbuf_size += sendext * sendcount * size;
+        info->tmpbuf_size += recvext * sendcount * size;
       }
       return MPI_SUCCESS;
   }
 
   if(sendbuf == MPI_IN_PLACE) {
-    __INTERNAL__Copy_type(recvbuf, sendcount * size, sendtype, tmpbuf, sendcount * size, sendtype, comm, coll_type, schedule, info);
-  }
+    __INTERNAL__Copy_type(recvbuf, recvcount * size, recvtype, tmpbuf, recvcount * size, recvtype, comm, coll_type, schedule, info);
 
-  for(int i = 0; i < size; i++) {
-    if(i == rank) {
-      continue;
+    for(int i = 0; i < size; i++) {
+      if(i == rank) {
+        continue;
+      }
+
+      __INTERNAL__Send_type(tmpbuf  + i * recvcount * recvext, recvcount, recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      __INTERNAL__Recv_type(recvbuf + i * recvcount * recvext, recvcount, recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
     }
 
-    __INTERNAL__Send_type(tmpbuf + i * sendcount * sendext, sendcount, sendtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
-    __INTERNAL__Recv_type(recvbuf + i * recvcount * recvext, recvcount, recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
-  }
+  } else {
+    for(int i = 0; i < size; i++) {
+      if(i == rank) {
+        continue;
+      }
 
-  __INTERNAL__Copy_type(tmpbuf + rank * sendcount * sendext, sendcount, sendtype, recvbuf + rank * recvcount * recvext, recvcount, recvtype, comm, coll_type, schedule, info);
+      __INTERNAL__Send_type(sendbuf + i * sendcount * sendext, sendcount, sendtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      __INTERNAL__Recv_type(recvbuf + i * recvcount * recvext, recvcount, recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+    }
+
+    __INTERNAL__Copy_type(sendbuf + rank * sendcount * sendext, sendcount, sendtype, recvbuf + rank * recvcount * recvext, recvcount, recvtype, comm, coll_type, schedule, info);
+
+  }
 
   return MPI_SUCCESS;
 }
@@ -5282,6 +5215,853 @@ static inline int __INTERNAL__Alltoall_bruck(const void *sendbuf, int sendcount,
   \return error code
   */
 static inline int __INTERNAL__Alltoall_pairwise(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  not_implemented();
+
+  return MPI_SUCCESS;
+}
+
+
+
+
+/***********
+  ALLTOALLV
+  ***********/
+
+int PMPI_Ialltoallv (const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request);
+int __INTERNAL__Ialltoallv(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
+int PMPI_Alltoallv_init(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request);
+int __INTERNAL__Alltoallv_init(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle);
+int __INTERNAL__Alltoallv(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
+static inline int __INTERNAL__Alltoallv_cluster(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __INTERNAL__Alltoallv_bruck(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __INTERNAL__Alltoallv_pairwise(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+
+
+/**
+  \brief Initialize NBC structures used in call of non-blocking Alltoallv
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param sdispls Array (of length group size) specifying at entry i the the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtype Type of the data elements in recvbuf
+  \param comm Target communicator
+  \param request Pointer to the MPI_Request
+  \return error code
+  */
+int PMPI_Ialltoallv(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request) {
+
+  int res = MPI_ERR_INTERN;
+  mpc_common_nodebug ("Entering IALLTOALLV %d", comm);
+  SCTK__MPI_INIT_REQUEST (request);
+
+  int csize;
+  MPI_Comm_size(comm, &csize);
+
+  if(recvbuf == sendbuf)
+  {
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
+
+  if(csize == 1)
+  {
+    res = PMPI_Alltoallv (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+  }
+  else
+  {
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->is_nbc = 1;
+    tmp->nbc_handle.is_persistent = 0;
+
+    res = __INTERNAL__Ialltoallv (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, &(tmp->nbc_handle));
+  }
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+/**
+  \brief Initialize NBC structures used in call of non-blocking Alltoallv
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param sdispls Array (of length group size) specifying at entry i the the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtype Type of the data elements in recvbuf
+  \param comm Target communicator
+  \param handle Pointer to the NBC_Handle
+  \return error code
+  */
+int __INTERNAL__Ialltoallv(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle) {
+
+  int res;
+  NBC_Schedule *schedule;
+  Sched_info info;
+  sched_info_init(&info);
+
+  res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  handle->tmpbuf = NULL;
+  schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
+
+  __INTERNAL__Alltoallv_switch(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+
+  sched_alloc_init(handle, schedule, &info);
+
+  __INTERNAL__Alltoallv_switch(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  
+  res = my_NBC_Sched_commit(schedule, &info);
+  if (NBC_OK != res)
+  {
+    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    return res;
+  }
+
+  res = NBC_Start(handle, schedule);
+  if (NBC_OK != res)
+  {
+    printf("Error in NBC_Start() (%i)\n", res);
+    return res;
+  }
+
+  return MPI_SUCCESS;
+}
+
+
+/**
+  \brief Initialize NBC structures used in call of persistent Alltoallv
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param sdispls Array (of length group size) specifying at entry i the the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtype Type of the data elements in recvbuf
+  \param comm Target communicator
+  \param info MPI_Info
+  \param request Pointer to the MPI_Request
+  \return error code
+  */
+int PMPI_Alltoallv_init(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request) {
+
+  {
+    int size;
+    int rank;
+    mpi_check_comm(comm);
+    _mpc_cl_comm_size(comm, &size);
+    _mpc_cl_comm_rank(comm, &rank);
+    mpi_check_type(sendtype, comm);
+    mpi_check_type(recvtype, comm);
+    int i;
+    for(i = 0; i < size; i++)
+    {
+      mpi_check_count(recvcounts[i], comm);
+      mpi_check_count(sendcounts[i], comm);
+    }
+    if(recvcounts[rank] != 0)
+    {
+      mpi_check_buf(recvbuf, comm);
+    }
+    if(sendcounts[rank] != 0)
+    {
+      mpi_check_buf(sendbuf, comm);
+    }
+
+  }
+  MPI_internal_request_t *req;
+  SCTK__MPI_INIT_REQUEST (request);
+  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  req->freeable = 0;
+  req->is_active = 0;
+  req->is_nbc = 1;
+  req->is_persistent = 1;
+  req->req.request_type = REQUEST_GENERALIZED;
+
+  req->persistant.op = Alltoallv_init;
+  req->persistant.info = info;
+
+  /* Init metadata for nbc */
+  __INTERNAL__Alltoallv_init (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, &(req->nbc_handle));
+  req->nbc_handle.is_persistent = 1;
+  return MPI_SUCCESS;
+}
+
+/**
+  \brief Initialize NBC structures used in call of persistent Alltoallv
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param sdispls Array (of length group size) specifying at entry i the the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtype Type of the data elements in recvbuf
+  \param comm Target communicator
+  \param handle Pointer to the NBC_Handle
+  \return error code
+  */
+int __INTERNAL__Alltoallv_init(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle) {
+  
+  int res;
+  NBC_Schedule *schedule;
+  Sched_info info;
+  sched_info_init(&info);
+
+  res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+
+  handle->tmpbuf = NULL;
+
+  /* alloc schedule */
+  schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
+
+  __INTERNAL__Alltoallv_switch(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  
+  sched_alloc_init(handle, schedule, &info);
+  
+  __INTERNAL__Alltoallv_switch(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+
+  res = my_NBC_Sched_commit(schedule, &info);
+  if (res != MPI_SUCCESS)
+  {
+    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    return res;
+  }
+
+  handle->schedule = schedule;
+
+  return MPI_SUCCESS;
+}
+
+
+/**
+  \brief Blocking Alltoallv
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param sdispls Array (of length group size) specifying at entry i the the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtype Type of the data elements in recvbuf
+  \param comm Target communicator
+  \return error code
+  */
+int __INTERNAL__Alltoallv(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm) {
+  //return __INTERNAL__Alltoall_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+
+  MPI_Request req;
+  MPI_Status status;
+
+  MPI_Ialltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, &req);
+  MPI_Wait(&req, &status);
+
+  return status.MPI_ERROR;
+}
+
+
+/**
+  \brief Swith between the different Alltoallv algorithms
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param sdispls Array (of length group size) specifying at entry i the the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtype Type of the data elements in recvbuf
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Alltoallv_switch(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  enum {
+    NBC_ALLTOALLV_CLUSTER,
+    NBC_ALLTOALLV_BRUCK,
+    NBC_ALLTOALLV_PAIRWISE
+  } alg;
+
+  int size;
+  _mpc_cl_comm_size(comm, &size);
+  
+  alg = NBC_ALLTOALLV_CLUSTER;
+
+  int res;
+
+  switch(alg) {
+    case NBC_ALLTOALLV_CLUSTER:
+      res = __INTERNAL__Alltoallv_cluster(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, coll_type, schedule, info);
+      break;
+    case NBC_ALLTOALLV_BRUCK:
+      res = __INTERNAL__Alltoallv_bruck(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, coll_type, schedule, info);
+      break;
+    case NBC_ALLTOALLV_PAIRWISE:
+      res = __INTERNAL__Alltoallv_pairwise(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, coll_type, schedule, info);
+      break;
+  }
+
+  return res; 
+}
+
+/**
+  \brief Execute or schedule a Alltoallv using the cluster algorithm
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param sdispls Array (of length group size) specifying at entry i the the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtype Type of the data elements in recvbuf
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Alltoallv_cluster(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  int rank, size;
+  MPI_Aint sendext, recvext;
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+  PMPI_Type_extent(sendtype, &sendext);
+  PMPI_Type_extent(recvtype, &recvext);
+
+  void *tmpbuf = NULL;
+
+  int rsize = 0;
+  for(int i = 0; i < size; i++) {
+    int size = rdispls[i] + recvcounts[i] * recvext;
+    rsize = (size > rsize) ? (size) : (rsize) ;
+  }
+  
+  switch(coll_type) {
+    case MPC_COLL_TYPE_BLOCKING:
+      not_implemented();
+      return MPI_SUCCESS;
+
+    case MPC_COLL_TYPE_NONBLOCKING:
+    case MPC_COLL_TYPE_PERSISTENT:
+      if(sendbuf == MPI_IN_PLACE) {
+        tmpbuf = info->tmpbuf + info->tmpbuf_pos;
+        info->tmpbuf_pos += rsize; 
+      }
+      break;
+
+    case MPC_COLL_TYPE_COUNT:
+      info->comm_count += 2 * (size - 1) + 1;
+
+      if(sendbuf == MPI_IN_PLACE) {
+        info->tmpbuf_size += rsize;
+      }
+      return MPI_SUCCESS;
+  }
+
+  if(sendbuf == MPI_IN_PLACE) {
+    __INTERNAL__Copy_type(recvbuf, rsize, MPI_BYTE, tmpbuf, rsize, MPI_BYTE, comm, coll_type, schedule, info);
+
+    for(int i = 0; i < size; i++) {
+      if(i == rank) {
+        continue;
+      }
+
+      __INTERNAL__Send_type(tmpbuf  + rdispls[i], recvcounts[i], recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      __INTERNAL__Recv_type(recvbuf + rdispls[i], recvcounts[i], recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+    }
+
+  } else {
+    for(int i = 0; i < size; i++) {
+      if(i == rank) {
+        continue;
+      }
+
+      __INTERNAL__Send_type(sendbuf + sdispls[i], sendcounts[i], sendtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      __INTERNAL__Recv_type(recvbuf + rdispls[i], recvcounts[i], recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+    }
+
+    __INTERNAL__Copy_type(sendbuf + sdispls[rank], sendcounts[rank], sendtype, recvbuf + rdispls[rank], recvcounts[rank], recvtype, comm, coll_type, schedule, info);
+
+  }
+
+  return MPI_SUCCESS;
+}
+
+/**
+  \brief Execute or schedule a Alltoallv using the bruck algorithm
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param sdispls Array (of length group size) specifying at entry i the the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtype Type of the data elements in recvbuf
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Alltoallv_bruck(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  not_implemented();
+
+  return MPI_SUCCESS;
+}
+
+/**
+  \brief Execute or schedule a Alltoallv using the pairwise algorithm
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param sdispls Array (of length group size) specifying at entry i the the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtype Type of the data elements in sendbuf
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtype Type of the data elements in recvbuf
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Alltoallv_pairwise(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  not_implemented();
+
+  return MPI_SUCCESS;
+}
+
+
+
+
+/***********
+  ALLTOALLW
+  ***********/
+
+int PMPI_Ialltoallw (const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPI_Request *request);
+int __INTERNAL__Ialltoallw(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, NBC_Handle *handle);
+int PMPI_Alltoall_winit(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPI_Info info, MPI_Request *request);
+int __INTERNAL__Alltoallw_init(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, NBC_Handle* handle);
+int __INTERNAL__Alltoallw(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm);
+static inline int __INTERNAL__Alltoallw_cluster(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __INTERNAL__Alltoallw_bruck(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __INTERNAL__Alltoallw_pairwise(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+
+
+/**
+  \brief Initialize NBC structures used in call of non-blocking Alltoallw
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param sdispls Array (of length group size) specifying at entry i the the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtypes Array (of length group size) specifying at entry i the type of the data elements to send to process i
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtypes Array (of length group size) specifying at entry i the type of the data elements to receive from process i
+  \param comm Target communicator
+  \param request Pointer to the MPI_Request
+  \return error code
+  */
+int PMPI_Ialltoallw(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPI_Request *request) {
+
+  int res = MPI_ERR_INTERN;
+  mpc_common_nodebug ("Entering IALLTOALLW %d", comm);
+  SCTK__MPI_INIT_REQUEST (request);
+
+  int csize;
+  MPI_Comm_size(comm, &csize);
+
+  if(recvbuf == sendbuf)
+  {
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
+
+  if(csize == 1)
+  {
+    res = PMPI_Alltoallw (sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+  }
+  else
+  {
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->is_nbc = 1;
+    tmp->nbc_handle.is_persistent = 0;
+
+    res = __INTERNAL__Ialltoallw (sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, &(tmp->nbc_handle));
+  }
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+/**
+  \brief Initialize NBC structures used in call of non-blocking Alltoallw
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param sdispls Array (of length group size) specifying at entry i the the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtypes Array (of length group size) specifying at entry i the type of the data elements to send to process i
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtypes Array (of length group size) specifying at entry i the type of the data elements to receive from process i
+  \param comm Target communicator
+  \param handle Pointer to the NBC_Handle
+  \return error code
+  */
+int __INTERNAL__Ialltoallw(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, NBC_Handle *handle) {
+
+  int res;
+  NBC_Schedule *schedule;
+  Sched_info info;
+  sched_info_init(&info);
+
+  res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  handle->tmpbuf = NULL;
+  schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
+
+  __INTERNAL__Alltoallw_switch(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+
+  sched_alloc_init(handle, schedule, &info);
+
+  __INTERNAL__Alltoallw_switch(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  
+  res = my_NBC_Sched_commit(schedule, &info);
+  if (NBC_OK != res)
+  {
+    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    return res;
+  }
+
+  res = NBC_Start(handle, schedule);
+  if (NBC_OK != res)
+  {
+    printf("Error in NBC_Start() (%i)\n", res);
+    return res;
+  }
+
+  return MPI_SUCCESS;
+}
+
+
+/**
+  \brief Initialize NBC structures used in call of persistent Alltoallw
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param sdispls Array (of length group size) specifying at entry i the the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtypes Array (of length group size) specifying at entry i the type of the data elements to send to process i
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtypes Array (of length group size) specifying at entry i the type of the data elements to receive from process i
+  \param comm Target communicator
+  \param info MPI_Info
+  \param request Pointer to the MPI_Request
+  \return error code
+  */
+int PMPI_Alltoallw_init(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPI_Info info, MPI_Request *request) {
+
+  {
+    int size;
+    int rank;
+    mpi_check_comm(comm);
+    _mpc_cl_comm_size(comm, &size);
+    _mpc_cl_comm_rank(comm, &rank);
+    int i;
+    for(i = 0; i < size; i++)
+    {
+      mpi_check_count(recvcounts[i], comm);
+      mpi_check_count(sendcounts[i], comm);
+      mpi_check_type(sendtypes[i], comm);
+      mpi_check_type(recvtypes[i], comm);
+    }
+    if(recvcounts[rank] != 0)
+    {
+      mpi_check_buf(recvbuf, comm);
+    }
+    if(sendcounts[rank] != 0)
+    {
+      mpi_check_buf(sendbuf, comm);
+    }
+
+  }
+
+  MPI_internal_request_t *req;
+  SCTK__MPI_INIT_REQUEST (request);
+  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  req->freeable = 0;
+  req->is_active = 0;
+  req->is_nbc = 1;
+  req->is_persistent = 1;
+  req->req.request_type = REQUEST_GENERALIZED;
+
+  req->persistant.op = Alltoallw_init;
+  req->persistant.info = info;
+
+  /* Init metadata for nbc */
+  __INTERNAL__Alltoallw_init (sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, &(req->nbc_handle));
+  req->nbc_handle.is_persistent = 1;
+  return MPI_SUCCESS;
+}
+
+/**
+  \brief Initialize NBC structures used in call of persistent Alltoallw
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param sdispls Array (of length group size) specifying at entry i the the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtypes Array (of length group size) specifying at entry i the type of the data elements to send to process i
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtypes Array (of length group size) specifying at entry i the type of the data elements to receive from process i
+  \param comm Target communicator
+  \param handle Pointer to the NBC_Handle
+  \return error code
+  */
+int __INTERNAL__Alltoallw_init(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, NBC_Handle* handle) {
+  
+  int res;
+  NBC_Schedule *schedule;
+  Sched_info info;
+  sched_info_init(&info);
+
+  res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+
+  handle->tmpbuf = NULL;
+
+  /* alloc schedule */
+  schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
+
+  __INTERNAL__Alltoallw_switch(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  
+  sched_alloc_init(handle, schedule, &info);
+  
+  __INTERNAL__Alltoallw_switch(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+
+  res = my_NBC_Sched_commit(schedule, &info);
+  if (res != MPI_SUCCESS)
+  {
+    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    return res;
+  }
+
+  handle->schedule = schedule;
+
+  return MPI_SUCCESS;
+}
+
+
+/**
+  \brief Blocking Alltoallw
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param sdispls Array (of length group size) specifying at entry i the the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtypes Array (of length group size) specifying at entry i the type of the data elements to send to process i
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtypes Array (of length group size) specifying at entry i the type of the data elements to receive from process i
+  \param comm Target communicator
+  \return error code
+  */
+int __INTERNAL__Alltoallw(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm) {
+
+  MPI_Request req;
+  MPI_Status status;
+
+  MPI_Ialltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, &req);
+  MPI_Wait(&req, &status);
+
+  return status.MPI_ERROR;
+}
+
+
+/**
+  \brief Swith between the different Alltoallw algorithms
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param sdispls Array (of length group size) specifying at entry i the the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtypes Array (of length group size) specifying at entry i the type of the data elements to send to process i
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtypes Array (of length group size) specifying at entry i the type of the data elements to receive from process i
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Alltoallw_switch(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  enum {
+    NBC_ALLTOALLW_CLUSTER,
+    NBC_ALLTOALLW_BRUCK,
+    NBC_ALLTOALLW_PAIRWISE
+  } alg;
+
+  int size;
+  _mpc_cl_comm_size(comm, &size);
+  
+  alg = NBC_ALLTOALLW_CLUSTER;
+
+  int res;
+
+  switch(alg) {
+    case NBC_ALLTOALLW_CLUSTER:
+      res = __INTERNAL__Alltoallw_cluster(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, coll_type, schedule, info);
+      break;
+    case NBC_ALLTOALLW_BRUCK:
+      res = __INTERNAL__Alltoallw_bruck(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, coll_type, schedule, info);
+      break;
+    case NBC_ALLTOALLW_PAIRWISE:
+      res = __INTERNAL__Alltoallw_pairwise(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, coll_type, schedule, info);
+      break;
+  }
+
+  return res; 
+}
+
+/**
+  \brief Execute or schedule a Alltoallw using the cluster algorithm
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param sdispls Array (of length group size) specifying at entry i the the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtypes Array (of length group size) specifying at entry i the type of the data elements to send to process i
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtypes Array (of length group size) specifying at entry i the type of the data elements to receive from process i
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Alltoallw_cluster(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  int rank, size;
+  MPI_Aint ext;
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+
+  void *tmpbuf = NULL;
+
+  int rsize = 0;
+  for(int i = 0; i < size; i++) {
+    PMPI_Type_extent(recvtypes[i], &ext);
+    int size = rdispls[i] + recvcounts[i] * ext;
+    rsize = (size > rsize) ? (size) : (rsize);
+  }
+  
+  switch(coll_type) {
+    case MPC_COLL_TYPE_BLOCKING:
+      not_implemented();
+      return MPI_SUCCESS;
+
+    case MPC_COLL_TYPE_NONBLOCKING:
+    case MPC_COLL_TYPE_PERSISTENT:
+      if(sendbuf == MPI_IN_PLACE) {
+        tmpbuf = info->tmpbuf + info->tmpbuf_pos;
+        info->tmpbuf_pos += rsize; 
+      }
+      break;
+
+    case MPC_COLL_TYPE_COUNT:
+      info->comm_count += 2 * (size - 1) + 1;
+
+      if(sendbuf == MPI_IN_PLACE) {
+        info->tmpbuf_size += rsize;
+      }
+      return MPI_SUCCESS;
+  }
+
+  if(sendbuf == MPI_IN_PLACE) {
+    __INTERNAL__Copy_type(recvbuf, rsize, MPI_BYTE, tmpbuf, rsize, MPI_BYTE, comm, coll_type, schedule, info);
+
+    for(int i = 0; i < size; i++) {
+      if(i == rank) {
+        continue;
+      }
+
+      __INTERNAL__Send_type(tmpbuf  + rdispls[i], recvcounts[i], recvtypes[i], i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      __INTERNAL__Recv_type(recvbuf + rdispls[i], recvcounts[i], recvtypes[i], i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+    }
+
+  } else {
+    for(int i = 0; i < size; i++) {
+      if(i == rank) {
+        continue;
+      }
+
+      __INTERNAL__Send_type(sendbuf + sdispls[i], sendcounts[i], sendtypes[i], i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      __INTERNAL__Recv_type(recvbuf + rdispls[i], recvcounts[i], recvtypes[i], i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+    }
+
+    __INTERNAL__Copy_type(sendbuf + sdispls[rank], sendcounts[rank], sendtypes[rank], recvbuf + rdispls[rank], recvcounts[rank], recvtypes[rank], comm, coll_type, schedule, info);
+
+  }
+
+  return MPI_SUCCESS;
+}
+
+/**
+  \brief Execute or schedule a Alltoallw using the bruck algorithm
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param sdispls Array (of length group size) specifying at entry i the the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtypes Array (of length group size) specifying at entry i the type of the data elements to send to process i
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtypes Array (of length group size) specifying at entry i the type of the data elements to receive from process i
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Alltoallw_bruck(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  not_implemented();
+
+  return MPI_SUCCESS;
+}
+
+/**
+  \brief Execute or schedule a Alltoallw using the pairwise algorithm
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param sendcounts Array (of length group size) containing the number of elements send to each process
+  \param sdispls Array (of length group size) specifying at entry i the the displacement relative to sendbuf from which to take the sent data for process i
+  \param sendtypes Array (of length group size) specifying at entry i the type of the data elements to send to process i
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param recvcounts Array (of length group size) containing the number of elements received from each process
+  \param rdispls Array (of length group size) specifying at entry i the the displacement relative to recvbuf at which to place the received data from process i
+  \param recvtypes Array (of length group size) specifying at entry i the type of the data elements to receive from process i
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Alltoallw_pairwise(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   not_implemented();
 

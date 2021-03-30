@@ -5373,91 +5373,93 @@ int __INTERNAL__PMPI_Alltoallv_intra(void *sendbuf, int *sendcnts, int *sdispls,
                                      int *recvcnts, int *rdispls,
                                      MPI_Datatype recvtype, MPI_Comm comm)
 {
-	int res = MPI_ERR_INTERN;
-	int i, size, rank, ss, ii, dst, is_in_place = 0;
-	int bblock = 4;
-	MPI_Request requests[2 * bblock * sizeof(MPI_Request)];
-	MPI_Aint d_send, d_recv;
+//   int res = MPI_ERR_INTERN;
+//   int i, size, rank, ss, ii, dst, is_in_place = 0;
+//   int bblock = 4;
+//   MPI_Request requests[2 * bblock * sizeof(MPI_Request)];
+//   MPI_Aint d_send, d_recv;
+// 
+//   res = _mpc_cl_comm_size(comm, &size);
+//   if(res != MPI_SUCCESS)
+//   {
+//     return res;
+//   }
+//   res = _mpc_cl_comm_rank(comm, &rank);
+//   if(res != MPI_SUCCESS)
+//   {
+//     return res;
+//   }
+// 
+//   res = PMPI_Type_extent(recvtype, &d_recv);
+//   if(res != MPI_SUCCESS)
+//   {
+//     return res;
+//   }
+// 
+//   if(sendbuf == MPI_IN_PLACE)
+//   {
+//     sendcnts = recvcnts;
+//     sdispls  = rdispls;
+//     d_send   = d_recv;
+//     size_t to_cpy = 0;
+//     for(i = 0; i < size; i++)
+//     {
+//       to_cpy += d_recv * rdispls[i];
+//     }
+//     to_cpy += recvcnts[size - 1] * d_recv;
+//     sendbuf = malloc(to_cpy);
+//     memcpy(sendbuf, recvbuf, to_cpy);
+//     is_in_place = 1;
+//   }
+//   else
+//   {
+//     res = PMPI_Type_extent(sendtype, &d_send);
+//     if(res != MPI_SUCCESS)
+//     {
+//       return res;
+//     }
+//   }
+// 
+// 
+//   for(ii = 0; ii < size; ii += bblock)
+//   {
+//     ss = size - ii < bblock ? size - ii : bblock;
+//     for(i = 0; i < ss; ++i)
+//     {
+//       dst = (rank + i + ii) % size;
+//       res = PMPI_Irecv_internal( ( (char *)recvbuf) + (rdispls[dst] * d_recv),
+//           recvcnts[dst], recvtype, dst,
+//           MPC_ALLTOALLV_TAG, comm, &requests[i]);
+//       if(res != MPI_SUCCESS)
+//       {
+//         return res;
+//       }
+//     }
+//     for(i = 0; i < ss; ++i)
+//     {
+//       dst = (rank - i - ii + size) % size;
+//       res = PMPI_Isend_internal( ( (char *)sendbuf) + (sdispls[dst] * d_send),
+//           sendcnts[dst], sendtype, dst,
+//           MPC_ALLTOALLV_TAG, comm, &requests[i + ss]);
+//       if(res != MPI_SUCCESS)
+//       {
+//         return res;
+//       }
+//     }
+//     res = PMPI_Waitall(2 * ss, requests, SCTK_STATUS_NULL);
+//     if(res != MPI_SUCCESS)
+//     {
+//       return res;
+//     }
+//   }
+//   if(is_in_place == 1)
+//   {
+//     sctk_free(sendbuf);
+//   }
+// 
+//   return res;
 
-	res = _mpc_cl_comm_size(comm, &size);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-	res = _mpc_cl_comm_rank(comm, &rank);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-
-	res = PMPI_Type_extent(recvtype, &d_recv);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-
-	if(sendbuf == MPI_IN_PLACE)
-	{
-		sendcnts = recvcnts;
-		sdispls  = rdispls;
-		d_send   = d_recv;
-		size_t to_cpy = 0;
-		for(i = 0; i < size; i++)
-		{
-			to_cpy += d_recv * rdispls[i];
-		}
-		to_cpy += recvcnts[size - 1] * d_recv;
-		sendbuf = malloc(to_cpy);
-		memcpy(sendbuf, recvbuf, to_cpy);
-		is_in_place = 1;
-	}
-	else
-	{
-		res = PMPI_Type_extent(sendtype, &d_send);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-	}
-
-
-	for(ii = 0; ii < size; ii += bblock)
-	{
-		ss = size - ii < bblock ? size - ii : bblock;
-		for(i = 0; i < ss; ++i)
-		{
-			dst = (rank + i + ii) % size;
-			res = PMPI_Irecv_internal( ( (char *)recvbuf) + (rdispls[dst] * d_recv),
-			                  recvcnts[dst], recvtype, dst,
-			                  MPC_ALLTOALLV_TAG, comm, &requests[i]);
-			if(res != MPI_SUCCESS)
-			{
-				return res;
-			}
-		}
-		for(i = 0; i < ss; ++i)
-		{
-			dst = (rank - i - ii + size) % size;
-			res = PMPI_Isend_internal( ( (char *)sendbuf) + (sdispls[dst] * d_send),
-			                  sendcnts[dst], sendtype, dst,
-			                  MPC_ALLTOALLV_TAG, comm, &requests[i + ss]);
-			if(res != MPI_SUCCESS)
-			{
-				return res;
-			}
-		}
-		res = PMPI_Waitall(2 * ss, requests, SCTK_STATUS_NULL);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-	}
-	if(is_in_place == 1)
-	{
-		sctk_free(sendbuf);
-	}
-
-	return res;
+  return __INTERNAL__Alltoallv(sendbuf, sendcnts, sdispls, sendtype, recvbuf, recvcnts, rdispls, recvtype, comm);
 }
 
 int __INTERNAL__PMPI_Alltoallv_inter(const void *sendbuf, int *sendcnts, int *sdispls,
@@ -5539,126 +5541,128 @@ int __INTERNAL__PMPI_Alltoallw_intra(void *sendbuf, int *sendcnts, int *sdispls,
                                      int *recvcnts, int *rdispls,
                                      MPI_Datatype *recvtypes, MPI_Comm comm)
 {
-	int res = MPI_ERR_INTERN;
-	int i, j, ii, ss, dst;
-	int type_size, size;
-	int rank, bblock = 4;
-	MPI_Status status;
-	MPI_Status *starray;
-	MPI_Request *reqarray;
-	int outstanding_requests;
+//   int res = MPI_ERR_INTERN;
+//   int i, j, ii, ss, dst;
+//   int type_size, size;
+//   int rank, bblock = 4;
+//   MPI_Status status;
+//   MPI_Status *starray;
+//   MPI_Request *reqarray;
+//   int outstanding_requests;
+// 
+//   res = _mpc_cl_comm_size(comm, &size);
+//   if(res != MPI_SUCCESS)
+//   {
+//     return res;
+//   }
+//   res = _mpc_cl_comm_rank(comm, &rank);
+//   if(res != MPI_SUCCESS)
+//   {
+//     return res;
+//   }
+// 
+//   if(bblock < size)
+//   {
+//     bblock = size;
+//   }
+// 
+//   if(sendbuf == MPI_IN_PLACE)
+//   {
+//     for(i = 0; i < size; ++i)
+//     {
+//       for(j = i; j < size; ++j)
+//       {
+//         if(rank == i)
+//         {
+//           res = PMPI_Sendrecv_replace(
+//               ( (char *)recvbuf + rdispls[j]), recvcnts[j], recvtypes[j], j,
+//               MPC_ALLTOALLW_TAG, j, MPC_ALLTOALLW_TAG, comm, &status);
+//           if(res != MPI_SUCCESS)
+//           {
+//             return res;
+//           }
+//         }
+//         else if(rank == j)
+//         {
+//           res = PMPI_Sendrecv_replace(
+//               ( (char *)recvbuf + rdispls[i]), recvcnts[i], recvtypes[i], i,
+//               MPC_ALLTOALLW_TAG, i, MPC_ALLTOALLW_TAG, comm, &status);
+//           if(res != MPI_SUCCESS)
+//           {
+//             return res;
+//           }
+//         }
+//       }
+//     }
+//   }
+//   else
+//   {
+//     starray  = (MPI_Status *)sctk_malloc(2 * bblock * sizeof(MPI_Status) );
+//     reqarray = (MPI_Request *)sctk_malloc(2 * bblock * sizeof(MPI_Request) );
+// 
+//     for(ii = 0; ii < size; ii += bblock)
+//     {
+//       outstanding_requests = 0;
+//       ss = size - ii < bblock ? size - ii : bblock;
+// 
+//       for(i = 0; i < ss; i++)
+//       {
+//         dst = (rank + i + ii) % size;
+//         if(recvcnts[dst])
+//         {
+//           res = PMPI_Type_size(recvtypes[dst], &type_size);
+//           if(res != MPI_SUCCESS)
+//           {
+//             return res;
+//           }
+//           if(type_size)
+//           {
+//             res = PMPI_Irecv_internal(
+//                 (char *)recvbuf + rdispls[dst], recvcnts[dst], recvtypes[dst],
+//                 dst, MPC_ALLTOALLW_TAG, comm, &reqarray[outstanding_requests]);
+//             if(res != MPI_SUCCESS)
+//             {
+//               return res;
+//             }
+//             outstanding_requests++;
+//           }
+//         }
+//       }
+// 
+//       for(i = 0; i < ss; i++)
+//       {
+//         dst = (rank - i - ii + size) % size;
+//         if(sendcnts[dst])
+//         {
+//           res = PMPI_Type_size(sendtypes[dst], &type_size);
+//           if(res != MPI_SUCCESS)
+//           {
+//             return res;
+//           }
+//           if(type_size)
+//           {
+//             res = PMPI_Isend_internal(
+//                 (char *)sendbuf + sdispls[dst], sendcnts[dst], sendtypes[dst],
+//                 dst, MPC_ALLTOALLW_TAG, comm, &reqarray[outstanding_requests]);
+//             if(res != MPI_SUCCESS)
+//             {
+//               return res;
+//             }
+//             outstanding_requests++;
+//           }
+//         }
+//       }
+// 
+//       res = PMPI_Waitall(outstanding_requests, reqarray, starray);
+//       if(res != MPI_SUCCESS)
+//       {
+//         return res;
+//       }
+//     }
+//   }
+//   return res;
 
-	res = _mpc_cl_comm_size(comm, &size);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-	res = _mpc_cl_comm_rank(comm, &rank);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
-
-	if(bblock < size)
-	{
-		bblock = size;
-	}
-
-	if(sendbuf == MPI_IN_PLACE)
-	{
-		for(i = 0; i < size; ++i)
-		{
-			for(j = i; j < size; ++j)
-			{
-				if(rank == i)
-				{
-					res = PMPI_Sendrecv_replace(
-						( (char *)recvbuf + rdispls[j]), recvcnts[j], recvtypes[j], j,
-						MPC_ALLTOALLW_TAG, j, MPC_ALLTOALLW_TAG, comm, &status);
-					if(res != MPI_SUCCESS)
-					{
-						return res;
-					}
-				}
-				else if(rank == j)
-				{
-					res = PMPI_Sendrecv_replace(
-						( (char *)recvbuf + rdispls[i]), recvcnts[i], recvtypes[i], i,
-						MPC_ALLTOALLW_TAG, i, MPC_ALLTOALLW_TAG, comm, &status);
-					if(res != MPI_SUCCESS)
-					{
-						return res;
-					}
-				}
-			}
-		}
-	}
-	else
-	{
-		starray  = (MPI_Status *)sctk_malloc(2 * bblock * sizeof(MPI_Status) );
-		reqarray = (MPI_Request *)sctk_malloc(2 * bblock * sizeof(MPI_Request) );
-
-		for(ii = 0; ii < size; ii += bblock)
-		{
-			outstanding_requests = 0;
-			ss = size - ii < bblock ? size - ii : bblock;
-
-			for(i = 0; i < ss; i++)
-			{
-				dst = (rank + i + ii) % size;
-				if(recvcnts[dst])
-				{
-					res = PMPI_Type_size(recvtypes[dst], &type_size);
-					if(res != MPI_SUCCESS)
-					{
-						return res;
-					}
-					if(type_size)
-					{
-						res = PMPI_Irecv_internal(
-							(char *)recvbuf + rdispls[dst], recvcnts[dst], recvtypes[dst],
-							dst, MPC_ALLTOALLW_TAG, comm, &reqarray[outstanding_requests]);
-						if(res != MPI_SUCCESS)
-						{
-							return res;
-						}
-						outstanding_requests++;
-					}
-				}
-			}
-
-			for(i = 0; i < ss; i++)
-			{
-				dst = (rank - i - ii + size) % size;
-				if(sendcnts[dst])
-				{
-					res = PMPI_Type_size(sendtypes[dst], &type_size);
-					if(res != MPI_SUCCESS)
-					{
-						return res;
-					}
-					if(type_size)
-					{
-						res = PMPI_Isend_internal(
-							(char *)sendbuf + sdispls[dst], sendcnts[dst], sendtypes[dst],
-							dst, MPC_ALLTOALLW_TAG, comm, &reqarray[outstanding_requests]);
-						if(res != MPI_SUCCESS)
-						{
-							return res;
-						}
-						outstanding_requests++;
-					}
-				}
-			}
-
-			res = PMPI_Waitall(outstanding_requests, reqarray, starray);
-			if(res != MPI_SUCCESS)
-			{
-				return res;
-			}
-		}
-	}
-	return res;
+  return __INTERNAL__Alltoallw( sendbuf, sendcnts, sdispls, sendtypes, recvbuf, recvcnts, rdispls, recvtypes, comm);
 }
 
 int __INTERNAL__PMPI_Alltoallw_inter(void *sendbuf, int *sendcnts, int *sdispls,
@@ -11592,32 +11596,32 @@ int PMPI_Start(MPI_Request *request)
             req->persistant.tag,
             req->persistant.comm, request, 1, requests);
       break;
-    case MPC_MPI_PERSISTENT_ALLTOALLW_INIT:
-      res = 
-        NBC_Ialltoallw(req->persistant.sendbuf, 
-            req->persistant.sendcounts, 
-            req->persistant.sdispls, 
-            req->persistant.sendtypes, 
-            req->persistant.recvbuf, 
-            req->persistant.recvcounts, 
-            req->persistant.rdispls,
-            req->persistant.recvtypes, 
-            req->persistant.comm, 
-            &(req->nbc_handle));
-      break;
-    case MPC_MPI_PERSISTENT_ALLTOALLV_INIT:
-      res = 
-        NBC_Ialltoallv(req->persistant.sendbuf, 
-            req->persistant.sendcounts, 
-            req->persistant.sdispls, 
-            req->persistant.sendtype, 
-            req->persistant.recvbuf, 
-            req->persistant.recvcounts, 
-            req->persistant.rdispls,
-            req->persistant.recvtype, 
-            req->persistant.comm, 
-            &(req->nbc_handle));
-      break;
+    // case MPC_MPI_PERSISTENT_ALLTOALLW_INIT:
+    //   res = 
+    //     NBC_Ialltoallw(req->persistant.sendbuf, 
+    //         req->persistant.sendcounts, 
+    //         req->persistant.sdispls, 
+    //         req->persistant.sendtypes, 
+    //         req->persistant.recvbuf, 
+    //         req->persistant.recvcounts, 
+    //         req->persistant.rdispls,
+    //         req->persistant.recvtypes, 
+    //         req->persistant.comm, 
+    //         &(req->nbc_handle));
+    //   break;
+    // case MPC_MPI_PERSISTENT_ALLTOALLV_INIT:
+    //   res = 
+    //     NBC_Ialltoallv(req->persistant.sendbuf, 
+    //         req->persistant.sendcounts, 
+    //         req->persistant.sdispls, 
+    //         req->persistant.sendtype, 
+    //         req->persistant.recvbuf, 
+    //         req->persistant.recvcounts, 
+    //         req->persistant.rdispls,
+    //         req->persistant.recvtype, 
+    //         req->persistant.comm, 
+    //         &(req->nbc_handle));
+    //   break;
     // case MPC_MPI_PERSISTENT_BCAST_INIT:
     //   res = 
     //     NBC_Ibcast(req->persistant.buf, 
@@ -11782,6 +11786,8 @@ int PMPI_Start(MPI_Request *request)
     case MPC_MPI_PERSISTENT_ALLGATHER_INIT:
     case MPC_MPI_PERSISTENT_ALLGATHERV_INIT:
     case MPC_MPI_PERSISTENT_ALLTOALL_INIT:
+    case MPC_MPI_PERSISTENT_ALLTOALLV_INIT:
+    case MPC_MPI_PERSISTENT_ALLTOALLW_INIT:
       handle = &(req->nbc_handle);
       handle->row_offset = sizeof(int);
       res = NBC_Start(handle, (NBC_Schedule *)handle->schedule);
@@ -20377,134 +20383,6 @@ int PMPI_Exscan_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype
     /* Init metadata for nbc */
     NBC_Iexscan_init (sendbuf, recvbuf, count,
     		     datatype, op, comm, &(req->nbc_handle));
-        req->nbc_handle.is_persistent = 1;
-	return MPI_SUCCESS;
-}
-
-/** \brief Initialize MPC internal structures used for persistent Alltoallv 
- *  \param sendbuf Adress of the pointer to the buffer used to send data
- *  \param sendcounts Array (of length group size) containing the number of elements send to each process
- *  \param sdispls Array (of length group size) specifying at entry i the the displacement relative to sendbuf from which to take the sent data for process i
- *  \param sendtype Type of the data elements in sendbuf
- *  \param recvbuf Adress of the pointer to the buffer used to receive data
- *  \param recvcounts Array (of length group size) containing the number of elements received from each process
- *  \param rdispls Array (of length group size) specifying at entry i the the displacement relative to recvbuf at which to place the received data from process i
- *  \param recvtype Type of the data elements in recvbuf
- *  \param comm Target communicator
- *  \param info MPI_Info
- *  \param request Pointer to the MPI_Request
- */
-int PMPI_Alltoallv_init(const void *sendbuf, const int sendcounts[], const int sdispls[], MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request)
-{
-    int size;
-    int rank;
-    mpi_check_comm(comm);
-    _mpc_cl_comm_size(comm, &size);
-    _mpc_cl_comm_rank(comm, &rank);
-    mpi_check_type(sendtype, comm);
-    mpi_check_type(recvtype, comm);
-    int i;
-    for(i = 0; i < size; i++)
-    {
-        mpi_check_count(recvcounts[i], comm);
-        mpi_check_count(sendcounts[i], comm);
-    }
-    if(recvcounts[rank] != 0)
-    {
-        mpi_check_buf(recvbuf, comm);
-    }
-    if(sendcounts[rank] != 0)
-    {
-        mpi_check_buf(sendbuf, comm);
-    }
-
-	MPI_internal_request_t *req;
-    SCTK__MPI_INIT_REQUEST (request);
-    req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
-    req->freeable = 0;
-    req->is_active = 0;
-    req->is_nbc = 1;
-    req->is_persistent = 1;
-    req->req.request_type = REQUEST_GENERALIZED;
-
-    req->persistant.sendbuf = sendbuf;
-    req->persistant.recvbuf= recvbuf;
-    req->persistant.sendcounts = sendcounts;
-    req->persistant.rdispls = rdispls;
-    req->persistant.sdispls = sdispls;
-    req->persistant.recvcounts = recvcounts;
-    req->persistant.sendtype = sendtype;
-    req->persistant.recvtype = recvtype;
-    req->persistant.comm = comm;
-    req->persistant.op = MPC_MPI_PERSISTENT_ALLTOALLV_INIT;
-	req->persistant.info = info;
-    /* Init metadata for nbc */
-    NBC_Ialltoallv_init (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls,
-			     recvtype,  comm, &(req->nbc_handle));
-        req->nbc_handle.is_persistent = 1;
-	return MPI_SUCCESS;
-}
-
-/** \brief Initialize MPC internal structures used for persistent Alltoallw 
- *  \param sendbuf Adress of the pointer to the buffer used to send data
- *  \param sendcounts Array (of length group size) containing the number of elements send to each process
- *  \param sdispls Array (of length group size) specifying at entry i the the displacement relative to sendbuf from which to take the sent data for process i
- *  \param sendtypes Array (of length group size) specifying at entry i the type of the data elements to send to process i
- *  \param recvbuf Adress of the pointer to the buffer used to receive data
- *  \param recvcounts Array (of length group size) containing the number of elements received from each process
- *  \param rdispls Array (of length group size) specifying at entry i the the displacement relative to recvbuf at which to place the received data from process i
- *  \param recvtypes Array (of length group size) specifying at entry i the type of the data elements to receive from process i
- *  \param comm Target communicator
- *  \param info MPI_Info
- *  \param request Pointer to the MPI_Request
- */
-int PMPI_Alltoallw_init(const void *sendbuf, const int sendcounts[], const int sdispls[], const MPI_Datatype sendtypes[], void *recvbuf, const int recvcounts[], const int rdispls[], const MPI_Datatype recvtypes[], MPI_Comm comm, MPI_Info info, MPI_Request *request)
-{
-    int size;
-    int rank;
-    mpi_check_comm(comm);
-    _mpc_cl_comm_size(comm, &size);
-    _mpc_cl_comm_rank(comm, &rank);
-    int i;
-    for(i = 0; i < size; i++)
-    {
-        mpi_check_count(recvcounts[i], comm);
-        mpi_check_count(sendcounts[i], comm);
-        mpi_check_type(sendtypes[i], comm);
-        mpi_check_type(recvtypes[i], comm);
-    }
-    if(recvcounts[rank] != 0)
-    {
-        mpi_check_buf(recvbuf, comm);
-    }
-    if(sendcounts[rank] != 0)
-    {
-        mpi_check_buf(sendbuf, comm);
-    }
-
-	MPI_internal_request_t *req;
-    SCTK__MPI_INIT_REQUEST (request);
-	req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
-    req->freeable = 0;
-    req->is_active = 0;
-    req->is_nbc = 1;
-    req->is_persistent = 1;
-    req->req.request_type = REQUEST_GENERALIZED;
-
-    req->persistant.sendbuf = sendbuf;
-    req->persistant.recvbuf= recvbuf;
-    req->persistant.sendcounts = sendcounts;
-    req->persistant.rdispls = rdispls;
-    req->persistant.sdispls = sdispls;
-    req->persistant.recvcounts = recvcounts;
-    req->persistant.sendtypes = sendtypes;
-    req->persistant.recvtypes = recvtypes;
-    req->persistant.comm = comm;
-    req->persistant.op = MPC_MPI_PERSISTENT_ALLTOALLW_INIT;
-	req->persistant.info = info;
-    /* Init metadata for nbc */
-    NBC_Ialltoallw_init (sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls,
-			     recvtypes,  comm, &(req->nbc_handle));
         req->nbc_handle.is_persistent = 1;
 	return MPI_SUCCESS;
 }

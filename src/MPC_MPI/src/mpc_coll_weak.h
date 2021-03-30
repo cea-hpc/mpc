@@ -54,3 +54,9 @@
 
 #pragma weak MPI_Ialltoall = PMPI_Ialltoall
 #pragma weak MPI_Alltoall_init = PMPI_Alltoall_init
+
+#pragma weak MPI_Ialltoallv = PMPI_Ialltoallv
+#pragma weak MPI_Alltoallv_init = PMPI_Alltoallv_init
+
+#pragma weak MPI_Ialltoallw = PMPI_Ialltoallw
+#pragma weak MPI_Alltoallw_init = PMPI_Alltoallw_init
