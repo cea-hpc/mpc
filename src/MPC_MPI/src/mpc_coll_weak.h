@@ -60,3 +60,9 @@
 
 #pragma weak MPI_Ialltoallw = PMPI_Ialltoallw
 #pragma weak MPI_Alltoallw_init = PMPI_Alltoallw_init
+
+#pragma weak MPI_Iscan = PMPI_Iscan
+#pragma weak MPI_Scan_init = PMPI_Scan_init
+
+#pragma weak MPI_Iexscan = PMPI_Iexscan
+#pragma weak MPI_Exscan_init = PMPI_Exscan_init

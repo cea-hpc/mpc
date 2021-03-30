@@ -11701,26 +11701,26 @@ int PMPI_Start(MPI_Request *request)
     //         req->persistant.comm, 
     //         &(req->nbc_handle));
     //   break;
-    case MPC_MPI_PERSISTENT_SCAN_INIT:
-      res = 
-        NBC_Iscan(req->persistant.sendbuf,  
-            req->persistant.recvbuf, 
-            req->persistant.count,
-            req->persistant.datatype,
-            req->persistant.op_coll, 
-            req->persistant.comm, 
-            &(req->nbc_handle));
-      break;
-    case MPC_MPI_PERSISTENT_EXSCAN_INIT:
-      res = 
-        NBC_Iexscan(req->persistant.sendbuf,  
-            req->persistant.recvbuf, 
-            req->persistant.count,
-            req->persistant.datatype,
-            req->persistant.op_coll, 
-            req->persistant.comm, 
-            &(req->nbc_handle));
-      break;
+    // case MPC_MPI_PERSISTENT_SCAN_INIT:
+    //   res = 
+    //     NBC_Iscan(req->persistant.sendbuf,  
+    //         req->persistant.recvbuf, 
+    //         req->persistant.count,
+    //         req->persistant.datatype,
+    //         req->persistant.op_coll, 
+    //         req->persistant.comm, 
+    //         &(req->nbc_handle));
+    //   break;
+    // case MPC_MPI_PERSISTENT_EXSCAN_INIT:
+    //   res = 
+    //     NBC_Iexscan(req->persistant.sendbuf,  
+    //         req->persistant.recvbuf, 
+    //         req->persistant.count,
+    //         req->persistant.datatype,
+    //         req->persistant.op_coll, 
+    //         req->persistant.comm, 
+    //         &(req->nbc_handle));
+    //   break;
     case MPC_MPI_PERSISTENT_REDUCE_SCATTER_INIT:
       res = 
         NBC_Ireduce_scatter(req->persistant.sendbuf,  
@@ -11788,6 +11788,8 @@ int PMPI_Start(MPI_Request *request)
     case MPC_MPI_PERSISTENT_ALLTOALL_INIT:
     case MPC_MPI_PERSISTENT_ALLTOALLV_INIT:
     case MPC_MPI_PERSISTENT_ALLTOALLW_INIT:
+    case MPC_MPI_PERSISTENT_SCAN_INIT:
+    case MPC_MPI_PERSISTENT_EXSCAN_INIT:
       handle = &(req->nbc_handle);
       handle->row_offset = sizeof(int);
       res = NBC_Start(handle, (NBC_Schedule *)handle->schedule);
@@ -20339,98 +20341,6 @@ int PMPI_Reduce_scatter_block(const void *sendbuf, void *recvbuf, int recvcnt,
 	/* Profiling */
 	SCTK_PROFIL_END(MPI_Reduce_scatter_block);
 	MPI_HANDLE_RETURN_VAL(res, comm);
-}
-
-/** \brief Initialize MPC internal structures used for persistent Exscan
- *  \param sendbuf Adress of the pointer to the buffer used to send data
- *  \param recvbuf Adress of the pointer to the buffer used to receive data
- *  \param count Number of elements in sendbuf
- *  \param datatype Type of the data elements in sendbuf
- *  \param op Reduction operation
- *  \param comm Target communicator
- *  \param info MPI_Info
- *  \param request Pointer to the MPI_Request
- */
-int PMPI_Exscan_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request)
-{
-    mpi_check_comm(comm);
-    mpi_check_type(datatype, comm);
-    mpi_check_count(count, comm);
-
-    if(count != 0)
-    {
-        mpi_check_buf(recvbuf, comm);
-        mpi_check_buf(sendbuf, comm);
-    }
-
-	MPI_internal_request_t *req;
-    SCTK__MPI_INIT_REQUEST (request);
-	req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
-    req->freeable = 0;
-    req->is_active = 0;
-    req->is_nbc = 1;
-    req->is_persistent = 1;
-    req->req.request_type = REQUEST_GENERALIZED;
-
-    req->persistant.sendbuf = sendbuf;
-    req->persistant.recvbuf = recvbuf;
-    req->persistant.count = count;
-    req->persistant.datatype = datatype;
-    req->persistant.comm = comm;
-    req->persistant.op_coll = op;
-    req->persistant.op = MPC_MPI_PERSISTENT_EXSCAN_INIT;
-	req->persistant.info = info;
-    /* Init metadata for nbc */
-    NBC_Iexscan_init (sendbuf, recvbuf, count,
-    		     datatype, op, comm, &(req->nbc_handle));
-        req->nbc_handle.is_persistent = 1;
-	return MPI_SUCCESS;
-}
-
-/** \brief Initialize MPC internal structures used for persistent Scan
- *  \param sendbuf Adress of the pointer to the buffer used to send data
- *  \param recvbuf Adress of the pointer to the buffer used to receive data
- *  \param count Number of elements in sendbuf
- *  \param datatype Type of the data elements in sendbuf
- *  \param op Reduction operation
- *  \param comm Target communicator
- *  \param info MPI_Info
- *  \param request Pointer to the MPI_Request
- */
-int PMPI_Scan_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request)
-{
-    mpi_check_comm(comm);
-    mpi_check_type(datatype, comm);
-    mpi_check_count(count, comm);
-
-    if(count != 0)
-    {
-        mpi_check_buf(recvbuf, comm);
-        mpi_check_buf(sendbuf, comm);
-    }
-
-	MPI_internal_request_t *req;
-    SCTK__MPI_INIT_REQUEST (request);
-    req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
-    req->freeable = 0;
-    req->is_active = 0;
-    req->is_nbc = 1;
-    req->is_persistent = 1;
-    req->req.request_type = REQUEST_GENERALIZED;
-
-    req->persistant.sendbuf = sendbuf;
-    req->persistant.recvbuf = recvbuf;
-    req->persistant.count = count;
-    req->persistant.datatype = datatype;
-    req->persistant.comm = comm;
-    req->persistant.op_coll = op;
-    req->persistant.op = MPC_MPI_PERSISTENT_SCAN_INIT;
-	req->persistant.info = info;
-    /* Init metadata for nbc */
-    NBC_Iscan_init (sendbuf, recvbuf, count,
-			     datatype, op, comm, &(req->nbc_handle));
-        req->nbc_handle.is_persistent = 1;
-	return MPI_SUCCESS;
 }
 
 int PMPI_Scan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,

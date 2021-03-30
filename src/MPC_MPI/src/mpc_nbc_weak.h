@@ -24,6 +24,4 @@
 /* Non Blocking Collectives  */
 #pragma weak MPI_Ibarrier = PMPI_Ibarrier
 #pragma weak MPI_Ireduce_scatter = PMPI_Ireduce_scatter
-#pragma weak MPI_Iscan = PMPI_Iscan
-#pragma weak MPI_Iexscan = PMPI_Iexscan
 

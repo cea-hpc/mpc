@@ -380,9 +380,7 @@
 #pragma weak MPI_Ineighbor_alltoall = PMPI_Ineighbor_alltoall
 #pragma weak MPI_Ineighbor_allgatherv = PMPI_Ineighbor_allgatherv
 #pragma weak MPI_Ineighbor_allgather = PMPI_Ineighbor_allgather
-#pragma weak MPI_Exscan_init = PMPI_Exscan_init
 #pragma weak MPI_Barrier_init = PMPI_Barrier_init
-#pragma weak MPI_Scan_init = PMPI_Scan_init
 #pragma weak MPI_Register_datarep = PMPI_Register_datarep
 #pragma weak MPI_Comm_idup_with_info = PMPI_Comm_idup_with_info
 #pragma weak MPI_Aint_diff = PMPI_Aint_diff

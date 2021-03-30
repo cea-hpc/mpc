@@ -177,7 +177,7 @@ int sched_alloc_init(NBC_Handle *handle, NBC_Schedule *schedule, Sched_info *inf
   \param info Adress on the information structure about the schedule
   \return Error code
   */
-static inline int my_NBC_Sched_send(void *buffer, int count, MPI_Datatype datatype, int dest, MPI_Comm comm, NBC_Schedule *schedule, Sched_info *info) {
+static inline int my_NBC_Sched_send(const void *buffer, int count, MPI_Datatype datatype, int dest, MPI_Comm comm, NBC_Schedule *schedule, Sched_info *info) {
 
   NBC_Args* send_args;
 
@@ -371,7 +371,7 @@ static inline int my_NBC_Sched_copy(void *src, int srccount, MPI_Datatype srctyp
   \param info Adress on the information structure about the schedule
   \return Error code
   */
-static inline int __INTERNAL__Send_type(void *buffer, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
+static inline int __INTERNAL__Send_type(const void *buffer, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
   int res = MPI_SUCCESS;
 
   switch(coll_type) {
@@ -461,7 +461,7 @@ static inline int __INTERNAL__Barrier_type(MPC_COLL_TYPE coll_type, NBC_Schedule
   \param info Adress on the information structure about the schedule
   \return Error code
   */
-static inline int __INTERNAL__Op_type( __UNUSED__ void *res_buf, void* left_op_buf, void* right_op_buf, int count, MPI_Datatype datatype, MPI_Op op, sctk_Op mpc_op, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
+static inline int __INTERNAL__Op_type( __UNUSED__ void *res_buf, const void* left_op_buf, void* right_op_buf, int count, MPI_Datatype datatype, MPI_Op op, sctk_Op mpc_op, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
   int res = MPI_SUCCESS;
 
   switch(coll_type) {
@@ -503,7 +503,7 @@ static inline int __INTERNAL__Op_type( __UNUSED__ void *res_buf, void* left_op_b
   \param info Adress on the information structure about the schedule
   \return Error code
   */
-static inline int __INTERNAL__Copy_type(void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
+static inline int __INTERNAL__Copy_type(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
   int res = MPI_SUCCESS;
 
   switch(coll_type) {
@@ -539,6 +539,8 @@ static inline int __INTERNAL__Allgatherv_switch(const void *sendbuf, int sendcou
 static inline int __INTERNAL__Alltoall_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Alltoallv_switch(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Alltoallw_switch(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __INTERNAL__Scan_switch (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __INTERNAL__Exscan_switch (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
 
@@ -1223,8 +1225,6 @@ static inline int __INTERNAL__Reduce_linear(const void *sendbuf, void* recvbuf, 
     case MPC_COLL_TYPE_COUNT:
       if(rank == root) {
         info->tmpbuf_size += ext * count * size;
-      } else {
-        info->comm_count += 1;
       }
       break;
   }
@@ -4612,7 +4612,7 @@ int PMPI_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendty
   req->is_persistent = 1;
   req->req.request_type = REQUEST_GENERALIZED;
 
-  req->persistant.op = Allgatherv_init;
+  req->persistant.op = MPC_MPI_PERSISTENT_ALLGATHERV_INIT;
   req->persistant.info = info;
 
   /* Init metadata for nbc */
@@ -5384,7 +5384,7 @@ int PMPI_Alltoallv_init(const void *sendbuf, const int *sendcounts, const int *s
   req->is_persistent = 1;
   req->req.request_type = REQUEST_GENERALIZED;
 
-  req->persistant.op = Alltoallv_init;
+  req->persistant.op = MPC_MPI_PERSISTENT_ALLTOALLV_INIT;
   req->persistant.info = info;
 
   /* Init metadata for nbc */
@@ -5654,7 +5654,7 @@ static inline int __INTERNAL__Alltoallv_pairwise(const void *sendbuf, const int 
 
 int PMPI_Ialltoallw (const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPI_Request *request);
 int __INTERNAL__Ialltoallw(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, NBC_Handle *handle);
-int PMPI_Alltoall_winit(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPI_Info info, MPI_Request *request);
+int PMPI_Alltoallw_init(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 int __INTERNAL__Alltoallw_init(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, NBC_Handle* handle);
 int __INTERNAL__Alltoallw(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm);
 static inline int __INTERNAL__Alltoallw_cluster(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -5809,7 +5809,7 @@ int PMPI_Alltoallw_init(const void *sendbuf, const int *sendcounts, const int *s
   req->is_persistent = 1;
   req->req.request_type = REQUEST_GENERALIZED;
 
-  req->persistant.op = Alltoallw_init;
+  req->persistant.op = MPC_MPI_PERSISTENT_ALLTOALLW_INIT;
   req->persistant.info = info;
 
   /* Init metadata for nbc */
@@ -6067,4 +6067,798 @@ static inline int __INTERNAL__Alltoallw_pairwise(const void *sendbuf, const int 
 
   return MPI_SUCCESS;
 }
+
+
+
+
+/***********
+  SCAN
+  ***********/
+
+int PMPI_Iscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
+int __INTERNAL__Iscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle);
+int PMPI_Scan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request);
+int __INTERNAL__Scan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle);
+int __INTERNAL__Scan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
+static inline int __INTERNAL__Scan_linear (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __INTERNAL__Scan_allgather (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+
+
+/**
+  \brief Initialize NBC structures used in call of non-blocking Scan
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param count Number of elements in sendbuf
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \param request Pointer to the MPI_Request
+  \return error code
+  */
+int PMPI_Iscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request) {
+
+  int res = MPI_ERR_INTERN;
+  mpc_common_nodebug ("Entering ISCAN %d", comm);
+  SCTK__MPI_INIT_REQUEST (request);
+
+  int csize;
+  MPI_Comm_size(comm, &csize);
+  
+  if(recvbuf == sendbuf)
+  {
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
+
+  if(csize == 1)
+  {
+    res = PMPI_Scan (sendbuf, recvbuf, count, datatype, op, comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+  }
+  else
+  {
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->is_nbc = 1;
+    tmp->nbc_handle.is_persistent = 0;
+    
+    res = __INTERNAL__Iscan (sendbuf, recvbuf, count, datatype, op, comm, &(tmp->nbc_handle));
+  }
+
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+/**
+  \brief Initialize NBC structures used in call of non-blocking Scan
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param count Number of elements in sendbuf
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \param handle Pointer to the NBC_Handle
+  \return error code
+  */
+int __INTERNAL__Iscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle) {
+
+  int res;
+  NBC_Schedule *schedule;
+  Sched_info info;
+  sched_info_init(&info);
+
+  res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  handle->tmpbuf = NULL;
+  schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
+
+  __INTERNAL__Scan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+
+  sched_alloc_init(handle, schedule, &info);
+
+  __INTERNAL__Scan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  
+  res = my_NBC_Sched_commit(schedule, &info);
+  if (NBC_OK != res)
+  {
+    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    return res;
+  }
+
+  res = NBC_Start(handle, schedule);
+  if (NBC_OK != res)
+  {
+    printf("Error in NBC_Start() (%i)\n", res);
+    return res;
+  }
+
+  return MPI_SUCCESS;
+}
+
+
+/**
+  \brief Initialize NBC structures used in call of persistent Scan
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param count Number of elements in sendbuf
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \param info MPI_Info
+  \param request Pointer to the MPI_Request
+  \return error code
+  */
+int PMPI_Scan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request) {
+
+  {
+    mpi_check_comm(comm);
+    mpi_check_type(datatype, comm);
+    mpi_check_count(count, comm);
+
+    if(count != 0)
+    {
+      mpi_check_buf(recvbuf, comm);
+      mpi_check_buf(sendbuf, comm);
+    }
+  }
+
+  MPI_internal_request_t *req;
+  SCTK__MPI_INIT_REQUEST (request);
+  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  req->freeable = 0;
+  req->is_active = 0;
+  req->is_nbc = 1;
+  req->is_persistent = 1;
+  req->req.request_type = REQUEST_GENERALIZED;
+
+  req->persistant.op = MPC_MPI_PERSISTENT_SCAN_INIT;
+  req->persistant.info = info;
+
+  /* Init metadata for nbc */
+  __INTERNAL__Scan_init (sendbuf, recvbuf, count, datatype, op, comm, &(req->nbc_handle));
+  req->nbc_handle.is_persistent = 1;
+  
+  return MPI_SUCCESS;
+}
+
+/**
+  \brief Initialize NBC structures used in call of persistent Scan
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param count Number of elements in sendbuf
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \param handle Pointer to the NBC_Handle
+  \return error code
+  */
+int __INTERNAL__Scan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle) {
+
+  int res;
+  NBC_Schedule *schedule;
+  Sched_info info;
+  sched_info_init(&info);
+
+  res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+
+  handle->tmpbuf = NULL;
+
+  /* alloc schedule */
+  schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
+
+  __INTERNAL__Scan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  
+  sched_alloc_init(handle, schedule, &info);
+  
+  __INTERNAL__Scan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+
+  res = my_NBC_Sched_commit(schedule, &info);
+  if (res != MPI_SUCCESS)
+  {
+    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    return res;
+  }
+
+  handle->schedule = schedule;
+
+  return MPI_SUCCESS;
+}
+
+
+/**
+  \brief Blocking Scan
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param count Number of elements in sendbuf
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \return error code
+  */
+int __INTERNAL__Scan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
+  return __INTERNAL__Scan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+}
+
+
+/**
+  \brief Swith between the different Scan algorithms
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param count Number of elements in sendbuf
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Scan_switch (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  enum {
+    NBC_SCAN_LINEAR,
+    NBC_SCAN_ALLGATHER
+  } alg;
+
+  int size;
+  _mpc_cl_comm_size(comm, &size);
+  
+  alg = NBC_SCAN_LINEAR;
+
+  int res;
+
+  switch(alg) {
+    case NBC_SCAN_LINEAR:
+      res = __INTERNAL__Scan_linear(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
+      break;
+    case NBC_SCAN_ALLGATHER:
+      res = __INTERNAL__Scan_allgather(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
+      break;
+  }
+
+  return res;
+}
+
+/**
+  \brief Execute or schedule a Scan using the linear algorithm
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param count Number of elements in sendbuf
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Scan_linear (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+  
+  int rank, size;
+  MPI_Aint ext;
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+  PMPI_Type_extent(datatype, &ext);
+
+  int res = MPI_SUCCESS;
+
+  void* tmpbuf = NULL;
+
+  sctk_Op mpc_op;
+  sctk_op_t *mpi_op; 
+
+  switch(coll_type) {
+    case MPC_COLL_TYPE_BLOCKING:
+      mpi_op = sctk_convert_to_mpc_op(op);
+      mpc_op = mpi_op->op;
+      tmpbuf = sctk_malloc(ext * count);
+      break;
+
+    case MPC_COLL_TYPE_NONBLOCKING:
+    case MPC_COLL_TYPE_PERSISTENT:
+      tmpbuf = info->tmpbuf + info->tmpbuf_pos;
+      info->tmpbuf_pos += ext * count;
+      break;
+
+    case MPC_COLL_TYPE_COUNT:
+      info->tmpbuf_size += ext * count;
+      break; 
+  }
+
+  if(sendbuf != MPI_IN_PLACE) {
+    __INTERNAL__Copy_type(sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+  }
+
+  if(rank > 1) {
+    __INTERNAL__Recv_type(tmpbuf, count, datatype, rank - 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
+  } else if(rank == 1) {
+    __INTERNAL__Recv_type(recvbuf, count, datatype, rank - 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
+  }
+
+  __INTERNAL__Barrier_type(coll_type, schedule, info);
+  
+  if(rank > 1) {
+    __INTERNAL__Op_type(NULL, tmpbuf, recvbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
+  }
+
+  if(rank + 1 < size) {
+    if(rank == 0) {
+      if(sendbuf != MPI_IN_PLACE) {
+        __INTERNAL__Send_type(sendbuf, count, datatype, rank + 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
+      } else {
+        __INTERNAL__Send_type(recvbuf, count, datatype, rank + 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
+      }
+    } else {
+      __INTERNAL__Send_type(recvbuf, count, datatype, rank + 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
+    }
+  }
+
+
+  if(coll_type == MPC_COLL_TYPE_BLOCKING) {
+    free(tmpbuf);
+  }
+
+  return res;
+}
+
+/**
+  \brief Execute or schedule a Scan using the allgather algorithm
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param count Number of elements in sendbuf
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Scan_allgather (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+ 
+  int rank, size;
+  MPI_Aint ext;
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+  PMPI_Type_extent(datatype, &ext);
+
+  void* tmpbuf = NULL;
+
+  sctk_Op mpc_op;
+  sctk_op_t *mpi_op; 
+
+  switch(coll_type) {
+    case MPC_COLL_TYPE_BLOCKING:
+      mpi_op = sctk_convert_to_mpc_op(op);
+      mpc_op = mpi_op->op;
+      tmpbuf = sctk_malloc(ext * count * size);
+      break;
+
+    case MPC_COLL_TYPE_NONBLOCKING:
+    case MPC_COLL_TYPE_PERSISTENT:
+      tmpbuf = info->tmpbuf + info->tmpbuf_pos;
+      info->tmpbuf_pos += ext * count * size;
+      break;
+
+    case MPC_COLL_TYPE_COUNT:
+      info->tmpbuf_size += ext * count * size;
+      break; 
+  }
+
+  const void *buf = sendbuf;
+  if(buf == MPI_IN_PLACE) {
+    buf = recvbuf;
+  }
+
+
+  __INTERNAL__Allgather_switch(buf, count, datatype, tmpbuf, count, datatype, comm, coll_type, schedule, info);
+  __INTERNAL__Barrier_type(coll_type, schedule, info);
+
+  for(int i = 1; i <= rank; i++) {
+    __INTERNAL__Op_type(NULL, tmpbuf + (i-1) * count * ext, tmpbuf + i * count * rank, count, datatype, op, mpc_op, coll_type, schedule, info);
+  }
+
+  __INTERNAL__Copy_type(tmpbuf + rank * count * ext, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+
+  return MPI_SUCCESS;
+}
+
+
+
+
+/***********
+  EXSCAN
+  ***********/
+
+int PMPI_Iexscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
+int __INTERNAL__Iexscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle);
+int PMPI_Exscan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request);
+int __INTERNAL__Exscan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle);
+int __INTERNAL__Exscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
+static inline int __INTERNAL__Exscan_linear (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __INTERNAL__Exscan_allgather (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+
+
+/**
+  \brief Initialize NBC structures used in call of non-blocking Exscan
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param count Number of elements in sendbuf
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \param request Pointer to the MPI_Request
+  \return error code
+  */
+int PMPI_Iexscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request) {
+
+  int res = MPI_ERR_INTERN;
+  mpc_common_nodebug ("Entering IEXSCAN %d", comm);
+  SCTK__MPI_INIT_REQUEST (request);
+
+  int csize;
+  MPI_Comm_size(comm, &csize);
+
+  if(recvbuf == sendbuf)
+  {
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
+
+  if(csize == 1)
+  {
+    res = PMPI_Exscan (sendbuf, recvbuf, count, datatype, op, comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+  }
+  else
+  {
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->is_nbc = 1;
+    tmp->nbc_handle.is_persistent = 0;
+
+    res = __INTERNAL__Iexscan (sendbuf, recvbuf, count, datatype, op, comm, &(tmp->nbc_handle));
+  }
+
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+/**
+  \brief Initialize NBC structures used in call of non-blocking Exscan
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param count Number of elements in sendbuf
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \param handle Pointer to the NBC_Handle
+  \return error code
+  */
+int __INTERNAL__Iexscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle) {
+
+  int res;
+  NBC_Schedule *schedule;
+  Sched_info info;
+  sched_info_init(&info);
+
+  res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  handle->tmpbuf = NULL;
+  schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
+
+  __INTERNAL__Exscan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+
+  sched_alloc_init(handle, schedule, &info);
+
+  __INTERNAL__Exscan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  
+  res = my_NBC_Sched_commit(schedule, &info);
+  if (NBC_OK != res)
+  {
+    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    return res;
+  }
+
+  res = NBC_Start(handle, schedule);
+  if (NBC_OK != res)
+  {
+    printf("Error in NBC_Start() (%i)\n", res);
+    return res;
+  }
+
+  return MPI_SUCCESS;
+}
+
+
+/**
+  \brief Initialize NBC structures used in call of persistent Exscan
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param count Number of elements in sendbuf
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \param info MPI_Info
+  \param request Pointer to the MPI_Request
+  \return error code
+  */
+int PMPI_Exscan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request) {
+
+  {
+    mpi_check_comm(comm);
+    mpi_check_type(datatype, comm);
+    mpi_check_count(count, comm);
+
+    if(count != 0)
+    {
+      mpi_check_buf(recvbuf, comm);
+      mpi_check_buf(sendbuf, comm);
+    }
+  }
+
+  MPI_internal_request_t *req;
+  SCTK__MPI_INIT_REQUEST (request);
+  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  req->freeable = 0;
+  req->is_active = 0;
+  req->is_nbc = 1;
+  req->is_persistent = 1;
+  req->req.request_type = REQUEST_GENERALIZED;
+
+  req->persistant.op = MPC_MPI_PERSISTENT_EXSCAN_INIT;
+  req->persistant.info = info;
+
+  /* Init metadata for nbc */
+  __INTERNAL__Exscan_init (sendbuf, recvbuf, count, datatype, op, comm, &(req->nbc_handle));
+  req->nbc_handle.is_persistent = 1;
+  
+  return MPI_SUCCESS;
+}
+
+/**
+  \brief Initialize NBC structures used in call of persistent Exscan
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param count Number of elements in sendbuf
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \param handle Pointer to the NBC_Handle
+  \return error code
+  */
+int __INTERNAL__Exscan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle) {
+
+  int res;
+  NBC_Schedule *schedule;
+  Sched_info info;
+  sched_info_init(&info);
+
+  res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+
+  handle->tmpbuf = NULL;
+
+  /* alloc schedule */
+  schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
+
+  __INTERNAL__Exscan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  
+  sched_alloc_init(handle, schedule, &info);
+  
+  __INTERNAL__Exscan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+
+  res = my_NBC_Sched_commit(schedule, &info);
+  if (res != MPI_SUCCESS)
+  {
+    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    return res;
+  }
+
+  handle->schedule = schedule;
+
+  return MPI_SUCCESS;
+}
+
+
+/**
+  \brief Blocking Exscan
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param count Number of elements in sendbuf
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \return error code
+  */
+int __INTERNAL__Exscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
+  return __INTERNAL__Exscan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+}
+
+
+/**
+  \brief Swith between the different Exscan algorithms
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param count Number of elements in sendbuf
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Exscan_switch (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  enum {
+    NBC_EXSCAN_LINEAR,
+    NBC_EXSCAN_ALLGATHER
+  } alg;
+
+  int size;
+  _mpc_cl_comm_size(comm, &size);
+  
+  alg = NBC_EXSCAN_LINEAR;
+
+  int res;
+
+  switch(alg) {
+    case NBC_EXSCAN_LINEAR:
+      res = __INTERNAL__Exscan_linear(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
+      break;
+    case NBC_EXSCAN_ALLGATHER:
+      res = __INTERNAL__Exscan_linear(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
+      break;
+  }
+
+  return res;
+}
+
+/**
+  \brief Execute or schedule a Exscan using the linear algorithm
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param count Number of elements in sendbuf
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Exscan_linear (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  int rank, size;
+  MPI_Aint ext;
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+  PMPI_Type_extent(datatype, &ext);
+
+  int res = MPI_SUCCESS;
+
+  void* tmpbuf = NULL;
+
+  sctk_Op mpc_op;
+  sctk_op_t *mpi_op; 
+
+  switch(coll_type) {
+    case MPC_COLL_TYPE_BLOCKING:
+      mpi_op = sctk_convert_to_mpc_op(op);
+      mpc_op = mpi_op->op;
+      tmpbuf = sctk_malloc(ext * count);
+      break;
+
+    case MPC_COLL_TYPE_NONBLOCKING:
+    case MPC_COLL_TYPE_PERSISTENT:
+      tmpbuf = info->tmpbuf + info->tmpbuf_pos;
+      info->tmpbuf_pos += ext * count;
+      break;
+
+    case MPC_COLL_TYPE_COUNT:
+      info->tmpbuf_size += ext * count;
+      break; 
+  }
+
+  if(rank > 0) {
+    if(sendbuf != MPI_IN_PLACE) {
+      __INTERNAL__Copy_type(sendbuf, count, datatype, tmpbuf, count, datatype, comm, coll_type, schedule, info);
+    } else {
+      __INTERNAL__Copy_type(recvbuf, count, datatype, tmpbuf, count, datatype, comm, coll_type, schedule, info);
+    }
+  
+    __INTERNAL__Recv_type(recvbuf, count, datatype, rank - 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
+  }
+
+  __INTERNAL__Barrier_type(coll_type, schedule, info);
+  
+  if(rank > 1 && rank < size - 1) {
+    __INTERNAL__Op_type(NULL, recvbuf, tmpbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
+  }
+
+  if(rank + 1 < size) {
+    if(rank == 0) {
+      if(sendbuf != MPI_IN_PLACE) {
+        __INTERNAL__Send_type(sendbuf, count, datatype, rank + 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
+      } else {
+        __INTERNAL__Send_type(recvbuf, count, datatype, rank + 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
+      }
+    } else {
+      __INTERNAL__Send_type(tmpbuf, count, datatype, rank + 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
+    }
+  }
+
+
+  if(coll_type == MPC_COLL_TYPE_BLOCKING) {
+    free(tmpbuf);
+  }
+
+  return res;
+}
+
+/**
+  \brief Execute or schedule a Exscan using the allgather algorithm
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the pointer to the buffer used to send data
+  \param recvbuf Adress of the pointer to the buffer used to receive data
+  \param count Number of elements in sendbuf
+  \param datatype Type of the data elements in sendbuf
+  \param op Reduction operation
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Exscan_allgather (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  int rank, size;
+  MPI_Aint ext;
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+  PMPI_Type_extent(datatype, &ext);
+
+  void* tmpbuf = NULL;
+
+  sctk_Op mpc_op;
+  sctk_op_t *mpi_op; 
+
+  switch(coll_type) {
+    case MPC_COLL_TYPE_BLOCKING:
+      mpi_op = sctk_convert_to_mpc_op(op);
+      mpc_op = mpi_op->op;
+      tmpbuf = sctk_malloc(ext * count * size);
+      break;
+
+    case MPC_COLL_TYPE_NONBLOCKING:
+    case MPC_COLL_TYPE_PERSISTENT:
+      tmpbuf = info->tmpbuf + info->tmpbuf_pos;
+      info->tmpbuf_pos += ext * count * size;
+      break;
+
+    case MPC_COLL_TYPE_COUNT:
+      info->tmpbuf_size += ext * count * size;
+      break; 
+  }
+
+  const void *buf = sendbuf;
+  if(buf == MPI_IN_PLACE) {
+    buf = recvbuf;
+  }
+
+
+  __INTERNAL__Allgather_switch(buf, count, datatype, tmpbuf, count, datatype, comm, coll_type, schedule, info);
+  __INTERNAL__Barrier_type(coll_type, schedule, info);
+
+  for(int i = 1; i <= rank; i++) {
+    __INTERNAL__Op_type(NULL, tmpbuf + (i-1) * count * ext, tmpbuf + i * count * rank, count, datatype, op, mpc_op, coll_type, schedule, info);
+  }
+
+  __INTERNAL__Copy_type(tmpbuf + (rank - 1) * count * ext, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+
+  return MPI_SUCCESS;
+}
+
+
 
