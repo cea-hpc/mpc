@@ -69,3 +69,6 @@
 
 #pragma weak MPI_Iexscan = PMPI_Iexscan
 #pragma weak MPI_Exscan_init = PMPI_Exscan_init
+
+#pragma weak MPI_Ibarrier = PMPI_Ibarrier
+#pragma weak MPI_Barrier_init = PMPI_Barrier_init

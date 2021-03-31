@@ -42,6 +42,7 @@ int __INTERNAL__Alltoallv(const void *sendbuf, const int *sendcounts, const int 
 int __INTERNAL__Alltoallw(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm);
 int __INTERNAL__Scan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
 int __INTERNAL__Exscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
+int __INTERNAL__Barrier (MPI_Comm comm);
 
 
 #endif

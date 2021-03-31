@@ -10913,38 +10913,3 @@ int NBC_Finalize(__UNUSED__ mpc_thread_t * NBC_thread)
 #define SCTK_MPI_CHECK_RETURN_VAL(res,comm)do{if(res == MPI_SUCCESS){return res;} else {MPI_ERROR_REPORT(comm,res,"Generic error retrun");}}while(0)
 //~ #define SCTK_MPI_CHECK_RETURN_VAL(res, comm) return res
 
-
-
-  /*Non-Blocking Collective*/
-
-int
-PMPI_Ibarrier (MPI_Comm comm, MPI_Request *request)
-{
-  if( _mpc_mpi_config()->nbc.use_egreq_barrier )
-  {
-      return MPI_Ixbarrier( comm, request );
-  }
-
-  mpc_common_nodebug ("Entering IBARRIER %d", comm);
-  int res = MPI_ERR_INTERN;
-  SCTK__MPI_INIT_REQUEST (request);
-  int csize;
-  MPI_Comm_size(comm, &csize);
-  if(csize == 1)
-  {
-    res = PMPI_Barrier(comm);
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
-  }
-  else
-  {
-    MPI_internal_request_t *tmp;
-  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-  tmp->is_nbc = 1;
-  tmp->nbc_handle.is_persistent = 0;
-  res = NBC_Ibarrier (comm, &(tmp->nbc_handle));
-  }
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
-}
-

@@ -22,5 +22,4 @@
 
 // PROFILER MPI_NBC MPI Non Blocking Collectives
 /* Non Blocking Collectives  */
-#pragma weak MPI_Ibarrier = PMPI_Ibarrier
 

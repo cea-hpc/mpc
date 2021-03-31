@@ -542,6 +542,7 @@ static inline int __INTERNAL__Alltoallv_switch(const void *sendbuf, const int *s
 static inline int __INTERNAL__Alltoallw_switch(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Scan_switch (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Exscan_switch (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __INTERNAL__Barrier_switch (MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
 
@@ -7257,6 +7258,281 @@ static inline int __INTERNAL__Exscan_allgather (const void *sendbuf, void *recvb
 
   return MPI_SUCCESS;
 }
+
+
+
+
+/***********
+  BARRIER
+  ***********/
+
+int PMPI_Ibarrier (MPI_Comm comm, MPI_Request *request);
+int __INTERNAL__Ibarrier (MPI_Comm comm, NBC_Handle *handle);
+int PMPI_Barrier_init (MPI_Comm comm, MPI_Info info, MPI_Request *request);
+int __INTERNAL__Barrier_init (MPI_Comm comm, NBC_Handle* handle);
+int __INTERNAL__Barrier (MPI_Comm comm);
+static inline int __INTERNAL__Barrier_reduce_broadcast (MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+
+
+/**
+  \brief Initialize NBC structures used in call of non-blocking Barrier
+  \param comm Target communicator
+  \param request Pointer to the MPI_Request
+  \return error code
+  */
+int PMPI_Ibarrier (MPI_Comm comm, MPI_Request *request) {
+  
+  if( sctk_runtime_config_get()->modules.nbc.use_egreq_barrier )
+  {
+    return MPI_Ixbarrier( comm, request );
+  }
+
+  mpc_common_nodebug ("Entering IBARRIER %d", comm);
+  int res = MPI_ERR_INTERN;
+  SCTK__MPI_INIT_REQUEST (request);
+  int csize;
+  MPI_Comm_size(comm, &csize);
+
+  if(csize == 1)
+  {
+    res = PMPI_Barrier(comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+  }
+  else
+  {
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->is_nbc = 1;
+    tmp->nbc_handle.is_persistent = 0;
+
+    res = __INTERNAL__Ibarrier (comm, &(tmp->nbc_handle));
+  }
+
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+/**
+  \brief Initialize NBC structures used in call of non-blocking Barrier
+  \param comm Target communicator
+  \param handle Pointer to the NBC_Handle
+  \return error code
+  */
+int __INTERNAL__Ibarrier (MPI_Comm comm, NBC_Handle *handle) {
+  
+  int res;
+  NBC_Schedule *schedule;
+  Sched_info info;
+  sched_info_init(&info);
+
+  res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  handle->tmpbuf = NULL;
+  schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
+
+  __INTERNAL__Barrier_switch(comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+
+  sched_alloc_init(handle, schedule, &info);
+
+  __INTERNAL__Barrier_switch(comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  
+  res = my_NBC_Sched_commit(schedule, &info);
+  if (NBC_OK != res)
+  {
+    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    return res;
+  }
+
+  res = NBC_Start(handle, schedule);
+  if (NBC_OK != res)
+  {
+    printf("Error in NBC_Start() (%i)\n", res);
+    return res;
+  }
+
+  return MPI_SUCCESS;
+}
+
+
+/**
+  \brief Initialize NBC structures used in call of persistent Barrier
+  \param comm Target communicator
+  \param info MPI_Info
+  \param request Pointer to the MPI_Request
+  \return error code
+  */
+int PMPI_Barrier_init (MPI_Comm comm, MPI_Info info, MPI_Request *request) {
+
+  {
+    mpi_check_comm(comm);
+  }
+
+  MPI_internal_request_t *req;
+  SCTK__MPI_INIT_REQUEST (request);
+  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
+  req->freeable = 0;
+  req->is_active = 0;
+  req->is_nbc = 1;
+  req->is_persistent = 1;
+  req->req.request_type = REQUEST_GENERALIZED;
+
+  req->persistant.op = MPC_MPI_PERSISTENT_BARRIER_INIT;
+  req->persistant.info = info;
+
+  /* Init metadata for nbc */
+  __INTERNAL__Barrier_init (comm, &(req->nbc_handle));
+  req->nbc_handle.is_persistent = 1;
+  
+  return MPI_SUCCESS;
+}
+
+/**
+  \brief Initialize NBC structures used in call of persistent Barrier
+  \param comm Target communicator
+  \param handle Pointer to the NBC_Handle
+  \return error code
+  */
+int __INTERNAL__Barrier_init (MPI_Comm comm, NBC_Handle* handle) {
+
+  int res;
+  NBC_Schedule *schedule;
+  Sched_info info;
+  sched_info_init(&info);
+
+  res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+
+  handle->tmpbuf = NULL;
+
+  /* alloc schedule */
+  schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
+
+  __INTERNAL__Barrier_switch(comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  
+  sched_alloc_init(handle, schedule, &info);
+  
+  __INTERNAL__Barrier_switch(comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+
+  res = my_NBC_Sched_commit(schedule, &info);
+  if (res != MPI_SUCCESS)
+  {
+    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    return res;
+  }
+
+  handle->schedule = schedule;
+
+  return MPI_SUCCESS;
+}
+
+
+/**
+  \brief Blocking Exscan
+  \param comm Target communicator
+  \return error code
+  */
+int __INTERNAL__Barrier (MPI_Comm comm) {
+  return __INTERNAL__Barrier_switch(comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+}
+
+
+/**
+  \brief Swith between the different Barrier algorithms
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Barrier_switch (MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+  
+  enum {
+    NBC_BARRIER_REDUCE_BROADCAST
+  } alg;
+
+  int size;
+  _mpc_cl_comm_size(comm, &size);
+  
+  alg = NBC_BARRIER_REDUCE_BROADCAST;
+
+  int res;
+
+  switch(alg) {
+    case NBC_BARRIER_REDUCE_BROADCAST:
+      res = __INTERNAL__Barrier_reduce_broadcast (comm, coll_type, schedule, info);
+      break;
+  }
+
+  return res;
+}
+
+/**
+  \brief Execute or schedule a Barrier using the reduce_broadcast algorithm
+    Or count the number of operations and rounds for the schedule
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __INTERNAL__Barrier_reduce_broadcast (MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+  
+  static char bar = 0;
+
+  int size, rank;
+
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+
+  int maxr, peer;
+  maxr = (int)ceil((log(size)/LOG2));
+  int rmb = rmb_index(rank);
+  if(rank == 0) {
+    rmb = maxr;
+  }
+
+
+  if(rank != 0) { 
+    peer = rank ^ (1 << rmb);
+    __INTERNAL__Recv_type(&bar, 1, MPI_CHAR, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
+
+    if(rmb != 0) {
+      __INTERNAL__Barrier_type(coll_type, schedule, info);
+    }
+  }
+
+  for(int i = rmb - 1; i >= 0; i--) {
+    peer = rank ^ (1 << i);
+    if(peer >= size) {
+      continue;
+    }
+
+    __INTERNAL__Send_type(& bar, 1, MPI_CHAR, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
+  }
+  
+
+  __INTERNAL__Barrier_type(coll_type, schedule, info);
+
+
+  for(int i = 0; i < maxr; i++) {
+    if(rank & (1 << i)) {
+      peer = rank ^ (1 << i);
+      __INTERNAL__Barrier_type(coll_type, schedule, info);
+      __INTERNAL__Send_type(&bar, 1, MPI_CHAR, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
+      
+      break;
+    } else if((rank | (1 << i)) < size) {
+      peer = rank | (1 << i);
+      __INTERNAL__Recv_type(&bar, 1, MPI_CHAR, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
+    }
+  }
+  
+  return MPI_SUCCESS;
+}
+
+
+
+
+
 
 
 
