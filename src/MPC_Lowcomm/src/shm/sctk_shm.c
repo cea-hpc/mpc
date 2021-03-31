@@ -272,10 +272,7 @@ static void sctk_shm_add_route(int dest, int shm_dest, sctk_rail_info_t *rail)
 	new_route = sctk_malloc(sizeof(_mpc_lowcomm_endpoint_t) );
 	assume(new_route != NULL);
 
-	mpc_lowcomm_peer_uid_t tuid = mpc_lowcomm_monitor_local_uid_of(dest);
-
-	mpc_common_debug_warning("SHM TUID is %lu", tuid);
-	_mpc_lowcomm_endpoint_init(new_route, tuid, rail, _MPC_LOWCOMM_ENDPOINT_STATIC);
+	_mpc_lowcomm_endpoint_init(new_route, mpc_lowcomm_monitor_local_uid_of(dest), rail, _MPC_LOWCOMM_ENDPOINT_STATIC);
 
 	new_route->data.shm.dest = shm_dest;
 
@@ -410,7 +407,6 @@ void sctk_network_init_shm(sctk_rail_info_t *rail)
 		sctk_shm_init_raw_queue(sctk_shmem_size, sctk_shmem_cells_num, i);
 		if(i != local_process_rank)
 		{
-			mpc_common_debug_warning("SHM add route to %d", i);
 			sctk_shm_add_route(tmp->process_list[i], i, rail);
 		}
 	}

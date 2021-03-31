@@ -28,12 +28,12 @@ extern "C"
 #endif
 
 #include "endpoint.h"
-
+#include <mpc_lowcomm_monitor.h>
 
 void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
                                  void * ( *tcp_thread ) ( _mpc_lowcomm_endpoint_t * ) );
 
-void tcp_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_process );
+void tcp_on_demand_connection_handler( sctk_rail_info_t *rail, mpc_lowcomm_peer_uid_t dest_process );
 
 #ifdef __cplusplus
 }

@@ -50,7 +50,7 @@
 
 
 /* Initialize a new route table */
-void sctk_ib_init_remote ( int dest, sctk_rail_info_t *rail, struct _mpc_lowcomm_endpoint_s *route_table, int ondemand )
+void sctk_ib_init_remote ( mpc_lowcomm_peer_uid_t dest, sctk_rail_info_t *rail, struct _mpc_lowcomm_endpoint_s *route_table, int ondemand )
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 	_mpc_lowcomm_endpoint_info_ib_t *route_ib;

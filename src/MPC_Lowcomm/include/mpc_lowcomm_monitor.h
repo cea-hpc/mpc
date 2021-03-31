@@ -146,9 +146,11 @@ int mpc_lowcomm_monitor_response_free(mpc_lowcomm_monitor_response_t response);
  * ON DEMAND SUPPORT *
  *********************/
 
-typedef int (*mpc_lowcomm_on_demand_callback_t)(char *out_data,
+typedef int (*mpc_lowcomm_on_demand_callback_t)(mpc_lowcomm_peer_uid_t from,
+												char *data,
 												char * return_data,
-												int return_data_len);
+												int return_data_len,
+												void *ctx);
 
 int mpc_lowcomm_monitor_register_on_demand_callback(char *target,
                                                     mpc_lowcomm_on_demand_callback_t callback,
@@ -158,11 +160,10 @@ mpc_lowcomm_on_demand_callback_t mpc_lowcomm_monitor_get_on_demand_callback(char
 
 int mpc_lowcomm_monitor_unregister_on_demand_callback(char * target);
 
-int mpc_lowcomm_monitor_call_on_demand(mpc_lowcomm_peer_uid_t dest,
-									   char target[8],
-									   char *sent_data,
-									   char * received_data,
-									   int received_data_len);
+mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_ondemand(mpc_lowcomm_peer_uid_t dest,
+															char *target,
+															char *data,
+															mpc_lowcomm_monitor_retcode_t *ret);
 
 
 #endif /* MPC_LAUNCH_MONITOR_H_ */

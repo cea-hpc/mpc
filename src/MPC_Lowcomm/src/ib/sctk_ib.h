@@ -32,6 +32,8 @@ extern "C"
 #include "mpc_common_spinlock.h"
 #include "uthash.h"
 #include "mpc_common_types.h"
+#include <mpc_lowcomm_monitor.h>
+
 
 /*-----------------------------------------------------------
 *  IB module debugging
@@ -200,7 +202,7 @@ typedef struct mpc_lowcomm_ib_tail_s
 
 /* XXX: Should not be declared here but in CM */
 struct _mpc_lowcomm_endpoint_s *sctk_ib_create_remote();
-void sctk_ib_init_remote(int dest, struct sctk_rail_info_s *rail, struct _mpc_lowcomm_endpoint_s *route_table, int ondemand);
+void sctk_ib_init_remote(mpc_lowcomm_peer_uid_t dest, struct sctk_rail_info_s *rail, struct _mpc_lowcomm_endpoint_s *route_table, int ondemand);
 
 void sctk_ib_add_static_route(int dest, struct _mpc_lowcomm_endpoint_s *tmp, struct sctk_rail_info_s *rail);
 void sctk_ib_add_dynamic_route(int dest, struct _mpc_lowcomm_endpoint_s *tmp, struct sctk_rail_info_s *rail);

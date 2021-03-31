@@ -650,7 +650,7 @@ void sctk_rail_pin_ctx_release( sctk_rail_pin_ctx_t * ctx )
 /* route_init                                                           */
 /************************************************************************/
 
-void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology, void (*on_demand)( struct sctk_rail_info_s * rail , int dest ) )
+void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology, void (*on_demand)( struct sctk_rail_info_s * rail , mpc_lowcomm_peer_uid_t dest ) )
 {
 	/* First assume that the initial ring is required */
 	rail->requires_bootstrap_ring = 1;
@@ -790,13 +790,13 @@ void sctk_rail_add_dynamic_route_no_lock (  sctk_rail_info_t * rail, _mpc_lowcom
 
 
 /* Get a static route with no routing (can return NULL ) */
-_mpc_lowcomm_endpoint_t * sctk_rail_get_static_route_to_process ( sctk_rail_info_t *rail, int dest )
+_mpc_lowcomm_endpoint_t * sctk_rail_get_static_route_to_process ( sctk_rail_info_t *rail, mpc_lowcomm_peer_uid_t dest )
 {
 	return _mpc_lowcomm_endpoint_table_get_static_route(   rail->route_table , dest );
 }
 
 /* Get a route (static / dynamic) with no routing (can return NULL) */
-_mpc_lowcomm_endpoint_t * sctk_rail_get_any_route_to_process ( sctk_rail_info_t *rail, int dest )
+_mpc_lowcomm_endpoint_t * sctk_rail_get_any_route_to_process ( sctk_rail_info_t *rail, mpc_lowcomm_peer_uid_t dest )
 {
 	_mpc_lowcomm_endpoint_t *tmp;
 
@@ -823,7 +823,7 @@ _mpc_lowcomm_endpoint_t * sctk_rail_get_any_route_to_process ( sctk_rail_info_t 
  *  - added: if the entry has been created
  *  - is_initiator: if the current process is the initiator of the entry creation.
  */
-_mpc_lowcomm_endpoint_t * sctk_rail_add_or_reuse_route_dynamic ( sctk_rail_info_t *rail, int dest, _mpc_lowcomm_endpoint_t * ( *create_func ) (), void ( *init_func ) ( int dest, sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_t *route_table, int ondemand ), int *added, char is_initiator )
+_mpc_lowcomm_endpoint_t * sctk_rail_add_or_reuse_route_dynamic ( sctk_rail_info_t *rail, mpc_lowcomm_peer_uid_t dest, _mpc_lowcomm_endpoint_t * ( *create_func ) (), void ( *init_func ) ( mpc_lowcomm_peer_uid_t dest, sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_t *route_table, int ondemand ), int *added, char is_initiator )
 {
 
 	*added = 0;
@@ -862,7 +862,7 @@ _mpc_lowcomm_endpoint_t * sctk_rail_add_or_reuse_route_dynamic ( sctk_rail_info_
 }
 
 
-_mpc_lowcomm_endpoint_t * sctk_rail_get_dynamic_route_to_process ( sctk_rail_info_t *rail, int dest )
+_mpc_lowcomm_endpoint_t * sctk_rail_get_dynamic_route_to_process ( sctk_rail_info_t *rail, mpc_lowcomm_peer_uid_t dest )
 {
 	return  _mpc_lowcomm_endpoint_table_get_dynamic_route( rail->route_table, dest );
 }
@@ -870,7 +870,7 @@ _mpc_lowcomm_endpoint_t * sctk_rail_get_dynamic_route_to_process ( sctk_rail_inf
 
 
 /* Get the route to a given task (on demand mode) */
-_mpc_lowcomm_endpoint_t * sctk_rail_get_any_route_to_task_or_on_demand ( sctk_rail_info_t *rail, int dest )
+_mpc_lowcomm_endpoint_t * sctk_rail_get_any_route_to_task_or_on_demand ( sctk_rail_info_t *rail, mpc_lowcomm_peer_uid_t dest )
 {
 	_mpc_lowcomm_endpoint_t *tmp;
 	int process;
@@ -883,7 +883,7 @@ _mpc_lowcomm_endpoint_t * sctk_rail_get_any_route_to_task_or_on_demand ( sctk_ra
 
 /* Get a route to a process with no ondemand connexions (relies on both static and dynamic routes without creating
  * routes => Relies on routing ) */
-inline _mpc_lowcomm_endpoint_t * sctk_rail_get_any_route_to_process_or_forward ( sctk_rail_info_t *rail, int dest )
+inline _mpc_lowcomm_endpoint_t * sctk_rail_get_any_route_to_process_or_forward ( sctk_rail_info_t *rail, mpc_lowcomm_peer_uid_t dest )
 {
 	_mpc_lowcomm_endpoint_t *tmp;
 	/* Try to get a dynamic / static route until this process */
@@ -909,7 +909,7 @@ inline _mpc_lowcomm_endpoint_t * sctk_rail_get_any_route_to_process_or_forward (
 
 
 /* Get a route to a process only on static routes (does not create new routes => Relies on routing) */
-inline _mpc_lowcomm_endpoint_t * sctk_rail_get_static_route_to_process_or_forward ( sctk_rail_info_t *rail , int dest )
+inline _mpc_lowcomm_endpoint_t * sctk_rail_get_static_route_to_process_or_forward ( sctk_rail_info_t *rail , mpc_lowcomm_peer_uid_t dest )
 {
 	_mpc_lowcomm_endpoint_t *tmp;
 	tmp = sctk_rail_get_static_route_to_process ( rail, dest );
@@ -934,7 +934,7 @@ inline _mpc_lowcomm_endpoint_t * sctk_rail_get_static_route_to_process_or_forwar
 
 
 /* Get a route to process, creating the route if not present */
-_mpc_lowcomm_endpoint_t * sctk_rail_get_any_route_to_process_or_on_demand ( sctk_rail_info_t *rail, int dest )
+_mpc_lowcomm_endpoint_t * sctk_rail_get_any_route_to_process_or_on_demand ( sctk_rail_info_t *rail, mpc_lowcomm_peer_uid_t dest )
 {
 	_mpc_lowcomm_endpoint_t *tmp;
 

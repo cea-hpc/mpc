@@ -58,6 +58,8 @@ struct _mpc_lowcomm_monitor_s
 	int                         server_socket;
 	fd_set                      read_fds;
 	int                         notiffd[2];
+	int                         clientfd[2];
+
 	char                        monitor_uri[MPC_LOWCOMM_PEER_URI_SIZE];
 
 	/* This is the process set lead group info (entry point to routing) */
