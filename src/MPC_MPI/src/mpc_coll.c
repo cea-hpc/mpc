@@ -329,7 +329,7 @@ static inline int my_NBC_Sched_op(void *res_buf, void* left_op_buf, void* right_
   \param info Adress on the information structure about the schedule
   \return Error code
   */
-static inline int my_NBC_Sched_copy(void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, NBC_Schedule *schedule, Sched_info *info) {
+static inline int my_NBC_Sched_copy(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, NBC_Schedule *schedule, Sched_info *info) {
 
   NBC_Args *copy_args;
 
@@ -532,7 +532,7 @@ static inline int __INTERNAL__Allreduce_switch(const void *sendbuf, void* recvbu
 static inline int __INTERNAL__Scatter_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Scatterv_switch(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Gather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __INTERNAL__Gatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __INTERNAL__Gatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Reduce_scatter_block_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Reduce_scatter_switch(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __INTERNAL__Allgather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
@@ -909,7 +909,7 @@ static inline int __INTERNAL__Bcast_binomial(void *buffer, int count, MPI_Dataty
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Bcast_scatter_allgather(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Bcast_scatter_allgather(__UNUSED__ void *buffer, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
   
@@ -1382,7 +1382,7 @@ static inline int __INTERNAL__Reduce_binomial(const void *sendbuf, void* recvbuf
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Reduce_reduce_scatter_allgather(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Reduce_reduce_scatter_allgather(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
  
   not_implemented();
 
@@ -1822,7 +1822,7 @@ static inline int __INTERNAL__Allreduce_distance_doubling(const void *sendbuf, v
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Allreduce_vector_halving_distance_doubling(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Allreduce_vector_halving_distance_doubling(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
   
@@ -1843,7 +1843,7 @@ static inline int __INTERNAL__Allreduce_vector_halving_distance_doubling(const v
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Allreduce_binary_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Allreduce_binary_block(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
   
@@ -1864,7 +1864,7 @@ static inline int __INTERNAL__Allreduce_binary_block(const void *sendbuf, void* 
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Allreduce_ring(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Allreduce_ring(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
   
@@ -2683,7 +2683,7 @@ static inline int __INTERNAL__Scatterv_linear(const void *sendbuf, const int *se
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Scatterv_binomial(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Scatterv_binomial(__UNUSED__ const void *sendbuf, __UNUSED__ const int *sendcounts, __UNUSED__ const int *displs, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ int recvcount, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
   
@@ -3134,13 +3134,13 @@ static inline int __INTERNAL__Gather_binomial(const void *sendbuf, int sendcount
   GATHERV
   ***********/
 
-int PMPI_Igatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request);
-int __INTERNAL__Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
-int PMPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
-int __INTERNAL__Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
-int __INTERNAL__Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm);
-static inline int __INTERNAL__Gatherv_linear(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __INTERNAL__Gatherv_binomial(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+int PMPI_Igatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request);
+int __INTERNAL__Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
+int PMPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
+int __INTERNAL__Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
+int __INTERNAL__Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm);
+static inline int __INTERNAL__Gatherv_linear(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __INTERNAL__Gatherv_binomial(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
 /**
@@ -3157,7 +3157,7 @@ static inline int __INTERNAL__Gatherv_binomial(const void *sendbuf, int sendcoun
   \param request Pointer to the MPI_Request
   \return error code
   */
-int PMPI_Igatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request) {
+int PMPI_Igatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request) {
   
   int res = MPI_ERR_INTERN;
   mpc_common_nodebug ("Entering IGATHERV %d", comm);
@@ -3202,7 +3202,7 @@ int PMPI_Igatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype, vo
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-int __INTERNAL__Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle) {
+int __INTERNAL__Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle) {
 
   int res;
   NBC_Schedule *schedule;
@@ -3252,7 +3252,7 @@ int __INTERNAL__Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendty
   \param request Pointer to the MPI_Request
   \return error code
   */
-int PMPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request) {
+int PMPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request) {
   
   {
     int size;
@@ -3308,7 +3308,7 @@ int PMPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-int __INTERNAL__Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle) {
+int __INTERNAL__Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle) {
   
   int res;
   NBC_Schedule *schedule;
@@ -3354,7 +3354,7 @@ int __INTERNAL__Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype se
   \param comm Target communicator
   \return error code
   */
-int __INTERNAL__Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm) {
+int __INTERNAL__Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm) {
   return __INTERNAL__Gatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
 }
 
@@ -3375,7 +3375,7 @@ int __INTERNAL__Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtyp
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Gatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Gatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   enum {
     NBC_GATHERV_LINEAR,
@@ -3415,7 +3415,7 @@ static inline int __INTERNAL__Gatherv_switch(const void *sendbuf, int sendcount,
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Gatherv_linear(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Gatherv_linear(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size;
   MPI_Aint ext;
@@ -3484,7 +3484,7 @@ static inline int __INTERNAL__Gatherv_linear(const void *sendbuf, int sendcount,
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Gatherv_binomial(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Gatherv_binomial(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *displs, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
 
@@ -3817,7 +3817,7 @@ static inline int __INTERNAL__Reduce_scatter_block_reduce_scatter(const void *se
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Reduce_scatter_block_distance_doubling(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Reduce_scatter_block_distance_doubling(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
   
@@ -3838,7 +3838,7 @@ static inline int __INTERNAL__Reduce_scatter_block_distance_doubling(const void 
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Reduce_scatter_block_distance_halving(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Reduce_scatter_block_distance_halving(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
   
@@ -4264,7 +4264,7 @@ static inline int __INTERNAL__Reduce_scatter_reduce_scatterv(const void *sendbuf
 
   __INTERNAL__Barrier_type(coll_type, schedule, info);
 
-  __INTERNAL__Scatterv_switch(tmpbuf, recvcounts, displs, datatype, recvbuf, recvcounts, datatype, 0, comm, coll_type, schedule, info);
+  __INTERNAL__Scatterv_switch(tmpbuf, recvcounts, displs, datatype, recvbuf, recvcounts[rank], datatype, 0, comm, coll_type, schedule, info);
 
 
   if(coll_type == MPC_COLL_TYPE_BLOCKING) {
@@ -4288,7 +4288,7 @@ static inline int __INTERNAL__Reduce_scatter_reduce_scatterv(const void *sendbuf
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Reduce_scatter_distance_doubling(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Reduce_scatter_distance_doubling(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
   
@@ -4309,7 +4309,7 @@ static inline int __INTERNAL__Reduce_scatter_distance_doubling(const void *sendb
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Reduce_scatter_distance_halving(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Reduce_scatter_distance_halving(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
   
@@ -4330,7 +4330,7 @@ static inline int __INTERNAL__Reduce_scatter_distance_halving(const void *sendbu
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Reduce_scatter_pairwise(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Reduce_scatter_pairwise(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
   
@@ -4653,8 +4653,6 @@ static inline int __INTERNAL__Allgather_distance_doubling(const void *sendbuf, i
   PMPI_Type_extent(sendtype, &sendext);
   PMPI_Type_extent(recvtype, &recvext);
 
-  int res = MPI_SUCCESS;
-
   int vrank, vsize, peer, maxr, count = 0, peer_count = 0;
   maxr = (int)floor((log(size)/LOG2));
   vsize = (1 << maxr);
@@ -4788,7 +4786,7 @@ static inline int __INTERNAL__Allgather_distance_doubling(const void *sendbuf, i
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Allgather_bruck(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Allgather_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ int recvcount, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
 
@@ -5178,7 +5176,7 @@ static inline int __INTERNAL__Allgatherv_gatherv_broadcast(const void *sendbuf, 
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Allgatherv_distance_doubling(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Allgatherv_distance_doubling(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *displs, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
 
@@ -5201,7 +5199,7 @@ static inline int __INTERNAL__Allgatherv_distance_doubling(const void *sendbuf, 
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Allgatherv_bruck(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Allgatherv_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *displs, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
 
@@ -5224,7 +5222,7 @@ static inline int __INTERNAL__Allgatherv_bruck(const void *sendbuf, int sendcoun
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Allgatherv_ring(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Allgatherv_ring(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *displs, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
 
@@ -5591,7 +5589,7 @@ static inline int __INTERNAL__Alltoall_cluster(const void *sendbuf, int sendcoun
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Alltoall_bruck(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Alltoall_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ int recvcount, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
 
@@ -5613,7 +5611,7 @@ static inline int __INTERNAL__Alltoall_bruck(const void *sendbuf, int sendcount,
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Alltoall_pairwise(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Alltoall_pairwise(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ int recvcount, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
 
@@ -6013,7 +6011,7 @@ static inline int __INTERNAL__Alltoallv_cluster(const void *sendbuf, const int *
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Alltoallv_bruck(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Alltoallv_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ const int *sendcounts, __UNUSED__ const int *sdispls, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *rdispls, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
 
@@ -6037,7 +6035,7 @@ static inline int __INTERNAL__Alltoallv_bruck(const void *sendbuf, const int *se
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Alltoallv_pairwise(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Alltoallv_pairwise(__UNUSED__ const void *sendbuf, __UNUSED__ const int *sendcounts, __UNUSED__ const int *sdispls, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *rdispls, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
 
@@ -6436,7 +6434,7 @@ static inline int __INTERNAL__Alltoallw_cluster(const void *sendbuf, const int *
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Alltoallw_bruck(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Alltoallw_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ const int *sendcounts, __UNUSED__ const int *sdispls, __UNUSED__ const MPI_Datatype *sendtypes, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *rdispls, __UNUSED__ const MPI_Datatype *recvtypes, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
 
@@ -6460,7 +6458,7 @@ static inline int __INTERNAL__Alltoallw_bruck(const void *sendbuf, const int *se
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __INTERNAL__Alltoallw_pairwise(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int __INTERNAL__Alltoallw_pairwise(__UNUSED__ const void *sendbuf, __UNUSED__ const int *sendcounts, __UNUSED__ const int *sdispls, __UNUSED__ const MPI_Datatype *sendtypes, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *rdispls, __UNUSED__ const MPI_Datatype *recvtypes, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
 
