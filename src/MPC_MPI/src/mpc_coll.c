@@ -35,8 +35,14 @@
 #define COMM_SCHED_SIZE (sizeof(NBC_Fn_type) + sizeof(NBC_Args))
 #define ROUND_SCHED_SIZE (SCHED_SIZE + BARRIER_SCHED_SIZE)
 
-// TODO : error handling & config handling
 #define SCTK_MPI_CHECK_RETURN_VAL(res,comm)do{if(res == MPI_SUCCESS){return res;} else {MPI_ERROR_REPORT(comm,res,"Generic error retrun");}}while(0)
+
+//  TODO:
+//    support MPI_IN_PLACE:
+//      reduce_scatter_block_pairwise
+//      allgather_distance_doubling
+//    error hanfling
+//    config handling
 
 
 
@@ -824,13 +830,14 @@ static inline int __INTERNAL__Bcast_linear(void *buffer, int count, MPI_Datatype
       return MPI_SUCCESS;
   }
 
-
+  // if rank != root, wait for data from root
   if(rank != root) {
     res = __INTERNAL__Recv_type(buffer, count, datatype, root, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
     if(res != MPI_SUCCESS) {
       return res;
     }
   } else {
+    //if rank == root, send data to each rank
     for(int i = 0; i < size; i++) {
       if(i == rank) {
         continue;
@@ -874,6 +881,7 @@ static inline int __INTERNAL__Bcast_binomial(void *buffer, int count, MPI_Dataty
     rmb = maxr;
   }
 
+  // Wait for data
   if(rank != root) {
     VRANK2RANK(peer, vrank ^ (1 << rmb), root);
 
@@ -884,6 +892,7 @@ static inline int __INTERNAL__Bcast_binomial(void *buffer, int count, MPI_Dataty
     }
   }
 
+  // Distribute data to rank+2^(rmb-1); ...; rank+2^0
   for(int i = rmb - 1; i >= 0; i--) {
     VRANK2RANK(peer, vrank | (1 << i), root);
     if(peer >= size) {
@@ -1231,12 +1240,14 @@ static inline int __INTERNAL__Reduce_linear(const void *sendbuf, void* recvbuf, 
       break;
   }
 
+  // Gather data from all ranks
   if(sendbuf != MPI_IN_PLACE) {
     __INTERNAL__Gather_switch(sendbuf, count, datatype, tmpbuf, count, datatype, root, comm, coll_type, schedule, info);
   } else {
     __INTERNAL__Gather_switch(recvbuf, count, datatype, tmpbuf, count, datatype, root, comm, coll_type, schedule, info);
   }
 
+  // Reduce received data
   if(rank == root) {
     __INTERNAL__Barrier_type(coll_type, schedule, info);
 
@@ -1324,17 +1335,21 @@ static inline int __INTERNAL__Reduce_binomial(const void *sendbuf, void* recvbuf
   }
 
   for(int i = 0; i < maxr; i++) {
+    // 
     if(vrank & (1 << i)) {
       VRANK2RANK(peer, vrank ^ (1 << i), vroot);
      
+      // send reduce data to rank-2^i
       __INTERNAL__Send_type(tmp_sendbuf, count, datatype, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
       
       break;
     } else if((vrank | (1 << i)) < size) {
       VRANK2RANK(peer, vrank | (1 << i), vroot);
       
+      // wait data from rank+2^i
       __INTERNAL__Recv_type(tmp_recvbuf, count, datatype, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
       __INTERNAL__Barrier_type(coll_type, schedule, info);
+      // reduce data
       __INTERNAL__Op_type(NULL, tmp_sendbuf, tmp_recvbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
 
       if(first_access) {
@@ -1346,6 +1361,7 @@ static inline int __INTERNAL__Reduce_binomial(const void *sendbuf, void* recvbuf
     }
   }
 
+  // if the operation isnt commutative rank 0 send the reduced data to root
   if(!can_commute) {
     if(root != 0) {
       if(rank == 0) {
@@ -1733,8 +1749,9 @@ static inline int __INTERNAL__Allreduce_distance_doubling(const void *sendbuf, v
     first_access = 0;
   }
 
-
-
+  // Reduce the number of rank participating ro the allreduce to the nearest lower power of 2:
+  // all processes with odd rank and rank < 2 * (size - 2^(floor(log(size)/LOG2))) send their data to rank-1
+  // all processes with even rank and rank < 2 * (size - 2^(floor(log(size)/LOG2))) receive and reduce data from rank+1
   if(rank < group) {
     peer = rank ^ 1;
 
@@ -1755,6 +1772,7 @@ static inline int __INTERNAL__Allreduce_distance_doubling(const void *sendbuf, v
   }
 
   if(rank >= group || !(rank & 1)) {
+    // at each step, processes exchange and reduce their data with (rank XOR 2^i)
     for(int i = 0; i < maxr; i++) {
       
       peer = vrank ^ (1 << i);
@@ -1788,6 +1806,7 @@ static inline int __INTERNAL__Allreduce_distance_doubling(const void *sendbuf, v
     }
   }
 
+  // As some processes didnt participate, exchange data with them
   if(rank < group) {
     peer = rank ^ 1;
 
@@ -2183,12 +2202,14 @@ static inline int __INTERNAL__Scatter_linear(const void *sendbuf, int sendcount,
   }
 
 
+  // if rank != root, receive data from root
   if(rank != root) {
     res = __INTERNAL__Recv_type(recvbuf, recvcount, recvtype, root, MPC_SCATTER_TAG, comm, coll_type, schedule, info);
     if(res != MPI_SUCCESS) {
       return res;
     }
   } else {
+    // if rank == root, send data to each process
     for(int i = 0; i < size; i++) {
       if(i == rank) {
         continue;
@@ -2226,12 +2247,22 @@ static inline int __INTERNAL__Scatter_linear(const void *sendbuf, int sendcount,
   */
 static inline int __INTERNAL__Scatter_binomial(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
+  const void *tmp_sendbuf = sendbuf;
+  int tmp_recvcount = recvcount;
+  MPI_Datatype tmp_recvtype = recvtype;
+  // if sendbuf == MPI_IN_PLACE, recvcount & recvtype are ignored
+  if(sendbuf == MPI_IN_PLACE) {
+    tmp_sendbuf = recvbuf;
+    tmp_recvcount = sendcount;
+    tmp_recvtype = sendtype;
+  }
+
   int rank, size;
   MPI_Aint sendext, recvext;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
   PMPI_Type_extent(sendtype, &sendext);
-  PMPI_Type_extent(recvtype, &recvext);
+  PMPI_Type_extent(tmp_recvtype, &recvext);
 
   int maxr, vrank, peer, peer_vrank;
   maxr = (int)ceil((log(size)/LOG2));
@@ -2256,36 +2287,41 @@ static inline int __INTERNAL__Scatter_binomial(const void *sendbuf, int sendcoun
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
       tmpbuf = info->tmpbuf + info->tmpbuf_pos;
-      info->tmpbuf_pos += size * recvext * recvcount;
+      info->tmpbuf_pos += size * recvext * tmp_recvcount;
       break;
 
     case MPC_COLL_TYPE_COUNT:
-      info->tmpbuf_size += size * recvext * recvcount;
+      info->tmpbuf_size += size * recvext * tmp_recvcount;
       break;
   }
 
-  if(rank == root) {
-    __INTERNAL__Copy_type(sendbuf, sendcount * size, sendtype, tmpbuf, recvcount * size, recvtype, comm, coll_type, schedule, info);
+  
 
+  if(rank == root) {
+    __INTERNAL__Copy_type(tmp_sendbuf, sendcount * size, sendtype, tmpbuf, tmp_recvcount * size, tmp_recvtype, comm, coll_type, schedule, info);
+
+    // As we use virtual rank where rank root and rank 0 are swapped, we need to swap their data as well
     if(root != 0) {
-      __INTERNAL__Copy_type(sendbuf, sendcount, sendtype, tmpbuf + root * recvcount * recvext, recvcount, recvtype, comm, coll_type, schedule, info);
-      __INTERNAL__Copy_type(sendbuf + root * sendcount * sendext, sendcount, sendtype, tmpbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+      __INTERNAL__Copy_type(tmp_sendbuf, sendcount, sendtype, tmpbuf + root * tmp_recvcount * recvext, tmp_recvcount, tmp_recvtype, comm, coll_type, schedule, info);
+      __INTERNAL__Copy_type(tmp_sendbuf + root * sendcount * sendext, sendcount, sendtype, tmpbuf, tmp_recvcount, tmp_recvtype, comm, coll_type, schedule, info);
     }
   }
 
+  // Wait for data
   if(vrank != 0) {
     VRANK2RANK(peer, vrank ^ (1 << rmb), root);
 
     if(range < size) {
-      count = (1 << rmb) * recvcount;
+      count = (1 << rmb) * tmp_recvcount;
     } else {
-      count = (size - peer) * recvcount;
+      count = (size - peer) * tmp_recvcount;
     }
 
-    __INTERNAL__Recv_type(tmpbuf, count, recvtype, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
+    __INTERNAL__Recv_type(tmpbuf, count, tmp_recvtype, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
     __INTERNAL__Barrier_type(coll_type, schedule, info);
   }
 
+  // Distribute data to rank+2^(rmb-1); ...; rank+2^0
   for(int i = rmb - 1; i >= 0; i--) {
     peer_vrank = vrank | (1 << i);
 
@@ -2296,15 +2332,17 @@ static inline int __INTERNAL__Scatter_binomial(const void *sendbuf, int sendcoun
 
     peer_range = fill_rmb(peer_vrank, i);
     if(peer_range < size) {
-      count = (1 << i) * recvcount;
+      count = (1 << i) * tmp_recvcount;
     } else {
-      count = (size - peer_vrank) * recvcount;
+      count = (size - peer_vrank) * tmp_recvcount;
     }
 
-    __INTERNAL__Send_type(tmpbuf + (1 << i) * recvcount * recvext, count, recvtype, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
+    __INTERNAL__Send_type(tmpbuf + (1 << i) * tmp_recvcount * recvext, count, tmp_recvtype, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
   }
 
-  __INTERNAL__Copy_type(tmpbuf, recvcount, recvtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+  if(sendbuf != MPI_IN_PLACE) {
+    __INTERNAL__Copy_type(tmpbuf, tmp_recvcount, recvtype, recvbuf, tmp_recvcount, tmp_recvtype, comm, coll_type, schedule, info);
+  }
 
 
 
@@ -2610,10 +2648,8 @@ static inline int __INTERNAL__Scatterv_switch(const void *sendbuf, const int *se
 static inline int __INTERNAL__Scatterv_linear(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size;
-  MPI_Aint ext;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
-  PMPI_Type_extent(sendtype, &ext);
 
   int res = MPI_SUCCESS;
 
@@ -3043,11 +3079,21 @@ static inline int __INTERNAL__Gather_linear(const void *sendbuf, int sendcount, 
   */
 static inline int __INTERNAL__Gather_binomial(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
+  const void *tmp_sendbuf = sendbuf;
+  int tmp_sendcount = sendcount;
+  MPI_Datatype tmp_sendtype = sendtype;
+  // if sendbuf == MPI_IN_PLACE, sendcount & sendtype are ignored
+  if(sendbuf == MPI_IN_PLACE) {
+    tmp_sendbuf = recvbuf;
+    tmp_sendcount = recvcount;
+    tmp_sendtype = recvtype;
+  }
+
   int rank, size;
   MPI_Aint sendext, recvext;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
-  PMPI_Type_extent(sendtype, &sendext);
+  PMPI_Type_extent(tmp_sendtype, &sendext);
   PMPI_Type_extent(recvtype, &recvext);
 
   int maxr, vrank, peer, peer_vrank;
@@ -3063,21 +3109,21 @@ static inline int __INTERNAL__Gather_binomial(const void *sendbuf, int sendcount
 
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
-      tmpbuf = sctk_malloc(size * sendext * sendcount);
+      tmpbuf = sctk_malloc(size * sendext * tmp_sendcount);
       break;
 
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
       tmpbuf = info->tmpbuf + info->tmpbuf_pos;
-      info->tmpbuf_pos += size * sendext * sendcount;
+      info->tmpbuf_pos += size * sendext * tmp_sendcount;
       break;
 
     case MPC_COLL_TYPE_COUNT:
-      info->tmpbuf_size += size * sendext * sendcount;
+      info->tmpbuf_size += size * sendext * tmp_sendcount;
       break;
   }
 
-  __INTERNAL__Copy_type(sendbuf, sendcount, sendtype, tmpbuf, sendcount, sendtype, comm, coll_type, schedule, info);
+  __INTERNAL__Copy_type(tmp_sendbuf, tmp_sendcount, tmp_sendtype, tmpbuf, tmp_sendcount, tmp_sendtype, comm, coll_type, schedule, info);
 
 
   for(int i = 0; i < maxr; i++) {
@@ -3087,36 +3133,36 @@ static inline int __INTERNAL__Gather_binomial(const void *sendbuf, int sendcount
     if(vrank & (1 << i)) {
       
       if(range < size) {
-        count = (1 << i) * sendcount;
+        count = (1 << i) * tmp_sendcount;
       } else {
-        count = (size - vrank) * sendcount;
+        count = (size - vrank) * tmp_sendcount;
       }
 
       __INTERNAL__Barrier_type(coll_type, schedule, info);
-      __INTERNAL__Send_type(tmpbuf, count, sendtype, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
+      __INTERNAL__Send_type(tmpbuf, count, tmp_sendtype, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
       
       break;
     } else if(peer < size) {
       
       peer_range = fill_rmb(peer_vrank, i);
       if(peer_range < size) {
-        count = (1 << i) * sendcount;
+        count = (1 << i) * tmp_sendcount;
       } else {
-        count = (size - peer_vrank) * sendcount;
+        count = (size - peer_vrank) * tmp_sendcount;
       }
 
-      __INTERNAL__Recv_type(tmpbuf + (1 << i) * sendcount * sendext, count, sendtype, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
+      __INTERNAL__Recv_type(tmpbuf + (1 << i) * tmp_sendcount * sendext, count, tmp_sendtype, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
     }
   }
 
   if(rank == root) {
     __INTERNAL__Barrier_type(coll_type, schedule, info);
     
-    __INTERNAL__Copy_type(tmpbuf, sendcount * size, sendtype, recvbuf, recvcount * size, recvtype, comm, coll_type, schedule, info);
+    __INTERNAL__Copy_type(tmpbuf, tmp_sendcount * size, tmp_sendtype, recvbuf, recvcount * size, recvtype, comm, coll_type, schedule, info);
     
     if(root != 0) {
-      __INTERNAL__Copy_type(tmpbuf, sendcount, sendtype, recvbuf + root * recvcount * recvext, recvcount, recvtype, comm, coll_type, schedule, info);
-      __INTERNAL__Copy_type(tmpbuf + root * sendcount * sendext, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+      __INTERNAL__Copy_type(tmpbuf, tmp_sendcount, tmp_sendtype, recvbuf + root * recvcount * recvext, recvcount, recvtype, comm, coll_type, schedule, info);
+      __INTERNAL__Copy_type(tmpbuf + root * tmp_sendcount * sendext, tmp_sendcount, tmp_sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
     }
   }
 
@@ -4829,7 +4875,9 @@ static inline int __INTERNAL__Allgather_ring(const void *sendbuf, int sendcount,
       return MPI_SUCCESS;
   }
 
-  __INTERNAL__Copy_type(sendbuf, sendcount, sendtype, recvbuf + rank * recvcount * recvext, recvcount, recvtype, comm, coll_type, schedule, info);
+  if(sendbuf != MPI_IN_PLACE) {
+    __INTERNAL__Copy_type(sendbuf, sendcount, sendtype, recvbuf + rank * recvcount * recvext, recvcount, recvtype, comm, coll_type, schedule, info);
+  }
 
   for(int i = 0; i < size - 1; i++) {
     if(rank & 1) {
