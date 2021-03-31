@@ -108,10 +108,30 @@ int mpc_lowcomm_peer_closer(mpc_lowcomm_peer_uid_t dest, mpc_lowcomm_peer_uid_t 
 
 	mpc_common_debug_error("Dest is %u current %u D %d candidate %u D %d", dest_rank, current, d_cur_d, candidate_rank, d_cand_d);
 
+
 	if(d_cand_d < d_cur_d)
 	{
 		return 1;
 	}
 
 	return 0;
+}
+
+char * mpc_lowcomm_peer_format_r(mpc_lowcomm_peer_uid_t uid, char * buff, int len)
+{
+	if(!buff)
+	{
+		return buff;
+	}
+
+	snprintf(buff, len, "(%u,%u)", mpc_lowcomm_peer_get_set(uid), mpc_lowcomm_peer_get_rank(uid));
+
+	return buff;
+}
+
+
+char * mpc_lowcomm_peer_format(mpc_lowcomm_peer_uid_t uid)
+{
+	static char peer_name[128];
+	return mpc_lowcomm_peer_format_r(uid, peer_name, 128);
 }

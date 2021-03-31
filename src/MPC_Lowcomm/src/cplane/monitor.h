@@ -41,6 +41,8 @@ typedef struct _mpc_lowcomm_client_ctx_s
 _mpc_lowcomm_client_ctx_t *_mpc_lowcomm_client_ctx_new(uint64_t uid, int fd);
 int _mpc_lowcomm_client_ctx_release(_mpc_lowcomm_client_ctx_t **client);
 
+int _mpc_lowcomm_client_ctx_send(_mpc_lowcomm_client_ctx_t * ctx, _mpc_lowcomm_monitor_wrap_t * wrap);
+
 
 #define _MPC_LOWCOMM_MONITOR_MAX_CLIENTS_    16
 
@@ -51,6 +53,7 @@ struct _mpc_lowcomm_monitor_s
 	struct mpc_common_hashtable client_contexts;
 	uint32_t                    client_count;
 
+	pthread_mutex_t             connect_accept_lock;
 
 	/* This is the server information */
 	int                         running;
@@ -66,7 +69,6 @@ struct _mpc_lowcomm_monitor_s
 	mpc_lowcomm_set_uid_t       monitor_gid;
 	_mpc_lowcomm_set_t *        process_set;
 	mpc_lowcomm_peer_uid_t      process_uid;
-	
 };
 
 mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_init(struct _mpc_lowcomm_monitor_s *monitor);

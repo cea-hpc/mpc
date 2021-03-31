@@ -8,6 +8,8 @@
 #include <time.h>
 #include <errno.h>
 #include <string.h>
+#include <pthread.h>
+#include <semaphore.h>
 #include <mpc_launch_pmi.h>
 #include <mpc_common_rank.h>
 
@@ -26,6 +28,140 @@
 ***************/
 
 static struct _mpc_lowcomm_monitor_s __monitor = { 0 };
+
+/******************
+ * WORKER THREADS *
+ ******************/
+
+typedef struct __monitor_work_context_s
+{
+	_mpc_lowcomm_client_ctx_t * client;
+	_mpc_lowcomm_monitor_wrap_t * data;
+	struct __monitor_work_context_s * next;
+}__monitor_work_context_t;
+
+
+struct __monitor_worker_s
+{
+	volatile int done;
+	pthread_t worker_thread;
+	__monitor_work_context_t * work_list;
+	pthread_mutex_t lock;
+	sem_t semaphore;
+};
+
+struct __monitor_worker_s __worker;
+
+static inline __monitor_work_context_t * __monitor_worker_pop(void)
+{
+	__monitor_work_context_t * ret = NULL;
+	pthread_mutex_lock(&__worker.lock);
+	if(__worker.work_list)
+	{
+		ret = __worker.work_list;
+		__worker.work_list = __worker.work_list->next;
+	}
+	pthread_mutex_unlock(&__worker.lock);
+
+	return ret;
+}
+
+
+
+static inline __monitor_work_context_t * __monitor_work_context_new(_mpc_lowcomm_client_ctx_t * ctx, _mpc_lowcomm_monitor_wrap_t *data)
+{
+	__monitor_work_context_t * ret = sctk_malloc(sizeof(__monitor_work_context_t));
+
+	assume(ret != NULL);
+
+	ret->client = ctx;
+	ret->data = data;
+
+	return ret;
+}
+
+static inline void __monitor_worker_push(__monitor_work_context_t * work)
+{
+	pthread_mutex_lock(&__worker.lock);
+	work->next = __worker.work_list;
+	__worker.work_list = work;
+	pthread_mutex_unlock(&__worker.lock);
+}
+
+
+int __monitor_worker_work_push(_mpc_lowcomm_client_ctx_t * ctx, _mpc_lowcomm_monitor_wrap_t *data)
+{
+	__monitor_work_context_t * new = __monitor_work_context_new(ctx, data);
+	__monitor_worker_push(new);
+	sem_post(&__worker.semaphore);
+
+	return 0;
+}
+
+int __monitor_work_context_free(__monitor_work_context_t * wc)
+{
+	sctk_free(wc);
+	return 0;
+}
+
+
+static inline int __handle_query(_mpc_lowcomm_client_ctx_t *ctx, _mpc_lowcomm_monitor_wrap_t *data);
+
+static void * __worker_loop(void *pwork)
+{
+	struct __monitor_worker_s * worker = (struct __monitor_worker_s *)pwork;
+
+	while(1)
+	{
+		sem_wait(&worker->semaphore);
+
+		if( worker->done && (worker->work_list == NULL) )
+		{
+			/* Done and all done */
+			return NULL;
+		}
+
+		__monitor_work_context_t * work = __monitor_worker_pop();
+
+		if(work)
+		{
+			_mpc_lowcomm_monitor_wrap_print(work->data, "PROCESSING");
+
+			__handle_query(work->client, work->data);
+			__monitor_work_context_free(work);
+		}
+
+	}
+}
+
+
+static inline int __monitor_worker_init(void)
+{
+	__worker.done = 0;
+	__worker.work_list = NULL;
+	pthread_mutex_init(&__worker.lock, NULL);
+	sem_init(&__worker.semaphore, 0, 0);
+	pthread_create(&__worker.worker_thread, NULL, __worker_loop, (void*)&__worker);
+
+	return 0;
+}
+
+static inline int __monitor_worker_release(void)
+{
+	__worker.done = 1;
+
+	sem_post(&__worker.semaphore);
+
+	pthread_join(__worker.worker_thread, NULL);
+
+	__worker.work_list = NULL;
+	pthread_mutex_init(&__worker.lock, NULL);
+	sem_init(&__worker.semaphore, 0, 0);
+
+	return 0;
+}
+
+
 
 /***************
 * ERROR CODES *
@@ -86,9 +222,8 @@ static char *__server_uid_name(char *buf, int size)
 
 static inline mpc_lowcomm_monitor_retcode_t __bootstrap_ring(void)
 {
-	if(mpc_common_get_local_task_rank() != 0)
+	if(mpc_common_get_process_count() == 1)
 	{
-		/* We only want one bootstrap per process */
 		return MPC_LAUNCH_MONITOR_RET_SUCCESS;
 	}
 
@@ -151,54 +286,52 @@ static inline int __register_process_set(void)
 	/* Declare own job */
 	uint32_t job_id = __monitor.monitor_gid;
 
-	int task_rank = mpc_common_get_task_rank();
 
-	if(mpc_common_get_local_task_rank() == 0)
+	/* No need to register several times world in this proc */
+
+	/* Now create all peers */
+	int i;
+	int proc_count   = mpc_common_get_process_count();
+	int my_proc_rank = mpc_common_get_process_rank();
+
+	uint64_t *peers_ids = sctk_malloc(sizeof(uint64_t) * proc_count);
+	assume(peers_ids != NULL);
+
+	for(i = 0; i < proc_count; i++)
 	{
-		/* No need to register several times world in this proc */
+		mpc_lowcomm_peer_uid_t pid = mpc_lowcomm_monitor_uid_of(job_id, i);
+		char server_key[128];
+		char uri[155];
 
-		/* Now create all peers */
-		int i;
-		int proc_count   = mpc_common_get_process_count();
-		int my_proc_rank = mpc_common_get_process_rank();
-
-		uint64_t *peers_ids = sctk_malloc(sizeof(uint64_t) * proc_count);
-		assume(peers_ids != NULL);
-
-		for(i = 0; i < proc_count; i++)
+		if(i == my_proc_rank)
 		{
-			mpc_lowcomm_peer_uid_t pid = mpc_lowcomm_monitor_uid_of(job_id, i);
-			char server_key[128];
+			snprintf(uri, 155, __monitor.monitor_uri);
+		}
+		else
+		{
 			/* They all should be PMI reachable */
 			__server_key_name(server_key, 128, i);
-			char uri[155];
 			snprintf(uri, 155, "pmi://%s", server_key);
-			_mpc_lowcomm_peer_register(pid,
-			                           0,
-			                           uri,
-			                           (my_proc_rank == i) );
-			peers_ids[i] = pid;
 		}
-
-		mpc_lowcomm_peer_uid_t local_peer_id = mpc_lowcomm_monitor_uid_of(job_id, mpc_common_get_process_rank() );
-
-		/* Create the set atop the world set */
-		__monitor.process_set = _mpc_lowcomm_set_init(job_id,
-		                                                   "mpc://process/leaders",
-		                                                   mpc_common_get_task_count(),
-		                                                   peers_ids,
-		                                                   proc_count,
-		                                                   (task_rank == 0) /* is_lead */,
-		                                                   local_peer_id);
-
-		sctk_free(peers_ids);
+		_mpc_lowcomm_peer_register(pid,
+									0,
+									uri,
+									(my_proc_rank == i) );
+		peers_ids[i] = pid;
 	}
 
+	mpc_lowcomm_peer_uid_t local_peer_id = mpc_lowcomm_monitor_uid_of(job_id, mpc_common_get_process_rank() );
 
-	/* Just to make sure world set is known before continuing */
-	mpc_lowcomm_barrier(MPC_COMM_WORLD);
+	/* Create the set atop the world set */
+	__monitor.process_set = _mpc_lowcomm_set_init(job_id,
+														"mpc://process/leaders",
+														mpc_common_get_task_count(),
+														peers_ids,
+														proc_count,
+														(mpc_common_get_process_rank() == 0) /* is_lead */,
+														local_peer_id);
 
-	assume(__monitor.process_uid != 0);
+	sctk_free(peers_ids);
 
 	return 0;
 }
@@ -207,17 +340,17 @@ int _mpc_lowcomm_monitor_setup()
 {
 	mpc_lowcomm_monitor_retcode_t ret;
 
+	/* Time to provide generic sets */
+	if(_mpc_lowcomm_set_setup() )
+	{
+		return 1;
+	}
+
 	ret = _mpc_lowcomm_monitor_init(&__monitor);
 
 	if(ret != MPC_LAUNCH_MONITOR_RET_SUCCESS)
 	{
 		mpc_lowcomm_monitor_retcode_print(ret, __func__);
-		return 1;
-	}
-
-	/* Time to provide generic sets */
-	if(_mpc_lowcomm_set_setup() )
-	{
 		return 1;
 	}
 
@@ -253,8 +386,15 @@ int _mpc_lowcomm_monitor_setup()
 	/* Now we can set our peer ID (in process realm at is is used for network setup) */
 	__monitor.process_uid = mpc_lowcomm_monitor_uid_of(__monitor.monitor_gid, mpc_common_get_process_rank());
 
+	mpc_launch_pmi_barrier();
 
 	/* At this point all processes in the group share the same GID without comm */
+
+
+	__register_process_set();
+	__bootstrap_ring();
+
+	mpc_launch_pmi_barrier();
 
 	_mpc_lowcomm_monitor_command_engine_init();
 	_mpc_lowcomm_monitor_on_demand_callbacks_init();
@@ -264,12 +404,10 @@ int _mpc_lowcomm_monitor_setup()
 
 static inline int __remove_uid(_mpc_lowcomm_set_t *set, void *arg)
 {
-	mpc_common_debug_error("JOBID : %u is_lead %d", set->uid, set->is_lead);
 
 	/* Only the lead process proceeds to clear */
 	if(set->is_lead)
 	{
-		mpc_common_debug_error("CLEAR");
 		_mpc_lowcomm_uid_clear(set->uid);
 	}
 
@@ -302,9 +440,6 @@ int _mpc_lowcomm_monitor_teardown()
 
 int _mpc_lowcomm_monitor_setup_per_task()
 {
-	__register_process_set();
-	__bootstrap_ring();
-
 	if(mpc_common_get_process_rank() == 0)
 	{
 		__exchange_peer_info();
@@ -338,6 +473,7 @@ _mpc_lowcomm_client_ctx_t *_mpc_lowcomm_client_ctx_new(uint64_t uid, int fd)
 	ret->uid       = uid;
 	ret->client_fd = fd;
 	time(&ret->last_used);
+	pthread_mutex_init(&ret->write_lock, NULL);
 
 	return ret;
 }
@@ -353,14 +489,31 @@ int _mpc_lowcomm_client_ctx_release(_mpc_lowcomm_client_ctx_t **client)
 	{
 		shutdown( (*client)->client_fd, SHUT_RDWR);
 		close( (*client)->client_fd);
+		pthread_mutex_destroy(&(*client)->write_lock);
 		sctk_free(*client);
 	}
 
 	return 0;
 }
 
+int _mpc_lowcomm_client_ctx_send(_mpc_lowcomm_client_ctx_t * peer_info, _mpc_lowcomm_monitor_wrap_t * cmd)
+{
+	pthread_mutex_lock(&peer_info->write_lock);
+
+	if(_mpc_lowcomm_monitor_wrap_send(peer_info->client_fd, cmd) < 0)
+	{
+		pthread_mutex_unlock(&peer_info->write_lock);
+		return -1;
+	}
+
+	pthread_mutex_unlock(&peer_info->write_lock);
+
+	return 0;
+}
+
 _mpc_lowcomm_client_ctx_t *__accept_incoming(struct _mpc_lowcomm_monitor_s *monitor)
 {
+
 	struct sockaddr_in client_addr;
 	socklen_t          len = 0;
 
@@ -383,35 +536,38 @@ _mpc_lowcomm_client_ctx_t *__accept_incoming(struct _mpc_lowcomm_monitor_s *moni
 		return NULL;
 	}
 
-	int refused = 0;
+	int already_present = 0;
 
 	/* Set UID is non-zero if we receive 0 we skip the
 	 * already connected set check as we have a temporary
 	 * client */
 	if(uid)
 	{
+		pthread_mutex_lock(&monitor->connect_accept_lock);
+
 		/* Now make sure this UID is not already known */
 		if(_mpc_lowcomm_monitor_client_known(monitor, uid) != NULL)
 		{
-			mpc_common_debug("UID %lu is alreary connected closing", uid);
+			mpc_common_debug_error("UID %s is alreary connected closing", mpc_lowcomm_peer_format(uid));
 
 			/* Notify remote end of our refusal */
 
-			refused = 1;
+			already_present = 1;
 			shutdown(new_fd, SHUT_RDWR);
 			close(new_fd);
+			pthread_mutex_unlock(&monitor->connect_accept_lock);
 			return NULL;
 		}
+
+		pthread_mutex_unlock(&monitor->connect_accept_lock);
 	}
 
-
-	/* Notify the client of acceptance or refusal */
-	mpc_common_io_safe_write(new_fd, &refused, sizeof(int) );
-
-	if(!refused)
+	if(!already_present)
 	{
 		_mpc_lowcomm_client_ctx_t *new = _mpc_lowcomm_client_ctx_new(uid, new_fd);
 		_mpc_lowcomm_monitor_client_add(monitor, new);
+		char meb[128];
+		mpc_common_debug_error("%s UID %s now connected", mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), meb, 128), mpc_lowcomm_peer_format(uid));
 		return new;
 	}
 
@@ -474,11 +630,10 @@ static inline int __handle_query(_mpc_lowcomm_client_ctx_t *ctx, _mpc_lowcomm_mo
 			return -1;
 	}
 
-	mpc_common_debug_error("RESP == %p", resp);
-
 	if(resp != NULL)
 	{
-		/* We need to route */
+		char fromb[128], tob[128];
+		mpc_common_debug_error("IN RESPONSE from %s to %s", mpc_lowcomm_peer_format_r(resp->from, fromb, 128), mpc_lowcomm_peer_format_r(resp->dest, tob, 128) );
 		mpc_lowcomm_monitor_retcode_t send_ret;
 		if(_mpc_lowcomm_monitor_command_send(resp, &send_ret) < 0)
 		{
@@ -524,6 +679,8 @@ static void *__server_loop(void *pmonitor)
 		/* Now add all client sockets */
 		_mpc_lowcomm_client_ctx_t *ctx;
 
+		pthread_mutex_lock(&monitor->client_lock);
+
 		MPC_HT_ITER(&monitor->client_contexts, ctx)
 		{
 			if(!ctx)
@@ -532,14 +689,18 @@ static void *__server_loop(void *pmonitor)
 			}
 
 			all_ctx[ctx->client_fd] = ctx;
+			//mpc_common_debug_error("CTX == %p", ctx);
 
 			FD_SET(ctx->client_fd, &monitor->read_fds);
 		}
 		MPC_HT_ITER_END
 
+		pthread_mutex_unlock(&monitor->client_lock);
+
+
 		struct timeval to;
 
-		to.tv_sec = 10;
+		to.tv_sec = 1;
 		to.tv_usec = 0;
 
 		int ret = select(FD_SETSIZE,
@@ -579,8 +740,6 @@ static void *__server_loop(void *pmonitor)
 
 				if(i == monitor->server_socket)
 				{
-					mpc_common_debug_error("Server EVENT");
-
 
 					_mpc_lowcomm_client_ctx_t *new_ctx = NULL;
 					/* Accept incoming connection */
@@ -599,7 +758,6 @@ static void *__server_loop(void *pmonitor)
 				/* Process incoming message */
 				_mpc_lowcomm_monitor_wrap_t *query = _mpc_lowcomm_monitor_recv(i);
 
-
 				if(!query)
 				{
 					mpc_common_debug_error("Client %lu left", all_ctx[i]->uid);
@@ -608,16 +766,16 @@ static void *__server_loop(void *pmonitor)
 					break;
 				}
 
-				mpc_common_debug_warning("Handle message for %llu from %llu", query->dest, query->from);
+				_mpc_lowcomm_monitor_wrap_print(query, "INCOMING");
+
 				/* Check if we are the dest or if we are routing */
 				if(_mpc_lowcomm_peer_is_local(query->dest) )
 				{
-					__handle_query(all_ctx[i], query);
+					__monitor_worker_work_push(all_ctx[i], query);
 				}
 				else
 				{
 					/* We need to route */
-					mpc_common_debug_error("ROUTING");
 					mpc_lowcomm_monitor_retcode_t route_ret;
 					if(_mpc_lowcomm_monitor_command_send(query, &route_ret) < 0)
 					{
@@ -769,6 +927,8 @@ static inline void __monitor_publish_over_pmi(struct _mpc_lowcomm_monitor_s *mon
 
 mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_init(struct _mpc_lowcomm_monitor_s *monitor)
 {
+	__monitor_worker_init();
+
 	/* Clear sets */
 	FD_ZERO(&monitor->read_fds);
 
@@ -778,6 +938,7 @@ mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_init(struct _mpc_lowcomm_moni
 
 	/* Prepare client list */
 	pthread_mutex_init(&monitor->client_lock, NULL);
+	pthread_mutex_init(&monitor->connect_accept_lock, NULL);
 	monitor->client_count = 0;
 	mpc_common_hashtable_init(&monitor->client_contexts, _MPC_LOWCOMM_MONITOR_MAX_CLIENTS_);
 
@@ -815,6 +976,9 @@ mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_init(struct _mpc_lowcomm_moni
 
 mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_release(struct _mpc_lowcomm_monitor_s *monitor)
 {
+	__monitor_worker_release();
+
+
 	monitor->running = 0;
 
 	/* Notify end to select thread */
@@ -838,6 +1002,7 @@ mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_release(struct _mpc_lowcomm_m
 
 	mpc_common_hashtable_release(&monitor->client_contexts);
 	pthread_mutex_destroy(&monitor->client_lock);
+	pthread_mutex_destroy(&monitor->connect_accept_lock);
 
 	return 0;
 }
@@ -887,10 +1052,10 @@ int _mpc_lowcomm_monitor_client_remove(struct _mpc_lowcomm_monitor_s *monitor,
 	return 0;
 }
 
-static inline _mpc_lowcomm_client_ctx_t *__connect_client(struct _mpc_lowcomm_monitor_s *monitor,
-                                                          char *uri,
-                                                          uint64_t uid,
-                                                          mpc_lowcomm_monitor_retcode_t *retcode)
+static inline _mpc_lowcomm_client_ctx_t *___connect_client(struct _mpc_lowcomm_monitor_s *monitor,
+                                                           char *uri,
+                                                           uint64_t uid,
+                                                           mpc_lowcomm_monitor_retcode_t *retcode)
 {
 	if(strstr(uri, "pmi://") )
 	{
@@ -1002,17 +1167,6 @@ static inline _mpc_lowcomm_client_ctx_t *__connect_client(struct _mpc_lowcomm_mo
 	/* If we have a socket the first step is to write our UID */
 	mpc_common_io_safe_write(client_socket, &__monitor.process_uid, sizeof(uint64_t) );
 
-	/* Now wait to see if we were refused (already connected) */
-	int refused = 0;
-	mpc_common_io_safe_read(client_socket, &refused, sizeof(int) );
-
-	if(refused)
-	{
-		close(client_socket);
-		*retcode = MPC_LAUNCH_MONITOR_RET_REFUSED;
-		return NULL;
-	}
-
 	/* If we are here we can create the client */
 	_mpc_lowcomm_client_ctx_t *new = _mpc_lowcomm_client_ctx_new(uid, client_socket);
 
@@ -1023,6 +1177,25 @@ static inline _mpc_lowcomm_client_ctx_t *__connect_client(struct _mpc_lowcomm_mo
 	*retcode = MPC_LAUNCH_MONITOR_RET_SUCCESS;
 
 	return new;
+}
+
+static inline _mpc_lowcomm_client_ctx_t *__connect_client(struct _mpc_lowcomm_monitor_s *monitor,
+                                                          char *uri,
+                                                          uint64_t uid,
+                                                          mpc_lowcomm_monitor_retcode_t *retcode)
+{
+	pthread_mutex_lock(&monitor->connect_accept_lock);
+
+	_mpc_lowcomm_client_ctx_t * ret = _mpc_lowcomm_monitor_client_known(monitor, uid);
+
+	if(!ret)
+	{
+		ret =___connect_client(monitor, uri, uid, retcode);
+	}
+
+	pthread_mutex_unlock(&monitor->connect_accept_lock);
+
+	return ret;
 }
 
 static inline _mpc_lowcomm_client_ctx_t *__get_client(struct _mpc_lowcomm_monitor_s *monitor,
@@ -1074,14 +1247,21 @@ static inline _mpc_lowcomm_client_ctx_t *__get_closest_in_set(struct _mpc_lowcom
 	_mpc_lowcomm_client_ctx_t *ctx          = NULL;
 	_mpc_lowcomm_client_ctx_t *ellected_ctx = NULL;
 
+	int has_routes = 0;
+
 	mpc_lowcomm_peer_uid_t current_route_uid = 0;
+
+	pthread_mutex_lock(&monitor->client_lock);
 
 	MPC_HT_ITER(&monitor->client_contexts, ctx)
 	{
+		//mpc_common_debug_error("CTX == %p", ctx);
 		if(!ctx)
 		{
 			continue;
 		}
+
+		has_routes = 1;
 
 		if(mpc_lowcomm_peer_closer(dest, current_route_uid, ctx->uid) )
 		{
@@ -1092,17 +1272,18 @@ static inline _mpc_lowcomm_client_ctx_t *__get_closest_in_set(struct _mpc_lowcom
 	}
 	MPC_HT_ITER_END
 
+	pthread_mutex_unlock(&monitor->client_lock);
+
 	if(ellected_ctx != NULL)
 	{
 		*retcode = MPC_LAUNCH_MONITOR_RET_SUCCESS;
 		/* We found a set member to route to */
-		mpc_common_debug_warning("ROUTE to %u through %u", dest, ctx->uid);
 		return ctx;
 	}
 
 	/* Here we did not find a route if we are the root process we do direct. If not we do route to the root process */
 	//if(mpc_lowcomm_peer_get_rank(monitor->process_uid) == 0)
-	if(1)
+	if((mpc_lowcomm_peer_get_rank(mpc_lowcomm_monitor_get_uid()) == 0) || (!has_routes))
 	{
 		/* If we are here we need to connect directly to the set master as
 		* we did not find any set member in our viscinity */
@@ -1158,7 +1339,7 @@ static inline _mpc_lowcomm_client_ctx_t *__route_client(struct _mpc_lowcomm_moni
 	
 	if(ret)
 	{
-		mpc_common_debug_warning("ROUTE [%lu through %lu]", mpc_lowcomm_monitor_get_uid(), ret->uid);
+		mpc_common_debug_warning("ROUTE [%lu to %lu through %lu]", mpc_lowcomm_monitor_get_uid(), client_uid, ret->uid);
 	}
 
 	return ret;
@@ -1350,8 +1531,15 @@ int mpc_lowcomm_monitor_response_free(mpc_lowcomm_monitor_response_t response)
 
 int _mpc_lowcomm_monitor_command_send(_mpc_lowcomm_monitor_wrap_t *cmd, mpc_lowcomm_monitor_retcode_t *ret)
 {
-	mpc_common_debug_warning("Command from (%u, %u) %llu to (%u, %u) %llu", mpc_lowcomm_peer_get_set(cmd->from),
-	                         mpc_lowcomm_peer_get_rank(cmd->from), cmd->from, mpc_lowcomm_peer_get_set(cmd->dest), mpc_lowcomm_peer_get_rank(cmd->dest), cmd->dest );
+	_mpc_lowcomm_monitor_wrap_print(cmd, "SENDING");
+
+	cmd->ttl--;
+
+	if(cmd->ttl < 0)
+	{
+		mpc_common_debug_error("Message's TTL reached 0 there probably was a routing problem");
+		return 1;
+	}
 
 	/* First of all get the peer */
 	_mpc_lowcomm_client_ctx_t *peer_info = _mpc_lowcomm_monitor_get_client(&__monitor,
@@ -1363,22 +1551,12 @@ int _mpc_lowcomm_monitor_command_send(_mpc_lowcomm_monitor_wrap_t *cmd, mpc_lowc
 	{
 		return -1;
 	}
-
-	cmd->ttl--;
-
-	if(cmd->ttl == 0)
+	else
 	{
-		mpc_common_debug_error("Message's TTL reached 0 there probably was a routing problem");
-		mpc_common_debug_error("FROM %d TO %d", cmd->dest);
+		mpc_common_debug_warning("SENDING through %s", mpc_lowcomm_peer_format(peer_info->uid));
 	}
 
-		mpc_common_debug_error("WRITING to == %llu", peer_info->uid);
-
-
-	if(_mpc_lowcomm_monitor_wrap_send(peer_info->client_fd, cmd) < 0)
-	{
-		return -1;
-	}
+	_mpc_lowcomm_client_ctx_send(peer_info, cmd);
 
 	return 0;
 }
@@ -1684,12 +1862,9 @@ mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_ondemand(mpc_lowcomm_peer_uid
 		return NULL;
 	}
 
-	mpc_common_debug_error("BEFORE RESP (%ld)", cmd->match_key);
 
 	_mpc_lowcomm_monitor_wrap_t *resp = _mpc_lowcomm_monitor_command_engine_await_response(cmd->match_key,
-	                                                                                       60);
-
-	mpc_common_debug_error("AFTER RESP (%ld)", cmd->match_key);
+	                                                                                       10);
 
 
 	if(!resp)
@@ -1728,8 +1903,6 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_process_ondemand(mpc_l
 			resp->content->on_demand.retcode = MPC_LAUNCH_MONITOR_RET_SUCCESS;
 		}
 	}
-
-	mpc_common_debug_error("SENDING RESP MATCH %lu", response_index);
 
 	return resp;
 }

@@ -105,7 +105,7 @@
 #define mpc_common_min( a, b ) ( ( a ) < ( b ) ? ( a ) : ( b ) )
 
 
-#define mpc_common_abs(a) ((a < 0)?(-a):(a) )
+#define mpc_common_abs(a) (((a) < 0)?(-(a)):(a) )
 
 /*********************
  * HASHING FUNCTIONS *

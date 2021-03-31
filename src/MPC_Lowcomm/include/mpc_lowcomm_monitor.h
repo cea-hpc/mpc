@@ -49,6 +49,9 @@ static inline mpc_lowcomm_peer_uid_t mpc_lowcomm_monitor_uid_of(uint32_t set_uid
 	return ret;
 }
 
+char * mpc_lowcomm_peer_format_r(mpc_lowcomm_peer_uid_t uid, char * buff, int len);
+char * mpc_lowcomm_peer_format(mpc_lowcomm_peer_uid_t uid);
+
 mpc_lowcomm_peer_uid_t mpc_lowcomm_monitor_get_uid();
 mpc_lowcomm_set_uid_t mpc_lowcomm_monitor_get_gid();
 

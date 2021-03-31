@@ -26,7 +26,7 @@ typedef struct _mpc_lowcomm_monitor_wrap_s
 	uint64_t                      size;
 	uint64_t                      match_key;
 	uint64_t                      magick;
-	uint64_t                      ttl;
+	int                           ttl;
 	mpc_lowcomm_monitor_args_t    content[];
 }_mpc_lowcomm_monitor_wrap_t;
 
@@ -44,6 +44,8 @@ static inline size_t _mpc_lowcomm_monitor_wrap_total_size(_mpc_lowcomm_monitor_w
 }
 
 int _mpc_lowcomm_monitor_wrap_free(_mpc_lowcomm_monitor_wrap_t *wr);
+char * _mpc_lowcomm_monitor_wrap_debug(_mpc_lowcomm_monitor_wrap_t * wrap, char *state, char * buffer, int len);
+void _mpc_lowcomm_monitor_wrap_print(_mpc_lowcomm_monitor_wrap_t * cmd, char *state);
 int _mpc_lowcomm_monitor_wrap_send(int socket, _mpc_lowcomm_monitor_wrap_t *wr);
 _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_recv(int socket);
 

@@ -35,9 +35,37 @@ int _mpc_lowcomm_monitor_wrap_free(_mpc_lowcomm_monitor_wrap_t *wr)
 	return 0;
 }
 
+char * _mpc_lowcomm_monitor_wrap_debug(_mpc_lowcomm_monitor_wrap_t * cmd, char *state, char * buffer, int len)
+{
+	mpc_common_debug_error("CMD == %p", cmd);
+	char meb[32], fromb[32], tob[32];
+	snprintf(buffer, len,"%s [%s] COMMAND TTL %d from %s to %s",mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), meb, 32),
+																				state,
+																				cmd->ttl,
+																				mpc_lowcomm_peer_format_r(cmd->from, fromb, 32),
+																				mpc_lowcomm_peer_format_r(cmd->dest, tob, 32) );
+
+	return buffer;
+}
+
+void _mpc_lowcomm_monitor_wrap_print(_mpc_lowcomm_monitor_wrap_t * cmd, char *state)
+{
+	char buff[128];
+	mpc_common_debug_warning("%s", _mpc_lowcomm_monitor_wrap_debug(cmd, state, buff, 128));
+}
+
 int _mpc_lowcomm_monitor_wrap_send(int socket, _mpc_lowcomm_monitor_wrap_t *wr)
 {
-	return mpc_common_io_safe_write(socket, wr, _mpc_lowcomm_monitor_wrap_total_size(wr) );
+	ssize_t ret = mpc_common_io_safe_write(socket, wr, _mpc_lowcomm_monitor_wrap_total_size(wr) );
+
+	if(ret < 0)
+	{
+		return -1;
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_recv(int socket)

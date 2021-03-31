@@ -389,8 +389,6 @@ void tcp_on_demand_connection_handler(sctk_rail_info_t *rail, mpc_lowcomm_peer_u
 {
 	_mpc_lowcomm_endpoint_t *rout = sctk_rail_get_any_route_to_process (  rail, dest_process );
 
-	mpc_common_debug_error("ROUTE is %p", rout);
-
 	//__sctk_network_connection_from_tcp(mpc_common_get_process_rank(), dest_process, rail, _MPC_LOWCOMM_ENDPOINT_DYNAMIC);
 	char my_net_name[128];
 
@@ -426,8 +424,6 @@ static int __tcp_on_demand_callback(mpc_lowcomm_peer_uid_t from,
 		return 1;
 	}
 
-
-	mpc_common_debug_error("ADDED ROUTE %lu => %lu", mpc_lowcomm_monitor_get_uid(), from);
 	__add_route( from, new_socket, rail, _MPC_LOWCOMM_ENDPOINT_DYNAMIC);
 
 	return 0;
@@ -464,7 +460,6 @@ void * __accept_loop(void *prail)
 			continue;
 		}
 
-		mpc_common_debug_error("ACCEPT ROUTE %lu => %lu", mpc_lowcomm_monitor_get_uid(), remote_uid);
 		__add_route(remote_uid, new_socket, rail,_MPC_LOWCOMM_ENDPOINT_DYNAMIC);
 	}
 
