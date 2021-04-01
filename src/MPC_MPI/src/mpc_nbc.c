@@ -9641,7 +9641,7 @@ static inline int NBC_Start_round_persistent( NBC_Handle *handle )
 
 static inline int NBC_Initialize()
 {
-  if(sctk_runtime_config_get()->modules.nbc.use_progress_thread == 1)
+  if(_mpc_mpi_config()->nbc.progress_thread == 1)
   { 
   struct mpc_mpi_cl_per_mpi_process_ctx_s * task_specific;
   task_specific = mpc_cl_per_mpi_process_ctx_get ();

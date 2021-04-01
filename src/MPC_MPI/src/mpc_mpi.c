@@ -19202,89 +19202,18 @@ int PMPI_Ineighbor_allgather(__UNUSED__ const void *sendbuf, __UNUSED__ int send
 	not_implemented(); return MPI_ERR_INTERN;
 }
 
-/* Persistent Collectives */
-
-int PMPI_Alltoall_init(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ int recvcount, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Info info, __UNUSED__ MPI_Request *request)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
-int PMPI_Exscan_init(__UNUSED__ const void *sendbuf, __UNUSED__ void *recvbuf, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Info info, __UNUSED__ MPI_Request *request)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
-int PMPI_Allgather_init(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ int recvcount, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Info info, __UNUSED__ MPI_Request *request)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
-int PMPI_Allgatherv_init(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ const int recvcounts[], __UNUSED__ const int displs[], __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Info info, __UNUSED__ MPI_Request *request)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
-int PMPI_Gather_init(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ int recvcount, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Info info, __UNUSED__ MPI_Request *request)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
-int PMPI_Bcast_init(__UNUSED__ void *buffer, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Info info, __UNUSED__ MPI_Request *request)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
-int PMPI_Allreduce_init(__UNUSED__ const void *sendbuf, __UNUSED__ void *recvbuf, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Info info, __UNUSED__ MPI_Request *request)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
 int PMPI_Barrier_init(__UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Info info, __UNUSED__ MPI_Request *request)
 {
 	not_implemented(); return MPI_ERR_INTERN;
 }
 
-int PMPI_Alltoallv_init(__UNUSED__ const void *sendbuf, __UNUSED__ const int sendcounts[], __UNUSED__ const int sdispls[], __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ const int recvcounts[], __UNUSED__ const int rdispls[], __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Info info, __UNUSED__ MPI_Request *request)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
-int PMPI_Alltoallw_init(__UNUSED__ const void *sendbuf, __UNUSED__ const int sendcounts[], __UNUSED__ const int sdispls[], __UNUSED__ const __UNUSED__ MPI_Datatype sendtypes[], __UNUSED__ void *recvbuf, __UNUSED__ const int recvcounts[], __UNUSED__ const int rdispls[], __UNUSED__ const __UNUSED__ MPI_Datatype recvtypes[], __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Info info, __UNUSED__ MPI_Request *request)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
-int PMPI_Gatherv_init(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ const int recvcounts[], __UNUSED__ const int displs[], __UNUSED__ MPI_Datatype recvtype, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Info info, __UNUSED__ MPI_Request *request)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
-int PMPI_Scan_init(__UNUSED__ const void *sendbuf, __UNUSED__ void *recvbuf, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Info info, __UNUSED__ MPI_Request *request)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
-int PMPI_Reduce_scatter_block_init(__UNUSED__ const void *sendbuf, __UNUSED__ void *recvbuf, __UNUSED__ int recvcount, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Info info, __UNUSED__ MPI_Request *request)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
 
 int PMPI_Neighbor_alltoallv_init(__UNUSED__ const void *sendbuf, __UNUSED__ const int sendcounts[], __UNUSED__ const int sdispls[], __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ const int recvcounts[], __UNUSED__ const int rdispls[], __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Info info, __UNUSED__ MPI_Request *request)
 {
 	not_implemented(); return MPI_ERR_INTERN;
 }
 
-int PMPI_Scatter_init(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ int recvcount, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Info info, __UNUSED__ MPI_Request *request)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
 int PMPI_Neighbor_alltoallw_init(__UNUSED__ const void *sendbuf, __UNUSED__ const int sendcounts[], __UNUSED__ const MPI_Aint sdispls[], __UNUSED__ const __UNUSED__ MPI_Datatype sendtypes[], __UNUSED__ void *recvbuf, __UNUSED__ const int recvcounts[], __UNUSED__ const MPI_Aint rdispls[], __UNUSED__ const __UNUSED__ MPI_Datatype recvtypes[], __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Info info, __UNUSED__ MPI_Request *request)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
-int PMPI_Scatterv_init(__UNUSED__ const void *sendbuf, __UNUSED__ const int sendcounts[], __UNUSED__ const int displs[], __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ int recvcount, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Info info, __UNUSED__ MPI_Request *request)
 {
 	not_implemented(); return MPI_ERR_INTERN;
 }
@@ -19295,16 +19224,6 @@ int PMPI_Neighbor_alltoall_init(__UNUSED__ const void *sendbuf, __UNUSED__ int s
 }
 
 int PMPI_Neighbor_allgather_init(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ int recvcount, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Info info, __UNUSED__ MPI_Request *request)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
-int PMPI_Reduce_scatter_init(__UNUSED__ const void *sendbuf, __UNUSED__ void *recvbuf, __UNUSED__ const int recvcounts[], __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Info info, __UNUSED__ MPI_Request *request)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
-int PMPI_Reduce_init(__UNUSED__ const void *sendbuf, __UNUSED__ void *recvbuf, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Info info, __UNUSED__ MPI_Request *request)
 {
 	not_implemented(); return MPI_ERR_INTERN;
 }
