@@ -43,9 +43,6 @@ int _mpc_lowcomm_client_ctx_release(_mpc_lowcomm_client_ctx_t **client);
 
 int _mpc_lowcomm_client_ctx_send(_mpc_lowcomm_client_ctx_t * ctx, _mpc_lowcomm_monitor_wrap_t * wrap);
 
-
-#define _MPC_LOWCOMM_MONITOR_MAX_CLIENTS_    16
-
 struct _mpc_lowcomm_monitor_s
 {
 	/* Client context list to handle per UID monitor sockets */
@@ -144,6 +141,13 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_peer_info(mpc_l
 
 _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_ping_info(mpc_lowcomm_peer_uid_t dest,
                                                                            uint64_t response_index);
+
+/****************
+ * CONNECTIVITY *
+ ****************/
+
+_mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_connectivity_info(mpc_lowcomm_peer_uid_t dest,
+                                                                                   uint64_t response_index);
 
 /***********************
  * ON DEMAND CALLBACKS *

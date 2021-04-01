@@ -27,6 +27,8 @@ void mpc_lowcomm_monitor_retcode_print(mpc_lowcomm_monitor_retcode_t code, const
 typedef uint32_t   mpc_lowcomm_set_uid_t;
 typedef uint64_t   mpc_lowcomm_peer_uid_t;
 
+mpc_lowcomm_peer_uid_t mpc_lowcomm_monitor_get_uid();
+mpc_lowcomm_set_uid_t mpc_lowcomm_monitor_get_gid();
 
 static inline mpc_lowcomm_set_uid_t mpc_lowcomm_peer_get_set(mpc_lowcomm_peer_uid_t uid)
 {
@@ -49,21 +51,42 @@ static inline mpc_lowcomm_peer_uid_t mpc_lowcomm_monitor_uid_of(uint32_t set_uid
 	return ret;
 }
 
-char * mpc_lowcomm_peer_format_r(mpc_lowcomm_peer_uid_t uid, char * buff, int len);
-char * mpc_lowcomm_peer_format(mpc_lowcomm_peer_uid_t uid);
-
-mpc_lowcomm_peer_uid_t mpc_lowcomm_monitor_get_uid();
-mpc_lowcomm_set_uid_t mpc_lowcomm_monitor_get_gid();
-
 static inline mpc_lowcomm_peer_uid_t mpc_lowcomm_monitor_local_uid_of(int peer_rank)
 {
 	return mpc_lowcomm_monitor_uid_of(mpc_lowcomm_monitor_get_gid(), peer_rank);
 }
 
+/******************
+ * PEER FUNCTIONS *
+ ******************/
+
+char * mpc_lowcomm_peer_format_r(mpc_lowcomm_peer_uid_t uid, char * buff, int len);
+char * mpc_lowcomm_peer_format(mpc_lowcomm_peer_uid_t uid);
 int mpc_lowcomm_peer_closer(mpc_lowcomm_peer_uid_t dest, mpc_lowcomm_peer_uid_t current, mpc_lowcomm_peer_uid_t candidate);
-
-
 int mpc_lowcomm_monitor_peer_reachable_directly(mpc_lowcomm_peer_uid_t target_peer);
+
+/*****************
+ * SET INTERFACE *
+ *****************/
+
+typedef void * mpc_lowcomm_monitor_set_t;
+
+int mpc_lowcomm_monitor_set_iterate(int (*callback)(mpc_lowcomm_monitor_set_t set, void * arg), void * arg);
+
+char * mpc_lowcomm_monitor_set_name(mpc_lowcomm_monitor_set_t set);
+mpc_lowcomm_set_uid_t mpc_lowcomm_monitor_set_gid(mpc_lowcomm_monitor_set_t set);
+
+#define MPC_LOWCOMM_PEER_URI_SIZE     256
+
+typedef struct mpc_lowcomm_monitor_peer_info_s
+{
+	mpc_lowcomm_peer_uid_t uid;
+	uint64_t               local_task_count;
+	char                   uri[MPC_LOWCOMM_PEER_URI_SIZE];
+}mpc_lowcomm_monitor_peer_info_t;
+
+uint64_t mpc_lowcomm_monitor_set_peer_count(mpc_lowcomm_monitor_set_t set);
+int mpc_lowcomm_monitor_set_peers(mpc_lowcomm_monitor_set_t set, mpc_lowcomm_monitor_peer_info_t * peers, uint64_t peers_len);
 
 /************
 * COMMANDS *
@@ -75,25 +98,18 @@ typedef enum
 	MPC_LAUNCH_MONITOR_COMMAND_REQUEST_PEER_INFO,
 	MPC_LAUNCH_MONITOR_COMMAND_REQUEST_SET_INFO,
 	MPC_LAUNCH_MONITOR_PING,
-	MPC_LAUNCH_MONITOR_ON_DEMAND
+	MPC_LAUNCH_MONITOR_ON_DEMAND,
+	MPC_LAUNCH_MONITOR_CONNECTIVITY
 }mpc_lowcomm_monitor_command_t;
+
+const char * mpc_lowcomm_monitor_command_tostring(mpc_lowcomm_monitor_command_t cmd);
 
 #define MPC_LAUNCH_MONITOR_KEY_LEN    128
 #define MPC_LOWCOMM_SET_NAME_LEN      256
-#define MPC_LOWCOMM_PEER_URI_SIZE     256
 #define MPC_LOWCOMM_ONDEMAND_TARGET_LEN 32
 #define MPC_LOWCOMM_ONDEMAND_DATA_LEN MPC_LOWCOMM_PEER_URI_SIZE
+#define MPC_LOWCOMM_MONITOR_MAX_CLIENTS    16
 
-
-
-typedef struct mpc_lowcomm_monitor_peer_info_s
-{
-	mpc_lowcomm_peer_uid_t uid;
-	uint64_t               local_task_count;
-	char                   uri[MPC_LOWCOMM_PEER_URI_SIZE];
-}mpc_lowcomm_monitor_peer_info_t;
-
-	
 typedef union
 {
 	struct
@@ -126,24 +142,40 @@ typedef union
 		mpc_lowcomm_monitor_retcode_t retcode;
 	}on_demand;
 
+	struct
+	{
+		mpc_lowcomm_peer_uid_t peers[MPC_LOWCOMM_MONITOR_MAX_CLIENTS];
+		uint64_t peers_count;
+	}connectivity;
+
 }mpc_lowcomm_monitor_args_t;
 
 typedef void *mpc_lowcomm_monitor_response_t;
 
+mpc_lowcomm_monitor_args_t *mpc_lowcomm_monitor_response_get_content(mpc_lowcomm_monitor_response_t response);
+
+int mpc_lowcomm_monitor_response_free(mpc_lowcomm_monitor_response_t response);
+
+/****************
+ * GET SET INFO *
+ ****************/
 
 mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_get_set_info(mpc_lowcomm_peer_uid_t target_peer,
                                                                 mpc_lowcomm_monitor_retcode_t *ret);
+
+/*****************
+ * GET PEER INFO *
+ *****************/
 
 mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_command_get_peer_info(mpc_lowcomm_peer_uid_t dest,
                                                                          mpc_lowcomm_peer_uid_t requested_peer,
                                                                          mpc_lowcomm_monitor_retcode_t *ret);
 
+/***************
+ * PING REMOTE *
+ ***************/
 
 mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_ping(mpc_lowcomm_peer_uid_t dest, mpc_lowcomm_monitor_retcode_t *ret);
-
-mpc_lowcomm_monitor_args_t *mpc_lowcomm_monitor_response_get_content(mpc_lowcomm_monitor_response_t response);
-
-int mpc_lowcomm_monitor_response_free(mpc_lowcomm_monitor_response_t response);
 
 /*********************
  * ON DEMAND SUPPORT *
@@ -168,5 +200,12 @@ mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_ondemand(mpc_lowcomm_peer_uid
 															char *data,
 															mpc_lowcomm_monitor_retcode_t *ret);
 
+/*************************
+ * GET CONNECTIVITY INFO *
+ *************************/
+
+mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_connectivity(mpc_lowcomm_peer_uid_t dest, mpc_lowcomm_monitor_retcode_t *ret);
+
+void mpc_lowcomm_monitor_synchronous_connectivity_dump(void);
 
 #endif /* MPC_LAUNCH_MONITOR_H_ */

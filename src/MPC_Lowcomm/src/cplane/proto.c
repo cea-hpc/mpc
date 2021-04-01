@@ -39,9 +39,9 @@ char * _mpc_lowcomm_monitor_wrap_debug(_mpc_lowcomm_monitor_wrap_t * cmd, char *
 {
 	mpc_common_debug_error("CMD == %p", cmd);
 	char meb[32], fromb[32], tob[32];
-	snprintf(buffer, len,"%s [%s] COMMAND TTL %d from %s to %s",mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), meb, 32),
+	snprintf(buffer, len,"%s [%s] COMMAND %s from %s to %s",mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), meb, 32),
 																				state,
-																				cmd->ttl,
+																				mpc_lowcomm_monitor_command_tostring(cmd->command),
 																				mpc_lowcomm_peer_format_r(cmd->from, fromb, 32),
 																				mpc_lowcomm_peer_format_r(cmd->dest, tob, 32) );
 

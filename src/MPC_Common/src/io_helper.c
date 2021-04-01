@@ -36,6 +36,8 @@
 #include <ifaddrs.h>
 #include <sctk_alloc.h>
 
+#include <sctk_alloc.h>
+
 /********************************** GLOBALS *********************************/
 
 static inline int _mpc_io_all_digits( char *str )
@@ -352,6 +354,7 @@ size_t mpc_common_helper_memory_in_use( void )
 {
 	return 0;
 }
+
 #endif
 /**************************************
  * GETADDRINFO WITH DEVICE PREFERENCE *
@@ -513,6 +516,9 @@ int mpc_common_getaddrinfo(const char *node, const char *service,
     /* First check if there is an exact match */
 
     int did_match_exactly = 0;
+	{
+		ret[i] = NULL;
+	}
 
     int i;
 
@@ -530,7 +536,7 @@ int mpc_common_getaddrinfo(const char *node, const char *service,
             }
         }
     }
-
+		
     /* Did we match exactly if not try to match partially */
     if(!did_match_exactly && 0)
     {
@@ -549,6 +555,11 @@ int mpc_common_getaddrinfo(const char *node, const char *service,
                     __addr_info_swap(&reorder_buff[i], &reorder_buff[cnt]);
                     cnt++;
                 }
+		else if(ret[cnt] == NULL)
+		{
+			ret[cnt] = &buff[i];
+		}
+
             }
         }
     }

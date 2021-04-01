@@ -229,6 +229,14 @@ static inline int sctk_safe_cast_long_int(long l)
 #define sctk_safe_cast_long_int(l)    l
 #endif
 
+/**********************
+ * CMD LINE ARGUMENTS *
+ **********************/
+
+char * mpc_common_helper_command_line_pretty(int json, char * buff, int len);
+char ** mpc_common_helper_command_line(void);
+void mpc_common_helper_command_line_free(char **cmd);
+
 
 /**********************
  * NETWORKING HELPERS *
