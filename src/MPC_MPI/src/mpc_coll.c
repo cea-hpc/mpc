@@ -38,11 +38,9 @@
 #define SCTK_MPI_CHECK_RETURN_VAL(res,comm)do{if(res == MPI_SUCCESS){return res;} else {MPI_ERROR_REPORT(comm,res,"Generic error retrun");}}while(0)
 
 //  TODO:
-//    support MPI_IN_PLACE:
-//      reduce_scatter_block_pairwise
-//      allgather_distance_doubling
 //    error hanfling
 //    config handling
+//    add reduce_scatter(_block)_Allgather(v) algorithm, may be faster than reduce then scatter
 
 
 
@@ -873,8 +871,10 @@ static inline int __INTERNAL__Bcast_binomial(void *buffer, int count, MPI_Dataty
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
 
+  // Get max number of steps
   int maxr, vrank, peer;
   maxr = (int)ceil((log(size)/LOG2));
+  // Get virtual rank for processes by swappping rank 0 & root
   RANK2VRANK(rank, vrank, root);
   int rmb = rmb_index(vrank);
   if(rank == root) {
@@ -1299,13 +1299,15 @@ static inline int __INTERNAL__Reduce_binomial(const void *sendbuf, void* recvbuf
   int can_commute = sctk_op_can_commute(mpi_op, datatype);
   int first_access = 1;
 
+  // We cant use virtual rank if the operation isn't commutative
+  // As RANK2VRANK swap rank 0 & rank root, vroot prevent the switch if necessary
   int vrank, vroot, peer, maxr;
-  
   vroot = root;
   if(!can_commute) {
     vroot = 0;
   }
-  
+
+  // Get virtual rank for processes by swappping rank 0 & vroot
   RANK2VRANK(rank, vrank, vroot);
   
   maxr = (int)ceil((log(size)/LOG2));
@@ -1335,7 +1337,6 @@ static inline int __INTERNAL__Reduce_binomial(const void *sendbuf, void* recvbuf
   }
 
   for(int i = 0; i < maxr; i++) {
-    // 
     if(vrank & (1 << i)) {
       VRANK2RANK(peer, vrank ^ (1 << i), vroot);
      
@@ -1356,7 +1357,9 @@ static inline int __INTERNAL__Reduce_binomial(const void *sendbuf, void* recvbuf
         tmp_sendbuf = tmpbuf + ext * count;
         first_access = 0;
       }
-
+      
+      // As we receive data from higher rank & the Operation put the result in the right input
+      // We must swap the send & recv pointers to respect commutativity
       pointer_swap(tmp_sendbuf, tmp_recvbuf, swap);
     }
   }
@@ -1371,6 +1374,7 @@ static inline int __INTERNAL__Reduce_binomial(const void *sendbuf, void* recvbuf
       }
     }
   } else if (rank == root){
+    // Root already have the result, just copy it in revcbuf
     __INTERNAL__Copy_type(tmp_sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
   }
 
@@ -1782,6 +1786,7 @@ static inline int __INTERNAL__Allreduce_distance_doubling(const void *sendbuf, v
         peer = peer + group / 2;
       }
 
+      // Prevent deadlock
       if(peer > rank) {
         __INTERNAL__Send_type(tmp_sendbuf, count, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
         __INTERNAL__Recv_type(tmp_recvbuf, count, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
@@ -1791,6 +1796,9 @@ static inline int __INTERNAL__Allreduce_distance_doubling(const void *sendbuf, v
       }
       __INTERNAL__Barrier_type(coll_type, schedule, info);
 
+      // To respect commutativity, we must choose the right order for the Reduction operation
+      // if we received from a lower rank: tmp_recvbuf OP tmp_sendbuf
+      // if we received from a higher rank: tmp_sendbuf OP tmp_recvbuf
       if(vrank & (1 << i)) {
         __INTERNAL__Op_type(NULL, tmp_recvbuf, tmp_sendbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
       } else {
@@ -2322,6 +2330,7 @@ static inline int __INTERNAL__Scatter_binomial(const void *sendbuf, int sendcoun
   }
 
   // Distribute data to rank+2^(rmb-1); ...; rank+2^0
+  // See __INTERNAL__Bcast_binomial
   for(int i = rmb - 1; i >= 0; i--) {
     peer_vrank = vrank | (1 << i);
 
@@ -2330,7 +2339,18 @@ static inline int __INTERNAL__Scatter_binomial(const void *sendbuf, int sendcoun
       continue;
     }
 
+    // In case the total number of processes isn't a power of 2 we need to compute the correct size of data to send
+    // The range of a process is the higher rank to which this process may send data, regardless of the number of processes
     peer_range = fill_rmb(peer_vrank, i);
+    // Trivial case, we are a power of 2 OR we are sending data to a process in the middle (peer + peer_range < size)
+    // EX: 0[d0 d1 d2 d3] 1 2 3, first step, i = 1, size = 4, rank 0 send to rank 2, range(2) = 3
+    // => count = 2^i * recvcount = 2
+    // => 0[d0 d1] 1 2[d2 d3] 3
+    
+    // other case, we are not power of 2 AND we are sending to a process at the end (peer + peer_range >= size)
+    // EX: 0[d0 d1 d2] 1 2, first step, i = 1, size = 3, rank 0 send to rank 2, range(2) = 3
+    // => count = (size - range) * recvcount = 1
+    // => 0[d0 d1] 1 2[d2]
     if(peer_range < size) {
       count = (1 << i) * tmp_recvcount;
     } else {
@@ -2677,12 +2697,14 @@ static inline int __INTERNAL__Scatterv_linear(const void *sendbuf, const int *se
   }
 
 
+  // if rank != root, receive data from root
   if(rank != root) {
     res = __INTERNAL__Recv_type(recvbuf, recvcount, recvtype, root, MPC_SCATTER_TAG, comm, coll_type, schedule, info);
     if(res != MPI_SUCCESS) {
       return res;
     }
   } else {
+    // if rank == root, send data to each process
     for(int i = 0; i < size; i++) {
       if(i == rank) {
         continue;
@@ -3036,12 +3058,14 @@ static inline int __INTERNAL__Gather_linear(const void *sendbuf, int sendcount, 
   }
 
 
+  // if rank != root, send data to root
   if(rank != root) {
     res = __INTERNAL__Send_type(sendbuf, sendcount, sendtype, root, MPC_GATHER_TAG, comm, coll_type, schedule, info);
     if(res != MPI_SUCCESS) {
       return res;
     }
   } else {
+    // if rank == root, receive data from each process
     for(int i = 0; i < size; i++) {
       if(i == rank) {
         continue;
@@ -3125,7 +3149,8 @@ static inline int __INTERNAL__Gather_binomial(const void *sendbuf, int sendcount
 
   __INTERNAL__Copy_type(tmp_sendbuf, tmp_sendcount, tmp_sendtype, tmpbuf, tmp_sendcount, tmp_sendtype, comm, coll_type, schedule, info);
 
-
+  // Receive data from rank+2^(rmb-1); ...; rank+2^0
+  // See __INTERNAL__Reduce_binomial
   for(int i = 0; i < maxr; i++) {
     peer_vrank = vrank ^ (1 << i);
     VRANK2RANK(peer, peer_vrank, root);
@@ -3144,7 +3169,18 @@ static inline int __INTERNAL__Gather_binomial(const void *sendbuf, int sendcount
       break;
     } else if(peer < size) {
       
+      // In case the total number of processes isn't a power of 2 we need to compute the correct size of data to recv
+      // The range of a process is the higher rank from which this process may recv data, regardless of the number of processes
       peer_range = fill_rmb(peer_vrank, i);
+      // Trivial case, we are a power of 2 OR we are receiving data from a process in the middle (peer + peer_range < size)
+      // EX: 0[d0 d1] 1 2[d2 d3] 3, second step, i = 1, size = 4, rank 0 recv from rank 2, range(2) = 3
+      // => count = 2^i * recvcount = 2
+      // => 0[d0 d1 d2 d3] 1 2 3
+
+      // other case, we are not power of 2 AND we are receving from a process at the end (peer + peer_range >= size)
+      // EX: 0[d0 d1] 1 2[d2], second step, i = 1, size = 3, rank 0 recv from rank 2, range(2) = 3
+      // => count = (size - range) * recvcount = 1
+      // => 0[d0 d1 d2] 1 2
       if(peer_range < size) {
         count = (1 << i) * tmp_sendcount;
       } else {
@@ -3160,6 +3196,7 @@ static inline int __INTERNAL__Gather_binomial(const void *sendbuf, int sendcount
     
     __INTERNAL__Copy_type(tmpbuf, tmp_sendcount * size, tmp_sendtype, recvbuf, recvcount * size, recvtype, comm, coll_type, schedule, info);
     
+    // As we use virtual rank where rank root and rank 0 are swapped, we need to swap their data as well
     if(root != 0) {
       __INTERNAL__Copy_type(tmpbuf, tmp_sendcount, tmp_sendtype, recvbuf + root * recvcount * recvext, recvcount, recvtype, comm, coll_type, schedule, info);
       __INTERNAL__Copy_type(tmpbuf + root * tmp_sendcount * sendext, tmp_sendcount, tmp_sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
@@ -3488,12 +3525,14 @@ static inline int __INTERNAL__Gatherv_linear(const void *sendbuf, int sendcount,
   }
 
 
+  // if rank != root, send data to root
   if(rank != root) {
     res = __INTERNAL__Send_type(sendbuf, sendcount, sendtype, root, MPC_GATHER_TAG, comm, coll_type, schedule, info);
     if(res != MPI_SUCCESS) {
       return res;
     }
   } else {
+    // if rank == root, receive data from each process
     for(int i = 0; i < size; i++) {
       if(i == rank) {
         continue;
@@ -3760,7 +3799,7 @@ static inline int __INTERNAL__Reduce_scatter_block_switch(const void *sendbuf, v
     NBC_REDUCE_SCATTER_BLOCK_REDUCE_SCATTER,
     NBC_REDUCE_SCATTER_BLOCK_DISTANCE_DOUBLING, // difficile a mettre en place
     NBC_REDUCE_SCATTER_BLOCK_DISTANCE_HALVING, // necessite operateur commutatif & associatif
-    NBC_REDUCE_SCATTER_BLOCK_PAIRWISE // seulement en non bloquant
+    NBC_REDUCE_SCATTER_BLOCK_PAIRWISE // seulement en non bloquant & ne respecte pas l'associativité
   } alg;
 
   alg = NBC_REDUCE_SCATTER_BLOCK_REDUCE_SCATTER;
@@ -3945,30 +3984,33 @@ static inline int __INTERNAL__Reduce_scatter_block_pairwise(const void *sendbuf,
   tmp_left_resbuf = tmpbuf + ext * count;
   tmp_right_resbuf = tmpbuf + 2 * ext * count;
 
+  const void *initial_buf = sendbuf;
   if(sendbuf == MPI_IN_PLACE) {
-    __INTERNAL__Copy_type(recvbuf, count, datatype, tmp_left_resbuf, count, datatype, comm, coll_type, schedule, info);
-  } else {
-    __INTERNAL__Copy_type(sendbuf, count, datatype, tmp_left_resbuf, count, datatype, comm, coll_type, schedule, info);
+    initial_buf = recvbuf;
   }
 
+  __INTERNAL__Copy_type(initial_buf, count, datatype, tmp_left_resbuf, count, datatype, comm, coll_type, schedule, info);
 
   for(int i = 1; i < size; i++) {
+    // At each step receive from rank-i, & send to rank+i,
+    // This order is choosed to avoid swap buffer:
+    // tmp_recvbuf OP tmp_resbuf will put the result in tmp_resbuf
     send_peer = (rank + i) % size;
     recv_peer = (rank - i + size) % size;
     
-    __INTERNAL__Send_type(sendbuf + send_peer * ext * count, count, datatype, send_peer, MPC_REDUCE_SCATTER_BLOCK_TAG, comm, coll_type, schedule, info);
+    __INTERNAL__Send_type(initial_buf + send_peer * ext * count, count, datatype, send_peer, MPC_REDUCE_SCATTER_BLOCK_TAG, comm, coll_type, schedule, info);
     __INTERNAL__Recv_type(tmp_recvbuf, count, datatype, recv_peer, MPC_REDUCE_SCATTER_BLOCK_TAG, comm, coll_type, schedule, info);
 
     __INTERNAL__Barrier_type(coll_type, schedule, info);
-    
+   
+    // We reduce data from rank 0;...;rank in tmp_left_resbuf
     if(recv_peer < rank) { 
       __INTERNAL__Op_type(NULL, tmp_recvbuf, tmp_left_resbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
     } else {
+    // We reduce data from rank rank+1;...;size-1 in tmp_right_resbuf
+      // No reduce operation needed if we received from rank size-1
       if(first_access) {
-        swap = tmp_recvbuf;
-        tmp_recvbuf = tmp_right_resbuf;
-        tmp_right_resbuf = swap;
-
+        pointer_swap(tmp_recvbuf, tmp_right_resbuf, swap);
         first_access = 0;
       } else {
         __INTERNAL__Op_type(NULL, tmp_recvbuf, tmp_right_resbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
@@ -4692,11 +4734,21 @@ static inline int __INTERNAL__Allgather_gather_broadcast(const void *sendbuf, in
   */
 static inline int __INTERNAL__Allgather_distance_doubling(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
+  const void *initial_buf = sendbuf;
+  int tmp_sendcount = sendcount;
+  MPI_Datatype tmp_sendtype = sendtype;
+  if(sendbuf == MPI_IN_PLACE) {
+    initial_buf = recvbuf;
+    tmp_sendcount = recvcount;
+    tmp_sendtype = recvtype;
+  }
+
+
   int rank, size;
   MPI_Aint sendext, recvext;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
-  PMPI_Type_extent(sendtype, &sendext);
+  PMPI_Type_extent(tmp_sendtype, &sendext);
   PMPI_Type_extent(recvtype, &recvext);
 
   int vrank, vsize, peer, maxr, count = 0, peer_count = 0;
@@ -4734,7 +4786,7 @@ static inline int __INTERNAL__Allgather_distance_doubling(const void *sendbuf, i
   countbuf = (int*)tmpbuf2;
   prev_countbuf = (int*)countbuf + vsize;
 
-
+  // Initialyse the array containing the amount of data in possession of each processes
   if(coll_type != MPC_COLL_TYPE_COUNT) {
     for(int i = 0; i < vsize; i++) {
       if(i < group / 2) {
@@ -4745,12 +4797,14 @@ static inline int __INTERNAL__Allgather_distance_doubling(const void *sendbuf, i
     }
   }
 
-
+  // Reduce the number of rank participating ro the allgather to the nearest lower power of 2:
+  // all processes with odd rank and rank < 2 * (size - 2^(floor(log(size)/LOG2))) send their data to rank-1
+  // all processes with even rank and rank < 2 * (size - 2^(floor(log(size)/LOG2))) receive data from rank+1
   if(rank < group) {
     peer = rank ^ 1;
 
     if(rank & 1) {
-      __INTERNAL__Send_type(sendbuf, sendcount, sendtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
+      __INTERNAL__Send_type(initial_buf, tmp_sendcount, tmp_sendtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
     } else {
       __INTERNAL__Recv_type(recvbuf + peer * recvcount * recvext, recvcount, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
       __INTERNAL__Barrier_type(coll_type, schedule, info);
@@ -4759,8 +4813,11 @@ static inline int __INTERNAL__Allgather_distance_doubling(const void *sendbuf, i
   
   if(rank > group || !(rank & 1)) {
   
-    __INTERNAL__Copy_type(sendbuf, sendcount, sendtype, tmpbuf, recvcount, recvtype, comm, coll_type, schedule, info);
-    
+    if(sendbuf != MPI_IN_PLACE) {
+      __INTERNAL__Copy_type(sendbuf , sendcount, sendtype, tmpbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+    }
+
+    // at each step, processes exchange their data with (rank XOR 2^i)
     for(int i = 0; i < maxr; i++) {
       peer = vrank ^ (1 << i);
 
@@ -4775,7 +4832,7 @@ static inline int __INTERNAL__Allgather_distance_doubling(const void *sendbuf, i
         peer = peer + group / 2;
       }
 
-
+      // To avoid deadlocks
       if(peer < rank) {
         __INTERNAL__Send_type(tmpbuf, count * recvcount, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
         __INTERNAL__Recv_type(tmpbuf - peer_count * recvcount * recvext, peer_count * recvcount, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
@@ -4788,6 +4845,9 @@ static inline int __INTERNAL__Allgather_distance_doubling(const void *sendbuf, i
 
       __INTERNAL__Barrier_type(coll_type, schedule, info);
 
+      // Update of the array containing the amount of data in possession of each processes
+      // Could be replace by a formula to find the amound of data we need to receive from a specific process,
+      // but i didnt find it
       if(coll_type != MPC_COLL_TYPE_COUNT) {
         pointer_swap(countbuf, prev_countbuf, swap);
         for(int j = 0; j < vsize; j++) {
@@ -4798,8 +4858,7 @@ static inline int __INTERNAL__Allgather_distance_doubling(const void *sendbuf, i
     }
   }
 
-
-
+  // As some processes didnt participate, exchange data with them
   if(rank < group) {
     peer = rank ^ 1;
 
@@ -4879,7 +4938,11 @@ static inline int __INTERNAL__Allgather_ring(const void *sendbuf, int sendcount,
     __INTERNAL__Copy_type(sendbuf, sendcount, sendtype, recvbuf + rank * recvcount * recvext, recvcount, recvtype, comm, coll_type, schedule, info);
   }
 
+  // At each step, send to rank+1, recv from rank-1
   for(int i = 0; i < size - 1; i++) {
+    // To prevent deadlocks even ranks send then recv, odd ranks recv then send
+    // When i=0 we send our own data
+    // At each step we send the data received at the previous step
     if(rank & 1) {
       __INTERNAL__Recv_type(recvbuf + ((rank - i - 1 + size) % size) * recvcount * recvext, recvcount, recvtype, (rank - 1 + size) % size, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
       __INTERNAL__Send_type(recvbuf + ((rank - i + size) % size) * recvcount * recvext, recvcount, recvtype, (rank + 1) % size, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
@@ -5594,18 +5657,20 @@ static inline int __INTERNAL__Alltoall_cluster(const void *sendbuf, int sendcoun
   }
 
   if(sendbuf == MPI_IN_PLACE) {
+    // Copy data to avoid erasing it by receiving other's data
     __INTERNAL__Copy_type(recvbuf, recvcount * size, recvtype, tmpbuf, recvcount * size, recvtype, comm, coll_type, schedule, info);
 
+    // For each rank, send and recv the data needed
     for(int i = 0; i < size; i++) {
       if(i == rank) {
         continue;
       }
-
       __INTERNAL__Send_type(tmpbuf  + i * recvcount * recvext, recvcount, recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
       __INTERNAL__Recv_type(recvbuf + i * recvcount * recvext, recvcount, recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
     }
 
   } else {
+    // For each rank, send and recv the data needed
     for(int i = 0; i < size; i++) {
       if(i == rank) {
         continue;
@@ -5614,7 +5679,7 @@ static inline int __INTERNAL__Alltoall_cluster(const void *sendbuf, int sendcoun
       __INTERNAL__Send_type(sendbuf + i * sendcount * sendext, sendcount, sendtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
       __INTERNAL__Recv_type(recvbuf + i * recvcount * recvext, recvcount, recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
     }
-
+    // Copy our own data in the recvbuf
     __INTERNAL__Copy_type(sendbuf + rank * sendcount * sendext, sendcount, sendtype, recvbuf + rank * recvcount * recvext, recvcount, recvtype, comm, coll_type, schedule, info);
 
   }
@@ -6014,8 +6079,10 @@ static inline int __INTERNAL__Alltoallv_cluster(const void *sendbuf, const int *
   }
 
   if(sendbuf == MPI_IN_PLACE) {
+    // Copy data to avoid erasing it by receiving other's data
     __INTERNAL__Copy_type(recvbuf, rsize, MPI_BYTE, tmpbuf, rsize, MPI_BYTE, comm, coll_type, schedule, info);
 
+    // For each rank, send and recv the data needed
     for(int i = 0; i < size; i++) {
       if(i == rank) {
         continue;
@@ -6026,6 +6093,7 @@ static inline int __INTERNAL__Alltoallv_cluster(const void *sendbuf, const int *
     }
 
   } else {
+    // For each rank, send and recv the data needed
     for(int i = 0; i < size; i++) {
       if(i == rank) {
         continue;
@@ -6034,7 +6102,7 @@ static inline int __INTERNAL__Alltoallv_cluster(const void *sendbuf, const int *
       __INTERNAL__Send_type(sendbuf + sdispls[i], sendcounts[i], sendtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
       __INTERNAL__Recv_type(recvbuf + rdispls[i], recvcounts[i], recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
     }
-
+    // Copy our own data in the recvbuf
     __INTERNAL__Copy_type(sendbuf + sdispls[rank], sendcounts[rank], sendtype, recvbuf + rdispls[rank], recvcounts[rank], recvtype, comm, coll_type, schedule, info);
 
   }
@@ -6437,8 +6505,10 @@ static inline int __INTERNAL__Alltoallw_cluster(const void *sendbuf, const int *
   }
 
   if(sendbuf == MPI_IN_PLACE) {
+    // Copy data to avoid erasing it by receiving other's data
     __INTERNAL__Copy_type(recvbuf, rsize, MPI_BYTE, tmpbuf, rsize, MPI_BYTE, comm, coll_type, schedule, info);
 
+    // For each rank, send and recv the data needed
     for(int i = 0; i < size; i++) {
       if(i == rank) {
         continue;
@@ -6449,6 +6519,7 @@ static inline int __INTERNAL__Alltoallw_cluster(const void *sendbuf, const int *
     }
 
   } else {
+    // For each rank, send and recv the data needed
     for(int i = 0; i < size; i++) {
       if(i == rank) {
         continue;
@@ -6457,7 +6528,7 @@ static inline int __INTERNAL__Alltoallw_cluster(const void *sendbuf, const int *
       __INTERNAL__Send_type(sendbuf + sdispls[i], sendcounts[i], sendtypes[i], i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
       __INTERNAL__Recv_type(recvbuf + rdispls[i], recvcounts[i], recvtypes[i], i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
     }
-
+    // Copy our own data in the recvbuf
     __INTERNAL__Copy_type(sendbuf + sdispls[rank], sendcounts[rank], sendtypes[rank], recvbuf + rdispls[rank], recvcounts[rank], recvtypes[rank], comm, coll_type, schedule, info);
 
   }
@@ -6810,32 +6881,21 @@ static inline int __INTERNAL__Scan_linear (const void *sendbuf, void *recvbuf, i
       break; 
   }
 
+  // Copy data to recvbuf
   if(sendbuf != MPI_IN_PLACE) {
     __INTERNAL__Copy_type(sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
   }
 
-  if(rank > 1) {
+  // recv & reduce data from rank-1
+  if(rank > 0) {
     __INTERNAL__Recv_type(tmpbuf, count, datatype, rank - 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
-  } else if(rank == 1) {
-    __INTERNAL__Recv_type(recvbuf, count, datatype, rank - 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
-  }
-
-  __INTERNAL__Barrier_type(coll_type, schedule, info);
-  
-  if(rank > 1) {
+    __INTERNAL__Barrier_type(coll_type, schedule, info);
     __INTERNAL__Op_type(NULL, tmpbuf, recvbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
   }
 
+  // send data to rank+1
   if(rank + 1 < size) {
-    if(rank == 0) {
-      if(sendbuf != MPI_IN_PLACE) {
-        __INTERNAL__Send_type(sendbuf, count, datatype, rank + 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
-      } else {
-        __INTERNAL__Send_type(recvbuf, count, datatype, rank + 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
-      }
-    } else {
-      __INTERNAL__Send_type(recvbuf, count, datatype, rank + 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
-    }
+    __INTERNAL__Send_type(recvbuf, count, datatype, rank + 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
   }
 
 
@@ -7206,34 +7266,34 @@ static inline int __INTERNAL__Exscan_linear (const void *sendbuf, void *recvbuf,
       break; 
   }
 
+  const void *initial_buf = sendbuf;
+  if(sendbuf == MPI_IN_PLACE) {
+    initial_buf = recvbuf;
+  }
+
   if(rank > 0) {
-    if(sendbuf != MPI_IN_PLACE) {
-      __INTERNAL__Copy_type(sendbuf, count, datatype, tmpbuf, count, datatype, comm, coll_type, schedule, info);
-    } else {
-      __INTERNAL__Copy_type(recvbuf, count, datatype, tmpbuf, count, datatype, comm, coll_type, schedule, info);
-    }
+    // Copy data in tmpbuf
+    __INTERNAL__Copy_type(initial_buf, count, datatype, tmpbuf, count, datatype, comm, coll_type, schedule, info);
   
+    // recv data from rank-1
     __INTERNAL__Recv_type(recvbuf, count, datatype, rank - 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
+
+    __INTERNAL__Barrier_type(coll_type, schedule, info);
+
+    // reduce data
+    if(rank > 1 && rank < size - 1) {
+      __INTERNAL__Op_type(NULL, recvbuf, tmpbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
+    }
   }
 
-  __INTERNAL__Barrier_type(coll_type, schedule, info);
-  
-  if(rank > 1 && rank < size - 1) {
-    __INTERNAL__Op_type(NULL, recvbuf, tmpbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
-  }
-
+  // send data to rank+1
   if(rank + 1 < size) {
     if(rank == 0) {
-      if(sendbuf != MPI_IN_PLACE) {
-        __INTERNAL__Send_type(sendbuf, count, datatype, rank + 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
-      } else {
-        __INTERNAL__Send_type(recvbuf, count, datatype, rank + 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
-      }
+      __INTERNAL__Send_type(initial_buf, count, datatype, rank + 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
     } else {
       __INTERNAL__Send_type(tmpbuf, count, datatype, rank + 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
     }
   }
-
 
   if(coll_type == MPC_COLL_TYPE_BLOCKING) {
     free(tmpbuf);
@@ -7296,12 +7356,13 @@ static inline int __INTERNAL__Exscan_allgather (const void *sendbuf, void *recvb
   __INTERNAL__Allgather_switch(buf, count, datatype, tmpbuf, count, datatype, comm, coll_type, schedule, info);
   __INTERNAL__Barrier_type(coll_type, schedule, info);
 
-  for(int i = 1; i <= rank; i++) {
-    __INTERNAL__Op_type(NULL, tmpbuf + (i-1) * count * ext, tmpbuf + i * count * rank, count, datatype, op, mpc_op, coll_type, schedule, info);
+  if(rank > 0) {
+    for(int i = 1; i < rank; i++) {
+      __INTERNAL__Op_type(NULL, tmpbuf + (i-1) * count * ext, tmpbuf + i * count * rank, count, datatype, op, mpc_op, coll_type, schedule, info);
+    }
+
+    __INTERNAL__Copy_type(tmpbuf + (rank - 1) * count * ext, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
   }
-
-  __INTERNAL__Copy_type(tmpbuf + (rank - 1) * count * ext, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
-
   return MPI_SUCCESS;
 }
 
@@ -7536,6 +7597,7 @@ static inline int __INTERNAL__Barrier_reduce_broadcast (MPI_Comm comm, MPC_COLL_
     rmb = maxr;
   }
 
+  // Reduce | Broadcast
 
   if(rank != 0) { 
     peer = rank ^ (1 << rmb);
