@@ -755,13 +755,22 @@ static void *__server_loop(void *pmonitor)
 		if(ret < 0)
 		{
 			perror("select");
+
 			if(errno == EINTR || errno == EAGAIN)
 			{
 				continue;
 			}
 
-			perror("select");
-			break;
+
+			if(!monitor->running)
+			{
+				perror("select");
+				break;
+			}
+			else
+			{
+				continue;
+			}
 		}
 
 		if(!monitor->running)
@@ -1299,31 +1308,40 @@ static inline _mpc_lowcomm_client_ctx_t *__get_closest_in_set(struct _mpc_lowcom
 	_mpc_lowcomm_client_ctx_t *ellected_ctx = NULL;
 
 	int has_routes = 0;
-
 	mpc_lowcomm_peer_uid_t current_route_uid = 0;
 
-	pthread_mutex_lock(&monitor->client_lock);
-
-	MPC_HT_ITER(&monitor->client_contexts, ctx)
+	/* Only do distance routing in same set */
+	if(set_uid == mpc_lowcomm_monitor_get_gid())
 	{
-		//mpc_common_debug_error("CTX == %p", ctx);
-		if(!ctx)
-		{
-			continue;
-		}
 
-		has_routes = 1;
+		pthread_mutex_lock(&monitor->client_lock);
 
-		if(mpc_lowcomm_peer_closer(dest, current_route_uid, ctx->uid) )
+		MPC_HT_ITER(&monitor->client_contexts, ctx)
 		{
-			/* We have one pick it if closer */
-			current_route_uid = ctx->uid;
-			ellected_ctx      = ctx;
+			//mpc_common_debug_error("CTX == %p", ctx);
+			if(!ctx)
+			{
+				continue;
+			}
+
+			has_routes = 1;
+
+			if(mpc_lowcomm_peer_closer(dest, current_route_uid, ctx->uid) )
+			{
+				/* We have one pick it if closer */
+				current_route_uid = ctx->uid;
+				ellected_ctx      = ctx;
+			}
 		}
+		MPC_HT_ITER_END
+
+		pthread_mutex_unlock(&monitor->client_lock);
+
 	}
-	MPC_HT_ITER_END
-
-	pthread_mutex_unlock(&monitor->client_lock);
+	else
+	{
+		has_routes = 1;
+	}
 
 	if(ellected_ctx != NULL)
 	{

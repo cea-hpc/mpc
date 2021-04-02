@@ -75,12 +75,10 @@ int conn_callback(mpc_lowcomm_monitor_set_t set, void * arg)
 
             for(i = 0 ; i < args->connectivity.peers_count; i++)
             {
-                char b1[128], b2[128];
-                printf(" - %lu %s == %lu %s\n", peers[i].uid,
-                                                mpc_lowcomm_peer_format_r(peers[i].uid, b1, 128),
-                                                args->connectivity.peers[i],
-                                                mpc_lowcomm_peer_format_r(args->connectivity.peers[i], b2, 128));
-
+                mpc_lowcomm_peer_uid_t peer_uid = peers[i].uid;
+                printf("%lu [label=\"%lu %s\"]\n", peer_uid, peer_uid, mpc_lowcomm_peer_format(peer_uid));
+                printf("%lu -- %lu\n", peers[i].uid,
+                        args->connectivity.peers[i]);
             }
 
 
@@ -96,7 +94,13 @@ int conn_callback(mpc_lowcomm_monitor_set_t set, void * arg)
 
 void get_connectivity(int argc, char ** argv)
 {
-        mpc_lowcomm_monitor_set_iterate(conn_callback, NULL);
+    printf("graph G{\n");
+    printf("graph[concentrate=true]\n");
+
+    mpc_lowcomm_monitor_set_iterate(conn_callback, NULL);
+
+    printf("}\n");
+
 
 }
 
