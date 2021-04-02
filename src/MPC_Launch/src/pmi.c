@@ -1054,38 +1054,42 @@ int mpc_launch_pmi_get_app_num(int* appnum){
 }
 
 // get with PMIX_SET_NAMES does not work
-int mpc_launch_pmi_get_pset(char** pset){
-	#if defined(MPC_USE_PMIX)
-	pmix_value_t* val;
-	pmix_status_t ret;
-	char* my_set;
+// breaks slurm support (2/04/2020)
 
-	ret = PMIx_Get(&pmi_context.pmix_proc, PMIX_PSET_NAMES, NULL, 0, &val); // fonctionne pas ?
-	if(ret == PMIX_SUCCESS) my_set = val->data.string;
-	// else printf("get pmix_pset_names returned %d", ret);
-	return ret == PMIX_SUCCESS;
-	#else
-	// TODO
-	#endif
-}
+// int mpc_launch_pmi_get_pset(char** pset){
+// 	#if defined(MPC_USE_PMIX)
+// 	pmix_value_t* val;
+// 	pmix_status_t ret;
+// 	char* my_set;
 
-int mpc_launch_pmi_get_pset_list(char** psetlist){
-	#if defined(MPC_USE_PMIX)
-		pmix_value_t* val;
-		pmix_status_t ret;
-		pmix_query_t query;
+// 	ret = PMIx_Get(&pmi_context.pmix_proc, PMIX_PSET_NAMES, NULL, 0, &val); // fonctionne pas ?
+// 	if(ret == PMIX_SUCCESS) my_set = val->data.string;
+// 	// else printf("get pmix_pset_names returned %d", ret);
+// 	return ret == PMIX_SUCCESS;
+// 	#else
+// 	// TODO
+// 	#endif
+// }
 
-		PMIX_QUERY_CONSTRUCT(&query);
-		PMIX_ARGV_APPEND(ret, query.keys, PMIX_QUERY_NUM_PSETS);
-		PMIX_ARGV_APPEND(ret, query.keys, PMIX_QUERY_PSET_NAMES);
-		pmix_info_t* result = NULL;
-		size_t result_size;
 
-		ret = PMIx_Query_info(&query, 1, &result, &result_size);
-		if(ret == PMIX_SUCCESS) *psetlist = result[1].value.data.string;
-		else printf("query returned %d", ret);
-		return ret;
-	#else
-	// TODO
-	#endif
+// breaks slurm support
+// int mpc_launch_pmi_get_pset_list(char** psetlist){
+// 	#if defined(MPC_USE_PMIX)
+// 		pmix_value_t* val;
+// 		pmix_status_t ret;
+// 		pmix_query_t query;
+
+// 		PMIX_QUERY_CONSTRUCT(&query);
+// 		PMIX_ARGV_APPEND(ret, query.keys, PMIX_QUERY_NUM_PSETS);
+// 		PMIX_ARGV_APPEND(ret, query.keys, PMIX_QUERY_PSET_NAMES);
+// 		pmix_info_t* result = NULL;
+// 		size_t result_size;
+
+// 		ret = PMIx_Query_info(&query, 1, &result, &result_size);
+// 		if(ret == PMIX_SUCCESS) *psetlist = result[1].value.data.string;
+// 		else printf("query returned %d", ret);
+// 		return ret;
+// 	#else
+// 	// TODO
+// 	#endif
 }
