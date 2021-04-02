@@ -34,7 +34,20 @@ if test "x${MPC_LAUNCHER}" = "xPMI1" -o "x${MPC_LAUNCHER}" = "xPMIX"; then
                     LAUNCHER_OPTION_CPU_NB=1
                 fi
 	fi
-	LAUNCH_COMMAND="srun ${autokill_opt} $LAUNCH_OPTIONS --ntasks=$LAUNCHER_OPTION_PROCESS_NB --nodes=$LAUNCHER_OPTION_NODE_NB --cpus-per-task=$LAUNCHER_OPTION_CPU_NB $LAUNCHER_OPTION_WRAPPER $LAUNCHER_OPTION_BINARY $LAUNCHER_OPTION_BINARY_ARGS"
+	if test "$MPMD_COMMAND" = "" ; then
+		LAUNCH_COMMAND="srun ${autokill_opt} $LAUNCH_OPTIONS --ntasks=$LAUNCHER_OPTION_PROCESS_NB --nodes=$LAUNCHER_OPTION_NODE_NB --cpus-per-task=$LAUNCHER_OPTION_CPU_NB $LAUNCHER_OPTION_WRAPPER $LAUNCHER_OPTION_BINARY $LAUNCHER_OPTION_BINARY_ARGS"
+	else
+		LAUNCHER_OPTION_WRAPPER=""
+		MPMD=""
+		for i in $(seq 1 $MPMD_LEN); do
+			if test $i = 1 ; then
+				MPMD="-np $(echo $MPMD_PROC_NUM | cut -d' ' -f$i) $(echo $MPMD_COMMAND | cut -d: -f$i)"
+			else
+				MPMD="$MPMD : -np $(echo $MPMD_PROC_NUM | cut -d' ' -f$i) $(echo $MPMD_COMMAND | cut -d: -f$i)"
+			fi
+		done
+		LAUNCH_COMMAND="srun ${autokill_opt} $LAUNCH_OPTIONS --ntasks=$LAUNCHER_OPTION_PROCESS_NB --nodes=$LAUNCHER_OPTION_NODE_NB --cpus-per-task=$LAUNCHER_OPTION_CPU_NB $LAUNCHER_OPTION_WRAPPER $MPMD"
+	fi
 else
 	echo  "ERROR mpc is compiled without any PMI (--with-pmi1/--with-slurm or --with-pmix) support cannot use bare srun" 1>&2
 	exit 1
