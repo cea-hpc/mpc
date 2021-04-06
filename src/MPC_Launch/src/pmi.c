@@ -894,12 +894,7 @@ int mpc_launch_pmi_get_job_id( uint64_t *id )
 
 	return MPC_LAUNCH_PMI_SUCCESS;
 #elif defined(MPC_USE_PMIX)
-	size_t uid;
-	*id = -1;
-	pmix_status_t rc = __pmix_get_attribute(0, PMIX_GROUP_CONTEXT_ID, PMIX_SIZE, &uid);
-	PMI_CHECK_RC( rc, "__pmix_get_attribute" );
-	*id = uid;
-	PMI_RETURN( rc );
+	not_implemented();
 #elif defined( MPC_USE_PMI1 )
 	char *env = NULL;
 	env = getenv( "SLURM_JOB_ID" );
