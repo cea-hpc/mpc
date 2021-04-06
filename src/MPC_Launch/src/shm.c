@@ -4,7 +4,7 @@
 #include <mpc_common_debug.h>
 #include <mpc_launch_pmi.h>
 
-
+#include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -43,7 +43,7 @@ static inline char * __get_per_node_unique_name(char * buff, int len)
 
 static inline char * __get_per_node_segment_key(char *buff, int len)
 {
-	static segment_id = 0;
+	static unsigned int segment_id = 0;
 	snprintf(buff, len, "mpc-shm-filename-%d-%d", mpc_common_get_node_rank(), ++segment_id);
     return buff;
 }
@@ -128,13 +128,94 @@ void * __map_shm_segment_pmi(size_t size)
 }
 
 
-void * mpc_launch_shm_map(size_t size, mpc_launch_shm_exchange_method_t method)
+void * __map_shm_segment_mpi(size_t size, mpc_launch_shm_exchange_params_t * params)
+{
+	assume(params != NULL);
+	assume(params->mpi.rank != NULL);
+	assume(params->mpi.barrier != NULL);
+	assume(params->mpi.bcast != NULL);
+
+	int my_rank = (params->mpi.rank)(params->mpi.pcomm);
+
+	char segment_name[128];
+	segment_name[0] = '\0';
+
+	int shm_fd = -1;
+
+	if(my_rank == 0)
+	{
+		__get_per_node_unique_name(segment_name, 128);
+
+		/* Time to create the segment */
+		shm_fd = shm_open(segment_name, O_CREAT | O_EXCL | O_RDWR | O_TRUNC, 0600);
+
+		if(shm_fd < 0)
+		{
+			perror("shm_open");
+			mpc_common_debug_fatal("Failed to open shm segment (as leading processes)");
+		}
+
+		/* Truncate to size */
+		int ret = ftruncate(shm_fd, size);
+
+		if(ret < 0)
+		{
+			perror("ftruncate");
+			mpc_common_debug_fatal("Failed to truncate shm segment to size %ld", size);
+		}
+	}
+
+	(params->mpi.bcast)(segment_name, 128, params->mpi.pcomm);
+
+	assume(strlen(segment_name) != 0);
+
+	if(my_rank != 0)
+	{
+		shm_fd = shm_open(segment_name, O_RDWR, 0600);
+
+		if(shm_fd < 0)
+		{
+			perror("shm_open");
+			mpc_common_debug_fatal("Failed to open shm segment (as secondary processes)");
+		}
+	}
+
+	assume(0 < shm_fd);
+
+	void * ret = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+
+    if(ret == NULL)
+    {
+        perror("mmap");
+		mpc_common_debug_fatal("Failed to map shm segment");
+    }
+
+	(params->mpi.barrier)(params->mpi.pcomm);
+
+	if(my_rank == 0)
+	{
+		shm_unlink(segment_name);
+	}
+
+	return ret;
+}
+
+
+void * mpc_launch_shm_map(size_t size, mpc_launch_shm_exchange_method_t method, mpc_launch_shm_exchange_params_t * params)
 {
     switch (method)
     {
-    case MPC_LAUNCH_SHM_USE_PMI:
-        return __map_shm_segment_pmi(size);
+		case MPC_LAUNCH_SHM_USE_MPI:
+			return __map_shm_segment_mpi(size, params);
+		case MPC_LAUNCH_SHM_USE_PMI:
+			return __map_shm_segment_pmi(size);
     }
 
     return NULL;
+}
+
+
+int mpc_launch_shm_unmap(void *ptr, size_t size)
+{
+	return munmap(ptr, size);
 }

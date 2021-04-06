@@ -3,8 +3,6 @@
 #include "sctk_route.h"
 #include "mpc_launch_pmi.h"
 #include <mpc_launch_shm.h>
-#include "sctk_shm_mapper.h"
-#include "sctk_handler_pmi.h"
 #include "sctk_alloc.h"
 
 #include <sctk_net_tools.h>
@@ -318,7 +316,7 @@ static void sctk_shm_init_raw_queue(size_t size, int cells_num, int rank)
 {
 	void *shm_base = NULL;
 
-	shm_base = mpc_launch_shm_map(size, MPC_LAUNCH_SHM_USE_PMI);
+	shm_base = mpc_launch_shm_map(size, MPC_LAUNCH_SHM_USE_PMI, NULL);
 
 	sctk_shm_add_region_infos(shm_base, size, cells_num, rank);
 

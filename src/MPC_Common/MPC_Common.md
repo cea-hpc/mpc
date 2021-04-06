@@ -8,7 +8,6 @@ This module contains all basic blocks of MPC framework, common to other modules.
 
 CONTENTS:
 ---------
-* **sctk_shm_mapper/**     : The SHM mapper
 * **sctk_optim/**          : longjmp/setjmp (may be moved)
 * **sctk_alloc/**          : POSIX binding when allocator is disabled
 * **sctk_asm/**            : ASM part of MPC (test\_and\_set, atomics)

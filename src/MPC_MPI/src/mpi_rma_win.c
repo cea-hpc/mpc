@@ -23,11 +23,10 @@
 #include "mpi_rma_win.h"
 #include "mpi_rma_ctrl_msg.h"
 #include "sctk_control_messages.h"
+#include <mpc_launch_shm.h>
 
 #include "mpi_alloc_mem.h"
 #include "mpi_rma_epoch.h"
-#include "sctk_handler_mpi.h"
-#include "sctk_shm_mapper.h"
 #include "mpc_lowcomm.h"
 #include "mpc_lowcomm_rdma.h"
 
@@ -517,6 +516,30 @@ int mpc_MPI_Win_allocate(MPI_Aint size, int disp_unit, MPI_Info info,
   return ret;
 }
 
+static inline int __barrier(void *pcomm)
+{
+	MPI_Comm comm = (MPI_Comm)pcomm;
+	PMPI_Barrier(comm);
+	return 0;
+}
+
+static inline int __rank(void *pcomm)
+{
+	MPI_Comm comm = (MPI_Comm)pcomm;
+	int ret;
+	PMPI_Comm_rank(comm, &ret);
+	return ret;
+}
+
+static inline int __bcast(void *buff, size_t len, void *pcomm)
+{
+	MPI_Comm comm = (MPI_Comm)pcomm;
+	
+	PMPI_Bcast(buff,len, MPI_BYTE, 0, comm);
+	return 0;
+}
+
+
 int mpc_MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
                                 MPI_Comm comm, void *base, MPI_Win *win) {
   int rank;
@@ -529,8 +552,8 @@ int mpc_MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
   int ret = PMPI_Allreduce((void *)&tmp_size, (void *)&total_size, 1,
                            MPI_UINT64_T, MPI_SUM, comm);
 
-  size_t to_map_size = ((total_size / SCTK_SHM_MAPPER_PAGE_SIZE) + 1) *
-                       SCTK_SHM_MAPPER_PAGE_SIZE;
+  size_t to_map_size = ((total_size / SCTK_ALLOC_PAGE_SIZE) + 1) *
+                       SCTK_ALLOC_PAGE_SIZE;
   void *win_segment = NULL;
 
   mpc_MPI_win_storage storage_type = MPC_MPI_WIN_STORAGE_NONE;
@@ -549,8 +572,6 @@ int mpc_MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
 
     storage_type = MPC_MPI_WIN_STORAGE_ROOT_ALLOC;
   } else {
-    sctk_shm_mapper_role_t role = SCTK_SHM_MAPPER_ROLE_SLAVE;
-
     /* Now count number of processes by counting masters */
     int is_master = 0;
 
@@ -558,36 +579,23 @@ int mpc_MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
       is_master = 1;
     }
 
-    int process_on_node_count = 0;
-
     MPI_Comm process_master_comm, node_comm;
-    PMPI_Comm_split(comm, is_master, rank, &process_master_comm);
-
     PMPI_Comm_split_type(comm, MPI_COMM_TYPE_SHARED, rank, MPI_INFO_NULL,
                          &node_comm);
 
-    int node_master_rank;
-    PMPI_Comm_rank(node_comm, &node_master_rank);
-
-    if (node_master_rank == 0) {
-      /* Root rank becomes the master */
-      role = SCTK_SHM_MAPPER_ROLE_MASTER;
-    }
-
-    PMPI_Comm_size(process_master_comm, &process_on_node_count);
+    PMPI_Comm_split(node_comm, is_master, rank, &process_master_comm);
 
     /* Only process masters do the mapping */
     if (mpc_common_get_local_task_rank() == 0) {
-      /* Prepare to use the MPI handlers */
-      sctk_alloc_mapper_handler_t *handler =
-          sctk_shm_mpi_handler_init(process_master_comm);
 
-      /* Here we need to map a shared segment */
-      win_segment = sctk_shm_mapper_create(to_map_size, role,
-                                           process_on_node_count, handler);
+      mpc_launch_shm_exchange_params_t params;
 
-      mpc_common_nodebug("MAPPED at %p size %ld", win_segment, to_map_size);
-      sctk_shm_mpi_handler_free(handler);
+			params.mpi.barrier = __barrier;
+			params.mpi.bcast = __bcast;
+			params.mpi.rank = __rank;
+			params.mpi.pcomm = process_master_comm;
+
+			win_segment = mpc_launch_shm_map(to_map_size, MPC_LAUNCH_SHM_USE_MPI, &params);
     }
 
     /* Make sure that non process masters have the address */
@@ -720,7 +728,7 @@ int mpc_MPI_Win_free(MPI_Win *win) {
     PMPI_Comm_split(desc->comm, is_master, rank, &process_master_comm);
 
     if (mpc_common_get_local_task_rank() == 0) {
-      sctk_alloc_shm_remove(desc->win_segment, desc->mmaped_size);
+      mpc_launch_shm_unmap(desc->win_segment, desc->mmaped_size);
     }
 
     PMPI_Comm_free(&process_master_comm);

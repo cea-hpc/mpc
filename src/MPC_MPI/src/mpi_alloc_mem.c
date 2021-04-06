@@ -34,13 +34,13 @@
 #include "mpc_mpi.h"
 #include <mpc_common_debug.h>
 #include <mpc_common_flags.h>
+#include <mpc_launch_shm.h>
+
 
 #ifdef MPC_Threads
 #include "mpc_thread.h"
 #endif
 
-#include "sctk_handler_mpi.h"
-#include "sctk_shm_mapper.h"
 #include "mpc_thread.h"
 #include "string.h"
 
@@ -97,6 +97,30 @@ size_t mpc_MPI_allocmem_get_pool_size()
 	return _mpc_mpi_config()->mempool.size;
 }
 
+static inline int __barrier(void *pcomm)
+{
+	MPI_Comm comm = (MPI_Comm)pcomm;
+	PMPI_Barrier(comm);
+	return 0;
+}
+
+static inline int __rank(void *pcomm)
+{
+	MPI_Comm comm = (MPI_Comm)pcomm;
+	int ret;
+	PMPI_Comm_rank(comm, &ret);
+	return ret;
+}
+
+static inline int __bcast(void *buff, size_t len, void *pcomm)
+{
+	MPI_Comm comm = (MPI_Comm)pcomm;
+	
+	PMPI_Bcast(buff,len, MPI_BYTE, 0, comm);
+	return 0;
+}
+
+
 int mpc_MPI_allocmem_pool_init()
 {
         /* Check for particular programs */
@@ -118,7 +142,7 @@ int mpc_MPI_allocmem_pool_init()
 	/* This code is one task per MPC process */
 	size_t inner_size = pool_size;
 	/* Book space for the bit array at buffer start */
-	inner_size += SCTK_SHM_MAPPER_PAGE_SIZE;
+	inner_size += SCTK_ALLOC_PAGE_SIZE;
 	/* Book space for the spinlock */
 	inner_size += sizeof( OPA_int_t );
 
@@ -163,14 +187,6 @@ int mpc_MPI_allocmem_pool_init()
 			return 0;
 		}
 
-		sctk_shm_mapper_role_t role = SCTK_SHM_MAPPER_ROLE_SLAVE;
-
-		if ( !my_rank )
-		{
-			/* Root rank becomes the master */
-			role = SCTK_SHM_MAPPER_ROLE_MASTER;
-		}
-
 		/* Now count number of processes by counting masters */
 		int is_master = 0;
 
@@ -185,17 +201,21 @@ int mpc_MPI_allocmem_pool_init()
 
 		if ( is_master )
 		{
-			int process_on_node_count = 0;
-			PMPI_Comm_size( process_master_comm, &process_on_node_count );
-			size_t to_map_size = ( ( inner_size / SCTK_SHM_MAPPER_PAGE_SIZE ) + 1 ) *
-			                     SCTK_SHM_MAPPER_PAGE_SIZE;
+			size_t to_map_size = ( ( inner_size / SCTK_ALLOC_PAGE_SIZE ) + 1 ) *
+			                     SCTK_ALLOC_PAGE_SIZE;
 			____mpc_sctk_mpi_alloc_mem_pool.mapped_size = to_map_size;
-			/* Prepare to use the MPI handlers */
-			sctk_alloc_mapper_handler_t *handler = sctk_shm_mpi_handler_init( process_master_comm );
-			/* Here we need to map a shared segment */
-			____mpc_sctk_mpi_alloc_mem_pool._pool = sctk_shm_mapper_create(
-			        to_map_size, role, process_on_node_count, handler );
-			sctk_shm_mpi_handler_free( handler );
+
+			mpc_launch_shm_exchange_params_t params;
+
+			params.mpi.barrier = __barrier;
+			params.mpi.bcast = __bcast;
+			params.mpi.rank = __rank;
+			params.mpi.pcomm = process_master_comm;
+
+			____mpc_sctk_mpi_alloc_mem_pool._pool = mpc_launch_shm_map(to_map_size, MPC_LAUNCH_SHM_USE_MPI, &params);
+
+			assume(____mpc_sctk_mpi_alloc_mem_pool._pool != NULL);
+
 			PMPI_Comm_free( &process_master_comm );
 		}
 
@@ -212,7 +232,7 @@ int mpc_MPI_allocmem_pool_init()
 		void *bit_array_page = ____mpc_sctk_mpi_alloc_mem_pool._pool;
 		/* After we have a lock */
 		____mpc_sctk_mpi_alloc_mem_pool.lock =
-		    bit_array_page + SCTK_SHM_MAPPER_PAGE_SIZE;
+		    bit_array_page + SCTK_ALLOC_PAGE_SIZE;
 		/* And to finish the actual memory pool */
 		____mpc_sctk_mpi_alloc_mem_pool.pool =
 		    ____mpc_sctk_mpi_alloc_mem_pool.lock + 1;
@@ -223,10 +243,10 @@ int mpc_MPI_allocmem_pool_init()
 		____mpc_sctk_mpi_alloc_mem_pool.size_left = pool_size;
 		OPA_store_int( ____mpc_sctk_mpi_alloc_mem_pool.lock, 0 );
 		mpc_common_bit_array_init_buff( &____mpc_sctk_mpi_alloc_mem_pool.mask,
-		                                SCTK_SHM_MAPPER_PAGE_SIZE * 8, bit_array_page,
-		                                SCTK_SHM_MAPPER_PAGE_SIZE );
+		                                SCTK_ALLOC_PAGE_SIZE * 8, bit_array_page,
+		                                SCTK_ALLOC_PAGE_SIZE );
 		____mpc_sctk_mpi_alloc_mem_pool.space_per_bit =
-		    ( pool_size / ( SCTK_SHM_MAPPER_PAGE_SIZE * 8 ) );
+		    ( pool_size / ( SCTK_ALLOC_PAGE_SIZE * 8 ) );
 		mpc_common_hashtable_init( &____mpc_sctk_mpi_alloc_mem_pool.size_ht, 32 );
 	}
 
@@ -268,7 +288,7 @@ int mpc_MPI_allocmem_pool_release()
 	}
 	else
 	{
-		sctk_alloc_shm_remove( ____mpc_sctk_mpi_alloc_mem_pool._pool,
+		mpc_launch_shm_unmap( ____mpc_sctk_mpi_alloc_mem_pool._pool,
 		                       ____mpc_sctk_mpi_alloc_mem_pool.mapped_size );
 	}
 
