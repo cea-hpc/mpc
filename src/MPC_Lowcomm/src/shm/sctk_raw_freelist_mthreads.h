@@ -5,56 +5,57 @@
 #include "sctk_shm_raw_queues_internals.h"
 
 static inline sctk_shm_item_t *
-sctk_shm_dequeue_mt(sctk_shm_list_t *queue,char *src_base_addr)
+sctk_shm_dequeue_mt(sctk_shm_list_t *queue, char *src_base_addr)
 {
     volatile sctk_shm_item_t *abs_item;
     sctk_shm_item_t *head;
 
-    if(mpc_common_spinlock_trylock(&(queue->lock)) != 0)
-    { 
-        cpu_relax();
+    if(mpc_common_spinlock_trylock(&(queue->lock)))
+    {
         return NULL;
     }
 
-    head = queue->head;    
+    head = queue->head;
+
     if(!head)
     {
         mpc_common_spinlock_unlock( &(queue->lock));
         return NULL;
     }
-    
-    abs_item = sctk_shm_rel_to_abs(src_base_addr,queue->head); 
-    
+
+    abs_item = sctk_shm_rel_to_abs(src_base_addr,queue->head);
+
     if(abs_item->next)
     {
         queue->head = abs_item->next;
     }
     else
     {
-        queue->tail = 0;
-        queue->head = 0;
+        queue->tail = NULL;
+        queue->head = NULL;
     }
     mpc_common_spinlock_unlock( &(queue->lock));
-    abs_item->next = 0;
+
+    abs_item->next = NULL;
     return (sctk_shm_item_t *) abs_item;
 }
 
-static inline int 
-sctk_shm_enqueue_mt(sctk_shm_list_t *queue, 
+static inline int
+sctk_shm_enqueue_mt(sctk_shm_list_t *queue,
                     char *dest_base_addr,
                     sctk_shm_item_t *abs_new_item,
                     char *src_base_addr )
 {
     sctk_shm_item_t *rel_new_item, *rel_prev_item, *abs_prev_item;
     rel_new_item = sctk_shm_abs_to_rel(src_base_addr,abs_new_item);
-    
+
     while(mpc_common_spinlock_trylock(&(queue->lock)) != 0)
         cpu_relax();
 
     rel_prev_item = queue->tail;
     queue->tail = rel_new_item;
 
-    if(rel_prev_item == 0)
+    if(rel_prev_item == NULL)
     {
         queue->head = rel_new_item;
     }

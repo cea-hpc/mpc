@@ -33,14 +33,14 @@ typedef enum {
   SCTK_SHM_CELLS_QUEUE_CMPL = 2,
   SCTK_SHM_CELLS_QUEUE_FREE = 3,
   SCTK_SHM_CELLS_QUEUE_CTRL = 4,
-  SCTK_SHM_CELLS_QUEUE_POOL = 5,
+  SCTK_SHM_CELLS_LIST_COUNT = 5,
 } sctk_shm_list_type_t;
 
 /**
  * STRUCTS
  */
 typedef struct sctk_shm_cell_s{
-    mpc_common_spinlock_t lock; 
+    mpc_common_spinlock_t lock;
     sctk_shm_msg_type_t msg_type;       /* Cell msg type                        */ 
     size_t size_to_copy;
     int src;
@@ -66,7 +66,7 @@ struct sctk_shm_list_s
 {
     sctk_shm_item_t *head;
     sctk_shm_item_t *tail;
-    mpc_common_spinlock_t lock; 
+    mpc_common_spinlock_t lock;
 #ifdef SHM_USE_ATOMIC_QUEUE
     char cache_pad[CACHELINE_SIZE];
     sctk_shm_item_t *shadow_head;

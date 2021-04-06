@@ -2,6 +2,7 @@
 #include <mpc_config.h>
 #include "sctk_route.h"
 #include "mpc_launch_pmi.h"
+#include <mpc_launch_shm.h>
 #include "sctk_shm_mapper.h"
 #include "sctk_handler_pmi.h"
 #include "sctk_alloc.h"
@@ -46,7 +47,6 @@ void sctk_shm_network_rdma_write(sctk_rail_info_t *rail, mpc_lowcomm_ptp_message
                                  size_t size)
 {
 }
-
 void sctk_shm_network_rdma_read(sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg,
                                 void *src_addr, struct  sctk_rail_pin_ctx_list *remote_key,
                                 void *dest_addr, struct  sctk_rail_pin_ctx_list *local_key,
@@ -291,98 +291,6 @@ sctk_network_notify_any_source_message_shm(__UNUSED__ int polling_task_id, __UNU
 /* SHM Init                                                         */
 /********************************************************************/
 
-static void *
-sctk_shm_add_region_slave(sctk_size_t size, sctk_alloc_mapper_handler_t *handler)
-{
-	//vars
-	char *filename;
-	int   fd;
-	void *ptr;
-
-	//check args
-	assert(handler != NULL);
-	assert(handler->recv_handler != NULL);
-	assert(handler->send_handler != NULL);
-	assert(size > 0 && size % SCTK_SHM_MAPPER_PAGE_SIZE == 0);
-
-	//get filename
-	filename = handler->recv_handler(handler->key, &handler->master_rank);
-	assume_m(filename != NULL, "Failed to get the SHM filename.");
-
-	// firt try to map
-	fd  = sctk_shm_mapper_slave_open(filename);
-	ptr = sctk_shm_mapper_mmap(NULL, fd, size);
-
-	mpc_launch_pmi_barrier();
-
-	close(fd);
-	sctk_free(filename);
-	return ptr;
-}
-
-static void *
-sctk_shm_add_region_master(sctk_size_t size, sctk_alloc_mapper_handler_t *handler)
-{
-	//vars
-	char *filename;
-	int   fd;
-	void *ptr;
-	short int  status;
-
-	//check args
-	assert(handler != NULL);
-	assert(handler->recv_handler != NULL);
-	assert(handler->send_handler != NULL);
-	assert(size > 0 && size % SCTK_SHM_MAPPER_PAGE_SIZE == 0);
-
-	//get filename
-	filename = handler->gen_filename(handler->key, &handler->master_rank);
-
-	// create file and map it
-	fd  = sctk_shm_mapper_create_shm_file(filename, size);
-	ptr = sctk_shm_mapper_mmap(NULL, fd, size);
-
-	// sync filename
-	status =
-		handler->send_handler(filename, handler->key, &handler->master_rank);
-	assume_m(status,
-	         "Fail to send the SHM filename to other participants.");
-
-	mpc_launch_pmi_barrier();
-
-	close(fd);
-	sctk_shm_mapper_unlink(filename);
-
-	//free temp memory and return
-	sctk_free(filename);
-	return ptr;
-}
-
-static void *sctk_shm_add_region(sctk_size_t size, sctk_shm_mapper_role_t role,
-                                 sctk_alloc_mapper_handler_t *handler)
-{
-	//errors
-	assume_m(handler != NULL, "You must provide a valid handler to exchange the SHM filename.");
-	if(size == 0 && size % SCTK_SHM_MAPPER_PAGE_SIZE != 0)
-	{
-		printf("Size must be non NULL and multiple of page size (%lu bytes), get %lu\n", SCTK_SHM_MAPPER_PAGE_SIZE, size);
-		abort();
-	}
-	//select the method
-	switch(role)
-	{
-		case SCTK_SHM_MAPPER_ROLE_MASTER:
-			return sctk_shm_add_region_master(size, handler);
-
-		case SCTK_SHM_MAPPER_ROLE_SLAVE:
-			return sctk_shm_add_region_slave(size, handler);
-
-		default:
-			assume_m(0, "Invalid role on sctk_shm_mapper.");
-	}
-
-	return NULL;
-}
 
 static void sctk_shm_add_route(int dest, int shm_dest, sctk_rail_info_t *rail)
 {
@@ -408,28 +316,16 @@ static void sctk_shm_add_route(int dest, int shm_dest, sctk_rail_info_t *rail)
 
 static void sctk_shm_init_raw_queue(size_t size, int cells_num, int rank)
 {
-	char  buffer[16];
 	void *shm_base = NULL;
-	sctk_shm_mapper_role_t shm_role;
-	struct sctk_alloc_mapper_handler_s *pmi_handler = NULL;
 
-	sprintf(buffer, "%d", rank);
-
-	shm_role = SCTK_SHM_MAPPER_ROLE_SLAVE;
-	shm_role = (mpc_common_get_local_process_rank() == rank) ? SCTK_SHM_MAPPER_ROLE_MASTER : shm_role;
-
-	pmi_handler = sctk_shm_pmi_handler_init(buffer, rank);
-
-	shm_base = sctk_shm_add_region(size, shm_role, pmi_handler);
+	shm_base = mpc_launch_shm_map(size, MPC_LAUNCH_SHM_USE_PMI);
 
 	sctk_shm_add_region_infos(shm_base, size, cells_num, rank);
 
-	if(shm_role == SCTK_SHM_MAPPER_ROLE_MASTER)
+	if(mpc_common_get_local_process_rank() == rank)
 	{
 		sctk_shm_reset_process_queues(rank);
 	}
-
-	sctk_shm_pmi_handler_free(pmi_handler);
 }
 
 static void sctk_shm_free_raw_queue(__UNUSED__ int i)
@@ -447,7 +343,6 @@ void sctk_shm_check_raw_queue(int local_process_number)
 		assume_m(sctk_shm_isempty_process_queue(SCTK_SHM_CELLS_QUEUE_CMPL, i), "Queue must be empty")
 		assume_m(!sctk_shm_isempty_process_queue(SCTK_SHM_CELLS_QUEUE_FREE, i), "Queue must be full")
 	}
-	mpc_launch_pmi_barrier();
 }
 
 void sctk_network_finalize_shm(__UNUSED__ sctk_rail_info_t *rail)
@@ -530,7 +425,6 @@ void sctk_network_init_shm(sctk_rail_info_t *rail)
 		{
 			sctk_shm_add_route(tmp->process_list[i], i, rail);
 		}
-		mpc_launch_pmi_barrier();
 	}
 
 	sctk_cma_enabled = rail->runtime_config_driver_config->driver.value.shm.cma_enable;

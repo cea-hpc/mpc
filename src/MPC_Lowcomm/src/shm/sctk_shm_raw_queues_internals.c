@@ -9,7 +9,7 @@
 #include "sctk_raw_freelist_mthreads.h"
 
 static void * 
-sctk_shm_get_region_queue_base(char *ptr,sctk_shm_list_type_t type)
+sctk_shm_get_region_queue_base(char *ptr, sctk_shm_list_type_t type)
 {
     return ptr + ( type * sizeof( sctk_shm_list_t ) );
 }
@@ -18,7 +18,7 @@ static char *
 sctk_shm_get_region_items_asymm_addr(char *ptr)
 {
     /* First offset after all shmem queues */
-    return ptr + (5 * sizeof(sctk_shm_list_t));
+    return ptr + (SCTK_SHM_CELLS_LIST_COUNT * sizeof(sctk_shm_list_t));
 }
 
 size_t 
@@ -26,9 +26,9 @@ sctk_shm_get_region_size(int cells_num)
 {
     size_t size;
     /* shmem_queue size */
-    size = 5 * sizeof(sctk_shm_list_t);
+    size = SCTK_SHM_CELLS_LIST_COUNT * sizeof(sctk_shm_list_t);
     size += 128 + (cells_num + 5 + 1) * sizeof(sctk_shm_item_t);
-    size += 4*1024; 
+    size += 4*1024;
     return size;
 // ( ( uintptr_t ) page_align( size ) );
 }
@@ -87,18 +87,19 @@ sctk_shm_set_region_infos(void *shmem_base, size_t shmem_size,int cells_num)
     
     shmem->cells_num = cells_num;
     shmem->all_shm_base = sctk_malloc( mpc_common_get_local_process_count() * sizeof(char*));
-    shmem->shm_base = shmem_base; 
+    shmem->shm_base = shmem_base;
     shmem->max_addr = shmem->shm_base + shmem_size;
+
     mpc_common_spinlock_init(&shmem->global_lock, 0);
+
     shmem->send_queue = sctk_shm_get_region_queue_base(shmem_base,SCTK_SHM_CELLS_QUEUE_SEND);
     shmem->recv_queue = sctk_shm_get_region_queue_base(shmem_base,SCTK_SHM_CELLS_QUEUE_RECV);
     shmem->cmpl_queue = sctk_shm_get_region_queue_base(shmem_base,SCTK_SHM_CELLS_QUEUE_CMPL);
     shmem->free_queue = sctk_shm_get_region_queue_base(shmem_base,SCTK_SHM_CELLS_QUEUE_FREE);
-    shmem->ctrl_queue =
-        sctk_shm_get_region_queue_base(shmem_base, SCTK_SHM_CELLS_QUEUE_CTRL);
-    //   shmem->buff_queue =
-    //   sctk_shm_get_region_queue_base(shmem_base,SCTK_SHM_CELLS_QUEUE_BUFF);
-    assume_m((char *)shmem->free_queue < shmem->max_addr, "Too small shmem memory region");
+    shmem->ctrl_queue = sctk_shm_get_region_queue_base(shmem_base, SCTK_SHM_CELLS_QUEUE_CTRL);
+
+    assume_m((char *)shmem->ctrl_queue < shmem->max_addr, "Too small shmem memory region");
+
     shmem->sctk_shm_asymm_addr = sctk_shm_get_region_items_asymm_addr(shmem_base);
     return shmem;
 }

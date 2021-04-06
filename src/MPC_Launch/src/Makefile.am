@@ -39,7 +39,7 @@ mpc_headerdir=$(pkgincludedir)
 
 lib_LTLIBRARIES = libmpclaunch.la
 
-libmpclaunch_la_SOURCES = main.c  libc_main.c  mpc_launch.c pmi.c
+libmpclaunch_la_SOURCES = main.c  libc_main.c  mpc_launch.c pmi.c shm.c
 
 if HYDRA_LAUNCHER_ENABLED
         libmpclaunch_la_SOURCES += ./hydra_client/safestr2.c  ./hydra_client/simple_pmi.c  ./hydra_client/simple_pmiutil.c

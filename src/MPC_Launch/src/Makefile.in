@@ -145,15 +145,15 @@ libmpclaunch_la_DEPENDENCIES =  \
 	../../MPC_Topology/src/libmpctopology.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am__libmpclaunch_la_SOURCES_DIST = main.c libc_main.c mpc_launch.c \
-	pmi.c ./hydra_client/safestr2.c ./hydra_client/simple_pmi.c \
-	./hydra_client/simple_pmiutil.c
+	pmi.c shm.c ./hydra_client/safestr2.c \
+	./hydra_client/simple_pmi.c ./hydra_client/simple_pmiutil.c
 am__dirstamp = $(am__leading_dot)dirstamp
 @HYDRA_LAUNCHER_ENABLED_TRUE@am__objects_1 =  \
 @HYDRA_LAUNCHER_ENABLED_TRUE@	./hydra_client/safestr2.lo \
 @HYDRA_LAUNCHER_ENABLED_TRUE@	./hydra_client/simple_pmi.lo \
 @HYDRA_LAUNCHER_ENABLED_TRUE@	./hydra_client/simple_pmiutil.lo
 am_libmpclaunch_la_OBJECTS = main.lo libc_main.lo mpc_launch.lo pmi.lo \
-	$(am__objects_1)
+	shm.lo $(am__objects_1)
 libmpclaunch_la_OBJECTS = $(am_libmpclaunch_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -527,7 +527,7 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	$(am__append_2)
 mpc_headerdir = $(pkgincludedir)
 lib_LTLIBRARIES = libmpclaunch.la
-libmpclaunch_la_SOURCES = main.c libc_main.c mpc_launch.c pmi.c \
+libmpclaunch_la_SOURCES = main.c libc_main.c mpc_launch.c pmi.c shm.c \
 	$(am__append_3)
 libmpclaunch_la_LIBADD = ../../MPC_Topology/src/libmpctopology.la -ldl $(PMIX_LIBS) $(PMI_LIBS)
 all: all-am
@@ -626,6 +626,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_launch.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pmi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/shm.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./hydra_client/$(DEPDIR)/safestr2.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./hydra_client/$(DEPDIR)/simple_pmi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./hydra_client/$(DEPDIR)/simple_pmiutil.Plo@am__quote@

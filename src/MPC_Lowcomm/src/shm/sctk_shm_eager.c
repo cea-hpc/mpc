@@ -61,6 +61,9 @@ sctk_network_eager_msg_shm_recv(sctk_shm_cell_t *cell, int copy_enabled) {
   void (*shm_copy_funct)(mpc_lowcomm_ptp_message_content_to_copy_t *) = NULL;
 
   tmp = (mpc_lowcomm_ptp_message_t *)cell->data;
+
+  
+
   // if ctrl message disable no copy
   if (_mpc_comm_ptp_message_is_for_control(SCTK_MSG_SPECIFIC_CLASS(tmp))) {
     copy_enabled = 1;
