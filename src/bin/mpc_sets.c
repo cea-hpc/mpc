@@ -65,23 +65,27 @@ int conn_callback(mpc_lowcomm_monitor_set_t set, void * arg)
     for( i = 0 ; i < size; i++)
     {
         mpc_lowcomm_monitor_retcode_t ret;
-        mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_connectivity(peers[i].uid, &ret);
+        mpc_lowcomm_peer_uid_t peer_uid = peers[i].uid;
+
+        mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_connectivity(peer_uid, &ret);
 
         if(ret == MPC_LAUNCH_MONITOR_RET_SUCCESS)
         {
             mpc_lowcomm_monitor_args_t *args = mpc_lowcomm_monitor_response_get_content(resp);
 
-            int i;
+            int j;
 
-            for(i = 0 ; i < args->connectivity.peers_count; i++)
+            printf("%lu [label=\"%lu %s\"]\n", peer_uid, peer_uid, mpc_lowcomm_peer_format(peer_uid));
+
+
+            for(j = 0 ; j < args->connectivity.peers_count; j++)
             {
-                mpc_lowcomm_peer_uid_t peer_uid = peers[i].uid;
-                printf("%lu [label=\"%lu %s\"]\n", peer_uid, peer_uid, mpc_lowcomm_peer_format(peer_uid));
-                printf("%lu -- %lu\n", peers[i].uid,
-                        args->connectivity.peers[i]);
+                char buff[128];
+                printf("//%s -- %s\n", mpc_lowcomm_peer_format_r(peer_uid, buff, 128), mpc_lowcomm_peer_format(args->connectivity.peers[j]));
+                printf("%lu -- %lu\n", peer_uid, args->connectivity.peers[j]);
             }
 
-
+            mpc_lowcomm_monitor_response_free(resp);
         }
 
     }

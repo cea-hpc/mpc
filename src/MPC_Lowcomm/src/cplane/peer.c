@@ -79,7 +79,7 @@ int _mpc_lowcomm_peer_alive(mpc_lowcomm_peer_uid_t uid)
 
 int mpc_lowcomm_peer_closer(mpc_lowcomm_peer_uid_t dest, mpc_lowcomm_peer_uid_t current, mpc_lowcomm_peer_uid_t candidate)
 {
-	mpc_common_debug_error("Dest is %lu CURRENT %lu CANDIDATE %lu", dest, current, candidate);
+	//mpc_common_debug_error("Dest is %lu CURRENT %lu CANDIDATE %lu", dest, current, candidate);
 
 	/* No candidate */
 	if(candidate == 0)
@@ -99,22 +99,13 @@ int mpc_lowcomm_peer_closer(mpc_lowcomm_peer_uid_t dest, mpc_lowcomm_peer_uid_t 
 		return 1;
 	}
 
-#if 0
 	int current_rank = mpc_lowcomm_peer_get_rank(current);
 	int candidate_rank = mpc_lowcomm_peer_get_rank(candidate);
 	int dest_rank = mpc_lowcomm_peer_get_rank(dest);
 
 	int d_cand_d = mpc_common_abs(dest_rank - candidate_rank);
 	int d_cur_d = mpc_common_abs(dest_rank - current_rank);
-	mpc_common_debug_error("Dest is %u current %u D %d candidate %u D %d", dest_rank, current, d_cur_d, candidate_rank, d_cand_d);
-
-#else
-	mpc_lowcomm_peer_uid_t d_cand_d = dest ^candidate;
-	mpc_lowcomm_peer_uid_t d_cur_d = dest ^ current;
-#endif
-
-
-
+	//mpc_common_debug_error("Dest is %u current %u D %d candidate %u D %d", dest_rank, current, d_cur_d, candidate_rank, d_cand_d);
 
 	if(d_cand_d < d_cur_d)
 	{

@@ -37,7 +37,6 @@ int _mpc_lowcomm_monitor_wrap_free(_mpc_lowcomm_monitor_wrap_t *wr)
 
 char * _mpc_lowcomm_monitor_wrap_debug(_mpc_lowcomm_monitor_wrap_t * cmd, char *state, char * buffer, int len)
 {
-	mpc_common_debug_error("CMD == %p", cmd);
 	char meb[32], fromb[32], tob[32];
 	snprintf(buffer, len,"%s [%s] COMMAND %s from %s to %s",mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), meb, 32),
 																				state,
