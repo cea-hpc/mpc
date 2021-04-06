@@ -977,8 +977,6 @@ static inline void __monitor_publish_over_pmi(struct _mpc_lowcomm_monitor_s *mon
 		mpc_launch_pmi_put(monitor->monitor_uri, buff, 0 /* non local */);
 	}
 
-	/* Sync the job to ensure PMI exchange */
-	mpc_launch_pmi_barrier();
 }
 
 mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_init(struct _mpc_lowcomm_monitor_s *monitor)

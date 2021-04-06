@@ -6,6 +6,7 @@
 #include <mpc_launch_shm.h>
 #include <mpc_common_rank.h>
 #include <utlist.h>
+#include <mpc_launch_shm.h>
 
 #include "sctk_shm_raw_queues_internals.h"
 
@@ -21,7 +22,6 @@
 #include "sctk_shm.h"
 
 #include <mpc_lowcomm_monitor.h>
-
 
 
 static unsigned int sctk_shm_send_max_try = 4;
