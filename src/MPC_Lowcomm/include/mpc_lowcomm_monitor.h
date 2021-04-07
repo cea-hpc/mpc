@@ -200,6 +200,14 @@ mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_ondemand(mpc_lowcomm_peer_uid
 															char *data,
 															mpc_lowcomm_monitor_retcode_t *ret);
 
+/**********************
+ * EVENT LOOP SUPPORT *
+ **********************/
+
+typedef void (*mpc_lowcomm_monitor_worker_callback_t)(void *ctx);
+
+int mpc_lowcomm_monitor_event_loop_push(mpc_lowcomm_monitor_worker_callback_t callback, void *arg);
+
 /*************************
  * GET CONNECTIVITY INFO *
  *************************/

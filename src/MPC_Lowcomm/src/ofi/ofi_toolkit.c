@@ -224,13 +224,13 @@ void mpc_lowcomm_ofi_setup_hints_from_config(struct fi_info* hint, struct _mpc_l
  * @param state the route state (CONNECTED / UNCONNECTED ...)
  * @return _mpc_lowcomm_endpoint_t* the created MPC endpoint
  */
-_mpc_lowcomm_endpoint_t* mpc_lowcomm_ofi_add_route(int dest, void* ctx, sctk_rail_info_t* rail, _mpc_lowcomm_endpoint_type_t origin, _mpc_lowcomm_endpoint_state_t state)
+_mpc_lowcomm_endpoint_t* mpc_lowcomm_ofi_add_route(mpc_lowcomm_peer_uid_t dest, void* ctx, sctk_rail_info_t* rail, _mpc_lowcomm_endpoint_type_t origin, _mpc_lowcomm_endpoint_state_t state)
 {
 	assert(rail);
 	_mpc_lowcomm_endpoint_t * route = sctk_malloc(sizeof(_mpc_lowcomm_endpoint_t));
 	assert(route);
 
-	_mpc_lowcomm_endpoint_init(route, mpc_lowcomm_monitor_local_uid_of(dest), rail, origin);
+	_mpc_lowcomm_endpoint_init(route, dest, rail, origin);
 	_mpc_lowcomm_endpoint_set_state(route, state);
 
 	route->data.ofi.ctx = ctx;

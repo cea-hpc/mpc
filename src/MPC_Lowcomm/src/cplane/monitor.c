@@ -56,6 +56,10 @@ static struct _mpc_lowcomm_monitor_s __monitor = { 0 };
 
 typedef struct __monitor_work_context_s
 {
+	/* Params for event loop callbacks */
+	mpc_lowcomm_monitor_worker_callback_t callback;
+	void * ctx;
+	/* Params for query handling */
 	_mpc_lowcomm_client_ctx_t * client;
 	_mpc_lowcomm_monitor_wrap_t * data;
 	struct __monitor_work_context_s * next;
@@ -97,6 +101,22 @@ static inline __monitor_work_context_t * __monitor_work_context_new(_mpc_lowcomm
 
 	ret->client = ctx;
 	ret->data = data;
+	ret->callback = NULL;
+	ret->ctx = NULL;
+
+	return ret;
+}
+
+static inline __monitor_work_context_t * __monitor_work_context_new_callback(mpc_lowcomm_monitor_worker_callback_t *callback, void * ctx)
+{
+	__monitor_work_context_t * ret = sctk_malloc(sizeof(__monitor_work_context_t));
+
+	assume(ret != NULL);
+
+	ret->client = NULL;
+	ret->data = NULL;
+	ret->callback = callback;
+	ret->ctx = ctx;
 
 	return ret;
 }
@@ -117,6 +137,20 @@ int __monitor_worker_work_push(_mpc_lowcomm_client_ctx_t * ctx, _mpc_lowcomm_mon
 	sem_post(&__worker.semaphore);
 
 	return 0;
+}
+
+int __monitor_worker_work_push_callback(mpc_lowcomm_monitor_worker_callback_t callback, void * ctx)
+{
+	__monitor_work_context_t * new = __monitor_work_context_new_callback(callback, ctx);
+	__monitor_worker_push(new);
+	sem_post(&__worker.semaphore);
+
+	return 0;
+}
+
+int mpc_lowcomm_monitor_event_loop_push(mpc_lowcomm_monitor_worker_callback_t callback, void *arg)
+{
+	return __monitor_worker_work_push_callback(callback, arg);
 }
 
 int __monitor_work_context_free(__monitor_work_context_t * wc)
@@ -146,10 +180,16 @@ static void * __worker_loop(void *pwork)
 
 		if(work)
 		{
+			if(work->callback)
+			{
+				(work->callback)(work->ctx);
+			}
+			else
+			{
 			//_mpc_lowcomm_monitor_wrap_print(work->data, "PROCESSING");
-
-			__handle_query(work->client, work->data);
-			__monitor_work_context_free(work);
+				__handle_query(work->client, work->data);
+				__monitor_work_context_free(work);
+			}
 		}
 
 	}

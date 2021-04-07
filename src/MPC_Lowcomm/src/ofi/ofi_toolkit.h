@@ -31,7 +31,7 @@ extern "C"
 #include <mpc_lowcomm_types.h>
 #include <mpc_common_asm.h>
 #include "ofi_types.h"
-
+#include <mpc_lowcomm_monitor.h>
 
 #define MPC_LOWCOMM_OFI_EQ_SIZE 64
 #define MPC_LOWCOMM_OFI_CQ_SIZE 64
@@ -41,7 +41,7 @@ extern "C"
 
 void mpc_lowcomm_ofi_setup_hints_from_config(struct fi_info* hint, struct _mpc_lowcomm_config_struct_net_driver_ofi config);
 void mpc_lowcomm_ofi_init_provider(mpc_lowcomm_ofi_rail_info_t* rail, struct fi_info* hint);
-_mpc_lowcomm_endpoint_t* mpc_lowcomm_ofi_add_route(int dest, void* ctx, sctk_rail_info_t* rail, _mpc_lowcomm_endpoint_type_t origin, _mpc_lowcomm_endpoint_state_t state);
+_mpc_lowcomm_endpoint_t* mpc_lowcomm_ofi_add_route(mpc_lowcomm_peer_uid_t dest, void* ctx, sctk_rail_info_t* rail, _mpc_lowcomm_endpoint_type_t origin, _mpc_lowcomm_endpoint_state_t state);
 
 /**
  * @brief elect the proper fabric datatype from MPC datatype

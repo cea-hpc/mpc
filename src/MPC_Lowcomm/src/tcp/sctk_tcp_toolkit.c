@@ -403,6 +403,8 @@ void tcp_on_demand_connection_handler(sctk_rail_info_t *rail, mpc_lowcomm_peer_u
 	{
 		mpc_common_debug_fatal("Could not connect to UID %lu", dest_process);
 	}
+
+	mpc_lowcomm_monitor_response_free(resp);
 }
 
 static int __tcp_on_demand_callback(mpc_lowcomm_peer_uid_t from,

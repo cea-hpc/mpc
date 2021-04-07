@@ -33,6 +33,7 @@
 #include <mpc_common_datastructure.h>
 #include <mpc_common_rank.h>
 #include <mpc_launch_pmi.h>
+#include <mpc_lowcomm_monitor.h>
 
 /** Lookup table to cache contexts associated to each endpoint */
 mpc_lowcomm_ofi_ep_t* *ctx_ep_table = NULL;
@@ -126,10 +127,10 @@ static inline void __mpc_lowcomm_ofi_msg_post_recv(mpc_lowcomm_ofi_ep_t* ep_ctx)
  * @param infos actual infos used to initialize a fabric endpoint (content depends on the 'side' parameter)
  * @return mpc_lowcomm_ofi_ep_t* the newly allocated context for the created endpoint/route
  */
-static inline mpc_lowcomm_ofi_ep_t* __mpc_lowcomm_ofi_register_endpoint(sctk_rail_info_t* rail, int remote, int side, _mpc_lowcomm_endpoint_type_t origin, char* infos)
+static inline mpc_lowcomm_ofi_ep_t* __mpc_lowcomm_ofi_register_endpoint(sctk_rail_info_t* rail, mpc_lowcomm_peer_uid_t remote, int side, _mpc_lowcomm_endpoint_type_t origin, char* infos)
 {
 	assert(rail);
-	assert(remote >= 0 && remote !=  mpc_common_get_process_rank());
+	assert(remote !=  mpc_lowcomm_monitor_get_uid());
 	assert(side == MPC_LOWCOMM_OFI_PASSIVE_SIDE || side == MPC_LOWCOMM_OFI_ACTIVE_SIDE);
 	mpc_lowcomm_ofi_ep_t* ep_ctx = NULL;
 	mpc_lowcomm_ofi_rail_info_t* orail = NULL;
@@ -180,7 +181,7 @@ static inline mpc_lowcomm_ofi_ep_t* __mpc_lowcomm_ofi_register_endpoint(sctk_rai
 		.lock            = SCTK_SPINLOCK_INITIALIZER,
 		.spec.msg.sz_buf = 0
 	};
-	
+
 	/* both these calls are enabling the endpoint */
 	if(side == MPC_LOWCOMM_OFI_ACTIVE_SIDE)
 	{
@@ -411,8 +412,19 @@ static inline void __mpc_lowcomm_ofi_poll_cq(sctk_rail_info_t* rail, struct fid_
  */
 static inline void __sctk_network_ofi_bootstrap(sctk_rail_info_t* rail)
 {
+
 	assert(rail);
 	mpc_lowcomm_ofi_rail_info_t* orail = &rail->network.ofi;
+	orail->name_info_sz = FI_NAME_MAX;
+
+	/* initialize a passive ep, always ready to listen for new connections */
+	__sctk_network_ofi_run_passive(orail);
+
+	/* retrieve the passive endpoint ID for the current process */
+	MPC_LOWCOMM_OFI_CHECK_RC(fi_getname((fid_t)orail->spec.msg.pep, orail->name_info, &orail->name_info_sz));
+
+	/* This is the old ring code left here for reference of how to connect */
+#if 0
 	mpc_lowcomm_ofi_ep_t* ctx_connect = NULL, *ctx_accept = NULL;
 	unsigned char raw_connection_infos[MPC_COMMON_MAX_STRING_SIZE], *connection_infos;
 	int right_rank, my_rank, nb_ranks;
@@ -424,14 +436,7 @@ static inline void __sctk_network_ofi_bootstrap(sctk_rail_info_t* rail)
 	will_connect = my_rank == 0 || nb_ranks >2;
 	will_accept = my_rank == 1 || nb_ranks > 2;
 	right_rank = ( my_rank + 1 ) % nb_ranks;
-	orail->name_info_sz = FI_NAME_MAX;
 
-	/* initialize a passive ep, always ready to listen for new connections */
-	__sctk_network_ofi_run_passive(orail);
-
-	/* retrieve the passive endpoint ID for the current process */
-	MPC_LOWCOMM_OFI_CHECK_RC(fi_getname((fid_t)orail->spec.msg.pep, orail->name_info, &orail->name_info_sz));
-	
 	/* it has to be encoded because what fi_getname() returns is not always PMI-format compatible (strings) */
 	connection_infos = mpc_common_datastructure_base64_encode((unsigned char*)orail->name_info, orail->name_info_sz, NULL);
 	assume ( mpc_launch_pmi_put_as_rank((char *)connection_infos, rail->rail_number, 0 ) == 0 );
@@ -478,6 +483,7 @@ static inline void __sctk_network_ofi_bootstrap(sctk_rail_info_t* rail)
 	 * But this is "only" the second barrier of the driver initialisation 
 	*/
 	mpc_launch_pmi_barrier();
+#endif
 }
 
 /**
@@ -537,37 +543,6 @@ static void _mpc_lowcomm_ofi_send_message ( mpc_lowcomm_ptp_message_t *msg, _mpc
 }
 
 /**
- * Not used for this network.
- * \param[in] msg not used
- * \param[in] rail not used
- */
-static void _mpc_lowcomm_ofi_notify_receive ( __UNUSED__ mpc_lowcomm_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail ) {}
-
-/**
- * Not used for this network.
- * \param[in] msg not used
- * \param[in] rail not used
- */
-static void _mpc_lowcomm_ofi_notify_matching (  __UNUSED__ mpc_lowcomm_ptp_message_t *msg,  __UNUSED__ sctk_rail_info_t *rail ) {}
-
-/**
- * Not used for this network.
- * \param[in] remote not used
- * \param[in] remote_task_id not used
- * \param[in] polling_task_id not used
- * \param[in] blocking not used
- * \param[in] rail not used
- */
-static void _mpc_lowcomm_ofi_notify_perform (  __UNUSED__ int remote,  __UNUSED__ int remote_task_id,  __UNUSED__ int polling_task_id,  __UNUSED__ int blocking, __UNUSED__  sctk_rail_info_t *rail ) {}
-
-/**
- * Not used for this network.
- * \param[in] msg not used
- * \param[in] rail not used
- */
-static void _mpc_lowcomm_ofi_notify_anysource ( __UNUSED__  int polling_task_id, __UNUSED__ int blocking,  __UNUSED__ sctk_rail_info_t *rail ) {}
-
-/**
  * Called by idle threads to progress messages.
  * \param[in] rail the rail where communications should be progressed on
  */
@@ -611,6 +586,12 @@ void sctk_network_finalize_ofi_msg(sctk_rail_info_t *rail)
     sctk_free(rail->network_name);
 }
 
+static char * __ofi_rail_name(sctk_rail_info_t *rail, char * buff, int bufflen)
+{
+	snprintf(buff, bufflen, "ofi_%d", rail->rail_number);
+	return buff;
+}
+
 /**
  * @brief Create on-demand route when asked by low_level_comm.
  * 
@@ -620,25 +601,73 @@ void sctk_network_finalize_ofi_msg(sctk_rail_info_t *rail)
  * @param rail the rail owning the future route
  * @param dest_process the process to connect to
  */
-void mpc_lowcomm_ofi_msg_on_demand_handler( sctk_rail_info_t *rail, int dest_process )
+void mpc_lowcomm_ofi_msg_on_demand_handler( struct sctk_rail_info_s *rail, mpc_lowcomm_peer_uid_t dest_process )
 {
 	assert(rail);
 	assert(dest_process >= 0 && dest_process !=  mpc_common_get_process_rank());
 
 	mpc_lowcomm_ofi_ep_t* ep_ctx = NULL;
-	unsigned char raw_connection_infos[MPC_COMMON_MAX_STRING_SIZE], *connection_infos;
+	unsigned char *connection_infos = NULL;
 
-	/* initiate a new connection attempt to the remote side */
-	assume ( mpc_launch_pmi_get_as_rank ((char *)raw_connection_infos, MPC_COMMON_MAX_STRING_SIZE, rail->rail_number, dest_process ) == 0 );
-	connection_infos = mpc_common_datastructure_base64_decode(raw_connection_infos, strlen((char*)raw_connection_infos), NULL);
+	char rail_name[32];
+	mpc_lowcomm_monitor_retcode_t ret = MPC_LAUNCH_MONITOR_RET_SUCCESS;
+
+	mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_ondemand(dest_process,
+																	   __ofi_rail_name(rail, rail_name, 32),
+																	   "",
+																	   &ret);
+
+	if(ret != MPC_LAUNCH_MONITOR_RET_SUCCESS)
+	{
+		mpc_common_debug_fatal("Could not connect to UID %lu", dest_process);
+	}
+
+	mpc_lowcomm_monitor_args_t *content = mpc_lowcomm_monitor_response_get_content(resp);
+
+	connection_infos = mpc_common_datastructure_base64_decode(content->on_demand.data, strlen(content->on_demand.data), NULL);
+
 	ep_ctx = __mpc_lowcomm_ofi_register_endpoint(rail, dest_process, MPC_LOWCOMM_OFI_ACTIVE_SIDE, _MPC_LOWCOMM_ENDPOINT_DYNAMIC, (char*)connection_infos);
-	
+
 	/* Wait for route completion, this function cannot be exited without this guarantee... */
 	while(_mpc_lowcomm_endpoint_get_state((_mpc_lowcomm_endpoint_t*)ep_ctx->sctk_ep) != _MPC_LOWCOMM_ENDPOINT_CONNECTED)
 	{
-		mpc_thread_yield();
+		(void) __mpc_lowcomm_ofi_poll_eq(rail);
 	}
+
+	mpc_lowcomm_monitor_response_free(resp);
 }
+
+
+static int __ofi_monitor_callback(mpc_lowcomm_peer_uid_t from,
+								  char *data,
+								  char * return_data,
+								  int return_data_len,
+								  void *ctx)
+{
+	sctk_rail_info_t *rail = (sctk_rail_info_t *)ctx;
+	mpc_lowcomm_ofi_rail_info_t* orail = &rail->network.ofi;
+
+	/* Here we return the encoded OFI connection infos */
+	char * connection_infos = mpc_common_datastructure_base64_encode((unsigned char*)orail->name_info, orail->name_info_sz, NULL);
+
+	assume(connection_infos != NULL);
+	assume(strlen(connection_infos) < return_data_len);
+
+	snprintf(return_data, return_data_len, "%s", connection_infos);
+
+	sctk_free(connection_infos);
+
+	return 0;
+}
+
+static inline void __register_in_monitor(sctk_rail_info_t *rail)
+{
+	char rail_name[32];
+	__ofi_rail_name(rail, rail_name, 32);
+
+	mpc_lowcomm_monitor_register_on_demand_callback(rail_name, __ofi_monitor_callback, rail);
+}
+
 
 /**
  * @brief test to assess if current rail supports fetch_and_op operations.
@@ -840,11 +869,11 @@ void sctk_network_init_ofi_msg( sctk_rail_info_t *rail )
 
 	/* Register Hooks in rail */
 	rail->send_message_endpoint     = _mpc_lowcomm_ofi_send_message;
-	rail->notify_recv_message       = _mpc_lowcomm_ofi_notify_receive;
-	rail->notify_matching_message   = _mpc_lowcomm_ofi_notify_matching;
-	rail->notify_perform_message    = _mpc_lowcomm_ofi_notify_perform;
+	rail->notify_recv_message       = NULL;
+	rail->notify_matching_message   = NULL;
+	rail->notify_perform_message    = NULL;
 	rail->notify_idle_message       = _mpc_lowcomm_ofi_notify_idle;
-	rail->notify_any_source_message = _mpc_lowcomm_ofi_notify_anysource;
+	rail->notify_any_source_message = NULL;
 	rail->send_message_from_network = sctk_send_message_from_network_ofi_msg;
 	rail->driver_finalize           = sctk_network_finalize_ofi_msg;
 	rail->control_message_handler   = sctk_network_ofi_control_message_handler;
@@ -858,6 +887,8 @@ void sctk_network_init_ofi_msg( sctk_rail_info_t *rail )
 	rail->rdma_fetch_and_op      = NULL;
 	rail->rdma_cas_gate          = mpc_lowcomm_ofi_msg_cas_gate;
 	rail->rdma_cas               = NULL;
+
+	__register_in_monitor(rail);
 
 	/* generic initialization */
 	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, mpc_lowcomm_ofi_msg_on_demand_handler );
