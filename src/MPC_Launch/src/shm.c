@@ -12,10 +12,10 @@
 #include <sys/types.h>
 
 /*********************
- * PMI DATA EXCHANGE *
- *********************/
+* PMI DATA EXCHANGE *
+*********************/
 
-static inline char * __get_per_node_unique_name(char * buff, int len)
+static inline char *__get_per_node_unique_name(char *buff, int len)
 {
 	buff[0] = '\0';
 
@@ -32,7 +32,7 @@ static inline char * __get_per_node_unique_name(char * buff, int len)
 	close(fd);
 	unlink(local_buff);
 
-	char * slash = strrchr(local_buff, '/');
+	char *slash = strrchr(local_buff, '/');
 
 	if(slash)
 	{
@@ -45,18 +45,19 @@ static inline char * __get_per_node_unique_name(char * buff, int len)
 	}
 }
 
-static inline char * __get_per_node_segment_key(char *buff, int len)
+static inline char *__get_per_node_segment_key(char *buff, int len)
 {
 	static unsigned int segment_id = 0;
+
 	snprintf(buff, len, "mpc-shm-filename-%d-%d", mpc_common_get_node_rank(), ++segment_id);
-    return buff;
+	return buff;
 }
 
-
-static inline void * __map_shm_segment_pmi(size_t size)
+static inline void *__map_shm_segment_pmi(size_t size)
 {
 	char segment_name[128];
 	char segment_key[32];
+
 	__get_per_node_segment_key(segment_key, 32);
 
 	int shm_fd = -1;
@@ -92,15 +93,15 @@ static inline void * __map_shm_segment_pmi(size_t size)
 	/* Now time to retrieve the local segments in non leaders */
 	if(mpc_common_get_local_process_rank() != 0)
 	{
-        segment_name[0] = '\0';
+		segment_name[0] = '\0';
 
 		/* First get the segment name */
-        mpc_launch_pmi_get(segment_name, 128, segment_key, 1 /* local to node */);
+		mpc_launch_pmi_get(segment_name, 128, segment_key, 1 /* local to node */);
 
-        if(!strlen(segment_name))
-        {
-            mpc_common_debug_fatal("Failed to retrieve shm segment name");
-        }
+		if(!strlen(segment_name) )
+		{
+			mpc_common_debug_fatal("Failed to retrieve shm segment name");
+		}
 
 		shm_fd = shm_open(segment_name, O_RDWR, 0600);
 
@@ -111,15 +112,15 @@ static inline void * __map_shm_segment_pmi(size_t size)
 		}
 	}
 
-    assume(0 < shm_fd);
+	assume(0 < shm_fd);
 
-	void * ret = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+	void *ret = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
 
-    if(ret == NULL)
-    {
-        perror("mmap");
+	if(ret == NULL)
+	{
+		perror("mmap");
 		mpc_common_debug_fatal("Failed to map shm segment");
-    }
+	}
 
 	mpc_launch_pmi_barrier();
 
@@ -128,14 +129,14 @@ static inline void * __map_shm_segment_pmi(size_t size)
 		shm_unlink(segment_name);
 	}
 
-    return ret;
+	return ret;
 }
 
 /*********************
- * MPI DATA EXCHANGE *
- *********************/
+* MPI DATA EXCHANGE *
+*********************/
 
-static inline void * __map_shm_segment_mpi(size_t size, mpc_launch_shm_exchange_params_t * params)
+static inline void *__map_shm_segment_mpi(size_t size, mpc_launch_shm_exchange_params_t *params)
 {
 	assume(params != NULL);
 	assume(params->mpi.rank != NULL);
@@ -189,13 +190,13 @@ static inline void * __map_shm_segment_mpi(size_t size, mpc_launch_shm_exchange_
 
 	assume(0 < shm_fd);
 
-	void * ret = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+	void *ret = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
 
-    if(ret == NULL)
-    {
-        perror("mmap");
+	if(ret == NULL)
+	{
+		perror("mmap");
 		mpc_common_debug_fatal("Failed to map shm segment");
-    }
+	}
 
 	(params->mpi.barrier)(params->mpi.pcomm);
 
@@ -208,20 +209,21 @@ static inline void * __map_shm_segment_mpi(size_t size, mpc_launch_shm_exchange_
 }
 
 /********************************
- * MPC LAUNCH SHM MAP INTERFACE *
- ********************************/
+* MPC LAUNCH SHM MAP INTERFACE *
+********************************/
 
-void * mpc_launch_shm_map(size_t size, mpc_launch_shm_exchange_method_t method, mpc_launch_shm_exchange_params_t * params)
+void *mpc_launch_shm_map(size_t size, mpc_launch_shm_exchange_method_t method, mpc_launch_shm_exchange_params_t *params)
 {
-    switch (method)
-    {
+	switch(method)
+	{
 		case MPC_LAUNCH_SHM_USE_MPI:
 			return __map_shm_segment_mpi(size, params);
+
 		case MPC_LAUNCH_SHM_USE_PMI:
 			return __map_shm_segment_pmi(size);
-    }
+	}
 
-    return NULL;
+	return NULL;
 }
 
 int mpc_launch_shm_unmap(void *ptr, size_t size)
