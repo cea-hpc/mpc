@@ -483,7 +483,6 @@ __mpcomp_init_omp_task_tree( const int num_mvps, int *shape, const int *cpus_ord
  */
 static inline void __mpcomp_read_env_variables()
 {
-
 	/* Ensure larceny mode for tasks is read from string and then locked */
 	__omp_conf.omp_task_larceny_mode = mpcomp_task_parse_larceny_mode(__omp_conf.omp_task_larceny_mode_str);
 	/* We lock as we wont parse future updates */
@@ -777,7 +776,7 @@ static inline void __mpcomp_read_env_variables()
 	}
 
 	/***** PRINT SUMMARY (only first MPI rank) ******/
-	if ( getenv( "MPC_DISABLE_BANNER" ) == NULL && mpc_common_get_task_rank() == 0 )
+	if ( getenv( "MPC_DISABLE_BANNER" ) == NULL &&  mpc_common_get_process_rank() == 0)
 	{
                 mpc_common_debug_log("--------------------------------------------------");
 		mpc_common_debug_log(
@@ -787,7 +786,7 @@ static inline void __mpcomp_read_env_variables()
 		mpc_common_debug_log("\tOpenMP 3 Tasking on:\n"
                 "\t\tOMP_NEW_TASKS_DEPTH=%d\n"
                 "\t\tOMP_TASK_LARCENY_MODE=%d\n"
-		"\t\tOMP_TASK_NESTING_MAX=%d\n"
+		        "\t\tOMP_TASK_NESTING_MAX=%d\n"
                 "\t\tOMP_TASK_MAX_DELAYED=%d\n"
                 "\t\tOMP_TASK_USE_LOCKFREE_QUEUE=%d\n"
                 "\t\tOMP_TASK_STEAL_LAST_STOLEN_LIST=%d\n"
