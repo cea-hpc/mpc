@@ -25,6 +25,7 @@
 #include <mpc_common_rank.h>
 #include <mpc_topology.h>
 #include <multirail.h>
+#include <mpc_lowcomm_monitor.h>
 
 #include <sctk_alloc.h>
 
@@ -112,7 +113,7 @@ static void _mpc_lowcomm_topological_send_message(mpc_lowcomm_ptp_message_t *msg
 	endpoint_rail->send_message_endpoint(msg, topo_endpoint);
 }
 
-void topological_on_demand_connection_handler(sctk_rail_info_t *rail, int dest_process)
+void topological_on_demand_connection_handler(sctk_rail_info_t *rail, mpc_lowcomm_peer_uid_t dest_process)
 {
 	int vp_id = mpc_topology_get_pu();
 

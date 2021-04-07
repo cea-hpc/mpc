@@ -41,22 +41,22 @@ char * ofi_req_type_decoder[] = {
 	"MPC_LOWCOMM_OFI_TYPE_NB"
 };
 
-fi_addr_t* rank_av_map;
+struct mpc_common_hashtable __rank_av_map;
 
-static inline fi_addr_t __mpc_lowcomm_ofi_rdma_get_peer(int rank)
+static inline fi_addr_t __mpc_lowcomm_ofi_rdma_get_peer(mpc_lowcomm_peer_uid_t rank)
 {
-	assert(rank >= 0);
-	assert(rank < mpc_common_get_process_count());
-	assert(rank_av_map[rank] != FI_ADDR_UNSPEC);
-
-	return rank_av_map[rank];
+	fi_addr_t* ret = (fi_addr_t *)mpc_common_hashtable_get(&__rank_av_map, rank);
+	assume(ret != NULL);
+	assert(*ret != FI_ADDR_UNSPEC);
+	return *ret;
 }
 
-static inline void __mpc_lowcomm_ofi_rdma_set_peer(int rank, fi_addr_t addr)
+static inline void __mpc_lowcomm_ofi_rdma_set_peer(mpc_lowcomm_peer_uid_t rank, fi_addr_t addr)
 {
-	assert(rank >= 0);
-	assert(rank < mpc_common_get_process_count());
-	rank_av_map[rank] = addr;
+	fi_addr_t * new = sctk_malloc(sizeof(fi_addr_t));
+	assume(new != NULL);
+	*new = addr;
+	mpc_common_hashtable_set(&__rank_av_map, rank, new);
 }
 
 static inline void __mpc_lowcomm_ofi_rdv_message_copy(mpc_lowcomm_ptp_message_content_to_copy_t* copy)
@@ -125,7 +125,7 @@ static inline void __mpc_lowcomm_ofi_rdv_message_copy(mpc_lowcomm_ptp_message_co
 }
 
 
-static inline mpc_lowcomm_ofi_ep_t* __mpc_lowcomm_ofi_rdma_register_endpoint(sctk_rail_info_t* rail, int remote, _mpc_lowcomm_endpoint_type_t origin, char* infos)
+static inline mpc_lowcomm_ofi_ep_t* __mpc_lowcomm_ofi_rdma_register_endpoint(sctk_rail_info_t* rail, mpc_lowcomm_peer_uid_t remote, _mpc_lowcomm_endpoint_type_t origin, char* infos)
 {
 	mpc_lowcomm_ofi_ep_t* ctx = sctk_malloc(sizeof(mpc_lowcomm_ofi_ep_t));
 	*ctx = (mpc_lowcomm_ofi_ep_t)
@@ -194,7 +194,9 @@ static inline void __mpc_lowcomm_ofi_rdma_init(sctk_rail_info_t* rail)
 
 	size_t nb_processes = mpc_common_get_process_count();
 
-	rank_av_map = sctk_malloc(sizeof(fi_addr_t) * nb_processes);
+	assume(sizeof(fi_addr_t) == sizeof(void *));
+	mpc_common_hashtable_init(&__rank_av_map, nb_processes);
+
 	for (i = 0; i < nb_processes; i++)
 	{
 		__mpc_lowcomm_ofi_rdma_set_peer(i, FI_ADDR_UNSPEC);
@@ -234,6 +236,15 @@ static inline void __mpc_lowcomm_ofi_rdma_init(sctk_rail_info_t* rail)
 static inline void __sctk_network_ofi_rdma_bootstrap(sctk_rail_info_t* rail)
 {
 	mpc_lowcomm_ofi_rail_info_t* orail = &rail->network.ofi;
+	orail->name_info_sz = FI_NAME_MAX;
+
+	__mpc_lowcomm_ofi_rdma_init(rail);
+
+	/* retrieve the ID for the current process */
+	MPC_LOWCOMM_OFI_CHECK_RC(fi_getname(&orail->spec.rdma.sep->fid, orail->name_info, &orail->name_info_sz));
+
+
+#if 0
 	unsigned char raw_connection_infos[MPC_COMMON_MAX_STRING_SIZE], *connection_infos;
 	int right_rank, left_rank, my_rank, nb_ranks;
 	int need_right, need_left;
@@ -244,13 +255,7 @@ static inline void __sctk_network_ofi_rdma_bootstrap(sctk_rail_info_t* rail)
 	need_left = my_rank == 1 || nb_ranks > 2;
 	right_rank = ( my_rank + 1 ) % nb_ranks;
 	left_rank = ( my_rank - 1 + nb_ranks ) % nb_ranks;
-	
-	orail->name_info_sz = FI_NAME_MAX;
 
-	__mpc_lowcomm_ofi_rdma_init(rail);
-
-	/* retrieve the ID for the current process */
-	MPC_LOWCOMM_OFI_CHECK_RC(fi_getname(&orail->spec.rdma.sep->fid, orail->name_info, &orail->name_info_sz));
 
 	/* it has to be encoded because what fi_getname() returns is not always PMI-format compatible (strings) */
 	connection_infos = mpc_common_datastructure_base64_encode((unsigned char*)orail->name_info, orail->name_info_sz, NULL);
@@ -283,7 +288,7 @@ static inline void __sctk_network_ofi_rdma_bootstrap(sctk_rail_info_t* rail)
 	}
 
 	mpc_launch_pmi_barrier();
-
+#endif
 }
 
 /**
@@ -467,17 +472,71 @@ static inline int sctk_send_message_from_network_ofi_rdma ( mpc_lowcomm_ptp_mess
 
 void sctk_network_finalize_ofi_rdma(sctk_rail_info_t *rail)
 {
+	mpc_common_hashtable_release(&__rank_av_map);
 	sctk_free(rail->network_name);
 }
 
-void mpc_lowcomm_ofi_rdma_on_demand_handler( sctk_rail_info_t *rail, int dest_process )
-{	
-	unsigned char raw_connection_infos[MPC_COMMON_MAX_STRING_SIZE], *connection_infos;
 
-	/* initiate a new connection attempt to the remote side */
-	assume ( mpc_launch_pmi_get_as_rank ((char *)raw_connection_infos, MPC_COMMON_MAX_STRING_SIZE, rail->rail_number, dest_process ) == 0 );
-	connection_infos = mpc_common_datastructure_base64_decode(raw_connection_infos, strlen((char*)raw_connection_infos), NULL);
+static char * __ofi_rdma_rail_name(sctk_rail_info_t *rail, char * buff, int bufflen)
+{
+	snprintf(buff, bufflen, "ofi_rdma_%d", rail->rail_number);
+	return buff;
+}
+
+
+void mpc_lowcomm_ofi_rdma_on_demand_handler( sctk_rail_info_t *rail, mpc_lowcomm_peer_uid_t dest_process )
+{
+	unsigned char *connection_infos;
+
+	char rail_name[32];
+	mpc_lowcomm_monitor_retcode_t ret = MPC_LAUNCH_MONITOR_RET_SUCCESS;
+
+	mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_ondemand(dest_process,
+																	   __ofi_rdma_rail_name(rail, rail_name, 32),
+																	   "",
+																	   &ret);
+
+	if(ret != MPC_LAUNCH_MONITOR_RET_SUCCESS)
+	{
+		mpc_common_debug_fatal("Could not connect to UID %lu", dest_process);
+	}
+
+	mpc_lowcomm_monitor_args_t *content = mpc_lowcomm_monitor_response_get_content(resp);
+
+	connection_infos = mpc_common_datastructure_base64_decode(content->on_demand.data, strlen(content->on_demand.data), NULL);
 	__mpc_lowcomm_ofi_rdma_register_endpoint(rail, dest_process, _MPC_LOWCOMM_ENDPOINT_DYNAMIC, (char*)connection_infos);
+
+	mpc_lowcomm_monitor_response_free(resp);
+}
+
+static int __ofi_rdma_monitor_callback(mpc_lowcomm_peer_uid_t from,
+								  char *data,
+								  char * return_data,
+								  int return_data_len,
+								  void *ctx)
+{
+	sctk_rail_info_t *rail = (sctk_rail_info_t *)ctx;
+	mpc_lowcomm_ofi_rail_info_t* orail = &rail->network.ofi;
+
+	/* Here we return the encoded OFI connection infos */
+	char * connection_infos = mpc_common_datastructure_base64_encode((unsigned char*)orail->name_info, orail->name_info_sz, NULL);
+
+	assume(connection_infos != NULL);
+	assume(strlen(connection_infos) < return_data_len);
+
+	snprintf(return_data, return_data_len, "%s", connection_infos);
+
+	sctk_free(connection_infos);
+
+	return 0;
+}
+
+static inline void __rdma_register_in_monitor(sctk_rail_info_t *rail)
+{
+	char rail_name[32];
+	__ofi_rdma_rail_name(rail, rail_name, 32);
+
+	mpc_lowcomm_monitor_register_on_demand_callback(rail_name, __ofi_rdma_monitor_callback, rail);
 }
 
 void sctk_network_ofi_rdma_control_message_handler( __UNUSED__ struct sctk_rail_info_s * rail, __UNUSED__ int source_process, __UNUSED__ int source_rank, __UNUSED__ char subtype, __UNUSED__ char param, __UNUSED__ void * data, __UNUSED__ size_t size )
@@ -498,6 +557,8 @@ void sctk_network_init_ofi_rdma( sctk_rail_info_t *rail )
 	rail->send_message_from_network = sctk_send_message_from_network_ofi_rdma;
 	rail->driver_finalize           = sctk_network_finalize_ofi_rdma;
 	rail->control_message_handler   = sctk_network_ofi_rdma_control_message_handler;
+
+	__rdma_register_in_monitor(rail);
 
 	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, mpc_lowcomm_ofi_rdma_on_demand_handler );
 

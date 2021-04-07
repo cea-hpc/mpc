@@ -2639,10 +2639,10 @@ void mpc_lowcomm_ptp_message_recv(mpc_lowcomm_ptp_message_t *msg)
 {
 	int need_check = !_mpc_comm_is_remote_rank(SCTK_MSG_DEST_TASK(msg) );
 
-	mpc_common_debug("RECV from %d (size %ld) %s COMM %d T %d", SCTK_MSG_SRC_TASK(msg),
+	mpc_common_debug("RECV from %d (size %ld) %s COMM %lu T %d", SCTK_MSG_SRC_TASK(msg),
 	                 SCTK_MSG_SIZE(msg),
 	                 mpc_lowcomm_ptp_message_class_name[(int)SCTK_MSG_SPECIFIC_CLASS(msg)],
-	                 SCTK_MSG_COMMUNICATOR(msg),
+	                 SCTK_MSG_COMMUNICATOR_ID(msg),
 	                 SCTK_MSG_TAG(msg) );
 
 	_mpc_comm_ptp_message_recv_check(msg, need_check);

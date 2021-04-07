@@ -857,6 +857,11 @@ void sctk_network_ofi_control_message_handler( __UNUSED__ struct sctk_rail_info_
 	/* nothing to do for now... */
 }
 
+static void _mpc_lowcomm_ofi_msg_notify_anysource ( int polling_task_id, int blocking, sctk_rail_info_t *rail )
+{
+	_mpc_lowcomm_ofi_notify_idle(rail);
+}
+
 /**
  * @brief Initialize a libfabric rail, in connected mode.
  * 
@@ -873,7 +878,7 @@ void sctk_network_init_ofi_msg( sctk_rail_info_t *rail )
 	rail->notify_matching_message   = NULL;
 	rail->notify_perform_message    = NULL;
 	rail->notify_idle_message       = _mpc_lowcomm_ofi_notify_idle;
-	rail->notify_any_source_message = NULL;
+	rail->notify_any_source_message = _mpc_lowcomm_ofi_msg_notify_anysource;
 	rail->send_message_from_network = sctk_send_message_from_network_ofi_msg;
 	rail->driver_finalize           = sctk_network_finalize_ofi_msg;
 	rail->control_message_handler   = sctk_network_ofi_control_message_handler;
