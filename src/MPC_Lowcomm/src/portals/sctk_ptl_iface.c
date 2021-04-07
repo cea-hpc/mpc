@@ -212,11 +212,14 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims)
 	size_t eager_size = srail->eager_limit;
 
 	sctk_ptl_pte_t * table = NULL;
-	srail->nb_entries = comm_dims;
+	srail->nb_entries = 0;
 	comm_dims += SCTK_PTL_PTE_HIDDEN;
 
 	table = sctk_malloc(sizeof(sctk_ptl_pte_t) * comm_dims); /* one CM, one recovery, one RDMA */
+	
 	mpc_common_hashtable_init(&srail->pt_table, (comm_dims < 64) ? 64 : comm_dims);
+	mpc_common_hashtable_init(&srail->reverse_pt_table, (comm_dims < 64) ? 64 : comm_dims);
+
 
 	for (i = 0; i < SCTK_PTL_PTE_HIDDEN; i++)
 	{
@@ -241,8 +244,6 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims)
 		/*{*/
 			/*table[i].taglocks[j] = SCTK_SPINLOCK_INITIALIZER;*/
 		/*}*/
-		
-		mpc_common_hashtable_set(&srail->pt_table, i, table + i);
 	}
 
 	/* fill the CM queue with preallocated buffers
@@ -253,7 +254,7 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims)
 
 	for (i = SCTK_PTL_PTE_HIDDEN; i < comm_dims; ++i)
 	{
-		sctk_ptl_pte_create(srail, table + i, i);
+		sctk_ptl_pte_create(srail, table + i, i, i);
 	}
 
 	/* create the global EQ, shared by pending MDs */
@@ -274,13 +275,29 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims)
 	sctk_ptl_print_structure(srail);
 }
 
+static inline void __pte_idx_register(sctk_ptl_rail_info_t* srail, ptl_pt_index_t idx, mpc_lowcomm_communicator_id_t comm_id)
+{
+	mpc_lowcomm_communicator_id_t * new = sctk_malloc(sizeof(mpc_lowcomm_communicator_id_t));
+	*new = comm_id - SCTK_PTL_PTE_HIDDEN;
+	mpc_common_debug_error("REVERSE REG %d maps to %llu", idx, *new );
+	mpc_common_hashtable_set(&srail->reverse_pt_table, idx, new);
+}
+
+
+mpc_lowcomm_communicator_id_t sctk_ptl_pte_idx_to_comm_id(sctk_ptl_rail_info_t* srail, ptl_pt_index_t idx)
+{
+	mpc_lowcomm_communicator_id_t* ret = mpc_common_hashtable_get(&srail->reverse_pt_table, idx);
+	assume(ret != NULL);
+	return *ret;
+}
+
 /**
  * Dynamically create a new Portals entry.
  * \param[in] srail the Portals rail
  * \param[out] pte Portals entry pointer, to init
  * \param[in] key the Portals desired ID
  */
-void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t key)
+void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, ptl_pt_index_t requested_index, size_t key)
 {
 	size_t eager_size = srail->eager_limit;
 	/* create the EQ for this PT */
@@ -295,7 +312,7 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_
 		srail->iface,       /* the NI handler */
 		SCTK_PTL_PTE_FLAGS, /* PT entry specific flags */
 		pte->eq,        /* the EQ for this entry */
-		key,           /* the desired index value */
+		requested_index,  /* the desired index value */
 		&pte->idx       /* the effective index value */
 	));
 
@@ -308,10 +325,14 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_
 	 SCTK_PTL_PROT_NONE);
 
 	mpc_common_hashtable_set(&srail->pt_table, key, pte);
-	/* suppose that comm_idx always increase
-	 * We add 1, because  (key + HIDDEN) is an idx */
-	srail->nb_entries = (key + SCTK_PTL_PTE_HIDDEN) + 1;
+
+		mpc_common_debug_error("REG %llu maps to %d", key, pte->idx );
+
+	__pte_idx_register(srail, pte->idx, key);
+
+	srail->nb_entries++;
 }
+
 
 /**
  * Release Portals structure from our program.
@@ -356,6 +377,8 @@ void sctk_ptl_software_fini(sctk_ptl_rail_info_t* srail)
 	/* write 'NULL' to be sure */
 	sctk_free(base_ptr);
 	mpc_common_hashtable_release(&srail->pt_table);
+	mpc_common_hashtable_release(&srail->reverse_pt_table);
+
 	srail->nb_entries = 0;
 
 	if(sctk_ptl_offcoll_enabled(srail))

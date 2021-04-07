@@ -28,6 +28,7 @@
 #include "sctk_net_tools.h"
 
 #include <mpc_common_rank.h>
+#include <mpc_lowcomm_communicator.h>
 
 
 /**
@@ -91,17 +92,25 @@ static inline void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_
 	
 	/* rebuild a complete MPC header msg (inter_thread_comm needs it) */
 	mpc_lowcomm_ptp_message_header_clear(net_msg, MPC_LOWCOMM_MESSAGE_CONTIGUOUS , sctk_ptl_eager_free_memory, sctk_ptl_eager_message_copy);
-	SCTK_MSG_SRC_PROCESS_SET     ( net_msg ,  match.data.rank);
+
+	/* As the UID cannot be transported in the portals matchbit
+	   we need to rebuild it from the (comm + task_id) infos */
+	mpc_lowcomm_communicator_id_t comm_id = sctk_ptl_pte_idx_to_comm_id(&rail->network.ptl, ev.pt_index);
+	mpc_lowcomm_communicator_t comm = mpc_lowcomm_get_communicator_from_id(comm_id);
+	mpc_lowcomm_peer_uid_t process_uid = mpc_lowcomm_communicator_uid_for(comm, match.data.rank);
+
+	SCTK_MSG_SRC_PROCESS_UID_SET ( net_msg ,  process_uid);
 	SCTK_MSG_SRC_TASK_SET        ( net_msg ,  match.data.rank);
-	SCTK_MSG_DEST_PROCESS_SET    ( net_msg ,  mpc_common_get_process_rank());
+	SCTK_MSG_DEST_PROCESS_SET    ( net_msg ,  mpc_lowcomm_monitor_get_uid());
 	SCTK_MSG_DEST_TASK_SET       ( net_msg ,  mpc_common_get_process_rank());
-	SCTK_MSG_COMMUNICATOR_ID_SET ( net_msg ,  ev.pt_index - SCTK_PTL_PTE_HIDDEN);
+	SCTK_MSG_COMMUNICATOR_ID_SET ( net_msg ,  comm_id);
 	SCTK_MSG_TAG_SET             ( net_msg ,  match.data.tag);
 	SCTK_MSG_NUMBER_SET          ( net_msg ,  match.data.uid);
 	SCTK_MSG_MATCH_SET           ( net_msg ,  0);
 	SCTK_MSG_SPECIFIC_CLASS_SET  ( net_msg ,  match.data.type);
 	SCTK_MSG_SIZE_SET            ( net_msg ,  ev.mlength);
 	SCTK_MSG_COMPLETION_FLAG_SET ( net_msg ,  NULL);
+
 
 	/* save the Portals context in the tail
 	 * Whatever the origin, the user_ptr here is the one attached to the PRIORITY one
@@ -124,7 +133,7 @@ static inline void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_
 	/* finish creating an MPC message heder */
 	_mpc_comm_ptp_message_clear_request(net_msg);
 
-	mpc_common_nodebug("PORTALS: RECV-EAGER from %d (idx=%d, match=%s, size=%lu) -> %p", SCTK_MSG_SRC_TASK(net_msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, match.raw), ev.mlength, ev.start);
+	mpc_common_debug("PORTALS: RECV-EAGER from %d (idx=%d, match=%s, size=%lu) -> %p", SCTK_MSG_SRC_TASK(net_msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, match.raw), ev.mlength, ev.start);
 
 	/* notify ther inter_thread_comm a new message has arrived */
 	rail->send_message_from_network(net_msg);
@@ -165,11 +174,12 @@ void sctk_ptl_eager_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_en
 		msg->tail.ptl.copy = 1;
 	}
 
+
 	/* prepare the Put() MD */
 	size                   = SCTK_MSG_SIZE(msg);
 	flags                  = SCTK_PTL_MD_PUT_FLAGS;
 	match.data.tag         = SCTK_MSG_TAG(msg)            % SCTK_PTL_MAX_TAGS;
-	match.data.rank        = SCTK_MSG_SRC_PROCESS(msg)    % SCTK_PTL_MAX_RANKS;
+	match.data.rank        = SCTK_MSG_SRC_TASK(msg)    % SCTK_PTL_MAX_RANKS;
 	match.data.uid         = SCTK_MSG_NUMBER(msg)         % SCTK_PTL_MAX_UIDS;
 	match.data.type        = SCTK_MSG_SPECIFIC_CLASS(msg) % SCTK_PTL_MAX_TYPES;
 	pte                    = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR_ID(msg));
@@ -191,8 +201,9 @@ void sctk_ptl_eager_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_en
 	/* emit the request */
 	sctk_ptl_md_register(srail, request);
 	sctk_ptl_emit_put(request, size, remote, pte, match, 0, 0, hdr.raw, request);
-	
-	mpc_common_nodebug("PORTALS: SEND-EAGER to %d (idx=%d, match=%s, sz=%llu)", SCTK_MSG_DEST_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), size);
+
+
+	mpc_common_debug("PORTALS: SEND-EAGER to %d (idx=%d, match=%s, sz=%llu)", SCTK_MSG_DEST_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), size);
 }
 
 /**
@@ -231,7 +242,7 @@ void sctk_ptl_eager_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_ptl_rail_in
 
 	/* Build the match_bits */
 	match.data.tag  = SCTK_MSG_TAG(msg)            % SCTK_PTL_MAX_TAGS;
-	match.data.rank = SCTK_MSG_SRC_PROCESS(msg)    % SCTK_PTL_MAX_RANKS;
+	match.data.rank = SCTK_MSG_SRC_TASK(msg)    % SCTK_PTL_MAX_RANKS;
 	match.data.uid  = SCTK_MSG_NUMBER(msg)         % SCTK_PTL_MAX_UIDS;
 	match.data.type = SCTK_MSG_SPECIFIC_CLASS(msg) % SCTK_PTL_MAX_TYPES;
 
@@ -239,7 +250,7 @@ void sctk_ptl_eager_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_ptl_rail_in
 	 * The UID is always ignored, it we only be used to make RDV requests consistent
 	 */
 	ign.data.tag  = (SCTK_MSG_TAG(msg)         == MPC_ANY_TAG)    ? SCTK_PTL_IGN_TAG  : SCTK_PTL_MATCH_TAG;
-	ign.data.rank = (SCTK_MSG_SRC_PROCESS(msg) == MPC_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK;
+	ign.data.rank = (SCTK_MSG_SRC_TASK(msg) == MPC_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK;
 	ign.data.uid  = SCTK_PTL_IGN_UID;
 	ign.data.type = SCTK_PTL_MATCH_TYPE;
 
@@ -259,7 +270,7 @@ void sctk_ptl_eager_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_ptl_rail_in
 	msg->tail.ptl.user_ptr = user_ptr;
 	sctk_ptl_me_register(srail, user_ptr, pte);
 	
-	mpc_common_nodebug("PORTALS: NOTIFY-RECV-EAGER from %d (idx=%llu, match=%s, ign=%llu start=%p, sz=%llu)", SCTK_MSG_SRC_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), start, size);
+	mpc_common_debug("PORTALS: NOTIFY-RECV-EAGER from %d (idx=%llu, match=%s, ign=%llu start=%p, sz=%llu)", SCTK_MSG_SRC_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), start, size);
 }
 
 /**

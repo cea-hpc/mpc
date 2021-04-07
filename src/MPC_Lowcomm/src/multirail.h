@@ -163,7 +163,7 @@ void _mpc_lowcomm_multirail_notify_matching(mpc_lowcomm_ptp_message_t *msg);
 void _mpc_lowcomm_multirail_notify_perform(mpc_lowcomm_peer_uid_t remote_process, int remote_task_id, int polling_task_id, int blocking);
 void _mpc_lowcomm_multirail_notify_idle();
 void _mpc_lowcomm_multirail_notify_anysource(int polling_task_id, int blocking);
-void _mpc_lowcomm_multirail_notify_new_comm(int comm_idx, size_t comm_size);
+void _mpc_lowcomm_multirail_notify_new_comm(mpc_lowcomm_communicator_id_t comm_idx, size_t comm_size);
 void _mpc_lowcomm_multirail_notify_probe(mpc_lowcomm_ptp_message_header_t *hdr, int *status);
 
 #endif /* LOWCOMM_MULTIRAIL_H_ */

@@ -191,7 +191,6 @@ am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c sctk_checksum.c \
 	sctk_reorder.c endpoint.c sctk_topological_polling.c \
 	sctk_topological_rail.c sctk_window.c ./tcp/sctk_tcp.c \
 	./tcp/sctk_tcp_rdma.c ./tcp/sctk_tcp_toolkit.c \
-	./tcp/sctk_tcp_rdma.c ./tcp/sctk_tcp_toolkit.c \
 	./shm/sctk_shm.c ./shm/sctk_shm_eager.c \
 	./shm/sctk_shm_raw_queues.c ./shm/sctk_shm_cma.c \
 	./shm/sctk_shm_frag.c ./shm/sctk_shm_qemu.c \
@@ -206,6 +205,7 @@ am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c sctk_checksum.c \
 	./portals/sctk_ptl_eager.c ./portals/sctk_ptl_iface.c \
 	./portals/sctk_ptl_offcoll.c ./portals/sctk_ptl_rdma.c \
 	./portals/sctk_ptl_rdv.c ./portals/sctk_ptl_toolkit.c \
+	./portals_am/sctk_ptl_am_iface.c \
 	./portals_am/sctk_ptl_am_iface.c \
 	./portals_am/sctk_ptl_am_toolkit.c \
 	./portals_am/sctk_ptl_am_arpc_api.c ./portals_am/arpc_weak.c \
@@ -255,14 +255,14 @@ am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo \
 	sctk_net_topology.lo sctk_rail.lo sctk_reorder.lo endpoint.lo \
 	sctk_topological_polling.lo sctk_topological_rail.lo \
 	sctk_window.lo ./tcp/sctk_tcp.lo ./tcp/sctk_tcp_rdma.lo \
-	./tcp/sctk_tcp_toolkit.lo ./shm/sctk_handler_mpi.lo \
 	./tcp/sctk_tcp_toolkit.lo ./shm/sctk_shm.lo \
 	./shm/sctk_shm_eager.lo ./shm/sctk_shm_raw_queues.lo \
 	./shm/sctk_shm_cma.lo ./shm/sctk_shm_frag.lo \
 	./shm/sctk_shm_qemu.lo ./shm/sctk_shm_raw_queues_internals.lo \
-	$(am__objects_2) $(am__objects_3) ./cplane/auth.lo \
-	./cplane/peer.lo ./cplane/proto.lo ./cplane/monitor.lo \
-	./cplane/set.lo ./cplane/uid.lo $(am__objects_4)
+	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
+	./cplane/auth.lo ./cplane/peer.lo ./cplane/proto.lo \
+	./cplane/monitor.lo ./cplane/set.lo ./cplane/uid.lo \
+	$(am__objects_4)
 libmpclowcomm_la_OBJECTS = $(am_libmpclowcomm_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -657,14 +657,13 @@ libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c \
 	sctk_reorder.c endpoint.c sctk_topological_polling.c \
 	sctk_topological_rail.c sctk_window.c ./tcp/sctk_tcp.c \
 	./tcp/sctk_tcp_rdma.c ./tcp/sctk_tcp_toolkit.c \
-	./tcp/sctk_tcp_rdma.c ./tcp/sctk_tcp_toolkit.c \
 	./shm/sctk_shm.c ./shm/sctk_shm_eager.c \
 	./shm/sctk_shm_raw_queues.c ./shm/sctk_shm_cma.c \
 	./shm/sctk_shm_frag.c ./shm/sctk_shm_qemu.c \
 	./shm/sctk_shm_raw_queues_internals.c $(am__append_4) \
-	./cplane/auth.c ./cplane/peer.c ./cplane/proto.c \
-	./cplane/monitor.c ./cplane/set.c ./cplane/uid.c \
-	$(am__append_9)
+	$(am__append_6) $(am__append_8) ./cplane/auth.c \
+	./cplane/peer.c ./cplane/proto.c ./cplane/monitor.c \
+	./cplane/set.c ./cplane/uid.c $(am__append_9)
 
 # library dependency #
 libmpclowcomm_la_LIBADD = $(ALLOC_LIBS) \

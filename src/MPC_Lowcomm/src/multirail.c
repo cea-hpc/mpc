@@ -1093,7 +1093,7 @@ void _mpc_lowcomm_multirail_notify_anysource(int polling_task_id, int blocking)
 	}
 }
 
-void _mpc_lowcomm_multirail_notify_new_comm(int comm_idx, size_t size)
+void _mpc_lowcomm_multirail_notify_new_comm(mpc_lowcomm_communicator_id_t comm_idx, size_t size)
 {
 	int count = sctk_rail_count();
 	int i;

@@ -1773,7 +1773,7 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 		assert( SCTK_MSG_DEST_PROCESS(msg) < mpc_common_get_process_count());
 
 
-		mpc_common_debug("%s [T(%d -> %d) P(%lu -> %lu) C %u CL %s TA %d REQ %p]",
+		mpc_common_debug("%s [T(%d -> %d) P(%lu -> %lu) C %llu CL %s TA %d REQ %p]",
 		                 mpc_lowcomm_request_type_name[request_type],
 		                 source_task,
 		                 dest_task,
@@ -2572,7 +2572,7 @@ void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_r
  * */
 void mpc_lowcomm_ptp_message_send(mpc_lowcomm_ptp_message_t *msg)
 {
-	mpc_common_debug("SEND to %d (size %ld) %s COMM %lu T %d", SCTK_MSG_DEST_TASK(msg),
+	mpc_common_debug("SEND to %d (size %ld) %s COMM %llu T %d", SCTK_MSG_DEST_TASK(msg),
 	                 SCTK_MSG_SIZE(msg),
 	                 mpc_lowcomm_ptp_message_class_name[(int)SCTK_MSG_SPECIFIC_CLASS(msg)],
 	                 SCTK_MSG_COMMUNICATOR_ID(msg),
@@ -2639,7 +2639,7 @@ void mpc_lowcomm_ptp_message_recv(mpc_lowcomm_ptp_message_t *msg)
 {
 	int need_check = !_mpc_comm_is_remote_rank(SCTK_MSG_DEST_TASK(msg) );
 
-	mpc_common_debug("RECV from %d (size %ld) %s COMM %lu T %d", SCTK_MSG_SRC_TASK(msg),
+	mpc_common_debug("RECV from %d (size %ld) %s COMM %llu T %d", SCTK_MSG_SRC_TASK(msg),
 	                 SCTK_MSG_SIZE(msg),
 	                 mpc_lowcomm_ptp_message_class_name[(int)SCTK_MSG_SPECIFIC_CLASS(msg)],
 	                 SCTK_MSG_COMMUNICATOR_ID(msg),

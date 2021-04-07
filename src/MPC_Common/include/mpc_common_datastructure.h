@@ -429,7 +429,6 @@ void mpc_common_hashtable_unlock_cell_write( struct mpc_common_hashtable *ht, ui
 	____c = ____c->next; \
 	}                    \
 	}
-
 /**
  * @}
  */

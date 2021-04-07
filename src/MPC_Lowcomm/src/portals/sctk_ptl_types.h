@@ -411,7 +411,8 @@ typedef struct sctk_ptl_rail_info_s
 	sctk_ptl_nih_t iface;                   /**< Interface handler for the device */
 	sctk_ptl_id_t id;                       /**< Local id identifying this rail */
 	sctk_ptl_eq_t mds_eq;                   /**< EQ for all MDs emited from this NI */
-	struct mpc_common_hashtable pt_table;                  /**< The PT hash table */
+	struct mpc_common_hashtable pt_table;         /**< The COMM => PT hash table */
+	struct mpc_common_hashtable reverse_pt_table; /**< The PT => COMM hash table */
 	size_t cutoff;                          /**< cutoff for large RDV messages */
 	size_t max_mr;                          /**< Max size of a memory region (MD | ME ) */
 	size_t eager_limit;                     /**< the max size for an eager msg */

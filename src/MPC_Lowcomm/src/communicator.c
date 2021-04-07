@@ -443,7 +443,11 @@ static inline void __communicator_id_register(mpc_lowcomm_communicator_t comm, i
 	mpc_common_hashtable_set(&__id_factory.id_table, key, (void *)comm);
 	mpc_common_hashtable_set(&__id_factory.comm_table, (uint64_t)comm, (void *)comm);
 	mpc_common_bit_array_set(&__id_factory.comm_bit_array, (uint64_t)comm, 1);
-	mpc_common_nodebug("New reg comm %d", key);
+	mpc_common_debug_error("New reg comm %llu", key);
+
+
+	/* Notify communicator creation to lowcomm drivers */
+	_mpc_lowcomm_multirail_notify_new_comm(comm->id, mpc_lowcomm_communicator_size(comm));
 }
 
 static inline void __communicator_id_release(mpc_lowcomm_communicator_t comm)
@@ -472,7 +476,6 @@ mpc_lowcomm_communicator_t mpc_lowcomm_get_communicator_from_id(mpc_lowcomm_comm
 	mpc_lowcomm_communicator_t ret = NULL;
 
 	ret = (mpc_lowcomm_communicator_t)mpc_common_hashtable_get(&__id_factory.id_table, id);
-	mpc_common_nodebug("GET comm %lu == %p", id, ret);
 	return ret;
 }
 
@@ -724,7 +727,7 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 		new_id = __communicator_id_new_for_comm(comm);
 	}
 
-	mpc_common_debug("New ID  %u => %u (forced : %u) is inter ? %d", comm->id, new_id, forced_id, mpc_lowcomm_communicator_is_intercomm(comm));
+	mpc_common_debug_error("New ID  %u => %u (forced : %u) is inter ? %d", comm->id, new_id, forced_id, mpc_lowcomm_communicator_is_intercomm(comm));
 
 
 	int comm_local_lead    = mpc_lowcomm_communicator_local_lead(comm);
@@ -779,9 +782,6 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 			{
 				_mpc_lowcomm_communicator_acquire(ret->right_comm);
 			}
-
-			/* Notify communicator creation to lowcomm drivers */
-			_mpc_lowcomm_multirail_notify_new_comm(new_id, mpc_lowcomm_communicator_size(ret));
 		}
 
 		mpc_common_spinlock_unlock(&lock);

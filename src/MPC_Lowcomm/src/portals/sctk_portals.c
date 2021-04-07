@@ -65,24 +65,15 @@ static void _mpc_lowcomm_portals_notify_receive ( mpc_lowcomm_ptp_message_t *msg
 }
 
 /**
- * Not relevant in this implementation */
-static void _mpc_lowcomm_portals_notify_matching ( mpc_lowcomm_ptp_message_t *msg, sctk_rail_info_t *rail )
+ * @brief Poll the Portals RAIL
+ *
+ * @param rail the rail to poll
+ * @param cnt the number of events to poll
+ */
+static inline void __ptl_poll(sctk_rail_info_t* rail, int cnt)
 {
-	/* nothing to do */
-	UNUSED(msg);
-	UNUSED(rail);
-}
-
-/** Not relevant in this implementation */
-static void _mpc_lowcomm_portals_notify_perform ( mpc_lowcomm_peer_uid_t remote, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t *rail )
-{
-	/* nothing to do */
-	UNUSED(remote);
-	UNUSED(remote_task_id);
-	
-	UNUSED(polling_task_id);
-	UNUSED(blocking);
-	UNUSED(rail);
+	sctk_ptl_eqs_poll( rail, 5 );
+	sctk_ptl_mds_poll( rail, 5 );
 }
 
 /**
@@ -93,23 +84,23 @@ static void _mpc_lowcomm_portals_notify_perform ( mpc_lowcomm_peer_uid_t remote,
 static void _mpc_lowcomm_portals_notify_idle (sctk_rail_info_t* rail)
 {
 	/* '5' has been chosen arbitrarly for now */
-	sctk_ptl_eqs_poll( rail, 5 );
-	sctk_ptl_mds_poll( rail, 5 );
+	__ptl_poll(rail, 5);
 }
 
 /**
- * @brief NOTIFIER : routine called when an any_source message is arrived
+ * @brief Routine called when a message is to be performed
  *
- * @param[in] polling_task_id not used by Portals implementation
- * @param[in] blocking not used by Portals implementation
- * @param[in,out] rail associated rail
+ * @param remote_process the corresponding UID
+ * @param remote_task_id the remote task ID
+ * @param polling_task_id the task polling
+ * @param blocking should we block ?
+ * @param rail the rail to poll
  */
-static void _mpc_lowcomm_portals_notify_anysource ( int polling_task_id, int blocking, sctk_rail_info_t *rail )
+static void _mpc_lowcomm_portals_notify_perform(__UNUSED__ mpc_lowcomm_peer_uid_t remote_process, __UNUSED__ int remote_task_id, __UNUSED__ int polling_task_id, __UNUSED__ int blocking, sctk_rail_info_t *rail)
 {
-	UNUSED(polling_task_id);
-	UNUSED(blocking);
-	UNUSED(rail);
+	__ptl_poll(rail, 3);
 }
+
 
 static void _mpc_lowcomm_portals_notify_probe (sctk_rail_info_t* rail, mpc_lowcomm_ptp_message_header_t* hdr, int *status)
 {
@@ -187,7 +178,7 @@ void sctk_network_initialize_task_ptl(sctk_rail_info_t* rail, int taskid, int vp
  * \param[in] rail the route owner
  * \param[in] dest the remote process id
  */
-static void sctk_network_connect_on_demand_ptl ( struct sctk_rail_info_s * rail , int dest )
+static void sctk_network_connect_on_demand_ptl ( struct sctk_rail_info_s * rail , mpc_lowcomm_peer_uid_t dest )
 {
 	sctk_ptl_id_t id = sctk_ptl_map_id(rail, dest);
 	sctk_ptl_add_route(dest, id, rail, _MPC_LOWCOMM_ENDPOINT_DYNAMIC, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
@@ -263,10 +254,10 @@ void sctk_network_init_ptl (sctk_rail_info_t *rail)
 	/* Register msg hooks in rail */
 	rail->send_message_endpoint     = _mpc_lowcomm_portals_send_message;
 	rail->notify_recv_message       = _mpc_lowcomm_portals_notify_receive;
-	rail->notify_matching_message   = _mpc_lowcomm_portals_notify_matching;
+	rail->notify_matching_message   = NULL;
 	rail->notify_perform_message    = _mpc_lowcomm_portals_notify_perform;
 	rail->notify_idle_message       = _mpc_lowcomm_portals_notify_idle;
-	rail->notify_any_source_message = _mpc_lowcomm_portals_notify_anysource;
+	rail->notify_any_source_message = NULL;
 	rail->notify_new_comm           = _mpc_lowcomm_portals_notify_newcomm;
 	rail->send_message_from_network = sctk_send_message_from_network_ptl;
 	rail->notify_probe_message      = _mpc_lowcomm_portals_notify_probe;
