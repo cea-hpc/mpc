@@ -11,6 +11,10 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+/*********************
+ * PMI DATA EXCHANGE *
+ *********************/
+
 static inline char * __get_per_node_unique_name(char * buff, int len)
 {
 	buff[0] = '\0';
@@ -49,7 +53,7 @@ static inline char * __get_per_node_segment_key(char *buff, int len)
 }
 
 
-void * __map_shm_segment_pmi(size_t size)
+static inline void * __map_shm_segment_pmi(size_t size)
 {
 	char segment_name[128];
 	char segment_key[32];
@@ -127,8 +131,11 @@ void * __map_shm_segment_pmi(size_t size)
     return ret;
 }
 
+/*********************
+ * MPI DATA EXCHANGE *
+ *********************/
 
-void * __map_shm_segment_mpi(size_t size, mpc_launch_shm_exchange_params_t * params)
+static inline void * __map_shm_segment_mpi(size_t size, mpc_launch_shm_exchange_params_t * params)
 {
 	assume(params != NULL);
 	assume(params->mpi.rank != NULL);
@@ -200,6 +207,9 @@ void * __map_shm_segment_mpi(size_t size, mpc_launch_shm_exchange_params_t * par
 	return ret;
 }
 
+/********************************
+ * MPC LAUNCH SHM MAP INTERFACE *
+ ********************************/
 
 void * mpc_launch_shm_map(size_t size, mpc_launch_shm_exchange_method_t method, mpc_launch_shm_exchange_params_t * params)
 {
@@ -213,7 +223,6 @@ void * mpc_launch_shm_map(size_t size, mpc_launch_shm_exchange_method_t method, 
 
     return NULL;
 }
-
 
 int mpc_launch_shm_unmap(void *ptr, size_t size)
 {
