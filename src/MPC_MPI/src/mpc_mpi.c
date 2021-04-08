@@ -20312,20 +20312,20 @@ int PMPI_Reduce_scatter_block(const void *sendbuf, void *recvbuf, int recvcnt,
  */
 int PMPI_Alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
-	{
-		mpi_check_comm (comm);
-		mpi_check_type (sendtype, comm);
-		mpi_check_count (sendcount, comm);
+	
+    mpi_check_comm (comm);
+    mpi_check_type (sendtype, comm);
+    mpi_check_count (sendcount, comm);
 
-		if (sendcount != 0)
-		{
-			mpi_check_buf (sendbuf, comm);
-		}
-		if (recvcount != 0)
-		{
-			mpi_check_buf (recvbuf, comm);
-		}
-	}
+    if (sendcount != 0)
+    {
+        mpi_check_buf (sendbuf, comm);
+    }
+    if (recvcount != 0)
+    {
+        mpi_check_buf (recvbuf, comm);
+    }
+
 	MPI_internal_request_t *req;
 	SCTK__MPI_INIT_REQUEST (request);
 	req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
@@ -20363,17 +20363,16 @@ int PMPI_Alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype
  */
 int PMPI_Exscan_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
-	{
-		mpi_check_comm(comm);
-		mpi_check_type(datatype, comm);
-		mpi_check_count(count, comm);
+    mpi_check_comm(comm);
+    mpi_check_type(datatype, comm);
+    mpi_check_count(count, comm);
 
-		if(count != 0)
-		{
-			mpi_check_buf(recvbuf, comm);
-			mpi_check_buf(sendbuf, comm);
-		}
-	}
+    if(count != 0)
+    {
+        mpi_check_buf(recvbuf, comm);
+        mpi_check_buf(sendbuf, comm);
+    }
+
 	MPI_internal_request_t *req;
     SCTK__MPI_INIT_REQUEST (request);
 	req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
@@ -20411,23 +20410,22 @@ int PMPI_Exscan_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype
  */
 int PMPI_Allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
-	{
-		mpi_check_comm(comm);
-		mpi_check_type(sendtype, comm);
-		mpi_check_type(recvtype, comm);
-		mpi_check_count(sendcount, comm);
-		mpi_check_count(recvcount, comm);
+    mpi_check_comm(comm);
+    mpi_check_type(sendtype, comm);
+    mpi_check_type(recvtype, comm);
+    mpi_check_count(sendcount, comm);
+    mpi_check_count(recvcount, comm);
 
-		if(sendcount != 0)
-		{
-			mpi_check_buf(sendbuf, comm);
-		}
-		if(recvcount != 0)
-		{
-			mpi_check_buf(recvbuf, comm);
-		}
-	}
-	MPI_internal_request_t *req;
+    if(sendcount != 0)
+    {
+        mpi_check_buf(sendbuf, comm);
+    }
+    if(recvcount != 0)
+    {
+        mpi_check_buf(recvbuf, comm);
+    }
+
+    MPI_internal_request_t *req;
     SCTK__MPI_INIT_REQUEST (request);
 	req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
     req->freeable = 0;
@@ -20466,30 +20464,28 @@ int PMPI_Allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtyp
  */
 int PMPI_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
-	{
-		int size;
-		int rank;
-		mpi_check_comm(comm);
-		_mpc_cl_comm_size(comm, &size);
-		_mpc_cl_comm_rank(comm, &rank);
-		mpi_check_type(sendtype, comm);
-		mpi_check_type(recvtype, comm);
-		int i;
-		for(i = 0; i < size; i++)
-		{
-			mpi_check_count(recvcounts[i], comm);
-		}
-		mpi_check_count(sendcount, comm);
-		if(recvcounts[rank] != 0)
-		{
-			mpi_check_buf(recvbuf, comm);
-		}
-		if(sendcount != 0)
-		{
-			mpi_check_buf(sendbuf, comm);
-		}
+    int size;
+    int rank;
+    mpi_check_comm(comm);
+    _mpc_cl_comm_size(comm, &size);
+    _mpc_cl_comm_rank(comm, &rank);
+    mpi_check_type(sendtype, comm);
+    mpi_check_type(recvtype, comm);
+    int i;
+    for(i = 0; i < size; i++)
+    {
+        mpi_check_count(recvcounts[i], comm);
+    }
+    mpi_check_count(sendcount, comm);
+    if(recvcounts[rank] != 0)
+    {
+        mpi_check_buf(recvbuf, comm);
+    }
+    if(sendcount != 0)
+    {
+        mpi_check_buf(sendbuf, comm);
+    }
 
-	}
     MPI_internal_request_t *req;
     SCTK__MPI_INIT_REQUEST (request);
     req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
@@ -20530,25 +20526,23 @@ int PMPI_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendty
  */
 int PMPI_Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
-	{
-		int size;
-		mpi_check_comm(comm);
-		_mpc_cl_comm_size(comm, &size);
-		mpi_check_root(root, size, comm);
-		mpi_check_type(sendtype, comm);
-		mpi_check_type(recvtype, comm);
-		mpi_check_count(sendcount, comm);
-		mpi_check_count(recvcount, comm);
-		if(recvcount != 0)
-		{
-			mpi_check_buf(recvbuf, comm);
-		}
-		if(sendcount != 0)
-		{
-			mpi_check_buf(sendbuf, comm);
-		}
+    int size;
+    mpi_check_comm(comm);
+    _mpc_cl_comm_size(comm, &size);
+    mpi_check_root(root, size, comm);
+    mpi_check_type(sendtype, comm);
+    mpi_check_type(recvtype, comm);
+    mpi_check_count(sendcount, comm);
+    mpi_check_count(recvcount, comm);
+    if(recvcount != 0)
+    {
+        mpi_check_buf(recvbuf, comm);
+    }
+    if(sendcount != 0)
+    {
+        mpi_check_buf(sendbuf, comm);
+    }
 
-	}
 	MPI_internal_request_t *req;
     SCTK__MPI_INIT_REQUEST (request);
     req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
@@ -20586,20 +20580,18 @@ int PMPI_Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
  */
 int PMPI_Bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
-	{
-		int size;
-		mpi_check_comm(comm);
-		_mpc_cl_comm_size(comm, &size);
-		mpi_check_root(root, size, comm);
-		mpi_check_type(datatype, comm);
-		mpi_check_count(count, comm);
-		if(count != 0)
-		{
-			mpi_check_buf(buffer, comm);
-		}
+    int size;
+    mpi_check_comm(comm);
+    _mpc_cl_comm_size(comm, &size);
+    mpi_check_root(root, size, comm);
+    mpi_check_type(datatype, comm);
+    mpi_check_count(count, comm);
+    if(count != 0)
+    {
+        mpi_check_buf(buffer, comm);
+    }
 
-	}
-	MPI_internal_request_t *req;
+    MPI_internal_request_t *req;
     SCTK__MPI_INIT_REQUEST (request);
 	req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
     req->freeable = 0;
@@ -20634,17 +20626,16 @@ int PMPI_Bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MP
  */
 int PMPI_Allreduce_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
-	{
-		mpi_check_comm (comm);
-		mpi_check_type (datatype, comm);
-		mpi_check_count (count, comm);
+    mpi_check_comm (comm);
+    mpi_check_type (datatype, comm);
+    mpi_check_count (count, comm);
 
-		if (count != 0)
-		{
-			mpi_check_buf (sendbuf, comm);
-			mpi_check_buf (recvbuf, comm);
-		}
-	}
+    if (count != 0)
+    {
+        mpi_check_buf (sendbuf, comm);
+        mpi_check_buf (recvbuf, comm);
+    }
+
     MPI_internal_request_t *req;
     SCTK__MPI_INIT_REQUEST (request);
     req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
@@ -20684,30 +20675,28 @@ int PMPI_Allreduce_init(const void *sendbuf, void *recvbuf, int count, MPI_Datat
  */
 int PMPI_Alltoallv_init(const void *sendbuf, const int sendcounts[], const int sdispls[], MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
-	{
-		int size;
-		int rank;
-		mpi_check_comm(comm);
-		_mpc_cl_comm_size(comm, &size);
-		_mpc_cl_comm_rank(comm, &rank);
-		mpi_check_type(sendtype, comm);
-		mpi_check_type(recvtype, comm);
-		int i;
-		for(i = 0; i < size; i++)
-		{
-			mpi_check_count(recvcounts[i], comm);
-			mpi_check_count(sendcounts[i], comm);
-		}
-		if(recvcounts[rank] != 0)
-		{
-			mpi_check_buf(recvbuf, comm);
-		}
-		if(sendcounts[rank] != 0)
-		{
-			mpi_check_buf(sendbuf, comm);
-		}
+    int size;
+    int rank;
+    mpi_check_comm(comm);
+    _mpc_cl_comm_size(comm, &size);
+    _mpc_cl_comm_rank(comm, &rank);
+    mpi_check_type(sendtype, comm);
+    mpi_check_type(recvtype, comm);
+    int i;
+    for(i = 0; i < size; i++)
+    {
+        mpi_check_count(recvcounts[i], comm);
+        mpi_check_count(sendcounts[i], comm);
+    }
+    if(recvcounts[rank] != 0)
+    {
+        mpi_check_buf(recvbuf, comm);
+    }
+    if(sendcounts[rank] != 0)
+    {
+        mpi_check_buf(sendbuf, comm);
+    }
 
-	}
 	MPI_internal_request_t *req;
     SCTK__MPI_INIT_REQUEST (request);
     req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
@@ -20750,30 +20739,27 @@ int PMPI_Alltoallv_init(const void *sendbuf, const int sendcounts[], const int s
  */
 int PMPI_Alltoallw_init(const void *sendbuf, const int sendcounts[], const int sdispls[], const MPI_Datatype sendtypes[], void *recvbuf, const int recvcounts[], const int rdispls[], const MPI_Datatype recvtypes[], MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
-	{
-		int size;
-		int rank;
-		mpi_check_comm(comm);
-		_mpc_cl_comm_size(comm, &size);
-		_mpc_cl_comm_rank(comm, &rank);
-		int i;
-		for(i = 0; i < size; i++)
-		{
-			mpi_check_count(recvcounts[i], comm);
-			mpi_check_count(sendcounts[i], comm);
-			mpi_check_type(sendtypes[i], comm);
-			mpi_check_type(recvtypes[i], comm);
-		}
-		if(recvcounts[rank] != 0)
-		{
-			mpi_check_buf(recvbuf, comm);
-		}
-		if(sendcounts[rank] != 0)
-		{
-			mpi_check_buf(sendbuf, comm);
-		}
-
-	}
+    int size;
+    int rank;
+    mpi_check_comm(comm);
+    _mpc_cl_comm_size(comm, &size);
+    _mpc_cl_comm_rank(comm, &rank);
+    int i;
+    for(i = 0; i < size; i++)
+    {
+        mpi_check_count(recvcounts[i], comm);
+        mpi_check_count(sendcounts[i], comm);
+        mpi_check_type(sendtypes[i], comm);
+        mpi_check_type(recvtypes[i], comm);
+    }
+    if(recvcounts[rank] != 0)
+    {
+        mpi_check_buf(recvbuf, comm);
+    }
+    if(sendcounts[rank] != 0)
+    {
+        mpi_check_buf(sendbuf, comm);
+    }
 
 	MPI_internal_request_t *req;
     SCTK__MPI_INIT_REQUEST (request);
@@ -20817,29 +20803,27 @@ int PMPI_Alltoallw_init(const void *sendbuf, const int sendcounts[], const int s
  */
 int PMPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
-	{
-		int size;
-		mpi_check_comm(comm);
-		_mpc_cl_comm_size(comm, &size);
-		mpi_check_root(root, size, comm);
-		mpi_check_type(sendtype, comm);
-		mpi_check_type(recvtype, comm);
-		mpi_check_count(sendcount, comm);
-		int i;
-		for(i = 0; i < size; i++)
-		{
-			if(recvcounts[i] != 0)
-			{
-				mpi_check_buf(recvbuf, comm);
-			}
-		}
-		if(sendcount != 0)
-		{
-			mpi_check_buf(sendbuf, comm);
-		}
+    int size;
+    mpi_check_comm(comm);
+    _mpc_cl_comm_size(comm, &size);
+    mpi_check_root(root, size, comm);
+    mpi_check_type(sendtype, comm);
+    mpi_check_type(recvtype, comm);
+    mpi_check_count(sendcount, comm);
+    int i;
+    for(i = 0; i < size; i++)
+    {
+        if(recvcounts[i] != 0)
+        {
+            mpi_check_buf(recvbuf, comm);
+        }
+    }
+    if(sendcount != 0)
+    {
+        mpi_check_buf(sendbuf, comm);
+    }
 
-	}
-	MPI_internal_request_t *req;
+    MPI_internal_request_t *req;
     SCTK__MPI_INIT_REQUEST (request);
 	req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
     req->freeable = 0;
@@ -20878,17 +20862,16 @@ int PMPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
  */
 int PMPI_Scan_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
-	{
-		mpi_check_comm(comm);
-		mpi_check_type(datatype, comm);
-		mpi_check_count(count, comm);
+    mpi_check_comm(comm);
+    mpi_check_type(datatype, comm);
+    mpi_check_count(count, comm);
 
-		if(count != 0)
-		{
-			mpi_check_buf(recvbuf, comm);
-			mpi_check_buf(sendbuf, comm);
-		}
-	}
+    if(count != 0)
+    {
+        mpi_check_buf(recvbuf, comm);
+        mpi_check_buf(sendbuf, comm);
+    }
+
 	MPI_internal_request_t *req;
     SCTK__MPI_INIT_REQUEST (request);
     req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
@@ -20925,17 +20908,16 @@ int PMPI_Scan_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype d
  */
 int PMPI_Reduce_scatter_block_init(const void *sendbuf, void *recvbuf, int recvcount, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
-	{
-		mpi_check_comm(comm);
-		mpi_check_type(datatype, comm);
-		mpi_check_count(recvcount, comm);
+    mpi_check_comm(comm);
+    mpi_check_type(datatype, comm);
+    mpi_check_count(recvcount, comm);
 
-		if(recvcount != 0)
-		{
-			mpi_check_buf(recvbuf, comm);
-			mpi_check_buf(sendbuf, comm);
-		}
-	}
+    if(recvcount != 0)
+    {
+        mpi_check_buf(recvbuf, comm);
+        mpi_check_buf(sendbuf, comm);
+    }
+
 	MPI_internal_request_t *req;
     SCTK__MPI_INIT_REQUEST (request);
     req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
@@ -20974,20 +20956,18 @@ int PMPI_Reduce_scatter_block_init(const void *sendbuf, void *recvbuf, int recvc
  */
 int PMPI_Scatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
-	{
-		int size;
-		mpi_check_comm(comm);
-		_mpc_cl_comm_size(comm, &size);
-		mpi_check_root(root, size, comm);
-		mpi_check_type(recvtype, comm);
-		mpi_check_count(sendcount, comm);
-		if(sendcount != 0)
-		{
-			mpi_check_buf(sendbuf, comm);
-			mpi_check_buf(recvbuf, comm);
-		}
+    int size;
+    mpi_check_comm(comm);
+    _mpc_cl_comm_size(comm, &size);
+    mpi_check_root(root, size, comm);
+    mpi_check_type(recvtype, comm);
+    mpi_check_count(sendcount, comm);
+    if(sendcount != 0)
+    {
+        mpi_check_buf(sendbuf, comm);
+        mpi_check_buf(recvbuf, comm);
+    }
 
-	}
 	MPI_internal_request_t *req;
     SCTK__MPI_INIT_REQUEST (request);
 	req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
@@ -21071,31 +21051,29 @@ int PMPI_Scan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype dataty
  */
 int PMPI_Scatterv_init(const void *sendbuf, const int sendcounts[], const int displs[], MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
-	{
-		int size;
-		int rank;
-		mpi_check_comm(comm);
-		_mpc_cl_comm_rank(comm, &rank);
-		_mpc_cl_comm_size(comm, &size);
-		mpi_check_root(root, size, comm);
-		mpi_check_type(sendtype, comm);
-		mpi_check_type(recvtype, comm);
-		mpi_check_count(recvcount, comm);
-		int i;
-		for(i = 0; i < size; i++)
-		{
-			mpi_check_count(sendcounts[i], comm);
-		}
-		if(recvcount != 0)
-		{
-			mpi_check_buf(recvbuf, comm);
-		}
-		if(sendcounts[rank] != 0)
-		{
-			mpi_check_buf(sendbuf, comm);
-		}
+    int size;
+    int rank;
+    mpi_check_comm(comm);
+    _mpc_cl_comm_rank(comm, &rank);
+    _mpc_cl_comm_size(comm, &size);
+    mpi_check_root(root, size, comm);
+    mpi_check_type(sendtype, comm);
+    mpi_check_type(recvtype, comm);
+    mpi_check_count(recvcount, comm);
+    int i;
+    for(i = 0; i < size; i++)
+    {
+        mpi_check_count(sendcounts[i], comm);
+    }
+    if(recvcount != 0)
+    {
+        mpi_check_buf(recvbuf, comm);
+    }
+    if(sendcounts[rank] != 0)
+    {
+        mpi_check_buf(sendbuf, comm);
+    }
 
-	}
 	MPI_internal_request_t *req;
     SCTK__MPI_INIT_REQUEST (request);
     req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
@@ -21135,24 +21113,22 @@ int PMPI_Scatterv_init(const void *sendbuf, const int sendcounts[], const int di
  */
 int PMPI_Reduce_scatter_init(const void *sendbuf, void *recvbuf, const int recvcounts[], MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
-	{
-		int size;
-		mpi_check_comm(comm);
-		_mpc_cl_comm_size(comm, &size);
-		mpi_check_type(datatype, comm);
-		int i;
-		for(i = 0; i < size; i++)
-		{
-			mpi_check_count(recvcounts[i], comm);
-			if(recvcounts[i] != 0)
-			{
-				mpi_check_buf(recvbuf, comm);
-				mpi_check_buf(sendbuf, comm);
-			}
-		}
-		mpi_check_type(datatype, comm);
+    int size;
+    mpi_check_comm(comm);
+    _mpc_cl_comm_size(comm, &size);
+    mpi_check_type(datatype, comm);
+    int i;
+    for(i = 0; i < size; i++)
+    {
+        mpi_check_count(recvcounts[i], comm);
+        if(recvcounts[i] != 0)
+        {
+            mpi_check_buf(recvbuf, comm);
+            mpi_check_buf(sendbuf, comm);
+        }
+    }
+    mpi_check_type(datatype, comm);
 
-	}
 	MPI_internal_request_t *req;
     SCTK__MPI_INIT_REQUEST (request);
 	req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
@@ -21190,20 +21166,18 @@ int PMPI_Reduce_scatter_init(const void *sendbuf, void *recvbuf, const int recvc
  */
 int PMPI_Reduce_init(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
-	{
-		int size;
-		mpi_check_comm(comm);
-		_mpc_cl_comm_size(comm, &size);
-		mpi_check_root(root, size, comm);
-		mpi_check_type(datatype, comm);
-		mpi_check_count(count, comm);
-		if(count != 0)
-		{
-			mpi_check_buf(recvbuf, comm);
-			mpi_check_buf(sendbuf, comm);
-		}
+    int size;
+    mpi_check_comm(comm);
+    _mpc_cl_comm_size(comm, &size);
+    mpi_check_root(root, size, comm);
+    mpi_check_type(datatype, comm);
+    mpi_check_count(count, comm);
+    if(count != 0)
+    {
+        mpi_check_buf(recvbuf, comm);
+        mpi_check_buf(sendbuf, comm);
+    }
 
-	}
 	MPI_internal_request_t *req;
     SCTK__MPI_INIT_REQUEST (request);
 	req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
