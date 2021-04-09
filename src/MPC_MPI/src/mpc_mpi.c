@@ -11655,7 +11655,8 @@ int PMPI_Start(MPI_Request *request)
 						req->persistant.recvcount,
 						req->persistant.recvtype, 
 						req->persistant.root, 
-						req->persistant.comm, &(req->nbc_handle));
+						req->persistant.comm, 
+                        &(req->nbc_handle));
 			break;
 		case MPC_MPI_PERSISTENT_SCATTER_INIT:
 			res = 
@@ -20319,6 +20320,9 @@ int PMPI_Alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype
     mpi_check_comm (comm);
     mpi_check_type (sendtype, comm);
     mpi_check_count (sendcount, comm);
+    mpi_check_type (recvtype, comm);
+    mpi_check_count (recvcount, comm);
+
 
     if (sendcount != 0)
     {
