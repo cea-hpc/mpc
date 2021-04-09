@@ -448,8 +448,11 @@ int _mpc_lowcomm_monitor_setup()
 		}
 	}
 
-	/* Sync the job to ensure PMI exchange */
-	mpc_launch_pmi_barrier();
+	if(mpc_launch_pmi_is_initialized() )
+	{
+		/* Sync the job to ensure PMI exchange */
+		mpc_launch_pmi_barrier();
+	}
 
 	if(mpc_common_get_process_rank() != 0)
 	{
@@ -460,15 +463,20 @@ int _mpc_lowcomm_monitor_setup()
 	/* Now we can set our peer ID (in process realm at is is used for network setup) */
 	__monitor.process_uid = mpc_lowcomm_monitor_uid_of(__monitor.monitor_gid, mpc_common_get_process_rank());
 
-	mpc_launch_pmi_barrier();
-
+	if(mpc_launch_pmi_is_initialized() )
+	{
+		mpc_launch_pmi_barrier();
+	}
 	/* At this point all processes in the group share the same GID without comm */
 
 
 	__register_process_set();
 	__bootstrap_ring();
 
-	mpc_launch_pmi_barrier();
+	if(mpc_launch_pmi_is_initialized() )
+	{
+		mpc_launch_pmi_barrier();
+	}
 
 	_mpc_lowcomm_monitor_command_engine_init();
 	_mpc_lowcomm_monitor_on_demand_callbacks_init();
