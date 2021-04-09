@@ -10672,7 +10672,10 @@ int PMPI_Testany(int count,
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
-static int __mpc_testall(int count, MPI_Request array_of_requests[], int *flag,
+/* Slighty different from PMPI_Testall to wait NBC requests 
+ * completion inside PMPI_Waitall */
+
+static int __testall_for_NBC(int count, MPI_Request array_of_requests[], int *flag,
                  MPI_Status array_of_statuses[])
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
@@ -10862,7 +10865,7 @@ int PMPI_Waitall(int count, MPI_Request array_of_requests[],
 
 		while(!nbc_flag)
 		{
-			__mpc_testall(count, mpc_array_of_requests_nbc,
+			__testall_for_NBC(count, mpc_array_of_requests_nbc,
 			             &nbc_flag, MPI_STATUSES_IGNORE);
 		}
 	}
