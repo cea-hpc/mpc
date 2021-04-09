@@ -137,20 +137,22 @@ CONFIGURE_SCRIPT_PATH=$(dirname "`readlink -f "$0"`")
 
 # Proceed to prefix checks
 
-AC_ARG_ENABLE([prefix-check],
-[AS_HELP_STRING([--enable-prefix-check],
-                [Make sure MPC is not installed over a previous install.])],
-[prefix_check=$enableval],
-[prefix_check=yes])
+# Note that we used to prevent reinstall but it led to several overheads
+# for user we then propose to leave the warning but let the code go without
+# complaining. In particular this allows maintainer-mode to work cleanly
+# and it also allows direct reconfiguring (with the ./reconfigure scrip
+# generated in the buildir). This is then a tradeoff, changing MPC's
+# configuration is sill a possible souce of error.
 
-if test -f "${prefix}/bin/mpc_status" -a "x${prefix_check}" = "xyes"; then
+if test -f "${prefix}/bin/mpc_status"; then
         AC_MSG_NOTICE([!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!])
         AC_MSG_NOTICE([There seems to be a previous install of MPC in ${prefix}.])
         AC_MSG_NOTICE([Reinstalling over it can lead to spurious errors if configuration changed.])
         AC_MSG_NOTICE([It is recommended to remove MPC beforehand to avoid conflicts.])
-        AC_MSG_NOTICE([If you are sure of what you are doing pass --disable-prefix-check to force install.])
+        AC_MSG_NOTICE([PROCEED at your OWN RISKS !!])
         AC_MSG_NOTICE([!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!])
-        AC_MSG_ERROR([Previous install in target prefix.])
+        AC_MSG_WARN([You have 5 seconds to abort.])
+        sleep 5
 fi
 
 ####################################

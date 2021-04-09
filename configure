@@ -1014,7 +1014,6 @@ enable_dependency_tracking
 with_gnu_ld
 with_sysroot
 enable_libtool_lock
-enable_prefix_check
 with_hwloc
 with_hwloc_include
 with_hwloc_libs
@@ -1763,8 +1762,6 @@ Optional Features:
   --disable-dependency-tracking
                           speeds up one-time build
   --disable-libtool-lock  avoid locking (might break parallel builds)
-  --enable-prefix-check   Make sure MPC is not installed over a previous
-                          install.
   --enable-mpcalloc       If the MPC allocator is to be used
   --enable-am             Compile MPC active messages
   --enable-profiler       Compile MPC with Internal Profiling Support
@@ -13141,15 +13138,14 @@ CONFIGURE_SCRIPT_PATH=$(dirname "`readlink -f "$0"`")
 
 # Proceed to prefix checks
 
-# Check whether --enable-prefix-check was given.
-if test "${enable_prefix_check+set}" = set; then :
-  enableval=$enable_prefix_check; prefix_check=$enableval
-else
-  prefix_check=yes
-fi
+# Note that we used to prevent reinstall but it led to several overheads
+# for user we then propose to leave the warning but let the code go without
+# complaining. In particular this allows maintainer-mode to work cleanly
+# and it also allows direct reconfiguring (with the ./reconfigure scrip
+# generated in the buildir). This is then a tradeoff, changing MPC's
+# configuration is sill a possible souce of error.
 
-
-if test -f "${prefix}/bin/mpc_status" -a "x${prefix_check}" = "xyes"; then
+if test -f "${prefix}/bin/mpc_status"; then
         { $as_echo "$as_me:${as_lineno-$LINENO}: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" >&5
 $as_echo "$as_me: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" >&6;}
         { $as_echo "$as_me:${as_lineno-$LINENO}: There seems to be a previous install of MPC in ${prefix}." >&5
@@ -13158,11 +13154,13 @@ $as_echo "$as_me: There seems to be a previous install of MPC in ${prefix}." >&6
 $as_echo "$as_me: Reinstalling over it can lead to spurious errors if configuration changed." >&6;}
         { $as_echo "$as_me:${as_lineno-$LINENO}: It is recommended to remove MPC beforehand to avoid conflicts." >&5
 $as_echo "$as_me: It is recommended to remove MPC beforehand to avoid conflicts." >&6;}
-        { $as_echo "$as_me:${as_lineno-$LINENO}: If you are sure of what you are doing pass --disable-prefix-check to force install." >&5
-$as_echo "$as_me: If you are sure of what you are doing pass --disable-prefix-check to force install." >&6;}
+        { $as_echo "$as_me:${as_lineno-$LINENO}: PROCEED at your OWN RISKS !!" >&5
+$as_echo "$as_me: PROCEED at your OWN RISKS !!" >&6;}
         { $as_echo "$as_me:${as_lineno-$LINENO}: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" >&5
 $as_echo "$as_me: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" >&6;}
-        as_fn_error $? "Previous install in target prefix." "$LINENO" 5
+        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: You have 5 seconds to abort." >&5
+$as_echo "$as_me: WARNING: You have 5 seconds to abort." >&2;}
+        sleep 5
 fi
 
 ####################################
