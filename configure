@@ -1044,8 +1044,8 @@ with_portals
 with_portals_inc
 with_portals_libs
 with_hydra
-with_pmi1
 with_slurm
+with_pmi1
 with_pmix
 with_pmi
 with_pmi_inc
@@ -1826,8 +1826,8 @@ Optional Packages:
   --with-portals-libs     Provide library path for portals
   --with-hydra            Compile MPC with hydra support (requires an external
                           hydra launcher)
-  --with-pmi1             Rely on PMI1 (PMI1) same as --with-slurm
   --with-slurm            Rely on SLURM-based PMI1 same as --with-pmi1
+  --with-pmi1             Rely on PMI1 (PMI1) same as --with-slurm
   --with-pmix             Compile MPC with pmix support (requires an external
                           pmix capable launcher)
   --with-pmi              Provide prefix for pmi
@@ -25851,9 +25851,39 @@ else
 fi
 
 
-# Same as with SLURM
+# WITH SLURM is autodetect for either PMI1 or PMIx
 
-mpc_pmi1_enabled=no
+
+# Check whether --with-slurm was given.
+if test "${with_slurm+set}" = set; then :
+  withval=$with_slurm; mpc_hydra_enabled=no;detect_pmi_version=$withval
+else
+  detect_pmi_version=no
+fi
+
+
+if test "x${detect_pmi_version}" = "xyes"; then
+        mpc_hydra_enabled=no
+        ERRMSG="Could not detect PMI type using '--with-slurm' please specify manually either '--with-pmi1' or '--with-pmix'"
+        # Do we have srun ?
+        if command -v "srun" > /dev/null 2>&1; then
+                if srun --mpi=list 2>&1 | grep "pmix"; then
+                        mpc_pmix_enabled="yes"
+                        mpc_pmi1_enabled="no"
+                elif srun --mpi=list 2>&1 | grep "pmi2"; then
+                        mpc_pmi1_enabled="yes"
+                        mpc_pmix_enabled="no"
+                else
+                        as_fn_error $? "${ERRMSG}" "$LINENO" 5
+                fi
+        else
+                as_fn_error $? "${ERRMSG}" "$LINENO" 5
+        fi
+else
+        # No definitive decision leave defaults
+        mpc_pmi1_enabled="no"
+        mpc_pmix_enabled="no"
+fi
 
 
 # Check whether --with-pmi1 was given.
@@ -25863,18 +25893,9 @@ fi
 
 
 
-# Check whether --with-slurm was given.
-if test "${with_slurm+set}" = set; then :
-  withval=$with_slurm; mpc_hydra_enabled=no;mpc_pmi1_enabled=$withval
-fi
-
-
-
 # Check whether --with-pmix was given.
 if test "${with_pmix+set}" = set; then :
   withval=$with_pmix; mpc_hydra_enabled=no;mpc_pmix_enabled=$withval
-else
-  mpc_pmix_enabled=no
 fi
 
 
@@ -25890,13 +25911,15 @@ ensure_only_one_launcher()
 $as_echo "$as_me: =================================" >&6;}
                 { $as_echo "$as_me:${as_lineno-$LINENO}: HYDRA Enabled: $mpc_hydra_enabled" >&5
 $as_echo "$as_me: HYDRA Enabled: $mpc_hydra_enabled" >&6;}
-                { $as_echo "$as_me:${as_lineno-$LINENO}: SLURM PMI1 Enabled: $mpc_pmi1_enabled" >&5
-$as_echo "$as_me: SLURM PMI1 Enabled: $mpc_pmi1_enabled" >&6;}
+                { $as_echo "$as_me:${as_lineno-$LINENO}: PMI1 Enabled: $mpc_pmi1_enabled" >&5
+$as_echo "$as_me: PMI1 Enabled: $mpc_pmi1_enabled" >&6;}
                 { $as_echo "$as_me:${as_lineno-$LINENO}: PMIX Enabled: $mpc_pmix_enabled" >&5
 $as_echo "$as_me: PMIX Enabled: $mpc_pmix_enabled" >&6;}
                 { $as_echo "$as_me:${as_lineno-$LINENO}: =================================" >&5
 $as_echo "$as_me: =================================" >&6;}
-                as_fn_error $? "You must pick up one launcher between Hydra, Slurm PMI1 and PMIX (--with-hydra or --with-slurm or --with-pmix)" "$LINENO" 5
+                { $as_echo "$as_me:${as_lineno-$LINENO}: --with-slurm can try to detect between pmix and pmi1" >&5
+$as_echo "$as_me: --with-slurm can try to detect between pmix and pmi1" >&6;}
+                as_fn_error $? "You must pick up one launcher between Hydra, PMI1 and PMIX (--with-hydra or --with-pmi1 or --with-pmix)" "$LINENO" 5
         fi
 }
 

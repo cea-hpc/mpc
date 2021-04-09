@@ -921,9 +921,36 @@ AC_ARG_WITH([hydra],
 [mpc_hydra_enabled=$withval],
 [mpc_hydra_enabled=yes])
 
-# Same as with SLURM
+# WITH SLURM is autodetect for either PMI1 or PMIx
 
-mpc_pmi1_enabled=no
+AC_ARG_WITH([slurm],
+[AS_HELP_STRING([--with-slurm],
+                [Rely on SLURM-based PMI1 same as --with-pmi1])],
+[mpc_hydra_enabled=no;detect_pmi_version=$withval],
+[detect_pmi_version=no])
+
+if test "x${detect_pmi_version}" = "xyes"; then
+        mpc_hydra_enabled=no
+        ERRMSG="Could not detect PMI type using '--with-slurm' please specify manually either '--with-pmi1' or '--with-pmix'"
+        # Do we have srun ?
+        if command -v "srun" > /dev/null 2>&1; then
+                if srun --mpi=list 2>&1 | grep "pmix"; then
+                        mpc_pmix_enabled="yes"
+                        mpc_pmi1_enabled="no"
+                elif srun --mpi=list 2>&1 | grep "pmi2"; then
+                        mpc_pmi1_enabled="yes"
+                        mpc_pmix_enabled="no"
+                else
+                        AC_MSG_ERROR([${ERRMSG}])
+                fi
+        else
+                AC_MSG_ERROR([${ERRMSG}])
+        fi
+else
+        # No definitive decision leave defaults
+        mpc_pmi1_enabled="no"
+        mpc_pmix_enabled="no"
+fi
 
 AC_ARG_WITH([pmi1],
 [AS_HELP_STRING([--with-pmi1],
@@ -931,17 +958,11 @@ AC_ARG_WITH([pmi1],
 [mpc_hydra_enabled=no;mpc_pmi1_enabled=$withval],
 [])
 
-AC_ARG_WITH([slurm],
-[AS_HELP_STRING([--with-slurm],
-                [Rely on SLURM-based PMI1 same as --with-pmi1])],
-[mpc_hydra_enabled=no;mpc_pmi1_enabled=$withval],
-[])
-
 AC_ARG_WITH([pmix],
 [AS_HELP_STRING([--with-pmix],
                 [Compile MPC with pmix support (requires an external pmix capable launcher)])],
 [mpc_hydra_enabled=no;mpc_pmix_enabled=$withval],
-[mpc_pmix_enabled=no])
+[])
 
 ensure_only_one_launcher()
 {
@@ -953,10 +974,11 @@ ensure_only_one_launcher()
         if test "x$LAUNCHER_COUNT" != "x1"; then
                 AC_MSG_NOTICE([=================================])
                 AC_MSG_NOTICE([HYDRA Enabled: $mpc_hydra_enabled])
-                AC_MSG_NOTICE([SLURM PMI1 Enabled: $mpc_pmi1_enabled])
+                AC_MSG_NOTICE([PMI1 Enabled: $mpc_pmi1_enabled])
                 AC_MSG_NOTICE([PMIX Enabled: $mpc_pmix_enabled])
                 AC_MSG_NOTICE([=================================])
-                AC_MSG_ERROR([You must pick up one launcher between Hydra, Slurm PMI1 and PMIX (--with-hydra or --with-slurm or --with-pmix)])
+                AC_MSG_NOTICE([--with-slurm can try to detect between pmix and pmi1])
+                AC_MSG_ERROR([You must pick up one launcher between Hydra, PMI1 and PMIX (--with-hydra or --with-pmi1 or --with-pmix)])
         fi
 }
 
