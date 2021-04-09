@@ -625,7 +625,7 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                 [whole_prefix=$withval],[whole_prefix="/usr/"])
 
                 inc_prefix=""
-                AC_ARG_WITH([$2-include],
+                AC_ARG_WITH([$2-inc],
                 [AS_HELP_STRING([--with-$2-inc],
                                 [Provide include path for $2])],
                 [inc_prefix=$withval],[])

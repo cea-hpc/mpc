@@ -1015,48 +1015,48 @@ with_gnu_ld
 with_sysroot
 enable_libtool_lock
 with_hwloc
-with_hwloc_include
+with_hwloc_inc
 with_hwloc_libs
 with_openpa
-with_openpa_include
+with_openpa_inc
 with_openpa_libs
 enable_mpcalloc
 with_mpcalloc
-with_mpcalloc_include
+with_mpcalloc_inc
 with_mpcalloc_libs
 enable_am
 with_libffi
-with_libffi_include
+with_libffi_inc
 with_libffi_libs
 with_libvmem
-with_libvmem_include
+with_libvmem_inc
 with_libvmem_libs
 with_libunwind
-with_libunwind_include
+with_libunwind_inc
 with_libunwind_libs
 with_ibverbs
-with_ibverbs_include
+with_ibverbs_inc
 with_ibverbs_libs
 with_libfabric
-with_libfabric_include
+with_libfabric_inc
 with_libfabric_libs
 with_portals
-with_portals_include
+with_portals_inc
 with_portals_libs
 with_hydra
 with_pmi1
 with_slurm
 with_pmix
 with_pmi
-with_pmi_include
+with_pmi_inc
 with_pmi_libs
-with_pmix_include
+with_pmix_inc
 with_pmix_libs
 with_cuda
-with_cuda_include
+with_cuda_inc
 with_cuda_libs
 with_cudart
-with_cudart_include
+with_cudart_inc
 with_cudart_libs
 with_dmtcp
 enable_profiler
@@ -1069,7 +1069,7 @@ enable_fortran
 enable_mpiio
 enable_process_mode
 with_autopriv
-with_autopriv_include
+with_autopriv_inc
 with_autopriv_libs
 enable_shell_colors
 enable_color
@@ -23931,9 +23931,9 @@ fi
 
                 inc_prefix=""
 
-# Check whether --with-hwloc-include was given.
-if test "${with_hwloc_include+set}" = set; then :
-  withval=$with_hwloc_include; inc_prefix=$withval
+# Check whether --with-hwloc-inc was given.
+if test "${with_hwloc_inc+set}" = set; then :
+  withval=$with_hwloc_inc; inc_prefix=$withval
 fi
 
                 lib_prefix=""
@@ -24130,9 +24130,9 @@ fi
 
                 inc_prefix=""
 
-# Check whether --with-openpa-include was given.
-if test "${with_openpa_include+set}" = set; then :
-  withval=$with_openpa_include; inc_prefix=$withval
+# Check whether --with-openpa-inc was given.
+if test "${with_openpa_inc+set}" = set; then :
+  withval=$with_openpa_inc; inc_prefix=$withval
 fi
 
                 lib_prefix=""
@@ -24349,9 +24349,9 @@ fi
 
                 inc_prefix=""
 
-# Check whether --with-mpcalloc-include was given.
-if test "${with_mpcalloc_include+set}" = set; then :
-  withval=$with_mpcalloc_include; inc_prefix=$withval
+# Check whether --with-mpcalloc-inc was given.
+if test "${with_mpcalloc_inc+set}" = set; then :
+  withval=$with_mpcalloc_inc; inc_prefix=$withval
 fi
 
                 lib_prefix=""
@@ -24577,9 +24577,9 @@ fi
 
                 inc_prefix=""
 
-# Check whether --with-libffi-include was given.
-if test "${with_libffi_include+set}" = set; then :
-  withval=$with_libffi_include; inc_prefix=$withval
+# Check whether --with-libffi-inc was given.
+if test "${with_libffi_inc+set}" = set; then :
+  withval=$with_libffi_inc; inc_prefix=$withval
 fi
 
                 lib_prefix=""
@@ -24806,9 +24806,9 @@ fi
 
                 inc_prefix=""
 
-# Check whether --with-libvmem-include was given.
-if test "${with_libvmem_include+set}" = set; then :
-  withval=$with_libvmem_include; inc_prefix=$withval
+# Check whether --with-libvmem-inc was given.
+if test "${with_libvmem_inc+set}" = set; then :
+  withval=$with_libvmem_inc; inc_prefix=$withval
 fi
 
                 lib_prefix=""
@@ -25011,9 +25011,9 @@ fi
 
                 inc_prefix=""
 
-# Check whether --with-libunwind-include was given.
-if test "${with_libunwind_include+set}" = set; then :
-  withval=$with_libunwind_include; inc_prefix=$withval
+# Check whether --with-libunwind-inc was given.
+if test "${with_libunwind_inc+set}" = set; then :
+  withval=$with_libunwind_inc; inc_prefix=$withval
 fi
 
                 lib_prefix=""
@@ -25224,9 +25224,9 @@ fi
 
                 inc_prefix=""
 
-# Check whether --with-ibverbs-include was given.
-if test "${with_ibverbs_include+set}" = set; then :
-  withval=$with_ibverbs_include; inc_prefix=$withval
+# Check whether --with-ibverbs-inc was given.
+if test "${with_ibverbs_inc+set}" = set; then :
+  withval=$with_ibverbs_inc; inc_prefix=$withval
 fi
 
                 lib_prefix=""
@@ -25433,9 +25433,9 @@ fi
 
                 inc_prefix=""
 
-# Check whether --with-libfabric-include was given.
-if test "${with_libfabric_include+set}" = set; then :
-  withval=$with_libfabric_include; inc_prefix=$withval
+# Check whether --with-libfabric-inc was given.
+if test "${with_libfabric_inc+set}" = set; then :
+  withval=$with_libfabric_inc; inc_prefix=$withval
 fi
 
                 lib_prefix=""
@@ -25644,9 +25644,9 @@ fi
 
                 inc_prefix=""
 
-# Check whether --with-portals-include was given.
-if test "${with_portals_include+set}" = set; then :
-  withval=$with_portals_include; inc_prefix=$withval
+# Check whether --with-portals-inc was given.
+if test "${with_portals_inc+set}" = set; then :
+  withval=$with_portals_inc; inc_prefix=$withval
 fi
 
                 lib_prefix=""
@@ -25920,9 +25920,9 @@ fi
 
                 inc_prefix=""
 
-# Check whether --with-pmi-include was given.
-if test "${with_pmi_include+set}" = set; then :
-  withval=$with_pmi_include; inc_prefix=$withval
+# Check whether --with-pmi-inc was given.
+if test "${with_pmi_inc+set}" = set; then :
+  withval=$with_pmi_inc; inc_prefix=$withval
 fi
 
                 lib_prefix=""
@@ -26123,9 +26123,9 @@ fi
 
                 inc_prefix=""
 
-# Check whether --with-pmix-include was given.
-if test "${with_pmix_include+set}" = set; then :
-  withval=$with_pmix_include; inc_prefix=$withval
+# Check whether --with-pmix-inc was given.
+if test "${with_pmix_inc+set}" = set; then :
+  withval=$with_pmix_inc; inc_prefix=$withval
 fi
 
                 lib_prefix=""
@@ -26623,9 +26623,9 @@ fi
 
                 inc_prefix=""
 
-# Check whether --with-cuda-include was given.
-if test "${with_cuda_include+set}" = set; then :
-  withval=$with_cuda_include; inc_prefix=$withval
+# Check whether --with-cuda-inc was given.
+if test "${with_cuda_inc+set}" = set; then :
+  withval=$with_cuda_inc; inc_prefix=$withval
 fi
 
                 lib_prefix=""
@@ -26823,9 +26823,9 @@ fi
 
                 inc_prefix=""
 
-# Check whether --with-cudart-include was given.
-if test "${with_cudart_include+set}" = set; then :
-  withval=$with_cudart_include; inc_prefix=$withval
+# Check whether --with-cudart-inc was given.
+if test "${with_cudart_inc+set}" = set; then :
+  withval=$with_cudart_inc; inc_prefix=$withval
 fi
 
                 lib_prefix=""
@@ -31578,9 +31578,9 @@ fi
 
                 inc_prefix=""
 
-# Check whether --with-autopriv-include was given.
-if test "${with_autopriv_include+set}" = set; then :
-  withval=$with_autopriv_include; inc_prefix=$withval
+# Check whether --with-autopriv-inc was given.
+if test "${with_autopriv_inc+set}" = set; then :
+  withval=$with_autopriv_inc; inc_prefix=$withval
 fi
 
                 lib_prefix=""
