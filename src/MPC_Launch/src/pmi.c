@@ -619,6 +619,8 @@ int __legacy_process_layout_init(void)
 	/* Free temporary values */
 	sctk_free( value );
 	sctk_free( nodes );
+
+	return 0;
 }
 
 #ifdef MPC_USE_PMIX
@@ -748,6 +750,8 @@ int mpc_launch_pmi_init()
 	mpc_common_set_process_rank( pmi_context.process_rank );
 	mpc_common_set_process_count( pmi_context.process_count );
 
+	if( 0u < mpc_common_get_flags()->process_number)
+		assume(mpc_common_get_flags()->process_number == (unsigned int)pmi_context.process_count);
 	/* Get process number from PMI */
 	mpc_common_get_flags()->process_number = pmi_context.process_count;
 
@@ -919,6 +923,7 @@ int mpc_launch_pmi_put( char *value, char *key, int is_local)
 	PMI_CHECK_RC( rc, "PMIx_Commit" );
 	PMI_RETURN( rc );
 #else
+	UNUSED(is_local);
 	int rc;
 	// Put info in Key-Value-Space
 	rc = PMI_KVS_Put( pmi_context.kvsname, key, value );
@@ -967,6 +972,7 @@ int mpc_launch_pmi_get( char *value, size_t size, char *key, int remote)
 	PMIX_PROC_DESTRUCT(proc);
 	PMI_RETURN( rc );
 #else
+	UNUSED(remote);
 	int rc;
 
 	// Get the value associated to the given key

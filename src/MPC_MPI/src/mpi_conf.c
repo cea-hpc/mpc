@@ -193,8 +193,8 @@ static inline void __coll_intercomm_defaults( void )
 	snprintf( coll->allreduce_name, MPC_CONF_STRING_SIZE, "__INTERNAL__PMPI_Allreduce_inter" );
 	snprintf( coll->reduce_scatter_name, MPC_CONF_STRING_SIZE, "__INTERNAL__PMPI_Reduce_scatter_inter" );
 	snprintf( coll->reduce_scatter_block_name, MPC_CONF_STRING_SIZE, "__INTERNAL__PMPI_Reduce_scatter_block_inter" );
-	snprintf( coll->scan_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->exscan_name, MPC_CONF_STRING_SIZE, "" );
+	 coll->scan_name[0] = '\0';
+	 coll->exscan_name[0] = '\0';
 }
 
 static inline void __coll_intracomm_defaults( void )
@@ -224,23 +224,23 @@ static inline void __coll_intracomm_shm_defaults( void )
 {
 	struct _mpc_mpi_config_coll_array *coll = &__mpc_mpi_config.coll_intracomm_shm;
 
-	snprintf( coll->barrier_name, MPC_CONF_STRING_SIZE, "" );
+	coll->barrier_name[0] = '\0';
 	snprintf( coll->bcast_name, MPC_CONF_STRING_SIZE, "__INTERNAL__PMPI_Bcast_intra_shm" );
-	snprintf( coll->allgather_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->allgatherv_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->alltoall_name, MPC_CONF_STRING_SIZE, "" );
+	coll->allgather_name[0] = '\0';
+	coll->allgatherv_name[0] = '\0';
+	coll->alltoall_name[0] = '\0';
 	snprintf( coll->alltoallv_name, MPC_CONF_STRING_SIZE, "__INTERNAL__PMPI_Alltoallv_intra_shm" );
-	snprintf( coll->alltoallw_name, MPC_CONF_STRING_SIZE, "" );
+	coll->alltoallw_name[0] = '\0';
 	snprintf( coll->gather_name, MPC_CONF_STRING_SIZE, "__INTERNAL__PMPI_Gather_intra_shm" );
 	snprintf( coll->gatherv_name, MPC_CONF_STRING_SIZE, "__INTERNAL__PMPI_Gatherv_intra_shm" );
 	snprintf( coll->scatter_name, MPC_CONF_STRING_SIZE, "__INTERNAL__PMPI_Scatter_intra_shm" );
 	snprintf( coll->scatterv_name, MPC_CONF_STRING_SIZE, "__INTERNAL__PMPI_Scatterv_intra_shm" );
 	snprintf( coll->reduce_name, MPC_CONF_STRING_SIZE, "__INTERNAL__PMPI_Reduce_shm" );
-	snprintf( coll->allreduce_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->reduce_scatter_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->reduce_scatter_block_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->scan_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->exscan_name, MPC_CONF_STRING_SIZE, "" );
+	coll->allreduce_name[0] = '\0';
+	coll->reduce_scatter_name[0] = '\0';
+	coll->reduce_scatter_block_name[0] = '\0';
+	coll->scan_name[0] = '\0';
+	coll->exscan_name[0] = '\0';
 }
 
 static inline void __coll_intracomm_shared_node_defaults( void )
@@ -249,21 +249,21 @@ static inline void __coll_intracomm_shared_node_defaults( void )
 
 	snprintf( coll->barrier_name, MPC_CONF_STRING_SIZE, "__INTERNAL__PMPI_Barrier_intra_shared_node" );
 	snprintf( coll->bcast_name, MPC_CONF_STRING_SIZE, "__INTERNAL__PMPI_Bcast_intra_shared_node" );
-	snprintf( coll->allgather_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->allgatherv_name, MPC_CONF_STRING_SIZE, "" );
+	coll->allgather_name[0] = '\0';
+	coll->allgatherv_name[0] = '\0';
 	snprintf( coll->alltoall_name, MPC_CONF_STRING_SIZE, "__INTERNAL__PMPI_Alltoall_intra_shared_node" );
-	snprintf( coll->alltoallv_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->alltoallw_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->gather_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->gatherv_name, MPC_CONF_STRING_SIZE, "" );
+	coll->alltoallv_name[0] = '\0';
+	coll->alltoallw_name[0] = '\0';
+	coll->gather_name[0] = '\0';
+	coll->gatherv_name[0] = '\0';
 	snprintf( coll->scatter_name, MPC_CONF_STRING_SIZE, "__INTERNAL__PMPI_Scatter_intra_shared_node" );
-	snprintf( coll->scatterv_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->reduce_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->allreduce_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->reduce_scatter_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->reduce_scatter_block_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->scan_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->exscan_name, MPC_CONF_STRING_SIZE, "" );
+	coll->scatterv_name[0] = '\0';
+	coll->reduce_name[0] = '\0';
+	coll->allreduce_name[0] = '\0';
+	coll->reduce_scatter_name[0] = '\0';
+	coll->reduce_scatter_block_name[0] = '\0';
+	coll->scan_name[0] = '\0';
+	coll->exscan_name[0] = '\0';
 }
 
 static inline void __load_coll_function( char *family, char *func_name, int ( **func )() )

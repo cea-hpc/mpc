@@ -1,4 +1,5 @@
 #include <mpc_mpi.h>
+#include <string.h>
 #include <mpc_config.h>
 #include <sctk_alloc.h>
 #include <mpc_keywords.h>
@@ -43,9 +44,9 @@ static inline char *char_fortran_to_c(char *buf, int size, char **free_ptr)
 	return tmp;
 }
 
-static inline void char_c_to_fortran(char *buf, int size)
+static inline void char_c_to_fortran(char *buf, size_t size)
 {
-	ssize_t i;
+	size_t i;
 
 	for(i = strlen(buf); i < size; i++)
 	{
@@ -8961,6 +8962,10 @@ void pmpi_null_delete_fn_( MPI_Fint *v1, MPI_Fint *v2,
 						  int *ierr )
 {
 	*ierr = MPI_SUCCESS;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
 }
 
 #pragma weak mpi_null_delete_fn__ = pmpi_null_delete_fn__
@@ -8970,6 +8975,10 @@ void pmpi_null_delete_fn__( MPI_Fint *v1, MPI_Fint *v2,
 						   int *ierr )
 {
 	*ierr = MPI_SUCCESS;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
 }
 
 #pragma weak mpi_comm_null_delete_fn_ = pmpi_comm_null_delete_fn_
@@ -8979,6 +8988,10 @@ void pmpi_comm_null_delete_fn_( MPI_Fint *v1, MPI_Fint *v2,
 							   int *ierr )
 {
 	*ierr = MPI_SUCCESS;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
 }
 
 #pragma weak mpi_comm_null_delete_fn__ = pmpi_comm_null_delete_fn__
@@ -8988,6 +9001,10 @@ void pmpi_comm_null_delete_fn__( MPI_Fint *v1, MPI_Fint *v2,
 								int *ierr )
 {
 	*ierr = MPI_SUCCESS;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
 }
 
 #pragma weak mpi_comm_null_copy_fn_ = pmpi_comm_null_copy_fn_
@@ -8995,6 +9012,11 @@ void pmpi_comm_null_copy_fn_( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, vo
 {
 	*ierr = MPI_SUCCESS;
 	*v6 = 0;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
+	UNUSED(v5);
 }
 
 #pragma weak mpi_comm_null_copy_fn__ = pmpi_comm_null_copy_fn__
@@ -9002,20 +9024,33 @@ void pmpi_comm_null_copy_fn__( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, v
 {
 	*ierr = MPI_SUCCESS;
 	*v6 = 0;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
+	UNUSED(v5);
 }
 
 #pragma weak mpi_dup_fn_ = pmpi_dup_fn__
 void pmpi_dup_fn_ ( MPI_Fint v1, MPI_Fint*v2, void*v3, void**v4, void**v5, MPI_Fint*v6, MPI_Fint *ierr ){
-         *v5 = *v4;
-         *v6 = (1);
-         *ierr = MPI_SUCCESS;
+	*v5 = *v4;
+	*v6 = (1);
+	*ierr = MPI_SUCCESS;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
 }
 
 #pragma weak mpi_dup_fn__ = pmpi_dup_fn_
 void pmpi_dup_fn__ ( MPI_Fint v1, MPI_Fint*v2, void*v3, void**v4, void**v5, MPI_Fint*v6, MPI_Fint *ierr ){
-         *v5 = *v4;
-         *v6 = (1);
-         *ierr = MPI_SUCCESS;
+	*v5 = *v4;
+	*v6 = (1);
+	*ierr = MPI_SUCCESS;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
 }
 
 #pragma weak mpi_comm_dup_fn_ = pmpi_comm_dup_fn_
@@ -9024,6 +9059,10 @@ void pmpi_comm_dup_fn_( MPI_Fint v1, MPI_Fint *v2, void *v3, void **v4, void **v
 	*v5 = *v4;
 	*v6 = 1;
 	*ierr = MPI_SUCCESS;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
 }
 
 #pragma weak mpi_comm_dup_fn__ = pmpi_comm_dup_fn__
@@ -9032,6 +9071,10 @@ void pmpi_comm_dup_fn__( MPI_Fint v1, MPI_Fint *v2, void *v3, void **v4, void **
 	*v5 = *v4;
 	*v6 = 1;
 	*ierr = MPI_SUCCESS;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
 }
 
 #pragma weak mpi_null_copy_fn_ = pmpi_null_copy_fn_
@@ -9039,6 +9082,11 @@ void pmpi_null_copy_fn_( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, void *v
 {
 	*ierr = MPI_SUCCESS;
 	*v6 = 0;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
+	UNUSED(v5);
 }
 
 #pragma weak mpi_null_copy_fn__ = pmpi_null_copy_fn__
@@ -9046,18 +9094,31 @@ void pmpi_null_copy_fn__( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, void *
 {
 	*ierr = MPI_SUCCESS;
 	*v6 = 0;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
+	UNUSED(v5);
 }
 
 #pragma weak mpi_type_null_delete_fn_ = pmpi_type_null_delete_fn_
 void pmpi_type_null_delete_fn_( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, int *ierr )
 {
 	*ierr = MPI_SUCCESS;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
 }
 
 #pragma weak mpi_type_null_delete_fn__ = pmpi_type_null_delete_fn__
 void pmpi_type_null_delete_fn__( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, int *ierr )
 {
 	*ierr = MPI_SUCCESS;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
 }
 
 #pragma weak mpi_type_dup_fn_ = pmpi_type_dup_fn_
@@ -9066,6 +9127,10 @@ void pmpi_type_dup_fn_( MPI_Fint v1, MPI_Fint *v2, void *v3, void **v4, void **v
 	*v5 = *v4;
 	*v6 = 1;
 	*ierr = MPI_SUCCESS;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
 }
 
 #pragma weak mpi_type_dup_fn__ = pmpi_type_dup_fn__
@@ -9074,6 +9139,10 @@ void pmpi_type_dup_fn__( MPI_Fint v1, MPI_Fint *v2, void *v3, void **v4, void **
 	*v5 = *v4;
 	*v6 = 1;
 	*ierr = MPI_SUCCESS;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
 }
 
 #pragma weak mpi_type_null_copy_fn_ = pmpi_type_null_copy_fn_
@@ -9081,6 +9150,11 @@ void pmpi_type_null_copy_fn_( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, vo
 {
 	*ierr = MPI_SUCCESS;
 	*v6 = 0;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
+	UNUSED(v5);
 }
 
 #pragma weak mpi_type_null_copy_fn__ = pmpi_type_null_copy_fn__
@@ -9088,48 +9162,79 @@ void pmpi_type_null_copy_fn__( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, v
 {
 	*ierr = MPI_SUCCESS;
 	*v6 = 0;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
+	UNUSED(v5);
 }
 
 #pragma weak mpi_win_null_delete_fn_ = pmpi_win_null_delete_fn_
 void pmpi_win_null_delete_fn_ ( MPI_Fint*v1, MPI_Fint*v2, void*v3, void*v4, int *ierr )
 {
-        *ierr = MPI_SUCCESS;
+	*ierr = MPI_SUCCESS;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
 }
 
 #pragma weak mpi_win_null_delete_fn__ = pmpi_win_null_delete_fn__
 void pmpi_win_null_delete_fn__ ( MPI_Fint*v1, MPI_Fint*v2, void*v3, void*v4, int *ierr )
 {
-        *ierr = MPI_SUCCESS;
+    *ierr = MPI_SUCCESS;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
 }
 
 #pragma weak mpi_win_dup_fn_ = pmpi_win_dup_fn_
 void pmpi_win_dup_fn_ ( MPI_Fint v1, MPI_Fint*v2, void*v3, void**v4, void**v5, MPI_Fint*v6, int *ierr )
 {
-        *v5 = *v4;
-        *v6 = 1;
-        *ierr = MPI_SUCCESS;
+	*v5 = *v4;
+	*v6 = 1;
+	*ierr = MPI_SUCCESS;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
 }
 
 #pragma weak mpi_win_dup_fn__ = pmpi_win_dup_fn__
 void pmpi_win_dup_fn__ ( MPI_Fint v1, MPI_Fint*v2, void*v3, void**v4, void**v5, MPI_Fint*v6, int *ierr )
 {
-        *v5 = *v4;
-        *v6 = 1;
-        *ierr = MPI_SUCCESS;
+	*v5 = *v4;
+	*v6 = 1;
+	*ierr = MPI_SUCCESS;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
 }
 
 #pragma weak mpi_win_null_copy_fn_ = pmpi_win_null_copy_fn_
 void pmpi_win_null_copy_fn_ ( MPI_Fint*v1, MPI_Fint*v2, void*v3, void*v4, void*v5, MPI_Fint *v6, int *ierr )
 {
-        *ierr = MPI_SUCCESS;
-        *v6 = 0;
+	*ierr = MPI_SUCCESS;
+	*v6 = 0;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
+	UNUSED(v5);
 }
 
 #pragma weak mpi_win_null_copy_fn__ = pmpi_win_null_copy_fn__
 void pmpi_win_null_copy_fn__ ( MPI_Fint*v1, MPI_Fint*v2, void*v3, void*v4, void*v5, MPI_Fint *v6, int *ierr )
 {
-        *ierr = MPI_SUCCESS;
-        *v6 = 0;
+	*ierr = MPI_SUCCESS;
+	*v6 = 0;
+	UNUSED(v1);
+	UNUSED(v2);
+	UNUSED(v3);
+	UNUSED(v4);
+	UNUSED(v5);
 }
 
 #pragma weak mpi_pcontrol_ = pmpi_pcontrol_
@@ -9144,7 +9249,7 @@ void pmpi_pcontrol__ ( MPI_Fint *v1, MPI_Fint *ierr ){
 
 #pragma weak mpi_address_ = pmpi_address_
 void pmpi_address_ ( void*v1, MPI_Fint *v2, MPI_Fint *ierr ){
-     MPI_Aint a, b;
+     MPI_Aint a;
      *ierr = MPI_Address( v1, &a );
      *v2 = (MPI_Fint)( a );
 }

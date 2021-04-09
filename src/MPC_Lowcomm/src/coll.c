@@ -473,7 +473,6 @@ void mpc_lowcomm_bcast_opt_messages( void *buffer, const size_t size,
                                 const int root, const mpc_lowcomm_communicator_t communicator,
                                 struct mpc_lowcomm_coll_s *tmp )
 {
-	int check_threshold =  _mpc_lowcomm_coll_conf_get()->bcast_check_threshold;
 	size_t broadcast_max_size = _mpc_lowcomm_coll_conf_get()->bcast_max_size;
 	int broadcast_arity_max = _mpc_lowcomm_coll_conf_get()->bcast_max_arity;
 	size_t broadcast_check_threshold = _mpc_lowcomm_coll_conf_get()->bcast_check_threshold;
@@ -1882,7 +1881,7 @@ static void _mpc_coll_noalloc_allreduce( const void *buffer_in, void *buffer_out
         const mpc_lowcomm_datatype_t data_type,
         struct mpc_lowcomm_coll_s *tmp )
 {
-	int allreduce_max_slot = _mpc_lowcomm_coll_conf_get()->allreduce_max_slots;
+	unsigned int allreduce_max_slot = (unsigned int)_mpc_lowcomm_coll_conf_get()->allreduce_max_slots;
 
 
 	if ( elem_number == 0 )

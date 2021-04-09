@@ -434,7 +434,7 @@ static inline void __sctk_network_ofi_bootstrap(sctk_rail_info_t* rail)
 	
 	/* it has to be encoded because what fi_getname() returns is not always PMI-format compatible (strings) */
 	connection_infos = mpc_common_datastructure_base64_encode((unsigned char*)orail->name_info, orail->name_info_sz, NULL);
-	assume ( mpc_launch_pmi_put_as_rank(connection_infos, rail->rail_number, 0 ) == 0 );
+	assume ( mpc_launch_pmi_put_as_rank((char *)connection_infos, rail->rail_number, 0 ) == 0 );
 	mpc_launch_pmi_barrier();
 	sctk_free(connection_infos);
 
@@ -449,7 +449,7 @@ static inline void __sctk_network_ofi_bootstrap(sctk_rail_info_t* rail)
 	*/
 	if(will_connect)
 	{
-		assume ( mpc_launch_pmi_get_as_rank ( raw_connection_infos, MPC_COMMON_MAX_STRING_SIZE, rail->rail_number, right_rank ) == 0 );
+		assume ( mpc_launch_pmi_get_as_rank ( (char *)raw_connection_infos, MPC_COMMON_MAX_STRING_SIZE, rail->rail_number, right_rank ) == 0 );
 		connection_infos = mpc_common_datastructure_base64_decode((unsigned char*)raw_connection_infos, strlen((char*)raw_connection_infos), NULL);
 		ctx_connect = __mpc_lowcomm_ofi_register_endpoint(rail, right_rank, MPC_LOWCOMM_OFI_ACTIVE_SIDE, ROUTE_ORIGIN_STATIC, (char*)connection_infos);
 		sctk_free(connection_infos);
@@ -629,7 +629,7 @@ void mpc_lowcomm_ofi_msg_on_demand_handler( sctk_rail_info_t *rail, int dest_pro
 	unsigned char raw_connection_infos[MPC_COMMON_MAX_STRING_SIZE], *connection_infos;
 
 	/* initiate a new connection attempt to the remote side */
-	assume ( mpc_launch_pmi_get_as_rank ( raw_connection_infos, MPC_COMMON_MAX_STRING_SIZE, rail->rail_number, dest_process ) == 0 );
+	assume ( mpc_launch_pmi_get_as_rank ((char *)raw_connection_infos, MPC_COMMON_MAX_STRING_SIZE, rail->rail_number, dest_process ) == 0 );
 	connection_infos = mpc_common_datastructure_base64_decode(raw_connection_infos, strlen((char*)raw_connection_infos), NULL);
 	ep_ctx = __mpc_lowcomm_ofi_register_endpoint(rail, dest_process, MPC_LOWCOMM_OFI_ACTIVE_SIDE, ROUTE_ORIGIN_DYNAMIC, (char*)connection_infos);
 	

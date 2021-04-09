@@ -135,6 +135,7 @@ struct sctk_comm_coll *mpc_communicator_shm_coll_get(const mpc_lowcomm_communica
 
 int mpc_lowcomm_communicator_is_shared_node(const mpc_lowcomm_communicator_t comm)
 {
+	UNUSED(comm);
 	return 0;
 }
 

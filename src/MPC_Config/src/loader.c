@@ -77,7 +77,7 @@ mpc_conf_config_type_t *mpc_conf_config_loader_paths(char *conf_name,
 
 
 	char * amanual_prefix = malloc(sizeof(char) * MPC_CONF_STRING_SIZE);
-	snprintf(amanual_prefix, MPC_CONF_STRING_SIZE, "");
+	amanual_prefix[0] = '\0';
 
 
 	mpc_conf_config_type_t *type = mpc_conf_config_type_init(conf_name, PARAM("cancreate",
@@ -98,7 +98,7 @@ mpc_conf_config_type_t *mpc_conf_config_loader_paths(char *conf_name,
 																			"Manual override configuration prefix/file"),
 																		NULL);
 
-	int i;
+	unsigned int i;
 
 	for( i = 0 ; i < type->elem_count; i++)
 	{

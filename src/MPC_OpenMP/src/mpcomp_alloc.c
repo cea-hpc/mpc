@@ -33,46 +33,46 @@ static mpcomp_alloc_list_t mpcomp_global_allocators;
   static VMEM *vmp;
 #endif
 
-static inline void
-mpcomp_alloc_init_default_trait(mpcomp_alloc_t alloc)
+static inline void mpcomp_alloc_init_default_trait(mpcomp_alloc_t * alloc)
 {
-  for(int i = omp_atk_sync_hint; i <= omp_atk_partition; ++i)
+  int i;
+  for(i = omp_atk_sync_hint; i <= omp_atk_partition; ++i)
   {
     int idx = i - 1;
-    alloc.traits[idx].key = i;
+    alloc->traits[idx].key = i;
 
     switch (i)
     {
       case omp_atk_sync_hint :
-        alloc.traits[idx].value = omp_atv_contended & omp_atv_sequential;
+        alloc->traits[idx].value = omp_atv_contended & omp_atv_sequential;
         break;
 
       case omp_atk_alignment :
-        alloc.traits[idx].value = 32;
+        alloc->traits[idx].value = 32;
         break;
 
       case omp_atk_access :
-        alloc.traits[idx].value = omp_atv_all;
+        alloc->traits[idx].value = omp_atv_all;
         break;
 
       case omp_atk_pool_size :
-        alloc.traits[idx].value = 0; /* pool size to def */
+        alloc->traits[idx].value = 0; /* pool size to def */
         break;
 
       case omp_atk_fallback :
-        alloc.traits[idx].value = omp_atv_default_mem_fb;
+        alloc->traits[idx].value = omp_atv_default_mem_fb;
         break;
 
       case omp_atk_fb_data :
-        alloc.traits[idx].value = 0x0;
+        alloc->traits[idx].value = 0x0;
         break;
 
       case omp_atk_pinned :
-        alloc.traits[idx].value = omp_atv_false;
+        alloc->traits[idx].value = omp_atv_false;
         break;
 
       case omp_atk_partition :
-        alloc.traits[idx].value = omp_atv_environment;
+        alloc->traits[idx].value = omp_atv_environment;
         break;
 
       default:
@@ -96,10 +96,11 @@ mpcomp_alloc_init_allocators()
   mpcomp_global_allocators.last_index = -1;
   mpcomp_global_allocators.recycling_info.nb_recycl_allocators = 0;
 
+  int i;
   /* Initialize Pre-defined traits for all the allocators */
-  for(int i = omp_atk_sync_hint-1; i < omp_atk_partition; ++i)
+  for(i = omp_atk_sync_hint-1; i < omp_atk_partition; ++i)
   {
-    mpcomp_alloc_init_default_trait(alloc_set[i]);
+    mpcomp_alloc_init_default_trait(&alloc_set[i]);
     mpcomp_global_allocators.nb_init_allocators += 1;
   }
   mpcomp_global_allocators.last_index = mpcomp_global_allocators.nb_init_allocators;
@@ -180,7 +181,9 @@ omp_init_allocator(
   assert(idx >= 0 && idx < MPCOMP_MAX_ALLOCATORS);
 
   mpcomp_global_allocators.list[idx].memspace = memspace;
-  for(int i = 0; i < ntraits; ++i)
+  
+  int i;
+  for(i = 0; i < ntraits; ++i)
   {
     switch (traits[i].key)
     {

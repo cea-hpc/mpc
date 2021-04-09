@@ -6,6 +6,7 @@
 #include <string.h>
 #include <assert.h>
 
+#include <mpc_thread.h>
 #include <mpc_topology.h>
 #include "mpcomp_alloc.h"
 #include "mpcomp_core.h"

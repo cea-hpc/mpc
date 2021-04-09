@@ -248,7 +248,8 @@ int __mpc_conf_type_parse_from_string(mpc_conf_type_t type, void *dest, char *fr
 					return 1;
 				}
 			}
-		/* FALLTRU Could also be an int so we falltrough */
+		/* FALLTHRU */
+		/* Could also be an int so we falltrough */
 		case MPC_CONF_INT:
 		{
 			long tmp = 0;

@@ -371,7 +371,7 @@ char * _utils_read_whole_file(char * path, size_t * file_size)
 
 	size_t fret = fread(ret, sizeof(char), size, file);
 
-	if(fret != size)
+	if(fret != (size_t)size)
 	{
 		_utils_verbose_output(0, "fread was truncated for %s (expected %ld bytes)\n", path, size);
 		free(ret);
