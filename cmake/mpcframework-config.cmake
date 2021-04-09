@@ -16,8 +16,7 @@
 # terms.                                                               #
 #                                                                      #
 # Authors:                                                             #
-#   - PERACHE Marc marc.perache@cea.fr                                 #
-#   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
+#   - BESNARD Jean-Baptiste  jbbesnard@paratools.fr                    #
 #                                                                      #
 ########################################################################
 #[=======================================================================[.rst:
