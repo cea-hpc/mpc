@@ -42,6 +42,7 @@
 //    config handling
 //    add reduce_scatter(_block)_Allgather(v) algorithm, may be faster than reduce then scatter
 
+#define dbg 0
 
 
 /**
@@ -378,6 +379,14 @@ static inline int my_NBC_Sched_copy(const void *src, int srccount, MPI_Datatype 
 static inline int __INTERNAL__Send_type(const void *buffer, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
   int res = MPI_SUCCESS;
 
+#if dbg == 1
+  if(coll_type != MPC_COLL_TYPE_COUNT) {
+    int rank = -1;
+    _mpc_cl_comm_rank(comm, &rank);
+    fprintf(stderr, "SEND | %d -> %d (%d) : %p\n", rank, dest, count, buffer);
+  }
+#endif
+
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
       res = _mpc_cl_send(buffer, count, datatype, dest, tag, comm);
@@ -409,7 +418,15 @@ static inline int __INTERNAL__Send_type(const void *buffer, int count, MPI_Datat
   */
 static inline int __INTERNAL__Recv_type(void *buffer, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
   int res = MPI_SUCCESS;
-  
+ 
+#if dbg == 1
+  if(coll_type != MPC_COLL_TYPE_COUNT) {
+    int rank = -1;
+    _mpc_cl_comm_rank(comm, &rank);
+    fprintf(stderr, "RECV | %d <- %d (%d) : %p\n", rank, source, count, buffer);
+  }
+#endif
+
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
       res = _mpc_cl_recv(buffer, count, datatype, source, tag, comm, MPI_STATUS_IGNORE);
@@ -1642,6 +1659,7 @@ int __INTERNAL__Allreduce(const void *sendbuf, void* recvbuf, int count, MPI_Dat
   \return error code
   */
 static inline int __INTERNAL__Allreduce_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
   enum {
     NBC_ALLREDUCE_REDUCE_BROADCAST,
     NBC_ALLREDUCE_DISTANCE_DOUBLING,
@@ -1899,32 +1917,6 @@ static inline int __INTERNAL__Allreduce_binary_block(const void *sendbuf, void* 
   maxr = (int)ceil((log(size)/LOG2));
   vrank = rank;
 
-  switch(coll_type) {
-    case MPC_COLL_TYPE_BLOCKING:
-      tmpbuf = sctk_malloc(count * ext);
-      mpi_op = sctk_convert_to_mpc_op(op);
-      mpc_op = mpi_op->op;
-      break;
-
-    case MPC_COLL_TYPE_NONBLOCKING:
-    case MPC_COLL_TYPE_PERSISTENT:
-      tmpbuf = info->tmpbuf + info->tmpbuf_pos;
-      info->tmpbuf_pos += count * ext;
-      break;
-
-    case MPC_COLL_TYPE_COUNT:
-      info->tmpbuf_size += count * ext;
-      break;
-  }
-  
-  if(sendbuf != MPI_IN_PLACE) {
-    __INTERNAL__Copy_type(sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
-    //memcpy(recvbuf, sendbuf, count * d_size);
-  }
-
-  // log2size = maxr
-  //int log2size = ceil(log(size) / log(2));
-
   int block = maxr;
   int previous_block = -1;
   int next_block = -1;
@@ -1960,215 +1952,215 @@ static inline int __INTERNAL__Allreduce_binary_block(const void *sendbuf, void* 
   int target_count = previous_block_size / block_size;
 
   int start = 0, end = count, mid;
+
+
+  switch(coll_type) {
+    case MPC_COLL_TYPE_BLOCKING:
+      tmpbuf = sctk_malloc(count * ext + 4 * block_size * sizeof(int));
+      mpi_op = sctk_convert_to_mpc_op(op);
+      mpc_op = mpi_op->op;
+      break;
+
+    case MPC_COLL_TYPE_NONBLOCKING:
+    case MPC_COLL_TYPE_PERSISTENT:
+      tmpbuf = info->tmpbuf + info->tmpbuf_pos;
+      info->tmpbuf_pos += count * ext + 4 * block_size * sizeof(int);
+      break;
+
+    case MPC_COLL_TYPE_COUNT:
+      info->tmpbuf_size += count * ext + 4 * block_size * sizeof(int);
+      break;
+  }
+
+
+  int *group_starts      = (int*)(((void*)tmpbuf) + count * ext + 0 * block_size * sizeof(int));
+  int *group_ends        = (int*)(((void*)tmpbuf) + count * ext + 1 * block_size * sizeof(int));
+  int *prev_group_starts = (int*)(((void*)tmpbuf) + count * ext + 2 * block_size * sizeof(int));
+  int *prev_group_ends   = (int*)(((void*)tmpbuf) + count * ext + 3 * block_size * sizeof(int));
+  void *swap = NULL;
+
+
+  if(coll_type != MPC_COLL_TYPE_COUNT) {
+    // init group starts/ends
+    for(int j = 0; j < block_size; j++) {
+      group_starts[j] = 0;
+      group_ends[j] = count;
+    }
+  }
+
   
-  // tmprecvbuf = tmpbuf
-  //char* tmprecvbuf = malloc(count * d_size);
+  if(sendbuf != MPI_IN_PLACE) {
+    __INTERNAL__Copy_type(sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+  }
 
 
+  int send_bufsize;
+  int recv_bufsize;
 
+  void *tmp_sendbuf;
+  void *tmp_recvbuf;
+  void *tmp_opbuf;
 
+  int peer, peer_vrank;
 
 
   //REDUCE_SCATTER
   //distance doubling and vector halving
+  
   for(int i = 0; i < block; i++) {
-    int peer_vrank = vrank ^ (1 << i);
-    int peer = first_rank_of_block + peer_vrank;
+    peer_vrank = vrank ^ (1 << i);
+    peer = first_rank_of_block + peer_vrank;
 
-    mid = ceil((start + end) / 2.0);
+    //mid = ceil((start + end) / 2.0);
+    mid = (start + end + 1) >> 1;
+
+    //fprintf(stderr, "RANK %d | START : MID : END | %d : %d : %d\n", rank, start, mid, end);
 
     if(peer_vrank > vrank) { // send second part of buffer
-      if(end - mid) {
-        char* buf = ((char*) recvbuf) + mid * ext;
-        int halfbufsize = end - mid;
 
-        __INTERNAL__Send_type(buf, halfbufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-        //MPI_Send(buf, halfbufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm);
+      tmp_sendbuf = ((void*) recvbuf) + mid * ext;
+      send_bufsize = end - mid;
+
+      tmp_recvbuf = ((void*) tmpbuf) + start * ext;
+      tmp_opbuf = ((void*) recvbuf) + start * ext;
+      recv_bufsize = mid - start;
+
+      if(send_bufsize) {
+        __INTERNAL__Send_type(tmp_sendbuf, send_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
       }
 
-      if(mid - start) {
-        char* buf = ((char*) tmpbuf) + start * ext;
-        int halfbufsize = mid - start;
-
-        __INTERNAL__Recv_type(buf, halfbufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-        //MPI_Recv(buf, halfbufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, MPI_STATUS_IGNORE);
-        
-        char* buf2 = ((char*) recvbuf) + start * ext;
-
-        __INTERNAL__Op_type(NULL, buf, buf2, halfbufsize, datatype, op, mpc_op, coll_type, schedule, info);
-        // if (mpc_op.u_func != NULL) {
-        //   mpc_op.u_func(buf, buf2, &halfbufsize, &datatype);
-        // } else {
-        //   MPC_Op_f func;
-        //   func = sctk_get_common_function(datatype, mpc_op);
-        //   func(buf, buf2, halfbufsize, datatype);
-        // }
+      if(recv_bufsize) {
+        __INTERNAL__Recv_type(tmp_recvbuf, recv_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+        __INTERNAL__Barrier_type(coll_type, schedule, info);
+        __INTERNAL__Op_type(NULL, tmp_recvbuf, tmp_opbuf, recv_bufsize, datatype, op, mpc_op, coll_type, schedule, info);
       }
 
       end = mid;
     } else { // send first part of buffer
-      if(end - mid) {
-        char* buf = ((char*) tmpbuf) + mid * ext;
-        int halfbufsize = end - mid;
+      
+      tmp_sendbuf = ((void*) recvbuf) + start * ext;
+      send_bufsize = mid - start;
 
-        __INTERNAL__Recv_type(buf, halfbufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-        //MPI_Recv(buf, halfbufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, MPI_STATUS_IGNORE);
+      tmp_recvbuf = ((void*) tmpbuf) + mid * ext;
+      tmp_opbuf = ((void*) recvbuf) + mid * ext;
+      recv_bufsize = end - mid;
 
-        char* buf2 = ((char*) recvbuf) + mid * ext;
-
-        __INTERNAL__Op_type(NULL, buf, buf2, halfbufsize, datatype, op, mpc_op, coll_type, schedule, info);
-        // if (mpc_op.u_func != NULL) {
-        //   mpc_op.u_func(buf, buf2, &halfbufsize, &datatype);
-        // } else {
-        //   MPC_Op_f func;
-        //   func = sctk_get_common_function(datatype, mpc_op);
-        //   func(buf, buf2, halfbufsize, datatype);
-        // }
+      if(recv_bufsize) {
+        __INTERNAL__Recv_type(tmp_recvbuf, recv_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+        __INTERNAL__Barrier_type(coll_type, schedule, info);
+        __INTERNAL__Op_type(NULL, tmp_recvbuf, tmp_opbuf, recv_bufsize, datatype, op, mpc_op, coll_type, schedule, info);
       }
 
-      if(mid - start) {
-        char* buf = ((char*) recvbuf) + start * ext;
-        int halfbufsize = mid - start;
-
-        __INTERNAL__Send_type(buf, halfbufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-        //MPI_Send(buf, halfbufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm);
+      if(send_bufsize) {
+        __INTERNAL__Send_type(tmp_sendbuf, send_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
       }
 
       start = mid;
     }
+
+    if(coll_type != MPC_COLL_TYPE_COUNT) {
+      // update group starts/ends
+      pointer_swap(prev_group_starts, group_starts, swap);
+      pointer_swap(prev_group_ends, group_ends, swap);
+
+      for(int j = 0; j < block_size; j++) {
+
+        peer = j ^ (1 << i);
+        mid = (prev_group_starts[j] + prev_group_ends[j] + 1) >> 1;
+
+        if(peer > j) {
+          group_starts[j] = prev_group_starts[j];
+          group_ends[j] = mid;
+        } else {
+          group_starts[j] = mid;
+          group_ends[j] = prev_group_ends[j];
+        }
+      }
+    }
   }
-
-
-
-
-
-
 
 
 
 
   // SEND/RECEIVE SEGMENTED DATA TO/FROM PREVIOUS/NEXT BLOCK
   int next_block_peer = -1;
+  int peer_start, peer_end, peer_mid;
 
   if(next_block != -1) {
-    char* buf = ((char*) tmpbuf) + start * ext;
-    char* buf2 = ((char*) recvbuf) + start * ext;
-    int bufsize = end - start;
 
+    tmp_recvbuf = ((void*) tmpbuf) + start * ext;
+    tmp_opbuf = ((void*) recvbuf) + start * ext;
+    recv_bufsize = end - start;
     next_block_peer = vrank / (1 << (block - next_block)) + first_rank_of_next_block;
 
-    __INTERNAL__Recv_type(buf, bufsize, datatype, next_block_peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-    //MPI_Recv(buf, bufsize, datatype, MPI_ANY_SOURCE, MPC_ALLREDUCE_TAG, comm, &status);
-    //next_block_peer = status.MPI_SOURCE;
-
-
-    __INTERNAL__Op_type(NULL, buf, buf2, bufsize, datatype, op, mpc_op, coll_type, schedule, info);
-    // if (mpc_op.u_func != NULL) {
-    //   mpc_op.u_func(buf, buf2, &bufsize, &datatype);
-    // } else {
-    //   MPC_Op_f func;
-    //   func = sctk_get_common_function(datatype, mpc_op);
-    //   func(buf, buf2, bufsize, datatype);
-    // }
+    __INTERNAL__Recv_type(tmp_recvbuf, recv_bufsize, datatype, next_block_peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+    __INTERNAL__Barrier_type(coll_type, schedule, info);
+    __INTERNAL__Op_type(NULL, tmp_recvbuf, tmp_opbuf, recv_bufsize, datatype, op, mpc_op, coll_type, schedule, info);
   }
 
   
 
   if(previous_block != -1) {
-    // MPI_Request* rqsts = malloc(2 * target_count * sizeof(MPI_Request));
-    // int index = 0;
 
-    // for(int j = 0; j < target_count; j++)
-    // {
-    //   int target = first_rank_of_previous_block + vrank + j * block_size;
-    //  
-    //   //TODO
-    //   //send_to_target(target, first_rank_of_previous_block, previous_block, size, d_size, recvbuf, count, datatype, comm, rqsts, &index);
-    // }
-    // MPI_Waitall(index, rqsts, MPI_STATUSES_IGNORE);
-    // free(rqsts);
+    for(int j = 0; j < target_count; j++) {
+      peer_vrank = vrank + j * block_size;
+      peer = peer_vrank + first_rank_of_previous_block;
+      peer_start = 0;
+      peer_end = count;
 
+      for(int i = 0; i < previous_block; i++) {
+        int peer_peer_vrank = peer_vrank ^ (1 << i);
 
+        peer_mid = (peer_start + peer_end + 1) >> 1;
 
-    for(int j = 0; j < target_count; j++)
-    {
-      int target = first_rank_of_previous_block + vrank + j * block_size;
-      
-      {
-        int vrank = target - first_rank_of_previous_block;
-        int start = 0, end = size * count, mid;
-
-        for(int i = 0; i < previous_block; i++) {
-          int peer_vrank = vrank ^ (1 << i);
-          // ???
-          //int peer = first_rank_of_previous_block + peer_vrank;
-
-          mid = ceil((start + end) / 2.0);
-
-          if(peer_vrank > vrank) {
-            end = mid;
-          } else {
-            start = mid;
-          }
+        if(peer_peer_vrank > peer_vrank) {
+          peer_end = peer_mid;
+        } else {
+          peer_start = peer_mid;
         }
-
-        char* buf = ((char*) recvbuf) + start * ext;
-        int bufsize = end - start;
-
-        __INTERNAL__Send_type(buf, bufsize, datatype, target, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
       }
+
+      tmp_sendbuf = ((void*) recvbuf) + peer_start * ext;
+      send_bufsize = peer_end - peer_start;
+
+      __INTERNAL__Send_type(tmp_sendbuf, send_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
     }
 
-    for(int j = 0; j < target_count; j++)
-    {
-      int target = first_rank_of_previous_block + vrank + j * block_size;
+    for(int j = 0; j < target_count; j++) {
+      peer_vrank = vrank + j * block_size;
+      peer = peer_vrank + first_rank_of_previous_block;
+      peer_start = 0;
+      peer_end = count;
 
-      {
-        int vrank = target - first_rank_of_previous_block;
-        int start = 0, end = size * count, mid;
+      for(int i = 0; i < previous_block; i++) {
+        int peer_peer_vrank = peer_vrank ^ (1 << i);
 
-        for(int i = 0; i < previous_block; i++) {
-          int peer_vrank = vrank ^ (1 << i);
-          // ???
-          //int peer = first_rank_of_previous_block + peer_vrank;
+        peer_mid = (peer_start + peer_end + 1) >> 1;
 
-          mid = ceil((start + end) / 2.0);
-
-          if(peer_vrank > vrank) {
-            end = mid;
-          } else {
-            start = mid;
-          }
+        if(peer_peer_vrank > peer_vrank) {
+          peer_end = peer_mid;
+        } else {
+          peer_start = peer_mid;
         }
-
-        char* buf = ((char*) recvbuf) + start * ext;
-        int bufsize = end - start;
-
-        __INTERNAL__Recv_type(buf, bufsize, datatype, target, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
       }
+
+      tmp_sendbuf = ((void*) recvbuf) + peer_start * ext;
+      send_bufsize = peer_end - peer_start;
+
+      __INTERNAL__Recv_type(tmp_sendbuf, send_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
     }
+
+    __INTERNAL__Barrier_type(coll_type, schedule, info);
   }
 
 
   if(next_block != -1) {
-    char* buf = ((char*) recvbuf) + start * ext;
-    int bufsize = end - start;
 
-    __INTERNAL__Send_type(buf, bufsize, datatype, next_block_peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-    // MPI_Send(buf, bufsize, datatype, next_block_peer, MPC_ALLREDUCE_TAG, comm);
+    tmp_sendbuf = ((void*) recvbuf) + start * ext;
+    send_bufsize = end - start;
+
+    __INTERNAL__Send_type(tmp_sendbuf, send_bufsize, datatype, next_block_peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
   }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -2176,54 +2168,112 @@ static inline int __INTERNAL__Allreduce_binary_block(const void *sendbuf, void* 
   //ALLGATHER
   //distance halving and vector doubling
 
-  // TODO
-  // to change : Sending a msg to get the size of the next recv isnt great
+  // int *recv_bufsize = (void*)tmpbuf + count * ext;
+
+  // int count_pointer;
+  // if(coll_type == MPC_COLL_TYPE_COUNT) {
+  //   recv_bufsize = &count_pointer;
+  // }
+
+  // for(int i = block-1; i >= 0; i--) {
+  //   int peer_vrank = vrank ^ (1 << i);
+  //   int peer = first_rank_of_block + peer_vrank;
+
+  //   if(peer_vrank > vrank) { // receive second part of buffer
+  //     char* buf1 = ((char*) recvbuf) + start * ext;
+  //     int bufsize1 = end - start;
+
+  //     __INTERNAL__Send_type(&bufsize1, 1, MPI_INT, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+  //     __INTERNAL__Send_type(buf1, bufsize1, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+
+  //     //int bufsize2;
+  //     //__INTERNAL__Recv_type(&bufsize2, 1, MPI_INT, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+  //     __INTERNAL__Recv_type(recv_bufsize, 1, MPI_INT, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+  //     __INTERNAL__Barrier_type(coll_type, schedule, info);
+  //     char* buf2 = ((char*) recvbuf) + end * ext;
+  //     
+  //     //__INTERNAL__Recv_type(buf2, bufsize2, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+  //     __INTERNAL__Recv_type(buf2, *recv_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+  //     __INTERNAL__Barrier_type(coll_type, schedule, info);
+
+  //     end += *recv_bufsize;
+  //   } else { // receive first part of buffer
+
+  //     //int bufsize1;
+  //     //__INTERNAL__Recv_type(&bufsize1, 1, MPI_INT, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+  //     __INTERNAL__Recv_type(recv_bufsize, 1, MPI_INT, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+  //     __INTERNAL__Barrier_type(coll_type, schedule, info);
+  //     
+  //     //char* buf1 = ((char*) recvbuf) + (start - bufsize1) * ext;
+  //     char* buf1 = ((char*) recvbuf) + (start - *recv_bufsize) * ext;
+
+  //     //__INTERNAL__Recv_type(buf1, bufsize1, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+  //     __INTERNAL__Recv_type(buf1, *recv_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+  //     __INTERNAL__Barrier_type(coll_type, schedule, info);
+
+  //     char* buf2 = ((char*) recvbuf) + start * ext;
+  //     int bufsize2 = end - start;
+
+  //     __INTERNAL__Send_type(&bufsize2, 1, MPI_INT, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+  //     __INTERNAL__Send_type(buf2, bufsize2, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+
+  //     start -= *recv_bufsize;
+  //   }
+  // }
+
+  
 
   for(int i = block-1; i >= 0; i--) {
     int peer_vrank = vrank ^ (1 << i);
     int peer = first_rank_of_block + peer_vrank;
 
+    tmp_sendbuf = ((void*) recvbuf) + start * ext;
+    send_bufsize = end - start;
+
+    if(coll_type != MPC_COLL_TYPE_COUNT) {
+      recv_bufsize = group_ends[peer_vrank] - group_starts[peer_vrank];
+    }
+
     if(peer_vrank > vrank) { // receive second part of buffer
-      char* buf1 = ((char*) recvbuf) + start * ext;
-      int bufsize1 = end - start;
-
-      __INTERNAL__Send_type(&bufsize1, 1, MPI_INT, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-      __INTERNAL__Send_type(buf1, bufsize1, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-      //MPI_Send(buf1, bufsize1, datatype, peer, MPC_ALLREDUCE_TAG, comm);
-
-
-      int bufsize2;
-      __INTERNAL__Recv_type(&bufsize2, 1, MPI_INT, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-      // __INTERNAL__PMPI_Probe(peer, MPC_ALLREDUCE_TAG, comm, &status);
-      // MPI_Get_count(&status, datatype, &bufsize2);
-      char* buf2 = ((char*) recvbuf) + end * ext;
+      tmp_recvbuf = ((void*) recvbuf) + end * ext;
       
-      __INTERNAL__Recv_type(buf2, bufsize2, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-      //MPI_Recv(buf2, bufsize2, datatype, peer, MPC_ALLREDUCE_TAG, comm, MPI_STATUS_IGNORE);
+      __INTERNAL__Send_type(tmp_sendbuf, send_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+      __INTERNAL__Recv_type(tmp_recvbuf, recv_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+      __INTERNAL__Barrier_type(coll_type, schedule, info);
 
-
-      end += bufsize2;
+      end += recv_bufsize;
     } else { // receive first part of buffer
+      tmp_recvbuf = ((void*) recvbuf) + (start - recv_bufsize) * ext;
+      
+      __INTERNAL__Recv_type(tmp_recvbuf, recv_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+      __INTERNAL__Send_type(tmp_sendbuf, send_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+      __INTERNAL__Barrier_type(coll_type, schedule, info);
 
-      int bufsize1;
-      __INTERNAL__Recv_type(&bufsize1, 1, MPI_INT, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-      // __INTERNAL__PMPI_Probe(peer, MPC_ALLREDUCE_TAG, comm, &status);
-      // MPI_Get_count(&status, datatype, &bufsize1);
-      char* buf1 = ((char*) recvbuf) + (start - bufsize1) * ext;
+      start -= recv_bufsize;
+    }
 
-      __INTERNAL__Recv_type(buf1, bufsize1, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-      //MPI_Recv(buf1, bufsize1, datatype, peer, MPC_ALLREDUCE_TAG, comm, MPI_STATUS_IGNORE);
 
-      char* buf2 = ((char*) recvbuf) + start * ext;
-      int bufsize2 = end - start;
+    if(coll_type != MPC_COLL_TYPE_COUNT) {
+      // update group starts/ends
+      pointer_swap(prev_group_starts, group_starts, swap);
+      pointer_swap(prev_group_ends, group_ends, swap);
 
-      __INTERNAL__Send_type(&bufsize2, 1, MPI_INT, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-      __INTERNAL__Send_type(buf2, bufsize2, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-      //MPI_Send(buf2, bufsize2, datatype, peer, MPC_ALLREDUCE_TAG, comm);
+      for(int j = 0; j < block_size; j++) {
 
-      start -= bufsize1;
+        peer = j ^ (1 << i);
+        recv_bufsize = prev_group_ends[peer] - prev_group_starts[peer];
+
+        if(peer > j) {
+          group_starts[j] = prev_group_starts[j];
+          group_ends[j] = prev_group_ends[j] + recv_bufsize;
+        } else {
+          group_starts[j] = prev_group_starts[j] - recv_bufsize;
+          group_ends[j] = prev_group_ends[j];
+        }
+      }
     }
   }
+
 
   if(coll_type == MPC_COLL_TYPE_BLOCKING) {
     sctk_free(tmpbuf);
@@ -2252,248 +2302,6 @@ static inline int __INTERNAL__Allreduce_ring(__UNUSED__ const void *sendbuf, __U
   
   return MPI_SUCCESS;
 }
-
-
-// void send_to_target(int rank, int first_rank_of_block, int block, int size, MPI_Aint d_size,
-//     void* sendbuf, int count, MPI_Datatype datatype, MPI_Comm comm, MPI_Request* rqsts, int* index)
-// {
-//   int vrank = rank - first_rank_of_block;
-//   int start = 0, end = size * count, mid;
-// 
-//   for(int i = 0; i < block; i++) {
-//     int peer_vrank = vrank ^ (1 << i);
-//     int peer = first_rank_of_block + peer_vrank;
-// 
-//     mid = ceil((start + end) / 2.0);
-// 
-//     if(peer_vrank > vrank) {
-//       end = mid;
-//     } else {
-//       start = mid;
-//     }
-//   }
-// 
-//   char* buf = ((char*) sendbuf) + start * d_size;
-//   int bufsize = end - start;
-// 
-//   __INTERNAL__PMPI_Isend(buf, bufsize, datatype, rank, MPC_ALLREDUCE_TAG, comm, &(rqsts[*index]));
-//   __INTERNAL__PMPI_Irecv(buf, bufsize, datatype, rank, MPC_ALLREDUCE_TAG, comm, &(rqsts[*index + 1]));
-// 
-//   *index = *index + 2;
-// }
-// 
-// 
-// int PMPI_Allreduce_binary_block(void *sendbuf, void *recvbuf, int count,
-// 		MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
-// {
-//   int size, rank;
-//   MPI_Comm_size(comm, &size);
-//   MPI_Comm_rank(comm, &rank);
-// 
-//   MPI_Aint d_size;
-//   __INTERNAL__PMPI_Type_extent(datatype, &d_size);
-//   
-//   if(sendbuf != MPI_IN_PLACE) {
-//     memcpy(recvbuf, sendbuf, count * d_size);
-//   }
-//   
-//   MPC_Op mpc_op;
-// 	sctk_op_t *mpi_op;
-// 
-// 	mpi_op = sctk_convert_to_mpc_op (op);
-// 	mpc_op = mpi_op->op;
-// 
-//   int log2size = ceil(log(size) / log(2));
-//   int vrank = rank;
-// 
-//   int block = log2size;
-//   int previous_block = -1;
-//   int next_block = -1;
-// 
-//   while(block) {
-//     if(size & (1 << block)) {
-//       if(vrank >> block == 0) {
-//         for(int j = block - 1; j >= 0; j--) {
-//           if(size & (1 << j)) {
-//             next_block = j;
-//             break;
-//           }
-//         }
-//         break;
-//       }
-//       vrank &= ~ (1 << block);
-// 
-//       previous_block = block;
-//     }
-//     block--;
-//   
-// 
-//   int block_size = 1 << block;
-//   int first_rank_of_block = (size >> (block + 1)) << (block + 1); 
-// 
-//   int previous_block_size = (previous_block != -1) ? (1 << previous_block) : 0;
-//   int first_rank_of_previous_block = (size >> (previous_block + 1)) << (previous_block + 1);
-// 
-//   int target_count = previous_block_size / block_size;
-// 
-//   int start = 0, end = count, mid;
-//   
-//   char* tmprecvbuf = malloc(count * d_size);
-// 
-//   //REDUCE_SCATTER
-//   //distance doubling and vector halving
-//   for(int i = 0; i < block; i++) {
-//     int peer_vrank = vrank ^ (1 << i);
-//     int peer = first_rank_of_block + peer_vrank;
-// 
-//     mid = ceil((start + end) / 2.0);
-// 
-//     if(peer_vrank > vrank) { // send second part of buffer
-//       if(end - mid) {
-//         char* buf = ((char*) recvbuf) + mid * d_size;
-//         int halfbufsize = end - mid;
-// 
-//         MPI_Send(buf, halfbufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm);
-//       }
-// 
-//       if(mid - start) {
-//         char* buf = ((char*) tmprecvbuf) + start * d_size;
-//         int halfbufsize = mid - start;
-// 
-//         MPI_Recv(buf, halfbufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, MPI_STATUS_IGNORE);
-//         
-//         char* buf2 = ((char*) recvbuf) + start * d_size;
-// 
-//         if (mpc_op.u_func != NULL) {
-//           mpc_op.u_func(buf, buf2, &halfbufsize, &datatype);
-//         } else {
-//           MPC_Op_f func;
-//           func = sctk_get_common_function(datatype, mpc_op);
-//           func(buf, buf2, halfbufsize, datatype);
-//         }
-//       }
-// 
-//       end = mid;
-//     } else { // send first part of buffer
-//       if(end - mid) {
-//         char* buf = ((char*) tmprecvbuf) + mid * d_size;
-//         int halfbufsize = end - mid;
-// 
-//         MPI_Recv(buf, halfbufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, MPI_STATUS_IGNORE);
-// 
-//         char* buf2 = ((char*) recvbuf) + mid * d_size;
-// 
-//         if (mpc_op.u_func != NULL) {
-//           mpc_op.u_func(buf, buf2, &halfbufsize, &datatype);
-//         } else {
-//           MPC_Op_f func;
-//           func = sctk_get_common_function(datatype, mpc_op);
-//           func(buf, buf2, halfbufsize, datatype);
-//         }
-//       }
-// 
-//       if(mid - start) {
-//         char* buf = ((char*) recvbuf) + start * d_size;
-//         int halfbufsize = mid - start;
-// 
-//         MPI_Send(buf, halfbufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm);
-//       }
-// 
-//       start = mid;
-//     }
-//   }
-// 
-//   // SEND/RECEIVE SEGMENTED DATA TO/FROM PREVIOUS/NEXT BLOCK
-//   MPI_Status status;
-//   int next_block_peer = -1;
-// 
-//   if(next_block != -1) {
-//     char* buf = ((char*) tmprecvbuf) + start * d_size;
-//     char* buf2 = ((char*) recvbuf) + start * d_size;
-//     int bufsize = end - start;
-// 
-//     MPI_Recv(buf, bufsize, datatype, MPI_ANY_SOURCE, MPC_ALLREDUCE_TAG, comm, &status);
-//     next_block_peer = status.MPI_SOURCE;
-// 
-//     if (mpc_op.u_func != NULL) {
-//       mpc_op.u_func(buf, buf2, &bufsize, &datatype);
-//     } else {
-//       MPC_Op_f func;
-//       func = sctk_get_common_function(datatype, mpc_op);
-//       func(buf, buf2, bufsize, datatype);
-//     }
-//   }
-// 
-//   
-// 
-//   if(previous_block != -1) {
-//     MPI_Request* rqsts = malloc(2 * target_count * sizeof(MPI_Request));
-//     int index = 0;
-// 
-//     for(int j = 0; j < target_count; j++)
-//     {
-//       int target = first_rank_of_previous_block + vrank + j * block_size;
-//       
-//       send_to_target(target, first_rank_of_previous_block, previous_block, size, d_size,
-//           recvbuf, count, datatype, comm, rqsts, &index);
-//     }
-// 
-//     MPI_Waitall(index, rqsts, MPI_STATUSES_IGNORE);
-//     free(rqsts);
-//   }
-// 
-//   if(next_block != -1) {
-//     char* buf = ((char*) recvbuf) + start * d_size;
-//     int bufsize = end - start;
-// 
-//     MPI_Send(buf, bufsize, datatype, next_block_peer, MPC_ALLREDUCE_TAG, comm);
-//   }
-// 
-//   //ALLGATHER
-//   //distance halving and vector doubling
-// 
-//   for(int i = block-1; i >= 0; i--) {
-//     int peer_vrank = vrank ^ (1 << i);
-//     int peer = first_rank_of_block + peer_vrank;
-// 
-//     if(peer_vrank > vrank) { // receive second part of buffer
-//       char* buf1 = ((char*) recvbuf) + start * d_size;
-//       int bufsize1 = end - start;
-// 
-//       MPI_Send(buf1, bufsize1, datatype, peer, MPC_ALLREDUCE_TAG, comm);
-// 
-// 
-//       int bufsize2;
-//       __INTERNAL__PMPI_Probe(peer, MPC_ALLREDUCE_TAG, comm, &status);
-//       MPI_Get_count(&status, datatype, &bufsize2);
-//       char* buf2 = ((char*) recvbuf) + end * d_size;
-// 
-//       MPI_Recv(buf2, bufsize2, datatype, peer, MPC_ALLREDUCE_TAG, comm, MPI_STATUS_IGNORE);
-// 
-// 
-//       end += bufsize2;
-//     } else { // receive first part of buffer
-// 
-//       int bufsize1;
-//       __INTERNAL__PMPI_Probe(peer, MPC_ALLREDUCE_TAG, comm, &status);
-//       MPI_Get_count(&status, datatype, &bufsize1);
-//       char* buf1 = ((char*) recvbuf) + (start - bufsize1) * d_size;
-// 
-//       MPI_Recv(buf1, bufsize1, datatype, peer, MPC_ALLREDUCE_TAG, comm, MPI_STATUS_IGNORE);
-// 
-// 
-//       char* buf2 = ((char*) recvbuf) + start * d_size;
-//       int bufsize2 = end - start;
-// 
-//       MPI_Send(buf2, bufsize2, datatype, peer, MPC_ALLREDUCE_TAG, comm);
-// 
-//       start -= bufsize1;
-//     }
-//   }
-// 
-//   free(tmprecvbuf);
-// }
-
 
 
 
