@@ -2011,10 +2011,7 @@ static inline int __INTERNAL__Allreduce_binary_block(const void *sendbuf, void* 
     peer_vrank = vrank ^ (1 << i);
     peer = first_rank_of_block + peer_vrank;
 
-    //mid = ceil((start + end) / 2.0);
     mid = (start + end + 1) >> 1;
-
-    //fprintf(stderr, "RANK %d | START : MID : END | %d : %d : %d\n", rank, start, mid, end);
 
     if(peer_vrank > vrank) { // send second part of buffer
 
@@ -2167,61 +2164,6 @@ static inline int __INTERNAL__Allreduce_binary_block(const void *sendbuf, void* 
 
   //ALLGATHER
   //distance halving and vector doubling
-
-  // int *recv_bufsize = (void*)tmpbuf + count * ext;
-
-  // int count_pointer;
-  // if(coll_type == MPC_COLL_TYPE_COUNT) {
-  //   recv_bufsize = &count_pointer;
-  // }
-
-  // for(int i = block-1; i >= 0; i--) {
-  //   int peer_vrank = vrank ^ (1 << i);
-  //   int peer = first_rank_of_block + peer_vrank;
-
-  //   if(peer_vrank > vrank) { // receive second part of buffer
-  //     char* buf1 = ((char*) recvbuf) + start * ext;
-  //     int bufsize1 = end - start;
-
-  //     __INTERNAL__Send_type(&bufsize1, 1, MPI_INT, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-  //     __INTERNAL__Send_type(buf1, bufsize1, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-
-  //     //int bufsize2;
-  //     //__INTERNAL__Recv_type(&bufsize2, 1, MPI_INT, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-  //     __INTERNAL__Recv_type(recv_bufsize, 1, MPI_INT, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-  //     __INTERNAL__Barrier_type(coll_type, schedule, info);
-  //     char* buf2 = ((char*) recvbuf) + end * ext;
-  //     
-  //     //__INTERNAL__Recv_type(buf2, bufsize2, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-  //     __INTERNAL__Recv_type(buf2, *recv_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-  //     __INTERNAL__Barrier_type(coll_type, schedule, info);
-
-  //     end += *recv_bufsize;
-  //   } else { // receive first part of buffer
-
-  //     //int bufsize1;
-  //     //__INTERNAL__Recv_type(&bufsize1, 1, MPI_INT, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-  //     __INTERNAL__Recv_type(recv_bufsize, 1, MPI_INT, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-  //     __INTERNAL__Barrier_type(coll_type, schedule, info);
-  //     
-  //     //char* buf1 = ((char*) recvbuf) + (start - bufsize1) * ext;
-  //     char* buf1 = ((char*) recvbuf) + (start - *recv_bufsize) * ext;
-
-  //     //__INTERNAL__Recv_type(buf1, bufsize1, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-  //     __INTERNAL__Recv_type(buf1, *recv_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-  //     __INTERNAL__Barrier_type(coll_type, schedule, info);
-
-  //     char* buf2 = ((char*) recvbuf) + start * ext;
-  //     int bufsize2 = end - start;
-
-  //     __INTERNAL__Send_type(&bufsize2, 1, MPI_INT, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-  //     __INTERNAL__Send_type(buf2, bufsize2, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-
-  //     start -= *recv_bufsize;
-  //   }
-  // }
-
-  
 
   for(int i = block-1; i >= 0; i--) {
     int peer_vrank = vrank ^ (1 << i);
