@@ -1196,7 +1196,7 @@ static inline int __INTERNAL__Reduce_switch(const void *sendbuf, void* recvbuf, 
     NBC_REDUCE_REDUCE_SCATTER_ALLGATHER
   } alg;
 
-  alg = NBC_REDUCE_LINEAR;
+  alg = NBC_REDUCE_BINOMIAL;
 
   int res;
 
@@ -1366,16 +1366,14 @@ static inline int __INTERNAL__Reduce_binomial(const void *sendbuf, void* recvbuf
   }
 
   for(int i = 0; i < maxr; i++) {
-    if(vrank & (1 << i)) {
-      VRANK2RANK(peer, vrank ^ (1 << i), vroot);
-     
+    VRANK2RANK(peer, vrank ^ (1 << i), vroot);
+    
+    if(peer < rank) {
       // send reduce data to rank-2^i
       __INTERNAL__Send_type(tmp_sendbuf, count, datatype, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
-      
       break;
-    } else if((vrank | (1 << i)) < size) {
-      VRANK2RANK(peer, vrank | (1 << i), vroot);
-      
+
+    } else if(peer < size) {
       // wait data from rank+2^i
       __INTERNAL__Recv_type(tmp_recvbuf, count, datatype, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
       __INTERNAL__Barrier_type(coll_type, schedule, info);
@@ -1394,15 +1392,13 @@ static inline int __INTERNAL__Reduce_binomial(const void *sendbuf, void* recvbuf
   }
 
   // if the operation isnt commutative rank 0 send the reduced data to root
-  if(!can_commute) {
-    if(root != 0) {
-      if(rank == 0) {
-        __INTERNAL__Send_type(tmp_sendbuf, count, datatype, root, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
-      } else if(rank == root) {
-        __INTERNAL__Recv_type(recvbuf, count, datatype, 0, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
-      }
+  if(!can_commute && root != 0) {
+    if(rank == 0) {
+      __INTERNAL__Send_type(tmp_sendbuf, count, datatype, root, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
+    } else if(rank == root) {
+      __INTERNAL__Recv_type(recvbuf, count, datatype, 0, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
     }
-  } else if (rank == root){
+  } else if (rank == root) {
     // Root already have the result, just copy it in revcbuf
     __INTERNAL__Copy_type(tmp_sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
   }
@@ -1663,8 +1659,8 @@ static inline int __INTERNAL__Allreduce_switch(const void *sendbuf, void* recvbu
   enum {
     NBC_ALLREDUCE_REDUCE_BROADCAST,
     NBC_ALLREDUCE_DISTANCE_DOUBLING,
-    NBC_ALLREDUCE_VECTOR_HALVING_DISTANCE_DOUBLING, //need reduce_scatter + allgather
-    NBC_ALLREDUCE_BINARY_BLOCK, // need reduce_scatter + allgather
+    NBC_ALLREDUCE_VECTOR_HALVING_DISTANCE_DOUBLING, 
+    NBC_ALLREDUCE_BINARY_BLOCK, 
     NBC_ALLREDUCE_RING
   } alg;
 
@@ -2001,6 +1997,10 @@ static inline int __INTERNAL__Allreduce_binary_block(const void *sendbuf, void* 
   void *tmp_recvbuf;
   void *tmp_opbuf;
 
+
+  void *resbuf = recvbuf;
+  void *recv_resbuf = tmpbuf;
+
   int peer, peer_vrank;
 
 
@@ -2015,11 +2015,11 @@ static inline int __INTERNAL__Allreduce_binary_block(const void *sendbuf, void* 
 
     if(peer_vrank > vrank) { // send second part of buffer
 
-      tmp_sendbuf = ((void*) recvbuf) + mid * ext;
+      tmp_sendbuf = ((void*) resbuf) + mid * ext;
       send_bufsize = end - mid;
 
-      tmp_recvbuf = ((void*) tmpbuf) + start * ext;
-      tmp_opbuf = ((void*) recvbuf) + start * ext;
+      tmp_recvbuf = ((void*) recv_resbuf) + start * ext;
+      tmp_opbuf = ((void*) resbuf) + start * ext;
       recv_bufsize = mid - start;
 
       if(send_bufsize) {
@@ -2029,17 +2029,19 @@ static inline int __INTERNAL__Allreduce_binary_block(const void *sendbuf, void* 
       if(recv_bufsize) {
         __INTERNAL__Recv_type(tmp_recvbuf, recv_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
         __INTERNAL__Barrier_type(coll_type, schedule, info);
-        __INTERNAL__Op_type(NULL, tmp_recvbuf, tmp_opbuf, recv_bufsize, datatype, op, mpc_op, coll_type, schedule, info);
+        __INTERNAL__Op_type(NULL, tmp_opbuf, tmp_recvbuf, recv_bufsize, datatype, op, mpc_op, coll_type, schedule, info);
+
+        pointer_swap(resbuf, recv_resbuf, swap);
       }
 
       end = mid;
     } else { // send first part of buffer
       
-      tmp_sendbuf = ((void*) recvbuf) + start * ext;
+      tmp_sendbuf = ((void*) resbuf) + start * ext;
       send_bufsize = mid - start;
 
-      tmp_recvbuf = ((void*) tmpbuf) + mid * ext;
-      tmp_opbuf = ((void*) recvbuf) + mid * ext;
+      tmp_recvbuf = ((void*) recv_resbuf) + mid * ext;
+      tmp_opbuf = ((void*) resbuf) + mid * ext;
       recv_bufsize = end - mid;
 
       if(recv_bufsize) {
@@ -2077,25 +2079,29 @@ static inline int __INTERNAL__Allreduce_binary_block(const void *sendbuf, void* 
   }
 
 
-
-
   // SEND/RECEIVE SEGMENTED DATA TO/FROM PREVIOUS/NEXT BLOCK
   int next_block_peer = -1;
   int peer_start, peer_end, peer_mid;
 
   if(next_block != -1) {
 
-    tmp_recvbuf = ((void*) tmpbuf) + start * ext;
-    tmp_opbuf = ((void*) recvbuf) + start * ext;
+    tmp_recvbuf = ((void*) recv_resbuf) + start * ext;
+    tmp_opbuf = ((void*) resbuf) + start * ext;
     recv_bufsize = end - start;
     next_block_peer = vrank / (1 << (block - next_block)) + first_rank_of_next_block;
 
     __INTERNAL__Recv_type(tmp_recvbuf, recv_bufsize, datatype, next_block_peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
     __INTERNAL__Barrier_type(coll_type, schedule, info);
-    __INTERNAL__Op_type(NULL, tmp_recvbuf, tmp_opbuf, recv_bufsize, datatype, op, mpc_op, coll_type, schedule, info);
+    __INTERNAL__Op_type(NULL, tmp_opbuf, tmp_recvbuf, recv_bufsize, datatype, op, mpc_op, coll_type, schedule, info);
+
+    pointer_swap(resbuf, recv_resbuf, swap);
   }
 
-  
+
+  if(resbuf != recvbuf) {
+    __INTERNAL__Copy_type(resbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+  }
+
 
   if(previous_block != -1) {
 
@@ -2158,8 +2164,6 @@ static inline int __INTERNAL__Allreduce_binary_block(const void *sendbuf, void* 
 
     __INTERNAL__Send_type(tmp_sendbuf, send_bufsize, datatype, next_block_peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
   }
-
-
 
 
   //ALLGATHER
