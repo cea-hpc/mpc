@@ -169,6 +169,60 @@ set_fortran()
 }
 
 
+show_help()
+{
+	if "${COMPILER}" "--help" > /dev/null 2>&1; then
+		"${COMPILER}" "--help"
+	else
+		echo "INFO: target compiler \'${COMPILER}' does not seem to handle the --help flag"
+	fi
+
+	#And now we add the help for MPC
+cat << EOF
+
+################################################################
+Options below are specific to $(basename "$0") for use with MPC.
+################################################################
+
+Changing compiler:
+
+-cc=[COMP]	      : change the default compiler to COMP
+
+Getting informations from the wrapper:
+
+--showme:link       : show link command to be used
+--showme:compile    : show compilation command
+--showme:command    : show full command
+--use:command       : show bare compiler command
+-show               : print full resulting command (no execution)
+
+MPC main rewrite:
+
+-fmpc-include       : include MPC header for main rewriting
+-fno-mpc-include    : do not include MPC header for main rewrite
+EOF
+
+if compiler_is_privatizing "${COMPILER}"; then
+cat << EOF
+
+Privatization:
+
+-fmpc-privatize     : enable global variable privarization (passed by default)
+-fno-mpc-privatize  : disable global variable privatization
+
+EOF
+
+
+fi
+
+
+	exit 0
+
+}
+
+
+
+
 #
 # Parse Command Line arguments and store those for the compiler
 #
@@ -256,7 +310,7 @@ parse_cli_args()
 			# see mpc_compiler_common.sh
 			TMP_IS_FOR_COMPILER=no
 			;;
-		-fno-mpc-include)
+		-fno-mpc-include|-fnompc-include)
 			MPC_HEADER_INCLUDE=""
 			TMP_IS_FOR_COMPILER=no
 			;;
@@ -274,15 +328,15 @@ parse_cli_args()
 			;;
 
 			# Verbose mode
-			-v)
+		-v)
 			# Pass this argument to the pre-compiler/compiler as well.
 			echo "mpc_cc for $MPC_VERSION"
 			;;
 
-			# Help
-			-help)
+		# Help
+		--help)
+			show_help
 			;;
-
 		esac
 
 		# Update compiler arguments
