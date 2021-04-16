@@ -3324,10 +3324,12 @@ static void __lowcomm_init_per_task()
 		mpc_lowcomm_terminaison_barrier();
 
 		mpc_lowcomm_init_per_task(task_rank);
+		
+        mpc_common_debug_error("HERE MONITOR INIT");
+        _mpc_lowcomm_monitor_setup_per_task();
 
 		mpc_lowcomm_terminaison_barrier();
 
-		_mpc_lowcomm_monitor_setup_per_task();
 	}
 
 }

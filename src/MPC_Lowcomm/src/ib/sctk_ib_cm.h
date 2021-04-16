@@ -133,6 +133,9 @@ void sctk_ib_cm_control_message_handler( struct sctk_rail_info_s * rail, int pro
 
 _mpc_lowcomm_endpoint_t *sctk_ib_cm_on_demand_request ( int dest, sctk_rail_info_t *rail );
 
+_mpc_lowcomm_endpoint_t * sctk_ib_cm_on_demand_request_monitor(sctk_rail_info_t *rail, mpc_lowcomm_peer_uid_t dest);
+void sctk_ib_cm_monitor_register_callbacks(sctk_rail_info_t * rail);
+
 void sctk_ib_cm_deco_ack ( sctk_rail_info_t *rail,
                            _mpc_lowcomm_endpoint_t *route_table, int ack );
 

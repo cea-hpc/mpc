@@ -255,9 +255,9 @@ void _mpc_lowcomm_endpoint_table_add_dynamic_route_no_lock(_mpc_lowcomm_endpoint
                                                            _mpc_lowcomm_endpoint_t *edp);
 
 /* Functions for getting a route */
-_mpc_lowcomm_endpoint_t *_mpc_lowcomm_endpoint_table_get_static_route(_mpc_lowcomm_endpoint_table_t *table, int dest);
-_mpc_lowcomm_endpoint_t *_mpc_lowcomm_endpoint_table_get_dynamic_route(_mpc_lowcomm_endpoint_table_t *table, int dest);
-_mpc_lowcomm_endpoint_t *_mpc_lowcomm_endpoint_table_get_dynamic_route_no_lock(_mpc_lowcomm_endpoint_table_t *table, int dest);
+_mpc_lowcomm_endpoint_t *_mpc_lowcomm_endpoint_table_get_static_route(_mpc_lowcomm_endpoint_table_t *table, mpc_lowcomm_peer_uid_t dest);
+_mpc_lowcomm_endpoint_t *_mpc_lowcomm_endpoint_table_get_dynamic_route(_mpc_lowcomm_endpoint_table_t *table, mpc_lowcomm_peer_uid_t dest);
+_mpc_lowcomm_endpoint_t *_mpc_lowcomm_endpoint_table_get_dynamic_route_no_lock(_mpc_lowcomm_endpoint_table_t *table, mpc_lowcomm_peer_uid_t dest);
 
 /**
  * @brief Call a function on all dynamic endpoints

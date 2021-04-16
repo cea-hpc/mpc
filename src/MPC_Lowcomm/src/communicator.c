@@ -443,7 +443,6 @@ static inline void __communicator_id_register(mpc_lowcomm_communicator_t comm, i
 	mpc_common_hashtable_set(&__id_factory.id_table, key, (void *)comm);
 	mpc_common_hashtable_set(&__id_factory.comm_table, (uint64_t)comm, (void *)comm);
 	mpc_common_bit_array_set(&__id_factory.comm_bit_array, (uint64_t)comm, 1);
-	mpc_common_debug_error("New reg comm %llu", key);
 
 
 	/* Notify communicator creation to lowcomm drivers */

@@ -489,7 +489,6 @@ static inline void ___mpc_cl_per_mpi_process_ctx_init(mpc_mpi_cl_per_mpi_process
 	/* Set task id */
 	tmp->task_id = mpc_common_get_task_rank();
 	__mpc_cl_egreq_progress_init(tmp);
-	mpc_lowcomm_barrier( ( mpc_lowcomm_communicator_t )MPC_COMM_WORLD);
 	/* Initialize Data-type array */
 	tmp->datatype_array = _mpc_dt_storage_init();
 	/* Set initial per communicator data */

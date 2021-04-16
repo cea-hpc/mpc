@@ -30,18 +30,6 @@ int _mpc_lowcomm_monitor_teardown_per_task();
 * MONITOR HUB DEFINITION *
 **************************/
 
-typedef struct _mpc_lowcomm_client_ctx_s
-{
-	uint64_t uid;
-	int      client_fd;
-	time_t   last_used;
-	pthread_mutex_t write_lock;
-}_mpc_lowcomm_client_ctx_t;
-
-_mpc_lowcomm_client_ctx_t *_mpc_lowcomm_client_ctx_new(uint64_t uid, int fd);
-int _mpc_lowcomm_client_ctx_release(_mpc_lowcomm_client_ctx_t **client);
-
-int _mpc_lowcomm_client_ctx_send(_mpc_lowcomm_client_ctx_t * ctx, _mpc_lowcomm_monitor_wrap_t * wrap);
 
 struct _mpc_lowcomm_monitor_s
 {
@@ -67,6 +55,21 @@ struct _mpc_lowcomm_monitor_s
 	_mpc_lowcomm_set_t *        process_set;
 	mpc_lowcomm_peer_uid_t      process_uid;
 };
+
+typedef struct _mpc_lowcomm_client_ctx_s
+{
+	uint64_t uid;
+	int      client_fd;
+	time_t   last_used;
+	pthread_mutex_t write_lock;
+	struct _mpc_lowcomm_monitor_s *monitor;
+}_mpc_lowcomm_client_ctx_t;
+
+_mpc_lowcomm_client_ctx_t *_mpc_lowcomm_client_ctx_new(uint64_t uid, int fd, struct _mpc_lowcomm_monitor_s * monitor);
+int _mpc_lowcomm_client_ctx_release(_mpc_lowcomm_client_ctx_t **client);
+
+int _mpc_lowcomm_client_ctx_send(_mpc_lowcomm_client_ctx_t * ctx, _mpc_lowcomm_monitor_wrap_t * wrap);
+
 
 mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_init(struct _mpc_lowcomm_monitor_s *monitor);
 
