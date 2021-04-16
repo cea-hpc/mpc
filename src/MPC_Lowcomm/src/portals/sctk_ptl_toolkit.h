@@ -30,7 +30,6 @@
 #include <mpc_lowcomm_types.h>
 #include <mpc_lowcomm_monitor.h>
 
-void sctk_ptl_create_ring(sctk_rail_info_t *rail);
 sctk_ptl_id_t sctk_ptl_map_id(sctk_rail_info_t* rail, mpc_lowcomm_peer_uid_t dest);
 void sctk_ptl_add_route(mpc_lowcomm_peer_uid_t dest, sctk_ptl_id_t id, sctk_rail_info_t* rail, _mpc_lowcomm_endpoint_type_t origin, _mpc_lowcomm_endpoint_state_t state);
 void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold);

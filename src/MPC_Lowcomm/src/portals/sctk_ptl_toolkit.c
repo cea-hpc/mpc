@@ -361,91 +361,6 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, size_t threshold)
 	}
 }
 
-/**
- * Create the initial Portals topology: the ring.
- * \param[in] rail the just-initialized Portals rail
- */
-void sctk_ptl_create_ring ( sctk_rail_info_t *rail )
-{
-#if 0
-	sctk_ptl_rail_info_t* srail = &rail->network.ptl;
-
-	/** Portals initialization : Ring topology.
-	 * 1. bind to right process through PMI
-	 * 2. if process number > 2 create a route to the process to the left
-	 * => Bidirectional ring
-	 */
-	int right_rank, left_rank, tmp_ret;
-	sctk_ptl_id_t right_id, left_id;
-	char right_rank_connection_infos[MPC_COMMON_MAX_STRING_SIZE];
-	char left_rank_connection_infos[MPC_COMMON_MAX_STRING_SIZE];	
-
-
-	/* register the serialized id into the PMI */
-	tmp_ret = mpc_launch_pmi_put_as_rank (
-			srail->connection_infos,      /* the string to publish */
-			rail->rail_number,             /* rail ID: PMI tag */
-			0 /* Not local */
-	);
-	assert(tmp_ret == 0);
-	__ranks_ids_map_set(mpc_lowcomm_monitor_get_uid(), srail->id);
-
-	/* what are my neighbour ranks ? */
-	right_rank = ( mpc_common_get_process_rank() + 1 ) % mpc_common_get_process_count();
-	left_rank = ( mpc_common_get_process_rank() + mpc_common_get_process_count() - 1 ) % mpc_common_get_process_count();
-
-	/* wait for each process to register its own serialized ID */
- mpc_launch_pmi_barrier();
-
-	/* retrieve the right neighbour id struct */
-	tmp_ret = mpc_launch_pmi_get_as_rank (
-			right_rank_connection_infos, /* the recv buffer */
-			MPC_COMMON_MAX_STRING_SIZE,             /* the recv buffer max size */
-			rail->rail_number,           /* rail IB: PMI tag */
-			right_rank                   /* which process we are targeting */
-	);
-	assert(tmp_ret == 0);
-	
-	/* de-serialize the string to retrive the real ptl_id_t */
-	sctk_ptl_data_deserialize(
-			right_rank_connection_infos, /* the buffer containing raw data */
-			&right_id,                   /* the target struct */
-			sizeof ( right_id )          /* target struct size */
-	);
-
-	//if we need an initialization to the left process (bidirectional ring)
-	if(mpc_common_get_process_count() > 2)
-	{
-
-		/* retrieve the left neighbour id struct */
-		tmp_ret = mpc_launch_pmi_get_as_rank (
-				left_rank_connection_infos, /* the recv buffer */
-				MPC_COMMON_MAX_STRING_SIZE,             /* the recv buffer max size */
-				rail->rail_number,           /* rail IB: PMI tag */
-				left_rank                   /* which process we are targeting */
-				);
-		assert(tmp_ret == 0);
-
-		/* de-serialize the string to retrive the real ptl_id_t */
-		sctk_ptl_data_deserialize(
-				left_rank_connection_infos, /* the buffer containing raw data */
-				&left_id,                   /* the target struct */
-				sizeof ( left_id )          /* target struct size */
-				);
-	}
-
-	/* add routes */
-	sctk_ptl_add_route (right_rank, right_id, rail, _MPC_LOWCOMM_ENDPOINT_STATIC, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
-	if ( mpc_common_get_process_count() > 2 )
-	{
-		sctk_ptl_add_route (left_rank, left_id, rail, _MPC_LOWCOMM_ENDPOINT_STATIC, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
-	}
-
-	//Wait for all processes to complete the ring topology init */
- 	mpc_launch_pmi_barrier();
- #endif
-}
-
 static inline char * __ptl_get_rail_callback_name(sctk_rail_info_t* rail, char * buff, int bufflen)
 {
 	snprintf(buff, bufflen, "portals-callback-%d", rail->rail_number);
@@ -453,6 +368,68 @@ static inline char * __ptl_get_rail_callback_name(sctk_rail_info_t* rail, char *
 }
 
 
+static inline sctk_ptl_id_t __map_id_pmi(sctk_rail_info_t* rail, mpc_lowcomm_peer_uid_t dest, int *found)
+{
+	char connection_infos[MPC_COMMON_MAX_STRING_SIZE];
+
+	/* retrieve the right neighbour id struct */
+	int tmp_ret = mpc_launch_pmi_get_as_rank (
+						connection_infos,  /* the recv buffer */
+						MPC_COMMON_MAX_STRING_SIZE,   /* the recv buffer max size */
+						rail->rail_number, /* rail IB: PMI tag */
+						mpc_lowcomm_peer_get_rank(dest)               /* which process we are targeting */
+						);
+
+	if(tmp_ret == MPC_LAUNCH_PMI_SUCCESS)
+	{
+		*found = 1;
+
+		sctk_ptl_id_t out_id;
+
+		sctk_ptl_data_deserialize(
+				connection_infos, /* the buffer containing raw data */
+				&out_id, /* the target struct */
+				sizeof (sctk_ptl_id_t)      /* target struct size */
+				);
+
+		return out_id;
+	}
+
+	*found = 0;
+	return SCTK_PTL_ANY_PROCESS;
+}
+
+static inline sctk_ptl_id_t __map_id_monitor(sctk_rail_info_t* rail, mpc_lowcomm_peer_uid_t dest)
+{
+	mpc_lowcomm_monitor_retcode_t ret = MPC_LAUNCH_MONITOR_RET_SUCCESS;
+
+	char rail_name[32];
+
+	mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_ondemand(dest,
+																		__ptl_get_rail_callback_name(rail, rail_name, 32),
+																		"",
+																		&ret);
+
+	if(ret != MPC_LAUNCH_MONITOR_RET_SUCCESS)
+	{
+		mpc_common_debug_fatal("Could not connect to UID %lu", dest);
+	}
+
+	mpc_lowcomm_monitor_args_t * content = mpc_lowcomm_monitor_response_get_content(resp);
+
+	mpc_common_debug_warning("OD got %s", content->on_demand.data);
+	sctk_ptl_id_t out_id;
+
+	sctk_ptl_data_deserialize(
+			content->on_demand.data, /* the buffer containing raw data */
+			&out_id, /* the target struct */
+			sizeof (sctk_ptl_id_t)      /* target struct size */
+			);
+
+	mpc_lowcomm_monitor_response_free(resp);
+
+	return out_id;
+}
 
 /** 
  * Retrieve the ptl_process_id object, associated with a given MPC process rank.
@@ -464,39 +441,26 @@ sctk_ptl_id_t sctk_ptl_map_id(sctk_rail_info_t* rail, mpc_lowcomm_peer_uid_t des
 {
 	if(SCTK_PTL_IS_ANY_PROCESS( __ranks_ids_map_get(dest) ))
 	{
-		mpc_lowcomm_monitor_retcode_t ret = MPC_LAUNCH_MONITOR_RET_SUCCESS;
+		sctk_ptl_id_t out_id = SCTK_PTL_ANY_PROCESS;
 
-		char rail_name[32];
-
-		mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_ondemand(dest,
-																		   __ptl_get_rail_callback_name(rail, rail_name, 32),
-																		   "",
-																		   &ret);
-
-		if(ret != MPC_LAUNCH_MONITOR_RET_SUCCESS)
+		int found = 0;
+		if(mpc_lowcomm_peer_get_set(dest) == mpc_lowcomm_monitor_get_gid())
 		{
-			mpc_common_debug_fatal("Could not connect to UID %lu", dest);
+			/* If target belongs to our set try PMI first */
+			out_id = __map_id_pmi(rail, dest, &found);
 		}
 
-		mpc_lowcomm_monitor_args_t * content = mpc_lowcomm_monitor_response_get_content(resp);
-
-		mpc_common_debug_warning("OD got %s", content->on_demand.data);
-		sctk_ptl_id_t out_id;
-
-		sctk_ptl_data_deserialize(
-				content->on_demand.data, /* the buffer containing raw data */
-				&out_id, /* the target struct */
-				sizeof (sctk_ptl_id_t)      /* target struct size */
-				);
-
-		mpc_lowcomm_monitor_response_free(resp);
-
+		if(!found)
+		{
+			/* Here we need to use the cplane
+			   to request the info remotely */
+			out_id = __map_id_monitor(rail, dest);
+		}
 
 		__ranks_ids_map_set(dest, out_id);
 	}
 
 	sctk_ptl_id_t ret = __ranks_ids_map_get(dest);
-
 	assert(!SCTK_PTL_IS_ANY_PROCESS(ret));
 	return ret;
 }
@@ -672,6 +636,15 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 			MPC_COMMON_MAX_STRING_SIZE          /* max allowed string's size */
 	);
 	assert(srail->connection_infos_size > 0);
+
+	/* register the serialized id into the PMI */
+	int tmp_ret = mpc_launch_pmi_put_as_rank (
+					srail->connection_infos,      /* the string to publish */
+					rail->rail_number,             /* rail ID: PMI tag */
+					0 /* Not local */
+					);
+	assert(tmp_ret == 0);
+
 }
 
 /**
