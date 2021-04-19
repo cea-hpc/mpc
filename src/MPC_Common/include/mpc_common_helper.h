@@ -27,7 +27,9 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <stdio.h>
-
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 #include <mpc_config.h>
 
 /***********************
@@ -193,5 +195,62 @@ static inline int sctk_safe_cast_long_int(long l)
 #define sctk_safe_cast_long_int(l)    l
 #endif
 
+
+/**********************
+ * NETWORKING HELPERS *
+ **********************/
+
+/**
+ * @brief Returns true if a given address is part of a given network
+ *
+ * @param network_addr network device address
+ * @param network_mask network mask
+ * @param candidate candidate address
+ * @return int 1 if device is part of the net supported by this device
+ */
+int mpc_common_address_in_range(in_addr_t network_addr, in_addr_t network_mask, in_addr_t candidate);
+
+
+/**
+ * @brief Get the network interface name supporting a given IPV4 address
+ *
+ * @param addr address to check for support
+ * @param ifname output interface name
+ * @param ifname_len length of output buffer
+ * @return int 0 if resolution succeeded
+ */
+int mpc_common_getaddr_interface(struct sockaddr_in *addr, char * ifname, int ifname_len);
+
+/**
+ * @brief Get the network interface supporting a given socket
+ *
+ * @param socket socket to look for
+ * @param ifname output interface name
+ * @param ifname_len length of output buffer
+ * @return int 0 if resolution succeeded
+ */
+int mpc_common_getsocket_interface(int socket, char * ifname, int ifname_len);
+
+/**
+ * @brief This is a wrapper aroung getaddrinfo which reorders results with preffered interface
+ *
+ * @param node see getaddrinfo
+ * @param service see getaddrinfo
+ * @param hints see getaddrinfo
+ * @param res see getaddrinfo (NOTE !! free it with mpc_common_freeaddrinfo)
+ * @param preffered_device Either the exact device name or part of it (nothing done if "")
+ * @return int see getaddrinfo
+ */
+int mpc_common_getaddrinfo(const char *node, const char *service,
+                           const struct addrinfo *hints,
+                           struct addrinfo **res,
+                           const char *preffered_device);
+
+/**
+ * @brief Free a list as returned by mpc_common_getaddrinfo
+ *
+ * @param res the response to free
+ */
+void mpc_common_freeaddrinfo(struct addrinfo *res);
 
 #endif /* MPC_COMMON_INCLUDE_MPC_COMMON_HELPER_H_ */

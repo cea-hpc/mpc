@@ -84,33 +84,13 @@ static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
 		}
 	}
 
+	char * preffered_network = "";
+
 	/* Rely on IP over IB if possible */
 	if ( rail->network.tcp.sctk_use_tcp_o_ib )
 	{
-		sprintf ( name, "%s-ib0", name_init );
-		
-		/* Make sure it resolves */
-		server = gethostbyname ( name );
-
-		if ( server == NULL )
-		{
-			/* If host fails to resolve fallback to Classical IP */
-			sprintf ( name, "%s", name_init );
-		}	
-	}
-	else
-	{
-		/* Try the hostname */
-		sprintf ( name, "%s", name_init );
-
-		/* Make sure it resolves */
-		server = gethostbyname ( name );
-
-		if ( server == NULL )
-		{
-			/* If host fails to resolve fallback to IP over IB */
-			sprintf ( name, "%s-ib0", name_init );
-		}
+		/* Make sure to match network with ib in their name first */
+		preffered_network = "ib";
 	}
 
 	/* Start Name Resolution */
@@ -120,7 +100,7 @@ static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
 
 
 	/* First use getaddrinfo to extract connection type */
-	int ret = getaddrinfo ( name, portno, NULL, &results );
+	int ret = mpc_common_getaddrinfo(name, portno, NULL, &results, preffered_network);
 
 	if ( ret != 0 )
 	{
@@ -176,7 +156,7 @@ static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
 		current = current->ai_next;
 	}
 
-	freeaddrinfo ( results );
+	mpc_common_freeaddrinfo(results);
 
 	/* Did we fail ? */
 	if ( connected == 0 )
