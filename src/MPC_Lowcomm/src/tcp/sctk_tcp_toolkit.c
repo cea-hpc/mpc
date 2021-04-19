@@ -42,7 +42,7 @@
 #include <mpc_lowcomm_monitor.h>
 #include <mpc_common_rank.h>
 #include <sctk_alloc.h>
-
+#include <arpa/inet.h>
 #include "sctk_rail.h"
 
 /************************
