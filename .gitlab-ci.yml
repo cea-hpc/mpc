@@ -147,7 +147,7 @@ MPC Compilation:
   stage: Builds
   script:
   - cd $HOME/GL_$CI_PIPELINE_ID/build
-  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install --mpc-option='--with-slurm --enable-debug'
+  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install --mpc-option='--with-pmi1 --enable-debug'
 
 MPC Compilation Spack:
   <<: *run_by_main

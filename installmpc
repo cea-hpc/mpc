@@ -1083,7 +1083,8 @@ You may track issued commands using the "-v" flag.
   -jN                                     : Allow N jobs at once (parallel install)
 
 # Features
-  --with-slurm[=prefix]                   : Build MPC with slurm support (PMI1)
+  --with-slurm[=prefix]                   : Build MPC with PMI support (detect 1 and x)
+  --with-pmi1[=prefix]                    : Build MPC with PMI1 support
   --with-pmix[=prefix]                    : Build MPC with PMIX support
   --process-mode                          : Build MPC in process-mode (1 MPI process = 1 UNIX process)
   --{enable,disable}-mpc-ft               : Activate/Deactivate checkpoint/restart support
@@ -1318,6 +1319,18 @@ do
 			;;
 		--enable-debug)
 			enable_debug
+			;;
+		--with-pmi1=*)
+			PMIX_PREFIX=""
+			extractParamValue 'PMIX_PREFIX' 'with-pmi1=' "$arg"
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} ${PMIX_PREFIX}"
+			# No need for hydra
+			HYDRA_PREFIX='disabled'
+			;;
+		--with-pmi1)
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-pmi1"
+			# No need for hydra
+			HYDRA_PREFIX='disabled'
 			;;
 		--with-pmix=*)
 			PMIX_PREFIX=""
