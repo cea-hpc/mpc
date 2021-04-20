@@ -34,6 +34,7 @@
 #include <limits.h>
 #include <arpa/inet.h>
 #include <ifaddrs.h>
+#include <sctk_alloc.h>
 
 /********************************** GLOBALS *********************************/
 
@@ -459,10 +460,12 @@ struct addrinfo * __linearize_addrinfo(struct addrinfo * info)
 
     int cnt = 0;
 
-    while(info)
+	struct addrinfo * tmp = info;
+
+    while(tmp)
     {
-        memcpy(&reorder_buff[cnt], info, sizeof(struct addrinfo));
-        info = info->ai_next;
+        memcpy(&reorder_buff[cnt], tmp, sizeof(struct addrinfo));
+        tmp = tmp->ai_next;
         cnt++;
     }
 
