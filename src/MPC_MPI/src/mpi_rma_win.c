@@ -552,8 +552,8 @@ int mpc_MPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
   int ret = PMPI_Allreduce((void *)&tmp_size, (void *)&total_size, 1,
                            MPI_UINT64_T, MPI_SUM, comm);
 
-  size_t to_map_size = ((total_size / SCTK_ALLOC_PAGE_SIZE) + 1) *
-                       SCTK_ALLOC_PAGE_SIZE;
+  size_t to_map_size = ((total_size / SCTK_PAGE_SIZE) + 1) *
+                       SCTK_PAGE_SIZE;
   void *win_segment = NULL;
 
   mpc_MPI_win_storage storage_type = MPC_MPI_WIN_STORAGE_NONE;

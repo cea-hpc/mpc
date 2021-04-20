@@ -39,6 +39,8 @@
 
 #include "mpc_common_mcs.h"
 
+#include <stdbool.h>
+
 // #define TLS_ALLOCATORS
 
 #ifdef MPCOMP_USE_INTEL_ABI

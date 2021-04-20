@@ -142,7 +142,7 @@ int mpc_MPI_allocmem_pool_init()
 	/* This code is one task per MPC process */
 	size_t inner_size = pool_size;
 	/* Book space for the bit array at buffer start */
-	inner_size += SCTK_ALLOC_PAGE_SIZE;
+	inner_size += SCTK_PAGE_SIZE;
 	/* Book space for the spinlock */
 	inner_size += sizeof( OPA_int_t );
 
@@ -201,8 +201,8 @@ int mpc_MPI_allocmem_pool_init()
 
 		if ( is_master )
 		{
-			size_t to_map_size = ( ( inner_size / SCTK_ALLOC_PAGE_SIZE ) + 1 ) *
-			                     SCTK_ALLOC_PAGE_SIZE;
+			size_t to_map_size = ( ( inner_size / SCTK_PAGE_SIZE ) + 1 ) *
+			                     SCTK_PAGE_SIZE;
 			____mpc_sctk_mpi_alloc_mem_pool.mapped_size = to_map_size;
 
 			mpc_launch_shm_exchange_params_t params;
@@ -232,7 +232,7 @@ int mpc_MPI_allocmem_pool_init()
 		void *bit_array_page = ____mpc_sctk_mpi_alloc_mem_pool._pool;
 		/* After we have a lock */
 		____mpc_sctk_mpi_alloc_mem_pool.lock =
-		    bit_array_page + SCTK_ALLOC_PAGE_SIZE;
+		    bit_array_page + SCTK_PAGE_SIZE;
 		/* And to finish the actual memory pool */
 		____mpc_sctk_mpi_alloc_mem_pool.pool =
 		    ____mpc_sctk_mpi_alloc_mem_pool.lock + 1;
@@ -243,10 +243,10 @@ int mpc_MPI_allocmem_pool_init()
 		____mpc_sctk_mpi_alloc_mem_pool.size_left = pool_size;
 		OPA_store_int( ____mpc_sctk_mpi_alloc_mem_pool.lock, 0 );
 		mpc_common_bit_array_init_buff( &____mpc_sctk_mpi_alloc_mem_pool.mask,
-		                                SCTK_ALLOC_PAGE_SIZE * 8, bit_array_page,
-		                                SCTK_ALLOC_PAGE_SIZE );
+		                                SCTK_PAGE_SIZE * 8, bit_array_page,
+		                                SCTK_PAGE_SIZE );
 		____mpc_sctk_mpi_alloc_mem_pool.space_per_bit =
-		    ( pool_size / ( SCTK_ALLOC_PAGE_SIZE * 8 ) );
+		    ( pool_size / ( SCTK_PAGE_SIZE * 8 ) );
 		mpc_common_hashtable_init( &____mpc_sctk_mpi_alloc_mem_pool.size_ht, 32 );
 	}
 
