@@ -4667,32 +4667,38 @@ static inline int __INTERNAL__Reduce_scatter_reduce_scatterv(const void *sendbuf
     count += recvcounts[i];
   }
 
+  if(count == 0) {
+    return MPI_SUCCESS;
+  }
+
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
-      if(rank == 0) {
+      //if(rank == 0) {
         tmpbuf = sctk_malloc(ext * count + size * sizeof(int));
         displs = tmpbuf + ext * count;
-      }
+      //}
       break;
 
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
-      if(rank == 0) {
+      //if(rank == 0) {
         tmpbuf = info->tmpbuf + info->tmpbuf_pos;
         displs = tmpbuf + ext * count;
         info->tmpbuf_pos += ext * count + size * sizeof(int);
-      }
+      //}
       break;
 
     case MPC_COLL_TYPE_COUNT:
-      if(rank == 0) {
+      //if(rank == 0) {
         info->tmpbuf_size += ext * count + size * sizeof(int);
-      }
+      //}
       break;
   }
 
-  for(int i = 0; i < size; i++) {
-    displs[i] = i * ext;
+  if(coll_type != MPC_COLL_TYPE_COUNT) {
+    for(int i = 0; i < size; i++) {
+      displs[i] = i * ext;
+    }
   }
 
   if(sendbuf != MPI_IN_PLACE) {
@@ -4704,7 +4710,6 @@ static inline int __INTERNAL__Reduce_scatter_reduce_scatterv(const void *sendbuf
   __INTERNAL__Barrier_type(coll_type, schedule, info);
 
   __INTERNAL__Scatterv_switch(tmpbuf, recvcounts, displs, datatype, recvbuf, recvcounts[rank], datatype, 0, comm, coll_type, schedule, info);
-
 
   if(coll_type == MPC_COLL_TYPE_BLOCKING) {
     free(tmpbuf);
