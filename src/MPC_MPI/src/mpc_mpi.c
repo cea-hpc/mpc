@@ -11785,7 +11785,7 @@ int PMPI_Start(MPI_Request *request)
     case MPC_MPI_PERSISTENT_GATHER_INIT:
     case MPC_MPI_PERSISTENT_GATHERV_INIT:
     case MPC_MPI_PERSISTENT_REDUCE_SCATTER_BLOCK_INIT:
-    case MPC_MPI_PERSISTENT_REDUCE_SCATTER:
+    case MPC_MPI_PERSISTENT_REDUCE_SCATTER_INIT:
     case MPC_MPI_PERSISTENT_ALLGATHER_INIT:
     case MPC_MPI_PERSISTENT_ALLGATHERV_INIT:
     case MPC_MPI_PERSISTENT_ALLTOALL_INIT:
@@ -11793,6 +11793,7 @@ int PMPI_Start(MPI_Request *request)
     case MPC_MPI_PERSISTENT_ALLTOALLW_INIT:
     case MPC_MPI_PERSISTENT_SCAN_INIT:
     case MPC_MPI_PERSISTENT_EXSCAN_INIT:
+    case MPC_MPI_PERSISTENT_BARRIER_INIT:
       handle = &(req->nbc_handle);
       handle->row_offset = sizeof(int);
       res = NBC_Start(handle, (NBC_Schedule *)handle->schedule);
@@ -19245,11 +19246,6 @@ int PMPI_Ineighbor_allgatherv(__UNUSED__ const void *sendbuf, __UNUSED__ int sen
 }
 
 int PMPI_Ineighbor_allgather(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ int recvcount, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Request *request)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
-int PMPI_Barrier_init(__UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Info info, __UNUSED__ MPI_Request *request)
 {
 	not_implemented(); return MPI_ERR_INTERN;
 }

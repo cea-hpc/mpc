@@ -21,8 +21,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <stdarg.h>
 #include <mpc_mpi_internal.h>
+#include <mpi_conf.h>
 #include <mpc_coll_weak.h>
 
 #include "egreq_nbc.h"
@@ -594,7 +594,7 @@ static inline int __INTERNAL__Bcast_scatter_allgather(void *buffer, int count, M
   */
 int PMPI_Ibcast (void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPI_Request *request) {
   
-  if( sctk_runtime_config_get()->modules.nbc.use_egreq_bcast )
+  if( _mpc_mpi_config()->nbc.use_egreq_bcast )
   {
     return MPI_Ixbcast( buffer, count, datatype, root, comm, request );
   }
@@ -986,7 +986,7 @@ static inline int __INTERNAL__Reduce_reduce_scatter_allgather(const void *sendbu
   */
 int PMPI_Ireduce (const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPI_Request *request) {
   
-  if( sctk_runtime_config_get()->modules.nbc.use_egreq_reduce )
+  if( _mpc_mpi_config()->nbc.use_egreq_reduce )
   {
     return MPI_Ixreduce( sendbuf, recvbuf, count, datatype, op, root, comm, request);
   }
@@ -2280,7 +2280,7 @@ static inline int __INTERNAL__Scatter_binomial(const void *sendbuf, int sendcoun
   */
 int PMPI_Iscatter (const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request) {
   
-  if( sctk_runtime_config_get()->modules.nbc.use_egreq_scatter )
+  if( _mpc_mpi_config()->nbc.use_egreq_scatter )
   {
     return MPI_Ixscatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, request);
   }
@@ -3130,7 +3130,7 @@ static inline int __INTERNAL__Gather_binomial(const void *sendbuf, int sendcount
   */
 int PMPI_Igather (const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request) {
   
-  if( sctk_runtime_config_get()->modules.nbc.use_egreq_gather )
+  if( _mpc_mpi_config()->nbc.use_egreq_gather )
   {
     return MPI_Ixgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, request);
   }
@@ -7745,7 +7745,7 @@ static inline int __INTERNAL__Barrier_reduce_broadcast (MPI_Comm comm, MPC_COLL_
   */
 int PMPI_Ibarrier (MPI_Comm comm, MPI_Request *request) {
   
-  if( sctk_runtime_config_get()->modules.nbc.use_egreq_barrier )
+  if( _mpc_mpi_config()->nbc.use_egreq_barrier )
   {
     return MPI_Ixbarrier( comm, request );
   }
