@@ -4696,19 +4696,19 @@ static inline int __Reduce_scatter_reduce_scatterv(const void *sendbuf, void* re
   }
 
   if(coll_type != MPC_COLL_TYPE_COUNT) {
-    for(int i = 0; i < size; i++) {
-      displs[i] = i * ext;
+    displs[0] = 0;
+    for(int i = 1; i < size; i++) {
+      displs[i] = displs[i-1] + recvcounts[i-1] * ext;
     }
   }
 
-  if(sendbuf != MPI_IN_PLACE) {
-    __Reduce_switch(sendbuf, tmpbuf, count, datatype, op, 0, comm, coll_type, schedule, info); 
-  } else {
-    __Reduce_switch(recvbuf, tmpbuf, count, datatype, op, 0, comm, coll_type, schedule, info); 
+  const void *tmp_sendbuf = sendbuf;
+  if(sendbuf == MPI_IN_PLACE) {
+    tmp_sendbuf = recvbuf;
   }
 
+  __Reduce_switch(tmp_sendbuf, tmpbuf, count, datatype, op, 0, comm, coll_type, schedule, info); 
   __Barrier_type(coll_type, schedule, info);
-
   __Scatterv_switch(tmpbuf, recvcounts, displs, datatype, recvbuf, recvcounts[rank], datatype, 0, comm, coll_type, schedule, info);
 
   if(coll_type == MPC_COLL_TYPE_BLOCKING) {
@@ -5612,15 +5612,25 @@ static inline int __Allgatherv_switch(const void *sendbuf, int sendcount, MPI_Da
   */
 static inline int __Allgatherv_gatherv_broadcast(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-  int count = 0;
-  int size;
+  int count = 0, buf_start = 0;
+  int size, rank;
   _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
 
   for(int i = 0; i < size; i++) {
     count += recvcounts[i];
   }
 
- __Gatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, 0, comm, coll_type, schedule, info);
+  const void *tmp_sendbuf = sendbuf;
+  int tmp_sendcount = sendcount;
+  MPI_Datatype tmp_sendtype = sendtype;
+  if(sendbuf == MPI_IN_PLACE && rank != 0) {
+    tmp_sendbuf = recvbuf + displs[rank];
+    tmp_sendcount = recvcounts[rank];
+    tmp_sendtype = recvtype;
+  }
+
+ __Gatherv_switch(tmp_sendbuf, tmp_sendcount, tmp_sendtype, recvbuf, recvcounts, displs, recvtype, 0, comm, coll_type, schedule, info);
  __Barrier_type(coll_type, schedule, info);
  __Bcast_switch(recvbuf, count, recvtype, 0, comm, coll_type, schedule, info);
 
