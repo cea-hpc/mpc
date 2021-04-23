@@ -285,7 +285,8 @@ static char *__server_uid_name(char *buf, int size)
 
 static inline mpc_lowcomm_monitor_retcode_t __bootstrap_ring(void)
 {
-	if(mpc_common_get_process_count() == 1)
+    int process_count = mpc_common_get_process_count(); 
+	if( process_count == 1)
 	{
 		return MPC_LAUNCH_MONITOR_RET_SUCCESS;
 	}
@@ -301,6 +302,18 @@ static inline mpc_lowcomm_monitor_retcode_t __bootstrap_ring(void)
 	int cnt = 0;
 
 	mpc_lowcomm_peer_uid_t me = mpc_lowcomm_monitor_get_uid();
+
+    int shift = 2;
+
+    if(512 < process_count)
+    {
+        shift += 2;
+    }
+
+    if(1024 <= process_count)
+    {
+        shift += 2;
+    }
 
 	for(i = 1; i < __monitor.process_set->peer_count; i <<= 2)
 	{
