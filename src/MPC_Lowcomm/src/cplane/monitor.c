@@ -936,7 +936,25 @@ static mpc_lowcomm_monitor_retcode_t __start_server_socket(struct _mpc_lowcomm_m
 		return MPC_LAUNCH_MONITOR_RET_ERROR;
 	}
 
-	ret = snprintf(monitor->monitor_uri, MPC_LOWCOMM_PEER_URI_SIZE, "%s:%d", hostname, port);
+    /* As the DNS does not take the load we resolve once
+     * per server instead of once per client as we
+     * do not want to break anything ! */
+ 
+    char resolved_ip[256];
+  
+    if( mpc_common_resolve_local_ip_for_iface(resolved_ip, 256, "ib") < 0 )
+    {
+        /* Only use hostname and hope for the best */
+        snprintf(resolved_ip, 256, "%s", hostname);
+    }
+
+    /* Make sure we do not publish loopback (who knows :-/) */
+    if(!strcmp(resolved_ip, "127.0.0.1"))
+    {
+        snprintf(resolved_ip, 256, "%s", hostname);
+    }
+
+	ret = snprintf(monitor->monitor_uri, MPC_LOWCOMM_PEER_URI_SIZE, "%s:%d", resolved_ip, port);
 
 	if(MPC_LOWCOMM_PEER_URI_SIZE <= ret)
 	{

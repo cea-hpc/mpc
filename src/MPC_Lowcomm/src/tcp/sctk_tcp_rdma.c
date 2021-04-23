@@ -203,18 +203,13 @@ void sctk_network_init_tcp_rdma ( sctk_rail_info_t *rail )
 	rail->notify_any_source_message = NULL;
 	rail->driver_finalize           = sctk_network_finalize_tcp_rdma;
 
-	int sctk_use_tcp_o_ib = rail->runtime_config_driver_config->driver.value.tcp.tcpoib;
+	char * interface = rail->runtime_config_driver_config->driver.value.tcp.interface;
 
-	/* Handle the IPoIB case */
-	if ( sctk_use_tcp_o_ib == 0 )
-	{
-		rail->network_name = "TCP RDMA";
-	}
-	else
-	{
-		rail->network_name = "TCP_O_IB RDMA";
-	}
+    char net_name[128];
+    snprintf(net_name, 128, "TCP RDMA (%s)", interface);
+    rail->network_name = strdup(net_name);
+
 
 	/* Actually Init the TCP layer */
-	sctk_network_init_tcp_all ( rail, sctk_use_tcp_o_ib, sctk_tcp_rdma_thread );
+	sctk_network_init_tcp_all ( rail, interface, sctk_tcp_rdma_thread );
 }

@@ -717,7 +717,6 @@ void __addr_info_swap(struct addrinfo * from, struct addrinfo * to)
     memcpy(from, &tmp, sizeof(struct addrinfo));
 }
 
-
 int mpc_common_getaddrinfo(const char *node, const char *service,
                            const struct addrinfo *hints,
                            struct addrinfo **res,
@@ -801,6 +800,79 @@ MPC_COMMON_AIDDR_DONE:
 
     return 0;
 }
+
+int mpc_common_resolve_local_ip_for_iface(char * ip, int iplen, char *preffered_device)
+{
+    if(!ip || !iplen)
+    {
+        return -1;
+    }
+
+    assume(INET6_ADDRSTRLEN <= iplen);
+
+    ip[0] = '\0';
+
+    char hostname[128];
+    if( gethostname(hostname, 128) < 0)
+    {
+        perror("gethostname");
+        return -1;
+    }
+
+    struct addrinfo *res = NULL;
+	struct addrinfo  hints;
+
+	memset(&hints, 0, sizeof(struct addrinfo) );
+
+	hints.ai_family   = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+
+
+
+    int ret = mpc_common_getaddrinfo(hostname, "80",
+                                     &hints,
+                                     &res,
+                                     preffered_device);
+	if(ret < 0)
+	{
+		if(ret == EAI_SYSTEM)
+		{
+			fprintf(stderr, "Failed resolving peer: %s\n", strerror(errno) );
+		}
+		else
+		{
+			fprintf(stderr, "Failed resolving peer: %s\n", gai_strerror(ret) );
+		}
+
+		return -1;
+	}
+
+
+    /* Now we want the IP from the first entry in the reordered getaddr */
+    if(!res)
+    {
+        return -1;   
+    }
+
+    if ( res->ai_family == AF_INET )
+    {
+        struct sockaddr_in *saddr = ( struct sockaddr_in * )res->ai_addr;
+        inet_ntop( AF_INET, &saddr->sin_addr, ip, iplen );
+    }
+    else if ( res->ai_family == AF_INET6 )
+    {
+        struct sockaddr_in6 *saddr6 = ( struct sockaddr_in6 * )res->ai_addr;
+        inet_ntop( AF_INET6, &saddr6->sin6_addr, ip, iplen );
+    } 
+    else
+    {
+        not_reachable();
+    }
+
+    return 0;
+}
+
+
 
 
 void mpc_common_freeaddrinfo(struct addrinfo *res)

@@ -90,14 +90,7 @@ static int __connect_to(char *name_init, sctk_rail_info_t *rail)
 	}
 
 	char * preferred_network = "";
-
-	/* Rely on IP over IB if possible */
-	if(rail->network.tcp.sctk_use_tcp_o_ib)
-	{
-		/* Make sure to match network with ib in their name first */
 		preferred_network = "ib";
-	}
-
 	/* Start Name Resolution */
 
 	mpc_common_nodebug("Try connection to |%s| on port %s type %d", name, portno, AF_INET);
@@ -445,11 +438,11 @@ void * __accept_loop(void *prail)
 /**
  * End of TCP rail initialization and create the first topology: the ring.
  * \param[in,out] rail the TCP rail
- * \param[in] sctk_use_tcp_o_ib Is a TCP_O_IB configuration ?
+ * \param[in] interface the interface to try first
  * \param[in] tcp_thread_loop the polling routine function.
  * \param[in] route_init the function registering a new TCP route
  */
-void sctk_network_init_tcp_all(sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
+void sctk_network_init_tcp_all(sctk_rail_info_t *rail, char *interface,
                                void * (*tcp_thread_loop)(_mpc_lowcomm_endpoint_t *) )
 {
 	char right_rank_connection_infos[MPC_COMMON_MAX_STRING_SIZE];
@@ -470,7 +463,7 @@ void sctk_network_init_tcp_all(sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	rail->connect_to              = NULL;
 	rail->control_message_handler = NULL;
 
-	rail->network.tcp.sctk_use_tcp_o_ib = sctk_use_tcp_o_ib;
+	rail->network.tcp.interface = interface;
 	rail->network.tcp.tcp_thread_loop        = tcp_thread_loop;
 
 	/* Start listening TCP socket */
@@ -480,11 +473,28 @@ void sctk_network_init_tcp_all(sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	_mpc_lowcomm_kernel_thread_create( NULL, __accept_loop, (void*)rail);
 
 
-	/* Fill HOST info */
-	gethostname(rail->network.tcp.connection_infos, MPC_COMMON_MAX_STRING_SIZE - 100);
-	rail->network.tcp.connection_infos_size = strlen(rail->network.tcp.connection_infos);
-	/* Add port info */
-	sprintf(rail->network.tcp.connection_infos + rail->network.tcp.connection_infos_size, ":%d", rail->network.tcp.portno);
+    /* As the DNS does not take the load we resolve once
+     * per server instead of once per client as we
+     * do not want to break anything ! */
+
+    char hostname[128];
+    gethostname(hostname, 128);
+
+    char resolved_ip[256];
+  
+    if( mpc_common_resolve_local_ip_for_iface(resolved_ip, 256, interface) < 0 )
+    {
+        /* Only use hostname and hope for the best */
+        snprintf(resolved_ip, 256, "%s", hostname);
+    }
+
+    /* Make sure we do not publish loopback (who knows :-/) */
+    if(!strcmp(resolved_ip, "127.0.0.1"))
+    {
+        snprintf(resolved_ip, 256, "%s", hostname);
+    }
+
+    snprintf(rail->network.tcp.connection_infos, MPC_COMMON_MAX_STRING_SIZE, "%s:%d", resolved_ip, rail->network.tcp.portno);
 	rail->network.tcp.connection_infos_size = strlen(rail->network.tcp.connection_infos) + 1;
 
 	assume(rail->network.tcp.connection_infos_size < MPC_COMMON_MAX_STRING_SIZE);

@@ -203,18 +203,14 @@ void sctk_network_init_tcp(sctk_rail_info_t *rail)
 
 	sctk_rail_init_route(rail, rail->runtime_config_rail->topology, tcp_on_demand_connection_handler);
 
-	int try_tcp_o_ib = rail->runtime_config_driver_config->driver.value.tcp.tcpoib;
+	char * interface = rail->runtime_config_driver_config->driver.value.tcp.interface;
 
 	/* Handle the IPoIB case */
-	if(try_tcp_o_ib == 0)
-	{
-		rail->network_name = "TCP";
-	}
-	else
-	{
-		rail->network_name = "TCP_O_IB";
-	}
+    char net_name[128];
+	snprintf(net_name, 128, "TCP (%s)", interface);
+    rail->network_name = strdup(net_name);
+
 
 	/* Actually initialize the network (note TCP kind specific functions) */
-	sctk_network_init_tcp_all(rail, try_tcp_o_ib, __tcp_thread_loop);
+	sctk_network_init_tcp_all(rail, interface, __tcp_thread_loop);
 }

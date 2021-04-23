@@ -49,7 +49,7 @@ typedef struct
  */
 typedef struct
 {
-	int sctk_use_tcp_o_ib;                               /**< set to 1 if the TCP connection targets TCP over IB */
+	char * interface;                               /**< name of the net interface to try first */
 	int sockfd;                                          /**< Listening socket file descriptor */
 	int portno;                                          /**< Listening socket port number */
 	char connection_infos[MPC_COMMON_MAX_STRING_SIZE];              /**< Connection info for this listening socket */

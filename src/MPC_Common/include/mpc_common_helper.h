@@ -294,6 +294,15 @@ int mpc_common_getaddrinfo(const char *node, const char *service,
  */
 void mpc_common_freeaddrinfo(struct addrinfo *res);
 
+/**
+ * @brief We want to save the DNS so provide a function to do the local resolution
+ * 
+ * @param ip the output buffer where the ip is set
+ * @param iplen the lenght of the output buffer (should be enough for ipv6)
+ * @param preffered_device the device to look at first same rule as @mpc_common_getaddrinfo
+ * @return -1 on error
+ */
+int mpc_common_resolve_local_ip_for_iface(char * ip, int iplen, char *preffered_device);
 
 /**********************
  * NETWORKING HELPERS *

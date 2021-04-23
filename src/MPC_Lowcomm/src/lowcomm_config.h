@@ -261,7 +261,7 @@ struct _mpc_lowcomm_config_struct_net_driver_portals
 struct _mpc_lowcomm_config_struct_net_driver_tcp
 {
 	/**Enable TCP over Infiniband (if elligible).**/
-	int tcpoib;
+	char interface[MPC_CONF_STRING_SIZE];
 };
 
 /******************************** STRUCTURE *********************************/
@@ -269,7 +269,7 @@ struct _mpc_lowcomm_config_struct_net_driver_tcp
 struct _mpc_lowcomm_config_struct_net_driver_tcp_rdma
 {
 	/**Enable TCP over Infiniband (if elligible).**/
-	int tcpoib;
+	char interface[MPC_CONF_STRING_SIZE];
 };
 
 /******************************** STRUCTURE *********************************/
