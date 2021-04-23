@@ -37,7 +37,6 @@
 //    error hanfling
 //    config handling
 //    add reduce_scatter(_block)_Allgather(v) algorithm, may be faster than reduce then scatter
-//    debug allreduce_binary_block: deadlock
 
 #define dbg 0
 
@@ -1684,11 +1683,11 @@ static inline int __Allreduce_switch(const void *sendbuf, void* recvbuf, int cou
     NBC_ALLREDUCE_REDUCE_BROADCAST,
     NBC_ALLREDUCE_DISTANCE_DOUBLING,
     NBC_ALLREDUCE_VECTOR_HALVING_DISTANCE_DOUBLING, 
-    NBC_ALLREDUCE_BINARY_BLOCK, //TODO to debug, deadlocks sometimes 
+    NBC_ALLREDUCE_BINARY_BLOCK, 
     NBC_ALLREDUCE_RING
   } alg;
 
-  alg = NBC_ALLREDUCE_DISTANCE_DOUBLING;
+  alg = NBC_ALLREDUCE_BINARY_BLOCK;
 
   int res;
 
@@ -1920,7 +1919,6 @@ static inline int __Allreduce_vector_halving_distance_doubling(__UNUSED__ const 
   \param info Adress on the information structure about the schedule
   \return error code
   */
-//TODO to debug, deadlocks sometimes
 static inline int __Allreduce_binary_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size;
@@ -1967,13 +1965,14 @@ static inline int __Allreduce_binary_block(const void *sendbuf, void* recvbuf, i
   int previous_block_size = (previous_block != -1) ? (1 << previous_block) : 0;
   int first_rank_of_previous_block = (size >> (previous_block + 1)) << (previous_block + 1);
 
-  //int next_block_size = (next_block != -1) ? (1 << next_block) : 0;
+  int next_block_size = (next_block != -1) ? (1 << next_block) : 0;
   int first_rank_of_next_block = (size >> (next_block + 1)) << (next_block + 1);
 
   int target_count = previous_block_size / block_size;
 
   int start = 0, end = count, mid;
 
+  //fprintf(stderr, "RANK %d | VRANK %d | SIZE %d | BLOCK %d | BLOCK SIZE %d | 1rst RANK OF BLOCK %d | PREV BLOCK %d | PREV BLOCK SIZE %d | 1rst RANK OF PREV BLOCK %d | NEXT BLOCK %d | NEXT BLOCK SIZE %d | 1rst RANK OF NEXT BLOCK %d\n", rank, vrank, size, block, block_size, first_rank_of_block, previous_block, previous_block_size, first_rank_of_previous_block, next_block, next_block_size, first_rank_of_next_block);
 
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
@@ -2027,6 +2026,7 @@ static inline int __Allreduce_binary_block(const void *sendbuf, void* recvbuf, i
   void *recv_resbuf = tmpbuf;
 
   int peer, peer_vrank;
+
 
 
   //REDUCE_SCATTER
@@ -2113,7 +2113,10 @@ static inline int __Allreduce_binary_block(const void *sendbuf, void* recvbuf, i
     tmp_recvbuf = ((void*) recv_resbuf) + start * ext;
     tmp_opbuf = ((void*) resbuf) + start * ext;
     recv_bufsize = end - start;
-    next_block_peer = vrank / (1 << (block - next_block)) + first_rank_of_next_block;
+    //next_block_peer = vrank / (1 << (block - next_block)) + first_rank_of_next_block;
+    //next_block_peer = vrank % (1 << (block - next_block)) + first_rank_of_next_block;
+    next_block_peer = vrank % next_block_size + first_rank_of_next_block;
+
 
     __Recv_type(tmp_recvbuf, recv_bufsize, datatype, next_block_peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
     __Barrier_type(coll_type, schedule, info);
