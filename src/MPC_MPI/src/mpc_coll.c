@@ -37,6 +37,7 @@
 //    error hanfling
 //    config handling
 //    add reduce_scatter(_block)_Allgather(v) algorithm, may be faster than reduce then scatter
+//    debug allreduce_binary_block: deadlock
 
 #define dbg 0
 
@@ -1683,11 +1684,11 @@ static inline int __Allreduce_switch(const void *sendbuf, void* recvbuf, int cou
     NBC_ALLREDUCE_REDUCE_BROADCAST,
     NBC_ALLREDUCE_DISTANCE_DOUBLING,
     NBC_ALLREDUCE_VECTOR_HALVING_DISTANCE_DOUBLING, 
-    NBC_ALLREDUCE_BINARY_BLOCK, 
+    NBC_ALLREDUCE_BINARY_BLOCK, //TODO to debug, deadlocks sometimes 
     NBC_ALLREDUCE_RING
   } alg;
 
-  alg = NBC_ALLREDUCE_BINARY_BLOCK;
+  alg = NBC_ALLREDUCE_DISTANCE_DOUBLING;
 
   int res;
 
@@ -1919,6 +1920,7 @@ static inline int __Allreduce_vector_halving_distance_doubling(__UNUSED__ const 
   \param info Adress on the information structure about the schedule
   \return error code
   */
+//TODO to debug, deadlocks sometimes
 static inline int __Allreduce_binary_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size;
