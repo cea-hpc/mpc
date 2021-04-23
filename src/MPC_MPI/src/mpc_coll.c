@@ -2537,13 +2537,6 @@ static inline int __Scatter_linear(const void *sendbuf, int sendcount, MPI_Datat
 
   int res = MPI_SUCCESS;
 
-  void *tmp_sendbuf = NULL;
-  if(sendbuf == MPI_IN_PLACE) {
-    tmp_sendbuf = recvbuf;
-  } else {
-    tmp_sendbuf = sendbuf;
-  }
-
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
     case MPC_COLL_TYPE_NONBLOCKING:
@@ -2574,14 +2567,14 @@ static inline int __Scatter_linear(const void *sendbuf, int sendcount, MPI_Datat
         continue;
       }
 
-      res = __Send_type(tmp_sendbuf + i * ext * sendcount, sendcount, sendtype, i, MPC_SCATTER_TAG, comm, coll_type, schedule, info);
+      res = __Send_type(sendbuf + i * ext * sendcount, sendcount, sendtype, i, MPC_SCATTER_TAG, comm, coll_type, schedule, info);
       if(res != MPI_SUCCESS) {
         return res;
       }
     }
 
-    if(sendbuf != MPI_IN_PLACE) {
-      __Copy_type(tmp_sendbuf + rank * ext * sendcount, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+    if(recvbuf != MPI_IN_PLACE) {
+      __Copy_type(sendbuf + rank * ext * sendcount, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
     }
   }
 
@@ -2606,12 +2599,12 @@ static inline int __Scatter_linear(const void *sendbuf, int sendcount, MPI_Datat
   */
 static inline int __Scatter_binomial(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-  const void *tmp_sendbuf = sendbuf;
+  //const void *tmp_sendbuf = sendbuf;
   int tmp_recvcount = recvcount;
   MPI_Datatype tmp_recvtype = recvtype;
   // if sendbuf == MPI_IN_PLACE, recvcount & recvtype are ignored
-  if(sendbuf == MPI_IN_PLACE) {
-    tmp_sendbuf = recvbuf;
+  if(recvbuf == MPI_IN_PLACE) {
+    //tmp_sendbuf = recvbuf;
     tmp_recvcount = sendcount;
     tmp_recvtype = sendtype;
   }
@@ -2657,12 +2650,12 @@ static inline int __Scatter_binomial(const void *sendbuf, int sendcount, MPI_Dat
   
 
   if(rank == root) {
-    __Copy_type(tmp_sendbuf, sendcount * size, sendtype, tmpbuf, tmp_recvcount * size, tmp_recvtype, comm, coll_type, schedule, info);
+    __Copy_type(sendbuf, sendcount * size, sendtype, tmpbuf, tmp_recvcount * size, tmp_recvtype, comm, coll_type, schedule, info);
 
     // As we use virtual rank where rank root and rank 0 are swapped, we need to swap their data as well
     if(root != 0) {
-      __Copy_type(tmp_sendbuf, sendcount, sendtype, tmpbuf + root * tmp_recvcount * recvext, tmp_recvcount, tmp_recvtype, comm, coll_type, schedule, info);
-      __Copy_type(tmp_sendbuf + root * sendcount * sendext, sendcount, sendtype, tmpbuf, tmp_recvcount, tmp_recvtype, comm, coll_type, schedule, info);
+      __Copy_type(sendbuf, sendcount, sendtype, tmpbuf + root * tmp_recvcount * recvext, tmp_recvcount, tmp_recvtype, comm, coll_type, schedule, info);
+      __Copy_type(sendbuf + root * sendcount * sendext, sendcount, sendtype, tmpbuf, tmp_recvcount, tmp_recvtype, comm, coll_type, schedule, info);
     }
   }
 
@@ -2711,7 +2704,7 @@ static inline int __Scatter_binomial(const void *sendbuf, int sendcount, MPI_Dat
     __Send_type(tmpbuf + (1 << i) * tmp_recvcount * recvext, count, tmp_recvtype, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
   }
 
-  if(sendbuf != MPI_IN_PLACE) {
+  if(recvbuf != MPI_IN_PLACE) {
     __Copy_type(tmpbuf, tmp_recvcount, recvtype, recvbuf, tmp_recvcount, tmp_recvtype, comm, coll_type, schedule, info);
   }
 
@@ -3024,13 +3017,6 @@ static inline int __Scatterv_linear(const void *sendbuf, const int *sendcounts, 
 
   int res = MPI_SUCCESS;
 
-  void *tmp_sendbuf = NULL;
-  if(sendbuf == MPI_IN_PLACE) {
-    tmp_sendbuf = recvbuf;
-  } else {
-    tmp_sendbuf = sendbuf;
-  }
-
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
     case MPC_COLL_TYPE_NONBLOCKING:
@@ -3061,14 +3047,14 @@ static inline int __Scatterv_linear(const void *sendbuf, const int *sendcounts, 
         continue;
       }
 
-      res = __Send_type(tmp_sendbuf + displs[i], sendcounts[i], sendtype, i, MPC_SCATTER_TAG, comm, coll_type, schedule, info);
+      res = __Send_type(sendbuf + displs[i], sendcounts[i], sendtype, i, MPC_SCATTER_TAG, comm, coll_type, schedule, info);
       if(res != MPI_SUCCESS) {
         return res;
       }
     }
 
-    if(sendbuf != MPI_IN_PLACE) {
-      __Copy_type(tmp_sendbuf + displs[rank], sendcounts[rank], sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+    if(recvbuf != MPI_IN_PLACE) {
+      __Copy_type(sendbuf + displs[rank], sendcounts[rank], sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
     }
   }
 
