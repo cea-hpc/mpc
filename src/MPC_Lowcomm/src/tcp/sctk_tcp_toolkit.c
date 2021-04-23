@@ -45,35 +45,7 @@
 #include <arpa/inet.h>
 #include "sctk_rail.h"
 
-/************************
- * KERNEL THREAD HELPER *
- ************************/
-#undef MPC_Threads
-
-#ifdef MPC_Threads
-#include <mpc_thread.h>
-#else
-#include <pthread.h>
-#endif
-
-
-int __create_kernel_thread(void * (*func)(void*), void * arg)
-{
-#ifdef MPC_Threads
-	mpc_thread_t      pidt;
-	mpc_thread_attr_t attr;
-
-	/* Launch the polling thread */
-	mpc_thread_attr_init(&attr);
-	mpc_thread_attr_setscope(&attr, SCTK_THREAD_SCOPE_SYSTEM);
-	mpc_thread_core_thread_create(&pidt, &attr, (void * (*)(void *) )func, arg);
-#else
-	pthread_t pidt;
-	pthread_create(&pidt, NULL, (void * (*)(void *) )func, arg);
-#endif	
-	return 0;
-}
-
+#include "lowcomm_thread.h"
 
 
 /********************************************************************/
@@ -364,7 +336,7 @@ static void __add_route(mpc_lowcomm_peer_uid_t dest_uid, int fd, sctk_rail_info_
 	/* set the route as connected */
 	_mpc_lowcomm_endpoint_set_state(new_route, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
 
-	__create_kernel_thread((void * (*)(void *) )rail->network.tcp.tcp_thread_loop, new_route);
+	_mpc_lowcomm_kernel_thread_create(NULL, (void * (*)(void *) )rail->network.tcp.tcp_thread_loop, new_route);
 }
 
 /********************************************************************/
@@ -415,7 +387,7 @@ static int __tcp_on_demand_callback(mpc_lowcomm_peer_uid_t from,
 {
 	sctk_rail_info_t * rail = prail;
 
-	mpc_common_debug_warning("TCP on-demande from (%u, %u)", mpc_lowcomm_peer_get_set(from), mpc_lowcomm_peer_get_rank(from) );
+	mpc_common_debug("TCP on-demand from (%u, %u)", mpc_lowcomm_peer_get_set(from), mpc_lowcomm_peer_get_rank(from) );
 
 	/* Here we just need to connect to the target */
 	int new_socket = __connect_to(data, rail);
@@ -505,7 +477,7 @@ void sctk_network_init_tcp_all(sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	__create_listening_socket(rail);
 
 	/* Start accept loop */
-	__create_kernel_thread(__accept_loop, (void*)rail);
+	_mpc_lowcomm_kernel_thread_create( NULL, __accept_loop, (void*)rail);
 
 
 	/* Fill HOST info */

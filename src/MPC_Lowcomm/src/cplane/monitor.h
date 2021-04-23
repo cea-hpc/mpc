@@ -12,7 +12,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-
+#include "lowcomm_thread.h"
 #include "set.h"
 #include "proto.h"
 
@@ -34,41 +34,41 @@ int _mpc_lowcomm_monitor_teardown_per_task();
 struct _mpc_lowcomm_monitor_s
 {
 	/* Client context list to handle per UID monitor sockets */
-	pthread_mutex_t             client_lock;
-	struct mpc_common_hashtable client_contexts;
-	uint32_t                    client_count;
+	pthread_mutex_t              client_lock;
+	struct mpc_common_hashtable  client_contexts;
+	uint32_t                     client_count;
 
-	pthread_mutex_t             connect_accept_lock;
+	pthread_mutex_t              connect_accept_lock;
 
 	/* This is the server information */
-	int                         running;
-	pthread_t                   server_thread;
-	int                         server_socket;
-	fd_set                      read_fds;
-	int                         notiffd[2];
-	int                         clientfd[2];
+	int                          running;
+	_mpc_lowcomm_kernel_thread_t server_thread;
+	int                          server_socket;
+	fd_set                       read_fds;
+	int                          notiffd[2];
+	int                          clientfd[2];
 
-	char                        monitor_uri[MPC_LOWCOMM_PEER_URI_SIZE];
+	char                         monitor_uri[MPC_LOWCOMM_PEER_URI_SIZE];
 
 	/* This is the process set lead group info (entry point to routing) */
-	mpc_lowcomm_set_uid_t       monitor_gid;
-	_mpc_lowcomm_set_t *        process_set;
-	mpc_lowcomm_peer_uid_t      process_uid;
+	mpc_lowcomm_set_uid_t        monitor_gid;
+	_mpc_lowcomm_set_t *         process_set;
+	mpc_lowcomm_peer_uid_t       process_uid;
 };
 
 typedef struct _mpc_lowcomm_client_ctx_s
 {
-	uint64_t uid;
-	int      client_fd;
-	time_t   last_used;
-	pthread_mutex_t write_lock;
+	uint64_t                       uid;
+	int                            client_fd;
+	time_t                         last_used;
+	pthread_mutex_t                write_lock;
 	struct _mpc_lowcomm_monitor_s *monitor;
 }_mpc_lowcomm_client_ctx_t;
 
-_mpc_lowcomm_client_ctx_t *_mpc_lowcomm_client_ctx_new(uint64_t uid, int fd, struct _mpc_lowcomm_monitor_s * monitor);
+_mpc_lowcomm_client_ctx_t *_mpc_lowcomm_client_ctx_new(uint64_t uid, int fd, struct _mpc_lowcomm_monitor_s *monitor);
 int _mpc_lowcomm_client_ctx_release(_mpc_lowcomm_client_ctx_t **client);
 
-int _mpc_lowcomm_client_ctx_send(_mpc_lowcomm_client_ctx_t * ctx, _mpc_lowcomm_monitor_wrap_t * wrap);
+int _mpc_lowcomm_client_ctx_send(_mpc_lowcomm_client_ctx_t *ctx, _mpc_lowcomm_monitor_wrap_t *wrap);
 
 
 mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_init(struct _mpc_lowcomm_monitor_s *monitor);
@@ -139,28 +139,28 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_peer_info(mpc_l
                                                                            mpc_lowcomm_peer_uid_t requested_peer);
 
 /********
- * PING *
- ********/
+* PING *
+********/
 
 _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_ping_info(mpc_lowcomm_peer_uid_t dest,
                                                                            uint64_t response_index);
 
 /****************
- * CONNECTIVITY *
- ****************/
+* CONNECTIVITY *
+****************/
 
 _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_connectivity_info(mpc_lowcomm_peer_uid_t dest,
                                                                                    uint64_t response_index);
 
 /***********************
- * ON DEMAND CALLBACKS *
- ***********************/
+* ON DEMAND CALLBACKS *
+***********************/
 
 int _mpc_lowcomm_monitor_on_demand_callbacks_init(void);
 int _mpc_lowcomm_monitor_on_demand_callbacks_teardown(void);
 
 _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_process_ondemand(mpc_lowcomm_peer_uid_t dest,
-																		   uint64_t response_index,
+                                                                           uint64_t response_index,
                                                                            mpc_lowcomm_monitor_args_t *ondemand);
 
 #endif /* _MPC_LOWCOMM_MONITOR_H_ */

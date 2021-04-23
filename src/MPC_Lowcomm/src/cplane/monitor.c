@@ -19,6 +19,8 @@
 #include <mpc_common_helper.h>
 #include <mpc_lowcomm.h>
 
+#include "lowcomm_thread.h"
+
 #include "uid.h"
 #include "monitor.h"
 
@@ -69,7 +71,7 @@ typedef struct __monitor_work_context_s
 struct __monitor_worker_s
 {
 	volatile int done;
-	pthread_t worker_thread;
+	_mpc_lowcomm_kernel_thread_t worker_thread;
 	__monitor_work_context_t * work_list;
 	pthread_mutex_t lock;
 	sem_t semaphore;
@@ -202,7 +204,7 @@ static inline int __monitor_worker_init(void)
 	__worker.work_list = NULL;
 	pthread_mutex_init(&__worker.lock, NULL);
 	sem_init(&__worker.semaphore, 0, 0);
-	pthread_create(&__worker.worker_thread, NULL, __worker_loop, (void*)&__worker);
+	_mpc_lowcomm_kernel_thread_create(&__worker.worker_thread, __worker_loop, (void*)&__worker);
 
 	return 0;
 }
@@ -213,7 +215,7 @@ static inline int __monitor_worker_release(void)
 
 	sem_post(&__worker.semaphore);
 
-	pthread_join(__worker.worker_thread, NULL);
+	_mpc_lowcomm_kernel_thread_join(&__worker.worker_thread);
 
 	__worker.work_list = NULL;
 	pthread_mutex_init(&__worker.lock, NULL);
@@ -319,7 +321,7 @@ static inline mpc_lowcomm_monitor_retcode_t __bootstrap_ring(void)
 
 		char b1[128], b2[128];
 
-		mpc_common_debug_warning("RING == %lu %s to %lu %s", me, mpc_lowcomm_peer_format_r(me, b1, 128) , to, mpc_lowcomm_peer_format_r(to, b2, 128) );
+		mpc_common_nodebug("RING == %lu %s to %lu %s", me, mpc_lowcomm_peer_format_r(me, b1, 128) , to, mpc_lowcomm_peer_format_r(to, b2, 128) );
 
 		if(MPC_LOWCOMM_MONITOR_MAX_CLIENTS <= ++cnt)
 		{
@@ -622,7 +624,7 @@ _mpc_lowcomm_client_ctx_t *__accept_incoming(struct _mpc_lowcomm_monitor_s *moni
 	}
 
 	char bx[128];
-	mpc_common_debug_error("[IN] %s INCOMING from %s", mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), bx, 128), mpc_lowcomm_peer_format(uid));
+	mpc_common_nodebug("[IN] %s INCOMING from %s", mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), bx, 128), mpc_lowcomm_peer_format(uid));
 
 	int already_present = 0;
 
@@ -640,7 +642,7 @@ _mpc_lowcomm_client_ctx_t *__accept_incoming(struct _mpc_lowcomm_monitor_s *moni
 			if(uid < mpc_lowcomm_monitor_get_uid())
 			{
 				char b1[128];
-				mpc_common_debug_error("[REJECT] %s UID %s is alreary connected closing",mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), b1, 128), mpc_lowcomm_peer_format(uid));
+				mpc_common_debug("[REJECT] %s UID %s is alreary connected closing",mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), b1, 128), mpc_lowcomm_peer_format(uid));
 
 				/* Notify remote end of our refusal */
 				already_present = 1;
@@ -657,7 +659,7 @@ _mpc_lowcomm_client_ctx_t *__accept_incoming(struct _mpc_lowcomm_monitor_s *moni
 		_mpc_lowcomm_client_ctx_t *new = _mpc_lowcomm_client_ctx_new(uid, new_fd, monitor);
 		_mpc_lowcomm_monitor_client_add(monitor, new);
 		char meb[128];
-		mpc_common_debug_warning("%s UID %s now connected", mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), meb, 128), mpc_lowcomm_peer_format(uid));
+		mpc_common_nodebug("%s UID %s now connected", mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), meb, 128), mpc_lowcomm_peer_format(uid));
 		return new;
 	}
 
@@ -713,7 +715,6 @@ static inline int __handle_query(_mpc_lowcomm_client_ctx_t *ctx, _mpc_lowcomm_mo
 			break;
 
 		case MPC_LAUNCH_MONITOR_ON_DEMAND:
-            mpc_common_debug_error("PROCESSING OD IN HQ");
 			resp = _mpc_lowcomm_monitor_command_process_ondemand(data->from, data->match_key, cmd_data);
 			break;
 
@@ -728,7 +729,7 @@ static inline int __handle_query(_mpc_lowcomm_client_ctx_t *ctx, _mpc_lowcomm_mo
 	if(resp != NULL)
 	{
 		char fromb[128], tob[128];
-		mpc_common_debug_error("IN RESPONSE from %s to %s", mpc_lowcomm_peer_format_r(resp->from, fromb, 128), mpc_lowcomm_peer_format_r(resp->dest, tob, 128) );
+		mpc_common_nodebug("IN RESPONSE from %s to %s", mpc_lowcomm_peer_format_r(resp->from, fromb, 128), mpc_lowcomm_peer_format_r(resp->dest, tob, 128) );
 		mpc_lowcomm_monitor_retcode_t send_ret;
 		if(_mpc_lowcomm_monitor_command_send(resp, &send_ret) < 0)
 		{
@@ -753,7 +754,6 @@ static inline void __ack_new_client(void)
 static void *__per_client_loop(void *pctx)
 {
 	_mpc_lowcomm_client_ctx_t *ctx = (_mpc_lowcomm_client_ctx_t*)pctx;
-	mpc_common_debug_error("NEW CLIENT LOOP for %llu", ctx->uid);
 
 	while(1)
 	{
@@ -763,12 +763,15 @@ static void *__per_client_loop(void *pctx)
 
 		if(!query)
 		{
-			mpc_common_debug_error("Client %lu left", ctx->uid);
-			_mpc_lowcomm_monitor_client_remove(ctx->monitor, ctx->uid);
+			mpc_common_nodebug("Client %lu left", ctx->uid);
+			if(ctx->monitor->running)
+			{
+				_mpc_lowcomm_monitor_client_remove(ctx->monitor, ctx->uid);
+			}
 			break;
 		}
 
-		_mpc_lowcomm_monitor_wrap_print(query, "INCOMING QUERY");
+		//_mpc_lowcomm_monitor_wrap_print(query, "INCOMING QUERY");
 
 		/* Check if we are the dest or if we are routing */
 		if(_mpc_lowcomm_peer_is_local(query->dest) )
@@ -787,10 +790,9 @@ static void *__per_client_loop(void *pctx)
 }
 
 
-static void __start_client_loop(_mpc_lowcomm_client_ctx_t *ctx)
+static inline void __start_client_loop(_mpc_lowcomm_client_ctx_t *ctx)
 {
-	pthread_t per_client_th;
-	pthread_create(&per_client_th, NULL, __per_client_loop, (void*)ctx);
+	_mpc_lowcomm_kernel_thread_create(NULL, __per_client_loop, (void*)ctx);
 }
 
 
@@ -802,7 +804,6 @@ static void *__server_loop(void *pmonitor)
 	while(1)
 	{
 
-		mpc_common_debug_error("ACCEPTING client");
 		_mpc_lowcomm_client_ctx_t *new_ctx = NULL;
 		/* Accept incoming connection */
 		if( (new_ctx = __accept_incoming(monitor) ) != NULL)
@@ -818,8 +819,6 @@ static void *__server_loop(void *pmonitor)
 				break;
 			}
 		}
-
-		mpc_common_debug_error("ACCEPTING client DONE");
 	}
 
 	return NULL;
@@ -895,7 +894,12 @@ static mpc_lowcomm_monitor_retcode_t __start_server_socket(struct _mpc_lowcomm_m
 			monitor->server_socket = -1;
 			continue;
 		}
+
+		/* All done */
+		break;
 	}
+
+	freeaddrinfo(res);
 
 	if(monitor->server_socket < 0)
 	{
@@ -988,7 +992,7 @@ mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_init(struct _mpc_lowcomm_moni
 	monitor->running = 1;
 
 	/* Now start the server thread */
-	int rc = pthread_create(&monitor->server_thread, NULL, __server_loop, (void *)monitor);
+	int rc = _mpc_lowcomm_kernel_thread_create(&monitor->server_thread, __server_loop, (void *)monitor);
 
 	if(rc < 0)
 	{
@@ -1015,7 +1019,7 @@ mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_release(struct _mpc_lowcomm_m
 	shutdown(monitor->server_socket, SHUT_RDWR);
 	close(monitor->server_socket);
 
-	pthread_join(monitor->server_thread, NULL);
+	_mpc_lowcomm_kernel_thread_join(&monitor->server_thread);
 
 
 	mpc_common_hashtable_release(&monitor->client_contexts);
@@ -1089,7 +1093,7 @@ static inline _mpc_lowcomm_client_ctx_t *___connect_client(struct _mpc_lowcomm_m
 	char localuri[MPC_LOWCOMM_PEER_URI_SIZE];
 	snprintf(localuri, MPC_LOWCOMM_PEER_URI_SIZE, uri);
 
-	mpc_common_debug_warning("(%u, %u) connecting to (%u, %u)", mpc_lowcomm_peer_get_set(monitor->process_uid),
+	mpc_common_nodebug("(%u, %u) connecting to (%u, %u)", mpc_lowcomm_peer_get_set(monitor->process_uid),
 	                        mpc_lowcomm_peer_get_rank(monitor->process_uid), mpc_lowcomm_peer_get_set(uid), mpc_lowcomm_peer_get_rank(uid) );
 
 	/*mpc_common_debug_warning("%lu -> %lu", monitor->process_uid, uid);
@@ -1138,7 +1142,7 @@ static inline _mpc_lowcomm_client_ctx_t *___connect_client(struct _mpc_lowcomm_m
 	hints.ai_socktype = SOCK_STREAM;
 
 	/* Note we bind to port 0 as we do not care much of where we are */
-	int ret = getaddrinfo(hostname, port, &hints, &res);
+	int ret = mpc_common_getaddrinfo(hostname, port, &hints, &res, "ib");
 
 	if(ret < 0)
 	{
@@ -1178,7 +1182,12 @@ static inline _mpc_lowcomm_client_ctx_t *___connect_client(struct _mpc_lowcomm_m
 			client_socket = -1;
 			continue;
 		}
+
+		/* all done */
+		break;
 	}
+
+	mpc_common_freeaddrinfo(res);
 
 	if(client_socket < 0)
 	{
@@ -1189,10 +1198,8 @@ static inline _mpc_lowcomm_client_ctx_t *___connect_client(struct _mpc_lowcomm_m
     int flag = 1;
     setsockopt(client_socket, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
 
-    mpc_common_debug_error("HERE SENDING MY UID");
 	/* If we have a socket the first step is to write our UID */
 	mpc_common_io_safe_write(client_socket, &__monitor.process_uid, sizeof(uint64_t) );
-    mpc_common_debug_error("HERE DONE SENDING MY UID");
 
 	/* If we are here we can create the client */
 	_mpc_lowcomm_client_ctx_t *new = _mpc_lowcomm_client_ctx_new(uid, client_socket, monitor);
@@ -1608,7 +1615,7 @@ int _mpc_lowcomm_monitor_command_send(_mpc_lowcomm_monitor_wrap_t *cmd, mpc_lowc
 	}
 	else
 	{
-		mpc_common_debug_warning("SENDING through %s", mpc_lowcomm_peer_format(peer_info->uid));
+		mpc_common_nodebug("SENDING through %s", mpc_lowcomm_peer_format(peer_info->uid));
 	}
 
 	_mpc_lowcomm_client_ctx_send(peer_info, cmd);

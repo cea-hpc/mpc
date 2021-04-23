@@ -726,7 +726,7 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 		new_id = __communicator_id_new_for_comm(comm);
 	}
 
-	mpc_common_debug_error("New ID  %u => %u (forced : %u) is inter ? %d", comm->id, new_id, forced_id, mpc_lowcomm_communicator_is_intercomm(comm));
+	mpc_common_nodebug("New ID  %u => %u (forced : %u) is inter ? %d", comm->id, new_id, forced_id, mpc_lowcomm_communicator_is_intercomm(comm));
 
 
 	int comm_local_lead    = mpc_lowcomm_communicator_local_lead(comm);
