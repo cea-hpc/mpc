@@ -27,15 +27,11 @@
 
 #include "egreq_nbc.h"
 
-#define LOG2 0.69314718055994530941
-
 
 #define SCHED_SIZE (sizeof(int))
 #define BARRIER_SCHED_SIZE (sizeof(char))
 #define COMM_SCHED_SIZE (sizeof(NBC_Fn_type) + sizeof(NBC_Args))
 #define ROUND_SCHED_SIZE (SCHED_SIZE + BARRIER_SCHED_SIZE)
-
-#define SCTK_MPI_CHECK_RETURN_VAL(res,comm)do{if(res == MPI_SUCCESS){return res;} else {MPI_ERROR_REPORT(comm,res,"Generic error retrun");}}while(0)
 
 //  TODO:
 //    error hanfling
@@ -121,6 +117,33 @@ static inline int __rmb_index(int a) {
   */
 static inline int __fill_rmb(int a, int index) {
   return a | ((1 << index) - 1);
+}
+
+/**
+  \brief Compute the floored log2 of an integer
+  \param a Input integer
+  \return 
+  */
+static inline unsigned int __floored_log2(unsigned int a) {
+  
+  unsigned int n = 0;
+  
+  while (a >>= 1) {
+    ++n;
+  }
+
+  return n;
+}
+
+/**
+  \brief Compute the ceiled log2 of an integer
+  \param a Input integer
+  \return 
+  */
+static inline unsigned int __ceiled_log2(unsigned int a) {
+
+  unsigned int n = __floored_log2(a);
+  return (a != (1 << n))?(n+1):(n);
 }
 
 /**
@@ -620,7 +643,7 @@ int PMPI_Ibcast (void *buffer, int count, MPI_Datatype datatype, int root, MPI_C
     tmp->nbc_handle.is_persistent = 0;
     res = __Ibcast(buffer, count, datatype, root, comm, &(tmp->nbc_handle));
   }
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+  MPI_HANDLE_RETURN_VAL (res, comm);
 }
 
 /**
@@ -890,7 +913,7 @@ static inline int __Bcast_binomial(void *buffer, int count, MPI_Datatype datatyp
 
   // Get max number of steps
   int maxr, vrank, peer;
-  maxr = (int)ceil((log(size)/LOG2));
+  maxr = __ceiled_log2(size);
   // Get virtual rank for processes by swappping rank 0 & root
   RANK2VRANK(rank, vrank, root);
   // Get the index of the right-most bit set to 1 in rank
@@ -1018,7 +1041,7 @@ int PMPI_Ireduce (const void *sendbuf, void* recvbuf, int count, MPI_Datatype da
     tmp->nbc_handle.is_persistent = 0;
     res = __Ireduce(sendbuf, recvbuf, count, datatype, op, root, comm, &(tmp->nbc_handle));
   }
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+  MPI_HANDLE_RETURN_VAL (res, comm);
 }
 
 /**
@@ -1339,7 +1362,7 @@ static inline int __Reduce_binomial(const void *sendbuf, void* recvbuf, int coun
   // Get virtual rank for processes by swappping rank 0 & vroot
   RANK2VRANK(rank, vrank, vroot);
   
-  maxr = (int)ceil((log(size)/LOG2));
+  maxr = __ceiled_log2(size);
 
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
@@ -1492,7 +1515,7 @@ int PMPI_Iallreduce (const void *sendbuf, void* recvbuf, int count, MPI_Datatype
     res = __Iallreduce (sendbuf, recvbuf, count, datatype, op, comm, &(tmp->nbc_handle));
   }
 
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+  MPI_HANDLE_RETURN_VAL (res, comm);
 }
 
 /**
@@ -1742,7 +1765,7 @@ static inline int __Allreduce_distance_doubling(const void *sendbuf, void* recvb
   int first_access = 1;
 
   int vrank, peer, maxr;
-  maxr = (int)floor((log(size)/LOG2));
+  maxr = __floored_log2(size);
   int group = 2 * (size - (1 << maxr));
  
   if(rank < group) {
@@ -1910,7 +1933,7 @@ static inline int __Allreduce_binary_block(const void *sendbuf, void* recvbuf, i
   sctk_op_t *mpi_op;
 
   int vrank/*, peer*/, maxr;
-  maxr = (int)ceil((log(size)/LOG2));
+  maxr = __ceiled_log2(size);
   vrank = rank;
 
   int block = maxr;
@@ -2311,7 +2334,7 @@ int PMPI_Iscatter (const void *sendbuf, int sendcount, MPI_Datatype sendtype, vo
     tmp->nbc_handle.is_persistent = 0;
     res = __Iscatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, &(tmp->nbc_handle));
   }
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+  MPI_HANDLE_RETURN_VAL (res, comm);
 }
 
 /**
@@ -2617,7 +2640,7 @@ static inline int __Scatter_binomial(const void *sendbuf, int sendcount, MPI_Dat
   PMPI_Type_extent(tmp_recvtype, &recvext);
 
   int maxr, vrank, peer, peer_vrank;
-  maxr = (int)ceil((log(size)/LOG2));
+  maxr = __ceiled_log2(size);
   RANK2VRANK(rank, vrank, root);
   
   int rmb = __rmb_index(vrank);
@@ -2776,7 +2799,7 @@ int PMPI_Iscatterv (const void *sendbuf, const int *sendcounts, const int *displ
     tmp->nbc_handle.is_persistent = 0;
     res = __Iscatterv (sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, &(tmp->nbc_handle));
   }
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+  MPI_HANDLE_RETURN_VAL (res, comm);
 }
 
 /**
@@ -3147,7 +3170,7 @@ int PMPI_Igather (const void *sendbuf, int sendcount, MPI_Datatype sendtype, voi
     tmp->nbc_handle.is_persistent = 0;
     res = __Igather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, &(tmp->nbc_handle));
   }
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+  MPI_HANDLE_RETURN_VAL (res, comm);
 }
 
 /**
@@ -3458,7 +3481,7 @@ static inline int __Gather_binomial(const void *sendbuf, int sendcount, MPI_Data
   PMPI_Type_extent(recvtype, &recvext);
 
   int maxr, vrank, peer, peer_vrank;
-  maxr = (int)ceil((log(size)/LOG2));
+  maxr = __ceiled_log2(size);
   RANK2VRANK(rank, vrank, root);
   
   int rmb = __rmb_index(vrank);
@@ -3605,7 +3628,7 @@ int PMPI_Igatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype, vo
     tmp->nbc_handle.is_persistent = 0;
     res = __Igatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, &(tmp->nbc_handle));
   }
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+  MPI_HANDLE_RETURN_VAL (res, comm);
 }
 
 /**
@@ -3969,7 +3992,7 @@ int PMPI_Ireduce_scatter_block (const void *sendbuf, void* recvbuf, int count, M
     tmp->nbc_handle.is_persistent = 0;
     res = __Ireduce_scatter_block (sendbuf, recvbuf, count, datatype, op, comm, &(tmp->nbc_handle));
   }
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+  MPI_HANDLE_RETURN_VAL (res, comm);
 }
 
 /**
@@ -4424,7 +4447,7 @@ int PMPI_Ireduce_scatter (const void *sendbuf, void* recvbuf, const int *recvcou
 
     res = __Ireduce_scatter (sendbuf, recvbuf, recvcounts, datatype, op, comm, &(tmp->nbc_handle));
   }
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+  MPI_HANDLE_RETURN_VAL (res, comm);
 }
 
 /**
@@ -4827,7 +4850,7 @@ int PMPI_Iallgather (const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
     tmp->nbc_handle.is_persistent = 0;
     res =  __Iallgather (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, &(tmp->nbc_handle));
   }
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+  MPI_HANDLE_RETURN_VAL (res, comm);
 }
 
 /**
@@ -5094,7 +5117,7 @@ static inline int __Allgather_distance_doubling(const void *sendbuf, int sendcou
   PMPI_Type_extent(recvtype, &recvext);
 
   int vrank, vsize, peer, maxr, count = 0, peer_count = 0;
-  maxr = (int)floor((log(size)/LOG2));
+  maxr = __floored_log2(size);
   vsize = (1 << maxr);
   int group = 2 * (size - (1 << maxr));
  
@@ -5360,7 +5383,7 @@ int PMPI_Iallgatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
     res =  __Iallgatherv (sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, &(tmp->nbc_handle));
   }
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+  MPI_HANDLE_RETURN_VAL (res, comm);
 }
 
 /**
@@ -5749,7 +5772,7 @@ int PMPI_Ialltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, vo
     tmp->nbc_handle.is_persistent = 0;
     res = __Ialltoall (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, &(tmp->nbc_handle));
   }
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+  MPI_HANDLE_RETURN_VAL (res, comm);
 }
 
 /**
@@ -6144,7 +6167,7 @@ int PMPI_Ialltoallv(const void *sendbuf, const int *sendcounts, const int *sdisp
 
     res = __Ialltoallv (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, &(tmp->nbc_handle));
   }
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+  MPI_HANDLE_RETURN_VAL (res, comm);
 }
 
 /**
@@ -6571,7 +6594,7 @@ int PMPI_Ialltoallw(const void *sendbuf, const int *sendcounts, const int *sdisp
 
     res = __Ialltoallw (sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, &(tmp->nbc_handle));
   }
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+  MPI_HANDLE_RETURN_VAL (res, comm);
 }
 
 /**
@@ -6994,7 +7017,7 @@ int PMPI_Iscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype data
     res = __Iscan (sendbuf, recvbuf, count, datatype, op, comm, &(tmp->nbc_handle));
   }
 
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+  MPI_HANDLE_RETURN_VAL (res, comm);
 }
 
 /**
@@ -7379,7 +7402,7 @@ int PMPI_Iexscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype da
     res = __Iexscan (sendbuf, recvbuf, count, datatype, op, comm, &(tmp->nbc_handle));
   }
 
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+  MPI_HANDLE_RETURN_VAL (res, comm);
 }
 
 /**
@@ -7769,7 +7792,7 @@ int PMPI_Ibarrier (MPI_Comm comm, MPI_Request *request) {
     res = __Ibarrier (comm, &(tmp->nbc_handle));
   }
 
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+  MPI_HANDLE_RETURN_VAL (res, comm);
 }
 
 /**
@@ -7943,7 +7966,7 @@ static inline int __Barrier_reduce_broadcast (MPI_Comm comm, MPC_COLL_TYPE coll_
   _mpc_cl_comm_rank(comm, &rank);
 
   int maxr, peer;
-  maxr = (int)ceil((log(size)/LOG2));
+  maxr = __ceiled_log2(size);
   int rmb = __rmb_index(rank);
   if(rank == 0) {
     rmb = maxr;
