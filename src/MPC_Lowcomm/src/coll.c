@@ -2225,58 +2225,175 @@ static inline int ___gather_inter(void *sendbuf, void *recvbuf, const size_t siz
 	return SCTK_SUCCESS;
 }
 
+
+#define STATIC_GATHER_INTRA_BUFF_SIZE 4096
+
 static inline int ___gather_intra(void *sendbuf, void *recvbuf, const size_t size, int root, mpc_lowcomm_communicator_t comm)
 {
-	int i;
-	int j;
-
-	mpc_lowcomm_request_t request;
-
-	mpc_lowcomm_request_t *           recvrequest   = sctk_malloc(sizeof(mpc_lowcomm_request_t) * MPC_MAX_CONCURENT);
-	assume(recvrequest != NULL);
-
 	int comm_size = mpc_lowcomm_communicator_size(comm);
 	int rank = mpc_lowcomm_communicator_rank(comm);
 
-	if( (sendbuf == MPC_IN_PLACE) && (rank == root) )
+	/* Handle trivial case */
+
+	if(comm_size == 1)
 	{
-		request = MPC_REQUEST_NULL;
+		if( sendbuf != MPC_IN_PLACE)
+		{
+			memcpy(recvbuf, sendbuf, size);
+		}
+
+		return SCTK_SUCCESS;
+	}
+
+	/* We need a buffer on all except root */
+	void * gather_buffer = recvbuf;
+
+	char static_buffer[STATIC_GATHER_INTRA_BUFF_SIZE];
+	int did_allocate = 0;
+
+	if( (rank != root) && ( (comm_size * size) < STATIC_GATHER_INTRA_BUFF_SIZE ) )
+	{
+		/* We are not root and total size can fit */
+		gather_buffer = static_buffer;
+	}
+	else if(rank != root)
+	{
+		/* We need to allocate */
+		gather_buffer = sctk_malloc(comm_size * size);
+		assume(gather_buffer != NULL);
+		did_allocate = 1;
+	}
+
+	/* Handle in Place */
+	if( sendbuf != MPC_IN_PLACE)
+	{
+		/* If not in PLACE we need to copy the
+		   contrib to the given slot */
+		memcpy(gather_buffer + size * rank, sendbuf, size);
 	}
 	else
 	{
-		mpc_lowcomm_isend(root, sendbuf, size, MPC_GATHER_TAG, comm, &request);
+		/* MPC_IN_PLACE is only meaninfull at root */
+		assume(rank == root);
 	}
 
-	if(rank == root)
+	int div2_size = comm_size - (comm_size % 2);
+	int last_rank = comm_size - 1;
+
+	mpc_lowcomm_request_t last_rank_exchange = MPC_REQUEST_NULL;
+
+	/* Now we are normalized we can proceed to a recursive doubling approach */
+	int round = 0;
+	int rel_rank = rank;
+	int rel_size = div2_size;
+	size_t size_this_round = size;
+
+	if(rank < div2_size)
 	{
-		i     = 0;
 
-		while(i < comm_size)
+		while (rel_size)
 		{
-			for(j = 0; (i < comm_size) && (j < MPC_MAX_CONCURENT); )
-			{
-				if( (sendbuf == MPC_IN_PLACE) && (i == root) )
-				{
-					recvrequest[j] = MPC_REQUEST_NULL;
-				}
-				else
-				{
-					mpc_lowcomm_irecv(i, (( char * )recvbuf) + (i * size), size, MPC_GATHER_TAG, comm, &(recvrequest[j]));
-				}
+			int will_break = 0;
+			mpc_lowcomm_request_t round_exchange = MPC_REQUEST_NULL;
 
-				i++;
-				j++;
+			if( rel_rank % 2 )
+			{
+				/* SEND */
+				int dest_this_round = (rank - (1<<round));
+
+				assume(0 <= dest_this_round);
+
+				mpc_common_nodebug("R%d %d --> %d", round, rank, dest_this_round);
+
+				mpc_lowcomm_isend(dest_this_round, gather_buffer + (rank * size), size_this_round, MPC_GATHER_TAG, comm, &round_exchange);
+
+				will_break = 1;
+			}
+			else
+			{
+				/* RECV */
+				int from_this_round = (rank + (1<<round));
+
+				if(from_this_round != rank )
+				{
+
+					if(from_this_round < div2_size)
+					{
+						mpc_common_nodebug("R%d %d <-- %d", round, rank, from_this_round);
+
+						mpc_lowcomm_irecv(from_this_round, gather_buffer + (from_this_round * size), size_this_round, MPC_GATHER_TAG, comm, &round_exchange);
+
+					}
+					else
+					{
+						mpc_common_nodebug("R%d NOPOST %d <-- %d", round, rank, from_this_round);
+					}
+				}
 			}
 
-			mpc_lowcomm_waitall(j, recvrequest, SCTK_STATUS_NULL);
+			mpc_lowcomm_wait(&round_exchange, SCTK_STATUS_NULL);
+
+			if(will_break)
+			{
+				break;
+			}
+
+			if(rel_size>1)
+			{
+				rel_size >>= 1;
+			}
+			else
+			{
+				rel_size--;
+			}
+
+			rel_rank >>= 1;
+			round++;
+			size_this_round *= 2;
+		}
+
+	}
+
+
+
+	/* Do we need to normalize  ? */
+	if(div2_size < comm_size)
+	{
+		if(rank == 0)
+		{
+			/* We need to receive from the last rank directly */
+			mpc_lowcomm_recv(last_rank, gather_buffer + (last_rank * size), size, MPC_GATHER_TAG, comm);
+		}
+		else if(rank == last_rank)
+		{
+			mpc_lowcomm_send(0, sendbuf, size, MPC_GATHER_TAG, comm);
 		}
 	}
 
-	mpc_lowcomm_wait(&(request), SCTK_STATUS_NULL);
 
-	sctk_free(recvrequest);
+	/* Now as we were lazy if root is not 0 resend */
+	if(root != 0)
+	{
+		if(rank == 0)
+		{
+			mpc_lowcomm_send(root, gather_buffer, comm_size * size, MPC_GATHER_TAG, comm);
+		}
+		else if(rank == root)
+		{
+			mpc_lowcomm_recv(0, gather_buffer, comm_size * size, MPC_GATHER_TAG, comm);
+		}
+	}
+
+
+	/* Free gather buffer if needed */
+	if( did_allocate )
+	{
+		sctk_free(gather_buffer);
+	}
+
 	return SCTK_SUCCESS;
 }
+
 
 
 int mpc_lowcomm_gather(void *sendbuf, void *recvbuf, const size_t size, int root, mpc_lowcomm_communicator_t comm)

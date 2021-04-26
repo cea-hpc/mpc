@@ -875,6 +875,22 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_split(mpc_lowcomm_communicat
 	int size = mpc_lowcomm_communicator_size(comm);
 	int rank = mpc_lowcomm_communicator_rank(comm);
 
+#if 0
+	/* This code is to check the gather if we have doubts as we recently changed it */
+	int * itable = sctk_malloc(size * sizeof(int));
+
+	mpc_lowcomm_allgather(&rank, itable, sizeof(int), comm);
+
+
+	for(i = 0 ; i < size; i++)
+	{
+		assume(i == itable[i]);
+	}
+
+
+	sctk_free(itable);
+#endif
+
 	mpc_comm_split_t *tab = ( mpc_comm_split_t * )sctk_malloc(size * sizeof(mpc_comm_split_t) );
 	assume(tab != NULL);
 

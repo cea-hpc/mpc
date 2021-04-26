@@ -121,6 +121,22 @@ static inline uint64_t mpc_common_hash( uint64_t val )
 	return h;
 }
 
+/**
+ * @brief Check if a value is a power of 2
+ *
+ * @param val value to check for being power of 2
+ * @return 1 if val is a power of 2
+ */
+static inline int mpc_common_is_powerof2(unsigned long val)
+{
+	if(!val)
+	{
+		return 0;
+	}
+
+	return (val & (val - 1)) == 0;
+}
+
 /***********************
  * COMMON IO FUNCTIONS *
  ***********************/
