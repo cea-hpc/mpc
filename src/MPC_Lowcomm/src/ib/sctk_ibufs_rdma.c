@@ -146,6 +146,8 @@ void __rdma_region_resize(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *rem
 	/* Check if all ibufs are really free */
 #ifdef IB_DEBUG
 	int busy;
+    int i;
+    _mpc_lowcomm_ib_ibuf_t * ibuf_ptr;
 
 	if(channel == (MPC_LOWCOMM_IB_RDMA_CHANNEL | MPC_LOWCOMM_IB_SEND_CHANNEL) )
 	/* SEND CHANNEL */

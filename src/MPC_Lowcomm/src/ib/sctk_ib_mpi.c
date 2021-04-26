@@ -163,7 +163,7 @@ exit:
 	// PROF_TIME_END ( rail, ib_send_message );
 }
 
-_mpc_lowcomm_endpoint_t *sctk_on_demand_connection_ib(struct sctk_rail_info_s *rail, int dest)
+_mpc_lowcomm_endpoint_t *sctk_on_demand_connection_ib(struct sctk_rail_info_s *rail, mpc_lowcomm_peer_uid_t dest)
 {
 	_mpc_lowcomm_endpoint_t *tmp = NULL;
 
@@ -186,9 +186,8 @@ _mpc_lowcomm_endpoint_t *sctk_on_demand_connection_ib(struct sctk_rail_info_s *r
 			}
 		} while(state != _MPC_LOWCOMM_ENDPOINT_DECONNECTED && state != _MPC_LOWCOMM_ENDPOINT_CONNECTED && state != _MPC_LOWCOMM_ENDPOINT_RECONNECTING);
 	}
-
 	/* We send the request using the signalization rail */
-	tmp = sctk_ib_cm_on_demand_request_monitor(dest, rail);
+	tmp = sctk_ib_cm_on_demand_request_monitor(rail, dest);
 	assume(tmp);
 
 	/* If route not connected, so we wait for until it is connected */
@@ -780,8 +779,7 @@ int sctk_send_message_from_network_mpi_ib(mpc_lowcomm_ptp_message_t *msg)
 void sctk_connect_on_demand_mpi_ib(struct sctk_rail_info_s *rail, mpc_lowcomm_peer_uid_t dest)
 {
 	//sctk_on_demand_connection_ib(rail, dest);
-
-	sctk_ib_cm_on_demand_request_monitor(rail, dest);
+    sctk_ib_cm_on_demand_request_monitor(rail, dest);
 
 	/* add_dynamic_route() is not necessary here, as its is done
 	 * by the IB handshake protocol deeply in the function above */

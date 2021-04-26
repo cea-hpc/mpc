@@ -473,8 +473,15 @@ _mpc_lowcomm_ib_rdma_rendezvous_recv_req(sctk_rail_info_t *rail, _mpc_lowcomm_ib
 		rdma->remote_rail = sctk_rail_get_by_id(remote_rail_nb);
 
 		/* Get the remote QP from the remote rail */
-		int src_process;
-		_mpc_lowcomm_endpoint_t *route;
+		
+	    /* Determine the Source process */
+	    int integer_src_task = msg->body.header.source_task;
+	
+        mpc_lowcomm_communicator_id_t comm_id = SCTK_MSG_COMMUNICATOR_ID(msg);
+        mpc_lowcomm_communicator_t comm = mpc_lowcomm_get_communicator_from_id(comm_id);
+        mpc_lowcomm_peer_uid_t src_process = mpc_lowcomm_communicator_uid_for(comm, integer_src_task);
+        
+        _mpc_lowcomm_endpoint_t *route;
 		src_process = msg->body.header.source;
 		assume(src_process != -1);
 		route = sctk_rail_get_any_route_to_process_or_on_demand(rdma->remote_rail,
@@ -598,8 +605,13 @@ void _mpc_lowcomm_ib_rdma_rendezvous_prepare_data_write(
 
 	_mpc_lowcomm_endpoint_t *route;
 
+
+    mpc_lowcomm_peer_uid_t remote_peer =  rdma->remote_peer->rank;
+
+
 	route = sctk_rail_get_any_route_to_process_or_on_demand(
-		rdma->remote_rail, rdma->remote_peer->rank);
+		rdma->remote_rail, remote_peer);
+        
 
 	ibuf = _mpc_lowcomm_ib_ibuf_pick_send_sr(&rdma->remote_rail->network.ib);
 	assume(ibuf);

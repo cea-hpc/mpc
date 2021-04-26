@@ -610,13 +610,15 @@ char * __monitor_get_rail_name(char * data, int len, sctk_rail_info_t *rail, __i
     return data;
 }
 
+#define _ALREADY_CONNECTED_MSG "ALREADY HERE BUDDY"
+
 static inline int __ib_monitor_on_demand(mpc_lowcomm_peer_uid_t from,
 										 char *data,
 										 char * return_data,
 										 int return_data_len,
 										 void *ctx)
 {
-    mpc_common_debug_error("IB MONITOR OD from %lu", from);
+    mpc_common_debug("IB MONITOR OD from %lu", from);
     sctk_rail_info_t *rail = (sctk_rail_info_t *)ctx;
 	sctk_ib_rail_info_t *rail_ib_targ = &rail->network.ib;
 	LOAD_DEVICE(rail_ib_targ);
@@ -630,6 +632,23 @@ static inline int __ib_monitor_on_demand(mpc_lowcomm_peer_uid_t from,
 
 	_mpc_lowcomm_endpoint_t *endpoint = sctk_rail_add_or_reuse_route_dynamic(rail, from, sctk_ib_create_remote, sctk_ib_init_remote, &added, 0);
 	ib_assume(endpoint);
+
+    if(!added)
+    {
+        /* This means we are racing in cross connect
+         * we then know that both processes 
+         * may encounter this error the collision
+         * avoidance rule of the largest rank
+         * is then to be used */
+        mpc_lowcomm_peer_uid_t local = mpc_lowcomm_monitor_get_uid();
+
+        if(from < local)
+        {
+            snprintf(return_data, return_data_len, _ALREADY_CONNECTED_MSG);
+            return 1;
+        }
+    
+    }
 
 	_MPC_LOWCOMM_ENDPOINT_LOCK(endpoint);
 
@@ -663,7 +682,7 @@ static inline int __ib_monitor_rts(mpc_lowcomm_peer_uid_t from,
 								   int return_data_len,
 								   void *ctx)
 {
-    mpc_common_debug_error("IB MONITOR RTS from %lu", from);
+    mpc_common_nodebug("IB MONITOR RTS from %lu", from);
     sctk_rail_info_t *rail = (sctk_rail_info_t *)ctx;
 	sctk_ib_rail_info_t *rail_ib_targ = &rail->network.ib;
 
@@ -685,7 +704,6 @@ static inline int __ib_monitor_rts(mpc_lowcomm_peer_uid_t from,
 
 _mpc_lowcomm_endpoint_t * sctk_ib_cm_on_demand_request_monitor(sctk_rail_info_t *rail, mpc_lowcomm_peer_uid_t dest)
 {
-    mpc_common_debug_error("IB MONITOR OD to %lu", dest);
     int added = 0;
 
     _mpc_lowcomm_endpoint_t *  endpoint = sctk_rail_add_or_reuse_route_dynamic(rail, dest, sctk_ib_create_remote, sctk_ib_init_remote, &added, 1);
@@ -703,6 +721,7 @@ _mpc_lowcomm_endpoint_t * sctk_ib_cm_on_demand_request_monitor(sctk_rail_info_t 
 
 	_MPC_LOWCOMM_ENDPOINT_UNLOCK(endpoint);
 
+    mpc_common_nodebug("IB MONITOR OD to %s send %d", mpc_lowcomm_peer_format(dest), send_request);
 
 	/* If we are the first to access the route and if the state
 	 * is deconnected, so we can proceed to a connection*/
@@ -728,26 +747,39 @@ _mpc_lowcomm_endpoint_t * sctk_ib_cm_on_demand_request_monitor(sctk_rail_info_t 
 																		   __monitor_get_rail_name(monitor_code, 128, rail, _IB_MONITOR_OD),
 																		   local_qp_infos,
 																		   &mon_retcode);
-
-		if(mon_retcode != MPC_LAUNCH_MONITOR_RET_SUCCESS)
-		{
-			mpc_lowcomm_monitor_retcode_print(mon_retcode, "IB OD");
-			mpc_common_debug_fatal("Failed to connect to remote infiniband peer");
-		}
-
-		/* Decode incoming addr */
+	/* Decode incoming addr */
 		mpc_lowcomm_monitor_args_t *resp_content = mpc_lowcomm_monitor_response_get_content(resp);
 
+		if( resp_content->on_demand.retcode!= MPC_LAUNCH_MONITOR_RET_SUCCESS)
+		{
+            /* HANDLE CROSS CONNECT */
+            if(!strcmp(resp_content->on_demand.data, _ALREADY_CONNECTED_MSG))
+            {
+                while(_mpc_lowcomm_endpoint_get_state(endpoint) != _MPC_LOWCOMM_ENDPOINT_CONNECTED)
+                {
+                    mpc_thread_yield();
+                }
+           
+		        mpc_lowcomm_monitor_response_free(resp);
+                return endpoint;
+            }
+            else
+            {
+                mpc_common_debug_fatal("On DEMAND callback failed");
+            }
+		}
+
+	
 		sctk_ib_cm_qp_connection_t recv_keys = sctk_ib_qp_keys_convert ( resp_content->on_demand.data );
+
+		/* Set ourselves in RTR */
+		ib_assume(sctk_ib_qp_allocate_get_rtr(remote) == 0);
+    	sctk_ib_qp_allocate_rtr(rail_ib_targ, remote, &recv_keys);
 
 		/* Set QP in RTS */
 		ib_assume(sctk_ib_qp_allocate_get_rts(remote) == 0);
 		sctk_ib_qp_allocate_rts(rail_ib_targ, remote);
 
-
-		/* Set ourselves in RTR */
-		ib_assume(sctk_ib_qp_allocate_get_rtr(remote) == 0);
-    	sctk_ib_qp_allocate_rtr(rail_ib_targ, remote, &recv_keys);
 
         /* Done with the monitor command */
 		mpc_lowcomm_monitor_response_free(resp);
@@ -773,7 +805,6 @@ _mpc_lowcomm_endpoint_t * sctk_ib_cm_on_demand_request_monitor(sctk_rail_info_t 
 
 void sctk_ib_cm_monitor_register_callbacks(sctk_rail_info_t * rail)
 {
-    mpc_common_debug_warning("REGISTERING CBS");
   char cb_name[128];
   mpc_lowcomm_monitor_register_on_demand_callback(__monitor_get_rail_name(cb_name, 128, rail, _IB_MONITOR_OD),
                                                   __ib_monitor_on_demand,
@@ -820,6 +851,7 @@ int sctk_ib_cm_on_demand_rdma_check_request(__UNUSED__ sctk_rail_info_t *rail, s
  */
 int sctk_ib_cm_on_demand_rdma_request(sctk_rail_info_t *rail, struct sctk_ib_qp_s *remote, int entry_size, int entry_nb)
 {
+    mpc_common_debug_error("HERE SENDING RDMA");
 	sctk_ib_rail_info_t *rail_ib_targ = &rail->network.ib;
 
 	LOAD_DEVICE(rail_ib_targ);

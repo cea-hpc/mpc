@@ -1991,6 +1991,7 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_process_ondemand(mpc_l
 	{
 		int ret = (cb)(dest, ondemand->on_demand.data, resp->content->on_demand.data, MPC_LOWCOMM_ONDEMAND_DATA_LEN, ctx);
 
+
 		if(ret != 0)
 		{
 			resp->content->on_demand.retcode = MPC_LAUNCH_MONITOR_RET_ERROR;
@@ -2227,6 +2228,8 @@ mpc_lowcomm_on_demand_callback_t mpc_lowcomm_monitor_get_on_demand_callback(char
 			*ctx = head->ctx;
 			return head->callback;
 		}
+
+        head = head->next;
 	}
 
 	return NULL;
@@ -2238,6 +2241,7 @@ int mpc_lowcomm_monitor_register_on_demand_callback(char *target,
 													void * ctx)
 {
 	assume(callback != NULL);
+
 
 	struct __on_demand_callback * new = sctk_malloc(sizeof(struct __on_demand_callback ));
 	assume(new != NULL);

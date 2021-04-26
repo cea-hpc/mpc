@@ -223,11 +223,11 @@ void sctk_ib_qp_key_create_value ( char *msg, size_t size, sctk_ib_cm_qp_connect
 {
 
 
-	snprintf ( msg, size, "%08x:%08x:%08x", keys->lid,
+	int ret =snprintf ( msg, size, "%08x:%08x:%08x", keys->lid,
 	                 keys->qp_num,
 	                 keys->psn );
 	/* We assume the value doest not overflow with the buffer */
-	ib_assume ( ret < size );
+	assume ( ret < size );
 
 	sctk_ib_qp_key_print ( keys );
 }
@@ -236,10 +236,10 @@ void sctk_ib_qp_key_create_key ( char *msg, size_t size, int rail_id, int src, i
 {
 
 	/* We create the key with the number of the rail */
-	snprintf ( msg, size, "IB-%02d|%06d:%06d", rail_id, src, dest );
+	int ret = snprintf ( msg, size, "IB-%02d|%06d:%06d", rail_id, src, dest );
 	mpc_common_nodebug ( "key: %s", msg );
 	/* We assume the value doest not overflow with the buffer */
-	ib_assume ( ret < size );
+	assume ( ret < size );
 }
 
 sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_convert ( char *msg )
@@ -279,8 +279,8 @@ void sctk_ib_qp_keys_send ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *r
 
 	sctk_ib_qp_key_create_key ( key, key_max, rail_ib->rail->rail_number, mpc_common_get_process_rank(), remote->rank );
 	sctk_ib_qp_key_create_value ( val, val_max, &qp_keys );
- 	mpc_launch_pmi_put ( val, key, 0 );
-	ib_assume ( ret == MPC_LAUNCH_PMI_SUCCESS );
+ 	int ret = mpc_launch_pmi_put ( val, key, 0 );
+	assume ( ret == MPC_LAUNCH_PMI_SUCCESS );
 	
 	sctk_free( key );
 	sctk_free( val );
@@ -302,9 +302,9 @@ sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_recv ( struct sctk_ib_rail_info_s *ra
 
 
 	sctk_ib_qp_key_create_key ( key, key_max, rail_ib->rail->rail_number, dest_process, mpc_common_get_process_rank() );
- 	mpc_launch_pmi_get( val, val_max, key, dest_process );
+ 	int ret = mpc_launch_pmi_get( val, val_max, key, dest_process );
  
-	ib_assume ( ret == SCTK_PMI_SUCCESS );
+	assume ( ret == MPC_LAUNCH_PMI_SUCCESS );
 	qp_keys = sctk_ib_qp_keys_convert ( val );
 
 	sctk_free( key );
@@ -342,7 +342,7 @@ void sctk_ib_qp_destroy ( sctk_ib_qp_t *remote )
 	sctk_free(remote); 
 }
 
-struct ibv_qp *sctk_ib_qp_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, struct ibv_qp_init_attr *attr, int rank )
+struct ibv_qp *sctk_ib_qp_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, struct ibv_qp_init_attr *attr, mpc_lowcomm_peer_uid_t rank )
 {
 	LOAD_DEVICE ( rail_ib );
 
@@ -630,7 +630,7 @@ char * sctk_ib_qp_print_state( struct ibv_qp *qp)
 /*-----------------------------------------------------------
  *  ALLOCATION
  *----------------------------------------------------------*/
-void sctk_ib_qp_allocate_init ( struct sctk_ib_rail_info_s *rail_ib, int rank, sctk_ib_qp_t *remote, int ondemand, _mpc_lowcomm_endpoint_t *endpoint )
+void sctk_ib_qp_allocate_init ( struct sctk_ib_rail_info_s *rail_ib, mpc_lowcomm_peer_uid_t rank, sctk_ib_qp_t *remote, int ondemand, _mpc_lowcomm_endpoint_t *endpoint )
 {
 	LOAD_CONFIG ( rail_ib );
 	LOAD_DEVICE ( rail_ib );

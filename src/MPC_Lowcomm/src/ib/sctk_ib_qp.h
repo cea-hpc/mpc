@@ -33,6 +33,7 @@
 #include "sctk_ib_cm.h"
 #include "sctk_ib_device.h"
 
+#include <mpc_lowcomm_monitor.h>
 
 #define ACK_UNSET   111
 #define ACK_OK      222
@@ -82,7 +83,7 @@ typedef struct sctk_ib_qp_s
 							(should match remote QP's sq_psn) */
 	uint32_t           psn;        /**< packet sequence number */
 	uint32_t           dest_qp_num;/**< destination qp number */
-	int                     rank;       /**< Process rank associated to the QP */
+	mpc_lowcomm_peer_uid_t                     rank;       /**< Process rank associated to the QP */
 	OPA_int_t               state; 	    /**< QP state */
 	OPA_int_t               is_rtr;     /**< If QP in Ready-to-Receive mode*/
 	mpc_common_spinlock_t         lock_rtr;
@@ -142,7 +143,7 @@ sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_recv ( struct sctk_ib_rail_info_s *ra
 sctk_ib_qp_t *sctk_ib_qp_new();
 void sctk_ib_qp_destroy(sctk_ib_qp_t *remote);
 
-struct ibv_qp *sctk_ib_qp_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, struct ibv_qp_init_attr *attr, int rank );
+struct ibv_qp *sctk_ib_qp_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, struct ibv_qp_init_attr *attr, mpc_lowcomm_peer_uid_t rank );
 void sctk_ib_qp_free_all(struct sctk_ib_rail_info_s* rail_ib);
 
 struct ibv_qp_init_attr sctk_ib_qp_init_attr ( struct sctk_ib_rail_info_s *rail_ib );
@@ -155,7 +156,7 @@ struct ibv_qp_attr sctk_ib_qp_state_rts_attr ( struct sctk_ib_rail_info_s *rail_
 
 void sctk_ib_qp_modify ( sctk_ib_qp_t *remote, struct ibv_qp_attr *attr, int flags );
 
-void sctk_ib_qp_allocate_init ( struct sctk_ib_rail_info_s *rail_ib, int rank, sctk_ib_qp_t *remote, int ondemand, _mpc_lowcomm_endpoint_t *route );
+void sctk_ib_qp_allocate_init ( struct sctk_ib_rail_info_s *rail_ib, mpc_lowcomm_peer_uid_t rank, sctk_ib_qp_t *remote, int ondemand, _mpc_lowcomm_endpoint_t *route );
 
 void sctk_ib_qp_allocate_rtr ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, sctk_ib_cm_qp_connection_t *keys );
 

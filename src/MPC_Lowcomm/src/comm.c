@@ -2501,6 +2501,7 @@ void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_r
 		msg->tail.request->request_type = REQUEST_SEND;
 	}
 
+    //mpc_common_debug_error("%llu != %llu ?", SCTK_MSG_DEST_PROCESS_UID(msg), mpc_lowcomm_monitor_get_uid());
 	/*  Message has not reached its destination */
 	if(SCTK_MSG_DEST_PROCESS_UID(msg) != mpc_lowcomm_monitor_get_uid() )
 	{

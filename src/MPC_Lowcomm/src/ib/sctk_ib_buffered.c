@@ -314,12 +314,23 @@ void _mpc_lowcomm_ib_buffered_poll_recv(sctk_rail_info_t *rail, _mpc_lowcomm_ib_
 	mpc_lowcomm_ptp_message_body_t *body         = &buffered_msg->msg;
 
 	/* Determine the Source process */
-	int src_process = body->header.source;
-	ib_assume(src_process != -1);
+	int integer_src_task = body->header.source_task;
+
+    mpc_lowcomm_communicator_id_t comm_id = body->header.communicator_id;
+    
+    
+    mpc_lowcomm_communicator_t comm = mpc_lowcomm_get_communicator_from_id(comm_id);
+    mpc_lowcomm_peer_uid_t src_process = mpc_lowcomm_communicator_uid_for(comm, integer_src_task);
+    
+    //mpc_common_debug_error("MSG from %d to %d on comm %d src %s", body->header.source, body->header.destination, comm_id, mpc_lowcomm_peer_format(src_process));
+    
+    ib_assume(src_process != -1);
 	/* Determine if the message is expected or not (good sequence number) */
 	_mpc_lowcomm_endpoint_t *route_table = sctk_rail_get_any_route_to_process(rail, src_process);
-	ib_assume(route_table);
-	sctk_ib_qp_t * remote = route_table->data.ib.remote;
+	
+
+    ib_assume(route_table);
+    sctk_ib_qp_t * remote = route_table->data.ib.remote;
 
 	/* Get the entry */
 	_mpc_lowcomm_ib_buffered_entry_t *entry = __buffered_get_entry(rail, remote, ibuf);
