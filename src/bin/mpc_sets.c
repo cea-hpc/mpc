@@ -109,12 +109,6 @@ void get_connectivity(int argc, char ** argv)
 }
 
 
-
-
-
-
-
-
 void help(int argc, char *argv[])
 {
     fprintf(stderr, "Usage of %s:\n", argv[0]);
@@ -122,7 +116,10 @@ void help(int argc, char *argv[])
     fprintf(stderr, "\n");
     fprintf(stderr, "- sets          : print running sets (default)\n");
     fprintf(stderr, "     -v be verbose and print peers\n");
+    fprintf(stderr, "- conn          : output overlay network map in Graphviz\n");
     fprintf(stderr, "- help/-h/--help: print this help\n");
+    fprintf(stderr, "Advanced debug:\n");
+    fprintf(stderr, "- syncconn      : output own program map (only current set)\n");
 
 
 }

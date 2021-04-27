@@ -39,13 +39,18 @@ endif
 # mpirun
 #
 
+bin_PROGRAMS=mpc_sets
+mpc_sets_SOURCES= ./mpc_sets.c
+mpc_sets_CFLAGS= -I$(abs_top_srcdir)/src/MPC_Lowcomm/include/ -I$(abs_top_srcdir)/src/MPC_Common/include/ -I$(abs_top_builddir)/src/MPC_Common/include/ -I$(abs_top_srcdir)/src/include/  -I$(abs_top_builddir)/src/include/ -I$(abs_top_srcdir)/src/MPC_MPI/include/
+mpc_sets_LDADD = $(ALLOC_LIBS)
+mpc_sets_LDADD += @ALL_MPC_LIBS@
 
 if PRRTE_LAUNCHER_ENABLED
 install-exec-hook:
 	$(MKDIR_P) $(prefix)/bin
 	rm -fr  $(prefix)/bin/mpirun; $(LN_S) @PRTERUN@ $(prefix)/bin/mpirun
 else
-bin_PROGRAMS=mpirun
+bin_PROGRAMS+=mpirun
 mpirun_SOURCES=./mpirun.c
 endif
 

@@ -101,10 +101,11 @@ host_triplet = @host@
 # Cuda support
 #
 @MPC_CUDA_ENABLED_TRUE@am__append_4 = mpc_nvcc
-@PRRTE_LAUNCHER_ENABLED_FALSE@bin_PROGRAMS = mpirun$(EXEEXT)
-@MPC_HAS_SRUN_SUPPORT_TRUE@am__append_5 = mpcrun_opt/mpcrun_srun
-@HYDRA_LAUNCHER_ENABLED_TRUE@am__append_6 = mpcrun_opt/mpcrun_hydra mpcrun_opt/mpcrun_salloc_hydra 
-@PRRTE_LAUNCHER_ENABLED_TRUE@am__append_7 = mpcrun_opt/mpcrun_prrte
+bin_PROGRAMS = mpc_sets$(EXEEXT) $(am__EXEEXT_1)
+@PRRTE_LAUNCHER_ENABLED_FALSE@am__append_3 = mpirun
+@MPC_HAS_SRUN_SUPPORT_TRUE@am__append_4 = mpcrun_opt/mpcrun_srun
+@HYDRA_LAUNCHER_ENABLED_TRUE@am__append_5 = mpcrun_opt/mpcrun_hydra mpcrun_opt/mpcrun_salloc_hydra 
+@PRRTE_LAUNCHER_ENABLED_TRUE@am__append_6 = mpcrun_opt/mpcrun_prrte
 subdir = src/bin
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_gcc_builtin.m4 \
@@ -126,19 +127,27 @@ CONFIG_HEADER = $(top_builddir)/mpc_config.h
 CONFIG_CLEAN_FILES = mpc_build_env.sh mpc_cflags mpc_ldflags mpcrun \
 	mpcvars.sh mpc_status
 CONFIG_CLEAN_VPATH_FILES =
+@PRRTE_LAUNCHER_ENABLED_FALSE@am__EXEEXT_1 = mpirun$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)" \
 	"$(DESTDIR)$(mpcrun_plugindir)" "$(DESTDIR)$(pkgdatadir)" \
 	"$(DESTDIR)$(prefix_bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am__mpirun_SOURCES_DIST = ./mpirun.c
 am__dirstamp = $(am__leading_dot)dirstamp
-@PRRTE_LAUNCHER_ENABLED_FALSE@am_mpirun_OBJECTS = ./mpirun.$(OBJEXT)
-mpirun_OBJECTS = $(am_mpirun_OBJECTS)
-mpirun_LDADD = $(LDADD)
+am_mpc_sets_OBJECTS = ./mpc_sets-mpc_sets.$(OBJEXT)
+mpc_sets_OBJECTS = $(am_mpc_sets_OBJECTS)
+am__DEPENDENCIES_1 =
+mpc_sets_DEPENDENCIES = $(am__DEPENDENCIES_1)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+mpc_sets_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(mpc_sets_CFLAGS) \
+	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+am__mpirun_SOURCES_DIST = ./mpirun.c
+@PRRTE_LAUNCHER_ENABLED_FALSE@am_mpirun_OBJECTS = ./mpirun.$(OBJEXT)
+mpirun_OBJECTS = $(am_mpirun_OBJECTS)
+mpirun_LDADD = $(LDADD)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -202,8 +211,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(mpirun_SOURCES)
-DIST_SOURCES = $(am__mpirun_SOURCES_DIST)
+SOURCES = $(mpc_sets_SOURCES) $(mpirun_SOURCES)
+DIST_SOURCES = $(mpc_sets_SOURCES) $(am__mpirun_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -522,11 +531,14 @@ pkgdata_SCRIPTS = mpc_compiler_common.sh
 # It duplicates mpcvarsh.sh but is needed for retrocompat
 prefix_bindir = $(prefix)
 prefix_bin_SCRIPTS = mpcvars.sh
+mpc_sets_SOURCES = ./mpc_sets.c
+mpc_sets_CFLAGS = -I$(abs_top_srcdir)/src/MPC_Lowcomm/include/ -I$(abs_top_srcdir)/src/MPC_Common/include/ -I$(abs_top_builddir)/src/MPC_Common/include/ -I$(abs_top_srcdir)/src/include/  -I$(abs_top_builddir)/src/include/ -I$(abs_top_srcdir)/src/MPC_MPI/include/
+mpc_sets_LDADD = $(ALLOC_LIBS) @ALL_MPC_LIBS@
 @PRRTE_LAUNCHER_ENABLED_FALSE@mpirun_SOURCES = ./mpirun.c
 mpcrun_plugindir = $(pkgdatadir)/mpcrun_opt/
 mpcrun_plugin_SCRIPTS = mpcrun_opt/mpcrun_none \
-	mpcrun_opt/mpcrun_none_mpc-gdb $(am__append_5) $(am__append_6) \
-	$(am__append_7)
+	mpcrun_opt/mpcrun_none_mpc-gdb $(am__append_4) $(am__append_5) \
+	$(am__append_6)
 all: all-am
 
 .SUFFIXES:
@@ -643,6 +655,12 @@ installcheck-binPROGRAMS: $(bin_PROGRAMS)
 $(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) ./$(DEPDIR)
 	@: > $(DEPDIR)/$(am__dirstamp)
+./mpc_sets-mpc_sets.$(OBJEXT): ./$(am__dirstamp) \
+	$(DEPDIR)/$(am__dirstamp)
+
+mpc_sets$(EXEEXT): $(mpc_sets_OBJECTS) $(mpc_sets_DEPENDENCIES) $(EXTRA_mpc_sets_DEPENDENCIES) 
+	@rm -f mpc_sets$(EXEEXT)
+	$(AM_V_CCLD)$(mpc_sets_LINK) $(mpc_sets_OBJECTS) $(mpc_sets_LDADD) $(LIBS)
 ./mpirun.$(OBJEXT): ./$(am__dirstamp) $(DEPDIR)/$(am__dirstamp)
 
 mpirun$(EXEEXT): $(mpirun_OBJECTS) $(mpirun_DEPENDENCIES) $(EXTRA_mpirun_DEPENDENCIES) 
@@ -856,6 +874,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_sets-mpc_sets.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpirun.Po@am__quote@
 
 .c.o:
@@ -881,6 +900,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
+
+./mpc_sets-mpc_sets.o: ./mpc_sets.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mpc_sets_CFLAGS) $(CFLAGS) -MT ./mpc_sets-mpc_sets.o -MD -MP -MF $(DEPDIR)/mpc_sets-mpc_sets.Tpo -c -o ./mpc_sets-mpc_sets.o `test -f './mpc_sets.c' || echo '$(srcdir)/'`./mpc_sets.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/mpc_sets-mpc_sets.Tpo $(DEPDIR)/mpc_sets-mpc_sets.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./mpc_sets.c' object='./mpc_sets-mpc_sets.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mpc_sets_CFLAGS) $(CFLAGS) -c -o ./mpc_sets-mpc_sets.o `test -f './mpc_sets.c' || echo '$(srcdir)/'`./mpc_sets.c
+
+./mpc_sets-mpc_sets.obj: ./mpc_sets.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mpc_sets_CFLAGS) $(CFLAGS) -MT ./mpc_sets-mpc_sets.obj -MD -MP -MF $(DEPDIR)/mpc_sets-mpc_sets.Tpo -c -o ./mpc_sets-mpc_sets.obj `if test -f './mpc_sets.c'; then $(CYGPATH_W) './mpc_sets.c'; else $(CYGPATH_W) '$(srcdir)/./mpc_sets.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/mpc_sets-mpc_sets.Tpo $(DEPDIR)/mpc_sets-mpc_sets.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='./mpc_sets.c' object='./mpc_sets-mpc_sets.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(mpc_sets_CFLAGS) $(CFLAGS) -c -o ./mpc_sets-mpc_sets.obj `if test -f './mpc_sets.c'; then $(CYGPATH_W) './mpc_sets.c'; else $(CYGPATH_W) '$(srcdir)/./mpc_sets.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -1111,10 +1144,6 @@ uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
 
 .PRECIOUS: Makefile
 
-
-#
-# mpirun
-#
 
 @PRRTE_LAUNCHER_ENABLED_TRUE@install-exec-hook:
 @PRRTE_LAUNCHER_ENABLED_TRUE@	$(MKDIR_P) $(prefix)/bin
