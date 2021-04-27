@@ -954,10 +954,10 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_split(mpc_lowcomm_communicat
 			color_number++;
 		}
 
-		//mpc_common_debug_error("COL rank %d color %d", i, tab[i].rank, tab[i].color);
+		mpc_common_nodebug("COL rank %d color %d", i, tab[i].rank, tab[i].color);
 	}
 
-	//mpc_common_debug_error("%d colors", color_number);
+	mpc_common_nodebug("%d colors", color_number);
 
 	/*We need on comm_create per color */
 	for(k = 0; k < color_number; k++)
@@ -976,6 +976,8 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_split(mpc_lowcomm_communicat
 					group_size++;
 				}
 			}
+
+			mpc_common_nodebug("GROUP is %d", group_size);
 
 
 			int *comm_world_ranks = ( int * )sctk_malloc(group_size * sizeof(int) );

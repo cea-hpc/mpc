@@ -26,7 +26,7 @@
 #include "mpcomp_types.h"
 #include "mpcomp_task.h"
 #include "mpcomp_openmp_tls.h"
-
+#include <stdbool.h>
 void omp_set_num_threads(int num_threads) {
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();

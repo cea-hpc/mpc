@@ -2296,6 +2296,8 @@ static inline int ___gather_intra(void *sendbuf, void *recvbuf, const size_t siz
 			int will_break = 0;
 			mpc_lowcomm_request_t round_exchange = MPC_REQUEST_NULL;
 
+			size_t local_size = size_this_round;
+
 			if( rel_rank % 2 )
 			{
 				/* SEND */
@@ -2305,7 +2307,17 @@ static inline int ___gather_intra(void *sendbuf, void *recvbuf, const size_t siz
 
 				mpc_common_nodebug("R%d %d --> %d", round, rank, dest_this_round);
 
-				mpc_lowcomm_isend(dest_this_round, gather_buffer + (rank * size), size_this_round, MPC_GATHER_TAG, comm, &round_exchange);
+				/* Make sure not to overflow */
+				if( (comm_size * size) <= (rank * size) + local_size )
+				{
+					local_size = (comm_size - rank) * size;
+				}
+
+				mpc_common_nodebug("%d * %ld + %ld (%ld) <  %d * %ld (%ld)", rank, size, local_size, rank * size + local_size, comm_size, size, comm_size * size);
+				/* Check for read overflow */
+				assert( (rank * size + local_size) <= (comm_size * size));
+
+				mpc_lowcomm_isend(dest_this_round, gather_buffer + (rank * size), local_size, MPC_GATHER_TAG, comm, &round_exchange);
 
 				will_break = 1;
 			}
@@ -2321,7 +2333,19 @@ static inline int ___gather_intra(void *sendbuf, void *recvbuf, const size_t siz
 					{
 						mpc_common_nodebug("R%d %d <-- %d", round, rank, from_this_round);
 
-						mpc_lowcomm_irecv(from_this_round, gather_buffer + (from_this_round * size), size_this_round, MPC_GATHER_TAG, comm, &round_exchange);
+						/* Make sure not to overflow */
+						if( (comm_size * size) <= (from_this_round * size) + local_size )
+						{
+							local_size = (comm_size - from_this_round) * size;
+						}
+
+
+						mpc_common_nodebug("RR %d * %ld + %ld (%ld) <  %d * %ld (%ld)", from_this_round, size, local_size, from_this_round * size + local_size, comm_size, size, comm_size * size);
+						/* Check for write overflow */
+						assert( (from_this_round * size + local_size) <= (comm_size * size));
+
+
+						mpc_lowcomm_irecv(from_this_round, gather_buffer + (from_this_round * size), local_size, MPC_GATHER_TAG, comm, &round_exchange);
 
 					}
 					else

@@ -26,6 +26,7 @@
 #include <mpc_mpi_internal.h>
 
 #include <mpi_conf.h>
+#include <stdbool.h>
 
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
 #include "mpc_nbc_weak.h"

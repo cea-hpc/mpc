@@ -27,6 +27,7 @@
 
 #define AD_USE_LOCK
 
+#include <stdbool.h>
 #include "mpc_common_debug.h"
 #include <mpc_common_asm.h>
 #include "sctk_context.h"
