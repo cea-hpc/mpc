@@ -112,6 +112,41 @@ int mpc_lowcomm_request_cancel(mpc_lowcomm_request_t *request);
  */
 void mpc_lowcomm_request_init(mpc_lowcomm_request_t *request, mpc_lowcomm_communicator_t comm, int request_type);
 
+/*********************
+ * UNIVERSE MESSAGES *
+ *********************/
+
+/**
+ * @brief Send a message to a remote set peer
+ *
+ * @param dest destination peer UID
+ * @param data data to be sent
+ * @param size size of data pointer
+ * @param tag tag to be used
+ * @param req request to fill in
+ * @return int SCTK_SUCCESS if all ok
+ */
+int mpc_lowcomm_universe_isend(mpc_lowcomm_peer_uid_t dest,
+                              const void *data,
+                              size_t size,
+                              int tag,
+                              mpc_lowcomm_request_t *req);
+
+/**
+ * @brief Recv a message from a remote set peer
+ *
+ * @param dest source peer UID
+ * @param data data to be received
+ * @param size size of data pointer
+ * @param tag tag to be used
+ * @param req request to fill in
+ * @return int SCTK_SUCCESS if all ok
+ */
+int mpc_lowcomm_universe_irecv(mpc_lowcomm_peer_uid_t src,
+                               const void *data,
+                               size_t size,
+                               int tag,
+                               mpc_lowcomm_request_t *req);
 
 /************************************************************************/
 /* P2P Messages                                                         */

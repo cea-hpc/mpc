@@ -71,6 +71,7 @@ static inline int _mpc_comm_ptp_message_is_for_process( mpc_lowcomm_ptp_message_
 		case MPC_LOWCOMM_ALLREDUCE_OFFLOAD_MESSAGE:
 		case MPC_LOWCOMM_CONTROL_MESSAGE_RAIL:
 		case MPC_LOWCOMM_CONTROL_MESSAGE_PROCESS:
+		case MPC_LOWCOMM_MESSAGE_UNIVERSE:
 			return 1;
 
 		case MPC_LOWCOMM_MESSAGE_CLASS_COUNT:
@@ -104,6 +105,7 @@ static inline int _mpc_comm_ptp_message_is_for_control( mpc_lowcomm_ptp_message_
 		case MPC_LOWCOMM_RDMA_WINDOW_MESSAGES:
 		case MPC_LOWCOMM_CONTROL_MESSAGE_FENCE:
 		case MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL:
+		case MPC_LOWCOMM_MESSAGE_UNIVERSE:
 			return 0;
 
 		case MPC_LOWCOMM_CONTROL_MESSAGE_TASK:
@@ -291,6 +293,12 @@ static inline int sctk_is_process_specific_message( mpc_lowcomm_ptp_message_head
 	return _mpc_comm_ptp_message_is_for_process( class );
 }
 
+
+/** Message for a process with ordering and a tag */
+static inline int _mpc_lowcomm_message_is_for_universe( mpc_lowcomm_ptp_message_header_t *header )
+{
+	return (header->message_type.type == MPC_LOWCOMM_MESSAGE_UNIVERSE);
+}
 
 
 static inline void _mpc_comm_ptp_message_clear_request( mpc_lowcomm_ptp_message_t *msg )

@@ -290,12 +290,6 @@ void sctk_net_init_driver(char *name)
 	sctk_net_memory_free_hook_register(__mpc_memory_free_hook);
 #endif
 
-	if(mpc_common_get_process_count() == 1)
-	{
-		/* Nothing to do */
-		return;
-	}
-
 	/* Initialize multi-rail engine */
 	_mpc_lowcomm_multirail_table_init();
 

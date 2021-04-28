@@ -118,6 +118,72 @@ int _mpc_lowcomm_communicator_relax(mpc_lowcomm_internal_communicator_t *comm)
 	return OPA_fetch_and_decr_int(&comm->refcount);
 }
 
+/*****************
+ * UNIVERSE COMM *
+ *****************/
+
+#if 0
+typedef struct mpc_lowcomm_internal_communicator_s
+{
+	mpc_lowcomm_communicator_id_t               id;				/**< Integer unique identifier of the comm */
+	int                        linear_comm_id;  /** Linear communicator id on int32 used for FORTRAN */
+	mpc_lowcomm_group_t *      group;			/**< Group supporting the comm */
+	OPA_int_t                  refcount;		/**< Number of ref to the comm freed when 0 */
+
+	OPA_int_t                  free_count;      /**< Local synchronization for free */
+
+	unsigned int               process_span;	/**< Number of UNIX processes in the group */
+	int *                      process_array;	/**< Array of the processes in the group */
+
+	int                        is_comm_self;	/**< 1 if the group is comm_self */
+
+	/* Collective comm */
+	struct mpc_lowcomm_coll_s *coll;			/**< This holds the collectives for this comm */
+	struct sctk_comm_coll *    shm_coll;		/**< This holds the SHM collectives for this comm */
+
+	/* Intercomms */
+
+	/* These are the internall intracomm for
+	 * intercomms. If the group is NULL
+	 * it means the communicator is an intercomm
+	 * and then functions will refer to this functions */
+	mpc_lowcomm_communicator_t left_comm;		/**< The left comm for intercomms */
+	mpc_lowcomm_communicator_t right_comm;		/**< The right comm for intercomms */
+}mpc_lowcomm_internal_communicator_t;
+#endif
+
+int mpc_lowcomm_communicator_build_remote_world(const mpc_lowcomm_set_uid_t gid, mpc_lowcomm_communicator_t *comm)
+{
+	/* First make sure the GID matches a set */
+	mpc_lowcomm_monitor_set_t set = mpc_lowcomm_monitor_set_get(gid);
+	assert(set != NULL);
+
+	if(!set)
+	{
+		return -1;
+	}
+
+	/* Now create a fake comm for the remote */
+	struct mpc_lowcomm_internal_communicator_s * new = sctk_malloc(sizeof(struct mpc_lowcomm_internal_communicator_s));
+	assume(new != NULL);
+	memset(new, 0, sizeof(struct mpc_lowcomm_internal_communicator_s));
+
+	new->id = mpc_lowcomm_get_comm_world_id_gid(gid);
+
+	/* Return comm */
+	*comm = new;
+
+	return 0;
+}
+
+int mpc_lowcomm_communicator_free_remote_world(mpc_lowcomm_communicator_t *comm)
+{
+	sctk_free(*comm);
+	*comm = NULL;
+
+	return 0;
+}
+
 /*********************************
 * COLL GETTERS FOR COMMUNICATOR *
 *********************************/
@@ -873,10 +939,15 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_self()
 	return __comm_self;
 }
 
+mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_world_id_gid(mpc_lowcomm_set_uid_t gid)
+{
+	uint64_t lgid = gid;
+	return (lgid << 32) | MPC_LOWCOMM_COMM_WORLD_NUMERIC_ID;
+}
+
 mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_world_id(void)
 {
-	uint64_t gid = mpc_lowcomm_monitor_get_gid();
-	return (gid << 32) | MPC_LOWCOMM_COMM_WORLD_NUMERIC_ID;
+	return mpc_lowcomm_get_comm_world_id_gid(mpc_lowcomm_monitor_get_gid());
 }
 
 mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_self_id(void)

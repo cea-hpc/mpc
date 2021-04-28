@@ -20,8 +20,8 @@ void mpc_common_set_process_rank(int process_rank)
 
 /* MPC local_process Count Getters */
 
-int __local_process_count = -1;
-int __local_process_rank = -1;
+int __local_process_count = 1;
+int __local_process_rank = 0;
 
 void mpc_common_set_local_process_count(int local_process_count)
 {

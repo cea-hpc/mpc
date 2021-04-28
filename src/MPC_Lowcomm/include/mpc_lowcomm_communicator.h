@@ -68,6 +68,14 @@ mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_self_id(void);
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_world();
 
 /**
+ * @brief Compute the world ID for a remote set of processes
+ *
+ * @param gid the target group id
+ * @return mpc_lowcomm_communicator_id_t the corresponding comm_world
+ */
+mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_world_id_gid(mpc_lowcomm_set_uid_t gid);
+
+/**
  * @brief Get a pointer to COMM_SELF
  *
  * @return mpc_lowcomm_communicator_t pointer to comm_self
@@ -418,6 +426,14 @@ int mpc_lowcomm_communicator_remote_size(mpc_lowcomm_communicator_t comm);
  * @return int the comm world rank for the remote rank
  */
 int mpc_lowcomm_communicator_remote_world_rank(const mpc_lowcomm_communicator_t communicator, const int rank);
+
+/*****************
+ * UNIVERSE COMM *
+ *****************/
+
+int mpc_lowcomm_communicator_build_remote_world(const mpc_lowcomm_set_uid_t gid, mpc_lowcomm_communicator_t *comm);
+
+int mpc_lowcomm_communicator_free_remote_world(mpc_lowcomm_communicator_t *comm);
 
 /***********************************
 * COMMUNICATOR COLLECTIVE CONTEXT *

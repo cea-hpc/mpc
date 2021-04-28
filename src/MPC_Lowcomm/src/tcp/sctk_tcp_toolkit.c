@@ -499,47 +499,4 @@ void sctk_network_init_tcp_all(sctk_rail_info_t *rail, char *interface,
 
 	assume(rail->network.tcp.connection_infos_size < MPC_COMMON_MAX_STRING_SIZE);
 
-	/* If this rail does not require the bootstrap ring just return */
-	if(rail->requires_bootstrap_ring == 0)
-	{
-		return;
-	}
-
-	/* Otherwise BUILD a TCP bootstrap ring */
-	right_rank = (mpc_common_get_process_rank() + 1) % mpc_common_get_process_count();
-
-	mpc_common_nodebug("Connection Infos (%d): %s", mpc_common_get_process_rank(), rail->network.tcp.connection_infos);
-
-	/* Register connection info inside the PMPI */
-	assume(mpc_launch_pmi_put_as_rank(rail->network.tcp.connection_infos, rail->rail_number, 0 /* Not local */) == 0);
-
-	mpc_launch_pmi_barrier();
-
-	/* Retrieve Connection info to dest rank from the PMI */
-	assume(mpc_launch_pmi_get_as_rank(right_rank_connection_infos, MPC_COMMON_MAX_STRING_SIZE, rail->rail_number, right_rank) == 0);
-
-	mpc_launch_pmi_barrier();
-
-	mpc_common_nodebug("DEST Connection Infos(%d) to %d: %s", mpc_common_get_process_rank(), right_rank, right_rank_connection_infos);
-
-
-	/* Intiate ring connection */
-	if(mpc_common_get_process_count() > 1)
-	{
-		mpc_common_nodebug("Connect to %d", right_rank);
-		right_socket = __connect_to(right_rank_connection_infos, rail);
-
-		if(right_socket < 0)
-		{
-			perror("Connection error");
-			mpc_common_debug_abort();
-		}
-	}
-
-	mpc_launch_pmi_barrier();
-
-	/* We are all done, now register the routes and create the polling threads */
-	__add_route( mpc_lowcomm_monitor_local_uid_of(right_rank), right_socket, rail, _MPC_LOWCOMM_ENDPOINT_STATIC);
-
-	mpc_launch_pmi_barrier();
 }

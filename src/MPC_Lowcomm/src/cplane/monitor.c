@@ -1684,8 +1684,6 @@ int _mpc_lowcomm_monitor_command_register_set_info(mpc_lowcomm_monitor_args_t *c
 		peers_uids[i] = pinfo->uid;
 	}
 
-
-
 	/* and eventually create the set */
 	_mpc_lowcomm_set_init(cmd->set_info.uid,
 	                      cmd->set_info.name,
@@ -1711,6 +1709,12 @@ int mpc_lowcomm_monitor_peer_reachable_directly(mpc_lowcomm_peer_uid_t target_pe
 
 	return ret != NULL;
 }
+
+int mpc_lowcomm_monitor_peer_exists(mpc_lowcomm_peer_uid_t peer)
+{
+	return (_mpc_lowcomm_peer_get(peer) != NULL);
+}
+
 /**************************
  * COMMON WRAP GENERATION *
  **************************/
@@ -2310,6 +2314,11 @@ int mpc_lowcomm_monitor_unregister_on_demand_callback(char * target)
 int mpc_lowcomm_monitor_set_iterate(int (*callback)(mpc_lowcomm_monitor_set_t set, void * arg), void * arg)
 {
 	return _mpc_lowcomm_set_iterate(callback, arg);
+}
+
+mpc_lowcomm_monitor_set_t mpc_lowcomm_monitor_set_get(mpc_lowcomm_set_uid_t gid)
+{
+	return (mpc_lowcomm_monitor_set_t)_mpc_lowcomm_set_get(gid);
 }
 
 char * mpc_lowcomm_monitor_set_name(mpc_lowcomm_monitor_set_t pset)

@@ -401,7 +401,7 @@ void _mpc_comm_ptp_message_reinit_comm(mpc_lowcomm_ptp_message_t *msg)
 
 	if(!comm)
 	{
-		mpc_common_debug_error("No such local comm %u", comm_id);
+		mpc_common_debug_error("No such local comm %llu", comm_id);
 		assume(comm != NULL);
 	}
 
@@ -1671,15 +1671,13 @@ static inline void __mpc_comm_fill_request(mpc_lowcomm_request_t *request,
 void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
                                          const int message_tag,
                                          const mpc_lowcomm_communicator_t communicator,
-                                         const int source, const int destination,
+                                         const mpc_lowcomm_peer_uid_t source, const mpc_lowcomm_peer_uid_t destination,
                                          mpc_lowcomm_request_t *request, const size_t count,
                                          mpc_lowcomm_ptp_message_class_t message_class,
                                          mpc_lowcomm_datatype_t datatype,
                                          mpc_lowcomm_request_type_t request_type)
 {
 	msg->tail.request = request;
-
-	int is_intercomm = mpc_lowcomm_communicator_is_intercomm(communicator);
 
 	/* Save message class */
 	SCTK_MSG_SPECIFIC_CLASS_SET(msg, message_class);
@@ -1689,22 +1687,26 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 	{
 		/* Fill in Source and Dest Process Informations (NO conversion needed)
 		 */
-		SCTK_MSG_SRC_PROCESS_SET(msg, source);
-		SCTK_MSG_DEST_PROCESS_SET(msg, destination);
+
+		/* Note ANY_SOURCE will use truncation in matching with mpc_lowcomm_peer_get_rank(source) */
+		SCTK_MSG_SRC_PROCESS_UID_SET(msg, source);
+		SCTK_MSG_DEST_PROCESS_UID_SET(msg, destination);
 		/* Message does not come from a task source */
 		SCTK_MSG_SRC_TASK_SET(msg, mpc_common_get_task_rank() );
-		/* In all cases such message goes to a process */
-		SCTK_MSG_DEST_TASK_SET(msg, -1);
+		/* In all cases such message goes to a process we set the id the first local task */
+		SCTK_MSG_DEST_TASK_SET(msg, _mpc_lowcomm_communicator_world_first_local_task());
 	}
 	else
 	{
+		int is_intercomm = mpc_lowcomm_communicator_is_intercomm(communicator);
+
 		int source_task = -1;
 		int dest_task   = -1;
 		/* Fill in Source and Dest Process Informations (convert from task) */
 
 		/* SOURCE */
 
-		if(source != MPC_ANY_SOURCE)
+		if(mpc_lowcomm_peer_get_rank(source) != MPC_ANY_SOURCE)
 		{
 			if( is_intercomm )
 			{
@@ -2501,7 +2503,7 @@ void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_r
 		msg->tail.request->request_type = REQUEST_SEND;
 	}
 
-    //mpc_common_debug_error("%llu != %llu ?", SCTK_MSG_DEST_PROCESS_UID(msg), mpc_lowcomm_monitor_get_uid());
+    mpc_common_nodebug("%llu != %llu ?", SCTK_MSG_DEST_PROCESS_UID(msg), mpc_lowcomm_monitor_get_uid());
 	/*  Message has not reached its destination */
 	if(SCTK_MSG_DEST_PROCESS_UID(msg) != mpc_lowcomm_monitor_get_uid() )
 	{
@@ -2908,13 +2910,12 @@ int mpc_lowcomm_irecv_class(int src, void *buffer, size_t size, int tag,
 }
 
 /*************************
-* PUBLIC COMM INTERFACE *
-*************************/
+ * PUBLIC COMM INTERFACE *
+ *************************/
 
-
-/*  ###############
- *  Rank Querry
- *  ############### */
+/**************
+ * RANK QUERY *
+ **************/
 
 int mpc_lowcomm_get_rank()
 {
@@ -2946,10 +2947,9 @@ int mpc_lowcomm_get_process_rank()
 	return mpc_common_get_process_rank();
 }
 
-
-/*  ###############
- *  Messages
- *  ############### */
+/************
+ * MESSAGES *
+ ************/
 
 static mpc_lowcomm_request_t __request_null;
 
@@ -3029,7 +3029,7 @@ int mpc_lowcomm_test(mpc_lowcomm_request_t * request, int * completed, mpc_lowco
 	}
 
 	mpc_lowcomm_ptp_msg_wait_init(&wait, request, 1);
-	
+
 	__mpc_comm_ptp_msg_wait(&wait);
 
 	*completed = (request->completion_flag == MPC_LOWCOMM_MESSAGE_DONE);
@@ -3070,7 +3070,7 @@ int mpc_lowcomm_waitall(int count, mpc_lowcomm_request_t *requests, mpc_lowcomm_
 			mpc_lowcomm_test(&requests[i], &done, status);
 			all_done &= done;
 		}
-		
+
 		if(!all_done)
 		{
 			/* Yield for coroutines */
@@ -3211,7 +3211,6 @@ int mpc_lowcomm_iprobe(int source, int tag, mpc_lowcomm_communicator_t comm, int
 		source = MPC_ANY_SOURCE;
 	}
 
-	
 	return mpc_lowcomm_iprobe_src_dest(source, mpc_common_get_task_rank(), tag, comm, flag, status);
 }
 
@@ -3276,9 +3275,114 @@ size_t mpc_lowcomm_get_req_size(mpc_lowcomm_request_t *req)
    return req->header.msg_size;
 }
 
-/*  ###############
- *  Setup & Teardown
- *  ############### */
+/**********************************
+ * UNIVERSE COMMUNICATION SUPPORT *
+ **********************************/
+
+int mpc_lowcomm_universe_isend(mpc_lowcomm_peer_uid_t dest,
+							   const void *data,
+							   size_t size,
+							   int tag,
+							   mpc_lowcomm_request_t *req)
+{
+
+	if(dest == MPC_PROC_NULL)
+	{
+		mpc_lowcomm_request_init(req, MPC_COMM_WORLD, REQUEST_SEND);
+		return SCTK_SUCCESS;
+	}
+
+	if(!mpc_lowcomm_monitor_peer_exists(dest))
+	{
+		mpc_common_debug_warning("%s : peer %s does not appear to exist",
+								__FUNCTION__,
+								mpc_lowcomm_peer_format(dest));
+		return SCTK_ERROR;
+	}
+
+	mpc_lowcomm_set_uid_t gid = mpc_lowcomm_peer_get_set(dest);
+	mpc_lowcomm_communicator_t remote_world = NULL;
+
+	if( mpc_lowcomm_communicator_build_remote_world(gid, &remote_world) < 0 )
+	{
+		return SCTK_ERROR;
+	}
+
+	mpc_lowcomm_ptp_message_t *msg = mpc_lowcomm_ptp_message_header_create(MPC_LOWCOMM_MESSAGE_CONTIGUOUS);
+	mpc_lowcomm_ptp_message_set_contiguous_addr(msg, data, size);
+
+
+	mpc_lowcomm_ptp_message_header_init(msg,
+										tag,
+										remote_world,
+										mpc_lowcomm_monitor_get_uid(),
+										dest,
+										req,
+										size,
+										MPC_LOWCOMM_MESSAGE_UNIVERSE,
+	                                    MPC_DATATYPE_IGNORE,
+										REQUEST_SEND);
+
+	mpc_common_debug_error("MSG TO comm %llu (LOCAL %llu)", SCTK_MSG_COMMUNICATOR_ID(msg), mpc_lowcomm_get_comm_world_id());
+
+
+	mpc_lowcomm_ptp_message_send(msg);
+
+
+	mpc_lowcomm_communicator_free_remote_world(&remote_world);
+
+	return SCTK_SUCCESS;
+}
+
+
+int mpc_lowcomm_universe_irecv(mpc_lowcomm_peer_uid_t src,
+							   const void *data,
+							   size_t size,
+							   int tag,
+							   mpc_lowcomm_request_t *req)
+{
+	if(src == MPC_PROC_NULL)
+	{
+		mpc_lowcomm_request_init(req, MPC_COMM_WORLD, REQUEST_SEND);
+		return SCTK_SUCCESS;
+	}
+
+	if(mpc_lowcomm_peer_get_rank(src) != MPC_ANY_SOURCE)
+	{
+		if(!mpc_lowcomm_monitor_peer_exists(src))
+		{
+			mpc_common_debug_warning("%s : peer %s does not appear to exist",
+									__FUNCTION__,
+									mpc_lowcomm_peer_format(src));
+			return SCTK_ERROR;
+		}
+	}
+
+	mpc_lowcomm_ptp_message_t *msg = mpc_lowcomm_ptp_message_header_create(MPC_LOWCOMM_MESSAGE_CONTIGUOUS);
+	mpc_lowcomm_ptp_message_set_contiguous_addr(msg, data, size);
+
+
+	mpc_lowcomm_ptp_message_header_init(msg,
+										tag,
+										MPC_COMM_WORLD,
+										src,
+										mpc_lowcomm_monitor_get_uid(),
+										req,
+										size,
+										MPC_LOWCOMM_MESSAGE_UNIVERSE,
+	                                    MPC_DATATYPE_IGNORE,
+										REQUEST_RECV);
+
+	mpc_lowcomm_ptp_message_recv(msg);
+
+	return SCTK_SUCCESS;
+}
+
+
+
+/********************
+ * SETUP & TEARDOWN *
+ ********************/
 
 void mpc_launch_init_runtime();
 
@@ -3358,21 +3462,18 @@ static void __initialize_drivers()
 {
 	_mpc_lowcomm_monitor_setup();
 
-	if(mpc_common_get_process_count() > 1)
-	{
 #ifdef MPC_USE_INFINIBAND
-		if(!mpc_common_get_flags()->network_driver_name && !sctk_ib_device_found() )
+	if(!mpc_common_get_flags()->network_driver_name && !sctk_ib_device_found() )
+	{
+		if(!mpc_common_get_process_rank() )
 		{
-			if(!mpc_common_get_process_rank() )
-			{
-				mpc_common_debug("Could not locate an IB device, fallback to TCP");
-			}
-
-			mpc_common_get_flags()->network_driver_name = "tcp";
+			mpc_common_debug("Could not locate an IB device, fallback to TCP");
 		}
-#endif
-		sctk_net_init_driver(mpc_common_get_flags()->network_driver_name);
+
+		mpc_common_get_flags()->network_driver_name = "tcp";
 	}
+#endif
+	sctk_net_init_driver(mpc_common_get_flags()->network_driver_name);
 
 	mpc_lowcomm_rdma_window_init_ht();
 

@@ -77,6 +77,8 @@ typedef enum
 	MPC_LOWCOMM_CONTROL_MESSAGE_PROCESS,  /**< This message goes to a process (\ref sctk_control_message_process_level) */
 	MPC_LOWCOMM_CONTROL_MESSAGE_TASK,     /**< This message goes to a task */
 
+	MPC_LOWCOMM_MESSAGE_UNIVERSE,         /**< This message is for a given UID */
+
 	MPC_LOWCOMM_MESSAGE_CLASS_COUNT       /**< This value allows to track the  number of control message types */
 } mpc_lowcomm_ptp_message_class_t;
 
@@ -107,7 +109,9 @@ static const char *const mpc_lowcomm_ptp_message_class_name[MPC_LOWCOMM_MESSAGE_
 	"MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL",
 	"MPC_LOWCOMM_CONTROL_MESSAGE_RAIL",
 	"MPC_LOWCOMM_CONTROL_MESSAGE_PROCESS",
-	"MPC_LOWCOMM_CONTROL_MESSAGE_TASK"
+	"MPC_LOWCOMM_CONTROL_MESSAGE_TASK",
+
+	"MPC_LOWCOMM_MESSAGE_UNIVERSE"
 };
 
 /************************************************************************/
@@ -385,8 +389,8 @@ void mpc_lowcomm_ptp_message_add_pack_absolute(mpc_lowcomm_ptp_message_t *msg, c
 
 void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg, const int message_tag,
                                          const mpc_lowcomm_communicator_t communicator,
-                                         const int source,
-                                         const int destination,
+                                         const mpc_lowcomm_peer_uid_t source,
+                                         const mpc_lowcomm_peer_uid_t destination,
                                          mpc_lowcomm_request_t *request,
                                          const size_t count,
                                          mpc_lowcomm_ptp_message_class_t message_class,

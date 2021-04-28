@@ -845,7 +845,7 @@ void _mpc_lowcomm_multirail_send_message(mpc_lowcomm_ptp_message_t *msg)
 	int is_process_specific = sctk_is_process_specific_message(SCTK_MSG_HEADER(msg) );
 
 	/* If the message is based on signalization we directly rely on routing */
-	if(is_process_specific)
+	if(is_process_specific && !_mpc_lowcomm_message_is_for_universe(msg))
 	{
 		/* Find the process to which to route to */
 		__route_to_process(SCTK_MSG_DEST_PROCESS_UID(msg), &destination_process);
@@ -1121,10 +1121,14 @@ void _mpc_lowcomm_multirail_table_init()
 	mpc_common_hashtable_init(&table->destination_table, 1024);
 	mpc_common_rwlock_t lckinit = SCTK_SPIN_RWLOCK_INITIALIZER;
 	table->table_lock = lckinit;
+
+	mpc_common_debug_error("TABLE INIT");
 }
 
 void _mpc_lowcomm_multirail_table_release()
 {
+		mpc_common_debug_error("TABLE FRE");
+
 	struct _mpc_lowcomm_multirail_table * table = _mpc_lowcomm_multirail_table_get();
 	_mpc_lowcomm_multirail_table_entry_t *entry;
 

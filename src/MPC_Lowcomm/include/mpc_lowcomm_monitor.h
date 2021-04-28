@@ -65,6 +65,8 @@ char * mpc_lowcomm_peer_format(mpc_lowcomm_peer_uid_t uid);
 int mpc_lowcomm_peer_closer(mpc_lowcomm_peer_uid_t dest, mpc_lowcomm_peer_uid_t current, mpc_lowcomm_peer_uid_t candidate);
 int mpc_lowcomm_monitor_peer_reachable_directly(mpc_lowcomm_peer_uid_t target_peer);
 
+int mpc_lowcomm_monitor_peer_exists(mpc_lowcomm_peer_uid_t peer);
+
 /*****************
  * SET INTERFACE *
  *****************/
@@ -75,6 +77,8 @@ int mpc_lowcomm_monitor_set_iterate(int (*callback)(mpc_lowcomm_monitor_set_t se
 
 char * mpc_lowcomm_monitor_set_name(mpc_lowcomm_monitor_set_t set);
 mpc_lowcomm_set_uid_t mpc_lowcomm_monitor_set_gid(mpc_lowcomm_monitor_set_t set);
+
+mpc_lowcomm_monitor_set_t mpc_lowcomm_monitor_set_get(mpc_lowcomm_set_uid_t gid);
 
 #define MPC_LOWCOMM_PEER_URI_SIZE     256
 
