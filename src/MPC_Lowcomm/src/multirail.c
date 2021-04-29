@@ -845,7 +845,7 @@ void _mpc_lowcomm_multirail_send_message(mpc_lowcomm_ptp_message_t *msg)
 	int is_process_specific = sctk_is_process_specific_message(SCTK_MSG_HEADER(msg) );
 
 	/* If the message is based on signalization we directly rely on routing */
-	if(is_process_specific && !_mpc_lowcomm_message_is_for_universe(msg))
+	if(is_process_specific && !_mpc_lowcomm_message_is_for_universe(SCTK_MSG_HEADER(msg)))
 	{
 		/* Find the process to which to route to */
 		__route_to_process(SCTK_MSG_DEST_PROCESS_UID(msg), &destination_process);

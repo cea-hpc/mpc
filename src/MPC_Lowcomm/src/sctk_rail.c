@@ -427,7 +427,6 @@ void sctk_rail_commit()
 		sctk_rail_info_t *  rail = sctk_rail_get_by_id ( i );
 		rail->route_init( rail );
 		rail->state = SCTK_RAIL_ST_ENABLED;
-	 mpc_launch_pmi_barrier();
 	}
 
 	sz = sctk_rail_print_topology(net_name, sctk_rail_count() * 1024);
