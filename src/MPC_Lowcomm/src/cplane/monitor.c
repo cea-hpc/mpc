@@ -590,8 +590,11 @@ int _mpc_lowcomm_client_ctx_release(_mpc_lowcomm_client_ctx_t **client)
 	{
 		shutdown( (*client)->client_fd, SHUT_RDWR);
 		close( (*client)->client_fd);
-		pthread_mutex_destroy(&(*client)->write_lock);
-		sctk_free(*client);
+
+		/* There is a race between a client leaving
+           and the monitor command completion */
+		//pthread_mutex_destroy(&(*client)->write_lock);
+		//sctk_free(*client);
 	}
 
 	return 0;

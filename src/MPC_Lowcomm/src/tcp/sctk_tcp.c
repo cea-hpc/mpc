@@ -114,9 +114,11 @@ static void *__tcp_thread_loop(_mpc_lowcomm_endpoint_t *tmp)
 		tmp->rail->send_message_from_network(msg);
 	}
 
+	shutdown(fd, SHUT_RDWR);
+	close(fd);
+
 	mpc_common_debug("TCP THREAD LEAVING");
 
-	pthread_exit(NULL);
 	return NULL;
 }
 

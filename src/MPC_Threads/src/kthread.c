@@ -85,8 +85,8 @@ typedef struct _mpc_thread_kthread_create_start_s
 	sem_t                                               sem;
 } _mpc_thread_kthread_create_start_t;
 
-static mpc_common_spinlock_t lock = { 0 };
-static volatile _mpc_thread_kthread_create_start_t *list = NULL;
+static mpc_common_spinlock_t __thread_list_lock = { 0 };
+static volatile _mpc_thread_kthread_create_start_t *__thread_list = NULL;
 
 static void *__kthread_start_func(void *t_arg)
 {
@@ -101,19 +101,19 @@ static void *__kthread_start_func(void *t_arg)
 
 	sem_init(&(slot.sem), 0, 0);
 
-	mpc_common_spinlock_lock(&lock);
+	mpc_common_spinlock_lock(&__thread_list_lock);
 
-	if(list != &slot)
+	if(__thread_list)
 	{
-		slot.next = list;
+		slot.next = __thread_list;
 	}
 	else
 	{
 		slot.next = NULL;
 	}
 
-	list = &slot;
-	mpc_common_spinlock_unlock(&lock);
+	__thread_list = &slot;
+	mpc_common_spinlock_unlock(&__thread_list_lock);
 
 	while(1)
 	{
@@ -190,8 +190,8 @@ int _mpc_thread_kthread_create(mpc_thread_kthread_t *thread, void *(*start_routi
 	size_t kthread_stack_size = _mpc_thread_config_get()->kthread_stack_size;
 	
 	mpc_common_nodebug("Scan already started kthreads");
-	mpc_common_spinlock_lock(&lock);
-	cursor = (_mpc_thread_kthread_create_start_t *)list;
+	mpc_common_spinlock_lock(&__thread_list_lock);
+	cursor = (_mpc_thread_kthread_create_start_t *)__thread_list;
 	while(cursor != NULL)
 	{
 		if(cursor->used == 0)
@@ -202,7 +202,7 @@ int _mpc_thread_kthread_create(mpc_thread_kthread_t *thread, void *(*start_routi
 		}
 		cursor = (_mpc_thread_kthread_create_start_t *)cursor->next;
 	}
-	mpc_common_spinlock_unlock(&lock);
+	mpc_common_spinlock_unlock(&__thread_list_lock);
 	mpc_common_nodebug("Scan already started kthreads done found %p", found);
 
 	if(found)
@@ -261,7 +261,6 @@ int _mpc_thread_kthread_create(mpc_thread_kthread_t *thread, void *(*start_routi
 			pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
 			res = mpc_thread_kthread_pthread_create( (pthread_t *)thread, &attr, __kthread_start_func, &tmp);
 		}
-		assume(res == 0);
 
 		mpc_common_nodebug("_mpc_thread_kthread_create: after pthread_create with res = %d", res);
 

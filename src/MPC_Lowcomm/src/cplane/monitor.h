@@ -11,6 +11,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <mpc_common_asm.h>
 
 #include "lowcomm_thread.h"
 #include "set.h"

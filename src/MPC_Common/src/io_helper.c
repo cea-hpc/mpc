@@ -121,7 +121,7 @@ ssize_t mpc_common_io_safe_read( int fd, void *buf, size_t count )
 			else
 			{
 				mpc_common_debug( "READ %p %lu/%lu FAIL\n", buf, count );
-				perror( "mpc_common_io_safe_read" );
+				//perror( "mpc_common_io_safe_read" );
 				res = -1;
 				break;
 			}

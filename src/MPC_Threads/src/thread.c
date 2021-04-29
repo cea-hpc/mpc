@@ -1022,7 +1022,7 @@ static void *___vp_thread_start_routine(sctk_thread_data_t *__arg)
 #if defined(MPC_USE_EXTLS)
 	/* TLS INTIALIZATION */
 	sctk_tls_init();
-	sctk_call_dynamic_initializers();
+	//sctk_call_dynamic_initializers();
 #endif
 
 	sctk_register_thread_initial(task_rank);
@@ -1168,7 +1168,7 @@ static void __extls_thread_init(void)
 
 static void __extls_thread_start(void)
 {
-	sctk_call_dynamic_initializers();
+	//sctk_call_dynamic_initializers();
 }
 
 static void __extls_runtime_start(void)
