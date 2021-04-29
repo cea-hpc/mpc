@@ -1258,6 +1258,7 @@ int mpc_topology_guided_compute_color(char *value)
 * MPC TOPOLOGY ACCESSORS *
 **************************/
 
+static volatile int __mpc_module_topology_loaded = 0;
 static hwloc_topology_t __mpc_module_topology;
 static int __mpc_module_mcdram_node  = -1;
 static int __mpc_module_avail_nvdimm = 0;
@@ -1337,6 +1338,8 @@ void mpc_topology_init()
 	extls_set_topology_addr( (void *(*)(void) )__extls_get_topology_addr);
 	extls_hls_topology_construct();
 #endif
+
+	__mpc_module_topology_loaded = 1;
 }
 
 #if (HWLOC_API_VERSION >= 0x00020000)
@@ -1400,6 +1403,8 @@ void mpc_topology_destroy( void )
 	hwloc_topology_destroy( __mpc_module_topology );
 
 	hwloc_topology_destroy( __mpc_module_topology_global );
+
+	__mpc_module_topology_loaded = 0;
 }
 
 void mpc_topology_get_pu_neighborhood( int cpuid, unsigned int nb_cpus, int *neighborhood )
@@ -1466,6 +1471,11 @@ void mpc_topology_bind_to_process_cpuset(void)
 
 int mpc_topology_get_current_cpu()
 {
+	if(!__mpc_module_topology_loaded)
+	{
+		return -1;
+	}
+
 	if ( __topo_cpu_pinning_caching_value < 0 )
 	{
 		return _mpc_topology_get_current_cpu(__mpc_module_topology);
