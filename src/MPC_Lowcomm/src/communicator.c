@@ -152,37 +152,94 @@ typedef struct mpc_lowcomm_internal_communicator_s
 }mpc_lowcomm_internal_communicator_t;
 #endif
 
-int mpc_lowcomm_communicator_build_remote_world(const mpc_lowcomm_set_uid_t gid, mpc_lowcomm_communicator_t *comm)
-{
-	/* First make sure the GID matches a set */
-	mpc_lowcomm_monitor_set_t set = mpc_lowcomm_monitor_set_get(gid);
-	assert(set != NULL);
+static inline mpc_lowcomm_internal_communicator_t *__init_communicator_with_id(mpc_lowcomm_communicator_id_t comm_id,
+                                                                               mpc_lowcomm_group_t *group,
+																			   int forced_linear_id);
 
-	if(!set)
+int mpc_lowcomm_communicator_build_remote(mpc_lowcomm_peer_uid_t remote,
+										  const mpc_lowcomm_communicator_id_t id,
+										  mpc_lowcomm_communicator_t *outcomm)
+{
+	/* First make sure the comm targets an existing set different than ourselves */
+	mpc_lowcomm_set_uid_t gid = mpc_lowcomm_get_comm_gid(id);
+
+	mpc_lowcomm_monitor_set_t set = mpc_lowcomm_monitor_set_get(gid);
+
+	if(set == NULL)
+	{
+		mpc_common_debug_error("Could not resolve remote set %llu", gid);
+		return SCTK_ERROR;
+	}
+
+	if(gid == mpc_lowcomm_monitor_get_gid())
+	{
+		mpc_common_debug_error("Cannot resolve local set as a remote one");
+		return SCTK_ERROR;
+	}
+
+	/* Now we need set info from the remote 
+	   not for now it only resolves world, we need a call to target specific comm */
+
+	mpc_lowcomm_monitor_retcode_t cret;
+
+	mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_comm_info(remote,
+															            id,
+															            &cret);
+
+	if(cret != MPC_LAUNCH_MONITOR_RET_SUCCESS)
 	{
 		return -1;
 	}
 
-	/* Now create a fake comm for the remote */
-	struct mpc_lowcomm_internal_communicator_s * new = sctk_malloc(sizeof(struct mpc_lowcomm_internal_communicator_s));
-	assume(new != NULL);
-	memset(new, 0, sizeof(struct mpc_lowcomm_internal_communicator_s));
+	mpc_lowcomm_monitor_args_t * content = mpc_lowcomm_monitor_response_get_content(resp);
 
-	new->id = mpc_lowcomm_get_comm_world_id_gid(gid);
+	if(content->comm_info.retcode != MPC_LAUNCH_MONITOR_RET_SUCCESS)
+	{
+		return -1;
+	}
 
-	/* Return comm */
-	*comm = new;
+	uint64_t peer_count = content->comm_info.size;
 
-	return 0;
+	/* Now create the group description */
+	_mpc_lowcomm_group_rank_descriptor_t *remote_desc = sctk_malloc(sizeof(_mpc_lowcomm_group_rank_descriptor_t) * peer_count);
+
+	assume(remote_desc != NULL);
+
+	uint64_t i;
+	for(i = 0; i < peer_count; i++)
+	{
+		/* WARNING this assumes homogeneity ! */
+		if(_mpc_lowcomm_group_rank_descriptor_set_uid(&remote_desc[i], content->comm_info.uids[i]) != SCTK_SUCCESS)
+		{
+			mpc_common_debug_fatal("An error occured when creating descriptor for RANK %d in remote comm", i);
+		}
+	}
+
+	mpc_lowcomm_monitor_response_free(resp);
+
+	mpc_lowcomm_group_t *remote_group = _mpc_lowcomm_group_create(peer_count, remote_desc);
+	mpc_lowcomm_internal_communicator_t *ret = __init_communicator_with_id(id,
+                                                                           remote_group,
+																		   0);
+
+	if(!ret)
+	{
+		mpc_common_debug_error("Failed to build remote comm");
+		return SCTK_ERROR;
+	}
+
+	*outcomm = ret;
+
+	return SCTK_SUCCESS;
 }
 
-int mpc_lowcomm_communicator_free_remote_world(mpc_lowcomm_communicator_t *comm)
+int mpc_lowcomm_communicator_build_remote_world(const mpc_lowcomm_set_uid_t gid, mpc_lowcomm_communicator_t *comm)
 {
-	sctk_free(*comm);
-	*comm = NULL;
-
-	return 0;
+	return mpc_lowcomm_communicator_build_remote( mpc_lowcomm_monitor_uid_of(gid, 0),
+												  mpc_lowcomm_get_comm_world_id_gid(gid),
+												  comm);
 }
+
 
 /*********************************
 * COLL GETTERS FOR COMMUNICATOR *
@@ -676,7 +733,6 @@ static inline void __comm_free(mpc_lowcomm_communicator_t comm)
 
 	if(exists)
 	{
-		mpc_common_debug_error("FREE COMM %u", comm->id);
 		/* Release the ID */
 		__communicator_id_release(comm);
 	}
@@ -748,7 +804,11 @@ int mpc_lowcomm_communicator_free(mpc_lowcomm_communicator_t *pcomm)
 
 	int local_task_count = mpc_lowcomm_communicator_local_task_count(comm);
 
-	mpc_lowcomm_barrier(comm);
+	/* Only barrier when freeing local comms */
+	if(mpc_lowcomm_get_comm_gid(comm) == mpc_lowcomm_monitor_get_gid())
+	{
+		mpc_lowcomm_barrier(comm);
+	}
 
 	int current_refc = OPA_fetch_and_incr_int(&comm->free_count);
 
@@ -945,6 +1005,11 @@ mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_world_id_gid(mpc_lowcomm_set_
 	return (lgid << 32) | MPC_LOWCOMM_COMM_WORLD_NUMERIC_ID;
 }
 
+mpc_lowcomm_set_uid_t mpc_lowcomm_get_comm_gid(mpc_lowcomm_communicator_id_t comm_id)
+{
+	return comm_id >> 32;
+}
+
 mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_world_id(void)
 {
 	return mpc_lowcomm_get_comm_world_id_gid(mpc_lowcomm_monitor_get_gid());
@@ -1010,6 +1075,28 @@ int mpc_lowcomm_communicator_local_lead(mpc_lowcomm_communicator_t comm)
 
 	return MPC_PROC_NULL;
 }
+
+/**
+ * @brief Get rank in communicator for current process
+ *
+ * @param comm communicator to query
+ * @param rank rank to query
+ * @return mpc_lowcomm_peer_uid_t uid for given peer
+ */
+mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_uid(const mpc_lowcomm_communicator_t comm, int rank)
+{
+	assert(0 <= rank);
+	assert(comm != NULL);
+
+	int world_rank = mpc_lowcomm_communicator_world_rank_of(comm, rank);
+	mpc_lowcomm_communicator_t tcomm = mpc_lowcomm_communicator_get_local_as(comm, world_rank);
+
+	assert(tcomm != NULL);
+
+	return mpc_lowcomm_group_process_uid_for_rank(tcomm->group, rank);
+}
+
+
 
 int mpc_lowcomm_communicator_rank_of_as(const mpc_lowcomm_communicator_t comm,
 										const int comm_world_rank,

@@ -814,6 +814,8 @@ static void _mpc_coll_hetero_barrier_inter( const mpc_lowcomm_communicator_t com
 	myself_ptr = ( ( int * ) bsearch( ( void * ) &process_rank,
 	                                  process_array,
 	                                  total, sizeof( int ), int_cmp ) );
+	assume(process_array != NULL);
+	assume(myself_ptr != NULL);
 	mpc_common_nodebug( "rank : %d, myself_ptr: %p", mpc_common_get_process_rank(), myself_ptr );
 	assume( myself_ptr );
 	myself = ( myself_ptr - process_array );
@@ -990,6 +992,8 @@ void _mpc_coll_hetero_bcast_inter( void *buffer, const size_t size,
 		                                  process_array,
 		                                  total, sizeof( int ), int_cmp ) );
 		assume( myself_ptr );
+		assume(process_array != NULL);
+
 		myself = ( myself_ptr - process_array );
 		myself_ptr = ( ( int * ) bsearch( ( void * ) &root_process,
 		                                  process_array,
@@ -1209,6 +1213,8 @@ static void _mpc_coll_hetero_allreduce_intern_inter( const void *buffer_in, void
 	                                  process_array,
 	                                  total, sizeof( int ), int_cmp ) );
 	assume( myself_ptr );
+	assume(process_array != NULL);
+
 	myself = ( myself_ptr - process_array );
 	total_max = log( total ) / log( ALLREDUCE_ARRITY );
 	total_max = pow( ALLREDUCE_ARRITY, total_max );

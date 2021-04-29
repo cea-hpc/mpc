@@ -1121,8 +1121,6 @@ void _mpc_lowcomm_multirail_table_init()
 	mpc_common_hashtable_init(&table->destination_table, 1024);
 	mpc_common_rwlock_t lckinit = SCTK_SPIN_RWLOCK_INITIALIZER;
 	table->table_lock = lckinit;
-
-	mpc_common_debug_error("TABLE INIT");
 }
 
 void _mpc_lowcomm_multirail_table_release()

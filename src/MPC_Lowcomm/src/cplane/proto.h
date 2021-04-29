@@ -33,8 +33,8 @@ typedef struct _mpc_lowcomm_monitor_wrap_s
 
 _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_wrap_new(mpc_lowcomm_monitor_command_t cmd,
                                                            int is_response,
-														   mpc_lowcomm_peer_uid_t from,
-                                                           mpc_lowcomm_peer_uid_t dest,
+														   mpc_lowcomm_peer_uid_t dest,
+                                                           mpc_lowcomm_peer_uid_t from,
                                                            uint64_t match_key,
                                                            size_t size);
 

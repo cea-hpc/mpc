@@ -84,8 +84,6 @@ mpc_lowcomm_peer_uid_t mpc_lowcomm_group_process_uid_for_rank(mpc_lowcomm_group_
 
 int mpc_lowcomm_group_process_rank_from_world(int comm_world_rank)
 {
-	assert(comm_world_rank < mpc_lowcomm_get_size() );
-
 	mpc_lowcomm_group_t * gworld = _mpc_lowcomm_group_world_no_assert();
 
 	if(!gworld)
@@ -97,8 +95,59 @@ int mpc_lowcomm_group_process_rank_from_world(int comm_world_rank)
 	return mpc_lowcomm_group_process_uid_for_rank(gworld, comm_world_rank);
 }
 
+static inline int __compar_uid(const void *pa, const void *pb)
+{
+	mpc_lowcomm_peer_uid_t * a = (mpc_lowcomm_peer_uid_t*)pa;
+	mpc_lowcomm_peer_uid_t * b = (mpc_lowcomm_peer_uid_t*)pb;
+
+	return *a < *b;
+}
+
+static inline void __fill_process_info_remote(mpc_lowcomm_group_t *g)
+{
+	mpc_lowcomm_peer_uid_t * all_proc_uids = sctk_malloc(g->size * sizeof(mpc_lowcomm_peer_uid_t));
+	assume(all_proc_uids != NULL);
+
+	int i;
+
+	for(i = 0 ; i < g->size ; i++)
+	{
+		all_proc_uids[i] = g->ranks[i].host_process_uid;
+	}
+
+	qsort(all_proc_uids, g->size, sizeof(mpc_lowcomm_peer_uid_t), __compar_uid);
+
+	/* Now count number of ids */
+	mpc_lowcomm_peer_uid_t last_seen_uid = 0;
+	int uid_count = 0;
+
+	for(i = 0 ; i < g->size; i++)
+	{
+		if(!last_seen_uid || (last_seen_uid != all_proc_uids[i]))
+		{
+			last_seen_uid = all_proc_uids[i];
+			uid_count++;
+		}
+	}
+
+	g->tasks_count_in_process = 0;
+	g->process_count = uid_count;
+
+	sctk_free(all_proc_uids);
+}
+
+
 static inline void __fill_process_info(mpc_lowcomm_group_t *g)
 {
+	/* It is a remote group ? */
+	if(!_mpc_lowcomm_group_rank_descriptor_all_from_local_set(g->size, g->ranks))
+	{
+		__fill_process_info_remote(g);
+		return;
+	}
+
+	/* Here is the response for a local group */
+
 	unsigned int  process_count = (unsigned int)mpc_common_get_process_count();
 	unsigned int *counter       = sctk_malloc(process_count * sizeof(unsigned int) );
 
@@ -252,6 +301,25 @@ int _mpc_lowcomm_group_rank_descriptor_equal(_mpc_lowcomm_group_rank_descriptor_
 	return memcmp( (void *)a, (void *)b, sizeof(_mpc_lowcomm_group_rank_descriptor_t) ) == 0;
 }
 
+
+int _mpc_lowcomm_group_rank_descriptor_all_from_local_set(unsigned int size, _mpc_lowcomm_group_rank_descriptor_t *ranks)
+{
+	int i;
+
+	mpc_lowcomm_set_uid_t my_id = mpc_lowcomm_monitor_get_gid();
+
+
+	for( i = 0 ; i < size; i++)
+	{
+		if( mpc_lowcomm_peer_get_set(ranks[i].host_process_uid) != my_id)
+		{
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
 int _mpc_lowcomm_group_rank_descriptor_set_in_grp(_mpc_lowcomm_group_rank_descriptor_t *rd,
 											      mpc_lowcomm_set_uid_t set,
 											      int cw_rank)
@@ -264,6 +332,19 @@ int _mpc_lowcomm_group_rank_descriptor_set_in_grp(_mpc_lowcomm_group_rank_descri
 	rd->comm_world_rank = cw_rank;
 	rd->host_process_uid = mpc_lowcomm_monitor_uid_of(set, ___process_rank_from_world_rank(cw_rank));
 
+
+	return SCTK_SUCCESS;
+}
+
+int _mpc_lowcomm_group_rank_descriptor_set_uid(_mpc_lowcomm_group_rank_descriptor_t *rd, mpc_lowcomm_peer_uid_t uid)
+{
+	if(!rd)
+	{
+		return SCTK_ERROR;
+	}
+
+	rd->comm_world_rank = mpc_lowcomm_peer_get_rank(uid);
+	rd->host_process_uid = uid;
 
 	return SCTK_SUCCESS;
 }
@@ -444,7 +525,7 @@ int mpc_lowcomm_group_world_rank(mpc_lowcomm_group_t *g, int rank)
 
 int mpc_lowcomm_group_rank_for(mpc_lowcomm_group_t *g, int rank)
 {
-	assert( (0 <= rank) && (rank < mpc_lowcomm_get_size() ) );
+	assert(0 <= rank);
 
 	if(rank == MPC_PROC_NULL)
 	{
@@ -565,11 +646,14 @@ mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size, _mpc_lowcomm_g
 	ret->tasks_count_in_process = MPC_PROC_NULL;
 	ret->local_leader           = MPC_PROC_NULL;
 
-#if 1
-	__fill_global_to_local(ret);
-#else
-	ret->global_to_local = NULL;
-#endif
+	if( _mpc_lowcomm_group_rank_descriptor_all_from_local_set(size, ranks))
+	{
+		__fill_global_to_local(ret);
+	}
+	else
+	{
+		ret->global_to_local = NULL;
+	}
 
 	/* As we create we set refcounter to 1 */
 	OPA_store_int(&ret->refcount, 1);

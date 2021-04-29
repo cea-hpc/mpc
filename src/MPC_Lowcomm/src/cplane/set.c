@@ -157,7 +157,6 @@ static inline int __load_set_from_uid(uint32_t uid, char * path)
 
 int _mpc_lowcomm_set_load_from_system(void)
 {
-	mpc_common_debug_error("LOAGING Sets");
 	return _mpc_lowcomm_uid_scan(__load_set_from_uid);
 }
 

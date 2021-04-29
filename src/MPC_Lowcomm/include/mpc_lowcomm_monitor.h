@@ -103,7 +103,8 @@ typedef enum
 	MPC_LAUNCH_MONITOR_COMMAND_REQUEST_SET_INFO,
 	MPC_LAUNCH_MONITOR_PING,
 	MPC_LAUNCH_MONITOR_ON_DEMAND,
-	MPC_LAUNCH_MONITOR_CONNECTIVITY
+	MPC_LAUNCH_MONITOR_CONNECTIVITY,
+	MPC_LAUNCH_MONITOR_COMM_INFO
 }mpc_lowcomm_monitor_command_t;
 
 const char * mpc_lowcomm_monitor_command_tostring(mpc_lowcomm_monitor_command_t cmd);
@@ -152,6 +153,14 @@ typedef union
 		uint64_t peers_count;
 	}connectivity;
 
+	struct
+	{
+		uint64_t id;
+		int size;
+		mpc_lowcomm_monitor_retcode_t retcode;
+		mpc_lowcomm_peer_uid_t uids[];
+	}comm_info;
+
 }mpc_lowcomm_monitor_args_t;
 
 typedef void *mpc_lowcomm_monitor_response_t;
@@ -180,6 +189,14 @@ mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_command_get_peer_info(mpc_low
  ***************/
 
 mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_ping(mpc_lowcomm_peer_uid_t dest, mpc_lowcomm_monitor_retcode_t *ret);
+
+/***************
+ * COMM INFO    *
+ ***************/
+
+mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_comm_info(mpc_lowcomm_peer_uid_t dest,
+															 uint64_t target_id,
+															 mpc_lowcomm_monitor_retcode_t *ret);
 
 /*********************
  * ON DEMAND SUPPORT *

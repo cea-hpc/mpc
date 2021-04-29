@@ -68,6 +68,15 @@ mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_self_id(void);
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_world();
 
 /**
+ * @brief Get the set id corresponding to a given comm ID
+ *
+ * @param comm_id the comm to querry
+ * @return The set ID holding this comm
+ */
+mpc_lowcomm_set_uid_t mpc_lowcomm_get_comm_gid(mpc_lowcomm_communicator_id_t comm_id);
+
+
+/**
  * @brief Compute the world ID for a remote set of processes
  *
  * @param gid the target group id
@@ -183,6 +192,15 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_split(mpc_lowcomm_communicat
 int mpc_lowcomm_communicator_free(mpc_lowcomm_communicator_t *pcomm);
 
 /* Query */
+
+/**
+ * @brief Get rank in communicator for current process
+ *
+ * @param comm communicator to query
+ * @param rank rank to query
+ * @return mpc_lowcomm_peer_uid_t uid for given peer
+ */
+mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_uid(const mpc_lowcomm_communicator_t comm, int rank);
 
 /**
  * @brief Get rank in communicator for current process
@@ -392,7 +410,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_local(mpc_lowcomm_commun
  */
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_local_as(mpc_lowcomm_communicator_t comm,
                                                                  int lookup_cw_rank);
-                                                            
+
 /**
  * @brief Get the remote communicator (on intracomm returns intracomm)
  * 
@@ -431,9 +449,11 @@ int mpc_lowcomm_communicator_remote_world_rank(const mpc_lowcomm_communicator_t 
  * UNIVERSE COMM *
  *****************/
 
-int mpc_lowcomm_communicator_build_remote_world(const mpc_lowcomm_set_uid_t gid, mpc_lowcomm_communicator_t *comm);
+int mpc_lowcomm_communicator_build_remote(mpc_lowcomm_peer_uid_t remote,
+										  const mpc_lowcomm_communicator_id_t id,
+										  mpc_lowcomm_communicator_t *outcomm);
 
-int mpc_lowcomm_communicator_free_remote_world(mpc_lowcomm_communicator_t *comm);
+int mpc_lowcomm_communicator_build_remote_world(const mpc_lowcomm_set_uid_t gid, mpc_lowcomm_communicator_t *comm);
 
 /***********************************
 * COMMUNICATOR COLLECTIVE CONTEXT *

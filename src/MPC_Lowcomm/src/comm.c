@@ -1772,7 +1772,13 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 		SCTK_MSG_DEST_PROCESS_UID_SET(msg, mpc_lowcomm_communicator_uid_for(communicator, destination));
 
 		assert(SCTK_MSG_SRC_PROCESS(msg) < mpc_common_get_process_count());
-		assert( SCTK_MSG_DEST_PROCESS(msg) < mpc_common_get_process_count());
+
+		assert( 
+			/* Is in another set set */
+			( mpc_lowcomm_peer_get_set(SCTK_MSG_DEST_PROCESS_UID(msg)) != mpc_lowcomm_monitor_get_uid() ) ||
+			/* or does overflows process count */
+			(SCTK_MSG_DEST_PROCESS(msg) < mpc_common_get_process_count())
+		);
 
 
 		mpc_common_debug("%s [T(%d -> %d) P(%lu -> %lu) C %llu CL %s TA %d REQ %p]",
@@ -2495,7 +2501,12 @@ void mpc_lowcomm_ptp_msg_progress(struct mpc_lowcomm_ptp_msg_progress_s *wait)
 void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_receiver_end)
 {
 	assert(mpc_common_get_process_rank() >= 0);
-	assert(mpc_common_get_process_count() >= SCTK_MSG_DEST_PROCESS(msg) );
+	assert( 
+		/* Does not overflow */
+		(mpc_common_get_process_count() >= SCTK_MSG_DEST_PROCESS(msg)) ||
+		/* Is different process set */
+		( mpc_lowcomm_peer_get_set(SCTK_MSG_DEST_PROCESS_UID(msg)) != mpc_lowcomm_monitor_get_gid() )
+	 );
 
 	/* Flag msg's request as a send one */
 	if(msg->tail.request != NULL)
@@ -2527,6 +2538,15 @@ void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_r
 	if(SCTK_MSG_COMPLETION_FLAG(msg) != NULL)
 	{
 		*(SCTK_MSG_COMPLETION_FLAG(msg) ) = MPC_LOWCOMM_MESSAGE_PENDING;
+	}
+
+	mpc_common_debug("SEND msg from %llu to %llu HERE %llu (FT %d TT %d)", SCTK_MSG_SRC_PROCESS_UID(msg), SCTK_MSG_DEST_PROCESS_UID(msg), mpc_lowcomm_monitor_get_uid(), SCTK_MSG_SRC_TASK(msg), SCTK_MSG_DEST_TASK(msg) );
+
+	/* If the message is a UNIVERSE message it targets the process not a given task
+	  we then use the matching queue from the first local process as a convention */
+	if(SCTK_MSG_SPECIFIC_CLASS(msg) == MPC_LOWCOMM_MESSAGE_UNIVERSE)
+	{
+		SCTK_MSG_DEST_TASK_SET(msg, _mpc_lowcomm_communicator_world_first_local_task());
 	}
 
 	/* Flag the Message as all local */
@@ -3318,8 +3338,7 @@ int mpc_lowcomm_universe_isend(mpc_lowcomm_peer_uid_t dest,
 	                                    MPC_DATATYPE_IGNORE,
 										REQUEST_SEND);
 
-	mpc_common_debug_error("MSG TO comm %llu (LOCAL %llu)", SCTK_MSG_COMMUNICATOR_ID(msg), mpc_lowcomm_get_comm_world_id());
-
+	//mpc_common_debug_error("MSG TO comm %llu (LOCAL %llu)", SCTK_MSG_COMMUNICATOR_ID(msg), mpc_lowcomm_get_comm_world_id());
 
 	mpc_lowcomm_ptp_message_send(msg);
 

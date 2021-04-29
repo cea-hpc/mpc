@@ -43,11 +43,17 @@ typedef struct _mpc_lowcomm_group_rank_descriptor_s
 int _mpc_lowcomm_group_rank_descriptor_equal(_mpc_lowcomm_group_rank_descriptor_t *a,
                                              _mpc_lowcomm_group_rank_descriptor_t *b);
 
-int _mpc_lowcomm_group_rank_descriptor_set(_mpc_lowcomm_group_rank_descriptor_t *rd, int comm_world_rank);
+int _mpc_lowcomm_group_rank_descriptor_set(_mpc_lowcomm_group_rank_descriptor_t *rd,
+										   int comm_world_rank);
+
+int _mpc_lowcomm_group_rank_descriptor_set_uid(_mpc_lowcomm_group_rank_descriptor_t *rd,
+											   mpc_lowcomm_peer_uid_t uid);
 
 int _mpc_lowcomm_group_rank_descriptor_set_in_grp(_mpc_lowcomm_group_rank_descriptor_t *rd,
 											      mpc_lowcomm_set_uid_t set,
 											      int group_rank);
+
+int _mpc_lowcomm_group_rank_descriptor_all_from_local_set(unsigned int size, _mpc_lowcomm_group_rank_descriptor_t *ranks);
 
 
 /************************

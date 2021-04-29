@@ -19,10 +19,15 @@
 #include <mpc_common_helper.h>
 #include <mpc_lowcomm.h>
 
+#include "communicator.h"
 #include "lowcomm_thread.h"
 
 #include "uid.h"
 #include "monitor.h"
+
+
+//#define MONITOR_DEBUG
+
 
 static volatile int __monitor_running = 0;
 
@@ -43,6 +48,8 @@ const char * mpc_lowcomm_monitor_command_tostring(mpc_lowcomm_monitor_command_t 
 			return "MPC_LAUNCH_MONITOR_ON_DEMAND";
 		case MPC_LAUNCH_MONITOR_CONNECTIVITY:
 			return "MPC_LAUNCH_MONITOR_CONNECTIVITY";
+		case MPC_LAUNCH_MONITOR_COMM_INFO:
+			return "MPC_LAUNCH_MONITOR_COMM_INFO";
 	}
 
 	return "NO SUCH COMMAND";
@@ -741,14 +748,21 @@ static inline int __handle_query(_mpc_lowcomm_client_ctx_t *ctx, _mpc_lowcomm_mo
 			resp = _mpc_lowcomm_monitor_command_return_connectivity_info(data->from, data->match_key);
 			break;
 
+		case MPC_LAUNCH_MONITOR_COMM_INFO:
+			resp = _mpc_lowcomm_monitor_command_return_comm_info(data->from,
+																 cmd_data,
+                                                                 data->match_key);
+			break;
 		case MPC_LAUNCH_MONITOR_COMMAND_NONE:
 			return -1;
 	}
 
 	if(resp != NULL)
 	{
+#ifdef MONITOR_DEBUG
 		char fromb[128], tob[128];
-		mpc_common_nodebug("IN RESPONSE from %s to %s", mpc_lowcomm_peer_format_r(resp->from, fromb, 128), mpc_lowcomm_peer_format_r(resp->dest, tob, 128) );
+		mpc_common_debug_error("IN RESPONSE from %s to %s", mpc_lowcomm_peer_format_r(resp->from, fromb, 128), mpc_lowcomm_peer_format_r(resp->dest, tob, 128) );
+#endif
 		mpc_lowcomm_monitor_retcode_t send_ret;
 		if(_mpc_lowcomm_monitor_command_send(resp, &send_ret) < 0)
 		{
@@ -790,7 +804,9 @@ static void *__per_client_loop(void *pctx)
 			break;
 		}
 
-		//_mpc_lowcomm_monitor_wrap_print(query, "INCOMING QUERY");
+#ifdef MONITOR_DEBUG
+		_mpc_lowcomm_monitor_wrap_print(query, "INCOMING QUERY");
+#endif
 
 		/* Check if we are the dest or if we are routing */
 		if(_mpc_lowcomm_peer_is_local(query->dest) )
@@ -1337,8 +1353,6 @@ static inline _mpc_lowcomm_client_ctx_t *__get_closest_in_set(struct _mpc_lowcom
 				continue;
 			}
 
-			has_routes = 1;
-
 			if(mpc_lowcomm_peer_closer(dest, current_route_uid, ctx->uid) )
 			{
 				/* We have one pick it if closer */
@@ -1350,10 +1364,33 @@ static inline _mpc_lowcomm_client_ctx_t *__get_closest_in_set(struct _mpc_lowcom
 
 		pthread_mutex_unlock(&monitor->client_lock);
 
+		/* Not connected yet or disconnected */
+		if(!has_routes)
+		{
+			/* Peer is in my set do direct (case where all connections are not set or closed) */
+			ellected_ctx = _mpc_lowcomm_monitor_get_client(monitor, dest, _MPC_LOWCOMM_MONITOR_GET_CLIENT_DIRECT, retcode);
+		}
+
 	}
-	else
+
+
+	/* If we are here we must be from another set to we send to root rank if we are not root
+	   and if we are root we connect to remote root */
+	if(!ellected_ctx)
 	{
-		has_routes = 1;
+		if(mpc_lowcomm_peer_get_rank(mpc_lowcomm_monitor_get_uid()) == 0)
+		{
+			mpc_lowcomm_peer_uid_t remote_master_s_uid = mpc_lowcomm_monitor_uid_of(set_uid, 0);
+			return _mpc_lowcomm_monitor_get_client(monitor, remote_master_s_uid, _MPC_LOWCOMM_MONITOR_GET_CLIENT_DIRECT, retcode);
+		}
+		else
+		{
+			/* If I'm not root lets route to it */
+
+			/* Here as we are a subprocess we route to 0 which should already be connected */
+			mpc_lowcomm_peer_uid_t master_s_uid = mpc_lowcomm_monitor_uid_of(mpc_lowcomm_monitor_get_gid(), 0);
+			return _mpc_lowcomm_monitor_get_client(monitor, master_s_uid, _MPC_LOWCOMM_MONITOR_GET_CLIENT_CAN_ROUTE, retcode);
+		}
 	}
 
 	if(ellected_ctx != NULL)
@@ -1362,26 +1399,6 @@ static inline _mpc_lowcomm_client_ctx_t *__get_closest_in_set(struct _mpc_lowcom
 		/* We found a set member to route to */
 		return ellected_ctx;
 	}
-
-	/* Here we did not find a route if we are the root process we do direct. If not we do route to the root process */
-	//if(mpc_lowcomm_peer_get_rank(monitor->process_uid) == 0)
-	if((mpc_lowcomm_peer_get_rank(mpc_lowcomm_monitor_get_uid()) == 0) || (!has_routes))
-	{
-		//mpc_common_debug_error("DIRECT route");
-		/* If we are here we need to connect directly to the set master as
-		* we did not find any set member in our viscinity */
-		mpc_lowcomm_peer_uid_t master_s_uid = mpc_lowcomm_monitor_uid_of(set_uid, 0);
-		return _mpc_lowcomm_monitor_get_client(monitor, master_s_uid, _MPC_LOWCOMM_MONITOR_GET_CLIENT_DIRECT, retcode);
-	}
-	else
-	{
-		//mpc_common_debug_error("INDIRECT route");
-
-		/* Here as we are a subprocess we route to 0 which should already be connected */
-		mpc_lowcomm_peer_uid_t master_s_uid = mpc_lowcomm_monitor_uid_of(monitor->process_set->uid, 0);
-		return _mpc_lowcomm_monitor_get_client(monitor, master_s_uid, _MPC_LOWCOMM_MONITOR_GET_CLIENT_CAN_ROUTE, retcode);
-	}
-
 
 	//mpc_common_debug_error("NO route");
 
@@ -1927,6 +1944,109 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_ping_info(mpc_l
 
 	return resp;
 }
+
+
+
+/*********************
+ * COMM INFO COMMAND *
+ *********************/
+
+static inline _mpc_lowcomm_monitor_wrap_t * __generate_comm_info_cmd(mpc_lowcomm_peer_uid_t dest, 
+																	 mpc_lowcomm_communicator_id_t target_id,
+																	 uint64_t size,
+																	 int is_response)
+{
+	_mpc_lowcomm_monitor_wrap_t * cmd = NULL;
+	_mpc_lowcomm_peer_t * rpeer = __gen_wrap_for_peer(dest, MPC_LAUNCH_MONITOR_COMM_INFO, is_response, &cmd);
+
+	/* We used uin64_t to avoid header mess make sure it matches */
+	assume(sizeof(mpc_lowcomm_communicator_id_t) == sizeof(uint64_t));
+
+	if(!rpeer)
+	{
+		cmd->content->comm_info.retcode = MPC_LAUNCH_MONITOR_RET_INVALID_UID;
+	}
+	else
+	{
+		cmd->content->comm_info.id = target_id;
+		cmd->content->comm_info.size = size;
+		cmd->content->comm_info.retcode = MPC_LAUNCH_MONITOR_RET_SUCCESS;
+	}
+
+	return cmd;
+}
+
+
+mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_comm_info(mpc_lowcomm_peer_uid_t dest,
+															 uint64_t target_id,
+															 mpc_lowcomm_monitor_retcode_t *ret)
+{
+	_mpc_lowcomm_monitor_wrap_t * cmd = __generate_comm_info_cmd(dest, target_id, 0, 0);
+
+	if(_mpc_lowcomm_monitor_command_send(cmd, ret) < 0)
+	{
+		_mpc_lowcomm_monitor_wrap_free(cmd);
+		return NULL;
+	}
+
+	_mpc_lowcomm_monitor_wrap_t *resp = _mpc_lowcomm_monitor_command_engine_await_response(cmd->match_key,
+	                                                                                       60);
+
+
+	if(!resp)
+	{
+        *ret = MPC_LAUNCH_MONITOR_RET_NOT_REACHABLE;
+		mpc_common_debug_warning("mpc_lowcomm_monitor_comm_info timed out when targetting %llu", dest);
+	}
+
+	return (mpc_lowcomm_monitor_response_t)resp;
+}
+
+_mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_comm_info(mpc_lowcomm_peer_uid_t dest,
+																		   mpc_lowcomm_monitor_args_t *content,
+                                                                           uint64_t response_index)
+{
+	mpc_lowcomm_communicator_t comm = mpc_lowcomm_get_communicator_from_id(content->comm_info.id);
+
+	int comm_size = 0;
+
+	if(comm)
+	{
+		comm_size = mpc_lowcomm_communicator_size(comm);
+	}
+
+	_mpc_lowcomm_monitor_wrap_t * resp = _mpc_lowcomm_monitor_wrap_new(MPC_LAUNCH_MONITOR_COMM_INFO,
+																	1,
+																	dest,
+																	__monitor.process_uid,
+																	response_index,
+																	sizeof(mpc_lowcomm_monitor_args_t)
+																	+ (comm_size * sizeof(mpc_lowcomm_peer_uid_t)));
+
+	if(comm)
+	{
+		/* We need more time to think of what it means */
+		assume(!mpc_lowcomm_communicator_is_intercomm(comm));
+		resp->content->comm_info.id = content->comm_info.id;
+		resp->content->comm_info.size = comm_size;
+		resp->content->comm_info.retcode = MPC_LAUNCH_MONITOR_RET_SUCCESS;
+
+		int i;
+
+		for(i = 0 ; i < comm_size; i++)
+		{
+			resp->content->comm_info.uids[i] = mpc_lowcomm_communicator_uid(comm, i);
+		}
+
+	}
+	else
+	{
+		resp->content->comm_info.retcode = MPC_LAUNCH_MONITOR_RET_INVALID_UID;
+	}
+
+	return resp;
+}
+
 /**********************
  * ON DEMMAND COMMAND *
  **********************/
