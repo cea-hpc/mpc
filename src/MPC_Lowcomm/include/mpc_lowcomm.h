@@ -130,6 +130,7 @@ int mpc_lowcomm_universe_isend(mpc_lowcomm_peer_uid_t dest,
                               const void *data,
                               size_t size,
                               int tag,
+                              mpc_lowcomm_communicator_t remote_world,
                               mpc_lowcomm_request_t *req);
 
 /**

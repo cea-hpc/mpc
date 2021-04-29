@@ -1221,7 +1221,7 @@ static void *___nonvp_thread_start_routine(sctk_thread_data_t *__arg)
 
 	/* FIXME Intel OMP: at some point, in pthread mode, the ptr_cleanup variable seems to
 	 * be corrupted. */
-	struct _sctk_thread_cleanup_buffer **ptr_cleanup = malloc(sizeof(struct _sctk_thread_cleanup_buffer *) );
+	struct _sctk_thread_cleanup_buffer **ptr_cleanup = sctk_malloc(sizeof(struct _sctk_thread_cleanup_buffer *) );
 	tmp = *__arg;
 	sctk_set_tls(tmp.tls);
 	*ptr_cleanup = NULL;

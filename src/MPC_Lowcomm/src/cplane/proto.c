@@ -17,6 +17,8 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_wrap_new(mpc_lowcomm_monitor_c
 
 	assume(ret != NULL);
 
+	memset(ret, 0, sizeof(_mpc_lowcomm_monitor_wrap_t) + size);
+
 	ret->command     = cmd;
 	ret->is_response = is_response;
 	ret->dest        = dest;

@@ -41,7 +41,6 @@ struct _mpc_lowcomm_monitor_s
 	pthread_mutex_t              connect_accept_lock;
 
 	/* This is the server information */
-	int                          running;
 	_mpc_lowcomm_kernel_thread_t server_thread;
 	int                          server_socket;
 	fd_set                       read_fds;

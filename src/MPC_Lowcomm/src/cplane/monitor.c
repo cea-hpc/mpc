@@ -24,6 +24,9 @@
 #include "uid.h"
 #include "monitor.h"
 
+static volatile int __monitor_running = 0;
+
+
 const char * mpc_lowcomm_monitor_command_tostring(mpc_lowcomm_monitor_command_t cmd)
 {
 	switch(cmd)
@@ -777,7 +780,7 @@ static void *__per_client_loop(void *pctx)
 		if(!query)
 		{
 			mpc_common_nodebug("Client %lu left", ctx->uid);
-			if(ctx->monitor->running)
+			if(__monitor_running)
 			{
 				_mpc_lowcomm_monitor_client_remove(ctx->monitor, ctx->uid);
 			}
@@ -827,7 +830,7 @@ static void *__server_loop(void *pmonitor)
 		else
 		{
 			/* Was refused or error */
-			if(!monitor->running)
+			if(!__monitor_running)
 			{
 				break;
 			}
@@ -1020,7 +1023,7 @@ mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_init(struct _mpc_lowcomm_moni
 		mpc_common_debug_fatal("Failed to start the cplane monitor server");
 	}
 
-	monitor->running = 1;
+	__monitor_running = 1;
 
 	/* Now start the server thread */
 	int rc = _mpc_lowcomm_kernel_thread_create(&monitor->server_thread, __server_loop, (void *)monitor);
@@ -1041,7 +1044,7 @@ mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_release(struct _mpc_lowcomm_m
 	__monitor_worker_release();
 
 
-	monitor->running = 0;
+	__monitor_running = 0;
 
 
 	/* Disconnect all */

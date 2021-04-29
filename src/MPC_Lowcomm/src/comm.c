@@ -3283,6 +3283,7 @@ int mpc_lowcomm_universe_isend(mpc_lowcomm_peer_uid_t dest,
 							   const void *data,
 							   size_t size,
 							   int tag,
+							   mpc_lowcomm_communicator_t remote_world,
 							   mpc_lowcomm_request_t *req)
 {
 
@@ -3301,12 +3302,6 @@ int mpc_lowcomm_universe_isend(mpc_lowcomm_peer_uid_t dest,
 	}
 
 	mpc_lowcomm_set_uid_t gid = mpc_lowcomm_peer_get_set(dest);
-	mpc_lowcomm_communicator_t remote_world = NULL;
-
-	if( mpc_lowcomm_communicator_build_remote_world(gid, &remote_world) < 0 )
-	{
-		return SCTK_ERROR;
-	}
 
 	mpc_lowcomm_ptp_message_t *msg = mpc_lowcomm_ptp_message_header_create(MPC_LOWCOMM_MESSAGE_CONTIGUOUS);
 	mpc_lowcomm_ptp_message_set_contiguous_addr(msg, data, size);
@@ -3327,9 +3322,6 @@ int mpc_lowcomm_universe_isend(mpc_lowcomm_peer_uid_t dest,
 
 
 	mpc_lowcomm_ptp_message_send(msg);
-
-
-	mpc_lowcomm_communicator_free_remote_world(&remote_world);
 
 	return SCTK_SUCCESS;
 }
@@ -3507,7 +3499,7 @@ void mpc_lowcomm_registration()
 
 	mpc_common_init_callback_register("Base Runtime Finalize", "Release LowComm", __finalize_driver, 16);
 
-	mpc_common_init_callback_register("After Ending VPs", "Block sigpipe", mpc_common_helper_ignore_sigpipe, 0);
+	mpc_common_init_callback_register("Base Runtime Init Done", "Block sigpipe", mpc_common_helper_ignore_sigpipe, 0);
 
 	mpc_common_init_callback_register("VP Thread Start", "MPC Message Passing Init per Task", __lowcomm_init_per_task, 0);
 
