@@ -69,6 +69,11 @@ typedef struct {
   void *tmpbuf;               /**< Adress of the temporary buffer for the schedule. */
   int tmpbuf_size;            /**< Size of the temporary buffer for the schedule. */
   int tmpbuf_pos;             /**< Offset from the staring adress of the temporary buffer to the current position. */
+
+  int local_level_max;        /**< deepest level of hardware toplogy split. */
+
+  MPI_Comm *hwcomm;           /**< communicators of hardware level. */
+  MPI_Comm *rootcomm;         /**< communicators of master hardware level. */
 } Sched_info;
 
 
@@ -162,6 +167,10 @@ static inline void __sched_info_init(Sched_info *info) {
 
   info->tmpbuf_size = 0;
   info->tmpbuf_pos = 0;
+
+  info->hwcomm= NULL;
+  info->rootcomm = NULL;
+  info->local_level_max = -1;
 }
 
 /**
@@ -603,6 +612,75 @@ int mpc_mpi_bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_
 static inline int __Bcast_linear(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __Bcast_binomial(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __Bcast_scatter_allgather(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __Bcast_full_binomial_topo(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+
+/**
+  \brief Initialize hardware communicators used for persistent hardware algorithms 
+  \param comm communicator of the collective 
+  \param vrank virtual rank for the algorithm
+  \param level Max hardware topological level to split communicators 
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __create_hardware_comm(MPI_Comm comm, int vrank, int level, Sched_info *info)
+{
+    int res = MPI_ERR_INTERN;
+    int level_num = 0;
+
+    MPI_Comm* hwcomm = info->hwcomm;
+
+    hwcomm[level_num] = comm;
+
+    /* create topology communicators */
+    while((hwcomm[level_num] != MPI_COMM_NULL) && level_num < level)
+    {
+        res = PMPI_Comm_split_type(hwcomm[level_num],
+                MPI_COMM_TYPE_HW_UNGUIDED,
+                vrank,
+                MPI_INFO_NULL,
+                &hwcomm[level_num+1]);
+        level_num++;
+    }
+	info->local_level_max = level_num;
+    return res;
+}
+
+/**
+  \brief Initialize hardware master communicators used for persistent hardware algorithms 
+  \param vrank virtual rank for the algorithm
+  \param level Max hardware topological level to split communicators 
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __create_master_hardware_comm(int vrank, int level, Sched_info *info)
+{
+	int res = MPI_ERR_INTERN;
+    int rank_comm = -1;
+    int level_num = 0;
+
+	MPI_Comm* hwcomm = info->hwcomm;
+	MPI_Comm* rootcomm = info->rootcomm;
+
+    /* create master communicator with ranks 0 for each hwcomm communicator */
+    while((hwcomm[level_num + 1] != MPI_COMM_NULL) && (level_num < level))
+    {
+        _mpc_cl_comm_rank(hwcomm[level_num + 1],&rank_comm);
+        int color = -1;
+
+        if(rank_comm == 0)
+        {
+            color = 0;
+        }
+        else
+        {
+            color = 1;
+        }
+
+        PMPI_Comm_split(hwcomm[level_num ], color, vrank, &rootcomm[level_num ]);
+        level_num ++;
+    }
+    return res;
+}
 
 
 /**
@@ -809,10 +887,13 @@ static inline int __Bcast_switch(void *buffer, int count, MPI_Datatype datatype,
   enum {
     NBC_BCAST_LINEAR,
     NBC_BCAST_BINOMIAL,
-    NBC_BCAST_SCATTER_ALLGATHER
+    NBC_BCAST_SCATTER_ALLGATHER,
+    NBC_BCAST_FULL_BINOMIAL_TOPO
+
   } alg;
 
-  alg = NBC_BCAST_BINOMIAL;
+  //alg = NBC_BCAST_BINOMIAL;
+  alg = NBC_BCAST_FULL_BINOMIAL_TOPO;
 
   int res;
 
@@ -825,6 +906,9 @@ static inline int __Bcast_switch(void *buffer, int count, MPI_Datatype datatype,
       break;
     case NBC_BCAST_SCATTER_ALLGATHER:
       res = __Bcast_scatter_allgather(buffer, count, datatype, root, comm, coll_type, schedule, info);
+      break;
+    case NBC_BCAST_FULL_BINOMIAL_TOPO:
+      res = __Bcast_full_binomial_topo(buffer, count, datatype, root, comm, coll_type, schedule, info);
       break;
   }
 
@@ -955,6 +1039,174 @@ static inline int __Bcast_binomial(void *buffer, int count, MPI_Datatype datatyp
   }
   
   return MPI_SUCCESS;
+}
+
+static inline int __bcast_sched_full_hardware_binomial(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, int count, MPI_Datatype datatype, MPI_Comm comm, MPC_COLL_TYPE coll_type, Sched_info *info)
+{
+    int maxr, vrank, peer, r, res;
+
+    maxr = (int)ceil((log(p)/LOG2));
+
+    RANK2VRANK(rank, vrank, root);
+
+    if (vrank != 0)
+    {
+        r = 0;
+        for(r =0; r<maxr; r++)
+        {
+            if((vrank & (1 << r)) && (r < maxr))
+            {
+                VRANK2RANK(peer, vrank - (1 << r), root);
+
+                /* recv buffer from a master of root topologicaal level (rank 0) */
+                /* master of previous level is always master of its subsequent topological root split level */
+                res = __Recv_type(buffer, count, datatype, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
+
+                break;
+            }
+        }
+        __Barrier_type(coll_type, schedule, info);
+
+    }
+
+    int cpt = 0;
+    r = 0;
+    while(!(vrank & (1 << r)) && (r < maxr))
+    {
+        if ((vrank + (1 << r) < p))
+        {
+            cpt++;
+            VRANK2RANK(peer, vrank + (1 << r), root);
+
+            /* recv buffer from a master of root topologicaal level (rank 0) */
+            /* master of previous level is always master of its subsequent topological root split level */
+            res = __Send_type(buffer, count, datatype, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
+        }
+        r++;
+    }
+
+    return MPI_SUCCESS;
+}
+
+/**
+  \brief Execute or schedule a broadcast using the linear algorithm
+    Or count the number of operations and rounds for the schedule
+  \param buffer Adress of the buffer used to send/recv data during the broadcast
+  \param count Number of elements in buffer
+  \param datatype Type of the data elements in the buffer
+  \param root Rank root of the broadcast
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
+static inline int __Bcast_full_binomial_topo(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  int rank, size;
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+
+  int res = MPI_SUCCESS;
+
+  switch(coll_type) {
+      case MPC_COLL_TYPE_BLOCKING:
+      case MPC_COLL_TYPE_NONBLOCKING:
+      case MPC_COLL_TYPE_PERSISTENT:
+          break;
+
+      case MPC_COLL_TYPE_COUNT:
+          {
+              /* At each topological level, masters do binomial algorithm */
+
+              int max_num_levels = 8;
+              int level_topo = 2;
+              info->hwcomm = (MPI_Comm *)sctk_malloc(max_num_levels*sizeof(MPI_Comm));
+              info->rootcomm = (MPI_Comm *)sctk_malloc(max_num_levels*sizeof(MPI_Comm));
+
+              /* set root to 0 te be color as master for every of its topological levels */
+              int vrank;
+              RANK2VRANK(rank, vrank, root)
+
+              __create_hardware_comm(comm, vrank, level_topo, info);
+              __create_master_hardware_comm(vrank, level_topo, info);
+
+              level_topo = 2;
+
+              for (int k = 0; k < level_topo; k++)
+              {
+                  int rank_split;
+                  int rank_master;
+                  int master_level_size;
+
+                  _mpc_cl_comm_rank(info->hwcomm[k + 1], &rank_split);
+                  _mpc_cl_comm_rank(info->rootcomm[k], &rank_master);
+                  _mpc_cl_comm_size(info->rootcomm[k], &master_level_size);
+
+                  if((!rank_split)) /* if master */
+                  {
+                      /* schedule binomial bcast for masters at each master levels */
+                      MPI_Comm master_comm = info->rootcomm[k];
+                      res = __bcast_sched_full_hardware_binomial(rank_master, master_level_size, 0, 
+                              schedule, buffer, count, datatype, master_comm, coll_type, info);
+                  }
+              }
+
+              /* last level topology binomial bcast */
+              int rank_last_hwlevel;
+              int size_last_hwlevel;
+
+              _mpc_cl_comm_rank(info->hwcomm[level_topo], &rank_last_hwlevel);
+              _mpc_cl_comm_size(info->hwcomm[level_topo], &size_last_hwlevel);
+
+              MPI_Comm hardware_comm = info->hwcomm[level_topo];
+
+              res = __bcast_sched_full_hardware_binomial(rank_last_hwlevel, size_last_hwlevel, 0, 
+                      schedule, buffer, count, datatype, hardware_comm, coll_type, info);
+
+
+              //fprintf(stderr, "rank %d SENDS %d sizeargs %d sizefntype %d\n",rank, sends, sizeof(NBC_Args), sizeof(NBC_Fn_type));
+
+              return MPI_SUCCESS;
+          }
+  }
+
+  int level_topo = 2;
+
+  for (int k = 0; k < level_topo; k++)
+  {
+      int rank_split;
+      int rank_master;
+      int master_level_size;
+
+      _mpc_cl_comm_rank(info->hwcomm[k + 1], &rank_split);
+      _mpc_cl_comm_rank(info->rootcomm[k], &rank_master);
+      _mpc_cl_comm_size(info->rootcomm[k], &master_level_size);
+
+      if((!rank_split)) /* if master */
+      {
+          /* schedule binomial bcast for masters at each master levels */
+          MPI_Comm master_comm = info->rootcomm[k];
+
+          res = __bcast_sched_full_hardware_binomial(rank_master, master_level_size, 0, 
+                  schedule, buffer, count, datatype, master_comm, coll_type, info);
+      }
+  }
+
+  /* last level topology binomial bcast */
+  int rank_last_hwlevel;
+  int size_last_hwlevel;
+
+  _mpc_cl_comm_rank(info->hwcomm[level_topo], &rank_last_hwlevel);
+  _mpc_cl_comm_size(info->hwcomm[level_topo], &size_last_hwlevel);
+
+  MPI_Comm hardware_comm = info->hwcomm[level_topo];
+
+  res = __bcast_sched_full_hardware_binomial(rank_last_hwlevel, size_last_hwlevel, 0, 
+          schedule, buffer, count, datatype, hardware_comm, coll_type, info);
+
+
+  return res;
 }
 
 /**
