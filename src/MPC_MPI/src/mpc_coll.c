@@ -299,8 +299,7 @@ static inline int __Sched_barrier(NBC_Schedule *schedule, Sched_info *info) {
   \param info Adress on the information structure about the schedule
   \return Error code
   */
-static inline int __Sched_commit(NBC_Schedule *schedule, Sched_info *info)
-{
+static inline int __Sched_commit(NBC_Schedule *schedule, Sched_info *info){
 
   *(int *)((char*)*schedule) = info->alloc_size;
   *(int *)((char *)*schedule + info->round_start_pos) = info->round_comm_count;
@@ -572,6 +571,127 @@ static inline int __Copy_type(const void *src, int srccount, MPI_Datatype srctyp
 }
 
 
+
+
+void mpc_topology_split_persistent_init(mpc_topology_split_info_t *info, MPI_Comm comm, int root, int level)
+{
+  int res = MPI_ERR_INTERN;
+  MPI_Comm* hwcomm = info->hwcomm;
+  int level_num = 0;
+  int rank_comm;
+  hwcomm[0] = comm;
+  _mpc_cl_comm_rank(comm, &rank_comm);
+  int max_num_levels = 32;
+  int vrank = -1;
+
+  int current_size;
+  int previous_size;
+
+  _mpc_cl_comm_size(comm, &previous_size);
+
+  /* set root to 0 te be color as master for every of its topological levels */
+  RANK2VRANK(rank_comm, vrank, root);
+
+  /* create topological communicators */
+  while((hwcomm[level_num] != MPI_COMM_NULL) && level_num < level)
+  {
+    if(level_num > 0) {
+      _mpc_cl_comm_size(hwcomm[level_num], &current_size);
+
+      //printf("CURRENT %d | PREV %d\n", current_size, previous_size);
+
+      if(previous_size == current_size) {
+        // bah c est pas normal de faire ca
+        break;
+      }
+      previous_size = current_size;
+    }
+
+    res = PMPI_Comm_split_type(hwcomm[level_num], MPI_COMM_TYPE_HW_UNGUIDED, vrank, MPI_INFO_NULL, &hwcomm[level_num+1]);
+
+    if(hwcomm[level_num+1] != MPI_COMM_NULL) {
+      printf("topo split\n");
+    }
+
+
+    /* affichage */
+    //if(hwcomm[level_num+1] != MPI_COMM_NULL)
+    //{
+    //    int size;
+    //    MPI_Comm_rank(hwcomm[level_num + 1],&rank_comm);
+    //    /* set root to 0 te be color as master for every of its topological levels */
+    //    RANK2VRANK(rank_comm, vrank, root)
+    //    if(!rank_comm)
+    //    {
+    //        MPI_Comm_size(hwcomm[level_num + 1],&size);
+    //        fprintf(stderr, "hwxomm master rank %d size %d\n", rank_comm, size);
+    //    }
+    //}
+
+    level_num++;
+  }
+  info->local_level_max = level_num;
+  //SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+void mpc_topology_split_create_master_comm(mpc_topology_split_info_t *info, int root, int level)
+{
+  int res = MPI_ERR_INTERN;
+  int size_comm = 0;
+  int rank_comm = -1;
+  int rank = -1;
+  int level_num = 0;
+  int rank_global = -1;
+  MPI_Comm* hwcomm = info->hwcomm;
+  int max_num_levels = 32;
+  MPI_Comm* rootcomm = info->rootcomm;
+  _mpc_cl_comm_rank(hwcomm[0],&rank_global);
+
+  int vrank = -1;
+  /* use vrank to set root at rank 0 in new master comm */
+  RANK2VRANK(rank_global, vrank, root);
+
+  //int size_next_comm = -1;
+  //_mpc_cl_comm_size(hwcomm[level_num + 1], &size_next_comm);
+
+  /* create root communicator with ranks 0 for each hwcomm communicator */
+  while((hwcomm[level_num + 1] != MPI_COMM_NULL) /*&& (size_next_comm > 1)*/ && (level_num < level))
+  {
+    //_mpc_cl_comm_rank(hwcomm[level_num + 1], &rank_comm);
+    //_mpc_cl_comm_size(hwcomm[level_num + 1], &size_comm);
+
+    int color = (rank_comm == 0)?(0):(1);
+
+    //fprintf(stderr, "%d, %d, %d, %p\n",hwcomm[level_num ], color, vrank, &rootcomm[level_num ]);
+    PMPI_Comm_split(hwcomm[level_num], color, vrank, &rootcomm[level_num + 1]);
+    //_mpc_cl_comm_size(hwcomm[level_num + 2], &size_next_comm);
+    level_num ++;
+  }
+  //SCTK_MPI_CHECK_RETURN_VAL (res, hwcomm[0]);
+}
+
+static inline int __Topo_comm_init(NBC_Handle* handle, MPI_Comm comm, int root, int level) {
+  //int max_num_levels = 8;
+  //int level_topo = 1;
+
+  handle->info_hwcomm = (mpc_topology_split_info_t*) sctk_malloc(sizeof(mpc_topology_split_info_t));
+  handle->info_hwcomm->hwcomm = (MPI_Comm *)sctk_malloc((level+1)*sizeof(MPI_Comm));
+  handle->info_hwcomm->rootcomm = (MPI_Comm *)sctk_malloc((level+1)*sizeof(MPI_Comm));
+  handle->info_hwcomm->hwcomm_rank = (int *)sctk_malloc((level+1)*sizeof(int));
+  
+  mpc_topology_split_persistent_init(handle->info_hwcomm, comm, root, level);
+  mpc_topology_split_create_master_comm(handle->info_hwcomm, root, level);
+
+  for (int k = 1; k < handle->info_hwcomm->local_level_max; k++)
+  {
+    _mpc_cl_comm_rank(handle->info_hwcomm->hwcomm[k], &handle->info_hwcomm->hwcomm_rank[k]);
+  }
+}
+
+
+
+
+
 /***************************
   switch function prototype
   ***************************/
@@ -831,14 +951,14 @@ int PMPI_Bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MP
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle* handle)
-{
+static inline int __Bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle* handle){
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
   __sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+  res = __Topo_comm_init(handle, comm, root, 4);
 
   handle->tmpbuf = NULL;
 
@@ -854,9 +974,11 @@ static inline int __Bcast_init(void *buffer, int count, MPI_Datatype datatype, i
       handle->hardware_info = info.hardware_info_ptr;
   }
   
+
   __sched_alloc_init(handle, schedule, &info);
   
   __Bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+
 
   res = __Sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
