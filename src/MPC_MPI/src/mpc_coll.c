@@ -619,11 +619,11 @@ static inline int __Bcast_full_binomial_topo(void *buffer, int count, MPI_Dataty
   \brief Initialize hardware communicators used for persistent hardware algorithms 
   \param comm communicator of the collective 
   \param vrank virtual rank for the algorithm
-  \param level Max hardware topological level to split communicators 
+  \param max_level Max hardware topological level to split communicators 
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __create_hardware_comm_unguided(MPI_Comm comm, int vrank, int level, Sched_info *info)
+static inline int __create_hardware_comm_unguided(MPI_Comm comm, int vrank, int max_level, Sched_info *info)
 {
     int res = MPI_ERR_INTERN;
     int level_num = 0;
@@ -633,20 +633,26 @@ static inline int __create_hardware_comm_unguided(MPI_Comm comm, int vrank, int 
     hwcomm[level_num] = comm;
 
     /* create topology communicators */
-    while((hwcomm[level_num] != MPI_COMM_NULL) && (level_num < level))
+    while((hwcomm[level_num] != MPI_COMM_NULL) && (level_num < max_level))
     {
         res = PMPI_Comm_split_type(hwcomm[level_num],
                 MPI_COMM_TYPE_HW_UNGUIDED,
                 vrank,
                 MPI_INFO_NULL,
                 &hwcomm[level_num+1]);
+
         if(hwcomm[level_num+1] != MPI_COMM_NULL)
         {
             _mpc_cl_comm_rank(hwcomm[level_num + 1],&vrank);
         }
+
         level_num++;
     }
+
+    level_num--;
+
 	info->deepest_hardware_level = level_num;
+
     return res;
 }
 
@@ -670,6 +676,7 @@ static inline int __create_master_hardware_comm_unguided(int vrank, int level, S
     while((hwcomm[level_num + 1] != MPI_COMM_NULL) && (level_num < level))
     {
         _mpc_cl_comm_rank(hwcomm[level_num + 1],&rank_comm);
+
         int color = -1;
 
         if(rank_comm == 0)
@@ -1132,7 +1139,8 @@ static inline int __Bcast_full_binomial_topo(void *buffer, int count, MPI_Dataty
               RANK2VRANK(rank, vrank, root)
 
               __create_hardware_comm_unguided(comm, vrank, MAX_HARDWARE_LEVEL, info);
-              deepest_level  = info->deepest_hardware_level - 1;
+              //__create_hardware_comm_unguided(comm, vrank, 2, info);
+              deepest_level  = info->deepest_hardware_level;
               __create_master_hardware_comm_unguided(vrank, deepest_level, info);
 
               for (int k = 0; k < deepest_level; k++)
@@ -1166,13 +1174,11 @@ static inline int __Bcast_full_binomial_topo(void *buffer, int count, MPI_Dataty
               res = __bcast_sched_full_hardware_binomial(rank_last_hwlevel, size_last_hwlevel, 0, 
                       schedule, buffer, count, datatype, hardware_comm, coll_type, info);
 
-              //fprintf(stderr, "rank %d SENDS %d sizeargs %d sizefntype %d\n",rank, sends, sizeof(NBC_Args), sizeof(NBC_Fn_type));
-
               return res;
           }
   }
 
-  int deepest_level = info->deepest_hardware_level - 1;
+  int deepest_level = info->deepest_hardware_level;
 
   for (int k = 0; k < deepest_level; k++)
   {
