@@ -478,7 +478,7 @@ struct addrinfo * __linearize_addrinfo(struct addrinfo * info)
 void __addr_info_swap(struct addrinfo * from, struct addrinfo * to)
 {
     struct addrinfo tmp;
-    memcpy(&tmp, from, sizeof(struct addrinfo));
+    memcpy(&tmp, to, sizeof(struct addrinfo));
     memcpy(to, from, sizeof(struct addrinfo));
     memcpy(from, &tmp, sizeof(struct addrinfo));
 }
