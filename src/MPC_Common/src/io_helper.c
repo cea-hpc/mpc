@@ -487,7 +487,7 @@ void __addr_info_swap(struct addrinfo * from, struct addrinfo * to)
 int mpc_common_getaddrinfo(const char *node, const char *service,
                            const struct addrinfo *hints,
                            struct addrinfo **res,
-                           const char *preffered_device)
+                           const char *preferred_device)
 {
     struct addrinfo *local_res = NULL;
 
@@ -504,7 +504,7 @@ int mpc_common_getaddrinfo(const char *node, const char *service,
     int res_count = __count_addrinfo(local_res);
     struct addrinfo * reorder_buff = __linearize_addrinfo(local_res);
 
-    if(!strlen(preffered_device))
+    if(!strlen(preferred_device))
     {
         *res = reorder_buff;
 		goto MPC_COMMON_AIDDR_DONE;
@@ -520,7 +520,7 @@ int mpc_common_getaddrinfo(const char *node, const char *service,
     {
         char iface_name[128];
         mpc_common_getaddr_interface((struct sockaddr_in *)reorder_buff[i].ai_addr, iface_name, 128);
-        if(!strcmp(iface_name, preffered_device))
+        if(!strcmp(iface_name, preferred_device))
         {
             /* This device should be first */
             if(i!=0)
@@ -541,7 +541,7 @@ int mpc_common_getaddrinfo(const char *node, const char *service,
             mpc_common_getaddr_interface((struct sockaddr_in *)reorder_buff[i].ai_addr,
                                          iface_name,
                                          128);
-            if(strstr(iface_name, preffered_device))
+            if(strstr(iface_name, preferred_device))
             {
                 /* This device should be among the firsts */
                 if(i!=cnt)

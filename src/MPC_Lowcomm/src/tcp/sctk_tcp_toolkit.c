@@ -84,13 +84,13 @@ static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
 		}
 	}
 
-	char * preffered_network = "";
+	char * preferred_network = "";
 
 	/* Rely on IP over IB if possible */
 	if ( rail->network.tcp.sctk_use_tcp_o_ib )
 	{
 		/* Make sure to match network with ib in their name first */
-		preffered_network = "ib";
+		preferred_network = "ib";
 	}
 
 	/* Start Name Resolution */
@@ -100,7 +100,7 @@ static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
 
 
 	/* First use getaddrinfo to extract connection type */
-	int ret = mpc_common_getaddrinfo(name, portno, NULL, &results, preffered_network);
+	int ret = mpc_common_getaddrinfo(name, portno, NULL, &results, preferred_network);
 
 	if ( ret != 0 )
 	{
