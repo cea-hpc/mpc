@@ -623,7 +623,7 @@ static inline int __Bcast_full_binomial_topo(void *buffer, int count, MPI_Dataty
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __create_hardware_comm(MPI_Comm comm, int vrank, int level, Sched_info *info)
+static inline int __create_hardware_comm_unguided(MPI_Comm comm, int vrank, int level, Sched_info *info)
 {
     int res = MPI_ERR_INTERN;
     int level_num = 0;
@@ -657,7 +657,7 @@ static inline int __create_hardware_comm(MPI_Comm comm, int vrank, int level, Sc
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __create_master_hardware_comm(int vrank, int level, Sched_info *info)
+static inline int __create_master_hardware_comm_unguided(int vrank, int level, Sched_info *info)
 {
 	int res = MPI_ERR_INTERN;
     int rank_comm = -1;
@@ -1090,11 +1090,11 @@ static inline int __bcast_sched_full_hardware_binomial(int rank, int p, int root
         r++;
     }
 
-    return MPI_SUCCESS;
+    return res;
 }
 
 /**
-  \brief Execute or schedule a broadcast using the linear algorithm
+  \brief Execute or schedule a broadcast using the hardware full binomial algorithm
     Or count the number of operations and rounds for the schedule
   \param buffer Adress of the buffer used to send/recv data during the broadcast
   \param count Number of elements in buffer
@@ -1124,7 +1124,7 @@ static inline int __Bcast_full_binomial_topo(void *buffer, int count, MPI_Dataty
           {
               /* At each topological level, masters do binomial algorithm */
 
-              int level_topo;
+              int deepest_level;
               info->hwcomm = (MPI_Comm *)sctk_malloc(MAX_HARDWARE_LEVEL*sizeof(MPI_Comm));
               info->rootcomm = (MPI_Comm *)sctk_malloc(MAX_HARDWARE_LEVEL*sizeof(MPI_Comm));
 
@@ -1132,11 +1132,11 @@ static inline int __Bcast_full_binomial_topo(void *buffer, int count, MPI_Dataty
               int vrank;
               RANK2VRANK(rank, vrank, root)
 
-              __create_hardware_comm(comm, vrank, MAX_HARDWARE_LEVEL, info);
-              level_topo = info->deepest_hardware_level - 1;
-              __create_master_hardware_comm(vrank, level_topo, info);
+              __create_hardware_comm_unguided(comm, vrank, MAX_HARDWARE_LEVEL, info);
+              deepest_level  = info->deepest_hardware_level - 1;
+              __create_master_hardware_comm_unguided(vrank, deepest_level, info);
 
-              for (int k = 0; k < level_topo; k++)
+              for (int k = 0; k < deepest_level; k++)
               {
                   int rank_split;
                   int rank_master;
@@ -1159,24 +1159,23 @@ static inline int __Bcast_full_binomial_topo(void *buffer, int count, MPI_Dataty
               int rank_last_hwlevel;
               int size_last_hwlevel;
 
-              _mpc_cl_comm_rank(info->hwcomm[level_topo], &rank_last_hwlevel);
-              _mpc_cl_comm_size(info->hwcomm[level_topo], &size_last_hwlevel);
+              _mpc_cl_comm_rank(info->hwcomm[deepest_level], &rank_last_hwlevel);
+              _mpc_cl_comm_size(info->hwcomm[deepest_level], &size_last_hwlevel);
 
-              MPI_Comm hardware_comm = info->hwcomm[level_topo];
+              MPI_Comm hardware_comm = info->hwcomm[deepest_level];
 
               res = __bcast_sched_full_hardware_binomial(rank_last_hwlevel, size_last_hwlevel, 0, 
                       schedule, buffer, count, datatype, hardware_comm, coll_type, info);
 
-
               //fprintf(stderr, "rank %d SENDS %d sizeargs %d sizefntype %d\n",rank, sends, sizeof(NBC_Args), sizeof(NBC_Fn_type));
 
-              return MPI_SUCCESS;
+              return res;
           }
   }
 
-  int level_topo = info->deepest_hardware_level - 1;
+  int deepest_level = info->deepest_hardware_level - 1;
 
-  for (int k = 0; k < level_topo; k++)
+  for (int k = 0; k < deepest_level; k++)
   {
       int rank_split;
       int rank_master;
@@ -1200,10 +1199,10 @@ static inline int __Bcast_full_binomial_topo(void *buffer, int count, MPI_Dataty
   int rank_last_hwlevel;
   int size_last_hwlevel;
 
-  _mpc_cl_comm_rank(info->hwcomm[level_topo], &rank_last_hwlevel);
-  _mpc_cl_comm_size(info->hwcomm[level_topo], &size_last_hwlevel);
+  _mpc_cl_comm_rank(info->hwcomm[deepest_level], &rank_last_hwlevel);
+  _mpc_cl_comm_size(info->hwcomm[deepest_level], &size_last_hwlevel);
 
-  MPI_Comm hardware_comm = info->hwcomm[level_topo];
+  MPI_Comm hardware_comm = info->hwcomm[deepest_level];
 
   res = __bcast_sched_full_hardware_binomial(rank_last_hwlevel, size_last_hwlevel, 0, 
           schedule, buffer, count, datatype, hardware_comm, coll_type, info);
