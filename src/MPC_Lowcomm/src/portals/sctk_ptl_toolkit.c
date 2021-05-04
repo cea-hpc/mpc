@@ -401,7 +401,7 @@ static inline sctk_ptl_id_t __map_id_pmi(sctk_rail_info_t* rail, mpc_lowcomm_pee
 
 static inline sctk_ptl_id_t __map_id_monitor(sctk_rail_info_t* rail, mpc_lowcomm_peer_uid_t dest)
 {
-	mpc_lowcomm_monitor_retcode_t ret = MPC_LAUNCH_MONITOR_RET_SUCCESS;
+	mpc_lowcomm_monitor_retcode_t ret = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 
 	char rail_name[32];
 
@@ -410,7 +410,7 @@ static inline sctk_ptl_id_t __map_id_monitor(sctk_rail_info_t* rail, mpc_lowcomm
 																		"",
 																		&ret);
 
-	if(ret != MPC_LAUNCH_MONITOR_RET_SUCCESS)
+	if(ret != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
 	{
 		mpc_common_debug_fatal("Could not connect to UID %lu", dest);
 	}

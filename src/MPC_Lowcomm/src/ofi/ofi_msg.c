@@ -610,14 +610,14 @@ void mpc_lowcomm_ofi_msg_on_demand_handler( struct sctk_rail_info_s *rail, mpc_l
 	unsigned char *connection_infos = NULL;
 
 	char rail_name[32];
-	mpc_lowcomm_monitor_retcode_t ret = MPC_LAUNCH_MONITOR_RET_SUCCESS;
+	mpc_lowcomm_monitor_retcode_t ret = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 
 	mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_ondemand(dest_process,
 																	   __ofi_rail_name(rail, rail_name, 32),
 																	   "",
 																	   &ret);
 
-	if(ret != MPC_LAUNCH_MONITOR_RET_SUCCESS)
+	if(ret != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
 	{
 		mpc_common_debug_fatal("Could not connect to UID %lu", dest_process);
 	}

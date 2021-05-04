@@ -24,7 +24,7 @@
 
 #include "uid.h"
 #include "monitor.h"
-
+#include "name.h"
 
 //#define MONITOR_DEBUG
 
@@ -36,20 +36,20 @@ const char * mpc_lowcomm_monitor_command_tostring(mpc_lowcomm_monitor_command_t 
 {
 	switch(cmd)
 	{
-		case MPC_LAUNCH_MONITOR_COMMAND_NONE:
-			return "MPC_LAUNCH_MONITOR_COMMAND_NONE";
-		case MPC_LAUNCH_MONITOR_COMMAND_REQUEST_PEER_INFO:
-			return "MPC_LAUNCH_MONITOR_COMMAND_REQUEST_PEER_INFO";
-		case MPC_LAUNCH_MONITOR_COMMAND_REQUEST_SET_INFO:
-			return "MPC_LAUNCH_MONITOR_COMMAND_REQUEST_SET_INFO";
-		case MPC_LAUNCH_MONITOR_PING:
-			return "MPC_LAUNCH_MONITOR_PING";
-		case MPC_LAUNCH_MONITOR_ON_DEMAND:
-			return "MPC_LAUNCH_MONITOR_ON_DEMAND";
-		case MPC_LAUNCH_MONITOR_CONNECTIVITY:
-			return "MPC_LAUNCH_MONITOR_CONNECTIVITY";
-		case MPC_LAUNCH_MONITOR_COMM_INFO:
-			return "MPC_LAUNCH_MONITOR_COMM_INFO";
+		case MPC_LOWCOMM_MONITOR_COMMAND_NONE:
+			return "MPC_LOWCOMM_MONITOR_COMMAND_NONE";
+		case MPC_LOWCOMM_MONITOR_COMMAND_REQUEST_PEER_INFO:
+			return "MPC_LOWCOMM_MONITOR_COMMAND_REQUEST_PEER_INFO";
+		case MPC_LOWCOMM_MONITOR_COMMAND_REQUEST_SET_INFO:
+			return "MPC_LOWCOMM_MONITOR_COMMAND_REQUEST_SET_INFO";
+		case MPC_LOWCOMM_MONITOR_PING:
+			return "MPC_LOWCOMM_MONITOR_PING";
+		case MPC_LOWCOMM_MONITOR_ON_DEMAND:
+			return "MPC_LOWCOMM_MONITOR_ON_DEMAND";
+		case MPC_LOWCOMM_MONITOR_CONNECTIVITY:
+			return "MPC_LOWCOMM_MONITOR_CONNECTIVITY";
+		case MPC_LOWCOMM_MONITOR_COMM_INFO:
+			return "MPC_LOWCOMM_MONITOR_COMM_INFO";
 	}
 
 	return "NO SUCH COMMAND";
@@ -246,27 +246,27 @@ void mpc_lowcomm_monitor_retcode_print(mpc_lowcomm_monitor_retcode_t code, const
 
 	switch(code)
 	{
-		case MPC_LAUNCH_MONITOR_RET_SUCCESS:
+		case MPC_LOWCOMM_MONITOR_RET_SUCCESS:
 			desc = "SUCCESS";
 			break;
 
-		case MPC_LAUNCH_MONITOR_RET_ERROR:
+		case MPC_LOWCOMM_MONITOR_RET_ERROR:
 			desc = "Generic Error";
 			break;
 
-		case MPC_LAUNCH_MONITOR_RET_DUPLICATE_KEY:
+		case MPC_LOWCOMM_MONITOR_RET_DUPLICATE_KEY:
 			desc = "Key is duplicated";
 			break;
 
-		case MPC_LAUNCH_MONITOR_RET_NOT_REACHABLE:
+		case MPC_LOWCOMM_MONITOR_RET_NOT_REACHABLE:
 			desc = "Provided UID was not reachable";
 			break;
 
-		case MPC_LAUNCH_MONITOR_RET_INVALID_UID:
+		case MPC_LOWCOMM_MONITOR_RET_INVALID_UID:
 			desc = "Provided UID was not known";
 			break;
 
-		case MPC_LAUNCH_MONITOR_RET_REFUSED:
+		case MPC_LOWCOMM_MONITOR_RET_REFUSED:
 			desc = "Connection refused";
 			break;
 
@@ -298,7 +298,7 @@ static inline mpc_lowcomm_monitor_retcode_t __bootstrap_ring(void)
     int process_count = mpc_common_get_process_count(); 
 	if( process_count == 1)
 	{
-		return MPC_LAUNCH_MONITOR_RET_SUCCESS;
+		return MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 	}
 
 	/* Bootstrap Kademlia like connections on WORLD */
@@ -337,7 +337,7 @@ static inline mpc_lowcomm_monitor_retcode_t __bootstrap_ring(void)
 		                                to,
 		                                _MPC_LOWCOMM_MONITOR_GET_CLIENT_DIRECT,
 		                                &retcode);
-		if(retcode != MPC_LAUNCH_MONITOR_RET_SUCCESS)
+		if(retcode != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
 		{
 			mpc_lowcomm_monitor_retcode_print(retcode, "Bootstraping ring");
 		}
@@ -352,7 +352,7 @@ static inline mpc_lowcomm_monitor_retcode_t __bootstrap_ring(void)
 		}
 	}
 
-	return MPC_LAUNCH_MONITOR_RET_SUCCESS;
+	return MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 }
 
 
@@ -447,7 +447,7 @@ int _mpc_lowcomm_monitor_setup()
 
 	ret = _mpc_lowcomm_monitor_init(&__monitor);
 
-	if(ret != MPC_LAUNCH_MONITOR_RET_SUCCESS)
+	if(ret != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
 	{
 		mpc_lowcomm_monitor_retcode_print(ret, __func__);
 		return 1;
@@ -497,6 +497,7 @@ int _mpc_lowcomm_monitor_setup()
 
 	__register_process_set();
 	__bootstrap_ring();
+	_mpc_lowcomm_monitor_name_init();
 	_mpc_lowcomm_monitor_on_demand_callbacks_init();
     _mpc_lowcomm_monitor_command_engine_init();
 
@@ -527,7 +528,7 @@ int _mpc_lowcomm_monitor_teardown()
 
 	ret = _mpc_lowcomm_monitor_release(&__monitor);
 
-	if(ret != MPC_LAUNCH_MONITOR_RET_SUCCESS)
+	if(ret != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
 	{
 		mpc_lowcomm_monitor_retcode_print(ret, __func__);
 		return 1;
@@ -540,7 +541,7 @@ int _mpc_lowcomm_monitor_teardown()
 
 	_mpc_lowcomm_monitor_command_engine_teardown();
 	_mpc_lowcomm_monitor_on_demand_callbacks_teardown();
-
+	_mpc_lowcomm_monitor_name_release();
 
 	return 0;
 }
@@ -715,7 +716,7 @@ static inline int __handle_query(_mpc_lowcomm_client_ctx_t *ctx, _mpc_lowcomm_mo
 
 	switch(cmd)
 	{
-		case MPC_LAUNCH_MONITOR_COMMAND_REQUEST_SET_INFO:
+		case MPC_LOWCOMM_MONITOR_COMMAND_REQUEST_SET_INFO:
 		{
 			/* Here we register the incoming set */
 			_mpc_lowcomm_monitor_command_register_set_info(cmd_data);
@@ -727,7 +728,7 @@ static inline int __handle_query(_mpc_lowcomm_client_ctx_t *ctx, _mpc_lowcomm_mo
 		}
 		break;
 
-		case MPC_LAUNCH_MONITOR_COMMAND_REQUEST_PEER_INFO:
+		case MPC_LOWCOMM_MONITOR_COMMAND_REQUEST_PEER_INFO:
 			/* In all cases register the incoming peer */
 			_mpc_lowcomm_monitor_command_register_peer_info(cmd_data);
 
@@ -736,24 +737,29 @@ static inline int __handle_query(_mpc_lowcomm_client_ctx_t *ctx, _mpc_lowcomm_mo
 			                                                     cmd_data->peer.requested_peer);
 			break;
 
-		case MPC_LAUNCH_MONITOR_PING:
+		case MPC_LOWCOMM_MONITOR_PING:
 			resp = _mpc_lowcomm_monitor_command_return_ping_info(data->from, data->match_key);
 			break;
 
-		case MPC_LAUNCH_MONITOR_ON_DEMAND:
+		case MPC_LOWCOMM_MONITOR_ON_DEMAND:
 			resp = _mpc_lowcomm_monitor_command_process_ondemand(data->from, data->match_key, cmd_data);
 			break;
 
-		case MPC_LAUNCH_MONITOR_CONNECTIVITY:
+		case MPC_LOWCOMM_MONITOR_CONNECTIVITY:
 			resp = _mpc_lowcomm_monitor_command_return_connectivity_info(data->from, data->match_key);
 			break;
 
-		case MPC_LAUNCH_MONITOR_COMM_INFO:
+		case MPC_LOWCOMM_MONITOR_COMM_INFO:
 			resp = _mpc_lowcomm_monitor_command_return_comm_info(data->from,
 																 cmd_data,
                                                                  data->match_key);
 			break;
-		case MPC_LAUNCH_MONITOR_COMMAND_NONE:
+		case MPC_LOWCOMM_MONITOR_NAMING:
+			resp = _mpc_lowcomm_monitor_command_return_naming_info(data->from,
+																   cmd_data,
+                                                                   data->match_key);
+			break;
+		case MPC_LOWCOMM_MONITOR_COMMAND_NONE:
 			return -1;
 	}
 
@@ -822,6 +828,8 @@ static void *__per_client_loop(void *pctx)
 			}
 		}
 	}
+
+	return NULL;
 }
 
 
@@ -899,7 +907,7 @@ static mpc_lowcomm_monitor_retcode_t __start_server_socket(struct _mpc_lowcomm_m
 		{
 			fprintf(stderr, "Monitor getaddrinfo error: %s\n", gai_strerror(ret) );
 		}
-		return MPC_LAUNCH_MONITOR_RET_ERROR;
+		return MPC_LOWCOMM_MONITOR_RET_ERROR;
 	}
 
 	struct addrinfo *tmp = NULL;
@@ -940,7 +948,7 @@ static mpc_lowcomm_monitor_retcode_t __start_server_socket(struct _mpc_lowcomm_m
 	{
 		/* We failed creating the monitor server */
 		mpc_common_debug_error("Failed binding monitor server socket");
-		return MPC_LAUNCH_MONITOR_RET_ERROR;
+		return MPC_LOWCOMM_MONITOR_RET_ERROR;
 	}
 
 	ret = listen(monitor->server_socket, 32);
@@ -949,7 +957,7 @@ static mpc_lowcomm_monitor_retcode_t __start_server_socket(struct _mpc_lowcomm_m
 	{
 		perror("listen");
 		mpc_common_debug_error("Failed listen on monitor server socket");
-		return MPC_LAUNCH_MONITOR_RET_ERROR;
+		return MPC_LOWCOMM_MONITOR_RET_ERROR;
 	}
 
 	/* If we are here the server is ready to start its thread
@@ -959,7 +967,7 @@ static mpc_lowcomm_monitor_retcode_t __start_server_socket(struct _mpc_lowcomm_m
 	if(port < 0)
 	{
 		mpc_common_debug_error("Failed retrieving port on monitor server socket");
-		return MPC_LAUNCH_MONITOR_RET_ERROR;
+		return MPC_LOWCOMM_MONITOR_RET_ERROR;
 	}
 
 	char hostname[512];
@@ -968,7 +976,7 @@ static mpc_lowcomm_monitor_retcode_t __start_server_socket(struct _mpc_lowcomm_m
 	if(ret < 0)
 	{
 		mpc_common_debug_error("Failed retrieving hostname on monitor server socket");
-		return MPC_LAUNCH_MONITOR_RET_ERROR;
+		return MPC_LOWCOMM_MONITOR_RET_ERROR;
 	}
 
     /* As the DNS does not take the load we resolve once
@@ -995,10 +1003,10 @@ static mpc_lowcomm_monitor_retcode_t __start_server_socket(struct _mpc_lowcomm_m
 	{
 		/* URI was mpc_common_debug_error */
 		mpc_common_debug_fatal("Monitor server URI was too long to be stored");
-		return MPC_LAUNCH_MONITOR_RET_ERROR;
+		return MPC_LOWCOMM_MONITOR_RET_ERROR;
 	}
 
-	return MPC_LAUNCH_MONITOR_RET_SUCCESS;
+	return MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 }
 
 static inline void __monitor_publish_over_pmi(struct _mpc_lowcomm_monitor_s *monitor)
@@ -1037,7 +1045,7 @@ mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_init(struct _mpc_lowcomm_moni
 
 	mpc_lowcomm_monitor_retcode_t ret = __start_server_socket(monitor);
 
-	if(ret != MPC_LAUNCH_MONITOR_RET_SUCCESS)
+	if(ret != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
 	{
 		mpc_common_debug_fatal("Failed to start the cplane monitor server");
 	}
@@ -1055,7 +1063,7 @@ mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_init(struct _mpc_lowcomm_moni
 
 	__monitor_publish_over_pmi(monitor);
 
-	return MPC_LAUNCH_MONITOR_RET_SUCCESS;
+	return MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 }
 
 mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_release(struct _mpc_lowcomm_monitor_s *monitor)
@@ -1161,7 +1169,7 @@ static inline _mpc_lowcomm_client_ctx_t *___connect_client(struct _mpc_lowcomm_m
 	if(!sep)
 	{
 		mpc_common_debug_error("Bad peer URI %s", uri);
-		*retcode = MPC_LAUNCH_MONITOR_RET_ERROR;
+		*retcode = MPC_LOWCOMM_MONITOR_RET_ERROR;
 		return NULL;
 	}
 
@@ -1178,7 +1186,7 @@ static inline _mpc_lowcomm_client_ctx_t *___connect_client(struct _mpc_lowcomm_m
 		if(!isdigit(port[i]) )
 		{
 			mpc_common_debug_error("%s is not a numeric port", port);
-			*retcode = MPC_LAUNCH_MONITOR_RET_ERROR;
+			*retcode = MPC_LOWCOMM_MONITOR_RET_ERROR;
 			return NULL;
 		}
 	}
@@ -1208,7 +1216,7 @@ static inline _mpc_lowcomm_client_ctx_t *___connect_client(struct _mpc_lowcomm_m
 			fprintf(stderr, "Failed resolving peer: %s\n", gai_strerror(ret) );
 		}
 
-		*retcode = MPC_LAUNCH_MONITOR_RET_NOT_REACHABLE;
+		*retcode = MPC_LOWCOMM_MONITOR_RET_NOT_REACHABLE;
 		return NULL;
 	}
 
@@ -1244,7 +1252,7 @@ static inline _mpc_lowcomm_client_ctx_t *___connect_client(struct _mpc_lowcomm_m
 
 	if(client_socket < 0)
 	{
-		*retcode = MPC_LAUNCH_MONITOR_RET_NOT_REACHABLE;
+		*retcode = MPC_LOWCOMM_MONITOR_RET_NOT_REACHABLE;
 		return NULL;
 	}
 
@@ -1263,7 +1271,7 @@ static inline _mpc_lowcomm_client_ctx_t *___connect_client(struct _mpc_lowcomm_m
 	_mpc_lowcomm_monitor_client_add(monitor, new);
 
 
-	*retcode = MPC_LAUNCH_MONITOR_RET_SUCCESS;
+	*retcode = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 
 	return new;
 }
@@ -1295,7 +1303,7 @@ static inline _mpc_lowcomm_client_ctx_t *__get_client(struct _mpc_lowcomm_monito
 
 	if(!peer)
 	{
-		*retcode = MPC_LAUNCH_MONITOR_RET_INVALID_UID;
+		*retcode = MPC_LOWCOMM_MONITOR_RET_INVALID_UID;
 		return NULL;
 	}
 
@@ -1320,7 +1328,7 @@ static inline _mpc_lowcomm_client_ctx_t *__get_client(struct _mpc_lowcomm_monito
 	if(ctx != NULL)
 	{
 		/* All done seems OK */
-		*retcode = MPC_LAUNCH_MONITOR_RET_SUCCESS;
+		*retcode = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 		monitor->client_count++;
 	}
 
@@ -1395,7 +1403,7 @@ static inline _mpc_lowcomm_client_ctx_t *__get_closest_in_set(struct _mpc_lowcom
 
 	if(ellected_ctx != NULL)
 	{
-		*retcode = MPC_LAUNCH_MONITOR_RET_SUCCESS;
+		*retcode = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 		/* We found a set member to route to */
 		return ellected_ctx;
 	}
@@ -1430,14 +1438,14 @@ static inline _mpc_lowcomm_client_ctx_t *__route_client(struct _mpc_lowcomm_moni
 		if(!tset)
 		{
 			/* No set with such UID */
-			*retcode = MPC_LAUNCH_MONITOR_RET_INVALID_UID;
+			*retcode = MPC_LOWCOMM_MONITOR_RET_INVALID_UID;
 			return NULL;
 		}
 
 		/* If we have a set make sure the target UID is known */
 		if(!_mpc_lowcomm_set_contains(tset, client_uid) )
 		{
-			*retcode = MPC_LAUNCH_MONITOR_RET_INVALID_UID;
+			*retcode = MPC_LOWCOMM_MONITOR_RET_INVALID_UID;
 			return NULL;
 		}
 	}
@@ -1466,7 +1474,7 @@ _mpc_lowcomm_client_ctx_t *_mpc_lowcomm_monitor_get_client(struct _mpc_lowcomm_m
 	if(ctx)
 	{
 		/* In all cases if we are already connected: do direct */
-		*retcode = MPC_LAUNCH_MONITOR_RET_SUCCESS;
+		*retcode = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 		return ctx;
 	}
 
@@ -1508,7 +1516,7 @@ mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_disconnect(struct _mpc_lowcom
 		MPC_HT_ITER_END
 	} while(did_delete);
 
-	return MPC_LAUNCH_MONITOR_RET_SUCCESS;
+	return MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 }
 
 int _mpc_lowcomm_peer_is_local(mpc_lowcomm_peer_uid_t uid)
@@ -1653,7 +1661,7 @@ int _mpc_lowcomm_monitor_command_send(_mpc_lowcomm_monitor_wrap_t *cmd, mpc_lowc
 
 	if(cmd->dest == mpc_lowcomm_monitor_get_uid())
 	{
-		*ret = MPC_LAUNCH_MONITOR_RET_SUCCESS;
+		*ret = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 		return __handle_query(NULL, cmd);
 	}
 
@@ -1801,7 +1809,7 @@ static inline _mpc_lowcomm_monitor_wrap_t *__generate_set_decription(mpc_lowcomm
 	}
 
 	/* This prepares a request for set info this contains no data */
-	_mpc_lowcomm_monitor_wrap_t *cmd = _mpc_lowcomm_monitor_wrap_new(MPC_LAUNCH_MONITOR_COMMAND_REQUEST_SET_INFO,
+	_mpc_lowcomm_monitor_wrap_t *cmd = _mpc_lowcomm_monitor_wrap_new(MPC_LOWCOMM_MONITOR_COMMAND_REQUEST_SET_INFO,
 	                                                                 is_response,
 	                                                                 dest,
 	                                                                 __monitor.process_uid,
@@ -1816,12 +1824,12 @@ static inline _mpc_lowcomm_monitor_wrap_t *__generate_set_decription(mpc_lowcomm
 
 	if(no_such_uid)
 	{
-		cmd->content->set_info.retcode          = MPC_LAUNCH_MONITOR_RET_INVALID_UID;
+		cmd->content->set_info.retcode          = MPC_LOWCOMM_MONITOR_RET_INVALID_UID;
 		cmd->content->set_info.total_task_count = 0;
 	}
 	else
 	{
-		cmd->content->set_info.retcode = MPC_LAUNCH_MONITOR_RET_SUCCESS;
+		cmd->content->set_info.retcode = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 		snprintf(cmd->content->set_info.name, MPC_LOWCOMM_SET_NAME_LEN, set->name);
 		cmd->content->set_info.total_task_count = set->total_task_count;
 
@@ -1861,12 +1869,12 @@ mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_get_set_info(mpc_lowcomm_peer
 
 	if(!resp)
 	{
-        *ret = MPC_LAUNCH_MONITOR_RET_NOT_REACHABLE;
+        *ret = MPC_LOWCOMM_MONITOR_RET_NOT_REACHABLE;
 		mpc_common_debug_warning("mpc_lowcomm_monitor_get_set_info timed out when targetting %llu", target_peer);
 	}
 	else
 	{
-		if(resp->content->set_info.retcode == MPC_LAUNCH_MONITOR_RET_SUCCESS)
+		if(resp->content->set_info.retcode == MPC_LOWCOMM_MONITOR_RET_SUCCESS)
 		{
 			_mpc_lowcomm_monitor_command_register_set_info(resp->content);
 		}
@@ -1897,11 +1905,11 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_set_info(mpc_lo
 static inline _mpc_lowcomm_monitor_wrap_t * __generate_ping_cmd(mpc_lowcomm_peer_uid_t dest, int is_response)
 {
 	_mpc_lowcomm_monitor_wrap_t * cmd = NULL;
-	_mpc_lowcomm_peer_t * rpeer = __gen_wrap_for_peer(dest, MPC_LAUNCH_MONITOR_PING, is_response, &cmd);
+	_mpc_lowcomm_peer_t * rpeer = __gen_wrap_for_peer(dest, MPC_LOWCOMM_MONITOR_PING, is_response, &cmd);
 
 	if(!rpeer)
 	{
-		cmd->content->ping.retcode = MPC_LAUNCH_MONITOR_RET_INVALID_UID;
+		cmd->content->ping.retcode = MPC_LOWCOMM_MONITOR_RET_INVALID_UID;
 	}
 	else
 	{
@@ -1928,7 +1936,7 @@ mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_ping(mpc_lowcomm_peer_uid_t d
 
 	if(!resp)
 	{
-        *ret = MPC_LAUNCH_MONITOR_RET_NOT_REACHABLE;
+        *ret = MPC_LOWCOMM_MONITOR_RET_NOT_REACHABLE;
 		mpc_common_debug_warning("_mpc_lowcomm_monitor_ping timed out when targetting %llu", dest);
 	}
 
@@ -1947,6 +1955,145 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_ping_info(mpc_l
 
 
 
+/******************
+ * NAMING COMMAND *
+ ******************/
+
+static inline _mpc_lowcomm_monitor_wrap_t * __generate_naming_cmd(mpc_lowcomm_peer_uid_t dest, size_t extra_size, int is_response)
+{
+	_mpc_lowcomm_monitor_wrap_t * cmd = NULL;
+	_mpc_lowcomm_peer_t * rpeer = __gen_wrap_for_peer(dest, MPC_LOWCOMM_MONITOR_NAMING, is_response, &cmd);
+
+	if(!rpeer)
+	{
+		cmd->content->ping.retcode = MPC_LOWCOMM_MONITOR_RET_INVALID_UID;
+	}
+
+	return cmd;
+}
+
+
+mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_naming(mpc_lowcomm_peer_uid_t dest,
+														  mpc_lowcomm_monitor_command_naming_t operation,
+														  char * name,
+														  mpc_lowcomm_peer_uid_t peer,
+														  mpc_lowcomm_monitor_retcode_t *ret)
+{
+	_mpc_lowcomm_monitor_wrap_t * cmd = __generate_naming_cmd(dest, 0, 0);
+
+	cmd->content->naming.operation = operation;
+	snprintf(cmd->content->naming.name, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, "%s", name);
+	cmd->content->naming.peer_uid = peer;
+	cmd->content->naming.retcode = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
+
+	if(_mpc_lowcomm_monitor_command_send(cmd, ret) < 0)
+	{
+		_mpc_lowcomm_monitor_wrap_free(cmd);
+		return NULL;
+	}
+
+	_mpc_lowcomm_monitor_wrap_t *resp = _mpc_lowcomm_monitor_command_engine_await_response(cmd->match_key,
+	                                                                                       60);
+
+
+	if(!resp)
+	{
+        *ret = MPC_LOWCOMM_MONITOR_RET_NOT_REACHABLE;
+		mpc_common_debug_warning("mpc_lowcomm_monitor_naming timed out when targetting %llu", dest);
+	}
+
+	return (mpc_lowcomm_monitor_response_t)resp;
+}
+
+_mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_naming_info(mpc_lowcomm_peer_uid_t dest,
+																		     mpc_lowcomm_monitor_args_t *content,
+                                                                             uint64_t response_index)
+{
+	/* We need to handle name list first as it may need more space */
+	char *name_csv_list = NULL;
+	size_t extra_size = 0;
+
+	if(content->naming.operation == MPC_LOWCOMM_MONITOR_NAMING_LIST)
+	{
+		name_csv_list = _mpc_lowcomm_monitor_name_get_csv_list();
+
+		if(name_csv_list)
+		{
+			extra_size += strlen(name_csv_list) + 1;
+		}
+		else
+		{
+			name_csv_list = "";
+			extra_size = 1;
+		}
+	}
+
+	/* This prepares a request for set info this contains no data */
+	_mpc_lowcomm_monitor_wrap_t *resp = _mpc_lowcomm_monitor_wrap_new(MPC_LOWCOMM_MONITOR_NAMING,
+																	  1,
+																	  dest,
+																	  __monitor.process_uid,
+																	  response_index,
+																	  sizeof(mpc_lowcomm_monitor_args_t) + extra_size);
+
+	int error = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
+
+	switch (content->naming.operation)
+	{
+		case MPC_LOWCOMM_MONITOR_NAMING_PUT:
+			if( _mpc_lowcomm_monitor_name_publish(content->naming.name, content->naming.peer_uid))
+			{
+				snprintf(resp->content->naming.name, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, "Name already present");
+				error = MPC_LOWCOMM_MONITOR_RET_DUPLICATE_KEY;
+			}
+		break;
+		case MPC_LOWCOMM_MONITOR_NAMING_GET:
+		{
+			int found = 0;
+			mpc_lowcomm_peer_uid_t rpeer = _mpc_lowcomm_monitor_name_get_peer(content->naming.name, &found);
+
+			if(found)
+			{
+				snprintf(resp->content->naming.name, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, "%s", content->naming.name);
+				resp->content->naming.peer_uid = rpeer;
+			}
+			else
+			{
+				snprintf(resp->content->naming.name, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, "No such name");
+				error = MPC_LOWCOMM_MONITOR_RET_ERROR;
+			}
+
+			break;
+		}
+		case MPC_LOWCOMM_MONITOR_NAMING_DEL:
+			if(_mpc_lowcomm_monitor_name_unpublish(content->naming.name))
+			{
+				snprintf(resp->content->naming.name, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, "No such name");
+				error = MPC_LOWCOMM_MONITOR_RET_ERROR;
+			}
+		break;
+		case MPC_LOWCOMM_MONITOR_NAMING_LIST:
+			assume(name_csv_list);
+			memcpy(resp->content->naming.name_list, name_csv_list, strlen(name_csv_list) + 1);
+			break;
+		default:
+			error = 1;
+	}
+
+	if(error != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
+	{
+		resp->content->naming.retcode = error;
+	}
+	else
+	{
+		resp->content->naming.retcode = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
+	}
+
+	return resp;
+}
+
+
+
 /*********************
  * COMM INFO COMMAND *
  *********************/
@@ -1957,20 +2104,20 @@ static inline _mpc_lowcomm_monitor_wrap_t * __generate_comm_info_cmd(mpc_lowcomm
 																	 int is_response)
 {
 	_mpc_lowcomm_monitor_wrap_t * cmd = NULL;
-	_mpc_lowcomm_peer_t * rpeer = __gen_wrap_for_peer(dest, MPC_LAUNCH_MONITOR_COMM_INFO, is_response, &cmd);
+	_mpc_lowcomm_peer_t * rpeer = __gen_wrap_for_peer(dest, MPC_LOWCOMM_MONITOR_COMM_INFO, is_response, &cmd);
 
 	/* We used uin64_t to avoid header mess make sure it matches */
 	assume(sizeof(mpc_lowcomm_communicator_id_t) == sizeof(uint64_t));
 
 	if(!rpeer)
 	{
-		cmd->content->comm_info.retcode = MPC_LAUNCH_MONITOR_RET_INVALID_UID;
+		cmd->content->comm_info.retcode = MPC_LOWCOMM_MONITOR_RET_INVALID_UID;
 	}
 	else
 	{
 		cmd->content->comm_info.id = target_id;
 		cmd->content->comm_info.size = size;
-		cmd->content->comm_info.retcode = MPC_LAUNCH_MONITOR_RET_SUCCESS;
+		cmd->content->comm_info.retcode = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 	}
 
 	return cmd;
@@ -1995,7 +2142,7 @@ mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_comm_info(mpc_lowcomm_peer_ui
 
 	if(!resp)
 	{
-        *ret = MPC_LAUNCH_MONITOR_RET_NOT_REACHABLE;
+        *ret = MPC_LOWCOMM_MONITOR_RET_NOT_REACHABLE;
 		mpc_common_debug_warning("mpc_lowcomm_monitor_comm_info timed out when targetting %llu", dest);
 	}
 
@@ -2015,7 +2162,7 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_comm_info(mpc_l
 		comm_size = mpc_lowcomm_communicator_size(comm);
 	}
 
-	_mpc_lowcomm_monitor_wrap_t * resp = _mpc_lowcomm_monitor_wrap_new(MPC_LAUNCH_MONITOR_COMM_INFO,
+	_mpc_lowcomm_monitor_wrap_t * resp = _mpc_lowcomm_monitor_wrap_new(MPC_LOWCOMM_MONITOR_COMM_INFO,
 																	1,
 																	dest,
 																	__monitor.process_uid,
@@ -2029,7 +2176,7 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_comm_info(mpc_l
 		assume(!mpc_lowcomm_communicator_is_intercomm(comm));
 		resp->content->comm_info.id = content->comm_info.id;
 		resp->content->comm_info.size = comm_size;
-		resp->content->comm_info.retcode = MPC_LAUNCH_MONITOR_RET_SUCCESS;
+		resp->content->comm_info.retcode = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 
 		int i;
 
@@ -2041,7 +2188,7 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_comm_info(mpc_l
 	}
 	else
 	{
-		resp->content->comm_info.retcode = MPC_LAUNCH_MONITOR_RET_INVALID_UID;
+		resp->content->comm_info.retcode = MPC_LOWCOMM_MONITOR_RET_INVALID_UID;
 	}
 
 	return resp;
@@ -2057,11 +2204,11 @@ static inline _mpc_lowcomm_monitor_wrap_t * __generate_ondemand_cmd(mpc_lowcomm_
 									   int is_response)
 {
 	_mpc_lowcomm_monitor_wrap_t * cmd = NULL;
-	_mpc_lowcomm_peer_t * rpeer = __gen_wrap_for_peer(dest, MPC_LAUNCH_MONITOR_ON_DEMAND, is_response, &cmd);
+	_mpc_lowcomm_peer_t * rpeer = __gen_wrap_for_peer(dest, MPC_LOWCOMM_MONITOR_ON_DEMAND, is_response, &cmd);
 
 	if(!rpeer)
 	{
-		cmd->content->on_demand.retcode = MPC_LAUNCH_MONITOR_RET_INVALID_UID;
+		cmd->content->on_demand.retcode = MPC_LOWCOMM_MONITOR_RET_INVALID_UID;
 	}
 	else
 	{
@@ -2084,7 +2231,7 @@ mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_ondemand(mpc_lowcomm_peer_uid
 	if(_mpc_lowcomm_monitor_command_send(cmd, ret) < 0)
 	{
 		_mpc_lowcomm_monitor_wrap_free(cmd);
-        *ret = MPC_LAUNCH_MONITOR_RET_NOT_REACHABLE;
+        *ret = MPC_LOWCOMM_MONITOR_RET_NOT_REACHABLE;
 		return NULL;
 	}
 
@@ -2095,7 +2242,7 @@ mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_ondemand(mpc_lowcomm_peer_uid
 
 	if(!resp)
 	{
-        //*ret = MPC_LAUNCH_MONITOR_RET_NOT_REACHABLE;
+        //*ret = MPC_LOWCOMM_MONITOR_RET_NOT_REACHABLE;
 		mpc_common_debug_warning("_mpc_lowcomm_monitor_ondemand timed out when targetting %llu", dest);
 	}
 
@@ -2115,7 +2262,7 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_process_ondemand(mpc_l
 
 	if(!cb)
 	{
-		resp->content->on_demand.retcode = MPC_LAUNCH_MONITOR_RET_ERROR;
+		resp->content->on_demand.retcode = MPC_LOWCOMM_MONITOR_RET_ERROR;
 	}
 	else
 	{
@@ -2124,11 +2271,11 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_process_ondemand(mpc_l
 
 		if(ret != 0)
 		{
-			resp->content->on_demand.retcode = MPC_LAUNCH_MONITOR_RET_ERROR;
+			resp->content->on_demand.retcode = MPC_LOWCOMM_MONITOR_RET_ERROR;
 		}
 		else
 		{
-			resp->content->on_demand.retcode = MPC_LAUNCH_MONITOR_RET_SUCCESS;
+			resp->content->on_demand.retcode = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 		}
 	}
 
@@ -2142,11 +2289,11 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_process_ondemand(mpc_l
 static inline _mpc_lowcomm_monitor_wrap_t * __generate_connectivity_cmd(mpc_lowcomm_peer_uid_t dest, int is_response)
 {
 	_mpc_lowcomm_monitor_wrap_t * cmd = NULL;
-	_mpc_lowcomm_peer_t * rpeer = __gen_wrap_for_peer(dest, MPC_LAUNCH_MONITOR_CONNECTIVITY, is_response, &cmd);
+	_mpc_lowcomm_peer_t * rpeer = __gen_wrap_for_peer(dest, MPC_LOWCOMM_MONITOR_CONNECTIVITY, is_response, &cmd);
 
 	if(!rpeer)
 	{
-		cmd->content->on_demand.retcode = MPC_LAUNCH_MONITOR_RET_INVALID_UID;
+		cmd->content->on_demand.retcode = MPC_LOWCOMM_MONITOR_RET_INVALID_UID;
 	}
 
 	return cmd;
@@ -2229,15 +2376,15 @@ static inline _mpc_lowcomm_monitor_wrap_t *__generate_peer_decription(mpc_lowcom
                                                                       int is_response)
 {
 	_mpc_lowcomm_monitor_wrap_t * cmd = NULL;
-	_mpc_lowcomm_peer_t * rpeer = __gen_wrap_for_peer(dest, MPC_LAUNCH_MONITOR_COMMAND_REQUEST_PEER_INFO, is_response, &cmd);
+	_mpc_lowcomm_peer_t * rpeer = __gen_wrap_for_peer(dest, MPC_LOWCOMM_MONITOR_COMMAND_REQUEST_PEER_INFO, is_response, &cmd);
 
 	if(!rpeer)
 	{
-		cmd->content->peer.retcode = MPC_LAUNCH_MONITOR_RET_INVALID_UID;
+		cmd->content->peer.retcode = MPC_LOWCOMM_MONITOR_RET_INVALID_UID;
 	}
 	else
 	{
-		cmd->content->peer.retcode = MPC_LAUNCH_MONITOR_RET_SUCCESS;
+		cmd->content->peer.retcode = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 		memcpy(&cmd->content->peer.info, &rpeer->infos, sizeof(mpc_lowcomm_monitor_peer_info_t) );
 	}
 
@@ -2286,7 +2433,7 @@ mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_command_get_peer_info(mpc_low
 	}
 	else
 	{
-		if(resp->content->set_info.retcode == MPC_LAUNCH_MONITOR_RET_SUCCESS)
+		if(resp->content->set_info.retcode == MPC_LOWCOMM_MONITOR_RET_SUCCESS)
 		{
 			_mpc_lowcomm_monitor_command_register_peer_info(resp->content);
 		}

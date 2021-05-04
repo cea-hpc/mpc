@@ -186,14 +186,14 @@ int mpc_lowcomm_communicator_build_remote(mpc_lowcomm_peer_uid_t remote,
 															            id,
 															            &cret);
 
-	if(cret != MPC_LAUNCH_MONITOR_RET_SUCCESS)
+	if(cret != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
 	{
 		return -1;
 	}
 
 	mpc_lowcomm_monitor_args_t * content = mpc_lowcomm_monitor_response_get_content(resp);
 
-	if(content->comm_info.retcode != MPC_LAUNCH_MONITOR_RET_SUCCESS)
+	if(content->comm_info.retcode != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
 	{
 		return -1;
 	}

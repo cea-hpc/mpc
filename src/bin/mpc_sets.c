@@ -69,7 +69,7 @@ int conn_callback(mpc_lowcomm_monitor_set_t set, void * arg)
 
         mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_connectivity(peer_uid, &ret);
 
-        if(ret == MPC_LAUNCH_MONITOR_RET_SUCCESS)
+        if(ret == MPC_LOWCOMM_MONITOR_RET_SUCCESS)
         {
             mpc_lowcomm_monitor_args_t *args = mpc_lowcomm_monitor_response_get_content(resp);
 

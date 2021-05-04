@@ -169,4 +169,11 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_comm_info(mpc_l
 																		   mpc_lowcomm_monitor_args_t *content,
                                                                            uint64_t response_index);
 
+
+/* NAMING INFO */
+
+_mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_naming_info(mpc_lowcomm_peer_uid_t dest,
+																		     mpc_lowcomm_monitor_args_t *content,
+                                                                             uint64_t response_index);
+
 #endif /* _MPC_LOWCOMM_MONITOR_H_ */

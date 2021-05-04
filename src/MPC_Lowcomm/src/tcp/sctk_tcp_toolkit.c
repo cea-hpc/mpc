@@ -357,14 +357,14 @@ void tcp_on_demand_connection_handler(sctk_rail_info_t *rail, mpc_lowcomm_peer_u
 	//__sctk_network_connection_from_tcp(mpc_common_get_process_rank(), dest_process, rail, _MPC_LOWCOMM_ENDPOINT_DYNAMIC);
 	char my_net_name[128];
 
-	mpc_lowcomm_monitor_retcode_t ret = MPC_LAUNCH_MONITOR_RET_SUCCESS;
+	mpc_lowcomm_monitor_retcode_t ret = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 
 	mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_ondemand(dest_process,
 																	   __gen_rail_target_name(rail, my_net_name, 128),
 																	   rail->network.tcp.connection_infos,
 																	   &ret);
 
-	if(ret != MPC_LAUNCH_MONITOR_RET_SUCCESS)
+	if(ret != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
 	{
 		mpc_common_debug_fatal("Could not connect to UID %lu", dest_process);
 	}

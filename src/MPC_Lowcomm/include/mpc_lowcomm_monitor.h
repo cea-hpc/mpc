@@ -1,5 +1,5 @@
-#ifndef MPC_LAUNCH_MONITOR_H_
-#define MPC_LAUNCH_MONITOR_H_
+#ifndef MPC_LOWCOMM_MONITOR_H_
+#define MPC_LOWCOMM_MONITOR_H_
 
 #include <stdlib.h>
 #include <mpc_common_types.h>
@@ -10,12 +10,12 @@
 
 typedef enum
 {
-	MPC_LAUNCH_MONITOR_RET_SUCCESS,
-	MPC_LAUNCH_MONITOR_RET_ERROR,
-	MPC_LAUNCH_MONITOR_RET_DUPLICATE_KEY,
-	MPC_LAUNCH_MONITOR_RET_NOT_REACHABLE,
-	MPC_LAUNCH_MONITOR_RET_INVALID_UID,
-	MPC_LAUNCH_MONITOR_RET_REFUSED
+	MPC_LOWCOMM_MONITOR_RET_SUCCESS,
+	MPC_LOWCOMM_MONITOR_RET_ERROR,
+	MPC_LOWCOMM_MONITOR_RET_DUPLICATE_KEY,
+	MPC_LOWCOMM_MONITOR_RET_NOT_REACHABLE,
+	MPC_LOWCOMM_MONITOR_RET_INVALID_UID,
+	MPC_LOWCOMM_MONITOR_RET_REFUSED
 }mpc_lowcomm_monitor_retcode_t;
 
 void mpc_lowcomm_monitor_retcode_print(mpc_lowcomm_monitor_retcode_t code, const char *ctx);
@@ -80,7 +80,7 @@ mpc_lowcomm_set_uid_t mpc_lowcomm_monitor_set_gid(mpc_lowcomm_monitor_set_t set)
 
 mpc_lowcomm_monitor_set_t mpc_lowcomm_monitor_set_get(mpc_lowcomm_set_uid_t gid);
 
-#define MPC_LOWCOMM_PEER_URI_SIZE     256
+#define MPC_LOWCOMM_PEER_URI_SIZE     128
 
 typedef struct mpc_lowcomm_monitor_peer_info_s
 {
@@ -98,18 +98,27 @@ int mpc_lowcomm_monitor_set_peers(mpc_lowcomm_monitor_set_t set, mpc_lowcomm_mon
 
 typedef enum
 {
-	MPC_LAUNCH_MONITOR_COMMAND_NONE,
-	MPC_LAUNCH_MONITOR_COMMAND_REQUEST_PEER_INFO,
-	MPC_LAUNCH_MONITOR_COMMAND_REQUEST_SET_INFO,
-	MPC_LAUNCH_MONITOR_PING,
-	MPC_LAUNCH_MONITOR_ON_DEMAND,
-	MPC_LAUNCH_MONITOR_CONNECTIVITY,
-	MPC_LAUNCH_MONITOR_COMM_INFO
+	MPC_LOWCOMM_MONITOR_COMMAND_NONE,
+	MPC_LOWCOMM_MONITOR_COMMAND_REQUEST_PEER_INFO,
+	MPC_LOWCOMM_MONITOR_COMMAND_REQUEST_SET_INFO,
+	MPC_LOWCOMM_MONITOR_PING,
+	MPC_LOWCOMM_MONITOR_ON_DEMAND,
+	MPC_LOWCOMM_MONITOR_CONNECTIVITY,
+	MPC_LOWCOMM_MONITOR_COMM_INFO,
+	MPC_LOWCOMM_MONITOR_NAMING
 }mpc_lowcomm_monitor_command_t;
+
+typedef enum
+{
+	MPC_LOWCOMM_MONITOR_NAMING_PUT,
+	MPC_LOWCOMM_MONITOR_NAMING_GET,
+	MPC_LOWCOMM_MONITOR_NAMING_DEL,
+	MPC_LOWCOMM_MONITOR_NAMING_LIST
+}mpc_lowcomm_monitor_command_naming_t;
 
 const char * mpc_lowcomm_monitor_command_tostring(mpc_lowcomm_monitor_command_t cmd);
 
-#define MPC_LAUNCH_MONITOR_KEY_LEN    128
+#define MPC_LOWCOMM_MONITOR_KEY_LEN    128
 #define MPC_LOWCOMM_SET_NAME_LEN      256
 #define MPC_LOWCOMM_ONDEMAND_TARGET_LEN 32
 #define MPC_LOWCOMM_ONDEMAND_DATA_LEN MPC_LOWCOMM_PEER_URI_SIZE
@@ -160,6 +169,15 @@ typedef union
 		mpc_lowcomm_monitor_retcode_t retcode;
 		mpc_lowcomm_peer_uid_t uids[];
 	}comm_info;
+
+	struct
+	{
+		mpc_lowcomm_monitor_command_naming_t operation;
+		char name[MPC_LOWCOMM_ONDEMAND_TARGET_LEN];
+		mpc_lowcomm_peer_uid_t peer_uid;
+		mpc_lowcomm_monitor_retcode_t retcode;
+		char name_list[0];
+	}naming;
 
 }mpc_lowcomm_monitor_args_t;
 
@@ -237,4 +255,4 @@ mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_connectivity(mpc_lowcomm_peer
 
 void mpc_lowcomm_monitor_synchronous_connectivity_dump(void);
 
-#endif /* MPC_LAUNCH_MONITOR_H_ */
+#endif /* MPC_LOWCOMM_MONITOR_H_ */
