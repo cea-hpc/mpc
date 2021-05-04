@@ -1029,10 +1029,14 @@ static inline int __Bcast_switch(void *buffer, int count, MPI_Datatype datatype,
     NBC_BCAST_BINOMIAL,
     NBC_BCAST_SCATTER_ALLGATHER,
     NBC_BCAST_HARDWARE_FULL_BINOMIAL,
-    NBC_BCAST_SCATTER_TOPO
+    NBC_BCAST_TOPO
   } alg;
 
-  alg = NBC_BCAST_BINOMIAL;
+  if(coll_type != MPC_COLL_TYPE_PERSISTENT) {
+    alg = NBC_BCAST_BINOMIAL;
+  } else {
+    alg = NBC_BCAST_TOPO;
+  }
 
   int res;
 
@@ -1049,7 +1053,7 @@ static inline int __Bcast_switch(void *buffer, int count, MPI_Datatype datatype,
     case NBC_BCAST_HARDWARE_FULL_BINOMIAL:
       res = __Bcast_full_binomial_topo(buffer, count, datatype, root, comm, coll_type, schedule, info);
       break;
-    case NBC_BCAST_SCATTER_TOPO:
+    case NBC_BCAST_TOPO:
       res = __Bcast_topo(buffer, count, datatype, root, comm, coll_type, schedule, info);
       break;
   }
@@ -1633,7 +1637,11 @@ static inline int __Reduce_switch(const void *sendbuf, void* recvbuf, int count,
     NBC_REDUCE_TOPO
   } alg;
 
-  alg = NBC_REDUCE_BINOMIAL;
+  if(coll_type != MPC_COLL_TYPE_PERSISTENT) {
+    alg = NBC_REDUCE_BINOMIAL;
+  } else {
+    alg = NBC_REDUCE_TOPO;
+  }
 
   int res;
 
@@ -2152,7 +2160,11 @@ static inline int __Allreduce_switch(const void *sendbuf, void* recvbuf, int cou
     NBC_ALLREDUCE_TOPO
   } alg;
 
-  alg = NBC_ALLREDUCE_BINARY_BLOCK;
+  if(coll_type != MPC_COLL_TYPE_PERSISTENT) {
+    alg = NBC_ALLREDUCE_BINARY_BLOCK;
+  } else {
+    alg = NBC_ALLREDUCE_TOPO;
+  }
 
   int res;
 
@@ -2999,7 +3011,11 @@ static inline int __Scatter_switch(const void *sendbuf, int sendcount, MPI_Datat
     NBC_SCATTER_TOPO
   } alg;
 
-  alg = NBC_SCATTER_BINOMIAL;
+  if(coll_type != MPC_COLL_TYPE_PERSISTENT) {
+    alg = NBC_SCATTER_BINOMIAL;
+  } else {
+    alg = NBC_SCATTER_TOPO;
+  }
 
   int res;
 
@@ -3881,7 +3897,11 @@ static inline int __Gather_switch(const void *sendbuf, int sendcount, MPI_Dataty
     NBC_GATHER_TOPO
   } alg;
 
-  alg = NBC_GATHER_BINOMIAL;
+  if(coll_type != MPC_COLL_TYPE_PERSISTENT) {
+    alg = NBC_GATHER_BINOMIAL;
+  } else {
+    alg = NBC_GATHER_TOPO;
+  }
 
   int res;
 
@@ -5605,7 +5625,11 @@ static inline int __Allgather_switch(const void *sendbuf, int sendcount, MPI_Dat
     NBC_ALLGATHER_TOPO
   } alg;
 
-  alg = NBC_ALLGATHER_DISTANCE_DOUBLING;
+  if(coll_type != MPC_COLL_TYPE_PERSISTENT) {
+    alg = NBC_ALLGATHER_DISTANCE_DOUBLING;
+  } else {
+    alg = NBC_ALLGATHER_TOPO;
+  }
 
   int res;
 
