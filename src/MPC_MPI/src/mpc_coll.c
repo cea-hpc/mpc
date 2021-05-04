@@ -1136,10 +1136,15 @@ static inline int __Bcast_full_binomial_topo(void *buffer, int count, MPI_Dataty
 
               /* set root to 0 te be color as master for every of its topological levels */
               int vrank;
-              RANK2VRANK(rank, vrank, root)
+              RANK2VRANK(rank, vrank, root);
 
-              __create_hardware_comm_unguided(comm, vrank, MAX_HARDWARE_LEVEL, info);
-              //__create_hardware_comm_unguided(comm, vrank, 2, info);
+              /* choose max topological level on which to do hardware split */
+              int max_level;
+              max_level = 3;
+              //max_level = MAX_HARDWARE_LEVEL;
+
+              /* Create hardware communicators using unguided topological split and max split level */
+              __create_hardware_comm_unguided(comm, vrank, max_level, info);
               deepest_level  = info->deepest_hardware_level;
               __create_master_hardware_comm_unguided(vrank, deepest_level, info);
 
