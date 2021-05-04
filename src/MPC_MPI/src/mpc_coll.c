@@ -893,12 +893,11 @@ static inline int __Bcast_switch(void *buffer, int count, MPI_Datatype datatype,
     NBC_BCAST_LINEAR,
     NBC_BCAST_BINOMIAL,
     NBC_BCAST_SCATTER_ALLGATHER,
-    NBC_BCAST_FULL_BINOMIAL_TOPO
-
+    NBC_BCAST_HARDWARE_FULL_BINOMIAL
   } alg;
 
   //alg = NBC_BCAST_BINOMIAL;
-  alg = NBC_BCAST_FULL_BINOMIAL_TOPO;
+  alg = NBC_BCAST_HARDWARE_FULL_BINOMIAL;
 
   int res;
 
@@ -912,7 +911,7 @@ static inline int __Bcast_switch(void *buffer, int count, MPI_Datatype datatype,
     case NBC_BCAST_SCATTER_ALLGATHER:
       res = __Bcast_scatter_allgather(buffer, count, datatype, root, comm, coll_type, schedule, info);
       break;
-    case NBC_BCAST_FULL_BINOMIAL_TOPO:
+    case NBC_BCAST_HARDWARE_FULL_BINOMIAL:
       res = __Bcast_full_binomial_topo(buffer, count, datatype, root, comm, coll_type, schedule, info);
       break;
   }
