@@ -32,6 +32,7 @@
 #define BARRIER_SCHED_SIZE (sizeof(char))
 #define COMM_SCHED_SIZE (sizeof(NBC_Fn_type) + sizeof(NBC_Args))
 #define ROUND_SCHED_SIZE (SCHED_SIZE + BARRIER_SCHED_SIZE)
+#define MAX_HARDWARE_LEVEL 8
 
 //  TODO:
 //    error hanfling
@@ -70,7 +71,7 @@ typedef struct {
   int tmpbuf_size;            /**< Size of the temporary buffer for the schedule. */
   int tmpbuf_pos;             /**< Offset from the staring adress of the temporary buffer to the current position. */
 
-  int local_level_max;        /**< deepest level of hardware toplogy split. */
+  int deepest_hardware_level;        /**< deepest level of hardware toplogy split. */
 
   MPI_Comm *hwcomm;           /**< communicators of hardware level. */
   MPI_Comm *rootcomm;         /**< communicators of master hardware level. */
@@ -170,7 +171,7 @@ static inline void __sched_info_init(Sched_info *info) {
 
   info->hwcomm= NULL;
   info->rootcomm = NULL;
-  info->local_level_max = -1;
+  info->deepest_hardware_level = -1;
 }
 
 /**
@@ -632,16 +633,20 @@ static inline int __create_hardware_comm(MPI_Comm comm, int vrank, int level, Sc
     hwcomm[level_num] = comm;
 
     /* create topology communicators */
-    while((hwcomm[level_num] != MPI_COMM_NULL) && level_num < level)
+    while((hwcomm[level_num] != MPI_COMM_NULL) && (level_num < level))
     {
         res = PMPI_Comm_split_type(hwcomm[level_num],
                 MPI_COMM_TYPE_HW_UNGUIDED,
                 vrank,
                 MPI_INFO_NULL,
                 &hwcomm[level_num+1]);
+        if(hwcomm[level_num+1] != MPI_COMM_NULL)
+        {
+            _mpc_cl_comm_rank(hwcomm[level_num + 1],&vrank);
+        }
         level_num++;
     }
-	info->local_level_max = level_num;
+	info->deepest_hardware_level = level_num;
     return res;
 }
 
@@ -1119,19 +1124,17 @@ static inline int __Bcast_full_binomial_topo(void *buffer, int count, MPI_Dataty
           {
               /* At each topological level, masters do binomial algorithm */
 
-              int max_num_levels = 8;
-              int level_topo = 2;
-              info->hwcomm = (MPI_Comm *)sctk_malloc(max_num_levels*sizeof(MPI_Comm));
-              info->rootcomm = (MPI_Comm *)sctk_malloc(max_num_levels*sizeof(MPI_Comm));
+              int level_topo;
+              info->hwcomm = (MPI_Comm *)sctk_malloc(MAX_HARDWARE_LEVEL*sizeof(MPI_Comm));
+              info->rootcomm = (MPI_Comm *)sctk_malloc(MAX_HARDWARE_LEVEL*sizeof(MPI_Comm));
 
               /* set root to 0 te be color as master for every of its topological levels */
               int vrank;
               RANK2VRANK(rank, vrank, root)
 
-              __create_hardware_comm(comm, vrank, level_topo, info);
+              __create_hardware_comm(comm, vrank, MAX_HARDWARE_LEVEL, info);
+              level_topo = info->deepest_hardware_level - 1;
               __create_master_hardware_comm(vrank, level_topo, info);
-
-              level_topo = 2;
 
               for (int k = 0; k < level_topo; k++)
               {
@@ -1171,7 +1174,7 @@ static inline int __Bcast_full_binomial_topo(void *buffer, int count, MPI_Dataty
           }
   }
 
-  int level_topo = 2;
+  int level_topo = info->deepest_hardware_level - 1;
 
   for (int k = 0; k < level_topo; k++)
   {
