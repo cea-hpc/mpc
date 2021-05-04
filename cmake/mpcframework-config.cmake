@@ -116,7 +116,7 @@ if (MPCFRAMEWORK_FOUND)
     set(MPI_FOUND TRUE)
     # Yes we'll need to detect..
     set(MPI_VERSION_MAJOR "3" CACHE STRING "Major MPI version")
-    set(MPI_VERSION_MINOR "1" CACHE STRING "MINOR MPI version")
+    set(MPI_VERSION_MINOR "1" CACHE STRING "Minor MPI version")
     set(MPI_VERSION "${MPI_VERSION_MAJOR}.${MPI_VERSION_MINOR}" CACHE STRING "MPI version")
 
     set(MPI_C_FOUND TRUE CACHE BOOL "C Interface for MPI was found")
