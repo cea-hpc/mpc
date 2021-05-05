@@ -9,23 +9,24 @@
 struct _mpc_lowcomm_monitor_name_s
 {
 	char *                              name;
-	mpc_lowcomm_peer_uid_t              peer;
+	char *                              port;
+	mpc_lowcomm_peer_uid_t              hosting_peer;
 	struct _mpc_lowcomm_monitor_name_s *prev;
 };
 
 static struct _mpc_lowcomm_monitor_name_s *__names = NULL;
 static mpc_common_spinlock_t __names_lock          = SCTK_SPINLOCK_INITIALIZER;
 
-static inline struct _mpc_lowcomm_monitor_name_s *__name_new(char *name, mpc_lowcomm_peer_uid_t peer)
+static inline struct _mpc_lowcomm_monitor_name_s *__name_new(char *name, char * port_name, mpc_lowcomm_peer_uid_t hosting_peer)
 {
 	struct _mpc_lowcomm_monitor_name_s *ret = sctk_malloc(sizeof(struct _mpc_lowcomm_monitor_name_s) );
 
 	assume(ret != NULL);
 
 	ret->name = strdup(name);
-	ret->peer = peer;
+	ret->port = strdup(port_name);
+	ret->hosting_peer = hosting_peer;
 	ret->prev = NULL;
-
 
 	return ret;
 }
@@ -65,6 +66,8 @@ static inline struct _mpc_lowcomm_monitor_name_s *__name_get(char *name)
 static inline void __name_free(struct _mpc_lowcomm_monitor_name_s *n)
 {
 	free(n->name);
+	free(n->port);
+
 	sctk_free(n);
 }
 
@@ -161,7 +164,7 @@ void _mpc_lowcomm_monitor_name_release(void)
 * PUBLISH *
 ***********/
 
-int _mpc_lowcomm_monitor_name_publish(char *name, mpc_lowcomm_peer_uid_t peer)
+int _mpc_lowcomm_monitor_name_publish(char *name, char * port_name,  mpc_lowcomm_peer_uid_t hosting_peer)
 {
 	/* First make sure the name is not already here */
 	struct _mpc_lowcomm_monitor_name_s *prev = __name_get(name);
@@ -171,7 +174,7 @@ int _mpc_lowcomm_monitor_name_publish(char *name, mpc_lowcomm_peer_uid_t peer)
 		return 1;
 	}
 
-	prev = __name_new(name, peer);
+	prev = __name_new(name, port_name, hosting_peer);
 
 	if(__name_push(prev) )
 	{
@@ -192,19 +195,19 @@ int _mpc_lowcomm_monitor_name_unpublish(char *name)
 * RESOLVE *
 ***********/
 
-mpc_lowcomm_peer_uid_t _mpc_lowcomm_monitor_name_get_peer(char *name, int *found)
+char * _mpc_lowcomm_monitor_name_get_port(char *name,  mpc_lowcomm_peer_uid_t *hosting_peer)
 {
 	struct _mpc_lowcomm_monitor_name_s *n = __name_get(name);
 
     if(n)
     {
-        *found = 1;
-        return n->peer;
+		*hosting_peer = n->hosting_peer;
+        return n->port;
     }
 
-    *found = 0;
-    return 0;
+    return NULL;
 }
+
 
 /********
 * LIST *

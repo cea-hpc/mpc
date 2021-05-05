@@ -173,8 +173,9 @@ typedef union
 	struct
 	{
 		mpc_lowcomm_monitor_command_naming_t operation;
+		mpc_lowcomm_peer_uid_t hosting_peer;
 		char name[MPC_LOWCOMM_ONDEMAND_TARGET_LEN];
-		mpc_lowcomm_peer_uid_t peer_uid;
+		char port_name[MPC_LOWCOMM_ONDEMAND_TARGET_LEN];
 		mpc_lowcomm_monitor_retcode_t retcode;
 		char name_list[0];
 	}naming;
@@ -254,5 +255,15 @@ int mpc_lowcomm_monitor_event_loop_push(mpc_lowcomm_monitor_worker_callback_t ca
 mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_connectivity(mpc_lowcomm_peer_uid_t dest, mpc_lowcomm_monitor_retcode_t *ret);
 
 void mpc_lowcomm_monitor_synchronous_connectivity_dump(void);
+
+/* Set Naming */
+
+mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_naming(mpc_lowcomm_peer_uid_t dest,
+														  mpc_lowcomm_monitor_command_naming_t operation,
+														  mpc_lowcomm_peer_uid_t hosting_peer,
+														  const char * name,
+														  const char * port_name,
+														  mpc_lowcomm_monitor_retcode_t *ret);
+
 
 #endif /* MPC_LOWCOMM_MONITOR_H_ */

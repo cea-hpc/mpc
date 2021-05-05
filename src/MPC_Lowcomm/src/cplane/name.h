@@ -14,14 +14,14 @@ void _mpc_lowcomm_monitor_name_release(void);
  * PUBLISH *
  ***********/
 
-int _mpc_lowcomm_monitor_name_publish(char * name, mpc_lowcomm_peer_uid_t peer );
+int _mpc_lowcomm_monitor_name_publish(char * name, char * port_name, mpc_lowcomm_peer_uid_t hosting_peer);
 int _mpc_lowcomm_monitor_name_unpublish(char * name );
 
 /***********
  * RESOLVE *
  ***********/
 
-mpc_lowcomm_peer_uid_t _mpc_lowcomm_monitor_name_get_peer(char * name, int * found);
+char * _mpc_lowcomm_monitor_name_get_port(char * name, mpc_lowcomm_peer_uid_t *hosting_peer);
 
 /********
  * LIST *

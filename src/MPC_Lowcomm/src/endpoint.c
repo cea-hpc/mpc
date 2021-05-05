@@ -30,6 +30,7 @@
 #include <mpc_common_debug.h>
 #include <limits.h>
 #include <sctk_alloc.h>
+#include <string.h>
 
 #include "endpoint.h"
 

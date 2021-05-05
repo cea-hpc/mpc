@@ -26,7 +26,7 @@
 #include "monitor.h"
 #include "name.h"
 
-//#define MONITOR_DEBUG
+#define MONITOR_DEBUG
 
 
 static volatile int __monitor_running = 0;
@@ -1975,15 +1975,17 @@ static inline _mpc_lowcomm_monitor_wrap_t * __generate_naming_cmd(mpc_lowcomm_pe
 
 mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_naming(mpc_lowcomm_peer_uid_t dest,
 														  mpc_lowcomm_monitor_command_naming_t operation,
-														  char * name,
-														  mpc_lowcomm_peer_uid_t peer,
+														  mpc_lowcomm_peer_uid_t hosting_peer,
+														  const char * name,
+														  const char * port_name,
 														  mpc_lowcomm_monitor_retcode_t *ret)
 {
 	_mpc_lowcomm_monitor_wrap_t * cmd = __generate_naming_cmd(dest, 0, 0);
 
 	cmd->content->naming.operation = operation;
+	cmd->content->naming.hosting_peer = hosting_peer;
 	snprintf(cmd->content->naming.name, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, "%s", name);
-	cmd->content->naming.peer_uid = peer;
+	snprintf(cmd->content->naming.port_name, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, "%s", port_name);
 	cmd->content->naming.retcode = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 
 	if(_mpc_lowcomm_monitor_command_send(cmd, ret) < 0)
@@ -2041,7 +2043,7 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_naming_info(mpc
 	switch (content->naming.operation)
 	{
 		case MPC_LOWCOMM_MONITOR_NAMING_PUT:
-			if( _mpc_lowcomm_monitor_name_publish(content->naming.name, content->naming.peer_uid))
+			if( _mpc_lowcomm_monitor_name_publish(content->naming.name, content->naming.port_name, content->naming.hosting_peer))
 			{
 				snprintf(resp->content->naming.name, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, "Name already present");
 				error = MPC_LOWCOMM_MONITOR_RET_DUPLICATE_KEY;
@@ -2049,13 +2051,13 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_naming_info(mpc
 		break;
 		case MPC_LOWCOMM_MONITOR_NAMING_GET:
 		{
-			int found = 0;
-			mpc_lowcomm_peer_uid_t rpeer = _mpc_lowcomm_monitor_name_get_peer(content->naming.name, &found);
 
-			if(found)
+			char * port = _mpc_lowcomm_monitor_name_get_port(content->naming.name, &resp->content->naming.hosting_peer);
+
+			if(port)
 			{
 				snprintf(resp->content->naming.name, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, "%s", content->naming.name);
-				resp->content->naming.peer_uid = rpeer;
+				snprintf(resp->content->naming.port_name, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, "%s", port);
 			}
 			else
 			{
@@ -2075,6 +2077,7 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_naming_info(mpc
 		case MPC_LOWCOMM_MONITOR_NAMING_LIST:
 			assume(name_csv_list);
 			memcpy(resp->content->naming.name_list, name_csv_list, strlen(name_csv_list) + 1);
+			_mpc_lowcomm_monitor_name_free_cvs_list(name_csv_list);
 			break;
 		default:
 			error = 1;

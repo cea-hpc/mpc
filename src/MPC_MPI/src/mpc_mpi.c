@@ -19173,6 +19173,80 @@ int PMPI_Get_library_version(char *version, __UNUSED__ int *resultlen)
 	return MPI_SUCCESS;
 }
 
+/* Name Resolution */
+
+int PMPI_Lookup_name(__UNUSED__ const char *service_name, __UNUSED__ MPI_Info info, __UNUSED__ char *port_name)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+static inline int __publish_op(mpc_lowcomm_monitor_command_naming_t cmd, const char *service_name,  MPI_Info info, const char *port_name)
+{
+	/* Publishing is setting a value in the root rank of my process set */
+	mpc_lowcomm_monitor_retcode_t ret;
+
+	mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_naming(mpc_lowcomm_monitor_uid_of(  mpc_lowcomm_monitor_get_gid() , 0),
+																	cmd,
+																	mpc_lowcomm_monitor_get_uid(),
+																    service_name,
+																    port_name,
+																    &ret);
+
+	mpc_lowcomm_monitor_args_t * content = mpc_lowcomm_monitor_response_get_content(resp);
+
+	int err = 0;
+
+
+	if(content->naming.retcode != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
+	{
+		err = 1;
+	}
+
+
+	mpc_lowcomm_monitor_response_free(resp);
+
+	if(err)
+	{
+		return MPI_ERR_KEYVAL;
+	}
+
+	return MPI_SUCCESS;
+}
+
+
+int PMPI_Publish_name(const char *service_name,  MPI_Info info, const char *port_name)
+{
+	return __publish_op(MPC_LOWCOMM_MONITOR_NAMING_PUT, service_name, info, port_name);
+}
+
+int PMPI_Unpublish_name(__UNUSED__ const char *service_name, __UNUSED__ MPI_Info info, __UNUSED__ const char *port_name)
+{
+	return __publish_op(MPC_LOWCOMM_MONITOR_NAMING_DEL, service_name, info, "");
+}
+
+/* Comm Interconnect */
+
+int PMPI_Open_port(__UNUSED__ MPI_Info info, __UNUSED__ char *port_name)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+/* Process Creation and Management */
+int PMPI_Close_port(__UNUSED__ const char *port_name)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Comm_accept(__UNUSED__ const char *port_name, __UNUSED__ MPI_Info info, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Comm *newcomm)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
+int PMPI_Comm_connect(__UNUSED__ const char *port_name, __UNUSED__ MPI_Info info, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Comm *newcomm)
+{
+	not_implemented(); return MPI_ERR_INTERN;
+}
+
 /************************************************************************/
 /*  NOT IMPLEMENTED                                                     */
 /************************************************************************/
@@ -19213,21 +19287,6 @@ int PMPI_Comm_create_group(__UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Group group,
 	not_implemented(); return MPI_ERR_INTERN;
 }
 
-/* Process Creation and Management */
-int PMPI_Close_port(__UNUSED__ const char *port_name)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
-int PMPI_Comm_accept(__UNUSED__ const char *port_name, __UNUSED__ MPI_Info info, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Comm *newcomm)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
-int PMPI_Comm_connect(__UNUSED__ const char *port_name, __UNUSED__ MPI_Info info, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Comm *newcomm)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
 
 int PMPI_Comm_disconnect(__UNUSED__ MPI_Comm *comm)
 {
@@ -19254,25 +19313,7 @@ int PMPI_Comm_spawn_multiple(__UNUSED__ int count, __UNUSED__ char *array_of_com
 	not_implemented(); return MPI_ERR_INTERN;
 }
 
-int PMPI_Lookup_name(__UNUSED__ const char *service_name, __UNUSED__ MPI_Info info, __UNUSED__ char *port_name)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
 
-int PMPI_Open_port(__UNUSED__ MPI_Info info, __UNUSED__ char *port_name)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
-int PMPI_Publish_name(__UNUSED__ const char *service_name, __UNUSED__ MPI_Info info, __UNUSED__ const char *port_name)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
-int PMPI_Unpublish_name(__UNUSED__ const char *service_name, __UNUSED__ MPI_Info info, __UNUSED__ const char *port_name)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
 
 /* Dist graph operations */
 int PMPI_Dist_graph_neighbors_count(__UNUSED__ MPI_Comm comm, __UNUSED__ int *indegree, __UNUSED__ int *outdegree, __UNUSED__ int *weighted)
