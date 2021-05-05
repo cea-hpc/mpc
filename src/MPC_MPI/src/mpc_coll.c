@@ -72,7 +72,7 @@ typedef struct {
   int tmpbuf_pos;             /**< Offset from the staring adress of the temporary buffer to the current position. */
 
   int is_hardware_algo;       /**< flag set to 1 if using hardware algorithm else 0. */
-  mpc_hardware_split_info_t *hardware_info_ptr;
+  mpc_hardware_split_info_t *hardware_info_ptr; /**< ptr to structure for hardware communicator info */
 } Sched_info;
 
 #define pointer_swap(a, b, swap) \
