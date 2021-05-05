@@ -68,7 +68,13 @@ typedef struct {
 
 } NBC_Comminfo;
 
-
+/* used to manage communicators in topological algorithm */
+typedef struct mpc_hardware_split_info_s
+{
+	int deepest_hardware_level;
+	MPI_Comm *hwcomm; /* communicator of hardware splited topological level */
+	MPI_Comm *rootcomm; /* communicator of master node topological level */
+}mpc_hardware_split_info_t; 
 
 /* thread specific data */
 typedef struct {
@@ -93,6 +99,7 @@ typedef struct {
 /* TODO: we should make a handle pointer to a state later (that the user
  * can move request handles) */
 	void *tmpbuf_gather; /* temporary buffer e.g. used for Gather */
+    mpc_hardware_split_info_t *hardware_info;
 } NBC_Handle;
 typedef NBC_Handle NBC_Request;
 
@@ -199,7 +206,6 @@ typedef struct {
 	char tmpoutbuf;
   MPI_Comm comm;
 } NBC_Args;
-
 
 /* internal function prototypes */
 int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule);

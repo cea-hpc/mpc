@@ -9005,6 +9005,11 @@ static inline int NBC_Free(NBC_Handle* handle)
       perror("mpc_thread_sem_post()");
     }
   }
+  if(NULL != handle->hardware_info)
+  {
+    sctk_free((void *)handle->hardware_info);
+    handle->hardware_info = NULL;
+  }
 
   return NBC_OK;
 }
@@ -9802,6 +9807,7 @@ inline int NBC_Init_handle( NBC_Handle *handle, MPI_Comm comm, int tag )
 	handle->req_count_persistent = NULL;
 	handle->comm = comm;
 	handle->schedule = NULL;
+	handle->hardware_info = NULL;
 	/* first int is the schedule size */
 	handle->row_offset = sizeof( int );
 
