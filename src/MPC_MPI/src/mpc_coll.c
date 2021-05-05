@@ -906,8 +906,7 @@ static inline int __Bcast_switch(void *buffer, int count, MPI_Datatype datatype,
     NBC_BCAST_HARDWARE_FULL_BINOMIAL
   } alg;
 
-  //alg = NBC_BCAST_BINOMIAL;
-  alg = NBC_BCAST_HARDWARE_FULL_BINOMIAL;
+  alg = NBC_BCAST_BINOMIAL;
 
   int res;
 
@@ -1055,6 +1054,7 @@ static inline int __Bcast_binomial(void *buffer, int count, MPI_Datatype datatyp
   return MPI_SUCCESS;
 }
 
+/*TODO remove when __Bcast_full_binomial_topo works with __Bcast_binomial instead of this */
 static inline int __bcast_sched_full_hardware_binomial(int root, NBC_Schedule *schedule, void *buffer, int count, MPI_Datatype datatype, MPI_Comm comm, MPC_COLL_TYPE coll_type, Sched_info *info)
 {
 
@@ -1086,7 +1086,6 @@ static inline int __bcast_sched_full_hardware_binomial(int root, NBC_Schedule *s
             }
         }
         __Barrier_type(coll_type, schedule, info);
-
     }
 
     int cpt = 0;
@@ -1162,30 +1161,6 @@ static inline int __Bcast_full_binomial_topo(void *buffer, int count, MPI_Dataty
               __create_hardware_comm_unguided(comm, vrank, max_level, info);
               deepest_level = info->hardware_info_ptr->deepest_hardware_level;
               __create_master_hardware_comm_unguided(vrank, deepest_level, info);
-
-              for (int k = 0; k < deepest_level; k++)
-              {
-                  int rank_split;
-
-                  _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[k + 1], &rank_split);
-
-                  if((!rank_split)) /* if master */
-                  {
-                      /* schedule binomial bcast for masters at each master levels */
-                      MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[k];
-
-                      //res = __Bcast_binomial(buffer, count, datatype, 0, master_comm, coll_type, schedule, info);
-                      res = __bcast_sched_full_hardware_binomial(0, schedule, buffer, count, datatype, master_comm, coll_type, info);
-                  }
-              }
-
-              /* last level topology binomial bcast */
-              MPI_Comm hardware_comm = info->hardware_info_ptr->hwcomm[deepest_level];
-
-              //res = __Bcast_binomial(buffer, count, datatype, 0, hardware_comm, coll_type, schedule, info);
-              res = __bcast_sched_full_hardware_binomial(0, schedule, buffer, count, datatype, hardware_comm, coll_type, info);
-
-              return res;
           }
   }
 
@@ -1203,8 +1178,8 @@ static inline int __Bcast_full_binomial_topo(void *buffer, int count, MPI_Dataty
           MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[k];
 
           //res = __Bcast_binomial(buffer, count, datatype, 0, master_comm, coll_type, schedule, info);
-          res = __bcast_sched_full_hardware_binomial(0, 
-                  schedule, buffer, count, datatype, master_comm, coll_type, info);
+          /*TODO replace by __Bcast_binomial when possible */
+          res = __bcast_sched_full_hardware_binomial(0, schedule, buffer, count, datatype, master_comm, coll_type, info);
       }
   }
 
@@ -1213,9 +1188,8 @@ static inline int __Bcast_full_binomial_topo(void *buffer, int count, MPI_Dataty
   MPI_Comm hardware_comm = info->hardware_info_ptr->hwcomm[deepest_level];
 
   //res = __Bcast_binomial(buffer, count, datatype, 0, hardware_comm, coll_type, schedule, info);
-
-  res = __bcast_sched_full_hardware_binomial(0, 
-          schedule, buffer, count, datatype, hardware_comm, coll_type, info);
+  /*TODO replace by __Bcast_binomial when possible */
+  res = __bcast_sched_full_hardware_binomial(0, schedule, buffer, count, datatype, hardware_comm, coll_type, info);
 
 
   return res;

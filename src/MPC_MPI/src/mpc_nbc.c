@@ -9007,6 +9007,8 @@ static inline int NBC_Free(NBC_Handle* handle)
   }
   if(NULL != handle->hardware_info)
   {
+    sctk_free((void *)handle->hardware_info->hwcomm);
+    sctk_free((void *)handle->hardware_info->rootcomm);
     sctk_free((void *)handle->hardware_info);
     handle->hardware_info = NULL;
   }
