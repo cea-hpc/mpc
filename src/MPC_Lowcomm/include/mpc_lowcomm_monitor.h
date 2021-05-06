@@ -92,6 +92,40 @@ typedef struct mpc_lowcomm_monitor_peer_info_s
 uint64_t mpc_lowcomm_monitor_set_peer_count(mpc_lowcomm_monitor_set_t set);
 int mpc_lowcomm_monitor_set_peers(mpc_lowcomm_monitor_set_t set, mpc_lowcomm_monitor_peer_info_t * peers, uint64_t peers_len);
 
+/******************
+ * PORT INTERFACE *
+ ******************/
+
+/* This mimicks the MPI Port Mechanism */
+
+/**
+ * @brief Open a new port for Connect accept
+ *
+ * @param id output string describing the new port
+ * @param id_len the length of the string
+ * @return int 0 on success
+ */
+int mpc_lowcomm_monitor_open_port(char * id, int id_len);
+
+/**
+ * @brief Close a previously openned port
+ *
+ * @param id the port to be freed
+ * @return int 0 on success
+ */
+int mpc_lowcomm_monitor_close_port(const char * id);
+
+/**
+ * @brief Parse port information
+ *
+ * @param id the id to be parsed
+ * @param uid the peer UID contained in the port description
+ * @param port the port ID contained in the port description
+ * @return int 0 on success
+ */
+int mpc_lowcomm_monitor_parse_port(const char * id,  mpc_lowcomm_peer_uid_t *uid, int * port);
+
+
 /************
 * COMMANDS *
 ************/

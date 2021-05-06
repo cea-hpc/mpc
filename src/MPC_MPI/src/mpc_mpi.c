@@ -24,16 +24,17 @@
 #include <string.h>
 #include <dlfcn.h>
 
-#include "mpi_conf.h"
 #include <mpc_mpi_internal.h>
 
-#include <mpc_common_helper.h>
 #include <mpc_launch.h>
+
+#include <mpc_common_helper.h>
 #include <mpc_common_datastructure.h>
 #include <mpc_common_profiler.h>
 #include <mpc_common_debug.h>
 #include <mpc_common_rank.h>
 
+#include "mpi_conf.h"
 #include "sctk_handle.h"
 #include "mpc_mpi_halo.h"
 
@@ -19173,31 +19174,39 @@ int PMPI_Get_library_version(char *version, __UNUSED__ int *resultlen)
 	return MPI_SUCCESS;
 }
 
-/* Name Resolution */
+/*******************
+ * NAME RESOLUTION *
+ *******************/
 
-int PMPI_Lookup_name(__UNUSED__ const char *service_name, __UNUSED__ MPI_Info info, __UNUSED__ char *port_name)
+int PMPI_Lookup_name(__UNUSED__ const char *service_name,
+					 __UNUSED__ MPI_Info info,
+					 __UNUSED__ char *port_name)
 {
 	not_implemented(); return MPI_ERR_INTERN;
 }
 
-static inline int __publish_op(mpc_lowcomm_monitor_command_naming_t cmd, const char *service_name,  MPI_Info info, const char *port_name)
+static inline int __publish_op(mpc_lowcomm_monitor_command_naming_t cmd,
+							   const char *service_name,
+							   __UNUSED__ MPI_Info info,
+							   const char *port_name)
 {
 	/* Publishing is setting a value in the root rank of my process set */
-	mpc_lowcomm_monitor_retcode_t ret;
+	mpc_lowcomm_monitor_retcode_t mret;
 
 	mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_naming(mpc_lowcomm_monitor_uid_of(  mpc_lowcomm_monitor_get_gid() , 0),
 																	cmd,
 																	mpc_lowcomm_monitor_get_uid(),
 																    service_name,
 																    port_name,
-																    &ret);
+																    &mret);
 
 	mpc_lowcomm_monitor_args_t * content = mpc_lowcomm_monitor_response_get_content(resp);
 
 	int err = 0;
 
 
-	if(content->naming.retcode != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
+	if((content->naming.retcode != MPC_LOWCOMM_MONITOR_RET_SUCCESS) ||
+	   (mret != MPC_LOWCOMM_MONITOR_RET_SUCCESS) )
 	{
 		err = 1;
 	}
@@ -19205,14 +19214,15 @@ static inline int __publish_op(mpc_lowcomm_monitor_command_naming_t cmd, const c
 
 	mpc_lowcomm_monitor_response_free(resp);
 
+	int ret = MPI_SUCCESS;
+
 	if(err)
 	{
-		return MPI_ERR_KEYVAL;
+		ret = MPI_ERR_KEYVAL;
 	}
 
-	return MPI_SUCCESS;
+	MPI_HANDLE_RETURN_VAL(ret, MPI_COMM_SELF);
 }
-
 
 int PMPI_Publish_name(const char *service_name,  MPI_Info info, const char *port_name)
 {
@@ -19224,25 +19234,58 @@ int PMPI_Unpublish_name(__UNUSED__ const char *service_name, __UNUSED__ MPI_Info
 	return __publish_op(MPC_LOWCOMM_MONITOR_NAMING_DEL, service_name, info, "");
 }
 
-/* Comm Interconnect */
+/*****************************
+ * COMMUNICATOR INTERCONNECT *
+ *****************************/
 
-int PMPI_Open_port(__UNUSED__ MPI_Info info, __UNUSED__ char *port_name)
+int PMPI_Open_port(__UNUSED__ MPI_Info info, char *port_name)
 {
-	not_implemented(); return MPI_ERR_INTERN;
+	int ret = mpc_lowcomm_monitor_open_port(port_name, MPI_MAX_PORT_NAME);
+
+	if(ret != 0)
+	{
+		ret = MPI_ERR_INTERN;
+	}
+	else
+	{
+		ret = MPI_SUCCESS;
+	}
+
+	MPI_HANDLE_RETURN_VAL(ret, MPI_COMM_SELF);
+
 }
 
 /* Process Creation and Management */
-int PMPI_Close_port(__UNUSED__ const char *port_name)
+int PMPI_Close_port(const char *port_name)
+{
+	int ret = mpc_lowcomm_monitor_close_port(port_name);
+
+	if(ret != 0)
+	{
+		ret = MPI_ERR_INTERN;
+	}
+	else
+	{
+		ret = MPI_SUCCESS;
+	}
+
+	MPI_HANDLE_RETURN_VAL(ret, MPI_COMM_SELF);
+}
+
+int PMPI_Comm_accept(__UNUSED__ const char *port_name,
+					 __UNUSED__ MPI_Info info,
+					 __UNUSED__ int root,
+					 __UNUSED__ MPI_Comm comm,
+					 __UNUSED__ MPI_Comm *newcomm)
 {
 	not_implemented(); return MPI_ERR_INTERN;
 }
 
-int PMPI_Comm_accept(__UNUSED__ const char *port_name, __UNUSED__ MPI_Info info, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Comm *newcomm)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
-int PMPI_Comm_connect(__UNUSED__ const char *port_name, __UNUSED__ MPI_Info info, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Comm *newcomm)
+int PMPI_Comm_connect(__UNUSED__ const char *port_name,
+					  __UNUSED__ MPI_Info info,
+					  __UNUSED__ int root,
+					  __UNUSED__ MPI_Comm comm,
+					  __UNUSED__ MPI_Comm *newcomm)
 {
 	not_implemented(); return MPI_ERR_INTERN;
 }

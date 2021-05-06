@@ -1419,7 +1419,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_commu
 	if(local_rank == 0)
 	{
 		/* ########################################
-		   Build the process list according to high 
+		   Build the process list according to high
         ########################################### */
 		int remote_high = 0;
 		mpc_lowcomm_sendrecv(&high, sizeof(int), 0, 0, &remote_high, 0, intercomm);
@@ -1492,7 +1492,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_commu
 	#endif
 
 		/* ########################################
-		   Elect who is going to choose the ID 
+		   Elect who is going to choose the ID
         ########################################### */
 
 		int my_world_rank = mpc_lowcomm_communicator_world_rank_of(intercomm, 0);
@@ -1523,7 +1523,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_commu
 	mpc_lowcomm_bcast(&intracomm_id,
 	                  sizeof(mpc_lowcomm_communicator_id_t),
 	                  0,
-	                  local_comm);	
+	                  local_comm);
 
 	mpc_lowcomm_group_t *intracomm_group = _mpc_lowcomm_group_create(total_size, remote_descriptors);
 

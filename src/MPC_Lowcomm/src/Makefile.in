@@ -211,8 +211,8 @@ am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c sctk_checksum.c \
 	./portals_am/sctk_ptl_am_arpc_api.c ./portals_am/arpc_weak.c \
 	./ofi/ofi.c ./ofi/ofi_msg.c ./ofi/ofi_rdma.c \
 	./ofi/ofi_toolkit.c ./cplane/auth.c ./cplane/peer.c \
-	./cplane/proto.c ./cplane/monitor.c ./cplane/set.c \
-	./cplane/uid.c ./cplane/name.c am.c
+	./cplane/proto.c ./cplane/port.c ./cplane/monitor.c \
+	./cplane/set.c ./cplane/uid.c ./cplane/name.c am.c
 am__dirstamp = $(am__leading_dot)dirstamp
 @INFINIBAND_DRIVER_ENABLED_TRUE@am__objects_1 = ./ib/sctk_ib_async.lo \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_buffered.lo \
@@ -261,9 +261,9 @@ am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo \
 	./shm/sctk_shm_frag.lo ./shm/sctk_shm_qemu.lo \
 	./shm/sctk_shm_raw_queues_internals.lo $(am__objects_1) \
 	$(am__objects_2) $(am__objects_3) ./cplane/auth.lo \
-	./cplane/peer.lo ./cplane/proto.lo ./cplane/monitor.lo \
-	./cplane/set.lo ./cplane/uid.lo ./cplane/name.lo \
-	$(am__objects_4)
+	./cplane/peer.lo ./cplane/proto.lo ./cplane/port.lo \
+	./cplane/monitor.lo ./cplane/set.lo ./cplane/uid.lo \
+	./cplane/name.lo $(am__objects_4)
 libmpclowcomm_la_OBJECTS = $(am_libmpclowcomm_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -664,8 +664,8 @@ libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c \
 	./shm/sctk_shm_qemu.c ./shm/sctk_shm_raw_queues_internals.c \
 	$(am__append_4) $(am__append_6) $(am__append_8) \
 	./cplane/auth.c ./cplane/peer.c ./cplane/proto.c \
-	./cplane/monitor.c ./cplane/set.c ./cplane/uid.c \
-	./cplane/name.c $(am__append_9)
+	./cplane/port.c ./cplane/monitor.c ./cplane/set.c \
+	./cplane/uid.c ./cplane/name.c $(am__append_9)
 
 # library dependency #
 libmpclowcomm_la_LIBADD = $(ALLOC_LIBS) \
@@ -857,6 +857,8 @@ cplane/$(DEPDIR)/$(am__dirstamp):
 	cplane/$(DEPDIR)/$(am__dirstamp)
 ./cplane/proto.lo: cplane/$(am__dirstamp) \
 	cplane/$(DEPDIR)/$(am__dirstamp)
+./cplane/port.lo: cplane/$(am__dirstamp) \
+	cplane/$(DEPDIR)/$(am__dirstamp)
 ./cplane/monitor.lo: cplane/$(am__dirstamp) \
 	cplane/$(DEPDIR)/$(am__dirstamp)
 ./cplane/set.lo: cplane/$(am__dirstamp) \
@@ -915,6 +917,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/monitor.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/name.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/peer.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/port.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/proto.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/set.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/uid.Plo@am__quote@

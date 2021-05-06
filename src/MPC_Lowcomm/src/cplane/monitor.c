@@ -2101,7 +2101,7 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_naming_info(mpc
  * COMM INFO COMMAND *
  *********************/
 
-static inline _mpc_lowcomm_monitor_wrap_t * __generate_comm_info_cmd(mpc_lowcomm_peer_uid_t dest, 
+static inline _mpc_lowcomm_monitor_wrap_t * __generate_comm_info_cmd(mpc_lowcomm_peer_uid_t dest,
 																	 mpc_lowcomm_communicator_id_t target_id,
 																	 uint64_t size,
 																	 int is_response)
