@@ -630,15 +630,8 @@ void mpcomp_GOMP_parallel_loop_nonmonotonic_dynamic(
     long incr, long chunk_size, unsigned flags )
 {
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-	MPCOMP_GOMP_UNUSED_VAR( fn );
-	MPCOMP_GOMP_UNUSED_VAR( data );
-	MPCOMP_GOMP_UNUSED_VAR( num_threads );
-	MPCOMP_GOMP_UNUSED_VAR( start );
-	MPCOMP_GOMP_UNUSED_VAR( end );
-	MPCOMP_GOMP_UNUSED_VAR( incr );
-	MPCOMP_GOMP_UNUSED_VAR( chunk_size );
-	MPCOMP_GOMP_UNUSED_VAR( flags );
-	not_implemented();
+	__mpcomp_start_parallel_dynamic_loop( fn, data, num_threads, start, end, incr,
+			chunk_size );
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
@@ -648,14 +641,7 @@ bool mpcomp_GOMP_loop_nonmonotonic_dynamic_start( long istart, long iend,
 {
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-	ret = false;
-	MPCOMP_GOMP_UNUSED_VAR( istart );
-	MPCOMP_GOMP_UNUSED_VAR( iend );
-	MPCOMP_GOMP_UNUSED_VAR( incr );
-	MPCOMP_GOMP_UNUSED_VAR( chunk_size );
-	MPCOMP_GOMP_UNUSED_VAR( start );
-	MPCOMP_GOMP_UNUSED_VAR( end );
-	not_implemented();
+	ret = __gomp_loop_dynamic_start( istart, iend, incr, chunk_size, start, end );
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
@@ -667,15 +653,8 @@ void mpcomp_GOMP_parallel_loop_nonmonotonic_guided(
     long incr, long chunk_size, unsigned flags )
 {
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-	MPCOMP_GOMP_UNUSED_VAR( fn );
-	MPCOMP_GOMP_UNUSED_VAR( data );
-	MPCOMP_GOMP_UNUSED_VAR( num_threads );
-	MPCOMP_GOMP_UNUSED_VAR( start );
-	MPCOMP_GOMP_UNUSED_VAR( end );
-	MPCOMP_GOMP_UNUSED_VAR( incr );
-	MPCOMP_GOMP_UNUSED_VAR( chunk_size );
-	MPCOMP_GOMP_UNUSED_VAR( flags );
-	not_implemented();
+	__mpcomp_start_parallel_guided_loop( fn, data, num_threads, start, end, incr,
+			chunk_size );
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
@@ -685,14 +664,7 @@ bool mpcomp_GOMP_loop_nonmonotonic_guided_start( long istart, long iend,
 {
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-	ret = false;
-	MPCOMP_GOMP_UNUSED_VAR( istart );
-	MPCOMP_GOMP_UNUSED_VAR( iend );
-	MPCOMP_GOMP_UNUSED_VAR( incr );
-	MPCOMP_GOMP_UNUSED_VAR( chunk_size );
-	MPCOMP_GOMP_UNUSED_VAR( start );
-	MPCOMP_GOMP_UNUSED_VAR( end );
-	not_implemented();
+	ret = __gomp_loop_guided_start( istart, iend, incr, chunk_size, start, end );
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
@@ -701,10 +673,7 @@ bool mpcomp_GOMP_loop_nonmonotonic_dynamic_next( long *start, long *end )
 {
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-	ret = false;
-	MPCOMP_GOMP_UNUSED_VAR( start );
-	MPCOMP_GOMP_UNUSED_VAR( end );
-	not_implemented();
+	ret = ( __mpcomp_dynamic_loop_next( start, end ) ) ? true : false;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
@@ -713,10 +682,7 @@ bool mpcomp_GOMP_loop_nonmonotonic_guided_next( long *start, long *end )
 {
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-	ret = false;
-	MPCOMP_GOMP_UNUSED_VAR( start );
-	MPCOMP_GOMP_UNUSED_VAR( end );
-	not_implemented();
+	ret = ( __mpcomp_guided_loop_next( start, end ) ) ? true : false;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }

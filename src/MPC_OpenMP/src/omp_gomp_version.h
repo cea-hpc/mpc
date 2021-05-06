@@ -151,7 +151,18 @@ GOMP_ABI_FUNC(GOMP_loop_ull_static_start, "GOMP_2.0",
               mpcomp_GOMP_loop_ull_static_start)
 GOMP_ABI_FUNC(GOMP_taskwait, "GOMP_2.0", mpcomp_GOMP_taskwait,
               _mpc_task_newwait)
-
+GOMP_ABI_FUNC(GOMP_loop_nonmonotonic_dynamic_start, "GOMP_2.0",
+              mpcomp_GOMP_loop_nonmonotonic_dynamic_start,
+              mpcomp_GOMP_loop_nonmonotonic_dynamic_start)
+GOMP_ABI_FUNC(GOMP_loop_nonmonotonic_dynamic_next, "GOMP_2.0",
+              mpcomp_GOMP_loop_nonmonotonic_dynamic_next,
+              mpcomp_GOMP_loop_nonmonotonic_dynamic_next)
+GOMP_ABI_FUNC(GOMP_loop_nonmonotonic_guided_start, "GOMP_2.0",
+              mpcomp_GOMP_loop_nonmonotonic_guided_start,
+              mpcomp_GOMP_loop_nonmonotonic_guided_start)
+GOMP_ABI_FUNC(GOMP_loop_nonmonotonic_guided_next, "GOMP_2.0",
+              mpcomp_GOMP_loop_nonmonotonic_guided_next,
+              mpcomp_GOMP_loop_nonmonotonic_guided_next)
 //All"GOMP_3.0"symbols
 GOMP_ABI_FUNC(GOMP_taskyield, "GOMP_3.0", mpcomp_GOMP_taskyield,
               _mpc_task_newyield)
