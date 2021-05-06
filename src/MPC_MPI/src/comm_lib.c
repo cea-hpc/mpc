@@ -126,7 +126,13 @@ static inline void __mpc_cl_per_communicator_delete(mpc_mpi_cl_per_mpi_process_c
 {
 	mpc_common_spinlock_lock(&(task_specific->per_communicator_lock) );
 	mpc_per_communicator_t *per_communicator = _mpc_cl_per_communicator_get_no_lock(task_specific, comm);
-	assume(per_communicator != NULL);
+
+	if(!per_communicator)
+	{
+		mpc_common_spinlock_unlock(&(task_specific->per_communicator_lock) );
+		return;
+	}
+
 	assume(per_communicator->key == comm);
 	HASH_DELETE(hh, task_specific->per_communicator, per_communicator);
 	sctk_free(per_communicator);
@@ -152,7 +158,12 @@ static inline void ___mpc_cl_per_communicator_copy(mpc_mpi_cl_per_mpi_process_ct
                                                    mpc_per_communicator_t *per_communicator,
                                                    void (*copy_fn)(struct mpc_mpi_per_communicator_s **, struct mpc_mpi_per_communicator_s *) )
 {
-	assume(per_communicator != NULL);
+
+	if(!per_communicator)
+	{
+		return;
+	}
+
 	mpc_per_communicator_t *per_communicator_new = __mpc_cl_per_communicator_alloc();
 	memcpy(per_communicator_new, per_communicator,
 	       sizeof(mpc_per_communicator_t) );
@@ -172,7 +183,10 @@ static inline void __mpc_cl_per_communicator_alloc_from_existing(
 {
 	mpc_per_communicator_t *per_communicator = _mpc_cl_per_communicator_get_no_lock(task_specific, old_comm);
 
-	assume(per_communicator != NULL);
+	if(!per_communicator)
+	{
+		return;
+	}
 	___mpc_cl_per_communicator_copy(task_specific, new_comm, per_communicator, per_communicator->mpc_mpi_per_communicator_copy);
 }
 
@@ -182,7 +196,11 @@ static inline void __mpc_cl_per_communicator_alloc_from_existing_dup(
 {
 	mpc_per_communicator_t *per_communicator = _mpc_cl_per_communicator_get_no_lock(task_specific, old_comm);
 
-	assume(per_communicator != NULL);
+	if(!per_communicator)
+	{
+		return;
+	}
+
 	___mpc_cl_per_communicator_copy(task_specific, new_comm, per_communicator, per_communicator->mpc_mpi_per_communicator_copy_dup);
 }
 
@@ -3495,7 +3513,7 @@ int _mpc_cl_intercommcomm_merge(mpc_lowcomm_communicator_t intercomm, int high, 
 {
 	*newintracomm = mpc_lowcomm_intercommunicator_merge(intercomm, high);
 	__mpc_cl_per_communicator_alloc_from_existing_dup(_mpc_cl_per_mpi_process_ctx_get(),
-	                                                  *newintracomm, intercomm);	
+	                                                  *newintracomm, intercomm);
 	MPC_ERROR_SUCESS();
 }
 

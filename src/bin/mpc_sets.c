@@ -13,7 +13,7 @@ int set_callback(mpc_lowcomm_monitor_set_t set, void * arg)
     uint64_t size = mpc_lowcomm_monitor_set_peer_count(set);
 
     printf("-------------------------\n");
-    printf("SET ID : %lu\n", uid);
+    printf("SET ID : %u\n", uid);
     printf("SIZE   : %lu\n", size);
     printf("CMD    : %s\n", name);
     if(*verbose)

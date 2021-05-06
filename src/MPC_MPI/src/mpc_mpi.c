@@ -16071,7 +16071,7 @@ int PMPI_Intercomm_merge(MPI_Comm intercomm, int high, MPI_Comm *newintracomm)
 	}
 
 	if(rank == 0)
-	{	
+	{
 		int remote_in_error = 0;
 		PMPI_Sendrecv(&in_error, 1, MPI_INT, 0, 123, &remote_in_error, 1, MPI_INT, 0, 123, intercomm, MPI_STATUS_IGNORE);
 		in_error |= remote_in_error;
@@ -16088,7 +16088,10 @@ int PMPI_Intercomm_merge(MPI_Comm intercomm, int high, MPI_Comm *newintracomm)
 	 * PROCEED TO MERGE *
 	 ********************/
 
-	return _mpc_cl_intercommcomm_merge(intercomm, high, newintracomm);
+	int res =  _mpc_cl_intercommcomm_merge(intercomm, high, newintracomm);
+
+
+	MPI_HANDLE_RETURN_VAL(res, intercomm);
 }
 
 /**************************
@@ -19182,56 +19185,55 @@ int PMPI_Lookup_name(__UNUSED__ const char *service_name,
 					 __UNUSED__ MPI_Info info,
 					 __UNUSED__ char *port_name)
 {
-	not_implemented(); return MPI_ERR_INTERN;
-}
+	int ret = mpc_lowcomm_lookup_name(service_name,
+									  port_name,
+									  MPI_MAX_PORT_NAME);
 
-static inline int __publish_op(mpc_lowcomm_monitor_command_naming_t cmd,
-							   const char *service_name,
-							   __UNUSED__ MPI_Info info,
-							   const char *port_name)
-{
-	/* Publishing is setting a value in the root rank of my process set */
-	mpc_lowcomm_monitor_retcode_t mret;
-
-	mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_naming(mpc_lowcomm_monitor_uid_of(  mpc_lowcomm_monitor_get_gid() , 0),
-																	cmd,
-																	mpc_lowcomm_monitor_get_uid(),
-																    service_name,
-																    port_name,
-																    &mret);
-
-	mpc_lowcomm_monitor_args_t * content = mpc_lowcomm_monitor_response_get_content(resp);
-
-	int err = 0;
-
-
-	if((content->naming.retcode != MPC_LOWCOMM_MONITOR_RET_SUCCESS) ||
-	   (mret != MPC_LOWCOMM_MONITOR_RET_SUCCESS) )
+	if(ret != SCTK_SUCCESS)
 	{
-		err = 1;
+		ret = MPI_ERR_INTERN;
 	}
-
-
-	mpc_lowcomm_monitor_response_free(resp);
-
-	int ret = MPI_SUCCESS;
-
-	if(err)
+	else
 	{
-		ret = MPI_ERR_KEYVAL;
+		ret = MPI_SUCCESS;
 	}
 
 	MPI_HANDLE_RETURN_VAL(ret, MPI_COMM_SELF);
 }
 
+
 int PMPI_Publish_name(const char *service_name,  MPI_Info info, const char *port_name)
 {
-	return __publish_op(MPC_LOWCOMM_MONITOR_NAMING_PUT, service_name, info, port_name);
+	int ret = mpc_lowcomm_publish_name(service_name, port_name);
+
+	if(ret != SCTK_SUCCESS)
+	{
+		ret = MPI_ERR_INTERN;
+	}
+	else
+	{
+		ret = MPI_SUCCESS;
+	}
+
+	MPI_HANDLE_RETURN_VAL(ret, MPI_COMM_SELF);
 }
 
-int PMPI_Unpublish_name(__UNUSED__ const char *service_name, __UNUSED__ MPI_Info info, __UNUSED__ const char *port_name)
+int PMPI_Unpublish_name(const char *service_name,
+						__UNUSED__ MPI_Info info,
+						__UNUSED__ const char *port_name)
 {
-	return __publish_op(MPC_LOWCOMM_MONITOR_NAMING_DEL, service_name, info, "");
+	int ret = mpc_lowcomm_unpublish_name(service_name, port_name);
+
+	if(ret != SCTK_SUCCESS)
+	{
+		ret = MPI_ERR_INTERN;
+	}
+	else
+	{
+		ret = MPI_SUCCESS;
+	}
+
+	MPI_HANDLE_RETURN_VAL(ret, MPI_COMM_SELF);
 }
 
 /*****************************
@@ -19240,7 +19242,7 @@ int PMPI_Unpublish_name(__UNUSED__ const char *service_name, __UNUSED__ MPI_Info
 
 int PMPI_Open_port(__UNUSED__ MPI_Info info, char *port_name)
 {
-	int ret = mpc_lowcomm_monitor_open_port(port_name, MPI_MAX_PORT_NAME);
+	int ret = mpc_lowcomm_open_port(port_name, MPI_MAX_PORT_NAME);
 
 	if(ret != 0)
 	{
@@ -19258,7 +19260,7 @@ int PMPI_Open_port(__UNUSED__ MPI_Info info, char *port_name)
 /* Process Creation and Management */
 int PMPI_Close_port(const char *port_name)
 {
-	int ret = mpc_lowcomm_monitor_close_port(port_name);
+	int ret = mpc_lowcomm_close_port(port_name);
 
 	if(ret != 0)
 	{
@@ -19272,22 +19274,50 @@ int PMPI_Close_port(const char *port_name)
 	MPI_HANDLE_RETURN_VAL(ret, MPI_COMM_SELF);
 }
 
-int PMPI_Comm_accept(__UNUSED__ const char *port_name,
+int PMPI_Comm_accept(const char *port_name,
 					 __UNUSED__ MPI_Info info,
-					 __UNUSED__ int root,
-					 __UNUSED__ MPI_Comm comm,
-					 __UNUSED__ MPI_Comm *newcomm)
+					 int root,
+					 MPI_Comm comm,
+					 MPI_Comm *newcomm)
 {
-	not_implemented(); return MPI_ERR_INTERN;
+	int ret = mpc_lowcomm_communicator_accept(port_name,
+											  root,
+											  comm,
+											  newcomm);
+
+	if(ret != 0)
+	{
+		ret = MPI_ERR_INTERN;
+	}
+	else
+	{
+		ret = MPI_SUCCESS;
+	}
+
+	MPI_HANDLE_RETURN_VAL(ret, MPI_COMM_SELF);
 }
 
-int PMPI_Comm_connect(__UNUSED__ const char *port_name,
+int PMPI_Comm_connect(const char *port_name,
 					  __UNUSED__ MPI_Info info,
-					  __UNUSED__ int root,
-					  __UNUSED__ MPI_Comm comm,
-					  __UNUSED__ MPI_Comm *newcomm)
+					  int root,
+					  MPI_Comm comm,
+					  MPI_Comm *newcomm)
 {
-	not_implemented(); return MPI_ERR_INTERN;
+	int ret = mpc_lowcomm_communicator_connect(port_name,
+											   root,
+											   comm,
+											   newcomm);
+
+	if(ret != 0)
+	{
+		ret = MPI_ERR_INTERN;
+	}
+	else
+	{
+		ret = MPI_SUCCESS;
+	}
+
+	MPI_HANDLE_RETURN_VAL(ret, MPI_COMM_SELF);
 }
 
 /************************************************************************/

@@ -733,8 +733,8 @@ void _mpc_comm_ptp_message_commit_request(mpc_lowcomm_ptp_message_t *send,
 		 * for intracomm as there is a single group it is not important */
 		if(0 <= SCTK_MSG_SRC_TASK(send))
         {
-            recv->tail.request->header.source_task = mpc_lowcomm_communicator_rank_of_as(SCTK_MSG_COMMUNICATOR(send), SCTK_MSG_SRC_TASK(send),  SCTK_MSG_SRC_TASK(send) );
-		    assume(recv->tail.request->header.source_task  != MPC_PROC_NULL);
+            recv->tail.request->header.source_task = mpc_lowcomm_communicator_rank_of_as(SCTK_MSG_COMMUNICATOR(send), SCTK_MSG_SRC_TASK(send),  SCTK_MSG_SRC_TASK(send), SCTK_MSG_SRC_PROCESS_UID(send) );
+		    //assume(recv->tail.request->header.source_task  != MPC_PROC_NULL);
         }
         else
         {
@@ -1700,6 +1700,9 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 	{
 		int is_intercomm = mpc_lowcomm_communicator_is_intercomm(communicator);
 
+
+		mpc_lowcomm_peer_uid_t source_process = 0;
+		mpc_lowcomm_peer_uid_t dest_process = 0;
 		int source_task = -1;
 		int dest_task   = -1;
 		/* Fill in Source and Dest Process Informations (convert from task) */
@@ -1714,23 +1717,26 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 				{
 					/* If this is a RECV make sure the translation is done on the source according to remote */
 					source_task = mpc_lowcomm_communicator_remote_world_rank(communicator, source);
-
+					source_process = mpc_lowcomm_communicator_remote_uid_for(communicator, source);
 				}
 				else if(request_type == REQUEST_SEND)
 				{
 					/* If this is a SEND make sure the translation is done on the dest according to remote */
 					source_task = mpc_lowcomm_communicator_world_rank_of(communicator, source);
+					source_process = mpc_lowcomm_communicator_uid_for(communicator, source);
 				}
 			}
 			else
 			{
 				source_task = mpc_lowcomm_communicator_world_rank_of(communicator, source);
+				source_process = mpc_lowcomm_communicator_uid_for(communicator, source);
 			}
 
 		}
 		else
 		{
 			source_task = MPC_ANY_SOURCE;
+			source_process = MPC_ANY_SOURCE;
 		}
 
 		/* DEST Handling */
@@ -1741,43 +1747,44 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 			{
 				/* If this is a RECV make sure the translation is done on the source according to remote */
 				dest_task   = mpc_lowcomm_communicator_world_rank_of(communicator, destination);
+				dest_process = mpc_lowcomm_communicator_uid_for(communicator, destination);
 			}
 			else if(request_type == REQUEST_SEND)
 			{
 				/* If this is a SEND make sure the translation is done on the dest according to remote */
 				dest_task   = mpc_lowcomm_communicator_remote_world_rank(communicator, destination);
+				dest_process = mpc_lowcomm_communicator_remote_uid_for(communicator, destination);
 			}
 		}
 		else
 		{
 			dest_task = mpc_lowcomm_communicator_world_rank_of(communicator, destination);
+			dest_process = mpc_lowcomm_communicator_uid_for(communicator, destination);
 		}
+
+		assert(source_process != 0);
+		SCTK_MSG_SRC_PROCESS_UID_SET(msg, source_process);
+
+		assert(dest_process != 0);
+		SCTK_MSG_DEST_PROCESS_UID_SET(msg, dest_process);
 
 		SCTK_MSG_SRC_TASK_SET(msg, source_task);
+		assert(dest_task != -1);
 		SCTK_MSG_DEST_TASK_SET(msg, dest_task);
 
-		assert(source_task < mpc_common_get_task_count());
-		assert(dest_task < mpc_common_get_task_count());
+		assert(
+			/* Is in another set set */
+			( mpc_lowcomm_peer_get_set(SCTK_MSG_DEST_PROCESS_UID(msg)) != mpc_lowcomm_monitor_get_uid() ) ||
+			/* or does overflows task count */
+			( (source_task < mpc_common_get_task_count()) && (dest_task < mpc_common_get_task_count()) )
+		);
 
 
-		if(source_task != MPC_ANY_SOURCE)
-		{
-			SCTK_MSG_SRC_PROCESS_UID_SET(msg, mpc_lowcomm_communicator_uid_for(communicator, source) );
-		}
-		else
-		{
-			SCTK_MSG_SRC_PROCESS_SET(msg, MPC_ANY_SOURCE);
-		}
-
-		SCTK_MSG_DEST_PROCESS_UID_SET(msg, mpc_lowcomm_communicator_uid_for(communicator, destination));
-
-		assert(SCTK_MSG_SRC_PROCESS(msg) < mpc_common_get_process_count());
-
-		assert( 
+		assert(
 			/* Is in another set set */
 			( mpc_lowcomm_peer_get_set(SCTK_MSG_DEST_PROCESS_UID(msg)) != mpc_lowcomm_monitor_get_uid() ) ||
 			/* or does overflows process count */
-			(SCTK_MSG_DEST_PROCESS(msg) < mpc_common_get_process_count())
+			( (SCTK_MSG_DEST_PROCESS(msg) < mpc_common_get_process_count()) && (SCTK_MSG_SRC_PROCESS(msg) < mpc_common_get_process_count()) )
 		);
 
 
@@ -2248,7 +2255,7 @@ void mpc_lowcomm_ptp_msg_wait_init(struct mpc_lowcomm_ptp_msg_progress_s *wait,
 	   request->header.source_task != MPC_PROC_NULL)
 	{
 		/* Convert task rank to process rank */
-		wait->remote_process = mpc_lowcomm_group_process_rank_from_world(request->header.source_task);
+		wait->remote_process = mpc_lowcomm_communicator_uid(request->comm, request->header.source_task);
 	}
 	else
 	{
@@ -3321,8 +3328,6 @@ int mpc_lowcomm_universe_isend(mpc_lowcomm_peer_uid_t dest,
 		return SCTK_ERROR;
 	}
 
-	mpc_lowcomm_set_uid_t gid = mpc_lowcomm_peer_get_set(dest);
-
 	mpc_lowcomm_ptp_message_t *msg = mpc_lowcomm_ptp_message_header_create(MPC_LOWCOMM_MESSAGE_CONTIGUOUS);
 	mpc_lowcomm_ptp_message_set_contiguous_addr(msg, data, size);
 
@@ -3389,7 +3394,116 @@ int mpc_lowcomm_universe_irecv(mpc_lowcomm_peer_uid_t src,
 	return SCTK_SUCCESS;
 }
 
+/*******************
+ * PORT MANAGEMENT *
+ *******************/
 
+int mpc_lowcomm_open_port(char * port_name, int port_name_len)
+{
+	return mpc_lowcomm_monitor_open_port(port_name, port_name_len);
+}
+
+int mpc_lowcomm_close_port(const char * port_name)
+{
+	return mpc_lowcomm_monitor_close_port(port_name);
+}
+
+/*********************
+ * Name Publishing   *
+ *********************/
+
+static inline int __publish_op(mpc_lowcomm_monitor_command_naming_t cmd,
+							   const char *service_name,
+							   const char *port_name)
+{
+	/* Publishing is setting a value in the root rank of my process set */
+	mpc_lowcomm_monitor_retcode_t mret;
+
+	mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_naming(mpc_lowcomm_monitor_uid_of(  mpc_lowcomm_monitor_get_gid() , 0),
+																	cmd,
+																	mpc_lowcomm_monitor_get_uid(),
+																    service_name,
+																    port_name,
+																    &mret);
+
+	mpc_lowcomm_monitor_args_t * content = mpc_lowcomm_monitor_response_get_content(resp);
+
+	int err = 0;
+
+
+	if((content->naming.retcode != MPC_LOWCOMM_MONITOR_RET_SUCCESS) ||
+	   (mret != MPC_LOWCOMM_MONITOR_RET_SUCCESS) )
+	{
+		err = 1;
+	}
+
+	mpc_lowcomm_monitor_response_free(resp);
+
+	return (err?SCTK_ERROR:SCTK_SUCCESS);
+}
+
+
+int mpc_lowcomm_publish_name(const char *service_name,
+                             const char *port_name)
+{
+	return __publish_op(MPC_LOWCOMM_MONITOR_NAMING_PUT, service_name, port_name);
+}
+
+int mpc_lowcomm_unpublish_name(const char *service_name,
+                               __UNUSED__ const char *port_name)
+{
+	return __publish_op(MPC_LOWCOMM_MONITOR_NAMING_DEL, service_name, "");
+}
+
+int mpc_lowcomm_lookup_name(const char *service_name,
+                            char *port_name,
+                            int port_name_len)
+{
+	int roots_count = 0;
+	mpc_lowcomm_peer_uid_t *set_roots = _mpc_lowcomm_get_set_roots(&roots_count);
+
+	int i;
+
+	for(i = 0 ; i < roots_count ; i++)
+	{
+		/* Now try to resolve starting from ourselves */
+		mpc_lowcomm_monitor_retcode_t mret;
+
+		mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_naming(set_roots[i],
+																		 MPC_LOWCOMM_MONITOR_NAMING_GET,
+																		 mpc_lowcomm_monitor_get_uid(),
+																		 service_name,
+																		 "",
+																		&mret);
+
+		mpc_lowcomm_monitor_args_t * content = mpc_lowcomm_monitor_response_get_content(resp);
+
+		int err = 0;
+
+
+		if((content->naming.retcode != MPC_LOWCOMM_MONITOR_RET_SUCCESS) ||
+		(mret != MPC_LOWCOMM_MONITOR_RET_SUCCESS) )
+		{
+			err = 1;
+		}
+
+		if(!err)
+		{
+			snprintf(port_name, port_name_len, "%s", content->naming.port_name);
+		}
+
+		mpc_lowcomm_monitor_response_free(resp);
+
+		if(!err)
+		{
+			break;
+		}
+	}
+
+	_mpc_lowcomm_free_set_roots(set_roots);
+
+	return SCTK_SUCCESS;
+}
 
 /********************
  * SETUP & TEARDOWN *

@@ -121,6 +121,9 @@ static inline void __fill_process_info_remote(mpc_lowcomm_group_t *g)
 	mpc_lowcomm_peer_uid_t last_seen_uid = 0;
 	int uid_count = 0;
 
+	mpc_lowcomm_peer_uid_t my_uid = mpc_lowcomm_monitor_get_uid();
+	int local_task_count = 0;
+
 	for(i = 0 ; i < g->size; i++)
 	{
 		if(!last_seen_uid || (last_seen_uid != all_proc_uids[i]))
@@ -128,10 +131,15 @@ static inline void __fill_process_info_remote(mpc_lowcomm_group_t *g)
 			last_seen_uid = all_proc_uids[i];
 			uid_count++;
 		}
+		if(my_uid == all_proc_uids[i])
+		{
+			local_task_count++;
+		}
 	}
 
 	g->tasks_count_in_process = 0;
 	g->process_count = uid_count;
+	g->tasks_count_in_process = local_task_count;
 
 	sctk_free(all_proc_uids);
 }
@@ -281,14 +289,17 @@ int mpc_lowcomm_group_get_local_leader(mpc_lowcomm_group_t *g)
 	return g->local_leader;
 }
 
-int mpc_lowcomm_group_includes(mpc_lowcomm_group_t *g, int cw_rank)
+
+int mpc_lowcomm_group_includes(mpc_lowcomm_group_t *g, int cw_rank, mpc_lowcomm_peer_uid_t uid)
 {
 	if(cw_rank == MPC_PROC_NULL)
 	{
 		return 0;
 	}
 
-	return mpc_lowcomm_group_rank_for(g, cw_rank) != MPC_PROC_NULL;
+	int rank = mpc_lowcomm_group_rank_for(g, cw_rank, uid);
+
+	return rank != MPC_PROC_NULL;
 }
 
 /****************************************
@@ -523,7 +534,7 @@ int mpc_lowcomm_group_world_rank(mpc_lowcomm_group_t *g, int rank)
 	return desc->comm_world_rank;
 }
 
-int mpc_lowcomm_group_rank_for(mpc_lowcomm_group_t *g, int rank)
+int mpc_lowcomm_group_rank_for(mpc_lowcomm_group_t *g, int rank, mpc_lowcomm_peer_uid_t uid)
 {
 	assert(0 <= rank);
 
@@ -532,11 +543,13 @@ int mpc_lowcomm_group_rank_for(mpc_lowcomm_group_t *g, int rank)
 		return rank;
 	}
 
-
 	if(g->global_to_local)
 	{
-		//mpc_common_debug_error("RANK %d MAPS to %d", rank, g->global_to_local[rank]);
-		return g->global_to_local[rank];
+		int trank =  g->global_to_local[rank];
+		if(g->ranks[trank].host_process_uid == uid)
+		{
+			return trank;
+		}
 	}
 
 
@@ -549,7 +562,7 @@ int mpc_lowcomm_group_rank_for(mpc_lowcomm_group_t *g, int rank)
 	{
 		//mpc_common_debug_error("[%d] %d == %d ?",i,  rank, g->ranks[i].comm_world_rank);
 
-		if(g->ranks[i].comm_world_rank == rank)
+		if( (g->ranks[i].comm_world_rank == rank) && (g->ranks[i].host_process_uid == uid) )
 		{
 			return i;
 		}
@@ -560,7 +573,7 @@ int mpc_lowcomm_group_rank_for(mpc_lowcomm_group_t *g, int rank)
 
 int mpc_lowcomm_group_rank(mpc_lowcomm_group_t *g)
 {
-	return mpc_lowcomm_group_rank_for(g, mpc_lowcomm_get_rank() );
+	return mpc_lowcomm_group_rank_for(g, mpc_lowcomm_get_rank(), mpc_lowcomm_monitor_get_uid() );
 }
 
 int mpc_lowcomm_group_translate_ranks(mpc_lowcomm_group_t *g1, int n, const int ranks1[], mpc_lowcomm_group_t *g2, int ranks2[])

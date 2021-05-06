@@ -1,5 +1,5 @@
 /* ############################# MPC License ############################## */
-/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* # Thu May  6 10:26:16 CEST 2021                                        # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -15,8 +15,15 @@
 /* # had knowledge of the CeCILL-C license and that you accept its        # */
 /* # terms.                                                               # */
 /* #                                                                      # */
+/* # Maintainers:                                                         # */
+/* # - CARRIBAULT Patrick patrick.carribault@cea.fr                       # */
+/* # - JAEGER Julien julien.jaeger@cea.fr                                 # */
+/* # - PERACHE Marc marc.perache@cea.fr                                   # */
+/* # - ROUSSEL Adrien adrien.roussel@cea.fr                               # */
+/* # - TABOADA Hugo hugo.taboada@cea.fr                                   # */
+/* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
+/* # - BESNARD Jean-Baptiste jbbesnard@paratools.fr                       # */
 /* #                                                                      # */
 /* ######################################################################## */
 #ifndef MPC_LOWCOMM_COMMUNICATOR_H
@@ -203,6 +210,16 @@ int mpc_lowcomm_communicator_free(mpc_lowcomm_communicator_t *pcomm);
 mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_uid(const mpc_lowcomm_communicator_t comm, int rank);
 
 /**
+ * @brief Check if a given communicator contains a given UID
+ *
+ * @param comm the comm to check
+ * @param uid the UID to check
+ * @return int true if UID is part of the comm
+ */
+int mpc_lowcomm_communicator_contains(const mpc_lowcomm_communicator_t comm,
+                                      const mpc_lowcomm_peer_uid_t uid);
+
+/**
  * @brief Get rank in communicator for current process
  *
  * @param comm communicator to query
@@ -263,7 +280,8 @@ int mpc_lowcomm_communicator_rank_of(const mpc_lowcomm_communicator_t comm, cons
  */
 int mpc_lowcomm_communicator_rank_of_as(const mpc_lowcomm_communicator_t comm,
                                         const int comm_world_rank,
-                                        const int lookup_cw_rank);
+                                        const int lookup_cw_rank,
+                                        mpc_lowcomm_peer_uid_t lookup_uid);
 
 /**
  * @brief Get comm world rank for a given communicator rank
@@ -299,13 +317,22 @@ int mpc_lowcomm_communicator_get_process_count(const mpc_lowcomm_communicator_t 
 int *mpc_lowcomm_communicator_get_process_list(const mpc_lowcomm_communicator_t comm);
 
 /**
- * @brief Get the process UID for a given rank
+ * @brief Get the process UID for a given rank in local comm
  *
  * @param comm the communicator to look into
  * @param rank the task rank to target
  * @return mpc_lowcomm_peer_uid_t the corresponding process UID
  */
 mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_uid_for(const mpc_lowcomm_communicator_t comm, int rank);
+
+/**
+ * @brief Get the process UID for a given rank in remote comm
+ *
+ * @param comm the communicator to look into
+ * @param rank the task rank to target
+ * @return mpc_lowcomm_peer_uid_t the corresponding process UID
+ */
+mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_remote_uid_for(const mpc_lowcomm_communicator_t comm, int rank);
 
 /*********************
 * INTERCOMM SUPPORT *
@@ -372,7 +399,9 @@ int mpc_lowcomm_communicator_in_left_group(const mpc_lowcomm_communicator_t comm
  * @param comm_world_rank the rank to be checked
  * @return int true if the rank is in left group
  */
-int mpc_lowcomm_communicator_in_left_group_rank(const mpc_lowcomm_communicator_t communicator, int comm_world_rank);
+int mpc_lowcomm_communicator_in_left_group_rank(const mpc_lowcomm_communicator_t communicator,
+                                                int comm_world_rank,
+                                                mpc_lowcomm_peer_uid_t uid);
 
 /**
  * @brief Check if the rank is in the right group
@@ -389,13 +418,15 @@ int mpc_lowcomm_communicator_in_right_group(const mpc_lowcomm_communicator_t com
  * @param comm_world_rank the rank to be checked
  * @return int true if the rank is in right group
  */
-int mpc_lowcomm_communicator_in_right_group_rank(const mpc_lowcomm_communicator_t communicator, int comm_world_rank);
+int mpc_lowcomm_communicator_in_right_group_rank(const mpc_lowcomm_communicator_t communicator,
+                                                 int comm_world_rank,
+                                                 mpc_lowcomm_peer_uid_t uid);
 
 /* Accessors */
 
 /**
  * @brief Get the local communicator (on intracomm returns intracomm)
- * 
+ *
  * @param comm the communicator to querry
  * @return mpc_lowcomm_communicator_t the local comm for current rank
  */
@@ -403,17 +434,18 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_local(mpc_lowcomm_commun
 
 /**
  * @brief Get the local communicator (on intracomm returns intracomm) for a given rank
- * 
+ *
  * @param comm the communicator to querry
  * @param lookup_cw_rank the rank to check for membership in the comm (in comm_world)
  * @return mpc_lowcomm_communicator_t the local comm for lookup_cw_rank
  */
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_local_as(mpc_lowcomm_communicator_t comm,
-                                                                 int lookup_cw_rank);
+                                                                 int lookup_cw_rank,
+                                                                 mpc_lowcomm_peer_uid_t uid);
 
 /**
  * @brief Get the remote communicator (on intracomm returns intracomm)
- * 
+ *
  * @param comm the communicator to querry
  * @return mpc_lowcomm_communicator_t the remote comm for current rank
  */
@@ -421,16 +453,18 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote(mpc_lowcomm_commu
 
 /**
  * @brief Get the remote communicator (on intracomm returns intracomm) from a given cw rank
- * 
+ *
  * @param comm the communicator to querry
  * @param lookup_cw_rank the rank to check for membership in the comm (in comm_world)
  * @return mpc_lowcomm_communicator_t the remote comm for current rank
  */
-mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote_as(mpc_lowcomm_communicator_t comm, int lookup_cw_rank);
+mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote_as(mpc_lowcomm_communicator_t comm,
+                                                                  int lookup_cw_rank,
+																  mpc_lowcomm_peer_uid_t uid);
 
 /**
  * @brief Get the size for the remote comm
- * 
+ *
  * @param comm intercomm to querry
  * @return int the size of the remote comm
  */
@@ -438,7 +472,7 @@ int mpc_lowcomm_communicator_remote_size(mpc_lowcomm_communicator_t comm);
 
 /**
  * @brief Get world rank for a process in the remote comm
- * 
+ *
  * @param communicator the intercomm to query
  * @param rank the remote rank
  * @return int the comm world rank for the remote rank
@@ -449,11 +483,42 @@ int mpc_lowcomm_communicator_remote_world_rank(const mpc_lowcomm_communicator_t 
  * UNIVERSE COMM *
  *****************/
 
+/**
+ * @brief Build a given communicator ID as seen by a remote peer
+ *
+ * @param remote remote peer aware of the communicator with given ID
+ * @param id the ID of the communicator to build
+ * @param outcomm the output communicator
+ * @return int SCTK_SUCCESS if all OK
+ */
 int mpc_lowcomm_communicator_build_remote(mpc_lowcomm_peer_uid_t remote,
 										  const mpc_lowcomm_communicator_id_t id,
 										  mpc_lowcomm_communicator_t *outcomm);
 
-int mpc_lowcomm_communicator_build_remote_world(const mpc_lowcomm_set_uid_t gid, mpc_lowcomm_communicator_t *comm);
+/**
+ * @brief Build the remote comm_world as seen by the remote group
+ *
+ * @param gid the identifier of the group to be targetted
+ * @param comm output communicator
+ * @return int SCTK_SUCCESS if all OK
+ */
+int mpc_lowcomm_communicator_build_remote_world(const mpc_lowcomm_set_uid_t gid,
+                                                mpc_lowcomm_communicator_t *comm);
+
+/***********************************
+ * COMMUNICATOR CONNECT AND ACCEPT *
+ ***********************************/
+
+int mpc_lowcomm_communicator_connect(const char *port_name,
+                                     int root,
+                                     mpc_lowcomm_communicator_t comm,
+                                     mpc_lowcomm_communicator_t *new_comm);
+
+int mpc_lowcomm_communicator_accept(const char *port_name,
+                                    int root,
+                                    mpc_lowcomm_communicator_t comm,
+                                    mpc_lowcomm_communicator_t *new_comm);
+
 
 /***********************************
 * COMMUNICATOR COLLECTIVE CONTEXT *
@@ -461,7 +526,7 @@ int mpc_lowcomm_communicator_build_remote_world(const mpc_lowcomm_set_uid_t gid,
 
 /**
  * @brief Retrieve all infos about a comm in one call (fastpath for collectives)
- * 
+ *
  * @param comm the communicator of interest
  * @param is_intercomm set to true if it is an intercomm
  * @param is_shm set to true if the comm resides in shared memory
@@ -475,7 +540,7 @@ int mpc_lowcomm_communicator_attributes(const mpc_lowcomm_communicator_t comm,
 
 /**
  * @brief Check if the communicator is in shared memory
- * 
+ *
  * @param comm the communicator  
  * @return int true if the comm is shared memory
  */
@@ -483,7 +548,7 @@ int mpc_lowcomm_communicator_is_shared_mem(const mpc_lowcomm_communicator_t comm
 
 /**
  * @brief Check if the communicator is on a single node
- * 
+ *
  * @param comm the communicator
  * @return int true if it is in shared-node
  */

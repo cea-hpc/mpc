@@ -1,5 +1,5 @@
 /* ############################# MPC License ############################## */
-/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* # Thu May  6 10:26:16 CEST 2021                                        # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -15,8 +15,15 @@
 /* # had knowledge of the CeCILL-C license and that you accept its        # */
 /* # terms.                                                               # */
 /* #                                                                      # */
+/* # Maintainers:                                                         # */
+/* # - CARRIBAULT Patrick patrick.carribault@cea.fr                       # */
+/* # - JAEGER Julien julien.jaeger@cea.fr                                 # */
+/* # - PERACHE Marc marc.perache@cea.fr                                   # */
+/* # - ROUSSEL Adrien adrien.roussel@cea.fr                               # */
+/* # - TABOADA Hugo hugo.taboada@cea.fr                                   # */
+/* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
+/* # - BESNARD Jean-Baptiste jbbesnard@paratools.fr                       # */
 /* #                                                                      # */
 /* ######################################################################## */
 #include "communicator.h"
@@ -67,10 +74,11 @@ void mpc_lowcomm_communicator_print(mpc_lowcomm_communicator_t comm, int root_on
 		return;
 	}
 
-	mpc_common_debug_error("========COMM %u @ %p=======", comm->id, comm);
+	mpc_common_debug_error("========COMM %lu @ %p=======", comm->id, comm);
 	
 	mpc_common_debug_error("TYPE: %s", (comm->group || comm->is_comm_self)?"intracomm":"intercomm");
 	mpc_common_debug_error("IS SELF: %s", (comm->is_comm_self)?"yes":"no");
+	mpc_common_debug_error("GID: %lu", mpc_lowcomm_get_comm_gid(comm->id));
 
 	if(is_intercomm)
 	{
@@ -90,7 +98,10 @@ void mpc_lowcomm_communicator_print(mpc_lowcomm_communicator_t comm, int root_on
 		int i;
 		for(i = 0 ; i < size; i++)
 		{
-			mpc_common_debug_error("COMM %d is CW %d", i, mpc_lowcomm_communicator_world_rank_of(comm, i));
+			mpc_common_debug_error("COMM %d is CW %d UID %lu",
+								   i,
+								   mpc_lowcomm_communicator_world_rank_of(comm, i),
+								   mpc_lowcomm_communicator_uid(comm, i));
 		}
 		mpc_common_debug_error("-----------------");
 
@@ -154,6 +165,9 @@ typedef struct mpc_lowcomm_internal_communicator_s
 
 static inline mpc_lowcomm_internal_communicator_t *__init_communicator_with_id(mpc_lowcomm_communicator_id_t comm_id,
                                                                                mpc_lowcomm_group_t *group,
+																			   int is_comm_self,
+																			   mpc_lowcomm_communicator_t left_comm,
+																			   mpc_lowcomm_communicator_t right_comm,
 																			   int forced_linear_id);
 
 int mpc_lowcomm_communicator_build_remote(mpc_lowcomm_peer_uid_t remote,
@@ -220,7 +234,12 @@ int mpc_lowcomm_communicator_build_remote(mpc_lowcomm_peer_uid_t remote,
 	mpc_lowcomm_group_t *remote_group = _mpc_lowcomm_group_create(peer_count, remote_desc);
 	mpc_lowcomm_internal_communicator_t *ret = __init_communicator_with_id(id,
                                                                            remote_group,
+																		   0,
+																		   MPC_COMM_NULL,
+																		   MPC_COMM_NULL,
 																		   0);
+
+	mpc_lowcomm_group_free(&remote_group);
 
 	if(!ret)
 	{
@@ -238,6 +257,373 @@ int mpc_lowcomm_communicator_build_remote_world(const mpc_lowcomm_set_uid_t gid,
 	return mpc_lowcomm_communicator_build_remote( mpc_lowcomm_monitor_uid_of(gid, 0),
 												  mpc_lowcomm_get_comm_world_id_gid(gid),
 												  comm);
+}
+
+
+/***********************************
+ * COMMUNICATOR CONNECT AND ACCEPT *
+ ***********************************/
+
+struct _mpc_lowcomm_connect_desc_s
+{
+	mpc_lowcomm_peer_uid_t uid;
+	mpc_lowcomm_communicator_id_t comm_id;
+	mpc_lowcomm_communicator_id_t new_comm_id;
+};
+
+
+static inline int __broadcast_new_comm(mpc_lowcomm_communicator_t local_comm,
+								       mpc_lowcomm_communicator_t tobcast,
+									   int root,
+									   mpc_lowcomm_communicator_t *newcomm)
+{
+	assume(local_comm != MPC_COMM_NULL);
+
+	int my_rank = mpc_lowcomm_get_comm_rank(local_comm);
+
+	if(root == my_rank)
+	{
+		assume(tobcast != MPC_COMM_NULL);
+		*newcomm = tobcast;
+
+		mpc_lowcomm_bcast(&tobcast->id,
+						  sizeof(mpc_lowcomm_communicator_id_t),
+						  root,
+						  local_comm);
+
+		mpc_lowcomm_bcast(&tobcast->group->size,
+						  sizeof(unsigned int),
+						  root,
+						  local_comm);
+
+		mpc_lowcomm_bcast(tobcast->group->ranks,
+		                  tobcast->group->size * sizeof(_mpc_lowcomm_group_rank_descriptor_t),
+						  root,
+						  local_comm);
+
+	}
+	else
+	{
+		mpc_lowcomm_communicator_id_t comm_id = 0;
+		mpc_lowcomm_bcast(&comm_id,
+						  sizeof(mpc_lowcomm_communicator_id_t),
+						  root,
+						  local_comm);
+
+		unsigned int group_size;
+		mpc_lowcomm_bcast(&group_size, sizeof(unsigned int), root, local_comm);
+
+		_mpc_lowcomm_group_rank_descriptor_t * descs = sctk_malloc(group_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t));
+		assume(descs != NULL);
+
+		mpc_lowcomm_bcast(descs, group_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t), root, local_comm);
+
+		/* Now we create a group from descriptors */
+		mpc_lowcomm_group_t *comm_group = _mpc_lowcomm_group_create(group_size, descs);
+
+		static mpc_common_spinlock_t __bcast_creation_lock = SCTK_SPINLOCK_INITIALIZER;
+
+		mpc_common_spinlock_lock(&__bcast_creation_lock);
+
+		*newcomm = mpc_lowcomm_get_communicator_from_id(comm_id);
+
+		if(*newcomm == NULL)
+		{
+
+			/* And eventually our comm of interest */
+			*newcomm = __init_communicator_with_id(comm_id,
+												comm_group,
+												0,
+												MPC_COMM_NULL,
+												MPC_COMM_NULL,
+												0);
+
+		}
+		else
+		{
+			_mpc_lowcomm_communicator_acquire(*newcomm);
+		}
+
+
+		mpc_common_spinlock_unlock(&__bcast_creation_lock);
+
+
+		mpc_lowcomm_group_free(&comm_group);
+	}
+
+	return SCTK_SUCCESS;
+}
+
+static inline mpc_lowcomm_communicator_id_t  __communicator_id_new(void);
+
+static inline mpc_lowcomm_communicator_id_t __send_connect_infos(mpc_lowcomm_peer_uid_t dest,
+																int port_tag,
+																mpc_lowcomm_communicator_t local_comm,
+																mpc_lowcomm_communicator_t remote_world,
+																int gen_new_comm_id)
+{
+	struct _mpc_lowcomm_connect_desc_s desc;
+	desc.uid = mpc_lowcomm_monitor_get_uid();
+	desc.comm_id = mpc_lowcomm_communicator_id(local_comm);
+
+	if(gen_new_comm_id)
+	{
+		desc.new_comm_id = __communicator_id_new();
+	}
+	else
+	{
+		desc.new_comm_id = MPC_LOWCOMM_COMM_NULL_ID;
+	}
+
+	mpc_lowcomm_request_t req;
+
+	mpc_lowcomm_universe_isend(dest,
+							   &desc,
+							   sizeof(struct _mpc_lowcomm_connect_desc_s),
+							   port_tag,
+							   remote_world,
+							   &req);
+
+	mpc_lowcomm_wait(&req, SCTK_STATUS_NULL);
+
+	return desc.new_comm_id;
+}
+
+
+static inline void __recv_connect_infos(struct _mpc_lowcomm_connect_desc_s *remote_desc,
+										mpc_lowcomm_peer_uid_t from,
+										int port_tag)
+{
+	mpc_lowcomm_request_t req;
+
+	/* Now Post a RECV on universe for incomming connections
+	   this recv will contain the remote root ID and communicator ID as the rank in peer comm */
+	mpc_lowcomm_universe_irecv(from,
+							   remote_desc,
+							   sizeof(struct _mpc_lowcomm_connect_desc_s),
+							   port_tag,
+							   &req);
+
+	mpc_lowcomm_wait(&req, SCTK_STATUS_NULL);
+}
+
+static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communicator_t comm,
+                                                            mpc_lowcomm_group_t *group,
+                                                            mpc_lowcomm_communicator_t left_comm,
+                                                            mpc_lowcomm_communicator_t right_comm,
+                                                            int is_comm_self,
+                                                            int check_if_current_rank_belongs,
+                                                            mpc_lowcomm_communicator_id_t forced_id);
+
+
+static inline int __comm_connect_accept(const char *port_name,
+                                        int root,
+                                        mpc_lowcomm_communicator_t comm,
+                                        mpc_lowcomm_communicator_t *new_comm,
+										int is_accept)
+{
+	/* Start with a dup */
+	mpc_lowcomm_communicator_t orig_comm = comm;
+	comm = mpc_lowcomm_communicator_dup(comm);
+
+	/* Only meaningfull at root */
+	mpc_lowcomm_communicator_t remote_world = MPC_COMM_NULL;
+	/* Only meaningfull at root */
+	struct _mpc_lowcomm_connect_desc_s remote_desc;
+
+
+	int rank = mpc_lowcomm_get_comm_rank(comm);
+
+	int retained_root = root;
+
+	mpc_lowcomm_peer_uid_t listening_peer;
+	int port_tag = 0;
+	mpc_lowcomm_communicator_id_t new_comm_id = MPC_LOWCOMM_COMM_NULL_ID;
+
+	if(rank == root)
+	{
+
+
+		/* First decode the port */
+		if( mpc_lowcomm_monitor_parse_port(port_name, &listening_peer, &port_tag) < 0)
+		{
+			return SCTK_ERROR;
+		}
+
+		int listening_peer_rank = mpc_lowcomm_peer_get_rank(listening_peer);
+
+		if(is_accept)
+		{
+			/* Now we make sure the listening peer is part of our local comm */
+			if(!mpc_lowcomm_communicator_contains(comm, listening_peer))
+			{
+				mpc_common_debug_warning("This port is not part of our comm");
+				return SCTK_ERROR;
+			}
+
+			retained_root = listening_peer_rank;
+		}
+	}
+
+	/* Bcast the tag to local comm */
+	mpc_lowcomm_bcast(&port_tag, sizeof(int), retained_root, comm);
+
+	mpc_lowcomm_communicator_t remote_comm = MPC_COMM_NULL;
+
+
+	if(rank == retained_root)
+	{
+		if(is_accept)
+		{
+
+			/* Receive remote connection infos */
+			__recv_connect_infos(&remote_desc, MPC_ANY_SOURCE, port_tag);
+
+			/* Connect generates the comm_id */
+			new_comm_id = remote_desc.new_comm_id;
+
+			mpc_lowcomm_communicator_build_remote_world(mpc_lowcomm_peer_get_set(remote_desc.uid),
+														&remote_world);
+
+
+			/* Send my connection infos */
+			__send_connect_infos(remote_desc.uid, port_tag, comm, remote_world, 0);
+
+
+		}
+		else
+		{
+			mpc_lowcomm_communicator_build_remote_world(mpc_lowcomm_peer_get_set(listening_peer),
+														&remote_world);
+
+			/* Send my connection infos
+			   note that it is in this function that we generate comm id */
+			new_comm_id = __send_connect_infos(listening_peer,
+											   port_tag,
+											   comm,
+											   remote_world,
+											   1);
+
+			/* Receive remote connection infos */
+			__recv_connect_infos(&remote_desc, MPC_ANY_SOURCE, port_tag);
+
+		}
+
+		mpc_common_debug_error("REMOTE is %lu", remote_desc.comm_id);
+
+		static mpc_common_spinlock_t __creation_lock = SCTK_SPINLOCK_INITIALIZER;
+
+		mpc_common_spinlock_lock(&__creation_lock);
+
+
+		remote_comm = mpc_lowcomm_get_communicator_from_id(remote_desc.comm_id);
+
+		if(!remote_comm)
+		{
+
+			if( mpc_lowcomm_communicator_build_remote(remote_desc.uid,
+													remote_desc.comm_id,
+													&remote_comm) )
+			{
+				mpc_common_debug_warning("Failed to retrieve remote comm info");
+				return SCTK_ERROR;
+			}
+
+		}
+		else
+		{
+			_mpc_lowcomm_communicator_acquire(remote_comm);
+		}
+
+		mpc_common_spinlock_unlock(&__creation_lock);
+
+		assume(remote_comm != MPC_COMM_NULL);
+	}
+
+	mpc_lowcomm_communicator_t _bcast_remote_comm = MPC_COMM_NULL;
+
+	__broadcast_new_comm(comm,
+						 remote_comm,
+						 retained_root,
+						 &_bcast_remote_comm);
+
+	assume(_bcast_remote_comm != MPC_COMM_NULL);
+
+	/* At this point we have both the local and the remote comm
+	   available everywhere */
+
+	mpc_lowcomm_bcast(&new_comm_id, sizeof(mpc_lowcomm_communicator_id_t), retained_root, comm);
+
+    *new_comm = __new_communicator(orig_comm,
+									NULL,
+									comm,
+									_bcast_remote_comm,
+									0,
+									0,
+									new_comm_id);
+
+
+	mpc_lowcomm_communicator_print(*new_comm, 0);
+
+
+	/* Now Manual Barrier to ensure comm is known everywhere */
+	mpc_lowcomm_barrier(comm);
+
+	if(rank == retained_root)
+	{
+		mpc_lowcomm_request_t sync_reqs[2];
+		int dummy;
+
+		mpc_lowcomm_peer_uid_t sync_peer = -1;
+
+		if(is_accept)
+		{
+			sync_peer = remote_desc.uid;
+		}
+		else
+		{
+			sync_peer = listening_peer;
+		}
+
+		mpc_lowcomm_universe_isend(sync_peer,
+									&rank,
+									sizeof(int),
+									port_tag,
+									remote_world,
+									&sync_reqs[0]);
+		mpc_lowcomm_universe_irecv(sync_peer,
+									&dummy,
+									sizeof(int),
+									port_tag,
+									&sync_reqs[1]);
+
+
+		mpc_lowcomm_waitall(2, sync_reqs, SCTK_STATUS_NULL);
+
+		/* We do not need the remote world anymore */
+		mpc_lowcomm_communicator_free(&remote_world);
+	}
+
+	mpc_lowcomm_barrier(comm);
+
+	return SCTK_SUCCESS;
+}
+
+
+int mpc_lowcomm_communicator_connect(const char *port_name,
+                                     int root,
+                                     mpc_lowcomm_communicator_t comm,
+                                     mpc_lowcomm_communicator_t *new_comm)
+{
+	return __comm_connect_accept(port_name,  root, comm, new_comm, 0);
+}
+
+int mpc_lowcomm_communicator_accept(const char *port_name,
+                                    int root,
+                                    mpc_lowcomm_communicator_t comm,
+                                    mpc_lowcomm_communicator_t *new_comm)
+{
+	return __comm_connect_accept(port_name,  root, comm, new_comm, 1);
 }
 
 
@@ -408,6 +794,9 @@ static inline void __communicator_id_register(mpc_lowcomm_communicator_t comm, i
 
 static inline mpc_lowcomm_internal_communicator_t *__init_communicator_with_id(mpc_lowcomm_communicator_id_t comm_id,
                                                                                mpc_lowcomm_group_t *group,
+																			   int is_comm_self,
+																			   mpc_lowcomm_communicator_t left_comm,
+																			   mpc_lowcomm_communicator_t right_comm,
 																			   int forced_linear_id)
 {
 	mpc_lowcomm_internal_communicator_t *ret = sctk_malloc(sizeof(mpc_lowcomm_internal_communicator_t) );
@@ -416,14 +805,28 @@ static inline mpc_lowcomm_internal_communicator_t *__init_communicator_with_id(m
 
 	ret->id           = comm_id;
 	ret->group        = group;
-	ret->is_comm_self = 0;
 	ret->process_span = 1;
 	ret->shm_coll     = NULL;
 	ret->linear_comm_id = -1;
 
 	/* Intercomm ctx */
-	ret->left_comm  = MPC_COMM_NULL;
-	ret->right_comm = MPC_COMM_NULL;
+	ret->is_comm_self = is_comm_self;
+
+	/* Intercommm ctx we acquire a ref to inner comms */
+
+	ret->left_comm = left_comm;
+
+	if(ret->left_comm != MPC_COMM_NULL)
+	{
+		_mpc_lowcomm_communicator_acquire(ret->left_comm);
+	}
+
+	ret->right_comm = right_comm;
+
+	if(ret->right_comm != MPC_COMM_NULL)
+	{
+		_mpc_lowcomm_communicator_acquire(ret->right_comm);
+	}
 
   /* Topo comms */
   ___init_topo_comm(ret);
@@ -804,8 +1207,8 @@ int mpc_lowcomm_communicator_free(mpc_lowcomm_communicator_t *pcomm)
 
 	int local_task_count = mpc_lowcomm_communicator_local_task_count(comm);
 
-	/* Only barrier when freeing local comms */
-	if(mpc_lowcomm_get_comm_gid(comm) == mpc_lowcomm_monitor_get_gid())
+	/* Only barrier when freeing local comms or intercomms */
+	if( mpc_lowcomm_communicator_rank(comm) != MPC_PROC_NULL )
 	{
 		mpc_lowcomm_barrier(comm);
 	}
@@ -888,25 +1291,8 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 		if(ret == MPC_COMM_NULL)
 		{
 			/* We can then directly create a new group using the current group */
-			ret = __init_communicator_with_id(new_id, group, -1);
+			ret = __init_communicator_with_id(new_id, group, is_comm_self, left_comm, right_comm, -1);
 			/* Make sure that dups of comm self behave as comm self */
-			ret->is_comm_self = is_comm_self;
-
-			/* Intercommm ctx we acquire a ref to inner comms */
-
-			ret->left_comm = left_comm;
-
-			if(ret->left_comm != MPC_COMM_NULL)
-			{
-				_mpc_lowcomm_communicator_acquire(ret->left_comm);
-			}
-
-			ret->right_comm = right_comm;
-
-			if(ret->right_comm != MPC_COMM_NULL)
-			{
-				_mpc_lowcomm_communicator_acquire(ret->right_comm);
-			}
 		}
 
 		mpc_common_spinlock_unlock(&lock);
@@ -928,7 +1314,7 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 	if(ret->group && check_if_current_rank_belongs)
 	{
 		/* If the process is not in the group we do return MPI_COMM_NULL */
-		if(!mpc_lowcomm_group_includes(ret->group, mpc_lowcomm_get_rank() ) )
+		if(!mpc_lowcomm_group_includes(ret->group, mpc_lowcomm_get_rank(), mpc_lowcomm_monitor_get_uid() ) )
 		{
 			ret = MPC_COMM_NULL;
 		}
@@ -963,7 +1349,6 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_create(const mpc_lowcomm_com
 		for(i = 0; i < size; i++)
 		{
 			mpc_lowcomm_communicator_t local = mpc_lowcomm_communicator_get_local(comm);
-			assume(mpc_lowcomm_group_includes(local->group, members[i]) );
 			_mpc_lowcomm_group_rank_descriptor_set(&rank_desc[i], members[i] );
 		}
 	}
@@ -1029,10 +1414,20 @@ void _mpc_lowcomm_communicator_init(void)
 	mpc_lowcomm_group_t *cw_group = _mpc_lowcomm_group_world();
 
 	assume(__comm_world == NULL);
-	__comm_world = __init_communicator_with_id(MPC_LOWCOMM_COMM_WORLD_ID, cw_group, MPC_LOWCOMM_COMM_WORLD_NUMERIC_ID);
+	__comm_world = __init_communicator_with_id(MPC_LOWCOMM_COMM_WORLD_ID,
+											  cw_group,
+											  0,
+											  MPC_COMM_NULL,
+											  MPC_COMM_NULL,
+											  MPC_LOWCOMM_COMM_WORLD_NUMERIC_ID);
 
 	assume(__comm_self == NULL);
-	__comm_self = __init_communicator_with_id(MPC_LOWCOMM_COMM_SELF_ID, NULL, MPC_LOWCOMM_COMM_SELF_NUMERIC_ID);
+	__comm_self = __init_communicator_with_id(MPC_LOWCOMM_COMM_SELF_ID,
+											  NULL,
+											  1,
+											  MPC_COMM_NULL,
+											  MPC_COMM_NULL,
+											  MPC_LOWCOMM_COMM_SELF_NUMERIC_ID);
 }
 
 
@@ -1076,36 +1471,50 @@ int mpc_lowcomm_communicator_local_lead(mpc_lowcomm_communicator_t comm)
 	return MPC_PROC_NULL;
 }
 
-/**
- * @brief Get rank in communicator for current process
- *
- * @param comm communicator to query
- * @param rank rank to query
- * @return mpc_lowcomm_peer_uid_t uid for given peer
- */
+
 mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_uid(const mpc_lowcomm_communicator_t comm, int rank)
 {
 	assert(0 <= rank);
 	assert(comm != NULL);
 
-	int world_rank = mpc_lowcomm_communicator_world_rank_of(comm, rank);
-	mpc_lowcomm_communicator_t tcomm = mpc_lowcomm_communicator_get_local_as(comm, world_rank);
+	mpc_lowcomm_communicator_t tcomm = mpc_lowcomm_communicator_get_local(comm);
 
 	assert(tcomm != NULL);
 
 	return mpc_lowcomm_group_process_uid_for_rank(tcomm->group, rank);
 }
 
+int mpc_lowcomm_communicator_contains(const mpc_lowcomm_communicator_t comm,
+                                      const mpc_lowcomm_peer_uid_t uid)
+{
+	assert(comm != NULL);
+	mpc_lowcomm_communicator_t tcomm = mpc_lowcomm_communicator_get_local(comm);
+	assert(tcomm != NULL);
 
+	assume(tcomm->group);
+
+	int i;
+	for(i = 0 ; i < tcomm->group->size; i++)
+	{
+		if(tcomm->group->ranks[i].host_process_uid == uid)
+		{
+			return 1;
+		}
+	}
+
+	return 0;
+}
 
 int mpc_lowcomm_communicator_rank_of_as(const mpc_lowcomm_communicator_t comm,
 										const int comm_world_rank,
-										const int lookup_cw_rank)
+										const int lookup_cw_rank,
+                                        mpc_lowcomm_peer_uid_t lookup_uid)
 {
 	assert(0 <= comm_world_rank);
 	assert(0 <= lookup_cw_rank);
 	assert(comm != NULL);
-	mpc_lowcomm_communicator_t tcomm = mpc_lowcomm_communicator_get_local_as(comm, lookup_cw_rank);
+
+	mpc_lowcomm_communicator_t tcomm = mpc_lowcomm_communicator_get_local_as(comm, lookup_cw_rank, lookup_uid);
 	assert(tcomm != NULL);
 
 	if(tcomm->is_comm_self)
@@ -1115,13 +1524,13 @@ int mpc_lowcomm_communicator_rank_of_as(const mpc_lowcomm_communicator_t comm,
 
 	//mpc_common_debug_error("GET RANK from %p targets %p", comm, tcomm);
 
-	return mpc_lowcomm_group_rank_for(tcomm->group, comm_world_rank);
+	return mpc_lowcomm_group_rank_for(tcomm->group, comm_world_rank, lookup_uid);
 }
 
 int mpc_lowcomm_communicator_rank_of(const mpc_lowcomm_communicator_t comm,
 										const int comm_world_rank)
 {
-	return mpc_lowcomm_communicator_rank_of_as(comm, comm_world_rank, mpc_lowcomm_get_rank());
+	return mpc_lowcomm_communicator_rank_of_as(comm, comm_world_rank, mpc_lowcomm_get_rank(), mpc_lowcomm_monitor_get_uid());
 }
 
 int mpc_lowcomm_communicator_rank(const mpc_lowcomm_communicator_t comm)
@@ -1213,6 +1622,15 @@ int *mpc_lowcomm_communicator_get_process_list(const mpc_lowcomm_communicator_t 
 	}
 
 	return _mpc_lowcomm_group_process_list(tcomm->group);
+}
+
+mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_remote_uid_for(const mpc_lowcomm_communicator_t comm, int rank)
+{
+	assert(comm != NULL);
+	mpc_lowcomm_communicator_t tcomm = mpc_lowcomm_communicator_get_remote(comm);
+	assert(tcomm != NULL);
+
+	return mpc_lowcomm_group_process_uid_for_rank(tcomm->group, rank);
 }
 
 mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_uid_for(const mpc_lowcomm_communicator_t comm, int rank)
@@ -1394,6 +1812,8 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_split(mpc_lowcomm_communicat
 **********************/
 mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_communicator_t intercomm, int high)
 {
+	mpc_common_debug_warning("Start MERGING");
+
 	assume(mpc_lowcomm_communicator_is_intercomm(intercomm) );
 
 	int local_size  = mpc_lowcomm_communicator_size(intercomm);
@@ -1410,6 +1830,13 @@ mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_commu
 	mpc_lowcomm_communicator_t remote_comm = mpc_lowcomm_communicator_get_remote(intercomm);
 	mpc_lowcomm_communicator_t local_comm  = mpc_lowcomm_communicator_get_local(intercomm);
 
+	mpc_common_debug_warning("LOCAL COMM");
+	mpc_lowcomm_communicator_print(local_comm, 1);
+
+
+	mpc_common_debug_warning("REMOTE COMM");
+	mpc_lowcomm_communicator_print(remote_comm, 1);
+
 	assume(remote_comm != NULL);
 	assume(local_comm != NULL);
 
@@ -1422,7 +1849,10 @@ mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_commu
 		   Build the process list according to high
         ########################################### */
 		int remote_high = 0;
+		mpc_common_debug_error("BEGIN SENDRECV");
 		mpc_lowcomm_sendrecv(&high, sizeof(int), 0, 0, &remote_high, 0, intercomm);
+		mpc_common_debug_error("DONE SENDRECV");
+
 
 		int local_root_rank = mpc_lowcomm_communicator_world_rank_of(intercomm, 0);
 		int remote_root_rank = mpc_lowcomm_communicator_remote_world_rank(intercomm, 0);
@@ -1484,6 +1914,16 @@ mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_commu
 			cnt++;
 		}
 
+
+		/* When merging two different worlds we need to renumber the world IDs
+		   to ensure they are unique for this comm */
+		if(mpc_lowcomm_get_comm_gid(remote_comm->id) < mpc_lowcomm_get_comm_gid(local_comm->id))
+		{
+
+
+		}
+
+
 	#if 0
 		for( i = 0 ; i < cnt; i++)
 		{
@@ -1495,10 +1935,32 @@ mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_commu
 		   Elect who is going to choose the ID
         ########################################### */
 
-		int my_world_rank = mpc_lowcomm_communicator_world_rank_of(intercomm, 0);
-		int remote_world_rank = mpc_lowcomm_communicator_remote_world_rank(intercomm, 0);
+		/* Here two cases, same group higher comm world sends
+		   second case different groups higher set sends */
 
-		if(my_world_rank < remote_world_rank)
+		int does_recv_id = 0;
+
+		mpc_common_debug_error("ABOUT TO GEN ID GREM %lu GLOC %lu", mpc_lowcomm_get_comm_gid(remote_comm->id), mpc_lowcomm_get_comm_gid(local_comm->id));
+
+		if(mpc_lowcomm_get_comm_gid(remote_comm->id) < mpc_lowcomm_get_comm_gid(local_comm->id))
+		{
+			/* Note strictly lower also covers being != !! */
+			does_recv_id = 1;
+		}
+		else
+		{
+
+			int my_world_rank = mpc_lowcomm_communicator_world_rank_of(intercomm, 0);
+			int remote_world_rank = mpc_lowcomm_communicator_remote_world_rank(intercomm, 0);
+
+			if(my_world_rank < remote_world_rank)
+			{
+				does_recv_id = 1;
+			}
+		}
+
+
+		if(does_recv_id)
 		{
 			/* I do receive the ID */
 			mpc_lowcomm_recv(0, &intracomm_id, sizeof(mpc_lowcomm_communicator_id_t), 128, intercomm);
@@ -1509,6 +1971,8 @@ mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_commu
 			intracomm_id = __communicator_id_new();
 			mpc_lowcomm_send(0, &intracomm_id, sizeof(mpc_lowcomm_communicator_id_t), 128, intercomm);
 		}
+
+		mpc_common_debug_error("HERE INTRACOMM ID is %lu", intracomm_id);
 	}
 
 	/* Root broadcasts its finding to local comm */
@@ -1532,11 +1996,11 @@ mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_commu
 															  NULL,
 															  NULL,
 															  0,
-															  1,
+															  0,
 															  intracomm_id);
 	mpc_lowcomm_group_free(&intracomm_group);
 
-	//mpc_common_debug_error("RETURNED %p", intracomm);
+	mpc_common_debug_error("RETURNED %p", intracomm);
 
 	return intracomm;
 }
@@ -1790,32 +2254,36 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_intercomm_create(const mpc_l
 }
 
 
-int mpc_lowcomm_communicator_in_left_group_rank(const mpc_lowcomm_communicator_t communicator, int comm_world_rank)
+int mpc_lowcomm_communicator_in_left_group_rank(const mpc_lowcomm_communicator_t communicator,
+												int comm_world_rank ,
+												mpc_lowcomm_peer_uid_t uid)
 {
 	assert(communicator != NULL);
 	assert(communicator->left_comm);
-	return mpc_lowcomm_group_includes(communicator->left_comm->group, comm_world_rank);
+	return mpc_lowcomm_group_includes(communicator->left_comm->group, comm_world_rank, uid);
 }
 
 int mpc_lowcomm_communicator_in_left_group(const mpc_lowcomm_communicator_t communicator)
 {
-	int rank = mpc_lowcomm_get_rank();
-
-	return mpc_lowcomm_communicator_in_left_group_rank(communicator, rank);
+	return mpc_lowcomm_communicator_in_left_group_rank(communicator,
+													   mpc_lowcomm_get_rank(),
+													   mpc_lowcomm_monitor_get_uid());
 }
 
-int mpc_lowcomm_communicator_in_right_group_rank(const mpc_lowcomm_communicator_t communicator, int comm_world_rank)
+int mpc_lowcomm_communicator_in_right_group_rank(const mpc_lowcomm_communicator_t communicator,
+											     int comm_world_rank,
+												 mpc_lowcomm_peer_uid_t uid)
 {
 	assert(communicator != NULL);
 	assume(communicator->right_comm != NULL);
-	return mpc_lowcomm_group_includes(communicator->right_comm->group, comm_world_rank);
+	return mpc_lowcomm_group_includes(communicator->right_comm->group, comm_world_rank, uid);
 }
 
 int mpc_lowcomm_communicator_in_right_group(const mpc_lowcomm_communicator_t communicator)
 {
-	int rank = mpc_lowcomm_get_rank();
-
-	return mpc_lowcomm_communicator_in_right_group_rank(communicator, rank);
+	return mpc_lowcomm_communicator_in_right_group_rank(communicator,
+														mpc_lowcomm_get_rank(),
+														mpc_lowcomm_monitor_get_uid());
 }
 
 int mpc_lowcomm_communicator_in_master_group(const mpc_lowcomm_communicator_t communicator)
@@ -1838,17 +2306,18 @@ int mpc_lowcomm_communicator_in_master_group(const mpc_lowcomm_communicator_t co
 }
 
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_local_as(mpc_lowcomm_communicator_t comm,
-																 int lookup_cw_rank)
+																 int lookup_cw_rank,
+																 mpc_lowcomm_peer_uid_t uid)
 {
 	assert(comm != NULL);
 
 	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
-		if(mpc_lowcomm_communicator_in_left_group_rank(comm, lookup_cw_rank) )
+		if(mpc_lowcomm_communicator_in_left_group_rank(comm, lookup_cw_rank, uid) )
 		{
 			return comm->left_comm;
 		}
-		else if(mpc_lowcomm_communicator_in_right_group_rank(comm, lookup_cw_rank) )
+		else if(mpc_lowcomm_communicator_in_right_group_rank(comm, lookup_cw_rank, uid) )
 		{
 			return comm->right_comm;
 		}
@@ -1866,10 +2335,12 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_local_as(mpc_lowcomm_com
 
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_local(mpc_lowcomm_communicator_t comm)
 {
-	return mpc_lowcomm_communicator_get_local_as(comm, mpc_lowcomm_get_rank());
+	return mpc_lowcomm_communicator_get_local_as(comm, mpc_lowcomm_get_rank(), mpc_lowcomm_monitor_get_uid());
 }
 
-mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote_as(mpc_lowcomm_communicator_t comm, int lookup_cw_rank)
+mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote_as(mpc_lowcomm_communicator_t comm,
+																  int lookup_cw_rank,
+																  mpc_lowcomm_peer_uid_t uid)
 {
 	/* Only meaningfull for intercomms */
 	if(!mpc_lowcomm_communicator_is_intercomm(comm) )
@@ -1877,7 +2348,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote_as(mpc_lowcomm_co
 		return MPC_COMM_NULL;
 	}
 
-	mpc_lowcomm_communicator_t local = mpc_lowcomm_communicator_get_local_as(comm, lookup_cw_rank);
+	mpc_lowcomm_communicator_t local = mpc_lowcomm_communicator_get_local_as(comm, lookup_cw_rank, uid);
 
 	/* The remote is the non-local one */
 	if(local == comm->left_comm)
@@ -1895,7 +2366,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote_as(mpc_lowcomm_co
 
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote(mpc_lowcomm_communicator_t comm)
 {
-	return mpc_lowcomm_communicator_get_remote_as(comm, mpc_lowcomm_get_rank());
+	return mpc_lowcomm_communicator_get_remote_as(comm, mpc_lowcomm_get_rank(), mpc_lowcomm_monitor_get_uid());
 }
 
 

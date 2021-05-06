@@ -1,3 +1,31 @@
+/* ############################# MPC License ############################## */
+/* # Thu May  6 10:26:16 CEST 2021                                        # */
+/* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* #                                                                      # */
+/* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
+/* # This file is part of the MPC Runtime.                                # */
+/* #                                                                      # */
+/* # This software is governed by the CeCILL-C license under French law   # */
+/* # and abiding by the rules of distribution of free software.  You can  # */
+/* # use, modify and/ or redistribute the software under the terms of     # */
+/* # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # */
+/* # following URL http://www.cecill.info.                                # */
+/* #                                                                      # */
+/* # The fact that you are presently reading this means that you have     # */
+/* # had knowledge of the CeCILL-C license and that you accept its        # */
+/* # terms.                                                               # */
+/* #                                                                      # */
+/* # Maintainers:                                                         # */
+/* # - CARRIBAULT Patrick patrick.carribault@cea.fr                       # */
+/* # - JAEGER Julien julien.jaeger@cea.fr                                 # */
+/* # - PERACHE Marc marc.perache@cea.fr                                   # */
+/* # - ROUSSEL Adrien adrien.roussel@cea.fr                               # */
+/* # - TABOADA Hugo hugo.taboada@cea.fr                                   # */
+/* #                                                                      # */
+/* # Authors:                                                             # */
+/* # - BESNARD Jean-Baptiste jbbesnard@paratools.fr                       # */
+/* #                                                                      # */
+/* ######################################################################## */
 #include "set.h"
 
 #include <string.h>
@@ -34,7 +62,7 @@ int _mpc_lowcomm_set_teardown()
 * REGISTER INTERFACE *
 **********************/
 
-_mpc_lowcomm_set_t *_mpc_lowcomm_set_init(mpc_lowcomm_set_uid_t uid,
+_mpc_lowcomm_set_t *_mpc_lowcomm_set_init(mpc_lowcomm_set_uid_t gid,
                                           char *name,
                                           uint64_t total_task_count,
                                           uint64_t *peers_uids,
@@ -42,7 +70,7 @@ _mpc_lowcomm_set_t *_mpc_lowcomm_set_init(mpc_lowcomm_set_uid_t uid,
                                           int is_lead,
 										  mpc_lowcomm_peer_uid_t local_peer)
 {
-	assume(_mpc_lowcomm_set_get(uid) == NULL);
+	assume(_mpc_lowcomm_set_get(gid) == NULL);
 
 	_mpc_lowcomm_set_t *new = sctk_malloc(sizeof(_mpc_lowcomm_set_t) );
 	assume(new != NULL);
@@ -50,7 +78,7 @@ _mpc_lowcomm_set_t *_mpc_lowcomm_set_init(mpc_lowcomm_set_uid_t uid,
 	new->is_lead = is_lead;
 	new->local_peer = local_peer;
 
-	new->uid = uid;
+	new->gid = gid;
 	snprintf(new->name, MPC_LOWCOMM_SET_NAME_LEN, name);
 
 	uint64_t i;
@@ -74,7 +102,7 @@ _mpc_lowcomm_set_t *_mpc_lowcomm_set_init(mpc_lowcomm_set_uid_t uid,
 
 	new->total_task_count = total_task_count;
 
-	mpc_common_hashtable_set(&__set_ht, uid, new);
+	mpc_common_hashtable_set(&__set_ht, gid, new);
 
 	return new;
 }
@@ -92,7 +120,7 @@ int _mpc_lowcomm_set_free(_mpc_lowcomm_set_t *set)
 }
 
 
-static inline int __load_set_from_uid(uint32_t uid, char * path)
+static inline int __load_set_from_uid( __UNUSED__ uint32_t uid, char * path)
 {
 	/* Now load information for each set */
 	struct _mpc_lowcomm_uid_descriptor_s sd;
@@ -124,7 +152,7 @@ static inline int __load_set_from_uid(uint32_t uid, char * path)
 	}
 
 	/* First of all we make sure the peer is reachable */
-	int failed = 0;
+
 	if(!mpc_lowcomm_monitor_peer_reachable_directly(main_peer))
 	{
 		/* These info could not be retrieved consider the set as lost */
@@ -164,9 +192,9 @@ int _mpc_lowcomm_set_load_from_system(void)
 * QUERY INTERFACE *
 *******************/
 
-_mpc_lowcomm_set_t *_mpc_lowcomm_set_get(mpc_lowcomm_set_uid_t uid)
+_mpc_lowcomm_set_t *_mpc_lowcomm_set_get(mpc_lowcomm_set_uid_t gid)
 {
-	return (_mpc_lowcomm_set_t *)mpc_common_hashtable_get(&__set_ht, uid);
+	return (_mpc_lowcomm_set_t *)mpc_common_hashtable_get(&__set_ht, gid);
 }
 
 int _mpc_lowcomm_set_iterate(int (*set_cb)(_mpc_lowcomm_set_t *set, void *arg), void *arg)
@@ -190,6 +218,71 @@ int _mpc_lowcomm_set_iterate(int (*set_cb)(_mpc_lowcomm_set_t *set, void *arg), 
 	MPC_HT_ITER_END
 
 	return 0;
+}
+
+mpc_lowcomm_peer_uid_t * _mpc_lowcomm_get_set_roots(int * root_table_len)
+{
+	_mpc_lowcomm_set_t *set = NULL;
+
+	/* First count */
+
+	int len = 0;
+
+	MPC_HT_ITER(&__set_ht, set)
+	{
+		if(!set->peer_count)
+		{
+			continue;
+		}
+
+		len++;
+	}
+	MPC_HT_ITER_END
+
+	*root_table_len = len;
+
+	mpc_lowcomm_peer_uid_t *  ret = sctk_malloc(sizeof(mpc_lowcomm_peer_uid_t) * len * 2);
+	assume(ret != NULL);
+
+	set = NULL;
+
+	int cnt = 0;
+
+	{
+		MPC_HT_ITER(&__set_ht, set)
+		{
+			if(!set->peer_count)
+			{
+				continue;
+			}
+
+			ret[cnt] = set->peers[0]->infos.uid;
+			cnt++;
+		}
+		MPC_HT_ITER_END
+	}
+
+	/* Now as an optimization always put current set first */
+	mpc_lowcomm_peer_uid_t my_set_root = mpc_lowcomm_monitor_uid_of(mpc_lowcomm_monitor_get_gid(), 0);
+
+	int i;
+	for(i = 1 ; i < len; i++)
+	{
+		if(ret[i] == my_set_root)
+		{
+			/* Swap */
+			mpc_lowcomm_peer_uid_t tmp = ret[0];
+			ret[0] = ret[i];
+			ret[i] = tmp;
+		}
+	}
+
+	return ret;
+}
+
+void _mpc_lowcomm_free_set_roots(mpc_lowcomm_peer_uid_t * roots)
+{
+	sctk_free(roots);
 }
 
 

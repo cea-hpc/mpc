@@ -352,8 +352,7 @@ static void _mpc_coll_opt_barrier( const mpc_lowcomm_communicator_t communicator
 		_mpc_coll_message_table_init( &table );
 		total = mpc_lowcomm_communicator_size( communicator );
 		myself = mpc_lowcomm_communicator_rank_of( communicator, mpc_common_get_task_rank() );
-		mpc_common_nodebug( "enter barrier total = %d, myself = %d", total,
-		              myself );
+		//mpc_common_nodebug( "enter barrier total = %d, myself = %d", total, myself );
 		total_max = log( total ) / log( barrier_arity );
 		total_max = pow( barrier_arity, total_max );
 
@@ -1482,8 +1481,7 @@ static void _mpc_coll_noalloc_barrier(const mpc_lowcomm_communicator_t communica
 	}
 
 	myself = mpc_lowcomm_communicator_rank(communicator);
-	mpc_common_nodebug("enter barrier total = %d, myself = %d", total,
-	                   myself);
+	//mpc_common_debug_error("enter barrier total = %d, myself = %d", total, myself);
 
 
 	total_max = log(total) / log(barrier_arity);

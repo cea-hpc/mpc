@@ -79,7 +79,7 @@ int mpc_lowcomm_get_process_rank(void);
 /**
  * @brief Extract status information from a request
  *    @warning request should be completed or canceled
- * 
+ *
  * @param request request to extract information from
  * @param status status to be filled
  * @return int SCTK_SUCCESS if all ok
@@ -89,7 +89,7 @@ int mpc_lowcomm_commit_status_from_request(mpc_lowcomm_request_t *request,
 
 /**
  * @brief Wait for a request completion (or cancelation)
- * 
+ *
  * @param request request to be waited
  * @return int SCTK_SUCCESS if all ok
  */
@@ -97,7 +97,7 @@ int mpc_lowcomm_request_wait(mpc_lowcomm_request_t *request);
 
 /**
  * @brief Cancel a request
- * 
+ *
  * @param request the request to be cancelled
  * @return int SCTK_SUCCESS if all ok
  */
@@ -105,7 +105,7 @@ int mpc_lowcomm_request_cancel(mpc_lowcomm_request_t *request);
 
 /**
  * @brief Initalize a request (internal use)
- * 
+ *
  * @param request request to be initialized
  * @param comm communicator to rely on
  * @param request_type request type
@@ -148,6 +148,63 @@ int mpc_lowcomm_universe_irecv(mpc_lowcomm_peer_uid_t src,
                                size_t size,
                                int tag,
                                mpc_lowcomm_request_t *req);
+
+/*******************
+ * PORT MANAGEMENT *
+ *******************/
+
+/**
+ * @brief Open a new port for Connect accept
+ *
+ * @param id output string describing the new port
+ * @param id_len the length of the string
+ * @return int 0 on success
+ */
+int mpc_lowcomm_open_port(char * iport_name, int port_name_len);
+
+/**
+ * @brief Close a previously openned port
+ *
+ * @param id the port to be freed
+ * @return int 0 on success
+ */
+int mpc_lowcomm_close_port(const char * port_name);
+
+/*******************
+ * NAME PUBLISHING *
+ *******************/
+
+/**
+ * @brief Publish an open port as service name
+ *
+ * @param service_name the service to publish
+ * @param port_name the port information to publish
+ * @return int SCTK_SUCCESS if all ok
+ */
+int mpc_lowcomm_publish_name(const char *service_name,
+                             const char *port_name);
+
+/**
+ * @brief Unpublish a service name
+ *
+ * @param service_name the service to unpublish
+ * @param port_name the port information to unpublish
+ * @return int SCTK_SUCCESS if all ok
+ */
+int mpc_lowcomm_unpublish_name(const char *service_name,
+                               const char *port_name);
+
+/**
+ * @brief Retrieve information from a published service
+ *
+ * @param service_name the service name to resolve
+ * @param port_name the corresponding port information
+ * @param port_name_len the length of the port_name buffer
+ * @return int SCTK_SUCCESS if all ok
+ */
+int mpc_lowcomm_lookup_name(const char *service_name,
+                            char *port_name,
+                            int port_name_len);
 
 /************************************************************************/
 /* P2P Messages                                                         */

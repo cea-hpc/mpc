@@ -428,7 +428,7 @@ typedef struct mpc_lowcomm_ptp_msg_progress_s
 	mpc_lowcomm_request_t *request;
 	struct mpc_comm_ptp_s *recv_ptp;
 	struct mpc_comm_ptp_s *send_ptp;
-	int                    remote_process;
+	mpc_lowcomm_peer_uid_t remote_process;
 	int                    source_task_id;
 	int                    dest_task_id;
 	int                    polling_task_id;

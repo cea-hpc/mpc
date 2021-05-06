@@ -1,3 +1,31 @@
+/* ############################# MPC License ############################## */
+/* # Thu May  6 10:26:16 CEST 2021                                        # */
+/* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* #                                                                      # */
+/* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
+/* # This file is part of the MPC Runtime.                                # */
+/* #                                                                      # */
+/* # This software is governed by the CeCILL-C license under French law   # */
+/* # and abiding by the rules of distribution of free software.  You can  # */
+/* # use, modify and/ or redistribute the software under the terms of     # */
+/* # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # */
+/* # following URL http://www.cecill.info.                                # */
+/* #                                                                      # */
+/* # The fact that you are presently reading this means that you have     # */
+/* # had knowledge of the CeCILL-C license and that you accept its        # */
+/* # terms.                                                               # */
+/* #                                                                      # */
+/* # Maintainers:                                                         # */
+/* # - CARRIBAULT Patrick patrick.carribault@cea.fr                       # */
+/* # - JAEGER Julien julien.jaeger@cea.fr                                 # */
+/* # - PERACHE Marc marc.perache@cea.fr                                   # */
+/* # - ROUSSEL Adrien adrien.roussel@cea.fr                               # */
+/* # - TABOADA Hugo hugo.taboada@cea.fr                                   # */
+/* #                                                                      # */
+/* # Authors:                                                             # */
+/* # - BESNARD Jean-Baptiste jbbesnard@paratools.fr                       # */
+/* #                                                                      # */
+/* ######################################################################## */
 #include "monitor.h"
 
 #include <sys/types.h>
@@ -26,7 +54,7 @@
 #include "monitor.h"
 #include "name.h"
 
-#define MONITOR_DEBUG
+//#define MONITOR_DEBUG
 
 
 static volatile int __monitor_running = 0;
@@ -50,6 +78,8 @@ const char * mpc_lowcomm_monitor_command_tostring(mpc_lowcomm_monitor_command_t 
 			return "MPC_LOWCOMM_MONITOR_CONNECTIVITY";
 		case MPC_LOWCOMM_MONITOR_COMM_INFO:
 			return "MPC_LOWCOMM_MONITOR_COMM_INFO";
+		case MPC_LOWCOMM_MONITOR_NAMING:
+			return "MPC_LOWCOMM_MONITOR_NAMING";
 	}
 
 	return "NO SUCH COMMAND";
@@ -363,7 +393,7 @@ static inline int __exchange_peer_info(void)
 	/* Here each rank != 0 in the process set requests infos from 0
 	 * this has the effect of registering in 0 and pre retrieving 0's infos */
 	mpc_lowcomm_monitor_retcode_t ret;
-	mpc_lowcomm_peer_uid_t        root_process_uid = _mpc_lowcomm_set_root(__monitor.process_set->uid);
+	mpc_lowcomm_peer_uid_t        root_process_uid = _mpc_lowcomm_set_root(__monitor.process_set->gid);
 
 	if(root_process_uid != __monitor.process_uid)
 	{
@@ -423,12 +453,12 @@ static inline int __register_process_set(void)
 
 	/* Create the set atop the world set */
 	__monitor.process_set = _mpc_lowcomm_set_init(job_id,
-														command_line,
-														mpc_common_get_task_count(),
-														peers_ids,
-														proc_count,
-														(mpc_common_get_process_rank() == 0) /* is_lead */,
-														local_peer_id);
+												  command_line,
+												  mpc_common_get_task_count(),
+												  peers_ids,
+												  proc_count,
+												  (mpc_common_get_process_rank() == 0) /* is_lead */,
+												  local_peer_id);
 
 	sctk_free(peers_ids);
 
@@ -516,7 +546,7 @@ static inline int __remove_uid(_mpc_lowcomm_set_t *set, void *arg)
 	/* Only the lead process proceeds to clear */
 	if(set->is_lead)
 	{
-		_mpc_lowcomm_uid_clear(set->uid);
+		_mpc_lowcomm_uid_clear(set->gid);
 	}
 
 	return 0;
@@ -1847,7 +1877,7 @@ static inline _mpc_lowcomm_monitor_wrap_t *__generate_set_decription(mpc_lowcomm
 _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_request_set_info(mpc_lowcomm_peer_uid_t dest)
 {
 	/* This is a request for remote set info also sending our own data */
-	return __generate_set_decription(dest, __monitor.process_set->uid, 0);
+	return __generate_set_decription(dest, __monitor.process_set->gid, 0);
 }
 
 mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_get_set_info(mpc_lowcomm_peer_uid_t target_peer,
@@ -2597,6 +2627,19 @@ mpc_lowcomm_monitor_set_t mpc_lowcomm_monitor_set_get(mpc_lowcomm_set_uid_t gid)
 	return (mpc_lowcomm_monitor_set_t)_mpc_lowcomm_set_get(gid);
 }
 
+int mpc_lowcomm_monitor_set_contains(mpc_lowcomm_set_uid_t gid, mpc_lowcomm_peer_uid_t uid)
+{
+	_mpc_lowcomm_set_t * set = _mpc_lowcomm_set_get(gid);
+
+	if(!set)
+	{
+		return 0;
+	}
+
+	return _mpc_lowcomm_set_contains(set, uid);
+}
+
+
 char * mpc_lowcomm_monitor_set_name(mpc_lowcomm_monitor_set_t pset)
 {
 	if(!pset)
@@ -2619,7 +2662,7 @@ mpc_lowcomm_set_uid_t mpc_lowcomm_monitor_set_gid(mpc_lowcomm_monitor_set_t pset
 
 	_mpc_lowcomm_set_t * set = (_mpc_lowcomm_set_t*)pset;
 
-	return set->uid;
+	return set->gid;
 }
 
 uint64_t mpc_lowcomm_monitor_set_peer_count(mpc_lowcomm_monitor_set_t pset)

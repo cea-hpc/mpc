@@ -355,242 +355,138 @@ size_t mpc_common_helper_memory_in_use( void )
 }
 
 #endif
-/**************************************
- * GETADDRINFO WITH DEVICE PREFERENCE *
- **************************************/
 
 
-int mpc_common_address_in_range(in_addr_t network_addr, in_addr_t network_mask, in_addr_t candidate)
+/**********************
+ * CMD LINE ARGUMENTS *
+ **********************/
+
+char * mpc_common_helper_command_line_pretty(int json, char * buff, int len)
 {
-    if ((network_addr & network_mask) == (candidate & network_mask))
-    {
-        return 1;
-    }
+	char ** cmd = mpc_common_helper_command_line();
 
-    return 0;
+	if(!cmd)
+	{
+		return NULL;
+	}
+
+	if(json)
+	{
+		buff[0] = '[';
+		buff[1] = '\0';
+	}
+	else
+	{
+		buff[0] = '\0';
+	}
+
+	int cnt = 0;
+
+	while(cmd[cnt])
+	{
+		char tmp[512];
+
+		char * sep = " ";
+
+		if(json)
+		{
+			sep = (cnt>0)?(", "):("");
+		}
+
+		snprintf(tmp, 512, "%s%s", sep, cmd[cnt]);
+		strncat(buff, tmp, len);
+		cnt++;
+	}
+
+	if(json)
+	{
+		strncat(buff, "]", len);
+	}
+
+	return buff;
 }
 
-int mpc_common_getaddr_interface(struct sockaddr_in *addr, char * ifname, int ifname_len)
+char ** mpc_common_helper_command_line(void)
 {
-    struct ifaddrs* ifaddr;
 
-    if( getifaddrs(&ifaddr) < 0 )
-    {
-        return -1;
-    }
+	FILE * cmdline = fopen("/proc/self/cmdline", "r");
 
-    int ret = -1;
+	if(!cmdline)
+	{
+		return NULL;
+	}
 
-    struct ifaddrs* ifa = NULL;
+	char* buff = sctk_malloc(1024 * 1024);
 
-    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
-    {
-        if (ifa->ifa_addr)
-        {
-            if (AF_INET == ifa->ifa_addr->sa_family)
-            {
-                struct sockaddr_in* inaddr = (struct sockaddr_in*)ifa->ifa_addr;
-                struct sockaddr_in* netmaskaddr = (struct sockaddr_in*)ifa->ifa_netmask;
+	assume(buff != NULL);
 
-#if 0
-                char ip[INET6_ADDRSTRLEN];
-                inet_ntop( AF_INET, &inaddr->sin_addr, ip, sizeof( ip ) );
-			    printf( "IFACE IP : %s\n", ip );
-                inet_ntop( AF_INET, &netmaskaddr->sin_addr, ip, sizeof( ip ) );
-			    printf( "IFACE MASK : %s\n", ip );
-#endif
+	ssize_t size = fread(buff, sizeof(char), 1024*1024, cmdline);
 
-                if(mpc_common_address_in_range(inaddr->sin_addr.s_addr,
-                                               netmaskaddr->sin_addr.s_addr,
-                                               addr->sin_addr.s_addr))
-                {
-                    if (ifa->ifa_name)
-                    {
-                        //printf("TESTING %s\n", ifa->ifa_name);
-                        snprintf(ifname, ifname_len, "%s", ifa->ifa_name);
-                        ret = 0;
-                        break;
-                    }
-                }
+	if(size < 0)
+	{
+		sctk_free(buff);
+		return NULL;
+	}
 
-            }
-        }
-    }
+	/* Now count the number of \0 */
+	int cnt = 0;
+	ssize_t i;
+	for( i = 0 ; i < size ; i++)
+	{
+		if(buff[i] == '\0')
+		{
+			cnt++;
+		}
+	}
 
-    freeifaddrs(ifaddr);
+	char ** ret = sctk_malloc( (cnt + 1) * sizeof(char *));
+	assume(ret != NULL);
 
-    return ret;
-}
-
-
-int mpc_common_getsocket_interface(int socket, char * ifname, int ifname_len)
-{
-    struct sockaddr_in addr;
-
-    socklen_t addr_len = sizeof (addr);
-    if( getsockname(socket, (struct sockaddr*)&addr, &addr_len) < 0)
-    {
-        return -1;
-    }
-
-    return mpc_common_getaddr_interface(&addr, ifname, ifname_len);
-}
-
-static inline int __count_addrinfo(struct addrinfo * info)
-{
-    int ret = 0;
-
-    while(info)
-    {
-        ret++;
-        info = info->ai_next;
-    }
-
-    return ret;
-}
-
-struct addrinfo * __linearize_addrinfo(struct addrinfo * info)
-{
-    int res_count = __count_addrinfo(info);
-    struct addrinfo * reorder_buff = sctk_malloc(sizeof( struct addrinfo ) * (res_count + 1) );
-
-    if(!reorder_buff)
-    {
-        perror("malloc");
-        return NULL;
-    }
-
-    int cnt = 0;
-
-	struct addrinfo * tmp = info;
-
-    while(tmp)
-    {
-        memcpy(&reorder_buff[cnt], tmp, sizeof(struct addrinfo));
-        tmp = tmp->ai_next;
-        cnt++;
-    }
-
-	/* Last cell is the original pointer */
-	reorder_buff[res_count].ai_next = info;
-
-    return reorder_buff;
-}
-
-void __addr_info_swap(struct addrinfo * from, struct addrinfo * to)
-{
-    struct addrinfo tmp;
-    memcpy(&tmp, to, sizeof(struct addrinfo));
-    memcpy(to, from, sizeof(struct addrinfo));
-    memcpy(from, &tmp, sizeof(struct addrinfo));
-}
-
-
-int mpc_common_getaddrinfo(const char *node, const char *service,
-                           const struct addrinfo *hints,
-                           struct addrinfo **res,
-                           const char *preferred_device)
-{
-    struct addrinfo *local_res = NULL;
-
-	int ret = getaddrinfo( node, service, hints, &local_res );
-
-    if(ret < 0)
-    {
-        return ret;
-    }
-
-    /* We now want to reorder according to prefered interface name
-       but to do so linearize the list */
-
-    int res_count = __count_addrinfo(local_res);
-    struct addrinfo * reorder_buff = __linearize_addrinfo(local_res);
-
-    if(!strlen(preferred_device))
-    {
-        *res = reorder_buff;
-		goto MPC_COMMON_AIDDR_DONE;
-    }
-
-    /* First check if there is an exact match */
-
-    int did_match_exactly = 0;
+	for(i = 0 ; i < cnt; i++)
 	{
 		ret[i] = NULL;
 	}
 
-    int i;
+	cnt = 0;
 
-    for( i = 0 ; i < res_count ; i++)
-    {
-        char iface_name[128];
-        mpc_common_getaddr_interface((struct sockaddr_in *)reorder_buff[i].ai_addr, iface_name, 128);
-        if(!strcmp(iface_name, preferred_device))
-        {
-            /* This device should be first */
-            if(i!=0)
-            {
-                __addr_info_swap(&reorder_buff[i], &reorder_buff[0]);
-                did_match_exactly = 1;
-            }
-        }
-    }
+	for(i = 0; i < size; i++)
+	{
+
 		
-    /* Did we match exactly if not try to match partially */
-    if(!did_match_exactly && 0)
-    {
-        int cnt = 0;
-        for( i = 0 ; i < res_count ; i++)
-        {
-            char iface_name[128];
-            mpc_common_getaddr_interface((struct sockaddr_in *)reorder_buff[i].ai_addr,
-                                         iface_name,
-                                         128);
-            if(strstr(iface_name, preferred_device))
-            {
-                /* This device should be among the firsts */
-                if(i!=cnt)
-                {
-                    __addr_info_swap(&reorder_buff[i], &reorder_buff[cnt]);
-                    cnt++;
-                }
+		if(buff[i] == '\0')
+		{
+			cnt++;
+		}
 		else if(ret[cnt] == NULL)
 		{
 			ret[cnt] = &buff[i];
 		}
 
-            }
-        }
-    }
+	}
 
-MPC_COMMON_AIDDR_DONE:
+	ret[cnt] = NULL;
 
-    /* Last step is to rebuild a new list */
-    for( i = 0 ; i < res_count - 1 ; i++)
-    {
-        reorder_buff[i].ai_next = &reorder_buff[i + 1];
-    }
-
-    reorder_buff[res_count - 1].ai_next = NULL;
-
-    *res = reorder_buff;
-
-    return 0;
+	return ret;
 }
+
+void mpc_common_helper_command_line_free(char **cmd)
+{
+	if(!cmd)
+	{
+		return;
+	}
+
+	sctk_free(cmd[0]);
+	sctk_free(cmd);
+}
+
+
 
 /**************************************
  * GETADDRINFO WITH DEVICE PREFERENCE *
  **************************************/
 
 
-void mpc_common_freeaddrinfo(struct addrinfo *res)
-{
-    int res_count = __count_addrinfo(res);
-
-	/* Last cell holds the addrinfo addr */
-    freeaddrinfo(res[res_count].ai_next);
-	sctk_free(res);
-}
 int mpc_common_address_in_range(in_addr_t network_addr, in_addr_t network_mask, in_addr_t candidate)
 {
     if ((network_addr & network_mask) == (candidate & network_mask))
@@ -871,9 +767,6 @@ int mpc_common_resolve_local_ip_for_iface(char * ip, int iplen, char *preffered_
 
     return 0;
 }
-
-
-
 
 void mpc_common_freeaddrinfo(struct addrinfo *res)
 {

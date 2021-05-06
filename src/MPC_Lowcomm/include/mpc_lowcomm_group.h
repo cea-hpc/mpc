@@ -120,7 +120,7 @@ int mpc_lowcomm_group_rank(mpc_lowcomm_group_t *g);
  *
  * @return int the rank or MPC_PROC_NULL if not present
  */
-int mpc_lowcomm_group_rank_for(mpc_lowcomm_group_t *g, int rank);
+int mpc_lowcomm_group_rank_for(mpc_lowcomm_group_t *g, int rank, mpc_lowcomm_peer_uid_t uid);
 
 /**
  * @brief Translate ranks from one group to another
@@ -144,7 +144,7 @@ int mpc_lowcomm_group_translate_ranks(mpc_lowcomm_group_t *g1,
  * @param cw_rank the comm_world rank
  * @return int true if the rank is part of the group
  */
-int mpc_lowcomm_group_includes(mpc_lowcomm_group_t *g, int cw_rank);
+int mpc_lowcomm_group_includes(mpc_lowcomm_group_t *g, int cw_rank, mpc_lowcomm_peer_uid_t uid);
 
 /**
  * @brief Get the process local leader rank in a given group
