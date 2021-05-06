@@ -575,8 +575,7 @@ static inline int __Copy_type(const void *src, int srccount, MPI_Datatype srctyp
 
 
 // TODO a changer pour eviter les splits qui ne change pas la taille du comm
-void mpc_topology_split_persistent_init(mpc_topology_split_info_t *info, MPI_Comm comm, int root, int level)
-{
+void mpc_topology_split_persistent_init(mpc_topology_split_info_t *info, MPI_Comm comm, int root, int level) {
   int res = MPI_ERR_INTERN;
   MPI_Comm* hwcomm = info->hwcomm;
   int level_num = 0;
@@ -636,8 +635,7 @@ void mpc_topology_split_persistent_init(mpc_topology_split_info_t *info, MPI_Com
   //SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
-void mpc_topology_split_create_master_comm(mpc_topology_split_info_t *info, int root, int level)
-{
+void mpc_topology_split_create_master_comm(mpc_topology_split_info_t *info, int root, int level) {
   int res = MPI_ERR_INTERN;
   int size_comm = 0;
   int rank_comm = -1;
@@ -1367,30 +1365,31 @@ static inline int __Bcast_topo(void *buffer, int count, MPI_Datatype datatype, i
     if(info->info_hwcomm->hwcomm_rank[i] == 0) {
       switch(alg) {
         case NBC_BCAST_LINEAR:
-          res = __Bcast_linear(buffer, count, datatype, root, info->info_hwcomm->rootcomm[i], coll_type, schedule, info);
+          res = __Bcast_linear(buffer, count, datatype, 0, info->info_hwcomm->rootcomm[i], coll_type, schedule, info);
           break;
         case NBC_BCAST_BINOMIAL:
-          res = __Bcast_binomial(buffer, count, datatype, root, info->info_hwcomm->rootcomm[i], coll_type, schedule, info);
+          res = __Bcast_binomial(buffer, count, datatype, 0, info->info_hwcomm->rootcomm[i], coll_type, schedule, info);
           break;
         case NBC_BCAST_SCATTER_ALLGATHER:
-          res = __Bcast_scatter_allgather(buffer, count, datatype, root, info->info_hwcomm->rootcomm[i], coll_type, schedule, info);
+          res = __Bcast_scatter_allgather(buffer, count, datatype, 0, info->info_hwcomm->rootcomm[i], coll_type, schedule, info);
           break;
       }
+  
       __Barrier_type(MPC_COLL_TYPE_COUNT, schedule, info);
     }
+  }
+      
 
-    switch(alg) {
-      case NBC_BCAST_LINEAR:
-        res = __Bcast_linear(buffer, count, datatype, root, info->info_hwcomm->hwcomm[i], coll_type, schedule, info);
-        break;
-      case NBC_BCAST_BINOMIAL:
-        res = __Bcast_binomial(buffer, count, datatype, root, info->info_hwcomm->hwcomm[i], coll_type, schedule, info);
-        break;
-      case NBC_BCAST_SCATTER_ALLGATHER:
-        res = __Bcast_scatter_allgather(buffer, count, datatype, root, info->info_hwcomm->hwcomm[i], coll_type, schedule, info);
-        break;
-    }
-    __Barrier_type(MPC_COLL_TYPE_COUNT, schedule, info);
+  switch(alg) {
+    case NBC_BCAST_LINEAR:
+      res = __Bcast_linear(buffer, count, datatype, 0, info->info_hwcomm->hwcomm[info->info_hwcomm->local_level_max - 1], coll_type, schedule, info);
+      break;
+    case NBC_BCAST_BINOMIAL:
+      res = __Bcast_binomial(buffer, count, datatype, 0, info->info_hwcomm->hwcomm[info->info_hwcomm->local_level_max - 1], coll_type, schedule, info);
+      break;
+    case NBC_BCAST_SCATTER_ALLGATHER:
+      res = __Bcast_scatter_allgather(buffer, count, datatype, 0, info->info_hwcomm->hwcomm[info->info_hwcomm->local_level_max - 1], coll_type, schedule, info);
+      break;
   }
 }
 
@@ -1894,37 +1893,32 @@ static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, M
     NBC_REDUCE_BINOMIAL
   } alg;
 
-  // au choix, soit on fait un switch dans une boucle, ou on utilise un pointeur de fonction
+
+  alg = NBC_REDUCE_LINEAR;
+
+  switch(alg) {
+    case NBC_REDUCE_LINEAR:
+      res = __Reduce_linear(sendbuf, recvbuf, count, datatype, op, 0, info->info_hwcomm->hwcomm[info->info_hwcomm->local_level_max - 1], coll_type, schedule, info);
+      break;
+    case NBC_REDUCE_BINOMIAL:
+      res = __Reduce_binomial(sendbuf, recvbuf, count, datatype, op, 0, info->info_hwcomm->hwcomm[info->info_hwcomm->local_level_max - 1], coll_type, schedule, info);
+      break;
+  }
 
   for(int i = info->info_hwcomm->local_level_max - 1; i > 0; i--) {
-    alg = NBC_REDUCE_LINEAR;
-
-    switch(alg) {
-      case NBC_REDUCE_LINEAR:
-        res = __Reduce_linear(sendbuf, recvbuf, count, datatype, op, root, info->info_hwcomm->hwcomm[i], coll_type, schedule, info);
-        break;
-      case NBC_REDUCE_BINOMIAL:
-        res = __Reduce_binomial(sendbuf, recvbuf, count, datatype, op, root, info->info_hwcomm->hwcomm[i], coll_type, schedule, info);
-        break;
-    }
-
-    __Barrier_type(coll_type, schedule, info);
-
     if(info->info_hwcomm->hwcomm_rank[i] == 0) {
+      __Barrier_type(coll_type, schedule, info);
       alg = NBC_REDUCE_LINEAR;
 
       switch(alg) {
         case NBC_REDUCE_LINEAR:
-          res = __Reduce_linear(sendbuf, recvbuf, count, datatype, op, root, info->info_hwcomm->rootcomm[i], coll_type, schedule, info);
+          res = __Reduce_linear(sendbuf, recvbuf, count, datatype, op, 0, info->info_hwcomm->rootcomm[i], coll_type, schedule, info);
           break;
         case NBC_REDUCE_BINOMIAL:
-          res = __Reduce_binomial(sendbuf, recvbuf, count, datatype, op, root, info->info_hwcomm->rootcomm[i], coll_type, schedule, info);
+          res = __Reduce_binomial(sendbuf, recvbuf, count, datatype, op, 0, info->info_hwcomm->rootcomm[i], coll_type, schedule, info);
           break;
       }
-    
-      __Barrier_type(coll_type, schedule, info);
     }
-
   }
 }
 
@@ -3256,24 +3250,24 @@ static inline int __Scatter_topo(const void *sendbuf, int sendcount, MPI_Datatyp
     if(info->info_hwcomm->hwcomm_rank[i] == 0) {
       switch(alg) {
         case NBC_SCATTER_LINEAR:
-          res = __Scatter_linear(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, info->info_hwcomm->hwcomm[i], coll_type, schedule, info);
+          res = __Scatter_linear(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, info->info_hwcomm->hwcomm[i], coll_type, schedule, info);
           break;
         case NBC_SCATTER_BINOMIAL:
-          res = __Scatter_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, info->info_hwcomm->hwcomm[i], coll_type, schedule, info);
+          res = __Scatter_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, info->info_hwcomm->hwcomm[i], coll_type, schedule, info);
           break;
       }
+
       __Barrier_type(MPC_COLL_TYPE_COUNT, schedule, info);
     }
+  }
 
-    switch(alg) {
-      case NBC_SCATTER_LINEAR:
-        res = __Scatter_linear(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, info->info_hwcomm->rootcomm[i], coll_type, schedule, info);
-        break;
-      case NBC_SCATTER_BINOMIAL:
-        res = __Scatter_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, info->info_hwcomm->rootcomm[i], coll_type, schedule, info);
-        break;
-    }
-    __Barrier_type(MPC_COLL_TYPE_COUNT, schedule, info);
+  switch(alg) {
+    case NBC_SCATTER_LINEAR:
+      res = __Scatter_linear(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, info->info_hwcomm->rootcomm[info->info_hwcomm->local_level_max - 1], coll_type, schedule, info);
+      break;
+    case NBC_SCATTER_BINOMIAL:
+      res = __Scatter_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, info->info_hwcomm->rootcomm[info->info_hwcomm->local_level_max - 1], coll_type, schedule, info);
+      break;
   }
 }
 
@@ -4126,20 +4120,18 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
     NBC_GATHER_BINOMIAL
   } alg;
 
-  // au choix, soit on fait un switch dans une boucle, ou on utilise un pointeur de fonction
+  alg = NBC_GATHER_LINEAR;
+
+  switch(alg) {
+    case NBC_GATHER_LINEAR:
+      res = __Gather_linear(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, info->info_hwcomm->hwcomm[info->info_hwcomm->local_level_max - 1], coll_type, schedule, info);
+      break;
+    case NBC_GATHER_BINOMIAL:
+      res = __Gather_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, info->info_hwcomm->hwcomm[info->info_hwcomm->local_level_max - 1], coll_type, schedule, info);
+      break;
+  }
 
   for(int i = info->info_hwcomm->local_level_max - 1; i > 0; i--) {
-    alg = NBC_GATHER_LINEAR;
-
-    switch(alg) {
-      case NBC_GATHER_LINEAR:
-        res = __Gather_linear(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, info->info_hwcomm->hwcomm[i], coll_type, schedule, info);
-        break;
-      case NBC_GATHER_BINOMIAL:
-        res = __Gather_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, info->info_hwcomm->hwcomm[i], coll_type, schedule, info);
-        break;
-    }
-
     __Barrier_type(coll_type, schedule, info);
 
     if(info->info_hwcomm->hwcomm_rank[i] == 0) {
@@ -4147,16 +4139,13 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
 
       switch(alg) {
         case NBC_GATHER_LINEAR:
-          res = __Gather_linear(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, info->info_hwcomm->rootcomm[i], coll_type, schedule, info);
+          res = __Gather_linear(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, info->info_hwcomm->rootcomm[i], coll_type, schedule, info);
           break;
         case NBC_GATHER_BINOMIAL:
-          res = __Gather_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, info->info_hwcomm->rootcomm[i], coll_type, schedule, info);
+          res = __Gather_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, info->info_hwcomm->rootcomm[i], coll_type, schedule, info);
           break;
       }
-    
-      __Barrier_type(coll_type, schedule, info);
     }
-
   }
 }
 
