@@ -60,20 +60,21 @@ typedef enum MPC_COLL_TYPE {
   \brief Hold schedule informations
   */
 typedef struct {
-  int pos;                    /**< Current offset from the starting adress of the schedule. */
+  int pos;                                      /**< Current offset from the starting adress of the schedule. */
 
-  int round_start_pos;        /**< Offset from the starting adress of the schedule to the starting adress of the current round. */
-  int round_comm_count;       /**< Number of operations in the current round. */
+  int round_start_pos;                          /**< Offset from the starting adress of the schedule to the starting adress of the current round. */
+  int round_comm_count;                         /**< Number of operations in the current round. */
 
-  int round_count;            /**< Number of rounds in the schedule. */
-  int comm_count;             /**< Number of operations in the schedule. */
-  int alloc_size;             /**< Allocation size for the schedule. */
+  int round_count;                              /**< Number of rounds in the schedule. */
+  int comm_count;                               /**< Number of operations in the schedule. */
+  int alloc_size;                               /**< Allocation size for the schedule. */
 
-  void *tmpbuf;               /**< Adress of the temporary buffer for the schedule. */
-  int tmpbuf_size;            /**< Size of the temporary buffer for the schedule. */
-  int tmpbuf_pos;             /**< Offset from the staring adress of the temporary buffer to the current position. */
+  void *tmpbuf;                                 /**< Adress of the temporary buffer for the schedule. */
+  int tmpbuf_size;                              /**< Size of the temporary buffer for the schedule. */
+  int tmpbuf_pos;                               /**< Offset from the staring adress of the temporary buffer to the current position. */
 
-  int is_hardware_algo;       /**< flag set to 1 if using hardware algorithm else 0. */
+  int is_topo_comm_creation_allowed;
+  int is_hardware_algo;                         /**< flag set to 1 if using hardware algorithm else 0. */
   mpc_hardware_split_info_t *hardware_info_ptr; /**< ptr to structure for hardware communicator info */
 } Sched_info;
 
@@ -168,6 +169,7 @@ static inline void __sched_info_init(Sched_info *info) {
   info->tmpbuf_size = 0;
   info->tmpbuf_pos = 0;
 
+  info->is_topo_comm_creation_allowed = 0;
   info->is_hardware_algo = 0;
   info->hardware_info_ptr = NULL;
 }
@@ -659,24 +661,6 @@ static inline int __create_master_hardware_comm_unguided(int vrank, int level, S
 }
 
 static inline int __Topo_comm_init(MPI_Comm comm, int root, int max_level, Sched_info *info) {
-  // //int max_num_levels = 8;
-  // //int level_topo = 1;
-
-  // handle->info_hwcomm = (mpc_topology_split_info_t*) sctk_malloc(sizeof(mpc_topology_split_info_t));
-  // handle->info_hwcomm->hwcomm = (MPI_Comm *)sctk_malloc((level+1)*sizeof(MPI_Comm));
-  // handle->info_hwcomm->rootcomm = (MPI_Comm *)sctk_malloc((level+1)*sizeof(MPI_Comm));
-  // handle->info_hwcomm->hwcomm_rank = (int *)sctk_malloc((level+1)*sizeof(int));
-  // 
-  // mpc_topology_split_persistent_init(handle->info_hwcomm, comm, root, level);
-  // mpc_topology_split_create_master_comm(handle->info_hwcomm, root, level);
-
-  // for (int k = 1; k < handle->info_hwcomm->local_level_max; k++)
-  // {
-  //   _mpc_cl_comm_rank(handle->info_hwcomm->hwcomm[k], &handle->info_hwcomm->hwcomm_rank[k]);
-  // }
-
-  // info->info_hwcomm = handle->info_hwcomm;
-
   int rank, size;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
@@ -886,6 +870,7 @@ static inline int __Bcast_init(void *buffer, int count, MPI_Datatype datatype, i
   NBC_Schedule *schedule;
   Sched_info info;
   __sched_info_init(&info);
+  info.is_topo_comm_creation_allowed = 1;
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
@@ -948,7 +933,11 @@ static inline int __Bcast_switch(void *buffer, int count, MPI_Datatype datatype,
     NBC_BCAST_TOPO
   } alg;
 
-  alg = NBC_BCAST_TOPO;
+  if(info && info->is_topo_comm_creation_allowed) {
+    alg = NBC_BCAST_TOPO;
+  } else {
+    alg = NBC_BCAST_BINOMIAL;
+  }
 
   int res;
 
@@ -1205,12 +1194,14 @@ static inline int __Bcast_topo(void *buffer, int count, MPI_Datatype datatype, i
 
     case MPC_COLL_TYPE_COUNT:
       {
-        /* choose max topological level on which to do hardware split */
-        /*TODO choose level wisely */
-        int max_level = 3;
-        //max_level = MAX_HARDWARE_LEVEL;
+        if(!info->is_hardware_algo) {
+          /* choose max topological level on which to do hardware split */
+          /*TODO choose level wisely */
+          int max_level = 3;
+          //max_level = MAX_HARDWARE_LEVEL;
 
-        __Topo_comm_init(comm, root, max_level, info);
+          __Topo_comm_init(comm, root, max_level, info);
+        }
         break;
       }
   }
@@ -1442,6 +1433,7 @@ static inline int __Reduce_init(const void *sendbuf, void* recvbuf, int count, M
   NBC_Schedule *schedule;
   Sched_info info;
   __sched_info_init(&info);
+  info.is_topo_comm_creation_allowed = 1;
 
   res = NBC_Init_handle(handle, comm, MPC_IREDUCE_TAG);
 
@@ -1507,10 +1499,10 @@ static inline int __Reduce_switch(const void *sendbuf, void* recvbuf, int count,
     NBC_REDUCE_TOPO
   } alg;
 
-  if(coll_type != MPC_COLL_TYPE_PERSISTENT) {
-    alg = NBC_REDUCE_BINOMIAL;
-  } else {
+  if(info && info->is_topo_comm_creation_allowed) {
     alg = NBC_REDUCE_TOPO;
+  } else {
+    alg = NBC_REDUCE_BINOMIAL;
   }
 
   int res;
@@ -1772,12 +1764,14 @@ static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, M
 
     case MPC_COLL_TYPE_COUNT:
       {
-        /* choose max topological level on which to do hardware split */
-        /*TODO choose level wisely */
-        int max_level = 3;
-        //max_level = MAX_HARDWARE_LEVEL;
+        if(!info->is_hardware_algo) {
+          /* choose max topological level on which to do hardware split */
+          /*TODO choose level wisely */
+          int max_level = 3;
+          //max_level = MAX_HARDWARE_LEVEL;
 
-        __Topo_comm_init(comm, root, max_level, info);
+          __Topo_comm_init(comm, root, max_level, info);
+        }
         break;
       }
   }
@@ -1985,6 +1979,7 @@ static inline int __Allreduce_init(const void *sendbuf, void* recvbuf, int count
   NBC_Schedule *schedule;
   Sched_info info;
   __sched_info_init(&info);
+  info.is_topo_comm_creation_allowed = 1;
 
   res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
 
@@ -2051,10 +2046,10 @@ static inline int __Allreduce_switch(const void *sendbuf, void* recvbuf, int cou
     NBC_ALLREDUCE_TOPO
   } alg;
 
-  if(coll_type != MPC_COLL_TYPE_PERSISTENT) {
-    alg = NBC_ALLREDUCE_BINARY_BLOCK;
-  } else {
+  if(info && info->is_topo_comm_creation_allowed) {
     alg = NBC_ALLREDUCE_TOPO;
+  } else {
+    alg = NBC_ALLREDUCE_BINARY_BLOCK;
   }
 
   int res;
@@ -2834,6 +2829,7 @@ static inline int __Scatter_init(const void *sendbuf, int sendcount, MPI_Datatyp
   NBC_Schedule *schedule;
   Sched_info info;
   __sched_info_init(&info);
+  info.is_topo_comm_creation_allowed = 1;
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
@@ -2901,10 +2897,10 @@ static inline int __Scatter_switch(const void *sendbuf, int sendcount, MPI_Datat
     NBC_SCATTER_TOPO
   } alg;
 
-  if(coll_type != MPC_COLL_TYPE_PERSISTENT) {
-    alg = NBC_SCATTER_BINOMIAL;
-  } else {
+  if(info && info->is_topo_comm_creation_allowed) {
     alg = NBC_SCATTER_TOPO;
+  } else {
+    alg = NBC_SCATTER_BINOMIAL;
   }
 
   int res;
@@ -3149,12 +3145,14 @@ static inline int __Scatter_topo(const void *sendbuf, int sendcount, MPI_Datatyp
 
     case MPC_COLL_TYPE_COUNT:
       {
-        /* choose max topological level on which to do hardware split */
-        /*TODO choose level wisely */
-        int max_level = 3;
-        //max_level = MAX_HARDWARE_LEVEL;
+        if(!info->is_hardware_algo) {
+          /* choose max topological level on which to do hardware split */
+          /*TODO choose level wisely */
+          int max_level = 3;
+          //max_level = MAX_HARDWARE_LEVEL;
 
-        __Topo_comm_init(comm, root, max_level, info);
+          __Topo_comm_init(comm, root, max_level, info);
+        }
         break;
       }
   }
@@ -3384,6 +3382,7 @@ static inline int __Scatterv_init(const void *sendbuf, const int *sendcounts, co
   NBC_Schedule *schedule;
   Sched_info info;
   __sched_info_init(&info);
+  info.is_topo_comm_creation_allowed = 1;
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
@@ -3814,10 +3813,10 @@ static inline int __Gather_switch(const void *sendbuf, int sendcount, MPI_Dataty
     NBC_GATHER_TOPO
   } alg;
 
-  if(coll_type != MPC_COLL_TYPE_PERSISTENT) {
-    alg = NBC_GATHER_BINOMIAL;
-  } else {
+  if(info && info->is_topo_comm_creation_allowed) {
     alg = NBC_GATHER_TOPO;
+  } else {
+    alg = NBC_GATHER_BINOMIAL;
   }
 
   int res;
@@ -4052,12 +4051,14 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
 
     case MPC_COLL_TYPE_COUNT:
       {
-        /* choose max topological level on which to do hardware split */
-        /*TODO choose level wisely */
-        int max_level = 3;
-        //max_level = MAX_HARDWARE_LEVEL;
+        if(!info->is_hardware_algo) {
+          /* choose max topological level on which to do hardware split */
+          /*TODO choose level wisely */
+          int max_level = 3;
+          //max_level = MAX_HARDWARE_LEVEL;
 
-        __Topo_comm_init(comm, root, max_level, info);
+          __Topo_comm_init(comm, root, max_level, info);
+        }
         break;
       }
   }
@@ -5494,6 +5495,7 @@ static inline int __Allgather_init(const void *sendbuf, int sendcount, MPI_Datat
   NBC_Schedule *schedule;
   Sched_info info;
   __sched_info_init(&info);
+  info.is_topo_comm_creation_allowed = 1;
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
@@ -5561,10 +5563,10 @@ static inline int __Allgather_switch(const void *sendbuf, int sendcount, MPI_Dat
     NBC_ALLGATHER_TOPO
   } alg;
 
-  if(coll_type != MPC_COLL_TYPE_PERSISTENT) {
-    alg = NBC_ALLGATHER_DISTANCE_DOUBLING;
-  } else {
+  if(info && info->is_topo_comm_creation_allowed) {
     alg = NBC_ALLGATHER_TOPO;
+  } else {
+    alg = NBC_ALLGATHER_DISTANCE_DOUBLING;
   }
 
   int res;
