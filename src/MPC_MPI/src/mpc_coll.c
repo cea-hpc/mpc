@@ -197,6 +197,13 @@ static inline int __sched_alloc_init(NBC_Handle *handle, NBC_Schedule *schedule,
     info->tmpbuf = handle->tmpbuf;
   }
 
+  // /* if hardware algorithm has been scheduled */
+  // if(info.is_hardware_algo)
+  // {
+  /* to free hardware structure later from handle */
+  handle->hardware_info = info->hardware_info_ptr;
+  // }
+
   return MPI_SUCCESS;
 }
 
@@ -888,13 +895,6 @@ static inline int __Bcast_init(void *buffer, int count, MPI_Datatype datatype, i
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
   __Bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
-
-  /* if hardware algorithm has been scheduled */
-  if(info.is_hardware_algo)
-  {
-    /* to free hardware structure later from handle */
-    handle->hardware_info = info.hardware_info_ptr;
-  }
 
   __sched_alloc_init(handle, schedule, &info);
 
@@ -3139,8 +3139,7 @@ static inline int __Scatter_binomial(const void *sendbuf, int sendcount, MPI_Dat
 }
 
 static inline int __Scatter_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
-  /*int rank, size, res;
-  MPI_Aint ext;
+  int rank, size, res = MPI_SUCCESS;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
 
@@ -3149,14 +3148,40 @@ static inline int __Scatter_topo(const void *sendbuf, int sendcount, MPI_Datatyp
     NBC_SCATTER_BINOMIAL
   } alg;
 
-  for(int i = 1; i < info->info_hwcomm->local_level_max; i++) {
-    if(info->info_hwcomm->hwcomm_rank[i] == 0) {
+  switch(coll_type) {
+    case MPC_COLL_TYPE_BLOCKING:
+    case MPC_COLL_TYPE_NONBLOCKING:
+    case MPC_COLL_TYPE_PERSISTENT:
+      break;
+
+    case MPC_COLL_TYPE_COUNT:
+      {
+        /* choose max topological level on which to do hardware split */
+        /*TODO choose level wisely */
+        int max_level = 3;
+        //max_level = MAX_HARDWARE_LEVEL;
+
+        __Topo_comm_init(comm, root, max_level, info);
+        break;
+      }
+  }
+
+  int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
+
+  /* At each topological level, masters do binomial algorithm */
+  for(int i = 1; i < deepest_level; i++) {
+    int rank_split;
+    _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &rank_split);
+    
+    if(!rank_split) {
+      MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[i];
+      
       switch(alg) {
         case NBC_SCATTER_LINEAR:
-          res = __Scatter_linear(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, info->info_hwcomm->hwcomm[i], coll_type, schedule, info);
+          res = __Scatter_linear(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, master_comm, coll_type, schedule, info);
           break;
         case NBC_SCATTER_BINOMIAL:
-          res = __Scatter_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, info->info_hwcomm->hwcomm[i], coll_type, schedule, info);
+          res = __Scatter_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, master_comm, coll_type, schedule, info);
           break;
       }
 
@@ -3164,14 +3189,17 @@ static inline int __Scatter_topo(const void *sendbuf, int sendcount, MPI_Datatyp
     }
   }
 
+  /* last level topology binomial bcast */
+  MPI_Comm hardware_comm = info->hardware_info_ptr->hwcomm[deepest_level];
+
   switch(alg) {
     case NBC_SCATTER_LINEAR:
-      res = __Scatter_linear(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, info->info_hwcomm->rootcomm[info->info_hwcomm->local_level_max - 1], coll_type, schedule, info);
+      res = __Scatter_linear(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, hardware_comm, coll_type, schedule, info);
       break;
     case NBC_SCATTER_BINOMIAL:
-      res = __Scatter_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, info->info_hwcomm->rootcomm[info->info_hwcomm->local_level_max - 1], coll_type, schedule, info);
+      res = __Scatter_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, hardware_comm, coll_type, schedule, info);
       break;
-  }*/
+  }
 }
 
 
