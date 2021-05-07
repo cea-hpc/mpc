@@ -1185,7 +1185,7 @@ static inline int __Bcast_scatter_allgather(__UNUSED__ void *buffer, __UNUSED__ 
   */
 static inline int __Bcast_topo(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-  int rank, size;
+  int rank, size, res = MPI_SUCCESS;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
 
@@ -1196,8 +1196,6 @@ static inline int __Bcast_topo(void *buffer, int count, MPI_Datatype datatype, i
   } alg;
 
   alg = NBC_BCAST_BINOMIAL;
-
-  int res = MPI_SUCCESS;
 
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
@@ -1231,7 +1229,7 @@ static inline int __Bcast_topo(void *buffer, int count, MPI_Datatype datatype, i
 #endif
 
 
-    if((!rank_split)) { /* if master */
+    if(!rank_split) { /* if master */
       MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[k];
 
       //res = __Bcast_binomial(buffer, count, datatype, 0, master_comm, coll_type, schedule, info);
@@ -1248,6 +1246,8 @@ static inline int __Bcast_topo(void *buffer, int count, MPI_Datatype datatype, i
           res = __Bcast_scatter_allgather(buffer, count, datatype, 0, master_comm, coll_type, schedule, info);
           break;
       }
+      
+      __Barrier_type(coll_type, schedule, info);
     }
   }
 
@@ -1760,44 +1760,71 @@ static inline int __Reduce_reduce_scatter_allgather(__UNUSED__ const void *sendb
 }
 
 static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
-  /*int rank, size, res;
-  MPI_Aint ext;
+  int rank, size, res = MPI_SUCCESS;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
-  PMPI_Type_extent(datatype, &ext);
 
   enum {
     NBC_REDUCE_LINEAR,
     NBC_REDUCE_BINOMIAL
   } alg;
 
-
   alg = NBC_REDUCE_LINEAR;
+
+  switch(coll_type) {
+    case MPC_COLL_TYPE_BLOCKING:
+    case MPC_COLL_TYPE_NONBLOCKING:
+    case MPC_COLL_TYPE_PERSISTENT:
+      break;
+
+    case MPC_COLL_TYPE_COUNT:
+      {
+        /* choose max topological level on which to do hardware split */
+        /*TODO choose level wisely */
+        int max_level = 3;
+        //max_level = MAX_HARDWARE_LEVEL;
+
+        __Topo_comm_init(comm, root, max_level, info);
+        break;
+      }
+  }
+  
+  int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
+
+  /* last level topology binomial bcast */
+  MPI_Comm hardware_comm = info->hardware_info_ptr->hwcomm[deepest_level];
 
   switch(alg) {
     case NBC_REDUCE_LINEAR:
-      res = __Reduce_linear(sendbuf, recvbuf, count, datatype, op, 0, info->info_hwcomm->hwcomm[info->info_hwcomm->local_level_max - 1], coll_type, schedule, info);
+      res = __Reduce_linear(sendbuf, recvbuf, count, datatype, op, 0, hardware_comm, coll_type, schedule, info);
       break;
     case NBC_REDUCE_BINOMIAL:
-      res = __Reduce_binomial(sendbuf, recvbuf, count, datatype, op, 0, info->info_hwcomm->hwcomm[info->info_hwcomm->local_level_max - 1], coll_type, schedule, info);
+      res = __Reduce_binomial(sendbuf, recvbuf, count, datatype, op, 0, hardware_comm, coll_type, schedule, info);
       break;
   }
-
-  for(int i = info->info_hwcomm->local_level_max - 1; i > 0; i--) {
-    if(info->info_hwcomm->hwcomm_rank[i] == 0) {
+  
+  /* At each topological level, masters do binomial algorithm */
+  for(int i = deepest_level - 1; i > 0; i--) {
+    int rank_split;
+    _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &rank_split);
+    
+    if(!rank_split) {
       __Barrier_type(coll_type, schedule, info);
-      alg = NBC_REDUCE_LINEAR;
 
+      MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[i];
+      
       switch(alg) {
         case NBC_REDUCE_LINEAR:
-          res = __Reduce_linear(sendbuf, recvbuf, count, datatype, op, 0, info->info_hwcomm->rootcomm[i], coll_type, schedule, info);
+          res = __Reduce_linear(sendbuf, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
           break;
         case NBC_REDUCE_BINOMIAL:
-          res = __Reduce_binomial(sendbuf, recvbuf, count, datatype, op, 0, info->info_hwcomm->rootcomm[i], coll_type, schedule, info);
+          res = __Reduce_binomial(sendbuf, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
           break;
       }
     }
-  }*/
+  }
+
+  return res;
 }
 
 
