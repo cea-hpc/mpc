@@ -669,6 +669,7 @@ if test "$tmp" != ""; then
 		tot=$((tot + $i))
 	done
 	if test $P_SET = "false" ; then
+		echo "WARNING : -p automatically completed to $tot"
 		LAUNCHER_OPTION_PROCESS_NB=$tot
 	fi
 	if [ "$tot" != "$LAUNCHER_OPTION_PROCESS_NB" ]; then

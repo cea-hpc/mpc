@@ -32617,6 +32617,18 @@ if test -z "${PRRTE_LAUNCHER_ENABLED_TRUE}" && test -z "${PRRTE_LAUNCHER_ENABLED
   as_fn_error $? "conditional \"PRRTE_LAUNCHER_ENABLED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${MPC_HAS_SRUN_SUPPORT_TRUE}" && test -z "${MPC_HAS_SRUN_SUPPORT_FALSE}"; then
+  as_fn_error $? "conditional \"MPC_HAS_SRUN_SUPPORT\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HYDRA_LAUNCHER_ENABLED_TRUE}" && test -z "${HYDRA_LAUNCHER_ENABLED_FALSE}"; then
+  as_fn_error $? "conditional \"HYDRA_LAUNCHER_ENABLED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${PRRTE_LAUNCHER_ENABLED_TRUE}" && test -z "${PRRTE_LAUNCHER_ENABLED_FALSE}"; then
+  as_fn_error $? "conditional \"PRRTE_LAUNCHER_ENABLED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${MPC_CUDA_ENABLED_TRUE}" && test -z "${MPC_CUDA_ENABLED_FALSE}"; then
   as_fn_error $? "conditional \"MPC_CUDA_ENABLED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
