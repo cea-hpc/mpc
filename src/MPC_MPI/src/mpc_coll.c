@@ -1222,13 +1222,6 @@ static inline int __Bcast_topo(void *buffer, int count, MPI_Datatype datatype, i
     int rank_split;
     _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[k + 1], &rank_split);
 
-#if dbg == 1
-    int size_split;
-    _mpc_cl_comm_size(info->hardware_info_ptr->hwcomm[k + 1], &size_split);
-    printf("RANK %d | LEVEL %d | TOPO_RANK %d / %d\n", rank, k, rank_split, size_split);
-#endif
-
-
     if(!rank_split) { /* if master */
       MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[k];
 
@@ -1804,7 +1797,7 @@ static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, M
   }
   
   /* At each topological level, masters do binomial algorithm */
-  for(int i = deepest_level - 1; i > 0; i--) {
+  for(int i = deepest_level - 1; i >= 0; i--) {
     int rank_split;
     _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &rank_split);
     
@@ -3169,7 +3162,7 @@ static inline int __Scatter_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
 
   /* At each topological level, masters do binomial algorithm */
-  for(int i = 1; i < deepest_level; i++) {
+  for(int i = 0; i < deepest_level; i++) {
     int rank_split;
     _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &rank_split);
     
@@ -4040,8 +4033,7 @@ static inline int __Gather_binomial(const void *sendbuf, int sendcount, MPI_Data
 }
 
 static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
-  /*int rank, size, res;
-  MPI_Aint ext;
+  int rank, size, res = MPI_SUCCESS;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
 
@@ -4052,31 +4044,57 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
 
   alg = NBC_GATHER_LINEAR;
 
+  switch(coll_type) {
+    case MPC_COLL_TYPE_BLOCKING:
+    case MPC_COLL_TYPE_NONBLOCKING:
+    case MPC_COLL_TYPE_PERSISTENT:
+      break;
+
+    case MPC_COLL_TYPE_COUNT:
+      {
+        /* choose max topological level on which to do hardware split */
+        /*TODO choose level wisely */
+        int max_level = 3;
+        //max_level = MAX_HARDWARE_LEVEL;
+
+        __Topo_comm_init(comm, root, max_level, info);
+        break;
+      }
+  }
+
+  int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
+
+  /* last level topology binomial bcast */
+  MPI_Comm hardware_comm = info->hardware_info_ptr->hwcomm[deepest_level];
+
   switch(alg) {
     case NBC_GATHER_LINEAR:
-      res = __Gather_linear(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, info->info_hwcomm->hwcomm[info->info_hwcomm->local_level_max - 1], coll_type, schedule, info);
+      res = __Gather_linear(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, hardware_comm, coll_type, schedule, info);
       break;
     case NBC_GATHER_BINOMIAL:
-      res = __Gather_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, info->info_hwcomm->hwcomm[info->info_hwcomm->local_level_max - 1], coll_type, schedule, info);
+      res = __Gather_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, hardware_comm, coll_type, schedule, info);
       break;
   }
 
-  for(int i = info->info_hwcomm->local_level_max - 1; i > 0; i--) {
+  for(int i = deepest_level - 1; i >= 0; i--) {
     __Barrier_type(coll_type, schedule, info);
 
-    if(info->info_hwcomm->hwcomm_rank[i] == 0) {
-      alg = NBC_GATHER_LINEAR;
-
+    int rank_split;
+    _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &rank_split);
+    
+    if(!rank_split) {
+      MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[i];
+      
       switch(alg) {
         case NBC_GATHER_LINEAR:
-          res = __Gather_linear(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, info->info_hwcomm->rootcomm[i], coll_type, schedule, info);
+          res = __Gather_linear(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, master_comm, coll_type, schedule, info);
           break;
         case NBC_GATHER_BINOMIAL:
-          res = __Gather_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, info->info_hwcomm->rootcomm[i], coll_type, schedule, info);
+          res = __Gather_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, master_comm, coll_type, schedule, info);
           break;
       }
     }
-  }*/
+  }
 }
 
 
