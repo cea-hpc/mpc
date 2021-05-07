@@ -574,120 +574,120 @@ static inline int __Copy_type(const void *src, int srccount, MPI_Datatype srctyp
 
 
 
-// TODO a changer pour eviter les splits qui ne change pas la taille du comm
-void mpc_topology_split_persistent_init(mpc_topology_split_info_t *info, MPI_Comm comm, int root, int level) {
+/**
+  \brief Initialize hardware communicators used for persistent hardware algorithms 
+  \param comm communicator of the collective 
+  \param vrank virtual rank for the algorithm
+  \param max_level Max hardware topological level to split communicators 
+  \param info Adress on the information structure about the schedule
+  \return error code
+ */
+static inline int __create_hardware_comm_unguided(MPI_Comm comm, int vrank, int max_level, Sched_info *info) {
   int res = MPI_ERR_INTERN;
-  MPI_Comm* hwcomm = info->hwcomm;
   int level_num = 0;
-  int rank_comm;
-  hwcomm[0] = comm;
-  _mpc_cl_comm_rank(comm, &rank_comm);
-  int max_num_levels = 32;
-  int vrank = -1;
 
-  int current_size;
-  int previous_size;
+  MPI_Comm* hwcomm = info->hardware_info_ptr->hwcomm;
 
-  _mpc_cl_comm_size(comm, &previous_size);
+  hwcomm[level_num] = comm;
 
-  /* set root to 0 te be color as master for every of its topological levels */
-  RANK2VRANK(rank_comm, vrank, root);
-
-  /* create topological communicators */
-  while((hwcomm[level_num] != MPI_COMM_NULL) && level_num < level)
+  /* create topology communicators */
+  while((hwcomm[level_num] != MPI_COMM_NULL) && (level_num < max_level))
   {
-    if(level_num > 0) {
-      _mpc_cl_comm_size(hwcomm[level_num], &current_size);
+    res = PMPI_Comm_split_type(hwcomm[level_num],
+        MPI_COMM_TYPE_HW_UNGUIDED,
+        vrank,
+        MPI_INFO_NULL,
+        &hwcomm[level_num+1]);
 
-      //printf("CURRENT %d | PREV %d\n", current_size, previous_size);
-
-      if(previous_size == current_size) {
-        // bah c est pas normal de faire ca
-        break;
-      }
-      previous_size = current_size;
+    if(hwcomm[level_num+1] != MPI_COMM_NULL)
+    {
+      _mpc_cl_comm_rank(hwcomm[level_num + 1],&vrank);
     }
-
-    res = PMPI_Comm_split_type(hwcomm[level_num], MPI_COMM_TYPE_HW_UNGUIDED, vrank, MPI_INFO_NULL, &hwcomm[level_num+1]);
-
-    if(hwcomm[level_num+1] != MPI_COMM_NULL) {
-      printf("topo split\n");
-    }
-
-
-    /* affichage */
-    //if(hwcomm[level_num+1] != MPI_COMM_NULL)
-    //{
-    //    int size;
-    //    MPI_Comm_rank(hwcomm[level_num + 1],&rank_comm);
-    //    /* set root to 0 te be color as master for every of its topological levels */
-    //    RANK2VRANK(rank_comm, vrank, root)
-    //    if(!rank_comm)
-    //    {
-    //        MPI_Comm_size(hwcomm[level_num + 1],&size);
-    //        fprintf(stderr, "hwxomm master rank %d size %d\n", rank_comm, size);
-    //    }
-    //}
 
     level_num++;
   }
-  info->local_level_max = level_num;
-  //SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+
+  level_num--;
+
+  info->hardware_info_ptr->deepest_hardware_level = level_num;
+
+  return res;
 }
 
-void mpc_topology_split_create_master_comm(mpc_topology_split_info_t *info, int root, int level) {
+/**
+  \brief Initialize hardware master communicators used for persistent hardware algorithms 
+  \param vrank virtual rank for the algorithm
+  \param level Max hardware topological level to split communicators 
+  \param info Adress on the information structure about the schedule
+  \return error code
+ */
+static inline int __create_master_hardware_comm_unguided(int vrank, int level, Sched_info *info) {
   int res = MPI_ERR_INTERN;
-  int size_comm = 0;
   int rank_comm = -1;
-  int rank = -1;
   int level_num = 0;
-  int rank_global = -1;
-  MPI_Comm* hwcomm = info->hwcomm;
-  int max_num_levels = 32;
-  MPI_Comm* rootcomm = info->rootcomm;
-  _mpc_cl_comm_rank(hwcomm[0],&rank_global);
 
-  int vrank = -1;
-  /* use vrank to set root at rank 0 in new master comm */
-  RANK2VRANK(rank_global, vrank, root);
+  MPI_Comm* hwcomm = info->hardware_info_ptr->hwcomm;
+  MPI_Comm* rootcomm = info->hardware_info_ptr->rootcomm;
 
-  //int size_next_comm = -1;
-  //_mpc_cl_comm_size(hwcomm[level_num + 1], &size_next_comm);
-
-  /* create root communicator with ranks 0 for each hwcomm communicator */
-  while((hwcomm[level_num + 1] != MPI_COMM_NULL) /*&& (size_next_comm > 1)*/ && (level_num < level))
+  /* create master communicator with ranks 0 for each hwcomm communicator */
+  while((hwcomm[level_num + 1] != MPI_COMM_NULL) && (level_num < level))
   {
-    //_mpc_cl_comm_rank(hwcomm[level_num + 1], &rank_comm);
-    //_mpc_cl_comm_size(hwcomm[level_num + 1], &size_comm);
+    _mpc_cl_comm_rank(hwcomm[level_num + 1],&rank_comm);
 
-    int color = (rank_comm == 0)?(0):(1);
+    int color = -1;
 
-    //fprintf(stderr, "%d, %d, %d, %p\n",hwcomm[level_num ], color, vrank, &rootcomm[level_num ]);
-    PMPI_Comm_split(hwcomm[level_num], color, vrank, &rootcomm[level_num + 1]);
-    //_mpc_cl_comm_size(hwcomm[level_num + 2], &size_next_comm);
+    if(rank_comm == 0)
+    {
+      color = 0;
+    }
+    else
+    {
+      color = 1;
+    }
+
+    PMPI_Comm_split(hwcomm[level_num ], color, vrank, &rootcomm[level_num ]);
     level_num ++;
   }
-  //SCTK_MPI_CHECK_RETURN_VAL (res, hwcomm[0]);
+  return res;
 }
 
-static inline int __Topo_comm_init(NBC_Handle* handle, MPI_Comm comm, int root, int level, Sched_info *info) {
-  //int max_num_levels = 8;
-  //int level_topo = 1;
+static inline int __Topo_comm_init(MPI_Comm comm, int root, int max_level, Sched_info *info) {
+  // //int max_num_levels = 8;
+  // //int level_topo = 1;
 
-  handle->info_hwcomm = (mpc_topology_split_info_t*) sctk_malloc(sizeof(mpc_topology_split_info_t));
-  handle->info_hwcomm->hwcomm = (MPI_Comm *)sctk_malloc((level+1)*sizeof(MPI_Comm));
-  handle->info_hwcomm->rootcomm = (MPI_Comm *)sctk_malloc((level+1)*sizeof(MPI_Comm));
-  handle->info_hwcomm->hwcomm_rank = (int *)sctk_malloc((level+1)*sizeof(int));
-  
-  mpc_topology_split_persistent_init(handle->info_hwcomm, comm, root, level);
-  mpc_topology_split_create_master_comm(handle->info_hwcomm, root, level);
+  // handle->info_hwcomm = (mpc_topology_split_info_t*) sctk_malloc(sizeof(mpc_topology_split_info_t));
+  // handle->info_hwcomm->hwcomm = (MPI_Comm *)sctk_malloc((level+1)*sizeof(MPI_Comm));
+  // handle->info_hwcomm->rootcomm = (MPI_Comm *)sctk_malloc((level+1)*sizeof(MPI_Comm));
+  // handle->info_hwcomm->hwcomm_rank = (int *)sctk_malloc((level+1)*sizeof(int));
+  // 
+  // mpc_topology_split_persistent_init(handle->info_hwcomm, comm, root, level);
+  // mpc_topology_split_create_master_comm(handle->info_hwcomm, root, level);
 
-  for (int k = 1; k < handle->info_hwcomm->local_level_max; k++)
-  {
-    _mpc_cl_comm_rank(handle->info_hwcomm->hwcomm[k], &handle->info_hwcomm->hwcomm_rank[k]);
-  }
+  // for (int k = 1; k < handle->info_hwcomm->local_level_max; k++)
+  // {
+  //   _mpc_cl_comm_rank(handle->info_hwcomm->hwcomm[k], &handle->info_hwcomm->hwcomm_rank[k]);
+  // }
 
-  info->info_hwcomm = handle->info_hwcomm;
+  // info->info_hwcomm = handle->info_hwcomm;
+
+  int rank, size;
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+
+  int vrank;
+  RANK2VRANK(rank, vrank, root);
+
+  /* specify hardware algorithm to pass hardware structure to the handle to free later */
+  info->is_hardware_algo = 1;
+
+  info->hardware_info_ptr = (mpc_hardware_split_info_t *)sctk_malloc(sizeof(mpc_hardware_split_info_t));
+  info->hardware_info_ptr->hwcomm = (MPI_Comm *)sctk_malloc(MAX_HARDWARE_LEVEL*sizeof(MPI_Comm));
+  info->hardware_info_ptr->rootcomm = (MPI_Comm *)sctk_malloc(MAX_HARDWARE_LEVEL*sizeof(MPI_Comm));
+
+  /* Create hardware communicators using unguided topological split and max split level */
+  __create_hardware_comm_unguided(comm, vrank, max_level, info);
+  int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
+  __create_master_hardware_comm_unguided(vrank, deepest_level, info);
 }
 
 
@@ -731,87 +731,7 @@ int mpc_mpi_bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_
 static inline int __Bcast_linear(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __Bcast_binomial(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __Bcast_scatter_allgather(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Bcast_full_binomial_topo(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __Bcast_topo(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-
-/**
-  \brief Initialize hardware communicators used for persistent hardware algorithms 
-  \param comm communicator of the collective 
-  \param vrank virtual rank for the algorithm
-  \param max_level Max hardware topological level to split communicators 
-  \param info Adress on the information structure about the schedule
-  \return error code
-  */
-static inline int __create_hardware_comm_unguided(MPI_Comm comm, int vrank, int max_level, Sched_info *info)
-{
-    int res = MPI_ERR_INTERN;
-    int level_num = 0;
-
-    MPI_Comm* hwcomm = info->hardware_info_ptr->hwcomm;
-
-    hwcomm[level_num] = comm;
-
-    /* create topology communicators */
-    while((hwcomm[level_num] != MPI_COMM_NULL) && (level_num < max_level))
-    {
-        res = PMPI_Comm_split_type(hwcomm[level_num],
-                MPI_COMM_TYPE_HW_UNGUIDED,
-                vrank,
-                MPI_INFO_NULL,
-                &hwcomm[level_num+1]);
-
-        if(hwcomm[level_num+1] != MPI_COMM_NULL)
-        {
-            _mpc_cl_comm_rank(hwcomm[level_num + 1],&vrank);
-        }
-
-        level_num++;
-    }
-
-    level_num--;
-
-	info->hardware_info_ptr->deepest_hardware_level = level_num;
-
-    return res;
-}
-
-/**
-  \brief Initialize hardware master communicators used for persistent hardware algorithms 
-  \param vrank virtual rank for the algorithm
-  \param level Max hardware topological level to split communicators 
-  \param info Adress on the information structure about the schedule
-  \return error code
-  */
-static inline int __create_master_hardware_comm_unguided(int vrank, int level, Sched_info *info)
-{
-	int res = MPI_ERR_INTERN;
-    int rank_comm = -1;
-    int level_num = 0;
-
-	MPI_Comm* hwcomm = info->hardware_info_ptr->hwcomm;
-	MPI_Comm* rootcomm = info->hardware_info_ptr->rootcomm;
-
-    /* create master communicator with ranks 0 for each hwcomm communicator */
-    while((hwcomm[level_num + 1] != MPI_COMM_NULL) && (level_num < level))
-    {
-        _mpc_cl_comm_rank(hwcomm[level_num + 1],&rank_comm);
-
-        int color = -1;
-
-        if(rank_comm == 0)
-        {
-            color = 0;
-        }
-        else
-        {
-            color = 1;
-        }
-
-        PMPI_Comm_split(hwcomm[level_num ], color, vrank, &rootcomm[level_num ]);
-        level_num ++;
-    }
-    return res;
-}
 
 
 /**
@@ -961,7 +881,6 @@ static inline int __Bcast_init(void *buffer, int count, MPI_Datatype datatype, i
   __sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
-  res = __Topo_comm_init(handle, comm, root, MAX_TOPO_SPLIT, &info);
 
   handle->tmpbuf = NULL;
 
@@ -973,12 +892,12 @@ static inline int __Bcast_init(void *buffer, int count, MPI_Datatype datatype, i
   /* if hardware algorithm has been scheduled */
   if(info.is_hardware_algo)
   {
-      /* to free hardware structure later from handle */
-      handle->hardware_info = info.hardware_info_ptr;
+    /* to free hardware structure later from handle */
+    handle->hardware_info = info.hardware_info_ptr;
   }
-  
+
   __sched_alloc_init(handle, schedule, &info);
-  
+
   __Bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
   res = __Sched_commit(schedule, &info);
@@ -1026,15 +945,10 @@ static inline int __Bcast_switch(void *buffer, int count, MPI_Datatype datatype,
     NBC_BCAST_LINEAR,
     NBC_BCAST_BINOMIAL,
     NBC_BCAST_SCATTER_ALLGATHER,
-    NBC_BCAST_HARDWARE_FULL_BINOMIAL,
     NBC_BCAST_TOPO
   } alg;
 
-  if(coll_type != MPC_COLL_TYPE_PERSISTENT) {
-    alg = NBC_BCAST_BINOMIAL;
-  } else {
-    alg = NBC_BCAST_TOPO;
-  }
+  alg = NBC_BCAST_TOPO;
 
   int res;
 
@@ -1047,9 +961,6 @@ static inline int __Bcast_switch(void *buffer, int count, MPI_Datatype datatype,
       break;
     case NBC_BCAST_SCATTER_ALLGATHER:
       res = __Bcast_scatter_allgather(buffer, count, datatype, root, comm, coll_type, schedule, info);
-      break;
-    case NBC_BCAST_HARDWARE_FULL_BINOMIAL:
-      res = __Bcast_full_binomial_topo(buffer, count, datatype, root, comm, coll_type, schedule, info);
       break;
     case NBC_BCAST_TOPO:
       res = __Bcast_topo(buffer, count, datatype, root, comm, coll_type, schedule, info);
@@ -1186,8 +1097,7 @@ static inline int __Bcast_binomial(void *buffer, int count, MPI_Datatype datatyp
 }
 
 /*TODO remove when __Bcast_full_binomial_topo works with __Bcast_binomial instead of this */
-static inline int __bcast_sched_full_hardware_binomial(int root, NBC_Schedule *schedule, void *buffer, int count, MPI_Datatype datatype, MPI_Comm comm, MPC_COLL_TYPE coll_type, Sched_info *info)
-{
+static inline int __bcast_sched_full_hardware_binomial(int root, NBC_Schedule *schedule, void *buffer, int count, MPI_Datatype datatype, MPI_Comm comm, MPC_COLL_TYPE coll_type, Sched_info *info) {
 
     int rank, p;
 
@@ -1238,93 +1148,6 @@ static inline int __bcast_sched_full_hardware_binomial(int root, NBC_Schedule *s
     return res;
 }
 
-/**
-  \brief Execute or schedule a broadcast using the hardware full binomial algorithm
-    Or count the number of operations and rounds for the schedule
-  \param buffer Adress of the buffer used to send/recv data during the broadcast
-  \param count Number of elements in buffer
-  \param datatype Type of the data elements in the buffer
-  \param root Rank root of the broadcast
-  \param comm Target communicator
-  \param coll_type Type of the communication
-  \param schedule Adress of the schedule
-  \param info Adress on the information structure about the schedule
-  \return error code
-  */
-static inline int __Bcast_full_binomial_topo(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
-
-  int rank, size;
-  _mpc_cl_comm_size(comm, &size);
-  _mpc_cl_comm_rank(comm, &rank);
-
-  int res = MPI_SUCCESS;
-
-  switch(coll_type) {
-      case MPC_COLL_TYPE_BLOCKING:
-      case MPC_COLL_TYPE_NONBLOCKING:
-      case MPC_COLL_TYPE_PERSISTENT:
-          break;
-
-      case MPC_COLL_TYPE_COUNT:
-          {
-              /* At each topological level, masters do binomial algorithm */
-
-              int deepest_level;
-
-              /* set root to 0 te be color as master for every of its topological levels */
-              int vrank;
-              RANK2VRANK(rank, vrank, root);
-
-              /* choose max topological level on which to do hardware split */
-              int max_level;
-              max_level = 3;
-              //max_level = MAX_HARDWARE_LEVEL;
-              /*TODO choose level wisely */
-
-              /* specify hardware algorithm to pass hardware structure to the handle to free later */
-              info->is_hardware_algo = 1;
-
-              info->hardware_info_ptr = (mpc_hardware_split_info_t *)sctk_malloc(sizeof(mpc_hardware_split_info_t));
-              info->hardware_info_ptr->hwcomm = (MPI_Comm *)sctk_malloc(MAX_HARDWARE_LEVEL*sizeof(MPI_Comm));
-              info->hardware_info_ptr->rootcomm = (MPI_Comm *)sctk_malloc(MAX_HARDWARE_LEVEL*sizeof(MPI_Comm));
-
-              /* Create hardware communicators using unguided topological split and max split level */
-              __create_hardware_comm_unguided(comm, vrank, max_level, info);
-              deepest_level = info->hardware_info_ptr->deepest_hardware_level;
-              __create_master_hardware_comm_unguided(vrank, deepest_level, info);
-          }
-  }
-
-  int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
-
-  for (int k = 0; k < deepest_level; k++)
-  {
-      int rank_split;
-
-      _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[k + 1], &rank_split);
-
-      if((!rank_split)) /* if master */
-      {
-          /* schedule binomial bcast for masters at each master levels */
-          MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[k];
-
-          //res = __Bcast_binomial(buffer, count, datatype, 0, master_comm, coll_type, schedule, info);
-          /*TODO replace by __Bcast_binomial when possible */
-          res = __bcast_sched_full_hardware_binomial(0, schedule, buffer, count, datatype, master_comm, coll_type, info);
-      }
-  }
-
-  /* last level topology binomial bcast */
-
-  MPI_Comm hardware_comm = info->hardware_info_ptr->hwcomm[deepest_level];
-
-  //res = __Bcast_binomial(buffer, count, datatype, 0, hardware_comm, coll_type, schedule, info);
-  /*TODO replace by __Bcast_binomial when possible */
-  res = __bcast_sched_full_hardware_binomial(0, schedule, buffer, count, datatype, hardware_comm, coll_type, info);
-
-
-  return res;
-}
 
 /**
   \brief Execute or schedule a broadcast using the scatter_allgather algorithm
@@ -1346,12 +1169,25 @@ static inline int __Bcast_scatter_allgather(__UNUSED__ void *buffer, __UNUSED__ 
   return MPI_SUCCESS;
 }
 
+
+/**
+  \brief Execute or schedule a broadcast using the hardware full binomial algorithm
+    Or count the number of operations and rounds for the schedule
+  \param buffer Adress of the buffer used to send/recv data during the broadcast
+  \param count Number of elements in buffer
+  \param datatype Type of the data elements in the buffer
+  \param root Rank root of the broadcast
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
 static inline int __Bcast_topo(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
-  int rank, size, res;
-  MPI_Aint ext;
+
+  int rank, size;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
-  PMPI_Type_extent(datatype, &ext);
 
   enum {
     NBC_BCAST_LINEAR,
@@ -1359,38 +1195,81 @@ static inline int __Bcast_topo(void *buffer, int count, MPI_Datatype datatype, i
     NBC_BCAST_SCATTER_ALLGATHER
   } alg;
 
-  alg = NBC_BCAST_LINEAR;
+  alg = NBC_BCAST_BINOMIAL;
 
-  for(int i = 1; i < info->info_hwcomm->local_level_max; i++) {
-    if(info->info_hwcomm->hwcomm_rank[i] == 0) {
+  int res = MPI_SUCCESS;
+
+  switch(coll_type) {
+    case MPC_COLL_TYPE_BLOCKING:
+    case MPC_COLL_TYPE_NONBLOCKING:
+    case MPC_COLL_TYPE_PERSISTENT:
+      break;
+
+    case MPC_COLL_TYPE_COUNT:
+      {
+        /* choose max topological level on which to do hardware split */
+        /*TODO choose level wisely */
+        int max_level = 3;
+        //max_level = MAX_HARDWARE_LEVEL;
+
+        __Topo_comm_init(comm, root, max_level, info);
+        break;
+      }
+  }
+
+  int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
+
+  /* At each topological level, masters do binomial algorithm */
+  for (int k = 0; k < deepest_level; k++) {
+    int rank_split;
+    _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[k + 1], &rank_split);
+
+#if dbg == 1
+    int size_split;
+    _mpc_cl_comm_size(info->hardware_info_ptr->hwcomm[k + 1], &size_split);
+    printf("RANK %d | LEVEL %d | TOPO_RANK %d / %d\n", rank, k, rank_split, size_split);
+#endif
+
+
+    if((!rank_split)) { /* if master */
+      MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[k];
+
+      //res = __Bcast_binomial(buffer, count, datatype, 0, master_comm, coll_type, schedule, info);
+      //res = __bcast_sched_full_hardware_binomial(0, schedule, buffer, count, datatype, master_comm, coll_type, info);
+
       switch(alg) {
         case NBC_BCAST_LINEAR:
-          res = __Bcast_linear(buffer, count, datatype, 0, info->info_hwcomm->rootcomm[i], coll_type, schedule, info);
+          res = __Bcast_linear(buffer, count, datatype, 0, master_comm, coll_type, schedule, info);
           break;
         case NBC_BCAST_BINOMIAL:
-          res = __Bcast_binomial(buffer, count, datatype, 0, info->info_hwcomm->rootcomm[i], coll_type, schedule, info);
+          res = __Bcast_binomial(buffer, count, datatype, 0, master_comm, coll_type, schedule, info);
           break;
         case NBC_BCAST_SCATTER_ALLGATHER:
-          res = __Bcast_scatter_allgather(buffer, count, datatype, 0, info->info_hwcomm->rootcomm[i], coll_type, schedule, info);
+          res = __Bcast_scatter_allgather(buffer, count, datatype, 0, master_comm, coll_type, schedule, info);
           break;
       }
-  
-      __Barrier_type(MPC_COLL_TYPE_COUNT, schedule, info);
     }
   }
-      
+
+  /* last level topology binomial bcast */
+  MPI_Comm hardware_comm = info->hardware_info_ptr->hwcomm[deepest_level];
+
+  //res = __Bcast_binomial(buffer, count, datatype, 0, hardware_comm, coll_type, schedule, info);
+  //res = __bcast_sched_full_hardware_binomial(0, schedule, buffer, count, datatype, hardware_comm, coll_type, info);
 
   switch(alg) {
     case NBC_BCAST_LINEAR:
-      res = __Bcast_linear(buffer, count, datatype, 0, info->info_hwcomm->hwcomm[info->info_hwcomm->local_level_max - 1], coll_type, schedule, info);
+      res = __Bcast_linear(buffer, count, datatype, 0, hardware_comm, coll_type, schedule, info);
       break;
     case NBC_BCAST_BINOMIAL:
-      res = __Bcast_binomial(buffer, count, datatype, 0, info->info_hwcomm->hwcomm[info->info_hwcomm->local_level_max - 1], coll_type, schedule, info);
+      res = __Bcast_binomial(buffer, count, datatype, 0, hardware_comm, coll_type, schedule, info);
       break;
     case NBC_BCAST_SCATTER_ALLGATHER:
-      res = __Bcast_scatter_allgather(buffer, count, datatype, 0, info->info_hwcomm->hwcomm[info->info_hwcomm->local_level_max - 1], coll_type, schedule, info);
+      res = __Bcast_scatter_allgather(buffer, count, datatype, 0, hardware_comm, coll_type, schedule, info);
       break;
   }
+
+  return res;
 }
 
 
@@ -1572,7 +1451,6 @@ static inline int __Reduce_init(const void *sendbuf, void* recvbuf, int count, M
   __sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IREDUCE_TAG);
-  res = __Topo_comm_init(handle, comm, root, MAX_TOPO_SPLIT, &info);
 
   handle->tmpbuf = NULL;
 
@@ -1882,7 +1760,7 @@ static inline int __Reduce_reduce_scatter_allgather(__UNUSED__ const void *sendb
 }
 
 static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
-  int rank, size, res;
+  /*int rank, size, res;
   MPI_Aint ext;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
@@ -1919,7 +1797,7 @@ static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, M
           break;
       }
     }
-  }
+  }*/
 }
 
 
@@ -2089,7 +1967,6 @@ static inline int __Allreduce_init(const void *sendbuf, void* recvbuf, int count
   __sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
-  res = __Topo_comm_init(handle, comm, 0, MAX_TOPO_SPLIT, &info);
 
   handle->tmpbuf = NULL;
 
@@ -2939,7 +2816,6 @@ static inline int __Scatter_init(const void *sendbuf, int sendcount, MPI_Datatyp
   __sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
-  res = __Topo_comm_init(handle, comm, root, MAX_TOPO_SPLIT, &info);
 
   handle->tmpbuf = NULL;
 
@@ -3236,7 +3112,7 @@ static inline int __Scatter_binomial(const void *sendbuf, int sendcount, MPI_Dat
 }
 
 static inline int __Scatter_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
-  int rank, size, res;
+  /*int rank, size, res;
   MPI_Aint ext;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
@@ -3268,7 +3144,7 @@ static inline int __Scatter_topo(const void *sendbuf, int sendcount, MPI_Datatyp
     case NBC_SCATTER_BINOMIAL:
       res = __Scatter_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, info->info_hwcomm->rootcomm[info->info_hwcomm->local_level_max - 1], coll_type, schedule, info);
       break;
-  }
+  }*/
 }
 
 
@@ -3825,7 +3701,6 @@ static inline int __Gather_init(const void *sendbuf, int sendcount, MPI_Datatype
   __sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
-  res = __Topo_comm_init(handle, comm, root, MAX_TOPO_SPLIT, &info);
 
   handle->tmpbuf = NULL;
 
@@ -4110,7 +3985,7 @@ static inline int __Gather_binomial(const void *sendbuf, int sendcount, MPI_Data
 }
 
 static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
-  int rank, size, res;
+  /*int rank, size, res;
   MPI_Aint ext;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
@@ -4146,7 +4021,7 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
           break;
       }
     }
-  }
+  }*/
 }
 
 
@@ -5548,7 +5423,6 @@ static inline int __Allgather_init(const void *sendbuf, int sendcount, MPI_Datat
   __sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
-  res = __Topo_comm_init(handle, comm, 0, MAX_TOPO_SPLIT, &info);
 
   handle->tmpbuf = NULL;
 
