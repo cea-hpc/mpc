@@ -1092,8 +1092,6 @@ bool mpcomp_GOMP_loop_ull_dynamic_start( bool up, unsigned long long start,
 	TODO( "CHECK why this was changed" );
 	ret = __mpcomp_loop_ull_dynamic_begin( up, start, end, incr, chunk_size,
 	                                       istart, iend );
-	// ret =
-	// __gomp_loop_ull_dynamic_start(up,start,end,incr,chunk_size,istart,iend);
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 #else  /* MPC_SUPPORT_ULL_LOOP */
 	ret = false;
@@ -1132,8 +1130,6 @@ bool mpcomp_GOMP_loop_ull_guided_start( bool up, unsigned long long start,
 	TODO( "CHECK why GUIDED schedule is not used from previous function" );
 	ret = __mpcomp_loop_ull_guided_begin( up, start, end, incr, chunk_size, istart,
 	                                      iend );
-	/*ret = __gomp_loop_ull_guided_start(up, start, end, incr, chunk_size, istart,
-	                                   iend);*/
 #else  /* MPC_SUPPORT_ULL_LOOP */
 	ret = false;
 	not_implemented();
@@ -1143,40 +1139,32 @@ bool mpcomp_GOMP_loop_ull_guided_start( bool up, unsigned long long start,
 }
 
 bool mpcomp_GOMP_loop_ull_nonmonotonic_dynamic_start(
-    __UNUSED__ bool up, __UNUSED__ unsigned long long start, __UNUSED__ unsigned long long end,
-    __UNUSED__ unsigned long long incr, __UNUSED__ unsigned long long chunk_size,
-    __UNUSED__ unsigned long long *istart, __UNUSED__ unsigned long long *iend )
+     bool up,  unsigned long long start,  unsigned long long end,
+     unsigned long long incr,  unsigned long long chunk_size,
+     unsigned long long *istart,  unsigned long long *iend )
 {
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-#if ( defined( MPC_SUPPORT_ULL_LOOP ) && defined( MPC_SUPPORT_NONMONOTONIC ) )
-	ret = false;
-	not_implemented();
-#else  /* MPC_SUPPORT_ULL_LOOP && MPC_SUPPORT_NONMONOTONIC */
-	ret = false;
-	not_implemented();
-#endif /* MPC_SUPPORT_ULL_LOOP && MPC_SUPPORT_NONMONOTONIC */
+#ifdef MPC_SUPPORT_ULL_LOOP
+	ret = __gomp_loop_ull_dynamic_start( up, start, end, incr, chunk_size, istart, iend );
+#endif /* MPC_SUPPORT_ULL_LOOP */
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
 bool mpcomp_GOMP_loop_ull_nonmonotonic_guided_start(
-    __UNUSED__ bool up, __UNUSED__ unsigned long long start, __UNUSED__ unsigned long long end,
-    __UNUSED__ unsigned long long incr, __UNUSED__ unsigned long long chunk_size,
-    __UNUSED__ unsigned long long *istart, __UNUSED__ unsigned long long *iend )
+     bool up,  unsigned long long start,  unsigned long long end,
+		 unsigned long long incr,  unsigned long long chunk_size,
+		 unsigned long long *istart,  unsigned long long *iend )
 {
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-#if ( defined( MPC_SUPPORT_ULL_LOOP ) && defined( MPC_SUPPORT_NONMONOTONIC ) )
-	ret = false;
-	not_implemented();
-#else  /* MPC_SUPPORT_ULL_LOOP && MPC_SUPPORT_NONMONOTONIC */
-	ret = false;
-	not_implemented();
-#endif /* MPC_SUPPORT_ULL_LOOP && MPC_SUPPORT_NONMONOTONIC */
-	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
-	return ret;
-}
+#ifdef MPC_SUPPORT_ULL_LOOP
+		ret = __gomp_loop_ull_guided_start( up, start, end, incr, chunk_size, istart, iend );
+#endif /* MPC_SUPPORT_ULL_LOOP */
+		mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+		return ret;
+		}
 
 static inline bool __gomp_loop_ull_ordered_static_start(
     bool up, unsigned long long start, unsigned long long end,
@@ -1391,32 +1379,32 @@ bool mpcomp_GOMP_loop_ull_guided_next( unsigned long long *istart,
 	return ret;
 }
 
-bool mpcomp_GOMP_loop_ull_nonmonotonic_dynamic_next( __UNUSED__ unsigned long long *istart,
-        __UNUSED__ unsigned long long *iend )
+bool mpcomp_GOMP_loop_ull_nonmonotonic_dynamic_next(  unsigned long long *istart,
+         unsigned long long *iend )
 {
 	bool ret = false;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-#if ( defined( MPC_SUPPORT_ULL_LOOP ) && defined( MPC_SUPPORT_NONMONOTONIC ) )
-	not_implemented();
-#else  /* MPC_SUPPORT_ULL_LOOP && MPC_SUPPORT_NONMONOTONIC */
+#ifdef MPC_SUPPORT_ULL_LOOP
+	ret = ( __mpcomp_loop_ull_dynamic_next( istart, iend ) ) ? true : false;
+#else  /* MPC_SUPPORT_ULL_LOOP */
 	ret = false;
 	not_implemented();
-#endif /* MPC_SUPPORT_ULL_LOOP && MPC_SUPPORT_NONMONOTONIC */
+#endif /* MPC_SUPPORT_ULL_LOOP */
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }
 
-bool mpcomp_GOMP_loop_ull_nonmonotonic_guided_next( __UNUSED__ unsigned long long *istart,
-        __UNUSED__ unsigned long long *iend )
+bool mpcomp_GOMP_loop_ull_nonmonotonic_guided_next(  unsigned long long *istart,
+         unsigned long long *iend )
 {
-	bool ret = false;
+	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-#if ( defined( MPC_SUPPORT_ULL_LOOP ) && defined( MPC_SUPPORT_NONMONOTONIC ) )
-	not_implemented();
-#else  /* MPC_SUPPORT_ULL_LOOP && MPC_SUPPORT_NONMONOTONIC */
+#ifdef MPC_SUPPORT_ULL_LOOP
+	ret = ( __mpcomp_loop_ull_guided_next( istart, iend ) ) ? true : false;
+#else  /* MPC_SUPPORT_ULL_LOOP */
 	ret = false;
 	not_implemented();
-#endif /* MPC_SUPPORT_ULL_LOOP && MPC_SUPPORT_NONMONOTONIC */
+#endif /* MPC_SUPPORT_ULL_LOOP */
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return ret;
 }

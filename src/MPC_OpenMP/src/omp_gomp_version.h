@@ -151,18 +151,6 @@ GOMP_ABI_FUNC(GOMP_loop_ull_static_start, "GOMP_2.0",
               mpcomp_GOMP_loop_ull_static_start)
 GOMP_ABI_FUNC(GOMP_taskwait, "GOMP_2.0", mpcomp_GOMP_taskwait,
               _mpc_task_newwait)
-GOMP_ABI_FUNC(GOMP_loop_nonmonotonic_dynamic_start, "GOMP_2.0",
-              mpcomp_GOMP_loop_nonmonotonic_dynamic_start,
-              mpcomp_GOMP_loop_nonmonotonic_dynamic_start)
-GOMP_ABI_FUNC(GOMP_loop_nonmonotonic_dynamic_next, "GOMP_2.0",
-              mpcomp_GOMP_loop_nonmonotonic_dynamic_next,
-              mpcomp_GOMP_loop_nonmonotonic_dynamic_next)
-GOMP_ABI_FUNC(GOMP_loop_nonmonotonic_guided_start, "GOMP_2.0",
-              mpcomp_GOMP_loop_nonmonotonic_guided_start,
-              mpcomp_GOMP_loop_nonmonotonic_guided_start)
-GOMP_ABI_FUNC(GOMP_loop_nonmonotonic_guided_next, "GOMP_2.0",
-              mpcomp_GOMP_loop_nonmonotonic_guided_next,
-              mpcomp_GOMP_loop_nonmonotonic_guided_next)
 //All"GOMP_3.0"symbols
 GOMP_ABI_FUNC(GOMP_taskyield, "GOMP_3.0", mpcomp_GOMP_taskyield,
               _mpc_task_newyield)
@@ -176,7 +164,7 @@ GOMP_ABI_FUNC(MPCOMP_GOMP_ABI_CANCELLATION_POINT,GOMP_cancellation_point,402,GOM
 GOMP_ABI_FUNC(MPCOMP_GOMP_ABI_LOOP_END_CANCEL,GOMP_loop_end_cancel,403,GOMP_4.0)
 */
 #ifdef NO_OPTIMIZED_GOMP_4_0_API_SUPPORT
-GOMP_ABI_FUNC(GOMP_parallel, "GOMP_4.0", __mpcomp_start_parallel_region,
+GOMP_ABI_FUNC(GOMP_parallel, "GOMP_4.0.1", __mpcomp_start_parallel_region,
               __mpcomp_start_parallel_region)
 GOMP_ABI_FUNC(GOMP_parallel_loop_static, "GOMP_4.0",
               __mpcomp_start_parallel_static_loop,
@@ -193,26 +181,47 @@ GOMP_ABI_FUNC(GOMP_parallel_loop_runtime, "GOMP_4.0",
 GOMP_ABI_FUNC(GOMP_parallel_sections, "GOMP_4.0",
               __mpcomp_start_sections_parallel_region,
               __mpcomp_start_sections_parallel_region)
-GOMP_ABI_FUNC(GOMP_loop_nonmonotonic_dynamic_start, "GOMP_4.0",
+#endif /* OPTIMIZED_GOMP_4_0_API_SUPPORT */
+
+GOMP_ABI_FUNC(GOMP_offload_register, "GOMP_4.0.1",
+              mpcomp_GOMP_offload_register,
+              mpcomp_GOMP_offload_register)
+
+GOMP_ABI_FUNC(GOMP_offload_unregister, "GOMP_4.0.1",
+              mpcomp_GOMP_offload_unregister,
+              mpcomp_GOMP_offload_unregister)
+
+GOMP_ABI_FUNC(GOMP_loop_nonmonotonic_dynamic_start, "GOMP_4.5",
               mpcomp_GOMP_loop_nonmonotonic_dynamic_start,
               mpcomp_GOMP_loop_nonmonotonic_dynamic_start)
-GOMP_ABI_FUNC(GOMP_loop_nonmonotonic_dynamic_next, "GOMP_4.0",
+GOMP_ABI_FUNC(GOMP_loop_nonmonotonic_dynamic_next, "GOMP_4.5",
               mpcomp_GOMP_loop_nonmonotonic_dynamic_next,
               mpcomp_GOMP_loop_nonmonotonic_dynamic_next)
-GOMP_ABI_FUNC(GOMP_loop_nonmonotonic_guided_start, "GOMP_4.0",
+GOMP_ABI_FUNC(GOMP_loop_nonmonotonic_guided_start, "GOMP_4.5",
               mpcomp_GOMP_loop_nonmonotonic_guided_start,
               mpcomp_GOMP_loop_nonmonotonic_guided_start)
-GOMP_ABI_FUNC(GOMP_loop_nonmonotonic_guided_next, "GOMP_4.0",
+GOMP_ABI_FUNC(GOMP_loop_nonmonotonic_guided_next, "GOMP_4.5",
               mpcomp_GOMP_loop_nonmonotonic_guided_next,
               mpcomp_GOMP_loop_nonmonotonic_guided_next)
-GOMP_ABI_FUNC(GOMP_parallel_loop_nonmonotonic_dynamic, "GOMP_4.0",
+GOMP_ABI_FUNC(GOMP_loop_ull_nonmonotonic_dynamic_start, "GOMP_4.5",
+              mpcomp_GOMP_loop_nonmonotonic_dynamic_start,
+              mpcomp_GOMP_loop_nonmonotonic_dynamic_start)
+GOMP_ABI_FUNC(GOMP_loop_ull_nonmonotonic_dynamic_next, "GOMP_4.5",
+              mpcomp_GOMP_loop_nonmonotonic_dynamic_next,
+              mpcomp_GOMP_loop_nonmonotonic_dynamic_next)
+GOMP_ABI_FUNC(GOMP_loop_ull_nonmonotonic_guided_start, "GOMP_4.5",
+              mpcomp_GOMP_loop_nonmonotonic_guided_start,
+              mpcomp_GOMP_loop_nonmonotonic_guided_start)
+GOMP_ABI_FUNC(GOMP_loop_ull_nonmonotonic_guided_next, "GOMP_4.5",
+              mpcomp_GOMP_loop_nonmonotonic_guided_next,
+              mpcomp_GOMP_loop_nonmonotonic_guided_next)
+GOMP_ABI_FUNC(GOMP_parallel_loop_nonmonotonic_dynamic, "GOMP_4.5",
               mpcomp_GOMP_parallel_loop_nonmonotonic_dynamic,
               mpcomp_GOMP_parallel_loop_nonmonotonic_dynamic)
-GOMP_ABI_FUNC(GOMP_parallel_loop_nonmonotonic_guided, "GOMP_4.0",
+GOMP_ABI_FUNC(GOMP_parallel_loop_nonmonotonic_guided, "GOMP_4.5",
               mpcomp_GOMP_parallel_loop_nonmonotonic_guided,
               mpcomp_GOMP_parallel_loop_nonmonotonic_guided)
 
-#endif /* OPTIMIZED_GOMP_4_0_API_SUPPORT */
 
 // GOMP_ABI_FUNC(GOMP_taskgroup_start, "GOMP_4.0", mpcomp_GOMP_taskgroup_start,
 // mpcomp_GOMP_taskgroup_start )

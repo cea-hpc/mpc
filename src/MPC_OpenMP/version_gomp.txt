@@ -11,6 +11,18 @@ GOMP_3.0 {
 GOMP_4.0 {
 } GOMP_3.0;
 
+GOMP_4.0.1 {
+} GOMP_4.0;
+
+GOMP_4.5 {
+} GOMP_4.0.1;
+
+GOMP_5.0 {
+} GOMP_4.5;
+
+GOMP_5.1 {
+} GOMP_5.0;
+
 # sets up GCC GOMP_ version dependency chain
 OMP_1.0{
 };
