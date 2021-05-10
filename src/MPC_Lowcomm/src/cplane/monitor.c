@@ -355,7 +355,7 @@ static inline mpc_lowcomm_monitor_retcode_t __bootstrap_ring(void)
         shift += 2;
     }
 
-	for(i = 1; i < __monitor.process_set->peer_count; i <<= 2)
+	for(i = 1; i < __monitor.process_set->peer_count; i <<= shift)
 	{
 		target = (my_rank + i) % __monitor.process_set->peer_count;
 
@@ -1396,6 +1396,7 @@ static inline _mpc_lowcomm_client_ctx_t *__get_closest_in_set(struct _mpc_lowcom
 				/* We have one pick it if closer */
 				current_route_uid = ctx->uid;
 				ellected_ctx      = ctx;
+                has_routes = 1;
 			}
 		}
 		MPC_HT_ITER_END
@@ -2319,10 +2320,25 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_process_ondemand(mpc_l
  * GET CONNECTIVITY INFO *
  *************************/
 
-static inline _mpc_lowcomm_monitor_wrap_t * __generate_connectivity_cmd(mpc_lowcomm_peer_uid_t dest, int is_response)
+static inline _mpc_lowcomm_monitor_wrap_t * __generate_connectivity_cmd(mpc_lowcomm_peer_uid_t dest, int num_peers,  int is_response)
 {
-	_mpc_lowcomm_monitor_wrap_t * cmd = NULL;
-	_mpc_lowcomm_peer_t * rpeer = __gen_wrap_for_peer(dest, MPC_LOWCOMM_MONITOR_CONNECTIVITY, is_response, &cmd);
+    _mpc_lowcomm_peer_t *rpeer = _mpc_lowcomm_peer_get(dest);
+
+	/* If response this is set in the calling function */
+	uint64_t response_index = 0;
+
+	if(!is_response)
+	{
+		response_index = __get_new_command_index();
+	}
+
+	/* This prepares a request for set info this contains no data */
+	_mpc_lowcomm_monitor_wrap_t * cmd = _mpc_lowcomm_monitor_wrap_new(MPC_LOWCOMM_MONITOR_CONNECTIVITY,
+										                              is_response,
+									                                  dest,
+									                                  __monitor.process_uid,
+									                                  response_index,
+									                                  sizeof(mpc_lowcomm_monitor_args_t) + num_peers * sizeof(mpc_lowcomm_peer_uid_t));
 
 	if(!rpeer)
 	{
@@ -2335,14 +2351,32 @@ static inline _mpc_lowcomm_monitor_wrap_t * __generate_connectivity_cmd(mpc_lowc
 _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_connectivity_info(mpc_lowcomm_peer_uid_t dest,
                                                                                   uint64_t response_index)
 {
-	_mpc_lowcomm_monitor_wrap_t *resp = __generate_connectivity_cmd(dest, 1);
+    size_t peer_count = 0;
+	pthread_mutex_lock(&__monitor.client_lock);
+
+	_mpc_lowcomm_client_ctx_t *ctx = NULL;
+
+    {
+	MPC_HT_ITER(&__monitor.client_contexts, ctx)
+	{
+		if(!ctx)
+		{
+			continue;
+		}
+
+	    peer_count++;
+	}
+	MPC_HT_ITER_END
+    }
+
+	pthread_mutex_unlock(&__monitor.client_lock);
+
+	_mpc_lowcomm_monitor_wrap_t *resp = __generate_connectivity_cmd(dest, peer_count,  1);
 	resp->match_key = response_index;
 
 	resp->content->connectivity.peers_count = 0;
 
 	pthread_mutex_lock(&__monitor.client_lock);
-
-	_mpc_lowcomm_client_ctx_t *ctx = NULL;
 
 	MPC_HT_ITER(&__monitor.client_contexts, ctx)
 	{
@@ -2351,8 +2385,11 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_connectivity_in
 			continue;
 		}
 
-		resp->content->connectivity.peers[resp->content->connectivity.peers_count] = ctx->uid;
-		resp->content->connectivity.peers_count++;
+		if( resp->content->connectivity.peers_count < peer_count )
+        {
+		    resp->content->connectivity.peers[resp->content->connectivity.peers_count] = ctx->uid;
+		    resp->content->connectivity.peers_count++;
+        }
 	}
 	MPC_HT_ITER_END
 
@@ -2364,7 +2401,7 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_connectivity_in
 
 mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_connectivity(mpc_lowcomm_peer_uid_t dest, mpc_lowcomm_monitor_retcode_t *ret)
 {
-	_mpc_lowcomm_monitor_wrap_t * cmd = __generate_connectivity_cmd(dest, 0);
+	_mpc_lowcomm_monitor_wrap_t * cmd = __generate_connectivity_cmd(dest, 0,  0);
 
 	if(_mpc_lowcomm_monitor_command_send(cmd, ret) < 0)
 	{

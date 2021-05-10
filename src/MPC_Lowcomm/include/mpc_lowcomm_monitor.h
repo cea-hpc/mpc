@@ -188,7 +188,7 @@ const char * mpc_lowcomm_monitor_command_tostring(mpc_lowcomm_monitor_command_t 
 #define MPC_LOWCOMM_SET_NAME_LEN      256
 #define MPC_LOWCOMM_ONDEMAND_TARGET_LEN 32
 #define MPC_LOWCOMM_ONDEMAND_DATA_LEN MPC_LOWCOMM_PEER_URI_SIZE
-#define MPC_LOWCOMM_MONITOR_MAX_CLIENTS    16
+#define MPC_LOWCOMM_MONITOR_MAX_CLIENTS 32
 
 typedef union
 {
@@ -224,8 +224,8 @@ typedef union
 
 	struct
 	{
-		mpc_lowcomm_peer_uid_t peers[MPC_LOWCOMM_MONITOR_MAX_CLIENTS];
 		uint64_t peers_count;
+		mpc_lowcomm_peer_uid_t peers[0];
 	}connectivity;
 
 	struct
