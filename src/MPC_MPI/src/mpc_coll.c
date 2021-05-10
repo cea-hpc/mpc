@@ -670,6 +670,53 @@ static inline int __create_master_hardware_comm_unguided(int vrank, int level, S
   return res;
 }
 
+static inline int __create_childs_counts(MPI_Comm, Sched_info *info) {
+
+  int data_count = 1;
+
+  info->hardware_info_ptr->childs_data_count = sctk_malloc(sizeof(int*) * info->hardware_info_ptr->deepest_hardware_level);
+
+  for(int i = info->hardware_info_ptr->deepest_hardware_level - 1; i >= 0; i--) {
+
+    int rank_split;
+    _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &rank_split);
+
+    if(rank_split == 0) {
+      MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[i];
+
+      int rank_master, size_master;
+      _mpc_cl_comm_rank(master_comm, &rank_master);
+      _mpc_cl_comm_size(master_comm, &size_master);
+
+      void *buf = NULL;
+      if(rank_master == 0) {
+        info->hardware_info_ptr->childs_data_count[i] = sctk_malloc(sizeof(int) * size_master);
+        buf = info->hardware_info_ptr->childs_data_count[i];
+      }
+
+      MPI_Gather(&data_count, 1, MPI_INT, buf, 1, MPI_INT, 0, info->hardware_info_ptr->rootcomm[i]);
+
+      if(rank_master == 0) {
+        data_count = 0;
+        for(int j = 0; j < size_master; j++) {
+          data_count += info->hardware_info_ptr->rootcomm[i][j];
+        }
+      } else {
+        break;
+      }
+
+    } else {
+      break;
+    }
+  }
+
+  return MPI_SUCCESS;
+}
+
+static inline int __create_swap_array(MPI_Comm, Sched_info *info) {
+
+}
+
 static inline int __Topo_comm_init(MPI_Comm comm, int root, int max_level, Sched_info *info) {
   int rank, size;
   _mpc_cl_comm_size(comm, &size);
@@ -689,6 +736,8 @@ static inline int __Topo_comm_init(MPI_Comm comm, int root, int max_level, Sched
   __create_hardware_comm_unguided(comm, vrank, max_level, info);
   int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
   __create_master_hardware_comm_unguided(vrank, deepest_level, info);
+  __create_childs_counts(comm, info);
+  __create_swap_array(comm, info);
 }
 
 
@@ -1837,16 +1886,24 @@ static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, M
 
       MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[i];
 
+      int rank_master;
+      _mpc_cl_comm_rank(master_comm, &rank_master);
+
+      const void *buffer =  recvbuf;
+      if(rank_master == 0) {
+        buffer = MPI_IN_PLACE;
+      }
+
       //_mpc_cl_comm_size(master_comm, &tmp_size);
       //_mpc_cl_comm_rank(master_comm, &tmp_rank);
       //fprintf(stderr, "RANK %d / %d | REDUCE ON COMM DEPTH %d | SUBRANK %d / %d\n", rank, size, i, tmp_rank, tmp_size);
       
       switch(alg) {
         case NBC_REDUCE_LINEAR:
-          res = __Reduce_linear(MPI_IN_PLACE, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
+          res = __Reduce_linear(buffer, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
           break;
         case NBC_REDUCE_BINOMIAL:
-          res = __Reduce_binomial(MPI_IN_PLACE, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
+          res = __Reduce_binomial(buffer, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
           break;
       }
     }
@@ -3907,18 +3964,16 @@ static inline int __Gather_linear(const void *sendbuf, int sendcount, MPI_Dataty
     case MPC_COLL_TYPE_BLOCKING:
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
-      break;
-
     case MPC_COLL_TYPE_COUNT:
-      if(rank == root) {
-        info->comm_count += size;
-      } else {
-        info->comm_count += 1;
-      }
-
-      return MPI_SUCCESS;
+      break;
   }
 
+  if(size == 1) {
+    if(sendbuf != MPI_IN_PLACE) {
+      __Copy_type(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+    }
+    return MPI_SUCCESS;
+  }
 
   // if rank != root, send data to root
   if(rank != root) {
@@ -3995,19 +4050,33 @@ static inline int __Gather_binomial(const void *sendbuf, int sendcount, MPI_Data
 
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
-      tmpbuf = sctk_malloc(size * sendext * tmp_sendcount);
+      if(size != 1) {
+        tmpbuf = sctk_malloc(size * sendext * tmp_sendcount);
+      }
       break;
 
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
-      tmpbuf = info->tmpbuf + info->tmpbuf_pos;
-      info->tmpbuf_pos += size * sendext * tmp_sendcount;
+      if(size != 1) {
+        tmpbuf = info->tmpbuf + info->tmpbuf_pos;
+        info->tmpbuf_pos += size * sendext * tmp_sendcount;
+      }
       break;
 
     case MPC_COLL_TYPE_COUNT:
-      info->tmpbuf_size += size * sendext * tmp_sendcount;
+      if(size != 1) {
+        info->tmpbuf_size += size * sendext * tmp_sendcount;
+      }
       break;
   }
+
+  if(size == 1) {
+    if(sendbuf != MPI_IN_PLACE) {
+      __Copy_type(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+    }
+    return MPI_SUCCESS;
+  }
+
 
   __Copy_type(tmp_sendbuf, tmp_sendcount, tmp_sendtype, tmpbuf, tmp_sendcount, tmp_sendtype, comm, coll_type, schedule, info);
 
