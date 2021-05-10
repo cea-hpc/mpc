@@ -2255,7 +2255,8 @@ void mpc_lowcomm_ptp_msg_wait_init(struct mpc_lowcomm_ptp_msg_progress_s *wait,
 	   request->header.source_task != MPC_PROC_NULL)
 	{
 		/* Convert task rank to process rank */
-		wait->remote_process = mpc_lowcomm_communicator_uid(request->comm, request->header.source_task);
+		wait->remote_process = -1;
+		//mpc_lowcomm_communicator_uid_as(request->comm, request->header.source_task, request->header.destination_task, mpc_lowcomm_monitor_get_uid());
 	}
 	else
 	{
