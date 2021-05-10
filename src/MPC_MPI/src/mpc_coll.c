@@ -599,6 +599,10 @@ static inline int __create_hardware_comm_unguided(MPI_Comm comm, int vrank, int 
 
   hwcomm[level_num] = comm;
 
+  //int rank, size, tmp_rank, tmp_size;
+  //_mpc_cl_comm_rank(comm, &rank);
+  //_mpc_cl_comm_size(comm, &size);
+
   /* create topology communicators */
   while((hwcomm[level_num] != MPI_COMM_NULL) && (level_num < max_level))
   {
@@ -611,6 +615,11 @@ static inline int __create_hardware_comm_unguided(MPI_Comm comm, int vrank, int 
     if(hwcomm[level_num+1] != MPI_COMM_NULL)
     {
       _mpc_cl_comm_rank(hwcomm[level_num + 1],&vrank);
+
+
+      //_mpc_cl_comm_rank(hwcomm[level_num + 1], &tmp_rank);
+      //_mpc_cl_comm_size(hwcomm[level_num + 1], &tmp_size);
+      //fprintf(stderr, "RANK %d / %d | SPLIT COMM | SUBRANK %d / %d\n", rank, size, tmp_rank, tmp_size);
     }
 
     level_num++;
@@ -638,23 +647,24 @@ static inline int __create_master_hardware_comm_unguided(int vrank, int level, S
   MPI_Comm* hwcomm = info->hardware_info_ptr->hwcomm;
   MPI_Comm* rootcomm = info->hardware_info_ptr->rootcomm;
 
+  //int rank, size, tmp_rank, tmp_size;
+  //_mpc_cl_comm_rank(hwcomm[0], &rank);
+  //_mpc_cl_comm_size(hwcomm[0], &size);
+
   /* create master communicator with ranks 0 for each hwcomm communicator */
   while((hwcomm[level_num + 1] != MPI_COMM_NULL) && (level_num < level))
   {
     _mpc_cl_comm_rank(hwcomm[level_num + 1],&rank_comm);
 
-    int color = -1;
-
-    if(rank_comm == 0)
-    {
-      color = 0;
-    }
-    else
-    {
-      color = 1;
-    }
+    int color = (rank_comm == 0)?(0):(1);
 
     PMPI_Comm_split(hwcomm[level_num ], color, vrank, &rootcomm[level_num ]);
+
+    //_mpc_cl_comm_rank(rootcomm[level_num], &tmp_rank);
+    //_mpc_cl_comm_size(rootcomm[level_num], &tmp_size);
+    //fprintf(stderr, "RANK %d / %d | SPLIT ROOT | SUBRANK %d / %d\n", rank, size, tmp_rank, tmp_size);
+
+
     level_num ++;
   }
   return res;
@@ -1557,7 +1567,7 @@ static inline int __Reduce_linear(const void *sendbuf, void* recvbuf, int count,
 
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
-      if(rank == root) {
+      if(rank == root && size != 1) {
         mpi_op = sctk_convert_to_mpc_op(op);
         mpc_op = mpi_op->op;
         tmpbuf = sctk_malloc(ext * count * size);
@@ -1566,18 +1576,27 @@ static inline int __Reduce_linear(const void *sendbuf, void* recvbuf, int count,
 
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
-      if(rank == root) {
+      if(rank == root && size != 1) {
         tmpbuf = info->tmpbuf + info->tmpbuf_pos;
         info->tmpbuf_pos += ext * count * size;
       }
       break;
 
     case MPC_COLL_TYPE_COUNT:
-      if(rank == root) {
+      if(rank == root && size != 1) {
         info->tmpbuf_size += ext * count * size;
       }
       break;
   }
+
+  if(size == 1) {
+    if(sendbuf != MPI_IN_PLACE) {
+      __Copy_type(sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+    }
+    return MPI_SUCCESS;
+  }
+
+
 
   // Gather data from all ranks
   if(sendbuf != MPI_IN_PLACE) {
@@ -1653,18 +1672,31 @@ static inline int __Reduce_binomial(const void *sendbuf, void* recvbuf, int coun
 
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
-      tmpbuf = sctk_malloc(2 * ext * count);
+      if(size != 1) {
+        tmpbuf = sctk_malloc(2 * ext * count);
+      }
       break;
 
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
-      tmpbuf = info->tmpbuf + info->tmpbuf_pos;
-      info->tmpbuf_pos += 2 * ext * count;
+      if(size != 1) {
+        tmpbuf = info->tmpbuf + info->tmpbuf_pos;
+        info->tmpbuf_pos += 2 * ext * count;
+      }
       break;
 
     case MPC_COLL_TYPE_COUNT:
-      info->tmpbuf_size += 2 * ext * count;
+      if(size != 1) {
+        info->tmpbuf_size += 2 * ext * count;
+      }
       break;
+  }
+
+  if(size == 1) {
+    if(sendbuf != MPI_IN_PLACE) {
+      __Copy_type(sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+    }
+    return MPI_SUCCESS;
   }
 
   void *tmp_recvbuf, *tmp_sendbuf, *swap;
@@ -1781,6 +1813,11 @@ static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, M
   /* last level topology binomial bcast */
   MPI_Comm hardware_comm = info->hardware_info_ptr->hwcomm[deepest_level];
 
+  //int tmp_size, tmp_rank;
+  //_mpc_cl_comm_size(hardware_comm, &tmp_size);
+  //_mpc_cl_comm_rank(hardware_comm, &tmp_rank);
+  //fprintf(stderr, "RANK %d / %d | REDUCE ON COMM DEPTH %d | SUBRANK %d / %d\n", rank, size, deepest_level, tmp_rank, tmp_size);
+
   switch(alg) {
     case NBC_REDUCE_LINEAR:
       res = __Reduce_linear(sendbuf, recvbuf, count, datatype, op, 0, hardware_comm, coll_type, schedule, info);
@@ -1799,13 +1836,17 @@ static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, M
       __Barrier_type(coll_type, schedule, info);
 
       MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[i];
+
+      //_mpc_cl_comm_size(master_comm, &tmp_size);
+      //_mpc_cl_comm_rank(master_comm, &tmp_rank);
+      //fprintf(stderr, "RANK %d / %d | REDUCE ON COMM DEPTH %d | SUBRANK %d / %d\n", rank, size, i, tmp_rank, tmp_size);
       
       switch(alg) {
         case NBC_REDUCE_LINEAR:
-          res = __Reduce_linear(sendbuf, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
+          res = __Reduce_linear(MPI_IN_PLACE, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
           break;
         case NBC_REDUCE_BINOMIAL:
-          res = __Reduce_binomial(sendbuf, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
+          res = __Reduce_binomial(MPI_IN_PLACE, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
           break;
       }
     }
