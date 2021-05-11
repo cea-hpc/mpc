@@ -670,11 +670,13 @@ static inline int __create_master_hardware_comm_unguided(int vrank, int level, S
   return res;
 }
 
-static inline int __create_childs_counts(MPI_Comm, Sched_info *info) {
+static inline int __create_childs_counts(MPI_Comm comm, Sched_info *info) {
 
-  int data_count = 1;
+  int data_count;
 
-  info->hardware_info_ptr->childs_data_count = sctk_malloc(sizeof(int*) * info->hardware_info_ptr->deepest_hardware_level);
+  info->hardware_info_ptr->childs_data_count = sctk_malloc(sizeof(int*) * (info->hardware_info_ptr->deepest_hardware_level));
+
+  _mpc_cl_comm_size(info->hardware_info_ptr->hwcomm[info->hardware_info_ptr->deepest_hardware_level], &data_count);
 
   for(int i = info->hardware_info_ptr->deepest_hardware_level - 1; i >= 0; i--) {
 
@@ -699,7 +701,7 @@ static inline int __create_childs_counts(MPI_Comm, Sched_info *info) {
       if(rank_master == 0) {
         data_count = 0;
         for(int j = 0; j < size_master; j++) {
-          data_count += info->hardware_info_ptr->rootcomm[i][j];
+          data_count += info->hardware_info_ptr->childs_data_count[i][j];
         }
       } else {
         break;
@@ -713,8 +715,9 @@ static inline int __create_childs_counts(MPI_Comm, Sched_info *info) {
   return MPI_SUCCESS;
 }
 
-static inline int __create_swap_array(MPI_Comm, Sched_info *info) {
+static inline int __create_swap_array(MPI_Comm comm, Sched_info *info) {
 
+  return MPI_SUCCESS;
 }
 
 static inline int __Topo_comm_init(MPI_Comm comm, int root, int max_level, Sched_info *info) {
@@ -3675,6 +3678,13 @@ static inline int __Gather_binomial(const void *sendbuf, int sendcount, MPI_Data
 static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
+static inline int __Gatherv_linear(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __Gatherv_binomial(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+
+
+
+
+
 /**
   \brief Initialize NBC structures used in call of non-blocking Gather
   \param sendbuf Adress of the buffer used to send data during the Gather
@@ -4143,20 +4153,47 @@ static inline int __Gather_binomial(const void *sendbuf, int sendcount, MPI_Data
 
 static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
   int rank, size, res = MPI_SUCCESS;
+  MPI_Aint ext;
+
+  void *tmp_sendbuf = sendbuf;
+  MPI_Datatype tmp_sendtype = sendtype;
+  int tmp_sendcount = sendcount;
+
+  if(sendbuf == MPI_IN_PLACE) {
+    tmp_sendtype = recvtype;
+    tmp_sendcount = recvcount;
+  }
+
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
+  PMPI_Type_extent(tmp_sendtype, &ext);
+
+  if(sendbuf == MPI_IN_PLACE) {
+    tmp_sendbuf = recvbuf + rank * ext * tmp_sendcount;
+  }
 
   enum {
     NBC_GATHER_LINEAR,
     NBC_GATHER_BINOMIAL
-  } alg;
+  } gather_alg;
 
-  alg = NBC_GATHER_LINEAR;
+  enum {
+    NBC_GATHERV_LINEAR,
+    NBC_GATHERV_BINOMIAL
+  } gatherv_alg;
+
+  gather_alg = NBC_GATHER_LINEAR;
+  gatherv_alg = NBC_GATHERV_LINEAR;
+
+  void *tmpbuf = NULL;
 
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
+      tmpbuf = sctk_malloc(size * ext * tmp_sendcount);
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
+      tmpbuf = info->tmpbuf + info->tmpbuf_pos;
+      info->tmpbuf_pos += size * ext * tmp_sendcount;
       break;
 
     case MPC_COLL_TYPE_COUNT:
@@ -4169,6 +4206,8 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
 
           __Topo_comm_init(comm, root, max_level, info);
         }
+
+        info->tmpbuf_size += size * ext * tmp_sendcount;
         break;
       }
   }
@@ -4178,14 +4217,19 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
   /* last level topology binomial bcast */
   MPI_Comm hardware_comm = info->hardware_info_ptr->hwcomm[deepest_level];
 
-  switch(alg) {
+  switch(gather_alg) {
     case NBC_GATHER_LINEAR:
-      res = __Gather_linear(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, hardware_comm, coll_type, schedule, info);
+      res = __Gather_linear(tmp_sendbuf, tmp_sendcount, tmp_sendtype, tmpbuf, tmp_sendcount, tmp_sendtype, 0, hardware_comm, coll_type, schedule, info);
       break;
     case NBC_GATHER_BINOMIAL:
-      res = __Gather_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, hardware_comm, coll_type, schedule, info);
+      res = __Gather_binomial(tmp_sendbuf, tmp_sendcount, tmp_sendtype, tmpbuf, tmp_sendcount, tmp_sendtype, 0, hardware_comm, coll_type, schedule, info);
       break;
   }
+
+
+  int displs[size];
+  void *gatherv_buf = tmpbuf;
+
 
   for(int i = deepest_level - 1; i >= 0; i--) {
     __Barrier_type(coll_type, schedule, info);
@@ -4195,17 +4239,34 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
     
     if(!rank_split) {
       MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[i];
+
+      int size_master, rank_master;
+      _mpc_cl_comm_size(master_comm, &size_master);
+      _mpc_cl_comm_rank(master_comm, &rank_master);
       
-      switch(alg) {
-        case NBC_GATHER_LINEAR:
-          res = __Gather_linear(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, master_comm, coll_type, schedule, info);
+      displs[0] = 0;
+      for(int j = 1; j < size_master; j++) {
+        displs[i] = displs[i-1] + info->hardware_info_ptr->childs_data_count[i][j] * sendcount * ext;
+      }
+
+      if(rank_master == 0) {
+        gatherv_buf = MPI_IN_PLACE;
+      }
+      
+      switch(gatherv_alg) {
+        
+        case NBC_GATHERV_LINEAR:
+          res = __Gatherv_linear(gatherv_buf, info->hardware_info_ptr->childs_data_count[i][rank_master], sendtype, tmpbuf, info->hardware_info_ptr->childs_data_count[i], displs, sendtype, 0, master_comm, coll_type, schedule, info);
           break;
-        case NBC_GATHER_BINOMIAL:
-          res = __Gather_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, master_comm, coll_type, schedule, info);
+        case NBC_GATHERV_BINOMIAL:
+          res = __Gatherv_binomial(gatherv_buf, info->hardware_info_ptr->childs_data_count[i][rank_master], sendtype, tmpbuf, info->hardware_info_ptr->childs_data_count[i], displs, sendtype, 0, master_comm, coll_type, schedule, info);
           break;
       }
     }
   }
+
+
+  // SWAP PART
 }
 
 
@@ -4219,8 +4280,7 @@ static inline int __Igatherv(const void *sendbuf, int sendcount, MPI_Datatype se
 int PMPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 static inline int __Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
 int mpc_mpi_gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm);
-static inline int __Gatherv_linear(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Gatherv_binomial(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+
 
 
 /**
