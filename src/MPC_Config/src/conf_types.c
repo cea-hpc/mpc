@@ -249,7 +249,7 @@ int __mpc_conf_type_parse_from_string(mpc_conf_type_t type, void *dest, char *fr
 				}
 			}
 		/* FALLTHRU */
-		/* Could also be an int so we falltrough */
+		/* Could also be an int so we fallthrough */
 		case MPC_CONF_INT:
 		{
 			long tmp = 0;
