@@ -380,18 +380,3 @@ void __mpcomp_start_parallel_runtime_loop(void (*func)(void *), void *shared,
   }
 }
 
-/* GOMP OPTIMIZED_4_0_WRAPPING */
-#ifndef NO_OPTIMIZED_GOMP_4_0_API_SUPPORT
-__asm__(
-    ".symver __mpcomp_start_parallel_region,          GOMP_parallel@@GOMP_4.0");
-__asm__(".symver __mpcomp_start_sections_parallel_region, "
-        "GOMP_parallel_sections@@GOMP_4.0");
-__asm__(".symver __mpcomp_start_parallel_static_loop,     "
-        "GOMP_parallel_loop_static@@GOMP_4.0");
-__asm__(".symver __mpcomp_start_parallel_dynamic_loop,    "
-        "GOMP_parallel_loop_dynamic@@GOMP_4.0");
-__asm__(".symver __mpcomp_start_parallel_guided_loop,     "
-        "GOMP_parallel_loop_guided@@GOMP_4.0");
-__asm__(".symver __mpcomp_start_parallel_runtime_loop,    "
-        "GOMP_parallel_loop_runtime@@GOMP_4.0");
-#endif /* OPTIMIZED_GOMP_API_SUPPORT */

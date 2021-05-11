@@ -2638,11 +2638,6 @@ void mpcomp_taskloop_ull(__UNUSED__ void (*fn)(void *), __UNUSED__ void *data,
 
 #endif /* MPCOMP_TASK */
 
-/* GOMP OPTIMIZED_1_0_WRAPPING */
-#ifndef NO_OPTIMIZED_GOMP_4_0_API_SUPPORT
-__asm__(".symver mpcomp_taskloop, GOMP_taskloop@@GOMP_4.0");
-#endif /* OPTIMIZED_GOMP_API_SUPPORT */
-
 /***********
  * ORDERED *
  ***********/

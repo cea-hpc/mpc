@@ -3182,9 +3182,4 @@ void _mpc_task_taskgroup_end( void )
 }
 #endif /* MPCOMP_TASKGROUP */
 
-/* GOMP OPTIMIZED_1_0_WRAPPING */
-#ifndef NO_OPTIMIZED_GOMP_4_0_API_SUPPORT
-	__asm__( ".symver _mpc_task_taskgroup_start, GOMP_taskgroup_start@@GOMP_4.0" );
-	__asm__( ".symver _mpc_task_taskgroup_end, GOMP_taskgroup_end@@GOMP_4.0" );
-#endif /* OPTIMIZED_GOMP_API_SUPPORT */
 

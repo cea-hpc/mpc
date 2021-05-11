@@ -42,7 +42,7 @@ void mpcomp_GOMP_barrier( void )
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
-bool GOMP_barrier_cancel( void )
+bool mpcomp_GOMP_barrier_cancel( void )
 {
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	not_implemented();
@@ -627,7 +627,7 @@ void mpcomp_GOMP_parallel_loop_runtime_start( void ( *fn )( void * ), void *data
 
 void mpcomp_GOMP_parallel_loop_nonmonotonic_dynamic(
     void ( *fn )( void * ), void *data, unsigned num_threads, long start, long end,
-    long incr, long chunk_size, unsigned flags )
+    long incr, long chunk_size, __UNUSED__ unsigned flags )
 {
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_start_parallel_dynamic_loop( fn, data, num_threads, start, end, incr,
@@ -650,7 +650,7 @@ bool mpcomp_GOMP_loop_nonmonotonic_dynamic_start( long istart, long iend,
 
 void mpcomp_GOMP_parallel_loop_nonmonotonic_guided(
     void ( *fn )( void * ), void *data, unsigned num_threads, long start, long end,
-    long incr, long chunk_size, unsigned flags )
+    long incr, long chunk_size, __UNUSED__ unsigned flags )
 {
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_start_parallel_guided_loop( fn, data, num_threads, start, end, incr,
@@ -849,6 +849,22 @@ bool mpcomp_GOMP_loop_doacross_guided_start( unsigned ncounts, long *counts,
 	MPCOMP_GOMP_UNUSED_VAR( ncounts );
 	MPCOMP_GOMP_UNUSED_VAR( counts );
 	MPCOMP_GOMP_UNUSED_VAR( chunk_size );
+	MPCOMP_GOMP_UNUSED_VAR( start );
+	MPCOMP_GOMP_UNUSED_VAR( end );
+	not_implemented();
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+	return ret;
+}
+
+bool mpcomp_GOMP_loop_doacross_runtime_start( unsigned ncounts, long *counts,
+        long *start,
+        long *end )
+{
+	bool ret;
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	ret = false;
+	MPCOMP_GOMP_UNUSED_VAR( ncounts );
+	MPCOMP_GOMP_UNUSED_VAR( counts );
 	MPCOMP_GOMP_UNUSED_VAR( start );
 	MPCOMP_GOMP_UNUSED_VAR( end );
 	not_implemented();
@@ -1652,6 +1668,28 @@ void mpcomp_GOMP_taskgroup_end( void )
 	_mpc_task_taskgroup_end();
 	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
 }
+
+void mpcomp_GOMP_taskloop(void (*fn)(void *), void *data,
+                     void (*cpyfn)(void *, void *), long arg_size,
+                     long arg_align, unsigned flags, unsigned long num_tasks,
+                     __UNUSED__ int priority, long start, long end, long step) 
+{
+	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
+	mpcomp_taskloop(fn,data,cpyfn,arg_size,arg_align,flags,num_tasks,priority,start,end,step);
+	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
+}
+
+void mpcomp_GOMP_taskloop_ull(__UNUSED__ void (*fn)(void *), __UNUSED__ void *data,
+                         __UNUSED__ void (*cpyfn)(void *, void *), __UNUSED__ long arg_size,
+                         __UNUSED__ long arg_align, __UNUSED__ unsigned flags,
+                         __UNUSED__  unsigned long num_tasks, __UNUSED__ int priority,
+                         __UNUSED__ unsigned long long start, __UNUSED__ unsigned long long end,
+                         __UNUSED__ unsigned long long step)
+{
+	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
+	mpcomp_taskloop_ull(fn,data,cpyfn,arg_size,arg_align,flags,num_tasks,priority,start,end,step);
+	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
+}
 #endif /* MPCOMP_TASK */
 
 /***********
@@ -1764,6 +1802,34 @@ void mpcomp_GOMP_target_enter_exit_data( __UNUSED__ int device, __UNUSED__ size_
 }
 
 void mpcomp_GOMP_teams( __UNUSED__ unsigned int num_teams, __UNUSED__ unsigned int thread_limit )
+{
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	not_implemented();
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+}
+
+void mpcomp_GOMP_doacross_post (__UNUSED__ long *counts)
+{
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	not_implemented();
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+}
+
+void mpcomp_GOMP_doacross_ull_post (__UNUSED__ unsigned long long *counts)
+{
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	not_implemented();
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+}
+
+void mpcomp_GOMP_doacross_wait (__UNUSED__ long *first, ...)
+{
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
+	not_implemented();
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+}
+
+void mpcomp_GOMP_doacross_ull_wait (__UNUSED__ unsigned long long *first, ...)
 {
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	not_implemented();
