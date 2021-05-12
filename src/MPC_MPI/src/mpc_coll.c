@@ -830,9 +830,9 @@ static inline int __create_hardware_comm_unguided(MPI_Comm comm, int vrank, int 
       _mpc_cl_comm_rank(hwcomm[level_num + 1],&vrank);
 
 
-      _mpc_cl_comm_rank(hwcomm[level_num + 1], &tmp_rank);
-      _mpc_cl_comm_size(hwcomm[level_num + 1], &tmp_size);
-      fprintf(stderr, "RANK %d / %d | SPLIT COMM | SUBRANK %d / %d\n", rank, size, tmp_rank, tmp_size);
+      //_mpc_cl_comm_rank(hwcomm[level_num + 1], &tmp_rank);
+      //_mpc_cl_comm_size(hwcomm[level_num + 1], &tmp_size);
+      //fprintf(stderr, "RANK %d / %d | SPLIT COMM | SUBRANK %d / %d\n", rank, size, tmp_rank, tmp_size);
     }
 
     level_num++;
@@ -873,9 +873,9 @@ static inline int __create_master_hardware_comm_unguided(int vrank, int level, S
 
     PMPI_Comm_split(hwcomm[level_num ], color, vrank, &rootcomm[level_num ]);
 
-    _mpc_cl_comm_rank(rootcomm[level_num], &tmp_rank);
-    _mpc_cl_comm_size(rootcomm[level_num], &tmp_size);
-    fprintf(stderr, "RANK %d / %d | SPLIT ROOT | SUBRANK %d / %d\n", rank, size, tmp_rank, tmp_size);
+    //_mpc_cl_comm_rank(rootcomm[level_num], &tmp_rank);
+    //_mpc_cl_comm_size(rootcomm[level_num], &tmp_size);
+    //fprintf(stderr, "RANK %d / %d | SPLIT ROOT | SUBRANK %d / %d\n", rank, size, tmp_rank, tmp_size);
 
 
     level_num ++;
@@ -928,27 +928,25 @@ static inline int __create_childs_counts(MPI_Comm comm, Sched_info *info) {
   return MPI_SUCCESS;
 }
 
-static inline int __create_swap_array(MPI_Comm comm, Sched_info *info) {
+static inline int __create_swap_array(MPI_Comm comm, int root, Sched_info *info) {
 
   int rank, size;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
-  
-  info->hardware_info_ptr->swap_array = sctk_malloc(sizeof(int) * size);
  
-  int tmp_swap_array[size];
-  __Allgather_topo(&rank, 1, MPI_INT, tmp_swap_array, 1, MPI_INT, comm, MPC_COLL_TYPE_BLOCKING, NULL, info);
-  memcpy(info->hardware_info_ptr->swap_array, tmp_swap_array, size * sizeof(int));
-  
-
-  // __Gather_topo(&rank, 1, MPI_INT, tmp_swap_array, 1, MPI_INT, 0, comm, MPC_COLL_TYPE_BLOCKING, NULL, info);
-
-  for(int i = 0; i < size; i++) {
-    fprintf(stderr, "RANK %d | swap[%d]= %d\n", rank, i, info->hardware_info_ptr->swap_array[i]);
+  if(rank == root) {
+    info->hardware_info_ptr->swap_array = sctk_malloc(sizeof(int) * size);
+    for(int i = 0; i < size; i++) {
+      info->hardware_info_ptr->swap_array[i] = i;
+    }
   }
 
-  for(int i = 0; i < size; i++) {
-    info->hardware_info_ptr->swap_array[i] = i;
+  int tmp_swap_array[size];
+
+  __Gather_topo(&rank, 1, MPI_INT, tmp_swap_array, 1, MPI_INT, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, info);
+
+  if(rank == root) {
+    memcpy(info->hardware_info_ptr->swap_array, tmp_swap_array, size * sizeof(int));
   }
 
   return MPI_SUCCESS;
@@ -974,7 +972,7 @@ static inline int __Topo_comm_init(MPI_Comm comm, int root, int max_level, Sched
   int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
   __create_master_hardware_comm_unguided(vrank, deepest_level, info);
   __create_childs_counts(comm, info);
-  __create_swap_array(comm, info);
+  __create_swap_array(comm, root, info);
 }
 
 
@@ -4131,8 +4129,7 @@ static inline int __Gather_linear(const void *sendbuf, int sendcount, MPI_Dataty
 
   // if rank != root, send data to root
   if(rank != root) {
-    fprintf(stderr, "SEND | %d -> %d | data= %d\n", rank, root, ((int*)sendbuf)[0]);
-
+    
     res = __Send_type(sendbuf, sendcount, sendtype, root, MPC_GATHER_TAG, comm, coll_type, schedule, info);
     if(res != MPI_SUCCESS) {
       return res;
@@ -4145,7 +4142,6 @@ static inline int __Gather_linear(const void *sendbuf, int sendcount, MPI_Dataty
       }
 
       res = __Recv_type(recvbuf + i * ext * recvcount, recvcount, recvtype, i, MPC_GATHER_TAG, comm, coll_type, schedule, info);
-      fprintf(stderr, "RECV | %d <- %d | data= %d\n", rank, root, ((int*)recvbuf)[i]);
       if(res != MPI_SUCCESS) {
         return res;
       }
@@ -4375,26 +4371,6 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
       break;
   }
 
-  //TODO a enlever
-  {
-    fprintf(stderr, "rank %d | GATHER TOPO HWCOMM | data= %d\n", rank, ((int*)tmp_sendbuf)[0]);
-    int size;
-    _mpc_cl_comm_size(hardware_comm, &size);
-
-    if(rank == 0) {
-      for(int i = 0; i < size; i++) {
-        fprintf(stderr, "rank %d | GATHER TOPO HWCOMM | buf[%d]= %d\n", rank, i, ((int*)tmpbuf)[i]);
-      }
-    }
-  }
-
-
-
-
-
-  MPI_Barrier(comm);
-  fprintf(stderr, "function: %s ,line: %d\n", __FUNCTION__, __LINE__);
-
   int displs[size];
   void *gatherv_buf = tmpbuf;
 
@@ -4433,33 +4409,26 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
     }
   }
 
-  MPI_Barrier(comm);
-  fprintf(stderr, "function: %s ,line: %d\n", __FUNCTION__, __LINE__);
-
   // SWAP PART
  
   if(rank == root) {
     __Barrier_type(coll_type, schedule, info);
-    //__Copy_type(tmpbuf, tmp_sendcount * size, tmp_sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
     
     int start = 0, end;
 
     for(end = 1; end < size; end++) {
       if(info->hardware_info_ptr->swap_array[end] != info->hardware_info_ptr->swap_array[end - 1] + 1) {
-        __Copy_type(tmpbuf + start * tmp_sendcount * sendext, tmp_sendcount * (end - start), tmp_sendtype, 
-                    recvbuf + start * recvcount * recvext   , recvcount * (end - start)    , recvtype,
+        __Copy_type(tmpbuf + start * tmp_sendcount * sendext                                  , tmp_sendcount * (end - start), tmp_sendtype, 
+                    recvbuf + info->hardware_info_ptr->swap_array[start] * recvcount * recvext, recvcount * (end - start)    , recvtype,
                     comm, coll_type, schedule, info);
         start = end;
       }
     }
 
-    __Copy_type(tmpbuf + start * tmp_sendcount * sendext, tmp_sendcount * (end - start), tmp_sendtype, 
-                recvbuf + start * recvcount * recvext   , recvcount * (end - start)    , recvtype,
+    __Copy_type(tmpbuf + start * tmp_sendcount * sendext                                  , tmp_sendcount * (end - start), tmp_sendtype, 
+                recvbuf + info->hardware_info_ptr->swap_array[start] * recvcount * recvext, recvcount * (end - start)    , recvtype,
                 comm, coll_type, schedule, info);
   }
-
-  MPI_Barrier(comm);
-  fprintf(stderr, "function: %s ,line: %d\n", __FUNCTION__, __LINE__);
 
   return res;
 }
@@ -4769,6 +4738,12 @@ static inline int __Gatherv_linear(const void *sendbuf, int sendcount, MPI_Datat
       return MPI_SUCCESS;
   }
 
+  if(size == 1) {
+    if(sendbuf != MPI_IN_PLACE) {
+      __Copy_type(sendbuf, sendcount, sendtype, recvbuf + displs[0], recvcounts[0], recvtype, comm, coll_type, schedule, info);
+    }
+    return MPI_SUCCESS;
+  }
 
   // if rank != root, send data to root
   if(rank != root) {
@@ -6191,16 +6166,7 @@ static inline int __Allgather_topo(const void *sendbuf, int sendcount, MPI_Datat
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
 
-  fprintf(stderr, "rank %d | ALLGATHER TOPO IN | data= %d\n", rank, ((int*)sendbuf)[0]);
-  
   __Gather_topo(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, comm, coll_type, schedule, info);
-
-  if(rank == 0) {
-    for(int i = 0; i < size; i++) {
-      fprintf(stderr, "rank %d | ALLGATHER TOPO | buf[%d]= %d\n", rank, i, ((int*)recvbuf)[i]);
-    }
-  }
-
   __Barrier_type(coll_type, schedule, info);
   __Bcast_topo(recvbuf, recvcount * size, recvtype, 0, comm, coll_type, schedule, info);
 
