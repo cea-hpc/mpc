@@ -888,13 +888,17 @@ static inline int __create_childs_counts(MPI_Comm comm, Sched_info *info) {
   int data_count;
 
   info->hardware_info_ptr->childs_data_count = sctk_malloc(sizeof(int*) * (info->hardware_info_ptr->deepest_hardware_level));
+  info->hardware_info_ptr->send_data_count = sctk_malloc(sizeof(int) * (info->hardware_info_ptr->deepest_hardware_level));
 
+  //TODO a remplacer par un allreduce pour gerer le cas du gatherv
   _mpc_cl_comm_size(info->hardware_info_ptr->hwcomm[info->hardware_info_ptr->deepest_hardware_level], &data_count);
 
   for(int i = info->hardware_info_ptr->deepest_hardware_level - 1; i >= 0; i--) {
 
     int rank_split;
     _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &rank_split);
+
+    info->hardware_info_ptr->send_data_count[i] = data_count;
 
     if(rank_split == 0) {
       MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[i];
@@ -4371,6 +4375,7 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
       break;
   }
 
+
   int displs[size];
   void *gatherv_buf = tmpbuf;
 
@@ -4387,23 +4392,23 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
       int size_master, rank_master;
       _mpc_cl_comm_size(master_comm, &size_master);
       _mpc_cl_comm_rank(master_comm, &rank_master);
-      
-      displs[0] = 0;
-      for(int j = 1; j < size_master; j++) {
-        displs[i] = displs[i-1] + info->hardware_info_ptr->childs_data_count[i][j] * sendcount * sendext;
-      }
 
       if(rank_master == 0) {
+        displs[0] = 0;
+        for(int j = 1; j < size_master; j++) {
+          displs[j] = displs[j-1] + info->hardware_info_ptr->childs_data_count[i][j] * sendcount * sendext;
+        }
+
         gatherv_buf = MPI_IN_PLACE;
       }
-      
+
+
       switch(gatherv_alg) {
-        
         case NBC_GATHERV_LINEAR:
-          res = __Gatherv_linear(gatherv_buf, info->hardware_info_ptr->childs_data_count[i][rank_master], sendtype, tmpbuf, info->hardware_info_ptr->childs_data_count[i], displs, sendtype, 0, master_comm, coll_type, schedule, info);
+          res = __Gatherv_linear(gatherv_buf, info->hardware_info_ptr->send_data_count[i], sendtype, tmpbuf, info->hardware_info_ptr->childs_data_count[i], displs, sendtype, 0, master_comm, coll_type, schedule, info);
           break;
         case NBC_GATHERV_BINOMIAL:
-          res = __Gatherv_binomial(gatherv_buf, info->hardware_info_ptr->childs_data_count[i][rank_master], sendtype, tmpbuf, info->hardware_info_ptr->childs_data_count[i], displs, sendtype, 0, master_comm, coll_type, schedule, info);
+          res = __Gatherv_binomial(gatherv_buf, info->hardware_info_ptr->send_data_count[i], sendtype, tmpbuf, info->hardware_info_ptr->childs_data_count[i], displs, sendtype, 0, master_comm, coll_type, schedule, info);
           break;
       }
     }
@@ -4413,7 +4418,7 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
  
   if(rank == root) {
     __Barrier_type(coll_type, schedule, info);
-    
+
     int start = 0, end;
 
     for(end = 1; end < size; end++) {

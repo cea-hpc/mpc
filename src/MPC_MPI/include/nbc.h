@@ -76,6 +76,7 @@ typedef struct mpc_hardware_split_info_s
 	MPI_Comm *rootcomm; /* communicator of master node topological level */
 
   int **childs_data_count;
+  int *send_data_count;
   int *swap_array;
 }mpc_hardware_split_info_t; 
 
