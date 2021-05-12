@@ -27,7 +27,6 @@
 
 #include "egreq_nbc.h"
 
-
 #define SCHED_SIZE (sizeof(int))
 #define BARRIER_SCHED_SIZE (sizeof(char))
 #define COMM_SCHED_SIZE (sizeof(NBC_Fn_type) + sizeof(NBC_Args))
@@ -885,51 +884,58 @@ static inline int __create_master_hardware_comm_unguided(int vrank, int level, S
 
 static inline int __create_childs_counts(MPI_Comm comm, Sched_info *info) {
 
-  int data_count;
+   int rank;
+   _mpc_cl_comm_rank(comm, &rank);
+   
+   int data_count;
 
-  info->hardware_info_ptr->childs_data_count = sctk_malloc(sizeof(int*) * (info->hardware_info_ptr->deepest_hardware_level));
-  info->hardware_info_ptr->send_data_count = sctk_malloc(sizeof(int) * (info->hardware_info_ptr->deepest_hardware_level));
+   info->hardware_info_ptr->childs_data_count = sctk_malloc(sizeof(int*) * (info->hardware_info_ptr->deepest_hardware_level));
+   info->hardware_info_ptr->send_data_count = sctk_malloc(sizeof(int) * (info->hardware_info_ptr->deepest_hardware_level));
 
-  //TODO a remplacer par un allreduce pour gerer le cas du gatherv
-  _mpc_cl_comm_size(info->hardware_info_ptr->hwcomm[info->hardware_info_ptr->deepest_hardware_level], &data_count);
+   //TODO a remplacer par un allreduce pour gerer le cas du gatherv
+   _mpc_cl_comm_size(info->hardware_info_ptr->hwcomm[info->hardware_info_ptr->deepest_hardware_level], &data_count);
 
-  for(int i = info->hardware_info_ptr->deepest_hardware_level - 1; i >= 0; i--) {
+   for(int i = info->hardware_info_ptr->deepest_hardware_level - 1; i >= 0; i--) {
 
-    int rank_split;
-    _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &rank_split);
+     int rank_split;
+     _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &rank_split);
 
-    info->hardware_info_ptr->send_data_count[i] = data_count;
+     if(rank_split == 0) {
 
-    if(rank_split == 0) {
-      MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[i];
+       info->hardware_info_ptr->send_data_count[i] = data_count;
+       fprintf(stderr, "RANK %d | SEND DATA COUNT [%d] = %d\n", rank, i, data_count);
 
-      int rank_master, size_master;
-      _mpc_cl_comm_rank(master_comm, &rank_master);
-      _mpc_cl_comm_size(master_comm, &size_master);
+       MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[i];
 
-      void *buf = NULL;
-      if(rank_master == 0) {
-        info->hardware_info_ptr->childs_data_count[i] = sctk_malloc(sizeof(int) * size_master);
-        buf = info->hardware_info_ptr->childs_data_count[i];
-      }
+       int rank_master, size_master;
+       _mpc_cl_comm_rank(master_comm, &rank_master);
+       _mpc_cl_comm_size(master_comm, &size_master);
 
-      MPI_Gather(&data_count, 1, MPI_INT, buf, 1, MPI_INT, 0, info->hardware_info_ptr->rootcomm[i]);
+       void *buf = NULL;
+       if(rank_master == 0) {
+         info->hardware_info_ptr->childs_data_count[i] = sctk_malloc(sizeof(int) * size_master);
+         buf = info->hardware_info_ptr->childs_data_count[i];
+       }
 
-      if(rank_master == 0) {
-        data_count = 0;
-        for(int j = 0; j < size_master; j++) {
-          data_count += info->hardware_info_ptr->childs_data_count[i][j];
-        }
-      } else {
-        break;
-      }
+       MPI_Gather(&data_count, 1, MPI_INT, buf, 1, MPI_INT, 0, info->hardware_info_ptr->rootcomm[i]);
 
-    } else {
-      break;
-    }
-  }
+       if(rank_master == 0) {
+         data_count = 0;
+         for(int j = 0; j < size_master; j++) {
+           data_count += info->hardware_info_ptr->childs_data_count[i][j];
+     
+           fprintf(stderr, "RANK %d | CHILD DATA COUNT [%d] [%d] = %d\n", rank, i, j, info->hardware_info_ptr->childs_data_count[i][j]);
+         }
+       } else {
+         break;
+       }
 
-  return MPI_SUCCESS;
+     } else {
+       break;
+     }
+   }
+
+   return MPI_SUCCESS;
 }
 
 static inline int __create_swap_array(MPI_Comm comm, int root, Sched_info *info) {
@@ -951,6 +957,10 @@ static inline int __create_swap_array(MPI_Comm comm, int root, Sched_info *info)
 
   if(rank == root) {
     memcpy(info->hardware_info_ptr->swap_array, tmp_swap_array, size * sizeof(int));
+
+    for(int i = 0; i < size; i++) {
+      fprintf(stderr, "swap[%d] = %d\n", i, info->hardware_info_ptr->swap_array[i]);
+    }
   }
 
   return MPI_SUCCESS;
@@ -3944,6 +3954,9 @@ static inline int __Igather(const void *sendbuf, int sendcount, MPI_Datatype sen
 int PMPI_Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request) {
   
   {
+
+
+
     int size;
     mpi_check_comm(comm);
     _mpc_cl_comm_size(comm, &size);
@@ -3994,7 +4007,7 @@ int PMPI_Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
   \return error code
   */
 static inline int __Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle) {
-  
+ 
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
@@ -4375,12 +4388,27 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
       break;
   }
 
+  //TODO a enlever
+  {
+    int size_split, rank_split;
+    _mpc_cl_comm_rank(hardware_comm, &rank_split);
+    _mpc_cl_comm_size(hardware_comm, &size_split);
+
+    if(rank_split == 0 && coll_type == MPC_COLL_TYPE_BLOCKING) {
+      for(int i = 0; i < size_split; i++) {
+        fprintf(stderr, "RANK %d | GATHER | res[%d] = %d\n", rank, i, ((int*)tmpbuf)[i]);
+      }
+    }
+  }
+
 
   int displs[size];
-  void *gatherv_buf = tmpbuf;
+  void *gatherv_buf = NULL;
 
 
   for(int i = deepest_level - 1; i >= 0; i--) {
+    gatherv_buf = tmpbuf;
+
     __Barrier_type(coll_type, schedule, info);
 
     int rank_split;
@@ -4396,12 +4424,15 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
       if(rank_master == 0) {
         displs[0] = 0;
         for(int j = 1; j < size_master; j++) {
-          displs[j] = displs[j-1] + info->hardware_info_ptr->childs_data_count[i][j] * sendcount * sendext;
+          displs[j] = displs[j-1] + info->hardware_info_ptr->childs_data_count[i][j-1] * sendcount * sendext;
         }
 
         gatherv_buf = MPI_IN_PLACE;
       }
 
+      if(coll_type == MPC_COLL_TYPE_BLOCKING) {
+        fprintf(stderr, "RANK %d | INITIATE GATHERV %d | (%d)\n", rank, i, info->hardware_info_ptr->send_data_count[i]);
+      }
 
       switch(gatherv_alg) {
         case NBC_GATHERV_LINEAR:
@@ -4410,6 +4441,22 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
         case NBC_GATHERV_BINOMIAL:
           res = __Gatherv_binomial(gatherv_buf, info->hardware_info_ptr->send_data_count[i], sendtype, tmpbuf, info->hardware_info_ptr->childs_data_count[i], displs, sendtype, 0, master_comm, coll_type, schedule, info);
           break;
+      }
+
+      //TODO a enlever
+      {
+        int tmp;
+        if(i > 0) {
+          tmp = info->hardware_info_ptr->send_data_count[i - 1];
+        } else {
+          tmp = size;
+        }
+
+        if(rank_master == 0 && coll_type == MPC_COLL_TYPE_BLOCKING) {
+          for(int j = 0; j < tmp; j++) {
+            fprintf(stderr, "RANK %d | GATHERV %d | res[%d] = %d\n", rank, i, j, ((int*)tmpbuf)[j]);
+          }
+        }
       }
     }
   }
