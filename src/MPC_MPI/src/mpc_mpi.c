@@ -15745,7 +15745,7 @@ int PMPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
-static int __split_guided(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_Info info,
+static int __split_guided(MPI_Comm comm, int split_type, int key, MPI_Info info,
                          int * guided_shared_memory)
 {
     int buflen = 1024;
@@ -15758,6 +15758,11 @@ static int __split_guided(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI
         *guided_shared_memory = 1;
         return 0;
     }
+	else
+	{
+		*guided_shared_memory = 0;
+	}
+
     int size = mpc_lowcomm_communicator_size(comm);
     if(size == 1) 
     {
@@ -15855,10 +15860,30 @@ static int __split_unguided(MPI_Comm comm, int split_type, int key, __UNUSED__ M
     return color;
 }
 
+
+static inline int __split_at_level(MPI_Comm comm, int key, const char * level)
+{
+	/* Fill the INFO */
+	MPI_Info split_val;
+	MPI_Info_create(&split_val);
+	MPI_Info_set(split_val, "mpi_hw_subdomain_type", level);
+
+	int guided_shared_memory = 1;
+
+	int ret =  __split_guided(comm, MPI_COMM_TYPE_HW_SUBDOMAIN, key, split_val, &guided_shared_memory);
+
+	assume(guided_shared_memory == 0);
+
+	MPI_Info_free(&split_val);
+
+	return ret;
+}
+
+
 int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_Info info,
                          MPI_Comm *newcomm)
 {
-	int color = 0, ret, cpu;
+	int color = 0;
 
     int guided_shared_memory = 0; /* ensure consistency MPI standard 4.0 */
 
@@ -15866,42 +15891,42 @@ int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_
     {
         color = __split_guided(comm, split_type, key, info,
                          &guided_shared_memory);
-		if(color == MPC_PROC_NULL)
-		{
-			*newcomm = MPI_COMM_NULL;
-			return;
-		}
     }
+
 	if(guided_shared_memory)
 	{
 		split_type = MPI_COMM_TYPE_SHARED;
 	}
+
 	switch(split_type){
 		case MPI_COMM_TYPE_HW_UNGUIDED:
 			color = __split_unguided(comm, split_type, key, info);
-			if(color == MPC_PROC_NULL)
-			{
-				*newcomm = MPI_COMM_NULL;
-				return;
-			}
 			break;
-		case MPI_COMM_TYPE_SHARED:
-			cpu = mpc_topology_get_current_cpu();
-			color = mpc_topology_get_numa_node_from_cpu(cpu);
-			/* char hname[200];
-			* gethostname(hname, 200);
-			* mpc_common_debug_error("Color %d on %s", color, hname); */
 		break;
 		case MPI_COMM_TYPE_APP:
 			if(!mpc_launch_pmi_get_app_rank(&color)) mpc_common_debug_warning("app rank not properly assigned");
 		break;
+		case MPI_COMM_TYPE_SHARED:
+			/* Try numa first */
+			color = __split_at_level(comm, key, "NUMANode");
+
+			/* If it failed use the node_rank */
+			if(color == MPI_PROC_NULL )
+			{
+				color = mpc_common_get_node_rank();
+			}
+		break;
 		case MPI_COMM_TYPE_NUMA:
-			cpu = mpc_topology_get_current_cpu();
-			color = mpc_topology_get_numa_node_from_cpu(cpu);
+			color = __split_at_level(comm, key, "NUMANode");
 		break;
 		case MPI_COMM_TYPE_SOCKET:
-			cpu = mpc_topology_get_current_cpu();
-			color = mpc_topology_get_parent_socket_cpuset(cpu);
+			color = __split_at_level(comm, key, "L3Cache");
+
+			/* If it failed use lower cache */
+			if(color == MPI_PROC_NULL )
+			{
+				color = __split_at_level(comm, key, "L2Cache");
+			}
 		break;
 		case MPI_COMM_TYPE_UNIX_PROCESS:
 			color = mpc_common_get_process_rank();
@@ -15909,9 +15934,11 @@ int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, __UNUSED__ MPI_
 		case MPI_COMM_TYPE_NODE:
 			color = mpc_common_get_node_rank();
 		break;
+		case MPI_COMM_TYPE_HW_SUBDOMAIN:
+			/* Done in previous if */
+		break;
 	}
 
-	TODO("Handle info in Comm_split_type");
 	return PMPI_Comm_split(comm, color, key, newcomm);
 }
 
