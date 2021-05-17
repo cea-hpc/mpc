@@ -1,3 +1,4 @@
+#include <mpc.h>
 #include <mpc_lowcomm.h>
 #include <mpc_lowcomm_monitor.h>
 #include <stdio.h>

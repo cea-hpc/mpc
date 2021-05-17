@@ -23,7 +23,7 @@
 #ifndef ___MPC___GLOBAL_RENAMING__HEADER___FILE___
 #define ___MPC___GLOBAL_RENAMING__HEADER___FILE___
 
-#ifdef MPC_MODULE_MPC_Threads
+#ifdef MPC_THREAD_ENABLED
 	/* Include is needed for cstdlib
 	it needs to *know* atexit  */
 	#include <stdlib.h>

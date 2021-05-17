@@ -89,7 +89,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@MPC_THREAD_ENABLED_TRUE@am__append_1 = $(abs_top_builddir)/src/include/mpc_threads_config.h
+@MPC_THREAD_ENABLED_TRUE@am__append_1 = $(abs_top_builddir)/src/include/mpc_threads_config.h \
+@MPC_THREAD_ENABLED_TRUE@	$(abs_top_srcdir)/src/include/mpc_main.h
 @MPC_MPI_ENABLED_TRUE@am__append_2 = $(abs_top_srcdir)/src/include/mpi.h
 subdir = src/lib
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -187,8 +188,8 @@ am__can_run_installinfo = \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
 am__mpc_header_HEADERS_DIST = $(abs_top_builddir)/src/include/mpc.h \
-	$(abs_top_srcdir)/src/include/mpc_main.h \
 	$(abs_top_builddir)/src/include/mpc_threads_config.h \
+	$(abs_top_srcdir)/src/include/mpc_main.h \
 	$(abs_top_srcdir)/src/include/mpi.h
 HEADERS = $(mpc_header_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
@@ -487,8 +488,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 mpc_headerdir = $(pkgincludedir)
 mpc_header_HEADERS = $(abs_top_builddir)/src/include/mpc.h \
-	$(abs_top_srcdir)/src/include/mpc_main.h $(am__append_1) \
-	$(am__append_2)
+	$(am__append_1) $(am__append_2)
+
 #
 # Define the MPC Library
 #
