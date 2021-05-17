@@ -1,4 +1,4 @@
-#include <mpi.h>
+#include <mpc_lowcomm.h>
 #include <mpc_lowcomm_monitor.h>
 #include <stdio.h>
 #include <string.h>
@@ -33,6 +33,7 @@ int set_callback(mpc_lowcomm_monitor_set_t set, void * arg)
     }
     printf("-------------------------\n");
 
+    return 0;
 }
 
 
@@ -73,7 +74,7 @@ int conn_callback(mpc_lowcomm_monitor_set_t set, void * arg)
         {
             mpc_lowcomm_monitor_args_t *args = mpc_lowcomm_monitor_response_get_content(resp);
 
-            int j;
+            uint64_t j;
 
             printf("%lu [label=\"%lu %s\"]\n", peer_uid, peer_uid, mpc_lowcomm_peer_format(peer_uid));
 
@@ -92,6 +93,7 @@ int conn_callback(mpc_lowcomm_monitor_set_t set, void * arg)
 
     free(peers);
 
+    return 0;
 }
 
 
@@ -132,10 +134,7 @@ void syncdump(int argc, char *argv[])
 
 int main( int argc, char *argv[])
 {
-    int rank, size;
-    MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    mpc_lowcomm_init();
 
 
     /* Set default and get mode if present */
@@ -173,7 +172,7 @@ int main( int argc, char *argv[])
     }
 
 
-    MPI_Finalize();
+    mpc_lowcomm_release();
 
     return 0;
 }
