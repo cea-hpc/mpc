@@ -2038,8 +2038,10 @@ static inline int __Reduce_reduce_scatter_allgather(__UNUSED__ const void *sendb
 
 static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
   int rank, size, res = MPI_SUCCESS;
+  MPI_Aint ext;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
+  MPI_Type_extent(datatype, &ext);
 
   enum {
     NBC_REDUCE_LINEAR,
@@ -2048,14 +2050,34 @@ static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, M
 
   alg = NBC_REDUCE_LINEAR;
 
+  void *tmpbuf = NULL;
+
+  sctk_Op mpc_op;
+  sctk_op_t *mpi_op;
+
+  mpi_op = sctk_convert_to_mpc_op(op);
+  mpc_op = mpi_op->op;
+
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
+      if(rank == root) {
+        tmpbuf = sctk_malloc(size * count * ext);
+      }
+      break;
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
+      if(rank == root) {
+        tmpbuf = info->tmpbuf + info->tmpbuf_pos;
+        info->tmpbuf_pos += size * count * ext;
+      }
       break;
 
     case MPC_COLL_TYPE_COUNT:
       {
+        if(rank == root) {
+          info->tmpbuf_size += size * count * ext;
+        }
+
         if(!(info->flag & SCHED_INFO_TOPO_COMM_INITIALISED)) {
           /* choose max topological level on which to do hardware split */
           /*TODO choose level wisely */
@@ -2068,56 +2090,76 @@ static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, M
       }
   }
   
-  int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
+  // int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
 
-  /* last level topology binomial bcast */
-  MPI_Comm hardware_comm = info->hardware_info_ptr->hwcomm[deepest_level];
+  // /* last level topology binomial bcast */
+  // MPI_Comm hardware_comm = info->hardware_info_ptr->hwcomm[deepest_level];
 
-  //int tmp_size, tmp_rank;
-  //_mpc_cl_comm_size(hardware_comm, &tmp_size);
-  //_mpc_cl_comm_rank(hardware_comm, &tmp_rank);
-  //fprintf(stderr, "RANK %d / %d | REDUCE ON COMM DEPTH %d | SUBRANK %d / %d\n", rank, size, deepest_level, tmp_rank, tmp_size);
+  // //int tmp_size, tmp_rank;
+  // //_mpc_cl_comm_size(hardware_comm, &tmp_size);
+  // //_mpc_cl_comm_rank(hardware_comm, &tmp_rank);
+  // //fprintf(stderr, "RANK %d / %d | REDUCE ON COMM DEPTH %d | SUBRANK %d / %d\n", rank, size, deepest_level, tmp_rank, tmp_size);
 
-  switch(alg) {
-    case NBC_REDUCE_LINEAR:
-      res = __Reduce_linear(sendbuf, recvbuf, count, datatype, op, 0, hardware_comm, coll_type, schedule, info);
-      break;
-    case NBC_REDUCE_BINOMIAL:
-      res = __Reduce_binomial(sendbuf, recvbuf, count, datatype, op, 0, hardware_comm, coll_type, schedule, info);
-      break;
+  // switch(alg) {
+  //   case NBC_REDUCE_LINEAR:
+  //     res = __Reduce_linear(sendbuf, recvbuf, count, datatype, op, 0, hardware_comm, coll_type, schedule, info);
+  //     break;
+  //   case NBC_REDUCE_BINOMIAL:
+  //     res = __Reduce_binomial(sendbuf, recvbuf, count, datatype, op, 0, hardware_comm, coll_type, schedule, info);
+  //     break;
+  // }
+  // 
+  // /* At each topological level, masters do binomial algorithm */
+  // for(int i = deepest_level - 1; i >= 0; i--) {
+  //   int rank_split;
+  //   _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &rank_split);
+  //   
+  //   if(!rank_split) {
+  //     __Barrier_type(coll_type, schedule, info);
+
+  //     MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[i];
+
+  //     int rank_master;
+  //     _mpc_cl_comm_rank(master_comm, &rank_master);
+
+  //     const void *buffer =  recvbuf;
+  //     if(rank_master == 0) {
+  //       buffer = MPI_IN_PLACE;
+  //     }
+
+  //     //_mpc_cl_comm_size(master_comm, &tmp_size);
+  //     //_mpc_cl_comm_rank(master_comm, &tmp_rank);
+  //     //fprintf(stderr, "RANK %d / %d | REDUCE ON COMM DEPTH %d | SUBRANK %d / %d\n", rank, size, i, tmp_rank, tmp_size);
+  //     
+  //     switch(alg) {
+  //       case NBC_REDUCE_LINEAR:
+  //         res = __Reduce_linear(buffer, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
+  //         break;
+  //       case NBC_REDUCE_BINOMIAL:
+  //         res = __Reduce_binomial(buffer, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
+  //         break;
+  //     }
+  //   }
+  // }
+
+  void *tmp_sendbuf = sendbuf;
+  if(sendbuf == MPI_IN_PLACE) {
+    tmp_sendbuf = recvbuf;
   }
   
-  /* At each topological level, masters do binomial algorithm */
-  for(int i = deepest_level - 1; i >= 0; i--) {
-    int rank_split;
-    _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &rank_split);
-    
-    if(!rank_split) {
+  __Gather_topo(tmp_sendbuf, count, datatype, tmpbuf, count, datatype, root, comm, coll_type, schedule, info);
+  __Barrier_type(coll_type, schedule, info);
+
+  if(rank == root) {
+    for(int i = 1; i < size; i++) {
+      void *leftbuf = tmpbuf + (i-1) * count * ext;
+      void *rightbuf = tmpbuf + i * count * ext;
+
+      __Op_type(NULL, leftbuf, rightbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
       __Barrier_type(coll_type, schedule, info);
-
-      MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[i];
-
-      int rank_master;
-      _mpc_cl_comm_rank(master_comm, &rank_master);
-
-      const void *buffer =  recvbuf;
-      if(rank_master == 0) {
-        buffer = MPI_IN_PLACE;
-      }
-
-      //_mpc_cl_comm_size(master_comm, &tmp_size);
-      //_mpc_cl_comm_rank(master_comm, &tmp_rank);
-      //fprintf(stderr, "RANK %d / %d | REDUCE ON COMM DEPTH %d | SUBRANK %d / %d\n", rank, size, i, tmp_rank, tmp_size);
-      
-      switch(alg) {
-        case NBC_REDUCE_LINEAR:
-          res = __Reduce_linear(buffer, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
-          break;
-        case NBC_REDUCE_BINOMIAL:
-          res = __Reduce_binomial(buffer, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
-          break;
-      }
     }
+
+    __Copy_type(tmpbuf + (size-1) * count * ext, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
   }
 
   return res;
