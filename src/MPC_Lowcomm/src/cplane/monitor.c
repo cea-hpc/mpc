@@ -2202,7 +2202,7 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_comm_info(mpc_l
 																	__monitor.process_uid,
 																	response_index,
 																	sizeof(mpc_lowcomm_monitor_args_t)
-																	+ (comm_size * sizeof(mpc_lowcomm_peer_uid_t)));
+																	+ (comm_size * sizeof(mpc_lowcomm_monitor_rank_desc_t)));
 
 	if(comm)
 	{
@@ -2216,7 +2216,8 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_comm_info(mpc_l
 
 		for(i = 0 ; i < comm_size; i++)
 		{
-			resp->content->comm_info.uids[i] = mpc_lowcomm_communicator_uid(comm, i);
+			resp->content->comm_info.rds[i].uid = mpc_lowcomm_communicator_uid(comm, i);
+			resp->content->comm_info.rds[i].comm_world_rank = mpc_lowcomm_communicator_world_rank_of(comm, i);
 		}
 
 	}

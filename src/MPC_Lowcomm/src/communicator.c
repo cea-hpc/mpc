@@ -222,11 +222,8 @@ int mpc_lowcomm_communicator_build_remote(mpc_lowcomm_peer_uid_t remote,
 	uint64_t i;
 	for(i = 0; i < peer_count; i++)
 	{
-		/* WARNING this assumes homogeneity ! */
-		if(_mpc_lowcomm_group_rank_descriptor_set_uid(&remote_desc[i], content->comm_info.uids[i]) != SCTK_SUCCESS)
-		{
-			mpc_common_debug_fatal("An error occured when creating descriptor for RANK %d in remote comm", i);
-		}
+		remote_desc[i].comm_world_rank = content->comm_info.rds[i].comm_world_rank;
+		remote_desc[i].host_process_uid = content->comm_info.rds[i].uid;
 	}
 
 	mpc_lowcomm_monitor_response_free(resp);
@@ -1348,7 +1345,6 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_create(const mpc_lowcomm_com
 	{
 		for(i = 0; i < size; i++)
 		{
-			mpc_lowcomm_communicator_t local = mpc_lowcomm_communicator_get_local(comm);
 			_mpc_lowcomm_group_rank_descriptor_set(&rank_desc[i], members[i] );
 		}
 	}
@@ -2289,16 +2285,41 @@ int mpc_lowcomm_communicator_in_right_group(const mpc_lowcomm_communicator_t com
 int mpc_lowcomm_communicator_in_master_group(const mpc_lowcomm_communicator_t communicator)
 {
 	assume(mpc_lowcomm_communicator_is_intercomm(communicator));
-	int remote_master_rank = mpc_lowcomm_communicator_remote_world_rank(communicator, 0);
+
+	mpc_lowcomm_communicator_t remote_comm = mpc_lowcomm_communicator_get_remote(communicator);
+
+	int remote_master_rank = mpc_lowcomm_communicator_world_rank_of(remote_comm, 0);
 	int local_master_rank = mpc_lowcomm_communicator_world_rank_of(communicator, 0);
 
-	if(local_master_rank < remote_master_rank)
+	mpc_lowcomm_peer_uid_t local_master_uid = mpc_lowcomm_communicator_uid(communicator, 0);
+	mpc_lowcomm_peer_uid_t remote_master_uid = mpc_lowcomm_communicator_uid(remote_comm, 0);
+
+	/* If local and remote are in the same set we use the ranks
+	   otherwise we use the set IDs */
+	mpc_lowcomm_set_uid_t local_master_set = mpc_lowcomm_peer_get_set(local_master_uid);
+	mpc_lowcomm_set_uid_t remote_master_set = mpc_lowcomm_peer_get_set(remote_master_uid);
+
+	if(local_master_set != remote_master_set)
 	{
-		return 0;
+		if(local_master_set < remote_master_set)
+		{
+			return 0;
+		}
+		else
+		{
+			return 1;
+		}
 	}
 	else
 	{
-		return 1;
+		if(local_master_rank < remote_master_rank)
+		{
+			return 0;
+		}
+		else
+		{
+			return 1;
+		}
 	}
 
 	not_reachable();

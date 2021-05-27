@@ -24,6 +24,9 @@
 
 #include <uthash.h>
 #include <mpc_common_spinlock.h>
+#include <mpc_lowcomm_monitor.h>
+
+
 struct mpc_lowcomm_ptp_message_s;
 struct sctk_ib_buffered_table_s;
 
@@ -59,6 +62,7 @@ typedef struct
 
 typedef struct
 {
+	mpc_lowcomm_peer_uid_t uid;
 	int destination;
 } sctk_reorder_key_t;
 

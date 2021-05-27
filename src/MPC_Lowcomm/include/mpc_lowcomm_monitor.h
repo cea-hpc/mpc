@@ -340,6 +340,13 @@ typedef enum
 #define MPC_LOWCOMM_ONDEMAND_DATA_LEN      MPC_LOWCOMM_PEER_URI_SIZE
 #define MPC_LOWCOMM_MONITOR_MAX_CLIENTS    32
 
+
+typedef struct
+{
+	mpc_lowcomm_peer_uid_t uid;
+	int                    comm_world_rank;
+}mpc_lowcomm_monitor_rank_desc_t;
+
 /**
  * @brief This is the actual payload sent for the various commands
  *
@@ -406,12 +413,14 @@ typedef union
 	 * @brief Payload for @ref mpc_lowcomm_monitor_comm_info
 	 *
 	 */
+
+
 	struct
 	{
-		uint64_t                      id;      /**< Identifier of the queried comm */
-		int                           size;    /**< Size of the queried comm */
-		mpc_lowcomm_monitor_retcode_t retcode; /**< Remote return code */
-		mpc_lowcomm_peer_uid_t        uids[];  /**< List of UIDs participating in comm */
+		uint64_t                             id;      /**< Identifier of the queried comm */
+		int                                  size;    /**< Size of the queried comm */
+		mpc_lowcomm_monitor_retcode_t        retcode; /**< Remote return code */
+		mpc_lowcomm_monitor_rank_desc_t     rds[];   /**< List of ranks participating in comm */
 	}comm_info;
 
 	/**

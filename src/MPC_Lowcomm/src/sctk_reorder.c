@@ -40,7 +40,6 @@
 #include <sctk_alloc.h>
 
 
-
 /*
  * Initialize the reordering for the list
  */
@@ -53,7 +52,7 @@ void sctk_reorder_list_init(sctk_reorder_list_t *reorder)
 /*
  * Add a reorder entry to the reorder table and initialize it
  */
-sctk_reorder_table_t *sctk_init_task_to_reorder(int dest)
+sctk_reorder_table_t *sctk_init_task_to_reorder(mpc_lowcomm_peer_uid_t uid, int rank)
 {
 	sctk_reorder_table_t *tmp;
 
@@ -67,7 +66,8 @@ sctk_reorder_table_t *sctk_init_task_to_reorder(int dest)
 	OPA_store_int(&(tmp->message_number_dest), 0);
 	mpc_common_spinlock_init(&tmp->lock, 0);
 	tmp->buffer          = NULL;
-	tmp->key.destination = dest;
+	tmp->key.destination = rank;
+	tmp->key.uid = uid;
 
 	return tmp;
 }
@@ -75,12 +75,13 @@ sctk_reorder_table_t *sctk_init_task_to_reorder(int dest)
 /*
  * Get an entry from the reorder. Add it if not exist
  */
-sctk_reorder_table_t *sctk_get_task_from_reorder(int dest, sctk_reorder_list_t *reorder)
+sctk_reorder_table_t *sctk_get_task_from_reorder(mpc_lowcomm_peer_uid_t uid, int rank, sctk_reorder_list_t *reorder)
 {
-	sctk_reorder_key_t    key;
+	sctk_reorder_key_t    key = { 0 };
 	sctk_reorder_table_t *tmp;
 
-	key.destination = dest;
+	key.destination = rank;
+	key.uid = uid;
 
 	mpc_common_spinlock_lock(&reorder->lock);
 
@@ -88,10 +89,10 @@ sctk_reorder_table_t *sctk_get_task_from_reorder(int dest, sctk_reorder_list_t *
 
 	if(tmp == NULL)
 	{
-		tmp = sctk_init_task_to_reorder(dest);
+		tmp = sctk_init_task_to_reorder(uid, rank);
 		/* Add the entry */
 		HASH_ADD(hh, reorder->table, key, sizeof(sctk_reorder_key_t), tmp);
-		mpc_common_nodebug("%p Entry for task %d added to %p!!", reorder->table, dest, reorder->table);
+		mpc_common_nodebug("%p Entry for task %d added to %p!!", reorder->table, rank, reorder->table);
 	}
 
 	mpc_common_spinlock_unlock(&reorder->lock);
@@ -144,10 +145,11 @@ static inline int __send_pending_messages(sctk_reorder_table_t *tmp)
  * */
 int sctk_send_message_from_network_reorder(mpc_lowcomm_ptp_message_t *msg)
 {
+	const mpc_lowcomm_peer_uid_t src_uid = SCTK_MSG_SRC_PROCESS_UID(msg);
 	const int src_task  = SCTK_MSG_SRC_TASK(msg);
 	const int dest_task = SCTK_MSG_DEST_TASK(msg);
 
-	mpc_common_nodebug("Recv message from [%d,%d] to [%d,%d] (number: %d)", SCTK_MSG_SRC_PROCESS(msg), src_task, SCTK_MSG_DEST_PROCESS(msg), dest_task, SCTK_MSG_NUMBER(msg) );
+	mpc_common_nodebug("Recv message from [%llu,%d] to [%llu,%d] (number: %d)", SCTK_MSG_SRC_PROCESS_UID(msg), src_task, SCTK_MSG_DEST_PROCESS_UID(msg), dest_task, SCTK_MSG_NUMBER(msg) );
 
 	_mpc_comm_ptp_message_reinit_comm(msg);
 
@@ -186,15 +188,16 @@ int sctk_send_message_from_network_reorder(mpc_lowcomm_ptp_message_t *msg)
 		}
 
 		sctk_reorder_list_t *list = _mpc_comm_ptp_array_get_reorder(SCTK_MSG_COMMUNICATOR(msg), dest_task);
-		mpc_common_nodebug("GET REORDER LIST FOR %d -> %d", src_task, dest_task);
-		tmp = sctk_get_task_from_reorder(src_task, list);
+		mpc_common_nodebug("GET REORDER LIST FOR %llu:%d", src_uid, src_task);
+		tmp = sctk_get_task_from_reorder(src_uid, src_task, list);
 		assume(tmp != NULL);
-		mpc_common_nodebug("LIST %p ENTRY %p src %d dest %d", list, tmp,
-		                   src_task, dest_task);
 
 		number = OPA_load_int(&(tmp->message_number_src) );
 		mpc_common_nodebug("wait for %d recv %d", number,
 		                   SCTK_MSG_NUMBER(msg) );
+
+		mpc_common_nodebug("LIST %p ENTRY %p @ %d (incoming number %d @ %p)", list, tmp, number, SCTK_MSG_NUMBER(msg), &(tmp->message_number_src));
+
 
 		if(number == SCTK_MSG_NUMBER(msg) )
 		{
@@ -222,11 +225,11 @@ int sctk_send_message_from_network_reorder(mpc_lowcomm_ptp_message_t *msg)
 			mpc_common_spinlock_lock(&(tmp->lock) );
 			HASH_ADD_INT( tmp->buffer, key, reorder);
 			mpc_common_spinlock_unlock(&(tmp->lock) );
-			mpc_common_nodebug("recv %d to %d - delay wait for %d recv %d "
-			                   "(expecting:%d, tmp:%p)",
-			                   SCTK_MSG_SRC_PROCESS(msg),
-			                   SCTK_MSG_DEST_PROCESS(msg), number,
-			                   SCTK_MSG_NUMBER(msg), number, tmp);
+			mpc_common_debug_error("recv %llu to %llu - delay wait counter is %d had %d "
+			                   "(tmp:%p)",
+			                   SCTK_MSG_SRC_PROCESS_UID(msg),
+			                   SCTK_MSG_DEST_PROCESS_UID(msg), number,
+			                   SCTK_MSG_NUMBER(msg), tmp);
 
 			/* XXX: we *MUST* check once again if there is no pending
 			 * messages. During
@@ -248,6 +251,7 @@ int sctk_prepare_send_message_to_network_reorder(mpc_lowcomm_ptp_message_t *msg)
 	sctk_reorder_table_t *tmp;
 	const int             src_task  = SCTK_MSG_SRC_TASK(msg);
 	const int             dest_task = SCTK_MSG_DEST_TASK(msg);
+	const mpc_lowcomm_peer_uid_t dest_uid = SCTK_MSG_DEST_PROCESS_UID(msg);
 
 	mpc_common_nodebug("Send message from %d to %d", src_task, dest_task);
 
@@ -262,7 +266,7 @@ int sctk_prepare_send_message_to_network_reorder(mpc_lowcomm_ptp_message_t *msg)
 
 
 	sctk_reorder_list_t *list = _mpc_comm_ptp_array_get_reorder(SCTK_MSG_COMMUNICATOR(msg), src_task);
-	tmp = sctk_get_task_from_reorder(dest_task, list);
+	tmp = sctk_get_task_from_reorder(dest_uid, dest_task, list);
 	assume(tmp);
 
 	/* Local numbering */
