@@ -23929,14 +23929,17 @@ else
 fi
 
 
-                inc_prefix=""
+                if test "x${whole_prefix}" != "xno"; then
+                        # This IF is long !!
+                        # >>>>>>>>>>>>>>>>>>>
+                        inc_prefix=""
 
 # Check whether --with-hwloc-inc was given.
 if test "${with_hwloc_inc+set}" = set; then :
   withval=$with_hwloc_inc; inc_prefix=$withval
 fi
 
-                lib_prefix=""
+                        lib_prefix=""
 
 # Check whether --with-hwloc-libs was given.
 if test "${with_hwloc_libs+set}" = set; then :
@@ -23946,42 +23949,42 @@ else
 fi
 
 
-                check_or_infer_prefix_result="no"
-                header_name=hwloc.h
-                libname=hwloc
-                alt_libname=
-                function_name=hwloc_topology_init
-                var_prefix=HWLOC
-                version="> 2.0.0"
+                        check_or_infer_prefix_result="no"
+                        header_name=hwloc.h
+                        libname=hwloc
+                        alt_libname=
+                        function_name=hwloc_topology_init
+                        var_prefix=HWLOC
+                        version="> 2.0.0"
 
-                if test -z "$lib_prefix"
-                then
-                        lib_prefix="$whole_prefix/lib"
-                fi
-
-                if test -d "${lib_prefix}/pkgconfig"; then
-                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
-                fi
-
-                if test -n "$whole_prefix"
-                then
-                        if test -d "${whole_prefix}/lib/pkgconfig"; then
-                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                        if test -z "$lib_prefix"
+                        then
+                                lib_prefix="$whole_prefix/lib"
                         fi
-                fi
 
-                if test -z "$inc_prefix"
-                then
-                        inc_prefix="$whole_prefix/include/"
-                fi
+                        if test -d "${lib_prefix}/pkgconfig"; then
+                                append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                        fi
+
+                        if test -n "$whole_prefix"
+                        then
+                                if test -d "${whole_prefix}/lib/pkgconfig"; then
+                                        append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                                fi
+                        fi
+
+                        if test -z "$inc_prefix"
+                        then
+                                inc_prefix="$whole_prefix/include/"
+                        fi
 
 
 
 
-                #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
+                        #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
-                # First try with PKG config
-                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+                        # First try with PKG config
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
 $as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
@@ -24055,54 +24058,60 @@ $as_echo "yes" >&6; }
 	pkg_found=1
 fi
 
-                if test "x$pkg_found" = "x1"
-                then
-                        # Ensure PKG config dependencies are also
-                        # injected using RPATH
-                        HWLOC_LIBS=$(promote_to_rpath ${HWLOC_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: HWLOC FLAGS are ${HWLOC_LIBS}" >&5
+                        if test "x$pkg_found" = "x1"
+                        then
+                                # Ensure PKG config dependencies are also
+                                # injected using RPATH
+                                HWLOC_LIBS=$(promote_to_rpath ${HWLOC_LIBS})
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: HWLOC FLAGS are ${HWLOC_LIBS}" >&5
 $as_echo "$as_me: HWLOC FLAGS are ${HWLOC_LIBS}" >&6;}
 
-                        #Insert flags
-                        CPPFLAGS="${HWLOC_CFLAGS} $CPPFLAGS"
-                        LDFLAGS="${HWLOC_LIBS} $LDFLAGS"
+                                #Insert flags
+                                CPPFLAGS="${HWLOC_CFLAGS} $CPPFLAGS"
+                                LDFLAGS="${HWLOC_LIBS} $LDFLAGS"
 
 
 
 
-                        #AC_MSG_NOTICE([$libname found using pkg-config])
-                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
-                        check_or_infer_prefix_result="yes"
-                else
-                        __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
-
-                        if test -n "${alt_libname}"; then
-                                libname="${alt_libname}"
-                        fi
-
-                        __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
-
-                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
-                        then
+                                #AC_MSG_NOTICE([$libname found using pkg-config])
+                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                                 check_or_infer_prefix_result="yes"
                         else
-                                check_or_infer_prefix_result="no"
+                                __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                                if test -n "${alt_libname}"; then
+                                        libname="${alt_libname}"
+                                fi
+
+                                __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
+
+                                if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                                then
+                                        check_or_infer_prefix_result="yes"
+                                else
+                                        check_or_infer_prefix_result="no"
+                                fi
                         fi
-                fi
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking hwloc cflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking hwloc cflags" >&5
 $as_echo_n "checking hwloc cflags... " >&6; }
-                XXTMP=$(eval echo \${HWLOC_CFLAGS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${HWLOC_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking hwloc ldflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking hwloc ldflags" >&5
 $as_echo_n "checking hwloc ldflags... " >&6; }
-                XXTMP=$(eval echo \${HWLOC_LIBS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${HWLOC_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                mpc_dep_found=$check_or_infer_prefix_result
+                        mpc_dep_found=$check_or_infer_prefix_result
+                else
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: !! hwloc is explicitly deactivated" >&5
+$as_echo "$as_me: !! hwloc is explicitly deactivated" >&6;}
+                        mpc_dep_found="no"
+                fi
+                # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
                 if test "x$mpc_dep_found" = "xno"
@@ -24128,14 +24137,17 @@ else
 fi
 
 
-                inc_prefix=""
+                if test "x${whole_prefix}" != "xno"; then
+                        # This IF is long !!
+                        # >>>>>>>>>>>>>>>>>>>
+                        inc_prefix=""
 
 # Check whether --with-openpa-inc was given.
 if test "${with_openpa_inc+set}" = set; then :
   withval=$with_openpa_inc; inc_prefix=$withval
 fi
 
-                lib_prefix=""
+                        lib_prefix=""
 
 # Check whether --with-openpa-libs was given.
 if test "${with_openpa_libs+set}" = set; then :
@@ -24145,42 +24157,42 @@ else
 fi
 
 
-                check_or_infer_prefix_result="no"
-                header_name=opa_config.h
-                libname=openpa
-                alt_libname=opa
-                function_name=OPA_Queue_init
-                var_prefix=OPA
-                version=""
+                        check_or_infer_prefix_result="no"
+                        header_name=opa_config.h
+                        libname=openpa
+                        alt_libname=opa
+                        function_name=OPA_Queue_init
+                        var_prefix=OPA
+                        version=""
 
-                if test -z "$lib_prefix"
-                then
-                        lib_prefix="$whole_prefix/lib"
-                fi
-
-                if test -d "${lib_prefix}/pkgconfig"; then
-                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
-                fi
-
-                if test -n "$whole_prefix"
-                then
-                        if test -d "${whole_prefix}/lib/pkgconfig"; then
-                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                        if test -z "$lib_prefix"
+                        then
+                                lib_prefix="$whole_prefix/lib"
                         fi
-                fi
 
-                if test -z "$inc_prefix"
-                then
-                        inc_prefix="$whole_prefix/include/"
-                fi
+                        if test -d "${lib_prefix}/pkgconfig"; then
+                                append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                        fi
+
+                        if test -n "$whole_prefix"
+                        then
+                                if test -d "${whole_prefix}/lib/pkgconfig"; then
+                                        append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                                fi
+                        fi
+
+                        if test -z "$inc_prefix"
+                        then
+                                inc_prefix="$whole_prefix/include/"
+                        fi
 
 
 
 
-                #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
+                        #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
-                # First try with PKG config
-                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+                        # First try with PKG config
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
 $as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
@@ -24254,54 +24266,60 @@ $as_echo "yes" >&6; }
 	pkg_found=1
 fi
 
-                if test "x$pkg_found" = "x1"
-                then
-                        # Ensure PKG config dependencies are also
-                        # injected using RPATH
-                        OPA_LIBS=$(promote_to_rpath ${OPA_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: OPA FLAGS are ${OPA_LIBS}" >&5
+                        if test "x$pkg_found" = "x1"
+                        then
+                                # Ensure PKG config dependencies are also
+                                # injected using RPATH
+                                OPA_LIBS=$(promote_to_rpath ${OPA_LIBS})
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: OPA FLAGS are ${OPA_LIBS}" >&5
 $as_echo "$as_me: OPA FLAGS are ${OPA_LIBS}" >&6;}
 
-                        #Insert flags
-                        CPPFLAGS="${OPA_CFLAGS} $CPPFLAGS"
-                        LDFLAGS="${OPA_LIBS} $LDFLAGS"
+                                #Insert flags
+                                CPPFLAGS="${OPA_CFLAGS} $CPPFLAGS"
+                                LDFLAGS="${OPA_LIBS} $LDFLAGS"
 
 
 
 
-                        #AC_MSG_NOTICE([$libname found using pkg-config])
-                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
-                        check_or_infer_prefix_result="yes"
-                else
-                        __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
-
-                        if test -n "${alt_libname}"; then
-                                libname="${alt_libname}"
-                        fi
-
-                        __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
-
-                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
-                        then
+                                #AC_MSG_NOTICE([$libname found using pkg-config])
+                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                                 check_or_infer_prefix_result="yes"
                         else
-                                check_or_infer_prefix_result="no"
+                                __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                                if test -n "${alt_libname}"; then
+                                        libname="${alt_libname}"
+                                fi
+
+                                __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
+
+                                if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                                then
+                                        check_or_infer_prefix_result="yes"
+                                else
+                                        check_or_infer_prefix_result="no"
+                                fi
                         fi
-                fi
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking openpa cflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking openpa cflags" >&5
 $as_echo_n "checking openpa cflags... " >&6; }
-                XXTMP=$(eval echo \${OPA_CFLAGS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${OPA_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking openpa ldflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking openpa ldflags" >&5
 $as_echo_n "checking openpa ldflags... " >&6; }
-                XXTMP=$(eval echo \${OPA_LIBS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${OPA_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                mpc_dep_found=$check_or_infer_prefix_result
+                        mpc_dep_found=$check_or_infer_prefix_result
+                else
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: !! openpa is explicitly deactivated" >&5
+$as_echo "$as_me: !! openpa is explicitly deactivated" >&6;}
+                        mpc_dep_found="no"
+                fi
+                # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
                 if test "x$mpc_dep_found" = "xno"
@@ -24347,14 +24365,17 @@ else
 fi
 
 
-                inc_prefix=""
+                if test "x${whole_prefix}" != "xno"; then
+                        # This IF is long !!
+                        # >>>>>>>>>>>>>>>>>>>
+                        inc_prefix=""
 
 # Check whether --with-mpcalloc-inc was given.
 if test "${with_mpcalloc_inc+set}" = set; then :
   withval=$with_mpcalloc_inc; inc_prefix=$withval
 fi
 
-                lib_prefix=""
+                        lib_prefix=""
 
 # Check whether --with-mpcalloc-libs was given.
 if test "${with_mpcalloc_libs+set}" = set; then :
@@ -24364,42 +24385,42 @@ else
 fi
 
 
-                check_or_infer_prefix_result="no"
-                header_name=mpcalloc.h
-                libname=mpcalloc
-                alt_libname=
-                function_name=sctk_malloc
-                var_prefix=ALLOC
-                version=""
+                        check_or_infer_prefix_result="no"
+                        header_name=mpcalloc.h
+                        libname=mpcalloc
+                        alt_libname=
+                        function_name=sctk_malloc
+                        var_prefix=ALLOC
+                        version=""
 
-                if test -z "$lib_prefix"
-                then
-                        lib_prefix="$whole_prefix/lib"
-                fi
-
-                if test -d "${lib_prefix}/pkgconfig"; then
-                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
-                fi
-
-                if test -n "$whole_prefix"
-                then
-                        if test -d "${whole_prefix}/lib/pkgconfig"; then
-                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                        if test -z "$lib_prefix"
+                        then
+                                lib_prefix="$whole_prefix/lib"
                         fi
-                fi
 
-                if test -z "$inc_prefix"
-                then
-                        inc_prefix="$whole_prefix/include/"
-                fi
+                        if test -d "${lib_prefix}/pkgconfig"; then
+                                append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                        fi
+
+                        if test -n "$whole_prefix"
+                        then
+                                if test -d "${whole_prefix}/lib/pkgconfig"; then
+                                        append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                                fi
+                        fi
+
+                        if test -z "$inc_prefix"
+                        then
+                                inc_prefix="$whole_prefix/include/"
+                        fi
 
 
 
 
-                #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
+                        #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
-                # First try with PKG config
-                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+                        # First try with PKG config
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
 $as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
@@ -24473,54 +24494,60 @@ $as_echo "yes" >&6; }
 	pkg_found=1
 fi
 
-                if test "x$pkg_found" = "x1"
-                then
-                        # Ensure PKG config dependencies are also
-                        # injected using RPATH
-                        ALLOC_LIBS=$(promote_to_rpath ${ALLOC_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: ALLOC FLAGS are ${ALLOC_LIBS}" >&5
+                        if test "x$pkg_found" = "x1"
+                        then
+                                # Ensure PKG config dependencies are also
+                                # injected using RPATH
+                                ALLOC_LIBS=$(promote_to_rpath ${ALLOC_LIBS})
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: ALLOC FLAGS are ${ALLOC_LIBS}" >&5
 $as_echo "$as_me: ALLOC FLAGS are ${ALLOC_LIBS}" >&6;}
 
-                        #Insert flags
-                        CPPFLAGS="${ALLOC_CFLAGS} $CPPFLAGS"
-                        LDFLAGS="${ALLOC_LIBS} $LDFLAGS"
+                                #Insert flags
+                                CPPFLAGS="${ALLOC_CFLAGS} $CPPFLAGS"
+                                LDFLAGS="${ALLOC_LIBS} $LDFLAGS"
 
 
 
 
-                        #AC_MSG_NOTICE([$libname found using pkg-config])
-                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
-                        check_or_infer_prefix_result="yes"
-                else
-                        __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
-
-                        if test -n "${alt_libname}"; then
-                                libname="${alt_libname}"
-                        fi
-
-                        __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
-
-                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
-                        then
+                                #AC_MSG_NOTICE([$libname found using pkg-config])
+                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                                 check_or_infer_prefix_result="yes"
                         else
-                                check_or_infer_prefix_result="no"
+                                __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                                if test -n "${alt_libname}"; then
+                                        libname="${alt_libname}"
+                                fi
+
+                                __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
+
+                                if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                                then
+                                        check_or_infer_prefix_result="yes"
+                                else
+                                        check_or_infer_prefix_result="no"
+                                fi
                         fi
-                fi
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking mpcalloc cflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking mpcalloc cflags" >&5
 $as_echo_n "checking mpcalloc cflags... " >&6; }
-                XXTMP=$(eval echo \${ALLOC_CFLAGS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${ALLOC_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking mpcalloc ldflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking mpcalloc ldflags" >&5
 $as_echo_n "checking mpcalloc ldflags... " >&6; }
-                XXTMP=$(eval echo \${ALLOC_LIBS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${ALLOC_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                mpc_dep_found=$check_or_infer_prefix_result
+                        mpc_dep_found=$check_or_infer_prefix_result
+                else
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: !! mpcalloc is explicitly deactivated" >&5
+$as_echo "$as_me: !! mpcalloc is explicitly deactivated" >&6;}
+                        mpc_dep_found="no"
+                fi
+                # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         if test "x$mpc_dep_found" = "xyes"; then
 
@@ -24575,14 +24602,17 @@ else
 fi
 
 
-                inc_prefix=""
+                if test "x${whole_prefix}" != "xno"; then
+                        # This IF is long !!
+                        # >>>>>>>>>>>>>>>>>>>
+                        inc_prefix=""
 
 # Check whether --with-libffi-inc was given.
 if test "${with_libffi_inc+set}" = set; then :
   withval=$with_libffi_inc; inc_prefix=$withval
 fi
 
-                lib_prefix=""
+                        lib_prefix=""
 
 # Check whether --with-libffi-libs was given.
 if test "${with_libffi_libs+set}" = set; then :
@@ -24592,42 +24622,42 @@ else
 fi
 
 
-                check_or_infer_prefix_result="no"
-                header_name=ffi.h
-                libname=libffi
-                alt_libname=
-                function_name=ffi_prep_cif
-                var_prefix=FFI
-                version=""
+                        check_or_infer_prefix_result="no"
+                        header_name=ffi.h
+                        libname=libffi
+                        alt_libname=
+                        function_name=ffi_prep_cif
+                        var_prefix=FFI
+                        version=""
 
-                if test -z "$lib_prefix"
-                then
-                        lib_prefix="$whole_prefix/lib"
-                fi
-
-                if test -d "${lib_prefix}/pkgconfig"; then
-                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
-                fi
-
-                if test -n "$whole_prefix"
-                then
-                        if test -d "${whole_prefix}/lib/pkgconfig"; then
-                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                        if test -z "$lib_prefix"
+                        then
+                                lib_prefix="$whole_prefix/lib"
                         fi
-                fi
 
-                if test -z "$inc_prefix"
-                then
-                        inc_prefix="$whole_prefix/include/"
-                fi
+                        if test -d "${lib_prefix}/pkgconfig"; then
+                                append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                        fi
+
+                        if test -n "$whole_prefix"
+                        then
+                                if test -d "${whole_prefix}/lib/pkgconfig"; then
+                                        append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                                fi
+                        fi
+
+                        if test -z "$inc_prefix"
+                        then
+                                inc_prefix="$whole_prefix/include/"
+                        fi
 
 
 
 
-                #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
+                        #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
-                # First try with PKG config
-                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+                        # First try with PKG config
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
 $as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
@@ -24701,54 +24731,60 @@ $as_echo "yes" >&6; }
 	pkg_found=1
 fi
 
-                if test "x$pkg_found" = "x1"
-                then
-                        # Ensure PKG config dependencies are also
-                        # injected using RPATH
-                        FFI_LIBS=$(promote_to_rpath ${FFI_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: FFI FLAGS are ${FFI_LIBS}" >&5
+                        if test "x$pkg_found" = "x1"
+                        then
+                                # Ensure PKG config dependencies are also
+                                # injected using RPATH
+                                FFI_LIBS=$(promote_to_rpath ${FFI_LIBS})
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: FFI FLAGS are ${FFI_LIBS}" >&5
 $as_echo "$as_me: FFI FLAGS are ${FFI_LIBS}" >&6;}
 
-                        #Insert flags
-                        CPPFLAGS="${FFI_CFLAGS} $CPPFLAGS"
-                        LDFLAGS="${FFI_LIBS} $LDFLAGS"
+                                #Insert flags
+                                CPPFLAGS="${FFI_CFLAGS} $CPPFLAGS"
+                                LDFLAGS="${FFI_LIBS} $LDFLAGS"
 
 
 
 
-                        #AC_MSG_NOTICE([$libname found using pkg-config])
-                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
-                        check_or_infer_prefix_result="yes"
-                else
-                        __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
-
-                        if test -n "${alt_libname}"; then
-                                libname="${alt_libname}"
-                        fi
-
-                        __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
-
-                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
-                        then
+                                #AC_MSG_NOTICE([$libname found using pkg-config])
+                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                                 check_or_infer_prefix_result="yes"
                         else
-                                check_or_infer_prefix_result="no"
+                                __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                                if test -n "${alt_libname}"; then
+                                        libname="${alt_libname}"
+                                fi
+
+                                __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
+
+                                if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                                then
+                                        check_or_infer_prefix_result="yes"
+                                else
+                                        check_or_infer_prefix_result="no"
+                                fi
                         fi
-                fi
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking libffi cflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking libffi cflags" >&5
 $as_echo_n "checking libffi cflags... " >&6; }
-                XXTMP=$(eval echo \${FFI_CFLAGS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${FFI_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking libffi ldflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking libffi ldflags" >&5
 $as_echo_n "checking libffi ldflags... " >&6; }
-                XXTMP=$(eval echo \${FFI_LIBS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${FFI_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                mpc_dep_found=$check_or_infer_prefix_result
+                        mpc_dep_found=$check_or_infer_prefix_result
+                else
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: !! libffi is explicitly deactivated" >&5
+$as_echo "$as_me: !! libffi is explicitly deactivated" >&6;}
+                        mpc_dep_found="no"
+                fi
+                # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 HAVE_LIB_FFI="no"
 
@@ -24804,14 +24840,17 @@ else
 fi
 
 
-                inc_prefix=""
+                if test "x${whole_prefix}" != "xno"; then
+                        # This IF is long !!
+                        # >>>>>>>>>>>>>>>>>>>
+                        inc_prefix=""
 
 # Check whether --with-libvmem-inc was given.
 if test "${with_libvmem_inc+set}" = set; then :
   withval=$with_libvmem_inc; inc_prefix=$withval
 fi
 
-                lib_prefix=""
+                        lib_prefix=""
 
 # Check whether --with-libvmem-libs was given.
 if test "${with_libvmem_libs+set}" = set; then :
@@ -24821,42 +24860,42 @@ else
 fi
 
 
-                check_or_infer_prefix_result="no"
-                header_name=libvmem.h
-                libname=libvmem
-                alt_libname=
-                function_name=vmem_create
-                var_prefix=VMEM
-                version=""
+                        check_or_infer_prefix_result="no"
+                        header_name=libvmem.h
+                        libname=libvmem
+                        alt_libname=
+                        function_name=vmem_create
+                        var_prefix=VMEM
+                        version=""
 
-                if test -z "$lib_prefix"
-                then
-                        lib_prefix="$whole_prefix/lib"
-                fi
-
-                if test -d "${lib_prefix}/pkgconfig"; then
-                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
-                fi
-
-                if test -n "$whole_prefix"
-                then
-                        if test -d "${whole_prefix}/lib/pkgconfig"; then
-                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                        if test -z "$lib_prefix"
+                        then
+                                lib_prefix="$whole_prefix/lib"
                         fi
-                fi
 
-                if test -z "$inc_prefix"
-                then
-                        inc_prefix="$whole_prefix/include/"
-                fi
+                        if test -d "${lib_prefix}/pkgconfig"; then
+                                append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                        fi
+
+                        if test -n "$whole_prefix"
+                        then
+                                if test -d "${whole_prefix}/lib/pkgconfig"; then
+                                        append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                                fi
+                        fi
+
+                        if test -z "$inc_prefix"
+                        then
+                                inc_prefix="$whole_prefix/include/"
+                        fi
 
 
 
 
-                #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
+                        #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
-                # First try with PKG config
-                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+                        # First try with PKG config
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
 $as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
@@ -24930,54 +24969,60 @@ $as_echo "yes" >&6; }
 	pkg_found=1
 fi
 
-                if test "x$pkg_found" = "x1"
-                then
-                        # Ensure PKG config dependencies are also
-                        # injected using RPATH
-                        VMEM_LIBS=$(promote_to_rpath ${VMEM_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: VMEM FLAGS are ${VMEM_LIBS}" >&5
+                        if test "x$pkg_found" = "x1"
+                        then
+                                # Ensure PKG config dependencies are also
+                                # injected using RPATH
+                                VMEM_LIBS=$(promote_to_rpath ${VMEM_LIBS})
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: VMEM FLAGS are ${VMEM_LIBS}" >&5
 $as_echo "$as_me: VMEM FLAGS are ${VMEM_LIBS}" >&6;}
 
-                        #Insert flags
-                        CPPFLAGS="${VMEM_CFLAGS} $CPPFLAGS"
-                        LDFLAGS="${VMEM_LIBS} $LDFLAGS"
+                                #Insert flags
+                                CPPFLAGS="${VMEM_CFLAGS} $CPPFLAGS"
+                                LDFLAGS="${VMEM_LIBS} $LDFLAGS"
 
 
 
 
-                        #AC_MSG_NOTICE([$libname found using pkg-config])
-                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
-                        check_or_infer_prefix_result="yes"
-                else
-                        __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
-
-                        if test -n "${alt_libname}"; then
-                                libname="${alt_libname}"
-                        fi
-
-                        __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
-
-                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
-                        then
+                                #AC_MSG_NOTICE([$libname found using pkg-config])
+                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                                 check_or_infer_prefix_result="yes"
                         else
-                                check_or_infer_prefix_result="no"
+                                __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                                if test -n "${alt_libname}"; then
+                                        libname="${alt_libname}"
+                                fi
+
+                                __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
+
+                                if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                                then
+                                        check_or_infer_prefix_result="yes"
+                                else
+                                        check_or_infer_prefix_result="no"
+                                fi
                         fi
-                fi
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking libvmem cflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking libvmem cflags" >&5
 $as_echo_n "checking libvmem cflags... " >&6; }
-                XXTMP=$(eval echo \${VMEM_CFLAGS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${VMEM_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking libvmem ldflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking libvmem ldflags" >&5
 $as_echo_n "checking libvmem ldflags... " >&6; }
-                XXTMP=$(eval echo \${VMEM_LIBS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${VMEM_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                mpc_dep_found=$check_or_infer_prefix_result
+                        mpc_dep_found=$check_or_infer_prefix_result
+                else
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: !! libvmem is explicitly deactivated" >&5
+$as_echo "$as_me: !! libvmem is explicitly deactivated" >&6;}
+                        mpc_dep_found="no"
+                fi
+                # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
 if test "x$mpc_dep_found" = "xyes"; then
@@ -25009,14 +25054,17 @@ else
 fi
 
 
-                inc_prefix=""
+                if test "x${whole_prefix}" != "xno"; then
+                        # This IF is long !!
+                        # >>>>>>>>>>>>>>>>>>>
+                        inc_prefix=""
 
 # Check whether --with-libunwind-inc was given.
 if test "${with_libunwind_inc+set}" = set; then :
   withval=$with_libunwind_inc; inc_prefix=$withval
 fi
 
-                lib_prefix=""
+                        lib_prefix=""
 
 # Check whether --with-libunwind-libs was given.
 if test "${with_libunwind_libs+set}" = set; then :
@@ -25026,42 +25074,42 @@ else
 fi
 
 
-                check_or_infer_prefix_result="no"
-                header_name=libunwind.h
-                libname=libunwind
-                alt_libname=
-                function_name=unw_init_local
-                var_prefix=UNW
-                version=""
+                        check_or_infer_prefix_result="no"
+                        header_name=libunwind.h
+                        libname=libunwind
+                        alt_libname=
+                        function_name=unw_init_local
+                        var_prefix=UNW
+                        version=""
 
-                if test -z "$lib_prefix"
-                then
-                        lib_prefix="$whole_prefix/lib"
-                fi
-
-                if test -d "${lib_prefix}/pkgconfig"; then
-                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
-                fi
-
-                if test -n "$whole_prefix"
-                then
-                        if test -d "${whole_prefix}/lib/pkgconfig"; then
-                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                        if test -z "$lib_prefix"
+                        then
+                                lib_prefix="$whole_prefix/lib"
                         fi
-                fi
 
-                if test -z "$inc_prefix"
-                then
-                        inc_prefix="$whole_prefix/include/"
-                fi
+                        if test -d "${lib_prefix}/pkgconfig"; then
+                                append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                        fi
+
+                        if test -n "$whole_prefix"
+                        then
+                                if test -d "${whole_prefix}/lib/pkgconfig"; then
+                                        append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                                fi
+                        fi
+
+                        if test -z "$inc_prefix"
+                        then
+                                inc_prefix="$whole_prefix/include/"
+                        fi
 
 
 
 
-                #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
+                        #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
-                # First try with PKG config
-                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+                        # First try with PKG config
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
 $as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
@@ -25135,54 +25183,60 @@ $as_echo "yes" >&6; }
 	pkg_found=1
 fi
 
-                if test "x$pkg_found" = "x1"
-                then
-                        # Ensure PKG config dependencies are also
-                        # injected using RPATH
-                        UNW_LIBS=$(promote_to_rpath ${UNW_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: UNW FLAGS are ${UNW_LIBS}" >&5
+                        if test "x$pkg_found" = "x1"
+                        then
+                                # Ensure PKG config dependencies are also
+                                # injected using RPATH
+                                UNW_LIBS=$(promote_to_rpath ${UNW_LIBS})
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: UNW FLAGS are ${UNW_LIBS}" >&5
 $as_echo "$as_me: UNW FLAGS are ${UNW_LIBS}" >&6;}
 
-                        #Insert flags
-                        CPPFLAGS="${UNW_CFLAGS} $CPPFLAGS"
-                        LDFLAGS="${UNW_LIBS} $LDFLAGS"
+                                #Insert flags
+                                CPPFLAGS="${UNW_CFLAGS} $CPPFLAGS"
+                                LDFLAGS="${UNW_LIBS} $LDFLAGS"
 
 
 
 
-                        #AC_MSG_NOTICE([$libname found using pkg-config])
-                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
-                        check_or_infer_prefix_result="yes"
-                else
-                        __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
-
-                        if test -n "${alt_libname}"; then
-                                libname="${alt_libname}"
-                        fi
-
-                        __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
-
-                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
-                        then
+                                #AC_MSG_NOTICE([$libname found using pkg-config])
+                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                                 check_or_infer_prefix_result="yes"
                         else
-                                check_or_infer_prefix_result="no"
+                                __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                                if test -n "${alt_libname}"; then
+                                        libname="${alt_libname}"
+                                fi
+
+                                __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
+
+                                if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                                then
+                                        check_or_infer_prefix_result="yes"
+                                else
+                                        check_or_infer_prefix_result="no"
+                                fi
                         fi
-                fi
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking libunwind cflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking libunwind cflags" >&5
 $as_echo_n "checking libunwind cflags... " >&6; }
-                XXTMP=$(eval echo \${UNW_CFLAGS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${UNW_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking libunwind ldflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking libunwind ldflags" >&5
 $as_echo_n "checking libunwind ldflags... " >&6; }
-                XXTMP=$(eval echo \${UNW_LIBS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${UNW_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                mpc_dep_found=$check_or_infer_prefix_result
+                        mpc_dep_found=$check_or_infer_prefix_result
+                else
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: !! libunwind is explicitly deactivated" >&5
+$as_echo "$as_me: !! libunwind is explicitly deactivated" >&6;}
+                        mpc_dep_found="no"
+                fi
+                # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
 if test "x$mpc_dep_found" = "xyes"; then
@@ -25222,14 +25276,17 @@ else
 fi
 
 
-                inc_prefix=""
+                if test "x${whole_prefix}" != "xno"; then
+                        # This IF is long !!
+                        # >>>>>>>>>>>>>>>>>>>
+                        inc_prefix=""
 
 # Check whether --with-ibverbs-inc was given.
 if test "${with_ibverbs_inc+set}" = set; then :
   withval=$with_ibverbs_inc; inc_prefix=$withval
 fi
 
-                lib_prefix=""
+                        lib_prefix=""
 
 # Check whether --with-ibverbs-libs was given.
 if test "${with_ibverbs_libs+set}" = set; then :
@@ -25239,42 +25296,42 @@ else
 fi
 
 
-                check_or_infer_prefix_result="no"
-                header_name=infiniband/verbs.h
-                libname=ibverbs
-                alt_libname=
-                function_name=ibv_query_qp
-                var_prefix=IBV
-                version=""
+                        check_or_infer_prefix_result="no"
+                        header_name=infiniband/verbs.h
+                        libname=ibverbs
+                        alt_libname=
+                        function_name=ibv_query_qp
+                        var_prefix=IBV
+                        version=""
 
-                if test -z "$lib_prefix"
-                then
-                        lib_prefix="$whole_prefix/lib"
-                fi
-
-                if test -d "${lib_prefix}/pkgconfig"; then
-                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
-                fi
-
-                if test -n "$whole_prefix"
-                then
-                        if test -d "${whole_prefix}/lib/pkgconfig"; then
-                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                        if test -z "$lib_prefix"
+                        then
+                                lib_prefix="$whole_prefix/lib"
                         fi
-                fi
 
-                if test -z "$inc_prefix"
-                then
-                        inc_prefix="$whole_prefix/include/"
-                fi
+                        if test -d "${lib_prefix}/pkgconfig"; then
+                                append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                        fi
+
+                        if test -n "$whole_prefix"
+                        then
+                                if test -d "${whole_prefix}/lib/pkgconfig"; then
+                                        append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                                fi
+                        fi
+
+                        if test -z "$inc_prefix"
+                        then
+                                inc_prefix="$whole_prefix/include/"
+                        fi
 
 
 
 
-                #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
+                        #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
-                # First try with PKG config
-                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+                        # First try with PKG config
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
 $as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
@@ -25348,54 +25405,60 @@ $as_echo "yes" >&6; }
 	pkg_found=1
 fi
 
-                if test "x$pkg_found" = "x1"
-                then
-                        # Ensure PKG config dependencies are also
-                        # injected using RPATH
-                        IBV_LIBS=$(promote_to_rpath ${IBV_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: IBV FLAGS are ${IBV_LIBS}" >&5
+                        if test "x$pkg_found" = "x1"
+                        then
+                                # Ensure PKG config dependencies are also
+                                # injected using RPATH
+                                IBV_LIBS=$(promote_to_rpath ${IBV_LIBS})
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: IBV FLAGS are ${IBV_LIBS}" >&5
 $as_echo "$as_me: IBV FLAGS are ${IBV_LIBS}" >&6;}
 
-                        #Insert flags
-                        CPPFLAGS="${IBV_CFLAGS} $CPPFLAGS"
-                        LDFLAGS="${IBV_LIBS} $LDFLAGS"
+                                #Insert flags
+                                CPPFLAGS="${IBV_CFLAGS} $CPPFLAGS"
+                                LDFLAGS="${IBV_LIBS} $LDFLAGS"
 
 
 
 
-                        #AC_MSG_NOTICE([$libname found using pkg-config])
-                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
-                        check_or_infer_prefix_result="yes"
-                else
-                        __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
-
-                        if test -n "${alt_libname}"; then
-                                libname="${alt_libname}"
-                        fi
-
-                        __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
-
-                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
-                        then
+                                #AC_MSG_NOTICE([$libname found using pkg-config])
+                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                                 check_or_infer_prefix_result="yes"
                         else
-                                check_or_infer_prefix_result="no"
+                                __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                                if test -n "${alt_libname}"; then
+                                        libname="${alt_libname}"
+                                fi
+
+                                __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
+
+                                if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                                then
+                                        check_or_infer_prefix_result="yes"
+                                else
+                                        check_or_infer_prefix_result="no"
+                                fi
                         fi
-                fi
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking ibverbs cflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking ibverbs cflags" >&5
 $as_echo_n "checking ibverbs cflags... " >&6; }
-                XXTMP=$(eval echo \${IBV_CFLAGS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${IBV_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking ibverbs ldflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking ibverbs ldflags" >&5
 $as_echo_n "checking ibverbs ldflags... " >&6; }
-                XXTMP=$(eval echo \${IBV_LIBS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${IBV_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                mpc_dep_found=$check_or_infer_prefix_result
+                        mpc_dep_found=$check_or_infer_prefix_result
+                else
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: !! ibverbs is explicitly deactivated" >&5
+$as_echo "$as_me: !! ibverbs is explicitly deactivated" >&6;}
+                        mpc_dep_found="no"
+                fi
+                # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 if test "x$mpc_dep_found" = "xyes"; then
         MPC_NETWORK_LIST="$MPC_NETWORK_LIST verbs"
@@ -25431,14 +25494,17 @@ else
 fi
 
 
-                inc_prefix=""
+                if test "x${whole_prefix}" != "xno"; then
+                        # This IF is long !!
+                        # >>>>>>>>>>>>>>>>>>>
+                        inc_prefix=""
 
 # Check whether --with-libfabric-inc was given.
 if test "${with_libfabric_inc+set}" = set; then :
   withval=$with_libfabric_inc; inc_prefix=$withval
 fi
 
-                lib_prefix=""
+                        lib_prefix=""
 
 # Check whether --with-libfabric-libs was given.
 if test "${with_libfabric_libs+set}" = set; then :
@@ -25448,42 +25514,42 @@ else
 fi
 
 
-                check_or_infer_prefix_result="no"
-                header_name=fabric.h
-                libname=libfabric
-                alt_libname=fabric
-                function_name=ofi_wait_init
-                var_prefix=OFI
-                version=""
+                        check_or_infer_prefix_result="no"
+                        header_name=fabric.h
+                        libname=libfabric
+                        alt_libname=fabric
+                        function_name=ofi_wait_init
+                        var_prefix=OFI
+                        version=""
 
-                if test -z "$lib_prefix"
-                then
-                        lib_prefix="$whole_prefix/lib"
-                fi
-
-                if test -d "${lib_prefix}/pkgconfig"; then
-                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
-                fi
-
-                if test -n "$whole_prefix"
-                then
-                        if test -d "${whole_prefix}/lib/pkgconfig"; then
-                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                        if test -z "$lib_prefix"
+                        then
+                                lib_prefix="$whole_prefix/lib"
                         fi
-                fi
 
-                if test -z "$inc_prefix"
-                then
-                        inc_prefix="$whole_prefix/include/"
-                fi
+                        if test -d "${lib_prefix}/pkgconfig"; then
+                                append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                        fi
+
+                        if test -n "$whole_prefix"
+                        then
+                                if test -d "${whole_prefix}/lib/pkgconfig"; then
+                                        append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                                fi
+                        fi
+
+                        if test -z "$inc_prefix"
+                        then
+                                inc_prefix="$whole_prefix/include/"
+                        fi
 
 
 
 
-                #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
+                        #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
-                # First try with PKG config
-                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+                        # First try with PKG config
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
 $as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
@@ -25557,54 +25623,60 @@ $as_echo "yes" >&6; }
 	pkg_found=1
 fi
 
-                if test "x$pkg_found" = "x1"
-                then
-                        # Ensure PKG config dependencies are also
-                        # injected using RPATH
-                        OFI_LIBS=$(promote_to_rpath ${OFI_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: OFI FLAGS are ${OFI_LIBS}" >&5
+                        if test "x$pkg_found" = "x1"
+                        then
+                                # Ensure PKG config dependencies are also
+                                # injected using RPATH
+                                OFI_LIBS=$(promote_to_rpath ${OFI_LIBS})
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: OFI FLAGS are ${OFI_LIBS}" >&5
 $as_echo "$as_me: OFI FLAGS are ${OFI_LIBS}" >&6;}
 
-                        #Insert flags
-                        CPPFLAGS="${OFI_CFLAGS} $CPPFLAGS"
-                        LDFLAGS="${OFI_LIBS} $LDFLAGS"
+                                #Insert flags
+                                CPPFLAGS="${OFI_CFLAGS} $CPPFLAGS"
+                                LDFLAGS="${OFI_LIBS} $LDFLAGS"
 
 
 
 
-                        #AC_MSG_NOTICE([$libname found using pkg-config])
-                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
-                        check_or_infer_prefix_result="yes"
-                else
-                        __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
-
-                        if test -n "${alt_libname}"; then
-                                libname="${alt_libname}"
-                        fi
-
-                        __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
-
-                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
-                        then
+                                #AC_MSG_NOTICE([$libname found using pkg-config])
+                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                                 check_or_infer_prefix_result="yes"
                         else
-                                check_or_infer_prefix_result="no"
+                                __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                                if test -n "${alt_libname}"; then
+                                        libname="${alt_libname}"
+                                fi
+
+                                __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
+
+                                if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                                then
+                                        check_or_infer_prefix_result="yes"
+                                else
+                                        check_or_infer_prefix_result="no"
+                                fi
                         fi
-                fi
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking libfabric cflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking libfabric cflags" >&5
 $as_echo_n "checking libfabric cflags... " >&6; }
-                XXTMP=$(eval echo \${OFI_CFLAGS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${OFI_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking libfabric ldflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking libfabric ldflags" >&5
 $as_echo_n "checking libfabric ldflags... " >&6; }
-                XXTMP=$(eval echo \${OFI_LIBS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${OFI_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                mpc_dep_found=$check_or_infer_prefix_result
+                        mpc_dep_found=$check_or_infer_prefix_result
+                else
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: !! libfabric is explicitly deactivated" >&5
+$as_echo "$as_me: !! libfabric is explicitly deactivated" >&6;}
+                        mpc_dep_found="no"
+                fi
+                # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 if test "x$mpc_dep_found" = "xyes"; then
         MPC_NETWORK_LIST="$MPC_NETWORK_LIST ofi"
@@ -25642,14 +25714,17 @@ else
 fi
 
 
-                inc_prefix=""
+                if test "x${whole_prefix}" != "xno"; then
+                        # This IF is long !!
+                        # >>>>>>>>>>>>>>>>>>>
+                        inc_prefix=""
 
 # Check whether --with-portals-inc was given.
 if test "${with_portals_inc+set}" = set; then :
   withval=$with_portals_inc; inc_prefix=$withval
 fi
 
-                lib_prefix=""
+                        lib_prefix=""
 
 # Check whether --with-portals-libs was given.
 if test "${with_portals_libs+set}" = set; then :
@@ -25659,42 +25734,42 @@ else
 fi
 
 
-                check_or_infer_prefix_result="no"
-                header_name=portals4.h
-                libname=portals
-                alt_libname=
-                function_name=PtlGet
-                var_prefix=PORTALS
-                version=""
+                        check_or_infer_prefix_result="no"
+                        header_name=portals4.h
+                        libname=portals
+                        alt_libname=
+                        function_name=PtlGet
+                        var_prefix=PORTALS
+                        version=""
 
-                if test -z "$lib_prefix"
-                then
-                        lib_prefix="$whole_prefix/lib"
-                fi
-
-                if test -d "${lib_prefix}/pkgconfig"; then
-                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
-                fi
-
-                if test -n "$whole_prefix"
-                then
-                        if test -d "${whole_prefix}/lib/pkgconfig"; then
-                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                        if test -z "$lib_prefix"
+                        then
+                                lib_prefix="$whole_prefix/lib"
                         fi
-                fi
 
-                if test -z "$inc_prefix"
-                then
-                        inc_prefix="$whole_prefix/include/"
-                fi
+                        if test -d "${lib_prefix}/pkgconfig"; then
+                                append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                        fi
+
+                        if test -n "$whole_prefix"
+                        then
+                                if test -d "${whole_prefix}/lib/pkgconfig"; then
+                                        append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                                fi
+                        fi
+
+                        if test -z "$inc_prefix"
+                        then
+                                inc_prefix="$whole_prefix/include/"
+                        fi
 
 
 
 
-                #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
+                        #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
-                # First try with PKG config
-                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+                        # First try with PKG config
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
 $as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
@@ -25768,54 +25843,60 @@ $as_echo "yes" >&6; }
 	pkg_found=1
 fi
 
-                if test "x$pkg_found" = "x1"
-                then
-                        # Ensure PKG config dependencies are also
-                        # injected using RPATH
-                        PORTALS_LIBS=$(promote_to_rpath ${PORTALS_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: PORTALS FLAGS are ${PORTALS_LIBS}" >&5
+                        if test "x$pkg_found" = "x1"
+                        then
+                                # Ensure PKG config dependencies are also
+                                # injected using RPATH
+                                PORTALS_LIBS=$(promote_to_rpath ${PORTALS_LIBS})
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: PORTALS FLAGS are ${PORTALS_LIBS}" >&5
 $as_echo "$as_me: PORTALS FLAGS are ${PORTALS_LIBS}" >&6;}
 
-                        #Insert flags
-                        CPPFLAGS="${PORTALS_CFLAGS} $CPPFLAGS"
-                        LDFLAGS="${PORTALS_LIBS} $LDFLAGS"
+                                #Insert flags
+                                CPPFLAGS="${PORTALS_CFLAGS} $CPPFLAGS"
+                                LDFLAGS="${PORTALS_LIBS} $LDFLAGS"
 
 
 
 
-                        #AC_MSG_NOTICE([$libname found using pkg-config])
-                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
-                        check_or_infer_prefix_result="yes"
-                else
-                        __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
-
-                        if test -n "${alt_libname}"; then
-                                libname="${alt_libname}"
-                        fi
-
-                        __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
-
-                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
-                        then
+                                #AC_MSG_NOTICE([$libname found using pkg-config])
+                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                                 check_or_infer_prefix_result="yes"
                         else
-                                check_or_infer_prefix_result="no"
+                                __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                                if test -n "${alt_libname}"; then
+                                        libname="${alt_libname}"
+                                fi
+
+                                __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
+
+                                if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                                then
+                                        check_or_infer_prefix_result="yes"
+                                else
+                                        check_or_infer_prefix_result="no"
+                                fi
                         fi
-                fi
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking portals cflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking portals cflags" >&5
 $as_echo_n "checking portals cflags... " >&6; }
-                XXTMP=$(eval echo \${PORTALS_CFLAGS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${PORTALS_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking portals ldflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking portals ldflags" >&5
 $as_echo_n "checking portals ldflags... " >&6; }
-                XXTMP=$(eval echo \${PORTALS_LIBS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${PORTALS_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                mpc_dep_found=$check_or_infer_prefix_result
+                        mpc_dep_found=$check_or_infer_prefix_result
+                else
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: !! portals is explicitly deactivated" >&5
+$as_echo "$as_me: !! portals is explicitly deactivated" >&6;}
+                        mpc_dep_found="no"
+                fi
+                # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 if test "x$mpc_dep_found" = "xyes"; then
         MPC_NETWORK_LIST="$MPC_NETWORK_LIST portals4 portals4_am"
@@ -25941,14 +26022,17 @@ else
 fi
 
 
-                inc_prefix=""
+                if test "x${whole_prefix}" != "xno"; then
+                        # This IF is long !!
+                        # >>>>>>>>>>>>>>>>>>>
+                        inc_prefix=""
 
 # Check whether --with-pmi-inc was given.
 if test "${with_pmi_inc+set}" = set; then :
   withval=$with_pmi_inc; inc_prefix=$withval
 fi
 
-                lib_prefix=""
+                        lib_prefix=""
 
 # Check whether --with-pmi-libs was given.
 if test "${with_pmi_libs+set}" = set; then :
@@ -25958,42 +26042,42 @@ else
 fi
 
 
-                check_or_infer_prefix_result="no"
-                header_name=pmi.h
-                libname=pmi
-                alt_libname=
-                function_name=PMI_Finalize
-                var_prefix=PMI
-                version=""
+                        check_or_infer_prefix_result="no"
+                        header_name=pmi.h
+                        libname=pmi
+                        alt_libname=
+                        function_name=PMI_Finalize
+                        var_prefix=PMI
+                        version=""
 
-                if test -z "$lib_prefix"
-                then
-                        lib_prefix="$whole_prefix/lib"
-                fi
-
-                if test -d "${lib_prefix}/pkgconfig"; then
-                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
-                fi
-
-                if test -n "$whole_prefix"
-                then
-                        if test -d "${whole_prefix}/lib/pkgconfig"; then
-                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                        if test -z "$lib_prefix"
+                        then
+                                lib_prefix="$whole_prefix/lib"
                         fi
-                fi
 
-                if test -z "$inc_prefix"
-                then
-                        inc_prefix="$whole_prefix/include/"
-                fi
+                        if test -d "${lib_prefix}/pkgconfig"; then
+                                append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                        fi
+
+                        if test -n "$whole_prefix"
+                        then
+                                if test -d "${whole_prefix}/lib/pkgconfig"; then
+                                        append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                                fi
+                        fi
+
+                        if test -z "$inc_prefix"
+                        then
+                                inc_prefix="$whole_prefix/include/"
+                        fi
 
 
 
 
-                #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
+                        #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
-                # First try with PKG config
-                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+                        # First try with PKG config
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
 $as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
@@ -26067,54 +26151,60 @@ $as_echo "yes" >&6; }
 	pkg_found=1
 fi
 
-                if test "x$pkg_found" = "x1"
-                then
-                        # Ensure PKG config dependencies are also
-                        # injected using RPATH
-                        PMI_LIBS=$(promote_to_rpath ${PMI_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: PMI FLAGS are ${PMI_LIBS}" >&5
+                        if test "x$pkg_found" = "x1"
+                        then
+                                # Ensure PKG config dependencies are also
+                                # injected using RPATH
+                                PMI_LIBS=$(promote_to_rpath ${PMI_LIBS})
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: PMI FLAGS are ${PMI_LIBS}" >&5
 $as_echo "$as_me: PMI FLAGS are ${PMI_LIBS}" >&6;}
 
-                        #Insert flags
-                        CPPFLAGS="${PMI_CFLAGS} $CPPFLAGS"
-                        LDFLAGS="${PMI_LIBS} $LDFLAGS"
+                                #Insert flags
+                                CPPFLAGS="${PMI_CFLAGS} $CPPFLAGS"
+                                LDFLAGS="${PMI_LIBS} $LDFLAGS"
 
 
 
 
-                        #AC_MSG_NOTICE([$libname found using pkg-config])
-                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
-                        check_or_infer_prefix_result="yes"
-                else
-                        __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
-
-                        if test -n "${alt_libname}"; then
-                                libname="${alt_libname}"
-                        fi
-
-                        __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
-
-                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
-                        then
+                                #AC_MSG_NOTICE([$libname found using pkg-config])
+                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                                 check_or_infer_prefix_result="yes"
                         else
-                                check_or_infer_prefix_result="no"
+                                __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                                if test -n "${alt_libname}"; then
+                                        libname="${alt_libname}"
+                                fi
+
+                                __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
+
+                                if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                                then
+                                        check_or_infer_prefix_result="yes"
+                                else
+                                        check_or_infer_prefix_result="no"
+                                fi
                         fi
-                fi
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking pmi cflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking pmi cflags" >&5
 $as_echo_n "checking pmi cflags... " >&6; }
-                XXTMP=$(eval echo \${PMI_CFLAGS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${PMI_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking pmi ldflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking pmi ldflags" >&5
 $as_echo_n "checking pmi ldflags... " >&6; }
-                XXTMP=$(eval echo \${PMI_LIBS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${PMI_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                mpc_dep_found=$check_or_infer_prefix_result
+                        mpc_dep_found=$check_or_infer_prefix_result
+                else
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: !! pmi is explicitly deactivated" >&5
+$as_echo "$as_me: !! pmi is explicitly deactivated" >&6;}
+                        mpc_dep_found="no"
+                fi
+                # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
                 if test "x$mpc_dep_found" = "xno"
@@ -26144,14 +26234,17 @@ else
 fi
 
 
-                inc_prefix=""
+                if test "x${whole_prefix}" != "xno"; then
+                        # This IF is long !!
+                        # >>>>>>>>>>>>>>>>>>>
+                        inc_prefix=""
 
 # Check whether --with-pmix-inc was given.
 if test "${with_pmix_inc+set}" = set; then :
   withval=$with_pmix_inc; inc_prefix=$withval
 fi
 
-                lib_prefix=""
+                        lib_prefix=""
 
 # Check whether --with-pmix-libs was given.
 if test "${with_pmix_libs+set}" = set; then :
@@ -26161,42 +26254,42 @@ else
 fi
 
 
-                check_or_infer_prefix_result="no"
-                header_name=pmix.h
-                libname=pmix
-                alt_libname=
-                function_name=PMIx_Finalize
-                var_prefix=PMIX
-                version=""
+                        check_or_infer_prefix_result="no"
+                        header_name=pmix.h
+                        libname=pmix
+                        alt_libname=
+                        function_name=PMIx_Finalize
+                        var_prefix=PMIX
+                        version=""
 
-                if test -z "$lib_prefix"
-                then
-                        lib_prefix="$whole_prefix/lib"
-                fi
-
-                if test -d "${lib_prefix}/pkgconfig"; then
-                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
-                fi
-
-                if test -n "$whole_prefix"
-                then
-                        if test -d "${whole_prefix}/lib/pkgconfig"; then
-                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                        if test -z "$lib_prefix"
+                        then
+                                lib_prefix="$whole_prefix/lib"
                         fi
-                fi
 
-                if test -z "$inc_prefix"
-                then
-                        inc_prefix="$whole_prefix/include/"
-                fi
+                        if test -d "${lib_prefix}/pkgconfig"; then
+                                append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                        fi
+
+                        if test -n "$whole_prefix"
+                        then
+                                if test -d "${whole_prefix}/lib/pkgconfig"; then
+                                        append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                                fi
+                        fi
+
+                        if test -z "$inc_prefix"
+                        then
+                                inc_prefix="$whole_prefix/include/"
+                        fi
 
 
 
 
-                #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
+                        #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
-                # First try with PKG config
-                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+                        # First try with PKG config
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
 $as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
@@ -26270,54 +26363,60 @@ $as_echo "yes" >&6; }
 	pkg_found=1
 fi
 
-                if test "x$pkg_found" = "x1"
-                then
-                        # Ensure PKG config dependencies are also
-                        # injected using RPATH
-                        PMIX_LIBS=$(promote_to_rpath ${PMIX_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: PMIX FLAGS are ${PMIX_LIBS}" >&5
+                        if test "x$pkg_found" = "x1"
+                        then
+                                # Ensure PKG config dependencies are also
+                                # injected using RPATH
+                                PMIX_LIBS=$(promote_to_rpath ${PMIX_LIBS})
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: PMIX FLAGS are ${PMIX_LIBS}" >&5
 $as_echo "$as_me: PMIX FLAGS are ${PMIX_LIBS}" >&6;}
 
-                        #Insert flags
-                        CPPFLAGS="${PMIX_CFLAGS} $CPPFLAGS"
-                        LDFLAGS="${PMIX_LIBS} $LDFLAGS"
+                                #Insert flags
+                                CPPFLAGS="${PMIX_CFLAGS} $CPPFLAGS"
+                                LDFLAGS="${PMIX_LIBS} $LDFLAGS"
 
 
 
 
-                        #AC_MSG_NOTICE([$libname found using pkg-config])
-                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
-                        check_or_infer_prefix_result="yes"
-                else
-                        __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
-
-                        if test -n "${alt_libname}"; then
-                                libname="${alt_libname}"
-                        fi
-
-                        __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
-
-                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
-                        then
+                                #AC_MSG_NOTICE([$libname found using pkg-config])
+                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                                 check_or_infer_prefix_result="yes"
                         else
-                                check_or_infer_prefix_result="no"
+                                __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                                if test -n "${alt_libname}"; then
+                                        libname="${alt_libname}"
+                                fi
+
+                                __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
+
+                                if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                                then
+                                        check_or_infer_prefix_result="yes"
+                                else
+                                        check_or_infer_prefix_result="no"
+                                fi
                         fi
-                fi
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking pmix cflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking pmix cflags" >&5
 $as_echo_n "checking pmix cflags... " >&6; }
-                XXTMP=$(eval echo \${PMIX_CFLAGS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${PMIX_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking pmix ldflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking pmix ldflags" >&5
 $as_echo_n "checking pmix ldflags... " >&6; }
-                XXTMP=$(eval echo \${PMIX_LIBS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${PMIX_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                mpc_dep_found=$check_or_infer_prefix_result
+                        mpc_dep_found=$check_or_infer_prefix_result
+                else
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: !! pmix is explicitly deactivated" >&5
+$as_echo "$as_me: !! pmix is explicitly deactivated" >&6;}
+                        mpc_dep_found="no"
+                fi
+                # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
                 if test "x$mpc_dep_found" = "xno"
@@ -26644,14 +26743,17 @@ else
 fi
 
 
-                inc_prefix=""
+                if test "x${whole_prefix}" != "xno"; then
+                        # This IF is long !!
+                        # >>>>>>>>>>>>>>>>>>>
+                        inc_prefix=""
 
 # Check whether --with-cuda-inc was given.
 if test "${with_cuda_inc+set}" = set; then :
   withval=$with_cuda_inc; inc_prefix=$withval
 fi
 
-                lib_prefix=""
+                        lib_prefix=""
 
 # Check whether --with-cuda-libs was given.
 if test "${with_cuda_libs+set}" = set; then :
@@ -26661,42 +26763,42 @@ else
 fi
 
 
-                check_or_infer_prefix_result="no"
-                header_name=cuda.h
-                libname=cuda
-                alt_libname=
-                function_name=cuMemFree
-                var_prefix=CUDA
-                version=""
+                        check_or_infer_prefix_result="no"
+                        header_name=cuda.h
+                        libname=cuda
+                        alt_libname=
+                        function_name=cuMemFree
+                        var_prefix=CUDA
+                        version=""
 
-                if test -z "$lib_prefix"
-                then
-                        lib_prefix="$whole_prefix/lib"
-                fi
-
-                if test -d "${lib_prefix}/pkgconfig"; then
-                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
-                fi
-
-                if test -n "$whole_prefix"
-                then
-                        if test -d "${whole_prefix}/lib/pkgconfig"; then
-                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                        if test -z "$lib_prefix"
+                        then
+                                lib_prefix="$whole_prefix/lib"
                         fi
-                fi
 
-                if test -z "$inc_prefix"
-                then
-                        inc_prefix="$whole_prefix/include/"
-                fi
+                        if test -d "${lib_prefix}/pkgconfig"; then
+                                append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                        fi
+
+                        if test -n "$whole_prefix"
+                        then
+                                if test -d "${whole_prefix}/lib/pkgconfig"; then
+                                        append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                                fi
+                        fi
+
+                        if test -z "$inc_prefix"
+                        then
+                                inc_prefix="$whole_prefix/include/"
+                        fi
 
 
 
 
-                #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
+                        #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
-                # First try with PKG config
-                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+                        # First try with PKG config
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
 $as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
@@ -26770,54 +26872,60 @@ $as_echo "yes" >&6; }
 	pkg_found=1
 fi
 
-                if test "x$pkg_found" = "x1"
-                then
-                        # Ensure PKG config dependencies are also
-                        # injected using RPATH
-                        CUDA_LIBS=$(promote_to_rpath ${CUDA_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: CUDA FLAGS are ${CUDA_LIBS}" >&5
+                        if test "x$pkg_found" = "x1"
+                        then
+                                # Ensure PKG config dependencies are also
+                                # injected using RPATH
+                                CUDA_LIBS=$(promote_to_rpath ${CUDA_LIBS})
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: CUDA FLAGS are ${CUDA_LIBS}" >&5
 $as_echo "$as_me: CUDA FLAGS are ${CUDA_LIBS}" >&6;}
 
-                        #Insert flags
-                        CPPFLAGS="${CUDA_CFLAGS} $CPPFLAGS"
-                        LDFLAGS="${CUDA_LIBS} $LDFLAGS"
+                                #Insert flags
+                                CPPFLAGS="${CUDA_CFLAGS} $CPPFLAGS"
+                                LDFLAGS="${CUDA_LIBS} $LDFLAGS"
 
 
 
 
-                        #AC_MSG_NOTICE([$libname found using pkg-config])
-                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
-                        check_or_infer_prefix_result="yes"
-                else
-                        __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
-
-                        if test -n "${alt_libname}"; then
-                                libname="${alt_libname}"
-                        fi
-
-                        __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
-
-                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
-                        then
+                                #AC_MSG_NOTICE([$libname found using pkg-config])
+                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                                 check_or_infer_prefix_result="yes"
                         else
-                                check_or_infer_prefix_result="no"
+                                __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                                if test -n "${alt_libname}"; then
+                                        libname="${alt_libname}"
+                                fi
+
+                                __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
+
+                                if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                                then
+                                        check_or_infer_prefix_result="yes"
+                                else
+                                        check_or_infer_prefix_result="no"
+                                fi
                         fi
-                fi
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking cuda cflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking cuda cflags" >&5
 $as_echo_n "checking cuda cflags... " >&6; }
-                XXTMP=$(eval echo \${CUDA_CFLAGS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${CUDA_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking cuda ldflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking cuda ldflags" >&5
 $as_echo_n "checking cuda ldflags... " >&6; }
-                XXTMP=$(eval echo \${CUDA_LIBS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${CUDA_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                mpc_dep_found=$check_or_infer_prefix_result
+                        mpc_dep_found=$check_or_infer_prefix_result
+                else
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: !! cuda is explicitly deactivated" >&5
+$as_echo "$as_me: !! cuda is explicitly deactivated" >&6;}
+                        mpc_dep_found="no"
+                fi
+                # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
                 if test "x$mpc_dep_found" = "xno"
@@ -26844,14 +26952,17 @@ else
 fi
 
 
-                inc_prefix=""
+                if test "x${whole_prefix}" != "xno"; then
+                        # This IF is long !!
+                        # >>>>>>>>>>>>>>>>>>>
+                        inc_prefix=""
 
 # Check whether --with-cudart-inc was given.
 if test "${with_cudart_inc+set}" = set; then :
   withval=$with_cudart_inc; inc_prefix=$withval
 fi
 
-                lib_prefix=""
+                        lib_prefix=""
 
 # Check whether --with-cudart-libs was given.
 if test "${with_cudart_libs+set}" = set; then :
@@ -26861,42 +26972,42 @@ else
 fi
 
 
-                check_or_infer_prefix_result="no"
-                header_name=cuda_runtime.h
-                libname=cudart
-                alt_libname=
-                function_name=cudaDeviceSetLimit
-                var_prefix=CUDART
-                version=""
+                        check_or_infer_prefix_result="no"
+                        header_name=cuda_runtime.h
+                        libname=cudart
+                        alt_libname=
+                        function_name=cudaDeviceSetLimit
+                        var_prefix=CUDART
+                        version=""
 
-                if test -z "$lib_prefix"
-                then
-                        lib_prefix="$whole_prefix/lib"
-                fi
-
-                if test -d "${lib_prefix}/pkgconfig"; then
-                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
-                fi
-
-                if test -n "$whole_prefix"
-                then
-                        if test -d "${whole_prefix}/lib/pkgconfig"; then
-                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                        if test -z "$lib_prefix"
+                        then
+                                lib_prefix="$whole_prefix/lib"
                         fi
-                fi
 
-                if test -z "$inc_prefix"
-                then
-                        inc_prefix="$whole_prefix/include/"
-                fi
+                        if test -d "${lib_prefix}/pkgconfig"; then
+                                append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                        fi
+
+                        if test -n "$whole_prefix"
+                        then
+                                if test -d "${whole_prefix}/lib/pkgconfig"; then
+                                        append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                                fi
+                        fi
+
+                        if test -z "$inc_prefix"
+                        then
+                                inc_prefix="$whole_prefix/include/"
+                        fi
 
 
 
 
-                #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
+                        #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
-                # First try with PKG config
-                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+                        # First try with PKG config
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
 $as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
@@ -26970,54 +27081,60 @@ $as_echo "yes" >&6; }
 	pkg_found=1
 fi
 
-                if test "x$pkg_found" = "x1"
-                then
-                        # Ensure PKG config dependencies are also
-                        # injected using RPATH
-                        CUDART_LIBS=$(promote_to_rpath ${CUDART_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: CUDART FLAGS are ${CUDART_LIBS}" >&5
+                        if test "x$pkg_found" = "x1"
+                        then
+                                # Ensure PKG config dependencies are also
+                                # injected using RPATH
+                                CUDART_LIBS=$(promote_to_rpath ${CUDART_LIBS})
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: CUDART FLAGS are ${CUDART_LIBS}" >&5
 $as_echo "$as_me: CUDART FLAGS are ${CUDART_LIBS}" >&6;}
 
-                        #Insert flags
-                        CPPFLAGS="${CUDART_CFLAGS} $CPPFLAGS"
-                        LDFLAGS="${CUDART_LIBS} $LDFLAGS"
+                                #Insert flags
+                                CPPFLAGS="${CUDART_CFLAGS} $CPPFLAGS"
+                                LDFLAGS="${CUDART_LIBS} $LDFLAGS"
 
 
 
 
-                        #AC_MSG_NOTICE([$libname found using pkg-config])
-                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
-                        check_or_infer_prefix_result="yes"
-                else
-                        __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
-
-                        if test -n "${alt_libname}"; then
-                                libname="${alt_libname}"
-                        fi
-
-                        __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
-
-                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
-                        then
+                                #AC_MSG_NOTICE([$libname found using pkg-config])
+                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                                 check_or_infer_prefix_result="yes"
                         else
-                                check_or_infer_prefix_result="no"
+                                __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                                if test -n "${alt_libname}"; then
+                                        libname="${alt_libname}"
+                                fi
+
+                                __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
+
+                                if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                                then
+                                        check_or_infer_prefix_result="yes"
+                                else
+                                        check_or_infer_prefix_result="no"
+                                fi
                         fi
-                fi
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking cudart cflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking cudart cflags" >&5
 $as_echo_n "checking cudart cflags... " >&6; }
-                XXTMP=$(eval echo \${CUDART_CFLAGS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${CUDART_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking cudart ldflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking cudart ldflags" >&5
 $as_echo_n "checking cudart ldflags... " >&6; }
-                XXTMP=$(eval echo \${CUDART_LIBS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${CUDART_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                mpc_dep_found=$check_or_infer_prefix_result
+                        mpc_dep_found=$check_or_infer_prefix_result
+                else
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: !! cudart is explicitly deactivated" >&5
+$as_echo "$as_me: !! cudart is explicitly deactivated" >&6;}
+                        mpc_dep_found="no"
+                fi
+                # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
                 if test "x$mpc_dep_found" = "xno"
@@ -31599,14 +31716,17 @@ else
 fi
 
 
-                inc_prefix=""
+                if test "x${whole_prefix}" != "xno"; then
+                        # This IF is long !!
+                        # >>>>>>>>>>>>>>>>>>>
+                        inc_prefix=""
 
 # Check whether --with-autopriv-inc was given.
 if test "${with_autopriv_inc+set}" = set; then :
   withval=$with_autopriv_inc; inc_prefix=$withval
 fi
 
-                lib_prefix=""
+                        lib_prefix=""
 
 # Check whether --with-autopriv-libs was given.
 if test "${with_autopriv_libs+set}" = set; then :
@@ -31616,42 +31736,42 @@ else
 fi
 
 
-                check_or_infer_prefix_result="no"
-                header_name=extls.h
-                libname=autopriv
-                alt_libname=
-                function_name=extls_init
-                var_prefix=EXTLS
-                version=""
+                        check_or_infer_prefix_result="no"
+                        header_name=extls.h
+                        libname=autopriv
+                        alt_libname=
+                        function_name=extls_init
+                        var_prefix=EXTLS
+                        version=""
 
-                if test -z "$lib_prefix"
-                then
-                        lib_prefix="$whole_prefix/lib"
-                fi
-
-                if test -d "${lib_prefix}/pkgconfig"; then
-                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
-                fi
-
-                if test -n "$whole_prefix"
-                then
-                        if test -d "${whole_prefix}/lib/pkgconfig"; then
-                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                        if test -z "$lib_prefix"
+                        then
+                                lib_prefix="$whole_prefix/lib"
                         fi
-                fi
 
-                if test -z "$inc_prefix"
-                then
-                        inc_prefix="$whole_prefix/include/"
-                fi
+                        if test -d "${lib_prefix}/pkgconfig"; then
+                                append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                        fi
+
+                        if test -n "$whole_prefix"
+                        then
+                                if test -d "${whole_prefix}/lib/pkgconfig"; then
+                                        append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                                fi
+                        fi
+
+                        if test -z "$inc_prefix"
+                        then
+                                inc_prefix="$whole_prefix/include/"
+                        fi
 
 
 
 
-                #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
+                        #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
-                # First try with PKG config
-                { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
+                        # First try with PKG config
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
 $as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
 
 pkg_failed=no
@@ -31725,54 +31845,60 @@ $as_echo "yes" >&6; }
 	pkg_found=1
 fi
 
-                if test "x$pkg_found" = "x1"
-                then
-                        # Ensure PKG config dependencies are also
-                        # injected using RPATH
-                        EXTLS_LIBS=$(promote_to_rpath ${EXTLS_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: EXTLS FLAGS are ${EXTLS_LIBS}" >&5
+                        if test "x$pkg_found" = "x1"
+                        then
+                                # Ensure PKG config dependencies are also
+                                # injected using RPATH
+                                EXTLS_LIBS=$(promote_to_rpath ${EXTLS_LIBS})
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: EXTLS FLAGS are ${EXTLS_LIBS}" >&5
 $as_echo "$as_me: EXTLS FLAGS are ${EXTLS_LIBS}" >&6;}
 
-                        #Insert flags
-                        CPPFLAGS="${EXTLS_CFLAGS} $CPPFLAGS"
-                        LDFLAGS="${EXTLS_LIBS} $LDFLAGS"
+                                #Insert flags
+                                CPPFLAGS="${EXTLS_CFLAGS} $CPPFLAGS"
+                                LDFLAGS="${EXTLS_LIBS} $LDFLAGS"
 
 
 
 
-                        #AC_MSG_NOTICE([$libname found using pkg-config])
-                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
-                        check_or_infer_prefix_result="yes"
-                else
-                        __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
-
-                        if test -n "${alt_libname}"; then
-                                libname="${alt_libname}"
-                        fi
-
-                        __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
-
-                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
-                        then
+                                #AC_MSG_NOTICE([$libname found using pkg-config])
+                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                                 check_or_infer_prefix_result="yes"
                         else
-                                check_or_infer_prefix_result="no"
+                                __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                                if test -n "${alt_libname}"; then
+                                        libname="${alt_libname}"
+                                fi
+
+                                __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
+
+                                if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                                then
+                                        check_or_infer_prefix_result="yes"
+                                else
+                                        check_or_infer_prefix_result="no"
+                                fi
                         fi
-                fi
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking autopriv cflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking autopriv cflags" >&5
 $as_echo_n "checking autopriv cflags... " >&6; }
-                XXTMP=$(eval echo \${EXTLS_CFLAGS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${EXTLS_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking autopriv ldflags" >&5
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking autopriv ldflags" >&5
 $as_echo_n "checking autopriv ldflags... " >&6; }
-                XXTMP=$(eval echo \${EXTLS_LIBS})
-                { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
+                        XXTMP=$(eval echo \${EXTLS_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
 $as_echo "$XXTMP" >&6; }
 
-                mpc_dep_found=$check_or_infer_prefix_result
+                        mpc_dep_found=$check_or_infer_prefix_result
+                else
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: !! autopriv is explicitly deactivated" >&5
+$as_echo "$as_me: !! autopriv is explicitly deactivated" >&6;}
+                        mpc_dep_found="no"
+                fi
+                # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         if test "x$mpc_dep_found" = "xyes"; then
 

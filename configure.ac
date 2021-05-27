@@ -624,98 +624,106 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                                 [Provide prefix for $2])],
                 [whole_prefix=$withval],[whole_prefix="/usr/"])
 
-                inc_prefix=""
-                AC_ARG_WITH([$2-inc],
-                [AS_HELP_STRING([--with-$2-inc],
-                                [Provide include path for $2])],
-                [inc_prefix=$withval],[])
-                lib_prefix=""
-                AC_ARG_WITH([$2-libs],
-                [AS_HELP_STRING([--with-$2-libs],
-                                [Provide library path for $2])],
-                [lib_prefix=$withval],[lib_prefix="$6"])
+                if test "x${whole_prefix}" != "xno"; then
+                        # This IF is long !!
+                        # >>>>>>>>>>>>>>>>>>>
+                        inc_prefix=""
+                        AC_ARG_WITH([$2-inc],
+                        [AS_HELP_STRING([--with-$2-inc],
+                                        [Provide include path for $2])],
+                        [inc_prefix=$withval],[])
+                        lib_prefix=""
+                        AC_ARG_WITH([$2-libs],
+                        [AS_HELP_STRING([--with-$2-libs],
+                                        [Provide library path for $2])],
+                        [lib_prefix=$withval],[lib_prefix="$6"])
 
-                check_or_infer_prefix_result="no"
-                header_name=$1
-                libname=$2
-                alt_libname=$7
-                function_name=$3
-                var_prefix=$4
-                version="$5"
+                        check_or_infer_prefix_result="no"
+                        header_name=$1
+                        libname=$2
+                        alt_libname=$7
+                        function_name=$3
+                        var_prefix=$4
+                        version="$5"
 
-                if test -z "$lib_prefix"
-                then
-                        lib_prefix="$whole_prefix/lib"
-                fi
-
-                if test -d "${lib_prefix}/pkgconfig"; then
-                        append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
-                fi
-
-                if test -n "$whole_prefix"
-                then
-                        if test -d "${whole_prefix}/lib/pkgconfig"; then
-                                append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                        if test -z "$lib_prefix"
+                        then
+                                lib_prefix="$whole_prefix/lib"
                         fi
-                fi
 
-                if test -z "$inc_prefix"
-                then
-                        inc_prefix="$whole_prefix/include/"
-                fi
+                        if test -d "${lib_prefix}/pkgconfig"; then
+                                append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
+                        fi
 
-                AC_SUBST([$4_CFLAGS])
-                AC_SUBST([$4_LIBS])
+                        if test -n "$whole_prefix"
+                        then
+                                if test -d "${whole_prefix}/lib/pkgconfig"; then
+                                        append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
+                                fi
+                        fi
 
-                #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
-
-                # First try with PKG config
-                AC_MSG_NOTICE([Locating $libname$version with pkg-config])
-                PKG_CHECK_MODULES([$4], [$libname $version], [pkg_found=1], [pkg_found=0])
-
-                if test "x$pkg_found" = "x1"
-                then
-                        # Ensure PKG config dependencies are also
-                        # injected using RPATH
-                        $4_LIBS=$(promote_to_rpath ${$4_LIBS})
-                        AC_MSG_NOTICE([$4 FLAGS are ${$4_LIBS}])
-
-                        #Insert flags
-                        CPPFLAGS="${$4_CFLAGS} $CPPFLAGS"
-                        LDFLAGS="${$4_LIBS} $LDFLAGS"
+                        if test -z "$inc_prefix"
+                        then
+                                inc_prefix="$whole_prefix/include/"
+                        fi
 
                         AC_SUBST([$4_CFLAGS])
                         AC_SUBST([$4_LIBS])
 
-                        #AC_MSG_NOTICE([$libname found using pkg-config])
-                        #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
-                        check_or_infer_prefix_result="yes"
-                else
-                        __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+                        #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
-                        if test -n "${alt_libname}"; then
-                                libname="${alt_libname}"
-                        fi
+                        # First try with PKG config
+                        AC_MSG_NOTICE([Locating $libname$version with pkg-config])
+                        PKG_CHECK_MODULES([$4], [$libname $version], [pkg_found=1], [pkg_found=0])
 
-                        __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
-
-                        if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                        if test "x$pkg_found" = "x1"
                         then
+                                # Ensure PKG config dependencies are also
+                                # injected using RPATH
+                                $4_LIBS=$(promote_to_rpath ${$4_LIBS})
+                                AC_MSG_NOTICE([$4 FLAGS are ${$4_LIBS}])
+
+                                #Insert flags
+                                CPPFLAGS="${$4_CFLAGS} $CPPFLAGS"
+                                LDFLAGS="${$4_LIBS} $LDFLAGS"
+
+                                AC_SUBST([$4_CFLAGS])
+                                AC_SUBST([$4_LIBS])
+
+                                #AC_MSG_NOTICE([$libname found using pkg-config])
+                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
                                 check_or_infer_prefix_result="yes"
                         else
-                                check_or_infer_prefix_result="no"
+                                __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
+
+                                if test -n "${alt_libname}"; then
+                                        libname="${alt_libname}"
+                                fi
+
+                                __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
+
+                                if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
+                                then
+                                        check_or_infer_prefix_result="yes"
+                                else
+                                        check_or_infer_prefix_result="no"
+                                fi
                         fi
+
+                        AC_MSG_CHECKING([$2 cflags])
+                        XXTMP=$(eval echo \${$4_CFLAGS})
+                        AC_MSG_RESULT([$XXTMP])
+
+                        AC_MSG_CHECKING([$2 ldflags])
+                        XXTMP=$(eval echo \${$4_LIBS})
+                        AC_MSG_RESULT([$XXTMP])
+
+                        AS_VAR_SET([dep_found], [$check_or_infer_prefix_result])
+                else
+                        AC_MSG_NOTICE([!! $2 is explicitly deactivated])
+                        AS_VAR_SET([dep_found], ["no"])
                 fi
-
-                AC_MSG_CHECKING([$2 cflags])
-                XXTMP=$(eval echo \${$4_CFLAGS})
-                AC_MSG_RESULT([$XXTMP])
-
-                AC_MSG_CHECKING([$2 ldflags])
-                XXTMP=$(eval echo \${$4_LIBS})
-                AC_MSG_RESULT([$XXTMP])
-
-                AS_VAR_SET([dep_found], [$check_or_infer_prefix_result])
+                # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
          ])
 
 
