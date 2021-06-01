@@ -15820,7 +15820,7 @@ static int __split_unguided(MPI_Comm comm, int split_type, int key, __UNUSED__ M
     mpc_lowcomm_gather(tab_cpuid, tab_cpuid, 2*sizeof(int), root, comm);
 
     /* root computes color with infos gathered*/
-    if(key == root)
+    if(rank == root)
     {
         int k;
         int is_multinode = 0;
@@ -15850,11 +15850,11 @@ static int __split_unguided(MPI_Comm comm, int split_type, int key, __UNUSED__ M
     /* root sends color computed */ //TODO scatter
     mpc_lowcomm_bcast( ( void * )tab_color, size*sizeof(int), root, comm);
 
-    if(tab_color[key] == -1)
+    if(tab_color[rank] == -1)
     {
         return MPI_PROC_NULL;
     }
-    color = tab_color[key];
+    color = tab_color[rank];
     sctk_free(tab_color);
     sctk_free(tab_cpuid);
     return color;
@@ -16956,7 +16956,6 @@ void PMPIX_Get_hwsubdomain_types(char * value)
         }
     }
 }
-
 
 int PMPI_Graph_neighbors_count(MPI_Comm comm, int rank, int *nneighbors)
 {
