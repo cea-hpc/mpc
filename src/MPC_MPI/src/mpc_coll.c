@@ -134,6 +134,7 @@ static inline int __Reduce_linear(const void *sendbuf, void* recvbuf, int count,
 static inline int __Reduce_binomial(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __Reduce_reduce_scatter_allgather(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int __Reduce_topo_commute(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
 int PMPI_Iallreduce (const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
@@ -1763,11 +1764,16 @@ static inline int __Reduce_switch(const void *sendbuf, void* recvbuf, int count,
     NBC_REDUCE_LINEAR,
     NBC_REDUCE_BINOMIAL,
     NBC_REDUCE_REDUCE_SCATTER_ALLGATHER,
-    NBC_REDUCE_TOPO
+    NBC_REDUCE_TOPO,
+    NBC_REDUCE_TOPO_COMMUTE
   } alg;
 
   if(info && (info->flag & SCHED_INFO_TOPO_COMM_CREATION_ALLOWED)) {
-    alg = NBC_REDUCE_TOPO;
+    if(sctk_op_can_commute(sctk_convert_to_mpc_op(op), datatype)) {
+      alg = NBC_REDUCE_TOPO_COMMUTE;
+    } else {
+      alg = NBC_REDUCE_TOPO;
+    }
   } else {
     alg = NBC_REDUCE_BINOMIAL;
   }
@@ -1786,6 +1792,9 @@ static inline int __Reduce_switch(const void *sendbuf, void* recvbuf, int count,
       break;
     case NBC_REDUCE_TOPO:
       res = __Reduce_topo(sendbuf, recvbuf, count, datatype, op, root, comm, coll_type, schedule, info);
+      break;
+    case NBC_REDUCE_TOPO_COMMUTE:
+      res = __Reduce_topo_commute(sendbuf, recvbuf, count, datatype, op, root, comm, coll_type, schedule, info);
       break;
   }
 
@@ -2087,58 +2096,6 @@ static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, M
       }
   }
   
-  // int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
-
-  // /* last level topology binomial bcast */
-  // MPI_Comm hardware_comm = info->hardware_info_ptr->hwcomm[deepest_level];
-
-  // //int tmp_size, tmp_rank;
-  // //_mpc_cl_comm_size(hardware_comm, &tmp_size);
-  // //_mpc_cl_comm_rank(hardware_comm, &tmp_rank);
-  // //fprintf(stderr, "RANK %d / %d | REDUCE ON COMM DEPTH %d | SUBRANK %d / %d\n", rank, size, deepest_level, tmp_rank, tmp_size);
-
-  // switch(alg) {
-  //   case NBC_REDUCE_LINEAR:
-  //     res = __Reduce_linear(sendbuf, recvbuf, count, datatype, op, 0, hardware_comm, coll_type, schedule, info);
-  //     break;
-  //   case NBC_REDUCE_BINOMIAL:
-  //     res = __Reduce_binomial(sendbuf, recvbuf, count, datatype, op, 0, hardware_comm, coll_type, schedule, info);
-  //     break;
-  // }
-  // 
-  // /* At each topological level, masters do binomial algorithm */
-  // for(int i = deepest_level - 1; i >= 0; i--) {
-  //   int rank_split;
-  //   _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &rank_split);
-  //   
-  //   if(!rank_split) {
-  //     __Barrier_type(coll_type, schedule, info);
-
-  //     MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[i];
-
-  //     int rank_master;
-  //     _mpc_cl_comm_rank(master_comm, &rank_master);
-
-  //     const void *buffer =  recvbuf;
-  //     if(rank_master == 0) {
-  //       buffer = MPI_IN_PLACE;
-  //     }
-
-  //     //_mpc_cl_comm_size(master_comm, &tmp_size);
-  //     //_mpc_cl_comm_rank(master_comm, &tmp_rank);
-  //     //fprintf(stderr, "RANK %d / %d | REDUCE ON COMM DEPTH %d | SUBRANK %d / %d\n", rank, size, i, tmp_rank, tmp_size);
-  //     
-  //     switch(alg) {
-  //       case NBC_REDUCE_LINEAR:
-  //         res = __Reduce_linear(buffer, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
-  //         break;
-  //       case NBC_REDUCE_BINOMIAL:
-  //         res = __Reduce_binomial(buffer, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
-  //         break;
-  //     }
-  //   }
-  // }
-
   void *tmp_sendbuf = sendbuf;
   if(sendbuf == MPI_IN_PLACE) {
     tmp_sendbuf = recvbuf;
@@ -2157,6 +2114,107 @@ static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, M
     }
 
     __Copy_type(tmpbuf + (size-1) * count * ext, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+  }
+
+  return res;
+}
+
+static inline int __Reduce_topo_commute(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  int rank, size, res = MPI_SUCCESS;
+  MPI_Aint ext;
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+  MPI_Type_extent(datatype, &ext);
+
+  enum {
+    NBC_REDUCE_LINEAR,
+    NBC_REDUCE_BINOMIAL
+  } alg;
+
+  // TODO
+  // /!\ deadlock with reduce_linear due to call to gather_topo on communicator subset with topo comm already initialised
+  // will be solved with reusable topo comm & topo comm hierarchy
+  // or with an index to track the current topo level
+  alg = NBC_REDUCE_BINOMIAL;
+
+  sctk_Op mpc_op;
+  sctk_op_t *mpi_op;
+
+  mpi_op = sctk_convert_to_mpc_op(op);
+  mpc_op = mpi_op->op;
+
+  switch(coll_type) {
+    case MPC_COLL_TYPE_BLOCKING:
+      break;
+    case MPC_COLL_TYPE_NONBLOCKING:
+    case MPC_COLL_TYPE_PERSISTENT:
+      break;
+
+    case MPC_COLL_TYPE_COUNT:
+      {
+        if(!(info->flag & SCHED_INFO_TOPO_COMM_INITIALISED)) {
+          /* choose max topological level on which to do hardware split */
+          /*TODO choose level wisely */
+          int max_level = TOPO_MAX_LEVEL;
+          //max_level = MAX_HARDWARE_LEVEL;
+
+          __Topo_comm_init(comm, root, max_level, info);
+        }
+        break;
+      }
+  }
+  
+  int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
+
+  /* last level topology binomial bcast */
+  MPI_Comm hardware_comm = info->hardware_info_ptr->hwcomm[deepest_level];
+
+  //int tmp_size, tmp_rank;
+  //_mpc_cl_comm_size(hardware_comm, &tmp_size);
+  //_mpc_cl_comm_rank(hardware_comm, &tmp_rank);
+  //fprintf(stderr, "RANK %d / %d | REDUCE ON COMM DEPTH %d | SUBRANK %d / %d\n", rank, size, deepest_level, tmp_rank, tmp_size);
+
+  switch(alg) {
+    case NBC_REDUCE_LINEAR:
+      res = __Reduce_linear(sendbuf, recvbuf, count, datatype, op, 0, hardware_comm, coll_type, schedule, info);
+      break;
+    case NBC_REDUCE_BINOMIAL:
+      res = __Reduce_binomial(sendbuf, recvbuf, count, datatype, op, 0, hardware_comm, coll_type, schedule, info);
+      break;
+  }
+  
+  /* At each topological level, masters do binomial algorithm */
+  for(int i = deepest_level - 1; i >= 0; i--) {
+    int rank_split;
+    _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &rank_split);
+    
+    if(!rank_split) {
+      __Barrier_type(coll_type, schedule, info);
+
+      MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[i];
+
+      int rank_master;
+      _mpc_cl_comm_rank(master_comm, &rank_master);
+
+      const void *buffer =  recvbuf;
+      if(rank_master == 0) {
+        buffer = MPI_IN_PLACE;
+      }
+
+      //_mpc_cl_comm_size(master_comm, &tmp_size);
+      //_mpc_cl_comm_rank(master_comm, &tmp_rank);
+      //fprintf(stderr, "RANK %d / %d | REDUCE ON COMM DEPTH %d | SUBRANK %d / %d\n", rank, size, i, tmp_rank, tmp_size);
+  
+      switch(alg) {
+        case NBC_REDUCE_LINEAR:
+          res = __Reduce_linear(buffer, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
+          break;
+        case NBC_REDUCE_BINOMIAL:
+          res = __Reduce_binomial(buffer, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
+          break;
+      }
+    }
   }
 
   return res;
