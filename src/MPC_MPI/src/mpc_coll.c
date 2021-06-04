@@ -33,7 +33,7 @@
 #define ROUND_SCHED_SIZE (SCHED_SIZE + BARRIER_SCHED_SIZE)
 #define MAX_HARDWARE_LEVEL 8
 
-#define SCHED_INFO_TOPO_COMM_CREATION_ALLOWED 1
+#define SCHED_INFO_TOPO_COMM_ALLOWED 1
 #define SCHED_INFO_TOPO_COMM_INITIALISED 2
 #define SCHED_INFO_TOPO_SWAP_ARRAY_INITIALISED 4
 
@@ -625,7 +625,14 @@ static inline int __Send_type(const void *buffer, int count, MPI_Datatype dataty
   if(coll_type != MPC_COLL_TYPE_COUNT) {
     int rank = -1;
     _mpc_cl_comm_rank(comm, &rank);
-    fprintf(stderr, "SEND | %d -> %d (%d) : %p\n", rank, dest, count, buffer);
+    int global_rank = -1;
+    _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
+    int peer_global_rank;
+    MPI_Group local_group, global_group;
+    MPI_Comm_group(comm, &local_group);
+    MPI_Comm_group(MPI_COMM_WORLD, &global_group);
+    MPI_Group_translate_ranks(local_group, 1, &dest, global_group, &peer_global_rank);
+    fprintf(stderr, "SEND | % 4d (% 4d) -> % 4d (% 4d) (count=%d) : %p\n", rank, global_rank, dest, peer_global_rank, count, buffer);
   }
 #endif
 
@@ -665,7 +672,14 @@ static inline int __Recv_type(void *buffer, int count, MPI_Datatype datatype, in
   if(coll_type != MPC_COLL_TYPE_COUNT) {
     int rank = -1;
     _mpc_cl_comm_rank(comm, &rank);
-    fprintf(stderr, "RECV | %d <- %d (%d) : %p\n", rank, source, count, buffer);
+    int global_rank = -1;
+    _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
+    int peer_global_rank;
+    MPI_Group local_group, global_group;
+    MPI_Comm_group(comm, &local_group);
+    MPI_Comm_group(MPI_COMM_WORLD, &global_group);
+    MPI_Group_translate_ranks(local_group, 1, &source, global_group, &peer_global_rank);
+    fprintf(stderr, "RECV | % 4d (% 4d) <- % 4d (% 4d) (count=%d) : %p\n", rank, global_rank, source, peer_global_rank, count, buffer);
   }
 #endif
 
@@ -697,7 +711,9 @@ static inline int __Barrier_type(MPC_COLL_TYPE coll_type, NBC_Schedule *schedule
 
 #if dbg == 1
   if(coll_type != MPC_COLL_TYPE_COUNT) {
-    fprintf(stderr, "BARRIER\n");
+    int rank = -1;
+    _mpc_cl_comm_rank(MPI_COMM_WORLD, &rank);
+    fprintf(stderr, "BARR |      % 4d\n", rank);
   }
 #endif
 
@@ -733,6 +749,14 @@ static inline int __Barrier_type(MPC_COLL_TYPE coll_type, NBC_Schedule *schedule
   */
 static inline int __Op_type( __UNUSED__ void *res_buf, const void* left_op_buf, void* right_op_buf, int count, MPI_Datatype datatype, MPI_Op op, sctk_Op mpc_op, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
   int res = MPI_SUCCESS;
+
+#if dbg == 1
+  if(coll_type != MPC_COLL_TYPE_COUNT) {
+    int rank = -1;
+    _mpc_cl_comm_rank(MPI_COMM_WORLD, &rank);
+    fprintf(stderr, "OP   |      % 4d\n", rank);
+  }
+#endif
 
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
@@ -780,7 +804,9 @@ static inline int __Copy_type(const void *src, int srccount, MPI_Datatype srctyp
   if(coll_type != MPC_COLL_TYPE_COUNT) {
     int rank = -1;
     _mpc_cl_comm_rank(comm, &rank);
-    fprintf(stderr, "COPY | %d : %p -> %p\n", rank, src, tgt);
+    int global_rank = -1;
+    _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
+    fprintf(stderr, "COPY | % 4d (% 4d) : %p -> %p\n", rank, global_rank, src, tgt);
   }
 #endif
 
@@ -834,9 +860,9 @@ static inline int __create_hardware_comm_unguided(MPI_Comm comm, int vrank, int 
     {
       _mpc_cl_comm_rank(hwcomm[level_num + 1],&vrank);
 
-      //_mpc_cl_comm_rank(hwcomm[level_num + 1], &tmp_rank);
-      //_mpc_cl_comm_size(hwcomm[level_num + 1], &tmp_size);
-      //fprintf(stderr, "RANK %d / %d | SPLIT COMM | SUBRANK %d / %d\n", rank, size, tmp_rank, tmp_size);
+      // _mpc_cl_comm_rank(hwcomm[level_num + 1], &tmp_rank);
+      // _mpc_cl_comm_size(hwcomm[level_num + 1], &tmp_size);
+      // fprintf(stderr, "RANK %d / %d | SPLIT COMM | SUBRANK %d / %d\n", rank, size, tmp_rank, tmp_size);
 
       level_num++;
     } else {
@@ -944,7 +970,7 @@ static inline int __create_swap_array(MPI_Comm comm, int root, Sched_info *info)
   int rank, size;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
- 
+
   if(rank == root) {
     info->hardware_info_ptr->swap_array = sctk_malloc(sizeof(int) * size);
     for(int i = 0; i < size; i++) {
@@ -958,10 +984,6 @@ static inline int __create_swap_array(MPI_Comm comm, int root, Sched_info *info)
 
   if(rank == root) {
     memcpy(info->hardware_info_ptr->swap_array, tmp_swap_array, size * sizeof(int));
-
-    /*for(int i = 0; i < size; i++) {
-      fprintf(stderr, "swap[%d] = %d\n", i, info->hardware_info_ptr->swap_array[i]);
-    }*/
   }
 
   return MPI_SUCCESS;
@@ -986,8 +1008,8 @@ static inline int __Topo_comm_init(MPI_Comm comm, int root, int max_level, Sched
   __create_hardware_comm_unguided(comm, vrank, max_level, info);
   int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
   __create_master_hardware_comm_unguided(vrank, deepest_level, info);
- 
-   return MPI_SUCCESS;
+
+  return MPI_SUCCESS;
 }
 
 
@@ -1145,7 +1167,7 @@ static inline int __Bcast_init(void *buffer, int count, MPI_Datatype datatype, i
   __sched_info_init(&info);
 
 #if ALLOW_TOPO_COMM == 1
-  info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  info.flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
 #endif
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
@@ -1202,6 +1224,14 @@ int mpc_mpi_bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_
   */
 static inline int __Bcast_switch(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
+#if dbg == 1
+  int rank = -1;
+  _mpc_cl_comm_rank(comm, &rank);
+  int global_rank = -1;
+  _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
+  fprintf(stderr, "BCAST | %d (%d)\n", rank, global_rank);
+#endif
+
   enum {
     NBC_BCAST_LINEAR,
     NBC_BCAST_BINOMIAL,
@@ -1209,7 +1239,7 @@ static inline int __Bcast_switch(void *buffer, int count, MPI_Datatype datatype,
     NBC_BCAST_TOPO
   } alg;
 
-  if(info && (info->flag & SCHED_INFO_TOPO_COMM_CREATION_ALLOWED)) {
+  if(info && (info->flag & SCHED_INFO_TOPO_COMM_ALLOWED)) {
     alg = NBC_BCAST_TOPO;
   } else {
     alg = NBC_BCAST_BINOMIAL;
@@ -1361,59 +1391,6 @@ static inline int __Bcast_binomial(void *buffer, int count, MPI_Datatype datatyp
   return MPI_SUCCESS;
 }
 
-/*TODO remove when __Bcast_full_binomial_topo works with __Bcast_binomial instead of this */
-static inline int __bcast_sched_full_hardware_binomial(int root, NBC_Schedule *schedule, void *buffer, int count, MPI_Datatype datatype, MPI_Comm comm, MPC_COLL_TYPE coll_type, Sched_info *info) {
-
-    int rank, p;
-
-    _mpc_cl_comm_rank(comm, &rank);
-    _mpc_cl_comm_size(comm, &p);
-
-    int maxr, vrank, peer, r, res;
-
-    maxr = (int)ceil((log(p)/LOG2));
-
-    RANK2VRANK(rank, vrank, root);
-
-    if (vrank != 0)
-    {
-        r = 0;
-        for(r =0; r<maxr; r++)
-        {
-            if((vrank & (1 << r)) && (r < maxr))
-            {
-                VRANK2RANK(peer, vrank - (1 << r), root);
-
-                /* recv buffer from a master of root topologicaal level (rank 0) */
-                /* master of previous level is always master of its subsequent topological root split level */
-                res = __Recv_type(buffer, count, datatype, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
-
-                break;
-            }
-        }
-        __Barrier_type(coll_type, schedule, info);
-    }
-
-    int cpt = 0;
-    r = 0;
-    while(!(vrank & (1 << r)) && (r < maxr))
-    {
-        if ((vrank + (1 << r) < p))
-        {
-            cpt++;
-            VRANK2RANK(peer, vrank + (1 << r), root);
-
-            /* recv buffer from a master of root topologicaal level (rank 0) */
-            /* master of previous level is always master of its subsequent topological root split level */
-            res = __Send_type(buffer, count, datatype, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
-        }
-        r++;
-    }
-
-    return res;
-}
-
-
 /**
   \brief Execute or schedule a broadcast using the scatter_allgather algorithm
     Or count the number of operations and rounds for the schedule
@@ -1481,6 +1458,8 @@ static inline int __Bcast_topo(void *buffer, int count, MPI_Datatype datatype, i
         break;
       }
   }
+  
+  info->flag ^= SCHED_INFO_TOPO_COMM_ALLOWED; 
 
   int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
 
@@ -1492,20 +1471,7 @@ static inline int __Bcast_topo(void *buffer, int count, MPI_Datatype datatype, i
     if(!rank_split) { /* if master */
       MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[k];
 
-      //res = __Bcast_binomial(buffer, count, datatype, 0, master_comm, coll_type, schedule, info);
-      //res = __bcast_sched_full_hardware_binomial(0, schedule, buffer, count, datatype, master_comm, coll_type, info);
-
-      switch(alg) {
-        case NBC_BCAST_LINEAR:
-          res = __Bcast_linear(buffer, count, datatype, 0, master_comm, coll_type, schedule, info);
-          break;
-        case NBC_BCAST_BINOMIAL:
-          res = __Bcast_binomial(buffer, count, datatype, 0, master_comm, coll_type, schedule, info);
-          break;
-        case NBC_BCAST_SCATTER_ALLGATHER:
-          res = __Bcast_scatter_allgather(buffer, count, datatype, 0, master_comm, coll_type, schedule, info);
-          break;
-      }
+      res = __Bcast_switch(buffer, count, datatype, 0, master_comm, coll_type, schedule, info);
       
       __Barrier_type(coll_type, schedule, info);
     }
@@ -1514,20 +1480,9 @@ static inline int __Bcast_topo(void *buffer, int count, MPI_Datatype datatype, i
   /* last level topology binomial bcast */
   MPI_Comm hardware_comm = info->hardware_info_ptr->hwcomm[deepest_level];
 
-  //res = __Bcast_binomial(buffer, count, datatype, 0, hardware_comm, coll_type, schedule, info);
-  //res = __bcast_sched_full_hardware_binomial(0, schedule, buffer, count, datatype, hardware_comm, coll_type, info);
-
-  switch(alg) {
-    case NBC_BCAST_LINEAR:
-      res = __Bcast_linear(buffer, count, datatype, 0, hardware_comm, coll_type, schedule, info);
-      break;
-    case NBC_BCAST_BINOMIAL:
-      res = __Bcast_binomial(buffer, count, datatype, 0, hardware_comm, coll_type, schedule, info);
-      break;
-    case NBC_BCAST_SCATTER_ALLGATHER:
-      res = __Bcast_scatter_allgather(buffer, count, datatype, 0, hardware_comm, coll_type, schedule, info);
-      break;
-  }
+  res = __Bcast_switch(buffer, count, datatype, 0, hardware_comm, coll_type, schedule, info);
+  
+  info->flag ^= SCHED_INFO_TOPO_COMM_ALLOWED; 
 
   return res;
 }
@@ -1700,7 +1655,7 @@ static inline int __Reduce_init(const void *sendbuf, void* recvbuf, int count, M
   Sched_info info;
   __sched_info_init(&info);
 #if ALLOW_TOPO_COMM == 1
-  info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  info.flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
 #endif
 
   res = NBC_Init_handle(handle, comm, MPC_IREDUCE_TAG);
@@ -1760,6 +1715,15 @@ int mpc_mpi_reduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype d
   \return error code
   */
 static inline int __Reduce_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+#if dbg == 1
+  int rank = -1;
+  _mpc_cl_comm_rank(comm, &rank);
+  int global_rank = -1;
+  _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
+  fprintf(stderr, "REDUCE | %d (%d)\n", rank, global_rank);
+#endif
+
   enum {
     NBC_REDUCE_LINEAR,
     NBC_REDUCE_BINOMIAL,
@@ -1768,7 +1732,7 @@ static inline int __Reduce_switch(const void *sendbuf, void* recvbuf, int count,
     NBC_REDUCE_TOPO_COMMUTE
   } alg;
 
-  if(info && (info->flag & SCHED_INFO_TOPO_COMM_CREATION_ALLOWED)) {
+  if(info && (info->flag & SCHED_INFO_TOPO_COMM_ALLOWED)) {
     if(sctk_op_can_commute(sctk_convert_to_mpc_op(op), datatype)) {
       alg = NBC_REDUCE_TOPO_COMMUTE;
     } else {
@@ -2054,7 +2018,7 @@ static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, M
     NBC_REDUCE_BINOMIAL
   } alg;
 
-  alg = NBC_REDUCE_LINEAR;
+  alg = NBC_REDUCE_BINOMIAL;
 
   void *tmpbuf = NULL;
 
@@ -2096,6 +2060,8 @@ static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, M
       }
   }
   
+  info->flag ^= SCHED_INFO_TOPO_COMM_ALLOWED; 
+  
   void *tmp_sendbuf = sendbuf;
   if(sendbuf == MPI_IN_PLACE) {
     tmp_sendbuf = recvbuf;
@@ -2115,6 +2081,8 @@ static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, M
 
     __Copy_type(tmpbuf + (size-1) * count * ext, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
   }
+  
+  info->flag ^= SCHED_INFO_TOPO_COMM_ALLOWED; 
 
   return res;
 }
@@ -2136,7 +2104,7 @@ static inline int __Reduce_topo_commute(const void *sendbuf, void* recvbuf, int 
   // /!\ deadlock with reduce_linear due to call to gather_topo on communicator subset with topo comm already initialised
   // will be solved with reusable topo comm & topo comm hierarchy
   // or with an index to track the current topo level
-  alg = NBC_REDUCE_BINOMIAL;
+  alg = NBC_REDUCE_LINEAR;
 
   sctk_Op mpc_op;
   sctk_op_t *mpi_op;
@@ -2165,6 +2133,8 @@ static inline int __Reduce_topo_commute(const void *sendbuf, void* recvbuf, int 
       }
   }
   
+  info->flag ^= SCHED_INFO_TOPO_COMM_ALLOWED; 
+  
   int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
 
   /* last level topology binomial bcast */
@@ -2175,14 +2145,7 @@ static inline int __Reduce_topo_commute(const void *sendbuf, void* recvbuf, int 
   //_mpc_cl_comm_rank(hardware_comm, &tmp_rank);
   //fprintf(stderr, "RANK %d / %d | REDUCE ON COMM DEPTH %d | SUBRANK %d / %d\n", rank, size, deepest_level, tmp_rank, tmp_size);
 
-  switch(alg) {
-    case NBC_REDUCE_LINEAR:
-      res = __Reduce_linear(sendbuf, recvbuf, count, datatype, op, 0, hardware_comm, coll_type, schedule, info);
-      break;
-    case NBC_REDUCE_BINOMIAL:
-      res = __Reduce_binomial(sendbuf, recvbuf, count, datatype, op, 0, hardware_comm, coll_type, schedule, info);
-      break;
-  }
+  res = __Reduce_switch(sendbuf, recvbuf, count, datatype, op, 0, hardware_comm, coll_type, schedule, info);
   
   /* At each topological level, masters do binomial algorithm */
   for(int i = deepest_level - 1; i >= 0; i--) {
@@ -2206,16 +2169,11 @@ static inline int __Reduce_topo_commute(const void *sendbuf, void* recvbuf, int 
       //_mpc_cl_comm_rank(master_comm, &tmp_rank);
       //fprintf(stderr, "RANK %d / %d | REDUCE ON COMM DEPTH %d | SUBRANK %d / %d\n", rank, size, i, tmp_rank, tmp_size);
   
-      switch(alg) {
-        case NBC_REDUCE_LINEAR:
-          res = __Reduce_linear(buffer, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
-          break;
-        case NBC_REDUCE_BINOMIAL:
-          res = __Reduce_binomial(buffer, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
-          break;
-      }
+      res = __Reduce_switch(buffer, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
     }
   }
+
+  info->flag ^= SCHED_INFO_TOPO_COMM_ALLOWED; 
 
   return res;
 }
@@ -2374,7 +2332,7 @@ static inline int __Allreduce_init(const void *sendbuf, void* recvbuf, int count
   Sched_info info;
   __sched_info_init(&info);
 #if ALLOW_TOPO_COMM == 1
-  info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  info.flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
 #endif
 
   res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
@@ -2433,6 +2391,14 @@ int mpc_mpi_allreduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatyp
   */
 static inline int __Allreduce_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
+#if dbg == 1
+  int rank = -1;
+  _mpc_cl_comm_rank(comm, &rank);
+  int global_rank = -1;
+  _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
+  fprintf(stderr, "ALLREDUCE | %d (%d)\n", rank, global_rank);
+#endif
+
   enum {
     NBC_ALLREDUCE_REDUCE_BROADCAST,
     NBC_ALLREDUCE_DISTANCE_DOUBLING,
@@ -2442,7 +2408,7 @@ static inline int __Allreduce_switch(const void *sendbuf, void* recvbuf, int cou
     NBC_ALLREDUCE_TOPO
   } alg;
 
-  if(info && (info->flag & SCHED_INFO_TOPO_COMM_CREATION_ALLOWED)) {
+  if(info && (info->flag & SCHED_INFO_TOPO_COMM_ALLOWED)) {
     alg = NBC_ALLREDUCE_TOPO;
   } else {
     alg = NBC_ALLREDUCE_REDUCE_BROADCAST;
@@ -3217,7 +3183,7 @@ static inline int __Scatter_init(const void *sendbuf, int sendcount, MPI_Datatyp
   Sched_info info;
   __sched_info_init(&info);
 #if ALLOW_TOPO_COMM == 1
-  info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  info.flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
 #endif
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
@@ -3280,13 +3246,21 @@ int mpc_mpi_scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, v
   */
 static inline int __Scatter_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
+#if dbg == 1
+  int rank = -1;
+  _mpc_cl_comm_rank(comm, &rank);
+  int global_rank = -1;
+  _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
+  fprintf(stderr, "SCATTER | %d (%d)\n", rank, global_rank);
+#endif
+
   enum {
     NBC_SCATTER_LINEAR,
     NBC_SCATTER_BINOMIAL,
     NBC_SCATTER_TOPO
   } alg;
 
-  if(info && (info->flag & SCHED_INFO_TOPO_COMM_CREATION_ALLOWED)) {
+  if(info && (info->flag & SCHED_INFO_TOPO_COMM_ALLOWED)) {
     alg = NBC_SCATTER_TOPO;
   } else {
     alg = NBC_SCATTER_BINOMIAL;
@@ -3580,6 +3554,8 @@ static inline int __Scatter_topo(const void *sendbuf, int sendcount, MPI_Datatyp
         break;
       }
   }
+  
+  info->flag ^= SCHED_INFO_TOPO_COMM_ALLOWED; 
 
   // 1) SWAP
   // 2) MASTER SCATTERV
@@ -3638,14 +3614,7 @@ static inline int __Scatter_topo(const void *sendbuf, int sendcount, MPI_Datatyp
         scatterv_buf = MPI_IN_PLACE;
       }
 
-      switch(scatterv_alg) {
-        case NBC_SCATTERV_LINEAR:
-          res = __Scatterv_linear(tmpbuf, info->hardware_info_ptr->childs_data_count[i], displs, recvtype, scatterv_buf, info->hardware_info_ptr->send_data_count[i], recvtype, 0, master_comm, coll_type, schedule, info);
-          break;
-        case NBC_SCATTERV_BINOMIAL:
-          res = __Scatterv_binomial(tmpbuf, info->hardware_info_ptr->childs_data_count[i], displs, recvtype, scatterv_buf, info->hardware_info_ptr->send_data_count[i], recvtype, 0, master_comm, coll_type, schedule, info);
-          break;
-      }
+      res = __Scatterv_switch(tmpbuf, info->hardware_info_ptr->childs_data_count[i], displs, recvtype, scatterv_buf, info->hardware_info_ptr->send_data_count[i], recvtype, 0, master_comm, coll_type, schedule, info);
     
       __Barrier_type(coll_type, schedule, info);
     }
@@ -3660,14 +3629,9 @@ static inline int __Scatter_topo(const void *sendbuf, int sendcount, MPI_Datatyp
     scatter_buf = MPI_IN_PLACE;
   }
 
-  switch(scatter_alg) {
-    case NBC_SCATTER_LINEAR:
-      res = __Scatter_linear(tmpbuf, tmp_recvcount, tmp_recvtype, scatter_buf, tmp_recvcount, tmp_recvtype, 0, hardware_comm, coll_type, schedule, info);
-      break;
-    case NBC_SCATTER_BINOMIAL:
-      res = __Scatter_binomial(tmpbuf, tmp_recvcount, tmp_recvtype, scatter_buf, tmp_recvcount, tmp_recvtype, 0, hardware_comm, coll_type, schedule, info);
-      break;
-  }
+  res = __Scatter_switch(tmpbuf, tmp_recvcount, tmp_recvtype, scatter_buf, tmp_recvcount, tmp_recvtype, 0, hardware_comm, coll_type, schedule, info);
+
+  info->flag ^= SCHED_INFO_TOPO_COMM_ALLOWED; 
 
   return res;
 }
@@ -3915,6 +3879,14 @@ int mpc_mpi_scatterv(const void *sendbuf, const int *sendcounts, const int *disp
   \return error code
   */
 static inline int __Scatterv_switch(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+#if dbg == 1
+  int rank = -1;
+  _mpc_cl_comm_rank(comm, &rank);
+  int global_rank = -1;
+  _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
+  fprintf(stderr, "SCATTERV | %d (%d)\n", rank, global_rank);
+#endif
 
   enum {
     NBC_SCATTERV_LINEAR,
@@ -4208,7 +4180,7 @@ static inline int __Gather_init(const void *sendbuf, int sendcount, MPI_Datatype
   Sched_info info;
   __sched_info_init(&info);
 #if ALLOW_TOPO_COMM == 1
-  info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  info.flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
 #endif
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
@@ -4269,13 +4241,21 @@ int mpc_mpi_gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, vo
   */
 static inline int __Gather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
+#if dbg == 1
+  int rank = -1;
+  _mpc_cl_comm_rank(comm, &rank);
+  int global_rank = -1;
+  _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
+  fprintf(stderr, "GATHER | %d (%d)\n", rank, global_rank);
+#endif
+
   enum {
     NBC_GATHER_LINEAR,
     NBC_GATHER_BINOMIAL,
     NBC_GATHER_TOPO
   } alg;
 
-  if(info && (info->flag & SCHED_INFO_TOPO_COMM_CREATION_ALLOWED)) {
+  if(info && (info->flag & SCHED_INFO_TOPO_COMM_ALLOWED)) {
     alg = NBC_GATHER_TOPO;
   } else {
     alg = NBC_GATHER_BINOMIAL;
@@ -4574,33 +4554,14 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
       }
   }
 
+  info->flag ^= SCHED_INFO_TOPO_COMM_ALLOWED; 
+
   int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
 
   /* last level topology binomial bcast */
   MPI_Comm hardware_comm = info->hardware_info_ptr->hwcomm[deepest_level];
 
-  switch(gather_alg) {
-    case NBC_GATHER_LINEAR:
-      res = __Gather_linear(tmp_sendbuf, tmp_sendcount, tmp_sendtype, tmpbuf, tmp_sendcount, tmp_sendtype, 0, hardware_comm, coll_type, schedule, info);
-      break;
-    case NBC_GATHER_BINOMIAL:
-      res = __Gather_binomial(tmp_sendbuf, tmp_sendcount, tmp_sendtype, tmpbuf, tmp_sendcount, tmp_sendtype, 0, hardware_comm, coll_type, schedule, info);
-      break;
-  }
-
-  //TODO a enlever
-  /*{
-    int size_split, rank_split;
-    _mpc_cl_comm_rank(hardware_comm, &rank_split);
-    _mpc_cl_comm_size(hardware_comm, &size_split);
-
-    if(rank_split == 0 && coll_type == MPC_COLL_TYPE_BLOCKING) {
-      for(int i = 0; i < size_split; i++) {
-        fprintf(stderr, "RANK %d | GATHER | res[%d] = %d\n", rank, i, ((int*)tmpbuf)[i]);
-      }
-    }
-  }*/
-
+  res = __Gather_switch(tmp_sendbuf, tmp_sendcount, tmp_sendtype, tmpbuf, tmp_sendcount, tmp_sendtype, 0, hardware_comm, coll_type, schedule, info);
 
   int displs[size];
   void *gatherv_buf = NULL;
@@ -4630,35 +4591,7 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
         gatherv_buf = MPI_IN_PLACE;
       }
 
-      //TODO a enlever
-      /*if(coll_type == MPC_COLL_TYPE_BLOCKING) {
-        fprintf(stderr, "RANK %d | INITIATE GATHERV %d | (%d)\n", rank, i, info->hardware_info_ptr->send_data_count[i]);
-      }*/
-
-      switch(gatherv_alg) {
-        case NBC_GATHERV_LINEAR:
-          res = __Gatherv_linear(gatherv_buf, info->hardware_info_ptr->send_data_count[i], sendtype, tmpbuf, info->hardware_info_ptr->childs_data_count[i], displs, sendtype, 0, master_comm, coll_type, schedule, info);
-          break;
-        case NBC_GATHERV_BINOMIAL:
-          res = __Gatherv_binomial(gatherv_buf, info->hardware_info_ptr->send_data_count[i], sendtype, tmpbuf, info->hardware_info_ptr->childs_data_count[i], displs, sendtype, 0, master_comm, coll_type, schedule, info);
-          break;
-      }
-
-      //TODO a enlever
-      /*{
-        int tmp;
-        if(i > 0) {
-          tmp = info->hardware_info_ptr->send_data_count[i - 1];
-        } else {
-          tmp = size;
-        }
-
-        if(rank_master == 0 && coll_type == MPC_COLL_TYPE_BLOCKING) {
-          for(int j = 0; j < tmp; j++) {
-            fprintf(stderr, "RANK %d | GATHERV %d | res[%d] = %d\n", rank, i, j, ((int*)tmpbuf)[j]);
-          }
-        }
-      }*/
+      res = __Gatherv_switch(gatherv_buf, info->hardware_info_ptr->send_data_count[i], sendtype, tmpbuf, info->hardware_info_ptr->childs_data_count[i], displs, sendtype, 0, master_comm, coll_type, schedule, info);
     }
   }
 
@@ -4669,7 +4602,7 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
 
     int start = 0, end;
 
-    for(end = 1; end < size; end++) {
+    for(end = start + 1; end < size; end++) {
       if(info->hardware_info_ptr->swap_array[end] != info->hardware_info_ptr->swap_array[end - 1] + 1) {
         __Copy_type(tmpbuf + start * tmp_sendcount * sendext                                  , tmp_sendcount * (end - start), tmp_sendtype, 
                     recvbuf + info->hardware_info_ptr->swap_array[start] * recvcount * recvext, recvcount * (end - start)    , recvtype,
@@ -4682,6 +4615,8 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
                 recvbuf + info->hardware_info_ptr->swap_array[start] * recvcount * recvext, recvcount * (end - start)    , recvtype,
                 comm, coll_type, schedule, info);
   }
+  
+  info->flag ^= SCHED_INFO_TOPO_COMM_ALLOWED; 
 
   return res;
 }
@@ -4926,6 +4861,14 @@ int mpc_mpi_gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, v
   \return error code
   */
 static inline int __Gatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+#if dbg == 1
+  int rank = -1;
+  _mpc_cl_comm_rank(comm, &rank);
+  int global_rank = -1;
+  _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
+  fprintf(stderr, "GATHERV | %d (%d)\n", rank, global_rank);
+#endif
 
   enum {
     NBC_GATHERV_LINEAR,
@@ -5258,6 +5201,15 @@ int mpc_mpi_reduce_scatter_block(const void *sendbuf, void* recvbuf, int count, 
   \return error code
   */
 static inline int __Reduce_scatter_block_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+#if dbg == 1
+  int rank = -1;
+  _mpc_cl_comm_rank(comm, &rank);
+  int global_rank = -1;
+  _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
+  fprintf(stderr, "REDUCE SCATTER BLOCK | %d (%d)\n", rank, global_rank);
+#endif
+
   enum {
     NBC_REDUCE_SCATTER_BLOCK_REDUCE_SCATTER,
     NBC_REDUCE_SCATTER_BLOCK_DISTANCE_DOUBLING, // difficile a mettre en place
@@ -5710,6 +5662,15 @@ int mpc_mpi_reduce_scatter(const void *sendbuf, void* recvbuf, const int *recvco
   \return error code
   */
 static inline int __Reduce_scatter_switch(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+#if dbg == 1
+  int rank = -1;
+  _mpc_cl_comm_rank(comm, &rank);
+  int global_rank = -1;
+  _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
+  fprintf(stderr, "REDUCE SCATTER | %d (%d)\n", rank, global_rank);
+#endif
+
   enum {
     NBC_REDUCE_SCATTER_REDUCE_SCATTERV,
     NBC_REDUCE_SCATTER_DISTANCE_DOUBLING, // difficile a mettre en place
@@ -6051,7 +6012,7 @@ static inline int __Allgather_init(const void *sendbuf, int sendcount, MPI_Datat
   Sched_info info;
   __sched_info_init(&info);
 #if ALLOW_TOPO_COMM == 1
-  info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  info.flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
 #endif
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
@@ -6112,6 +6073,14 @@ int mpc_mpi_allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
   */
 static inline int __Allgather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
+#if dbg == 1
+  int rank = -1;
+  _mpc_cl_comm_rank(comm, &rank);
+  int global_rank = -1;
+  _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
+  fprintf(stderr, "ALLGATHER | %d (%d)\n", rank, global_rank);
+#endif
+
   enum {
     NBC_ALLGATHER_GATHER_BROADCAST,
     NBC_ALLGATHER_DISTANCE_DOUBLING,
@@ -6120,7 +6089,7 @@ static inline int __Allgather_switch(const void *sendbuf, int sendcount, MPI_Dat
     NBC_ALLGATHER_TOPO
   } alg;
 
-  if(info && (info->flag & SCHED_INFO_TOPO_COMM_CREATION_ALLOWED)) {
+  if(info && (info->flag & SCHED_INFO_TOPO_COMM_ALLOWED)) {
     alg = NBC_ALLGATHER_TOPO;
   } else {
     alg = NBC_ALLGATHER_DISTANCE_DOUBLING;
@@ -6669,6 +6638,14 @@ int mpc_mpi_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype
   */
 static inline int __Allgatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
+#if dbg == 1
+  int rank = -1;
+  _mpc_cl_comm_rank(comm, &rank);
+  int global_rank = -1;
+  _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
+  fprintf(stderr, "ALLGATHERV | %d (%d)\n", rank, global_rank);
+#endif
+
   enum {
     NBC_ALLGATHERV_GATHERV_BROADCAST,
     NBC_ALLGATHERV_DISTANCE_DOUBLING,
@@ -7040,6 +7017,14 @@ int mpc_mpi_alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
   \return error code
   */
 static inline int __Alltoall_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+#if dbg == 1
+  int rank = -1;
+  _mpc_cl_comm_rank(comm, &rank);
+  int global_rank = -1;
+  _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
+  fprintf(stderr, "ALLTOALL | %d (%d)\n", rank, global_rank);
+#endif
 
   enum {
     NBC_ALLTOALL_CLUSTER,
@@ -7445,6 +7430,14 @@ int mpc_mpi_alltoallv(const void *sendbuf, const int *sendcounts, const int *sdi
   \return error code
   */
 static inline int __Alltoallv_switch(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+#if dbg == 1
+  int rank = -1;
+  _mpc_cl_comm_rank(comm, &rank);
+  int global_rank = -1;
+  _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
+  fprintf(stderr, "ALLTOALLV | %d (%d)\n", rank, global_rank);
+#endif
 
   enum {
     NBC_ALLTOALLV_CLUSTER,
@@ -7864,6 +7857,14 @@ int mpc_mpi_alltoallw(const void *sendbuf, const int *sendcounts, const int *sdi
   */
 static inline int __Alltoallw_switch(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
+#if dbg == 1
+  int rank = -1;
+  _mpc_cl_comm_rank(comm, &rank);
+  int global_rank = -1;
+  _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
+  fprintf(stderr, "ALLTOALLW | %d (%d)\n", rank, global_rank);
+#endif
+
   enum {
     NBC_ALLTOALLW_CLUSTER,
     NBC_ALLTOALLW_BRUCK,
@@ -8245,6 +8246,14 @@ int mpc_mpi_scan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype da
   */
 static inline int __Scan_switch (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
+#if dbg == 1
+  int rank = -1;
+  _mpc_cl_comm_rank(comm, &rank);
+  int global_rank = -1;
+  _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
+  fprintf(stderr, "SCAN | %d (%d)\n", rank, global_rank);
+#endif
+
   enum {
     NBC_SCAN_LINEAR,
     NBC_SCAN_ALLGATHER
@@ -8622,6 +8631,14 @@ int mpc_mpi_exscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype 
   */
 static inline int __Exscan_switch (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
+#if dbg == 1
+  int rank = -1;
+  _mpc_cl_comm_rank(comm, &rank);
+  int global_rank = -1;
+  _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
+  fprintf(stderr, "EXSCAN | %d (%d)\n", rank, global_rank);
+#endif
+
   enum {
     NBC_EXSCAN_LINEAR,
     NBC_EXSCAN_ALLGATHER
@@ -8971,6 +8988,14 @@ int mpc_mpi_barrier (MPI_Comm comm) {
   \return error code
   */
 static inline int __Barrier_switch (MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+#if dbg == 1
+  int rank = -1;
+  _mpc_cl_comm_rank(comm, &rank);
+  int global_rank = -1;
+  _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
+  fprintf(stderr, "BARRIER | %d (%d)\n", rank, global_rank);
+#endif
   
   enum {
     NBC_BARRIER_REDUCE_BROADCAST
