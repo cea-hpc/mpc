@@ -151,6 +151,56 @@ int mpc_lowcomm_communicator_attributes(const mpc_lowcomm_communicator_t comm,
 	return SCTK_SUCCESS;
 }
 
+
+static inline int mpc_lowcomm_find_topo_comm_index(mpc_lowcomm_communicator_t comm, int root) {
+  for(int i = 0; i < comm->topo_comms.size; i++) {
+    if(comm->topo_comms.roots[i] == root) {
+      return i;
+    }
+  }
+
+  return -1;
+}
+
+mpc_hardware_split_info_t* mpc_lowcomm_topo_comm_get(mpc_lowcomm_communicator_t comm, int root) {
+
+  int index = mpc_lowcomm_find_topo_comm_index(comm, root);
+  
+  if(index != -1) {
+    return comm->topo_comms.hw_infos[index];
+  }
+
+  return NULL;
+}
+
+void mpc_lowcomm_topo_comm_set(mpc_lowcomm_communicator_t comm, int root, mpc_hardware_split_info_t *hw_info) {
+
+
+  int index = mpc_lowcomm_find_topo_comm_index(comm, root);
+  if(index != -1) {
+    comm->topo_comms.hw_infos[index] = hw_info;
+    return;
+  }
+
+  index = mpc_lowcomm_find_topo_comm_index(comm, -1);
+  if(index == -1) {
+
+    comm->topo_comms.roots = realloc(comm->topo_comms.roots, sizeof(int) * comm->topo_comms.size * 2);
+    comm->topo_comms.hw_infos = realloc(comm->topo_comms.hw_infos, sizeof(mpc_hardware_split_info_t*) * comm->topo_comms.size * 2);
+
+    for(int i = comm->topo_comms.size; i < comm->topo_comms.size * 2; i++) {
+      comm->topo_comms.roots[i] = -1;
+    }
+
+    index = comm->topo_comms.size;
+    comm->topo_comms.size *= 2;
+  }
+
+  comm->topo_comms.roots[index] = root;
+  comm->topo_comms.hw_infos[index] = hw_info;
+}
+
+
 /***************************
 * BASIC COMMUNICATOR INIT *
 ***************************/
@@ -173,6 +223,15 @@ static inline mpc_lowcomm_internal_communicator_t *__init_communicator_with_id(u
 	/* Intercomm ctx */
 	ret->left_comm  = MPC_COMM_NULL;
 	ret->right_comm = MPC_COMM_NULL;
+
+  /* Topo comms */
+  ret->topo_comms.size = MPC_INITIAL_TOPO_COMMS_SIZE;
+  ret->topo_comms.roots = sctk_malloc(sizeof(int) * MPC_INITIAL_TOPO_COMMS_SIZE);
+  ret->topo_comms.hw_infos = sctk_malloc(sizeof(mpc_hardware_split_info_t*) * MPC_INITIAL_TOPO_COMMS_SIZE);
+  for(int i = 0; i < MPC_INITIAL_TOPO_COMMS_SIZE; i++) {
+    ret->topo_comms.roots[i] = -1;
+  }
+
 
 	if(comm_id == MPC_LOWCOMM_COMM_SELF_ID)
 	{

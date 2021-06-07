@@ -31,6 +31,16 @@
 #include "coll.h"
 #include "shm_coll.h"
 
+//TODO a changer de place
+#define MPC_INITIAL_TOPO_COMMS_SIZE 10
+typedef struct mpc_lowcomm_topo_comms
+{
+  int size;
+
+  int *roots;
+  mpc_hardware_split_info_t **hw_infos;
+} mpc_lowcomm_topo_comms;
+
 
 /**
  * @brief This is the struct defining a lowcomm communicator
@@ -61,6 +71,10 @@ typedef struct mpc_lowcomm_internal_communicator_s
 	 * and then functions will refer to this functions */
 	mpc_lowcomm_communicator_t left_comm;		/**< The left comm for intercomms */
 	mpc_lowcomm_communicator_t right_comm;		/**< The right comm for intercomms */
+
+  /* Topological comm */
+  mpc_lowcomm_topo_comms topo_comms;
+  
 }mpc_lowcomm_internal_communicator_t;
 
 /*********************************

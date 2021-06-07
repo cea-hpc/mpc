@@ -419,6 +419,17 @@ struct sctk_comm_coll;
 /** Get the communicator collective context */
 struct sctk_comm_coll *mpc_communicator_shm_coll_get(const mpc_lowcomm_communicator_t comm);
 
+
+/*****************************
+ * TOPOLOGICAL COMMUNICATORS *
+ *****************************/
+
+struct mpc_hardware_split_info_s;
+typedef struct mpc_hardware_split_info_s mpc_hardware_split_info_t;
+
+mpc_hardware_split_info_t* mpc_lowcomm_topo_comm_get(mpc_lowcomm_communicator_t comm, int root);
+void mpc_lowcomm_topo_comm_set(mpc_lowcomm_communicator_t comm, int root, mpc_hardware_split_info_t *hw_info);
+
 #ifdef __cplusplus
 }
 #endif
