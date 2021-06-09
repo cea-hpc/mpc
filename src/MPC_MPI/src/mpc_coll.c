@@ -26,6 +26,7 @@
 #include <mpc_coll_weak.h>
 
 #include "egreq_nbc.h"
+//#include "mpi_conf.h"
 
 #define SCHED_SIZE (sizeof(int))
 #define BARRIER_SCHED_SIZE (sizeof(char))
@@ -430,13 +431,6 @@ static inline int ___collectives_sched_alloc_init(NBC_Handle *handle, NBC_Schedu
     info->tmpbuf = handle->tmpbuf;
   }
 
-  // /* if hardware algorithm has been scheduled */
-  // if(info.is_hardware_algo)
-  // {
-  /* to free hardware structure later from handle */
-  handle->hardware_info = info->hardware_info_ptr;
-  // }
-
   return MPI_SUCCESS;
 }
 
@@ -660,7 +654,7 @@ static inline int ___collectives_send_type(const void *buffer, int count, MPI_Da
     MPI_Comm_group(comm, &local_group);
     MPI_Comm_group(MPI_COMM_WORLD, &global_group);
     MPI_Group_translate_ranks(local_group, 1, &dest, global_group, &peer_global_rank);
-    mpc_common_debug_log("SEND | % 4d (% 4d) -> % 4d (% 4d) (count=%d) : %p\n", rank, global_rank, dest, peer_global_rank, count, buffer);
+    mpc_common_debug_log("SEND | % 4d (% 4d) -> % 4d (% 4d) (count=%d) : %p | COMM %p\n", rank, global_rank, dest, peer_global_rank, count, buffer, comm);
   }
 #endif
 
@@ -707,7 +701,7 @@ static inline int ___collectives_recv_type(void *buffer, int count, MPI_Datatype
     MPI_Comm_group(comm, &local_group);
     MPI_Comm_group(MPI_COMM_WORLD, &global_group);
     MPI_Group_translate_ranks(local_group, 1, &source, global_group, &peer_global_rank);
-    mpc_common_debug_log("RECV | % 4d (% 4d) <- % 4d (% 4d) (count=%d) : %p\n", rank, global_rank, source, peer_global_rank, count, buffer);
+    mpc_common_debug_log("RECV | % 4d (% 4d) <- % 4d (% 4d) (count=%d) : %p | COMM %p\n", rank, global_rank, source, peer_global_rank, count, buffer, comm);
   }
 #endif
 
@@ -1043,6 +1037,7 @@ static inline int ___collectives_create_swap_array(MPI_Comm comm, int root, Sche
   \return error code
  */
 static inline int ___collectives_topo_comm_init(MPI_Comm comm, int root, int max_level, Sched_info *info) {
+  
   int rank, size;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
@@ -1054,8 +1049,10 @@ static inline int ___collectives_topo_comm_init(MPI_Comm comm, int root, int max
   info->flag |= SCHED_INFO_TOPO_COMM_INITIALISED;
 
   info->hardware_info_ptr = (mpc_hardware_split_info_t *)sctk_malloc(sizeof(mpc_hardware_split_info_t));
-  info->hardware_info_ptr->hwcomm = (MPI_Comm *)sctk_malloc(MAX_HARDWARE_LEVEL*sizeof(MPI_Comm));
-  info->hardware_info_ptr->rootcomm = (MPI_Comm *)sctk_malloc(MAX_HARDWARE_LEVEL*sizeof(MPI_Comm));
+  mpc_lowcomm_topo_comm_set(comm, root, info->hardware_info_ptr);
+
+  info->hardware_info_ptr->hwcomm = (MPI_Comm *)sctk_malloc(MAX_HARDWARE_LEVEL * sizeof(MPI_Comm));
+  info->hardware_info_ptr->rootcomm = (MPI_Comm *)sctk_malloc(MAX_HARDWARE_LEVEL * sizeof(MPI_Comm));
 
   /* Create hardware communicators using unguided topological split and max split level */
   ___collectives_create_hardware_comm_unguided(comm, vrank, max_level, info);
@@ -1278,11 +1275,12 @@ int _mpc_mpi_collectives_bcast(void *buffer, int count, MPI_Datatype datatype, i
 static inline int ___collectives_bcast_switch(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
-  int rank = -1;
+  int rank = -1, size = -1;
   _mpc_cl_comm_rank(comm, &rank);
+  _mpc_cl_comm_size(comm, &size);
   int global_rank = -1;
   _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-  mpc_common_debug_log("BCAST | %d (%d)\n", rank, global_rank);
+  mpc_common_debug_log("BCAST | %d / %d (%d)\n", rank, size, global_rank);
 #endif
 
   enum {
@@ -1500,14 +1498,17 @@ static inline int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatyp
 
     case MPC_COLL_TYPE_COUNT:
       {
-        if(!(info->flag & SCHED_INFO_TOPO_COMM_INITIALISED)) {
+        if(!(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
           /* choose max topological level on which to do hardware split */
           /*TODO choose level wisely */
           int max_level = TOPO_MAX_LEVEL;
           //max_level = MAX_HARDWARE_LEVEL;
 
           ___collectives_topo_comm_init(comm, root, max_level, info);
+          mpc_lowcomm_topo_comm_set(comm, root, info->hardware_info_ptr);
         }
+
+        fprintf(stderr, "RANK %d | hw info ptr %p\n", rank, info->hardware_info_ptr);
         break;
       }
   }
@@ -2115,8 +2116,8 @@ static inline int ___collectives_reduce_topo(const void *sendbuf, void* recvbuf,
         if(rank == root) {
           info->tmpbuf_size += size * count * ext;
         }
-
-        if(!(info->flag & SCHED_INFO_TOPO_COMM_INITIALISED)) {
+        if(!(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
+        // if(!(info->flag & SCHED_INFO_TOPO_COMM_INITIALISED)) {
           /* choose max topological level on which to do hardware split */
           /*TODO choose level wisely */
           int max_level = TOPO_MAX_LEVEL;
@@ -2204,7 +2205,8 @@ static inline int ___collectives_reduce_topo_commute(const void *sendbuf, void* 
 
     case MPC_COLL_TYPE_COUNT:
       {
-        if(!(info->flag & SCHED_INFO_TOPO_COMM_INITIALISED)) {
+        if(!(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
+        //if(!(info->flag & SCHED_INFO_TOPO_COMM_INITIALISED)) {
           /* choose max topological level on which to do hardware split */
           /*TODO choose level wisely */
           int max_level = TOPO_MAX_LEVEL;
@@ -3638,7 +3640,8 @@ static inline int ___collectives_scatter_topo(const void *sendbuf, int sendcount
 
     case MPC_COLL_TYPE_COUNT:
       {
-        if(!(info->flag & SCHED_INFO_TOPO_COMM_INITIALISED)) {
+        if(!(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
+        // if(!(info->flag & SCHED_INFO_TOPO_COMM_INITIALISED)) {
           /* choose max topological level on which to do hardware split */
           /*TODO choose level wisely */
           int max_level = TOPO_MAX_LEVEL;
@@ -3647,7 +3650,8 @@ static inline int ___collectives_scatter_topo(const void *sendbuf, int sendcount
           ___collectives_topo_comm_init(comm, root, max_level, info);
         }
 
-        if(!(info->flag & SCHED_INFO_TOPO_SWAP_ARRAY_INITIALISED)) {
+        if(!(info->hardware_info_ptr->childs_data_count)) {
+        // if(!(info->flag & SCHED_INFO_TOPO_SWAP_ARRAY_INITIALISED)) {
           ___collectives_create_childs_counts(comm, info);
           ___collectives_create_swap_array(comm, root, info);
         }
@@ -4653,7 +4657,8 @@ static inline int ___collectives_gather_topo(const void *sendbuf, int sendcount,
 
     case MPC_COLL_TYPE_COUNT:
       {
-        if(!(info->flag & SCHED_INFO_TOPO_COMM_INITIALISED)) {
+        if(!(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
+        // if(!(info->flag & SCHED_INFO_TOPO_COMM_INITIALISED)) {
           /* choose max topological level on which to do hardware split */
           /*TODO choose level wisely */
           int max_level = TOPO_MAX_LEVEL;
@@ -4662,7 +4667,8 @@ static inline int ___collectives_gather_topo(const void *sendbuf, int sendcount,
           ___collectives_topo_comm_init(comm, root, max_level, info);
         }
 
-        if(!(info->flag & SCHED_INFO_TOPO_SWAP_ARRAY_INITIALISED)) {
+        if(!(info->hardware_info_ptr->childs_data_count)) {
+        // if(!(info->flag & SCHED_INFO_TOPO_SWAP_ARRAY_INITIALISED)) {
           ___collectives_create_childs_counts(comm, info);
           ___collectives_create_swap_array(comm, root, info);
         }

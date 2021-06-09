@@ -73,7 +73,7 @@ typedef struct mpc_lowcomm_internal_communicator_s
 	mpc_lowcomm_communicator_t right_comm;		/**< The right comm for intercomms */
 
   /* Topological comm */
-  mpc_lowcomm_topo_comms topo_comms;
+  mpc_lowcomm_topo_comms *topo_comms;
   
 }mpc_lowcomm_internal_communicator_t;
 

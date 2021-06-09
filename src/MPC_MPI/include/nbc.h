@@ -78,6 +78,7 @@ typedef struct mpc_hardware_split_info_s
   int **childs_data_count;
   int *send_data_count;
   int *swap_array;
+
 }mpc_hardware_split_info_t; 
 
 /* thread specific data */
@@ -104,7 +105,7 @@ typedef struct {
  * can move request handles) */
 	void *tmpbuf_gather; /* temporary buffer e.g. used for Gather */
     
-  mpc_hardware_split_info_t *hardware_info; /* structure for hardware communicator info */
+  //mpc_hardware_split_info_t *hardware_info; /* structure for hardware communicator info */
 } NBC_Handle;
 typedef NBC_Handle NBC_Request;
 
