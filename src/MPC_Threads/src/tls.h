@@ -241,7 +241,7 @@ static inline void sctk_context_init_tls(sctk_mctx_t *ucp)
 
 void sctk_tls_dtors_init(struct sctk_tls_dtors_s **head);
 void sctk_tls_dtors_add(struct sctk_tls_dtors_s **head, void *obj, void (*func)(void *) );
-void sctk_tls_dtors_free(struct sctk_tls_dtors_s **head);
+void sctk_tls_dtors_free(struct sctk_tls_dtors_s *head);
 void *sctk_get_ctx_addr(void);   /* to be visible from launch.c */
 
 #ifdef __cplusplus

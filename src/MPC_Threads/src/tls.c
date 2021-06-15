@@ -143,6 +143,9 @@ void sctk_tls_dtors_init(struct sctk_tls_dtors_s **head)
 	*head = NULL;
 }
 
+static mpc_common_spinlock_t dtors_lock = SCTK_SPINLOCK_INITIALIZER;
+
+
 /**
  * register a new destructor to the list (C++).
  * This list contains pointers to object which have to be
@@ -159,7 +162,10 @@ void sctk_tls_dtors_add(struct sctk_tls_dtors_s **head, void *obj, void (*func)(
 	elt->dtor = func;
 	elt->obj  = obj;
 
+	mpc_common_spinlock_lock(&dtors_lock);
 	LL_PREPEND(*head, elt);
+	mpc_common_spinlock_unlock(&dtors_lock);
+
 }
 
 /**
@@ -167,16 +173,20 @@ void sctk_tls_dtors_add(struct sctk_tls_dtors_s **head, void *obj, void (*func)(
  * for the registered objects.
  * @param[in,out] head the pointer to the list to free
  */
-void sctk_tls_dtors_free(struct sctk_tls_dtors_s **head)
+void sctk_tls_dtors_free(struct sctk_tls_dtors_s *head)
 {
 	struct sctk_tls_dtors_s *elt = NULL, *tmp = NULL;
 
-	LL_FOREACH_SAFE(*head, elt, tmp)
+	mpc_common_spinlock_lock(&dtors_lock);
+
+	LL_FOREACH_SAFE(head, elt, tmp)
 	{
 		elt->dtor(elt->obj);
-		LL_DELETE(*head, elt);
+		LL_DELETE(head, elt);
 		sctk_free(elt);
 	}
+
+	mpc_common_spinlock_unlock(&dtors_lock);
 }
 
 /**

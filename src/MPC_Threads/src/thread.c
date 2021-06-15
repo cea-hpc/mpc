@@ -886,7 +886,7 @@ void mpc_thread_spawn_mpi_tasks(void *(*mpi_task_start_func)(void *), void *arg)
 	mpc_common_init_trigger("After Ending VPs");
 
 	/* Make sure to call desctructors for main thread */
-	sctk_tls_dtors_free(&(sctk_main_datas.dtors_head) );
+	sctk_tls_dtors_free(sctk_main_datas.dtors_head);
 	sctk_free(threads);
 }
 
@@ -1003,6 +1003,7 @@ static void *___vp_thread_start_routine(sctk_thread_data_t *__arg)
 
 	//mark the given TLS as currant thread allocator
 	sctk_set_tls(tmp.tls);
+
 	//do NUMA migration if required
 	sctk_alloc_posix_numa_migrate();
 	__set_thread_cleanup_callback_key();
@@ -1047,7 +1048,8 @@ static void *___vp_thread_start_routine(sctk_thread_data_t *__arg)
 	sctk_report_death(mpc_thread_self() );
 
 	__tbb_finalize_for_mpc();
-	sctk_tls_dtors_free(&(tmp.dtors_head) );
+
+	sctk_tls_dtors_free(tmp.dtors_head);
 	sctk_unregister_task(tmp.mpi_task.rank);
 
 	sctk_thread_remove(&tmp);
