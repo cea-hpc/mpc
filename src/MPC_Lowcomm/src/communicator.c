@@ -170,11 +170,11 @@ mpc_hardware_split_info_t* mpc_lowcomm_topo_comm_get(mpc_lowcomm_communicator_t 
   int index = mpc_lowcomm_find_topo_comm_index(comm, root);
   
   if(index != -1) {
-    fprintf(stderr, "GET | TASK %d | ROOT %d -> INDEX %d | ADR %p\n", task_rank, root, index, comm->topo_comms[task_rank].hw_infos[index]);
+    //fprintf(stderr, "GET | TASK %d | ROOT %d -> INDEX %d | ADR %p\n", task_rank, root, index, comm->topo_comms[task_rank].hw_infos[index]);
     return comm->topo_comms[task_rank].hw_infos[index];
   }
 
-  fprintf(stderr, "GET | TASK %d | ROOT %d -> NULL | ADR %p\n", task_rank, root, NULL);
+  //fprintf(stderr, "GET | TASK %d | ROOT %d -> NULL | ADR %p\n", task_rank, root, NULL);
   return NULL;
 }
 
@@ -184,7 +184,7 @@ void mpc_lowcomm_topo_comm_set(mpc_lowcomm_communicator_t comm, int root, mpc_ha
   int index = mpc_lowcomm_find_topo_comm_index(comm, root);
 
   if(index != -1) {
-    fprintf(stderr, "SET | TASK %d | UPDATE | ROOT %d -> INDEX %d | ADR %p\n", task_rank, root, index, hw_info);
+    //fprintf(stderr, "SET | TASK %d | UPDATE | ROOT %d -> INDEX %d | ADR %p\n", task_rank, root, index, hw_info);
     comm->topo_comms[task_rank].hw_infos[index] = hw_info;
     return;
   }
@@ -203,7 +203,7 @@ void mpc_lowcomm_topo_comm_set(mpc_lowcomm_communicator_t comm, int root, mpc_ha
     comm->topo_comms[task_rank].size *= 2;
   }
 
-  fprintf(stderr, "SET | TASK %d | ROOT %d -> INDEX %d | ADR %p\n", task_rank, root, index, hw_info);
+  //fprintf(stderr, "SET | TASK %d | ROOT %d -> INDEX %d | ADR %p\n", task_rank, root, index, hw_info);
   comm->topo_comms[task_rank].roots[index] = root;
   comm->topo_comms[task_rank].hw_infos[index] = hw_info;
 }
@@ -218,7 +218,7 @@ static inline void __communicator_id_register(mpc_lowcomm_communicator_t comm);
 static inline mpc_lowcomm_internal_communicator_t *__init_communicator_with_id(unsigned int comm_id,
                                                                                mpc_lowcomm_group_t *group)
 {
-  fprintf(stderr, "COMM INIT\n");
+  //fprintf(stderr, "COMM INIT\n");
 
 	mpc_lowcomm_internal_communicator_t *ret = sctk_malloc(sizeof(mpc_lowcomm_internal_communicator_t) );
 

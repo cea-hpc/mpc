@@ -35,8 +35,7 @@
 #define MAX_HARDWARE_LEVEL 8
 
 #define SCHED_INFO_TOPO_COMM_ALLOWED 1
-#define SCHED_INFO_TOPO_COMM_INITIALISED 2
-#define SCHED_INFO_TOPO_SWAP_ARRAY_INITIALISED 4
+#define SCHED_INFO_TOPO_COMM_CREATION_ALLOWED 2
 
 //  TODO:
 //    error hanfling
@@ -45,6 +44,17 @@
 
 #define ALLOW_TOPO_COMM 1
 #define TOPO_MAX_LEVEL 1
+
+
+__thread int global_topo_allow = 1;
+
+void global_allow_topo() {
+  global_topo_allow = 1;
+}
+
+void global_forbid_topo() {
+  global_topo_allow = 0;
+}
 
 
 /**
@@ -401,7 +411,7 @@ static inline void ___collectives_sched_info_init(Sched_info *info) {
   info->tmpbuf_size = 0;
   info->tmpbuf_pos = 0;
 
-  info->flag = 0;
+  info->flag = SCHED_INFO_TOPO_COMM_ALLOWED;
   
   info->hardware_info_ptr = NULL;
 }
@@ -945,7 +955,11 @@ static inline int ___collectives_create_master_hardware_comm_unguided(int vrank,
  */
 static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info *info) {
 
-   int rank;
+#if dbg == 1
+  fprintf(stderr, "TOPO COMM INIT CHILDS COUNT\n");
+#endif
+
+  int rank;
    _mpc_cl_comm_rank(comm, &rank);
 
    int data_count;
@@ -977,7 +991,8 @@ static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info 
          buf = info->hardware_info_ptr->childs_data_count[i];
        }
 
-       MPI_Gather(&data_count, 1, MPI_INT, buf, 1, MPI_INT, 0, info->hardware_info_ptr->rootcomm[i]);
+       //MPI_Gather(&data_count, 1, MPI_INT, buf, 1, MPI_INT, 0, info->hardware_info_ptr->rootcomm[i]);
+       __Gather_switch(&data_count, 1, MPI_INT, buf, 1, MPI_INT, 0, info->hardware_info_ptr->rootcomm[i], MPC_COLL_TYPE_BLOCKING, NULL, info);
 
        if(rank_master == 0) {
          data_count = 0;
@@ -985,6 +1000,17 @@ static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info 
            data_count += info->hardware_info_ptr->childs_data_count[i][j];
            mpc_common_nodebug("RANK %d | CHILD DATA COUNT [%d] [%d] = %d\n", rank, i, j, info->hardware_info_ptr->childs_data_count[i][j]);
          }
+
+#if dbg == 1
+        char dbg_str[1024];
+        sprintf(dbg_str, "RANK %d | CHILD DATA COUNT [%d] = [%d", rank, i, info->hardware_info_ptr->childs_data_count[i][0]);
+        for(int j = 1; j < size_master; j++) {
+          sprintf(&(dbg_str[strlen(dbg_str)]), ", %d", info->hardware_info_ptr->childs_data_count[i][j]);
+        }
+        sprintf(&(dbg_str[strlen(dbg_str)]), "]\n");
+        fprintf(stderr, "%s", dbg_str);
+#endif
+
        } else {
          break;
        }
@@ -994,7 +1020,7 @@ static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info 
      }
    }
 
-   return MPI_SUCCESS;
+  return MPI_SUCCESS;
 }
 
 /**
@@ -1005,6 +1031,10 @@ static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info 
   \return error code
  */
 static inline int ___collectives_create_swap_array(MPI_Comm comm, int root, Sched_info *info) {
+
+#if dbg == 1
+  fprintf(stderr, "TOPO COMM INIT SWAP ARRAY\n");
+#endif
 
   int rank, size;
   _mpc_cl_comm_size(comm, &size);
@@ -1038,6 +1068,10 @@ static inline int ___collectives_create_swap_array(MPI_Comm comm, int root, Sche
  */
 static inline int ___collectives_topo_comm_init(MPI_Comm comm, int root, int max_level, Sched_info *info) {
   
+#if dbg == 1
+  fprintf(stderr, "TOPO COMM INIT\n");
+#endif
+
   int rank, size;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
@@ -1045,14 +1079,15 @@ static inline int ___collectives_topo_comm_init(MPI_Comm comm, int root, int max
   int vrank;
   RANK2VRANK(rank, vrank, root);
 
-  /* specify hardware algorithm to pass hardware structure to the handle to free later */
-  info->flag |= SCHED_INFO_TOPO_COMM_INITIALISED;
-
   info->hardware_info_ptr = (mpc_hardware_split_info_t *)sctk_malloc(sizeof(mpc_hardware_split_info_t));
   mpc_lowcomm_topo_comm_set(comm, root, info->hardware_info_ptr);
 
   info->hardware_info_ptr->hwcomm = (MPI_Comm *)sctk_malloc(MAX_HARDWARE_LEVEL * sizeof(MPI_Comm));
   info->hardware_info_ptr->rootcomm = (MPI_Comm *)sctk_malloc(MAX_HARDWARE_LEVEL * sizeof(MPI_Comm));
+
+  info->hardware_info_ptr->childs_data_count = NULL;
+  info->hardware_info_ptr->send_data_count = NULL;
+  info->hardware_info_ptr->swap_array = NULL;
 
   /* Create hardware communicators using unguided topological split and max split level */
   ___collectives_create_hardware_comm_unguided(comm, vrank, max_level, info);
@@ -1060,6 +1095,17 @@ static inline int ___collectives_topo_comm_init(MPI_Comm comm, int root, int max
   ___collectives_create_master_hardware_comm_unguided(vrank, deepest_level, info);
 
   return MPI_SUCCESS;
+}
+
+static inline int __Get_topo_comm_allowed(MPC_COLL_TYPE coll_type) {
+  switch(coll_type) {
+    case MPC_COLL_TYPE_BLOCKING:
+      return _mpc_mpi_config()->coll_opts.topo_creation_allow_blocking;
+    case MPC_COLL_TYPE_NONBLOCKING: 
+      return _mpc_mpi_config()->coll_opts.topo_creation_allow_non_blocking;
+    case MPC_COLL_TYPE_PERSISTENT: 
+      return _mpc_mpi_config()->coll_opts.topo_creation_allow_persistent;
+  }
 }
 
 
@@ -1127,6 +1173,10 @@ static inline int ___collectives_ibcast( void *buffer, int count, MPI_Datatype d
   NBC_Schedule *schedule;
   Sched_info info;
   ___collectives_sched_info_init(&info);
+
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_NONBLOCKING)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
@@ -1216,10 +1266,9 @@ static inline int ___collectives_bcast_init(void *buffer, int count, MPI_Datatyp
   Sched_info info;
   ___collectives_sched_info_init(&info);
 
-#if ALLOW_TOPO_COMM == 1
-  info.flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
-#endif
-
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_PERSISTENT)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
   handle->tmpbuf = NULL;
@@ -1256,7 +1305,15 @@ static inline int ___collectives_bcast_init(void *buffer, int count, MPI_Datatyp
   \return error code
   */
 int _mpc_mpi_collectives_bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm) {
-  return ___collectives_bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL); 
+
+  Sched_info info;
+  __sched_info_init(&info);
+
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
+
+  return __Bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info); 
 }
 
 
@@ -1290,7 +1347,19 @@ static inline int ___collectives_bcast_switch(void *buffer, int count, MPI_Datat
     NBC_BCAST_TOPO
   } alg;
 
-  if(info && (info->flag & SCHED_INFO_TOPO_COMM_ALLOWED)) {
+
+  int topo = 0;
+  // Check if we are on a topological comm
+  if(global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
+    // Get the topological communicators
+    info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root);
+    // If we could'nt get them, check if we can create them
+    if(info->hardware_info_ptr != NULL || (info->flag & SCHED_INFO_TOPO_COMM_CREATION_ALLOWED)) {
+      topo = 1;
+    }
+  }
+
+  if(topo) {
     alg = NBC_BCAST_TOPO;
   } else {
     alg = NBC_BCAST_BINOMIAL;
@@ -1478,6 +1547,9 @@ static inline int ___collectives_bcast_scatter_allgather(__UNUSED__ void *buffer
   */
 static inline int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
+  int initial_flag = info->flag;
+  info->flag &=(!SCHED_INFO_TOPO_COMM_ALLOWED); 
+
   int rank, size, res = MPI_SUCCESS;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
@@ -1494,26 +1566,18 @@ static inline int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatyp
     case MPC_COLL_TYPE_BLOCKING:
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
-      break;
-
     case MPC_COLL_TYPE_COUNT:
-      {
-        if(!(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
-          /* choose max topological level on which to do hardware split */
-          /*TODO choose level wisely */
-          int max_level = TOPO_MAX_LEVEL;
-          //max_level = MAX_HARDWARE_LEVEL;
+      break;
+  }
 
-          ___collectives_topo_comm_init(comm, root, max_level, info);
-          mpc_lowcomm_topo_comm_set(comm, root, info->hardware_info_ptr);
-        }
+  if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
+    /* choose max topological level on which to do hardware split */
+    /*TODO choose level wisely */
+    int max_level = TOPO_MAX_LEVEL;
 
-        fprintf(stderr, "RANK %d | hw info ptr %p\n", rank, info->hardware_info_ptr);
-        break;
-      }
+    ___collectives_topo_comm_init(comm, root, max_level, info);
   }
   
-  info->flag ^= SCHED_INFO_TOPO_COMM_ALLOWED; 
 
   int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
 
@@ -1536,7 +1600,7 @@ static inline int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatyp
 
   res = ___collectives_bcast_switch(buffer, count, datatype, 0, hardware_comm, coll_type, schedule, info);
   
-  info->flag ^= SCHED_INFO_TOPO_COMM_ALLOWED; 
+  info->flag = initial_flag; 
 
   return res;
 }
@@ -1616,6 +1680,9 @@ static inline int ___collectives_ireduce(const void *sendbuf, void* recvbuf, int
   Sched_info info;
   ___collectives_sched_info_init(&info);
 
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_NONBLOCKING)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
   res = NBC_Init_handle(handle, comm, MPC_IREDUCE_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
@@ -1712,6 +1779,9 @@ static inline int ___collectives_reduce_init(const void *sendbuf, void* recvbuf,
   info.flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
 #endif
 
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_PERSISTENT)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
   res = NBC_Init_handle(handle, comm, MPC_IREDUCE_TAG);
 
   handle->tmpbuf = NULL;
@@ -1750,7 +1820,15 @@ static inline int ___collectives_reduce_init(const void *sendbuf, void* recvbuf,
   \return error code
   */
 int _mpc_mpi_collectives_reduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm) {
-  return ___collectives_reduce_switch(sendbuf, recvbuf, count, datatype, op, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+
+  Sched_info info;
+  __sched_info_init(&info);
+
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
+
+  return __Reduce_switch(sendbuf, recvbuf, count, datatype, op, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
 
@@ -1786,7 +1864,19 @@ static inline int ___collectives_reduce_switch(const void *sendbuf, void* recvbu
     NBC_REDUCE_TOPO_COMMUTE
   } alg;
 
-  if(info && (info->flag & SCHED_INFO_TOPO_COMM_ALLOWED)) {
+
+  int topo = 0;
+  // Check if we are on a topological comm
+  if(global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
+    // Get the topological communicators
+    info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root);
+    // If we could'nt get them, check if we can create them
+    if(info->hardware_info_ptr != NULL || (info->flag & SCHED_INFO_TOPO_COMM_CREATION_ALLOWED)) {
+      topo = 1;
+    }
+  }
+  
+  if(topo) {
     if(sctk_op_can_commute(sctk_convert_to_mpc_op(op), datatype)) {
       alg = NBC_REDUCE_TOPO_COMMUTE;
     } else {
@@ -2116,21 +2206,20 @@ static inline int ___collectives_reduce_topo(const void *sendbuf, void* recvbuf,
         if(rank == root) {
           info->tmpbuf_size += size * count * ext;
         }
-        if(!(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
-        // if(!(info->flag & SCHED_INFO_TOPO_COMM_INITIALISED)) {
-          /* choose max topological level on which to do hardware split */
-          /*TODO choose level wisely */
-          int max_level = TOPO_MAX_LEVEL;
-          //max_level = MAX_HARDWARE_LEVEL;
-
-          ___collectives_topo_comm_init(comm, root, max_level, info);
-        }
         break;
       }
   }
-  
-  info->flag ^= SCHED_INFO_TOPO_COMM_ALLOWED; 
-  
+
+  if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
+    // if(!(info->flag & SCHED_INFO_TOPO_COMM_INITIALISED)) {
+    /* choose max topological level on which to do hardware split */
+    /*TODO choose level wisely */
+    int max_level = TOPO_MAX_LEVEL;
+    //max_level = MAX_HARDWARE_LEVEL;
+
+    ___collectives_topo_comm_init(comm, root, max_level, info);
+  }
+
   void *tmp_sendbuf = sendbuf;
   if(sendbuf == MPI_IN_PLACE) {
     tmp_sendbuf = recvbuf;
@@ -2150,8 +2239,6 @@ static inline int ___collectives_reduce_topo(const void *sendbuf, void* recvbuf,
 
     ___collectives_copy_type(tmpbuf + (size-1) * count * ext, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
   }
-  
-  info->flag ^= SCHED_INFO_TOPO_COMM_ALLOWED; 
 
   return res;
 }
@@ -2172,6 +2259,9 @@ static inline int ___collectives_reduce_topo(const void *sendbuf, void* recvbuf,
   \return error code
   */
 static inline int ___collectives_reduce_topo_commute(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+  
+  int initial_flag = info->flag;
+  info->flag &=(!SCHED_INFO_TOPO_COMM_ALLOWED); 
 
   int rank, size, res = MPI_SUCCESS;
   MPI_Aint ext;
@@ -2198,27 +2288,22 @@ static inline int ___collectives_reduce_topo_commute(const void *sendbuf, void* 
 
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
-      break;
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
-      break;
-
     case MPC_COLL_TYPE_COUNT:
-      {
-        if(!(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
-        //if(!(info->flag & SCHED_INFO_TOPO_COMM_INITIALISED)) {
-          /* choose max topological level on which to do hardware split */
-          /*TODO choose level wisely */
-          int max_level = TOPO_MAX_LEVEL;
-          //max_level = MAX_HARDWARE_LEVEL;
-
-          ___collectives_topo_comm_init(comm, root, max_level, info);
-        }
         break;
-      }
+  }
+
+  if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
+    // if(!(info->flag & SCHED_INFO_TOPO_COMM_INITIALISED)) {
+    /* choose max topological level on which to do hardware split */
+    /*TODO choose level wisely */
+    int max_level = TOPO_MAX_LEVEL;
+    //max_level = MAX_HARDWARE_LEVEL;
+
+    ___collectives_topo_comm_init(comm, root, max_level, info);
   }
   
-  info->flag ^= SCHED_INFO_TOPO_COMM_ALLOWED; 
   
   int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
 
@@ -2249,7 +2334,7 @@ static inline int ___collectives_reduce_topo_commute(const void *sendbuf, void* 
     }
   }
 
-  info->flag ^= SCHED_INFO_TOPO_COMM_ALLOWED; 
+  info->flag = initial_flag; 
 
   return res;
 }
@@ -2321,6 +2406,9 @@ static inline int ___collectives_iallreduce(const void *sendbuf, void* recvbuf, 
   Sched_info info;
   ___collectives_sched_info_init(&info);
 
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_NONBLOCKING)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
   res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
@@ -2411,6 +2499,9 @@ static inline int ___collectives_allreduce_init(const void *sendbuf, void* recvb
   info.flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
 #endif
 
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_PERSISTENT)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
   res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
 
   handle->tmpbuf = NULL;
@@ -2448,7 +2539,15 @@ static inline int ___collectives_allreduce_init(const void *sendbuf, void* recvb
   \return error code
   */
 int _mpc_mpi_collectives_allreduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
-  return ___collectives_allreduce_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+
+  Sched_info info;
+  __sched_info_init(&info);
+
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
+
+  return __Allreduce_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
 
@@ -2484,11 +2583,24 @@ static inline int ___collectives_allreduce_switch(const void *sendbuf, void* rec
     NBC_ALLREDUCE_TOPO
   } alg;
 
-  if(info && (info->flag & SCHED_INFO_TOPO_COMM_ALLOWED)) {
+  int topo = 0;
+  // Check if we are on a topological comm
+  if(global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
+    // Get the topological communicators
+    info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, 0);
+    // If we could'nt get them, check if we can create them
+    if(info->hardware_info_ptr != NULL || (info->flag & SCHED_INFO_TOPO_COMM_CREATION_ALLOWED)) {
+      topo = 1;
+    }
+  }
+
+  if(topo) {
     alg = NBC_ALLREDUCE_TOPO;
   } else {
     alg = NBC_ALLREDUCE_REDUCE_BROADCAST;
   }
+    
+  alg = NBC_ALLREDUCE_REDUCE_BROADCAST;
 
   int res;
 
@@ -3175,6 +3287,9 @@ static inline int ___collectives_iscatter(const void *sendbuf, int sendcount, MP
   Sched_info info;
   ___collectives_sched_info_init(&info);
 
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_NONBLOCKING)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
@@ -3274,6 +3389,9 @@ static inline int ___collectives_scatter_init(const void *sendbuf, int sendcount
   info.flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
 #endif
 
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_PERSISTENT)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
   handle->tmpbuf = NULL;
@@ -3313,7 +3431,15 @@ static inline int ___collectives_scatter_init(const void *sendbuf, int sendcount
   \return error code
   */
 int _mpc_mpi_collectives_scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm) {
-  return ___collectives_scatter_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL); 
+
+  Sched_info info;
+  __sched_info_init(&info);
+
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
+
+  return __Scatter_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info); 
 }
 
 
@@ -3348,7 +3474,18 @@ static inline int ___collectives_scatter_switch(const void *sendbuf, int sendcou
     NBC_SCATTER_TOPO
   } alg;
 
-  if(info && (info->flag & SCHED_INFO_TOPO_COMM_ALLOWED)) {
+  int topo = 0;
+  // Check if we are on a topological comm
+  if(global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
+    // Get the topological communicators
+    info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root);
+    // If we could'nt get them, check if we can create them
+    if(info->hardware_info_ptr != NULL || (info->flag & SCHED_INFO_TOPO_COMM_CREATION_ALLOWED)) {
+      topo = 1;
+    }
+  }
+
+  if(topo) {
     alg = NBC_SCATTER_TOPO;
   } else {
     alg = NBC_SCATTER_BINOMIAL;
@@ -3595,7 +3732,10 @@ static inline int ___collectives_scatter_binomial(const void *sendbuf, int sendc
   \return error code
   */
 static inline int ___collectives_scatter_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
-
+  
+  int initial_flag = info->flag;
+  info->flag &=(!SCHED_INFO_TOPO_COMM_ALLOWED); 
+ 
   int rank, size, res = MPI_SUCCESS;
   MPI_Aint sendext, recvext;
 
@@ -3640,28 +3780,27 @@ static inline int ___collectives_scatter_topo(const void *sendbuf, int sendcount
 
     case MPC_COLL_TYPE_COUNT:
       {
-        if(!(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
-        // if(!(info->flag & SCHED_INFO_TOPO_COMM_INITIALISED)) {
-          /* choose max topological level on which to do hardware split */
-          /*TODO choose level wisely */
-          int max_level = TOPO_MAX_LEVEL;
-          //max_level = MAX_HARDWARE_LEVEL;
-
-          ___collectives_topo_comm_init(comm, root, max_level, info);
-        }
-
-        if(!(info->hardware_info_ptr->childs_data_count)) {
-        // if(!(info->flag & SCHED_INFO_TOPO_SWAP_ARRAY_INITIALISED)) {
-          ___collectives_create_childs_counts(comm, info);
-          ___collectives_create_swap_array(comm, root, info);
-        }
-
         info->tmpbuf_size += size * recvext * tmp_recvcount;
         break;
       }
   }
+
+  if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
+    // if(!(info->flag & SCHED_INFO_TOPO_COMM_INITIALISED)) {
+    /* choose max topological level on which to do hardware split */
+    /*TODO choose level wisely */
+    int max_level = TOPO_MAX_LEVEL;
+    //max_level = MAX_HARDWARE_LEVEL;
+
+    __Topo_comm_init(comm, root, max_level, info);
+  }
+
+  if(!(info->hardware_info_ptr->childs_data_count)) {
+    // if(!(info->flag & SCHED_INFO_TOPO_SWAP_ARRAY_INITIALISED)) {
+    ___collectives_create_childs_counts(comm, info);
+    ___collectives_create_swap_array(comm, root, info);
+  }
   
-  info->flag ^= SCHED_INFO_TOPO_COMM_ALLOWED; 
 
   // 1) SWAP
   // 2) MASTER SCATTERV
@@ -3737,7 +3876,7 @@ static inline int ___collectives_scatter_topo(const void *sendbuf, int sendcount
 
   res = ___collectives_scatter_switch(tmpbuf, tmp_recvcount, tmp_recvtype, scatter_buf, tmp_recvcount, tmp_recvtype, 0, hardware_comm, coll_type, schedule, info);
 
-  info->flag ^= SCHED_INFO_TOPO_COMM_ALLOWED; 
+  info->flag = initial_flag; 
 
   return res;
 }
@@ -4185,6 +4324,9 @@ static inline int ___collectives_igather(const void *sendbuf, int sendcount, MPI
   Sched_info info;
   ___collectives_sched_info_init(&info);
 
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_NONBLOCKING)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
@@ -4289,6 +4431,9 @@ static inline int ___collectives_gather_init(const void *sendbuf, int sendcount,
   info.flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
 #endif
 
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_PERSISTENT)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
   handle->tmpbuf = NULL;
@@ -4326,7 +4471,15 @@ static inline int ___collectives_gather_init(const void *sendbuf, int sendcount,
   \return error code
   */
 int _mpc_mpi_collectives_gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm) {
-  return ___collectives_gather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+
+  Sched_info info;
+  __sched_info_init(&info);
+
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
+
+  return __Gather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
 
@@ -4361,10 +4514,21 @@ static inline int ___collectives_gather_switch(const void *sendbuf, int sendcoun
     NBC_GATHER_TOPO
   } alg;
 
-  if(info && (info->flag & SCHED_INFO_TOPO_COMM_ALLOWED)) {
+  int topo = 0;
+  // Check if we are on a topological comm
+  if(global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
+    // Get the topological communicators
+    info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root);
+    // If we could'nt get them, check if we can create them
+    if(info->hardware_info_ptr != NULL || (info->flag & SCHED_INFO_TOPO_COMM_CREATION_ALLOWED)) {
+      topo = 1;
+    }
+  }
+
+  if(topo) {
     alg = NBC_GATHER_TOPO;
   } else {
-    alg = NBC_GATHER_BINOMIAL;
+    alg = NBC_GATHER_LINEAR;
   }
 
   int res;
@@ -4609,6 +4773,10 @@ static inline int ___collectives_gather_binomial(const void *sendbuf, int sendco
   \return error code
   */
 static inline int ___collectives_gather_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+
+  int initial_flag = info->flag;
+  info->flag &=(!SCHED_INFO_TOPO_COMM_ALLOWED); 
+
   int rank, size, res = MPI_SUCCESS;
   MPI_Aint sendext, recvext;
 
@@ -4630,19 +4798,6 @@ static inline int ___collectives_gather_topo(const void *sendbuf, int sendcount,
     tmp_sendbuf = recvbuf + rank * sendext * tmp_sendcount;
   }
 
-  enum {
-    NBC_GATHER_LINEAR,
-    NBC_GATHER_BINOMIAL
-  } gather_alg;
-
-  enum {
-    NBC_GATHERV_LINEAR,
-    NBC_GATHERV_BINOMIAL
-  } gatherv_alg;
-
-  gather_alg = NBC_GATHER_BINOMIAL;
-  gatherv_alg = NBC_GATHERV_LINEAR;
-
   void *tmpbuf = NULL;
 
   switch(coll_type) {
@@ -4657,28 +4812,27 @@ static inline int ___collectives_gather_topo(const void *sendbuf, int sendcount,
 
     case MPC_COLL_TYPE_COUNT:
       {
-        if(!(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
-        // if(!(info->flag & SCHED_INFO_TOPO_COMM_INITIALISED)) {
-          /* choose max topological level on which to do hardware split */
-          /*TODO choose level wisely */
-          int max_level = TOPO_MAX_LEVEL;
-          //max_level = MAX_HARDWARE_LEVEL;
-
-          ___collectives_topo_comm_init(comm, root, max_level, info);
-        }
-
-        if(!(info->hardware_info_ptr->childs_data_count)) {
-        // if(!(info->flag & SCHED_INFO_TOPO_SWAP_ARRAY_INITIALISED)) {
-          ___collectives_create_childs_counts(comm, info);
-          ___collectives_create_swap_array(comm, root, info);
-        }
-
         info->tmpbuf_size += size * sendext * tmp_sendcount;
         break;
       }
   }
 
-  info->flag ^= SCHED_INFO_TOPO_COMM_ALLOWED; 
+  if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
+    // if(!(info->flag & SCHED_INFO_TOPO_COMM_INITIALISED)) {
+    /* choose max topological level on which to do hardware split */
+    /*TODO choose level wisely */
+    int max_level = TOPO_MAX_LEVEL;
+    //max_level = MAX_HARDWARE_LEVEL;
+
+    __Topo_comm_init(comm, root, max_level, info);
+  }
+
+  if(!(info->hardware_info_ptr->childs_data_count)) {
+    // if(!(info->flag & SCHED_INFO_TOPO_SWAP_ARRAY_INITIALISED)) {
+    ___collectives_create_childs_counts(comm, info);
+    ___collectives_create_swap_array(comm, root, info);
+  }
+
 
   int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
 
@@ -4688,6 +4842,7 @@ static inline int ___collectives_gather_topo(const void *sendbuf, int sendcount,
   res = ___collectives_gather_switch(tmp_sendbuf, tmp_sendcount, tmp_sendtype, tmpbuf, tmp_sendcount, tmp_sendtype, 0, hardware_comm, coll_type, schedule, info);
 
   int displs[size];
+  int counts[size];
   void *gatherv_buf = NULL;
 
 
@@ -4708,14 +4863,17 @@ static inline int ___collectives_gather_topo(const void *sendbuf, int sendcount,
 
       if(rank_master == 0) {
         displs[0] = 0;
+        counts[0] = info->hardware_info_ptr->childs_data_count[i][0] * tmp_sendcount;
         for(int j = 1; j < size_master; j++) {
           displs[j] = displs[j-1] + info->hardware_info_ptr->childs_data_count[i][j-1] * sendcount * sendext;
+          counts[j] = info->hardware_info_ptr->childs_data_count[i][j] * tmp_sendcount;
         }
 
         gatherv_buf = MPI_IN_PLACE;
       }
 
-      res = ___collectives_gatherv_switch(gatherv_buf, info->hardware_info_ptr->send_data_count[i], sendtype, tmpbuf, info->hardware_info_ptr->childs_data_count[i], displs, sendtype, 0, master_comm, coll_type, schedule, info);
+      //res = ___collectives_gatherv_switch(gatherv_buf, info->hardware_info_ptr->send_data_count[i], sendtype, tmpbuf, info->hardware_info_ptr->childs_data_count[i], displs, sendtype, 0, master_comm, coll_type, schedule, info);
+      res = ___collectives_gatherv_switch(gatherv_buf, info->hardware_info_ptr->send_data_count[i] * tmp_sendcount, sendtype, tmpbuf, counts, displs, sendtype, 0, master_comm, coll_type, schedule, info);
     }
   }
 
@@ -4740,7 +4898,7 @@ static inline int ___collectives_gather_topo(const void *sendbuf, int sendcount,
                 comm, coll_type, schedule, info);
   }
   
-  info->flag ^= SCHED_INFO_TOPO_COMM_ALLOWED; 
+  info->flag = initial_flag; 
 
   return res;
 }
@@ -6040,6 +6198,9 @@ static inline int ___collectives_iallgather(const void *sendbuf, int sendcount, 
   Sched_info info;
   ___collectives_sched_info_init(&info);
 
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_NONBLOCKING)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
   res = NBC_Init_handle(handle, comm, MPC_IALLGATHER_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
@@ -6139,6 +6300,9 @@ static inline int ___collectives_allgather_init(const void *sendbuf, int sendcou
   info.flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
 #endif
 
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_PERSISTENT)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
   handle->tmpbuf = NULL;
@@ -6177,7 +6341,15 @@ static inline int ___collectives_allgather_init(const void *sendbuf, int sendcou
   \return error code
   */
 int _mpc_mpi_collectives_allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm) {
-  return ___collectives_allgather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+
+  Sched_info info;
+  __sched_info_init(&info);
+
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
+
+  return __Allgather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
 
@@ -6213,7 +6385,18 @@ static inline int ___collectives_allgather_switch(const void *sendbuf, int sendc
     NBC_ALLGATHER_TOPO
   } alg;
 
-  if(info && (info->flag & SCHED_INFO_TOPO_COMM_ALLOWED)) {
+  int topo = 0;
+  // Check if we are on a topological comm
+  if(global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
+    // Get the topological communicators
+    info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, 0);
+    // If we could'nt get them, check if we can create them
+    if(info->hardware_info_ptr != NULL || (info->flag & SCHED_INFO_TOPO_COMM_CREATION_ALLOWED)) {
+      topo = 1;
+    }
+  }
+
+  if(topo) {
     alg = NBC_ALLGATHER_TOPO;
   } else {
     alg = NBC_ALLGATHER_DISTANCE_DOUBLING;

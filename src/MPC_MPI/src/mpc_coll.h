@@ -45,4 +45,7 @@ int _mpc_mpi_collectives_exscan (const void *sendbuf, void *recvbuf, int count, 
 int _mpc_mpi_collectives_barrier (MPI_Comm comm);
 
 
+void global_allow_topo();
+void global_forbid_topo();
+
 #endif
