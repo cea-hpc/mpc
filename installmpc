@@ -1164,6 +1164,7 @@ TBB_PREFIX="disabled"
 
 # Empty means mpc-compiler-additions's default
 GCC_VERSION=""
+WORKSHARE_ENABLED="no"
 
 #
 # Argument parsing
@@ -1432,9 +1433,12 @@ do
 		--force-spack-package=*)
 			extractParamValue 'OVERRIDEN_SPACK_PKGS' 'force-spack-package' "$arg"
 			;;
-    --enable-workshare)
+    	--enable-workshare)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-workshare"
-      ;;
+			WORKSHARE_ENABLED="yes"
+			# Workshare is only on 7.3.0 try to force it
+			GCC_VERSION="7.3.0"
+      	;;
 		# Build wrappers
 		--version)
 			printf "%s\n" "$("$SCRIPTPATH/utils/get_version")"
@@ -1584,6 +1588,9 @@ check_glibc_is_compatible()
                GLIBC=$(ldd --version | head -n 1 | rev | cut -d " " -f 1 | rev | sed "s/\.//g")
                # Check for incompatibilities in versions >= 2.27
                if test $GLIBC -gt 227; then
+			   			if test "${WORKSHARE_ENABLED}" = "yes"; then
+							info "GCC 7.3.0 is required to enable workshare consider disabling this option"
+						fi
 			   		    if test "x${GCC_VERSION}" = "x7.3.0"; then
                        		die "GLIBC $GLIBC not compatible with GCC 7.3.0 you may choose another version with --gcc-version=10.2.0 for example)"
 						fi
@@ -1601,8 +1608,12 @@ if test -n "${GCC_VERSION}"; then
 	DISABLE_WORKSHARE=""
 	DISABLE_WORKSHARE_ARG=""
 
-	# This will need to be updated for workshare
 	if test "x${GCC_VERSION}" != "x7.3.0"; then
+
+		if test "${WORKSHARE_ENABLED}" = "yes"; then
+			die "GCC 7.3.0 is required to enable workshare consider disabling this option"
+		fi
+
 		info "Building GCC ${GCC_VERSION}: disabling workshare extensions only supported in GCC 7.3.0"
 		DISABLE_WORKSHARE=" -workshare"
 		DISABLE_WORKSHARE_ARG=" --disable-workshare"
