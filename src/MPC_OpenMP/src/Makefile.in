@@ -148,15 +148,27 @@ am__v_lt_1 =
 libiomp5_la_LIBADD =
 am_libiomp5_la_OBJECTS = ./fakelib/fakelib.lo
 libiomp5_la_OBJECTS = $(am_libiomp5_la_OBJECTS)
-am__DEPENDENCIES_1 =
-libmpcomp_la_DEPENDENCIES = ../../MPC_Launch/src/libmpclaunch.la \
-	$(am__DEPENDENCIES_1)
+libmpcomp_la_DEPENDENCIES = ../../MPC_Launch/src/libmpclaunch.la
+am__objects_1 = tools/src/mpcompt_entryPoints.lo \
+	tools/src/mpcompt_init.lo tools/src/mpcompt_instance.lo \
+	tools/callback/mpcompt_cancel.lo \
+	tools/callback/mpcompt_control_tool.lo \
+	tools/callback/mpcompt_device.lo \
+	tools/callback/mpcompt_dispatch.lo \
+	tools/callback/mpcompt_flush.lo \
+	tools/callback/mpcompt_mutex.lo \
+	tools/callback/mpcompt_parallel.lo \
+	tools/callback/mpcompt_sync.lo \
+	tools/callback/mpcompt_target.lo \
+	tools/callback/mpcompt_task.lo \
+	tools/callback/mpcompt_thread.lo \
+	tools/callback/mpcompt_workShare.lo
 am_libmpcomp_la_OBJECTS = mpcomp_api.lo mpcomp_core.lo \
 	mpcomp_fortran.lo mpcomp_loop.lo mpcomp_parallel_region.lo \
 	mpcomp_places_env.lo mpcomp_spinning_core.lo mpcomp_stack.lo \
 	mpcomp_stack_node_leaf.lo mpcomp_sync.lo mpcomp_task.lo \
-	mpcomp_tree.lo mpcomp_alloc.lo omp_gomp.lo \
-	omp_intel_atomics.lo omp_intel.lo omp_ompt.lo
+	mpcomp_tree.lo omp_gomp.lo mpcomp_alloc.lo omp_intel_atomics.lo omp_intel.lo \
+	$(am__objects_1)
 libmpcomp_la_OBJECTS = $(am_libmpcomp_la_OBJECTS)
 libmpcomp_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -274,10 +286,7 @@ EXTLS_CFLAGS = @EXTLS_CFLAGS@
 EXTLS_LIBS = @EXTLS_LIBS@
 FC = @FC@
 FCFLAGS = @FCFLAGS@
-FFI_CFLAGS = @FFI_CFLAGS@
-FFI_LIBS = @FFI_LIBS@
 FGREP = @FGREP@
-FORTRAN_ARG_MISMATCH_ARG = @FORTRAN_ARG_MISMATCH_ARG@
 GREP = @GREP@
 HAVE_BUILTIN_EXPECT = @HAVE_BUILTIN_EXPECT@
 HAVE_MPC_THREAD = @HAVE_MPC_THREAD@
@@ -345,15 +354,11 @@ MPC_CONFIG_SCHED_RR = @MPC_CONFIG_SCHED_RR@
 MPC_CONFIG_SEM_FAILED = @MPC_CONFIG_SEM_FAILED@
 MPC_CONFIG_SEM_VALUE_MAX = @MPC_CONFIG_SEM_VALUE_MAX@
 MPC_FORTRAN_ENABLED = @MPC_FORTRAN_ENABLED@
-MPC_FORTRAN_PKGCONFIG_CFLAGS = @MPC_FORTRAN_PKGCONFIG_CFLAGS@
-MPC_FORTRAN_PKGCONFIG_LIB = @MPC_FORTRAN_PKGCONFIG_LIB@
 MPC_GENERATION_DATE = @MPC_GENERATION_DATE@
 MPC_HAVE_DMTCP = @MPC_HAVE_DMTCP@
 MPC_HAVE_PROFILER = @MPC_HAVE_PROFILER@
 MPC_IN_PROCESS_MODE = @MPC_IN_PROCESS_MODE@
-MPC_IO_PKGCONFIG_LIB = @MPC_IO_PKGCONFIG_LIB@
 MPC_LAUNCHER = @MPC_LAUNCHER@
-MPC_LAUNCHER_PROGRAM = @MPC_LAUNCHER_PROGRAM@
 MPC_LOWCOMM_ENABLED = @MPC_LOWCOMM_ENABLED@
 MPC_MODULE_DEFINES = @MPC_MODULE_DEFINES@
 MPC_MODULE_LIST = @MPC_MODULE_LIST@
@@ -364,20 +369,18 @@ MPC_OPENMP_ENABLED = @MPC_OPENMP_ENABLED@
 MPC_TARGET_ARCHITECTURE = @MPC_TARGET_ARCHITECTURE@
 MPC_THREAD_ENABLED = @MPC_THREAD_ENABLED@
 MPC_THREAD_KEYS_MAX = @MPC_THREAD_KEYS_MAX@
-MPC_THREAD_PKGCONFIG_DEP = @MPC_THREAD_PKGCONFIG_DEP@
 MPC_VERSION_MAJOR = @MPC_VERSION_MAJOR@
 MPC_VERSION_MINOR = @MPC_VERSION_MINOR@
 MPC_VERSION_PATCH = @MPC_VERSION_PATCH@
 MPC_VERSION_PRE = @MPC_VERSION_PRE@
 MPC_VERSION_STRING = @MPC_VERSION_STRING@
+MPIEXEC_HYDDRA = @MPIEXEC_HYDDRA@
 MPIEXEC_HYDRA = @MPIEXEC_HYDRA@
 NEEDS_MPI_FINT = @NEEDS_MPI_FINT@
 NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
-OFI_CFLAGS = @OFI_CFLAGS@
-OFI_LIBS = @OFI_LIBS@
 OPA_CFLAGS = @OPA_CFLAGS@
 OPA_LIBS = @OPA_LIBS@
 OTOOL = @OTOOL@
@@ -396,14 +399,10 @@ PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
 PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 PKG_DATADIR = @PKG_DATADIR@
 PKG_INCDIR = @PKG_INCDIR@
-PMIX_CFLAGS = @PMIX_CFLAGS@
-PMIX_LIBS = @PMIX_LIBS@
 PMI_CFLAGS = @PMI_CFLAGS@
 PMI_LIBS = @PMI_LIBS@
 PORTALS_CFLAGS = @PORTALS_CFLAGS@
 PORTALS_LIBS = @PORTALS_LIBS@
-PRTERUN = @PRTERUN@
-PRUN = @PRUN@
 PYTHON = @PYTHON@
 PYTHON_EXEC_PREFIX = @PYTHON_EXEC_PREFIX@
 PYTHON_PLATFORM = @PYTHON_PLATFORM@
@@ -428,14 +427,15 @@ SIZEOF_PTHREAD_RWLOCKATTR_T = @SIZEOF_PTHREAD_RWLOCKATTR_T@
 SIZEOF_PTHREAD_RWLOCK_T = @SIZEOF_PTHREAD_RWLOCK_T@
 SIZEOF_PTHREAD_SPINLOCK_T = @SIZEOF_PTHREAD_SPINLOCK_T@
 SIZEOF_SEM_T = @SIZEOF_SEM_T@
-SRUN_IN_PATH = @SRUN_IN_PATH@
 STRIP = @STRIP@
 UNW_CFLAGS = @UNW_CFLAGS@
 UNW_LIBS = @UNW_LIBS@
 USING_ASAN = @USING_ASAN@
 VERSION = @VERSION@
-VMEM_CFLAGS = @VMEM_CFLAGS@
-VMEM_LIBS = @VMEM_LIBS@
+XML2_CFLAGS = @XML2_CFLAGS@
+XML2_LIBS = @XML2_LIBS@
+XMLLINT = @XMLLINT@
+XSLTPROC = @XSLTPROC@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -536,15 +536,27 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	-I$(abs_top_builddir)/src/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Threads/src/ \
 	-I$(abs_top_srcdir)/src/MPC_Threads/include/ \
-	-I$(abs_top_srcdir)/src/MPC_OpenMP/include/ $(VMEM_CFLAGS)
+	-I$(abs_top_srcdir)/src/MPC_OpenMP/include/ $(tools_inc)
+tools_inc = -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/src/ \
+            -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/callback/ \
+            -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/trace/
+
 lib_LTLIBRARIES = libmpcomp.la libiomp5.la libgomp.la
 libmpcomp_la_SOURCES = mpcomp_api.c mpcomp_core.c mpcomp_fortran.c \
 	mpcomp_loop.c mpcomp_parallel_region.c mpcomp_places_env.c \
 	mpcomp_spinning_core.c mpcomp_stack.c mpcomp_stack_node_leaf.c \
-	mpcomp_sync.c mpcomp_task.c mpcomp_tree.c mpcomp_alloc.c \
-	omp_gomp.c omp_intel_atomics.c omp_intel.c omp_ompt.c
+	mpcomp_sync.c mpcomp_task.c mpcomp_tree.c omp_gomp.c mpcomp_alloc.c \
+	omp_intel_atomics.c omp_intel.c $(tools_src)
+tools_src = tools/src/mpcompt_entryPoints.c tools/src/mpcompt_init.c tools/src/mpcompt_instance.c \
+            tools/callback/mpcompt_cancel.c tools/callback/mpcompt_control_tool.c \
+            tools/callback/mpcompt_device.c tools/callback/mpcompt_dispatch.c \
+            tools/callback/mpcompt_flush.c tools/callback/mpcompt_mutex.c \
+            tools/callback/mpcompt_parallel.c tools/callback/mpcompt_sync.c \
+            tools/callback/mpcompt_target.c tools/callback/mpcompt_task.c \
+            tools/callback/mpcompt_thread.c tools/callback/mpcompt_workShare.c
+
 libmpcomp_la_LDFLAGS = -Wl,--version-script=$(abs_top_srcdir)/src/MPC_OpenMP/version_gomp.txt
-libmpcomp_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la $(VMEM_LIBS)
+libmpcomp_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la
 libiomp5_la_SOURCES = ./fakelib/fakelib.c
 libgomp_la_SOURCES = ./fakelib/fakelib.c
 all: all-am
@@ -629,6 +641,49 @@ libgomp.la: $(libgomp_la_OBJECTS) $(libgomp_la_DEPENDENCIES) $(EXTRA_libgomp_la_
 
 libiomp5.la: $(libiomp5_la_OBJECTS) $(libiomp5_la_DEPENDENCIES) $(EXTRA_libiomp5_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) -rpath $(libdir) $(libiomp5_la_OBJECTS) $(libiomp5_la_LIBADD) $(LIBS)
+tools/src/$(am__dirstamp):
+	@$(MKDIR_P) tools/src
+	@: > tools/src/$(am__dirstamp)
+tools/src/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tools/src/$(DEPDIR)
+	@: > tools/src/$(DEPDIR)/$(am__dirstamp)
+tools/src/mpcompt_entryPoints.lo: tools/src/$(am__dirstamp) \
+	tools/src/$(DEPDIR)/$(am__dirstamp)
+tools/src/mpcompt_init.lo: tools/src/$(am__dirstamp) \
+	tools/src/$(DEPDIR)/$(am__dirstamp)
+tools/src/mpcompt_instance.lo: tools/src/$(am__dirstamp) \
+	tools/src/$(DEPDIR)/$(am__dirstamp)
+tools/callback/$(am__dirstamp):
+	@$(MKDIR_P) tools/callback
+	@: > tools/callback/$(am__dirstamp)
+tools/callback/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tools/callback/$(DEPDIR)
+	@: > tools/callback/$(DEPDIR)/$(am__dirstamp)
+tools/callback/mpcompt_cancel.lo: tools/callback/$(am__dirstamp) \
+	tools/callback/$(DEPDIR)/$(am__dirstamp)
+tools/callback/mpcompt_control_tool.lo:  \
+	tools/callback/$(am__dirstamp) \
+	tools/callback/$(DEPDIR)/$(am__dirstamp)
+tools/callback/mpcompt_device.lo: tools/callback/$(am__dirstamp) \
+	tools/callback/$(DEPDIR)/$(am__dirstamp)
+tools/callback/mpcompt_dispatch.lo: tools/callback/$(am__dirstamp) \
+	tools/callback/$(DEPDIR)/$(am__dirstamp)
+tools/callback/mpcompt_flush.lo: tools/callback/$(am__dirstamp) \
+	tools/callback/$(DEPDIR)/$(am__dirstamp)
+tools/callback/mpcompt_mutex.lo: tools/callback/$(am__dirstamp) \
+	tools/callback/$(DEPDIR)/$(am__dirstamp)
+tools/callback/mpcompt_parallel.lo: tools/callback/$(am__dirstamp) \
+	tools/callback/$(DEPDIR)/$(am__dirstamp)
+tools/callback/mpcompt_sync.lo: tools/callback/$(am__dirstamp) \
+	tools/callback/$(DEPDIR)/$(am__dirstamp)
+tools/callback/mpcompt_target.lo: tools/callback/$(am__dirstamp) \
+	tools/callback/$(DEPDIR)/$(am__dirstamp)
+tools/callback/mpcompt_task.lo: tools/callback/$(am__dirstamp) \
+	tools/callback/$(DEPDIR)/$(am__dirstamp)
+tools/callback/mpcompt_thread.lo: tools/callback/$(am__dirstamp) \
+	tools/callback/$(DEPDIR)/$(am__dirstamp)
+tools/callback/mpcompt_workShare.lo: tools/callback/$(am__dirstamp) \
+	tools/callback/$(DEPDIR)/$(am__dirstamp)
 
 libmpcomp.la: $(libmpcomp_la_OBJECTS) $(libmpcomp_la_DEPENDENCIES) $(EXTRA_libmpcomp_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(libmpcomp_la_LINK) -rpath $(libdir) $(libmpcomp_la_OBJECTS) $(libmpcomp_la_LIBADD) $(LIBS)
@@ -637,6 +692,10 @@ mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f ./fakelib/*.$(OBJEXT)
 	-rm -f ./fakelib/*.lo
+	-rm -f tools/callback/*.$(OBJEXT)
+	-rm -f tools/callback/*.lo
+	-rm -f tools/src/*.$(OBJEXT)
+	-rm -f tools/src/*.lo
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -657,8 +716,22 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/omp_gomp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/omp_intel.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/omp_intel_atomics.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/omp_ompt.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./fakelib/$(DEPDIR)/fakelib.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tools/callback/$(DEPDIR)/mpcompt_cancel.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tools/callback/$(DEPDIR)/mpcompt_control_tool.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tools/callback/$(DEPDIR)/mpcompt_device.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tools/callback/$(DEPDIR)/mpcompt_dispatch.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tools/callback/$(DEPDIR)/mpcompt_flush.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tools/callback/$(DEPDIR)/mpcompt_mutex.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tools/callback/$(DEPDIR)/mpcompt_parallel.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tools/callback/$(DEPDIR)/mpcompt_sync.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tools/callback/$(DEPDIR)/mpcompt_target.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tools/callback/$(DEPDIR)/mpcompt_task.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tools/callback/$(DEPDIR)/mpcompt_thread.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tools/callback/$(DEPDIR)/mpcompt_workShare.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tools/src/$(DEPDIR)/mpcompt_entryPoints.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tools/src/$(DEPDIR)/mpcompt_init.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tools/src/$(DEPDIR)/mpcompt_instance.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -690,6 +763,8 @@ mostlyclean-libtool:
 clean-libtool:
 	-rm -rf .libs _libs
 	-rm -rf ./fakelib/.libs ./fakelib/_libs
+	-rm -rf tools/callback/.libs tools/callback/_libs
+	-rm -rf tools/src/.libs tools/src/_libs
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -808,6 +883,10 @@ distclean-generic:
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
 	-rm -f fakelib/$(DEPDIR)/$(am__dirstamp)
 	-rm -f fakelib/$(am__dirstamp)
+	-rm -f tools/callback/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tools/callback/$(am__dirstamp)
+	-rm -f tools/src/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tools/src/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -818,7 +897,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR) ./fakelib/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) ./fakelib/$(DEPDIR) tools/callback/$(DEPDIR) tools/src/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -864,7 +943,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR) ./fakelib/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) ./fakelib/$(DEPDIR) tools/callback/$(DEPDIR) tools/src/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

@@ -54,6 +54,8 @@
 
 #include "mpc_reduction.h"
 
+#include "mpc_lowcomm_workshare.h"
+
 /*******************
 * FORTRAN SUPPORT *
 *******************/
@@ -2458,20 +2460,22 @@ int __INTERNAL__PMPI_Barrier_intra_shm_sig(MPI_Comm comm)
 	{
 		while(*toll != OPA_load_int(&barrier_ctx->fare) )
 		{
-			mpc_thread_yield();
-			if( (cnt++ & 0xFF) == 0)
-			{
-				mpc_mpi_cl_egreq_progress_poll();
-			}
-		}
-	}
-	else
-	{
-		while(*toll != OPA_load_int(&barrier_ctx->fare) )
-		{
-			sctk_cpu_relax();
-			if( (cnt++ & 0xFF) == 0)
-			{
+      mpc_thread_yield();
+      MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+      if( (cnt++ & 0xFF) == 0)
+      {
+        mpc_mpi_cl_egreq_progress_poll();
+      }
+    }
+  }
+  else
+  {
+    while(*toll != OPA_load_int(&barrier_ctx->fare) )
+    {
+      sctk_cpu_relax();
+      MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+      if( (cnt++ & 0xFF) == 0)
+      {
 				mpc_mpi_cl_egreq_progress_poll();
 			}
 		}
@@ -2508,21 +2512,23 @@ int __INTERNAL__PMPI_Barrier_intra_shm_sig(MPI_Comm comm)
 		if(__do_yield)
 		{
 			while(the_signal == 0)
-			{
-				mpc_thread_yield();
-				if( (cnt++ & 0xFF) == 0)
-				{
-					mpc_mpi_cl_egreq_progress_poll();
-				}
-			}
-		}
-		else
-		{
-			while(the_signal == 0)
-			{
-				sctk_cpu_relax();
-				if( (cnt++ & 0xFF) == 0)
-				{
+      {
+        mpc_thread_yield();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+        if( (cnt++ & 0xFF) == 0)
+        {
+          mpc_mpi_cl_egreq_progress_poll();
+        }
+      }
+    }
+    else
+    {
+      while(the_signal == 0)
+      {
+        sctk_cpu_relax();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+        if( (cnt++ & 0xFF) == 0)
+        {
 					mpc_mpi_cl_egreq_progress_poll();
 				}
 			}
@@ -2759,49 +2765,53 @@ int __INTERNAL__PMPI_Bcast_intra_shm(void *buffer, int count,
 		      OPA_load_int(&bcast_ctx->fare) )
 		{
 			mpc_thread_yield();
-		}
-	}
-	else
-	{
-		while(bcast_ctx->tollgate[rank] !=
-		      OPA_load_int(&bcast_ctx->fare) )
-		{
-			sctk_cpu_relax();
-		}
-	}
+      MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+    }
+  }
+  else
+  {
+    while(bcast_ctx->tollgate[rank] !=
+        OPA_load_int(&bcast_ctx->fare) )
+    {
+      sctk_cpu_relax();
+      MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+    }
+  }
 
-	/* Reverse state so that only a root done can unlock by
-	 * also reversing the fare */
-	bcast_ctx->tollgate[rank] = !bcast_ctx->tollgate[rank];
+  /* Reverse state so that only a root done can unlock by
+   * also reversing the fare */
+  bcast_ctx->tollgate[rank] = !bcast_ctx->tollgate[rank];
 
-	void *   data_buff = buffer;
-	MPI_Aint tsize     = 0;
-	res = PMPI_Type_extent(datatype, &tsize);
-	if(res != MPI_SUCCESS)
-	{
-		return res;
-	}
+  void *   data_buff = buffer;
+  MPI_Aint tsize     = 0;
+  res = PMPI_Type_extent(datatype, &tsize);
+  if(res != MPI_SUCCESS)
+  {
+    return res;
+  }
 
-	int is_shared_mem_buffer = sctk_mpi_type_is_shared_mem(datatype, count);
-	int is_contig_type       = _mpc_dt_is_contig_mem(datatype);
+  int is_shared_mem_buffer = sctk_mpi_type_is_shared_mem(datatype, count);
+  int is_contig_type       = _mpc_dt_is_contig_mem(datatype);
 
-	/* Now am I the root ? */
-	if(root == rank)
-	{
-		if(__do_yield)
-		{
-			while(OPA_cas_int(&bcast_ctx->owner, -1, -2) != -1)
-			{
-				mpc_thread_yield();
-			}
-		}
-		else
-		{
-			while(OPA_cas_int(&bcast_ctx->owner, -1, -2) != -1)
-			{
-				sctk_cpu_relax();
-			}
-		}
+  /* Now am I the root ? */
+  if(root == rank)
+  {
+    if(__do_yield)
+    {
+      while(OPA_cas_int(&bcast_ctx->owner, -1, -2) != -1)
+      {
+        mpc_thread_yield();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+      }
+    }
+    else
+    {
+      while(OPA_cas_int(&bcast_ctx->owner, -1, -2) != -1)
+      {
+        sctk_cpu_relax();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+      }
+    }
 
 		bcast_ctx->root_in_buff = 0;
 
@@ -2855,6 +2865,7 @@ int __INTERNAL__PMPI_Bcast_intra_shm(void *buffer, int count,
 			while(OPA_load_int(&bcast_ctx->owner) != root)
 			{
 				mpc_thread_yield();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 			}
 		}
 		else
@@ -2862,6 +2873,7 @@ int __INTERNAL__PMPI_Bcast_intra_shm(void *buffer, int count,
 			while(OPA_load_int(&bcast_ctx->owner) != root)
 			{
 				sctk_cpu_relax();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 			}
 		}
 	}
@@ -2921,15 +2933,17 @@ int __INTERNAL__PMPI_Bcast_intra_shm(void *buffer, int count,
 				while(OPA_load_int(&bcast_ctx->left_to_pop) != 0)
 				{
 					mpc_thread_yield();
+          MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 				}
 			}
 			else
 			{
-				while(OPA_load_int(&bcast_ctx->left_to_pop) != 0)
-				{
-					sctk_cpu_relax();
-				}
-			}
+        while(OPA_load_int(&bcast_ctx->left_to_pop) != 0)
+        {
+          sctk_cpu_relax();
+          MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+        }
+      }
 
 			goto SHM_BCAST_RELEASE;
 		}
@@ -3503,6 +3517,7 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(const void *sendbuf, int sendcnt,
 		while(gv_ctx->tollgate[rank] != OPA_load_int(&gv_ctx->fare) )
 		{
 			mpc_thread_yield();
+      MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 		}
 	}
 	else
@@ -3510,6 +3525,7 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(const void *sendbuf, int sendcnt,
 		while(gv_ctx->tollgate[rank] != OPA_load_int(&gv_ctx->fare) )
 		{
 			sctk_cpu_relax();
+      MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 		}
 	}
 
@@ -3557,6 +3573,7 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(const void *sendbuf, int sendcnt,
 			while(OPA_cas_int(&gv_ctx->owner, -1, -2) != -1)
 			{
 				mpc_thread_yield();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 			}
 		}
 		else
@@ -3564,6 +3581,7 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(const void *sendbuf, int sendcnt,
 			while(OPA_cas_int(&gv_ctx->owner, -1, -2) != -1)
 			{
 				sctk_cpu_relax();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 			}
 		}
 
@@ -3596,6 +3614,7 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(const void *sendbuf, int sendcnt,
 			while(OPA_load_int(&gv_ctx->owner) != root)
 			{
 				mpc_thread_yield();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 			}
 		}
 		else
@@ -3603,6 +3622,7 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(const void *sendbuf, int sendcnt,
 			while(OPA_load_int(&gv_ctx->owner) != root)
 			{
 				sctk_cpu_relax();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 			}
 		}
 	}
@@ -3673,12 +3693,14 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(const void *sendbuf, int sendcnt,
 			while(OPA_load_int(&gv_ctx->left_to_push) != 0)
 			{
 				mpc_thread_yield();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 			}
 		}
 		else
 		{
 			while(OPA_load_int(&gv_ctx->left_to_push) != 0)
 			{
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 				sctk_cpu_relax();
 			}
 		}
@@ -4208,6 +4230,7 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 		while(sv_ctx->tollgate[rank] != OPA_load_int(&sv_ctx->fare) )
 		{
 			mpc_thread_yield();
+      MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 		}
 	}
 	else
@@ -4215,6 +4238,7 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 		while(sv_ctx->tollgate[rank] != OPA_load_int(&sv_ctx->fare) )
 		{
 			sctk_cpu_relax();
+      MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 		}
 	}
 
@@ -4248,16 +4272,18 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 		if(__do_yield)
 		{
 			while(OPA_cas_int(&sv_ctx->owner, -1, -2) != -1)
-			{
-				mpc_thread_yield();
-			}
-		}
-		else
-		{
-			while(OPA_cas_int(&sv_ctx->owner, -1, -2) != -1)
-			{
-				sctk_cpu_relax();
-			}
+      {
+        mpc_thread_yield();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+      }
+    }
+    else
+    {
+      while(OPA_cas_int(&sv_ctx->owner, -1, -2) != -1)
+      {
+        sctk_cpu_relax();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+      }
 		}
 
 		sv_ctx->send_type = sendtype;
@@ -4334,18 +4360,20 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 		if(__do_yield)
 		{
 			while(OPA_load_int(&sv_ctx->owner) != root)
-			{
-				mpc_thread_yield();
-			}
-		}
-		else
-		{
-			while(OPA_load_int(&sv_ctx->owner) != root)
-			{
-				sctk_cpu_relax();
-			}
-		}
-	}
+      {
+        mpc_thread_yield();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+      }
+    }
+    else
+    {
+      while(OPA_load_int(&sv_ctx->owner) != root)
+      {
+        sctk_cpu_relax();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+      }
+    }
+  }
 
 	//if (!_mpc_dt_is_contig_mem(sendtype) && rank != root) {
 	//sv_ctx->was_packed = 1;
@@ -4436,16 +4464,18 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 		if(__do_yield)
 		{
 			while(OPA_load_int(&sv_ctx->left_to_pop) != 0)
-			{
-				mpc_thread_yield();
-			}
-		}
-		else
-		{
-			while(OPA_load_int(&sv_ctx->left_to_pop) != 0)
-			{
-				sctk_cpu_relax();
-			}
+      {
+        mpc_thread_yield();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+      }
+    }
+    else
+    {
+      while(OPA_load_int(&sv_ctx->left_to_pop) != 0)
+      {
+        sctk_cpu_relax();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+      }
 		}
 
 		/* Do we need to free data packed for Scatter case ? */
@@ -7528,6 +7558,7 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 		while(reduce_ctx->tollgate[rank] != OPA_load_int(&reduce_ctx->fare) )
 		{
 			mpc_thread_yield();
+      MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 		}
 	}
 	else
@@ -7535,6 +7566,7 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 		while(reduce_ctx->tollgate[rank] != OPA_load_int(&reduce_ctx->fare) )
 		{
 			sctk_cpu_relax();
+      MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 		}
 	}
 
@@ -7583,16 +7615,18 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 		if(__do_yield)
 		{
 			while(OPA_cas_int(&reduce_ctx->owner, -1, -2) != -1)
-			{
-				mpc_thread_yield();
-			}
-		}
-		else
-		{
-			while(OPA_cas_int(&reduce_ctx->owner, -1, -2) != -1)
-			{
-				sctk_cpu_relax();
-			}
+      {
+        mpc_thread_yield();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+      }
+    }
+    else
+    {
+      while(OPA_cas_int(&reduce_ctx->owner, -1, -2) != -1)
+      {
+        sctk_cpu_relax();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+      }
 		}
 
 		/* Set the local infos */
@@ -7617,19 +7651,21 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 	else
 	{
 		if(__do_yield)
-		{
-			while(OPA_load_int(&reduce_ctx->owner) != root)
-			{
-				mpc_thread_yield();
-			}
-		}
-		else
-		{
-			while(OPA_load_int(&reduce_ctx->owner) != root)
-			{
-				sctk_cpu_relax();
-			}
-		}
+    {
+      while(OPA_load_int(&reduce_ctx->owner) != root)
+      {
+        mpc_thread_yield();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+      }
+    }
+    else
+    {
+      while(OPA_load_int(&reduce_ctx->owner) != root)
+      {
+        sctk_cpu_relax();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+      }
+    }
 	}
 
 	/* Get variables */
@@ -7664,6 +7700,7 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 			while(OPA_load_int(&reduce_ctx->left_to_push) != (rank + 1) )
 			{
 				mpc_thread_yield();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 			}
 		}
 		else
@@ -7671,6 +7708,7 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 			while(OPA_load_int(&reduce_ctx->left_to_push) != (rank + 1) )
 			{
 				sctk_cpu_relax();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 			}
 		}
 
@@ -7794,15 +7832,17 @@ SHM_REDUCE_DONE:
 		{
 			while(OPA_load_int(&reduce_ctx->left_to_push) != 0)
 			{
-				mpc_thread_yield();
-			}
-		}
-		else
-		{
-			while(OPA_load_int(&reduce_ctx->left_to_push) != 0)
-			{
-				sctk_cpu_relax();
-			}
+        mpc_thread_yield();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+      }
+    }
+    else
+    {
+      while(OPA_load_int(&reduce_ctx->left_to_push) != 0)
+      {
+        sctk_cpu_relax();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+      }
 		}
 
 		if(will_be_in_shm_buff)
@@ -10273,8 +10313,9 @@ int PMPI_Buffer_detach(void *buffer, int *size)
 				head      = head_next;
 			}
 			if(pending != 0)
-			{
-				mpc_thread_yield();
+      {
+        mpc_thread_yield();
+        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 			}
 		} while(pending != 0);
 	}
@@ -10523,6 +10564,7 @@ int PMPI_Test(MPI_Request *request, int *flag, MPI_Status *status)
 	else
 	{
 		mpc_thread_yield();
+    MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 	}
 
 	if(status != MPI_STATUS_IGNORE)
@@ -11017,6 +11059,7 @@ int PMPI_Testall(int count, MPI_Request array_of_requests[], int *flag,
 	if(*flag == 0)
 	{
 		mpc_thread_yield();
+    MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 	}
 
 	if(array_of_statuses != MPI_STATUSES_IGNORE)
@@ -11174,10 +11217,12 @@ int PMPI_Testsome(int incount, MPI_Request array_of_requests[], int *outcount, i
 	{
 		*outcount = MPI_UNDEFINED;
 		mpc_thread_yield();
+    MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 	}
 	else
 	{
 		mpc_thread_yield();
+    MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 	}
 
 	if( (array_of_statuses != MPI_STATUSES_IGNORE) && (*outcount != MPI_UNDEFINED) )
@@ -11213,6 +11258,7 @@ int PMPI_Iprobe(int source, int tag, MPI_Comm comm, int *flag,
 	if(!(*flag) )
 	{
 		mpc_thread_yield();
+    MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 	}
 
 

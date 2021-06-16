@@ -39,6 +39,10 @@
 
 #include "sctk_dummy.h"
 
+#ifdef MPC_Lowcomm
+#include "mpc_lowcomm_workshare.h"
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -130,15 +134,20 @@ typedef struct sctk_thread_data_s
 	struct sctk_tls_dtors_s *                dtors_head;
 	/* Where the thread must be bound */
 	unsigned int                             bind_to;
-	/* This is the MPI interface per th ctx */
-	void *                                   mpi_per_thread;
-	/* The thread disguisement if present */
-	mpc_thread_mpi_disguise_t disguise;
+  /* This is the MPI interface per th ctx */
+  void *                                   mpi_per_thread;
+  /* The thread disguisement if present */
+  mpc_thread_mpi_disguise_t disguise;
+#ifdef MPC_Lowcomm
+  mpc_workshare *                          workshare; 
+  int                                      is_in_collective;
+#endif
+
 } sctk_thread_data_t;
 
 #define SCTK_THREAD_DATA_INIT    { NULL, NULL, NULL, {-1, -1}, -1, -1, NULL,           \
 		                   NULL, -1, (void *)NULL, sctk_thread_undef_status, \
-		                   NULL, NULL, -1, NULL, {NULL, NULL} }
+		                   NULL, NULL, -1, NULL, {NULL, NULL},0,0 }
 
 void _mpc_thread_data_init(void);
 void _mpc_thread_data_set(sctk_thread_data_t *task_id);

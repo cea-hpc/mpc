@@ -2767,6 +2767,16 @@ if test "x${mpc_debug_messages}" = "xyes"; then
         AC_DEFINE([MPC_ENABLE_DEBUG_MESSAGES], [1], [MPC debug messages output was enabled])
 fi
 
+AC_ARG_ENABLE([enable-workshare],
+[AS_HELP_STRING([--enable-workshare],
+                [Enable MPI Workshare])],
+[mpc_enable_workshare=$enableval],
+[mpc_enable_workshare=no])
+
+if test "x${mpc_enable_workshare}" = "xyes"; then
+        AC_DEFINE([MPC_ENABLE_WORKSHARE], [1], [MPI Workshare was enabled])
+fi
+
 AC_ARG_ENABLE([debug-mem],
 [AS_HELP_STRING([--enable-debug-mem],
                 [Compile MPC with ASAN checks])],
@@ -3009,6 +3019,7 @@ MPC_CONFIG_RESULT="\
 # Debug symbols........ $mpc_debug ($MPC_DEBUG_FLAGS)\n\
 # Memory Debug......... $mpc_debug_mem\n\
 # Debug messages....... $mpc_debug_messages\n\
+# Enable workshare..... $mpc_enable_workshare\n\
 # Colored output....... $mpc_shell_color\n\
 # ${PERF_WARNING}\n\
 #############################################\n"

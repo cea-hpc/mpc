@@ -29,26 +29,27 @@
 
 #include <sys/time.h>
 #include <ctype.h>
+#include <string.h>
 
+#include "mpc_thread.h"
 #include "mpc_launch.h"
-
 #include "mpcomp_task.h"
-#include "mpcomp_sync.h"
-
 #include "mpcomp_sync.h"
 #include "mpcomp_core.h"
 #include "mpcomp_tree.h"
+#include "mpcomp_spinning_core.h"
 
 /* Loop declaration */
 #include "mpcomp_loop.h"
 #include "mpcomp_tree.h"
 #include "mpc_conf.h"
-#include "mpc_thread.h"
-
-#include "ompt.h"
 /* parsing OMP_PLACES */
 #include "mpcomp_places_env.h"
 
+#include "mpcompt_task.h"
+#include "mpcompt_init.h"
+#include "mpcompt_thread.h"
+#include "mpcompt_frame.h"
 
 /*************************
  * MPC_OMP CONFIGURATION *
@@ -93,6 +94,9 @@ static inline void __omp_conf_set_default(void)
 	__omp_conf.omp_task_use_lockfree_queue = 1;
 	__omp_conf.omp_task_steal_last_stolen_list = 0;
 	__omp_conf.omp_task_resteal_to_last_thief = 0;
+
+	snprintf(__omp_conf.omp_tool, MPC_CONF_STRING_SIZE, "enabled");
+	snprintf(__omp_conf.omp_tool_libraries, MPC_CONF_STRING_SIZE, "");
 
 }
 
@@ -173,6 +177,9 @@ static mpcomp_mode_t OMP_MODE = MPCOMP_MODE_SIMPLE_MIXED;
 static mpcomp_affinity_t OMP_AFFINITY = MPCOMP_AFFINITY_SCATTER;
 /* OMP_PLACES */
 static mpcomp_places_info_t *OMP_PLACES_LIST = NULL;
+/* Tools */
+static mpcomp_tool_status_t OMP_TOOL = mpcomp_tool_enabled;
+static char* OMP_TOOL_LIBRARIES = NULL;
 
 mpcomp_global_icv_t mpcomp_global_icvs;
 
@@ -428,7 +435,7 @@ __mpcomp_prepare_omp_task_tree_init( const int num_mvps, const int *cpus_order )
 }
 
 static void
-__mpcomp_init_omp_task_tree( const int num_mvps, int *shape, const int *cpus_order, const mpcomp_local_icv_t icvs )
+__mpcomp_init_omp_task_tree( const int num_mvps, int *shape, const int *cpus_order )
 {
 	int i, max_depth, place_depth = 0, place_size;
 	int *tree_shape;
@@ -472,7 +479,7 @@ __mpcomp_init_omp_task_tree( const int num_mvps, int *shape, const int *cpus_ord
 		place_size = 1;
 	}
 
-	_mpc_omp_tree_alloc( tree_shape, max_depth, cpus_order, place_depth, place_size, &icvs );
+	_mpc_omp_tree_alloc( tree_shape, max_depth, cpus_order, place_depth, place_size );
 }
 
 /*
@@ -739,10 +746,10 @@ static inline void __mpcomp_read_env_variables()
 		}
 		else
 		{
-			mpc_common_debug_warning("Unknown affinity <%s> (must be COMPACT, "
+			/*mpc_common_debug_warning("Unknown affinity <%s> (must be COMPACT, "
 			         "SCATTER or BALANCED),"
 			         " fallback to default affinity <%d>\n",
-			         env, OMP_AFFINITY );
+			         env, OMP_AFFINITY );*/
 		}
 	}
 
@@ -774,6 +781,30 @@ static inline void __mpcomp_read_env_variables()
 	{
 		OMP_TREE = NULL;
 	}
+
+    /******* OMP_TOOL *********/
+    env = __omp_conf.omp_tool;
+
+    if ( strlen( env ) != 0 )
+    {
+        if ( strncmp( env, "disabled", strlen("disabled") ) == 0 ||
+             strncmp( env, "Disabled", strlen("disabled") ) == 0 ||
+             strncmp( env, "DISABLED", strlen("disabled") ) == 0 )
+        {
+            OMP_TOOL = mpcomp_tool_disabled;
+        }
+    }
+
+//fprintf(stderr, "OMPT TOOL ENV = %s / OMP_TOOL = %s\n", env, OMP_TOOL );
+//fflush(stderr);
+
+    /******* OMP_TOOL_LIBRARIES *********/
+    env = __omp_conf.omp_tool_libraries;
+
+    if ( strlen( env ) != 0 )
+    {
+        OMP_TOOL_LIBRARIES = strdup( env );
+    }
 
 	/***** PRINT SUMMARY (only first MPI rank) ******/
 	if ( getenv( "MPC_DISABLE_BANNER" ) == NULL &&  mpc_common_get_process_rank() == 0)
@@ -914,9 +945,14 @@ static inline void __mpcomp_read_env_variables()
 		mpc_common_debug_log("\tMIC optimizations on\n" );
 #endif
 #if OMPT_SUPPORT
-		mpc_common_debug_log("\tOMPT Support ON\n" );
+		mpc_common_debug_log("\tTool support %s", OMP_TOOL ? "enabled" : "disabled" );
+
+        if ( OMP_TOOL_LIBRARIES )
+        {
+		    mpc_common_debug_log("\tTool paths: %s", OMP_TOOL_LIBRARIES );
+        }
 #else
-		mpc_common_debug_log("\tOMPT Support OFF\n" );
+		mpc_common_debug_log("\tTool Support disabled" );
 #endif
 		TODO( "Add every env vars when printing info on OpenMP" )
                 mpc_common_debug_log("--------------------------------------------------");
@@ -934,16 +970,18 @@ void __mpcomp_init( void )
 	int task_rank;
 
 	/* Do we need to initialize the current team */
-	if ( sctk_openmp_thread_tls )
-	{
-		return;
-	}
-
 #if OMPT_SUPPORT
-	_mpc_ompt_pre_init();
+    if ( sctk_openmp_thread_tls
+         && ( (mpcomp_thread_t*) sctk_openmp_thread_tls )->tool_status != uninitialized )
+#else
+	if ( sctk_openmp_thread_tls )
 #endif /* OMPT_SUPPORT */
+    {
+		return;
+    }
 
 	mpcomp_local_icv_t icvs;
+
 	/* Need to initialize the whole runtime (environment variables) This
 	* section is shared by every OpenMP instances among MPI tasks located inside
 	* the same OS process */
@@ -961,6 +999,8 @@ void __mpcomp_init( void )
 		mpcomp_global_icvs.nmicrovps_var = __omp_conf.OMP_MICROVP_NUMBER;
 		mpcomp_global_icvs.warn_nested = __omp_conf.OMP_WARN_NESTED;
 		mpcomp_global_icvs.affinity = OMP_AFFINITY;
+        mpcomp_global_icvs.tool = OMP_TOOL;
+        mpcomp_global_icvs.tool_libraries = OMP_TOOL_LIBRARIES;
 		done = 1;
 	}
 
@@ -1068,9 +1108,14 @@ void __mpcomp_init( void )
 	icvs.modifier_sched_var = __omp_conf.OMP_MODIFIER_SCHEDULE;
 	icvs.active_levels_var = 0;
 	icvs.levels_var = 0;
+
+    __mpcomp_init_seq_region();
+
 #if OMPT_SUPPORT
-	_mpc_ompt_post_init();
+	__mpcompt_init();
 #endif /* OMPT_SUPPORT */
+
+    __mpcomp_init_initial_thread( icvs );
 
 	int places_nb_mvps;
 	int *shape, *cpus_order;
@@ -1079,8 +1124,7 @@ void __mpcomp_init( void )
 	if ( OMP_PLACES_LIST )
 	{
 		places_nb_mvps = mpcomp_places_get_topo_info( OMP_PLACES_LIST, &shape, &cpus_order );
-		assert( places_nb_mvps <= nb_mvps );
-		nb_mvps = places_nb_mvps;
+		assert( places_nb_mvps == nb_mvps );
 	}
 	else
 	{
@@ -1088,15 +1132,46 @@ void __mpcomp_init( void )
 		cpus_order = NULL;
 	}
 
-	__mpcomp_init_omp_task_tree( nb_mvps, shape, cpus_order, icvs );
+	__mpcomp_init_omp_task_tree( nb_mvps, shape, cpus_order );
+
 #if MPCOMP_TASK
 	//    _mpc_task_team_info_init(team_info, instance->tree_depth);
 #endif /* MPCOMP_TASK */
+
 	mpc_common_spinlock_unlock( &lock );
+
+#if OMPT_SUPPORT
+    __mpcompt_callback_implicit_task( ompt_scope_begin, 1, 1, ompt_task_initial );
+#endif /* OMPT_SUPPORT */
 }
 
 void __mpcomp_exit( void )
 {
+    mpcomp_thread_t *ithread;
+    mpcomp_node_t* root_node;
+
+    if( sctk_openmp_thread_tls ) {
+        ithread = sctk_openmp_thread_tls;
+        assert( ithread->rank == 0 );
+        root_node = ithread->root;
+        assert( root_node );
+
+#if OMPT_SUPPORT
+        __mpcompt_callback_implicit_task( ompt_scope_end, 0, 1, ompt_task_initial );
+#endif /* OMPT_SUPPORT */
+
+        __mpcomp_exit_node_signal( root_node );
+
+#if OMPT_SUPPORT
+        __mpcompt_callback_thread_end( ithread, ompt_thread_initial );
+        __mpcompt_finalize();
+#endif /* OMPT_SUPPORT */
+
+        if( mpcomp_global_icvs.tool_libraries ) {
+            sctk_free( mpcomp_global_icvs.tool_libraries );
+            mpcomp_global_icvs.tool_libraries = NULL;
+        }
+    }
 #if MPCOMP_TASK
 	//     _mpc_task_new_exit();
 #endif /* MPCOMP_TASK */
@@ -1142,65 +1217,17 @@ void __mpcomp_in_order_scheduler( mpcomp_thread_t *thread )
 			not_implemented();
 	}
 
-#if OMPT_SUPPORT
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    /* Record and reset current frame infos */
+    mpcompt_frame_info_t prev_frame_infos = __mpcompt_frame_reset_infos();
 
-	if ( _mpc_omp_ompt_is_enabled() )
-	{
-		if ( OMPT_Callbacks )
-		{
-			ompt_callback_implicit_task_t callback;
-			callback = ( ompt_callback_implicit_task_t ) OMPT_Callbacks[ompt_callback_implicit_task];
-
-			if ( callback )
-			{
-				ompt_data_t *parallel_data = &( thread->instance->team->info.ompt_region_data );
-                ompt_data_t* task_data = &( thread->task_infos.current_task->ompt_task_data );
-
-				callback( ompt_scope_begin, parallel_data, task_data, thread->instance->nb_mvps, thread->rank, ompt_task_implicit );  
-			}
-		}
-	}
-
+    __mpcompt_frame_set_exit( MPCOMPT_GET_FRAME_ADDRESS );
 #endif /* OMPT_SUPPORT */
+
 	thread->info.func( thread->info.shared );
-#if OMPT_SUPPORT
 
-	if ( _mpc_omp_ompt_is_enabled() )
-	{
-		if ( OMPT_Callbacks )
-		{
-			ompt_callback_implicit_task_t callback;
-			callback = ( ompt_callback_implicit_task_t ) OMPT_Callbacks[ompt_callback_implicit_task];
-
-			if ( callback )
-			{
-                ompt_data_t* task_data = &( thread->task_infos.current_task->ompt_task_data );
-
-				callback( ompt_scope_end, NULL, task_data, thread->instance->nb_mvps, thread->rank, ompt_task_implicit );
-			}
-		}
-	}
-
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    /* Restore previous frame infos */
+    __mpcompt_frame_set_infos( &prev_frame_infos );
 #endif /* OMPT_SUPPORT */
-
-	/* Handle ending of combined parallel region */
-	switch ( thread->info.combined_pragma )
-	{
-		case MPCOMP_COMBINED_NONE:
-		case MPCOMP_COMBINED_SECTION:
-		case MPCOMP_COMBINED_STATIC_LOOP:
-			break;
-
-		case MPCOMP_COMBINED_DYN_LOOP:
-			__mpcomp_dynamic_loop_end_nowait();
-			break;
-
-		case MPCOMP_COMBINED_GUIDED_LOOP:
-			__mpcomp_guided_loop_end_nowait();
-			break;
-
-		default:
-			not_implemented();
-			break;
-	}
 }

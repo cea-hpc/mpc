@@ -48,6 +48,7 @@
 #include <sctk_ib_device.h>
 #endif
 
+#include "mpc_lowcomm_workshare.h"
 #include "lowcomm_config.h"
 
 /********************************************************************/
@@ -2300,9 +2301,10 @@ static void __mpc_comm_perform_msg_wfv(void *a)
 	__mpc_comm_ptp_msg_wait(_wait);
 
 	if( ( volatile int )_wait->request->completion_flag != MPC_LOWCOMM_MESSAGE_DONE)
-	{
-		sctk_network_notify_idle_message();
-	}
+  {
+    sctk_network_notify_idle_message();
+    MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+  }
 }
 
 void mpc_lowcomm_perform_idle(volatile int *data, int value,
@@ -2317,6 +2319,7 @@ void mpc_lowcomm_perform_idle(volatile int *data, int value,
 	while(*data != value)
 	{
 		func(arg);
+    MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 	}
 #else
 	mpc_thread_wait_for_value_and_poll(data, value, func, arg);
@@ -2463,6 +2466,7 @@ static inline void __mpc_comm_ptp_msg_wait(struct mpc_lowcomm_ptp_msg_progress_s
 		{
 			__mpc_comm_ptp_perform_msg_pair_trylock(recv_ptp);
 		}
+
 	}
 	else
 	{

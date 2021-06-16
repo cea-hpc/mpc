@@ -520,6 +520,37 @@ struct _mpc_lowcomm_config_struct_networks
 	char                                               cli_default_network[MPC_CONF_STRING_SIZE];
 };
 
+typedef enum
+{
+	WS_STEAL_MODE_ROUNDROBIN = 0,
+	WS_STEAL_MODE_RANDOM,
+	WS_STEAL_MODE_PRODUCER,
+	WS_STEAL_MODE_LESS_STEALERS,
+	WS_STEAL_MODE_LESS_STEALERS_PRODUCER,
+	WS_STEAL_MODE_TOPOLOGICAL,
+	WS_STEAL_MODE_STRICTLY_TOPOLOGICAL,
+	WS_STEAL_MODE_COUNT
+} ws_steal_mode;
+
+struct _mpc_lowcomm_workshare_config
+{
+  /** Workshare steal policy **/ 
+	ws_steal_mode steal_mode;
+  /** Stealing from end of the loop or not **/ 
+	int steal_from_end;
+  /** Schedule (guided, dynamic, static) **/ 
+	int schedule;
+  /** Steal schedule (guided, dynamic, static) when stealing **/ 
+	int steal_schedule;
+  /** Chunk size **/ 
+	int chunk_size;
+  /** Chunk size when stealing **/ 
+	int steal_chunk_size;
+  /** Enable workshare stealing or not **/ 
+  int enable_stealing;
+};
+
+
 
 struct _mpc_lowcomm_config_struct_networks *_mpc_lowcomm_config_net_get(void);
 
@@ -554,6 +585,7 @@ struct _mpc_lowcomm_config
 #ifdef MPC_USE_INFINIBAND
 	struct _mpc_lowcomm_config_struct_ib_global infiniband;
 #endif
+	struct _mpc_lowcomm_workshare_config workshare;
 };
 
 struct _mpc_lowcomm_config *_mpc_lowcomm_conf_get(void);

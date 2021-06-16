@@ -32,13 +32,11 @@
 #include <mpc_common_asm.h>
 #include "sctk_context.h"
 #include "mpc_common_types.h"
-
 #include "mpcomp.h"
-#include "ompt.h"
-
 #include "sctk_alloc.h"
-
 #include "mpc_common_mcs.h"
+#include "mpcompt_instance_types.h"
+#include "mpcompt_frame_types.h"
 
 #include <stdbool.h>
 
@@ -67,9 +65,6 @@
 #endif /* MPCOMP_OPENMP_3_0 */
 
 #define MPCOMP_USE_TASKDEP 1
-
-/* Enable/Disable OMPT support */
-#define OMPT_SUPPORT 0
 
 /* Maximum number of alive 'for dynamic' and 'for guided'  construct */
 #define MPCOMP_MAX_ALIVE_FOR_DYN 3
@@ -352,6 +347,15 @@ __UNUSED__ static char *mpcomp_task_dep_task_status_to_string[MPCOMP_TASK_DEP_TA
 #endif
 
 /**********************
+ * OMPT STATUS        *
+ **********************/
+
+typedef enum mpcomp_tool_status_e {
+    mpcomp_tool_disabled = 0,
+    mpcomp_tool_enabled  = 1
+} mpcomp_tool_status_t;
+
+/**********************
  * STRUCT DEFINITIONS *
  **********************/
 
@@ -376,6 +380,10 @@ typedef struct mpcomp_global_icv_s
 	int warn_nested;			/**< Emit warning for nested parallelism?
                                 */
 	int affinity;				/**< OpenMP threads affinity
+                                */
+	mpcomp_tool_status_t tool;  /**< OpenMP Tool interface (enabled/disabled)
+                                */
+	char* tool_libraries;	   	/**< OpenMP Tool paths (absolutes paths)
                                 */
 } mpcomp_global_icv_t;
 
@@ -432,12 +440,18 @@ typedef struct mpcomp_meta_tree_node_s
 typedef struct mpcomp_mvp_thread_args_s
 {
 	unsigned int rank;
+	unsigned int pu_id;
 	mpcomp_meta_tree_node_t *array;
 	unsigned int place_id;
 	unsigned int target_vp;
 	unsigned int place_depth;
+  unsigned int mpi_rank;
+#if OMPT_SUPPORT
+    /* Transfer common tool instance infos */
+    mpcompt_tool_status_t tool_status;
+    mpcompt_tool_instance_t* tool_instance;
+#endif /* OMPT_SUPPORT */
 } mpcomp_mvp_thread_args_t;
-
 
 /** Property of an OpenMP task */
 typedef unsigned int mpcomp_task_property_t;
@@ -485,7 +499,9 @@ typedef struct mpcomp_task_s
 {
 	int depth;						 /**< nested task depth */
 	void ( *func )( void * );		 /**< Function to execute */
-	void *data;						 /**< Arguments of the function 				    */
+	void *func_data;				 /**< Arguments of the function 				    */
+	void *data;
+	size_t data_size;
 	OPA_int_t refcount;				 /**< refcount delay task free                   */
 	mpcomp_task_property_t property; /**< Task property
                                       */
@@ -507,19 +523,19 @@ typedef struct mpcomp_task_s
 #ifdef MPCOMP_OMP_4_0 /* deps infos */
 	struct mpcomp_task_dep_task_infos_s *task_dep_infos;
 #endif /* MPCOMP_GOMP_4_0 */
-
-#if 1 //OMPT_SUPPORT
-	ompt_data_t ompt_task_data;
-	ompt_frame_t ompt_task_frame;
-	ompt_task_flag_t ompt_task_type;
-#endif /* OMPT_SUPPORT */
 	/* TODO if INTEL */
 	struct mpcomp_task_s *last_task_alloc; /**< last task allocated by the thread doing if0 pragma */
 
 	bool is_stealed;					/**< is task have been stealed or not */
 	int task_size;						/**< Size of allocation task */
 	struct mpcomp_task_s *far_ancestor; /**< far parent (MPCOMP_TASKS_DEPTH_JUMP) of the task */
-
+#if OMPT_SUPPORT
+    /* Task data and type */
+    ompt_data_t ompt_task_data;
+    ompt_task_flag_t ompt_task_type;
+    /* Task frame */
+    ompt_frame_t ompt_task_frame;
+#endif /* OMPT_SUPPORT */
 } mpcomp_task_t;
 
 /**
@@ -598,8 +614,9 @@ typedef struct mpcomp_task_dep_node_s {
   struct mpcomp_task_dep_node_list_s *successors;
   bool if_clause;
 #if OMPT_SUPPORT
+  /* Task dependences record */
   ompt_dependence_t* ompt_task_deps;
-#endif
+#endif /* OMPT_SUPPORT */
 } mpcomp_task_dep_node_t;
 
 typedef struct mpcomp_task_dep_node_list_s {
@@ -755,13 +772,14 @@ typedef struct mpcomp_new_parallel_region_info_s
 	long loop_incr;		  /* Step */
 	long loop_chunk_size; /* Size of each chunk */
 	int nb_sections;
-
-#if 1 // OMPT_SUPPORT
-	ompt_data_t ompt_region_data;
-        int doing_single;
-        int in_single;
+#if OMPT_SUPPORT
+    /* Parallel region data */
+    ompt_data_t ompt_parallel_data;
+    /* Single contruct fields specific to OMPT
+     * Used to trigger work end event in barrier */
+    int doing_single;
+    int in_single;
 #endif /* OMPT_SUPPORT */
-
 } mpcomp_parallel_region_t;
 
 static inline void
@@ -807,12 +825,15 @@ typedef struct mpcomp_team_s
   
 	/* ATOMIC/CRITICAL CONSTRUCT */
   mpc_common_spinlock_t atomic_lock;
-  mpc_common_spinlock_t critical_lock;
+  mpcomp_lock_t* critical_lock;
   
 #if MPCOMP_TASK
 	struct mpcomp_task_team_infos_s task_infos;
 #endif // MPCOMP_TASK
-
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    /* Frame struct to transfert infos at parallel region */
+    mpcompt_frame_info_t frame_infos;
+#endif /* OMPT_SUPPORT */
 } mpcomp_team_t;
 
 /** OpenMP thread struct
@@ -895,12 +916,6 @@ typedef struct mpcomp_thread_s
 	/** Chunk number in static loop construct for Intel Runtime */
 	int static_chunk_size_intel;
 #endif /* MPCOMP_USE_INTEL_ABI */
-#if 1  // OMPT_SUPPORT
-	/** Thread state for OMPT */
-	ompt_state_t state;
-	/** Thread data for OMPT */
-	ompt_data_t ompt_thread_data;
-#endif /* OMPT_SUPPORT */
 
   /* OpenMP 5.0 -- Memory Management */
 
@@ -925,7 +940,22 @@ typedef struct mpcomp_thread_s
 	void **args_copy;
 	/* Current size of args_copy */
 	int temp_argc;
-
+#if OMPT_SUPPORT
+    /* Thread state */
+    ompt_state_t state;
+    /* Wait id */
+    ompt_wait_id_t wait_id;
+    /* Thread data */
+    ompt_data_t ompt_thread_data;
+#if MPCOMPT_HAS_FRAME_SUPPORT
+    /* Frame addr and frame return addr infos */
+    mpcompt_frame_info_t frame_infos;
+#endif
+    /* Common tool instance status */
+    mpcompt_tool_status_t tool_status;
+    /* Common tool instance infos */
+    mpcompt_tool_instance_t* tool_instance;
+#endif /* OMPT_SUPPORT */
 } mpcomp_thread_t;
 
 /* Instance of OpenMP runtime */
@@ -973,6 +1003,13 @@ typedef union mpcomp_node_or_leaf_u
 	struct mpcomp_mvp_s **leaf;
 } mpcomp_node_or_leaf_t;
 
+typedef struct worker_workshare_s
+{
+  void* workshare;
+  int mpi_rank;
+} worker_workshare_t;
+
+
 /* OpenMP Micro VP */
 typedef struct mpcomp_mvp_s
 {
@@ -981,6 +1018,8 @@ typedef struct mpcomp_mvp_s
 	/* -- MVP Thread specific informations --                   */
 	/** VP on which microVP is executed                         */
 	int thread_vp_idx;
+	/** PU on which microVP is executed                         */
+	int pu_id;
 	/** MVP thread structure pointer                            */
 	mpc_thread_t thread_self;
 	/** MVP keep alive after fall asleep                        */
@@ -1014,6 +1053,7 @@ typedef struct mpcomp_mvp_s
 	/* Rank within the microVPs */
 	//TODO Remove duplicate value
 	int rank;
+
 	/** Rank within sibbling MVP        */
 	int local_rank;
 	int *tree_array_ancestor_path;
@@ -1031,9 +1071,14 @@ typedef struct mpcomp_mvp_s
 #endif /* MPCOMP_TASK */
 	struct mpcomp_mvp_rank_chain_elt_s *rank_list;
 	struct mpcomp_mvp_saved_context_s *prev_node_father;
+#if OMPT_SUPPORT
+    /* MVP thread data */
+    ompt_data_t ompt_mvp_data;
+#endif /* OMPT_SUPPORT */
 } mpcomp_mvp_t;
 
 /* OpenMP Node */
+
 typedef struct mpcomp_node_s
 {
 	int already_init;
@@ -1111,6 +1156,7 @@ typedef struct mpcomp_node_s
 	volatile int *isArrived;
 	/* Tree reduction data */
 	void **reduce_data;
+  worker_workshare_t* worker_ws;
 
 } mpcomp_node_t;
 
@@ -1174,6 +1220,7 @@ typedef struct mpcomp_stack
 	int max_elements;
 	int n_elements; /* Corresponds to the head of the stack */
 } mpcomp_stack_t;
+
 
 /**************
  * OPENMP TLS *

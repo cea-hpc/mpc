@@ -23,14 +23,15 @@
 
 #include <mpcomp.h>
 #include "mpc_common_debug.h"
-
 #include "mpcomp_core.h"
-
 #include "mpcomp_types.h"
 #include "mpcomp_loop.h"
 #include "mpcomp_openmp_tls.h"
 #include "mpcomp_sync.h"
 #include "mpcomp_task.h"
+#include "mpcompt_workShare.h"
+#include "mpcompt_dispatch.h"
+#include "mpcompt_frame.h"
 
 static inline int __loop_dyn_get_for_dyn_current( struct mpcomp_thread_s *thread )
 {
@@ -385,13 +386,21 @@ void __mpcomp_static_loop_init( struct mpcomp_thread_s *t, long lb, long b, long
                                 long chunk_size )
 {
 	mpcomp_loop_gen_info_t *loop_infos;
-	/* Get the team info */
 	assert( t->instance != NULL );
+
 	t->schedule_type =
 	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_STATIC_LOOP;
 	t->schedule_is_forced = 0;
+
 	loop_infos = &( t->info.loop_infos );
 	__mpcomp_loop_gen_infos_init( loop_infos, lb, b, incr, chunk_size );
+
+#if OMPT_SUPPORT
+    __mpcompt_callback_work( ompt_work_loop,
+                             ompt_scope_begin,
+                             __loop_get_num_iters_gen( &( t->info.loop_infos )));
+#endif /* OMPT_SUPPORT */
+
 	/*  As the loop_next function consider a chunk as already been realised
 	  we need to initialize to 0 minus 1 */
 	t->static_current_chunk = -1;
@@ -413,28 +422,12 @@ int __mpcomp_static_loop_begin( long lb, long b, long incr, long chunk_size,
                                 long *from, long *to )
 {
 	__mpcomp_init();
+
 	struct mpcomp_thread_s *t = mpcomp_get_thread_tls();
+
 	/* Initialization of loop internals */
 	__mpcomp_static_loop_init( t, lb, b, incr, chunk_size );
-#if OMPT_SUPPORT
-	if( _mpc_omp_ompt_is_enabled() )
-	{
-   	if( OMPT_Callbacks )
-   	{
-			ompt_callback_work_t callback;
-			callback = (ompt_callback_work_t) OMPT_Callbacks[ompt_callback_work];
-			if( callback )
-			{
-				uint64_t ompt_iter_count = 0;
-				ompt_iter_count = __loop_get_num_iters_gen( &( t->info.loop_infos ) );
-				ompt_data_t* parallel_data = &( t->instance->team->info.ompt_region_data );
-                ompt_data_t* task_data = &( t->task_infos.current_task->ompt_task_data );
-				const void* code_ra = __ompt_get_return_address(2);
-				callback( ompt_work_loop, ompt_scope_begin, parallel_data, task_data, ompt_iter_count, code_ra);
-			}
-		}
-	}
-#endif /* OMPT_SUPPORT */
+
 	return ( !from && !to ) ? -1 : __mpcomp_static_loop_next( from, to );
 }
 
@@ -458,39 +451,40 @@ int __mpcomp_static_loop_next( long *from, long *to )
 	if ( !( loop_infos->ischunked ) )
 	{
 		mpcomp_loop_long_iter_t *loop = &( loop_infos->loop.mpcomp_long );
-		return __loop_static_schedule_get_single_chunk( loop->lb, loop->b,
-		        loop->incr, from, to );
+		int ret = __loop_static_schedule_get_single_chunk( loop->lb, loop->b,
+		                                                   loop->incr, from, to );
+
+#if OMPT_SUPPORT
+        if( ret ) {
+            ompt_data_t ompt_from = { (uint64_t) *from };
+            __mpcompt_callback_dispatch( ompt_dispatch_iteration,
+                                         ompt_from );
+        }
+#endif /* OMPT_SUPPORT */
+
+        return ret;
 	}
 
 	__loop_static_schedule_get_specific_chunk(
 	    rank, nb_threads, &( loop_infos->loop.mpcomp_long ),
 	    t->static_current_chunk, from, to );
+
 	mpc_common_nodebug( "[%d] ____mpcomp_static_loop_next: got a chunk %d -> %d",
 	              t->rank, *from, *to );
+ 
+#if OMPT_SUPPORT
+    ompt_data_t ompt_from = { (uint64_t) *from };
+    __mpcompt_callback_dispatch( ompt_dispatch_iteration,
+                                 ompt_from );
+#endif /* OMPT_SUPPORT */
+
 	return 1;
 }
 
 void __mpcomp_static_loop_end_nowait()
 {
 #if OMPT_SUPPORT
-	if( _mpc_omp_ompt_is_enabled() )
-	{
-   	if( OMPT_Callbacks )
-   	{
-			ompt_callback_work_t callback; 
-			callback = (ompt_callback_work_t) OMPT_Callbacks[ompt_callback_work];
-			if( callback )
-			{
-  				mpcomp_thread_t *t = mpcomp_get_thread_tls();
-				uint64_t ompt_iter_count =
-				ompt_iter_count = __loop_get_num_iters_gen( &( t->info.loop_infos ) );
-				ompt_data_t* parallel_data = &( t->instance->team->info.ompt_region_data );
-                ompt_data_t* task_data = &( t->task_infos.current_task->ompt_task_data );
-				const void* code_ra = __builtin_return_address(0);	
-				callback( ompt_work_loop, ompt_scope_end, parallel_data, task_data, ompt_iter_count, code_ra);
-			}
-		}
-	}
+    __mpcompt_callback_work( ompt_work_loop, ompt_scope_end, 0 );
 #endif /* OMPT_SUPPORT */
 }
 
@@ -568,12 +562,16 @@ int __mpcomp_static_loop_begin_ull( bool up, unsigned long long lb,
                                     unsigned long long *to )
 {
 	mpcomp_loop_ull_iter_t *loop;
+
 	__mpcomp_init();
+
 	/* Grab info on the current thread */
 	mpcomp_thread_t *t = mpcomp_get_thread_tls();
+
 	t->schedule_type =
 	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_STATIC_LOOP;
 	t->schedule_is_forced = 0;
+
 	/* Fill private info about the loop */
 	t->info.loop_infos.type = MPCOMP_LOOP_TYPE_ULL;
 	loop = &( t->info.loop_infos.loop.mpcomp_ull );
@@ -584,9 +582,16 @@ int __mpcomp_static_loop_begin_ull( bool up, unsigned long long lb,
 	loop->chunk_size = chunk_size;
 	t->static_nb_chunks = __loop_get_static_nb_chunks_per_rank_ull(
 	                          t->rank, t->info.num_threads, loop );
+
 	/* As the loop_next function consider a chunk as already been realised
 	   we need to initialize to 0 minus 1 */
 	t->static_current_chunk = -1;
+
+#if OMPT_SUPPORT
+    __mpcompt_callback_work( ompt_work_loop,
+                             ompt_scope_begin,
+                             __loop_get_num_iters_gen( &( t->info.loop_infos )));
+#endif /* OMPT_SUPPORT */
 
 	if ( !from && !to )
 	{
@@ -616,6 +621,13 @@ int __mpcomp_static_loop_next_ull( unsigned long long *from,
 	__loop_static_schedule_get_specific_chunk_ull(
 	    rank, num_threads, &( t->info.loop_infos.loop.mpcomp_ull ),
 	    t->static_current_chunk, from, to );
+
+#if OMPT_SUPPORT
+    ompt_data_t ompt_from = { (uint64_t) *from };
+    __mpcompt_callback_dispatch( ompt_dispatch_iteration,
+                                 ompt_from );
+#endif /* OMPT_SUPPORT */
+
 	return 1;
 }
 
@@ -670,11 +682,15 @@ int __mpcomp_ordered_static_loop_next_ull( unsigned long long *from,
 int __mpcomp_guided_loop_begin( long lb, long b, long incr, long chunk_size,
                                 long *from, long *to )
 {
+    __mpcomp_init();
+
 	struct mpcomp_thread_s *t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
 	assert( t );
+
 	t->schedule_type =
 	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_GUIDED_LOOP;
 	t->schedule_is_forced = 1;
+
 	const int index = __loop_dyn_get_for_dyn_index( t );
 
 	/* if current thread is too much ahead */
@@ -695,6 +711,13 @@ int __mpcomp_guided_loop_begin( long lb, long b, long incr, long chunk_size,
 	}
 
 	mpc_common_spinlock_unlock( &( t->instance->team->lock ) );
+
+#if OMPT_SUPPORT
+    __mpcompt_callback_work( ompt_work_loop,
+                             ompt_scope_begin,
+                             __loop_get_num_iters_gen( &( t->info.loop_infos )));
+#endif /* OMPT_SUPPORT */
+
 	return ( !from && !to ) ? -1 : __mpcomp_guided_loop_next( from, to );
 }
 
@@ -740,6 +763,12 @@ int __mpcomp_guided_loop_next( long *from, long *to )
 
 	if (( *from < *to && loop->incr > 0 ) || ( *from > *to && loop->incr < 0 ) )
 	{
+#if OMPT_SUPPORT
+        ompt_data_t ompt_from = { (uint64_t) *from };
+        __mpcompt_callback_dispatch( ompt_dispatch_iteration,
+                                     ompt_from );
+#endif /* OMPT_SUPPORT */
+
 		return 1;
 	}
 	else
@@ -761,26 +790,11 @@ void __mpcomp_guided_loop_end_nowait()
 	/* Compute the index of the dynamic for construct */
 	const int index = __loop_dyn_get_for_dyn_index( t );
 	assert( index >= 0 && index < MPCOMP_MAX_ALIVE_FOR_DYN + 1 );
+
 #if OMPT_SUPPORT
-	/* Avoid double call during runtime schedule policy */
-	if( _mpc_omp_ompt_is_enabled() )
-	{
-   	if( OMPT_Callbacks )
-   	{
-			ompt_callback_work_t callback; 
-			callback = (ompt_callback_work_t) OMPT_Callbacks[ompt_callback_work];
-			if( callback )
-			{
-				uint64_t ompt_iter_count = 0;
-				ompt_iter_count = __loop_get_num_iters_gen( &( t->info.loop_infos ) );
-				ompt_data_t* parallel_data = &( t->instance->team->info.ompt_region_data );
-                ompt_data_t* task_data = &( t->task_infos.current_task->ompt_task_data );
-				const void* code_ra = __builtin_return_address(0);	
-				callback( ompt_work_loop, ompt_scope_end, parallel_data, task_data, ompt_iter_count, code_ra);
-			}
-		}
-	}
+    __mpcompt_callback_work( ompt_work_loop, ompt_scope_end, 0 );
 #endif /* OMPT_SUPPORT */
+
 	/* Get the team info */
 	assert( t->instance != NULL );
 	team_info = t->instance->team;
@@ -870,11 +884,15 @@ int __mpcomp_loop_ull_guided_begin( bool up, unsigned long long lb,
                                     unsigned long long *from,
                                     unsigned long long *to )
 {
+    __mpcomp_init();
+
 	struct mpcomp_thread_s *t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
 	assert( t );
+
 	t->schedule_type =
 	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_GUIDED_LOOP;
 	t->schedule_is_forced = 1;
+
 	const int index = __loop_dyn_get_for_dyn_index( t );
 
 	while ( OPA_load_int( &( t->instance->team->for_dyn_nb_threads_exited[index].i ) ) ==
@@ -886,6 +904,7 @@ int __mpcomp_loop_ull_guided_begin( bool up, unsigned long long lb,
 	__mpcomp_loop_gen_infos_init_ull( &( t->info.loop_infos ), lb, b, incr, chunk_size );
 	mpcomp_loop_long_iter_t *loop = ( mpcomp_loop_long_iter_t * ) & ( t->info.loop_infos.loop.mpcomp_ull );
 	loop->up = up;
+
 	mpc_common_spinlock_lock( &( t->instance->team->lock ) );
 
 	if ( t->instance->team->is_first[index] == 1 )
@@ -895,6 +914,13 @@ int __mpcomp_loop_ull_guided_begin( bool up, unsigned long long lb,
 	}
 
 	mpc_common_spinlock_unlock( &( t->instance->team->lock ) );
+
+#if OMPT_SUPPORT
+    __mpcompt_callback_work( ompt_work_loop,
+                             ompt_scope_begin,
+                             __loop_get_num_iters_gen( &( t->info.loop_infos )));
+#endif /* OMPT_SUPPORT */
+
 	return ( !from && !to ) ? -1 : __mpcomp_loop_ull_guided_next( from, to );
 }
 
@@ -944,6 +970,12 @@ int __mpcomp_loop_ull_guided_next( unsigned long long *from,
 
 	if ( *from != *to )
 	{
+#if OMPT_SUPPORT
+        ompt_data_t ompt_from = { (uint64_t) *from };
+        __mpcompt_callback_dispatch( ompt_dispatch_iteration,
+                                     ompt_from );
+#endif /* OMPT_SUPPORT */
+
 		return 1;
 	}
 	else
@@ -1296,16 +1328,19 @@ static int __loop_dyn_get_chunk_from_rank( struct mpcomp_thread_s *t,
 void __mpcomp_dynamic_loop_init( struct mpcomp_thread_s *t, long lb, long b, long incr,
                                  long chunk_size )
 {
-	mpcomp_team_t *team_info; /* Info on the team */
 	/* Get the team info */
+	mpcomp_team_t *team_info;
 	assert( t->instance != NULL );
 	team_info = t->instance->team;
 	assert( team_info != NULL );
+
 	/* WORKAROUND (pr35196.c)
 	* Reinitialize the flag for the last iteration of the loop */
 	t->for_dyn_last_loop_iteration = 0;
+
 	const long num_threads = ( long ) t->info.num_threads;
 	const int index = __loop_dyn_get_for_dyn_index( t );
+
 	t->schedule_type =
 	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;
 	t->schedule_is_forced = 0;
@@ -1320,6 +1355,13 @@ void __mpcomp_dynamic_loop_init( struct mpcomp_thread_s *t, long lb, long b, lon
 
 	/* Fill private info about the loop */
 	__mpcomp_loop_gen_infos_init( &( t->info.loop_infos ), lb, b, incr, chunk_size );
+
+#if OMPT_SUPPORT
+    __mpcompt_callback_work( ompt_work_loop,
+                             ompt_scope_begin,
+                             __loop_get_num_iters_gen( &( t->info.loop_infos )));
+#endif /* OMPT_SUPPORT */
+
 	/* Try to change the number of remaining chunks */
 	t->dyn_last_target = t;
 	t->for_dyn_total[index] = __loop_get_static_nb_chunks_per_rank(
@@ -1330,45 +1372,30 @@ void __mpcomp_dynamic_loop_init( struct mpcomp_thread_s *t, long lb, long b, lon
 int __mpcomp_dynamic_loop_begin( long lb, long b, long incr, long chunk_size,
                                  long *from, long *to )
 {
-	struct mpcomp_thread_s *t; /* Info on the current thread */
+    /* Info on the current thread */
+	struct mpcomp_thread_s *t;
+
 	/* Handle orphaned directive (initialize OpenMP environment) */
 	__mpcomp_init();
+
 	/* Grab the thread info */
 	t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
 	assert( t != NULL );
 
+	/* Initialization of loop internals */
+	t->for_dyn_last_loop_iteration = 0;
+	__mpcomp_dynamic_loop_init( t, lb, b, incr, chunk_size );
+
 	if ( !( t->instance->root ) )
 	{
-		*from = lb;
-		*to = b;
+		if( from ) *from = lb;
+		if( to ) *to = b;
 		t->schedule_type =
 		    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;
 		t->schedule_is_forced = 0;
 		return 1;
 	}
 
-	/* Initialization of loop internals */
-	t->for_dyn_last_loop_iteration = 0;
-	__mpcomp_dynamic_loop_init( t, lb, b, incr, chunk_size );
-#if OMPT_SUPPORT
-	if( _mpc_omp_ompt_is_enabled() )
-	{
-   	    if( OMPT_Callbacks )
-   	    {
-			ompt_callback_work_t callback; 
-			callback = (ompt_callback_work_t) OMPT_Callbacks[ompt_callback_work];
-			if( callback )
-			{
-				uint64_t ompt_iter_count = 0;
-				ompt_iter_count = __loop_get_num_iters_gen( &( t->info.loop_infos ) );
-				ompt_data_t* parallel_data = &( t->instance->team->info.ompt_region_data );
-                ompt_data_t* task_data = &( t->task_infos.current_task->ompt_task_data );
-				const void* code_ra = __ompt_get_return_address(2);
-				callback( ompt_work_loop, ompt_scope_begin, parallel_data, task_data, ompt_iter_count, code_ra);
-			}
-		}
-	}
-#endif /* OMPT_SUPPORT */
 	return ( !from && !to ) ? -1 : __mpcomp_dynamic_loop_next( from, to );
 }
 
@@ -1387,7 +1414,17 @@ int __mpcomp_dynamic_loop_next( long *from, long *to )
 	/* 1 thread => no stealing, directly get a chunk */
 	if ( num_threads == 1 )
 	{
-		return __loop_dyn_get_chunk_from_rank( t, t, from, to );
+        int ret = __loop_dyn_get_chunk_from_rank( t, t, from, to );
+
+#if OMPT_SUPPORT
+        if( ret ) {
+            ompt_data_t ompt_from = { (uint64_t) *from };
+            __mpcompt_callback_dispatch( ompt_dispatch_iteration,
+                                         ompt_from );
+        }
+#endif /* OMPT_SUPPORT */
+
+		return ret;
 	}
 
 	/* Check that the target is allocated */
@@ -1458,6 +1495,12 @@ do_increase:
 			t->for_dyn_last_loop_iteration = 1;
 		}
 
+#if OMPT_SUPPORT
+        ompt_data_t ompt_from = { (uint64_t) *from };
+        __mpcompt_callback_dispatch( ompt_dispatch_iteration,
+                                     ompt_from );
+#endif /* OMPT_SUPPORT */
+
 		t->dyn_last_target = target;
 		return 1;
 	}
@@ -1478,25 +1521,9 @@ void __mpcomp_dynamic_loop_end_nowait( void )
 	/* Compute the index of the dynamic for construct */
 	const int index = __loop_dyn_get_for_dyn_index( t );
 	assert( index >= 0 && index < MPCOMP_MAX_ALIVE_FOR_DYN + 1 );
+
 #if OMPT_SUPPORT
-	/* Avoid double call during runtime schedule policy */
-	if( _mpc_omp_ompt_is_enabled() )
-	{
-   	if( OMPT_Callbacks )
-   	{
-			ompt_callback_work_t callback; 
-			callback = (ompt_callback_work_t) OMPT_Callbacks[ompt_callback_work];
-			if( callback )
-			{
-				uint64_t ompt_iter_count = 0;
-				ompt_iter_count = __loop_get_num_iters_gen( &( t->info.loop_infos ) );
-				ompt_data_t* parallel_data = &( t->instance->team->info.ompt_region_data );
-                ompt_data_t* task_data = &( t->task_infos.current_task->ompt_task_data );
-				const void* code_ra = __builtin_return_address(0);	
-				callback( ompt_work_loop, ompt_scope_end, parallel_data, task_data, ompt_iter_count, code_ra);
-			}
-		}
-	}
+    __mpcompt_callback_work( ompt_work_loop, ompt_scope_end, 0 );
 #endif /* OMPT_SUPPORT */
 
 	/* In case of 1 thread, re-initialize the number of remaining chunks
@@ -1741,6 +1768,13 @@ static int __loop_dyn_get_chunk_from_rank_ull(
 
 	__loop_static_schedule_get_specific_chunk_ull( rank, num_threads, loop,
 	        cur, from, to );
+
+#if OMPT_SUPPORT
+    ompt_data_t ompt_from = { (uint64_t) *from };
+    __mpcompt_callback_dispatch( ompt_dispatch_iteration,
+                                 ompt_from );
+#endif /* OMPT_SUPPORT */
+
 	return 1;
 }
 
@@ -1756,14 +1790,18 @@ static inline void __loop_dyn_init_ull( struct mpcomp_thread_s *t, bool up,
                                      unsigned long long chunk_size )
 {
 	mpcomp_loop_ull_iter_t *loop;
+
 	/* Get the team info */
 	assert( t->instance != NULL );
 	assert( t->instance->team != NULL );
+
 	/* WORKAROUND (pr35196.c)
 	* Reinitialize the flag for the last iteration of the loop */
 	t->for_dyn_last_loop_iteration = 0;
+
 	const int num_threads = t->info.num_threads;
 	const int index = __loop_dyn_get_for_dyn_index( t );
+
 	t->schedule_type =
 	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;
 	t->schedule_is_forced = 0;
@@ -1784,6 +1822,13 @@ static inline void __loop_dyn_init_ull( struct mpcomp_thread_s *t, bool up,
 	loop->b = b;
 	loop->incr = incr;
 	loop->chunk_size = chunk_size;
+
+#if OMPT_SUPPORT
+    __mpcompt_callback_work( ompt_work_loop,
+                             ompt_scope_begin,
+                             __loop_get_num_iters_gen( &( t->info.loop_infos )));
+#endif /* OMPT_SUPPORT */
+
 	/* Try to change the number of remaining chunks */
 	t->for_dyn_total[index] = __loop_get_static_nb_chunks_per_rank_ull(
 	                              t->rank, num_threads, &( t->info.loop_infos.loop.mpcomp_ull ) );
@@ -1797,47 +1842,31 @@ int __mpcomp_loop_ull_dynamic_begin( bool up, unsigned long long lb,
                                      unsigned long long *from,
                                      unsigned long long *to )
 {
-	struct mpcomp_thread_s *t; /* Info on the current thread */
+	struct mpcomp_thread_s *t;
+
 	/* Handle orphaned directive (initialize OpenMP environment) */
 	__mpcomp_init();
+
 	/* Grab the thread info */
 	t = ( struct mpcomp_thread_s * ) sctk_openmp_thread_tls;
 	assert( t != NULL );
+
 	t->dyn_last_target = t;
+
+	/* Initialization of loop internals */
+	t->for_dyn_last_loop_iteration = 0;
+	__loop_dyn_init_ull( t, up, lb, b, incr, chunk_size );
 
 	if ( !( t->instance->root ) )
 	{
-		*from = lb;
-		*to = b;
+		if( from ) *from = lb;
+		if( to ) *to = b;
 		t->schedule_type =
 		    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;
 		t->schedule_is_forced = 0;
 		return 1;
 	}
 
-	/* Initialization of loop internals */
-	t->for_dyn_last_loop_iteration = 0;
-	__loop_dyn_init_ull( t, up, lb, b, incr, chunk_size );
-#if OMPT_SUPPORT
-	/* Avoid double call during runtime schedule policy */
-	if( ( t->schedule_type == MPCOMP_COMBINED_DYN_LOOP ) && _mpc_omp_ompt_is_enabled() )
-	{
-   	if( OMPT_Callbacks )
-   	{
-			ompt_callback_work_t callback; 
-			callback = (ompt_callback_work_t) OMPT_Callbacks[ompt_callback_work];
-			if( callback )
-			{
-				uint64_t ompt_iter_count = 0;
-				ompt_iter_count = __loop_get_num_iters_gen( &( t->info.loop_infos ) );
-				ompt_data_t* parallel_data = &( t->instance->team->info.ompt_region_data );
-                ompt_data_t* task_data = &( t->task_infos.current_task->ompt_task_data );
-				const void* code_ra = __ompt_get_return_address(3);
-				callback( ompt_work_loop, ompt_scope_begin, parallel_data, task_data, ompt_iter_count, code_ra);
-			}
-		}
-	}
-#endif /* OMPT_SUPPORT */
 	return ( !from && !to ) ? -1 : __mpcomp_loop_ull_dynamic_next( from, to );
 }
 
@@ -1945,6 +1974,12 @@ do_increase:
 		{
 			t->for_dyn_last_loop_iteration = 1;
 		}
+
+#if OMPT_SUPPORT
+        ompt_data_t ompt_from = { (uint64_t) *from };
+        __mpcompt_callback_dispatch( ompt_dispatch_iteration,
+                                     ompt_from );
+#endif /* OMPT_SUPPORT */
 
 		t->dyn_last_target = target;
 		return 1;
@@ -2497,8 +2532,6 @@ int __mpcomp_loop_ull_ordered_runtime_next( unsigned long long *from,
  ************/
 
 
-#if MPCOMP_TASK
-
 static unsigned long mpcomp_taskloop_compute_num_iters(long start, long end,
                                                        long step) {
   long decal = (step > 0) ? -1 : 1;
@@ -2589,6 +2622,12 @@ void mpcomp_taskloop(void (*fn)(void *), void *data,
                      void (*cpyfn)(void *, void *), long arg_size,
                      long arg_align, unsigned flags, unsigned long num_tasks,
                      __UNUSED__ int priority, long start, long end, long step) {
+#if MPCOMP_TASK
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+  __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
   long taskstep;
   unsigned long extra_chunk, i;
 
@@ -2596,7 +2635,15 @@ void mpcomp_taskloop(void (*fn)(void *), void *data,
 
   const long num_iters = mpcomp_taskloop_compute_num_iters(start, end, step);
 
+#if OMPT_SUPPORT
+  __mpcompt_callback_work( ompt_work_taskloop, ompt_scope_begin, num_iters );
+#endif /* OMPT_SUPPORT */
+
   if (!(num_iters)) {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_unset_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
     return;
   }
 
@@ -2617,8 +2664,8 @@ void mpcomp_taskloop(void (*fn)(void *), void *data,
     mpcomp_task_t *new_task = NULL;
     new_task = _mpc_task_alloc(fn, data, cpyfn, arg_size, arg_align, 0,
                                    flags, 0 /* no deps */);
-    ((long *)new_task->data)[0] = start;
-    ((long *)new_task->data)[1] = start + taskstep;
+    ((long *)new_task->func_data)[0] = start;
+    ((long *)new_task->func_data)[1] = start + taskstep;
     start += taskstep;
     taskstep -= (i == extra_chunk) ? step : 0;
     _mpc_task_process(new_task, 0);
@@ -2627,6 +2674,22 @@ void mpcomp_taskloop(void (*fn)(void *), void *data,
   if (!(flags & MPCOMP_TASK_FLAG_NOGROUP)) {
     _mpc_task_taskgroup_end();
   }
+
+#if OMPT_SUPPORT
+  __mpcompt_callback_work( ompt_work_taskloop, ompt_scope_end, 0 );
+
+#if MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_unset_no_reentrant();
+#endif
+#endif /* OMPT_SUPPORT */
+#else
+
+  ((long *)data)[0] = start;
+  ((long *)data)[1] = end;
+
+  fn( data );
+
+#endif /* MPCOMP_TASK */
 }
 
 void mpcomp_taskloop_ull(__UNUSED__ void (*fn)(void *), __UNUSED__ void *data,
@@ -2634,9 +2697,27 @@ void mpcomp_taskloop_ull(__UNUSED__ void (*fn)(void *), __UNUSED__ void *data,
                          __UNUSED__ long arg_align, __UNUSED__ unsigned flags,
                          __UNUSED__  unsigned long num_tasks, __UNUSED__ int priority,
                          __UNUSED__ unsigned long long start, __UNUSED__ unsigned long long end,
-                         __UNUSED__ unsigned long long step) {}
+                         __UNUSED__ unsigned long long step) {
+#if MPCOMP_TASK
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+  __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
+  not_implemented();
+
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_unset_no_reentrant();
+#endif /* OMPT_SUPPORT */
+#else
+
+  ((unsigned long long *)data)[0] = start;
+  ((unsigned long long *)data)[1] = end;
+
+  fn( data );
 
 #endif /* MPCOMP_TASK */
+}
 
 /***********
  * ORDERED *
@@ -2685,6 +2766,10 @@ static inline void __loop_internal_ordered_begin_ull( mpcomp_thread_t *t, mpcomp
 
 void __mpcomp_ordered_begin( void )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	mpcomp_thread_t *t;
     mpcomp_loop_gen_info_t* loop_infos; 
 
@@ -2776,6 +2861,10 @@ static inline void __mpcomp_internal_ordered_end_ull( mpcomp_thread_t* t, mpcomp
 
 void __mpcomp_ordered_end( void )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	mpcomp_thread_t *t;
     mpcomp_loop_gen_info_t* loop_infos; 
 
@@ -2797,7 +2886,8 @@ void __mpcomp_ordered_end( void )
     }
 }
 
-#ifndef NO_OPTIMIZED_GOMP_4_0_API_SUPPORT
+/* GOMP OPTIMIZED_1_0_WRAPPING */
+#ifndef NO_OPTIMIZED_GOMP_1_0_API_SUPPORT
     __asm__(".symver __mpcomp_ordered_begin, GOMP_ordered_start@@GOMP_1.0"); 
     __asm__(".symver __mpcomp_ordered_end, GOMP_ordered_end@@GOMP_1.0"); 
 #endif /* OPTIMIZED_GOMP_API_SUPPORT */

@@ -1,22 +1,22 @@
 #include "mpcomp_types.h"
 #include "mpcomp_core.h"
 #include "mpc_common_asm.h"
-
 #include "mpcomp_sync.h"
-
 #include "mpc_thread.h"
+#include "mpcomp_spinning_core.h"
+#include "mpcomp_tree.h"
+#include "mpcompt_sync.h"
+#include "mpcompt_task.h"
+#include "mpcompt_frame.h"
 
 #if defined( MPCOMP_OPENMP_3_0 )
 	#include "mpcomp_task.h"
 #endif /* defined( MPCOMP_OPENMP_3_0 ) */
-
-#include "mpcomp_spinning_core.h"
-
-
 #ifndef NDEBUG
 	#include "sctk_pm_json.h"
 #endif /* !NDEBUG */
 
+void mpc_lowcomm_workshare_worker_steal(int rank);
 
 static inline int __scatter_compute_node_num_thread( mpcomp_node_t *node, const int num_threads, int rank, int *first )
 {
@@ -401,6 +401,17 @@ static inline mpcomp_node_t *__scatter_wakeup_intermediate_node( mpcomp_node_t *
 	assert( node->children.node );
 	node->reduce_data = ( void ** ) mpcomp_alloc( node->nb_children * 64 * sizeof( void * ) );
 	node->isArrived = ( int * ) mpcomp_alloc( node->nb_children * 64 * sizeof( int ) );
+#ifdef MPCOMP_USE_INTEL_ABI
+    struct common_table * th_pri_common;
+#endif
+#if OMPT_SUPPORT
+    ompt_data_t data;
+    mpcompt_tool_status_t tool_status;
+    mpcompt_tool_instance_t* tool_instance;
+#if MPCOMPT_HAS_FRAME_SUPPORT
+    mpcompt_frame_info_t frame_infos;
+#endif
+#endif /* OMPT_SUPPORT */
 
 	for ( i = 0; i < node->nb_children * 64; i += 64 )
 	{
@@ -453,6 +464,17 @@ static inline mpcomp_node_t *__scatter_wakeup_intermediate_node( mpcomp_node_t *
 
 			if ( !node->instance->buffered )
 			{
+#if OMPT_SUPPORT
+                data = mvp->threads->ompt_thread_data;
+                tool_status = mvp->threads->tool_status;
+                tool_instance = mvp->threads->tool_instance;
+#if MPCOMPT_HAS_FRAME_SUPPORT
+                frame_infos = mvp->threads->frame_infos;
+#endif
+#endif /* OMPT_SUPPORT */
+#ifdef MPCOMP_USE_INTEL_ABI
+                th_pri_common = mvp->threads->th_pri_common;
+#endif
 				child_node->num_threads = 1;
 				child_node->instance = node->instance;
 				child_node->mvp_first_id = node_first_mvp + i;
@@ -468,6 +490,17 @@ static inline mpcomp_node_t *__scatter_wakeup_intermediate_node( mpcomp_node_t *
 				mvp->threads->father_node = node;
 				mvp->threads->rank = node->mvp_first_id + i;
 				mvp->instance = node->instance;
+#ifdef MPCOMP_USE_INTEL_ABI
+                mvp->threads->th_pri_common = th_pri_common;
+#endif
+#if OMPT_SUPPORT
+                mvp->threads->ompt_thread_data = data;
+                mvp->threads->tool_status = tool_status;
+                mvp->threads->tool_instance = tool_instance;
+#if MPCOMPT_HAS_FRAME_SUPPORT
+                mvp->threads->frame_infos = frame_infos;
+#endif
+#endif /* OMPT_SUPPORT */
 				int j;
 
 				for ( j = 0; j < MPCOMP_MAX_ALIVE_FOR_DYN + 1; j++ )
@@ -505,6 +538,17 @@ static inline mpcomp_mvp_t *__scatter_wakeup_final_mvp( mpcomp_node_t *node )
 	cur_mvp = 0;
 	node->reduce_data = ( void ** ) mpcomp_alloc( node->nb_children * 64 * sizeof( void * ) );
 	node->isArrived = ( int * ) mpcomp_alloc( node->nb_children * 64 * sizeof( int ) );
+#ifdef MPCOMP_USE_INTEL_ABI
+    struct common_table * th_pri_common;
+#endif
+#if OMPT_SUPPORT
+    ompt_data_t data;
+    mpcompt_tool_status_t tool_status;
+    mpcompt_tool_instance_t* tool_instance;
+#if MPCOMPT_HAS_FRAME_SUPPORT
+    mpcompt_frame_info_t frame_infos;
+#endif
+#endif /* OMPT_SUPPORT */
 
 	for ( i = 0; i < node->nb_children * 64; i += 64 )
 	{
@@ -519,6 +563,17 @@ static inline mpcomp_mvp_t *__scatter_wakeup_final_mvp( mpcomp_node_t *node )
 
 		if ( !node->instance->buffered )
 		{
+#if OMPT_SUPPORT
+            data = mvp->threads->ompt_thread_data;
+            tool_status = mvp->threads->tool_status;
+            tool_instance = mvp->threads->tool_instance;
+#if MPCOMPT_HAS_FRAME_SUPPORT
+            frame_infos = mvp->threads->frame_infos;
+#endif
+#endif /* OMPT_SUPPORT */
+#ifdef MPCOMP_USE_INTEL_ABI
+            th_pri_common = mvp->threads->th_pri_common;
+#endif
 			mvp->instance = node->instance;
 			/* Set MVP instance rank in thread structure */
 			assert( mvp->threads );
@@ -531,6 +586,17 @@ static inline mpcomp_mvp_t *__scatter_wakeup_final_mvp( mpcomp_node_t *node )
 			mvp->threads->father = node->instance->thread_ancestor;
 			mvp->threads->father_node = node;
 			mvp->threads->rank = node->mvp_first_id + i;
+#ifdef MPCOMP_USE_INTEL_ABI
+            mvp->threads->th_pri_common = th_pri_common;
+#endif
+#if OMPT_SUPPORT
+            mvp->threads->ompt_thread_data = data;
+            mvp->threads->tool_status = tool_status;
+            mvp->threads->tool_instance = tool_instance;
+#if MPCOMPT_HAS_FRAME_SUPPORT
+            mvp->threads->frame_infos = frame_infos;
+#endif
+#endif /* OMPT_SUPPORT */
 			int j;
 
 			for ( j = 0; j < MPCOMP_MAX_ALIVE_FOR_DYN + 1; j++ )
@@ -585,7 +651,7 @@ static inline mpcomp_mvp_t *__scatter_wakeup( mpcomp_node_t *node )
 	return __scatter_wakeup_final_mvp( cur_node );
 }
 
-static inline void __scatter_instance_post_init( mpcomp_thread_t *thread )
+void __scatter_instance_post_init( mpcomp_thread_t *thread )
 {
 	assert( thread );
 	assert( thread->mvp );
@@ -604,7 +670,7 @@ static inline void __scatter_instance_post_init( mpcomp_thread_t *thread )
 
 	if ( ! thread->mvp->instance->buffered )
 	{
-		__mpcomp_internal_full_barrier( thread->mvp );
+		__mpcomp_barrier();
 	}
 
 #if 0  /* Check victim list for each thread */
@@ -670,7 +736,9 @@ static inline void __team_reset( mpcomp_team_t *team )
 	team->id = OPA_fetch_and_incr_int( &nb_teams );
 	mpc_common_spinlock_init( &team->lock, 0 );
 	mpc_common_spinlock_init( &team->atomic_lock, 0 );
-	mpc_common_spinlock_init( &team->critical_lock, 0 );
+	team->critical_lock = ( mpcomp_lock_t * ) mpcomp_alloc( sizeof( mpcomp_lock_t ) );
+	memset( team->critical_lock, 0, sizeof( mpcomp_lock_t ) );
+	mpc_common_spinlock_init( &team->critical_lock->lock, 0 );
 }
 
 static inline void __mvp_del_saved_ctx( mpcomp_mvp_t *mvp )
@@ -744,50 +812,82 @@ mpcomp_instance_t *__mpcomp_tree_array_instance_init( mpcomp_thread_t *thread, c
 	assert( expected_nb_mvps > 0 );
 	instance =  __scatter_instance_pre_init( thread, expected_nb_mvps );
 	assert( instance );
+
 	instance->nb_mvps = expected_nb_mvps;
+
 	instance->team = ( mpcomp_team_t * ) mpcomp_alloc( sizeof( mpcomp_team_t ) );
 	assert( instance->team );
 	memset( instance->team, 0, sizeof( mpcomp_team_t ) );
+
 	instance->thread_ancestor = thread;
 	__team_reset( instance->team );
+
 #if defined( MPCOMP_OPENMP_3_0 )
 	_mpc_task_team_info_init( instance->team, instance->tree_depth );
 	/* Compute first id for tasklist depth */
 #endif /* MPCOMP_OPENMP_3_0 */
+
 	/* Allocate new thread context */
 	master = ( mpcomp_thread_t * ) mpcomp_alloc( sizeof( mpcomp_thread_t ) );
 	assert( master );
 	memset( master, 0, sizeof( mpcomp_thread_t ) );
+
 	master->next = thread;
 	master->mvp = thread->mvp;
 	master->root = thread->root;
 	master->father = thread->father;
 	thread->mvp->threads = master;
-#if defined( MPCOMP_OPENMP_3_0 )
-	_mpc_task_tree_array_thread_init( master );
-#endif /* MPCOMP_OPENMP_3_0 */
 	instance->master = master;
+
+    __mpcomp_thread_infos_init( master );
+
+#if OMPT_SUPPORT
+    master->ompt_thread_data = thread->ompt_thread_data;
+    /* Transfer common tool instance infos */
+    master->tool_status = thread->tool_status;
+    master->tool_instance = thread->tool_instance;
+#if MPCOMPT_HAS_FRAME_SUPPORT
+    master->frame_infos.outter_caller = thread->frame_infos.outter_caller;
+    master->frame_infos.ompt_return_addr = thread->frame_infos.ompt_return_addr;
+#endif
+#endif /* OMPT_SUPPORT */
+
 	return instance;
 }
 
-static inline mpcomp_thread_t *__mvp_wakeup( mpcomp_mvp_t *mvp )
+mpcomp_thread_t *__mvp_wakeup( mpcomp_mvp_t *mvp )
 {
 	mpcomp_thread_t *new_thread;
 	assert( mvp );
+
 	new_thread = mvp->threads;
 	assert( new_thread );
-	_mpc_task_tree_array_thread_init( new_thread );
+
+    sctk_openmp_thread_tls = (void*) new_thread;
+
 	mvp->father = new_thread->father_node;
+
 #if MPCOMP_TRANSFER_INFO_ON_NODES
 	new_thread->info = mvp->info;
 #else /* MPCOMP_TRANSFER_INFO_ON_NODES */
 	new_thread->info = mvp->instance->team->info;
 #endif
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    new_thread->frame_infos.outter_caller =
+        mvp->instance->team->frame_infos.outter_caller;
+#endif /* OMPT_SUPPORT */
+
 	/* Set thread rank */
 	new_thread->mvp = mvp;
 	new_thread->instance = mvp->instance;
+
 	mpc_common_spinlock_init( &( new_thread->info.update_lock ), 0 );
 	/* Reset pragma for dynamic internal */
+
+#if defined( MPCOMP_OPENMP_3_0 )
+    _mpc_task_tree_array_thread_init( new_thread );
+#endif /* MPCOMP_OPENMP_3_0 */
+
 	return new_thread;
 }
 
@@ -801,75 +901,106 @@ mpcomp_mvp_t *_mpc_spin_node_wakeup( mpcomp_node_t *node )
 	return __scatter_wakeup( node );
 }
 
+void
+__mpcomp_exit_node_signal( mpcomp_node_t* node ) {
+    int i;
+    assert( node );
+
+    /* We are the mvp spinning on the deepest node, wake-up regular leaves and exit */
+    if( node->child_type == MPCOMP_CHILDREN_LEAF ) {
+        for( i = 1; i < node->nb_children; i++ ) {
+            node->children.leaf[i]->enable = 0;
+            node->children.leaf[i]->spin_status = MPCOMP_MVP_STATE_AWAKE;
+        }
+
+        return;
+    }
+
+    /* Wake-up intermediate nodes */
+    for( i = 1; i < node->nb_children; i++ ) {
+        node->children.node[i]->mvp->enable = 0;
+        node->children.node[i]->spin_status = MPCOMP_MVP_STATE_AWAKE;
+    }
+
+    __mpcomp_exit_node_signal( node->children.node[0] );
+}
 
 void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
 {
-	mpcomp_thread_t *cur_thread = NULL;
+	mpcomp_thread_t *next_thread = NULL;
+	mpcomp_thread_t *cur_thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
 	volatile int *spin_status;
 	assert( mvp );
+
 	__mvp_add_saved_ctx( mvp );
-	cur_thread =  __mvp_wakeup( mvp );
-	assert( cur_thread->mvp );
-	sctk_openmp_thread_tls = ( void * ) cur_thread;
 #ifdef TLS_ALLOCATORS
   mpcomp_init_allocators();
 #endif
-	__scatter_instance_post_init( cur_thread );
-	__mpcomp_in_order_scheduler( ( mpcomp_thread_t * )sctk_openmp_thread_tls );
+
+	next_thread =  __mvp_wakeup( mvp );
+	assert( next_thread->mvp );
+
+	__scatter_instance_post_init( next_thread );
+
+#if OMPT_SUPPORT
+    if( cur_thread ) {
+        __mpcompt_callback_task_schedule(
+            &( MPCOMP_TASK_THREAD_GET_CURRENT_TASK(cur_thread)->ompt_task_data ),
+            ompt_task_switch,
+            &( MPCOMP_TASK_THREAD_GET_CURRENT_TASK(next_thread)->ompt_task_data ));
+    }
+
+    __mpcompt_callback_implicit_task( ompt_scope_begin,
+                                      next_thread->instance->nb_mvps,
+                                      next_thread->rank,
+                                      ompt_task_implicit );
+#endif /* OMPT_SUPPORT */
+
+	__mpcomp_in_order_scheduler( next_thread );
+
 	/* Must be set before barrier for thread safety*/
 	spin_status = ( mvp->spin_node ) ? &( mvp->spin_node->spin_status ) : &( mvp->spin_status );
 	*spin_status = MPCOMP_MVP_STATE_SLEEP;
 
 #if OMPT_SUPPORT
-    if( mpcomp_ompt_is_enabled() &&  OMPT_Callbacks ) {
-       ompt_callback_sync_region_t callback;
-       callback = (ompt_callback_sync_region_t) OMPT_Callbacks[ompt_callback_sync
-
-       if( callback ) {
-           ompt_data_t* parallel_data =
-               &( cur_thread->instance->team->info.ompt_region_data );
-           ompt_data_t* task_data =
-               &( MPCOMP_TASK_THREAD_GET_CURRENT_TASK(cur_thread)->ompt_task_data
-           const void* code_ra = __builtin_return_address( 1 );
-
-           callback( ompt_sync_region_barrier_implicit, ompt_scope_begin, paralle
-       }
-    }
+    __mpcompt_callback_sync_region( ompt_sync_region_barrier_implicit, ompt_scope_begin );
 #endif /* OMPT_SUPPORT */
 
 	__mpcomp_internal_full_barrier( mvp );
 
 #if OMPT_SUPPORT
-    if( mpcomp_ompt_is_enabled() &&  OMPT_Callbacks ) {
-       ompt_callback_sync_region_t callback;
-       callback = (ompt_callback_sync_region_t) OMPT_Callbacks[ompt_callback_sync
-
-       if( callback ) {
-           ompt_data_t* task_data =
-               &( MPCOMP_TASK_THREAD_GET_CURRENT_TASK(cur_thread)->ompt_task_data
-           const void* code_ra = __builtin_return_address( 1 );
-
-           callback( ompt_sync_region_barrier_implicit, ompt_scope_end, NULL, tas
-       }
-    }
+    __mpcompt_callback_sync_region( ompt_sync_region_barrier_implicit, ompt_scope_end );
+    __mpcompt_callback_implicit_task( ompt_scope_end,
+                                      0,
+                                      next_thread->rank,
+                                      ompt_task_implicit );
 #endif /* OMPT_SUPPORT */
 
 	_mpc_task_free( mvp->threads );
-	sctk_openmp_thread_tls = mvp->threads->next;
 
-	if ( mvp->threads->next )
+	if ( cur_thread )
 	{
-		mvp->threads = mvp->threads->next;
-		//mpcomp_free( cur_thread );
+#if OMPT_SUPPORT
+        __mpcompt_callback_task_schedule(
+            &( MPCOMP_TASK_THREAD_GET_CURRENT_TASK(next_thread)->ompt_task_data ),
+            ompt_task_complete,
+            &( MPCOMP_TASK_THREAD_GET_CURRENT_TASK(cur_thread)->ompt_task_data ));
+#endif /* OMPT_SUPPORT */
+
+        mvp->instance = cur_thread->instance;
+		mvp->threads = cur_thread;
+		//mpcomp_free( next_thread );
 	}
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    else {
+        /* Unset outter caller if transfered at openning of the parallel region */
+        __mpcompt_frame_unset_no_reentrant();
+    }
+#endif /* OMPT_SUPPORT */
+
+	sctk_openmp_thread_tls = (void*) cur_thread;
 
 	__mvp_del_saved_ctx( mvp );
-
-	if ( sctk_openmp_thread_tls )
-	{
-		cur_thread = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-		mvp->instance = cur_thread->instance;
-	}
 }
 
 /**
@@ -888,13 +1019,26 @@ void mpcomp_slave_mvp_node( mpcomp_mvp_t *mvp )
 
 		while ( mvp->enable )
 		{
-			mpc_thread_wait_for_value_and_poll( spin_status, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
+#ifdef MPC_ENABLE_WORKSHARE
+			if(mpc_conf_type_elem_get_as_int(mpc_conf_root_config_get("mpcframework.lowcomm.workshare.enablestealing")))
+			  mpc_thread_wait_for_value_and_poll( spin_status, MPCOMP_MVP_STATE_AWAKE,(void*) mpc_lowcomm_workshare_worker_steal, mvp->root->worker_ws) ;
+      else
+			  mpc_thread_wait_for_value_and_poll( spin_status, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
+#else
+			  mpc_thread_wait_for_value_and_poll( spin_status, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
+#endif
+            if( expect_false( !mvp->enable ))
+                break;
+            else {
 #if MPCOMP_TRANSFER_INFO_ON_NODES
-			spin_node->info = spin_node->father->info;
+			    spin_node->info = spin_node->father->info;
 #endif /* MPCOMP_TRANSFER_INFO_ON_NODES */
-			_mpc_spin_node_wakeup( spin_node );
-			__mpcomp_start_openmp_thread( mvp );
+			    _mpc_spin_node_wakeup( spin_node );
+			    __mpcomp_start_openmp_thread( mvp );
+            }
 		}
+
+        __mpcomp_exit_node_signal( spin_node );
 	}
 	else
 	{
@@ -902,8 +1046,19 @@ void mpcomp_slave_mvp_node( mpcomp_mvp_t *mvp )
 
 		while ( mvp->enable )
 		{
-			mpc_thread_wait_for_value_and_poll( spin_status, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
-			__mpcomp_start_openmp_thread( mvp );
+#ifdef MPC_ENABLE_WORKSHARE
+			if(mpc_conf_type_elem_get_as_int(mpc_conf_root_config_get("mpcframework.lowcomm.workshare.enablestealing")))
+				mpc_thread_wait_for_value_and_poll( spin_status, MPCOMP_MVP_STATE_AWAKE, (void*) mpc_lowcomm_workshare_worker_steal, mvp->root->worker_ws) ;
+			else
+			  mpc_thread_wait_for_value_and_poll( spin_status, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
+#else
+			  mpc_thread_wait_for_value_and_poll( spin_status, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
+#endif
+
+            if( expect_false( !mvp->enable ))
+                break;
+            else
+			    __mpcomp_start_openmp_thread( mvp );
 		}
 	}
 }

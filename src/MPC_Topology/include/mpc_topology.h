@@ -136,6 +136,9 @@ int mpc_topology_get_numa_node_count(void);
 /** @brief Return 1 if the current node is a NUMA node, 0 otherwise */
 int mpc_topology_has_numa_nodes(void);
 
+/** @brief Return the number of sockets */
+int mpc_topology_get_socket_count(void);
+
 /** @brief Bind the current thread
  * @ param i The cpu_id to bind
 */

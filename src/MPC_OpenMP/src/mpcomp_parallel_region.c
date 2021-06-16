@@ -23,16 +23,12 @@
 #include "mpc_common_debug.h"
 #include "mpcomp_types.h"
 #include "mpcomp_core.h"
-
-
-
 #include "mpcomp_spinning_core.h"
-
 #include "mpcomp_parallel_region.h"
 #include "mpcomp_loop.h"
 #include "mpcomp_task.h"
-
-
+#include "mpcompt_parallel.h"
+#include "mpcompt_frame.h"
 
 /* Add header for spinning core */
 mpcomp_instance_t* __mpcomp_tree_array_instance_init( mpcomp_thread_t*, const int);
@@ -85,20 +81,13 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
     mpcomp_instance_t* instance = t->children_instance;
 
 #if OMPT_SUPPORT
-    if( mpcomp_ompt_is_enabled() &&  OMPT_Callbacks ) {
-        ompt_callback_parallel_begin_t callback;
-        callback = (ompt_callback_parallel_begin_t) OMPT_Callbacks[ompt_callback_parallel_begin];
+    __mpcompt_callback_parallel_begin( real_num_threads,
+                                       ompt_parallel_invoker_program | ompt_parallel_team );
 
-        if( callback ) {
-            t->info.ompt_region_data = ompt_data_none;
-            ompt_data_t* task_data = &( t->task_infos.current_task->ompt_task_data );
-            ompt_data_t* parallel_data = &( t->children_instance->team->info.ompt_region_data );
-            int flags = ( ompt_parallel_invoker_program & ompt_parallel_team );
-            const void* code_ra = __builtin_return_address( 0 );
-
-            callback( task_data, NULL, parallel_data, real_num_threads, flags, code_ra );
-        }
-    }
+#if MPCOMPT_HAS_FRAME_SUPPORT
+    /* Copy to transfert frame infos */
+    instance->team->frame_infos = t->frame_infos;
+#endif
 #endif /* OMPT_SUPPORT */
 
     instance_info = &( instance->team->info );
@@ -179,19 +168,7 @@ void __mpcomp_internal_end_parallel_region( __UNUSED__ mpcomp_instance_t *instan
 #endif
 
 #if OMPT_SUPPORT 
-    if( mpcomp_ompt_is_enabled() &&  OMPT_Callbacks )
-    {
-        ompt_callback_parallel_end_t callback;
-        callback = (ompt_callback_parallel_end_t) OMPT_Callbacks[ompt_callback_parallel_end];
-        if( callback )
-        {
-            ompt_data_t* task_data = &( t->task_infos.current_task->ompt_task_data );
-            ompt_data_t* parallel_data = &( instance->team->info.ompt_region_data );
-            const void* code_ra = __builtin_return_address( 1 );
-
-            callback( parallel_data, task_data, ( ompt_parallel_invoker_program | ompt_parallel_team ), code_ra );
-        }
-    }
+    __mpcompt_callback_parallel_end( ompt_parallel_invoker_program | ompt_parallel_team );
 #endif /* OMPT_SUPPORT */
 }
 
@@ -199,6 +176,11 @@ typedef void*(*mpcomp_start_func_t)(void*);
 
 void __mpcomp_start_parallel_region(void (*func)(void *), void *shared,
                                     unsigned arg_num_threads) {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
  	mpcomp_thread_t *t;
   	mpcomp_parallel_region_t info;
 
@@ -222,6 +204,10 @@ void __mpcomp_start_parallel_region(void (*func)(void *), void *shared,
   	t->mvp->instance = t->children_instance;
   	__mpcomp_start_openmp_thread( t->mvp );  
   	__mpcomp_internal_end_parallel_region(t->children_instance);
+
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_unset_no_reentrant();
+#endif /* OMPT_SUPPORT */
 }
 
 /****
@@ -234,6 +220,11 @@ void __mpcomp_start_parallel_region(void (*func)(void *), void *shared,
 void __mpcomp_start_sections_parallel_region(void (*func)(void *), void *shared,
                                              unsigned arg_num_threads,
                                              unsigned nb_sections) {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
   	mpcomp_thread_t *t;
   	mpcomp_parallel_region_t info;
 
@@ -257,11 +248,20 @@ void __mpcomp_start_sections_parallel_region(void (*func)(void *), void *shared,
   	t->mvp->instance = t->children_instance;
   	__mpcomp_start_openmp_thread( t->mvp );  
   	__mpcomp_internal_end_parallel_region(t->children_instance);
+
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_unset_no_reentrant();
+#endif /* OMPT_SUPPORT */
 }
 
 void __mpcomp_start_parallel_dynamic_loop(void (*func)(void *), void *shared,
                                           unsigned arg_num_threads, long lb,
                                           long b, long incr, long chunk_size) {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
   	mpcomp_thread_t *t;
  	mpcomp_parallel_region_t info;
 
@@ -288,11 +288,20 @@ void __mpcomp_start_parallel_dynamic_loop(void (*func)(void *), void *shared,
   	t->mvp->instance = t->children_instance;
   	__mpcomp_start_openmp_thread( t->mvp );  
   	__mpcomp_internal_end_parallel_region(t->children_instance);
+
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_unset_no_reentrant();
+#endif /* OMPT_SUPPORT */
 }
 
 void __mpcomp_start_parallel_static_loop(void (*func)(void *), void *shared,
                                          unsigned arg_num_threads, long lb,
                                          long b, long incr, long chunk_size) {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
   mpcomp_thread_t *t;
   mpcomp_parallel_region_t info;
 
@@ -318,11 +327,20 @@ void __mpcomp_start_parallel_static_loop(void (*func)(void *), void *shared,
   	t->mvp->instance = t->children_instance;
   	__mpcomp_start_openmp_thread( t->mvp );  
   	__mpcomp_internal_end_parallel_region(t->children_instance);
+
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_unset_no_reentrant();
+#endif /* OMPT_SUPPORT */
 }
 
 void __mpcomp_start_parallel_guided_loop(void (*func)(void *), void *shared,
                                          unsigned arg_num_threads, long lb,
                                          long b, long incr, long chunk_size) {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
   mpcomp_thread_t *t;
  	mpcomp_parallel_region_t info;
 
@@ -349,11 +367,20 @@ void __mpcomp_start_parallel_guided_loop(void (*func)(void *), void *shared,
   	t->mvp->instance = t->children_instance;
   	__mpcomp_start_openmp_thread( t->mvp );  
   	__mpcomp_internal_end_parallel_region(t->children_instance);
+
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_unset_no_reentrant();
+#endif /* OMPT_SUPPORT */
 }
 
 void __mpcomp_start_parallel_runtime_loop(void (*func)(void *), void *shared,
                                           unsigned arg_num_threads, long lb,
                                           long b, long incr, long chunk_size) {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
   mpcomp_thread_t *t; /* Info on the current thread */
 
   __mpcomp_init();

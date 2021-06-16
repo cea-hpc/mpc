@@ -333,7 +333,6 @@ static inline int mpcomp_task_property_isset( mpcomp_task_property_t property,
 	return ( property & mask );
 }
 
-
 static inline int _mpc_task_is_final( unsigned int flags,
                                         mpcomp_task_t *parent )
 {
@@ -353,7 +352,8 @@ static inline int _mpc_task_is_final( unsigned int flags,
 
 /* Initialization of a task structure */
 static inline void _mpc_task_info_init( mpcomp_task_t *task,
-        void ( *func )( void * ), void *data,
+        void ( *func )( void * ), void *func_data,
+        void* data, size_t data_size,
         struct mpcomp_thread_s *thread )
 {
 	assert( task != NULL );
@@ -362,7 +362,9 @@ static inline void _mpc_task_info_init( mpcomp_task_t *task,
 	memset( task, 0, sizeof( mpcomp_task_t ) );
 	/* Set non null task infos field */
 	task->func = func;
+	task->func_data = func_data;
 	task->data = data;
+	task->data_size = data_size;
 	task->icvs = thread->info.icvs;
 	task->parent = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread );
 	task->depth = ( task->parent ) ? task->parent->depth + 1 : 0;
@@ -416,7 +418,7 @@ mpcomp_task_t *_mpc_task_alloc( void ( *fn )( void * ), void *data,
                                     void ( *cpyfn )( void *, void * ),
                                     long arg_size, long arg_align,
                                     bool if_clause, unsigned flags,
-                                    int deps_num );
+                                    int has_deps );
 
 void _mpc_task_process( mpcomp_task_t *new_task, bool if_clause );
 

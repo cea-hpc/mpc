@@ -35,6 +35,7 @@
 #include "mpcposix/pthread.h"
 #endif
 
+#include "mpc_lowcomm_workshare.h"
 #include "lowcomm_config.h"
 
 /************************************************************************/
@@ -1448,7 +1449,7 @@ void mpc_lowcomm_coll_init_hetero( mpc_lowcomm_communicator_t id )
 }
 
 /******************************************
- * OPT NO ALLOC COLLECTIBE IMPLEMENTATION *
+ * OPT NO ALLOC COLLECTIVE IMPLEMENTATION *
  ******************************************/
 
 /* Barrier */
@@ -2026,6 +2027,7 @@ int mpc_lowcomm_barrier_shm_on_context(struct shared_mem_barrier *barrier_ctx,
 					if(128 < cnt++)
 					{
 						sctk_network_notify_idle_message();
+            MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 						mpc_thread_yield();
 					}
 				}

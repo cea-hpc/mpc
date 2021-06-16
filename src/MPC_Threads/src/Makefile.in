@@ -92,8 +92,14 @@ host_triplet = @host@
 @MPC_MPI_ENABLED_TRUE@am__append_2 = -I$(abs_top_srcdir)/src/MPC_MPI/include/ \
 @MPC_MPI_ENABLED_TRUE@	-I$(abs_top_srcdir)/src/MPC_MPI/src/ \
 @MPC_MPI_ENABLED_TRUE@	-I$(abs_top_srcdir)/src/MPC_Lowcomm/include/
-@MPC_CUDA_ENABLED_TRUE@am__append_3 = ./accelerator/cuda.c ./accelerator/cuda_wrap.c
-@MPC_CUDA_ENABLED_TRUE@am__append_4 = libmpc_cuda_addon.la
+@MPC_OPENMP_ENABLED_TRUE@am__append_3 = -I$(abs_top_srcdir)/src/MPC_OpenMP/include/ \
+@MPC_OPENMP_ENABLED_TRUE@                       -I$(abs_top_srcdir)/src/MPC_OpenMP/src/ \
+@MPC_OPENMP_ENABLED_TRUE@                       -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/src/ \
+@MPC_OPENMP_ENABLED_TRUE@                       -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/callback \
+@MPC_OPENMP_ENABLED_TRUE@                       -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/trace
+
+@MPC_CUDA_ENABLED_TRUE@am__append_4 = ./accelerator/cuda.c ./accelerator/cuda_wrap.c
+@MPC_CUDA_ENABLED_TRUE@am__append_5 = libmpc_cuda_addon.la
 subdir = src/MPC_Threads/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_gcc_builtin.m4 \
@@ -540,13 +546,13 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Config/src/generated/ \
 	-I$(abs_top_srcdir)/src/MPC_Topology/include/ \
 	-I$(abs_top_builddir)/src/include/ $(am__append_1) \
-	$(am__append_2)
-lib_LTLIBRARIES = libmpcthread.la $(am__append_4)
+	$(am__append_2) $(am__append_3)
+lib_LTLIBRARIES = libmpcthread.la $(am__append_5)
 libmpcthread_la_SOURCES = sctk_context.c futex.c thread_ptr.c thread.c \
 	tls.c kthread.c microthread.c romio_ctx.c pthread_engine.c \
 	ng_engine.c ng_engine_scheduler.c ethread_engine.c \
 	ethread_mxn_engine.c ethread_posix.c accelerator.c \
-	$(am__append_3)
+	$(am__append_4)
 @MPC_CUDA_ENABLED_TRUE@libmpc_cuda_addon_la_SOURCES = ./accelerator/cuda_lib/cuda_lib.c
 @MPC_CUDA_ENABLED_TRUE@libmpc_cuda_addon_la_LIBADD = -lcuda
 libmpcthread_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la  -lpthread

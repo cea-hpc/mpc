@@ -47,8 +47,6 @@
 #include "sctk_thread_dbg.h"
 #endif
 
-
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -68,6 +66,7 @@ static inline int ___mpc_thread_ethread_poll_vp(_mpc_thread_ethread_virtual_proc
                                                 _mpc_thread_ethread_per_thread_t *cur)
 {
 	_mpc_thread_ethread_status_t stat_sav;
+
 
 	stat_sav = cur->status;
 	assert(cur->status != ethread_inside_polling);
@@ -476,7 +475,6 @@ static inline int ___mpc_thread_ethread_sched_yield_vp(_mpc_thread_ethread_virtu
 #ifdef SCTK_SCHED_CHECK
 	___mpc_thread_ethread_sched_yield_vp_head(vp, cur);
 #endif
-
 	status = cur->status;
 
 	if(expect_false(status == ethread_ready) )
@@ -771,9 +769,12 @@ static inline void ___mpc_thread_ethread_wait_for_value_and_poll(_mpc_thread_eth
 
 	if(cur->status != ethread_ready)
 	{
-		while(*data != value)
-		{
-			if(func != NULL)
+    while(*data != value)
+    {
+#ifdef MPC_Lowcomm
+      MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL_WAIT_FOR_VALUE(data,value,func,arg, mpc_common_get_local_task_rank());
+#endif
+      if(func != NULL)
 			{
 				func(arg);
 			}
@@ -797,6 +798,7 @@ static inline void ___mpc_thread_ethread_wait_for_value_and_poll(_mpc_thread_eth
 	{
 		if(*data != value)
 		{
+
 			if(func != NULL)
 			{
 				func(arg);

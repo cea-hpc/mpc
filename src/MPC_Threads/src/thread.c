@@ -86,6 +86,10 @@
 	#include <extls_hls.h>
 #endif
 
+#ifdef MPC_OpenMP
+    #include "mpcomp_core.h"
+#endif
+
 /***************
 * LOCAL TYPES *
 ***************/
@@ -1033,6 +1037,10 @@ static void *___vp_thread_start_routine(sctk_thread_data_t *__arg)
 	mpc_common_init_trigger("VP Thread Start");
 
 	res = tmp.__start_routine(tmp.__arg);
+
+#if defined (MPC_OpenMP)
+    __mpcomp_exit();
+#endif
 
 	mpc_common_init_trigger("VP Thread End");
 

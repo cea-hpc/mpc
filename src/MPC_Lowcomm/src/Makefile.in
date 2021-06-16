@@ -188,7 +188,7 @@ am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c sctk_checksum.c \
 	sctk_control_messages.c ft.c group.c communicator.c shm_coll.c \
 	lowcomm_config.c sctk_handle.c sctk_low_level_comm.c \
 	sctk_multirail.c sctk_net_tools.c sctk_net_topology.c \
-	sctk_rail.c sctk_reorder.c sctk_route.c \
+	sctk_rail.c sctk_reorder.c sctk_route.c workshare.c\
 	sctk_topological_polling.c sctk_topological_rail.c \
 	sctk_window.c ./tcp/sctk_tcp.c ./tcp/sctk_tcp_rdma.c \
 	./tcp/sctk_tcp_toolkit.c ./shm/sctk_shm.c \
@@ -250,7 +250,7 @@ am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo \
 	shm_coll.lo lowcomm_config.lo sctk_handle.lo \
 	sctk_low_level_comm.lo sctk_multirail.lo sctk_net_tools.lo \
 	sctk_net_topology.lo sctk_rail.lo sctk_reorder.lo \
-	sctk_route.lo sctk_topological_polling.lo \
+	sctk_route.lo sctk_topological_polling.lo workshare.lo\
 	sctk_topological_rail.lo sctk_window.lo ./tcp/sctk_tcp.lo \
 	./tcp/sctk_tcp_rdma.lo ./tcp/sctk_tcp_toolkit.lo \
 	./shm/sctk_shm.lo ./shm/sctk_shm_eager.lo \
@@ -647,7 +647,7 @@ libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c \
 	sctk_control_messages.c ft.c group.c communicator.c shm_coll.c \
 	lowcomm_config.c sctk_handle.c sctk_low_level_comm.c \
 	sctk_multirail.c sctk_net_tools.c sctk_net_topology.c \
-	sctk_rail.c sctk_reorder.c sctk_route.c \
+	sctk_rail.c sctk_reorder.c sctk_route.c workshare.c \
 	sctk_topological_polling.c sctk_topological_rail.c \
 	sctk_window.c ./tcp/sctk_tcp.c ./tcp/sctk_tcp_rdma.c \
 	./tcp/sctk_tcp_toolkit.c ./shm/sctk_shm.c \
@@ -921,6 +921,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./tcp/$(DEPDIR)/sctk_tcp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./tcp/$(DEPDIR)/sctk_tcp_rdma.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./tcp/$(DEPDIR)/sctk_tcp_toolkit.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./tcp/$(DEPDIR)/workshare.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\

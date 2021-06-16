@@ -1013,7 +1013,7 @@ mpcomp_places_detect_heretogeneous_places( mpcomp_places_info_t *list )
 
 	if ( invalid_size_count )
 	{
-		mpc_common_debug_warning("Can't build regular tree\n" );
+		//mpc_common_debug_warning("Can't build regular tree\n" );
 	}
 
 	return invalid_size_count;
@@ -1077,7 +1077,7 @@ mpcomp_places_env_variable_parsing( const int nb_mvps )
 
 	if ( mpcomp_places_detect_heretogeneous_places( list ) )
 	{
-		mpc_common_debug_warning("Every place must have the same number of threads\n" );
+		//mpc_common_debug_warning("Every place must have the same number of threads\n" );
 		return NULL;
 	}
 

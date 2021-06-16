@@ -20,7 +20,7 @@ GOMP_ABI_FUNC(GOMP_ordered_end, "GOMP_1.0", mpcomp_GOMP_ordered_end,
               __mpcomp_ordered_end)
 GOMP_ABI_FUNC(GOMP_ordered_start, "GOMP_1.0", mpcomp_GOMP_ordered_start,
               __mpcomp_ordered_begin)
-#endif /* OPTIMIZED_GOMP_4_0_API_SUPPORT */
+#endif /* OPTIMIZED_GOMP_1_0_API_SUPPORT */
 
 GOMP_ABI_FUNC(GOMP_loop_dynamic_next, "GOMP_1.0", mpcomp_GOMP_loop_dynamic_next,
               __mpcomp_dynamic_loop_next)
@@ -100,7 +100,7 @@ GOMP_ABI_FUNC(GOMP_single_copy_start, "GOMP_1.0", mpcomp_GOMP_single_copy_start,
               __mpcomp_do_single_copyprivate_begin)
 GOMP_ABI_FUNC(GOMP_single_start, "GOMP_1.0", mpcomp_GOMP_single_start,
               __mpcomp_do_single)
-#endif /* OPTIMIZED_GOMP_4_0_API_SUPPORT */
+#endif /* OPTIMIZED_GOMP_1_0_API_SUPPORT */
 
 //All"GOMP_2.0"symbols
 GOMP_ABI_FUNC(GOMP_task, "GOMP_2.0", mpcomp_GOMP_task, mpcomp_GOMP_task)
@@ -150,14 +150,15 @@ GOMP_ABI_FUNC(GOMP_loop_ull_static_start, "GOMP_2.0",
               mpcomp_GOMP_loop_ull_static_start,
               mpcomp_GOMP_loop_ull_static_start)
 GOMP_ABI_FUNC(GOMP_taskwait, "GOMP_2.0", mpcomp_GOMP_taskwait,
-              _mpc_task_newwait)
+              _mpc_task_wait)
 //All"GOMP_3.0"symbols
 GOMP_ABI_FUNC(GOMP_taskyield, "GOMP_3.0", mpcomp_GOMP_taskyield,
-              _mpc_task_newyield)
+              _mpc_taskyield)
 
 //GOMP_4.0 symbols
 
-GOMP_ABI_FUNC(GOMP_parallel, "GOMP_4.0", mpcomp_GOMP_parallel,
+GOMP_ABI_FUNC(GOMP_parallel, "GOMP_4.0", 
+							mpcomp_GOMP_parallel,
               __mpcomp_start_parallel_region)
 GOMP_ABI_FUNC(GOMP_parallel_loop_static, "GOMP_4.0",
               mpcomp_GOMP_parallel_loop_static,
@@ -174,6 +175,12 @@ GOMP_ABI_FUNC(GOMP_parallel_loop_runtime, "GOMP_4.0",
 GOMP_ABI_FUNC(GOMP_parallel_sections, "GOMP_4.0",
               mpcomp_GOMP_parallel_sections,
               __mpcomp_start_sections_parallel_region)
+GOMP_ABI_FUNC(GOMP_taskgroup_start, "GOMP_4.0",
+              mpcomp_GOMP_taskgroup_start,
+              _mpc_task_taskgroup_start)
+GOMP_ABI_FUNC(GOMP_taskgroup_end, "GOMP_4.0",
+              mpcomp_GOMP_taskgroup_end,
+              _mpc_task_taskgroup_end )
 
 GOMP_ABI_FUNC(GOMP_barrier_cancel, "GOMP_4.0", mpcomp_GOMP_barrier_cancel,
              mpcomp_GOMP_barrier_cancel)

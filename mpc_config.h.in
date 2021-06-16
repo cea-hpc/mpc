@@ -817,6 +817,9 @@
 /* MPC debug messages output was enabled */
 #undef MPC_ENABLE_DEBUG_MESSAGES
 
+/* MPC Workshare was enabled */
+#undef MPC_ENABLE_WORKSHARE
+
 /* MPC Colored output */
 #undef MPC_ENABLE_SHELL_COLORS
 

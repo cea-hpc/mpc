@@ -27,7 +27,13 @@
 #include "mpcomp_task.h"
 #include "mpcomp_openmp_tls.h"
 #include <stdbool.h>
+#include "mpcompt_control_tool.h"
+#include "mpcompt_frame.h"
 void omp_set_num_threads(int num_threads) {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_get_pre_init_infos();
+#endif /* OMPT_SUPPORT */
+
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
   mpc_common_nodebug("[%d-%p] %s new num threads: %d", t->rank, t, __func__,
@@ -50,6 +56,10 @@ void ompc_set_num_threads(int num_threads) {
  * See OpenMP API 2.5 Section 3.2.4
  */
 int omp_get_thread_num(void) {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_get_pre_init_infos();
+#endif /* OMPT_SUPPORT */
+
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
   mpc_common_nodebug("[%d] %s thread id: ", t->rank, __func__);
@@ -62,6 +72,10 @@ int omp_get_thread_num(void) {
  * See OpenMP API 2.5 Section 3.2.3
  */
 int omp_get_max_threads(void) {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_get_pre_init_infos();
+#endif /* OMPT_SUPPORT */
+
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
   mpc_common_nodebug("[%d] %s max num threads : %d", t->rank, __func__,
@@ -74,6 +88,10 @@ int omp_get_max_threads(void) {
  * See OpenMP API 1.0 Section 3.2.5
  */
 int omp_get_num_procs(void) {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_get_pre_init_infos();
+#endif /* OMPT_SUPPORT */
+
   __mpcomp_init();
   return mpcomp_global_icvs.nmicrovps_var;
 }
@@ -84,6 +102,10 @@ int omp_get_num_procs(void) {
   * See OpenMP API 2.5 Section 3.1.7
   */
 void omp_set_dynamic(int dynamic_threads) {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_get_pre_init_infos();
+#endif /* OMPT_SUPPORT */
+
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
   mpc_common_nodebug("[%d] %s enter ...", t->rank, __func__);
@@ -96,6 +118,10 @@ void omp_set_dynamic(int dynamic_threads) {
   * See OpenMP API 2.5 Section 3.2.8
   */
 int omp_get_dynamic(void) {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_get_pre_init_infos();
+#endif /* OMPT_SUPPORT */
+
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
   mpc_common_nodebug("[%d] %s enter ...", t->rank, __func__);
@@ -107,6 +133,10 @@ int omp_get_dynamic(void) {
   * See OpenMP API 2.5 Section 3.2.9
   */
 void omp_set_nested(int nested) {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_get_pre_init_infos();
+#endif /* OMPT_SUPPORT */
+
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
   mpc_common_nodebug("[%d] %s enter ...", t->rank, __func__);
@@ -119,6 +149,10 @@ void omp_set_nested(int nested) {
   * See OpenMP API 2.5 Section 3.2.10
   */
 int omp_get_nested(void) {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_get_pre_init_infos();
+#endif /* OMPT_SUPPORT */
+
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
   mpc_common_nodebug("[%d] %s enter ...", t->rank, __func__);
@@ -131,6 +165,10 @@ int omp_get_nested(void) {
   * See OpenMP API 3.0 Section 3.2.11
   */
 void omp_set_schedule(omp_sched_t kind, int modifier) {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_get_pre_init_infos();
+#endif /* OMPT_SUPPORT */
+
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
   mpc_common_nodebug("[%d] %s enter ...", t->rank, __func__);
@@ -143,6 +181,10 @@ void omp_set_schedule(omp_sched_t kind, int modifier) {
   * See OpenMP API 3.0 Section 3.2.12
   */
 void omp_get_schedule(omp_sched_t *kind, int *modifier) {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_get_pre_init_infos();
+#endif /* OMPT_SUPPORT */
+
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
   mpc_common_nodebug("[%d] %s enter ...", t->rank, __func__);
@@ -157,6 +199,10 @@ void omp_get_schedule(omp_sched_t *kind, int *modifier) {
  * See OpenMP API 2.5 Section 3.2.6
  */
 int omp_in_parallel(void) {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_get_pre_init_infos();
+#endif /* OMPT_SUPPORT */
+
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
   mpc_common_nodebug("[%d] %s enter ...", t->rank, __func__);
@@ -168,6 +214,10 @@ int omp_in_parallel(void) {
  * which enclose the calling call.
  */
 int omp_get_level(void) {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_get_pre_init_infos();
+#endif /* OMPT_SUPPORT */
+
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
   mpc_common_nodebug("[%d] %s level: %d", t->rank, __func__, t->info.icvs.levels_var);
@@ -179,6 +229,10 @@ int omp_get_level(void) {
  * which enclose the calling call.
  */
 int omp_get_active_level(void) {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_get_pre_init_infos();
+#endif /* OMPT_SUPPORT */
+
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
   mpc_common_nodebug("[%d] %s level: %d", t->rank, __func__,
@@ -193,6 +247,10 @@ int omp_get_active_level(void) {
  * if level is omp_get_level the result is identical to omp_get_thread_num
  */
 int omp_get_ancestor_thread_num(int level) {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_get_pre_init_infos();
+#endif /* OMPT_SUPPORT */
+
   __mpcomp_init();
   if( !level ) return 0; 
   mpcomp_thread_t *t = mpc_omp_tree_array_ancestor_get_thread_tls(level);
@@ -207,6 +265,10 @@ int omp_get_ancestor_thread_num(int level) {
  * identical to omp_get_num_threads.
  */
 int omp_get_team_size(int level) {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_get_pre_init_infos();
+#endif /* OMPT_SUPPORT */
+
   __mpcomp_init();
   if( !level ) return 1;
   mpcomp_thread_t *t = mpc_omp_tree_array_ancestor_get_thread_tls(level);
@@ -220,6 +282,10 @@ int omp_get_team_size(int level) {
  * (See OpenMP API 2.5 Section 3.2.2)
  */
 int omp_get_num_threads(void) {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_get_pre_init_infos();
+#endif /* OMPT_SUPPORT */
+
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
   mpc_common_nodebug("[%d] %s entering ...", t->rank, __func__);
@@ -245,6 +311,10 @@ double omp_get_wtick(void) { return (double)10e-6; }
  * threads available to the program.
  */
 int omp_get_thread_limit() {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_get_pre_init_infos();
+#endif /* OMPT_SUPPORT */
+
   __mpcomp_init();
   return mpcomp_global_icvs.thread_limit_var;
 }
@@ -272,6 +342,10 @@ int omp_get_max_active_levels() {
    *  This is equivalent of having only one active parallel region
    *  */
 
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_get_pre_init_infos();
+#endif /* OMPT_SUPPORT */
+
   __mpcomp_init();
   return mpcomp_global_icvs.max_active_levels_var;
 }
@@ -289,6 +363,27 @@ int omp_in_final(void) {
 #else
   return 0;
 #endif
+}
+
+/*
+ * The omp_control_tool routine allows to interact with an active tool.
+ */
+int omp_control_tool(int command, int modifier, void * arg) {
+  omp_control_tool_result_t result = omp_control_tool_notool;
+
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_get_infos();
+#endif /* OMPT_SUPPORT */
+#if OMPT_SUPPORT
+
+  result = __mpcompt_callback_control_tool( command, modifier, arg );
+
+#endif /* OMPT_SUPPORT */
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+  __mpcompt_frame_unset_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
+  return result;
 }
 
 /* For backward compatibility with old patched GCC */

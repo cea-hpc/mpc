@@ -35,6 +35,13 @@ if MPC_MPI_ENABLED
         AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Lowcomm/include/
 endif
 
+if MPC_OPENMP_ENABLED
+        AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_OpenMP/include/ \
+                       -I$(abs_top_srcdir)/src/MPC_OpenMP/src/ \
+                       -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/src/ \
+                       -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/callback \
+                       -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/trace
+endif
 
 lib_LTLIBRARIES = libmpcthread.la
 

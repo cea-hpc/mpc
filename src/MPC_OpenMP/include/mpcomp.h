@@ -30,10 +30,8 @@ extern "C" {
 #include <stdio.h>
 #include <errno.h>
 #include <opa_primitives.h>
-
-#include <ompt.h>
 #include <pthread.h>
-
+#include <stdint.h>
 
 /* OpenMP 2.5 API - For backward compatibility with old patched GCC */
 int mpcomp_get_num_threads( void );
@@ -64,9 +62,7 @@ typedef struct mpcomp_lock_s
 	omp_lock_hint_t hint;
 	OPA_int_t lock;
 	void *opaque;
-#if 1 //OMPT_SUPPORT
-	ompt_wait_id_t wait_id;
-#endif /* OMPT_SUPPORT */
+	uint64_t ompt_wait_id;
 } mpcomp_lock_t;
 
 typedef mpcomp_lock_t* omp_lock_t;
@@ -79,9 +75,7 @@ typedef struct mpcomp_nest_lock_s
 	omp_lock_hint_t hint;
 	OPA_int_t lock;
 	void *opaque;
-#if 1 //OMPT_SUPPORT
-	ompt_wait_id_t wait_id;
-#endif /* OMPT_SUPPORT */
+	uint64_t ompt_wait_id;
 } mpcomp_nest_lock_t;
 
 typedef mpcomp_nest_lock_t *omp_nest_lock_t;
@@ -124,6 +118,23 @@ int omp_get_ancestor_thread_num( int level );
 int omp_get_team_size( int level );
 int omp_get_active_level( void );
 int omp_in_final();
+
+/* OpenMP 5.0 API */
+typedef enum omp_control_tool_result_e {
+    omp_control_tool_notool = -2,
+    omp_control_tool_nocallback = -1,
+    omp_control_tool_success = 0,
+    omp_control_tool_ignored = 1
+} omp_control_tool_result_t;
+
+typedef enum omp_control_tool_t {
+    omp_control_tool_start = 1,
+    omp_control_tool_pause = 2,
+    omp_control_tool_flush = 3,
+    omp_control_tool_end = 4
+} omp_control_tool_t;
+
+int omp_control_tool(int command, int modifier, void * arg);
 
 /* OpenMP 5.0 API */
 

@@ -1432,6 +1432,9 @@ do
 		--force-spack-package=*)
 			extractParamValue 'OVERRIDEN_SPACK_PKGS' 'force-spack-package' "$arg"
 			;;
+    --enable-workshare)
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-workshare"
+      ;;
 		# Build wrappers
 		--version)
 			printf "%s\n" "$("$SCRIPTPATH/utils/get_version")"
@@ -1662,7 +1665,6 @@ MPC_CONFIGURE_OPTS="--prefix=${PREFIX} $MPCFRAMEWORK_BUILD_PARAMETERS"
 #
 
 checking "Configuring MPC"
-
 
 if test "x${PREFIX}" = "xdisabled"; then
 	# we want parameter expansion

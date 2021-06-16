@@ -98,6 +98,10 @@ struct mpc_omp_conf
 	int omp_task_use_lockfree_queue;
 	int omp_task_steal_last_stolen_list;
 	int omp_task_resteal_to_last_thief;
+
+	/* Tools */
+	char omp_tool[MPC_CONF_STRING_SIZE];
+	char omp_tool_libraries[MPC_CONF_STRING_SIZE];
 };
 
 

@@ -1,11 +1,9 @@
 #include "mpcomp_tree.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <assert.h>
-
 #include <mpc_thread.h>
 #include <mpc_topology.h>
 #include "mpcomp_alloc.h"
@@ -13,7 +11,10 @@
 #include "mpc_common_asm.h"
 #include "mpcomp_types.h"
 #include "mpcomp_spinning_core.h"
+#include "mpcompt_thread.h"
+#include "mpcompt_frame.h"
 
+#include "thread.h"
 #if( MPCOMP_TASK || defined( MPCOMP_OPENMP_3_0 ) )
 
 /**************
@@ -1106,52 +1107,83 @@ static inline void *__tree_mvp_init( void *args )
 {
 	int *tree_shape;
 	int target_node_rank, current_depth;
+    mpcomp_thread_t *ithread, *thread;
 	mpcomp_mvp_t *new_mvp = NULL;
 	mpcomp_node_t *root_node;
 	mpcomp_meta_tree_node_t *me = NULL;
 	mpcomp_meta_tree_node_t *root = NULL;
 	mpcomp_mvp_thread_args_t *unpack_args = NULL;
+
 	/* Unpack thread start_routine arguments */
 	unpack_args = ( mpcomp_mvp_thread_args_t * ) args;
 	const unsigned int rank = unpack_args->rank;
 	root = unpack_args->array;
 	me = &( root[rank] );
 	root_node = ( mpcomp_node_t * ) root[0].user_pointer;
+
 	/* Shift root tree array to get OMP_TREE shape */
 	const int max_depth = root_node->tree_depth - 1;
 	tree_shape = root_node->tree_base + 1;
+
 	/* User defined infos */
-	new_mvp = ( mpcomp_mvp_t * ) mpcomp_alloc( sizeof( mpcomp_mvp_t ) );
-	assert( new_mvp );
-	memset( new_mvp, 0, sizeof( mpcomp_mvp_t ) );
+    /* MVP of initial thread becomes master thread MVP for upcoming parallel region */
+    if( sctk_openmp_thread_tls ) {
+        ithread = sctk_openmp_thread_tls;
+        new_mvp = ithread->mvp;
+        ithread->root = root_node;
+    }
+    else {
+        new_mvp = (mpcomp_mvp_t *) mpcomp_alloc( sizeof(mpcomp_mvp_t) );
+        assert( new_mvp );
+        memset( new_mvp, 0, sizeof(mpcomp_mvp_t) );
+
+        new_mvp->pu_id = unpack_args->pu_id;
+
+        new_mvp->threads = (mpcomp_thread_t*) mpcomp_alloc( sizeof( mpcomp_thread_t) );
+        assert( new_mvp->threads );
+        memset( new_mvp->threads, 0, sizeof( mpcomp_thread_t ) );
+
+#if OMPT_SUPPORT
+        new_mvp->threads->mvp = new_mvp;
+        new_mvp->threads->tool_status = unpack_args->tool_status;
+        new_mvp->threads->tool_instance = unpack_args->tool_instance;
+
+        __mpcompt_callback_thread_begin( new_mvp->threads, ompt_thread_other );
+        __mpcompt_callback_thread_begin( new_mvp->threads, ompt_thread_worker );
+#endif /* OMPT_SUPPORT */
+    }
+
 	/* Initialize the corresponding microVP (all but tree-related variables) */
 	new_mvp->root = root_node;
 	new_mvp->thread_self = mpc_thread_self();
+
 	/* MVP ranking */
 	new_mvp->global_rank = rank;
 	new_mvp->stage_rank = __tree_array_global_to_stage( tree_shape, max_depth, rank );
 	new_mvp->local_rank = __tree_array_global_to_local( tree_shape, max_depth, rank );
 	new_mvp->rank = new_mvp->local_rank;
+
 	/* Father initialisation */
 	me->fathers_array_size = ( max_depth ) ? max_depth : 1;
 	me->fathers_array = ( int * )__tree_array_get_father_array_by_depth( tree_shape, max_depth, rank );
 	new_mvp->tree_rank = __tree_array_get_rank( tree_shape, max_depth, rank );
 	new_mvp->enable = 1;
-	new_mvp->threads = ( mpcomp_thread_t * ) mpcomp_alloc( sizeof( mpcomp_thread_t ) );
-	assert( new_mvp->threads );
-	memset( new_mvp->threads, 0, sizeof( mpcomp_thread_t ) );
-#if defined( MPCOMP_OPENMP_3_0 )
-	_mpc_task_tree_array_thread_init( new_mvp->threads );
-#endif /* MPCOMP_OPENMP_3_0 */
-	new_mvp->threads->next = NULL;
-	new_mvp->threads->info.num_threads = 1;
+
+    thread = new_mvp->threads;
+	thread->next = NULL;
+	thread->info.num_threads = 1;
 	new_mvp->depth = max_depth;
+
+    __mpcomp_thread_infos_init( thread );
+
 	/* Generic infos */
 	me->type = MPCOMP_META_TREE_LEAF;
 	me->user_pointer = ( void * ) new_mvp;
+
 	// Transfert to slave_node_leaf function ...
 	current_depth = max_depth - 1;
 	target_node_rank = me->fathers_array[current_depth];
+
 	( void ) OPA_incr_int( &( root[target_node_rank].children_ready ) );
 
 	if (  !( new_mvp->local_rank ) )
@@ -1178,65 +1210,123 @@ static inline void *__tree_mvp_init( void *args )
 	}
 
 	mpcomp_slave_mvp_node( new_mvp );
+
+#if OMPT_SUPPORT
+    __mpcompt_callback_thread_end( thread, ompt_thread_worker );
+    __mpcompt_callback_thread_end( thread, ompt_thread_other );
+
+    /* Mvp exit */
+    if( thread->tool_status == active )
+        OPA_incr_int( &thread->tool_instance->nb_native_threads_exited );
+#endif /* OMPT_SUPPORT */
+
 	return NULL;
 }
 
-
-static inline void __tree_master_thread_init( mpcomp_node_t *root, __UNUSED__ mpcomp_meta_tree_node_t *tree_array, const mpcomp_local_icv_t *icvs )
-{
-	int *singleton;
-	mpcomp_thread_t *master;
+void
+__mpcomp_init_seq_region() {
 	mpcomp_instance_t *seq_instance;
-	assert( root );
-	assert( tree_array );
-	// Create an OpenMP context
-	master = root->mvp->threads;
-	assert( master );
-	master->root = root;
-	master->mvp = root->mvp;
+    mpcomp_mvp_t* new_mvp;
+	int *singleton;
+
+    /* Create an OpenMP context */
+    /* Init sequential instance */
 	seq_instance = ( mpcomp_instance_t * ) mpcomp_alloc( sizeof( mpcomp_instance_t ) );
 	assert( seq_instance );
 	memset( seq_instance, 0, sizeof( mpcomp_instance_t ) );
+
+    /* Init sequential team */
 	seq_instance->team = ( mpcomp_team_t * ) mpcomp_alloc( sizeof( mpcomp_team_t ) );
 	assert( seq_instance->team );
 	memset( seq_instance->team, 0, sizeof( mpcomp_team_t ) );
+
 	seq_instance->team->depth = 0;
 	seq_instance->root = NULL;
 	seq_instance->nb_mvps = 1;
-	seq_instance->tree_array = ( mpcomp_generic_node_t * )mpcomp_alloc( sizeof( mpcomp_generic_node_t ) );
+
+    /* Init MVP of sequential region */
+    new_mvp = (mpcomp_mvp_t *) mpcomp_alloc( sizeof(mpcomp_mvp_t) );
+    assert( new_mvp );
+    memset( new_mvp, 0, sizeof(mpcomp_mvp_t) );
+
+    /* Set PU on wich microvp is running */
+    new_mvp->pu_id = mpc_topology_get_pu();
+
+    /* Create associated initial thread */
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    new_mvp->threads = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
+#else
+    new_mvp->threads = (mpcomp_thread_t*) mpcomp_alloc( sizeof( mpcomp_thread_t ));
+    assert( new_mvp->threads );
+    memset( new_mvp->threads, 0, sizeof( mpcomp_thread_t ));
+
+    sctk_openmp_thread_tls = ( void* ) new_mvp->threads;
+#endif /* OMPT_SUPPORT */
+
+    new_mvp->threads->mvp = new_mvp;
+    new_mvp->threads->instance = seq_instance;
+
+    /* Init tree infos of sequential instance */
+	seq_instance->tree_array = (mpcomp_generic_node_t *) mpcomp_alloc( sizeof( mpcomp_generic_node_t ));
 	assert( seq_instance->tree_array );
-	seq_instance->tree_array[0].ptr.mvp = root->mvp;
+    memset( seq_instance->tree_array, 0, sizeof( mpcomp_generic_node_t ) );
+
+	seq_instance->tree_array[0].ptr.mvp = new_mvp;
 	seq_instance->tree_array[0].type = MPCOMP_CHILDREN_LEAF;
 	seq_instance->mvps = seq_instance->tree_array;
 	seq_instance->tree_depth = 1;
+
 	singleton = ( int * ) mpcomp_alloc( sizeof( int ) );
 	assert( singleton );
+
 	singleton[0] = 1;
 	seq_instance->tree_base = singleton;
 	seq_instance->tree_cumulative = singleton;
 	seq_instance->tree_nb_nodes_per_depth = singleton;
-	master->instance = seq_instance;
-	// Protect Orphan OpenMP construct
-	master->info.icvs = *icvs;
-	master->info.num_threads = 1;
-	assert( root->mvp );
 
   /* Initialize the various allocators (OpenMP 5.0 Mem Management) */
-  master->default_allocator = icvs->def_allocator_var;
+  //master->default_allocator = icvs->def_allocator_var;
 
-#if defined( MPCOMP_OPENMP_3_0 )
-	_mpc_task_tree_array_thread_init( master );
-#endif /* MPCOMP_OPENMP_3_0 */
 }
 
+void
+__mpcomp_init_initial_thread( const mpcomp_local_icv_t icvs )
+{
+    mpcomp_thread_t* ith;
+    ith = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
+    assert( ith );
 
+#if OMPT_SUPPORT
+    __mpcompt_callback_thread_begin( ith, ompt_thread_initial );
+#endif /* OMPT_SUPPORT */
 
-void _mpc_omp_tree_alloc( int *shape, int max_depth, const int *cpus_order, const int place_depth, const int place_size, const mpcomp_local_icv_t *icvs )
+    __mpcomp_thread_infos_init( ith );
+
+#if defined( MPCOMP_OPENMP_3_0 )
+	_mpc_task_tree_array_thread_init( ith );
+#endif /* MPCOMP_OPENMP_3_0 */
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    /* Update initial task with enter frame info */
+    __mpcompt_frame_set_enter( ith->frame_infos.ompt_frame_infos.enter_frame.ptr );
+#endif /* OMPT_SUPPORT */
+
+	/* Protect Orphan OpenMP construct */
+	ith->info.icvs = icvs;
+    ith->info.num_threads = 1;
+}
+
+void _mpc_omp_tree_alloc( int *shape, int max_depth, const int *cpus_order, const int place_depth, const int place_size )
 {
 	int i, n_num, place_id;
 	mpc_thread_t *threads;
 	mpcomp_mvp_thread_args_t *args;
 	mpcomp_meta_tree_node_t *tree_array;
+
+#if OMPT_SUPPORT
+    mpcomp_thread_t* t = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+    assert( t );
+#endif /* OMPT_SUPPORT */
+
 	mpcomp_node_t *root = ( mpcomp_node_t * ) mpcomp_alloc( sizeof( mpcomp_node_t ) );
 	assert( root );
 	memset( root, 0, sizeof( mpcomp_node_t ) );
@@ -1252,26 +1342,39 @@ void _mpc_omp_tree_alloc( int *shape, int max_depth, const int *cpus_order, cons
 	root->tree_base = __tree_array_compute_shape( root, shape, max_depth );
 	root->tree_cumulative = __tree_array_compute_cumulative_num_nodes_for_depth( root );
 	root->tree_nb_nodes_per_depth = __tree_array_compute_num_nodes_for_depth( root, &n_num );
+#ifdef MPC_Lowcomm
+  root->worker_ws = mpcomp_alloc(sizeof(worker_workshare_t));
+  root->worker_ws->mpi_rank = mpc_common_get_local_task_rank();
+  root->worker_ws->workshare = mpc_thread_data_get()->workshare;
+#endif
 	const int leaf_n_num = root->tree_nb_nodes_per_depth[max_depth];
 	const int non_leaf_n_num = n_num - leaf_n_num;
+
 	tree_array = ( mpcomp_meta_tree_node_t * ) mpcomp_alloc( n_num * sizeof( mpcomp_meta_tree_node_t ) );
 	assert( tree_array );
 	memset( tree_array, 0,  n_num * sizeof( mpcomp_meta_tree_node_t ) );
+
 	root->tree_array = tree_array;
 	tree_array[0].user_pointer = root;
+
 	threads = ( mpc_thread_t * ) mpcomp_alloc( ( leaf_n_num - 1 ) * sizeof( mpc_thread_t ) );
 	assert( threads );
 	memset( threads, 0, ( leaf_n_num - 1 ) * sizeof( mpc_thread_t ) );
+
 	args = ( mpcomp_mvp_thread_args_t * ) mpcomp_alloc( sizeof( mpcomp_mvp_thread_args_t ) * leaf_n_num );
 	assert( args );
 
 	for ( i = 0, place_id = 0; i < leaf_n_num; i++ )
 	{
-		place_id += ( !( i % place_size ) && !i ) ? 1 : 0;
+		place_id += ( !( i % place_size ) && i ) ? 1 : 0;
 		args[i].array = tree_array;
 		args[i].place_id = place_id;
 		args[i].place_depth = place_depth;
 		args[i].rank = i + non_leaf_n_num;
+#if OMPT_SUPPORT
+		args[i].tool_status = t->tool_status;
+		args[i].tool_instance = t->tool_instance;
+#endif /* OMPT_SUPPORT */
 	}
 
 	/* Worker threads */
@@ -1279,8 +1382,8 @@ void _mpc_omp_tree_alloc( int *shape, int max_depth, const int *cpus_order, cons
 	{
 		const int target_vp = ( cpus_order ) ? cpus_order[i] : i;
 		const int pu_id = ( mpc_topology_get_pu() + target_vp ) % mpc_topology_get_pu_count();
-		place_id += ( !( i % place_size ) ) ? 1 : 0;
 		args[i].target_vp = target_vp;
+		args[i].pu_id = pu_id;
 		mpc_thread_attr_t __attr;
 		mpc_thread_attr_init( &__attr );
 		mpc_thread_attr_setbinding( &__attr, pu_id );
@@ -1292,30 +1395,7 @@ void _mpc_omp_tree_alloc( int *shape, int max_depth, const int *cpus_order, cons
 
 	/* Root initialisation */
 	__tree_mvp_init( &( args[0] ) );
-	__tree_master_thread_init( root, tree_array, icvs );
-	sctk_openmp_thread_tls = ( void * ) root->mvp->threads;
   mpcomp_alloc_init_allocators();
-
-#if OMPT_SUPPORT
-	mpcomp_thread_t *t = (mpcomp_thread_t*) mpc_thread_tls;
-	assert(t != NULL);
-
-	if ( _mpc_omp_ompt_is_enabled() )
-	{
-		if ( OMPT_Callbacks )
-		{
-			ompt_callback_thread_begin_t callback;
-			callback = ( ompt_callback_thread_begin_t ) OMPT_Callbacks[ompt_callback_thread_begin];
-
-			if ( callback )
-			{
-				t->ompt_thread_data = ompt_data_none;
-				callback( ompt_thread_initial, &( t->ompt_thread_data ) );
-			}
-		}
-	}
-
-#endif /* OMPT_SUPPORT */
 
 	/* Free is thread-safety due to half barrier perform by tree build */
 	mpcomp_free( args );

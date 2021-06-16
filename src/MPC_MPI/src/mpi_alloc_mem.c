@@ -39,9 +39,9 @@
 
 #ifdef MPC_Threads
 #include "mpc_thread.h"
+#include "thread.h"
 #endif
 
-#include "mpc_thread.h"
 #include "string.h"
 
 struct mpc_MPI_allocmem_pool ____mpc_sctk_mpi_alloc_mem_pool;
@@ -120,6 +120,45 @@ static inline int __bcast(void *buff, size_t len, void *pcomm)
 	return 0;
 }
 
+void alloc_workshare(MPI_Comm comm)
+{
+  int nb_tasks = mpc_common_get_local_task_count();
+  mpc_workshare* workshare,*tmp; 
+  void* addr;
+  if(mpc_common_get_local_task_rank() == 0)
+  {
+    tmp = sctk_malloc(sizeof(mpc_workshare) * nb_tasks);
+    addr = tmp;
+  }
+  PMPI_Bcast(&addr, 1, MPI_UNSIGNED_LONG, 0, comm);
+
+  workshare = (mpc_workshare*)addr;
+#ifdef MPC_Threads
+  mpc_thread_data_get()->workshare = workshare;
+#endif
+
+  if(mpc_common_get_local_task_rank() == 0)
+  {
+    mpc_lowcomm_workshare_init_func_pointers();
+    int i;
+    for(i = 0; i < nb_tasks; i++)
+    {
+      OPA_store_int(&(workshare[i].is_last_iter),1);
+      mpc_common_spinlock_init(&workshare[i].lock, 0);
+      mpc_common_spinlock_init(&workshare[i].lock2, 0);
+      mpc_common_spinlock_init(&workshare[i].atomic_lock, 0);
+      mpc_common_spinlock_init(&workshare[i].critical_lock, 0);
+      workshare[i].lb = 0;
+      workshare[i].ub = 0;
+      OPA_store_int(&(workshare[i].nb_threads_stealing),0);
+    }
+    for(i = 0; i < nb_tasks; i++)
+    {
+      workshare[i].is_allowed_to_steal = 1; 
+    }
+  }
+	mpc_lowcomm_barrier( MPI_COMM_WORLD );
+}
 
 int mpc_MPI_allocmem_pool_init()
 {
@@ -149,6 +188,7 @@ int mpc_MPI_allocmem_pool_init()
 	/* Are all the tasks in the same process ? */
 	if ( mpc_common_get_task_count() == mpc_common_get_local_task_count() )
 	{
+    alloc_workshare(MPI_COMM_WORLD);
 		mpc_MPI_accumulate_op_lock_init_shared();
 		return 0;
 	}
@@ -158,10 +198,16 @@ int mpc_MPI_allocmem_pool_init()
 		MPI_Comm node_comm;
 		PMPI_Comm_split_type( MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, cw_rank,
 		                      MPI_INFO_NULL, &node_comm );
-		int my_rank, comm_size;
-		PMPI_Comm_rank( node_comm, &my_rank );
-		PMPI_Comm_size( node_comm, &comm_size );
+    int my_rank, comm_size;
+    PMPI_Comm_rank( node_comm, &my_rank );
+    PMPI_Comm_size( node_comm, &comm_size );
 
+		/* Allocate Workshare */
+    MPI_Comm workshare_comm;
+    int split_ws = mpc_common_get_process_rank();
+    PMPI_Comm_split( MPI_COMM_WORLD, split_ws, cw_rank, &workshare_comm );
+    alloc_workshare(workshare_comm);
+    PMPI_Comm_free( &workshare_comm );
 		/* disabling shm allocator for C/R (temp) */
 		if ( mpc_common_get_flags()->checkpoint_enabled )
 		{
@@ -194,7 +240,6 @@ int mpc_MPI_allocmem_pool_init()
 		{
 			is_master = 1;
 		}
-
 		MPI_Comm process_master_comm;
 
 		PMPI_Comm_split( node_comm, is_master, cw_rank, &process_master_comm );
@@ -217,7 +262,7 @@ int mpc_MPI_allocmem_pool_init()
 			assume(____mpc_sctk_mpi_alloc_mem_pool._pool != NULL);
 
 			PMPI_Comm_free( &process_master_comm );
-		}
+    }
 
 		PMPI_Comm_free( &node_comm );
 
@@ -258,6 +303,7 @@ int mpc_MPI_allocmem_pool_init()
 
 int mpc_MPI_allocmem_pool_release()
 {
+
 	mpc_lowcomm_barrier( MPI_COMM_WORLD );
 
 	/* Are all the tasks in the same process ? */

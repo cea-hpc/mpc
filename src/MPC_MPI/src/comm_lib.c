@@ -61,6 +61,8 @@
 
 #include <sctk_alloc.h>
 
+#include "mpc_lowcomm_workshare.h"
+
 sctk_Op_f sctk_get_common_function(mpc_lowcomm_datatype_t datatype, sctk_Op op);
 
 
@@ -3016,13 +3018,16 @@ int _mpc_cl_waitallp(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *parra
 
 		if(flag == 1)
 		{
-			MPC_ERROR_SUCESS();
-		}
+      MPC_ERROR_SUCESS();
+    }
+    else
+    {
+      MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();            
+    }
 
 		direct_pass_count--;
 
 	}while( (flag == 0) && (direct_pass_count != 0));
-
 
 	/* XXX: Waitall has been ported for using wait_for_value_and_poll
 	 * because it provides better results than thread_yield.

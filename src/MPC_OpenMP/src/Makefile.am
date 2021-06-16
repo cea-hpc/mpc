@@ -30,12 +30,28 @@ AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/
 
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_OpenMP/include/ $(VMEM_CFLAGS)
 
+tools_inc = -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/src/ \
+            -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/callback/ \
+            -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/trace/
+
+AM_CPPFLAGS += $(tools_inc)
+
 lib_LTLIBRARIES = libmpcomp.la
 
 libmpcomp_la_SOURCES = mpcomp_api.c mpcomp_core.c mpcomp_fortran.c mpcomp_loop.c
 libmpcomp_la_SOURCES += mpcomp_parallel_region.c mpcomp_places_env.c mpcomp_spinning_core.c
 libmpcomp_la_SOURCES += mpcomp_stack.c mpcomp_stack_node_leaf.c mpcomp_sync.c mpcomp_task.c
 libmpcomp_la_SOURCES += mpcomp_tree.c mpcomp_alloc.c omp_gomp.c omp_intel_atomics.c omp_intel.c omp_ompt.c
+
+tools_src = tools/src/mpcompt_entryPoints.c tools/src/mpcompt_init.c tools/src/mpcompt_instance.c \
+            tools/callback/mpcompt_cancel.c tools/callback/mpcompt_control_tool.c \
+            tools/callback/mpcompt_device.c tools/callback/mpcompt_dispatch.c \
+            tools/callback/mpcompt_flush.c tools/callback/mpcompt_mutex.c \
+            tools/callback/mpcompt_parallel.c tools/callback/mpcompt_sync.c \
+            tools/callback/mpcompt_target.c tools/callback/mpcompt_task.c \
+            tools/callback/mpcompt_thread.c tools/callback/mpcompt_workShare.c
+
+libmpcomp_la_SOURCES += $(tools_src)
 
 libmpcomp_la_LDFLAGS = -Wl,--version-script=$(abs_top_srcdir)/src/MPC_OpenMP/version_gomp.txt
 libmpcomp_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la $(VMEM_LIBS)

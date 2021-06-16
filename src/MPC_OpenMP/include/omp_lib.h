@@ -40,6 +40,9 @@
          
          external omp_in_final
          logical omp_in_final
+
+         external omp_control_tool
+         integer omp_control_tool
          
          external omp_init_lock
          external omp_destroy_lock

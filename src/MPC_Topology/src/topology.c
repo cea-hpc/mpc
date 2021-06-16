@@ -1417,6 +1417,11 @@ int mpc_topology_get_numa_node_count()
 	return _mpc_topology_get_numa_node_count( __mpc_module_topology);
 }
 
+int mpc_topology_get_socket_count()                                  
+{ 
+  return _mpc_topology_get_socket_count( __mpc_module_topology);
+}  
+
 int mpc_topology_has_numa_nodes(void)
 {
 	return _mpc_topology_has_numa_nodes(__mpc_module_topology);

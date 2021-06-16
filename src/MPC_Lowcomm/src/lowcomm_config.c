@@ -4,6 +4,7 @@
 #include <mpc_common_debug.h>
 #include <mpc_conf.h>
 #include <dlfcn.h>
+#include <ctype.h>
 
 #include "coll.h"
 
@@ -1388,6 +1389,186 @@ static inline mpc_conf_config_type_t * __init_infiniband_global_conf(void)
 }
 #endif
 
+static inline mpc_conf_config_type_t * __init_workshare_conf(void)
+{
+	struct _mpc_lowcomm_workshare_config *ws = &__lowcomm_conf.workshare;
+	ws->schedule = 2;
+	ws->steal_schedule = 2;
+	ws->chunk_size = 1;
+	ws->steal_chunk_size = 1;
+	ws->enable_stealing = 1;
+	ws->steal_from_end = 0;
+	ws->steal_mode = WS_STEAL_MODE_ROUNDROBIN;
+
+	char * tmp;
+	if ((tmp = getenv("WS_SCHEDULE")) != NULL) {
+    int ok = 0;
+    int offset = 0;
+    int ws_schedule = 2;
+    if (strncmp(tmp, "dynamic", 7) == 0) {
+      ws_schedule = 1;
+      offset = 7;
+      ok = 1;
+    }
+    if (strncmp(tmp, "guided", 6) == 0) {
+      ws_schedule = 2;
+      offset = 6;
+      ok = 1;
+    }
+    if (strncmp(tmp, "static", 6) == 0) {
+      ws_schedule = 0;
+      offset = 6;
+      ok = 1;
+    }
+  ws->schedule = ws_schedule;
+    if (ok) {
+      int chunk_size = 0;
+      /* Check for chunk size, if present */
+      switch (tmp[offset]) {
+        case ',':
+          chunk_size = atoi(&tmp[offset + 1]);
+          if (chunk_size <= 0) {
+            fprintf(stderr, "Warning: Incorrect chunk size within WS_SCHEDULE "
+                "variable: <%s>\n",
+                tmp);
+            chunk_size = 0;
+          } else {
+            ws->chunk_size = chunk_size;
+          }
+          break;
+        case '\0':
+          ws->chunk_size = 1;
+          break;
+        default:
+          fprintf(stderr,
+              "Syntax error with environment variable WS_SCHEDULE <%s>,"
+              " should be \"static|dynamic|guided[,chunk_size]\"\n",
+              tmp);
+          exit(1);
+      }
+    } else {
+      fprintf(stderr, "Warning: Unknown schedule <%s> (must be guided, "
+          "dynamic or static),"
+          " fallback to default schedule <guided>\n",
+          tmp);
+    }
+  }
+
+  if ((tmp = getenv("WS_STEAL_SCHEDULE")) != NULL) {
+    int ok = 0;
+    int offset = 0;
+    int ws_steal_schedule = 2;
+    if (strncmp(tmp, "dynamic", 7) == 0) {
+      ws_steal_schedule = 1;
+      offset = 7;
+      ok = 1;
+    }
+    if (strncmp(tmp, "guided", 6) == 0) {
+      ws_steal_schedule = 2;
+      offset = 6;
+      ok = 1;
+    }
+    if (strncmp(tmp, "static", 6) == 0) {
+      ws_steal_schedule = 0;
+      offset = 6;
+      ok = 1;
+    }
+    ws->steal_schedule = ws_steal_schedule;
+    if (ok) {
+      int chunk_size = 0;
+      /* Check for chunk size, if present */
+      switch (tmp[offset]) {
+        case ',':
+          chunk_size = atoi(&tmp[offset + 1]);
+          if (chunk_size <= 0) {
+            fprintf(stderr, "Warning: Incorrect chunk size within WS_STEAL_SCHEDULE "
+                "variable: <%s>\n",
+                tmp);
+            chunk_size = 0;
+          } else {
+            ws->steal_chunk_size = chunk_size;
+          }
+          break;
+        case '\0':
+          ws->chunk_size = 1;
+          break;
+        default:
+          fprintf(stderr,
+              "Syntax error with environment variable WS_STEAL_SCHEDULE <%s>,"
+              " should be \"dynamic|guided[,chunk_size]\"\n",
+              tmp);
+          exit(1);
+      }
+    } else {
+      fprintf(stderr, "Warning: Unknown schedule <%s> (must be guided "
+          "or dynamic),"
+          " fallback to default schedule <guided>\n",
+          tmp);
+    }
+  }
+
+  /******* WS STEAL MODE *********/
+  if ((tmp = getenv("WS_STEAL_MODE")) != NULL) {
+    int ws_steal_mode = strtol(tmp, NULL, 10);
+    if (isdigit(tmp[0]) && ws_steal_mode >= 0 && 
+        ws_steal_mode < WS_STEAL_MODE_COUNT) {
+      ws->steal_mode = ws_steal_mode;
+    }
+    else
+    {
+      if((strcmp(tmp,"random") == 0) )
+        ws->steal_mode = WS_STEAL_MODE_RANDOM;
+      else if(strcmp(tmp,"roundrobin") == 0)
+        ws->steal_mode = WS_STEAL_MODE_ROUNDROBIN;
+      else if(strcmp(tmp,"producer") == 0)
+        ws->steal_mode = WS_STEAL_MODE_PRODUCER;
+      else if(strcmp(tmp,"less_stealers") == 0)
+        ws->steal_mode = WS_STEAL_MODE_LESS_STEALERS;
+      else if(strcmp(tmp,"less_stealers_producer") == 0)
+        ws->steal_mode = WS_STEAL_MODE_LESS_STEALERS_PRODUCER;
+      else if(strcmp(tmp,"topological") == 0)
+        ws->steal_mode = WS_STEAL_MODE_TOPOLOGICAL;
+      else if(strcmp(tmp,"strictly_topological") == 0)
+        ws->steal_mode = WS_STEAL_MODE_STRICTLY_TOPOLOGICAL;
+    }
+  }
+
+  if ((tmp = getenv("WS_STEAL_FROM_END")) != NULL) {
+    if(strcmp(tmp, "1") == 0 || strcmp(tmp, "TRUE") == 0 || strcmp(tmp, "true") == 0)
+    {
+      ws->steal_from_end = 1;
+    }
+    else
+    {
+      ws->steal_from_end = 0;
+    }
+  }
+
+  /******* ENABLING WS *********/
+  if ((tmp = getenv("WS_ENABLE_STEALING")) != NULL) {
+    if(strcmp(tmp, "1") == 0 || strcmp(tmp, "TRUE") == 0 || strcmp(tmp, "true") == 0)
+    {
+      ws->enable_stealing = 1; 
+    }
+    else
+    {
+      ws->enable_stealing = 0; 
+    }
+
+  }
+
+	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("workshare",
+															PARAM("enablestealing", &ws->enable_stealing, MPC_CONF_INT, "Defines if workshare stealing is enabled."),
+															PARAM("stealmode", &ws->steal_mode, MPC_CONF_INT, "Workshare stealing mode"),
+															PARAM("stealfromend", &ws->steal_from_end, MPC_CONF_INT, "Stealing from end or not"),
+															PARAM("schedule", &ws->schedule, MPC_CONF_LONG_INT, "Workshare schedule"),
+															PARAM("stealschedule", &ws->steal_schedule, MPC_CONF_LONG_INT, "Workshare steal schedule"),
+															PARAM("chunksize", &ws->chunk_size, MPC_CONF_LONG_INT, "Workshare chunk size"),
+															PARAM("stealchunksize", &ws->steal_chunk_size, MPC_CONF_LONG_INT, "Workshare chunk size"),
+															NULL);
+	assume(ret != NULL);
+	return ret;
+}
 
 static void __lowcomm_conf_default(void)
 {
@@ -1405,6 +1586,7 @@ void _mpc_lowcomm_config_register(void)
 
 	mpc_conf_config_type_t *coll     = __mpc_lowcomm_coll_conf_init();
 	mpc_conf_config_type_t *networks = __mpc_lowcomm_network_conf_init();
+	mpc_conf_config_type_t *workshare = __init_workshare_conf();
 
 
 	mpc_conf_config_type_t *lowcomm = mpc_conf_config_type_init("lowcomm",
@@ -1417,6 +1599,7 @@ void _mpc_lowcomm_config_register(void)
 	                                                            PARAM("coll", coll, MPC_CONF_TYPE, "Lowcomm collective configuration"),
 	                                                            PARAM("networking", networks, MPC_CONF_TYPE, "Lowcomm Networking configuration"),
 
+																															PARAM("workshare", workshare, MPC_CONF_TYPE, "Workshare configuration"),
 	                                                            NULL);
 
 	mpc_conf_root_config_append("mpcframework", lowcomm, "MPC Lowcomm Configuration");

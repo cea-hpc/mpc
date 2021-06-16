@@ -1,17 +1,16 @@
 #include "omp_gomp.h"
-
 #include "mpc_common_types.h"
 #include "mpc_common_debug.h"
-
 #include "mpcomp_abi.h"
 #include "mpcomp_sync.h"
 #include "mpcomp_core.h"
-
+#include "mpcomp_spinning_core.h"
 #include "mpcomp_loop.h"
-
 #include "mpcomp_task.h"
 #include "mpcomp_parallel_region.h"
-
+#include "mpcompt_task.h"
+#include "mpcompt_sync.h"
+#include "mpcompt_frame.h"
 
 /***********
  * ORDERED *
@@ -19,6 +18,10 @@
 
 void mpcomp_GOMP_ordered_start( void )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_ordered_begin();
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
@@ -26,6 +29,10 @@ void mpcomp_GOMP_ordered_start( void )
 
 void mpcomp_GOMP_ordered_end( void )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_ordered_end();
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
@@ -37,9 +44,18 @@ void mpcomp_GOMP_ordered_end( void )
 
 void mpcomp_GOMP_barrier( void )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_barrier();
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_unset_no_reentrant();
+#endif /* OMPT_SUPPORT */
 }
 
 bool mpcomp_GOMP_barrier_cancel( void )
@@ -56,16 +72,31 @@ bool mpcomp_GOMP_barrier_cancel( void )
 
 bool mpcomp_GOMP_single_start( void )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = ( __mpcomp_do_single() ) ? true : false;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd -- ret: %s", __func__,
 	              ( ret == true ) ? "true" : "false" );
+
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_unset_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
 	return ret;
 }
 
 void *mpcomp_GOMP_single_copy_start( void )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
 	void *ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = __mpcomp_do_single_copyprivate_begin();
@@ -75,6 +106,11 @@ void *mpcomp_GOMP_single_copy_start( void )
 
 void mpcomp_GOMP_single_copy_end( void *data )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_do_single_copyprivate_end( data );
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
@@ -104,15 +140,13 @@ static inline void *mpcomp_GOMP_wrapper_fn( void *args )
  * PARALLEL REGION *
  *******************/
 
-static inline void __gomp_in_order_scheduler_master_begin( mpcomp_mvp_t *mvp )
+static inline void __gomp_in_order_scheduler_master_begin( mpcomp_thread_t *t )
 {
-	mpcomp_thread_t *t;
-	/* Switch OpenMP TLS */
-	sctk_openmp_thread_tls = &( mvp->threads[0] );
-	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
+    assert( t != NULL );
 	assert( t->instance != NULL );
 	assert( t->instance->team != NULL );
 	assert( t->info.func != NULL );
+
 	t->schedule_type = ( long ) t->info.combined_pragma;
 
 	/* Handle beginning of combined parallel region */
@@ -148,39 +182,7 @@ static inline void __gomp_in_order_scheduler_master_begin( mpcomp_mvp_t *mvp )
 
 static inline void __gomp_in_order_scheduler_master_end( void )
 {
-	mpcomp_thread_t *t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
-	assert( t != NULL );
-
-	/* Handle ending of combined parallel region */
-	switch ( t->info.combined_pragma )
-	{
-		case MPCOMP_COMBINED_NONE:
-			mpc_common_nodebug( "%s:\tEND - No combined parallel", __func__ );
-			break;
-
-		case MPCOMP_COMBINED_SECTION:
-			mpc_common_nodebug( "%s:\tEND - Combined parallel/sections w/ %d section(s)",
-			              __func__, t->info.nb_sections );
-			break;
-
-		case MPCOMP_COMBINED_STATIC_LOOP:
-			mpc_common_nodebug( "%s:\tEND - Combined parallel/loop", __func__ );
-			break;
-
-		case MPCOMP_COMBINED_DYN_LOOP:
-			mpc_common_nodebug( "%s:\tEND - Combined parallel/loop", __func__ );
-			__mpcomp_dynamic_loop_end_nowait();
-			break;
-
-		default:
-			not_implemented();
-			break;
-	}
-
-	//t->done = 1;
-	// _mpc_task_wait();
-	/* Restore previous TLS */
-	sctk_openmp_thread_tls = t->father;
+    /* Nothing to do */
 }
 
 static inline void __gomp_start_parallel( void ( *fn )( void * ), void *data,
@@ -193,35 +195,108 @@ static inline void __gomp_start_parallel( void ( *fn )( void * ), void *data,
 static inline void __gomp_start_parallel_region( void ( *fn )( void * ), void *data,
         unsigned num_threads )
 {
-	mpcomp_thread_t *t;
+	mpcomp_thread_t *t, *next_thread;
 	mpcomp_parallel_region_t *info;
+
 	/* Initialize OpenMP environment */
 	__mpcomp_init();
+
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
 	assert( t != NULL );
+    mpcomp_mvp_t *mvp = t->mvp;
+    assert( mvp );
+
 	/* Prepare MPC OpenMP parallel region infos */
 	info = sctk_malloc( sizeof( mpcomp_parallel_region_t ) );
 	assert( info );
 	__mpcomp_parallel_region_infos_init( info );
+
 	info->func = ( void *( * ) ( void * ) ) fn;
 	info->shared = data;
+    info->icvs = t->info.icvs;
 	info->combined_pragma = MPCOMP_COMBINED_NONE;
+
 	/* Begin scheduling */
 	__mpcomp_internal_begin_parallel_region( info, num_threads );
-	/* Start scheduling */
-	mpcomp_mvp_t *mvp = t->children_instance->mvps[0].ptr.mvp;
-	__gomp_in_order_scheduler_master_begin( mvp );
-	return;
+
+    t->mvp->instance = t->children_instance;
+    next_thread = __mvp_wakeup( mvp );
+    assert( next_thread->mvp );
+
+    sctk_openmp_thread_tls = (void*) next_thread;
+
+    __scatter_instance_post_init( next_thread );
+
+#if OMPT_SUPPORT
+    __mpcompt_callback_task_schedule(
+        &MPCOMP_TASK_THREAD_GET_CURRENT_TASK(t)->ompt_task_data,
+        ompt_task_switch,
+        &MPCOMP_TASK_THREAD_GET_CURRENT_TASK(next_thread)->ompt_task_data );
+
+    __mpcompt_callback_implicit_task( ompt_scope_begin,
+                                      t->instance->nb_mvps,
+                                      t->rank,
+                                      ompt_task_implicit );
+#endif /* OMPT_SUPPORT */
+
+	__gomp_in_order_scheduler_master_begin( next_thread );
+
+    sctk_free( info );
+    info = NULL;
 }
 
 static inline void __gomp_end_parallel_region( void )
 {
 	__gomp_in_order_scheduler_master_end();
+
+    volatile int * spin_status;
+    mpcomp_thread_t *t_prev;
 	mpcomp_thread_t *t = sctk_openmp_thread_tls;
+
 	assert( t != NULL );
-	mpcomp_instance_t *instance = t->children_instance;
-	assert( instance != NULL );
-	__mpcomp_internal_end_parallel_region( instance );
+    mpcomp_mvp_t *mvp = t->mvp;
+    assert(mvp != NULL);
+
+    /* Must be set before barrier for thread safety*/
+    spin_status = ( mvp->spin_node ) ? &( mvp->spin_node->spin_status ) : &( mvp->spin_status );
+    *spin_status = MPCOMP_MVP_STATE_SLEEP;
+
+#if OMPT_SUPPORT
+    __mpcompt_callback_sync_region( ompt_sync_region_barrier_implicit, ompt_scope_begin );
+#endif /* OMPT_SUPPORT */
+
+    __mpcomp_internal_full_barrier( mvp );
+
+#if OMPT_SUPPORT
+    __mpcompt_callback_sync_region( ompt_sync_region_barrier_implicit, ompt_scope_end );
+    __mpcompt_callback_implicit_task( ompt_scope_end,
+                                      0,
+                                      t->rank,
+                                      ompt_task_implicit );
+#endif /* OMPT_SUPPORT */
+
+    _mpc_task_free(t);
+
+    t_prev = mvp->threads->next;
+    assert(t_prev != NULL);
+    assert(t_prev->instance != NULL);
+
+    if( t_prev ) {
+#if OMPT_SUPPORT
+    __mpcompt_callback_task_schedule(
+        &MPCOMP_TASK_THREAD_GET_CURRENT_TASK(t)->ompt_task_data,
+        ompt_task_complete,
+        &MPCOMP_TASK_THREAD_GET_CURRENT_TASK(t_prev)->ompt_task_data );
+#endif /* OMPT_SUPPORT */
+
+        mvp->threads = t_prev;
+        //mpcomp_free( t );
+    }
+
+    mvp->instance = t_prev->instance;
+    sctk_openmp_thread_tls = t_prev;
+
+    __mpcomp_internal_end_parallel_region(t_prev->instance);
 }
 
 /* GOMP Parallel Region */
@@ -229,6 +304,11 @@ static inline void __gomp_end_parallel_region( void )
 void mpcomp_GOMP_parallel( void ( *fn )( void * ), void *data, unsigned num_threads,
                            unsigned flags )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__gomp_start_parallel( fn, data, num_threads, flags );
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
@@ -237,13 +317,26 @@ void mpcomp_GOMP_parallel( void ( *fn )( void * ), void *data, unsigned num_thre
 void mpcomp_GOMP_parallel_start( void ( *fn )( void * ), void *data,
                                  unsigned num_threads )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__gomp_start_parallel_region( fn, data, num_threads );
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_unset_no_reentrant();
+#endif /* OMPT_SUPPORT */
 }
 
 void mpcomp_GOMP_parallel_end( void )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__gomp_end_parallel_region();
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
@@ -273,24 +366,49 @@ static inline void __gomp_parallel_loop_generic_start(
     void ( *fn )( void * ), void *data, unsigned num_threads, long start, long end,
     long incr, long chunk_size, long combined_pragma )
 {
-	mpcomp_thread_t *t;
+	mpcomp_thread_t *t, *next_thread;
 	mpcomp_parallel_region_t *info;
+
 	/* Initialize OpenMP environment */
 	__mpcomp_init();
+
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
 	assert( t != NULL );
+    mpcomp_mvp_t *mvp = t->mvp;
+    assert( mvp );
+
 	info = sctk_malloc( sizeof( mpcomp_parallel_region_t ) );
 	assert( info );
+
 	__mpcomp_parallel_region_infos_init( info );
 	__mpcomp_parallel_set_specific_infos( info, ( void *( * ) ( void * ) ) fn, data,
 	                                      t->info.icvs, combined_pragma );
+
 	__mpcomp_loop_gen_infos_init( &( t->info.loop_infos ), start, end, incr,
 	                              chunk_size );
+
 	__mpcomp_internal_begin_parallel_region( info, num_threads );
+
 	/* Start scheduling */
-	mpcomp_mvp_t *mvp = t->children_instance->mvps[0].ptr.mvp;
-	__gomp_in_order_scheduler_master_begin( mvp );
-	return;
+    t->mvp->instance = t->children_instance;
+    next_thread = __mvp_wakeup( mvp );
+    assert( next_thread->mvp );
+
+    sctk_openmp_thread_tls = (void*) next_thread;
+
+    __scatter_instance_post_init( next_thread );
+
+#if OMPT_SUPPORT
+    __mpcompt_callback_task_schedule(
+        &MPCOMP_TASK_THREAD_GET_CURRENT_TASK(t)->ompt_task_data,
+        ompt_task_switch,
+        &MPCOMP_TASK_THREAD_GET_CURRENT_TASK(next_thread)->ompt_task_data );
+#endif /* OMPT_SUPPORT */
+
+	__gomp_in_order_scheduler_master_begin( next_thread );
+
+    sctk_free( info );
+    info = NULL;
 }
 
 /* Gomp Loop Definition */
@@ -307,6 +425,10 @@ static inline bool __gomp_loop_runtime_start( long start, long end, long incr,
 bool mpcomp_GOMP_loop_runtime_start( long istart, long iend, long incr,
                                      long *start, long *end )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = __gomp_loop_runtime_start( istart, iend, incr, start, end );
@@ -326,6 +448,10 @@ static inline bool __gomp_loop_ordered_runtime_start( long start, long end,
 bool mpcomp_GOMP_loop_ordered_runtime_start( long istart, long iend, long incr,
         long *start, long *end )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = __gomp_loop_ordered_runtime_start( istart, iend, incr,
@@ -357,6 +483,10 @@ bool mpcomp_GOMP_loop_ordered_static_start( long istart, long iend, long incr,
         long chunk_size, long *start,
         long *end )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = __gomp_loop_ordered_static_start( istart, iend, incr,
@@ -388,6 +518,10 @@ bool mpcomp_GOMP_loop_ordered_dynamic_start( long istart, long iend, long incr,
         long chunk_size, long *start,
         long *end )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = __gomp_loop_ordered_dynamic_start( istart, iend, incr,
@@ -398,6 +532,10 @@ bool mpcomp_GOMP_loop_ordered_dynamic_start( long istart, long iend, long incr,
 
 bool mpcomp_GOMP_loop_ordered_dynamic_next( long *start, long *end )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = ( __mpcomp_ordered_dynamic_loop_next( start, end ) ) ? true : false;
@@ -419,6 +557,10 @@ bool mpcomp_GOMP_loop_ordered_guided_start( long istart, long iend, long incr,
         long chunk_size, long *start,
         long *end )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = __gomp_loop_ordered_guided_start( istart, iend, incr,
@@ -443,6 +585,10 @@ void mpcomp_GOMP_parallel_loop_static_start( void ( *fn )( void * ), void *data,
         long end, long incr,
         long chunk_size )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	__gomp_parallel_loop_generic_start(
 	    fn, data, num_threads, start, end, incr, chunk_size,
 	    ( long ) MPCOMP_COMBINED_STATIC_LOOP );
@@ -462,6 +608,10 @@ static inline bool __gomp_loop_static_start( long start, long end, long incr,
 bool mpcomp_GOMP_loop_static_start( long istart, long iend, long incr,
                                     long chunk_size, long *start, long *end )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = __gomp_loop_static_start( istart, iend, incr, chunk_size,
@@ -486,6 +636,10 @@ void mpcomp_GOMP_parallel_loop_dynamic_start( void ( *fn )( void * ), void *data
         long end, long incr,
         long chunk_size )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin\tSTART:%ld", __func__, start );
 	__gomp_parallel_loop_generic_start(
 	    fn, data, num_threads, start, end, incr, chunk_size,
@@ -506,6 +660,10 @@ static inline bool __gomp_loop_dynamic_start( long start, long end, long incr,
 bool mpcomp_GOMP_loop_dynamic_start( long istart, long iend, long incr,
                                      long chunk_size, long *start, long *end )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = __gomp_loop_dynamic_start( istart, iend, incr, chunk_size, start, end );
@@ -540,6 +698,10 @@ void mpcomp_GOMP_parallel_loop_guided_start( void ( *fn )( void * ), void *data,
         long end, long incr,
         long chunk_size )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__gomp_parallel_loop_guided_start( fn, data, num_threads, start,
 	                                   end, incr, chunk_size );
@@ -559,6 +721,10 @@ static inline bool __gomp_loop_guided_start( long start, long end, long incr,
 bool mpcomp_GOMP_loop_guided_start( long istart, long iend, long incr,
                                     long chunk_size, long *start, long *end )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = __gomp_loop_guided_start( istart, iend, incr, chunk_size,
@@ -586,8 +752,10 @@ static inline void __gomp_parallel_loop_runtime_start( void ( *fn )( void * ),
 {
 	long combined_pragma, chunk_size;
 	mpcomp_thread_t *t; /* Info on the current thread */
+
 	/* Handle orphaned directive (initialize OpenMP environment) */
 	__mpcomp_init();
+
 	/* Grab the thread info */
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
 	assert( t != NULL );
@@ -617,6 +785,10 @@ void mpcomp_GOMP_parallel_loop_runtime_start( void ( *fn )( void * ), void *data
         unsigned num_threads, long start,
         long end, long incr )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__gomp_parallel_loop_runtime_start( fn, data, num_threads, start,
 	                                    end, incr );
@@ -781,9 +953,18 @@ bool mpcomp_GOMP_loop_runtime_next( long *start, long *end )
 
 void mpcomp_GOMP_loop_end( void )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__gomp_loop_end();
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_unset_no_reentrant();
+#endif /* OMPT_SUPPORT */
 }
 
 bool mpcomp_GOMP_loop_end_cancel( void )
@@ -798,6 +979,10 @@ bool mpcomp_GOMP_loop_end_cancel( void )
 
 void mpcomp_GOMP_loop_end_nowait( void )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__gomp_loop_end_nowait();
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
@@ -879,6 +1064,11 @@ void mpcomp_GOMP_parallel_loop_static( void ( *fn )( void * ), void *data,
                                        long end, long incr, long chunk_size,
                                        __UNUSED__ unsigned flags )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
 	__mpcomp_start_parallel_static_loop( fn, data, num_threads, start, end, incr,
 	                                     chunk_size );
 }
@@ -888,6 +1078,11 @@ void mpcomp_GOMP_parallel_loop_dynamic( void ( *fn )( void * ), void *data,
                                         long end, long incr, long chunk_size,
                                         __UNUSED__ unsigned flags )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
 	__mpcomp_start_parallel_dynamic_loop( fn, data, num_threads, start, end, incr,
 	                                      chunk_size );
 }
@@ -897,6 +1092,11 @@ void mpcomp_GOMP_parallel_loop_guided( void ( *fn )( void * ), void *data,
                                        long end, long incr, long chunk_size,
                                        __UNUSED__ unsigned flags )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
 	__mpcomp_start_parallel_guided_loop( fn, data, num_threads, start, end, incr,
 	                                     chunk_size );
 }
@@ -905,6 +1105,11 @@ void mpcomp_GOMP_parallel_loop_runtime( void ( *fn )( void * ), void *data,
                                         unsigned num_threads, long start,
                                         long end, long incr, __UNUSED__ unsigned flags )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
 	__mpcomp_start_parallel_runtime_loop( fn, data, num_threads, start, end, incr, 0 );
 }
 
@@ -940,6 +1145,10 @@ bool mpcomp_GOMP_loop_ull_runtime_start( bool up, unsigned long long start,
         unsigned long long *istart,
         unsigned long long *iend )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
@@ -978,6 +1187,10 @@ bool mpcomp_GOMP_loop_ull_ordered_runtime_start( bool up,
         unsigned long long *istart,
         unsigned long long *iend )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
@@ -1063,6 +1276,10 @@ bool mpcomp_GOMP_loop_ull_static_start( bool up, unsigned long long start,
                                         unsigned long long *istart,
                                         unsigned long long *iend )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
@@ -1100,6 +1317,10 @@ bool mpcomp_GOMP_loop_ull_dynamic_start( bool up, unsigned long long start,
         unsigned long long *istart,
         unsigned long long *iend )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	bool ret;
 #ifdef MPC_SUPPORT_ULL_LOOP
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin - start: %llu - end: %llu - step: "
@@ -1140,6 +1361,10 @@ bool mpcomp_GOMP_loop_ull_guided_start( bool up, unsigned long long start,
                                         unsigned long long *istart,
                                         unsigned long long *iend )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
@@ -1204,6 +1429,10 @@ bool mpcomp_GOMP_loop_ull_ordered_static_start(
     unsigned long long incr, unsigned long long chunk_size,
     unsigned long long *istart, unsigned long long *iend )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
@@ -1241,6 +1470,10 @@ bool mpcomp_GOMP_loop_ull_ordered_dynamic_start(
     unsigned long long incr, unsigned long long chunk_size,
     unsigned long long *istart, unsigned long long *iend )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
@@ -1278,6 +1511,10 @@ bool mpcomp_GOMP_loop_ull_ordered_guided_start(
     unsigned long long incr, unsigned long long chunk_size,
     unsigned long long *istart, unsigned long long *iend )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	bool ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 #ifdef MPC_SUPPORT_ULL_LOOP
@@ -1476,6 +1713,10 @@ bool mpcomp_GOMP_loop_ull_ordered_guided_next( unsigned long long *istart,
 
 unsigned mpcomp_GOMP_sections_start( unsigned count )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	unsigned ret;
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	ret = __mpcomp_sections_begin( count );
@@ -1485,9 +1726,18 @@ unsigned mpcomp_GOMP_sections_start( unsigned count )
 
 void mpcomp_GOMP_sections_end( void )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-	/* Nothing to do */
+    __mpcomp_sections_end();
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_unset_no_reentrant();
+#endif /* OMPT_SUPPORT */
 }
 
 unsigned mpcomp_GOMP_sections_next( void )
@@ -1503,6 +1753,11 @@ void mpcomp_GOMP_parallel_sections( void ( *fn )( void * ), void *data,
                                     unsigned num_threads, unsigned count,
                                     __UNUSED__ unsigned flags )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_start_sections_parallel_region( fn, data, num_threads, count );
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
@@ -1513,36 +1768,66 @@ static inline void __gomp_parallel_section_start( void ( *fn )( void * ),
         unsigned num_threads,
         unsigned count )
 {
-	mpcomp_thread_t *t;
+	mpcomp_thread_t *t, *next_thread;
 	mpcomp_parallel_region_t *info;
 	mpcomp_GOMP_wrapper_t *wrapper_gomp;
+
 	/* Initialize OpenMP environment */
 	__mpcomp_init();
+
 	t = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
 	assert( t != NULL );
+    mpcomp_mvp_t *mvp = t->mvp;
+    assert( mvp );
+
 	info = sctk_malloc( sizeof( mpcomp_parallel_region_t ) );
 	assert( info );
 	__mpcomp_parallel_region_infos_init( info );
+
 	wrapper_gomp = sctk_malloc( sizeof( mpcomp_GOMP_wrapper_t ) );
 	assert( wrapper_gomp );
 	wrapper_gomp->fn = fn;
 	wrapper_gomp->data = data;
+
 	info->func = mpcomp_GOMP_wrapper_fn;
 	info->shared = wrapper_gomp;
+    info->icvs = t->info.icvs;
 	info->combined_pragma = MPCOMP_COMBINED_SECTION;
 	info->nb_sections = count;
-	/* Begin scheduling */
+
 	num_threads = ( num_threads == 0 ) ? 1 : num_threads;
 	__mpcomp_internal_begin_parallel_region( info, num_threads );
-	/* Start scheduling */
-	mpcomp_mvp_t *mvp = t->children_instance->mvps[0].ptr.mvp;
-	__gomp_in_order_scheduler_master_begin( mvp );
-	return;
+
+	/* Begin scheduling */
+    t->mvp->instance = t->children_instance;
+    next_thread = __mvp_wakeup( mvp );
+    assert( next_thread->mvp );
+
+    sctk_openmp_thread_tls = (void*) next_thread;
+
+    __scatter_instance_post_init( next_thread );
+
+#if OMPT_SUPPORT
+    __mpcompt_callback_task_schedule(
+        &MPCOMP_TASK_THREAD_GET_CURRENT_TASK(t)->ompt_task_data,
+        ompt_task_switch,
+        &MPCOMP_TASK_THREAD_GET_CURRENT_TASK(next_thread)->ompt_task_data );
+#endif /* OMPT_SUPPORT */
+
+	__gomp_in_order_scheduler_master_begin( next_thread );
+
+    sctk_free( info );
+    info = NULL;
 }
 
 void mpcomp_GOMP_parallel_sections_start( void ( *fn )( void * ), void *data,
         unsigned num_threads, unsigned count )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__gomp_parallel_section_start( fn, data, num_threads, count );
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
@@ -1561,7 +1846,11 @@ bool mpcomp_GOMP_sections_end_cancel( void )
 void mpcomp_GOMP_sections_end_nowait( void )
 {
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-	/* Nothing to do */
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
+	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_sections_end_nowait();
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
@@ -1572,44 +1861,98 @@ void mpcomp_GOMP_sections_end_nowait( void )
 
 void mpcomp_GOMP_critical_start( void )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_anonymous_critical_begin();
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_unset_no_reentrant();
+#endif /* OMPT_SUPPORT */
 }
 
 void mpcomp_GOMP_critical_end( void )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_anonymous_critical_end();
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_unset_no_reentrant();
+#endif /* OMPT_SUPPORT */
 }
 
 void mpcomp_GOMP_critical_name_start( void **pptr )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_named_critical_begin( pptr );
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_unset_no_reentrant();
+#endif /* OMPT_SUPPORT */
 }
 
 void mpcomp_GOMP_critical_name_end( void **pptr )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_named_critical_end( pptr );
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_unset_no_reentrant();
+#endif /* OMPT_SUPPORT */
 }
 
 void mpcomp_GOMP_atomic_start( void )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_atomic_begin();
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_unset_no_reentrant();
+#endif /* OMPT_SUPPORT */
 }
 
 void mpcomp_GOMP_atomic_end( void )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
 	__mpcomp_atomic_end();
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_unset_no_reentrant();
+#endif /* OMPT_SUPPORT */
 }
 
 /*********
@@ -1628,6 +1971,10 @@ void mpcomp_GOMP_task( void ( *fn )( void * ), void *data,
                        void **depend, int priority )
 #endif
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
 #if MPCOMP_USE_TASKDEP
 	_mpc_task_new_with_deps( ( void ( * )( void * ) ) fn, data, cpyfn, arg_size, arg_align,
@@ -1641,6 +1988,10 @@ void mpcomp_GOMP_task( void ( *fn )( void * ), void *data,
 
 void mpcomp_GOMP_taskwait( void )
 {
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
 	_mpc_task_wait();
 	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
@@ -1654,43 +2005,76 @@ void mpcomp_GOMP_taskyield( void )
 	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
 }
 
-#if MPCOMP_TASK
 void mpcomp_GOMP_taskgroup_start( void )
 {
+#if MPCOMP_TASK
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
 	_mpc_task_taskgroup_start();
 	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
+
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_unset_no_reentrant();
+#endif /* OMPT_SUPPORT */
+#endif /* MPCOMP_TASK */
 }
 
 void mpcomp_GOMP_taskgroup_end( void )
 {
+#if MPCOMP_TASK
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
 	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
 	_mpc_task_taskgroup_end();
 	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
-}
 
-void mpcomp_GOMP_taskloop(void (*fn)(void *), void *data,
-                     void (*cpyfn)(void *, void *), long arg_size,
-                     long arg_align, unsigned flags, unsigned long num_tasks,
-                     __UNUSED__ int priority, long start, long end, long step) 
-{
-	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
-	mpcomp_taskloop(fn,data,cpyfn,arg_size,arg_align,flags,num_tasks,priority,start,end,step);
-	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
-}
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_unset_no_reentrant();
+#endif /* OMPT_SUPPORT */
 
-void mpcomp_GOMP_taskloop_ull(__UNUSED__ void (*fn)(void *), __UNUSED__ void *data,
-                         __UNUSED__ void (*cpyfn)(void *, void *), __UNUSED__ long arg_size,
-                         __UNUSED__ long arg_align, __UNUSED__ unsigned flags,
-                         __UNUSED__  unsigned long num_tasks, __UNUSED__ int priority,
-                         __UNUSED__ unsigned long long start, __UNUSED__ unsigned long long end,
-                         __UNUSED__ unsigned long long step)
-{
-	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
-	mpcomp_taskloop_ull(fn,data,cpyfn,arg_size,arg_align,flags,num_tasks,priority,start,end,step);
-	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
-}
 #endif /* MPCOMP_TASK */
+}
+
+
+void mpcomp_GOMP_taskloop( void (*fn)(void *), void *data,
+                           void (*cpyfn)(void *, void *), long arg_size, long arg_align,
+                           unsigned flags, unsigned long num_tasks, int priority,
+                           long start, long end, long step )
+{
+#if defined MPCOMP_TASK && OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* MPCOMP_TASK && OMPT_SUPPORT */
+
+	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
+    mpcomp_taskloop( fn, data, cpyfn, arg_size, arg_align,
+                     flags, num_tasks, priority, start, end, step );
+	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
+}
+
+void mpcomp_GOMP_taskloop_ull( void (*fn)(void *), void *data,
+                               void (*cpyfn)(void *, void *), long arg_size, long arg_align,
+                               unsigned flags, unsigned long num_tasks, int priority,
+                               unsigned long long start, unsigned long long end,
+                               unsigned long long step )
+{
+#if defined MPCOMP_TASK && OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    __mpcompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    __mpcompt_frame_set_no_reentrant();
+#endif /* MPCOMP_TASK && OMPT_SUPPORT */
+
+	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tBegin", __func__ );
+    mpcomp_taskloop_ull( fn, data, cpyfn, arg_size, arg_align,
+                         flags, num_tasks, priority, start, end, step );
+	mpc_common_nodebug( "[Redirect mpcomp_GOMP]%s:\tEnd", __func__ );
+}
 
 /***********
  * TARGETS *

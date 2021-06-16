@@ -8,8 +8,11 @@
 #endif /* defined( MPCOMP_OPENMP_3_0 ) */
 
 void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp );
+void __scatter_instance_post_init( mpcomp_thread_t* thread );
 mpcomp_mvp_t *_mpc_spin_node_wakeup( mpcomp_node_t *node );
 void mpcomp_slave_mvp_node( mpcomp_mvp_t *mvp );
+void __mpcomp_exit_node_signal( mpcomp_node_t* node );
+mpcomp_thread_t *__mvp_wakeup( mpcomp_mvp_t *mvp );
 
 static inline void __mpcomp_instance_tree_array_root_init( struct mpcomp_node_s *root, mpcomp_instance_t *instance, const int nthreads )
 {
