@@ -47,7 +47,7 @@ Env Sanitize:
   <<: *run_by_main
   stage: Initialization
   script:
-    - mkdir -p $HOME/GL_$CI_PIPELINE_ID/{build,buildspack,buildworkshare,install,install_spack,test}
+    - mkdir -p $HOME/GL_$CI_PIPELINE_ID/{build,buildspack,build_workshare,install,install_spack,install_workshare,test}
     - echo "Environment Intialized !"
 
 # post-actions to cleanup the machine after the run
@@ -162,8 +162,8 @@ MPC Compilation Workshare:
   <<: *run_by_main
   stage: Builds
   script:
-  - cd $HOME/GL_$CI_PIPELINE_ID/buildworkshare
-  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install --mpc-option='--with-pmi1 --enable-debug' --enable-workshare
+  - cd $HOME/GL_$CI_PIPELINE_ID/build_workshare
+  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_workshare --mpc-option='--with-pmi1 --enable-debug' --enable-workshare
 
 ############################
 ####### TEST STAGE ########
