@@ -198,29 +198,12 @@ void mpc_fortran_datatype_delete(__UNUSED__ MPI_Fint datatype)
 
 MPI_Group PMPI_Group_f2c(MPI_Fint group)
 {
-#if 0
-	_fortran_handle_storage_t pgroup = NULL;
-	pgroup = _mpc_handle_factory_get(&__groups_factory, group);
-
-	MPI_Group ret = MPI_GROUP_NULL;
-	memcpy(&ret, &pgroup, sizeof(MPI_Group));
-
-	return ret;
-#else
-	return group;
-#endif
+	return mpc_lowcomm_group_from_id(group);
 }
 
 MPI_Fint PMPI_Group_c2f(MPI_Group group)
 {
-#if 0
-	_fortran_handle_storage_t pgroup = NULL;
-	memcpy(&pgroup, &group, sizeof(MPI_Group));
-
-	return _mpc_handle_factory_set(&__groups_factory, pgroup);
-#else
-	return group;
-#endif
+	return mpc_lowcomm_group_linear_id(group);
 }
 
 void mpc_fortran_group_delete(__UNUSED__ MPI_Fint group)

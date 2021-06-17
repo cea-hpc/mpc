@@ -56,7 +56,7 @@ AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/shm/
 lib_LTLIBRARIES = libmpcmpi.la
 
 libmpcmpi_la_SOURCES = comm_lib.c egreq_nbc.c mpc_extern32.c mpc_mpi_halo.c mpc_reduction.c mpi_rma.c mpi_rma_win.c mpit.c
-libmpcmpi_la_SOURCES += datatype.c egreq_progress.c mpc_info.c mpc_nbc.c mpi_rma_ctrl_msg.c mpi_conf.c mpc_coll.c session.c errh.c
+libmpcmpi_la_SOURCES += datatype.c egreq_progress.c mpc_info.c mpc_nbc.c mpi_rma_ctrl_msg.c mpi_conf.c mpc_coll.c session.c errh.c mgroup.c
 libmpcmpi_la_SOURCES += egreq_classes.c mpc_cs.c mpc_mpi.c mpc_nbc_progress_thread_binding.c mpi_alloc_mem.c mpi_rma_epoch.c
 
 if MPC_FORTRAN_ENABLED

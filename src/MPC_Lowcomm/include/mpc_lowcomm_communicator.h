@@ -172,6 +172,15 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_create(const mpc_lowcomm_com
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_from_group(mpc_lowcomm_communicator_t comm,
                                                                mpc_lowcomm_group_t *group);
 
+
+/**
+ * @brief Get the group associated with the communicator (must be intracomm)
+ *
+ * @param comm communicator to get the group of
+ * @return mpc_lowcomm_group_t* the group of this communicator (to free)
+ */
+mpc_lowcomm_group_t * mpc_lowcomm_communicator_group(mpc_lowcomm_communicator_t comm);
+
 /**
  * @brief Duplicate a communicator
  *

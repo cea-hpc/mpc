@@ -59,12 +59,33 @@ mpc_lowcomm_group_t *mpc_lowcomm_group_create(unsigned int size, int *comm_world
  */
 int mpc_lowcomm_group_free(mpc_lowcomm_group_t **group);
 
-
+/**
+ * @brief Duplicate a group handle
+ *
+ * @param g the group to duplicate
+ * @return mpc_lowcomm_group_t* a pointer to the duplicated group
+ */
 mpc_lowcomm_group_t *mpc_lowcomm_group_dup(mpc_lowcomm_group_t *g);
 
 /***************
 * GROUP QUERY *
 ***************/
+
+/**
+ * @brief Resolve a group from its linear id
+ *
+ * @param linear_id linear id to search for
+ * @return mpc_lowcomm_group_t* the corresponding group NULL if not found
+ */
+mpc_lowcomm_group_t *mpc_lowcomm_group_from_id(int linear_id);
+
+/**
+ * @brief Get the linear id for a group
+ *
+ * @param group the group to querry
+ * @return int the corresponding linear ID
+ */
+int mpc_lowcomm_group_linear_id(mpc_lowcomm_group_t * group);
 
 /**
  * @brief Result when comparing two groups
@@ -74,7 +95,8 @@ typedef enum
 {
 	MPC_GROUP_IDENT,    /**< Identical groups */
 	MPC_GROUP_SIMILAR,  /**< Same ranks but different order */
-	MPC_GROUP_UNEQUAL   /**< Different groups */
+	MPC_GROUP_UNEQUAL,   /**< Different groups */
+    MPC_GROUP_CONGRUENT  /**< Groups are congruent */
 }mpc_lowcomm_group_eq_e;
 
 /**
@@ -95,6 +117,13 @@ mpc_lowcomm_group_eq_e mpc_lowcomm_group_compare(mpc_lowcomm_group_t *g1,
  * @return int the corresponding world rank
  */
 int mpc_lowcomm_group_world_rank(mpc_lowcomm_group_t *g, int rank);
+
+/**
+ * @brief Get the empty group
+ *
+ * @return mpc_lowcomm_group_t* a pointer to the empty group
+ */
+mpc_lowcomm_group_t * mpc_lowcomm_group_empty(void);
 
 /**
  * @brief Get the size of a group
@@ -139,6 +168,59 @@ int mpc_lowcomm_group_translate_ranks(mpc_lowcomm_group_t *g1,
                                       int ranks2[]);
 
 /**
+ * @brief Exclude given ranks to build a new group
+ *
+ * @param grp the group to filter
+ * @param n the number of ranks to exclude
+ * @param ranks the ranks to exclude
+ * @return mpc_lowcomm_group_t* new group (NULL if error)
+ */
+mpc_lowcomm_group_t * mpc_lowcomm_group_excl(mpc_lowcomm_group_t *grp,
+                                             int n,
+                                             const int ranks[]);
+
+/**
+ * @brief Include given ranks to build a new group
+ *
+ * @param grp the group to filter
+ * @param n the number of ranks to exclude
+ * @param ranks the ranks to include
+ * @return mpc_lowcomm_group_t* new group (NULL if error)
+ */
+mpc_lowcomm_group_t * mpc_lowcomm_group_incl(mpc_lowcomm_group_t *grp,
+                                             int n,
+                                             const int ranks[]);
+
+/**
+ * @brief Substract member of a group from another to build a new group
+ *
+ * @param grp the group to use as reference
+ * @param grp_to_sub the members to substract
+ * @return mpc_lowcomm_group_t* new group (NULL if error)
+ */
+mpc_lowcomm_group_t * mpc_lowcomm_group_difference(mpc_lowcomm_group_t *grp,
+                                                   mpc_lowcomm_group_t *grp_to_sub);
+
+/**
+ * @brief Compute the group intersecting two groups
+ *
+ * @param grp first group
+ * @param grp2 second group
+ * @return mpc_lowcomm_group_t* the intersecting group
+ */
+mpc_lowcomm_group_t * mpc_lowcomm_group_instersection(mpc_lowcomm_group_t *grp, mpc_lowcomm_group_t *grp2);
+
+/**
+ * @brief Merge two groups to build a new one
+ *
+ * @param grp first group
+ * @param grp2 second group
+ * @return mpc_lowcomm_group_t* new group (NULL if error)
+ */
+mpc_lowcomm_group_t * mpc_lowcomm_group_union(mpc_lowcomm_group_t *grp,
+                                              mpc_lowcomm_group_t *grp2);
+
+/**
  * @brief Check if a given comm workd rank is part of a group
  *
  * @param g the group to check
@@ -175,6 +257,14 @@ int mpc_lowcomm_group_process_rank_from_world(int comm_world_rank);
  * @return int the corresponding process UID
  */
 mpc_lowcomm_peer_uid_t mpc_lowcomm_group_process_uid_for_rank(mpc_lowcomm_group_t *g, int rank);
+
+/**
+ * @brief Get the list of world ranks for a group (must be local)
+ *
+ * @param g the group
+ * @return int* the rank list in comm_world (NULL if error)
+ */
+int * mpc_lowcomm_group_world_ranks(mpc_lowcomm_group_t *g);
 
 /****************
 * PROCESS SETS *

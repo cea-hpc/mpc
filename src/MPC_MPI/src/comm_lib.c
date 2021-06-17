@@ -72,9 +72,6 @@ sctk_Op_f sctk_get_common_function(mpc_lowcomm_datatype_t datatype, sctk_Op op);
 
 static mpc_thread_keys_t sctk_func_key;
 
-const _mpc_cl_group_t mpc_group_empty = { 0, NULL };
-const _mpc_cl_group_t mpc_group_null = { -1, NULL };
-
 
 /** \brief Intitializes thread context keys
  * This function is called by mpc_thread_spawn_mpi_tasks
@@ -2484,9 +2481,14 @@ static inline void __mpc_cl_enter_tmp_directory()
 int _mpc_cl_comm_rank(mpc_lowcomm_communicator_t comm, int *rank)
 {
 	SCTK_PROFIL_START(MPC_Comm_rank);
-	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific;
-	task_specific = _mpc_cl_per_mpi_process_ctx_get();
-	*rank         = mpc_lowcomm_communicator_rank_of(comm, task_specific->task_id);
+
+	*rank = mpc_lowcomm_communicator_rank(comm);
+
+	if(*rank  == MPC_PROC_NULL)
+	{
+		*rank = MPI_UNDEFINED;
+	}
+
 	SCTK_PROFIL_END(MPC_Comm_rank);
 	MPC_ERROR_SUCESS();
 }
@@ -3280,163 +3282,11 @@ int _mpc_cl_op_free(sctk_Op *op)
 	MPC_ERROR_SUCESS();
 }
 
-/********************
-* GROUP MANAGEMENT *
-********************/
-
-int _mpc_cl_comm_group(mpc_lowcomm_communicator_t comm, _mpc_cl_group_t **group)
-{
-	int size;
-	int i;
-
-	size = mpc_lowcomm_communicator_size(comm);
-	mpc_common_nodebug("MPC_Comm_group");
-	*group            = ( _mpc_cl_group_t * )sctk_malloc(sizeof(_mpc_cl_group_t) );
-	(*group)->task_nb = size;
-	(*group)->task_list_in_global_ranks = ( int * )sctk_malloc(size * sizeof(int) );
-
-	for(i = 0; i < size; i++)
-	{
-		(*group)->task_list_in_global_ranks[i] = mpc_lowcomm_communicator_world_rank_of(comm, i);
-	}
-
-	MPC_ERROR_SUCESS();
-}
-
-int _mpc_cl_comm_remote_group(mpc_lowcomm_communicator_t comm, _mpc_cl_group_t **group)
-{
-	int size;
-	int i;
-
-	size = mpc_lowcomm_communicator_remote_size(comm);
-	mpc_common_nodebug("MPC_Comm_group");
-	*group            = ( _mpc_cl_group_t * )sctk_malloc(sizeof(_mpc_cl_group_t) );
-	(*group)->task_nb = size;
-	(*group)->task_list_in_global_ranks = ( int * )sctk_malloc(size * sizeof(int) );
-
-	for(i = 0; i < size; i++)
-	{
-		(*group)->task_list_in_global_ranks[i] =
-		        mpc_lowcomm_communicator_remote_world_rank(comm, i);
-	}
-
-	MPC_ERROR_SUCESS();
-}
-
-int _mpc_cl_group_free(_mpc_cl_group_t **group)
-{
-	if(*group != MPC_GROUP_NULL)
-	{
-		sctk_free( (*group)->task_list_in_global_ranks);
-		sctk_free(*group);
-		*group = MPC_GROUP_NULL;
-	}
-
-	MPC_ERROR_SUCESS();
-}
-
-int _mpc_cl_group_incl(_mpc_cl_group_t *group, int n, const int *ranks, _mpc_cl_group_t **newgroup)
-{
-	int i;
-
-	(*newgroup) = ( _mpc_cl_group_t * )sctk_malloc(sizeof(_mpc_cl_group_t) );
-	assume( (*newgroup) != NULL);
-	(*newgroup)->task_nb = n;
-	(*newgroup)->task_list_in_global_ranks = ( int * )sctk_malloc(n * sizeof(int) );
-	assume( ( (*newgroup)->task_list_in_global_ranks) != NULL);
-
-	for(i = 0; i < n; i++)
-	{
-		(*newgroup)->task_list_in_global_ranks[i] =
-		        group->task_list_in_global_ranks[ranks[i]];
-		mpc_common_nodebug("%d", group->task_list_in_global_ranks[ranks[i]]);
-	}
-
-	MPC_ERROR_SUCESS();
-}
-
-int _mpc_cl_group_difference(_mpc_cl_group_t *group1, _mpc_cl_group_t *group2, _mpc_cl_group_t **newgroup)
-{
-	int size;
-	int i, j, k;
-	int not_in;
-
-	for(i = 0; i < group1->task_nb; i++)
-	{
-		mpc_common_nodebug("group1[%d] = %d", i, group1->task_list_in_global_ranks[i]);
-	}
-
-	for(i = 0; i < group2->task_nb; i++)
-	{
-		mpc_common_nodebug("group2[%d] = %d", i, group2->task_list_in_global_ranks[i]);
-	}
-
-	/* get the size of newgroup */
-	size = 0;
-
-	for(i = 0; i < group1->task_nb; i++)
-	{
-		not_in = 1;
-
-		for(j = 0; j < group2->task_nb; j++)
-		{
-			if(group1->task_list_in_global_ranks[i] ==
-			   group2->task_list_in_global_ranks[j])
-			{
-				not_in = 0;
-			}
-		}
-
-		if(not_in)
-		{
-			size++;
-		}
-	}
-
-	/* allocation */
-	*newgroup            = ( _mpc_cl_group_t * )sctk_malloc(sizeof(_mpc_cl_group_t) );
-	(*newgroup)->task_nb = size;
-
-	if(size == 0)
-	{
-		MPC_ERROR_SUCESS();
-	}
-
-	(*newgroup)->task_nb = size;
-	(*newgroup)->task_list_in_global_ranks =
-	        ( int * )sctk_malloc(size * sizeof(int) );
-	/* fill the newgroup */
-	k = 0;
-
-	for(i = 0; i < group1->task_nb; i++)
-	{
-		not_in = 1;
-
-		for(j = 0; j < group2->task_nb; j++)
-		{
-			if(group1->task_list_in_global_ranks[i] ==
-			   group2->task_list_in_global_ranks[j])
-			{
-				not_in = 0;
-			}
-		}
-
-		if(not_in)
-		{
-			(*newgroup)->task_list_in_global_ranks[k] =
-			        group1->task_list_in_global_ranks[i];
-			k++;
-		}
-	}
-
-	MPC_ERROR_SUCESS();
-}
-
 /***************************
 * COMMUNICATOR MANAGEMENT *
 ***************************/
 
-int _mpc_cl_comm_create(mpc_lowcomm_communicator_t comm, _mpc_cl_group_t *group, mpc_lowcomm_communicator_t *comm_out)
+int _mpc_cl_comm_create(mpc_lowcomm_communicator_t comm, mpc_lowcomm_group_t*group, mpc_lowcomm_communicator_t *comm_out)
 {
 	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = _mpc_cl_per_mpi_process_ctx_get();
 
@@ -3445,8 +3295,7 @@ int _mpc_cl_comm_create(mpc_lowcomm_communicator_t comm, _mpc_cl_group_t *group,
 	mpc_lowcomm_communicator_t new_comm = MPC_COMM_NULL;
 
 
-	new_comm = mpc_lowcomm_communicator_create(comm, group->task_nb,
-											group->task_list_in_global_ranks);
+	new_comm = mpc_lowcomm_communicator_from_group(comm, group);
 
 	if(new_comm != MPC_COMM_NULL)
 	{

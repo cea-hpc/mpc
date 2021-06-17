@@ -95,7 +95,7 @@ use :: mpi_f08_types
 	type(MPI_Datatype) :: MPI_DATATYPE_NULL = MPI_Datatype(-1)
 	type(MPI_Op) :: MPI_OP_NULL = MPI_Op(-1)
 	type(MPI_Win) :: MPI_WIN_NULL = MPI_Win(-1)
-	type(MPI_Group) :: MPI_GROUP_NULL = MPI_Group(-1)
+	type(MPI_Group) :: MPI_GROUP_NULL = MPI_Group(0)
 	type(MPI_Info) :: MPI_INFO_NULL = MPI_Info(-1)
 	type(MPI_Errhandler) :: MPI_ERRHANDLER_NULL = MPI_Errhandler(-1)
 	type(MPI_Message) :: MPI_MESSAGE_NULL = MPI_Message(-1)

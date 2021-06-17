@@ -47,10 +47,10 @@ extern "C"
 #define MPI_DIST_GRAPH (-4)
 
 /* Results of the compare operations. */
-#define MPI_IDENT     0
-#define MPI_CONGRUENT 1
-#define MPI_SIMILAR   2
-#define MPI_UNEQUAL   3
+#define MPI_IDENT     MPC_GROUP_IDENT
+#define MPI_CONGRUENT MPC_GROUP_CONGRUENT
+#define MPI_SIMILAR   MPC_GROUP_SIMILAR
+#define MPI_UNEQUAL   MPC_GROUP_UNEQUAL
 
 #define MPI_LOCK_EXCLUSIVE  234
 #define MPI_LOCK_SHARED     235
@@ -318,8 +318,8 @@ extern "C"
 
 
 /* Group Handling */
-#define MPI_GROUP_EMPTY ((MPI_Group)0)
-#define MPI_GROUP_NULL ((MPI_Group)-1)
+#define MPI_GROUP_EMPTY (mpc_lowcomm_group_empty())
+#define MPI_GROUP_NULL (NULL)
 
 /* MPI_Info definitions */
 /* Matches the one of MPI_INFO_NULL @ mpc_mpi.h:207 */
@@ -432,7 +432,7 @@ typedef ssize_t MPI_Count;
 typedef int MPI_Errhandler;
 typedef sctk_Op_User_function MPI_User_function;
 typedef int MPI_Op;
-typedef int MPI_Group;
+typedef mpc_lowcomm_group_t* MPI_Group;
 typedef mpc_lowcomm_status_t MPI_Status;
 typedef MPC_Handler_function MPI_Handler_function;
 typedef int MPI_Fint;

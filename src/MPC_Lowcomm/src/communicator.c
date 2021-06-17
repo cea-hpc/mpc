@@ -133,35 +133,6 @@ int _mpc_lowcomm_communicator_relax(mpc_lowcomm_internal_communicator_t *comm)
  * UNIVERSE COMM *
  *****************/
 
-#if 0
-typedef struct mpc_lowcomm_internal_communicator_s
-{
-	mpc_lowcomm_communicator_id_t               id;				/**< Integer unique identifier of the comm */
-	int                        linear_comm_id;  /** Linear communicator id on int32 used for FORTRAN */
-	mpc_lowcomm_group_t *      group;			/**< Group supporting the comm */
-	OPA_int_t                  refcount;		/**< Number of ref to the comm freed when 0 */
-
-	OPA_int_t                  free_count;      /**< Local synchronization for free */
-
-	unsigned int               process_span;	/**< Number of UNIX processes in the group */
-	int *                      process_array;	/**< Array of the processes in the group */
-
-	int                        is_comm_self;	/**< 1 if the group is comm_self */
-
-	/* Collective comm */
-	struct mpc_lowcomm_coll_s *coll;			/**< This holds the collectives for this comm */
-	struct sctk_comm_coll *    shm_coll;		/**< This holds the SHM collectives for this comm */
-
-	/* Intercomms */
-
-	/* These are the internall intracomm for
-	 * intercomms. If the group is NULL
-	 * it means the communicator is an intercomm
-	 * and then functions will refer to this functions */
-	mpc_lowcomm_communicator_t left_comm;		/**< The left comm for intercomms */
-	mpc_lowcomm_communicator_t right_comm;		/**< The right comm for intercomms */
-}mpc_lowcomm_internal_communicator_t;
-#endif
 
 static inline mpc_lowcomm_internal_communicator_t *__init_communicator_with_id(mpc_lowcomm_communicator_id_t comm_id,
                                                                                mpc_lowcomm_group_t *group,
@@ -1327,6 +1298,22 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_from_group(mpc_lowcomm_commu
 	return __new_communicator(comm, group, NULL, NULL, comm->is_comm_self, 1, MPC_LOWCOMM_COMM_NULL_ID);
 }
 
+mpc_lowcomm_group_t * mpc_lowcomm_communicator_group(mpc_lowcomm_communicator_t comm)
+{
+	if(mpc_lowcomm_communicator_is_intercomm(comm))
+	{
+		return NULL;
+	}
+
+	if(comm->is_comm_self)
+	{
+		int my_rank = mpc_common_get_task_rank();
+		return mpc_lowcomm_group_create(1, &my_rank);
+	}
+
+	return mpc_lowcomm_group_dup(comm->group);
+}
+
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_dup(mpc_lowcomm_communicator_t comm)
 {
 	return __new_communicator(comm, comm->group, comm->left_comm, comm->right_comm, comm->is_comm_self, 0, MPC_LOWCOMM_COMM_NULL_ID);
@@ -1517,8 +1504,6 @@ int mpc_lowcomm_communicator_rank_of_as(const mpc_lowcomm_communicator_t comm,
 	{
 		return 0;
 	}
-
-	//mpc_common_debug_error("GET RANK from %p targets %p", comm, tcomm);
 
 	return mpc_lowcomm_group_rank_for(tcomm->group, comm_world_rank, lookup_uid);
 }
@@ -1808,8 +1793,6 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_split(mpc_lowcomm_communicat
 **********************/
 mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_communicator_t intercomm, int high)
 {
-	mpc_common_debug_warning("Start MERGING");
-
 	assume(mpc_lowcomm_communicator_is_intercomm(intercomm) );
 
 	int local_size  = mpc_lowcomm_communicator_size(intercomm);
@@ -1826,12 +1809,6 @@ mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_commu
 	mpc_lowcomm_communicator_t remote_comm = mpc_lowcomm_communicator_get_remote(intercomm);
 	mpc_lowcomm_communicator_t local_comm  = mpc_lowcomm_communicator_get_local(intercomm);
 
-	mpc_common_debug_warning("LOCAL COMM");
-	mpc_lowcomm_communicator_print(local_comm, 1);
-
-
-	mpc_common_debug_warning("REMOTE COMM");
-	mpc_lowcomm_communicator_print(remote_comm, 1);
 
 	assume(remote_comm != NULL);
 	assume(local_comm != NULL);
@@ -1845,10 +1822,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_commu
 		   Build the process list according to high
         ########################################### */
 		int remote_high = 0;
-		mpc_common_debug_error("BEGIN SENDRECV");
 		mpc_lowcomm_sendrecv(&high, sizeof(int), 0, 0, &remote_high, 0, intercomm);
-		mpc_common_debug_error("DONE SENDRECV");
-
 
 		int local_root_rank = mpc_lowcomm_communicator_world_rank_of(intercomm, 0);
 		int remote_root_rank = mpc_lowcomm_communicator_remote_world_rank(intercomm, 0);
@@ -1910,16 +1884,6 @@ mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_commu
 			cnt++;
 		}
 
-
-		/* When merging two different worlds we need to renumber the world IDs
-		   to ensure they are unique for this comm */
-		if(mpc_lowcomm_get_comm_gid(remote_comm->id) < mpc_lowcomm_get_comm_gid(local_comm->id))
-		{
-
-
-		}
-
-
 	#if 0
 		for( i = 0 ; i < cnt; i++)
 		{
@@ -1936,7 +1900,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_commu
 
 		int does_recv_id = 0;
 
-		mpc_common_debug_error("ABOUT TO GEN ID GREM %lu GLOC %lu", mpc_lowcomm_get_comm_gid(remote_comm->id), mpc_lowcomm_get_comm_gid(local_comm->id));
+		mpc_common_nodebug("ABOUT TO GEN ID GREM %lu GLOC %lu", mpc_lowcomm_get_comm_gid(remote_comm->id), mpc_lowcomm_get_comm_gid(local_comm->id));
 
 		if(mpc_lowcomm_get_comm_gid(remote_comm->id) < mpc_lowcomm_get_comm_gid(local_comm->id))
 		{
@@ -1968,7 +1932,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_commu
 			mpc_lowcomm_send(0, &intracomm_id, sizeof(mpc_lowcomm_communicator_id_t), 128, intercomm);
 		}
 
-		mpc_common_debug_error("HERE INTRACOMM ID is %lu", intracomm_id);
+		mpc_common_nodebug("HERE INTRACOMM ID is %lu", intracomm_id);
 	}
 
 	/* Root broadcasts its finding to local comm */
@@ -1996,7 +1960,6 @@ mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_commu
 															  intracomm_id);
 	mpc_lowcomm_group_free(&intracomm_group);
 
-	mpc_common_debug_error("RETURNED %p", intracomm);
 
 	return intracomm;
 }

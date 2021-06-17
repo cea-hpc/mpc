@@ -87,30 +87,6 @@ int _mpc_cl_finalize( void );
 int _mpc_cl_abort( mpc_lowcomm_communicator_t, int );
 int _mpc_cl_query_thread( int *provided );
 
-/********************
- * GROUP MANAGEMENT *
- ********************/
-
-typedef struct
-{
-	int task_nb;
-	/* Task list rank are valid in COMM_WORLD  */
-	int *task_list_in_global_ranks;
-} _mpc_cl_group_t;
-
-extern const _mpc_cl_group_t mpc_group_empty;
-extern const _mpc_cl_group_t mpc_group_null;
-
-#define MPC_GROUP_EMPTY &mpc_group_empty
-#define MPC_GROUP_NULL ( (_mpc_cl_group_t *) NULL )
-
-int _mpc_cl_comm_group( mpc_lowcomm_communicator_t, _mpc_cl_group_t ** );
-int _mpc_cl_comm_remote_group( mpc_lowcomm_communicator_t, _mpc_cl_group_t ** );
-int _mpc_cl_group_free( _mpc_cl_group_t ** );
-int _mpc_cl_group_incl( _mpc_cl_group_t *, int, const int *, _mpc_cl_group_t ** );
-int _mpc_cl_group_difference( _mpc_cl_group_t *, _mpc_cl_group_t *, _mpc_cl_group_t ** );
-
-
 /***********************************
  * (EXTENDED) GENERALIZED REQUESTS *
  ***********************************/
@@ -308,7 +284,7 @@ int _mpc_cl_waitany( mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t array_
  * COMMUNICATORS *
  *****************/
 
-int _mpc_cl_comm_create( mpc_lowcomm_communicator_t comm, _mpc_cl_group_t *group, mpc_lowcomm_communicator_t *comm_out );
+int _mpc_cl_comm_create(mpc_lowcomm_communicator_t comm, mpc_lowcomm_group_t*group, mpc_lowcomm_communicator_t *comm_out);
 
 int _mpc_cl_intercomm_create( mpc_lowcomm_communicator_t local_comm,
                               int local_leader, mpc_lowcomm_communicator_t peer_comm,

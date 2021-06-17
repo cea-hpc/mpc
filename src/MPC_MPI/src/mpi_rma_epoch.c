@@ -2067,13 +2067,15 @@ int mpc_MPI_Win_post(MPI_Group group, __UNUSED__ int assert, MPI_Win win) {
   if (!group_size)
     return MPI_SUCCESS;
 
-  ranks = sctk_group_raw_ranks(group);
+  ranks = mpc_lowcomm_group_world_ranks(group);
 
   if (mpc_Win_target_ctx_start_exposure(win, MPC_WIN_MULTIPLE_REMOTE, ranks,
                                         group_size, MPC_WIN_TARGET_ACTIVE)) {
+    sctk_free(ranks);
     return MPI_ERR_INTERN;
   }
 
+  sctk_free(ranks);
   return MPI_SUCCESS;
 }
 
@@ -2107,13 +2109,15 @@ int mpc_MPI_Win_start(MPI_Group group, __UNUSED__ int assert, MPI_Win win) {
   if (!group_size)
     return MPI_SUCCESS;
 
-  ranks = sctk_group_raw_ranks(group);
+  ranks = mpc_lowcomm_group_world_ranks(group);
 
   if (mpc_Win_source_ctx_start_access(win, MPC_WIN_MULTIPLE_REMOTE, ranks,
                                       group_size, MPC_WIN_SOURCE_ACTIVE)) {
+    sctk_free(ranks);
     return MPI_ERR_INTERN;
   }
 
+  sctk_free(ranks);
   return MPI_SUCCESS;
 }
 
