@@ -146,7 +146,7 @@ int _mpc_mpi_errhandler_free(_mpc_mpi_errhandler_t errh)
 /* MPI Handles                                                          */
 /************************************************************************/
 
-static inline uint64_t sctk_handle_compute(sctk_handle id,
+static inline uint64_t __handle_hash(sctk_handle id,
                                            sctk_handle_type type)
 {
 	uint64_t rank = mpc_common_get_task_rank();
@@ -177,7 +177,7 @@ static mpc_common_spinlock_t handle_mod_lock = SCTK_SPINLOCK_INITIALIZER;
 
 static inline  struct _mpc_mpi_handle_ctx_s *__ctx_get_no_lock(sctk_handle id, sctk_handle_type type)
 {
-	return (struct _mpc_mpi_handle_ctx_s *)mpc_common_hashtable_get(&handle_context, sctk_handle_compute(id, type) );
+	return (struct _mpc_mpi_handle_ctx_s *)mpc_common_hashtable_get(&handle_context, __handle_hash(id, type) );
 }
 
 static inline struct _mpc_mpi_handle_ctx_s *__ctx_get(sctk_handle id, sctk_handle_type type)
@@ -217,7 +217,7 @@ sctk_handle _mpc_mpi_handle_new_from_id(sctk_handle previous_id, sctk_handle_typ
 		struct _mpc_mpi_handle_ctx_s *ctx = _mpc_mpi_handle_ctx_new(new_handle_id);
 
 		/* Save in the HT */
-		mpc_common_hashtable_set(&handle_context, sctk_handle_compute(new_handle_id, type),
+		mpc_common_hashtable_set(&handle_context, __handle_hash(new_handle_id, type),
 		                         (void *)ctx);
 	}
 
@@ -251,7 +251,7 @@ int _mpc_mpi_handle_free(sctk_handle id, sctk_handle_type type)
 		return -1;
 	}
 
-	mpc_common_hashtable_delete(&handle_context, sctk_handle_compute(id, type) );
+	mpc_common_hashtable_delete(&handle_context, __handle_hash(id, type) );
 
 	mpc_common_spinlock_unlock(&handle_mod_lock);
 

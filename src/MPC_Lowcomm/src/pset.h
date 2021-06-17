@@ -19,18 +19,10 @@
 /* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef MPC_MPI_SESSION_H
-#define MPC_MPI_SESSION_H
+#ifndef MPC_LOWCOMM_PSET_H
+#define MPC_LOWCOMM_PSET_H
 
-#include <mpc_mpi.h>
-
-
-typedef struct mpc_mpi_session_s
-{
-	MPI_Errhandler errh;
-	MPI_Info       infos;
-}mpc_mpi_session_t;
+#include "mpc_lowcomm_group.h"
 
 
-
-#endif /* MPC_MPI_SESSION_H */
+#endif /* MPC_LOWCOMM_PSET_H */

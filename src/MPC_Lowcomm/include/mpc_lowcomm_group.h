@@ -124,7 +124,7 @@ int mpc_lowcomm_group_rank_for(mpc_lowcomm_group_t *g, int rank, mpc_lowcomm_pee
 
 /**
  * @brief Translate ranks from one group to another
- * 
+ *
  * @param g1 the first group
  * @param n size of the ranklist (ranks1 (in) and ranks2(out))
  * @param ranks1 the input rank list to be translated from g1 to g2
@@ -137,9 +137,10 @@ int mpc_lowcomm_group_translate_ranks(mpc_lowcomm_group_t *g1,
                                       const int ranks1[],
                                       mpc_lowcomm_group_t *g2,
                                       int ranks2[]);
+
 /**
  * @brief Check if a given comm workd rank is part of a group
- * 
+ *
  * @param g the group to check
  * @param cw_rank the comm_world rank
  * @return int true if the rank is part of the group
@@ -148,7 +149,7 @@ int mpc_lowcomm_group_includes(mpc_lowcomm_group_t *g, int cw_rank, mpc_lowcomm_
 
 /**
  * @brief Get the process local leader rank in a given group
- * 
+ *
  * @param g the group to query
  * @return int the group rank of the process leader
  */
@@ -173,7 +174,47 @@ int mpc_lowcomm_group_process_rank_from_world(int comm_world_rank);
  * @param rank the rank of interest
  * @return int the corresponding process UID
  */
-mpc_lowcomm_peer_uid_t mpc_lowcomm_group_process_uid_for_rank(mpc_lowcomm_group_t * g, int rank);
+mpc_lowcomm_peer_uid_t mpc_lowcomm_group_process_uid_for_rank(mpc_lowcomm_group_t *g, int rank);
+
+/****************
+* PROCESS SETS *
+****************/
+
+/**
+ * @brief This is the storage for a process set
+ *
+ */
+struct mpc_lowcomm_proces_set_s
+{
+	char *               name;  /*<< PSET name */
+	int                  size;  /*<< PSET size */
+	mpc_lowcomm_group_t *group; /*<< PSET group */
+};
+
+typedef struct mpc_lowcomm_proces_set_s mpc_lowcomm_process_set_t;
+
+/**
+ * @brief Get the number of process set currently available
+ *
+ * @return int number of available process sets
+ */
+int mpc_lowcomm_group_pset_count(void);
+
+/**
+ * @brief Get the nth process set
+ *
+ * @param n index of the process set to get
+ * @return mpc_lowcomm_process_set_t* pointer to process set null if not found
+ */
+mpc_lowcomm_process_set_t *mpc_lowcomm_group_pset_get_nth(int n);
+
+/**
+ * @brief Get a process set by name
+ *
+ * @param name name to retrieve
+ * @return mpc_lowcomm_process_set_t* pointer to process set null if not found
+ */
+mpc_lowcomm_process_set_t *mpc_lowcomm_group_pset_get_by_name(const char *name);
 
 #ifdef __cplusplus
 }
