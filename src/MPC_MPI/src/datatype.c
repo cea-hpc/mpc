@@ -27,11 +27,10 @@
 
 #include "mpc_reduction.h"
 #include "comm_lib.h"
-#include "sctk_handle.h"
+#include "errh.h"
 #include "mpc_common_types.h"
 #include "mpc_common_types.h"
 #include "uthash.h"
-#include "sctk_handle.h"
 
 #include <sctk_alloc.h>
 
@@ -736,7 +735,7 @@ void _mpc_dt_contiguous_init( _mpc_dt_contiguout_t *type, size_t id_rank, size_t
 	/* Clear context */
 	__mpc_dt_footprint_clear( &type->context );
 
-	sctk_handle_new_from_id( datatype, SCTK_HANDLE_DATATYPE );
+	_mpc_mpi_handle_new_from_id( datatype, _MPC_MPI_HANDLE_DATATYPE );
 
 	/* Attrs */
 	__mpc_dt_attr_store_init( &type->attrs );
@@ -756,7 +755,7 @@ void _mpc_dt_contiguous_release( _mpc_dt_contiguout_t *type )
 
 		__mpc_context_free( &type->context );
 
-		sctk_handle_free( type->datatype, SCTK_HANDLE_DATATYPE );
+		_mpc_mpi_handle_free( type->datatype, _MPC_MPI_HANDLE_DATATYPE );
 		/* Counter == 0 then free */
 		memset( type, 0, sizeof( _mpc_dt_contiguout_t ) );
 	}
@@ -873,7 +872,7 @@ void _mpc_dt_derived_init( _mpc_dt_derived_t *type,
 	/* Clear context */
 	__mpc_dt_footprint_clear( &type->context );
 
-	sctk_handle_new_from_id( id, SCTK_HANDLE_DATATYPE );
+	_mpc_mpi_handle_new_from_id( id, _MPC_MPI_HANDLE_DATATYPE );
 	/* Attrs */
 	__mpc_dt_attr_store_init( &type->attrs );
 }
@@ -888,7 +887,7 @@ int _mpc_dt_derived_release( _mpc_dt_derived_t *type )
 	if ( type->ref_count == 0 )
 	{
 
-		sctk_handle_free( type->id, SCTK_HANDLE_DATATYPE );
+		_mpc_mpi_handle_free( type->id, _MPC_MPI_HANDLE_DATATYPE );
 
 		/* Attrs */
 		__mpc_dt_attr_store_release( &type->attrs, type->id );

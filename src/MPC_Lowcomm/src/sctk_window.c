@@ -21,7 +21,6 @@
 /* ######################################################################## */
 
 #include "sctk_window.h"
-#include "sctk_handle.h"
 #include "comm.h"
 #include "uthash.h"
 #include <sctk_alloc.h>
@@ -29,7 +28,6 @@
 #include <sctk_control_messages.h>
 #include <mpc_common_spinlock.h>
 #include <mpc_common_types.h>
-#include "sctk_handle.h"
 
 #include <group.h>
 #include <communicator.h>
@@ -111,8 +109,6 @@ static struct mpc_lowcomm_rdma_window *sctk_win_register()
 
 	mpc_common_hashtable_set(&___window_hash_table, new_id, (void *)new);
 
-	sctk_handle_new_from_id(new_id, SCTK_HANDLE_WIN);
-
 	return new;
 }
 
@@ -152,8 +148,6 @@ static void sctk_win_delete(struct mpc_lowcomm_rdma_window *win)
 	int id = win->id;
 
 	mpc_common_hashtable_delete(&___window_hash_table, id);
-
-	sctk_handle_free(id, SCTK_HANDLE_WIN);
 
 	sctk_free(win->incoming_emulated_rma);
 	memset(win, 0, sizeof(struct mpc_lowcomm_rdma_window) );

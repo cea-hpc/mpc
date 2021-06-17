@@ -48,7 +48,7 @@
 #include "mpc_reduction.h"
 
 #include <sys/time.h>
-#include "sctk_handle.h"
+#include "errh.h"
 #include "egreq_progress.h"
 
 #ifdef MPC_Threads
@@ -829,9 +829,9 @@ static inline int __MPC_ERROR_REPORT__(mpc_lowcomm_communicator_t comm, int erro
 {
 	mpc_lowcomm_communicator_t comm_id;
 	int            error_id;
-	MPC_Errhandler errh = ( MPC_Errhandler )sctk_handle_get_errhandler(
-	        ( sctk_handle )comm, SCTK_HANDLE_COMM);
-	MPC_Handler_function *func = sctk_errhandler_resolve(errh);
+	MPC_Errhandler errh = ( MPC_Errhandler )_mpc_mpi_handle_get_errhandler(
+	        ( sctk_handle )comm, _MPC_MPI_HANDLE_COMM);
+	MPC_Handler_function *func = _mpc_mpi_errhandler_resolve(errh);
 
 	comm_id = comm;
 	error_id = error;
@@ -3555,25 +3555,25 @@ int _mpc_cl_comm_split(mpc_lowcomm_communicator_t comm, int color, int key, mpc_
 int _mpc_cl_errhandler_create(MPC_Handler_function *function,
                               MPC_Errhandler *errhandler)
 {
-	sctk_errhandler_register( ( sctk_generic_handler )function, ( sctk_errhandler_t * )errhandler);
+	_mpc_mpi_errhandler_register( ( _mpc_mpi_generic_errhandler_func_t )function, ( _mpc_mpi_errhandler_t * )errhandler);
 	MPC_ERROR_SUCESS();
 }
 
 int _mpc_cl_errhandler_set(mpc_lowcomm_communicator_t comm, MPC_Errhandler errhandler)
 {
-	sctk_handle_set_errhandler( ( sctk_handle )comm, SCTK_HANDLE_COMM, ( sctk_errhandler_t )errhandler);
+	_mpc_mpi_handle_set_errhandler( ( sctk_handle )comm, _MPC_MPI_HANDLE_COMM, ( _mpc_mpi_errhandler_t )errhandler);
 	MPC_ERROR_SUCESS();
 }
 
 int _mpc_cl_errhandler_get(mpc_lowcomm_communicator_t comm, MPC_Errhandler *errhandler)
 {
-	*errhandler = ( MPC_Errhandler )sctk_handle_get_errhandler( ( sctk_handle )comm, SCTK_HANDLE_COMM);
+	*errhandler = ( MPC_Errhandler )_mpc_mpi_handle_get_errhandler( ( sctk_handle )comm, _MPC_MPI_HANDLE_COMM);
 	MPC_ERROR_SUCESS();
 }
 
 int _mpc_cl_errhandler_free(MPC_Errhandler *errhandler)
 {
-	sctk_errhandler_free(*errhandler);
+	_mpc_mpi_errhandler_free(*errhandler);
 	*errhandler = ( MPC_Errhandler )MPC_ERRHANDLER_NULL;
 	MPC_ERROR_SUCESS();
 }
@@ -3704,11 +3704,11 @@ int _mpc_cl_error_init()
 	if(error_init_done == 0)
 	{
 		error_init_done = 1;
-		sctk_errhandler_register_on_slot( ( sctk_generic_handler )_mpc_cl_default_error,
+		_mpc_mpi_errhandler_register_on_slot( ( _mpc_mpi_generic_errhandler_func_t )_mpc_cl_default_error,
 		                                  MPC_ERRHANDLER_NULL);
-		sctk_errhandler_register_on_slot( ( sctk_generic_handler )_mpc_cl_return_error,
+		_mpc_mpi_errhandler_register_on_slot( ( _mpc_mpi_generic_errhandler_func_t )_mpc_cl_return_error,
 		                                  MPC_ERRORS_RETURN);
-		sctk_errhandler_register_on_slot( ( sctk_generic_handler )_mpc_cl_abort_error,
+		_mpc_mpi_errhandler_register_on_slot( ( _mpc_mpi_generic_errhandler_func_t )_mpc_cl_abort_error,
 		                                  MPC_ERRORS_ARE_FATAL);
 		_mpc_cl_errhandler_set(MPC_COMM_WORLD, MPC_ERRORS_ARE_FATAL);
 		_mpc_cl_errhandler_set(MPC_COMM_SELF, MPC_ERRORS_ARE_FATAL);

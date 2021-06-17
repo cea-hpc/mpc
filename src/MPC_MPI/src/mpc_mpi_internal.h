@@ -27,7 +27,7 @@
 #include "sctk_alloc.h"
 #include "mpc_lowcomm.h"
 #include "mpc_common_debug.h"
-#include "sctk_handle.h"
+#include "errh.h"
 #include <mpc_lowcomm_msg.h>
 #include "mpc_common_spinlock.h"
 #include "mpc_coll.h"

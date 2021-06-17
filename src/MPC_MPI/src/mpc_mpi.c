@@ -35,7 +35,7 @@
 #include <mpc_common_rank.h>
 
 #include "mpi_conf.h"
-#include "sctk_handle.h"
+
 #include "mpc_mpi_halo.h"
 
 
@@ -148,13 +148,13 @@ static inline void fortran_check_binds_resolve()
 
 int _mpc_mpi_report_error(mpc_lowcomm_communicator_t comm, int error, char *message, char * function, char *file, int line)
 {
-	MPI_Errhandler errh = (MPI_Errhandler)sctk_handle_get_errhandler(
-		(sctk_handle)comm, SCTK_HANDLE_COMM);
+	MPI_Errhandler errh = (MPI_Errhandler)_mpc_mpi_handle_get_errhandler(
+		(sctk_handle)comm, _MPC_MPI_HANDLE_COMM);
 
 	if(errh != MPI_ERRHANDLER_NULL)
 	{
 		mpc_common_nodebug("ERRH is %d for %d", errh, comm);
-		MPI_Handler_function *func = sctk_errhandler_resolve(errh);
+		MPI_Handler_function *func = _mpc_mpi_errhandler_resolve(errh);
 		int      error_id          = error;
 		MPI_Comm comm_id           = comm;
 
@@ -17461,7 +17461,7 @@ int PMPI_Get_version(int *version, int *subversion)
 int PMPI_Errhandler_create(MPI_Handler_function *function,
                            MPI_Errhandler *errhandler)
 {
-	sctk_errhandler_register(function, errhandler);
+	_mpc_mpi_errhandler_register(function, errhandler);
 	MPI_ERROR_SUCESS();
 }
 
@@ -17478,16 +17478,16 @@ int PMPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhandler)
 	}
 
 	mpi_check_comm(comm);
-	sctk_handle_set_errhandler( (sctk_handle)comm, SCTK_HANDLE_COMM,
-	                            (sctk_errhandler_t)errhandler);
+	_mpc_mpi_handle_set_errhandler( (sctk_handle)comm, _MPC_MPI_HANDLE_COMM,
+	                            (_mpc_mpi_errhandler_t)errhandler);
 	MPI_ERROR_SUCESS();
 }
 
 int PMPI_Errhandler_get(MPI_Comm comm, MPI_Errhandler *errhandler)
 {
 	mpi_check_comm(comm);
-	*errhandler = (MPI_Errhandler)sctk_handle_get_errhandler( (sctk_handle)comm,
-	                                                          SCTK_HANDLE_COMM);
+	*errhandler = (MPI_Errhandler)_mpc_mpi_handle_get_errhandler( (sctk_handle)comm,
+	                                                          _MPC_MPI_HANDLE_COMM);
 
 	MPI_ERROR_SUCESS();
 }
@@ -17505,7 +17505,7 @@ int PMPI_Errhandler_free(MPI_Errhandler *errhandler)
 	}
 
 	TODO("Refcounting should be implemented for Error handlers");
-	// sctk_errhandler_free((sctk_errhandler_t)*errhandler);
+	// _mpc_mpi_errhandler_free((_mpc_mpi_errhandler_t)*errhandler);
 	*errhandler = MPI_ERRHANDLER_NULL;
 	MPI_ERROR_SUCESS();
 }
@@ -17514,23 +17514,23 @@ int PMPI_Errhandler_free(MPI_Errhandler *errhandler)
 /* Error handling */
 int PMPI_File_create_errhandler(MPI_File_errhandler_function *file_errhandler_fn, MPI_Errhandler *errhandler)
 {
-	sctk_errhandler_register(file_errhandler_fn, errhandler);
+	_mpc_mpi_errhandler_register(file_errhandler_fn, errhandler);
 	MPI_ERROR_SUCESS();
 }
 
 
 int PMPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler)
 {
-	sctk_handle_set_errhandler( (sctk_handle)file, SCTK_HANDLE_FILE,
-	                            (sctk_errhandler_t)errhandler);
+	_mpc_mpi_handle_set_errhandler( (sctk_handle)file, _MPC_MPI_HANDLE_FILE,
+	                            (_mpc_mpi_errhandler_t)errhandler);
 	MPI_ERROR_SUCESS();
 	return MPI_SUCCESS;
 }
 
 int PMPI_File_get_errhandler(MPI_File file, MPI_Errhandler *errhandler)
 {
-	*errhandler = (MPI_Errhandler)sctk_handle_get_errhandler( (sctk_handle)file,
-	                                                          SCTK_HANDLE_FILE);
+	*errhandler = (MPI_Errhandler)_mpc_mpi_handle_get_errhandler( (sctk_handle)file,
+	                                                          _MPC_MPI_HANDLE_FILE);
 	return MPI_SUCCESS;
 }
 
@@ -17543,7 +17543,7 @@ int PMPI_File_call_errhandler(MPI_File file, int errorcode)
 
 	if(errh != SCTK_ERRHANDLER_NULL)
 	{
-		sctk_generic_handler hlndr = sctk_errhandler_resolve(errh);
+		_mpc_mpi_generic_errhandler_func_t hlndr = _mpc_mpi_errhandler_resolve(errh);
 
 		if(hlndr)
 		{
@@ -18742,9 +18742,9 @@ int PMPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler)
 
 int PMPI_Comm_call_errhandler(MPI_Comm comm, int errorcode)
 {
-	sctk_errhandler_t errh =
-		sctk_handle_get_errhandler( (sctk_handle)comm, SCTK_HANDLE_COMM);
-	sctk_generic_handler errf = sctk_errhandler_resolve(errh);
+	_mpc_mpi_errhandler_t errh =
+		_mpc_mpi_handle_get_errhandler( (sctk_handle)comm, _MPC_MPI_HANDLE_COMM);
+	_mpc_mpi_generic_errhandler_func_t errf = _mpc_mpi_errhandler_resolve(errh);
 
 	if(errf)
 	{
@@ -18756,9 +18756,9 @@ int PMPI_Comm_call_errhandler(MPI_Comm comm, int errorcode)
 
 int PMPI_Win_call_errhandler(MPI_Win win, int errorcode)
 {
-	sctk_errhandler_t errh =
-		sctk_handle_get_errhandler( (sctk_handle)win, SCTK_HANDLE_WIN);
-	sctk_generic_handler errf = sctk_errhandler_resolve(errh);
+	_mpc_mpi_errhandler_t errh =
+		_mpc_mpi_handle_get_errhandler( (sctk_handle)win, _MPC_MPI_HANDLE_WIN);
+	_mpc_mpi_generic_errhandler_func_t errf = _mpc_mpi_errhandler_resolve(errh);
 
 	if(errf)
 	{
@@ -18993,15 +18993,15 @@ int PMPI_Win_create_errhandler(MPI_Win_errhandler_function *win_errhandler_fn,
 
 int PMPI_Win_set_errhandler(MPI_Win win, MPI_Errhandler errhandler)
 {
-	sctk_handle_set_errhandler( (sctk_handle)win, SCTK_HANDLE_WIN,
-	                            (sctk_errhandler_t)errhandler);
+	_mpc_mpi_handle_set_errhandler( (sctk_handle)win, _MPC_MPI_HANDLE_WIN,
+	                            (_mpc_mpi_errhandler_t)errhandler);
 	return MPI_SUCCESS;
 }
 
 int PMPI_Win_get_errhandler(MPI_Win win, MPI_Errhandler *errhandler)
 {
-	*errhandler = (MPC_Errhandler)sctk_handle_get_errhandler( (sctk_handle)win,
-	                                                          SCTK_HANDLE_WIN);
+	*errhandler = (MPC_Errhandler)_mpc_mpi_handle_get_errhandler( (sctk_handle)win,
+	                                                          _MPC_MPI_HANDLE_WIN);
 	return MPI_SUCCESS;
 }
 

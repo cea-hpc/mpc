@@ -19,8 +19,9 @@
 /* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef MPI_HANDLE_H
-#define MPI_HANDLE_H
+#ifndef MPC_MPI_ERROR_H
+#define MPC_MPI_ERROR_H
+
 
 #include <stdio.h>
 
@@ -28,54 +29,63 @@
 /* Error Handler                                                        */
 /************************************************************************/
 
-typedef void (*sctk_generic_handler)(void *phandle, int *error_code, ...);
-typedef int sctk_errhandler_t;
+typedef void (*_mpc_mpi_generic_errhandler_func_t)(void *phandle, int *error_code, ...);
+typedef int _mpc_mpi_errhandler_t;
 
-int sctk_errhandler_register(sctk_generic_handler eh, sctk_errhandler_t *errh);
-int sctk_errhandler_register_on_slot(sctk_generic_handler eh,
-                                     sctk_errhandler_t slot);
-sctk_generic_handler sctk_errhandler_resolve(sctk_errhandler_t errh);
-int sctk_errhandler_free(sctk_errhandler_t errh);
+int _mpc_mpi_errhandler_register(_mpc_mpi_generic_errhandler_func_t eh, _mpc_mpi_errhandler_t *errh);
+
+int _mpc_mpi_errhandler_register_on_slot(_mpc_mpi_generic_errhandler_func_t eh,
+                                         _mpc_mpi_errhandler_t slot);
+
+_mpc_mpi_generic_errhandler_func_t _mpc_mpi_errhandler_resolve(_mpc_mpi_errhandler_t errh);
+
+int _mpc_mpi_errhandler_free(_mpc_mpi_errhandler_t errh);
 
 /************************************************************************/
 /* MPI Handles                                                          */
 /************************************************************************/
 
-#define SCTK_BOOKED_HANDLES (10000)
+#define SCTK_BOOKED_HANDLES    (10000)
 
 typedef size_t sctk_handle;
 
-struct sctk_handle_context {
-  sctk_handle id;
-  sctk_errhandler_t handler;
+struct _mpc_mpi_handle_ctx_s
+{
+	sctk_handle           id;
+	_mpc_mpi_errhandler_t handler;
 };
 
-typedef enum {
-  SCTK_HANDLE_GLOBAL,
-  SCTK_HANDLE_COMM,
-  SCTK_HANDLE_DATATYPE,
-  SCTK_HANDLE_WIN,
-  SCTK_HANDLE_FILE,
-  SCTK_HANDLE_ERRHANDLER,
-  SCTK_HANDLE_OP,
-  SCTK_HANDLE_GROUP,
-  SCTK_HANDLE_REQUEST,
-  SCTK_HANDLE_MESSAGE,
-  SCTK_HANDLE_INFO
+typedef enum
+{
+	_MPC_MPI_HANDLE_GLOBAL,
+	_MPC_MPI_HANDLE_COMM,
+	_MPC_MPI_HANDLE_DATATYPE,
+	_MPC_MPI_HANDLE_WIN,
+	_MPC_MPI_HANDLE_FILE,
+	_MPC_MPI_HANDLE_ERRHANDLER,
+	_MPC_MPI_HANDLE_OP,
+	_MPC_MPI_HANDLE_GROUP,
+	_MPC_MPI_HANDLE_REQUEST,
+	_MPC_MPI_HANDLE_MESSAGE,
+	_MPC_MPI_HANDLE_INFO,
+	_MPC_MPI_HANDLE_SESSION
 } sctk_handle_type;
 
-struct sctk_handle_context *sctk_handle_context_new(sctk_handle id);
-int sctk_handle_context_release(struct sctk_handle_context *hctx);
-sctk_handle sctk_handle_new_from_id(sctk_handle previous_id, sctk_handle_type type);
-sctk_handle sctk_handle_new(sctk_handle_type type);
-int sctk_handle_free(sctk_handle id, sctk_handle_type type);
+struct _mpc_mpi_handle_ctx_s *_mpc_mpi_handle_ctx_new(sctk_handle id);
 
-struct sctk_handle_context *sctk_handle_context(sctk_handle id,
-                                                sctk_handle_type type);
+int _mpc_mpi_handle_ctx_release(struct _mpc_mpi_handle_ctx_s *hctx);
 
-sctk_errhandler_t sctk_handle_get_errhandler(sctk_handle id,
-                                             sctk_handle_type type);
-int sctk_handle_set_errhandler(sctk_handle id, sctk_handle_type type,
-                               sctk_errhandler_t errh);
+sctk_handle _mpc_mpi_handle_new_from_id(sctk_handle previous_id, sctk_handle_type type);
 
-#endif /* MPI_HANDLE_H */
+sctk_handle _mpc_mpi_handle_new(sctk_handle_type type);
+
+int _mpc_mpi_handle_free(sctk_handle id, sctk_handle_type type);
+
+
+_mpc_mpi_errhandler_t _mpc_mpi_handle_get_errhandler(sctk_handle id,
+                                                     sctk_handle_type type);
+
+int _mpc_mpi_handle_set_errhandler(sctk_handle id, sctk_handle_type type,
+                                   _mpc_mpi_errhandler_t errh);
+
+#endif /* MPC_MPI_ERROR_H */
