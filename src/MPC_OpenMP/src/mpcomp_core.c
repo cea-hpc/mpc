@@ -1124,7 +1124,8 @@ void __mpcomp_init( void )
 	if ( OMP_PLACES_LIST )
 	{
 		places_nb_mvps = mpcomp_places_get_topo_info( OMP_PLACES_LIST, &shape, &cpus_order );
-		assert( places_nb_mvps == nb_mvps );
+		assert( places_nb_mvps <= nb_mvps );
+    nb_mvps = places_nb_mvps;
 	}
 	else
 	{
