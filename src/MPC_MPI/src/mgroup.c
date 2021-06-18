@@ -47,7 +47,6 @@
 
 //#define DEBUG_GROUP_RANGES
 
-
 int PMPI_Comm_remote_group(MPI_Comm comm, MPI_Group *mpi_group)
 {
 	mpc_common_nodebug("Enter Comm_remote_group");
@@ -141,7 +140,7 @@ int PMPI_Group_translate_ranks(MPI_Group group1, int n, const int ranks1[], MPI_
 
 	int i;
 
-	for(i = 0 ; i < n ; i++)
+	for(i = 0; i < n; i++)
 	{
 		if( (ranks1[i] < 0) || (mpc_lowcomm_group_size(group1) <= ranks1[i]) )
 		{

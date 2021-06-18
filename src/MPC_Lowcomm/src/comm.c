@@ -51,6 +51,7 @@
 #include "mpc_lowcomm_workshare.h"
 #include "lowcomm_config.h"
 #include "monitor.h"
+#include "pset.h"
 
 /********************************************************************/
 /*Structures                                                        */
@@ -3605,6 +3606,8 @@ static void __initialize_drivers()
 
 	_mpc_lowcomm_communicator_init();
 
+	_mpc_lowcomm_init_psets();
+
 	__init_request_null();
 }
 
@@ -3613,6 +3616,7 @@ static void __finalize_driver()
 	_mpc_lowcomm_monitor_teardown();
 	mpc_lowcomm_rdma_window_release_ht();
 	_mpc_lowcomm_communicator_release();
+	_mpc_lowcomm_release_psets();
 }
 
 #ifdef MPC_USE_DMTCP

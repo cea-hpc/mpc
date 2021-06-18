@@ -270,14 +270,15 @@ int * mpc_lowcomm_group_world_ranks(mpc_lowcomm_group_t *g);
 * PROCESS SETS *
 ****************/
 
+#define MPC_LOWCOMM_GROUP_MAX_PSET_NAME_LEN 256
+
 /**
  * @brief This is the storage for a process set
  *
  */
 struct mpc_lowcomm_proces_set_s
 {
-	char *               name;  /*<< PSET name */
-	int                  size;  /*<< PSET size */
+	char                 name[MPC_LOWCOMM_GROUP_MAX_PSET_NAME_LEN];  /*<< PSET name */
 	mpc_lowcomm_group_t *group; /*<< PSET group */
 };
 
@@ -305,6 +306,14 @@ mpc_lowcomm_process_set_t *mpc_lowcomm_group_pset_get_nth(int n);
  * @return mpc_lowcomm_process_set_t* pointer to process set null if not found
  */
 mpc_lowcomm_process_set_t *mpc_lowcomm_group_pset_get_by_name(const char *name);
+
+/**
+ * @brief Free a retrieved process set
+ *
+ * @param pset the pset to free
+ * @return int SCTK_SUCCESS if all ok
+ */
+int mpc_lowcomm_group_pset_free(mpc_lowcomm_process_set_t *pset);
 
 #ifdef __cplusplus
 }

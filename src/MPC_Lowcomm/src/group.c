@@ -1192,7 +1192,6 @@ void _mpc_lowcomm_group_create_world(void)
 	__empty_group = _mpc_lowcomm_group_create(0, NULL);
 	__empty_group->do_not_free = 1;
 
-
 	/* Comm world */
 	int i;
 	int size = mpc_lowcomm_get_size();

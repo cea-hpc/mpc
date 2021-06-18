@@ -134,6 +134,8 @@ int PMPI_Session_init(MPI_Info info, MPI_Errhandler errhandler, MPI_Session *ses
 {
 	int res = MPI_SUCCESS;
 
+	*session = __session_new();
+
 	if(info == MPI_INFO_NULL)
 	{
 		/* Store empty info */
@@ -201,6 +203,8 @@ int PMPI_Session_get_nth_pset(MPI_Session session, MPI_Info info, int n, int *ps
 
 	*pset_len = strlen(pset->name);
 
+	mpc_lowcomm_group_pset_free(pset);
+
 	MPI_ERROR_SUCESS();
 }
 
@@ -221,11 +225,13 @@ int PMPI_Session_get_pset_info(MPI_Session session, const char *pset_name, MPI_I
 	char smpi_size[64];
 	char sname[128];
 
-	snprintf(smpi_size, 64, pset->size);
+	snprintf(smpi_size, 64, "%d", mpc_lowcomm_group_size(pset->group));
 	snprintf(sname, 128, pset->name);
 
 	PMPI_Info_set(*info, "mpi_size", smpi_size);
 	PMPI_Info_set(*info, "name", sname);
+
+	mpc_lowcomm_group_pset_free(pset);
 
 	MPI_ERROR_SUCESS();
 }
@@ -240,5 +246,9 @@ int PMPI_Group_from_session_pset(MPI_Session session, const char *pset_name, MPI
 		MPI_ERROR_REPORT(MPI_COMM_SELF, MPI_ERR_ARG, "Could not retrieve this pset");
 	}
 
-    //TODO
+    *newgroup = mpc_lowcomm_group_dup(pset->group);
+
+	mpc_lowcomm_group_pset_free(pset);
+
+	MPI_ERROR_SUCESS();
 }

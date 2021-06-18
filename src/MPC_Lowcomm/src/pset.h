@@ -23,6 +23,16 @@
 #define MPC_LOWCOMM_PSET_H
 
 #include "mpc_lowcomm_group.h"
+#include <mpc_common_spinlock.h>
+#include <mpc_common_types.h>
 
+
+int _mpc_lowcomm_init_psets(void);
+
+int _mpc_lowcomm_release_psets(void);
+
+int _mpc_lowcomm_pset_push(char *name, mpc_lowcomm_group_t * group, int is_comm_self);
+
+int _mpc_lowcomm_pset_register(void);
 
 #endif /* MPC_LOWCOMM_PSET_H */
