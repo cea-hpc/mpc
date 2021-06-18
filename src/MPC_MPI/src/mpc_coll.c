@@ -76,9 +76,9 @@ typedef struct {
   int tmpbuf_size;                              /**< Size of the temporary buffer for the schedule. */
   int tmpbuf_pos;                               /**< Offset from the staring adress of the temporary buffer to the current position. */
 
-  int flag;
+  int flag;                                     /**< flag used to store initialisation states. */
   //int is_topo_comm_creation_allowed;
-  //int is_hardware_algo;                         /**< flag set to 1 if using hardware algorithm else 0. */
+  //int is_hardware_algo;                         
   mpc_hardware_split_info_t *hardware_info_ptr; /**< ptr to structure for hardware communicator info */
 } Sched_info;
 
@@ -911,6 +911,12 @@ static inline int __create_master_hardware_comm_unguided(int vrank, int level, S
   return res;
 }
 
+/**
+  \brief Create the array containing the number of processes bellow in the topological communicator tree for each height
+  \param comm Target communicator
+  \param info Adress on the information structure about the schedule
+  \return error code
+ */
 static inline int __create_childs_counts(MPI_Comm comm, Sched_info *info) {
 
    int rank;
@@ -965,6 +971,13 @@ static inline int __create_childs_counts(MPI_Comm comm, Sched_info *info) {
    return MPI_SUCCESS;
 }
 
+/**
+  \brief Create the array linking the position of processes in the topology and their rank
+  \param comm Target communicator
+  \param root Rank of the root of the collective
+  \param info Adress on the information structure about the schedule
+  \return error code
+ */
 static inline int __create_swap_array(MPI_Comm comm, int root, Sched_info *info) {
 
   int rank, size;
@@ -989,6 +1002,14 @@ static inline int __create_swap_array(MPI_Comm comm, int root, Sched_info *info)
   return MPI_SUCCESS;
 }
 
+/**
+  \brief Initialise topological informations and create topological communicators
+  \param comm Target communicator
+  \param root Rank of the root of the collective
+  \param level Max hardware topological level to split communicators 
+  \param info Adress on the information structure about the schedule
+  \return error code
+ */
 static inline int __Topo_comm_init(MPI_Comm comm, int root, int max_level, Sched_info *info) {
   int rank, size;
   _mpc_cl_comm_size(comm, &size);
@@ -1413,7 +1434,7 @@ static inline int __Bcast_scatter_allgather(__UNUSED__ void *buffer, __UNUSED__ 
 
 
 /**
-  \brief Execute or schedule a broadcast using the hardware full binomial algorithm
+  \brief Execute or schedule a broadcast using the topological algorithm
     Or count the number of operations and rounds for the schedule
   \param buffer Adress of the buffer used to send/recv data during the broadcast
   \param count Number of elements in buffer
@@ -2006,6 +2027,21 @@ static inline int __Reduce_reduce_scatter_allgather(__UNUSED__ const void *sendb
   return MPI_SUCCESS;
 }
 
+/**
+  \brief Execute or schedule a reduce using the topological algorithm
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the buffer used to send data during the reduce
+  \param recvbuf Adress of the buffer used to recv data during the reduce
+  \param count Number of elements in the buffers
+  \param datatype Type of the data elements in the buffers
+  \param op Operator to use in the reduction operation
+  \param root Rank root of the reduce
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
 static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
   int rank, size, res = MPI_SUCCESS;
   MPI_Aint ext;
@@ -2087,6 +2123,21 @@ static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, M
   return res;
 }
 
+/**
+  \brief Execute or schedule a reduce using the topological algorithm for commutative operators
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the buffer used to send data during the reduce
+  \param recvbuf Adress of the buffer used to recv data during the reduce
+  \param count Number of elements in the buffers
+  \param datatype Type of the data elements in the buffers
+  \param op Operator to use in the reduction operation
+  \param root Rank root of the reduce
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
 static inline int __Reduce_topo_commute(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size, res = MPI_SUCCESS;
@@ -3005,6 +3056,20 @@ static inline int __Allreduce_ring(__UNUSED__ const void *sendbuf, __UNUSED__ vo
   return MPI_SUCCESS;
 }
 
+/**
+  \brief Execute or schedule a reduce using the topological algorithm
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the buffer used to send data during the allreduce
+  \param recvbuf Adress of the buffer used to recv data during the allreduce
+  \param count Number of elements in the buffers
+  \param datatype Type of the data elements in the buffers
+  \param op Operator to use in the reduction operation
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
 static inline int __Allreduce_topo(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
   __Reduce_topo(sendbuf, recvbuf, count, datatype, op, 0, comm, coll_type, schedule, info);
   __Barrier_type(coll_type, schedule, info);
@@ -3490,6 +3555,22 @@ static inline int __Scatter_binomial(const void *sendbuf, int sendcount, MPI_Dat
   return MPI_SUCCESS;
 }
 
+/**
+  \brief Execute or schedule a Scatter using the topological algorithm
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the buffer used to send data during the scatter
+  \param sendcount Number of elements in the send buffer
+  \param sendtype Type of the data elements in the send buffer
+  \param recvbuf Adress of the buffer used to send data during the scatter
+  \param recvcount Number of elements in the recv buffer
+  \param recvtype Type of the data elements in the recv buffer
+  \param root Rank root of the Scatter
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
 static inline int __Scatter_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size, res = MPI_SUCCESS;
@@ -4486,6 +4567,22 @@ static inline int __Gather_binomial(const void *sendbuf, int sendcount, MPI_Data
   return MPI_SUCCESS;
 }
 
+/**
+  \brief Execute or schedule a Gather using the topological algorithm
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the buffer used to send data during the Gather
+  \param sendcount Number of elements in the send buffer
+  \param sendtype Type of the data elements in the send buffer
+  \param recvbuf Adress of the buffer used to send data during the Gather
+  \param recvcount Number of elements in the recv buffer
+  \param recvtype Type of the data elements in the recv buffer
+  \param root Rank root of the Gather
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
 static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
   int rank, size, res = MPI_SUCCESS;
   MPI_Aint sendext, recvext;
@@ -6385,6 +6482,21 @@ static inline int __Allgather_ring(const void *sendbuf, int sendcount, MPI_Datat
   return MPI_SUCCESS;
 }
 
+/**
+  \brief Execute or schedule a Allgather using the topological algorithm
+    Or count the number of operations and rounds for the schedule
+  \param sendbuf Adress of the buffer used to send data during the Allgather
+  \param sendcount Number of elements in the send buffer
+  \param sendtype Type of the data elements in the send buffer
+  \param recvbuf Adress of the buffer used to send data during the Allgather
+  \param recvcount Number of elements in the recv buffer
+  \param recvtype Type of the data elements in the recv buffer
+  \param comm Target communicator
+  \param coll_type Type of the communication
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return error code
+  */
 static inline int __Allgather_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
   int size, rank;
   _mpc_cl_comm_size(comm, &size);
