@@ -82,7 +82,7 @@ int mpc_lowcomm_get_process_rank(void);
  *
  * @param request request to extract information from
  * @param status status to be filled
- * @return int SCTK_SUCCESS if all ok
+ * @return int MPC_LOWCOMM_SUCCESS if all ok
  */
 int mpc_lowcomm_commit_status_from_request(mpc_lowcomm_request_t *request,
                                            mpc_lowcomm_status_t *status);
@@ -91,7 +91,7 @@ int mpc_lowcomm_commit_status_from_request(mpc_lowcomm_request_t *request,
  * @brief Wait for a request completion (or cancelation)
  *
  * @param request request to be waited
- * @return int SCTK_SUCCESS if all ok
+ * @return int MPC_LOWCOMM_SUCCESS if all ok
  */
 int mpc_lowcomm_request_wait(mpc_lowcomm_request_t *request);
 
@@ -99,7 +99,7 @@ int mpc_lowcomm_request_wait(mpc_lowcomm_request_t *request);
  * @brief Cancel a request
  *
  * @param request the request to be cancelled
- * @return int SCTK_SUCCESS if all ok
+ * @return int MPC_LOWCOMM_SUCCESS if all ok
  */
 int mpc_lowcomm_request_cancel(mpc_lowcomm_request_t *request);
 
@@ -124,7 +124,7 @@ void mpc_lowcomm_request_init(mpc_lowcomm_request_t *request, mpc_lowcomm_commun
  * @param size size of data pointer
  * @param tag tag to be used
  * @param req request to fill in
- * @return int SCTK_SUCCESS if all ok
+ * @return int MPC_LOWCOMM_SUCCESS if all ok
  */
 int mpc_lowcomm_universe_isend(mpc_lowcomm_peer_uid_t dest,
                               const void *data,
@@ -141,7 +141,7 @@ int mpc_lowcomm_universe_isend(mpc_lowcomm_peer_uid_t dest,
  * @param size size of data pointer
  * @param tag tag to be used
  * @param req request to fill in
- * @return int SCTK_SUCCESS if all ok
+ * @return int MPC_LOWCOMM_SUCCESS if all ok
  */
 int mpc_lowcomm_universe_irecv(mpc_lowcomm_peer_uid_t src,
                                const void *data,
@@ -179,7 +179,7 @@ int mpc_lowcomm_close_port(const char * port_name);
  *
  * @param service_name the service to publish
  * @param port_name the port information to publish
- * @return int SCTK_SUCCESS if all ok
+ * @return int MPC_LOWCOMM_SUCCESS if all ok
  */
 int mpc_lowcomm_publish_name(const char *service_name,
                              const char *port_name);
@@ -189,7 +189,7 @@ int mpc_lowcomm_publish_name(const char *service_name,
  *
  * @param service_name the service to unpublish
  * @param port_name the port information to unpublish
- * @return int SCTK_SUCCESS if all ok
+ * @return int MPC_LOWCOMM_SUCCESS if all ok
  */
 int mpc_lowcomm_unpublish_name(const char *service_name,
                                const char *port_name);
@@ -200,7 +200,7 @@ int mpc_lowcomm_unpublish_name(const char *service_name,
  * @param service_name the service name to resolve
  * @param port_name the corresponding port information
  * @param port_name_len the length of the port_name buffer
- * @return int SCTK_SUCCESS if all ok
+ * @return int MPC_LOWCOMM_SUCCESS if all ok
  */
 int mpc_lowcomm_lookup_name(const char *service_name,
                             char *port_name,
@@ -300,7 +300,7 @@ int mpc_lowcomm_sendrecv(void *sendbuf, size_t size, int dest, int tag, void *re
  * @param comm communicator to test for
  * @param flag set to 1 if the message is found
  * @param status status (similar to MPI filled with message infos)
- * @return int SCTK_SUCCESS if no error
+ * @return int MPC_LOWCOMM_SUCCESS if no error
  */
 int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destination, const int tag,
                                 const mpc_lowcomm_communicator_t comm, int *flag, mpc_lowcomm_status_t *status);
@@ -313,7 +313,7 @@ int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destinat
  * @param comm message communicator
  * @param flag set to 1 if message is found
  * @param status status (similar to MPI filled with message infos)
- * @return int SCTK_SUCCESS if no error
+ * @return int MPC_LOWCOMM_SUCCESS if no error
  */
 int mpc_lowcomm_iprobe(int source, int tag, mpc_lowcomm_communicator_t comm, int *flag, mpc_lowcomm_status_t *status);
 
@@ -325,7 +325,7 @@ int mpc_lowcomm_iprobe(int source, int tag, mpc_lowcomm_communicator_t comm, int
  * @param comm message communicator
  * @param flag set to 1 if message is found
  * @param status status (similar to MPI filled with message infos)
- * @return int SCTK_SUCCESS if no error
+ * @return int MPC_LOWCOMM_SUCCESS if no error
  */
 int mpc_lowcomm_probe(int source, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_status_t *status);
 

@@ -55,8 +55,26 @@ typedef uint64_t mpc_lowcomm_communicator_id_t;
 /** This is the ID of COMM self */
 #define MPC_LOWCOMM_COMM_SELF_NUMERIC_ID     2
 
+/**
+ * @brief Get COMM_WORLD identifier
+ * 
+ * @return mpc_lowcomm_communicator_id_t comm_world communicator ID
+ */
 mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_world_id(void);
+
+/**
+ * @brief Get COMM_SELF id
+ * 
+ * @return mpc_lowcomm_communicator_id_t comm_self communicator ID
+ */
 mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_self_id(void);
+
+/**
+ * @brief Book a local communicator ID
+ * 
+ * @return mpc_lowcomm_communicator_id_t local communicator ID
+ */
+mpc_lowcomm_communicator_id_t mpc_lowcomm_communicator_gen_local_id(void);
 
 /** define the ID of a NULL communicator */
 #define MPC_LOWCOMM_COMM_NULL_ID     0
@@ -163,6 +181,20 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_create(const mpc_lowcomm_com
                                                            const int *members);
 
 /**
+ * @brief Create a communicator from a comm subgroup
+ * 
+ * @param comm the communicator to use as source
+ * @param group the subgroup to create on
+ * @param tag the tag to use for ID exchange
+ * @param newcomm the new communicator
+ * @return int MPC_LOWCOMM_SUCCESS if all OK
+ */
+int mpc_lowcomm_communicator_create_group(mpc_lowcomm_communicator_t comm,
+                                          mpc_lowcomm_group_t* group,
+                                          int tag,
+                                          mpc_lowcomm_communicator_t *newcomm);
+
+/**
  * @brief Create a communicator from a group object
  *
  * @param comm Source communicator
@@ -171,6 +203,17 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_create(const mpc_lowcomm_com
  */
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_from_group(mpc_lowcomm_communicator_t comm,
                                                                mpc_lowcomm_group_t *group);
+
+/**
+ * @brief Creare a communicator with a group using a pre-exchanged ID (see @ref mpc_lowcomm_communicator_gen_local_id)
+ * 
+ * @param comm the comm to rely on to build the new comm
+ * @param group the group to use for exchange
+ * @param forced_id the ID to rely on (same as mpc_lowcomm_communicator_from_group if MPC_LOWCOMM_COMM_NULL_ID)
+ * @return mpc_lowcomm_communicator_t  new communicator (if member or MPI_COMM_NULL if not)
+ */
+mpc_lowcomm_communicator_t mpc_lowcomm_communicator_from_group_forced_id(mpc_lowcomm_group_t *group,
+																		 mpc_lowcomm_communicator_id_t forced_id);
 
 
 /**
@@ -203,7 +246,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_split(mpc_lowcomm_communicat
  * @brief Free a communicator
  *
  * @param pcomm pointer to a communicator (set to MPC_COMM_NULL)
- * @return int SCTK_SUCCESS if no error
+ * @return int MPC_LOWCOMM_SUCCESS if no error
  */
 int mpc_lowcomm_communicator_free(mpc_lowcomm_communicator_t *pcomm);
 
@@ -498,7 +541,7 @@ int mpc_lowcomm_communicator_remote_world_rank(const mpc_lowcomm_communicator_t 
  * @param remote remote peer aware of the communicator with given ID
  * @param id the ID of the communicator to build
  * @param outcomm the output communicator
- * @return int SCTK_SUCCESS if all OK
+ * @return int MPC_LOWCOMM_SUCCESS if all OK
  */
 int mpc_lowcomm_communicator_build_remote(mpc_lowcomm_peer_uid_t remote,
 										  const mpc_lowcomm_communicator_id_t id,
@@ -509,7 +552,7 @@ int mpc_lowcomm_communicator_build_remote(mpc_lowcomm_peer_uid_t remote,
  *
  * @param gid the identifier of the group to be targetted
  * @param comm output communicator
- * @return int SCTK_SUCCESS if all OK
+ * @return int MPC_LOWCOMM_SUCCESS if all OK
  */
 int mpc_lowcomm_communicator_build_remote_world(const mpc_lowcomm_set_uid_t gid,
                                                 mpc_lowcomm_communicator_t *comm);
@@ -540,7 +583,7 @@ int mpc_lowcomm_communicator_accept(const char *port_name,
  * @param is_intercomm set to true if it is an intercomm
  * @param is_shm set to true if the comm resides in shared memory
  * @param is_shared_node set to true if the comm is on a single node
- * @return int SCTK_SUCCESS if all OK
+ * @return int MPC_LOWCOMM_SUCCESS if all OK
  */
 int mpc_lowcomm_communicator_attributes(const mpc_lowcomm_communicator_t comm,
                                         int *is_intercomm,

@@ -507,13 +507,13 @@ static inline void mpc_lowcomm_request_set_null(mpc_lowcomm_request_t *request, 
 static inline int mpc_lowcomm_status_set_cancelled(mpc_lowcomm_status_t *status, int cancelled)
 {
 	status->cancelled = cancelled;
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 static inline int mpc_lowcomm_status_get_cancelled(const mpc_lowcomm_status_t *status, int *flag)
 {
 	*flag = (status->cancelled == 1);
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 /************************************************************************/

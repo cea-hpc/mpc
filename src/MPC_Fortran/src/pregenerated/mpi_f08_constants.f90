@@ -111,9 +111,9 @@ use :: mpi_f08_types
 	integer, parameter :: MPI_UNWEIGHTED = 2
 	integer, parameter :: MPI_WEIGHTS_EMPTY = 3
 	integer, parameter :: MPI_IDENT = 0
-	integer, parameter :: MPI_CONGRUENT = 1
-	integer, parameter :: MPI_SIMILAR = 2
-	integer, parameter :: MPI_UNEQUAL = 3
+	integer, parameter :: MPI_CONGRUENT = 3
+	integer, parameter :: MPI_SIMILAR = 1
+	integer, parameter :: MPI_UNEQUAL = 2
 	integer, parameter :: MPI_ANY_TAG = -1
 	integer, parameter :: MPI_ANY_SOURCE = -1
 	integer, parameter :: MPI_ROOT = -4

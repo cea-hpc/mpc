@@ -456,7 +456,7 @@ int MPCX_Disguise(mpc_lowcomm_communicator_t comm, int target_rank)
 				OPA_incr_int(&__mpc_p_disguise_flag);
 				mpc_thread_disguise_set(__mpc_p_disguise_costumes[i]->thread_data,
 										(void *)__mpc_p_disguise_costumes[i]);
-				return SCTK_SUCCESS;
+				return MPC_LOWCOMM_SUCCESS;
 			}
 		}
 	#endif
@@ -480,7 +480,7 @@ int MPCX_Undisguise()
 
 		OPA_decr_int(&__mpc_p_disguise_flag);
 	#endif
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 /*******************************
@@ -839,7 +839,7 @@ static inline int __MPC_ERROR_REPORT__(mpc_lowcomm_communicator_t comm, int erro
 #define MPC_ERROR_REPORT(comm, error, message) \
 	return __MPC_ERROR_REPORT__(comm, error, message, (char*)__FUNCTION__, __FILE__, __LINE__)
 
-#define MPC_ERROR_SUCESS()    return SCTK_SUCCESS;
+#define MPC_ERROR_SUCESS()    return MPC_LOWCOMM_SUCCESS;
 
 
 
@@ -862,7 +862,7 @@ static inline int __mpc_cl_egreq_progress_init(mpc_mpi_cl_per_mpi_process_ctx_t 
 	mpc_lowcomm_barrier(MPC_COMM_WORLD);
 	/* Retrieve the ctx pointer */
 	tmp->progress_list = _mpc_egreq_progress_pool_join(&__mpc_progress_pool);
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 static inline int __mpc_cl_egreq_progress_release(mpc_mpi_cl_per_mpi_process_ctx_t *tmp)
@@ -879,11 +879,11 @@ static inline int __mpc_cl_egreq_progress_release(mpc_mpi_cl_per_mpi_process_ctx
 
 	if(done)
 	{
-		return SCTK_SUCCESS;
+		return MPC_LOWCOMM_SUCCESS;
 	}
 
 	_mpc_egreq_progress_pool_release(&__mpc_progress_pool);
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 static inline void __mpc_cl_egreq_progress_poll_id(int id)
@@ -930,7 +930,7 @@ int ___mpc_cl_egreq_disguise_poll(void *arg)
 	{
 		disguised = 1;
 
-		if(MPCX_Disguise(MPC_COMM_WORLD, req->grequest_rank) != SCTK_SUCCESS)
+		if(MPCX_Disguise(MPC_COMM_WORLD, req->grequest_rank) != MPC_LOWCOMM_SUCCESS)
 		{
 			ret = 0;
 			goto POLL_DONE_G;
@@ -2312,76 +2312,13 @@ mpc_lowcomm_datatype_t _mpc_cl_type_get_inner(mpc_lowcomm_datatype_t type)
 /* MPC Init and Finalize                                                */
 /************************************************************************/
 
-int _mpc_cl_init(__UNUSED__ int *argc, __UNUSED__ char ***argv)
+
+int _mpc_cl_abort(__UNUSED__ mpc_lowcomm_communicator_t comm, int errorcode)
 {
-	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific;
-
-	SCTK_PROFIL_START(MPC_Init);
-	task_specific = _mpc_cl_per_mpi_process_ctx_get();
-
-	/* If the task calls MPI_Init() a second time */
-	if(task_specific->init_done == 2)
-	{
-		return MPC_ERR_OTHER;
-	}
-
-	task_specific->init_done    = 1;
-	task_specific->thread_level = MPC_THREAD_MULTIPLE;
-	SCTK_PROFIL_END(MPC_Init);
-	MPC_ERROR_SUCESS();
-}
-
-int _mpc_cl_init_thread(int *argc, char ***argv, int required, int *provided)
-{
-	const int res = _mpc_cl_init(argc, argv);
-
-	if(res == SCTK_SUCCESS)
-	{
-		mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = _mpc_cl_per_mpi_process_ctx_get();
-		task_specific->thread_level = required;
-		*provided = required;
-	}
-
-	return res;
-}
-
-int _mpc_cl_initialized(int *flag)
-{
-	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific;
-
-	SCTK_PROFIL_START(MPC_Initialized);
-	task_specific = _mpc_cl_per_mpi_process_ctx_get();
-	*flag         = task_specific->init_done;
-	SCTK_PROFIL_END(MPC_Initialized);
-	MPC_ERROR_SUCESS();
-}
-
-int mpc_lowcomm_barrier(mpc_lowcomm_communicator_t comm);
-
-int _mpc_cl_finalize(void)
-{
-	SCTK_PROFIL_START(MPC_Finalize);
-	mpc_lowcomm_barrier(MPC_COMM_WORLD);
-	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = _mpc_cl_per_mpi_process_ctx_get();
-	task_specific->init_done = 2;
+	mpc_common_debug_error("MPC_Abort with error %d", errorcode);
 	fflush(stderr);
 	fflush(stdout);
-	SCTK_PROFIL_END(MPC_Finalize);
-	MPC_ERROR_SUCESS();
-}
-
-int _mpc_cl_query_thread(int *provided)
-{
-	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific;
-
-	task_specific = _mpc_cl_per_mpi_process_ctx_get();
-
-	if(task_specific->thread_level == -1)
-	{
-		return MPC_ERR_OTHER;
-	}
-
-	*provided = task_specific->thread_level;
+	mpc_common_debug_abort();
 	MPC_ERROR_SUCESS();
 }
 
@@ -2729,11 +2666,11 @@ int _mpc_cl_recv(void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_
 
 	if(source == MPC_PROC_NULL)
 	{
-		if(status != SCTK_STATUS_NULL)
+		if(status != MPC_LOWCOMM_STATUS_NULL)
 		{
 			status->MPC_SOURCE = MPC_PROC_NULL;
 			status->MPC_TAG    = MPC_ANY_TAG;
-			status->MPC_ERROR  = SCTK_SUCCESS;
+			status->MPC_ERROR  = MPC_LOWCOMM_SUCCESS;
 			status->size       = 0;
 		}
 
@@ -2779,7 +2716,7 @@ int _mpc_cl_sendrecv(void *sendbuf, mpc_lowcomm_msg_count_t sendcount, mpc_lowco
 
 	_mpc_cl_waitall(2, reqs, st);
 
-	if(status != SCTK_STATUS_NULL)
+	if(status != MPC_LOWCOMM_STATUS_NULL)
 	{
 		memcpy(status, &st[0], sizeof(MPI_Status) );
 	}
@@ -2923,7 +2860,7 @@ static inline int _mpc_cl_waitall_Grequest(mpc_lowcomm_msg_count_t count,
 		sctk_free(array_of_states);
 
 		/* Update the statuses */
-		if(array_of_statuses != SCTK_STATUS_NULL)
+		if(array_of_statuses != MPC_LOWCOMM_STATUS_NULL)
 		{
 			/* here we do a for loop as we only checked that the wait function
 			 * was identical we are not sure that the XGrequests classes werent
@@ -3013,7 +2950,7 @@ int _mpc_cl_waitallp(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *parra
 			}
 			else
 			{
-				status = SCTK_STATUS_NULL;
+				status = MPC_LOWCOMM_STATUS_NULL;
 			}
 
 			request = parray_of_requests[i];
@@ -3197,20 +3134,20 @@ int _mpc_cl_request_get_status(mpc_lowcomm_request_t request, int *flag, mpc_low
 {
 	mpc_lowcomm_commit_status_from_request(&request, status);
 	*flag = (request.completion_flag == MPC_LOWCOMM_MESSAGE_DONE);
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 int _mpc_cl_status_set_elements_x(mpc_lowcomm_status_t *status, mpc_lowcomm_datatype_t datatype, size_t count)
 {
-	if(status == SCTK_STATUS_NULL)
+	if(status == MPC_LOWCOMM_STATUS_NULL)
 	{
-		return SCTK_SUCCESS;
+		return MPC_LOWCOMM_SUCCESS;
 	}
 
 	size_t elem_size = 0;
 	_mpc_cl_type_size(datatype, &elem_size);
 	status->size = elem_size * count;
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 int _mpc_cl_status_set_elements(mpc_lowcomm_status_t *status, mpc_lowcomm_datatype_t datatype, int count)
@@ -3220,18 +3157,18 @@ int _mpc_cl_status_set_elements(mpc_lowcomm_status_t *status, mpc_lowcomm_dataty
 
 int _mpc_cl_status_get_count(const mpc_lowcomm_status_t *status, mpc_lowcomm_datatype_t datatype, mpc_lowcomm_msg_count_t *count)
 {
-	int           res = SCTK_SUCCESS;
+	int           res = MPC_LOWCOMM_SUCCESS;
 	unsigned long size;
 	size_t        data_size;
 
-	if(status == SCTK_STATUS_NULL)
+	if(status == MPC_LOWCOMM_STATUS_NULL)
 	{
 		MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_IN_STATUS, "Invalid status");
 	}
 
 	res = _mpc_cl_type_size(datatype, &data_size);
 
-	if(res != SCTK_SUCCESS)
+	if(res != MPC_LOWCOMM_SUCCESS)
 	{
 		return res;
 	}
@@ -3286,9 +3223,19 @@ int _mpc_cl_op_free(sctk_Op *op)
 * COMMUNICATOR MANAGEMENT *
 ***************************/
 
+int _mpc_cl_attach_per_comm(mpc_lowcomm_communicator_t comm, mpc_lowcomm_communicator_t new_comm)
+{
+	if(new_comm != MPC_COMM_NULL)
+	{
+		mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = _mpc_cl_per_mpi_process_ctx_get();
+		mpc_lowcomm_barrier(new_comm);
+		__mpc_cl_per_communicator_alloc_from_existing(task_specific, new_comm, comm);
+	}
+}
+
+
 int _mpc_cl_comm_create(mpc_lowcomm_communicator_t comm, mpc_lowcomm_group_t*group, mpc_lowcomm_communicator_t *comm_out)
 {
-	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = _mpc_cl_per_mpi_process_ctx_get();
 
 	assert(comm != MPC_COMM_NULL);
 
@@ -3297,11 +3244,7 @@ int _mpc_cl_comm_create(mpc_lowcomm_communicator_t comm, mpc_lowcomm_group_t*gro
 
 	new_comm = mpc_lowcomm_communicator_from_group(comm, group);
 
-	if(new_comm != MPC_COMM_NULL)
-	{
-		mpc_lowcomm_barrier(new_comm);
-		__mpc_cl_per_communicator_alloc_from_existing(task_specific, new_comm, comm);
-	}
+	_mpc_cl_attach_per_comm(comm, new_comm);
 
 	*comm_out = new_comm;
 
@@ -3474,15 +3417,6 @@ int mpc_mpi_cl_error_string(int code, char *str, int *len)
 int _mpc_cl_error_class(int errorcode, int *errorclass)
 {
 	*errorclass = errorcode;
-	MPC_ERROR_SUCESS();
-}
-
-int _mpc_cl_abort(__UNUSED__ mpc_lowcomm_communicator_t comm, int errorcode)
-{
-	mpc_common_debug_error("MPC_Abort with error %d", errorcode);
-	fflush(stderr);
-	fflush(stdout);
-	mpc_common_debug_abort();
 	MPC_ERROR_SUCESS();
 }
 
@@ -4060,7 +3994,7 @@ int _mpc_cl_info_dup(MPC_Info info, MPC_Info *newinfo)
 	/* First create a new entry */
 	int ret = _mpc_cl_info_create(newinfo);
 
-	if(ret != SCTK_SUCCESS)
+	if(ret != MPC_LOWCOMM_SUCCESS)
 	{
 		return ret;
 	}

@@ -53,6 +53,10 @@
 #include <sctk_ptl_offcoll.h>
 #endif
 
+#ifdef MPC_Threads
+#include <mpc_thread.h>
+#endif
+
 #include "mpc_reduction.h"
 
 #include "mpc_lowcomm_workshare.h"
@@ -415,127 +419,6 @@ static void __sctk_init_mpi_errors()
 	_mpc_cl_error_init();
 }
 
-//#define MPI_ERROR_SUCESS()    return MPI_SUCCESS
-//
-//#define mpi_check_status_error(status) do{\
-//	if( (status)->MPI_ERROR != MPI_SUCCESS )\
-//	{\
-//		return (status)->MPI_ERROR; \
-//	}\
-//	}while(0)
-//
-//#define mpi_check_status_array_error(size, statusses) \
-//	do{\
-//		int ___i;\
-//		for(___i = 0 ; ___i < size ; ___i++)\
-//		{\
-//			mpi_check_status_error(&statusses[___i]);\
-//		}\
-//	}while(0)
-//
-//#define mpi_check_type(datatype, comm)     \
-//	if(datatype == MPI_DATATYPE_NULL){ \
-//		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Bad datatype provided"); }
-//
-//#define mpi_check_type_create(datatype, comm)                                                                                                                                              \
-//	if( (datatype >= SCTK_USER_DATA_TYPES_MAX) && (_mpc_dt_is_derived(datatype) != 1) && (_mpc_dt_is_contiguous(datatype) != 1) && ( (datatype != MPI_UB) && (datatype != MPI_LB) ) ){ \
-//		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, ""); }
-
-int is_finalized   = 0;
-int is_initialized = 0;
-
-//#define mpi_check_comm(comm)                                                        \
-//	if( (is_finalized != 0) || (is_initialized != 1) ){                              \
-//		MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_OTHER, "The runtime is not initialized");                     \
-//	} \
-//	else if((comm == MPI_COMM_NULL) || (!mpc_lowcomm_communicator_exists(comm)) ) \
-//	{                                                 \
-//		MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_COMM, "Error in communicator"); \
-//	}
-//
-//#define mpi_check_status(status, comm)  \
-//	if(status == MPI_STATUS_IGNORE) \
-//		MPI_ERROR_REPORT(comm, MPI_ERR_IN_STATUS, "Error status is MPI_STATUS_IGNORE")
-//
-//#define mpi_check_buf(buf, comm)                   \
-//	if( (buf == NULL) && (buf != MPI_BOTTOM) ) \
-//		MPI_ERROR_REPORT(comm, MPI_ERR_BUFFER, "")
-//
-//
-//#define mpi_check_count(count, comm) \
-//	if(count < 0)                \
-//		MPI_ERROR_REPORT(comm, MPI_ERR_COUNT, "Error count cannot be negative")
-//
-//#define mpi_check_rank(task, max_rank, comm) \
-//	do{ \
-//		if( !mpc_lowcomm_communicator_is_intercomm(comm) ) {\
-//			if( (task != MPI_ANY_SOURCE) && (task != MPI_PROC_NULL) ) \
-//			{\
-//				if( ( (task < 0) || (task >= max_rank) )) \
-//				{ \
-//					MPI_ERROR_REPORT(comm, MPI_ERR_RANK, "Error bad rank provided"); \
-//				}\
-//			}\
-//		} \
-//	}while(0)
-//
-//#define mpi_check_rank_send(task, max_rank, comm) \
-//	do{ \
-//		if( !mpc_lowcomm_communicator_is_intercomm(comm) ) {\
-//			if(task != MPI_PROC_NULL)\
-//			{\
-//				if( (task < 0) || (task >= max_rank) ) \
-//				{ \
-//					MPI_ERROR_REPORT(comm, MPI_ERR_RANK, "Error bad rank provided"); \
-//				}\
-//			}\
-//		} \
-//	}while(0)
-//
-//#define mpi_check_root(task, max_rank, comm)                                                        \
-//	if( ( (task < 0) || (task >= max_rank) ) && (task != MPI_PROC_NULL) && (task != MPI_ROOT) ) \
-//		MPI_ERROR_REPORT(comm, MPI_ERR_ROOT, "Error bad root rank provided")
-//
-//#define mpi_check_tag(tag, comm)                                   \
-//	do { \
-//		if( tag != MPI_ANY_TAG ) \
-//		{ \
-//			if( (tag < 0) || (tag > MPI_TAG_UB_VALUE) ) \
-//			{ \
-//				MPI_ERROR_REPORT(comm, MPI_ERR_TAG, "Error bad tag provided"); \
-//			}\
-//		}\
-//	}\
-//	while(0)
-//
-//#define mpi_check_tag_send(tag, comm)  \
-//	if( (tag < 0) || (tag > MPI_TAG_UB_VALUE) ) \
-//		MPI_ERROR_REPORT(comm, MPI_ERR_TAG, "Error bad tag provided")
-//
-//#define mpi_check_op_type_func(t)             case t: return mpi_check_op_type_func_ ## t(datatype)
-//#define mpi_check_op_type_func_notavail(t)    case t: return 1
-//
-//#if 0
-//static int mpi_check_op_type_func_MPI_(MPI_Datatype datatype)
-//{
-//	switch(datatype)
-//	{
-//		default: return 0;
-//	}
-//	return 0;
-//}
-//
-//#endif
-//#define mpi_check_op_type_func_integer()          \
-//	mpi_check_op_type_func_notavail(MPC_INT); \
-//	mpi_check_op_type_func_notavail(MPC_LONG)
-//
-//#define mpi_check_op_type_func_float()               \
-//	mpi_check_op_type_func_notavail(MPC_FLOAT);  \
-//	mpi_check_op_type_func_notavail(MPC_DOUBLE); \
-//	mpi_check_op_type_func_notavail(MPC_LONG_DOUBLE)
-//
-
 static int mpi_check_op_type_func_MPI_SUM(MPI_Datatype datatype)
 {
 	switch(datatype)
@@ -879,7 +762,7 @@ inline void sctk_check_auto_free_list(MPI_request_struct_t *requests)
 		tmp = (MPI_internal_request_t *)requests->auto_free_list;
 
 		/* Test it */
-		mpc_lowcomm_test(&(tmp->req), &flag, MPI_STATUS_IGNORE);
+		mpc_lowcomm_test(&(tmp->req), &flag, MPC_LOWCOMM_STATUS_NULL);
 
 		/* If call has ended */
 		if(flag != 0)
@@ -2705,7 +2588,7 @@ int __INTERNAL__PMPI_Bcast_inter(void *buffer, int count, MPI_Datatype datatype,
 
 	if(root == MPI_PROC_NULL)
 	{
-		MPI_ERROR_SUCESS();
+		MPI_ERROR_SUCCESS();
 	}
 	else if(root == MPC_ROOT)
 	{
@@ -3468,7 +3351,7 @@ int __INTERNAL__PMPI_Gather_inter(void *sendbuf, int sendcnt,
 
 	if(MPI_PROC_NULL == root)
 	{
-		MPI_ERROR_SUCESS();
+		MPI_ERROR_SUCCESS();
 	}
 	else if(root != MPI_ROOT)
 	{
@@ -4017,7 +3900,7 @@ int __INTERNAL__PMPI_Scatter_intra(void *sendbuf, int sendcnt,
 //    }
 //  }
 //
-//  res = PMPI_Wait(&(request), MPI_STATUS_IGNORE);
+//  res = PMPI_Wait(&(request), MPC_LOWCOMM_STATUS_NULL);
 //  sctk_free(sendrequest);
 //  sctk_free(sendstatus);
 //  return res;
@@ -5479,7 +5362,7 @@ int __INTERNAL__PMPI_Alltoallv_intra(void *sendbuf, int *sendcnts, int *sdispls,
 //         return res;
 //       }
 //     }
-//     res = PMPI_Waitall(2 * ss, requests, MPI_STATUS_IGNORE);
+//     res = PMPI_Waitall(2 * ss, requests, MPC_LOWCOMM_STATUS_NULL);
 //     if(res != MPI_SUCCESS)
 //     {
 //       return res;
@@ -7989,7 +7872,7 @@ int __INTERNAL__PMPI_Reduce_inter(void *sendbuf, void *recvbuf, int count,
 
 	if(root == MPI_PROC_NULL)
 	{
-		MPI_ERROR_SUCESS();
+		MPI_ERROR_SUCCESS();
 	}
 
 	if(root == MPI_ROOT)
@@ -10528,9 +10411,9 @@ int PMPI_Testany(int count,
 
 	MPI_request_struct_t *requests;
 
-	if(status != MPI_STATUS_IGNORE)
+	if(status != MPC_LOWCOMM_STATUS_NULL)
 	{
-		status->MPI_ERROR = SCTK_SUCCESS;
+		status->MPI_ERROR = MPC_LOWCOMM_SUCCESS;
 	}
 
 	if(!array_of_requests)
@@ -10620,7 +10503,7 @@ static int __testall_for_NBC(int count, MPI_Request array_of_requests[], int *fl
 
 	requests = __sctk_internal_get_MPC_requests();
 	*flag    = 0;
-	if(array_of_statuses != MPI_STATUSES_IGNORE)
+	if(array_of_statuses != MPC_LOWCOMM_STATUS_NULL)
 	{
 		for(i = 0; i < count; i++)
 		{
@@ -10668,8 +10551,8 @@ static int __testall_for_NBC(int count, MPI_Request array_of_requests[], int *fl
 				{
 					res = mpc_lowcomm_test(
 						req, &loc_flag,
-						(array_of_statuses == MPI_STATUSES_IGNORE)
-						? MPI_STATUS_IGNORE
+						(array_of_statuses == MPC_LOWCOMM_STATUS_NULL)
+						? MPC_LOWCOMM_STATUS_NULL
 						: &(array_of_statuses[i]) );
 				}
 			}
@@ -10859,7 +10742,7 @@ int PMPI_Testall(int count, MPI_Request array_of_requests[], int *flag,
 
 	requests = __sctk_internal_get_MPC_requests();
 	*flag    = 0;
-	if(array_of_statuses != MPI_STATUSES_IGNORE)
+	if(array_of_statuses != MPC_LOWCOMM_STATUS_NULL)
 	{
 		for(i = 0; i < count; i++)
 		{
@@ -10903,8 +10786,8 @@ int PMPI_Testall(int count, MPI_Request array_of_requests[], int *flag,
 				{
 					res = mpc_lowcomm_test(
 						req, &loc_flag,
-						(array_of_statuses == MPI_STATUSES_IGNORE)
-						? MPI_STATUS_IGNORE
+						(array_of_statuses == MPC_LOWCOMM_STATUS_NULL)
+						? MPC_LOWCOMM_STATUS_NULL
 						: &(array_of_statuses[i]) );
 				}
 			}
@@ -11052,11 +10935,11 @@ int PMPI_Testsome(int incount, MPI_Request array_of_requests[], int *outcount, i
                 req_internal = __sctk_convert_mpc_request_internal(&array_of_requests[i], requests);
                 if( (req_internal != NULL) && (req_internal->is_nbc == 1) )
                 {
-                    tmp = NBC_Test(&(req_internal ->nbc_handle), &loc_flag, (array_of_statuses == MPI_STATUSES_IGNORE) ? MPI_STATUS_IGNORE : &(array_of_statuses[done]));
+                    tmp = NBC_Test(&(req_internal ->nbc_handle), &loc_flag, (array_of_statuses == MPI_STATUSES_IGNORE) ? MPC_LOWCOMM_STATUS_NULL : &(array_of_statuses[done]));
                 }
                 else
                 {
-                    tmp = mpc_lowcomm_test(req, &loc_flag, (array_of_statuses == MPI_STATUSES_IGNORE) ? MPI_STATUS_IGNORE : &(array_of_statuses[done]));
+                    tmp = mpc_lowcomm_test(req, &loc_flag, (array_of_statuses == MPI_STATUSES_IGNORE) ? MPC_LOWCOMM_STATUS_NULL : &(array_of_statuses[done]));
                 }
 			}
 			if(loc_flag)
@@ -16279,7 +16162,7 @@ int PMPI_Errhandler_create(MPI_Handler_function *function,
                            MPI_Errhandler *errhandler)
 {
 	_mpc_mpi_errhandler_register(function, errhandler);
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhandler)
@@ -16297,7 +16180,7 @@ int PMPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhandler)
 	mpi_check_comm(comm);
 	_mpc_mpi_handle_set_errhandler( (sctk_handle)comm, _MPC_MPI_HANDLE_COMM,
 	                            (_mpc_mpi_errhandler_t)errhandler);
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Errhandler_get(MPI_Comm comm, MPI_Errhandler *errhandler)
@@ -16306,7 +16189,7 @@ int PMPI_Errhandler_get(MPI_Comm comm, MPI_Errhandler *errhandler)
 	*errhandler = (MPI_Errhandler)_mpc_mpi_handle_get_errhandler( (sctk_handle)comm,
 	                                                          _MPC_MPI_HANDLE_COMM);
 
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Errhandler_free(MPI_Errhandler *errhandler)
@@ -16324,7 +16207,7 @@ int PMPI_Errhandler_free(MPI_Errhandler *errhandler)
 	TODO("Refcounting should be implemented for Error handlers");
 	// _mpc_mpi_errhandler_free((_mpc_mpi_errhandler_t)*errhandler);
 	*errhandler = MPI_ERRHANDLER_NULL;
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 
@@ -16332,7 +16215,7 @@ int PMPI_Errhandler_free(MPI_Errhandler *errhandler)
 int PMPI_File_create_errhandler(MPI_File_errhandler_function *file_errhandler_fn, MPI_Errhandler *errhandler)
 {
 	_mpc_mpi_errhandler_register(file_errhandler_fn, errhandler);
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 
@@ -16340,7 +16223,7 @@ int PMPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler)
 {
 	_mpc_mpi_handle_set_errhandler( (sctk_handle)file, _MPC_MPI_HANDLE_FILE,
 	                            (_mpc_mpi_errhandler_t)errhandler);
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 	return MPI_SUCCESS;
 }
 
@@ -16450,13 +16333,13 @@ int PMPI_Error_string(int errorcode, char *string, int *resultlen)
 
 	lngt       = strlen(string);
 	*resultlen = (int)lngt;
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Error_class(int errorcode, int *errorclass)
 {
 	*errorclass = errorcode;
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 /**********
@@ -16479,7 +16362,147 @@ double PMPI_Wtick(void)
 
 int PMPI_Query_thread(int *provided)
 {
-	return _mpc_cl_query_thread(provided);
+	TODO("USE sessions");
+	*provided = MPI_THREAD_MULTIPLE;
+	MPI_ERROR_SUCCESS();
+}
+
+static mpc_common_spinlock_t __init_lock = SCTK_SPINLOCK_INITIALIZER;
+
+int mpc_mpi_initialize(void)
+{
+	mpc_common_spinlock_lock(&__init_lock);
+
+	int flag;
+
+	PMPI_Initialized(&flag);
+
+	if(0 < flag )
+	{
+		struct mpc_mpi_cl_per_mpi_process_ctx_s *task_specific = mpc_cl_per_mpi_process_ctx_get();
+		task_specific->init_done++;
+		mpc_common_spinlock_unlock(&__init_lock);
+		MPI_ERROR_SUCCESS();
+	}
+
+	mpc_common_spinlock_unlock(&__init_lock);
+
+	/* Proceed to INIT */
+
+	sctk_init_yield_as_overloaded();
+
+
+	struct mpc_mpi_cl_per_mpi_process_ctx_s *task_specific = mpc_cl_per_mpi_process_ctx_get();
+	task_specific->mpc_mpi_data = sctk_malloc(sizeof(struct mpc_mpi_data_s) );
+	memset(task_specific->mpc_mpi_data, 0, sizeof(struct mpc_mpi_data_s) );
+	mpc_common_spinlock_init(&task_specific->mpc_mpi_data->lock, 0);
+	task_specific->mpc_mpi_data->requests = NULL;
+	task_specific->mpc_mpi_data->groups   = NULL;
+	task_specific->mpc_mpi_data->buffers  = NULL;
+	task_specific->mpc_mpi_data->ops      = NULL;
+	task_specific->init_done    = 1;
+	task_specific->thread_level = MPC_THREAD_MULTIPLE;
+
+	__sctk_init_mpc_request();
+	__buffer_init();
+	__sctk_init_mpi_errors();
+	__sctk_init_mpi_topo();
+	__sctk_init_mpi_op();
+	fortran_check_binds_resolve();
+	__sctk_init_mpc_halo();
+
+	MPI_APPNUM_VALUE       = 0;
+	MPI_LASTUSEDCODE_VALUE = MPI_ERR_LASTCODE;
+	_mpc_cl_comm_size(MPI_COMM_WORLD, &MPI_UNIVERSE_SIZE_VALUE);
+
+	if(_mpc_mpi_config()->nbc.progress_thread)
+	{
+		task_specific->mpc_mpi_data->NBC_Pthread_handles = NULL;
+		mpc_thread_mutex_init(&(task_specific->mpc_mpi_data->list_handles_lock),
+								NULL);
+		task_specific->mpc_mpi_data->nbc_initialized_per_task = 0;
+		mpc_thread_mutex_init(
+			&(task_specific->mpc_mpi_data->nbc_initializer_lock), NULL);
+	}
+
+	mpc_common_spinlock_lock(&(task_specific->per_communicator_lock) );
+
+	mpc_per_communicator_t *per_communicator;
+	mpc_per_communicator_t *per_communicator_tmp;
+
+
+	HASH_ITER(hh, task_specific->per_communicator, per_communicator, per_communicator_tmp)
+	{
+
+		per_communicator->mpc_mpi_per_communicator = sctk_malloc(sizeof(struct mpc_mpi_per_communicator_s) );
+
+		memset(per_communicator->mpc_mpi_per_communicator, 0, sizeof(struct mpc_mpi_per_communicator_s) );
+		per_communicator->mpc_mpi_per_communicator_copy = mpc_mpi_per_communicator_copy_func;
+		per_communicator->mpc_mpi_per_communicator_copy_dup = mpc_mpi_per_communicator_dup_copy_func;
+
+		mpc_common_spinlock_init(&per_communicator->mpc_mpi_per_communicator->lock, 0);
+
+		mpc_mpi_per_communicator_t * tmp = per_communicator->mpc_mpi_per_communicator;
+
+		__sctk_init_mpi_topo_per_comm(tmp);
+		tmp->max_number = 0;
+		mpc_common_spinlock_init(&tmp->topo.lock, 0);
+	}
+
+	mpc_common_spinlock_unlock(&(task_specific->per_communicator_lock) );
+
+
+	mpc_MPI_allocmem_pool_init();
+
+
+	MPI_ERROR_SUCCESS();
+}
+
+
+int mpc_mpi_release(void)
+{
+	mpc_common_spinlock_lock(&__init_lock);
+
+	struct mpc_mpi_cl_per_mpi_process_ctx_s *task_specific = mpc_cl_per_mpi_process_ctx_get();
+
+	if(task_specific->init_done < 0)
+	{
+		mpc_common_spinlock_unlock(&__init_lock);
+		/* Already freed */
+		return MPI_ERR_OTHER;
+	}
+
+	task_specific->init_done--;
+
+	if(0 < task_specific->init_done)
+	{
+		mpc_common_spinlock_unlock(&__init_lock);
+		/* Still running */
+		return MPI_SUCCESS;
+	}
+
+	task_specific->init_done = -1;
+
+	mpc_common_spinlock_unlock(&__init_lock);
+
+
+	if(task_specific->mpc_mpi_data->nbc_initialized_per_task == 1)
+	{
+		task_specific->mpc_mpi_data->nbc_initialized_per_task = -1;
+		mpc_thread_yield();
+		NBC_Finalize(&(task_specific->mpc_mpi_data->NBC_Pthread) );
+	}
+
+	mpc_MPI_allocmem_pool_release();
+
+	/* Clear attributes on COMM_SELF */
+	SCTK__MPI_Attr_clean_communicator(MPI_COMM_SELF);
+
+	fflush(stderr);
+	fflush(stdout);
+
+
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Init_thread(int *argc, char ***argv, int required, int *provided)
@@ -16511,85 +16534,14 @@ int PMPI_Init(int *argc, char ***argv)
 
 	PMPI_Initialized(&flag);
 	PMPI_Finalized(&flag_finalized);
+	
 	if( (flag != 0) || (flag_finalized != 0) )
 	{
 		MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_OTHER, "MPI_Init issue");
 	}
 	else
 	{
-		int rank;
-
-		mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
-		struct mpc_mpi_cl_per_mpi_process_ctx_s *task_specific;
-		mpc_per_communicator_t *per_communicator;
-		mpc_per_communicator_t *per_communicator_tmp;
-
-		sctk_init_yield_as_overloaded();
-
-		res = _mpc_cl_init(argc, argv);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-		is_initialized = 1;
-
-		task_specific = mpc_cl_per_mpi_process_ctx_get();
-		task_specific->mpc_mpi_data = sctk_malloc(sizeof(struct mpc_mpi_data_s) );
-		memset(task_specific->mpc_mpi_data, 0, sizeof(struct mpc_mpi_data_s) );
-		mpc_common_spinlock_init(&task_specific->mpc_mpi_data->lock, 0);
-		task_specific->mpc_mpi_data->requests = NULL;
-		task_specific->mpc_mpi_data->groups   = NULL;
-		task_specific->mpc_mpi_data->buffers  = NULL;
-		task_specific->mpc_mpi_data->ops      = NULL;
-
-		if(_mpc_mpi_config()->nbc.progress_thread)
-		{
-			task_specific->mpc_mpi_data->NBC_Pthread_handles = NULL;
-			mpc_thread_mutex_init(&(task_specific->mpc_mpi_data->list_handles_lock),
-			                      NULL);
-			task_specific->mpc_mpi_data->nbc_initialized_per_task = 0;
-			mpc_thread_mutex_init(
-				&(task_specific->mpc_mpi_data->nbc_initializer_lock), NULL);
-		}
-
-		__sctk_init_mpc_request();
-		__buffer_init();
-		__sctk_init_mpi_errors();
-		__sctk_init_mpi_topo();
-		__sctk_init_mpi_op();
-		fortran_check_binds_resolve();
-		__sctk_init_mpc_halo();
-
-		mpc_common_spinlock_lock(&(task_specific->per_communicator_lock) );
-		HASH_ITER(hh, task_specific->per_communicator, per_communicator,
-		          per_communicator_tmp)
-		{
-			mpc_mpi_per_communicator_t *tmp;
-
-			per_communicator->mpc_mpi_per_communicator =
-				sctk_malloc(sizeof(struct mpc_mpi_per_communicator_s) );
-			memset(per_communicator->mpc_mpi_per_communicator, 0,
-			       sizeof(struct mpc_mpi_per_communicator_s) );
-			per_communicator->mpc_mpi_per_communicator_copy =
-				mpc_mpi_per_communicator_copy_func;
-			per_communicator->mpc_mpi_per_communicator_copy_dup =
-				mpc_mpi_per_communicator_dup_copy_func;
-			per_communicator->mpc_mpi_per_communicator->lock = lock;
-
-			tmp = per_communicator->mpc_mpi_per_communicator;
-
-			__sctk_init_mpi_topo_per_comm(tmp);
-			tmp->max_number = 0;
-			tmp->topo.lock  = lock;
-		}
-		mpc_common_spinlock_unlock(&(task_specific->per_communicator_lock) );
-
-		mpc_MPI_allocmem_pool_init();
-
-		MPI_APPNUM_VALUE       = 0;
-		MPI_LASTUSEDCODE_VALUE = MPI_ERR_LASTCODE;
-		_mpc_cl_comm_size(MPI_COMM_WORLD, &MPI_UNIVERSE_SIZE_VALUE);
-		_mpc_cl_comm_rank(MPI_COMM_WORLD, &rank);
+		res = mpc_mpi_initialize();
 	}
 
 
@@ -16610,40 +16562,34 @@ int PMPI_Finalize(void)
 	sctk_internal_profiler_render();
 #endif
 
-	struct mpc_mpi_cl_per_mpi_process_ctx_s *task_specific;
-	task_specific = mpc_cl_per_mpi_process_ctx_get();
+	int flag;
+	
+	PMPI_Finalized(&flag);
 
-	if(task_specific->mpc_mpi_data->nbc_initialized_per_task == 1)
-	{
-		task_specific->mpc_mpi_data->nbc_initialized_per_task = -1;
-		mpc_thread_yield();
-		NBC_Finalize(&(task_specific->mpc_mpi_data->NBC_Pthread) );
-	}
-
-	mpc_MPI_allocmem_pool_release();
-
-	/* Clear attributes on COMM_SELF */
-	SCTK__MPI_Attr_clean_communicator(MPI_COMM_SELF);
-
-	if(is_finalized != 0)
+	if(flag != 0)
 	{
 		MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_OTHER, "MPI_Finalize issue");
 	}
-	res          = _mpc_cl_finalize();
-	is_finalized = 1;
+
+	res = mpc_mpi_release();
 
 	MPI_HANDLE_RETURN_VAL(res, MPI_COMM_WORLD);
 }
 
 int PMPI_Finalized(int *flag)
 {
-	*flag = is_finalized;
-	MPI_ERROR_SUCESS();
+	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = mpc_cl_per_mpi_process_ctx_get();
+	assume(task_specific != NULL);
+	*flag = (task_specific->init_done < 0);
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Initialized(int *flag)
 {
-	return _mpc_cl_initialized(flag);
+	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = mpc_cl_per_mpi_process_ctx_get();
+	assume(task_specific != NULL);
+	*flag = task_specific->init_done;
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Abort(MPI_Comm comm, int errorcode)
@@ -18005,7 +17951,7 @@ int PMPI_Lookup_name(__UNUSED__ const char *service_name,
 									  port_name,
 									  MPI_MAX_PORT_NAME);
 
-	if(ret != SCTK_SUCCESS)
+	if(ret != MPC_LOWCOMM_SUCCESS)
 	{
 		ret = MPI_ERR_INTERN;
 	}
@@ -18022,7 +17968,7 @@ int PMPI_Publish_name(const char *service_name,  MPI_Info info, const char *port
 {
 	int ret = mpc_lowcomm_publish_name(service_name, port_name);
 
-	if(ret != SCTK_SUCCESS)
+	if(ret != MPC_LOWCOMM_SUCCESS)
 	{
 		ret = MPI_ERR_INTERN;
 	}
@@ -18040,7 +17986,7 @@ int PMPI_Unpublish_name(const char *service_name,
 {
 	int ret = mpc_lowcomm_unpublish_name(service_name, port_name);
 
-	if(ret != SCTK_SUCCESS)
+	if(ret != MPC_LOWCOMM_SUCCESS)
 	{
 		ret = MPI_ERR_INTERN;
 	}
@@ -18170,12 +18116,6 @@ int PMPI_Comm_get_info(__UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Info *info_used)
 {
 	not_implemented(); return MPI_ERR_INTERN;
 }
-
-int PMPI_Comm_create_group(__UNUSED__ MPI_Comm comm, __UNUSED__ MPI_Group group, __UNUSED__ int tag, __UNUSED__ MPI_Comm *newcomm)
-{
-	not_implemented(); return MPI_ERR_INTERN;
-}
-
 
 int PMPI_Comm_disconnect(__UNUSED__ MPI_Comm *comm)
 {

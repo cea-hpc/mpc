@@ -593,7 +593,7 @@ void mpc_lowcomm_rdma_window_RDMA_emulated_write_ctrl_msg_handler(
 		win->comm_rank, remote_rank,
 		&dummy, sizeof(int), TAG_RDMA_WRITE_ACK, win->communicator,
 		MPC_LOWCOMM_RDMA_WINDOW_MESSAGES, &req[1]);
-	mpc_lowcomm_waitall(2, req, SCTK_STATUS_NULL);
+	mpc_lowcomm_waitall(2, req, MPC_LOWCOMM_STATUS_NULL);
 
 	OPA_incr_int(&win->incoming_emulated_rma[erma->source_rank]);
 

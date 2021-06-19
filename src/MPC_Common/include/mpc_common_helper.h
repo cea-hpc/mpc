@@ -123,6 +123,29 @@ static inline uint64_t mpc_common_hash( uint64_t val )
 	h ^= h >> 33;
 	return h;
 }
+
+static inline uint64_t mpc_common_hash_string(const char * string)
+{
+	uint64_t ret = 1337;
+
+	if(!string)
+	{
+		return ret;
+	}
+
+	const char * cur = string;
+	int cnt = 0;
+
+	while(*cur != '\0')
+	{
+		ret ^= (*cur << ((cnt << 4)%32));
+		cur++;
+		cnt++;
+	}
+
+	return ret;
+}
+
 /****************************
  * ROUND TO NEXT POWER OF 2 *
  ****************************/
@@ -296,7 +319,7 @@ void mpc_common_freeaddrinfo(struct addrinfo *res);
 
 /**
  * @brief We want to save the DNS so provide a function to do the local resolution
- * 
+ *
  * @param ip the output buffer where the ip is set
  * @param iplen the lenght of the output buffer (should be enough for ipv6)
  * @param preffered_device the device to look at first same rule as @mpc_common_getaddrinfo

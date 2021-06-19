@@ -22,6 +22,14 @@
 #include "mpc_mpi.h"
 #include "mpc_mpi_internal.h"
 
+#include <mpc_config.h>
+
+#include <mpc_common_helper.h>
+
+#ifdef MPC_Threads
+#include <mpc_thread.h>
+#endif
+
 /******************
 * WEAK FUNCTIONS *
 ******************/
@@ -40,6 +48,59 @@
 #pragma weak MPI_Group_free = PMPI_Group_free
 #pragma weak MPI_Comm_group = PMPI_Comm_group
 #pragma weak MPI_Comm_remote_group = PMPI_Comm_remote_group
+#pragma weak MPI_Comm_create_group = PMPI_Comm_create_group
+#pragma weak MPI_Comm_create_from_group = PMPI_Comm_create_from_group
+
+/*****************************************
+* GROUP-BASED COMMUNICATOR CONSTRUCTORS *
+*****************************************/
+
+int PMPI_Comm_create_group(MPI_Comm comm, MPI_Group group, int tag, MPI_Comm *newcomm)
+{
+	if(mpc_lowcomm_communicator_is_intercomm(comm) )
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "PMPI_Comm_create_group not possible on intercoms");
+	}
+
+	*newcomm = MPC_COMM_NULL;
+
+	if(mpc_lowcomm_communicator_create_group(comm, group, tag, newcomm) != MPC_LOWCOMM_SUCCESS)
+	{
+		MPI_ERROR_REPORT(comm, MPI_ERR_OTHER, "PMPI_Comm_create_group failed");
+	}
+
+	_mpc_cl_attach_per_comm(comm, *newcomm);
+
+	MPI_ERROR_SUCCESS();
+}
+
+int PMPI_Comm_create_from_group(MPI_Group group, const char *stringtag, MPI_Info info, MPI_Errhandler errhandler, MPI_Comm *newcomm)
+{
+	if(group == MPI_GROUP_NULL)
+	{
+		MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_GROUP, "");
+	}
+
+	if(group == MPI_GROUP_EMPTY)
+	{
+		*newcomm = MPI_COMM_NULL;
+		return MPI_SUCCESS;
+	}
+
+	uint64_t hash  = mpc_common_hash_string(stringtag);
+	int      ihash = (int)hash & 0xFFFFFF;
+
+	int res = PMPI_Comm_create_group(MPI_COMM_WORLD, group, ihash, newcomm);
+	MPI_HANDLE_ERROR(res, MPI_COMM_SELF, "Failed creating the comm group");
+
+	if( (errhandler != MPI_ERRHANDLER_NULL) && (*newcomm != MPI_COMM_NULL) )
+	{
+		res = PMPI_Comm_set_errhandler(*newcomm, errhandler);
+		MPI_HANDLE_ERROR(res, *newcomm, "Failed attaching the comm errhandler");
+	}
+
+	MPI_ERROR_SUCCESS();
+}
 
 /************************
 * GROUP IMPLEMENTATION *
@@ -61,7 +122,7 @@ int PMPI_Comm_remote_group(MPI_Comm comm, MPI_Group *mpi_group)
 
 	*mpi_group = mpc_lowcomm_communicator_group(remote);
 
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Comm_group(MPI_Comm comm, MPI_Group *mpi_group)
@@ -71,21 +132,9 @@ int PMPI_Comm_group(MPI_Comm comm, MPI_Group *mpi_group)
 	mpc_common_nodebug("Enter Comm_group");
 	mpi_check_comm(comm);
 
-	mpc_lowcomm_communicator_t local = MPC_COMM_NULL;
+	*mpi_group = mpc_lowcomm_communicator_group(comm);
 
-	if(mpc_lowcomm_communicator_is_intercomm(comm) )
-	{
-		/* We assume comm_group means local for intercomm */
-		local = mpc_lowcomm_communicator_get_local(comm);
-	}
-	else
-	{
-		local = comm;
-	}
-
-	*mpi_group = mpc_lowcomm_communicator_group(local);
-
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Group_free(MPI_Group *group)
@@ -102,14 +151,14 @@ int PMPI_Group_free(MPI_Group *group)
 
 	int ret = mpc_lowcomm_group_free(group);
 
-	if(ret != SCTK_SUCCESS)
+	if(ret != MPC_LOWCOMM_SUCCESS)
 	{
 		MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_GROUP, "Could not free group");
 	}
 
 	*group = MPI_GROUP_NULL;
 
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result)
@@ -123,7 +172,7 @@ int PMPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result)
 
 	*result = res;
 
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Group_translate_ranks(MPI_Group group1, int n, const int ranks1[], MPI_Group group2, int ranks2[])
@@ -150,12 +199,12 @@ int PMPI_Group_translate_ranks(MPI_Group group1, int n, const int ranks1[], MPI_
 
 	int ret = mpc_lowcomm_group_translate_ranks(group1, n, ranks1, group2, ranks2);
 
-	if(ret != SCTK_SUCCESS)
+	if(ret != MPC_LOWCOMM_SUCCESS)
 	{
 		MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_GROUP, "Could not tranlate ranks");
 	}
 
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 static inline int __check_ranks_arrays(MPI_Group group, int n, const int ranks[])
@@ -191,7 +240,7 @@ static inline int __check_ranks_arrays(MPI_Group group, int n, const int ranks[]
 		}
 	}
 
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Group_excl(MPI_Group group, int n, const int ranks[], MPI_Group *newgroup)
@@ -224,7 +273,7 @@ int PMPI_Group_excl(MPI_Group group, int n, const int ranks[], MPI_Group *newgro
 		MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_GROUP, "Could not exclude ranks");
 	}
 
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Group_incl(MPI_Group group, int n, const int ranks[], MPI_Group *newgroup)
@@ -257,7 +306,7 @@ int PMPI_Group_incl(MPI_Group group, int n, const int ranks[], MPI_Group *newgro
 		MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_GROUP, "Could not include ranks");
 	}
 
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Group_rank(MPI_Group group, int *rank)
@@ -274,7 +323,7 @@ int PMPI_Group_rank(MPI_Group group, int *rank)
 		*rank = MPI_UNDEFINED;
 	}
 
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Group_size(MPI_Group group, int *size)
@@ -285,7 +334,7 @@ int PMPI_Group_size(MPI_Group group, int *size)
 	}
 
 	*size = mpc_lowcomm_group_size(group);
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Group_difference(MPI_Group group1, MPI_Group group2, MPI_Group *newgroup)
@@ -302,7 +351,7 @@ int PMPI_Group_difference(MPI_Group group1, MPI_Group group2, MPI_Group *newgrou
 		MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_GROUP, "Could not substract ranks");
 	}
 
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Group_intersection(MPI_Group group1, MPI_Group group2, MPI_Group *newgroup)
@@ -319,7 +368,7 @@ int PMPI_Group_intersection(MPI_Group group1, MPI_Group group2, MPI_Group *newgr
 		MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_GROUP, "Could not instersect ranks");
 	}
 
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *newgroup)
@@ -336,7 +385,7 @@ int PMPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *newgroup)
 		MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_GROUP, "Could not instersect ranks");
 	}
 
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 int __check_ranges(MPI_Group group, int n, int ranges[][3])
@@ -385,7 +434,7 @@ int __check_ranges(MPI_Group group, int n, int ranges[][3])
 		}
 	}
 
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 int *__linearize_ranges(int n, int ranges[][3], int *new_size)

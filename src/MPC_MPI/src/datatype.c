@@ -192,7 +192,7 @@ static inline int __mpc_dt_keyval_delete( unsigned int type_keyval )
 
 	key->free_cell = 1;
 
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 /** \brief This function create a new keyval
@@ -334,7 +334,7 @@ int _mpc_dt_keyval_create( MPC_Type_copy_attr_function *copy,
 	new->delete = delete;
 	new->extra_state = extra_state;
 
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 /** \brief Delete a keyval
@@ -351,7 +351,7 @@ int _mpc_dt_keyval_free( int *type_keyval )
 	int ret = __mpc_dt_keyval_delete( *type_keyval );
 
 	/* Clear key handler */
-	if ( ret == SCTK_SUCCESS )
+	if ( ret == MPC_LOWCOMM_SUCCESS )
 		*type_keyval = MPC_KEYVAL_INVALID;
 
 	return ret;
@@ -1025,7 +1025,7 @@ int _mpc_dt_derived_optimize( _mpc_dt_derived_t *target_type )
 
 	/* Do we have at least two blocks */
 	if ( count <= 1 )
-		return SCTK_SUCCESS;
+		return MPC_LOWCOMM_SUCCESS;
 
 	/* Extract the layout in cells */
 	struct __mpc_derived_type_desc *cells = sctk_malloc( sizeof( struct __mpc_derived_type_desc ) * count );
@@ -1100,7 +1100,7 @@ int _mpc_dt_derived_optimize( _mpc_dt_derived_t *target_type )
 
 	sctk_free( cells );
 
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 void _mpc_dt_derived_display( _mpc_dt_derived_t *target_type )
@@ -1308,7 +1308,7 @@ int _mpc_dt_attr_set( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
 		mpc_common_hashtable_set( &store->attrs, type_keyval, new );
 	}
 
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 int _mpc_dt_attr_get( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
@@ -1336,7 +1336,7 @@ int _mpc_dt_attr_get( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
 		*flag = 0;
 	}
 
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 int _mpc_dt_attr_delete( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
@@ -1358,7 +1358,7 @@ int _mpc_dt_attr_delete( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type
 
 	sctk_free( pret );
 
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 /************************************************************************/
@@ -2050,7 +2050,7 @@ static inline int _mpc_dt_layout_fill( struct _mpc_dt_layout *l, mpc_lowcomm_dat
 	_mpc_cl_type_size( datatype, &size );
 	l->size = (size_t) size;
 
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 struct _mpc_dt_layout *_mpc_dt_get_layout( struct _mpc_dt_footprint *ctx, size_t *ly_count )

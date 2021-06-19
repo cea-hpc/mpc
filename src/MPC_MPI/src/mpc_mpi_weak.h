@@ -249,7 +249,6 @@
 #pragma weak MPI_Comm_set_info = PMPI_Comm_set_info
 #pragma weak MPI_Comm_get_info = PMPI_Comm_get_info
 #pragma weak MPI_Comm_idup = PMPI_Comm_idup
-#pragma weak MPI_Comm_create_group = PMPI_Comm_create_group
 #pragma weak MPI_Comm_get_errhandler = PMPI_Comm_get_errhandler
 #pragma weak MPI_Comm_call_errhandler = PMPI_Comm_call_errhandler
 #pragma weak MPI_Comm_set_errhandler = PMPI_Comm_set_errhandler

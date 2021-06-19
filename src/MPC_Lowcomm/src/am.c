@@ -475,5 +475,5 @@ int mpc_lowcomm_am(mpc_lowcomm_am_ctx_t ctx,
 	                dest,
 	                &req);
 	
-	return mpc_lowcomm_wait(&req, SCTK_STATUS_NULL);
+	return mpc_lowcomm_wait(&req, MPC_LOWCOMM_STATUS_NULL);
 }

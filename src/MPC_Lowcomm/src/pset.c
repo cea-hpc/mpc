@@ -67,7 +67,7 @@ int __free_entry(struct _mpc_lowcomm_pset_list_entry * entry)
     mpc_lowcomm_group_free(&entry->pset.group);
     sctk_free(entry);
 
-    return SCTK_SUCCESS;
+    return MPC_LOWCOMM_SUCCESS;
 }
 
 
@@ -135,7 +135,7 @@ int _mpc_lowcomm_pset_push(char *name, mpc_lowcomm_group_t * group, int is_comm_
     {
         mpc_common_spinlock_unlock(&__pset_list.lock);
         mpc_common_debug_error("Pset %s is already registered", name);
-        return SCTK_ERROR;
+        return MPC_LOWCOMM_ERROR;
     }
 
     struct _mpc_lowcomm_pset_list_entry * new = __new_entry(name,  group, is_comm_self);
@@ -146,7 +146,7 @@ int _mpc_lowcomm_pset_push(char *name, mpc_lowcomm_group_t * group, int is_comm_
 
     mpc_common_spinlock_unlock(&__pset_list.lock);
 
-    return SCTK_SUCCESS;
+    return MPC_LOWCOMM_SUCCESS;
 }
 
 int mpc_lowcomm_group_pset_count(void)
@@ -188,13 +188,13 @@ int mpc_lowcomm_group_pset_free(mpc_lowcomm_process_set_t *pset)
 {
     if(!pset)
     {
-        return SCTK_SUCCESS;
+        return MPC_LOWCOMM_SUCCESS;
     }
 
     mpc_lowcomm_group_free(&pset->group);
     sctk_free(pset);
 
-    return SCTK_SUCCESS;
+    return MPC_LOWCOMM_SUCCESS;
 }
 
 

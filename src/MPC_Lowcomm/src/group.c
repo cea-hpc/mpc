@@ -94,7 +94,7 @@ int *mpc_lowcomm_group_world_ranks(mpc_lowcomm_group_t *g)
 
 	assume(ret != NULL);
 
-	int i;
+	unsigned int i;
 
 	for(i = 0; i < g->size; i++)
 	{
@@ -131,7 +131,7 @@ static inline void __fill_process_info_remote(mpc_lowcomm_group_t *g)
 
 	assume(all_proc_uids != NULL);
 
-	int i;
+	unsigned int i;
 
 	for(i = 0; i < g->size; i++)
 	{
@@ -343,7 +343,7 @@ int _mpc_lowcomm_group_rank_descriptor_equal(_mpc_lowcomm_group_rank_descriptor_
 
 int _mpc_lowcomm_group_rank_descriptor_all_from_local_set(unsigned int size, _mpc_lowcomm_group_rank_descriptor_t *ranks)
 {
-	int i;
+	unsigned int i;
 
 	mpc_lowcomm_set_uid_t my_id = mpc_lowcomm_monitor_get_gid();
 
@@ -365,27 +365,27 @@ int _mpc_lowcomm_group_rank_descriptor_set_in_grp(_mpc_lowcomm_group_rank_descri
 {
 	if(!rd)
 	{
-		return SCTK_ERROR;
+		return MPC_LOWCOMM_ERROR;
 	}
 
 	rd->comm_world_rank  = cw_rank;
 	rd->host_process_uid = mpc_lowcomm_monitor_uid_of(set, ___process_rank_from_world_rank(cw_rank) );
 
 
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 int _mpc_lowcomm_group_rank_descriptor_set_uid(_mpc_lowcomm_group_rank_descriptor_t *rd, mpc_lowcomm_peer_uid_t uid)
 {
 	if(!rd)
 	{
-		return SCTK_ERROR;
+		return MPC_LOWCOMM_ERROR;
 	}
 
 	rd->comm_world_rank  = mpc_lowcomm_peer_get_rank(uid);
 	rd->host_process_uid = uid;
 
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 int _mpc_lowcomm_group_rank_descriptor_set(_mpc_lowcomm_group_rank_descriptor_t *rd, int cw_rank)
@@ -622,9 +622,11 @@ int mpc_lowcomm_group_translate_ranks(mpc_lowcomm_group_t *g1, int n, const int 
 			continue;
 		}
 
+		//mpc_common_debug_error("%d / %d", ranks1[i], g1->size);
+
 		if(g1->size <= (unsigned int)ranks1[i])
 		{
-			return SCTK_ERROR;
+			return MPC_LOWCOMM_ERROR;
 		}
 
 		_mpc_lowcomm_group_rank_descriptor_t *rd = &g1->ranks[ranks1[i]];
@@ -642,17 +644,17 @@ int mpc_lowcomm_group_translate_ranks(mpc_lowcomm_group_t *g1, int n, const int 
 	}
 
 
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 static inline int __rank_array_invalid(mpc_lowcomm_group_t *grp, const int ranks[], int n)
 {
-	unsigned int i;
+	int i;
 
 	/* Check size memberhship */
 	for(i = 0; i < n; i++)
 	{
-		if(grp->size < ranks[i] || (ranks[i] < 0) )
+		if((int)grp->size < ranks[i] || (ranks[i] < 0) )
 		{
 			mpc_common_debug_error("%d is not part of group of size %d", ranks[i], grp->size);
 			return 1;
@@ -758,7 +760,7 @@ mpc_lowcomm_group_t *mpc_lowcomm_group_incl(mpc_lowcomm_group_t *grp, int n, con
 
 	assume(descs != NULL);
 
-	for(i = 0; i < n; i++)
+	for(i = 0; i < (unsigned int)n; i++)
 	{
 		memcpy(&descs[i], mpc_lowcomm_group_descriptor(grp, ranks[i]), sizeof(_mpc_lowcomm_group_rank_descriptor_t) );
 	}
@@ -987,7 +989,7 @@ mpc_lowcomm_group_t *mpc_lowcomm_group_create(unsigned int size, int *comm_world
 
 	for(i = 0; i < size; i++)
 	{
-		if(_mpc_lowcomm_group_rank_descriptor_set(&cw_desc[i], comm_world_ranks[i]) != SCTK_SUCCESS)
+		if(_mpc_lowcomm_group_rank_descriptor_set(&cw_desc[i], comm_world_ranks[i]) != MPC_LOWCOMM_SUCCESS)
 		{
 			mpc_common_debug_fatal("An error occured when creating descriptor for RANK %d in COMM_WORLD", i);
 		}
@@ -1202,7 +1204,7 @@ void _mpc_lowcomm_group_create_world(void)
 
 	for(i = 0; i < size; i++)
 	{
-		if(_mpc_lowcomm_group_rank_descriptor_set(&cw_desc[i], i) != SCTK_SUCCESS)
+		if(_mpc_lowcomm_group_rank_descriptor_set(&cw_desc[i], i) != MPC_LOWCOMM_SUCCESS)
 		{
 			mpc_common_debug_fatal("An error occured when creating descriptor for RANK %d in COMM_WORLD", i);
 		}
@@ -1271,7 +1273,7 @@ mpc_lowcomm_group_t *_mpc_lowcomm_group_create_from_world_ranks(int size, int *w
 
 	for(i = 0; i < size; i++)
 	{
-		if(_mpc_lowcomm_group_rank_descriptor_set(&desc[i], world_ranks[i]) != SCTK_SUCCESS)
+		if(_mpc_lowcomm_group_rank_descriptor_set(&desc[i], world_ranks[i]) != MPC_LOWCOMM_SUCCESS)
 		{
 			mpc_common_debug_fatal("An error occured when creating descriptor for RANK %d", i);
 		}

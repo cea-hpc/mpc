@@ -159,7 +159,7 @@ int mpc_lowcomm_group_rank_for(mpc_lowcomm_group_t *g, int rank, mpc_lowcomm_pee
  * @param ranks1 the input rank list to be translated from g1 to g2
  * @param g2 the second group
  * @param ranks2 the output rank list
- * @return int SCTK_SUCCESS when all ok
+ * @return int MPC_LOWCOMM_SUCCESS when all ok
  */
 int mpc_lowcomm_group_translate_ranks(mpc_lowcomm_group_t *g1,
                                       int n,
@@ -311,7 +311,7 @@ mpc_lowcomm_process_set_t *mpc_lowcomm_group_pset_get_by_name(const char *name);
  * @brief Free a retrieved process set
  *
  * @param pset the pset to free
- * @return int SCTK_SUCCESS if all ok
+ * @return int MPC_LOWCOMM_SUCCESS if all ok
  */
 int mpc_lowcomm_group_pset_free(mpc_lowcomm_process_set_t *pset);
 

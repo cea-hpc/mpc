@@ -62,7 +62,7 @@ int PMPI_Session_create_errhandler(MPI_Session_errhandler_function *session_errh
 
 	assume(*errhandler != MPI_ERRHANDLER_NULL);
 
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Session_set_errhandler(MPI_Session session, MPI_Errhandler errhandler)
@@ -74,7 +74,7 @@ int PMPI_Session_set_errhandler(MPI_Session session, MPI_Errhandler errhandler)
 
 	session->errh = errhandler;
 
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Session_get_errhandler(MPI_Session session, MPI_Errhandler *errhandler)
@@ -86,7 +86,7 @@ int PMPI_Session_get_errhandler(MPI_Session session, MPI_Errhandler *errhandler)
 
 	*errhandler = session->errh;
 
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Session_call_errhandler(MPI_Session session, int error_code)
@@ -110,7 +110,7 @@ int PMPI_Session_call_errhandler(MPI_Session session, int error_code)
 
 	( (MPI_Session_errhandler_function)errh)(&session, &error_code);
 
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 /*********************
@@ -149,7 +149,7 @@ int PMPI_Session_init(MPI_Info info, MPI_Errhandler errhandler, MPI_Session *ses
 	MPI_HANDLE_ERROR(res, MPI_COMM_SELF, "Could not create session info object");
 
 	/* Now as MPC is always thread multiple set the thread_support level accordingly */
-	PMPI_Info_set( (*session)->infos, "mpi_thread_support_level", "MPI_THREAD_MULTIPLE");
+	res = PMPI_Info_set( (*session)->infos, "mpi_thread_support_level", "MPI_THREAD_MULTIPLE");
 
 	if(res != MPI_SUCCESS)
 	{
@@ -157,6 +157,9 @@ int PMPI_Session_init(MPI_Info info, MPI_Errhandler errhandler, MPI_Session *ses
 		PMPI_Session_call_errhandler(*session, res);
 		return res;
 	}
+
+	/* Initialized the runtime (if needed) */
+	mpc_mpi_initialize();
 
 	return res;
 }
@@ -173,8 +176,15 @@ int PMPI_Session_finalize(MPI_Session *session)
 
 	*session = MPI_SESSION_NULL;
 
-	MPI_ERROR_SUCESS();
+	/* Release the runtime (if needed) */
+	mpc_mpi_release();
+
+	MPI_ERROR_SUCCESS();
 }
+
+/*****************
+ * SESSION QUERY *
+ *****************/
 
 int PMPI_Session_get_info(MPI_Session session, MPI_Info *info_used)
 {
@@ -184,7 +194,7 @@ int PMPI_Session_get_info(MPI_Session session, MPI_Info *info_used)
 int PMPI_Session_get_num_psets(MPI_Session session, MPI_Info info, int *npset_names)
 {
 	*npset_names = mpc_lowcomm_group_pset_count();
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Session_get_nth_pset(MPI_Session session, MPI_Info info, int n, int *pset_len, char *pset_name)
@@ -205,7 +215,7 @@ int PMPI_Session_get_nth_pset(MPI_Session session, MPI_Info info, int n, int *ps
 
 	mpc_lowcomm_group_pset_free(pset);
 
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Session_get_pset_info(MPI_Session session, const char *pset_name, MPI_Info *info)
@@ -233,7 +243,7 @@ int PMPI_Session_get_pset_info(MPI_Session session, const char *pset_name, MPI_I
 
 	mpc_lowcomm_group_pset_free(pset);
 
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }
 
 int PMPI_Group_from_session_pset(MPI_Session session, const char *pset_name, MPI_Group *newgroup)
@@ -250,5 +260,5 @@ int PMPI_Group_from_session_pset(MPI_Session session, const char *pset_name, MPI
 
 	mpc_lowcomm_group_pset_free(pset);
 
-	MPI_ERROR_SUCESS();
+	MPI_ERROR_SUCCESS();
 }

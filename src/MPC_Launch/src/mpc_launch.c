@@ -680,7 +680,7 @@ static void __topology_init()
 
 void mpc_launch_init_runtime()
 {
-	static int __init_already_done = 0;
+	static volatile int __init_already_done = 0;
 
 	if(__init_already_done)
 	{

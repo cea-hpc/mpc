@@ -52,8 +52,8 @@ typedef struct
 	mpc_lowcomm_msg_count_t size;	/**< Size of the message */
 } mpc_lowcomm_status_t;
 
-#define SCTK_STATUS_NULL NULL
-#define SCTK_STATUS_INIT {MPC_ANY_SOURCE,MPC_ANY_TAG,SCTK_SUCCESS,0,0}
+#define MPC_LOWCOMM_STATUS_NULL NULL
+#define MPC_LOWCOMM_STATUS_INIT {MPC_ANY_SOURCE,MPC_ANY_TAG,MPC_LOWCOMM_SUCCESS,0,0}
 
 
 /** Generalized requests functions **/
@@ -216,8 +216,8 @@ typedef enum sctk_ft_state_e
 /** PROC_NULL **/
 #define MPC_PROC_NULL -2
 /** SUCCESS and ERROR **/
-#define SCTK_SUCCESS 0
-#define SCTK_ERROR 1
+#define MPC_LOWCOMM_SUCCESS 0
+#define MPC_LOWCOMM_ERROR 1
 
 /** Wildcards **/
 #define MPC_ANY_TAG -1

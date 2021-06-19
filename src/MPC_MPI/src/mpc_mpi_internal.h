@@ -51,6 +51,32 @@ TODO("Expose this header cleanly");
 //#define MPC_MPI_USE_REQUEST_CACHE
 //#define MPC_MPI_USE_LOCAL_REQUESTS_QUEUE
 
+/********************
+ * INIT AND RELEASE *
+ ********************/
+
+int mpc_mpi_initialize(void);
+int mpc_mpi_release(void);
+
+/***********
+ * FORTRAN *
+ ***********/
+
+char * sctk_char_fortran_to_c (char *buf, int size, char ** free_ptr);
+void sctk_char_c_to_fortran (char *buf, int size);
+
+#if defined(SCTK_USE_CHAR_MIXED)
+#define SCTK_CHAR_END(size)
+#define SCTK_CHAR_MIXED(size)  ,long int size
+#else
+#define SCTK_CHAR_END(size) ,long int size
+#define SCTK_CHAR_MIXED(size)
+#endif
+
+
+/*******************
+ * ERROR REPORTING *
+ *******************/
 
 /*
  * TODO: RULE FROM THE MPI STANDARD
@@ -64,17 +90,6 @@ int _mpc_mpi_report_error(mpc_lowcomm_communicator_t comm, int error, char *mess
 #define MPI_HANDLE_RETURN_VAL(res, comm)            do { if(res == MPI_SUCCESS){ return res; } else { MPI_ERROR_REPORT(comm, res, "Generic error return"); } } while(0)
 #define MPI_HANDLE_ERROR(res, comm, desc_string)    do { if(res != MPI_SUCCESS){ MPI_ERROR_REPORT(comm, res, desc_string); } } while(0)
 
-
-char * sctk_char_fortran_to_c (char *buf, int size, char ** free_ptr);
-void sctk_char_c_to_fortran (char *buf, int size);
-
-#if defined(SCTK_USE_CHAR_MIXED)
-#define SCTK_CHAR_END(size)
-#define SCTK_CHAR_MIXED(size)  ,long int size
-#else
-#define SCTK_CHAR_END(size) ,long int size
-#define SCTK_CHAR_MIXED(size)
-#endif
 
 
 struct sctk_list_elem {
@@ -227,8 +242,6 @@ typedef struct MPI_internal_request_s
 	NBC_Handle nbc_handle;
 
 } MPI_internal_request_t;
-
-
 
 /** \brief MPI_Request managment structure 
  * 
@@ -435,7 +448,6 @@ int NBC_Finalize(mpc_thread_t *NBC_thread);
 /* All these functions do not check for negative
    tags to allow internal use */
 
-
 int PMPI_Send_internal(const void *buf, int count, MPI_Datatype datatype, int dest, int tag,
               MPI_Comm comm);
 
@@ -455,10 +467,7 @@ int PMPI_Irecv_internal(void *buf, int count, MPI_Datatype datatype, int source,
 
 /* error handling */
 
-extern int is_finalized;
-extern int is_initialized;
-
-#define MPI_ERROR_SUCESS()    return MPI_SUCCESS
+#define MPI_ERROR_SUCCESS()    return MPI_SUCCESS
 
 #define mpi_check_status_error(status) do{\
 	if( (status)->MPI_ERROR != MPI_SUCCESS )\
@@ -486,8 +495,14 @@ extern int is_initialized;
 
 
 #define mpi_check_comm(comm)                                                        \
-	if( (is_finalized != 0) || (is_initialized != 1) ){                              \
-		MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_OTHER, "The runtime is not initialized");                     \
+	if( comm == MPI_COMM_WORLD ){                              \
+		int ____is_init = 0; \
+		int ____is_fini = 0; \
+		PMPI_Initialized(&____is_init);     \
+		PMPI_Finalized(&____is_fini);        \
+		if(!____is_init || ____is_fini) { \
+			MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_OTHER, "The runtime is not initialized");                     \
+		}\
 	} \
 	else if((comm == MPI_COMM_NULL) || (!mpc_lowcomm_communicator_exists(comm)) ) \
 	{                                                 \

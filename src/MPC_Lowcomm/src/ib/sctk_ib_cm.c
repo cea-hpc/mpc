@@ -327,7 +327,7 @@ void sctk_ib_cm_connect_to(int from, int to, sctk_rail_info_t *rail)
 	                             MPC_COMM_WORLD,
 	                             MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL,
 	                             &req);
-	mpc_lowcomm_wait(&req, SCTK_STATUS_NULL);
+	mpc_lowcomm_wait(&req, MPC_LOWCOMM_STATUS_NULL);
 
 	sctk_ib_qp_allocate_rtr(rail_ib, remote, &recv_keys);
 
@@ -343,7 +343,7 @@ void sctk_ib_cm_connect_to(int from, int to, sctk_rail_info_t *rail)
 	                            MPC_COMM_WORLD,
 	                            MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL,
 	                            &req);
-	mpc_lowcomm_wait(&req, SCTK_STATUS_NULL);
+	mpc_lowcomm_wait(&req, MPC_LOWCOMM_STATUS_NULL);
 
 	mpc_lowcomm_irecv_class_dest(from,
 	                             to,
@@ -353,7 +353,7 @@ void sctk_ib_cm_connect_to(int from, int to, sctk_rail_info_t *rail)
 	                             MPC_COMM_WORLD,
 	                             MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL,
 	                             &req);
-	mpc_lowcomm_wait(&req, SCTK_STATUS_NULL);
+	mpc_lowcomm_wait(&req, MPC_LOWCOMM_STATUS_NULL);
 
 	sctk_ib_qp_allocate_rts(rail_ib, remote);
 	/* Add route */
@@ -401,7 +401,7 @@ void sctk_ib_cm_connect_from(int from, int to, sctk_rail_info_t *rail)
 	                            MPC_COMM_WORLD,
 	                            MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL,
 	                            &req);
-	mpc_lowcomm_wait(&req, SCTK_STATUS_NULL);
+	mpc_lowcomm_wait(&req, MPC_LOWCOMM_STATUS_NULL);
 
 	mpc_lowcomm_irecv_class_dest(to,
 	                             from,
@@ -411,7 +411,7 @@ void sctk_ib_cm_connect_from(int from, int to, sctk_rail_info_t *rail)
 	                             MPC_COMM_WORLD,
 	                             MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL,
 	                             &req);
-	mpc_lowcomm_wait(&req, SCTK_STATUS_NULL);
+	mpc_lowcomm_wait(&req, MPC_LOWCOMM_STATUS_NULL);
 
 	sctk_ib_qp_allocate_rtr(rail_ib, remote, &recv_keys);
 	sctk_ib_qp_allocate_rts(rail_ib, remote);
@@ -425,7 +425,7 @@ void sctk_ib_cm_connect_from(int from, int to, sctk_rail_info_t *rail)
 	                            MPC_COMM_WORLD,
 	                            MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL,
 	                            &req);
-	mpc_lowcomm_wait(&req, SCTK_STATUS_NULL);
+	mpc_lowcomm_wait(&req, MPC_LOWCOMM_STATUS_NULL);
 
 	/* Add route */
 	sctk_rail_add_static_route(rail, endpoint);

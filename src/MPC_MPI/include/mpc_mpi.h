@@ -78,8 +78,8 @@ extern "C"
 #define MPI_UNDEFINED MPC_UNDEFINED
 #define MPI_REQUEST_NULL ((MPI_Request)-1)
 #define MPI_COMM_WORLD MPC_COMM_WORLD
-#define MPI_STATUS_IGNORE SCTK_STATUS_NULL
-#define MPI_STATUSES_IGNORE MPI_STATUS_IGNORE
+#define MPI_STATUS_IGNORE MPC_LOWCOMM_STATUS_NULL
+#define MPI_STATUSES_IGNORE MPC_LOWCOMM_STATUS_NULL
 #define MPI_ANY_TAG MPC_ANY_TAG
 #define MPI_ANY_SOURCE MPC_ANY_SOURCE
 #define MPI_PROC_NULL MPC_PROC_NULL
@@ -90,7 +90,7 @@ extern "C"
 #define MPI_COMM_SELF MPC_COMM_SELF
 
 /* Error Handling */
-#define MPI_SUCCESS SCTK_SUCCESS
+#define MPI_SUCCESS MPC_LOWCOMM_SUCCESS
 
 #define MPI_MAX_ERROR_STRING MPC_MAX_ERROR_STRING
 #define MPI_ERR_BUFFER MPC_ERR_BUFFER
@@ -1684,6 +1684,21 @@ int PMPI_Comm_connect(const char *port_name, MPI_Info info, int root, MPI_Comm c
  */
 int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm);
 int PMPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm);
+
+/*MPI_Comm_create_from_group*/
+
+/**
+ * @brief MPI function MPI_Comm_create_from_group
+ * 
+ * @param group group
+ * @param stringtag matching unique identifier for this operation
+ * @param info info object
+ * @param errhandler error handler to be attached to the new intra-communicator
+ * @param newcomm new communicator
+ * @return int MPI_SUCCESS on success other MPI_* error code otherwise
+ */
+int MPI_Comm_create_from_group(MPI_Group group, const char * stringtag, MPI_Info info, MPI_Errhandler errhandler, MPI_Comm *newcomm);
+int PMPI_Comm_create_from_group(MPI_Group group, const char * stringtag, MPI_Info info, MPI_Errhandler errhandler, MPI_Comm *newcomm);
 
 
 /*MPI_Comm_create_errhandler*/
