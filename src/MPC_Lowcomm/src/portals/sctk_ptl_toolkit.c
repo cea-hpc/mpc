@@ -444,7 +444,7 @@ sctk_ptl_id_t sctk_ptl_map_id(sctk_rail_info_t* rail, mpc_lowcomm_peer_uid_t des
 		sctk_ptl_id_t out_id = SCTK_PTL_ANY_PROCESS;
 
 		int found = 0;
-		if(mpc_lowcomm_peer_get_set(dest) == mpc_lowcomm_monitor_get_gid())
+		if( (mpc_lowcomm_peer_get_set(dest) == mpc_lowcomm_monitor_get_gid()) && mpc_launch_pmi_is_initialized() )
 		{
 			/* If target belongs to our set try PMI first */
 			out_id = __map_id_pmi(rail, dest, &found);
@@ -637,14 +637,16 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 	);
 	assert(srail->connection_infos_size > 0);
 
-	/* register the serialized id into the PMI */
-	int tmp_ret = mpc_launch_pmi_put_as_rank (
-					srail->connection_infos,      /* the string to publish */
-					rail->rail_number,             /* rail ID: PMI tag */
-					0 /* Not local */
-					);
-	assert(tmp_ret == 0);
-
+	if(mpc_launch_pmi_is_initialized())
+	{
+		/* register the serialized id into the PMI */
+		int tmp_ret = mpc_launch_pmi_put_as_rank (
+						srail->connection_infos,      /* the string to publish */
+						rail->rail_number,             /* rail ID: PMI tag */
+						0 /* Not local */
+						);
+		assert(tmp_ret == 0);
+	}
 }
 
 /**
