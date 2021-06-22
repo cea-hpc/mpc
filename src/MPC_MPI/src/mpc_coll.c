@@ -2274,6 +2274,10 @@ static inline int ___collectives_reduce_topo(const void *sendbuf, void* recvbuf,
     ___collectives_copy_type(tmpbuf + (size-1) * count * ext, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
   }
 
+  if(coll_type == MPC_COLL_TYPE_BLOCKING && rank == root) {
+    free(tmpbuf);
+  }
+
   return res;
 }
 
@@ -3919,6 +3923,10 @@ static inline int ___collectives_scatter_topo(const void *sendbuf, int sendcount
 
   info->flag = initial_flag; 
 
+  if(coll_type == MPC_COLL_TYPE_BLOCKING) {
+    free(tmpbuf);
+  }
+
   return res;
 }
 
@@ -4956,6 +4964,10 @@ static inline int ___collectives_gather_topo(const void *sendbuf, int sendcount,
   }
   
   info->flag = initial_flag; 
+  
+  if(coll_type == MPC_COLL_TYPE_BLOCKING) {
+    free(tmpbuf);
+  }
 
   return res;
 }
@@ -5793,6 +5805,10 @@ static inline int ___collectives_reduce_scatter_block_pairwise(const void *sendb
   } else {
     ___collectives_op_type(NULL, tmp_left_resbuf, tmp_right_resbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
     ___collectives_copy_type(tmp_right_resbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+  }
+
+  if(coll_type == MPC_COLL_TYPE_BLOCKING) {
+    free(tmpbuf);
   }
   
   return MPI_SUCCESS;
