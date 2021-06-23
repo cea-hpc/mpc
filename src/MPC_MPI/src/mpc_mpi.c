@@ -16450,9 +16450,7 @@ int mpc_mpi_initialize(void)
 
 	mpc_common_spinlock_unlock(&(task_specific->per_communicator_lock) );
 
-
 	mpc_MPI_allocmem_pool_init();
-	mpc_lowcomm_pset_bootstrap();
 
 	MPI_ERROR_SUCCESS();
 }

@@ -280,7 +280,7 @@ static inline int __split_for(mpc_lowcomm_communicator_t src_comm, const char *d
 	mpc_lowcomm_communicator_free(&comm);
 }
 
-int mpc_lowcomm_pset_bootstrap(void)
+int _mpc_lowcomm_pset_bootstrap(void)
 {
 	/* Application PSETS */
 	int my_app_id;

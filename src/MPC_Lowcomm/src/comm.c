@@ -3560,8 +3560,8 @@ static void __lowcomm_init_per_task()
 
 		mpc_lowcomm_terminaison_barrier();
 
+		_mpc_lowcomm_pset_bootstrap();
 	}
-
 }
 
 static void __lowcomm_release_per_task()

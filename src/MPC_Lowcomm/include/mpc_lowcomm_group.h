@@ -320,7 +320,7 @@ int mpc_lowcomm_group_pset_free(mpc_lowcomm_process_set_t *pset);
  *
  * @return int MPC_LOWCOMM_SUCCESS if all ok
  */
-int mpc_lowcomm_pset_bootstrap(void);
+int _mpc_lowcomm_pset_bootstrap(void);
 
 #ifdef __cplusplus
 }
