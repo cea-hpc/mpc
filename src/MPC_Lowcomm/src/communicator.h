@@ -46,7 +46,7 @@ typedef struct mpc_lowcomm_topo_comms
 
 /**
  * @brief This is the struct defining a lowcomm communicator
- * 
+ *
  */
 typedef struct mpc_lowcomm_internal_communicator_s
 {

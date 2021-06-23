@@ -28,6 +28,7 @@
 #include <mpc_lowcomm_types.h>
 #include "group.h"
 #include <string.h>
+#include <mpc_launch_pmi.h>
 
 struct _mpc_lowcomm_pset_list_entry
 {
@@ -155,6 +156,8 @@ int mpc_lowcomm_group_pset_count(void)
     mpc_common_spinlock_lock(&__pset_list.lock);
     ret = __pset_list.count;
     mpc_common_spinlock_unlock(&__pset_list.lock);
+
+    return ret;
 }
 
 static inline mpc_lowcomm_process_set_t * __rebuild_and_dup(struct _mpc_lowcomm_pset_list_entry * entry)
@@ -200,7 +203,7 @@ int mpc_lowcomm_group_pset_free(mpc_lowcomm_process_set_t *pset)
 
 mpc_lowcomm_process_set_t *mpc_lowcomm_group_pset_get_nth(int n)
 {
-    if(mpc_lowcomm_group_pset_count() < n)
+    if(mpc_lowcomm_group_pset_count() <= n)
     {
         return NULL;
     }
@@ -220,6 +223,7 @@ mpc_lowcomm_process_set_t *mpc_lowcomm_group_pset_get_nth(int n)
             ret = cur;
             break;
         }
+        cnt++;
         cur = cur->next;
     }
 
@@ -246,4 +250,50 @@ int _mpc_lowcomm_pset_register(void)
     /* WORLD */
     _mpc_lowcomm_pset_push("mpi://WORLD", _mpc_lowcomm_group_world(), 0);
 
+}
+
+
+int mpc_lowcomm_pset_bootstrap(void)
+{
+    /* Application PSETS */
+    int my_app_id;
+
+    mpc_launch_pmi_get_app_rank(&my_app_id);
+
+    mpc_lowcomm_communicator_t app_comm = mpc_lowcomm_communicator_split(MPC_COMM_WORLD,
+                                                                         my_app_id,
+                                                                         mpc_common_get_task_rank());
+
+    if(app_comm == MPC_COMM_NULL)
+    {
+        return MPC_LOWCOMM_ERROR;
+    }
+
+    //mpc_common_debug_error("APP %d LPR %d", my_app_id, mpc_common_get_local_process_rank());
+
+    mpc_lowcomm_group_t * grp = mpc_lowcomm_communicator_group(app_comm);
+
+    /* Only one rank per UNIX process does register */
+    if(mpc_common_get_local_task_rank() == 0)
+    {
+
+        _mpc_lowcomm_pset_push("app://SELF", grp, 0);
+
+        char sappid[64];
+        snprintf(sappid, 64, "app://%d", my_app_id);
+
+        _mpc_lowcomm_pset_push(sappid, grp, 0);
+
+    }
+
+    mpc_lowcomm_group_free(&grp);
+
+    mpc_lowcomm_communicator_free(&app_comm);
+
+
+
+
+
+
+    return MPC_LOWCOMM_SUCCESS;
 }

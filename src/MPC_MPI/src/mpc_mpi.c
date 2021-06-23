@@ -16453,7 +16453,7 @@ int mpc_mpi_initialize(void)
 
 
 	mpc_MPI_allocmem_pool_init();
-
+	mpc_lowcomm_pset_bootstrap();
 
 	MPI_ERROR_SUCCESS();
 }

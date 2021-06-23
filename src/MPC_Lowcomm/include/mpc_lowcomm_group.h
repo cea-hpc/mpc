@@ -315,6 +315,13 @@ mpc_lowcomm_process_set_t *mpc_lowcomm_group_pset_get_by_name(const char *name);
  */
 int mpc_lowcomm_group_pset_free(mpc_lowcomm_process_set_t *pset);
 
+/**
+ * @brief Register PSET using initialized MPC
+ *
+ * @return int MPC_LOWCOMM_SUCCESS if all ok
+ */
+int mpc_lowcomm_pset_bootstrap(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -1026,8 +1026,11 @@ int mpc_launch_pmi_get_univ_size(int* univsize){
 		ret = PMIx_Get(&proc, PMIX_UNIV_SIZE, NULL, 0 , &val);
 		if(PMIX_SUCCESS == ret) *univsize = val->data.uint32;
 		return ret == PMIX_SUCCESS;
+	#elif defined( MPC_USE_PMI1 )
+		int rc = PMI_Get_universe_size(univsize);
+		PMI_CHECK_RC( rc, "PMI_Get_universe_size" );
 	#else
-	// TODO
+		not_available();
 	#endif
 }
 
@@ -1040,8 +1043,11 @@ int mpc_launch_pmi_get_app_rank(int* appname){
 		if(PMIX_SUCCESS == ret) *appname = val->data.uint32;
 		else printf("get appnum returned %d", ret);
 		return ret == PMIX_SUCCESS;
+	#elif defined( MPC_USE_PMI1 ) || defined(MPC_USE_HYDRA)
+		int rc = PMI_Get_appnum(appname);
+		PMI_CHECK_RC( rc, "PMI_Get_appnum" );
 	#else
-	// TODO
+		not_available();
 	#endif
 }
 
