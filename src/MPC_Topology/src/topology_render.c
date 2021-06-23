@@ -386,7 +386,7 @@ void mpc_topology_render_create(int os_pu, int os_master_pu, int task_id){
     }
 }
 
-static mpc_common_spinlock_t __lock_graphic = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t __lock_graphic = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 void mpc_topology_render_lock()
 {

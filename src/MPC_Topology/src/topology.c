@@ -833,7 +833,7 @@ void _mpc_topology_bind_to_process(hwloc_topology_t target_topo)
  */
 int _mpc_topology_bind_to_pu(hwloc_topology_t target_topo, int cpuid)
 {
-	static mpc_common_spinlock_t pin_lock = SCTK_SPINLOCK_INITIALIZER;
+	static mpc_common_spinlock_t pin_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 	if ( cpuid < 0 )
 	{

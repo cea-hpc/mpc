@@ -59,16 +59,16 @@ _mpc_lowcomm_ib_ibuf_rdma_pool_t *rdma_pool_list = NULL;
 /* Elements to merge to the rdma_pool_list */
 _mpc_lowcomm_ib_ibuf_rdma_pool_t *rdma_pool_list_to_merge = NULL;
 /* Lock when adding and accessing the concat list */
-static mpc_common_spinlock_t rdma_pool_list_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t rdma_pool_list_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 /* Linked list of regions */
 static _mpc_lowcomm_ib_ibuf_region_t *rdma_region_list      = NULL;
-static mpc_common_rwlock_t rdma_region_list_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
+static mpc_common_rwlock_t rdma_region_list_lock = MPC_COMMON_SPIN_RWLOCK_INITIALIZER;
 /* Pointer for the clock algorithm */
 static _mpc_lowcomm_ib_ibuf_region_t *clock_pointer = NULL;
 
-static mpc_common_spinlock_t rdma_lock         = SCTK_SPINLOCK_INITIALIZER;
-static mpc_common_rwlock_t   rdma_polling_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
+static mpc_common_spinlock_t rdma_lock         = MPC_COMMON_SPINLOCK_INITIALIZER;
+static mpc_common_rwlock_t   rdma_polling_lock = MPC_COMMON_SPIN_RWLOCK_INITIALIZER;
 
 /*-----------------------------------------------------------
 *  FUNCTIONS

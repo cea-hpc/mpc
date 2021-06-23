@@ -178,7 +178,7 @@ static inline mpc_lowcomm_ofi_ep_t* __mpc_lowcomm_ofi_register_endpoint(sctk_rai
 		.ep              = ep,
 		.cq_r            = cq_recv,
 		.cq_s            = cq_send,
-		.lock            = SCTK_SPINLOCK_INITIALIZER,
+		.lock            = MPC_COMMON_SPINLOCK_INITIALIZER,
 		.spec.msg.sz_buf = 0
 	};
 

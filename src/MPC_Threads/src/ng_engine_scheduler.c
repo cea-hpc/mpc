@@ -201,11 +201,11 @@ _mpc_threads_ng_engine_scheduler_check_task(_mpc_threads_ng_engine_task_t *task)
 /***************************************/
 /* CENTRALIZED SCHEDULER               */
 /***************************************/
-static mpc_common_spinlock_t sctk_centralized_sched_list_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t sctk_centralized_sched_list_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 static _mpc_threads_ng_engine_scheduler_generic_t *sctk_centralized_sched_list = NULL;
 
 static _mpc_threads_ng_engine_task_t *sctk_centralized_task_list      = NULL;
-static mpc_common_spinlock_t       sctk_centralized_task_list_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t       sctk_centralized_task_list_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 static void sctk_centralized_add_to_list(_mpc_threads_ng_engine_scheduler_t *sched)
 {
@@ -396,7 +396,7 @@ typedef struct
 	char                                     pad[4096];
 } sctk_multiple_queues_sched_list_t;
 #define SCTK_MULTIPLE_QUEUES_SCHED_LIST_INIT \
-	{ SCTK_SPINLOCK_INITIALIZER, NULL, NULL, .pad = { 0 } }
+	{ MPC_COMMON_SPINLOCK_INITIALIZER, NULL, NULL, .pad = { 0 } }
 
 static sctk_multiple_queues_sched_list_t *sctk_multiple_queues_sched_lists = NULL;
 
@@ -412,7 +412,7 @@ typedef struct
 	char                        pad[4096];
 }sctk_multiple_queues_task_list_t;
 #define SCTK_MULTIPLE_QUEUES_TASK_LIST_INIT \
-	{ NULL, SCTK_SPINLOCK_INITIALIZER, 0, NULL, .pad = { 0 } }
+	{ NULL, MPC_COMMON_SPINLOCK_INITIALIZER, 0, NULL, .pad = { 0 } }
 static sctk_multiple_queues_task_list_t *sctk_multiple_queues_task_lists = NULL;
 
 ////////////////////////////////////////
@@ -462,7 +462,7 @@ void sctk_multiple_queues_concat_to_list(_mpc_threads_ng_engine_scheduler_t *sch
 }
 
 // get_from_list
-mpc_common_spinlock_t debug_lock = SCTK_SPINLOCK_INITIALIZER;
+mpc_common_spinlock_t debug_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 static _mpc_threads_ng_engine_scheduler_t *sctk_multiple_queues_get_from_list()
 {
 	int core;

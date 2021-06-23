@@ -294,7 +294,7 @@ static inline int __broadcast_new_comm(mpc_lowcomm_communicator_t local_comm,
 		/* Now we create a group from descriptors */
 		mpc_lowcomm_group_t *comm_group = _mpc_lowcomm_group_create(group_size, descs);
 
-		static mpc_common_spinlock_t __bcast_creation_lock = SCTK_SPINLOCK_INITIALIZER;
+		static mpc_common_spinlock_t __bcast_creation_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 		mpc_common_spinlock_lock(&__bcast_creation_lock);
 
@@ -484,7 +484,7 @@ static inline int __comm_connect_accept(const char *port_name,
 
 		mpc_common_debug_error("REMOTE is %lu", remote_desc.comm_id);
 
-		static mpc_common_spinlock_t __creation_lock = SCTK_SPINLOCK_INITIALIZER;
+		static mpc_common_spinlock_t __creation_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 		mpc_common_spinlock_lock(&__creation_lock);
 
@@ -915,7 +915,7 @@ static inline void __communicator_id_factory_release(void)
 static inline void __communicator_id_register(mpc_lowcomm_communicator_t comm, int forced_linear_id)
 {
 	static uint32_t __linear_comm_id = 1000;
-	static mpc_common_spinlock_t __linear_comm_id_lock = SCTK_SPINLOCK_INITIALIZER;
+	static mpc_common_spinlock_t __linear_comm_id_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 	if(0 < forced_linear_id)
 	{

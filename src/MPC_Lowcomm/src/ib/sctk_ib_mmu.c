@@ -80,7 +80,7 @@ _mpc_lowcomm_ib_mmu_entry_t * _mpc_lowcomm_ib_mmu_entry_new(sctk_ib_rail_info_t 
 	}
 
 	/* No one ows it yet */
-	mpc_common_rwlock_t lckinit = SCTK_SPIN_RWLOCK_INITIALIZER;
+	mpc_common_rwlock_t lckinit = MPC_COMMON_SPIN_RWLOCK_INITIALIZER;
 	new->entry_refcounter = lckinit;
 
 	new->free_on_relax = 0;

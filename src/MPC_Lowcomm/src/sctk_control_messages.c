@@ -463,7 +463,7 @@ struct sctk_ctrl_msg_cell
 };
 
 struct sctk_ctrl_msg_cell *__ctrl_msg_list      = NULL;
-mpc_common_spinlock_t      __ctrl_msg_list_lock = SCTK_SPINLOCK_INITIALIZER;
+mpc_common_spinlock_t      __ctrl_msg_list_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 void sctk_control_message_push(mpc_lowcomm_ptp_message_t *msg)
 {

@@ -366,7 +366,7 @@ void _mpc_lowcomm_multirail_endpoint_list_prune(_mpc_lowcomm_multirail_endpoint_
 void _mpc_lowcomm_multirail_table_entry_init(_mpc_lowcomm_multirail_table_entry_t *entry, mpc_lowcomm_peer_uid_t destination)
 {
 	_mpc_lowcomm_multirail_endpoint_list_init(&entry->endpoints);
-	mpc_common_rwlock_t lckinit = SCTK_SPIN_RWLOCK_INITIALIZER;
+	mpc_common_rwlock_t lckinit = MPC_COMMON_SPIN_RWLOCK_INITIALIZER;
 	entry->endpoints_lock = lckinit;
 	entry->destination    = destination;
 }
@@ -558,7 +558,7 @@ static inline _mpc_lowcomm_endpoint_t *__elect_endpoint(mpc_lowcomm_ptp_message_
 	return cur->endpoint;
 }
 
-mpc_common_spinlock_t on_demand_connection_lock = SCTK_SPINLOCK_INITIALIZER;
+mpc_common_spinlock_t on_demand_connection_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 /* Per VP pending on-demand connection list */
 static __thread sctk_pending_on_demand_t *__pending_on_demand = NULL;
@@ -1119,7 +1119,7 @@ void _mpc_lowcomm_multirail_table_init()
 	struct _mpc_lowcomm_multirail_table *table = _mpc_lowcomm_multirail_table_get();
 
 	mpc_common_hashtable_init(&table->destination_table, 1024);
-	mpc_common_rwlock_t lckinit = SCTK_SPIN_RWLOCK_INITIALIZER;
+	mpc_common_rwlock_t lckinit = MPC_COMMON_SPIN_RWLOCK_INITIALIZER;
 	table->table_lock = lckinit;
 }
 

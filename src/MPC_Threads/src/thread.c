@@ -1268,7 +1268,7 @@ int mpc_thread_core_thread_create(mpc_thread_t *restrict __threadp,
 	sctk_thread_data_t *         tmp;
 	sctk_thread_data_t *         tmp_father;
 	struct sctk_alloc_chain *    tls;
-	static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+	static mpc_common_spinlock_t lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 	int user_thread;
 
 	mpc_common_spinlock_lock(&lock);

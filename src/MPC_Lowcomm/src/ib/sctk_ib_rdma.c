@@ -50,7 +50,7 @@
 *----------------------------------------------------------*/
 
 static sctk_ib_header_rdma_t *recv_rdma_headers      = NULL;
-static mpc_common_spinlock_t  recv_rdma_headers_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t  recv_rdma_headers_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 static OPA_int_t recv_rdma_headers_nb = OPA_INT_T_INITIALIZER(0);
 
 static inline void _mpc_lowcomm_ib_rdma_align_msg(void *addr, size_t size,

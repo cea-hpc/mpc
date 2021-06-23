@@ -38,7 +38,7 @@
 /************************************************************************/
 
 static int init_done = 0;
-static mpc_common_spinlock_t init_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t init_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 /* Error handlers */
 static OPA_int_t current_errhandler;
@@ -173,7 +173,7 @@ struct _mpc_mpi_handle_ctx_s *_mpc_mpi_handle_ctx_new(sctk_handle id)
 	return ret;
 }
 
-static mpc_common_spinlock_t handle_mod_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t handle_mod_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 static inline  struct _mpc_mpi_handle_ctx_s *__ctx_get_no_lock(sctk_handle id, sctk_handle_type type)
 {

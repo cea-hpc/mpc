@@ -163,7 +163,7 @@ static inline _mpc_mpi_mpit_cat_t * __cat_recursive_scan_conf(mpc_conf_config_ty
  *************************/
 
 struct _mpi_t_state __mpit = { 0 };
-static mpc_common_spinlock_t __mpit_init_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t __mpit_init_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 
 static inline void __expandable_array_init(volatile void ***parray, int * psize)

@@ -335,7 +335,7 @@ static inline int sctk_mctx_set(sctk_mctx_t *mctx,
 }
 
 #else
-static mpc_common_spinlock_t sjlj_spinlock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t sjlj_spinlock = MPC_COMMON_SPINLOCK_INITIALIZER;
 static jmp_buf mctx_trampoline;
 
 static sctk_mctx_t           mctx_caller;

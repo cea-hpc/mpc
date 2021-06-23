@@ -1571,7 +1571,7 @@ int _mpc_lowcomm_peer_is_local(mpc_lowcomm_peer_uid_t uid)
 static inline uint64_t __get_new_command_index(void)
 {
 	static uint64_t __command_index = 0;
-	static mpc_common_spinlock_t __command_index_lock = SCTK_SPINLOCK_INITIALIZER;
+	static mpc_common_spinlock_t __command_index_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 	uint64_t ret = 0;
 

@@ -418,7 +418,7 @@ void _mpc_comm_ptp_message_reinit_comm(mpc_lowcomm_ptp_message_t *msg)
  */
 static inline void __mpc_comm_ptp_array_insert(mpc_comm_ptp_t *tmp)
 {
-	static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+	static mpc_common_spinlock_t lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 	static volatile int          done = 0;
 
 	mpc_common_spinlock_lock(&lock);
@@ -495,7 +495,7 @@ int mpc_lowcomm_is_remote_rank(int dest)
  * matched and are wainting to be copied */
 
 static short          __mpc_comm_ptp_task_init_done = 0;
-mpc_common_spinlock_t __mpc_comm_ptp_task_init_lock = SCTK_SPINLOCK_INITIALIZER;
+mpc_common_spinlock_t __mpc_comm_ptp_task_init_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 /* MUST BE POWER of 2 as we use masking for modulos */
 #define PTP_TASKING_QUEUE_COUNT    0xF

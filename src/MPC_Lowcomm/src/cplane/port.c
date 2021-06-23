@@ -38,7 +38,7 @@
 #define MPC_LOWCOMM_MONITOR_PORT_RANGE_START 10000
 
 int __current_port_id = MPC_LOWCOMM_MONITOR_PORT_RANGE_START;
-mpc_common_spinlock_t __current_port_id_lock = SCTK_SPINLOCK_INITIALIZER;
+mpc_common_spinlock_t __current_port_id_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 
 int mpc_lowcomm_monitor_open_port(char * id, int id_len)

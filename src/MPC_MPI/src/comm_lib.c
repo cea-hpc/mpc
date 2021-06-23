@@ -139,7 +139,7 @@ static inline void __mpc_cl_per_communicator_delete(mpc_mpi_cl_per_mpi_process_c
 static inline mpc_per_communicator_t *__mpc_cl_per_communicator_alloc()
 {
 	mpc_per_communicator_t *tmp;
-	mpc_common_spinlock_t   lock = SCTK_SPINLOCK_INITIALIZER;
+	mpc_common_spinlock_t   lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 	tmp = sctk_malloc(sizeof(mpc_per_communicator_t) );
 	tmp->err_handler                       = ( MPC_Handler_function * )_mpc_cl_default_error;
@@ -867,8 +867,8 @@ static inline int __mpc_cl_egreq_progress_init(mpc_mpi_cl_per_mpi_process_ctx_t 
 
 static inline int __mpc_cl_egreq_progress_release(mpc_mpi_cl_per_mpi_process_ctx_t *tmp)
 {
-	static mpc_common_spinlock_t l = SCTK_SPINLOCK_INITIALIZER;
-	static mpc_common_spinlock_t d = SCTK_SPINLOCK_INITIALIZER;
+	static mpc_common_spinlock_t l = MPC_COMMON_SPINLOCK_INITIALIZER;
+	static mpc_common_spinlock_t d = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 	tmp->progress_list = NULL;
 	int done = 0;

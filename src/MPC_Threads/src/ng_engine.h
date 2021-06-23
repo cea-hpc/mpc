@@ -116,7 +116,7 @@ typedef struct _mpc_threads_ng_engine_mutex_s
 	_mpc_threads_ng_engine_mutex_cell_t *        blocked;
 }_mpc_threads_ng_engine_mutex_t;
 
-#define SCTK_THREAD_GENERIC_MUTEX_INIT    { NULL, SCTK_SPINLOCK_INITIALIZER, 0, 0, NULL }
+#define SCTK_THREAD_GENERIC_MUTEX_INIT    { NULL, MPC_COMMON_SPINLOCK_INITIALIZER, 0, 0, NULL }
 
 
 typedef struct _mpc_threads_ng_engine_mutexattr_s
@@ -144,7 +144,7 @@ typedef struct
 	clockid_t                        clock_id;
 }_mpc_threads_ng_engine_cond_t;
 
-#define SCTK_THREAD_GENERIC_COND_INIT    { SCTK_SPINLOCK_INITIALIZER, NULL, 0 }
+#define SCTK_THREAD_GENERIC_COND_INIT    { MPC_COMMON_SPINLOCK_INITIALIZER, NULL, 0 }
 
 typedef struct _mpc_threads_ng_engine_condattr_s
 {
@@ -165,7 +165,7 @@ typedef struct _mpc_threads_ng_engine_sem_s
 	_mpc_threads_ng_engine_mutex_cell_t *list;
 }_mpc_threads_ng_engine_sem_t;
 
-#define SCTK_THREAD_GENERIC_SEM_INIT    { 0, SCTK_SPINLOCK_INITIALIZER, NULL }
+#define SCTK_THREAD_GENERIC_SEM_INIT    { 0, MPC_COMMON_SPINLOCK_INITIALIZER, NULL }
 
 typedef struct _mpc_threads_ng_engine_sem_named_list_s
 {
@@ -221,7 +221,7 @@ typedef struct _mpc_threads_ng_engine_rwlock_s
 	_mpc_threads_ng_engine_rwlock_cell_t *         waiting;
 }_mpc_threads_ng_engine_rwlock_t;
 
-#define SCTK_THREAD_GENERIC_RWLOCK_INIT    { SCTK_SPINLOCK_INITIALIZER, SCTK_UNINITIALIZED, 0, 0, SCTK_RWLOCK_ALONE, SCTK_RWLOCK_NO_WR_WAITING, NULL, NULL, NULL }
+#define SCTK_THREAD_GENERIC_RWLOCK_INIT    { MPC_COMMON_SPINLOCK_INITIALIZER, SCTK_UNINITIALIZED, 0, 0, SCTK_RWLOCK_ALONE, SCTK_RWLOCK_NO_WR_WAITING, NULL, NULL, NULL }
 
 typedef struct
 {
@@ -247,7 +247,7 @@ typedef struct _mpc_threads_ng_engine_barrier_s
 	_mpc_threads_ng_engine_barrier_cell_t *blocked;
 }_mpc_threads_ng_engine_barrier_t;
 
-#define SCTK_THREAD_GENERIC_BARRIER_INIT    { SCTK_SPINLOCK_INITIALIZER, 0, 0, NULL }
+#define SCTK_THREAD_GENERIC_BARRIER_INIT    { MPC_COMMON_SPINLOCK_INITIALIZER, 0, 0, NULL }
 
 typedef struct _mpc_threads_ng_engine_barrierattr_s
 {
@@ -274,7 +274,7 @@ typedef struct _mpc_threads_ng_engine_spinlock_s
 	_mpc_threads_ng_engine_scheduler_t *owner;
 }_mpc_threads_ng_engine_spinlock_t;
 
-#define SCTK_THREAD_GENERIC_SPINLOCK_INIT    { SCTK_SPINLOCK_INITIALIZER, sctk_spin_unitialized, NULL }
+#define SCTK_THREAD_GENERIC_SPINLOCK_INIT    { MPC_COMMON_SPINLOCK_INITIALIZER, sctk_spin_unitialized, NULL }
 
 #define SCTK_SPIN_DELAY                      10
 

@@ -60,7 +60,7 @@ typedef struct
 	volatile struct _mpc_thread_ethread_mutex_cell_s *list;
 	volatile struct _mpc_thread_ethread_mutex_cell_s *list_tail;
 } _mpc_thread_ethread_cond_t;
-#define SCTK_ETHREAD_COND_INIT    { SCTK_SPINLOCK_INITIALIZER, 0, NULL, NULL }
+#define SCTK_ETHREAD_COND_INIT    { MPC_COMMON_SPINLOCK_INITIALIZER, 0, NULL, NULL }
 
 /*condition attributes */
 
@@ -79,7 +79,7 @@ typedef struct
 	volatile struct _mpc_thread_ethread_mutex_cell_s *list;
 	volatile struct _mpc_thread_ethread_mutex_cell_s *list_tail;
 } _mpc_thread_ethread_sem_t;
-#define STCK_ETHREAD_SEM_INIT    { 0, SCTK_SPINLOCK_INITIALIZER, NULL, NULL }
+#define STCK_ETHREAD_SEM_INIT    { 0, MPC_COMMON_SPINLOCK_INITIALIZER, NULL, NULL }
 
 /*Mutex definition */
 
@@ -94,8 +94,8 @@ typedef struct
 	volatile unsigned int                             lock;
 	unsigned int                                      type;
 } _mpc_thread_ethread_mutex_t;
-#define SCTK_ETHREAD_MUTEX_INIT              { NULL, NULL, NULL, SCTK_SPINLOCK_INITIALIZER, 0, SCTK_THREAD_MUTEX_DEFAULT }
-#define SCTK_ETHREAD_MUTEX_RECURSIVE_INIT    { NULL, NULL, NULL, SCTK_SPINLOCK_INITIALIZER, 0, SCTK_THREAD_MUTEX_RECURSIVE }
+#define SCTK_ETHREAD_MUTEX_INIT              { NULL, NULL, NULL, MPC_COMMON_SPINLOCK_INITIALIZER, 0, SCTK_THREAD_MUTEX_DEFAULT }
+#define SCTK_ETHREAD_MUTEX_RECURSIVE_INIT    { NULL, NULL, NULL, MPC_COMMON_SPINLOCK_INITIALIZER, 0, SCTK_THREAD_MUTEX_RECURSIVE }
 
 typedef struct
 {
@@ -123,7 +123,7 @@ typedef struct
 	volatile unsigned short                     wait;
 } _mpc_thread_ethread_rwlock_t;
 
-#define SCTK_ETHREAD_RWLOCK_INIT    { SCTK_SPINLOCK_INITIALIZER, NULL, NULL, 0, SCTK_RWLOCK_ALONE, SCTK_RWLOCK_NO_WR_WAIT }
+#define SCTK_ETHREAD_RWLOCK_INIT    { MPC_COMMON_SPINLOCK_INITIALIZER, NULL, NULL, 0, SCTK_RWLOCK_ALONE, SCTK_RWLOCK_NO_WR_WAIT }
 #define SCTK_RWLOCK_READ            1
 #define SCTK_RWLOCK_WRITE           2
 #define SCTK_RWLOCK_ALONE           0

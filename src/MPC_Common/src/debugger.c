@@ -237,7 +237,7 @@ static void read_map()
 	done = 1;
 }
 
-static mpc_common_spinlock_t big_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t big_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 static inline void __no_backtrace( void )
 {

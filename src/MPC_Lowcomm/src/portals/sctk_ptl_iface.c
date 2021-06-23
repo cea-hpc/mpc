@@ -242,7 +242,7 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims)
 		/*int j;*/
 		/*for (j = 0; j < SCTK_PTL_PTE_NB_LOCKS; ++j) */
 		/*{*/
-			/*table[i].taglocks[j] = SCTK_SPINLOCK_INITIALIZER;*/
+			/*table[i].taglocks[j] = MPC_COMMON_SPINLOCK_INITIALIZER;*/
 		/*}*/
 	}
 

@@ -89,7 +89,7 @@ static inline void __mpc_composed_common_types_init();
 
 void _mpc_dt_init()
 {
-	static mpc_common_spinlock_t init_lock = SCTK_SPINLOCK_INITIALIZER;
+	static mpc_common_spinlock_t init_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 	mpc_common_spinlock_lock(&init_lock);
 
@@ -114,7 +114,7 @@ static inline void __mpc_dt_name_clear();
 
 void _mpc_dt_release()
 {
-	static mpc_common_spinlock_t clear_lock = SCTK_SPINLOCK_INITIALIZER;
+	static mpc_common_spinlock_t clear_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 	mpc_common_spinlock_lock(&clear_lock);
 
@@ -153,7 +153,7 @@ static unsigned int __keyval_array_size = 0;
 /** This is the current ID offset */
 static unsigned int __keyval_array_offset = 0;
 /** This is the Keyval array lock */
-mpc_common_spinlock_t __keyval_array_lock = SCTK_SPINLOCK_INITIALIZER;
+mpc_common_spinlock_t __keyval_array_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 /** \brief This function retrieves a keyval from an id
  * 	\param type_keyval ID of keyval to retrieve (offset in a static table)
@@ -1383,7 +1383,7 @@ struct __mpc_dt_name_cell
 /** \brief Static variable used to store type names */
 struct __mpc_dt_name_cell *datatype_names = NULL;
 /** \brief Lock protecting \ref datatype_names */
-mpc_common_spinlock_t datatype_names_lock = SCTK_SPINLOCK_INITIALIZER;
+mpc_common_spinlock_t datatype_names_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 static inline struct __mpc_dt_name_cell *__mpc_dt_get_name_cell( mpc_lowcomm_datatype_t datatype )
 {

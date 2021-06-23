@@ -155,7 +155,7 @@ static sctk_device_matrix_t __mpc_topology_device_matrix;
 /* Scattering Computation                                               */
 /************************************************************************/
 
-static mpc_common_spinlock_t ___counter_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t ___counter_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 static int ___numa_count = -1;
 static int ___core_count = -1;
 static int ___current_numa_id = 0;

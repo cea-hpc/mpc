@@ -66,7 +66,7 @@ void sctk_thread_remove(sctk_thread_data_t *item)
 /** *********************   LIB_THREAD_DB   ************************************* **/
 /** ***************************************************************************** **/
 static int sctk_use_rtdb = 0;
-static mpc_common_spinlock_t sctk_rtdb_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t sctk_rtdb_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 /* Translate a sctk status to a gdb status*/
 /* static inline */

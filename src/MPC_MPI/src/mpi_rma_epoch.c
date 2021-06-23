@@ -116,7 +116,7 @@ void *mpc_MPI_Win_tmp_alloc(struct mpc_MPI_Win_tmp *tmp, size_t size) {
 /************************************************************************/
 
 static struct mpc_common_hashtable __request_pool_ht;
-static mpc_common_spinlock_t __request_pool_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t __request_pool_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 static volatile int __request_pool_init_done = 0;
 
 static inline void request_poll_ht_check_init() {

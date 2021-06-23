@@ -234,7 +234,7 @@ typedef struct _mpc_thread_ethread_virtual_processor_s
 		NULL, NULL, NULL, NULL, 0, \
 		NULL,                      \
 		NULL,                      \
-		SCTK_SPINLOCK_INITIALIZER, \
+		MPC_COMMON_SPINLOCK_INITIALIZER, \
 		0, 0, 0, 0, 1, SCTK_ETHREAD_VP_EAGERNESS, -1 }
 
 extern _mpc_thread_ethread_virtual_processor_t virtual_processor;

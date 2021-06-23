@@ -180,7 +180,7 @@ void mpc_threads_generic_kind_mask_remove(unsigned int kind_mask)
 
 /* Globals */
 
-static mpc_common_spinlock_t __keys_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t __keys_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 static char __keys_in_use[SCTK_THREAD_KEYS_MAX + 1];
 
 
@@ -1953,7 +1953,7 @@ static int _mpc_threads_ng_engine_sem_destroy(mpc_thread_sem_t *psem)
 
 /* Named semaphore globals */
 
-static mpc_common_spinlock_t __named_semaphore_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t __named_semaphore_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 static _mpc_threads_ng_engine_sem_named_list_t *__named_semaphore_list = NULL;
 
 /* Named semaphore Interface */

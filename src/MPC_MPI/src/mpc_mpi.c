@@ -1058,7 +1058,7 @@ inline void __sctk_delete_mpc_request(MPI_Request *req,
 /************************************************************************/
 
 static volatile int   __sctk_halo_initialized      = 0;
-mpc_common_spinlock_t __sctk_halo_initialized_lock = SCTK_SPINLOCK_INITIALIZER;
+mpc_common_spinlock_t __sctk_halo_initialized_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 static struct sctk_mpi_halo_context __sctk_halo_context;
 
 /** \brief Halo Context getter for MPI */
@@ -16367,7 +16367,7 @@ int PMPI_Query_thread(int *provided)
 	MPI_ERROR_SUCCESS();
 }
 
-static mpc_common_spinlock_t __init_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t __init_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 int mpc_mpi_initialize(void)
 {
@@ -16620,7 +16620,7 @@ int PMPI_Pcontrol(__UNUSED__ const int level, ...)
  **************************************/
 
 /** This lock protects message handles attribution */
-static mpc_common_spinlock_t __message_handle_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t __message_handle_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 /** This is where message handle ids are generated */
 static int __message_handle_id = 1;

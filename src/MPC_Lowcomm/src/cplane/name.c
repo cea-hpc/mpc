@@ -43,7 +43,7 @@ struct _mpc_lowcomm_monitor_name_s
 };
 
 static struct _mpc_lowcomm_monitor_name_s *__names = NULL;
-static mpc_common_spinlock_t __names_lock          = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t __names_lock          = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 static inline struct _mpc_lowcomm_monitor_name_s *__name_new(char *name, char * port_name, mpc_lowcomm_peer_uid_t hosting_peer)
 {

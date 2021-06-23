@@ -133,7 +133,7 @@ static inline mpc_lowcomm_ofi_ep_t* __mpc_lowcomm_ofi_rdma_register_endpoint(sct
 		.ep = rail->network.ofi.spec.rdma.sep,
 		.cq_r = rail->network.ofi.spec.rdma.cq_recv,
 		.cq_s = rail->network.ofi.spec.rdma.cq_send,
-		.lock = SCTK_SPINLOCK_INITIALIZER,
+		.lock = MPC_COMMON_SPINLOCK_INITIALIZER,
 	};
 	
 	MPC_LOWCOMM_OFI_CHECK_RC(fi_av_insert(rail->network.ofi.spec.rdma.av, infos, 1, &ctx->spec.rdma.av_root, 0, NULL));

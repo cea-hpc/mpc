@@ -170,7 +170,7 @@ void __kmpc_atomic_float8_add(ident_t *id_ref, int gtid, kmp_real64 *lhs,
 
 #define ATOMIC_CRITICAL(TYPE_ID, OP_ID, TYPE, OP, LCK_ID, GOMP_FLAG)            \
 	ATOMIC_BEGIN(TYPE_ID, OP_ID, TYPE, void)                                \
-	static mpc_common_spinlock_t critical_lock = SCTK_SPINLOCK_INITIALIZER; \
+	static mpc_common_spinlock_t critical_lock = MPC_COMMON_SPINLOCK_INITIALIZER; \
 	mpc_common_spinlock_lock(&critical_lock);                               \
 	(*lhs)OP ## = (rhs);                                                    \
 	mpc_common_spinlock_unlock(&critical_lock);                             \
@@ -178,7 +178,7 @@ void __kmpc_atomic_float8_add(ident_t *id_ref, int gtid, kmp_real64 *lhs,
 
 #define ATOMIC_CRITICAL_REV(TYPE_ID, OP_ID, TYPE, OP, LCK_ID, GOMP_FLAG)        \
 	ATOMIC_BEGIN_REV(TYPE_ID, OP_ID, TYPE, void)                            \
-	static mpc_common_spinlock_t critical_lock = SCTK_SPINLOCK_INITIALIZER; \
+	static mpc_common_spinlock_t critical_lock = MPC_COMMON_SPINLOCK_INITIALIZER; \
 	mpc_common_spinlock_lock(&critical_lock);                               \
 	(*lhs) = (rhs)OP(*lhs);                                                 \
 	mpc_common_spinlock_unlock(&critical_lock);                             \
@@ -251,7 +251,7 @@ void __kmpc_atomic_float8_add(ident_t *id_ref, int gtid, kmp_real64 *lhs,
 
 #define ATOMIC_CRITICAL_CPT(TYPE_ID, OP_ID, TYPE, OP, LCK_ID, GOMP_FLAG)        \
 	ATOMIC_BEGIN_CPT(TYPE_ID, OP_ID, TYPE, TYPE)                            \
-	static mpc_common_spinlock_t critical_lock = SCTK_SPINLOCK_INITIALIZER; \
+	static mpc_common_spinlock_t critical_lock = MPC_COMMON_SPINLOCK_INITIALIZER; \
 	TYPE new_value;                                                         \
 	mpc_common_spinlock_lock(&critical_lock);                               \
 	if(flag){                                                               \
@@ -325,7 +325,7 @@ void __kmpc_atomic_float8_add(ident_t *id_ref, int gtid, kmp_real64 *lhs,
 #define ATOMIC_CRITICAL_READ(TYPE_ID, OP_ID, TYPE, OP, LCK_ID, GOMP_FLAG)       \
 	ATOMIC_BEGIN_READ(TYPE_ID, OP_ID, TYPE, TYPE)                           \
 	TYPE new_value;                                                         \
-	static mpc_common_spinlock_t critical_lock = SCTK_SPINLOCK_INITIALIZER; \
+	static mpc_common_spinlock_t critical_lock = MPC_COMMON_SPINLOCK_INITIALIZER; \
 	mpc_common_spinlock_lock(&critical_lock);                               \
 	new_value = (*loc);                                                     \
 	mpc_common_spinlock_unlock(&critical_lock);                             \
@@ -361,7 +361,7 @@ void __kmpc_atomic_float8_add(ident_t *id_ref, int gtid, kmp_real64 *lhs,
 
 #define ATOMIC_CRITICAL_WR(TYPE_ID, OP_ID, TYPE, OP, LCK_ID, GOMP_FLAG)         \
 	ATOMIC_BEGIN(TYPE_ID, OP_ID, TYPE, void)                                \
-	static mpc_common_spinlock_t critical_lock = SCTK_SPINLOCK_INITIALIZER; \
+	static mpc_common_spinlock_t critical_lock = MPC_COMMON_SPINLOCK_INITIALIZER; \
 	mpc_common_spinlock_lock(&critical_lock);                               \
 	(*lhs)OP(rhs);                                                          \
 	mpc_common_spinlock_unlock(&critical_lock);                             \

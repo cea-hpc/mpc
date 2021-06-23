@@ -36,7 +36,7 @@
 #include "ethread_posix.h"
 
 static volatile unsigned int sctk_nb_vp_initialized           = 1;
-mpc_common_spinlock_t        _mpc_thread_ethread_key_spinlock = SCTK_SPINLOCK_INITIALIZER;
+mpc_common_spinlock_t        _mpc_thread_ethread_key_spinlock = MPC_COMMON_SPINLOCK_INITIALIZER;
 static _mpc_thread_ethread_virtual_processor_t **_mpc_thread_ethread_mxn_engine_vp_list = NULL;
 static int use_ethread_mxn = 0;
 

@@ -1082,7 +1082,7 @@ static inline void mpc_lowcomm_rdma_window_fetch_and_op_operate_int(RDMA_op op, 
 
 #define RDMA_OP_def(type, type2, type3)                                                                  \
 	static mpc_common_spinlock_t __RDMA_OP_ ## type ## type2 ## type3 ## _lock =                     \
-		SCTK_SPINLOCK_INITIALIZER;                                                               \
+		MPC_COMMON_SPINLOCK_INITIALIZER;                                                               \
                                                                                                          \
 	static inline void mpc_lowcomm_rdma_window_fetch_and_op_operate_ ## type ## type2 ## type3 ## _( \
 		RDMA_op op, void *add, void *src, void *dest){                                           \
@@ -1153,7 +1153,7 @@ static inline void mpc_lowcomm_rdma_window_fetch_and_op_operate_int(RDMA_op op, 
 
 #define RDMA_OP_def_nobin(type, type2)                                                                      \
 	static mpc_common_spinlock_t __RDMA_OP_ ## type ## type2 ## _lock =                                 \
-		SCTK_SPINLOCK_INITIALIZER;                                                                  \
+		MPC_COMMON_SPINLOCK_INITIALIZER;                                                                  \
                                                                                                             \
 	static inline void mpc_lowcomm_rdma_window_fetch_and_op_operate_ ## type ## type2 ## _(             \
 		RDMA_op op, void *add, void *src, void *dest){                                              \
@@ -1566,7 +1566,7 @@ void mpc_lowcomm_rdma_window_RDMA_CAS_ptr_local(void **cmp, void **new, void *ta
 	}
 }
 
-static mpc_common_spinlock_t __RDMA_CAS_16_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t __RDMA_CAS_16_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 void mpc_lowcomm_rdma_window_RDMA_CAS_16_local(void *cmp, void *new, void *target, void *res)
 {
@@ -1585,7 +1585,7 @@ void mpc_lowcomm_rdma_window_RDMA_CAS_16_local(void *cmp, void *new, void *targe
 	mpc_common_spinlock_unlock(&__RDMA_CAS_16_lock);
 }
 
-static mpc_common_spinlock_t __RDMA_CAS_any_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t __RDMA_CAS_any_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 void mpc_lowcomm_rdma_window_RDMA_CAS_any_local(void *cmp, void *new, void *target, void *res, size_t size)
 {

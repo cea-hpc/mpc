@@ -531,7 +531,7 @@ static inline void __poll_cq(sctk_rail_info_t *rail,
 /* Count how many times the vp is entered to the polling function. We
  * allow recursive calls to the polling function */
 
-mpc_common_spinlock_t __cq_lock = SCTK_SPINLOCK_INITIALIZER;
+mpc_common_spinlock_t __cq_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 #define POLL_CQ_CONCURENCY 4
 

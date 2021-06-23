@@ -76,7 +76,7 @@ static ompt_wait_id_t _mpcomp_ompt_atomic_lock_wait_id = 0;
 
 //static mpc_common_spinlock_t *_mpcomp_omp_global_atomic_lock = NULL;
 //static omp_lock_t 	*_mpcomp_omp_global_critical_lock = NULL;
-static mpc_common_spinlock_t 	_mpcomp_global_init_critical_named_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t 	__mpcomp_global_init_critical_named_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 void mpc_omp_atomic_begin( void )
 {

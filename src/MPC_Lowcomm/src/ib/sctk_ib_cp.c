@@ -87,7 +87,7 @@ typedef struct __mpc_lowcomm_ib_numa_s
 } __mpc_lowcomm_ib_numa_t;
 
 /** Array of numa nodes */
-static mpc_common_spinlock_t __numas_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t __numas_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 static __mpc_lowcomm_ib_numa_t ** numas = NULL;
 
 static int numa_number = -1;
@@ -95,7 +95,7 @@ int        __number_of_registered_numa = 0;
 
 /** Array of vps */
 static __mpc_lowcomm_ib_vp_t **vps        = NULL;
-static mpc_common_spinlock_t   __vps_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t   __vps_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 static _mpc_lowcomm_ib_cp_task_t *all_tasks = NULL;
 
@@ -217,7 +217,7 @@ void _mpc_lowcomm_ib_cp_ctx_finalize(struct sctk_ib_rail_info_s *rail_ib)
 }
 
 static _mpc_lowcomm_ib_ibuf_t * volatile __global_ibufs_list      = NULL;
-static mpc_common_spinlock_t   __global_ibufs_list_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t   __global_ibufs_list_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 void _mpc_lowcomm_ib_cp_ctx_init_task(int rank, int vp)
 {

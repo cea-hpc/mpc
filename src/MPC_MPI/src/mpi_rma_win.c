@@ -83,7 +83,7 @@ int mpc_MPI_Win_progress_probe(struct mpc_MPI_Win *desc, void *prebuff,
 
 #if 1
 
-static mpc_common_spinlock_t __pool_submit_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t __pool_submit_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 static struct mpc_MPI_Win *submited_desc = NULL;
 static volatile int progress_pool_count = 0;
 
@@ -832,7 +832,7 @@ int mpc_MPI_Win_shared_query(MPI_Win win, int rank, MPI_Aint *size,
 /* Keyval low-level storage */
 
 static struct mpc_common_hashtable __win_keyval_ht;
-mpc_common_spinlock_t __win_keyval_ht_lock = SCTK_SPINLOCK_INITIALIZER;
+mpc_common_spinlock_t __win_keyval_ht_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 int __win_keyval_ht_init_done = 0;
 
 static inline void win_keyval_ht_init_once() {

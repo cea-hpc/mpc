@@ -61,7 +61,7 @@ struct sctk_ib_qp_ht_s
 	struct sctk_ib_qp_s *remote;
 };
 
-static mpc_common_rwlock_t __qp_ht_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
+static mpc_common_rwlock_t __qp_ht_lock = MPC_COMMON_SPIN_RWLOCK_INITIALIZER;
 
 sctk_ib_qp_t  *sctk_ib_qp_ht_find ( struct sctk_ib_rail_info_s *rail_ib, int key )
 {
