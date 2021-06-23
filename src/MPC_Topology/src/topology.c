@@ -1062,7 +1062,7 @@ static hwloc_obj_type_t __mpc_find_split_type(char *value, hwloc_obj_type_t *typ
 	/* if new level added, change enum and arrays in mpc_topology.h accordingly */
 	int i;
 
-	for(i = 0; i < HW_TYPE_COUNT; i++)
+	for(i = 0; i < MPC_LOWCOMM_HW_TYPE_COUNT; i++)
 	{
 		if(!strcmp(value, mpc_topology_split_hardware_type_name[i]) )
 		{
@@ -1161,7 +1161,9 @@ int mpc_topology_guided_compute_color(char *value)
 	{
 		return -1;
 	}
+
 	int color = -1;
+
 	if(!ret) /* info value not find */
 	{
 		return -1;

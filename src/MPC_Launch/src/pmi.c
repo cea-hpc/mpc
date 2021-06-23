@@ -25,6 +25,7 @@
 
 #include <mpc_common_helper.h>
 #include <mpc_common_rank.h>
+#include <mpc_common_spinlock.h>
 #include <mpc_common_types.h>
 #include <mpc_common_flags.h>
 #include "sctk_alloc.h"
@@ -1044,8 +1045,25 @@ int mpc_launch_pmi_get_app_rank(int* appname){
 		else printf("get appnum returned %d", ret);
 		return ret == PMIX_SUCCESS;
 	#elif defined( MPC_USE_PMI1 ) || defined(MPC_USE_HYDRA)
-		int rc = PMI_Get_appnum(appname);
-		PMI_CHECK_RC( rc, "PMI_Get_appnum" );
+		/* Hydra is not threadsafe */
+		static mpc_common_spinlock_t lock = MPC_COMMON_SPINLOCK_INITIALIZER;
+
+		static int prev_value = -1;
+
+		mpc_common_spinlock_lock(&lock);
+
+		if(0 <= prev_value)
+		{
+			*appname = prev_value;
+		}
+		else
+		{
+			int rc = PMI_Get_appnum(appname);
+			PMI_CHECK_RC( rc, "PMI_Get_appnum" );
+		}
+
+		mpc_common_spinlock_unlock(&lock);
+
 	#else
 		not_available();
 	#endif

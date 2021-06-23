@@ -14491,6 +14491,7 @@ static int __split_guided(MPI_Comm comm, int split_type, int key, MPI_Info info,
     int flag;
     int color = MPC_PROC_NULL;
     _mpc_cl_info_get(info, "mpi_hw_subdomain_type", buflen, value, &flag);
+ 
     if(!strcmp(value,"mpi_shared_memory")) /* ensure consistency MPI standard 4.0 */
     {
         *guided_shared_memory = 1;
@@ -14502,30 +14503,28 @@ static int __split_guided(MPI_Comm comm, int split_type, int key, MPI_Info info,
 	}
 
     int size = mpc_lowcomm_communicator_size(comm);
-    if(size == 1) 
+
+    if(size == 1)
     {
         return MPI_PROC_NULL;
     }
+
     color = mpc_topology_guided_compute_color(value);
-    if(color < 0) 
+
+    if(color < 0)
     {
         return MPI_PROC_NULL;
     }
+
     if(mpc_common_get_node_count() > 1)/* create color with node id */
     {
-        char str_logical_idx[512];
         char str_node_idx[512];
-        char tmp[512];
-        sprintf(str_logical_idx, "%d", color); 
-        sprintf(str_node_idx, "%d", mpc_common_get_node_rank()); 
-        sprintf(tmp, "%d", mpc_common_get_node_rank()); 
+		int node = mpc_common_get_node_rank();
+        snprintf(str_node_idx, 512, "%d%d%d%d%d%d", node, node, node, node, node, color);
         /* add node number enough time to be sure id not interfere between nodes */
-        strcat(str_node_idx, tmp);
-        strcat(str_node_idx, tmp);
-        strcat(str_node_idx, tmp);
-        strcat(str_node_idx, str_logical_idx);
         color = atoi(str_node_idx);
     }
+
     return color;
 }
 
@@ -15664,7 +15663,7 @@ void PMPIX_Get_hwsubdomain_types(char * value)
         /* if new level added, change enum and arrays in mpc_topology.h accordingly */
     int buflen = 1024;
     int i;
-    for(i = 0; i < HW_TYPE_COUNT; ++i)
+    for(i = 0; i < MPC_LOWCOMM_HW_TYPE_COUNT; ++i)
     {
         if(i == 0)
         {
@@ -15673,7 +15672,7 @@ void PMPIX_Get_hwsubdomain_types(char * value)
         else 
         {
             strcat(value, mpc_topology_split_hardware_type_name[i]);  
-            if(i != HW_TYPE_COUNT - 1)
+            if(i != MPC_LOWCOMM_HW_TYPE_COUNT - 1)
             {
                 strcat(value, " ");  
             }

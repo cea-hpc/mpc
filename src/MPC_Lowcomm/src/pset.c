@@ -29,6 +29,7 @@
 #include "group.h"
 #include <string.h>
 #include <mpc_launch_pmi.h>
+#include <mpc_topology.h>
 
 struct _mpc_lowcomm_pset_list_entry
 {
@@ -247,9 +248,9 @@ int _mpc_lowcomm_pset_register(void)
 	_mpc_lowcomm_pset_push("mpi://WORLD", _mpc_lowcomm_group_world(), 0);
 }
 
-static inline int __split_for(const char *desc, int color)
+static inline int __split_for(mpc_lowcomm_communicator_t src_comm, const char *desc, int color)
 {
-	mpc_lowcomm_communicator_t comm = mpc_lowcomm_communicator_split(MPC_COMM_WORLD,
+	mpc_lowcomm_communicator_t comm = mpc_lowcomm_communicator_split(src_comm,
 	                                                                 color,
 	                                                                 mpc_common_get_task_rank() );
 
@@ -267,10 +268,10 @@ static inline int __split_for(const char *desc, int color)
 	{
 		char sappid[64];
 
-		snprintf(sappid, 64, "%s://SELF", desc);
+		snprintf(sappid, 64, "%sSELF", desc);
 		_mpc_lowcomm_pset_push(sappid, grp, 0);
 
-		snprintf(sappid, 64, "%s://%d", desc, color);
+		snprintf(sappid, 64, "%s%d", desc, color);
 		_mpc_lowcomm_pset_push(sappid, grp, 0);
 	}
 
@@ -285,13 +286,48 @@ int mpc_lowcomm_pset_bootstrap(void)
 	int my_app_id;
 
 	mpc_launch_pmi_get_app_rank(&my_app_id);
-	__split_for("app", my_app_id);
+
+    __split_for(MPC_COMM_WORLD, "app://", my_app_id);
 
 	/* Node PSETS */
-	__split_for("node", mpc_common_get_node_rank() );
+	__split_for(MPC_COMM_WORLD, "node://", mpc_common_get_node_rank() );
 
 	/* Process PSETS */
-	__split_for("unix", mpc_common_get_process_rank() );
+	__split_for(MPC_COMM_WORLD, "unix://", mpc_common_get_process_rank() );
+
+
+	/* Topological PSETS */
+	mpc_lowcomm_communicator_t node_comm = mpc_lowcomm_communicator_split(MPC_COMM_WORLD,
+	                                                                      mpc_common_get_node_rank(),
+	                                                                      mpc_common_get_task_rank() );
+
+	if(node_comm == MPC_COMM_NULL)
+	{
+		return MPC_LOWCOMM_ERROR;
+	}
+
+	/* One task on the whole node nothing interesting */
+	if(mpc_lowcomm_communicator_size(node_comm) == 1)
+	{
+		mpc_lowcomm_communicator_free(&node_comm);
+		return MPC_LOWCOMM_SUCCESS;
+	}
+
+	int i;
+
+	for(i = 0 ; i < MPC_LOWCOMM_HW_TYPE_COUNT ; i++)
+	{
+		int color = mpc_topology_guided_compute_color(mpc_topology_split_hardware_type_name[i]);
+
+		if(0 <= color)
+		{
+			char name[64];
+			snprintf(name, 64, "hwloc://%s/", mpc_topology_split_hardware_type_name[i]);
+			__split_for(node_comm, name, color);
+		}
+	}
+
+	mpc_lowcomm_communicator_free(&node_comm);
 
 	return MPC_LOWCOMM_SUCCESS;
 }
