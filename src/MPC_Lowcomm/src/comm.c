@@ -3199,7 +3199,7 @@ int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destinat
 	{
 		if(has_status)
 		{
-			status->MPC_SOURCE = mpc_lowcomm_communicator_rank_of(comm, msg.source_task);
+			status->MPC_SOURCE = mpc_lowcomm_communicator_rank_of_as(comm, msg.source_task, msg.source_task, msg.source);
 			status->MPC_TAG    = msg.message_tag;
 			status->size       = ( mpc_lowcomm_msg_count_t )msg.msg_size;
 			status->MPC_ERROR = MPC_LOWCOMM_SUCCESS;

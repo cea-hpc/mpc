@@ -91,7 +91,7 @@ ssize_t mpc_common_io_safe_read( int fd, void *buf, size_t count )
 
 	if ( count == 0 )
 	{
-		return 1;
+		return 0;
 	}
 
 	/* loop until read all */

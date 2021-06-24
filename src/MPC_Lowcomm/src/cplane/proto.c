@@ -78,8 +78,10 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_recv(int socket)
 		return NULL;
 	}
 
-	//mpc_common_debug_error("MAG %d", incoming_wr.magick);
-	assume(incoming_wr.magick == 1337);
+	if(incoming_wr.magick != 1337)
+	{
+		return NULL;
+	}
 
 	/* Reallocate piggyback */
 
@@ -89,7 +91,7 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_recv(int socket)
 	memcpy(ret, &incoming_wr, sizeof(_mpc_lowcomm_monitor_wrap_t) );
 
 	/* Receive payload */
-	if(mpc_common_io_safe_read(socket, ret->content, incoming_wr.size) < 0)
+	if(mpc_common_io_safe_read(socket, ret->content, incoming_wr.size) <= 0)
 	{
 		sctk_free(ret);
 		return NULL;
