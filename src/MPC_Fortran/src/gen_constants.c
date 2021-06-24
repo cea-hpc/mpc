@@ -136,7 +136,7 @@ int generate_mpi_fortran_constants()
         MPI_TYPE_VAL("MPI_DATATYPE_NULL", MPI_DATATYPE_NULL, "MPI_Datatype");
         MPI_TYPE_VAL("MPI_OP_NULL", ((MPI_Op)MPI_OP_NULL), "MPI_Op");
         MPI_TYPE_VAL("MPI_WIN_NULL", ((MPI_Win)MPI_WIN_NULL), "MPI_Win");
-        MPI_TYPE_VAL("MPI_GROUP_NULL", ((MPI_Group)MPI_GROUP_NULL), "MPI_Group");
+
         MPI_TYPE_VAL("MPI_INFO_NULL", ((MPI_Info)MPI_INFO_NULL), "MPI_Info");
         MPI_TYPE_VAL("MPI_ERRHANDLER_NULL", MPI_ERRHANDLER_NULL,
                      "MPI_Errhandler");
@@ -339,7 +339,8 @@ int generate_mpi_fortran_constants()
 
         MPI_INTEGER_VAL("MPI_BOTTOM", (int)(MPI_BOTTOM));
 
-        MPI_INTEGER_VAL("MPI_GROUP_EMPTY", ((MPI_Group)0));
+        MPI_INTEGER_VAL("MPI_GROUP_EMPTY", (-1));
+        MPI_INTEGER_VAL("MPI_GROUP_NULL", 0);
 
         MPI_INTEGER_VAL("MPI_KEYVAL_INVALID", MPI_KEYVAL_INVALID);
 

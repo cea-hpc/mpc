@@ -198,11 +198,31 @@ void mpc_fortran_datatype_delete(__UNUSED__ MPI_Fint datatype)
 
 MPI_Group PMPI_Group_f2c(MPI_Fint group)
 {
+	if(group == -1)
+	{
+		return mpc_lowcomm_group_empty();
+	}
+
+	if(group == 0)
+	{
+		return NULL;
+	}
+
 	return mpc_lowcomm_group_from_id(group);
 }
 
 MPI_Fint PMPI_Group_c2f(MPI_Group group)
 {
+	if(group == NULL)
+	{
+		return 0;
+	}
+
+	if(group == mpc_lowcomm_group_empty())
+	{
+		return -1;
+	}
+
 	return mpc_lowcomm_group_linear_id(group);
 }
 

@@ -95,7 +95,6 @@ use :: mpi_f08_types
 	type(MPI_Datatype) :: MPI_DATATYPE_NULL = MPI_Datatype(-1)
 	type(MPI_Op) :: MPI_OP_NULL = MPI_Op(-1)
 	type(MPI_Win) :: MPI_WIN_NULL = MPI_Win(-1)
-	type(MPI_Group) :: MPI_GROUP_NULL = MPI_Group(0)
 	type(MPI_Info) :: MPI_INFO_NULL = MPI_Info(-1)
 	type(MPI_Errhandler) :: MPI_ERRHANDLER_NULL = MPI_Errhandler(-1)
 	type(MPI_Message) :: MPI_MESSAGE_NULL = MPI_Message(-1)
@@ -255,7 +254,8 @@ use :: mpi_f08_types
 	type(MPI_Op) :: MPI_REPLACE = MPI_Op(13)
 	type(MPI_Op) :: MPI_NO_OP = MPI_Op(14)
 	integer, parameter :: MPI_BOTTOM = 0
-	integer, parameter :: MPI_GROUP_EMPTY = 0
+	integer, parameter :: MPI_GROUP_EMPTY = -1
+	integer, parameter :: MPI_GROUP_NULL = 0
 	integer, parameter :: MPI_KEYVAL_INVALID = -1
 	integer, parameter :: MPI_THREAD_SINGLE = 0
 	integer, parameter :: MPI_THREAD_FUNNELED = 1
