@@ -102,8 +102,15 @@ ssize_t mpc_common_io_safe_read( int fd, void *buf, size_t count )
 		/* check errors */
 		if ( tmp == 0 )
 		{
-			res = nb_total_received_bytes;
-			break;
+			if(nb_total_received_bytes != count)
+			{
+				/* Early EOF */
+				return -1;
+			}
+			else
+			{
+				return nb_total_received_bytes;
+			}
 		}
 		else if ( tmp < 0 )
 		{
