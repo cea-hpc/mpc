@@ -503,7 +503,6 @@ int mpc_common_getaddr_interface(struct sockaddr_in *addr, char * ifname, int if
 
     if( getifaddrs(&ifaddr) < 0 )
     {
-        printf("HERE");
         return -1;
     }
 
@@ -661,7 +660,7 @@ int mpc_common_getaddrinfo(const char *node, const char *service,
     }
 
     /* Did we match exactly if not try to match partially */
-    if(!did_match_exactly && 0)
+    if(!did_match_exactly)
     {
         int cnt = 0;
         for( i = 0 ; i < res_count ; i++)
@@ -697,8 +696,15 @@ MPC_COMMON_AIDDR_DONE:
     return 0;
 }
 
+static inline void __print_ipv4(struct sockaddr_in * inaddr, char * ip, int iplen)
+{
+    inet_ntop( AF_INET, &inaddr->sin_addr, ip, iplen );
+}
+
+
 int mpc_common_resolve_local_ip_for_iface(char * ip, int iplen, char *preffered_device)
 {
+
     if(!ip || !iplen)
     {
         return -1;
@@ -708,62 +714,87 @@ int mpc_common_resolve_local_ip_for_iface(char * ip, int iplen, char *preffered_
 
     ip[0] = '\0';
 
-    char hostname[128];
-    if( gethostname(hostname, 128) < 0)
+    struct ifaddrs* ifaddr;
+
+    if( getifaddrs(&ifaddr) < 0 )
     {
-        perror("gethostname");
         return -1;
     }
 
-    struct addrinfo *res = NULL;
-	struct addrinfo  hints;
+    struct ifaddrs* ifa = NULL;
 
-	memset(&hints, 0, sizeof(struct addrinfo) );
+    /* First pass Exact Match */
 
-	hints.ai_family   = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-
-
-
-    int ret = mpc_common_getaddrinfo(hostname, "80",
-                                     &hints,
-                                     &res,
-                                     preffered_device);
-	if(ret < 0)
-	{
-		if(ret == EAI_SYSTEM)
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
+    {
+        if (ifa->ifa_addr && ifa->ifa_name)
+        {
+            if (AF_INET == ifa->ifa_addr->sa_family)
+            {
+    		struct sockaddr_in* inaddr = (struct sockaddr_in*)ifa->ifa_addr;
+              	/* Exact Match */
+		if(!strcmp(ifa->ifa_name, preffered_device) )
 		{
-			fprintf(stderr, "Failed resolving peer: %s\n", strerror(errno) );
+			__print_ipv4(inaddr, ip, iplen);
+			goto LOCADDRDONE;
 		}
-		else
+            }
+        }
+    }
+
+    /* Second Pass Partial Match */
+
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
+    {
+        if (ifa->ifa_addr && ifa->ifa_name)
+        {
+            if (AF_INET == ifa->ifa_addr->sa_family)
+            {
+    		struct sockaddr_in* inaddr = (struct sockaddr_in*)ifa->ifa_addr;
+              	/* Exact Match */
+		if(strstr(ifa->ifa_name, preffered_device) )
 		{
-			fprintf(stderr, "Failed resolving peer: %s\n", gai_strerror(ret) );
+			__print_ipv4(inaddr, ip, iplen);
+			goto LOCADDRDONE;
 		}
-
-		return -1;
-	}
-
-
-    /* Now we want the IP from the first entry in the reordered getaddr */
-    if(!res)
-    {
-        return -1;   
+            }
+        }
     }
 
-    if ( res->ai_family == AF_INET )
+
+    /* Last Pass First not localhost */
+
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
     {
-        struct sockaddr_in *saddr = ( struct sockaddr_in * )res->ai_addr;
-        inet_ntop( AF_INET, &saddr->sin_addr, ip, iplen );
+        if (ifa->ifa_addr && ifa->ifa_name)
+        {
+            if(!strcmp(ifa->ifa_name, "lo"))
+	    {
+		    continue;
+	    }
+
+            if (AF_INET == ifa->ifa_addr->sa_family)
+            {
+    		struct sockaddr_in* inaddr = (struct sockaddr_in*)ifa->ifa_addr;
+		__print_ipv4(inaddr, ip, iplen);
+	
+		/* We really dont want to answer localhost ! */	
+		if(!strstr(ip, "127.0."))
+		{
+			goto LOCADDRDONE;
+		}
+            }
+        }
     }
-    else if ( res->ai_family == AF_INET6 )
+
+    if(strlen(ip) == 0 )
     {
-        struct sockaddr_in6 *saddr6 = ( struct sockaddr_in6 * )res->ai_addr;
-        inet_ntop( AF_INET6, &saddr6->sin6_addr, ip, iplen );
-    } 
-    else
-    {
-        not_reachable();
+	return -1;
     }
+
+
+LOCADDRDONE:
+    freeifaddrs(ifaddr);
 
     return 0;
 }

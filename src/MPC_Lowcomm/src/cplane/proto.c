@@ -78,7 +78,7 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_recv(int socket)
 		return NULL;
 	}
 
-	mpc_common_debug_error("MAG %d", incoming_wr.magick);
+	//mpc_common_debug_error("MAG %d", incoming_wr.magick);
 	assume(incoming_wr.magick == 1337);
 
 	/* Reallocate piggyback */

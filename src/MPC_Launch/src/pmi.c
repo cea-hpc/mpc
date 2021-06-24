@@ -1052,14 +1052,15 @@ int mpc_launch_pmi_get_app_rank(int* appname){
 
 		mpc_common_spinlock_lock(&lock);
 
+		*appname = -1;
+
 		if(0 <= prev_value)
 		{
 			*appname = prev_value;
 		}
 		else
 		{
-			int rc = PMI_Get_appnum(appname);
-			PMI_CHECK_RC( rc, "PMI_Get_appnum" );
+			PMI_Get_appnum(appname);
 		}
 
 		mpc_common_spinlock_unlock(&lock);

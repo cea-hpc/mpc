@@ -370,11 +370,12 @@ static inline mpc_lowcomm_monitor_retcode_t __bootstrap_ring(void)
 		if(retcode != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
 		{
 			mpc_lowcomm_monitor_retcode_print(retcode, "Bootstraping ring");
+			mpc_common_debug_fatal("Could not bootstrap ring");
 		}
 
 		char b1[128], b2[128];
 
-		mpc_common_nodebug("RING == %lu %s to %lu %s", me, mpc_lowcomm_peer_format_r(me, b1, 128) , to, mpc_lowcomm_peer_format_r(to, b2, 128) );
+		mpc_common_debug("RING == %lu %s to %lu %s", me, mpc_lowcomm_peer_format_r(me, b1, 128) , to, mpc_lowcomm_peer_format_r(to, b2, 128) );
 
 		if(MPC_LOWCOMM_MONITOR_MAX_CLIENTS <= ++cnt)
 		{
@@ -1232,6 +1233,8 @@ static inline _mpc_lowcomm_client_ctx_t *___connect_client(struct _mpc_lowcomm_m
 	hints.ai_family   = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
+	mpc_common_debug("Trying to connect to %s : %s", hostname, port);
+
 	/* Note we bind to port 0 as we do not care much of where we are */
 	int ret = mpc_common_getaddrinfo(hostname, port, &hints, &res, "ib");
 
@@ -1245,6 +1248,8 @@ static inline _mpc_lowcomm_client_ctx_t *___connect_client(struct _mpc_lowcomm_m
 		{
 			fprintf(stderr, "Failed resolving peer: %s\n", gai_strerror(ret) );
 		}
+
+		mpc_common_debug_error("HERE %d", __LINE__);
 
 		*retcode = MPC_LOWCOMM_MONITOR_RET_NOT_REACHABLE;
 		return NULL;
@@ -1282,6 +1287,7 @@ static inline _mpc_lowcomm_client_ctx_t *___connect_client(struct _mpc_lowcomm_m
 
 	if(client_socket < 0)
 	{
+		mpc_common_debug_error("HERE %d", __LINE__);
 		*retcode = MPC_LOWCOMM_MONITOR_RET_NOT_REACHABLE;
 		return NULL;
 	}
