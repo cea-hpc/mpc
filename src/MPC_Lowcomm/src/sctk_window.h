@@ -54,8 +54,8 @@ struct mpc_lowcomm_rdma_window
 	int                                   owner;
 	int                                   comm_rank;
 	sctk_rail_pin_ctx_t                   pin;
-	uint32_t                              comm_id;
-  mpc_lowcomm_communicator_t            communicator;
+	mpc_lowcomm_communicator_id_t         comm_id;
+	mpc_lowcomm_communicator_t            communicator;
 	int                                   is_emulated;
 	mpc_common_spinlock_t                 lock;
 	unsigned int                          refcounter;
