@@ -26,7 +26,7 @@
 #endif
 
 #include <sctk_alloc.h>
-
+#include <mpc_lowcomm_monitor.h>
 
 /************************************************************************/
 /* Rail Gates                                                           */
@@ -456,6 +456,8 @@ static inline _mpc_lowcomm_endpoint_t *__elect_endpoint(mpc_lowcomm_ptp_message_
                                                         int is_for_on_demand,
                                                         _mpc_lowcomm_multirail_table_entry_t **ext_routes)
 {
+	assert( mpc_lowcomm_peer_get_set(destination_process) != 0);
+
 	_mpc_lowcomm_multirail_table_entry_t *routes = _mpc_lowcomm_multirail_table_acquire_routes(destination_process);
 
 	*ext_routes = routes;
@@ -578,6 +580,8 @@ void sctk_pending_on_demand_push(sctk_rail_info_t *rail, mpc_lowcomm_peer_uid_t 
 	new->next = (struct sctk_pending_on_demand_s *)__pending_on_demand;
 
 	new->dest = dest;
+	assert( mpc_lowcomm_peer_get_set(dest) != 0);
+
 	new->rail = rail;
 
 	__pending_on_demand = new;
@@ -839,6 +843,7 @@ static inline void __route_to_process(mpc_lowcomm_peer_uid_t destination, mpc_lo
  */
 void _mpc_lowcomm_multirail_send_message(mpc_lowcomm_ptp_message_t *msg)
 {
+	assert( mpc_lowcomm_peer_get_set(SCTK_MSG_DEST_PROCESS_UID(msg)) != 0);
 	int retry;
 	mpc_lowcomm_peer_uid_t destination_process;
 

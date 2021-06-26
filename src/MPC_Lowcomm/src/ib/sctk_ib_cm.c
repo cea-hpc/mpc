@@ -747,6 +747,13 @@ _mpc_lowcomm_endpoint_t * sctk_ib_cm_on_demand_request_monitor(sctk_rail_info_t 
 																		   __monitor_get_rail_name(monitor_code, 128, rail, _IB_MONITOR_OD),
 																		   local_qp_infos,
 																		   &mon_retcode);
+
+		if(mon_retcode != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
+		{
+			mpc_lowcomm_monitor_retcode_print(mon_retcode, "IB OD CPLANE error");
+			return NULL;
+		}
+
 	/* Decode incoming addr */
 		mpc_lowcomm_monitor_args_t *resp_content = mpc_lowcomm_monitor_response_get_content(resp);
 

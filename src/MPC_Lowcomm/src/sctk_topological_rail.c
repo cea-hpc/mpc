@@ -31,7 +31,7 @@
 
 #include "sctk_rail.h"
 
-_mpc_lowcomm_endpoint_t *sctk_topological_rail_ellect_endpoint(int remote, mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint)
+_mpc_lowcomm_endpoint_t *sctk_topological_rail_ellect_endpoint(mpc_lowcomm_peer_uid_t remote, mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint)
 {
 	int vp_id = mpc_topology_get_pu();
 
@@ -102,7 +102,7 @@ _mpc_lowcomm_endpoint_t *sctk_topological_rail_ellect_endpoint(int remote, mpc_l
 
 static void _mpc_lowcomm_topological_send_message(mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint)
 {
-	_mpc_lowcomm_endpoint_t *topo_endpoint = sctk_topological_rail_ellect_endpoint(SCTK_MSG_DEST_PROCESS(msg), msg, endpoint);
+	_mpc_lowcomm_endpoint_t *topo_endpoint = sctk_topological_rail_ellect_endpoint(SCTK_MSG_DEST_PROCESS_UID(msg), msg, endpoint);
 
 	assume(topo_endpoint != NULL);
 
@@ -279,18 +279,12 @@ void sctk_network_init_topological_rail_info(sctk_rail_info_t *rail)
 		/* In this case we split the devices among the PUs as the topology
 		 * is flat therefore no need to think of distances just split
 		 * devices envenly among the CPUS */
-		int cpu_per_device = infos->max_vp / rail->subrail_count;
-
-		/* If there are more devices than CPU */
-		if(!cpu_per_device)
-		{
-			cpu_per_device = 1;
-		}
 
 		for(i = 0; i < infos->max_vp; i++)
 		{
 			/* Comput ehte device bucket */
-			infos->vp_to_subrail[i] = i / cpu_per_device;
+			infos->vp_to_subrail[i] = (i + mpc_common_get_local_process_rank())%rail->subrail_count;
+			mpc_common_debug_info("[FLAT] TOPOLOGICAL Rail VP %d maps to device %d", i, infos->vp_to_subrail[i]);
 
 			/* Should NEVER happen due to integer computation */
 			if(rail->subrail_count <= infos->vp_to_subrail[i])

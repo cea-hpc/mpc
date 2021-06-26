@@ -375,7 +375,9 @@ static inline mpc_lowcomm_monitor_retcode_t __bootstrap_ring(void)
 
 		char b1[128], b2[128];
 
-		mpc_common_debug("RING == %lu %s to %lu %s", me, mpc_lowcomm_peer_format_r(me, b1, 128) , to, mpc_lowcomm_peer_format_r(to, b2, 128) );
+#ifdef MONITOR_DEBUG
+		mpc_common_debug_error("RING == %lu %s to %lu %s", me, mpc_lowcomm_peer_format_r(me, b1, 128) , to, mpc_lowcomm_peer_format_r(to, b2, 128) );
+#endif
 
 		if(MPC_LOWCOMM_MONITOR_MAX_CLIENTS <= ++cnt)
 		{
@@ -681,8 +683,10 @@ _mpc_lowcomm_client_ctx_t *__accept_incoming(struct _mpc_lowcomm_monitor_s *moni
 		return NULL;
 	}
 
+#ifdef MONITOR_DEBUG
 	char bx[128];
-	mpc_common_nodebug("[IN] %s INCOMING from %s", mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), bx, 128), mpc_lowcomm_peer_format(uid));
+	mpc_common_debug_error("[IN] %s INCOMING from %s", mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), bx, 128), mpc_lowcomm_peer_format(uid));
+#endif
 
 	int already_present = 0;
 
@@ -699,9 +703,10 @@ _mpc_lowcomm_client_ctx_t *__accept_incoming(struct _mpc_lowcomm_monitor_s *moni
 
 			if(uid < mpc_lowcomm_monitor_get_uid())
 			{
+#ifdef MONITOR_DEBUG
 				char b1[128];
-				mpc_common_debug("[REJECT] %s UID %s is alreary connected closing",mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), b1, 128), mpc_lowcomm_peer_format(uid));
-
+				mpc_common_debug_error("[REJECT] %s UID %s is alreary connected closing",mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), b1, 128), mpc_lowcomm_peer_format(uid));
+#endif
 				/* Notify remote end of our refusal */
 				already_present = 1;
 				shutdown(new_fd, SHUT_RDWR);
@@ -716,8 +721,10 @@ _mpc_lowcomm_client_ctx_t *__accept_incoming(struct _mpc_lowcomm_monitor_s *moni
 	{
 		_mpc_lowcomm_client_ctx_t *new = _mpc_lowcomm_client_ctx_new(uid, new_fd, monitor);
 		_mpc_lowcomm_monitor_client_add(monitor, new);
+#ifdef MONITOR_DEBUG
 		char meb[128];
-		mpc_common_nodebug("%s UID %s now connected", mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), meb, 128), mpc_lowcomm_peer_format(uid));
+		mpc_common_debug_error("%s UID %s now connected", mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), meb, 128), mpc_lowcomm_peer_format(uid));
+#endif
 		return new;
 	}
 
@@ -1249,7 +1256,6 @@ static inline _mpc_lowcomm_client_ctx_t *___connect_client(struct _mpc_lowcomm_m
 			fprintf(stderr, "Failed resolving peer: %s\n", gai_strerror(ret) );
 		}
 
-		mpc_common_debug_error("HERE %d", __LINE__);
 
 		*retcode = MPC_LOWCOMM_MONITOR_RET_NOT_REACHABLE;
 		return NULL;
@@ -1287,7 +1293,6 @@ static inline _mpc_lowcomm_client_ctx_t *___connect_client(struct _mpc_lowcomm_m
 
 	if(client_socket < 0)
 	{
-		mpc_common_debug_error("HERE %d", __LINE__);
 		*retcode = MPC_LOWCOMM_MONITOR_RET_NOT_REACHABLE;
 		return NULL;
 	}
@@ -2267,12 +2272,18 @@ mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_ondemand(mpc_lowcomm_peer_uid
 															char *data,
 															mpc_lowcomm_monitor_retcode_t *ret)
 {
+	assume( mpc_lowcomm_peer_get_set(dest) != 0);
+#ifdef MONITOR_DEBUG
+	mpc_common_debug_error("Sending OD on CPLANE for %s", mpc_lowcomm_peer_format(dest));
+#endif
+
 	_mpc_lowcomm_monitor_wrap_t * cmd = __generate_ondemand_cmd(dest, target, data, 0);
 
 	if(_mpc_lowcomm_monitor_command_send(cmd, ret) < 0)
 	{
 		_mpc_lowcomm_monitor_wrap_free(cmd);
         *ret = MPC_LOWCOMM_MONITOR_RET_NOT_REACHABLE;
+		mpc_common_debug_error("Failed to send OD on cplane");
 		return NULL;
 	}
 
