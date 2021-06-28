@@ -354,8 +354,8 @@ static inline mpc_conf_config_type_t *__init_driver_portals(struct _mpc_lowcomm_
 	*/
 
 	mpc_conf_config_type_t *offload = mpc_conf_config_type_init("offload",
-															PARAM("collective", &portals->offloading.collectives, MPC_CONF_BOOL, "Enable on-demand optimization through ID hardware propagation."),
-															PARAM("ondemand", &portals->offloading.ondemand, MPC_CONF_BOOL, "Enable collective optimization for Portals."),
+															PARAM("collective", &portals->offloading.collectives, MPC_CONF_BOOL, "Enable collective optimization for Portals."),
+															PARAM("ondemand", &portals->offloading.ondemand, MPC_CONF_BOOL, "Enable on-demand optimization through ID hardware propagation."),
 	                                                        NULL);
 
 
