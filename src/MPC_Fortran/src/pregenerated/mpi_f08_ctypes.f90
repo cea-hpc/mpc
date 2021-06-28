@@ -30,21 +30,21 @@ module mpi_f08_ctypes
 use,intrinsic :: iso_c_binding
 
 
-integer, parameter :: c_Datatype = c_int
-integer, parameter :: c_Comm = c_int
+integer, parameter :: c_Offset = c_intptr_t
 integer, parameter :: c_Group = c_int
-integer, parameter :: c_Win = c_int
-integer, parameter :: c_Op = c_int
-integer, parameter :: c_Info = c_int
 integer, parameter :: c_Errhandler = c_int
 integer, parameter :: c_Message = c_int
-integer, parameter :: c_File = c_int
-integer, parameter :: c_Request = c_int
 integer, parameter :: c_Count = c_intptr_t
-integer, parameter :: c_Aint = c_intptr_t
-integer, parameter :: c_Offset = c_intptr_t
-integer, parameter :: bool = c_int
 integer, parameter :: int = c_int
+integer, parameter :: c_Op = c_int
+integer, parameter :: c_Datatype = c_int
+integer, parameter :: c_Aint = c_intptr_t
+integer, parameter :: bool = c_int
+integer, parameter :: c_File = c_int
+integer, parameter :: c_Comm = c_int
+integer, parameter :: c_Win = c_int
+integer, parameter :: c_Request = c_int
+integer, parameter :: c_Info = c_int
 
 !If you ever need to change this STATUS edit genmod.py
 type, bind(c) :: c_Status

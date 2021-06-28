@@ -296,13 +296,11 @@ static inline mpc_conf_config_type_t *__init_driver_tcp(struct _mpc_lowcomm_conf
 	
 	struct _mpc_lowcomm_config_struct_net_driver_tcp *tcp = &driver->value.tcp;
 
-    snprintf(tcp->interface, MPC_CONF_STRING_SIZE, "ib");
 	/*
 	  Create the config object
 	*/
 
 	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("tcp",
-															PARAM("interface", tcp->interface, MPC_CONF_STRING, "Give preferred interface name (can be subset)."),
 	                                                        NULL);
 
 	return ret;
@@ -319,13 +317,11 @@ static inline mpc_conf_config_type_t *__init_driver_tcprdma(struct _mpc_lowcomm_
 	
 	struct _mpc_lowcomm_config_struct_net_driver_tcp_rdma *tcp = &driver->value.tcprdma;
 
-    snprintf(tcp->interface, MPC_CONF_STRING_SIZE, "ib");
 	/*
 	  Create the config object
 	*/
 
 	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("tcprdma",
-															PARAM("interface", tcp->interface, MPC_CONF_STRING, "Give preferred interface name (can be subset)."),
 	                                                        NULL);
 	return ret;
 }

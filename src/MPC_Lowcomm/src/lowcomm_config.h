@@ -260,16 +260,12 @@ struct _mpc_lowcomm_config_struct_net_driver_portals
 /**TCP-based driver**/
 struct _mpc_lowcomm_config_struct_net_driver_tcp
 {
-	/**Enable TCP over Infiniband (if elligible).**/
-	char interface[MPC_CONF_STRING_SIZE];
 };
 
 /******************************** STRUCTURE *********************************/
 /**TCP-Based RDMA implementation**/
 struct _mpc_lowcomm_config_struct_net_driver_tcp_rdma
 {
-	/**Enable TCP over Infiniband (if elligible).**/
-	char interface[MPC_CONF_STRING_SIZE];
 };
 
 /******************************** STRUCTURE *********************************/

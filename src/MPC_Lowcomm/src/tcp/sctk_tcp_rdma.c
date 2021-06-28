@@ -203,7 +203,12 @@ void sctk_network_init_tcp_rdma ( sctk_rail_info_t *rail )
 	rail->notify_any_source_message = NULL;
 	rail->driver_finalize           = sctk_network_finalize_tcp_rdma;
 
-	char * interface = rail->runtime_config_driver_config->driver.value.tcp.interface;
+	char * interface = rail->runtime_config_rail->device;
+
+	if(!interface)
+	{
+		interface = "default";
+	}
 
     char net_name[128];
     snprintf(net_name, 128, "TCP RDMA (%s)", interface);
