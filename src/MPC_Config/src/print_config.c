@@ -157,7 +157,16 @@ int main(int argc, char **argv)
 {
 #ifdef MPC_Lowcomm
 	 mpc_lowcomm_init();
+	int my_rank = mpc_lowcomm_get_rank();
+
+	if(my_rank)
+	{
+		/* Only 0 prints */
+		return 0;
+	}
 #endif
+
+
 
 	int ret = 0;
 

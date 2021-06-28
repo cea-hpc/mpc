@@ -684,7 +684,11 @@ void ___mpc_lowcomm_driver_conf_validate()
 			all_configs->elems[i]->addr = new_config;
 			/* Reget new conf */
 			unfold = _mpc_lowcomm_conf_driver_unfolded_get(config->name);
-			assume(unfold != NULL);
+			
+			if(!unfold)
+			{
+				continue;
+			}
 		}
 
 		/* This updates enums from string values */
