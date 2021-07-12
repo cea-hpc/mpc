@@ -208,7 +208,7 @@ int PMPI_Session_get_nth_pset(MPI_Session session, MPI_Info info, int n, int *ps
 
 	if(*pset_len)
 	{
-		snprintf(pset_name, *pset_len, pset->name);
+		snprintf(pset_name, *pset_len + 1, pset->name);
 	}
 
 	*pset_len = strlen(pset->name);
