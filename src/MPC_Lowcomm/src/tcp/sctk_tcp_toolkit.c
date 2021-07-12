@@ -127,11 +127,8 @@ static int __connect_to(char *name_init, sctk_rail_info_t *rail)
 			 * performance for short messages. See http://www.ibm.com/developerworks/library/l-hisock/index.html */
 			int one = 1;
 
-			if(setsockopt(clientsock_fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one) ) == -1)
-			{
-				mpc_common_debug_error("Cannot modify the socket options!");
-			}
-
+			setsockopt(clientsock_fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one) );
+			
 			/* Try to connect */
 			errno = 0;
 
@@ -223,10 +220,7 @@ static void __create_listening_socket(sctk_rail_info_t *rail)
 			 * performance for short messages. See http://www.ibm.com/developerworks/library/l-hisock/index.html */
 			int one = 1;
 
-			if(setsockopt(rail->network.tcp.sockfd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one) ) == -1)
-			{
-				mpc_common_debug_error("Cannot modify the socket options!");
-			}
+			setsockopt(rail->network.tcp.sockfd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one) );
 
 			errno = 0;
 
