@@ -149,6 +149,7 @@ int parse_args(int argc, char **argv)
 }
 
 #ifdef MPC_Lowcomm
+	int mpc_lowcomm_get_rank();
 	void mpc_lowcomm_init();
 	void mpc_lowcomm_release();
 #endif
