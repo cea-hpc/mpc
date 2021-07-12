@@ -70,7 +70,20 @@ _mpc_lowcomm_set_t *_mpc_lowcomm_set_init(mpc_lowcomm_set_uid_t gid,
                                           int is_lead,
 										  mpc_lowcomm_peer_uid_t local_peer)
 {
-	assume(_mpc_lowcomm_set_get(gid) == NULL);
+	static mpc_common_spinlock_t __set_creation_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
+
+	mpc_common_spinlock_lock(&__set_creation_lock);
+
+	_mpc_lowcomm_set_t * ret = _mpc_lowcomm_set_get(gid);
+
+	if( ret != NULL)
+	{
+		mpc_common_spinlock_unlock(&__set_creation_lock);
+		return ret;
+	}
+
+	mpc_common_spinlock_unlock(&__set_creation_lock);
+
 
 	_mpc_lowcomm_set_t *new = sctk_malloc(sizeof(_mpc_lowcomm_set_t) );
 	assume(new != NULL);
