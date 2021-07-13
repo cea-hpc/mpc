@@ -30,7 +30,22 @@ int _mpc_lowcomm_peer_teardown()
 
 _mpc_lowcomm_peer_t *_mpc_lowcomm_peer_register(mpc_lowcomm_peer_uid_t uid, uint64_t local_task_count, char *uri, int is_local)
 {
-	assume(_mpc_lowcomm_peer_get(uid) == NULL);
+	static mpc_common_spinlock_t __peer_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
+
+	_mpc_lowcomm_peer_t *ret = NULL;
+
+	/* Make sure there is no race on the peer registration */
+	mpc_common_spinlock_lock( &__peer_lock );
+
+	ret = _mpc_lowcomm_peer_get( uid );
+
+	if(ret != NULL)
+	{
+		mpc_common_spinlock_unlock( &__peer_lock );
+		return ret;
+	}
+
+	mpc_common_spinlock_unlock( &__peer_lock );
 
 	_mpc_lowcomm_peer_t *new = sctk_malloc(sizeof(_mpc_lowcomm_peer_t) );
 	assume(new != NULL);
