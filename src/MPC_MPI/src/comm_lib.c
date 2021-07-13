@@ -3231,6 +3231,8 @@ int _mpc_cl_attach_per_comm(mpc_lowcomm_communicator_t comm, mpc_lowcomm_communi
 		mpc_lowcomm_barrier(new_comm);
 		__mpc_cl_per_communicator_alloc_from_existing(task_specific, new_comm, comm);
 	}
+
+	MPC_ERROR_SUCESS();
 }
 
 

@@ -36,6 +36,10 @@ type, bind(C) :: MPI_Comm
     integer :: val
 end type MPI_Comm
 
+type, bind(C) :: MPI_Session
+    integer :: val
+end type MPI_Session
+
 type, bind(C) :: MPI_Datatype
     integer :: val
 end type MPI_Datatype
@@ -116,6 +120,10 @@ type, bind(C) :: MPI_Grequest_free_function
     type(c_ptr) :: val
 end type MPI_Grequest_free_function
 
+type, bind(C) :: MPI_Session_errhandler_function
+    type(c_ptr) :: val
+end type MPI_Session_errhandler_function
+
 type, bind(C) :: MPI_Comm_errhandler_function
     type(c_ptr) :: val
 end type MPI_Comm_errhandler_function
@@ -153,6 +161,9 @@ interface operator(==)
    module procedure MPI_Comm_equal
    module procedure MPI_Comm_equal_c
    module procedure MPI_Comm_equal_cr
+   module procedure MPI_Session_equal
+   module procedure MPI_Session_equal_c
+   module procedure MPI_Session_equal_cr
    module procedure MPI_Datatype_equal
    module procedure MPI_Datatype_equal_c
    module procedure MPI_Datatype_equal_cr
@@ -191,6 +202,7 @@ interface operator(==)
    module procedure MPI_Grequest_query_function_equal
    module procedure MPI_Grequest_cancel_function_equal
    module procedure MPI_Grequest_free_function_equal
+   module procedure MPI_Session_errhandler_function_equal
    module procedure MPI_Comm_errhandler_function_equal
    module procedure MPI_Win_errhandler_function_equal
    module procedure MPI_Errhandler_function_equal
@@ -204,6 +216,8 @@ end interface
 
 private :: MPI_Comm_equal
 private :: MPI_Comm_equal_c
+private :: MPI_Session_equal
+private :: MPI_Session_equal_c
 private :: MPI_Datatype_equal
 private :: MPI_Datatype_equal_c
 private :: MPI_Errhandler_equal
@@ -233,6 +247,7 @@ private :: MPI_Delete_function_equal
 private :: MPI_Grequest_query_function_equal
 private :: MPI_Grequest_cancel_function_equal
 private :: MPI_Grequest_free_function_equal
+private :: MPI_Session_errhandler_function_equal
 private :: MPI_Comm_errhandler_function_equal
 private :: MPI_Win_errhandler_function_equal
 private :: MPI_Errhandler_function_equal
@@ -246,6 +261,9 @@ interface operator(/=)
    module procedure MPI_Comm_notequal
    module procedure MPI_Comm_notequal_c
    module procedure MPI_Comm_notequal_cr
+   module procedure MPI_Session_notequal
+   module procedure MPI_Session_notequal_c
+   module procedure MPI_Session_notequal_cr
    module procedure MPI_Datatype_notequal
    module procedure MPI_Datatype_notequal_c
    module procedure MPI_Datatype_notequal_cr
@@ -284,6 +302,7 @@ interface operator(/=)
    module procedure MPI_Grequest_query_function_notequal
    module procedure MPI_Grequest_cancel_function_notequal
    module procedure MPI_Grequest_free_function_notequal
+   module procedure MPI_Session_errhandler_function_notequal
    module procedure MPI_Comm_errhandler_function_notequal
    module procedure MPI_Win_errhandler_function_notequal
    module procedure MPI_Errhandler_function_notequal
@@ -297,6 +316,8 @@ end interface
 
 private :: MPI_Comm_notequal
 private :: MPI_Comm_notequal_c
+private :: MPI_Session_notequal
+private :: MPI_Session_notequal_c
 private :: MPI_Datatype_notequal
 private :: MPI_Datatype_notequal_c
 private :: MPI_Errhandler_notequal
@@ -326,6 +347,7 @@ private :: MPI_Delete_function_notequal
 private :: MPI_Grequest_query_function_notequal
 private :: MPI_Grequest_cancel_function_notequal
 private :: MPI_Grequest_free_function_notequal
+private :: MPI_Session_errhandler_function_notequal
 private :: MPI_Comm_errhandler_function_notequal
 private :: MPI_Win_errhandler_function_notequal
 private :: MPI_Errhandler_function_notequal
@@ -339,6 +361,9 @@ interface assignment(=)
    module procedure MPI_Comm_assign
    module procedure MPI_Comm_assign_c
    module procedure MPI_Comm_assign_cr
+   module procedure MPI_Session_assign
+   module procedure MPI_Session_assign_c
+   module procedure MPI_Session_assign_cr
    module procedure MPI_Datatype_assign
    module procedure MPI_Datatype_assign_c
    module procedure MPI_Datatype_assign_cr
@@ -377,6 +402,7 @@ interface assignment(=)
    module procedure MPI_Grequest_query_function_assign
    module procedure MPI_Grequest_cancel_function_assign
    module procedure MPI_Grequest_free_function_assign
+   module procedure MPI_Session_errhandler_function_assign
    module procedure MPI_Comm_errhandler_function_assign
    module procedure MPI_Win_errhandler_function_assign
    module procedure MPI_Errhandler_function_assign
@@ -390,6 +416,8 @@ end interface
 
 private :: MPI_Comm_assign
 private :: MPI_Comm_assign_c
+private :: MPI_Session_assign
+private :: MPI_Session_assign_c
 private :: MPI_Datatype_assign
 private :: MPI_Datatype_assign_c
 private :: MPI_Errhandler_assign
@@ -419,6 +447,7 @@ private :: MPI_Delete_function_assign
 private :: MPI_Grequest_query_function_assign
 private :: MPI_Grequest_cancel_function_assign
 private :: MPI_Grequest_free_function_assign
+private :: MPI_Session_errhandler_function_assign
 private :: MPI_Comm_errhandler_function_assign
 private :: MPI_Win_errhandler_function_assign
 private :: MPI_Errhandler_function_assign
@@ -495,6 +524,72 @@ subroutine MPI_Comm_assign_cr( a , b)
    type(MPI_Comm), intent(in) ::  b 
    a =  b%val
 end subroutine MPI_Comm_assign_cr
+
+function MPI_Session_equal( a , b) result(r)
+   type(MPI_Session), intent(in) ::  a
+   type(MPI_Session), intent(in) ::  b
+   logical :: r
+   r = ( .TRUE.  .AND. ( a%val ==  b%val  )&
+ )
+end function MPI_Session_equal
+
+function MPI_Session_equal_c( a , b) result(r)
+   type(MPI_Session), intent(in) ::  a 
+   integer(c_int), intent(in) ::  b 
+   logical :: r
+   r = ( .TRUE.  .AND. ( a%val ==  b  )&
+ )
+end function MPI_Session_equal_c
+
+function MPI_Session_equal_cr( a , b) result(r)
+   integer(c_int), intent(in) ::  a 
+   type(MPI_Session), intent(in) ::  b 
+   logical :: r
+   r = ( .TRUE.  .AND. ( a ==  b%val )&
+ )
+end function MPI_Session_equal_cr
+
+function MPI_Session_notequal( a , b) result(r)
+   type(MPI_Session), intent(in) ::  a
+   type(MPI_Session), intent(in) ::  b
+   logical :: r
+   r = ( .FALSE.  .OR. ( a%val /=  b%val  )&
+ )
+end function MPI_Session_notequal
+
+function MPI_Session_notequal_c( a , b) result(r)
+   type(MPI_Session), intent(in) ::  a 
+   integer(c_int), intent(in) ::  b 
+   logical :: r
+   r = ( .FALSE.  .OR. ( a%val /=  b  )&
+ )
+end function MPI_Session_notequal_c
+
+function MPI_Session_notequal_cr( a , b) result(r)
+   integer(c_int), intent(in) ::  a 
+   type(MPI_Session), intent(in) ::  b 
+   logical :: r
+   r = ( .FALSE.  .OR. ( a /=  b%val )&
+ )
+end function MPI_Session_notequal_cr
+
+subroutine MPI_Session_assign( a , b)
+   type(MPI_Session), intent(out) ::  a
+   type(MPI_Session), intent(in) ::  b
+   a%val =  b%val
+end subroutine MPI_Session_assign
+
+subroutine MPI_Session_assign_c( a , b)
+   type(MPI_Session), intent(out) ::  a 
+   integer(c_int), intent(in) ::  b 
+   a%val =  b
+end subroutine MPI_Session_assign_c
+
+subroutine MPI_Session_assign_cr( a , b)
+   integer(c_int), intent(out) ::  a 
+   type(MPI_Session), intent(in) ::  b 
+   a =  b%val
+end subroutine MPI_Session_assign_cr
 
 function MPI_Datatype_equal( a , b) result(r)
    type(MPI_Datatype), intent(in) ::  a
@@ -1362,6 +1457,31 @@ subroutine MPI_Grequest_free_function_assign( a , b)
    type(MPI_Grequest_free_function), intent(out) ::  a
    type(MPI_Grequest_free_function), intent(in) ::  b
 end subroutine MPI_Grequest_free_function_assign
+
+!SKIP function ptr
+!SKIP function ptr
+function MPI_Session_errhandler_function_equal( a , b) result(r)
+   type(MPI_Session_errhandler_function), intent(in) ::  a
+   type(MPI_Session_errhandler_function), intent(in) ::  b
+   logical :: r
+   r = ( .TRUE. )
+end function MPI_Session_errhandler_function_equal
+
+!SKIP function ptr
+!SKIP function ptr
+function MPI_Session_errhandler_function_notequal( a , b) result(r)
+   type(MPI_Session_errhandler_function), intent(in) ::  a
+   type(MPI_Session_errhandler_function), intent(in) ::  b
+   logical :: r
+   r = ( .FALSE. )
+end function MPI_Session_errhandler_function_notequal
+
+!SKIP function ptr
+!SKIP function ptr
+subroutine MPI_Session_errhandler_function_assign( a , b)
+   type(MPI_Session_errhandler_function), intent(out) ::  a
+   type(MPI_Session_errhandler_function), intent(in) ::  b
+end subroutine MPI_Session_errhandler_function_assign
 
 !SKIP function ptr
 !SKIP function ptr

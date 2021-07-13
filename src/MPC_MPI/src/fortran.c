@@ -126,7 +126,19 @@ static void __initialize_handle_factories()
 #endif
 }
 
+/********************
+ * SESSIONS HANDLES *
+ ********************/
 
+MPI_Session PMPI_Session_f2c(MPI_Fint session)
+{
+	return MPI_SESSION_NULL;
+}
+
+MPI_Fint PMPI_Session_c2f(MPI_Session session)
+{
+	return -1;
+}
 
 /*************************************
  *  MPI-2 : Fortran handle conversion *
@@ -458,3 +470,5 @@ void mpc_fortran_interface_registration()
 #pragma weak MPI_Info_c2f = PMPI_Info_c2f
 #pragma weak MPI_Errhandler_f2c = PMPI_Errhandler_f2c
 #pragma weak MPI_Errhandler_c2f = PMPI_Errhandler_c2f
+#pragma weak MPI_Session_f2c = PMPI_Session_f2c
+#pragma weak MPI_Session_c2f = PMPI_Session_c2f

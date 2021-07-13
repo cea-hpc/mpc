@@ -6965,7 +6965,7 @@ int PMPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler);
 struct mpc_mpi_session_s;
 typedef struct mpc_mpi_session_s* MPI_Session;
 
-typedef void (*MPI_Session_errhandler_function)(MPI_Session *session, int *error_code, ...);
+typedef void (MPI_Session_errhandler_function)(MPI_Session *session, int *error_code, ...);
 
 /* MPI_Session_create_errhandler */
 

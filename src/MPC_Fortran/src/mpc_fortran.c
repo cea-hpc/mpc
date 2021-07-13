@@ -8915,22 +8915,289 @@ double pmpi_wtime__()
 	return MPI_Wtime();
 }
 
+#pragma weak mpi_session_create_errhandler_ = pmpi_session_create_errhandler_
+void pmpi_session_create_errhandler_(MPI_Session_errhandler_function *session_errhandler_fn,
+                                   MPI_Fint *errhandler, int *ierror)
+{
+	MPI_Errhandler c_errhandler;
+
+	*ierror = PMPI_Session_create_errhandler( session_errhandler_fn, &c_errhandler );
+	*errhandler = PMPI_Errhandler_c2f( c_errhandler );
+}
+
+#pragma weak mpi_session_create_errhandler__ = pmpi_session_create_errhandler__
+void pmpi_session_create_errhandler__(MPI_Session_errhandler_function *session_errhandler_fn,
+                                   MPI_Fint *errhandler, int *ierror)
+{
+	pmpi_session_create_errhandler_( session_errhandler_fn, errhandler, ierror );
+}
+
+#pragma weak mpi_session_set_errhandler_ = pmpi_session_set_errhandler_
+void pmpi_session_set_errhandler_(MPI_Fint * session, MPI_Fint * errhandler, int *ierror)
+{
+	MPI_Errhandler c_errhandler = PMPI_Errhandler_f2c( *errhandler );
+	MPI_Session c_session = PMPI_Session_f2c( *session );
+	*ierror = PMPI_Session_set_errhandler( c_session, c_errhandler );
+}
+
+#pragma weak mpi_session_set_errhandler__ = pmpi_session_set_errhandler__
+void pmpi_session_set_errhandler__(MPI_Fint * session, MPI_Fint * errhandler, int *ierror)
+{
+	pmpi_session_set_errhandler_( session, errhandler, ierror );
+}
+
+#pragma weak mpi_session_get_errhandler_ = pmpi_session_get_errhandler_
+void pmpi_session_get_errhandler_(MPI_Fint * session, MPI_Fint *errhandler, int * ierror)
+{
+	MPI_Session c_session = PMPI_Session_f2c( *session );
+
+	MPI_Errhandler c_errhandler;
+
+	*ierror = PMPI_Session_get_errhandler( c_session, &c_errhandler );
+
+	*errhandler = PMPI_Errhandler_c2f( c_errhandler );
+}
+
+#pragma weak mpi_session_get_errhandler__ = pmpi_session_get_errhandler__
+void pmpi_session_get_errhandler__(MPI_Fint * session, MPI_Fint *errhandler, int * ierror)
+{
+	pmpi_session_get_errhandler_( session, errhandler, ierror );
+}
+
+#pragma weak mpi_session_call_errhandler_ = pmpi_session_call_errhandler_
+void pmpi_session_call_errhandler_(MPI_Fint *  session, MPI_Fint *  error_code, int *ierror)
+{
+	int c_error_code = *error_code;
+	MPI_Session c_session = PMPI_Session_f2c( *session );
+
+	*ierror = PMPI_Session_call_errhandler( c_session, c_error_code );
+}
+
+#pragma weak mpi_session_call_errhandler__ = pmpi_session_call_errhandler__
+void pmpi_session_call_errhandler__(MPI_Fint *  session, MPI_Fint *  error_code, int *ierror)
+{
+	pmpi_session_call_errhandler_( session, error_code, ierror );
+}
+
+#pragma weak mpi_session_init_ = pmpi_session_init_
+void pmpi_session_init_(MPI_Fint *  info, MPI_Fint *  errhandler, MPI_Fint * session, int *ierror)
+{
+	MPI_Info c_info = PMPI_Info_f2c( *info );
+	MPI_Errhandler c_errh = PMPI_Errhandler_f2c(*errhandler);
+
+	MPI_Session c_session;
+	*ierror = PMPI_Session_init( c_info, c_errh , &c_session);
+
+	*session = PMPI_Session_c2f( c_session );
+}
+
+#pragma weak mpi_session_init__ = pmpi_session_init__
+void pmpi_session_init__(MPI_Fint *  info, MPI_Fint *  errhandler, MPI_Fint * session, int *ierror)
+{
+	pmpi_session_init_( info, errhandler, session, ierror );
+}
+
+#pragma weak mpi_session_finalize_ = pmpi_session_finalize_
+void pmpi_session_finalize_(MPI_Fint *session, int *ierror)
+{
+	MPI_Session c_session = PMPI_Session_f2c( *session );
+	*ierror = PMPI_Session_finalize( &c_session );
+	*session = PMPI_Session_c2f( c_session );
+}
+
+#pragma weak mpi_session_finalize__ = pmpi_session_finalize__
+void pmpi_session_finalize__(MPI_Fint *session, int *ierror)
+{
+	pmpi_session_finalize_( session, ierror );
+}
+
+#pragma weak mpi_session_get_info_ = pmpi_session_get_info_
+void pmpi_session_get_info_(MPI_Fint * session, MPI_Fint * info_used, int *ierror)
+{
+	MPI_Info c_info;
+	MPI_Session c_session = PMPI_Session_f2c( *session );
+
+	*ierror = PMPI_Session_get_info(c_session, &c_info);
+
+	*info_used = PMPI_Info_c2f( c_info );
+}
+
+#pragma weak mpi_session_get_num_psets_ = pmpi_session_get_num_psets_
+void pmpi_session_get_num_psets_(MPI_Fint * session, MPI_Fint *  info, MPI_Fint *npset_names, int *ierror)
+{
+	MPI_Session c_session = PMPI_Session_f2c( *session );
+	MPI_Info c_info = PMPI_Info_f2c( *info);
+
+	int num;
+
+	*ierror = PMPI_Session_get_num_psets( c_session, c_info, &num );
+
+	*npset_names = num;
+}
+
+#pragma weak mpi_session_get_num_psets__ = pmpi_session_get_num_psets__
+void pmpi_session_get_num_psets__(MPI_Fint * session, MPI_Fint *  info, MPI_Fint *npset_names, int *ierror)
+{
+	pmpi_session_get_num_psets_( session, info, npset_names, ierror );
+}
+
+#pragma weak mpi_session_get_nth_pset_ = pmpi_session_get_nth_pset_
+void pmpi_session_get_nth_pset_(MPI_Fint * session, MPI_Fint * info, MPI_Fint * n, MPI_Fint *pset_len, char *pset_name CHAR_MIXED(size_string), int *ierror CHAR_END(size_string) )
+{
+	MPI_Session c_session = PMPI_Session_f2c( *session );
+	MPI_Info c_info = PMPI_Info_f2c( *info );
+
+	int len;
+	int c_n = *n;
+
+	*ierror = PMPI_Session_get_nth_pset( c_session, c_info, c_n, &len, pset_name );
+	char_c_to_fortran(pset_name, size_string);
+	*pset_len = len;
+}
+
+#pragma weak mpi_session_get_nth_pset__ = pmpi_session_get_nth_pset__
+void pmpi_session_get_nth_pset__(MPI_Fint * session, MPI_Fint * info, MPI_Fint * n, MPI_Fint *pset_len, char *pset_name CHAR_MIXED(size_string), int *ierror CHAR_END(size_string) )
+{
+	MPI_Session c_session = PMPI_Session_f2c( *session );
+	MPI_Info c_info = PMPI_Info_f2c( *info );
+
+	int len;
+	int c_n = *n;
+
+	*ierror = PMPI_Session_get_nth_pset( c_session, c_info, c_n, &len, pset_name );
+	char_c_to_fortran(pset_name, size_string);
+	*pset_len = len;
+}
+
+#pragma weak mpi_group_from_session_pset_ = pmpi_group_from_session_pset_
+void pmpi_group_from_session_pset_(MPI_Fint * session, const char *pset_name  CHAR_MIXED(size_string), MPI_Fint * newgroup, int *ierror CHAR_END(size_string))
+{
+	MPI_Session c_session = PMPI_Session_f2c( *session );
+	MPI_Group c_group;
+
+	char *tmp_string = NULL, *ptr_string = NULL;
+
+	tmp_string = char_fortran_to_c( (char *)pset_name, size_string, &ptr_string);
+
+	*ierror = PMPI_Group_from_session_pset( c_session, tmp_string, &c_group );
+
+	sctk_free( ptr_string );
+
+	*newgroup = PMPI_Group_c2f( c_group );
+}
+
+#pragma weak mpi_group_from_session_pset__ = pmpi_group_from_session_pset__
+void pmpi_group_from_session_pset__(MPI_Fint * session, const char *pset_name  CHAR_MIXED(size_string), MPI_Fint * newgroup, int *ierror CHAR_END(size_string))
+{
+	MPI_Session c_session = PMPI_Session_f2c( *session );
+	MPI_Group c_group;
+
+	char *tmp_string = NULL, *ptr_string = NULL;
+
+	tmp_string = char_fortran_to_c( (char *)pset_name, size_string, &ptr_string);
+
+	*ierror = PMPI_Group_from_session_pset( c_session, tmp_string, &c_group );
+
+	sctk_free( ptr_string );
+
+	*newgroup = PMPI_Group_c2f( c_group );
+}
+
+#pragma weak mpi_comm_create_from_group_ = pmpi_comm_create_from_group_
+void pmpi_comm_create_from_group_(MPI_Fint * group, const char * stringtag CHAR_MIXED(size_string), MPI_Fint * info, MPI_Fint * errhandler, MPI_Fint *newcomm, int *ierror CHAR_END(size_string) )
+{
+	MPI_Group c_group = PMPI_Group_f2c( *group );
+	MPI_Info c_info = PMPI_Info_f2c( *info );
+	MPI_Errhandler c_errhandler = PMPI_Errhandler_f2c( *errhandler );
+
+
+	char *tmp_string = NULL, *ptr_string = NULL;
+
+	tmp_string = char_fortran_to_c( (char *)stringtag, size_string, &ptr_string);
+
+	MPI_Comm c_newcomm;
+
+	*ierror = PMPI_Comm_create_from_group(c_group, tmp_string, c_info, c_errhandler, &c_newcomm);
+
+	sctk_free( ptr_string );
+
+	*newcomm = PMPI_Comm_c2f( c_newcomm );
+}
+
+#pragma weak mpi_comm_create_from_group__ = pmpi_comm_create_from_group__
+void pmpi_comm_create_from_group__(MPI_Fint * group, const char * stringtag CHAR_MIXED(size_string), MPI_Fint * info, MPI_Fint * errhandler, MPI_Fint *newcomm, int *ierror CHAR_END(size_string) )
+{
+	MPI_Group c_group = PMPI_Group_f2c( *group );
+	MPI_Info c_info = PMPI_Info_f2c( *info );
+	MPI_Errhandler c_errhandler = PMPI_Errhandler_f2c( *errhandler );
+
+
+	char *tmp_string = NULL, *ptr_string = NULL;
+
+	tmp_string = char_fortran_to_c( (char *)stringtag, size_string, &ptr_string);
+
+	MPI_Comm c_newcomm;
+
+	*ierror = PMPI_Comm_create_from_group(c_group, tmp_string, c_info, c_errhandler, &c_newcomm);
+
+	sctk_free( ptr_string );
+
+	*newcomm = PMPI_Comm_c2f( c_newcomm );
+}
+
+#pragma weak mpi_session_get_pset_info_ = pmpi_session_get_pset_info_
+void pmpi_session_get_pset_info_(MPI_Fint *  session, const char *pset_name  CHAR_MIXED(size_string), MPI_Fint *info, int * ierror CHAR_END(size_string) )
+{
+	MPI_Session c_session = PMPI_Session_f2c( *session );
+	MPI_Info c_info;
+
+	char *tmp_string = NULL, *ptr_string = NULL;
+
+	tmp_string = char_fortran_to_c( (char *)pset_name, size_string, &ptr_string);
+
+	*ierror = PMPI_Session_get_pset_info( c_session, tmp_string, &c_info );
+
+	sctk_free( ptr_string );
+
+	*info = PMPI_Info_c2f( c_info );
+}
+
+#pragma weak mpi_session_get_pset_info__ = pmpi_session_get_pset_info__
+void pmpi_session_get_pset_info__(MPI_Fint *  session, const char *pset_name  CHAR_MIXED(size_string), MPI_Fint *info, int * ierror CHAR_END(size_string) )
+{
+	MPI_Session c_session = PMPI_Session_f2c( *session );
+	MPI_Info c_info;
+
+	char *tmp_string = NULL, *ptr_string = NULL;
+
+	tmp_string = char_fortran_to_c( (char *)pset_name, size_string, &ptr_string);
+
+	*ierror = PMPI_Session_get_pset_info( c_session, tmp_string, &c_info );
+
+	sctk_free( ptr_string );
+
+	*info = PMPI_Info_c2f( c_info );
+}
+
+#pragma weak mpi_session_get_info__ = pmpi_session_get_info__
+void pmpi_session_get_info__(MPI_Fint * session, MPI_Fint * info_used, int *ierror)
+{
+	pmpi_session_get_info_( session, info_used, ierror );
+}
+
 #pragma weak mpi_file_create_errhandler_ = pmpi_file_create_errhandler_
 void pmpi_file_create_errhandler_( MPI_File_errhandler_function *errhandler_fn, MPI_Fint *errhandler, int *ierror )
 {
 	MPI_Errhandler c_errhandler;
 
-	*ierror = MPI_File_create_errhandler( errhandler_fn, &c_errhandler );
+	*ierror = PMPI_File_create_errhandler( errhandler_fn, &c_errhandler );
 	*errhandler = PMPI_Errhandler_c2f( c_errhandler );
 }
 
 #pragma weak mpi_file_create_errhandler__ = pmpi_file_create_errhandler__
 void pmpi_file_create_errhandler__( MPI_File_errhandler_function *errhandler_fn, MPI_Fint *errhandler, int *ierror )
 {
-	MPI_Errhandler c_errhandler;
-
-	*ierror = MPI_File_create_errhandler( errhandler_fn, &c_errhandler );
-	*errhandler = PMPI_Errhandler_c2f( c_errhandler );
+	pmpi_file_create_errhandler__( errhandler_fn, errhandler, ierror );
 }
 
 MPI_File PMPI_File_f2c(int file);

@@ -1,5 +1,6 @@
 [
 	{"name" : "MPI_Comm", "layout" : [{"name" : "val" , "type" : "int"}]},
+	{"name" : "MPI_Session", "layout" : [{"name" : "val" , "type" : "int"}]},
 	{"name" : "MPI_Datatype", "layout" :[{"name" : "val" , "type" : "int"}]},
 	{"name" : "MPI_Errhandler", "layout" :[{"name" : "val" , "type" : "int"}]},
 	{"name" : "MPI_File", "layout" :[{"name" : "val" , "type" : "int"}]},
@@ -27,6 +28,8 @@
 	{"name" : "MPI_Grequest_cancel_function", "layout" :[{"name" : "val" , "type" : "func"}]},
 	{"name" : "MPI_Grequest_free_function", "layout" :[{"name" : "val" , "type" : "func"}]},
 
+
+	{"name" : "MPI_Session_errhandler_function", "layout" :[{"name" : "val" , "type" : "func"}]},
 
 	{"name" : "MPI_Comm_errhandler_function", "layout" :[{"name" : "val" , "type" : "func"}]},
 	{"name" : "MPI_Win_errhandler_function", "layout" :[{"name" : "val" , "type" : "func"}]},

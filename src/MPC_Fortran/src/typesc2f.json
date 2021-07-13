@@ -4,6 +4,8 @@
     "MPI_Aint": "INTEGER(KIND=MPI_ADDRESS_KIND)",
     "MPI_Aint*": "INTEGER(KIND=MPI_ADDRESS_KIND)",
     "MPI_Aint[]": "INTEGER(KIND=MPI_ADDRESS_KIND) !!VAR!!(*)",
+    "MPI_Session": "INTEGER",
+    "MPI_Session*": "INTEGER",
     "MPI_Comm": "INTEGER",
     "MPI_Comm*": "INTEGER",
     "MPI_Comm_copy_attr_function*": "EXTERNAL",

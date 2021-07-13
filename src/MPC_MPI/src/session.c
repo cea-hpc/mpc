@@ -108,7 +108,7 @@ int PMPI_Session_call_errhandler(MPI_Session session, int error_code)
 		MPI_ERROR_REPORT(MPI_COMM_SELF, MPI_ERR_ARG, "Failed to resolve errhandler");
 	}
 
-	( (MPI_Session_errhandler_function)errh)(&session, &error_code);
+	( (MPI_Session_errhandler_function*)errh)(&session, &error_code);
 
 	MPI_ERROR_SUCCESS();
 }
