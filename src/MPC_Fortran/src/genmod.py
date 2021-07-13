@@ -726,6 +726,8 @@ for mpitype in f08types:
             module_file_data += "    integer :: " + tname + "\n"
         elif ttype == "func":
             module_file_data += "    type(c_ptr) :: " + tname + "\n"
+        elif ttype == "ptr":
+            module_file_data += "    integer*8 :: " + tname + "\n"
         elif ttype == "long":
             module_file_data += "    integer*8 :: " + tname + "\n"
         # Done emmiting content
@@ -1071,9 +1073,15 @@ for const in mpcconstants:
     fval = const["value"]
     # Skip F77 Procedures
     if ismpif:
-        continue
+        continue 
     # HANDLE LINK TIME VALUES
-    if name == "MPI_IN_PLACE":
+    if name == "MPI_COMM_WORLD":
+        module_file_data += "	type(MPI_Comm), dimension(1), bind(C, name=\"mpc_f08_world\"), target :: MPI_COMM_WORLD\n"
+    elif name == "MPI_COMM_SELF":
+        module_file_data += "	type(MPI_Comm), dimension(1), bind(C, name=\"mpc_f08_self\"), target :: MPI_COMM_SELF\n"
+    elif name == "MPI_COMM_NULL":
+        module_file_data += "	type(MPI_Comm), dimension(1), bind(C, name=\"mpc_f08_null\"), target :: MPI_COMM_NULL\n"
+    elif name == "MPI_IN_PLACE":
         module_file_data += "	integer(c_int), bind(C, name=\"mpc_f08_in_place\"), target :: MPI_IN_PLACE\n"
     elif ftype == "int":
         module_file_data += "	integer, parameter :: " + \

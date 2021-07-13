@@ -91,7 +91,7 @@ use :: mpi_f08_types
 	integer, parameter :: MPI_COMBINER_STRUCT_INTEGER = 18
 	integer, parameter :: MPI_COMBINER_HVECTOR_INTEGER = 19
 	type(MPI_Request) :: MPI_REQUEST_NULL = MPI_Request(-1)
-	type(MPI_Comm) :: MPI_COMM_NULL = MPI_Comm(0)
+	type(MPI_Comm), dimension(1), bind(C, name="mpc_f08_null"), target :: MPI_COMM_NULL
 	type(MPI_Datatype) :: MPI_DATATYPE_NULL = MPI_Datatype(-1)
 	type(MPI_Op) :: MPI_OP_NULL = MPI_Op(-1)
 	type(MPI_Win) :: MPI_WIN_NULL = MPI_Win(-1)
@@ -102,8 +102,8 @@ use :: mpi_f08_types
 	integer, parameter :: MPI_ARGV_NULL = 0
 	integer, parameter :: MPI_ARGVS_NULL = 0
 	integer, parameter :: MPI_UNDEFINED = -1
-	type(MPI_Comm) :: MPI_COMM_WORLD = MPI_Comm(1)
-	type(MPI_Comm) :: MPI_COMM_SELF = MPI_Comm(2)
+	type(MPI_Comm), dimension(1), bind(C, name="mpc_f08_world"), target :: MPI_COMM_WORLD
+	type(MPI_Comm), dimension(1), bind(C, name="mpc_f08_self"), target :: MPI_COMM_SELF
 	integer, parameter :: MPI_CART = -2
 	integer, parameter :: MPI_GRAPH = -3
 	integer, parameter :: MPI_DIST_GRAPH = -4

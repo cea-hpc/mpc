@@ -24,6 +24,7 @@
 #include "mpc_mpi_internal.h"
 #include <mpc_common_debug.h>
 #include <mpc_lowcomm_group.h>
+#include <mpc_common_datastructure.h>
 
 
 #include <sctk_alloc.h>
@@ -43,6 +44,109 @@
 #pragma weak MPI_Session_get_nth_pset = PMPI_Session_get_nth_pset
 #pragma weak MPI_Session_get_pset_info = PMPI_Session_get_pset_info
 #pragma weak MPI_Group_from_session_pset = PMPI_Group_from_session_pset
+
+/*************************
+ * IDENTIFIER GENERATION *
+ *************************/
+
+static mpc_common_spinlock_t __factory_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
+static int __factory_initialization_counter = 0;
+struct mpc_common_hashtable __id_to_session_ht;
+int __session_id = 0;
+
+
+static inline void __init_id_factory()
+{
+	mpc_common_spinlock_lock(&__factory_lock);
+
+	__factory_initialization_counter++;
+
+	if(__factory_initialization_counter > 1)
+	{
+		mpc_common_spinlock_unlock(&__factory_lock);
+		return;
+	}
+
+	/* Doing INIT */
+	mpc_common_hashtable_init(&__id_to_session_ht, 37);
+
+
+	mpc_common_spinlock_unlock(&__factory_lock);
+}
+
+static inline void __release_id_factory()
+{
+	mpc_common_spinlock_lock(&__factory_lock);
+
+	__factory_initialization_counter--;
+
+	if(__factory_initialization_counter > 0)
+	{
+		mpc_common_spinlock_unlock(&__factory_lock);
+		return;
+	}
+
+	/* Doing RELEASE */
+	mpc_common_hashtable_release(&__id_to_session_ht);
+
+
+	mpc_common_spinlock_unlock(&__factory_lock);
+}
+
+static int __session_new_id(MPI_Session session)
+{
+	int ret = 0;
+
+	mpc_common_spinlock_lock(&__factory_lock);
+
+	__session_id++;
+
+	ret = __session_id;
+
+	mpc_common_hashtable_set(&__id_to_session_ht, __session_id, (void*)session);
+
+	mpc_common_spinlock_unlock(&__factory_lock);
+
+	return ret;
+}
+
+static void __session_free_id(int session_id)
+{
+	mpc_common_spinlock_lock(&__factory_lock);
+
+	mpc_common_hashtable_delete(&__id_to_session_ht, session_id);
+
+	mpc_common_spinlock_unlock(&__factory_lock);
+}
+
+
+MPI_Session mpc_mpi_session_f2c(int session_id)
+{
+	MPI_Session ret = MPI_SESSION_NULL;
+
+	if(session_id == 0)
+	{
+		return ret;
+	}
+
+	mpc_common_spinlock_lock(&__factory_lock);
+
+	ret = mpc_common_hashtable_get(&__id_to_session_ht, session_id);
+
+	mpc_common_spinlock_unlock(&__factory_lock);
+
+	return ret;
+}
+
+int mpc_mpi_session_c2f(MPI_Session session)
+{
+	if(session == MPI_SESSION_NULL)
+	{
+		return 0;
+	}
+
+	return session->id;
+}
 
 /******************
 * ERROR HANDLING *
@@ -158,8 +262,12 @@ int PMPI_Session_init(MPI_Info info, MPI_Errhandler errhandler, MPI_Session *ses
 		return res;
 	}
 
+	__init_id_factory();
+
 	/* Initialized the runtime (if needed) */
 	mpc_mpi_initialize();
+
+	(*session)->id = __session_new_id(*session);
 
 	return res;
 }
@@ -168,9 +276,16 @@ int PMPI_Session_finalize(MPI_Session *session)
 {
 	int res = MPI_SUCCESS;
 
+	if(*session == MPI_SESSION_NULL)
+	{
+		MPI_ERROR_REPORT(MPI_COMM_SELF, MPI_ERR_COMM, "Cannot Free a NULL session");
+	}
+
 	res = PMPI_Info_free(&(*session)->infos);
 
 	MPI_HANDLE_ERROR(res, MPI_COMM_SELF, "Could not free session info object");
+
+	__session_free_id((*session)->id);
 
 	__session_free(*session);
 
@@ -178,6 +293,8 @@ int PMPI_Session_finalize(MPI_Session *session)
 
 	/* Release the runtime (if needed) */
 	mpc_mpi_release();
+
+	__release_id_factory();
 
 	MPI_ERROR_SUCCESS();
 }

@@ -1,8 +1,8 @@
 {
 	"MPI_Datatype" : "c_int",
-	"MPI_Comm" : "c_int",
+	"MPI_Comm" : "c_intptr_t",
 	"MPI_Session" : "c_int",
-	"MPI_Group" : "c_int",
+	"MPI_Group" : "c_intptr_t",
 	"MPI_Win" : "c_int",
 	"MPI_Op" : "c_int",
 	"MPI_Info" : "c_int",

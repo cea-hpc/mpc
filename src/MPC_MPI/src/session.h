@@ -27,10 +27,13 @@
 
 typedef struct mpc_mpi_session_s
 {
+	int            id;
 	MPI_Errhandler errh;
 	MPI_Info       infos;
 }mpc_mpi_session_t;
 
+MPI_Session mpc_mpi_session_f2c(int session_id);
+int mpc_mpi_session_c2f(MPI_Session session);
 
 
 #endif /* MPC_MPI_SESSION_H */

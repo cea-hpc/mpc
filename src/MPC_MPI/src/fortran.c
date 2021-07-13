@@ -8,6 +8,7 @@
 #include <uthash.h>
 
 #include <mpc_lowcomm_communicator.h>
+#include "session.h"
 
 /*******************
  * FORTRAN SUPPORT *
@@ -132,12 +133,12 @@ static void __initialize_handle_factories()
 
 MPI_Session PMPI_Session_f2c(MPI_Fint session)
 {
-	return MPI_SESSION_NULL;
+	return mpc_mpi_session_f2c(session);
 }
 
 MPI_Fint PMPI_Session_c2f(MPI_Session session)
 {
-	return -1;
+	return mpc_mpi_session_c2f(session);
 }
 
 /*************************************
@@ -449,6 +450,41 @@ void mpc_fortran_interface_registration()
         mpc_common_init_callback_register("Base Runtime Init Done", "Init Fortran Handles Factories", __initialize_handle_factories, 128);
 
 }
+
+/* 
+F08 Bindings
+ */
+#if 0
+MPI_Status * mpc_f08_status_ignore()
+{
+	return (MPI_Status*)MPI_STATUS_IGNORE;
+}
+
+MPI_Status * mpc_f08_statuses_ignore()
+{
+	return (MPI_Status*)MPI_STATUSES_IGNORE;
+}
+
+void * mpc_f08_in_place()
+{
+	return MPI_IN_PLACE;
+}
+
+MPI_Comm mpc_f08_world()
+{
+	return MPI_COMM_WORLD;
+}
+
+MPI_Comm mpc_f08_self()
+{
+	return MPI_COMM_SELF;
+}
+
+MPI_Comm mpc_f08_null()
+{
+	return MPI_COMM_NULL;
+}
+#endif
 
 /*****************
  * WEAK BINDINGS *

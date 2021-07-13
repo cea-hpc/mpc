@@ -36,6 +36,22 @@ int * ierror)
 {
 *ierror = MPI_Start( request);
 }
+
+void mpi_imrecv_f08(
+CFI_cdesc_t* buf_ptr,
+int count,
+MPI_Datatype datatype,
+MPI_Message* message,
+MPI_Request* status,
+int * ierror)
+{
+void* buf = buf_ptr->base_addr;
+*ierror = MPI_Imrecv( buf,
+count,
+datatype,
+message,
+status);
+}
 /* MPI_File_write_all_begin NOT IMPLEMENTED in MPC */
 
 
@@ -49,6 +65,15 @@ int * ierror)
 *ierror = MPI_Win_post( group,
 assert,
 win);
+}
+
+void mpi_session_create_errhandler_f08(
+MPI_Session_errhandler_function* errhfn,
+MPI_Errhandler* errh,
+int * ierror)
+{
+*ierror = MPI_Session_create_errhandler( errhfn,
+errh);
 }
 
 void mpi_win_get_errhandler_f08(
@@ -169,6 +194,17 @@ int * ierror)
 errorclass);
 }
 
+void mpi_session_get_num_psets_f08(
+MPI_Session session,
+MPI_Info info,
+int* npset_names,
+int * ierror)
+{
+*ierror = MPI_Session_get_num_psets( session,
+info,
+npset_names);
+}
+
 void mpi_free_mem_f08(
 CFI_cdesc_t* base_ptr,
 int * ierror)
@@ -248,7 +284,8 @@ bridge_comm,
 remote_leader,
 tag,
 newintercomm);
-}
+}/* Skipped function MPI_Group_from_session_psetwith conversion */
+
 /* MPI_File_iread_at NOT IMPLEMENTED in MPC */
 
 
@@ -350,25 +387,13 @@ request);
 }/* Skipped function MPI_Type_get_namewith conversion */
 
 
-void mpi_reduce_f08(
-CFI_cdesc_t* sendbuf_ptr,
-CFI_cdesc_t* recvbuf_ptr,
-int count,
-MPI_Datatype datatype,
-MPI_Op op,
-int root,
-MPI_Comm comm,
+void mpi_session_get_info_f08(
+MPI_Session session,
+MPI_Info* infoused,
 int * ierror)
 {
-void* sendbuf = sendbuf_ptr->base_addr;
-void* recvbuf = recvbuf_ptr->base_addr;
-*ierror = MPI_Reduce( sendbuf,
-recvbuf,
-count,
-datatype,
-op,
-root,
-comm);
+*ierror = MPI_Session_get_info( session,
+infoused);
 }
 
 void mpi_type_commit_f08(
@@ -378,11 +403,13 @@ int * ierror)
 *ierror = MPI_Type_commit( type);
 }
 
-void mpi_comm_get_parent_f08(
-MPI_Comm* parent,
+void mpi_session_set_errhandler_f08(
+MPI_Session session,
+MPI_Errhandler errh,
 int * ierror)
 {
-*ierror = MPI_Comm_get_parent( parent);
+*ierror = MPI_Session_set_errhandler( session,
+errh);
 }
 
 void mpi_type_create_f90_integer_f08(
@@ -548,13 +575,6 @@ int * ierror)
 {
 *ierror = MPI_Type_dup( type,
 newtype);
-}
-
-void mpi_query_thread_f08(
-int* provided,
-int * ierror)
-{
-*ierror = MPI_Query_thread( provided);
 }
 
 void mpi_comm_group_f08(
@@ -810,6 +830,15 @@ int * ierror)
 errorcode);
 }
 
+void mpi_session_call_errhandler_f08(
+MPI_Session session,
+int errorcode,
+int * ierror)
+{
+*ierror = MPI_Session_call_errhandler( session,
+errorcode);
+}
+
 void mpi_grequest_complete_f08(
 MPI_Request request,
 int * ierror)
@@ -1010,20 +1039,18 @@ r,
 newtype);
 }
 
-void mpi_imrecv_f08(
-CFI_cdesc_t* buf_ptr,
-int count,
-MPI_Datatype datatype,
-MPI_Message* message,
-MPI_Request* status,
+void mpi_win_create_keyval_f08(
+MPI_Win_copy_attr_function* win_copy_attr_fn,
+MPI_Win_delete_attr_function* win_delete_attr_fn,
+int* win_keyval,
+CFI_cdesc_t* extra_state_ptr,
 int * ierror)
 {
-void* buf = buf_ptr->base_addr;
-*ierror = MPI_Imrecv( buf,
-count,
-datatype,
-message,
-status);
+void* extra_state = extra_state_ptr->base_addr;
+*ierror = MPI_Win_create_keyval( win_copy_attr_fn,
+win_delete_attr_fn,
+win_keyval,
+extra_state);
 }
 
 void mpi_wait_f08(
@@ -1035,18 +1062,17 @@ int * ierror)
 status);
 }
 
-void mpi_testall_f08(
-int count,
-MPI_Request* array_of_requests,
-int* flag,
-MPI_Status* array_of_statuses,
+void mpi_session_get_errhandler_f08(
+MPI_Session session,
+MPI_Errhandler* errh,
 int * ierror)
 {
-*ierror = MPI_Testall( count,
-array_of_requests,
-flag,
-array_of_statuses);
+*ierror = MPI_Session_get_errhandler( session,
+errh);
 }
+/* MPI_File_write_all NOT IMPLEMENTED in MPC */
+
+
 /* MPI_File_set_info NOT IMPLEMENTED in MPC */
 
 
@@ -1096,9 +1122,7 @@ int * ierror)
 {
 *ierror = MPI_Comm_create_errhandler( function,
 errhandler);
-}
-/* MPI_File_write_all NOT IMPLEMENTED in MPC */
-
+}/* Skipped function MPI_Session_get_pset_infowith conversion */
 /* Skipped function MPI_Comm_connectwith conversion */
 
 
@@ -1163,14 +1187,11 @@ status);
 
 
 
-void mpi_buffer_attach_f08(
-CFI_cdesc_t* buffer_ptr,
-int size,
+void mpi_query_thread_f08(
+int* provided,
 int * ierror)
 {
-void* buffer = buffer_ptr->base_addr;
-*ierror = MPI_Buffer_attach( buffer,
-size);
+*ierror = MPI_Query_thread( provided);
 }
 
 void mpi_win_call_errhandler_f08(
@@ -1311,9 +1332,18 @@ recvtype,
 root,
 comm);
 }
-/* MPI_File_get_byte_offset NOT IMPLEMENTED in MPC */
 
-
+void mpi_comm_set_attr_f08(
+MPI_Comm comm,
+int comm_keyval,
+CFI_cdesc_t* attribute_val_ptr,
+int * ierror)
+{
+void* attribute_val = attribute_val_ptr->base_addr;
+*ierror = MPI_Comm_set_attr( comm,
+comm_keyval,
+attribute_val);
+}
 
 void mpi_comm_free_keyval_f08(
 int* comm_keyval,
@@ -1337,19 +1367,11 @@ op);
 /* Skipped function MPI_Add_error_stringwith conversion */
 
 
-void mpi_mprobe_f08(
-int source,
-int tag,
-MPI_Comm comm,
-MPI_Message* message,
-MPI_Status* status,
+void mpi_session_finalize_f08(
+MPI_Session* session,
 int * ierror)
 {
-*ierror = MPI_Mprobe( source,
-tag,
-comm,
-message,
-status);
+*ierror = MPI_Session_finalize( session);
 }
 
 void mpi_ssend_init_f08(
@@ -1470,7 +1492,8 @@ int * ierror)
 {
 *ierror = MPI_Comm_test_inter( comm,
 flag);
-}
+}/* Skipped function MPI_Comm_create_from_groupwith conversion */
+
 
 void mpi_intercomm_merge_f08(
 MPI_Comm intercomm,
@@ -1603,13 +1626,14 @@ recvtype,
 comm);
 }
 
-void mpi_file_create_errhandler_f08(
-MPI_File_errhandler_function* function,
-MPI_Errhandler* errhandler,
+void mpi_buffer_attach_f08(
+CFI_cdesc_t* buffer_ptr,
+int size,
 int * ierror)
 {
-*ierror = MPI_File_create_errhandler( function,
-errhandler);
+void* buffer = buffer_ptr->base_addr;
+*ierror = MPI_Buffer_attach( buffer,
+size);
 }/* Skipped function MPI_Info_getwith conversion */
 
 /* MPI_File_iwrite_at NOT IMPLEMENTED in MPC */
@@ -1828,6 +1852,27 @@ int * ierror)
 *ierror = MPI_Finalized( flag);
 }
 
+void mpi_reduce_f08(
+CFI_cdesc_t* sendbuf_ptr,
+CFI_cdesc_t* recvbuf_ptr,
+int count,
+MPI_Datatype datatype,
+MPI_Op op,
+int root,
+MPI_Comm comm,
+int * ierror)
+{
+void* sendbuf = sendbuf_ptr->base_addr;
+void* recvbuf = recvbuf_ptr->base_addr;
+*ierror = MPI_Reduce( sendbuf,
+recvbuf,
+count,
+datatype,
+op,
+root,
+comm);
+}
+
 void mpi_win_free_keyval_f08(
 int* win_keyval,
 int * ierror)
@@ -1924,6 +1969,13 @@ count);
 /* MPI_File_write NOT IMPLEMENTED in MPC */
 
 
+
+void mpi_comm_get_parent_f08(
+MPI_Comm* parent,
+int * ierror)
+{
+*ierror = MPI_Comm_get_parent( parent);
+}
 /* MPI_File_read_at_all_end NOT IMPLEMENTED in MPC */
 
 
@@ -2011,6 +2063,13 @@ newtype);
 /* MPI_File_set_atomicity NOT IMPLEMENTED in MPC */
 
 
+
+void mpi_op_free_f08(
+MPI_Op* op,
+int * ierror)
+{
+*ierror = MPI_Op_free( op);
+}
 
 void mpi_group_range_incl_f08(
 MPI_Group group,
@@ -2125,6 +2184,19 @@ newcomm);
 }/* Skipped function MPI_Pack_external_sizewith conversion */
 
 
+void mpi_testall_f08(
+int count,
+MPI_Request* array_of_requests,
+int* flag,
+MPI_Status* array_of_statuses,
+int * ierror)
+{
+*ierror = MPI_Testall( count,
+array_of_requests,
+flag,
+array_of_statuses);
+}
+
 void mpi_comm_join_f08(
 int fd,
 MPI_Comm* intercomm,
@@ -2192,6 +2264,21 @@ size);
 /* MPI_File_get_atomicity NOT IMPLEMENTED in MPC */
 
 
+
+void mpi_mprobe_f08(
+int source,
+int tag,
+MPI_Comm comm,
+MPI_Message* message,
+MPI_Status* status,
+int * ierror)
+{
+*ierror = MPI_Mprobe( source,
+tag,
+comm,
+message,
+status);
+}
 /* MPI_File_read_shared NOT IMPLEMENTED in MPC */
 
 
@@ -2275,18 +2362,9 @@ newtype);
 /* MPI_File_delete NOT IMPLEMENTED in MPC */
 
 
+/* MPI_File_get_byte_offset NOT IMPLEMENTED in MPC */
 
-void mpi_comm_set_attr_f08(
-MPI_Comm comm,
-int comm_keyval,
-CFI_cdesc_t* attribute_val_ptr,
-int * ierror)
-{
-void* attribute_val = attribute_val_ptr->base_addr;
-*ierror = MPI_Comm_set_attr( comm,
-comm_keyval,
-attribute_val);
-}
+
 /* MPI_File_read_all NOT IMPLEMENTED in MPC */
 
 
@@ -2441,14 +2519,8 @@ count,
 datatype,
 op,
 comm);
-}
+}/* Skipped function MPI_Cart_subwith conversion */
 
-void mpi_op_free_f08(
-MPI_Op* op,
-int * ierror)
-{
-*ierror = MPI_Op_free( op);
-}
 
 void mpi_win_set_errhandler_f08(
 MPI_Win win,
@@ -2482,8 +2554,16 @@ target_datatype,
 op,
 win);
 }/* Skipped function MPI_Comm_get_namewith conversion */
-/* Skipped function MPI_Cart_subwith conversion */
 
+
+void mpi_file_create_errhandler_f08(
+MPI_File_errhandler_function* function,
+MPI_Errhandler* errhandler,
+int * ierror)
+{
+*ierror = MPI_File_create_errhandler( function,
+errhandler);
+}
 /* MPI_File_write_ordered NOT IMPLEMENTED in MPC */
 
 
@@ -2579,7 +2659,8 @@ int * ierror)
 {
 *ierror = MPI_Comm_rank( comm,
 rank);
-}
+}/* Skipped function MPI_Session_get_nth_psetwith conversion */
+
 
 void mpi_cancel_f08(
 MPI_Request* request,
@@ -2597,18 +2678,15 @@ int * ierror)
 win);
 }
 
-void mpi_win_create_keyval_f08(
-MPI_Win_copy_attr_function* win_copy_attr_fn,
-MPI_Win_delete_attr_function* win_delete_attr_fn,
-int* win_keyval,
-CFI_cdesc_t* extra_state_ptr,
+void mpi_session_init_f08(
+MPI_Info info,
+MPI_Errhandler errh,
+MPI_Session* session,
 int * ierror)
 {
-void* extra_state = extra_state_ptr->base_addr;
-*ierror = MPI_Win_create_keyval( win_copy_attr_fn,
-win_delete_attr_fn,
-win_keyval,
-extra_state);
+*ierror = MPI_Session_init( info,
+errh,
+session);
 }
 
 void mpi_errhandler_free_f08(

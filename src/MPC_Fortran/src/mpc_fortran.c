@@ -9047,11 +9047,22 @@ void pmpi_session_get_nth_pset_(MPI_Fint * session, MPI_Fint * info, MPI_Fint * 
 	MPI_Session c_session = PMPI_Session_f2c( *session );
 	MPI_Info c_info = PMPI_Info_f2c( *info );
 
-	int len;
+	int len = *pset_len;
 	int c_n = *n;
 
-	*ierror = PMPI_Session_get_nth_pset( c_session, c_info, c_n, &len, pset_name );
-	char_c_to_fortran(pset_name, size_string);
+
+	int ret = PMPI_Session_get_nth_pset( c_session, c_info, c_n, &len, pset_name );
+	
+	if(ierror)
+	{
+		*ierror = ret;
+	}
+
+	if(pset_name)
+	{
+		char_c_to_fortran(pset_name, size_string);
+	}
+
 	*pset_len = len;
 }
 
@@ -9061,12 +9072,22 @@ void pmpi_session_get_nth_pset__(MPI_Fint * session, MPI_Fint * info, MPI_Fint *
 	MPI_Session c_session = PMPI_Session_f2c( *session );
 	MPI_Info c_info = PMPI_Info_f2c( *info );
 
-	int len;
+	int len = *pset_len;
 	int c_n = *n;
 
-	*ierror = PMPI_Session_get_nth_pset( c_session, c_info, c_n, &len, pset_name );
-	char_c_to_fortran(pset_name, size_string);
-	*pset_len = len;
+	int ret = PMPI_Session_get_nth_pset( c_session, c_info, c_n, &len, pset_name );
+
+	if(ierror)
+	{
+		*ierror = ret;
+	}
+
+	if(pset_name)
+	{
+		char_c_to_fortran(pset_name, size_string);
+	}
+
+		*pset_len = len;
 }
 
 #pragma weak mpi_group_from_session_pset_ = pmpi_group_from_session_pset_

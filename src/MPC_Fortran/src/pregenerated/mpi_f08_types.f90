@@ -33,7 +33,7 @@ private :: c_Count, c_Status
 
 
 type, bind(C) :: MPI_Comm
-    integer :: val
+    integer*8 :: val
 end type MPI_Comm
 
 type, bind(C) :: MPI_Session
@@ -53,7 +53,7 @@ type, bind(C) :: MPI_File
 end type MPI_File
 
 type, bind(C) :: MPI_Group
-    integer :: val
+    integer*8 :: val
 end type MPI_Group
 
 type, bind(C) :: MPI_Info
@@ -469,14 +469,14 @@ end function MPI_Comm_equal
 
 function MPI_Comm_equal_c( a , b) result(r)
    type(MPI_Comm), intent(in) ::  a 
-   integer(c_int), intent(in) ::  b 
+   integer(c_intptr_t), intent(in) ::  b 
    logical :: r
    r = ( .TRUE.  .AND. ( a%val ==  b  )&
  )
 end function MPI_Comm_equal_c
 
 function MPI_Comm_equal_cr( a , b) result(r)
-   integer(c_int), intent(in) ::  a 
+   integer(c_intptr_t), intent(in) ::  a 
    type(MPI_Comm), intent(in) ::  b 
    logical :: r
    r = ( .TRUE.  .AND. ( a ==  b%val )&
@@ -493,14 +493,14 @@ end function MPI_Comm_notequal
 
 function MPI_Comm_notequal_c( a , b) result(r)
    type(MPI_Comm), intent(in) ::  a 
-   integer(c_int), intent(in) ::  b 
+   integer(c_intptr_t), intent(in) ::  b 
    logical :: r
    r = ( .FALSE.  .OR. ( a%val /=  b  )&
  )
 end function MPI_Comm_notequal_c
 
 function MPI_Comm_notequal_cr( a , b) result(r)
-   integer(c_int), intent(in) ::  a 
+   integer(c_intptr_t), intent(in) ::  a 
    type(MPI_Comm), intent(in) ::  b 
    logical :: r
    r = ( .FALSE.  .OR. ( a /=  b%val )&
@@ -515,12 +515,12 @@ end subroutine MPI_Comm_assign
 
 subroutine MPI_Comm_assign_c( a , b)
    type(MPI_Comm), intent(out) ::  a 
-   integer(c_int), intent(in) ::  b 
+   integer(c_intptr_t), intent(in) ::  b 
    a%val =  b
 end subroutine MPI_Comm_assign_c
 
 subroutine MPI_Comm_assign_cr( a , b)
-   integer(c_int), intent(out) ::  a 
+   integer(c_intptr_t), intent(out) ::  a 
    type(MPI_Comm), intent(in) ::  b 
    a =  b%val
 end subroutine MPI_Comm_assign_cr
@@ -799,14 +799,14 @@ end function MPI_Group_equal
 
 function MPI_Group_equal_c( a , b) result(r)
    type(MPI_Group), intent(in) ::  a 
-   integer(c_int), intent(in) ::  b 
+   integer(c_intptr_t), intent(in) ::  b 
    logical :: r
    r = ( .TRUE.  .AND. ( a%val ==  b  )&
  )
 end function MPI_Group_equal_c
 
 function MPI_Group_equal_cr( a , b) result(r)
-   integer(c_int), intent(in) ::  a 
+   integer(c_intptr_t), intent(in) ::  a 
    type(MPI_Group), intent(in) ::  b 
    logical :: r
    r = ( .TRUE.  .AND. ( a ==  b%val )&
@@ -823,14 +823,14 @@ end function MPI_Group_notequal
 
 function MPI_Group_notequal_c( a , b) result(r)
    type(MPI_Group), intent(in) ::  a 
-   integer(c_int), intent(in) ::  b 
+   integer(c_intptr_t), intent(in) ::  b 
    logical :: r
    r = ( .FALSE.  .OR. ( a%val /=  b  )&
  )
 end function MPI_Group_notequal_c
 
 function MPI_Group_notequal_cr( a , b) result(r)
-   integer(c_int), intent(in) ::  a 
+   integer(c_intptr_t), intent(in) ::  a 
    type(MPI_Group), intent(in) ::  b 
    logical :: r
    r = ( .FALSE.  .OR. ( a /=  b%val )&
@@ -845,12 +845,12 @@ end subroutine MPI_Group_assign
 
 subroutine MPI_Group_assign_c( a , b)
    type(MPI_Group), intent(out) ::  a 
-   integer(c_int), intent(in) ::  b 
+   integer(c_intptr_t), intent(in) ::  b 
    a%val =  b
 end subroutine MPI_Group_assign_c
 
 subroutine MPI_Group_assign_cr( a , b)
-   integer(c_int), intent(out) ::  a 
+   integer(c_intptr_t), intent(out) ::  a 
    type(MPI_Group), intent(in) ::  b 
    a =  b%val
 end subroutine MPI_Group_assign_cr
