@@ -92,6 +92,14 @@ type, bind(C) :: MPI_Type_delete_attr_function
     type(c_ptr) :: val
 end type MPI_Type_delete_attr_function
 
+type, bind(C) :: MPI_Datarep_conversion_function
+    type(c_ptr) :: val
+end type MPI_Datarep_conversion_function
+
+type, bind(C) :: MPI_Datarep_extent_function
+    type(c_ptr) :: val
+end type MPI_Datarep_extent_function
+
 type, bind(C) :: MPI_Comm_copy_attr_function
     type(c_ptr) :: val
 end type MPI_Comm_copy_attr_function
@@ -195,6 +203,8 @@ interface operator(==)
    module procedure MPI_Win_delete_attr_function_equal
    module procedure MPI_Type_copy_attr_function_equal
    module procedure MPI_Type_delete_attr_function_equal
+   module procedure MPI_Datarep_conversion_function_equal
+   module procedure MPI_Datarep_extent_function_equal
    module procedure MPI_Comm_copy_attr_function_equal
    module procedure MPI_Comm_delete_attr_function_equal
    module procedure MPI_Copy_function_equal
@@ -240,6 +250,8 @@ private :: MPI_Win_copy_attr_function_equal
 private :: MPI_Win_delete_attr_function_equal
 private :: MPI_Type_copy_attr_function_equal
 private :: MPI_Type_delete_attr_function_equal
+private :: MPI_Datarep_conversion_function_equal
+private :: MPI_Datarep_extent_function_equal
 private :: MPI_Comm_copy_attr_function_equal
 private :: MPI_Comm_delete_attr_function_equal
 private :: MPI_Copy_function_equal
@@ -295,6 +307,8 @@ interface operator(/=)
    module procedure MPI_Win_delete_attr_function_notequal
    module procedure MPI_Type_copy_attr_function_notequal
    module procedure MPI_Type_delete_attr_function_notequal
+   module procedure MPI_Datarep_conversion_function_notequal
+   module procedure MPI_Datarep_extent_function_notequal
    module procedure MPI_Comm_copy_attr_function_notequal
    module procedure MPI_Comm_delete_attr_function_notequal
    module procedure MPI_Copy_function_notequal
@@ -340,6 +354,8 @@ private :: MPI_Win_copy_attr_function_notequal
 private :: MPI_Win_delete_attr_function_notequal
 private :: MPI_Type_copy_attr_function_notequal
 private :: MPI_Type_delete_attr_function_notequal
+private :: MPI_Datarep_conversion_function_notequal
+private :: MPI_Datarep_extent_function_notequal
 private :: MPI_Comm_copy_attr_function_notequal
 private :: MPI_Comm_delete_attr_function_notequal
 private :: MPI_Copy_function_notequal
@@ -395,6 +411,8 @@ interface assignment(=)
    module procedure MPI_Win_delete_attr_function_assign
    module procedure MPI_Type_copy_attr_function_assign
    module procedure MPI_Type_delete_attr_function_assign
+   module procedure MPI_Datarep_conversion_function_assign
+   module procedure MPI_Datarep_extent_function_assign
    module procedure MPI_Comm_copy_attr_function_assign
    module procedure MPI_Comm_delete_attr_function_assign
    module procedure MPI_Copy_function_assign
@@ -440,6 +458,8 @@ private :: MPI_Win_copy_attr_function_assign
 private :: MPI_Win_delete_attr_function_assign
 private :: MPI_Type_copy_attr_function_assign
 private :: MPI_Type_delete_attr_function_assign
+private :: MPI_Datarep_conversion_function_assign
+private :: MPI_Datarep_extent_function_assign
 private :: MPI_Comm_copy_attr_function_assign
 private :: MPI_Comm_delete_attr_function_assign
 private :: MPI_Copy_function_assign
@@ -469,14 +489,14 @@ end function MPI_Comm_equal
 
 function MPI_Comm_equal_c( a , b) result(r)
    type(MPI_Comm), intent(in) ::  a 
-   integer(c_intptr_t), intent(in) ::  b 
+   integer(c_int), intent(in) ::  b 
    logical :: r
    r = ( .TRUE.  .AND. ( a%val ==  b  )&
  )
 end function MPI_Comm_equal_c
 
 function MPI_Comm_equal_cr( a , b) result(r)
-   integer(c_intptr_t), intent(in) ::  a 
+   integer(c_int), intent(in) ::  a 
    type(MPI_Comm), intent(in) ::  b 
    logical :: r
    r = ( .TRUE.  .AND. ( a ==  b%val )&
@@ -493,14 +513,14 @@ end function MPI_Comm_notequal
 
 function MPI_Comm_notequal_c( a , b) result(r)
    type(MPI_Comm), intent(in) ::  a 
-   integer(c_intptr_t), intent(in) ::  b 
+   integer(c_int), intent(in) ::  b 
    logical :: r
    r = ( .FALSE.  .OR. ( a%val /=  b  )&
  )
 end function MPI_Comm_notequal_c
 
 function MPI_Comm_notequal_cr( a , b) result(r)
-   integer(c_intptr_t), intent(in) ::  a 
+   integer(c_int), intent(in) ::  a 
    type(MPI_Comm), intent(in) ::  b 
    logical :: r
    r = ( .FALSE.  .OR. ( a /=  b%val )&
@@ -515,12 +535,12 @@ end subroutine MPI_Comm_assign
 
 subroutine MPI_Comm_assign_c( a , b)
    type(MPI_Comm), intent(out) ::  a 
-   integer(c_intptr_t), intent(in) ::  b 
+   integer(c_int), intent(in) ::  b 
    a%val =  b
 end subroutine MPI_Comm_assign_c
 
 subroutine MPI_Comm_assign_cr( a , b)
-   integer(c_intptr_t), intent(out) ::  a 
+   integer(c_int), intent(out) ::  a 
    type(MPI_Comm), intent(in) ::  b 
    a =  b%val
 end subroutine MPI_Comm_assign_cr
@@ -799,14 +819,14 @@ end function MPI_Group_equal
 
 function MPI_Group_equal_c( a , b) result(r)
    type(MPI_Group), intent(in) ::  a 
-   integer(c_intptr_t), intent(in) ::  b 
+   integer(c_int), intent(in) ::  b 
    logical :: r
    r = ( .TRUE.  .AND. ( a%val ==  b  )&
  )
 end function MPI_Group_equal_c
 
 function MPI_Group_equal_cr( a , b) result(r)
-   integer(c_intptr_t), intent(in) ::  a 
+   integer(c_int), intent(in) ::  a 
    type(MPI_Group), intent(in) ::  b 
    logical :: r
    r = ( .TRUE.  .AND. ( a ==  b%val )&
@@ -823,14 +843,14 @@ end function MPI_Group_notequal
 
 function MPI_Group_notequal_c( a , b) result(r)
    type(MPI_Group), intent(in) ::  a 
-   integer(c_intptr_t), intent(in) ::  b 
+   integer(c_int), intent(in) ::  b 
    logical :: r
    r = ( .FALSE.  .OR. ( a%val /=  b  )&
  )
 end function MPI_Group_notequal_c
 
 function MPI_Group_notequal_cr( a , b) result(r)
-   integer(c_intptr_t), intent(in) ::  a 
+   integer(c_int), intent(in) ::  a 
    type(MPI_Group), intent(in) ::  b 
    logical :: r
    r = ( .FALSE.  .OR. ( a /=  b%val )&
@@ -845,12 +865,12 @@ end subroutine MPI_Group_assign
 
 subroutine MPI_Group_assign_c( a , b)
    type(MPI_Group), intent(out) ::  a 
-   integer(c_intptr_t), intent(in) ::  b 
+   integer(c_int), intent(in) ::  b 
    a%val =  b
 end subroutine MPI_Group_assign_c
 
 subroutine MPI_Group_assign_cr( a , b)
-   integer(c_intptr_t), intent(out) ::  a 
+   integer(c_int), intent(out) ::  a 
    type(MPI_Group), intent(in) ::  b 
    a =  b%val
 end subroutine MPI_Group_assign_cr
@@ -1282,6 +1302,56 @@ subroutine MPI_Type_delete_attr_function_assign( a , b)
    type(MPI_Type_delete_attr_function), intent(out) ::  a
    type(MPI_Type_delete_attr_function), intent(in) ::  b
 end subroutine MPI_Type_delete_attr_function_assign
+
+!SKIP function ptr
+!SKIP function ptr
+function MPI_Datarep_conversion_function_equal( a , b) result(r)
+   type(MPI_Datarep_conversion_function), intent(in) ::  a
+   type(MPI_Datarep_conversion_function), intent(in) ::  b
+   logical :: r
+   r = ( .TRUE. )
+end function MPI_Datarep_conversion_function_equal
+
+!SKIP function ptr
+!SKIP function ptr
+function MPI_Datarep_conversion_function_notequal( a , b) result(r)
+   type(MPI_Datarep_conversion_function), intent(in) ::  a
+   type(MPI_Datarep_conversion_function), intent(in) ::  b
+   logical :: r
+   r = ( .FALSE. )
+end function MPI_Datarep_conversion_function_notequal
+
+!SKIP function ptr
+!SKIP function ptr
+subroutine MPI_Datarep_conversion_function_assign( a , b)
+   type(MPI_Datarep_conversion_function), intent(out) ::  a
+   type(MPI_Datarep_conversion_function), intent(in) ::  b
+end subroutine MPI_Datarep_conversion_function_assign
+
+!SKIP function ptr
+!SKIP function ptr
+function MPI_Datarep_extent_function_equal( a , b) result(r)
+   type(MPI_Datarep_extent_function), intent(in) ::  a
+   type(MPI_Datarep_extent_function), intent(in) ::  b
+   logical :: r
+   r = ( .TRUE. )
+end function MPI_Datarep_extent_function_equal
+
+!SKIP function ptr
+!SKIP function ptr
+function MPI_Datarep_extent_function_notequal( a , b) result(r)
+   type(MPI_Datarep_extent_function), intent(in) ::  a
+   type(MPI_Datarep_extent_function), intent(in) ::  b
+   logical :: r
+   r = ( .FALSE. )
+end function MPI_Datarep_extent_function_notequal
+
+!SKIP function ptr
+!SKIP function ptr
+subroutine MPI_Datarep_extent_function_assign( a , b)
+   type(MPI_Datarep_extent_function), intent(out) ::  a
+   type(MPI_Datarep_extent_function), intent(in) ::  b
+end subroutine MPI_Datarep_extent_function_assign
 
 !SKIP function ptr
 !SKIP function ptr

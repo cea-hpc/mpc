@@ -58,22 +58,6 @@ TODO("Expose this header cleanly");
 int mpc_mpi_initialize(void);
 int mpc_mpi_release(void);
 
-/***********
- * FORTRAN *
- ***********/
-
-char * sctk_char_fortran_to_c (char *buf, int size, char ** free_ptr);
-void sctk_char_c_to_fortran (char *buf, int size);
-
-#if defined(SCTK_USE_CHAR_MIXED)
-#define SCTK_CHAR_END(size)
-#define SCTK_CHAR_MIXED(size)  ,long int size
-#else
-#define SCTK_CHAR_END(size) ,long int size
-#define SCTK_CHAR_MIXED(size)
-#endif
-
-
 /*******************
  * ERROR REPORTING *
  *******************/

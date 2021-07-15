@@ -1411,6 +1411,23 @@ void pmpi_comm_create__(MPI_Fint *comm, MPI_Fint *group, MPI_Fint *newcomm, int 
 	*newcomm = PMPI_Comm_c2f(c_newcomm);
 }
 
+#pragma weak mpi_errhandler_get_ = pmpi_errhandler_get_
+void pmpi_errhandler_get_(MPI_Fint *comm, MPI_Fint *errhandler, int *ierror)
+{
+/* MPI_Comm_create_errhandler */
+	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
+	MPI_Errhandler c_errhandler;
+
+	*ierror     = MPI_Errhandler_get(c_comm, &c_errhandler);
+	*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+}
+
+#pragma weak mpi_errhandler_get__ = pmpi_errhandler_get__
+void pmpi_errhandler_get__(MPI_Fint *comm, MPI_Fint *errhandler, int *ierror)
+{
+	pmpi_errhandler_get_(comm, errhandler, ierror);
+}
+
 #pragma weak mpi_comm_create_errhandler_ = pmpi_comm_create_errhandler_
 void pmpi_comm_create_errhandler_(MPI_Comm_errhandler_function *comm_errhandler_fn, MPI_Fint *errhandler, int *ierror)
 {
@@ -9052,13 +9069,15 @@ void pmpi_session_get_nth_pset_(MPI_Fint * session, MPI_Fint * info, MPI_Fint * 
 
 
 	int ret = PMPI_Session_get_nth_pset( c_session, c_info, c_n, &len, pset_name );
-	
+
+	kill(0, 2);
+
 	if(ierror)
 	{
 		*ierror = ret;
 	}
 
-	if(pset_name)
+	if(*pset_len && pset_name)
 	{
 		char_c_to_fortran(pset_name, size_string);
 	}
@@ -9082,12 +9101,12 @@ void pmpi_session_get_nth_pset__(MPI_Fint * session, MPI_Fint * info, MPI_Fint *
 		*ierror = ret;
 	}
 
-	if(pset_name)
+	if(*pset_len && pset_name)
 	{
 		char_c_to_fortran(pset_name, size_string);
 	}
 
-		*pset_len = len;
+	*pset_len = len;
 }
 
 #pragma weak mpi_group_from_session_pset_ = pmpi_group_from_session_pset_

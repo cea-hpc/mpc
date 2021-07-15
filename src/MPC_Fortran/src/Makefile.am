@@ -25,7 +25,7 @@ clean-local:
 if HAVE_PYTHON
 
 
-MPCFORT_FILES= mpi_f08_c_iface.c mpi_constants.f90 mpi_f08_c.f90 mpi_f08_constants.f90 mpi_f08_ctypes.f90 mpi_f08.f90 mpi_f08_types.f90 mpi.f90 mpi_sizeofs.f90 mpi_base.f90
+MPCFORT_FILES= mpi_constants.f90 mpi_f08_c.f90 mpi_f08_constants.f90 mpi_f08_ctypes.f90 mpi_f08.f90 mpi_f08_types.f90 mpi.f90 mpi_sizeofs.f90 mpi_base.f90
 
 # We can generate, so generate and save (should not produce diff)
 genfortraniface: genmod.py preparsed_mpih.dat constants.json
@@ -57,7 +57,7 @@ mpi08_module.f90: mpi_f08_ctypes.f90 mpi_f08_types.f90 mpi_f08_constants.f90 mpi
 lib_LTLIBRARIES = libmpcfortran.la
 
 # F08 Iface
-libmpcfortran_la_SOURCES = mpi_f08_c_iface.c  mpi08_module.f90 
+libmpcfortran_la_SOURCES =  mpi08_module.f90 
 # F90 Iface
 libmpcfortran_la_SOURCES += mpi_module.f90 
 # F77 Iface
@@ -78,7 +78,7 @@ mpi08_module_priv.f90 :  mpi08_module.f90 libmpcfortran.la
 	cat $< > $@
 
 # F08 Iface
-libmpcfortran_priv_la_SOURCES = mpi_f08_c_iface.c  mpi08_module_priv.f90 
+libmpcfortran_priv_la_SOURCES =  mpi08_module_priv.f90 
 # F90 Iface
 
 mpi_module_priv.f90 :  mpi_module.f90 libmpcfortran.la

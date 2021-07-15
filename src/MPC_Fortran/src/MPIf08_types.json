@@ -9,21 +9,17 @@
 	{"name" : "MPI_Request", "layout" :[{"name" : "val" , "type" : "int"}]},
 	{"name" : "MPI_Win", "layout" :[{"name" : "val" , "type" : "int"}]},
 	{"name" : "MPI_Message", "layout" :[{"name" : "val" , "type" : "int"}]},
-	
 	{"name" : "MPI_Op", "layout" :[{"name" : "val" , "type" : "long"}]},
-	
 	{"name" : "MPI_Win_copy_attr_function", "layout" :[{"name" : "val" , "type" : "func"}]},
 	{"name" : "MPI_Win_delete_attr_function", "layout" :[{"name" : "val" , "type" : "func"}]},
-		
 	{"name" : "MPI_Type_copy_attr_function", "layout" :[{"name" : "val" , "type" : "func"}]},
 	{"name" : "MPI_Type_delete_attr_function", "layout" :[{"name" : "val" , "type" : "func"}]},
-	
+	{"name" : "MPI_Datarep_conversion_function", "layout" :[{"name" : "val" , "type" : "func"}]},
+	{"name" : "MPI_Datarep_extent_function", "layout" :[{"name" : "val" , "type" : "func"}]},
 	{"name" : "MPI_Comm_copy_attr_function", "layout" :[{"name" : "val" , "type" : "func"}]},
 	{"name" : "MPI_Comm_delete_attr_function", "layout" :[{"name" : "val" , "type" : "func"}]},
-	
 	{"name" : "MPI_Copy_function", "layout" :[{"name" : "val" , "type" : "func"}]},
 	{"name" : "MPI_Delete_function", "layout" :[{"name" : "val" , "type" : "func"}]},
-
 	{"name" : "MPI_Grequest_query_function", "layout" :[{"name" : "val" , "type" : "func"}]},
 	{"name" : "MPI_Grequest_cancel_function", "layout" :[{"name" : "val" , "type" : "func"}]},
 	{"name" : "MPI_Grequest_free_function", "layout" :[{"name" : "val" , "type" : "func"}]},
@@ -34,8 +30,6 @@
 	{"name" : "MPI_File_errhandler_function", "layout" :[{"name" : "val" , "type" : "func"}]},
 	{"name" : "MPI_Handler_function", "layout" :[{"name" : "val" , "type" : "func"}]},
 	{"name" : "MPI_User_function", "layout" :[{"name" : "val" , "type" : "func"}]},
-	
-	
     {"name" : "MPI_Status", "layout" :[
 											{"name" : "MPI_SOURCE" , "type" : "int"},
 											{"name" : "MPI_TAG" , "type" : "int"},
