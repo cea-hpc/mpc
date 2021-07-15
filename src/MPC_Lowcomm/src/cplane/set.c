@@ -72,7 +72,7 @@ _mpc_lowcomm_set_t *_mpc_lowcomm_set_init(mpc_lowcomm_set_uid_t gid,
 {
 	static mpc_common_spinlock_t __set_creation_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
-	mpc_common_spinlock_lock(&__set_creation_lock);
+	mpc_common_spinlock_lock_yield(&__set_creation_lock);
 
 	_mpc_lowcomm_set_t * ret = _mpc_lowcomm_set_get(gid);
 

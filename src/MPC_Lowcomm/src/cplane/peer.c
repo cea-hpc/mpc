@@ -35,7 +35,7 @@ _mpc_lowcomm_peer_t *_mpc_lowcomm_peer_register(mpc_lowcomm_peer_uid_t uid, uint
 	_mpc_lowcomm_peer_t *ret = NULL;
 
 	/* Make sure there is no race on the peer registration */
-	mpc_common_spinlock_lock( &__peer_lock );
+	mpc_common_spinlock_lock_yield( &__peer_lock );
 
 	ret = _mpc_lowcomm_peer_get( uid );
 
