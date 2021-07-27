@@ -42,7 +42,6 @@
 //    config handling
 //    add reduce_scatter(_block)_Allgather(v) algorithm, may be faster than reduce then scatter
 
-#define dbg 0
 #define ALLOW_TOPO_COMM 1
 #define TOPO_MAX_LEVEL 1
 
@@ -621,7 +620,7 @@ static inline int __Sched_copy(const void *src, int srccount, MPI_Datatype srcty
 static inline int __Send_type(const void *buffer, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
   int res = MPI_SUCCESS;
 
-#if dbg == 1
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
   if(coll_type != MPC_COLL_TYPE_COUNT) {
     int rank = -1;
     _mpc_cl_comm_rank(comm, &rank);
@@ -632,7 +631,7 @@ static inline int __Send_type(const void *buffer, int count, MPI_Datatype dataty
     MPI_Comm_group(comm, &local_group);
     MPI_Comm_group(MPI_COMM_WORLD, &global_group);
     MPI_Group_translate_ranks(local_group, 1, &dest, global_group, &peer_global_rank);
-    fprintf(stderr, "SEND | % 4d (% 4d) -> % 4d (% 4d) (count=%d) : %p\n", rank, global_rank, dest, peer_global_rank, count, buffer);
+    mpc_common_debug_log("SEND | % 4d (% 4d) -> % 4d (% 4d) (count=%d) : %p\n", rank, global_rank, dest, peer_global_rank, count, buffer);
   }
 #endif
 
@@ -668,7 +667,7 @@ static inline int __Send_type(const void *buffer, int count, MPI_Datatype dataty
 static inline int __Recv_type(void *buffer, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
   int res = MPI_SUCCESS;
  
-#if dbg == 1
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
   if(coll_type != MPC_COLL_TYPE_COUNT) {
     int rank = -1;
     _mpc_cl_comm_rank(comm, &rank);
@@ -679,7 +678,7 @@ static inline int __Recv_type(void *buffer, int count, MPI_Datatype datatype, in
     MPI_Comm_group(comm, &local_group);
     MPI_Comm_group(MPI_COMM_WORLD, &global_group);
     MPI_Group_translate_ranks(local_group, 1, &source, global_group, &peer_global_rank);
-    fprintf(stderr, "RECV | % 4d (% 4d) <- % 4d (% 4d) (count=%d) : %p\n", rank, global_rank, source, peer_global_rank, count, buffer);
+    mpc_common_debug_log("RECV | % 4d (% 4d) <- % 4d (% 4d) (count=%d) : %p\n", rank, global_rank, source, peer_global_rank, count, buffer);
   }
 #endif
 
@@ -709,11 +708,11 @@ static inline int __Recv_type(void *buffer, int count, MPI_Datatype datatype, in
 static inline int __Barrier_type(MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
   int res = MPI_SUCCESS;
 
-#if dbg == 1
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
   if(coll_type != MPC_COLL_TYPE_COUNT) {
     int rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &rank);
-    fprintf(stderr, "BARR |      % 4d\n", rank);
+    mpc_common_debug_log("BARR |      % 4d\n", rank);
   }
 #endif
 
@@ -750,11 +749,11 @@ static inline int __Barrier_type(MPC_COLL_TYPE coll_type, NBC_Schedule *schedule
 static inline int __Op_type( __UNUSED__ void *res_buf, const void* left_op_buf, void* right_op_buf, int count, MPI_Datatype datatype, MPI_Op op, sctk_Op mpc_op, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
   int res = MPI_SUCCESS;
 
-#if dbg == 1
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
   if(coll_type != MPC_COLL_TYPE_COUNT) {
     int rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &rank);
-    fprintf(stderr, "OP   |      % 4d\n", rank);
+    mpc_common_debug_log("OP   |      % 4d\n", rank);
   }
 #endif
 
@@ -800,13 +799,13 @@ static inline int __Op_type( __UNUSED__ void *res_buf, const void* left_op_buf, 
 static inline int __Copy_type(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
   int res = MPI_SUCCESS;
 
-#if dbg == 1
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
   if(coll_type != MPC_COLL_TYPE_COUNT) {
     int rank = -1;
     _mpc_cl_comm_rank(comm, &rank);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    fprintf(stderr, "COPY | % 4d (% 4d) : %p -> %p\n", rank, global_rank, src, tgt);
+    mpc_common_debug_log("COPY | % 4d (% 4d) : %p -> %p\n", rank, global_rank, src, tgt);
   }
 #endif
 
@@ -860,9 +859,11 @@ static inline int __create_hardware_comm_unguided(MPI_Comm comm, int vrank, int 
     {
       _mpc_cl_comm_rank(hwcomm[level_num + 1],&vrank);
 
-      // _mpc_cl_comm_rank(hwcomm[level_num + 1], &tmp_rank);
-      // _mpc_cl_comm_size(hwcomm[level_num + 1], &tmp_size);
-      // fprintf(stderr, "RANK %d / %d | SPLIT COMM | SUBRANK %d / %d\n", rank, size, tmp_rank, tmp_size);
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
+      _mpc_cl_comm_rank(hwcomm[level_num + 1], &tmp_rank);
+      _mpc_cl_comm_size(hwcomm[level_num + 1], &tmp_size);
+      mpc_common_debug_log("RANK %d / %d | SPLIT COMM | SUBRANK %d / %d\n", rank, size, tmp_rank, tmp_size);
+#endif
 
       level_num++;
     } else {
@@ -903,9 +904,11 @@ static inline int __create_master_hardware_comm_unguided(int vrank, int level, S
 
     PMPI_Comm_split(hwcomm[i], color, vrank, &rootcomm[i]);
 
-    //_mpc_cl_comm_rank(rootcomm[i], &tmp_rank);
-    //_mpc_cl_comm_size(rootcomm[i], &tmp_size);
-    //fprintf(stderr, "RANK %d / %d | SPLIT ROOT | SUBRANK %d / %d\n", rank, size, tmp_rank, tmp_size);
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
+    _mpc_cl_comm_rank(rootcomm[i], &tmp_rank);
+    _mpc_cl_comm_size(rootcomm[i], &tmp_size);
+    mpc_common_debug_log("RANK %d / %d | SPLIT ROOT | SUBRANK %d / %d\n", rank, size, tmp_rank, tmp_size);
+#endif
   }
 
   return res;
@@ -957,7 +960,7 @@ static inline int __create_childs_counts(MPI_Comm comm, Sched_info *info) {
          data_count = 0;
          for(int j = 0; j < size_master; j++) {
            data_count += info->hardware_info_ptr->childs_data_count[i][j];
-           //fprintf(stderr, "RANK %d | CHILD DATA COUNT [%d] [%d] = %d\n", rank, i, j, info->hardware_info_ptr->childs_data_count[i][j]);
+           mpc_common_nodebug("RANK %d | CHILD DATA COUNT [%d] [%d] = %d\n", rank, i, j, info->hardware_info_ptr->childs_data_count[i][j]);
          }
        } else {
          break;
@@ -1245,12 +1248,12 @@ int mpc_mpi_bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_
   */
 static inline int __Bcast_switch(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#if dbg == 1
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
   _mpc_cl_comm_rank(comm, &rank);
   int global_rank = -1;
   _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-  fprintf(stderr, "BCAST | %d (%d)\n", rank, global_rank);
+  mpc_common_debug_log("BCAST | %d (%d)\n", rank, global_rank);
 #endif
 
   enum {
@@ -1737,12 +1740,12 @@ int mpc_mpi_reduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype d
   */
 static inline int __Reduce_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#if dbg == 1
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
   _mpc_cl_comm_rank(comm, &rank);
   int global_rank = -1;
   _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-  fprintf(stderr, "REDUCE | %d (%d)\n", rank, global_rank);
+  mpc_common_debug_log("REDUCE | %d (%d)\n", rank, global_rank);
 #endif
 
   enum {
@@ -2191,11 +2194,6 @@ static inline int __Reduce_topo_commute(const void *sendbuf, void* recvbuf, int 
   /* last level topology binomial bcast */
   MPI_Comm hardware_comm = info->hardware_info_ptr->hwcomm[deepest_level];
 
-  //int tmp_size, tmp_rank;
-  //_mpc_cl_comm_size(hardware_comm, &tmp_size);
-  //_mpc_cl_comm_rank(hardware_comm, &tmp_rank);
-  //fprintf(stderr, "RANK %d / %d | REDUCE ON COMM DEPTH %d | SUBRANK %d / %d\n", rank, size, deepest_level, tmp_rank, tmp_size);
-
   res = __Reduce_switch(sendbuf, recvbuf, count, datatype, op, 0, hardware_comm, coll_type, schedule, info);
   
   /* At each topological level, masters do binomial algorithm */
@@ -2215,10 +2213,6 @@ static inline int __Reduce_topo_commute(const void *sendbuf, void* recvbuf, int 
       if(rank_master == 0) {
         buffer = MPI_IN_PLACE;
       }
-
-      //_mpc_cl_comm_size(master_comm, &tmp_size);
-      //_mpc_cl_comm_rank(master_comm, &tmp_rank);
-      //fprintf(stderr, "RANK %d / %d | REDUCE ON COMM DEPTH %d | SUBRANK %d / %d\n", rank, size, i, tmp_rank, tmp_size);
   
       res = __Reduce_switch(buffer, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
     }
@@ -2442,12 +2436,12 @@ int mpc_mpi_allreduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatyp
   */
 static inline int __Allreduce_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#if dbg == 1
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
   _mpc_cl_comm_rank(comm, &rank);
   int global_rank = -1;
   _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-  fprintf(stderr, "ALLREDUCE | %d (%d)\n", rank, global_rank);
+  mpc_common_debug_log("ALLREDUCE | %d (%d)\n", rank, global_rank);
 #endif
 
   enum {
@@ -2750,8 +2744,6 @@ static inline int __Allreduce_binary_block(const void *sendbuf, void* recvbuf, i
   int target_count = previous_block_size / block_size;
 
   int start = 0, end = count, mid;
-
-  //fprintf(stderr, "RANK %d | VRANK %d | SIZE %d | BLOCK %d | BLOCK SIZE %d | 1rst RANK OF BLOCK %d | PREV BLOCK %d | PREV BLOCK SIZE %d | 1rst RANK OF PREV BLOCK %d | NEXT BLOCK %d | NEXT BLOCK SIZE %d | 1rst RANK OF NEXT BLOCK %d\n", rank, vrank, size, block, block_size, first_rank_of_block, previous_block, previous_block_size, first_rank_of_previous_block, next_block, next_block_size, first_rank_of_next_block);
 
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
@@ -3311,12 +3303,12 @@ int mpc_mpi_scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, v
   */
 static inline int __Scatter_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#if dbg == 1
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
   _mpc_cl_comm_rank(comm, &rank);
   int global_rank = -1;
   _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-  fprintf(stderr, "SCATTER | %d (%d)\n", rank, global_rank);
+  mpc_common_debug_log("SCATTER | %d (%d)\n", rank, global_rank);
 #endif
 
   enum {
@@ -3961,12 +3953,12 @@ int mpc_mpi_scatterv(const void *sendbuf, const int *sendcounts, const int *disp
   */
 static inline int __Scatterv_switch(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#if dbg == 1
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
   _mpc_cl_comm_rank(comm, &rank);
   int global_rank = -1;
   _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-  fprintf(stderr, "SCATTERV | %d (%d)\n", rank, global_rank);
+  mpc_common_debug_log("SCATTERV | %d (%d)\n", rank, global_rank);
 #endif
 
   enum {
@@ -4322,12 +4314,12 @@ int mpc_mpi_gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, vo
   */
 static inline int __Gather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#if dbg == 1
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
   _mpc_cl_comm_rank(comm, &rank);
   int global_rank = -1;
   _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-  fprintf(stderr, "GATHER | %d (%d)\n", rank, global_rank);
+  mpc_common_debug_log("GATHER | %d (%d)\n", rank, global_rank);
 #endif
 
   enum {
@@ -4959,12 +4951,12 @@ int mpc_mpi_gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, v
   */
 static inline int __Gatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#if dbg == 1
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
   _mpc_cl_comm_rank(comm, &rank);
   int global_rank = -1;
   _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-  fprintf(stderr, "GATHERV | %d (%d)\n", rank, global_rank);
+  mpc_common_debug_log("GATHERV | %d (%d)\n", rank, global_rank);
 #endif
 
   enum {
@@ -5299,12 +5291,12 @@ int mpc_mpi_reduce_scatter_block(const void *sendbuf, void* recvbuf, int count, 
   */
 static inline int __Reduce_scatter_block_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#if dbg == 1
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
   _mpc_cl_comm_rank(comm, &rank);
   int global_rank = -1;
   _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-  fprintf(stderr, "REDUCE SCATTER BLOCK | %d (%d)\n", rank, global_rank);
+  mpc_common_debug_log("REDUCE SCATTER BLOCK | %d (%d)\n", rank, global_rank);
 #endif
 
   enum {
@@ -5760,12 +5752,12 @@ int mpc_mpi_reduce_scatter(const void *sendbuf, void* recvbuf, const int *recvco
   */
 static inline int __Reduce_scatter_switch(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#if dbg == 1
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
   _mpc_cl_comm_rank(comm, &rank);
   int global_rank = -1;
   _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-  fprintf(stderr, "REDUCE SCATTER | %d (%d)\n", rank, global_rank);
+  mpc_common_debug_log("REDUCE SCATTER | %d (%d)\n", rank, global_rank);
 #endif
 
   enum {
@@ -6170,12 +6162,12 @@ int mpc_mpi_allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
   */
 static inline int __Allgather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#if dbg == 1
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
   _mpc_cl_comm_rank(comm, &rank);
   int global_rank = -1;
   _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-  fprintf(stderr, "ALLGATHER | %d (%d)\n", rank, global_rank);
+  mpc_common_debug_log("ALLGATHER | %d (%d)\n", rank, global_rank);
 #endif
 
   enum {
@@ -6750,12 +6742,12 @@ int mpc_mpi_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype
   */
 static inline int __Allgatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#if dbg == 1
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
   _mpc_cl_comm_rank(comm, &rank);
   int global_rank = -1;
   _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-  fprintf(stderr, "ALLGATHERV | %d (%d)\n", rank, global_rank);
+  mpc_common_debug_log("ALLGATHERV | %d (%d)\n", rank, global_rank);
 #endif
 
   enum {
@@ -7130,12 +7122,12 @@ int mpc_mpi_alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
   */
 static inline int __Alltoall_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#if dbg == 1
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
   _mpc_cl_comm_rank(comm, &rank);
   int global_rank = -1;
   _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-  fprintf(stderr, "ALLTOALL | %d (%d)\n", rank, global_rank);
+  mpc_common_debug_log("ALLTOALL | %d (%d)\n", rank, global_rank);
 #endif
 
   enum {
@@ -7543,12 +7535,12 @@ int mpc_mpi_alltoallv(const void *sendbuf, const int *sendcounts, const int *sdi
   */
 static inline int __Alltoallv_switch(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#if dbg == 1
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
   _mpc_cl_comm_rank(comm, &rank);
   int global_rank = -1;
   _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-  fprintf(stderr, "ALLTOALLV | %d (%d)\n", rank, global_rank);
+  mpc_common_debug_log("ALLTOALLV | %d (%d)\n", rank, global_rank);
 #endif
 
   enum {
@@ -7969,12 +7961,12 @@ int mpc_mpi_alltoallw(const void *sendbuf, const int *sendcounts, const int *sdi
   */
 static inline int __Alltoallw_switch(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#if dbg == 1
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
   _mpc_cl_comm_rank(comm, &rank);
   int global_rank = -1;
   _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-  fprintf(stderr, "ALLTOALLW | %d (%d)\n", rank, global_rank);
+  mpc_common_debug_log("ALLTOALLW | %d (%d)\n", rank, global_rank);
 #endif
 
   enum {
@@ -8358,12 +8350,12 @@ int mpc_mpi_scan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype da
   */
 static inline int __Scan_switch (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#if dbg == 1
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
   _mpc_cl_comm_rank(comm, &rank);
   int global_rank = -1;
   _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-  fprintf(stderr, "SCAN | %d (%d)\n", rank, global_rank);
+  mpc_common_debug_log("SCAN | %d (%d)\n", rank, global_rank);
 #endif
 
   enum {
@@ -8743,12 +8735,12 @@ int mpc_mpi_exscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype 
   */
 static inline int __Exscan_switch (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#if dbg == 1
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
   _mpc_cl_comm_rank(comm, &rank);
   int global_rank = -1;
   _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-  fprintf(stderr, "EXSCAN | %d (%d)\n", rank, global_rank);
+  mpc_common_debug_log("EXSCAN | %d (%d)\n", rank, global_rank);
 #endif
 
   enum {
@@ -9101,12 +9093,12 @@ int mpc_mpi_barrier (MPI_Comm comm) {
   */
 static inline int __Barrier_switch (MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#if dbg == 1
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
   _mpc_cl_comm_rank(comm, &rank);
   int global_rank = -1;
   _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-  fprintf(stderr, "BARRIER | %d (%d)\n", rank, global_rank);
+  mpc_common_debug_log("BARRIER | %d (%d)\n", rank, global_rank);
 #endif
   
   enum {
