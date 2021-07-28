@@ -30,11 +30,11 @@
 #include "mpcomp_types.h"
 
 void
-__mpcompt_callback_thread_begin( mpcomp_thread_t* thread,
+_mpc_omp_ompt_callback_thread_begin( mpc_omp_thread_t* thread,
                                  ompt_thread_t thread_type );
 
 void
-__mpcompt_callback_thread_end( mpcomp_thread_t* thread,
+_mpc_omp_ompt_callback_thread_end( mpc_omp_thread_t* thread,
                                ompt_thread_t thread_type );
 
 #endif /* OMPT_SUPPORT */

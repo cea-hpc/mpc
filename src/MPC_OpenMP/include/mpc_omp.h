@@ -20,8 +20,8 @@
 /* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __mpcomp__H
-#define __mpcomp__H
+#ifndef __MPC_OMP__H
+#define __MPC_OMP__H
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,8 +34,8 @@ extern "C" {
 #include <stdint.h>
 
 /* OpenMP 2.5 API - For backward compatibility with old patched GCC */
-int mpcomp_get_num_threads( void );
-int mpcomp_get_thread_num( void );
+int mpc_omp_get_num_threads( void );
+int mpc_omp_get_thread_num( void );
 
 /* OpenMP 2.5 API */
 void omp_set_num_threads( int num_threads );
@@ -57,17 +57,17 @@ typedef enum omp_lock_hint_t {
 	omp_lock_hint_speculative = 8
 } omp_lock_hint_t;
 
-typedef struct mpcomp_lock_s
+typedef struct mpc_omp_lock_s
 {
 	omp_lock_hint_t hint;
 	OPA_int_t lock;
 	void *opaque;
 	uint64_t ompt_wait_id;
-} mpcomp_lock_t;
+} mpc_omp_lock_t;
 
-typedef mpcomp_lock_t* omp_lock_t;
+typedef mpc_omp_lock_t* omp_lock_t;
 
-typedef struct mpcomp_nest_lock_s
+typedef struct mpc_omp_nest_lock_s
 {
 	int nb_nested;		/* Number of times this lock is held */
 	void *owner_thread; /* Owner of the lock */
@@ -76,9 +76,9 @@ typedef struct mpcomp_nest_lock_s
 	OPA_int_t lock;
 	void *opaque;
 	uint64_t ompt_wait_id;
-} mpcomp_nest_lock_t;
+} mpc_omp_nest_lock_t;
 
-typedef mpcomp_nest_lock_t *omp_nest_lock_t;
+typedef mpc_omp_nest_lock_t *omp_nest_lock_t;
 
 /* Lock Functions */
 void omp_init_lock( omp_lock_t *lock );

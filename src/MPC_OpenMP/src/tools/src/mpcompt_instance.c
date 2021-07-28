@@ -12,23 +12,23 @@ static char* mpcompt_status_convertion[e_tool_status_count] = { "uninitialized",
                                                                 "pending" };
 
 int
-mpcompt_register_tool ( ompt_start_tool_result_t* tool_result,
+mpc_omp_ompt_register_tool ( ompt_start_tool_result_t* tool_result,
                         char *path ) {
     assert( tool_result );
 
     int ret = 0;
-    mpcomp_thread_t* thread;
-    mpcompt_tool_instance_t* tool_instance;
+    mpc_omp_thread_t* thread;
+    mpc_omp_ompt_tool_instance_t* tool_instance;
 
     /* Get current thread */
-    thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+    thread = (mpc_omp_thread_t*) mpc_omp_tls;
     assert( thread );
 
     /* Allocate tool instance */
     if( !thread->tool_instance ) {
-        tool_instance = (mpcompt_tool_instance_t*) sctk_malloc( sizeof( mpcompt_tool_instance_t ));
+        tool_instance = (mpc_omp_ompt_tool_instance_t*) sctk_malloc( sizeof( mpc_omp_ompt_tool_instance_t ));
         assert( tool_instance );
-        memset( tool_instance, 0, sizeof( mpcompt_tool_instance_t ));
+        memset( tool_instance, 0, sizeof( mpc_omp_ompt_tool_instance_t ));
 
         mpc_common_spinlock_init( &tool_instance->wait_id_lock, 0 );
 
@@ -36,7 +36,7 @@ mpcompt_register_tool ( ompt_start_tool_result_t* tool_result,
     }
 
     /* Call tool intialize method */
-    ret = tool_result->initialize( mpcompt_get_lookup_fn(),
+    ret = tool_result->initialize( mpc_omp_ompt_get_lookup_fn(),
                                    0,
                                    &tool_result->tool_data );
 
@@ -58,13 +58,13 @@ mpcompt_register_tool ( ompt_start_tool_result_t* tool_result,
 }
 
 void
-mpcompt_unregister_tool () {
-    mpcomp_thread_t* thread;
-    mpcompt_tool_instance_t* tool_instance;
+mpc_omp_ompt_unregister_tool () {
+    mpc_omp_thread_t* thread;
+    mpc_omp_ompt_tool_instance_t* tool_instance;
     ompt_start_tool_result_t* tool_result;
 
     /* Get current thread */
-    thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+    thread = (mpc_omp_thread_t*) mpc_omp_tls;
     assert( thread );
 
     /* Get tool instance */

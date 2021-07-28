@@ -18,7 +18,7 @@ static inline unsigned long long __get_chunk_and_execute_steal_from_end(mpc_work
 static inline unsigned long long __get_chunk_and_execute_steal_from_start(mpc_workshare*, int, int);
 static unsigned long long (*__get_chunk_and_execute)(mpc_workshare*, int, int);
 
-void __mpcomp_init();
+void mpc_omp_init();
 int MPCX_Disguise(mpc_lowcomm_communicator_t,int);
 int MPCX_Undisguise();
 
@@ -147,7 +147,7 @@ void mpc_lowcomm_workshare_start(void (*func) (void*,long long,long long) , void
 {
   /* Entry function for #pragma ws for */
 #ifdef MPC_Threads
-  __mpcomp_init();
+  mpc_omp_init();
 
   if((ub >= lb && incr < 0) || (ub <= lb && incr > 0)) return;
   int rank = mpc_common_get_local_task_rank();

@@ -34,47 +34,47 @@
  * ATOMICS *
  ***********/
 
-void __mpcomp_atomic_begin( void );
-void __mpcomp_atomic_end( void );
+void mpc_omp_atomic_begin( void );
+void mpc_omp_atomic_end( void );
 
 /************
  * CRITICAL *
  ************/
 
-void __mpcomp_anonymous_critical_begin( void );
-void __mpcomp_anonymous_critical_end( void );
-void __mpcomp_named_critical_begin( void ** );
-void __mpcomp_named_critical_end( void ** );
+void mpc_omp_anonymous_critical_begin( void );
+void mpc_omp_anonymous_critical_end( void );
+void mpc_omp_named_critical_begin( void ** );
+void mpc_omp_named_critical_end( void ** );
 
 /**********
  * SINGLE *
  **********/
 
-int __mpcomp_do_single( void );
-void *__mpcomp_do_single_copyprivate_begin( void );
-void __mpcomp_do_single_copyprivate_end( void *data );
-void __mpcomp_single_coherency_entering_parallel_region( void );
-void __mpcomp_single_coherency_end_barrier( void );
+int mpc_omp_do_single( void );
+void *mpc_omp_do_single_copyprivate_begin( void );
+void mpc_omp_do_single_copyprivate_end( void *data );
+void _mpc_omp_single_coherency_entering_parallel_region( void );
+void _mpc_omp_single_coherency_end_barrier( void );
 
 /***********
  * BARRIER *
  ***********/
 
-void __mpcomp_barrier( void );
-void __mpcomp_internal_half_barrier( mpcomp_mvp_t *mvp );
-void __mpcomp_internal_full_barrier( mpcomp_mvp_t *mvp );
+void mpc_omp_barrier( void );
+void _mpc_omp_internal_half_barrier( mpc_omp_mvp_t *mvp );
+void _mpc_omp_internal_full_barrier( mpc_omp_mvp_t *mvp );
 
 /************
  * SECTIONS *
  ************/
 
-void __mpcomp_sections_init(struct mpcomp_thread_s *, int);
-int __mpcomp_sections_begin(int);
-int __mpcomp_sections_next(void);
-void __mpcomp_sections_end(void);
-void __mpcomp_sections_end_nowait(void);
-int __mpcomp_sections_coherency_exiting_paralel_region(void);
-int __mpcomp_sections_coherency_barrier(void);
+void _mpc_omp_sections_init(struct mpc_omp_thread_s *, int);
+int mpc_omp_sections_begin(int);
+int mpc_omp_sections_next(void);
+void mpc_omp_sections_end(void);
+void mpc_omp_sections_end_nowait(void);
+int _mpc_omp_sections_coherency_exiting_paralel_region(void);
+int _mpc_omp_sections_coherency_barrier(void);
 
 /*********
  * LOCKS *
@@ -96,11 +96,10 @@ int omp_test_nest_lock( omp_nest_lock_t *lock );
 /* If the current task (thread if implicit task or explicit task)
 *     is not the owner of the lock */
 static inline int
-mpcomp_nest_lock_test_task( mpcomp_thread_t *thread,
-                            mpcomp_nest_lock_t *mpcomp_user_nest_lock )
+mpc_omp_nest_lock_test_task( mpc_omp_thread_t *thread,
+                            mpc_omp_nest_lock_t *mpcomp_user_nest_lock )
 {
-#if MPCOMP_TASK
-	struct mpcomp_task_s *current_task =
+	struct mpc_omp_task_s *current_task =
 	    MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread );
 	assert( current_task );
 	const bool is_task_owner =
@@ -109,7 +108,6 @@ mpcomp_nest_lock_test_task( mpcomp_thread_t *thread,
 	    ( mpcomp_user_nest_lock->owner_thread == ( void * )thread );
 	const bool have_task_owner = ( mpcomp_user_nest_lock->owner_task != NULL );
 	return !( is_task_owner && ( is_thread_owned || have_task_owner ) );
-#endif /* MPCOMP_TASK */
 }
 
 #endif /*  __MPCOMP_SYNC_H__ */

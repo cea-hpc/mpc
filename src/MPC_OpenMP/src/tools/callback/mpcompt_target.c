@@ -5,7 +5,7 @@
 #include "mpc_common_debug.h"
 
 void
-__mpcompt_callback_target_data_op ( __UNUSED__ ompt_id_t target_id,
+_mpc_omp_ompt_callback_target_data_op ( __UNUSED__ ompt_id_t target_id,
                                     __UNUSED__ ompt_id_t host_op_id,
                                     __UNUSED__ ompt_target_data_op_t optype,
                                     __UNUSED__ void *src_addr,
@@ -17,7 +17,7 @@ __mpcompt_callback_target_data_op ( __UNUSED__ ompt_id_t target_id,
 }
 
 void
-__mpcompt_callback_target ( __UNUSED__ ompt_target_t kind,
+_mpc_omp_ompt_callback_target ( __UNUSED__ ompt_target_t kind,
                             __UNUSED__ ompt_scope_endpoint_t endpoint,
                             __UNUSED__ int device_num,
                             __UNUSED__ ompt_data_t *task_data,
@@ -26,7 +26,7 @@ __mpcompt_callback_target ( __UNUSED__ ompt_target_t kind,
 }
 
 void
-__mpcompt_callback_target_map ( __UNUSED__ ompt_id_t target_id,
+_mpc_omp_ompt_callback_target_map ( __UNUSED__ ompt_id_t target_id,
                                 __UNUSED__ unsigned int nitems,
                                 __UNUSED__ void **host_addr,
                                 __UNUSED__ void **device_addr,
@@ -36,7 +36,7 @@ __mpcompt_callback_target_map ( __UNUSED__ ompt_id_t target_id,
 }
 
 void
-__mpcompt_callback_target_submit ( __UNUSED__ ompt_id_t target_id,
+_mpc_omp_ompt_callback_target_submit ( __UNUSED__ ompt_id_t target_id,
                                    __UNUSED__ ompt_id_t host_op_id,
                                    __UNUSED__ unsigned int requested_num_teams ) {
     not_implemented();

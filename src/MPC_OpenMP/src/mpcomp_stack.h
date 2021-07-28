@@ -4,17 +4,17 @@
 #include "mpcomp_types_stack.h"
 
 /* Stack primitives */
-mpcomp_stack_t *__mpcomp_create_stack(int max_elements);
-int __mpcomp_is_stack_empty(mpcomp_stack_t *s);
-void __mpcomp_push(mpcomp_stack_t *s, struct mpcomp_node_s *n);
-struct mpcomp_node_s *__mpcomp_pop(mpcomp_stack_t *s);
-void __mpcomp_free_stack(mpcomp_stack_t *s);
+mpc_omp_stack_t *_mpc_omp_create_stack(int max_elements);
+int _mpc_omp_is_stack_empty(mpc_omp_stack_t *s);
+void _mpc_omp_push(mpc_omp_stack_t *s, struct mpc_omp_node_s *n);
+struct mpc_omp_node_s *_mpc_omp_pop(mpc_omp_stack_t *s);
+void _mpc_omp_free_stack(mpc_omp_stack_t *s);
 
-mpcomp_stack_node_leaf_t *__mpcomp_create_stack_node_leaf(int max_elements);
-int __mpcomp_is_stack_node_leaf_empty(mpcomp_stack_node_leaf_t *s);
-void __mpcomp_push_node(mpcomp_stack_node_leaf_t *s, struct mpcomp_node_s *n);
-void __mpcomp_push_leaf(mpcomp_stack_node_leaf_t *s, struct mpcomp_mvp_s *n);
-mpcomp_elem_stack_t *__mpcomp_pop_elem_stack(mpcomp_stack_node_leaf_t *s);
-void __mpcomp_free_stack_node_leaf(mpcomp_stack_node_leaf_t *s);
+mpc_omp_stack_node_leaf_t *_mpc_omp_create_stack_node_leaf(int max_elements);
+int _mpc_omp_is_stack_node_leaf_empty(mpc_omp_stack_node_leaf_t *s);
+void _mpc_omp_push_node(mpc_omp_stack_node_leaf_t *s, struct mpc_omp_node_s *n);
+void _mpc_omp_push_leaf(mpc_omp_stack_node_leaf_t *s, struct mpc_omp_mvp_s *n);
+mpc_omp_elem_stack_t *_mpc_omp_pop_elem_stack(mpc_omp_stack_node_leaf_t *s);
+void _mpc_omp_free_stack_node_leaf(mpc_omp_stack_node_leaf_t *s);
 
 #endif /* __MPCOMP_STACK_H__ */

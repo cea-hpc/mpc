@@ -5,7 +5,7 @@
 #include "mpc_common_debug.h"
 
 void
-__mpcompt_callback_cancel ( __UNUSED__ int flags ) {
+_mpc_omp_ompt_callback_cancel ( __UNUSED__ int flags ) {
     not_implemented();
 }
 

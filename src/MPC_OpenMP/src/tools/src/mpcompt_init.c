@@ -11,7 +11,7 @@
 #include "mpcomp_abi.h"
 
 /* Global vars */
-extern mpcomp_global_icv_t mpcomp_global_icvs;
+extern mpc_omp_global_icv_t mpcomp_global_icvs;
 
 #pragma weak ompt_start_tool
 ompt_start_tool_result_t*
@@ -36,7 +36,7 @@ ompt_start_tool ( unsigned int omp_version,
 }
 
 static inline ompt_start_tool_result_t*
-___mpcompt_get_start_tool_result ( unsigned int omp_version,
+__get_start_tool_result ( unsigned int omp_version,
                                    const char *runtime_version,
                                    char** tool_path ) {
     char* save_ptr;
@@ -94,21 +94,21 @@ ___mpcompt_get_start_tool_result ( unsigned int omp_version,
 }
 
 void
-__mpcompt_init () {
+_mpc_omp_ompt_init () {
     char* tool_path = NULL;
-    mpcomp_thread_t* thread;
+    mpc_omp_thread_t* thread;
     ompt_start_tool_result_t* tool_res = NULL;
 
     /* Get current thread */
-    thread = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
+    thread = ( mpc_omp_thread_t* ) mpc_omp_tls;
     assert( thread );
 
     mpc_common_debug( "%s: %s tool interface (OMP_TOOL)", __func__,
-                      mpcomp_global_icvs.tool == mpcomp_tool_enabled ?
+                      mpcomp_global_icvs.tool == mpc_omp_tool_enabled ?
                       "initialize" : "ignore" );
 
     /* Tool interface disabled by OMP_TOOL env variable */
-    if( mpcomp_global_icvs.tool != mpcomp_tool_enabled ) {
+    if( mpcomp_global_icvs.tool != mpc_omp_tool_enabled ) {
         thread->tool_status = inactive;
 
         return;
@@ -121,7 +121,7 @@ __mpcompt_init () {
     thread->tool_status = initialized;
 
     /* Try to find a tool */
-    tool_res = ___mpcompt_get_start_tool_result( _OPENMP,
+    tool_res = __get_start_tool_result( _OPENMP,
                                                  "mpc-omp",
                                                  &tool_path );
 
@@ -129,7 +129,7 @@ __mpcompt_init () {
 
     /* Found a tool, call initialize method and register it */
     if( tool_res
-        && mpcompt_register_tool( tool_res, tool_path ? tool_path : NULL )) {
+        && mpc_omp_ompt_register_tool( tool_res, tool_path ? tool_path : NULL )) {
         mpc_common_debug( "%s: Tool found! Tool interface active.\n"
                           "(tool result = %p, tool instance = %p)",
                           __func__, thread->tool_instance->start_result,
@@ -143,12 +143,12 @@ __mpcompt_init () {
 }
 
 void
-__mpcompt_finalize () {
-    mpcomp_thread_t* thread;
+_mpc_omp_ompt_finalize () {
+    mpc_omp_thread_t* thread;
     OPA_int_t* nb_threads_exit;
 
     /* Get current thread */
-    thread = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
+    thread = ( mpc_omp_thread_t* ) mpc_omp_tls;
     assert( thread );
 
     mpc_common_debug( "%s: tool state = %s", __func__,
@@ -169,7 +169,7 @@ __mpcompt_finalize () {
                           thread->tool_instance );
 
         /* Call tool finalize method, unregister callabcks and free tool infos */
-        mpcompt_unregister_tool();
+        mpc_omp_ompt_unregister_tool();
 
         /* No more active tool */
         thread->tool_status = inactive;

@@ -5,17 +5,17 @@
 #include "mpc_common_debug.h"
 
 void
-__mpcompt_callback_thread_begin ( mpcomp_thread_t* thread,
+_mpc_omp_ompt_callback_thread_begin ( mpc_omp_thread_t* thread,
                                   ompt_thread_t thread_type ) {
     assert( thread );
-    mpcomp_thread_t* cur_thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+    mpc_omp_thread_t* cur_thread = (mpc_omp_thread_t*) mpc_omp_tls;
 
-    if( ___mpcompt_isActive( thread )) {
+    if( __mpc_omp_ompt_isActive( thread )) {
         assert( thread->tool_instance );
         ompt_callback_thread_begin_t callback;
 
         callback = (ompt_callback_thread_begin_t)
-            ___mpcompt_get_callback( thread, ompt_callback_thread_begin );
+            __mpc_omp_ompt_get_callback( thread, ompt_callback_thread_begin );
 
         if( callback ) {
             ompt_data_t* ompt_data;
@@ -30,9 +30,9 @@ __mpcompt_callback_thread_begin ( mpcomp_thread_t* thread,
                               (int) thread_type, ompt_data );
 
             if( cur_thread != thread ) {
-                sctk_openmp_thread_tls = (void*) thread;
+                mpc_omp_tls = (void*) thread;
                 callback( thread_type, ompt_data );
-                sctk_openmp_thread_tls = (void*) cur_thread;
+                mpc_omp_tls = (void*) cur_thread;
             }
             else
                 callback( thread_type, ompt_data );
@@ -41,17 +41,17 @@ __mpcompt_callback_thread_begin ( mpcomp_thread_t* thread,
 }
 
 void
-__mpcompt_callback_thread_end ( mpcomp_thread_t* thread,
+_mpc_omp_ompt_callback_thread_end ( mpc_omp_thread_t* thread,
                                 ompt_thread_t thread_type ) {
     assert( thread );
-    mpcomp_thread_t* cur_thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+    mpc_omp_thread_t* cur_thread = (mpc_omp_thread_t*) mpc_omp_tls;
 
-    if( ___mpcompt_isActive( thread )) {
+    if( __mpc_omp_ompt_isActive( thread )) {
         assert( thread->tool_instance );
         ompt_callback_thread_end_t callback;
 
         callback = (ompt_callback_thread_end_t)
-            ___mpcompt_get_callback( thread,
+            __mpc_omp_ompt_get_callback( thread,
                                      ompt_callback_thread_end );
 
         if( callback ) {
@@ -66,9 +66,9 @@ __mpcompt_callback_thread_end ( mpcomp_thread_t* thread,
                               __func__, callback, ompt_data );
 
             if( cur_thread != thread ) {
-                sctk_openmp_thread_tls = (void*) thread;
+                mpc_omp_tls = (void*) thread;
                 callback( ompt_data );
-                sctk_openmp_thread_tls = (void*) cur_thread;
+                mpc_omp_tls = (void*) cur_thread;
             }
             else
                 callback( ompt_data );

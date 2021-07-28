@@ -5,22 +5,22 @@
 #include "mpc_common_debug.h"
 
 void
-__mpcompt_callback_mutex_acquire ( ompt_mutex_t kind,
+_mpc_omp_ompt_callback_mutex_acquire ( ompt_mutex_t kind,
                                    unsigned int hint,
                                    unsigned int impl,
                                    ompt_wait_id_t wait_id ) {
-    mpcomp_thread_t* thread;
+    mpc_omp_thread_t* thread;
 
     /* Get current thread infos */
-    thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+    thread = (mpc_omp_thread_t*) mpc_omp_tls;
     assert( thread );
 
-    if( ___mpcompt_isActive( thread )) {
+    if( __mpc_omp_ompt_isActive( thread )) {
         assert( thread->tool_instance );
         ompt_callback_mutex_acquire_t callback;
 
         callback = (ompt_callback_mutex_acquire_t)
-            ___mpcompt_get_callback( thread, ompt_callback_mutex_acquire );
+            __mpc_omp_ompt_get_callback( thread, ompt_callback_mutex_acquire );
 
         if( callback ) {
 #if MPCOMPT_HAS_FRAME_SUPPORT
@@ -39,22 +39,22 @@ __mpcompt_callback_mutex_acquire ( ompt_mutex_t kind,
 }
 
 void
-__mpcompt_callback_lock_init ( ompt_mutex_t kind,
+_mpc_omp_ompt_callback_lock_init ( ompt_mutex_t kind,
                                unsigned int hint,
                                unsigned int impl,
                                ompt_wait_id_t wait_id ) {
-    mpcomp_thread_t* thread;
+    mpc_omp_thread_t* thread;
 
     /* Get current thread infos */
-    thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+    thread = (mpc_omp_thread_t*) mpc_omp_tls;
     assert( thread );
 
-    if( ___mpcompt_isActive( thread )) {
+    if( __mpc_omp_ompt_isActive( thread )) {
         assert( thread->tool_instance );
         ompt_callback_mutex_acquire_t callback;
 
         callback = (ompt_callback_mutex_acquire_t)
-            ___mpcompt_get_callback( thread, ompt_callback_lock_init );
+            __mpc_omp_ompt_get_callback( thread, ompt_callback_lock_init );
 
         if( callback ) {
 #if MPCOMPT_HAS_FRAME_SUPPORT
@@ -73,20 +73,20 @@ __mpcompt_callback_lock_init ( ompt_mutex_t kind,
 }
 
 void
-__mpcompt_callback_lock_destroy ( ompt_mutex_t kind,
+_mpc_omp_ompt_callback_lock_destroy ( ompt_mutex_t kind,
                                   ompt_wait_id_t wait_id ) {
-    mpcomp_thread_t* thread;
+    mpc_omp_thread_t* thread;
 
     /* Get current thread infos */
-    thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+    thread = (mpc_omp_thread_t*) mpc_omp_tls;
     assert( thread );
 
-    if( ___mpcompt_isActive( thread )) {
+    if( __mpc_omp_ompt_isActive( thread )) {
         assert( thread->tool_instance );
         ompt_callback_mutex_t callback;
 
         callback = (ompt_callback_mutex_t)
-            ___mpcompt_get_callback( thread, ompt_callback_lock_destroy );
+            __mpc_omp_ompt_get_callback( thread, ompt_callback_lock_destroy );
 
         if( callback ) {
 #if MPCOMPT_HAS_FRAME_SUPPORT
@@ -105,20 +105,20 @@ __mpcompt_callback_lock_destroy ( ompt_mutex_t kind,
 }
 
 void
-__mpcompt_callback_mutex_acquired ( ompt_mutex_t kind,
+_mpc_omp_ompt_callback_mutex_acquired ( ompt_mutex_t kind,
                                     ompt_wait_id_t wait_id ) {
-    mpcomp_thread_t* thread;
+    mpc_omp_thread_t* thread;
 
     /* Get current thread infos */
-    thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+    thread = (mpc_omp_thread_t*) mpc_omp_tls;
     assert( thread );
 
-    if( ___mpcompt_isActive( thread )) {
+    if( __mpc_omp_ompt_isActive( thread )) {
         assert( thread->tool_instance );
         ompt_callback_mutex_t callback;
 
         callback = (ompt_callback_mutex_t)
-            ___mpcompt_get_callback( thread, ompt_callback_mutex_acquired );
+            __mpc_omp_ompt_get_callback( thread, ompt_callback_mutex_acquired );
 
         if( callback ) {
 #if MPCOMPT_HAS_FRAME_SUPPORT
@@ -137,20 +137,20 @@ __mpcompt_callback_mutex_acquired ( ompt_mutex_t kind,
 }
 
 void
-__mpcompt_callback_mutex_released ( ompt_mutex_t kind,
+_mpc_omp_ompt_callback_mutex_released ( ompt_mutex_t kind,
                                     ompt_wait_id_t wait_id ) {
-    mpcomp_thread_t* thread;
+    mpc_omp_thread_t* thread;
 
     /* Get current thread infos */
-    thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+    thread = (mpc_omp_thread_t*) mpc_omp_tls;
     assert( thread );
 
-    if( ___mpcompt_isActive( thread )) {
+    if( __mpc_omp_ompt_isActive( thread )) {
         assert( thread->tool_instance );
         ompt_callback_mutex_t callback;
 
         callback = (ompt_callback_mutex_t)
-            ___mpcompt_get_callback( thread, ompt_callback_mutex_released );
+            __mpc_omp_ompt_get_callback( thread, ompt_callback_mutex_released );
 
         if( callback ) {
 #if MPCOMPT_HAS_FRAME_SUPPORT
@@ -169,20 +169,20 @@ __mpcompt_callback_mutex_released ( ompt_mutex_t kind,
 }
 
 void
-__mpcompt_callback_nest_lock ( ompt_scope_endpoint_t endpoint,
+_mpc_omp_ompt_callback_nest_lock ( ompt_scope_endpoint_t endpoint,
                                ompt_wait_id_t wait_id ) {
-    mpcomp_thread_t* thread;
+    mpc_omp_thread_t* thread;
 
     /* Get current thread infos */
-    thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+    thread = (mpc_omp_thread_t*) mpc_omp_tls;
     assert( thread );
 
-    if( ___mpcompt_isActive( thread )) {
+    if( __mpc_omp_ompt_isActive( thread )) {
         assert( thread->tool_instance );
         ompt_callback_nest_lock_t callback;
 
         callback = (ompt_callback_nest_lock_t)
-            ___mpcompt_get_callback( thread, ompt_callback_nest_lock );
+            __mpc_omp_ompt_get_callback( thread, ompt_callback_nest_lock );
 
         if( callback ) {
 #if MPCOMPT_HAS_FRAME_SUPPORT

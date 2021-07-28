@@ -24,14 +24,14 @@
 #if 0 // NO MORE USED
 #include "mpc_common_debug.h"
 #include "mpcomp_types.h"
-#include "mpcomp_stack.h"
+#include "mpc_omp_stack.h"
 
-mpcomp_stack_t * __mpcomp_create_stack(int max_elements)
+mpc_omp_stack_t * _mpc_omp_create_stack(int max_elements)
 {
-     mpcomp_stack_t *s;
+     mpc_omp_stack_t *s;
 
-     s = (mpcomp_stack_t *) malloc(sizeof(mpcomp_stack_t));
-     s->elements = (mpcomp_node_t **) malloc(max_elements * sizeof(mpcomp_node_t *));
+     s = (mpc_omp_stack_t *) malloc(sizeof(mpc_omp_stack_t));
+     s->elements = (mpc_omp_node_t **) malloc(max_elements * sizeof(mpc_omp_node_t *));
      assert(s->elements != NULL);
      s->max_elements = max_elements;
      s->n_elements = 0; 
@@ -39,12 +39,12 @@ mpcomp_stack_t * __mpcomp_create_stack(int max_elements)
      return s;
 }
 
-int __mpcomp_is_stack_empty(mpcomp_stack_t *s)
+int _mpc_omp_is_stack_empty(mpc_omp_stack_t *s)
 {
      return (s->n_elements == 0);
 }
 
-void __mpcomp_push(mpcomp_stack_t *s, mpcomp_node_t *n)
+void _mpc_omp_push(mpc_omp_stack_t *s, mpc_omp_node_t *n)
 {
      if (s->n_elements == s->max_elements)
 	  exit(1);   /* Error */
@@ -53,9 +53,9 @@ void __mpcomp_push(mpcomp_stack_t *s, mpcomp_node_t *n)
      s->n_elements++;
 }
 
-mpcomp_node_t * __mpcomp_pop(mpcomp_stack_t *s)
+mpc_omp_node_t * _mpc_omp_pop(mpc_omp_stack_t *s)
 {
-     mpcomp_node_t *n;
+     mpc_omp_node_t *n;
 
      if (s->n_elements == 0)
 	  return NULL;
@@ -66,7 +66,7 @@ mpcomp_node_t * __mpcomp_pop(mpcomp_stack_t *s)
      return n;
 }
 
-void __mpcomp_free_stack(mpcomp_stack_t *s)
+void _mpc_omp_free_stack(mpc_omp_stack_t *s)
 {
      free(s->elements);
 }

@@ -26,14 +26,14 @@
 
 #include <mpc_topology.h>
 
-static mpcomp_alloc_list_t mpcomp_global_allocators;
+static mpc_omp_alloc_list_t mpcomp_global_allocators;
 
 #if MPC_HAVE_LIBVMEM
   #include <libvmem.h>
   static VMEM *vmp;
 #endif
 
-static inline void mpcomp_alloc_init_default_trait(mpcomp_alloc_t * alloc)
+static inline void mpc_omp_alloc_init_default_trait(mpc_omp_alloc_t * alloc)
 {
   int i;
   for(i = omp_atk_sync_hint; i <= omp_atk_partition; ++i)
@@ -82,7 +82,7 @@ static inline void mpcomp_alloc_init_default_trait(mpcomp_alloc_t * alloc)
 }
 
 void
-mpcomp_alloc_init_allocators()
+mpc_omp_alloc_init_allocators()
 {
 
   assume(mpcomp_global_allocators.list);
@@ -91,7 +91,7 @@ mpcomp_alloc_init_allocators()
 
 	mpc_common_spinlock_lock( &mpcomp_global_allocators.lock );
 
-  mpcomp_alloc_t* alloc_set = mpcomp_global_allocators.list;
+  mpc_omp_alloc_t* alloc_set = mpcomp_global_allocators.list;
   mpcomp_global_allocators.nb_init_allocators = 0;
   mpcomp_global_allocators.last_index = -1;
   mpcomp_global_allocators.recycling_info.nb_recycl_allocators = 0;
@@ -100,7 +100,7 @@ mpcomp_alloc_init_allocators()
   /* Initialize Pre-defined traits for all the allocators */
   for(i = omp_atk_sync_hint-1; i < omp_atk_partition; ++i)
   {
-    mpcomp_alloc_init_default_trait(&alloc_set[i]);
+    mpc_omp_alloc_init_default_trait(&alloc_set[i]);
     mpcomp_global_allocators.nb_init_allocators += 1;
   }
   mpcomp_global_allocators.last_index = mpcomp_global_allocators.nb_init_allocators;
@@ -145,7 +145,7 @@ omp_init_allocator(
   const omp_alloctrait_t traits[]
 )
 {
-  __mpcomp_init();
+  mpc_omp_init();
 
   omp_allocator_handle_t idx = -1;
 
@@ -250,7 +250,7 @@ omp_init_allocator(
 void
 omp_destroy_allocator(omp_allocator_handle_t allocator)
 {
-  __mpcomp_init();
+  mpc_omp_init();
 
 	mpc_common_spinlock_lock( &mpcomp_global_allocators.lock );
 
@@ -274,10 +274,10 @@ omp_destroy_allocator(omp_allocator_handle_t allocator)
 void
 omp_set_default_allocator(omp_allocator_handle_t allocator)
 {
-  __mpcomp_init();
+  mpc_omp_init();
 
-  mpcomp_thread_t *t;
-  t = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+  mpc_omp_thread_t *t;
+  t = (mpc_omp_thread_t*) mpc_omp_tls;
 
   t->default_allocator = allocator;
 }
@@ -288,10 +288,10 @@ omp_set_default_allocator(omp_allocator_handle_t allocator)
 omp_allocator_handle_t
 omp_get_default_allocator(void)
 {
-  __mpcomp_init();
+  mpc_omp_init();
 
-  mpcomp_thread_t *t;
-  t = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+  mpc_omp_thread_t *t;
+  t = (mpc_omp_thread_t*) mpc_omp_tls;
 
   return t->default_allocator;
 }
@@ -307,7 +307,7 @@ void *
 omp_alloc(size_t size, omp_allocator_handle_t allocator)
 #endif
 {
-  __mpcomp_init();
+  mpc_omp_init();
 
   void* ret = NULL;
 
@@ -397,7 +397,7 @@ void
 omp_free(void *ptr, omp_allocator_handle_t allocator)
 #endif
 {
-  __mpcomp_init();
+  mpc_omp_init();
 
   if(ptr == NULL)
   {

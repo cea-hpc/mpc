@@ -29,7 +29,7 @@
 #if OMPT_SUPPORT
 
 ompt_function_lookup_t
-mpcompt_get_lookup_fn();
+mpc_omp_ompt_get_lookup_fn();
 
 #endif /* OMPT_SUPPORT */
 #endif /* __MPCOMPT_ENTRYPOINTS_H__ */

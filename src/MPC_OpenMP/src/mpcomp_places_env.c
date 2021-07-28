@@ -27,15 +27,17 @@
 #include "mpcomp_places_env.h"
 #include "mpcomp_core.h"
 
-static inline void mpcomp_places_restrict_bitmap( hwloc_bitmap_t res, const int nb_mvps )
+static inline void
+__places_restrict_bitmap( hwloc_bitmap_t res, const int nb_mvps )
 {
 	hwloc_bitmap_t default_bitmap;
-	default_bitmap = mpcomp_places_get_default_include_bitmap( nb_mvps );
+	default_bitmap = mpc_omp_places_get_default_include_bitmap( nb_mvps );
 	hwloc_bitmap_and( res, res, default_bitmap );
 	hwloc_bitmap_free( default_bitmap );
 }
 
-static inline hwloc_bitmap_t mpcomp_places_dup_with_stride( const hwloc_bitmap_t origin, int stride, int idx, const int nb_mvps )
+static inline hwloc_bitmap_t
+__places_dup_with_stride( const hwloc_bitmap_t origin, int stride, int idx, const int nb_mvps )
 {
 	int index;
 	hwloc_bitmap_t new_bitmap;
@@ -47,17 +49,17 @@ static inline hwloc_bitmap_t mpcomp_places_dup_with_stride( const hwloc_bitmap_t
 	hwloc_bitmap_foreach_begin( index, origin )
 	hwloc_bitmap_set( new_bitmap, index + idx * stride );
 	hwloc_bitmap_foreach_end();
-	mpcomp_places_restrict_bitmap( new_bitmap, nb_mvps );
+	__places_restrict_bitmap( new_bitmap, nb_mvps );
 	return new_bitmap;
 }
 
-static inline mpcomp_places_info_t *
-mpcomp_places_infos_init( int allocate_bitmap )
+static inline mpc_omp_places_info_t *
+__places_infos_init( int allocate_bitmap )
 {
-	mpcomp_places_info_t *new_place = NULL;
-	new_place = ( mpcomp_places_info_t * ) sctk_malloc( sizeof( mpcomp_places_info_t ) );
+	mpc_omp_places_info_t *new_place = NULL;
+	new_place = ( mpc_omp_places_info_t * ) sctk_malloc( sizeof( mpc_omp_places_info_t ) );
 	assert( new_place );
-	memset( new_place, 0, sizeof( mpcomp_places_info_t ) );
+	memset( new_place, 0, sizeof( mpc_omp_places_info_t ) );
 
 	if ( allocate_bitmap )
 	{
@@ -69,18 +71,18 @@ mpcomp_places_infos_init( int allocate_bitmap )
 	return new_place;
 }
 
-static inline int mpcomp_places_expand_place_bitmap( mpcomp_places_info_t *list, mpcomp_places_info_t *place, int len, int stride, const int nb_mvps )
+static inline int mpc_omp_places_expand_place_bitmap( mpc_omp_places_info_t *list, mpc_omp_places_info_t *place, int len, int stride, const int nb_mvps )
 {
 	int i;
-	mpcomp_places_info_t *new_place;
+	mpc_omp_places_info_t *new_place;
 	assert( stride != 0 && len > 0 );
 	const unsigned int place_id = place->id;
 
 	/* i = 0 is place */
 	for ( i = 1; i < len; i++ )
 	{
-		new_place = mpcomp_places_infos_init( 0 );
-		new_place->interval = mpcomp_places_dup_with_stride( place->interval, i, stride, nb_mvps );
+		new_place = __places_infos_init( 0 );
+		new_place->interval = __places_dup_with_stride( place->interval, i, stride, nb_mvps );
 
 		if ( !( new_place->interval ) )
 		{
@@ -94,7 +96,7 @@ static inline int mpcomp_places_expand_place_bitmap( mpcomp_places_info_t *list,
 	return 0;
 }
 
-static inline int mpcomp_safe_atoi( char *string, char **next )
+static inline int ___safe_atoi( char *string, char **next )
 {
 	long retval = strtol( string, next, 10 );
 	assert( retval > INT_MIN && retval < INT_MAX );
@@ -107,12 +109,12 @@ static inline int mpcomp_safe_atoi( char *string, char **next )
 	return ( int ) retval;
 }
 
-static inline int mpcomp_places_detect_collision( mpcomp_places_info_t *list )
+static inline int mpc_omp_places_detect_collision( mpc_omp_places_info_t *list )
 {
 	int colision_count;
 	hwloc_bitmap_t bitmap_val = hwloc_bitmap_alloc();
 	char string_place[256], string_place2[256], string_place3[256];
-	mpcomp_places_info_t *place, *place2, *saveptr, *saveptr2;
+	mpc_omp_places_info_t *place, *place2, *saveptr, *saveptr2;
 	colision_count = 0;
 	DL_FOREACH_SAFE( list, place, saveptr )
 	{
@@ -148,7 +150,7 @@ static inline int mpcomp_places_detect_collision( mpcomp_places_info_t *list )
 
 
 static inline void
-mpcomp_places_merge_interval( hwloc_bitmap_t res,
+__places_merge_interval( hwloc_bitmap_t res,
                               const hwloc_bitmap_t include,
                               const hwloc_bitmap_t exclude,
                               const int nb_mvps )
@@ -176,11 +178,11 @@ mpcomp_places_merge_interval( hwloc_bitmap_t res,
 		}
 	}
 
-	mpcomp_places_restrict_bitmap( res, nb_mvps );
+	__places_restrict_bitmap( res, nb_mvps );
 }
 
 static inline hwloc_bitmap_t
-mpcomp_places_build_interval_bitmap( int res, int num_places, int stride )
+__places_build_interval_bitmap( int res, int num_places, int stride )
 {
 	int i;
 	hwloc_bitmap_t interval;
@@ -196,10 +198,10 @@ mpcomp_places_build_interval_bitmap( int res, int num_places, int stride )
 	return interval;
 }
 
-mpcomp_places_info_t *
-mpcomp_places_build_interval_infos( char *string, char **end, const int nb_mvps )
+mpc_omp_places_info_t *
+mpc_omp_places_build_interval_infos( char *string, char **end, const int nb_mvps )
 {
-	mpcomp_places_info_t *place;
+	mpc_omp_places_info_t *place;
 	int res, num_places, stride, exclude, error;
 	hwloc_bitmap_t bitmap_tmp, bitmap_to_update;
 	hwloc_bitmap_t include_interval, exclude_interval;
@@ -209,7 +211,7 @@ mpcomp_places_build_interval_infos( char *string, char **end, const int nb_mvps 
 		return NULL;
 	}
 
-	place = mpcomp_places_infos_init( 1 );
+	place = __places_infos_init( 1 );
 	include_interval = hwloc_bitmap_alloc();
 	assert( include_interval );
 	hwloc_bitmap_zero( include_interval );
@@ -232,7 +234,7 @@ mpcomp_places_build_interval_infos( char *string, char **end, const int nb_mvps 
 			bitmap_to_update = exclude_interval;
 		}
 
-		res = mpcomp_safe_atoi( string, end );
+		res = ___safe_atoi( string, end );
 		string = *end;
 
 		if ( !exclude )
@@ -240,7 +242,7 @@ mpcomp_places_build_interval_infos( char *string, char **end, const int nb_mvps 
 			if ( *string == ':' )
 			{
 				string++;
-				num_places = mpcomp_safe_atoi( string, end );
+				num_places = ___safe_atoi( string, end );
 
 				if ( string == *end )
 				{
@@ -261,7 +263,7 @@ mpcomp_places_build_interval_infos( char *string, char **end, const int nb_mvps 
 			if ( *string == ':' )
 			{
 				string++;
-				stride = mpcomp_safe_atoi( string, end );
+				stride = ___safe_atoi( string, end );
 
 				if ( string == *end )
 				{
@@ -273,7 +275,7 @@ mpcomp_places_build_interval_infos( char *string, char **end, const int nb_mvps 
 			}
 		}
 
-		bitmap_tmp = mpcomp_places_build_interval_bitmap( res, num_places, stride );
+		bitmap_tmp = __places_build_interval_bitmap( res, num_places, stride );
 		hwloc_bitmap_or( bitmap_to_update, bitmap_to_update, bitmap_tmp );
 		hwloc_bitmap_free( bitmap_tmp );
 
@@ -285,12 +287,12 @@ mpcomp_places_build_interval_infos( char *string, char **end, const int nb_mvps 
 		string++; // skip ','
 	}
 
-	mpcomp_places_merge_interval( place->interval, include_interval, exclude_interval, nb_mvps );
+	__places_merge_interval( place->interval, include_interval, exclude_interval, nb_mvps );
 	return ( error ) ? NULL : place;
 }
 
 static char *
-mpcomp_places_build_numas_places( const int places_number, int *error )
+__places_build_numas_places( const int places_number, int *error )
 {
 	int numa_found;
 	size_t cnwrites, tnwrites;
@@ -391,7 +393,7 @@ mpcomp_places_build_numas_places( const int places_number, int *error )
 }
 
 static char *
-mpcomp_places_build_sockets_places( const int places_number, int *error )
+mpc_omp_places_build_sockets_places( const int places_number, int *error )
 {
 	int socket_found;
 	size_t cnwrites, tnwrites;
@@ -490,7 +492,7 @@ mpcomp_places_build_sockets_places( const int places_number, int *error )
 }
 
 static char *
-mpcomp_places_build_threads_places( const int places_number, int *error )
+mpc_omp_places_build_threads_places( const int places_number, int *error )
 {
 	int pu_found;
 	size_t cnwrites, tnwrites;
@@ -548,7 +550,7 @@ mpcomp_places_build_threads_places( const int places_number, int *error )
 }
 
 static char *
-mpcomp_places_build_cores_places( const int places_number, int *error )
+mpc_omp_places_build_cores_places( const int places_number, int *error )
 {
 	int core_found;
 	size_t cnwrites, tnwrites;
@@ -613,7 +615,7 @@ mpcomp_places_build_cores_places( const int places_number, int *error )
  * \return The number of places (0 if there was an issue
  * or -1 if there was no such number of places)
  */
-static int mpcomp_places_named_extract_num( const char *env, char *string )
+static int mpc_omp_places_named_extract_num( const char *env, char *string )
 {
 	char *next_char;
 
@@ -628,7 +630,7 @@ static int mpcomp_places_named_extract_num( const char *env, char *string )
 	}
 
 	string++; // skip '('
-	const int num_places = mpcomp_safe_atoi( string, &next_char );
+	const int num_places = ___safe_atoi( string, &next_char );
 
 	if ( num_places <= 0 || string == next_char )
 	{
@@ -672,66 +674,66 @@ static int mpcomp_places_named_extract_num( const char *env, char *string )
  * was not a named places
  */
 static char *
-mpcomp_places_is_named_places( const char *env, char *string, int *error )
+__places_is_named_places( const char *env, char *string, int *error )
 {
 	if ( !strncmp( string, "threads", 7 ) )
 	{
-		const int num_places = mpcomp_places_named_extract_num( env, string + 7 );
+		const int num_places = mpc_omp_places_named_extract_num( env, string + 7 );
 
 		if ( !num_places )
 		{
 			return NULL;
 		}
 
-		return mpcomp_places_build_threads_places( num_places, error );
+		return mpc_omp_places_build_threads_places( num_places, error );
 	}
 
 	if ( !strncmp( string, "cores", 5 ) )
 	{
-		const int num_places = mpcomp_places_named_extract_num( env, string + 5 );
+		const int num_places = mpc_omp_places_named_extract_num( env, string + 5 );
 
 		if ( !num_places )
 		{
 			return NULL;
 		}
 
-		return mpcomp_places_build_cores_places( num_places, error );
+		return mpc_omp_places_build_cores_places( num_places, error );
 	}
 
 	if ( !strncmp( string, "sockets", 7 ) )
 	{
-		const int num_places = mpcomp_places_named_extract_num( env, string + 7 );
+		const int num_places = mpc_omp_places_named_extract_num( env, string + 7 );
 
 		if ( !num_places )
 		{
 			return NULL;
 		}
 
-		return mpcomp_places_build_sockets_places( num_places, error );
+		return mpc_omp_places_build_sockets_places( num_places, error );
 	}
 
 	if ( !strncmp( string, "numas", 5 ) )
 	{
-		const int num_places = mpcomp_places_named_extract_num( env, string + 5 );
+		const int num_places = mpc_omp_places_named_extract_num( env, string + 5 );
 
 		if ( !num_places )
 		{
 			return NULL;
 		}
 
-		return mpcomp_places_build_numas_places( num_places, error );
+		return __places_build_numas_places( num_places, error );
 	}
 
 	*error = 0;
 	return NULL;
 }
 
-mpcomp_places_info_t *
-mpcomp_places_build_place_infos( char *string, char **end, const int nb_mvps )
+static inline mpc_omp_places_info_t *
+__places_build_place_infos( char *string, char **end, const int nb_mvps )
 {
 	int exclude, stride, len;
-	mpcomp_places_info_t *new_place, *list;
-	static int __mpcomp_places_generate_count = 0;
+	mpc_omp_places_info_t *new_place, *list;
+	static int _mpcomp_places_generate_count = 0;
 	list = NULL; // init utlist.h
 
 	if ( *string == '\0' )
@@ -757,7 +759,7 @@ mpcomp_places_build_place_infos( char *string, char **end, const int nb_mvps )
 		}
 
 		string++; // skip '{'
-		new_place = mpcomp_places_build_interval_infos( string, end, nb_mvps );
+		new_place = mpc_omp_places_build_interval_infos( string, end, nb_mvps );
 
 		if ( !new_place )
 		{
@@ -766,7 +768,7 @@ mpcomp_places_build_place_infos( char *string, char **end, const int nb_mvps )
 		}
 
 		DL_APPEND( list, new_place );
-		new_place->id = __mpcomp_places_generate_count++;
+		new_place->id = _mpcomp_places_generate_count++;
 		string = *end;
 
 		if ( *string != '}' )
@@ -781,7 +783,7 @@ mpcomp_places_build_place_infos( char *string, char **end, const int nb_mvps )
 			if ( *string == ':' )
 			{
 				string++;
-				len = mpcomp_safe_atoi( string, end );
+				len = ___safe_atoi( string, end );
 
 				if ( string == *end )
 				{
@@ -800,7 +802,7 @@ mpcomp_places_build_place_infos( char *string, char **end, const int nb_mvps )
 			if ( *string == ':' )
 			{
 				string++;
-				stride = mpcomp_safe_atoi( string, end );
+				stride = ___safe_atoi( string, end );
 
 				if ( string == *end )
 				{
@@ -810,8 +812,8 @@ mpcomp_places_build_place_infos( char *string, char **end, const int nb_mvps )
 				string = *end;
 			}
 
-			__mpcomp_places_generate_count += ( len - 1 );
-			mpcomp_places_expand_place_bitmap( list, new_place, len, stride, nb_mvps );
+			_mpcomp_places_generate_count += ( len - 1 );
+			mpc_omp_places_expand_place_bitmap( list, new_place, len, stride, nb_mvps );
 		}
 		else
 		{
@@ -831,7 +833,7 @@ mpcomp_places_build_place_infos( char *string, char **end, const int nb_mvps )
 }
 
 hwloc_bitmap_t
-mpcomp_places_get_default_include_bitmap( const int nb_mvps )
+mpc_omp_places_get_default_include_bitmap( const int nb_mvps )
 {
 	int i;
 	hwloc_obj_t pu;
@@ -872,11 +874,11 @@ mpcomp_places_get_default_include_bitmap( const int nb_mvps )
 	return hwloc_bitmap_dup( __default_num_threads_bitmap );
 }
 
-void mpcomp_display_places( mpcomp_places_info_t *list )
+void mpc_omp_display_places( mpc_omp_places_info_t *list )
 {
 	int count = 0;
 	char currend_bitmap_list[256];
-	mpcomp_places_info_t *place, *saveptr;
+	mpc_omp_places_info_t *place, *saveptr;
 	DL_FOREACH_SAFE( list, place, saveptr )
 	{
 		hwloc_bitmap_list_snprintf( currend_bitmap_list, 255, place->interval );
@@ -885,10 +887,10 @@ void mpcomp_display_places( mpcomp_places_info_t *list )
 	}
 }
 
-int mpcomp_places_get_real_nb_mvps( mpcomp_places_info_t *list )
+int mpc_omp_places_get_real_nb_mvps( mpc_omp_places_info_t *list )
 {
 	int real_nb_mvps = 0;
-	mpcomp_places_info_t *place, *saveptr;
+	mpc_omp_places_info_t *place, *saveptr;
 	DL_FOREACH_SAFE( list, place, saveptr )
 	{
 		real_nb_mvps += hwloc_bitmap_weight( place->interval );
@@ -896,7 +898,7 @@ int mpcomp_places_get_real_nb_mvps( mpcomp_places_info_t *list )
 	return real_nb_mvps;
 }
 
-static inline void __mpcomp_places_translate_cpu_list( int **cpus_order, const int cpu_number )
+static inline void __places_translate_cpu_list( int **cpus_order, const int cpu_number )
 {
 	int *__cpus_order;
 	int i, next, prev, pos_in_bitmap;
@@ -933,10 +935,10 @@ static inline void __mpcomp_places_translate_cpu_list( int **cpus_order, const i
 	}
 }
 
-int mpcomp_places_get_topo_info( mpcomp_places_info_t *list, int **shape, int **cpus_order )
+int _mpc_omp_places_get_topo_info( mpc_omp_places_info_t *list, int **shape, int **cpus_order )
 {
 	int __cur_cpu_id, __place_cur_id, __place_old_id;
-	mpcomp_places_info_t *place, *saveptr;
+	mpc_omp_places_info_t *place, *saveptr;
 	int *__place_shape, *__cpus_order;
 	__place_shape = ( int * ) malloc( sizeof( int ) * 2 );
 	assert( __place_shape );
@@ -945,7 +947,7 @@ int mpcomp_places_get_topo_info( mpcomp_places_info_t *list, int **shape, int **
 	/* No DL_FIRST ... bypass utlist API */
 	__place_shape[1] = hwloc_bitmap_weight( list->interval );
 	//fprintf(stderr, "Tree Shape : %d %d\n", __place_shape[0], __place_shape[1] );
-	const int __places_nb_mvps = mpcomp_places_get_real_nb_mvps( list );
+	const int __places_nb_mvps = mpc_omp_places_get_real_nb_mvps( list );
 	assert( __place_shape[0] * __place_shape[1] == __places_nb_mvps );
 	/* Build cpu order */
 	__cpus_order = ( int * ) malloc( sizeof( int ) * __places_nb_mvps );
@@ -964,7 +966,7 @@ int mpcomp_places_get_topo_info( mpcomp_places_info_t *list, int **shape, int **
 		}
 	}
 	/* Rename CPU PROC in places */
-	__mpcomp_places_translate_cpu_list( &__cpus_order, __cur_cpu_id );
+	__places_translate_cpu_list( &__cpus_order, __cur_cpu_id );
 	/* Build logical mpc task cpu in places */
 	int __rename_cur_cpu_id = 0;
 	DL_FOREACH_SAFE( list, place, saveptr )
@@ -997,11 +999,11 @@ int mpcomp_places_get_topo_info( mpcomp_places_info_t *list, int **shape, int **
 }
 
 static int
-mpcomp_places_detect_heretogeneous_places( mpcomp_places_info_t *list )
+__places_detect_heretogeneous_places( mpc_omp_places_info_t *list )
 {
 	int invalid_size_count;
 	const int first_size = hwloc_bitmap_weight( list->interval );
-	mpcomp_places_info_t *place, *saveptr;
+	mpc_omp_places_info_t *place, *saveptr;
 	invalid_size_count = 0;
 	DL_FOREACH_SAFE( list, place, saveptr )
 	{
@@ -1025,12 +1027,12 @@ mpcomp_places_detect_heretogeneous_places( mpcomp_places_info_t *list )
  * \param[in] nb_mvps Target number of microVPs (i.e., OpenMP threads)
  * \return List of places (or NULL if an error occured)
  */
-mpcomp_places_info_t *
-mpcomp_places_env_variable_parsing( const int nb_mvps )
+mpc_omp_places_info_t *
+_mpc_omp_places_env_variable_parsing( const int nb_mvps )
 {
 	int error = 0;
 	char *tmp, *string, *end;
-	mpcomp_places_info_t *list = NULL;
+	mpc_omp_places_info_t *list = NULL;
 	/* Get the value of OMP_PLACES (as a string) */
 	tmp = mpc_omp_conf_get()->places;
 
@@ -1044,7 +1046,7 @@ mpcomp_places_env_variable_parsing( const int nb_mvps )
 	mpc_common_debug_log("OMP_PLACES = <%s>\n", tmp );
 	const char *prev_env = strdup( tmp );
 	string = ( char * ) prev_env;
-	const char *named_str = mpcomp_places_is_named_places( prev_env, string, &error );
+	const char *named_str = __places_is_named_places( prev_env, string, &error );
 
 	if ( error )
 	{
@@ -1061,7 +1063,7 @@ mpcomp_places_env_variable_parsing( const int nb_mvps )
 		return NULL;
 	}
 
-	list = mpcomp_places_build_place_infos( string, &end, nb_mvps );
+	list = __places_build_place_infos( string, &end, nb_mvps );
 
 	if ( *end != '\0' )
 	{
@@ -1069,13 +1071,13 @@ mpcomp_places_env_variable_parsing( const int nb_mvps )
 		return NULL;
 	}
 
-	if ( mpcomp_places_detect_collision( list ) )
+	if ( mpc_omp_places_detect_collision( list ) )
 	{
 		mpc_common_debug_warning("MPC doesn't support collision between places\n" );
 		return NULL;
 	}
 
-	if ( mpcomp_places_detect_heretogeneous_places( list ) )
+	if ( __places_detect_heretogeneous_places( list ) )
 	{
 		//mpc_common_debug_warning("Every place must have the same number of threads\n" );
 		return NULL;

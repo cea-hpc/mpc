@@ -28,19 +28,19 @@
 #include "mpc_common_debug.h"
 #include "sctk_alloc.h"
 
-typedef struct mpcomp_places_info_s
+typedef struct mpc_omp_places_info_s
 {
 	unsigned int id;
 	hwloc_bitmap_t interval;
 	hwloc_bitmap_t logical_interval;
-	struct mpcomp_places_info_s *prev, *next;
-} mpcomp_places_info_t;
+	struct mpc_omp_places_info_s *prev, *next;
+} mpc_omp_places_info_t;
 
-void mpcomp_display_places( mpcomp_places_info_t *list );
-mpcomp_places_info_t *mpcomp_places_env_variable_parsing( const int );
-int mpcomp_places_get_real_nb_mvps( mpcomp_places_info_t *list );
-int mpcomp_places_get_topo_info( mpcomp_places_info_t *list, int **shape, int **cpus_order );
+void mpc_omp_display_places( mpc_omp_places_info_t *list );
+mpc_omp_places_info_t *_mpc_omp_places_env_variable_parsing( const int );
+int mpc_omp_places_get_real_nb_mvps( mpc_omp_places_info_t *list );
+int _mpc_omp_places_get_topo_info( mpc_omp_places_info_t *list, int **shape, int **cpus_order );
 
-hwloc_bitmap_t mpcomp_places_get_default_include_bitmap( const int );
+hwloc_bitmap_t mpc_omp_places_get_default_include_bitmap( const int );
 
 #endif /* __MPCOMP_PLACES_ENV_H__*/

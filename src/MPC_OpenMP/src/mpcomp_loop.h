@@ -37,7 +37,7 @@
  *******************/
 
 static inline void
-__mpcomp_loop_gen_infos_init( mpcomp_loop_gen_info_t *loop_infos, long lb,
+_mpc_omp_loop_gen_infos_init( mpc_omp_loop_gen_info_t *loop_infos, long lb,
                               long b, long incr, long chunk_size )
 {
 	assert( loop_infos );
@@ -53,7 +53,7 @@ __mpcomp_loop_gen_infos_init( mpcomp_loop_gen_info_t *loop_infos, long lb,
 }
 
 static inline void
-__mpcomp_loop_gen_infos_init_ull( mpcomp_loop_gen_info_t *loop_infos,
+_mpc_omp_loop_gen_infos_init_ull( mpc_omp_loop_gen_info_t *loop_infos,
                                   unsigned long long lb, unsigned long long b,
                                   unsigned long long incr,
                                   unsigned long long chunk_size )
@@ -71,163 +71,159 @@ __mpcomp_loop_gen_infos_init_ull( mpcomp_loop_gen_info_t *loop_infos,
 }
 
 static inline void
-__mpcomp_loop_gen_loop_infos_cpy( mpcomp_loop_gen_info_t *in,
-                                  mpcomp_loop_gen_info_t *out )
+_mpc_omp_loop_gen_loop_infos_cpy( mpc_omp_loop_gen_info_t *in,
+                                  mpc_omp_loop_gen_info_t *out )
 {
-	memcpy( out, in, sizeof( mpcomp_loop_gen_info_t ) );
+	memcpy( out, in, sizeof( mpc_omp_loop_gen_info_t ) );
 }
 
 static inline void
-__mpcomp_loop_gen_loop_infos_reset( mpcomp_loop_gen_info_t *loop )
+_mpc_omp_loop_gen_loop_infos_reset( mpc_omp_loop_gen_info_t *loop )
 {
-	memset( loop, 0, sizeof( mpcomp_loop_gen_info_t ) );
+	memset( loop, 0, sizeof( mpc_omp_loop_gen_info_t ) );
 }
 
 /***************
  * LOOP STATIC *
  ***************/
 
-struct mpcomp_thread_s;
+struct mpc_omp_thread_s;
 
-void __mpcomp_static_loop_init( struct mpcomp_thread_s *, long, long, long,
+void _mpc_omp_static_loop_init( struct mpc_omp_thread_s *, long, long, long,
                                 long );
 
 
-int __mpcomp_static_loop_begin( long, long, long, long, long *, long * );
-int __mpcomp_static_loop_next( long *, long * );
-void __mpcomp_static_loop_end( void );
-void __mpcomp_static_loop_end_nowait( void );
+int mpc_omp_static_loop_begin( long, long, long, long, long *, long * );
+int mpc_omp_static_loop_next( long *, long * );
+void mpc_omp_static_loop_end( void );
+void mpc_omp_static_loop_end_nowait( void );
 
-int __mpcomp_ordered_static_loop_begin( long, long b, long, long, long *,
+int mpc_omp_ordered_static_loop_begin( long, long b, long, long, long *,
                                         long * );
-int __mpcomp_ordered_static_loop_next( long *, long * );
-void __mpcomp_ordered_static_loop_end( void );
-void __mpcomp_ordered_static_loop_end_nowait( void );
+int mpc_omp_ordered_static_loop_next( long *, long * );
+void mpc_omp_ordered_static_loop_end( void );
+void mpc_omp_ordered_static_loop_end_nowait( void );
 
-int __mpcomp_static_loop_begin_ull( bool up, unsigned long long lb,
+int mpc_omp_static_loop_begin_ull( bool up, unsigned long long lb,
                                     unsigned long long b,
                                     unsigned long long incr,
                                     unsigned long long chunk_size,
                                     unsigned long long *from,
                                     unsigned long long *to );
 
-int __mpcomp_static_loop_next_ull( unsigned long long *from,
+int mpc_omp_static_loop_next_ull( unsigned long long *from,
                                    unsigned long long *to );
 
-int __mpcomp_ordered_static_loop_begin_ull( bool up, unsigned long long lb,
+int mpc_omp_ordered_static_loop_begin_ull( bool up, unsigned long long lb,
         unsigned long long b,
         unsigned long long incr,
         unsigned long long chunk_size,
         unsigned long long *from,
         unsigned long long *to );
 
-int __mpcomp_ordered_static_loop_next_ull( unsigned long long *from,
+int mpc_omp_ordered_static_loop_next_ull( unsigned long long *from,
         unsigned long long *to );
 
 /***************
  * LOOP GUIDED *
  ***************/
 
-int __mpcomp_guided_loop_begin( long, long, long, long, long *, long * );
-int __mpcomp_guided_loop_next( long *, long * );
-void __mpcomp_guided_loop_end( void );
-void __mpcomp_guided_loop_end_nowait( void );
+int mpc_omp_guided_loop_begin( long, long, long, long, long *, long * );
+int mpc_omp_guided_loop_next( long *, long * );
+void mpc_omp_guided_loop_end( void );
+void mpc_omp_guided_loop_end_nowait( void );
 
-int __mpcomp_ordered_guided_loop_begin( long, long, long, long, long *, long * );
-int __mpcomp_ordered_guided_loop_next( long *, long * );
-void __mpcomp_ordered_guided_loop_end( void );
-void __mpcomp_ordered_guided_loop_end_nowait( void );
-int __mpcomp_loop_ull_guided_begin( bool, unsigned long long, unsigned long long,
+int mpc_omp_ordered_guided_loop_begin( long, long, long, long, long *, long * );
+int mpc_omp_ordered_guided_loop_next( long *, long * );
+void mpc_omp_ordered_guided_loop_end( void );
+void mpc_omp_ordered_guided_loop_end_nowait( void );
+int mpc_omp_loop_ull_guided_begin( bool, unsigned long long, unsigned long long,
                                     unsigned long long, unsigned long long,
                                     unsigned long long *, unsigned long long * );
-int __mpcomp_loop_ull_guided_next( unsigned long long *, unsigned long long * );
-void __mpcomp_guided_loop_ull_end( void );
-void __mpcomp_guided_loop_ull_end_nowait( void );
-int __mpcomp_loop_ull_ordered_guided_begin(
+int mpc_omp_loop_ull_guided_next( unsigned long long *, unsigned long long * );
+void _mpc_omp_guided_loop_ull_end( void );
+void _mpc_omp_guided_loop_ull_end_nowait( void );
+int mpc_omp_loop_ull_ordered_guided_begin(
     bool, unsigned long long, unsigned long long, unsigned long long,
     unsigned long long, unsigned long long *, unsigned long long * );
-int __mpcomp_loop_ull_ordered_guided_next( unsigned long long *,
+int mpc_omp_loop_ull_ordered_guided_next( unsigned long long *,
         unsigned long long * );
 
 /****************
  * LOOP DYNAMIC *
  ****************/
 
-struct mpcomp_thread_s;
-struct mpcomp_instance_s;
+struct mpc_omp_thread_s;
+struct mpc_omp_instance_s;
 
-void __mpcomp_dynamic_loop_init( struct mpcomp_thread_s *, long, long, long,
+void _mpc_omp_dynamic_loop_init( struct mpc_omp_thread_s *, long, long, long,
                                  long );
 
-int __mpcomp_dynamic_loop_begin( long, long, long, long, long *, long * );
-int __mpcomp_dynamic_loop_next( long *, long * );
-int __mpcomp_loop_ull_dynamic_begin( bool, unsigned long long,
+int mpc_omp_dynamic_loop_begin( long, long, long, long, long *, long * );
+int mpc_omp_dynamic_loop_next( long *, long * );
+int mpc_omp_loop_ull_dynamic_begin( bool, unsigned long long,
                                      unsigned long long, unsigned long long,
                                      unsigned long long, unsigned long long *,
                                      unsigned long long * );
-int __mpcomp_loop_ull_dynamic_next( unsigned long long *, unsigned long long * );
-void __mpcomp_dynamic_loop_end( void );
-void __mpcomp_dynamic_loop_end_nowait( void );
-int __mpcomp_dynamic_loop_next_ignore_nowait( long *, long * );
+int mpc_omp_loop_ull_dynamic_next( unsigned long long *, unsigned long long * );
+void mpc_omp_dynamic_loop_end( void );
+void mpc_omp_dynamic_loop_end_nowait( void );
+int mpc_omp_dynamic_loop_next_ignore_nowait( long *, long * );
 
-int __mpcomp_ordered_dynamic_loop_begin( long, long, long, long, long *, long * );
-int __mpcomp_ordered_dynamic_loop_next( long *, long * );
-int __mpcomp_loop_ull_ordered_dynamic_begin(
+int mpc_omp_ordered_dynamic_loop_begin( long, long, long, long, long *, long * );
+int mpc_omp_ordered_dynamic_loop_next( long *, long * );
+int mpc_omp_loop_ull_ordered_dynamic_begin(
     bool, unsigned long long, unsigned long long, unsigned long long,
     unsigned long long, unsigned long long *, unsigned long long * );
-int __mpcomp_loop_ull_ordered_dynamic_next( unsigned long long *,
+int mpc_omp_loop_ull_ordered_dynamic_next( unsigned long long *,
         unsigned long long * );
-void __mpcomp_ordered_dynamic_loop_end( void );
-void __mpcomp_ordered_dynamic_loop_end_nowait( void );
+void mpc_omp_ordered_dynamic_loop_end( void );
+void mpc_omp_ordered_dynamic_loop_end_nowait( void );
 
-void __mpcomp_for_dyn_coherency_end_barrier( void );
-void __mpcomp_for_dyn_coherency_end_parallel_region( struct mpcomp_instance_s * );
+void _mpc_omp_for_dyn_coherency_end_barrier( void );
+void _mpc_omp_for_dyn_coherency_end_parallel_region( struct mpc_omp_instance_s * );
 
 /****************
  * LOOP RUNTIME *
  ****************/
 
-int __mpcomp_runtime_loop_begin( long, long, long, long *, long * );
-int __mpcomp_runtime_loop_next( long *, long * );
-int __mpcomp_loop_ull_runtime_begin( bool, unsigned long long,
+int mpc_omp_runtime_loop_begin( long, long, long, long *, long * );
+int mpc_omp_runtime_loop_next( long *, long * );
+int mpc_omp_loop_ull_runtime_begin( bool, unsigned long long,
                                      unsigned long long, unsigned long long,
                                      unsigned long long *, unsigned long long * );
-int __mpcomp_loop_ull_runtime_next( unsigned long long *, unsigned long long * );
-void __mpcomp_runtime_loop_end( void );
-void __mpcomp_runtime_loop_end_nowait( void );
+int mpc_omp_loop_ull_runtime_next( unsigned long long *, unsigned long long * );
+void mpc_omp_runtime_loop_end( void );
+void mpc_omp_runtime_loop_end_nowait( void );
 
-int __mpcomp_ordered_runtime_loop_begin( long, long, long, long *, long * );
-int __mpcomp_ordered_runtime_loop_next( long *, long * );
-int __mpcomp_loop_ull_ordered_runtime_begin( bool, unsigned long long,
+int mpc_omp_ordered_runtime_loop_begin( long, long, long, long *, long * );
+int mpc_omp_ordered_runtime_loop_next( long *, long * );
+int mpc_omp_loop_ull_ordered_runtime_begin( bool, unsigned long long,
         unsigned long long,
         unsigned long long,
         unsigned long long *,
         unsigned long long * );
-int __mpcomp_loop_ull_ordered_runtime_next( unsigned long long *,
+int mpc_omp_loop_ull_ordered_runtime_next( unsigned long long *,
         unsigned long long * );
-void __mpcomp_ordered_runtime_loop_end( void );
-void __mpcomp_ordered_runtime_loop_end_nowait( void );
+void mpc_omp_ordered_runtime_loop_end( void );
+void mpc_omp_ordered_runtime_loop_end_nowait( void );
 
 /************
  * TASKLOOP *
  ************/
 
-#if MPCOMP_TASK
-
-void mpcomp_taskloop(void (*)(void *), void *, void (*)(void *, void *), long,
+void mpc_omp_taskloop(void (*)(void *), void *, void (*)(void *, void *), long,
                      long, unsigned, unsigned long, int, long, long, long);
-void mpcomp_taskloop_ull(void (*)(void *), void *, void (*)(void *, void *),
+void mpc_omp_taskloop_ull(void (*)(void *), void *, void (*)(void *, void *),
                          long, long, unsigned, unsigned long, int,
                          unsigned long long, unsigned long long,
                          unsigned long long);
-
-#endif
 
 /***********
  * ORDERED *
  ***********/
 
-void __mpcomp_ordered_begin( void );
-void __mpcomp_ordered_end( void );
+void _mpc_omp_ordered_begin( void );
+void _mpc_omp_ordered_end( void );
 
 #endif /* MPCOMP_LOOP_H_ */

@@ -89,7 +89,7 @@ int __kmpc_test_nest_lock( ident_t *loc, kmp_int32 gtid, void **user_lock );
 int __kmp_determine_reduction_method(
     ident_t *loc,  kmp_int32 global_tid,  kmp_int32 num_vars,  size_t reduce_size,
     void *reduce_data, void ( *reduce_func )( void *lhs_data, void *rhs_data ),
-    kmp_critical_name *lck, mpcomp_thread_t *t );
+    kmp_critical_name *lck, mpc_omp_thread_t *t );
 
 kmp_int32 __kmpc_reduce_nowait( ident_t *loc, kmp_int32 global_tid, kmp_int32 num_vars,
                                 size_t reduce_size, void *reduce_data,
@@ -233,7 +233,7 @@ typedef struct kmpc_shared_vars_t
 #define KMP_IDENT_WORK_DISTRIBUTE 0x800
 #endif /* OMPT_SUPPORT */
 
-#define KMP_TASKDATA_TO_TASK(task_data) ((mpcomp_task_t *)taskdata - 1)
+#define KMP_TASKDATA_TO_TASK(task_data) ((mpc_omp_task_t *)taskdata - 1)
 #define KMP_TASK_TO_TASKDATA(task) ((kmp_task_t *)taskdata + 1)
 
 typedef kmp_int32 ( *kmp_routine_entry_t )( kmp_int32, void * );
@@ -364,13 +364,13 @@ void __kmp_release_deps( kmp_int32, kmp_taskdata_t * );
 extern int __kmp_invoke_microtask( kmpc_micro pkfn, int gtid, int npr, int argc,
                                    void *argv[] );
 
-typedef struct mpcomp_intel_wrapper_s
+typedef struct mpc_omp_intel_wrapper_s
 {
 	microtask_t f;
 	int argc;
 	void **args;
-} mpcomp_intel_wrapper_t;
+} mpc_omp_intel_wrapper_t;
 
-void mpcomp_intel_wrapper_func( void * );
+void mpc_omp_intel_wrapper_func( void * );
 
 #endif /*OMP_INTEL_H_*/

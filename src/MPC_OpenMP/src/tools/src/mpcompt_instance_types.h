@@ -37,9 +37,9 @@ typedef enum {
     active                = 3,
     pending               = 4,
     e_tool_status_count   = 5
-} mpcompt_tool_status_t;
+} mpc_omp_ompt_tool_status_t;
 
-typedef struct mpcompt_tool_instance_s {
+typedef struct mpc_omp_ompt_tool_instance_s {
     char *path;
     ompt_start_tool_result_t *start_result;
     ompt_callback_t *callbacks;
@@ -47,7 +47,7 @@ typedef struct mpcompt_tool_instance_s {
     ompt_wait_id_t wait_id;
     mpc_common_spinlock_t wait_id_lock;
     OPA_int_t nb_native_threads_exited;
-} mpcompt_tool_instance_t;
+} mpc_omp_ompt_tool_instance_t;
 
 #endif /* OMPT_SUPPORT */
 #endif /* __MPCOMPT_INSTANCE_H__ */

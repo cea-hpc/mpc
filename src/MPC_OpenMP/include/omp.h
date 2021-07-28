@@ -28,10 +28,10 @@ extern "C"
 {
 #endif
 
-#include <mpcomp.h>
+#include <mpc_omp.h>
 
   /* Dummy file.
-     See mpcomp.h for OpenMP header (API + Compiler API)
+     See mpc_omp.h for OpenMP header (API + Compiler API)
    */
 
 #ifdef __cplusplus

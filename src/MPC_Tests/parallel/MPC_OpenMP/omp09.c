@@ -28,11 +28,11 @@
 void *
 run (void *arg)
 {
-  mpcomp_nest_lock_t *nest_lock;
+  mpc_omp_nest_lock_t *nest_lock;
 
   assert (mpcomp_in_parallel ());
 
-  nest_lock = (mpcomp_nest_lock_t *) arg;
+  nest_lock = (mpc_omp_nest_lock_t *) arg;
 
   mpcomp_set_nest_lock (nest_lock);
   mpcomp_set_nest_lock (nest_lock);
@@ -59,7 +59,7 @@ main (int argc, char **argv)
 
 
   {
-    mpcomp_nest_lock_t nest_lock;
+    mpc_omp_nest_lock_t nest_lock;
     mpcomp_init_nest_lock (&nest_lock);
     __mpcomp_start_parallel_region (10, run, (void *) &nest_lock);
     mpcomp_destroy_nest_lock (&nest_lock);

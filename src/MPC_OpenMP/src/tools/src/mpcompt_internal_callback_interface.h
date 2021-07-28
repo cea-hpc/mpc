@@ -29,12 +29,12 @@
 #include "mpc_common_debug.h"
 
 static inline int
-___mpcompt_isActive( mpcomp_thread_t* thread ) {
+__mpc_omp_ompt_isActive( mpc_omp_thread_t* thread ) {
     return thread->tool_status == active;
 }
 
 static inline ompt_callback_t
-___mpcompt_get_callback( mpcomp_thread_t* thread,
+__mpc_omp_ompt_get_callback( mpc_omp_thread_t* thread,
                          ompt_callbacks_t event ) {
     ompt_callback_t* callbacks;
     ompt_callback_t callback = NULL;

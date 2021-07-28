@@ -29,7 +29,7 @@
 #if OMPT_SUPPORT
 
 void
-__mpcompt_callback_target_data_op( ompt_id_t target_id,
+_mpc_omp_ompt_callback_target_data_op( ompt_id_t target_id,
                                    ompt_id_t host_op_id,
                                    ompt_target_data_op_t optype,
                                    void *src_addr,
@@ -39,14 +39,14 @@ __mpcompt_callback_target_data_op( ompt_id_t target_id,
                                    size_t bytes );
 
 void
-__mpcompt_callback_target( ompt_target_t kind,
+_mpc_omp_ompt_callback_target( ompt_target_t kind,
                            ompt_scope_endpoint_t endpoint,
                            int device_num,
                            ompt_data_t *task_data,
                            ompt_id_t target_id );
 
 void
-__mpcompt_callback_target_map( ompt_id_t target_id,
+_mpc_omp_ompt_callback_target_map( ompt_id_t target_id,
                                unsigned int nitems,
                                void **host_addr,
                                void **device_addr,
@@ -54,7 +54,7 @@ __mpcompt_callback_target_map( ompt_id_t target_id,
                                unsigned int *mapping_flags );
 
 void
-__mpcompt_callback_target_submit( ompt_id_t target_id,
+_mpc_omp_ompt_callback_target_submit( ompt_id_t target_id,
                                   ompt_id_t host_op_id,
                                   unsigned int requested_num_teams );
 

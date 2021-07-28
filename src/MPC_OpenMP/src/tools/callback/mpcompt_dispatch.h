@@ -29,7 +29,7 @@
 #if OMPT_SUPPORT
 
 void
-__mpcompt_callback_dispatch( ompt_dispatch_t kind,
+_mpc_omp_ompt_callback_dispatch( ompt_dispatch_t kind,
                              ompt_data_t instance );
 
 #endif /* OMPT_SUPPORT */

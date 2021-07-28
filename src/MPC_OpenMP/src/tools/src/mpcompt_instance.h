@@ -29,11 +29,11 @@
 #if OMPT_SUPPORT
 
 int
-mpcompt_register_tool( ompt_start_tool_result_t* tool_result,
+mpc_omp_ompt_register_tool( ompt_start_tool_result_t* tool_result,
                        char *path );
 
 void
-mpcompt_unregister_tool();
+mpc_omp_ompt_unregister_tool();
 
 #endif /* OMPT_SUPPORT */
 #endif /* __MPCOMPT_INSTANCE_H__ */

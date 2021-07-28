@@ -25,8 +25,8 @@
 #ifndef __MPCOMP_ALLOC_H__
 #define __MPCOMP_ALLOC_H__
 
-#include "mpcomp_types.h" /* need mpcomp_mvp_t && mpcomp_instance_t */
+#include "mpcomp_types.h" /* need mpc_omp_mvp_t && mpc_omp_instance_t */
 
-void mpcomp_alloc_init_allocators();
+void mpc_omp_alloc_init_allocators();
 
 #endif /* __MPCOMP_ALLOC_H__ */

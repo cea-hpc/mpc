@@ -1040,7 +1040,7 @@ static void *___vp_thread_start_routine(sctk_thread_data_t *__arg)
 	res = tmp.__start_routine(tmp.__arg);
 
 #if defined (MPC_OpenMP)
-    __mpcomp_exit();
+    mpc_omp_exit();
 #endif
 
 	mpc_common_init_trigger("VP Thread End");
@@ -1354,7 +1354,7 @@ int mpc_thread_core_thread_create(mpc_thread_t *restrict __threadp,
 		/* to be sure of __arg type to cast */
 		if(mpc_common_get_task_rank() != -1)
 		{
-			struct mpcomp_mvp_thread_args_s *temp = ( struct mpcomp_mvp_thread_args_s * )__arg;
+			struct mpc_omp_mvp_thread_args_s *temp = ( struct mpc_omp_mvp_thread_args_s * )__arg;
 			int vp_local_processus = temp->target_vp;
 			/* get os ind */
 			int master = mpc_topology_render_get_current_binding();
@@ -1377,14 +1377,14 @@ int mpc_thread_core_thread_create(mpc_thread_t *restrict __threadp,
 		/* to be sure of __arg type to cast */
 		if(mpc_common_get_task_rank() != -1)
 		{
-			struct mpcomp_mvp_thread_args_s *temp = ( struct mpcomp_mvp_thread_args_s * )__arg;
+			struct mpc_omp_mvp_thread_args_s *temp = ( struct mpc_omp_mvp_thread_args_s * )__arg;
 			int *                    tree_shape;
-			mpcomp_node_t *          root_node;
-			mpcomp_meta_tree_node_t *root = NULL;
+			mpc_omp_node_t *          root_node;
+			mpc_omp_meta_tree_node_t *root = NULL;
 			int rank      = temp->rank;
 			int target_vp = temp->target_vp;
 			root      = temp->array;
-			root_node = ( mpcomp_node_t * )root[0].user_pointer;
+			root_node = ( mpc_omp_node_t * )root[0].user_pointer;
 			int max_depth = root_node->tree_depth - 1;
 			tree_shape = root_node->tree_base + 1;
 			int        core_depth;

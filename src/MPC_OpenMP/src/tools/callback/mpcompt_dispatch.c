@@ -5,20 +5,20 @@
 #include "mpc_common_debug.h"
 
 void
-__mpcompt_callback_dispatch ( ompt_dispatch_t kind,
+_mpc_omp_ompt_callback_dispatch ( ompt_dispatch_t kind,
                               ompt_data_t instance ) {
-    mpcomp_thread_t* thread;
+    mpc_omp_thread_t* thread;
 
     /* Get current thread infos */
-    thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+    thread = (mpc_omp_thread_t*) mpc_omp_tls;
     assert( thread );
 
-    if( ___mpcompt_isActive( thread )) {
+    if( __mpc_omp_ompt_isActive( thread )) {
         assert( thread->tool_instance );
         ompt_callback_dispatch_t callback;
 
         callback = (ompt_callback_dispatch_t)
-            ___mpcompt_get_callback( thread, ompt_callback_dispatch );
+            __mpc_omp_ompt_get_callback( thread, ompt_callback_dispatch );
 
         if( callback ) {
             ompt_data_t* task_data = &thread->task_infos.current_task->ompt_task_data;

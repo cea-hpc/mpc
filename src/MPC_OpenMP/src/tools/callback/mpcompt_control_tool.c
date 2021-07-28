@@ -5,24 +5,24 @@
 #include "mpc_common_debug.h"
 
 omp_control_tool_result_t
-__mpcompt_callback_control_tool ( uint64_t command,
+_mpc_omp_ompt_callback_control_tool ( uint64_t command,
                                   uint64_t modifier,
                                   void *arg ) {
-    mpcomp_thread_t* thread;
+    mpc_omp_thread_t* thread;
     omp_control_tool_result_t ret = omp_control_tool_notool;
 
     /* Get current thread infos */
-    thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+    thread = (mpc_omp_thread_t*) mpc_omp_tls;
 
     if( !thread )
         return ret;
 
-    if( ___mpcompt_isActive( thread )) {
+    if( __mpc_omp_ompt_isActive( thread )) {
         assert( thread->tool_instance );
         ompt_callback_control_tool_t callback;
 
         callback = (ompt_callback_control_tool_t)
-            ___mpcompt_get_callback( thread, ompt_callback_control_tool );
+            __mpc_omp_ompt_get_callback( thread, ompt_callback_control_tool );
 
         if( callback ) {
 #if MPCOMPT_HAS_FRAME_SUPPORT

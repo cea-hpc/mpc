@@ -29,19 +29,19 @@
 #include "mpcompt_thread_state.h"
 #include "mpc_common_debug.h"
 
-static mpcompt_enumerate_infos_t mpcompt_state_infos[] = {
+static mpc_omp_ompt_enumerate_infos_t mpcompt_state_infos[] = {
 #define ompt_state_macro(state, code, desc) {#state, code},
   FOREACH_OMPT_STATE(ompt_state_macro)
 #undef ompt_state_macro
 };
 
 static inline int
-mpcompt_get_next_state ( int current_state,
+_mpc_omp_ompt_get_next_state ( int current_state,
                          int *next_state,
                          const char **next_state_name ) {
     int i;
     static const int state_array_len =
-        sizeof( mpcompt_state_infos ) / sizeof( mpcompt_enumerate_infos_t );
+        sizeof( mpcompt_state_infos ) / sizeof( mpc_omp_ompt_enumerate_infos_t );
     assert( state_array_len > 0 );
 
     if( current_state == ompt_state_undefined ) {

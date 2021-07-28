@@ -48,7 +48,7 @@ __thread char *mpc_user_tls_1 = NULL;
 
 #if defined(MPC_OpenMP)
 /* MPC OpenMP TLS */
-__thread void *sctk_openmp_thread_tls;
+__thread void *mpc_omp_tls;
 #endif
 
 #if defined(MPC_MPI)

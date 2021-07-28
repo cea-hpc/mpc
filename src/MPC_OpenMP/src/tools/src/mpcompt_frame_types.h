@@ -30,23 +30,23 @@
 
 /* Wrapper used for pragma directives.
  * UNDEF
- * GOMP  <=> GOMP (mpcomp_GOMP_ and some mpcomp_ prefix)
+ * GOMP  <=> GOMP (mpc_omp_GOMP_ and some mpcomp_ prefix)
  * INTEL <=> INTEL (kmpc_ prefix)
  */
-typedef enum mpcompt_wrapper_e {
+typedef enum mpc_omp_ompt_wrapper_e {
     MPCOMP_UNDEF  = 0,
     MPCOMP_GOMP   = 1,
     MPCOMP_INTEL  = 2
-} mpcompt_wrapper_t;
+} mpc_omp_ompt_wrapper_t;
 
 /* Frame infos structure, one per thread.
  */
-typedef struct mpcompt_frame_info_s {
-    mpcompt_wrapper_t omp_wrapper;
+typedef struct mpc_omp_ompt_frame_info_s {
+    mpc_omp_ompt_wrapper_t omp_wrapper;
     int outter_caller;
     ompt_frame_t ompt_frame_infos;
     void* ompt_return_addr;
-} mpcompt_frame_info_t;
+} mpc_omp_ompt_frame_info_t;
 
 #endif /* OMPT_SUPPORT */
 #endif /* __MPCOMPT_FRAME_TYPES_H__ */

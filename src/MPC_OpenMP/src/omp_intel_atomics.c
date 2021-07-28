@@ -58,18 +58,18 @@ void __kmpc_atomic_4(__UNUSED__ ident_t *id_ref, __UNUSED__ int gtid, void *lhs,
 
 void __kmpc_atomic_fixed4_wr(__UNUSED__ ident_t *id_ref, __UNUSED__ int gtid, kmp_int32 *lhs,
                              kmp_int32 rhs) {
-  __UNUSED__ mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  __UNUSED__ mpc_omp_thread_t *t = (mpc_omp_thread_t *)mpc_omp_tls;
   assert(t);
 
   mpc_common_nodebug("[%d] %s: Write %d", t->rank, __func__, rhs);
   __kmp_xchg_fixed32(lhs, rhs);
 
 #if 0
-  __mpcomp_atomic_begin() ;
+  mpc_omp_atomic_begin() ;
 
     *lhs = rhs ;
 
-      __mpcomp_atomic_end() ;
+      mpc_omp_atomic_end() ;
 
         /* TODO: use assembly functions by Intel if available */
 #endif
@@ -77,7 +77,7 @@ void __kmpc_atomic_fixed4_wr(__UNUSED__ ident_t *id_ref, __UNUSED__ int gtid, km
 
 void __kmpc_atomic_float8_add(__UNUSED__ ident_t *id_ref,__UNUSED__  int gtid, kmp_real64 *lhs,
                               kmp_real64 rhs) {
-  __UNUSED__ mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  __UNUSED__ mpc_omp_thread_t *t = (mpc_omp_thread_t *)mpc_omp_tls;
   assert(t);
 
   mpc_common_nodebug("[%d] (ASM) %s: Add %g", t->rank, rhs);
@@ -91,11 +91,11 @@ void __kmpc_atomic_float8_add(__UNUSED__ ident_t *id_ref,__UNUSED__  int gtid, k
 /* TODO use MPCOMP_MIC */
 
 #if __MIC__ || __MIC2__
-  __mpcomp_atomic_begin();
+  mpc_omp_atomic_begin();
 
   *lhs += rhs;
 
-  __mpcomp_atomic_end();
+  mpc_omp_atomic_end();
 #else
   __kmp_test_then_add_real64(lhs, rhs);
 #endif

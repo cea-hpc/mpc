@@ -5,20 +5,20 @@
 #include "mpc_common_debug.h"
 
 void
-__mpcompt_callback_sync_region ( ompt_sync_region_t kind,
+_mpc_omp_ompt_callback_sync_region ( ompt_sync_region_t kind,
                                  ompt_scope_endpoint_t endpoint ) {
-    mpcomp_thread_t* thread;
+    mpc_omp_thread_t* thread;
 
     /* Get current thread infos */
-    thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+    thread = (mpc_omp_thread_t*) mpc_omp_tls;
     assert( thread );
 
-    if( ___mpcompt_isActive( thread )) {
+    if( __mpc_omp_ompt_isActive( thread )) {
         assert( thread->tool_instance );
         ompt_callback_sync_region_t callback;
 
         callback = (ompt_callback_sync_region_t)
-           ___mpcompt_get_callback( thread, ompt_callback_sync_region );
+           __mpc_omp_ompt_get_callback( thread, ompt_callback_sync_region );
 
         if( callback ) {
             ompt_data_t* parallel_data = &thread->instance->team->info.ompt_parallel_data;
@@ -41,20 +41,20 @@ __mpcompt_callback_sync_region ( ompt_sync_region_t kind,
 }
 
 void
-__mpcompt_callback_sync_region_wait ( ompt_sync_region_t kind,
+_mpc_omp_ompt_callback_sync_region_wait ( ompt_sync_region_t kind,
                                       ompt_scope_endpoint_t endpoint ) {
-    mpcomp_thread_t* thread;
+    mpc_omp_thread_t* thread;
 
     /* Get current thread infos */
-    thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+    thread = (mpc_omp_thread_t*) mpc_omp_tls;
     assert( thread );
 
-    if( ___mpcompt_isActive( thread )) {
+    if( __mpc_omp_ompt_isActive( thread )) {
         assert( thread->tool_instance );
         ompt_callback_sync_region_t callback;
 
         callback = (ompt_callback_sync_region_t)
-           ___mpcompt_get_callback( thread, ompt_callback_sync_region_wait );
+           __mpc_omp_ompt_get_callback( thread, ompt_callback_sync_region_wait );
 
         if( callback ) {
             ompt_data_t* parallel_data = &thread->instance->team->info.ompt_parallel_data;

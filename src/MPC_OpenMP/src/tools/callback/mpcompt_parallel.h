@@ -29,11 +29,11 @@
 #if OMPT_SUPPORT
 
 void
-__mpcompt_callback_parallel_begin( unsigned int requested_parallelism,
+_mpc_omp_ompt_callback_parallel_begin( unsigned int requested_parallelism,
                                    int flags );
 
 void
-__mpcompt_callback_parallel_end( int flags );
+_mpc_omp_ompt_callback_parallel_end( int flags );
 
 #endif /* OMPT_SUPPORT */
 #endif /* __MPCOMPT_PARALLEL_H__ */

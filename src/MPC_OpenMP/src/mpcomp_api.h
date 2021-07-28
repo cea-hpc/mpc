@@ -48,7 +48,7 @@ void omp_set_max_active_levels(int);
 int omp_get_max_active_levels();
 int omp_in_final(void);
 int omp_control_tool(int, int, void*);
-int mpcomp_get_num_threads(void);
-int mpcomp_get_thread_num(void);
+int mpc_omp_get_num_threads(void);
+int mpc_omp_get_thread_num(void);
 
 #endif /* __MPCOMP_API_H__ */

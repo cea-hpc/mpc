@@ -28,11 +28,11 @@
 void *
 run (void *arg)
 {
-  mpcomp_lock_t *lock;
+  mpc_omp_lock_t *lock;
 
   assert (mpcomp_in_parallel ());
 
-  lock = (mpcomp_lock_t *) arg;
+  lock = (mpc_omp_lock_t *) arg;
 
   mpcomp_set_lock (lock);
   usleep (30);
@@ -56,7 +56,7 @@ main (int argc, char **argv)
 
 
   {
-    mpcomp_lock_t lock;
+    mpc_omp_lock_t lock;
     mpcomp_init_lock (&lock);
     __mpcomp_start_parallel_region (10, run, (void *) &lock);
     mpcomp_destroy_lock (&lock);

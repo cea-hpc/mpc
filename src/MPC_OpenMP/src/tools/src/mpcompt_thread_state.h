@@ -31,9 +31,9 @@
 #include "mpc_common_debug.h"
 
 static inline ompt_state_t
-__mpcompt_thread_set_state ( ompt_state_t state,
+_mpc_omp_ompt_thread_set_state ( ompt_state_t state,
                              ompt_wait_id_t wait_id ) {
-    mpcomp_thread_t* thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+    mpc_omp_thread_t* thread = (mpc_omp_thread_t*) mpc_omp_tls;
     assert( thread );
 
     /* TODO */
@@ -42,8 +42,8 @@ __mpcompt_thread_set_state ( ompt_state_t state,
 }
 
 static inline int
-__mpcompt_thread_get_state ( ompt_wait_id_t* wait_id ) {
-    mpcomp_thread_t* thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+_mpc_omp_ompt_thread_get_state ( ompt_wait_id_t* wait_id ) {
+    mpc_omp_thread_t* thread = (mpc_omp_thread_t*) mpc_omp_tls;
     assert( thread );
 
     ompt_state_t ret = ompt_state_overhead;

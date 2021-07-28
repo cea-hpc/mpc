@@ -29,10 +29,10 @@
 #if OMPT_SUPPORT
 
 void
-__mpcompt_init();
+_mpc_omp_ompt_init();
 
 void
-__mpcompt_finalize();
+_mpc_omp_ompt_finalize();
 
 #endif /* OMPT_SUPPORT */
 #endif /* __MPCOMPT_INIT_H__ */

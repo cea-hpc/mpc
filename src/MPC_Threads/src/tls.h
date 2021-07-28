@@ -61,7 +61,7 @@ extern __thread void *sctk_cuda_ctx;
 #endif
 
 #if defined (MPC_OpenMP)
-extern __thread void *sctk_openmp_thread_tls;
+extern __thread void *mpc_omp_tls;
 #endif
 
 #if defined (MPC_USE_DMTCP)
@@ -102,7 +102,7 @@ static inline void sctk_context_save_tls(sctk_mctx_t *ucp)
 #if defined(TLS_SUPPORT)
 #if defined (MPC_OpenMP)
 	/* MPC OpenMP TLS */
-	tls_save(sctk_openmp_thread_tls);
+	tls_save(mpc_omp_tls);
 #endif
 	tls_save(mpc_user_tls_1);
 
@@ -150,7 +150,7 @@ static inline void sctk_context_restore_tls(sctk_mctx_t *ucp)
 {
 #if defined(TLS_SUPPORT)
 #if defined (MPC_OpenMP)
-	tls_restore(sctk_openmp_thread_tls);
+	tls_restore(mpc_omp_tls);
 #endif
 	tls_restore(mpc_user_tls_1);
 
@@ -210,7 +210,7 @@ static inline void sctk_context_init_tls(sctk_mctx_t *ucp)
 
 #if defined (MPC_OpenMP)
 	/* MPC OpenMP TLS */
-	tls_init(sctk_openmp_thread_tls);
+	tls_init(mpc_omp_tls);
 #endif
 
 	ucp->mpc_user_tls_1 = mpc_user_tls_1;

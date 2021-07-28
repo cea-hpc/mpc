@@ -218,7 +218,7 @@ typedef struct sctk_mctx_st
 
 #if defined (MPC_OpenMP)
 	/* MPC OpenMP TLS */
-	void *                              sctk_openmp_thread_tls;
+	void *                              mpc_omp_tls;
 #endif
 
 #if defined MPC_USE_DMTCP

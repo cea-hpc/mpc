@@ -27,10 +27,10 @@
 #include "mpcompt_macros.h"
 
 #if OMPT_SUPPORT
-#include "mpcomp.h"
+#include "mpc_omp.h"
 
 omp_control_tool_result_t
-__mpcompt_callback_control_tool( uint64_t command,
+_mpc_omp_ompt_callback_control_tool( uint64_t command,
                                  uint64_t modifier,
                                  void *arg );
 

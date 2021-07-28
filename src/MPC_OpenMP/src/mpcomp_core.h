@@ -25,18 +25,18 @@
 #ifndef __MPCOMP_CORE_H__
 #define __MPCOMP_CORE_H__
 
-#include "mpcomp_types.h" /* need mpcomp_mvp_t && mpcomp_instance_t */
+#include "mpcomp_types.h" /* need mpc_omp_mvp_t && mpc_omp_instance_t */
 #include <mpc_conf.h>
 /**************
  * ALLOC HOOK *
  **************/
 
-static inline void* mpcomp_alloc( int size )
+static inline void* mpc_omp_alloc( int size )
 {
   return sctk_malloc(size);
 }
 
-static inline void mpcomp_free( void *p )
+static inline void mpc_omp_free( void *p )
 {
     sctk_free(p);
 }
@@ -91,7 +91,7 @@ struct mpc_omp_conf
 	int omp_new_task_depth;
     int omp_untied_task_depth;
 	char omp_task_larceny_mode_str[MPC_CONF_STRING_SIZE];
-	enum mpcomp_task_larceny_mode_t omp_task_larceny_mode; 
+	enum mpc_omp_task_larceny_mode_t omp_task_larceny_mode; 
 
 	int omp_task_nesting_max;
 	int mpcomp_task_max_delayed;
@@ -112,10 +112,10 @@ struct mpc_omp_conf * mpc_omp_conf_get(void);
  * INITIALIZATION AND FINALIZE *
  *******************************/
 
-void __mpcomp_init(void);
-void __mpcomp_exit(void);
-void __mpcomp_instance_init(mpcomp_instance_t *, int, mpcomp_team_t *);
-void __mpcomp_in_order_scheduler(mpcomp_thread_t *);
-void __mpcomp_flush(void);
+void mpc_omp_init(void);
+void mpc_omp_exit(void);
+void _mpc_omp_instance_init(mpc_omp_instance_t *, int, mpc_omp_team_t *);
+void _mpc_omp_in_order_scheduler(mpc_omp_thread_t *);
+void _mpc_omp_flush(void);
 
 #endif /* __MPCOMP_CORE_H__ */

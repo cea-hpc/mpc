@@ -31,11 +31,11 @@
 #include "mpcompt_frame.h"
 void omp_set_num_threads(int num_threads) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  __mpcompt_frame_get_pre_init_infos();
+  _mpc_omp_ompt_frame_get_pre_init_infos();
 #endif /* OMPT_SUPPORT */
 
-  __mpcomp_init();
-  mpcomp_thread_t *t = mpcomp_get_thread_tls();
+  mpc_omp_init();
+  mpc_omp_thread_t *t = mpc_omp_get_thread_tls();
   mpc_common_nodebug("[%d-%p] %s new num threads: %d", t->rank, t, __func__,
                num_threads);
   t->info.icvs.nthreads_var = num_threads;
@@ -57,11 +57,11 @@ void ompc_set_num_threads(int num_threads) {
  */
 int omp_get_thread_num(void) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  __mpcompt_frame_get_pre_init_infos();
+  _mpc_omp_ompt_frame_get_pre_init_infos();
 #endif /* OMPT_SUPPORT */
 
-  __mpcomp_init();
-  mpcomp_thread_t *t = mpcomp_get_thread_tls();
+  mpc_omp_init();
+  mpc_omp_thread_t *t = mpc_omp_get_thread_tls();
   mpc_common_nodebug("[%d] %s thread id: ", t->rank, __func__);
   return t->rank;
 }
@@ -73,11 +73,11 @@ int omp_get_thread_num(void) {
  */
 int omp_get_max_threads(void) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  __mpcompt_frame_get_pre_init_infos();
+  _mpc_omp_ompt_frame_get_pre_init_infos();
 #endif /* OMPT_SUPPORT */
 
-  __mpcomp_init();
-  mpcomp_thread_t *t = mpcomp_get_thread_tls();
+  mpc_omp_init();
+  mpc_omp_thread_t *t = mpc_omp_get_thread_tls();
   mpc_common_nodebug("[%d] %s max num threads : %d", t->rank, __func__,
                t->info.icvs.nthreads_var);
   return t->info.icvs.nthreads_var;
@@ -89,10 +89,10 @@ int omp_get_max_threads(void) {
  */
 int omp_get_num_procs(void) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  __mpcompt_frame_get_pre_init_infos();
+  _mpc_omp_ompt_frame_get_pre_init_infos();
 #endif /* OMPT_SUPPORT */
 
-  __mpcomp_init();
+  mpc_omp_init();
   return mpcomp_global_icvs.nmicrovps_var;
 }
 
@@ -103,11 +103,11 @@ int omp_get_num_procs(void) {
   */
 void omp_set_dynamic(int dynamic_threads) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  __mpcompt_frame_get_pre_init_infos();
+  _mpc_omp_ompt_frame_get_pre_init_infos();
 #endif /* OMPT_SUPPORT */
 
-  __mpcomp_init();
-  mpcomp_thread_t *t = mpcomp_get_thread_tls();
+  mpc_omp_init();
+  mpc_omp_thread_t *t = mpc_omp_get_thread_tls();
   mpc_common_nodebug("[%d] %s enter ...", t->rank, __func__);
   t->info.icvs.dyn_var = dynamic_threads;
 }
@@ -119,11 +119,11 @@ void omp_set_dynamic(int dynamic_threads) {
   */
 int omp_get_dynamic(void) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  __mpcompt_frame_get_pre_init_infos();
+  _mpc_omp_ompt_frame_get_pre_init_infos();
 #endif /* OMPT_SUPPORT */
 
-  __mpcomp_init();
-  mpcomp_thread_t *t = mpcomp_get_thread_tls();
+  mpc_omp_init();
+  mpc_omp_thread_t *t = mpc_omp_get_thread_tls();
   mpc_common_nodebug("[%d] %s enter ...", t->rank, __func__);
   return t->info.icvs.dyn_var;
 }
@@ -134,11 +134,11 @@ int omp_get_dynamic(void) {
   */
 void omp_set_nested(int nested) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  __mpcompt_frame_get_pre_init_infos();
+  _mpc_omp_ompt_frame_get_pre_init_infos();
 #endif /* OMPT_SUPPORT */
 
-  __mpcomp_init();
-  mpcomp_thread_t *t = mpcomp_get_thread_tls();
+  mpc_omp_init();
+  mpc_omp_thread_t *t = mpc_omp_get_thread_tls();
   mpc_common_nodebug("[%d] %s enter ...", t->rank, __func__);
   /* no mpcomp nested support */
   t->info.icvs.nest_var = nested;
@@ -150,11 +150,11 @@ void omp_set_nested(int nested) {
   */
 int omp_get_nested(void) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  __mpcompt_frame_get_pre_init_infos();
+  _mpc_omp_ompt_frame_get_pre_init_infos();
 #endif /* OMPT_SUPPORT */
 
-  __mpcomp_init();
-  mpcomp_thread_t *t = mpcomp_get_thread_tls();
+  mpc_omp_init();
+  mpc_omp_thread_t *t = mpc_omp_get_thread_tls();
   mpc_common_nodebug("[%d] %s enter ...", t->rank, __func__);
   return t->info.icvs.nest_var;
 }
@@ -166,11 +166,11 @@ int omp_get_nested(void) {
   */
 void omp_set_schedule(omp_sched_t kind, int modifier) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  __mpcompt_frame_get_pre_init_infos();
+  _mpc_omp_ompt_frame_get_pre_init_infos();
 #endif /* OMPT_SUPPORT */
 
-  __mpcomp_init();
-  mpcomp_thread_t *t = mpcomp_get_thread_tls();
+  mpc_omp_init();
+  mpc_omp_thread_t *t = mpc_omp_get_thread_tls();
   mpc_common_nodebug("[%d] %s enter ...", t->rank, __func__);
   t->info.icvs.run_sched_var = kind;
   t->info.icvs.modifier_sched_var = modifier;
@@ -182,11 +182,11 @@ void omp_set_schedule(omp_sched_t kind, int modifier) {
   */
 void omp_get_schedule(omp_sched_t *kind, int *modifier) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  __mpcompt_frame_get_pre_init_infos();
+  _mpc_omp_ompt_frame_get_pre_init_infos();
 #endif /* OMPT_SUPPORT */
 
-  __mpcomp_init();
-  mpcomp_thread_t *t = mpcomp_get_thread_tls();
+  mpc_omp_init();
+  mpc_omp_thread_t *t = mpc_omp_get_thread_tls();
   mpc_common_nodebug("[%d] %s enter ...", t->rank, __func__);
   assert(kind && modifier);
   *kind = t->info.icvs.run_sched_var;
@@ -200,11 +200,11 @@ void omp_get_schedule(omp_sched_t *kind, int *modifier) {
  */
 int omp_in_parallel(void) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  __mpcompt_frame_get_pre_init_infos();
+  _mpc_omp_ompt_frame_get_pre_init_infos();
 #endif /* OMPT_SUPPORT */
 
-  __mpcomp_init();
-  mpcomp_thread_t *t = mpcomp_get_thread_tls();
+  mpc_omp_init();
+  mpc_omp_thread_t *t = mpc_omp_get_thread_tls();
   mpc_common_nodebug("[%d] %s enter ...", t->rank, __func__);
   return (t->instance->team->depth != 0);
 }
@@ -215,11 +215,11 @@ int omp_in_parallel(void) {
  */
 int omp_get_level(void) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  __mpcompt_frame_get_pre_init_infos();
+  _mpc_omp_ompt_frame_get_pre_init_infos();
 #endif /* OMPT_SUPPORT */
 
-  __mpcomp_init();
-  mpcomp_thread_t *t = mpcomp_get_thread_tls();
+  mpc_omp_init();
+  mpc_omp_thread_t *t = mpc_omp_get_thread_tls();
   mpc_common_nodebug("[%d] %s level: %d", t->rank, __func__, t->info.icvs.levels_var);
   return t->info.icvs.levels_var;
 }
@@ -230,11 +230,11 @@ int omp_get_level(void) {
  */
 int omp_get_active_level(void) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  __mpcompt_frame_get_pre_init_infos();
+  _mpc_omp_ompt_frame_get_pre_init_infos();
 #endif /* OMPT_SUPPORT */
 
-  __mpcomp_init();
-  mpcomp_thread_t *t = mpcomp_get_thread_tls();
+  mpc_omp_init();
+  mpc_omp_thread_t *t = mpc_omp_get_thread_tls();
   mpc_common_nodebug("[%d] %s level: %d", t->rank, __func__,
                t->info.icvs.active_levels_var);
   return t->info.icvs.active_levels_var;
@@ -248,12 +248,12 @@ int omp_get_active_level(void) {
  */
 int omp_get_ancestor_thread_num(int level) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  __mpcompt_frame_get_pre_init_infos();
+  _mpc_omp_ompt_frame_get_pre_init_infos();
 #endif /* OMPT_SUPPORT */
 
-  __mpcomp_init();
+  mpc_omp_init();
   if( !level ) return 0; 
-  mpcomp_thread_t *t = mpc_omp_tree_array_ancestor_get_thread_tls(level);
+  mpc_omp_thread_t *t = mpc_omp_tree_array_ancestor_get_thread_tls(level);
   return (t == NULL) ? -1 : t->rank;
 }
 
@@ -266,12 +266,12 @@ int omp_get_ancestor_thread_num(int level) {
  */
 int omp_get_team_size(int level) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  __mpcompt_frame_get_pre_init_infos();
+  _mpc_omp_ompt_frame_get_pre_init_infos();
 #endif /* OMPT_SUPPORT */
 
-  __mpcomp_init();
+  mpc_omp_init();
   if( !level ) return 1;
-  mpcomp_thread_t *t = mpc_omp_tree_array_ancestor_get_thread_tls(level);
+  mpc_omp_thread_t *t = mpc_omp_tree_array_ancestor_get_thread_tls(level);
   return (t == NULL) ? -1 : t->info.num_threads;
 }
 
@@ -283,11 +283,11 @@ int omp_get_team_size(int level) {
  */
 int omp_get_num_threads(void) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  __mpcompt_frame_get_pre_init_infos();
+  _mpc_omp_ompt_frame_get_pre_init_infos();
 #endif /* OMPT_SUPPORT */
 
-  __mpcomp_init();
-  mpcomp_thread_t *t = mpcomp_get_thread_tls();
+  mpc_omp_init();
+  mpc_omp_thread_t *t = mpc_omp_get_thread_tls();
   mpc_common_nodebug("[%d] %s entering ...", t->rank, __func__);
   return t->info.num_threads;
 }
@@ -312,10 +312,10 @@ double omp_get_wtick(void) { return (double)10e-6; }
  */
 int omp_get_thread_limit() {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  __mpcompt_frame_get_pre_init_infos();
+  _mpc_omp_ompt_frame_get_pre_init_infos();
 #endif /* OMPT_SUPPORT */
 
-  __mpcomp_init();
+  mpc_omp_init();
   return mpcomp_global_icvs.thread_limit_var;
 }
 
@@ -343,10 +343,10 @@ int omp_get_max_active_levels() {
    *  */
 
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  __mpcompt_frame_get_pre_init_infos();
+  _mpc_omp_ompt_frame_get_pre_init_infos();
 #endif /* OMPT_SUPPORT */
 
-  __mpcomp_init();
+  mpc_omp_init();
   return mpcomp_global_icvs.max_active_levels_var;
 }
 
@@ -355,14 +355,10 @@ int omp_get_max_active_levels() {
  * in a final task region; otherwise, it returns false.
  */
 int omp_in_final(void) {
-#if MPCOMP_TASK
-  mpcomp_thread_t *thread = mpcomp_get_thread_tls();
-  mpcomp_task_t *task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+  mpc_omp_thread_t *thread = mpc_omp_get_thread_tls();
+  mpc_omp_task_t *task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(thread);
   return (task &&
-          mpcomp_task_property_isset(task->property, MPCOMP_TASK_FINAL));
-#else
-  return 0;
-#endif
+          mpc_omp_task_property_isset(task->property, MPCOMP_TASK_FINAL));
 }
 
 /*
@@ -372,21 +368,21 @@ int omp_control_tool(int command, int modifier, void * arg) {
   omp_control_tool_result_t result = omp_control_tool_notool;
 
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  __mpcompt_frame_get_infos();
+  _mpc_omp_ompt_frame_get_infos();
 #endif /* OMPT_SUPPORT */
 #if OMPT_SUPPORT
 
-  result = __mpcompt_callback_control_tool( command, modifier, arg );
+  result = _mpc_omp_ompt_callback_control_tool( command, modifier, arg );
 
 #endif /* OMPT_SUPPORT */
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  __mpcompt_frame_unset_no_reentrant();
+  _mpc_omp_ompt_frame_unset_no_reentrant();
 #endif /* OMPT_SUPPORT */
 
   return result;
 }
 
 /* For backward compatibility with old patched GCC */
-int mpcomp_get_num_threads(void) { return omp_get_num_threads(); }
+int mpc_omp_get_num_threads(void) { return omp_get_num_threads(); }
 
-int mpcomp_get_thread_num(void) { return omp_get_thread_num(); }
+int mpc_omp_get_thread_num(void) { return omp_get_thread_num(); }

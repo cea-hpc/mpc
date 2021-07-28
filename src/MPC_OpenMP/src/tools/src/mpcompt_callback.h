@@ -28,19 +28,19 @@
 #include "mpcompt_internal_structs.h"
 #include "mpc_common_debug.h"
 
-static mpcompt_callback_infos_t mpcompt_callback_infos[] = {
+static mpc_omp_ompt_callback_infos_t mpcompt_callback_infos[] = {
 #define ompt_callback_macro(callback, code, status) {#callback, code, status},
   FOREACH_OMPT_CALLBACK(ompt_callback_macro)
 #undef ompt_callback_macro
 };
 
 static inline ompt_set_result_t
-mpcompt_get_callback_status ( ompt_callbacks_t id ) {
+_mpc_omp_ompt_get_callback_status ( ompt_callbacks_t id ) {
     uint64_t i;
     ompt_set_result_t ret = ompt_set_error;
 
     const uint64_t status_array_len =
-        sizeof( mpcompt_callback_infos ) / sizeof( mpcompt_callback_infos_t );
+        sizeof( mpcompt_callback_infos ) / sizeof( mpc_omp_ompt_callback_infos_t );
     assert( status_array_len > 0 );
 
     for( i = 0; i < status_array_len; i++ ) {

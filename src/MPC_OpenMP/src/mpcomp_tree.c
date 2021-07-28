@@ -15,16 +15,15 @@
 #include "mpcompt_frame.h"
 
 #include "thread.h"
-#if( MPCOMP_TASK || defined( MPCOMP_OPENMP_3_0 ) )
 
 /**************
  * TASK UTILS *
  **************/
 
-static inline int *__tree_array_ancestor_path( mpcomp_instance_t *instance, const int globalRank, int *depth )
+static inline int *__tree_array_ancestor_path( mpc_omp_instance_t *instance, const int globalRank, int *depth )
 {
 	int *path;
-	mpcomp_generic_node_t *gen_node;
+	mpc_omp_generic_node_t *gen_node;
 	assert( instance );
 	assert( depth );
 	assert( globalRank >= 0 && globalRank < instance->tree_array_size );
@@ -59,11 +58,11 @@ int mpc_omp_tree_array_get_neighbor( const int globalRank, const int index )
 {
 	int i, currentDepth = 0;
 	int *path, *treeShape, *treeNumNodePerDepth;
-	mpcomp_thread_t *thread;
-	mpcomp_instance_t *instance;
+	mpc_omp_thread_t *thread;
+	mpc_omp_instance_t *instance;
 	/* Retrieve the current thread information */
-	assert( sctk_openmp_thread_tls );
-	thread = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
+	assert( mpc_omp_tls );
+	thread = ( mpc_omp_thread_t * ) mpc_omp_tls;
 	assert( thread->instance );
 	instance = thread->instance;
 	/* Shift ancestor array 0-depth -> 1-depth : Root is depth 0 */
@@ -123,8 +122,8 @@ int mpc_omp_tree_array_ancestor_get( const int globalRank, const int depth )
 {
 	int i, currentDepth = 0;
 	int *path, *treeShape, *treeNumNodePerDepth;
-	mpcomp_thread_t *thread;
-	mpcomp_instance_t *instance;
+	mpc_omp_thread_t *thread;
+	mpc_omp_instance_t *instance;
 
 	/* If it's the root, ancestor is itself */
 	if ( !globalRank )
@@ -133,8 +132,8 @@ int mpc_omp_tree_array_ancestor_get( const int globalRank, const int depth )
 	}
 
 	/* Retrieve the current thread information */
-	assert( sctk_openmp_thread_tls );
-	thread = ( mpcomp_thread_t * )sctk_openmp_thread_tls;
+	assert( mpc_omp_tls );
+	thread = ( mpc_omp_thread_t * )mpc_omp_tls;
 	assert( thread->instance );
 	instance = thread->instance;
 	path = __tree_array_ancestor_path( instance, globalRank, &currentDepth );
@@ -165,14 +164,14 @@ int mpc_omp_tree_array_ancestor_get( const int globalRank, const int depth )
 }
 
 /* Recursive call for checking neighbourhood from node n */
-static void ___tree_task_check_neigborhood( mpcomp_node_t *node )
+static void ___tree_task_check_neigborhood( mpc_omp_node_t *node )
 {
 	int i;
-	mpcomp_thread_t  __UNUSED__ *thread = NULL;
+	mpc_omp_thread_t  __UNUSED__ *thread = NULL;
 	assert( node );
 	/* Retrieve the current thread information */
-	assert( sctk_openmp_thread_tls );
-	thread = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
+	assert( mpc_omp_tls );
+	thread = ( mpc_omp_thread_t * ) mpc_omp_tls;
 	assert( thread->instance );
 	assert( thread->instance->tree_nb_nodes_per_depth );
 
@@ -193,7 +192,7 @@ static void ___tree_task_check_neigborhood( mpcomp_node_t *node )
 			/* All the children are leafs */
 			for ( i = 0; i < node->nb_children; i++ )
 			{
-				mpcomp_mvp_t *  __UNUSED__ mvp = node->children.leaf[i];
+				mpc_omp_mvp_t *  __UNUSED__ mvp = node->children.leaf[i];
 				assert( mvp && mvp->threads );
 			}
 
@@ -207,15 +206,13 @@ static void ___tree_task_check_neigborhood( mpcomp_node_t *node )
 /* Check all neighbour of all nodes */
 void _mpc_omp_tree_task_check_neigborhood( void )
 {
-	mpcomp_thread_t *thread;
+	mpc_omp_thread_t *thread;
 	/* Retrieve the current thread information */
-	assert( sctk_openmp_thread_tls );
-	thread = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
+	assert( mpc_omp_tls );
+	thread = ( mpc_omp_thread_t * ) mpc_omp_tls;
 	assert( thread->instance );
 	___tree_task_check_neigborhood( thread->instance->root );
 }
-
-#endif /* MPCOMP_TASK */
 
 /**************
  * TREE ARRAY *
@@ -224,7 +221,7 @@ void _mpc_omp_tree_task_check_neigborhood( void )
 
 #if 0
 static char *
-__mpcomp_tree_array_convert_array_to_string( int *tab, const int size )
+_mpc_omp_tree_array_convert_array_to_string( int *tab, const int size )
 {
 	int i, ret, used;
 	char *tmp, *string;
@@ -255,7 +252,7 @@ __mpcomp_tree_array_convert_array_to_string( int *tab, const int size )
 }
 #endif
 
-static inline int *__tree_array_compute_shape( mpcomp_node_t *node, int *tree_shape, const int size  )
+static inline int *__tree_array_compute_shape( mpc_omp_node_t *node, int *tree_shape, const int size  )
 {
 	int i;
 	int *node_tree_shape;
@@ -278,7 +275,7 @@ static inline int *__tree_array_compute_shape( mpcomp_node_t *node, int *tree_sh
 	return node_tree_shape;
 }
 
-static inline int *__tree_array_compute_num_nodes_for_depth( mpcomp_node_t *node, int *total )
+static inline int *__tree_array_compute_num_nodes_for_depth( mpc_omp_node_t *node, int *total )
 {
 	int i;
 	int *num_nodes_per_depth;
@@ -306,7 +303,7 @@ static inline int *__tree_array_compute_num_nodes_for_depth( mpcomp_node_t *node
 	return num_nodes_per_depth;
 }
 
-static inline int *__tree_array_compute_cumulative_num_nodes_for_depth( mpcomp_node_t *node )
+static inline int *__tree_array_compute_cumulative_num_nodes_for_depth( mpc_omp_node_t *node )
 {
 	int i, j;
 	int *cumulative_num_nodes;
@@ -334,7 +331,7 @@ static inline int *__tree_array_compute_cumulative_num_nodes_for_depth( mpcomp_n
 	return cumulative_num_nodes;
 }
 
-static inline int *__tree_array_compute_first_children( mpcomp_node_t *root, mpcomp_node_t *node )
+static inline int *__tree_array_compute_first_children( mpc_omp_node_t *root, mpc_omp_node_t *node )
 {
 	int i, shift_next_stage_stage, stage_rank;
 	int *node_first_children;
@@ -367,7 +364,7 @@ static inline int *__tree_array_compute_first_children( mpcomp_node_t *root, mpc
 	return node_first_children;
 }
 
-static inline int *__tree_array_compute_parents(  mpcomp_node_t *root, mpcomp_node_t *node )
+static inline int *__tree_array_compute_parents(  mpc_omp_node_t *root, mpc_omp_node_t *node )
 {
 	int i, prev_num_nodes, stage_rank;
 	int *node_parents;
@@ -402,11 +399,11 @@ static inline int *__tree_array_compute_parents(  mpcomp_node_t *root, mpcomp_no
 }
 
 static inline void __tree_array_update_children_node( const int first_idx,
-        mpcomp_node_t *node,
-        mpcomp_meta_tree_node_t *root )
+        mpc_omp_node_t *node,
+        mpc_omp_meta_tree_node_t *root )
 {
 	int i;
-	mpcomp_meta_tree_node_t *me;
+	mpc_omp_meta_tree_node_t *me;
 	assert( node );
 	assert( first_idx > 0 );
 	assert( root );
@@ -418,8 +415,8 @@ static inline void __tree_array_update_children_node( const int first_idx,
 	for ( i = 0; i < children_num; i++ )
 	{
 		const int global_child_idx = first_idx + i;
-		mpcomp_meta_tree_node_t *child = &( root[global_child_idx] );
-		node->children.node[i] = ( mpcomp_node_t * ) child->user_pointer;
+		mpc_omp_meta_tree_node_t *child = &( root[global_child_idx] );
+		node->children.node[i] = ( mpc_omp_node_t * ) child->user_pointer;
 		assert( node->children.node[i]->local_rank == i );
 		node->children.node[i]->father = node;
 	}
@@ -443,11 +440,11 @@ static inline void __tree_array_update_children_node( const int first_idx,
 }
 
 static inline void __tree_array_update_children_mvp(  const int first_idx,
-        mpcomp_node_t *node,
-        mpcomp_meta_tree_node_t *root )
+        mpc_omp_node_t *node,
+        mpc_omp_meta_tree_node_t *root )
 {
 	int i;
-	mpcomp_meta_tree_node_t *me;
+	mpc_omp_meta_tree_node_t *me;
 	assert( node );
 	assert( first_idx > 0 );
 	assert( root );
@@ -459,8 +456,8 @@ static inline void __tree_array_update_children_mvp(  const int first_idx,
 	for ( i = 0; i < children_num; i++ )
 	{
 		const int global_child_idx = first_idx + i;
-		mpcomp_meta_tree_node_t *child = &( root[global_child_idx] );
-		node->children.leaf[i] = ( mpcomp_mvp_t * ) child->user_pointer;
+		mpc_omp_meta_tree_node_t *child = &( root[global_child_idx] );
+		node->children.leaf[i] = ( mpc_omp_mvp_t * ) child->user_pointer;
 		assert( node->children.leaf[i]->local_rank == i );
 		node->children.leaf[i]->father = node;
 	}
@@ -528,11 +525,11 @@ static inline int __tree_array_get_stage_nodes_num_per_depth( const int *shape, 
 
 #if 0
 static inline int *
-__mpcomp_tree_array_get_stage_nodes_num_depth_array( const int *shape, const int max_depth, const int depth )
+_mpc_omp_tree_array_get_stage_nodes_num_depth_array( const int *shape, const int max_depth, const int depth )
 {
 	int i;
 	int *count;
-	count = ( int * ) mpcomp_alloc( sizeof( int ) * depth );
+	count = ( int * ) mpc_omp_alloc( sizeof( int ) * depth );
 	assert( count );
 	memset( count, 0, sizeof( int ) * depth );
 
@@ -634,7 +631,7 @@ static inline int *__tree_array_get_rank( const int *shape, const int max_depth,
 	assert( shape );
 	assert( rank >= 0 );
 	assert( max_depth >= 0 );
-	tree_array = ( int * ) mpcomp_alloc( sizeof( int ) * max_depth );
+	tree_array = ( int * ) mpc_omp_alloc( sizeof( int ) * max_depth );
 	assert( tree_array );
 	memset( tree_array, 0, sizeof( int ) * max_depth );
 
@@ -652,7 +649,7 @@ static inline int *__tree_array_get_tree_cumulative( const int *shape, int max_d
 {
 	int i, j;
 	int *tree_cumulative;
-	tree_cumulative = ( int * ) mpcomp_alloc( sizeof( int ) * max_depth );
+	tree_cumulative = ( int * ) mpc_omp_alloc( sizeof( int ) * max_depth );
 	assert( tree_cumulative );
 	memset( tree_cumulative, 0, sizeof( int ) * max_depth );
 
@@ -688,7 +685,7 @@ static inline int *__tree_array_get_father_array_by_depth( const int *shape, con
 	}
 
 	tmp_rank = rank;
-	parents_array = ( int * ) mpcomp_alloc( sizeof( int ) * depth );
+	parents_array = ( int * ) mpc_omp_alloc( sizeof( int ) * depth );
 	assert( parents_array );
 
 	for ( i = depth - 1; i > 0; i-- )
@@ -705,7 +702,7 @@ static inline int *__tree_array_get_father_array_by_depth( const int *shape, con
 
 #if 0
 static inline int *
-__mpcomp_tree_array_get_father_array_by_level( const int *shape, const int max_depth, const int rank )
+_mpc_omp_tree_array_get_father_array_by_level( const int *shape, const int max_depth, const int rank )
 {
 	int i;
 	int tmp_rank = -1;
@@ -719,7 +716,7 @@ __mpcomp_tree_array_get_father_array_by_level( const int *shape, const int max_d
 	}
 
 	tmp_rank = rank;
-	parents_array = ( int * ) mpcomp_alloc( sizeof( int ) * depth );
+	parents_array = ( int * ) mpc_omp_alloc( sizeof( int ) * depth );
 	assert( parents_array );
 
 	for ( i = depth - 1; i > 0; i-- )
@@ -749,7 +746,7 @@ static inline int *__tree_array_get_first_child_array( const int *shape, const i
 		return NULL;
 	}
 
-	first_child_array = ( int * ) mpcomp_alloc( sizeof( int ) * children_levels );
+	first_child_array = ( int * ) mpc_omp_alloc( sizeof( int ) * children_levels );
 	assert( first_child_array );
 	memset( first_child_array, 0,  sizeof( int ) * children_levels );
 	last_father_rank = __tree_array_global_to_stage( shape, max_depth, rank );
@@ -767,7 +764,7 @@ static inline int *__tree_array_get_first_child_array( const int *shape, const i
 
 #if 0
 static inline int *
-__mpcomp_tree_array_get_children_num_array( const int *shape, const int max_depth, const int rank )
+_mpc_omp_tree_array_get_children_num_array( const int *shape, const int max_depth, const int rank )
 {
 	int i;
 	int *children_num_array = NULL;
@@ -779,7 +776,7 @@ __mpcomp_tree_array_get_children_num_array( const int *shape, const int max_dept
 		return NULL;
 	}
 
-	children_num_array = ( int * ) mpcomp_alloc( sizeof( int ) * children_levels );
+	children_num_array = ( int * ) mpc_omp_alloc( sizeof( int ) * children_levels );
 	assert( children_num_array );
 	memset( children_num_array, 0,  sizeof( int ) * children_levels );
 
@@ -879,7 +876,7 @@ static inline int __tree_array_compute_thread_min_balanced( const int *shape, co
 
 #if 0
 static inline int
-__mpcomp_tree_array_update_thread_openmp_min_rank_scatter ( const int father_stage_size, const int father_min_index, const int node_local_rank )
+_mpcomp_tree_array_update_thread_openmp_min_rank_scatter ( const int father_stage_size, const int father_min_index, const int node_local_rank )
 {
 	return father_min_index + node_local_rank * father_stage_size;
 }
@@ -921,7 +918,7 @@ int *mpc_omp_tree_array_compute_thread_min_rank( const int *shape, const int max
 {
 	int index;
 	int *min_index = NULL;
-	min_index = ( int * ) mpcomp_alloc( sizeof( int ) * MPCOMP_AFFINITY_NB );
+	min_index = ( int * ) mpc_omp_alloc( sizeof( int ) * MPCOMP_AFFINITY_NB );
 	assert( min_index );
 	memset( min_index, 0, sizeof( int ) * MPCOMP_AFFINITY_NB );
 	/* MPCOMP_AFFINITY_COMPACT  */
@@ -937,7 +934,7 @@ int *mpc_omp_tree_array_compute_thread_min_rank( const int *shape, const int max
 }
 
 #if 0
-static inline int __mpcomp_tree_array_find_next_running_stage_depth(   const int *tree_shape,
+static inline int _mpc_omp_tree_array_find_next_running_stage_depth(   const int *tree_shape,
         const int start_depth,
         const int max_depth,
         const int num_requested_mvps,
@@ -961,28 +958,28 @@ static inline int __mpcomp_tree_array_find_next_running_stage_depth(   const int
 }
 #endif
 
-static inline int __tree_node_init( mpcomp_meta_tree_node_t *root, const int *tree_shape, const int max_depth, const int rank )
+static inline int __tree_node_init( mpc_omp_meta_tree_node_t *root, const int *tree_shape, const int max_depth, const int rank )
 {
 	int i, j, father_rank;
-	mpcomp_meta_tree_node_t *me;
-	mpcomp_node_t *new_node, *root_node;
+	mpc_omp_meta_tree_node_t *me;
+	mpc_omp_node_t *new_node, *root_node;
 	assert( root );
 	assert( tree_shape );
 	me = &( root[rank] );
-	root_node = ( mpcomp_node_t * )root[0].user_pointer;
+	root_node = ( mpc_omp_node_t * )root[0].user_pointer;
 	assert( root_node );
 
 	if ( !( me->user_pointer )  )
 	{
 		assert( rank );
 		me->type = MPCOMP_META_TREE_NODE;
-		mpcomp_node_t *new_alloc_node = ( mpcomp_node_t * ) mpcomp_alloc( sizeof( mpcomp_node_t ) );
+		mpc_omp_node_t *new_alloc_node = ( mpc_omp_node_t * ) mpc_omp_alloc( sizeof( mpc_omp_node_t ) );
 		assert( new_alloc_node );
-		memset( new_alloc_node, 0, sizeof( mpcomp_node_t ) );
+		memset( new_alloc_node, 0, sizeof( mpc_omp_node_t ) );
 		me->user_pointer = ( void * ) new_alloc_node;
 	}
 
-	new_node = ( mpcomp_node_t * )me->user_pointer;
+	new_node = ( mpc_omp_node_t * )me->user_pointer;
 	new_node->tree_array = root;
 	// Get infos from parent node
 	new_node->depth = __tree_array_get_node_depth( tree_shape, max_depth, rank );
@@ -996,7 +993,7 @@ static inline int __tree_node_init( mpcomp_meta_tree_node_t *root, const int *tr
 	if ( rank )
 	{
 		me->fathers_array_size = new_node->depth;
-		me->fathers_array = ( int * )mpcomp_alloc( sizeof( int ) * new_node->depth );
+		me->fathers_array = ( int * )mpc_omp_alloc( sizeof( int ) * new_node->depth );
 		assert( me->fathers_array );
 	}
 
@@ -1009,11 +1006,11 @@ static inline int __tree_node_init( mpcomp_meta_tree_node_t *root, const int *tr
 	{
 		new_node->tree_depth = max_depth - new_node->depth + 1;
 		assert( new_node->tree_depth > 1 );
-		new_node->tree_base = ( int * )mpcomp_alloc( sizeof( int ) * new_node->tree_depth );
+		new_node->tree_base = ( int * )mpc_omp_alloc( sizeof( int ) * new_node->tree_depth );
 		assert( new_node->tree_base );
-		new_node->tree_cumulative = ( int * )mpcomp_alloc( sizeof( int ) * new_node->tree_depth );
+		new_node->tree_cumulative = ( int * )mpc_omp_alloc( sizeof( int ) * new_node->tree_depth );
 		assert( new_node->tree_cumulative );
-		new_node->tree_nb_nodes_per_depth = ( int * )mpcomp_alloc( sizeof( int ) * new_node->tree_depth );
+		new_node->tree_nb_nodes_per_depth = ( int * )mpc_omp_alloc( sizeof( int ) * new_node->tree_depth );
 		assert( new_node->tree_nb_nodes_per_depth );
 		const int tmp = root_node->tree_nb_nodes_per_depth[new_node->depth];
 		new_node->tree_base[0] = 1;
@@ -1055,17 +1052,17 @@ static inline int __tree_node_init( mpcomp_meta_tree_node_t *root, const int *tr
 	/* Leaf or Node */
 	if ( new_node->depth < max_depth - 1 )
 	{
-		mpcomp_node_t **children = NULL;
+		mpc_omp_node_t **children = NULL;
 		new_node->child_type = MPCOMP_CHILDREN_NODE;
-		children = ( mpcomp_node_t ** )mpcomp_alloc( sizeof( mpcomp_node_t * ) * num_children );
+		children = ( mpc_omp_node_t ** )mpc_omp_alloc( sizeof( mpc_omp_node_t * ) * num_children );
 		assert( children );
 		new_node->children.node = children;
 	}
 	else
 	{
-		mpcomp_mvp_t **children = NULL;
+		mpc_omp_mvp_t **children = NULL;
 		new_node->child_type = MPCOMP_CHILDREN_LEAF;
-		children = ( mpcomp_mvp_t ** )mpcomp_alloc( sizeof( mpcomp_mvp_t * ) * num_children );
+		children = ( mpc_omp_mvp_t ** )mpc_omp_alloc( sizeof( mpc_omp_mvp_t * ) * num_children );
 		assert( children );
 		new_node->children.leaf = children;
 	}
@@ -1107,19 +1104,19 @@ static inline void *__tree_mvp_init( void *args )
 {
 	int *tree_shape;
 	int target_node_rank, current_depth;
-    mpcomp_thread_t *ithread, *thread;
-	mpcomp_mvp_t *new_mvp = NULL;
-	mpcomp_node_t *root_node;
-	mpcomp_meta_tree_node_t *me = NULL;
-	mpcomp_meta_tree_node_t *root = NULL;
-	mpcomp_mvp_thread_args_t *unpack_args = NULL;
+    mpc_omp_thread_t *ithread, *thread;
+	mpc_omp_mvp_t *new_mvp = NULL;
+	mpc_omp_node_t *root_node;
+	mpc_omp_meta_tree_node_t *me = NULL;
+	mpc_omp_meta_tree_node_t *root = NULL;
+	mpc_omp_mvp_thread_args_t *unpack_args = NULL;
 
 	/* Unpack thread start_routine arguments */
-	unpack_args = ( mpcomp_mvp_thread_args_t * ) args;
+	unpack_args = ( mpc_omp_mvp_thread_args_t * ) args;
 	const unsigned int rank = unpack_args->rank;
 	root = unpack_args->array;
 	me = &( root[rank] );
-	root_node = ( mpcomp_node_t * ) root[0].user_pointer;
+	root_node = ( mpc_omp_node_t * ) root[0].user_pointer;
 
 	/* Shift root tree array to get OMP_TREE shape */
 	const int max_depth = root_node->tree_depth - 1;
@@ -1127,29 +1124,29 @@ static inline void *__tree_mvp_init( void *args )
 
 	/* User defined infos */
     /* MVP of initial thread becomes master thread MVP for upcoming parallel region */
-    if( sctk_openmp_thread_tls ) {
-        ithread = sctk_openmp_thread_tls;
+    if( mpc_omp_tls ) {
+        ithread = mpc_omp_tls;
         new_mvp = ithread->mvp;
         ithread->root = root_node;
     }
     else {
-        new_mvp = (mpcomp_mvp_t *) mpcomp_alloc( sizeof(mpcomp_mvp_t) );
+        new_mvp = (mpc_omp_mvp_t *) mpc_omp_alloc( sizeof(mpc_omp_mvp_t) );
         assert( new_mvp );
-        memset( new_mvp, 0, sizeof(mpcomp_mvp_t) );
+        memset( new_mvp, 0, sizeof(mpc_omp_mvp_t) );
 
         new_mvp->pu_id = unpack_args->pu_id;
 
-        new_mvp->threads = (mpcomp_thread_t*) mpcomp_alloc( sizeof( mpcomp_thread_t) );
+        new_mvp->threads = (mpc_omp_thread_t*) mpc_omp_alloc( sizeof( mpc_omp_thread_t) );
         assert( new_mvp->threads );
-        memset( new_mvp->threads, 0, sizeof( mpcomp_thread_t ) );
+        memset( new_mvp->threads, 0, sizeof( mpc_omp_thread_t ) );
 
 #if OMPT_SUPPORT
         new_mvp->threads->mvp = new_mvp;
         new_mvp->threads->tool_status = unpack_args->tool_status;
         new_mvp->threads->tool_instance = unpack_args->tool_instance;
 
-        __mpcompt_callback_thread_begin( new_mvp->threads, ompt_thread_other );
-        __mpcompt_callback_thread_begin( new_mvp->threads, ompt_thread_worker );
+        _mpc_omp_ompt_callback_thread_begin( new_mvp->threads, ompt_thread_other );
+        _mpc_omp_ompt_callback_thread_begin( new_mvp->threads, ompt_thread_worker );
 #endif /* OMPT_SUPPORT */
     }
 
@@ -1174,7 +1171,7 @@ static inline void *__tree_mvp_init( void *args )
 	thread->info.num_threads = 1;
 	new_mvp->depth = max_depth;
 
-    __mpcomp_thread_infos_init( thread );
+    _mpc_omp_thread_infos_init( thread );
 
 	/* Generic infos */
 	me->type = MPCOMP_META_TREE_LEAF;
@@ -1199,7 +1196,7 @@ static inline void *__tree_mvp_init( void *args )
 			return ( void * ) root[0].user_pointer;
 		}
 
-		new_mvp->spin_node = ( mpcomp_node_t * ) root[target_node_rank].user_pointer;
+		new_mvp->spin_node = ( mpc_omp_node_t * ) root[target_node_rank].user_pointer;
 		assert( new_mvp->spin_node );
 		new_mvp->spin_node->spin_status = MPCOMP_MVP_STATE_SLEEP;
 	}
@@ -1209,11 +1206,11 @@ static inline void *__tree_mvp_init( void *args )
 		new_mvp->spin_status = MPCOMP_MVP_STATE_SLEEP;
 	}
 
-	mpcomp_slave_mvp_node( new_mvp );
+	mpc_omp_slave_mvp_node( new_mvp );
 
 #if OMPT_SUPPORT
-    __mpcompt_callback_thread_end( thread, ompt_thread_worker );
-    __mpcompt_callback_thread_end( thread, ompt_thread_other );
+    _mpc_omp_ompt_callback_thread_end( thread, ompt_thread_worker );
+    _mpc_omp_ompt_callback_thread_end( thread, ompt_thread_other );
 
     /* Mvp exit */
     if( thread->tool_status == active )
@@ -1224,59 +1221,59 @@ static inline void *__tree_mvp_init( void *args )
 }
 
 void
-__mpcomp_init_seq_region() {
-	mpcomp_instance_t *seq_instance;
-    mpcomp_mvp_t* new_mvp;
+mpc_omp_init_seq_region() {
+	mpc_omp_instance_t *seq_instance;
+    mpc_omp_mvp_t* new_mvp;
 	int *singleton;
 
     /* Create an OpenMP context */
     /* Init sequential instance */
-	seq_instance = ( mpcomp_instance_t * ) mpcomp_alloc( sizeof( mpcomp_instance_t ) );
+	seq_instance = ( mpc_omp_instance_t * ) mpc_omp_alloc( sizeof( mpc_omp_instance_t ) );
 	assert( seq_instance );
-	memset( seq_instance, 0, sizeof( mpcomp_instance_t ) );
+	memset( seq_instance, 0, sizeof( mpc_omp_instance_t ) );
 
     /* Init sequential team */
-	seq_instance->team = ( mpcomp_team_t * ) mpcomp_alloc( sizeof( mpcomp_team_t ) );
+	seq_instance->team = ( mpc_omp_team_t * ) mpc_omp_alloc( sizeof( mpc_omp_team_t ) );
 	assert( seq_instance->team );
-	memset( seq_instance->team, 0, sizeof( mpcomp_team_t ) );
+	memset( seq_instance->team, 0, sizeof( mpc_omp_team_t ) );
 
 	seq_instance->team->depth = 0;
 	seq_instance->root = NULL;
 	seq_instance->nb_mvps = 1;
 
     /* Init MVP of sequential region */
-    new_mvp = (mpcomp_mvp_t *) mpcomp_alloc( sizeof(mpcomp_mvp_t) );
+    new_mvp = (mpc_omp_mvp_t *) mpc_omp_alloc( sizeof(mpc_omp_mvp_t) );
     assert( new_mvp );
-    memset( new_mvp, 0, sizeof(mpcomp_mvp_t) );
+    memset( new_mvp, 0, sizeof(mpc_omp_mvp_t) );
 
     /* Set PU on wich microvp is running */
     new_mvp->pu_id = mpc_topology_get_pu();
 
     /* Create associated initial thread */
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    new_mvp->threads = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
+    new_mvp->threads = ( mpc_omp_thread_t* ) mpc_omp_tls;
 #else
-    new_mvp->threads = (mpcomp_thread_t*) mpcomp_alloc( sizeof( mpcomp_thread_t ));
+    new_mvp->threads = (mpc_omp_thread_t*) mpc_omp_alloc( sizeof( mpc_omp_thread_t ));
     assert( new_mvp->threads );
-    memset( new_mvp->threads, 0, sizeof( mpcomp_thread_t ));
+    memset( new_mvp->threads, 0, sizeof( mpc_omp_thread_t ));
 
-    sctk_openmp_thread_tls = ( void* ) new_mvp->threads;
+    mpc_omp_tls = ( void* ) new_mvp->threads;
 #endif /* OMPT_SUPPORT */
 
     new_mvp->threads->mvp = new_mvp;
     new_mvp->threads->instance = seq_instance;
 
     /* Init tree infos of sequential instance */
-	seq_instance->tree_array = (mpcomp_generic_node_t *) mpcomp_alloc( sizeof( mpcomp_generic_node_t ));
+	seq_instance->tree_array = (mpc_omp_generic_node_t *) mpc_omp_alloc( sizeof( mpc_omp_generic_node_t ));
 	assert( seq_instance->tree_array );
-    memset( seq_instance->tree_array, 0, sizeof( mpcomp_generic_node_t ) );
+    memset( seq_instance->tree_array, 0, sizeof( mpc_omp_generic_node_t ) );
 
 	seq_instance->tree_array[0].ptr.mvp = new_mvp;
 	seq_instance->tree_array[0].type = MPCOMP_CHILDREN_LEAF;
 	seq_instance->mvps = seq_instance->tree_array;
 	seq_instance->tree_depth = 1;
 
-	singleton = ( int * ) mpcomp_alloc( sizeof( int ) );
+	singleton = ( int * ) mpc_omp_alloc( sizeof( int ) );
 	assert( singleton );
 
 	singleton[0] = 1;
@@ -1290,24 +1287,22 @@ __mpcomp_init_seq_region() {
 }
 
 void
-__mpcomp_init_initial_thread( const mpcomp_local_icv_t icvs )
+mpc_omp_init_initial_thread( const mpc_omp_local_icv_t icvs )
 {
-    mpcomp_thread_t* ith;
-    ith = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
+    mpc_omp_thread_t* ith;
+    ith = ( mpc_omp_thread_t* ) mpc_omp_tls;
     assert( ith );
 
 #if OMPT_SUPPORT
-    __mpcompt_callback_thread_begin( ith, ompt_thread_initial );
+    _mpc_omp_ompt_callback_thread_begin( ith, ompt_thread_initial );
 #endif /* OMPT_SUPPORT */
 
-    __mpcomp_thread_infos_init( ith );
+    _mpc_omp_thread_infos_init( ith );
 
-#if defined( MPCOMP_OPENMP_3_0 )
 	_mpc_task_tree_array_thread_init( ith );
-#endif /* MPCOMP_OPENMP_3_0 */
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     /* Update initial task with enter frame info */
-    __mpcompt_frame_set_enter( ith->frame_infos.ompt_frame_infos.enter_frame.ptr );
+    _mpc_omp_ompt_frame_set_enter( ith->frame_infos.ompt_frame_infos.enter_frame.ptr );
 #endif /* OMPT_SUPPORT */
 
 	/* Protect Orphan OpenMP construct */
@@ -1319,17 +1314,17 @@ void _mpc_omp_tree_alloc( int *shape, int max_depth, const int *cpus_order, cons
 {
 	int i, n_num, place_id;
 	mpc_thread_t *threads;
-	mpcomp_mvp_thread_args_t *args;
-	mpcomp_meta_tree_node_t *tree_array;
+	mpc_omp_mvp_thread_args_t *args;
+	mpc_omp_meta_tree_node_t *tree_array;
 
 #if OMPT_SUPPORT
-    mpcomp_thread_t* t = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+    mpc_omp_thread_t* t = (mpc_omp_thread_t*) mpc_omp_tls;
     assert( t );
 #endif /* OMPT_SUPPORT */
 
-	mpcomp_node_t *root = ( mpcomp_node_t * ) mpcomp_alloc( sizeof( mpcomp_node_t ) );
+	mpc_omp_node_t *root = ( mpc_omp_node_t * ) mpc_omp_alloc( sizeof( mpc_omp_node_t ) );
 	assert( root );
-	memset( root, 0, sizeof( mpcomp_node_t ) );
+	memset( root, 0, sizeof( mpc_omp_node_t ) );
 #if 0
 
 	for ( i = 0; i < max_depth; i++ )
@@ -1343,25 +1338,25 @@ void _mpc_omp_tree_alloc( int *shape, int max_depth, const int *cpus_order, cons
 	root->tree_cumulative = __tree_array_compute_cumulative_num_nodes_for_depth( root );
 	root->tree_nb_nodes_per_depth = __tree_array_compute_num_nodes_for_depth( root, &n_num );
 #ifdef MPC_Lowcomm
-  root->worker_ws = mpcomp_alloc(sizeof(worker_workshare_t));
+  root->worker_ws = mpc_omp_alloc(sizeof(worker_workshare_t));
   root->worker_ws->mpi_rank = mpc_common_get_local_task_rank();
   root->worker_ws->workshare = mpc_thread_data_get()->workshare;
 #endif
 	const int leaf_n_num = root->tree_nb_nodes_per_depth[max_depth];
 	const int non_leaf_n_num = n_num - leaf_n_num;
 
-	tree_array = ( mpcomp_meta_tree_node_t * ) mpcomp_alloc( n_num * sizeof( mpcomp_meta_tree_node_t ) );
+	tree_array = ( mpc_omp_meta_tree_node_t * ) mpc_omp_alloc( n_num * sizeof( mpc_omp_meta_tree_node_t ) );
 	assert( tree_array );
-	memset( tree_array, 0,  n_num * sizeof( mpcomp_meta_tree_node_t ) );
+	memset( tree_array, 0,  n_num * sizeof( mpc_omp_meta_tree_node_t ) );
 
 	root->tree_array = tree_array;
 	tree_array[0].user_pointer = root;
 
-	threads = ( mpc_thread_t * ) mpcomp_alloc( ( leaf_n_num - 1 ) * sizeof( mpc_thread_t ) );
+	threads = ( mpc_thread_t * ) mpc_omp_alloc( ( leaf_n_num - 1 ) * sizeof( mpc_thread_t ) );
 	assert( threads );
 	memset( threads, 0, ( leaf_n_num - 1 ) * sizeof( mpc_thread_t ) );
 
-	args = ( mpcomp_mvp_thread_args_t * ) mpcomp_alloc( sizeof( mpcomp_mvp_thread_args_t ) * leaf_n_num );
+	args = ( mpc_omp_mvp_thread_args_t * ) mpc_omp_alloc( sizeof( mpc_omp_mvp_thread_args_t ) * leaf_n_num );
 	assert( args );
 
 	for ( i = 0, place_id = 0; i < leaf_n_num; i++ )
@@ -1395,8 +1390,8 @@ void _mpc_omp_tree_alloc( int *shape, int max_depth, const int *cpus_order, cons
 
 	/* Root initialisation */
 	__tree_mvp_init( &( args[0] ) );
-  mpcomp_alloc_init_allocators();
+  mpc_omp_alloc_init_allocators();
 
 	/* Free is thread-safety due to half barrier perform by tree build */
-	mpcomp_free( args );
+	mpc_omp_free( args );
 }

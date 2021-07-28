@@ -30,41 +30,41 @@
 #include "mpcomp_types.h"
 
 void
-__mpcompt_callback_mutex_acquire( ompt_mutex_t kind,
+_mpc_omp_ompt_callback_mutex_acquire( ompt_mutex_t kind,
                                   unsigned int hint,
                                   unsigned int impl,
                                   ompt_wait_id_t wait_id );
 
 void
-__mpcompt_callback_lock_init( ompt_mutex_t kind,
+_mpc_omp_ompt_callback_lock_init( ompt_mutex_t kind,
                               unsigned int hint,
                               unsigned int impl,
                               ompt_wait_id_t wait_id );
 
 void
-__mpcompt_callback_lock_destroy( ompt_mutex_t kind,
+_mpc_omp_ompt_callback_lock_destroy( ompt_mutex_t kind,
                                  ompt_wait_id_t wait_id );
 
 void
-__mpcompt_callback_mutex_acquired( ompt_mutex_t kind,
+_mpc_omp_ompt_callback_mutex_acquired( ompt_mutex_t kind,
                                    ompt_wait_id_t wait_id );
 
 void
-__mpcompt_callback_mutex_released( ompt_mutex_t kind,
+_mpc_omp_ompt_callback_mutex_released( ompt_mutex_t kind,
                                    ompt_wait_id_t wait_id );
 
 void
-__mpcompt_callback_nest_lock( ompt_scope_endpoint_t endpoint,
+_mpc_omp_ompt_callback_nest_lock( ompt_scope_endpoint_t endpoint,
                               ompt_wait_id_t wait_id );
 
 static inline ompt_wait_id_t
-__mpcompt_mutex_gen_wait_id() {
+_mpc_omp_ompt_mutex_gen_wait_id() {
     ompt_wait_id_t wait_id = 0;
-    mpcomp_thread_t* thread;
-    mpcompt_tool_instance_t* tool_instance;
+    mpc_omp_thread_t* thread;
+    mpc_omp_ompt_tool_instance_t* tool_instance;
 
     /* Get current thread infos */
-    thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+    thread = (mpc_omp_thread_t*) mpc_omp_tls;
     assert( thread );
 
     if( thread->tool_status == active ) {

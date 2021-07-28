@@ -172,31 +172,31 @@ static int OMP_TREE_DEPTH = 0;
 static int OMP_TREE_NB_LEAVES = 0;
 
 /* Hybrid MPI/OpenMP mode */
-static mpcomp_mode_t OMP_MODE = MPCOMP_MODE_SIMPLE_MIXED;
+static mpc_omp_mode_t OMP_MODE = MPCOMP_MODE_SIMPLE_MIXED;
 /* Affinity policy */
-static mpcomp_affinity_t OMP_AFFINITY = MPCOMP_AFFINITY_SCATTER;
+static mpc_omp_affinity_t OMP_AFFINITY = MPCOMP_AFFINITY_SCATTER;
 /* OMP_PLACES */
-static mpcomp_places_info_t *OMP_PLACES_LIST = NULL;
+static mpc_omp_places_info_t *OMP_PLACES_LIST = NULL;
 /* Tools */
-static mpcomp_tool_status_t OMP_TOOL = mpcomp_tool_enabled;
+static mpc_omp_tool_status_t OMP_TOOL = mpc_omp_tool_enabled;
 static char* OMP_TOOL_LIBRARIES = NULL;
 
-mpcomp_global_icv_t mpcomp_global_icvs;
+mpc_omp_global_icv_t mpcomp_global_icvs;
 
 /*****************
   ****** FUNCTIONS
   *****************/
 
-TODO( " function __mpcomp_tokenizer is inspired from sctk_launch.c. Need to "
-      "merge" )
-static char **__mpcomp_tokenizer( char *string_to_tokenize, int *nb_tokens )
+TODO(" function ___tokenizer is inspired from sctk_launch.c. Need to merge, or use 'strtok'")
+static char **
+___tokenizer( char *string_to_tokenize, int *nb_tokens )
 {
 	/*    size_t len;*/
 	char *cursor;
 	char **new_argv;
 	int new_argc = 0;
 	/* TODO check sizes of every mpcomp_alloc... */
-	new_argv = ( char ** ) mpcomp_alloc( 32 * sizeof( char * ) );
+	new_argv = ( char ** ) mpc_omp_alloc( 32 * sizeof( char * ) );
 	assert( new_argv != NULL );
 	cursor = string_to_tokenize;
 
@@ -208,7 +208,7 @@ static char **__mpcomp_tokenizer( char *string_to_tokenize, int *nb_tokens )
 	while ( *cursor != '\0' )
 	{
 		int word_len = 0;
-		new_argv[new_argc] = ( char * ) mpcomp_alloc( 1024 * sizeof( char ) );
+		new_argv[new_argc] = ( char * ) mpc_omp_alloc( 1024 * sizeof( char ) );
 
 		while ( ( word_len < 1024 ) && ( *cursor != '\0' ) && ( *cursor != ' ' ) )
 		{
@@ -232,7 +232,7 @@ static char **__mpcomp_tokenizer( char *string_to_tokenize, int *nb_tokens )
 }
 
 static void
-__mpcomp_aux_reverse_one_dim_array( int *array, const int len )
+___aux_reverse_one_dim_array( int *array, const int len )
 {
 	int i, j, tmp;
 
@@ -245,13 +245,13 @@ __mpcomp_aux_reverse_one_dim_array( int *array, const int len )
 }
 
 static int *
-__mpcomp_convert_topology_to_tree_shape( hwloc_topology_t topology, int *shape_depth )
+__convert_topology_to_tree_shape( hwloc_topology_t topology, int *shape_depth )
 {
 	int *reverse_shape;
 	int i, j, reverse_shape_depth;
 	const int max_depth = hwloc_topology_get_depth( topology );
 	assert( max_depth > 1 );
-	reverse_shape = ( int * ) mpcomp_alloc( sizeof( int ) * max_depth );
+	reverse_shape = ( int * ) mpc_omp_alloc( sizeof( int ) * max_depth );
 	assert( reverse_shape );
 	memset( reverse_shape, 0, sizeof( int ) * max_depth );
 	/* Last level size */
@@ -322,7 +322,7 @@ __mpcomp_convert_topology_to_tree_shape( hwloc_topology_t topology, int *shape_d
 
 	if ( reverse_shape_depth > 1 )
 	{
-		__mpcomp_aux_reverse_one_dim_array( reverse_shape, reverse_shape_depth );
+		___aux_reverse_one_dim_array( reverse_shape, reverse_shape_depth );
 	}
 
 	*shape_depth = reverse_shape_depth;
@@ -330,7 +330,8 @@ __mpcomp_convert_topology_to_tree_shape( hwloc_topology_t topology, int *shape_d
 }
 
 /* MOVE FROM mpcomp_tree_bis.c */
-int __mpcomp_restrict_topology_for_mpcomp( hwloc_topology_t *restrictedTopology, const int omp_threads_expected, const int *cpulist )
+static int
+__restrict_topology_for_mpc_omp( hwloc_topology_t *restrictedTopology, const int omp_threads_expected, const int *cpulist )
 {
 	int i, err, num_mvps;
 	hwloc_topology_t topology;
@@ -424,24 +425,24 @@ int __mpcomp_restrict_topology_for_mpcomp( hwloc_topology_t *restrictedTopology,
 }
 
 static hwloc_topology_t
-__mpcomp_prepare_omp_task_tree_init( const int num_mvps, const int *cpus_order )
+__prepare_omp_task_tree_init( const int num_mvps, const int *cpus_order )
 {
 	int err;
 	hwloc_topology_t restrictedTopology;
-	err = __mpcomp_restrict_topology_for_mpcomp( &restrictedTopology, num_mvps, cpus_order );
+	err = __restrict_topology_for_mpc_omp( &restrictedTopology, num_mvps, cpus_order );
 	assert( !err );
 	assert( restrictedTopology );
 	return restrictedTopology;
 }
 
 static void
-__mpcomp_init_omp_task_tree( const int num_mvps, int *shape, const int *cpus_order )
+__init_task_tree( const int num_mvps, int *shape, const int *cpus_order )
 {
 	int i, max_depth, place_depth = 0, place_size;
 	int *tree_shape;
 	hwloc_topology_t omp_task_topo;
-	omp_task_topo = __mpcomp_prepare_omp_task_tree_init( num_mvps, cpus_order );
-	tree_shape = __mpcomp_convert_topology_to_tree_shape( omp_task_topo, &max_depth );
+	omp_task_topo = __prepare_omp_task_tree_init( num_mvps, cpus_order );
+	tree_shape = __convert_topology_to_tree_shape( omp_task_topo, &max_depth );
 
 	if ( shape ) // Force shape
 	{
@@ -488,15 +489,15 @@ __mpcomp_init_omp_task_tree( const int num_mvps, int *shape, const int *cpus_ord
  * assigned with environement variable or config file.
  * This function is called once per process
  */
-static inline void __mpcomp_read_env_variables()
+static inline void __read_env_variables()
 {
 	/* Ensure larceny mode for tasks is read from string and then locked */
-	__omp_conf.omp_task_larceny_mode = mpcomp_task_parse_larceny_mode(__omp_conf.omp_task_larceny_mode_str);
+	__omp_conf.omp_task_larceny_mode = mpc_omp_task_parse_larceny_mode(__omp_conf.omp_task_larceny_mode_str);
 	/* We lock as we wont parse future updates */
 	mpc_conf_root_config_set_lock("mpcframework.omp.task.larceny", 1);
 
 	char *env;
-	mpc_common_nodebug( "__mpcomp_read_env_variables: Read env vars (MPC rank: %d)",
+	mpc_common_nodebug( "_mpcomp_read_env_variables: Read env vars (MPC rank: %d)",
 	              mpc_common_get_task_rank() );
 	/******* OMP_VP_NUMBER *********/
 	if ( __omp_conf.OMP_MICROVP_NUMBER < 0 )
@@ -762,10 +763,10 @@ static inline void __mpcomp_read_env_variables()
 		int nb_tokens = 0;
 		char **tokens = NULL;
 		int i;
-		tokens = __mpcomp_tokenizer( env, &nb_tokens );
+		tokens = ___tokenizer( env, &nb_tokens );
 		assert( tokens != NULL );
 		/* TODO check that arguments are ok and #leaves is correct */
-		OMP_TREE = ( int * ) mpcomp_alloc( nb_tokens * sizeof( int ) );
+		OMP_TREE = ( int * ) mpc_omp_alloc( nb_tokens * sizeof( int ) );
 		OMP_TREE_DEPTH = nb_tokens;
 		OMP_TREE_NB_LEAVES = 1;
 
@@ -791,7 +792,7 @@ static inline void __mpcomp_read_env_variables()
              strncmp( env, "Disabled", strlen("disabled") ) == 0 ||
              strncmp( env, "DISABLED", strlen("disabled") ) == 0 )
         {
-            OMP_TOOL = mpcomp_tool_disabled;
+            OMP_TOOL = mpc_omp_tool_disabled;
         }
     }
 
@@ -813,7 +814,6 @@ static inline void __mpcomp_read_env_variables()
 		mpc_common_debug_log(
 		         "MPC OpenMP version %d.%d (Intel and Patched GCC compatibility)",
 		         SCTK_OMP_VERSION_MAJOR, SCTK_OMP_VERSION_MINOR );
-#if MPCOMP_TASK
 		mpc_common_debug_log("\tOpenMP 3 Tasking on:\n"
                 "\t\tOMP_NEW_TASKS_DEPTH=%d\n"
                 "\t\tOMP_TASK_LARCENY_MODE=%d\n"
@@ -829,14 +829,6 @@ static inline void __mpcomp_read_env_variables()
 		         __omp_conf.omp_task_use_lockfree_queue,
 		         __omp_conf.omp_task_steal_last_stolen_list,
 		         __omp_conf.omp_task_resteal_to_last_thief );
-#ifdef MPCOMP_USE_TASKDEP
-		mpc_common_debug_log("\t\tDependencies ON" );
-#else
-		mpc_common_debug_log("\t\tDependencies OFF" );
-#endif /* MPCOMP_USE_TASKDEP */
-#else
-		mpc_common_debug_log("\tOpenMP 3 Tasking off");
-#endif
 		mpc_common_debug_log("\tOMP_SCHEDULE %d", OMP_SCHEDULE );
 
 		if ( __omp_conf.OMP_NUM_THREADS == 0 )
@@ -962,7 +954,7 @@ static inline void __mpcomp_read_env_variables()
 /* Initialization of the OpenMP runtime
    Called during the initialization of MPC
  */
-void __mpcomp_init( void )
+void mpc_omp_init( void )
 {
 	static volatile int done = 0;
 	static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
@@ -971,16 +963,16 @@ void __mpcomp_init( void )
 
 	/* Do we need to initialize the current team */
 #if OMPT_SUPPORT
-    if ( sctk_openmp_thread_tls
-         && ( (mpcomp_thread_t*) sctk_openmp_thread_tls )->tool_status != uninitialized )
+    if ( mpc_omp_tls
+         && ( (mpc_omp_thread_t*) mpc_omp_tls )->tool_status != uninitialized )
 #else
-	if ( sctk_openmp_thread_tls )
+	if ( mpc_omp_tls )
 #endif /* OMPT_SUPPORT */
     {
 		return;
     }
 
-	mpcomp_local_icv_t icvs;
+	mpc_omp_local_icv_t icvs;
 
 	/* Need to initialize the whole runtime (environment variables) This
 	* section is shared by every OpenMP instances among MPI tasks located inside
@@ -989,7 +981,7 @@ void __mpcomp_init( void )
 
 	if ( done == 0 )
 	{
-		__mpcomp_read_env_variables();
+		__read_env_variables();
 		mpcomp_global_icvs.def_sched_var = omp_sched_static;
 		mpcomp_global_icvs.bind_var = __omp_conf.OMP_PROC_BIND;
 		mpcomp_global_icvs.stacksize_var = __omp_conf.OMP_STACKSIZE;
@@ -1109,21 +1101,21 @@ void __mpcomp_init( void )
 	icvs.active_levels_var = 0;
 	icvs.levels_var = 0;
 
-    __mpcomp_init_seq_region();
+    mpc_omp_init_seq_region();
 
 #if OMPT_SUPPORT
-	__mpcompt_init();
+	_mpc_omp_ompt_init();
 #endif /* OMPT_SUPPORT */
 
-    __mpcomp_init_initial_thread( icvs );
+    mpc_omp_init_initial_thread( icvs );
 
 	int places_nb_mvps;
 	int *shape, *cpus_order;
-	OMP_PLACES_LIST = mpcomp_places_env_variable_parsing( nb_mvps );
+	OMP_PLACES_LIST = _mpc_omp_places_env_variable_parsing( nb_mvps );
 
 	if ( OMP_PLACES_LIST )
 	{
-		places_nb_mvps = mpcomp_places_get_topo_info( OMP_PLACES_LIST, &shape, &cpus_order );
+		places_nb_mvps = _mpc_omp_places_get_topo_info( OMP_PLACES_LIST, &shape, &cpus_order );
 		assert( places_nb_mvps <= nb_mvps );
     nb_mvps = places_nb_mvps;
 	}
@@ -1133,39 +1125,35 @@ void __mpcomp_init( void )
 		cpus_order = NULL;
 	}
 
-	__mpcomp_init_omp_task_tree( nb_mvps, shape, cpus_order );
-
-#if MPCOMP_TASK
-	//    _mpc_task_team_info_init(team_info, instance->tree_depth);
-#endif /* MPCOMP_TASK */
+	__init_task_tree( nb_mvps, shape, cpus_order );
 
 	mpc_common_spinlock_unlock( &lock );
 
 #if OMPT_SUPPORT
-    __mpcompt_callback_implicit_task( ompt_scope_begin, 1, 1, ompt_task_initial );
+    _mpc_omp_ompt_callback_implicit_task( ompt_scope_begin, 1, 1, ompt_task_initial );
 #endif /* OMPT_SUPPORT */
 }
 
-void __mpcomp_exit( void )
+void mpc_omp_exit( void )
 {
-    mpcomp_thread_t *ithread;
-    mpcomp_node_t* root_node;
+    mpc_omp_thread_t *ithread;
+    mpc_omp_node_t* root_node;
 
-    if( sctk_openmp_thread_tls ) {
-        ithread = sctk_openmp_thread_tls;
+    if( mpc_omp_tls ) {
+        ithread = mpc_omp_tls;
         assert( ithread->rank == 0 );
         root_node = ithread->root;
         assert( root_node );
 
 #if OMPT_SUPPORT
-        __mpcompt_callback_implicit_task( ompt_scope_end, 0, 1, ompt_task_initial );
+        _mpc_omp_ompt_callback_implicit_task( ompt_scope_end, 0, 1, ompt_task_initial );
 #endif /* OMPT_SUPPORT */
 
-        __mpcomp_exit_node_signal( root_node );
+        _mpc_omp_exit_node_signal( root_node );
 
 #if OMPT_SUPPORT
-        __mpcompt_callback_thread_end( ithread, ompt_thread_initial );
-        __mpcompt_finalize();
+        _mpc_omp_ompt_callback_thread_end( ithread, ompt_thread_initial );
+        _mpc_omp_ompt_finalize();
 #endif /* OMPT_SUPPORT */
 
         if( mpcomp_global_icvs.tool_libraries ) {
@@ -1173,14 +1161,11 @@ void __mpcomp_exit( void )
             mpcomp_global_icvs.tool_libraries = NULL;
         }
     }
-#if MPCOMP_TASK
-	//     _mpc_task_new_exit();
-#endif /* MPCOMP_TASK */
 }
 
-void __mpcomp_in_order_scheduler( mpcomp_thread_t *thread )
+void _mpc_omp_in_order_scheduler( mpc_omp_thread_t *thread )
 {
-	mpcomp_loop_long_iter_t *loop;
+	mpc_omp_loop_long_iter_t *loop;
 	assert( thread );
 	assert( thread->instance );
 	assert( thread->info.func );
@@ -1199,19 +1184,19 @@ void __mpcomp_in_order_scheduler( mpcomp_thread_t *thread )
 			break;
 
 		case MPCOMP_COMBINED_SECTION:
-			__mpcomp_sections_init( thread, thread->info.nb_sections );
+			_mpc_omp_sections_init( thread, thread->info.nb_sections );
 			break;
 
 		case MPCOMP_COMBINED_STATIC_LOOP:
-			__mpcomp_static_loop_init( thread, loop->lb, loop->b, loop->incr, loop->chunk_size );
+			_mpc_omp_static_loop_init( thread, loop->lb, loop->b, loop->incr, loop->chunk_size );
 			break;
 
 		case MPCOMP_COMBINED_DYN_LOOP:
-			__mpcomp_dynamic_loop_init( thread, loop->lb, loop->b, loop->incr, loop->chunk_size );
+			_mpc_omp_dynamic_loop_init( thread, loop->lb, loop->b, loop->incr, loop->chunk_size );
 			break;
 
 		case MPCOMP_COMBINED_GUIDED_LOOP:
-			__mpcomp_guided_loop_begin( loop->lb, loop->b, loop->incr, loop->chunk_size, NULL, NULL );
+			mpc_omp_guided_loop_begin( loop->lb, loop->b, loop->incr, loop->chunk_size, NULL, NULL );
 			break;
 
 		default:
@@ -1220,15 +1205,15 @@ void __mpcomp_in_order_scheduler( mpcomp_thread_t *thread )
 
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     /* Record and reset current frame infos */
-    mpcompt_frame_info_t prev_frame_infos = __mpcompt_frame_reset_infos();
+    mpc_omp_ompt_frame_info_t prev_frame_infos = _mpc_omp_ompt_frame_reset_infos();
 
-    __mpcompt_frame_set_exit( MPCOMPT_GET_FRAME_ADDRESS );
+    _mpc_omp_ompt_frame_set_exit( MPCOMPT_GET_FRAME_ADDRESS );
 #endif /* OMPT_SUPPORT */
 
 	thread->info.func( thread->info.shared );
 
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     /* Restore previous frame infos */
-    __mpcompt_frame_set_infos( &prev_frame_infos );
+    _mpc_omp_ompt_frame_set_infos( &prev_frame_infos );
 #endif /* OMPT_SUPPORT */
 }

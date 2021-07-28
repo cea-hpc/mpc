@@ -28,19 +28,19 @@
 #include "mpcompt_internal_structs.h"
 #include "mpc_common_debug.h"
 
-static mpcompt_enumerate_infos_t mpcompt_mutexImpl_infos[] = {
+static mpc_omp_ompt_enumerate_infos_t mpcompt_mutexImpl_infos[] = {
 #define ompt_mutex_impl_macro(mutex_impl, code, desc) {#mutex_impl, mutex_impl},
   FOREACH_OMPT_MUTEX_IMPL(ompt_mutex_impl_macro)
 #undef ompt_mutex_impl_macro
 };
 
 static inline int
-mpcompt_get_next_mutexImpl ( int current_impl, 
+_mpc_omp_ompt_get_next_mutexImpl ( int current_impl, 
                              int *next_impl, 
                              const char **next_impl_name ) {
     uint64_t i;
     static const uint64_t mtx_impl_len =
-        sizeof( mpcompt_mutexImpl_infos ) / sizeof( mpcompt_enumerate_infos_t );
+        sizeof( mpcompt_mutexImpl_infos ) / sizeof( mpc_omp_ompt_enumerate_infos_t );
     assert( mtx_impl_len > 0 );
 
     /* Find current state in mpcompt_mutexImpl_infos tabular */

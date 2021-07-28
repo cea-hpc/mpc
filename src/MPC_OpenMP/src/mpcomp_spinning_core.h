@@ -1,22 +1,19 @@
 #ifndef __MPCOMP_SPINNING_CORE_H__
 #define __MPCOMP_SPINNING_CORE_H__
 
-#include "mpcomp_types.h"
+# include "mpcomp_types.h"
+# include "mpcomp_task.h"
 
-#if defined( MPCOMP_OPENMP_3_0 )
-	#include "mpcomp_task.h"
-#endif /* defined( MPCOMP_OPENMP_3_0 ) */
+void _mpc_omp_start_openmp_thread( mpc_omp_mvp_t *mvp );
+void __scatter_instance_post_init( mpc_omp_thread_t* thread );
+mpc_omp_mvp_t *_mpc_spin_node_wakeup( mpc_omp_node_t *node );
+void mpc_omp_slave_mvp_node( mpc_omp_mvp_t *mvp );
+void _mpc_omp_exit_node_signal( mpc_omp_node_t* node );
+mpc_omp_thread_t *__mvp_wakeup( mpc_omp_mvp_t *mvp );
 
-void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp );
-void __scatter_instance_post_init( mpcomp_thread_t* thread );
-mpcomp_mvp_t *_mpc_spin_node_wakeup( mpcomp_node_t *node );
-void mpcomp_slave_mvp_node( mpcomp_mvp_t *mvp );
-void __mpcomp_exit_node_signal( mpcomp_node_t* node );
-mpcomp_thread_t *__mvp_wakeup( mpcomp_mvp_t *mvp );
-
-static inline void __mpcomp_instance_tree_array_root_init( struct mpcomp_node_s *root, mpcomp_instance_t *instance, const int nthreads )
+static inline void _mpc_omp_instance_tree_array_root_init( struct mpc_omp_node_s *root, mpc_omp_instance_t *instance, const int nthreads )
 {
-	struct mpcomp_generic_node_s *meta_node;
+	struct mpc_omp_generic_node_s *meta_node;
 
 	if ( !root )
 	{
@@ -31,14 +28,12 @@ static inline void __mpcomp_instance_tree_array_root_init( struct mpcomp_node_s 
 	meta_node = &( instance->tree_array[0] );
 	meta_node->ptr.node = root;
 	meta_node->type = MPCOMP_CHILDREN_NODE;
-#if defined( MPCOMP_OPENMP_3_0 )
 	_mpc_task_root_info_init( root );
-#endif /* defined( MPCOMP_OPENMP_3_0 )  */
 }
 
 #if 0
 
-static inline mpcomp_thread_t * __mpcomp_spinning_push_mvp_thread( mpcomp_mvp_t *mvp, mpcomp_thread_t *new_thread )
+static inline mpc_omp_thread_t * _mpc_omp_spinning_push_mvp_thread( mpc_omp_mvp_t *mvp, mpc_omp_thread_t *new_thread )
 {
 	assert( mvp );
 	assert( new_thread );
@@ -47,9 +42,9 @@ static inline mpcomp_thread_t * __mpcomp_spinning_push_mvp_thread( mpcomp_mvp_t 
 	return new_thread;
 }
 
-static inline mpcomp_thread_t * __mpcomp_spinning_pop_mvp_thread( mpcomp_mvp_t *mvp )
+static inline mpc_omp_thread_t * _mpc_omp_spinning_pop_mvp_thread( mpc_omp_mvp_t *mvp )
 {
-	mpcomp_thread_t *cur_thread;
+	mpc_omp_thread_t *cur_thread;
 	assert( mvp );
 	assert( mvp->threads );
 	cur_thread = mvp->threads;
@@ -57,10 +52,10 @@ static inline mpcomp_thread_t * __mpcomp_spinning_pop_mvp_thread( mpcomp_mvp_t *
 	return cur_thread;
 }
 
-static inline mpcomp_thread_t * __mpcomp_spinning_get_thread_ancestor( mpcomp_thread_t *thread, const int depth )
+static inline mpc_omp_thread_t * _mpc_omp_spinning_get_thread_ancestor( mpc_omp_thread_t *thread, const int depth )
 {
 	int i;
-	mpcomp_thread_t *ancestor;
+	mpc_omp_thread_t *ancestor;
 	ancestor = thread;
 
 	for ( i = 0; i < depth; i++ )
@@ -76,37 +71,37 @@ static inline mpcomp_thread_t * __mpcomp_spinning_get_thread_ancestor( mpcomp_th
 	return ancestor;
 }
 
-static inline mpcomp_thread_t * __mpcomp_spinning_get_mvp_thread_ancestor( mpcomp_mvp_t *mvp, const int depth )
+static inline mpc_omp_thread_t * _mpc_omp_spinning_get_mvp_thread_ancestor( mpc_omp_mvp_t *mvp, const int depth )
 {
-	mpcomp_thread_t *mvp_thread, *ancestor;
+	mpc_omp_thread_t *mvp_thread, *ancestor;
 	assert( mvp );
 	mvp_thread = mvp->threads;
-	ancestor = __mpcomp_spinning_get_thread_ancestor( mvp_thread, depth );
+	ancestor = _mpc_omp_spinning_get_thread_ancestor( mvp_thread, depth );
 	return ancestor;
 }
 
-static inline mpcomp_node_t * __mpcomp_spinning_get_thread_root_node( mpcomp_thread_t *thread )
+static inline mpc_omp_node_t * _mpc_omp_spinning_get_thread_root_node( mpc_omp_thread_t *thread )
 {
 	assert( thread );
 	return thread->root;
 }
 
-static inline int __mpcomp_spining_get_instance_max_depth( mpcomp_instance_t *instance )
+static inline int _mpc_omp_spining_get_instance_max_depth( mpc_omp_instance_t *instance )
 {
-	mpcomp_node_t *root = instance->root;
+	mpc_omp_node_t *root = instance->root;
 	assert( root ); //TODO instance root can be NULL when leaf create new parallel region
 	return root->depth + root->tree_depth - 1;
 }
 
-static inline char * __mpcomp_spinning_get_debug_thread_infos( __UNUSED__ mpcomp_thread_t *thread )
+static inline char * _mpc_omp_spinning_get_debug_thread_infos( __UNUSED__ mpc_omp_thread_t *thread )
 {
 	return NULL;
 }
 
-static inline mpcomp_node_t * __mpcomp_spinning_get_mvp_father_node( mpcomp_mvp_t *mvp, mpcomp_instance_t *instance )
+static inline mpc_omp_node_t * _mpc_omp_spinning_get_mvp_father_node( mpc_omp_mvp_t *mvp, mpc_omp_instance_t *instance )
 {
 	int *mvp_father_array;
-	mpcomp_meta_tree_node_t *tree_array_node, *tree_array;
+	mpc_omp_meta_tree_node_t *tree_array_node, *tree_array;
 	assert( mvp );
 	assert( instance );
 
@@ -130,10 +125,10 @@ static inline mpcomp_node_t * __mpcomp_spinning_get_mvp_father_node( mpcomp_mvp_
 	mvp_father_array = tree_array[mvp->global_rank].fathers_array;
 	assert( mvp_ancestor_node < tree_array[mvp->global_rank].fathers_array_size );
 	tree_array_node = &( tree_array[mvp_father_array[father_depth - 1]] );
-	return ( mpcomp_node_t * ) tree_array_node->user_pointer;
+	return ( mpc_omp_node_t * ) tree_array_node->user_pointer;
 }
 
-static inline int __mpcomp_spinning_node_compute_rank( mpcomp_node_t *node, const int num_threads, int rank, int *first )
+static inline int _mpc_omp_spinning_node_compute_rank( mpc_omp_node_t *node, const int num_threads, int rank, int *first )
 {
 	assert( node );
 	assert( num_threads > 0 );
@@ -152,7 +147,7 @@ static inline int __mpcomp_spinning_node_compute_rank( mpcomp_node_t *node, cons
 	return ( rank < rest ) ? quot + 1 : quot;
 }
 
-static inline int __mpcomp_spinning_leaf_compute_rank( mpcomp_node_t *node, const int num_threads, const int first_rank, const int rank )
+static inline int _mpc_omp_spinning_leaf_compute_rank( mpc_omp_node_t *node, const int num_threads, const int first_rank, const int rank )
 {
 	int i;
 	assert( node );

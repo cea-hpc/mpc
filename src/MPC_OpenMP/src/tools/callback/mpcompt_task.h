@@ -27,42 +27,43 @@
 #include "mpcompt_macros.h"
 
 #if OMPT_SUPPORT
+#include "mpcomp_core.h"
 #include "mpcomp_task.h"
 
 void
-__mpcompt_callback_task_create( mpcomp_task_t *task,
+_mpc_omp_ompt_callback_task_create( mpc_omp_task_t *task,
                                 int flags,
                                 int has_dependences );
 
 void
-__mpcompt_callback_dependences( mpcomp_task_t *task,
+_mpc_omp_ompt_callback_dependences( mpc_omp_task_t *task,
                                 const ompt_dependence_t *deps,
                                 int ndeps );
 
 void
-__mpcompt_callback_task_dependence( ompt_data_t *src_task_data,
+_mpc_omp_ompt_callback_task_dependence( ompt_data_t *src_task_data,
                                     ompt_data_t *sink_task_data );
 
 void
-__mpcompt_callback_task_schedule( ompt_data_t *prior_task_data,
+_mpc_omp_ompt_callback_task_schedule( ompt_data_t *prior_task_data,
                                   ompt_task_status_t prior_task_status,
                                   ompt_data_t *next_task_data );
 
 void
-__mpcompt_callback_implicit_task( ompt_scope_endpoint_t endpoint,
+_mpc_omp_ompt_callback_implicit_task( ompt_scope_endpoint_t endpoint,
                                   unsigned int actual_parallelism,
                                   unsigned int index,
                                   int flags );
 
 static inline ompt_task_flag_t
-___mpcompt_get_task_flags( mpcomp_thread_t * thread, mpcomp_task_t *new_task ) {
+__mpc_omp_ompt_get_task_flags( mpc_omp_thread_t * thread, mpc_omp_task_t *new_task ) {
     ompt_task_flag_t flags = ompt_task_explicit;
     int task_nesting_max = mpc_omp_conf_get()->omp_task_nesting_max;
 
-    if( mpcomp_task_property_isset( new_task->property, MPCOMP_TASK_UNDEFERRED ))
+    if( mpc_omp_task_property_isset( new_task->property, MPCOMP_TASK_UNDEFERRED ))
         flags |= ompt_task_undeferred;
 
-    if( mpcomp_task_property_isset( new_task->property, MPCOMP_TASK_FINAL ))
+    if( mpc_omp_task_property_isset( new_task->property, MPCOMP_TASK_FINAL ))
         flags |= ompt_task_final;
 
     if( !( flags & ompt_task_undeferred )
@@ -81,7 +82,7 @@ ___mpcompt_get_task_flags( mpcomp_thread_t * thread, mpcomp_task_t *new_task ) {
 /* Only used when one thread with a task with dependencies.
  */
 static inline ompt_dependence_t*
-___mpcompt_task_process_deps( void **depend ) {
+__mpc_omp_ompt_task_process_deps( void **depend ) {
     assert(depend);
 
     size_t i, j;

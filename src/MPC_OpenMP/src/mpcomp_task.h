@@ -23,8 +23,8 @@
 /* ######################################################################## */
 #include "mpcomp_types.h"
 
-#if ( !defined( __SCTK_MPCOMP_TASK_H__ ) && MPCOMP_TASK )
-#define __SCTK_MPCOMP_TASK_H__
+#ifndef __MPCOMP_TASK_H__
+#define __MPCOMP_TASK_H__
 
 #include "mpc_common_asm.h"
 
@@ -307,34 +307,34 @@
 
 /*** Task property primitives ***/
 
-int mpcomp_task_parse_larceny_mode(char * mode);
+int mpc_omp_task_parse_larceny_mode(char * mode);
 
 static inline void
-mpcomp_task_reset_property( mpcomp_task_property_t *property )
+mpc_omp_task_reset_property( mpc_omp_task_property_t *property )
 {
 	*property = 0;
 }
 
-static inline void mpcomp_task_set_property( mpcomp_task_property_t *property,
-        mpcomp_task_property_t mask )
+static inline void mpc_omp_task_set_property( mpc_omp_task_property_t *property,
+        mpc_omp_task_property_t mask )
 {
 	*property |= mask;
 }
 
-static inline void mpcomp_task_unset_property( mpcomp_task_property_t *property,
-        mpcomp_task_property_t mask )
+static inline void mpc_omp_task_unset_property( mpc_omp_task_property_t *property,
+        mpc_omp_task_property_t mask )
 {
 	*property &= ~( mask );
 }
 
-static inline int mpcomp_task_property_isset( mpcomp_task_property_t property,
-        mpcomp_task_property_t mask )
+static inline int mpc_omp_task_property_isset( mpc_omp_task_property_t property,
+        mpc_omp_task_property_t mask )
 {
 	return ( property & mask );
 }
 
 static inline int _mpc_task_is_final( unsigned int flags,
-                                        mpcomp_task_t *parent )
+                                        mpc_omp_task_t *parent )
 {
 	if ( flags & 2 )
 	{
@@ -342,7 +342,7 @@ static inline int _mpc_task_is_final( unsigned int flags,
 	}
 
 	if ( parent &&
-	     mpcomp_task_property_isset( parent->property, MPCOMP_TASK_FINAL ) )
+	     mpc_omp_task_property_isset( parent->property, MPCOMP_TASK_FINAL ) )
 	{
 		return 1;
 	}
@@ -351,15 +351,15 @@ static inline int _mpc_task_is_final( unsigned int flags,
 }
 
 /* Initialization of a task structure */
-static inline void _mpc_task_info_init( mpcomp_task_t *task,
+static inline void _mpc_task_info_init( mpc_omp_task_t *task,
         void ( *func )( void * ), void *func_data,
         void* data, size_t data_size,
-        struct mpcomp_thread_s *thread )
+        struct mpc_omp_thread_s *thread )
 {
 	assert( task != NULL );
 	assert( thread != NULL );
 	/* Reset all task infos to NULL */
-	memset( task, 0, sizeof( mpcomp_task_t ) );
+	memset( task, 0, sizeof( mpc_omp_task_t ) );
 	/* Set non null task infos field */
 	task->func = func;
 	task->func_data = func_data;
@@ -392,11 +392,11 @@ static inline long _mpc_task_align_single_malloc( long size, long arg_align )
 	return size;
 }
 
-void _mpc_task_ref_parent_task( mpcomp_task_t *task );
+void _mpc_task_ref_parent_task( mpc_omp_task_t *task );
 
-void _mpc_task_unref_parent_task( mpcomp_task_t *task );
+void _mpc_task_unref_parent_task( mpc_omp_task_t *task );
 
-void _mpc_task_free( mpcomp_thread_t *thread );
+void _mpc_task_free( mpc_omp_thread_t *thread );
 
 /**
  * Allocate a new task with provided information.
@@ -414,13 +414,13 @@ void _mpc_task_free( mpcomp_thread_t *thread );
  *
  * \return New allocated task (or NULL if an error occured)
  */
-mpcomp_task_t *_mpc_task_alloc( void ( *fn )( void * ), void *data,
+mpc_omp_task_t *_mpc_task_alloc( void ( *fn )( void * ), void *data,
                                     void ( *cpyfn )( void *, void * ),
                                     long arg_size, long arg_align,
                                     bool if_clause, unsigned flags,
                                     int has_deps );
 
-void _mpc_task_process( mpcomp_task_t *new_task, bool if_clause );
+void _mpc_task_process( mpc_omp_task_t *new_task, bool if_clause );
 
 /*
  * Creation of an OpenMP task.
@@ -435,9 +435,13 @@ void _mpc_task_process( mpcomp_task_t *new_task, bool if_clause );
  * \param if_clause
  * \param flags
  */
-void _mpc_task_new( void ( *fn )( void * ), void *data,
-                    void ( *cpyfn )( void *, void * ), long arg_size, long arg_align,
-                    bool if_clause, unsigned flags );
+void _mpc_omp_task_new( void ( *fn )( void * ), void *data,
+                            void ( *cpyfn )( void *, void * ), long arg_size,
+                            long arg_align, bool if_clause, unsigned flags,
+                            void **depend, bool intel_alloc, mpc_omp_task_t *intel_task );
+
+void _mpc_task_dep_new_finalize( mpc_omp_task_t *task );
+
 
 void _mpc_task_newgroup_start( void );
 void _mpc_task_newgroup_end( void );
@@ -446,13 +450,13 @@ void _mpc_taskyield( void );
 
 void _mpc_task_list_interface_init();
 
-void _mpc_task_mvp_info_init( struct mpcomp_node_s *parent, struct mpcomp_mvp_s *child );
+void _mpc_task_mvp_info_init( struct mpc_omp_node_s *parent, struct mpc_omp_mvp_s *child );
 
-void _mpc_task_node_info_init( struct mpcomp_node_s *parent, struct mpcomp_node_s *child );
+void _mpc_task_node_info_init( struct mpc_omp_node_s *parent, struct mpc_omp_node_s *child );
 
-void _mpc_task_team_info_init( struct mpcomp_team_s *team, int depth );
+void _mpc_task_team_info_init( struct mpc_omp_team_s *team, int depth );
 
-void _mpc_task_root_info_init( struct mpcomp_node_s *root );
+void _mpc_task_root_info_init( struct mpc_omp_node_s *root );
 
 void _mpc_task_schedule( int need_taskwait );
 
@@ -462,18 +466,11 @@ void _mpc_task_wait( void );
  * TREE ARRAY TASK *
  *******************/
 
-void _mpc_task_tree_array_thread_init( struct mpcomp_thread_s *thread );
+void _mpc_task_tree_array_thread_init( struct mpc_omp_thread_s *thread );
 
 /*********************
  * TASK DEPENDENCIES *
  *********************/
-
-void _mpc_task_new_with_deps( void ( *fn )( void * ), void *data,
-                            void ( *cpyfn )( void *, void * ), long arg_size,
-                            long arg_align, bool if_clause, unsigned flags,
-                            void **depend, bool intel_alloc, mpcomp_task_t *intel_task );
-
-void _mpc_task_dep_new_finalize( mpcomp_task_t *task );
 
 /*************
  * TASKGROUP *
@@ -483,15 +480,14 @@ void _mpc_task_dep_new_finalize( mpcomp_task_t *task );
 void _mpc_task_taskgroup_start( void );
 void _mpc_task_taskgroup_end( void );
 
-#ifdef MPCOMP_TASKGROUP
 /* Inline functions */
-static inline void mpcomp_taskgroup_add_task( mpcomp_task_t *new_task )
+static inline void mpc_omp_taskgroup_add_task( mpc_omp_task_t *new_task )
 {
-	mpcomp_task_t *current_task;
-	mpcomp_thread_t *omp_thread_tls;
-	mpcomp_task_taskgroup_t *taskgroup;
-	assert( sctk_openmp_thread_tls );
-	omp_thread_tls = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
+	mpc_omp_task_t *current_task;
+	mpc_omp_thread_t *omp_thread_tls;
+	mpc_omp_task_taskgroup_t *taskgroup;
+	assert( mpc_omp_tls );
+	omp_thread_tls = ( mpc_omp_thread_t * ) mpc_omp_tls;
 	current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( omp_thread_tls );
 	taskgroup = current_task->taskgroup;
 
@@ -502,7 +498,7 @@ static inline void mpcomp_taskgroup_add_task( mpcomp_task_t *new_task )
 	}
 }
 
-static inline void mpcomp_taskgroup_del_task( mpcomp_task_t *task )
+static inline void mpc_omp_taskgroup_del_task( mpc_omp_task_t *task )
 {
 	if ( task->taskgroup )
 	{
@@ -510,14 +506,4 @@ static inline void mpcomp_taskgroup_del_task( mpcomp_task_t *task )
 	}
 }
 
-#else /* MPCOMP_TASKGROUP */
-
-static inline void mpcomp_taskgroup_add_task( mpcomp_task_t *new_task )
-{
-}
-
-static inline void mpcomp_taskgroup_del_task( mpcomp_task_t *task ) {}
-
-#endif /* MPCOMP_TASKGROUP */
-
-#endif /* __SCTK_MPCOMP_TASK_H__ */
+#endif /* __MPCOMP_TASK_H__ */

@@ -29,7 +29,7 @@
 #if OMPT_SUPPORT
 
 void
-__mpcompt_callback_cancel( int flags );
+_mpc_omp_ompt_callback_cancel( int flags );
 
 #endif /* OMPT_SUPPORT */
 #endif /* __MPCOMPT_CANCEL_H__ */

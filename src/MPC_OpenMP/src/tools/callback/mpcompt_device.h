@@ -29,17 +29,17 @@
 #if OMPT_SUPPORT
 
 void
-__mpcompt_callback_device_initialize( int device_num,
+_mpc_omp_ompt_callback_device_initialize( int device_num,
                                       const char *type,
                                       ompt_device_t *device,
                                       ompt_function_lookup_t lookup,
                                       const char *documentation );
 
 void
-__mpcompt_callback_device_finalize( int device_num );
+_mpc_omp_ompt_callback_device_finalize( int device_num );
 
 void
-__mpcompt_callback_device_load( int device_num,
+_mpc_omp_ompt_callback_device_load( int device_num,
                                 const char *filename,
                                 int64_t offset_in_file,
                                 void *vma_in_file,
@@ -49,7 +49,7 @@ __mpcompt_callback_device_load( int device_num,
                                 uint64_t module_id );
 
 void
-__mpcompt_callback_device_unload( int device_num,
+_mpc_omp_ompt_callback_device_unload( int device_num,
                                   uint64_t module_id );
 
 #endif /* OMPT_SUPPORT */

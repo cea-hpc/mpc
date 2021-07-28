@@ -5,7 +5,7 @@
 #include "mpc_common_debug.h"
 
 void
-__mpcompt_callback_device_initialize ( __UNUSED__ int device_num,
+_mpc_omp_ompt_callback_device_initialize ( __UNUSED__ int device_num,
                                        __UNUSED__ const char *type,
                                        __UNUSED__ ompt_device_t *device,
                                        __UNUSED__ ompt_function_lookup_t lookup,
@@ -14,12 +14,12 @@ __mpcompt_callback_device_initialize ( __UNUSED__ int device_num,
 }
 
 void
-__mpcompt_callback_device_finalize ( __UNUSED__ int device_num ) {
+_mpc_omp_ompt_callback_device_finalize ( __UNUSED__ int device_num ) {
     not_implemented();
 }
 
 void
-__mpcompt_callback_device_load ( __UNUSED__ int device_num,
+_mpc_omp_ompt_callback_device_load ( __UNUSED__ int device_num,
                                  __UNUSED__ const char *filename,
                                  __UNUSED__ int64_t offset_in_file,
                                  __UNUSED__ void *vma_in_file,
@@ -31,7 +31,7 @@ __mpcompt_callback_device_load ( __UNUSED__ int device_num,
 }
 
 void
-__mpcompt_callback_device_unload ( __UNUSED__ int device_num,
+_mpc_omp_ompt_callback_device_unload ( __UNUSED__ int device_num,
                                    __UNUSED__ uint64_t module_id ) {
     not_implemented();
 }
