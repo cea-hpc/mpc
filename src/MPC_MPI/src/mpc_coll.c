@@ -108,201 +108,230 @@ typedef struct {
 
 
 /**************
-   PROTOTYPES
+   COLLECTIVES PROTOTYPES
  **************/
 
 int PMPI_Ibcast (void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPI_Request *request);
-static inline int __Ibcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle *handle);
+static inline int ___collectives_ibcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
-static inline int __Bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle* handle);
-int mpc_mpi_bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
-static inline int __Bcast_switch(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Bcast_linear(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Bcast_binomial(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Bcast_scatter_allgather(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Bcast_topo(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle* handle);
+int _mpc_mpi_collectives_bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
+static inline int ___collectives_bcast_switch(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_bcast_linear(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_bcast_binomial(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_bcast_scatter_allgather(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
 int PMPI_Ireduce (const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPI_Request *request);
-static inline int __Ireduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, NBC_Handle *handle);
+static inline int ___collectives_ireduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Reduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
-static inline int __Reduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, NBC_Handle* handle);
-int mpc_mpi_reduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm);
-static inline int __Reduce_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Reduce_linear(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Reduce_binomial(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Reduce_reduce_scatter_allgather(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Reduce_topo_commute(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_reduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, NBC_Handle* handle);
+int _mpc_mpi_collectives_reduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm);
+static inline int ___collectives_reduce_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_reduce_linear(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_reduce_binomial(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_reduce_reduce_scatter_allgather(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_reduce_topo(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_reduce_topo_commute(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
 int PMPI_Iallreduce (const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
-static inline int __Iallreduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle);
+static inline int ___collectives_iallreduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Allreduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request);
-static inline int __Allreduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle);
-int mpc_mpi_allreduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
-static inline int __Allreduce_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Allreduce_reduce_broadcast(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Allreduce_distance_doubling(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Allreduce_vector_halving_distance_doubling(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Allreduce_binary_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Allreduce_ring(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Allreduce_topo(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_allreduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle);
+int _mpc_mpi_collectives_allreduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
+static inline int ___collectives_allreduce_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_allreduce_reduce_broadcast(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_allreduce_distance_doubling(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_allreduce_vector_halving_distance_doubling(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_allreduce_binary_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_allreduce_ring(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_allreduce_topo(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
 int PMPI_Iscatter (const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request);
-static inline int __Iscatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
+static inline int ___collectives_iscatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Scatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
-static inline int __Scatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
-int mpc_mpi_scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm);
-static inline int __Scatter_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Scatter_linear(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Scatter_binomial(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Scatter_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_scatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
+int _mpc_mpi_collectives_scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm);
+static inline int ___collectives_scatter_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_scatter_linear(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_scatter_binomial(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_scatter_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
 int PMPI_Iscatterv (const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request * request);
-static inline int __Iscatterv(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
+static inline int ___collectives_iscatterv(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Scatterv_init(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
-static inline int __Scatterv_init(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
-int mpc_mpi_scatterv(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm);
-static inline int __Scatterv_switch(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Scatterv_linear(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Scatterv_binomial(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_scatterv_init(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
+int _mpc_mpi_collectives_scatterv(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm);
+static inline int ___collectives_scatterv_switch(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_scatterv_linear(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_scatterv_binomial(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
 int PMPI_Igather (const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request);
-static inline int __Igather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
+static inline int ___collectives_igather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
-static inline int __Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
-int mpc_mpi_gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm);
-static inline int __Gather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Gather_linear(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Gather_binomial(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
+int _mpc_mpi_collectives_gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm);
+static inline int ___collectives_gather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_gather_linear(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_gather_binomial(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_gather_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
 int PMPI_Igatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request);
-static inline int __Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
+static inline int ___collectives_igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
-static inline int __Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
-int mpc_mpi_gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm);
-static inline int __Gatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Gatherv_linear(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Gatherv_binomial(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle);
+int _mpc_mpi_collectives_gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm);
+static inline int ___collectives_gatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_gatherv_linear(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_gatherv_binomial(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
 int PMPI_Ireduce_scatter_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
-static inline int __Ireduce_scatter_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle);
+static inline int ___collectives_ireduce_scatter_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Reduce_scatter_block_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request);
-static inline int __Reduce_scatter_block_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle);
-int mpc_mpi_reduce_scatter_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
-static inline int __Reduce_scatter_block_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Reduce_scatter_block_reduce_scatter(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Reduce_scatter_block_distance_doubling(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Reduce_scatter_block_distance_halving(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Reduce_scatter_block_pairwise(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_reduce_scatter_block_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle);
+int _mpc_mpi_collectives_reduce_scatter_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
+static inline int ___collectives_reduce_scatter_block_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_reduce_scatter_block_reduce_scatter(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_reduce_scatter_block_distance_doubling(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_reduce_scatter_block_distance_halving(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_reduce_scatter_block_pairwise(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
 int PMPI_Ireduce_scatter(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
-static inline int __Ireduce_scatter(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle);
+static inline int ___collectives_ireduce_scatter(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Reduce_scatter_init(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request);
-static inline int __Reduce_scatter_init(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle);
-int mpc_mpi_reduce_scatter(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
-static inline int __Reduce_scatter_switch(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Reduce_scatter_reduce_scatterv(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Reduce_scatter_distance_doubling(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Reduce_scatter_distance_halving(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Reduce_scatter_pairwise(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_reduce_scatter_init(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle);
+int _mpc_mpi_collectives_reduce_scatter(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
+static inline int ___collectives_reduce_scatter_switch(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_reduce_scatter_reduce_scatterv(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_reduce_scatter_distance_doubling(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_reduce_scatter_distance_halving(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_reduce_scatter_pairwise(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
 int PMPI_Iallgather (const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request);
-static inline int __Iallgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
+static inline int ___collectives_iallgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request);
-static inline int __Allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle);
-int mpc_mpi_allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
-static inline int __Allgather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Allgather_gather_broadcast(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Allgather_distance_doubling(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Allgather_bruck(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Allgather_ring(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Allgather_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle);
+int _mpc_mpi_collectives_allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
+static inline int ___collectives_allgather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_allgather_gather_broadcast(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_allgather_distance_doubling(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_allgather_bruck(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_allgather_ring(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_allgather_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
 int PMPI_Iallgatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request);
-static inline int __Iallgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
+static inline int ___collectives_iallgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request);
-static inline int __Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle);
-int mpc_mpi_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm);
-static inline int __Allgatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Allgatherv_gatherv_broadcast(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Allgatherv_distance_doubling(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Allgatherv_bruck(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Allgatherv_ring(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle);
+int _mpc_mpi_collectives_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm);
+static inline int ___collectives_allgatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_allgatherv_gatherv_broadcast(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_allgatherv_distance_doubling(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_allgatherv_bruck(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_allgatherv_ring(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
 int PMPI_Ialltoall (const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request);
-static inline int __Ialltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
+static inline int ___collectives_ialltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request);
-static inline int __Alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle);
-int mpc_mpi_alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
-static inline int __Alltoall_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Alltoall_cluster(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Alltoall_bruck(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Alltoall_pairwise(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle);
+int _mpc_mpi_collectives_alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
+static inline int ___collectives_alltoall_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_alltoall_cluster(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_alltoall_bruck(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_alltoall_pairwise(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
 int PMPI_Ialltoallv (const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request);
-static inline int __Ialltoallv(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
+static inline int ___collectives_ialltoallv(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Alltoallv_init(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPI_Info info, MPI_Request *request);
-static inline int __Alltoallv_init(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle);
-int mpc_mpi_alltoallv(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
-static inline int __Alltoallv_switch(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Alltoallv_cluster(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Alltoallv_bruck(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Alltoallv_pairwise(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_alltoallv_init(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle);
+int _mpc_mpi_collectives_alltoallv(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
+static inline int ___collectives_alltoallv_switch(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_alltoallv_cluster(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_alltoallv_bruck(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_alltoallv_pairwise(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
 int PMPI_Ialltoallw (const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPI_Request *request);
-static inline int __Ialltoallw(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, NBC_Handle *handle);
+static inline int ___collectives_ialltoallw(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Alltoallw_init(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPI_Info info, MPI_Request *request);
-static inline int __Alltoallw_init(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, NBC_Handle* handle);
-int mpc_mpi_alltoallw(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm);
-static inline int __Alltoallw_switch(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Alltoallw_cluster(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Alltoallw_bruck(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Alltoallw_pairwise(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_alltoallw_init(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, NBC_Handle* handle);
+int _mpc_mpi_collectives_alltoallw(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm);
+static inline int ___collectives_alltoallw_switch(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_alltoallw_cluster(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_alltoallw_bruck(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_alltoallw_pairwise(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
 int PMPI_Iscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
-static inline int __Iscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle);
+static inline int ___collectives_iscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Scan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request);
-static inline int __Scan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle);
-int mpc_mpi_scan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
-static inline int __Scan_switch (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Scan_linear (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Scan_allgather (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_scan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle);
+int _mpc_mpi_collectives_scan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
+static inline int ___collectives_scan_switch (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_scan_linear (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_scan_allgather (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
 int PMPI_Iexscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
-static inline int __Iexscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle);
+static inline int ___collectives_iexscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Exscan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Info info, MPI_Request *request);
-static inline int __Exscan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle);
-int mpc_mpi_exscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
-static inline int __Exscan_switch (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Exscan_linear (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Exscan_allgather (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_exscan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle);
+int _mpc_mpi_collectives_exscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
+static inline int ___collectives_exscan_switch (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_exscan_linear (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_exscan_allgather (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
 int PMPI_Ibarrier (MPI_Comm comm, MPI_Request *request);
-static inline int __Ibarrier (MPI_Comm comm, NBC_Handle *handle);
+static inline int ___collectives_ibarrier (MPI_Comm comm, NBC_Handle *handle);
 int PMPI_Barrier_init (MPI_Comm comm, MPI_Info info, MPI_Request *request);
-static inline int __Barrier_init (MPI_Comm comm, NBC_Handle* handle);
-int mpc_mpi_barrier (MPI_Comm comm);
-static inline int __Barrier_switch (MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int __Barrier_reduce_broadcast (MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_barrier_init (MPI_Comm comm, NBC_Handle* handle);
+int _mpc_mpi_collectives_barrier (MPI_Comm comm);
+static inline int ___collectives_barrier_switch (MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+static inline int ___collectives_barrier_reduce_broadcast (MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
+/**************
+   OTHER PROTOTYPES
+ **************/
+
+static inline int ___collectives_rmb_index(int a);
+static inline int ___collectives_fill_rmb(int a, int index);
+static inline unsigned int ___collectives_floored_log2(unsigned int a);
+static inline unsigned int ___collectives_ceiled_log2(unsigned int a);
+
+static inline void ___collectives_sched_info_init(Sched_info *info);
+static inline int ___collectives_sched_alloc_init(NBC_Handle *handle, NBC_Schedule *schedule, Sched_info *info);
+static inline int ___collectives_sched_send(const void *buffer, int count, MPI_Datatype datatype, int dest, MPI_Comm comm, NBC_Schedule *schedule, Sched_info *info);
+static inline int ___collectives_sched_recv(void *buffer, int count, MPI_Datatype datatype, int source, MPI_Comm comm, NBC_Schedule *schedule, Sched_info *info);
+static inline int ___collectives_sched_barrier(NBC_Schedule *schedule, Sched_info *info);
+static inline int ___collectives_sched_commit(NBC_Schedule *schedule, Sched_info *info);
+static inline int ___collectives_sched_op(void *res_buf, void* left_op_buf, void* right_op_buf, int count, MPI_Datatype datatype, MPI_Op op, NBC_Schedule *schedule, Sched_info *info);
+static inline int ___collectives_sched_copy(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, NBC_Schedule *schedule, Sched_info *info);
+
+static inline int ___collectives_send_type(const void *buffer, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info);
+static inline int ___collectives_recv_type(void *buffer, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info);
+static inline int ___collectives_barrier_type(MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info);
+static inline int ___collectives_op_type( __UNUSED__ void *res_buf, const void* left_op_buf, void* right_op_buf, int count, MPI_Datatype datatype, MPI_Op op, sctk_Op mpc_op, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info);
+static inline int ___collectives_copy_type(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info);
+
+static inline int ___collectives_create_hardware_comm_unguided(MPI_Comm comm, int vrank, int max_level, Sched_info *info);
+static inline int ___collectives_create_master_hardware_comm_unguided(int vrank, int level, Sched_info *info);
+static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info *info);
+static inline int ___collectives_create_swap_array(MPI_Comm comm, int root, Sched_info *info);
+static inline int ___collectives_topo_comm_init(MPI_Comm comm, int root, int max_level, Sched_info *info);
 
 
 /**
@@ -310,7 +339,7 @@ static inline int __Barrier_reduce_broadcast (MPI_Comm comm, MPC_COLL_TYPE coll_
   \param a Integer
   \return Index of the first bit set to 1 int the input integer
   */
-static inline int __rmb_index(int a) {
+static inline int ___collectives_rmb_index(int a) {
   if(a == 0) return -1;
   int i = 0;
   while((a & (1 << i)) != (1 << i)) i++;
@@ -323,7 +352,7 @@ static inline int __rmb_index(int a) {
   \param index 
   \return 
   */
-static inline int __fill_rmb(int a, int index) {
+static inline int ___collectives_fill_rmb(int a, int index) {
   return a | ((1 << index) - 1);
 }
 
@@ -332,7 +361,7 @@ static inline int __fill_rmb(int a, int index) {
   \param a Input integer
   \return 
   */
-static inline unsigned int __floored_log2(unsigned int a) {
+static inline unsigned int ___collectives_floored_log2(unsigned int a) {
   
   unsigned int n = 0;
   
@@ -348,9 +377,9 @@ static inline unsigned int __floored_log2(unsigned int a) {
   \param a Input integer
   \return 
   */
-static inline unsigned int __ceiled_log2(unsigned int a) {
+static inline unsigned int ___collectives_ceiled_log2(unsigned int a) {
 
-  unsigned int n = __floored_log2(a);
+  unsigned int n = ___collectives_floored_log2(a);
   return (a != (1 << n))?(n+1):(n);
 }
 
@@ -358,7 +387,7 @@ static inline unsigned int __ceiled_log2(unsigned int a) {
   \brief Initialise the Sched_info struct with default values
   \param info The adress of the Sched_info struct to initialise
   */
-static inline void __sched_info_init(Sched_info *info) {
+static inline void ___collectives_sched_info_init(Sched_info *info) {
   info->pos = 2 * sizeof(int);
 
   info->round_start_pos = sizeof(int);
@@ -383,7 +412,7 @@ static inline void __sched_info_init(Sched_info *info) {
   \param info Information about the function to schedule
   \return Error code
   */
-static inline int __sched_alloc_init(NBC_Handle *handle, NBC_Schedule *schedule, Sched_info *info) {
+static inline int ___collectives_sched_alloc_init(NBC_Handle *handle, NBC_Schedule *schedule, Sched_info *info) {
 
   info->alloc_size = SCHED_SIZE + info->round_count * ROUND_SCHED_SIZE + info->comm_count * COMM_SCHED_SIZE;
 
@@ -424,7 +453,7 @@ static inline int __sched_alloc_init(NBC_Handle *handle, NBC_Schedule *schedule,
   \param info Adress on the information structure about the schedule
   \return Error code
   */
-static inline int __Sched_send(const void *buffer, int count, MPI_Datatype datatype, int dest, MPI_Comm comm, NBC_Schedule *schedule, Sched_info *info) {
+static inline int ___collectives_sched_send(const void *buffer, int count, MPI_Datatype datatype, int dest, MPI_Comm comm, NBC_Schedule *schedule, Sched_info *info) {
 
   NBC_Args* send_args;
 
@@ -460,7 +489,7 @@ static inline int __Sched_send(const void *buffer, int count, MPI_Datatype datat
   \param info Adress on the information structure about the schedule
   \return Error code
   */
-static inline int __Sched_recv(void *buffer, int count, MPI_Datatype datatype, int source, MPI_Comm comm, NBC_Schedule *schedule, Sched_info *info) {
+static inline int ___collectives_sched_recv(void *buffer, int count, MPI_Datatype datatype, int source, MPI_Comm comm, NBC_Schedule *schedule, Sched_info *info) {
 
   NBC_Args* recv_args;
 
@@ -491,7 +520,7 @@ static inline int __Sched_recv(void *buffer, int count, MPI_Datatype datatype, i
   \param info Adress on the information structure about the schedule
   \return Error code
   */
-static inline int __Sched_barrier(NBC_Schedule *schedule, Sched_info *info) {
+static inline int ___collectives_sched_barrier(NBC_Schedule *schedule, Sched_info *info) {
   *(char *)((char *)*schedule + info->pos) = 1;
 
   info->pos += BARRIER_SCHED_SIZE;
@@ -512,7 +541,7 @@ static inline int __Sched_barrier(NBC_Schedule *schedule, Sched_info *info) {
   \param info Adress on the information structure about the schedule
   \return Error code
   */
-static inline int __Sched_commit(NBC_Schedule *schedule, Sched_info *info){
+static inline int ___collectives_sched_commit(NBC_Schedule *schedule, Sched_info *info) {
 
   *(int *)((char*)*schedule) = info->alloc_size;
   *(int *)((char *)*schedule + info->round_start_pos) = info->round_comm_count;
@@ -535,7 +564,7 @@ static inline int __Sched_commit(NBC_Schedule *schedule, Sched_info *info){
   \param info Adress on the information structure about the schedule
   \return Error code
   */
-static inline int __Sched_op(void *res_buf, void* left_op_buf, void* right_op_buf, int count, MPI_Datatype datatype, MPI_Op op, NBC_Schedule *schedule, Sched_info *info) {
+static inline int ___collectives_sched_op(void *res_buf, void* left_op_buf, void* right_op_buf, int count, MPI_Datatype datatype, MPI_Op op, NBC_Schedule *schedule, Sched_info *info) {
 
   NBC_Args* op_args;
   
@@ -575,7 +604,7 @@ static inline int __Sched_op(void *res_buf, void* left_op_buf, void* right_op_bu
   \param info Adress on the information structure about the schedule
   \return Error code
   */
-static inline int __Sched_copy(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, NBC_Schedule *schedule, Sched_info *info) {
+static inline int ___collectives_sched_copy(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, NBC_Schedule *schedule, Sched_info *info) {
 
   NBC_Args *copy_args;
 
@@ -617,7 +646,7 @@ static inline int __Sched_copy(const void *src, int srccount, MPI_Datatype srcty
   \param info Adress on the information structure about the schedule
   \return Error code
   */
-static inline int __Send_type(const void *buffer, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
+static inline int ___collectives_send_type(const void *buffer, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
   int res = MPI_SUCCESS;
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
@@ -641,7 +670,7 @@ static inline int __Send_type(const void *buffer, int count, MPI_Datatype dataty
       break;
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
-      res = __Sched_send(buffer, count, datatype, dest, comm, schedule, info);
+      res = ___collectives_sched_send(buffer, count, datatype, dest, comm, schedule, info);
       break;
     case MPC_COLL_TYPE_COUNT:
       info->comm_count += 1;
@@ -664,7 +693,7 @@ static inline int __Send_type(const void *buffer, int count, MPI_Datatype dataty
   \param info Adress on the information structure about the schedule
   \return Error code
   */
-static inline int __Recv_type(void *buffer, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
+static inline int ___collectives_recv_type(void *buffer, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
   int res = MPI_SUCCESS;
  
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
@@ -688,7 +717,7 @@ static inline int __Recv_type(void *buffer, int count, MPI_Datatype datatype, in
       break;
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
-      res = __Sched_recv(buffer, count, datatype, source, comm, schedule, info);
+      res = ___collectives_sched_recv(buffer, count, datatype, source, comm, schedule, info);
       break;
     case MPC_COLL_TYPE_COUNT:
       info->comm_count += 1;
@@ -705,7 +734,7 @@ static inline int __Recv_type(void *buffer, int count, MPI_Datatype datatype, in
   \param info Adress on the information structure about the schedule
   \return Error code
   */
-static inline int __Barrier_type(MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
+static inline int ___collectives_barrier_type(MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
   int res = MPI_SUCCESS;
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
@@ -722,7 +751,7 @@ static inline int __Barrier_type(MPC_COLL_TYPE coll_type, NBC_Schedule *schedule
       break;
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
-      res = __Sched_barrier(schedule, info);
+      res = ___collectives_sched_barrier(schedule, info);
       break;
     case MPC_COLL_TYPE_COUNT:
       info->round_count += 1;
@@ -746,7 +775,7 @@ static inline int __Barrier_type(MPC_COLL_TYPE coll_type, NBC_Schedule *schedule
   \param info Adress on the information structure about the schedule
   \return Error code
   */
-static inline int __Op_type( __UNUSED__ void *res_buf, const void* left_op_buf, void* right_op_buf, int count, MPI_Datatype datatype, MPI_Op op, sctk_Op mpc_op, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
+static inline int ___collectives_op_type( __UNUSED__ void *res_buf, const void* left_op_buf, void* right_op_buf, int count, MPI_Datatype datatype, MPI_Op op, sctk_Op mpc_op, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
   int res = MPI_SUCCESS;
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
@@ -772,7 +801,7 @@ static inline int __Op_type( __UNUSED__ void *res_buf, const void* left_op_buf, 
       break;
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
-      res = __Sched_op(right_op_buf, left_op_buf, right_op_buf, count, datatype, op, schedule, info);
+      res = ___collectives_sched_op(right_op_buf, left_op_buf, right_op_buf, count, datatype, op, schedule, info);
       break;
     case MPC_COLL_TYPE_COUNT:
       info->comm_count += 1;
@@ -796,7 +825,7 @@ static inline int __Op_type( __UNUSED__ void *res_buf, const void* left_op_buf, 
   \param info Adress on the information structure about the schedule
   \return Error code
   */
-static inline int __Copy_type(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
+static inline int ___collectives_copy_type(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
   int res = MPI_SUCCESS;
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
@@ -815,7 +844,7 @@ static inline int __Copy_type(const void *src, int srccount, MPI_Datatype srctyp
       break;
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
-      __Sched_copy(src, srccount, srctype, tgt, tgtcount, tgttype, schedule, info);
+      ___collectives_sched_copy(src, srccount, srctype, tgt, tgtcount, tgttype, schedule, info);
       break;
     case MPC_COLL_TYPE_COUNT:
       info->comm_count += 1;
@@ -834,7 +863,7 @@ static inline int __Copy_type(const void *src, int srccount, MPI_Datatype srctyp
   \param info Adress on the information structure about the schedule
   \return error code
  */
-static inline int __create_hardware_comm_unguided(MPI_Comm comm, int vrank, int max_level, Sched_info *info) {
+static inline int ___collectives_create_hardware_comm_unguided(MPI_Comm comm, int vrank, int max_level, Sched_info *info) {
   int res = MPI_ERR_INTERN;
   int level_num = 0;
 
@@ -883,7 +912,7 @@ static inline int __create_hardware_comm_unguided(MPI_Comm comm, int vrank, int 
   \param info Adress on the information structure about the schedule
   \return error code
  */
-static inline int __create_master_hardware_comm_unguided(int vrank, int level, Sched_info *info) {
+static inline int ___collectives_create_master_hardware_comm_unguided(int vrank, int level, Sched_info *info) {
   int res = MPI_ERR_INTERN;
   int rank_comm = -1;
   int level_num = 0;
@@ -920,7 +949,7 @@ static inline int __create_master_hardware_comm_unguided(int vrank, int level, S
   \param info Adress on the information structure about the schedule
   \return error code
  */
-static inline int __create_childs_counts(MPI_Comm comm, Sched_info *info) {
+static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info *info) {
 
    int rank;
    _mpc_cl_comm_rank(comm, &rank);
@@ -981,7 +1010,7 @@ static inline int __create_childs_counts(MPI_Comm comm, Sched_info *info) {
   \param info Adress on the information structure about the schedule
   \return error code
  */
-static inline int __create_swap_array(MPI_Comm comm, int root, Sched_info *info) {
+static inline int ___collectives_create_swap_array(MPI_Comm comm, int root, Sched_info *info) {
 
   int rank, size;
   _mpc_cl_comm_size(comm, &size);
@@ -996,7 +1025,7 @@ static inline int __create_swap_array(MPI_Comm comm, int root, Sched_info *info)
 
   int tmp_swap_array[size];
 
-  __Gather_topo(&rank, 1, MPI_INT, tmp_swap_array, 1, MPI_INT, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, info);
+  ___collectives_gather_topo(&rank, 1, MPI_INT, tmp_swap_array, 1, MPI_INT, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, info);
 
   if(rank == root) {
     memcpy(info->hardware_info_ptr->swap_array, tmp_swap_array, size * sizeof(int));
@@ -1013,7 +1042,7 @@ static inline int __create_swap_array(MPI_Comm comm, int root, Sched_info *info)
   \param info Adress on the information structure about the schedule
   \return error code
  */
-static inline int __Topo_comm_init(MPI_Comm comm, int root, int max_level, Sched_info *info) {
+static inline int ___collectives_topo_comm_init(MPI_Comm comm, int root, int max_level, Sched_info *info) {
   int rank, size;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
@@ -1029,9 +1058,9 @@ static inline int __Topo_comm_init(MPI_Comm comm, int root, int max_level, Sched
   info->hardware_info_ptr->rootcomm = (MPI_Comm *)sctk_malloc(MAX_HARDWARE_LEVEL*sizeof(MPI_Comm));
 
   /* Create hardware communicators using unguided topological split and max split level */
-  __create_hardware_comm_unguided(comm, vrank, max_level, info);
+  ___collectives_create_hardware_comm_unguided(comm, vrank, max_level, info);
   int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
-  __create_master_hardware_comm_unguided(vrank, deepest_level, info);
+  ___collectives_create_master_hardware_comm_unguided(vrank, deepest_level, info);
 
   return MPI_SUCCESS;
 }
@@ -1080,7 +1109,7 @@ int PMPI_Ibcast (void *buffer, int count, MPI_Datatype datatype, int root, MPI_C
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
-    res = __Ibcast(buffer, count, datatype, root, comm, &(tmp->nbc_handle));
+    res = ___collectives_ibcast(buffer, count, datatype, root, comm, &(tmp->nbc_handle));
   }
   MPI_HANDLE_RETURN_VAL (res, comm);
 }
@@ -1095,24 +1124,24 @@ int PMPI_Ibcast (void *buffer, int count, MPI_Datatype datatype, int root, MPI_C
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Ibcast( void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle *handle ) {
+static inline int ___collectives_ibcast( void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle *handle ) {
 
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
 
-  __Bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  ___collectives_bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -1169,7 +1198,7 @@ int PMPI_Bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MP
   req->persistant.op = MPC_MPI_PERSISTENT_BCAST_INIT;
   req->persistant.info = info;
 
-  __Bcast_init(buffer, count, datatype, root, comm, &(req->nbc_handle));
+  ___collectives_bcast_init(buffer, count, datatype, root, comm, &(req->nbc_handle));
   req->nbc_handle.is_persistent = 1;
   return MPI_SUCCESS;
 }
@@ -1184,11 +1213,11 @@ int PMPI_Bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MP
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle* handle){
+static inline int ___collectives_bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle* handle){
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
 #if ALLOW_TOPO_COMM == 1
   info.flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
@@ -1201,13 +1230,13 @@ static inline int __Bcast_init(void *buffer, int count, MPI_Datatype datatype, i
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
 
-  __Bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  ___collectives_bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -1229,8 +1258,8 @@ static inline int __Bcast_init(void *buffer, int count, MPI_Datatype datatype, i
   \param comm Target communicator
   \return error code
   */
-int mpc_mpi_bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm) {
-  return __Bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL); 
+int _mpc_mpi_collectives_bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm) {
+  return ___collectives_bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL); 
 }
 
 
@@ -1246,7 +1275,7 @@ int mpc_mpi_bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Bcast_switch(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_bcast_switch(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
@@ -1273,16 +1302,16 @@ static inline int __Bcast_switch(void *buffer, int count, MPI_Datatype datatype,
 
   switch(alg) {
     case NBC_BCAST_LINEAR:
-      res = __Bcast_linear(buffer, count, datatype, root, comm, coll_type, schedule, info);
+      res = ___collectives_bcast_linear(buffer, count, datatype, root, comm, coll_type, schedule, info);
       break;
     case NBC_BCAST_BINOMIAL:
-      res = __Bcast_binomial(buffer, count, datatype, root, comm, coll_type, schedule, info);
+      res = ___collectives_bcast_binomial(buffer, count, datatype, root, comm, coll_type, schedule, info);
       break;
     case NBC_BCAST_SCATTER_ALLGATHER:
-      res = __Bcast_scatter_allgather(buffer, count, datatype, root, comm, coll_type, schedule, info);
+      res = ___collectives_bcast_scatter_allgather(buffer, count, datatype, root, comm, coll_type, schedule, info);
       break;
     case NBC_BCAST_TOPO:
-      res = __Bcast_topo(buffer, count, datatype, root, comm, coll_type, schedule, info);
+      res = ___collectives_bcast_topo(buffer, count, datatype, root, comm, coll_type, schedule, info);
       break;
   }
 
@@ -1302,7 +1331,7 @@ static inline int __Bcast_switch(void *buffer, int count, MPI_Datatype datatype,
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Bcast_linear(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_bcast_linear(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size;
   _mpc_cl_comm_size(comm, &size);
@@ -1328,7 +1357,7 @@ static inline int __Bcast_linear(void *buffer, int count, MPI_Datatype datatype,
 
   // if rank != root, wait for data from root
   if(rank != root) {
-    res = __Recv_type(buffer, count, datatype, root, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
+    res = ___collectives_recv_type(buffer, count, datatype, root, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
     if(res != MPI_SUCCESS) {
       return res;
     }
@@ -1339,7 +1368,7 @@ static inline int __Bcast_linear(void *buffer, int count, MPI_Datatype datatype,
         continue;
       }
 
-      res = __Send_type(buffer, count, datatype, i, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
+      res = ___collectives_send_type(buffer, count, datatype, i, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
       if(res != MPI_SUCCESS) {
         return res;
       }
@@ -1362,7 +1391,7 @@ static inline int __Bcast_linear(void *buffer, int count, MPI_Datatype datatype,
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Bcast_binomial(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_bcast_binomial(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int size, rank;
 
@@ -1371,12 +1400,12 @@ static inline int __Bcast_binomial(void *buffer, int count, MPI_Datatype datatyp
 
   // Get max number of steps
   int maxr, vrank, peer;
-  maxr = __ceiled_log2(size);
+  maxr = ___collectives_ceiled_log2(size);
   // Get virtual rank for processes by swappping rank 0 & root
   RANK2VRANK(rank, vrank, root);
   // Get the index of the right-most bit set to 1 in rank
   // The max number of sends made is equal to rmb
-  int rmb = __rmb_index(vrank);
+  int rmb = ___collectives_rmb_index(vrank);
   if(rank == root) {
     rmb = maxr;
   }
@@ -1385,10 +1414,10 @@ static inline int __Bcast_binomial(void *buffer, int count, MPI_Datatype datatyp
   if(rank != root) {
     VRANK2RANK(peer, vrank ^ (1 << rmb), root);
 
-    __Recv_type(buffer, count, datatype, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
+    ___collectives_recv_type(buffer, count, datatype, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
 
     if(rmb != 0) {
-      __Barrier_type(coll_type, schedule, info);
+      ___collectives_barrier_type(coll_type, schedule, info);
     }
   }
 
@@ -1409,7 +1438,7 @@ static inline int __Bcast_binomial(void *buffer, int count, MPI_Datatype datatyp
       continue;
     }
 
-    __Send_type(buffer, count, datatype, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
+    ___collectives_send_type(buffer, count, datatype, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
   }
   
   return MPI_SUCCESS;
@@ -1428,7 +1457,7 @@ static inline int __Bcast_binomial(void *buffer, int count, MPI_Datatype datatyp
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Bcast_scatter_allgather(__UNUSED__ void *buffer, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+static inline int ___collectives_bcast_scatter_allgather(__UNUSED__ void *buffer, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
   
@@ -1449,7 +1478,7 @@ static inline int __Bcast_scatter_allgather(__UNUSED__ void *buffer, __UNUSED__ 
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Bcast_topo(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size, res = MPI_SUCCESS;
   _mpc_cl_comm_size(comm, &size);
@@ -1477,7 +1506,7 @@ static inline int __Bcast_topo(void *buffer, int count, MPI_Datatype datatype, i
           int max_level = TOPO_MAX_LEVEL;
           //max_level = MAX_HARDWARE_LEVEL;
 
-          __Topo_comm_init(comm, root, max_level, info);
+          ___collectives_topo_comm_init(comm, root, max_level, info);
         }
         break;
       }
@@ -1495,16 +1524,16 @@ static inline int __Bcast_topo(void *buffer, int count, MPI_Datatype datatype, i
     if(!rank_split) { /* if master */
       MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[k];
 
-      res = __Bcast_switch(buffer, count, datatype, 0, master_comm, coll_type, schedule, info);
+      res = ___collectives_bcast_switch(buffer, count, datatype, 0, master_comm, coll_type, schedule, info);
       
-      __Barrier_type(coll_type, schedule, info);
+      ___collectives_barrier_type(coll_type, schedule, info);
     }
   }
 
   /* last level topology binomial bcast */
   MPI_Comm hardware_comm = info->hardware_info_ptr->hwcomm[deepest_level];
 
-  res = __Bcast_switch(buffer, count, datatype, 0, hardware_comm, coll_type, schedule, info);
+  res = ___collectives_bcast_switch(buffer, count, datatype, 0, hardware_comm, coll_type, schedule, info);
   
   info->flag ^= SCHED_INFO_TOPO_COMM_ALLOWED; 
 
@@ -1562,7 +1591,7 @@ int PMPI_Ireduce (const void *sendbuf, void* recvbuf, int count, MPI_Datatype da
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
-    res = __Ireduce(sendbuf, recvbuf, count, datatype, op, root, comm, &(tmp->nbc_handle));
+    res = ___collectives_ireduce(sendbuf, recvbuf, count, datatype, op, root, comm, &(tmp->nbc_handle));
   }
   MPI_HANDLE_RETURN_VAL (res, comm);
 }
@@ -1579,24 +1608,24 @@ int PMPI_Ireduce (const void *sendbuf, void* recvbuf, int count, MPI_Datatype da
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Ireduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, NBC_Handle *handle) {
+static inline int ___collectives_ireduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, NBC_Handle *handle) {
   
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IREDUCE_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Reduce_switch(sendbuf, recvbuf, count, datatype, op, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_reduce_switch(sendbuf, recvbuf, count, datatype, op, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
 
-  __Reduce_switch(sendbuf, recvbuf, count, datatype, op, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  ___collectives_reduce_switch(sendbuf, recvbuf, count, datatype, op, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -1656,7 +1685,7 @@ int PMPI_Reduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype
   req->persistant.info = info;
 
   /* Init metadat for nbc */
-  __Reduce_init (sendbuf, recvbuf, count, datatype, op, root, comm, &(req->nbc_handle));
+  ___collectives_reduce_init (sendbuf, recvbuf, count, datatype, op, root, comm, &(req->nbc_handle));
   req->nbc_handle.is_persistent = 1;
   return MPI_SUCCESS;
 }
@@ -1673,11 +1702,11 @@ int PMPI_Reduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Reduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, NBC_Handle* handle) {
+static inline int ___collectives_reduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, NBC_Handle* handle) {
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 #if ALLOW_TOPO_COMM == 1
   info.flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
 #endif
@@ -1689,13 +1718,13 @@ static inline int __Reduce_init(const void *sendbuf, void* recvbuf, int count, M
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Reduce_switch(sendbuf, recvbuf, count, datatype, op, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_reduce_switch(sendbuf, recvbuf, count, datatype, op, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
   
-  __Reduce_switch(sendbuf, recvbuf, count, datatype, op, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  ___collectives_reduce_switch(sendbuf, recvbuf, count, datatype, op, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -1719,8 +1748,8 @@ static inline int __Reduce_init(const void *sendbuf, void* recvbuf, int count, M
   \param comm Target communicator
   \return error code
   */
-int mpc_mpi_reduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm) {
-  return __Reduce_switch(sendbuf, recvbuf, count, datatype, op, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+int _mpc_mpi_collectives_reduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm) {
+  return ___collectives_reduce_switch(sendbuf, recvbuf, count, datatype, op, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
 }
 
 
@@ -1738,7 +1767,7 @@ int mpc_mpi_reduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype d
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Reduce_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_reduce_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
@@ -1770,19 +1799,19 @@ static inline int __Reduce_switch(const void *sendbuf, void* recvbuf, int count,
 
   switch(alg) {
     case NBC_REDUCE_LINEAR:
-      res = __Reduce_linear(sendbuf, recvbuf, count, datatype, op, root, comm, coll_type, schedule, info);
+      res = ___collectives_reduce_linear(sendbuf, recvbuf, count, datatype, op, root, comm, coll_type, schedule, info);
       break;
     case NBC_REDUCE_BINOMIAL:
-      res = __Reduce_binomial(sendbuf, recvbuf, count, datatype, op, root, comm, coll_type, schedule, info);
+      res = ___collectives_reduce_binomial(sendbuf, recvbuf, count, datatype, op, root, comm, coll_type, schedule, info);
       break;
     case NBC_REDUCE_REDUCE_SCATTER_ALLGATHER:
-      res = __Reduce_reduce_scatter_allgather(sendbuf, recvbuf, count, datatype, op, root, comm, coll_type, schedule, info);
+      res = ___collectives_reduce_reduce_scatter_allgather(sendbuf, recvbuf, count, datatype, op, root, comm, coll_type, schedule, info);
       break;
     case NBC_REDUCE_TOPO:
-      res = __Reduce_topo(sendbuf, recvbuf, count, datatype, op, root, comm, coll_type, schedule, info);
+      res = ___collectives_reduce_topo(sendbuf, recvbuf, count, datatype, op, root, comm, coll_type, schedule, info);
       break;
     case NBC_REDUCE_TOPO_COMMUTE:
-      res = __Reduce_topo_commute(sendbuf, recvbuf, count, datatype, op, root, comm, coll_type, schedule, info);
+      res = ___collectives_reduce_topo_commute(sendbuf, recvbuf, count, datatype, op, root, comm, coll_type, schedule, info);
       break;
   }
 
@@ -1804,7 +1833,7 @@ static inline int __Reduce_switch(const void *sendbuf, void* recvbuf, int count,
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Reduce_linear(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_reduce_linear(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
   
   int rank, size;
   MPI_Aint ext;
@@ -1845,7 +1874,7 @@ static inline int __Reduce_linear(const void *sendbuf, void* recvbuf, int count,
 
   if(size == 1) {
     if(sendbuf != MPI_IN_PLACE) {
-      __Copy_type(sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+      ___collectives_copy_type(sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
     }
     return MPI_SUCCESS;
   }
@@ -1854,20 +1883,20 @@ static inline int __Reduce_linear(const void *sendbuf, void* recvbuf, int count,
 
   // Gather data from all ranks
   if(sendbuf != MPI_IN_PLACE) {
-    __Gather_switch(sendbuf, count, datatype, tmpbuf, count, datatype, root, comm, coll_type, schedule, info);
+    ___collectives_gather_switch(sendbuf, count, datatype, tmpbuf, count, datatype, root, comm, coll_type, schedule, info);
   } else {
-    __Gather_switch(recvbuf, count, datatype, tmpbuf, count, datatype, root, comm, coll_type, schedule, info);
+    ___collectives_gather_switch(recvbuf, count, datatype, tmpbuf, count, datatype, root, comm, coll_type, schedule, info);
   }
 
   // Reduce received data
   if(rank == root) {
-    __Barrier_type(coll_type, schedule, info);
+    ___collectives_barrier_type(coll_type, schedule, info);
 
     for(int i = 1; i < size; i++) {
-      __Op_type(NULL, (char*)tmpbuf + (i-1)*ext*count, (char*)tmpbuf + i*ext*count, count, datatype, op, mpc_op, coll_type, schedule, info);
+      ___collectives_op_type(NULL, (char*)tmpbuf + (i-1)*ext*count, (char*)tmpbuf + i*ext*count, count, datatype, op, mpc_op, coll_type, schedule, info);
     }
     
-    __Copy_type((char*)tmpbuf + (size-1)*ext*count, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+    ___collectives_copy_type((char*)tmpbuf + (size-1)*ext*count, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
   }
 
   if(coll_type == MPC_COLL_TYPE_BLOCKING && rank == root) {
@@ -1892,7 +1921,7 @@ static inline int __Reduce_linear(const void *sendbuf, void* recvbuf, int count,
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Reduce_binomial(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_reduce_binomial(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
  
   int rank, size;
   MPI_Aint ext;
@@ -1922,7 +1951,7 @@ static inline int __Reduce_binomial(const void *sendbuf, void* recvbuf, int coun
   // Get virtual rank for processes by swappping rank 0 & vroot
   RANK2VRANK(rank, vrank, vroot);
   
-  maxr = __ceiled_log2(size);
+  maxr = ___collectives_ceiled_log2(size);
 
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
@@ -1948,7 +1977,7 @@ static inline int __Reduce_binomial(const void *sendbuf, void* recvbuf, int coun
 
   if(size == 1) {
     if(sendbuf != MPI_IN_PLACE) {
-      __Copy_type(sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+      ___collectives_copy_type(sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
     }
     return MPI_SUCCESS;
   }
@@ -1966,15 +1995,15 @@ static inline int __Reduce_binomial(const void *sendbuf, void* recvbuf, int coun
     
     if(peer < rank) {
       // send reduce data to rank-2^i
-      __Send_type(tmp_sendbuf, count, datatype, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(tmp_sendbuf, count, datatype, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
       break;
 
     } else if(peer < size) {
       // wait data from rank+2^i
-      __Recv_type(tmp_recvbuf, count, datatype, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
-      __Barrier_type(coll_type, schedule, info);
+      ___collectives_recv_type(tmp_recvbuf, count, datatype, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_barrier_type(coll_type, schedule, info);
       // reduce data
-      __Op_type(NULL, tmp_sendbuf, tmp_recvbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
+      ___collectives_op_type(NULL, tmp_sendbuf, tmp_recvbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
 
       if(first_access) {
         tmp_sendbuf = tmpbuf + ext * count;
@@ -1990,13 +2019,13 @@ static inline int __Reduce_binomial(const void *sendbuf, void* recvbuf, int coun
   // if the operation isnt commutative rank 0 send the reduced data to root
   if(!can_commute && root != 0) {
     if(rank == 0) {
-      __Send_type(tmp_sendbuf, count, datatype, root, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(tmp_sendbuf, count, datatype, root, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
     } else if(rank == root) {
-      __Recv_type(recvbuf, count, datatype, 0, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_recv_type(recvbuf, count, datatype, 0, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
     }
   } else if (rank == root) {
     // Root already have the result, just copy it in revcbuf
-    __Copy_type(tmp_sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+    ___collectives_copy_type(tmp_sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
   }
 
 
@@ -2023,7 +2052,7 @@ static inline int __Reduce_binomial(const void *sendbuf, void* recvbuf, int coun
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Reduce_reduce_scatter_allgather(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+static inline int ___collectives_reduce_reduce_scatter_allgather(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
  
   not_implemented();
 
@@ -2045,7 +2074,7 @@ static inline int __Reduce_reduce_scatter_allgather(__UNUSED__ const void *sendb
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_reduce_topo(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
   int rank, size, res = MPI_SUCCESS;
   MPI_Aint ext;
   _mpc_cl_comm_size(comm, &size);
@@ -2093,7 +2122,7 @@ static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, M
           int max_level = TOPO_MAX_LEVEL;
           //max_level = MAX_HARDWARE_LEVEL;
 
-          __Topo_comm_init(comm, root, max_level, info);
+          ___collectives_topo_comm_init(comm, root, max_level, info);
         }
         break;
       }
@@ -2106,19 +2135,19 @@ static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, M
     tmp_sendbuf = recvbuf;
   }
   
-  __Gather_topo(tmp_sendbuf, count, datatype, tmpbuf, count, datatype, root, comm, coll_type, schedule, info);
-  __Barrier_type(coll_type, schedule, info);
+  ___collectives_gather_topo(tmp_sendbuf, count, datatype, tmpbuf, count, datatype, root, comm, coll_type, schedule, info);
+  ___collectives_barrier_type(coll_type, schedule, info);
 
   if(rank == root) {
     for(int i = 1; i < size; i++) {
       void *leftbuf = tmpbuf + (i-1) * count * ext;
       void *rightbuf = tmpbuf + i * count * ext;
 
-      __Op_type(NULL, leftbuf, rightbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
-      //__Barrier_type(coll_type, schedule, info);
+      ___collectives_op_type(NULL, leftbuf, rightbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
+      //___collectives_barrier_type(coll_type, schedule, info);
     }
 
-    __Copy_type(tmpbuf + (size-1) * count * ext, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+    ___collectives_copy_type(tmpbuf + (size-1) * count * ext, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
   }
   
   info->flag ^= SCHED_INFO_TOPO_COMM_ALLOWED; 
@@ -2141,7 +2170,7 @@ static inline int __Reduce_topo(const void *sendbuf, void* recvbuf, int count, M
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Reduce_topo_commute(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_reduce_topo_commute(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size, res = MPI_SUCCESS;
   MPI_Aint ext;
@@ -2181,7 +2210,7 @@ static inline int __Reduce_topo_commute(const void *sendbuf, void* recvbuf, int 
           int max_level = TOPO_MAX_LEVEL;
           //max_level = MAX_HARDWARE_LEVEL;
 
-          __Topo_comm_init(comm, root, max_level, info);
+          ___collectives_topo_comm_init(comm, root, max_level, info);
         }
         break;
       }
@@ -2194,7 +2223,7 @@ static inline int __Reduce_topo_commute(const void *sendbuf, void* recvbuf, int 
   /* last level topology binomial bcast */
   MPI_Comm hardware_comm = info->hardware_info_ptr->hwcomm[deepest_level];
 
-  res = __Reduce_switch(sendbuf, recvbuf, count, datatype, op, 0, hardware_comm, coll_type, schedule, info);
+  res = ___collectives_reduce_switch(sendbuf, recvbuf, count, datatype, op, 0, hardware_comm, coll_type, schedule, info);
   
   /* At each topological level, masters do binomial algorithm */
   for(int i = deepest_level - 1; i >= 0; i--) {
@@ -2202,7 +2231,7 @@ static inline int __Reduce_topo_commute(const void *sendbuf, void* recvbuf, int 
     _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &rank_split);
     
     if(!rank_split) {
-      __Barrier_type(coll_type, schedule, info);
+      ___collectives_barrier_type(coll_type, schedule, info);
 
       MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[i];
 
@@ -2214,7 +2243,7 @@ static inline int __Reduce_topo_commute(const void *sendbuf, void* recvbuf, int 
         buffer = MPI_IN_PLACE;
       }
   
-      res = __Reduce_switch(buffer, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
+      res = ___collectives_reduce_switch(buffer, recvbuf, count, datatype, op, 0, master_comm, coll_type, schedule, info);
     }
   }
 
@@ -2266,7 +2295,7 @@ int PMPI_Iallreduce (const void *sendbuf, void* recvbuf, int count, MPI_Datatype
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
-    res = __Iallreduce (sendbuf, recvbuf, count, datatype, op, comm, &(tmp->nbc_handle));
+    res = ___collectives_iallreduce (sendbuf, recvbuf, count, datatype, op, comm, &(tmp->nbc_handle));
   }
 
   MPI_HANDLE_RETURN_VAL (res, comm);
@@ -2283,24 +2312,24 @@ int PMPI_Iallreduce (const void *sendbuf, void* recvbuf, int count, MPI_Datatype
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Iallreduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle) {
+static inline int ___collectives_iallreduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle) {
   
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Allreduce_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_allreduce_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
 
-  __Allreduce_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  ___collectives_allreduce_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -2355,7 +2384,7 @@ int PMPI_Allreduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datat
   req->persistant.info = info;
 
   /* Init metadat for nbc */
-  __Allreduce_init (sendbuf, recvbuf, count, datatype, op, comm, &(req->nbc_handle));
+  ___collectives_allreduce_init (sendbuf, recvbuf, count, datatype, op, comm, &(req->nbc_handle));
   req->nbc_handle.is_persistent = 1;
   return MPI_SUCCESS;
 }
@@ -2371,11 +2400,11 @@ int PMPI_Allreduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datat
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Allreduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle) {
+static inline int ___collectives_allreduce_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle) {
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 #if ALLOW_TOPO_COMM == 1
   info.flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
 #endif
@@ -2387,13 +2416,13 @@ static inline int __Allreduce_init(const void *sendbuf, void* recvbuf, int count
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Allreduce_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_allreduce_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
   
-  __Allreduce_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  ___collectives_allreduce_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -2416,8 +2445,8 @@ static inline int __Allreduce_init(const void *sendbuf, void* recvbuf, int count
   \param comm Target communicator
   \return error code
   */
-int mpc_mpi_allreduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
-  return __Allreduce_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+int _mpc_mpi_collectives_allreduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
+  return ___collectives_allreduce_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
 }
 
 
@@ -2434,7 +2463,7 @@ int mpc_mpi_allreduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatyp
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Allreduce_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_allreduce_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
@@ -2463,22 +2492,22 @@ static inline int __Allreduce_switch(const void *sendbuf, void* recvbuf, int cou
 
   switch(alg) {
     case NBC_ALLREDUCE_REDUCE_BROADCAST:
-      res = __Allreduce_reduce_broadcast(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
+      res = ___collectives_allreduce_reduce_broadcast(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
       break;
     case NBC_ALLREDUCE_DISTANCE_DOUBLING:
-      res = __Allreduce_distance_doubling(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
+      res = ___collectives_allreduce_distance_doubling(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
       break;
     case NBC_ALLREDUCE_VECTOR_HALVING_DISTANCE_DOUBLING:
-      res = __Allreduce_vector_halving_distance_doubling(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
+      res = ___collectives_allreduce_vector_halving_distance_doubling(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
       break;
     case NBC_ALLREDUCE_BINARY_BLOCK:
-      res = __Allreduce_binary_block(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
+      res = ___collectives_allreduce_binary_block(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
       break;
     case NBC_ALLREDUCE_RING:
-      res = __Allreduce_ring(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
+      res = ___collectives_allreduce_ring(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
       break;
     case NBC_ALLREDUCE_TOPO:
-      res = __Allreduce_topo(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
+      res = ___collectives_allreduce_topo(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
       break;
   }
 
@@ -2499,11 +2528,11 @@ static inline int __Allreduce_switch(const void *sendbuf, void* recvbuf, int cou
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Allreduce_reduce_broadcast(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_allreduce_reduce_broadcast(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-  __Reduce_switch(sendbuf, recvbuf, count, datatype, op, 0, comm, coll_type, schedule, info);
-  __Barrier_type(coll_type, schedule, info);
-  __Bcast_switch(recvbuf, count, datatype, 0, comm, coll_type, schedule, info);
+  ___collectives_reduce_switch(sendbuf, recvbuf, count, datatype, op, 0, comm, coll_type, schedule, info);
+  ___collectives_barrier_type(coll_type, schedule, info);
+  ___collectives_bcast_switch(recvbuf, count, datatype, 0, comm, coll_type, schedule, info);
 
   return MPI_SUCCESS;
 }
@@ -2522,7 +2551,7 @@ static inline int __Allreduce_reduce_broadcast(const void *sendbuf, void* recvbu
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Allreduce_distance_doubling(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_allreduce_distance_doubling(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size;
   MPI_Aint ext;
@@ -2538,7 +2567,7 @@ static inline int __Allreduce_distance_doubling(const void *sendbuf, void* recvb
   int first_access = 1;
 
   int vrank, peer, maxr;
-  maxr = __floored_log2(size);
+  maxr = ___collectives_floored_log2(size);
   int group = 2 * (size - (1 << maxr));
  
   if(rank < group) {
@@ -2571,7 +2600,7 @@ static inline int __Allreduce_distance_doubling(const void *sendbuf, void* recvb
     tmp_sendbuf = recvbuf;
   } else {
     tmp_sendbuf = tmpbuf + ext * count;
-    __Copy_type(sendbuf, count, datatype, tmp_sendbuf, count, datatype, comm, coll_type, schedule, info);
+    ___collectives_copy_type(sendbuf, count, datatype, tmp_sendbuf, count, datatype, comm, coll_type, schedule, info);
     first_access = 0;
   }
 
@@ -2582,11 +2611,11 @@ static inline int __Allreduce_distance_doubling(const void *sendbuf, void* recvb
     peer = rank ^ 1;
 
     if(rank & 1) {
-      __Send_type(sendbuf, count, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(sendbuf, count, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
     } else {
-      __Recv_type(tmp_recvbuf, count, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-      __Barrier_type(coll_type, schedule, info);
-      __Op_type(NULL, tmp_sendbuf, tmp_recvbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
+      ___collectives_recv_type(tmp_recvbuf, count, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_barrier_type(coll_type, schedule, info);
+      ___collectives_op_type(NULL, tmp_sendbuf, tmp_recvbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
 
       if(first_access) {
         tmp_sendbuf = tmpbuf + ext * count;
@@ -2610,21 +2639,21 @@ static inline int __Allreduce_distance_doubling(const void *sendbuf, void* recvb
 
       // Prevent deadlock
       if(peer > rank) {
-        __Send_type(tmp_sendbuf, count, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-        __Recv_type(tmp_recvbuf, count, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+        ___collectives_send_type(tmp_sendbuf, count, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+        ___collectives_recv_type(tmp_recvbuf, count, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
       } else {
-        __Recv_type(tmp_recvbuf, count, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-        __Send_type(tmp_sendbuf, count, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+        ___collectives_recv_type(tmp_recvbuf, count, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+        ___collectives_send_type(tmp_sendbuf, count, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
       }
-      __Barrier_type(coll_type, schedule, info);
+      ___collectives_barrier_type(coll_type, schedule, info);
 
       // To respect commutativity, we must choose the right order for the Reduction operation
       // if we received from a lower rank: tmp_recvbuf OP tmp_sendbuf
       // if we received from a higher rank: tmp_sendbuf OP tmp_recvbuf
       if(vrank & (1 << i)) {
-        __Op_type(NULL, tmp_recvbuf, tmp_sendbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
+        ___collectives_op_type(NULL, tmp_recvbuf, tmp_sendbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
       } else {
-        __Op_type(NULL, tmp_sendbuf, tmp_recvbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
+        ___collectives_op_type(NULL, tmp_sendbuf, tmp_recvbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
 
         if(first_access) {
           tmp_sendbuf = tmpbuf + ext * count;
@@ -2641,13 +2670,13 @@ static inline int __Allreduce_distance_doubling(const void *sendbuf, void* recvb
     peer = rank ^ 1;
 
     if(rank & 1) {
-      __Recv_type(recvbuf, count, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_recv_type(recvbuf, count, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
     } else {
-      __Send_type(tmp_sendbuf, count, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-      __Copy_type(tmp_sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+      ___collectives_send_type(tmp_sendbuf, count, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_copy_type(tmp_sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
     }
   } else {
-    __Copy_type(tmp_sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+    ___collectives_copy_type(tmp_sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
   }
 
   if(coll_type == MPC_COLL_TYPE_BLOCKING) {
@@ -2671,7 +2700,7 @@ static inline int __Allreduce_distance_doubling(const void *sendbuf, void* recvb
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Allreduce_vector_halving_distance_doubling(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+static inline int ___collectives_allreduce_vector_halving_distance_doubling(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
   
@@ -2692,7 +2721,7 @@ static inline int __Allreduce_vector_halving_distance_doubling(__UNUSED__ const 
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Allreduce_binary_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_allreduce_binary_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size;
   MPI_Aint ext;
@@ -2706,7 +2735,7 @@ static inline int __Allreduce_binary_block(const void *sendbuf, void* recvbuf, i
   sctk_op_t *mpi_op;
 
   int vrank/*, peer*/, maxr;
-  maxr = __ceiled_log2(size);
+  maxr = ___collectives_ceiled_log2(size);
   vrank = rank;
 
   int block = maxr;
@@ -2781,7 +2810,7 @@ static inline int __Allreduce_binary_block(const void *sendbuf, void* recvbuf, i
 
   
   if(sendbuf != MPI_IN_PLACE) {
-    __Copy_type(sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+    ___collectives_copy_type(sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
   }
 
 
@@ -2819,13 +2848,13 @@ static inline int __Allreduce_binary_block(const void *sendbuf, void* recvbuf, i
       recv_bufsize = mid - start;
 
       if(send_bufsize) {
-        __Send_type(tmp_sendbuf, send_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+        ___collectives_send_type(tmp_sendbuf, send_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
       }
 
       if(recv_bufsize) {
-        __Recv_type(tmp_recvbuf, recv_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-        __Barrier_type(coll_type, schedule, info);
-        __Op_type(NULL, tmp_opbuf, tmp_recvbuf, recv_bufsize, datatype, op, mpc_op, coll_type, schedule, info);
+        ___collectives_recv_type(tmp_recvbuf, recv_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+        ___collectives_barrier_type(coll_type, schedule, info);
+        ___collectives_op_type(NULL, tmp_opbuf, tmp_recvbuf, recv_bufsize, datatype, op, mpc_op, coll_type, schedule, info);
 
         pointer_swap(resbuf, recv_resbuf, swap);
       }
@@ -2841,13 +2870,13 @@ static inline int __Allreduce_binary_block(const void *sendbuf, void* recvbuf, i
       recv_bufsize = end - mid;
 
       if(recv_bufsize) {
-        __Recv_type(tmp_recvbuf, recv_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-        __Barrier_type(coll_type, schedule, info);
-        __Op_type(NULL, tmp_recvbuf, tmp_opbuf, recv_bufsize, datatype, op, mpc_op, coll_type, schedule, info);
+        ___collectives_recv_type(tmp_recvbuf, recv_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+        ___collectives_barrier_type(coll_type, schedule, info);
+        ___collectives_op_type(NULL, tmp_recvbuf, tmp_opbuf, recv_bufsize, datatype, op, mpc_op, coll_type, schedule, info);
       }
 
       if(send_bufsize) {
-        __Send_type(tmp_sendbuf, send_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+        ___collectives_send_type(tmp_sendbuf, send_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
       }
 
       start = mid;
@@ -2889,16 +2918,16 @@ static inline int __Allreduce_binary_block(const void *sendbuf, void* recvbuf, i
     next_block_peer = vrank % next_block_size + first_rank_of_next_block;
 
 
-    __Recv_type(tmp_recvbuf, recv_bufsize, datatype, next_block_peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-    __Barrier_type(coll_type, schedule, info);
-    __Op_type(NULL, tmp_opbuf, tmp_recvbuf, recv_bufsize, datatype, op, mpc_op, coll_type, schedule, info);
+    ___collectives_recv_type(tmp_recvbuf, recv_bufsize, datatype, next_block_peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+    ___collectives_barrier_type(coll_type, schedule, info);
+    ___collectives_op_type(NULL, tmp_opbuf, tmp_recvbuf, recv_bufsize, datatype, op, mpc_op, coll_type, schedule, info);
 
     pointer_swap(resbuf, recv_resbuf, swap);
   }
 
 
   if(resbuf != recvbuf) {
-    __Copy_type(resbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+    ___collectives_copy_type(resbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
   }
 
 
@@ -2925,7 +2954,7 @@ static inline int __Allreduce_binary_block(const void *sendbuf, void* recvbuf, i
       tmp_sendbuf = ((void*) recvbuf) + peer_start * ext;
       send_bufsize = peer_end - peer_start;
 
-      __Send_type(tmp_sendbuf, send_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(tmp_sendbuf, send_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
     }
 
     for(int j = 0; j < target_count; j++) {
@@ -2949,10 +2978,10 @@ static inline int __Allreduce_binary_block(const void *sendbuf, void* recvbuf, i
       tmp_sendbuf = ((void*) recvbuf) + peer_start * ext;
       send_bufsize = peer_end - peer_start;
 
-      __Recv_type(tmp_sendbuf, send_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_recv_type(tmp_sendbuf, send_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
     }
 
-    __Barrier_type(coll_type, schedule, info);
+    ___collectives_barrier_type(coll_type, schedule, info);
   }
 
 
@@ -2961,7 +2990,7 @@ static inline int __Allreduce_binary_block(const void *sendbuf, void* recvbuf, i
     tmp_sendbuf = ((void*) recvbuf) + start * ext;
     send_bufsize = end - start;
 
-    __Send_type(tmp_sendbuf, send_bufsize, datatype, next_block_peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+    ___collectives_send_type(tmp_sendbuf, send_bufsize, datatype, next_block_peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
   }
 
 
@@ -2982,17 +3011,17 @@ static inline int __Allreduce_binary_block(const void *sendbuf, void* recvbuf, i
     if(peer_vrank > vrank) { // receive second part of buffer
       tmp_recvbuf = ((void*) recvbuf) + end * ext;
       
-      __Send_type(tmp_sendbuf, send_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-      __Recv_type(tmp_recvbuf, recv_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-      __Barrier_type(coll_type, schedule, info);
+      ___collectives_send_type(tmp_sendbuf, send_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_recv_type(tmp_recvbuf, recv_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_barrier_type(coll_type, schedule, info);
 
       end += recv_bufsize;
     } else { // receive first part of buffer
       tmp_recvbuf = ((void*) recvbuf) + (start - recv_bufsize) * ext;
       
-      __Recv_type(tmp_recvbuf, recv_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-      __Send_type(tmp_sendbuf, send_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
-      __Barrier_type(coll_type, schedule, info);
+      ___collectives_recv_type(tmp_recvbuf, recv_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(tmp_sendbuf, send_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_barrier_type(coll_type, schedule, info);
 
       start -= recv_bufsize;
     }
@@ -3041,7 +3070,7 @@ static inline int __Allreduce_binary_block(const void *sendbuf, void* recvbuf, i
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Allreduce_ring(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+static inline int ___collectives_allreduce_ring(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
   
@@ -3062,10 +3091,10 @@ static inline int __Allreduce_ring(__UNUSED__ const void *sendbuf, __UNUSED__ vo
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Allreduce_topo(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
-  __Reduce_topo(sendbuf, recvbuf, count, datatype, op, 0, comm, coll_type, schedule, info);
-  __Barrier_type(coll_type, schedule, info);
-  __Bcast_topo(recvbuf, count, datatype, 0, comm, coll_type, schedule, info);
+static inline int ___collectives_allreduce_topo(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+  ___collectives_reduce_topo(sendbuf, recvbuf, count, datatype, op, 0, comm, coll_type, schedule, info);
+  ___collectives_barrier_type(coll_type, schedule, info);
+  ___collectives_bcast_topo(recvbuf, count, datatype, 0, comm, coll_type, schedule, info);
 }
 
 
@@ -3119,7 +3148,7 @@ int PMPI_Iscatter (const void *sendbuf, int sendcount, MPI_Datatype sendtype, vo
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
-    res = __Iscatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, &(tmp->nbc_handle));
+    res = ___collectives_iscatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, &(tmp->nbc_handle));
   }
   MPI_HANDLE_RETURN_VAL (res, comm);
 }
@@ -3137,24 +3166,24 @@ int PMPI_Iscatter (const void *sendbuf, int sendcount, MPI_Datatype sendtype, vo
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Iscatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle) {
+static inline int ___collectives_iscatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle) {
 
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Scatter_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_scatter_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
 
-  __Scatter_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  ___collectives_scatter_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -3215,7 +3244,7 @@ int PMPI_Scatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
   req->persistant.info = info;
 
   /* Init metadat for nbc */
-  __Scatter_init(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, &(req->nbc_handle));
+  ___collectives_scatter_init(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, &(req->nbc_handle));
   req->nbc_handle.is_persistent = 1;
   return MPI_SUCCESS;
 }
@@ -3233,12 +3262,12 @@ int PMPI_Scatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Scatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle) {
+static inline int ___collectives_scatter_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle) {
   
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 #if ALLOW_TOPO_COMM == 1
   info.flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
 #endif
@@ -3250,13 +3279,13 @@ static inline int __Scatter_init(const void *sendbuf, int sendcount, MPI_Datatyp
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Scatter_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_scatter_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
   
-  __Scatter_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  ___collectives_scatter_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -3281,8 +3310,8 @@ static inline int __Scatter_init(const void *sendbuf, int sendcount, MPI_Datatyp
   \param comm Target communicator
   \return error code
   */
-int mpc_mpi_scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm) {
-  return __Scatter_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL); 
+int _mpc_mpi_collectives_scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm) {
+  return ___collectives_scatter_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL); 
 }
 
 
@@ -3301,7 +3330,7 @@ int mpc_mpi_scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, v
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Scatter_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_scatter_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
@@ -3327,13 +3356,13 @@ static inline int __Scatter_switch(const void *sendbuf, int sendcount, MPI_Datat
 
   switch(alg) {
     case NBC_SCATTER_LINEAR:
-      res = __Scatter_linear(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, coll_type, schedule, info);
+      res = ___collectives_scatter_linear(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, coll_type, schedule, info);
       break;
     case NBC_SCATTER_BINOMIAL:
-      res = __Scatter_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, coll_type, schedule, info);
+      res = ___collectives_scatter_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, coll_type, schedule, info);
       break;
     case NBC_SCATTER_TOPO:
-      res = __Scatter_topo(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, coll_type, schedule, info);
+      res = ___collectives_scatter_topo(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, coll_type, schedule, info);
       break;
   }
 
@@ -3356,7 +3385,7 @@ static inline int __Scatter_switch(const void *sendbuf, int sendcount, MPI_Datat
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Scatter_linear(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_scatter_linear(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size;
   MPI_Aint ext;
@@ -3385,7 +3414,7 @@ static inline int __Scatter_linear(const void *sendbuf, int sendcount, MPI_Datat
 
   // if rank != root, receive data from root
   if(rank != root) {
-    res = __Recv_type(recvbuf, recvcount, recvtype, root, MPC_SCATTER_TAG, comm, coll_type, schedule, info);
+    res = ___collectives_recv_type(recvbuf, recvcount, recvtype, root, MPC_SCATTER_TAG, comm, coll_type, schedule, info);
     if(res != MPI_SUCCESS) {
       return res;
     }
@@ -3396,14 +3425,14 @@ static inline int __Scatter_linear(const void *sendbuf, int sendcount, MPI_Datat
         continue;
       }
 
-      res = __Send_type(sendbuf + i * ext * sendcount, sendcount, sendtype, i, MPC_SCATTER_TAG, comm, coll_type, schedule, info);
+      res = ___collectives_send_type(sendbuf + i * ext * sendcount, sendcount, sendtype, i, MPC_SCATTER_TAG, comm, coll_type, schedule, info);
       if(res != MPI_SUCCESS) {
         return res;
       }
     }
 
     if(recvbuf != MPI_IN_PLACE) {
-      __Copy_type(sendbuf + rank * ext * sendcount, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+      ___collectives_copy_type(sendbuf + rank * ext * sendcount, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
     }
   }
 
@@ -3426,7 +3455,7 @@ static inline int __Scatter_linear(const void *sendbuf, int sendcount, MPI_Datat
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Scatter_binomial(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_scatter_binomial(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   //const void *tmp_sendbuf = sendbuf;
   int tmp_recvcount = recvcount;
@@ -3446,15 +3475,15 @@ static inline int __Scatter_binomial(const void *sendbuf, int sendcount, MPI_Dat
   PMPI_Type_extent(tmp_recvtype, &recvext);
 
   int maxr, vrank, peer, peer_vrank;
-  maxr = __ceiled_log2(size);
+  maxr = ___collectives_ceiled_log2(size);
   RANK2VRANK(rank, vrank, root);
   
-  int rmb = __rmb_index(vrank);
+  int rmb = ___collectives_rmb_index(vrank);
   if(rank == root) {
     rmb = maxr;
   }
 
-  int range = __fill_rmb(vrank, rmb);
+  int range = ___collectives_fill_rmb(vrank, rmb);
 
   int peer_range, count;
 
@@ -3479,12 +3508,12 @@ static inline int __Scatter_binomial(const void *sendbuf, int sendcount, MPI_Dat
   
 
   if(rank == root) {
-    __Copy_type(sendbuf, sendcount * size, sendtype, tmpbuf, tmp_recvcount * size, tmp_recvtype, comm, coll_type, schedule, info);
+    ___collectives_copy_type(sendbuf, sendcount * size, sendtype, tmpbuf, tmp_recvcount * size, tmp_recvtype, comm, coll_type, schedule, info);
 
     // As we use virtual rank where rank root and rank 0 are swapped, we need to swap their data as well
     if(root != 0) {
-      __Copy_type(sendbuf, sendcount, sendtype, tmpbuf + root * tmp_recvcount * recvext, tmp_recvcount, tmp_recvtype, comm, coll_type, schedule, info);
-      __Copy_type(sendbuf + root * sendcount * sendext, sendcount, sendtype, tmpbuf, tmp_recvcount, tmp_recvtype, comm, coll_type, schedule, info);
+      ___collectives_copy_type(sendbuf, sendcount, sendtype, tmpbuf + root * tmp_recvcount * recvext, tmp_recvcount, tmp_recvtype, comm, coll_type, schedule, info);
+      ___collectives_copy_type(sendbuf + root * sendcount * sendext, sendcount, sendtype, tmpbuf, tmp_recvcount, tmp_recvtype, comm, coll_type, schedule, info);
     }
   }
 
@@ -3498,12 +3527,12 @@ static inline int __Scatter_binomial(const void *sendbuf, int sendcount, MPI_Dat
       count = (size - peer) * tmp_recvcount;
     }
 
-    __Recv_type(tmpbuf, count, tmp_recvtype, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
-    __Barrier_type(coll_type, schedule, info);
+    ___collectives_recv_type(tmpbuf, count, tmp_recvtype, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
+    ___collectives_barrier_type(coll_type, schedule, info);
   }
 
   // Distribute data to rank+2^(rmb-1); ...; rank+2^0
-  // See __Bcast_binomial
+  // See ___collectives_bcast_binomial
   for(int i = rmb - 1; i >= 0; i--) {
     peer_vrank = vrank | (1 << i);
 
@@ -3514,7 +3543,7 @@ static inline int __Scatter_binomial(const void *sendbuf, int sendcount, MPI_Dat
 
     // In case the total number of processes isn't a power of 2 we need to compute the correct size of data to send
     // The range of a process is the higher rank to which this process may send data, regardless of the number of processes
-    peer_range = __fill_rmb(peer_vrank, i);
+    peer_range = ___collectives_fill_rmb(peer_vrank, i);
     // Trivial case, we are a power of 2 OR we are sending data to a process in the middle (peer + peer_range < size)
     // EX: 0[d0 d1 d2 d3] 1 2 3, first step, i = 1, size = 4, rank 0 send to rank 2, range(2) = 3
     // => count = 2^i * recvcount = 2
@@ -3530,11 +3559,11 @@ static inline int __Scatter_binomial(const void *sendbuf, int sendcount, MPI_Dat
       count = (size - peer_vrank) * tmp_recvcount;
     }
 
-    __Send_type(tmpbuf + (1 << i) * tmp_recvcount * recvext, count, tmp_recvtype, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
+    ___collectives_send_type(tmpbuf + (1 << i) * tmp_recvcount * recvext, count, tmp_recvtype, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
   }
 
   if(recvbuf != MPI_IN_PLACE) {
-    __Copy_type(tmpbuf, tmp_recvcount, recvtype, recvbuf, tmp_recvcount, tmp_recvtype, comm, coll_type, schedule, info);
+    ___collectives_copy_type(tmpbuf, tmp_recvcount, recvtype, recvbuf, tmp_recvcount, tmp_recvtype, comm, coll_type, schedule, info);
   }
 
 
@@ -3563,7 +3592,7 @@ static inline int __Scatter_binomial(const void *sendbuf, int sendcount, MPI_Dat
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Scatter_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_scatter_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size, res = MPI_SUCCESS;
   MPI_Aint sendext, recvext;
@@ -3615,12 +3644,12 @@ static inline int __Scatter_topo(const void *sendbuf, int sendcount, MPI_Datatyp
           int max_level = TOPO_MAX_LEVEL;
           //max_level = MAX_HARDWARE_LEVEL;
 
-          __Topo_comm_init(comm, root, max_level, info);
+          ___collectives_topo_comm_init(comm, root, max_level, info);
         }
 
         if(!(info->flag & SCHED_INFO_TOPO_SWAP_ARRAY_INITIALISED)) {
-          __create_childs_counts(comm, info);
-          __create_swap_array(comm, root, info);
+          ___collectives_create_childs_counts(comm, info);
+          ___collectives_create_swap_array(comm, root, info);
         }
 
         info->tmpbuf_size += size * recvext * tmp_recvcount;
@@ -3643,14 +3672,14 @@ static inline int __Scatter_topo(const void *sendbuf, int sendcount, MPI_Datatyp
 
     for(end = 1; end < size; end++) {
       if(info->hardware_info_ptr->swap_array[end] != info->hardware_info_ptr->swap_array[end - 1] + 1) {
-        __Copy_type(sendbuf + start * sendcount * sendext                                        , sendcount * (end - start)     , sendtype, 
+        ___collectives_copy_type(sendbuf + start * sendcount * sendext                                        , sendcount * (end - start)     , sendtype, 
                     tmpbuf + info->hardware_info_ptr->swap_array[start] * tmp_recvcount * recvext, tmp_recvcount * (end - start) , tmp_recvtype,
                     comm, coll_type, schedule, info);
         start = end;
       }
     }
 
-    __Copy_type(sendbuf + start * sendcount * sendext                                        , sendcount * (end - start)     , sendtype, 
+    ___collectives_copy_type(sendbuf + start * sendcount * sendext                                        , sendcount * (end - start)     , sendtype, 
                 tmpbuf + info->hardware_info_ptr->swap_array[start] * tmp_recvcount * recvext, tmp_recvcount * (end - start) , tmp_recvtype,
                 comm, coll_type, schedule, info);
   }
@@ -3665,7 +3694,7 @@ static inline int __Scatter_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   for(int i = 0; i < deepest_level; i++) {
     scatterv_buf = tmpbuf;
 
-    __Barrier_type(coll_type, schedule, info);
+    ___collectives_barrier_type(coll_type, schedule, info);
 
     int rank_split;
     _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &rank_split);
@@ -3687,9 +3716,9 @@ static inline int __Scatter_topo(const void *sendbuf, int sendcount, MPI_Datatyp
         scatterv_buf = MPI_IN_PLACE;
       }
 
-      res = __Scatterv_switch(tmpbuf, info->hardware_info_ptr->childs_data_count[i], displs, recvtype, scatterv_buf, info->hardware_info_ptr->send_data_count[i], recvtype, 0, master_comm, coll_type, schedule, info);
+      res = ___collectives_scatterv_switch(tmpbuf, info->hardware_info_ptr->childs_data_count[i], displs, recvtype, scatterv_buf, info->hardware_info_ptr->send_data_count[i], recvtype, 0, master_comm, coll_type, schedule, info);
     
-      __Barrier_type(coll_type, schedule, info);
+      ___collectives_barrier_type(coll_type, schedule, info);
     }
   }
 
@@ -3702,7 +3731,7 @@ static inline int __Scatter_topo(const void *sendbuf, int sendcount, MPI_Datatyp
     scatter_buf = MPI_IN_PLACE;
   }
 
-  res = __Scatter_switch(tmpbuf, tmp_recvcount, tmp_recvtype, scatter_buf, tmp_recvcount, tmp_recvtype, 0, hardware_comm, coll_type, schedule, info);
+  res = ___collectives_scatter_switch(tmpbuf, tmp_recvcount, tmp_recvtype, scatter_buf, tmp_recvcount, tmp_recvtype, 0, hardware_comm, coll_type, schedule, info);
 
   info->flag ^= SCHED_INFO_TOPO_COMM_ALLOWED; 
 
@@ -3756,7 +3785,7 @@ int PMPI_Iscatterv (const void *sendbuf, const int *sendcounts, const int *displ
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
-    res = __Iscatterv (sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, &(tmp->nbc_handle));
+    res = ___collectives_iscatterv (sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, &(tmp->nbc_handle));
   }
   MPI_HANDLE_RETURN_VAL (res, comm);
 }
@@ -3775,24 +3804,24 @@ int PMPI_Iscatterv (const void *sendbuf, const int *sendcounts, const int *displ
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Iscatterv(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle) {
+static inline int ___collectives_iscatterv(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle) {
 
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Scatterv_switch(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_scatterv_switch(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
 
-  __Scatterv_switch(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  ___collectives_scatterv_switch(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -3865,7 +3894,7 @@ int PMPI_Scatterv_init(const void *sendbuf, const int *sendcounts, const int *di
   req->persistant.info = info;
 
   /* Init metadata for nbc */
-  __Scatterv_init (sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, &(req->nbc_handle));
+  ___collectives_scatterv_init (sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, &(req->nbc_handle));
   req->nbc_handle.is_persistent = 1;
   return MPI_SUCCESS;
 }
@@ -3884,12 +3913,12 @@ int PMPI_Scatterv_init(const void *sendbuf, const int *sendcounts, const int *di
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Scatterv_init(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle) {
+static inline int ___collectives_scatterv_init(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle) {
   
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
@@ -3898,13 +3927,13 @@ static inline int __Scatterv_init(const void *sendbuf, const int *sendcounts, co
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Scatterv_switch(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_scatterv_switch(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
   
-  __Scatterv_switch(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  ___collectives_scatterv_switch(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -3930,8 +3959,8 @@ static inline int __Scatterv_init(const void *sendbuf, const int *sendcounts, co
   \param comm Target communicator
   \return error code
   */
-int mpc_mpi_scatterv(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm) {
-  return __Scatterv_switch(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL); 
+int _mpc_mpi_collectives_scatterv(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm) {
+  return ___collectives_scatterv_switch(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL); 
 }
 
 
@@ -3951,7 +3980,7 @@ int mpc_mpi_scatterv(const void *sendbuf, const int *sendcounts, const int *disp
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Scatterv_switch(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_scatterv_switch(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
@@ -3972,10 +4001,10 @@ static inline int __Scatterv_switch(const void *sendbuf, const int *sendcounts, 
 
   switch(alg) {
     case NBC_SCATTERV_LINEAR:
-      res = __Scatterv_linear(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, coll_type, schedule, info);
+      res = ___collectives_scatterv_linear(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, coll_type, schedule, info);
       break;
     case NBC_SCATTERV_BINOMIAL:
-      res = __Scatterv_binomial(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, coll_type, schedule, info);
+      res = ___collectives_scatterv_binomial(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, coll_type, schedule, info);
       break;
   }
 
@@ -3999,7 +4028,7 @@ static inline int __Scatterv_switch(const void *sendbuf, const int *sendcounts, 
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Scatterv_linear(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_scatterv_linear(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size;
   _mpc_cl_comm_size(comm, &size);
@@ -4026,7 +4055,7 @@ static inline int __Scatterv_linear(const void *sendbuf, const int *sendcounts, 
 
   // if rank != root, receive data from root
   if(rank != root) {
-    res = __Recv_type(recvbuf, recvcount, recvtype, root, MPC_SCATTER_TAG, comm, coll_type, schedule, info);
+    res = ___collectives_recv_type(recvbuf, recvcount, recvtype, root, MPC_SCATTER_TAG, comm, coll_type, schedule, info);
     if(res != MPI_SUCCESS) {
       return res;
     }
@@ -4037,14 +4066,14 @@ static inline int __Scatterv_linear(const void *sendbuf, const int *sendcounts, 
         continue;
       }
 
-      res = __Send_type(sendbuf + displs[i], sendcounts[i], sendtype, i, MPC_SCATTER_TAG, comm, coll_type, schedule, info);
+      res = ___collectives_send_type(sendbuf + displs[i], sendcounts[i], sendtype, i, MPC_SCATTER_TAG, comm, coll_type, schedule, info);
       if(res != MPI_SUCCESS) {
         return res;
       }
     }
 
     if(recvbuf != MPI_IN_PLACE) {
-      __Copy_type(sendbuf + displs[rank], sendcounts[rank], sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+      ___collectives_copy_type(sendbuf + displs[rank], sendcounts[rank], sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
     }
   }
 
@@ -4068,7 +4097,7 @@ static inline int __Scatterv_linear(const void *sendbuf, const int *sendcounts, 
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Scatterv_binomial(__UNUSED__ const void *sendbuf, __UNUSED__ const int *sendcounts, __UNUSED__ const int *displs, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ int recvcount, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+static inline int ___collectives_scatterv_binomial(__UNUSED__ const void *sendbuf, __UNUSED__ const int *sendcounts, __UNUSED__ const int *displs, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ int recvcount, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
 
@@ -4127,7 +4156,7 @@ int PMPI_Igather (const void *sendbuf, int sendcount, MPI_Datatype sendtype, voi
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
-    res = __Igather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, &(tmp->nbc_handle));
+    res = ___collectives_igather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, &(tmp->nbc_handle));
   }
   MPI_HANDLE_RETURN_VAL (res, comm);
 }
@@ -4145,24 +4174,24 @@ int PMPI_Igather (const void *sendbuf, int sendcount, MPI_Datatype sendtype, voi
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Igather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle) {
+static inline int ___collectives_igather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle) {
 
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Gather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_gather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
 
-  __Gather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  ___collectives_gather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -4228,7 +4257,7 @@ int PMPI_Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
   req->persistant.info = info;
 
   /* Init metadat for nbc */
-  __Gather_init (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, &(req->nbc_handle));
+  ___collectives_gather_init (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, &(req->nbc_handle));
   req->nbc_handle.is_persistent = 1;
   return MPI_SUCCESS;
 }
@@ -4246,12 +4275,12 @@ int PMPI_Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle) {
+static inline int ___collectives_gather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle) {
  
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 #if ALLOW_TOPO_COMM == 1
   info.flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
 #endif
@@ -4263,11 +4292,11 @@ static inline int __Gather_init(const void *sendbuf, int sendcount, MPI_Datatype
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Gather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
-  __sched_alloc_init(handle, schedule, &info);
-  __Gather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  ___collectives_gather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
+  ___collectives_gather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -4292,8 +4321,8 @@ static inline int __Gather_init(const void *sendbuf, int sendcount, MPI_Datatype
   \param comm Target communicator
   \return error code
   */
-int mpc_mpi_gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm) {
-  return __Gather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+int _mpc_mpi_collectives_gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm) {
+  return ___collectives_gather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
 }
 
 
@@ -4312,7 +4341,7 @@ int mpc_mpi_gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, vo
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Gather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_gather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
@@ -4338,13 +4367,13 @@ static inline int __Gather_switch(const void *sendbuf, int sendcount, MPI_Dataty
 
   switch(alg) {
     case NBC_GATHER_LINEAR:
-      res = __Gather_linear(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, coll_type, schedule, info);
+      res = ___collectives_gather_linear(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, coll_type, schedule, info);
       break;
     case NBC_GATHER_BINOMIAL:
-      res = __Gather_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, coll_type, schedule, info);
+      res = ___collectives_gather_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, coll_type, schedule, info);
       break;
     case NBC_GATHER_TOPO:
-      res = __Gather_topo(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, coll_type, schedule, info);
+      res = ___collectives_gather_topo(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, coll_type, schedule, info);
       break;
   }
 
@@ -4367,7 +4396,7 @@ static inline int __Gather_switch(const void *sendbuf, int sendcount, MPI_Dataty
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Gather_linear(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_gather_linear(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size;
   MPI_Aint ext;
@@ -4387,7 +4416,7 @@ static inline int __Gather_linear(const void *sendbuf, int sendcount, MPI_Dataty
 
   if(size == 1) {
     if(sendbuf != MPI_IN_PLACE) {
-      __Copy_type(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+      ___collectives_copy_type(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
     }
     return MPI_SUCCESS;
   }
@@ -4395,7 +4424,7 @@ static inline int __Gather_linear(const void *sendbuf, int sendcount, MPI_Dataty
   // if rank != root, send data to root
   if(rank != root) {
     
-    res = __Send_type(sendbuf, sendcount, sendtype, root, MPC_GATHER_TAG, comm, coll_type, schedule, info);
+    res = ___collectives_send_type(sendbuf, sendcount, sendtype, root, MPC_GATHER_TAG, comm, coll_type, schedule, info);
     if(res != MPI_SUCCESS) {
       return res;
     }
@@ -4406,14 +4435,14 @@ static inline int __Gather_linear(const void *sendbuf, int sendcount, MPI_Dataty
         continue;
       }
 
-      res = __Recv_type(recvbuf + i * ext * recvcount, recvcount, recvtype, i, MPC_GATHER_TAG, comm, coll_type, schedule, info);
+      res = ___collectives_recv_type(recvbuf + i * ext * recvcount, recvcount, recvtype, i, MPC_GATHER_TAG, comm, coll_type, schedule, info);
       if(res != MPI_SUCCESS) {
         return res;
       }
     }
 
     if(sendbuf != MPI_IN_PLACE) {
-      __Copy_type(sendbuf, sendcount, sendtype, recvbuf + rank * ext * recvcount, recvcount, recvtype, comm, coll_type, schedule, info);
+      ___collectives_copy_type(sendbuf, sendcount, sendtype, recvbuf + rank * ext * recvcount, recvcount, recvtype, comm, coll_type, schedule, info);
     }
   }
 
@@ -4436,7 +4465,7 @@ static inline int __Gather_linear(const void *sendbuf, int sendcount, MPI_Dataty
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Gather_binomial(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_gather_binomial(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   const void *tmp_sendbuf = sendbuf;
   int tmp_sendcount = sendcount;
@@ -4456,11 +4485,11 @@ static inline int __Gather_binomial(const void *sendbuf, int sendcount, MPI_Data
   PMPI_Type_extent(recvtype, &recvext);
 
   int maxr, vrank, peer, peer_vrank;
-  maxr = __ceiled_log2(size);
+  maxr = ___collectives_ceiled_log2(size);
   RANK2VRANK(rank, vrank, root);
   
-  int rmb = __rmb_index(vrank);
-  int range = __fill_rmb(vrank, rmb);
+  int rmb = ___collectives_rmb_index(vrank);
+  int range = ___collectives_fill_rmb(vrank, rmb);
 
   int peer_range, count;
 
@@ -4490,16 +4519,16 @@ static inline int __Gather_binomial(const void *sendbuf, int sendcount, MPI_Data
 
   if(size == 1) {
     if(sendbuf != MPI_IN_PLACE) {
-      __Copy_type(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+      ___collectives_copy_type(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
     }
     return MPI_SUCCESS;
   }
 
 
-  __Copy_type(tmp_sendbuf, tmp_sendcount, tmp_sendtype, tmpbuf, tmp_sendcount, tmp_sendtype, comm, coll_type, schedule, info);
+  ___collectives_copy_type(tmp_sendbuf, tmp_sendcount, tmp_sendtype, tmpbuf, tmp_sendcount, tmp_sendtype, comm, coll_type, schedule, info);
 
   // Receive data from rank+2^(rmb-1); ...; rank+2^0
-  // See __Reduce_binomial
+  // See ___collectives_reduce_binomial
   for(int i = 0; i < maxr; i++) {
     peer_vrank = vrank ^ (1 << i);
     VRANK2RANK(peer, peer_vrank, root);
@@ -4512,15 +4541,15 @@ static inline int __Gather_binomial(const void *sendbuf, int sendcount, MPI_Data
         count = (size - vrank) * tmp_sendcount;
       }
 
-      __Barrier_type(coll_type, schedule, info);
-      __Send_type(tmpbuf, count, tmp_sendtype, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_barrier_type(coll_type, schedule, info);
+      ___collectives_send_type(tmpbuf, count, tmp_sendtype, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
       
       break;
     } else if(peer < size) {
       
       // In case the total number of processes isn't a power of 2 we need to compute the correct size of data to recv
       // The range of a process is the higher rank from which this process may recv data, regardless of the number of processes
-      peer_range = __fill_rmb(peer_vrank, i);
+      peer_range = ___collectives_fill_rmb(peer_vrank, i);
       // Trivial case, we are a power of 2 OR we are receiving data from a process in the middle (peer + peer_range < size)
       // EX: 0[d0 d1] 1 2[d2 d3] 3, second step, i = 1, size = 4, rank 0 recv from rank 2, range(2) = 3
       // => count = 2^i * recvcount = 2
@@ -4536,19 +4565,19 @@ static inline int __Gather_binomial(const void *sendbuf, int sendcount, MPI_Data
         count = (size - peer_vrank) * tmp_sendcount;
       }
 
-      __Recv_type(tmpbuf + (1 << i) * tmp_sendcount * sendext, count, tmp_sendtype, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_recv_type(tmpbuf + (1 << i) * tmp_sendcount * sendext, count, tmp_sendtype, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
     }
   }
 
   if(rank == root) {
-    __Barrier_type(coll_type, schedule, info);
+    ___collectives_barrier_type(coll_type, schedule, info);
     
-    __Copy_type(tmpbuf, tmp_sendcount * size, tmp_sendtype, recvbuf, recvcount * size, recvtype, comm, coll_type, schedule, info);
+    ___collectives_copy_type(tmpbuf, tmp_sendcount * size, tmp_sendtype, recvbuf, recvcount * size, recvtype, comm, coll_type, schedule, info);
     
     // As we use virtual rank where rank root and rank 0 are swapped, we need to swap their data as well
     if(root != 0) {
-      __Copy_type(tmpbuf, tmp_sendcount, tmp_sendtype, recvbuf + root * recvcount * recvext, recvcount, recvtype, comm, coll_type, schedule, info);
-      __Copy_type(tmpbuf + root * tmp_sendcount * sendext, tmp_sendcount, tmp_sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+      ___collectives_copy_type(tmpbuf, tmp_sendcount, tmp_sendtype, recvbuf + root * recvcount * recvext, recvcount, recvtype, comm, coll_type, schedule, info);
+      ___collectives_copy_type(tmpbuf + root * tmp_sendcount * sendext, tmp_sendcount, tmp_sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
     }
   }
 
@@ -4575,7 +4604,7 @@ static inline int __Gather_binomial(const void *sendbuf, int sendcount, MPI_Data
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_gather_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
   int rank, size, res = MPI_SUCCESS;
   MPI_Aint sendext, recvext;
 
@@ -4630,12 +4659,12 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
           int max_level = TOPO_MAX_LEVEL;
           //max_level = MAX_HARDWARE_LEVEL;
 
-          __Topo_comm_init(comm, root, max_level, info);
+          ___collectives_topo_comm_init(comm, root, max_level, info);
         }
 
         if(!(info->flag & SCHED_INFO_TOPO_SWAP_ARRAY_INITIALISED)) {
-          __create_childs_counts(comm, info);
-          __create_swap_array(comm, root, info);
+          ___collectives_create_childs_counts(comm, info);
+          ___collectives_create_swap_array(comm, root, info);
         }
 
         info->tmpbuf_size += size * sendext * tmp_sendcount;
@@ -4650,7 +4679,7 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
   /* last level topology binomial bcast */
   MPI_Comm hardware_comm = info->hardware_info_ptr->hwcomm[deepest_level];
 
-  res = __Gather_switch(tmp_sendbuf, tmp_sendcount, tmp_sendtype, tmpbuf, tmp_sendcount, tmp_sendtype, 0, hardware_comm, coll_type, schedule, info);
+  res = ___collectives_gather_switch(tmp_sendbuf, tmp_sendcount, tmp_sendtype, tmpbuf, tmp_sendcount, tmp_sendtype, 0, hardware_comm, coll_type, schedule, info);
 
   int displs[size];
   void *gatherv_buf = NULL;
@@ -4659,7 +4688,7 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
   for(int i = deepest_level - 1; i >= 0; i--) {
     gatherv_buf = tmpbuf;
 
-    __Barrier_type(coll_type, schedule, info);
+    ___collectives_barrier_type(coll_type, schedule, info);
 
     int rank_split;
     _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &rank_split);
@@ -4680,27 +4709,27 @@ static inline int __Gather_topo(const void *sendbuf, int sendcount, MPI_Datatype
         gatherv_buf = MPI_IN_PLACE;
       }
 
-      res = __Gatherv_switch(gatherv_buf, info->hardware_info_ptr->send_data_count[i], sendtype, tmpbuf, info->hardware_info_ptr->childs_data_count[i], displs, sendtype, 0, master_comm, coll_type, schedule, info);
+      res = ___collectives_gatherv_switch(gatherv_buf, info->hardware_info_ptr->send_data_count[i], sendtype, tmpbuf, info->hardware_info_ptr->childs_data_count[i], displs, sendtype, 0, master_comm, coll_type, schedule, info);
     }
   }
 
   // SWAP PART
  
   if(rank == root) {
-    __Barrier_type(coll_type, schedule, info);
+    ___collectives_barrier_type(coll_type, schedule, info);
 
     int start = 0, end;
 
     for(end = start + 1; end < size; end++) {
       if(info->hardware_info_ptr->swap_array[end] != info->hardware_info_ptr->swap_array[end - 1] + 1) {
-        __Copy_type(tmpbuf + start * tmp_sendcount * sendext                                  , tmp_sendcount * (end - start), tmp_sendtype, 
+        ___collectives_copy_type(tmpbuf + start * tmp_sendcount * sendext                                  , tmp_sendcount * (end - start), tmp_sendtype, 
                     recvbuf + info->hardware_info_ptr->swap_array[start] * recvcount * recvext, recvcount * (end - start)    , recvtype,
                     comm, coll_type, schedule, info);
         start = end;
       }
     }
 
-    __Copy_type(tmpbuf + start * tmp_sendcount * sendext                                  , tmp_sendcount * (end - start), tmp_sendtype, 
+    ___collectives_copy_type(tmpbuf + start * tmp_sendcount * sendext                                  , tmp_sendcount * (end - start), tmp_sendtype, 
                 recvbuf + info->hardware_info_ptr->swap_array[start] * recvcount * recvext, recvcount * (end - start)    , recvtype,
                 comm, coll_type, schedule, info);
   }
@@ -4757,7 +4786,7 @@ int PMPI_Igatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype, vo
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
-    res = __Igatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, &(tmp->nbc_handle));
+    res = ___collectives_igatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, &(tmp->nbc_handle));
   }
   MPI_HANDLE_RETURN_VAL (res, comm);
 }
@@ -4776,24 +4805,24 @@ int PMPI_Igatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype, vo
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle) {
+static inline int ___collectives_igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle *handle) {
 
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Gatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_gatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
 
-  __Gatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  ___collectives_gatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -4863,7 +4892,7 @@ int PMPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
   req->persistant.info = info;
 
   /* Init metadat for nbc */
-  __Gatherv_init (sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, &(req->nbc_handle));
+  ___collectives_gatherv_init (sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, &(req->nbc_handle));
   req->nbc_handle.is_persistent = 1;
   return MPI_SUCCESS;
 }
@@ -4882,12 +4911,12 @@ int PMPI_Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle) {
+static inline int ___collectives_gatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle) {
   
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
@@ -4896,13 +4925,13 @@ static inline int __Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatyp
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Gatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_gatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
   
-  __Gatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  ___collectives_gatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -4928,8 +4957,8 @@ static inline int __Gatherv_init(const void *sendbuf, int sendcount, MPI_Datatyp
   \param comm Target communicator
   \return error code
   */
-int mpc_mpi_gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm) {
-  return __Gatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+int _mpc_mpi_collectives_gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm) {
+  return ___collectives_gatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
 }
 
 
@@ -4949,7 +4978,7 @@ int mpc_mpi_gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, v
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Gatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_gatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
@@ -4970,10 +4999,10 @@ static inline int __Gatherv_switch(const void *sendbuf, int sendcount, MPI_Datat
 
   switch(alg) {
     case NBC_GATHERV_LINEAR:
-      res = __Gatherv_linear(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, coll_type, schedule, info);
+      res = ___collectives_gatherv_linear(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, coll_type, schedule, info);
       break;
     case NBC_GATHERV_BINOMIAL:
-      res = __Gatherv_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, coll_type, schedule, info);
+      res = ___collectives_gatherv_binomial(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, coll_type, schedule, info);
       break;
   }
 
@@ -4997,7 +5026,7 @@ static inline int __Gatherv_switch(const void *sendbuf, int sendcount, MPI_Datat
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Gatherv_linear(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_gatherv_linear(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size;
   MPI_Aint ext;
@@ -5025,14 +5054,14 @@ static inline int __Gatherv_linear(const void *sendbuf, int sendcount, MPI_Datat
 
   if(size == 1) {
     if(sendbuf != MPI_IN_PLACE) {
-      __Copy_type(sendbuf, sendcount, sendtype, recvbuf + displs[0], recvcounts[0], recvtype, comm, coll_type, schedule, info);
+      ___collectives_copy_type(sendbuf, sendcount, sendtype, recvbuf + displs[0], recvcounts[0], recvtype, comm, coll_type, schedule, info);
     }
     return MPI_SUCCESS;
   }
 
   // if rank != root, send data to root
   if(rank != root) {
-    res = __Send_type(sendbuf, sendcount, sendtype, root, MPC_GATHER_TAG, comm, coll_type, schedule, info);
+    res = ___collectives_send_type(sendbuf, sendcount, sendtype, root, MPC_GATHER_TAG, comm, coll_type, schedule, info);
     if(res != MPI_SUCCESS) {
       return res;
     }
@@ -5043,14 +5072,14 @@ static inline int __Gatherv_linear(const void *sendbuf, int sendcount, MPI_Datat
         continue;
       }
 
-      res = __Recv_type(recvbuf + displs[i], recvcounts[i], recvtype, i, MPC_GATHER_TAG, comm, coll_type, schedule, info);
+      res = ___collectives_recv_type(recvbuf + displs[i], recvcounts[i], recvtype, i, MPC_GATHER_TAG, comm, coll_type, schedule, info);
       if(res != MPI_SUCCESS) {
         return res;
       }
     }
 
     if(sendbuf != MPI_IN_PLACE) {
-      __Copy_type(sendbuf, sendcount, sendtype, recvbuf + displs[rank], recvcounts[rank], recvtype, comm, coll_type, schedule, info);
+      ___collectives_copy_type(sendbuf, sendcount, sendtype, recvbuf + displs[rank], recvcounts[rank], recvtype, comm, coll_type, schedule, info);
     }
   }
 
@@ -5074,7 +5103,7 @@ static inline int __Gatherv_linear(const void *sendbuf, int sendcount, MPI_Datat
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Gatherv_binomial(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *displs, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+static inline int ___collectives_gatherv_binomial(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *displs, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
 
@@ -5125,7 +5154,7 @@ int PMPI_Ireduce_scatter_block (const void *sendbuf, void* recvbuf, int count, M
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
-    res = __Ireduce_scatter_block (sendbuf, recvbuf, count, datatype, op, comm, &(tmp->nbc_handle));
+    res = ___collectives_ireduce_scatter_block (sendbuf, recvbuf, count, datatype, op, comm, &(tmp->nbc_handle));
   }
   MPI_HANDLE_RETURN_VAL (res, comm);
 }
@@ -5141,24 +5170,24 @@ int PMPI_Ireduce_scatter_block (const void *sendbuf, void* recvbuf, int count, M
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Ireduce_scatter_block (const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle) {
+static inline int ___collectives_ireduce_scatter_block (const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle) {
   
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Reduce_scatter_block_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_reduce_scatter_block_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
 
-  __Reduce_scatter_block_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  ___collectives_reduce_scatter_block_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -5213,7 +5242,7 @@ int PMPI_Reduce_scatter_block_init(const void *sendbuf, void* recvbuf, int count
   req->persistant.info = info;
 
   /* Init metadat for nbc */
-  __Reduce_scatter_block_init (sendbuf,  recvbuf, count, datatype, op, comm, &(req->nbc_handle));
+  ___collectives_reduce_scatter_block_init (sendbuf,  recvbuf, count, datatype, op, comm, &(req->nbc_handle));
   req->nbc_handle.is_persistent = 1;
   return MPI_SUCCESS;
 }
@@ -5229,11 +5258,11 @@ int PMPI_Reduce_scatter_block_init(const void *sendbuf, void* recvbuf, int count
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Reduce_scatter_block_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle) {
+static inline int ___collectives_reduce_scatter_block_init(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle) {
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
 
@@ -5242,13 +5271,13 @@ static inline int __Reduce_scatter_block_init(const void *sendbuf, void* recvbuf
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Reduce_scatter_block_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_reduce_scatter_block_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
   
-  __Reduce_scatter_block_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  ___collectives_reduce_scatter_block_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -5271,8 +5300,8 @@ static inline int __Reduce_scatter_block_init(const void *sendbuf, void* recvbuf
   \param comm Target communicator
   \return error code
   */
-int mpc_mpi_reduce_scatter_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
-  return __Reduce_scatter_block_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+int _mpc_mpi_collectives_reduce_scatter_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
+  return ___collectives_reduce_scatter_block_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
 }
 
 
@@ -5289,7 +5318,7 @@ int mpc_mpi_reduce_scatter_block(const void *sendbuf, void* recvbuf, int count, 
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Reduce_scatter_block_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_reduce_scatter_block_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
@@ -5312,16 +5341,16 @@ static inline int __Reduce_scatter_block_switch(const void *sendbuf, void* recvb
 
   switch(alg) {
     case NBC_REDUCE_SCATTER_BLOCK_REDUCE_SCATTER:
-      res = __Reduce_scatter_block_reduce_scatter(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
+      res = ___collectives_reduce_scatter_block_reduce_scatter(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
       break;
     case NBC_REDUCE_SCATTER_BLOCK_DISTANCE_DOUBLING:
-      res = __Reduce_scatter_block_distance_doubling(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
+      res = ___collectives_reduce_scatter_block_distance_doubling(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
       break;
     case NBC_REDUCE_SCATTER_BLOCK_DISTANCE_HALVING:
-      res = __Reduce_scatter_block_distance_halving(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
+      res = ___collectives_reduce_scatter_block_distance_halving(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
       break;
     case NBC_REDUCE_SCATTER_BLOCK_PAIRWISE:
-      res = __Reduce_scatter_block_pairwise(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
+      res = ___collectives_reduce_scatter_block_pairwise(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
       break;
   }
 
@@ -5342,7 +5371,7 @@ static inline int __Reduce_scatter_block_switch(const void *sendbuf, void* recvb
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Reduce_scatter_block_reduce_scatter(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_reduce_scatter_block_reduce_scatter(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size;
   MPI_Aint ext;
@@ -5375,14 +5404,14 @@ static inline int __Reduce_scatter_block_reduce_scatter(const void *sendbuf, voi
   }
 
   if(sendbuf != MPI_IN_PLACE) {
-    __Reduce_switch(sendbuf, tmpbuf, count * size, datatype, op, 0, comm, coll_type, schedule, info); 
+    ___collectives_reduce_switch(sendbuf, tmpbuf, count * size, datatype, op, 0, comm, coll_type, schedule, info); 
   } else {
-    __Reduce_switch(recvbuf, tmpbuf, count * size, datatype, op, 0, comm, coll_type, schedule, info); 
+    ___collectives_reduce_switch(recvbuf, tmpbuf, count * size, datatype, op, 0, comm, coll_type, schedule, info); 
   }
 
-  __Barrier_type(coll_type, schedule, info);
+  ___collectives_barrier_type(coll_type, schedule, info);
 
-  __Scatter_switch(tmpbuf, count, datatype, recvbuf, count, datatype, 0, comm, coll_type, schedule, info);
+  ___collectives_scatter_switch(tmpbuf, count, datatype, recvbuf, count, datatype, 0, comm, coll_type, schedule, info);
 
 
   if(coll_type == MPC_COLL_TYPE_BLOCKING) {
@@ -5406,7 +5435,7 @@ static inline int __Reduce_scatter_block_reduce_scatter(const void *sendbuf, voi
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Reduce_scatter_block_distance_doubling(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+static inline int ___collectives_reduce_scatter_block_distance_doubling(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
   
@@ -5427,7 +5456,7 @@ static inline int __Reduce_scatter_block_distance_doubling(__UNUSED__ const void
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Reduce_scatter_block_distance_halving(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+static inline int ___collectives_reduce_scatter_block_distance_halving(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
   
@@ -5448,7 +5477,7 @@ static inline int __Reduce_scatter_block_distance_halving(__UNUSED__ const void 
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Reduce_scatter_block_pairwise(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_reduce_scatter_block_pairwise(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size;
   MPI_Aint ext;
@@ -5493,7 +5522,7 @@ static inline int __Reduce_scatter_block_pairwise(const void *sendbuf, void* rec
     initial_buf = recvbuf;
   }
 
-  __Copy_type(initial_buf, count, datatype, tmp_left_resbuf, count, datatype, comm, coll_type, schedule, info);
+  ___collectives_copy_type(initial_buf, count, datatype, tmp_left_resbuf, count, datatype, comm, coll_type, schedule, info);
 
   for(int i = 1; i < size; i++) {
     // At each step receive from rank-i, & send to rank+i,
@@ -5502,14 +5531,14 @@ static inline int __Reduce_scatter_block_pairwise(const void *sendbuf, void* rec
     send_peer = (rank + i) % size;
     recv_peer = (rank - i + size) % size;
     
-    __Send_type(initial_buf + send_peer * ext * count, count, datatype, send_peer, MPC_REDUCE_SCATTER_BLOCK_TAG, comm, coll_type, schedule, info);
-    __Recv_type(tmp_recvbuf, count, datatype, recv_peer, MPC_REDUCE_SCATTER_BLOCK_TAG, comm, coll_type, schedule, info);
+    ___collectives_send_type(initial_buf + send_peer * ext * count, count, datatype, send_peer, MPC_REDUCE_SCATTER_BLOCK_TAG, comm, coll_type, schedule, info);
+    ___collectives_recv_type(tmp_recvbuf, count, datatype, recv_peer, MPC_REDUCE_SCATTER_BLOCK_TAG, comm, coll_type, schedule, info);
 
-    __Barrier_type(coll_type, schedule, info);
+    ___collectives_barrier_type(coll_type, schedule, info);
    
     // We reduce data from rank 0;...;rank in tmp_left_resbuf
     if(recv_peer < rank) { 
-      __Op_type(NULL, tmp_recvbuf, tmp_left_resbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
+      ___collectives_op_type(NULL, tmp_recvbuf, tmp_left_resbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
     } else {
     // We reduce data from rank rank+1;...;size-1 in tmp_right_resbuf
       // No reduce operation needed if we received from rank size-1
@@ -5517,16 +5546,16 @@ static inline int __Reduce_scatter_block_pairwise(const void *sendbuf, void* rec
         pointer_swap(tmp_recvbuf, tmp_right_resbuf, swap);
         first_access = 0;
       } else {
-        __Op_type(NULL, tmp_recvbuf, tmp_right_resbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
+        ___collectives_op_type(NULL, tmp_recvbuf, tmp_right_resbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
       }
     }
   }
 
   if(first_access) {
-    __Copy_type(tmp_left_resbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+    ___collectives_copy_type(tmp_left_resbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
   } else {
-    __Op_type(NULL, tmp_left_resbuf, tmp_right_resbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
-    __Copy_type(tmp_right_resbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+    ___collectives_op_type(NULL, tmp_left_resbuf, tmp_right_resbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
+    ___collectives_copy_type(tmp_right_resbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
   }
   
   return MPI_SUCCESS;
@@ -5579,7 +5608,7 @@ int PMPI_Ireduce_scatter (const void *sendbuf, void* recvbuf, const int *recvcou
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
 
-    res = __Ireduce_scatter (sendbuf, recvbuf, recvcounts, datatype, op, comm, &(tmp->nbc_handle));
+    res = ___collectives_ireduce_scatter (sendbuf, recvbuf, recvcounts, datatype, op, comm, &(tmp->nbc_handle));
   }
   MPI_HANDLE_RETURN_VAL (res, comm);
 }
@@ -5595,24 +5624,24 @@ int PMPI_Ireduce_scatter (const void *sendbuf, void* recvbuf, const int *recvcou
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Ireduce_scatter (const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle) {
+static inline int ___collectives_ireduce_scatter (const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle) {
   
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Reduce_scatter_switch(sendbuf, recvbuf, recvcounts, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_reduce_scatter_switch(sendbuf, recvbuf, recvcounts, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
 
-  __Reduce_scatter_switch(sendbuf, recvbuf, recvcounts, datatype, op, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  ___collectives_reduce_scatter_switch(sendbuf, recvbuf, recvcounts, datatype, op, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -5674,7 +5703,7 @@ int PMPI_Reduce_scatter_init(const void *sendbuf, void* recvbuf, const int *recv
   req->persistant.info = info;
 
   /* Init metadat for nbc */
-  __Reduce_scatter_init (sendbuf,  recvbuf, recvcounts, datatype, op, comm, &(req->nbc_handle));
+  ___collectives_reduce_scatter_init (sendbuf,  recvbuf, recvcounts, datatype, op, comm, &(req->nbc_handle));
   req->nbc_handle.is_persistent = 1;
   return MPI_SUCCESS;
 }
@@ -5690,11 +5719,11 @@ int PMPI_Reduce_scatter_init(const void *sendbuf, void* recvbuf, const int *recv
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Reduce_scatter_init(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle) {
+static inline int ___collectives_reduce_scatter_init(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle) {
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
 
@@ -5703,13 +5732,13 @@ static inline int __Reduce_scatter_init(const void *sendbuf, void* recvbuf, cons
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Reduce_scatter_switch(sendbuf, recvbuf, recvcounts, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_reduce_scatter_switch(sendbuf, recvbuf, recvcounts, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
   
-  __Reduce_scatter_switch(sendbuf, recvbuf, recvcounts, datatype, op, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  ___collectives_reduce_scatter_switch(sendbuf, recvbuf, recvcounts, datatype, op, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -5732,8 +5761,8 @@ static inline int __Reduce_scatter_init(const void *sendbuf, void* recvbuf, cons
   \param comm Target communicator
   \return error code
   */
-int mpc_mpi_reduce_scatter(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
-  return __Reduce_scatter_switch(sendbuf, recvbuf, recvcounts, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+int _mpc_mpi_collectives_reduce_scatter(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
+  return ___collectives_reduce_scatter_switch(sendbuf, recvbuf, recvcounts, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
 }
 
 
@@ -5750,7 +5779,7 @@ int mpc_mpi_reduce_scatter(const void *sendbuf, void* recvbuf, const int *recvco
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Reduce_scatter_switch(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_reduce_scatter_switch(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
@@ -5773,16 +5802,16 @@ static inline int __Reduce_scatter_switch(const void *sendbuf, void* recvbuf, co
 
   switch(alg) {
     case NBC_REDUCE_SCATTER_REDUCE_SCATTERV:
-      res = __Reduce_scatter_reduce_scatterv(sendbuf, recvbuf, recvcounts, datatype, op, comm, coll_type, schedule, info);
+      res = ___collectives_reduce_scatter_reduce_scatterv(sendbuf, recvbuf, recvcounts, datatype, op, comm, coll_type, schedule, info);
       break;
     case NBC_REDUCE_SCATTER_DISTANCE_DOUBLING:
-      res = __Reduce_scatter_distance_doubling(sendbuf, recvbuf, recvcounts, datatype, op, comm, coll_type, schedule, info);
+      res = ___collectives_reduce_scatter_distance_doubling(sendbuf, recvbuf, recvcounts, datatype, op, comm, coll_type, schedule, info);
       break;
     case NBC_REDUCE_SCATTER_DISTANCE_HALVING:
-      res = __Reduce_scatter_distance_halving(sendbuf, recvbuf, recvcounts, datatype, op, comm, coll_type, schedule, info);
+      res = ___collectives_reduce_scatter_distance_halving(sendbuf, recvbuf, recvcounts, datatype, op, comm, coll_type, schedule, info);
       break;
     case NBC_REDUCE_SCATTER_PAIRWISE:
-      res = __Reduce_scatter_pairwise(sendbuf, recvbuf, recvcounts, datatype, op, comm, coll_type, schedule, info);
+      res = ___collectives_reduce_scatter_pairwise(sendbuf, recvbuf, recvcounts, datatype, op, comm, coll_type, schedule, info);
       break;
   }
 
@@ -5803,7 +5832,7 @@ static inline int __Reduce_scatter_switch(const void *sendbuf, void* recvbuf, co
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Reduce_scatter_reduce_scatterv(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_reduce_scatter_reduce_scatterv(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size;
   MPI_Aint ext;
@@ -5859,9 +5888,9 @@ static inline int __Reduce_scatter_reduce_scatterv(const void *sendbuf, void* re
     tmp_sendbuf = recvbuf;
   }
 
-  __Reduce_switch(tmp_sendbuf, tmpbuf, count, datatype, op, 0, comm, coll_type, schedule, info); 
-  __Barrier_type(coll_type, schedule, info);
-  __Scatterv_switch(tmpbuf, recvcounts, displs, datatype, recvbuf, recvcounts[rank], datatype, 0, comm, coll_type, schedule, info);
+  ___collectives_reduce_switch(tmp_sendbuf, tmpbuf, count, datatype, op, 0, comm, coll_type, schedule, info); 
+  ___collectives_barrier_type(coll_type, schedule, info);
+  ___collectives_scatterv_switch(tmpbuf, recvcounts, displs, datatype, recvbuf, recvcounts[rank], datatype, 0, comm, coll_type, schedule, info);
 
   if(coll_type == MPC_COLL_TYPE_BLOCKING) {
     free(tmpbuf);
@@ -5884,7 +5913,7 @@ static inline int __Reduce_scatter_reduce_scatterv(const void *sendbuf, void* re
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Reduce_scatter_distance_doubling(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+static inline int ___collectives_reduce_scatter_distance_doubling(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
   
@@ -5905,7 +5934,7 @@ static inline int __Reduce_scatter_distance_doubling(__UNUSED__ const void *send
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Reduce_scatter_distance_halving(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+static inline int ___collectives_reduce_scatter_distance_halving(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
   
@@ -5926,7 +5955,7 @@ static inline int __Reduce_scatter_distance_halving(__UNUSED__ const void *sendb
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Reduce_scatter_pairwise(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+static inline int ___collectives_reduce_scatter_pairwise(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
   
@@ -5981,7 +6010,7 @@ int PMPI_Iallgather (const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
     tmp->is_nbc = 1;
 
     tmp->nbc_handle.is_persistent = 0;
-    res =  __Iallgather (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, &(tmp->nbc_handle));
+    res =  ___collectives_iallgather (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, &(tmp->nbc_handle));
   }
   MPI_HANDLE_RETURN_VAL (res, comm);
 }
@@ -5998,24 +6027,24 @@ int PMPI_Iallgather (const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Iallgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle) {
+static inline int ___collectives_iallgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle) {
 
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IALLGATHER_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Allgather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_allgather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
 
-  __Allgather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  ___collectives_allgather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -6077,7 +6106,7 @@ int PMPI_Allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtyp
   req->persistant.info = info;
 
   /* Init metadata for nbc */
-  __Allgather_init (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, &(req->nbc_handle));
+  ___collectives_allgather_init (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, &(req->nbc_handle));
   req->nbc_handle.is_persistent = 1;
   return MPI_SUCCESS;
 }
@@ -6094,12 +6123,12 @@ int PMPI_Allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtyp
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle) {
+static inline int ___collectives_allgather_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle) {
   
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 #if ALLOW_TOPO_COMM == 1
   info.flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
 #endif
@@ -6111,13 +6140,13 @@ static inline int __Allgather_init(const void *sendbuf, int sendcount, MPI_Datat
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Allgather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_allgather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
   
-  __Allgather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  ___collectives_allgather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -6141,8 +6170,8 @@ static inline int __Allgather_init(const void *sendbuf, int sendcount, MPI_Datat
   \param comm Target communicator
   \return error code
   */
-int mpc_mpi_allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm) {
-  return __Allgather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+int _mpc_mpi_collectives_allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm) {
+  return ___collectives_allgather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
 }
 
 
@@ -6160,7 +6189,7 @@ int mpc_mpi_allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Allgather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_allgather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
@@ -6188,19 +6217,19 @@ static inline int __Allgather_switch(const void *sendbuf, int sendcount, MPI_Dat
 
   switch(alg) {
     case NBC_ALLGATHER_GATHER_BROADCAST:
-      res = __Allgather_gather_broadcast(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+      res = ___collectives_allgather_gather_broadcast(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
       break;
     case NBC_ALLGATHER_DISTANCE_DOUBLING:
-      res = __Allgather_distance_doubling(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+      res = ___collectives_allgather_distance_doubling(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
       break;
     case NBC_ALLGATHER_BRUCK:
-      res = __Allgather_bruck(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+      res = ___collectives_allgather_bruck(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
       break;
     case NBC_ALLGATHER_RING:
-      res = __Allgather_ring(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+      res = ___collectives_allgather_ring(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
       break;
     case NBC_ALLGATHER_TOPO:
-      res = __Allgather_topo(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+      res = ___collectives_allgather_topo(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
       break;
   }
 
@@ -6222,14 +6251,14 @@ static inline int __Allgather_switch(const void *sendbuf, int sendcount, MPI_Dat
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Allgather_gather_broadcast(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_allgather_gather_broadcast(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int size;
   _mpc_cl_comm_size(comm, &size);
 
- __Gather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, comm, coll_type, schedule, info);
- __Barrier_type(coll_type, schedule, info);
- __Bcast_switch(recvbuf, recvcount * size, recvtype, 0, comm, coll_type, schedule, info);
+ ___collectives_gather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, comm, coll_type, schedule, info);
+ ___collectives_barrier_type(coll_type, schedule, info);
+ ___collectives_bcast_switch(recvbuf, recvcount * size, recvtype, 0, comm, coll_type, schedule, info);
 
   return MPI_SUCCESS;
 }
@@ -6249,7 +6278,7 @@ static inline int __Allgather_gather_broadcast(const void *sendbuf, int sendcoun
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Allgather_distance_doubling(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_allgather_distance_doubling(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   const void *initial_buf = sendbuf;
   int tmp_sendcount = sendcount;
@@ -6269,7 +6298,7 @@ static inline int __Allgather_distance_doubling(const void *sendbuf, int sendcou
   PMPI_Type_extent(recvtype, &recvext);
 
   int vrank, vsize, peer, maxr, count = 0, peer_count = 0;
-  maxr = __floored_log2(size);
+  maxr = ___collectives_floored_log2(size);
   vsize = (1 << maxr);
   int group = 2 * (size - (1 << maxr));
  
@@ -6321,17 +6350,17 @@ static inline int __Allgather_distance_doubling(const void *sendbuf, int sendcou
     peer = rank ^ 1;
 
     if(rank & 1) {
-      __Send_type(initial_buf, tmp_sendcount, tmp_sendtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(initial_buf, tmp_sendcount, tmp_sendtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
     } else {
-      __Recv_type(recvbuf + peer * recvcount * recvext, recvcount, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
-      __Barrier_type(coll_type, schedule, info);
+      ___collectives_recv_type(recvbuf + peer * recvcount * recvext, recvcount, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
+      ___collectives_barrier_type(coll_type, schedule, info);
     }
   }
   
   if(rank > group || !(rank & 1)) {
   
     if(sendbuf != MPI_IN_PLACE) {
-      __Copy_type(sendbuf , sendcount, sendtype, tmpbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+      ___collectives_copy_type(sendbuf , sendcount, sendtype, tmpbuf, recvcount, recvtype, comm, coll_type, schedule, info);
     }
 
     // at each step, processes exchange their data with (rank XOR 2^i)
@@ -6351,16 +6380,16 @@ static inline int __Allgather_distance_doubling(const void *sendbuf, int sendcou
 
       // To avoid deadlocks
       if(peer < rank) {
-        __Send_type(tmpbuf, count * recvcount, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
-        __Recv_type(tmpbuf - peer_count * recvcount * recvext, peer_count * recvcount, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
+        ___collectives_send_type(tmpbuf, count * recvcount, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
+        ___collectives_recv_type(tmpbuf - peer_count * recvcount * recvext, peer_count * recvcount, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
 
         tmpbuf -= peer_count * recvcount * recvext;
       } else {
-        __Recv_type(tmpbuf + count * recvcount * recvext, peer_count * recvcount, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
-        __Send_type(tmpbuf, count * recvcount, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
+        ___collectives_recv_type(tmpbuf + count * recvcount * recvext, peer_count * recvcount, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
+        ___collectives_send_type(tmpbuf, count * recvcount, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
       }
 
-      __Barrier_type(coll_type, schedule, info);
+      ___collectives_barrier_type(coll_type, schedule, info);
 
       // Update of the array containing the amount of data in possession of each processes
       // Could be replace by a formula to find the amound of data we need to receive from a specific process,
@@ -6380,9 +6409,9 @@ static inline int __Allgather_distance_doubling(const void *sendbuf, int sendcou
     peer = rank ^ 1;
 
     if(rank & 1) {
-      __Recv_type(recvbuf, recvcount * size, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
+      ___collectives_recv_type(recvbuf, recvcount * size, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
     } else {
-      __Send_type(recvbuf, recvcount * size, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(recvbuf, recvcount * size, recvtype, peer, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
     }
   }
 
@@ -6408,7 +6437,7 @@ static inline int __Allgather_distance_doubling(const void *sendbuf, int sendcou
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Allgather_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ int recvcount, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+static inline int ___collectives_allgather_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ int recvcount, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
 
@@ -6430,7 +6459,7 @@ static inline int __Allgather_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ i
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Allgather_ring(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_allgather_ring(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size;
   MPI_Aint sendext, recvext;
@@ -6452,7 +6481,7 @@ static inline int __Allgather_ring(const void *sendbuf, int sendcount, MPI_Datat
   }
 
   if(sendbuf != MPI_IN_PLACE) {
-    __Copy_type(sendbuf, sendcount, sendtype, recvbuf + rank * recvcount * recvext, recvcount, recvtype, comm, coll_type, schedule, info);
+    ___collectives_copy_type(sendbuf, sendcount, sendtype, recvbuf + rank * recvcount * recvext, recvcount, recvtype, comm, coll_type, schedule, info);
   }
 
   // At each step, send to rank+1, recv from rank-1
@@ -6461,14 +6490,14 @@ static inline int __Allgather_ring(const void *sendbuf, int sendcount, MPI_Datat
     // When i=0 we send our own data
     // At each step we send the data received at the previous step
     if(rank & 1) {
-      __Recv_type(recvbuf + ((rank - i - 1 + size) % size) * recvcount * recvext, recvcount, recvtype, (rank - 1 + size) % size, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
-      __Send_type(recvbuf + ((rank - i + size) % size) * recvcount * recvext, recvcount, recvtype, (rank + 1) % size, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
+      ___collectives_recv_type(recvbuf + ((rank - i - 1 + size) % size) * recvcount * recvext, recvcount, recvtype, (rank - 1 + size) % size, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(recvbuf + ((rank - i + size) % size) * recvcount * recvext, recvcount, recvtype, (rank + 1) % size, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
     } else {
-      __Send_type(recvbuf + ((rank - i + size) % size) * recvcount * recvext, recvcount, recvtype, (rank + 1) % size, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
-      __Recv_type(recvbuf + ((rank - i - 1 + size) % size) * recvcount * recvext, recvcount, recvtype, (rank - 1 + size) % size, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(recvbuf + ((rank - i + size) % size) * recvcount * recvext, recvcount, recvtype, (rank + 1) % size, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
+      ___collectives_recv_type(recvbuf + ((rank - i - 1 + size) % size) * recvcount * recvext, recvcount, recvtype, (rank - 1 + size) % size, MPC_ALLGATHER_TAG, comm, coll_type, schedule, info);
     }
     
-    __Barrier_type(coll_type, schedule, info);
+    ___collectives_barrier_type(coll_type, schedule, info);
   }
 
   return MPI_SUCCESS;
@@ -6489,14 +6518,14 @@ static inline int __Allgather_ring(const void *sendbuf, int sendcount, MPI_Datat
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Allgather_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_allgather_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
   int size, rank;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
 
-  __Gather_topo(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, comm, coll_type, schedule, info);
-  __Barrier_type(coll_type, schedule, info);
-  __Bcast_topo(recvbuf, recvcount * size, recvtype, 0, comm, coll_type, schedule, info);
+  ___collectives_gather_topo(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, comm, coll_type, schedule, info);
+  ___collectives_barrier_type(coll_type, schedule, info);
+  ___collectives_bcast_topo(recvbuf, recvcount * size, recvtype, 0, comm, coll_type, schedule, info);
 
   return MPI_SUCCESS;
 }
@@ -6549,7 +6578,7 @@ int PMPI_Iallgatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
 
-    res =  __Iallgatherv (sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, &(tmp->nbc_handle));
+    res =  ___collectives_iallgatherv (sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, &(tmp->nbc_handle));
   }
   MPI_HANDLE_RETURN_VAL (res, comm);
 }
@@ -6567,24 +6596,24 @@ int PMPI_Iallgatherv (const void *sendbuf, int sendcount, MPI_Datatype sendtype,
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Iallgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle) {
+static inline int ___collectives_iallgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle) {
 
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IALLGATHER_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Allgatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_allgatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
 
-  __Allgatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  ___collectives_allgatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -6657,7 +6686,7 @@ int PMPI_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendty
   req->persistant.info = info;
 
   /* Init metadata for nbc */
-  __Allgatherv_init (sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, &(req->nbc_handle));
+  ___collectives_allgatherv_init (sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, &(req->nbc_handle));
   req->nbc_handle.is_persistent = 1;
   return MPI_SUCCESS;
 }
@@ -6675,12 +6704,12 @@ int PMPI_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendty
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle) {
+static inline int ___collectives_allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle) {
   
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
@@ -6689,13 +6718,13 @@ static inline int __Allgatherv_init(const void *sendbuf, int sendcount, MPI_Data
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Allgatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_allgatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
   
-  __Allgatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  ___collectives_allgatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -6720,8 +6749,8 @@ static inline int __Allgatherv_init(const void *sendbuf, int sendcount, MPI_Data
   \param comm Target communicator
   \return error code
   */
-int mpc_mpi_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm) {
-  return __Allgatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+int _mpc_mpi_collectives_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm) {
+  return ___collectives_allgatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
 }
 
 
@@ -6740,7 +6769,7 @@ int mpc_mpi_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Allgatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_allgatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
@@ -6763,16 +6792,16 @@ static inline int __Allgatherv_switch(const void *sendbuf, int sendcount, MPI_Da
 
   switch(alg) {
     case NBC_ALLGATHERV_GATHERV_BROADCAST:
-      res = __Allgatherv_gatherv_broadcast(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, coll_type, schedule, info);
+      res = ___collectives_allgatherv_gatherv_broadcast(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, coll_type, schedule, info);
       break;
     case NBC_ALLGATHERV_DISTANCE_DOUBLING:
-      res = __Allgatherv_distance_doubling(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, coll_type, schedule, info);
+      res = ___collectives_allgatherv_distance_doubling(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, coll_type, schedule, info);
       break;
     case NBC_ALLGATHERV_BRUCK:
-      res = __Allgatherv_bruck(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, coll_type, schedule, info);
+      res = ___collectives_allgatherv_bruck(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, coll_type, schedule, info);
       break;
     case NBC_ALLGATHERV_RING:
-      res = __Allgatherv_ring(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, coll_type, schedule, info);
+      res = ___collectives_allgatherv_ring(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, coll_type, schedule, info);
       break;
   }
 
@@ -6795,7 +6824,7 @@ static inline int __Allgatherv_switch(const void *sendbuf, int sendcount, MPI_Da
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Allgatherv_gatherv_broadcast(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_allgatherv_gatherv_broadcast(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int count = 0, buf_start = 0;
   int size, rank;
@@ -6815,9 +6844,9 @@ static inline int __Allgatherv_gatherv_broadcast(const void *sendbuf, int sendco
     tmp_sendtype = recvtype;
   }
 
- __Gatherv_switch(tmp_sendbuf, tmp_sendcount, tmp_sendtype, recvbuf, recvcounts, displs, recvtype, 0, comm, coll_type, schedule, info);
- __Barrier_type(coll_type, schedule, info);
- __Bcast_switch(recvbuf, count, recvtype, 0, comm, coll_type, schedule, info);
+ ___collectives_gatherv_switch(tmp_sendbuf, tmp_sendcount, tmp_sendtype, recvbuf, recvcounts, displs, recvtype, 0, comm, coll_type, schedule, info);
+ ___collectives_barrier_type(coll_type, schedule, info);
+ ___collectives_bcast_switch(recvbuf, count, recvtype, 0, comm, coll_type, schedule, info);
 
   return MPI_SUCCESS;
 }
@@ -6838,7 +6867,7 @@ static inline int __Allgatherv_gatherv_broadcast(const void *sendbuf, int sendco
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Allgatherv_distance_doubling(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *displs, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+static inline int ___collectives_allgatherv_distance_doubling(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *displs, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
 
@@ -6861,7 +6890,7 @@ static inline int __Allgatherv_distance_doubling(__UNUSED__ const void *sendbuf,
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Allgatherv_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *displs, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+static inline int ___collectives_allgatherv_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *displs, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
 
@@ -6884,7 +6913,7 @@ static inline int __Allgatherv_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ 
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Allgatherv_ring(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *displs, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+static inline int ___collectives_allgatherv_ring(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *displs, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
 
@@ -6937,7 +6966,7 @@ int PMPI_Ialltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, vo
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
-    res = __Ialltoall (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, &(tmp->nbc_handle));
+    res = ___collectives_ialltoall (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, &(tmp->nbc_handle));
   }
   MPI_HANDLE_RETURN_VAL (res, comm);
 }
@@ -6954,24 +6983,24 @@ int PMPI_Ialltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, vo
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Ialltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle) {
+static inline int ___collectives_ialltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle) {
 
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Alltoall_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_alltoall_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
 
-  __Alltoall_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  ___collectives_alltoall_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -7031,7 +7060,7 @@ int PMPI_Alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype
   req->persistant.info = info;
 
   /* Init metadata for nbc */
-  __Alltoall_init (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, &(req->nbc_handle));
+  ___collectives_alltoall_init (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, &(req->nbc_handle));
   req->nbc_handle.is_persistent = 1;
   return MPI_SUCCESS;
 }
@@ -7048,12 +7077,12 @@ int PMPI_Alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle) {
+static inline int ___collectives_alltoall_init(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle) {
   
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
@@ -7062,13 +7091,13 @@ static inline int __Alltoall_init(const void *sendbuf, int sendcount, MPI_Dataty
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Alltoall_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_alltoall_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
   
-  __Alltoall_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  ___collectives_alltoall_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -7092,8 +7121,8 @@ static inline int __Alltoall_init(const void *sendbuf, int sendcount, MPI_Dataty
   \param comm Target communicator
   \return error code
   */
-int mpc_mpi_alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm) {
-  //return __Alltoall_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+int _mpc_mpi_collectives_alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm) {
+  //return ___collectives_alltoall_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
 
 
   MPI_Request req;
@@ -7120,7 +7149,7 @@ int mpc_mpi_alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, 
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Alltoall_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_alltoall_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
@@ -7145,13 +7174,13 @@ static inline int __Alltoall_switch(const void *sendbuf, int sendcount, MPI_Data
 
   switch(alg) {
     case NBC_ALLTOALL_CLUSTER:
-      res = __Alltoall_cluster(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+      res = ___collectives_alltoall_cluster(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
       break;
     case NBC_ALLTOALL_BRUCK:
-      res = __Alltoall_bruck(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+      res = ___collectives_alltoall_bruck(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
       break;
     case NBC_ALLTOALL_PAIRWISE:
-      res = __Alltoall_pairwise(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+      res = ___collectives_alltoall_pairwise(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
       break;
   }
 
@@ -7173,7 +7202,7 @@ static inline int __Alltoall_switch(const void *sendbuf, int sendcount, MPI_Data
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Alltoall_cluster(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_alltoall_cluster(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size;
   MPI_Aint sendext, recvext;
@@ -7208,15 +7237,15 @@ static inline int __Alltoall_cluster(const void *sendbuf, int sendcount, MPI_Dat
 
   if(sendbuf == MPI_IN_PLACE) {
     // Copy data to avoid erasing it by receiving other's data
-    __Copy_type(recvbuf, recvcount * size, recvtype, tmpbuf, recvcount * size, recvtype, comm, coll_type, schedule, info);
+    ___collectives_copy_type(recvbuf, recvcount * size, recvtype, tmpbuf, recvcount * size, recvtype, comm, coll_type, schedule, info);
 
     // For each rank, send and recv the data needed
     for(int i = 0; i < size; i++) {
       if(i == rank) {
         continue;
       }
-      __Send_type(tmpbuf  + i * recvcount * recvext, recvcount, recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
-      __Recv_type(recvbuf + i * recvcount * recvext, recvcount, recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(tmpbuf  + i * recvcount * recvext, recvcount, recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      ___collectives_recv_type(recvbuf + i * recvcount * recvext, recvcount, recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
     }
 
   } else {
@@ -7226,11 +7255,11 @@ static inline int __Alltoall_cluster(const void *sendbuf, int sendcount, MPI_Dat
         continue;
       }
 
-      __Send_type(sendbuf + i * sendcount * sendext, sendcount, sendtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
-      __Recv_type(recvbuf + i * recvcount * recvext, recvcount, recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(sendbuf + i * sendcount * sendext, sendcount, sendtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      ___collectives_recv_type(recvbuf + i * recvcount * recvext, recvcount, recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
     }
     // Copy our own data in the recvbuf
-    __Copy_type(sendbuf + rank * sendcount * sendext, sendcount, sendtype, recvbuf + rank * recvcount * recvext, recvcount, recvtype, comm, coll_type, schedule, info);
+    ___collectives_copy_type(sendbuf + rank * sendcount * sendext, sendcount, sendtype, recvbuf + rank * recvcount * recvext, recvcount, recvtype, comm, coll_type, schedule, info);
 
   }
 
@@ -7252,7 +7281,7 @@ static inline int __Alltoall_cluster(const void *sendbuf, int sendcount, MPI_Dat
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Alltoall_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ int recvcount, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+static inline int ___collectives_alltoall_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ int recvcount, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
 
@@ -7274,7 +7303,7 @@ static inline int __Alltoall_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ in
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Alltoall_pairwise(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ int recvcount, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+static inline int ___collectives_alltoall_pairwise(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ int recvcount, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
 
@@ -7331,7 +7360,7 @@ int PMPI_Ialltoallv(const void *sendbuf, const int *sendcounts, const int *sdisp
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
 
-    res = __Ialltoallv (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, &(tmp->nbc_handle));
+    res = ___collectives_ialltoallv (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, &(tmp->nbc_handle));
   }
   MPI_HANDLE_RETURN_VAL (res, comm);
 }
@@ -7350,24 +7379,24 @@ int PMPI_Ialltoallv(const void *sendbuf, const int *sendcounts, const int *sdisp
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Ialltoallv(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle) {
+static inline int ___collectives_ialltoallv(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle) {
 
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Alltoallv_switch(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_alltoallv_switch(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
 
-  __Alltoallv_switch(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  ___collectives_alltoallv_switch(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -7439,7 +7468,7 @@ int PMPI_Alltoallv_init(const void *sendbuf, const int *sendcounts, const int *s
   req->persistant.info = info;
 
   /* Init metadata for nbc */
-  __Alltoallv_init (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, &(req->nbc_handle));
+  ___collectives_alltoallv_init (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, &(req->nbc_handle));
   req->nbc_handle.is_persistent = 1;
   return MPI_SUCCESS;
 }
@@ -7458,12 +7487,12 @@ int PMPI_Alltoallv_init(const void *sendbuf, const int *sendcounts, const int *s
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Alltoallv_init(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle) {
+static inline int ___collectives_alltoallv_init(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle) {
   
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
@@ -7472,13 +7501,13 @@ static inline int __Alltoallv_init(const void *sendbuf, const int *sendcounts, c
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Alltoallv_switch(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_alltoallv_switch(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
   
-  __Alltoallv_switch(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  ___collectives_alltoallv_switch(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -7504,8 +7533,8 @@ static inline int __Alltoallv_init(const void *sendbuf, const int *sendcounts, c
   \param comm Target communicator
   \return error code
   */
-int mpc_mpi_alltoallv(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm) {
-  //return __Alltoall_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+int _mpc_mpi_collectives_alltoallv(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm) {
+  //return ___collectives_alltoall_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
 
   MPI_Request req;
   MPI_Status status;
@@ -7533,7 +7562,7 @@ int mpc_mpi_alltoallv(const void *sendbuf, const int *sendcounts, const int *sdi
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Alltoallv_switch(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_alltoallv_switch(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
@@ -7558,13 +7587,13 @@ static inline int __Alltoallv_switch(const void *sendbuf, const int *sendcounts,
 
   switch(alg) {
     case NBC_ALLTOALLV_CLUSTER:
-      res = __Alltoallv_cluster(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, coll_type, schedule, info);
+      res = ___collectives_alltoallv_cluster(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, coll_type, schedule, info);
       break;
     case NBC_ALLTOALLV_BRUCK:
-      res = __Alltoallv_bruck(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, coll_type, schedule, info);
+      res = ___collectives_alltoallv_bruck(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, coll_type, schedule, info);
       break;
     case NBC_ALLTOALLV_PAIRWISE:
-      res = __Alltoallv_pairwise(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, coll_type, schedule, info);
+      res = ___collectives_alltoallv_pairwise(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, coll_type, schedule, info);
       break;
   }
 
@@ -7588,7 +7617,7 @@ static inline int __Alltoallv_switch(const void *sendbuf, const int *sendcounts,
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Alltoallv_cluster(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_alltoallv_cluster(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size;
   MPI_Aint sendext, recvext;
@@ -7629,7 +7658,7 @@ static inline int __Alltoallv_cluster(const void *sendbuf, const int *sendcounts
 
   if(sendbuf == MPI_IN_PLACE) {
     // Copy data to avoid erasing it by receiving other's data
-    __Copy_type(recvbuf, rsize, MPI_BYTE, tmpbuf, rsize, MPI_BYTE, comm, coll_type, schedule, info);
+    ___collectives_copy_type(recvbuf, rsize, MPI_BYTE, tmpbuf, rsize, MPI_BYTE, comm, coll_type, schedule, info);
 
     // For each rank, send and recv the data needed
     for(int i = 0; i < size; i++) {
@@ -7637,8 +7666,8 @@ static inline int __Alltoallv_cluster(const void *sendbuf, const int *sendcounts
         continue;
       }
 
-      __Send_type(tmpbuf  + rdispls[i], recvcounts[i], recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
-      __Recv_type(recvbuf + rdispls[i], recvcounts[i], recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(tmpbuf  + rdispls[i], recvcounts[i], recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      ___collectives_recv_type(recvbuf + rdispls[i], recvcounts[i], recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
     }
 
   } else {
@@ -7648,11 +7677,11 @@ static inline int __Alltoallv_cluster(const void *sendbuf, const int *sendcounts
         continue;
       }
 
-      __Send_type(sendbuf + sdispls[i], sendcounts[i], sendtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
-      __Recv_type(recvbuf + rdispls[i], recvcounts[i], recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(sendbuf + sdispls[i], sendcounts[i], sendtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      ___collectives_recv_type(recvbuf + rdispls[i], recvcounts[i], recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
     }
     // Copy our own data in the recvbuf
-    __Copy_type(sendbuf + sdispls[rank], sendcounts[rank], sendtype, recvbuf + rdispls[rank], recvcounts[rank], recvtype, comm, coll_type, schedule, info);
+    ___collectives_copy_type(sendbuf + sdispls[rank], sendcounts[rank], sendtype, recvbuf + rdispls[rank], recvcounts[rank], recvtype, comm, coll_type, schedule, info);
 
   }
 
@@ -7676,7 +7705,7 @@ static inline int __Alltoallv_cluster(const void *sendbuf, const int *sendcounts
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Alltoallv_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ const int *sendcounts, __UNUSED__ const int *sdispls, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *rdispls, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+static inline int ___collectives_alltoallv_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ const int *sendcounts, __UNUSED__ const int *sdispls, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *rdispls, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
 
@@ -7700,7 +7729,7 @@ static inline int __Alltoallv_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ c
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Alltoallv_pairwise(__UNUSED__ const void *sendbuf, __UNUSED__ const int *sendcounts, __UNUSED__ const int *sdispls, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *rdispls, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+static inline int ___collectives_alltoallv_pairwise(__UNUSED__ const void *sendbuf, __UNUSED__ const int *sendcounts, __UNUSED__ const int *sdispls, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *rdispls, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
 
@@ -7757,7 +7786,7 @@ int PMPI_Ialltoallw(const void *sendbuf, const int *sendcounts, const int *sdisp
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
 
-    res = __Ialltoallw (sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, &(tmp->nbc_handle));
+    res = ___collectives_ialltoallw (sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, &(tmp->nbc_handle));
   }
   MPI_HANDLE_RETURN_VAL (res, comm);
 }
@@ -7776,24 +7805,24 @@ int PMPI_Ialltoallw(const void *sendbuf, const int *sendcounts, const int *sdisp
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Ialltoallw(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, NBC_Handle *handle) {
+static inline int ___collectives_ialltoallw(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, NBC_Handle *handle) {
 
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Alltoallw_switch(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_alltoallw_switch(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
 
-  __Alltoallw_switch(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  ___collectives_alltoallw_switch(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -7866,7 +7895,7 @@ int PMPI_Alltoallw_init(const void *sendbuf, const int *sendcounts, const int *s
   req->persistant.info = info;
 
   /* Init metadata for nbc */
-  __Alltoallw_init (sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, &(req->nbc_handle));
+  ___collectives_alltoallw_init (sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, &(req->nbc_handle));
   req->nbc_handle.is_persistent = 1;
   return MPI_SUCCESS;
 }
@@ -7885,12 +7914,12 @@ int PMPI_Alltoallw_init(const void *sendbuf, const int *sendcounts, const int *s
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Alltoallw_init(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, NBC_Handle* handle) {
+static inline int ___collectives_alltoallw_init(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, NBC_Handle* handle) {
   
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
@@ -7899,13 +7928,13 @@ static inline int __Alltoallw_init(const void *sendbuf, const int *sendcounts, c
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Alltoallw_switch(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_alltoallw_switch(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
   
-  __Alltoallw_switch(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  ___collectives_alltoallw_switch(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -7931,7 +7960,7 @@ static inline int __Alltoallw_init(const void *sendbuf, const int *sendcounts, c
   \param comm Target communicator
   \return error code
   */
-int mpc_mpi_alltoallw(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm) {
+int _mpc_mpi_collectives_alltoallw(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm) {
 
   MPI_Request req;
   MPI_Status status;
@@ -7959,7 +7988,7 @@ int mpc_mpi_alltoallw(const void *sendbuf, const int *sendcounts, const int *sdi
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Alltoallw_switch(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_alltoallw_switch(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
@@ -7984,13 +8013,13 @@ static inline int __Alltoallw_switch(const void *sendbuf, const int *sendcounts,
 
   switch(alg) {
     case NBC_ALLTOALLW_CLUSTER:
-      res = __Alltoallw_cluster(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, coll_type, schedule, info);
+      res = ___collectives_alltoallw_cluster(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, coll_type, schedule, info);
       break;
     case NBC_ALLTOALLW_BRUCK:
-      res = __Alltoallw_bruck(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, coll_type, schedule, info);
+      res = ___collectives_alltoallw_bruck(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, coll_type, schedule, info);
       break;
     case NBC_ALLTOALLW_PAIRWISE:
-      res = __Alltoallw_pairwise(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, coll_type, schedule, info);
+      res = ___collectives_alltoallw_pairwise(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, coll_type, schedule, info);
       break;
   }
 
@@ -8014,7 +8043,7 @@ static inline int __Alltoallw_switch(const void *sendbuf, const int *sendcounts,
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Alltoallw_cluster(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_alltoallw_cluster(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size;
   MPI_Aint ext;
@@ -8054,7 +8083,7 @@ static inline int __Alltoallw_cluster(const void *sendbuf, const int *sendcounts
 
   if(sendbuf == MPI_IN_PLACE) {
     // Copy data to avoid erasing it by receiving other's data
-    __Copy_type(recvbuf, rsize, MPI_BYTE, tmpbuf, rsize, MPI_BYTE, comm, coll_type, schedule, info);
+    ___collectives_copy_type(recvbuf, rsize, MPI_BYTE, tmpbuf, rsize, MPI_BYTE, comm, coll_type, schedule, info);
 
     // For each rank, send and recv the data needed
     for(int i = 0; i < size; i++) {
@@ -8062,8 +8091,8 @@ static inline int __Alltoallw_cluster(const void *sendbuf, const int *sendcounts
         continue;
       }
 
-      __Send_type(tmpbuf  + rdispls[i], recvcounts[i], recvtypes[i], i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
-      __Recv_type(recvbuf + rdispls[i], recvcounts[i], recvtypes[i], i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(tmpbuf  + rdispls[i], recvcounts[i], recvtypes[i], i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      ___collectives_recv_type(recvbuf + rdispls[i], recvcounts[i], recvtypes[i], i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
     }
 
   } else {
@@ -8073,11 +8102,11 @@ static inline int __Alltoallw_cluster(const void *sendbuf, const int *sendcounts
         continue;
       }
 
-      __Send_type(sendbuf + sdispls[i], sendcounts[i], sendtypes[i], i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
-      __Recv_type(recvbuf + rdispls[i], recvcounts[i], recvtypes[i], i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(sendbuf + sdispls[i], sendcounts[i], sendtypes[i], i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      ___collectives_recv_type(recvbuf + rdispls[i], recvcounts[i], recvtypes[i], i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
     }
     // Copy our own data in the recvbuf
-    __Copy_type(sendbuf + sdispls[rank], sendcounts[rank], sendtypes[rank], recvbuf + rdispls[rank], recvcounts[rank], recvtypes[rank], comm, coll_type, schedule, info);
+    ___collectives_copy_type(sendbuf + sdispls[rank], sendcounts[rank], sendtypes[rank], recvbuf + rdispls[rank], recvcounts[rank], recvtypes[rank], comm, coll_type, schedule, info);
 
   }
 
@@ -8101,7 +8130,7 @@ static inline int __Alltoallw_cluster(const void *sendbuf, const int *sendcounts
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Alltoallw_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ const int *sendcounts, __UNUSED__ const int *sdispls, __UNUSED__ const MPI_Datatype *sendtypes, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *rdispls, __UNUSED__ const MPI_Datatype *recvtypes, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+static inline int ___collectives_alltoallw_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ const int *sendcounts, __UNUSED__ const int *sdispls, __UNUSED__ const MPI_Datatype *sendtypes, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *rdispls, __UNUSED__ const MPI_Datatype *recvtypes, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
 
@@ -8125,7 +8154,7 @@ static inline int __Alltoallw_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ c
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Alltoallw_pairwise(__UNUSED__ const void *sendbuf, __UNUSED__ const int *sendcounts, __UNUSED__ const int *sdispls, __UNUSED__ const MPI_Datatype *sendtypes, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *rdispls, __UNUSED__ const MPI_Datatype *recvtypes, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+static inline int ___collectives_alltoallw_pairwise(__UNUSED__ const void *sendbuf, __UNUSED__ const int *sendcounts, __UNUSED__ const int *sdispls, __UNUSED__ const MPI_Datatype *sendtypes, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *rdispls, __UNUSED__ const MPI_Datatype *recvtypes, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
 
@@ -8179,7 +8208,7 @@ int PMPI_Iscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype data
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
     
-    res = __Iscan (sendbuf, recvbuf, count, datatype, op, comm, &(tmp->nbc_handle));
+    res = ___collectives_iscan (sendbuf, recvbuf, count, datatype, op, comm, &(tmp->nbc_handle));
   }
 
   MPI_HANDLE_RETURN_VAL (res, comm);
@@ -8196,24 +8225,24 @@ int PMPI_Iscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype data
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Iscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle) {
+static inline int ___collectives_iscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle) {
 
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Scan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_scan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
 
-  __Scan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  ___collectives_scan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -8270,7 +8299,7 @@ int PMPI_Scan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype 
   req->persistant.info = info;
 
   /* Init metadata for nbc */
-  __Scan_init (sendbuf, recvbuf, count, datatype, op, comm, &(req->nbc_handle));
+  ___collectives_scan_init (sendbuf, recvbuf, count, datatype, op, comm, &(req->nbc_handle));
   req->nbc_handle.is_persistent = 1;
   
   return MPI_SUCCESS;
@@ -8287,12 +8316,12 @@ int PMPI_Scan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype 
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Scan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle) {
+static inline int ___collectives_scan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle) {
 
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
@@ -8301,13 +8330,13 @@ static inline int __Scan_init (const void *sendbuf, void *recvbuf, int count, MP
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Scan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_scan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
   
-  __Scan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  ___collectives_scan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -8330,8 +8359,8 @@ static inline int __Scan_init (const void *sendbuf, void *recvbuf, int count, MP
   \param comm Target communicator
   \return error code
   */
-int mpc_mpi_scan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
-  return __Scan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+int _mpc_mpi_collectives_scan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
+  return ___collectives_scan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
 }
 
 
@@ -8348,7 +8377,7 @@ int mpc_mpi_scan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype da
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Scan_switch (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_scan_switch (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
@@ -8372,10 +8401,10 @@ static inline int __Scan_switch (const void *sendbuf, void *recvbuf, int count, 
 
   switch(alg) {
     case NBC_SCAN_LINEAR:
-      res = __Scan_linear(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
+      res = ___collectives_scan_linear(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
       break;
     case NBC_SCAN_ALLGATHER:
-      res = __Scan_allgather(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
+      res = ___collectives_scan_allgather(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
       break;
   }
 
@@ -8396,7 +8425,7 @@ static inline int __Scan_switch (const void *sendbuf, void *recvbuf, int count, 
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Scan_linear (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_scan_linear (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
   
   int rank, size;
   MPI_Aint ext;
@@ -8431,19 +8460,19 @@ static inline int __Scan_linear (const void *sendbuf, void *recvbuf, int count, 
 
   // Copy data to recvbuf
   if(sendbuf != MPI_IN_PLACE) {
-    __Copy_type(sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+    ___collectives_copy_type(sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
   }
 
   // recv & reduce data from rank-1
   if(rank > 0) {
-    __Recv_type(tmpbuf, count, datatype, rank - 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
-    __Barrier_type(coll_type, schedule, info);
-    __Op_type(NULL, tmpbuf, recvbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
+    ___collectives_recv_type(tmpbuf, count, datatype, rank - 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
+    ___collectives_barrier_type(coll_type, schedule, info);
+    ___collectives_op_type(NULL, tmpbuf, recvbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
   }
 
   // send data to rank+1
   if(rank + 1 < size) {
-    __Send_type(recvbuf, count, datatype, rank + 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
+    ___collectives_send_type(recvbuf, count, datatype, rank + 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
   }
 
 
@@ -8468,7 +8497,7 @@ static inline int __Scan_linear (const void *sendbuf, void *recvbuf, int count, 
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Scan_allgather (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_scan_allgather (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
  
   int rank, size;
   MPI_Aint ext;
@@ -8505,14 +8534,14 @@ static inline int __Scan_allgather (const void *sendbuf, void *recvbuf, int coun
   }
 
 
-  __Allgather_switch(buf, count, datatype, tmpbuf, count, datatype, comm, coll_type, schedule, info);
-  __Barrier_type(coll_type, schedule, info);
+  ___collectives_allgather_switch(buf, count, datatype, tmpbuf, count, datatype, comm, coll_type, schedule, info);
+  ___collectives_barrier_type(coll_type, schedule, info);
 
   for(int i = 1; i <= rank; i++) {
-    __Op_type(NULL, tmpbuf + (i-1) * count * ext, tmpbuf + i * count * rank, count, datatype, op, mpc_op, coll_type, schedule, info);
+    ___collectives_op_type(NULL, tmpbuf + (i-1) * count * ext, tmpbuf + i * count * rank, count, datatype, op, mpc_op, coll_type, schedule, info);
   }
 
-  __Copy_type(tmpbuf + rank * count * ext, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+  ___collectives_copy_type(tmpbuf + rank * count * ext, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
 
   return MPI_SUCCESS;
 }
@@ -8564,7 +8593,7 @@ int PMPI_Iexscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype da
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
 
-    res = __Iexscan (sendbuf, recvbuf, count, datatype, op, comm, &(tmp->nbc_handle));
+    res = ___collectives_iexscan (sendbuf, recvbuf, count, datatype, op, comm, &(tmp->nbc_handle));
   }
 
   MPI_HANDLE_RETURN_VAL (res, comm);
@@ -8581,24 +8610,24 @@ int PMPI_Iexscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype da
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Iexscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle) {
+static inline int ___collectives_iexscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle *handle) {
 
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Exscan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_exscan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
 
-  __Exscan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  ___collectives_exscan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -8655,7 +8684,7 @@ int PMPI_Exscan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatyp
   req->persistant.info = info;
 
   /* Init metadata for nbc */
-  __Exscan_init (sendbuf, recvbuf, count, datatype, op, comm, &(req->nbc_handle));
+  ___collectives_exscan_init (sendbuf, recvbuf, count, datatype, op, comm, &(req->nbc_handle));
   req->nbc_handle.is_persistent = 1;
   
   return MPI_SUCCESS;
@@ -8672,12 +8701,12 @@ int PMPI_Exscan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatyp
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Exscan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle) {
+static inline int ___collectives_exscan_init (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle) {
 
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
@@ -8686,13 +8715,13 @@ static inline int __Exscan_init (const void *sendbuf, void *recvbuf, int count, 
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Exscan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_exscan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
   
-  __Exscan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  ___collectives_exscan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -8715,8 +8744,8 @@ static inline int __Exscan_init (const void *sendbuf, void *recvbuf, int count, 
   \param comm Target communicator
   \return error code
   */
-int mpc_mpi_exscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
-  return __Exscan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+int _mpc_mpi_collectives_exscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
+  return ___collectives_exscan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
 }
 
 
@@ -8733,7 +8762,7 @@ int mpc_mpi_exscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype 
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Exscan_switch (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_exscan_switch (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
@@ -8757,10 +8786,10 @@ static inline int __Exscan_switch (const void *sendbuf, void *recvbuf, int count
 
   switch(alg) {
     case NBC_EXSCAN_LINEAR:
-      res = __Exscan_linear(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
+      res = ___collectives_exscan_linear(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
       break;
     case NBC_EXSCAN_ALLGATHER:
-      res = __Exscan_linear(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
+      res = ___collectives_exscan_linear(sendbuf, recvbuf, count, datatype, op, comm, coll_type, schedule, info);
       break;
   }
 
@@ -8781,7 +8810,7 @@ static inline int __Exscan_switch (const void *sendbuf, void *recvbuf, int count
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Exscan_linear (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_exscan_linear (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size;
   MPI_Aint ext;
@@ -8821,25 +8850,25 @@ static inline int __Exscan_linear (const void *sendbuf, void *recvbuf, int count
 
   if(rank > 0) {
     // Copy data in tmpbuf
-    __Copy_type(initial_buf, count, datatype, tmpbuf, count, datatype, comm, coll_type, schedule, info);
+    ___collectives_copy_type(initial_buf, count, datatype, tmpbuf, count, datatype, comm, coll_type, schedule, info);
   
     // recv data from rank-1
-    __Recv_type(recvbuf, count, datatype, rank - 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
+    ___collectives_recv_type(recvbuf, count, datatype, rank - 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
 
-    __Barrier_type(coll_type, schedule, info);
+    ___collectives_barrier_type(coll_type, schedule, info);
 
     // reduce data
     if(rank > 1 && rank < size - 1) {
-      __Op_type(NULL, recvbuf, tmpbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
+      ___collectives_op_type(NULL, recvbuf, tmpbuf, count, datatype, op, mpc_op, coll_type, schedule, info);
     }
   }
 
   // send data to rank+1
   if(rank + 1 < size) {
     if(rank == 0) {
-      __Send_type(initial_buf, count, datatype, rank + 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(initial_buf, count, datatype, rank + 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
     } else {
-      __Send_type(tmpbuf, count, datatype, rank + 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(tmpbuf, count, datatype, rank + 1, MPC_SCAN_TAG, comm, coll_type, schedule, info);
     }
   }
 
@@ -8864,7 +8893,7 @@ static inline int __Exscan_linear (const void *sendbuf, void *recvbuf, int count
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Exscan_allgather (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_exscan_allgather (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size;
   MPI_Aint ext;
@@ -8901,15 +8930,15 @@ static inline int __Exscan_allgather (const void *sendbuf, void *recvbuf, int co
   }
 
 
-  __Allgather_switch(buf, count, datatype, tmpbuf, count, datatype, comm, coll_type, schedule, info);
-  __Barrier_type(coll_type, schedule, info);
+  ___collectives_allgather_switch(buf, count, datatype, tmpbuf, count, datatype, comm, coll_type, schedule, info);
+  ___collectives_barrier_type(coll_type, schedule, info);
 
   if(rank > 0) {
     for(int i = 1; i < rank; i++) {
-      __Op_type(NULL, tmpbuf + (i-1) * count * ext, tmpbuf + i * count * rank, count, datatype, op, mpc_op, coll_type, schedule, info);
+      ___collectives_op_type(NULL, tmpbuf + (i-1) * count * ext, tmpbuf + i * count * rank, count, datatype, op, mpc_op, coll_type, schedule, info);
     }
 
-    __Copy_type(tmpbuf + (rank - 1) * count * ext, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+    ___collectives_copy_type(tmpbuf + (rank - 1) * count * ext, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
   }
   return MPI_SUCCESS;
 }
@@ -8955,7 +8984,7 @@ int PMPI_Ibarrier (MPI_Comm comm, MPI_Request *request) {
     tmp->is_nbc = 1;
     tmp->nbc_handle.is_persistent = 0;
 
-    res = __Ibarrier (comm, &(tmp->nbc_handle));
+    res = ___collectives_ibarrier (comm, &(tmp->nbc_handle));
   }
 
   MPI_HANDLE_RETURN_VAL (res, comm);
@@ -8967,24 +8996,24 @@ int PMPI_Ibarrier (MPI_Comm comm, MPI_Request *request) {
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Ibarrier (MPI_Comm comm, NBC_Handle *handle) {
+static inline int ___collectives_ibarrier (MPI_Comm comm, NBC_Handle *handle) {
   
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Barrier_switch(comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_barrier_switch(comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
 
-  __Barrier_switch(comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  ___collectives_barrier_switch(comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -9028,7 +9057,7 @@ int PMPI_Barrier_init (MPI_Comm comm, MPI_Info info, MPI_Request *request) {
   req->persistant.info = info;
 
   /* Init metadata for nbc */
-  __Barrier_init (comm, &(req->nbc_handle));
+  ___collectives_barrier_init (comm, &(req->nbc_handle));
   req->nbc_handle.is_persistent = 1;
   
   return MPI_SUCCESS;
@@ -9040,12 +9069,12 @@ int PMPI_Barrier_init (MPI_Comm comm, MPI_Info info, MPI_Request *request) {
   \param handle Pointer to the NBC_Handle
   \return error code
   */
-static inline int __Barrier_init (MPI_Comm comm, NBC_Handle* handle) {
+static inline int ___collectives_barrier_init (MPI_Comm comm, NBC_Handle* handle) {
 
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  __sched_info_init(&info);
+  ___collectives_sched_info_init(&info);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
@@ -9054,13 +9083,13 @@ static inline int __Barrier_init (MPI_Comm comm, NBC_Handle* handle) {
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  __Barrier_switch(comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  ___collectives_barrier_switch(comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   
-  __sched_alloc_init(handle, schedule, &info);
+  ___collectives_sched_alloc_init(handle, schedule, &info);
   
-  __Barrier_switch(comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  ___collectives_barrier_switch(comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
-  res = __Sched_commit(schedule, &info);
+  res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
   {
     printf("Error in NBC_Sched_commit() (%i)\n", res);
@@ -9078,8 +9107,8 @@ static inline int __Barrier_init (MPI_Comm comm, NBC_Handle* handle) {
   \param comm Target communicator
   \return error code
   */
-int mpc_mpi_barrier (MPI_Comm comm) {
-  return __Barrier_switch(comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+int _mpc_mpi_collectives_barrier (MPI_Comm comm) {
+  return ___collectives_barrier_switch(comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
 }
 
 
@@ -9091,7 +9120,7 @@ int mpc_mpi_barrier (MPI_Comm comm) {
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Barrier_switch (MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_barrier_switch (MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
   int rank = -1;
@@ -9114,7 +9143,7 @@ static inline int __Barrier_switch (MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_
 
   switch(alg) {
     case NBC_BARRIER_REDUCE_BROADCAST:
-      res = __Barrier_reduce_broadcast (comm, coll_type, schedule, info);
+      res = ___collectives_barrier_reduce_broadcast (comm, coll_type, schedule, info);
       break;
   }
 
@@ -9130,7 +9159,7 @@ static inline int __Barrier_switch (MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int __Barrier_reduce_broadcast (MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+static inline int ___collectives_barrier_reduce_broadcast (MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
   
   static char bar = 0;
 
@@ -9140,8 +9169,8 @@ static inline int __Barrier_reduce_broadcast (MPI_Comm comm, MPC_COLL_TYPE coll_
   _mpc_cl_comm_rank(comm, &rank);
 
   int maxr, peer;
-  maxr = __ceiled_log2(size);
-  int rmb = __rmb_index(rank);
+  maxr = ___collectives_ceiled_log2(size);
+  int rmb = ___collectives_rmb_index(rank);
   if(rank == 0) {
     rmb = maxr;
   }
@@ -9150,10 +9179,10 @@ static inline int __Barrier_reduce_broadcast (MPI_Comm comm, MPC_COLL_TYPE coll_
 
   if(rank != 0) { 
     peer = rank ^ (1 << rmb);
-    __Recv_type(&bar, 1, MPI_CHAR, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
+    ___collectives_recv_type(&bar, 1, MPI_CHAR, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
 
     if(rmb != 0) {
-      __Barrier_type(coll_type, schedule, info);
+      ___collectives_barrier_type(coll_type, schedule, info);
     }
   }
 
@@ -9163,23 +9192,23 @@ static inline int __Barrier_reduce_broadcast (MPI_Comm comm, MPC_COLL_TYPE coll_
       continue;
     }
 
-    __Send_type(& bar, 1, MPI_CHAR, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
+    ___collectives_send_type(& bar, 1, MPI_CHAR, peer, MPC_BROADCAST_TAG, comm, coll_type, schedule, info);
   }
   
 
-  __Barrier_type(coll_type, schedule, info);
+  ___collectives_barrier_type(coll_type, schedule, info);
 
 
   for(int i = 0; i < maxr; i++) {
     if(rank & (1 << i)) {
       peer = rank ^ (1 << i);
-      __Barrier_type(coll_type, schedule, info);
-      __Send_type(&bar, 1, MPI_CHAR, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_barrier_type(coll_type, schedule, info);
+      ___collectives_send_type(&bar, 1, MPI_CHAR, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
       
       break;
     } else if((rank | (1 << i)) < size) {
       peer = rank | (1 << i);
-      __Recv_type(&bar, 1, MPI_CHAR, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_recv_type(&bar, 1, MPI_CHAR, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
     }
   }
   

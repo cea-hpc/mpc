@@ -3345,7 +3345,7 @@ int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
 //
 //  return res;
 
-  return mpc_mpi_bcast(buffer, count, datatype, root, comm);
+  return _mpc_mpi_collectives_bcast(buffer, count, datatype, root, comm);
 }
 
 int __INTERNAL__PMPI_Gather_intra(const void *sendbuf, int sendcnt,
@@ -3445,7 +3445,7 @@ int __INTERNAL__PMPI_Gather_intra(const void *sendbuf, int sendcnt,
 //  mpi_check_status_error(&own_status);
 //
 //  return res;
-  return mpc_mpi_gather(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype, root, comm);
+  return _mpc_mpi_collectives_gather(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype, root, comm);
 }
 
 int __INTERNAL__PMPI_Gather_inter(void *sendbuf, int sendcnt,
@@ -3854,7 +3854,7 @@ int __INTERNAL__PMPI_Gatherv_intra(void *sendbuf, int sendcnt,
 //  sctk_free(recvrequest);
 //  return res;
 
-  return  mpc_mpi_gatherv(sendbuf, sendcnt, sendtype, recvbuf, recvcnts, displs, recvtype, root, comm);
+  return  _mpc_mpi_collectives_gatherv(sendbuf, sendcnt, sendtype, recvbuf, recvcnts, displs, recvtype, root, comm);
 }
 
 int __INTERNAL__PMPI_Gatherv_inter(const void *sendbuf, int sendcnt,
@@ -4018,7 +4018,7 @@ int __INTERNAL__PMPI_Scatter_intra(void *sendbuf, int sendcnt,
 //  sctk_free(sendrequest);
 //  sctk_free(sendstatus);
 //  return res;
-  return mpc_mpi_scatter(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype, root, comm);
+  return _mpc_mpi_collectives_scatter(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype, root, comm);
 }
 
 int __INTERNAL__PMPI_Scatter_inter(void *sendbuf, int sendcnt,
@@ -4600,7 +4600,7 @@ int __INTERNAL__PMPI_Scatterv_intra(void *sendbuf, int *sendcnts, int *displs,
 //  sctk_free(sendrequest);
 //  return res;
 
-  return mpc_mpi_scatterv(sendbuf, sendcnts, displs, sendtype, recvbuf, recvcnt, recvtype, root, comm);
+  return _mpc_mpi_collectives_scatterv(sendbuf, sendcnts, displs, sendtype, recvbuf, recvcnt, recvtype, root, comm);
 }
 
 int __INTERNAL__PMPI_Scatterv_inter(const void *sendbuf, const int *sendcnts, const int *displs,
@@ -4725,7 +4725,7 @@ int __INTERNAL__PMPI_Allgather_intra(void *sendbuf, int sendcount,
 //  MPI_HANDLE_ERROR(res, comm, "Error in Bcast");
 //
 //  return res;
-  return mpc_mpi_allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+  return _mpc_mpi_collectives_allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
 }
 
 int __INTERNAL__PMPI_Allgather_inter(void *sendbuf, int sendcount,
@@ -4900,7 +4900,7 @@ int __INTERNAL__PMPI_Allgatherv_intra(void *sendbuf, int sendcount,
 // 
 //   return res;
 
-  return mpc_mpi_allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm);
+  return _mpc_mpi_collectives_allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm);
 }
 
 int __INTERNAL__PMPI_Allgatherv_inter(const void *sendbuf, int sendcount,
@@ -5071,7 +5071,7 @@ int __INTERNAL__PMPI_Alltoall_intra(void *sendbuf, int sendcount,
 //
 //  return res;
 
-  return mpc_mpi_alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+  return _mpc_mpi_collectives_alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
 }
 
 int __INTERNAL__PMPI_Alltoall_inter(void *sendbuf, int sendcount,
@@ -5489,7 +5489,7 @@ int __INTERNAL__PMPI_Alltoallv_intra(void *sendbuf, int *sendcnts, int *sdispls,
 // 
 //   return res;
 
-  return mpc_mpi_alltoallv(sendbuf, sendcnts, sdispls, sendtype, recvbuf, recvcnts, rdispls, recvtype, comm);
+  return _mpc_mpi_collectives_alltoallv(sendbuf, sendcnts, sdispls, sendtype, recvbuf, recvcnts, rdispls, recvtype, comm);
 }
 
 int __INTERNAL__PMPI_Alltoallv_inter(const void *sendbuf, int *sendcnts, int *sdispls,
@@ -5692,7 +5692,7 @@ int __INTERNAL__PMPI_Alltoallw_intra(void *sendbuf, int *sendcnts, int *sdispls,
 //   }
 //   return res;
 
-  return mpc_mpi_alltoallw( sendbuf, sendcnts, sdispls, sendtypes, recvbuf, recvcnts, rdispls, recvtypes, comm);
+  return _mpc_mpi_collectives_alltoallw( sendbuf, sendcnts, sdispls, sendtypes, recvbuf, recvcnts, rdispls, recvtypes, comm);
 }
 
 int __INTERNAL__PMPI_Alltoallw_inter(void *sendbuf, int *sendcnts, int *sdispls,
@@ -7961,7 +7961,7 @@ int __INTERNAL__PMPI_Reduce_intra(void *sendbuf, void *recvbuf, int count,
 //        return res;
 //      }
 //    }
-    res = mpc_mpi_reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
+    res = _mpc_mpi_collectives_reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
   }
 
   return res;
@@ -8208,7 +8208,7 @@ int __INTERNAL__PMPI_Allreduce_intra(void *sendbuf, void *recvbuf, int count,
 //  }
 //
 //  return res;
-  return mpc_mpi_allreduce(sendbuf, recvbuf, count, datatype, op, comm);
+  return _mpc_mpi_collectives_allreduce(sendbuf, recvbuf, count, datatype, op, comm);
 }
 
 static int __copy_buffer(void *sendbuf, void *recvbuf, int count,
@@ -8514,7 +8514,7 @@ int __INTERNAL__PMPI_Reduce_scatter_intra(void *sendbuf, void *recvbuf, int *rec
 //   res = PMPI_Barrier(comm);
 //   return res;
 
-  return mpc_mpi_reduce_scatter(sendbuf, recvbuf, recvcnts, datatype, op, comm);
+  return _mpc_mpi_collectives_reduce_scatter(sendbuf, recvbuf, recvcnts, datatype, op, comm);
 }
 
 int __INTERNAL__PMPI_Reduce_scatter_inter(void *sendbuf, void *recvbuf, int *recvcnts,
@@ -8689,7 +8689,7 @@ int __INTERNAL__PMPI_Reduce_scatter_block_intra(void *sendbuf, void *recvbuf, in
 //
 //  res = PMPI_Scatter(recv_buf, recvcnt, datatype, recvbuf, recvcnt, datatype, 0, comm);
 //  return res;
-  return mpc_mpi_reduce_scatter_block(sendbuf, recvbuf, recvcnt, datatype, op, comm);
+  return _mpc_mpi_collectives_reduce_scatter_block(sendbuf, recvbuf, recvcnt, datatype, op, comm);
 }
 
 int __INTERNAL__PMPI_Reduce_scatter_block_inter(void *sendbuf, void *recvbuf, int recvcnt,
