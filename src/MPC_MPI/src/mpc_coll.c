@@ -26,7 +26,6 @@
 #include <mpc_coll_weak.h>
 
 #include "egreq_nbc.h"
-//#include "mpi_conf.h"
 
 #define SCHED_SIZE (sizeof(int))
 #define BARRIER_SCHED_SIZE (sizeof(char))
@@ -995,7 +994,6 @@ static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info 
          buf = info->hardware_info_ptr->childs_data_count[i];
        }
 
-       //MPI_Gather(&data_count, 1, MPI_INT, buf, 1, MPI_INT, 0, info->hardware_info_ptr->rootcomm[i]);
        ___collectives_gather_switch(&data_count, 1, MPI_INT, buf, 1, MPI_INT, 0, info->hardware_info_ptr->rootcomm[i], MPC_COLL_TYPE_BLOCKING, NULL, info);
 
        if(rank_master == 0) {
@@ -2233,11 +2231,9 @@ static inline int ___collectives_reduce_topo(const void *sendbuf, void* recvbuf,
   }
 
   if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
-    // if(!(info->flag & SCHED_INFO_TOPO_COMM_INITIALISED)) {
     /* choose max topological level on which to do hardware split */
     /*TODO choose level wisely */
     int max_level = TOPO_MAX_LEVEL;
-    //max_level = MAX_HARDWARE_LEVEL;
 
     ___collectives_topo_comm_init(comm, root, max_level, info);
   }
@@ -2310,11 +2306,9 @@ static inline int ___collectives_reduce_topo_commute(const void *sendbuf, void* 
   }
 
   if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
-    // if(!(info->flag & SCHED_INFO_TOPO_COMM_INITIALISED)) {
     /* choose max topological level on which to do hardware split */
     /*TODO choose level wisely */
     int max_level = TOPO_MAX_LEVEL;
-    //max_level = MAX_HARDWARE_LEVEL;
 
     ___collectives_topo_comm_init(comm, root, max_level, info);
   }
@@ -3805,17 +3799,14 @@ static inline int ___collectives_scatter_topo(const void *sendbuf, int sendcount
   }
 
   if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
-    // if(!(info->flag & SCHED_INFO_TOPO_COMM_INITIALISED)) {
     /* choose max topological level on which to do hardware split */
     /*TODO choose level wisely */
     int max_level = TOPO_MAX_LEVEL;
-    //max_level = MAX_HARDWARE_LEVEL;
 
     ___collectives_topo_comm_init(comm, root, max_level, info);
   }
 
   if(!(info->hardware_info_ptr->childs_data_count)) {
-    // if(!(info->flag & SCHED_INFO_TOPO_SWAP_ARRAY_INITIALISED)) {
     ___collectives_create_childs_counts(comm, info);
     ___collectives_create_swap_array(comm, root, info);
   }
@@ -3881,7 +3872,6 @@ static inline int ___collectives_scatter_topo(const void *sendbuf, int sendcount
         scatterv_buf = MPI_IN_PLACE;
       }
 
-      //res = ___collectives_scatterv_switch(tmpbuf, info->hardware_info_ptr->childs_data_count[i], displs, recvtype, scatterv_buf, info->hardware_info_ptr->send_data_count[i], recvtype, 0, master_comm, coll_type, schedule, info);
       res = ___collectives_scatterv_switch(tmpbuf, counts, displs, recvtype, scatterv_buf, info->hardware_info_ptr->send_data_count[i] * recvcount, recvtype, 0, master_comm, coll_type, schedule, info);
     
       ___collectives_barrier_type(coll_type, schedule, info);
@@ -4861,17 +4851,14 @@ static inline int ___collectives_gather_topo(const void *sendbuf, int sendcount,
   }
 
   if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
-    // if(!(info->flag & SCHED_INFO_TOPO_COMM_INITIALISED)) {
     /* choose max topological level on which to do hardware split */
     /*TODO choose level wisely */
     int max_level = TOPO_MAX_LEVEL;
-    //max_level = MAX_HARDWARE_LEVEL;
 
     ___collectives_topo_comm_init(comm, root, max_level, info);
   }
 
   if(!(info->hardware_info_ptr->childs_data_count)) {
-    // if(!(info->flag & SCHED_INFO_TOPO_SWAP_ARRAY_INITIALISED)) {
     ___collectives_create_childs_counts(comm, info);
     ___collectives_create_swap_array(comm, root, info);
   }
@@ -4915,7 +4902,6 @@ static inline int ___collectives_gather_topo(const void *sendbuf, int sendcount,
         gatherv_buf = MPI_IN_PLACE;
       }
 
-      //res = ___collectives_gatherv_switch(gatherv_buf, info->hardware_info_ptr->send_data_count[i], sendtype, tmpbuf, info->hardware_info_ptr->childs_data_count[i], displs, sendtype, 0, master_comm, coll_type, schedule, info);
       res = ___collectives_gatherv_switch(gatherv_buf, info->hardware_info_ptr->send_data_count[i] * tmp_sendcount, sendtype, tmpbuf, counts, displs, sendtype, 0, master_comm, coll_type, schedule, info);
     }
   }

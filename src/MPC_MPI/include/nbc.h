@@ -104,8 +104,6 @@ typedef struct {
 /* TODO: we should make a handle pointer to a state later (that the user
  * can move request handles) */
 	void *tmpbuf_gather; /* temporary buffer e.g. used for Gather */
-    
-  //mpc_hardware_split_info_t *hardware_info; /* structure for hardware communicator info */
 } NBC_Handle;
 typedef NBC_Handle NBC_Request;
 

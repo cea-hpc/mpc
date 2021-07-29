@@ -31,7 +31,6 @@
 #include "coll.h"
 #include "shm_coll.h"
 
-//TODO a changer de place
 #define MPC_INITIAL_TOPO_COMMS_SIZE 10
 typedef struct mpc_lowcomm_topo_comms
 {

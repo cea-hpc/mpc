@@ -226,8 +226,6 @@ static inline void __communicator_id_register(mpc_lowcomm_communicator_t comm);
 static inline mpc_lowcomm_internal_communicator_t *__init_communicator_with_id(unsigned int comm_id,
                                                                                mpc_lowcomm_group_t *group)
 {
-  //fprintf(stderr, "COMM INIT\n");
-
 	mpc_lowcomm_internal_communicator_t *ret = sctk_malloc(sizeof(mpc_lowcomm_internal_communicator_t) );
 
 	assume(ret != NULL);
