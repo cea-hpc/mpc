@@ -32,12 +32,15 @@
 #include "shm_coll.h"
 
 #define MPC_INITIAL_TOPO_COMMS_SIZE 10
+/**
+ * @brief This is the struct for the informations needed for topological collectives
+ */
 typedef struct mpc_lowcomm_topo_comms
 {
-  int size;
+  int size;                               /**< Size of the arrays. */
 
-  int *roots;
-  mpc_hardware_split_info_t **hw_infos;
+  int *roots;                             /**< Array of roots used in collectives. */
+  mpc_hardware_split_info_t **hw_infos;   /**< Array of the structure containing topological communicators. */
 } mpc_lowcomm_topo_comms;
 
 
@@ -72,7 +75,7 @@ typedef struct mpc_lowcomm_internal_communicator_s
 	mpc_lowcomm_communicator_t right_comm;		/**< The right comm for intercomms */
 
   /* Topological comm */
-  mpc_lowcomm_topo_comms *topo_comms;
+  mpc_lowcomm_topo_comms *topo_comms;  /**< Topological communicators. */
   
 }mpc_lowcomm_internal_communicator_t;
 

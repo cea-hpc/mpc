@@ -151,7 +151,14 @@ int mpc_lowcomm_communicator_attributes(const mpc_lowcomm_communicator_t comm,
 	return SCTK_SUCCESS;
 }
 
-
+/**
+ * @brief Find the index of the topological communicators associated with the root parameter.
+ *
+ * @param comm Target communicator.
+ * @param root Target root.
+ *
+ * @return The index of the topological communicators associated with the root parameter or -1.
+ */
 static inline int ___topo_find_comm_index(mpc_lowcomm_communicator_t comm, int root) {
   int task_rank = mpc_common_get_task_rank();
 
