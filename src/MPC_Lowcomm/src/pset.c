@@ -31,6 +31,8 @@
 #include <mpc_launch_pmi.h>
 #include <mpc_topology.h>
 
+#include <mpc_lowcomm.h>
+
 struct _mpc_lowcomm_pset_list_entry
 {
 	int                                  is_comm_self;
@@ -87,6 +89,8 @@ int _mpc_lowcomm_init_psets(void)
 	__pset_list.count = 0;
 
 	_mpc_lowcomm_pset_register();
+
+	return 0;
 }
 
 int _mpc_lowcomm_release_psets(void)
@@ -100,6 +104,8 @@ int _mpc_lowcomm_release_psets(void)
 		__pset_list.count--;
 		__free_entry(to_free);
 	}
+
+	return 0;
 }
 
 static inline struct _mpc_lowcomm_pset_list_entry *__pset_get_by_name_no_lock(const char *name)
@@ -107,8 +113,6 @@ static inline struct _mpc_lowcomm_pset_list_entry *__pset_get_by_name_no_lock(co
 	struct _mpc_lowcomm_pset_list_entry *cur = __pset_list.head;
 
 	struct _mpc_lowcomm_pset_list_entry *ret = NULL;
-
-	int cnt = 0;
 
 	while(cur)
 	{
@@ -246,6 +250,8 @@ int _mpc_lowcomm_pset_register(void)
 
 	/* WORLD */
 	_mpc_lowcomm_pset_push("mpi://WORLD", _mpc_lowcomm_group_world(), 0);
+
+	return 0;
 }
 
 static inline int __split_for(mpc_lowcomm_communicator_t src_comm, const char *desc, int color)
@@ -266,18 +272,20 @@ static inline int __split_for(mpc_lowcomm_communicator_t src_comm, const char *d
 	/* Only one rank per UNIX process does register */
 	if(mpc_common_get_local_task_rank() == 0)
 	{
-		char sappid[64];
+		char sappid[200];
 
-		snprintf(sappid, 64, "%sSELF", desc);
+		snprintf(sappid, 200, "%sSELF", desc);
 		_mpc_lowcomm_pset_push(sappid, grp, 0);
 
-		snprintf(sappid, 64, "%s%d", desc, color);
+		snprintf(sappid, 200, "%s%d", desc, color);
 		_mpc_lowcomm_pset_push(sappid, grp, 0);
 	}
 
 	mpc_lowcomm_group_free(&grp);
 
 	mpc_lowcomm_communicator_free(&comm);
+
+	return 0;
 }
 
 int _mpc_lowcomm_pset_bootstrap(void)
@@ -315,19 +323,45 @@ int _mpc_lowcomm_pset_bootstrap(void)
 
 	int i;
 
+	int cw_size = mpc_lowcomm_communicator_size(MPC_COMM_WORLD);
+
+	int * all_colors = sctk_malloc(sizeof(int) * cw_size);
+	assume(all_colors != NULL);
+
 	for(i = 0 ; i < MPC_LOWCOMM_HW_TYPE_COUNT ; i++)
 	{
-		int color = mpc_topology_guided_compute_color(mpc_topology_split_hardware_type_name[i]);
+		int color = mpc_topology_guided_compute_color((char *)mpc_topology_split_hardware_type_name[i]);
 
-		if(0 <= color)
+		/* Make sure all ranks have this level defined
+		   for example in the case of etherogeneous hardware  */
+		mpc_lowcomm_allgather(&color, all_colors, sizeof(int), MPC_COMM_WORLD);
+
+		int skip = 0;
+
+		int j;
+		for(j = 0 ; j < cw_size ; j++)
 		{
-			char name[64];
-			snprintf(name, 64, "hwloc://%s/", mpc_topology_split_hardware_type_name[i]);
-			__split_for(node_comm, name, color);
+			if(all_colors[j] < 0)
+			{
+				skip = 1;
+				break;
+			}
 		}
+
+		if(skip)
+		{
+			continue;
+		}
+
+		/* If we are here all ranks have a color */
+		char name[64];
+		snprintf(name, 64, "hwloc://%s/", mpc_topology_split_hardware_type_name[i]);
+		__split_for(node_comm, name, color);
 	}
 
 	mpc_lowcomm_communicator_free(&node_comm);
+
+	sctk_free(all_colors);
 
 	return MPC_LOWCOMM_SUCCESS;
 }
