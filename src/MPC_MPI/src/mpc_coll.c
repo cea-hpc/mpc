@@ -936,7 +936,7 @@ static inline int ___collectives_create_master_hardware_comm_unguided(int vrank,
   for(int i = 0; i < deepest_level; i++) {
     _mpc_cl_comm_rank(hwcomm[i+1],&rank_comm);
 
-    int color = (rank_comm == 0)?(0):(1);
+    int color = (rank_comm == 0)?(0):(MPI_UNDEFINED);
 
     PMPI_Comm_split(hwcomm[i], color, vrank, &rootcomm[i]);
 
