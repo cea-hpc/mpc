@@ -152,7 +152,7 @@ int mpc_lowcomm_communicator_attributes(const mpc_lowcomm_communicator_t comm,
 }
 
 
-static inline int mpc_lowcomm_find_topo_comm_index(mpc_lowcomm_communicator_t comm, int root) {
+static inline int ___topo_find_comm_index(mpc_lowcomm_communicator_t comm, int root) {
   int task_rank = mpc_common_get_task_rank();
 
   for(int i = 0; i < comm->topo_comms[task_rank].size; i++) {
@@ -167,29 +167,35 @@ static inline int mpc_lowcomm_find_topo_comm_index(mpc_lowcomm_communicator_t co
 mpc_hardware_split_info_t* mpc_lowcomm_topo_comm_get(mpc_lowcomm_communicator_t comm, int root) {
 
   int task_rank = mpc_common_get_task_rank();
-  int index = mpc_lowcomm_find_topo_comm_index(comm, root);
+  int index = ___topo_find_comm_index(comm, root);
   
   if(index != -1) {
-    //fprintf(stderr, "GET | TASK %d | ROOT %d -> INDEX %d | ADR %p\n", task_rank, root, index, comm->topo_comms[task_rank].hw_infos[index]);
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
+    mpc_common_debug_log("GET | TASK %d | ROOT %d -> INDEX %d | ADR %p\n", task_rank, root, index, comm->topo_comms[task_rank].hw_infos[index]);
+#endif
     return comm->topo_comms[task_rank].hw_infos[index];
   }
 
-  //fprintf(stderr, "GET | TASK %d | ROOT %d -> NULL | ADR %p\n", task_rank, root, NULL);
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
+  mpc_common_debug_log("GET | TASK %d | ROOT %d -> NULL | ADR %p\n", task_rank, root, NULL);
+#endif
   return NULL;
 }
 
 void mpc_lowcomm_topo_comm_set(mpc_lowcomm_communicator_t comm, int root, mpc_hardware_split_info_t *hw_info) {
 
   int task_rank = mpc_common_get_task_rank();
-  int index = mpc_lowcomm_find_topo_comm_index(comm, root);
+  int index = ___topo_find_comm_index(comm, root);
 
   if(index != -1) {
-    //fprintf(stderr, "SET | TASK %d | UPDATE | ROOT %d -> INDEX %d | ADR %p\n", task_rank, root, index, hw_info);
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
+    mpc_common_debug_log("SET | TASK %d | UPDATE | ROOT %d -> INDEX %d | ADR %p\n", task_rank, root, index, hw_info);
+#endif
     comm->topo_comms[task_rank].hw_infos[index] = hw_info;
     return;
   }
 
-  index = mpc_lowcomm_find_topo_comm_index(comm, -1);
+  index = ___topo_find_comm_index(comm, -1);
   if(index == -1) {
 
     comm->topo_comms[task_rank].roots = realloc(comm->topo_comms[task_rank].roots, sizeof(int) * comm->topo_comms[task_rank].size * 2);
@@ -203,7 +209,9 @@ void mpc_lowcomm_topo_comm_set(mpc_lowcomm_communicator_t comm, int root, mpc_ha
     comm->topo_comms[task_rank].size *= 2;
   }
 
-  //fprintf(stderr, "SET | TASK %d | ROOT %d -> INDEX %d | ADR %p\n", task_rank, root, index, hw_info);
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
+  mpc_common_debug_log("SET | TASK %d | ROOT %d -> INDEX %d | ADR %p\n", task_rank, root, index, hw_info);
+#endif
   comm->topo_comms[task_rank].roots[index] = root;
   comm->topo_comms[task_rank].hw_infos[index] = hw_info;
 }
