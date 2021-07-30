@@ -3765,7 +3765,6 @@ static inline int ___collectives_scatter_topo(const void *sendbuf, int sendcount
   int rank, size, res = MPI_SUCCESS;
   MPI_Aint sendext, recvext;
 
-  //void *tmp_recvbuf = recvbuf;
   MPI_Datatype tmp_recvtype = recvtype;
   int tmp_recvcount = recvcount;
 
