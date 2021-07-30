@@ -731,8 +731,8 @@ static inline void __team_reset( mpc_omp_team_t *team )
 	team->id = OPA_fetch_and_incr_int( &nb_teams );
 	mpc_common_spinlock_init( &team->lock, 0 );
 	mpc_common_spinlock_init( &team->atomic_lock, 0 );
-	team->critical_lock = ( mpc_omp_lock_t * ) mpc_omp_alloc( sizeof( mpc_omp_lock_t ) );
-	memset( team->critical_lock, 0, sizeof( mpc_omp_lock_t ) );
+	team->critical_lock = ( omp_lock_t * ) mpc_omp_alloc( sizeof( omp_lock_t ) );
+	memset( team->critical_lock, 0, sizeof( omp_lock_t ) );
 	mpc_common_spinlock_init( &team->critical_lock->lock, 0 );
 }
 

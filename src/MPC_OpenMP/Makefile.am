@@ -22,5 +22,7 @@
 #                                                                      #
 ########################################################################
 mpc_headerdir=$(pkgincludedir)
-mpc_header_HEADERS= ./include/omp_abi.h ./include/mpcomp_abi.h ./include/mpc_omp.h ./include/omp.h ./include/ompt.h ./include/omp-tools.h
+mpc_header_HEADERS= ./include/omp_abi.h ./include/mpcomp_abi.h \
+					./include/mpc_omp.h mpc_omp_task_property.h \
+					./include/omp.h ./include/ompt.h ./include/omp-tools.h
 SUBDIRS=src

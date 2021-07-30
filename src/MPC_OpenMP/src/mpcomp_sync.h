@@ -96,8 +96,8 @@ int omp_test_nest_lock( omp_nest_lock_t *lock );
 /* If the current task (thread if implicit task or explicit task)
 *     is not the owner of the lock */
 static inline int
-mpc_omp_nest_lock_test_task( mpc_omp_thread_t *thread,
-                            mpc_omp_nest_lock_t *mpcomp_user_nest_lock )
+omp_nest_lock_test_task( mpc_omp_thread_t *thread,
+                            omp_nest_lock_t *mpcomp_user_nest_lock )
 {
 	struct mpc_omp_task_s *current_task =
 	    MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread );

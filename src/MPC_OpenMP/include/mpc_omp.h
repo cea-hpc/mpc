@@ -33,191 +33,109 @@ extern "C" {
 #include <pthread.h>
 #include <stdint.h>
 
-/* OpenMP 2.5 API - For backward compatibility with old patched GCC */
-int mpc_omp_get_num_threads( void );
-int mpc_omp_get_thread_num( void );
+#include "omp.h"
 
-/* OpenMP 2.5 API */
-void omp_set_num_threads( int num_threads );
-int omp_get_num_threads( void );
-int omp_get_max_threads( void );
-int omp_get_thread_num( void );
-int omp_get_num_procs( void );
-int omp_in_parallel( void );
-void omp_set_dynamic( int dynamic_threads );
-int omp_get_dynamic( void );
-void omp_set_nested( int nested );
-int omp_get_nested( void );
+    /* OpenMP 2.5 API - For backward compatibility with old patched GCC */
+    int mpc_omp_get_num_threads( void );
+    int mpc_omp_get_thread_num( void );
 
-typedef enum omp_lock_hint_t {
-	omp_lock_hint_none = 0,
-	omp_lock_hint_uncontended = 1,
-	omp_lock_hint_contended = 2,
-	omp_lock_hint_nonspeculative = 4,
-	omp_lock_hint_speculative = 8
-} omp_lock_hint_t;
+    /* MPC-OpenMP event types */
+    typedef enum {
+        MPC_OMP_EVENT_TASK_BLOCK
+    }   mpc_omp_event_t;
 
-typedef struct mpc_omp_lock_s
-{
-	omp_lock_hint_t hint;
-	OPA_int_t lock;
-	void *opaque;
-	uint64_t ompt_wait_id;
-} mpc_omp_lock_t;
+    /**
+     * OpenMP specificates that :
+     * > The type omp_event_handle_t, which must be an implementation-defined enum type
+     *
+     * This has limitations, and so we define an MPC-specific event type for internal events
+     */
+    typedef struct  mpc_omp_event_handle_s
+    {
+        mpc_omp_event_t type;   /* the event type */
+        void            * attr; /* the event attributes */
+    }               mpc_omp_event_handle_t;
 
-typedef mpc_omp_lock_t* omp_lock_t;
+    void mpc_omp_fulfill_event(mpc_omp_event_handle_t * handle);
 
-typedef struct mpc_omp_nest_lock_s
-{
-	int nb_nested;		/* Number of times this lock is held */
-	void *owner_thread; /* Owner of the lock */
-	void *owner_task;   /* Owner of the lock */
-	omp_lock_hint_t hint;
-	OPA_int_t lock;
-	void *opaque;
-	uint64_t ompt_wait_id;
-} mpc_omp_nest_lock_t;
+    /** Dump the openmp thread tree */
+    void mpc_omp_tree_print(FILE * file);
 
-typedef mpc_omp_nest_lock_t *omp_nest_lock_t;
+    /**
+     *  * Async callback
+     *   */
+    typedef enum    mpc_omp_async_when_t
+    {
+        /* scheduler points */
+        MPC_OMP_ASYNC_TASK_SCHEDULER_POINT_NEW,
+        MPC_OMP_ASYNC_TASK_SCHEDULER_POINT_COMPLETE,
+        MPC_OMP_ASYNC_TASK_SCHEDULER_POINT_YIELD,
+        /* [...] */
+        MPC_OMP_ASYNC_SCHEDULER_POINT_ANY,
 
-/* Lock Functions */
-void omp_init_lock( omp_lock_t *lock );
-void omp_init_lock_with_hint( omp_lock_t *lock, omp_lock_hint_t hint );
-void omp_destroy_lock( omp_lock_t *lock );
-void omp_set_lock( omp_lock_t *lock );
-void omp_unset_lock( omp_lock_t *lock );
-int omp_test_lock( omp_lock_t *lock );
+        /* before a new task should be scheduled */
+        MPC_OMP_ASYNC_TASK_SCHEDULE_BEFORE,
 
-/* Nestable Lock Fuctions */
-void omp_init_nest_lock( omp_nest_lock_t *lock );
-void omp_init_nest_lock_with_hint( omp_nest_lock_t *lock,
-								   omp_lock_hint_t hint );
-void omp_destroy_nest_lock( omp_nest_lock_t *lock );
-void omp_set_nest_lock( omp_nest_lock_t *lock );
-void omp_unset_nest_lock( omp_nest_lock_t *lock );
-int omp_test_nest_lock( omp_nest_lock_t *lock );
+        /* when there is no more ready tasks */
+        MPC_OMP_ASYNC_TASK_SCHEDULER_FAMINE,
 
-/* Timing Routines */
-double omp_get_wtime( void );
-double omp_get_wtick( void );
+        /* max number */
+        MPC_OMP_ASYNC_MAX
+    }               mpc_omp_async_when_t;
 
-/* OpenMP 3.0 API */
-typedef enum omp_sched_t {
-	omp_sched_static = 1,
-	omp_sched_dynamic = 2,
-	omp_sched_guided = 3,
-	omp_sched_auto = 4,
-} omp_sched_t;
-void omp_set_schedule( omp_sched_t kind, int modifier );
-void omp_get_schedule( omp_sched_t *kind, int *modifier );
-int omp_get_thread_limit( void );
-void omp_set_max_active_levels( int max_levels );
-int omp_get_max_active_levels( void );
-int omp_get_level( void );
-int omp_get_ancestor_thread_num( int level );
-int omp_get_team_size( int level );
-int omp_get_active_level( void );
-int omp_in_final();
+    typedef enum    mpc_omp_async_repeat_t
+    {
+        MPC_MPC_OMP_ASYNC_REPEAT_UNTIL,
+        MPC_MPC_OMP_ASYNC_REPEAT_N
+    }               mpc_omp_async_repeat_t;
 
-/* OpenMP 5.0 API */
-typedef enum omp_control_tool_result_e {
-    omp_control_tool_notool = -2,
-    omp_control_tool_nocallback = -1,
-    omp_control_tool_success = 0,
-    omp_control_tool_ignored = 1
-} omp_control_tool_result_t;
+    typedef struct  mpc_omp_async_s
+    {
+        /* internal */
+        struct mpc_omp_async_s * _next;
 
-typedef enum omp_control_tool_t {
-    omp_control_tool_start = 1,
-    omp_control_tool_pause = 2,
-    omp_control_tool_flush = 3,
-    omp_control_tool_end = 4
-} omp_control_tool_t;
+        /* user */
+        int (* func)(void * data);      /* Return > 0 if the function should be re-run later on */
+        void * data;
+        mpc_omp_async_when_t when;
+        mpc_omp_async_repeat_t repeat;
+        omp_event_handle_t * event;     /* the event in case of `MPC_MPC_OMP_ASYNC_REPEAT_UNTIL`    */
+        size_t n;                       /* the `n` in case of `MPC_MPC_OMP_ASYNC_REPEAT_N`          */
+    }               mpc_omp_async_t;
 
-int omp_control_tool(int command, int modifier, void * arg);
+    /**
+     * `pragma omp async [when(indicator)] [repeat(when)]`
+     * 
+     *   A **async** region defines a routine that is executed by the runtime.
+     * 
+     * The **when** clause defines when the region should be executed (see `mpc_omp_async_when`)
+     *  Default value is `MPC_OMP_ASYNC_SCHEDULER_FAMINE`.
+     * 
+     *The **repeat** clause defines how many times should the region run.
+     *     - `repeat(until: event-handle)` will make the region run as long
+     *      as the event represented by `event-handle` is not fullfiled.
+     *      - `repeat(n > 0)` will make the region run `n` times.
+     *
+     *  Default value is `repeat(1)`
+     */
+    void mpc_omp_async(mpc_omp_async_t * async);
 
-/* OpenMP 5.0 API */
+    /** Maximum length of a task label */
+# define MPC_OMP_TASK_LABEL_MAX_LENGTH 64
 
-  /*
-   * define memory management types
-   */
+    /** Give extra information of the incoming task - must be called right before a `#pragma omp task` */
+    void mpc_omp_task(char * label);
 
-  typedef uintptr_t omp_uintptr_t;
+    /** Taskyield which blocks on event */
+    void mpc_omp_task_block(omp_event_handle_t * event, mpc_omp_async_t * async);
+    void mpc_omp_task_unblock(omp_event_handle_t * event);
 
-  typedef enum omp_memspace_handle_t {
-    omp_default_mem_space,
-    omp_large_cap_mem_space,
-    omp_const_mem_space,
-    omp_high_bw_mem_space,
-    omp_low_lat_mem_space
-    /* Add vendor specific constants for memory spaces here.  */
-  } omp_memspace_handle_t;
+    /* task trace calls */
+    void mpc_omp_task_trace_begin(void);
+    void mpc_omp_task_trace_end(void);
 
-  typedef enum omp_allocator_handle_t {
-    omp_null_allocator = 0,
-    /* The rest of the enumerators have
-     implementation specific values.  */
-    // omp_default_mem_alloc = -12,
-    omp_default_mem_alloc, // Utile ?
-    omp_large_cap_mem_alloc,
-    omp_const_mem_alloc,
-    omp_high_bw_mem_alloc,
-    omp_low_lat_mem_alloc,
-    omp_cgroup_mem_alloc,
-    omp_pteam_mem_alloc,
-    omp_thread_mem_alloc
-    /* Some range for dynamically allocated handles.  */
-  } omp_allocator_handle_t;
-
-  typedef enum omp_alloctrait_key_t {
-    omp_atk_sync_hint = 1,
-    omp_atk_alignment = 2,
-    omp_atk_access = 3,
-    omp_atk_pool_size = 4,
-    omp_atk_fallback = 5,
-    omp_atk_fb_data = 6,
-    omp_atk_pinned = 7,
-    omp_atk_partition = 8
-  } omp_alloctrait_key_t;
-
-  typedef enum omp_alloctrait_value_t {
-    omp_atv_false = 0,
-    omp_atv_true = 1,
-    omp_atv_default = 2,
-    omp_atv_contended = 3,
-    omp_atv_uncontended = 4,
-    omp_atv_sequential = 5,
-    omp_atv_private = 6,
-    omp_atv_all = 7,
-    omp_atv_thread = 8,
-    omp_atv_pteam = 9,
-    omp_atv_cgroup = 10,
-    omp_atv_default_mem_fb = 11,
-    omp_atv_null_fb = 12,
-    omp_atv_abort_fb = 13,
-    omp_atv_allocator_fb = 14,
-    omp_atv_environment = 15,
-    omp_atv_nearest = 16,
-    omp_atv_blocked = 17,
-    omp_atv_interleaved = 18
-  } omp_alloctrait_value_t;
-
-  typedef struct omp_alloctrait_t {
-    omp_alloctrait_key_t key;
-    omp_uintptr_t value;
-  } omp_alloctrait_t;
-
-  omp_allocator_handle_t omp_init_allocator (
-      omp_memspace_handle_t memspace,
-      int ntraits,
-      const omp_alloctrait_t traits[]
-      );
-
-  void omp_destroy_allocator (omp_allocator_handle_t allocator);
-  void omp_set_default_allocator (omp_allocator_handle_t allocator);
-  omp_allocator_handle_t omp_get_default_allocator (void);
-  void *omp_alloc (size_t size, omp_allocator_handle_t allocator);
-  void omp_free (void *ptr, omp_allocator_handle_t allocator);
+    /* return true if the thread is currently within an omp task */
+    int mpc_omp_in_task(void);
 
 #ifdef __cplusplus
 }

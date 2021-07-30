@@ -60,7 +60,7 @@ static ompt_wait_id_t _mpcomp_ompt_atomic_lock_wait_id = 0;
 //static OPA_int_t _mpcomp_critical_lock_init_once 	= OPA_INT_T_INITIALIZER( 0 );
 
 //static mpc_common_spinlock_t *_mpcomp_omp_global_atomic_lock = NULL;
-//static mpc_omp_lock_t 	*_mpcomp_omp_global_critical_lock = NULL;
+//static omp_lock_t 	*_mpcomp_omp_global_critical_lock = NULL;
 static mpc_common_spinlock_t 	_mpcomp_global_init_critical_named_lock = SCTK_SPINLOCK_INITIALIZER;
 
 void mpc_omp_atomic_begin( void )
@@ -133,7 +133,7 @@ void mpc_omp_anonymous_critical_begin( void )
   assert( t->instance != NULL ) ;
   team = t->instance->team ;
   assert( team != NULL ) ;
-	mpc_omp_lock_t* critical_lock = team->critical_lock;
+	omp_lock_t* critical_lock = team->critical_lock;
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_GOMP );
 #endif /* OMPT_SUPPORT */
@@ -172,7 +172,7 @@ void mpc_omp_anonymous_critical_end( void )
 #endif /* OMPT_SUPPORT */
   team = t->instance->team ;
   assert( team != NULL ) ;
-	mpc_omp_lock_t* critical_lock = team->critical_lock;
+	omp_lock_t* critical_lock = team->critical_lock;
 
 	mpc_common_spinlock_unlock( &(critical_lock->lock ) );
 
@@ -190,7 +190,7 @@ void mpc_omp_named_critical_begin( void **l )
 
 	assert( l );
 
-	mpc_omp_lock_t *named_critical_lock;
+	omp_lock_t *named_critical_lock;
 
 	if ( *l == NULL )
 	{
@@ -198,9 +198,9 @@ void mpc_omp_named_critical_begin( void **l )
 
 		if ( *l == NULL )
 		{
-			named_critical_lock = (mpc_omp_lock_t *) sctk_malloc( sizeof( mpc_omp_lock_t ));
+			named_critical_lock = (omp_lock_t *) sctk_malloc( sizeof( omp_lock_t ));
 			assert( named_critical_lock );
-			memset( named_critical_lock, 0, sizeof( mpc_omp_lock_t ) );
+			memset( named_critical_lock, 0, sizeof( omp_lock_t ) );
 			mpc_common_spinlock_init( &( named_critical_lock->lock ), 0 );
 
 #if OMPT_SUPPORT
@@ -214,7 +214,7 @@ void mpc_omp_named_critical_begin( void **l )
 		mpc_common_spinlock_unlock( &( _mpcomp_global_init_critical_named_lock ) );
 	}
 
-	named_critical_lock = ( mpc_omp_lock_t * )( *l );
+	named_critical_lock = ( omp_lock_t * )( *l );
 
 #if OMPT_SUPPORT
     _mpc_omp_ompt_callback_mutex_acquire( ompt_mutex_critical,
@@ -240,7 +240,7 @@ void mpc_omp_named_critical_end( void **l )
 	assert( l );
 	assert( *l );
 
-	mpc_omp_lock_t *named_critical_lock = ( mpc_omp_lock_t * )( *l );
+	omp_lock_t *named_critical_lock = ( omp_lock_t * )( *l );
 	mpc_common_spinlock_unlock( &( named_critical_lock->lock ) );
 
 #if OMPT_SUPPORT
@@ -815,13 +815,13 @@ int _mpc_omp_sections_coherency_barrier(void) { return 0; }
  */
 static void __sync_lock_init_with_hint( omp_lock_t *lock, omp_lock_hint_t hint )
 {
-	mpc_omp_lock_t *mpcomp_user_lock = NULL;
+	omp_lock_t *mpcomp_user_lock = NULL;
 
 	mpc_omp_init();
 
-	mpcomp_user_lock = ( mpc_omp_lock_t * )mpc_omp_alloc( sizeof( mpc_omp_lock_t ) );
+	mpcomp_user_lock = ( omp_lock_t * )mpc_omp_alloc( sizeof( omp_lock_t ) );
 	assert( mpcomp_user_lock );
-	memset( mpcomp_user_lock, 0, sizeof( mpc_omp_lock_t ) );
+	memset( mpcomp_user_lock, 0, sizeof( omp_lock_t ) );
 
 	mpc_common_spinlock_init( &( mpcomp_user_lock->lock ), 0 );
 
@@ -870,9 +870,9 @@ void omp_destroy_lock( omp_lock_t *lock )
     _mpc_omp_ompt_frame_get_infos();
 #endif /* OMPT_SUPPORT */
 
-	mpc_omp_lock_t *mpcomp_user_lock = NULL;
+	omp_lock_t *mpcomp_user_lock = NULL;
 	assert( lock );
-	mpcomp_user_lock = ( mpc_omp_lock_t * )*lock;
+	mpcomp_user_lock = ( omp_lock_t * )*lock;
 
 #if OMPT_SUPPORT
     _mpc_omp_ompt_callback_lock_destroy( ompt_mutex_lock,
@@ -889,9 +889,9 @@ void omp_set_lock( omp_lock_t *lock )
     _mpc_omp_ompt_frame_get_infos();
 #endif /* OMPT_SUPPORT */
 
-	mpc_omp_lock_t *mpcomp_user_lock = NULL;
+	omp_lock_t *mpcomp_user_lock = NULL;
 	assert( lock );
-	mpcomp_user_lock = ( mpc_omp_lock_t * )*lock;
+	mpcomp_user_lock = ( omp_lock_t * )*lock;
 
 #if OMPT_SUPPORT
     _mpc_omp_ompt_callback_mutex_acquire( ompt_mutex_lock,
@@ -914,9 +914,9 @@ void omp_unset_lock( omp_lock_t *lock )
     _mpc_omp_ompt_frame_get_infos();
 #endif /* OMPT_SUPPORT */
 
-	mpc_omp_lock_t *mpcomp_user_lock = NULL;
+	omp_lock_t *mpcomp_user_lock = NULL;
 	assert( lock );
-	mpcomp_user_lock = ( mpc_omp_lock_t * )*lock;
+	mpcomp_user_lock = ( omp_lock_t * )*lock;
 	mpc_common_spinlock_unlock( &( mpcomp_user_lock->lock ) );
 
 #if OMPT_SUPPORT
@@ -932,9 +932,9 @@ int omp_test_lock( omp_lock_t *lock )
 #endif /* OMPT_SUPPORT */
 
 	int retval;
-	mpc_omp_lock_t *mpcomp_user_lock = NULL;
+	omp_lock_t *mpcomp_user_lock = NULL;
 	assert( lock );
-	mpcomp_user_lock = ( mpc_omp_lock_t * )*lock;
+	mpcomp_user_lock = ( omp_lock_t * )*lock;
 
 #if OMPT_SUPPORT
     _mpc_omp_ompt_callback_mutex_acquire( ompt_mutex_lock,
@@ -961,13 +961,13 @@ int omp_test_lock( omp_lock_t *lock )
 
 static void __sync_nest_lock_init_with_hint( omp_nest_lock_t *lock, omp_lock_hint_t hint )
 {
-	mpc_omp_nest_lock_t *mpcomp_user_nest_lock = NULL;
+	omp_nest_lock_t *mpcomp_user_nest_lock = NULL;
 
 	mpc_omp_init();
 
-	mpcomp_user_nest_lock = ( mpc_omp_nest_lock_t * )mpc_omp_alloc( sizeof( mpc_omp_nest_lock_t ) );
+	mpcomp_user_nest_lock = ( omp_nest_lock_t * )mpc_omp_alloc( sizeof( omp_nest_lock_t ) );
 	assert( mpcomp_user_nest_lock );
-	memset( mpcomp_user_nest_lock, 0, sizeof( mpc_omp_nest_lock_t ) );
+	memset( mpcomp_user_nest_lock, 0, sizeof( omp_nest_lock_t ) );
 
 	mpc_common_spinlock_init( &( mpcomp_user_nest_lock->lock ), 0 );
 
@@ -1016,9 +1016,9 @@ void omp_destroy_nest_lock( omp_nest_lock_t *lock )
     _mpc_omp_ompt_frame_get_infos();
 #endif /* OMPT_SUPPORT */
 
-	mpc_omp_nest_lock_t *mpcomp_user_nest_lock = NULL;
+	omp_nest_lock_t *mpcomp_user_nest_lock = NULL;
 	assert( lock );
-	mpcomp_user_nest_lock = ( mpc_omp_nest_lock_t * )*lock;
+	mpcomp_user_nest_lock = ( omp_nest_lock_t * )*lock;
 
 #if OMPT_SUPPORT
     _mpc_omp_ompt_callback_lock_destroy( ompt_mutex_nest_lock,
@@ -1035,7 +1035,7 @@ void omp_set_nest_lock( omp_nest_lock_t *lock )
     _mpc_omp_ompt_frame_get_infos();
 #endif /* OMPT_SUPPORT */
 
-	mpc_omp_nest_lock_t *mpcomp_user_nest_lock;
+	omp_nest_lock_t *mpcomp_user_nest_lock;
 
 	mpc_omp_init();
 
@@ -1043,7 +1043,7 @@ void omp_set_nest_lock( omp_nest_lock_t *lock )
 
 	assert( lock );
 
-	mpcomp_user_nest_lock = ( mpc_omp_nest_lock_t * )*lock;
+	mpcomp_user_nest_lock = ( omp_nest_lock_t * )*lock;
 
 #if OMPT_SUPPORT
     _mpc_omp_ompt_callback_mutex_acquire( ompt_mutex_nest_lock,
@@ -1052,7 +1052,7 @@ void omp_set_nest_lock( omp_nest_lock_t *lock )
                                       (ompt_wait_id_t) mpcomp_user_nest_lock->ompt_wait_id );
 #endif /* OMPT_SUPPORT */
 
-	if ( mpc_omp_nest_lock_test_task( thread, mpcomp_user_nest_lock ) )
+	if ( omp_nest_lock_test_task( thread, mpcomp_user_nest_lock ) )
 	{
 		mpc_common_spinlock_lock( &( mpcomp_user_nest_lock->lock ) );
 		mpcomp_user_nest_lock->owner_thread = thread;
@@ -1078,9 +1078,9 @@ void omp_unset_nest_lock( omp_nest_lock_t *lock )
     _mpc_omp_ompt_frame_get_infos();
 #endif /* OMPT_SUPPORT */
 
-	mpc_omp_nest_lock_t *mpcomp_user_nest_lock = NULL;
+	omp_nest_lock_t *mpcomp_user_nest_lock = NULL;
 	assert( lock );
-	mpcomp_user_nest_lock = ( mpc_omp_nest_lock_t * )*lock;
+	mpcomp_user_nest_lock = ( omp_nest_lock_t * )*lock;
 
 	mpcomp_user_nest_lock->nb_nested -= 1;
 
@@ -1108,11 +1108,11 @@ int omp_test_nest_lock( omp_nest_lock_t *lock )
     _mpc_omp_ompt_frame_get_infos();
 #endif /* OMPT_SUPPORT */
 
-	mpc_omp_nest_lock_t *mpcomp_user_nest_lock;
+	omp_nest_lock_t *mpcomp_user_nest_lock;
 	mpc_omp_init();
 	mpc_omp_thread_t *thread = mpc_omp_get_thread_tls();
 	assert( lock );
-	mpcomp_user_nest_lock = ( mpc_omp_nest_lock_t * )*lock;
+	mpcomp_user_nest_lock = ( omp_nest_lock_t * )*lock;
 
 #if OMPT_SUPPORT
     _mpc_omp_ompt_callback_mutex_acquire( ompt_mutex_nest_lock,
@@ -1121,7 +1121,7 @@ int omp_test_nest_lock( omp_nest_lock_t *lock )
                                       (ompt_wait_id_t) mpcomp_user_nest_lock->ompt_wait_id );
 #endif /* OMPT_SUPPORT */
 
-	if ( mpc_omp_nest_lock_test_task( thread, mpcomp_user_nest_lock ) )
+	if ( omp_nest_lock_test_task( thread, mpcomp_user_nest_lock ) )
 	{
 		if ( mpc_common_spinlock_trylock( &( mpcomp_user_nest_lock->lock ) ) )
 		{
