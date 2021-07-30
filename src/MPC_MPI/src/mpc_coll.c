@@ -4120,7 +4120,15 @@ static inline int ___collectives_scatterv_init(const void *sendbuf, const int *s
   \return error code
   */
 int _mpc_mpi_collectives_scatterv(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm) {
-  return ___collectives_scatterv_switch(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL); 
+
+  Sched_info info;
+  ___collectives_sched_info_init(&info);
+
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
+
+  return ___collectives_scatterv_switch(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info); 
 }
 
 
@@ -5155,7 +5163,15 @@ static inline int ___collectives_gatherv_init(const void *sendbuf, int sendcount
   \return error code
   */
 int _mpc_mpi_collectives_gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm) {
-  return ___collectives_gatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+
+  Sched_info info;
+  ___collectives_sched_info_init(&info);
+
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
+
+  return ___collectives_gatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
 
@@ -5506,7 +5522,15 @@ static inline int ___collectives_reduce_scatter_block_init(const void *sendbuf, 
   \return error code
   */
 int _mpc_mpi_collectives_reduce_scatter_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
-  return ___collectives_reduce_scatter_block_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+
+  Sched_info info;
+  ___collectives_sched_info_init(&info);
+
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
+
+  return ___collectives_reduce_scatter_block_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
 
@@ -5979,7 +6003,15 @@ static inline int ___collectives_reduce_scatter_init(const void *sendbuf, void* 
   \return error code
   */
 int _mpc_mpi_collectives_reduce_scatter(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
-  return ___collectives_reduce_scatter_switch(sendbuf, recvbuf, recvcounts, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+
+  Sched_info info;
+  ___collectives_sched_info_init(&info);
+
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
+
+  return ___collectives_reduce_scatter_switch(sendbuf, recvbuf, recvcounts, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
 
@@ -7008,7 +7040,15 @@ static inline int ___collectives_allgatherv_init(const void *sendbuf, int sendco
   \return error code
   */
 int _mpc_mpi_collectives_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm) {
-  return ___collectives_allgatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+
+  Sched_info info;
+  ___collectives_sched_info_init(&info);
+
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
+
+  return ___collectives_allgatherv_switch(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
 
@@ -7104,15 +7144,18 @@ static inline int ___collectives_allgatherv_gatherv_broadcast(const void *sendbu
   const void *tmp_sendbuf = sendbuf;
   int tmp_sendcount = sendcount;
   MPI_Datatype tmp_sendtype = sendtype;
+
   if(sendbuf == MPI_IN_PLACE && rank != 0) {
+    tmp_sendtype = recvtype;
+
     tmp_sendbuf = recvbuf + displs[rank];
     tmp_sendcount = recvcounts[rank];
-    tmp_sendtype = recvtype;
   }
+  
 
- ___collectives_gatherv_switch(tmp_sendbuf, tmp_sendcount, tmp_sendtype, recvbuf, recvcounts, displs, recvtype, 0, comm, coll_type, schedule, info);
- ___collectives_barrier_type(coll_type, schedule, info);
- ___collectives_bcast_switch(recvbuf, count, recvtype, 0, comm, coll_type, schedule, info);
+  ___collectives_gatherv_switch(tmp_sendbuf, tmp_sendcount, tmp_sendtype, recvbuf, recvcounts, displs, recvtype, 0, comm, coll_type, schedule, info);
+  ___collectives_barrier_type(coll_type, schedule, info);
+  ___collectives_bcast_switch(recvbuf, count, recvtype, 0, comm, coll_type, schedule, info);
 
   return MPI_SUCCESS;
 }
@@ -8650,7 +8693,15 @@ static inline int ___collectives_scan_init (const void *sendbuf, void *recvbuf, 
   \return error code
   */
 int _mpc_mpi_collectives_scan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
-  return ___collectives_scan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+
+  Sched_info info;
+  ___collectives_sched_info_init(&info);
+
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
+
+  return ___collectives_scan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
 
@@ -9043,7 +9094,15 @@ static inline int ___collectives_exscan_init (const void *sendbuf, void *recvbuf
   \return error code
   */
 int _mpc_mpi_collectives_exscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
-  return ___collectives_exscan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+
+  Sched_info info;
+  ___collectives_sched_info_init(&info);
+
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
+
+  return ___collectives_exscan_switch(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
 
@@ -9409,7 +9468,15 @@ static inline int ___collectives_barrier_init (MPI_Comm comm, NBC_Handle* handle
   \return error code
   */
 int _mpc_mpi_collectives_barrier (MPI_Comm comm) {
-  return ___collectives_barrier_switch(comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
+
+  Sched_info info;
+  ___collectives_sched_info_init(&info);
+
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
+
+  return ___collectives_barrier_switch(comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
 
