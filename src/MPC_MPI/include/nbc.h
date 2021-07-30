@@ -68,19 +68,6 @@ typedef struct {
 
 } NBC_Comminfo;
 
-/* used to manage communicators in topological algorithm */
-typedef struct mpc_hardware_split_info_s
-{
-	int deepest_hardware_level;
-	MPI_Comm *hwcomm; /* communicator of hardware splited topological level */
-	MPI_Comm *rootcomm; /* communicator of master node topological level */
-
-  int **childs_data_count; /* For each topological level, an array containing the number of ranks under each rank of the same hwcomm of this level in the topological tree. */
-  int *send_data_count; /* For each topological level, the sum of the child_data_count_array. */
-  int *swap_array; /* Reordering array used to link mpi ranks with the topology. */
-
-}mpc_hardware_split_info_t; 
-
 /* thread specific data */
 typedef struct {
 	MPI_Comm comm;

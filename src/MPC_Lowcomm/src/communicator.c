@@ -237,12 +237,35 @@ static inline void ___init_topo_comm(mpc_lowcomm_internal_communicator_t *comm) 
   }
 }
 
+//needed function prototype
+static inline void __comm_free(mpc_lowcomm_communicator_t comm);
+
+static inline void ___free_hardware_info(mpc_hardware_split_info_t *hw_info) {
+  for(int i = 0; i < hw_info->deepest_hardware_level; i++) {
+    __comm_free(hw_info->hwcomm[i+1]);
+    __comm_free(hw_info->rootcomm[i]);
+
+    sctk_free(hw_info->childs_data_count[i]);
+  }
+    
+  sctk_free(hw_info->hwcomm);
+  sctk_free(hw_info->rootcomm);
+  sctk_free(hw_info->childs_data_count);
+  sctk_free(hw_info->send_data_count);
+  sctk_free(hw_info->swap_array);
+
+  sctk_free(hw_info);
+}
+
 static inline void ___free_topo_comm(mpc_lowcomm_communicator_t comm) {
   int task_count = mpc_common_get_task_count();
 
-  //TODO free topo communicator
-
   for(int i = 0; i < task_count; i++) {
+    int j = 0;
+    while(comm->topo_comms[i].roots[j] != -1) {
+      ___free_hardware_info(comm->topo_comms[i].hw_infos[i]);
+    }
+
     sctk_free(comm->topo_comms[i].roots);
     sctk_free(comm->topo_comms[i].hw_infos);
   }
