@@ -22,8 +22,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __MPCOMP_SYNC_H__
-#define __MPCOMP_SYNC_H__
+#ifndef __MPC_OMP_SYNC_H__
+#define __MPC_OMP_SYNC_H__
 
 #include "mpcomp_core.h"
 #include "mpcomp_task.h"
@@ -100,7 +100,7 @@ omp_nest_lock_test_task( mpc_omp_thread_t *thread,
                             omp_nest_lock_t *mpcomp_user_nest_lock )
 {
 	struct mpc_omp_task_s *current_task =
-	    MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread );
+	    MPC_OMP_TASK_THREAD_GET_CURRENT_TASK( thread );
 	assert( current_task );
 	const bool is_task_owner =
 	    ( mpcomp_user_nest_lock->owner_task == current_task );
@@ -110,4 +110,4 @@ omp_nest_lock_test_task( mpc_omp_thread_t *thread,
 	return !( is_task_owner && ( is_thread_owned || have_task_owner ) );
 }
 
-#endif /*  __MPCOMP_SYNC_H__ */
+#endif /*  __MPC_OMP_SYNC_H__ */

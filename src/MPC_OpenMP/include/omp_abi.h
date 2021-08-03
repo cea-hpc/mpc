@@ -28,10 +28,10 @@ extern "C"
 {
 #endif
 
-#include <mpcomp_abi.h>
+#include <mpc_omp_abi.h>
 
   /* Dummy file.
-     See mpcomp_abi.h for OpenMP compiler ABI
+     See mpc_omp_abi.h for OpenMP compiler ABI
    */
 
 #ifdef __cplusplus

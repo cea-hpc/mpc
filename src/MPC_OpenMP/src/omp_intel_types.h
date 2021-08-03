@@ -21,13 +21,13 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __MPCOMP_TYPES_KMP_H__
-#define __MPCOMP_TYPES_KMP_H__
+#ifndef __MPC_OMP_TYPES_KMP_H__
+#define __MPC_OMP_TYPES_KMP_H__
 
 #include <stdlib.h>
 #include <mpc_config.h>
 
-#define MPCOMP_FORCE_PARALLEL_REGION_ALLOC 1
+#define MPC_OMP_FORCE_PARALLEL_REGION_ALLOC 1
 
 #define KMP_HASH_TABLE_LOG2 9 /* log2 of the hash table size */
 #define KMP_HASH_TABLE_SIZE                                                    \
@@ -254,4 +254,4 @@ struct shared_table {
   struct shared_common *data[KMP_HASH_TABLE_SIZE];
 };
 
-#endif /* __MPCOMP_TYPES_KMP_H__ */
+#endif /* __MPC_OMP_TYPES_KMP_H__ */

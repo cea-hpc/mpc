@@ -1,5 +1,5 @@
-#ifndef __MPCOMP_OMPT_H__
-#define __MPCOMP_OMPT_H__
+#ifndef __MPC_OMP_OMPT_H__
+#define __MPC_OMP_OMPT_H__
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -1006,4 +1006,4 @@ typedef ompt_record_abstract_t *(*ompt_get_record_abstract_t) (
     void * native_record
 );
 
-#endif /* __MPCOMP_OMPT_H__ */
+#endif /* __MPC_OMP_OMPT_H__ */

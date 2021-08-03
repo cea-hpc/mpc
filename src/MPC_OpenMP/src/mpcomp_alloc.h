@@ -22,11 +22,11 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __MPCOMP_ALLOC_H__
-#define __MPCOMP_ALLOC_H__
+#ifndef __MPC_OMP_ALLOC_H__
+#define __MPC_OMP_ALLOC_H__
 
 #include "mpcomp_types.h" /* need mpc_omp_mvp_t && mpc_omp_instance_t */
 
 void mpc_omp_alloc_init_allocators();
 
-#endif /* __MPCOMP_ALLOC_H__ */
+#endif /* __MPC_OMP_ALLOC_H__ */

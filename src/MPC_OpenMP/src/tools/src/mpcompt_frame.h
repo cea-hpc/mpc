@@ -236,7 +236,7 @@ _mpc_omp_ompt_frame_get_wrapper_infos( mpc_omp_ompt_wrapper_t w ) {
         frame_infos = &thread->frame_infos;
 
         /* Update wrapper info */
-        if( frame_infos->omp_wrapper == MPCOMP_UNDEF )
+        if( frame_infos->omp_wrapper == MPC_OMP_UNDEF )
             frame_infos->omp_wrapper = w;
 
         if( frame_infos->omp_wrapper == w

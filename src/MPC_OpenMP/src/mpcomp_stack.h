@@ -1,5 +1,5 @@
-#ifndef __MPCOMP_STACK_H__
-#define __MPCOMP_STACK_H__
+#ifndef __MPC_OMP_STACK_H__
+#define __MPC_OMP_STACK_H__
 
 #include "mpcomp_types_stack.h"
 
@@ -17,4 +17,4 @@ void _mpc_omp_push_leaf(mpc_omp_stack_node_leaf_t *s, struct mpc_omp_mvp_s *n);
 mpc_omp_elem_stack_t *_mpc_omp_pop_elem_stack(mpc_omp_stack_node_leaf_t *s);
 void _mpc_omp_free_stack_node_leaf(mpc_omp_stack_node_leaf_t *s);
 
-#endif /* __MPCOMP_STACK_H__ */
+#endif /* __MPC_OMP_STACK_H__ */

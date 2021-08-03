@@ -88,7 +88,7 @@ void __kmpc_atomic_float8_add(__UNUSED__ ident_t *id_ref,__UNUSED__  int gtid, k
 
 /* TODO check how we can add this function to asssembly-dedicated module */
 
-/* TODO use MPCOMP_MIC */
+/* TODO use MPC_OMP_MIC */
 
 #if __MIC__ || __MIC2__
   mpc_omp_atomic_begin();

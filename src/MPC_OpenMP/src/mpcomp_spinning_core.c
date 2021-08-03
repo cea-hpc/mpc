@@ -83,7 +83,7 @@ int __scatter_compute_global_rank_from_instance_rank( mpc_omp_instance_t *instan
 		}
 
 		const int index = j - 1;
-		assert( start_node->child_type == MPCOMP_CHILDREN_NODE );
+		assert( start_node->child_type == MPC_OMP_CHILDREN_NODE );
 		start_node = start_node->children.node[index];
 		num_threads = ( index < rest ) ? ( quot + 1 ) : quot;
 		local_rank -= ( index < rest ) ? ( quot + 1 ) * index : ( quot * index + rest );
@@ -106,7 +106,7 @@ int __scatter_compute_global_rank_from_instance_rank( mpc_omp_instance_t *instan
 
 		const int index = i - 1;
 
-		if ( start_node->child_type == MPCOMP_CHILDREN_NODE  )
+		if ( start_node->child_type == MPC_OMP_CHILDREN_NODE  )
 		{
 			mvp = start_node->children.node[index]->mvp;
 		}
@@ -337,7 +337,7 @@ static inline void __instance_tree_array_node_init( struct mpc_omp_node_s *paren
 	meta_node = &( parent->instance->tree_array[global_rank] );
 	assert( meta_node );
 	meta_node->ptr.node = child;
-	meta_node->type = MPCOMP_CHILDREN_NODE;
+	meta_node->type = MPC_OMP_CHILDREN_NODE;
 	child->tree_array_rank = global_rank;
 	child->tree_array_ancestor_path = ( int * ) mpc_omp_alloc( ( vdepth ) * sizeof( int ) );
 	assert( child->tree_array_ancestor_path );
@@ -362,7 +362,7 @@ static inline void __instance_tree_array_mvp_init( struct mpc_omp_node_s *parent
 	meta_node = &( parent->instance->tree_array[global_rank] );
 	assert( meta_node );
 	meta_node->ptr.mvp = mvp;
-	meta_node->type = MPCOMP_CHILDREN_LEAF;
+	meta_node->type = MPC_OMP_CHILDREN_LEAF;
 	assert( mvp->threads );
 	assert( mvp->threads );
 	mvp->threads->tree_array_rank = global_rank;
@@ -385,7 +385,7 @@ static inline mpc_omp_node_t *__scatter_wakeup_intermediate_node( mpc_omp_node_t
 	int i;
 	mpc_omp_node_t *child_node;
 	assert( node->instance );
-	assert( node->child_type == MPCOMP_CHILDREN_NODE );
+	assert( node->child_type == MPC_OMP_CHILDREN_NODE );
 	assert( node->instance->root->depth <= node->depth );
 	const int node_vdepth = node->depth - node->instance->root->depth + 1;
 	const int num_vchildren = node->instance->tree_base[node_vdepth];
@@ -396,7 +396,7 @@ static inline mpc_omp_node_t *__scatter_wakeup_intermediate_node( mpc_omp_node_t
 	assert( node->children.node );
 	node->reduce_data = ( void ** ) mpc_omp_alloc( node->nb_children * 64 * sizeof( void * ) );
 	node->isArrived = ( int * ) mpc_omp_alloc( node->nb_children * 64 * sizeof( int ) );
-#ifdef MPCOMP_USE_INTEL_ABI
+#ifdef MPC_OMP_USE_INTEL_ABI
     struct common_table * th_pri_common;
 #endif
 #if OMPT_SUPPORT
@@ -436,7 +436,7 @@ static inline mpc_omp_node_t *__scatter_wakeup_intermediate_node( mpc_omp_node_t
 				__instance_tree_array_node_init( node, child_node, i );
 			}
 
-			child_node->spin_status = MPCOMP_MVP_STATE_AWAKE;
+			child_node->spin_status = MPC_OMP_MVP_STATE_AWAKE;
 		}
 	}
 	else
@@ -467,7 +467,7 @@ static inline mpc_omp_node_t *__scatter_wakeup_intermediate_node( mpc_omp_node_t
                 frame_infos = mvp->threads->frame_infos;
 #endif
 #endif /* OMPT_SUPPORT */
-#ifdef MPCOMP_USE_INTEL_ABI
+#ifdef MPC_OMP_USE_INTEL_ABI
                 th_pri_common = mvp->threads->th_pri_common;
 #endif
 				child_node->num_threads = 1;
@@ -485,7 +485,7 @@ static inline mpc_omp_node_t *__scatter_wakeup_intermediate_node( mpc_omp_node_t
 				mvp->threads->father_node = node;
 				mvp->threads->rank = node->mvp_first_id + i;
 				mvp->instance = node->instance;
-#ifdef MPCOMP_USE_INTEL_ABI
+#ifdef MPC_OMP_USE_INTEL_ABI
                 mvp->threads->th_pri_common = th_pri_common;
 #endif
 #if OMPT_SUPPORT
@@ -498,7 +498,7 @@ static inline mpc_omp_node_t *__scatter_wakeup_intermediate_node( mpc_omp_node_t
 #endif /* OMPT_SUPPORT */
 				int j;
 
-				for ( j = 0; j < MPCOMP_MAX_ALIVE_FOR_DYN + 1; j++ )
+				for ( j = 0; j < MPC_OMP_MAX_ALIVE_FOR_DYN + 1; j++ )
 				{
 					OPA_store_int( &( mvp->threads->for_dyn_remain[j].i ), -1 );
 				}
@@ -507,7 +507,7 @@ static inline mpc_omp_node_t *__scatter_wakeup_intermediate_node( mpc_omp_node_t
 			}
 
 			/* WakeUp NODE */
-			child_node->spin_status = MPCOMP_MVP_STATE_AWAKE;
+			child_node->spin_status = MPC_OMP_MVP_STATE_AWAKE;
 			cur_node += min_shift + ( ( i < ext_shift ) ? 1 : 0 );
 		}
 	}
@@ -519,7 +519,7 @@ static inline mpc_omp_mvp_t *__scatter_wakeup_final_mvp( mpc_omp_node_t *node )
 {
 	int i, cur_mvp;
 	assert( node );
-	assert( node->child_type == MPCOMP_CHILDREN_LEAF );
+	assert( node->child_type == MPC_OMP_CHILDREN_LEAF );
 	assert( node->instance->root->depth <= node->depth );
 	const int node_vdepth = node->depth - node->instance->root->depth + 1;
 	const int  __UNUSED__ num_vchildren = node->instance->tree_base[node_vdepth];
@@ -533,7 +533,7 @@ static inline mpc_omp_mvp_t *__scatter_wakeup_final_mvp( mpc_omp_node_t *node )
 	cur_mvp = 0;
 	node->reduce_data = ( void ** ) mpc_omp_alloc( node->nb_children * 64 * sizeof( void * ) );
 	node->isArrived = ( int * ) mpc_omp_alloc( node->nb_children * 64 * sizeof( int ) );
-#ifdef MPCOMP_USE_INTEL_ABI
+#ifdef MPC_OMP_USE_INTEL_ABI
     struct common_table * th_pri_common;
 #endif
 #if OMPT_SUPPORT
@@ -566,7 +566,7 @@ static inline mpc_omp_mvp_t *__scatter_wakeup_final_mvp( mpc_omp_node_t *node )
             frame_infos = mvp->threads->frame_infos;
 #endif
 #endif /* OMPT_SUPPORT */
-#ifdef MPCOMP_USE_INTEL_ABI
+#ifdef MPC_OMP_USE_INTEL_ABI
             th_pri_common = mvp->threads->th_pri_common;
 #endif
 			mvp->instance = node->instance;
@@ -581,7 +581,7 @@ static inline mpc_omp_mvp_t *__scatter_wakeup_final_mvp( mpc_omp_node_t *node )
 			mvp->threads->father = node->instance->thread_ancestor;
 			mvp->threads->father_node = node;
 			mvp->threads->rank = node->mvp_first_id + i;
-#ifdef MPCOMP_USE_INTEL_ABI
+#ifdef MPC_OMP_USE_INTEL_ABI
             mvp->threads->th_pri_common = th_pri_common;
 #endif
 #if OMPT_SUPPORT
@@ -594,7 +594,7 @@ static inline mpc_omp_mvp_t *__scatter_wakeup_final_mvp( mpc_omp_node_t *node )
 #endif /* OMPT_SUPPORT */
 			int j;
 
-			for ( j = 0; j < MPCOMP_MAX_ALIVE_FOR_DYN + 1; j++ )
+			for ( j = 0; j < MPC_OMP_MAX_ALIVE_FOR_DYN + 1; j++ )
 			{
 				OPA_store_int( &( mvp->threads->for_dyn_remain[j].i ), -1 );
 			}
@@ -603,7 +603,7 @@ static inline mpc_omp_mvp_t *__scatter_wakeup_final_mvp( mpc_omp_node_t *node )
 		}
 
 		/* WakeUp MVP */
-		mvp->spin_status = MPCOMP_MVP_STATE_AWAKE;
+		mvp->spin_status = MPC_OMP_MVP_STATE_AWAKE;
 		cur_mvp += min_shift + ( ( i < ext_shift ) ? 1 : 0 );
 	}
 
@@ -630,7 +630,7 @@ static inline mpc_omp_mvp_t *__scatter_wakeup( mpc_omp_node_t *node )
 
 	while ( cur_node->depth < target_depth )
 	{
-		if ( cur_node->already_init || cur_node->child_type != MPCOMP_CHILDREN_NODE )
+		if ( cur_node->already_init || cur_node->child_type != MPC_OMP_CHILDREN_NODE )
 		{
 			break;
 		}
@@ -653,14 +653,9 @@ void __scatter_instance_post_init( mpc_omp_thread_t *thread )
 	mpc_omp_mvp_t *mvp = thread->mvp;
 	int j;
 
-	for ( j = 0; j < MPCOMP_MAX_ALIVE_FOR_DYN + 1; j++ )
+	for ( j = 0; j < MPC_OMP_MAX_ALIVE_FOR_DYN + 1; j++ )
 	{
 		OPA_store_int( &( mvp->threads->for_dyn_remain[j].i ), -1 );
-	}
-
-	if ( !thread->task_infos.reusable_tasks )
-	{
-		thread->task_infos.reusable_tasks = ( mpc_omp_task_t ** ) mpc_omp_alloc( MPCOMP_NB_REUSABLE_TASKS * sizeof( mpc_omp_task_t * ) );
 	}
 
 	if ( ! thread->mvp->instance->buffered )
@@ -681,7 +676,7 @@ void __scatter_instance_post_init( mpc_omp_thread_t *thread )
 	}
 
 	string_array[total] = '\0';
-	const int node_rank = MPCOMP_TASK_MVP_GET_TASK_LIST_NODE_RANK( mvp, 0 );
+	const int node_rank = MPC_OMP_TASK_MVP_GET_TASK_LIST_NODE_RANK( mvp, 0 );
 	fprintf( stderr, "#%d - Me : %d -- Stealing list =%s nbList : %d\n", thread->rank, node_rank, string_array, nbList );
 	_mpc_omp_internal_full_barrier( thread->mvp );
 #endif /* Check victim list for each thread */
@@ -696,15 +691,15 @@ void __scatter_instance_post_init( mpc_omp_thread_t *thread )
 		{
 			switch ( instance->tree_array[i].type )
 			{
-				case MPCOMP_CHILDREN_NODE:
-					fprintf( stderr, ":: %s :: node> %d -- type> %s\n", __func__, instance->tree_array[i].ptr.node->global_rank, "MPCOMP_CHILDREN_NODE" );
+				case MPC_OMP_CHILDREN_NODE:
+					fprintf( stderr, ":: %s :: node> %d -- type> %s\n", __func__, instance->tree_array[i].ptr.node->global_rank, "MPC_OMP_CHILDREN_NODE" );
 					break;
 
-				case MPCOMP_CHILDREN_LEAF:
-					fprintf( stderr, ":: %s :: node> %d -- type> %s\n", __func__, instance->tree_array[i].ptr.mvp->global_rank, "MPCOMP_CHILDREN_LEAF" );
+				case MPC_OMP_CHILDREN_LEAF:
+					fprintf( stderr, ":: %s :: node> %d -- type> %s\n", __func__, instance->tree_array[i].ptr.mvp->global_rank, "MPC_OMP_CHILDREN_LEAF" );
 					break;
 
-				case MPCOMP_CHILDREN_NULL:
+				case MPC_OMP_CHILDREN_NULL:
 					fprintf( stderr, ":: %s :: empty node -> %d\n", __func__, i );
 					break;
 
@@ -715,7 +710,7 @@ void __scatter_instance_post_init( mpc_omp_thread_t *thread )
 	}
 
 #endif
-	//    MPCOMP_TASK_TEAM_CMPL_INIT(thread->instance->team);
+	//    MPC_OMP_TASK_TEAM_CMPL_INIT(thread->instance->team);
 }
 
 static OPA_int_t nb_teams = OPA_INT_T_INITIALIZER( 0 );
@@ -726,8 +721,8 @@ static inline void __team_reset( mpc_omp_team_t *team )
 	assert( team );
 	OPA_int_t *last_array_slot;
 	memset( team, 0, sizeof( mpc_omp_team_t ) );
-	last_array_slot = &( team->for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN].i );
-	OPA_store_int( last_array_slot, MPCOMP_NOWAIT_STOP_SYMBOL );
+	last_array_slot = &( team->for_dyn_nb_threads_exited[MPC_OMP_MAX_ALIVE_FOR_DYN].i );
+	OPA_store_int( last_array_slot, MPC_OMP_NOWAIT_STOP_SYMBOL );
 	team->id = OPA_fetch_and_incr_int( &nb_teams );
 	mpc_common_spinlock_init( &team->lock, 0 );
 	mpc_common_spinlock_init( &team->atomic_lock, 0 );
@@ -824,9 +819,9 @@ mpc_omp_thread_t *__mvp_wakeup( mpc_omp_mvp_t *mvp )
 
 	mvp->father = new_thread->father_node;
 
-#if MPCOMP_TRANSFER_INFO_ON_NODES
+#if MPC_OMP_TRANSFER_INFO_ON_NODES
 	new_thread->info = mvp->info;
-#else /* MPCOMP_TRANSFER_INFO_ON_NODES */
+#else /* MPC_OMP_TRANSFER_INFO_ON_NODES */
 	new_thread->info = mvp->instance->team->info;
 #endif
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
@@ -862,10 +857,10 @@ _mpc_omp_exit_node_signal( mpc_omp_node_t* node ) {
     assert( node );
 
     /* We are the mvp spinning on the deepest node, wake-up regular leaves and exit */
-    if( node->child_type == MPCOMP_CHILDREN_LEAF ) {
+    if( node->child_type == MPC_OMP_CHILDREN_LEAF ) {
         for( i = 1; i < node->nb_children; i++ ) {
             node->children.leaf[i]->enable = 0;
-            node->children.leaf[i]->spin_status = MPCOMP_MVP_STATE_AWAKE;
+            node->children.leaf[i]->spin_status = MPC_OMP_MVP_STATE_AWAKE;
         }
 
         return;
@@ -874,7 +869,7 @@ _mpc_omp_exit_node_signal( mpc_omp_node_t* node ) {
     /* Wake-up intermediate nodes */
     for( i = 1; i < node->nb_children; i++ ) {
         node->children.node[i]->mvp->enable = 0;
-        node->children.node[i]->spin_status = MPCOMP_MVP_STATE_AWAKE;
+        node->children.node[i]->spin_status = MPC_OMP_MVP_STATE_AWAKE;
     }
 
     _mpc_omp_exit_node_signal( node->children.node[0] );
@@ -900,9 +895,9 @@ void _mpc_omp_start_openmp_thread( mpc_omp_mvp_t *mvp )
 #if OMPT_SUPPORT
     if( cur_thread ) {
         _mpc_omp_ompt_callback_task_schedule(
-            &( MPCOMP_TASK_THREAD_GET_CURRENT_TASK(cur_thread)->ompt_task_data ),
+            &( MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(cur_thread)->ompt_task_data ),
             ompt_task_switch,
-            &( MPCOMP_TASK_THREAD_GET_CURRENT_TASK(next_thread)->ompt_task_data ));
+            &( MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(next_thread)->ompt_task_data ));
     }
 
     _mpc_omp_ompt_callback_implicit_task( ompt_scope_begin,
@@ -915,7 +910,7 @@ void _mpc_omp_start_openmp_thread( mpc_omp_mvp_t *mvp )
 
 	/* Must be set before barrier for thread safety*/
 	spin_status = ( mvp->spin_node ) ? &( mvp->spin_node->spin_status ) : &( mvp->spin_status );
-	*spin_status = MPCOMP_MVP_STATE_SLEEP;
+	*spin_status = MPC_OMP_MVP_STATE_SLEEP;
 
 #if OMPT_SUPPORT
     _mpc_omp_ompt_callback_sync_region( ompt_sync_region_barrier_implicit, ompt_scope_begin );
@@ -937,9 +932,9 @@ void _mpc_omp_start_openmp_thread( mpc_omp_mvp_t *mvp )
 	{
 #if OMPT_SUPPORT
         _mpc_omp_ompt_callback_task_schedule(
-            &( MPCOMP_TASK_THREAD_GET_CURRENT_TASK(next_thread)->ompt_task_data ),
+            &( MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(next_thread)->ompt_task_data ),
             ompt_task_complete,
-            &( MPCOMP_TASK_THREAD_GET_CURRENT_TASK(cur_thread)->ompt_task_data ));
+            &( MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(cur_thread)->ompt_task_data ));
 #endif /* OMPT_SUPPORT */
 
         mvp->instance = cur_thread->instance;
@@ -976,18 +971,18 @@ void mpc_omp_slave_mvp_node( mpc_omp_mvp_t *mvp )
 		{
 #ifdef MPC_ENABLE_WORKSHARE
 			if(mpc_conf_type_elem_get_as_int(mpc_conf_root_config_get("mpcframework.lowcomm.workshare.enablestealing")))
-			  mpc_thread_wait_for_value_and_poll( spin_status, MPCOMP_MVP_STATE_AWAKE,(void*) mpc_lowcomm_workshare_worker_steal, mvp->root->worker_ws) ;
+			  mpc_thread_wait_for_value_and_poll( spin_status, MPC_OMP_MVP_STATE_AWAKE,(void*) mpc_lowcomm_workshare_worker_steal, mvp->root->worker_ws) ;
       else
-			  mpc_thread_wait_for_value_and_poll( spin_status, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
+			  mpc_thread_wait_for_value_and_poll( spin_status, MPC_OMP_MVP_STATE_AWAKE, NULL, NULL ) ;
 #else
-			  mpc_thread_wait_for_value_and_poll( spin_status, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
+			  mpc_thread_wait_for_value_and_poll( spin_status, MPC_OMP_MVP_STATE_AWAKE, NULL, NULL ) ;
 #endif
             if( expect_false( !mvp->enable ))
                 break;
             else {
-#if MPCOMP_TRANSFER_INFO_ON_NODES
+#if MPC_OMP_TRANSFER_INFO_ON_NODES
 			    spin_node->info = spin_node->father->info;
-#endif /* MPCOMP_TRANSFER_INFO_ON_NODES */
+#endif /* MPC_OMP_TRANSFER_INFO_ON_NODES */
 			    _mpc_spin_node_wakeup( spin_node );
 			    _mpc_omp_start_openmp_thread( mvp );
             }
@@ -1003,11 +998,11 @@ void mpc_omp_slave_mvp_node( mpc_omp_mvp_t *mvp )
 		{
 #ifdef MPC_ENABLE_WORKSHARE
 			if(mpc_conf_type_elem_get_as_int(mpc_conf_root_config_get("mpcframework.lowcomm.workshare.enablestealing")))
-				mpc_thread_wait_for_value_and_poll( spin_status, MPCOMP_MVP_STATE_AWAKE, (void*) mpc_lowcomm_workshare_worker_steal, mvp->root->worker_ws) ;
+				mpc_thread_wait_for_value_and_poll( spin_status, MPC_OMP_MVP_STATE_AWAKE, (void*) mpc_lowcomm_workshare_worker_steal, mvp->root->worker_ws) ;
 			else
-			  mpc_thread_wait_for_value_and_poll( spin_status, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
+			  mpc_thread_wait_for_value_and_poll( spin_status, MPC_OMP_MVP_STATE_AWAKE, NULL, NULL ) ;
 #else
-			  mpc_thread_wait_for_value_and_poll( spin_status, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
+			  mpc_thread_wait_for_value_and_poll( spin_status, MPC_OMP_MVP_STATE_AWAKE, NULL, NULL ) ;
 #endif
 
             if( expect_false( !mvp->enable ))

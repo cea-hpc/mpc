@@ -64,71 +64,72 @@ extern "C" {
     /**
      *  * Async callback
      *   */
-    typedef enum    mpc_omp_async_when_t
+    typedef enum    mpc_omp_callback_when_t
     {
         /* scheduler points */
-        MPC_OMP_ASYNC_TASK_SCHEDULER_POINT_NEW,
-        MPC_OMP_ASYNC_TASK_SCHEDULER_POINT_COMPLETE,
-        MPC_OMP_ASYNC_TASK_SCHEDULER_POINT_YIELD,
+        MPC_OMP_CALLBACK_TASK_SCHEDULER_POINT_NEW,
+        MPC_OMP_CALLBACK_TASK_SCHEDULER_POINT_COMPLETE,
+        MPC_OMP_CALLBACK_TASK_SCHEDULER_POINT_YIELD,
         /* [...] */
-        MPC_OMP_ASYNC_SCHEDULER_POINT_ANY,
+        MPC_OMP_CALLBACK_SCHEDULER_POINT_ANY,
 
         /* before a new task should be scheduled */
-        MPC_OMP_ASYNC_TASK_SCHEDULE_BEFORE,
+        MPC_OMP_CALLBACK_TASK_SCHEDULE_BEFORE,
 
         /* when there is no more ready tasks */
-        MPC_OMP_ASYNC_TASK_SCHEDULER_FAMINE,
+        MPC_OMP_CALLBACK_TASK_SCHEDULER_FAMINE,
 
         /* max number */
-        MPC_OMP_ASYNC_MAX
-    }               mpc_omp_async_when_t;
+        MPC_OMP_CALLBACK_MAX
+    }               mpc_omp_callback_when_t;
 
-    typedef enum    mpc_omp_async_repeat_t
+    typedef enum    mpc_omp_callback_repeat_t
     {
-        MPC_MPC_OMP_ASYNC_REPEAT_UNTIL,
-        MPC_MPC_OMP_ASYNC_REPEAT_N
-    }               mpc_omp_async_repeat_t;
+        MPC_MPC_OMP_CALLBACK_REPEAT_RETURN,    /* repeat until the callback returned 0 */
+        MPC_MPC_OMP_CALLBACK_REPEAT_EVENT,     /* repeat until the event is fulfilled */
+        MPC_MPC_OMP_CALLBACK_REPEAT_N          /* repeat n times */
+    }               mpc_omp_callback_repeat_t;
 
-    typedef struct  mpc_omp_async_s
+    typedef struct  mpc_omp_callback_s
     {
         /* internal */
-        struct mpc_omp_async_s * _next;
+        struct mpc_omp_callback_s * _next;
 
         /* user */
         int (* func)(void * data);      /* Return > 0 if the function should be re-run later on */
         void * data;
-        mpc_omp_async_when_t when;
-        mpc_omp_async_repeat_t repeat;
-        omp_event_handle_t * event;     /* the event in case of `MPC_MPC_OMP_ASYNC_REPEAT_UNTIL`    */
-        size_t n;                       /* the `n` in case of `MPC_MPC_OMP_ASYNC_REPEAT_N`          */
-    }               mpc_omp_async_t;
+        mpc_omp_callback_when_t when;
+        mpc_omp_callback_repeat_t repeat;
+        mpc_omp_event_handle_t * event; /* the event in case of `MPC_MPC_OMP_CALLBACK_REPEAT_UNTIL`    */
+        size_t n;                       /* the `n` in case of `MPC_MPC_OMP_CALLBACK_REPEAT_N`          */
+    }               mpc_omp_callback_t;
 
     /**
-     * `pragma omp async [when(indicator)] [repeat(when)]`
+     * `pragma omp callback [when(indicator)] [repeat(when)]`
      * 
-     *   A **async** region defines a routine that is executed by the runtime.
+     *  A **callback** region defines a routine that is executed by the runtime.
      * 
-     * The **when** clause defines when the region should be executed (see `mpc_omp_async_when`)
-     *  Default value is `MPC_OMP_ASYNC_SCHEDULER_FAMINE`.
+     *  The **when** clause defines when the region should be executed (see `mpc_omp_callback_when`)
+     *  Default value is `MPC_OMP_CALLBACK_SCHEDULER_FAMINE`.
      * 
-     *The **repeat** clause defines how many times should the region run.
+     * The **repeat** clause defines how many times should the region run.
      *     - `repeat(until: event-handle)` will make the region run as long
      *      as the event represented by `event-handle` is not fullfiled.
      *      - `repeat(n > 0)` will make the region run `n` times.
      *
      *  Default value is `repeat(1)`
      */
-    void mpc_omp_async(mpc_omp_async_t * async);
+    void mpc_omp_callback(mpc_omp_callback_t * callback);
 
     /** Maximum length of a task label */
 # define MPC_OMP_TASK_LABEL_MAX_LENGTH 64
 
     /** Give extra information of the incoming task - must be called right before a `#pragma omp task` */
-    void mpc_omp_task(char * label);
+    void mpc_omp_task_extra(char * label);
 
     /** Taskyield which blocks on event */
-    void mpc_omp_task_block(omp_event_handle_t * event, mpc_omp_async_t * async);
-    void mpc_omp_task_unblock(omp_event_handle_t * event);
+    void mpc_omp_task_block(mpc_omp_event_handle_t * event, mpc_omp_callback_t * callback);
+    void mpc_omp_task_unblock(mpc_omp_event_handle_t * event);
 
     /* task trace calls */
     void mpc_omp_task_trace_begin(void);

@@ -102,7 +102,7 @@ void __kmpc_flush( __UNUSED__ ident_t *loc, ... )
 void __kmpc_barrier( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t __UNUSED__ *t = ( mpc_omp_thread_t * )mpc_omp_tls;
@@ -159,7 +159,7 @@ kmp_int32 __kmpc_ok_to_fork( __UNUSED__ ident_t *loc )
 void __kmpc_fork_call( __UNUSED__ ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ... )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	va_list args;
@@ -233,19 +233,19 @@ void __kmpc_fork_call( __UNUSED__ ident_t *loc, kmp_int32 argc, kmpc_micro micro
 void __kmpc_serialized_parallel( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t *t, *t_next;
 	mpc_omp_parallel_region_t *info;
 
-#ifdef MPCOMP_FORCE_PARALLEL_REGION_ALLOC
+#ifdef MPC_OMP_FORCE_PARALLEL_REGION_ALLOC
 	info = sctk_malloc( sizeof( mpc_omp_parallel_region_t ) );
 	assert( info );
-#else  /* MPCOMP_FORCE_PARALLEL_REGION_ALLOC */
+#else  /* MPC_OMP_FORCE_PARALLEL_REGION_ALLOC */
 	mpc_omp_parallel_region_t noallocate_info;
 	info = &noallocate_info;
-#endif /* MPCOMP_FORCE_PARALLEL_REGION_ALLOC */
+#endif /* MPC_OMP_FORCE_PARALLEL_REGION_ALLOC */
 
 	mpc_common_nodebug( "%s: entering (%d) ...", __func__, global_tid );
 
@@ -259,7 +259,7 @@ void __kmpc_serialized_parallel( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 g
 	info->num_threads = 1;
 	info->new_root = NULL;
 	info->icvs = t->info.icvs;
-	info->combined_pragma = MPCOMP_COMBINED_NONE;
+	info->combined_pragma = MPC_OMP_COMBINED_NONE;
 
 	_mpc_omp_internal_begin_parallel_region( info, 1 );
 
@@ -279,9 +279,9 @@ void __kmpc_serialized_parallel( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 g
     t_next->info = t_next->instance->team->info;
 
 #if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_task_schedule( &( MPCOMP_TASK_THREAD_GET_CURRENT_TASK(t)->ompt_task_data ),
+    _mpc_omp_ompt_callback_task_schedule( &( MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(t)->ompt_task_data ),
                                       ompt_task_switch,
-                                      &( MPCOMP_TASK_THREAD_GET_CURRENT_TASK(t_next)->ompt_task_data  ));
+                                      &( MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(t_next)->ompt_task_data  ));
 
     _mpc_omp_ompt_callback_implicit_task( ompt_scope_begin, 1, 0, ompt_task_implicit );
 #endif /* OMPT_SUPPORT */
@@ -295,7 +295,7 @@ void __kmpc_serialized_parallel( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 g
 void __kmpc_end_serialized_parallel( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t *t, *t_prev;
@@ -325,9 +325,9 @@ void __kmpc_end_serialized_parallel( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int
     t_prev->mvp->instance = t_prev->instance;
 
 #if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_task_schedule( &( MPCOMP_TASK_THREAD_GET_CURRENT_TASK(t_prev)->ompt_task_data ),
+    _mpc_omp_ompt_callback_task_schedule( &( MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(t_prev)->ompt_task_data ),
                                       ompt_task_complete,
-                                      &( MPCOMP_TASK_THREAD_GET_CURRENT_TASK(t)->ompt_task_data ));
+                                      &( MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(t)->ompt_task_data ));
 #endif /* OMPT_SUPPORT */
 
     //mpc_omp_free(t);
@@ -342,7 +342,7 @@ void __kmpc_push_num_threads( __UNUSED__ ident_t *loc, __UNUSED__  kmp_int32 glo
                               kmp_int32 num_threads )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t __UNUSED__ *t;
@@ -376,7 +376,7 @@ void __kmpc_fork_teams( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 argc, __UN
 kmp_int32 __kmpc_master( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t *t = ( mpc_omp_thread_t * )mpc_omp_tls;
@@ -394,7 +394,7 @@ kmp_int32 __kmpc_master( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_ti
 void __kmpc_end_master( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 #if OMPT_SUPPORT
@@ -407,7 +407,7 @@ void __kmpc_end_master( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid
 void __kmpc_ordered( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_common_nodebug( "[REDIRECT KMP]: %s -> _mpcomp_ordered_begin", __func__ );
@@ -417,7 +417,7 @@ void __kmpc_ordered( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid )
 void __kmpc_end_ordered( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_common_nodebug( "[REDIRECT KMP]: %s -> _mpcomp_ordered_end", __func__ );
@@ -428,7 +428,7 @@ void __kmpc_critical( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid,
                       kmp_critical_name *crit )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_common_nodebug( "[REDIRECT KMP]: %s -> _mpcomp_anonymous_critical_begin",
@@ -441,7 +441,7 @@ void __kmpc_critical_with_hint( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gl
                                 kmp_critical_name *crit,
                                 __UNUSED__ uint32_t hint) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
     // TODO: add support of hint
@@ -455,7 +455,7 @@ void __kmpc_end_critical( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_t
                           kmp_critical_name *crit )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_common_nodebug( "[REDIRECT KMP]: %s -> _mpcomp_anonymous_critical_end",
@@ -467,7 +467,7 @@ void __kmpc_end_critical( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_t
 kmp_int32 __kmpc_single( __UNUSED__ ident_t *loc, __UNUSED__  kmp_int32 global_tid )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_common_nodebug( "[REDIRECT KMP]: %s -> _mpcomp_do_single", __func__ );
@@ -477,7 +477,7 @@ kmp_int32 __kmpc_single( __UNUSED__ ident_t *loc, __UNUSED__  kmp_int32 global_t
 void __kmpc_end_single( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 #if OMPT_SUPPORT
@@ -950,7 +950,7 @@ static inline int __intel_tree_reduce( void *reduce_data, void ( *reduce_func )(
 						//mpc_thread_yield_wait_for_value( &( c->barrier_done ), b_done + 1);
 					}
 
-					while ( c->child_type != MPCOMP_CHILDREN_LEAF )   /* Go down */
+					while ( c->child_type != MPC_OMP_CHILDREN_LEAF )   /* Go down */
 					{
 						c = c->children.node[mvp->tree_rank[c->depth]];
 						c->barrier_done++;
@@ -988,7 +988,7 @@ static inline int __intel_tree_reduce( void *reduce_data, void ( *reduce_func )(
 						//mpc_thread_yield_wait_for_value( &( c->barrier_done ), b_done + 1);
 					}
 
-					while ( c->child_type != MPCOMP_CHILDREN_LEAF )   /* Go down */
+					while ( c->child_type != MPC_OMP_CHILDREN_LEAF )   /* Go down */
 					{
 						c = c->children.node[mvp->tree_rank[c->depth]];
 						c->barrier_done++;
@@ -1029,7 +1029,7 @@ kmp_int32 __kmpc_reduce_nowait( ident_t *loc, kmp_int32 global_tid, kmp_int32 nu
                                 kmp_critical_name *lck )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	int retval = 0;
@@ -1081,7 +1081,7 @@ void __kmpc_end_reduce_nowait( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 glo
                                __UNUSED__ kmp_critical_name *lck )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	int packed_reduction_method;
@@ -1129,7 +1129,7 @@ kmp_int32 __kmpc_reduce( ident_t *loc, kmp_int32 global_tid, kmp_int32 num_vars,
                          kmp_critical_name *lck )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	int retval = 0;
@@ -1184,7 +1184,7 @@ void __kmpc_end_reduce( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid
                         __UNUSED__ kmp_critical_name *lck )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	int packed_reduction_method;
@@ -1213,7 +1213,7 @@ void __kmpc_end_reduce( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid
 		c->barrier_done++;
 
 		/* Go down to release all threads still waiting on __intel_tree_reduce for the reduction to be done, we don't need to do a full barrier  */
-		while ( c->child_type != MPCOMP_CHILDREN_LEAF )
+		while ( c->child_type != MPC_OMP_CHILDREN_LEAF )
 		{
 			c = c->children.node[mvp->tree_rank[c->depth]];
 			c->barrier_done++;
@@ -1243,7 +1243,7 @@ void __kmpc_for_static_init_4( ident_t *loc, __UNUSED__ kmp_int32 gtid, kmp_int3
                                kmp_int32 incr, kmp_int32 chunk )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t *t;
@@ -1425,7 +1425,7 @@ void __kmpc_for_static_init_4u( ident_t *loc, __UNUSED__ kmp_int32 gtid,
                                 kmp_int32 chunk )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t *t;
@@ -1617,7 +1617,7 @@ void __kmpc_for_static_init_8( ident_t *loc, __UNUSED__ kmp_int32 gtid, kmp_int3
                                kmp_int64 incr, kmp_int64 chunk )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t *t;
@@ -1804,7 +1804,7 @@ void __kmpc_for_static_init_8u( ident_t *loc, __UNUSED__ kmp_int32 gtid,
                                 kmp_int64 chunk )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	/* TODO: the same as unsigned long long in GCC... */
@@ -1992,7 +1992,7 @@ void __kmpc_for_static_init_8u( ident_t *loc, __UNUSED__ kmp_int32 gtid,
 void __kmpc_for_static_fini( ident_t *loc, __UNUSED__ kmp_int32 global_tid )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_common_nodebug( "[REDIRECT KMP]: %s -> None", __func__ );
@@ -2317,7 +2317,7 @@ void __kmpc_dispatch_init_4( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gtid,
                              kmp_int32 ub, kmp_int32 st, kmp_int32 chunk )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t __UNUSED__ *t = ( mpc_omp_thread_t * )mpc_omp_tls;
@@ -2337,7 +2337,7 @@ void __kmpc_dispatch_init_4u( __UNUSED__ ident_t *loc, __UNUSED__  kmp_int32 gti
                               kmp_uint32 ub, kmp_int32 st, kmp_int32 chunk )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t __UNUSED__ *t = ( mpc_omp_thread_t * )mpc_omp_tls;
@@ -2361,7 +2361,7 @@ void __kmpc_dispatch_init_8( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 gtid,
                              kmp_int64 ub, kmp_int64 st, kmp_int64 chunk )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t __UNUSED__ *t = ( mpc_omp_thread_t * )mpc_omp_tls;
@@ -2381,7 +2381,7 @@ void __kmpc_dispatch_init_8u( __UNUSED__ ident_t *loc, __UNUSED__  kmp_int32 gti
                               kmp_uint64 ub, kmp_int64 st, kmp_int64 chunk )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t __UNUSED__ *t = ( mpc_omp_thread_t * )mpc_omp_tls;
@@ -2404,13 +2404,13 @@ int __kmpc_dispatch_next_4( ident_t *loc, kmp_int32 gtid, __UNUSED__ kmp_int32 *
                             kmp_int32 *p_lb, kmp_int32 *p_ub, __UNUSED__  kmp_int32 *p_st )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	long from, to;
 	mpc_omp_thread_t __UNUSED__ *t = ( mpc_omp_thread_t * )mpc_omp_tls;
 	assert( t != NULL );
-	assert( t->info.loop_infos.type == MPCOMP_LOOP_TYPE_LONG );
+	assert( t->info.loop_infos.type == MPC_OMP_LOOP_TYPE_LONG );
 	const long incr = t->info.loop_infos.loop.mpcomp_long.incr;
 	mpc_common_nodebug( "%s: p_lb %ld, p_ub %ld, p_st %ld", __func__, *p_lb, *p_ub,
 	              *p_st );
@@ -2433,14 +2433,14 @@ int __kmpc_dispatch_next_4u( ident_t *loc, kmp_int32 gtid, __UNUSED__ kmp_int32 
                              __UNUSED__ kmp_int32 *p_st )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t __UNUSED__ *t;
 	unsigned long long from, to;
 	t = ( mpc_omp_thread_t * )mpc_omp_tls;
 	assert( t != NULL );
-	assert( t->info.loop_infos.type == MPCOMP_LOOP_TYPE_ULL );
+	assert( t->info.loop_infos.type == MPC_OMP_LOOP_TYPE_ULL );
 	const unsigned long long incr = t->info.loop_infos.loop.mpcomp_ull.incr;
 	mpc_common_nodebug( "%s: p_lb %llu, p_ub %llu, p_st %llu", __func__, *p_lb, *p_ub,
 	              *p_st );
@@ -2462,14 +2462,14 @@ int __kmpc_dispatch_next_8( ident_t *loc, kmp_int32 gtid, __UNUSED__ kmp_int32 *
                             kmp_int64 *p_lb, kmp_int64 *p_ub, __UNUSED__ kmp_int64 *p_st )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	long from, to;
 	mpc_omp_thread_t __UNUSED__ *t;
 	t = ( mpc_omp_thread_t * )mpc_omp_tls;
 	assert( t != NULL );
-	assert( t->info.loop_infos.type == MPCOMP_LOOP_TYPE_LONG );
+	assert( t->info.loop_infos.type == MPC_OMP_LOOP_TYPE_LONG );
 	const long incr = t->info.loop_infos.loop.mpcomp_long.incr;
 	mpc_common_nodebug( "%s: p_lb %ld, p_ub %ld, p_st %ld", __func__, *p_lb, *p_ub,
 	              *p_st );
@@ -2492,14 +2492,14 @@ int __kmpc_dispatch_next_8u( ident_t *loc, kmp_int32 gtid, __UNUSED__ kmp_int32 
                              __UNUSED__ kmp_int64 *p_st )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t __UNUSED__ *t;
 	unsigned long long from, to;
 	t = ( mpc_omp_thread_t * )mpc_omp_tls;
 	assert( t != NULL );
-	assert( t->info.loop_infos.type == MPCOMP_LOOP_TYPE_ULL );
+	assert( t->info.loop_infos.type == MPC_OMP_LOOP_TYPE_ULL );
 	const unsigned long long incr = t->info.loop_infos.loop.mpcomp_ull.incr;
 	mpc_common_nodebug( "%s: p_lb %llu, p_ub %llu, p_st %llu", __func__, *p_lb, *p_ub,
 	              *p_st );
@@ -2603,7 +2603,7 @@ kmp_int32 __kmpc_omp_task( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gti
                            kmp_task_t *new_task )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	struct mpc_omp_task_s *mpcomp_task =
@@ -2618,7 +2618,7 @@ kmp_int32 __kmpc_omp_task( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gti
 
 	_mpc_task_process( mpcomp_task,
                        (bool) !mpc_omp_task_property_isset( mpcomp_task->property,
-                                                           MPCOMP_TASK_UNDEFERRED ));
+                                                           MPC_OMP_TASK_UNDEFERRED ));
 
 	return ( kmp_int32 )0;
 }
@@ -2635,7 +2635,7 @@ kmp_task_t *__kmpc_omp_task_alloc( __UNUSED__ ident_t *loc_ref, __UNUSED__  kmp_
                                    kmp_routine_entry_t task_entry )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	struct mpc_omp_task_s *new_task ;
@@ -2657,7 +2657,7 @@ kmp_task_t *__kmpc_omp_task_alloc( __UNUSED__ ident_t *loc_ref, __UNUSED__  kmp_
 
 	/* Compute task total size */
 	long mpc_omp_task_tot_size = mpcomp_task_info_size;
-	assert( MPCOMP_OVERFLOW_SANITY_CHECK( ( unsigned long )mpc_omp_task_tot_size,
+	assert( MPC_OMP_OVERFLOW_SANITY_CHECK( ( unsigned long )mpc_omp_task_tot_size,
 	             ( unsigned long )mpcomp_task_data_size ) );
 	mpc_omp_task_tot_size += mpcomp_task_data_size;
 
@@ -2714,13 +2714,13 @@ kmp_task_t *__kmpc_omp_task_alloc( __UNUSED__ ident_t *loc_ref, __UNUSED__  kmp_
 	compiler_infos->part_id = 0;
 
 	/* taskgroup */
-	mpc_omp_task_t *current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( t );
+	mpc_omp_task_t *current_task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK( t );
 	mpc_omp_taskgroup_add_task( new_task );
 	_mpc_task_ref_parent_task( new_task );
 	new_task->is_stealed = false;
 	new_task->task_size = t->task_infos.max_task_tot_size;
 
-	if ( new_task->depth % MPCOMP_TASKS_DEPTH_JUMP == 2 )
+	if ( new_task->depth % MPC_OMP_TASKS_DEPTH_JUMP == 2 )
 	{
 		new_task->far_ancestor = new_task->parent;
 	}
@@ -2734,12 +2734,12 @@ kmp_task_t *__kmpc_omp_task_alloc( __UNUSED__ ident_t *loc_ref, __UNUSED__  kmp_
 	/* If its parent task is final, the new task must be final too */
 	if ( _mpc_task_is_final( flags, new_task->parent ) )
 	{
-		mpc_omp_task_set_property( &( new_task->property ), MPCOMP_TASK_FINAL );
+		mpc_omp_task_set_property( &( new_task->property ), MPC_OMP_TASK_FINAL );
 	}
 
 	/* to handle if0 with deps */
     if( ( flags & mpcomp_kmp_task_serial ) || ( flags & mpcomp_kmp_tasking_ser ) )
-        mpc_omp_task_set_property(&(new_task->property), MPCOMP_TASK_UNDEFERRED );
+        mpc_omp_task_set_property(&(new_task->property), MPC_OMP_TASK_UNDEFERRED );
 
 	current_task->last_task_alloc = new_task;
 
@@ -2750,7 +2750,7 @@ void __kmpc_omp_task_begin_if0( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int3
                                 kmp_task_t *task )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t *t = ( mpc_omp_thread_t * )mpc_omp_tls;
@@ -2761,7 +2761,7 @@ void __kmpc_omp_task_begin_if0( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int3
 	mpcomp_task->prev_icvs = t->info.icvs;
 
     /* Task with if(0) clause, set to undeferred */
-    mpc_omp_task_set_property(&(mpcomp_task->property), MPCOMP_TASK_UNDEFERRED );
+    mpc_omp_task_set_property(&(mpcomp_task->property), MPC_OMP_TASK_UNDEFERRED );
 
 #if OMPT_SUPPORT
     _mpc_omp_ompt_callback_task_create( mpcomp_task,
@@ -2771,14 +2771,14 @@ void __kmpc_omp_task_begin_if0( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int3
 
 	/* Because task code is between the current call and the next call
 	 * __kmpc_omp_task_complete_if0 */
-	MPCOMP_TASK_THREAD_SET_CURRENT_TASK( t, mpcomp_task );
+	MPC_OMP_TASK_THREAD_SET_CURRENT_TASK( t, mpcomp_task );
 }
 
 void __kmpc_omp_task_complete_if0( __UNUSED__ ident_t *loc_ref, __UNUSED__  kmp_int32 gtid,
                                    kmp_task_t *task )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t __UNUSED__ *t = ( mpc_omp_thread_t * )mpc_omp_tls;
@@ -2788,7 +2788,7 @@ void __kmpc_omp_task_complete_if0( __UNUSED__ ident_t *loc_ref, __UNUSED__  kmp_
 	_mpc_task_dep_new_finalize( mpcomp_task ); /* if task if0 with deps */
 	mpc_omp_taskgroup_del_task( mpcomp_task );
 	_mpc_task_unref_parent_task( mpcomp_task );
-	MPCOMP_TASK_THREAD_SET_CURRENT_TASK( t, mpcomp_task->parent );
+	MPC_OMP_TASK_THREAD_SET_CURRENT_TASK( t, mpcomp_task->parent );
 	t->info.icvs = mpcomp_task->prev_icvs;
 }
 
@@ -2796,7 +2796,7 @@ kmp_int32 __kmpc_omp_task_parts( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int
                                  kmp_task_t *new_task )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	// TODO: Check if this is the correct way to implement __kmpc_omp_task_parts
@@ -2818,7 +2818,7 @@ kmp_int32 __kmpc_omp_task_parts( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int
 kmp_int32 __kmpc_omp_taskwait( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	_mpc_task_wait();
@@ -2828,7 +2828,7 @@ kmp_int32 __kmpc_omp_taskwait( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32
 kmp_int32 __kmpc_omp_taskyield( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid, __UNUSED__ int end_part )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	return ( kmp_int32 )0;
@@ -2852,7 +2852,7 @@ void __kmpc_omp_task_complete( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32
 void __kmpc_taskgroup( __UNUSED__ ident_t *loc, __UNUSED__ int gtid )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	_mpc_task_taskgroup_start();
@@ -2861,7 +2861,7 @@ void __kmpc_taskgroup( __UNUSED__ ident_t *loc, __UNUSED__ int gtid )
 void __kmpc_end_taskgroup( __UNUSED__ ident_t *loc, __UNUSED__ int gtid )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	_mpc_task_taskgroup_end();
@@ -2912,7 +2912,7 @@ kmp_int32 __kmpc_omp_task_with_deps( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp
                                      kmp_depend_info_t *noalias_dep_list )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	struct mpc_omp_task_s *mpcomp_task =
@@ -2948,11 +2948,11 @@ void __kmpc_omp_wait_deps( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gti
                            kmp_depend_info_t *noalias_dep_list )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t __UNUSED__ *t = ( mpc_omp_thread_t * )mpc_omp_tls;
-	mpc_omp_task_t *current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( t );
+	mpc_omp_task_t *current_task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK( t );
 	mpc_omp_task_t *task = current_task->last_task_alloc;
 	long arg_size = 0;
 	long arg_align = 0;
@@ -2979,7 +2979,7 @@ void __kmpc_taskloop( __UNUSED__ ident_t *loc, __UNUSED__ int gtid, kmp_task_t *
                       int nogroup, int sched, kmp_uint64 grainsize, void *task_dup )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t *t = ( mpc_omp_thread_t * )mpc_omp_tls;
@@ -3118,13 +3118,13 @@ void __kmpc_taskloop( __UNUSED__ ident_t *loc, __UNUSED__ int gtid, kmp_task_t *
                                      NULL;
 
             OPA_incr_int(&(next_task->parent->refcount));
-            MPCOMP_TASK_THREAD_GET_CURRENT_TASK(t)->last_task_alloc = next_task;
+            MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(t)->last_task_alloc = next_task;
 
             if ( ptask_dup != NULL )
                 ptask_dup( next_kmp_task, task, lastpriv );
 
             if ( nogroup == 0 ) {
-                mpc_omp_taskgroup_add_task( next_task );
+                _mpc_taskgroup_add_task( next_task );
             }
 
 #if OMPT_SUPPORT
@@ -3150,13 +3150,13 @@ void __kmpc_taskloop( __UNUSED__ ident_t *loc, __UNUSED__ int gtid, kmp_task_t *
 
             _mpc_task_process( next_task,
                                (bool) !mpc_omp_task_property_isset( next_task->property,
-                                                                   MPCOMP_TASK_UNDEFERRED ));
+                                                                   MPC_OMP_TASK_UNDEFERRED ));
 
             lower = upper + st;
         }
 
         if ( nogroup == 0 ) {
-            mpc_omp_taskgroup_add_task( mpcomp_task );
+            _mpc_taskgroup_add_task( mpcomp_task );
         }
 
         /* Last task */
@@ -3174,7 +3174,7 @@ void __kmpc_taskloop( __UNUSED__ ident_t *loc, __UNUSED__ int gtid, kmp_task_t *
 
         _mpc_task_process( mpcomp_task,
                            (bool) !mpc_omp_task_property_isset( mpcomp_task->property,
-                                                               MPCOMP_TASK_UNDEFERRED ));
+                                                               MPC_OMP_TASK_UNDEFERRED ));
     }
     else {
         /* Only one task */
@@ -3190,7 +3190,7 @@ void __kmpc_taskloop( __UNUSED__ ident_t *loc, __UNUSED__ int gtid, kmp_task_t *
 
         _mpc_task_process( mpcomp_task,
                            (bool) !mpc_omp_task_property_isset( mpcomp_task->property,
-                                                               MPCOMP_TASK_UNDEFERRED ));
+                                                               MPC_OMP_TASK_UNDEFERRED ));
     }
 
     if ( nogroup == 0 )
@@ -3337,7 +3337,7 @@ void __kmpc_copyprivate( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_ti
                          kmp_int32 didit )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_INTEL );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t __UNUSED__ *t; /* Info on the current thread */

@@ -31,12 +31,12 @@ static inline int *__tree_array_ancestor_path( mpc_omp_instance_t *instance, con
 	gen_node = &( instance->tree_array[globalRank] );
 
 	/* Extra node to preserve regular tree_shape */
-	if ( gen_node->type == MPCOMP_CHILDREN_NULL )
+	if ( gen_node->type == MPC_OMP_CHILDREN_NULL )
 	{
 		return NULL;
 	}
 
-	if ( gen_node->type == MPCOMP_CHILDREN_LEAF )
+	if ( gen_node->type == MPC_OMP_CHILDREN_LEAF )
 	{
 		path = gen_node->ptr.mvp->threads->tree_array_ancestor_path;
 		assert( gen_node->ptr.mvp->threads );
@@ -44,7 +44,7 @@ static inline int *__tree_array_ancestor_path( mpc_omp_instance_t *instance, con
 	}
 	else
 	{
-		assert( gen_node->type == MPCOMP_CHILDREN_NODE );
+		assert( gen_node->type == MPC_OMP_CHILDREN_NODE );
 		path =  gen_node->ptr.node->tree_array_ancestor_path;
 		*depth = gen_node->ptr.node->depth;
 	}
@@ -177,7 +177,7 @@ static void ___tree_task_check_neigborhood( mpc_omp_node_t *node )
 
 	switch ( node->child_type )
 	{
-		case MPCOMP_CHILDREN_NODE:
+		case MPC_OMP_CHILDREN_NODE:
 
 			/* Call recursively for all children nodes */
 			for ( i = 0; i < node->nb_children; i++ )
@@ -187,7 +187,7 @@ static void ___tree_task_check_neigborhood( mpc_omp_node_t *node )
 
 			break;
 
-		case MPCOMP_CHILDREN_LEAF:
+		case MPC_OMP_CHILDREN_LEAF:
 
 			/* All the children are leafs */
 			for ( i = 0; i < node->nb_children; i++ )
@@ -407,7 +407,7 @@ static inline void __tree_array_update_children_node( const int first_idx,
 	assert( node );
 	assert( first_idx > 0 );
 	assert( root );
-	assert( node->child_type == MPCOMP_CHILDREN_NODE );
+	assert( node->child_type == MPC_OMP_CHILDREN_NODE );
 	const int children_num = node->nb_children;
 	me = &( root[node->global_rank] );
 	assert( OPA_load_int( &( me->children_ready ) ) == children_num );
@@ -448,7 +448,7 @@ static inline void __tree_array_update_children_mvp(  const int first_idx,
 	assert( node );
 	assert( first_idx > 0 );
 	assert( root );
-	assert( node->child_type == MPCOMP_CHILDREN_LEAF );
+	assert( node->child_type == MPC_OMP_CHILDREN_LEAF );
 	const int children_num = node->nb_children;
 	me = &( root[node->global_rank] );
 	assert( OPA_load_int( &( me->children_ready ) ) == children_num );
@@ -918,18 +918,18 @@ int *mpc_omp_tree_array_compute_thread_min_rank( const int *shape, const int max
 {
 	int index;
 	int *min_index = NULL;
-	min_index = ( int * ) mpc_omp_alloc( sizeof( int ) * MPCOMP_AFFINITY_NB );
+	min_index = ( int * ) mpc_omp_alloc( sizeof( int ) * MPC_OMP_AFFINITY_NB );
 	assert( min_index );
-	memset( min_index, 0, sizeof( int ) * MPCOMP_AFFINITY_NB );
-	/* MPCOMP_AFFINITY_COMPACT  */
+	memset( min_index, 0, sizeof( int ) * MPC_OMP_AFFINITY_NB );
+	/* MPC_OMP_AFFINITY_COMPACT  */
 	index = __tree_array_compute_thread_min_compact( shape, max_depth, rank );
-	min_index[MPCOMP_AFFINITY_COMPACT] = index;
-	/* MPCOMP_AFFINITY_SCATTER  */
+	min_index[MPC_OMP_AFFINITY_COMPACT] = index;
+	/* MPC_OMP_AFFINITY_SCATTER  */
 	index = __tree_array_compute_thread_min_scatter( shape, max_depth, rank );
-	min_index[MPCOMP_AFFINITY_SCATTER] = index;
-	/* MPCOMP_AFFINITY_BALANCED */
+	min_index[MPC_OMP_AFFINITY_SCATTER] = index;
+	/* MPC_OMP_AFFINITY_BALANCED */
 	index = __tree_array_compute_thread_min_balanced( shape, max_depth, rank, core_depth );
-	min_index[MPCOMP_AFFINITY_BALANCED] = index;
+	min_index[MPC_OMP_AFFINITY_BALANCED] = index;
 	return min_index;
 }
 
@@ -972,7 +972,7 @@ static inline int __tree_node_init( mpc_omp_meta_tree_node_t *root, const int *t
 	if ( !( me->user_pointer )  )
 	{
 		assert( rank );
-		me->type = MPCOMP_META_TREE_NODE;
+		me->type = MPC_OMP_META_TREE_NODE;
 		mpc_omp_node_t *new_alloc_node = ( mpc_omp_node_t * ) mpc_omp_alloc( sizeof( mpc_omp_node_t ) );
 		assert( new_alloc_node );
 		memset( new_alloc_node, 0, sizeof( mpc_omp_node_t ) );
@@ -1053,7 +1053,7 @@ static inline int __tree_node_init( mpc_omp_meta_tree_node_t *root, const int *t
 	if ( new_node->depth < max_depth - 1 )
 	{
 		mpc_omp_node_t **children = NULL;
-		new_node->child_type = MPCOMP_CHILDREN_NODE;
+		new_node->child_type = MPC_OMP_CHILDREN_NODE;
 		children = ( mpc_omp_node_t ** )mpc_omp_alloc( sizeof( mpc_omp_node_t * ) * num_children );
 		assert( children );
 		new_node->children.node = children;
@@ -1061,7 +1061,7 @@ static inline int __tree_node_init( mpc_omp_meta_tree_node_t *root, const int *t
 	else
 	{
 		mpc_omp_mvp_t **children = NULL;
-		new_node->child_type = MPCOMP_CHILDREN_LEAF;
+		new_node->child_type = MPC_OMP_CHILDREN_LEAF;
 		children = ( mpc_omp_mvp_t ** )mpc_omp_alloc( sizeof( mpc_omp_mvp_t * ) * num_children );
 		assert( children );
 		new_node->children.leaf = children;
@@ -1078,11 +1078,11 @@ static inline int __tree_node_init( mpc_omp_meta_tree_node_t *root, const int *t
 
 	switch ( new_node->child_type )
 	{
-		case MPCOMP_CHILDREN_NODE:
+		case MPC_OMP_CHILDREN_NODE:
 			__tree_array_update_children_node( first_idx, new_node, root );
 			break;
 
-		case MPCOMP_CHILDREN_LEAF:
+		case MPC_OMP_CHILDREN_LEAF:
 			__tree_array_update_children_mvp( first_idx, new_node, root );
 			break;
 
@@ -1174,7 +1174,7 @@ static inline void *__tree_mvp_init( void *args )
     _mpc_omp_thread_infos_init( thread );
 
 	/* Generic infos */
-	me->type = MPCOMP_META_TREE_LEAF;
+	me->type = MPC_OMP_META_TREE_LEAF;
 	me->user_pointer = ( void * ) new_mvp;
 
 	// Transfert to slave_node_leaf function ...
@@ -1198,12 +1198,12 @@ static inline void *__tree_mvp_init( void *args )
 
 		new_mvp->spin_node = ( mpc_omp_node_t * ) root[target_node_rank].user_pointer;
 		assert( new_mvp->spin_node );
-		new_mvp->spin_node->spin_status = MPCOMP_MVP_STATE_SLEEP;
+		new_mvp->spin_node->spin_status = MPC_OMP_MVP_STATE_SLEEP;
 	}
 	else /* The other children are regular leaves */
 	{
 		new_mvp->spin_node = NULL;
-		new_mvp->spin_status = MPCOMP_MVP_STATE_SLEEP;
+		new_mvp->spin_status = MPC_OMP_MVP_STATE_SLEEP;
 	}
 
 	mpc_omp_slave_mvp_node( new_mvp );
@@ -1269,7 +1269,7 @@ mpc_omp_init_seq_region() {
     memset( seq_instance->tree_array, 0, sizeof( mpc_omp_generic_node_t ) );
 
 	seq_instance->tree_array[0].ptr.mvp = new_mvp;
-	seq_instance->tree_array[0].type = MPCOMP_CHILDREN_LEAF;
+	seq_instance->tree_array[0].type = MPC_OMP_CHILDREN_LEAF;
 	seq_instance->mvps = seq_instance->tree_array;
 	seq_instance->tree_depth = 1;
 

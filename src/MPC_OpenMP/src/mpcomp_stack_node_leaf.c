@@ -73,7 +73,7 @@ void _mpc_omp_push_node( mpc_omp_stack_node_leaf_t *s, mpc_omp_node_t *n)
      //s->elements[s->n_elements]->elem.node = (mpc_omp_node_t *) sctk_malloc_on_node(sizeof(mpc_omp_node_t),0);
 
      s->elements[s->n_elements]->elem.node = n;
-     s->elements[s->n_elements]->type = MPCOMP_ELEM_STACK_NODE;
+     s->elements[s->n_elements]->type = MPC_OMP_ELEM_STACK_NODE;
      s->n_elements++;
 }
 
@@ -90,7 +90,7 @@ void _mpc_omp_push_leaf(mpc_omp_stack_node_leaf_t *s, mpc_omp_mvp_t *l)
      s->elements[s->n_elements]->elem.leaf = (mpc_omp_mvp_t *) sctk_malloc(sizeof(mpc_omp_mvp_t));
 
      s->elements[s->n_elements]->elem.leaf = l;
-     s->elements[s->n_elements]->type = MPCOMP_ELEM_STACK_LEAF;  
+     s->elements[s->n_elements]->type = MPC_OMP_ELEM_STACK_LEAF;  
      s->n_elements++;
 }
 

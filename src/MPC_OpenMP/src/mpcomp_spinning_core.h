@@ -1,5 +1,5 @@
-#ifndef __MPCOMP_SPINNING_CORE_H__
-#define __MPCOMP_SPINNING_CORE_H__
+#ifndef __MPC_OMP_SPINNING_CORE_H__
+#define __MPC_OMP_SPINNING_CORE_H__
 
 # include "mpcomp_types.h"
 # include "mpcomp_task.h"
@@ -27,7 +27,7 @@ static inline void _mpc_omp_instance_tree_array_root_init( struct mpc_omp_node_s
 	root->instance_stage_first_rank = 1;
 	meta_node = &( instance->tree_array[0] );
 	meta_node->ptr.node = root;
-	meta_node->type = MPCOMP_CHILDREN_NODE;
+	meta_node->type = MPC_OMP_CHILDREN_NODE;
 	_mpc_task_root_info_init( root );
 }
 
@@ -167,4 +167,4 @@ static inline int _mpc_omp_spinning_leaf_compute_rank( mpc_omp_node_t *node, con
 
 #endif
 
-#endif /* __MPCOMP_SPINNING_CORE_H__ */
+#endif /* __MPC_OMP_SPINNING_CORE_H__ */

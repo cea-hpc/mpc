@@ -66,8 +66,6 @@ extern "C" {
         uint64_t ompt_wait_id;
     } omp_lock_t;
 
-    typedef omp_lock_t* omp_lock_t;
-
     typedef struct omp_nest_lock_s
     {
         int nb_nested;		/* Number of times this lock is held */

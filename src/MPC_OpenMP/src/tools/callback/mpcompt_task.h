@@ -60,15 +60,15 @@ __mpc_omp_ompt_get_task_flags( mpc_omp_thread_t * thread, mpc_omp_task_t *new_ta
     ompt_task_flag_t flags = ompt_task_explicit;
     int task_nesting_max = mpc_omp_conf_get()->omp_task_nesting_max;
 
-    if( mpc_omp_task_property_isset( new_task->property, MPCOMP_TASK_UNDEFERRED ))
+    if( mpc_omp_task_property_isset( new_task->property, MPC_OMP_TASK_UNDEFERRED ))
         flags |= ompt_task_undeferred;
 
-    if( mpc_omp_task_property_isset( new_task->property, MPCOMP_TASK_FINAL ))
+    if( mpc_omp_task_property_isset( new_task->property, MPC_OMP_TASK_FINAL ))
         flags |= ompt_task_final;
 
     if( !( flags & ompt_task_undeferred )
         && ( thread->info.num_threads == 1
-             || MPCOMP_TASK_THREAD_GET_CURRENT_TASK(thread)->depth > task_nesting_max ))
+             || MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread)->depth > task_nesting_max ))
         flags |= ompt_task_undeferred;
 
     /* NOTE: One case not handled: if task list has reached the maximum capacity

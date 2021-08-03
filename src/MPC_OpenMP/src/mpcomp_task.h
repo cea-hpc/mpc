@@ -23,8 +23,8 @@
 /* ######################################################################## */
 #include "mpcomp_types.h"
 
-#ifndef __MPCOMP_TASK_H__
-#define __MPCOMP_TASK_H__
+#ifndef __MPC_OMP_TASK_H__
+#define __MPC_OMP_TASK_H__
 
 #include "mpc_common_asm.h"
 
@@ -32,61 +32,63 @@
  * MACROS *
  **********/
 
-#define MPCOMP_TASK_DEP_UNUSED_VAR( var ) (void) ( sizeof( var ) )
+TODO("most of these macros are unused, remove this");
 
-#define MPCOMP_OVERFLOW_SANITY_CHECK( size, size_to_sum ) \
+#define MPC_OMP_TASK_DEP_UNUSED_VAR( var ) (void) ( sizeof( var ) )
+
+#define MPC_OMP_OVERFLOW_SANITY_CHECK( size, size_to_sum ) \
 	( size <= KMP_SIZE_T_MAX - size_to_sum )
 
-#define MPCOMP_TASK_COMPUTE_TASK_DATA_PTR( ptr, size, arg_align ) \
-	ptr + MPCOMP_TASK_ALIGN_SINGLE( size, arg_align )
+#define MPC_OMP_TASK_COMPUTE_TASK_DATA_PTR( ptr, size, arg_align ) \
+	ptr + MPC_OMP_TASK_ALIGN_SINGLE( size, arg_align )
 
-#define MPCOMP_TASK_STATUS_IS_INITIALIZED( status ) \
-	( OPA_load_int( &( status ) ) == MPCOMP_TASK_INIT_STATUS_INITIALIZED )
+#define MPC_OMP_TASK_STATUS_IS_INITIALIZED( status ) \
+	( OPA_load_int( &( status ) ) == MPC_OMP_TASK_INIT_STATUS_INITIALIZED )
 
-#define MPCOMP_TASK_STATUS_TRY_INIT( status )                          \
-	( OPA_cas_int( &( status ), MPCOMP_TASK_INIT_STATUS_UNINITIALIZED, \
-	               MPCOMP_TASK_INIT_STATUS_INIT_IN_PROCESS ) ==        \
-	  MPCOMP_TASK_INIT_STATUS_UNINITIALIZED )
+#define MPC_OMP_TASK_STATUS_TRY_INIT( status )                          \
+	( OPA_cas_int( &( status ), MPC_OMP_TASK_INIT_STATUS_UNINITIALIZED, \
+	               MPC_OMP_TASK_INIT_STATUS_INIT_IN_PROCESS ) ==        \
+	  MPC_OMP_TASK_INIT_STATUS_UNINITIALIZED )
 
-#define MPCOMP_TASK_STATUS_CMPL_INIT( status ) \
-	( OPA_store_int( &( status ), MPCOMP_TASK_INIT_STATUS_INITIALIZED ) )
+#define MPC_OMP_TASK_STATUS_CMPL_INIT( status ) \
+	( OPA_store_int( &( status ), MPC_OMP_TASK_INIT_STATUS_INITIALIZED ) )
 
 /*** THREAD ACCESSORS MACROS ***/
 
 /** Check if thread is initialized */
-#define MPCOMP_TASK_THREAD_IS_INITIALIZED( thread ) \
-	MPCOMP_TASK_STATUS_IS_INITIALIZED( thread->task_infos.status )
+#define MPC_OMP_TASK_THREAD_IS_INITIALIZED( thread ) \
+	MPC_OMP_TASK_STATUS_IS_INITIALIZED( thread->task_infos.status )
 
 /** Avoid multiple team init (one thread per team ) */
-#define MPCOMP_TASK_THREAD_TRY_INIT( thread ) \
-	MPCOMP_TASK_STATUS_TRY_INIT( thread->task_infos.status )
+#define MPC_OMP_TASK_THREAD_TRY_INIT( thread ) \
+	MPC_OMP_TASK_STATUS_TRY_INIT( thread->task_infos.status )
 
 /** Set thread status to INITIALIZED */
-#define MPCOMP_TASK_THREAD_CMPL_INIT( thread ) \
-	MPCOMP_TASK_STATUS_CMPL_INIT( thread->task_infos.status )
+#define MPC_OMP_TASK_THREAD_CMPL_INIT( thread ) \
+	MPC_OMP_TASK_STATUS_CMPL_INIT( thread->task_infos.status )
 
-#define MPCOMP_TASK_THREAD_GET_LARCENY_ORDER( thread ) \
+#define MPC_OMP_TASK_THREAD_GET_LARCENY_ORDER( thread ) \
 	thread->task_infos.larceny_order
 
-#define MPCOMP_TASK_THREAD_SET_LARCENY_ORDER( thread, ptr ) \
+#define MPC_OMP_TASK_THREAD_SET_LARCENY_ORDER( thread, ptr ) \
 	do                                                      \
 	{                                                       \
 		thread->task_infos.larceny_order = ptr;             \
 	} while ( 0 )
 
-#define MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread ) \
+#define MPC_OMP_TASK_THREAD_GET_CURRENT_TASK( thread ) \
 	thread->task_infos.current_task
 
-#define MPCOMP_TASK_THREAD_SET_CURRENT_TASK( thread, ptr ) \
+#define MPC_OMP_TASK_THREAD_SET_CURRENT_TASK( thread, ptr ) \
 	do                                                     \
 	{                                                      \
 		thread->task_infos.current_task = ptr;             \
 	} while ( 0 )
 
-#define MPCOMP_TASK_THREAD_GET_TIED_TASK_LIST_HEAD( thread ) \
+#define MPC_OMP_TASK_THREAD_GET_TIED_TASK_LIST_HEAD( thread ) \
 	thread->task_infos.tied_tasks
 
-#define MPCOMP_TASK_THREAD_SET_TIED_TASK_LIST_HEAD( thread, ptr ) \
+#define MPC_OMP_TASK_THREAD_SET_TIED_TASK_LIST_HEAD( thread, ptr ) \
 	do                                                            \
 	{                                                             \
 		thread->task_infos.tied_tasks = ptr;                      \
@@ -94,84 +96,84 @@
 
 /*** INSTANCE ACCESSORS MACROS ***/
 
-#define MPCOMP_TASK_INSTANCE_SET_ARRAY_TREE_TOTAL_SIZE( instance, num ) \
+#define MPC_OMP_TASK_INSTANCE_SET_ARRAY_TREE_TOTAL_SIZE( instance, num ) \
 	do                                                                  \
 	{                                                                   \
 		instance->task_infos.array_tree_total_size = num;               \
 	} while ( 0 )
 
-#define MPCOMP_TASK_INSTANCE_GET_ARRAY_TREE_TOTAL_SIZE( instance ) \
+#define MPC_OMP_TASK_INSTANCE_GET_ARRAY_TREE_TOTAL_SIZE( instance ) \
 	instance->task_infos.array_tree_total_size
 
-#define MPCOMP_TASK_INSTANCE_SET_ARRAY_TREE_LEVEL_SIZE( instance, ptr ) \
+#define MPC_OMP_TASK_INSTANCE_SET_ARRAY_TREE_LEVEL_SIZE( instance, ptr ) \
 	do                                                                  \
 	{                                                                   \
 		instance->task_infos.array_tree_level_size = ptr;               \
 	} while ( 0 );
 
-#define MPCOMP_TASK_INSTANCE_GET_ARRAY_TREE_LEVEL_SIZE( instance, depth ) \
+#define MPC_OMP_TASK_INSTANCE_GET_ARRAY_TREE_LEVEL_SIZE( instance, depth ) \
 	instance->task_infos.array_tree_level_size[depth]
 
-#define MPCOMP_TASK_INSTANCE_SET_ARRAY_TREE_LEVEL_FIRST( instance, ptr ) \
+#define MPC_OMP_TASK_INSTANCE_SET_ARRAY_TREE_LEVEL_FIRST( instance, ptr ) \
 	do                                                                   \
 	{                                                                    \
 		instance->task_infos.array_tree_level_first = ptr;               \
 	} while ( 0 );
 
-#define MPCOMP_TASK_INSTANCE_GET_ARRAY_TREE_LEVEL_FIRST( instance, depth ) \
+#define MPC_OMP_TASK_INSTANCE_GET_ARRAY_TREE_LEVEL_FIRST( instance, depth ) \
 	instance->task_infos.array_tree_level_first[depth]
 
 /*** TEAM ACCESSORS MACROS ***/
 
 /** Check if team is initialized */
-#define MPCOMP_TASK_TEAM_IS_INITIALIZED( team ) \
-	MPCOMP_TASK_STATUS_IS_INITIALIZED( team->task_infos.status )
+#define MPC_OMP_TASK_TEAM_IS_INITIALIZED( team ) \
+	MPC_OMP_TASK_STATUS_IS_INITIALIZED( team->task_infos.status )
 
 /** Avoid multiple team init (one thread per team ) */
-#define MPCOMP_TASK_TEAM_TRY_INIT( team ) \
-	MPCOMP_TASK_STATUS_TRY_INIT( team->task_infos.status )
+#define MPC_OMP_TASK_TEAM_TRY_INIT( team ) \
+	MPC_OMP_TASK_STATUS_TRY_INIT( team->task_infos.status )
 
 /** Set team status to INITIALIZED */
-#define MPCOMP_TASK_TEAM_CMPL_INIT( team ) \
-	MPCOMP_TASK_STATUS_CMPL_INIT( team->task_infos.status )
+#define MPC_OMP_TASK_TEAM_CMPL_INIT( team ) \
+	MPC_OMP_TASK_STATUS_CMPL_INIT( team->task_infos.status )
 
-#define MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH( team, type ) \
+#define MPC_OMP_TASK_TEAM_GET_TASKLIST_DEPTH( team, type ) \
 	team->task_infos.tasklist_depth[type]
 
-#define MPCOMP_TASK_TEAM_SET_TASKLIST_DEPTH( team, type, val ) \
+#define MPC_OMP_TASK_TEAM_SET_TASKLIST_DEPTH( team, type, val ) \
 	do                                                         \
 	{                                                          \
 		team->task_infos.tasklist_depth[type] = val;           \
 	} while ( 0 )
 
-#define MPCOMP_TASK_TEAM_GET_TASK_LARCENY_MODE( team ) \
+#define MPC_OMP_TASK_TEAM_GET_TASK_LARCENY_MODE( team ) \
 	team->task_infos.task_larceny_mode
 
-#define MPCOMP_TASK_TEAM_SET_TASK_LARCENY_MODE( team, mode ) \
+#define MPC_OMP_TASK_TEAM_SET_TASK_LARCENY_MODE( team, mode ) \
 	do                                                       \
 	{                                                        \
 		team->task_infos.task_larceny_mode = mode;           \
 	} while ( 0 )
 
-#define MPCOMP_TASK_TEAM_GET_TASK_NESTING_MAX( team ) \
+#define MPC_OMP_TASK_TEAM_GET_TASK_NESTING_MAX( team ) \
 	team->task_infos.task_nesting_max
 
-#define MPCOMP_TASK_TEAM_SET_TASK_NESTING_MAX( team, val ) \
+#define MPC_OMP_TASK_TEAM_SET_TASK_NESTING_MAX( team, val ) \
 	do                                                     \
 	{                                                      \
 		team->task_infos.task_nesting_max = val;           \
 	} while ( 0 )
 
-#define MPCOMP_TASK_TEAM_SET_USE_TASK( team )                \
+#define MPC_OMP_TASK_TEAM_SET_USE_TASK( team )                \
 	do                                                       \
 	{                                                        \
 		OPA_cas_int( &( team->task_infos.use_task ), 0, 1 ); \
 	} while ( 0 )
 
-#define MPCOMP_TASK_TEAM_GET_USE_TASK( team ) \
+#define MPC_OMP_TASK_TEAM_GET_USE_TASK( team ) \
 	OPA_load_int( &( team->task_infos.use_task ) )
 
-#define MPCOMP_TASK_TEAM_RESET_USE_TASK( team )             \
+#define MPC_OMP_TASK_TEAM_RESET_USE_TASK( team )             \
 	do                                                      \
 	{                                                       \
 		OPA_store_int( &( team->task_infos.use_task ), 0 ); \
@@ -179,43 +181,43 @@
 
 /*** NODE ACCESSORS MACROS ***/
 
-#define MPCOMP_TASK_NODE_GET_TREE_ARRAY_RANK( node ) \
+#define MPC_OMP_TASK_NODE_GET_TREE_ARRAY_RANK( node ) \
 	node->task_infos.tree_array_rank;
-#define MPCOMP_TASK_NODE_SET_TREE_ARRAY_RANK( node, id ) \
+#define MPC_OMP_TASK_NODE_SET_TREE_ARRAY_RANK( node, id ) \
 	do                                                   \
 	{                                                    \
 		node->task_infos.tree_array_rank = id;           \
 	} while ( 0 )
 
-#define MPCOMP_TASK_NODE_GET_TREE_ARRAY_NODES( node ) \
+#define MPC_OMP_TASK_NODE_GET_TREE_ARRAY_NODES( node ) \
 	node->task_infos.tree_array_node
-#define MPCOMP_TASK_NODE_SET_TREE_ARRAY_NODES( node, ptr ) \
+#define MPC_OMP_TASK_NODE_SET_TREE_ARRAY_NODES( node, ptr ) \
 	do                                                     \
 	{                                                      \
 		node->task_infos.tree_array_node = ptr;            \
 	} while ( 0 )
 
-#define MPCOMP_TASK_NODE_GET_TREE_ARRAY_NODE( node, rank ) \
+#define MPC_OMP_TASK_NODE_GET_TREE_ARRAY_NODE( node, rank ) \
 	node->task_infos.tree_array_node[rank]
 
-#define MPCOMP_TASK_NODE_GET_PATH( node ) node->task_infos.path
-#define MPCOMP_TASK_NODE_SET_PATH( node, ptr ) \
+#define MPC_OMP_TASK_NODE_GET_PATH( node ) node->task_infos.path
+#define MPC_OMP_TASK_NODE_SET_PATH( node, ptr ) \
 	do                                         \
 	{                                          \
 		node->task_infos.path = ptr;           \
 	} while ( 0 );
 
-#define MPCOMP_TASK_NODE_GET_TASK_LIST_HEAD( node, type ) \
+#define MPC_OMP_TASK_NODE_GET_TASK_LIST_HEAD( node, type ) \
 	node->task_infos.tasklist[type]
-#define MPCOMP_TASK_NODE_SET_TASK_LIST_HEAD( node, type, ptr ) \
+#define MPC_OMP_TASK_NODE_SET_TASK_LIST_HEAD( node, type, ptr ) \
 	do                                                         \
 	{                                                          \
 		node->task_infos.tasklist[type] = ptr;                 \
 	} while ( 0 )
 
-#define MPCOMP_TASK_NODE_GET_TASK_LIST_RANDBUFFER( node ) \
+#define MPC_OMP_TASK_NODE_GET_TASK_LIST_RANDBUFFER( node ) \
 	node->task_infos.tasklist_randBuffer
-#define MPCOMP_TASK_NODE_SET_TASK_LIST_RANDBUFFER( node, ptr ) \
+#define MPC_OMP_TASK_NODE_SET_TASK_LIST_RANDBUFFER( node, ptr ) \
 	do                                                         \
 	{                                                          \
 		node->task_infos.tasklist_randBuffer = ptr;            \
@@ -223,83 +225,61 @@
 
 /*** MVP ACCESSORS MACROS ***/
 
-#define MPCOMP_TASK_MVP_GET_TREE_ARRAY_RANK( mvp ) mvp->task_infos.tree_array_rank
-#define MPCOMP_TASK_MVP_SET_TREE_ARRAY_RANK( mvp, id ) \
+#define MPC_OMP_TASK_MVP_GET_TREE_ARRAY_RANK( mvp ) mvp->task_infos.tree_array_rank
+#define MPC_OMP_TASK_MVP_SET_TREE_ARRAY_RANK( mvp, id ) \
 	do                                                 \
 	{                                                  \
 		mvp->task_infos.tree_array_rank = id;          \
 	} while ( 0 )
 
-#define MPCOMP_TASK_MVP_GET_TREE_ARRAY_NODES( mvp ) \
+#define MPC_OMP_TASK_MVP_GET_TREE_ARRAY_NODES( mvp ) \
 	mvp->task_infos.tree_array_node
-#define MPCOMP_TASK_MVP_SET_TREE_ARRAY_NODES( mvp, ptr ) \
+#define MPC_OMP_TASK_MVP_SET_TREE_ARRAY_NODES( mvp, ptr ) \
 	do                                                   \
 	{                                                    \
 		mvp->task_infos.tree_array_node = ptr;           \
 	} while ( 0 )
 
-#define MPCOMP_TASK_MVP_GET_TREE_ARRAY_NODE( mvp, rank ) \
+#define MPC_OMP_TASK_MVP_GET_TREE_ARRAY_NODE( mvp, rank ) \
 	mvp->task_infos.tree_array_node[rank]
 
-#define MPCOMP_TASK_MVP_GET_PATH( mvp ) mvp->path
+#define MPC_OMP_TASK_MVP_GET_PATH( mvp ) mvp->path
 
-#define MPCOMP_TASK_MVP_GET_TASK_LIST_HEAD( mvp, type ) \
+#define MPC_OMP_TASK_MVP_GET_TASK_LIST_HEAD( mvp, type ) \
 	mvp->task_infos.tasklist[type]
-#define MPCOMP_TASK_MVP_SET_TASK_LIST_HEAD( mvp, type, ptr ) \
+#define MPC_OMP_TASK_MVP_SET_TASK_LIST_HEAD( mvp, type, ptr ) \
 	do                                                       \
 	{                                                        \
 		mvp->task_infos.tasklist[type] = ptr;                \
 	} while ( 0 )
 
-#define MPCOMP_TASK_MVP_GET_LAST_STOLEN_TASK_LIST( mvp, type ) \
+#define MPC_OMP_TASK_MVP_GET_LAST_STOLEN_TASK_LIST( mvp, type ) \
 	mvp->task_infos.lastStolen_tasklist[type]
-#define MPCOMP_TASK_MVP_SET_LAST_STOLEN_TASK_LIST( mvp, type, ptr ) \
+#define MPC_OMP_TASK_MVP_SET_LAST_STOLEN_TASK_LIST( mvp, type, ptr ) \
 	do                                                              \
 	{                                                               \
 		mvp->task_infos.lastStolen_tasklist[type] = ptr;            \
 	} while ( 0 )
 
-#define MPCOMP_TASK_MVP_GET_TASK_LIST_RANK_BUFFER( mvp, rank ) \
-	MPCOMP_TASK_NODE_GET_TASK_LIST_RANDBUFFER(                 \
-	        MPCOMP_TASK_MVP_GET_TREE_ARRAY_NODE( mvp, rank ) )
+#define MPC_OMP_TASK_MVP_GET_TASK_LIST_RANK_BUFFER( mvp, rank ) \
+	MPC_OMP_TASK_NODE_GET_TASK_LIST_RANDBUFFER(                 \
+	        MPC_OMP_TASK_MVP_GET_TREE_ARRAY_NODE( mvp, rank ) )
 
-#define MPCOMP_TASK_MVP_GET_TASK_LIST_RANDBUFFER( mvp ) \
+#define MPC_OMP_TASK_MVP_GET_TASK_LIST_RANDBUFFER( mvp ) \
 	mvp->task_infos.tasklist_randBuffer
-#define MPCOMP_TASK_MVP_SET_TASK_LIST_RANDBUFFER( mvp, ptr ) \
+#define MPC_OMP_TASK_MVP_SET_TASK_LIST_RANDBUFFER( mvp, ptr ) \
 	do                                                       \
 	{                                                        \
 		mvp->task_infos.tasklist_randBuffer = ptr;           \
 	} while ( 0 );
 
-#define MPCOMP_TASK_MVP_GET_TASK_LIST_NODE_RANK( mvp, type ) \
+#define MPC_OMP_TASK_MVP_GET_TASK_LIST_NODE_RANK( mvp, type ) \
 	mvp->task_infos.tasklistNodeRank[type]
-#define MPCOMP_TASK_MVP_SET_TASK_LIST_NODE_RANK( mvp, type, id ) \
+#define MPC_OMP_TASK_MVP_SET_TASK_LIST_NODE_RANK( mvp, type, id ) \
 	do                                                           \
 	{                                                            \
 		mvp->task_infos.tasklistNodeRank[type] = id;             \
 	} while ( 0 )
-
-/******************
- * GOMP CONSTANTS *
- ******************/
-
-#define GOMP_TASK_FLAG_FINAL ( 1 << 1 )
-#define GOMP_TASK_FLAG_MERGEABLE ( 1 << 2 )
-#define GOMP_TASK_FLAG_DEPEND ( 1 << 3 )
-#define GOMP_TASK_FLAG_PRIORITY ( 1 << 4 )
-#define GOMP_TASK_FLAG_UP ( 1 << 8 )
-#define GOMP_TASK_FLAG_GRAINSIZE ( 1 << 9 )
-#define GOMP_TASK_FLAG_IF ( 1 << 10 )
-#define GOMP_TASK_FLAG_NOGROUP ( 1 << 11 )
-
-#define MPCOMP_TASK_FLAG_FINAL GOMP_TASK_FLAG_FINAL
-#define MPCOMP_TASK_FLAG_MERGEABLE GOMP_TASK_FLAG_MERGEABLE
-#define MPCOMP_TASK_FLAG_DEPEND GOMP_TASK_FLAG_DEPEND
-#define MPCOMP_TASK_FLAG_PRIORITY GOMP_TASK_FLAG_PRIORITY
-#define MPCOMP_TASK_FLAG_UP GOMP_TASK_FLAG_UP
-#define MPCOMP_TASK_FLAG_GRAINSIZE GOMP_TASK_FLAG_GRAINSIZE
-#define MPCOMP_TASK_FLAG_IF GOMP_TASK_FLAG_IF
-#define MPCOMP_TASK_FLAG_NOGROUP GOMP_TASK_FLAG_NOGROUP
 
 /*********
  * UTILS *
@@ -308,70 +288,6 @@
 /*** Task property primitives ***/
 
 int mpc_omp_task_parse_larceny_mode(char * mode);
-
-static inline void
-mpc_omp_task_reset_property( mpc_omp_task_property_t *property )
-{
-	*property = 0;
-}
-
-static inline void mpc_omp_task_set_property( mpc_omp_task_property_t *property,
-        mpc_omp_task_property_t mask )
-{
-	*property |= mask;
-}
-
-static inline void mpc_omp_task_unset_property( mpc_omp_task_property_t *property,
-        mpc_omp_task_property_t mask )
-{
-	*property &= ~( mask );
-}
-
-static inline int mpc_omp_task_property_isset( mpc_omp_task_property_t property,
-        mpc_omp_task_property_t mask )
-{
-	return ( property & mask );
-}
-
-static inline int _mpc_task_is_final( unsigned int flags,
-                                        mpc_omp_task_t *parent )
-{
-	if ( flags & 2 )
-	{
-		return 1;
-	}
-
-	if ( parent &&
-	     mpc_omp_task_property_isset( parent->property, MPCOMP_TASK_FINAL ) )
-	{
-		return 1;
-	}
-
-	return 0;
-}
-
-/* Initialization of a task structure */
-static inline void _mpc_task_info_init( mpc_omp_task_t *task,
-        void ( *func )( void * ), void *func_data,
-        void* data, size_t data_size,
-        struct mpc_omp_thread_s *thread )
-{
-	assert( task != NULL );
-	assert( thread != NULL );
-	/* Reset all task infos to NULL */
-	memset( task, 0, sizeof( mpc_omp_task_t ) );
-	/* Set non null task infos field */
-	task->func = func;
-	task->func_data = func_data;
-	task->data = data;
-	task->data_size = data_size;
-	task->icvs = thread->info.icvs;
-	task->parent = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread );
-	task->depth = ( task->parent ) ? task->parent->depth + 1 : 0;
-#if MPC_USE_SISTER_LIST
-	task->children_lock = SCTK_SPINLOCK_INITIALIZER;
-#endif /* MPC_USE_SISTER_LIST */
-}
 
 /******************
  * TASK INTERFACE *
@@ -481,14 +397,14 @@ void _mpc_task_taskgroup_start( void );
 void _mpc_task_taskgroup_end( void );
 
 /* Inline functions */
-static inline void mpc_omp_taskgroup_add_task( mpc_omp_task_t *new_task )
+static inline void _mpc_taskgroup_add_task( mpc_omp_task_t *new_task )
 {
 	mpc_omp_task_t *current_task;
 	mpc_omp_thread_t *omp_thread_tls;
 	mpc_omp_task_taskgroup_t *taskgroup;
 	assert( mpc_omp_tls );
 	omp_thread_tls = ( mpc_omp_thread_t * ) mpc_omp_tls;
-	current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( omp_thread_tls );
+	current_task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK( omp_thread_tls );
 	taskgroup = current_task->taskgroup;
 
 	if ( taskgroup )
@@ -506,4 +422,4 @@ static inline void mpc_omp_taskgroup_del_task( mpc_omp_task_t *task )
 	}
 }
 
-#endif /* __MPCOMP_TASK_H__ */
+#endif /* __MPC_OMP_TASK_H__ */

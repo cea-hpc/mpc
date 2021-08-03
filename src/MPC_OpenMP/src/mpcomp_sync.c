@@ -68,7 +68,7 @@ void mpc_omp_atomic_begin( void )
   mpc_omp_team_t *team ;
   mpc_omp_init() ;
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
 #endif /* OMPT_SUPPORT */
 
 #if OMPT_SUPPORT
@@ -104,7 +104,7 @@ void mpc_omp_atomic_end( void )
   mpc_omp_team_t *team ;
   assert( t->instance != NULL ) ;
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
 #endif /* OMPT_SUPPORT */
   team = t->instance->team ;
   assert( team != NULL ) ;
@@ -135,7 +135,7 @@ void mpc_omp_anonymous_critical_begin( void )
   assert( team != NULL ) ;
 	omp_lock_t* critical_lock = team->critical_lock;
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
 #endif /* OMPT_SUPPORT */
 
 #if OMPT_SUPPORT
@@ -168,7 +168,7 @@ void mpc_omp_anonymous_critical_end( void )
   mpc_omp_team_t *team ;
   assert( t->instance != NULL ) ;
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
 #endif /* OMPT_SUPPORT */
   team = t->instance->team ;
   assert( team != NULL ) ;
@@ -185,7 +185,7 @@ void mpc_omp_anonymous_critical_end( void )
 void mpc_omp_named_critical_begin( void **l )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
 #endif /* OMPT_SUPPORT */
 
 	assert( l );
@@ -234,7 +234,7 @@ void mpc_omp_named_critical_begin( void **l )
 void mpc_omp_named_critical_end( void **l )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
 #endif /* OMPT_SUPPORT */
 
 	assert( l );
@@ -262,7 +262,7 @@ void mpc_omp_named_critical_end( void **l )
 int mpc_omp_do_single(void) 
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
 #endif /* OMPT_SUPPORT */
 
 	int retval = 0;
@@ -331,7 +331,7 @@ int mpc_omp_do_single(void)
 void *mpc_omp_do_single_copyprivate_begin( void )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
     _mpc_omp_ompt_frame_set_no_reentrant();
 #endif /* OMPT_SUPPORT */
 
@@ -370,7 +370,7 @@ void *mpc_omp_do_single_copyprivate_begin( void )
 void mpc_omp_do_single_copyprivate_end( void *data )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
     _mpc_omp_ompt_frame_set_no_reentrant();
 #endif /* OMPT_SUPPORT */
 
@@ -427,145 +427,142 @@ void _mpc_omp_single_coherency_end_barrier( void )
  ***********/
 
 /** Barrier for all threads of the same team */
-void _mpc_omp_internal_full_barrier(mpc_omp_mvp_t *mvp) {
-  long b, b_done;
-  mpc_omp_node_t *c, *new_root;
-  mpc_omp_thread_t* thread = (mpc_omp_thread_t*) mpc_omp_tls;
+void
+_mpc_omp_internal_full_barrier(mpc_omp_mvp_t * mvp)
+{
+    assert(mvp);
 
-  assert(mvp);
+    /* wait for children tasks to complete */
+    _mpc_omp_task_wait();
 
 #if OMPT_SUPPORT
-    ompt_sync_region_t kind = thread->reduction_method ?
-                              ompt_sync_region_reduction:
-                              ompt_sync_region_barrier;
+    ompt_sync_region_t kind = thread->reduction_method ? ompt_sync_region_reduction: ompt_sync_region_barrier;
 #endif /* OMPT_SUPPORT */
 
-  if( mvp->threads->info.num_threads == 1)
-  {
+    if( mvp->threads->info.num_threads == 1)
+    {
 #if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_sync_region_wait( kind, ompt_scope_begin );
-    _mpc_omp_ompt_callback_sync_region_wait( kind, ompt_scope_end );
+        _mpc_omp_ompt_callback_sync_region_wait( kind, ompt_scope_begin );
+        _mpc_omp_ompt_callback_sync_region_wait( kind, ompt_scope_end );
 #endif /* OMPT_SUPPORT */
-
-    return;
-  }
-
-  assert(mvp->father);
-  assert(mvp->father->instance);
-  assert(mvp->father->instance->team);
-
-  c = mvp->father;
-  new_root = thread->instance->root;
-
-  if( thread->info.num_threads > 1 )
-    while( OPA_load_int( &( MPCOMP_TASK_THREAD_GET_CURRENT_TASK(thread)->refcount ) ) != 1 )
-      _mpc_task_schedule( 0 );
-
-  /* Step 1: Climb in the tree */
-  b_done = c->barrier_done; /* Move out of sync region? */
-  b = OPA_fetch_and_incr_int(&(c->barrier)) + 1;
-
-  while (b == c->barrier_num_threads && c != new_root) {
-    OPA_store_int(&(c->barrier), 0);
-    c = c->father;
-    b_done = c->barrier_done;
-    b = OPA_fetch_and_incr_int(&(c->barrier)) + 1;
-  }
-
-  /* Step 2 - Wait for the barrier to be done */
-  if (c != new_root || (c == new_root && b != c->barrier_num_threads)) {
-#if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_sync_region_wait( kind, ompt_scope_begin );
-#endif /* OMPT_SUPPORT */
-
-    /* Wait for c->barrier == c->barrier_num_threads */
-    while (b_done == c->barrier_done) {
-      mpc_thread_yield();
-      _mpc_task_schedule( 1 );
+        return ;
     }
 
+    assert(mvp->father);
+    assert(mvp->father->instance);
+    assert(mvp->father->instance->team);
+
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    mpc_omp_node_t * c = mvp->father;
+    mpc_omp_node_t * new_root = thread->instance->root;
+
+    /* Step 1: Climb in the tree */
+    long b_done = c->barrier_done; /* Move out of sync region? */
+    long b = OPA_fetch_and_incr_int(&(c->barrier)) + 1;
+
+    while (b == c->barrier_num_threads && c != new_root)
+    {
+        OPA_store_int(&(c->barrier), 0);
+        c = c->father;
+        b_done = c->barrier_done;
+        b = OPA_fetch_and_incr_int(&(c->barrier)) + 1;
+    }
+
+    /* Step 2 - Wait for the barrier to be done */
+    if (c != new_root || (c == new_root && b != c->barrier_num_threads))
+    {
 #if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_sync_region_wait( kind, ompt_scope_end );
-#endif /* OMPT_SUPPORT */
-  } else {
-#if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_sync_region_wait( kind, ompt_scope_begin );
+        _mpc_omp_ompt_callback_sync_region_wait( kind, ompt_scope_begin );
 #endif /* OMPT_SUPPORT */
 
-    OPA_store_int(&(c->barrier), 0);
+        /* Wait for c->barrier == c->barrier_num_threads */
+        while (b_done == c->barrier_done)
+        {
+            mpc_thread_yield();
+            _mpc_omp_task_schedule();
+            _mpc_omp_task_wait();
+        }
 
-#if MPCOMP_COHERENCY_CHECKING
-    mpc_omp_for_dyn_coherency_end_barrier();
-    mpc_omp_single_coherency_end_barrier();
+#if OMPT_SUPPORT
+        _mpc_omp_ompt_callback_sync_region_wait( kind, ompt_scope_end );
+#endif /* OMPT_SUPPORT */
+    } else {
+#if OMPT_SUPPORT
+        _mpc_omp_ompt_callback_sync_region_wait( kind, ompt_scope_begin );
+#endif /* OMPT_SUPPORT */
+
+        OPA_store_int(&(c->barrier), 0);
+
+#if MPC_OMP_COHERENCY_CHECKING
+        mpc_omp_for_dyn_coherency_end_barrier();
+        mpc_omp_single_coherency_end_barrier();
 #endif
 
-    c->barrier_done++ ; /* No need to lock I think... */
+        c->barrier_done++ ; /* No need to lock I think... */
 
 #if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_sync_region_wait( kind, ompt_scope_end );
+        _mpc_omp_ompt_callback_sync_region_wait( kind, ompt_scope_end );
 #endif /* OMPT_SUPPORT */
-  }
+    }
 
-  /* Step 3 - Go down */
-  while ( c->child_type != MPCOMP_CHILDREN_LEAF ) {
-    c = c->children.node[mvp->tree_rank[c->depth]];
-    c->barrier_done++; /* No need to lock I think... */
-  }
-#if MPCOMP_COHERENCY_CHECKING
-  // mpc_omp_task_coherency_barrier();
-#endif
+    /* Step 3 - Go down */
+    while (c->child_type != MPC_OMP_CHILDREN_LEAF)
+    {
+        c = c->children.node[mvp->tree_rank[c->depth]];
+        c->barrier_done++; /* No need to lock I think... */
+    }
 }
 
 /* Half barrier for the end of a parallel region */
 void _mpc_omp_internal_half_barrier_start( mpc_omp_mvp_t *mvp )
 {
-	mpc_omp_node_t *c, *new_root;
-	assert( mvp );
-	assert( mvp->father );
-	assert( mvp->father->instance );
-	assert( mvp->father->instance->team );
-	new_root = mvp->instance->root;
-	c = mvp->father;
-	assert( c );
-	assert( new_root != NULL );
+    mpc_omp_node_t *c, *new_root;
+    assert( mvp );
+    assert( mvp->father );
+    assert( mvp->father->instance );
+    assert( mvp->father->instance->team );
+    new_root = mvp->instance->root;
+    c = mvp->father;
+    assert( c );
+    assert( new_root != NULL );
 #if 0
-	( void )mpc_omp_thread_tls_store( mvp->threads[0] );
-	_mpc_omp_internal_full_barrier( mvp );
-	( void )mpc_omp_thread_tls_store_father(); // To check...
+    ( void )mpc_omp_thread_tls_store( mvp->threads[0] );
+    _mpc_omp_internal_full_barrier( mvp );
+    ( void )mpc_omp_thread_tls_store_father(); // To check...
 #endif
-	/* Step 1: Climb in the tree */
-	long b = OPA_fetch_and_incr_int( &( c->barrier ) ) + 1;
+    /* Step 1: Climb in the tree */
+    long b = OPA_fetch_and_incr_int( &( c->barrier ) ) + 1;
 
-	while ( b == c->barrier_num_threads && c != new_root )
-	{
-		OPA_store_int( &( c->barrier ), 0 );
-		c = c->father;
-		b = OPA_fetch_and_incr_int( &( c->barrier ) ) + 1;
-	}
+    while ( b == c->barrier_num_threads && c != new_root )
+    {
+        OPA_store_int( &( c->barrier ), 0 );
+        c = c->father;
+        b = OPA_fetch_and_incr_int( &( c->barrier ) ) + 1;
+    }
 }
 
 void _mpc_omp_internal_half_barrier_end( mpc_omp_mvp_t *mvp )
 {
-	mpc_omp_thread_t *cur_thread;
-	mpc_omp_node_t *root;
-	assert( mvp->threads );
-	cur_thread = mvp->threads;
+    mpc_omp_thread_t *cur_thread;
+    mpc_omp_node_t *root;
+    assert( mvp->threads );
+    cur_thread = mvp->threads;
 
-	/* End barrier for master thread */
-	if ( cur_thread->rank )
-	{
-		return;
-	}
+    /* End barrier for master thread */
+    if ( cur_thread->rank )
+    {
+        return;
+    }
 
-	root = cur_thread->instance->root;
-	const int expected_num_threads = root->barrier_num_threads;
+    root = cur_thread->instance->root;
+    const int expected_num_threads = root->barrier_num_threads;
 
-	while ( OPA_load_int( &( root->barrier ) ) != expected_num_threads )
-	{
-		mpc_thread_yield();
-	}
+    while ( OPA_load_int( &( root->barrier ) ) != expected_num_threads )
+    {
+        mpc_thread_yield();
+    }
 
-	OPA_store_int( &( root->barrier ), 0 );
+    OPA_store_int( &( root->barrier ), 0 );
 }
 
 /*
@@ -575,7 +572,7 @@ void _mpc_omp_internal_half_barrier_end( mpc_omp_mvp_t *mvp )
  */
 void mpc_omp_barrier(void) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+  _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
 #endif /* OMPT_SUPPORT */
 
   /* Handle orphaned directive (initialize OpenMP environment) */
@@ -815,28 +812,20 @@ int _mpc_omp_sections_coherency_barrier(void) { return 0; }
  */
 static void __sync_lock_init_with_hint( omp_lock_t *lock, omp_lock_hint_t hint )
 {
-	omp_lock_t *mpcomp_user_lock = NULL;
+	assert(lock);
 
 	mpc_omp_init();
 
-	mpcomp_user_lock = ( omp_lock_t * )mpc_omp_alloc( sizeof( omp_lock_t ) );
-	assert( mpcomp_user_lock );
-	memset( mpcomp_user_lock, 0, sizeof( omp_lock_t ) );
-
-	mpc_common_spinlock_init( &( mpcomp_user_lock->lock ), 0 );
-
-	assert( lock );
-	*lock = mpcomp_user_lock;
-
-	mpcomp_user_lock->hint = hint;
+	memset(lock, 0, sizeof(omp_lock_t));
+	mpc_common_spinlock_init(&(lock->lock), 0 );
+	lock->hint = hint;
 
 #if OMPT_SUPPORT
-    mpcomp_user_lock->ompt_wait_id = (uint64_t) _mpc_omp_ompt_mutex_gen_wait_id();
-
+    lock->ompt_wait_id = (uint64_t) _mpc_omp_ompt_mutex_gen_wait_id();
     _mpc_omp_ompt_callback_lock_init( ompt_mutex_lock,
                                   hint,
                                   ompt_mutex_impl_mutex,
-                                  (ompt_wait_id_t) mpcomp_user_lock->ompt_wait_id );
+                                  (ompt_wait_id_t) lock->ompt_wait_id );
 #endif /* OMPT_SUPPORT */
 }
 
@@ -868,43 +857,23 @@ void omp_destroy_lock( omp_lock_t *lock )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_infos();
+    _mpc_omp_ompt_callback_lock_destroy( ompt_mutex_lock, (ompt_wait_id_t) lock->ompt_wait_id );
 #endif /* OMPT_SUPPORT */
 
-	omp_lock_t *mpcomp_user_lock = NULL;
-	assert( lock );
-	mpcomp_user_lock = ( omp_lock_t * )*lock;
-
-#if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_lock_destroy( ompt_mutex_lock,
-                                     (ompt_wait_id_t) mpcomp_user_lock->ompt_wait_id );
-#endif /* OMPT_SUPPORT */
-
-	sctk_free( mpcomp_user_lock );
-	*lock = NULL;
+	sctk_free(lock);
 }
 
 void omp_set_lock( omp_lock_t *lock )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_infos();
+    _mpc_omp_ompt_callback_mutex_acquire(ompt_mutex_lock, lock->hint, ompt_mutex_impl_mutex, (ompt_wait_id_t) lock->ompt_wait_id);
 #endif /* OMPT_SUPPORT */
 
-	omp_lock_t *mpcomp_user_lock = NULL;
-	assert( lock );
-	mpcomp_user_lock = ( omp_lock_t * )*lock;
+	mpc_common_spinlock_lock(&(lock->lock));
 
 #if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_mutex_acquire( ompt_mutex_lock,
-                                      mpcomp_user_lock->hint,
-                                      ompt_mutex_impl_mutex,
-                                      (ompt_wait_id_t) mpcomp_user_lock->ompt_wait_id );
-#endif /* OMPT_SUPPORT */
-
-	mpc_common_spinlock_lock( &( mpcomp_user_lock->lock ) );
-
-#if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_mutex_acquired( ompt_mutex_lock,
-                                       (ompt_wait_id_t) mpcomp_user_lock->ompt_wait_id );
+    _mpc_omp_ompt_callback_mutex_acquired( ompt_mutex_lock, (ompt_wait_id_t) lock->ompt_wait_id);
 #endif /* OMPT_SUPPORT */
 }
 
@@ -914,46 +883,34 @@ void omp_unset_lock( omp_lock_t *lock )
     _mpc_omp_ompt_frame_get_infos();
 #endif /* OMPT_SUPPORT */
 
-	omp_lock_t *mpcomp_user_lock = NULL;
-	assert( lock );
-	mpcomp_user_lock = ( omp_lock_t * )*lock;
-	mpc_common_spinlock_unlock( &( mpcomp_user_lock->lock ) );
+	mpc_common_spinlock_unlock(&(lock->lock));
 
 #if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_mutex_released( ompt_mutex_lock,
-                                       (ompt_wait_id_t) mpcomp_user_lock->ompt_wait_id );
+    _mpc_omp_ompt_callback_mutex_released( ompt_mutex_lock, (ompt_wait_id_t) lock->ompt_wait_id );
 #endif /* OMPT_SUPPORT */
 }
 
 int omp_test_lock( omp_lock_t *lock )
 {
-#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+#if OMPT_SUPPORT
+# if MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_infos();
+# endif /* MPCOMPT_HAS_FRAME_SUPPORT */
+    _mpc_omp_ompt_callback_mutex_acquire(ompt_mutex_lock, lock->hint, ompt_mutex_impl_mutex, (ompt_wait_id_t) lock->ompt_wait_id );
 #endif /* OMPT_SUPPORT */
 
-	int retval;
-	omp_lock_t *mpcomp_user_lock = NULL;
-	assert( lock );
-	mpcomp_user_lock = ( omp_lock_t * )*lock;
+	int retval = !mpc_common_spinlock_trylock(&(lock->lock));
 
 #if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_mutex_acquire( ompt_mutex_lock,
-                                      mpcomp_user_lock->hint,
-                                      ompt_mutex_impl_mutex,
-                                      (ompt_wait_id_t) mpcomp_user_lock->ompt_wait_id );
-#endif /* OMPT_SUPPORT */
-
-	retval = !mpc_common_spinlock_trylock( &( mpcomp_user_lock->lock ) );
-
-#if OMPT_SUPPORT
-    if( retval )
-        _mpc_omp_ompt_callback_mutex_acquired( ompt_mutex_lock,
-                                           (ompt_wait_id_t) mpcomp_user_lock->ompt_wait_id );
+    if (retval)
+    {
+        _mpc_omp_ompt_callback_mutex_acquired( ompt_mutex_lock, (ompt_wait_id_t) lock->ompt_wait_id );
+    }
 
 #if MPCOMPT_HAS_FRAME_SUPPORT
     /* If outter call, unset it here */
     _mpc_omp_ompt_frame_unset_no_reentrant();
-#endif
+#endif /* MPCOMPT_HAS_FRAME_SUPPORT */
 #endif /* OMPT_SUPPORT */
 
 	return retval;
@@ -961,28 +918,21 @@ int omp_test_lock( omp_lock_t *lock )
 
 static void __sync_nest_lock_init_with_hint( omp_nest_lock_t *lock, omp_lock_hint_t hint )
 {
-	omp_nest_lock_t *mpcomp_user_nest_lock = NULL;
+	assert(lock);
 
 	mpc_omp_init();
 
-	mpcomp_user_nest_lock = ( omp_nest_lock_t * )mpc_omp_alloc( sizeof( omp_nest_lock_t ) );
-	assert( mpcomp_user_nest_lock );
-	memset( mpcomp_user_nest_lock, 0, sizeof( omp_nest_lock_t ) );
-
-	mpc_common_spinlock_init( &( mpcomp_user_nest_lock->lock ), 0 );
-
-	assert( lock );
-	*lock = mpcomp_user_nest_lock;
-
-	mpcomp_user_nest_lock->hint = hint;
+	memset(lock, 0, sizeof(omp_nest_lock_t));
+	mpc_common_spinlock_init(&(lock->lock), 0);
+	lock->hint = hint;
 
 #if OMPT_SUPPORT
-    mpcomp_user_nest_lock->ompt_wait_id = (uint64_t) _mpc_omp_ompt_mutex_gen_wait_id();
+    lock->ompt_wait_id = (uint64_t) _mpc_omp_ompt_mutex_gen_wait_id();
 
     _mpc_omp_ompt_callback_lock_init( ompt_mutex_nest_lock,
                                   hint,
                                   ompt_mutex_impl_mutex,
-                                  (ompt_wait_id_t) mpcomp_user_nest_lock->ompt_wait_id );
+                                  (ompt_wait_id_t) lock->ompt_wait_id );
 #endif /* OMPT_SUPPORT */
 }
 
@@ -1012,63 +962,48 @@ void omp_init_nest_lock_with_hint( omp_nest_lock_t *lock, omp_lock_hint_t hint )
 
 void omp_destroy_nest_lock( omp_nest_lock_t *lock )
 {
+    assert(lock);
+	mpc_omp_init();
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_infos();
+    _mpc_omp_ompt_callback_lock_destroy( ompt_mutex_nest_lock, (ompt_wait_id_t) lock->ompt_wait_id );
 #endif /* OMPT_SUPPORT */
-
-	omp_nest_lock_t *mpcomp_user_nest_lock = NULL;
-	assert( lock );
-	mpcomp_user_nest_lock = ( omp_nest_lock_t * )*lock;
-
-#if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_lock_destroy( ompt_mutex_nest_lock,
-                                     (ompt_wait_id_t) mpcomp_user_nest_lock->ompt_wait_id );
-#endif /* OMPT_SUPPORT */
-
-	sctk_free( mpcomp_user_nest_lock );
-	*lock = NULL;
+	sctk_free(lock);
 }
 
 void omp_set_nest_lock( omp_nest_lock_t *lock )
 {
-#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_infos();
-#endif /* OMPT_SUPPORT */
-
-	omp_nest_lock_t *mpcomp_user_nest_lock;
-
-	mpc_omp_init();
+    assert(lock);
+	
+    mpc_omp_init();
 
 	mpc_omp_thread_t *thread = mpc_omp_get_thread_tls();
 
-	assert( lock );
-
-	mpcomp_user_nest_lock = ( omp_nest_lock_t * )*lock;
-
-#if OMPT_SUPPORT
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    _mpc_omp_ompt_frame_get_infos();
     _mpc_omp_ompt_callback_mutex_acquire( ompt_mutex_nest_lock,
-                                      mpcomp_user_nest_lock->hint,
+                                      lock->hint,
                                       ompt_mutex_impl_mutex,
-                                      (ompt_wait_id_t) mpcomp_user_nest_lock->ompt_wait_id );
+                                      (ompt_wait_id_t) lock->ompt_wait_id );
 #endif /* OMPT_SUPPORT */
 
-	if ( omp_nest_lock_test_task( thread, mpcomp_user_nest_lock ) )
+	if (omp_nest_lock_test_task(thread, lock))
 	{
-		mpc_common_spinlock_lock( &( mpcomp_user_nest_lock->lock ) );
-		mpcomp_user_nest_lock->owner_thread = thread;
-		mpcomp_user_nest_lock->owner_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread );
+		mpc_common_spinlock_lock(&(lock->lock));
+		lock->owner_thread = thread;
+		lock->owner_task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK( thread );
 #if OMPT_SUPPORT
     _mpc_omp_ompt_callback_mutex_acquired( ompt_mutex_nest_lock,
-                                       (ompt_wait_id_t) mpcomp_user_nest_lock->ompt_wait_id );
+                                       (ompt_wait_id_t) lock->ompt_wait_id );
 #endif /* OMPT_SUPPORT */
 	}
 
-    mpcomp_user_nest_lock->nb_nested += 1;
+    lock->nb_nested += 1;
 
 #if OMPT_SUPPORT
-    if( mpcomp_user_nest_lock->nb_nested > 1 )
+    if( lock->nb_nested > 1 )
         _mpc_omp_ompt_callback_nest_lock( ompt_scope_begin,
-                                      (ompt_wait_id_t) mpcomp_user_nest_lock->ompt_wait_id );
+                                      (ompt_wait_id_t) lock->ompt_wait_id );
 #endif /* OMPT_SUPPORT */
 }
 
@@ -1078,70 +1013,57 @@ void omp_unset_nest_lock( omp_nest_lock_t *lock )
     _mpc_omp_ompt_frame_get_infos();
 #endif /* OMPT_SUPPORT */
 
-	omp_nest_lock_t *mpcomp_user_nest_lock = NULL;
-	assert( lock );
-	mpcomp_user_nest_lock = ( omp_nest_lock_t * )*lock;
+	lock->nb_nested -= 1;
 
-	mpcomp_user_nest_lock->nb_nested -= 1;
-
-	if ( mpcomp_user_nest_lock->nb_nested == 0 )
+	if ( lock->nb_nested == 0 )
 	{
-		mpcomp_user_nest_lock->owner_thread = NULL;
-		mpcomp_user_nest_lock->owner_task = NULL;
-		mpc_common_spinlock_unlock( &( mpcomp_user_nest_lock->lock ) );
+		lock->owner_thread = NULL;
+		lock->owner_task = NULL;
+		mpc_common_spinlock_unlock( &( lock->lock ) );
 
 #if OMPT_SUPPORT
-        _mpc_omp_ompt_callback_mutex_released( ompt_mutex_nest_lock,
-                                           (ompt_wait_id_t) mpcomp_user_nest_lock->ompt_wait_id );
-#endif /* OMPT_SUPPORT */
+        _mpc_omp_ompt_callback_mutex_released( ompt_mutex_nest_lock, (ompt_wait_id_t) lock->ompt_wait_id );
 	}
-#if OMPT_SUPPORT
     else
-        _mpc_omp_ompt_callback_nest_lock( ompt_scope_end,
-                                      (ompt_wait_id_t) mpcomp_user_nest_lock->ompt_wait_id );
+    {
+        _mpc_omp_ompt_callback_nest_lock( ompt_scope_end, (ompt_wait_id_t) lock->ompt_wait_id );
 #endif /* OMPT_SUPPORT */
+    }
 }
 
 int omp_test_nest_lock( omp_nest_lock_t *lock )
 {
-#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_infos();
-#endif /* OMPT_SUPPORT */
-
-	omp_nest_lock_t *mpcomp_user_nest_lock;
+	assert( lock );
 	mpc_omp_init();
 	mpc_omp_thread_t *thread = mpc_omp_get_thread_tls();
-	assert( lock );
-	mpcomp_user_nest_lock = ( omp_nest_lock_t * )*lock;
 
-#if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_mutex_acquire( ompt_mutex_nest_lock,
-                                      mpcomp_user_nest_lock->hint,
-                                      ompt_mutex_impl_mutex,
-                                      (ompt_wait_id_t) mpcomp_user_nest_lock->ompt_wait_id );
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    _mpc_omp_ompt_frame_get_infos();
+    _mpc_omp_ompt_callback_mutex_acquire( ompt_mutex_nest_lock, lock->hint, ompt_mutex_impl_mutex, (ompt_wait_id_t) lock->ompt_wait_id );
 #endif /* OMPT_SUPPORT */
 
-	if ( omp_nest_lock_test_task( thread, mpcomp_user_nest_lock ) )
+	if ( omp_nest_lock_test_task( thread, lock ) )
 	{
-		if ( mpc_common_spinlock_trylock( &( mpcomp_user_nest_lock->lock ) ) )
+		if ( mpc_common_spinlock_trylock( &( lock->lock ) ) )
 		{
 			return 0;
 		}
 
-		mpcomp_user_nest_lock->owner_thread = ( void * )thread;
-		mpcomp_user_nest_lock->owner_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread );
+		lock->owner_thread = ( void * )thread;
+		lock->owner_task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK( thread );
 #if OMPT_SUPPORT
         _mpc_omp_ompt_callback_mutex_acquired( ompt_mutex_nest_lock,
-                                           (ompt_wait_id_t) mpcomp_user_nest_lock->ompt_wait_id );
+                                           (ompt_wait_id_t) lock->ompt_wait_id );
 #endif /* OMPT_SUPPORT */
 	}
 
-	mpcomp_user_nest_lock->nb_nested += 1;
+	lock->nb_nested += 1;
 
 #if OMPT_SUPPORT
-    if( mpcomp_user_nest_lock->nb_nested > 1 )
-        _mpc_omp_ompt_callback_nest_lock( ompt_scope_begin,
-                                      (ompt_wait_id_t) mpcomp_user_nest_lock->ompt_wait_id );
+    if (lock->nb_nested > 1)
+    {
+        _mpc_omp_ompt_callback_nest_lock( ompt_scope_begin, (ompt_wait_id_t) lock->ompt_wait_id );
+    }
 
 #if MPCOMPT_HAS_FRAME_SUPPORT
     /* If outter call, unset it here */
@@ -1149,5 +1071,5 @@ int omp_test_nest_lock( omp_nest_lock_t *lock )
 #endif
 #endif /* OMPT_SUPPORT */
 
-	return mpcomp_user_nest_lock->nb_nested;
+	return lock->nb_nested;
 }

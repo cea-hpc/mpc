@@ -88,7 +88,7 @@ static inline void __omp_conf_set_default(void)
 	__omp_conf.omp_new_task_depth = 10;
 	__omp_conf.omp_untied_task_depth = 10;
 	snprintf(__omp_conf.omp_task_larceny_mode_str, MPC_CONF_STRING_SIZE, "producer");
-	__omp_conf.omp_task_larceny_mode = MPCOMP_TASK_LARCENY_MODE_PRODUCER;
+	__omp_conf.omp_task_larceny_mode = MPC_OMP_TASK_LARCENY_MODE_PRODUCER;
 	__omp_conf.omp_task_nesting_max = 1000000;
 	__omp_conf.mpcomp_task_max_delayed = 1024;
 	__omp_conf.omp_task_use_lockfree_queue = 1;
@@ -172,9 +172,9 @@ static int OMP_TREE_DEPTH = 0;
 static int OMP_TREE_NB_LEAVES = 0;
 
 /* Hybrid MPI/OpenMP mode */
-static mpc_omp_mode_t OMP_MODE = MPCOMP_MODE_SIMPLE_MIXED;
+static mpc_omp_mode_t OMP_MODE = MPC_OMP_MODE_SIMPLE_MIXED;
 /* Affinity policy */
-static mpc_omp_affinity_t OMP_AFFINITY = MPCOMP_AFFINITY_SCATTER;
+static mpc_omp_affinity_t OMP_AFFINITY = MPC_OMP_AFFINITY_SCATTER;
 /* OMP_PLACES */
 static mpc_omp_places_info_t *OMP_PLACES_LIST = NULL;
 /* Tools */
@@ -650,31 +650,31 @@ static inline void __read_env_variables()
 	/******* ADDITIONAL VARIABLES *******/
 	/******* OMP_MODE *******/
 	env = getenv("OMP_MODE");
-	OMP_MODE = MPCOMP_MODE_SIMPLE_MIXED;
+	OMP_MODE = MPC_OMP_MODE_SIMPLE_MIXED;
 
 	if ( env != NULL )
 	{
 		int ok = 0;
 
-		/* Handling MPCOMP_MODE_SIMPLE_MIXED */
+		/* Handling MPC_OMP_MODE_SIMPLE_MIXED */
 		if ( strncmp( env, "simple-mixed", strlen( "simple-mixed" ) ) == 0 ||
 		     strncmp( env, "SIMPLE-MIXED", strlen( "SIMPLE-MIXED" ) ) == 0 ||
 		     strncmp( env, "simple_mixed", strlen( "simple_mixed" ) ) == 0 ||
 		     strncmp( env, "SIMPLE_MIXED", strlen( "SIMPLE_MIXED" ) ) == 0 )
 		{
-			OMP_MODE = MPCOMP_MODE_SIMPLE_MIXED;
+			OMP_MODE = MPC_OMP_MODE_SIMPLE_MIXED;
 			ok = 1;
 		}
 
-		/* Handling MPCOMP_MODE_OVERSUBSCRIBED_MIXED */
+		/* Handling MPC_OMP_MODE_OVERSUBSCRIBED_MIXED */
 		if ( strncmp( env, "alternating", strlen( "alternating" ) ) == 0 ||
 		     strncmp( env, "ALTERNATING", strlen( "ALTERNATING" ) ) == 0 )
 		{
-			OMP_MODE = MPCOMP_MODE_ALTERNATING;
+			OMP_MODE = MPC_OMP_MODE_ALTERNATING;
 			ok = 1;
 		}
 
-		/* Handling MPCOMP_MODE_ALTERNATING */
+		/* Handling MPC_OMP_MODE_ALTERNATING */
 		if ( strncmp( env, "oversubscribed-mixed", strlen( "oversubscribed-mixed" ) ) ==
 		     0 ||
 		     strncmp( env, "OVERSUBSCRIBED-MIXED", strlen( "OVERSUBSCRIBED-MIXED" ) ) ==
@@ -684,17 +684,17 @@ static inline void __read_env_variables()
 		     strncmp( env, "OVERSUBSCRIBED_MIXED", strlen( "OVERSUBSCRIBED_MIXED" ) ) ==
 		     0 )
 		{
-			OMP_MODE = MPCOMP_MODE_OVERSUBSCRIBED_MIXED;
+			OMP_MODE = MPC_OMP_MODE_OVERSUBSCRIBED_MIXED;
 			ok = 1;
 		}
 
-		/* Handling MPCOMP_MODE_FULLY_MIXED */
+		/* Handling MPC_OMP_MODE_FULLY_MIXED */
 		if ( strncmp( env, "fully-mixed", strlen( "fully-mixed" ) ) == 0 ||
 		     strncmp( env, "FULLY-MIXED", strlen( "FULLY-MIXED" ) ) == 0 ||
 		     strncmp( env, "fully_mixed", strlen( "fully_mixed" ) ) == 0 ||
 		     strncmp( env, "FULLY_MIXED", strlen( "FULLY_MIXED" ) ) == 0 )
 		{
-			OMP_MODE = MPCOMP_MODE_FULLY_MIXED;
+			OMP_MODE = MPC_OMP_MODE_FULLY_MIXED;
 			ok = 1;
 		}
 
@@ -718,27 +718,27 @@ static inline void __read_env_variables()
 	{
 		int ok = 0;
 
-		/* Handling MPCOMP_AFFINITY_COMPACT */
+		/* Handling MPC_OMP_AFFINITY_COMPACT */
 		if ( strncmp( env, "compact", strlen( "compact" ) ) == 0 ||
 		     strncmp( env, "COMPACT", strlen( "COMPACT" ) ) == 0 )
 		{
-			OMP_AFFINITY = MPCOMP_AFFINITY_COMPACT;
+			OMP_AFFINITY = MPC_OMP_AFFINITY_COMPACT;
 			ok = 1;
 		}
 
-		/* Handling MPCOMP_AFFINITY_SCATTER */
+		/* Handling MPC_OMP_AFFINITY_SCATTER */
 		if ( strncmp( env, "scatter", strlen( "scatter" ) ) == 0 ||
 		     strncmp( env, "SCATTER", strlen( "SCATTER" ) ) == 0 )
 		{
-			OMP_AFFINITY = MPCOMP_AFFINITY_SCATTER;
+			OMP_AFFINITY = MPC_OMP_AFFINITY_SCATTER;
 			ok = 1;
 		}
 
-		/* Handling MPCOMP_AFFINITY_BALANCED */
+		/* Handling MPC_OMP_AFFINITY_BALANCED */
 		if ( strncmp( env, "balanced", strlen( "balanced" ) ) == 0 ||
 		     strncmp( env, "BALANCED", strlen( "BALANCED" ) ) == 0 )
 		{
-			OMP_AFFINITY = MPCOMP_AFFINITY_BALANCED;
+			OMP_AFFINITY = MPC_OMP_AFFINITY_BALANCED;
 			ok = 1;
 		}
 
@@ -754,7 +754,7 @@ static inline void __read_env_variables()
 		}
 	}
 
-	OMP_AFFINITY = MPCOMP_AFFINITY_SCATTER;
+	OMP_AFFINITY = MPC_OMP_AFFINITY_SCATTER;
 	/******* OMP_TREE *********/
 	env = getenv("OMP_TREE");
 
@@ -813,7 +813,7 @@ static inline void __read_env_variables()
                 mpc_common_debug_log("--------------------------------------------------");
 		mpc_common_debug_log(
 		         "MPC OpenMP version %d.%d (Intel and Patched GCC compatibility)",
-		         SCTK_OMP_VERSION_MAJOR, SCTK_OMP_VERSION_MINOR );
+		         MPC_OMP_VERSION_MAJOR, MPC_OMP_VERSION_MINOR );
 		mpc_common_debug_log("\tOpenMP 3 Tasking on:\n"
                 "\t\tOMP_NEW_TASKS_DEPTH=%d\n"
                 "\t\tOMP_TASK_LARCENY_MODE=%d\n"
@@ -855,15 +855,15 @@ static inline void __read_env_variables()
 
 		switch ( OMP_AFFINITY )
 		{
-			case MPCOMP_AFFINITY_COMPACT:
+			case MPC_OMP_AFFINITY_COMPACT:
 				mpc_common_debug_log("\tAffinity COMPACT (fill logical cores first)" );
 				break;
 
-			case MPCOMP_AFFINITY_SCATTER:
+			case MPC_OMP_AFFINITY_SCATTER:
 				mpc_common_debug_log("\tAffinity SCATTER (spread over NUMA nodes)" );
 				break;
 
-			case MPCOMP_AFFINITY_BALANCED:
+			case MPC_OMP_AFFINITY_BALANCED:
 				mpc_common_debug_log("\tAffinity BALANCED (fill physical cores first)" );
 				break;
 
@@ -892,19 +892,19 @@ static inline void __read_env_variables()
 
 		switch ( OMP_MODE )
 		{
-			case MPCOMP_MODE_SIMPLE_MIXED:
+			case MPC_OMP_MODE_SIMPLE_MIXED:
 				mpc_common_debug_log("\tMode for hybrid MPI+OpenMP parallelism SIMPLE_MIXED" );
 				break;
 
-			case MPCOMP_MODE_OVERSUBSCRIBED_MIXED:
+			case MPC_OMP_MODE_OVERSUBSCRIBED_MIXED:
 				mpc_common_debug_log("\tMode for hybrid MPI+OpenMP parallelism OVERSUBSCRIBED_MIXED" );
 				break;
 
-			case MPCOMP_MODE_ALTERNATING:
+			case MPC_OMP_MODE_ALTERNATING:
 				mpc_common_debug_log("\tMode for hybrid MPI+OpenMP parallelism ALTERNATING" );
 				break;
 
-			case MPCOMP_MODE_FULLY_MIXED:
+			case MPC_OMP_MODE_FULLY_MIXED:
 				mpc_common_debug_log("\tMode for hybrid MPI+OpenMP parallelism FULLY_MIXED" );
 				break;
 
@@ -913,13 +913,13 @@ static inline void __read_env_variables()
 				break;
 		}
 
-#if MPCOMP_MALLOC_ON_NODE
+#if MPC_OMP_MALLOC_ON_NODE
 		mpc_common_debug_log("\tNUMA allocation for tree nodes" );
 #endif
-#if MPCOMP_COHERENCY_CHECKING
+#if MPC_OMP_COHERENCY_CHECKING
 		mpc_common_debug_log("\tCoherency check enabled" );
 #endif
-#if MPCOMP_ALIGN
+#if MPC_OMP_ALIGN
 		mpc_common_debug_log("\tStructure field alignement" );
 #endif
 
@@ -933,7 +933,7 @@ static inline void __read_env_variables()
 			mpc_common_debug_log("\tNo warning for nested parallelism" );
 		}
 
-#if MPCOMP_MIC
+#if MPC_OMP_MIC
 		mpc_common_debug_log("\tMIC optimizations on\n" );
 #endif
 #if OMPT_SUPPORT
@@ -1009,7 +1009,7 @@ void mpc_omp_init( void )
 		/* Compute the number of microVPs according to Hybrid Mode */
 		switch ( OMP_MODE )
 		{
-			case MPCOMP_MODE_SIMPLE_MIXED:
+			case MPC_OMP_MODE_SIMPLE_MIXED:
 				/* Compute the number of cores for this task */
 				mpc_thread_get_task_placement_and_count( task_rank, &nb_mvps );
 				mpc_common_nodebug( "[%d] %s: SIMPLE_MIXED -> #mvps = %d", task_rank, __func__,
@@ -1024,7 +1024,7 @@ void mpc_omp_init( void )
 
 				break;
 
-			case MPCOMP_MODE_ALTERNATING:
+			case MPC_OMP_MODE_ALTERNATING:
 				nb_mvps = 1;
 
 				if ( mpc_common_get_local_task_rank() == 0 )
@@ -1034,11 +1034,11 @@ void mpc_omp_init( void )
 
 				break;
 
-			case MPCOMP_MODE_OVERSUBSCRIBED_MIXED:
+			case MPC_OMP_MODE_OVERSUBSCRIBED_MIXED:
 				not_implemented();
 				break;
 
-			case MPCOMP_MODE_FULLY_MIXED:
+			case MPC_OMP_MODE_FULLY_MIXED:
 				nb_mvps = mpc_topology_get_pu_count();
 				break;
 
@@ -1180,22 +1180,22 @@ void _mpc_omp_in_order_scheduler( mpc_omp_thread_t *thread )
 	/* Handle beginning of combined parallel region */
 	switch ( thread->info.combined_pragma )
 	{
-		case MPCOMP_COMBINED_NONE:
+		case MPC_OMP_COMBINED_NONE:
 			break;
 
-		case MPCOMP_COMBINED_SECTION:
+		case MPC_OMP_COMBINED_SECTION:
 			_mpc_omp_sections_init( thread, thread->info.nb_sections );
 			break;
 
-		case MPCOMP_COMBINED_STATIC_LOOP:
+		case MPC_OMP_COMBINED_STATIC_LOOP:
 			_mpc_omp_static_loop_init( thread, loop->lb, loop->b, loop->incr, loop->chunk_size );
 			break;
 
-		case MPCOMP_COMBINED_DYN_LOOP:
+		case MPC_OMP_COMBINED_DYN_LOOP:
 			_mpc_omp_dynamic_loop_init( thread, loop->lb, loop->b, loop->incr, loop->chunk_size );
 			break;
 
-		case MPCOMP_COMBINED_GUIDED_LOOP:
+		case MPC_OMP_COMBINED_GUIDED_LOOP:
 			mpc_omp_guided_loop_begin( loop->lb, loop->b, loop->incr, loop->chunk_size, NULL, NULL );
 			break;
 

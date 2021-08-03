@@ -108,7 +108,7 @@ _mpc_omp_internal_begin_parallel_region( mpc_omp_parallel_region_t *info, const 
 
     instance->team->depth = t->instance->team->depth + 1;
     int i;
-    for(i=0;i<MPCOMP_MAX_ALIVE_FOR_DYN + 1;i++)
+    for(i=0;i<MPC_OMP_MAX_ALIVE_FOR_DYN + 1;i++)
       instance->team->is_first[i] = 1;
 
     if( !t->children_instance->buffered ) 
@@ -121,7 +121,7 @@ _mpc_omp_internal_begin_parallel_region( mpc_omp_parallel_region_t *info, const 
 
 void _mpc_omp_internal_end_parallel_region( __UNUSED__ mpc_omp_instance_t *instance) 
 {
-#if MPCOMP_COHERENCY_CHECKING
+#if MPC_OMP_COHERENCY_CHECKING
     _mpc_task_new_coherency_ending_parallel_region();
 #endif
 #if OMPT_SUPPORT 
@@ -134,7 +134,7 @@ typedef void*(*mpc_omp_start_func_t)(void*);
 void _mpc_omp_start_parallel_region(void (*func)(void *), void *shared,
                                     unsigned arg_num_threads) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
     _mpc_omp_ompt_frame_set_no_reentrant();
 #endif /* OMPT_SUPPORT */
 
@@ -151,10 +151,10 @@ void _mpc_omp_start_parallel_region(void (*func)(void *), void *shared,
   	assert(t != NULL);
 
   	_mpc_omp_parallel_region_infos_init(&info);
-  	_mpc_omp_parallel_set_specific_infos(&info, start, shared, t->info.icvs, MPCOMP_COMBINED_NONE);
+  	_mpc_omp_parallel_set_specific_infos(&info, start, shared, t->info.icvs, MPC_OMP_COMBINED_NONE);
 
 	if( !( t->schedule_is_forced ) )
-		 t->schedule_type = MPCOMP_COMBINED_NONE;
+		 t->schedule_type = MPC_OMP_COMBINED_NONE;
   	t->schedule_is_forced = 0;
 
   	_mpc_omp_internal_begin_parallel_region(&info, arg_num_threads);
@@ -178,7 +178,7 @@ void _mpc_omp_start_sections_parallel_region(void (*func)(void *), void *shared,
                                              unsigned arg_num_threads,
                                              unsigned nb_sections) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
     _mpc_omp_ompt_frame_set_no_reentrant();
 #endif /* OMPT_SUPPORT */
 
@@ -194,11 +194,11 @@ void _mpc_omp_start_sections_parallel_region(void (*func)(void *), void *shared,
   	assert(t != NULL);
 
   	_mpc_omp_parallel_region_infos_init(&info);
-  	_mpc_omp_parallel_set_specific_infos(&info,start,shared,t->info.icvs,MPCOMP_COMBINED_SECTION);
+  	_mpc_omp_parallel_set_specific_infos(&info,start,shared,t->info.icvs,MPC_OMP_COMBINED_SECTION);
   	info.nb_sections = nb_sections;
 
 	if( !( t->schedule_is_forced ) )
-		 t->schedule_type = MPCOMP_COMBINED_SECTION;
+		 t->schedule_type = MPC_OMP_COMBINED_SECTION;
   	t->schedule_is_forced = 0;
 
   	_mpc_omp_internal_begin_parallel_region(&info, arg_num_threads);
@@ -215,7 +215,7 @@ void _mpc_omp_start_parallel_dynamic_loop(void (*func)(void *), void *shared,
                                           unsigned arg_num_threads, long lb,
                                           long b, long incr, long chunk_size) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
     _mpc_omp_ompt_frame_set_no_reentrant();
 #endif /* OMPT_SUPPORT */
 
@@ -232,13 +232,13 @@ void _mpc_omp_start_parallel_dynamic_loop(void (*func)(void *), void *shared,
 
   	_mpc_omp_parallel_region_infos_init(&info);
   	_mpc_omp_parallel_set_specific_infos(&info,start, shared,
-                                       t->info.icvs, MPCOMP_COMBINED_DYN_LOOP);
+                                       t->info.icvs, MPC_OMP_COMBINED_DYN_LOOP);
 
-    assert( info.combined_pragma == MPCOMP_COMBINED_DYN_LOOP );
+    assert( info.combined_pragma == MPC_OMP_COMBINED_DYN_LOOP );
   	_mpc_omp_loop_gen_infos_init(&(info.loop_infos), lb, b, incr, chunk_size);
 
 	if( !( t->schedule_is_forced ) )
-		 t->schedule_type = MPCOMP_COMBINED_DYN_LOOP;
+		 t->schedule_type = MPC_OMP_COMBINED_DYN_LOOP;
   	t->schedule_is_forced = 0;
 
   	_mpc_omp_internal_begin_parallel_region(&info, arg_num_threads);
@@ -255,7 +255,7 @@ void _mpc_omp_start_parallel_static_loop(void (*func)(void *), void *shared,
                                          unsigned arg_num_threads, long lb,
                                          long b, long incr, long chunk_size) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
     _mpc_omp_ompt_frame_set_no_reentrant();
 #endif /* OMPT_SUPPORT */
 
@@ -273,11 +273,11 @@ void _mpc_omp_start_parallel_static_loop(void (*func)(void *), void *shared,
   	_mpc_omp_parallel_region_infos_init(&info);
   	_mpc_omp_parallel_set_specific_infos(&info, start, shared,
                                        t->info.icvs,
-                                       MPCOMP_COMBINED_STATIC_LOOP);
+                                       MPC_OMP_COMBINED_STATIC_LOOP);
   	_mpc_omp_loop_gen_infos_init(&(info.loop_infos), lb, b, incr, chunk_size);
 
 	if( !( t->schedule_is_forced ) )
-		 t->schedule_type = MPCOMP_COMBINED_STATIC_LOOP;
+		 t->schedule_type = MPC_OMP_COMBINED_STATIC_LOOP;
   	t->schedule_is_forced = 0;
 
   	_mpc_omp_internal_begin_parallel_region(&info, arg_num_threads);
@@ -294,7 +294,7 @@ void _mpc_omp_start_parallel_guided_loop(void (*func)(void *), void *shared,
                                          unsigned arg_num_threads, long lb,
                                          long b, long incr, long chunk_size) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
     _mpc_omp_ompt_frame_set_no_reentrant();
 #endif /* OMPT_SUPPORT */
 
@@ -311,13 +311,13 @@ void _mpc_omp_start_parallel_guided_loop(void (*func)(void *), void *shared,
 
   	_mpc_omp_parallel_region_infos_init(&info);
   	_mpc_omp_parallel_set_specific_infos(&info,start, shared,
-                                       t->info.icvs, MPCOMP_COMBINED_GUIDED_LOOP);
+                                       t->info.icvs, MPC_OMP_COMBINED_GUIDED_LOOP);
 
-    assert( info.combined_pragma == MPCOMP_COMBINED_GUIDED_LOOP );
+    assert( info.combined_pragma == MPC_OMP_COMBINED_GUIDED_LOOP );
   	_mpc_omp_loop_gen_infos_init(&(info.loop_infos), lb, b, incr, chunk_size);
 
 	if( !( t->schedule_is_forced ) )
-		 t->schedule_type = MPCOMP_COMBINED_GUIDED_LOOP;
+		 t->schedule_type = MPC_OMP_COMBINED_GUIDED_LOOP;
   	t->schedule_is_forced = 0;
 
   	_mpc_omp_internal_begin_parallel_region(&info, arg_num_threads);
@@ -334,7 +334,7 @@ void _mpc_omp_start_parallel_runtime_loop(void (*func)(void *), void *shared,
                                           unsigned arg_num_threads, long lb,
                                           long b, long incr, long chunk_size) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
     _mpc_omp_ompt_frame_set_no_reentrant();
 #endif /* OMPT_SUPPORT */
 

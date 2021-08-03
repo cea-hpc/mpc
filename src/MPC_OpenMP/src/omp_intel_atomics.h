@@ -21,8 +21,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __MPCOMP_TYPES_KMP_ATOMICS_H__
-#define __MPCOMP_TYPES_KMP_ATOMICS_H__
+#ifndef __MPC_OMP_TYPES_KMP_ATOMICS_H__
+#define __MPC_OMP_TYPES_KMP_ATOMICS_H__
 
 /********************************
  * ATOMIC_OPERATIONS
@@ -1227,4 +1227,4 @@ ATOMIC_CRITICAL_CPT(cmplx16, div_a16_cpt, kmp_cmplx128_a16_t, /, 32c, 1)     // 
 #endif
 #endif
 
-#endif /* __MPCOMP_TYPES_KMP_ATOMICS_H__ */
+#endif /* __MPC_OMP_TYPES_KMP_ATOMICS_H__ */

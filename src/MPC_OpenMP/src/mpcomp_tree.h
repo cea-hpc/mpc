@@ -1,5 +1,5 @@
-#ifndef MPCOMP_TREE_H_
-#define MPCOMP_TREE_H_
+#ifndef MPC_OMP_TREE_H_
+#define MPC_OMP_TREE_H_
 
 #include "mpcomp_types.h"
 #include "omp_intel.h"
@@ -29,16 +29,16 @@ static inline void _mpc_omp_thread_infos_init( mpc_omp_thread_t *thread ) {
 
     int i;
 	/* -- DYNAMIC FOR LOOP CONSTRUCT -- */
-	for ( i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1; i++ )
+	for ( i = 0; i < MPC_OMP_MAX_ALIVE_FOR_DYN + 1; i++ )
 	{
 		OPA_store_int( &( thread->for_dyn_remain[i].i ), -1 );
 	}
 
-#ifdef MPCOMP_USE_INTEL_ABI
+#ifdef MPC_OMP_USE_INTEL_ABI
 	thread->push_num_threads = -1;
 	thread->th_pri_common = _mpc_common_table_allocate();
 	thread->reduction_method = 0;
-#endif /* MPCOMP_USE_INTEL_ABI */
+#endif /* MPC_OMP_USE_INTEL_ABI */
 }
 
 
@@ -62,4 +62,4 @@ void _mpc_omp_tree_alloc( int *shape, int max_depth, const int *cpus_order, cons
 int *mpc_omp_tree_array_compute_thread_min_rank( const int *shape, const int max_depth, const int rank, const int core_depth );
 
 
-#endif /* MPCOMP_TREE_H_ */
+#endif /* MPC_OMP_TREE_H_ */

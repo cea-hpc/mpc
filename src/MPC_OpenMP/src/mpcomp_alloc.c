@@ -152,7 +152,7 @@ omp_init_allocator(
 	mpc_common_spinlock_lock( &mpcomp_global_allocators.lock );
 
   /* check nb list elements if there is enough place */
-  if( mpcomp_global_allocators.nb_init_allocators >= MPCOMP_MAX_ALLOCATORS)
+  if( mpcomp_global_allocators.nb_init_allocators >= MPC_OMP_MAX_ALLOCATORS)
   {
 	  mpc_common_spinlock_unlock( &mpcomp_global_allocators.lock );
     return idx;
@@ -178,7 +178,7 @@ omp_init_allocator(
 	mpc_common_spinlock_unlock( &mpcomp_global_allocators.lock );
 
   /* check idx format */
-  assert(idx >= 0 && idx < MPCOMP_MAX_ALLOCATORS);
+  assert(idx >= 0 && idx < MPC_OMP_MAX_ALLOCATORS);
 
   mpcomp_global_allocators.list[idx].memspace = memspace;
   
@@ -261,7 +261,7 @@ omp_destroy_allocator(omp_allocator_handle_t allocator)
   /* Pick the last index entry && check */
   /* Then incr the number of recycled allocators */
   int idx = mpcomp_global_allocators.recycling_info.nb_recycl_allocators++;
-  assert(idx < MPCOMP_MAX_ALLOCATORS);
+  assert(idx < MPC_OMP_MAX_ALLOCATORS);
   /* Add the index in the recycling list */
   mpcomp_global_allocators.recycling_info.idx_list[idx] = allocator;
 

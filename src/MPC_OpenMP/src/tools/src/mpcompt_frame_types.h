@@ -34,9 +34,9 @@
  * INTEL <=> INTEL (kmpc_ prefix)
  */
 typedef enum mpc_omp_ompt_wrapper_e {
-    MPCOMP_UNDEF  = 0,
-    MPCOMP_GOMP   = 1,
-    MPCOMP_INTEL  = 2
+    MPC_OMP_UNDEF  = 0,
+    MPC_OMP_GOMP   = 1,
+    MPC_OMP_INTEL  = 2
 } mpc_omp_ompt_wrapper_t;
 
 /* Frame infos structure, one per thread.

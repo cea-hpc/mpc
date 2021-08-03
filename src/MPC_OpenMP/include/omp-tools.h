@@ -20,8 +20,8 @@
 /* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __MPCOMP_OMP_TOOLS_H__
-#define __MPCOMP_OMP_TOOLS_H__
+#ifndef __MPC_OMP_OMP_TOOLS_H__
+#define __MPC_OMP_OMP_TOOLS_H__
 
 #ifdef __cplusplus
 extern "C"
@@ -33,4 +33,4 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
-#endif /* __MPCOMP_OMP_TOOLS_H__ */
+#endif /* __MPC_OMP_OMP_TOOLS_H__ */

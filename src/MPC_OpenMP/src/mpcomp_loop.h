@@ -22,8 +22,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef MPCOMP_LOOP_H_
-#define MPCOMP_LOOP_H_
+#ifndef MPC_OMP_LOOP_H_
+#define MPC_OMP_LOOP_H_
 
 #include <string.h>
 
@@ -43,7 +43,7 @@ _mpc_omp_loop_gen_infos_init( mpc_omp_loop_gen_info_t *loop_infos, long lb,
 	assert( loop_infos );
 	loop_infos->fresh = true;
 	loop_infos->ischunked = ( chunk_size ) ? 1 : 0;
-	loop_infos->type = MPCOMP_LOOP_TYPE_LONG;
+	loop_infos->type = MPC_OMP_LOOP_TYPE_LONG;
 	loop_infos->loop.mpcomp_long.up = ( incr > 0 );
 	loop_infos->loop.mpcomp_long.b = b;
 	loop_infos->loop.mpcomp_long.lb = lb;
@@ -61,7 +61,7 @@ _mpc_omp_loop_gen_infos_init_ull( mpc_omp_loop_gen_info_t *loop_infos,
 	assert( loop_infos );
 	loop_infos->fresh = true;
 	loop_infos->ischunked = ( chunk_size ) ? 1 : 0;
-	loop_infos->type = MPCOMP_LOOP_TYPE_ULL;
+	loop_infos->type = MPC_OMP_LOOP_TYPE_ULL;
 	loop_infos->loop.mpcomp_ull.up = ( incr > 0 );
 	loop_infos->loop.mpcomp_ull.b = b;
 	loop_infos->loop.mpcomp_ull.lb = lb;
@@ -226,4 +226,4 @@ void mpc_omp_taskloop_ull(void (*)(void *), void *, void (*)(void *, void *),
 void _mpc_omp_ordered_begin( void );
 void _mpc_omp_ordered_end( void );
 
-#endif /* MPCOMP_LOOP_H_ */
+#endif /* MPC_OMP_LOOP_H_ */

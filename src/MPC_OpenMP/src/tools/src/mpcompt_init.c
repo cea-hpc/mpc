@@ -8,7 +8,7 @@
 #include "mpcompt_entryPoints.h"
 #include "mpcompt_instance.h"
 #include "mpcomp_types.h"
-#include "mpcomp_abi.h"
+#include "mpc_omp_abi.h"
 
 /* Global vars */
 extern mpc_omp_global_icv_t mpcomp_global_icvs;

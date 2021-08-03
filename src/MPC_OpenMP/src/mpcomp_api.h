@@ -20,8 +20,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __MPCOMP_API_H__
-#define __MPCOMP_API_H__
+#ifndef __MPC_OMP_API_H__
+#define __MPC_OMP_API_H__
 
 #include "mpcomp_types.h"
 
@@ -51,4 +51,4 @@ int omp_control_tool(int, int, void*);
 int mpc_omp_get_num_threads(void);
 int mpc_omp_get_thread_num(void);
 
-#endif /* __MPCOMP_API_H__ */
+#endif /* __MPC_OMP_API_H__ */

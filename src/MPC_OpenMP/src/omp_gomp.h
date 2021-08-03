@@ -8,9 +8,9 @@
  * SYMBOL VERSIONNING *
  **********************/
 
-#define MPCOMP_VERSION_SYMBOLS
+#define MPC_OMP_VERSION_SYMBOLS
 
-#ifdef MPCOMP_VERSION_SYMBOLS
+#ifdef MPC_OMP_VERSION_SYMBOLS
 # define str(x) #x
 # define versionify( mpc_name, gomp_name, version ) \
     __asm__( ".symver " str( mpc_name ) "," str( gomp_name ) "@@" version );
@@ -18,11 +18,11 @@
 # include "omp_gomp_version.h"
 # undef GOMP_ABI_FUNC
 # undef str
-#endif /* MPCOMP_VERSION_SYMBOLS */
+#endif /* MPC_OMP_VERSION_SYMBOLS */
 
-#define MPCOMP_GOMP_UNUSED_VAR( var ) (void) ( sizeof( var ) )
-#define MPCOMP_GOMP_NO_ALIAS ""
-#define MPCOMP_GOMP_EMPTY_FN ""
+#define MPC_OMP_GOMP_UNUSED_VAR( var ) (void) ( sizeof( var ) )
+#define MPC_OMP_GOMP_NO_ALIAS ""
+#define MPC_OMP_GOMP_EMPTY_FN ""
 
 /***********
  * ORDERED *

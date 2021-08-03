@@ -356,9 +356,9 @@ int omp_get_max_active_levels() {
  */
 int omp_in_final(void) {
   mpc_omp_thread_t *thread = mpc_omp_get_thread_tls();
-  mpc_omp_task_t *task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+  mpc_omp_task_t *task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
   return (task &&
-          mpc_omp_task_property_isset(task->property, MPCOMP_TASK_FINAL));
+          mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_FINAL));
 }
 
 /*

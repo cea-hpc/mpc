@@ -1,5 +1,5 @@
-#ifndef __MPCOMP_OPENMP_THREAD_TLS_H__
-#define __MPCOMP_OPENMP_THREAD_TLS_H__
+#ifndef __MPC_OMP_OPENMP_THREAD_TLS_H__
+#define __MPC_OMP_OPENMP_THREAD_TLS_H__
 
 #include "mpc_common_debug.h"
 #include "mpcomp_types.h"
@@ -69,4 +69,4 @@ static inline mpc_omp_thread_t *mpc_omp_thread_tls_swap_father(void) {
   return thread;
 }
 
-#endif /* __MPCOMP_OPENMP_THREAD_TLS_H__ */
+#endif /* __MPC_OMP_OPENMP_THREAD_TLS_H__ */

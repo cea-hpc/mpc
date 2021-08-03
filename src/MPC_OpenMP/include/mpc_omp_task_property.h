@@ -36,55 +36,55 @@
 # define GOMP_TASK_FLAG_NOGROUP     (1 << 11)
 
 /* MPCOMP bit flags */
-# define MPCOMP_TASK_PROP_UNDEFERRED    (1 << 0)
-# define MPCOMP_TASK_PROP_UNTIED        (1 << 1)
-# define MPCOMP_TASK_PROP_EXPLICIT      (1 << 2)
-# define MPCOMP_TASK_PROP_IMPLICIT      (1 << 3)
-# define MPCOMP_TASK_PROP_INITIAL       (1 << 4)
-# define MPCOMP_TASK_PROP_INCLUDED      (1 << 5)
-# define MPCOMP_TASK_PROP_FINAL         (1 << 6)
-# define MPCOMP_TASK_PROP_STARTED       (1 << 7)
-# define MPCOMP_TASK_PROP_YIELDED       (1 << 8)
-# define MPCOMP_TASK_PROP_COMPLETED     (1 << 9)
-# define MPCOMP_TASK_PROP_MERGED        (1 << 10)
-# define MPCOMP_TASK_PROP_MERGEABLE     (1 << 11)
-# define MPCOMP_TASK_PROP_DEPEND        (1 << 12)
-# define MPCOMP_TASK_PROP_PRIORITY      (1 << 13)
-# define MPCOMP_TASK_PROP_UP            (1 << 14)
-# define MPCOMP_TASK_PROP_GRAINSIZE     (1 << 15)
-# define MPCOMP_TASK_PROP_IF            (1 << 16)
-# define MPCOMP_TASK_PROP_NOGROUP       (1 << 17)
-# define MPCOMP_TASK_PROP_BLOCKED       (1 << 18)
-# define MPCOMP_TASK_PROP_UNBLOCKED     (1 << 19)
-# define MPCOMP_TASK_PROP_HAS_FIBER     (1 << 20)
+# define MPC_OMP_TASK_PROP_UNDEFERRED    (1 << 0)
+# define MPC_OMP_TASK_PROP_UNTIED        (1 << 1)
+# define MPC_OMP_TASK_PROP_EXPLICIT      (1 << 2)
+# define MPC_OMP_TASK_PROP_IMPLICIT      (1 << 3)
+# define MPC_OMP_TASK_PROP_INITIAL       (1 << 4)
+# define MPC_OMP_TASK_PROP_INCLUDED      (1 << 5)
+# define MPC_OMP_TASK_PROP_FINAL         (1 << 6)
+# define MPC_OMP_TASK_PROP_STARTED       (1 << 7)
+# define MPC_OMP_TASK_PROP_YIELDED       (1 << 8)
+# define MPC_OMP_TASK_PROP_COMPLETED     (1 << 9)
+# define MPC_OMP_TASK_PROP_MERGED        (1 << 10)
+# define MPC_OMP_TASK_PROP_MERGEABLE     (1 << 11)
+# define MPC_OMP_TASK_PROP_DEPEND        (1 << 12)
+# define MPC_OMP_TASK_PROP_PRIORITY      (1 << 13)
+# define MPC_OMP_TASK_PROP_UP            (1 << 14)
+# define MPC_OMP_TASK_PROP_GRAINSIZE     (1 << 15)
+# define MPC_OMP_TASK_PROP_IF            (1 << 16)
+# define MPC_OMP_TASK_PROP_NOGROUP       (1 << 17)
+# define MPC_OMP_TASK_PROP_BLOCKED       (1 << 18)
+# define MPC_OMP_TASK_PROP_UNBLOCKED     (1 << 19)
+# define MPC_OMP_TASK_PROP_HAS_FIBER     (1 << 20)
 
 /** Property of an OpenMP task */
-typedef unsigned int mpcomp_task_property_t;
+typedef unsigned int mpc_omp_task_property_t;
 
 /*** Task property primitives ***/
 static inline void
-_mpc_omp_task_reset_property(mpcomp_task_property_t *property)
+mpc_omp_task_reset_property(mpc_omp_task_property_t *property)
 {
     *property = 0;
 }
 
 static inline void
-_mpc_omp_task_set_property(mpcomp_task_property_t *property,
-        mpcomp_task_property_t mask)
+mpc_omp_task_set_property(mpc_omp_task_property_t *property,
+        mpc_omp_task_property_t mask)
 {
     *property |= mask;
 }
 
 static inline void
-_mpc_omp_task_unset_property(mpcomp_task_property_t *property,
-        mpcomp_task_property_t mask)
+mpc_omp_task_unset_property(mpc_omp_task_property_t *property,
+        mpc_omp_task_property_t mask)
 {
     *property &= ~(mask);
 }
 
 static inline int
-_mpc_omp_task_property_isset(mpcomp_task_property_t property,
-        mpcomp_task_property_t mask)
+mpc_omp_task_property_isset(mpc_omp_task_property_t property,
+        mpc_omp_task_property_t mask)
 {
     return (property & mask);
 }

@@ -20,8 +20,8 @@
 /* #   - CAPRA Antoine capra@paratools.com                                # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __MPCOMP_PLACES_ENV_H__
-#define __MPCOMP_PLACES_ENV_H__
+#ifndef __MPC_OMP_PLACES_ENV_H__
+#define __MPC_OMP_PLACES_ENV_H__
 
 #include "hwloc.h"
 #include "utlist.h"
@@ -43,4 +43,4 @@ int _mpc_omp_places_get_topo_info( mpc_omp_places_info_t *list, int **shape, int
 
 hwloc_bitmap_t mpc_omp_places_get_default_include_bitmap( const int );
 
-#endif /* __MPCOMP_PLACES_ENV_H__*/
+#endif /* __MPC_OMP_PLACES_ENV_H__*/

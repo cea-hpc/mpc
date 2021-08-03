@@ -41,14 +41,14 @@ static inline int __loop_dyn_get_for_dyn_current( struct mpc_omp_thread_s *threa
 static inline int __loop_dyn_get_for_dyn_prev_index( struct mpc_omp_thread_s *thread )
 {
 	const int for_dyn_current = __loop_dyn_get_for_dyn_current( thread );
-	return ( for_dyn_current + MPCOMP_MAX_ALIVE_FOR_DYN - 1 ) %
-	       ( MPCOMP_MAX_ALIVE_FOR_DYN + 1 );
+	return ( for_dyn_current + MPC_OMP_MAX_ALIVE_FOR_DYN - 1 ) %
+	       ( MPC_OMP_MAX_ALIVE_FOR_DYN + 1 );
 }
 
 static inline int __loop_dyn_get_for_dyn_index( struct mpc_omp_thread_s *thread )
 {
 	const int for_dyn_current = __loop_dyn_get_for_dyn_current( thread );
-	return ( for_dyn_current % ( MPCOMP_MAX_ALIVE_FOR_DYN + 1 ) );
+	return ( for_dyn_current % ( MPC_OMP_MAX_ALIVE_FOR_DYN + 1 ) );
 }
 
 /*******************
@@ -85,7 +85,7 @@ static inline uint64_t __loop_get_num_iters_gen( mpc_omp_loop_gen_info_t *loop_i
 {
 	uint64_t count = 0;
 
-	if ( loop_infos->type == MPCOMP_LOOP_TYPE_LONG )
+	if ( loop_infos->type == MPC_OMP_LOOP_TYPE_LONG )
 	{
 		mpc_omp_loop_long_iter_t *long_loop = &( loop_infos->loop.mpcomp_long );
 		count = __loop_get_num_iters( long_loop->lb, long_loop->b, long_loop->incr );
@@ -389,7 +389,7 @@ void _mpc_omp_static_loop_init( struct mpc_omp_thread_s *t, long lb, long b, lon
 	assert( t->instance != NULL );
 
 	t->schedule_type =
-	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_STATIC_LOOP;
+	    ( t->schedule_is_forced ) ? t->schedule_type : MPC_OMP_COMBINED_STATIC_LOOP;
 	t->schedule_is_forced = 0;
 
 	loop_infos = &( t->info.loop_infos );
@@ -569,11 +569,11 @@ int mpc_omp_static_loop_begin_ull( bool up, unsigned long long lb,
 	mpc_omp_thread_t *t = mpc_omp_get_thread_tls();
 
 	t->schedule_type =
-	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_STATIC_LOOP;
+	    ( t->schedule_is_forced ) ? t->schedule_type : MPC_OMP_COMBINED_STATIC_LOOP;
 	t->schedule_is_forced = 0;
 
 	/* Fill private info about the loop */
-	t->info.loop_infos.type = MPCOMP_LOOP_TYPE_ULL;
+	t->info.loop_infos.type = MPC_OMP_LOOP_TYPE_ULL;
 	loop = &( t->info.loop_infos.loop.mpcomp_ull );
 	loop->up = up;
 	loop->lb = lb;
@@ -688,14 +688,14 @@ int mpc_omp_guided_loop_begin( long lb, long b, long incr, long chunk_size,
 	assert( t );
 
 	t->schedule_type =
-	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_GUIDED_LOOP;
+	    ( t->schedule_is_forced ) ? t->schedule_type : MPC_OMP_COMBINED_GUIDED_LOOP;
 	t->schedule_is_forced = 1;
 
 	const int index = __loop_dyn_get_for_dyn_index( t );
 
 	/* if current thread is too much ahead */
 	while ( OPA_load_int( &( t->instance->team->for_dyn_nb_threads_exited[index].i ) ) ==
-	        MPCOMP_NOWAIT_STOP_SYMBOL )
+	        MPC_OMP_NOWAIT_STOP_SYMBOL )
 	{
 		mpc_thread_yield();
 	}
@@ -789,7 +789,7 @@ void mpc_omp_guided_loop_end_nowait()
 	const int num_threads = t->info.num_threads;
 	/* Compute the index of the dynamic for construct */
 	const int index = __loop_dyn_get_for_dyn_index( t );
-	assert( index >= 0 && index < MPCOMP_MAX_ALIVE_FOR_DYN + 1 );
+	assert( index >= 0 && index < MPC_OMP_MAX_ALIVE_FOR_DYN + 1 );
 
 #if OMPT_SUPPORT
     _mpc_omp_ompt_callback_work( ompt_work_loop, ompt_scope_end, 0 );
@@ -814,9 +814,9 @@ void mpc_omp_guided_loop_end_nowait()
 		t->instance->team->is_first[index] = 1;
 		const int previous_index = __loop_dyn_get_for_dyn_prev_index( t );
 		assert( previous_index >= 0 &&
-		             previous_index < MPCOMP_MAX_ALIVE_FOR_DYN + 1 );
+		             previous_index < MPC_OMP_MAX_ALIVE_FOR_DYN + 1 );
 		OPA_store_int( &( team_info->for_dyn_nb_threads_exited[index].i ),
-		               MPCOMP_NOWAIT_STOP_SYMBOL );
+		               MPC_OMP_NOWAIT_STOP_SYMBOL );
 		OPA_swap_int(
 		    &( team_info->for_dyn_nb_threads_exited[previous_index].i ), 0 );
 	}
@@ -890,13 +890,13 @@ int mpc_omp_loop_ull_guided_begin( bool up, unsigned long long lb,
 	assert( t );
 
 	t->schedule_type =
-	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_GUIDED_LOOP;
+	    ( t->schedule_is_forced ) ? t->schedule_type : MPC_OMP_COMBINED_GUIDED_LOOP;
 	t->schedule_is_forced = 1;
 
 	const int index = __loop_dyn_get_for_dyn_index( t );
 
 	while ( OPA_load_int( &( t->instance->team->for_dyn_nb_threads_exited[index].i ) ) ==
-	        MPCOMP_NOWAIT_STOP_SYMBOL )
+	        MPC_OMP_NOWAIT_STOP_SYMBOL )
 	{
 		mpc_thread_yield();
 	}
@@ -1160,7 +1160,7 @@ static inline int __loop_dyn_get_chunk_from_target( struct mpc_omp_thread_s *thr
 	/* Init target chunk if it is not */
 	if ( cur < 0 )
 	{
-		if ( thread->info.loop_infos.type == MPCOMP_LOOP_TYPE_LONG )
+		if ( thread->info.loop_infos.type == MPC_OMP_LOOP_TYPE_LONG )
 		{
 			__loop_dyn_init_target_chunk( thread, target, thread->info.num_threads );
 		}
@@ -1311,7 +1311,7 @@ static int __loop_dyn_get_chunk_from_rank( struct mpc_omp_thread_s *t,
 
 	const long rank = ( long ) target->rank;
 	const long num_threads = ( long ) t->info.num_threads;
-	assert( t->info.loop_infos.type == MPCOMP_LOOP_TYPE_LONG );
+	assert( t->info.loop_infos.type == MPC_OMP_LOOP_TYPE_LONG );
 	mpc_omp_loop_long_iter_t *loop = &( t->info.loop_infos.loop.mpcomp_long );
 	cur = __loop_dyn_get_chunk_from_target( t, target );
 
@@ -1342,13 +1342,13 @@ void _mpc_omp_dynamic_loop_init( struct mpc_omp_thread_s *t, long lb, long b, lo
 	const int index = __loop_dyn_get_for_dyn_index( t );
 
 	t->schedule_type =
-	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;
+	    ( t->schedule_is_forced ) ? t->schedule_type : MPC_OMP_COMBINED_DYN_LOOP;
 	t->schedule_is_forced = 0;
 
 	/* Stop if the maximum number of alive loops is reached */
 	while (
 	    OPA_load_int( &( team_info->for_dyn_nb_threads_exited[index].i ) ) ==
-	    MPCOMP_NOWAIT_STOP_SYMBOL )
+	    MPC_OMP_NOWAIT_STOP_SYMBOL )
 	{
 		mpc_thread_yield();
 	}
@@ -1391,7 +1391,7 @@ int mpc_omp_dynamic_loop_begin( long lb, long b, long incr, long chunk_size,
 		if( from ) *from = lb;
 		if( to ) *to = b;
 		t->schedule_type =
-		    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;
+		    ( t->schedule_is_forced ) ? t->schedule_type : MPC_OMP_COMBINED_DYN_LOOP;
 		t->schedule_is_forced = 0;
 		return 1;
 	}
@@ -1520,7 +1520,7 @@ void mpc_omp_dynamic_loop_end_nowait( void )
 	const int num_threads = t->info.num_threads;
 	/* Compute the index of the dynamic for construct */
 	const int index = __loop_dyn_get_for_dyn_index( t );
-	assert( index >= 0 && index < MPCOMP_MAX_ALIVE_FOR_DYN + 1 );
+	assert( index >= 0 && index < MPC_OMP_MAX_ALIVE_FOR_DYN + 1 );
 
 #if OMPT_SUPPORT
     _mpc_omp_ompt_callback_work( ompt_work_loop, ompt_scope_end, 0 );
@@ -1553,9 +1553,9 @@ void mpc_omp_dynamic_loop_end_nowait( void )
 	{
 		const int previous_index = __loop_dyn_get_for_dyn_prev_index( t );
 		assert( previous_index >= 0 &&
-		             previous_index < MPCOMP_MAX_ALIVE_FOR_DYN + 1 );
+		             previous_index < MPC_OMP_MAX_ALIVE_FOR_DYN + 1 );
 		OPA_store_int( &( team_info->for_dyn_nb_threads_exited[index].i ),
-		               MPCOMP_NOWAIT_STOP_SYMBOL );
+		               MPC_OMP_NOWAIT_STOP_SYMBOL );
 		OPA_swap_int(
 		    &( team_info->for_dyn_nb_threads_exited[previous_index].i ), 0 );
 	}
@@ -1632,20 +1632,20 @@ void _mpc_omp_for_dyn_coherency_end_parallel_region(
 	/* Check team coherency */
 	n = 0;
 
-	for ( i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1; i++ )
+	for ( i = 0; i < MPC_OMP_MAX_ALIVE_FOR_DYN + 1; i++ )
 	{
 		switch ( OPA_load_int( &team->for_dyn_nb_threads_exited[i].i ) )
 		{
 			case 0:
 				break;
 
-			case MPCOMP_NOWAIT_STOP_SYMBOL:
+			case MPC_OMP_NOWAIT_STOP_SYMBOL:
 				n++;
 				break;
 
 			default:
 				/* This array should contain only '0' and
-				* one MPCOMP_MAX_ALIVE_FOR_DYN */
+				* one MPC_OMP_MAX_ALIVE_FOR_DYN */
 				not_reachable();
 				break;
 		}
@@ -1657,7 +1657,7 @@ void _mpc_omp_for_dyn_coherency_end_parallel_region(
 
 	if ( n != 1 )
 	{
-		/* This array should contain exactly 1 MPCOMP_MAX_ALIVE_FOR_DYN */
+		/* This array should contain exactly 1 MPC_OMP_MAX_ALIVE_FOR_DYN */
 		not_reachable();
 	}
 
@@ -1681,7 +1681,7 @@ void _mpc_omp_for_dyn_coherency_end_parallel_region(
 		}
 
 		/* Checking for_dyn_remain */
-		for ( j = 0; j < MPCOMP_MAX_ALIVE_FOR_DYN + 1; j++ )
+		for ( j = 0; j < MPC_OMP_MAX_ALIVE_FOR_DYN + 1; j++ )
 		{
 			if ( OPA_load_int( &( target_t->for_dyn_remain[j].i ) ) != -1 )
 			{
@@ -1803,19 +1803,19 @@ static inline void __loop_dyn_init_ull( struct mpc_omp_thread_s *t, bool up,
 	const int index = __loop_dyn_get_for_dyn_index( t );
 
 	t->schedule_type =
-	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;
+	    ( t->schedule_is_forced ) ? t->schedule_type : MPC_OMP_COMBINED_DYN_LOOP;
 	t->schedule_is_forced = 0;
 
 	/* Stop if the maximum number of alive loops is reached */
 	while ( OPA_load_int(
 	            &( t->instance->team->for_dyn_nb_threads_exited[index].i ) ) ==
-	        MPCOMP_NOWAIT_STOP_SYMBOL )
+	        MPC_OMP_NOWAIT_STOP_SYMBOL )
 	{
 		mpc_thread_yield();
 	}
 
 	/* Fill private info about the loop */
-	t->info.loop_infos.type = MPCOMP_LOOP_TYPE_ULL;
+	t->info.loop_infos.type = MPC_OMP_LOOP_TYPE_ULL;
 	loop = &( t->info.loop_infos.loop.mpcomp_ull );
 	loop->up = up;
 	loop->lb = lb;
@@ -1862,7 +1862,7 @@ int mpc_omp_loop_ull_dynamic_begin( bool up, unsigned long long lb,
 		if( from ) *from = lb;
 		if( to ) *to = b;
 		t->schedule_type =
-		    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;
+		    ( t->schedule_is_forced ) ? t->schedule_type : MPC_OMP_COMBINED_DYN_LOOP;
 		t->schedule_is_forced = 0;
 		return 1;
 	}
@@ -2004,7 +2004,7 @@ int mpc_omp_loop_ull_ordered_dynamic_begin( bool up, unsigned long long lb,
 	struct mpc_omp_thread_s *t = ( struct mpc_omp_thread_s * ) mpc_omp_tls;
 	assert( t != NULL );
 	t->schedule_type =
-	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;
+	    ( t->schedule_is_forced ) ? t->schedule_type : MPC_OMP_COMBINED_DYN_LOOP;
 	t->schedule_is_forced = 1;
 	// TODO EXTEND MODIF WITH UP VALUE
 	mpc_common_nodebug( "[%d] %s: %d -> %d [%d] cs:%d", t->rank, __func__, lb, b, incr,
@@ -2060,20 +2060,20 @@ mpc_omp_for_dyn_coherency_end_barrier()
 	/* Check team coherency */
 	n = 0 ;
 
-	for ( i = 0 ; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1 ; i++ )
+	for ( i = 0 ; i < MPC_OMP_MAX_ALIVE_FOR_DYN + 1 ; i++ )
 	{
 		switch ( OPA_load_int( &team->for_dyn_nb_threads_exited[i].i ) )
 		{
 			case 0:
 				break ;
 
-			case MPCOMP_NOWAIT_STOP_SYMBOL:
+			case MPC_OMP_NOWAIT_STOP_SYMBOL:
 				n++ ;
 				break ;
 
 			default:
 				/* This array should contain only '0' and
-				* one MPCOMP_MAX_ALIVE_FOR_DYN */
+				* one MPC_OMP_MAX_ALIVE_FOR_DYN */
 				not_reachable() ;
 				break ;
 		}
@@ -2086,7 +2086,7 @@ mpc_omp_for_dyn_coherency_end_barrier()
 
 	if ( n != 1 )
 	{
-		/* This array should contain exactly 1 MPCOMP_MAX_ALIVE_FOR_DYN */
+		/* This array should contain exactly 1 MPC_OMP_MAX_ALIVE_FOR_DYN */
 		not_reachable() ;
 	}
 
@@ -2109,7 +2109,7 @@ mpc_omp_for_dyn_coherency_end_barrier()
 		}
 
 		/* Checking for_dyn_remain */
-		for ( j = 0 ; j < MPCOMP_MAX_ALIVE_FOR_DYN + 1 ; j++ )
+		for ( j = 0 ; j < MPC_OMP_MAX_ALIVE_FOR_DYN + 1 ; j++ )
 		{
 			if ( OPA_load_int( &( target_t->for_dyn_remain[j].i ) ) != -1 )
 			{
@@ -2189,7 +2189,7 @@ int mpc_omp_runtime_loop_begin( long lb, long b, long incr, long *from,
 	/* Grab the thread info */
 	struct mpc_omp_thread_s *t = mpc_omp_get_thread_tls();
 	t->schedule_type =
-	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_RUNTIME_LOOP;
+	    ( t->schedule_is_forced ) ? t->schedule_type : MPC_OMP_COMBINED_RUNTIME_LOOP;
 	t->schedule_is_forced = 1;
 	const int run_sched_var = t->info.icvs.run_sched_var;
 	const long chunk_size = t->info.icvs.modifier_sched_var;
@@ -2309,7 +2309,7 @@ int mpc_omp_ordered_runtime_loop_begin( long lb, long b, long incr, long *from,
 	/* Grab the thread info */
 	struct mpc_omp_thread_s *t = mpc_omp_get_thread_tls();
 	t->schedule_type =
-	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_RUNTIME_LOOP;
+	    ( t->schedule_is_forced ) ? t->schedule_type : MPC_OMP_COMBINED_RUNTIME_LOOP;
 	t->schedule_is_forced = 1;
 	const int run_sched_var = t->info.icvs.run_sched_var;
 	const long chunk_size = t->info.icvs.modifier_sched_var;
@@ -2392,7 +2392,7 @@ int mpc_omp_loop_ull_runtime_begin( bool up, unsigned long long lb,
 	/* Grab the thread info */
 	struct mpc_omp_thread_s *t = mpc_omp_get_thread_tls();
 	t->schedule_type =
-	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_RUNTIME_LOOP;
+	    ( t->schedule_is_forced ) ? t->schedule_type : MPC_OMP_COMBINED_RUNTIME_LOOP;
 	t->schedule_is_forced = 1;
 	const unsigned long long chunk_size =
 	    ( unsigned long long ) t->info.icvs.modifier_sched_var;
@@ -2464,7 +2464,7 @@ int mpc_omp_loop_ull_ordered_runtime_begin( bool up, unsigned long long lb,
 	/* Grab the thread info */
 	struct mpc_omp_thread_s *t = mpc_omp_get_thread_tls();
 	t->schedule_type =
-	    ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_RUNTIME_LOOP;
+	    ( t->schedule_is_forced ) ? t->schedule_type : MPC_OMP_COMBINED_RUNTIME_LOOP;
 	t->schedule_is_forced = 1;
 	const int run_sched_var = t->info.icvs.run_sched_var;
 	const unsigned long long chunk_size =
@@ -2623,7 +2623,7 @@ void mpc_omp_taskloop(void (*fn)(void *), void *data,
                      long arg_align, unsigned flags, unsigned long num_tasks,
                      __UNUSED__ int priority, long start, long end, long step) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+  _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
   _mpc_omp_ompt_frame_set_no_reentrant();
 #endif /* OMPT_SUPPORT */
 
@@ -2646,7 +2646,7 @@ void mpc_omp_taskloop(void (*fn)(void *), void *data,
     return;
   }
 
-  if (!(flags & MPCOMP_TASK_FLAG_GRAINSIZE)) {
+  if (!(flags & MPC_OMP_TASK_PROP_GRAINSIZE)) {
     num_tasks = __loop_taskloop_compute_loop_value(num_iters, num_tasks, step,
                                                    &taskstep, &extra_chunk);
   } else {
@@ -2655,7 +2655,7 @@ void mpc_omp_taskloop(void (*fn)(void *), void *data,
     taskstep = (num_tasks == 1) ? end - start : taskstep;
   }
 
-  if (!(flags & MPCOMP_TASK_FLAG_NOGROUP)) {
+  if (!(flags & MPC_OMP_TASK_PROP_NOGROUP)) {
     _mpc_task_taskgroup_start();
   }
 
@@ -2663,14 +2663,14 @@ void mpc_omp_taskloop(void (*fn)(void *), void *data,
     mpc_omp_task_t *new_task = NULL;
     new_task = _mpc_task_alloc(fn, data, cpyfn, arg_size, arg_align, 0,
                                    flags, 0 /* no deps */);
-    ((long *)new_task->func_data)[0] = start;
-    ((long *)new_task->func_data)[1] = start + taskstep;
+    ((long *)new_task->data)[0] = start;
+    ((long *)new_task->data)[1] = start + taskstep;
     start += taskstep;
     taskstep -= (i == extra_chunk) ? step : 0;
     _mpc_task_process(new_task, 0);
   }
 
-  if (!(flags & MPCOMP_TASK_FLAG_NOGROUP)) {
+  if (!(flags & MPC_OMP_TASK_PROP_NOGROUP)) {
     _mpc_task_taskgroup_end();
   }
 
@@ -2690,7 +2690,7 @@ void mpc_omp_taskloop_ull(__UNUSED__ void (*fn)(void *), __UNUSED__ void *data,
                          __UNUSED__ unsigned long long start, __UNUSED__ unsigned long long end,
                          __UNUSED__ unsigned long long step) {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+  _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
   _mpc_omp_ompt_frame_set_no_reentrant();
 #endif /* OMPT_SUPPORT */
 
@@ -2708,7 +2708,7 @@ void mpc_omp_taskloop_ull(__UNUSED__ void (*fn)(void *), __UNUSED__ void *data,
 
 static inline void __loop_internal_ordered_begin( mpc_omp_thread_t *t, mpc_omp_loop_gen_info_t* loop_infos )
 {
-    assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_LONG );
+    assert( loop_infos && loop_infos->type == MPC_OMP_LOOP_TYPE_LONG );
     mpc_omp_loop_long_iter_t* loop = &( loop_infos->loop.mpcomp_long );
     const long cur_ordered_iter = loop->cur_ordered_iter;
 
@@ -2728,7 +2728,7 @@ static inline void __loop_internal_ordered_begin( mpc_omp_thread_t *t, mpc_omp_l
 
 static inline void __loop_internal_ordered_begin_ull( mpc_omp_thread_t *t, mpc_omp_loop_gen_info_t* loop_infos )
 {
-    assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_ULL );
+    assert( loop_infos && loop_infos->type == MPC_OMP_LOOP_TYPE_ULL );
     mpc_omp_loop_ull_iter_t* loop = &( loop_infos->loop.mpcomp_ull );
     const unsigned long long cur_ordered_iter = loop->cur_ordered_iter;
 
@@ -2749,7 +2749,7 @@ static inline void __loop_internal_ordered_begin_ull( mpc_omp_thread_t *t, mpc_o
 void _mpc_omp_ordered_begin( void )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t *t;
@@ -2766,7 +2766,7 @@ void _mpc_omp_ordered_begin( void )
 
     loop_infos = &( t->info.loop_infos );
 
-    if( loop_infos->type == MPCOMP_LOOP_TYPE_LONG )
+    if( loop_infos->type == MPC_OMP_LOOP_TYPE_LONG )
     { 
 //        fprintf(stderr, ":: %s :: Start ordered  %d\n", __func__, t->rank);
         __loop_internal_ordered_begin( t, loop_infos );
@@ -2781,7 +2781,7 @@ static inline void __internal_ordered_end( mpc_omp_thread_t* t, mpc_omp_loop_gen
 {
     int isLastIteration;
 
-    assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_LONG );
+    assert( loop_infos && loop_infos->type == MPC_OMP_LOOP_TYPE_LONG );
     mpc_omp_loop_long_iter_t* loop = &( loop_infos->loop.mpcomp_long );
 
     isLastIteration = 0;
@@ -2807,7 +2807,7 @@ static inline void __internal_ordered_end( mpc_omp_thread_t* t, mpc_omp_loop_gen
 static inline void __internal_ordered_end_ull( mpc_omp_thread_t* t, mpc_omp_loop_gen_info_t* loop_infos  )
 {
     int isLastIteration;
-    assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_ULL );
+    assert( loop_infos && loop_infos->type == MPC_OMP_LOOP_TYPE_ULL );
     mpc_omp_loop_ull_iter_t* loop = &( loop_infos->loop.mpcomp_ull );
 
     unsigned long long cast_cur_ordered_iter = (unsigned long long) loop->cur_ordered_iter;
@@ -2844,7 +2844,7 @@ static inline void __internal_ordered_end_ull( mpc_omp_thread_t* t, mpc_omp_loop
 void _mpc_omp_ordered_end( void )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPCOMP_GOMP );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t *t;
@@ -2858,7 +2858,7 @@ void _mpc_omp_ordered_end( void )
 
     loop_infos = &( t->info.loop_infos );
 
-    if( loop_infos->type == MPCOMP_LOOP_TYPE_LONG )
+    if( loop_infos->type == MPC_OMP_LOOP_TYPE_LONG )
     { 
         __internal_ordered_end( t, loop_infos );
     }

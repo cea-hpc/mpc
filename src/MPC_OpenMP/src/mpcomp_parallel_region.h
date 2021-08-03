@@ -21,8 +21,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __MPCOMP_PARALLEL_REGION_H__
-#define __MPCOMP_PARALLEL_REGION_H__
+#ifndef __MPC_OMP_PARALLEL_REGION_H__
+#define __MPC_OMP_PARALLEL_REGION_H__
 
 #include "mpcomp_types.h"
 
@@ -64,4 +64,4 @@ static inline void _mpc_omp_parallel_set_specific_infos(
 	info->combined_pragma = type;
 }
 
-#endif /*  __MPCOMP_PARALLEL_REGION_H__ */
+#endif /*  __MPC_OMP_PARALLEL_REGION_H__ */

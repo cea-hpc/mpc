@@ -22,8 +22,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __MPCOMP_CORE_H__
-#define __MPCOMP_CORE_H__
+#ifndef __MPC_OMP_CORE_H__
+#define __MPC_OMP_CORE_H__
 
 #include "mpcomp_types.h" /* need mpc_omp_mvp_t && mpc_omp_instance_t */
 #include <mpc_conf.h>
@@ -91,7 +91,7 @@ struct mpc_omp_conf
 	int omp_new_task_depth;
     int omp_untied_task_depth;
 	char omp_task_larceny_mode_str[MPC_CONF_STRING_SIZE];
-	enum mpc_omp_task_larceny_mode_t omp_task_larceny_mode; 
+	mpc_omp_task_larceny_mode_t omp_task_larceny_mode; 
 
 	int omp_task_nesting_max;
 	int mpcomp_task_max_delayed;
@@ -118,4 +118,4 @@ void _mpc_omp_instance_init(mpc_omp_instance_t *, int, mpc_omp_team_t *);
 void _mpc_omp_in_order_scheduler(mpc_omp_thread_t *);
 void _mpc_omp_flush(void);
 
-#endif /* __MPCOMP_CORE_H__ */
+#endif /* __MPC_OMP_CORE_H__ */
