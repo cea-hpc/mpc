@@ -932,7 +932,8 @@ static inline int ___collectives_create_master_hardware_comm_unguided(int vrank,
   _mpc_cl_comm_rank(hwcomm[0], &rank);
   _mpc_cl_comm_size(hwcomm[0], &size);
 
-  for(int i = 0; i < deepest_level; i++) {
+  int i;
+  for(i = 0; i < deepest_level; i++) {
     _mpc_cl_comm_rank(hwcomm[i+1],&rank_comm);
 
     int color = (rank_comm == 0)?(0):(MPI_UNDEFINED);
@@ -972,8 +973,8 @@ static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info 
 
    //TODO a remplacer par un allreduce pour gerer le cas du gatherv
    _mpc_cl_comm_size(info->hardware_info_ptr->hwcomm[info->hardware_info_ptr->deepest_hardware_level], &data_count);
-
-   for(int i = info->hardware_info_ptr->deepest_hardware_level - 1; i >= 0; i--) {
+   int i;
+   for(i = info->hardware_info_ptr->deepest_hardware_level - 1; i >= 0; i--) {
 
      int rank_split;
      _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &rank_split);
@@ -996,9 +997,11 @@ static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info 
 
        ___collectives_gather_switch(&data_count, 1, MPI_INT, buf, 1, MPI_INT, 0, info->hardware_info_ptr->rootcomm[i], MPC_COLL_TYPE_BLOCKING, NULL, info);
 
+       int j;
+
        if(rank_master == 0) {
          data_count = 0;
-         for(int j = 0; j < size_master; j++) {
+         for(j = 0; j < size_master; j++) {
            data_count += info->hardware_info_ptr->childs_data_count[i][j];
            mpc_common_nodebug("RANK %d | CHILD DATA COUNT [%d] [%d] = %d\n", rank, i, j, info->hardware_info_ptr->childs_data_count[i][j]);
          }
@@ -1006,7 +1009,7 @@ static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
         char dbg_str[1024];
         sprintf(dbg_str, "RANK %d | CHILD DATA COUNT [%d] = [%d", rank, i, info->hardware_info_ptr->childs_data_count[i][0]);
-        for(int j = 1; j < size_master; j++) {
+        for(j = 1; j < size_master; j++) {
           sprintf(&(dbg_str[strlen(dbg_str)]), ", %d", info->hardware_info_ptr->childs_data_count[i][j]);
         }
         sprintf(&(dbg_str[strlen(dbg_str)]), "]\n");
@@ -1049,7 +1052,8 @@ static inline int ___collectives_create_swap_array(MPI_Comm comm, int root, Sche
 
   if(rank == root) {
     info->hardware_info_ptr->swap_array = sctk_malloc(sizeof(int) * size);
-    for(int i = 0; i < size; i++) {
+    int i;
+    for(i = 0; i < size; i++) {
       info->hardware_info_ptr->swap_array[i] = i;
     }
   }
@@ -1456,7 +1460,8 @@ static inline int ___collectives_bcast_linear(void *buffer, int count, MPI_Datat
     }
   } else {
     //if rank == root, send data to each rank
-    for(int i = 0; i < size; i++) {
+      int i;
+      for(i = 0; i < size; i++) {
       if(i == rank) {
         continue;
       }
@@ -1525,7 +1530,8 @@ static inline int ___collectives_bcast_binomial(void *buffer, int count, MPI_Dat
   //       2(010) -> 3(011)
   //       4(100) -> 5(101)
   //       6(110) -> 7(111)
-  for(int i = rmb - 1; i >= 0; i--) {
+  int i;
+  for(i = rmb - 1; i >= 0; i--) {
     VRANK2RANK(peer, vrank | (1 << i), root);
     if(peer >= size) {
       continue;
@@ -1600,7 +1606,8 @@ static inline int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatyp
   int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
 
   /* At each topological level, masters do binomial algorithm */
-  for (int k = 0; k < deepest_level; k++) {
+  int k;
+  for (k = 0; k < deepest_level; k++) {
     int rank_split;
     _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[k + 1], &rank_split);
 
@@ -2008,8 +2015,8 @@ static inline int ___collectives_reduce_linear(const void *sendbuf, void* recvbu
   // Reduce received data
   if(rank == root) {
     ___collectives_barrier_type(coll_type, schedule, info);
-
-    for(int i = 1; i < size; i++) {
+    int i;
+    for(i = 1; i < size; i++) {
       ___collectives_op_type(NULL, (char*)tmpbuf + (i-1)*ext*count, (char*)tmpbuf + i*ext*count, count, datatype, op, mpc_op, coll_type, schedule, info);
     }
     
@@ -2106,8 +2113,8 @@ static inline int ___collectives_reduce_binomial(const void *sendbuf, void* recv
   } else {
     tmp_sendbuf = sendbuf;
   }
-
-  for(int i = 0; i < maxr; i++) {
+  int i;
+  for(i = 0; i < maxr; i++) {
     VRANK2RANK(peer, vrank ^ (1 << i), vroot);
     
     if(peer < rank) {
@@ -2247,7 +2254,8 @@ static inline int ___collectives_reduce_topo(const void *sendbuf, void* recvbuf,
   ___collectives_barrier_type(coll_type, schedule, info);
 
   if(rank == root) {
-    for(int i = 1; i < size; i++) {
+    int i;
+    for(i = 1; i < size; i++) {
       void *leftbuf = tmpbuf + (i-1) * count * ext;
       void *rightbuf = tmpbuf + i * count * ext;
 
@@ -2322,7 +2330,8 @@ static inline int ___collectives_reduce_topo_commute(const void *sendbuf, void* 
   res = ___collectives_reduce_switch(sendbuf, recvbuf, count, datatype, op, 0, hardware_comm, coll_type, schedule, info);
   
   /* At each topological level, masters do binomial algorithm */
-  for(int i = deepest_level - 1; i >= 0; i--) {
+  int i;
+  for(i = deepest_level - 1; i >= 0; i--) {
     int rank_split;
     _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &rank_split);
     
@@ -2759,7 +2768,8 @@ static inline int ___collectives_allreduce_distance_doubling(const void *sendbuf
 
   if(rank >= group || !(rank & 1)) {
     // at each step, processes exchange and reduce their data with (rank XOR 2^i)
-    for(int i = 0; i < maxr; i++) {
+    int i;
+    for(i = 0; i < maxr; i++) {
       
       peer = vrank ^ (1 << i);
       if(peer < group / 2) {
@@ -2876,7 +2886,8 @@ static inline int ___collectives_allreduce_binary_block(const void *sendbuf, voi
   while(block) {
     if(size & (1 << block)) {
       if(vrank >> block == 0) {
-        for(int j = block - 1; j >= 0; j--) {
+        int j;
+        for(j = block - 1; j >= 0; j--) {
           if(size & (1 << j)) {
             next_block = j;
             break;
@@ -2933,7 +2944,8 @@ static inline int ___collectives_allreduce_binary_block(const void *sendbuf, voi
 
   if(coll_type != MPC_COLL_TYPE_COUNT) {
     // init group starts/ends
-    for(int j = 0; j < block_size; j++) {
+    int j;
+    for(j = 0; j < block_size; j++) {
       group_starts[j] = 0;
       group_ends[j] = count;
     }
@@ -2962,8 +2974,8 @@ static inline int ___collectives_allreduce_binary_block(const void *sendbuf, voi
 
   //REDUCE_SCATTER
   //distance doubling and vector halving
-  
-  for(int i = 0; i < block; i++) {
+  int i; 
+  for( i = 0; i < block; i++) {
     peer_vrank = vrank ^ (1 << i);
     peer = first_rank_of_block + peer_vrank;
 
@@ -3017,8 +3029,8 @@ static inline int ___collectives_allreduce_binary_block(const void *sendbuf, voi
       // update group starts/ends
       pointer_swap(prev_group_starts, group_starts, swap);
       pointer_swap(prev_group_ends, group_ends, swap);
-
-      for(int j = 0; j < block_size; j++) {
+      int j;
+      for(j = 0; j < block_size; j++) {
 
         peer = j ^ (1 << i);
         mid = (prev_group_starts[j] + prev_group_ends[j] + 1) >> 1;
@@ -3063,14 +3075,14 @@ static inline int ___collectives_allreduce_binary_block(const void *sendbuf, voi
 
 
   if(previous_block != -1) {
-
-    for(int j = 0; j < target_count; j++) {
+    int j;
+    for(j = 0; j < target_count; j++) {
       peer_vrank = vrank + j * block_size;
       peer = peer_vrank + first_rank_of_previous_block;
       peer_start = 0;
       peer_end = count;
-
-      for(int i = 0; i < previous_block; i++) {
+      int i;
+      for(i = 0; i < previous_block; i++) {
         int peer_peer_vrank = peer_vrank ^ (1 << i);
 
         peer_mid = (peer_start + peer_end + 1) >> 1;
@@ -3087,14 +3099,14 @@ static inline int ___collectives_allreduce_binary_block(const void *sendbuf, voi
 
       ___collectives_send_type(tmp_sendbuf, send_bufsize, datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
     }
-
-    for(int j = 0; j < target_count; j++) {
+    
+    for(j = 0; j < target_count; j++) {
       peer_vrank = vrank + j * block_size;
       peer = peer_vrank + first_rank_of_previous_block;
       peer_start = 0;
       peer_end = count;
-
-      for(int i = 0; i < previous_block; i++) {
+      int i;
+      for(i = 0; i < previous_block; i++) {
         int peer_peer_vrank = peer_vrank ^ (1 << i);
 
         peer_mid = (peer_start + peer_end + 1) >> 1;
@@ -3127,8 +3139,7 @@ static inline int ___collectives_allreduce_binary_block(const void *sendbuf, voi
 
   //ALLGATHER
   //distance halving and vector doubling
-
-  for(int i = block-1; i >= 0; i--) {
+  for(i = block-1; i >= 0; i--) {
     int peer_vrank = vrank ^ (1 << i);
     int peer = first_rank_of_block + peer_vrank;
 
@@ -3162,8 +3173,8 @@ static inline int ___collectives_allreduce_binary_block(const void *sendbuf, voi
       // update group starts/ends
       pointer_swap(prev_group_starts, group_starts, swap);
       pointer_swap(prev_group_ends, group_ends, swap);
-
-      for(int j = 0; j < block_size; j++) {
+      int j;
+      for(j = 0; j < block_size; j++) {
 
         peer = j ^ (1 << i);
         recv_bufsize = prev_group_ends[peer] - prev_group_starts[peer];
@@ -3585,7 +3596,8 @@ static inline int ___collectives_scatter_linear(const void *sendbuf, int sendcou
     }
   } else {
     // if rank == root, send data to each process
-    for(int i = 0; i < size; i++) {
+    int i;
+    for(i = 0; i < size; i++) {
       if(i == rank) {
         continue;
       }
@@ -3698,7 +3710,8 @@ static inline int ___collectives_scatter_binomial(const void *sendbuf, int sendc
 
   // Distribute data to rank+2^(rmb-1); ...; rank+2^0
   // See ___collectives_bcast_binomial
-  for(int i = rmb - 1; i >= 0; i--) {
+  int i;
+  for(i = rmb - 1; i >= 0; i--) {
     peer_vrank = vrank | (1 << i);
 
     VRANK2RANK(peer, peer_vrank, root);
@@ -3843,8 +3856,8 @@ static inline int ___collectives_scatter_topo(const void *sendbuf, int sendcount
   int counts[size];
   void *scatterv_buf = NULL;
 
-
-  for(int i = 0; i < deepest_level; i++) {
+  int i;
+  for(i = 0; i < deepest_level; i++) {
     scatterv_buf = tmpbuf;
 
     ___collectives_barrier_type(coll_type, schedule, info);
@@ -3863,7 +3876,8 @@ static inline int ___collectives_scatter_topo(const void *sendbuf, int sendcount
       if(rank_master == 0) {
         displs[0] = 0;
         counts[0] = info->hardware_info_ptr->childs_data_count[i][0] * recvcount;
-        for(int j = 1; j < size_master; j++) {
+        int j;
+        for(j = 1; j < size_master; j++) {
           displs[j] = displs[j-1] + info->hardware_info_ptr->childs_data_count[i][j-1] * recvcount * recvext;
           counts[j] = info->hardware_info_ptr->childs_data_count[i][j] * recvcount;
         }
@@ -4236,7 +4250,8 @@ static inline int ___collectives_scatterv_linear(const void *sendbuf, const int 
     }
   } else {
     // if rank == root, send data to each process
-    for(int i = 0; i < size; i++) {
+    int i;
+    for(i = 0; i < size; i++) {
       if(i == rank) {
         continue;
       }
@@ -4638,7 +4653,8 @@ static inline int ___collectives_gather_linear(const void *sendbuf, int sendcoun
     }
   } else {
     // if rank == root, receive data from each process
-    for(int i = 0; i < size; i++) {
+    int i;
+    for(i = 0; i < size; i++) {
       if(i == rank) {
         continue;
       }
@@ -4737,7 +4753,8 @@ static inline int ___collectives_gather_binomial(const void *sendbuf, int sendco
 
   // Receive data from rank+2^(rmb-1); ...; rank+2^0
   // See ___collectives_reduce_binomial
-  for(int i = 0; i < maxr; i++) {
+  int i;
+  for(i = 0; i < maxr; i++) {
     peer_vrank = vrank ^ (1 << i);
     VRANK2RANK(peer, peer_vrank, root);
 
@@ -4882,8 +4899,8 @@ static inline int ___collectives_gather_topo(const void *sendbuf, int sendcount,
   int counts[size];
   void *gatherv_buf = NULL;
 
-
-  for(int i = deepest_level - 1; i >= 0; i--) {
+  int i;
+  for(i = deepest_level - 1; i >= 0; i--) {
     gatherv_buf = tmpbuf;
 
     ___collectives_barrier_type(coll_type, schedule, info);
@@ -4901,7 +4918,8 @@ static inline int ___collectives_gather_topo(const void *sendbuf, int sendcount,
       if(rank_master == 0) {
         displs[0] = 0;
         counts[0] = info->hardware_info_ptr->childs_data_count[i][0] * tmp_sendcount;
-        for(int j = 1; j < size_master; j++) {
+        int j;
+        for(j = 1; j < size_master; j++) {
           displs[j] = displs[j-1] + info->hardware_info_ptr->childs_data_count[i][j-1] * sendcount * sendext;
           counts[j] = info->hardware_info_ptr->childs_data_count[i][j] * tmp_sendcount;
         }
@@ -5287,7 +5305,8 @@ static inline int ___collectives_gatherv_linear(const void *sendbuf, int sendcou
     }
   } else {
     // if rank == root, receive data from each process
-    for(int i = 0; i < size; i++) {
+    int i;
+    for(i = 0; i < size; i++) {
       if(i == rank) {
         continue;
       }
@@ -5759,8 +5778,8 @@ static inline int ___collectives_reduce_scatter_block_pairwise(const void *sendb
   }
 
   ___collectives_copy_type(initial_buf, count, datatype, tmp_left_resbuf, count, datatype, comm, coll_type, schedule, info);
-
-  for(int i = 1; i < size; i++) {
+  int i;
+  for(i = 1; i < size; i++) {
     // At each step receive from rank-i, & send to rank+i,
     // This order is choosed to avoid swap buffer:
     // tmp_recvbuf OP tmp_resbuf will put the result in tmp_resbuf
@@ -6100,7 +6119,8 @@ static inline int ___collectives_reduce_scatter_reduce_scatterv(const void *send
   int *displs = NULL;
 
   int count = 0;
-  for(int i = 0; i < size; i++) {
+  int i;
+  for(i = 0; i < size; i++) {
     count += recvcounts[i];
   }
 
@@ -6134,7 +6154,8 @@ static inline int ___collectives_reduce_scatter_reduce_scatterv(const void *send
 
   if(coll_type != MPC_COLL_TYPE_COUNT) {
     displs[0] = 0;
-    for(int i = 1; i < size; i++) {
+    int i;
+    for(i = 1; i < size; i++) {
       displs[i] = displs[i-1] + recvcounts[i-1] * ext;
     }
   }
@@ -6623,7 +6644,8 @@ static inline int ___collectives_allgather_distance_doubling(const void *sendbuf
 
   // Initialyse the array containing the amount of data in possession of each processes
   if(coll_type != MPC_COLL_TYPE_COUNT) {
-    for(int i = 0; i < vsize; i++) {
+    int i;
+    for(i = 0; i < vsize; i++) {
       if(i < group / 2) {
         countbuf[i] = 2;
       } else {
@@ -6651,9 +6673,9 @@ static inline int ___collectives_allgather_distance_doubling(const void *sendbuf
     if(sendbuf != MPI_IN_PLACE) {
       ___collectives_copy_type(sendbuf , sendcount, sendtype, tmpbuf, recvcount, recvtype, comm, coll_type, schedule, info);
     }
-
+    int i;
     // at each step, processes exchange their data with (rank XOR 2^i)
-    for(int i = 0; i < maxr; i++) {
+    for(i = 0; i < maxr; i++) {
       peer = vrank ^ (1 << i);
 
       if(coll_type != MPC_COLL_TYPE_COUNT) {
@@ -6685,7 +6707,8 @@ static inline int ___collectives_allgather_distance_doubling(const void *sendbuf
       // but i didnt find it
       if(coll_type != MPC_COLL_TYPE_COUNT) {
         pointer_swap(countbuf, prev_countbuf, swap);
-        for(int j = 0; j < vsize; j++) {
+        int j;
+        for(j = 0; j < vsize; j++) {
           peer = j ^ (1 << i);
           countbuf[j] = prev_countbuf[j] + prev_countbuf[peer];
         }
@@ -6772,9 +6795,9 @@ static inline int ___collectives_allgather_ring(const void *sendbuf, int sendcou
   if(sendbuf != MPI_IN_PLACE) {
     ___collectives_copy_type(sendbuf, sendcount, sendtype, recvbuf + rank * recvcount * recvext, recvcount, recvtype, comm, coll_type, schedule, info);
   }
-
+  int i;
   // At each step, send to rank+1, recv from rank-1
-  for(int i = 0; i < size - 1; i++) {
+  for(i = 0; i < size - 1; i++) {
     // To prevent deadlocks even ranks send then recv, odd ranks recv then send
     // When i=0 we send our own data
     // At each step we send the data received at the previous step
@@ -6944,8 +6967,8 @@ int PMPI_Allgatherv_init(const void *sendbuf, int sendcount, MPI_Datatype sendty
     _mpc_cl_comm_rank(comm, &rank);
     mpi_check_type(sendtype, comm);
     mpi_check_type(recvtype, comm);
-    
-    for(int i = 0; i < size; i++)
+    int i; 
+    for(i = 0; i < size; i++)
     {
       mpi_check_count(recvcounts[i], comm);
     }
@@ -7135,8 +7158,8 @@ static inline int ___collectives_allgatherv_gatherv_broadcast(const void *sendbu
   int size, rank;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
-
-  for(int i = 0; i < size; i++) {
+  int i;
+  for(i = 0; i < size; i++) {
     count += recvcounts[i];
   }
 
@@ -7554,9 +7577,9 @@ static inline int ___collectives_alltoall_cluster(const void *sendbuf, int sendc
   if(sendbuf == MPI_IN_PLACE) {
     // Copy data to avoid erasing it by receiving other's data
     ___collectives_copy_type(recvbuf, recvcount * size, recvtype, tmpbuf, recvcount * size, recvtype, comm, coll_type, schedule, info);
-
+    int i;
     // For each rank, send and recv the data needed
-    for(int i = 0; i < size; i++) {
+    for(i = 0; i < size; i++) {
       if(i == rank) {
         continue;
       }
@@ -7566,7 +7589,8 @@ static inline int ___collectives_alltoall_cluster(const void *sendbuf, int sendc
 
   } else {
     // For each rank, send and recv the data needed
-    for(int i = 0; i < size; i++) {
+    int i;
+    for(i = 0; i < size; i++) {
       if(i == rank) {
         continue;
       }
@@ -7953,7 +7977,8 @@ static inline int ___collectives_alltoallv_cluster(const void *sendbuf, const in
   void *tmpbuf = NULL;
 
   int rsize = 0;
-  for(int i = 0; i < size; i++) {
+  int i;
+  for(i = 0; i < size; i++) {
     int size = rdispls[i] + recvcounts[i] * recvext;
     rsize = (size > rsize) ? (size) : (rsize) ;
   }
@@ -7985,7 +8010,8 @@ static inline int ___collectives_alltoallv_cluster(const void *sendbuf, const in
     ___collectives_copy_type(recvbuf, rsize, MPI_BYTE, tmpbuf, rsize, MPI_BYTE, comm, coll_type, schedule, info);
 
     // For each rank, send and recv the data needed
-    for(int i = 0; i < size; i++) {
+    int i;
+    for(i = 0; i < size; i++) {
       if(i == rank) {
         continue;
       }
@@ -7996,7 +8022,8 @@ static inline int ___collectives_alltoallv_cluster(const void *sendbuf, const in
 
   } else {
     // For each rank, send and recv the data needed
-    for(int i = 0; i < size; i++) {
+    int i;
+    for( i = 0; i < size; i++) {
       if(i == rank) {
         continue;
       }
@@ -8385,7 +8412,8 @@ static inline int ___collectives_alltoallw_cluster(const void *sendbuf, const in
   void *tmpbuf = NULL;
 
   int rsize = 0;
-  for(int i = 0; i < size; i++) {
+  int i;
+  for(i = 0; i < size; i++) {
     PMPI_Type_extent(recvtypes[i], &ext);
     int size = rdispls[i] + recvcounts[i] * ext;
     rsize = (size > rsize) ? (size) : (rsize);
@@ -8418,7 +8446,8 @@ static inline int ___collectives_alltoallw_cluster(const void *sendbuf, const in
     ___collectives_copy_type(recvbuf, rsize, MPI_BYTE, tmpbuf, rsize, MPI_BYTE, comm, coll_type, schedule, info);
 
     // For each rank, send and recv the data needed
-    for(int i = 0; i < size; i++) {
+    int i;
+    for(i = 0; i < size; i++) {
       if(i == rank) {
         continue;
       }
@@ -8429,7 +8458,8 @@ static inline int ___collectives_alltoallw_cluster(const void *sendbuf, const in
 
   } else {
     // For each rank, send and recv the data needed
-    for(int i = 0; i < size; i++) {
+    int i;
+    for(i = 0; i < size; i++) {
       if(i == rank) {
         continue;
       }
@@ -8884,8 +8914,8 @@ static inline int ___collectives_scan_allgather (const void *sendbuf, void *recv
 
   ___collectives_allgather_switch(buf, count, datatype, tmpbuf, count, datatype, comm, coll_type, schedule, info);
   ___collectives_barrier_type(coll_type, schedule, info);
-
-  for(int i = 1; i <= rank; i++) {
+  int i;
+  for( i = 1; i <= rank; i++) {
     ___collectives_op_type(NULL, tmpbuf + (i-1) * count * ext, tmpbuf + i * count * rank, count, datatype, op, mpc_op, coll_type, schedule, info);
   }
 
@@ -9293,7 +9323,8 @@ static inline int ___collectives_exscan_allgather (const void *sendbuf, void *re
   ___collectives_barrier_type(coll_type, schedule, info);
 
   if(rank > 0) {
-    for(int i = 1; i < rank; i++) {
+    int i;
+    for(i = 1; i < rank; i++) {
       ___collectives_op_type(NULL, tmpbuf + (i-1) * count * ext, tmpbuf + i * count * rank, count, datatype, op, mpc_op, coll_type, schedule, info);
     }
 
@@ -9560,8 +9591,8 @@ static inline int ___collectives_barrier_reduce_broadcast (MPI_Comm comm, MPC_CO
       ___collectives_barrier_type(coll_type, schedule, info);
     }
   }
-
-  for(int i = rmb - 1; i >= 0; i--) {
+  int i;
+  for(i = rmb - 1; i >= 0; i--) {
     peer = rank ^ (1 << i);
     if(peer >= size) {
       continue;
@@ -9574,7 +9605,7 @@ static inline int ___collectives_barrier_reduce_broadcast (MPI_Comm comm, MPC_CO
   ___collectives_barrier_type(coll_type, schedule, info);
 
 
-  for(int i = 0; i < maxr; i++) {
+  for( i = 0; i < maxr; i++) {
     if(rank & (1 << i)) {
       peer = rank ^ (1 << i);
       ___collectives_barrier_type(coll_type, schedule, info);
