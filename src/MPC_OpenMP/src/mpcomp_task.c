@@ -3073,8 +3073,6 @@ __thread_requeue_task(mpc_omp_task_t * task)
 void
 mpc_omp_task_unblock(mpc_omp_event_handle_t * event)
 {
-    puts("unblocking");fflush(stdout);
-
     assert(MPC_OMP_TASK_FIBER_ENABLED);
     assert(event->type & MPC_OMP_EVENT_TASK_BLOCK);
 
@@ -3115,7 +3113,6 @@ TODO("The callback function may unblock the task before it is actually suspended
 void
 mpc_omp_task_block(mpc_omp_event_handle_t * event, mpc_omp_callback_t * callback)
 {
-    puts("A");fflush(stdout);
     mpc_omp_thread_t * thread = __thread_task_coherency(NULL);
     assert(thread);
 
@@ -3132,7 +3129,6 @@ mpc_omp_task_block(mpc_omp_event_handle_t * event, mpc_omp_callback_t * callback
     OPA_store_int(&(curr->dep_node.status), MPC_OMP_TASK_DEP_TASK_NOT_READY);
 
     /* add the task to the blocked list */
-    puts("B");fflush(stdout);
     mpc_omp_task_list_t * list = &(thread->instance->task_infos.blocked_tasks);
     mpc_common_spinlock_lock(&(list->lock));
     {
@@ -3140,19 +3136,16 @@ mpc_omp_task_block(mpc_omp_event_handle_t * event, mpc_omp_callback_t * callback
     }
     mpc_common_spinlock_unlock(&(list->lock));
 
-    puts("C");fflush(stdout);
     /* if task context can be suspended, return to parent context */
     if (MPC_OMP_TASK_FIBER_ENABLED &&
         mpc_omp_task_property_isset(curr->property, MPC_OMP_TASK_PROP_HAS_FIBER))
     {
-        puts("D");fflush(stdout);
         thread->task_infos.callback_to_push = callback;  
         __taskyield_return();
     }
     /* otherwise, busy-loop until unblock */
     else
     {
-        puts("E");fflush(stdout);
         /* register the callback function if any */
         if (callback) mpc_omp_callback(callback);
         while (OPA_load_int(&(curr->dep_node.status)) != MPC_OMP_TASK_DEP_TASK_READY)

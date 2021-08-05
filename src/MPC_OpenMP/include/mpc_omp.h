@@ -42,7 +42,9 @@ extern "C" {
     /* MPC-OpenMP event types */
     typedef enum    mpc_omp_event_e
     {
-        MPC_OMP_EVENT_TASK_BLOCK
+        MPC_OMP_EVENT_NULL,
+        MPC_OMP_EVENT_TASK_BLOCK,
+        MPC_OMP_EVENT_MAX
     }               mpc_omp_event_t;
 
     /**
