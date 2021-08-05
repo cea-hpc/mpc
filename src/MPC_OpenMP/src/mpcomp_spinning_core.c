@@ -36,133 +36,6 @@ static inline int __scatter_compute_node_num_thread( mpc_omp_node_t *node, const
 	return ( rank < rest ) ? quot + 1 : quot;
 }
 
-#if 0
-
-static inline int __scatter_compute_mvp_index( mpc_omp_node_t *node, const int num_threads, const int first_rank, const int rank )
-{
-	int i;
-	assert( node );
-	assert( num_threads > 0 );
-	const int quot = node->nb_children / num_threads;
-
-	for ( i = 0; i < node->nb_children; i++ )
-	{
-		if ( i * quot + first_rank == rank )
-		{
-			break;
-		}
-	}
-
-	return i;
-}
-
-int __scatter_compute_global_rank_from_instance_rank( mpc_omp_instance_t *instance, const int instance_rank )
-{
-	mpc_omp_mvp_t *mvp;
-	mpc_omp_node_t *start_node;
-	int i, j, num_threads, local_rank;
-	/* Init Search Parameter */
-	local_rank = instance_rank;
-	start_node = instance->root;
-	num_threads = instance->nb_mvps;
-
-	/** Intermediate level **/
-	for ( i = 1; i < instance->tree_depth - 1; i++ )
-	{
-		const int quot = num_threads / start_node->nb_children;
-		const int rest = num_threads % start_node->nb_children;
-
-		for ( j = 1; j < start_node->nb_children; j++ )
-		{
-			const int max = ( j < rest ) ? ( quot + 1 ) * j : ( quot * j + rest );
-
-			if ( local_rank < max )
-			{
-				break;
-			}
-		}
-
-		const int index = j - 1;
-		assert( start_node->child_type == MPC_OMP_CHILDREN_NODE );
-		start_node = start_node->children.node[index];
-		num_threads = ( index < rest ) ? ( quot + 1 ) : quot;
-		local_rank -= ( index < rest ) ? ( quot + 1 ) * index : ( quot * index + rest );
-	}
-
-	/** Last level **/
-	{
-		const int quot = start_node->nb_children / num_threads;
-		const int rest = start_node->nb_children % num_threads;
-
-		for ( i = 1; i < num_threads; i++ )
-		{
-			const int max = ( i < rest ) ? ( quot + 1 ) * i : ( quot * i + rest );
-
-			if ( local_rank < max )
-			{
-				break;
-			}
-		}
-
-		const int index = i - 1;
-
-		if ( start_node->child_type == MPC_OMP_CHILDREN_NODE  )
-		{
-			mvp = start_node->children.node[index]->mvp;
-		}
-		else
-		{
-			mvp = start_node->children.leaf[index];
-		}
-	}
-	return mvp->global_rank;
-}
-
-int __scatter_compute_instance_rank_from_mvp( mpc_omp_instance_t *instance, mpc_omp_mvp_t *mvp )
-{
-	int nthreads, i, first;
-	int mvp_instance_rank;
-	int *mvp_fathers;
-	mpc_omp_node_t *prev_node, *next_node;
-	mpc_omp_meta_tree_node_t *tree_array;
-	assert( mvp );
-	assert( instance );
-
-	if ( !( instance->root ) )
-	{
-		return 0;
-	}
-
-	assert( mvp->father );
-	tree_array = mvp->father->tree_array;
-	assert( tree_array );
-	mvp_fathers = tree_array[mvp->global_rank].fathers_array;
-	assert( mvp_fathers );
-	const int start_depth = instance->root->depth;
-	mvp_instance_rank = 0;
-	prev_node = instance->root;
-	nthreads = instance->nb_mvps;
-
-	/** Intermediate level **/
-	for ( i = 1; i < instance->tree_depth - 1; i++ )
-	{
-		const int depth = start_depth + i;
-		next_node = ( mpc_omp_node_t * ) tree_array[mvp_fathers[depth]].user_pointer;
-		nthreads = __scatter_compute_node_num_thread( prev_node, nthreads, next_node->local_rank, &first );
-		mvp_instance_rank += first;
-		prev_node = next_node;
-	}
-
-	/** Last level **/
-	{
-	}
-	// const int first_local_mvp = mvp->global_rank - mvp->local_rank;
-	// += _mpc_omp_spinning_leaf_compute_rank( prev_node, nthreads, first_local_mvp, mvp->global_rank);
-	return mvp_instance_rank;
-}
-
-#endif
-
 static inline int __scatter_compute_instance_tree_depth( mpc_omp_node_t *node, const int expected_nb_mvps )
 {
 	int next_depth, num_nodes;
@@ -875,82 +748,46 @@ _mpc_omp_exit_node_signal( mpc_omp_node_t* node ) {
     _mpc_omp_exit_node_signal( node->children.node[0] );
 }
 
-void _mpc_omp_start_openmp_thread( mpc_omp_mvp_t *mvp )
+TODO("ompt callback are missing here");
+void _mpc_omp_start_openmp_thread(mpc_omp_mvp_t * mvp)
 {
-	mpc_omp_thread_t *next_thread = NULL;
-	mpc_omp_thread_t *cur_thread = (mpc_omp_thread_t*) mpc_omp_tls;
-	volatile int *spin_status;
-	assert( mvp );
+    assert(mvp);
+    __mvp_add_saved_ctx(mvp);
 
-	__mvp_add_saved_ctx( mvp );
+    mpc_omp_thread_t * cur_thread =  __mvp_wakeup(mvp);
+    assert(cur_thread->mvp);
+
+    mpc_omp_tls = (void *) cur_thread;
+
 #ifdef TLS_ALLOCATORS
-  mpc_omp_init_allocators();
+    mpc_omp_init_allocators();
 #endif
 
-	next_thread =  __mvp_wakeup( mvp );
-	assert( next_thread->mvp );
+    __scatter_instance_post_init(cur_thread);
+    _mpc_omp_in_order_scheduler(cur_thread);
 
-	__scatter_instance_post_init( next_thread );
+    /* Must be set before barrier for thread safety*/
+    volatile int * spin_status = ( mvp->spin_node ) ? &( mvp->spin_node->spin_status ) : &( mvp->spin_status );
+    *spin_status = MPC_OMP_MVP_STATE_SLEEP;
 
-#if OMPT_SUPPORT
-    if( cur_thread ) {
-        _mpc_omp_ompt_callback_task_schedule(
-            &( MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(cur_thread)->ompt_task_data ),
-            ompt_task_switch,
-            &( MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(next_thread)->ompt_task_data ));
-    }
+    _mpc_omp_internal_full_barrier( mvp );
+    _mpc_omp_task_tree_deinit(cur_thread);
 
-    _mpc_omp_ompt_callback_implicit_task( ompt_scope_begin,
-                                      next_thread->instance->nb_mvps,
-                                      next_thread->rank,
-                                      ompt_task_implicit );
-#endif /* OMPT_SUPPORT */
+    mpc_omp_tls = (void *) mvp->threads->next;
 
-	_mpc_omp_in_order_scheduler( next_thread );
+    if (mpc_omp_tls)
+    {
+        mvp->threads = mpc_omp_tls;
+        //_mpc_omp_free( cur_thread );
+    }   
 
-	/* Must be set before barrier for thread safety*/
-	spin_status = ( mvp->spin_node ) ? &( mvp->spin_node->spin_status ) : &( mvp->spin_status );
-	*spin_status = MPC_OMP_MVP_STATE_SLEEP;
+    __mvp_del_saved_ctx(mvp);
 
-#if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_sync_region( ompt_sync_region_barrier_implicit, ompt_scope_begin );
-#endif /* OMPT_SUPPORT */
-
-	_mpc_omp_internal_full_barrier( mvp );
-
-#if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_sync_region( ompt_sync_region_barrier_implicit, ompt_scope_end );
-    _mpc_omp_ompt_callback_implicit_task( ompt_scope_end,
-                                      0,
-                                      next_thread->rank,
-                                      ompt_task_implicit );
-#endif /* OMPT_SUPPORT */
-
-	mpc_omp_free( mvp->threads );
-
-	if ( cur_thread )
-	{
-#if OMPT_SUPPORT
-        _mpc_omp_ompt_callback_task_schedule(
-            &( MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(next_thread)->ompt_task_data ),
-            ompt_task_complete,
-            &( MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(cur_thread)->ompt_task_data ));
-#endif /* OMPT_SUPPORT */
-
+    if (mpc_omp_tls)
+    {
+        cur_thread = (mpc_omp_thread_t *) mpc_omp_tls;
         mvp->instance = cur_thread->instance;
-		mvp->threads = cur_thread;
-		//mpc_omp_free( next_thread );
-	}
-#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    else {
-        /* Unset outter caller if transfered at openning of the parallel region */
-        _mpc_omp_ompt_frame_unset_no_reentrant();
     }
-#endif /* OMPT_SUPPORT */
-
-	mpc_omp_tls = (void*) cur_thread;
-
-	__mvp_del_saved_ctx( mvp );
 }
 
 /**
