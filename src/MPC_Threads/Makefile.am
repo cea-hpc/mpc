@@ -24,5 +24,6 @@
 mpc_headerdir=$(pkgincludedir)
 mpc_header_HEADERS= ./include/mpc_thread.h ./include/mpcposix/pthread.h
 mpc_header_HEADERS+= ./include/mpcposix/semaphore.h ./include/mpc_thread_engines.h
+mpc_header_HEADERS+= ./include/mpc_thread_mpi_omp_interop.h
 
 SUBDIRS=src

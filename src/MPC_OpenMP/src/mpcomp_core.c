@@ -1236,6 +1236,10 @@ void _mpc_omp_in_order_scheduler( mpc_omp_thread_t *thread )
 #endif /* OMPT_SUPPORT */
 }
 
+# if MPC_MPI
+#  include "mpc_mpi.h"
+# endif
+
 double
 mpc_omp_timestamp(void)
 {

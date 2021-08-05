@@ -386,3 +386,36 @@ int omp_control_tool(int command, int modifier, void * arg) {
 int mpc_omp_get_num_threads(void) { return omp_get_num_threads(); }
 
 int mpc_omp_get_thread_num(void) { return omp_get_thread_num(); }
+
+/**
+ *  * The omp fulfill event routine
+ *   * Warning: this does not respect the standard
+ *    *  `omp_fulfill_event(omp_event_handle_t handle)`
+ *     */
+void
+mpc_omp_fulfill_event(mpc_omp_event_handle_t * handle)
+{
+    if (handle->type & MPC_OMP_EVENT_TASK_BLOCK) mpc_omp_task_unblock(handle);
+}
+
+int
+mpc_omp_in_explicit_task(void)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    if (!thread)
+    {
+        return 0;
+    }
+    mpc_omp_task_t * task = thread->task_infos.current_task;
+    if (!task)
+    {
+        return 0;
+    }
+    if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_IMPLICIT)
+            || mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_INITIAL))
+    {
+        return 0;
+    }
+    return 1;
+}
+

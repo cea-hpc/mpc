@@ -1,3 +1,5 @@
+TODO("move this file to runtime only scope");
+
 # ifndef __MPC_OMP_TASK_TRACE_H__
 #  define __MPC_OMP_TASK_TRACE_H__
 
@@ -7,6 +9,7 @@
 # define MPC_OMP_TASK_TRACE_RECYCLER_CAPACITY   131072
 
 # include "mpc_common_recycler.h"
+# include "mpc_omp.h"
 
 /**
  *  *  A trace writer (1 per thread)
@@ -180,4 +183,3 @@ void _mpc_omp_task_trace_callback(int when, int status);
 double mpc_omp_timestamp(void);
 
 # endif
-

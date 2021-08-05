@@ -6,7 +6,7 @@
 #include <sctk_reorder.h>
 
 #ifdef MPC_USE_INFINIBAND
-#include <sctk_ib.h>
+#include "ib/sctk_ib.h"
 #endif
 
 #ifdef MPC_USE_PORTALS
@@ -14,7 +14,7 @@
 #endif
 
 #ifdef MPC_USE_OFI
-#include "ofi_types.h"
+#include "ofi/ofi_types.h"
 #endif
 
 /************************************************************************/

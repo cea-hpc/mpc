@@ -754,9 +754,6 @@ typedef struct  mpc_omp_task_profile_s
     /* number of predecessors (is complete) */
     int npredecessors;
 
-    /* priority associated to the profile */
-    int priority;
-
     /* the parent task uid (control parent) */
     int parent_uid;
 }               mpc_omp_task_profile_t;

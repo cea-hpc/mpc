@@ -40,9 +40,10 @@ extern "C" {
     int mpc_omp_get_thread_num( void );
 
     /* MPC-OpenMP event types */
-    typedef enum {
+    typedef enum    mpc_omp_event_e
+    {
         MPC_OMP_EVENT_TASK_BLOCK
-    }   mpc_omp_event_t;
+    }               mpc_omp_event_t;
 
     /**
      * OpenMP specificates that :
@@ -85,9 +86,9 @@ extern "C" {
 
     typedef enum    mpc_omp_callback_repeat_t
     {
-        MPC_MPC_OMP_CALLBACK_REPEAT_RETURN,    /* repeat until the callback returned 0 */
-        MPC_MPC_OMP_CALLBACK_REPEAT_EVENT,     /* repeat until the event is fulfilled */
-        MPC_MPC_OMP_CALLBACK_REPEAT_N          /* repeat n times */
+        MPC_OMP_CALLBACK_REPEAT_RETURN,    /* repeat until the callback returned 0 */
+        MPC_OMP_CALLBACK_REPEAT_EVENT,     /* repeat until the event is fulfilled */
+        MPC_OMP_CALLBACK_REPEAT_N          /* repeat n times */
     }               mpc_omp_callback_repeat_t;
 
     typedef struct  mpc_omp_callback_s
@@ -138,8 +139,11 @@ extern "C" {
     void mpc_omp_task_trace_begin(void);
     void mpc_omp_task_trace_end(void);
 
+    /* notify openmp runtime that current task is a MPI send */
+    void mpc_omp_task_is_send(void);
+
     /* return true if the thread is currently within an omp task */
-    int mpc_omp_in_task(void);
+    int mpc_omp_in_explicit_task(void);
 
 #ifdef __cplusplus
 }

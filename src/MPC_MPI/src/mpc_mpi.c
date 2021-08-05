@@ -56,6 +56,8 @@
 
 #include "mpc_lowcomm_workshare.h"
 
+#include "mpc_thread_mpi_omp_interop.h"
+
 /*******************
 * FORTRAN SUPPORT *
 *******************/
@@ -10457,6 +10459,13 @@ int PMPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source,
 
 int PMPI_Wait(MPI_Request *request, MPI_Status *status)
 {
+# if MPC_ENABLE_INTEROP_MPI_OMP
+    if (mpc_thread_mpi_omp_wait(1, request))
+    {
+        return 0;
+    }
+# endif /* MPC_ENABLE_INTEROP_MPI_OMP */ 
+
 	mpc_common_nodebug("entering MPI_Wait request = %d", *request);
 	MPI_Comm comm = MPI_COMM_WORLD;
 
@@ -10834,6 +10843,14 @@ int PMPI_Waitall(int count, MPI_Request array_of_requests[],
                  MPI_Status array_of_statuses[])
 {
 	mpc_common_nodebug("entering PMPI_Waitall");
+
+# if MPC_ENABLE_INTEROP_MPI_OMP
+    if (mpc_thread_mpi_omp_wait(count, array_of_requests))
+    {
+        return 0;
+    }
+# endif /* MPC_ENABLE_INTEROP_MPI_OMP */
+
 	MPI_Comm comm = MPI_COMM_WORLD;
 
 	int i;
