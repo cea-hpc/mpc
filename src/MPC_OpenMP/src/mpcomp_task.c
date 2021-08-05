@@ -2791,7 +2791,9 @@ __task_run_with_fiber(mpc_omp_task_t * task)
 
     ___thread_bind_task(thread, task, &(task->icvs));
     task->fiber->exit = &(thread->task_infos.mctx);
+
     MPC_OMP_TASK_TRACE_SCHEDULE(task);
+
     sctk_mctx_t * mctx = mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_STARTED) ? &(task->fiber->current) : &(task->fiber->initial);
     sctk_swapcontext_no_tls(task->fiber->exit, mctx);
     MPC_OMP_TASK_TRACE_SCHEDULE(task);
@@ -3000,9 +3002,7 @@ _mpc_omp_task_schedule(void)
         /* Famine detected */
         if (mpc_omp_conf_get()->task_priority_policy == MPC_OMP_TASK_PRIORITY_POLICY_FA1)
         {
-            //MPC_OMP_TASK_TRACE_FAMINE_OVERLAP(0);
             __task_profile_propagate();
-            //MPC_OMP_TASK_TRACE_FAMINE_OVERLAP(1);
         }
     }
 }
@@ -3073,6 +3073,8 @@ __thread_requeue_task(mpc_omp_task_t * task)
 void
 mpc_omp_task_unblock(mpc_omp_event_handle_t * event)
 {
+    puts("unblocking");fflush(stdout);
+
     assert(MPC_OMP_TASK_FIBER_ENABLED);
     assert(event->type & MPC_OMP_EVENT_TASK_BLOCK);
 

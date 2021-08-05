@@ -72,7 +72,7 @@ ___task_notify_send(int n, MPI_Request * reqs)
         if (lowcomm_req->request_type == REQUEST_SEND)
         {
             mpc_omp_task_is_send();
-            break ;
+            return ;
         }
     }
 }

@@ -44,7 +44,32 @@ _mpc_omp_callback_run(mpc_omp_callback_when_t when)
         mpc_omp_callback_t * callback = infos->callbacks[when];
         while (callback)
         {
-            if (callback->func(callback->data) == 0)
+            /* run the callback */
+            int r = callback->func(callback->data);
+
+            /* if the callback should be popped out of the list */
+            int pop = 0;
+
+            /* check if the callback should be popped */
+            switch (callback->repeat)
+            {
+                case (MPC_OMP_CALLBACK_REPEAT_RETURN):
+                {
+                    if (r == 0)
+                    {
+                        pop = 1;
+                    }
+                    break ;
+                }
+                default:
+                {
+                    not_implemented();
+                    break ;
+                }
+            }
+
+            /* if so, pop it */
+            if (pop)
             {
                 if (prev)
                 {
@@ -59,6 +84,8 @@ _mpc_omp_callback_run(mpc_omp_callback_when_t when)
             {
                 prev = callback;
             }
+
+            /* process next callback for this event */
             callback = callback->_next;
         }
         mpc_common_spinlock_unlock(lock);
