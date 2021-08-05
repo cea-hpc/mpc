@@ -1299,7 +1299,7 @@ mpc_omp_init_initial_thread( const mpc_omp_local_icv_t icvs )
 
     _mpc_omp_thread_infos_init( ith );
 
-	_mpc_task_tree_array_thread_init( ith );
+    _mpc_omp_task_tree_init(ith);
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     /* Update initial task with enter frame info */
     _mpc_omp_ompt_frame_set_enter( ith->frame_infos.ompt_frame_infos.enter_frame.ptr );

@@ -237,6 +237,14 @@ int sctk_makecontext(sctk_mctx_t *ucp,
 
 void sctk_tls_init(void);
 
+int sctk_getcontext_no_tls(sctk_mctx_t *ucp);
+int sctk_setcontext_no_tls(sctk_mctx_t *ucp);
+int sctk_swapcontext_no_tls(sctk_mctx_t *oucp, sctk_mctx_t *ucp);
+int sctk_makecontext_no_tls(sctk_mctx_t *ucp,
+                     void *arg,
+                     void (*func)(void *),
+                     char *stack, size_t stack_size);
+
 #ifdef __cplusplus
 }
 #endif

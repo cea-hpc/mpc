@@ -23,7 +23,7 @@ void mpc_omp_GOMP_ordered_start( void )
 #endif /* OMPT_SUPPORT */
 
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-	_mpc_omp_ordered_begin();
+	mpc_omp_ordered_begin();
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
@@ -34,7 +34,7 @@ void mpc_omp_GOMP_ordered_end( void )
 #endif /* OMPT_SUPPORT */
 
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-	_mpc_omp_ordered_end();
+	mpc_omp_ordered_end();
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 }
 
@@ -189,7 +189,7 @@ static inline void __gomp_start_parallel( void ( *fn )( void * ), void *data,
         unsigned num_threads,
         __UNUSED__ unsigned int flags )
 {
-	_mpc_omp_start_parallel_region( ( void ( * )( void * ) ) fn, data, num_threads );
+	mpc_omp_start_parallel_region( ( void ( * )( void * ) ) fn, data, num_threads );
 }
 
 static inline void __gomp_start_parallel_region( void ( *fn )( void * ), void *data,
@@ -275,7 +275,7 @@ static inline void __gomp_end_parallel_region( void )
                                       ompt_task_implicit );
 #endif /* OMPT_SUPPORT */
 
-    _mpc_task_free(t);
+    mpc_omp_free(t);
 
     t_prev = mvp->threads->next;
     assert(t_prev != NULL);
@@ -1968,17 +1968,17 @@ void mpc_omp_GOMP_atomic_end( void )
 static inline mpc_omp_task_property_t
 ___gomp_convert_flags(bool if_clause, int flags)
 {
-    mpcomp_thread_t * thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     assert(thread);
 
-    mpcomp_task_t * current_task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    mpc_omp_task_t * current_task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
     assert(current_task);
 
     TODO("This can be slightly optimized by using the same bits for GOMP and MPC tasks");
 
     mpc_omp_task_property_t properties = 0;
 
-# define __CONVERT_ONE_BIT(X, Y) if (flags & X) _mpc_omp_task_set_property(&properties, Y)
+# define __CONVERT_ONE_BIT(X, Y) if (flags & X) mpc_omp_task_set_property(&properties, Y)
     __CONVERT_ONE_BIT(GOMP_TASK_FLAG_UNTIED,    MPC_OMP_TASK_PROP_UNTIED);
     __CONVERT_ONE_BIT(GOMP_TASK_FLAG_FINAL,     MPC_OMP_TASK_PROP_FINAL);
     __CONVERT_ONE_BIT(GOMP_TASK_FLAG_MERGEABLE, MPC_OMP_TASK_PROP_MERGEABLE);
@@ -1991,16 +1991,16 @@ ___gomp_convert_flags(bool if_clause, int flags)
 # undef  __CONVERT_ONE_BIT
 
     /* MPC_OMP_TASK_PROP_FINAL and MPC_OMP_TASK_PROP_INCLUDED */
-    if (current_task && _mpc_omp_task_property_isset(current_task->property, MPC_OMP_TASK_PROP_FINAL))
+    if (current_task && mpc_omp_task_property_isset(current_task->property, MPC_OMP_TASK_PROP_FINAL))
     {
-        _mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_INCLUDED);
-        _mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_FINAL);
-        _mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_UNDEFERRED);
+        mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_INCLUDED);
+        mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_FINAL);
+        mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_UNDEFERRED);
     }
     /* MPC_OMP_TASK_PROP_UNDEFERRED */
     else if (!if_clause || !omp_in_parallel())
     {
-        _mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_UNDEFERRED);
+        mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_UNDEFERRED);
     }
 
     return properties;
@@ -2020,7 +2020,8 @@ ___gomp_convert_flags(bool if_clause, int flags)
  */
 TODO("Edit GOMP task entry point prototype based on GCC version");
 
-void mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
+void
+mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
                        void ( *cpyfn )( void *, void * ), long arg_size,
                        long arg_align, bool if_clause, unsigned flags,
                        void **depend, int priority)
@@ -2031,8 +2032,8 @@ void mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
 
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tBegin", __func__ );
 
-    mpc_omp_task_property properties = ___gomp_convert_flags(if_clause, flags);
-    mpc_omp_task(NULL, fn, data, cpyfn, arg_size, arg_align, properties, depend);
+    mpc_omp_task_property_t properties = ___gomp_convert_flags(if_clause, flags);
+    mpc_omp_task(NULL, fn, data, cpyfn, arg_size, arg_align, properties, depend, priority);
 	
     mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
 }
@@ -2044,7 +2045,7 @@ void mpc_omp_GOMP_taskwait( void )
 #endif /* OMPT_SUPPORT */
 
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tBegin", __func__ );
-	_mpc_task_wait();
+	_mpc_omp_task_wait();
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
 }
 
@@ -2052,7 +2053,7 @@ void mpc_omp_GOMP_taskyield( void )
 {
 	/* Nothing at the moment.  */
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tBegin", __func__ );
-	_mpc_taskyield();
+	_mpc_omp_task_yield();
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
 }
 
@@ -2064,7 +2065,7 @@ void mpc_omp_GOMP_taskgroup_start( void )
 #endif /* OMPT_SUPPORT */
 
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tBegin", __func__ );
-	_mpc_task_taskgroup_start();
+	_mpc_omp_task_taskgroup_start();
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
 
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
@@ -2080,7 +2081,7 @@ void mpc_omp_GOMP_taskgroup_end( void )
 #endif /* OMPT_SUPPORT */
 
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tBegin", __func__ );
-	_mpc_task_taskgroup_end();
+	_mpc_omp_task_taskgroup_end();
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
 
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
@@ -2100,7 +2101,7 @@ void mpc_omp_GOMP_taskloop( void (*fn)(void *), void *data,
 #endif /* OMPT_SUPPORT */
 
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tBegin", __func__ );
-    mpc_omp_taskloop( fn, data, cpyfn, arg_size, arg_align,
+    mpc_omp_task_loop( fn, data, cpyfn, arg_size, arg_align,
                      flags, num_tasks, priority, start, end, step );
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
 }
@@ -2117,7 +2118,7 @@ void mpc_omp_GOMP_taskloop_ull( void (*fn)(void *), void *data,
 #endif /* OMPT_SUPPORT */
 
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tBegin", __func__ );
-    mpc_omp_taskloop_ull( fn, data, cpyfn, arg_size, arg_align,
+    mpc_omp_task_loop_ull( fn, data, cpyfn, arg_size, arg_align,
                          flags, num_tasks, priority, start, end, step );
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
 }

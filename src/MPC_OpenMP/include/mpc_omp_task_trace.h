@@ -40,7 +40,7 @@ typedef enum    mpc_omp_task_trace_record_type_e
     MPC_OMP_TASK_TRACE_TYPE_DEPENDENCY,
     MPC_OMP_TASK_TRACE_TYPE_SCHEDULE,
     MPC_OMP_TASK_TRACE_TYPE_CREATE,
-    MPC_OMP_TASK_TRACE_TYPE_ASYNC,
+    MPC_OMP_TASK_TRACE_TYPE_CALLBACK,
     MPC_OMP_TASK_TRACE_TYPE_COUNT
 }               mpc_omp_task_trace_record_type_t;
 
@@ -107,7 +107,7 @@ typedef struct  mpc_omp_task_trace_record_famine_overlap_s
     int status;
 }               mpc_omp_task_trace_record_famine_overlap_t;
 
-typedef struct  mpc_omp_task_trace_record_async_s
+typedef struct  mpc_omp_task_trace_record_callback_s
 {
     /* inherithance */
     mpc_omp_task_trace_record_t parent;
@@ -117,7 +117,7 @@ typedef struct  mpc_omp_task_trace_record_async_s
 
     /* when the call occured */
     int when;
-}               mpc_omp_task_trace_record_async_t;
+}               mpc_omp_task_trace_record_callback_t;
 
 /**
  *  A record node
@@ -172,7 +172,12 @@ int _mpc_omp_task_trace_begun(void);
 void _mpc_omp_task_trace_dependency(struct mpc_omp_task_s * out, struct mpc_omp_task_s * in);
 void _mpc_omp_task_trace_schedule(struct mpc_omp_task_s * task);
 void _mpc_omp_task_trace_create(struct mpc_omp_task_s * task);
-void _mpc_omp_task_trace_async(int when, int status);
+void _mpc_omp_task_trace_callback(int when, int status);
+
+/**
+ * get current time
+ */
+double mpc_omp_timestamp(void);
 
 # endif
 

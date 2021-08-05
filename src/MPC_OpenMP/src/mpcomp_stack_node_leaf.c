@@ -107,7 +107,7 @@ mpc_omp_elem_stack_t * _mpc_omp_pop_elem_stack(mpc_omp_stack_node_leaf_t *s)
      return e;
 }
 
-void _mpc_omp_free_stack_node_leaf(mpc_omp_stack_node_leaf_t *s) 
+void mpc_omp_free_stack_node_leaf(mpc_omp_stack_node_leaf_t *s) 
 {
      free(s->elements);
 }

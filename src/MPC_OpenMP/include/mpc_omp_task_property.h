@@ -35,7 +35,7 @@
 # define GOMP_TASK_FLAG_IF          (1 << 10)
 # define GOMP_TASK_FLAG_NOGROUP     (1 << 11)
 
-/* MPCOMP bit flags */
+/* MPC_OMP bit flags */
 # define MPC_OMP_TASK_PROP_UNDEFERRED    (1 << 0)
 # define MPC_OMP_TASK_PROP_UNTIED        (1 << 1)
 # define MPC_OMP_TASK_PROP_EXPLICIT      (1 << 2)
@@ -57,6 +57,10 @@
 # define MPC_OMP_TASK_PROP_BLOCKED       (1 << 18)
 # define MPC_OMP_TASK_PROP_UNBLOCKED     (1 << 19)
 # define MPC_OMP_TASK_PROP_HAS_FIBER     (1 << 20)
+
+ /* the properties to consider when comparing to a critical task */
+# define MPC_OMP_TASK_PROP_PROFILE_MASK \
+    (MPC_OMP_TASK_PROP_UNDEFERRED | MPC_OMP_TASK_PROP_UNTIED | MPC_OMP_TASK_PROP_EXPLICIT | MPC_OMP_TASK_PROP_INCLUDED | MPC_OMP_TASK_PROP_FINAL | MPC_OMP_TASK_PROP_MERGEABLE | MPC_OMP_TASK_PROP_DEPEND | MPC_OMP_TASK_PROP_PRIORITY | MPC_OMP_TASK_PROP_IF)
 
 /** Property of an OpenMP task */
 typedef unsigned int mpc_omp_task_property_t;

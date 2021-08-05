@@ -122,10 +122,13 @@ extern "C" {
     void mpc_omp_callback(mpc_omp_callback_t * callback);
 
     /** Maximum length of a task label */
-# define MPC_OMP_TASK_LABEL_MAX_LENGTH 64
+    # define MPC_OMP_TASK_LABEL_MAX_LENGTH 64
+
+    # define MPC_OMP_NO_CLAUSE          (0 << 0)
+    # define MPC_OMP_CLAUSE_USE_FIBER   (1 << 0)
 
     /** Give extra information of the incoming task - must be called right before a `#pragma omp task` */
-    void mpc_omp_task_extra(char * label);
+    void mpc_omp_task_extra(char * label, int extra_clauses);
 
     /** Taskyield which blocks on event */
     void mpc_omp_task_block(mpc_omp_event_handle_t * event, mpc_omp_callback_t * callback);

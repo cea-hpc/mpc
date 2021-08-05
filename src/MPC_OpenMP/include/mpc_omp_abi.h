@@ -290,9 +290,9 @@ extern "C"
      do {
        for ( ... ) {
 	 A ;
-	 _mpc_omp_ordered_begin() ;
+	 mpc_omp_ordered_begin() ;
 	 B ;
-	 _mpc_omp_ordered_end() ;
+	 mpc_omp_ordered_end() ;
 
        } 
      } while ( _mpc_omp_ordered_XX_loop_next( ... ) ) ;
@@ -361,6 +361,16 @@ void mpc_omp_ordered_runtime_loop_end_nowait () ;
    MPC tasks (message-passing interface).
  */
 int mpc_omp_checkpoint();
+
+/* tasks */
+void mpc_omp_task(
+        mpc_omp_task_t * task,
+        void (*fn)(void *), void *data,
+        void (*cpyfn)(void *, void *),
+        long arg_size, long arg_align,
+        mpc_omp_task_property_t properties,
+        void **depend,
+        int priority_hint);
 
 #ifdef __cplusplus
 }

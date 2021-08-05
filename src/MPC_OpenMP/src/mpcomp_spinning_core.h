@@ -28,7 +28,7 @@ static inline void _mpc_omp_instance_tree_array_root_init( struct mpc_omp_node_s
 	meta_node = &( instance->tree_array[0] );
 	meta_node->ptr.node = root;
 	meta_node->type = MPC_OMP_CHILDREN_NODE;
-	_mpc_task_root_info_init( root );
+	_mpc_omp_task_root_info_init( root );
 }
 
 #if 0

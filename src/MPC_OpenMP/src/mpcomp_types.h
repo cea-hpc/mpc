@@ -44,7 +44,7 @@
 #include "mpc_common_recycler.h"
 
 // #define TLS_ALLOCATORS
-
+# define MPC_OMP_USE_INTEL_ABI 1
 #ifdef MPC_OMP_USE_INTEL_ABI
 	#include "omp_intel_types.h"
 #endif /* MPC_OMP_USE_INTEL_ABI */
@@ -56,13 +56,13 @@
 # define MPC_OMP_VERSION_MAJOR  3
 # define MPC_OMP_VERSION_MINOR  1
 
-# define MPC_OMP_TASK_COMPILE_FIBER    1
-# define MPC_OMP_TASK_COMPILE_TRACE      1
+# define MPC_OMP_TASK_COMPILE_FIBER 1
+# define MPC_OMP_TASK_COMPILE_TRACE 1
 
 #if MPC_OMP_TASK_COMPILE_FIBER
-# define MPC_OMP_TASK_CONTEXT_ENABLED        mpc_omp_conf_get()->task_use_context
+# define MPC_OMP_TASK_FIBER_ENABLED mpc_omp_conf_get()->task_use_fiber
 # else
-# define MPC_OMP_TASK_CONTEXT_ENABLED        0
+# define MPC_OMP_TASK_FIBER_ENABLED 0
 #endif
 
 # define MPC_OMP_TASK_TRACE_ENABLED          mpc_omp_conf_get()->task_trace
@@ -72,22 +72,21 @@
 #  define MPC_OMP_TASK_TRACE_DEPENDENCY(out, in) if (MPC_OMP_TASK_TRACE_ENABLED && _mpc_omp_task_trace_begun()) _mpc_omp_task_trace_dependency(out, in)
 #  define MPC_OMP_TASK_TRACE_SCHEDULE(task) if (MPC_OMP_TASK_TRACE_ENABLED && _mpc_omp_task_trace_begun()) _mpc_omp_task_trace_schedule(task)
 #  define MPC_OMP_TASK_TRACE_CREATE(task) if (MPC_OMP_TASK_TRACE_ENABLED && _mpc_omp_task_trace_begun()) _mpc_omp_task_trace_create(task)
-#  define MPC_OMP_TASK_TRACE_FAMINE_OVERLAP(status) if (MPC_OMP_TASK_TRACE_ENABLED && _mpc_omp_task_trace_begun()) _mpc_omp_task_trace_famine_overlap(status)
-#  define MPC_OMP_TASK_TRACE_ASYNC(when, status) if (MPC_OMP_TASK_TRACE_ENABLED && _mpc_omp_task_trace_begun()) _mpc_omp_task_trace_async(when, status)
+#  define MPC_OMP_TASK_TRACE_CALLBACK(when, status) if (MPC_OMP_TASK_TRACE_ENABLED && _mpc_omp_task_trace_begun()) _mpc_omp_task_trace_async(when, status)
 # else  /* MPC_OMP_TASK_COMPILE_TRACE */
 #  define MPC_OMP_TASK_TRACE_DEPENDENCY(...)
 #  define MPC_OMP_TASK_TRACE_SCHEDULE(...)
 #  define MPC_OMP_TASK_TRACE_CREATE(...)
 #  define MPC_OMP_TASK_TRACE_FAMINE_OVERLAP(...)
-#  define MPC_OMP_TASK_TRACE_ASYNC(...)
+#  define MPC_OMP_TASK_TRACE_CALLBACK(...)
 # endif /* MPC_OMP_TASK_COMPILE_TRACE */
 
 TODO("Make this configurable")
-# define MPC_OMP_TASK_CONTEXT_STACK_SIZE (32768)
+# define MPC_OMP_TASK_FIBER_STACK_SIZE (32768)
 
 # define MPC_OMP_TASK_USE_RECYCLERS  1
-# define MPC_OMP_TASK_ALLOCATOR      _mpc_omp_alloc
-# define MPC_OMP_TASK_DEALLOCATOR    _mpc_omp_free
+# define MPC_OMP_TASK_ALLOCATOR      mpc_omp_alloc
+# define MPC_OMP_TASK_DEALLOCATOR    mpc_omp_free
 # define MPC_OMP_TASK_DEFAULT_ALIGN  8
 
 /* Use MCS locks or not */
@@ -170,7 +169,7 @@ typedef enum    mpc_omp_task_yield_mode_t
 }               mpc_omp_task_yield_mode_t;
 
 /* prioritization policy */
-typedef enum    mpcomp_task_priority_policy_e
+typedef enum    mpc_omp_task_priority_policy_e
 {
     MPC_OMP_TASK_PRIORITY_POLICY_FIFO,   /* priorities are ignored */
     MPC_OMP_TASK_PRIORITY_POLICY_MA1,    /* user set priority to 1 on send-tasks */
@@ -178,7 +177,7 @@ typedef enum    mpcomp_task_priority_policy_e
     MPC_OMP_TASK_PRIORITY_POLICY_SA1,    /* user set priority on send-tasks, runtime on predecessors */
     MPC_OMP_TASK_PRIORITY_POLICY_SA2,    /* user set constant priority on tasks, runtime on predecessors */
     MPC_OMP_TASK_PRIORITY_POLICY_FA1     /* user sets no priority, runtimes cooperates */
-}               mpcomp_task_priority_policy_t;
+}               mpc_omp_task_priority_policy_t;
 
 
 TODO("naming convention on these enums");
@@ -250,6 +249,14 @@ typedef enum    mpc_omp_loop_gen_type_e
 	MPC_OMP_LOOP_TYPE_LONG,
 	MPC_OMP_LOOP_TYPE_ULL,
 }              mpc_omp_loop_gen_type_t;
+
+typedef enum    mpc_omp_task_init_status_e
+{
+    MPC_OMP_TASK_INIT_STATUS_UNINITIALIZED,
+    MPC_OMP_TASK_INIT_STATUS_INIT_IN_PROCESS,
+    MPC_OMP_TASK_INIT_STATUS_INITIALIZED,
+    MPC_OMP_TASK_INIT_STATUS_COUNT
+}               mpc_omp_task_init_status_t;
 
 /** Type of task pqueues */
 typedef enum    mpc_omp_pqueue_type_e
@@ -531,7 +538,7 @@ typedef struct  mpc_omp_task_s
     OPA_int_t children_count;
 
 #if MPC_OMP_TASK_COMPILE_FIBER
-    mpc_omp_task_fiber_t * context;
+    mpc_omp_task_fiber_t * fiber;
 #endif
 
     /* task properties */
@@ -592,6 +599,9 @@ typedef struct  mpc_omp_task_s
 
     /* profile version, to avoid double profile matching */
     int profile_version;
+
+    /* propagation version, to avoid visiting the task multiple times */
+    int propagation_version;
 
 #if OMPT_SUPPORT
     /* Task data and type */
@@ -692,7 +702,7 @@ typedef struct  mpc_omp_task_mvp_infos_s
 }               mpc_omp_task_mvp_infos_t;
 
 /** Extend mpc_omp_thread_t struct for openmp task support */
-typedef struct mpc_omp_task_thread_infos_s
+typedef struct  mpc_omp_task_thread_infos_s
 {
     int * larceny_order;
     OPA_int_t status;                   /* Thread task's init tag */
@@ -701,7 +711,7 @@ typedef struct mpc_omp_task_thread_infos_s
 
 # if MPC_OMP_TASK_COMPILE_FIBER
     mpc_omp_callback_t * callback_to_push;  /* async callback to add to the runtime */
-    mpc_omp_task_fiber_t * context;         /* the context to use when running a new task */
+    mpc_omp_task_fiber_t * fiber;           /* the fiber to use when running a new task */
     sctk_mctx_t mctx;                       /* the thread context before the task started */
 # endif /* MPC_OMP_TASK_COMPILE_FIBER */
 
@@ -713,8 +723,8 @@ typedef struct mpc_omp_task_thread_infos_s
 #  endif /* MPC_OMP_TASK_COMPILE_FIBER */
 # endif /* MPC_OMP_TASK_USE_RECYCLERS */
 
-    struct {
-        int priority;
+    struct
+    {
         char * label;
         int extra_clauses;
     } incoming;
@@ -725,7 +735,44 @@ typedef struct mpc_omp_task_thread_infos_s
 
     size_t sizeof_kmp_task_t;
 
-}           mpc_omp_task_thread_infos_t;
+}               mpc_omp_task_thread_infos_t;
+
+typedef struct  mpc_omp_task_profile_s
+{   
+    /* next node */
+    struct mpc_omp_task_profile_s * next;
+
+    /* the task size */
+    unsigned int size;
+
+    /* the task properties */
+    unsigned int property;
+
+    /* number of successors (may be incomplete) */
+    int nsuccessors;
+
+    /* number of predecessors (is complete) */
+    int npredecessors;
+
+    /* priority associated to the profile */
+    int priority;
+
+    /* the parent task uid (control parent) */
+    int parent_uid;
+}               mpc_omp_task_profile_t;
+
+/* communication tasks infos */
+typedef struct  mpc_omp_task_profile_info_s
+{
+    /* head info node */
+    OPA_ptr_t head;
+
+    /* number of 'mpcomp_task_profile_t' in list */
+    OPA_int_t n;
+
+    /* spinlock for concurrency issues */
+    mpc_common_spinlock_t spinlock;
+}               mpc_omp_task_profile_info_t;
 
 /* Task priority propagation context */
 typedef struct  mpc_omp_task_priority_propagation_context_s
@@ -757,6 +804,9 @@ typedef struct  mpc_omp_task_instance_infos_s
     OPA_int_t next_task_uid;
     OPA_int_t next_schedule_id;
 # endif /* MPCOMP_TASK_COMPILE_TRACE */
+
+    /* saved task profiles */
+    mpc_omp_task_profile_info_t profiles;
 
     /* number of existing tasks */
     OPA_int_t ntasks;
@@ -1084,6 +1134,15 @@ typedef struct mpc_omp_thread_s
 #endif /* OMPT_SUPPORT */
 }       mpc_omp_thread_t;
 
+typedef struct  mpc_omp_instance_callback_infos_s
+{
+    /* async per events */
+    mpc_omp_callback_t * callbacks[MPC_OMP_CALLBACK_MAX];
+
+    /* asyncs lock per event */
+    mpc_common_spinlock_t locks[MPC_OMP_CALLBACK_MAX];
+}               mpc_omp_instance_callback_infos_t;
+
 /* Instance of OpenMP runtime */
 typedef struct mpc_omp_instance_s
 {
@@ -1118,6 +1177,9 @@ typedef struct mpc_omp_instance_s
 
 	/** Task information of this instance */
 	struct mpc_omp_task_instance_infos_s task_infos;
+
+    /* asynchronous callbacks */
+    struct mpc_omp_instance_callback_infos_s callback_infos;
 
 } mpc_omp_instance_t;
 

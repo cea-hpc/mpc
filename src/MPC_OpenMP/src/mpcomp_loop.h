@@ -212,9 +212,9 @@ void mpc_omp_ordered_runtime_loop_end_nowait( void );
  * TASKLOOP *
  ************/
 
-void mpc_omp_taskloop(void (*)(void *), void *, void (*)(void *, void *), long,
+void mpc_omp_task_loop(void (*)(void *), void *, void (*)(void *, void *), long,
                      long, unsigned, unsigned long, int, long, long, long);
-void mpc_omp_taskloop_ull(void (*)(void *), void *, void (*)(void *, void *),
+void mpc_omp_task_loop_ull(void (*)(void *), void *, void (*)(void *, void *),
                          long, long, unsigned, unsigned long, int,
                          unsigned long long, unsigned long long,
                          unsigned long long);
@@ -223,7 +223,7 @@ void mpc_omp_taskloop_ull(void (*)(void *), void *, void (*)(void *, void *),
  * ORDERED *
  ***********/
 
-void _mpc_omp_ordered_begin( void );
-void _mpc_omp_ordered_end( void );
+void mpc_omp_ordered_begin( void );
+void mpc_omp_ordered_end( void );
 
 #endif /* MPC_OMP_LOOP_H_ */

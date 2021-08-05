@@ -66,7 +66,7 @@ mpc_omp_node_t * _mpc_omp_pop(mpc_omp_stack_t *s)
      return n;
 }
 
-void _mpc_omp_free_stack(mpc_omp_stack_t *s)
+void mpc_omp_free_stack(mpc_omp_stack_t *s)
 {
      free(s->elements);
 }

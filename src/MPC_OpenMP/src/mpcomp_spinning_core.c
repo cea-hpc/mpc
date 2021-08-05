@@ -350,7 +350,7 @@ static inline void __instance_tree_array_node_init( struct mpc_omp_node_s *paren
 
 	child->tree_array_ancestor_path[vdepth - 1] = parent->tree_array_rank;
 	child->tree_array_ancestor_path[vdepth] = child->tree_array_rank;
-	_mpc_task_node_info_init( parent, child );
+	_mpc_omp_task_node_info_init( parent, child );
 }
 
 static inline void __instance_tree_array_mvp_init( struct mpc_omp_node_s *parent, struct mpc_omp_mvp_s *mvp, const int index )
@@ -377,7 +377,7 @@ static inline void __instance_tree_array_mvp_init( struct mpc_omp_node_s *parent
 
 	mvp->threads->tree_array_ancestor_path[vdepth - 1] = parent->tree_array_rank;
     mvp->threads->tree_array_ancestor_path[vdepth] = mvp->threads->tree_array_rank;
-    _mpc_task_mvp_info_init( parent, mvp );
+    _mpc_omp_task_mvp_info_init( parent, mvp );
 }
 
 static inline mpc_omp_node_t *__scatter_wakeup_intermediate_node( mpc_omp_node_t *node )
@@ -777,7 +777,7 @@ mpc_omp_instance_t *_mpc_omp_tree_array_instance_init( mpc_omp_thread_t *thread,
 	instance->thread_ancestor = thread;
 	__team_reset( instance->team );
 
-	_mpc_task_team_info_init( instance->team, instance->tree_depth );
+	_mpc_omp_task_team_info_init( instance->team, instance->tree_depth );
 
 	/* Allocate new thread context */
 	master = ( mpc_omp_thread_t * ) mpc_omp_alloc( sizeof( mpc_omp_thread_t ) );
@@ -836,7 +836,7 @@ mpc_omp_thread_t *__mvp_wakeup( mpc_omp_mvp_t *mvp )
 	mpc_common_spinlock_init( &( new_thread->info.update_lock ), 0 );
 	/* Reset pragma for dynamic internal */
 
-    _mpc_task_tree_array_thread_init( new_thread );
+    _mpc_omp_task_tree_init(new_thread);
 
 	return new_thread;
 }
@@ -926,7 +926,7 @@ void _mpc_omp_start_openmp_thread( mpc_omp_mvp_t *mvp )
                                       ompt_task_implicit );
 #endif /* OMPT_SUPPORT */
 
-	_mpc_task_free( mvp->threads );
+	mpc_omp_free( mvp->threads );
 
 	if ( cur_thread )
 	{

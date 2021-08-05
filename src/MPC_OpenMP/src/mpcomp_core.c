@@ -55,9 +55,9 @@
  * MPC_OMP CONFIGURATION *
  *************************/
 
-static struct mpc_omp_conf __omp_conf = { 0 };
+static struct mpc_omp_conf_s __omp_conf = { 0 };
 
-struct mpc_omp_conf * mpc_omp_conf_get(void)
+struct mpc_omp_conf_s * mpc_omp_conf_get(void)
 {
 	return &__omp_conf;
 }
@@ -83,21 +83,24 @@ static inline void __omp_conf_set_default(void)
 	__omp_conf.OMP_THREAD_LIMIT=64;
 	__omp_conf.OMP_DYNAMIC=0;
 
-	/* Tasks */
+    /* Tasks */
+    __omp_conf.maximum_tasks                = INT_MAX;
+    __omp_conf.pqueue_new_depth             = 0;
+    __omp_conf.pqueue_untied_depth          = 1;
+    __omp_conf.task_recycler_capacity       = 8192;
+    __omp_conf.fiber_recycler_capacity      = 256;
+    __omp_conf.queue_empty_schedules        = 1;
+    __omp_conf.task_depth_threshold         = 4;
+    __omp_conf.task_use_fiber               = 1;
+    __omp_conf.task_trace                   = 0;
+    __omp_conf.task_yield_mode              = MPC_OMP_TASK_YIELD_MODE_NOOP;
+    __omp_conf.task_priority_policy         = MPC_OMP_TASK_PRIORITY_POLICY_FIFO;
 
-	__omp_conf.omp_new_task_depth = 10;
-	__omp_conf.omp_untied_task_depth = 10;
-	snprintf(__omp_conf.omp_task_larceny_mode_str, MPC_CONF_STRING_SIZE, "producer");
-	__omp_conf.omp_task_larceny_mode = MPC_OMP_TASK_LARCENY_MODE_PRODUCER;
-	__omp_conf.omp_task_nesting_max = 1000000;
-	__omp_conf.mpcomp_task_max_delayed = 1024;
-	__omp_conf.omp_task_use_lockfree_queue = 1;
-	__omp_conf.omp_task_steal_last_stolen_list = 0;
-	__omp_conf.omp_task_resteal_to_last_thief = 0;
-
-	snprintf(__omp_conf.omp_tool, MPC_CONF_STRING_SIZE, "enabled");
-	snprintf(__omp_conf.omp_tool_libraries, MPC_CONF_STRING_SIZE, "");
-
+    /* task steal */
+    __omp_conf.task_steal_last_stolen   = 0;
+    __omp_conf.task_steal_last_thief    = 0;
+    __omp_conf.task_larceny_mode        = MPC_OMP_TASK_LARCENY_MODE_PRODUCER;
+    snprintf(__omp_conf.task_larceny_mode_str, MPC_CONF_STRING_SIZE, "producer");
 }
 
 
@@ -109,37 +112,47 @@ static inline void __omp_conf_init(void)
 	                                                       PARAM("chunk", &__omp_conf.OMP_MODIFIER_SCHEDULE , MPC_CONF_INT, "This is the chunk size as schedule modifier"),
 														   NULL);
 
-	mpc_conf_config_type_t *thread = mpc_conf_config_type_init("thread",
-	                                PARAM("number", &__omp_conf.OMP_NUM_THREADS , MPC_CONF_INT, "This is the number of threads OMP_NUM_THREADS"),
-									PARAM("nested", &__omp_conf.OMP_NESTED , MPC_CONF_BOOL, "Is nested parallelism enabled OMP_NESTED"),
-									PARAM("vpcount", &__omp_conf.OMP_MICROVP_NUMBER , MPC_CONF_INT, "Number of VP for each OMP team OMP_MICROVP_NUMBER"),
-									PARAM("bind", &__omp_conf.OMP_PROC_BIND , MPC_CONF_BOOL, "Bind OMP threads to cores OMP_PROC_BIND"),
-									PARAM("stacksize", &__omp_conf.OMP_STACKSIZE , MPC_CONF_INT, "Stack size for OpenMP threads OMP_STACKSIZE"),
-									PARAM("waitpolicy", &__omp_conf.OMP_WAIT_POLICY , MPC_CONF_INT, "Behavior of threads while waiting OMP_WAIT_POLICY"),
-									PARAM("maxthreads", &__omp_conf.OMP_THREAD_LIMIT , MPC_CONF_INT, "Max number of threads OMP_THREAD_LIMIT"),
-									PARAM("dynamic", &__omp_conf.OMP_DYNAMIC , MPC_CONF_INT, "Allow dynamic adjustment of the thread number OMP_DYNAMIC"),
-									NULL);
+    mpc_conf_config_type_t *thread = mpc_conf_config_type_init("thread",
+            PARAM("number", &__omp_conf.OMP_NUM_THREADS , MPC_CONF_INT, "This is the number of threads OMP_NUM_THREADS"),
+            PARAM("nested", &__omp_conf.OMP_NESTED , MPC_CONF_BOOL, "Is nested parallelism enabled OMP_NESTED"),
+            PARAM("vpcount", &__omp_conf.OMP_MICROVP_NUMBER , MPC_CONF_INT, "Number of VP for each OMP team OMP_MICROVP_NUMBER"),
+            PARAM("bind", &__omp_conf.OMP_PROC_BIND , MPC_CONF_BOOL, "Bind OMP threads to cores OMP_PROC_BIND"),
+            PARAM("stacksize", &__omp_conf.OMP_STACKSIZE , MPC_CONF_INT, "Stack size for OpenMP threads OMP_STACKSIZE"),
+            PARAM("waitpolicy", &__omp_conf.OMP_WAIT_POLICY , MPC_CONF_INT, "Behavior of threads while waiting OMP_WAIT_POLICY"),
+            PARAM("maxthreads", &__omp_conf.OMP_THREAD_LIMIT , MPC_CONF_INT, "Max number of threads OMP_THREAD_LIMIT"),
+            PARAM("dynamic", &__omp_conf.OMP_DYNAMIC , MPC_CONF_INT, "Allow dynamic adjustment of the thread number OMP_DYNAMIC"),
+            NULL
+    );
 
-	mpc_conf_config_type_t *task = mpc_conf_config_type_init("task",
-	                                PARAM("depth", &__omp_conf.omp_new_task_depth , MPC_CONF_INT, "Depth of the new tasks lists in the tree"),
-	                                PARAM("untieddepth", &__omp_conf.omp_untied_task_depth , MPC_CONF_INT, "Depth of the untied tasks lists in the tree"),
-									PARAM("larceny", &__omp_conf.omp_task_larceny_mode_str , MPC_CONF_STRING, "Task stealing policy (hierarchical, random, random_order, round_robin, producer, producer_order, hierarchical_random)"),
-	                                PARAM("maxnesting", &__omp_conf.omp_task_nesting_max , MPC_CONF_INT, "Task max depth in task generation"),
-	                                PARAM("maxdelayed", &__omp_conf.mpcomp_task_max_delayed , MPC_CONF_INT, "Max tasks in mpcomp list"),
-									PARAM("lockfreequeue", &__omp_conf.omp_task_use_lockfree_queue , MPC_CONF_BOOL, "Use a lock-free queue for tasks"),
-									PARAM("lastlist", &__omp_conf.omp_task_steal_last_stolen_list , MPC_CONF_BOOL, "Try to steal to same list than last successful stealing"),
-									PARAM("lastthief", &__omp_conf.omp_task_resteal_to_last_thief , MPC_CONF_BOOL, "Try to steal to the last thread that stole a task to current thread"),
-									NULL);
+    mpc_conf_config_type_t *task = mpc_conf_config_type_init("task",
+            PARAM("maximum",                    &__omp_conf.maximum_tasks,              MPC_CONF_INT,   "Number maximum of tasks that can exists concurrently in the runtime"),
+            PARAM("newdepth",                   &__omp_conf.pqueue_new_depth,           MPC_CONF_INT,   "Depth of the new tasks lists in the tree"),
+            PARAM("untieddepth",                &__omp_conf.pqueue_untied_depth,        MPC_CONF_INT,   "Depth of the untied tasks lists in the tree"),
+            PARAM("taskrecyclercapacity",       &__omp_conf.task_recycler_capacity,     MPC_CONF_INT,   "Task recycler capacity"),
+            PARAM("fiberrecyclercapacity",      &__omp_conf.fiber_recycler_capacity,    MPC_CONF_INT,   "Task fiber recycler capacity"),
+            PARAM("depththreshold",             &__omp_conf.task_depth_threshold,       MPC_CONF_INT,   "Maximum task depth before it is run undeferedly on parent's fiber"),
+            PARAM("fiber",                      &__omp_conf.task_use_fiber,             MPC_CONF_BOOL,  "Enable task fiber"),
+            PARAM("trace",                      &__omp_conf.task_trace,                 MPC_CONF_BOOL,  "Enable task tracing"),
+            PARAM("prioritypolicy",             &__omp_conf.task_priority_policy,       MPC_CONF_INT,   "Task priority policy"),
 
-	mpc_conf_config_type_t *omp = mpc_conf_config_type_init("omp",
-	                                PARAM("number", &__omp_conf.OMP_MAX_ACTIVE_LEVELS , MPC_CONF_INT, "Maximum depth of nested parallelism"),
-									PARAM("nested", &__omp_conf.OMP_WARN_NESTED , MPC_CONF_BOOL, "Emit warning when entering nested parallelism"),
-									PARAM("places", &__omp_conf.places , MPC_CONF_STRING, "OpenMP Places configuration OMP_PLACES"),
-									PARAM("allocator", &__omp_conf.allocator , MPC_CONF_STRING, "OpenMP allocator"),
-									PARAM("schedule", schedule , MPC_CONF_TYPE, "Parameters associated with OpenMP schedules"),
-									PARAM("thread", thread , MPC_CONF_TYPE, "Parameters associated with OpenMP threads"),
-									PARAM("task", task , MPC_CONF_TYPE, "Parameters associated with OpenMP tasks"),
-									NULL);
+            /* TODO : replace yield and priority policy by a string and parse it */
+            PARAM("yieldmode",            &__omp_conf.task_yield_mode,          MPC_CONF_INT,       "Task yielding policy"),
+            PARAM("larcenymode",          &__omp_conf.task_larceny_mode_str,    MPC_CONF_STRING,    "Task stealing policy"),
+            PARAM("steallaststolen",     &__omp_conf.task_steal_last_stolen,    MPC_CONF_BOOL,      "Try to steal to same list than last successful stealing"),
+            PARAM("steallastthief",      &__omp_conf.task_steal_last_thief,     MPC_CONF_BOOL,      "Try to steal to the last thread that stole a task to current thread"),
+            NULL
+    );
+
+    mpc_conf_config_type_t *omp = mpc_conf_config_type_init("omp",
+            PARAM("number", &__omp_conf.OMP_MAX_ACTIVE_LEVELS , MPC_CONF_INT, "Maximum depth of nested parallelism"),
+            PARAM("nested", &__omp_conf.OMP_WARN_NESTED , MPC_CONF_BOOL, "Emit warning when entering nested parallelism"),
+            PARAM("places", &__omp_conf.places , MPC_CONF_STRING, "OpenMP Places configuration OMP_PLACES"),
+            PARAM("allocator", &__omp_conf.allocator , MPC_CONF_STRING, "OpenMP allocator"),
+            PARAM("schedule", schedule , MPC_CONF_TYPE, "Parameters associated with OpenMP schedules"),
+            PARAM("thread", thread , MPC_CONF_TYPE, "Parameters associated with OpenMP threads"),
+            PARAM("task", task , MPC_CONF_TYPE, "Parameters associated with OpenMP tasks"),
+            NULL
+    );
 
 	mpc_conf_root_config_append("mpcframework", omp, "MPC OpenMP Configuration");
 
@@ -492,13 +505,14 @@ __init_task_tree( const int num_mvps, int *shape, const int *cpus_order )
 static inline void __read_env_variables()
 {
 	/* Ensure larceny mode for tasks is read from string and then locked */
-	__omp_conf.omp_task_larceny_mode = mpc_omp_task_parse_larceny_mode(__omp_conf.omp_task_larceny_mode_str);
+	__omp_conf.task_larceny_mode = mpc_omp_task_parse_larceny_mode(__omp_conf.task_larceny_mode_str);
+
 	/* We lock as we wont parse future updates */
 	mpc_conf_root_config_set_lock("mpcframework.omp.task.larceny", 1);
 
 	char *env;
-	mpc_common_nodebug( "_mpcomp_read_env_variables: Read env vars (MPC rank: %d)",
-	              mpc_common_get_task_rank() );
+	mpc_common_nodebug( "_mpcomp_read_env_variables: Read env vars (MPC rank: %d)", mpc_common_get_task_rank() );
+
 	/******* OMP_VP_NUMBER *********/
 	if ( __omp_conf.OMP_MICROVP_NUMBER < 0 )
 	{
@@ -810,26 +824,30 @@ static inline void __read_env_variables()
 	/***** PRINT SUMMARY (only first MPI rank) ******/
 	if ( getenv( "MPC_DISABLE_BANNER" ) == NULL &&  mpc_common_get_process_rank() == 0)
 	{
-                mpc_common_debug_log("--------------------------------------------------");
-		mpc_common_debug_log(
-		         "MPC OpenMP version %d.%d (Intel and Patched GCC compatibility)",
-		         MPC_OMP_VERSION_MAJOR, MPC_OMP_VERSION_MINOR );
-		mpc_common_debug_log("\tOpenMP 3 Tasking on:\n"
-                "\t\tOMP_NEW_TASKS_DEPTH=%d\n"
-                "\t\tOMP_TASK_LARCENY_MODE=%d\n"
-		        "\t\tOMP_TASK_NESTING_MAX=%d\n"
-                "\t\tOMP_TASK_MAX_DELAYED=%d\n"
-                "\t\tOMP_TASK_USE_LOCKFREE_QUEUE=%d\n"
-                "\t\tOMP_TASK_STEAL_LAST_STOLEN_LIST=%d\n"
-                "\t\tOMP_TASK_RESTEAL_TO_LAST_THIEF=%d",
-		         __omp_conf.omp_new_task_depth,
-		         __omp_conf.omp_task_larceny_mode,
-		         __omp_conf.omp_task_nesting_max,
-		         __omp_conf.mpcomp_task_max_delayed,
-		         __omp_conf.omp_task_use_lockfree_queue,
-		         __omp_conf.omp_task_steal_last_stolen_list,
-		         __omp_conf.omp_task_resteal_to_last_thief );
-		mpc_common_debug_log("\tOMP_SCHEDULE %d", OMP_SCHEDULE );
+        mpc_common_debug_log("--------------------------------------------------");
+        mpc_common_debug_log("MPC OpenMP version %d.%d (Intel and Patched GCC compatibility)", MPC_OMP_VERSION_MAJOR, MPC_OMP_VERSION_MINOR );
+        mpc_common_debug_log("\tOpenMP 3 Tasking on:\n");
+        mpc_common_debug_log("\t\tmaximum tasks=%d",        __omp_conf.maximum_tasks);
+        mpc_common_debug_log("\t\tnew tasks depth=%d",      __omp_conf.pqueue_new_depth);
+        mpc_common_debug_log("\t\tuntied tasks depth=%d",   __omp_conf.pqueue_untied_depth);
+        mpc_common_debug_log("\t\tlaceny mode=%d",          __omp_conf.task_larceny_mode);
+        mpc_common_debug_log("\t\tdepth threshold=%d",      __omp_conf.task_depth_threshold);
+        mpc_common_debug_log("\t\tsteal last stolen=%d",    __omp_conf.task_steal_last_stolen);
+        mpc_common_debug_log("\t\tsteal last thief=%d",     __omp_conf.task_steal_last_thief);
+        mpc_common_debug_log("\t\tyield mode=%d",           __omp_conf.task_yield_mode);
+        mpc_common_debug_log("\t\tpriority policy=%d",      __omp_conf.task_priority_policy);
+        mpc_common_debug_log("\t\ttrace=%d",                __omp_conf.task_trace);
+        mpc_common_debug_log("\n");
+
+        mpc_common_debug_log("\tTask context");
+# if MPCOMP_TASK_COMPILE_CONTEXT
+        mpc_common_debug_log("\t\tCompiled=yes");
+        mpc_common_debug_log("\t\tEnabled=%s", MPCOMP_TASK_CONTEXT_ENABLED ? "yes" : "no");
+# else
+        mpc_common_debug_log("\t\tCompiled=no");
+# endif 
+        mpc_common_debug_log("\n");
+        mpc_common_debug_log("\tOMP_SCHEDULE %d", OMP_SCHEDULE );
 
 		if ( __omp_conf.OMP_NUM_THREADS == 0 )
 		{
@@ -1203,17 +1221,34 @@ void _mpc_omp_in_order_scheduler( mpc_omp_thread_t *thread )
 			not_implemented();
 	}
 
-#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+#if OMPT_SUPPORT && MPC_OMPT_HAS_FRAME_SUPPORT
     /* Record and reset current frame infos */
     mpc_omp_ompt_frame_info_t prev_frame_infos = _mpc_omp_ompt_frame_reset_infos();
 
-    _mpc_omp_ompt_frame_set_exit( MPCOMPT_GET_FRAME_ADDRESS );
+    _mpc_omp_ompt_frame_set_exit( MPC_OMPT_GET_FRAME_ADDRESS );
 #endif /* OMPT_SUPPORT */
 
 	thread->info.func( thread->info.shared );
 
-#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+#if OMPT_SUPPORT && MPC_OMPT_HAS_FRAME_SUPPORT
     /* Restore previous frame infos */
     _mpc_omp_ompt_frame_set_infos( &prev_frame_infos );
 #endif /* OMPT_SUPPORT */
+}
+
+double
+mpc_omp_timestamp(void)
+{
+# if MPC_MPI
+    return MPI_Wtime() * 1000000;
+# else /* MPC_MPI */
+    double res;
+#  if SCTK_WTIME_USE_GETTIMEOFDAY
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+    return (double) tp.tv_usec + (double) tp.tv_sec * 1000000.0;
+#  else /* SCTK_WTIME_USE_GETTIMEOFDAY */
+    return mpc_arch_get_timestamp() * 1000000.0;
+#  endif /* SCTK_WTIME_USE_GETTIMEOFDAY */
+# endif /* MPC_MPI */
 }

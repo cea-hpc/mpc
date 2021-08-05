@@ -2526,181 +2526,6 @@ int mpc_omp_loop_ull_ordered_runtime_next( unsigned long long *from,
 	return ret;
 }
 
-
-/************
- * TASKLOOP *
- ************/
-
-
-static unsigned long mpc_omp_taskloop_compute_num_iters(long start, long end,
-                                                       long step) {
-  long decal = (step > 0) ? -1 : 1;
-
-  if ((end - start) * decal >= 0)
-    return 0;
-
-  return (end - start + step + decal) / step;
-}
-
-static unsigned long __loop_taskloop_compute_loop_value(long iteration_num, unsigned long num_tasks,
-                                   long step, long *taskstep,
-                                   unsigned long *extra_chunk) {
-  long compute_taskstep;
-  mpc_omp_thread_t *omp_thread_tls;
-  unsigned long compute_num_tasks, compute_extra_chunk;
-
-  omp_thread_tls = (mpc_omp_thread_t *)mpc_omp_tls;
-  assert(omp_thread_tls);
-
-  compute_taskstep = step;
-  compute_extra_chunk = iteration_num;
-  compute_num_tasks = num_tasks;
-
-  if (!(compute_num_tasks)) {
-    compute_num_tasks = (omp_thread_tls->info.num_threads)
-                            ? omp_thread_tls->info.num_threads
-                            : 1;
-  }
-
-  if (num_tasks >= (unsigned long)iteration_num) {
-    compute_num_tasks = iteration_num;
-  } else {
-    const long quotient = iteration_num / compute_num_tasks;
-    const long reste = iteration_num % compute_num_tasks;
-    compute_taskstep = quotient * step;
-    if (reste) {
-      compute_taskstep += step;
-      compute_extra_chunk = reste - 1;
-    }
-  }
-
-  *taskstep = compute_taskstep;
-  *extra_chunk = compute_extra_chunk;
-  return compute_num_tasks;
-}
-
-static unsigned long __loop_taskloop_compute_loop_value_grainsize(
-    long iteration_num, unsigned long num_tasks, long step, long *taskstep,
-    unsigned long *extra_chunk) {
-  long compute_taskstep;
-  unsigned long grainsize, compute_num_tasks, compute_extra_chunk;
-
-  grainsize = num_tasks;
-
-  compute_taskstep = step;
-  compute_extra_chunk = iteration_num;
-  compute_num_tasks = iteration_num / grainsize;
-
-  if (compute_num_tasks <= 1) {
-    compute_num_tasks = 1;
-  } else {
-    if (compute_num_tasks > grainsize) {
-      const long mul = num_tasks * grainsize;
-      const long reste = iteration_num - mul;
-      compute_taskstep = grainsize * step;
-      if (reste) {
-        compute_taskstep += step;
-        compute_extra_chunk = iteration_num - mul - 1;
-      }
-    } else {
-      const long quotient = iteration_num / compute_num_tasks;
-      const long reste = iteration_num % compute_num_tasks;
-      compute_taskstep = quotient * step;
-      if (reste) {
-        compute_taskstep += step;
-        compute_extra_chunk = reste - 1;
-      }
-    }
-  }
-
-  *taskstep = compute_taskstep;
-  *extra_chunk = compute_extra_chunk;
-  return compute_num_tasks;
-}
-
-void mpc_omp_taskloop(void (*fn)(void *), void *data,
-                     void (*cpyfn)(void *, void *), long arg_size,
-                     long arg_align, unsigned flags, unsigned long num_tasks,
-                     __UNUSED__ int priority, long start, long end, long step) {
-#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
-  _mpc_omp_ompt_frame_set_no_reentrant();
-#endif /* OMPT_SUPPORT */
-
-  long taskstep;
-  unsigned long extra_chunk, i;
-
-  mpc_omp_init();
-
-  const long num_iters = mpc_omp_taskloop_compute_num_iters(start, end, step);
-
-#if OMPT_SUPPORT
-  _mpc_omp_ompt_callback_work( ompt_work_taskloop, ompt_scope_begin, num_iters );
-#endif /* OMPT_SUPPORT */
-
-  if (!(num_iters)) {
-#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_unset_no_reentrant();
-#endif /* OMPT_SUPPORT */
-
-    return;
-  }
-
-  if (!(flags & MPC_OMP_TASK_PROP_GRAINSIZE)) {
-    num_tasks = __loop_taskloop_compute_loop_value(num_iters, num_tasks, step,
-                                                   &taskstep, &extra_chunk);
-  } else {
-    num_tasks = __loop_taskloop_compute_loop_value_grainsize(
-        num_iters, num_tasks, step, &taskstep, &extra_chunk);
-    taskstep = (num_tasks == 1) ? end - start : taskstep;
-  }
-
-  if (!(flags & MPC_OMP_TASK_PROP_NOGROUP)) {
-    _mpc_task_taskgroup_start();
-  }
-
-  for (i = 0; i < num_tasks; i++) {
-    mpc_omp_task_t *new_task = NULL;
-    new_task = _mpc_task_alloc(fn, data, cpyfn, arg_size, arg_align, 0,
-                                   flags, 0 /* no deps */);
-    ((long *)new_task->data)[0] = start;
-    ((long *)new_task->data)[1] = start + taskstep;
-    start += taskstep;
-    taskstep -= (i == extra_chunk) ? step : 0;
-    _mpc_task_process(new_task, 0);
-  }
-
-  if (!(flags & MPC_OMP_TASK_PROP_NOGROUP)) {
-    _mpc_task_taskgroup_end();
-  }
-
-#if OMPT_SUPPORT
-  _mpc_omp_ompt_callback_work( ompt_work_taskloop, ompt_scope_end, 0 );
-
-#if MPCOMPT_HAS_FRAME_SUPPORT
-  _mpc_omp_ompt_frame_unset_no_reentrant();
-#endif
-#endif /* OMPT_SUPPORT */
-}
-
-void mpc_omp_taskloop_ull(__UNUSED__ void (*fn)(void *), __UNUSED__ void *data,
-                         __UNUSED__ void (*cpyfn)(void *, void *), __UNUSED__ long arg_size,
-                         __UNUSED__ long arg_align, __UNUSED__ unsigned flags,
-                         __UNUSED__  unsigned long num_tasks, __UNUSED__ int priority,
-                         __UNUSED__ unsigned long long start, __UNUSED__ unsigned long long end,
-                         __UNUSED__ unsigned long long step) {
-#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
-  _mpc_omp_ompt_frame_set_no_reentrant();
-#endif /* OMPT_SUPPORT */
-
-  not_implemented();
-
-#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  _mpc_omp_ompt_frame_unset_no_reentrant();
-#endif /* OMPT_SUPPORT */
-}
-
 /***********
  * ORDERED *
  ***********/
@@ -2746,7 +2571,7 @@ static inline void __loop_internal_ordered_begin_ull( mpc_omp_thread_t *t, mpc_o
         mpc_thread_yield();
 }
 
-void _mpc_omp_ordered_begin( void )
+void mpc_omp_ordered_begin( void )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
@@ -2841,7 +2666,7 @@ static inline void __internal_ordered_end_ull( mpc_omp_thread_t* t, mpc_omp_loop
     }
 }
 
-void _mpc_omp_ordered_end( void )
+void mpc_omp_ordered_end( void )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );

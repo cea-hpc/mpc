@@ -31,7 +31,7 @@
  * ALLOC HOOK *
  **************/
 
-static inline void* mpc_omp_alloc( int size )
+static inline void* mpc_omp_alloc( size_t size )
 {
   return sctk_malloc(size);
 }
@@ -45,9 +45,8 @@ static inline void mpc_omp_free( void *p )
  * MPC_OMP CONFIGURATION *
  *************************/
 
-struct mpc_omp_conf
+typedef struct  mpc_omp_conf_s
 {
-
 	/* General OMP params */
 
 	/* Maximum number of nested active parallel regions */
@@ -83,29 +82,36 @@ struct mpc_omp_conf
 	/* Maximum number of threads participing in the whole program */
 	int OMP_THREAD_LIMIT ;
 	/* Is dynamic adaptation on? */
-	int OMP_DYNAMIC ;
+    int OMP_DYNAMIC ;
 
+    /* Tasks */
+    int maximum_tasks;
+    int pqueue_new_depth;
+    int pqueue_untied_depth;
+    int task_recycler_capacity;
+    int fiber_recycler_capacity;
+    double queue_empty_schedules;
+    int queue_empty_if_full;
+    int task_depth_threshold;
+    int task_use_fiber;
+    int task_trace;
+    mpc_omp_task_yield_mode_t task_yield_mode;
+    mpc_omp_task_priority_policy_t task_priority_policy;
 
-	/* Tasks */	
-
-	int omp_new_task_depth;
-    int omp_untied_task_depth;
-	char omp_task_larceny_mode_str[MPC_CONF_STRING_SIZE];
-	mpc_omp_task_larceny_mode_t omp_task_larceny_mode; 
-
-	int omp_task_nesting_max;
-	int mpcomp_task_max_delayed;
-	int omp_task_use_lockfree_queue;
-	int omp_task_steal_last_stolen_list;
-	int omp_task_resteal_to_last_thief;
+    /* task steal */
+    int task_steal_last_stolen;
+    int task_steal_last_thief;
+    char task_larceny_mode_str[MPC_CONF_STRING_SIZE];
+    mpc_omp_task_larceny_mode_t task_larceny_mode;
 
 	/* Tools */
 	char omp_tool[MPC_CONF_STRING_SIZE];
 	char omp_tool_libraries[MPC_CONF_STRING_SIZE];
-};
+
+}               mpc_omp_conf_t;
 
 
-struct mpc_omp_conf * mpc_omp_conf_get(void);
+struct mpc_omp_conf_s * mpc_omp_conf_get(void);
 
 
 /*******************************

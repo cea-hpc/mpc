@@ -559,3 +559,51 @@ int sctk_makecontext(sctk_mctx_t *ucp,
 	sctk_context_restore_tls(&lucp);
 	return res;
 }
+
+int
+sctk_setcontext_no_tls (sctk_mctx_t * ucp)
+{
+    sctk_mctx_restore (ucp);
+    return 0;
+}
+
+int
+sctk_makecontext_no_tls(
+        sctk_mctx_t * ucp,
+        void *arg,
+        void (*func) (void *), char *stack, size_t stack_size)
+{
+#ifdef SCTK_USE_VALGRIND
+    VALGRIND_STACK_REGISTER (stack, (((char *) stack) + stack_size));
+#endif
+    mpc_common_nodebug ("new stack %p-%p", stack, (((char *) stack) + stack_size));
+    return sctk_mctx_set (ucp, func, stack, stack + stack_size, arg);
+}
+
+int
+sctk_swapcontext_no_tls (sctk_mctx_t * oucp, sctk_mctx_t * ucp)
+{
+    oucp->error = errno;
+    oucp->restored = 0;
+    errno = ucp->error;
+    ucp->restored = 1;
+
+#if SCTK_MCTX_MTH(mcsc)
+    swapcontext (&(oucp->uc), &(ucp->uc));
+#elif SCTK_MCTX_MTH(libcontext)
+    mpc__swapcontext (&(oucp->uc), &(ucp->uc));
+#elif SCTK_MCTX_MTH(sjlj)
+    sctk_nodebug ("swap %p to %p", oucp, ucp);
+    if (sctk_setjmp ((oucp->jb)) == 0)
+    {
+        sctk_longjmp ((ucp->jb), 1);
+    }
+#elif SCTK_MCTX_MTH(windows)
+    sctk_nodebug ("swap %p to %p", oucp, ucp);
+    if (sctk_setjmp ((oucp->jb)) == 0)
+        sctk_longjmp ((ucp->jb), 1);
+#else
+#error "unknown mctx method"
+#endif
+    return 0;
+}
