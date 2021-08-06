@@ -73,14 +73,14 @@ INFO("MPC_COLL debugging is ENABLED this is incompatible with thread-based MPI")
 #endif
 
 
-int global_topo_allow = 0;
+static inline int __global_topo_allow = 0;
 
 void _mpc_mpi_coll_allow_topological_comm() {
-  global_topo_allow = 1;
+  __global_topo_allow = 1;
 }
 
 void _mpc_mpi_coll_forbid_topological_comm() {
-  global_topo_allow = 0;
+  __global_topo_allow = 0;
 }
 
 
@@ -1400,7 +1400,7 @@ static inline int ___collectives_bcast_switch(void *buffer, int count, MPI_Datat
 
   int topo = 0;
   // Check if we are on a topological comm
-  if(global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
+  if(__global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
     // Get the topological communicators
     info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root);
     // If we could'nt get them, check if we can create them
@@ -1920,7 +1920,7 @@ static inline int ___collectives_reduce_switch(const void *sendbuf, void* recvbu
 
   int topo = 0;
   // Check if we are on a topological comm
-  if(global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
+  if(__global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
     // Get the topological communicators
     info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root);
     // If we could'nt get them, check if we can create them
@@ -2631,7 +2631,7 @@ static inline int ___collectives_allreduce_switch(const void *sendbuf, void* rec
 
   int topo = 0;
   // Check if we are on a topological comm
-  if(global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
+  if(__global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
     // Get the topological communicators
     info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, 0);
     // If we could'nt get them, check if we can create them
@@ -3533,7 +3533,7 @@ static inline int ___collectives_scatter_switch(const void *sendbuf, int sendcou
 
   int topo = 0;
   // Check if we are on a topological comm
-  if(global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
+  if(__global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
     // Get the topological communicators
     info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root);
     // If we could'nt get them, check if we can create them
@@ -4591,7 +4591,7 @@ static inline int ___collectives_gather_switch(const void *sendbuf, int sendcoun
 
   int topo = 0;
   // Check if we are on a topological comm
-  if(global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
+  if(__global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
     // Get the topological communicators
     info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root);
     // If we could'nt get them, check if we can create them
@@ -6528,7 +6528,7 @@ static inline int ___collectives_allgather_switch(const void *sendbuf, int sendc
 
   int topo = 0;
   // Check if we are on a topological comm
-  if(global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
+  if(__global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
     // Get the topological communicators
     info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, 0);
     // If we could'nt get them, check if we can create them
