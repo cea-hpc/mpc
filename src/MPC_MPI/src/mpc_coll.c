@@ -44,18 +44,42 @@
 #define ALLOW_TOPO_COMM 1
 #define TOPO_MAX_LEVEL 1
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-  char dbg_indent[20] = "\0";
+/**
+ * @brief This enables debugging in the MPC_COLL file
+ *
+ */
+//#define MPC_COLL_ENABLE_DEBUG
+
+#if defined(MPC_COLL_ENABLE_DEBUG) && defined(MPC_ENABLE_DEBUG_MESSAGES)
+/* Make sure this is not un-noticed */
+INFO("MPC_COLL debugging is ENABLED this is incompatible with thread-based MPI");
+INFO("MPC_COLL debugging is ENABLED this is incompatible with thread-based MPI");
+INFO("MPC_COLL debugging is ENABLED this is incompatible with thread-based MPI");
+INFO("MPC_COLL debugging is ENABLED this is incompatible with thread-based MPI");
+INFO("MPC_COLL debugging is ENABLED this is incompatible with thread-based MPI");
+INFO("MPC_COLL debugging is ENABLED this is incompatible with thread-based MPI");
+
+/*
+  The __debug_indentation variable is global as shared between threads on the SAME vp
+  leading to underflow and underflows when used in thread-based but still
+  usefull to debug the process-based collectives */
+
+#define MPC_COLL_EXTRA_DEBUG_ENABLED
+#endif
+
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  #define DBG_INDENT_LEN 20
+  static char __debug_indentation[DBG_INDENT_LEN] = "\0";
 #endif
 
 
-__thread int global_topo_allow = 0;
+int global_topo_allow = 0;
 
-void global_allow_topo() {
+void _mpc_mpi_coll_allow_topological_comm() {
   global_topo_allow = 1;
 }
 
-void global_forbid_topo() {
+void _mpc_mpi_coll_forbid_topological_comm() {
   global_topo_allow = 0;
 }
 
@@ -656,7 +680,7 @@ static inline int ___collectives_sched_copy(const void *src, int srccount, MPI_D
 static inline int ___collectives_send_type(const void *buffer, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
   int res = MPI_SUCCESS;
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   if(coll_type != MPC_COLL_TYPE_COUNT) {
     int rank = -1;
     _mpc_cl_comm_rank(comm, &rank);
@@ -667,7 +691,7 @@ static inline int ___collectives_send_type(const void *buffer, int count, MPI_Da
     MPI_Comm_group(comm, &local_group);
     MPI_Comm_group(MPI_COMM_WORLD, &global_group);
     MPI_Group_translate_ranks(local_group, 1, &dest, global_group, &peer_global_rank);
-    mpc_common_debug_log("%sSEND | % 4d (% 4d) -> % 4d (% 4d) (count=%d) : %p | COMM %p\n", dbg_indent, rank, global_rank, dest, peer_global_rank, count, buffer, comm);
+    mpc_common_debug_log("%sSEND | % 4d (% 4d) -> % 4d (% 4d) (count=%d) : %p | COMM %p\n", __debug_indentation, rank, global_rank, dest, peer_global_rank, count, buffer, comm);
   }
 #endif
 
@@ -703,7 +727,7 @@ static inline int ___collectives_send_type(const void *buffer, int count, MPI_Da
 static inline int ___collectives_recv_type(void *buffer, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
   int res = MPI_SUCCESS;
  
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   if(coll_type != MPC_COLL_TYPE_COUNT) {
     int rank = -1;
     _mpc_cl_comm_rank(comm, &rank);
@@ -714,7 +738,7 @@ static inline int ___collectives_recv_type(void *buffer, int count, MPI_Datatype
     MPI_Comm_group(comm, &local_group);
     MPI_Comm_group(MPI_COMM_WORLD, &global_group);
     MPI_Group_translate_ranks(local_group, 1, &source, global_group, &peer_global_rank);
-    mpc_common_debug_log("%sRECV | % 4d (% 4d) <- % 4d (% 4d) (count=%d) : %p | COMM %p\n", dbg_indent, rank, global_rank, source, peer_global_rank, count, buffer, comm);
+    mpc_common_debug_log("%sRECV | % 4d (% 4d) <- % 4d (% 4d) (count=%d) : %p | COMM %p\n", __debug_indentation, rank, global_rank, source, peer_global_rank, count, buffer, comm);
   }
 #endif
 
@@ -744,11 +768,11 @@ static inline int ___collectives_recv_type(void *buffer, int count, MPI_Datatype
 static inline int ___collectives_barrier_type(MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
   int res = MPI_SUCCESS;
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   if(coll_type != MPC_COLL_TYPE_COUNT) {
     int rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &rank);
-    mpc_common_debug_log("%sBARR |      % 4d\n", dbg_indent, rank);
+    mpc_common_debug_log("%sBARR |      % 4d\n", __debug_indentation, rank);
   }
 #endif
 
@@ -785,11 +809,11 @@ static inline int ___collectives_barrier_type(MPC_COLL_TYPE coll_type, NBC_Sched
 static inline int ___collectives_op_type( __UNUSED__ void *res_buf, const void* left_op_buf, void* right_op_buf, int count, MPI_Datatype datatype, MPI_Op op, sctk_Op mpc_op, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
   int res = MPI_SUCCESS;
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   if(coll_type != MPC_COLL_TYPE_COUNT) {
     int rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &rank);
-    mpc_common_debug_log("%sOP   |      % 4d\n", dbg_indent, rank);
+    mpc_common_debug_log("%sOP   |      % 4d\n", __debug_indentation, rank);
   }
 #endif
 
@@ -835,13 +859,13 @@ static inline int ___collectives_op_type( __UNUSED__ void *res_buf, const void* 
 static inline int ___collectives_copy_type(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
   int res = MPI_SUCCESS;
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   if(coll_type != MPC_COLL_TYPE_COUNT) {
     int rank = -1;
     _mpc_cl_comm_rank(comm, &rank);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sCOPY | % 4d (% 4d) : %p -> %p\n", dbg_indent, rank, global_rank, src, tgt);
+    mpc_common_debug_log("%sCOPY | % 4d (% 4d) : %p -> %p\n", __debug_indentation, rank, global_rank, src, tgt);
   }
 #endif
 
@@ -895,10 +919,10 @@ static inline int ___collectives_create_hardware_comm_unguided(MPI_Comm comm, in
     {
       _mpc_cl_comm_rank(hwcomm[level_num + 1],&vrank);
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
       _mpc_cl_comm_rank(hwcomm[level_num + 1], &tmp_rank);
       _mpc_cl_comm_size(hwcomm[level_num + 1], &tmp_size);
-      mpc_common_debug_log("%sRANK %d / %d | SPLIT COMM | SUBRANK %d / %d\n", dbg_indent, rank, size, tmp_rank, tmp_size);
+      mpc_common_debug_log("%sRANK %d / %d | SPLIT COMM | SUBRANK %d / %d\n", __debug_indentation, rank, size, tmp_rank, tmp_size);
 #endif
 
       level_num++;
@@ -940,10 +964,10 @@ static inline int ___collectives_create_master_hardware_comm_unguided(int vrank,
 
     PMPI_Comm_split(hwcomm[i], color, vrank, &rootcomm[i]);
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
     _mpc_cl_comm_rank(rootcomm[i], &tmp_rank);
     _mpc_cl_comm_size(rootcomm[i], &tmp_size);
-    mpc_common_debug_log("%sRANK %d / %d | SPLIT ROOT | SUBRANK %d / %d\n", dbg_indent, rank, size, tmp_rank, tmp_size);
+    mpc_common_debug_log("%sRANK %d / %d | SPLIT ROOT | SUBRANK %d / %d\n", __debug_indentation, rank, size, tmp_rank, tmp_size);
 #endif
   }
 
@@ -958,9 +982,9 @@ static inline int ___collectives_create_master_hardware_comm_unguided(int vrank,
  */
 static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info *info) {
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-  mpc_common_debug_log("%sTOPO COMM INIT CHILDS COUNT\n", dbg_indent);
-  strcat(dbg_indent, "\t");
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  mpc_common_debug_log("%sTOPO COMM INIT CHILDS COUNT\n", __debug_indentation);
+  strcat(__debug_indentation, "\t");
 #endif
 
   int rank;
@@ -1006,14 +1030,14 @@ static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info 
            mpc_common_nodebug("RANK %d | CHILD DATA COUNT [%d] [%d] = %d\n", rank, i, j, info->hardware_info_ptr->childs_data_count[i][j]);
          }
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
         char dbg_str[1024];
         sprintf(dbg_str, "RANK %d | CHILD DATA COUNT [%d] = [%d", rank, i, info->hardware_info_ptr->childs_data_count[i][0]);
         for(j = 1; j < size_master; j++) {
           sprintf(&(dbg_str[strlen(dbg_str)]), ", %d", info->hardware_info_ptr->childs_data_count[i][j]);
         }
         sprintf(&(dbg_str[strlen(dbg_str)]), "]\n");
-        mpc_common_debug_log("%s%s", dbg_indent, dbg_str);
+        mpc_common_debug_log("%s%s", __debug_indentation, dbg_str);
 #endif
 
        } else {
@@ -1025,8 +1049,8 @@ static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info 
      }
    }
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-   dbg_indent[strlen(dbg_indent) - 1] = '\0';
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+   __debug_indentation[strlen(__debug_indentation) - 1] = '\0';
 #endif
 
   return MPI_SUCCESS;
@@ -1041,9 +1065,9 @@ static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info 
  */
 static inline int ___collectives_create_swap_array(MPI_Comm comm, int root, Sched_info *info) {
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-  mpc_common_debug_log("%sTOPO COMM INIT SWAP ARRAY\n", dbg_indent);
-  strcat(dbg_indent, "\t");
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  mpc_common_debug_log("%sTOPO COMM INIT SWAP ARRAY\n", __debug_indentation);
+  strcat(__debug_indentation, "\t");
 #endif
 
   int rank, size;
@@ -1066,8 +1090,8 @@ static inline int ___collectives_create_swap_array(MPI_Comm comm, int root, Sche
     memcpy(info->hardware_info_ptr->swap_array, tmp_swap_array, size * sizeof(int));
   }
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-  dbg_indent[strlen(dbg_indent) - 1] = '\0';
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  __debug_indentation[strlen(__debug_indentation) - 1] = '\0';
 #endif
 
   return MPI_SUCCESS;
@@ -1083,9 +1107,9 @@ static inline int ___collectives_create_swap_array(MPI_Comm comm, int root, Sche
  */
 static inline int ___collectives_topo_comm_init(MPI_Comm comm, int root, int max_level, Sched_info *info) {
   
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-  mpc_common_debug_log("%sTOPO COMM INIT\n", dbg_indent);
-  strcat(dbg_indent, "\t");
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  mpc_common_debug_log("%sTOPO COMM INIT\n", __debug_indentation);
+  strcat(__debug_indentation, "\t");
 #endif
 
   int rank, size;
@@ -1110,8 +1134,8 @@ static inline int ___collectives_topo_comm_init(MPI_Comm comm, int root, int max
   int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
   ___collectives_create_master_hardware_comm_unguided(vrank, deepest_level, info);
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-  dbg_indent[strlen(dbg_indent) - 1] = '\0';
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  __debug_indentation[strlen(__debug_indentation) - 1] = '\0';
 #endif
 
   return MPI_SUCCESS;
@@ -1354,15 +1378,15 @@ int _mpc_mpi_collectives_bcast(void *buffer, int count, MPI_Datatype datatype, i
   */
 static inline int ___collectives_bcast_switch(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
     int rank = -1, size = -1;
     _mpc_cl_comm_rank(comm, &rank);
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sBCAST | %d / %d (%d)\n", dbg_indent, rank, size, global_rank);
-    strcat(dbg_indent, "\t");
+    mpc_common_debug_log("%sBCAST | %d / %d (%d)\n", __debug_indentation, rank, size, global_rank);
+    strcat(__debug_indentation, "\t");
   }
 #endif
 
@@ -1408,8 +1432,8 @@ static inline int ___collectives_bcast_switch(void *buffer, int count, MPI_Datat
       break;
   }
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-  dbg_indent[strlen(dbg_indent) - 1] = '\0';
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  __debug_indentation[strlen(__debug_indentation) - 1] = '\0';
 #endif
 
   return res; 
@@ -1873,15 +1897,15 @@ int _mpc_mpi_collectives_reduce(const void *sendbuf, void* recvbuf, int count, M
   */
 static inline int ___collectives_reduce_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
     int rank = -1, size = -1;
     _mpc_cl_comm_rank(comm, &rank);
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sREDUCE | %d / %d (%d)\n", dbg_indent, rank, size, global_rank);
-    strcat(dbg_indent, "\t");
+    mpc_common_debug_log("%sREDUCE | %d / %d (%d)\n", __debug_indentation, rank, size, global_rank);
+    strncat(__debug_indentation,"\t", DBG_INDENT_LEN - 1);
   }
 #endif
 
@@ -1935,8 +1959,8 @@ static inline int ___collectives_reduce_switch(const void *sendbuf, void* recvbu
       break;
   }
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-  dbg_indent[strlen(dbg_indent) - 1] = '\0';
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  __debug_indentation[strlen(__debug_indentation) - 1] = '\0';
 #endif
 
   return res;
@@ -2584,15 +2608,15 @@ int _mpc_mpi_collectives_allreduce(const void *sendbuf, void* recvbuf, int count
   */
 static inline int ___collectives_allreduce_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
     int rank = -1, size = -1;
     _mpc_cl_comm_rank(comm, &rank);
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sALLREDUCE | %d / %d (%d)\n", dbg_indent, rank, size, global_rank);
-    strcat(dbg_indent, "\t");
+    mpc_common_debug_log("%sALLREDUCE | %d / %d (%d)\n", __debug_indentation, rank, size, global_rank);
+    strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
 
@@ -2647,8 +2671,8 @@ static inline int ___collectives_allreduce_switch(const void *sendbuf, void* rec
       break;
   }
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-  dbg_indent[strlen(dbg_indent) - 1] = '\0';
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  __debug_indentation[strlen(__debug_indentation) - 1] = '\0';
 #endif
 
   return res;
@@ -3489,15 +3513,15 @@ int _mpc_mpi_collectives_scatter(const void *sendbuf, int sendcount, MPI_Datatyp
   */
 static inline int ___collectives_scatter_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
     int rank = -1, size = -1;
     _mpc_cl_comm_rank(comm, &rank);
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sSCATTER | %d / %d (%d)\n", dbg_indent, rank, size, global_rank);
-    strcat(dbg_indent, "\t");
+    mpc_common_debug_log("%sSCATTER | %d / %d (%d)\n", __debug_indentation, rank, size, global_rank);
+    strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
 
@@ -3538,8 +3562,8 @@ static inline int ___collectives_scatter_switch(const void *sendbuf, int sendcou
       break;
   }
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-  dbg_indent[strlen(dbg_indent) - 1] = '\0';
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  __debug_indentation[strlen(__debug_indentation) - 1] = '\0';
 #endif
 
   return res; 
@@ -4163,15 +4187,15 @@ int _mpc_mpi_collectives_scatterv(const void *sendbuf, const int *sendcounts, co
   */
 static inline int ___collectives_scatterv_switch(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
     int rank = -1, size = -1;
     _mpc_cl_comm_rank(comm, &rank);
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sSCATTERV | %d / %d (%d)\n", dbg_indent, rank, size, global_rank);
-    strcat(dbg_indent, "\t");
+    mpc_common_debug_log("%sSCATTERV | %d / %d (%d)\n", __debug_indentation, rank, size, global_rank);
+    strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
 
@@ -4193,8 +4217,8 @@ static inline int ___collectives_scatterv_switch(const void *sendbuf, const int 
       break;
   }
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-  dbg_indent[strlen(dbg_indent) - 1] = '\0';
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  __debug_indentation[strlen(__debug_indentation) - 1] = '\0';
 #endif
 
   return res; 
@@ -4547,15 +4571,15 @@ int _mpc_mpi_collectives_gather(const void *sendbuf, int sendcount, MPI_Datatype
   */
 static inline int ___collectives_gather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
     int rank = -1, size = -1;
     _mpc_cl_comm_rank(comm, &rank);
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sGATHER | %d / %d (%d)\n", dbg_indent, rank, size, global_rank);
-    strcat(dbg_indent, "\t");
+    mpc_common_debug_log("%sGATHER | %d / %d (%d)\n", __debug_indentation, rank, size, global_rank);
+    strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
 
@@ -4596,8 +4620,8 @@ static inline int ___collectives_gather_switch(const void *sendbuf, int sendcoun
       break;
   }
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-  dbg_indent[strlen(dbg_indent) - 1] = '\0';
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  __debug_indentation[strlen(__debug_indentation) - 1] = '\0';
 #endif
 
   return res; 
@@ -5210,15 +5234,15 @@ int _mpc_mpi_collectives_gatherv(const void *sendbuf, int sendcount, MPI_Datatyp
   */
 static inline int ___collectives_gatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
     int rank = -1, size = -1;
     _mpc_cl_comm_rank(comm, &rank);
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sGATHERV | %d (%d)\n", dbg_indent, rank, size, global_rank);
-    strcat(dbg_indent, "\t");
+    mpc_common_debug_log("%sGATHERV | %d (%d)\n", __debug_indentation, rank, size, global_rank);
+    strncat(__debug_indentation,"\t", DBG_INDENT_LEN - 1);
   }
 #endif
 
@@ -5240,8 +5264,8 @@ static inline int ___collectives_gatherv_switch(const void *sendbuf, int sendcou
       break;
   }
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-  dbg_indent[strlen(dbg_indent) - 1] = '\0';
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  __debug_indentation[strlen(__debug_indentation) - 1] = '\0';
 #endif
 
   return res; 
@@ -5567,15 +5591,15 @@ int _mpc_mpi_collectives_reduce_scatter_block(const void *sendbuf, void* recvbuf
   */
 static inline int ___collectives_reduce_scatter_block_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
     int rank = -1, size = -1;
     _mpc_cl_comm_rank(comm, &rank);
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sREDUCE SCATTER BLOCK | %d / %d (%d)\n", dbg_indent, rank, size, global_rank);
-    strcat(dbg_indent, "\t");
+    mpc_common_debug_log("%sREDUCE SCATTER BLOCK | %d / %d (%d)\n", __debug_indentation, rank, size, global_rank);
+    strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
 
@@ -5605,8 +5629,8 @@ static inline int ___collectives_reduce_scatter_block_switch(const void *sendbuf
       break;
   }
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-  dbg_indent[strlen(dbg_indent) - 1] = '\0';
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  __debug_indentation[strlen(__debug_indentation) - 1] = '\0';
 #endif
 
   return res;
@@ -6048,15 +6072,15 @@ int _mpc_mpi_collectives_reduce_scatter(const void *sendbuf, void* recvbuf, cons
   */
 static inline int ___collectives_reduce_scatter_switch(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
     int rank = -1, size = -1;
     _mpc_cl_comm_rank(comm, &rank);
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sREDUCE SCATTER | %d / %d (%d)\n", dbg_indent, rank, size, global_rank);
-    strcat(dbg_indent, "\t");
+    mpc_common_debug_log("%sREDUCE SCATTER | %d / %d (%d)\n", __debug_indentation, rank, size, global_rank);
+    strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
 
@@ -6086,8 +6110,8 @@ static inline int ___collectives_reduce_scatter_switch(const void *sendbuf, void
       break;
   }
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-  dbg_indent[strlen(dbg_indent) - 1] = '\0';
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  __debug_indentation[strlen(__debug_indentation) - 1] = '\0';
 #endif
 
   return res;
@@ -6482,15 +6506,15 @@ int _mpc_mpi_collectives_allgather(const void *sendbuf, int sendcount, MPI_Datat
   */
 static inline int ___collectives_allgather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
     int rank = -1, size = -1;
     _mpc_cl_comm_rank(comm, &rank);
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sALLGATHER | %d / %d (%d)\n", dbg_indent, rank, size, global_rank);
-    strcat(dbg_indent, "\t");
+    mpc_common_debug_log("%sALLGATHER | %d / %d (%d)\n", __debug_indentation, rank, size, global_rank);
+    strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
 
@@ -6539,8 +6563,8 @@ static inline int ___collectives_allgather_switch(const void *sendbuf, int sendc
       break;
   }
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-  dbg_indent[strlen(dbg_indent) - 1] = '\0';
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  __debug_indentation[strlen(__debug_indentation) - 1] = '\0';
 #endif
 
   return res; 
@@ -7091,15 +7115,15 @@ int _mpc_mpi_collectives_allgatherv(const void *sendbuf, int sendcount, MPI_Data
   */
 static inline int ___collectives_allgatherv_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
     int rank = -1, size = -1;
     _mpc_cl_comm_rank(comm, &rank);
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sALLGATHERV | %d / %d (%d)\n", dbg_indent, rank, size, global_rank);
-    strcat(dbg_indent, "\t");
+    mpc_common_debug_log("%sALLGATHERV | %d / %d (%d)\n", __debug_indentation, rank, size, global_rank);
+    strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
 
@@ -7129,8 +7153,8 @@ static inline int ___collectives_allgatherv_switch(const void *sendbuf, int send
       break;
   }
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-  dbg_indent[strlen(dbg_indent) - 1] = '\0';
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  __debug_indentation[strlen(__debug_indentation) - 1] = '\0';
 #endif
 
   return res; 
@@ -7482,15 +7506,15 @@ int _mpc_mpi_collectives_alltoall(const void *sendbuf, int sendcount, MPI_Dataty
   */
 static inline int ___collectives_alltoall_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
     int rank = -1, size = -1;
     _mpc_cl_comm_rank(comm, &rank);
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sALLTOALL | %d / %d (%d)\n", dbg_indent, rank, size, global_rank);
-    strcat(dbg_indent, "\t");
+    mpc_common_debug_log("%sALLTOALL | %d / %d (%d)\n", __debug_indentation, rank, size, global_rank);
+    strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
 
@@ -7519,8 +7543,8 @@ static inline int ___collectives_alltoall_switch(const void *sendbuf, int sendco
       break;
   }
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-  dbg_indent[strlen(dbg_indent) - 1] = '\0';
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  __debug_indentation[strlen(__debug_indentation) - 1] = '\0';
 #endif
 
   return res; 
@@ -7904,15 +7928,15 @@ int _mpc_mpi_collectives_alltoallv(const void *sendbuf, const int *sendcounts, c
   */
 static inline int ___collectives_alltoallv_switch(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
     int rank = -1, size = -1;
     _mpc_cl_comm_rank(comm, &rank);
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sALLTOALLV | %d / %d (%d)\n", dbg_indent, rank, size, global_rank);
-    strcat(dbg_indent, "\t");
+    mpc_common_debug_log("%sALLTOALLV | %d / %d (%d)\n", __debug_indentation, rank, size, global_rank);
+    strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
 
@@ -7941,8 +7965,8 @@ static inline int ___collectives_alltoallv_switch(const void *sendbuf, const int
       break;
   }
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-  dbg_indent[strlen(dbg_indent) - 1] = '\0';
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  __debug_indentation[strlen(__debug_indentation) - 1] = '\0';
 #endif
 
   return res; 
@@ -8341,15 +8365,15 @@ int _mpc_mpi_collectives_alltoallw(const void *sendbuf, const int *sendcounts, c
   */
 static inline int ___collectives_alltoallw_switch(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
     int rank = -1, size = -1;
     _mpc_cl_comm_rank(comm, &rank);
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sALLTOALLW | %d / %d (%d)\n", dbg_indent, rank, size, global_rank);
-    strcat(dbg_indent, "\t");
+    mpc_common_debug_log("%sALLTOALLW | %d / %d (%d)\n", __debug_indentation, rank, size, global_rank);
+    strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
 
@@ -8378,8 +8402,8 @@ static inline int ___collectives_alltoallw_switch(const void *sendbuf, const int
       break;
   }
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-  dbg_indent[strlen(dbg_indent) - 1] = '\0';
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  __debug_indentation[strlen(__debug_indentation) - 1] = '\0';
 #endif
 
   return res; 
@@ -8749,15 +8773,15 @@ int _mpc_mpi_collectives_scan (const void *sendbuf, void *recvbuf, int count, MP
   */
 static inline int ___collectives_scan_switch (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
     int rank = -1, size;
     _mpc_cl_comm_rank(comm, &rank);
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sSCAN | %d / %d (%d)\n", dbg_indent, rank, size, global_rank);
-    strcat(dbg_indent, "\t");
+    mpc_common_debug_log("%sSCAN | %d / %d (%d)\n", __debug_indentation, rank, size, global_rank);
+    strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
 
@@ -8782,8 +8806,8 @@ static inline int ___collectives_scan_switch (const void *sendbuf, void *recvbuf
       break;
   }
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-  dbg_indent[strlen(dbg_indent) - 1] = '\0';
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  __debug_indentation[strlen(__debug_indentation) - 1] = '\0';
 #endif
 
   return res;
@@ -9150,14 +9174,14 @@ int _mpc_mpi_collectives_exscan (const void *sendbuf, void *recvbuf, int count, 
   */
 static inline int ___collectives_exscan_switch (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
     int rank = -1, size;
     _mpc_cl_comm_rank(comm, &rank);
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sEXSCAN | %d / %d (%d)\n", dbg_indent, rank, size, global_rank);
+    mpc_common_debug_log("%sEXSCAN | %d / %d (%d)\n", __debug_indentation, rank, size, global_rank);
   }
 #endif
 
@@ -9520,15 +9544,15 @@ int _mpc_mpi_collectives_barrier (MPI_Comm comm) {
   */
 static inline int ___collectives_barrier_switch (MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
     int rank = -1, size;
     _mpc_cl_comm_rank(comm, &rank);
     _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sBARRIER | %d / %d (%d)\n", dbg_indent, rank, size, global_rank);
-    strcat(dbg_indent, "\t");
+    mpc_common_debug_log("%sBARRIER | %d / %d (%d)\n", __debug_indentation, rank, size, global_rank);
+    strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
   
@@ -9549,8 +9573,8 @@ static inline int ___collectives_barrier_switch (MPI_Comm comm, MPC_COLL_TYPE co
       break;
   }
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-  dbg_indent[strlen(dbg_indent) - 1] = '\0';
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  __debug_indentation[strlen(__debug_indentation) - 1] = '\0';
 #endif
 
   return res;

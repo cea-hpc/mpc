@@ -17754,7 +17754,7 @@ int PMPI_Init(int *argc, char ***argv)
 
 
 
-  global_allow_topo();
+  _mpc_mpi_coll_allow_topological_comm();
 
 	MPI_HANDLE_RETURN_VAL(res, MPI_COMM_WORLD);
 }
