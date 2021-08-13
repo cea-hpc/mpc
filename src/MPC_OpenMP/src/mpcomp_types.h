@@ -667,7 +667,7 @@ typedef struct  mpc_omp_task_pqueue_s
 {
     /* the tree head */
     mpc_omp_task_pqueue_node_t * root;
-
+    
     /* the tree lock */
     mpc_common_spinlock_t lock;
 

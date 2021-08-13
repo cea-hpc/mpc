@@ -840,12 +840,12 @@ static inline void __read_env_variables()
         mpc_common_debug_log("\n");
 
         mpc_common_debug_log("\tTasks fiber");
-# if MPCOMP_TASK_COMPILE_FIBER
+# if MPC_OMP_TASK_COMPILE_FIBER
         mpc_common_debug_log("\t\tCompiled=yes");
-        mpc_common_debug_log("\t\tEnabled=%s", MPCOMP_TASK_FIBER_ENABLED ? "yes" : "no");
-# else /* MPCOMP_TASK_COMPILE_FIBER */
+        mpc_common_debug_log("\t\tEnabled=%s", MPC_OMP_TASK_FIBER_ENABLED ? "yes" : "no");
+# else /* MPC_OMP_TASK_COMPILE_FIBER */
         mpc_common_debug_log("\t\tCompiled=no");
-# endif /* MPCOMP_TASK_COMPILE_FIBER */
+# endif /* MPC_OMP_TASK_COMPILE_FIBER */
         mpc_common_debug_log("\n");
         mpc_common_debug_log("\tOMP_SCHEDULE %d", OMP_SCHEDULE );
 
