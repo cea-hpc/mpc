@@ -518,9 +518,9 @@ top_srcdir = @top_srcdir@
 #                                                                      #
 ########################################################################
 mpc_headerdir = $(pkgincludedir)
-mpc_header_HEADERS = ./include/mpc_omp.h ./include/omp.h \
-					./include/mpcomp_abi.h ./include/omp_abi.h \
-                    ./include/ompt.h ./include/omp-tools.h
+mpc_header_HEADERS = ./include/omp_abi.h ./include/mpc_omp_abi.h \
+					./include/mpc_omp.h include/mpc_omp_task_property.h include/mpc_omp_task_trace.h \
+					./include/omp.h ./include/ompt.h ./include/omp-tools.h
 
 SUBDIRS = src
 all: all-recursive
