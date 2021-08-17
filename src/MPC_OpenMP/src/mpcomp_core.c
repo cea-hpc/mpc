@@ -1221,16 +1221,16 @@ void _mpc_omp_in_order_scheduler( mpc_omp_thread_t *thread )
 			not_implemented();
 	}
 
-#if OMPT_SUPPORT && MPC_OMPT_HAS_FRAME_SUPPORT
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     /* Record and reset current frame infos */
     mpc_omp_ompt_frame_info_t prev_frame_infos = _mpc_omp_ompt_frame_reset_infos();
 
-    _mpc_omp_ompt_frame_set_exit( MPC_OMPT_GET_FRAME_ADDRESS );
+    _mpc_omp_ompt_frame_set_exit( MPCOMPT_GET_FRAME_ADDRESS );
 #endif /* OMPT_SUPPORT */
 
 	thread->info.func( thread->info.shared );
 
-#if OMPT_SUPPORT && MPC_OMPT_HAS_FRAME_SUPPORT
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     /* Restore previous frame infos */
     _mpc_omp_ompt_frame_set_infos( &prev_frame_infos );
 #endif /* OMPT_SUPPORT */

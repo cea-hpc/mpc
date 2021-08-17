@@ -10,7 +10,7 @@ def main():
     src = sys.argv[1]
     dst = sys.argv[2]
     with open(dst, "w") as f:
-        (_, cte, gg) = parse_traces(src)
+        (stats, cte, gg, g) = parse_traces(src)
         print("writing `{}` to disk...".format(dst))
         json.dump(cte, f)
         f.write("\n")
