@@ -388,10 +388,10 @@ int mpc_omp_get_num_threads(void) { return omp_get_num_threads(); }
 int mpc_omp_get_thread_num(void) { return omp_get_thread_num(); }
 
 /**
- *  * The omp fulfill event routine
- *   * Warning: this does not respect the standard
- *    *  `omp_fulfill_event(omp_event_handle_t handle)`
- *     */
+ * The omp fulfill event routine
+ * Warning: this does not respect the standard
+ * `omp_fulfill_event(omp_event_handle_t handle)`
+ */
 void
 mpc_omp_fulfill_event(mpc_omp_event_handle_t * handle)
 {
@@ -419,3 +419,32 @@ mpc_omp_in_explicit_task(void)
     return 1;
 }
 
+/* initialize an event handler */
+void
+mpc_omp_event_handle_init(mpc_omp_event_handle_t * event, mpc_omp_event_t type)
+{
+    OPA_store_int(&(event->status), MPC_OMP_EVENT_HANDLE_STATUS_INIT);
+    event->attr = NULL;
+    event->type = MPC_OMP_EVENT_NULL;
+    mpc_common_spinlock_init(&(event->lock), 0);
+
+    switch (type)
+    {
+        case (MPC_OMP_EVENT_TASK_BLOCK):
+        {
+            mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+            assert(thread);
+
+            mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+            assert(task);
+
+            event->type = type;
+            event->attr = (void *) task;
+            break ;
+        }
+        default:
+        {
+            not_implemented();
+        }
+    }
+}

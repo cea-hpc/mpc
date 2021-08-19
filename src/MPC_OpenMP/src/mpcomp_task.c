@@ -81,12 +81,12 @@ __thread_task_coherency(mpc_omp_task_t * task)
     if (task)
     {
         /* tied-ness checks */
-        int check = !mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_STARTED) || mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_UNTIED) || mpc_omp_tls == task->thread;
+        int check = !task->statuses.started || mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_UNTIED) || mpc_omp_tls == task->thread;
 
         if (!check)
         {
-            printf("%d %d %d\n",
-                mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_STARTED),
+            fprintf(stderr, "%d %d %d\n",
+                task->statuses.started,
                 mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_UNTIED),
                 mpc_omp_tls == task->thread);
         }
@@ -853,56 +853,6 @@ __task_pqueue_push(mpc_omp_task_pqueue_t * pqueue, mpc_omp_task_t * task)
  * TASK WEIGHT  *
  ****************/
 
-# if 0
-# define ABS(X)     ((X) < 0 ? -(X) : (X))
-# define MIN(X, Y)  (((X) < (Y)) ? (X) : (Y))
-# define MAX(X, Y)  (((X) < (Y)) ? (Y) : (X))
-
-static float
-__task_profile_distance(mpc_omp_task_t * task, mpc_omp_task_profile_t * profile)
-{
-    int npred = OPA_load_int(&(task->dep_node.npredecessors));
-    int nsucc = OPA_load_int(&(task->dep_node.nsuccessors));
-
-    int max_npred = MAX(npred, profile->npredecessors);
-    int max_nsucc = MAX(nsucc, profile->nsuccessors);
-
-    return 
-        0.2f * ABS((int)task->size - (int)profile->size) / MAX(task->size, profile->size) + 
-        0.2f * ((task->property & MPC_OMP_TASK_PROP_PROFILE_MASK) == (profile->property & MPC_OMP_TASK_PROP_PROFILE_MASK) ? 0.0f : 1.0f) +
-        0.2f * (max_npred ? ABS(npred - profile->npredecessors) / max_npred : 0.0f) +
-        0.2f * (max_nsucc ? ABS(nsucc - profile->nsuccessors)   / max_nsucc : 0.0f) +
-        0.2f * (task->parent->uid == profile->parent_uid ? 0.0f : 1.0f)
-    ;
-}
-
-/**
- * Return the minimum distance between the task and an existing profile.
- * N.B: distance is normalized (in [0.0, 1.0])
- * 0.0 means the 2 profiles matches absolutely
- * 1.0 means they dont
- */
-static float
-__task_profile_min_distance(mpc_omp_task_t * task)
-{
-    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
-    assert(thread);
-
-    float distance = 1.0;
-    mpc_omp_task_profile_t * profile = (mpc_omp_task_profile_t *) OPA_load_ptr(&(thread->instance->task_infos.profiles.head));
-    while (profile)
-    {
-        distance = MIN(distance, __task_profile_distance(task, profile));
-        profile = profile->next;
-    }
-    return distance;
-}
-
-# undef ABS
-# undef MAX
-# undef MIN
-# endif
-
 /**
  * Return 1 if given task profile alraedy was registered
  */
@@ -1075,7 +1025,7 @@ __task_delete_hard(mpc_omp_task_t * task)
 static void
 __task_finalize(mpc_omp_task_t * task)
 {
-    assert(mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_COMPLETED));
+    assert(task->statuses.completed);
 
     _mpc_omp_task_unref_parent_task(task);
 
@@ -2553,10 +2503,10 @@ __task_run_as_function(mpc_omp_task_t * task)
 
     ___thread_bind_task(thread, task, &(task->icvs));
 
-    mpc_omp_task_set_property(&(task->property), MPC_OMP_TASK_PROP_STARTED);
+    task->statuses.started = true;
     MPC_OMP_TASK_TRACE_SCHEDULE(task);
     task->func(task->data);
-    mpc_omp_task_set_property(&(task->property), MPC_OMP_TASK_PROP_COMPLETED);
+    task->statuses.completed = true;
     MPC_OMP_TASK_TRACE_SCHEDULE(task);
 
     ___thread_bind_task(thread, curr, &(curr->icvs));
@@ -2576,9 +2526,9 @@ __task_start_routine(__UNUSED__ void * unused)
 
     mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
 
-    mpc_omp_task_set_property(&(task->property), MPC_OMP_TASK_PROP_STARTED);
+    task->statuses.started = true;
     task->func(task->data);
-    mpc_omp_task_set_property(&(task->property), MPC_OMP_TASK_PROP_COMPLETED);
+    task->statuses.completed = true;
 
     sctk_setcontext_no_tls(task->fiber->exit);
 }
@@ -2627,35 +2577,35 @@ __task_run_with_fiber(mpc_omp_task_t * task)
 
     if (task->fiber == NULL)
     {
-        assert(!mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_STARTED));
+        assert(!task->statuses.started);
         task->fiber = __thread_generate_new_task_fiber(thread);
     }
 
     ___thread_bind_task(thread, task, &(task->icvs));
     task->fiber->exit = &(thread->task_infos.mctx);
 
-    MPC_OMP_TASK_TRACE_SCHEDULE(task);
 
-    sctk_mctx_t * mctx = mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_STARTED) ? &(task->fiber->current) : &(task->fiber->initial);
+    sctk_mctx_t * mctx = task->statuses.started ? &(task->fiber->current) : &(task->fiber->initial);
+
+    MPC_OMP_TASK_TRACE_SCHEDULE(task);
     sctk_swapcontext_no_tls(task->fiber->exit, mctx);
     MPC_OMP_TASK_TRACE_SCHEDULE(task);
     
     ___thread_bind_task(thread, curr, &(curr->icvs));
     
-    if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_COMPLETED))
+    if (task->statuses.completed)
     {
         __task_finalize(task);
     }
     else
     {
-        if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_BLOCKED))
+        /* The task yielded and blocked, unlock it associated event spinlock
+         * see `mpc_omp_task_block()` */
+        if (thread->task_infos.spinlock_to_unlock)
         {
-            /* add callbackhronous polling function if set */
-            if (thread->task_infos.callback_to_push)
-            {
-                mpc_omp_callback(thread->task_infos.callback_to_push);
-                thread->task_infos.callback_to_push = NULL;
-            }
+            task->statuses.blocked = true;
+            mpc_common_spinlock_unlock(thread->task_infos.spinlock_to_unlock);
+            thread->task_infos.spinlock_to_unlock = NULL;
         }
         else
         {
@@ -2667,6 +2617,8 @@ __task_run_with_fiber(mpc_omp_task_t * task)
             not_implemented();
         }
     }
+
+    /* continue what the thread was doing */
 }
 
 # endif /* MPC_OMP_TASK_COMPILE_FIBER */
@@ -2912,10 +2864,13 @@ __thread_requeue_task(mpc_omp_task_t * task)
     __task_pqueue_push(pqueue, task);
 }
 
+/* Warning : a task may unblock before blocking
+ * Note that while only a single thread may block a task at a time,
+ * multiple threads may unblock the same task concurrently */
 void
 mpc_omp_task_unblock(mpc_omp_event_handle_t * event)
 {
-    assert(MPC_OMP_TASK_FIBER_ENABLED);
+    assert(event);
     assert(event->type & MPC_OMP_EVENT_TASK_BLOCK);
 
     mpc_omp_thread_t * thread = __thread_task_coherency(NULL);
@@ -2923,79 +2878,124 @@ mpc_omp_task_unblock(mpc_omp_event_handle_t * event)
 
     mpc_omp_task_t * task = (mpc_omp_task_t *) event->attr;
     assert(task);
-    assert(mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_BLOCKED));
 
-    /* the event is fulfilled */
-    event->type = event->type & ~(MPC_OMP_EVENT_TASK_BLOCK);
-    event->attr = NULL;
-
-    /* mark the task as unblocked */
-    mpc_omp_task_unset_property(&(task->property), MPC_OMP_TASK_PROP_BLOCKED);
-    mpc_omp_task_set_property(&(task->property), MPC_OMP_TASK_PROP_UNBLOCKED);
-    OPA_store_int(&(task->dep_node.status), MPC_OMP_TASK_DEP_TASK_READY);
-
-    /* remove the task from the blocked list */
-    mpc_omp_task_list_t * list = &(thread->instance->task_infos.blocked_tasks);
-    mpc_common_spinlock_lock(&(list->lock));
+    /* if the task unblocked before blocking, there is nothing to do */
+    if (OPA_cas_int(
+                &(event->status),
+                MPC_OMP_EVENT_HANDLE_STATUS_INIT,
+                MPC_OMP_EVENT_HANDLE_STATUS_UNBLOCKED) == MPC_OMP_EVENT_HANDLE_STATUS_INIT)
     {
-        __task_list_remove(list, task);
+        /* nothing to do, task unblocked before blocking */
     }
-    mpc_common_spinlock_unlock(&(list->lock));
-
-    /* if task context was suspended */
-    if (MPC_OMP_TASK_FIBER_ENABLED &&
-        mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_HAS_FIBER))
+    else
     {
-        /* the task can now be re-queued */
-        __thread_requeue_task(task);
+        assert(
+            OPA_load_int(&(event->status)) == MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED ||
+            OPA_load_int(&(event->status)) == MPC_OMP_EVENT_HANDLE_STATUS_UNBLOCKED
+        );
+
+        if (OPA_cas_int(
+                    &(event->status),
+                    MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED,
+                    MPC_OMP_EVENT_HANDLE_STATUS_UNBLOCKED) == MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED)
+        {
+            /* remove the task from the blocked list */
+            mpc_omp_task_list_t * list = &(thread->instance->task_infos.blocked_tasks);
+            mpc_common_spinlock_lock(&(list->lock));
+            {
+                if (task->statuses.in_blocked_list)
+                {
+                    __task_list_remove(list, task);
+                    task->statuses.in_blocked_list = false;
+                }
+            }
+            mpc_common_spinlock_unlock(&(list->lock));
+
+            /* if the task has a fiber, check for requeue */
+            if (MPC_OMP_TASK_FIBER_ENABLED && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_HAS_FIBER))
+            {
+                mpc_common_spinlock_lock(&(event->lock));
+                {
+                    if (task->statuses.blocked)
+                    {
+                        __thread_requeue_task(task);
+                        task->statuses.blocked = false;
+                    }
+                    task->statuses.unblocked = true;
+                }
+                mpc_common_spinlock_unlock(&(event->lock));
+            }
+            /* otherwise, it will be resumed by it suspending threads once ready */
+            else
+            {
+                /* nothing to do */
+            }
+        }
+        else
+        {
+            /* nothing to do, the task is already being unblocked by another thread */
+        }
     }
 }
 
-TODO("The callback function may unblock the task before it is actually suspended. This is a race condition issue that must be fixed.");
+/* Warning: a task may unblock before it was actually suspended
+ * Note that only the executing thread may block the task,
+ * so only 1 thread may block the same task at a time */
 void
-mpc_omp_task_block(mpc_omp_event_handle_t * event, mpc_omp_callback_t * callback)
+mpc_omp_task_block(mpc_omp_event_handle_t * event)
 {
-    mpc_omp_thread_t * thread = __thread_task_coherency(NULL);
-    assert(thread);
+    assert(event);
 
-    mpc_omp_task_t * curr = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
-    assert(curr);
-
-    if (event)
+    /* if the task did not unblock */
+    if (OPA_cas_int(
+        &(event->status),
+        MPC_OMP_EVENT_HANDLE_STATUS_INIT,
+        MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED) == MPC_OMP_EVENT_HANDLE_STATUS_INIT)
     {
-        event->type = event->type | MPC_OMP_EVENT_TASK_BLOCK;
-        event->attr = (void *) curr;
-    }
 
-    mpc_omp_task_set_property(&(curr->property), MPC_OMP_TASK_PROP_BLOCKED);
-    OPA_store_int(&(curr->dep_node.status), MPC_OMP_TASK_DEP_TASK_NOT_READY);
+        mpc_omp_thread_t * thread = __thread_task_coherency(NULL);
+        assert(thread);
 
-    /* add the task to the blocked list */
-    mpc_omp_task_list_t * list = &(thread->instance->task_infos.blocked_tasks);
-    mpc_common_spinlock_lock(&(list->lock));
-    {
-        __task_list_push(list, curr);
-    }
-    mpc_common_spinlock_unlock(&(list->lock));
+        mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+        assert(task);
 
-    /* if task context can be suspended, return to parent context */
-    if (MPC_OMP_TASK_FIBER_ENABLED &&
-        mpc_omp_task_property_isset(curr->property, MPC_OMP_TASK_PROP_HAS_FIBER))
-    {
-        thread->task_infos.callback_to_push = callback;  
-        __taskyield_return();
-    }
-    /* otherwise, busy-loop until unblock */
-    else
-    {
-        /* register the callback function if any */
-        if (callback) mpc_omp_callback(callback);
-        while (OPA_load_int(&(curr->dep_node.status)) != MPC_OMP_TASK_DEP_TASK_READY)
+        /* add the task to the blocked list */
+        mpc_omp_task_list_t * list = &(thread->instance->task_infos.blocked_tasks);
+        mpc_common_spinlock_lock(&(list->lock));
         {
-            _mpc_omp_task_schedule();
+            if (OPA_load_int(&(event->status)) == MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED)
+            {
+                task->statuses.in_blocked_list = true;
+                __task_list_push(list, task);
+            }
+        }
+        mpc_common_spinlock_unlock(&(list->lock));
+
+        /* if the task has it own fiber, switch to parent' fiber */
+        if (MPC_OMP_TASK_FIBER_ENABLED && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_HAS_FIBER))
+        {
+            mpc_common_spinlock_lock(&(event->lock));
+            {
+                if (OPA_load_int(&(event->status)) == MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED)
+                {
+                    thread->task_infos.spinlock_to_unlock = &(event->lock);
+                    __taskyield_return();
+                }
+                else
+                {
+                    mpc_common_spinlock_unlock(&(event->lock));
+                }
+            }
+        }
+        /* otherwise, busy-loop until unblock */
+        else
+        {
+            while (OPA_load_int(&(event->status)) == MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED)
+            {
+                _mpc_omp_task_schedule();
+            }
         }
     }
-
 }
 
 # endif /* MPC_OMP_TASK_COMPILE_FIBER */
@@ -3014,7 +3014,7 @@ __taskyield_stack(void)
  * Called when encountering a taskyield construct
  * This is a scheduling point.
  */
-void
+    void
 _mpc_omp_task_yield(void)
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;

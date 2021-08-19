@@ -47,6 +47,14 @@ extern "C" {
         MPC_OMP_EVENT_MAX
     }               mpc_omp_event_t;
 
+    /* event status */
+    typedef enum    mpc_omp_event_handle_status_e
+    {
+        MPC_OMP_EVENT_HANDLE_STATUS_INIT,
+        MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED,
+        MPC_OMP_EVENT_HANDLE_STATUS_UNBLOCKED
+    }               mpc_omp_event_handle_status_t;
+
     /**
      * OpenMP specificates that :
      * > The type omp_event_handle_t, which must be an implementation-defined enum type
@@ -55,10 +63,16 @@ extern "C" {
      */
     typedef struct  mpc_omp_event_handle_s
     {
-        mpc_omp_event_t type;   /* the event type */
         void            * attr; /* the event attributes */
+        OPA_int_t       lock;   /* a spinlock */
+        mpc_omp_event_t type;   /* the event type */
+        OPA_int_t       status; /* the handle status */
     }               mpc_omp_event_handle_t;
 
+    /* initialize an event handler */
+    void mpc_omp_event_handle_init(mpc_omp_event_handle_t * event, mpc_omp_event_t type);
+
+    /* fulfill an mpc-omp event handler */
     void mpc_omp_fulfill_event(mpc_omp_event_handle_t * handle);
 
     /** Dump the openmp thread tree */
@@ -134,7 +148,7 @@ extern "C" {
     void mpc_omp_task_extra(char * label, int extra_clauses);
 
     /** Taskyield which blocks on event */
-    void mpc_omp_task_block(mpc_omp_event_handle_t * event, mpc_omp_callback_t * callback);
+    void mpc_omp_task_block(mpc_omp_event_handle_t * event);
     void mpc_omp_task_unblock(mpc_omp_event_handle_t * event);
 
     /* task trace calls */

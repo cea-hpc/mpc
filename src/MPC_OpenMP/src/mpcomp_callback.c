@@ -63,6 +63,7 @@ _mpc_omp_callback_run(mpc_omp_callback_when_t when)
                 }
                 default:
                 {
+                    fprintf(stderr, "callback->repeat=%d\n", callback->repeat);
                     not_implemented();
                     break ;
                 }

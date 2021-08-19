@@ -37,26 +37,21 @@
 
 /* MPC_OMP bit flags */
 # define MPC_OMP_TASK_PROP_UNDEFERRED    (1 << 0)
-# define MPC_OMP_TASK_PROP_UNTIED        (1 << 1)
+# define MPC_OMP_TASK_PROP_UNTIED        (1 << 1)  /* if the task is untied */
 # define MPC_OMP_TASK_PROP_EXPLICIT      (1 << 2)
 # define MPC_OMP_TASK_PROP_IMPLICIT      (1 << 3)
 # define MPC_OMP_TASK_PROP_INITIAL       (1 << 4)
 # define MPC_OMP_TASK_PROP_INCLUDED      (1 << 5)
-# define MPC_OMP_TASK_PROP_FINAL         (1 << 6)
-# define MPC_OMP_TASK_PROP_STARTED       (1 << 7)
-# define MPC_OMP_TASK_PROP_YIELDED       (1 << 8)
-# define MPC_OMP_TASK_PROP_COMPLETED     (1 << 9)
-# define MPC_OMP_TASK_PROP_MERGED        (1 << 10)
-# define MPC_OMP_TASK_PROP_MERGEABLE     (1 << 11)
-# define MPC_OMP_TASK_PROP_DEPEND        (1 << 12)
-# define MPC_OMP_TASK_PROP_PRIORITY      (1 << 13)
-# define MPC_OMP_TASK_PROP_UP            (1 << 14)
-# define MPC_OMP_TASK_PROP_GRAINSIZE     (1 << 15)
-# define MPC_OMP_TASK_PROP_IF            (1 << 16)
-# define MPC_OMP_TASK_PROP_NOGROUP       (1 << 17)
-# define MPC_OMP_TASK_PROP_BLOCKED       (1 << 18)
-# define MPC_OMP_TASK_PROP_UNBLOCKED     (1 << 19)
-# define MPC_OMP_TASK_PROP_HAS_FIBER     (1 << 20)
+# define MPC_OMP_TASK_PROP_FINAL         (1 << 6)  /* if the task is final */
+# define MPC_OMP_TASK_PROP_MERGED        (1 << 7)
+# define MPC_OMP_TASK_PROP_MERGEABLE     (1 << 8)
+# define MPC_OMP_TASK_PROP_DEPEND        (1 << 9)
+# define MPC_OMP_TASK_PROP_PRIORITY      (1 << 10)
+# define MPC_OMP_TASK_PROP_UP            (1 << 11)
+# define MPC_OMP_TASK_PROP_GRAINSIZE     (1 << 12)
+# define MPC_OMP_TASK_PROP_IF            (1 << 13)
+# define MPC_OMP_TASK_PROP_NOGROUP       (1 << 14)
+# define MPC_OMP_TASK_PROP_HAS_FIBER     (1 << 15) /* if the task has it own fiber */
 
  /* the properties to consider when comparing to a critical task */
 # define MPC_OMP_TASK_PROP_PROFILE_MASK \

@@ -34,18 +34,23 @@ __request_progress(mpc_lowcomm_request_omp_progress_t * infos)
 static inline void
 ___task_block(int n, MPI_Request * reqs)
 {
-    /* TODO : maybe add a MPI_Test before suspending */
+    /* test once before suspending */
+    int completed;
+    MPI_Testall(n, reqs, &completed, MPI_STATUSES_IGNORE);
+    if (completed)
+    {
+        return ;
+    }
 
-    /* suspend the task until associated requests terminated */
+    /* prepare the communication progression callback */
     mpc_omp_event_handle_t event;
-    memset(&event, 0, sizeof(mpc_omp_event_handle_t));
+    mpc_omp_event_handle_init(&event, MPC_OMP_EVENT_TASK_BLOCK);
 
     mpc_lowcomm_request_omp_progress_t infos;
     infos.event = &event;
     infos.req   = reqs;
     infos.n     = n;
 
-    /* create the progression callback */
     mpc_omp_callback_t callback;
     callback.func      = (int (*)(void *)) __request_progress;
     callback.data      = &infos;
@@ -53,11 +58,11 @@ ___task_block(int n, MPI_Request * reqs)
     callback.repeat    = MPC_OMP_CALLBACK_REPEAT_RETURN;
     callback.n         = 0;
 
-    // TODO : split this in 2 calls (CARE FOR RACE CONDITION!)
-    // mpc_omp_callback(&callback);
-    // mpc_omp_task_block(&event);
+    /* register the progression callback */
+    mpc_omp_callback(&callback);
 
-    mpc_omp_task_block(&event, &callback);
+    /* block current task until the associated event is fulfilled */
+    mpc_omp_task_block(&event);
 }
 
 static inline void

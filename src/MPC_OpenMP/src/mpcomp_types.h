@@ -519,6 +519,16 @@ typedef struct  mpc_omp_task_dep_htable_s
 
 }               mpc_omp_task_dep_htable_t;
 
+/** the task statuses */
+typedef struct  mpc_omp_task_statuses_s
+{
+    bool started;           /* if the task started */
+    bool completed;         /* if the task completed */
+    bool blocked;           /* if the task is blocked */
+    bool unblocked;         /* if the task was unblocked */
+    bool in_blocked_list;   /* if the task is in a blocked list */
+}               mpc_omp_task_statuses_t;
+
 /** OpenMP task data structure */
 typedef struct  mpc_omp_task_s
 {
@@ -533,6 +543,9 @@ typedef struct  mpc_omp_task_s
 
     /* total size of the task (sizeof(mpcomp_task_t) + data_size) */
     unsigned int size;
+
+    /* task statuses */
+    mpc_omp_task_statuses_t statuses;
 
     /* number of existing child for this task */
     OPA_int_t children_count;
@@ -710,9 +723,9 @@ typedef struct  mpc_omp_task_thread_infos_s
     void* opaque;                       /* use mcslock buffered */
 
 # if MPC_OMP_TASK_COMPILE_FIBER
-    mpc_omp_callback_t * callback_to_push;  /* async callback to add to the runtime */
-    mpc_omp_task_fiber_t * fiber;           /* the fiber to use when running a new task */
-    sctk_mctx_t mctx;                       /* the thread context before the task started */
+    mpc_common_spinlock_t * spinlock_to_unlock; /* a spinlock to be unlocked, see mpc_omp_task_block() */
+    mpc_omp_task_fiber_t * fiber;               /* the fiber to use when running a new task */
+    sctk_mctx_t mctx;                           /* the thread context before the task started */
 # endif /* MPC_OMP_TASK_COMPILE_FIBER */
 
 # if MPC_OMP_TASK_USE_RECYCLERS
