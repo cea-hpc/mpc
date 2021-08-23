@@ -76,14 +76,21 @@ static inline char *__debug_print_info( char *buffer )
 /*Abort                                                               */
 /**********************************************************************/
 #ifdef MPC_Launch
-	void mpc_launch_pmi_abort();
-#endif
+void mpc_launch_pmi_abort();
+
+void mpc_common_debug_abort( void )
+{
+	mpc_common_debug_error("######## Program will now abort ########");
+	mpc_launch_pmi_abort();
+}
+
+#else
 void mpc_common_debug_abort( void )
 {
 	mpc_common_debug_error("######## Program will now abort ########");
 	abort();
 }
-
+#endif
 
 /**********************************************************************/
 /*Messages                                                            */
