@@ -519,16 +519,6 @@ typedef struct  mpc_omp_task_dep_htable_s
 
 }               mpc_omp_task_dep_htable_t;
 
-/** the task statuses */
-typedef struct  mpc_omp_task_statuses_s
-{
-    bool started;           /* if the task started */
-    bool completed;         /* if the task completed */
-    bool blocked;           /* if the task is blocked */
-    bool unblocked;         /* if the task was unblocked */
-    bool in_blocked_list;   /* if the task is in a blocked list */
-}               mpc_omp_task_statuses_t;
-
 /** OpenMP task data structure */
 typedef struct  mpc_omp_task_s
 {

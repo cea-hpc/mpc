@@ -166,6 +166,7 @@ __task_trace(mpc_omp_task_t * task, mpc_omp_task_trace_record_type_t type)
     record->properties      = task->property;
     record->predecessors    = OPA_load_int(&(task->dep_node.ref_predecessors));
     record->schedule_id     = task->schedule_id;
+    record->statuses        = task->statuses;
 
     __node_insert(node);
 }

@@ -1,5 +1,3 @@
-TODO("move this file to runtime only scope");
-
 # ifndef __MPC_OMP_TASK_TRACE_H__
 #  define __MPC_OMP_TASK_TRACE_H__
 
@@ -10,6 +8,7 @@ TODO("move this file to runtime only scope");
 
 # include "mpc_common_recycler.h"
 # include "mpc_omp.h"
+# include "mpc_omp_task_property.h"
 
 /**
  *  *  A trace writer (1 per thread)
@@ -84,6 +83,10 @@ typedef struct  mpc_omp_task_trace_record_schedule_s
 
     /* number of tasks that were scheduled before this one */
     int schedule_id;
+
+    /* the task statuses */
+    mpc_omp_task_statuses_t statuses;
+
 }               mpc_omp_task_trace_record_schedule_t;
 
 /* task creation record is the same as schedule one */

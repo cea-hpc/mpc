@@ -2584,7 +2584,6 @@ __task_run_with_fiber(mpc_omp_task_t * task)
     ___thread_bind_task(thread, task, &(task->icvs));
     task->fiber->exit = &(thread->task_infos.mctx);
 
-
     sctk_mctx_t * mctx = task->statuses.started ? &(task->fiber->current) : &(task->fiber->initial);
 
     MPC_OMP_TASK_TRACE_SCHEDULE(task);
@@ -2604,6 +2603,7 @@ __task_run_with_fiber(mpc_omp_task_t * task)
         if (thread->task_infos.spinlock_to_unlock)
         {
             task->statuses.blocked = true;
+            task->statuses.blocking = false;
             mpc_common_spinlock_unlock(thread->task_infos.spinlock_to_unlock);
             thread->task_infos.spinlock_to_unlock = NULL;
         }
@@ -2916,12 +2916,12 @@ mpc_omp_task_unblock(mpc_omp_event_handle_t * event)
             {
                 mpc_common_spinlock_lock(&(event->lock));
                 {
+                    task->statuses.unblocked = true;
                     if (task->statuses.blocked)
                     {
-                        __thread_requeue_task(task);
                         task->statuses.blocked = false;
+                        __thread_requeue_task(task);
                     }
-                    task->statuses.unblocked = true;
                 }
                 mpc_common_spinlock_unlock(&(event->lock));
             }
@@ -2979,6 +2979,7 @@ mpc_omp_task_block(mpc_omp_event_handle_t * event)
                 if (OPA_load_int(&(event->status)) == MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED)
                 {
                     thread->task_infos.spinlock_to_unlock = &(event->lock);
+                    task->statuses.blocking = true;
                     __taskyield_return();
                 }
                 else

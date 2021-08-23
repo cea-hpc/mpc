@@ -20,26 +20,31 @@ MPC_OMP_TASK_PROP = {
         'INITIAL':      (1 << 4),
         'INCLUDED':     (1 << 5),
         'FINAL':        (1 << 6),
-        'STARTED':      (1 << 7),
-        'YIELDED':      (1 << 8),
-        'COMPLETED':    (1 << 9),
-        'MERGED':       (1 << 10),
-        'MERGEABLE':    (1 << 11),
-        'DEPEND':       (1 << 12),
-        'PRIORITY':     (1 << 13),
-        'UP':           (1 << 14),
-        'GRAINSIZE':    (1 << 15),
-        'IF':           (1 << 16),
-        'NOGROUP':      (1 << 17),
-        'BLOCKED':      (1 << 18),
-        'UNBLOCKED':    (1 << 19)
+        'MERGED':       (1 << 7),
+        'MERGEABLE':    (1 << 8),
+        'DEPEND':       (1 << 9),
+        'PRIORITY':     (1 << 10),
+        'UP':           (1 << 11),
+        'GRAINSIZE':    (1 << 12),
+        'IF':           (1 << 13),
+        'NOGROUP':      (1 << 14),
+        'HAS_FIBER':    (1 << 15)
 }
+
+MPC_OMP_TASK_STATUSES = [
+    'STARTED',
+    'COMPLETED',
+    'BLOCKING',
+    'BLOCKED',
+    'UNBLOCKED',
+    'IN_BLOCKED_LIST'
+]
 
 MPC_OMP_TASK_LABEL_MAX_LENGTH = 64
 
 RECORD_GENERIC_SIZE         = 16
 RECORD_DEPENDENCY_SIZE      = 24
-RECORD_SCHEDULE_SIZE        = 104
+RECORD_SCHEDULE_SIZE        = 112
 RECORD_ASYNC_SIZE           = 24
 RECORD_FAMINE_OVERLAP_SIZE  = 24
 
@@ -202,7 +207,6 @@ def parse_traces(traces):
 
             # task scheduling
             elif isinstance(record, RecordSchedule):
-
                 # append schedule time to the granularity tracker list
                 uuid = '{}-{}'.format(pid, record.uid)
                 if uuid not in granularities:
@@ -210,7 +214,7 @@ def parse_traces(traces):
                 granularities[uuid].append(record.time)
 
                 # update lists
-                properties = task_properties_to_array(record.properties)
+                properties = record_to_properties_and_statuses(record)
 
                 # a task completed
                 if 'COMPLETED' in properties:
@@ -223,13 +227,13 @@ def parse_traces(traces):
                     del blocked[record.uid]
 
                 # a task blocked and paused
-                elif 'BLOCKED' in properties:
+                elif 'BLOCKING' in properties:
                     assert(record.tid in bind)
                     assert(record.uid == bind[record.tid][-1].uid)
                     blocked[record.uid] = record
 
-                # a task starts
-                else:
+                # a task started
+                elif 'BLOCKED' not in properties:
                     assert(record.uid not in schedules)
                     assert(record.uid in readyqueue)
                     del readyqueue[record.uid]
@@ -247,7 +251,7 @@ def parse_traces(traces):
                 # if there is no other tasks ready
                 if len(readyqueue) == 0:
                     # and if we just ended a task
-                    if ('COMPLETED' in properties) or (('BLOCKED' in properties) and ('UNBLOCKED' not in properties)):
+                    if ('COMPLETED' in properties) or (('BLOCKING' in properties) and ('UNBLOCKED' not in properties)):
                         # find famine duration
                         nrecord = None
                         for j in range(i + 1, len(records[pid])):
@@ -305,8 +309,8 @@ def parse_traces(traces):
                         'ts': r1.time,
                         'created': tasks[uid].time,
                         'priority': r1.priority,
-                        'properties_begin': task_properties_to_array(r1.properties),
-                        'properties_end': task_properties_to_array(r2.properties)
+                        'properties_begin': record_to_properties_and_statuses(r1),
+                        'properties_end': record_to_properties_and_statuses(r2)
                    }
                 }
                 cte['traceEvents'].append(event)
@@ -318,9 +322,9 @@ def parse_traces(traces):
                     r1 = lst[i + 1]
                     r2 = lst[i + 2]
                     r3 = lst[i + 3]
-                    p1 = task_properties_to_array(r1.properties)
-                    p2 = task_properties_to_array(r2.properties)
-                    assert('BLOCKED' in p1)
+                    p1 = record_to_properties_and_statuses(r1)
+                    p2 = record_to_properties_and_statuses(r2)
+                    assert('BLOCKING' in p1)
                     assert('UNBLOCKED' in p2)
                     cat = 'block-resume'
                     identifier = "block-resume-{}-{}-{}-{}".format(pid, r1.tid, r2.tid, uid)
@@ -421,7 +425,7 @@ def parse_traces(traces):
                     'uid': uid,
                     'priority': record.priority,
                     'omp_priority': record.omp_priority,
-                    'properties': task_properties_to_array(record.properties),
+                    'properties': record_to_properties_and_statuses(record),
                }
             }
             cte['traceEvents'].append(event)
@@ -652,6 +656,8 @@ class RecordDependency(Record):
     def size(self):
         return RECORD_DEPENDENCY_SIZE - RECORD_GENERIC_SIZE
 
+
+
 class RecordSchedule(Record):
 
     def parse(self, buff):
@@ -663,10 +669,11 @@ class RecordSchedule(Record):
         self.properties     = int.from_bytes(buff[x+12:x+16],   byteorder=BYTE_ORDER, signed=False)
         self.npredecessors  = int.from_bytes(buff[x+16:x+20],   byteorder=BYTE_ORDER, signed=False)
         self.schedule_id    = int.from_bytes(buff[x+20:x+24],   byteorder=BYTE_ORDER, signed=False)
+        self.statuses       = buff[x+24:x+24+len(MPC_OMP_TASK_STATUSES)]
 
     def attributes(self):
         return "label={}, uid={}, priority={}, omp_priority={}, properties={}, npredecessors={}, schedule_id={}".format(
-            self.label, self.uid, self.priority, self.omp_priority, task_properties_to_array(self.properties), self.npredecessors, self.schedule_id)
+            self.label, self.uid, self.priority, self.omp_priority, record_to_properties_and_statuses(self), self.npredecessors, self.schedule_id)
 
     def store(self, tasks):
         ensure_task(tasks, self.uid)
@@ -682,37 +689,22 @@ class RecordCreate(RecordSchedule):
         tasks[self.uid]['created'] = self
 
 
-def task_properties_to_array(properties):
+def record_to_properties_and_statuses(record):
     lst = []
+
+    # task properties
     for p in MPC_OMP_TASK_PROP:
         flag = MPC_OMP_TASK_PROP[p]
-        if (properties & flag) == flag:
+        if (record.properties & flag) == flag:
             lst.append(p)
-    return lst
 
-def processes_communications(processes):
-    communications = {}
-    for pid in processes:
-        process = processes[pid]
-        for uid in process['tasks']:
-            task = process['tasks'][uid]
-            for record in task['schedules']:
-                if record.label.startswith('send') or record.label.startswith('recv'):
-                    data = record.label.split("-")
-                    name = data[0]
-                    src = data[1]
-                    dst = data[2]
-                    tag = data[3]
-                    if name not in communications:
-                        communications[name] = {}
-                    if src not in communications[name]:
-                        communications[name][src] = {}
-                    if dst not in communications[name][src]:
-                        communications[name][src][dst] = {}
-                    if tag not in communications[name][src][dst]:
-                        communications[name][src][dst][tag] = []
-                    communications[name][src][dst][tag].append(record)
-    return communications
+    # task statuses
+    for i in range(len(MPC_OMP_TASK_STATUSES)):
+        status = MPC_OMP_TASK_STATUSES[i]
+        if record.statuses[i]:
+            lst.append(status)
+
+    return lst
 
 def trace_to_records(records, path):
     total_size = os.path.getsize(path)
@@ -910,7 +902,7 @@ class GlobalGraph:
 
                                         suid = communications['send'][src][dst][tag][0].uid
                                         ruid = communications['recv'][dst][src][tag][0].uid
-                                        
+
                                         snode = self.graphs[spid].nodes[suid]
                                         rnode = self.graphs[rpid].nodes[ruid]
 

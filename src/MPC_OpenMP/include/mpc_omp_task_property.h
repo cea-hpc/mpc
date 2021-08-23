@@ -57,6 +57,19 @@
 # define MPC_OMP_TASK_PROP_PROFILE_MASK \
     (MPC_OMP_TASK_PROP_UNDEFERRED | MPC_OMP_TASK_PROP_UNTIED | MPC_OMP_TASK_PROP_EXPLICIT | MPC_OMP_TASK_PROP_INCLUDED | MPC_OMP_TASK_PROP_FINAL | MPC_OMP_TASK_PROP_MERGEABLE | MPC_OMP_TASK_PROP_DEPEND | MPC_OMP_TASK_PROP_PRIORITY | MPC_OMP_TASK_PROP_IF)
 
+# include <stdbool.h>
+
+/** the task statuses */
+typedef struct  mpc_omp_task_statuses_s
+{
+    bool started;           /* if the task started */
+    bool completed;         /* if the task completed */
+    bool blocking;          /* if the task is blocking (still running but will be blocked) */
+    bool blocked;           /* if the task is blocked (suspended) */
+    bool unblocked;         /* if the task was unblocked */
+    bool in_blocked_list;   /* if the task is in a blocked list */
+}               mpc_omp_task_statuses_t;
+
 /** Property of an OpenMP task */
 typedef unsigned int mpc_omp_task_property_t;
 

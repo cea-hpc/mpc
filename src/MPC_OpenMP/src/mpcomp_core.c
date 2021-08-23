@@ -1246,7 +1246,6 @@ mpc_omp_timestamp(void)
 # if MPC_MPI
     return MPI_Wtime() * 1000000;
 # else /* MPC_MPI */
-    double res;
 #  if SCTK_WTIME_USE_GETTIMEOFDAY
     struct timeval tp;
     gettimeofday(&tp, NULL);
