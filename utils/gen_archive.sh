@@ -1,4 +1,6 @@
 #!/bin/sh
+
+set -x
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -143,6 +145,7 @@ if test "x${ADD_DEP}" = "xyes"; then
 	cd "${TMPDIR}" || exit 42
 
 	safe_exec tar xf "${FILE}"
+	mkdir "./mpcframework-${VERSION}/deps/" || exit 42
 	cd "./mpcframework-${VERSION}/deps/" || exit 42
 
 	echo "Downloading dependencies.."
