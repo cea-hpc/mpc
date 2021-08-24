@@ -974,7 +974,7 @@ clean-local:
 
 # We can generate, so generate and save (should not produce diff)
 @HAVE_PYTHON_TRUE@genfortraniface: genmod.py preparsed_mpih.dat constants.json
-@HAVE_PYTHON_TRUE@	python $(srcdir)/genmod.py -m $(builddir)/preparsed_mpih.dat
+@HAVE_PYTHON_TRUE@	@PYTHON@ $(srcdir)/genmod.py -m $(builddir)/preparsed_mpih.dat
 @HAVE_PYTHON_TRUE@	@cp mpif.h $(MPCFORT_FILES) $(srcdir)/pregenerated/
 @HAVE_PYTHON_TRUE@	@touch genfortraniface
 
