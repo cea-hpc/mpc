@@ -8,7 +8,11 @@
 #include <pthread.h>
 #include "placement.h"
 
- int abort_or_not = 0;
+int abort_or_not = 0;
+
+const char * arg;
+enum func log_enum;
+
 /* global variables to a process to load and init 
    one time the topo for each process */
 pthread_spinlock_t my_lock;

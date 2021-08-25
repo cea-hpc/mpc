@@ -7,7 +7,7 @@
 #include <unistd.h>
 
 /* Test given in argument of the programm */
-const char * arg;
+extern const char * arg;
 extern int abort_or_not;
 
 struct worker_info_s {
@@ -89,7 +89,7 @@ _check_binding_obj
 
 };
 
-enum func log_enum;
+extern enum func log_enum;
 
 void abort_log(void);
 
