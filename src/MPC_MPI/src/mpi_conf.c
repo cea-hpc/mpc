@@ -108,6 +108,11 @@ static inline void __coll_param_defaults( void )
 	opts->reduce_interleave = 16;
 
 	opts->bcast_interleave = 16;
+
+  /* TOPO */
+  opts->topo_creation_allow_persistent = 0;
+  opts->topo_creation_allow_non_blocking = 0;
+  opts->topo_creation_allow_blocking = 0;
 }
 
 /* Coll array */
@@ -357,6 +362,12 @@ mpc_conf_config_type_t *__init_coll_config( void )
 															NULL );
 
 	mpc_conf_config_type_t *intracomm = mpc_conf_config_type_init( "intracomm",
+                              PARAM( "topopersistent", &opts->topo_creation_allow_persistent, MPC_CONF_BOOL,
+																	"Allow the creation of topological communicators inside persistent collectives" ),
+                              PARAM( "toponbc", &opts->topo_creation_allow_non_blocking, MPC_CONF_BOOL,
+																	"Allow the creation of topological communicators inside non blocking collectives" ),
+                              PARAM( "topoblocking", &opts->topo_creation_allow_blocking, MPC_CONF_BOOL,
+																	"Allow the creation of topological communicators inside blocking collectives" ),
 															PARAM( "nocommute", &opts->force_nocommute, MPC_CONF_BOOL,
 																	"Force the use of deterministic algorithms" ),
 															PARAM( "barrierfortresh", &opts->barrier_intra_for_trsh, MPC_CONF_INT,

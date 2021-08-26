@@ -17769,6 +17769,10 @@ int PMPI_Init(int *argc, char ***argv)
 		_mpc_cl_comm_rank(MPI_COMM_WORLD, &rank);
 	}
 
+
+
+  global_allow_topo();
+
 	MPI_HANDLE_RETURN_VAL(res, MPI_COMM_WORLD);
 }
 

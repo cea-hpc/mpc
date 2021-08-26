@@ -151,6 +151,129 @@ int mpc_lowcomm_communicator_attributes(const mpc_lowcomm_communicator_t comm,
 	return SCTK_SUCCESS;
 }
 
+/**
+ * @brief Find the index of the topological communicators associated with the root parameter.
+ *
+ * @param comm Target communicator.
+ * @param root Target root.
+ *
+ * @return The index of the topological communicators associated with the root parameter or -1.
+ */
+static inline int ___topo_find_comm_index(mpc_lowcomm_communicator_t comm, int root) {
+  int task_rank = mpc_common_get_task_rank();
+
+  for(int i = 0; i < comm->topo_comms[task_rank].size; i++) {
+    if(comm->topo_comms[task_rank].roots[i] == root) {
+      return i;
+    }
+  }
+
+  return -1;
+}
+
+mpc_hardware_split_info_t* mpc_lowcomm_topo_comm_get(mpc_lowcomm_communicator_t comm, int root) {
+
+  int task_rank = mpc_common_get_task_rank();
+  int index = ___topo_find_comm_index(comm, root);
+  
+  if(index != -1) {
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
+    mpc_common_debug_log("GET | TASK %d | ROOT %d -> INDEX %d | ADR %p\n", task_rank, root, index, comm->topo_comms[task_rank].hw_infos[index]);
+#endif
+    return comm->topo_comms[task_rank].hw_infos[index];
+  }
+
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
+  mpc_common_debug_log("GET | TASK %d | ROOT %d -> NULL | ADR %p\n", task_rank, root, NULL);
+#endif
+  return NULL;
+}
+
+void mpc_lowcomm_topo_comm_set(mpc_lowcomm_communicator_t comm, int root, mpc_hardware_split_info_t *hw_info) {
+
+  int task_rank = mpc_common_get_task_rank();
+  int index = ___topo_find_comm_index(comm, root);
+
+  if(index != -1) {
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
+    mpc_common_debug_log("SET | TASK %d | UPDATE | ROOT %d -> INDEX %d | ADR %p\n", task_rank, root, index, hw_info);
+#endif
+    comm->topo_comms[task_rank].hw_infos[index] = hw_info;
+    return;
+  }
+
+  index = ___topo_find_comm_index(comm, -1);
+  if(index == -1) {
+
+    comm->topo_comms[task_rank].roots = sctk_realloc(comm->topo_comms[task_rank].roots, sizeof(int) * comm->topo_comms[task_rank].size * 2);
+    comm->topo_comms[task_rank].hw_infos = sctk_realloc(comm->topo_comms[task_rank].hw_infos, sizeof(mpc_hardware_split_info_t*) * comm->topo_comms[task_rank].size * 2);
+
+    for(int i = comm->topo_comms[task_rank].size; i < comm->topo_comms[task_rank].size * 2; i++) {
+      comm->topo_comms[task_rank].roots[i] = -1;
+    }
+
+    index = comm->topo_comms[task_rank].size;
+    comm->topo_comms[task_rank].size *= 2;
+  }
+
+#ifdef MPC_ENABLE_DEBUG_MESSAGES
+  mpc_common_debug_log("SET | TASK %d | ROOT %d -> INDEX %d | ADR %p\n", task_rank, root, index, hw_info);
+#endif
+  comm->topo_comms[task_rank].roots[index] = root;
+  comm->topo_comms[task_rank].hw_infos[index] = hw_info;
+}
+
+static inline void ___init_topo_comm(mpc_lowcomm_internal_communicator_t *comm) {
+  int task_count = mpc_common_get_task_count();
+  comm->topo_comms = sctk_malloc(sizeof(mpc_lowcomm_topo_comms) * task_count);
+
+  for(int i = 0; i < task_count; i++) {
+    comm->topo_comms[i].size = MPC_INITIAL_TOPO_COMMS_SIZE;
+    comm->topo_comms[i].roots = sctk_malloc(sizeof(int) * MPC_INITIAL_TOPO_COMMS_SIZE);
+    comm->topo_comms[i].hw_infos = sctk_malloc(sizeof(mpc_hardware_split_info_t*) * MPC_INITIAL_TOPO_COMMS_SIZE);
+    for(int j = 0; j < MPC_INITIAL_TOPO_COMMS_SIZE; j++) {
+      comm->topo_comms[i].roots[j] = -1;
+    }
+  }
+}
+
+//needed function prototype
+static inline void __comm_free(mpc_lowcomm_communicator_t comm);
+
+static inline void ___free_hardware_info(mpc_hardware_split_info_t *hw_info) {
+  for(int i = 0; i < hw_info->deepest_hardware_level; i++) {
+    __comm_free(hw_info->hwcomm[i+1]);
+    __comm_free(hw_info->rootcomm[i]);
+
+    sctk_free(hw_info->childs_data_count[i]);
+  }
+    
+  sctk_free(hw_info->hwcomm);
+  sctk_free(hw_info->rootcomm);
+  sctk_free(hw_info->childs_data_count);
+  sctk_free(hw_info->send_data_count);
+  sctk_free(hw_info->swap_array);
+
+  sctk_free(hw_info);
+}
+
+static inline void ___free_topo_comm(mpc_lowcomm_communicator_t comm) {
+  int task_count = mpc_common_get_task_count();
+
+  for(int i = 0; i < task_count; i++) {
+    int j = 0;
+    while(comm->topo_comms[i].roots[j] != -1) {
+      ___free_hardware_info(comm->topo_comms[i].hw_infos[i]);
+    }
+
+    sctk_free(comm->topo_comms[i].roots);
+    sctk_free(comm->topo_comms[i].hw_infos);
+  }
+  
+  sctk_free(comm->topo_comms);
+}
+
+
 /***************************
 * BASIC COMMUNICATOR INIT *
 ***************************/
@@ -173,6 +296,10 @@ static inline mpc_lowcomm_internal_communicator_t *__init_communicator_with_id(u
 	/* Intercomm ctx */
 	ret->left_comm  = MPC_COMM_NULL;
 	ret->right_comm = MPC_COMM_NULL;
+
+  /* Topo comms */
+  ___init_topo_comm(ret);
+
 
 	if(comm_id == MPC_LOWCOMM_COMM_SELF_ID)
 	{
@@ -474,6 +601,8 @@ static inline void __comm_free(mpc_lowcomm_communicator_t comm)
 			__comm_free(comm->right_comm);
 		}
 	}
+
+  ___free_topo_comm(comm);
 }
 
 

@@ -36,6 +36,7 @@ extern "C" {
 struct mpc_lowcomm_internal_communicator_s;
 typedef struct mpc_lowcomm_internal_communicator_s *mpc_lowcomm_communicator_t;
 
+
 /************************
 * COMMON COMMUNICATORS *
 ************************/
@@ -418,6 +419,42 @@ struct sctk_comm_coll;
 
 /** Get the communicator collective context */
 struct sctk_comm_coll *mpc_communicator_shm_coll_get(const mpc_lowcomm_communicator_t comm);
+
+
+/*****************************
+ * TOPOLOGICAL COMMUNICATORS *
+ *****************************/
+
+/* used to manage communicators in topological algorithm */
+typedef struct mpc_hardware_split_info_s
+{
+	int deepest_hardware_level;
+	mpc_lowcomm_communicator_t *hwcomm; /* communicator of hardware splited topological level */
+	mpc_lowcomm_communicator_t *rootcomm; /* communicator of master node topological level */
+
+  int **childs_data_count; /* For each topological level, an array containing the number of ranks under each rank of the same hwcomm of this level in the topological tree. */
+  int *send_data_count; /* For each topological level, the sum of the child_data_count_array. */
+  int *swap_array; /* Reordering array used to link mpi ranks with the topology. */
+
+}mpc_hardware_split_info_t;
+
+/**
+ * @brief Get the topological communicators associated with the root parameter.
+ * 
+ * @param comm Target communicator.
+ * @param root Target root.
+ *
+ * @return The topological communicators or NULL if not found.
+ */
+mpc_hardware_split_info_t* mpc_lowcomm_topo_comm_get(mpc_lowcomm_communicator_t comm, int root);
+
+/**
+ * @brief Set the topological communicators associated with the root parameter.
+ * 
+ * @param comm Target communicator.
+ * @param root Target root.
+ */
+void mpc_lowcomm_topo_comm_set(mpc_lowcomm_communicator_t comm, int root, mpc_hardware_split_info_t *hw_info);
 
 #ifdef __cplusplus
 }
