@@ -56,8 +56,9 @@
 # define MPC_OMP_VERSION_MAJOR  3
 # define MPC_OMP_VERSION_MINOR  1
 
-# define MPC_OMP_TASK_COMPILE_FIBER 1
-# define MPC_OMP_TASK_COMPILE_TRACE 1
+/* tasking */
+# define MPC_OMP_TASK_COMPILE_FIBER 0
+# define MPC_OMP_TASK_COMPILE_TRACE 0
 
 #if MPC_OMP_TASK_COMPILE_FIBER
 # define MPC_OMP_TASK_FIBER_ENABLED mpc_omp_conf_get()->task_use_fiber
@@ -65,7 +66,15 @@
 # define MPC_OMP_TASK_FIBER_ENABLED 0
 #endif
 
-# define MPC_OMP_TASK_TRACE_ENABLED          mpc_omp_conf_get()->task_trace
+# define MPC_OMP_TASK_TRACE_ENABLED mpc_omp_conf_get()->task_trace
+
+# define MPC_OMP_TASK_USE_RECYCLERS  0
+# define MPC_OMP_TASK_ALLOCATOR      mpc_omp_alloc
+# define MPC_OMP_TASK_DEALLOCATOR    mpc_omp_free
+# define MPC_OMP_TASK_DEFAULT_ALIGN  8
+
+TODO("Make this configurable")
+# define MPC_OMP_TASK_FIBER_STACK_SIZE (32768)
 
 # if MPC_OMP_TASK_COMPILE_TRACE
 #  include "mpc_omp_task_trace.h"
@@ -80,14 +89,6 @@
 #  define MPC_OMP_TASK_TRACE_FAMINE_OVERLAP(...)
 #  define MPC_OMP_TASK_TRACE_CALLBACK(...)
 # endif /* MPC_OMP_TASK_COMPILE_TRACE */
-
-TODO("Make this configurable")
-# define MPC_OMP_TASK_FIBER_STACK_SIZE (32768)
-
-# define MPC_OMP_TASK_USE_RECYCLERS  1
-# define MPC_OMP_TASK_ALLOCATOR      mpc_omp_alloc
-# define MPC_OMP_TASK_DEALLOCATOR    mpc_omp_free
-# define MPC_OMP_TASK_DEFAULT_ALIGN  8
 
 /* Use MCS locks or not */
 #define MPC_OMP_USE_MCS_LOCK 1
@@ -590,12 +591,12 @@ typedef struct  mpc_omp_task_s
     /* the task name (+1 for the null char.) */
     char label[MPC_OMP_TASK_LABEL_MAX_LENGTH + 1];
 
-    /* task uid (= number of task previously created) */
-    int uid;
-
     /* task schedule id (= number of task previously scheduled) */
     int schedule_id;
 # endif
+
+    /* task uid (= number of task previously created) */
+    int uid;
 
     /* the task list */
     struct mpc_omp_task_pqueue_s * pqueue;
@@ -801,9 +802,10 @@ typedef struct  mpc_omp_task_instance_infos_s
     bool is_initialized;
 
 # if MPC_OMP_TASK_COMPILE_TRACE
-    OPA_int_t next_task_uid;
     OPA_int_t next_schedule_id;
 # endif /* MPCOMP_TASK_COMPILE_TRACE */
+
+    OPA_int_t next_task_uid;
 
     /* saved task profiles */
     mpc_omp_task_profile_info_t profiles;

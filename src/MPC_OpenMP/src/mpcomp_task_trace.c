@@ -1,9 +1,12 @@
+# include "mpcomp_types.h"
+
+# if MPC_OMP_TASK_COMPILE_TRACE
+
 # include "mpc_config.h"
 # if MPC_MPI
 #  include "mpc_mpi.h"
 # endif
 
-# include "mpcomp_types.h"
 # include "mpcomp_core.h"
 # include "mpcomp_task.h"
 
@@ -250,3 +253,5 @@ mpc_omp_task_trace_end(void)
     }
     infos->begun = 0;
 }
+
+#endif /* MPC_OMP_TASK_COMPILE_TRACE */

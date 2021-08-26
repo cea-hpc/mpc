@@ -865,7 +865,7 @@ __task_profile_exists(mpc_omp_task_t * task)
     mpc_omp_task_profile_t * profile = (mpc_omp_task_profile_t *) OPA_load_ptr(&(thread->instance->task_infos.profiles.head));
     while (profile)
     {
-        /** TODO : this matching function is optimized for apps with:
+        /** This matching function is optimized for apps with:
          *  - mono productor
          *  - no task recursion
          *  - complete graph discovery before running a match (so that we have the correct number of successors)
@@ -2732,7 +2732,6 @@ __task_profile_propagate(void)
                 mpc_omp_task_t * task = __task_list_pop_from_head(up);
                 if (OPA_load_int(&(task->dep_node.status)) < MPC_OMP_TASK_DEP_TASK_READY)
                 {
-                    // TODO replace lock by a reference counter on 'predecessors' list
                     MPC_OMP_TASK_LOCK(task);
                     {
                         if (OPA_load_int(&(task->dep_node.status)) < MPC_OMP_TASK_DEP_TASK_READY)
@@ -3151,8 +3150,8 @@ _mpc_omp_task_new(
         strncpy(task->label, thread->task_infos.incoming.label, MPC_OMP_TASK_LABEL_MAX_LENGTH);
         thread->task_infos.incoming.label = NULL;
     }
-    task->uid = OPA_fetch_and_incr_int(&(thread->instance->task_infos.next_task_uid));
 # endif /* MPC_OMP_TASK_COMPILE_TRACE */
+    task->uid = OPA_fetch_and_incr_int(&(thread->instance->task_infos.next_task_uid));
     if (thread->task_infos.incoming.extra_clauses & MPC_OMP_CLAUSE_USE_FIBER)
     {
         mpc_omp_task_set_property(&(task->property), MPC_OMP_TASK_PROP_HAS_FIBER);
@@ -3493,7 +3492,9 @@ __task_init_initial(mpc_omp_thread_t * thread)
     mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_INITIAL);
     mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_IMPLICIT);
     _mpc_omp_task_init(initial_task, NULL, NULL, 0, properties, thread);
+# if MPC_OMP_TASK_COMPILE_TRACE
     snprintf(initial_task->label, MPC_OMP_TASK_LABEL_MAX_LENGTH, "initial-%p", initial_task);
+# endif /* MPC_OMP_TASK_COMPILE_TRACE */
 
 #ifdef MPC_OMP_USE_MCS_LOCK
     thread->task_infos.opaque = sctk_mcslock_alloc_ticket();
