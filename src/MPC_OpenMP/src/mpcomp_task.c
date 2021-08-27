@@ -2831,7 +2831,6 @@ _mpc_omp_task_process(mpc_omp_task_t * task)
 }
 
 # if MPC_OMP_TASK_COMPILE_FIBER
-
 static void
 __taskyield_return(void)
 {
@@ -2841,6 +2840,7 @@ __taskyield_return(void)
     mpc_omp_task_t * curr = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
     sctk_swapcontext_no_tls(&(curr->fiber->current), curr->fiber->exit);
 }
+# endif /* MPC_OMP_TASK_COMPILE_FIBER */
 
 static inline void
 __thread_requeue_task(mpc_omp_task_t * task)
@@ -2911,6 +2911,7 @@ mpc_omp_task_unblock(mpc_omp_event_handle_t * event)
             mpc_common_spinlock_unlock(&(list->lock));
 
             /* if the task has a fiber, check for requeue */
+# if MPC_OMP_TASK_COMPILE_FIBER
             if (MPC_OMP_TASK_FIBER_ENABLED && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_HAS_FIBER))
             {
                 mpc_common_spinlock_lock(&(event->lock));
@@ -2929,6 +2930,7 @@ mpc_omp_task_unblock(mpc_omp_event_handle_t * event)
             {
                 /* nothing to do */
             }
+# endif /* MPC_OMP_TASK_COMPILE_FIBER */
         }
         else
         {
@@ -2971,6 +2973,7 @@ mpc_omp_task_block(mpc_omp_event_handle_t * event)
         mpc_common_spinlock_unlock(&(list->lock));
 
         /* if the task has it own fiber, switch to parent' fiber */
+# if MPC_OMP_TASK_COMPILE_FIBER
         if (MPC_OMP_TASK_FIBER_ENABLED && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_HAS_FIBER))
         {
             mpc_common_spinlock_lock(&(event->lock));
@@ -2989,16 +2992,15 @@ mpc_omp_task_block(mpc_omp_event_handle_t * event)
         }
         /* otherwise, busy-loop until unblock */
         else
+# endif /* MPC_OMP_TASK_COMPILE_FIBER */
         {
-            while (OPA_load_int(&(event->status)) == MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED)
+            while (task->statuses.in_blocked_list)
             {
                 _mpc_omp_task_schedule();
             }
         }
     }
 }
-
-# endif /* MPC_OMP_TASK_COMPILE_FIBER */
 
 static void
 __taskyield_stack(void)
@@ -3014,7 +3016,7 @@ __taskyield_stack(void)
  * Called when encountering a taskyield construct
  * This is a scheduling point.
  */
-    void
+void
 _mpc_omp_task_yield(void)
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
@@ -3031,14 +3033,12 @@ _mpc_omp_task_yield(void)
             break ;
         }
 
-# if MPC_OMP_TASK_COMPILE_FIBER
         case (MPC_OMP_TASK_YIELD_MODE_CIRCULAR):
         {
             fprintf(stderr, "Circular task-yield is not supported, please use 'mpc_omp_taskyield_block()'\n");
-            assert(0);
+            not_implemented();
             break ;
         }
-# endif /* MPC_OMP_TASK_COMPILE_FIBER */
 
         default:
         {
