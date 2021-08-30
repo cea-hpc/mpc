@@ -57,8 +57,8 @@
 # define MPC_OMP_VERSION_MINOR  1
 
 /* tasking */
-# define MPC_OMP_TASK_COMPILE_FIBER 0
-# define MPC_OMP_TASK_COMPILE_TRACE 0
+# define MPC_OMP_TASK_COMPILE_FIBER 1
+# define MPC_OMP_TASK_COMPILE_TRACE 1
 
 #if MPC_OMP_TASK_COMPILE_FIBER
 # define MPC_OMP_TASK_FIBER_ENABLED mpc_omp_conf_get()->task_use_fiber
@@ -68,7 +68,7 @@
 
 # define MPC_OMP_TASK_TRACE_ENABLED mpc_omp_conf_get()->task_trace
 
-# define MPC_OMP_TASK_USE_RECYCLERS  0
+# define MPC_OMP_TASK_USE_RECYCLERS  1
 # define MPC_OMP_TASK_ALLOCATOR      mpc_omp_alloc
 # define MPC_OMP_TASK_DEALLOCATOR    mpc_omp_free
 # define MPC_OMP_TASK_DEFAULT_ALIGN  8
@@ -173,11 +173,8 @@ typedef enum    mpc_omp_task_yield_mode_t
 typedef enum    mpc_omp_task_priority_policy_e
 {
     MPC_OMP_TASK_PRIORITY_POLICY_FIFO,   /* priorities are ignored */
-    MPC_OMP_TASK_PRIORITY_POLICY_MA1,    /* user set priority to 1 on send-tasks */
-    MPC_OMP_TASK_PRIORITY_POLICY_MA2,    /* user set priority to 1 on send-tasks, and the runtime propagates priority */
     MPC_OMP_TASK_PRIORITY_POLICY_SA1,    /* user set priority on send-tasks, runtime on predecessors */
     MPC_OMP_TASK_PRIORITY_POLICY_SA2,    /* user set constant priority on tasks, runtime on predecessors */
-    MPC_OMP_TASK_PRIORITY_POLICY_FA1     /* user sets no priority, runtimes cooperates */
 }               mpc_omp_task_priority_policy_t;
 
 
@@ -474,9 +471,6 @@ typedef struct  mpc_omp_task_dep_node_s
     /* status */
     OPA_int_t status;
 
-    /* profile flag, to remember which profile were checked */
-    int profile_version;
-
 #if OMPT_SUPPORT
     /* Task dependences record */
     ompt_dependence_t * ompt_task_deps;
@@ -600,12 +594,6 @@ typedef struct  mpc_omp_task_s
 
     /* the task list */
     struct mpc_omp_task_pqueue_s * pqueue;
-
-    /* profile version, to avoid double profile matching */
-    int profile_version;
-
-    /* propagation version, to avoid visiting the task multiple times */
-    int propagation_version;
 
 #if OMPT_SUPPORT
     /* Task data and type */
@@ -741,56 +729,6 @@ typedef struct  mpc_omp_task_thread_infos_s
 
 }               mpc_omp_task_thread_infos_t;
 
-typedef struct  mpc_omp_task_profile_s
-{   
-    /* next node */
-    struct mpc_omp_task_profile_s * next;
-
-    /* the task size */
-    unsigned int size;
-
-    /* the task properties */
-    unsigned int property;
-
-    /* number of successors (may be incomplete) */
-    int nsuccessors;
-
-    /* number of predecessors (is complete) */
-    int npredecessors;
-
-    /* the parent task uid (control parent) */
-    int parent_uid;
-}               mpc_omp_task_profile_t;
-
-/* communication tasks infos */
-typedef struct  mpc_omp_task_profile_info_s
-{
-    /* head info node */
-    OPA_ptr_t head;
-
-    /* number of 'mpcomp_task_profile_t' in list */
-    OPA_int_t n;
-
-    /* spinlock for concurrency issues */
-    mpc_common_spinlock_t spinlock;
-}               mpc_omp_task_profile_info_t;
-
-/* Task priority propagation context */
-typedef struct  mpc_omp_task_priority_propagation_context_s
-{
-    /* lock so that only 1 thread my propagate priorities (for now) */
-    mpc_common_spinlock_t lock;
-
-    /* tasks to climb down to find leaves */
-    mpc_omp_task_list_t down;
-
-    /* tasks to climb up to match profile and propagate priorities */
-    mpc_omp_task_list_t up;
-
-    /* version to mark task and no visit them twice */
-    OPA_int_t version;
-}               mpc_omp_task_priority_propagation_context_t;
-
 /**
  * Extend mpc_omp_instance_t struct for openmp task support
  */
@@ -807,9 +745,6 @@ typedef struct  mpc_omp_task_instance_infos_s
 
     OPA_int_t next_task_uid;
 
-    /* saved task profiles */
-    mpc_omp_task_profile_info_t profiles;
-
     /* number of existing tasks */
     OPA_int_t ntasks;
 
@@ -819,8 +754,6 @@ typedef struct  mpc_omp_task_instance_infos_s
     /* blocked tasks list */
     mpc_omp_task_list_t blocked_tasks;
 
-    /* propagation version */
-    mpc_omp_task_priority_propagation_context_t propagation;
 }               mpc_omp_task_instance_infos_t;
 
 /**
@@ -1014,6 +947,10 @@ typedef struct mpc_omp_team_s
     /* Frame struct to transfert infos at parallel region */
     mpc_omp_ompt_frame_info_t frame_infos;
 #endif /* OMPT_SUPPORT */
+
+    OPA_int_t threads_in_barrier;
+    volatile int barrier_version;
+
 } mpc_omp_team_t;
 
 /** OpenMP thread struct

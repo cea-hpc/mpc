@@ -155,9 +155,6 @@ extern "C" {
     void mpc_omp_task_trace_begin(void);
     void mpc_omp_task_trace_end(void);
 
-    /* notify openmp runtime that current task is a MPI send */
-    void mpc_omp_task_is_send(void);
-
     /* return true if the thread is currently within an omp task */
     int mpc_omp_in_explicit_task(void);
 

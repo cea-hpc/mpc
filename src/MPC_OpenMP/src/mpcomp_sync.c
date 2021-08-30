@@ -430,6 +430,30 @@ void _mpc_omp_single_coherency_end_barrier( void )
 void
 _mpc_omp_internal_full_barrier(mpc_omp_mvp_t * mvp)
 {
+    /**
+     * TODO : compare this naive barrier approach with the current implementation
+     *
+     *   assert(mvp);
+     *   
+     *   _mpc_omp_task_wait();
+     *  
+     *   mpc_omp_team_t * team = mvp->instance->team;
+     *   int num_threads = team->info.num_threads;
+     *   if (num_threads == 1) return ;
+     *  
+     *   int old_version = team->barrier_version;
+     *  
+     *   if (OPA_fetch_and_incr_int(&(team->threads_in_barrier)) == num_threads - 1)
+     *   {
+     *       OPA_store_int(&(team->threads_in_barrier), 0);
+     *       ++team->barrier_version;
+     *   }   
+     *   while (team->barrier_version == old_version)
+     *   {
+     *       _mpc_omp_task_schedule();
+     *   } 
+    */
+
     assert(mvp);
 
     /* wait for children tasks to complete */
