@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog][Keep a Changelog].
 
-## [Unreleased]
+## [4.1.0] - 2021-08-03
 
 - Active Message engine based on libffi
 - `PRRTE` implement support for the PMIx standard runtime.
@@ -10,8 +10,19 @@ All notable changes to this project will be documented in this file. The format 
 - Add new configuration system inside MPC (only at runtime)
 - Autopriv dependency has been renamed to mpc-compiler-additions
 - Add OMP 5.0 memory management support (includes HWLOC 2+ support)
-- Point to mpcallocator 0.2 using HWLOC 2+
-- MPIT rewrite mirrorring the new configuration system
+- Move to HWLOC 2+
+- MPIT rewrite mirroring the new configuration system
+- Full communicator / Group system rewrite
+- MPI 4.0 Split topology support
+- Collective factorization and rewrite
+- Bugfix on persistent collectives
+- Expose MPC's modularity in PKGCONFIG / CMAKE
+- Improved DNS resolution for TCP
+- Topological collectives support
+- Move to mpc-compiler-additions 0.7.0 with GCC 10.2.0
+- Workshare support
+- OMPT improvements
+- General bugfixes and documentation
 
 ## [4.0.0] - 2020-12-16
 

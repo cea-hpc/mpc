@@ -137,6 +137,13 @@ MPC PMIx:
   - cd $HOME/GL_$CI_PIPELINE_ID/build_pmix/
   - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_pmix --disable-mpc-autopriv --mpc-option="--with-pmix"
 
+MPC Compilation Workshare:
+  <<: *run_by_main
+  stage: Configurations
+  script:
+  - cd $HOME/GL_$CI_PIPELINE_ID/build_workshare
+  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_workshare --mpc-option='--with-pmi1 --enable-debug' --enable-workshare
+
 ############################
 ####### BUILD STAGE ########
 ############################
@@ -149,150 +156,134 @@ MPC Compilation:
   - cd $HOME/GL_$CI_PIPELINE_ID/build
   - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install --mpc-option='--with-pmi1 --enable-debug'
 
-MPC Compilation Spack:
-  <<: *run_by_main
-  stage: Builds
-  allow_failure: true
-  script:
-  - spack clean -d
-  - cd $HOME/GL_$CI_PIPELINE_ID/buildspack
-  - ${CI_PROJECT_DIR}/installmpc -vv --enable-spack-build --disable-build --prefix=$HOME/GL_$CI_PIPELINE_ID/install_spack --mpc-option='--with-slurm --enable-debug'
-
-MPC Compilation Workshare:
-  <<: *run_by_main
-  stage: Builds
-  script:
-  - cd $HOME/GL_$CI_PIPELINE_ID/build_workshare
-  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_workshare --mpc-option='--with-pmi1 --enable-debug' --enable-workshare
-
 ############################
 ####### TEST STAGE ########
 ############################
 
 # a BASIC one, to stop the pipeline early in case of major issue (not able to compile/run a simple test)
-Simple run:
-  <<: *run_by_main
-  <<: *uses_slurm
-  stage: Basic Testing
-  script:
-    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=simple --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/simple
-
-# a BASIC one, to stop the pipeline early in case of major issue (not able to compile/run a simple test)
-Simple run Spack:
-  <<: *run_by_main
-  <<: *uses_slurm
-  stage: Basic Testing
-  allow_failure: true
-  dependencies:
-    - MPC Compilation Spack
-  script:
-    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install_spack --select=simple --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/simple
-
-Fortran:
-  <<: *run_by_main
-  <<: *uses_slurm
-  stage: Basic Testing
-  script:
-    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=fortran/UnitTests --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/fortran
-
-      #Types:
-      #  stage: Basic Testing
-      #  script:
-      #    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-      #    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=UnitTests/check_types --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/types
-
-# a regular test, to assess some basic MPC feature
-
-Lowcomm:
-  <<: *run_by_main
-  <<: *uses_slurm
-  stage: Regular Testing
-  allow_failure: true
-  script:
-    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=lowcomm --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/lowcomm
-
-Privatization:
-  <<: *run_by_main
-  <<: *uses_slurm
-  stage: Regular Testing
-  script:
-    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=gcc --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/privatization
-
-Message Passing:
-  <<: *run_by_main
-  <<: *uses_slurm
-  stage: Regular Testing
-  script:
-    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=MPI/MessagePassing --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/mp
-
-OpenMP:
-  <<: *run_by_main
-  <<: *uses_slurm
-  stage: Regular Testing
-  script:
-    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=OpenMP/BOTS,OpenMP/Simple,OpenMP/EPCC --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/omp
-
-Fortran 90:
-  <<: *run_by_main
-  <<: *uses_slurm
-  stage: Regular Testing
-  script:
-    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=fortran/f90/Examples --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/fortran90
-
-# a larger test, known to take more time and to stress the runtime a bit more than previous jobs
-IMB (Check):
-  <<: *run_by_main
-  <<: *uses_slurm
-  stage: Benchmarks
-  script:
-    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=MPI/IMB/check --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/imb
-
-Communicators (ANL):
-  <<: *run_by_main
-  <<: *uses_slurm
-  stage: Benchmarks
-  script:
-    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=MPI/Intel_ANL/communicators --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/comms
-
-Lulesh:
-  <<: *run_by_main
-  <<: *uses_slurm
-  stage: Applications
-  script:
-    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=applications/lulesh --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/lulesh
-
-MiniFE:
-  <<: *run_by_main
-  <<: *uses_slurm
-  stage: Applications
-  script:
-    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=applications/miniFe --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/minife
-
-################################
-# TEsts not supported by MPC ###
-# ##############################
+#Simple run:
+#  <<: *run_by_main
+#  <<: *uses_slurm
+#  stage: Basic Testing
+#  script:
+#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
+#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=simple --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/simple
 #
-tofix-OpenMP:
-  <<: *run_by_main
-  <<: *breaking_tests
-  <<: *uses_slurm
-  stage: Breaking tests
-  script:
-    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=unsupported/OpenMP --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/tofix-omp
-
+## a BASIC one, to stop the pipeline early in case of major issue (not able to compile/run a simple test)
+#Simple run Spack:
+#  <<: *run_by_main
+#  <<: *uses_slurm
+#  stage: Basic Testing
+#  allow_failure: true
+#  dependencies:
+#    - MPC Compilation Spack
+#  script:
+#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
+#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install_spack --select=simple --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/simple
+#
+#Fortran:
+#  <<: *run_by_main
+#  <<: *uses_slurm
+#  stage: Basic Testing
+#  script:
+#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
+#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=fortran/UnitTests --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/fortran
+#
+#      #Types:
+#      #  stage: Basic Testing
+#      #  script:
+#      #    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
+#      #    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=UnitTests/check_types --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/types
+#
+## a regular test, to assess some basic MPC feature
+#
+#Lowcomm:
+#  <<: *run_by_main
+#  <<: *uses_slurm
+#  stage: Regular Testing
+#  allow_failure: true
+#  script:
+#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
+#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=lowcomm --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/lowcomm
+#
+#Privatization:
+#  <<: *run_by_main
+#  <<: *uses_slurm
+#  stage: Regular Testing
+#  script:
+#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
+#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=gcc --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/privatization
+#
+#Message Passing:
+#  <<: *run_by_main
+#  <<: *uses_slurm
+#  stage: Regular Testing
+#  script:
+#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
+#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=MPI/MessagePassing --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/mp
+#
+#OpenMP:
+#  <<: *run_by_main
+#  <<: *uses_slurm
+#  stage: Regular Testing
+#  script:
+#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
+#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=OpenMP/BOTS,OpenMP/Simple,OpenMP/EPCC --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/omp
+#
+#Fortran 90:
+#  <<: *run_by_main
+#  <<: *uses_slurm
+#  stage: Regular Testing
+#  script:
+#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
+#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=fortran/f90/Examples --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/fortran90
+#
+## a larger test, known to take more time and to stress the runtime a bit more than previous jobs
+#IMB (Check):
+#  <<: *run_by_main
+#  <<: *uses_slurm
+#  stage: Benchmarks
+#  script:
+#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
+#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=MPI/IMB/check --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/imb
+#
+#Communicators (ANL):
+#  <<: *run_by_main
+#  <<: *uses_slurm
+#  stage: Benchmarks
+#  script:
+#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
+#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=MPI/Intel_ANL/communicators --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/comms
+#
+#Lulesh:
+#  <<: *run_by_main
+#  <<: *uses_slurm
+#  stage: Applications
+#  script:
+#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
+#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=applications/lulesh --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/lulesh
+#
+#MiniFE:
+#  <<: *run_by_main
+#  <<: *uses_slurm
+#  stage: Applications
+#  script:
+#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
+#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=applications/miniFe --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/minife
+#
+#################################
+## TEsts not supported by MPC ###
+## ##############################
+##
+#tofix-OpenMP:
+#  <<: *run_by_main
+#  <<: *breaking_tests
+#  <<: *uses_slurm
+#  stage: Breaking tests
+#  script:
+#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
+#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=unsupported/OpenMP --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/tofix-omp
+#
 ###################################
 ####### MANUALLY TRIGGERED ########
 ###################################

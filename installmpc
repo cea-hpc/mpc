@@ -1177,7 +1177,7 @@ add_process_mode_flag_to_mpc()
 
 enable_debug()
 {
-	MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-debug --enable-debug-messages"
+	MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-debug"
 	BUILD_PARAMETERS="${MPC_COMP_ADD_BUILD_PARAMETERS} --opts=--enable-debug"
 }
 

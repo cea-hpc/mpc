@@ -3671,7 +3671,7 @@ void _mpc_cl_abort_error(mpc_lowcomm_communicator_t *comm, int *error, char *mes
 
 	if(i != 0)
 	{
-		mpc_common_debug_error("Error: %s on comm %d", str, mpc_lowcomm_communicator_id(*comm), message);
+		mpc_common_debug_error("Error: %s on comm %d : %s", str, mpc_lowcomm_communicator_id(*comm), message);
 	}
 
 	mpc_common_debug_error("This occured in %s at %s:%d", function, file, line);

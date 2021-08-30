@@ -223,6 +223,8 @@ fi
 
 AM_CONDITIONAL([HAVE_PYTHON], [test "x$HAVE_PYTHON" = "xyes" -a "x${HAVE_PYMOD_JSON}" = "xyes" -a "x${HAVE_PYMOD_ARGPARSE}" = "xyes"])
 
+AC_SUBST([PYTHON], [$PYTHON])
+
 # Optional Pandoc Generator (dynamically regen manpages
 AC_PATH_PROG([PANDOC],[pandoc],[:])
 AM_CONDITIONAL([CAN_USE_PANDOC], [test "x$PANDOC" != "x:"])
@@ -2137,6 +2139,10 @@ if test "x${MPC_FORTRAN_ENABLED}" = "xyes"; then
         if test "x${MPC_MPI_ENABLED}" = "xno"; then
                 AC_MSG_ERROR([--enable-fortran requires --enable-mpi])
         fi
+
+		if test "x${HAVE_PYTHON}" = "xno"; then
+                AC_MSG_ERROR([--enable-fortran requires a python interpreter])
+		fi
 
         AC_DEFINE([MPC_FORTRAN], [1], [MPC_Fortran module was enabled])
 

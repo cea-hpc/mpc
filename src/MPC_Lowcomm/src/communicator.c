@@ -161,8 +161,9 @@ int mpc_lowcomm_communicator_attributes(const mpc_lowcomm_communicator_t comm,
  */
 static inline int ___topo_find_comm_index(mpc_lowcomm_communicator_t comm, int root) {
   int task_rank = mpc_common_get_task_rank();
+  int i;
 
-  for(int i = 0; i < comm->topo_comms[task_rank].size; i++) {
+  for(i = 0; i < comm->topo_comms[task_rank].size; i++) {
     if(comm->topo_comms[task_rank].roots[i] == root) {
       return i;
     }
@@ -207,8 +208,8 @@ void mpc_lowcomm_topo_comm_set(mpc_lowcomm_communicator_t comm, int root, mpc_ha
 
     comm->topo_comms[task_rank].roots = sctk_realloc(comm->topo_comms[task_rank].roots, sizeof(int) * comm->topo_comms[task_rank].size * 2);
     comm->topo_comms[task_rank].hw_infos = sctk_realloc(comm->topo_comms[task_rank].hw_infos, sizeof(mpc_hardware_split_info_t*) * comm->topo_comms[task_rank].size * 2);
-
-    for(int i = comm->topo_comms[task_rank].size; i < comm->topo_comms[task_rank].size * 2; i++) {
+    int i;
+    for( i = comm->topo_comms[task_rank].size; i < comm->topo_comms[task_rank].size * 2; i++) {
       comm->topo_comms[task_rank].roots[i] = -1;
     }
 
@@ -226,12 +227,13 @@ void mpc_lowcomm_topo_comm_set(mpc_lowcomm_communicator_t comm, int root, mpc_ha
 static inline void ___init_topo_comm(mpc_lowcomm_internal_communicator_t *comm) {
   int task_count = mpc_common_get_task_count();
   comm->topo_comms = sctk_malloc(sizeof(mpc_lowcomm_topo_comms) * task_count);
-
-  for(int i = 0; i < task_count; i++) {
+  int i;
+  for(i = 0; i < task_count; i++) {
     comm->topo_comms[i].size = MPC_INITIAL_TOPO_COMMS_SIZE;
     comm->topo_comms[i].roots = sctk_malloc(sizeof(int) * MPC_INITIAL_TOPO_COMMS_SIZE);
     comm->topo_comms[i].hw_infos = sctk_malloc(sizeof(mpc_hardware_split_info_t*) * MPC_INITIAL_TOPO_COMMS_SIZE);
-    for(int j = 0; j < MPC_INITIAL_TOPO_COMMS_SIZE; j++) {
+    int j;
+    for(j = 0; j < MPC_INITIAL_TOPO_COMMS_SIZE; j++) {
       comm->topo_comms[i].roots[j] = -1;
     }
   }
@@ -241,7 +243,8 @@ static inline void ___init_topo_comm(mpc_lowcomm_internal_communicator_t *comm) 
 static inline void __comm_free(mpc_lowcomm_communicator_t comm);
 
 static inline void ___free_hardware_info(mpc_hardware_split_info_t *hw_info) {
-  for(int i = 0; i < hw_info->deepest_hardware_level; i++) {
+  int i;
+  for(i = 0; i < hw_info->deepest_hardware_level; i++) {
     __comm_free(hw_info->hwcomm[i+1]);
     __comm_free(hw_info->rootcomm[i]);
 
@@ -259,8 +262,8 @@ static inline void ___free_hardware_info(mpc_hardware_split_info_t *hw_info) {
 
 static inline void ___free_topo_comm(mpc_lowcomm_communicator_t comm) {
   int task_count = mpc_common_get_task_count();
-
-  for(int i = 0; i < task_count; i++) {
+  int i;
+  for(i = 0; i < task_count; i++) {
     int j = 0;
     while(comm->topo_comms[i].roots[j] != -1) {
       ___free_hardware_info(comm->topo_comms[i].hw_infos[i]);
