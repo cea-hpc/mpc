@@ -1361,6 +1361,12 @@ __task_priority_compute(mpc_omp_task_t * task)
             break ;
         }
 
+        case (MPC_OMP_TASK_PRIORITY_POLICY_MA):
+        {
+            task->priority = task->omp_priority_hint;
+            break ;
+        }
+
         case (MPC_OMP_TASK_PRIORITY_POLICY_SA1):
         {
             task->priority = task->omp_priority_hint;

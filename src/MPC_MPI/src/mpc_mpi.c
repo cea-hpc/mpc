@@ -10460,7 +10460,7 @@ int PMPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source,
 int PMPI_Wait(MPI_Request *request, MPI_Status *status)
 {
 # if MPC_ENABLE_INTEROP_MPI_OMP
-    if (mpc_thread_mpi_omp_wait(1, request))
+    if (mpc_thread_mpi_omp_wait(1, request, NULL, status))
     {
         return 0;
     }
@@ -10628,6 +10628,14 @@ int PMPI_Waitany(int count,
                  MPI_Status *status)
 {
 	mpc_common_nodebug("entering PMPI_Waitany");
+
+# if MPC_ENABLE_INTEROP_MPI_OMP
+    if (mpc_thread_mpi_omp_wait(count, array_of_requests, index, status))
+    {
+        return 0;
+    }
+# endif /* MPC_ENABLE_INTEROP_MPI_OMP */
+
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res       = MPI_SUCCESS;
 
@@ -10845,7 +10853,7 @@ int PMPI_Waitall(int count, MPI_Request array_of_requests[],
 	mpc_common_nodebug("entering PMPI_Waitall");
 
 # if MPC_ENABLE_INTEROP_MPI_OMP
-    if (mpc_thread_mpi_omp_wait(count, array_of_requests))
+    if (mpc_thread_mpi_omp_wait(count, array_of_requests, NULL, array_of_statuses))
     {
         return 0;
     }

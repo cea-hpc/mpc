@@ -173,6 +173,7 @@ typedef enum    mpc_omp_task_yield_mode_t
 typedef enum    mpc_omp_task_priority_policy_e
 {
     MPC_OMP_TASK_PRIORITY_POLICY_FIFO,   /* priorities are ignored */
+    MPC_OMP_TASK_PRIORITY_POLICY_MA,     /* user set priority on every tasks */
     MPC_OMP_TASK_PRIORITY_POLICY_SA1,    /* user set priority on send-tasks, runtime on predecessors */
     MPC_OMP_TASK_PRIORITY_POLICY_SA2,    /* user set constant priority on tasks, runtime on predecessors */
 }               mpc_omp_task_priority_policy_t;
