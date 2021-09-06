@@ -1,3 +1,6 @@
+"""
+"   This tool compute the critical path from an MPI+OpenMP(tasks) trace
+"""
 import getopt
 import sys
 

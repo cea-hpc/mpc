@@ -1,3 +1,15 @@
+"""
+"   This tool generate a .dot graph file from an MPI+OpenMp(tasks) trace
+"
+"   WARNING:    to generate inter-process edges that corresponds to MPI communications,
+"               OpenMP tasks that contains communications should be labeled this way :
+
+                on the sender rank :
+"                   send-%d-%d-%d, sender_rank, receiver_rank, tag
+
+                on the sender rank :
+"                   recv-%d-%d-%d, receiver_rank, sender_rank, tag
+"""
 import getopt
 import sys
 

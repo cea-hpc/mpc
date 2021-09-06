@@ -1,3 +1,8 @@
+"""
+"   usage: python3 trace_stats.py -h
+"
+"   This tool gather statistics of an hybrid MPI+OpenMP(tasks) trace
+"""
 import json
 import sys
 from utils import *

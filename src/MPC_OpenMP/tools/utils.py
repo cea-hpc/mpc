@@ -42,6 +42,7 @@ MPC_OMP_TASK_STATUSES = [
 
 MPC_OMP_TASK_LABEL_MAX_LENGTH = 64
 
+# record sizes from C's sizeof()
 RECORD_GENERIC_SIZE         = 16
 RECORD_DEPENDENCY_SIZE      = 24
 RECORD_SCHEDULE_SIZE        = 112
@@ -54,32 +55,6 @@ MPC_OMP_TASK_TRACE_TYPE_CREATE          = 2
 MPC_OMP_TASK_TRACE_TYPE_FAMINE_OVERLAP  = 3
 MPC_OMP_TASK_TRACE_TYPE_ASYNC           = 4
 MPC_OMP_TASK_TRACE_TYPE_COUNT           = 5
-
-def cte_to_gantt(json):
-    processes = {}
-    for event in json['traceEvents']:
-        if ('cat' in event) and (event['cat'] == 'task'):
-            if event['pid'] not in processes:
-                processes[event['pid']] = {}
-            process = processes[event['pid']]
-            if event['tid'] not in process:
-                process[event['tid']] = {'tasks': []}
-            thread = process[event['tid']]
-            task = {
-                'start':    event['ts'],
-                'stop':     event['ts'] + event['dur'],
-                'name':     event['name'],
-                'pid':      event['pid'],
-                'tid':      event['tid'],
-                'args':     event['args']
-            }
-            thread['tasks'].append(task)
-    for pid in processes:
-        process = processes[pid]
-        for tid in process:
-            thread = process[tid]
-            thread['tasks'] = sorted(thread['tasks'], key=lambda task: task['start'])
-    return processes
 
 def records_to_communications(records):
     communications = {}

@@ -1,3 +1,7 @@
+"""
+"   Converts an MPI+OpenMP(tasks) trace to a Chrome Trace Engine (CTE) json trace,
+"   to be read in chrome, at about:tracing
+"""
 import json
 import sys
 from utils import *

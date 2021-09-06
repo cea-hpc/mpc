@@ -1,3 +1,10 @@
+"""
+"   usage: python3 cte_compressed.py -h
+"
+"   This tool compresses a Chrome Trace Engine (CTE) trace file (.json),
+"   since Chrome may only accept traces of size < 400 Mo
+"""
+
 import json
 import sys
 import getopt
