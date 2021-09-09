@@ -809,6 +809,12 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                                 [Provide prefix for $2])],
                 [whole_prefix=$withval],[whole_prefix="/usr/"])
 
+                # As spack may export paths inside the env (e.g. CPATH)
+                # pkg-config way deduplicate them however we want to
+                # capture these cflags to be sure we work later on
+                # we then use this variable to inhibit this behavior
+                export PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1
+
                 if test "x${whole_prefix}" != "xno"; then
                         # This IF is long !!
                         # >>>>>>>>>>>>>>>>>>>

@@ -102,11 +102,11 @@ host_triplet = @host@
 #
 @MPC_CUDA_ENABLED_TRUE@am__append_4 = mpc_nvcc
 bin_PROGRAMS = $(am__EXEEXT_1) $(am__EXEEXT_2)
-@MPC_LOWCOMM_ENABLED_TRUE@am__append_3 = mpc_sets
-@PRRTE_LAUNCHER_ENABLED_FALSE@am__append_4 = mpirun
-@MPC_HAS_SRUN_SUPPORT_TRUE@am__append_5 = mpcrun_opt/mpcrun_srun
-@HYDRA_LAUNCHER_ENABLED_TRUE@am__append_6 = mpcrun_opt/mpcrun_hydra mpcrun_opt/mpcrun_salloc_hydra 
-@PRRTE_LAUNCHER_ENABLED_TRUE@am__append_7 = mpcrun_opt/mpcrun_prrte
+@MPC_LOWCOMM_ENABLED_TRUE@am__append_5 = mpc_sets
+@PRRTE_LAUNCHER_ENABLED_FALSE@am__append_6 = mpirun
+@MPC_HAS_SRUN_SUPPORT_TRUE@am__append_7 = mpcrun_opt/mpcrun_srun
+@HYDRA_LAUNCHER_ENABLED_TRUE@am__append_8 = mpcrun_opt/mpcrun_hydra mpcrun_opt/mpcrun_salloc_hydra 
+@PRRTE_LAUNCHER_ENABLED_TRUE@am__append_9 = mpcrun_opt/mpcrun_prrte
 subdir = src/bin
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_gcc_builtin.m4 \
@@ -543,8 +543,8 @@ prefix_bin_SCRIPTS = mpcvars.sh
 @PRRTE_LAUNCHER_ENABLED_FALSE@mpirun_SOURCES = ./mpirun.c
 mpcrun_plugindir = $(pkgdatadir)/mpcrun_opt/
 mpcrun_plugin_SCRIPTS = mpcrun_opt/mpcrun_none \
-	mpcrun_opt/mpcrun_none_mpc-gdb $(am__append_5) $(am__append_6) \
-	$(am__append_7)
+	mpcrun_opt/mpcrun_none_mpc-gdb $(am__append_7) $(am__append_8) \
+	$(am__append_9)
 all: all-am
 
 .SUFFIXES:

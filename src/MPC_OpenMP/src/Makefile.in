@@ -150,7 +150,7 @@ am_libiomp5_la_OBJECTS = ./fakelib/fakelib.lo
 libiomp5_la_OBJECTS = $(am_libiomp5_la_OBJECTS)
 am__DEPENDENCIES_1 =
 libmpcomp_la_DEPENDENCIES = ../../MPC_Launch/src/libmpclaunch.la \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__objects_1 = tools/src/mpcompt_entryPoints.lo \
 	tools/src/mpcompt_init.lo tools/src/mpcompt_instance.lo \
 	tools/callback/mpcompt_cancel.lo \
@@ -553,7 +553,7 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/src/MPC_MPI/src/ \
 	-I$(abs_top_srcdir)/src/MPC_MPI/include/ \
 	-I$(abs_top_srcdir)/src/MPC_OpenMP/include/ $(VMEM_CFLAGS) \
-	$(tools_inc)
+	$(OPA_CFLAGS) $(tools_inc)
 tools_inc = -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/src/ \
             -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/callback/ \
             -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/trace/
@@ -573,7 +573,7 @@ tools_src = tools/src/mpcompt_entryPoints.c tools/src/mpcompt_init.c tools/src/m
             tools/callback/mpcompt_thread.c tools/callback/mpcompt_workShare.c
 
 libmpcomp_la_LDFLAGS = -Wl,--version-script=$(abs_top_srcdir)/src/MPC_OpenMP/version_gomp.txt
-libmpcomp_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la $(VMEM_LIBS)
+libmpcomp_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la $(VMEM_LIBS) $(OPA_LIBS)
 libiomp5_la_SOURCES = ./fakelib/fakelib.c
 libgomp_la_SOURCES = ./fakelib/fakelib.c
 all: all-am
