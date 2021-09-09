@@ -209,7 +209,7 @@ void mpc_omp_named_critical_begin( void **l )
 
 	if ( *l == NULL )
 	{
-		mpc_common_spinlock_lock( &( _mpcomp_global_init_critical_named_lock ) );
+		mpc_common_spinlock_lock( &( __mpcomp_global_init_critical_named_lock ) );
 
 		if ( *l == NULL )
 		{
@@ -226,7 +226,7 @@ void mpc_omp_named_critical_begin( void **l )
 			*l = named_critical_lock;
 		}
 
-		mpc_common_spinlock_unlock( &( _mpcomp_global_init_critical_named_lock ) );
+		mpc_common_spinlock_unlock( &( __mpcomp_global_init_critical_named_lock ) );
 	}
 
 	named_critical_lock = ( omp_lock_t * )( *l );
