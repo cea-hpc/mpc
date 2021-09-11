@@ -311,7 +311,7 @@ void __kmpc_end_serialized_parallel( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int
     _mpc_omp_ompt_callback_sync_region( ompt_sync_region_barrier_implicit, ompt_scope_begin );
 #endif /* OMPT_SUPPORT */
 
-    _mpc_omp_internal_full_barrier( t->mvp );
+    mpc_omp_barrier();
 
 #if OMPT_SUPPORT
     _mpc_omp_ompt_callback_sync_region( ompt_sync_region_barrier_implicit, ompt_scope_end );
@@ -1198,11 +1198,11 @@ void __kmpc_end_reduce( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid
 	if ( packed_reduction_method == critical_reduce_block )
 	{
 		mpc_omp_anonymous_critical_end();
-        _mpc_omp_internal_full_barrier( t->mvp );
+        mpc_omp_barrier();
 	}
 	else if ( packed_reduction_method == atomic_reduce_block )
 	{
-        _mpc_omp_internal_full_barrier( t->mvp );
+        mpc_omp_barrier();
 	}
 	else if ( packed_reduction_method == tree_reduce_block )
 	{

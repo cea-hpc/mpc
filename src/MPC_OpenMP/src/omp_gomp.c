@@ -265,7 +265,7 @@ static inline void __gomp_end_parallel_region( void )
     _mpc_omp_ompt_callback_sync_region( ompt_sync_region_barrier_implicit, ompt_scope_begin );
 #endif /* OMPT_SUPPORT */
 
-    _mpc_omp_internal_full_barrier( mvp );
+    mpc_omp_barrier();
 
 #if OMPT_SUPPORT
     _mpc_omp_ompt_callback_sync_region( ompt_sync_region_barrier_implicit, ompt_scope_end );

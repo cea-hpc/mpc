@@ -551,7 +551,7 @@ void __scatter_instance_post_init( mpc_omp_thread_t *thread )
 	string_array[total] = '\0';
 	const int node_rank = MPC_OMP_TASK_MVP_GET_TASK_LIST_NODE_RANK( mvp, 0 );
 	fprintf( stderr, "#%d - Me : %d -- Stealing list =%s nbList : %d\n", thread->rank, node_rank, string_array, nbList );
-	_mpc_omp_internal_full_barrier( thread->mvp );
+	mpc_omp_barrier();
 #endif /* Check victim list for each thread */
 	thread->mvp->instance->buffered = 1;
 #if 0
@@ -772,7 +772,7 @@ void _mpc_omp_start_openmp_thread(mpc_omp_mvp_t * mvp)
     volatile int * spin_status = ( mvp->spin_node ) ? &( mvp->spin_node->spin_status ) : &( mvp->spin_status );
     *spin_status = MPC_OMP_MVP_STATE_SLEEP;
 
-    _mpc_omp_internal_full_barrier( mvp );
+    mpc_omp_barrier();
     _mpc_omp_task_tree_deinit(cur_thread);
 
     mpc_omp_tls = (void *) mvp->threads->next;

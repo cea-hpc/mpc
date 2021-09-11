@@ -426,219 +426,62 @@ void _mpc_omp_single_coherency_end_barrier( void )
  * BARRIER *
  ***********/
 
-/** Barrier for all threads of the same team */
-void
-_mpc_omp_internal_full_barrier(mpc_omp_mvp_t * mvp)
-{
-    /**
-     * TODO : compare this naive barrier approach with the current implementation
-     *
-     *   assert(mvp);
-     *   
-     *   _mpc_omp_task_wait();
-     *  
-     *   mpc_omp_team_t * team = mvp->instance->team;
-     *   int num_threads = team->info.num_threads;
-     *   if (num_threads == 1) return ;
-     *  
-     *   int old_version = team->barrier_version;
-     *  
-     *   if (OPA_fetch_and_incr_int(&(team->threads_in_barrier)) == num_threads - 1)
-     *   {
-     *       OPA_store_int(&(team->threads_in_barrier), 0);
-     *       ++team->barrier_version;
-     *   }   
-     *   while (team->barrier_version == old_version)
-     *   {
-     *       _mpc_omp_task_schedule();
-     *   } 
-    */
-
-    assert(mvp);
-
-    /* wait for children tasks to complete */
-    _mpc_omp_task_wait();
-
-#if OMPT_SUPPORT
-    ompt_sync_region_t kind = thread->reduction_method ? ompt_sync_region_reduction: ompt_sync_region_barrier;
-#endif /* OMPT_SUPPORT */
-
-    if( mvp->threads->info.num_threads == 1)
-    {
-#if OMPT_SUPPORT
-        _mpc_omp_ompt_callback_sync_region_wait( kind, ompt_scope_begin );
-        _mpc_omp_ompt_callback_sync_region_wait( kind, ompt_scope_end );
-#endif /* OMPT_SUPPORT */
-        return ;
-    }
-
-    assert(mvp->father);
-    assert(mvp->father->instance);
-    assert(mvp->father->instance->team);
-
-    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
-    mpc_omp_node_t * c = mvp->father;
-    mpc_omp_node_t * new_root = thread->instance->root;
-
-    /* Step 1: Climb in the tree */
-    long b_done = c->barrier_done; /* Move out of sync region? */
-    long b = OPA_fetch_and_incr_int(&(c->barrier)) + 1;
-
-    while (b == c->barrier_num_threads && c != new_root)
-    {
-        OPA_store_int(&(c->barrier), 0);
-        c = c->father;
-        b_done = c->barrier_done;
-        b = OPA_fetch_and_incr_int(&(c->barrier)) + 1;
-    }
-
-    /* Step 2 - Wait for the barrier to be done */
-    if (c != new_root || (c == new_root && b != c->barrier_num_threads))
-    {
-#if OMPT_SUPPORT
-        _mpc_omp_ompt_callback_sync_region_wait( kind, ompt_scope_begin );
-#endif /* OMPT_SUPPORT */
-
-        /* Wait for c->barrier == c->barrier_num_threads */
-        while (b_done == c->barrier_done)
-        {
-            mpc_thread_yield();
-            _mpc_omp_task_schedule();
-            _mpc_omp_task_wait();
-        }
-
-#if OMPT_SUPPORT
-        _mpc_omp_ompt_callback_sync_region_wait( kind, ompt_scope_end );
-#endif /* OMPT_SUPPORT */
-    } else {
-#if OMPT_SUPPORT
-        _mpc_omp_ompt_callback_sync_region_wait( kind, ompt_scope_begin );
-#endif /* OMPT_SUPPORT */
-
-        OPA_store_int(&(c->barrier), 0);
-
-#if MPC_OMP_COHERENCY_CHECKING
-        mpc_omp_for_dyn_coherency_end_barrier();
-        mpc_omp_single_coherency_end_barrier();
-#endif
-
-        c->barrier_done++ ; /* No need to lock I think... */
-
-#if OMPT_SUPPORT
-        _mpc_omp_ompt_callback_sync_region_wait( kind, ompt_scope_end );
-#endif /* OMPT_SUPPORT */
-    }
-
-    /* Step 3 - Go down */
-    while (c->child_type != MPC_OMP_CHILDREN_LEAF)
-    {
-        c = c->children.node[mvp->tree_rank[c->depth]];
-        c->barrier_done++; /* No need to lock I think... */
-    }
-}
-
-/* Half barrier for the end of a parallel region */
-void _mpc_omp_internal_half_barrier_start( mpc_omp_mvp_t *mvp )
-{
-    mpc_omp_node_t *c, *new_root;
-    assert( mvp );
-    assert( mvp->father );
-    assert( mvp->father->instance );
-    assert( mvp->father->instance->team );
-    new_root = mvp->instance->root;
-    c = mvp->father;
-    assert( c );
-    assert( new_root != NULL );
-#if 0
-    ( void )mpc_omp_thread_tls_store( mvp->threads[0] );
-    _mpc_omp_internal_full_barrier( mvp );
-    ( void )mpc_omp_thread_tls_store_father(); // To check...
-#endif
-    /* Step 1: Climb in the tree */
-    long b = OPA_fetch_and_incr_int( &( c->barrier ) ) + 1;
-
-    while ( b == c->barrier_num_threads && c != new_root )
-    {
-        OPA_store_int( &( c->barrier ), 0 );
-        c = c->father;
-        b = OPA_fetch_and_incr_int( &( c->barrier ) ) + 1;
-    }
-}
-
-void _mpc_omp_internal_half_barrier_end( mpc_omp_mvp_t *mvp )
-{
-    mpc_omp_thread_t *cur_thread;
-    mpc_omp_node_t *root;
-    assert( mvp->threads );
-    cur_thread = mvp->threads;
-
-    /* End barrier for master thread */
-    if ( cur_thread->rank )
-    {
-        return;
-    }
-
-    root = cur_thread->instance->root;
-    const int expected_num_threads = root->barrier_num_threads;
-
-    while ( OPA_load_int( &( root->barrier ) ) != expected_num_threads )
-    {
-        mpc_thread_yield();
-    }
-
-    OPA_store_int( &( root->barrier ), 0 );
-}
-
 /*
    OpenMP barrier.
    All threads of the same team must meet.
    This barrier uses some optimizations for threads inside the same microVP.
+
+   Description
+
+    All threads of the team that is executing the binding parallel
+    region must execute the barrier region and complete execution
+    of all explicit tasks bound to this parallel region before any
+    are allowed to continue execution beyond the barrier.
+    The barrier region includes an implicit task scheduling
+    point in the current task region
  */
-void mpc_omp_barrier(void) {
+void
+mpc_omp_barrier(void)
+{
+    /* Handle orphaned directive (initialize OpenMP environment) */
+    mpc_omp_init();
+
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-  _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
+    _mpc_omp_ompt_callback_sync_region_wait( kind, ompt_scope_begin );
 #endif /* OMPT_SUPPORT */
 
-  /* Handle orphaned directive (initialize OpenMP environment) */
-  mpc_omp_init();
+    mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
+    assert(thread);
+    assert(thread->instance);
+    assert(thread->instance->team);
 
-  /* Grab info on the current thread */
-  mpc_omp_thread_t *t = mpc_omp_get_thread_tls();
+    /* wait for children tasks to complete */
+    _mpc_omp_task_wait();
 
-  mpc_common_nodebug("[%d] %s: Entering w/ %d thread(s)\n", t->rank, __func__,
-               t->info.num_threads);
+    /* retrieve current thread team */
+    mpc_omp_team_t * team = thread->instance->team;
+    int num_threads = team->info.num_threads;
+    if (num_threads > 1)
+    {
+        int old_version = team->barrier_version;
+
+        if (OPA_fetch_and_incr_int(&(team->threads_in_barrier)) == num_threads - 1)
+        {
+            OPA_store_int(&(team->threads_in_barrier), 0);
+            ++team->barrier_version;
+        }
+        /* work steal */
+        while (team->barrier_version == old_version)
+        {
+            _mpc_omp_task_schedule();
+        }
+    }
 
 #if OMPT_SUPPORT
-  _mpc_omp_ompt_callback_sync_region( ompt_sync_region_barrier, ompt_scope_begin );
+    _mpc_omp_ompt_callback_sync_region_wait( kind, ompt_scope_end );
 #endif /* OMPT_SUPPORT */
 
-  if (t->info.num_threads != 1)
-  {
-    /* Get the corresponding microVP */
-    mpc_omp_mvp_t *mvp = t->mvp;
-    assert(mvp != NULL);
-    mpc_common_nodebug("[%d] %s: t->mvp = %p", t->rank, __func__, t->mvp);
- 
-    /* Call the real barrier */
-    assert( t->info.num_threads == t->mvp->threads->info.num_threads );
-    _mpc_omp_internal_full_barrier(mvp);
-  }
-#if OMPT_SUPPORT
-  else {
-    _mpc_omp_ompt_callback_sync_region_wait( ompt_sync_region_barrier, ompt_scope_begin );
-    _mpc_omp_ompt_callback_sync_region_wait( ompt_sync_region_barrier, ompt_scope_end );
-  }
-#endif /* OMPT_SUPPORT */
-
-#if OMPT_SUPPORT
-  _mpc_omp_ompt_callback_sync_region( ompt_sync_region_barrier, ompt_scope_end );
-
-  if( t->info.in_single ) {
-    _mpc_omp_ompt_callback_work( (t->rank == t->instance->team->info.doing_single) ?
-                             ompt_work_single_executor : ompt_work_single_other,
-                             ompt_scope_end, 1 );
-  }
-#endif /* OMPT_SUPPORT */
 }
 
 

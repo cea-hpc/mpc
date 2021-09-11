@@ -61,8 +61,6 @@ void _mpc_omp_single_coherency_end_barrier( void );
  ***********/
 
 void mpc_omp_barrier( void );
-void _mpc_omp_internal_half_barrier( mpc_omp_mvp_t *mvp );
-void _mpc_omp_internal_full_barrier( mpc_omp_mvp_t *mvp );
 
 /************
  * SECTIONS *
