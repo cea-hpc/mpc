@@ -893,7 +893,7 @@ __task_ref(mpc_omp_task_t * task)
     OPA_incr_int(&(task->ref_counter));
 }
 
-void __task_delete_hard(mpc_omp_task_t * task);
+void __task_delete(mpc_omp_task_t * task);
 
 static void
 __task_unref(mpc_omp_task_t * task)
@@ -902,7 +902,7 @@ __task_unref(mpc_omp_task_t * task)
     assert(OPA_load_int(&(task->ref_counter)) > 0);
     if (OPA_fetch_and_decr_int(&(task->ref_counter)) == 1)
     {
-        __task_delete_hard(task);
+        __task_delete(task);
     }
 }
 
@@ -931,7 +931,7 @@ __task_list_delete(mpc_omp_task_dep_list_elt_t * list)
 }
 
 static inline void
-__task_delete_soft(mpc_omp_task_t * task)
+__task_delete_fiber(mpc_omp_task_t * task)
 {
 # if MPC_OMP_TASK_COMPILE_FIBER
     if (MPC_OMP_TASK_FIBER_ENABLED && task->fiber)
@@ -956,7 +956,7 @@ __task_delete_soft(mpc_omp_task_t * task)
 
 
 void
-__task_delete_hard(mpc_omp_task_t * task)
+__task_delete(mpc_omp_task_t * task)
 {
     assert(OPA_load_int(&(task->ref_counter)) == 0);
 
@@ -988,7 +988,7 @@ __task_finalize(mpc_omp_task_t * task)
     mpc_omp_thread_t * thread = __thread_task_coherency(NULL);
     assert(thread);
 
-    __task_delete_soft(task);
+    __task_delete_fiber(task);
     mpc_omp_taskgroup_del_task(task);
     _mpc_omp_task_finalize_deps(task);
     __task_unref(task);
@@ -1011,7 +1011,6 @@ __task_list_elt_new(mpc_omp_task_dep_list_elt_t * list, mpc_omp_task_t * task)
     __task_ref(task);
     new_node->task = task;
     new_node->next = list;
-
     return new_node;
 }    
 
