@@ -23,18 +23,6 @@
 #ifndef __MPC_OMP_TASK_PROPERTY_H__ 
 # define __MPC_OMP_TASK_PROPERTY_H__
 
-/* GOMP bit flags */
-/* https://github.com/gcc-mirror/gcc/blob/master/include/gomp-constants.h#L202 */
-# define GOMP_TASK_FLAG_UNTIED      (1 << 0)
-# define GOMP_TASK_FLAG_FINAL       (1 << 1)
-# define GOMP_TASK_FLAG_MERGEABLE   (1 << 2)
-# define GOMP_TASK_FLAG_DEPEND      (1 << 3)
-# define GOMP_TASK_FLAG_PRIORITY    (1 << 4)
-# define GOMP_TASK_FLAG_UP          (1 << 8)
-# define GOMP_TASK_FLAG_GRAINSIZE   (1 << 9)
-# define GOMP_TASK_FLAG_IF          (1 << 10)
-# define GOMP_TASK_FLAG_NOGROUP     (1 << 11)
-
 /* MPC_OMP bit flags */
 # define MPC_OMP_TASK_PROP_UNDEFERRED    (1 << 0)
 # define MPC_OMP_TASK_PROP_UNTIED        (1 << 1)  /* if the task is untied */

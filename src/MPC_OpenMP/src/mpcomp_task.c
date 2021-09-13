@@ -31,12 +31,25 @@
 #include <mpc_common_rank.h>
 
 #include "mpcomp_core.h"
-
 #include "mpcomp_tree.h"
+
+#include "omp_gomp_constants.h"
 
 /************************
  * OMP INSTANCE RELATED 
  ***********************/
+static inline int
+__task_reached_thresholds(mpc_omp_task_t * task)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+    assert(thread);
+    int r = (task->depth > mpc_omp_conf_get()->task_depth_threshold
+            || OPA_load_int(&(thread->instance->task_infos.ntasks)) >= mpc_omp_conf_get()->maximum_tasks
+            || OPA_load_int(&(thread->instance->task_infos.ntasks_ready)) >= mpc_omp_conf_get()->maximum_ready_tasks);
+    if (r) { assert(0); }
+    return r;
+}
+
 static inline void
 __instance_incr_ready_tasks(void)
 {
@@ -864,8 +877,8 @@ __task_pqueue_push(mpc_omp_task_pqueue_t * pqueue, mpc_omp_task_t * task)
     mpc_common_spinlock_lock(&(pqueue->lock));
     {
         mpc_omp_task_pqueue_node_t * node = __task_pqueue_insert(pqueue, task->priority);
-        __task_pqueue_node_push(node, task);
         task->pqueue = pqueue;
+        __task_pqueue_node_push(node, task);
     }
     mpc_common_spinlock_unlock(&(pqueue->lock));
     
@@ -924,16 +937,16 @@ __task_list_delete(mpc_omp_task_dep_list_elt_t * list)
 {
     while (list)
     {
-        mpc_omp_task_dep_list_elt_t * tmp = list->next;
+        mpc_omp_task_dep_list_elt_t * next = list->next;
         __task_list_elt_delete(list);
-        list = tmp;
+        list = next;
     }
 }
 
+# if MPC_OMP_TASK_COMPILE_FIBER
 static inline void
 __task_delete_fiber(mpc_omp_task_t * task)
 {
-# if MPC_OMP_TASK_COMPILE_FIBER
     if (MPC_OMP_TASK_FIBER_ENABLED && task->fiber)
     {
         mpc_omp_thread_t * thread = __thread_task_coherency(NULL);
@@ -951,9 +964,8 @@ __task_delete_fiber(mpc_omp_task_t * task)
             thread->task_infos.fiber = task->fiber;
         }
     }
-# endif /* MPC_OMP_TASK_COMPILE_FIBER */
 }
-
+# endif /* MPC_OMP_TASK_COMPILE_FIBER */
 
 void
 __task_delete(mpc_omp_task_t * task)
@@ -983,13 +995,14 @@ __task_finalize(mpc_omp_task_t * task)
 {
     assert(task->statuses.completed);
 
-    _mpc_omp_task_unref_parent_task(task);
-
     mpc_omp_thread_t * thread = __thread_task_coherency(NULL);
     assert(thread);
 
+# if MPC_OMP_TASK_COMPILE_FIBER
     __task_delete_fiber(task);
+# endif /* MPC_OMP_TASK_COMPILE_FIBER */
     mpc_omp_taskgroup_del_task(task);
+    _mpc_omp_task_unref_parent_task(task);
     _mpc_omp_task_finalize_deps(task);
     __task_unref(task);
 }
@@ -1095,18 +1108,36 @@ __task_dep_htable_new(mpc_omp_task_dep_hash_func_t hfunc)
 }
 
 static inline void
-__task_update_dependency_depth(mpc_omp_task_t * task, mpc_omp_task_t * predecessor)
+__task_process_deps_link(mpc_omp_task_t * predecessor, mpc_omp_task_t * successor)
 {
-    if (predecessor->dep_node.min_depth + 1 < task->dep_node.min_depth)
+    if (OPA_load_int(&(predecessor->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED)
     {
-        task->dep_node.min_depth = predecessor->dep_node.min_depth + 1;
-    }
-    if (predecessor->dep_node.max_depth + 1 > task->dep_node.max_depth)
-    {
-        task->dep_node.max_depth = predecessor->dep_node.max_depth + 1;
+        MPC_OMP_TASK_LOCK(predecessor);
+        {
+            if (OPA_load_int(&(predecessor->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED)
+            {
+                predecessor->dep_node.successors = __task_list_elt_new(predecessor->dep_node.successors, successor);
+                OPA_incr_int(&(predecessor->dep_node.nsuccessors));
+
+                successor->dep_node.predecessors = __task_list_elt_new(successor->dep_node.predecessors, predecessor);
+                OPA_incr_int(&(successor->dep_node.npredecessors));
+                OPA_incr_int(&(successor->dep_node.ref_predecessors));
+
+                if (predecessor->dep_node.top_level + 1 > successor->dep_node.top_level)
+                {
+                    successor->dep_node.top_level = predecessor->dep_node.top_level + 1;
+                }
+            }
+        }
+        MPC_OMP_TASK_UNLOCK(predecessor);
     }
 }
 
+/**
+ * @param task - the task
+ * @param htable - task's parent htable, to retrieve previous data dependencies
+ * @param depend - gomp formatted 'depend' array
+ */
 static inline void
 __task_process_deps(mpc_omp_task_t * task,
                      mpc_omp_task_dep_htable_t * htable,
@@ -1116,117 +1147,92 @@ __task_process_deps(mpc_omp_task_t * task,
     assert(htable);
     assert(depend);
 
-    size_t i, j;
-
-    const size_t tot_deps_num = (uintptr_t)depend[0];
-    const size_t out_deps_num = (uintptr_t)depend[1];
-
-    if (!tot_deps_num)
+    const size_t tot_deps_num = (size_t)depend[0];
+    if (tot_deps_num == 0)
     {
         return ; 
     }
+    const size_t out_deps_num = (size_t)depend[1];
 
-    // Filter redundant value
-    size_t task_already_process_num = 0;
-    uintptr_t * task_already_process_list = (uintptr_t *) mpc_omp_alloc(sizeof(uintptr_t) * tot_deps_num);
-    assert(task_already_process_list);
+    /* Filter redundant value */
+    size_t dep_already_processed_n = 0;
+    uintptr_t * dep_already_processed_list = (uintptr_t *) mpc_omp_alloc(sizeof(uintptr_t) * tot_deps_num);
+    assert(dep_already_processed_list);
 
+    size_t i;
     for (i = 0; i < tot_deps_num; i++)
     {
-        int redundant = 0;
-
-        /* FIND HASH IN HTABLE */
+        /* get the data dependency address, and check that it is not redundant */
         const uintptr_t addr = (uintptr_t)depend[2 + i];
-        const int type = (i < out_deps_num) ? MPC_OMP_TASK_DEP_OUT : MPC_OMP_TASK_DEP_IN;
-        assert(task_already_process_num < tot_deps_num);
-
-        for (j = 0; j < task_already_process_num; j++)
+        int redundant = 0;
+        size_t j;
+        for (j = 0; j < dep_already_processed_n; j++)
         {
-            if (task_already_process_list[j] == addr)
+            if (dep_already_processed_list[j] == addr)
             {
                 redundant = 1;
                 break;
             }
         }
-
-        /** OUT are in first position en OUT > IN deps */
         if (redundant)
         {
             continue;
         }
 
-        task_already_process_list[task_already_process_num++] = addr;
+        /* mark the dependency address as processed */
+        dep_already_processed_list[dep_already_processed_n++] = addr;
 
+        /* retrieve parent's data dependency entry, or generate a new one for this data */
         mpc_omp_task_dep_htable_entry_t * entry = __task_dep_htable_entry_add(htable, addr);
         assert(entry);
 
+        /* retrieve dependency type */
+        const int type = (i < out_deps_num) ? GOMP_OMP_TASK_DEP_OUT : GOMP_OMP_TASK_DEP_IN;
+
         /**
-         * For the in dependence-type, if the storage location of at least one of the list items matches
-         * the storage location of a list item appearing in a depend clause with an out or inout dependence-type
+         * For the in dependence-type, if the storage location of at least one
+         * of the list items matches the storage location of a list item appearing
+         * in a depend clause with an out or inout dependence-type
          * on a construct from which a sibling task was previously generated,
          * then the generated task will be a dependent task of that sibling task.
          */
-
+        if (type == GOMP_OMP_TASK_DEP_IN)
+        {
+            if (entry->last_out)
+            {
+                __task_process_deps_link(entry->last_out, task);
+            }
+            entry->last_in = __task_list_elt_new(entry->last_in, task);
+        }
         /**
-         * For the out and inout dependence-types, if the storage location of at least one of the list items matches
-         * the storage location of a list item appearing in a depend clause with an in, out or inout dependence-type
+         * For the out and inout dependence-types, if the storage location of at
+         * least one of the list items matches the storage location of a list
+         * item appearing in a depend clause with an in, out or inout dependence-type
          * on a construct from which a sibling task was previously generated,
          * then the generated task will be a dependent task of that sibling task.
          */
-
-        // NEW [out] dep must be after all [in] deps
-        if (type == MPC_OMP_TASK_DEP_OUT && entry->last_in != NULL)
+        else if (type == GOMP_OMP_TASK_DEP_OUT || type == GOMP_OMP_TASK_DEP_INOUT)
         {
-            mpc_omp_task_dep_list_elt_t * list_elt;
-            for (list_elt = entry->last_in; list_elt; list_elt = list_elt->next)
+            /* with an in */
+            if (entry->last_in)
             {
-                mpc_omp_task_t * out_task = list_elt->task;
-
-                if (OPA_load_int(&(out_task->dep_node.status)) < MPC_OMP_TASK_DEP_TASK_FINALIZED)
+                mpc_omp_task_dep_list_elt_t * last_in = entry->last_in;
+                while (last_in)
                 {
-                    MPC_OMP_TASK_LOCK(out_task);
-                    {
-                        if (OPA_load_int(&(out_task->dep_node.status)) < MPC_OMP_TASK_DEP_TASK_FINALIZED)
-                        {
-                            out_task->dep_node.successors = __task_list_elt_new(out_task->dep_node.successors, task);
-                            OPA_incr_int(&(out_task->dep_node.nsuccessors));
-
-                            task->dep_node.predecessors = __task_list_elt_new(task->dep_node.predecessors, out_task);
-                            OPA_incr_int(&(task->dep_node.npredecessors));
-                            __task_update_dependency_depth(task, out_task);
-                        }
-                    }
-                    MPC_OMP_TASK_UNLOCK(out_task);
+                    __task_process_deps_link(last_in->task, task);
+                    last_in = last_in->next;
                 }
+                __task_list_delete(entry->last_in);
+                entry->last_in = NULL;
             }
-            __task_list_delete(entry->last_in);
-            entry->last_in = NULL;
-        }
-        else
-        {
-            /** Non executed OUT dependency**/
-            mpc_omp_task_t * last_out = entry->last_out;
-
-            if (last_out && (OPA_load_int(&(last_out->dep_node.status)) < MPC_OMP_TASK_DEP_TASK_FINALIZED))
+            /* 'else if' here, because 'entry->last_in' depends from 'entry->last_out' */
+            /* so we save an implicit edge here */
+            else if (entry->last_out)
             {
-                MPC_OMP_TASK_LOCK(last_out);
-                {
-                    if (OPA_load_int(&(last_out->dep_node.status)) < MPC_OMP_TASK_DEP_TASK_FINALIZED)
-                    {
-                        last_out->dep_node.successors = __task_list_elt_new(last_out->dep_node.successors, task);
-                        OPA_incr_int(&(last_out->dep_node.nsuccessors));
-
-                        task->dep_node.predecessors = __task_list_elt_new(task->dep_node.predecessors, last_out);
-                        OPA_incr_int(&(task->dep_node.npredecessors));
-                        __task_update_dependency_depth(task, last_out);
-                    }
-                }
-                MPC_OMP_TASK_UNLOCK(last_out);
+                __task_process_deps_link(entry->last_out, task);
             }
-        }
-
-        if (type == MPC_OMP_TASK_DEP_OUT)
-        {
+           
+            /* save the dependency for next tasks */ 
             if (entry->last_out)
             {
                 __task_unref(entry->last_out);
@@ -1236,13 +1242,15 @@ __task_process_deps(mpc_omp_task_t * task,
         }
         else
         {
-            assert(type == MPC_OMP_TASK_DEP_IN);
-            entry->last_in = __task_list_elt_new(entry->last_in, task);
+            not_implemented();
         }
     }
 
-    mpc_omp_free(task_already_process_list);
+    mpc_omp_free(dep_already_processed_list);
 }
+
+/* link error */
+void __task_run(mpc_omp_task_t * task);
 
 void
 _mpc_omp_task_finalize_deps(mpc_omp_task_t * task)
@@ -1257,7 +1265,7 @@ _mpc_omp_task_finalize_deps(mpc_omp_task_t * task)
 
     MPC_OMP_TASK_LOCK(task);
     {
-        OPA_store_int(&(task->dep_node.status), MPC_OMP_TASK_DEP_TASK_FINALIZED);
+        OPA_store_int(&(task->dep_node.status), MPC_OMP_TASK_STATUS_FINALIZED);
     }
     MPC_OMP_TASK_UNLOCK(task);
 
@@ -1268,28 +1276,26 @@ _mpc_omp_task_finalize_deps(mpc_omp_task_t * task)
         task->dep_node.htable = NULL;
     }
 
-    /* TODO : remove me from my parent htable */
-
     /* Resolve successor's data dependency */
     mpc_omp_task_dep_list_elt_t * succ = task->dep_node.successors;
+    
     while (succ)
     {
         MPC_OMP_TASK_TRACE_DEPENDENCY(task, succ->task);
 
-        /* save next successor */
-        mpc_omp_task_dep_list_elt_t * next_elt = succ->next;
-
         /* if successor's dependencies are fullfilled, process it */
         if (OPA_fetch_and_decr_int(&(succ->task->dep_node.ref_predecessors)) == 1)
         {
-            if (OPA_cas_int(&(succ->task->dep_node.status), MPC_OMP_TASK_DEP_TASK_NOT_READY, MPC_OMP_TASK_DEP_TASK_READY) == MPC_OMP_TASK_DEP_TASK_NOT_READY)
+            if (OPA_cas_int(&(succ->task->dep_node.status), MPC_OMP_TASK_STATUS_NOT_READY, MPC_OMP_TASK_STATUS_READY) == MPC_OMP_TASK_STATUS_NOT_READY)
             {
-                _mpc_omp_task_process(succ->task);
+                mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+                mpc_omp_task_pqueue_t * pqueue = __thread_get_task_pqueue(thread, MPC_OMP_PQUEUE_TYPE_NEW);
+                __task_pqueue_push(pqueue, succ->task);
             }
         }
 
-        /* processes next successor */
-        succ = next_elt;
+        /* process next successor */
+        succ = succ->next;
     }
 
     /* Since 'task' is completed, no longer need to access it predecessors */
@@ -1301,11 +1307,11 @@ static void
 __task_priority_propagate_on_predecessors(mpc_omp_task_t * task)
 {
     mpc_omp_task_priority_policy_t policy = mpc_omp_conf_get()->task_priority_policy;
-    if (task->dep_node.predecessors && OPA_load_int(&(task->dep_node.status)) < MPC_OMP_TASK_DEP_TASK_FINALIZED)
+    if (task->dep_node.predecessors && OPA_load_int(&(task->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED)
     {
         MPC_OMP_TASK_LOCK(task);
         {
-            if (OPA_load_int(&(task->dep_node.status)) < MPC_OMP_TASK_DEP_TASK_FINALIZED)
+            if (OPA_load_int(&(task->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED)
             {
                 mpc_omp_task_dep_list_elt_t * predecessor = task->dep_node.predecessors;
                 while (predecessor)
@@ -2402,7 +2408,6 @@ ___thread_bind_task(
     mpc_omp_task_t * task,
     mpc_omp_local_icv_t * icv)
 {
-
     /* Restore thread icv envionnement */
     thread->info.icvs = *icv;
 
@@ -2548,7 +2553,7 @@ __task_run_with_fiber(mpc_omp_task_t * task)
  * Run the task
  * @param task : the task
  */
-static inline void
+void
 __task_run(mpc_omp_task_t * task)
 {
 # if MPC_OMP_TASK_COMPILE_FIBER
@@ -2587,36 +2592,6 @@ _mpc_omp_task_schedule(void)
     else
     {
         /* Famine detected */
-    }
-}
-
-/**
- * Run or defer the task depending on its properties
- * This should be call after an omp task constructor
- * \see MPC_OMP_TASK_PROP_UNDEFERRED
- * \see MPC_OMP_TASK_PROP_INCLUDED
- */
-void
-_mpc_omp_task_process(mpc_omp_task_t * task)
-{
-    mpc_omp_thread_t * thread = __thread_task_coherency(task);
-
-    /** if the task should run undeferredly */
-    if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_UNDEFERRED)
-        || task->depth > mpc_omp_conf_get()->task_depth_threshold)
-    {
-        __task_run(task);
-    }
-    else
-    {
-        /* defer the task */
-        mpc_omp_task_pqueue_t * pqueue = __thread_get_task_pqueue(thread, MPC_OMP_PQUEUE_TYPE_NEW);
-        __task_pqueue_push(pqueue, task);
-        
-        if (OPA_load_int(&(thread->instance->task_infos.ntasks)) >= mpc_omp_conf_get()->maximum_tasks)
-        {
-            _mpc_omp_task_schedule(); 
-        }
     }
 }
 
@@ -2842,7 +2817,7 @@ _mpc_omp_task_yield(void)
 }
 
 void
-mpc_omp_task_extra(char * label, int extra_clauses)
+mpc_omp_task_extra(__UNUSED__ char * label, int extra_clauses)
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     assert(thread);
@@ -2927,14 +2902,15 @@ _mpc_omp_task_new(
 
     /* Initialize the task */
     _mpc_omp_task_init(task, fn, task_data, task_tot_size, properties, thread);
+    task->omp_priority_hint = priority_hint;
 
     _mpc_omp_taskgroup_add_task(task);
     _mpc_omp_task_ref_parent_task(task);
-    __task_ref(task);
+    __task_ref(task);   /* __task_finalize */
+    __task_ref(task);   /* mpc_omp_task */
 
     /* extra parameters given to the mpc thread for this task */
 # if MPC_OMP_TASK_COMPILE_TRACE
-    task->omp_priority_hint = priority_hint;
     if (thread->task_infos.incoming.label)
     {
         strncpy(task->label, thread->task_infos.incoming.label, MPC_OMP_TASK_LABEL_MAX_LENGTH);
@@ -2961,7 +2937,7 @@ _mpc_omp_task_new(
     /* Is it possible ?! See GOMP source code   */
     assert((uintptr_t)depend[0] > (uintptr_t)0);
 
-    if (!(parent->dep_node.htable))
+    if (parent->dep_node.htable == NULL)
     {
         parent->dep_node.htable = __task_dep_htable_new(__task_dep_hash);
         assert(parent->dep_node.htable);
@@ -2969,25 +2945,21 @@ _mpc_omp_task_new(
 
     /* initialize dependency node */
     mpc_common_spinlock_init(&(task->lock), 0);
-    task->dep_node.predecessors = NULL;
-    OPA_store_int(&(task->dep_node.npredecessors), 0);
     task->dep_node.successors = NULL;
     OPA_store_int(&(task->dep_node.nsuccessors), 0);
+    task->dep_node.predecessors = NULL;
+    OPA_store_int(&(task->dep_node.npredecessors), 0);
     OPA_store_int(&(task->dep_node.ref_predecessors), 0);
-    OPA_store_int(&(task->dep_node.status), MPC_OMP_TASK_DEP_TASK_NOT_READY);
-    task->dep_node.max_depth = 0;
-    task->dep_node.min_depth = INT_MAX;
+    OPA_store_int(&(task->dep_node.status), MPC_OMP_TASK_STATUS_NOT_READY);
+    task->dep_node.top_level = 0;
 
     /* parse dependencies */
     __task_process_deps(task, parent->dep_node.htable, depend);
-
-    /* update number of predecessors */
-    int npredecessors = OPA_load_int(&(task->dep_node.npredecessors));
-    if (npredecessors == 0) task->dep_node.min_depth = 0;
-    OPA_store_int(&(task->dep_node.ref_predecessors), npredecessors);
-
+    
+    /* compute priorities */
     __task_priority_compute(task);
 
+    /* trace task creation */
     MPC_OMP_TASK_TRACE_CREATE(task);
 
     return task;
@@ -3014,33 +2986,48 @@ mpc_omp_task(
     /* create the task */
     task = _mpc_omp_task_new(task, fn, data, cpyfn, arg_size, arg_align, properties, depend, priority_hint); 
     assert(task);
-
-    /* if the task has no dependency */
-    if (!mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_DEPEND)) 
+    
+    /* if the task is ready */
+    if (OPA_load_int(&(task->dep_node.ref_predecessors)) == 0)
     {
-        _mpc_omp_task_process(task);
+        if (OPA_cas_int(&(task->dep_node.status), MPC_OMP_TASK_STATUS_NOT_READY, MPC_OMP_TASK_STATUS_READY) == MPC_OMP_TASK_STATUS_NOT_READY)
+        {
+            /* if the task is undeferred, or we reached thresholds */
+            if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_UNDEFERRED) || __task_reached_thresholds(task))
+            {
+                /* run it */
+                __task_run(task);
+            }
+            else
+            {
+                /* else, differ it */
+                mpc_omp_task_pqueue_t * pqueue = __thread_get_task_pqueue(thread, MPC_OMP_PQUEUE_TYPE_NEW);
+                __task_pqueue_push(pqueue, task);
+            }
+        }
     }
+    /* else the task is not ready */
     else
     {
+        while (__task_reached_thresholds(task) && !task->statuses.completed)
+        {
+            _mpc_omp_task_schedule();
+        }
+
+        /* A task for which execution is not deferred with respect to its
+         * generating task region. That is, its generating task region is
+         * suspended until execution of the undeferred task is completed. */
         if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_UNDEFERRED))
         {
-            while (OPA_load_int(&(task->dep_node.ref_predecessors)))
+            while (!task->statuses.completed)
             {
                 _mpc_omp_task_schedule();
             }
         }
-
-        if (OPA_load_int(&(task->dep_node.ref_predecessors)) == 0)
-        {
-            if (OPA_cas_int(
-                        &(task->dep_node.status),
-                        MPC_OMP_TASK_DEP_TASK_NOT_READY,
-                        MPC_OMP_TASK_DEP_TASK_READY) == MPC_OMP_TASK_DEP_TASK_NOT_READY)
-            {
-                _mpc_omp_task_process(task);
-            }
-        }
     }
+
+    /* correspond with a reference on '_mpc_omp_task_new' */
+    __task_unref(task);
 }
 
 /*************
@@ -3211,39 +3198,37 @@ void mpc_omp_task_loop(void (*fn)(void *), void *data,
     const long num_iters = _mpc_omp_task_loop_compute_num_iters(start, end, step);
 
 #if OMPT_SUPPORT
-   _mpc_omp_ompt_callback_work( ompt_work_taskloop, ompt_scope_begin, num_iters );
+    _mpc_omp_ompt_callback_work( ompt_work_taskloop, ompt_scope_begin, num_iters );
 #endif /* OMPT_SUPPORT */
 
-   if (num_iters)
-   {
-       if (!(flags & GOMP_TASK_FLAG_GRAINSIZE)) {
-           num_tasks = __loop_taskloop_compute_loop_value(num_iters, num_tasks, step, &taskstep, &extra_chunk);
-       } else {
-           num_tasks = __loop_taskloop_compute_loop_value_grainsize(num_iters, num_tasks, step, &taskstep, &extra_chunk);
-           taskstep = (num_tasks == 1) ? end - start : taskstep;
-       }
+    if (num_iters)
+    {
+        if (!(flags & GOMP_TASK_FLAG_GRAINSIZE)) {
+            num_tasks = __loop_taskloop_compute_loop_value(num_iters, num_tasks, step, &taskstep, &extra_chunk);
+        } else {
+            num_tasks = __loop_taskloop_compute_loop_value_grainsize(num_iters, num_tasks, step, &taskstep, &extra_chunk);
+            taskstep = (num_tasks == 1) ? end - start : taskstep;
+        }
 
-       if (!(flags & GOMP_TASK_FLAG_NOGROUP)) {
-           _mpc_omp_task_taskgroup_start();
-       }
+        if (!(flags & GOMP_TASK_FLAG_NOGROUP)) {
+            _mpc_omp_task_taskgroup_start();
+        }
 
-       for (i = 0; i < num_tasks; i++) {
-           mpc_omp_task_property_t properties = 0;
-           mpc_omp_task_t * new_task = _mpc_omp_task_new(NULL, fn, data, cpyfn, arg_size, arg_align, properties, NULL, 0);
-           ((long *)new_task->data)[0] = start;
-           ((long *)new_task->data)[1] = start + taskstep;
-           start += taskstep;
-           taskstep -= (i == extra_chunk) ? step : 0;
-           TODO("handle the if clause, and flags here");
-           // for now, run task undeferredly
-           mpc_omp_task_set_property(&(new_task->property), MPC_OMP_TASK_PROP_UNDEFERRED);
-           _mpc_omp_task_process(new_task);
-       }
+        for (i = 0; i < num_tasks; i++) {
+            mpc_omp_task_property_t properties = 0;
+            mpc_omp_task_t * new_task = _mpc_omp_task_new(NULL, fn, data, cpyfn, arg_size, arg_align, properties, NULL, 0);
+            ((long *)new_task->data)[0] = start;
+            ((long *)new_task->data)[1] = start + taskstep;
+            start += taskstep;
+            taskstep -= (i == extra_chunk) ? step : 0;
+            TODO("handle the if clause, and flags here, for now, run sequentially");
+            __task_run(new_task);
+        }
 
-       if (!(flags & GOMP_TASK_FLAG_NOGROUP)) {
-           _mpc_omp_task_taskgroup_end();
-       }
-   }
+        if (!(flags & GOMP_TASK_FLAG_NOGROUP)) {
+            _mpc_omp_task_taskgroup_end();
+        }
+    }
 
 #if OMPT_SUPPORT
     _mpc_omp_ompt_callback_work( ompt_work_taskloop, ompt_scope_end, 0 );

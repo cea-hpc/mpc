@@ -172,10 +172,31 @@ typedef enum    mpc_omp_task_yield_mode_t
 /* prioritization policy */
 typedef enum    mpc_omp_task_priority_policy_e
 {
+    /** 0) FIFO
+     *      - priority hint is ignored
+     *      - runtime set internal tasks priority to zero
+     */
     MPC_OMP_TASK_PRIORITY_POLICY_FIFO,   /* priorities are ignored */
-    MPC_OMP_TASK_PRIORITY_POLICY_MA,     /* user set priority on every tasks */
-    MPC_OMP_TASK_PRIORITY_POLICY_SA1,    /* user set priority on send-tasks, runtime on predecessors */
-    MPC_OMP_TASK_PRIORITY_POLICY_SA2,    /* user set constant priority on tasks, runtime on predecessors */
+
+    /** 1) MA
+     *      - user set priority hint on tasks
+     *      - runtime copies the tasks hint as their internal priority
+     */  
+    MPC_OMP_TASK_PRIORITY_POLICY_MA,
+
+    /** 2) SA1
+     *      - user set a discrete priority on tasks
+     *      - runtime copies the tasks hint as their internal priority
+     *      - runtime propagate on predecessors - P(predecessors) = max(P(successors)) - 1
+     */
+    MPC_OMP_TASK_PRIORITY_POLICY_SA1,
+
+    /** 3) SA2
+     *      - user set constant priority on tasks
+     *      - runtime convert non-zero priorities to INT_MAX
+     *      - runtime propagate on predecessors - P(predecessors) = max(P(successors)) - 1
+     */
+    MPC_OMP_TASK_PRIORITY_POLICY_SA2
 }               mpc_omp_task_priority_policy_t;
 
 
@@ -274,24 +295,13 @@ typedef enum    mpc_omp_task_list_type_e
     MPC_OMP_TASK_LIST_TYPE_COUNT        = 2
 }               mpc_omp_task_list_type_t;
 
-/**
- * Don't modify order NONE < IN < OUT */
-typedef enum    mpc_omp_task_dep_type_e {
-  MPC_OMP_TASK_DEP_NONE  = 0,
-  MPC_OMP_TASK_DEP_IN    = 1,
-  MPC_OMP_TASK_DEP_OUT   = 2,
-  MPC_OMP_TASK_DEP_COUNT = 3,
-}               mpc_omp_task_dep_type_t;
-
 typedef enum    mpcomp_task_dep_task_status_e
 {
-    MPC_OMP_TASK_DEP_TASK_NOT_READY  = 0,
-    MPC_OMP_TASK_DEP_TASK_READY      = 1,
-    MPC_OMP_TASK_DEP_TASK_FINALIZED  = 2,
-    MPC_OMP_TASK_DEP_TASK_COUNT      = 3
+    MPC_OMP_TASK_STATUS_NOT_READY  = 0,
+    MPC_OMP_TASK_STATUS_READY      = 1,
+    MPC_OMP_TASK_STATUS_FINALIZED  = 2,
+    MPC_OMP_TASK_STATUS_COUNT      = 3
 }               mpcomp_task_dep_task_status_t;
-
-
 
 /**********************
  * OMPT STATUS        *
@@ -360,7 +370,7 @@ typedef struct mpc_omp_local_icv_s
 typedef struct mpc_omp_tree_array_global_info_s
 {
 	int *tree_shape;
-	int max_depth;
+	int top_level;
 } mpc_omp_tree_array_global_info_t;
 
 typedef struct mpc_omp_meta_tree_node_s
@@ -464,10 +474,7 @@ typedef struct  mpc_omp_task_dep_node_s
     OPA_int_t ref_predecessors;
 
     /* maximum path length to reach a root, in the dependency tree */
-    int max_depth;
-
-    /* minimum path length to reach a root, in the dependency tree */
-    int min_depth;
+    int top_level;
 
     /* status */
     OPA_int_t status;

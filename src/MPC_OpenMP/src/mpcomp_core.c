@@ -84,7 +84,8 @@ static inline void __omp_conf_set_default(void)
 	__omp_conf.OMP_DYNAMIC=0;
 
     /* Tasks */
-    __omp_conf.maximum_tasks                = INT_MAX;
+    __omp_conf.maximum_tasks                = 10000000;
+    __omp_conf.maximum_ready_tasks          = 16384;
     __omp_conf.pqueue_new_depth             = 0;
     __omp_conf.pqueue_untied_depth          = 1;
     __omp_conf.task_recycler_capacity       = 8192;
@@ -125,7 +126,8 @@ static inline void __omp_conf_init(void)
     );
 
     mpc_conf_config_type_t *task = mpc_conf_config_type_init("task",
-            PARAM("maximum",                    &__omp_conf.maximum_tasks,              MPC_CONF_INT,   "Number maximum of tasks that can exists concurrently in the runtime"),
+            PARAM("maximum",                    &__omp_conf.maximum_tasks,              MPC_CONF_INT,   "Maximum number of tasks that can exists concurrently in the runtime"),
+            PARAM("maximumready",               &__omp_conf.maximum_ready_tasks,        MPC_CONF_INT,   "Maximum number of ready tasks that can exists concurrently in the runtime"),
             PARAM("newdepth",                   &__omp_conf.pqueue_new_depth,           MPC_CONF_INT,   "Depth of the new tasks lists in the tree"),
             PARAM("untieddepth",                &__omp_conf.pqueue_untied_depth,        MPC_CONF_INT,   "Depth of the untied tasks lists in the tree"),
             PARAM("taskrecyclercapacity",       &__omp_conf.task_recycler_capacity,     MPC_CONF_INT,   "Task recycler capacity"),
@@ -262,16 +264,16 @@ __convert_topology_to_tree_shape( hwloc_topology_t topology, int *shape_depth )
 {
 	int *reverse_shape;
 	int i, j, reverse_shape_depth;
-	const int max_depth = hwloc_topology_get_depth( topology );
-	assert( max_depth > 1 );
-	reverse_shape = ( int * ) mpc_omp_alloc( sizeof( int ) * max_depth );
+	const int top_level = hwloc_topology_get_depth( topology );
+	assert( top_level > 1 );
+	reverse_shape = ( int * ) mpc_omp_alloc( sizeof( int ) * top_level );
 	assert( reverse_shape );
-	memset( reverse_shape, 0, sizeof( int ) * max_depth );
+	memset( reverse_shape, 0, sizeof( int ) * top_level );
 	/* Last level size */
-	reverse_shape[0] = hwloc_get_nbobjs_by_depth( topology, max_depth - 1 );
+	reverse_shape[0] = hwloc_get_nbobjs_by_depth( topology, top_level - 1 );
 	reverse_shape_depth = 1;
 
-	for ( i = max_depth - 2; i >= 0; i-- )
+	for ( i = top_level - 2; i >= 0; i-- )
 	{
 		int cur_stage_num = hwloc_get_nbobjs_by_depth( topology, i );
 		const int last_stage_num = reverse_shape[reverse_shape_depth - 1];
@@ -451,18 +453,18 @@ __prepare_omp_task_tree_init( const int num_mvps, const int *cpus_order )
 static void
 __init_task_tree( const int num_mvps, int *shape, const int *cpus_order )
 {
-	int i, max_depth, place_depth = 0, place_size;
+	int i, top_level, place_depth = 0, place_size;
 	int *tree_shape;
 	hwloc_topology_t omp_task_topo;
 	omp_task_topo = __prepare_omp_task_tree_init( num_mvps, cpus_order );
-	tree_shape = __convert_topology_to_tree_shape( omp_task_topo, &max_depth );
+	tree_shape = __convert_topology_to_tree_shape( omp_task_topo, &top_level );
 
 	if ( shape ) // Force shape
 	{
 		int cumul = 1;
 
 		/* Test if PLACES arity is in tree */
-		for ( i = 0; i < max_depth; i++ )
+		for ( i = 0; i < top_level; i++ )
 		{
 			cumul *= tree_shape[i];
 
@@ -473,9 +475,9 @@ __init_task_tree( const int num_mvps, int *shape, const int *cpus_order )
 		}
 
 		/* Not found */
-		if ( i == max_depth )
+		if ( i == top_level )
 		{
-			max_depth = 2;
+			top_level = 2;
 			place_depth = 0;
 			tree_shape = shape;
 			mpc_common_debug_log("Default Tree w/ places at level %d\n", place_depth );
@@ -493,7 +495,7 @@ __init_task_tree( const int num_mvps, int *shape, const int *cpus_order )
 		place_size = 1;
 	}
 
-	_mpc_omp_tree_alloc( tree_shape, max_depth, cpus_order, place_depth, place_size );
+	_mpc_omp_tree_alloc( tree_shape, top_level, cpus_order, place_depth, place_size );
 }
 
 /*

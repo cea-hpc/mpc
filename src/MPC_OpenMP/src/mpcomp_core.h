@@ -86,6 +86,7 @@ typedef struct  mpc_omp_conf_s
 
     /* Tasks */
     int maximum_tasks;
+    int maximum_ready_tasks;
     int pqueue_new_depth;
     int pqueue_untied_depth;
     int task_recycler_capacity;

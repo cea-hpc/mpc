@@ -956,18 +956,18 @@ int mpc_omp_loop_ull_ordered_guided_next( unsigned long long *from,
 
 /* Utility Functions */
 
-/* dest = src1+src2 in base 'base' of size 'depth' up to dimension 'max_depth'
+/* dest = src1+src2 in base 'base' of size 'depth' up to dimension 'top_level'
  */
 static inline int __loop_dyn_add( int *dest, int *src1, int *src2,
         int *base, int depth,
-        int max_depth,
+        int top_level,
         int include_carry_over )
 {
 	int i, ret, carry_over;
 	ret = 1;
 
 	/* Step to the next target */
-	for ( i = depth - 1; i >= max_depth; i-- )
+	for ( i = depth - 1; i >= top_level; i-- )
 	{
 		const int value = src1[i] + src2[i];
 		dest[i] = value;
@@ -975,7 +975,7 @@ static inline int __loop_dyn_add( int *dest, int *src1, int *src2,
 
 		if ( value >= base[i] )
 		{
-			ret = ( i == max_depth ) ? 0 : ret;
+			ret = ( i == top_level ) ? 0 : ret;
 			carry_over = ( include_carry_over ) ? value / base[i] : carry_over;
 			dest[i] = ( value % base[i] );
 		}
@@ -986,7 +986,7 @@ static inline int __loop_dyn_add( int *dest, int *src1, int *src2,
 
 /* Return 1 if overflow, otherwise 0 */
 static inline int __loop_dyn_increase( int *target, int *base,
-        int depth, int max_depth,
+        int depth, int top_level,
         int include_carry_over )
 {
 	int i, carry_over, ret;
@@ -994,7 +994,7 @@ static inline int __loop_dyn_increase( int *target, int *base,
 	carry_over = 1;
 
 	/* Step to the next target */
-	for ( i = depth - 1; i >= max_depth; i-- )
+	for ( i = depth - 1; i >= top_level; i-- )
 	{
 		const int value = target[i] + carry_over;
 		carry_over = 0;
@@ -1002,7 +1002,7 @@ static inline int __loop_dyn_increase( int *target, int *base,
 
 		if ( value >= base[i] )
 		{
-			ret = ( i == max_depth ) ? 1 : ret;
+			ret = ( i == top_level ) ? 1 : ret;
 			carry_over = ( include_carry_over ) ? value / base[i] : carry_over;
 			target[i] = value % base[i];
 		}
@@ -1363,7 +1363,7 @@ int mpc_omp_dynamic_loop_next( long *from, long *to )
 
 	int *tree_base = t->instance->tree_base + 1;
 	const int tree_depth = t->instance->tree_depth - 1;
-	const int max_depth = t->instance->root->depth;
+	const int top_level = t->instance->root->depth;
 	/* Compute the index of the target */
 	target = t->dyn_last_target;
 	found = 1;
@@ -1380,9 +1380,9 @@ do_increase:
 			break;
 		}
 
-		ret = __loop_dyn_increase( t->for_dyn_shift, tree_base, tree_depth, max_depth, 1 );
+		ret = __loop_dyn_increase( t->for_dyn_shift, tree_base, tree_depth, top_level, 1 );
 		/* Add t->for_dyn_shift and t->mvp->tree_rank[i] w/out carry over and store it into t->for_dyn_target */
-		__loop_dyn_add( t->for_dyn_target, t->for_dyn_shift, t->mvp->tree_rank, tree_base, tree_depth, max_depth, 0 );
+		__loop_dyn_add( t->for_dyn_target, t->for_dyn_shift, t->mvp->tree_rank, tree_base, tree_depth, top_level, 0 );
 		/* Compute the index of the target */
 		target_idx = __loop_dyn_get_victim_rank( t );
 		target_mvp = t->instance->mvps[target_idx].ptr.mvp;
@@ -1621,7 +1621,7 @@ void _mpc_omp_for_dyn_coherency_end_parallel_region(
 				{
 					mpc_common_nodebug( "[X] _mpcomp_for_dyn_coherency_checking_end_barrier: "
 					              "error rank %d has target[%d] = %d (depth: %d, "
-					              "max_depth: %d, for_dyn_current=%d)",
+					              "top_level: %d, for_dyn_current=%d)",
 					              target_t->rank, j, target_t->for_dyn_target[j],
 					              tree_depth, team->info.new_root->depth,
 					              target_t->for_dyn_current );
@@ -1643,7 +1643,7 @@ void _mpc_omp_for_dyn_coherency_end_parallel_region(
 				{
 					mpc_common_nodebug( "[X] _mpcomp_for_dyn_coherency_checking_end_barrier: "
 					              "error rank %d has shift[%d] = %d (depth: %d, "
-					              "max_depth: %d, for_dyn_current=%d)",
+					              "top_level: %d, for_dyn_current=%d)",
 					              target_t->rank, j, target_t->for_dyn_shift[j],
 					              tree_depth, team->info.new_root->depth,
 					              target_t->for_dyn_current );
@@ -1843,7 +1843,7 @@ int mpc_omp_loop_ull_dynamic_next( unsigned long long *from,
 
 	int *tree_base = t->instance->tree_base + 1;
 	const int tree_depth = t->instance->tree_depth - 1;
-	const int max_depth = t->instance->root->depth;
+	const int top_level = t->instance->root->depth;
 	/* Compute the index of the target */
 	target = t->dyn_last_target;
 	found = 1;
@@ -1860,9 +1860,9 @@ do_increase:
 			break;
 		}
 
-		ret = __loop_dyn_increase( t->for_dyn_shift, tree_base, tree_depth, max_depth, 1 );
+		ret = __loop_dyn_increase( t->for_dyn_shift, tree_base, tree_depth, top_level, 1 );
 		/* Add t->for_dyn_shift and t->mvp->tree_rank[i] w/out carry over and store it into t->for_dyn_target */
-		__loop_dyn_add( t->for_dyn_target, t->for_dyn_shift, t->mvp->tree_rank, tree_base, tree_depth, max_depth, 0 );
+		__loop_dyn_add( t->for_dyn_target, t->for_dyn_shift, t->mvp->tree_rank, tree_base, tree_depth, top_level, 0 );
 		/* Compute the index of the target */
 		target_idx = __loop_dyn_get_victim_rank( t );
 		target_mvp = t->instance->mvps[target_idx].ptr.mvp;
@@ -2048,7 +2048,7 @@ mpc_omp_for_dyn_coherency_end_barrier()
 				if ( target_t->for_dyn_target[j] != target_t->mvp->tree_rank[j] )
 				{
 					mpc_common_nodebug( "[%d] _mpcomp_for_dyn_coherency_checking_end_barrier: "
-					              "error rank %d has target[%d] = %d (depth: %d, max_depth: %d, for_dyn_current=%d)",
+					              "error rank %d has target[%d] = %d (depth: %d, top_level: %d, for_dyn_current=%d)",
 					              t->rank,
 					              target_t->rank, j,
 					              target_t->for_dyn_target[j],
@@ -2072,7 +2072,7 @@ mpc_omp_for_dyn_coherency_end_barrier()
 				if ( target_t->for_dyn_shift[j] != 0 )
 				{
 					mpc_common_nodebug( "[%d] _mpcomp_for_dyn_coherency_checking_end_barrier: "
-					              "error rank %d has shift[%d] = %d (dept: %d, max_depth: %d, for_dyn_current=%d)",
+					              "error rank %d has shift[%d] = %d (dept: %d, top_level: %d, for_dyn_current=%d)",
 					              t->rank,
 					              target_t->rank, j,
 					              target_t->for_dyn_shift[j],

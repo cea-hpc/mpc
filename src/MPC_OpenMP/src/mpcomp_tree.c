@@ -499,11 +499,11 @@ static inline int __tree_array_get_parent_nodes_num_per_depth( const int *shape,
 	return sum;
 }
 
-static inline int __tree_array_get_children_nodes_num_per_depth( const int *shape, const int max_depth, const int depth )
+static inline int __tree_array_get_children_nodes_num_per_depth( const int *shape, const int top_level, const int depth )
 {
 	int i, count;
 
-	for ( count = 1, i = depth; i < max_depth; i++ )
+	for ( count = 1, i = depth; i < top_level; i++ )
 	{
 		count *= shape[i];
 	}
@@ -511,7 +511,7 @@ static inline int __tree_array_get_children_nodes_num_per_depth( const int *shap
 	return count;
 }
 
-static inline int __tree_array_get_stage_nodes_num_per_depth( const int *shape, __UNUSED__ const int max_depth, const int depth )
+static inline int __tree_array_get_stage_nodes_num_per_depth( const int *shape, __UNUSED__ const int top_level, const int depth )
 {
 	int i, count;
 
@@ -525,7 +525,7 @@ static inline int __tree_array_get_stage_nodes_num_per_depth( const int *shape, 
 
 #if 0
 static inline int *
-_mpc_omp_tree_array_get_stage_nodes_num_depth_array( const int *shape, const int max_depth, const int depth )
+_mpc_omp_tree_array_get_stage_nodes_num_depth_array( const int *shape, const int top_level, const int depth )
 {
 	int i;
 	int *count;
@@ -542,11 +542,11 @@ _mpc_omp_tree_array_get_stage_nodes_num_depth_array( const int *shape, const int
 }
 #endif
 
-static inline int __tree_array_get_node_depth( const int *shape, const int max_depth, const int rank )
+static inline int __tree_array_get_node_depth( const int *shape, const int top_level, const int rank )
 {
 	int count, sum, i;
 
-	for ( count = 1, sum = 1, i = 0; i < max_depth; i++ )
+	for ( count = 1, sum = 1, i = 0; i < top_level; i++ )
 	{
 		if ( rank < sum )
 		{
@@ -561,12 +561,12 @@ static inline int __tree_array_get_node_depth( const int *shape, const int max_d
 }
 
 
-static inline int __tree_array_global_to_stage( const int *shape, const int max_depth, const int rank )
+static inline int __tree_array_global_to_stage( const int *shape, const int top_level, const int rank )
 {
 	assert( shape );
 	assert( rank >= 0 );
-	assert( max_depth >= 0 );
-	const int depth = __tree_array_get_node_depth( shape, max_depth, rank );
+	assert( top_level >= 0 );
+	const int depth = __tree_array_get_node_depth( shape, top_level, rank );
 
 	if ( !rank )
 	{
@@ -608,78 +608,78 @@ static inline int __tree_array_stage_to_local( const int *shape, const int depth
 	return rank % shape[depth - 1];
 }
 
-static inline int __tree_array_global_to_local( const int *shape, const int max_depth, const int rank )
+static inline int __tree_array_global_to_local( const int *shape, const int top_level, const int rank )
 {
 	assert( shape );
 	assert( rank >= 0 );
-	assert( max_depth >= 0 );
+	assert( top_level >= 0 );
 
 	if ( !rank )
 	{
 		return 0;
 	}
 
-	const int depth = __tree_array_get_node_depth( shape, max_depth, rank );
-	const int stage_rank = __tree_array_global_to_stage( shape, max_depth, rank );
+	const int depth = __tree_array_get_node_depth( shape, top_level, rank );
+	const int stage_rank = __tree_array_global_to_stage( shape, top_level, rank );
 	return __tree_array_stage_to_local( shape, depth, stage_rank );
 }
 
-static inline int *__tree_array_get_rank( const int *shape, const int max_depth, const int rank )
+static inline int *__tree_array_get_rank( const int *shape, const int top_level, const int rank )
 {
 	int i, current_rank;
 	int *tree_array;
 	assert( shape );
 	assert( rank >= 0 );
-	assert( max_depth >= 0 );
-	tree_array = ( int * ) mpc_omp_alloc( sizeof( int ) * max_depth );
+	assert( top_level >= 0 );
+	tree_array = ( int * ) mpc_omp_alloc( sizeof( int ) * top_level );
 	assert( tree_array );
-	memset( tree_array, 0, sizeof( int ) * max_depth );
+	memset( tree_array, 0, sizeof( int ) * top_level );
 
-	for ( current_rank = rank, i = max_depth - 1; i >= 0; i-- )
+	for ( current_rank = rank, i = top_level - 1; i >= 0; i-- )
 	{
-		const int stage_rank = __tree_array_global_to_stage( shape, max_depth, current_rank );
+		const int stage_rank = __tree_array_global_to_stage( shape, top_level, current_rank );
 		tree_array[i] = stage_rank % shape[ i ];
-		current_rank = __tree_array_stage_to_global( shape, max_depth, stage_rank / shape[i] );
+		current_rank = __tree_array_stage_to_global( shape, top_level, stage_rank / shape[i] );
 	}
 
 	return tree_array;
 }
 
-static inline int *__tree_array_get_tree_cumulative( const int *shape, int max_depth )
+static inline int *__tree_array_get_tree_cumulative( const int *shape, int top_level )
 {
 	int i, j;
 	int *tree_cumulative;
-	tree_cumulative = ( int * ) mpc_omp_alloc( sizeof( int ) * max_depth );
+	tree_cumulative = ( int * ) mpc_omp_alloc( sizeof( int ) * top_level );
 	assert( tree_cumulative );
-	memset( tree_cumulative, 0, sizeof( int ) * max_depth );
+	memset( tree_cumulative, 0, sizeof( int ) * top_level );
 
-	for ( i = 0; i < max_depth - 1; i++ )
+	for ( i = 0; i < top_level - 1; i++ )
 	{
 		tree_cumulative[i] = 1;
 
-		for ( j = 0; j < max_depth; j++ )
+		for ( j = 0; j < top_level; j++ )
 		{
 			tree_cumulative[i] *= shape[j];
 		}
 	}
 
-	tree_cumulative[max_depth - 1] = 1;
+	tree_cumulative[top_level - 1] = 1;
 	return tree_cumulative;
 }
 
-static inline int *__tree_array_get_father_array_by_depth( const int *shape, const int max_depth, const int rank )
+static inline int *__tree_array_get_father_array_by_depth( const int *shape, const int top_level, const int rank )
 {
 	int i;
 	int tmp_rank = -1;
 	int *parents_array = NULL;
-	int depth = __tree_array_get_node_depth( shape, max_depth, rank );
+	int depth = __tree_array_get_node_depth( shape, top_level, rank );
 
 	if ( !rank )
 	{
 		return NULL;
 	}
 
-	if ( max_depth == 0 )
+	if ( top_level == 0 )
 	{
 		depth = 1;
 	}
@@ -702,13 +702,13 @@ static inline int *__tree_array_get_father_array_by_depth( const int *shape, con
 
 #if 0
 static inline int *
-_mpc_omp_tree_array_get_father_array_by_level( const int *shape, const int max_depth, const int rank )
+_mpc_omp_tree_array_get_father_array_by_level( const int *shape, const int top_level, const int rank )
 {
 	int i;
 	int tmp_rank = -1;
 	int *parents_array = NULL;
-	int nodes_num = __tree_array_get_parent_nodes_num_per_depth( shape, max_depth );
-	const int depth = __tree_array_get_node_depth( shape, max_depth, rank );
+	int nodes_num = __tree_array_get_parent_nodes_num_per_depth( shape, top_level );
+	const int depth = __tree_array_get_node_depth( shape, top_level, rank );
 
 	if ( !rank )
 	{
@@ -734,12 +734,12 @@ _mpc_omp_tree_array_get_father_array_by_level( const int *shape, const int max_d
 #endif
 
 
-static inline int *__tree_array_get_first_child_array( const int *shape, const int max_depth, const int rank )
+static inline int *__tree_array_get_first_child_array( const int *shape, const int top_level, const int rank )
 {
 	int i, last_father_rank, last_stage_size;
 	int *first_child_array = NULL;
-	const int depth = __tree_array_get_node_depth( shape, max_depth, rank );
-	const int children_levels = max_depth - depth;
+	const int depth = __tree_array_get_node_depth( shape, top_level, rank );
+	const int children_levels = top_level - depth;
 
 	if (  !children_levels )
 	{
@@ -749,14 +749,14 @@ static inline int *__tree_array_get_first_child_array( const int *shape, const i
 	first_child_array = ( int * ) mpc_omp_alloc( sizeof( int ) * children_levels );
 	assert( first_child_array );
 	memset( first_child_array, 0,  sizeof( int ) * children_levels );
-	last_father_rank = __tree_array_global_to_stage( shape, max_depth, rank );
+	last_father_rank = __tree_array_global_to_stage( shape, top_level, rank );
 
 	for ( i = 0; i < children_levels; i++ )
 	{
 		last_stage_size = __tree_array_get_parent_nodes_num_per_depth( shape, depth + i );
 		last_father_rank = last_stage_size + shape[depth + i] * last_father_rank;
 		first_child_array[i] = last_father_rank;
-		last_father_rank = __tree_array_global_to_stage( shape, max_depth, last_father_rank );
+		last_father_rank = __tree_array_global_to_stage( shape, top_level, last_father_rank );
 	}
 
 	return first_child_array;
@@ -764,12 +764,12 @@ static inline int *__tree_array_get_first_child_array( const int *shape, const i
 
 #if 0
 static inline int *
-_mpc_omp_tree_array_get_children_num_array( const int *shape, const int max_depth, const int rank )
+_mpc_omp_tree_array_get_children_num_array( const int *shape, const int top_level, const int rank )
 {
 	int i;
 	int *children_num_array = NULL;
-	const int depth = __tree_array_get_node_depth( shape, max_depth, rank );
-	const int children_levels = max_depth - depth;
+	const int depth = __tree_array_get_node_depth( shape, top_level, rank );
+	const int children_levels = top_level - depth;
 
 	if (  !children_levels )
 	{
@@ -789,7 +789,7 @@ _mpc_omp_tree_array_get_children_num_array( const int *shape, const int max_dept
 }
 #endif
 
-static inline int __tree_array_compute_thread_min_compact( const int *shape, const int max_depth, const int rank )
+static inline int __tree_array_compute_thread_min_compact( const int *shape, const int top_level, const int rank )
 {
 	int i, count;
 	int *node_parents = NULL;
@@ -797,18 +797,18 @@ static inline int __tree_array_compute_thread_min_compact( const int *shape, con
 
 	if ( rank )
 	{
-		const int depth = __tree_array_get_node_depth( shape, max_depth, rank );
+		const int depth = __tree_array_get_node_depth( shape, top_level, rank );
 		node_parents = __tree_array_get_father_array_by_depth( shape, depth, rank );
-		tmp_local_rank = __tree_array_global_to_local( shape, max_depth, rank );
-		tmp_cumulative = __tree_array_get_children_nodes_num_per_depth( shape, max_depth, depth );
+		tmp_local_rank = __tree_array_global_to_local( shape, top_level, rank );
+		tmp_cumulative = __tree_array_get_children_nodes_num_per_depth( shape, top_level, depth );
 		count = tmp_local_rank;
-		count *= ( depth < max_depth ) ? tmp_cumulative : 1;
+		count *= ( depth < top_level ) ? tmp_cumulative : 1;
 
 		for ( i = 0; i < depth; i++ )
 		{
-			const int parent_depth = __tree_array_get_node_depth( shape, max_depth, node_parents[i] );
-			tmp_local_rank = __tree_array_global_to_local( shape, max_depth, node_parents[i] );
-			tmp_cumulative = __tree_array_get_children_nodes_num_per_depth( shape, max_depth, parent_depth );
+			const int parent_depth = __tree_array_get_node_depth( shape, top_level, node_parents[i] );
+			tmp_local_rank = __tree_array_global_to_local( shape, top_level, node_parents[i] );
+			tmp_cumulative = __tree_array_get_children_nodes_num_per_depth( shape, top_level, parent_depth );
 			count += tmp_local_rank * tmp_cumulative;
 		}
 
@@ -822,7 +822,7 @@ static inline int __tree_array_compute_thread_min_compact( const int *shape, con
 	return count;
 }
 
-static inline int __tree_array_compute_thread_min_balanced( const int *shape, const int max_depth, const int rank, const int core_depth )
+static inline int __tree_array_compute_thread_min_balanced( const int *shape, const int top_level, const int rank, const int core_depth )
 {
 	int i, count;
 	int *node_parents = NULL;
@@ -830,11 +830,11 @@ static inline int __tree_array_compute_thread_min_balanced( const int *shape, co
 
 	if ( rank )
 	{
-		const int depth = __tree_array_get_node_depth( shape, max_depth, rank );
-		const int *tmp_cumulative_core_array = __tree_array_get_tree_cumulative( shape, max_depth );
+		const int depth = __tree_array_get_node_depth( shape, top_level, rank );
+		const int *tmp_cumulative_core_array = __tree_array_get_tree_cumulative( shape, top_level );
 		const int tmp_cumulative_core = tmp_cumulative_core_array[depth - 1];
 		node_parents = __tree_array_get_father_array_by_depth( shape, depth, rank );
-		tmp_local_rank = __tree_array_global_to_local( shape, max_depth, rank );
+		tmp_local_rank = __tree_array_global_to_local( shape, top_level, rank );
 
 		if ( depth - 1 < core_depth )
 		{
@@ -843,14 +843,14 @@ static inline int __tree_array_compute_thread_min_balanced( const int *shape, co
 		}
 		else
 		{
-			tmp_nodes_per_depth = __tree_array_get_stage_nodes_num_per_depth( shape, max_depth, depth - 1 );
+			tmp_nodes_per_depth = __tree_array_get_stage_nodes_num_per_depth( shape, top_level, depth - 1 );
 			count = tmp_local_rank * tmp_nodes_per_depth;
 		}
 
 		for ( i = 0; i < depth - 1; i++ )
 		{
-			const int parent_depth = __tree_array_get_node_depth( shape, max_depth, node_parents[i] );
-			tmp_local_rank = __tree_array_global_to_local( shape, max_depth, node_parents[i] );
+			const int parent_depth = __tree_array_get_node_depth( shape, top_level, node_parents[i] );
+			tmp_local_rank = __tree_array_global_to_local( shape, top_level, node_parents[i] );
 
 			if ( parent_depth - 1 < core_depth )
 			{
@@ -859,7 +859,7 @@ static inline int __tree_array_compute_thread_min_balanced( const int *shape, co
 			}
 			else
 			{
-				tmp_nodes_per_depth = __tree_array_get_stage_nodes_num_per_depth( shape, max_depth, parent_depth - 1 );
+				tmp_nodes_per_depth = __tree_array_get_stage_nodes_num_per_depth( shape, top_level, parent_depth - 1 );
 				count += ( tmp_local_rank * tmp_nodes_per_depth );
 			}
 		}
@@ -882,7 +882,7 @@ _mpcomp_tree_array_update_thread_openmp_min_rank_scatter ( const int father_stag
 }
 #endif
 
-static inline int __tree_array_compute_thread_min_scatter( const int *shape, const int max_depth, const int rank )
+static inline int __tree_array_compute_thread_min_scatter( const int *shape, const int top_level, const int rank )
 {
 	int i, count;
 	int *node_parents = NULL;
@@ -890,17 +890,17 @@ static inline int __tree_array_compute_thread_min_scatter( const int *shape, con
 
 	if ( rank )
 	{
-		const int depth = __tree_array_get_node_depth( shape, max_depth, rank );
+		const int depth = __tree_array_get_node_depth( shape, top_level, rank );
 		node_parents = __tree_array_get_father_array_by_depth( shape, depth, rank );
-		tmp_local_rank = __tree_array_global_to_local( shape, max_depth, rank );
-		tmp_nodes_per_depth = __tree_array_get_stage_nodes_num_per_depth( shape, max_depth, depth );
+		tmp_local_rank = __tree_array_global_to_local( shape, top_level, rank );
+		tmp_nodes_per_depth = __tree_array_get_stage_nodes_num_per_depth( shape, top_level, depth );
 		count = tmp_local_rank * tmp_nodes_per_depth;
 
 		for ( i = 0; i < depth; i++ )
 		{
-			const int parent_depth = __tree_array_get_node_depth( shape, max_depth, node_parents[i] );
-			tmp_local_rank = __tree_array_global_to_local( shape, max_depth, node_parents[i] );
-			tmp_nodes_per_depth = __tree_array_get_stage_nodes_num_per_depth( shape, max_depth, parent_depth );
+			const int parent_depth = __tree_array_get_node_depth( shape, top_level, node_parents[i] );
+			tmp_local_rank = __tree_array_global_to_local( shape, top_level, node_parents[i] );
+			tmp_nodes_per_depth = __tree_array_get_stage_nodes_num_per_depth( shape, top_level, parent_depth );
 			count += tmp_local_rank * tmp_nodes_per_depth;
 		}
 
@@ -914,7 +914,7 @@ static inline int __tree_array_compute_thread_min_scatter( const int *shape, con
 	return count;
 }
 
-int *mpc_omp_tree_array_compute_thread_min_rank( const int *shape, const int max_depth, const int rank, const int core_depth )
+int *mpc_omp_tree_array_compute_thread_min_rank( const int *shape, const int top_level, const int rank, const int core_depth )
 {
 	int index;
 	int *min_index = NULL;
@@ -922,13 +922,13 @@ int *mpc_omp_tree_array_compute_thread_min_rank( const int *shape, const int max
 	assert( min_index );
 	memset( min_index, 0, sizeof( int ) * MPC_OMP_AFFINITY_NB );
 	/* MPC_OMP_AFFINITY_COMPACT  */
-	index = __tree_array_compute_thread_min_compact( shape, max_depth, rank );
+	index = __tree_array_compute_thread_min_compact( shape, top_level, rank );
 	min_index[MPC_OMP_AFFINITY_COMPACT] = index;
 	/* MPC_OMP_AFFINITY_SCATTER  */
-	index = __tree_array_compute_thread_min_scatter( shape, max_depth, rank );
+	index = __tree_array_compute_thread_min_scatter( shape, top_level, rank );
 	min_index[MPC_OMP_AFFINITY_SCATTER] = index;
 	/* MPC_OMP_AFFINITY_BALANCED */
-	index = __tree_array_compute_thread_min_balanced( shape, max_depth, rank, core_depth );
+	index = __tree_array_compute_thread_min_balanced( shape, top_level, rank, core_depth );
 	min_index[MPC_OMP_AFFINITY_BALANCED] = index;
 	return min_index;
 }
@@ -936,14 +936,14 @@ int *mpc_omp_tree_array_compute_thread_min_rank( const int *shape, const int max
 #if 0
 static inline int _mpc_omp_tree_array_find_next_running_stage_depth(   const int *tree_shape,
         const int start_depth,
-        const int max_depth,
+        const int top_level,
         const int num_requested_mvps,
         int *num_assigned_mvps )
 {
 	int i;
 	int cumulative_children_num = 1;
 
-	for ( i = start_depth; i < max_depth; i++ )
+	for ( i = start_depth; i < top_level; i++ )
 	{
 		cumulative_children_num *= tree_shape[i];
 
@@ -958,7 +958,7 @@ static inline int _mpc_omp_tree_array_find_next_running_stage_depth(   const int
 }
 #endif
 
-static inline int __tree_node_init( mpc_omp_meta_tree_node_t *root, const int *tree_shape, const int max_depth, const int rank )
+static inline int __tree_node_init( mpc_omp_meta_tree_node_t *root, const int *tree_shape, const int top_level, const int rank )
 {
 	int i, j, father_rank;
 	mpc_omp_meta_tree_node_t *me;
@@ -982,12 +982,12 @@ static inline int __tree_node_init( mpc_omp_meta_tree_node_t *root, const int *t
 	new_node = ( mpc_omp_node_t * )me->user_pointer;
 	new_node->tree_array = root;
 	// Get infos from parent node
-	new_node->depth = __tree_array_get_node_depth( tree_shape, max_depth, rank );
+	new_node->depth = __tree_array_get_node_depth( tree_shape, top_level, rank );
 	const int num_children = tree_shape[new_node->depth];
 	new_node->nb_children = num_children;
 	new_node->global_rank = rank;
-	new_node->stage_rank = __tree_array_global_to_stage( tree_shape, max_depth, rank );
-	new_node->local_rank = __tree_array_global_to_local( tree_shape, max_depth, rank );
+	new_node->stage_rank = __tree_array_global_to_stage( tree_shape, top_level, rank );
+	new_node->local_rank = __tree_array_global_to_local( tree_shape, top_level, rank );
 	new_node->rank = new_node->local_rank;
 
 	if ( rank )
@@ -998,13 +998,13 @@ static inline int __tree_node_init( mpc_omp_meta_tree_node_t *root, const int *t
 	}
 
 	/* Children initialisation */
-	me->children_array_size = max_depth - new_node->depth;
-	me->first_child_array = ( int * ) __tree_array_get_first_child_array( tree_shape, max_depth, rank );
+	me->children_array_size = top_level - new_node->depth;
+	me->first_child_array = ( int * ) __tree_array_get_first_child_array( tree_shape, top_level, rank );
 
 	/* -- TREE BASE -- */
 	if ( rank )
 	{
-		new_node->tree_depth = max_depth - new_node->depth + 1;
+		new_node->tree_depth = top_level - new_node->depth + 1;
 		assert( new_node->tree_depth > 1 );
 		new_node->tree_base = ( int * )mpc_omp_alloc( sizeof( int ) * new_node->tree_depth );
 		assert( new_node->tree_base );
@@ -1050,7 +1050,7 @@ static inline int __tree_node_init( mpc_omp_meta_tree_node_t *root, const int *t
 #endif /* NDEBUG */
 
 	/* Leaf or Node */
-	if ( new_node->depth < max_depth - 1 )
+	if ( new_node->depth < top_level - 1 )
 	{
 		mpc_omp_node_t **children = NULL;
 		new_node->child_type = MPC_OMP_CHILDREN_NODE;
@@ -1119,7 +1119,7 @@ static inline void *__tree_mvp_init( void *args )
 	root_node = ( mpc_omp_node_t * ) root[0].user_pointer;
 
 	/* Shift root tree array to get OMP_TREE shape */
-	const int max_depth = root_node->tree_depth - 1;
+	const int top_level = root_node->tree_depth - 1;
 	tree_shape = root_node->tree_base + 1;
 
 	/* User defined infos */
@@ -1156,20 +1156,20 @@ static inline void *__tree_mvp_init( void *args )
 
 	/* MVP ranking */
 	new_mvp->global_rank = rank;
-	new_mvp->stage_rank = __tree_array_global_to_stage( tree_shape, max_depth, rank );
-	new_mvp->local_rank = __tree_array_global_to_local( tree_shape, max_depth, rank );
+	new_mvp->stage_rank = __tree_array_global_to_stage( tree_shape, top_level, rank );
+	new_mvp->local_rank = __tree_array_global_to_local( tree_shape, top_level, rank );
 	new_mvp->rank = new_mvp->local_rank;
 
 	/* Father initialisation */
-	me->fathers_array_size = ( max_depth ) ? max_depth : 1;
-	me->fathers_array = ( int * )__tree_array_get_father_array_by_depth( tree_shape, max_depth, rank );
-	new_mvp->tree_rank = __tree_array_get_rank( tree_shape, max_depth, rank );
+	me->fathers_array_size = ( top_level ) ? top_level : 1;
+	me->fathers_array = ( int * )__tree_array_get_father_array_by_depth( tree_shape, top_level, rank );
+	new_mvp->tree_rank = __tree_array_get_rank( tree_shape, top_level, rank );
 	new_mvp->enable = 1;
 
     thread = new_mvp->threads;
 	thread->next = NULL;
 	thread->info.num_threads = 1;
-	new_mvp->depth = max_depth;
+	new_mvp->depth = top_level;
 
     _mpc_omp_thread_infos_init( thread );
 
@@ -1178,14 +1178,14 @@ static inline void *__tree_mvp_init( void *args )
 	me->user_pointer = ( void * ) new_mvp;
 
 	// Transfert to slave_node_leaf function ...
-	current_depth = max_depth - 1;
+	current_depth = top_level - 1;
 	target_node_rank = me->fathers_array[current_depth];
 
 	( void ) OPA_incr_int( &( root[target_node_rank].children_ready ) );
 
 	if (  !( new_mvp->local_rank ) )
 	{
-		while ( __tree_node_init( root, tree_shape, max_depth, target_node_rank ) )
+		while ( __tree_node_init( root, tree_shape, top_level, target_node_rank ) )
 		{
 			current_depth--;
 			target_node_rank = me->fathers_array[current_depth];
@@ -1310,7 +1310,7 @@ mpc_omp_init_initial_thread( const mpc_omp_local_icv_t icvs )
     ith->info.num_threads = 1;
 }
 
-void _mpc_omp_tree_alloc( int *shape, int max_depth, const int *cpus_order, const int place_depth, const int place_size )
+void _mpc_omp_tree_alloc( int *shape, int top_level, const int *cpus_order, const int place_depth, const int place_size )
 {
 	int i, n_num, place_id;
 	mpc_thread_t *threads;
@@ -1327,14 +1327,14 @@ void _mpc_omp_tree_alloc( int *shape, int max_depth, const int *cpus_order, cons
 	memset( root, 0, sizeof( mpc_omp_node_t ) );
 #if 0
 
-	for ( i = 0; i < max_depth; i++ )
+	for ( i = 0; i < top_level; i++ )
 	{
 		fprintf( stderr, ":: %s :: shape %d -> %d\n", __func__, i, shape[i] );
 	}
 
 #endif
-	root->tree_depth = max_depth + 1;
-	root->tree_base = __tree_array_compute_shape( root, shape, max_depth );
+	root->tree_depth = top_level + 1;
+	root->tree_base = __tree_array_compute_shape( root, shape, top_level );
 	root->tree_cumulative = __tree_array_compute_cumulative_num_nodes_for_depth( root );
 	root->tree_nb_nodes_per_depth = __tree_array_compute_num_nodes_for_depth( root, &n_num );
 #ifdef MPC_Lowcomm
@@ -1342,7 +1342,7 @@ void _mpc_omp_tree_alloc( int *shape, int max_depth, const int *cpus_order, cons
   root->worker_ws->mpi_rank = mpc_common_get_local_task_rank();
   root->worker_ws->workshare = mpc_thread_data_get()->workshare;
 #endif
-	const int leaf_n_num = root->tree_nb_nodes_per_depth[max_depth];
+	const int leaf_n_num = root->tree_nb_nodes_per_depth[top_level];
 	const int non_leaf_n_num = n_num - leaf_n_num;
 
 	tree_array = ( mpc_omp_meta_tree_node_t * ) mpc_omp_alloc( n_num * sizeof( mpc_omp_meta_tree_node_t ) );

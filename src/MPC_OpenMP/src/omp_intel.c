@@ -2611,7 +2611,7 @@ kmp_int32 __kmpc_omp_task( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gti
     mpc_omp_thread_t * t = (mpc_omp_thread_t *)mpc_omp_tls;
     _mpc_omp_ompt_callback_task_create(task, __mpc_omp_ompt_get_task_flags(t, task), 0);
 #endif /* OMPT_SUPPORT */
-	_mpc_omp_task_process(task);
+	//_mpc_omp_task_process(task);
 	return ( kmp_int32 )0;
 }
 
@@ -2735,7 +2735,7 @@ kmp_int32 __kmpc_omp_task_parts( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int
     _mpc_omp_ompt_callback_task_create(task, __mpc_omp_ompt_get_task_flags(t, task), 0);
 #endif /* OMPT_SUPPORT */
 
-	_mpc_omp_task_process(task);
+	//_mpc_omp_task_process(task);
 	return ( kmp_int32 )0;
 }
 
@@ -3054,7 +3054,7 @@ void __kmpc_taskloop( __UNUSED__ ident_t *loc, __UNUSED__ int gtid, kmp_task_t *
             mpc_common_nodebug( "[%d] Task %p; lb = %lu, ub = %lu",
                                 t->rank, next_task, lower, upper );
 
-            _mpc_omp_task_process( next_task);
+            //_mpc_omp_task_process( next_task);
 
             lower = upper + st;
         }
@@ -3076,7 +3076,7 @@ void __kmpc_taskloop( __UNUSED__ ident_t *loc, __UNUSED__ int gtid, kmp_task_t *
         mpc_common_nodebug( "[%d] Task %p; lb = %lu, ub = %lu",
                             t->rank, mpcomp_task, lower, upper );
 
-        _mpc_omp_task_process(mpcomp_task);
+        //_mpc_omp_task_process(mpcomp_task);
     }
     else {
         /* Only one task */
@@ -3090,7 +3090,7 @@ void __kmpc_taskloop( __UNUSED__ ident_t *loc, __UNUSED__ int gtid, kmp_task_t *
         mpc_common_nodebug( "[%d] Task %p; lb = %lu, ub = %lu",
                             t->rank, mpcomp_task, lower, upper );
 
-        _mpc_omp_task_process(mpcomp_task);
+        //_mpc_omp_task_process(mpcomp_task);
     }
 
     if ( nogroup == 0 )

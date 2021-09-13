@@ -28,12 +28,11 @@
 # include "mpcomp_types.h"
 # include "mpc_common_asm.h"
 # include "mpc_omp_task_property.h"
+# include "omp_gomp_constants.h"
 
 /**********
  * MACROS *
  **********/
-
-#define MPC_OMP_TASK_DEP_UNUSED_VAR( var ) (void) ( sizeof( var ) )
 
 #define MPC_OMP_OVERFLOW_SANITY_CHECK( size, size_to_sum ) \
     ( size <= KMP_SIZE_T_MAX - size_to_sum )

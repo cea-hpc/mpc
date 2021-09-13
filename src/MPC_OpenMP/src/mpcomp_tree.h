@@ -57,9 +57,9 @@ void _mpc_omp_tree_task_check_neigborhood( void );
 
 void mpc_omp_init_seq_region();
 void mpc_omp_init_initial_thread( const mpc_omp_local_icv_t icvs );
-void _mpc_omp_tree_alloc( int *shape, int max_depth, const int *cpus_order, const int place_depth, const int place_size );
+void _mpc_omp_tree_alloc( int *shape, int top_level, const int *cpus_order, const int place_depth, const int place_size );
 
-int *mpc_omp_tree_array_compute_thread_min_rank( const int *shape, const int max_depth, const int rank, const int core_depth );
+int *mpc_omp_tree_array_compute_thread_min_rank( const int *shape, const int top_level, const int rank, const int core_depth );
 
 
 #endif /* MPC_OMP_TREE_H_ */

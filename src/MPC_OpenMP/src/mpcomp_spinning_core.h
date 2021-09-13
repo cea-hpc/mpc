@@ -86,7 +86,7 @@ static inline mpc_omp_node_t * _mpc_omp_spinning_get_thread_root_node( mpc_omp_t
 	return thread->root;
 }
 
-static inline int _mpc_omp_spining_get_instance_max_depth( mpc_omp_instance_t *instance )
+static inline int _mpc_omp_spining_get_instance_top_level( mpc_omp_instance_t *instance )
 {
 	mpc_omp_node_t *root = instance->root;
 	assert( root ); //TODO instance root can be NULL when leaf create new parallel region
@@ -110,9 +110,9 @@ static inline mpc_omp_node_t * _mpc_omp_spinning_get_mvp_father_node( mpc_omp_mv
 		return  mvp->father;
 	}
 
-	const int max_depth = mvp->depth;
+	const int top_level = mvp->depth;
 	const int father_depth = instance->root->depth + instance->tree_depth - 1;
-	const unsigned int mvp_ancestor_node = max_depth - father_depth;
+	const unsigned int mvp_ancestor_node = top_level - father_depth;
 
 	if ( !mvp_ancestor_node )
 	{

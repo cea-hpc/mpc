@@ -33,9 +33,3159 @@ interface
 
 
 
-function MPI_Start_c( request,&
+function MPI_Finalize_c( ierror)&
+bind(C, name="mpi_finalize_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Finalize_c
+
+
+function MPI_Abort_c( comm,&
+errorcode,&
 ierror)&
-bind(C, name="mpi_start_f08") result(ret)
+bind(C, name="mpi_abort_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: errorcode     !int errorcode
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Abort_c
+
+
+function MPI_Accumulate_c( origin_addr,&
+origin_count,&
+origin_datatype,&
+target_rank,&
+target_disp,&
+target_count,&
+target_datatype,&
+op,&
+win,&
+ierror)&
+bind(C, name="mpi_accumulate_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: origin_addr     !void* origin_addr
+integer(c_int), value, intent(in) :: origin_count     !int origin_count
+integer(c_int), value, intent(in) :: origin_datatype     !MPI_Datatype origin_datatype
+integer(c_int), value, intent(in) :: target_rank     !int target_rank
+integer(c_intptr_t), value, intent(in) :: target_disp     !MPI_Aint target_disp
+integer(c_int), value, intent(in) :: target_count     !int target_count
+integer(c_int), value, intent(in) :: target_datatype     !MPI_Datatype target_datatype
+integer(c_int), value, intent(in) :: op     !MPI_Op op
+integer(c_int), value, intent(in) :: win     !MPI_Win win
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Accumulate_c
+
+
+function MPI_Add_error_class_c( errorclass,&
+ierror)&
+bind(C, name="mpi_add_error_class_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), intent(out) :: errorclass     !int* errorclass
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Add_error_class_c
+
+
+function MPI_Add_error_code_c( errorclass,&
+errorcode,&
+ierror)&
+bind(C, name="mpi_add_error_code_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: errorclass     !int errorclass
+integer(c_int), intent(out) :: errorcode     !int* errorcode
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Add_error_code_c
+
+
+function MPI_Add_error_string_c( errorcode,&
+string,&
+ierror)&
+bind(C, name="mpi_add_error_string_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: errorcode     !int errorcode
+character(kind=c_char), intent(in) :: string(*)     !char* string
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Add_error_string_c
+
+
+function MPI_Address_c( location,&
+address,&
+ierror)&
+bind(C, name="mpi_address_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: location     !void* location
+integer(c_intptr_t), intent(out) :: address     !MPI_Aint* address
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Address_c
+
+
+function MPI_Allgather_c( sendbuf,&
+sendcount,&
+sendtype,&
+recvbuf,&
+recvcount,&
+recvtype,&
+comm,&
+ierror)&
+bind(C, name="mpi_allgather_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: sendbuf     !void* sendbuf
+integer(c_int), value, intent(in) :: sendcount     !int sendcount
+integer(c_int), value, intent(in) :: sendtype     !MPI_Datatype sendtype
+type(*), dimension(..) :: recvbuf     !void* recvbuf
+integer(c_int), value, intent(in) :: recvcount     !int recvcount
+integer(c_int), value, intent(in) :: recvtype     !MPI_Datatype recvtype
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Allgather_c
+
+
+function MPI_Allgatherv_c( sendbuf,&
+sendcount,&
+sendtype,&
+recvbuf,&
+recvcounts,&
+displs,&
+recvtype,&
+comm,&
+ierror)&
+bind(C, name="mpi_allgatherv_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: sendbuf     !void* sendbuf
+integer(c_int), value, intent(in) :: sendcount     !int sendcount
+integer(c_int), value, intent(in) :: sendtype     !MPI_Datatype sendtype
+type(*), dimension(..) :: recvbuf     !void* recvbuf
+type(c_ptr), value :: recvcounts     !int[] recvcounts
+type(c_ptr), value :: displs     !int[] displs
+integer(c_int), value, intent(in) :: recvtype     !MPI_Datatype recvtype
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Allgatherv_c
+
+
+function MPI_Alloc_mem_c( size,&
+info,&
+baseptr,&
+ierror)&
+bind(C, name="mpi_alloc_mem_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_intptr_t), value, intent(in) :: size     !MPI_Aint size
+integer(c_int), value, intent(in) :: info     !MPI_Info info
+type(*), dimension(..) :: baseptr     !void* baseptr
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Alloc_mem_c
+
+
+function MPI_Allreduce_c( sendbuf,&
+recvbuf,&
+count,&
+datatype,&
+op,&
+comm,&
+ierror)&
+bind(C, name="mpi_allreduce_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: sendbuf     !void* sendbuf
+type(*), dimension(..) :: recvbuf     !void* recvbuf
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int), value, intent(in) :: op     !MPI_Op op
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Allreduce_c
+
+
+function MPI_Alltoall_c( sendbuf,&
+sendcount,&
+sendtype,&
+recvbuf,&
+recvcount,&
+recvtype,&
+comm,&
+ierror)&
+bind(C, name="mpi_alltoall_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: sendbuf     !void* sendbuf
+integer(c_int), value, intent(in) :: sendcount     !int sendcount
+integer(c_int), value, intent(in) :: sendtype     !MPI_Datatype sendtype
+type(*), dimension(..) :: recvbuf     !void* recvbuf
+integer(c_int), value, intent(in) :: recvcount     !int recvcount
+integer(c_int), value, intent(in) :: recvtype     !MPI_Datatype recvtype
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Alltoall_c
+
+
+function MPI_Alltoallv_c( sendbuf,&
+sendcounts,&
+sdispls,&
+sendtype,&
+recvbuf,&
+recvcounts,&
+rdispls,&
+recvtype,&
+comm,&
+ierror)&
+bind(C, name="mpi_alltoallv_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: sendbuf     !void* sendbuf
+type(c_ptr), value :: sendcounts     !int[] sendcounts
+type(c_ptr), value :: sdispls     !int[] sdispls
+integer(c_int), value, intent(in) :: sendtype     !MPI_Datatype sendtype
+type(*), dimension(..) :: recvbuf     !void* recvbuf
+type(c_ptr), value :: recvcounts     !int[] recvcounts
+type(c_ptr), value :: rdispls     !int[] rdispls
+integer(c_int), value, intent(in) :: recvtype     !MPI_Datatype recvtype
+integer(c_int), intent(out) :: comm     !MPI_Comm comm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Alltoallv_c
+
+
+function MPI_Alltoallw_c( sendbuf,&
+sendcounts,&
+sdispls,&
+sendtypes,&
+recvbuf,&
+recvcounts,&
+rdispls,&
+recvtypes,&
+comm,&
+ierror)&
+bind(C, name="mpi_alltoallw_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: sendbuf     !void* sendbuf
+type(c_ptr), value :: sendcounts     !int[] sendcounts
+type(c_ptr), value :: sdispls     !int[] sdispls
+type(c_ptr), value :: sendtypes     !MPI_Datatype[] sendtypes
+type(*), dimension(..) :: recvbuf     !void* recvbuf
+type(c_ptr), value :: recvcounts     !int[] recvcounts
+type(c_ptr), value :: rdispls     !int[] rdispls
+type(c_ptr), value :: recvtypes     !MPI_Datatype[] recvtypes
+integer(c_int), intent(out) :: comm     !MPI_Comm comm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Alltoallw_c
+
+
+function MPI_Attr_delete_c( comm,&
+keyval,&
+ierror)&
+bind(C, name="mpi_attr_delete_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: keyval     !int keyval
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Attr_delete_c
+
+
+function MPI_Attr_get_c( comm,&
+keyval,&
+attribute_val,&
+flag,&
+ierror)&
+bind(C, name="mpi_attr_get_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: keyval     !int keyval
+type(*), dimension(..) :: attribute_val     !void* attribute_val
+integer(c_int), intent(out) :: flag     !bool flag
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Attr_get_c
+
+
+function MPI_Attr_put_c( comm,&
+keyval,&
+attribute_val,&
+ierror)&
+bind(C, name="mpi_attr_put_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: keyval     !int keyval
+type(*), dimension(..) :: attribute_val     !void* attribute_val
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Attr_put_c
+
+
+function MPI_Barrier_c( comm,&
+ierror)&
+bind(C, name="mpi_barrier_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Barrier_c
+
+
+function MPI_Bcast_c( buffer,&
+count,&
+datatype,&
+root,&
+comm,&
+ierror)&
+bind(C, name="mpi_bcast_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: buffer     !void* buffer
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int), value, intent(in) :: root     !int root
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Bcast_c
+
+
+function MPI_Bsend_c( buf,&
+count,&
+datatype,&
+dest,&
+tag,&
+comm,&
+ierror)&
+bind(C, name="mpi_bsend_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: buf     !void* buf
+integer(c_int), value :: count     !int count
+integer(c_int), value :: datatype     !MPI_Datatype datatype
+integer(c_int), value :: dest     !int dest
+integer(c_int), value :: tag     !int tag
+integer(c_int), value :: comm     !MPI_Comm comm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Bsend_c
+
+
+function MPI_Bsend_init_c( buf,&
+count,&
+datatype,&
+dest,&
+tag,&
+comm,&
+request,&
+ierror)&
+bind(C, name="mpi_bsend_init_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: buf     !void* buf
+integer(c_int), value :: count     !int count
+integer(c_int), value :: datatype     !MPI_Datatype datatype
+integer(c_int), value :: dest     !int dest
+integer(c_int), value :: tag     !int tag
+integer(c_int), value :: comm     !MPI_Comm comm
+integer(c_int) :: request     !MPI_Request* request
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Bsend_init_c
+
+
+function MPI_Buffer_attach_c( buffer,&
+size,&
+ierror)&
+bind(C, name="mpi_buffer_attach_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: buffer     !void* buffer
+integer(c_int), value :: size     !int size
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Buffer_attach_c
+
+
+function MPI_Buffer_detach_c( buffer,&
+size,&
+ierror)&
+bind(C, name="mpi_buffer_detach_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: buffer     !void* buffer
+integer(c_int), value :: size     !int* size
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Buffer_detach_c
+
+
+function MPI_Cancel_c( request,&
+ierror)&
+bind(C, name="mpi_cancel_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int) :: request     !MPI_Request* request
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Cancel_c
+
+
+function MPI_Cart_coords_c( comm,&
+rank,&
+maxdims,&
+coords,&
+ierror)&
+bind(C, name="mpi_cart_coords_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: rank     !int rank
+integer(c_int), value, intent(in) :: maxdims     !int maxdims
+type(c_ptr) :: coords     !int[] coords
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Cart_coords_c
+
+
+function MPI_Cart_create_c( old_comm,&
+ndims,&
+dims,&
+periods,&
+reorder,&
+comm_cart,&
+ierror)&
+bind(C, name="mpi_cart_create_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: old_comm     !MPI_Comm old_comm
+integer(c_int), value, intent(in) :: ndims     !int ndims
+type(c_ptr), value :: dims     !int[] dims
+type(c_ptr), value :: periods     !bool[] periods
+integer(c_int), value, intent(in) :: reorder     !bool reorder
+integer(c_int), intent(out) :: comm_cart     !MPI_Comm* comm_cart
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Cart_create_c
+
+
+function MPI_Cart_get_c( comm,&
+maxdims,&
+dims,&
+periods,&
+coords,&
+ierror)&
+bind(C, name="mpi_cart_get_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: maxdims     !int maxdims
+type(c_ptr) :: dims     !int[] dims
+type(c_ptr) :: periods     !bool[] periods
+type(c_ptr) :: coords     !int[] coords
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Cart_get_c
+
+
+function MPI_Cart_map_c( comm,&
+ndims,&
+dims,&
+periods,&
+newrank,&
+ierror)&
+bind(C, name="mpi_cart_map_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: ndims     !int ndims
+type(c_ptr), value :: dims     !int[] dims
+type(c_ptr), value :: periods     !bool[] periods
+integer(c_int), intent(out) :: newrank     !int* newrank
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Cart_map_c
+
+
+function MPI_Cart_rank_c( comm,&
+coords,&
+rank,&
+ierror)&
+bind(C, name="mpi_cart_rank_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+type(c_ptr) :: coords     !int[] coords
+integer(c_int), intent(out) :: rank     !int* rank
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Cart_rank_c
+
+
+function MPI_Cart_shift_c( comm,&
+direction,&
+disp,&
+rank_source,&
+rank_dest,&
+ierror)&
+bind(C, name="mpi_cart_shift_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: direction     !int direction
+integer(c_int), value, intent(in) :: disp     !int disp
+integer(c_int), intent(out) :: rank_source     !int* rank_source
+integer(c_int), intent(out) :: rank_dest     !int* rank_dest
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Cart_shift_c
+
+
+function MPI_Cart_sub_c( comm,&
+remain_dims,&
+new_comm,&
+ierror)&
+bind(C, name="mpi_cart_sub_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+type(c_ptr), value :: remain_dims     !bool[] remain_dims
+integer(c_int), intent(out) :: new_comm     !MPI_Comm* new_comm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Cart_sub_c
+
+
+function MPI_Cartdim_get_c( comm,&
+ndims,&
+ierror)&
+bind(C, name="mpi_cartdim_get_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(out) :: ndims     !int* ndims
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Cartdim_get_c
+
+
+function MPI_Close_port_c( port_name,&
+ierror)&
+bind(C, name="mpi_close_port_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+character(kind=c_char), intent(in) :: port_name(*)     !char* port_name
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Close_port_c
+
+
+function MPI_Comm_accept_c( port_name,&
+info,&
+root,&
+comm,&
+newcomm,&
+ierror)&
+bind(C, name="mpi_comm_accept_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+character(kind=c_char), intent(in) :: port_name(*)     !char* port_name
+integer(c_int), value, intent(in) :: info     !MPI_Info info
+integer(c_int), value, intent(in) :: root     !int root
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(out) :: newcomm     !MPI_Comm* newcomm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_accept_c
+
+
+function MPI_Comm_call_errhandler_c( comm,&
+errorcode,&
+ierror)&
+bind(C, name="mpi_comm_call_errhandler_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: errorcode     !int errorcode
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_call_errhandler_c
+
+
+function MPI_Comm_compare_c( comm1,&
+comm2,&
+result,&
+ierror)&
+bind(C, name="mpi_comm_compare_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm1     !MPI_Comm comm1
+integer(c_int), value, intent(in) :: comm2     !MPI_Comm comm2
+integer(c_int), intent(out) :: result     !int* result
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_compare_c
+
+
+function MPI_Comm_connect_c( port_name,&
+info,&
+root,&
+comm,&
+newcomm,&
+ierror)&
+bind(C, name="mpi_comm_connect_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+character(kind=c_char), intent(in) :: port_name(*)     !char* port_name
+integer(c_int), value, intent(in) :: info     !MPI_Info info
+integer(c_int), value, intent(in) :: root     !int root
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(out) :: newcomm     !MPI_Comm* newcomm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_connect_c
+
+
+function MPI_Comm_create_c( comm,&
+group,&
+newcomm,&
+ierror)&
+bind(C, name="mpi_comm_create_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: group     !MPI_Group group
+integer(c_int), intent(out) :: newcomm     !MPI_Comm* newcomm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_create_c
+
+
+function MPI_Comm_create_errhandler_c( function,&
+errhandler,&
+ierror)&
+bind(C, name="mpi_comm_create_errhandler_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(c_ptr), value , intent(in) :: function     !MPI_Comm_errhandler_function* function
+integer(c_int), value, intent(in) :: errhandler     !MPI_Errhandler* errhandler
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_create_errhandler_c
+
+
+function MPI_Comm_create_keyval_c( comm_copy_attr_fn,&
+comm_delete_attr_fn,&
+comm_keyval,&
+extra_state,&
+ierror)&
+bind(C, name="mpi_comm_create_keyval_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(c_ptr), value , intent(in) :: comm_copy_attr_fn     !MPI_Comm_copy_attr_function* comm_copy_attr_fn
+type(c_ptr), value , intent(in) :: comm_delete_attr_fn     !MPI_Comm_delete_attr_function* comm_delete_attr_fn
+integer(c_int), intent(out) :: comm_keyval     !int* comm_keyval
+type(*), dimension(..) :: extra_state     !void* extra_state
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_create_keyval_c
+
+
+function MPI_Comm_delete_attr_c( comm,&
+comm_keyval,&
+ierror)&
+bind(C, name="mpi_comm_delete_attr_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: comm_keyval     !int comm_keyval
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_delete_attr_c
+
+
+function MPI_Comm_disconnect_c( comm,&
+ierror)&
+bind(C, name="mpi_comm_disconnect_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm* comm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_disconnect_c
+
+
+function MPI_Comm_dup_c( comm,&
+newcomm,&
+ierror)&
+bind(C, name="mpi_comm_dup_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(out) :: newcomm     !MPI_Comm* newcomm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_dup_c
+
+
+function MPI_Comm_free_c( comm,&
+ierror)&
+bind(C, name="mpi_comm_free_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), intent(inout) :: comm     !MPI_Comm* comm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_free_c
+
+
+function MPI_Comm_free_keyval_c( comm_keyval,&
+ierror)&
+bind(C, name="mpi_comm_free_keyval_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), intent(inout) :: comm_keyval     !int* comm_keyval
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_free_keyval_c
+
+
+function MPI_Comm_get_attr_c( comm,&
+comm_keyval,&
+attribute_val,&
+flag,&
+ierror)&
+bind(C, name="mpi_comm_get_attr_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: comm_keyval     !int comm_keyval
+type(*), dimension(..) :: attribute_val     !void* attribute_val
+integer(c_int), intent(out) :: flag     !bool flag
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_get_attr_c
+
+
+function MPI_Comm_get_errhandler_c( comm,&
+erhandler,&
+ierror)&
+bind(C, name="mpi_comm_get_errhandler_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: erhandler     !MPI_Errhandler* erhandler
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_get_errhandler_c
+
+
+function MPI_Comm_get_name_c( comm,&
+comm_name,&
+resultlen,&
+ierror)&
+bind(C, name="mpi_comm_get_name_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+character(kind=c_char), intent(out) :: comm_name(*)     !char* comm_name
+integer(c_int), intent(out) :: resultlen     !int* resultlen
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_get_name_c
+
+
+function MPI_Comm_get_parent_c( parent,&
+ierror)&
+bind(C, name="mpi_comm_get_parent_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), intent(out) :: parent     !MPI_Comm* parent
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_get_parent_c
+
+
+function MPI_Comm_group_c( comm,&
+group,&
+ierror)&
+bind(C, name="mpi_comm_group_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(out) :: group     !MPI_Group* group
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_group_c
+
+
+function MPI_Comm_join_c( fd,&
+intercomm,&
+ierror)&
+bind(C, name="mpi_comm_join_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: fd     !int fd
+integer(c_int), intent(out) :: intercomm     !MPI_Comm* intercomm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_join_c
+
+
+function MPI_Comm_rank_c( comm,&
+rank,&
+ierror)&
+bind(C, name="mpi_comm_rank_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(out) :: rank     !int* rank
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_rank_c
+
+
+function MPI_Comm_remote_group_c( comm,&
+group,&
+ierror)&
+bind(C, name="mpi_comm_remote_group_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(out) :: group     !MPI_Group* group
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_remote_group_c
+
+
+function MPI_Comm_remote_size_c( comm,&
+size,&
+ierror)&
+bind(C, name="mpi_comm_remote_size_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(out) :: size     !int* size
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_remote_size_c
+
+
+function MPI_Comm_set_attr_c( comm,&
+comm_keyval,&
+attribute_val,&
+ierror)&
+bind(C, name="mpi_comm_set_attr_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: comm_keyval     !int comm_keyval
+type(*), dimension(..) :: attribute_val     !void* attribute_val
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_set_attr_c
+
+
+function MPI_Comm_set_errhandler_c( comm,&
+errhandler,&
+ierror)&
+bind(C, name="mpi_comm_set_errhandler_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: errhandler     !MPI_Errhandler errhandler
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_set_errhandler_c
+
+
+function MPI_Comm_set_name_c( comm,&
+comm_name,&
+ierror)&
+bind(C, name="mpi_comm_set_name_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+character(kind=c_char), intent(in) :: comm_name(*)     !char* comm_name
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_set_name_c
+
+
+function MPI_Comm_size_c( comm,&
+size,&
+ierror)&
+bind(C, name="mpi_comm_size_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(out) :: size     !int* size
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_size_c
+
+
+function MPI_Comm_split_c( comm,&
+color,&
+key,&
+newcomm,&
+ierror)&
+bind(C, name="mpi_comm_split_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: color     !int color
+integer(c_int), value, intent(in) :: key     !int key
+integer(c_int), intent(out) :: newcomm     !MPI_Comm* newcomm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_split_c
+
+
+function MPI_Comm_test_inter_c( comm,&
+flag,&
+ierror)&
+bind(C, name="mpi_comm_test_inter_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(out) :: flag     !bool flag
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Comm_test_inter_c
+
+
+function MPI_Dims_create_c( nnodes,&
+ndims,&
+dims,&
+ierror)&
+bind(C, name="mpi_dims_create_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: nnodes     !int nnodes
+integer(c_int), value, intent(in) :: ndims     !int ndims
+type(c_ptr) :: dims     !int[] dims
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Dims_create_c
+
+
+function MPI_Errhandler_create_c( function,&
+errhandler,&
+ierror)&
+bind(C, name="mpi_errhandler_create_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(c_ptr), value , intent(in) :: function     !MPI_Handler_function* function
+integer(c_int), intent(out) :: errhandler     !MPI_Errhandler* errhandler
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Errhandler_create_c
+
+
+function MPI_Errhandler_free_c( errhandler,&
+ierror)&
+bind(C, name="mpi_errhandler_free_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), intent(inout) :: errhandler     !MPI_Errhandler* errhandler
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Errhandler_free_c
+
+
+function MPI_Errhandler_get_c( comm,&
+errhandler,&
+ierror)&
+bind(C, name="mpi_errhandler_get_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(out) :: errhandler     !MPI_Errhandler* errhandler
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Errhandler_get_c
+
+
+function MPI_Errhandler_set_c( comm,&
+errhandler,&
+ierror)&
+bind(C, name="mpi_errhandler_set_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: errhandler     !MPI_Errhandler errhandler
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Errhandler_set_c
+
+
+function MPI_Error_class_c( errorcode,&
+errorclass,&
+ierror)&
+bind(C, name="mpi_error_class_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: errorcode     !int errorcode
+integer(c_int), intent(out) :: errorclass     !int* errorclass
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Error_class_c
+
+
+function MPI_Error_string_c( errorcode,&
+string,&
+resultlen,&
+ierror)&
+bind(C, name="mpi_error_string_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: errorcode     !int errorcode
+character(kind=c_char), intent(out) :: string(*)     !char* string
+integer(c_int), intent(out) :: resultlen     !int* resultlen
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Error_string_c
+
+
+function MPI_Exscan_c( sendbuf,&
+recvbuf,&
+count,&
+datatype,&
+op,&
+comm,&
+ierror)&
+bind(C, name="mpi_exscan_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: sendbuf     !void* sendbuf
+type(*), dimension(..) :: recvbuf     !void* recvbuf
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int), value, intent(in) :: op     !MPI_Op op
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Exscan_c
+
+! MPI_File_c2f NOT IMPLEMENTED in MPC
+
+
+
+function MPI_File_call_errhandler_c( fh,&
+errorcode,&
+ierror)&
+bind(C, name="mpi_file_call_errhandler_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: fh     !MPI_File fh
+integer(c_int), value, intent(in) :: errorcode     !int errorcode
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_File_call_errhandler_c
+
+! MPI_File_close NOT IMPLEMENTED in MPC
+
+
+
+function MPI_File_create_errhandler_c( function,&
+errhandler,&
+ierror)&
+bind(C, name="mpi_file_create_errhandler_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(c_ptr), value , intent(in) :: function     !MPI_File_errhandler_function* function
+integer(c_int), intent(out) :: errhandler     !MPI_Errhandler* errhandler
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_File_create_errhandler_c
+
+! MPI_File_delete NOT IMPLEMENTED in MPC
+
+
+! MPI_File_get_amode NOT IMPLEMENTED in MPC
+
+
+! MPI_File_get_atomicity NOT IMPLEMENTED in MPC
+
+
+! MPI_File_get_byte_offset NOT IMPLEMENTED in MPC
+
+
+
+function MPI_File_get_errhandler_c( file,&
+errhandler,&
+ierror)&
+bind(C, name="mpi_file_get_errhandler_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: file     !MPI_File file
+integer(c_int), intent(out) :: errhandler     !MPI_Errhandler* errhandler
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_File_get_errhandler_c
+
+! MPI_File_get_group NOT IMPLEMENTED in MPC
+
+
+! MPI_File_get_info NOT IMPLEMENTED in MPC
+
+
+! MPI_File_get_position NOT IMPLEMENTED in MPC
+
+
+! MPI_File_get_position_shared NOT IMPLEMENTED in MPC
+
+
+! MPI_File_get_size NOT IMPLEMENTED in MPC
+
+
+! MPI_File_get_type_extent NOT IMPLEMENTED in MPC
+
+
+! MPI_File_get_view NOT IMPLEMENTED in MPC
+
+
+! MPI_File_iread NOT IMPLEMENTED in MPC
+
+
+! MPI_File_iread_at NOT IMPLEMENTED in MPC
+
+
+! MPI_File_iread_shared NOT IMPLEMENTED in MPC
+
+
+! MPI_File_iwrite NOT IMPLEMENTED in MPC
+
+
+! MPI_File_iwrite_at NOT IMPLEMENTED in MPC
+
+
+! MPI_File_iwrite_shared NOT IMPLEMENTED in MPC
+
+
+! MPI_File_open NOT IMPLEMENTED in MPC
+
+
+! MPI_File_preallocate NOT IMPLEMENTED in MPC
+
+
+! MPI_File_read NOT IMPLEMENTED in MPC
+
+
+! MPI_File_read_all NOT IMPLEMENTED in MPC
+
+
+! MPI_File_read_all_begin NOT IMPLEMENTED in MPC
+
+
+! MPI_File_read_all_end NOT IMPLEMENTED in MPC
+
+
+! MPI_File_read_at NOT IMPLEMENTED in MPC
+
+
+! MPI_File_read_at_all NOT IMPLEMENTED in MPC
+
+
+! MPI_File_read_at_all_begin NOT IMPLEMENTED in MPC
+
+
+! MPI_File_read_at_all_end NOT IMPLEMENTED in MPC
+
+
+! MPI_File_read_ordered NOT IMPLEMENTED in MPC
+
+
+! MPI_File_read_ordered_begin NOT IMPLEMENTED in MPC
+
+
+! MPI_File_read_ordered_end NOT IMPLEMENTED in MPC
+
+
+! MPI_File_read_shared NOT IMPLEMENTED in MPC
+
+
+! MPI_File_seek NOT IMPLEMENTED in MPC
+
+
+! MPI_File_seek_shared NOT IMPLEMENTED in MPC
+
+
+! MPI_File_set_atomicity NOT IMPLEMENTED in MPC
+
+
+
+function MPI_File_set_errhandler_c( file,&
+errhandler,&
+ierror)&
+bind(C, name="mpi_file_set_errhandler_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: file     !MPI_File file
+integer(c_int), value, intent(in) :: errhandler     !MPI_Errhandler errhandler
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_File_set_errhandler_c
+
+! MPI_File_set_info NOT IMPLEMENTED in MPC
+
+
+! MPI_File_set_size NOT IMPLEMENTED in MPC
+
+
+! MPI_File_set_view NOT IMPLEMENTED in MPC
+
+
+! MPI_File_sync NOT IMPLEMENTED in MPC
+
+
+! MPI_File_write NOT IMPLEMENTED in MPC
+
+
+! MPI_File_write_all NOT IMPLEMENTED in MPC
+
+
+! MPI_File_write_all_begin NOT IMPLEMENTED in MPC
+
+
+! MPI_File_write_all_end NOT IMPLEMENTED in MPC
+
+
+! MPI_File_write_at NOT IMPLEMENTED in MPC
+
+
+! MPI_File_write_at_all NOT IMPLEMENTED in MPC
+
+
+! MPI_File_write_at_all_begin NOT IMPLEMENTED in MPC
+
+
+! MPI_File_write_at_all_end NOT IMPLEMENTED in MPC
+
+
+! MPI_File_write_ordered NOT IMPLEMENTED in MPC
+
+
+! MPI_File_write_ordered_begin NOT IMPLEMENTED in MPC
+
+
+! MPI_File_write_ordered_end NOT IMPLEMENTED in MPC
+
+
+! MPI_File_write_shared NOT IMPLEMENTED in MPC
+
+
+
+function MPI_Finalized_c( flag,&
+ierror)&
+bind(C, name="mpi_finalized_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), intent(out) :: flag     !bool flag
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Finalized_c
+
+
+function MPI_Free_mem_c( base,&
+ierror)&
+bind(C, name="mpi_free_mem_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: base     !void* base
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Free_mem_c
+
+
+function MPI_Gather_c( sendbuf,&
+sendcount,&
+sendtype,&
+recvbuf,&
+recvcount,&
+recvtype,&
+root,&
+comm,&
+ierror)&
+bind(C, name="mpi_gather_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: sendbuf     !void* sendbuf
+integer(c_int), value, intent(in) :: sendcount     !int sendcount
+integer(c_int), value, intent(in) :: sendtype     !MPI_Datatype sendtype
+type(*), dimension(..) :: recvbuf     !void* recvbuf
+integer(c_int), value, intent(in) :: recvcount     !int recvcount
+integer(c_int), value, intent(in) :: recvtype     !MPI_Datatype recvtype
+integer(c_int), value, intent(in) :: root     !int root
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Gather_c
+
+
+function MPI_Gatherv_c( sendbuf,&
+sendcount,&
+sendtype,&
+recvbuf,&
+recvcounts,&
+displs,&
+recvtype,&
+root,&
+comm,&
+ierror)&
+bind(C, name="mpi_gatherv_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: sendbuf     !void* sendbuf
+integer(c_int), value, intent(in) :: sendcount     !int sendcount
+integer(c_int), value, intent(in) :: sendtype     !MPI_Datatype sendtype
+type(*), dimension(..) :: recvbuf     !void* recvbuf
+type(c_ptr) :: recvcounts     !int[] recvcounts
+type(c_ptr) :: displs     !int[] displs
+integer(c_int), value, intent(in) :: recvtype     !MPI_Datatype recvtype
+integer(c_int), value, intent(in) :: root     !int root
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Gatherv_c
+
+
+function MPI_Get_c( origin_addr,&
+origin_count,&
+origin_datatype,&
+target_rank,&
+target_disp,&
+target_count,&
+target_datatype,&
+win,&
+ierror)&
+bind(C, name="mpi_get_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: origin_addr     !void* origin_addr
+integer(c_int), value, intent(in) :: origin_count     !int origin_count
+integer(c_int), value, intent(in) :: origin_datatype     !MPI_Datatype origin_datatype
+integer(c_int), value, intent(in) :: target_rank     !int target_rank
+integer(c_intptr_t), value, intent(in) :: target_disp     !MPI_Aint target_disp
+integer(c_int), value, intent(in) :: target_count     !int target_count
+integer(c_int), value, intent(in) :: target_datatype     !MPI_Datatype target_datatype
+integer(c_int), value, intent(in) :: win     !MPI_Win win
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Get_c
+
+
+function MPI_Get_address_c( location,&
+address,&
+ierror)&
+bind(C, name="mpi_get_address_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: location     !void* location
+integer(c_intptr_t), intent(out) :: address     !MPI_Aint* address
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Get_address_c
+
+
+function MPI_Get_count_c( status,&
+datatype,&
+count,&
+ierror)&
+bind(C, name="mpi_get_count_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(c_Status) :: status     !MPI_Status* status
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int), intent(out) :: count     !int* count
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Get_count_c
+
+
+function MPI_Get_elements_c( status,&
+datatype,&
+count,&
+ierror)&
+bind(C, name="mpi_get_elements_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(c_Status) :: status     !MPI_Status* status
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int), intent(out) :: count     !int* count
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Get_elements_c
+
+
+function MPI_Get_processor_name_c( name,&
+resultlen,&
+ierror)&
+bind(C, name="mpi_get_processor_name_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+character(kind=c_char), intent(out) :: name(*)     !char* name
+integer(c_int), intent(out) :: resultlen     !int* resultlen
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Get_processor_name_c
+
+
+function MPI_Get_version_c( version,&
+subversion,&
+ierror)&
+bind(C, name="mpi_get_version_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), intent(inout) :: version     !int* version
+integer(c_int), intent(inout) :: subversion     !int* subversion
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Get_version_c
+
+
+function MPI_Graph_create_c( comm,&
+nnodes,&
+index,&
+edges,&
+reorder,&
+comm_graph,&
+ierror)&
+bind(C, name="mpi_graph_create_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: nnodes     !int nnodes
+type(c_ptr), value :: index     !int[] index
+type(c_ptr), value :: edges     !int[] edges
+integer(c_int), value, intent(in) :: reorder     !bool reorder
+integer(c_int), intent(out) :: comm_graph     !MPI_Comm* comm_graph
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Graph_create_c
+
+
+function MPI_Graph_get_c( comm,&
+maxindex,&
+maxedges,&
+index,&
+edges,&
+ierror)&
+bind(C, name="mpi_graph_get_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: maxindex     !int maxindex
+integer(c_int), value, intent(in) :: maxedges     !int maxedges
+type(c_ptr) :: index     !int[] index
+type(c_ptr) :: edges     !int[] edges
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Graph_get_c
+
+
+function MPI_Graph_map_c( comm,&
+nnodes,&
+index,&
+edges,&
+newrank,&
+ierror)&
+bind(C, name="mpi_graph_map_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: nnodes     !int nnodes
+type(c_ptr), value :: index     !int[] index
+type(c_ptr), value :: edges     !int[] edges
+integer(c_int), intent(out) :: newrank     !int* newrank
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Graph_map_c
+
+
+function MPI_Graph_neighbors_c( comm,&
+rank,&
+maxneighbors,&
+neighbors,&
+ierror)&
+bind(C, name="mpi_graph_neighbors_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: rank     !int rank
+integer(c_int), value, intent(in) :: maxneighbors     !int maxneighbors
+type(c_ptr) :: neighbors     !int[] neighbors
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Graph_neighbors_c
+
+
+function MPI_Graph_neighbors_count_c( comm,&
+rank,&
+nneighbors,&
+ierror)&
+bind(C, name="mpi_graph_neighbors_count_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: rank     !int rank
+integer(c_int), intent(out) :: nneighbors     !int* nneighbors
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Graph_neighbors_count_c
+
+
+function MPI_Graphdims_get_c( comm,&
+nnodes,&
+nedges,&
+ierror)&
+bind(C, name="mpi_graphdims_get_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(out) :: nnodes     !int* nnodes
+integer(c_int), intent(out) :: nedges     !int* nedges
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Graphdims_get_c
+
+
+function MPI_Grequest_complete_c( request,&
+ierror)&
+bind(C, name="mpi_grequest_complete_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), intent(inout) :: request     !MPI_Request request
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Grequest_complete_c
+
+
+function MPI_Grequest_start_c( query_fn,&
+free_fn,&
+cancel_fn,&
+extra_state,&
+request,&
+ierror)&
+bind(C, name="mpi_grequest_start_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(c_ptr), value , intent(in) :: query_fn     !MPI_Grequest_query_function* query_fn
+type(c_ptr), value , intent(in) :: free_fn     !MPI_Grequest_free_function* free_fn
+type(c_ptr), value , intent(in) :: cancel_fn     !MPI_Grequest_cancel_function* cancel_fn
+type(*), dimension(..) :: extra_state     !void* extra_state
+integer(c_int), intent(inout) :: request     !MPI_Request* request
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Grequest_start_c
+
+
+function MPI_Group_compare_c( group1,&
+group2,&
+result,&
+ierror)&
+bind(C, name="mpi_group_compare_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: group1     !MPI_Group group1
+integer(c_int), value, intent(in) :: group2     !MPI_Group group2
+integer(c_int), intent(out) :: result     !int* result
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Group_compare_c
+
+
+function MPI_Group_difference_c( group1,&
+group2,&
+newgroup,&
+ierror)&
+bind(C, name="mpi_group_difference_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: group1     !MPI_Group group1
+integer(c_int), value, intent(in) :: group2     !MPI_Group group2
+integer(c_int), intent(out) :: newgroup     !MPI_Group* newgroup
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Group_difference_c
+
+
+function MPI_Group_excl_c( group,&
+n,&
+ranks,&
+newgroup,&
+ierror)&
+bind(C, name="mpi_group_excl_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: group     !MPI_Group group
+integer(c_int), value, intent(in) :: n     !int n
+type(c_ptr), value :: ranks     !int[] ranks
+integer(c_int), intent(out) :: newgroup     !MPI_Group* newgroup
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Group_excl_c
+
+
+function MPI_Group_free_c( group,&
+ierror)&
+bind(C, name="mpi_group_free_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), intent(inout) :: group     !MPI_Group* group
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Group_free_c
+
+
+function MPI_Group_incl_c( group,&
+n,&
+ranks,&
+newgroup,&
+ierror)&
+bind(C, name="mpi_group_incl_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: group     !MPI_Group group
+integer(c_int), value, intent(in) :: n     !int n
+type(c_ptr), value :: ranks     !int[] ranks
+integer(c_int), intent(out) :: newgroup     !MPI_Group* newgroup
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Group_incl_c
+
+
+function MPI_Group_intersection_c( group1,&
+group2,&
+newgroup,&
+ierror)&
+bind(C, name="mpi_group_intersection_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: group1     !MPI_Group group1
+integer(c_int), value, intent(in) :: group2     !MPI_Group group2
+integer(c_int), intent(out) :: newgroup     !MPI_Group* newgroup
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Group_intersection_c
+
+
+function MPI_Group_range_excl_c( group,&
+n,&
+ranges,&
+newgroup,&
+ierror)&
+bind(C, name="mpi_group_range_excl_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: group     !MPI_Group group
+integer(c_int), value, intent(in) :: n     !int n
+type(c_ptr), value :: ranges     !int[][3] ranges
+integer(c_int), intent(out) :: newgroup     !MPI_Group* newgroup
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Group_range_excl_c
+
+
+function MPI_Group_range_incl_c( group,&
+n,&
+ranges,&
+newgroup,&
+ierror)&
+bind(C, name="mpi_group_range_incl_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: group     !MPI_Group group
+integer(c_int), value, intent(in) :: n     !int n
+type(c_ptr), value :: ranges     !int[][3] ranges
+integer(c_int), intent(out) :: newgroup     !MPI_Group* newgroup
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Group_range_incl_c
+
+
+function MPI_Group_rank_c( group,&
+rank,&
+ierror)&
+bind(C, name="mpi_group_rank_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: group     !MPI_Group group
+integer(c_int), intent(out) :: rank     !int* rank
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Group_rank_c
+
+
+function MPI_Group_size_c( group,&
+size,&
+ierror)&
+bind(C, name="mpi_group_size_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: group     !MPI_Group group
+integer(c_int), intent(out) :: size     !int* size
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Group_size_c
+
+
+function MPI_Group_translate_ranks_c( group1,&
+n,&
+ranks1,&
+group2,&
+ranks2,&
+ierror)&
+bind(C, name="mpi_group_translate_ranks_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: group1     !MPI_Group group1
+integer(c_int), value, intent(in) :: n     !int n
+type(c_ptr), value :: ranks1     !int[] ranks1
+integer(c_int), value, intent(in) :: group2     !MPI_Group group2
+type(c_ptr) :: ranks2     !int[] ranks2
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Group_translate_ranks_c
+
+
+function MPI_Group_union_c( group1,&
+group2,&
+newgroup,&
+ierror)&
+bind(C, name="mpi_group_union_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: group1     !MPI_Group group1
+integer(c_int), value, intent(in) :: group2     !MPI_Group group2
+integer(c_int), intent(out) :: newgroup     !MPI_Group* newgroup
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Group_union_c
+
+
+function MPI_Ibsend_c( buf,&
+count,&
+datatype,&
+dest,&
+tag,&
+comm,&
+request,&
+ierror)&
+bind(C, name="mpi_ibsend_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: buf     !void* buf
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int), value, intent(in) :: dest     !int dest
+integer(c_int), value, intent(in) :: tag     !int tag
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(inout) :: request     !MPI_Request* request
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Ibsend_c
+
+
+function MPI_Info_create_c( info,&
+ierror)&
+bind(C, name="mpi_info_create_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), intent(out) :: info     !MPI_Info* info
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Info_create_c
+
+
+function MPI_Info_delete_c( info,&
+key,&
+ierror)&
+bind(C, name="mpi_info_delete_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: info     !MPI_Info info
+character(kind=c_char), intent(in) :: key(*)     !char* key
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Info_delete_c
+
+
+function MPI_Info_dup_c( info,&
+newinfo,&
+ierror)&
+bind(C, name="mpi_info_dup_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: info     !MPI_Info info
+integer(c_int), intent(out) :: newinfo     !MPI_Info* newinfo
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Info_dup_c
+
+
+function MPI_Info_free_c( info,&
+ierror)&
+bind(C, name="mpi_info_free_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), intent(inout) :: info     !MPI_Info* info
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Info_free_c
+
+
+function MPI_Info_get_c( info,&
+key,&
+valuelen,&
+value,&
+flag,&
+ierror)&
+bind(C, name="mpi_info_get_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: info     !MPI_Info info
+character(kind=c_char), intent(in) :: key(*)     !char* key
+integer(c_int), value, intent(in) :: valuelen     !int valuelen
+character(kind=c_char), intent(out) :: value(*)     !char* value
+integer(c_int), intent(out) :: flag     !bool flag
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Info_get_c
+
+
+function MPI_Info_get_nkeys_c( info,&
+nkeys,&
+ierror)&
+bind(C, name="mpi_info_get_nkeys_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: info     !MPI_Info info
+integer(c_int), intent(out) :: nkeys     !int* nkeys
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Info_get_nkeys_c
+
+
+function MPI_Info_get_nthkey_c( info,&
+n,&
+key,&
+ierror)&
+bind(C, name="mpi_info_get_nthkey_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: info     !MPI_Info info
+integer(c_int), value, intent(in) :: n     !int n
+character(kind=c_char), intent(out) :: key(*)     !char* key
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Info_get_nthkey_c
+
+
+function MPI_Info_get_valuelen_c( info,&
+key,&
+valuelen,&
+flag,&
+ierror)&
+bind(C, name="mpi_info_get_valuelen_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: info     !MPI_Info info
+character(kind=c_char), intent(in) :: key(*)     !char* key
+integer(c_int), intent(out) :: valuelen     !int* valuelen
+integer(c_int), intent(out) :: flag     !bool flag
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Info_get_valuelen_c
+
+
+function MPI_Info_set_c( info,&
+key,&
+value,&
+ierror)&
+bind(C, name="mpi_info_set_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: info     !MPI_Info info
+character(kind=c_char), intent(in) :: key(*)     !char* key
+character(kind=c_char), intent(in) :: value(*)     !char* value
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Info_set_c
+
+
+function MPI_Initialized_c( flag,&
+ierror)&
+bind(C, name="mpi_initialized_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), intent(out) :: flag     !bool flag
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Initialized_c
+
+
+function MPI_Intercomm_create_c( local_comm,&
+local_leader,&
+bridge_comm,&
+remote_leader,&
+tag,&
+newintercomm,&
+ierror)&
+bind(C, name="mpi_intercomm_create_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: local_comm     !MPI_Comm local_comm
+integer(c_int), value, intent(in) :: local_leader     !int local_leader
+integer(c_int), value, intent(in) :: bridge_comm     !MPI_Comm bridge_comm
+integer(c_int), value, intent(in) :: remote_leader     !int remote_leader
+integer(c_int), value, intent(in) :: tag     !int tag
+integer(c_int), intent(out) :: newintercomm     !MPI_Comm* newintercomm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Intercomm_create_c
+
+
+function MPI_Intercomm_merge_c( intercomm,&
+high,&
+newintercomm,&
+ierror)&
+bind(C, name="mpi_intercomm_merge_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: intercomm     !MPI_Comm intercomm
+integer(c_int), value, intent(in) :: high     !bool high
+integer(c_int), intent(out) :: newintercomm     !MPI_Comm* newintercomm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Intercomm_merge_c
+
+
+function MPI_Iprobe_c( source,&
+tag,&
+comm,&
+flag,&
+status,&
+ierror)&
+bind(C, name="mpi_iprobe_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: source     !int source
+integer(c_int), value, intent(in) :: tag     !int tag
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(out) :: flag     !bool flag
+type(c_Status) :: status     !MPI_Status* status
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Iprobe_c
+
+
+function MPI_Irecv_c( buf,&
+count,&
+datatype,&
+source,&
+tag,&
+comm,&
+request,&
+ierror)&
+bind(C, name="mpi_irecv_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: buf     !void* buf
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int), value, intent(in) :: source     !int source
+integer(c_int), value, intent(in) :: tag     !int tag
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(inout) :: request     !MPI_Request* request
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Irecv_c
+
+
+function MPI_Irsend_c( buf,&
+count,&
+datatype,&
+dest,&
+tag,&
+comm,&
+request,&
+ierror)&
+bind(C, name="mpi_irsend_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: buf     !void* buf
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int), value, intent(in) :: dest     !int dest
+integer(c_int), value, intent(in) :: tag     !int tag
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(inout) :: request     !MPI_Request* request
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Irsend_c
+
+
+function MPI_Is_thread_main_c( flag,&
+ierror)&
+bind(C, name="mpi_is_thread_main_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), intent(inout) :: flag     !bool flag
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Is_thread_main_c
+
+
+function MPI_Isend_c( buf,&
+count,&
+datatype,&
+dest,&
+tag,&
+comm,&
+request,&
+ierror)&
+bind(C, name="mpi_isend_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: buf     !void* buf
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int), value, intent(in) :: dest     !int dest
+integer(c_int), value, intent(in) :: tag     !int tag
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(inout) :: request     !MPI_Request* request
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Isend_c
+
+
+function MPI_Issend_c( buf,&
+count,&
+datatype,&
+dest,&
+tag,&
+comm,&
+request,&
+ierror)&
+bind(C, name="mpi_issend_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: buf     !void* buf
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int), value, intent(in) :: dest     !int dest
+integer(c_int), value, intent(in) :: tag     !int tag
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(inout) :: request     !MPI_Request* request
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Issend_c
+
+
+function MPI_Keyval_create_c( copy_fn,&
+delete_fn,&
+keyval,&
+extra_state,&
+ierror)&
+bind(C, name="mpi_keyval_create_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(c_ptr), value , intent(in) :: copy_fn     !MPI_Copy_function* copy_fn
+type(c_ptr), value , intent(in) :: delete_fn     !MPI_Delete_function* delete_fn
+integer(c_int), intent(out) :: keyval     !int* keyval
+type(*), dimension(..) :: extra_state     !void* extra_state
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Keyval_create_c
+
+
+function MPI_Keyval_free_c( keyval,&
+ierror)&
+bind(C, name="mpi_keyval_free_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), intent(inout) :: keyval     !int* keyval
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Keyval_free_c
+
+
+function MPI_Lookup_name_c( service_name,&
+info,&
+port_name,&
+ierror)&
+bind(C, name="mpi_lookup_name_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+character(kind=c_char), intent(in) :: service_name(*)     !char* service_name
+integer(c_int), value, intent(in) :: info     !MPI_Info info
+character(kind=c_char), intent(in) :: port_name(*)     !char* port_name
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Lookup_name_c
+
+
+function MPI_Op_commutative_c( op,&
+commute,&
+ierror)&
+bind(C, name="mpi_op_commutative_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: op     !MPI_Op op
+integer(c_int), intent(out) :: commute     !bool commute
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Op_commutative_c
+
+
+function MPI_Op_create_c( function,&
+commute,&
+op,&
+ierror)&
+bind(C, name="mpi_op_create_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(c_ptr), value , intent(in) :: function     !MPI_User_function* function
+integer(c_int), value, intent(in) :: commute     !bool commute
+integer(c_int), intent(out) :: op     !MPI_Op* op
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Op_create_c
+
+
+function MPI_Op_free_c( op,&
+ierror)&
+bind(C, name="mpi_op_free_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), intent(inout) :: op     !MPI_Op* op
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Op_free_c
+
+
+function MPI_Open_port_c( info,&
+port_name,&
+ierror)&
+bind(C, name="mpi_open_port_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: info     !MPI_Info info
+character(kind=c_char), intent(in) :: port_name(*)     !char* port_name
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Open_port_c
+
+
+function MPI_Pack_c( inbuf,&
+incount,&
+datatype,&
+outbuf,&
+outsize,&
+position,&
+comm,&
+ierror)&
+bind(C, name="mpi_pack_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: inbuf     !void* inbuf
+integer(c_int), value, intent(in) :: incount     !int incount
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+type(*), dimension(..) :: outbuf     !void* outbuf
+integer(c_int), value, intent(in) :: outsize     !int outsize
+integer(c_int), intent(out) :: position     !int* position
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Pack_c
+
+
+function MPI_Pack_external_c( datarep,&
+inbuf,&
+incount,&
+datatype,&
+outbuf,&
+outsize,&
+position,&
+ierror)&
+bind(C, name="mpi_pack_external_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+character(kind=c_char), intent(in) :: datarep(*)     !char* datarep
+type(*), dimension(..) :: inbuf     !void* inbuf
+integer(c_int), value, intent(in) :: incount     !int incount
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+type(*), dimension(..) :: outbuf     !void* outbuf
+integer(c_intptr_t), value, intent(in) :: outsize     !MPI_Aint outsize
+integer(c_intptr_t), intent(out) :: position     !MPI_Aint* position
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Pack_external_c
+
+
+function MPI_Pack_external_size_c( datarep,&
+incount,&
+datatype,&
+size,&
+ierror)&
+bind(C, name="mpi_pack_external_size_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+character(kind=c_char), intent(in) :: datarep(*)     !char* datarep
+integer(c_int), value, intent(in) :: incount     !int incount
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_intptr_t), intent(out) :: size     !MPI_Aint* size
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Pack_external_size_c
+
+
+function MPI_Pack_size_c( incount,&
+datatype,&
+comm,&
+size,&
+ierror)&
+bind(C, name="mpi_pack_size_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: incount     !int incount
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(out) :: size     !int* size
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Pack_size_c
+
+
+function MPI_Probe_c( source,&
+tag,&
+comm,&
+status,&
+ierror)&
+bind(C, name="mpi_probe_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: source     !int source
+integer(c_int), value, intent(in) :: tag     !int tag
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+type(c_Status) :: status     !MPI_Status* status
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Probe_c
+
+
+function MPI_Publish_name_c( service_name,&
+info,&
+port_name,&
+ierror)&
+bind(C, name="mpi_publish_name_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+character(kind=c_char), intent(in) :: service_name(*)     !char* service_name
+integer(c_int), value, intent(in) :: info     !MPI_Info info
+character(kind=c_char), intent(in) :: port_name(*)     !char* port_name
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Publish_name_c
+
+
+function MPI_Put_c( origin_addr,&
+origin_count,&
+origin_datatype,&
+target_rank,&
+target_disp,&
+target_count,&
+target_datatype,&
+win,&
+ierror)&
+bind(C, name="mpi_put_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: origin_addr     !void* origin_addr
+integer(c_int), value, intent(in) :: origin_count     !int origin_count
+integer(c_int), value, intent(in) :: origin_datatype     !MPI_Datatype origin_datatype
+integer(c_int), value, intent(in) :: target_rank     !int target_rank
+integer(c_intptr_t), value, intent(in) :: target_disp     !MPI_Aint target_disp
+integer(c_int), value, intent(in) :: target_count     !int target_count
+integer(c_int), value, intent(in) :: target_datatype     !MPI_Datatype target_datatype
+integer(c_int), value, intent(in) :: win     !MPI_Win win
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Put_c
+
+
+function MPI_Query_thread_c( provided,&
+ierror)&
+bind(C, name="mpi_query_thread_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), intent(out) :: provided     !int* provided
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Query_thread_c
+
+
+function MPI_Recv_c( buf,&
+count,&
+datatype,&
+source,&
+tag,&
+comm,&
+status,&
+ierror)&
+bind(C, name="mpi_recv_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: buf     !void* buf
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int), value, intent(in) :: source     !int source
+integer(c_int), value, intent(in) :: tag     !int tag
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+type(c_Status) :: status     !MPI_Status* status
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Recv_c
+
+
+function MPI_Recv_init_c( buf,&
+count,&
+datatype,&
+source,&
+tag,&
+comm,&
+request,&
+ierror)&
+bind(C, name="mpi_recv_init_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: buf     !void* buf
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int), value, intent(in) :: source     !int source
+integer(c_int), value, intent(in) :: tag     !int tag
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(inout) :: request     !MPI_Request* request
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Recv_init_c
+
+
+function MPI_Reduce_c( sendbuf,&
+recvbuf,&
+count,&
+datatype,&
+op,&
+root,&
+comm,&
+ierror)&
+bind(C, name="mpi_reduce_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: sendbuf     !void* sendbuf
+type(*), dimension(..) :: recvbuf     !void* recvbuf
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int), value, intent(in) :: op     !MPI_Op op
+integer(c_int), value, intent(in) :: root     !int root
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Reduce_c
+
+
+function MPI_Reduce_local_c( inbuf,&
+inoutbuf,&
+count,&
+datatype,&
+op,&
+ierror)&
+bind(C, name="mpi_reduce_local_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: inbuf     !void* inbuf
+type(*), dimension(..) :: inoutbuf     !void* inoutbuf
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int), value, intent(in) :: op     !MPI_Op op
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Reduce_local_c
+
+
+function MPI_Reduce_scatter_c( sendbuf,&
+recvbuf,&
+recvcounts,&
+datatype,&
+op,&
+comm,&
+ierror)&
+bind(C, name="mpi_reduce_scatter_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: sendbuf     !void* sendbuf
+type(*), dimension(..) :: recvbuf     !void* recvbuf
+type(c_ptr), value :: recvcounts     !int[] recvcounts
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int), value, intent(in) :: op     !MPI_Op op
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Reduce_scatter_c
+
+
+function MPI_Register_datarep_c( datarep,&
+read_conversion_fn,&
+write_conversion_fn,&
+dtype_file_extent_fn,&
+extra_state,&
+ierror)&
+bind(C, name="mpi_register_datarep_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+character(kind=c_char), intent(in) :: datarep(*)     !char* datarep
+type(c_ptr), value , intent(in) :: read_conversion_fn     !MPI_Datarep_conversion_function* read_conversion_fn
+type(c_ptr), value , intent(in) :: write_conversion_fn     !MPI_Datarep_conversion_function* write_conversion_fn
+type(c_ptr), value , intent(in) :: dtype_file_extent_fn     !MPI_Datarep_extent_function* dtype_file_extent_fn
+type(*), dimension(..) :: extra_state     !void* extra_state
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Register_datarep_c
+
+
+function MPI_Request_free_c( request,&
+ierror)&
+bind(C, name="mpi_request_free_f08") result(ret)
 
 use, intrinsic :: iso_c_binding
 use :: mpi_f08_constants
@@ -46,51 +3196,223 @@ integer(c_int), intent(inout) :: request     !MPI_Request* request
 integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
-end function MPI_Start_c
-
-! MPI_File_write_all_begin NOT IMPLEMENTED in MPC
+end function MPI_Request_free_c
 
 
-
-function MPI_Win_post_c( group,&
-assert,&
-win,&
+function MPI_Request_get_status_c( request,&
+flag,&
+status,&
 ierror)&
-bind(C, name="mpi_win_post_f08") result(ret)
+bind(C, name="mpi_request_get_status_f08") result(ret)
 
 use, intrinsic :: iso_c_binding
 use :: mpi_f08_constants
 use :: mpi_f08_ctypes
 implicit none
 
-integer(c_int), value, intent(in) :: group     !MPI_Group group
-integer(c_int), value, intent(in) :: assert     !int assert
-integer(c_int), value, intent(in) :: win     !MPI_Win win
+integer(c_int), value, intent(in) :: request     !MPI_Request request
+integer(c_int), intent(out) :: flag     !bool flag
+type(c_Status) :: status     !MPI_Status* status
 integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
-end function MPI_Win_post_c
+end function MPI_Request_get_status_c
 
 
-function MPI_Win_get_errhandler_c( win,&
-errhandler,&
+function MPI_Rsend_c( ibuf,&
+count,&
+datatype,&
+dest,&
+tag,&
+comm,&
 ierror)&
-bind(C, name="mpi_win_get_errhandler_f08") result(ret)
+bind(C, name="mpi_rsend_f08") result(ret)
 
 use, intrinsic :: iso_c_binding
 use :: mpi_f08_constants
 use :: mpi_f08_ctypes
 implicit none
 
-integer(c_int), value, intent(in) :: win     !MPI_Win win
-integer(c_int), intent(out) :: errhandler     !MPI_Errhandler* errhandler
+type(*), dimension(..) :: ibuf     !void* ibuf
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int), value, intent(in) :: dest     !int dest
+integer(c_int), value, intent(in) :: tag     !int tag
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
 integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
-end function MPI_Win_get_errhandler_c
+end function MPI_Rsend_c
 
-! MPI_File_get_group NOT IMPLEMENTED in MPC
 
+function MPI_Rsend_init_c( buf,&
+count,&
+datatype,&
+dest,&
+tag,&
+comm,&
+request,&
+ierror)&
+bind(C, name="mpi_rsend_init_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: buf     !void* buf
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int), value, intent(in) :: dest     !int dest
+integer(c_int), value, intent(in) :: tag     !int tag
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(inout) :: request     !MPI_Request* request
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Rsend_init_c
+
+
+function MPI_Scan_c( sendbuf,&
+recvbuf,&
+count,&
+datatype,&
+op,&
+comm,&
+ierror)&
+bind(C, name="mpi_scan_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: sendbuf     !void* sendbuf
+type(*), dimension(..) :: recvbuf     !void* recvbuf
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int), value, intent(in) :: op     !MPI_Op op
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Scan_c
+
+
+function MPI_Scatter_c( sendbuf,&
+sendcount,&
+sendtype,&
+recvbuf,&
+recvcount,&
+recvtype,&
+root,&
+comm,&
+ierror)&
+bind(C, name="mpi_scatter_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: sendbuf     !void* sendbuf
+integer(c_int), value, intent(in) :: sendcount     !int sendcount
+integer(c_int), value, intent(in) :: sendtype     !MPI_Datatype sendtype
+type(*), dimension(..) :: recvbuf     !void* recvbuf
+integer(c_int), value, intent(in) :: recvcount     !int recvcount
+integer(c_int), value, intent(in) :: recvtype     !MPI_Datatype recvtype
+integer(c_int), value, intent(in) :: root     !int root
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Scatter_c
+
+
+function MPI_Scatterv_c( sendbuf,&
+sendcounts,&
+displs,&
+sendtype,&
+recvbuf,&
+recvcount,&
+recvtype,&
+root,&
+comm,&
+ierror)&
+bind(C, name="mpi_scatterv_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: sendbuf     !void* sendbuf
+type(c_ptr), value :: sendcounts     !int[] sendcounts
+type(c_ptr), value :: displs     !int[] displs
+integer(c_int), value, intent(in) :: sendtype     !MPI_Datatype sendtype
+type(*), dimension(..) :: recvbuf     !void* recvbuf
+integer(c_int), value, intent(in) :: recvcount     !int recvcount
+integer(c_int), value, intent(in) :: recvtype     !MPI_Datatype recvtype
+integer(c_int), value, intent(in) :: root     !int root
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Scatterv_c
+
+
+function MPI_Send_c( buf,&
+count,&
+datatype,&
+dest,&
+tag,&
+comm,&
+ierror)&
+bind(C, name="mpi_send_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: buf     !void* buf
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int), value, intent(in) :: dest     !int dest
+integer(c_int), value, intent(in) :: tag     !int tag
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Send_c
+
+
+function MPI_Send_init_c( buf,&
+count,&
+datatype,&
+dest,&
+tag,&
+comm,&
+request,&
+ierror)&
+bind(C, name="mpi_send_init_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: buf     !void* buf
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int), value, intent(in) :: dest     !int dest
+integer(c_int), value, intent(in) :: tag     !int tag
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(inout) :: request     !MPI_Request* request
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Send_init_c
 
 
 function MPI_Sendrecv_c( sendbuf,&
@@ -131,571 +3453,6 @@ integer(c_int) :: ret ! dummy
 end function MPI_Sendrecv_c
 
 
-function MPI_Scan_c( sendbuf,&
-recvbuf,&
-count,&
-datatype,&
-op,&
-comm,&
-ierror)&
-bind(C, name="mpi_scan_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: sendbuf     !void* sendbuf
-type(*), dimension(..) :: recvbuf     !void* recvbuf
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), value, intent(in) :: op     !MPI_Op op
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Scan_c
-
-! MPI_Status_c2f NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Startall_c( count,&
-array_of_requests,&
-ierror)&
-bind(C, name="mpi_startall_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), target  :: array_of_requests(count)     !MPI_Request[] array_of_requests
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Startall_c
-
-
-function MPI_Attr_delete_c( comm,&
-keyval,&
-ierror)&
-bind(C, name="mpi_attr_delete_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), value, intent(in) :: keyval     !int keyval
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Attr_delete_c
-
-! MPI_File_iwrite_shared NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Comm_get_attr_c( comm,&
-comm_keyval,&
-attribute_val,&
-flag,&
-ierror)&
-bind(C, name="mpi_comm_get_attr_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), value, intent(in) :: comm_keyval     !int comm_keyval
-type(*), dimension(..) :: attribute_val     !void* attribute_val
-integer(c_int), intent(out) :: flag     !bool flag
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_get_attr_c
-
-! MPI_File_get_info NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Type_delete_attr_c( type,&
-type_keyval,&
-ierror)&
-bind(C, name="mpi_type_delete_attr_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: type     !MPI_Datatype type
-integer(c_int), value, intent(in) :: type_keyval     !int type_keyval
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_delete_attr_c
-
-
-function MPI_Error_class_c( errorcode,&
-errorclass,&
-ierror)&
-bind(C, name="mpi_error_class_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: errorcode     !int errorcode
-integer(c_int), intent(out) :: errorclass     !int* errorclass
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Error_class_c
-
-
-function MPI_Free_mem_c( base,&
-ierror)&
-bind(C, name="mpi_free_mem_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: base     !void* base
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Free_mem_c
-
-
-function MPI_Info_dup_c( info,&
-newinfo,&
-ierror)&
-bind(C, name="mpi_info_dup_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: info     !MPI_Info info
-integer(c_int), intent(out) :: newinfo     !MPI_Info* newinfo
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Info_dup_c
-
-
-function MPI_Type_lb_c( type,&
-lb,&
-ierror)&
-bind(C, name="mpi_type_lb_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: type     !MPI_Datatype type
-integer(c_intptr_t), value, intent(in) :: lb     !MPI_Aint* lb
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_lb_c
-
-
-function MPI_Cart_get_c( comm,&
-maxdims,&
-dims,&
-periods,&
-coords,&
-ierror)&
-bind(C, name="mpi_cart_get_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), value, intent(in) :: maxdims     !int maxdims
-type(c_ptr) :: dims     !int[] dims
-type(c_ptr) :: periods     !bool[] periods
-type(c_ptr) :: coords     !int[] coords
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Cart_get_c
-
-
-function MPI_Add_error_class_c( errorclass,&
-ierror)&
-bind(C, name="mpi_add_error_class_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), intent(out) :: errorclass     !int* errorclass
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Add_error_class_c
-
-! MPI_File_write_shared NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Buffer_detach_c( buffer,&
-size,&
-ierror)&
-bind(C, name="mpi_buffer_detach_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: buffer     !void* buffer
-integer(c_int), value :: size     !int* size
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Buffer_detach_c
-
-! MPI_File_set_size NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Intercomm_create_c( local_comm,&
-local_leader,&
-bridge_comm,&
-remote_leader,&
-tag,&
-newintercomm,&
-ierror)&
-bind(C, name="mpi_intercomm_create_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: local_comm     !MPI_Comm local_comm
-integer(c_int), value, intent(in) :: local_leader     !int local_leader
-integer(c_int), value, intent(in) :: bridge_comm     !MPI_Comm bridge_comm
-integer(c_int), value, intent(in) :: remote_leader     !int remote_leader
-integer(c_int), value, intent(in) :: tag     !int tag
-integer(c_int), intent(out) :: newintercomm     !MPI_Comm* newintercomm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Intercomm_create_c
-
-! MPI_File_iread_at NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Allreduce_c( sendbuf,&
-recvbuf,&
-count,&
-datatype,&
-op,&
-comm,&
-ierror)&
-bind(C, name="mpi_allreduce_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: sendbuf     !void* sendbuf
-type(*), dimension(..) :: recvbuf     !void* recvbuf
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), value, intent(in) :: op     !MPI_Op op
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Allreduce_c
-
-
-function MPI_Comm_create_keyval_c( comm_copy_attr_fn,&
-comm_delete_attr_fn,&
-comm_keyval,&
-extra_state,&
-ierror)&
-bind(C, name="mpi_comm_create_keyval_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(c_ptr), value , intent(in) :: comm_copy_attr_fn     !MPI_Comm_copy_attr_function* comm_copy_attr_fn
-type(c_ptr), value , intent(in) :: comm_delete_attr_fn     !MPI_Comm_delete_attr_function* comm_delete_attr_fn
-integer(c_int), intent(out) :: comm_keyval     !int* comm_keyval
-type(*), dimension(..) :: extra_state     !void* extra_state
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_create_keyval_c
-
-
-function MPI_Ibsend_c( buf,&
-count,&
-datatype,&
-dest,&
-tag,&
-comm,&
-request,&
-ierror)&
-bind(C, name="mpi_ibsend_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: buf     !void* buf
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), value, intent(in) :: dest     !int dest
-integer(c_int), value, intent(in) :: tag     !int tag
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(inout) :: request     !MPI_Request* request
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Ibsend_c
-
-! MPI_File_read_all_end NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Comm_remote_size_c( comm,&
-size,&
-ierror)&
-bind(C, name="mpi_comm_remote_size_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(out) :: size     !int* size
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_remote_size_c
-
-
-function MPI_Type_contiguous_c( count,&
-oldtype,&
-newtype,&
-ierror)&
-bind(C, name="mpi_type_contiguous_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), value, intent(in) :: oldtype     !MPI_Datatype oldtype
-integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_contiguous_c
-
-
-function MPI_Send_init_c( buf,&
-count,&
-datatype,&
-dest,&
-tag,&
-comm,&
-request,&
-ierror)&
-bind(C, name="mpi_send_init_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: buf     !void* buf
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), value, intent(in) :: dest     !int dest
-integer(c_int), value, intent(in) :: tag     !int tag
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(inout) :: request     !MPI_Request* request
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Send_init_c
-
-
-function MPI_Type_get_name_c( type,&
-type_name,&
-resultlen,&
-ierror)&
-bind(C, name="mpi_type_get_name_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: type     !MPI_Datatype type
-character(kind=c_char), intent(out) :: type_name(*)     !char* type_name
-integer(c_int), intent(out) :: resultlen     !int* resultlen
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_get_name_c
-
-
-function MPI_Reduce_c( sendbuf,&
-recvbuf,&
-count,&
-datatype,&
-op,&
-root,&
-comm,&
-ierror)&
-bind(C, name="mpi_reduce_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: sendbuf     !void* sendbuf
-type(*), dimension(..) :: recvbuf     !void* recvbuf
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), value, intent(in) :: op     !MPI_Op op
-integer(c_int), value, intent(in) :: root     !int root
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Reduce_c
-
-
-function MPI_Type_commit_c( type,&
-ierror)&
-bind(C, name="mpi_type_commit_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), intent(inout) :: type     !MPI_Datatype* type
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_commit_c
-
-
-function MPI_Comm_get_parent_c( parent,&
-ierror)&
-bind(C, name="mpi_comm_get_parent_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), intent(out) :: parent     !MPI_Comm* parent
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_get_parent_c
-
-
-function MPI_Type_create_f90_integer_c( r,&
-newtype,&
-ierror)&
-bind(C, name="mpi_type_create_f90_integer_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: r     !int r
-integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_create_f90_integer_c
-
-
-function MPI_Testany_c( count,&
-array_of_requests,&
-index,&
-flag,&
-status,&
-ierror)&
-bind(C, name="mpi_testany_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), target  :: array_of_requests(count)     !MPI_Request[] array_of_requests
-integer(c_int), intent(out) :: index     !int* index
-integer(c_int), intent(out) :: flag     !bool flag
-type(c_Status) :: status     !MPI_Status* status
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Testany_c
-
-
-function MPI_Type_extent_c( type,&
-extent,&
-ierror)&
-bind(C, name="mpi_type_extent_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: type     !MPI_Datatype type
-integer(c_intptr_t), intent(out) :: extent     !MPI_Aint* extent
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_extent_c
-
-! MPI_File_preallocate NOT IMPLEMENTED in MPC
-
-
-! MPI_File_get_position NOT IMPLEMENTED in MPC
-
-
-
 function MPI_Sendrecv_replace_c( buf,&
 count,&
 datatype,&
@@ -728,631 +3485,14 @@ integer(c_int) :: ret ! dummy
 end function MPI_Sendrecv_replace_c
 
 
-function MPI_Type_get_extent_c( type,&
-lb,&
-extent,&
-ierror)&
-bind(C, name="mpi_type_get_extent_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: type     !MPI_Datatype type
-integer(c_intptr_t), intent(out) :: lb     !MPI_Aint* lb
-integer(c_intptr_t), intent(out) :: extent     !MPI_Aint* extent
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_get_extent_c
-
-
-function MPI_Keyval_create_c( copy_fn,&
-delete_fn,&
-keyval,&
-extra_state,&
-ierror)&
-bind(C, name="mpi_keyval_create_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(c_ptr), value , intent(in) :: copy_fn     !MPI_Copy_function* copy_fn
-type(c_ptr), value , intent(in) :: delete_fn     !MPI_Delete_function* delete_fn
-integer(c_int), intent(out) :: keyval     !int* keyval
-type(*), dimension(..) :: extra_state     !void* extra_state
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Keyval_create_c
-
-
-function MPI_Mrecv_c( buf,&
-count,&
-datatype,&
-message,&
-status,&
-ierror)&
-bind(C, name="mpi_mrecv_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: buf     !void* buf
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), intent(inout) :: message     !MPI_Message* message
-type(c_Status) :: status     !MPI_Status* status
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Mrecv_c
-
-
-function MPI_Type_hvector_c( count,&
-blocklength,&
-stride,&
-oldtype,&
-newtype,&
-ierror)&
-bind(C, name="mpi_type_hvector_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), value, intent(in) :: blocklength     !int blocklength
-integer(c_int), value, intent(in) :: stride     !int stride
-integer(c_int), value, intent(in) :: oldtype     !MPI_Datatype oldtype
-integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_hvector_c
-
-
-function MPI_Group_translate_ranks_c( group1,&
-n,&
-ranks1,&
-group2,&
-ranks2,&
-ierror)&
-bind(C, name="mpi_group_translate_ranks_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: group1     !MPI_Group group1
-integer(c_int), value, intent(in) :: n     !int n
-type(c_ptr), value :: ranks1     !int[] ranks1
-integer(c_int), value, intent(in) :: group2     !MPI_Group group2
-type(c_ptr) :: ranks2     !int[] ranks2
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Group_translate_ranks_c
-
-
-function MPI_Testsome_c( incount,&
-array_of_requests,&
-outcount,&
-array_of_indices,&
-array_of_statuses,&
-ierror)&
-bind(C, name="mpi_testsome_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: incount     !int incount
-integer(c_int), target  :: array_of_requests(incount)     !MPI_Request[] array_of_requests
-integer(c_int), intent(inout) :: outcount     !int* outcount
-type(c_ptr) :: array_of_indices     !int[] array_of_indices
-type(c_ptr), value :: array_of_statuses     !MPI_Status[] array_of_statuses
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Testsome_c
-
-
-function MPI_Recv_init_c( buf,&
-count,&
-datatype,&
-source,&
-tag,&
-comm,&
-request,&
-ierror)&
-bind(C, name="mpi_recv_init_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: buf     !void* buf
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), value, intent(in) :: source     !int source
-integer(c_int), value, intent(in) :: tag     !int tag
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(inout) :: request     !MPI_Request* request
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Recv_init_c
-
-
-function MPI_Win_set_name_c( win,&
-win_name,&
-ierror)&
-bind(C, name="mpi_win_set_name_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: win     !MPI_Win win
-character(kind=c_char), intent(in) :: win_name(*)     !char* win_name
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Win_set_name_c
-
-
-function MPI_Type_dup_c( type,&
-newtype,&
-ierror)&
-bind(C, name="mpi_type_dup_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: type     !MPI_Datatype type
-integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_dup_c
-
-
-function MPI_Query_thread_c( provided,&
-ierror)&
-bind(C, name="mpi_query_thread_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), intent(out) :: provided     !int* provided
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Query_thread_c
-
-
-function MPI_Comm_group_c( comm,&
-group,&
-ierror)&
-bind(C, name="mpi_comm_group_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(out) :: group     !MPI_Group* group
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_group_c
-
-
-function MPI_Add_error_code_c( errorclass,&
-errorcode,&
-ierror)&
-bind(C, name="mpi_add_error_code_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: errorclass     !int errorclass
-integer(c_int), intent(out) :: errorcode     !int* errorcode
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Add_error_code_c
-
-
-function MPI_Type_create_resized_c( oldtype,&
-lb,&
-extent,&
-newtype,&
-ierror)&
-bind(C, name="mpi_type_create_resized_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: oldtype     !MPI_Datatype oldtype
-integer(c_intptr_t), value, intent(in) :: lb     !MPI_Aint lb
-integer(c_intptr_t), value, intent(in) :: extent     !MPI_Aint extent
-integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_create_resized_c
-
-! MPI_File_seek_shared NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Unpublish_name_c( service_name,&
-info,&
-port_name,&
-ierror)&
-bind(C, name="mpi_unpublish_name_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-character(kind=c_char), intent(in) :: service_name(*)     !char* service_name
-integer(c_int), value, intent(in) :: info     !MPI_Info info
-character(kind=c_char), intent(in) :: port_name(*)     !char* port_name
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Unpublish_name_c
-
-
-function MPI_Get_address_c( location,&
-address,&
-ierror)&
-bind(C, name="mpi_get_address_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: location     !void* location
-integer(c_intptr_t), intent(out) :: address     !MPI_Aint* address
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Get_address_c
-
-
-function MPI_Is_thread_main_c( flag,&
-ierror)&
-bind(C, name="mpi_is_thread_main_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), intent(inout) :: flag     !bool flag
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Is_thread_main_c
-
-
-function MPI_Irecv_c( buf,&
-count,&
-datatype,&
-source,&
-tag,&
-comm,&
-request,&
-ierror)&
-bind(C, name="mpi_irecv_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: buf     !void* buf
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), value, intent(in) :: source     !int source
-integer(c_int), value, intent(in) :: tag     !int tag
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(inout) :: request     !MPI_Request* request
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Irecv_c
-
-
-function MPI_Type_create_indexed_block_c( count,&
-blocklength,&
-array_of_displacements,&
-oldtype,&
-newtype,&
-ierror)&
-bind(C, name="mpi_type_create_indexed_block_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), value, intent(in) :: blocklength     !int blocklength
-type(c_ptr), value :: array_of_displacements     !int[] array_of_displacements
-integer(c_int), value, intent(in) :: oldtype     !MPI_Datatype oldtype
-integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_create_indexed_block_c
-
-
-function MPI_Initialized_c( flag,&
-ierror)&
-bind(C, name="mpi_initialized_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), intent(out) :: flag     !bool flag
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Initialized_c
-
-! MPI_File_iwrite NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Bsend_c( buf,&
+function MPI_Ssend_c( buf,&
 count,&
 datatype,&
 dest,&
 tag,&
 comm,&
 ierror)&
-bind(C, name="mpi_bsend_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: buf     !void* buf
-integer(c_int), value :: count     !int count
-integer(c_int), value :: datatype     !MPI_Datatype datatype
-integer(c_int), value :: dest     !int dest
-integer(c_int), value :: tag     !int tag
-integer(c_int), value :: comm     !MPI_Comm comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Bsend_c
-
-
-function MPI_Group_excl_c( group,&
-n,&
-ranks,&
-newgroup,&
-ierror)&
-bind(C, name="mpi_group_excl_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: group     !MPI_Group group
-integer(c_int), value, intent(in) :: n     !int n
-type(c_ptr), value :: ranks     !int[] ranks
-integer(c_int), intent(out) :: newgroup     !MPI_Group* newgroup
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Group_excl_c
-
-
-function MPI_Get_count_c( status,&
-datatype,&
-count,&
-ierror)&
-bind(C, name="mpi_get_count_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(c_Status) :: status     !MPI_Status* status
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), intent(out) :: count     !int* count
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Get_count_c
-
-
-function MPI_Error_string_c( errorcode,&
-string,&
-resultlen,&
-ierror)&
-bind(C, name="mpi_error_string_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: errorcode     !int errorcode
-character(kind=c_char), intent(out) :: string(*)     !char* string
-integer(c_int), intent(out) :: resultlen     !int* resultlen
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Error_string_c
-
-
-function MPI_Grequest_start_c( query_fn,&
-free_fn,&
-cancel_fn,&
-extra_state,&
-request,&
-ierror)&
-bind(C, name="mpi_grequest_start_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(c_ptr), value , intent(in) :: query_fn     !MPI_Grequest_query_function* query_fn
-type(c_ptr), value , intent(in) :: free_fn     !MPI_Grequest_free_function* free_fn
-type(c_ptr), value , intent(in) :: cancel_fn     !MPI_Grequest_cancel_function* cancel_fn
-type(*), dimension(..) :: extra_state     !void* extra_state
-integer(c_int), intent(inout) :: request     !MPI_Request* request
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Grequest_start_c
-
-
-function MPI_Cartdim_get_c( comm,&
-ndims,&
-ierror)&
-bind(C, name="mpi_cartdim_get_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(out) :: ndims     !int* ndims
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Cartdim_get_c
-
-
-function MPI_Allgather_c( sendbuf,&
-sendcount,&
-sendtype,&
-recvbuf,&
-recvcount,&
-recvtype,&
-comm,&
-ierror)&
-bind(C, name="mpi_allgather_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: sendbuf     !void* sendbuf
-integer(c_int), value, intent(in) :: sendcount     !int sendcount
-integer(c_int), value, intent(in) :: sendtype     !MPI_Datatype sendtype
-type(*), dimension(..) :: recvbuf     !void* recvbuf
-integer(c_int), value, intent(in) :: recvcount     !int recvcount
-integer(c_int), value, intent(in) :: recvtype     !MPI_Datatype recvtype
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Allgather_c
-
-
-function MPI_Cart_coords_c( comm,&
-rank,&
-maxdims,&
-coords,&
-ierror)&
-bind(C, name="mpi_cart_coords_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), value, intent(in) :: rank     !int rank
-integer(c_int), value, intent(in) :: maxdims     !int maxdims
-type(c_ptr) :: coords     !int[] coords
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Cart_coords_c
-
-
-function MPI_Scatterv_c( sendbuf,&
-sendcounts,&
-displs,&
-sendtype,&
-recvbuf,&
-recvcount,&
-recvtype,&
-root,&
-comm,&
-ierror)&
-bind(C, name="mpi_scatterv_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: sendbuf     !void* sendbuf
-type(c_ptr), value :: sendcounts     !int[] sendcounts
-type(c_ptr), value :: displs     !int[] displs
-integer(c_int), value, intent(in) :: sendtype     !MPI_Datatype sendtype
-type(*), dimension(..) :: recvbuf     !void* recvbuf
-integer(c_int), value, intent(in) :: recvcount     !int recvcount
-integer(c_int), value, intent(in) :: recvtype     !MPI_Datatype recvtype
-integer(c_int), value, intent(in) :: root     !int root
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Scatterv_c
-
-
-function MPI_Issend_c( buf,&
-count,&
-datatype,&
-dest,&
-tag,&
-comm,&
-request,&
-ierror)&
-bind(C, name="mpi_issend_f08") result(ret)
+bind(C, name="mpi_ssend_f08") result(ret)
 
 use, intrinsic :: iso_c_binding
 use :: mpi_f08_constants
@@ -1365,1209 +3505,10 @@ integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
 integer(c_int), value, intent(in) :: dest     !int dest
 integer(c_int), value, intent(in) :: tag     !int tag
 integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(inout) :: request     !MPI_Request* request
 integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
-end function MPI_Issend_c
-
-! MPI_File_sync NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Rsend_c( ibuf,&
-count,&
-datatype,&
-dest,&
-tag,&
-comm,&
-ierror)&
-bind(C, name="mpi_rsend_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: ibuf     !void* ibuf
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), value, intent(in) :: dest     !int dest
-integer(c_int), value, intent(in) :: tag     !int tag
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Rsend_c
-
-! MPI_File_get_amode NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Abort_c( comm,&
-errorcode,&
-ierror)&
-bind(C, name="mpi_abort_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), value, intent(in) :: errorcode     !int errorcode
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Abort_c
-
-
-function MPI_Grequest_complete_c( request,&
-ierror)&
-bind(C, name="mpi_grequest_complete_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), intent(inout) :: request     !MPI_Request request
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Grequest_complete_c
-
-
-function MPI_Pack_c( inbuf,&
-incount,&
-datatype,&
-outbuf,&
-outsize,&
-position,&
-comm,&
-ierror)&
-bind(C, name="mpi_pack_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: inbuf     !void* inbuf
-integer(c_int), value, intent(in) :: incount     !int incount
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-type(*), dimension(..) :: outbuf     !void* outbuf
-integer(c_int), value, intent(in) :: outsize     !int outsize
-integer(c_int), intent(out) :: position     !int* position
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Pack_c
-
-
-function MPI_Win_set_attr_c( win,&
-win_keyval,&
-attribute_val,&
-ierror)&
-bind(C, name="mpi_win_set_attr_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: win     !MPI_Win win
-integer(c_int), value, intent(in) :: win_keyval     !int win_keyval
-type(*), dimension(..) :: attribute_val     !void* attribute_val
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Win_set_attr_c
-
-
-function MPI_Info_create_c( info,&
-ierror)&
-bind(C, name="mpi_info_create_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), intent(out) :: info     !MPI_Info* info
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Info_create_c
-
-! MPI_File_open NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Type_create_f90_complex_c( p,&
-r,&
-newtype,&
-ierror)&
-bind(C, name="mpi_type_create_f90_complex_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: p     !int p
-integer(c_int), value, intent(in) :: r     !int r
-integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_create_f90_complex_c
-
-
-function MPI_Gatherv_c( sendbuf,&
-sendcount,&
-sendtype,&
-recvbuf,&
-recvcounts,&
-displs,&
-recvtype,&
-root,&
-comm,&
-ierror)&
-bind(C, name="mpi_gatherv_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: sendbuf     !void* sendbuf
-integer(c_int), value, intent(in) :: sendcount     !int sendcount
-integer(c_int), value, intent(in) :: sendtype     !MPI_Datatype sendtype
-type(*), dimension(..) :: recvbuf     !void* recvbuf
-type(c_ptr) :: recvcounts     !int[] recvcounts
-type(c_ptr) :: displs     !int[] displs
-integer(c_int), value, intent(in) :: recvtype     !MPI_Datatype recvtype
-integer(c_int), value, intent(in) :: root     !int root
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Gatherv_c
-
-
-function MPI_Type_get_attr_c( type,&
-type_keyval,&
-attribute_val,&
-flag,&
-ierror)&
-bind(C, name="mpi_type_get_attr_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: type     !MPI_Datatype type
-integer(c_int), value, intent(in) :: type_keyval     !int type_keyval
-type(*), dimension(..) :: attribute_val     !void* attribute_val
-integer(c_int), intent(out) :: flag     !bool flag
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_get_attr_c
-
-
-function MPI_Comm_set_name_c( comm,&
-comm_name,&
-ierror)&
-bind(C, name="mpi_comm_set_name_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-character(kind=c_char), intent(in) :: comm_name(*)     !char* comm_name
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_set_name_c
-
-
-function MPI_Comm_disconnect_c( comm,&
-ierror)&
-bind(C, name="mpi_comm_disconnect_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm* comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_disconnect_c
-
-
-function MPI_Comm_remote_group_c( comm,&
-group,&
-ierror)&
-bind(C, name="mpi_comm_remote_group_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(out) :: group     !MPI_Group* group
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_remote_group_c
-
-
-function MPI_Cart_shift_c( comm,&
-direction,&
-disp,&
-rank_source,&
-rank_dest,&
-ierror)&
-bind(C, name="mpi_cart_shift_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), value, intent(in) :: direction     !int direction
-integer(c_int), value, intent(in) :: disp     !int disp
-integer(c_int), intent(out) :: rank_source     !int* rank_source
-integer(c_int), intent(out) :: rank_dest     !int* rank_dest
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Cart_shift_c
-
-
-function MPI_Group_incl_c( group,&
-n,&
-ranks,&
-newgroup,&
-ierror)&
-bind(C, name="mpi_group_incl_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: group     !MPI_Group group
-integer(c_int), value, intent(in) :: n     !int n
-type(c_ptr), value :: ranks     !int[] ranks
-integer(c_int), intent(out) :: newgroup     !MPI_Group* newgroup
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Group_incl_c
-
-
-function MPI_Comm_size_c( comm,&
-size,&
-ierror)&
-bind(C, name="mpi_comm_size_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(out) :: size     !int* size
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_size_c
-
-
-function MPI_Type_create_hindexed_c( count,&
-array_of_blocklengths,&
-array_of_displacements,&
-oldtype,&
-newtype,&
-ierror)&
-bind(C, name="mpi_type_create_hindexed_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: count     !int count
-type(c_ptr), value :: array_of_blocklengths     !int[] array_of_blocklengths
-type(c_ptr), value :: array_of_displacements     !MPI_Aint[] array_of_displacements
-integer(c_int), value, intent(in) :: oldtype     !MPI_Datatype oldtype
-integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_create_hindexed_c
-
-! MPI_File_iread_shared NOT IMPLEMENTED in MPC
-
-
-
-function MPI_File_set_errhandler_c( file,&
-errhandler,&
-ierror)&
-bind(C, name="mpi_file_set_errhandler_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: file     !MPI_File file
-integer(c_int), value, intent(in) :: errhandler     !MPI_Errhandler errhandler
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_File_set_errhandler_c
-
-
-function MPI_Register_datarep_c( datarep,&
-read_conversion_fn,&
-write_conversion_fn,&
-dtype_file_extent_fn,&
-extra_state,&
-ierror)&
-bind(C, name="mpi_register_datarep_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-character(kind=c_char), intent(in) :: datarep(*)     !char* datarep
-type(c_ptr), value , intent(in) :: read_conversion_fn     !MPI_Datarep_conversion_function* read_conversion_fn
-type(c_ptr), value , intent(in) :: write_conversion_fn     !MPI_Datarep_conversion_function* write_conversion_fn
-type(c_ptr), value , intent(in) :: dtype_file_extent_fn     !MPI_Datarep_extent_function* dtype_file_extent_fn
-type(*), dimension(..) :: extra_state     !void* extra_state
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Register_datarep_c
-
-! MPI_File_read_ordered NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Waitsome_c( incount,&
-array_of_requests,&
-outcount,&
-array_of_indices,&
-array_of_statuses,&
-ierror)&
-bind(C, name="mpi_waitsome_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: incount     !int incount
-integer(c_int), target  :: array_of_requests(incount)     !MPI_Request[] array_of_requests
-integer(c_int), intent(inout) :: outcount     !int* outcount
-type(c_ptr) :: array_of_indices     !int[] array_of_indices
-type(c_ptr), value :: array_of_statuses     !MPI_Status[] array_of_statuses
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Waitsome_c
-
-
-function MPI_Group_difference_c( group1,&
-group2,&
-newgroup,&
-ierror)&
-bind(C, name="mpi_group_difference_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: group1     !MPI_Group group1
-integer(c_int), value, intent(in) :: group2     !MPI_Group group2
-integer(c_int), intent(out) :: newgroup     !MPI_Group* newgroup
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Group_difference_c
-
-
-function MPI_Attr_get_c( comm,&
-keyval,&
-attribute_val,&
-flag,&
-ierror)&
-bind(C, name="mpi_attr_get_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), value, intent(in) :: keyval     !int keyval
-type(*), dimension(..) :: attribute_val     !void* attribute_val
-integer(c_int), intent(out) :: flag     !bool flag
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Attr_get_c
-
-
-function MPI_Reduce_scatter_c( sendbuf,&
-recvbuf,&
-recvcounts,&
-datatype,&
-op,&
-comm,&
-ierror)&
-bind(C, name="mpi_reduce_scatter_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: sendbuf     !void* sendbuf
-type(*), dimension(..) :: recvbuf     !void* recvbuf
-type(c_ptr), value :: recvcounts     !int[] recvcounts
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), value, intent(in) :: op     !MPI_Op op
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Reduce_scatter_c
-
-
-function MPI_Win_get_name_c( win,&
-win_name,&
-resultlen,&
-ierror)&
-bind(C, name="mpi_win_get_name_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: win     !MPI_Win win
-character(kind=c_char), intent(out) :: win_name(*)     !char* win_name
-integer(c_int), intent(out) :: resultlen     !int* resultlen
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Win_get_name_c
-
-
-function MPI_Type_create_f90_real_c( p,&
-r,&
-newtype,&
-ierror)&
-bind(C, name="mpi_type_create_f90_real_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: p     !int p
-integer(c_int), value, intent(in) :: r     !int r
-integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_create_f90_real_c
-
-
-function MPI_Imrecv_c( buf,&
-count,&
-datatype,&
-message,&
-status,&
-ierror)&
-bind(C, name="mpi_imrecv_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: buf     !void* buf
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), intent(inout) :: message     !MPI_Message* message
-integer(c_int), intent(out) :: status     !MPI_Request* status
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Imrecv_c
-
-
-function MPI_Wait_c( request,&
-status,&
-ierror)&
-bind(C, name="mpi_wait_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), intent(inout) :: request     !MPI_Request* request
-type(c_Status) :: status     !MPI_Status* status
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Wait_c
-
-
-function MPI_Testall_c( count,&
-array_of_requests,&
-flag,&
-array_of_statuses,&
-ierror)&
-bind(C, name="mpi_testall_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), target  :: array_of_requests(count)     !MPI_Request[] array_of_requests
-integer(c_int), intent(out) :: flag     !bool flag
-type(c_ptr), value :: array_of_statuses     !MPI_Status[] array_of_statuses
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Testall_c
-
-! MPI_File_set_info NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Irsend_c( buf,&
-count,&
-datatype,&
-dest,&
-tag,&
-comm,&
-request,&
-ierror)&
-bind(C, name="mpi_irsend_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: buf     !void* buf
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), value, intent(in) :: dest     !int dest
-integer(c_int), value, intent(in) :: tag     !int tag
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(inout) :: request     !MPI_Request* request
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Irsend_c
-
-
-function MPI_Get_version_c( version,&
-subversion,&
-ierror)&
-bind(C, name="mpi_get_version_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), intent(inout) :: version     !int* version
-integer(c_int), intent(inout) :: subversion     !int* subversion
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Get_version_c
-
-
-function MPI_File_call_errhandler_c( fh,&
-errorcode,&
-ierror)&
-bind(C, name="mpi_file_call_errhandler_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: fh     !MPI_File fh
-integer(c_int), value, intent(in) :: errorcode     !int errorcode
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_File_call_errhandler_c
-
-
-function MPI_Comm_create_errhandler_c( function,&
-errhandler,&
-ierror)&
-bind(C, name="mpi_comm_create_errhandler_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(c_ptr), value , intent(in) :: function     !MPI_Comm_errhandler_function* function
-integer(c_int), value, intent(in) :: errhandler     !MPI_Errhandler* errhandler
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_create_errhandler_c
-
-! MPI_File_write_all NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Comm_connect_c( port_name,&
-info,&
-root,&
-comm,&
-newcomm,&
-ierror)&
-bind(C, name="mpi_comm_connect_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-character(kind=c_char), intent(in) :: port_name(*)     !char* port_name
-integer(c_int), value, intent(in) :: info     !MPI_Info info
-integer(c_int), value, intent(in) :: root     !int root
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(out) :: newcomm     !MPI_Comm* newcomm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_connect_c
-
-
-function MPI_Group_compare_c( group1,&
-group2,&
-result,&
-ierror)&
-bind(C, name="mpi_group_compare_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: group1     !MPI_Group group1
-integer(c_int), value, intent(in) :: group2     !MPI_Group group2
-integer(c_int), intent(out) :: result     !int* result
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Group_compare_c
-
-
-function MPI_Address_c( location,&
-address,&
-ierror)&
-bind(C, name="mpi_address_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: location     !void* location
-integer(c_intptr_t), intent(out) :: address     !MPI_Aint* address
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Address_c
-
-
-function MPI_Comm_compare_c( comm1,&
-comm2,&
-result,&
-ierror)&
-bind(C, name="mpi_comm_compare_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm1     !MPI_Comm comm1
-integer(c_int), value, intent(in) :: comm2     !MPI_Comm comm2
-integer(c_int), intent(out) :: result     !int* result
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_compare_c
-
-
-function MPI_Win_unlock_c( rank,&
-win,&
-ierror)&
-bind(C, name="mpi_win_unlock_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: rank     !int rank
-integer(c_int), value, intent(in) :: win     !MPI_Win win
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Win_unlock_c
-
-
-function MPI_Graph_map_c( comm,&
-nnodes,&
-index,&
-edges,&
-newrank,&
-ierror)&
-bind(C, name="mpi_graph_map_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), value, intent(in) :: nnodes     !int nnodes
-type(c_ptr), value :: index     !int[] index
-type(c_ptr), value :: edges     !int[] edges
-integer(c_int), intent(out) :: newrank     !int* newrank
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Graph_map_c
-
-
-function MPI_Request_free_c( request,&
-ierror)&
-bind(C, name="mpi_request_free_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), intent(inout) :: request     !MPI_Request* request
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Request_free_c
-
-
-function MPI_Topo_test_c( comm,&
-status,&
-ierror)&
-bind(C, name="mpi_topo_test_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(out) :: status     !int* status
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Topo_test_c
-
-! MPI_File_read NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Buffer_attach_c( buffer,&
-size,&
-ierror)&
-bind(C, name="mpi_buffer_attach_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: buffer     !void* buffer
-integer(c_int), value :: size     !int size
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Buffer_attach_c
-
-
-function MPI_Win_call_errhandler_c( win,&
-errorcode,&
-ierror)&
-bind(C, name="mpi_win_call_errhandler_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: win     !MPI_Win win
-integer(c_int), value, intent(in) :: errorcode     !int errorcode
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Win_call_errhandler_c
-
-
-function MPI_Win_get_group_c( win,&
-group,&
-ierror)&
-bind(C, name="mpi_win_get_group_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: win     !MPI_Win win
-integer(c_int), intent(out) :: group     !MPI_Group* group
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Win_get_group_c
-
-
-function MPI_Errhandler_create_c( function,&
-errhandler,&
-ierror)&
-bind(C, name="mpi_errhandler_create_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(c_ptr), value , intent(in) :: function     !MPI_Handler_function* function
-integer(c_int), intent(out) :: errhandler     !MPI_Errhandler* errhandler
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Errhandler_create_c
-
-
-function MPI_Cart_create_c( old_comm,&
-ndims,&
-dims,&
-periods,&
-reorder,&
-comm_cart,&
-ierror)&
-bind(C, name="mpi_cart_create_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: old_comm     !MPI_Comm old_comm
-integer(c_int), value, intent(in) :: ndims     !int ndims
-type(c_ptr), value :: dims     !int[] dims
-type(c_ptr), value :: periods     !bool[] periods
-integer(c_int), value, intent(in) :: reorder     !bool reorder
-integer(c_int), intent(out) :: comm_cart     !MPI_Comm* comm_cart
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Cart_create_c
-
-
-function MPI_Status_set_cancelled_c( status,&
-flag,&
-ierror)&
-bind(C, name="mpi_status_set_cancelled_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(c_Status) :: status     !MPI_Status* status
-integer(c_int), intent(out) :: flag     !bool flag
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Status_set_cancelled_c
-
-! MPI_Status_f2c NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Type_struct_c( count,&
-array_of_blocklengths,&
-array_of_displacements,&
-array_of_types,&
-newtype,&
-ierror)&
-bind(C, name="mpi_type_struct_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: count     !int count
-type(c_ptr), value :: array_of_blocklengths     !int[] array_of_blocklengths
-type(c_ptr), value :: array_of_displacements     !int[] array_of_displacements
-type(c_ptr), value :: array_of_types     !MPI_Datatype[] array_of_types
-integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_struct_c
-
-
-function MPI_Graph_neighbors_count_c( comm,&
-rank,&
-nneighbors,&
-ierror)&
-bind(C, name="mpi_graph_neighbors_count_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), value, intent(in) :: rank     !int rank
-integer(c_int), intent(out) :: nneighbors     !int* nneighbors
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Graph_neighbors_count_c
-
-! MPI_File_get_view NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Allgatherv_c( sendbuf,&
-sendcount,&
-sendtype,&
-recvbuf,&
-recvcounts,&
-displs,&
-recvtype,&
-comm,&
-ierror)&
-bind(C, name="mpi_allgatherv_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: sendbuf     !void* sendbuf
-integer(c_int), value, intent(in) :: sendcount     !int sendcount
-integer(c_int), value, intent(in) :: sendtype     !MPI_Datatype sendtype
-type(*), dimension(..) :: recvbuf     !void* recvbuf
-type(c_ptr), value :: recvcounts     !int[] recvcounts
-type(c_ptr), value :: displs     !int[] displs
-integer(c_int), value, intent(in) :: recvtype     !MPI_Datatype recvtype
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Allgatherv_c
-
-! MPI_File_get_position_shared NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Graph_neighbors_c( comm,&
-rank,&
-maxneighbors,&
-neighbors,&
-ierror)&
-bind(C, name="mpi_graph_neighbors_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), value, intent(in) :: rank     !int rank
-integer(c_int), value, intent(in) :: maxneighbors     !int maxneighbors
-type(c_ptr) :: neighbors     !int[] neighbors
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Graph_neighbors_c
-
-
-function MPI_Dims_create_c( nnodes,&
-ndims,&
-dims,&
-ierror)&
-bind(C, name="mpi_dims_create_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: nnodes     !int nnodes
-integer(c_int), value, intent(in) :: ndims     !int ndims
-type(c_ptr) :: dims     !int[] dims
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Dims_create_c
-
-! MPI_File_iread NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Scatter_c( sendbuf,&
-sendcount,&
-sendtype,&
-recvbuf,&
-recvcount,&
-recvtype,&
-root,&
-comm,&
-ierror)&
-bind(C, name="mpi_scatter_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: sendbuf     !void* sendbuf
-integer(c_int), value, intent(in) :: sendcount     !int sendcount
-integer(c_int), value, intent(in) :: sendtype     !MPI_Datatype sendtype
-type(*), dimension(..) :: recvbuf     !void* recvbuf
-integer(c_int), value, intent(in) :: recvcount     !int recvcount
-integer(c_int), value, intent(in) :: recvtype     !MPI_Datatype recvtype
-integer(c_int), value, intent(in) :: root     !int root
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Scatter_c
-
-! MPI_File_get_byte_offset NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Comm_free_keyval_c( comm_keyval,&
-ierror)&
-bind(C, name="mpi_comm_free_keyval_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), intent(inout) :: comm_keyval     !int* comm_keyval
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_free_keyval_c
-
-
-function MPI_Op_create_c( function,&
-commute,&
-op,&
-ierror)&
-bind(C, name="mpi_op_create_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(c_ptr), value , intent(in) :: function     !MPI_User_function* function
-integer(c_int), value, intent(in) :: commute     !bool commute
-integer(c_int), intent(out) :: op     !MPI_Op* op
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Op_create_c
-
-! MPI_File_seek NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Add_error_string_c( errorcode,&
-string,&
-ierror)&
-bind(C, name="mpi_add_error_string_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: errorcode     !int errorcode
-character(kind=c_char), intent(in) :: string(*)     !char* string
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Add_error_string_c
-
-
-function MPI_Mprobe_c( source,&
-tag,&
-comm,&
-message,&
-status,&
-ierror)&
-bind(C, name="mpi_mprobe_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: source     !int source
-integer(c_int), value, intent(in) :: tag     !int tag
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(inout) :: message     !MPI_Message* message
-type(c_Status) :: status     !MPI_Status* status
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Mprobe_c
+end function MPI_Ssend_c
 
 
 function MPI_Ssend_init_c( buf,&
@@ -2598,980 +3539,26 @@ integer(c_int) :: ret ! dummy
 end function MPI_Ssend_init_c
 
 
-function MPI_Rsend_init_c( buf,&
-count,&
-datatype,&
-dest,&
-tag,&
-comm,&
-request,&
+function MPI_Start_c( request,&
 ierror)&
-bind(C, name="mpi_rsend_init_f08") result(ret)
+bind(C, name="mpi_start_f08") result(ret)
 
 use, intrinsic :: iso_c_binding
 use :: mpi_f08_constants
 use :: mpi_f08_ctypes
 implicit none
 
-type(*), dimension(..) :: buf     !void* buf
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), value, intent(in) :: dest     !int dest
-integer(c_int), value, intent(in) :: tag     !int tag
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
 integer(c_int), intent(inout) :: request     !MPI_Request* request
 integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
-end function MPI_Rsend_init_c
+end function MPI_Start_c
 
 
-function MPI_Info_free_c( info,&
-ierror)&
-bind(C, name="mpi_info_free_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), intent(inout) :: info     !MPI_Info* info
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Info_free_c
-
-
-function MPI_Publish_name_c( service_name,&
-info,&
-port_name,&
-ierror)&
-bind(C, name="mpi_publish_name_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-character(kind=c_char), intent(in) :: service_name(*)     !char* service_name
-integer(c_int), value, intent(in) :: info     !MPI_Info info
-character(kind=c_char), intent(in) :: port_name(*)     !char* port_name
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Publish_name_c
-
-
-function MPI_Bcast_c( buffer,&
-count,&
-datatype,&
-root,&
-comm,&
-ierror)&
-bind(C, name="mpi_bcast_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: buffer     !void* buffer
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), value, intent(in) :: root     !int root
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Bcast_c
-
-
-function MPI_Get_processor_name_c( name,&
-resultlen,&
-ierror)&
-bind(C, name="mpi_get_processor_name_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-character(kind=c_char), intent(out) :: name(*)     !char* name
-integer(c_int), intent(out) :: resultlen     !int* resultlen
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Get_processor_name_c
-
-
-function MPI_Info_set_c( info,&
-key,&
-value,&
-ierror)&
-bind(C, name="mpi_info_set_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: info     !MPI_Info info
-character(kind=c_char), intent(in) :: key(*)     !char* key
-character(kind=c_char), intent(in) :: value(*)     !char* value
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Info_set_c
-
-! MPI_File_write_ordered_end NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Graph_create_c( comm,&
-nnodes,&
-index,&
-edges,&
-reorder,&
-comm_graph,&
-ierror)&
-bind(C, name="mpi_graph_create_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), value, intent(in) :: nnodes     !int nnodes
-type(c_ptr), value :: index     !int[] index
-type(c_ptr), value :: edges     !int[] edges
-integer(c_int), value, intent(in) :: reorder     !bool reorder
-integer(c_int), intent(out) :: comm_graph     !MPI_Comm* comm_graph
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Graph_create_c
-
-
-function MPI_Comm_free_c( comm,&
-ierror)&
-bind(C, name="mpi_comm_free_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), intent(inout) :: comm     !MPI_Comm* comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_free_c
-
-! MPI_File_write_at_all NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Errhandler_get_c( comm,&
-errhandler,&
-ierror)&
-bind(C, name="mpi_errhandler_get_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(out) :: errhandler     !MPI_Errhandler* errhandler
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Errhandler_get_c
-
-
-function MPI_Pack_size_c( incount,&
-datatype,&
-comm,&
-size,&
-ierror)&
-bind(C, name="mpi_pack_size_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: incount     !int incount
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(out) :: size     !int* size
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Pack_size_c
-
-
-function MPI_Comm_call_errhandler_c( comm,&
-errorcode,&
-ierror)&
-bind(C, name="mpi_comm_call_errhandler_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), value, intent(in) :: errorcode     !int errorcode
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_call_errhandler_c
-
-
-function MPI_Comm_test_inter_c( comm,&
-flag,&
-ierror)&
-bind(C, name="mpi_comm_test_inter_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(out) :: flag     !bool flag
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_test_inter_c
-
-
-function MPI_Intercomm_merge_c( intercomm,&
-high,&
-newintercomm,&
-ierror)&
-bind(C, name="mpi_intercomm_merge_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: intercomm     !MPI_Comm intercomm
-integer(c_int), value, intent(in) :: high     !bool high
-integer(c_int), intent(out) :: newintercomm     !MPI_Comm* newintercomm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Intercomm_merge_c
-
-
-function MPI_Win_complete_c( win,&
-ierror)&
-bind(C, name="mpi_win_complete_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: win     !MPI_Win win
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Win_complete_c
-
-
-function MPI_Pack_external_c( datarep,&
-inbuf,&
-incount,&
-datatype,&
-outbuf,&
-outsize,&
-position,&
-ierror)&
-bind(C, name="mpi_pack_external_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-character(kind=c_char), intent(in) :: datarep(*)     !char* datarep
-type(*), dimension(..) :: inbuf     !void* inbuf
-integer(c_int), value, intent(in) :: incount     !int incount
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-type(*), dimension(..) :: outbuf     !void* outbuf
-integer(c_intptr_t), value, intent(in) :: outsize     !MPI_Aint outsize
-integer(c_intptr_t), intent(out) :: position     !MPI_Aint* position
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Pack_external_c
-
-! MPI_File_get_type_extent NOT IMPLEMENTED in MPC
-
-
-! MPI_File_c2f NOT IMPLEMENTED in MPC
-
-
-! MPI_File_read_all_begin NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Type_set_attr_c( type,&
-type_keyval,&
-attr_val,&
-ierror)&
-bind(C, name="mpi_type_set_attr_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: type     !MPI_Datatype type
-integer(c_int), value, intent(in) :: type_keyval     !int type_keyval
-type(*), dimension(..) :: attr_val     !void* attr_val
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_set_attr_c
-
-
-function MPI_Info_get_valuelen_c( info,&
-key,&
-valuelen,&
-flag,&
-ierror)&
-bind(C, name="mpi_info_get_valuelen_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: info     !MPI_Info info
-character(kind=c_char), intent(in) :: key(*)     !char* key
-integer(c_int), intent(out) :: valuelen     !int* valuelen
-integer(c_int), intent(out) :: flag     !bool flag
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Info_get_valuelen_c
-
-
-function MPI_Put_c( origin_addr,&
-origin_count,&
-origin_datatype,&
-target_rank,&
-target_disp,&
-target_count,&
-target_datatype,&
-win,&
-ierror)&
-bind(C, name="mpi_put_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: origin_addr     !void* origin_addr
-integer(c_int), value, intent(in) :: origin_count     !int origin_count
-integer(c_int), value, intent(in) :: origin_datatype     !MPI_Datatype origin_datatype
-integer(c_int), value, intent(in) :: target_rank     !int target_rank
-integer(c_intptr_t), value, intent(in) :: target_disp     !MPI_Aint target_disp
-integer(c_int), value, intent(in) :: target_count     !int target_count
-integer(c_int), value, intent(in) :: target_datatype     !MPI_Datatype target_datatype
-integer(c_int), value, intent(in) :: win     !MPI_Win win
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Put_c
-
-! MPI_File_read_at_all NOT IMPLEMENTED in MPC
-
-
-! MPI_File_read_ordered_end NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Isend_c( buf,&
-count,&
-datatype,&
-dest,&
-tag,&
-comm,&
-request,&
-ierror)&
-bind(C, name="mpi_isend_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: buf     !void* buf
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), value, intent(in) :: dest     !int dest
-integer(c_int), value, intent(in) :: tag     !int tag
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(inout) :: request     !MPI_Request* request
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Isend_c
-
-
-function MPI_Type_get_envelope_c( type,&
-num_integers,&
-num_addresses,&
-num_datatypes,&
-combiner,&
-ierror)&
-bind(C, name="mpi_type_get_envelope_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: type     !MPI_Datatype type
-integer(c_int), intent(out) :: num_integers     !int* num_integers
-integer(c_int), intent(out) :: num_addresses     !int* num_addresses
-integer(c_int), intent(out) :: num_datatypes     !int* num_datatypes
-integer(c_int), intent(out) :: combiner     !int* combiner
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_get_envelope_c
-
-
-function MPI_Group_rank_c( group,&
-rank,&
-ierror)&
-bind(C, name="mpi_group_rank_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: group     !MPI_Group group
-integer(c_int), intent(out) :: rank     !int* rank
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Group_rank_c
-
-
-function MPI_Alltoall_c( sendbuf,&
-sendcount,&
-sendtype,&
-recvbuf,&
-recvcount,&
-recvtype,&
-comm,&
-ierror)&
-bind(C, name="mpi_alltoall_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: sendbuf     !void* sendbuf
-integer(c_int), value, intent(in) :: sendcount     !int sendcount
-integer(c_int), value, intent(in) :: sendtype     !MPI_Datatype sendtype
-type(*), dimension(..) :: recvbuf     !void* recvbuf
-integer(c_int), value, intent(in) :: recvcount     !int recvcount
-integer(c_int), value, intent(in) :: recvtype     !MPI_Datatype recvtype
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Alltoall_c
-
-
-function MPI_File_create_errhandler_c( function,&
-errhandler,&
-ierror)&
-bind(C, name="mpi_file_create_errhandler_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(c_ptr), value , intent(in) :: function     !MPI_File_errhandler_function* function
-integer(c_int), intent(out) :: errhandler     !MPI_Errhandler* errhandler
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_File_create_errhandler_c
-
-
-function MPI_Info_get_c( info,&
-key,&
-valuelen,&
-value,&
-flag,&
-ierror)&
-bind(C, name="mpi_info_get_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: info     !MPI_Info info
-character(kind=c_char), intent(in) :: key(*)     !char* key
-integer(c_int), value, intent(in) :: valuelen     !int valuelen
-character(kind=c_char), intent(out) :: value(*)     !char* value
-integer(c_int), intent(out) :: flag     !bool flag
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Info_get_c
-
-! MPI_File_iwrite_at NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Group_intersection_c( group1,&
-group2,&
-newgroup,&
-ierror)&
-bind(C, name="mpi_group_intersection_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: group1     !MPI_Group group1
-integer(c_int), value, intent(in) :: group2     !MPI_Group group2
-integer(c_int), intent(out) :: newgroup     !MPI_Group* newgroup
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Group_intersection_c
-
-
-function MPI_Type_free_keyval_c( type_keyval,&
-ierror)&
-bind(C, name="mpi_type_free_keyval_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), intent(inout) :: type_keyval     !int* type_keyval
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_free_keyval_c
-
-
-function MPI_Type_create_struct_c( count,&
-array_of_block_lengths,&
-array_of_displacements,&
-array_of_types,&
-newtype,&
-ierror)&
-bind(C, name="mpi_type_create_struct_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: count     !int count
-type(c_ptr), value :: array_of_block_lengths     !int[] array_of_block_lengths
-type(c_ptr), value :: array_of_displacements     !MPI_Aint[] array_of_displacements
-type(c_ptr), value :: array_of_types     !MPI_Datatype[] array_of_types
-integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_create_struct_c
-
-
-function MPI_Type_get_contents_c( mtype,&
-max_integers,&
-max_addresses,&
-max_datatypes,&
-array_of_integers,&
-array_of_addresses,&
-array_of_datatypes,&
-ierror)&
-bind(C, name="mpi_type_get_contents_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: mtype     !MPI_Datatype mtype
-integer(c_int), value, intent(in) :: max_integers     !int max_integers
-integer(c_int), value, intent(in) :: max_addresses     !int max_addresses
-integer(c_int), value, intent(in) :: max_datatypes     !int max_datatypes
-type(c_ptr), value :: array_of_integers     !int[] array_of_integers
-type(c_ptr), value :: array_of_addresses     !MPI_Aint[] array_of_addresses
-type(c_ptr), value :: array_of_datatypes     !MPI_Datatype[] array_of_datatypes
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_get_contents_c
-
-
-function MPI_Reduce_local_c( inbuf,&
-inoutbuf,&
-count,&
-datatype,&
-op,&
-ierror)&
-bind(C, name="mpi_reduce_local_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: inbuf     !void* inbuf
-type(*), dimension(..) :: inoutbuf     !void* inoutbuf
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), value, intent(in) :: op     !MPI_Op op
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Reduce_local_c
-
-
-function MPI_Group_union_c( group1,&
-group2,&
-newgroup,&
-ierror)&
-bind(C, name="mpi_group_union_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: group1     !MPI_Group group1
-integer(c_int), value, intent(in) :: group2     !MPI_Group group2
-integer(c_int), intent(out) :: newgroup     !MPI_Group* newgroup
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Group_union_c
-
-
-function MPI_Type_free_c( type,&
-ierror)&
-bind(C, name="mpi_type_free_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), intent(inout) :: type     !MPI_Datatype* type
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_free_c
-
-
-function MPI_Info_get_nthkey_c( info,&
-n,&
-key,&
-ierror)&
-bind(C, name="mpi_info_get_nthkey_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: info     !MPI_Info info
-integer(c_int), value, intent(in) :: n     !int n
-character(kind=c_char), intent(out) :: key(*)     !char* key
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Info_get_nthkey_c
-
-! MPI_File_write_at_all_begin NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Unpack_external_c( datarep,&
-inbuf,&
-insize,&
-position,&
-outbuf,&
-outcount,&
-datatype,&
-ierror)&
-bind(C, name="mpi_unpack_external_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-character(kind=c_char), intent(in) :: datarep(*)     !char* datarep
-type(*), dimension(..) :: inbuf     !void* inbuf
-integer(c_intptr_t), value, intent(in) :: insize     !MPI_Aint insize
-integer(c_intptr_t), intent(inout) :: position     !MPI_Aint* position
-type(*), dimension(..) :: outbuf     !void* outbuf
-integer(c_int), value, intent(in) :: outcount     !int outcount
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Unpack_external_c
-
-
-function MPI_Errhandler_set_c( comm,&
-errhandler,&
-ierror)&
-bind(C, name="mpi_errhandler_set_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), value, intent(in) :: errhandler     !MPI_Errhandler errhandler
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Errhandler_set_c
-
-! MPI_File_read_at_all_begin NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Comm_get_errhandler_c( comm,&
-erhandler,&
-ierror)&
-bind(C, name="mpi_comm_get_errhandler_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), value, intent(in) :: erhandler     !MPI_Errhandler* erhandler
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_get_errhandler_c
-
-
-function MPI_Test_cancelled_c( status,&
-flag,&
-ierror)&
-bind(C, name="mpi_test_cancelled_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(c_Status) :: status     !MPI_Status* status
-integer(c_int), intent(out) :: flag     !bool flag
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Test_cancelled_c
-
-
-function MPI_Win_lock_c( lock_type,&
-rank,&
-assert,&
-win,&
-ierror)&
-bind(C, name="mpi_win_lock_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: lock_type     !int lock_type
-integer(c_int), value, intent(in) :: rank     !int rank
-integer(c_int), value, intent(in) :: assert     !int assert
-integer(c_int), value, intent(in) :: win     !MPI_Win win
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Win_lock_c
-
-
-function MPI_Win_create_c( base,&
-size,&
-disp_unit,&
-info,&
-comm,&
-win,&
-ierror)&
-bind(C, name="mpi_win_create_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: base     !void* base
-integer(c_intptr_t), value, intent(in) :: size     !MPI_Aint size
-integer(c_int), value, intent(in) :: disp_unit     !int disp_unit
-integer(c_int), value, intent(in) :: info     !MPI_Info info
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), value, intent(in) :: win     !MPI_Win* win
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Win_create_c
-
-
-function MPI_Test_c( request,&
-flag,&
-status,&
-ierror)&
-bind(C, name="mpi_test_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), intent(in) :: request     !MPI_Request* request
-integer(c_int), intent(out) :: flag     !bool flag
-type(c_Status) :: status     !MPI_Status* status
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Test_c
-
-
-function MPI_Type_create_hvector_c( count,&
-blocklength,&
-stride,&
-oldtype,&
-newtype,&
-ierror)&
-bind(C, name="mpi_type_create_hvector_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), value, intent(in) :: blocklength     !int blocklength
-integer(c_intptr_t), value, intent(in) :: stride     !MPI_Aint stride
-integer(c_int), value, intent(in) :: oldtype     !MPI_Datatype oldtype
-integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_create_hvector_c
-
-! MPI_File_write_all_end NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Info_get_nkeys_c( info,&
-nkeys,&
-ierror)&
-bind(C, name="mpi_info_get_nkeys_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: info     !MPI_Info info
-integer(c_int), intent(out) :: nkeys     !int* nkeys
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Info_get_nkeys_c
-
-
-function MPI_Win_start_c( group,&
-assert,&
-win,&
-ierror)&
-bind(C, name="mpi_win_start_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: group     !MPI_Group group
-integer(c_int), value, intent(in) :: assert     !int assert
-integer(c_int), value :: win     !MPI_Win win
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Win_start_c
-
-! MPI_File_get_size NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Finalized_c( flag,&
-ierror)&
-bind(C, name="mpi_finalized_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), intent(out) :: flag     !bool flag
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Finalized_c
-
-
-function MPI_Win_free_keyval_c( win_keyval,&
-ierror)&
-bind(C, name="mpi_win_free_keyval_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), intent(inout) :: win_keyval     !int* win_keyval
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Win_free_keyval_c
-
-
-function MPI_Waitany_c( count,&
+function MPI_Startall_c( count,&
 array_of_requests,&
-index,&
-status,&
 ierror)&
-bind(C, name="mpi_waitany_f08") result(ret)
+bind(C, name="mpi_startall_f08") result(ret)
 
 use, intrinsic :: iso_c_binding
 use :: mpi_f08_constants
@@ -3580,133 +3567,22 @@ implicit none
 
 integer(c_int), value, intent(in) :: count     !int count
 integer(c_int), target  :: array_of_requests(count)     !MPI_Request[] array_of_requests
-integer(c_int), intent(inout) :: index     !int* index
-type(c_Status) :: status     !MPI_Status* status
 integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
-end function MPI_Waitany_c
+end function MPI_Startall_c
+
+! MPI_Status_c2f NOT IMPLEMENTED in MPC
 
 
-function MPI_Open_port_c( info,&
-port_name,&
+! MPI_Status_f2c NOT IMPLEMENTED in MPC
+
+
+
+function MPI_Status_set_cancelled_c( status,&
+flag,&
 ierror)&
-bind(C, name="mpi_open_port_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: info     !MPI_Info info
-character(kind=c_char), intent(in) :: port_name(*)     !char* port_name
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Open_port_c
-
-
-function MPI_Type_indexed_c( count,&
-array_of_blocklengths,&
-array_of_displacements,&
-oldtype,&
-newtype,&
-ierror)&
-bind(C, name="mpi_type_indexed_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: count     !int count
-type(c_ptr), value :: array_of_blocklengths     !int[] array_of_blocklengths
-type(c_ptr), value :: array_of_displacements     !int[] array_of_displacements
-integer(c_int), value, intent(in) :: oldtype     !MPI_Datatype oldtype
-integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_indexed_c
-
-
-function MPI_Op_commutative_c( op,&
-commute,&
-ierror)&
-bind(C, name="mpi_op_commutative_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: op     !MPI_Op op
-integer(c_int), intent(out) :: commute     !bool commute
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Op_commutative_c
-
-
-function MPI_Gather_c( sendbuf,&
-sendcount,&
-sendtype,&
-recvbuf,&
-recvcount,&
-recvtype,&
-root,&
-comm,&
-ierror)&
-bind(C, name="mpi_gather_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: sendbuf     !void* sendbuf
-integer(c_int), value, intent(in) :: sendcount     !int sendcount
-integer(c_int), value, intent(in) :: sendtype     !MPI_Datatype sendtype
-type(*), dimension(..) :: recvbuf     !void* recvbuf
-integer(c_int), value, intent(in) :: recvcount     !int recvcount
-integer(c_int), value, intent(in) :: recvtype     !MPI_Datatype recvtype
-integer(c_int), value, intent(in) :: root     !int root
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Gather_c
-
-
-function MPI_Type_vector_c( count,&
-blocklength,&
-stride,&
-oldtype,&
-newtype,&
-ierror)&
-bind(C, name="mpi_type_vector_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), value, intent(in) :: blocklength     !int blocklength
-integer(c_int), value, intent(in) :: stride     !int stride
-integer(c_int), value, intent(in) :: oldtype     !MPI_Datatype oldtype
-integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_vector_c
-
-
-function MPI_Get_elements_c( status,&
-datatype,&
-count,&
-ierror)&
-bind(C, name="mpi_get_elements_f08") result(ret)
+bind(C, name="mpi_status_set_cancelled_f08") result(ret)
 
 use, intrinsic :: iso_c_binding
 use :: mpi_f08_constants
@@ -3714,89 +3590,11 @@ use :: mpi_f08_ctypes
 implicit none
 
 type(c_Status) :: status     !MPI_Status* status
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), intent(out) :: count     !int* count
+integer(c_int), intent(out) :: flag     !bool flag
 integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
-end function MPI_Get_elements_c
-
-! MPI_File_write NOT IMPLEMENTED in MPC
-
-
-! MPI_File_read_at_all_end NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Probe_c( source,&
-tag,&
-comm,&
-status,&
-ierror)&
-bind(C, name="mpi_probe_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: source     !int source
-integer(c_int), value, intent(in) :: tag     !int tag
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-type(c_Status) :: status     !MPI_Status* status
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Probe_c
-
-! MPI_File_set_view NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Unpack_c( inbuf,&
-insize,&
-position,&
-outbuf,&
-outcount,&
-datatype,&
-comm,&
-ierror)&
-bind(C, name="mpi_unpack_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: inbuf     !void* inbuf
-integer(c_int), value, intent(in) :: insize     !int insize
-integer(c_int), intent(inout) :: position     !int* position
-type(*), dimension(..) :: outbuf     !void* outbuf
-integer(c_int), value, intent(in) :: outcount     !int outcount
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Unpack_c
-
-
-function MPI_Type_ub_c( mtype,&
-ub,&
-ierror)&
-bind(C, name="mpi_type_ub_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: mtype     !MPI_Datatype mtype
-integer(c_intptr_t), value, intent(in) :: ub     !MPI_Aint* ub
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_ub_c
+end function MPI_Status_set_cancelled_c
 
 
 function MPI_Status_set_elements_c( status,&
@@ -3819,31 +3617,50 @@ integer(c_int) :: ret ! dummy
 end function MPI_Status_set_elements_c
 
 
-function MPI_Win_delete_attr_c( win,&
-win_keyval,&
+function MPI_Test_c( request,&
+flag,&
+status,&
 ierror)&
-bind(C, name="mpi_win_delete_attr_f08") result(ret)
+bind(C, name="mpi_test_f08") result(ret)
 
 use, intrinsic :: iso_c_binding
 use :: mpi_f08_constants
 use :: mpi_f08_ctypes
 implicit none
 
-integer(c_int), value, intent(in) :: win     !MPI_Win win
-integer(c_int), value, intent(in) :: win_keyval     !int win_keyval
+integer(c_int), intent(in) :: request     !MPI_Request* request
+integer(c_int), intent(out) :: flag     !bool flag
+type(c_Status) :: status     !MPI_Status* status
 integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
-end function MPI_Win_delete_attr_c
+end function MPI_Test_c
 
 
-function MPI_Type_hindexed_c( count,&
-array_of_blocklengths,&
-array_of_displacements,&
-oldtype,&
-newtype,&
+function MPI_Test_cancelled_c( status,&
+flag,&
 ierror)&
-bind(C, name="mpi_type_hindexed_f08") result(ret)
+bind(C, name="mpi_test_cancelled_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(c_Status) :: status     !MPI_Status* status
+integer(c_int), intent(out) :: flag     !bool flag
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Test_cancelled_c
+
+
+function MPI_Testall_c( count,&
+array_of_requests,&
+flag,&
+array_of_statuses,&
+ierror)&
+bind(C, name="mpi_testall_f08") result(ret)
 
 use, intrinsic :: iso_c_binding
 use :: mpi_f08_constants
@@ -3851,399 +3668,115 @@ use :: mpi_f08_ctypes
 implicit none
 
 integer(c_int), value, intent(in) :: count     !int count
-type(c_ptr), value :: array_of_blocklengths     !int[] array_of_blocklengths
-type(c_ptr), value :: array_of_displacements     !int[] array_of_displacements
+integer(c_int), target  :: array_of_requests(count)     !MPI_Request[] array_of_requests
+integer(c_int), intent(out) :: flag     !bool flag
+type(c_ptr), value :: array_of_statuses     !MPI_Status[] array_of_statuses
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Testall_c
+
+
+function MPI_Testany_c( count,&
+array_of_requests,&
+index,&
+flag,&
+status,&
+ierror)&
+bind(C, name="mpi_testany_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), target  :: array_of_requests(count)     !MPI_Request[] array_of_requests
+integer(c_int), intent(out) :: index     !int* index
+integer(c_int), intent(out) :: flag     !bool flag
+type(c_Status) :: status     !MPI_Status* status
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Testany_c
+
+
+function MPI_Testsome_c( incount,&
+array_of_requests,&
+outcount,&
+array_of_indices,&
+array_of_statuses,&
+ierror)&
+bind(C, name="mpi_testsome_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: incount     !int incount
+integer(c_int), target  :: array_of_requests(incount)     !MPI_Request[] array_of_requests
+integer(c_int), intent(inout) :: outcount     !int* outcount
+type(c_ptr) :: array_of_indices     !int[] array_of_indices
+type(c_ptr), value :: array_of_statuses     !MPI_Status[] array_of_statuses
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Testsome_c
+
+
+function MPI_Topo_test_c( comm,&
+status,&
+ierror)&
+bind(C, name="mpi_topo_test_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(out) :: status     !int* status
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Topo_test_c
+
+
+function MPI_Type_commit_c( type,&
+ierror)&
+bind(C, name="mpi_type_commit_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), intent(inout) :: type     !MPI_Datatype* type
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_commit_c
+
+
+function MPI_Type_contiguous_c( count,&
+oldtype,&
+newtype,&
+ierror)&
+bind(C, name="mpi_type_contiguous_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: count     !int count
 integer(c_int), value, intent(in) :: oldtype     !MPI_Datatype oldtype
 integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
 integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
-end function MPI_Type_hindexed_c
-
-! MPI_File_set_atomicity NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Group_range_incl_c( group,&
-n,&
-ranges,&
-newgroup,&
-ierror)&
-bind(C, name="mpi_group_range_incl_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: group     !MPI_Group group
-integer(c_int), value, intent(in) :: n     !int n
-type(c_ptr), value :: ranges     !int[][3] ranges
-integer(c_int), intent(out) :: newgroup     !MPI_Group* newgroup
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Group_range_incl_c
-
-
-function MPI_Get_c( origin_addr,&
-origin_count,&
-origin_datatype,&
-target_rank,&
-target_disp,&
-target_count,&
-target_datatype,&
-win,&
-ierror)&
-bind(C, name="mpi_get_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: origin_addr     !void* origin_addr
-integer(c_int), value, intent(in) :: origin_count     !int origin_count
-integer(c_int), value, intent(in) :: origin_datatype     !MPI_Datatype origin_datatype
-integer(c_int), value, intent(in) :: target_rank     !int target_rank
-integer(c_intptr_t), value, intent(in) :: target_disp     !MPI_Aint target_disp
-integer(c_int), value, intent(in) :: target_count     !int target_count
-integer(c_int), value, intent(in) :: target_datatype     !MPI_Datatype target_datatype
-integer(c_int), value, intent(in) :: win     !MPI_Win win
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Get_c
-
-
-function MPI_Iprobe_c( source,&
-tag,&
-comm,&
-flag,&
-status,&
-ierror)&
-bind(C, name="mpi_iprobe_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: source     !int source
-integer(c_int), value, intent(in) :: tag     !int tag
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(out) :: flag     !bool flag
-type(c_Status) :: status     !MPI_Status* status
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Iprobe_c
-
-! MPI_File_write_at_all_end NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Type_get_true_extent_c( datatype,&
-true_lb,&
-true_extent,&
-ierror)&
-bind(C, name="mpi_type_get_true_extent_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_intptr_t), intent(out) :: true_lb     !MPI_Aint* true_lb
-integer(c_intptr_t), intent(out) :: true_extent     !MPI_Aint* true_extent
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_get_true_extent_c
-
-
-function MPI_Graph_get_c( comm,&
-maxindex,&
-maxedges,&
-index,&
-edges,&
-ierror)&
-bind(C, name="mpi_graph_get_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), value, intent(in) :: maxindex     !int maxindex
-integer(c_int), value, intent(in) :: maxedges     !int maxedges
-type(c_ptr) :: index     !int[] index
-type(c_ptr) :: edges     !int[] edges
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Graph_get_c
-
-
-function MPI_Info_delete_c( info,&
-key,&
-ierror)&
-bind(C, name="mpi_info_delete_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: info     !MPI_Info info
-character(kind=c_char), intent(in) :: key(*)     !char* key
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Info_delete_c
-
-
-function MPI_Win_get_attr_c( win,&
-win_keyval,&
-attribute_val,&
-flag,&
-ierror)&
-bind(C, name="mpi_win_get_attr_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: win     !MPI_Win win
-integer(c_int), value, intent(in) :: win_keyval     !int win_keyval
-type(*), dimension(..) :: attribute_val     !void* attribute_val
-integer(c_int), intent(out) :: flag     !bool flag
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Win_get_attr_c
-
-
-function MPI_Cart_rank_c( comm,&
-coords,&
-rank,&
-ierror)&
-bind(C, name="mpi_cart_rank_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-type(c_ptr) :: coords     !int[] coords
-integer(c_int), intent(out) :: rank     !int* rank
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Cart_rank_c
-
-
-function MPI_Finalize_c( ierror)&
-bind(C, name="mpi_finalize_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Finalize_c
-
-
-function MPI_Comm_create_c( comm,&
-group,&
-newcomm,&
-ierror)&
-bind(C, name="mpi_comm_create_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), value, intent(in) :: group     !MPI_Group group
-integer(c_int), intent(out) :: newcomm     !MPI_Comm* newcomm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_create_c
-
-
-function MPI_Pack_external_size_c( datarep,&
-incount,&
-datatype,&
-size,&
-ierror)&
-bind(C, name="mpi_pack_external_size_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-character(kind=c_char), intent(in) :: datarep(*)     !char* datarep
-integer(c_int), value, intent(in) :: incount     !int incount
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_intptr_t), intent(out) :: size     !MPI_Aint* size
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Pack_external_size_c
-
-
-function MPI_Comm_join_c( fd,&
-intercomm,&
-ierror)&
-bind(C, name="mpi_comm_join_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: fd     !int fd
-integer(c_int), intent(out) :: intercomm     !MPI_Comm* intercomm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_join_c
-
-! MPI_File_read_at NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Keyval_free_c( keyval,&
-ierror)&
-bind(C, name="mpi_keyval_free_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), intent(inout) :: keyval     !int* keyval
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Keyval_free_c
-
-
-function MPI_Win_wait_c( win,&
-ierror)&
-bind(C, name="mpi_win_wait_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: win     !MPI_Win win
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Win_wait_c
-
-
-function MPI_Alloc_mem_c( size,&
-info,&
-baseptr,&
-ierror)&
-bind(C, name="mpi_alloc_mem_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_intptr_t), value, intent(in) :: size     !MPI_Aint size
-integer(c_int), value, intent(in) :: info     !MPI_Info info
-type(*), dimension(..) :: baseptr     !void* baseptr
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Alloc_mem_c
-
-
-function MPI_Improbe_c( source,&
-tag,&
-comm,&
-flag,&
-message,&
-status,&
-ierror)&
-bind(C, name="mpi_improbe_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: source     !int source
-integer(c_int), value, intent(in) :: tag     !int tag
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(out) :: flag     !bool flag
-integer(c_int), intent(inout) :: message     !MPI_Message* message
-type(c_Status) :: status     !MPI_Status* status
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Improbe_c
-
-
-function MPI_Type_size_c( type,&
-size,&
-ierror)&
-bind(C, name="mpi_type_size_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: type     !MPI_Datatype type
-integer(c_int), intent(out) :: size     !int* size
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Type_size_c
-
-
-function MPI_Lookup_name_c( service_name,&
-info,&
-port_name,&
-ierror)&
-bind(C, name="mpi_lookup_name_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-character(kind=c_char), intent(in) :: service_name(*)     !char* service_name
-integer(c_int), value, intent(in) :: info     !MPI_Info info
-character(kind=c_char), intent(in) :: port_name(*)     !char* port_name
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Lookup_name_c
-
-! MPI_File_get_atomicity NOT IMPLEMENTED in MPC
-
-
-! MPI_File_read_shared NOT IMPLEMENTED in MPC
-
+end function MPI_Type_contiguous_c
 
 
 function MPI_Type_create_darray_c( size,&
@@ -4280,110 +3813,202 @@ integer(c_int) :: ret ! dummy
 end function MPI_Type_create_darray_c
 
 
-function MPI_Win_create_errhandler_c( function,&
-errhandler,&
+function MPI_Type_create_f90_complex_c( p,&
+r,&
+newtype,&
 ierror)&
-bind(C, name="mpi_win_create_errhandler_f08") result(ret)
+bind(C, name="mpi_type_create_f90_complex_f08") result(ret)
 
 use, intrinsic :: iso_c_binding
 use :: mpi_f08_constants
 use :: mpi_f08_ctypes
 implicit none
 
-type(c_ptr), value , intent(in) :: function     !MPI_Win_errhandler_function* function
-integer(c_int), value, intent(in) :: errhandler     !MPI_Errhandler* errhandler
+integer(c_int), value, intent(in) :: p     !int p
+integer(c_int), value, intent(in) :: r     !int r
+integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
 integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
-end function MPI_Win_create_errhandler_c
+end function MPI_Type_create_f90_complex_c
 
 
-function MPI_Cart_map_c( comm,&
-ndims,&
-dims,&
-periods,&
-newrank,&
+function MPI_Type_create_f90_integer_c( r,&
+newtype,&
 ierror)&
-bind(C, name="mpi_cart_map_f08") result(ret)
+bind(C, name="mpi_type_create_f90_integer_f08") result(ret)
 
 use, intrinsic :: iso_c_binding
 use :: mpi_f08_constants
 use :: mpi_f08_ctypes
 implicit none
 
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), value, intent(in) :: ndims     !int ndims
-type(c_ptr), value :: dims     !int[] dims
-type(c_ptr), value :: periods     !bool[] periods
-integer(c_int), intent(out) :: newrank     !int* newrank
+integer(c_int), value, intent(in) :: r     !int r
+integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
 integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
-end function MPI_Cart_map_c
-
-! MPI_File_write_at NOT IMPLEMENTED in MPC
+end function MPI_Type_create_f90_integer_c
 
 
-
-function MPI_Comm_accept_c( port_name,&
-info,&
-root,&
-comm,&
-newcomm,&
+function MPI_Type_create_f90_real_c( p,&
+r,&
+newtype,&
 ierror)&
-bind(C, name="mpi_comm_accept_f08") result(ret)
+bind(C, name="mpi_type_create_f90_real_f08") result(ret)
 
 use, intrinsic :: iso_c_binding
 use :: mpi_f08_constants
 use :: mpi_f08_ctypes
 implicit none
 
-character(kind=c_char), intent(in) :: port_name(*)     !char* port_name
-integer(c_int), value, intent(in) :: info     !MPI_Info info
-integer(c_int), value, intent(in) :: root     !int root
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(out) :: newcomm     !MPI_Comm* newcomm
+integer(c_int), value, intent(in) :: p     !int p
+integer(c_int), value, intent(in) :: r     !int r
+integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
 integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
-end function MPI_Comm_accept_c
+end function MPI_Type_create_f90_real_c
 
 
-function MPI_Type_set_name_c( type,&
-type_name,&
+function MPI_Type_create_hindexed_c( count,&
+array_of_blocklengths,&
+array_of_displacements,&
+oldtype,&
+newtype,&
 ierror)&
-bind(C, name="mpi_type_set_name_f08") result(ret)
+bind(C, name="mpi_type_create_hindexed_f08") result(ret)
 
 use, intrinsic :: iso_c_binding
 use :: mpi_f08_constants
 use :: mpi_f08_ctypes
 implicit none
 
-integer(c_int), value, intent(in) :: type     !MPI_Datatype type
-character(kind=c_char), intent(in) :: type_name(*)     !char* type_name
+integer(c_int), value, intent(in) :: count     !int count
+type(c_ptr), value :: array_of_blocklengths     !int[] array_of_blocklengths
+type(c_ptr), value :: array_of_displacements     !MPI_Aint[] array_of_displacements
+integer(c_int), value, intent(in) :: oldtype     !MPI_Datatype oldtype
+integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
 integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
-end function MPI_Type_set_name_c
+end function MPI_Type_create_hindexed_c
 
 
-function MPI_Close_port_c( port_name,&
+function MPI_Type_create_hvector_c( count,&
+blocklength,&
+stride,&
+oldtype,&
+newtype,&
 ierror)&
-bind(C, name="mpi_close_port_f08") result(ret)
+bind(C, name="mpi_type_create_hvector_f08") result(ret)
 
 use, intrinsic :: iso_c_binding
 use :: mpi_f08_constants
 use :: mpi_f08_ctypes
 implicit none
 
-character(kind=c_char), intent(in) :: port_name(*)     !char* port_name
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: blocklength     !int blocklength
+integer(c_intptr_t), value, intent(in) :: stride     !MPI_Aint stride
+integer(c_int), value, intent(in) :: oldtype     !MPI_Datatype oldtype
+integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
 integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
-end function MPI_Close_port_c
+end function MPI_Type_create_hvector_c
 
-! MPI_File_close NOT IMPLEMENTED in MPC
 
+function MPI_Type_create_indexed_block_c( count,&
+blocklength,&
+array_of_displacements,&
+oldtype,&
+newtype,&
+ierror)&
+bind(C, name="mpi_type_create_indexed_block_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: blocklength     !int blocklength
+type(c_ptr), value :: array_of_displacements     !int[] array_of_displacements
+integer(c_int), value, intent(in) :: oldtype     !MPI_Datatype oldtype
+integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_create_indexed_block_c
+
+
+function MPI_Type_create_keyval_c( type_copy_attr_fn,&
+type_delete_attr_fn,&
+type_keyval,&
+extra_state,&
+ierror)&
+bind(C, name="mpi_type_create_keyval_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(c_ptr), value , intent(in) :: type_copy_attr_fn     !MPI_Type_copy_attr_function* type_copy_attr_fn
+type(c_ptr), value , intent(in) :: type_delete_attr_fn     !MPI_Type_delete_attr_function* type_delete_attr_fn
+integer(c_int), intent(out) :: type_keyval     !int* type_keyval
+type(*), dimension(..) :: extra_state     !void* extra_state
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_create_keyval_c
+
+
+function MPI_Type_create_resized_c( oldtype,&
+lb,&
+extent,&
+newtype,&
+ierror)&
+bind(C, name="mpi_type_create_resized_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: oldtype     !MPI_Datatype oldtype
+integer(c_intptr_t), value, intent(in) :: lb     !MPI_Aint lb
+integer(c_intptr_t), value, intent(in) :: extent     !MPI_Aint extent
+integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_create_resized_c
+
+
+function MPI_Type_create_struct_c( count,&
+array_of_block_lengths,&
+array_of_displacements,&
+array_of_types,&
+newtype,&
+ierror)&
+bind(C, name="mpi_type_create_struct_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: count     !int count
+type(c_ptr), value :: array_of_block_lengths     !int[] array_of_block_lengths
+type(c_ptr), value :: array_of_displacements     !MPI_Aint[] array_of_displacements
+type(c_ptr), value :: array_of_types     !MPI_Datatype[] array_of_types
+integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_create_struct_c
 
 
 function MPI_Type_create_subarray_c( ndims,&
@@ -4413,77 +4038,551 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_Type_create_subarray_c
 
-! MPI_File_delete NOT IMPLEMENTED in MPC
 
-
-
-function MPI_Comm_set_attr_c( comm,&
-comm_keyval,&
-attribute_val,&
+function MPI_Type_delete_attr_c( type,&
+type_keyval,&
 ierror)&
-bind(C, name="mpi_comm_set_attr_f08") result(ret)
+bind(C, name="mpi_type_delete_attr_f08") result(ret)
 
 use, intrinsic :: iso_c_binding
 use :: mpi_f08_constants
 use :: mpi_f08_ctypes
 implicit none
 
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), value, intent(in) :: comm_keyval     !int comm_keyval
-type(*), dimension(..) :: attribute_val     !void* attribute_val
+integer(c_int), value, intent(in) :: type     !MPI_Datatype type
+integer(c_int), value, intent(in) :: type_keyval     !int type_keyval
 integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
-end function MPI_Comm_set_attr_c
-
-! MPI_File_read_all NOT IMPLEMENTED in MPC
+end function MPI_Type_delete_attr_c
 
 
-
-function MPI_Recv_c( buf,&
-count,&
-datatype,&
-source,&
-tag,&
-comm,&
-status,&
+function MPI_Type_dup_c( type,&
+newtype,&
 ierror)&
-bind(C, name="mpi_recv_f08") result(ret)
+bind(C, name="mpi_type_dup_f08") result(ret)
 
 use, intrinsic :: iso_c_binding
 use :: mpi_f08_constants
 use :: mpi_f08_ctypes
 implicit none
 
-type(*), dimension(..) :: buf     !void* buf
-integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: type     !MPI_Datatype type
+integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_dup_c
+
+
+function MPI_Type_extent_c( type,&
+extent,&
+ierror)&
+bind(C, name="mpi_type_extent_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: type     !MPI_Datatype type
+integer(c_intptr_t), intent(out) :: extent     !MPI_Aint* extent
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_extent_c
+
+
+function MPI_Type_free_c( type,&
+ierror)&
+bind(C, name="mpi_type_free_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), intent(inout) :: type     !MPI_Datatype* type
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_free_c
+
+
+function MPI_Type_free_keyval_c( type_keyval,&
+ierror)&
+bind(C, name="mpi_type_free_keyval_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), intent(inout) :: type_keyval     !int* type_keyval
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_free_keyval_c
+
+
+function MPI_Type_get_attr_c( type,&
+type_keyval,&
+attribute_val,&
+flag,&
+ierror)&
+bind(C, name="mpi_type_get_attr_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: type     !MPI_Datatype type
+integer(c_int), value, intent(in) :: type_keyval     !int type_keyval
+type(*), dimension(..) :: attribute_val     !void* attribute_val
+integer(c_int), intent(out) :: flag     !bool flag
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_get_attr_c
+
+
+function MPI_Type_get_contents_c( mtype,&
+max_integers,&
+max_addresses,&
+max_datatypes,&
+array_of_integers,&
+array_of_addresses,&
+array_of_datatypes,&
+ierror)&
+bind(C, name="mpi_type_get_contents_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: mtype     !MPI_Datatype mtype
+integer(c_int), value, intent(in) :: max_integers     !int max_integers
+integer(c_int), value, intent(in) :: max_addresses     !int max_addresses
+integer(c_int), value, intent(in) :: max_datatypes     !int max_datatypes
+type(c_ptr), value :: array_of_integers     !int[] array_of_integers
+type(c_ptr), value :: array_of_addresses     !MPI_Aint[] array_of_addresses
+type(c_ptr), value :: array_of_datatypes     !MPI_Datatype[] array_of_datatypes
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_get_contents_c
+
+
+function MPI_Type_get_envelope_c( type,&
+num_integers,&
+num_addresses,&
+num_datatypes,&
+combiner,&
+ierror)&
+bind(C, name="mpi_type_get_envelope_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: type     !MPI_Datatype type
+integer(c_int), intent(out) :: num_integers     !int* num_integers
+integer(c_int), intent(out) :: num_addresses     !int* num_addresses
+integer(c_int), intent(out) :: num_datatypes     !int* num_datatypes
+integer(c_int), intent(out) :: combiner     !int* combiner
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_get_envelope_c
+
+
+function MPI_Type_get_extent_c( type,&
+lb,&
+extent,&
+ierror)&
+bind(C, name="mpi_type_get_extent_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: type     !MPI_Datatype type
+integer(c_intptr_t), intent(out) :: lb     !MPI_Aint* lb
+integer(c_intptr_t), intent(out) :: extent     !MPI_Aint* extent
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_get_extent_c
+
+
+function MPI_Type_get_name_c( type,&
+type_name,&
+resultlen,&
+ierror)&
+bind(C, name="mpi_type_get_name_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: type     !MPI_Datatype type
+character(kind=c_char), intent(out) :: type_name(*)     !char* type_name
+integer(c_int), intent(out) :: resultlen     !int* resultlen
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_get_name_c
+
+
+function MPI_Type_get_true_extent_c( datatype,&
+true_lb,&
+true_extent,&
+ierror)&
+bind(C, name="mpi_type_get_true_extent_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
 integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), value, intent(in) :: source     !int source
-integer(c_int), value, intent(in) :: tag     !int tag
+integer(c_intptr_t), intent(out) :: true_lb     !MPI_Aint* true_lb
+integer(c_intptr_t), intent(out) :: true_extent     !MPI_Aint* true_extent
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_get_true_extent_c
+
+
+function MPI_Type_hindexed_c( count,&
+array_of_blocklengths,&
+array_of_displacements,&
+oldtype,&
+newtype,&
+ierror)&
+bind(C, name="mpi_type_hindexed_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: count     !int count
+type(c_ptr), value :: array_of_blocklengths     !int[] array_of_blocklengths
+type(c_ptr), value :: array_of_displacements     !int[] array_of_displacements
+integer(c_int), value, intent(in) :: oldtype     !MPI_Datatype oldtype
+integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_hindexed_c
+
+
+function MPI_Type_hvector_c( count,&
+blocklength,&
+stride,&
+oldtype,&
+newtype,&
+ierror)&
+bind(C, name="mpi_type_hvector_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: blocklength     !int blocklength
+integer(c_int), value, intent(in) :: stride     !int stride
+integer(c_int), value, intent(in) :: oldtype     !MPI_Datatype oldtype
+integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_hvector_c
+
+
+function MPI_Type_indexed_c( count,&
+array_of_blocklengths,&
+array_of_displacements,&
+oldtype,&
+newtype,&
+ierror)&
+bind(C, name="mpi_type_indexed_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: count     !int count
+type(c_ptr), value :: array_of_blocklengths     !int[] array_of_blocklengths
+type(c_ptr), value :: array_of_displacements     !int[] array_of_displacements
+integer(c_int), value, intent(in) :: oldtype     !MPI_Datatype oldtype
+integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_indexed_c
+
+
+function MPI_Type_lb_c( type,&
+lb,&
+ierror)&
+bind(C, name="mpi_type_lb_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: type     !MPI_Datatype type
+integer(c_intptr_t), value, intent(in) :: lb     !MPI_Aint* lb
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_lb_c
+
+
+function MPI_Type_match_size_c( typeclass,&
+size,&
+type,&
+ierror)&
+bind(C, name="mpi_type_match_size_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: typeclass     !int typeclass
+integer(c_int), value, intent(in) :: size     !int size
+integer(c_int), intent(out) :: type     !MPI_Datatype* type
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_match_size_c
+
+
+function MPI_Type_set_attr_c( type,&
+type_keyval,&
+attr_val,&
+ierror)&
+bind(C, name="mpi_type_set_attr_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: type     !MPI_Datatype type
+integer(c_int), value, intent(in) :: type_keyval     !int type_keyval
+type(*), dimension(..) :: attr_val     !void* attr_val
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_set_attr_c
+
+
+function MPI_Type_set_name_c( type,&
+type_name,&
+ierror)&
+bind(C, name="mpi_type_set_name_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: type     !MPI_Datatype type
+character(kind=c_char), intent(in) :: type_name(*)     !char* type_name
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_set_name_c
+
+
+function MPI_Type_size_c( type,&
+size,&
+ierror)&
+bind(C, name="mpi_type_size_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: type     !MPI_Datatype type
+integer(c_int), intent(out) :: size     !int* size
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_size_c
+
+
+function MPI_Type_struct_c( count,&
+array_of_blocklengths,&
+array_of_displacements,&
+array_of_types,&
+newtype,&
+ierror)&
+bind(C, name="mpi_type_struct_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: count     !int count
+type(c_ptr), value :: array_of_blocklengths     !int[] array_of_blocklengths
+type(c_ptr), value :: array_of_displacements     !int[] array_of_displacements
+type(c_ptr), value :: array_of_types     !MPI_Datatype[] array_of_types
+integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_struct_c
+
+
+function MPI_Type_ub_c( mtype,&
+ub,&
+ierror)&
+bind(C, name="mpi_type_ub_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: mtype     !MPI_Datatype mtype
+integer(c_intptr_t), value, intent(in) :: ub     !MPI_Aint* ub
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_ub_c
+
+
+function MPI_Type_vector_c( count,&
+blocklength,&
+stride,&
+oldtype,&
+newtype,&
+ierror)&
+bind(C, name="mpi_type_vector_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: blocklength     !int blocklength
+integer(c_int), value, intent(in) :: stride     !int stride
+integer(c_int), value, intent(in) :: oldtype     !MPI_Datatype oldtype
+integer(c_int), intent(out) :: newtype     !MPI_Datatype* newtype
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Type_vector_c
+
+
+function MPI_Unpack_c( inbuf,&
+insize,&
+position,&
+outbuf,&
+outcount,&
+datatype,&
+comm,&
+ierror)&
+bind(C, name="mpi_unpack_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: inbuf     !void* inbuf
+integer(c_int), value, intent(in) :: insize     !int insize
+integer(c_int), intent(inout) :: position     !int* position
+type(*), dimension(..) :: outbuf     !void* outbuf
+integer(c_int), value, intent(in) :: outcount     !int outcount
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
 integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Unpack_c
+
+
+function MPI_Unpack_external_c( datarep,&
+inbuf,&
+insize,&
+position,&
+outbuf,&
+outcount,&
+datatype,&
+ierror)&
+bind(C, name="mpi_unpack_external_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+character(kind=c_char), intent(in) :: datarep(*)     !char* datarep
+type(*), dimension(..) :: inbuf     !void* inbuf
+integer(c_intptr_t), value, intent(in) :: insize     !MPI_Aint insize
+integer(c_intptr_t), intent(inout) :: position     !MPI_Aint* position
+type(*), dimension(..) :: outbuf     !void* outbuf
+integer(c_int), value, intent(in) :: outcount     !int outcount
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Unpack_external_c
+
+
+function MPI_Unpublish_name_c( service_name,&
+info,&
+port_name,&
+ierror)&
+bind(C, name="mpi_unpublish_name_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+character(kind=c_char), intent(in) :: service_name(*)     !char* service_name
+integer(c_int), value, intent(in) :: info     !MPI_Info info
+character(kind=c_char), intent(in) :: port_name(*)     !char* port_name
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Unpublish_name_c
+
+
+function MPI_Wait_c( request,&
+status,&
+ierror)&
+bind(C, name="mpi_wait_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), intent(inout) :: request     !MPI_Request* request
 type(c_Status) :: status     !MPI_Status* status
 integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
-end function MPI_Recv_c
-
-
-function MPI_Comm_dup_c( comm,&
-newcomm,&
-ierror)&
-bind(C, name="mpi_comm_dup_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(out) :: newcomm     !MPI_Comm* newcomm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_dup_c
+end function MPI_Wait_c
 
 
 function MPI_Waitall_c( count,&
@@ -4506,561 +4605,128 @@ integer(c_int) :: ret ! dummy
 end function MPI_Waitall_c
 
 
-function MPI_Comm_delete_attr_c( comm,&
-comm_keyval,&
-ierror)&
-bind(C, name="mpi_comm_delete_attr_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), value, intent(in) :: comm_keyval     !int comm_keyval
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_delete_attr_c
-
-
-function MPI_Ssend_c( buf,&
-count,&
-datatype,&
-dest,&
-tag,&
-comm,&
-ierror)&
-bind(C, name="mpi_ssend_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: buf     !void* buf
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), value, intent(in) :: dest     !int dest
-integer(c_int), value, intent(in) :: tag     !int tag
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Ssend_c
-
-
-function MPI_Group_size_c( group,&
-size,&
-ierror)&
-bind(C, name="mpi_group_size_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: group     !MPI_Group group
-integer(c_int), intent(out) :: size     !int* size
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Group_size_c
-
-
-function MPI_File_get_errhandler_c( file,&
-errhandler,&
-ierror)&
-bind(C, name="mpi_file_get_errhandler_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: file     !MPI_File file
-integer(c_int), intent(out) :: errhandler     !MPI_Errhandler* errhandler
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_File_get_errhandler_c
-
-
-function MPI_Attr_put_c( comm,&
-keyval,&
-attribute_val,&
-ierror)&
-bind(C, name="mpi_attr_put_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), value, intent(in) :: keyval     !int keyval
-type(*), dimension(..) :: attribute_val     !void* attribute_val
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Attr_put_c
-
-
-function MPI_Barrier_c( comm,&
-ierror)&
-bind(C, name="mpi_barrier_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Barrier_c
-
-
-function MPI_Win_free_c( win,&
-ierror)&
-bind(C, name="mpi_win_free_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), intent(inout) :: win     !MPI_Win* win
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Win_free_c
-
-
-function MPI_Alltoallw_c( sendbuf,&
-sendcounts,&
-sdispls,&
-sendtypes,&
-recvbuf,&
-recvcounts,&
-rdispls,&
-recvtypes,&
-comm,&
-ierror)&
-bind(C, name="mpi_alltoallw_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: sendbuf     !void* sendbuf
-type(c_ptr), value :: sendcounts     !int[] sendcounts
-type(c_ptr), value :: sdispls     !int[] sdispls
-type(c_ptr), value :: sendtypes     !MPI_Datatype[] sendtypes
-type(*), dimension(..) :: recvbuf     !void* recvbuf
-type(c_ptr), value :: recvcounts     !int[] recvcounts
-type(c_ptr), value :: rdispls     !int[] rdispls
-type(c_ptr), value :: recvtypes     !MPI_Datatype[] recvtypes
-integer(c_int), intent(out) :: comm     !MPI_Comm comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Alltoallw_c
-
-
-function MPI_Alltoallv_c( sendbuf,&
-sendcounts,&
-sdispls,&
-sendtype,&
-recvbuf,&
-recvcounts,&
-rdispls,&
-recvtype,&
-comm,&
-ierror)&
-bind(C, name="mpi_alltoallv_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: sendbuf     !void* sendbuf
-type(c_ptr), value :: sendcounts     !int[] sendcounts
-type(c_ptr), value :: sdispls     !int[] sdispls
-integer(c_int), value, intent(in) :: sendtype     !MPI_Datatype sendtype
-type(*), dimension(..) :: recvbuf     !void* recvbuf
-type(c_ptr), value :: recvcounts     !int[] recvcounts
-type(c_ptr), value :: rdispls     !int[] rdispls
-integer(c_int), value, intent(in) :: recvtype     !MPI_Datatype recvtype
-integer(c_int), intent(out) :: comm     !MPI_Comm comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Alltoallv_c
-
-
-function MPI_Bsend_init_c( buf,&
-count,&
-datatype,&
-dest,&
-tag,&
-comm,&
-request,&
-ierror)&
-bind(C, name="mpi_bsend_init_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: buf     !void* buf
-integer(c_int), value :: count     !int count
-integer(c_int), value :: datatype     !MPI_Datatype datatype
-integer(c_int), value :: dest     !int dest
-integer(c_int), value :: tag     !int tag
-integer(c_int), value :: comm     !MPI_Comm comm
-integer(c_int) :: request     !MPI_Request* request
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Bsend_init_c
-
-
-function MPI_Exscan_c( sendbuf,&
-recvbuf,&
-count,&
-datatype,&
-op,&
-comm,&
-ierror)&
-bind(C, name="mpi_exscan_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: sendbuf     !void* sendbuf
-type(*), dimension(..) :: recvbuf     !void* recvbuf
-integer(c_int), value, intent(in) :: count     !int count
-integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), value, intent(in) :: op     !MPI_Op op
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Exscan_c
-
-
-function MPI_Op_free_c( op,&
-ierror)&
-bind(C, name="mpi_op_free_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), intent(inout) :: op     !MPI_Op* op
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Op_free_c
-
-
-function MPI_Win_set_errhandler_c( win,&
-errhandler,&
-ierror)&
-bind(C, name="mpi_win_set_errhandler_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: win     !MPI_Win win
-integer(c_int), value, intent(in) :: errhandler     !MPI_Errhandler errhandler
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Win_set_errhandler_c
-
-
-function MPI_Accumulate_c( origin_addr,&
-origin_count,&
-origin_datatype,&
-target_rank,&
-target_disp,&
-target_count,&
-target_datatype,&
-op,&
-win,&
-ierror)&
-bind(C, name="mpi_accumulate_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-type(*), dimension(..) :: origin_addr     !void* origin_addr
-integer(c_int), value, intent(in) :: origin_count     !int origin_count
-integer(c_int), value, intent(in) :: origin_datatype     !MPI_Datatype origin_datatype
-integer(c_int), value, intent(in) :: target_rank     !int target_rank
-integer(c_intptr_t), value, intent(in) :: target_disp     !MPI_Aint target_disp
-integer(c_int), value, intent(in) :: target_count     !int target_count
-integer(c_int), value, intent(in) :: target_datatype     !MPI_Datatype target_datatype
-integer(c_int), value, intent(in) :: op     !MPI_Op op
-integer(c_int), value, intent(in) :: win     !MPI_Win win
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Accumulate_c
-
-
-function MPI_Comm_get_name_c( comm,&
-comm_name,&
-resultlen,&
-ierror)&
-bind(C, name="mpi_comm_get_name_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-character(kind=c_char), intent(out) :: comm_name(*)     !char* comm_name
-integer(c_int), intent(out) :: resultlen     !int* resultlen
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_get_name_c
-
-
-function MPI_Cart_sub_c( comm,&
-remain_dims,&
-new_comm,&
-ierror)&
-bind(C, name="mpi_cart_sub_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-type(c_ptr), value :: remain_dims     !bool[] remain_dims
-integer(c_int), intent(out) :: new_comm     !MPI_Comm* new_comm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Cart_sub_c
-
-! MPI_File_write_ordered NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Group_range_excl_c( group,&
-n,&
-ranges,&
-newgroup,&
-ierror)&
-bind(C, name="mpi_group_range_excl_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: group     !MPI_Group group
-integer(c_int), value, intent(in) :: n     !int n
-type(c_ptr), value :: ranges     !int[][3] ranges
-integer(c_int), intent(out) :: newgroup     !MPI_Group* newgroup
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Group_range_excl_c
-
-
-function MPI_Comm_split_c( comm,&
-color,&
-key,&
-newcomm,&
-ierror)&
-bind(C, name="mpi_comm_split_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), value, intent(in) :: color     !int color
-integer(c_int), value, intent(in) :: key     !int key
-integer(c_int), intent(out) :: newcomm     !MPI_Comm* newcomm
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_split_c
-
-
-function MPI_Comm_set_errhandler_c( comm,&
-errhandler,&
-ierror)&
-bind(C, name="mpi_comm_set_errhandler_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), value, intent(in) :: errhandler     !MPI_Errhandler errhandler
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_set_errhandler_c
-
-
-function MPI_Request_get_status_c( request,&
-flag,&
+function MPI_Waitany_c( count,&
+array_of_requests,&
+index,&
 status,&
 ierror)&
-bind(C, name="mpi_request_get_status_f08") result(ret)
+bind(C, name="mpi_waitany_f08") result(ret)
 
 use, intrinsic :: iso_c_binding
 use :: mpi_f08_constants
 use :: mpi_f08_ctypes
 implicit none
 
-integer(c_int), value, intent(in) :: request     !MPI_Request request
-integer(c_int), intent(out) :: flag     !bool flag
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), target  :: array_of_requests(count)     !MPI_Request[] array_of_requests
+integer(c_int), intent(inout) :: index     !int* index
 type(c_Status) :: status     !MPI_Status* status
 integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
-end function MPI_Request_get_status_c
+end function MPI_Waitany_c
 
 
-function MPI_Group_free_c( group,&
+function MPI_Waitsome_c( incount,&
+array_of_requests,&
+outcount,&
+array_of_indices,&
+array_of_statuses,&
 ierror)&
-bind(C, name="mpi_group_free_f08") result(ret)
+bind(C, name="mpi_waitsome_f08") result(ret)
 
 use, intrinsic :: iso_c_binding
 use :: mpi_f08_constants
 use :: mpi_f08_ctypes
 implicit none
 
-integer(c_int), intent(inout) :: group     !MPI_Group* group
+integer(c_int), value, intent(in) :: incount     !int incount
+integer(c_int), target  :: array_of_requests(incount)     !MPI_Request[] array_of_requests
+integer(c_int), intent(inout) :: outcount     !int* outcount
+type(c_ptr) :: array_of_indices     !int[] array_of_indices
+type(c_ptr), value :: array_of_statuses     !MPI_Status[] array_of_statuses
 integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
-end function MPI_Group_free_c
+end function MPI_Waitsome_c
 
 
-function MPI_Type_create_keyval_c( type_copy_attr_fn,&
-type_delete_attr_fn,&
-type_keyval,&
-extra_state,&
+function MPI_Win_call_errhandler_c( win,&
+errorcode,&
 ierror)&
-bind(C, name="mpi_type_create_keyval_f08") result(ret)
+bind(C, name="mpi_win_call_errhandler_f08") result(ret)
 
 use, intrinsic :: iso_c_binding
 use :: mpi_f08_constants
 use :: mpi_f08_ctypes
 implicit none
 
-type(c_ptr), value , intent(in) :: type_copy_attr_fn     !MPI_Type_copy_attr_function* type_copy_attr_fn
-type(c_ptr), value , intent(in) :: type_delete_attr_fn     !MPI_Type_delete_attr_function* type_delete_attr_fn
-integer(c_int), intent(out) :: type_keyval     !int* type_keyval
-type(*), dimension(..) :: extra_state     !void* extra_state
+integer(c_int), value, intent(in) :: win     !MPI_Win win
+integer(c_int), value, intent(in) :: errorcode     !int errorcode
 integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
-end function MPI_Type_create_keyval_c
-
-! MPI_File_write_ordered_begin NOT IMPLEMENTED in MPC
+end function MPI_Win_call_errhandler_c
 
 
-! MPI_File_read_ordered_begin NOT IMPLEMENTED in MPC
-
-
-
-function MPI_Graphdims_get_c( comm,&
-nnodes,&
-nedges,&
+function MPI_Win_complete_c( win,&
 ierror)&
-bind(C, name="mpi_graphdims_get_f08") result(ret)
+bind(C, name="mpi_win_complete_f08") result(ret)
 
 use, intrinsic :: iso_c_binding
 use :: mpi_f08_constants
 use :: mpi_f08_ctypes
 implicit none
 
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(out) :: nnodes     !int* nnodes
-integer(c_int), intent(out) :: nedges     !int* nedges
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Graphdims_get_c
-
-
-function MPI_Comm_rank_c( comm,&
-rank,&
-ierror)&
-bind(C, name="mpi_comm_rank_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
-integer(c_int), intent(out) :: rank     !int* rank
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Comm_rank_c
-
-
-function MPI_Cancel_c( request,&
-ierror)&
-bind(C, name="mpi_cancel_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int) :: request     !MPI_Request* request
-integer(c_int) :: ierror     !int ierror
-integer(c_int) :: ret ! dummy
-
-end function MPI_Cancel_c
-
-
-function MPI_Win_fence_c( assert,&
-win,&
-ierror)&
-bind(C, name="mpi_win_fence_f08") result(ret)
-
-use, intrinsic :: iso_c_binding
-use :: mpi_f08_constants
-use :: mpi_f08_ctypes
-implicit none
-
-integer(c_int), value, intent(in) :: assert     !int assert
 integer(c_int), value, intent(in) :: win     !MPI_Win win
 integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
-end function MPI_Win_fence_c
+end function MPI_Win_complete_c
+
+
+function MPI_Win_create_c( base,&
+size,&
+disp_unit,&
+info,&
+comm,&
+win,&
+ierror)&
+bind(C, name="mpi_win_create_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: base     !void* base
+integer(c_intptr_t), value, intent(in) :: size     !MPI_Aint size
+integer(c_int), value, intent(in) :: disp_unit     !int disp_unit
+integer(c_int), value, intent(in) :: info     !MPI_Info info
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), value, intent(in) :: win     !MPI_Win* win
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Win_create_c
+
+
+function MPI_Win_create_errhandler_c( function,&
+errhandler,&
+ierror)&
+bind(C, name="mpi_win_create_errhandler_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(c_ptr), value , intent(in) :: function     !MPI_Win_errhandler_function* function
+integer(c_int), value, intent(in) :: errhandler     !MPI_Errhandler* errhandler
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Win_create_errhandler_c
 
 
 function MPI_Win_create_keyval_c( win_copy_attr_fn,&
@@ -5085,20 +4751,268 @@ integer(c_int) :: ret ! dummy
 end function MPI_Win_create_keyval_c
 
 
-function MPI_Errhandler_free_c( errhandler,&
+function MPI_Win_delete_attr_c( win,&
+win_keyval,&
 ierror)&
-bind(C, name="mpi_errhandler_free_f08") result(ret)
+bind(C, name="mpi_win_delete_attr_f08") result(ret)
 
 use, intrinsic :: iso_c_binding
 use :: mpi_f08_constants
 use :: mpi_f08_ctypes
 implicit none
 
-integer(c_int), intent(inout) :: errhandler     !MPI_Errhandler* errhandler
+integer(c_int), value, intent(in) :: win     !MPI_Win win
+integer(c_int), value, intent(in) :: win_keyval     !int win_keyval
 integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
-end function MPI_Errhandler_free_c
+end function MPI_Win_delete_attr_c
+
+
+function MPI_Win_fence_c( assert,&
+win,&
+ierror)&
+bind(C, name="mpi_win_fence_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: assert     !int assert
+integer(c_int), value, intent(in) :: win     !MPI_Win win
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Win_fence_c
+
+
+function MPI_Win_free_c( win,&
+ierror)&
+bind(C, name="mpi_win_free_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), intent(inout) :: win     !MPI_Win* win
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Win_free_c
+
+
+function MPI_Win_free_keyval_c( win_keyval,&
+ierror)&
+bind(C, name="mpi_win_free_keyval_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), intent(inout) :: win_keyval     !int* win_keyval
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Win_free_keyval_c
+
+
+function MPI_Win_get_attr_c( win,&
+win_keyval,&
+attribute_val,&
+flag,&
+ierror)&
+bind(C, name="mpi_win_get_attr_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: win     !MPI_Win win
+integer(c_int), value, intent(in) :: win_keyval     !int win_keyval
+type(*), dimension(..) :: attribute_val     !void* attribute_val
+integer(c_int), intent(out) :: flag     !bool flag
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Win_get_attr_c
+
+
+function MPI_Win_get_errhandler_c( win,&
+errhandler,&
+ierror)&
+bind(C, name="mpi_win_get_errhandler_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: win     !MPI_Win win
+integer(c_int), intent(out) :: errhandler     !MPI_Errhandler* errhandler
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Win_get_errhandler_c
+
+
+function MPI_Win_get_group_c( win,&
+group,&
+ierror)&
+bind(C, name="mpi_win_get_group_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: win     !MPI_Win win
+integer(c_int), intent(out) :: group     !MPI_Group* group
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Win_get_group_c
+
+
+function MPI_Win_get_name_c( win,&
+win_name,&
+resultlen,&
+ierror)&
+bind(C, name="mpi_win_get_name_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: win     !MPI_Win win
+character(kind=c_char), intent(out) :: win_name(*)     !char* win_name
+integer(c_int), intent(out) :: resultlen     !int* resultlen
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Win_get_name_c
+
+
+function MPI_Win_lock_c( lock_type,&
+rank,&
+assert,&
+win,&
+ierror)&
+bind(C, name="mpi_win_lock_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: lock_type     !int lock_type
+integer(c_int), value, intent(in) :: rank     !int rank
+integer(c_int), value, intent(in) :: assert     !int assert
+integer(c_int), value, intent(in) :: win     !MPI_Win win
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Win_lock_c
+
+
+function MPI_Win_post_c( group,&
+assert,&
+win,&
+ierror)&
+bind(C, name="mpi_win_post_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: group     !MPI_Group group
+integer(c_int), value, intent(in) :: assert     !int assert
+integer(c_int), value, intent(in) :: win     !MPI_Win win
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Win_post_c
+
+
+function MPI_Win_set_attr_c( win,&
+win_keyval,&
+attribute_val,&
+ierror)&
+bind(C, name="mpi_win_set_attr_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: win     !MPI_Win win
+integer(c_int), value, intent(in) :: win_keyval     !int win_keyval
+type(*), dimension(..) :: attribute_val     !void* attribute_val
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Win_set_attr_c
+
+
+function MPI_Win_set_errhandler_c( win,&
+errhandler,&
+ierror)&
+bind(C, name="mpi_win_set_errhandler_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: win     !MPI_Win win
+integer(c_int), value, intent(in) :: errhandler     !MPI_Errhandler errhandler
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Win_set_errhandler_c
+
+
+function MPI_Win_set_name_c( win,&
+win_name,&
+ierror)&
+bind(C, name="mpi_win_set_name_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: win     !MPI_Win win
+character(kind=c_char), intent(in) :: win_name(*)     !char* win_name
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Win_set_name_c
+
+
+function MPI_Win_start_c( group,&
+assert,&
+win,&
+ierror)&
+bind(C, name="mpi_win_start_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: group     !MPI_Group group
+integer(c_int), value, intent(in) :: assert     !int assert
+integer(c_int), value :: win     !MPI_Win win
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Win_start_c
 
 
 function MPI_Win_test_c( win,&
@@ -5119,34 +5033,97 @@ integer(c_int) :: ret ! dummy
 end function MPI_Win_test_c
 
 
-function MPI_Type_match_size_c( typeclass,&
-size,&
-type,&
+function MPI_Win_unlock_c( rank,&
+win,&
 ierror)&
-bind(C, name="mpi_type_match_size_f08") result(ret)
+bind(C, name="mpi_win_unlock_f08") result(ret)
 
 use, intrinsic :: iso_c_binding
 use :: mpi_f08_constants
 use :: mpi_f08_ctypes
 implicit none
 
-integer(c_int), value, intent(in) :: typeclass     !int typeclass
-integer(c_int), value, intent(in) :: size     !int size
-integer(c_int), intent(out) :: type     !MPI_Datatype* type
+integer(c_int), value, intent(in) :: rank     !int rank
+integer(c_int), value, intent(in) :: win     !MPI_Win win
 integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
-end function MPI_Type_match_size_c
+end function MPI_Win_unlock_c
 
 
-function MPI_Send_c( buf,&
-count,&
-datatype,&
-dest,&
+function MPI_Win_wait_c( win,&
+ierror)&
+bind(C, name="mpi_win_wait_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: win     !MPI_Win win
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Win_wait_c
+
+
+function MPI_Mprobe_c( source,&
 tag,&
 comm,&
+message,&
+status,&
 ierror)&
-bind(C, name="mpi_send_f08") result(ret)
+bind(C, name="mpi_mprobe_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: source     !int source
+integer(c_int), value, intent(in) :: tag     !int tag
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(inout) :: message     !MPI_Message* message
+type(c_Status) :: status     !MPI_Status* status
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Mprobe_c
+
+
+function MPI_Improbe_c( source,&
+tag,&
+comm,&
+flag,&
+message,&
+status,&
+ierror)&
+bind(C, name="mpi_improbe_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+integer(c_int), value, intent(in) :: source     !int source
+integer(c_int), value, intent(in) :: tag     !int tag
+integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(out) :: flag     !bool flag
+integer(c_int), intent(inout) :: message     !MPI_Message* message
+type(c_Status) :: status     !MPI_Status* status
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Improbe_c
+
+
+function MPI_Mrecv_c( buf,&
+count,&
+datatype,&
+message,&
+status,&
+ierror)&
+bind(C, name="mpi_mrecv_f08") result(ret)
 
 use, intrinsic :: iso_c_binding
 use :: mpi_f08_constants
@@ -5156,13 +5133,36 @@ implicit none
 type(*), dimension(..) :: buf     !void* buf
 integer(c_int), value, intent(in) :: count     !int count
 integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
-integer(c_int), value, intent(in) :: dest     !int dest
-integer(c_int), value, intent(in) :: tag     !int tag
-integer(c_int), value, intent(in) :: comm     !MPI_Comm comm
+integer(c_int), intent(inout) :: message     !MPI_Message* message
+type(c_Status) :: status     !MPI_Status* status
 integer(c_int) :: ierror     !int ierror
 integer(c_int) :: ret ! dummy
 
-end function MPI_Send_c
+end function MPI_Mrecv_c
+
+
+function MPI_Imrecv_c( buf,&
+count,&
+datatype,&
+message,&
+status,&
+ierror)&
+bind(C, name="mpi_imrecv_f08") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+type(*), dimension(..) :: buf     !void* buf
+integer(c_int), value, intent(in) :: count     !int count
+integer(c_int), value, intent(in) :: datatype     !MPI_Datatype datatype
+integer(c_int), intent(inout) :: message     !MPI_Message* message
+integer(c_int), intent(out) :: status     !MPI_Request* status
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Imrecv_c
 
 end interface
 
