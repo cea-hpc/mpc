@@ -152,14 +152,14 @@ typedef struct  mpc_omp_thread_task_trace_infos_s
     /* the tail node */
     mpc_omp_task_trace_node_t * tail;
 
-    /* number of nodes to be flushed */
-    size_t length;
-
     /* node recycler */
     mpc_common_recycler_t recyclers[MPC_OMP_TASK_TRACE_TYPE_COUNT];
 
     /* 1 if between 'begin' / 'end' calls */
     int begun;
+
+    /* id of the current traced code section */
+    int id;
 }               mpc_omp_thread_task_trace_infos_t;
 
 /**
@@ -179,10 +179,5 @@ void _mpc_omp_task_trace_dependency(struct mpc_omp_task_s * out, struct mpc_omp_
 void _mpc_omp_task_trace_schedule(struct mpc_omp_task_s * task);
 void _mpc_omp_task_trace_create(struct mpc_omp_task_s * task);
 void _mpc_omp_task_trace_callback(int when, int status);
-
-/**
- * get current time
- */
-double mpc_omp_timestamp(void);
 
 # endif

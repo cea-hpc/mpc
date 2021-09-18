@@ -1237,23 +1237,3 @@ void _mpc_omp_in_order_scheduler( mpc_omp_thread_t *thread )
     _mpc_omp_ompt_frame_set_infos( &prev_frame_infos );
 #endif /* OMPT_SUPPORT */
 }
-
-# if MPC_MPI
-#  include "mpc_mpi.h"
-# endif
-
-double
-mpc_omp_timestamp(void)
-{
-# if MPC_MPI
-    return MPI_Wtime() * 1000000;
-# else /* MPC_MPI */
-#  if SCTK_WTIME_USE_GETTIMEOFDAY
-    struct timeval tp;
-    gettimeofday(&tp, NULL);
-    return (double) tp.tv_usec + (double) tp.tv_sec * 1000000.0;
-#  else /* SCTK_WTIME_USE_GETTIMEOFDAY */
-    return mpc_arch_get_timestamp() * 1000000.0;
-#  endif /* SCTK_WTIME_USE_GETTIMEOFDAY */
-# endif /* MPC_MPI */
-}

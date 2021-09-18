@@ -447,8 +447,11 @@ mpc_omp_barrier(void)
     mpc_omp_init();
 
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
-    _mpc_omp_ompt_callback_sync_region_wait( kind, ompt_scope_begin );
+    _mpc_omp_ompt_frame_get_wrapper_infos(MPC_OMP_GOMP);
+    ompt_sync_region_t kind = thread->reduction_method ?
+        ompt_sync_region_reduction:
+        ompt_sync_region_barrier;
+    _mpc_omp_ompt_callback_sync_region_wait(kind, ompt_scope_begin);
 #endif /* OMPT_SUPPORT */
 
     mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
@@ -459,11 +462,16 @@ mpc_omp_barrier(void)
     /* wait for children tasks to complete */
     _mpc_omp_task_wait();
 
+    /* retrieve mvp */
+    mpc_omp_mvp_t * mvp = thread->mvp;
+    assert(mvp);
+
     /* retrieve current thread team */
     mpc_omp_team_t * team = thread->instance->team;
     int num_threads = team->info.num_threads;
     if (num_threads > 1)
     {
+# if 0 /* naive implementation */
         int old_version = team->barrier_version;
 
         if (OPA_fetch_and_incr_int(&(team->threads_in_barrier)) == num_threads - 1)
@@ -476,12 +484,52 @@ mpc_omp_barrier(void)
         {
             _mpc_omp_task_schedule();
         }
+# endif /* naive implementation */
+
+# if 1 /* tree implementation */
+        mpc_omp_node_t * c = mvp->father;
+        mpc_omp_node_t * new_root = thread->instance->root;
+
+        /* Step 1: Climb in the tree */
+        long b_done = c->barrier_done; /* Move out of sync region? */
+        long b = OPA_fetch_and_incr_int(&(c->barrier)) + 1;
+
+        while (b == c->barrier_num_threads && c != new_root)
+        {
+            OPA_store_int(&(c->barrier), 0);
+            c = c->father;
+            b_done = c->barrier_done;
+            b = OPA_fetch_and_incr_int(&(c->barrier)) + 1;
+        }
+
+        /* Step 2 - Wait for the barrier to be done */
+        if (c != new_root || (c == new_root && b != c->barrier_num_threads))
+        {
+            /* Wait for c->barrier == c->barrier_num_threads */
+            while (b_done == c->barrier_done)
+            {
+                _mpc_omp_task_schedule();
+            }
+        }
+        else
+        {
+            OPA_store_int(&(c->barrier), 0);
+            c->barrier_done++ ; /* No need to lock I think... */
+        }
+
+        /* Step 3 - Go down */
+        while (c->child_type != MPC_OMP_CHILDREN_LEAF)
+        {
+            c = c->children.node[mvp->tree_rank[c->depth]];
+            c->barrier_done++; /* No need to lock I think... */
+        }
+
+# endif /* tree implementation */
     }
 
 #if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_sync_region_wait( kind, ompt_scope_end );
+    _mpc_omp_ompt_callback_sync_region_wait(kind, ompt_scope_end);
 #endif /* OMPT_SUPPORT */
-
 }
 
 

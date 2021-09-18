@@ -517,7 +517,7 @@ void
 _mpc_task_pqueue_dump(mpc_omp_task_pqueue_t * tree, char * label)
 {
     char filepath[256];
-    sprintf(filepath, "%lf-%p-%s-tree.dot", mpc_omp_timestamp(), tree, label);
+    sprintf(filepath, "%lf-%p-%s-tree.dot", omp_get_wtime(), tree, label);
     FILE * f = fopen(filepath, "w");
 
     fprintf(f, "digraph g%d {\n", OPA_load_int(&(tree->nb_elements)));

@@ -396,7 +396,7 @@ void
 mpc_omp_fulfill_event(mpc_omp_event_handle_t * handle)
 {
     if (handle->type & MPC_OMP_EVENT_TASK_BLOCK) mpc_omp_task_unblock(handle);
-    not_implemented();
+    else not_implemented();
 }
 
 int

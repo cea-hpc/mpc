@@ -38,12 +38,6 @@ __get_infos(void)
     return &(thread->task_infos.tracer);
 }
 
-static inline double
-__get_global_time(void)
-{
-    return mpc_omp_timestamp();
-}
-
 int
 _mpc_omp_task_trace_begun(void)
 {
@@ -65,7 +59,7 @@ __node_new(mpc_omp_task_trace_record_type_t type)
 
     mpc_omp_task_trace_record_t * record = __node_record(node);
     record->type = type;
-    record->time = __get_global_time();
+    record->time = omp_get_wtime() * 100000.0;
     return node;
 }
 
@@ -140,6 +134,7 @@ _mpc_omp_task_trace_flush(void)
         mpc_common_recycler_recycle(&(infos->recyclers[record->type]), node);
         infos->head = next;
     }
+    infos->tail = NULL;
 }
 
 void
@@ -204,7 +199,7 @@ __task_trace_create_file(void)
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     char filepath[64];
-    sprintf(filepath, "mpc_omp_trace_%d_%ld.dat", __getpid(), thread->rank);
+    sprintf(filepath, "mpc_omp_trace_%d_%ld_%d.dat", __getpid(), thread->rank, thread->task_infos.tracer.id++);
     thread->task_infos.tracer.writer.fd = open(filepath, O_WRONLY | O_TRUNC | O_CREAT, 0644);
     assert(thread->task_infos.tracer.writer.fd >= 0);
 
@@ -222,6 +217,8 @@ mpc_omp_task_trace_begin(void)
     if (!MPC_OMP_TASK_TRACE_ENABLED) return ;
 
     mpc_omp_thread_task_trace_infos_t * infos = __get_infos();
+    assert(infos->head == NULL);
+    assert(infos->tail == NULL);
 
     mpc_omp_task_trace_record_type_t type;
     for (type = 0 ; type < MPC_OMP_TASK_TRACE_TYPE_COUNT ; type++)

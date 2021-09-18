@@ -194,7 +194,8 @@ def parse_traces(traces):
                 # a task completed
                 if 'COMPLETED' in properties:
                     assert(record.tid in bind)
-                    assert(record.uid == bind[record.tid][-1].uid)
+# for the check bellow, use a stack instead, in case of recursive tasking
+#                    assert(record.uid == bind[record.tid][-1].uid)
 
                 # a task unblocked and resumed
                 elif 'UNBLOCKED' in properties:

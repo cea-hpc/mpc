@@ -57,8 +57,8 @@
 # define MPC_OMP_VERSION_MINOR  1
 
 /* tasking */
-# define MPC_OMP_TASK_COMPILE_FIBER 0
-# define MPC_OMP_TASK_COMPILE_TRACE 0
+# define MPC_OMP_TASK_COMPILE_FIBER 1
+# define MPC_OMP_TASK_COMPILE_TRACE 1
 
 #if MPC_OMP_TASK_COMPILE_FIBER
 # define MPC_OMP_TASK_FIBER_ENABLED mpc_omp_conf_get()->task_use_fiber
@@ -68,7 +68,7 @@
 
 # define MPC_OMP_TASK_TRACE_ENABLED mpc_omp_conf_get()->task_trace
 
-# define MPC_OMP_TASK_USE_RECYCLERS  0
+# define MPC_OMP_TASK_USE_RECYCLERS  1
 # define MPC_OMP_TASK_ALLOCATOR      mpc_omp_alloc
 # define MPC_OMP_TASK_DEALLOCATOR    mpc_omp_free
 # define MPC_OMP_TASK_DEFAULT_ALIGN  8
