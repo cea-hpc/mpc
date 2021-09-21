@@ -2006,7 +2006,7 @@ ___gomp_convert_flags(bool if_clause, int flags)
     return properties;
 }
 
-static void inline
+static inline void
 __task_data_copy(void (*cpyfn)(void *, void *), void * data_storage, void * data, size_t arg_size)
 {
     assert(data_storage);
@@ -2053,17 +2053,17 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
     /* compute task size, data alignement, and allocate the task */
     if (arg_align == 0) arg_align = sizeof(void *);
     const size_t size = _mpc_omp_task_align_single_malloc(sizeof(mpc_omp_task_t) + arg_size, arg_align);
-    mpc_omp_task_t * task = mpc_omp_task_allocate(size);
+    mpc_omp_task_t * task = _mpc_omp_task_allocate(size);
 
     /* retrieve task data storage (for shared variables) */
     void * data_storage = (void *) (task + 1);
     __task_data_copy(cpyfn, data_storage, data, arg_size);
 
     /* set task fields */
-    mpc_omp_task_init(task, fn, data_storage, size, properties, depend, priority);
+    _mpc_omp_task_init(task, fn, data_storage, size, properties, depend, priority);
 
     /* process the task (differ or run it) */
-    mpc_omp_task_process(task);
+    _mpc_omp_task_process(task);
 
     mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
 }
@@ -2128,6 +2128,7 @@ void mpc_omp_GOMP_taskloop( void (*fn)(void *), void *data,
     mpc_omp_init();
 
     TODO("task loop implementation does not support 'if' clause, and private/shared variables");
+    (void)cpyfn;
 
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
@@ -2174,12 +2175,12 @@ void mpc_omp_GOMP_taskloop( void (*fn)(void *), void *data,
         /* task instantiations */
         for (i = 0; i < num_tasks; i++)
         {
-            mpc_omp_task_t * task = mpc_omp_task_allocate(size);
+            mpc_omp_task_t * task = _mpc_omp_task_allocate(size);
             long * data_storage = (long *) (task + 1);
             data_storage[0] = start;
             data_storage[1] = start + taskstep;
-            mpc_omp_task_init(task, fn, data, size, properties, NULL, priority);
-            mpc_omp_task_process(task);
+            _mpc_omp_task_init(task, fn, data, size, properties, NULL, priority);
+            _mpc_omp_task_process(task);
 
             start += taskstep;
             taskstep -= (i == extra_chunk) ? step : 0;
@@ -2215,8 +2216,9 @@ void mpc_omp_GOMP_taskloop_ull( void (*fn)(void *), void *data,
 #endif /* OMPT_SUPPORT */
 
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tBegin", __func__ );
-    mpc_omp_task_loop_ull( fn, data, cpyfn, arg_size, arg_align,
-                         flags, num_tasks, priority, start, end, step );
+//    mpc_omp_task_loop_ull( fn, data, cpyfn, arg_size, arg_align,
+//                         flags, num_tasks, priority, start, end, step );
+    TODO("implement 'mpc_omp_GOMP_taskloop_ull'");
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
 }
 

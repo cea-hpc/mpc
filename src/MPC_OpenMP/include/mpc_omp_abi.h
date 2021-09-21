@@ -365,7 +365,7 @@ int mpc_omp_checkpoint();
 /* tasks */
 void mpc_omp_task_process(mpc_omp_task_t * task);
 
-mpc_omp_task_t * _mpc_omp_task_init(
+mpc_omp_task_t * __mpc_omp_task_init(
     mpc_omp_task_t * task,
     void (*fn)(void *),
     void *data,

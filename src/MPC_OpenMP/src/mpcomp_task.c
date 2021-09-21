@@ -920,6 +920,22 @@ __task_unref(mpc_omp_task_t * task)
     }
 }
 
+static void
+__task_ref_parent_task(mpc_omp_task_t * task)
+{
+    assert(task);
+    assert(task->parent);
+    OPA_incr_int(&(task->parent->children_count));
+}
+
+static void
+__task_unref_parent_task(mpc_omp_task_t *task)
+{
+    assert(task);
+    assert(task->parent);
+    OPA_decr_int(&(task->parent->children_count));
+}
+
 static inline void
 __task_list_elt_delete(mpc_omp_task_dep_list_elt_t * elt)
 {
@@ -1003,7 +1019,7 @@ __task_finalize(mpc_omp_task_t * task)
     __task_delete_fiber(task);
 # endif /* MPC_OMP_TASK_COMPILE_FIBER */
     mpc_omp_taskgroup_del_task(task);
-    _mpc_omp_task_unref_parent_task(task);
+    __task_unref_parent_task(task);
     _mpc_omp_task_finalize_deps(task);
     __task_unref(task);
 }
@@ -2292,22 +2308,6 @@ int mpc_omp_task_parse_larceny_mode(char * mode)
  * TASK INTERFACE *
  ******************/
 
-void
-_mpc_omp_task_ref_parent_task(mpc_omp_task_t * task)
-{
-    assert(task);
-    assert(task->parent);
-    OPA_incr_int(&(task->parent->children_count));
-}
-
-void
-_mpc_omp_task_unref_parent_task(mpc_omp_task_t *task)
-{
-    assert(task);
-    assert(task->parent);
-    OPA_decr_int(&(task->parent->children_count));
-}
-
 /**
  * Perform a taskwait construct.
  *
@@ -2804,7 +2804,7 @@ mpc_omp_task_extra(__UNUSED__ char * label, int extra_clauses)
  * \param task total size (>= sizeof(mpc_omp_task_t))
  */
 mpc_omp_task_t *
-mpc_omp_task_allocate(size_t size)
+_mpc_omp_task_allocate(size_t size)
 {
     /* Intialize the OpenMP environnement (if needed) */
     mpc_omp_init();
@@ -2827,26 +2827,13 @@ mpc_omp_task_allocate(size_t size)
     return task;
 }
 
-
-/*
- * Initialize an openmp task
- *
- * \param task the task buffer to use (may be NULL, and so, a new task is allocated)
- * \param fn the task entry point
- * \param data the task data (fn parameters)
- * \param cpyfn function to copy the data
- * \param arg_size
- * \param arg_align
- * \param properties
- */
-mpc_omp_task_t *
-mpc_omp_task_init(
+static void
+_mpc_omp_task_init_attributes(
     mpc_omp_task_t * task,
     void (*func)(void *),
     void * data,
     size_t size,
     mpc_omp_task_property_t properties,
-    void ** depend,
     int priority_hint)
 {
     /* Intialize the OpenMP environnement (if needed) */
@@ -2876,9 +2863,43 @@ mpc_omp_task_init(
 #if MPC_USE_SISTER_LIST
     task->children_lock = SCTK_SPINLOCK_INITIALIZER;
 #endif
+}
 
+
+/*
+ * Initialize an openmp task
+ *
+ * \param task the task buffer to use (may be NULL, and so, a new task is allocated)
+ * \param fn the task entry point
+ * \param data the task data (fn parameters)
+ * \param cpyfn function to copy the data
+ * \param arg_size
+ * \param arg_align
+ * \param properties
+ */
+mpc_omp_task_t *
+_mpc_omp_task_init(
+    mpc_omp_task_t * task,
+    void (*func)(void *),
+    void * data,
+    size_t size,
+    mpc_omp_task_property_t properties,
+    void ** depend,
+    int priority_hint)
+{
+    /* set attributes */
+    _mpc_omp_task_init_attributes(task, func, data, size, properties, priority_hint);
+
+    /* Retrieve the information (microthread structure and current region) */
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+    assert(thread);
+    assert(thread->instance);
+
+
+
+    /* reference the task */
     _mpc_omp_taskgroup_add_task(task);
-    _mpc_omp_task_ref_parent_task(task);
+    __task_ref_parent_task(task);
     __task_ref(task);   /* __task_finalize */
     __task_ref(task);   /* mpc_omp_task */
 
@@ -2939,10 +2960,11 @@ mpc_omp_task_init(
 }
 
 /**
- * Process the task : run it or differ it
+ *  Process the task : run it or differ it
+ *  return 0 if the task was differed, 1 if it started on current thread
  */
-void
-mpc_omp_task_process(mpc_omp_task_t * task)
+int
+_mpc_omp_task_process(mpc_omp_task_t * task)
 {
     /* Retrieve the information (microthread structure and current region) */
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
@@ -2959,6 +2981,7 @@ mpc_omp_task_process(mpc_omp_task_t * task)
             {
                 /* run it */
                 __task_run(task);
+                return 1;
             }
             else
             {
@@ -2992,8 +3015,10 @@ mpc_omp_task_process(mpc_omp_task_t * task)
         }
     }
 
-    /* correspond with a reference on 'mpc_omp_task_init' */
+    /* correspond with a reference on '_mpc_omp_task_init' */
     __task_unref(task);
+
+    return 0;
 }
 
 /*************
@@ -3051,9 +3076,9 @@ _mpc_omp_task_taskgroup_end( void )
 /************
  * TASKLOOP *
  ************/
-
-static unsigned long _mpc_omp_task_loop_compute_num_iters(long start, long end,
-        long step) {
+unsigned long
+_mpc_omp_task_loop_compute_num_iters(long start, long end, long step)
+{
     long decal = (step > 0) ? -1 : 1;
 
     if ((end - start) * decal >= 0)
@@ -3062,7 +3087,7 @@ static unsigned long _mpc_omp_task_loop_compute_num_iters(long start, long end,
     return (end - start + step + decal) / step;
 }
 
-static unsigned long
+unsigned long
 _mpc_task_loop_compute_loop_value(
         long iteration_num, unsigned long num_tasks,
         long step, long *taskstep,
@@ -3104,7 +3129,7 @@ _mpc_task_loop_compute_loop_value(
     return compute_num_tasks;
 }
 
-static unsigned long
+unsigned long
 _mpc_task_loop_compute_loop_value_grainsize(
         long iteration_num, unsigned long num_tasks,
         long step, long *taskstep,
@@ -3150,13 +3175,13 @@ static inline void
 __task_init_initial(mpc_omp_thread_t * thread)
 {
     const size_t size = sizeof(mpc_omp_task_t);
-    mpc_omp_task_t * initial_task = mpc_omp_task_allocate(size);
+    mpc_omp_task_t * initial_task = _mpc_omp_task_allocate(size);
     assert(initial_task);
 
     mpc_omp_task_property_t properties = 0;
     mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_INITIAL);
     mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_IMPLICIT);
-    mpc_omp_task_init(initial_task, NULL, NULL, size, properties, NULL, 0);
+    _mpc_omp_task_init_attributes(initial_task, NULL, NULL, size, properties, 0);
 # if MPC_OMP_TASK_COMPILE_TRACE
     snprintf(initial_task->label, MPC_OMP_TASK_LABEL_MAX_LENGTH, "initial-%p", initial_task);
 # endif /* MPC_OMP_TASK_COMPILE_TRACE */

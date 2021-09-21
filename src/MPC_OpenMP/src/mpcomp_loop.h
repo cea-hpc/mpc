@@ -208,17 +208,6 @@ int mpc_omp_loop_ull_ordered_runtime_next( unsigned long long *,
 void mpc_omp_ordered_runtime_loop_end( void );
 void mpc_omp_ordered_runtime_loop_end_nowait( void );
 
-/************
- * TASKLOOP *
- ************/
-
-void mpc_omp_task_loop(void (*)(void *), void *, void (*)(void *, void *), long,
-                     long, unsigned, unsigned long, int, long, long, long);
-void mpc_omp_task_loop_ull(void (*)(void *), void *, void (*)(void *, void *),
-                         long, long, unsigned, unsigned long, int,
-                         unsigned long long, unsigned long long,
-                         unsigned long long);
-
 /***********
  * ORDERED *
  ***********/

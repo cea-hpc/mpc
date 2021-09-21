@@ -263,9 +263,7 @@ typedef struct kmp_depend_info
 	} flags;
 } kmp_depend_info_t;
 
-/* Following commented structs here for info on intel tasking internals.
- * + */
-#if 0
+/* Following commented structs here for info on intel tasking internals. */
 typedef struct kmp_tasking_flags { /* Total struct must be exactly 32 bits */
   /* Compiler flags */ /* Total compiler flags must be 16 bits */
   unsigned tiedness : 1; /* task is either tied (1) or untied (0) */
@@ -284,9 +282,9 @@ typedef struct kmp_tasking_flags { /* Total struct must be exactly 32 bits */
   /* Library flags */ /* Total library flags must be 16 bits */
   unsigned tasktype : 1; /* task is either explicit(1) or implicit (0) */
   unsigned task_serial : 1; // task is executed immediately (1) or deferred (0)
-  unsigned tasking_ser : 1; // all tasks in team are either executed immediately
-  (1) or may be deferred (0)
+  unsigned tasking_ser : 1; // all tasks in team are either executed immediately (1) or may be deferred (0)
   unsigned team_serial : 1; // entire team is serial (1) [1 thread] or parallel
+
   // (0) [>= 2 threads]
   /* If either team_serial or tasking_ser is set, task team may be NULL */
   /* Task State Flags: */
@@ -297,7 +295,6 @@ typedef struct kmp_tasking_flags { /* Total struct must be exactly 32 bits */
   unsigned native : 1; /* 1==gcc-compiled task, 0==intel */
   unsigned reserved31 : 7; /* reserved for library use */
 } kmp_tasking_flags_t;
-#endif
 
 struct kmp_taskdata   /* aligned during dynamic allocation       */
 {

@@ -277,27 +277,6 @@
 
 int mpc_omp_task_parse_larceny_mode(char * mode);
 
-/* Initialization of a task structure */
-static inline void
-_mpc_omp_task_info_init( mpc_omp_task_t *task,
-                     void ( *func )( void * ), void *data,
-                     struct mpc_omp_thread_s *thread )
-{
-    assert( task != NULL );
-    assert( thread != NULL );
-    /* Reset all task infos to NULL */
-    memset( task, 0, sizeof( mpc_omp_task_t ) );
-    /* Set non null task infos field */
-    task->func = func;
-    task->data = data;
-    task->icvs = thread->info.icvs;
-    task->parent = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK( thread );
-    task->depth = ( task->parent ) ? task->parent->depth + 1 : 0;
-#if MPC_USE_SISTER_LIST
-    task->children_lock = SCTK_SPINLOCK_INITIALIZER;
-#endif /* MPC_USE_SISTER_LIST */
-}
-
 /******************
  * TASK INTERFACE *
  ******************/
@@ -318,14 +297,10 @@ _mpc_omp_task_align_single_malloc( long size, long arg_align )
     return size;
 }
 
-void _mpc_omp_task_ref_parent_task( mpc_omp_task_t *task );
+int _mpc_omp_task_process(mpc_omp_task_t * task);
 
-void _mpc_omp_task_unref_parent_task( mpc_omp_task_t *task );
-
-void _mpc_omp_task_process(mpc_omp_task_t * task);
-
-void mpc_omp_task_initgroup_start( void );
-void mpc_omp_task_initgroup_end( void );
+void _mpc_omp_task_initgroup_start( void );
+void _mpc_omp_task_initgroup_end( void );
 
 void _mpc_omp_task_yield( void );
 
@@ -352,7 +327,7 @@ void _mpc_omp_task_tree_deinit(struct mpc_omp_thread_s * thread);
 /**
  * Allocate a task
  */
-mpc_omp_task_t * mpc_omp_task_allocate(size_t size);
+mpc_omp_task_t * _mpc_omp_task_allocate(size_t size);
 
 /*
  * Create a new openmp task
@@ -367,7 +342,7 @@ mpc_omp_task_t * mpc_omp_task_allocate(size_t size);
  * \param depend
  * \param priority_hint
  */
-mpc_omp_task_t * mpc_omp_task_init(
+mpc_omp_task_t * _mpc_omp_task_init(
     mpc_omp_task_t * task,
     void (*fn)(void *), void *data,
     size_t size,
@@ -417,13 +392,22 @@ mpc_omp_taskgroup_del_task( mpc_omp_task_t *task )
  * TASKLOOP *
  ************/
 
-void _mpc_omp_task_loop(void (*)(void *), void *, void (*)(void *, void *), long,
-                     long, unsigned, unsigned long, int, long, long, long);
-void mpc_omp_task_loop_ull(void (*)(void *), void *, void (*)(void *, void *),
-                         long, long, unsigned, unsigned long, int,
-                         unsigned long long, unsigned long long,
-                         unsigned long long);
-                        
+unsigned long
+_mpc_task_loop_compute_loop_value_grainsize(
+        long iteration_num, unsigned long num_tasks,
+        long step, long *taskstep,
+        unsigned long *extra_chunk);
+
+unsigned long
+_mpc_task_loop_compute_loop_value(
+        long iteration_num, unsigned long num_tasks,
+        long step, long *taskstep,
+        unsigned long *extra_chunk);
+
+
+unsigned long
+_mpc_omp_task_loop_compute_num_iters(long start, long end, long step);
+
 /* Task callbacks */
 void _mpc_omp_callback_run(mpc_omp_callback_when_t when);
 

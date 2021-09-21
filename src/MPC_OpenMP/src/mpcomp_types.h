@@ -265,13 +265,13 @@ typedef enum    mpc_omp_loop_gen_type_e
 	MPC_OMP_LOOP_TYPE_ULL,
 }              mpc_omp_loop_gen_type_t;
 
-typedef enum    mpc_omp_task_init_status_e
+typedef enum    _mpc_omp_task_init_status_e
 {
     MPC_OMP_TASK_INIT_STATUS_UNINITIALIZED,
     MPC_OMP_TASK_INIT_STATUS_INIT_IN_PROCESS,
     MPC_OMP_TASK_INIT_STATUS_INITIALIZED,
     MPC_OMP_TASK_INIT_STATUS_COUNT
-}               mpc_omp_task_init_status_t;
+}               _mpc_omp_task_init_status_t;
 
 /** Type of task pqueues */
 typedef enum    mpc_omp_pqueue_type_e
@@ -402,9 +402,6 @@ typedef struct mpc_omp_mvp_thread_args_s
     mpc_omp_ompt_tool_instance_t* tool_instance;
 #endif /* OMPT_SUPPORT */
 } mpc_omp_mvp_thread_args_t;
-
-/** Property of an OpenMP task */
-typedef unsigned int mpc_omp_task_property_t;
 
 /* Data structures */
 typedef struct  mpc_omp_task_taskgroup_s
