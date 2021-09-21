@@ -104,10 +104,10 @@ void __kmpc_atomic_float8_add(ident_t *id_ref, int gtid, kmp_real64 *lhs,
 	ATOMIC_BEGIN(TYPE_ID, OP_ID, TYPE, void)                                        \
 	TYPE old_value, new_value;                                                      \
 	old_value = *(TYPE volatile *)lhs;                                              \
-	new_value = old_value OP rhs;                                                   \
-	while(!__kmp_compare_and_store ## BITS( ( (kmp_int ## BITS *)lhs),              \
-	                                        (*(kmp_int ## BITS *) & old_value),     \
-	                                        (*(kmp_int ## BITS *) & new_value) ) ){ \
+	new_value = old_value OP rhs;                                               \
+	while(!__kmp_compare_and_store ## BITS( ((kmp_int ## BITS *)lhs),           \
+	                                        ((kmp_int ## BITS)  old_value),     \
+	                                        ((kmp_int ## BITS)  new_value))) {  \
 		DO_PAUSE;                                                               \
 		old_value = *(TYPE volatile *)lhs;                                      \
 		new_value = old_value OP rhs;                                           \
@@ -119,9 +119,9 @@ void __kmpc_atomic_float8_add(ident_t *id_ref, int gtid, kmp_real64 *lhs,
 	TYPE old_value, new_value;                                                      \
 	old_value = *(TYPE volatile *)lhs;                                              \
 	new_value = old_value OP rhs;                                                   \
-	while(!__kmp_compare_and_store ## BITS( ( (kmp_int ## BITS *)lhs),              \
-	                                        (*(kmp_int ## BITS *) & old_value),     \
-	                                        (*(kmp_int ## BITS *) & new_value) ) ){ \
+	while(!__kmp_compare_and_store ## BITS( ((kmp_int ## BITS *) lhs),              \
+	                                        ((kmp_int ## BITS)   old_value),     \
+	                                        ((kmp_int ## BITS)   new_value) ) ){ \
 		DO_PAUSE;                                                               \
 		old_value = *(TYPE volatile *)lhs;                                      \
 		new_value = old_value OP rhs;                                           \
@@ -137,9 +137,9 @@ void __kmpc_atomic_float8_add(ident_t *id_ref, int gtid, kmp_real64 *lhs,
 		temp_val  = *lhs;                                                           \
 		old_value = temp_val;                                                       \
 		while(old_value OP rhs &&                                                   \
-		      !__kmp_compare_and_store ## BITS( ( (kmp_int ## BITS *)lhs),          \
-		                                        (*(kmp_int ## BITS *) & old_value), \
-		                                        (*(kmp_int ## BITS *) & rhs) ) ){   \
+		      !__kmp_compare_and_store ## BITS( ((kmp_int ## BITS *) lhs),          \
+		                                        ((kmp_int ## BITS)   old_value), \
+		                                        ((kmp_int ## BITS)   rhs) ) ){   \
 			DO_PAUSE;                                                           \
 			temp_val  = *lhs;                                                   \
 			old_value = temp_val;                                               \
@@ -153,9 +153,9 @@ void __kmpc_atomic_float8_add(ident_t *id_ref, int gtid, kmp_real64 *lhs,
 	TYPE old_value, new_value;                                                      \
 	old_value = *(TYPE volatile *)lhs;                                              \
 	new_value = old_value OP rhs;                                                   \
-	while(!__kmp_compare_and_store ## BITS( ( (kmp_int ## BITS *)lhs),              \
-	                                        (*(kmp_int ## BITS *) & old_value),     \
-	                                        (*(kmp_int ## BITS *) & new_value) ) ){ \
+	while(!__kmp_compare_and_store ## BITS( ((kmp_int ## BITS *) lhs),              \
+	                                        ((kmp_int ## BITS)   old_value),     \
+	                                        ((kmp_int ## BITS)   new_value) ) ){ \
 		DO_PAUSE;                                                               \
 		old_value = *(TYPE volatile *)lhs;                                      \
 		new_value = old_value OP rhs;                                           \
@@ -186,9 +186,9 @@ void __kmpc_atomic_float8_add(ident_t *id_ref, int gtid, kmp_real64 *lhs,
 		temp_val  = *lhs;                                                           \
 		old_value = temp_val;                                                       \
 		while(old_value OP rhs &&                                                   \
-		      !__kmp_compare_and_store ## BITS( ( (kmp_int ## BITS *)lhs),          \
-		                                        (*(kmp_int ## BITS *) & old_value), \
-		                                        (*(kmp_int ## BITS *) & rhs) ) ){   \
+		      !__kmp_compare_and_store ## BITS( ((kmp_int ## BITS *) lhs),          \
+		                                        ((kmp_int ## BITS)   old_value), \
+		                                        ((kmp_int ## BITS)   rhs) ) ){   \
 			DO_PAUSE;                                                           \
 			temp_val  = *lhs;                                                   \
 			old_value = temp_val;                                               \
@@ -208,9 +208,9 @@ void __kmpc_atomic_float8_add(ident_t *id_ref, int gtid, kmp_real64 *lhs,
 	temp_val  = *lhs;                                                               \
 	old_value = temp_val;                                                           \
 	new_value = old_value OP rhs;                                                   \
-	while(!__kmp_compare_and_store ## BITS( ( (kmp_int ## BITS *)lhs),              \
-	                                        (*(kmp_int ## BITS *) & old_value),     \
-	                                        (*(kmp_int ## BITS *) & new_value) ) ){ \
+	while(!__kmp_compare_and_store ## BITS( ((kmp_int ## BITS *) lhs),              \
+	                                        ((kmp_int ## BITS) old_value),     \
+	                                        ((kmp_int ## BITS) new_value) ) ){ \
 		DO_PAUSE;                                                               \
 		temp_val  = *lhs;                                                       \
 		old_value = temp_val;                                                   \
@@ -229,9 +229,9 @@ void __kmpc_atomic_float8_add(ident_t *id_ref, int gtid, kmp_real64 *lhs,
 	temp_val  = *lhs;                                                               \
 	old_value = temp_val;                                                           \
 	new_value = old_value OP rhs;                                                   \
-	while(!__kmp_compare_and_store ## BITS( ( (kmp_int ## BITS *)lhs),              \
-	                                        (*(kmp_int ## BITS *) & old_value),     \
-	                                        (*(kmp_int ## BITS *) & new_value) ) ){ \
+	while(!__kmp_compare_and_store ## BITS( ((kmp_int ## BITS *) lhs),              \
+	                                        ((kmp_int ## BITS)   old_value),     \
+	                                        ((kmp_int ## BITS)   new_value) ) ){ \
 		DO_PAUSE;                                                               \
 		temp_val  = *lhs;                                                       \
 		old_value = temp_val;                                                   \
@@ -267,8 +267,8 @@ void __kmpc_atomic_float8_add(ident_t *id_ref, int gtid, kmp_real64 *lhs,
 	old_value = temp_val;                                                        \
 	new_value = rhs OP old_value;                                                \
 	while(!__kmp_compare_and_store ## BITS( (kmp_int ## BITS *)lhs,              \
-	                                        *(kmp_int ## BITS *) & old_value,    \
-	                                        *(kmp_int ## BITS *) & new_value) ){ \
+	                                        (kmp_int ## BITS) old_value,    \
+	                                        (kmp_int ## BITS) new_value) ){ \
 		DO_PAUSE;                                                            \
 		temp_val  = *lhs;                                                    \
 		old_value = temp_val;                                                \
@@ -282,9 +282,9 @@ void __kmpc_atomic_float8_add(ident_t *id_ref, int gtid, kmp_real64 *lhs,
 	TYPE old_value, new_value;                                                   \
 	old_value = *(TYPE volatile *)lhs;                                           \
 	new_value = old_value OP(TYPE) rhs;                                          \
-	while(!__kmp_compare_and_store ## BITS( (kmp_int ## BITS *)lhs,              \
-	                                        *(kmp_int ## BITS *) & old_value,    \
-	                                        *(kmp_int ## BITS *) & new_value) ){ \
+	while(!__kmp_compare_and_store ## BITS( (kmp_int ## BITS *) lhs,              \
+	                                        (kmp_int ## BITS)   old_value,    \
+	                                        (kmp_int ## BITS)   new_value) ){ \
 		DO_PAUSE;                                                            \
 		old_value = *(TYPE volatile *)lhs;                                   \
 		new_value = old_value OP(TYPE) rhs;                                  \
@@ -344,8 +344,8 @@ void __kmpc_atomic_float8_add(ident_t *id_ref, int gtid, kmp_real64 *lhs,
 	old_value = temp_val;                                                        \
 	new_value = rhs;                                                             \
 	while(!__kmp_compare_and_store ## BITS( (kmp_int ## BITS *)lhs,              \
-	                                        *(kmp_int ## BITS *) & old_value,    \
-	                                        *(kmp_int ## BITS *) & new_value) ){ \
+	                                        (kmp_int ## BITS)  old_value,    \
+	                                        (kmp_int ## BITS)  new_value) ){ \
 		DO_PAUSE;                                                            \
 		temp_val  = *lhs;                                                    \
 		old_value = temp_val;                                                \
@@ -378,9 +378,9 @@ void __kmpc_atomic_float8_add(ident_t *id_ref, int gtid, kmp_real64 *lhs,
 	temp_val  = *lhs;                                                            \
 	old_value = temp_val;                                                        \
 	new_value = old_value OP rhs;                                                \
-	while(!__kmp_compare_and_store ## BITS( (kmp_int ## BITS *)lhs,              \
-	                                        *(kmp_int ## BITS *) & old_value,    \
-	                                        *(kmp_int ## BITS *) & new_value) ){ \
+	while(!__kmp_compare_and_store ## BITS( (kmp_int ## BITS *) lhs,              \
+	                                        (kmp_int ## BITS)   old_value,    \
+	                                        (kmp_int ## BITS)   new_value) ){ \
 		DO_PAUSE;                                                            \
 		temp_val  = *lhs;                                                    \
 		old_value = temp_val;                                                \

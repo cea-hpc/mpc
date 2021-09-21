@@ -2006,6 +2006,23 @@ ___gomp_convert_flags(bool if_clause, int flags)
     return properties;
 }
 
+static void inline
+__task_data_copy(void (*cpyfn)(void *, void *), void * data_storage, void * data, size_t arg_size)
+{
+    assert(data_storage);
+    assert(arg_size == 0 || data);
+    if (arg_size > 0)
+    {
+        if (cpyfn)
+        {
+            cpyfn(data_storage, data);
+        }
+        else
+        {
+            memcpy(data_storage, data, arg_size);
+        }
+    }
+}
 
 /**
  * See https://github.com/gcc-mirror/gcc/blob/master/libgomp/task.c#L351
@@ -2018,8 +2035,6 @@ ___gomp_convert_flags(bool if_clause, int flags)
  * >= 6 -> priority
  * >= 11 -> detach
  */
-TODO("Edit GOMP task entry point prototype based on GCC version");
-
 void
 mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
                        void ( *cpyfn )( void *, void * ), long arg_size,
@@ -2032,9 +2047,24 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
 
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tBegin", __func__ );
 
+    /* convert GOMP flags to MPC-OpenMP task properties */
     mpc_omp_task_property_t properties = ___gomp_convert_flags(if_clause, flags);
-    mpc_omp_task(NULL, fn, data, cpyfn, arg_size, arg_align, properties, depend, priority);
-	
+
+    /* compute task size, data alignement, and allocate the task */
+    if (arg_align == 0) arg_align = sizeof(void *);
+    const size_t size = _mpc_omp_task_align_single_malloc(sizeof(mpc_omp_task_t) + arg_size, arg_align);
+    mpc_omp_task_t * task = mpc_omp_task_allocate(size);
+
+    /* retrieve task data storage (for shared variables) */
+    void * data_storage = (void *) (task + 1);
+    __task_data_copy(cpyfn, data_storage, data, arg_size);
+
+    /* set task fields */
+    mpc_omp_task_init(task, fn, data_storage, size, properties, depend, priority);
+
+    /* process the task (differ or run it) */
+    mpc_omp_task_process(task);
+
     mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
 }
 
@@ -2095,15 +2125,82 @@ void mpc_omp_GOMP_taskloop( void (*fn)(void *), void *data,
                            unsigned flags, unsigned long num_tasks, int priority,
                            long start, long end, long step )
 {
+    mpc_omp_init();
+
+    TODO("task loop implementation does not support 'if' clause, and private/shared variables");
+
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
     _mpc_omp_ompt_frame_set_no_reentrant();
 #endif /* OMPT_SUPPORT */
 
-	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tBegin", __func__ );
-    mpc_omp_task_loop( fn, data, cpyfn, arg_size, arg_align,
-                     flags, num_tasks, priority, start, end, step );
-	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
+    mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tBegin", __func__ );
+
+#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
+    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
+    _mpc_omp_ompt_frame_set_no_reentrant();
+#endif /* OMPT_SUPPORT */
+
+    long taskstep;
+    unsigned long extra_chunk, i;
+    const long num_iters = _mpc_omp_task_loop_compute_num_iters(start, end, step);
+
+#if OMPT_SUPPORT
+    _mpc_omp_ompt_callback_work( ompt_work_taskloop, ompt_scope_begin, num_iters );
+#endif /* OMPT_SUPPORT */
+
+    if (num_iters)
+    {
+        if (!(flags & GOMP_TASK_FLAG_GRAINSIZE))
+        {
+            num_tasks = _mpc_task_loop_compute_loop_value(num_iters, num_tasks, step, &taskstep, &extra_chunk);
+        }
+        else
+        {
+            num_tasks = _mpc_task_loop_compute_loop_value_grainsize(num_iters, num_tasks, step, &taskstep, &extra_chunk);
+            taskstep = (num_tasks == 1) ? end - start : taskstep;
+        }
+
+        if (!(flags & GOMP_TASK_FLAG_NOGROUP))
+        {
+            _mpc_omp_task_taskgroup_start();
+        }
+
+        /* tasks size and properties */
+        if (arg_align == 0) arg_align = sizeof(void *);
+        const size_t size = _mpc_omp_task_align_single_malloc(sizeof(mpc_omp_task_t) + arg_size, arg_align);
+        mpc_omp_task_property_t properties = ___gomp_convert_flags(1, flags);
+
+        /* task instantiations */
+        for (i = 0; i < num_tasks; i++)
+        {
+            mpc_omp_task_t * task = mpc_omp_task_allocate(size);
+            long * data_storage = (long *) (task + 1);
+            data_storage[0] = start;
+            data_storage[1] = start + taskstep;
+            mpc_omp_task_init(task, fn, data, size, properties, NULL, priority);
+            mpc_omp_task_process(task);
+
+            start += taskstep;
+            taskstep -= (i == extra_chunk) ? step : 0;
+        }
+
+        if (!(flags & GOMP_TASK_FLAG_NOGROUP))
+        {
+            _mpc_omp_task_taskgroup_end();
+        }
+    }
+
+#if OMPT_SUPPORT
+    _mpc_omp_ompt_callback_work( ompt_work_taskloop, ompt_scope_end, 0 );
+#if MPCOMPT_HAS_FRAME_SUPPORT
+    _mpc_omp_ompt_frame_unset_no_reentrant();
+#endif /* MPCOMPT_HAS_FRAME_SUPPORT */
+#endif /* OMPT_SUPPORT */
+
+    TODO("no barrier after a taskloop construct, right ?");
+
+    mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
 }
 
 void mpc_omp_GOMP_taskloop_ull( void (*fn)(void *), void *data,

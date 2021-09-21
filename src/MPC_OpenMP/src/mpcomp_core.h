@@ -90,8 +90,8 @@ typedef struct  mpc_omp_conf_s
     int pqueue_new_depth;
     int pqueue_untied_depth;
     int task_recycler_capacity;
-    int fiber_recycler_capacity;
-    double queue_empty_schedules;
+    int task_fiber_stack_size;
+    int task_fiber_recycler_capacity;
     int queue_empty_if_full;
     int task_depth_threshold;
     int task_use_fiber;

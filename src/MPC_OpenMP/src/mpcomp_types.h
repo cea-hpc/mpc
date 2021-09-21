@@ -35,7 +35,6 @@
 #include "mpc_common_types.h"
 #include "mpc_omp.h"
 #include "mpc_omp_task_property.h"
-#include "mpc_omp_task_trace.h"
 #include "sctk_alloc.h"
 #include "mpc_common_mcs.h"
 #include "mpcompt_instance_types.h"
@@ -73,8 +72,7 @@
 # define MPC_OMP_TASK_DEALLOCATOR    mpc_omp_free
 # define MPC_OMP_TASK_DEFAULT_ALIGN  8
 
-TODO("Make this configurable")
-# define MPC_OMP_TASK_FIBER_STACK_SIZE (32768)
+# define MPC_OMP_TASK_FIBER_STACK_SIZE (mpc_omp_conf_get()->task_fiber_stack_size)
 
 # if MPC_OMP_TASK_COMPILE_TRACE
 #  include "mpc_omp_task_trace.h"
@@ -198,9 +196,6 @@ typedef enum    mpc_omp_task_priority_policy_e
      */
     MPC_OMP_TASK_PRIORITY_POLICY_SA2
 }               mpc_omp_task_priority_policy_t;
-
-
-TODO("naming convention on these enums");
 
 /* Type of children in the topology tree */
 typedef enum    mpc_omp_children_e
@@ -579,7 +574,6 @@ typedef struct  mpc_omp_task_s
     /* task reference counter to release memory appropriately */
     OPA_int_t ref_counter;
 
-    TODO("only set this attribute if using intel abi");
     /* last task allocated by the thread doing if0 pragma */
     struct mpc_omp_task_s * last_task_alloc;
 

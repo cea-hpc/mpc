@@ -363,14 +363,18 @@ void mpc_omp_ordered_runtime_loop_end_nowait () ;
 int mpc_omp_checkpoint();
 
 /* tasks */
-void mpc_omp_task(
-        mpc_omp_task_t * task,
-        void (*fn)(void *), void *data,
-        void (*cpyfn)(void *, void *),
-        long arg_size, long arg_align,
-        mpc_omp_task_property_t properties,
-        void **depend,
-        int priority_hint);
+void mpc_omp_task_process(mpc_omp_task_t * task);
+
+mpc_omp_task_t * _mpc_omp_task_init(
+    mpc_omp_task_t * task,
+    void (*fn)(void *),
+    void *data,
+    void (*cpyfn)(void *, void *),
+    long arg_size,
+    long arg_align,
+    mpc_omp_task_property_t properties,
+    void ** depend,
+    int priority_hint);
 
 #ifdef __cplusplus
 }

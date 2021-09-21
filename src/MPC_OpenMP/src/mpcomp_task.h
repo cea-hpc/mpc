@@ -324,8 +324,8 @@ void _mpc_omp_task_unref_parent_task( mpc_omp_task_t *task );
 
 void _mpc_omp_task_process(mpc_omp_task_t * task);
 
-void _mpc_omp_task_newgroup_start( void );
-void _mpc_omp_task_newgroup_end( void );
+void mpc_omp_task_initgroup_start( void );
+void mpc_omp_task_initgroup_end( void );
 
 void _mpc_omp_task_yield( void );
 
@@ -348,6 +348,12 @@ void _mpc_omp_task_wait( void );
 void _mpc_omp_task_tree_init(struct mpc_omp_thread_s * thread);
 void _mpc_omp_task_tree_deinit(struct mpc_omp_thread_s * thread);
 
+
+/**
+ * Allocate a task
+ */
+mpc_omp_task_t * mpc_omp_task_allocate(size_t size);
+
 /*
  * Create a new openmp task
  *
@@ -356,34 +362,20 @@ void _mpc_omp_task_tree_deinit(struct mpc_omp_thread_s * thread);
  * \param task the task buffer to use (may be NULL, and so, a new task is allocated)
  * \param fn the task entry point
  * \param data the task data (fn parameters)
- * \param cpyfn function to copy the data
- * \param arg_size
- * \param arg_align
+ * \param size the total size of the task in bytes
  * \param properties
  * \param depend
  * \param priority_hint
  */
-mpc_omp_task_t * _mpc_omp_task_new(
+mpc_omp_task_t * mpc_omp_task_init(
     mpc_omp_task_t * task,
     void (*fn)(void *), void *data,
-    void (*cpyfn)(void *, void *),
-    long arg_size, long arg_align,
+    size_t size,
     mpc_omp_task_property_t properties,
     void ** depend,
     int priority_hint);
 
-void
-_mpc_omp_task_init(
-    mpc_omp_task_t *task,
-    void (*func)(void *),
-    void *data,
-    unsigned int size,
-    mpc_omp_task_property_t properties,
-    mpc_omp_thread_t * thread
-);
-
 void _mpc_omp_task_finalize_deps(mpc_omp_task_t *task);
-
 
 /*************
  * TASKGROUP *

@@ -378,6 +378,7 @@ __task_pqueue_node_new(
     size_t priority)
 {
     /* TODO : use a recycler */
+    TODO("use a recycler for mpc_omp_task_pqueue_node_t");
     mpc_omp_task_pqueue_node_t * node = (mpc_omp_task_pqueue_node_t *) mpc_omp_alloc(sizeof(mpc_omp_task_pqueue_node_t));
     assert(node);
 
@@ -1047,6 +1048,7 @@ __task_dep_htable_entry_add(mpc_omp_task_dep_htable_t * htable, uintptr_t addr)
 
         /* Allocation */
         /* TODO : use recycler maybe */
+        TODO("use a recycler for mpc_omp_task_dep_htable_entry_t");
         if (entry == NULL)
         {
             entry = (mpc_omp_task_dep_htable_entry_t *)mpc_omp_alloc(sizeof(mpc_omp_task_dep_htable_entry_t));
@@ -1395,39 +1397,6 @@ __task_priority_compute(mpc_omp_task_t * task)
             break ;
         }
     }
-}
-
-/* Initialization of a task structure */
-void
-_mpc_omp_task_init(
-    mpc_omp_task_t *task,
-    void (*func)(void *),
-    void *data,
-    unsigned int size,
-    mpc_omp_task_property_t properties,
-    mpc_omp_thread_t * thread
-)
-{
-    assert(task != NULL);
-    assert(thread != NULL);
-
-    /* Reset all task infos to NULL */
-    memset(task, 0, sizeof(mpc_omp_task_t));
-
-    /* Set non null task infos field */
-    task->func = func;
-    task->data = data;
-    task->size = size;
-    task->icvs = thread->info.icvs;
-    task->property = properties;
-
-    task->parent = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
-    task->depth = (task->parent) ? task->parent->depth + 1 : 0;
-    OPA_store_int(&(task->ref_counter), 0);
-
-#if MPC_USE_SISTER_LIST
-    task->children_lock = SCTK_SPINLOCK_INITIALIZER;
-#endif
 }
 
 static inline int
@@ -2040,6 +2009,7 @@ __task_get_victim( int globalRank, int index,
     return victim;
 }
 
+TODO("steal more than 1 task at a time");
 static mpc_omp_task_t *
 __task_larceny(mpc_omp_task_pqueue_type_t type)
 {
@@ -2088,7 +2058,7 @@ __task_larceny(mpc_omp_task_pqueue_type_t type)
         }
     
         /* Try to steal to last thread that stole us a task */
-        /* TODO : this is broken, last_thief is always `-1` */
+        TODO("last_thief is always `-1`");
         if(mpc_omp_conf_get()->task_steal_last_thief)
         {
             if (mvp->task_infos.last_thief != -1
@@ -2792,6 +2762,11 @@ _mpc_omp_task_yield(void)
 
     switch (mpc_omp_conf_get()->task_yield_mode)
     {
+        case (MPC_OMP_TASK_YIELD_MODE_NOOP):
+        {
+            /* do nothing */
+            break ;
+        }
         case (MPC_OMP_TASK_YIELD_MODE_STACK):
         {
             __taskyield_stack();
@@ -2810,10 +2785,6 @@ _mpc_omp_task_yield(void)
             break ;
         }
     }
-
-    /* thread may have changed */
-    /* thread = (mpc_omp_thread_t *)mpc_omp_tls; */
-    /* assert(current_task == MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread)); */
 }
 
 void
@@ -2829,9 +2800,36 @@ mpc_omp_task_extra(__UNUSED__ char * label, int extra_clauses)
 }
 
 /*
- * Create a new openmp task
- *
- * This function can be called when encountering an 'omp task' construct
+ * Allocate an openmp task
+ * \param task total size (>= sizeof(mpc_omp_task_t))
+ */
+mpc_omp_task_t *
+mpc_omp_task_allocate(size_t size)
+{
+    /* Intialize the OpenMP environnement (if needed) */
+    mpc_omp_init();
+
+    /* increment number of existing tasks */
+    __instance_incr_tasks();
+
+    /* Retrieve the information (microthread structure and current region) */
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+    assert(thread);
+    assert(thread->instance);
+
+    /* default pading */
+
+# if MPC_OMP_TASK_USE_RECYCLERS
+    mpc_omp_task_t * task = mpc_common_nrecycler_alloc(&(thread->task_infos.task_recycler), size);
+# else
+    mpc_omp_task_t * task = mpc_omp_alloc(size);
+# endif
+    return task;
+}
+
+
+/*
+ * Initialize an openmp task
  *
  * \param task the task buffer to use (may be NULL, and so, a new task is allocated)
  * \param fn the task entry point
@@ -2842,20 +2840,15 @@ mpc_omp_task_extra(__UNUSED__ char * label, int extra_clauses)
  * \param properties
  */
 mpc_omp_task_t *
-_mpc_omp_task_new(
+mpc_omp_task_init(
     mpc_omp_task_t * task,
-    void (*fn)(void *),
-    void *data,
-    void (*cpyfn)(void *, void *),
-    long arg_size,
-    long arg_align,
+    void (*func)(void *),
+    void * data,
+    size_t size,
     mpc_omp_task_property_t properties,
     void ** depend,
     int priority_hint)
 {
-    /* increment number of existing tasks */
-    __instance_incr_tasks();
-
     /* Intialize the OpenMP environnement (if needed) */
     mpc_omp_init();
 
@@ -2864,45 +2857,25 @@ _mpc_omp_task_new(
     assert(thread);
     assert(thread->instance);
 
-    /* default pading */
-    const long align_size = (arg_align == 0) ? 8 : arg_align ;
-
-    // mpc_omp_task + arg_size
-    const unsigned long task_size = _mpc_omp_task_align_single_malloc(sizeof(mpc_omp_task_t), align_size);
-    const unsigned long data_size = _mpc_omp_task_align_single_malloc(arg_size, align_size);
-    const unsigned long task_tot_size = task_size + data_size;
-
-    if (task)   /* TODO */
-    {
-        TODO("Non-null task buffer is not implemented yet");
-        assert(0);
-    }
-
-# if MPC_OMP_TASK_USE_RECYCLERS
-    task = mpc_common_nrecycler_alloc(&(thread->task_infos.task_recycler), task_tot_size);
-# else
-    task = mpc_omp_alloc(task_tot_size);
-# endif
-    void * task_data = arg_size ? (void *) (((unsigned char *)task) + task_size) : NULL;
-
+    /* Reset all task infos to NULL */
     assert(task);
-    assert(arg_size == 0 || task_data);
+    memset(task, 0, sizeof(mpc_omp_task_t));
 
-    if (arg_size > 0)
-    {
-        if (cpyfn)
-        {
-            cpyfn(task_data, data);
-        }
-        else
-        {
-            memcpy(task_data, data, arg_size);
-        }
-    }
-
-    /* Initialize the task */
-    _mpc_omp_task_init(task, fn, task_data, task_tot_size, properties, thread);
+    /* Set non null task infos field */
+    task->func = func;
+    task->data = data;
+    task->size = size;
+    task->property = properties;
+    task->icvs = thread->info.icvs;
     task->omp_priority_hint = priority_hint;
+
+    task->parent = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    task->depth = (task->parent) ? task->parent->depth + 1 : 0;
+    OPA_store_int(&(task->ref_counter), 0);
+
+#if MPC_USE_SISTER_LIST
+    task->children_lock = SCTK_SPINLOCK_INITIALIZER;
+#endif
 
     _mpc_omp_taskgroup_add_task(task);
     _mpc_omp_task_ref_parent_task(task);
@@ -2966,27 +2939,16 @@ _mpc_omp_task_new(
 }
 
 /**
- * MPC OpenMP task constrctor ABI
+ * Process the task : run it or differ it
  */
 void
-mpc_omp_task(
-    mpc_omp_task_t * task,
-    void (*fn)(void *), void *data,
-    void (*cpyfn)(void *, void *),
-    long arg_size, long arg_align,
-    mpc_omp_task_property_t properties,
-    void **depend,
-    int priority_hint)
+mpc_omp_task_process(mpc_omp_task_t * task)
 {
-    mpc_omp_init();
-
+    /* Retrieve the information (microthread structure and current region) */
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     assert(thread);
+    assert(thread->instance);
 
-    /* create the task */
-    task = _mpc_omp_task_new(task, fn, data, cpyfn, arg_size, arg_align, properties, depend, priority_hint); 
-    assert(task);
-    
     /* if the task is ready */
     if (OPA_load_int(&(task->dep_node.ref_predecessors)) == 0)
     {
@@ -3004,6 +2966,10 @@ mpc_omp_task(
                 mpc_omp_task_pqueue_t * pqueue = __thread_get_task_pqueue(thread, MPC_OMP_PQUEUE_TYPE_NEW);
                 __task_pqueue_push(pqueue, task);
             }
+        }
+        else
+        {
+            /* already run */
         }
     }
     /* else the task is not ready */
@@ -3026,7 +2992,7 @@ mpc_omp_task(
         }
     }
 
-    /* correspond with a reference on '_mpc_omp_task_new' */
+    /* correspond with a reference on 'mpc_omp_task_init' */
     __task_unref(task);
 }
 
@@ -3097,7 +3063,7 @@ static unsigned long _mpc_omp_task_loop_compute_num_iters(long start, long end,
 }
 
 static unsigned long
-__loop_taskloop_compute_loop_value(
+_mpc_task_loop_compute_loop_value(
         long iteration_num, unsigned long num_tasks,
         long step, long *taskstep,
         unsigned long *extra_chunk)
@@ -3139,7 +3105,7 @@ __loop_taskloop_compute_loop_value(
 }
 
 static unsigned long
-__loop_taskloop_compute_loop_value_grainsize(
+_mpc_task_loop_compute_loop_value_grainsize(
         long iteration_num, unsigned long num_tasks,
         long step, long *taskstep,
         unsigned long *extra_chunk)
@@ -3180,93 +3146,17 @@ __loop_taskloop_compute_loop_value_grainsize(
   return compute_num_tasks;
 }
 
-void mpc_omp_task_loop(void (*fn)(void *), void *data,
-                     void (*cpyfn)(void *, void *), long arg_size,
-                     long arg_align, unsigned flags, unsigned long num_tasks,
-                     __UNUSED__ int priority, long start, long end, long step)
-{
-#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
-    _mpc_omp_ompt_frame_set_no_reentrant();
-#endif /* OMPT_SUPPORT */
-
-    long taskstep;
-    unsigned long extra_chunk, i;
-
-    mpc_omp_init();
-
-    const long num_iters = _mpc_omp_task_loop_compute_num_iters(start, end, step);
-
-#if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_work( ompt_work_taskloop, ompt_scope_begin, num_iters );
-#endif /* OMPT_SUPPORT */
-
-    if (num_iters)
-    {
-        if (!(flags & GOMP_TASK_FLAG_GRAINSIZE)) {
-            num_tasks = __loop_taskloop_compute_loop_value(num_iters, num_tasks, step, &taskstep, &extra_chunk);
-        } else {
-            num_tasks = __loop_taskloop_compute_loop_value_grainsize(num_iters, num_tasks, step, &taskstep, &extra_chunk);
-            taskstep = (num_tasks == 1) ? end - start : taskstep;
-        }
-
-        if (!(flags & GOMP_TASK_FLAG_NOGROUP)) {
-            _mpc_omp_task_taskgroup_start();
-        }
-
-        for (i = 0; i < num_tasks; i++) {
-            mpc_omp_task_property_t properties = 0;
-            mpc_omp_task_t * new_task = _mpc_omp_task_new(NULL, fn, data, cpyfn, arg_size, arg_align, properties, NULL, 0);
-            ((long *)new_task->data)[0] = start;
-            ((long *)new_task->data)[1] = start + taskstep;
-            start += taskstep;
-            taskstep -= (i == extra_chunk) ? step : 0;
-            TODO("handle the if clause, and flags here, for now, run sequentially");
-            __task_run(new_task);
-        }
-
-        if (!(flags & GOMP_TASK_FLAG_NOGROUP)) {
-            _mpc_omp_task_taskgroup_end();
-        }
-    }
-
-#if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_work( ompt_work_taskloop, ompt_scope_end, 0 );
-#if MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_unset_no_reentrant();
-#endif /* MPCOMPT_HAS_FRAME_SUPPORT */
-#endif /* OMPT_SUPPORT */
-}
-
-void mpc_omp_task_loop_ull(__UNUSED__ void (*fn)(void *), __UNUSED__ void *data,
-                         __UNUSED__ void (*cpyfn)(void *, void *), __UNUSED__ long arg_size,
-                         __UNUSED__ long arg_align, __UNUSED__ unsigned flags,
-                         __UNUSED__  unsigned long num_tasks, __UNUSED__ int priority,
-                         __UNUSED__ unsigned long long start, __UNUSED__ unsigned long long end,
-                         __UNUSED__ unsigned long long step)
-{
-#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
-    _mpc_omp_ompt_frame_set_no_reentrant();
-#endif /* OMPT_SUPPORT */
-
-    not_implemented();
-
-#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_unset_no_reentrant();
-#endif /* OMPT_SUPPORT */
-}
-
 static inline void
 __task_init_initial(mpc_omp_thread_t * thread)
 {
-    mpc_omp_task_t * initial_task = (mpc_omp_task_t*)mpc_omp_alloc( sizeof(mpc_omp_task_t));
-    assert( initial_task );
+    const size_t size = sizeof(mpc_omp_task_t);
+    mpc_omp_task_t * initial_task = mpc_omp_task_allocate(size);
+    assert(initial_task);
 
     mpc_omp_task_property_t properties = 0;
     mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_INITIAL);
     mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_IMPLICIT);
-    _mpc_omp_task_init(initial_task, NULL, NULL, 0, properties, thread);
+    mpc_omp_task_init(initial_task, NULL, NULL, size, properties, NULL, 0);
 # if MPC_OMP_TASK_COMPILE_TRACE
     snprintf(initial_task->label, MPC_OMP_TASK_LABEL_MAX_LENGTH, "initial-%p", initial_task);
 # endif /* MPC_OMP_TASK_COMPILE_TRACE */
@@ -3294,7 +3184,7 @@ __task_init_recyclers(mpc_omp_thread_t * thread)
             MPC_OMP_TASK_ALLOCATOR,
             MPC_OMP_TASK_DEALLOCATOR,
             sizeof(mpc_omp_task_fiber_t) + MPC_OMP_TASK_FIBER_STACK_SIZE,
-            config->fiber_recycler_capacity
+            config->task_fiber_recycler_capacity
         );
     }
 # endif /* MPC_OMP_TASK_COMPILE_FIBER */

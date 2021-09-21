@@ -89,8 +89,8 @@ static inline void __omp_conf_set_default(void)
     __omp_conf.pqueue_new_depth             = 0;
     __omp_conf.pqueue_untied_depth          = 1;
     __omp_conf.task_recycler_capacity       = 8192;
-    __omp_conf.fiber_recycler_capacity      = 256;
-    __omp_conf.queue_empty_schedules        = 1;
+    __omp_conf.task_fiber_stack_size        = 32768;
+    __omp_conf.task_fiber_recycler_capacity = 256;
     __omp_conf.task_depth_threshold         = 4;
     __omp_conf.task_use_fiber               = 1;
     __omp_conf.task_trace                   = 0;
@@ -126,20 +126,20 @@ static inline void __omp_conf_init(void)
     );
 
     mpc_conf_config_type_t *task = mpc_conf_config_type_init("task",
-            PARAM("maximum",                    &__omp_conf.maximum_tasks,              MPC_CONF_INT,   "Maximum number of tasks that can exists concurrently in the runtime"),
-            PARAM("maximumready",               &__omp_conf.maximum_ready_tasks,        MPC_CONF_INT,   "Maximum number of ready tasks that can exists concurrently in the runtime"),
-            PARAM("newdepth",                   &__omp_conf.pqueue_new_depth,           MPC_CONF_INT,   "Depth of the new tasks lists in the tree"),
-            PARAM("untieddepth",                &__omp_conf.pqueue_untied_depth,        MPC_CONF_INT,   "Depth of the untied tasks lists in the tree"),
-            PARAM("taskrecyclercapacity",       &__omp_conf.task_recycler_capacity,     MPC_CONF_INT,   "Task recycler capacity"),
-            PARAM("fiberrecyclercapacity",      &__omp_conf.fiber_recycler_capacity,    MPC_CONF_INT,   "Task fiber recycler capacity"),
-            PARAM("depththreshold",             &__omp_conf.task_depth_threshold,       MPC_CONF_INT,   "Maximum task depth before it is run undeferedly on parent's fiber"),
-            PARAM("fiber",                      &__omp_conf.task_use_fiber,             MPC_CONF_BOOL,  "Enable task fiber"),
-            PARAM("trace",                      &__omp_conf.task_trace,                 MPC_CONF_BOOL,  "Enable task tracing"),
-            PARAM("prioritypolicy",             &__omp_conf.task_priority_policy,       MPC_CONF_INT,   "Task priority policy"),
-
-            /* TODO : replace yield and priority policy by a string and parse it */
-            PARAM("yieldmode",            &__omp_conf.task_yield_mode,          MPC_CONF_INT,       "Task yielding policy"),
-            PARAM("larcenymode",          &__omp_conf.task_larceny_mode_str,    MPC_CONF_STRING,    "Task stealing policy"),
+            PARAM("maximum",                    &__omp_conf.maximum_tasks,                  MPC_CONF_INT,   "Maximum number of tasks that can exists concurrently in the runtime"),
+            PARAM("maximumready",               &__omp_conf.maximum_ready_tasks,            MPC_CONF_INT,   "Maximum number of ready tasks that can exists concurrently in the runtime"),
+            PARAM("newdepth",                   &__omp_conf.pqueue_new_depth,               MPC_CONF_INT,   "Depth of the new tasks lists in the tree"),
+            PARAM("untieddepth",                &__omp_conf.pqueue_untied_depth,            MPC_CONF_INT,   "Depth of the untied tasks lists in the tree"),
+            PARAM("taskrecyclercapacity",       &__omp_conf.task_recycler_capacity,         MPC_CONF_INT,   "Task recycler capacity"),
+            PARAM("fiberstacksize",             &__omp_conf.task_fiber_stack_size,          MPC_CONF_INT,   "Task fiber stack size (in bytes)"),
+            PARAM("fiberrecyclercapacity",      &__omp_conf.task_fiber_recycler_capacity,   MPC_CONF_INT,   "Task fiber recycler capacity"),
+            PARAM("depththreshold",             &__omp_conf.task_depth_threshold,           MPC_CONF_INT,   "Maximum task depth before it is run undeferedly on parent's fiber"),
+            PARAM("fiber",                      &__omp_conf.task_use_fiber,                 MPC_CONF_BOOL,  "Enable task fiber"),
+            PARAM("trace",                      &__omp_conf.task_trace,                     MPC_CONF_BOOL,  "Enable task tracing"),
+            PARAM("prioritypolicy",             &__omp_conf.task_priority_policy,           MPC_CONF_INT,   "Task priority policy"),
+            // TODO("yieldmode -> replace with a string and parse it");
+            PARAM("yieldmode",           &__omp_conf.task_yield_mode,           MPC_CONF_INT,       "Task yielding policy"),
+            PARAM("larcenymode",         &__omp_conf.task_larceny_mode_str,     MPC_CONF_STRING,    "Task stealing policy"),
             PARAM("steallaststolen",     &__omp_conf.task_steal_last_stolen,    MPC_CONF_BOOL,      "Try to steal to same list than last successful stealing"),
             PARAM("steallastthief",      &__omp_conf.task_steal_last_thief,     MPC_CONF_BOOL,      "Try to steal to the last thread that stole a task to current thread"),
             NULL

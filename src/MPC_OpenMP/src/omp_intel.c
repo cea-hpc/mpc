@@ -2630,49 +2630,44 @@ kmp_task_t *__kmpc_omp_task_alloc( __UNUSED__ ident_t *loc_ref, __UNUSED__  kmp_
     _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
-    /* default pading */
-    const long align_size = sizeof(void *);
+    /* retrieve current thread */
+    mpc_omp_thread_t * thread = ( mpc_omp_thread_t * )mpc_omp_tls;
+    assert(thread);
 
-    // mpcomp_task + arg_size
-    const long kmp_taskdata = sizeof(mpc_omp_task_t) + sizeof_kmp_task_t;
-    const long task_info_size = _mpc_omp_task_align_single_malloc(kmp_taskdata, align_size);
-    const long task_data_size = _mpc_omp_task_align_single_malloc(sizeof_shareds, align_size);
+    /* mpc_omp_task_t + kmp_task_t + shared variables) */
+    const size_t size = sizeof(mpc_omp_task_t) + sizeof_kmp_task_t + sizeof_shareds;
 
-    /* Compute task total size */
-    long task_tot_size = task_info_size;
+    /* mpc_omp_task_t */
+    mpc_omp_task_property_t properties = ___convert_flags(flags);
+    mpc_omp_task_t * task = mpc_omp_task_allocate(size);
+    assert(task);
 
-    assert(MPC_OMP_OVERFLOW_SANITY_CHECK((unsigned long)task_tot_size, (unsigned long)task_data_size));
-    task_tot_size += task_data_size;
-
-    mpc_omp_thread_t *t = ( mpc_omp_thread_t * )mpc_omp_tls;
-    assert(t);
-
-    mpc_omp_task_t * new_task = new_task = (mpc_omp_task_t*) mpc_omp_alloc( task_tot_size );
-    assert(new_task != NULL);
-
-    void *task_data = (sizeof_shareds > 0) ? (void *)((uintptr_t)new_task + task_info_size) : NULL;
-
-    /* compiler infos */
-    kmp_task_t * compiler_infos = (kmp_task_t *)((char *)new_task + sizeof(mpc_omp_task_t));
-    compiler_infos->shareds = task_data;
-    compiler_infos->routine = task_entry;
-    compiler_infos->part_id = 0;
+    /* kmp_task_t / shared variables*/
+    kmp_task_t * kmp_task = (kmp_task_t *)(task + 1);
+    kmp_task->shareds = (sizeof_shareds > 0) ? (void *)(kmp_task + 1) : NULL;
+    kmp_task->routine = task_entry;
+    kmp_task->part_id = 0;
 
     /* Create new task */
     TODO("Convert icc 'flags' to mpc 'properties'");
     mpc_omp_task_property_t properties = 0;
-    _mpc_omp_task_init(new_task, __kmp_omp_task_wrapper, compiler_infos, task_tot_size, properties, t);
+    mpc_omp_task_init(
+            task,
+            __kmp_omp_task_wrapper, kmp_task, cpyfn, arg_size,
+            properties,
+            depend,
+            priority_hint);
 
-    /* taskgroup */
-    mpc_omp_task_t *current_task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(t);
-    _mpc_omp_taskgroup_add_task(new_task);
-    _mpc_omp_task_ref_parent_task(new_task);
+    /* ? */
     t->task_infos.sizeof_kmp_task_t = sizeof_kmp_task_t;
 
     /* to handle if0 with deps */
-    current_task->last_task_alloc = new_task;
+    current_task->last_task_alloc = task;
 
-    return compiler_infos;
+    /* process the task */
+    mpc_omp_task_process(task);
+
+    return kmp_task;
 }
 
 void __kmpc_omp_task_begin_if0( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid,
