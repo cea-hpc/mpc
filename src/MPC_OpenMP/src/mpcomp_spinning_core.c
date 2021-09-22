@@ -677,7 +677,12 @@ mpc_omp_instance_t *_mpc_omp_tree_array_instance_init( mpc_omp_thread_t *thread,
 #endif
 #endif /* OMPT_SUPPORT */
 
+    /* instance initialization */
+# if MPC_OMP_TASK_COND_WAIT
     instance->task_infos.blocked_tasks.type = MPC_OMP_TASK_LIST_TYPE_SCHEDULER;
+    mpc_thread_mutex_init(&instance->task_infos.work_cond_mutex, NULL);
+    mpc_thread_cond_init(&instance->task_infos.work_cond, NULL);
+# endif /* MPC_OMP_TASK_COND_WAIT */
 
 	return instance;
 }
@@ -771,7 +776,7 @@ void _mpc_omp_start_openmp_thread(mpc_omp_mvp_t * mvp)
     /* Must be set before barrier for thread safety*/
     volatile int * spin_status = ( mvp->spin_node ) ? &( mvp->spin_node->spin_status ) : &( mvp->spin_status );
     *spin_status = MPC_OMP_MVP_STATE_SLEEP;
-
+    
     mpc_omp_barrier();
     _mpc_omp_task_tree_deinit(cur_thread);
 

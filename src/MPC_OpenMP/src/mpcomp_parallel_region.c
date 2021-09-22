@@ -131,25 +131,26 @@ void _mpc_omp_internal_end_parallel_region( __UNUSED__ mpc_omp_instance_t *insta
 
 typedef void*(*mpc_omp_start_func_t)(void*);
 
-void mpc_omp_start_parallel_region(void (*func)(void *), void *shared,
-                                    unsigned arg_num_threads) {
+void
+mpc_omp_start_parallel_region(
+        void (*func)(void *),
+        void *shared,
+        unsigned arg_num_threads)
+{
+  	mpc_omp_init();
+
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
     _mpc_omp_ompt_frame_set_no_reentrant();
 #endif /* OMPT_SUPPORT */
 
- 	mpc_omp_thread_t *t;
-  	mpc_omp_parallel_region_t info;
-
 	mpc_omp_start_func_t start = ( mpc_omp_start_func_t ) func;
 	assert( start );
 
-  	mpc_omp_init();
-
-
-  	t = (mpc_omp_thread_t *) mpc_omp_tls;
+  	mpc_omp_thread_t * t = (mpc_omp_thread_t *) mpc_omp_tls;
   	assert(t != NULL);
 
+  	mpc_omp_parallel_region_t info;
   	_mpc_omp_parallel_region_infos_init(&info);
   	_mpc_omp_parallel_set_specific_infos(&info, start, shared, t->info.icvs, MPC_OMP_COMBINED_NONE);
 
@@ -161,7 +162,7 @@ void mpc_omp_start_parallel_region(void (*func)(void *), void *shared,
   	t->mvp->instance = t->children_instance;
   	_mpc_omp_start_openmp_thread( t->mvp );  
   	_mpc_omp_internal_end_parallel_region(t->children_instance);
-
+    
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_unset_no_reentrant();
 #endif /* OMPT_SUPPORT */

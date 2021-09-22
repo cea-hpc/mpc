@@ -58,6 +58,7 @@
 /* tasking */
 # define MPC_OMP_TASK_COMPILE_FIBER 1
 # define MPC_OMP_TASK_COMPILE_TRACE 1
+# define MPC_OMP_TASK_COND_WAIT     0
 
 #if MPC_OMP_TASK_COMPILE_FIBER
 # define MPC_OMP_TASK_FIBER_ENABLED mpc_omp_conf_get()->task_use_fiber
@@ -65,7 +66,11 @@
 # define MPC_OMP_TASK_FIBER_ENABLED 0
 #endif
 
+# if MPC_OMP_TASK_COMPILE_TRACE
 # define MPC_OMP_TASK_TRACE_ENABLED mpc_omp_conf_get()->task_trace
+# else
+# define MPC_OMP_TASK_TRACE_ENABLED 0
+# endif /* MPC_OMP_TASK_COMPILE_TRACE */
 
 # define MPC_OMP_TASK_USE_RECYCLERS  1
 # define MPC_OMP_TASK_ALLOCATOR      mpc_omp_alloc
@@ -724,10 +729,11 @@ typedef struct  mpc_omp_task_thread_infos_s
     mpc_omp_thread_task_trace_infos_t tracer;
 # endif
 
+    /* ? */
     size_t sizeof_kmp_task_t;
 
 }               mpc_omp_task_thread_infos_t;
-
+#include <thread.h>
 /**
  * Extend mpc_omp_instance_t struct for openmp task support
  */
@@ -752,6 +758,12 @@ typedef struct  mpc_omp_task_instance_infos_s
 
     /* blocked tasks list */
     mpc_omp_task_list_t blocked_tasks;
+
+# if MPC_OMP_TASK_COND_WAIT
+    /* condition to make threads sleep when waiting for tasks */
+    mpc_thread_mutex_t work_cond_mutex;
+    mpc_thread_cond_t work_cond;
+# endif
 
 }               mpc_omp_task_instance_infos_t;
 

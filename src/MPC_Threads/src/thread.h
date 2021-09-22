@@ -174,6 +174,20 @@ int mpc_thread_atexit(void (*function)(void) );
 double sctk_profiling_get_init_time();
 double sctk_profiling_get_dataused();
 
+
+/* kernel blocking mecanisms */
+typedef unsigned int mpc_thread_futex_kernel_t;
+
+typedef struct
+{
+    mpc_thread_futex_kernel_t futex;
+} mpc_thread_cond_kernel_t;
+
+void mpc_thread_cond_init_kernel(mpc_thread_cond_kernel_t * cond);
+void mpc_thread_cond_wait_kernel(mpc_thread_cond_kernel_t * cond, mpc_thread_mutex_t * mutex);
+void mpc_thread_cond_signal_kernel(mpc_thread_cond_kernel_t * cond);
+void mpc_thread_cond_broadcast_kernel(mpc_thread_cond_kernel_t * cond);
+
 #ifdef __cplusplus
 }
 #endif

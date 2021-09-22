@@ -471,7 +471,8 @@ mpc_omp_barrier(void)
     int num_threads = team->info.num_threads;
     if (num_threads > 1)
     {
-# if 0 /* naive implementation */
+# if 1 /* naive implementation */
+
         int old_version = team->barrier_version;
 
         if (OPA_fetch_and_incr_int(&(team->threads_in_barrier)) == num_threads - 1)
@@ -479,14 +480,48 @@ mpc_omp_barrier(void)
             OPA_store_int(&(team->threads_in_barrier), 0);
             ++team->barrier_version;
         }
+
         /* work steal */
         while (team->barrier_version == old_version)
         {
-            _mpc_omp_task_schedule();
+            if (_mpc_omp_task_schedule() == 0)
+            {
+                /* Famine detected */
+            }
         }
-# endif /* naive implementation */
+# elif MPC_OMP_TASK_COND_WAIT /* naive implementation, with conditions */
+        mpc_thread_mutex_t * mutex = &(thread->instance->task_infos.work_cond_mutex);
+        mpc_thread_cond_t * cond = &(thread->instance->task_infos.work_cond);
+        int old_version = team->barrier_version;
+        if (OPA_fetch_and_incr_int(&(team->threads_in_barrier)) == num_threads - 1)
+        {
+            OPA_store_int(&(team->threads_in_barrier), 0);
+            ++team->barrier_version;
 
-# if 1 /* tree implementation */
+            mpc_thread_mutex_lock(mutex);
+            {
+                mpc_thread_cond_broadcast(cond);
+            }
+            mpc_thread_mutex_unlock(mutex);
+        }
+
+        /* work steal */
+        while (team->barrier_version == old_version)
+        {
+            if (_mpc_omp_task_schedule() == 0)
+            {
+                /* Famine detected */
+
+                /* make the thread sleep until a task spawns */
+                mpc_thread_mutex_lock(mutex);
+                if (team->barrier_version == old_version)
+                {
+                    mpc_thread_cond_wait(cond, mutex);
+                }
+                mpc_thread_mutex_unlock(mutex);
+            }
+        }
+# elif 0 /* tree implementation */
         mpc_omp_node_t * c = mvp->father;
         mpc_omp_node_t * new_root = thread->instance->root;
 
@@ -523,7 +558,8 @@ mpc_omp_barrier(void)
             c = c->children.node[mvp->tree_rank[c->depth]];
             c->barrier_done++; /* No need to lock I think... */
         }
-
+# else
+# error "Dont forget to uncomment another barrier implementation"
 # endif /* tree implementation */
     }
 

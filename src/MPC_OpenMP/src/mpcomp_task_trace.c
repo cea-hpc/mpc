@@ -59,7 +59,7 @@ __node_new(mpc_omp_task_trace_record_type_t type)
 
     mpc_omp_task_trace_record_t * record = __node_record(node);
     record->type = type;
-    record->time = omp_get_wtime() * 100000.0;
+    record->time = omp_get_wtime() * 1000000.0;
     return node;
 }
 

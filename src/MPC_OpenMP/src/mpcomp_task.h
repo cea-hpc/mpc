@@ -312,7 +312,7 @@ void _mpc_omp_task_team_info_init( struct mpc_omp_team_s *team, int depth );
 
 void _mpc_omp_task_root_info_init( struct mpc_omp_node_s *root );
 
-void _mpc_omp_task_schedule(void);
+int _mpc_omp_task_schedule(void);
 
 void _mpc_omp_task_wait( void );
 

@@ -875,6 +875,7 @@ __task_pqueue_push(mpc_omp_task_pqueue_t * pqueue, mpc_omp_task_t * task)
     assert(task);
     assert(task->pqueue == NULL);
 
+    /* push the task to its ready queue */
     mpc_common_spinlock_lock(&(pqueue->lock));
     {
         mpc_omp_task_pqueue_node_t * node = __task_pqueue_insert(pqueue, task->priority);
@@ -885,6 +886,19 @@ __task_pqueue_push(mpc_omp_task_pqueue_t * pqueue, mpc_omp_task_t * task)
     
     OPA_incr_int(&(pqueue->nb_elements));
     __instance_incr_ready_tasks();
+
+    /* notify a thread to wake up */
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+
+# if MPC_OMP_TASK_COND_WAIT
+    mpc_thread_mutex_t * mutex = &(thread->instance->task_infos.work_cond_mutex);
+    mpc_thread_cond_t * cond = &(thread->instance->task_infos.work_cond);
+
+    mpc_thread_mutex_lock(mutex);
+    mpc_thread_cond_signal(cond);
+    mpc_thread_mutex_unlock(mutex);
+# endif
 }
 
 /*********************
@@ -2537,11 +2551,11 @@ __task_run(mpc_omp_task_t * task)
 
 /**
  * Task scheduling.
- *
  * Try to find a task to be scheduled and execute it on the calling omp thread.
- * This is the main function (it calls an internal function).
+ *
+ * Return 1 if a task was found (and so, scheduled) - 0 otherwise
  */
-void
+int
 _mpc_omp_task_schedule(void)
 {
     _mpc_omp_callback_run(MPC_OMP_CALLBACK_TASK_SCHEDULE_BEFORE);
@@ -2558,11 +2572,11 @@ _mpc_omp_task_schedule(void)
         task->schedule_id = OPA_fetch_and_incr_int(&(thread->instance->task_infos.next_schedule_id));
 # endif
         __task_run(task);
+        return 1;
     }
-    else
-    {
-        /* Famine detected */
-    }
+
+    /* Famine detected */
+    return 0;
 }
 
 # if MPC_OMP_TASK_COMPILE_FIBER
@@ -3272,8 +3286,7 @@ _mpc_omp_task_tree_deinit(mpc_omp_thread_t * thread)
         task->dep_node.htable = NULL;
     }
 
-    assert(OPA_load_int(&(thread->instance->task_infos.ntasks_ready)) == 0);
-
     // this may not be true since every threads tasks are deinitialized concurrently
+    // assert(OPA_load_int(&(thread->instance->task_infos.ntasks_ready)) == 0);
     // assert(OPA_load_int(&(thread->instance->task_infos.ntasks)) == 0);
 }
