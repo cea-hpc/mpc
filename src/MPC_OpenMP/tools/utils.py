@@ -110,7 +110,7 @@ def parse_traces(traces):
 
     max_process_total_time = -math.inf
 
-    # return logical order of events
+    # sort records by time, type and schedule id
     def record_order(record):
         orders = {
             RecordCreate: 0,
@@ -119,13 +119,15 @@ def parse_traces(traces):
             RecordAsync: 3,
             RecordFamineOverlap: 4
         }
-        return orders[type(record)]
+        schedule_id = 0
+        if hasattr(record, 'schedule_id'):
+            schedule_id = record.schedule_id
+        return (record.time, orders[type(record)], schedule_id)
 
     # replay the scheduling to compute stats
     for pid in records:
 
-        # sort records by time
-        records[pid] = sorted(records[pid], key=lambda x: (x.time, record_order(x)))
+        records[pid] = sorted(records[pid], key=record_order)
 
         # find first and last time a thread worked
         ti = records[pid][0].time
@@ -194,8 +196,7 @@ def parse_traces(traces):
                 # a task completed
                 if 'COMPLETED' in properties:
                     assert(record.tid in bind)
-# for the check bellow, use a stack instead, in case of recursive tasking
-#                    assert(record.uid == bind[record.tid][-1].uid)
+                    assert(record.uid == bind[record.tid][-1].uid)
 
                 # a task unblocked and resumed
                 elif 'UNBLOCKED' in properties:

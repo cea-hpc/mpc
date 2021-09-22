@@ -633,14 +633,6 @@ static inline void __read_env_variables()
 		__omp_conf.OMP_NUM_THREADS = 0;
 	}
 
-	TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it "
-	      "later" )
-
-	if ( __omp_conf.OMP_NUM_THREADS == 0 )
-	{
-		__omp_conf.OMP_NUM_THREADS = __omp_conf.OMP_MICROVP_NUMBER; /* DEFAULT */
-	}
-
 	TODO( "OMP_NUM_THREADS: need to handle x,y,z,... and keep only x" )
 
 	/******* OMP_STACKSIZE *********/
