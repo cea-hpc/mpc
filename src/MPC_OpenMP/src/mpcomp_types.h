@@ -58,7 +58,7 @@
 /* tasking */
 # define MPC_OMP_TASK_COMPILE_FIBER 1
 # define MPC_OMP_TASK_COMPILE_TRACE 1
-# define MPC_OMP_TASK_COND_WAIT     0
+# define MPC_OMP_TASK_COND_WAIT     1
 
 #if MPC_OMP_TASK_COMPILE_FIBER
 # define MPC_OMP_TASK_FIBER_ENABLED mpc_omp_conf_get()->task_use_fiber
@@ -761,8 +761,8 @@ typedef struct  mpc_omp_task_instance_infos_s
 
 # if MPC_OMP_TASK_COND_WAIT
     /* condition to make threads sleep when waiting for tasks */
-    mpc_thread_mutex_t work_cond_mutex;
-    mpc_thread_cond_t work_cond;
+    pthread_mutex_t work_cond_mutex;
+    pthread_cond_t  work_cond;
 # endif
 
 }               mpc_omp_task_instance_infos_t;

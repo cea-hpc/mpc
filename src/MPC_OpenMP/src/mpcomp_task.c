@@ -291,7 +291,8 @@ static inline mpc_omp_task_t *
 __task_list_pop(mpc_omp_task_list_t * list)
 {
     assert(list);
-    return __task_list_pop_from_head(list);
+    /* LIFO policy for data locality, c.f LLVM paper */
+    return __task_list_pop_from_tail(list);
 }
 
 static inline void
@@ -888,16 +889,16 @@ __task_pqueue_push(mpc_omp_task_pqueue_t * pqueue, mpc_omp_task_t * task)
     __instance_incr_ready_tasks();
 
     /* notify a thread to wake up */
+# if MPC_OMP_TASK_COND_WAIT
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
     assert(thread);
 
-# if MPC_OMP_TASK_COND_WAIT
-    mpc_thread_mutex_t * mutex = &(thread->instance->task_infos.work_cond_mutex);
-    mpc_thread_cond_t * cond = &(thread->instance->task_infos.work_cond);
+    pthread_mutex_t * mutex = &(thread->instance->task_infos.work_cond_mutex);
+    pthread_cond_t * cond = &(thread->instance->task_infos.work_cond);
 
-    mpc_thread_mutex_lock(mutex);
-    mpc_thread_cond_signal(cond);
-    mpc_thread_mutex_unlock(mutex);
+    pthread_mutex_lock(mutex);
+    pthread_cond_signal(cond);
+    pthread_mutex_unlock(mutex);
 # endif
 }
 
@@ -2574,7 +2575,6 @@ _mpc_omp_task_schedule(void)
         __task_run(task);
         return 1;
     }
-
     /* Famine detected */
     return 0;
 }

@@ -680,8 +680,8 @@ mpc_omp_instance_t *_mpc_omp_tree_array_instance_init( mpc_omp_thread_t *thread,
     /* instance initialization */
 # if MPC_OMP_TASK_COND_WAIT
     instance->task_infos.blocked_tasks.type = MPC_OMP_TASK_LIST_TYPE_SCHEDULER;
-    mpc_thread_mutex_init(&instance->task_infos.work_cond_mutex, NULL);
-    mpc_thread_cond_init(&instance->task_infos.work_cond, NULL);
+    pthread_mutex_init(&instance->task_infos.work_cond_mutex, NULL);
+    pthread_cond_init(&instance->task_infos.work_cond, NULL);
 # endif /* MPC_OMP_TASK_COND_WAIT */
 
 	return instance;
