@@ -1331,21 +1331,21 @@ __task_priority_propagate_on_predecessors(mpc_omp_task_t * task)
                     /* if the task is not in queue, propagate the priority */
                     switch (policy)
                     {
-                        case (MPC_OMP_TASK_PRIORITY_POLICY_SA1):
+                        case (MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_DECR):
                             {
-                                if (predecessor->task->priority < task->priority)
+                                if (predecessor->task->priority < task->priority - 1)
                                 {
-                                    predecessor->task->priority = task->priority;
+                                    predecessor->task->priority = task->priority - 1;
                                     __task_priority_propagate_on_predecessors(predecessor->task);
                                 }
                                 break ;
                             }
 
-                        case (MPC_OMP_TASK_PRIORITY_POLICY_SA2):
+                        case (MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_EQUAL):
                             {
-                                if (predecessor->task->priority < task->priority - 1)
+                                if (predecessor->task->priority < task->priority)
                                 {
-                                    predecessor->task->priority = task->priority - 1;
+                                    predecessor->task->priority = task->priority;
                                     __task_priority_propagate_on_predecessors(predecessor->task);
                                 }
                                 break ;
@@ -1372,31 +1372,23 @@ __task_priority_compute(mpc_omp_task_t * task)
 
     switch (config->task_priority_policy)
     {
-        case (MPC_OMP_TASK_PRIORITY_POLICY_FIFO):
+        case (MPC_OMP_TASK_PRIORITY_POLICY_ZERO):
         {
             task->priority = 0;
             break ;
         }
 
-        case (MPC_OMP_TASK_PRIORITY_POLICY_MA):
+        case (MPC_OMP_TASK_PRIORITY_POLICY_COPY):
         {
             task->priority = task->omp_priority_hint;
             break ;
         }
 
-        case (MPC_OMP_TASK_PRIORITY_POLICY_SA1):
-        {
-            task->priority = task->omp_priority_hint;
-            __task_priority_propagate_on_predecessors(task);
-            break ;
-        }
-
-        case (MPC_OMP_TASK_PRIORITY_POLICY_SA2):
+        case (MPC_OMP_TASK_PRIORITY_POLICY_CONVERT):
         {
             if (task->omp_priority_hint)
             {
                 task->priority = INT_MAX;
-                __task_priority_propagate_on_predecessors(task);
             }
             break ;
         }
@@ -1406,6 +1398,11 @@ __task_priority_compute(mpc_omp_task_t * task)
             not_implemented();
             break ;
         }
+    }
+
+    if (config->task_priority_propagation_policy != MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_NOOP)
+    {
+        __task_priority_propagate_on_predecessors(task);
     }
 }
 

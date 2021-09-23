@@ -182,28 +182,44 @@ typedef enum    mpc_omp_task_priority_policy_e
      *      - priority hint is ignored
      *      - runtime set internal tasks priority to zero
      */
-    MPC_OMP_TASK_PRIORITY_POLICY_FIFO,   /* priorities are ignored */
+    MPC_OMP_TASK_PRIORITY_POLICY_ZERO,
 
-    /** 1) MA
-     *      - user set priority hint on tasks
-     *      - runtime copies the tasks hint as their internal priority
+    /** 1) CONVERT
+     *      - user set a priorities on tasks
+     *      - runtime convert non-null priorities to INT_MAX internally
+     */
+    MPC_OMP_TASK_PRIORITY_POLICY_CONVERT,
+
+    /** 2) COPY
+     *      - user set a priority hint on tasks
+     *      - runtime copies the tasks hint as its internal priority
      */  
-    MPC_OMP_TASK_PRIORITY_POLICY_MA,
+    MPC_OMP_TASK_PRIORITY_POLICY_COPY
 
-    /** 2) SA1
-     *      - user set a discrete priority on tasks
-     *      - runtime copies the tasks hint as their internal priority
-     *      - runtime propagate on predecessors - P(predecessors) = max(P(successors)) - 1
-     */
-    MPC_OMP_TASK_PRIORITY_POLICY_SA1,
-
-    /** 3) SA2
-     *      - user set constant priority on tasks
-     *      - runtime convert non-zero priorities to INT_MAX
-     *      - runtime propagate on predecessors - P(predecessors) = max(P(successors)) - 1
-     */
-    MPC_OMP_TASK_PRIORITY_POLICY_SA2
 }               mpc_omp_task_priority_policy_t;
+
+/* propagation policy */
+typedef enum    mpc_omp_task_priority_propagation_policy_e
+{
+    /** 0) NOOP
+     *      - priorities are not propagated
+     */
+    MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_NOOP,
+
+    /** 1) DECR
+     *      - runtime propagate priorities on predecessors
+     *      - P(predecessors) = max(P(successors)) - 1
+     */
+    MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_DECR,
+
+    /**
+     *  2) EQUAL
+     *      - runtime propagate priorities on predecessors
+     *      - P(predecessors) = max(P(successors))
+     */
+    MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_EQUAL
+
+}               mpc_omp_task_priority_propagation_policy_t;
 
 /* Type of children in the topology tree */
 typedef enum    mpc_omp_children_e

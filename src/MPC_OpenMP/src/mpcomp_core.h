@@ -99,6 +99,7 @@ typedef struct  mpc_omp_conf_s
     int task_trace;
     mpc_omp_task_yield_mode_t task_yield_mode;
     mpc_omp_task_priority_policy_t task_priority_policy;
+    mpc_omp_task_priority_propagation_policy_t task_priority_propagation_policy;
 
     /* task steal */
     int task_steal_last_stolen;
