@@ -188,24 +188,6 @@ __task_list_push_to_tail(
 }
 
 static inline void
-__task_list_push(
-        mpc_omp_task_list_t * list,
-        mpc_omp_task_t * task)
-{
-    __task_list_push_to_tail(list, task);
-}
-
-static inline void
-__task_pqueue_node_push(
-    mpc_omp_task_pqueue_node_t * node,
-    mpc_omp_task_t * task)
-{
-    assert(node);
-    assert(node);
-    __task_list_push(&(node->tasks), task);
-}
-
-static inline void
 __task_list_remove(
     mpc_omp_task_list_t * list,
     mpc_omp_task_t * task)
@@ -291,7 +273,7 @@ static inline mpc_omp_task_t *
 __task_list_pop(mpc_omp_task_list_t * list)
 {
     assert(list);
-    return __task_list_pop_from_head(list);
+    return __task_list_pop_from_tail(list);
 }
 
 static inline void
@@ -879,7 +861,19 @@ __task_pqueue_push(mpc_omp_task_pqueue_t * pqueue, mpc_omp_task_t * task)
     {
         mpc_omp_task_pqueue_node_t * node = __task_pqueue_insert(pqueue, task->priority);
         task->pqueue = pqueue;
-        __task_pqueue_node_push(node, task);
+        switch (mpc_omp_conf_get()->task_list_policy)
+        {
+            case (MPC_OMP_TASK_LIST_POLICY_FIFO):
+            {
+                __task_list_push_to_head(&(node->tasks), task);
+                break ;
+            }
+            case (MPC_OMP_TASK_LIST_POLICY_LIFO):
+            {
+                __task_list_push_to_tail(&(node->tasks), task);
+                break ;
+            }
+        }
     }
     mpc_common_spinlock_unlock(&(pqueue->lock));
     
@@ -2702,7 +2696,7 @@ mpc_omp_task_block(mpc_omp_event_handle_t * event)
             if (OPA_load_int(&(event->status)) == MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED)
             {
                 task->statuses.in_blocked_list = true;
-                __task_list_push(list, task);
+                __task_list_push_to_head(list, task);
             }
         }
         mpc_common_spinlock_unlock(&(list->lock));

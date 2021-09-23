@@ -159,7 +159,7 @@ typedef enum    mpc_omp_combined_mode_e
 	MPC_OMP_COMBINED_COUNT           = 6
 }               mpc_omp_combined_mode_t;
 
-typedef enum    mpc_omp_task_yield_mode_t
+typedef enum    mpc_omp_task_yield_mode_e
 {
     MPC_OMP_TASK_YIELD_MODE_NOOP,
     MPC_OMP_TASK_YIELD_MODE_STACK,
@@ -167,7 +167,15 @@ typedef enum    mpc_omp_task_yield_mode_t
     MPC_OMP_TASK_YIELD_MODE_COUNT
 }               mpc_omp_task_yield_mode_t;
 
-/* prioritization policy */
+/* list policies */
+typedef enum    mpc_omp_task_list_policy_e
+{
+    MPC_OMP_TASK_LIST_POLICY_LIFO,
+    MPC_OMP_TASK_LIST_POLICY_FIFO
+}               mpc_omp_task_list_policy_t;
+
+
+/* priority policies */
 typedef enum    mpc_omp_task_priority_policy_e
 {
     /** 0) FIFO

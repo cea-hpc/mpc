@@ -96,6 +96,7 @@ static inline void __omp_conf_set_default(void)
     __omp_conf.task_trace                   = 0;
     __omp_conf.task_yield_mode              = MPC_OMP_TASK_YIELD_MODE_NOOP;
     __omp_conf.task_priority_policy         = MPC_OMP_TASK_PRIORITY_POLICY_FIFO;
+    __omp_conf.task_list_policy             = MPC_OMP_TASK_LIST_POLICY_LIFO;
 
     /* task steal */
     __omp_conf.task_steal_last_stolen   = 0;
@@ -137,6 +138,7 @@ static inline void __omp_conf_init(void)
             PARAM("fiber",                      &__omp_conf.task_use_fiber,                 MPC_CONF_BOOL,  "Enable task fiber"),
             PARAM("trace",                      &__omp_conf.task_trace,                     MPC_CONF_BOOL,  "Enable task tracing"),
             PARAM("prioritypolicy",             &__omp_conf.task_priority_policy,           MPC_CONF_INT,   "Task priority policy"),
+            PARAM("listpolicy",                 &__omp_conf.task_list_policy,               MPC_CONF_INT,   "Task list policy"),
             // TODO("yieldmode -> replace with a string and parse it");
             PARAM("yieldmode",           &__omp_conf.task_yield_mode,           MPC_CONF_INT,       "Task yielding policy"),
             PARAM("larcenymode",         &__omp_conf.task_larceny_mode_str,     MPC_CONF_STRING,    "Task stealing policy"),
@@ -157,7 +159,6 @@ static inline void __omp_conf_init(void)
     );
 
 	mpc_conf_root_config_append("mpcframework", omp, "MPC OpenMP Configuration");
-
 }
 
 
