@@ -346,9 +346,15 @@ mpc_omp_task_t * _mpc_omp_task_init(
     mpc_omp_task_t * task,
     void (*fn)(void *), void *data,
     size_t size,
-    mpc_omp_task_property_t properties,
-    void ** depend,
-    int priority_hint);
+    mpc_omp_task_property_t properties);
+
+/**
+ * set task dependencies
+ *  - task is the task
+ *  - depend is the dependency array (GOMP format)
+ *  - priority_hint is the user task priority hint
+ */
+void _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint);
 
 void _mpc_omp_task_finalize_deps(mpc_omp_task_t *task);
 

@@ -236,17 +236,20 @@ typedef struct kmpc_shared_vars_t
 #define KMP_TASKDATA_TO_TASK(task_data) ((mpc_omp_task_t *)taskdata - 1)
 #define KMP_TASK_TO_TASKDATA(task) ((kmp_task_t *)taskdata + 1)
 
+/* kmp.h */
 typedef kmp_int32 ( *kmp_routine_entry_t )( kmp_int32, void * );
+
+typedef union kmp_cmplrdata {
+    kmp_int32 priority;                 /**< priority specified by user for the task */
+    kmp_routine_entry_t destructors;    /* pointer to function to invoke deconstructors of firstprivate C++ objects */
+} kmp_cmplrdata_t;
 
 typedef struct kmp_task   /* GEH: Shouldn't this be aligned somehow? */
 {
-	void *shareds;                      /**< pointer to block of pointers to shared vars   */
+	void * shareds;                     /**< pointer to block of pointers to shared vars   */
 	kmp_routine_entry_t routine;        /**< pointer to routine to call for executing task */
 	kmp_int32 part_id;                  /**< part id for the task                          */
-#if OMP_40_ENABLED
-	kmp_routine_entry_t destructors;    /* pointer to function to invoke deconstructors of firstprivate C++ objects */
-#endif             // OMP_40_ENABLED
-	/*  private vars  */
+    kmp_cmplrdata_t data1;              /* Two known optional additions: destructors and priority */
 } kmp_task_t;
 
 /* From kmp_os.h for this type */

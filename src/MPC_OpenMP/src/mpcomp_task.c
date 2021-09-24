@@ -43,11 +43,9 @@ __task_reached_thresholds(mpc_omp_task_t * task)
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     assert(thread);
-    int r = (task->depth > mpc_omp_conf_get()->task_depth_threshold
-            || OPA_load_int(&(thread->instance->task_infos.ntasks)) >= mpc_omp_conf_get()->maximum_tasks
-            || OPA_load_int(&(thread->instance->task_infos.ntasks_ready)) >= mpc_omp_conf_get()->maximum_ready_tasks);
-    if (r) { assert(0); }
-    return r;
+    return (task->depth > mpc_omp_conf_get()->task_depth_threshold
+           || OPA_load_int(&(thread->instance->task_infos.ntasks)) >= mpc_omp_conf_get()->maximum_tasks
+           || OPA_load_int(&(thread->instance->task_infos.ntasks_ready)) >= mpc_omp_conf_get()->maximum_ready_tasks);
 }
 
 static inline void
@@ -2824,8 +2822,7 @@ _mpc_omp_task_init_attributes(
     void (*func)(void *),
     void * data,
     size_t size,
-    mpc_omp_task_property_t properties,
-    int priority_hint)
+    mpc_omp_task_property_t properties)
 {
     /* Intialize the OpenMP environnement (if needed) */
     mpc_omp_init();
@@ -2845,7 +2842,6 @@ _mpc_omp_task_init_attributes(
     task->size = size;
     task->property = properties;
     task->icvs = thread->info.icvs;
-    task->omp_priority_hint = priority_hint;
 
     task->parent = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
     task->depth = (task->parent) ? task->parent->depth + 1 : 0;
@@ -2874,25 +2870,20 @@ _mpc_omp_task_init(
     void (*func)(void *),
     void * data,
     size_t size,
-    mpc_omp_task_property_t properties,
-    void ** depend,
-    int priority_hint)
+    mpc_omp_task_property_t properties)
 {
     /* set attributes */
-    _mpc_omp_task_init_attributes(task, func, data, size, properties, priority_hint);
+    _mpc_omp_task_init_attributes(task, func, data, size, properties);
 
     /* Retrieve the information (microthread structure and current region) */
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     assert(thread);
     assert(thread->instance);
 
-
-
     /* reference the task */
     _mpc_omp_taskgroup_add_task(task);
     __task_ref_parent_task(task);
     __task_ref(task);   /* __task_finalize */
-    __task_ref(task);   /* mpc_omp_task */
 
     /* extra parameters given to the mpc thread for this task */
 # if MPC_OMP_TASK_COMPILE_TRACE
@@ -2909,12 +2900,31 @@ _mpc_omp_task_init(
     }
     memset(&(thread->task_infos.incoming), 0, sizeof(thread->task_infos.incoming));
 
+    return task;
+}
+
+/**
+ * set task dependencies
+ *  - task is the task
+ *  - depend is the dependency array (GOMP format)
+ *  - priority_hint is the user task priority hint
+ */
+void
+_mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
+{
+    /* retrieve current thread */
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+    assert(thread);
+
+    /* set priority hint */
+    task->omp_priority_hint = priority_hint;
+
     /* if there is no dependencies, process the task now */
-    if (!mpc_omp_task_property_isset(properties, MPC_OMP_TASK_PROP_DEPEND))
+    if (depend == NULL)
     {
         __task_priority_compute(task);
         MPC_OMP_TASK_TRACE_CREATE(task);
-        return task;
+        return ;
     }
 
     mpc_omp_task_t * parent = (mpc_omp_task_t *)MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
@@ -2946,8 +2956,6 @@ _mpc_omp_task_init(
 
     /* trace task creation */
     MPC_OMP_TASK_TRACE_CREATE(task);
-
-    return task;
 }
 
 /**
@@ -2961,6 +2969,8 @@ _mpc_omp_task_process(mpc_omp_task_t * task)
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     assert(thread);
     assert(thread->instance);
+
+    __task_ref(task);
 
     /* if the task is ready */
     if (OPA_load_int(&(task->dep_node.ref_predecessors)) == 0)
@@ -3172,7 +3182,8 @@ __task_init_initial(mpc_omp_thread_t * thread)
     mpc_omp_task_property_t properties = 0;
     mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_INITIAL);
     mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_IMPLICIT);
-    _mpc_omp_task_init_attributes(initial_task, NULL, NULL, size, properties, 0);
+    _mpc_omp_task_init_attributes(initial_task, NULL, NULL, size, properties);
+    _mpc_omp_task_deps(initial_task, NULL, 0);
 # if MPC_OMP_TASK_COMPILE_TRACE
     snprintf(initial_task->label, MPC_OMP_TASK_LABEL_MAX_LENGTH, "initial-%p", initial_task);
 # endif /* MPC_OMP_TASK_COMPILE_TRACE */

@@ -2060,7 +2060,10 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
     __task_data_copy(cpyfn, data_storage, data, arg_size);
 
     /* set task fields */
-    _mpc_omp_task_init(task, fn, data_storage, size, properties, depend, priority);
+    _mpc_omp_task_init(task, fn, data_storage, size, properties);
+
+    /* set dependencies (and compute priorities) */
+    _mpc_omp_task_deps(task, depend, priority);
 
     /* process the task (differ or run it) */
     _mpc_omp_task_process(task);
@@ -2179,7 +2182,8 @@ void mpc_omp_GOMP_taskloop( void (*fn)(void *), void *data,
             long * data_storage = (long *) (task + 1);
             data_storage[0] = start;
             data_storage[1] = start + taskstep;
-            _mpc_omp_task_init(task, fn, data, size, properties, NULL, priority);
+            _mpc_omp_task_init(task, fn, data, size, properties);
+            _mpc_omp_task_deps(task, NULL, priority);
             _mpc_omp_task_process(task);
 
             start += taskstep;
