@@ -98,6 +98,7 @@ static inline void __omp_conf_set_default(void)
     __omp_conf.task_priority_policy             = MPC_OMP_TASK_PRIORITY_POLICY_ZERO;
     __omp_conf.task_priority_propagation_policy = MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_NOOP;
     __omp_conf.task_list_policy                 = MPC_OMP_TASK_LIST_POLICY_LIFO;
+    __omp_conf.task_immediate_successor         = 1;
 
     /* task steal */
     __omp_conf.task_steal_last_stolen   = 0;
@@ -146,6 +147,7 @@ static inline void __omp_conf_init(void)
             PARAM("larcenymode",         &__omp_conf.task_larceny_mode_str,     MPC_CONF_STRING,    "Task stealing policy"),
             PARAM("steallaststolen",     &__omp_conf.task_steal_last_stolen,    MPC_CONF_BOOL,      "Try to steal to same list than last successful stealing"),
             PARAM("steallastthief",      &__omp_conf.task_steal_last_thief,     MPC_CONF_BOOL,      "Try to steal to the last thread that stole a task to current thread"),
+            PARAM("immediatesuccessor",  &__omp_conf.task_immediate_successor,  MPC_CONF_BOOL,      "On task completion, run 1 ready successor immediately if any"),
             NULL
     );
 
@@ -833,6 +835,9 @@ static inline void __read_env_variables()
         mpc_common_debug_log("\t\tsteal last thief=%d",     __omp_conf.task_steal_last_thief);
         mpc_common_debug_log("\t\tyield mode=%d",           __omp_conf.task_yield_mode);
         mpc_common_debug_log("\t\tpriority policy=%d",      __omp_conf.task_priority_policy);
+        mpc_common_debug_log("\t\tpropagation policy=%d",   __omp_conf.task_priority_propagation_policy);
+        mpc_common_debug_log("\t\ttask list policy=%s",     __omp_conf.task_list_policy == MPC_OMP_TASK_LIST_POLICY_LIFO ? "lifo" : "fifo");
+        mpc_common_debug_log("\t\ttask immediate succ.=%s", __omp_conf.task_immediate_successor ? "yes" : "no");
         mpc_common_debug_log("\t\ttrace=%d",                __omp_conf.task_trace);
         mpc_common_debug_log("\n");
 

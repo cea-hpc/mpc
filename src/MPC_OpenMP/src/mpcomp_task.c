@@ -979,6 +979,7 @@ __task_delete_fiber(mpc_omp_task_t * task)
 void
 __task_delete(mpc_omp_task_t * task)
 {
+    //puts("delete");fflush(stdout);
     assert(OPA_load_int(&(task->ref_counter)) == 0);
 
     mpc_omp_thread_t * thread = __thread_task_coherency(NULL);
@@ -1285,10 +1286,15 @@ _mpc_omp_task_finalize_deps(mpc_omp_task_t * task)
         __task_dep_htable_delete(task->dep_node.htable);
         task->dep_node.htable = NULL;
     }
+    
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    const int use_immediate_successor = mpc_omp_conf_get()->task_immediate_successor;
+    assert(thread->task_infos.immediate_successor == NULL);
+    thread->task_infos.immediate_successor = NULL;
 
     /* Resolve successor's data dependency */
     mpc_omp_task_dep_list_elt_t * succ = task->dep_node.successors;
-    
+
     while (succ)
     {
         MPC_OMP_TASK_TRACE_DEPENDENCY(task, succ->task);
@@ -1298,9 +1304,15 @@ _mpc_omp_task_finalize_deps(mpc_omp_task_t * task)
         {
             if (OPA_cas_int(&(succ->task->dep_node.status), MPC_OMP_TASK_STATUS_NOT_READY, MPC_OMP_TASK_STATUS_READY) == MPC_OMP_TASK_STATUS_NOT_READY)
             {
-                mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
                 mpc_omp_task_pqueue_t * pqueue = __thread_get_task_pqueue(thread, MPC_OMP_PQUEUE_TYPE_NEW);
-                __task_pqueue_push(pqueue, succ->task);
+                if (use_immediate_successor && thread->task_infos.immediate_successor == NULL)
+                {
+                    thread->task_infos.immediate_successor = succ->task;
+                }
+                else
+                {
+                    __task_pqueue_push(pqueue, succ->task);
+                }
             }
         }
 
@@ -2338,6 +2350,14 @@ __task_schedule_next(mpc_omp_thread_t * thread)
 {
     mpc_omp_task_t * task;
 
+    /* if any immediate successor, schedule it */
+    if (thread->task_infos.immediate_successor)
+    {
+        task = thread->task_infos.immediate_successor;
+        thread->task_infos.immediate_successor = NULL;
+        return task;
+    }
+
     /* current thread tied tasks */
     task = __thread_task_pop_type(thread, MPC_OMP_PQUEUE_TYPE_TIED);
     if (task) return task;
@@ -2530,7 +2550,7 @@ __task_run(mpc_omp_task_t * task)
  * Try to find a task to be scheduled and execute it on the calling omp thread.
  * This is the main function (it calls an internal function).
  */
-void
+int
 _mpc_omp_task_schedule(void)
 {
     _mpc_omp_callback_run(MPC_OMP_CALLBACK_TASK_SCHEDULE_BEFORE);
@@ -2547,10 +2567,12 @@ _mpc_omp_task_schedule(void)
         task->schedule_id = OPA_fetch_and_incr_int(&(thread->instance->task_infos.next_schedule_id));
 # endif
         __task_run(task);
+        return 1;
     }
     else
     {
         /* Famine detected */
+        return 0;
     }
 }
 
@@ -2795,6 +2817,8 @@ mpc_omp_task_extra(__UNUSED__ char * label, int extra_clauses)
 mpc_omp_task_t *
 _mpc_omp_task_allocate(size_t size)
 {
+
+    //puts("alloc");fflush(stdout);
     /* Intialize the OpenMP environnement (if needed) */
     mpc_omp_init();
 

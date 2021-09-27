@@ -93,6 +93,7 @@ typedef struct  mpc_omp_conf_s
     int task_list_policy;
     int task_fiber_stack_size;
     int task_fiber_recycler_capacity;
+    int task_immediate_successor;
     int queue_empty_if_full;
     int task_depth_threshold;
     int task_use_fiber;

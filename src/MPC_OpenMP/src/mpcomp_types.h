@@ -67,7 +67,7 @@
 
 # define MPC_OMP_TASK_TRACE_ENABLED mpc_omp_conf_get()->task_trace
 
-# define MPC_OMP_TASK_USE_RECYCLERS  1
+# define MPC_OMP_TASK_USE_RECYCLERS  0
 # define MPC_OMP_TASK_ALLOCATOR      mpc_omp_alloc
 # define MPC_OMP_TASK_DEALLOCATOR    mpc_omp_free
 # define MPC_OMP_TASK_DEFAULT_ALIGN  8
@@ -738,6 +738,10 @@ typedef struct  mpc_omp_task_thread_infos_s
 #  endif /* MPC_OMP_TASK_COMPILE_FIBER */
 # endif /* MPC_OMP_TASK_USE_RECYCLERS */
 
+    /* immediate successor of previous task */
+    mpc_omp_task_t * immediate_successor;
+
+    /* extra data for incoming task */
     struct
     {
         char * label;
