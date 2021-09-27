@@ -90,6 +90,7 @@ typedef struct  mpc_omp_conf_s
     int pqueue_new_depth;
     int pqueue_untied_depth;
     int task_recycler_capacity;
+    int task_list_policy;
     int task_fiber_stack_size;
     int task_fiber_recycler_capacity;
     int queue_empty_if_full;
@@ -98,6 +99,7 @@ typedef struct  mpc_omp_conf_s
     int task_trace;
     mpc_omp_task_yield_mode_t task_yield_mode;
     mpc_omp_task_priority_policy_t task_priority_policy;
+    mpc_omp_task_priority_propagation_policy_t task_priority_propagation_policy;
 
     /* task steal */
     int task_steal_last_stolen;
