@@ -833,6 +833,8 @@ static inline void __read_env_variables()
         mpc_common_debug_log("\t\tsteal last thief=%d",     __omp_conf.task_steal_last_thief);
         mpc_common_debug_log("\t\tyield mode=%d",           __omp_conf.task_yield_mode);
         mpc_common_debug_log("\t\tpriority policy=%d",      __omp_conf.task_priority_policy);
+        mpc_common_debug_log("\t\tpropagation policy=%d",   __omp_conf.task_priority_propagation_policy);
+        mpc_common_debug_log("\t\ttask list policy=%s",     __omp_conf.task_list_policy == MPC_OMP_TASK_LIST_POLICY_LIFO ? "lifo" : "fifo");
         mpc_common_debug_log("\t\ttrace=%d",                __omp_conf.task_trace);
         mpc_common_debug_log("\n");
 

@@ -72,7 +72,7 @@
 # define MPC_OMP_TASK_TRACE_ENABLED 0
 # endif /* MPC_OMP_TASK_COMPILE_TRACE */
 
-# define MPC_OMP_TASK_USE_RECYCLERS  1
+# define MPC_OMP_TASK_USE_RECYCLERS  0
 # define MPC_OMP_TASK_ALLOCATOR      mpc_omp_alloc
 # define MPC_OMP_TASK_DEALLOCATOR    mpc_omp_free
 # define MPC_OMP_TASK_DEFAULT_ALIGN  8
@@ -81,9 +81,9 @@
 
 # if MPC_OMP_TASK_COMPILE_TRACE
 #  include "mpc_omp_task_trace.h"
-#  define MPC_OMP_TASK_TRACE_DEPENDENCY(out, in) if (MPC_OMP_TASK_TRACE_ENABLED && _mpc_omp_task_trace_begun()) _mpc_omp_task_trace_dependency(out, in)
-#  define MPC_OMP_TASK_TRACE_SCHEDULE(task) if (MPC_OMP_TASK_TRACE_ENABLED && _mpc_omp_task_trace_begun()) _mpc_omp_task_trace_schedule(task)
-#  define MPC_OMP_TASK_TRACE_CREATE(task) if (MPC_OMP_TASK_TRACE_ENABLED && _mpc_omp_task_trace_begun()) _mpc_omp_task_trace_create(task)
+#  define MPC_OMP_TASK_TRACE_DEPENDENCY(out, in)    if (MPC_OMP_TASK_TRACE_ENABLED && _mpc_omp_task_trace_begun()) _mpc_omp_task_trace_dependency(out, in)
+#  define MPC_OMP_TASK_TRACE_SCHEDULE(task)         if (MPC_OMP_TASK_TRACE_ENABLED && _mpc_omp_task_trace_begun()) _mpc_omp_task_trace_schedule(task)
+#  define MPC_OMP_TASK_TRACE_CREATE(task)           if (MPC_OMP_TASK_TRACE_ENABLED && _mpc_omp_task_trace_begun()) _mpc_omp_task_trace_create(task)
 #  define MPC_OMP_TASK_TRACE_CALLBACK(when, status) if (MPC_OMP_TASK_TRACE_ENABLED && _mpc_omp_task_trace_begun()) _mpc_omp_task_trace_async(when, status)
 # else  /* MPC_OMP_TASK_COMPILE_TRACE */
 #  define MPC_OMP_TASK_TRACE_DEPENDENCY(...)
@@ -305,10 +305,10 @@ typedef enum    _mpc_omp_task_init_status_e
 /** Type of task pqueues */
 typedef enum    mpc_omp_pqueue_type_e
 {
-    MPC_OMP_PQUEUE_TYPE_TIED     = 0,  /* unblocked-tied tasks (run once) */
-    MPC_OMP_PQUEUE_TYPE_UNTIED   = 1,  /* unblocked-untied tasks (run once) */
-    MPC_OMP_PQUEUE_TYPE_NEW      = 2,  /* unblocked tasks (never run) */
-    MPC_OMP_PQUEUE_TYPE_COUNT    = 3
+    MPC_OMP_PQUEUE_TYPE_TIED    = 0,  /* ready-tied tasks (run once) */
+    MPC_OMP_PQUEUE_TYPE_UNTIED  = 1,  /* ready-untied tasks (run once) */
+    MPC_OMP_PQUEUE_TYPE_NEW     = 2,  /* ready tasks (never run) */
+    MPC_OMP_PQUEUE_TYPE_COUNT   = 3
 }               mpc_omp_task_pqueue_type_t;
 
 /** Various lists that a task may be hold */
@@ -743,6 +743,10 @@ typedef struct  mpc_omp_task_thread_infos_s
 #  endif /* MPC_OMP_TASK_COMPILE_FIBER */
 # endif /* MPC_OMP_TASK_USE_RECYCLERS */
 
+    /* immediate successor of previous task */
+    mpc_omp_task_t * immediate_successor;
+
+    /* extra data for incoming task */
     struct
     {
         char * label;
