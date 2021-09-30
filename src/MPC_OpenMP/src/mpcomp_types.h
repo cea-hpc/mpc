@@ -57,7 +57,6 @@
 
 /* tasking */
 # define MPC_OMP_TASK_COMPILE_FIBER 1
-# define MPC_OMP_TASK_COMPILE_TRACE 1
 # define MPC_OMP_TASK_COND_WAIT     1
 
 #if MPC_OMP_TASK_COMPILE_FIBER
@@ -66,12 +65,6 @@
 # define MPC_OMP_TASK_FIBER_ENABLED 0
 #endif
 
-# if MPC_OMP_TASK_COMPILE_TRACE
-# define MPC_OMP_TASK_TRACE_ENABLED mpc_omp_conf_get()->task_trace
-# else
-# define MPC_OMP_TASK_TRACE_ENABLED 0
-# endif /* MPC_OMP_TASK_COMPILE_TRACE */
-
 # define MPC_OMP_TASK_USE_RECYCLERS  0
 # define MPC_OMP_TASK_ALLOCATOR      mpc_omp_alloc
 # define MPC_OMP_TASK_DEALLOCATOR    mpc_omp_free
@@ -79,19 +72,7 @@
 
 # define MPC_OMP_TASK_FIBER_STACK_SIZE (mpc_omp_conf_get()->task_fiber_stack_size)
 
-# if MPC_OMP_TASK_COMPILE_TRACE
-#  include "mpc_omp_task_trace.h"
-#  define MPC_OMP_TASK_TRACE_DEPENDENCY(out, in)    if (MPC_OMP_TASK_TRACE_ENABLED && _mpc_omp_task_trace_begun()) _mpc_omp_task_trace_dependency(out, in)
-#  define MPC_OMP_TASK_TRACE_SCHEDULE(task)         if (MPC_OMP_TASK_TRACE_ENABLED && _mpc_omp_task_trace_begun()) _mpc_omp_task_trace_schedule(task)
-#  define MPC_OMP_TASK_TRACE_CREATE(task)           if (MPC_OMP_TASK_TRACE_ENABLED && _mpc_omp_task_trace_begun()) _mpc_omp_task_trace_create(task)
-#  define MPC_OMP_TASK_TRACE_CALLBACK(when, status) if (MPC_OMP_TASK_TRACE_ENABLED && _mpc_omp_task_trace_begun()) _mpc_omp_task_trace_async(when, status)
-# else  /* MPC_OMP_TASK_COMPILE_TRACE */
-#  define MPC_OMP_TASK_TRACE_DEPENDENCY(...)
-#  define MPC_OMP_TASK_TRACE_SCHEDULE(...)
-#  define MPC_OMP_TASK_TRACE_CREATE(...)
-#  define MPC_OMP_TASK_TRACE_FAMINE_OVERLAP(...)
-#  define MPC_OMP_TASK_TRACE_CALLBACK(...)
-# endif /* MPC_OMP_TASK_COMPILE_TRACE */
+# include "mpc_omp_task_trace.h"
 
 /* Use MCS locks or not */
 #define MPC_OMP_USE_MCS_LOCK 1

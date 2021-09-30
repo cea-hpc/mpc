@@ -104,6 +104,16 @@ __record_sizeof(mpc_omp_task_trace_record_type_t type)
             return sizeof(mpc_omp_task_trace_record_callback_t);
         }
 
+        case (MPC_OMP_TASK_TRACE_TYPE_SEND):
+        {
+            return sizeof(mpc_omp_task_trace_record_send_t);
+        }
+
+        case (MPC_OMP_TASK_TRACE_TYPE_RECV):
+        {
+            return sizeof(mpc_omp_task_trace_record_recv_t);
+        }
+
         default:
         {
             printf("invalid record : type=%d\n", type);
@@ -194,6 +204,55 @@ _mpc_omp_task_trace_callback(int when, int status)
     __node_insert(node);
 }
 
+# if MPC_MPI
+void
+_mpc_omp_task_trace_send(int count, int datatype, int dst, int tag, int comm)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
+    mpc_omp_task_trace_node_t * node = __node_new(MPC_OMP_TASK_TRACE_TYPE_SEND);
+    assert(node);
+
+    mpc_omp_task_trace_record_send_t * record = (mpc_omp_task_trace_record_send_t *) __node_record(node);
+    record->uid = task->uid;
+    record->count = count;
+    record->datatype = datatype;
+    record->dst = dst;
+    record->tag = tag;
+    record->comm = comm;
+   
+    __node_insert(node); 
+}
+
+void
+_mpc_omp_task_trace_recv(int count, int datatype, int src, int tag, int comm)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
+    mpc_omp_task_trace_node_t * node = __node_new(MPC_OMP_TASK_TRACE_TYPE_RECV);
+    assert(node);
+
+    mpc_omp_task_trace_record_recv_t * record = (mpc_omp_task_trace_record_recv_t *) __node_record(node);
+    record->uid = task->uid;
+    record->count = count;
+    record->datatype = datatype;
+    record->src = src;
+    record->tag = tag;
+    record->comm = comm;
+   
+    __node_insert(node); 
+}
+
+# endif /* MPC_MPI */
+
 static inline void
 __task_trace_create_file(void)
 {
@@ -214,7 +273,7 @@ __task_trace_create_file(void)
 void
 mpc_omp_task_trace_begin(void)
 {
-    if (!MPC_OMP_TASK_TRACE_ENABLED) return ;
+    if (!mpc_omp_conf_get()->task_trace) return ;
 
     mpc_omp_thread_task_trace_infos_t * infos = __get_infos();
     assert(infos->head == NULL);
@@ -237,7 +296,8 @@ mpc_omp_task_trace_begin(void)
 void
 mpc_omp_task_trace_end(void)
 {
-    if (!MPC_OMP_TASK_TRACE_ENABLED) return ;
+    if (!mpc_omp_conf_get()->task_trace) return ;
+
     _mpc_omp_task_trace_flush();
     
     mpc_omp_thread_task_trace_infos_t * infos = __get_infos();

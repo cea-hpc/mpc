@@ -92,7 +92,8 @@ host_triplet = @host@
 @INFINIBAND_DRIVER_ENABLED_TRUE@am__append_2 = -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/ib/
 @PORTALS4_DRIVER_ENABLED_TRUE@am__append_3 = -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/portals/
 @OFI_DRIVER_ENABLED_TRUE@am__append_4 = -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/ofi/
-@MPC_FORTRAN_ENABLED_TRUE@am__append_5 = fortran.c
+@MPC_OPENMP_ENABLED_TRUE@am__append_5 = -I$(abs_top_srcdir)/src/MPC_OpenMP/include/
+@MPC_FORTRAN_ENABLED_TRUE@am__append_6 = fortran.c
 subdir = src/MPC_MPI/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_gcc_builtin.m4 \
@@ -538,7 +539,7 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/src/MPC_MPI/include/ \
 	-I$(abs_top_builddir)/src/include/ $(am__append_1) \
 	$(am__append_2) $(am__append_3) $(am__append_4) \
-	-I$(abs_top_srcdir)/src/MPC_Lowcomm/src/tcp/ \
+	$(am__append_5) -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/tcp/ \
 	-I$(abs_top_srcdir)/src/MPC_Lowcomm/src/shm/
 lib_LTLIBRARIES = libmpcmpi.la
 libmpcmpi_la_SOURCES = comm_lib.c egreq_nbc.c mpc_extern32.c \
@@ -546,7 +547,7 @@ libmpcmpi_la_SOURCES = comm_lib.c egreq_nbc.c mpc_extern32.c \
 	datatype.c egreq_progress.c mpc_info.c mpc_nbc.c \
 	mpi_rma_ctrl_msg.c mpi_conf.c mpc_coll.c egreq_classes.c \
 	mpc_cs.c mpc_mpi.c mpc_nbc_progress_thread_binding.c \
-	mpi_alloc_mem.c mpi_rma_epoch.c $(am__append_5)
+	mpi_alloc_mem.c mpi_rma_epoch.c $(am__append_6)
 libmpcmpi_la_LIBADD = ../../MPC_Lowcomm/src/libmpclowcomm.la -lrt
 all: all-am
 

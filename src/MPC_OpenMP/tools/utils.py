@@ -47,36 +47,16 @@ RECORD_GENERIC_SIZE         = 16
 RECORD_DEPENDENCY_SIZE      = 24
 RECORD_SCHEDULE_SIZE        = 112
 RECORD_ASYNC_SIZE           = 24
-RECORD_FAMINE_OVERLAP_SIZE  = 24
+RECORD_SEND_SIZE            = 40 # TODO
+RECORD_RECV_SIZE            = 40 # TODO
 
 MPC_OMP_TASK_TRACE_TYPE_DEPENDENCY      = 0
 MPC_OMP_TASK_TRACE_TYPE_SCHEDULE        = 1
 MPC_OMP_TASK_TRACE_TYPE_CREATE          = 2
-MPC_OMP_TASK_TRACE_TYPE_FAMINE_OVERLAP  = 3
-MPC_OMP_TASK_TRACE_TYPE_ASYNC           = 4
-MPC_OMP_TASK_TRACE_TYPE_COUNT           = 5
-
-def records_to_communications(records):
-    communications = {}
-    for pid in records:
-        for record in records[pid]:
-            if isinstance(record, RecordSchedule):
-                if record.label.startswith('send') or record.label.startswith('recv'):
-                    data = record.label.split('-')
-                    name = data[0][:4:]
-                    src = data[1]
-                    dst = data[2]
-                    tag = data[3]
-                    if name not in communications:
-                        communications[name] = {}
-                    if src not in communications[name]:
-                        communications[name][src] = {}
-                    if dst not in communications[name][src]:
-                        communications[name][src][dst] = {}
-                    if tag not in communications[name][src][dst]:
-                        communications[name][src][dst][tag] = []
-                    communications[name][src][dst][tag].append(record)
-    return communications
+MPC_OMP_TASK_TRACE_TYPE_ASYNC           = 3
+MPC_OMP_TASK_TRACE_TYPE_SEND            = 4
+MPC_OMP_TASK_TRACE_TYPE_RECV            = 5
+MPC_OMP_TASK_TRACE_TYPE_COUNT           = 6
 
 def parse_traces(traces):
     # parse records (TODO : maybe this can be optimized)
@@ -86,9 +66,6 @@ def parse_traces(traces):
     cte = {
         'traceEvents': []
     }
-
-    # inter-node communications
-    communications = records_to_communications(records)
 
     # stats dict
     stats = {}
@@ -117,7 +94,8 @@ def parse_traces(traces):
             RecordDependency: 1,
             RecordSchedule: 2,
             RecordAsync: 3,
-            RecordFamineOverlap: 4
+            RecordSend: 4,
+            RecordRecv: 5
         }
         schedule_id = 0
         if hasattr(record, 'schedule_id'):
@@ -410,6 +388,7 @@ def parse_traces(traces):
 
 
     # cte communications 
+    '''
     if 'send' in communications:
         for src in communications['send']:
             for dst in communications['send'][src]:
@@ -445,6 +424,7 @@ def parse_traces(traces):
                                             }
                                             cte['traceEvents'].append(event)
                                             break
+        '''
 
     # compute ranularities
     assert(all(len(granularities[uuid]) % 2 == 0 for uuid in granularities))
@@ -457,8 +437,8 @@ def parse_traces(traces):
 
     # graph stats
     gg = records_to_gg(records)
-    nsend = sum(node.label.startswith('send') for node in gg.nodes.values()) 
-    nrecv = sum(node.label.startswith('recv') for node in gg.nodes.values()) 
+    nsend = 0
+    nrecv = 0
     narcs = sum(len(node.successors) for node in gg.nodes.values())
     stats['graph'] = {
         'n-tasks': {
@@ -552,7 +532,9 @@ def ensure_task(tasks, uid):
             'created': None,
             'schedules':    [],
             'successors':   [],
-            'predecessors': []
+            'predecessors': [],
+            'sends':        [],
+            'recvs':        []
         }
 
 # see mpcomp_task_trace.h
@@ -581,39 +563,7 @@ class Record:
         return str(self)
 
     def __str__(self):
-        return "{}(pid={}, tid={}, type={}, time={}, {})".format(type(self).__name__, self.pid, self.tid, RECORD_CLASS[self.typ].__name__, self.time, self.attributes())
-
-class RecordAsync(Record):
-
-    def parse(self, buff):
-        # TODO : parse 'when'
-        self.status = int.from_bytes(buff[0:4], byteorder=BYTE_ORDER, signed=False)
-        self.when   = int.from_bytes(buff[4:8], byteorder=BYTE_ORDER, signed=False)
-
-    def attributes(self):
-        return "status={}, when={}".format(self.status, self.when)
-
-    def store(self, tasks):
-        # TODO : store
-        pass
-
-    def size(self):
-        return RECORD_ASYNC_SIZE - RECORD_GENERIC_SIZE
-
-class RecordFamineOverlap(Record):
-
-    def parse(self, buff):
-        self.status = int.from_bytes(buff[0:4], byteorder=BYTE_ORDER, signed=False)
-
-    def attributes(self):
-        return "status={}".format(self.status)
-
-    def store(self, tasks):
-        # TODO : store this event
-        pass
-
-    def size(self):
-        return RECORD_FAMINE_OVERLAP_SIZE - RECORD_GENERIC_SIZE
+        return "{}(pid={}, tid={}, time={}, {})".format(type(self).__name__, self.pid, self.tid, self.time, self.attributes())
 
 class RecordDependency(Record):
 
@@ -632,7 +582,6 @@ class RecordDependency(Record):
 
     def size(self):
         return RECORD_DEPENDENCY_SIZE - RECORD_GENERIC_SIZE
-
 
 
 class RecordSchedule(Record):
@@ -665,12 +614,70 @@ class RecordCreate(RecordSchedule):
         ensure_task(tasks, self.uid)
         tasks[self.uid]['created'] = self
 
+class RecordAsync(Record):
+
+    def parse(self, buff):
+        # TODO : parse 'when'
+        self.status = int.from_bytes(buff[0:4], byteorder=BYTE_ORDER, signed=False)
+        self.when   = int.from_bytes(buff[4:8], byteorder=BYTE_ORDER, signed=False)
+
+    def attributes(self):
+        return "status={}, when={}".format(self.status, self.when)
+
+    def store(self, tasks):
+        # TODO : store
+        pass
+
+    def size(self):
+        return RECORD_ASYNC_SIZE - RECORD_GENERIC_SIZE
+
+class RecordSend(Record):
+
+    def parse(self, buff):
+        self.uid   = int.from_bytes(buff[0:4],   byteorder=BYTE_ORDER, signed=False)
+        self.count = int.from_bytes(buff[4:8],   byteorder=BYTE_ORDER, signed=False)
+        self.dtype = int.from_bytes(buff[8:12],  byteorder=BYTE_ORDER, signed=False)
+        self.dst   = int.from_bytes(buff[12:16], byteorder=BYTE_ORDER, signed=False)
+        self.tag   = int.from_bytes(buff[16:20], byteorder=BYTE_ORDER, signed=False)
+        self.comm  = int.from_bytes(buff[20:24], byteorder=BYTE_ORDER, signed=False)
+
+    def attributes(self):
+        return "uid={}, count={}, dtype={}, dst={}, tag={}, comm={}".format(self.uid, self.count, self.dtype, self.dst, self.tag, self.comm)
+
+    def store(self, tasks):
+        assert(self.uid in tasks)
+        tasks[self.uid]['sends'].append(self)
+
+    def size(self):
+        return RECORD_SEND_SIZE - RECORD_GENERIC_SIZE
+
+class RecordRecv(Record):
+
+    def parse(self, buff):
+        self.uid   = int.from_bytes(buff[0:4],   byteorder=BYTE_ORDER, signed=False)
+        self.count = int.from_bytes(buff[4:8],   byteorder=BYTE_ORDER, signed=False)
+        self.dtype = int.from_bytes(buff[8:12],  byteorder=BYTE_ORDER, signed=False)
+        self.src   = int.from_bytes(buff[12:16], byteorder=BYTE_ORDER, signed=False)
+        self.tag   = int.from_bytes(buff[16:20], byteorder=BYTE_ORDER, signed=False)
+        self.comm  = int.from_bytes(buff[20:24], byteorder=BYTE_ORDER, signed=False)
+
+    def attributes(self):
+        return "uid={}, count={}, dtype={}, src={}, tag={}, comm={}".format(self.uid, self.count, self.dtype, self.src, self.tag, self.comm)
+
+    def store(self, tasks):
+        assert(self.uid in tasks)
+        tasks[self.uid]['recvs'].append(self)
+
+    def size(self):
+        return RECORD_SEND_SIZE - RECORD_GENERIC_SIZE
+
 RECORD_CLASS = {
     MPC_OMP_TASK_TRACE_TYPE_DEPENDENCY:     RecordDependency,
     MPC_OMP_TASK_TRACE_TYPE_SCHEDULE:       RecordSchedule,
     MPC_OMP_TASK_TRACE_TYPE_CREATE:         RecordCreate,
-    MPC_OMP_TASK_TRACE_TYPE_FAMINE_OVERLAP: RecordFamineOverlap,
-    MPC_OMP_TASK_TRACE_TYPE_ASYNC:          RecordAsync
+    MPC_OMP_TASK_TRACE_TYPE_ASYNC:          RecordAsync,
+    MPC_OMP_TASK_TRACE_TYPE_SEND:           RecordSend,
+    MPC_OMP_TASK_TRACE_TYPE_RECV:           RecordRecv
 }
 
 # ---------------------------------------------------- #
@@ -732,6 +739,8 @@ def traces_to_records(src):
 
 def records_to_processes(records):
     processes = {}
+
+    # sort record by processes and threads
     for pid in records:
         processes[pid] = {'threads': [], 'tasks': {}}
         process = processes[pid]
@@ -739,6 +748,7 @@ def records_to_processes(records):
             if record.tid not in process['threads']:
                 process['threads'].append(record.tid)
             record.store(process['tasks'])
+
     return processes
 
 def records_to_cte(records):
@@ -772,11 +782,13 @@ class Node:
         self.time = sum([task['schedules'][i + 1].time - task['schedules'][i].time for i in range(0, len(task['schedules']), 2)])
         self.schedule_id = schedule_id
 
-    def dump(self, gg, g, dumped, show_priority=False, show_omp_priority=False, show_time=False, gradient=False):
+    def dump(self, gg, g, dumped, show_label=False, show_priority=False, show_omp_priority=False, show_time=False, gradient=False):
         if self.uuid in dumped:
             return
         dumped[self.uuid] = True
-        s = self.label #self.label.split('-')[0]
+        s = ''
+        if show_label:
+            s = self.label
         if show_priority:
             s += "\\n{}".format(self.priority)
         if show_omp_priority:
@@ -784,7 +796,6 @@ class Node:
         if show_time:
             s += "\\n{}".format(self.time)
         if gradient:
-            s = ''  # TODO - no name in gradient mode
             f = self.schedule_id / float(self.graph.last_schedule_id)   # linear
             f = f**2
             rgb = tuple(int((1.0 - f) * component[0] + f * component[1]) for component in zip(COLOR_GRADIENT_1, COLOR_GRADIENT_2))
@@ -797,7 +808,7 @@ class Node:
             dotprint(2, '{} [label="{}"];'.format(self.uuid, s))
         for suid in self.successors:
             snode = g.nodes[suid]
-            snode.dump(gg, g, dumped, show_priority=show_priority, show_omp_priority=show_omp_priority, show_time=show_time, gradient=gradient)
+            snode.dump(gg, g, dumped, show_label=show_label, show_priority=show_priority, show_omp_priority=show_omp_priority, show_time=show_time, gradient=gradient)
             s = '{} -> {}'.format(self.uuid, snode.uuid)
             if self.critical and snode.critical and abs(self.critical_index - snode.critical_index) == 1:
                 s += ' [color=red]'
@@ -836,7 +847,7 @@ class Graph:
             if len(node.predecessors) == 0:
                 self.roots.append(node)
 
-    def dump(self, gg, show_priority=False, show_omp_priority=False, show_time=False, gradient=False):
+    def dump(self, gg, show_label=False, show_priority=False, show_omp_priority=False, show_time=False, gradient=False):
         dotprint(1, 'subgraph cluster_P{}'.format(self.pid))
         dotprint(1, '{')
         
@@ -845,7 +856,7 @@ class Graph:
 
         dumped = {}
         for node in self.roots:
-            node.dump(gg, self, dumped, show_priority=show_priority, show_omp_priority=show_omp_priority, show_time=show_time, gradient=gradient)
+            node.dump(gg, self, dumped, show_label=show_label, show_priority=show_priority, show_omp_priority=show_omp_priority, show_time=show_time, gradient=gradient)
 
         dotprint(1, '}')
 
@@ -866,36 +877,70 @@ class GlobalGraph:
             node = graph.nodes[uid]
             self.nodes[node.uuid] = node
 
-    def set_communications(self, communications):
-        if 'send' in communications:
-            for src in communications['send']:
-                for dst in communications['send'][src]:
-                    for tag in communications['send'][src][dst]:
-                        if 'recv' in communications:
-                            if dst in communications['recv']:
-                                if src in communications['recv'][dst]:
-                                    if tag in communications['recv'][dst][src]:
-                                        spid = int(src)
-                                        rpid = int(dst)
-
-                                        suid = communications['send'][src][dst][tag][0].uid
-                                        ruid = communications['recv'][dst][src][tag][0].uid
-
-                                        snode = self.graphs[spid].nodes[suid]
-                                        rnode = self.graphs[rpid].nodes[ruid]
-
-                                        self.send_to_recv[snode] = rnode
-                                        self.recv_to_send[rnode] = snode
-
-    def finalize(self):
+    def finalize(self, processes):
         for pid in self.graphs:
             graph = self.graphs[pid]
+
+            # retrieve leaves and roots 
             for leaf in graph.leaves:
                 if leaf not in self.send_to_recv:
                     self.leaves.append(leaf)
             for root in graph.roots:
                 if root not in self.recv_to_send:
                     self.roots.append(root)
+
+        # link inter-process nodes
+        c = {}
+        for pid in processes:
+            tasks = processes[pid]['tasks']
+            for uid in tasks:
+                task = tasks[uid]
+                for s in task['sends']:
+                    if s.comm not in c:
+                        c[s.comm] = {}
+                    if pid     not in c[s.comm]:
+                        c[s.comm][pid] = {}
+                    if s.dst   not in c[s.comm][pid]:
+                        c[s.comm][pid][s.dst] = {}
+                    if s.count not in c[s.comm][pid][s.dst]:
+                        c[s.comm][pid][s.dst][s.count] = {}
+                    if s.dtype not in c[s.comm][pid][s.dst][s.count]:
+                        c[s.comm][pid][s.dst][s.count][s.dtype] = {}
+                    if s.tag   not in c[s.comm][pid][s.dst][s.count][s.dtype]:
+                        c[s.comm][pid][s.dst][s.count][s.dtype][s.tag] = {'send': [], 'recv': []}
+                    c[s.comm][pid][s.dst][s.count][s.dtype][s.tag]['send'].append(s)
+
+                for r in task['recvs']:
+                    if r.comm  not in c:
+                        c[r.comm] = {}
+                    if r.src   not in c[r.comm]:
+                        c[r.comm][r.src] = {}
+                    if pid     not in c[r.comm][r.src]:
+                        c[r.comm][r.src][pid] = {}
+                    if r.count not in c[r.comm][r.src][pid]:
+                        c[r.comm][r.src][pid][r.count] = {}
+                    if r.dtype not in c[r.comm][r.src][pid][r.count]:
+                        c[r.comm][r.src][pid][r.count][r.dtype] = {}
+                    if r.tag   not in c[r.comm][r.src][pid][r.count][r.dtype]:
+                        c[r.comm][r.src][pid][r.count][r.dtype][r.tag] = {'send': [], 'recv': []}
+                    c[r.comm][r.src][pid][r.count][r.dtype][r.tag]['recv'].append(r)
+
+        for comm in c:
+            for src in c[comm]:
+                for dst in c[comm][src]:
+                    for count in c[comm][src][dst]:
+                        for dtype in c[comm][src][dst][count]:
+                            for tag in c[comm][src][dst][count][dtype]:
+                                x = c[comm][src][dst][count][dtype][tag]
+                                assert(len(x['send']) == len(x['recv']))
+                                for i in range(len(x['send'])):
+                                    send = x['send'][i]
+                                    recv = x['recv'][i]
+
+                                    snode = self.graphs[send.pid].nodes[send.uid]
+                                    rnode = self.graphs[recv.pid].nodes[recv.uid]
+
+                                    self.send_to_recv[snode] = rnode
 
     # compute local process critical path
     def compute_critical(self):
@@ -930,32 +975,31 @@ class GlobalGraph:
 
         return path
 
-    def dump(self, show_priority=False, show_omp_priority=False, show_time=False, gradient=False):
+    def dump(self, show_label=False, show_priority=False, show_omp_priority=False, show_time=False, gradient=False):
         dotprint(0, 'digraph G')
         dotprint(0, '{')
 
-        if not gradient:
-            # print legend
-            dotprint(1, 'subgraph cluster_LEGEND')
-            dotprint(1, '{')
+        # print legend
+        dotprint(1, 'subgraph cluster_LEGEND')
+        dotprint(1, '{')
 
-            legend = 'LABEL'
-            if show_priority:
-                legend += '\\nWEIGHT'
-            if show_omp_priority:
-                legend += '\\nOMP_PRIORITY'
-            if show_time:
-                legend += '\\nTIME'
-            dotprint(2, 'LEGEND [label="{}"];'.format(legend))
+        legend = 'LABEL'
+        if show_priority:
+            legend += '\\nPRIORITY (internal)'
+        if show_omp_priority:
+            legend += '\\nOMP_PRIORITY'
+        if show_time:
+            legend += '\\nTIME'
+        dotprint(2, 'LEGEND [label="{}"];'.format(legend))
        
-            dotprint(2, 'label="Legend";')
-            dotprint(2, 'color="#aaaaaa";')
-            dotprint(1, '}')
+        dotprint(2, 'label="Legend";')
+        dotprint(2, 'color="#aaaaaa";')
+        dotprint(1, '}')
 
         # print subgraphs
         for pid in self.graphs:
             graph = self.graphs[pid]
-            graph.dump(self, show_priority=show_priority, show_omp_priority=show_omp_priority, show_time=show_time, gradient=gradient)
+            graph.dump(self, show_label=show_label, show_priority=show_priority, show_omp_priority=show_omp_priority, show_time=show_time, gradient=gradient)
 
         # print inter-graph dependencies
         for snode in self.send_to_recv:
@@ -974,8 +1018,7 @@ def records_to_gg(records):
     processes = records_to_processes(records)
     for pid in processes:
         gg.add_process(pid, processes[pid])
-    gg.set_communications(records_to_communications(records))
-    gg.finalize()
+    gg.finalize(processes)
     return gg
 
 def traces_to_gg(src):

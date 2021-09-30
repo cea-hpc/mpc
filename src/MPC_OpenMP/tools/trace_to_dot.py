@@ -1,24 +1,16 @@
 """
 "   This tool generate a .dot graph file from an MPI+OpenMp(tasks) trace
-"
-"   WARNING:    to generate inter-process edges that corresponds to MPI communications,
-"               OpenMP tasks that contains communications should be labeled this way :
-
-                on the sender rank :
-"                   send-%d-%d-%d, sender_rank, receiver_rank, tag
-
-                on the sender rank :
-"                   recv-%d-%d-%d, receiver_rank, sender_rank, tag
+"   WARNING: must be using MPC to generate inter-process edges
 """
 import getopt
 import sys
 
 from utils import *
 
-def traces_to_dot(src, show_priority=False, show_omp_priority=False, show_critical=False, show_time=False, gradient=False):
-    gg = traces_to_gg(src)
+def traces_to_dot(config):
+    gg = traces_to_gg(config['file'])
 
-    if show_critical:
+    if config['critical']:
         print('computing critical...', file=sys.stderr)
         critical_path = gg.compute_critical()
         critical_time = 0.
@@ -27,7 +19,11 @@ def traces_to_dot(src, show_priority=False, show_omp_priority=False, show_critic
             critical_time += node.time
         print('global critical path time = {}'.format(critical_time / 1000000.0), file=sys.stderr)
 
-    gg.dump(show_priority=show_priority, show_omp_priority=show_omp_priority, show_time=show_time, gradient=gradient)
+    gg.dump(show_label=config['label'],
+            show_priority=config['priority'],
+            show_omp_priority=config['omp_priority'],
+            show_time=config['time'],
+            gradient=config['gradient'])
 
 def usage():
     print('usage: {} [[-f |--file=]TRACE] {-h|--help} {-w|--priority} {-p|--omp_priority} {-c|--critical} {-t|--time} {-g|--gradient}'.format(sys.argv[0]))
@@ -36,8 +32,9 @@ def main():
     if len(sys.argv) < 2:
         return usage()
 
-    CONFIG = {
+    config = {
         'file' : None,
+        'label': False,
         'priority': False,
         'omp_priority': False,
         'critical': False,
@@ -46,43 +43,38 @@ def main():
     }
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'f:hwpctg', ['file=', 'help', 'priority', 'omp_priority', 'critical', 'time', 'gradient'])
+        opts, args = getopt.getopt(sys.argv[1:], 'f:hwpctgl', ['file=', 'help', 'priority', 'omp_priority', 'critical', 'time', 'gradient', 'label'])
     except getopt.GetoptError:
         usage()
         sys.exit(1)
 
     for opt, arg in opts:
         if opt in ('-f', '--file'):
-            CONFIG['file'] = arg
+            config['file'] = arg
         elif opt in ('-h', '--help'):
             usage()
             sys.exit(0)
+        elif opt in ('-l', '--label'):
+            config['label'] = True
         elif opt in ('-w', '--priority'):
-            CONFIG['priority'] = True
+            config['priority'] = True
         elif opt in ('-p', '--omp_priority'):
-            CONFIG['omp_priority'] = True
+            config['omp_priority'] = True
         elif opt in ('-c', '--critical'):
-            CONFIG['critical'] = True
+            config['critical'] = True
         elif opt in ('-t', '--time'):
-            CONFIG['time'] = True
+            config['time'] = True
         elif opt in ('-g', '--gradient'):
-            CONFIG['gradient'] = True
+            config['gradient'] = True
         else:
             usage()
             sys.exit(1)
 
-    if CONFIG['file']:
-        traces_to_dot(
-            CONFIG['file'],
-            show_priority=CONFIG['priority'],
-            show_omp_priority=CONFIG['omp_priority'],
-            show_critical=CONFIG['critical'],
-            show_time=CONFIG['time'],
-            gradient=CONFIG['gradient'])
+    if config['file']:
+        traces_to_dot(config)
     else:
         usage()
 
 if __name__ == "__main__":
     main()
 
-""
