@@ -581,7 +581,7 @@ class Record:
         return str(self)
 
     def __str__(self):
-        return "{}(pid={}, tid={}, type={}, time={}, {})".format(type(self).__name__, self.pid, self.tid, self.typ, self.time, self.attributes())
+        return "{}(pid={}, tid={}, type={}, time={}, {})".format(type(self).__name__, self.pid, self.tid, RECORD_CLASS[self.typ].__name__, self.time, self.attributes())
 
 class RecordAsync(Record):
 
@@ -665,6 +665,15 @@ class RecordCreate(RecordSchedule):
         ensure_task(tasks, self.uid)
         tasks[self.uid]['created'] = self
 
+RECORD_CLASS = {
+    MPC_OMP_TASK_TRACE_TYPE_DEPENDENCY:     RecordDependency,
+    MPC_OMP_TASK_TRACE_TYPE_SCHEDULE:       RecordSchedule,
+    MPC_OMP_TASK_TRACE_TYPE_CREATE:         RecordCreate,
+    MPC_OMP_TASK_TRACE_TYPE_FAMINE_OVERLAP: RecordFamineOverlap,
+    MPC_OMP_TASK_TRACE_TYPE_ASYNC:          RecordAsync
+}
+
+# ---------------------------------------------------- #
 
 def record_to_properties_and_statuses(record):
     lst = []
@@ -702,16 +711,8 @@ def trace_to_records(records, path):
             read_size += RECORD_GENERIC_SIZE
             t   = int(struct.unpack('d', buff[0:8])[0])
             typ = int.from_bytes(buff[8:12], byteorder=BYTE_ORDER, signed=False)
-            clss = {
-                MPC_OMP_TASK_TRACE_TYPE_DEPENDENCY:     RecordDependency,
-                MPC_OMP_TASK_TRACE_TYPE_SCHEDULE:       RecordSchedule,
-                MPC_OMP_TASK_TRACE_TYPE_CREATE:         RecordCreate,
-                MPC_OMP_TASK_TRACE_TYPE_FAMINE_OVERLAP: RecordFamineOverlap,
-                MPC_OMP_TASK_TRACE_TYPE_ASYNC:          RecordAsync
-
-            }
-            assert(typ in clss)
-            record = clss[typ](header.pid, header.tid, t, typ, f)
+            assert(typ in RECORD_CLASS)
+            record = RECORD_CLASS[typ](header.pid, header.tid, t, typ, f)
             records[header.pid].append(record)
             read_size += record.size()
             t1 = time.time()

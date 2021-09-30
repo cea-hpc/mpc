@@ -44,9 +44,6 @@ _mpc_omp_callback_run(mpc_omp_callback_when_t when)
         mpc_omp_callback_t * callback = infos->callbacks[when];
         while (callback)
         {
-            /* run the callback */
-            int r = callback->func(callback->data);
-
             /* if the callback should be popped out of the list */
             int pop = 0;
 
@@ -55,10 +52,7 @@ _mpc_omp_callback_run(mpc_omp_callback_when_t when)
             {
                 case (MPC_OMP_CALLBACK_REPEAT_RETURN):
                 {
-                    if (r == 0)
-                    {
-                        pop = 1;
-                    }
+                    pop = !callback->func(callback->data);
                     break ;
                 }
                 default:
