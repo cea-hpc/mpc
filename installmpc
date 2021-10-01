@@ -909,7 +909,8 @@ build_configure_based_package()
 			cd "${PROJECT_BUILD_DIR}"
 		fi
 	else
-		skip
+        checking "Tarball for ${package}-${version} already extracted"
+        skip
 	fi
 
 	#
