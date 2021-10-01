@@ -386,46 +386,6 @@ def parse_traces(traces):
             cte['traceEvents'].append(event)
             '''
 
-
-    # cte communications 
-    '''
-    if 'send' in communications:
-        for src in communications['send']:
-            for dst in communications['send'][src]:
-                for tag in communications['send'][src][dst]:
-                    if 'recv' in communications:
-                        if dst in communications['recv']:
-                            if src in communications['recv'][dst]:
-                                if tag in communications['recv'][dst][src]:
-                                    r = communications['recv'][dst][src][tag]
-                                    s = communications['send'][src][dst][tag]
-                                    for ri, si in ((i, j) for i in range(len(r) - 2, -1, -2) for j in range(len(s) - 2, -1, -2)):
-                                        if s[si].time < r[ri].time:
-                                            identifier = "communication-{}-{}-{}-{}-{}".format(src, dst, tag, si, ri)
-                                            event = {
-                                                'name' : identifier,
-                                                'cat': 'communication',
-                                                'ph': 's',
-                                                'ts': min(s[si + 1].time, s[si].time + (r[ri].time - s[si].time) * 0.5),
-                                                'pid': s[si].pid,
-                                                'tid': s[si].tid,
-                                                'id': identifier
-                                            }
-                                            cte['traceEvents'].append(event)
-
-                                            event = {
-                                                'name' : identifier,
-                                                'cat': 'communication',
-                                                'ph': 't',
-                                                'ts': r[ri].time,
-                                                'pid': r[ri].pid,
-                                                'tid': r[ri].tid,
-                                                'id': identifier
-                                            }
-                                            cte['traceEvents'].append(event)
-                                            break
-        '''
-
     # compute ranularities
     assert(all(len(granularities[uuid]) % 2 == 0 for uuid in granularities))
     g = sorted([sum(granularities[uuid][i+1] - granularities[uuid][i] for i in range(0, len(granularities[uuid]) - 1, 2)) / 1000000.0 for uuid in granularities])
@@ -435,11 +395,51 @@ def parse_traces(traces):
         'n-threads-total': n_threads
     }
 
-    # graph stats
+    # generate global graph
     gg = records_to_gg(records)
-    nsend = 0
-    nrecv = 0
+
+    # add communication event
+    c = gg.communications
+    for comm in c:
+        for src in c[comm]:
+            for dst in c[comm][src]:
+                for count in c[comm][src][dst]:
+                    for dtype in c[comm][src][dst][count]:
+                        for tag in c[comm][src][dst][count][dtype]:
+                            x = c[comm][src][dst][count][dtype][tag]
+                            assert(len(x['send']) == len(x['recv']))
+                            for i in range(len(x['send'])):
+                                send = x['send'][i]
+                                recv = x['recv'][i]
+                                identifier = "communication-{}-{}-{}-{}-{}-{}-{}-{}".format(send.comm, send.pid, send.dst, send.count, send.dtype, send.tag, send.uid, recv.uid)
+                                event = {
+                                    'name' : identifier,
+                                    'cat': 'communication',
+                                    'ph': 's',
+                                    'ts':  send.time,
+                                    'pid': send.pid,
+                                    'tid': send.tid,
+                                    'id': identifier
+                                }
+                                cte['traceEvents'].append(event)
+                                
+                                event = {
+                                    'name' : identifier,
+                                    'cat': 'communication',
+                                    'ph': 't',
+                                    'ts': recv.time,
+                                    'pid': recv.pid,
+                                    'tid': recv.tid,
+                                    'id': identifier
+                                }
+                                cte['traceEvents'].append(event)
+
+    # graph stats
     narcs = sum(len(node.successors) for node in gg.nodes.values())
+    # TODO
+    narcs_remote = 0
+    nrecv = 0
+    nsend = 0
     stats['graph'] = {
         'n-tasks': {
             'total': len(gg.nodes),
@@ -452,8 +452,8 @@ def parse_traces(traces):
         },
         'n-arcs': {
             'total': narcs,
-            'dependencies': narcs - nrecv,
-            'communications': nrecv
+            'local': narcs - narcs_remote,
+            'remote': narcs_remote
         },
         'granularity (s.)': {
             'max':  g[-1],
@@ -890,7 +890,8 @@ class GlobalGraph:
                     self.roots.append(root)
 
         # link inter-process nodes
-        c = {}
+        self.communications = {}
+        c = self.communications
         for pid in processes:
             tasks = processes[pid]['tasks']
             for uid in tasks:
@@ -932,15 +933,21 @@ class GlobalGraph:
                         for dtype in c[comm][src][dst][count]:
                             for tag in c[comm][src][dst][count][dtype]:
                                 x = c[comm][src][dst][count][dtype][tag]
-                                assert(len(x['send']) == len(x['recv']))
-                                for i in range(len(x['send'])):
+                               # assert(len(x['send']) == len(x['recv']))
+                                for i in range(min(len(x['send']), len(x['recv']))):
                                     send = x['send'][i]
                                     recv = x['recv'][i]
 
                                     snode = self.graphs[send.pid].nodes[send.uid]
                                     rnode = self.graphs[recv.pid].nodes[recv.uid]
 
-                                    self.send_to_recv[snode] = rnode
+                                    if snode not in self.send_to_recv:
+                                        self.send_to_recv[snode] = []
+                                    self.send_to_recv[snode].append(rnode)
+
+                                    if rnode not in self.recv_to_send:
+                                        self.recv_to_send[rnode] = []
+                                    self.recv_to_send[rnode].append(snode)
 
     # compute local process critical path
     def compute_critical(self):
@@ -957,7 +964,7 @@ class GlobalGraph:
                     node = q.get()
                     successors = [node.graph.nodes[uid] for uid in node.successors]
                     if node in self.send_to_recv:
-                        successors += [self.send_to_recv[node]]
+                        successors += self.send_to_recv[node]
                     for snode in successors:
                         if d[snode.uuid] < d[node.uuid] + snode.time:
                             d[snode.uuid] = d[node.uuid] + snode.time
@@ -1003,14 +1010,14 @@ class GlobalGraph:
 
         # print inter-graph dependencies
         for snode in self.send_to_recv:
-            rnode = self.send_to_recv[snode]
-            s = '{} -> {}'.format(snode.uuid, rnode.uuid)
-            attr = []
-            attr.append('style=dotted')
-            if snode.critical and rnode.critical:
-                attr.append('color=red')
-            s += ' [{}] ;'.format(','.join(attr))
-            dotprint(1, s)
+            for rnode in self.send_to_recv[snode]:
+                s = '{} -> {}'.format(snode.uuid, rnode.uuid)
+                attr = []
+                attr.append('style=dotted')
+                if snode.critical and rnode.critical:
+                    attr.append('color=red')
+                s += ' [{}] ;'.format(','.join(attr))
+                dotprint(1, s)
         dotprint(0, '}')
 
 def records_to_gg(records):

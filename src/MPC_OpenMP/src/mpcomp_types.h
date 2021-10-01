@@ -41,6 +41,7 @@
 #include "mpcompt_frame_types.h"
 
 #include "mpc_common_recycler.h"
+#include "mpc_omp_task_trace.h"
 
 // #define TLS_ALLOCATORS
 # define MPC_OMP_USE_INTEL_ABI 1
@@ -55,7 +56,7 @@
 # define MPC_OMP_VERSION_MAJOR  3
 # define MPC_OMP_VERSION_MINOR  1
 
-/* tasking */
+/* config */
 # define MPC_OMP_TASK_COMPILE_FIBER 1
 # define MPC_OMP_TASK_COND_WAIT     1
 
@@ -71,8 +72,6 @@
 # define MPC_OMP_TASK_DEFAULT_ALIGN  8
 
 # define MPC_OMP_TASK_FIBER_STACK_SIZE (mpc_omp_conf_get()->task_fiber_stack_size)
-
-# include "mpc_omp_task_trace.h"
 
 /* Use MCS locks or not */
 #define MPC_OMP_USE_MCS_LOCK 1

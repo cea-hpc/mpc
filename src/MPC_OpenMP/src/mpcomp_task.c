@@ -883,6 +883,13 @@ __task_pqueue_push(mpc_omp_task_pqueue_t * pqueue, mpc_omp_task_t * task)
     
     OPA_incr_int(&(pqueue->nb_elements));
     __instance_incr_ready_tasks();
+
+# if MPC_OMP_TASK_COND_WAIT
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+    pthread_cond_t * cond = &(thread->instance->task_infos.work_cond);
+    pthread_cond_signal(cond);
+# endif /* MPC_OMP_TASK_COND_WAIT */
 }
 
 /*********************
