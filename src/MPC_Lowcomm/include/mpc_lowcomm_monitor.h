@@ -228,7 +228,7 @@ mpc_lowcomm_monitor_set_t mpc_lowcomm_monitor_set_get(mpc_lowcomm_set_uid_t gid)
  */
 int mpc_lowcomm_monitor_set_contains(mpc_lowcomm_set_uid_t gid, mpc_lowcomm_peer_uid_t uid);
 
-#define MPC_LOWCOMM_PEER_URI_SIZE    128
+#define MPC_LOWCOMM_PEER_URI_SIZE    246
 
 /**
  * @brief This defines the informations for a given peer

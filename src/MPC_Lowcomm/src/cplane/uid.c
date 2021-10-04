@@ -369,8 +369,6 @@ int _mpc_lowcomm_uid_clear(uint64_t uid)
 
 	__set_path(pathbuf, 517, uid);
 
-	//mpc_common_debug_error("CLEARRR ==> %s", pathbuf);
-
 	if(__is_file(pathbuf) )
 	{
 		unlink(pathbuf);

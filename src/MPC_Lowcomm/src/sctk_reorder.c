@@ -225,7 +225,7 @@ int sctk_send_message_from_network_reorder(mpc_lowcomm_ptp_message_t *msg)
 			mpc_common_spinlock_lock(&(tmp->lock) );
 			HASH_ADD_INT( tmp->buffer, key, reorder);
 			mpc_common_spinlock_unlock(&(tmp->lock) );
-			mpc_common_debug_error("recv %llu to %llu - delay wait counter is %d had %d "
+			mpc_common_debug("recv %llu to %llu - delay wait counter is %d had %d "
 			                   "(tmp:%p)",
 			                   SCTK_MSG_SRC_PROCESS_UID(msg),
 			                   SCTK_MSG_DEST_PROCESS_UID(msg), number,

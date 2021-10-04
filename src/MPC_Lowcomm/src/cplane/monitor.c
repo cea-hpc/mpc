@@ -1035,7 +1035,7 @@ static mpc_lowcomm_monitor_retcode_t __start_server_socket(struct _mpc_lowcomm_m
         snprintf(resolved_ip, 256, "%s", hostname);
     }
 
-	ret = snprintf(monitor->monitor_uri, MPC_LOWCOMM_PEER_URI_SIZE, "%s:%d", resolved_ip, port);
+	ret = snprintf(monitor->monitor_uri, MPC_LOWCOMM_PEER_URI_SIZE, "%s:%d@%s", resolved_ip, port, hostname);
 
 	if(MPC_LOWCOMM_PEER_URI_SIZE <= ret)
 	{
@@ -1043,6 +1043,8 @@ static mpc_lowcomm_monitor_retcode_t __start_server_socket(struct _mpc_lowcomm_m
 		mpc_common_debug_fatal("Monitor server URI was too long to be stored");
 		return MPC_LOWCOMM_MONITOR_RET_ERROR;
 	}
+
+	mpc_common_debug_info("MON: bound to %s", monitor->monitor_uri);
 
 	return MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 }
@@ -1192,15 +1194,16 @@ static inline _mpc_lowcomm_client_ctx_t *___connect_client(struct _mpc_lowcomm_m
 	char localuri[MPC_LOWCOMM_PEER_URI_SIZE];
 	snprintf(localuri, MPC_LOWCOMM_PEER_URI_SIZE, uri);
 
-	mpc_common_nodebug("(%u, %u) connecting to (%u, %u)", mpc_lowcomm_peer_get_set(monitor->process_uid),
-	                        mpc_lowcomm_peer_get_rank(monitor->process_uid), mpc_lowcomm_peer_get_set(uid), mpc_lowcomm_peer_get_rank(uid) );
+	mpc_common_debug("(%u, %u) connecting to (%u, %u)", mpc_lowcomm_peer_get_set(monitor->process_uid),
+	                         mpc_lowcomm_peer_get_rank(monitor->process_uid), mpc_lowcomm_peer_get_set(uid), mpc_lowcomm_peer_get_rank(uid) );
 
 	/*mpc_common_debug_warning("%lu -> %lu", monitor->process_uid, uid);
 	 * mpc_common_debug_warning("%lu [label='(%u, %u)']",monitor->process_uid , mpc_lowcomm_peer_get_set(monitor->process_uid),
 	 *                       mpc_lowcomm_peer_get_rank(monitor->process_uid));*/
 
-	char *hostname;
-	char *port;
+	char *ip = NULL;
+	char *port = NULL;
+	char *hostname = NULL;
 
 	char *sep = strchr(localuri, ':');
 
@@ -1211,10 +1214,20 @@ static inline _mpc_lowcomm_client_ctx_t *___connect_client(struct _mpc_lowcomm_m
 		return NULL;
 	}
 
-	*sep     = '\0';
-	hostname = localuri;
-	port     = sep + 1;
+	char *sep2 = strchr(localuri, '@');
 
+	if(!sep2)
+	{
+		mpc_common_debug_error("Bad peer URI %s", uri);
+		*retcode = MPC_LOWCOMM_MONITOR_RET_ERROR;
+		return NULL;
+	}
+
+	*sep     = '\0';
+	*sep2 = '\0';
+	ip = localuri;
+	port     = sep + 1;
+	hostname = sep2 + 1;
 
 	int len = strlen(port);
 	int i;
@@ -1229,70 +1242,84 @@ static inline _mpc_lowcomm_client_ctx_t *___connect_client(struct _mpc_lowcomm_m
 		}
 	}
 
+	char * trials[2] = { ip , hostname };
 
-	/* Now time to connect */
-
-	struct addrinfo *res = NULL;
-	struct addrinfo  hints;
-
-	memset(&hints, 0, sizeof(struct addrinfo) );
-
-	hints.ai_family   = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-
-	mpc_common_debug("Trying to connect to %s : %s", hostname, port);
-
-	/* Note we bind to port 0 as we do not care much of where we are */
-	int ret = mpc_common_getaddrinfo(hostname, port, &hints, &res, "ib");
-
-	if(ret < 0)
-	{
-		if(ret == EAI_SYSTEM)
-		{
-			fprintf(stderr, "Failed resolving peer: %s\n", strerror(errno) );
-		}
-		else
-		{
-			fprintf(stderr, "Failed resolving peer: %s\n", gai_strerror(ret) );
-		}
-
-
-		*retcode = MPC_LOWCOMM_MONITOR_RET_NOT_REACHABLE;
-		return NULL;
-	}
-
-	struct addrinfo *tmp = NULL;
 	int client_socket    = -1;
 
-	for(tmp = res; tmp != NULL; tmp = tmp->ai_next)
+	for( i = 0 ; i < 2 ; i++)
 	{
-		/* Now try the various configurations */
+		/* Now time to connect */
 
-		/* Socket creation */
-		client_socket = socket(tmp->ai_family, tmp->ai_socktype, tmp->ai_protocol);
+		struct addrinfo *res = NULL;
+		struct addrinfo  hints;
 
-		if(client_socket < 0)
+		memset(&hints, 0, sizeof(struct addrinfo) );
+
+		hints.ai_family   = AF_UNSPEC;
+		hints.ai_socktype = SOCK_STREAM;
+
+		mpc_common_debug_info("MON: Trying to connect to %s : %s", trials[i], port);
+
+		/* Note we bind to port 0 as we do not care much of where we are */
+		int ret = mpc_common_getaddrinfo(trials[i], port, &hints, &res, "ib");
+
+		if(ret < 0)
 		{
-			/* Not working */
-			client_socket = -1;
-			continue;
+			if(ret == EAI_SYSTEM)
+			{
+				fprintf(stderr, "Failed resolving peer: %s\n", strerror(errno) );
+			}
+			else
+			{
+				fprintf(stderr, "Failed resolving peer: %s\n", gai_strerror(ret) );
+			}
+
+
+			*retcode = MPC_LOWCOMM_MONITOR_RET_NOT_REACHABLE;
+			return NULL;
 		}
 
-		if(connect(client_socket, tmp->ai_addr, tmp->ai_addrlen) < 0)
+		struct addrinfo *tmp = NULL;
+
+		for(tmp = res; tmp != NULL; tmp = tmp->ai_next)
 		{
-			close(client_socket);
-			client_socket = -1;
-			continue;
+			/* Now try the various configurations */
+
+			/* Socket creation */
+			client_socket = socket(tmp->ai_family, tmp->ai_socktype, tmp->ai_protocol);
+
+			if(client_socket < 0)
+			{
+				/* Not working */
+				client_socket = -1;
+				continue;
+			}
+
+			if(connect(client_socket, tmp->ai_addr, tmp->ai_addrlen) < 0)
+			{
+				close(client_socket);
+				client_socket = -1;
+				continue;
+			}
+
+
+			mpc_common_debug_info("MON: DONE trying to connect to %s : %s == %d", trials[i], port, client_socket);
+			/* all done */
+			break;
 		}
 
-		/* all done */
-		break;
+		mpc_common_freeaddrinfo(res);
+
+		if(0 < client_socket)
+		{
+			/* Stop if option worked */
+			break;
+		}
 	}
-
-	mpc_common_freeaddrinfo(res);
 
 	if(client_socket < 0)
 	{
+		mpc_common_debug("MON: FAILED to connect to %s / %s : %s", trials[0], trials[1], port);
 		*retcode = MPC_LOWCOMM_MONITOR_RET_NOT_REACHABLE;
 		return NULL;
 	}

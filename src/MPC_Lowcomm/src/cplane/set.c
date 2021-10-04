@@ -170,6 +170,7 @@ static inline int __load_set_from_uid( __UNUSED__ uint32_t uid, char * path)
 	{
 		/* These info could not be retrieved consider the set as lost */
 		_mpc_lowcomm_uid_clear(sd.set_uid);
+
 		return 0;
 	}
 
@@ -190,7 +191,6 @@ static inline int __load_set_from_uid( __UNUSED__ uint32_t uid, char * path)
 	_mpc_lowcomm_monitor_command_register_set_info(mpc_lowcomm_monitor_response_get_content(set_info));
 
 	mpc_lowcomm_monitor_response_free(set_info);
-
 
 	return 0;
 }
