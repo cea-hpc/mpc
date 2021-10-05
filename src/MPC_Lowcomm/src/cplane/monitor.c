@@ -1295,6 +1295,11 @@ static inline _mpc_lowcomm_client_ctx_t *___connect_client(struct _mpc_lowcomm_m
 				continue;
 			}
 
+
+            /* Set a lower connect timeout ~3 sec */
+            int synRetries = 1;
+            setsockopt(client_socket, IPPROTO_TCP, TCP_SYNCNT, &synRetries, sizeof(int));
+
 			if(connect(client_socket, tmp->ai_addr, tmp->ai_addrlen) < 0)
 			{
 				close(client_socket);
