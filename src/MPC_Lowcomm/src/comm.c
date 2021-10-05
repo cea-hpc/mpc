@@ -59,11 +59,11 @@
 
 typedef struct
 {
-	uint32_t comm_id;
+	mpc_lowcomm_communicator_id_t comm_id;
 	int      rank;
 } mpc_comm_dest_key_t;
 
-static inline void _mpc_comm_dest_key_init(mpc_comm_dest_key_t *key, uint32_t comm, int rank)
+static inline void _mpc_comm_dest_key_init(mpc_comm_dest_key_t *key, mpc_lowcomm_communicator_id_t comm, int rank)
 {
 	key->rank = rank;
 	key->comm_id = comm;
