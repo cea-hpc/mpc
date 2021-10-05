@@ -19,39 +19,31 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __SCTK_REORDER_H_
-#define __SCTK_REORDER_H_
+#ifndef __SCTK__MPC_LOWCOMM_REORDER_H_
+#define __SCTK__MPC_LOWCOMM_REORDER_H_
 
 #include <uthash.h>
 #include <mpc_common_spinlock.h>
 #include <mpc_lowcomm_monitor.h>
 
-
 struct mpc_lowcomm_ptp_message_s;
-struct sctk_ib_buffered_table_s;
-
-/*NOT THREAD SAFE use to add a route at initialisation time*/
-void sctk_add_static_reorder_buffer ( int dest );
-
-/*THREAD SAFE use to add a route at compute time*/
-void sctk_add_dynamic_reorder_buffer ( int dest );
 
 /*
- * Return values for sctk_send_message_from_network_reorder
+ * Return values for _mpc_lowcomm_reorder_msg_check
  */
 /* Undefined message */
-#define REORDER_UNDEFINED -1
+#define _MPC_LOWCOMM_REORDER_UNDEFINED -1
 /* Message with the correct sequence number found */
-#define REORDER_FOUND_EXPECTED 0
+#define _MPC_LOWCOMM_REORDER_FOUND_EXPECTED 0
 /* Message without numbering */
-#define REORDER_NO_NUMBERING 1
+#define _MPC_LOWCOMM_REORDER_NO_NUMBERING 1
 /* Message with an incorrect sequence number found */
-#define REORDER_FOUND_NOT_EXPECTED 2
+#define _MPC_LOWCOMM_REORDER_FOUND_NOT_EXPECTED 2
 /* Message not found */
-#define REORDER_NOT_FOUND 3
+#define _MPC_LOWCOMM_REORDER_NOT_FOUND 3
 
-int sctk_send_message_from_network_reorder ( struct mpc_lowcomm_ptp_message_s *msg );
-int sctk_prepare_send_message_to_network_reorder ( struct mpc_lowcomm_ptp_message_s *msg );
+int _mpc_lowcomm_reorder_msg_check( struct mpc_lowcomm_ptp_message_s *msg );
+int _mpc_lowcomm_reorder_msg_register( struct mpc_lowcomm_ptp_message_s *msg );
 
 typedef struct
 {
@@ -64,11 +56,11 @@ typedef struct
 {
 	mpc_lowcomm_peer_uid_t uid;
 	int destination;
-} sctk_reorder_key_t;
+} _mpc_lowcomm_reorder_key_t;
 
-typedef struct sctk_reorder_table_s
+typedef struct _mpc_lowcomm_reorder_table_s
 {
-	sctk_reorder_key_t key;
+	_mpc_lowcomm_reorder_key_t key;
 
 	OPA_int_t message_number_src;
 	OPA_int_t message_number_dest;
@@ -77,18 +69,14 @@ typedef struct sctk_reorder_table_s
 	mpc_lowcomm_reorder_buffer_t *buffer;
 
 	UT_hash_handle hh;
-} sctk_reorder_table_t;
+} _mpc_lowcomm_reorder_table_t;
 
-typedef struct sctk_reorder_task_s
+typedef struct _mpc_lowcomm_reorder_list_s
 {
-	sctk_reorder_table_t *table;
+	_mpc_lowcomm_reorder_table_t *table;
 	mpc_common_spinlock_t lock;
-} sctk_reorder_list_t;
+} _mpc_lowcomm_reorder_list_t;
 
-sctk_reorder_table_t *sctk_get_reorder ( int dest );
-
-sctk_reorder_table_t *sctk_get_reorder_to_process ( int dest );
-
-void sctk_reorder_list_init ( sctk_reorder_list_t *reorder );
+void _mpc_lowcomm_reorder_list_init( _mpc_lowcomm_reorder_list_t *reorder );
 
 #endif

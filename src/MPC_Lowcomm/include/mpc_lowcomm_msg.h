@@ -3,7 +3,7 @@
 
 #include <mpc_config.h>
 #include <mpc_lowcomm_types.h>
-#include <sctk_reorder.h>
+#include <reorder.h>
 
 #include <mpc_lowcomm_monitor.h>
 

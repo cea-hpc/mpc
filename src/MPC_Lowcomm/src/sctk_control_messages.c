@@ -33,7 +33,7 @@
 #include <string.h>
 #include <mpc_common_asm.h>
 #include <sctk_checksum.h>
-#include <sctk_reorder.h>
+#include <reorder.h>
 #include <sctk_rail.h>
 #include <sctk_alloc.h>
 #include <sctk_window.h>

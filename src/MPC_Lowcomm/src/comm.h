@@ -276,7 +276,7 @@ static inline void _mpc_comm_ptp_message_set_copy_and_free( mpc_lowcomm_ptp_mess
 /************************************************************************/
 
 struct mpc_comm_ptp_s *_mpc_comm_ptp_array_get( mpc_lowcomm_communicator_t comm, int rank );
-sctk_reorder_list_t *_mpc_comm_ptp_array_get_reorder( mpc_lowcomm_communicator_t communicator, int rank );
+_mpc_lowcomm_reorder_list_t *_mpc_comm_ptp_array_get_reorder( mpc_lowcomm_communicator_t communicator, int rank );
 
 void _mpc_comm_ptp_message_reinit_comm(mpc_lowcomm_ptp_message_t *msg);
 

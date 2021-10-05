@@ -20,30 +20,20 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#include <reorder.h>
 
 #include <mpc_common_debug.h>
-
-#include <sctk_reorder.h>
+#include <group.h>
+#include <sctk_alloc.h>
 #include <communicator.h>
-#include <mpc_common_spinlock.h>
-#include <uthash.h>
-#include <opa_primitives.h>
+
 #include <comm.h>
 #include <mpc_common_rank.h>
-
-#ifdef MPC_USE_INFINIBAND
-#include <sctk_ib_buffered.h>
-#endif
-
-#include <group.h>
-
-#include <sctk_alloc.h>
-
 
 /*
  * Initialize the reordering for the list
  */
-void sctk_reorder_list_init(sctk_reorder_list_t *reorder)
+void _mpc_lowcomm_reorder_list_init(_mpc_lowcomm_reorder_list_t *reorder)
 {
 	mpc_common_spinlock_init(&reorder->lock, 0);
 	reorder->table = NULL;
@@ -52,22 +42,22 @@ void sctk_reorder_list_init(sctk_reorder_list_t *reorder)
 /*
  * Add a reorder entry to the reorder table and initialize it
  */
-sctk_reorder_table_t *sctk_init_task_to_reorder(mpc_lowcomm_peer_uid_t uid, int rank)
+static inline _mpc_lowcomm_reorder_table_t *___new_reorder_entry(mpc_lowcomm_peer_uid_t uid, int rank)
 {
-	sctk_reorder_table_t *tmp;
+	_mpc_lowcomm_reorder_table_t *tmp;
 
-	tmp = sctk_malloc(sizeof(sctk_reorder_table_t) );
+	tmp = sctk_malloc(sizeof(_mpc_lowcomm_reorder_table_t) );
 
 	assume(tmp != NULL);
 
-	memset(tmp, 0, sizeof(sctk_reorder_table_t) );
+	memset(tmp, 0, sizeof(_mpc_lowcomm_reorder_table_t) );
 
 	OPA_store_int(&(tmp->message_number_src), 0);
 	OPA_store_int(&(tmp->message_number_dest), 0);
 	mpc_common_spinlock_init(&tmp->lock, 0);
 	tmp->buffer          = NULL;
 	tmp->key.destination = rank;
-	tmp->key.uid = uid;
+	tmp->key.uid         = uid;
 
 	return tmp;
 }
@@ -75,23 +65,25 @@ sctk_reorder_table_t *sctk_init_task_to_reorder(mpc_lowcomm_peer_uid_t uid, int 
 /*
  * Get an entry from the reorder. Add it if not exist
  */
-sctk_reorder_table_t *sctk_get_task_from_reorder(mpc_lowcomm_peer_uid_t uid, int rank, sctk_reorder_list_t *reorder)
+static inline _mpc_lowcomm_reorder_table_t *__get_reorder_entry(mpc_lowcomm_peer_uid_t uid,
+                                                                int rank,
+                                                                _mpc_lowcomm_reorder_list_t *reorder)
 {
-	sctk_reorder_key_t    key = { 0 };
-	sctk_reorder_table_t *tmp;
+	_mpc_lowcomm_reorder_key_t    key = { 0 };
+	_mpc_lowcomm_reorder_table_t *tmp;
 
 	key.destination = rank;
-	key.uid = uid;
+	key.uid         = uid;
 
 	mpc_common_spinlock_lock(&reorder->lock);
 
-	HASH_FIND(hh, reorder->table, &key, sizeof(sctk_reorder_key_t), tmp);
+	HASH_FIND(hh, reorder->table, &key, sizeof(_mpc_lowcomm_reorder_key_t), tmp);
 
 	if(tmp == NULL)
 	{
-		tmp = sctk_init_task_to_reorder(uid, rank);
+		tmp = ___new_reorder_entry(uid, rank);
 		/* Add the entry */
-		HASH_ADD(hh, reorder->table, key, sizeof(sctk_reorder_key_t), tmp);
+		HASH_ADD(hh, reorder->table, key, sizeof(_mpc_lowcomm_reorder_key_t), tmp);
 		mpc_common_tracepoint_fmt("%p Entry for task (%lld ; %d) added to %p!!", reorder->table, uid, rank, reorder->table);
 	}
 
@@ -102,9 +94,9 @@ sctk_reorder_table_t *sctk_get_task_from_reorder(mpc_lowcomm_peer_uid_t uid, int
 }
 
 /* Try to handle all messages with an expected sequence number */
-static inline int __send_pending_messages(sctk_reorder_table_t *tmp)
+static inline int __send_pending_messages(_mpc_lowcomm_reorder_table_t *tmp)
 {
-	int ret = REORDER_FOUND_NOT_EXPECTED;
+	int ret = _MPC_LOWCOMM_REORDER_FOUND_NOT_EXPECTED;
 
 	if(tmp->buffer != NULL)
 	{
@@ -128,7 +120,7 @@ static inline int __send_pending_messages(sctk_reorder_table_t *tmp)
 				_mpc_comm_ptp_message_send_check(reorder->msg, 1);
 
 				OPA_fetch_and_incr_int(&(tmp->message_number_src) );
-				ret = REORDER_FOUND_EXPECTED;
+				ret = _MPC_LOWCOMM_REORDER_FOUND_EXPECTED;
 			}
 			else
 			{
@@ -143,7 +135,7 @@ static inline int __send_pending_messages(sctk_reorder_table_t *tmp)
 /*
  * Receive message from network
  * */
-int sctk_send_message_from_network_reorder(mpc_lowcomm_ptp_message_t *msg)
+int _mpc_lowcomm_reorder_msg_check(mpc_lowcomm_ptp_message_t *msg)
 {
 	const mpc_lowcomm_peer_uid_t src_uid = SCTK_MSG_SRC_PROCESS_UID(msg);
 	const int src_task  = SCTK_MSG_SRC_TASK(msg);
@@ -155,16 +147,16 @@ int sctk_send_message_from_network_reorder(mpc_lowcomm_ptp_message_t *msg)
 
 	int dest_process;
 	int number;
-	sctk_reorder_table_t *tmp = NULL;
+	_mpc_lowcomm_reorder_table_t *tmp = NULL;
 
 	if(SCTK_MSG_USE_MESSAGE_NUMBERING(msg) == 0)
 	{
 		/* Renumbering unused */
-		return REORDER_NO_NUMBERING;
+		return _MPC_LOWCOMM_REORDER_NO_NUMBERING;
 	}
 	else
 	{
-		if( 0 <= dest_task)
+		if(0 <= dest_task)
 		{
 			dest_process = mpc_lowcomm_group_process_rank_from_world(dest_task);
 		}
@@ -173,32 +165,27 @@ int sctk_send_message_from_network_reorder(mpc_lowcomm_ptp_message_t *msg)
 			dest_process = -1;
 		}
 
-		mpc_common_nodebug("RET %d == %d", dest_process, mpc_common_get_process_rank() );
-
 		/* Indirect messages, we do not check PSN */
 		if( (mpc_common_get_process_rank() != dest_process)
-		/* Process level messages we do not check the PSN */
-		|| (_mpc_comm_ptp_message_is_for_process(SCTK_MSG_SPECIFIC_CLASS(msg) ) ) )
+		    /* Process level messages we do not check the PSN */
+		    || (_mpc_comm_ptp_message_is_for_process(SCTK_MSG_SPECIFIC_CLASS(msg) ) ) )
 		{
-			return REORDER_NO_NUMBERING;
+			return _MPC_LOWCOMM_REORDER_NO_NUMBERING;
 		}
 
-		sctk_reorder_list_t *list = _mpc_comm_ptp_array_get_reorder(SCTK_MSG_COMMUNICATOR(msg), dest_task);
+		_mpc_lowcomm_reorder_list_t *list = _mpc_comm_ptp_array_get_reorder(SCTK_MSG_COMMUNICATOR(msg), dest_task);
 
-		tmp = sctk_get_task_from_reorder(src_uid, src_task, list);
+		tmp = __get_reorder_entry(src_uid, src_task, list);
 		assume(tmp != NULL);
 
 		number = OPA_load_int(&(tmp->message_number_src) );
 
 
-		mpc_common_tracepoint_fmt("LIST %p ENTRY %p @ %d (incoming number %d @ %p)", list, tmp, number, SCTK_MSG_NUMBER(msg), &(tmp->message_number_src));
+		mpc_common_tracepoint_fmt("LIST %p ENTRY %p @ %d (incoming number %d @ %p)", list, tmp, number, SCTK_MSG_NUMBER(msg), &(tmp->message_number_src) );
 
 
 		if(number == SCTK_MSG_NUMBER(msg) )
 		{
-			mpc_common_nodebug("Direct Send %d from %p", SCTK_MSG_NUMBER(msg),
-			                   tmp);
-
 			_mpc_comm_ptp_message_send_check(msg, 1);
 
 			OPA_fetch_and_incr_int(&(tmp->message_number_src) );
@@ -206,7 +193,7 @@ int sctk_send_message_from_network_reorder(mpc_lowcomm_ptp_message_t *msg)
 			/*Search for pending messages*/
 			__send_pending_messages(tmp);
 
-			return REORDER_FOUND_EXPECTED;
+			return _MPC_LOWCOMM_REORDER_FOUND_EXPECTED;
 		}
 		else
 		{
@@ -218,13 +205,13 @@ int sctk_send_message_from_network_reorder(mpc_lowcomm_ptp_message_t *msg)
 			reorder->msg = msg;
 
 			mpc_common_spinlock_lock(&(tmp->lock) );
-			HASH_ADD_INT( tmp->buffer, key, reorder);
+			HASH_ADD_INT(tmp->buffer, key, reorder);
 			mpc_common_spinlock_unlock(&(tmp->lock) );
 			mpc_common_tracepoint_fmt("DELAYED recv %llu to %llu - delay wait counter is %d had %d "
-			                   "(tmp:%p)",
-			                   SCTK_MSG_SRC_PROCESS_UID(msg),
-			                   SCTK_MSG_DEST_PROCESS_UID(msg), number,
-			                   SCTK_MSG_NUMBER(msg), tmp);
+			                          "(tmp:%p)",
+			                          SCTK_MSG_SRC_PROCESS_UID(msg),
+			                          SCTK_MSG_DEST_PROCESS_UID(msg), number,
+			                          SCTK_MSG_NUMBER(msg), tmp);
 
 			/* XXX: we *MUST* check once again if there is no pending
 			 * messages. During
@@ -241,15 +228,16 @@ int sctk_send_message_from_network_reorder(mpc_lowcomm_ptp_message_t *msg)
 /*
  * Send message to network
  * */
-int sctk_prepare_send_message_to_network_reorder(mpc_lowcomm_ptp_message_t *msg)
+int _mpc_lowcomm_reorder_msg_register(mpc_lowcomm_ptp_message_t *msg)
 {
-	sctk_reorder_table_t *tmp;
-	const int             src_task  = SCTK_MSG_SRC_TASK(msg);
-	const int             dest_task = SCTK_MSG_DEST_TASK(msg);
+	_mpc_lowcomm_reorder_table_t *tmp;
+	const int src_task  = SCTK_MSG_SRC_TASK(msg);
+	const int dest_task = SCTK_MSG_DEST_TASK(msg);
 	const mpc_lowcomm_peer_uid_t dest_uid = SCTK_MSG_DEST_PROCESS_UID(msg);
 
 	/* Indirect messages */
 	int src_process;
+
 	src_process = mpc_lowcomm_group_process_rank_from_world(src_task);
 
 	if(mpc_common_get_process_rank() != src_process)
@@ -257,8 +245,8 @@ int sctk_prepare_send_message_to_network_reorder(mpc_lowcomm_ptp_message_t *msg)
 		return 0;
 	}
 
-	sctk_reorder_list_t *list = _mpc_comm_ptp_array_get_reorder(SCTK_MSG_COMMUNICATOR(msg), src_task);
-	tmp = sctk_get_task_from_reorder(dest_uid, dest_task, list);
+	_mpc_lowcomm_reorder_list_t *list = _mpc_comm_ptp_array_get_reorder(SCTK_MSG_COMMUNICATOR(msg), src_task);
+	tmp = __get_reorder_entry(dest_uid, dest_task, list);
 	assume(tmp);
 
 
@@ -267,7 +255,7 @@ int sctk_prepare_send_message_to_network_reorder(mpc_lowcomm_ptp_message_t *msg)
 		/* Local numbering */
 		SCTK_MSG_USE_MESSAGE_NUMBERING_SET(msg, 1);
 		SCTK_MSG_NUMBER_SET(
-				msg, OPA_fetch_and_incr_int(&(tmp->message_number_dest) ) );
+			msg, OPA_fetch_and_incr_int(&(tmp->message_number_dest) ) );
 		mpc_common_tracepoint_fmt("send %d to (%llu, %d) number:%d", src_task, dest_uid, dest_task, SCTK_MSG_NUMBER(msg) );
 	}
 	else

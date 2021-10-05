@@ -461,7 +461,7 @@ static void _mpc_lowcomm_ofirdma_notify_idle(struct sctk_rail_info_s* rail)
  */
 static inline int sctk_send_message_from_network_ofi_rdma ( mpc_lowcomm_ptp_message_t *msg )
 {
-	if ( sctk_send_message_from_network_reorder ( msg ) == REORDER_NO_NUMBERING )
+	if ( _mpc_lowcomm_reorder_msg_check ( msg ) == _MPC_LOWCOMM_REORDER_NO_NUMBERING )
 	{
 		/* No reordering */
 		_mpc_comm_ptp_message_send_check ( msg, 1 );

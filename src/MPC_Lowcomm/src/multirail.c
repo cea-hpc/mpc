@@ -892,7 +892,7 @@ void _mpc_lowcomm_multirail_send_message(mpc_lowcomm_ptp_message_t *msg)
 			mpc_common_nodebug("RAIL %d", target_rail->rail_number);
 
 			/* Prepare reordering */
-			sctk_prepare_send_message_to_network_reorder(msg);
+			_mpc_lowcomm_reorder_msg_register(msg);
 
 			/* Send the message */
 			(target_rail->send_message_endpoint)(msg, endpoint);

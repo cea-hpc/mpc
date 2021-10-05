@@ -614,7 +614,7 @@ static void _mpc_lowcomm_ib_notify_perform(__UNUSED__ mpc_lowcomm_peer_uid_t rem
 
 	_mpc_lowcomm_ib_ibuf_rdma_eager_walk_remote(rail_ib, _mpc_lowcomm_ib_ibuf_rdma_eager_poll_remote, &ret);
 
-	if(ret == REORDER_FOUND_EXPECTED)
+	if(ret == _MPC_LOWCOMM_REORDER_FOUND_EXPECTED)
 	{
 		return;
 	}
@@ -678,7 +678,7 @@ static void _mpc_lowcomm_ib_notify_idle(sctk_rail_info_t *rail)
 	int ret;
 	_mpc_lowcomm_ib_ibuf_rdma_eager_walk_remote(rail_ib, _mpc_lowcomm_ib_ibuf_rdma_eager_poll_remote, &ret);
 
-	if(ret == REORDER_FOUND_EXPECTED)
+	if(ret == _MPC_LOWCOMM_REORDER_FOUND_EXPECTED)
 	{
 		idle_poll_freq = 100;
 		return;
@@ -724,7 +724,7 @@ static void _mpc_lowcomm_ib_notify_anysource(int polling_task_id, __UNUSED__ int
 		int ret;
 		_mpc_lowcomm_ib_ibuf_rdma_eager_walk_remote(rail_ib, _mpc_lowcomm_ib_ibuf_rdma_eager_poll_remote, &ret);
 
-		if(ret == REORDER_FOUND_EXPECTED)
+		if(ret == _MPC_LOWCOMM_REORDER_FOUND_EXPECTED)
 		{
 			return;
 		}
@@ -763,9 +763,9 @@ sctk_network_connection_from_ib(int from, int to, sctk_rail_info_t *rail)
 
 int sctk_send_message_from_network_mpi_ib(mpc_lowcomm_ptp_message_t *msg)
 {
-	int ret = sctk_send_message_from_network_reorder(msg);
+	int ret = _mpc_lowcomm_reorder_msg_check(msg);
 
-	if(ret == REORDER_NO_NUMBERING)
+	if(ret == _MPC_LOWCOMM_REORDER_NO_NUMBERING)
 	{
 		/*
 		 * No reordering

@@ -715,7 +715,7 @@ void _mpc_lowcomm_ib_ibuf_rdma_eager_walk_remote(sctk_ib_rail_info_t *rail, int(
 	int tmp_ret;
 
 	/* Set the default value */
-	*ret = REORDER_UNDEFINED;
+	*ret = _MPC_LOWCOMM_REORDER_UNDEFINED;
 
 	mpc_common_spinlock_read_lock(&rdma_polling_lock);
 	DL_FOREACH(rdma_pool_list, pool)
@@ -723,7 +723,7 @@ void _mpc_lowcomm_ib_ibuf_rdma_eager_walk_remote(sctk_ib_rail_info_t *rail, int(
 		/* 'func' needs to check if the remote is in a RTR mode */
 		tmp_ret = func(rail, pool->remote);
 
-		if(tmp_ret == REORDER_FOUND_EXPECTED)
+		if(tmp_ret == _MPC_LOWCOMM_REORDER_FOUND_EXPECTED)
 		{
 			*ret = tmp_ret;
 			mpc_common_spinlock_read_unlock(&rdma_polling_lock);
@@ -771,7 +771,7 @@ static inline int __eager_poll_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t
 
 	if( (state != _MPC_LOWCOMM_ENDPOINT_CONNECTED) && (state != _MPC_LOWCOMM_ENDPOINT_REQUESTING) )
 	{
-		return REORDER_UNDEFINED;
+		return _MPC_LOWCOMM_REORDER_UNDEFINED;
 	}
 
 	_mpc_lowcomm_ib_ibuf_t *head;
@@ -789,7 +789,7 @@ retry:
 		if( (state != _MPC_LOWCOMM_ENDPOINT_CONNECTED) && (state != _MPC_LOWCOMM_ENDPOINT_REQUESTING) )
 		{
 			IBUF_RDMA_UNLOCK_REGION(remote, REGION_RECV);
-			return REORDER_UNDEFINED;
+			return _MPC_LOWCOMM_REORDER_UNDEFINED;
 		}
 
 		/* Recaculate the head because it could be moved */
@@ -819,7 +819,7 @@ retry:
 			if(*(head->head_flag) != *(tail_flag) )
 			{
 				IBUF_RDMA_UNLOCK_REGION(remote, REGION_RECV);
-				return REORDER_NOT_FOUND;
+				return _MPC_LOWCOMM_REORDER_NOT_FOUND;
 			}
 
 			/* Reset the head flag */
@@ -851,12 +851,12 @@ retry:
 		else
 		{
 			IBUF_RDMA_UNLOCK_REGION(remote, REGION_RECV);
-			return REORDER_NOT_FOUND;
+			return _MPC_LOWCOMM_REORDER_NOT_FOUND;
 		}
 	}
 	else
 	{
-		return REORDER_UNDEFINED;
+		return _MPC_LOWCOMM_REORDER_UNDEFINED;
 	}
 }
 
@@ -874,7 +874,7 @@ int _mpc_lowcomm_ib_ibuf_rdma_eager_poll_remote(sctk_ib_rail_info_t *rail_ib, sc
 
 	if( (state != _MPC_LOWCOMM_ENDPOINT_CONNECTED) && (state != _MPC_LOWCOMM_ENDPOINT_REQUESTING) )
 	{
-		return REORDER_UNDEFINED;
+		return _MPC_LOWCOMM_REORDER_UNDEFINED;
 	}
 
 	_mpc_lowcomm_ib_ibuf_t *head;
@@ -883,13 +883,13 @@ int _mpc_lowcomm_ib_ibuf_rdma_eager_poll_remote(sctk_ib_rail_info_t *rail_ib, sc
 
 	if(*(head->head_flag) != IBUF_RDMA_RESET_FLAG)
 	{
-		if(__eager_poll_remote(rail_ib, remote) == REORDER_FOUND_EXPECTED)
+		if(__eager_poll_remote(rail_ib, remote) == _MPC_LOWCOMM_REORDER_FOUND_EXPECTED)
 		{
-			return REORDER_FOUND_EXPECTED;
+			return _MPC_LOWCOMM_REORDER_FOUND_EXPECTED;
 		}
 	}
 
-	return REORDER_UNDEFINED;
+	return _MPC_LOWCOMM_REORDER_UNDEFINED;
 }
 
 /* / ! \ This function requires the region to be previously locked !! */
@@ -1568,7 +1568,7 @@ void _mpc_lowcomm_ib_ibuf_rdma_flush_recv(sctk_ib_rail_info_t *rail_ib, sctk_ib_
 	do
 	{
 		ret = __eager_poll_remote(rail_ib, remote);
-	} while(ret != REORDER_NOT_FOUND);
+	} while(ret != _MPC_LOWCOMM_REORDER_NOT_FOUND);
 
 	/* We need to change the state AFTER flushing the buffers */
 	_mpc_lowcomm_endpoint_state_t state;

@@ -32,7 +32,7 @@
 #include <string.h>
 #include <mpc_common_asm.h>
 #include <sctk_checksum.h>
-#include <sctk_reorder.h>
+#include <reorder.h>
 #include <sctk_control_messages.h>
 #include <sctk_rail.h>
 #include <mpc_launch.h>
@@ -102,7 +102,7 @@ typedef struct mpc_comm_ptp_s
 	UT_hash_handle               hh;
 
 	/* Reorder table */
-	sctk_reorder_list_t          reorder;
+	_mpc_lowcomm_reorder_list_t          reorder;
 } mpc_comm_ptp_t;
 
 
@@ -385,7 +385,7 @@ struct mpc_comm_ptp_s *_mpc_comm_ptp_array_get(mpc_lowcomm_communicator_t comm, 
 	return __mpc_comm_ptp_array_get(comm, rank);
 }
 
-sctk_reorder_list_t *_mpc_comm_ptp_array_get_reorder(mpc_lowcomm_communicator_t communicator, int rank)
+_mpc_lowcomm_reorder_list_t *_mpc_comm_ptp_array_get_reorder(mpc_lowcomm_communicator_t communicator, int rank)
 {
 	struct mpc_comm_ptp_s *internal_ptp = __mpc_comm_ptp_array_get(communicator, rank);
 
@@ -1584,7 +1584,7 @@ void mpc_lowcomm_init_per_task(int rank)
 		memset(tmp, 0, sizeof(mpc_comm_ptp_t) );
 		_mpc_comm_dest_key_init(&tmp->key, comm_id, rank);
 		/* Initialize reordering for the list */
-		sctk_reorder_list_init(&tmp->reorder);
+		_mpc_lowcomm_reorder_list_init(&tmp->reorder);
 		/* Initialize the internal ptp lists */
 		__mpc_comm_ptp_message_list_init(&(tmp->lists) );
 		/* And insert them */
