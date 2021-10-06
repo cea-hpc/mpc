@@ -46,12 +46,10 @@ typedef enum {
 
 void sctk_control_messages_send_process(int dest_process, int subtype,
                                         char param, void *buffer, size_t size);
-void sctk_control_messages_send_to_task(int dest_task, mpc_lowcomm_communicator_t comm,
-                                        int subtype, char param, void *buffer,
-                                        size_t size);
+
 void sctk_control_messages_send_rail( int dest, int subtype, char param, void *buffer, size_t size, int  rail_id );
 void control_message_submit(mpc_lowcomm_ptp_message_class_t class, int rail_id,
-                            int source_process, int source_rank, int subtype,
+                            mpc_lowcomm_peer_uid_t source_process, int source_rank, int subtype,
                             int param, void *data, size_t msg_size);
 void sctk_control_messages_incoming( mpc_lowcomm_ptp_message_t * msg );
 void sctk_control_messages_perform(mpc_lowcomm_ptp_message_t *msg, int force);
@@ -60,7 +58,7 @@ struct sctk_control_message_fence_ctx
 {
 	int source;
 	int remote;
-  unsigned int comm;
+  mpc_lowcomm_communicator_id_t comm;
 };
 
 void sctk_control_message_fence(int target_task, mpc_lowcomm_communicator_t comm);

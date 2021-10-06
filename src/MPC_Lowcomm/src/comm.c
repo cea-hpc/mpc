@@ -1998,7 +1998,7 @@ static inline mpc_lowcomm_msg_list_t *__mpc_comm_pending_msg_list_search_matchin
 		}
 
 		/* Match the communicator, the tag, the source and the specific message tag */
-#if 1
+#if 0
 		mpc_common_debug("MATCH COMM [%d-%d] STASK [%d-%d] SPROC [%d-%d] TAG [%d-%d] TYPE [%s-%s]",
 		                 header->communicator_id,
 						 header_found->communicator_id,

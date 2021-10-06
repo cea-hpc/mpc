@@ -1046,6 +1046,7 @@ void _mpc_lowcomm_multirail_notify_probe(mpc_lowcomm_ptp_message_header_t *hdr, 
 
 void _mpc_lowcomm_multirail_notify_idle()
 {
+	sctk_control_message_process_all();
 	/* Fault Tolerance mechanism cannot allow any driver to be modified during a pending checkpoint.
 	 * This is our way to maintain consistency for data to be saved.
 	 */
