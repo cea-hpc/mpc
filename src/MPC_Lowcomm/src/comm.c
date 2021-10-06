@@ -105,7 +105,6 @@ typedef struct mpc_comm_ptp_s
 	_mpc_lowcomm_reorder_list_t          reorder;
 } mpc_comm_ptp_t;
 
-
 static inline void __mpc_comm_request_init(mpc_lowcomm_request_t *request,
                                            mpc_lowcomm_communicator_t comm,
                                            int request_type)
@@ -116,15 +115,14 @@ static inline void __mpc_comm_request_init(mpc_lowcomm_request_t *request,
 
 		request->comm = comm;
 		request->completion_flag         = MPC_LOWCOMM_MESSAGE_DONE;
-		request->header.source           = MPC_PROC_NULL;
-		request->header.destination      = MPC_PROC_NULL;
+		request->header.source           = mpc_lowcomm_monitor_local_uid_of(MPC_PROC_NULL);
+		request->header.destination      = mpc_lowcomm_monitor_local_uid_of(MPC_PROC_NULL);
 		request->header.source_task      = MPC_PROC_NULL;
 		request->header.destination_task = MPC_PROC_NULL;
 		request->header.message_tag      = MPC_ANY_TAG;
+		request->header.communicator_id = _mpc_lowcomm_communicator_id(comm);
 
 		request->request_type        = request_type;
-
-		request->header.communicator_id = _mpc_lowcomm_communicator_id(comm);
 	}
 }
 
@@ -211,7 +209,7 @@ int mpc_lowcomm_commit_status_from_request(mpc_lowcomm_request_t *request,
 		status->MPC_TAG    = request->header.message_tag;
 		status->MPC_ERROR  = request->status_error;
 
-		status->size = request->header.msg_size;
+		status->size = (int)request->header.msg_size;
 
 		if(request->completion_flag == MPC_LOWCOMM_MESSAGE_CANCELED)
 		{
@@ -428,8 +426,8 @@ static inline void __mpc_comm_ptp_array_insert(mpc_comm_ptp_t *tmp)
 	{
 		sctk_ptp_array_start = _mpc_lowcomm_communicator_world_first_local_task(MPC_COMM_WORLD);
 		sctk_ptp_array_end   = _mpc_lowcomm_communicator_world_last_local_task(MPC_COMM_WORLD);
-		sctk_ptp_array       = sctk_malloc( (sctk_ptp_array_end - sctk_ptp_array_start + 1) * sizeof(mpc_comm_ptp_t * *) );
-		memset(sctk_ptp_array, 0, (sctk_ptp_array_end - sctk_ptp_array_start + 1) * sizeof(mpc_comm_ptp_t * *) );
+		sctk_ptp_array       = sctk_malloc( (size_t)(sctk_ptp_array_end - sctk_ptp_array_start + 1) * sizeof(mpc_comm_ptp_t * *) );
+		memset(sctk_ptp_array, 0,  (size_t)(sctk_ptp_array_end - sctk_ptp_array_start + 1) * sizeof(mpc_comm_ptp_t * *) );
 		done = 1;
 	}
 
@@ -536,7 +534,7 @@ static inline void __mpc_comm_ptp_task_init()
  * pending messages which have been already matched.
  * Only called if the task engine is enabled
  */
-static inline int ___mpc_comm_ptp_task_perform(unsigned int key, int depth)
+static inline int ___mpc_comm_ptp_task_perform(unsigned int key, unsigned int depth)
 {
 	int nb_messages_copied = 0; /* Number of messages processed */
 	int target_list        = key & PTP_TASKING_QUEUE_COUNT;
@@ -743,7 +741,6 @@ void _mpc_comm_ptp_message_commit_request(mpc_lowcomm_ptp_message_t *send,
             recv->tail.request->header.source_task = SCTK_MSG_SRC_TASK(send);
         }
 
-
 		recv->tail.request->header.source      = SCTK_MSG_SRC_PROCESS_UID(send);
 		recv->tail.request->header.message_tag = SCTK_MSG_TAG(send);
 		recv->tail.request->header.msg_size    = SCTK_MSG_SIZE(send);
@@ -871,9 +868,9 @@ inline void mpc_lowcomm_ptp_message_copy(mpc_lowcomm_ptp_message_content_to_copy
 				{
 					for(j = 0; j < recv->tail.message.pack.list.absolute[i].count; j++)
 					{
-						size = (recv->tail.message.pack.list.absolute[i].ends[j] -
+						size = (size_t)( (recv->tail.message.pack.list.absolute[i].ends[j] -
 						        recv->tail.message.pack.list.absolute[i].begins[j] + 1) *
-						       recv->tail.message.pack.list.absolute[i].elem_size;
+						       (long)recv->tail.message.pack.list.absolute[i].elem_size );
 						recv_size += size;
 					}
 				}
@@ -891,9 +888,9 @@ inline void mpc_lowcomm_ptp_message_copy(mpc_lowcomm_ptp_message_content_to_copy
 					    ( (j < recv->tail.message.pack.list.absolute[i].count) && !skip);
 					    j++)
 					{
-						size = (recv->tail.message.pack.list.absolute[i].ends[j] -
+						size = (size_t)((recv->tail.message.pack.list.absolute[i].ends[j] -
 						        recv->tail.message.pack.list.absolute[i].begins[j] + 1) *
-						       recv->tail.message.pack.list.absolute[i].elem_size;
+						       (long)recv->tail.message.pack.list.absolute[i].elem_size);
 
 						if(total + size > send->tail.message.contiguous.size)
 						{
@@ -903,7 +900,7 @@ inline void mpc_lowcomm_ptp_message_copy(mpc_lowcomm_ptp_message_content_to_copy
 
 						memcpy( (void*)(recv->tail.message.pack.list.absolute[i].addr) +
 						        recv->tail.message.pack.list.absolute[i].begins[j] *
-						        recv->tail.message.pack.list.absolute[i].elem_size,
+						        (long)recv->tail.message.pack.list.absolute[i].elem_size,
 						        send->tail.message.contiguous.addr, size);
 						total += size;
 						send->tail.message.contiguous.addr += size;
@@ -1036,7 +1033,7 @@ static inline void __mpc_comm_copy_buffer_absolute_pack(long *restrict in_begins
 			in_begins    = tmp_begin_abs;
 			in_begins[0] = 0;
 			in_ends      = tmp_end_abs;
-			in_ends[0]   = in_sizes - 1;
+			in_ends[0]   = (long)in_sizes - 1;
 			in_elem_size = 1;
 			in_sizes     = 1;
 		}
@@ -1046,13 +1043,13 @@ static inline void __mpc_comm_copy_buffer_absolute_pack(long *restrict in_begins
 			out_begins    = tmp_begin;
 			out_begins[0] = 0;
 			out_ends      = tmp_end;
-			out_ends[0]   = out_sizes - 1;
+			out_ends[0]   = (unsigned long)out_sizes - 1;
 			out_elem_size = 1;
 			out_sizes     = 1;
 		}
 
 		in_i = 0;
-		in_j = in_begins[in_i] * in_elem_size;
+		in_j = (unsigned long)in_begins[in_i] * in_elem_size;
 
 		for(i = 0; i < out_sizes; i++)
 		{
@@ -1582,7 +1579,7 @@ void mpc_lowcomm_init_per_task(int rank)
 	{
 		mpc_comm_ptp_t *tmp = sctk_malloc(sizeof(mpc_comm_ptp_t) );
 		memset(tmp, 0, sizeof(mpc_comm_ptp_t) );
-		_mpc_comm_dest_key_init(&tmp->key, comm_id, rank);
+		_mpc_comm_dest_key_init(&tmp->key, (mpc_lowcomm_communicator_id_t)comm_id, rank);
 		/* Initialize reordering for the list */
 		_mpc_lowcomm_reorder_list_init(&tmp->reorder);
 		/* Initialize the internal ptp lists */
@@ -1672,12 +1669,18 @@ static inline void __mpc_comm_fill_request(mpc_lowcomm_request_t *request,
 void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
                                          const int message_tag,
                                          const mpc_lowcomm_communicator_t communicator,
-                                         const mpc_lowcomm_peer_uid_t source, const mpc_lowcomm_peer_uid_t destination,
-                                         mpc_lowcomm_request_t *request, const size_t count,
+                                         const mpc_lowcomm_peer_uid_t source,
+										 const mpc_lowcomm_peer_uid_t destination,
+                                         mpc_lowcomm_request_t *request,
+										 const size_t count,
                                          mpc_lowcomm_ptp_message_class_t message_class,
                                          mpc_lowcomm_datatype_t datatype,
                                          mpc_lowcomm_request_type_t request_type)
 {
+	/* This function can fill the header for both process-based messages
+	and regular MPI messages this is the reason why desitnation and source
+	are UIDs. In the case of regular messages this is downcasted to an int */
+
 	msg->tail.request = request;
 
 	/* Save message class */
@@ -1701,14 +1704,15 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 	{
 		int is_intercomm = mpc_lowcomm_communicator_is_intercomm(communicator);
 
-
 		mpc_lowcomm_peer_uid_t source_process = 0;
 		mpc_lowcomm_peer_uid_t dest_process = 0;
+
 		int source_task = -1;
 		int dest_task   = -1;
 		/* Fill in Source and Dest Process Informations (convert from task) */
 
 		/* SOURCE */
+		int isource = mpc_lowcomm_peer_get_rank(source);
 
 		if(mpc_lowcomm_peer_get_rank(source) != MPC_ANY_SOURCE)
 		{
@@ -1717,50 +1721,51 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 				if(request_type == REQUEST_RECV)
 				{
 					/* If this is a RECV make sure the translation is done on the source according to remote */
-					source_task = mpc_lowcomm_communicator_remote_world_rank(communicator, source);
-					source_process = mpc_lowcomm_communicator_remote_uid_for(communicator, source);
+					source_task = mpc_lowcomm_communicator_remote_world_rank(communicator, isource);
+					source_process = mpc_lowcomm_communicator_remote_uid_for(communicator, isource);
 				}
 				else if(request_type == REQUEST_SEND)
 				{
 					/* If this is a SEND make sure the translation is done on the dest according to remote */
-					source_task = mpc_lowcomm_communicator_world_rank_of(communicator, source);
-					source_process = mpc_lowcomm_communicator_uid_for(communicator, source);
+					source_task = mpc_lowcomm_communicator_world_rank_of(communicator, isource);
+					source_process = mpc_lowcomm_communicator_uid_for(communicator, isource);
 				}
 			}
 			else
 			{
-				source_task = mpc_lowcomm_communicator_world_rank_of(communicator, source);
-				source_process = mpc_lowcomm_communicator_uid_for(communicator, source);
+				source_task = mpc_lowcomm_communicator_world_rank_of(communicator, isource);
+				source_process = mpc_lowcomm_communicator_uid_for(communicator, isource);
 			}
 
 		}
 		else
 		{
 			source_task = MPC_ANY_SOURCE;
-			source_process = MPC_ANY_SOURCE;
+			source_process = mpc_lowcomm_monitor_local_uid_of(MPC_ANY_SOURCE);
 		}
 
 		/* DEST Handling */
+		int idestination = mpc_lowcomm_peer_get_rank(destination);
 
 		if( is_intercomm )
 		{
 			if(request_type == REQUEST_RECV)
 			{
 				/* If this is a RECV make sure the translation is done on the source according to remote */
-				dest_task   = mpc_lowcomm_communicator_world_rank_of(communicator, destination);
-				dest_process = mpc_lowcomm_communicator_uid_for(communicator, destination);
+				dest_task   = mpc_lowcomm_communicator_world_rank_of(communicator, idestination);
+				dest_process = mpc_lowcomm_communicator_uid_for(communicator, idestination);
 			}
 			else if(request_type == REQUEST_SEND)
 			{
 				/* If this is a SEND make sure the translation is done on the dest according to remote */
-				dest_task   = mpc_lowcomm_communicator_remote_world_rank(communicator, destination);
-				dest_process = mpc_lowcomm_communicator_remote_uid_for(communicator, destination);
+				dest_task   = mpc_lowcomm_communicator_remote_world_rank(communicator, idestination);
+				dest_process = mpc_lowcomm_communicator_remote_uid_for(communicator, idestination);
 			}
 		}
 		else
 		{
-			dest_task = mpc_lowcomm_communicator_world_rank_of(communicator, destination);
-			dest_process = mpc_lowcomm_communicator_uid_for(communicator, destination);
+			dest_task = mpc_lowcomm_communicator_world_rank_of(communicator, idestination);
+			dest_process = mpc_lowcomm_communicator_uid_for(communicator, idestination);
 		}
 
 		assert(source_process != 0);
@@ -1788,7 +1793,6 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 			( (SCTK_MSG_DEST_PROCESS(msg) < mpc_common_get_process_count()) && (SCTK_MSG_SRC_PROCESS(msg) < mpc_common_get_process_count()) )
 		);
 
-
 		mpc_common_debug("%s [T(%d -> %d) P(%lu -> %lu) C %llu CL %s TA %d REQ %p]",
 		                 mpc_lowcomm_request_type_name[request_type],
 		                 source_task,
@@ -1799,7 +1803,6 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 		                 mpc_lowcomm_ptp_message_class_name[message_class],
 		                 message_tag,
 				 request);
-
 	}
 
 	/* Fill in Message meta-data */
@@ -1809,7 +1812,6 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 	SCTK_MSG_SIZE_SET(msg, count);
 	SCTK_MSG_USE_MESSAGE_NUMBERING_SET(msg, 1);
 	SCTK_MSG_MATCH_SET(msg, sctk_m_probe_matching_get() );
-
 
 	/* A message can be sent with a NULL request (see the MPI standard) */
 	if(request)
@@ -1849,7 +1851,7 @@ void mpc_lowcomm_ptp_message_add_pack(mpc_lowcomm_ptp_message_t *msg, void *adr,
                                       unsigned long *begins,
                                       unsigned long *ends)
 {
-	int step;
+	size_t step;
 
 	if(msg->tail.message_type == MPC_LOWCOMM_MESSAGE_PACK_UNDEFINED)
 	{
@@ -1883,7 +1885,7 @@ void mpc_lowcomm_ptp_message_add_pack_absolute(mpc_lowcomm_ptp_message_t *msg,
                                                long *begins,
                                                long *ends)
 {
-	int step;
+	size_t step;
 
 	if(msg->tail.message_type == MPC_LOWCOMM_MESSAGE_PACK_UNDEFINED)
 	{
@@ -2256,12 +2258,12 @@ void mpc_lowcomm_ptp_msg_wait_init(struct mpc_lowcomm_ptp_msg_progress_s *wait,
 	   request->header.source_task != MPC_PROC_NULL)
 	{
 		/* Convert task rank to process rank */
-		wait->remote_process = -1;
+		wait->remote_process = mpc_lowcomm_monitor_local_uid_of(MPC_PROC_NULL);
 		//mpc_lowcomm_communicator_uid_as(request->comm, request->header.source_task, request->header.destination_task, mpc_lowcomm_monitor_get_uid());
 	}
 	else
 	{
-		wait->remote_process = -1;
+		wait->remote_process = mpc_lowcomm_monitor_local_uid_of(MPC_PROC_NULL);;
 		wait->source_task_id = -1;
 	}
 }
@@ -2451,7 +2453,7 @@ static inline void __mpc_comm_ptp_msg_wait(struct mpc_lowcomm_ptp_msg_progress_s
 	const mpc_lowcomm_request_t *request = wait->request;
 	mpc_comm_ptp_t *recv_ptp             = wait->recv_ptp;
 	mpc_comm_ptp_t *send_ptp             = wait->send_ptp;
-	const int       remote_process       = wait->remote_process;
+	const mpc_lowcomm_peer_uid_t remote_process = wait->remote_process;
 	const int       source_task_id       = wait->source_task_id;
 	const int       polling_task_id      = wait->polling_task_id;
 	const int       blocking             = wait->blocking;
@@ -3296,7 +3298,7 @@ int mpc_lowcomm_probe(int source, int tag, mpc_lowcomm_communicator_t comm, mpc_
 
 int mpc_lowcomm_get_req_source(mpc_lowcomm_request_t *req)
 {
-	return req->header.source;
+	return mpc_lowcomm_peer_get_rank(req->header.source);
 }
 
 size_t mpc_lowcomm_get_req_size(mpc_lowcomm_request_t *req)
@@ -3316,7 +3318,7 @@ int mpc_lowcomm_universe_isend(mpc_lowcomm_peer_uid_t dest,
 							   mpc_lowcomm_request_t *req)
 {
 
-	if(dest == MPC_PROC_NULL)
+	if(mpc_lowcomm_peer_get_rank(dest) == MPC_PROC_NULL)
 	{
 		mpc_lowcomm_request_init(req, MPC_COMM_WORLD, REQUEST_SEND);
 		return MPC_LOWCOMM_SUCCESS;
@@ -3359,7 +3361,7 @@ int mpc_lowcomm_universe_irecv(mpc_lowcomm_peer_uid_t src,
 							   int tag,
 							   mpc_lowcomm_request_t *req)
 {
-	if(src == MPC_PROC_NULL)
+	if(mpc_lowcomm_peer_get_rank(src) == MPC_PROC_NULL)
 	{
 		mpc_lowcomm_request_init(req, MPC_COMM_WORLD, REQUEST_SEND);
 		return MPC_LOWCOMM_SUCCESS;

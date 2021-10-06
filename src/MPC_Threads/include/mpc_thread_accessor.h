@@ -100,7 +100,7 @@ static inline int mpc_common_get_task_rank(void)
 	return ret;
 }
 
-static inline int mpc_common_get_task_count(void)
+static inline unsigned int mpc_common_get_task_count(void)
 {
 	return mpc_common_get_flags()->task_number;
 }

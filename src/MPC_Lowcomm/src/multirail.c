@@ -113,6 +113,13 @@ struct __gate_ctx
 	void *params;
 };
 
+union ptrconv
+{
+	void *ptr;
+	int (*fp)(sctk_rail_info_t *, mpc_lowcomm_ptp_message_t *, void *);
+};
+
+
 static inline void __gate_ctx_get(struct _mpc_lowcomm_config_struct_net_gate *gate,
                                   struct __gate_ctx *ctx)
 {
@@ -123,6 +130,8 @@ static inline void __gate_ctx_get(struct _mpc_lowcomm_config_struct_net_gate *ga
 	{
 		return;
 	}
+
+	union ptrconv pconv;
 
 	switch(gate->type)
 	{
@@ -147,7 +156,8 @@ static inline void __gate_ctx_get(struct _mpc_lowcomm_config_struct_net_gate *ga
 			break;
 
 		case MPC_CONF_RAIL_GATE_USER:
-			ctx->func = (int (*)(sctk_rail_info_t *, mpc_lowcomm_ptp_message_t *, void *) )gate->value.user.gatefunc.value;
+			pconv.ptr = gate->value.user.gatefunc.value;
+			ctx->func = pconv.fp;
 			if(!ctx->func)
 			{
 				bad_parameter("Could not resolve user-defined rail gate function %s == %p", gate->value.user.gatefunc.name, gate->value.user.gatefunc.value);

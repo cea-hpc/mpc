@@ -83,7 +83,7 @@ mpc_lowcomm_set_uid_t mpc_lowcomm_monitor_get_gid();
  */
 static inline mpc_lowcomm_set_uid_t mpc_lowcomm_peer_get_set(mpc_lowcomm_peer_uid_t uid)
 {
-	return uid >> 32;
+	return (mpc_lowcomm_set_uid_t)(uid >> 32);
 }
 
 /**
@@ -110,7 +110,7 @@ static inline mpc_lowcomm_peer_uid_t mpc_lowcomm_monitor_uid_of(uint32_t set_uid
 	uint64_t lset_uid = set_uid;
 
 	ret |= lset_uid << 32;
-	ret |= peer_rank;
+	ret |= (uint64_t)peer_rank;
 
 	return ret;
 }

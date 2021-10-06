@@ -39,9 +39,9 @@ typedef struct
 	int destination_task;
 	int source_task;
 	int message_tag;
-	unsigned int communicator_id;
-	mpc_lowcomm_msg_count_t msg_size;
-} sctk_header_t;
+	mpc_lowcomm_communicator_id_t communicator_id;
+	size_t msg_size;
+} mpc_lowcomm_request_header_t;
 /** Status Definition **/
 typedef struct
 {
@@ -74,7 +74,7 @@ struct mpc_lowcomm_request_t
 	volatile int completion_flag;
     char pad[128];
 	int request_type;
-	sctk_header_t header;
+	mpc_lowcomm_request_header_t header;
 	struct mpc_lowcomm_ptp_message_s *msg;
 	mpc_lowcomm_datatype_t source_type; /**< Type in the remote message */
 	mpc_lowcomm_datatype_t dest_type; /**< Type in the local message */

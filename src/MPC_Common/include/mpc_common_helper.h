@@ -133,7 +133,7 @@ static inline uint64_t mpc_common_hash_string(const char * string)
 		return ret;
 	}
 
-	const char * cur = string;
+	const unsigned char * cur = (unsigned char *)string;
 	int cnt = 0;
 
 	while(*cur != '\0')
@@ -151,7 +151,7 @@ static inline uint64_t mpc_common_hash_string(const char * string)
  ****************************/
 
 // FROM Henry S. Warren, Jr.'s "Hacker's Delight."
-static inline long mpc_common_roundup_powerof2(unsigned long n)
+static inline unsigned long mpc_common_roundup_powerof2(unsigned long n)
 {
 	--n;
 	n |= n >> 1;
@@ -159,7 +159,7 @@ static inline long mpc_common_roundup_powerof2(unsigned long n)
 	n |= n >> 4;
 	n |= n >> 8;
 	n |= n >> 16;
-	return n + 1;
+	return (n + 1);
 }
 
 /**
