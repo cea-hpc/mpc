@@ -357,7 +357,6 @@ __task_pqueue_node_new(
     char color,
     size_t priority)
 {
-    /* TODO : use a recycler */
     TODO("use a recycler for mpc_omp_task_pqueue_node_t");
     mpc_omp_task_pqueue_node_t * node = (mpc_omp_task_pqueue_node_t *) mpc_omp_alloc(sizeof(mpc_omp_task_pqueue_node_t));
     assert(node);
@@ -1062,7 +1061,6 @@ __task_dep_htable_entry_add(mpc_omp_task_dep_htable_t * htable, uintptr_t addr)
         }
 
         /* Allocation */
-        /* TODO : use recycler maybe */
         TODO("use a recycler for mpc_omp_task_dep_htable_entry_t");
         if (entry == NULL)
         {

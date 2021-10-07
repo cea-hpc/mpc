@@ -2609,7 +2609,7 @@ __kmpc_omp_task(__UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid, kmp_task
 
 #if OMPT_SUPPORT
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
-    _mpc_omp_ompt_callback_task_create(task, __mpc_omp_ompt_get_task_flags(t, task), 0);
+    _mpc_omp_ompt_callback_task_create(task, __mpc_omp_ompt_get_task_flags(thread, task), 0);
 #endif /* OMPT_SUPPORT */
 	return (kmp_int32) _mpc_omp_task_process(task);
 }
@@ -2904,14 +2904,11 @@ void __kmp_release_deps( __UNUSED__ kmp_int32 gtid, __UNUSED__ kmp_taskdata_t *t
 
 typedef void( *p_task_dup_t )( kmp_task_t *, kmp_task_t *, kmp_int32 );
 
-TODO("Refactor this to use 'mpc_omp_task_loop' instead of reimplementing it");
+TODO("Check kmp taskloop implementation, maybe refactor this with GOMP one");
 void __kmpc_taskloop( __UNUSED__ ident_t *loc, __UNUSED__ int gtid, kmp_task_t *task,
                       __UNUSED__ int if_val, kmp_uint64 *lb, kmp_uint64 *ub, kmp_int64 st,
                       int nogroup, int sched, kmp_uint64 grainsize, void *task_dup )
 {
-    TODO("check '__kmpc_taskloop' implementation");
-    not_implemented();
-
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */

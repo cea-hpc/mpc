@@ -2203,11 +2203,10 @@ void mpc_omp_GOMP_taskloop( void (*fn)(void *), void *data,
 #endif /* MPCOMPT_HAS_FRAME_SUPPORT */
 #endif /* OMPT_SUPPORT */
 
-    TODO("no barrier after a taskloop construct, right ?");
-
     mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
 }
 
+TODO("taskloop_ull");
 void mpc_omp_GOMP_taskloop_ull( void (*fn)(void *), void *data,
                                void (*cpyfn)(void *, void *), long arg_size, long arg_align,
                                unsigned flags, unsigned long num_tasks, int priority,

@@ -446,6 +446,11 @@ mpc_omp_barrier(void)
     /* Handle orphaned directive (initialize OpenMP environment) */
     mpc_omp_init();
 
+    mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
+    assert(thread);
+    assert(thread->instance);
+    assert(thread->instance->team);
+
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_wrapper_infos(MPC_OMP_GOMP);
     ompt_sync_region_t kind = thread->reduction_method ?
@@ -453,11 +458,6 @@ mpc_omp_barrier(void)
         ompt_sync_region_barrier;
     _mpc_omp_ompt_callback_sync_region_wait(kind, ompt_scope_begin);
 #endif /* OMPT_SUPPORT */
-
-    mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
-    assert(thread);
-    assert(thread->instance);
-    assert(thread->instance->team);
 
     /* wait for children tasks to complete */
     _mpc_omp_task_wait();
@@ -471,7 +471,8 @@ mpc_omp_barrier(void)
     int num_threads = team->info.num_threads;
     if (num_threads > 1)
     {
-# if 0 /* naive implementation */
+/* naive barrier implementation */
+# if MPC_OMP_NAIVE_BARRIER
         int old_version = team->barrier_version;
 
         if (OPA_fetch_and_incr_int(&(team->threads_in_barrier)) == num_threads - 1)
@@ -484,9 +485,9 @@ mpc_omp_barrier(void)
         {
             _mpc_omp_task_schedule();
         }
-# endif /* naive implementation */
 
-# if 1 /* tree implementation */
+/* tree implementation */
+# else
         mpc_omp_node_t * c = mvp->father;
         mpc_omp_node_t * new_root = thread->instance->root;
 
@@ -523,8 +524,7 @@ mpc_omp_barrier(void)
             c = c->children.node[mvp->tree_rank[c->depth]];
             c->barrier_done++; /* No need to lock I think... */
         }
-
-# endif /* tree implementation */
+# endif /* MPC_OMP_NAIVE_BARRIER */
     }
 
 #if OMPT_SUPPORT

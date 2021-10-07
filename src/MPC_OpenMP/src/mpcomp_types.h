@@ -67,11 +67,15 @@
 
 # define MPC_OMP_TASK_TRACE_ENABLED mpc_omp_conf_get()->task_trace
 
-# define MPC_OMP_TASK_USE_RECYCLERS  0
+# define MPC_OMP_TASK_USE_RECYCLERS  1
 # define MPC_OMP_TASK_ALLOCATOR      mpc_omp_alloc
 # define MPC_OMP_TASK_DEALLOCATOR    mpc_omp_free
 # define MPC_OMP_TASK_DEFAULT_ALIGN  8
 
+/* openmp barrier algorithm */
+# define MPC_OMP_NAIVE_BARRIER 0
+
+/* task fiber stack size */
 # define MPC_OMP_TASK_FIBER_STACK_SIZE (mpc_omp_conf_get()->task_fiber_stack_size)
 
 # if MPC_OMP_TASK_COMPILE_TRACE
@@ -975,8 +979,10 @@ typedef struct mpc_omp_team_s
     mpc_omp_ompt_frame_info_t frame_infos;
 #endif /* OMPT_SUPPORT */
 
+#if MPC_OMP_NAIVE_BARRIER
     OPA_int_t threads_in_barrier;
     volatile int barrier_version;
+#endif
 
 } mpc_omp_team_t;
 

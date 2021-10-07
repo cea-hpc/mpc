@@ -58,12 +58,12 @@ _mpc_omp_ompt_callback_implicit_task( ompt_scope_endpoint_t endpoint,
 static inline ompt_task_flag_t
 __mpc_omp_ompt_get_task_flags( mpc_omp_thread_t * thread, mpc_omp_task_t *new_task ) {
     ompt_task_flag_t flags = ompt_task_explicit;
-    int task_nesting_max = mpc_omp_conf_get()->omp_task_nesting_max;
+    int task_nesting_max = mpc_omp_conf_get()->task_depth_threshold;
 
-    if( mpc_omp_task_property_isset( new_task->property, MPC_OMP_TASK_UNDEFERRED ))
+    if( mpc_omp_task_property_isset( new_task->property, MPC_OMP_TASK_PROP_UNDEFERRED ))
         flags |= ompt_task_undeferred;
 
-    if( mpc_omp_task_property_isset( new_task->property, MPC_OMP_TASK_FINAL ))
+    if( mpc_omp_task_property_isset( new_task->property, MPC_OMP_TASK_PROP_FINAL ))
         flags |= ompt_task_final;
 
     if( !( flags & ompt_task_undeferred )
