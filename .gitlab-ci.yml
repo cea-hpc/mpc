@@ -162,26 +162,14 @@ MPC Compilation:
 ############################
 
 # a BASIC one, to stop the pipeline early in case of major issue (not able to compile/run a simple test)
-#Simple run:
-#  <<: *run_by_main
-#  <<: *uses_slurm
-#  stage: Basic Testing
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=simple --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/simple
-#
-## a BASIC one, to stop the pipeline early in case of major issue (not able to compile/run a simple test)
-#Simple run Spack:
-#  <<: *run_by_main
-#  <<: *uses_slurm
-#  stage: Basic Testing
-#  allow_failure: true
-#  dependencies:
-#    - MPC Compilation Spack
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install_spack --select=simple --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/simple
-#
+Simple run:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Basic Testing
+  script:
+    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
+    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_simple ~/repo/mpc_ci/trivial/
+
 #Fortran:
 #  <<: *run_by_main
 #  <<: *uses_slurm
