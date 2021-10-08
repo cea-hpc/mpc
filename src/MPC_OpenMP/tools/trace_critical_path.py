@@ -14,8 +14,8 @@ def traces_critical_path(src):
     print('    T1  = {} s.'.format(T1))
     print('    P   = {} threads'.format(P))
     print('Check')
-    print('    Too <= TP <= Too + T1/P')
-    print('    {} <= {} <= {}'.format(Too, TP, Too + T1 / P))
+    print('    Too <= T1/P <= TP <= Too + T1/P')
+    print('    {} <= {} <= {} <= {}'.format(Too, T1 / P, TP, Too + T1 / P))
 
 def usage():
     print('usage: {} [TRACE]'.format(sys.argv[0]))
