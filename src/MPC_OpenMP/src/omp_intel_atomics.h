@@ -21,8 +21,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-TODO("this file triggers many warnings: 'dereferencing type-punned pointer will break strict-aliasing rules'");
-
 #ifndef __MPC_OMP_TYPES_KMP_ATOMICS_H__
 #define __MPC_OMP_TYPES_KMP_ATOMICS_H__
 

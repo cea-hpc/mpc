@@ -281,6 +281,10 @@ static int
 ompt_get_task_memory ( void **addr,
                        size_t *size,
                        int block ) {
+    not_implemented();
+
+/* this implementation is wrong, check LLVM one */
+# if 0
     mpc_omp_thread_t* thread;
     mpc_omp_task_t* current_task = NULL;
 
@@ -295,16 +299,16 @@ ompt_get_task_memory ( void **addr,
 
         if( block == 0
             && current_task
-            && current_task->data_size ) {
-            *size = current_task->data_size;
+            && current_task->size ) {
+            *size = current_task->size;
 
             if( addr ) {
-                addr[block] = (void*) malloc( sizeof( current_task->data_size ));
-                memcpy( addr[block], current_task->data, current_task->data_size );
+                addr[block] = (void*) malloc( sizeof( current_task->size ));
+                memcpy( addr[block], current_task->data, current_task->size );
             }
         }
     }
-
+# endif
     return 0;
 }
 
