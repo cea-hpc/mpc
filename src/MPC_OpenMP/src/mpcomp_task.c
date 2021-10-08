@@ -984,7 +984,6 @@ __task_delete_fiber(mpc_omp_task_t * task)
 void
 __task_delete(mpc_omp_task_t * task)
 {
-    //puts("delete");fflush(stdout);
     assert(OPA_load_int(&(task->ref_counter)) == 0);
 
     mpc_omp_thread_t * thread = __thread_task_coherency(NULL);
@@ -2804,8 +2803,6 @@ mpc_omp_task_extra(__UNUSED__ char * label, int extra_clauses)
 mpc_omp_task_t *
 _mpc_omp_task_allocate(size_t size)
 {
-
-    //puts("alloc");fflush(stdout);
     /* Intialize the OpenMP environnement (if needed) */
     mpc_omp_init();
 
@@ -2894,7 +2891,7 @@ _mpc_omp_task_init(
     /* reference the task */
     _mpc_omp_taskgroup_add_task(task);
     __task_ref_parent_task(task);
-    __task_ref(task);   /* __task_finalize */
+    __task_ref(task); /* __task_finalize */
 
     /* extra parameters given to the mpc thread for this task */
 # if MPC_OMP_TASK_COMPILE_TRACE
@@ -2977,11 +2974,12 @@ int
 _mpc_omp_task_process(mpc_omp_task_t * task)
 {
     /* Retrieve the information (microthread structure and current region) */
+    int r = 0;
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     assert(thread);
     assert(thread->instance);
 
-    __task_ref(task);
+    __task_ref(task); /* _mpc_omp_task_process */
 
     /* if the task is ready */
     if (OPA_load_int(&(task->dep_node.ref_predecessors)) == 0)
@@ -2993,7 +2991,7 @@ _mpc_omp_task_process(mpc_omp_task_t * task)
             {
                 /* run it */
                 __task_run(task);
-                return 1;
+                r = 1;
             }
             else
             {
@@ -3004,7 +3002,7 @@ _mpc_omp_task_process(mpc_omp_task_t * task)
         }
         else
         {
-            /* already run */
+            /* already processed */
         }
     }
     /* else the task is not ready */
@@ -3027,10 +3025,9 @@ _mpc_omp_task_process(mpc_omp_task_t * task)
         }
     }
 
-    /* correspond with a reference on '_mpc_omp_task_init' */
-    __task_unref(task);
+    __task_unref(task); /* _mpc_omp_task_process */
 
-    return 0;
+    return r;
 }
 
 /*************
@@ -3285,8 +3282,7 @@ _mpc_omp_task_tree_deinit(mpc_omp_thread_t * thread)
         task->dep_node.htable = NULL;
     }
 
-    assert(OPA_load_int(&(thread->instance->task_infos.ntasks_ready)) == 0);
-
     // this may not be true since every threads tasks are deinitialized concurrently
     // assert(OPA_load_int(&(thread->instance->task_infos.ntasks)) == 0);
+    //assert(OPA_load_int(&(thread->instance->task_infos.ntasks_ready)) == 0);
 }
