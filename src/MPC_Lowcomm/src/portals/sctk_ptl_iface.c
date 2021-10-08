@@ -279,7 +279,7 @@ static inline void __pte_idx_register(sctk_ptl_rail_info_t* srail, ptl_pt_index_
 {
 	mpc_lowcomm_communicator_id_t * new = sctk_malloc(sizeof(mpc_lowcomm_communicator_id_t));
 	*new = comm_id - SCTK_PTL_PTE_HIDDEN;
-	mpc_common_debug_error("REVERSE REG %d maps to %llu", idx, *new );
+	mpc_common_nodebug("REVERSE REG %d maps to %llu", idx, *new );
 	mpc_common_hashtable_set(&srail->reverse_pt_table, idx, new);
 }
 
@@ -326,7 +326,7 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, ptl_p
 
 	mpc_common_hashtable_set(&srail->pt_table, key, pte);
 
-		mpc_common_debug_error("REG %llu maps to %d", key, pte->idx );
+	mpc_common_nodebug("REG %llu maps to %d", key, pte->idx );
 
 	__pte_idx_register(srail, pte->idx, key);
 

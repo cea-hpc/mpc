@@ -1042,7 +1042,7 @@ int mpc_launch_pmi_get_app_rank(int* appname){
 		pmix_value_t* val;
 		ret = PMIx_Get(&pmi_context.pmix_proc, PMIX_APPNUM, NULL, 0 , &val);
 		if(PMIX_SUCCESS == ret) *appname = val->data.uint32;
-		else printf("get appnum returned %d", ret);
+		else
 		return ret == PMIX_SUCCESS;
 	#elif defined( MPC_USE_PMI1 ) || defined(MPC_USE_HYDRA)
 		/* Hydra is not threadsafe */

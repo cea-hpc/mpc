@@ -1063,7 +1063,6 @@ static inline int __read_environ(mpc_conf_env_manager_t *envm)
 
 	if(env_len == 0)
 	{
-		perror("fread");
 		free(envdat);
 		return 1;
 	}
