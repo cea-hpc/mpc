@@ -26,7 +26,7 @@
 
 #include "mpcomp_types.h"
 
-void mpc_omp_start_parallel_region( void ( *func )( void * ), void *shared,
+void _mpc_omp_start_parallel_region( void ( *func )( void * ), void *shared,
                                      unsigned arg_num_threads );
 
 void _mpc_omp_start_sections_parallel_region( void ( *func )( void * ), void *shared,

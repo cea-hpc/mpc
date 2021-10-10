@@ -225,7 +225,7 @@ void __kmpc_fork_call( __UNUSED__ ident_t *loc, kmp_int32 argc, kmpc_micro micro
 	t->push_num_threads = ( t->push_num_threads <= 0 ) ? 0 : t->push_num_threads;
 	mpc_common_nodebug( " f: %p, argc: %d, args: %p, num_thread: %d", w->f, w->argc,
 	              w->args, t->push_num_threads );
-	mpc_omp_start_parallel_region( __intel_wrapper_func, w,
+	_mpc_omp_start_parallel_region( __intel_wrapper_func, w,
 	                                t->push_num_threads );
 	/* restore the number of threads w/ num_threads clause */
 	t->push_num_threads = 0;

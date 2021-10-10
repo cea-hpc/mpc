@@ -394,6 +394,21 @@ mpc_omp_taskgroup_del_task( mpc_omp_task_t *task )
     }
 }
 
+/* tasks */
+void mpc_omp_task_process(mpc_omp_task_t * task);
+
+mpc_omp_task_t * __mpc_omp_task_init(
+    mpc_omp_task_t * task,
+    void (*fn)(void *),
+    void *data,
+    void (*cpyfn)(void *, void *),
+    long arg_size,
+    long arg_align,
+    mpc_omp_task_property_t properties,
+    void ** depend,
+    int priority_hint);
+
+
 /************
  * TASKLOOP *
  ************/
