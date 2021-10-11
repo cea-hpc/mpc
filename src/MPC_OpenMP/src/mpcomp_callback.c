@@ -2,6 +2,10 @@
 
 # include "mpcomp_core.h"
 
+/**
+ * Register a callback to the OpenMP runtime
+ * @param callback
+ */
 void
 mpc_omp_callback(mpc_omp_callback_t * callback)
 {
@@ -23,7 +27,8 @@ mpc_omp_callback(mpc_omp_callback_t * callback)
 }
 
 /**
- * Run the callback functions of the given list
+ * Run the callback for the associated event
+ * @param when - the event
  */
 void
 _mpc_omp_callback_run(mpc_omp_callback_when_t when)

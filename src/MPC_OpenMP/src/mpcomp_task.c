@@ -36,8 +36,12 @@
 #include "omp_gomp_constants.h"
 
 /************************
- * OMP INSTANCE RELATED 
+ * OMP INSTANCE RELATED
  ***********************/
+
+ /**
+  * Return true if the runtime should now execute task sequentially
+  */
 static inline int
 __task_reached_thresholds(mpc_omp_task_t * task)
 {
@@ -273,6 +277,10 @@ __task_list_pop(mpc_omp_task_list_t * list)
     assert(list);
     return __task_list_pop_from_tail(list);
 }
+
+/**************************
+ * PRIORITY QUEUE (rb-tree)
+ *************************/
 
 static inline void
 __task_pqueue_coherency_check_colors(
@@ -897,6 +905,7 @@ __task_dep_hash(uintptr_t addr)
     return addr;
 }
 
+/* increase task reference counter by 1 */
 static inline void
 __task_ref(mpc_omp_task_t * task)
 {
@@ -906,6 +915,8 @@ __task_ref(mpc_omp_task_t * task)
 
 void __task_delete(mpc_omp_task_t * task);
 
+/* Decrease task reference counter by 1
+ * if it reaches 0, the task is deleted */
 static void
 __task_unref(mpc_omp_task_t * task)
 {
@@ -1020,6 +1031,10 @@ __task_finalize(mpc_omp_task_t * task)
     _mpc_omp_task_finalize_deps(task);
     __task_unref(task);
 }
+
+/****************
+ * HTABLE RELATED
+ ****************/
 
 static mpc_omp_task_dep_list_elt_t *
 __task_list_elt_new(mpc_omp_task_dep_list_elt_t * list, mpc_omp_task_t * task)
@@ -1263,9 +1278,7 @@ __task_process_deps(mpc_omp_task_t * task,
     mpc_omp_free(dep_already_processed_list);
 }
 
-/* link error */
-void __task_run(mpc_omp_task_t * task);
-
+/** Given task completed -> fulfill its successors dependencies */
 void
 _mpc_omp_task_finalize_deps(mpc_omp_task_t * task)
 {
@@ -1370,6 +1383,7 @@ __task_priority_propagate_on_predecessors(mpc_omp_task_t * task)
     }
 }
 
+/* compute task priority depending on policy set */
 static void
 __task_priority_compute(mpc_omp_task_t * task)
 {
@@ -1457,6 +1471,10 @@ ___task_root_pqueue_init( struct mpc_omp_node_s *root, const mpc_omp_task_pqueue
     infos->taskPqueueNodeRank[type] = 0;
     return 1;
 }
+
+/***************
+ * TASK STEALING
+ ***************/
 
 /** Hierarchical stealing policy **/
 
@@ -2784,6 +2802,10 @@ _mpc_omp_task_yield(void)
     }
 }
 
+/**
+ * Runtime task pre-constructor, to add extra argument
+ * to a task, without modifying the compiler
+ */
 void
 mpc_omp_task_extra(__UNUSED__ char * label, int extra_clauses)
 {
@@ -2868,8 +2890,7 @@ _mpc_omp_task_init_attributes(
  * \param fn the task entry point
  * \param data the task data (fn parameters)
  * \param cpyfn function to copy the data
- * \param arg_size
- * \param arg_align
+ * \param size total size of the task (sizeof(mpc_omp_task) + data_size)
  * \param properties
  */
 mpc_omp_task_t *
@@ -3282,7 +3303,7 @@ _mpc_omp_task_tree_deinit(mpc_omp_thread_t * thread)
         task->dep_node.htable = NULL;
     }
 
-    // this may not be true since every threads tasks are deinitialized concurrently
+    // this may not be true since every threads are deinitialized concurrently
     // assert(OPA_load_int(&(thread->instance->task_infos.ntasks)) == 0);
-    //assert(OPA_load_int(&(thread->instance->task_infos.ntasks_ready)) == 0);
+    // assert(OPA_load_int(&(thread->instance->task_infos.ntasks_ready)) == 0);
 }
