@@ -23,7 +23,7 @@
 /* # - TABOADA Hugo hugo.taboada@cea.fr                                   # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* # - Romain PEREIRA <romain.pereira@inria.fr>                           # */
+/* # - Romain Pereira <pereirar@ocre.cea.fr>                              # */
 /* #                                                                      # */
 /* ######################################################################## */
 # include "mpcomp_types.h"

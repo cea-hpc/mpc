@@ -23,7 +23,7 @@
 /* # - TABOADA Hugo hugo.taboada@cea.fr                                   # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* # - Romain PEREIRA <pereirar@ocre.cea.fr>                              # */
+/* # - Romain Pereira <pereirar@ocre.cea.fr>                              # */
 /* #                                                                      # */
 /* ######################################################################## */
 # include <mpc_omp.h>
