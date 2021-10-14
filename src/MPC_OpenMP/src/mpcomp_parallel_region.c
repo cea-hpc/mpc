@@ -149,7 +149,7 @@ void _mpc_omp_internal_end_parallel_region( __UNUSED__ mpc_omp_instance_t *insta
 typedef void*(*mpc_omp_start_func_t)(void*);
 
 void
-mpc_omp_start_parallel_region(
+_mpc_omp_start_parallel_region(
         void (*func)(void *),
         void *shared,
         unsigned arg_num_threads)

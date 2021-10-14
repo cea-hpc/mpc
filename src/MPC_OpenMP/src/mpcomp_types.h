@@ -56,11 +56,12 @@
 #include "mpc_common_recycler.h"
 #include "mpc_omp_task_trace.h"
 
-// #define TLS_ALLOCATORS
-# define MPC_OMP_USE_INTEL_ABI 1
-#ifdef MPC_OMP_USE_INTEL_ABI
-	#include "omp_intel_types.h"
-#endif /* MPC_OMP_USE_INTEL_ABI */
+#define MPC_OMP_USE_INTEL_ABI 1
+# ifdef MPC_OMP_USE_INTEL_ABI
+#  include "omp_intel_types.h"
+# endif /* MPC_OMP_USE_INTEL_ABI */
+
+#include "omp_gomp_constants.h"
 
 /*******************
  * OMP DEFINITIONS *
@@ -742,14 +743,12 @@ typedef struct  mpc_omp_task_thread_infos_s
 #  endif /* MPC_OMP_TASK_COMPILE_FIBER */
 # endif /* MPC_OMP_TASK_USE_RECYCLERS */
 
-    /* immediate successor of previous task */
-    mpc_omp_task_t * immediate_successor;
-
     /* extra data for incoming task */
     struct
     {
         char * label;
         int extra_clauses;
+        gomp_omp_depend_t * dependencies;
     } incoming;
 
 # if MPC_OMP_TASK_COMPILE_TRACE

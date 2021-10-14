@@ -2827,9 +2827,16 @@ _mpc_omp_task_yield(void)
 /**
  * Runtime task pre-constructor, to add extra argument
  * to a task, without modifying the compiler
+ *
+ * \param label : the task label
+ * \param extra_clauses : bits (MPC_OMP_NO_CLAUSE, MPC_OMP_CLAUSE_USE_FIBER)
+ * \param dependencies : gomp_omp_depend_t array, NULL terminated
  */
 void
-mpc_omp_task_extra(__UNUSED__ char * label, int extra_clauses)
+mpc_omp_task_extra(
+    __UNUSED__ char * label,
+    int extra_clauses,
+    gomp_omp_depend_t * dependencies)
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     assert(thread);
@@ -2838,6 +2845,7 @@ mpc_omp_task_extra(__UNUSED__ char * label, int extra_clauses)
     thread->task_infos.incoming.label = label;
 # endif /* MPC_OMP_TASK_COMPILE_TRACE */
     thread->task_infos.incoming.extra_clauses = extra_clauses;
+    thread->task_infos.incoming.dependencies = dependencies;
 }
 
 /*

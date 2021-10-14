@@ -43,6 +43,7 @@
 #include "mpcompt_task.h"
 #include "mpcompt_sync.h"
 #include "mpcompt_frame.h"
+#include "mpcompt_workShare.h"
 
 /***********
  * ORDERED *

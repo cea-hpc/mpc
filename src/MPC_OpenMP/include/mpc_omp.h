@@ -50,6 +50,7 @@ extern "C" {
 #include <stdint.h>
 
 #include "omp.h"
+#include "omp_gomp_constants.h"
 
     /* OpenMP 2.5 API - For backward compatibility with old patched GCC */
     int mpc_omp_get_num_threads( void );
@@ -95,8 +96,8 @@ extern "C" {
     void mpc_omp_tree_print(FILE * file);
 
     /**
-     *  * Async callback
-     *   */
+     * Async. callback
+     */
     typedef enum    mpc_omp_callback_when_t
     {
         /* scheduler points */
@@ -157,11 +158,12 @@ extern "C" {
     /** Maximum length of a task label */
     # define MPC_OMP_TASK_LABEL_MAX_LENGTH 64
 
+    /* extra clauses for mpc-omp tasks */
     # define MPC_OMP_NO_CLAUSE          (0 << 0)
     # define MPC_OMP_CLAUSE_USE_FIBER   (1 << 0)
 
     /** Give extra information of the incoming task - must be called right before a `#pragma omp task` */
-    void mpc_omp_task_extra(char * label, int extra_clauses);
+    void mpc_omp_task_extra(char * label, int extra_clauses, gomp_omp_depend_t * depend);
 
     /** Taskyield which blocks on event */
     void mpc_omp_task_block(mpc_omp_event_handle_t * event);
