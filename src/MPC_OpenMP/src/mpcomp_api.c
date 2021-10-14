@@ -1,5 +1,5 @@
 /* ############################# MPC License ############################## */
-/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* # Tue Oct 12 10:33:55 CEST 2021                                        # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -15,8 +15,22 @@
 /* # had knowledge of the CeCILL-C license and that you accept its        # */
 /* # terms.                                                               # */
 /* #                                                                      # */
+/* # Maintainers:                                                         # */
+/* # - CARRIBAULT Patrick patrick.carribault@cea.fr                       # */
+/* # - JAEGER Julien julien.jaeger@cea.fr                                 # */
+/* # - PERACHE Marc marc.perache@cea.fr                                   # */
+/* # - ROUSSEL Adrien adrien.roussel@cea.fr                               # */
+/* # - TABOADA Hugo hugo.taboada@cea.fr                                   # */
+/* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
+/* # - Adrien Roussel <adrien.roussel@cea.fr>                             # */
+/* # - Antoine Capra <capra@paratools.com>                                # */
+/* # - Jean-Baptiste Besnard <jbbesnard@paratools.com>                    # */
+/* # - Julien Adam <adamj@paratools.com>                                  # */
+/* # - Marc Perache <marc.perache@cea.fr>                                 # */
+/* # - Patrick Carribault <patrick.carribault@cea.fr>                     # */
+/* # - Ricardo Bispo vieira <ricardo.bispo-vieira@exascale-computing.eu>  # */
+/* # - Romain Pereira <pereirar@ocre.cea.fr>                              # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -388,17 +402,8 @@ int mpc_omp_get_num_threads(void) { return omp_get_num_threads(); }
 int mpc_omp_get_thread_num(void) { return omp_get_thread_num(); }
 
 /**
- * The omp fulfill event routine
- * Warning: this does not respect the standard
- * `omp_fulfill_event(omp_event_handle_t handle)`
+ * @return true if current task is explicit
  */
-void
-mpc_omp_fulfill_event(mpc_omp_event_handle_t * handle)
-{
-    if (handle->type & MPC_OMP_EVENT_TASK_BLOCK) mpc_omp_task_unblock(handle);
-    else not_implemented();
-}
-
 int
 mpc_omp_in_explicit_task(void)
 {
@@ -420,14 +425,32 @@ mpc_omp_in_explicit_task(void)
     return 1;
 }
 
-/* initialize an event handler */
+TODO("Support for OpenMP standard event handle : add an hashtable of `key=omp_event_handle_t` and `value=mpc_omp_event_handle_t *`");
+
+/**
+ * Fulfill the MPC event handle
+ * Warning: this does not respect the standard
+ * `omp_fulfill_event(omp_event_handle_t handle)`
+ */
 void
-mpc_omp_event_handle_init(mpc_omp_event_handle_t * event, mpc_omp_event_t type)
+mpc_omp_fulfill_event(mpc_omp_event_handle_t * handle)
 {
-    OPA_store_int(&(event->status), MPC_OMP_EVENT_HANDLE_STATUS_INIT);
-    event->attr = NULL;
-    event->type = MPC_OMP_EVENT_NULL;
-    mpc_common_spinlock_init(&(event->lock), 0);
+    if (handle->type & MPC_OMP_EVENT_TASK_BLOCK) mpc_omp_task_unblock(handle);
+    else not_implemented();
+}
+
+/**
+ * Initialize an MPC event handle
+ * @param handle - the event handle
+ * @param type - event type
+ */
+void
+mpc_omp_event_handle_init(mpc_omp_event_handle_t * handle, mpc_omp_event_t type)
+{
+    OPA_store_int(&(handle->status), MPC_OMP_EVENT_HANDLE_STATUS_INIT);
+    handle->attr = NULL;
+    handle->type = MPC_OMP_EVENT_NULL;
+    mpc_common_spinlock_init(&(handle->lock), 0);
 
     switch (type)
     {
@@ -439,8 +462,8 @@ mpc_omp_event_handle_init(mpc_omp_event_handle_t * event, mpc_omp_event_t type)
             mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
             assert(task);
 
-            event->type = type;
-            event->attr = (void *) task;
+            handle->type = type;
+            handle->attr = (void *) task;
             break ;
         }
         default:

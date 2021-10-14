@@ -1,5 +1,5 @@
 /* ############################# MPC License ############################## */
-/* # Wed Nov 04 16:37:28 CET 2020                                         # */
+/* # Tue Oct 12 12:39:43 CEST 2021                                        # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -15,8 +15,15 @@
 /* # had knowledge of the CeCILL-C license and that you accept its        # */
 /* # terms.                                                               # */
 /* #                                                                      # */
+/* # Maintainers:                                                         # */
+/* # - CARRIBAULT Patrick patrick.carribault@cea.fr                       # */
+/* # - JAEGER Julien julien.jaeger@cea.fr                                 # */
+/* # - PERACHE Marc marc.perache@cea.fr                                   # */
+/* # - ROUSSEL Adrien adrien.roussel@cea.fr                               # */
+/* # - TABOADA Hugo hugo.taboada@cea.fr                                   # */
+/* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - PEREIRA Romain romain.pereira.ocre@cea.fr                        # */
+/* # - Romain PEREIRA <pereirar@r1login.c-inti.ccc.ocre.cea.fr>           # */
 /* #                                                                      # */
 /* ######################################################################## */
 

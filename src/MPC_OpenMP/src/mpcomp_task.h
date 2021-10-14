@@ -1,5 +1,5 @@
 /* ############################# MPC License ############################## */
-/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* # Tue Oct 12 10:34:06 CEST 2021                                        # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -15,10 +15,23 @@
 /* # had knowledge of the CeCILL-C license and that you accept its        # */
 /* # terms.                                                               # */
 /* #                                                                      # */
+/* # Maintainers:                                                         # */
+/* # - CARRIBAULT Patrick patrick.carribault@cea.fr                       # */
+/* # - JAEGER Julien julien.jaeger@cea.fr                                 # */
+/* # - PERACHE Marc marc.perache@cea.fr                                   # */
+/* # - ROUSSEL Adrien adrien.roussel@cea.fr                               # */
+/* # - TABOADA Hugo hugo.taboada@cea.fr                                   # */
+/* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
-/* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
-/* #   - CAPRA Antoine capra@paratools.com                                # */
+/* # - Adrien Roussel <adrien.roussel@cea.fr>                             # */
+/* # - Antoine Capra <capra@paratools.com>                                # */
+/* # - Jean-Baptiste Besnard <jbbesnard@paratools.com>                    # */
+/* # - Julien Adam <adamj@paratools.com>                                  # */
+/* # - Patrick Carribault <patrick.carribault@cea.fr>                     # */
+/* # - Ricardo Bispo vieira <ricardo.bispo-vieira@exascale-computing.eu>  # */
+/* # - Romain Pereira <pereirar@ocre.cea.fr>                              # */
+/* # - Stephane Bouhrour <stephane.bouhrour@exascale-computing.eu>        # */
+/* # - Thomas Dionisi <thomas.dionisi@exascale-computing.eu>              # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -393,6 +406,21 @@ mpc_omp_taskgroup_del_task( mpc_omp_task_t *task )
         OPA_decr_int( &( task->taskgroup->children_num ) );
     }
 }
+
+/* tasks */
+void mpc_omp_task_process(mpc_omp_task_t * task);
+
+mpc_omp_task_t * __mpc_omp_task_init(
+    mpc_omp_task_t * task,
+    void (*fn)(void *),
+    void *data,
+    void (*cpyfn)(void *, void *),
+    long arg_size,
+    long arg_align,
+    mpc_omp_task_property_t properties,
+    void ** depend,
+    int priority_hint);
+
 
 /************
  * TASKLOOP *

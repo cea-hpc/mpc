@@ -1,5 +1,5 @@
 /* ############################# MPC License ############################## */
-/* # Wed Nov 10 13:55:00 CET 2020                                         # */
+/* # Tue Oct 12 12:25:56 CEST 2021                                        # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -15,8 +15,15 @@
 /* # had knowledge of the CeCILL-C license and that you accept its        # */
 /* # terms.                                                               # */
 /* #                                                                      # */
+/* # Maintainers:                                                         # */
+/* # - CARRIBAULT Patrick patrick.carribault@cea.fr                       # */
+/* # - JAEGER Julien julien.jaeger@cea.fr                                 # */
+/* # - PERACHE Marc marc.perache@cea.fr                                   # */
+/* # - ROUSSEL Adrien adrien.roussel@cea.fr                               # */
+/* # - TABOADA Hugo hugo.taboada@cea.fr                                   # */
+/* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - PEREIRA Romain romain.pereira.ocre@cea.fr                        # */
+/* # - Romain Pereira <pereirar@ocre.cea.fr>                              # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -40,10 +47,6 @@
 # define MPC_OMP_TASK_PROP_IF            (1 << 13)
 # define MPC_OMP_TASK_PROP_NOGROUP       (1 << 14)
 # define MPC_OMP_TASK_PROP_HAS_FIBER     (1 << 15) /* if the task has it own fiber */
-
- /* the properties to consider when comparing to a critical task */
-# define MPC_OMP_TASK_PROP_PROFILE_MASK \
-    (MPC_OMP_TASK_PROP_UNDEFERRED | MPC_OMP_TASK_PROP_UNTIED | MPC_OMP_TASK_PROP_EXPLICIT | MPC_OMP_TASK_PROP_INCLUDED | MPC_OMP_TASK_PROP_FINAL | MPC_OMP_TASK_PROP_MERGEABLE | MPC_OMP_TASK_PROP_DEPEND | MPC_OMP_TASK_PROP_PRIORITY | MPC_OMP_TASK_PROP_IF)
 
 # include <stdbool.h>
 

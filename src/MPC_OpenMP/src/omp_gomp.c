@@ -1,3 +1,35 @@
+/* ############################# MPC License ############################## */
+/* # Tue Oct 12 10:34:00 CEST 2021                                        # */
+/* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* #                                                                      # */
+/* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
+/* # This file is part of the MPC Runtime.                                # */
+/* #                                                                      # */
+/* # This software is governed by the CeCILL-C license under French law   # */
+/* # and abiding by the rules of distribution of free software.  You can  # */
+/* # use, modify and/ or redistribute the software under the terms of     # */
+/* # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # */
+/* # following URL http://www.cecill.info.                                # */
+/* #                                                                      # */
+/* # The fact that you are presently reading this means that you have     # */
+/* # had knowledge of the CeCILL-C license and that you accept its        # */
+/* # terms.                                                               # */
+/* #                                                                      # */
+/* # Maintainers:                                                         # */
+/* # - CARRIBAULT Patrick patrick.carribault@cea.fr                       # */
+/* # - JAEGER Julien julien.jaeger@cea.fr                                 # */
+/* # - PERACHE Marc marc.perache@cea.fr                                   # */
+/* # - ROUSSEL Adrien adrien.roussel@cea.fr                               # */
+/* # - TABOADA Hugo hugo.taboada@cea.fr                                   # */
+/* #                                                                      # */
+/* # Authors:                                                             # */
+/* # - Adrien Roussel <adrien.roussel@cea.fr>                             # */
+/* # - Jean-Baptiste Besnard <jbbesnard@paratools.com>                    # */
+/* # - Julien Adam <adamj@paratools.com>                                  # */
+/* # - Romain Pereira <pereirar@ocre.cea.fr>                              # */
+/* # - Thomas Dionisi <thomas.dionisi@exascale-computing.eu>              # */
+/* #                                                                      # */
+/* ######################################################################## */
 #include "omp_gomp.h"
 #include "mpc_common_types.h"
 #include "mpc_common_debug.h"
@@ -189,7 +221,7 @@ static inline void __gomp_start_parallel( void ( *fn )( void * ), void *data,
         unsigned num_threads,
         __UNUSED__ unsigned int flags )
 {
-	mpc_omp_start_parallel_region( ( void ( * )( void * ) ) fn, data, num_threads );
+	_mpc_omp_start_parallel_region( ( void ( * )( void * ) ) fn, data, num_threads );
 }
 
 static inline void __gomp_start_parallel_region( void ( *fn )( void * ), void *data,
@@ -1974,8 +2006,6 @@ ___gomp_convert_flags(bool if_clause, int flags)
     mpc_omp_task_t * current_task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
     assert(current_task);
 
-    TODO("This can be slightly optimized by using the same bits for GOMP and MPC tasks");
-
     mpc_omp_task_property_t properties = 0;
 
 # define __CONVERT_ONE_BIT(X, Y) if (flags & X) mpc_omp_task_set_property(&properties, Y)
@@ -2206,7 +2236,6 @@ void mpc_omp_GOMP_taskloop( void (*fn)(void *), void *data,
     mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
 }
 
-TODO("taskloop_ull");
 void mpc_omp_GOMP_taskloop_ull( void (*fn)(void *), void *data,
                                void (*cpyfn)(void *, void *), long arg_size, long arg_align,
                                unsigned flags, unsigned long num_tasks, int priority,
@@ -2219,8 +2248,7 @@ void mpc_omp_GOMP_taskloop_ull( void (*fn)(void *), void *data,
 #endif /* OMPT_SUPPORT */
 
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tBegin", __func__ );
-//    mpc_omp_task_loop_ull( fn, data, cpyfn, arg_size, arg_align,
-//                         flags, num_tasks, priority, start, end, step );
+    not_implemented();
     TODO("implement 'mpc_omp_GOMP_taskloop_ull'");
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
 }

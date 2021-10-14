@@ -1,5 +1,5 @@
 /* ############################# MPC License ############################## */
-/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* # Tue Oct 12 10:34:05 CEST 2021                                        # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -15,9 +15,18 @@
 /* # had knowledge of the CeCILL-C license and that you accept its        # */
 /* # terms.                                                               # */
 /* #                                                                      # */
+/* # Maintainers:                                                         # */
+/* # - CARRIBAULT Patrick patrick.carribault@cea.fr                       # */
+/* # - JAEGER Julien julien.jaeger@cea.fr                                 # */
+/* # - PERACHE Marc marc.perache@cea.fr                                   # */
+/* # - ROUSSEL Adrien adrien.roussel@cea.fr                               # */
+/* # - TABOADA Hugo hugo.taboada@cea.fr                                   # */
+/* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
-/* #   - CAPRA Antoine capra@paratools.com                                # */
+/* # - Antoine Capra <capra@paratools.com>                                # */
+/* # - Jean-Baptiste Besnard <jbbesnard@paratools.com>                    # */
+/* # - Patrick Carribault <patrick.carribault@cea.fr>                     # */
+/* # - Romain Pereira <pereirar@ocre.cea.fr>                              # */
 /* #                                                                      # */
 /* ######################################################################## */
 #ifndef __MPC_OMP_PLACES_ENV_H__

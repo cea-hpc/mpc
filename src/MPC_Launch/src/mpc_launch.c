@@ -533,8 +533,8 @@ static inline void __set_default_values()
 
 	mpc_common_get_flags()->enable_smt_capabilities = 0;
 	mpc_common_get_flags()->task_number = 1;
-	mpc_common_get_flags()->process_number = 1;
-	mpc_common_get_flags()->processor_number = 1;
+	mpc_common_get_flags()->process_number = 0;
+	mpc_common_get_flags()->processor_number = 0;
 
 #ifdef MPC_Threads
 	snprintf(mpc_common_get_flags()->thread_library_kind, MPC_CONF_STRING_SIZE, "ethread_mxn");

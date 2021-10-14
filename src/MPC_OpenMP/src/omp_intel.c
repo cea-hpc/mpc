@@ -1,3 +1,34 @@
+/* ############################# MPC License ############################## */
+/* # Tue Oct 12 10:34:01 CEST 2021                                        # */
+/* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* #                                                                      # */
+/* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
+/* # This file is part of the MPC Runtime.                                # */
+/* #                                                                      # */
+/* # This software is governed by the CeCILL-C license under French law   # */
+/* # and abiding by the rules of distribution of free software.  You can  # */
+/* # use, modify and/ or redistribute the software under the terms of     # */
+/* # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # */
+/* # following URL http://www.cecill.info.                                # */
+/* #                                                                      # */
+/* # The fact that you are presently reading this means that you have     # */
+/* # had knowledge of the CeCILL-C license and that you accept its        # */
+/* # terms.                                                               # */
+/* #                                                                      # */
+/* # Maintainers:                                                         # */
+/* # - CARRIBAULT Patrick patrick.carribault@cea.fr                       # */
+/* # - JAEGER Julien julien.jaeger@cea.fr                                 # */
+/* # - PERACHE Marc marc.perache@cea.fr                                   # */
+/* # - ROUSSEL Adrien adrien.roussel@cea.fr                               # */
+/* # - TABOADA Hugo hugo.taboada@cea.fr                                   # */
+/* #                                                                      # */
+/* # Authors:                                                             # */
+/* # - Adrien Roussel <adrien.roussel@cea.fr>                             # */
+/* # - Jean-Baptiste Besnard <jbbesnard@paratools.com>                    # */
+/* # - Julien Adam <adamj@paratools.com>                                  # */
+/* # - Romain Pereira <pereirar@ocre.cea.fr>                              # */
+/* #                                                                      # */
+/* ######################################################################## */
 #include "omp_intel.h"
 #include "mpc_omp_abi.h"
 #include "mpc_common_debug.h"
@@ -225,7 +256,7 @@ void __kmpc_fork_call( __UNUSED__ ident_t *loc, kmp_int32 argc, kmpc_micro micro
 	t->push_num_threads = ( t->push_num_threads <= 0 ) ? 0 : t->push_num_threads;
 	mpc_common_nodebug( " f: %p, argc: %d, args: %p, num_thread: %d", w->f, w->argc,
 	              w->args, t->push_num_threads );
-	mpc_omp_start_parallel_region( __intel_wrapper_func, w,
+	_mpc_omp_start_parallel_region( __intel_wrapper_func, w,
 	                                t->push_num_threads );
 	/* restore the number of threads w/ num_threads clause */
 	t->push_num_threads = 0;

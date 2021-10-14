@@ -1,5 +1,5 @@
 /* ############################# MPC License ############################## */
-/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* # Tue Oct 12 12:25:56 CEST 2021                                        # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -15,9 +15,24 @@
 /* # had knowledge of the CeCILL-C license and that you accept its        # */
 /* # terms.                                                               # */
 /* #                                                                      # */
+/* # Maintainers:                                                         # */
+/* # - CARRIBAULT Patrick patrick.carribault@cea.fr                       # */
+/* # - JAEGER Julien julien.jaeger@cea.fr                                 # */
+/* # - PERACHE Marc marc.perache@cea.fr                                   # */
+/* # - ROUSSEL Adrien adrien.roussel@cea.fr                               # */
+/* # - TABOADA Hugo hugo.taboada@cea.fr                                   # */
+/* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
-/* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
+/* # - Adrien Roussel <adrien.roussel@cea.fr>                             # */
+/* # - Antoine Capra <capra@paratools.com>                                # */
+/* # - Augustin Serraz <augustin.serraz@exascale-computing.eu>            # */
+/* # - Aurele Maheo <aurele.maheo@exascale-computing.eu>                  # */
+/* # - Jean-Baptiste Besnard <jbbesnard@paratools.com>                    # */
+/* # - Jerome Clet-Ortega <cletortegaj@ocre.cea.fr>                       # */
+/* # - Patrick Carribault <patrick.carribault@cea.fr>                     # */
+/* # - Romain Pereira <pereirar@ocre.cea.fr>                              # */
+/* # - Souad Koliai <skoliai@exascale-computing.eu>                       # */
+/* # - Sylvain Didelot <sylvain.didelot@exascale-computing.eu>            # */
 /* #                                                                      # */
 /* ######################################################################## */
 #ifndef mpc_omp_abi__H
@@ -361,20 +376,6 @@ void mpc_omp_ordered_runtime_loop_end_nowait () ;
    MPC tasks (message-passing interface).
  */
 int mpc_omp_checkpoint();
-
-/* tasks */
-void mpc_omp_task_process(mpc_omp_task_t * task);
-
-mpc_omp_task_t * __mpc_omp_task_init(
-    mpc_omp_task_t * task,
-    void (*fn)(void *),
-    void *data,
-    void (*cpyfn)(void *, void *),
-    long arg_size,
-    long arg_align,
-    mpc_omp_task_property_t properties,
-    void ** depend,
-    int priority_hint);
 
 #ifdef __cplusplus
 }
