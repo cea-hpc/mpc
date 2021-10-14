@@ -47,7 +47,7 @@ Env Sanitize:
   <<: *run_by_main
   stage: Initialization
   script:
-    - mkdir -p $HOME/GL_$CI_PIPELINE_ID/{build,buildspack,build_workshare,install,install_spack,install_workshare,test}
+    - mkdir -p $HOME/GL_$CI_PIPELINE_ID/{build,build_workshare,install,install_workshare,test}
     - echo "Environment Intialized !"
 
 # post-actions to cleanup the machine after the run
@@ -168,7 +168,7 @@ Simple run:
   stage: Basic Testing
   script:
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_simple $HOME/repo/mpc_ci/trivial/
+    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_simple $HOME/repo/mpc_ci/trivial/
 
 
 Privatization:
@@ -177,7 +177,7 @@ Privatization:
   stage: Basic Testing
   script:
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_priv $HOME/repo/mpc_ci/privatization/
+    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_priv $HOME/repo/mpc_ci/privatization/
 
 #
 ## a regular test, to assess some basic MPC feature
@@ -189,7 +189,7 @@ MPI Simple C:
   stage: Regular Testing
   script:
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_simple_c $HOME/repo/mpc_ci/MPI/simple/c/
+    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_simple_c $HOME/repo/mpc_ci/MPI/simple/c/
 
 MPI Simple Fortran:
   <<: *run_by_main
@@ -197,7 +197,7 @@ MPI Simple Fortran:
   stage: Regular Testing
   script:
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_simple_fortran $HOME/repo/mpc_ci/MPI/simple/fortran/
+    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_simple_fortran $HOME/repo/mpc_ci/MPI/simple/fortran/
 
 MPI NBC:
   <<: *run_by_main
@@ -205,7 +205,7 @@ MPI NBC:
   stage: Regular Testing
   script:
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_nbc $HOME/repo/mpc_ci/MPI/NBC/
+    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_nbc $HOME/repo/mpc_ci/MPI/NBC/
 
 Lowcomm:
   <<: *run_by_main
@@ -213,7 +213,7 @@ Lowcomm:
   stage: Regular Testing
   script:
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_nbc $HOME/repo/mpc_ci/lowcomm/
+    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_nbc $HOME/repo/mpc_ci/lowcomm/
 
 
 #
@@ -226,7 +226,7 @@ MPI IMB-MPI 2017:
   stage: Benchmarks
   script:
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_imb_mpi1 $HOME/repo/mpc_ci/MPI/IMB_2017/check-mpi/
+    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_imb_mpi1 $HOME/repo/mpc_ci/MPI/IMB_2017/check-mpi/
 
 MPI IMB-NBC 2017:
   <<: *run_by_main
@@ -234,7 +234,7 @@ MPI IMB-NBC 2017:
   stage: Benchmarks
   script:
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_imb_nbc $HOME/repo/mpc_ci/MPI/IMB_2017/check-nbc/
+    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_imb_nbc $HOME/repo/mpc_ci/MPI/IMB_2017/check-nbc/
 
 #
 # Applications
@@ -247,7 +247,7 @@ Lulesh:
   stage: Applications
   script:
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_app_lulesh $HOME/repo/mpc_ci/corals/lulesh-2.0.3/
+    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_app_lulesh $HOME/repo/mpc_ci/corals/lulesh-2.0.3/
 
 miniFe:
   <<: *run_by_main
@@ -255,7 +255,7 @@ miniFe:
   stage: Applications
   script:
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_app_minife $HOME/repo/mpc_ci/corals/miniFe/
+    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_app_minife $HOME/repo/mpc_ci/corals/miniFe/
 
 NAS-MZ MPI:
   <<: *run_by_main
@@ -263,7 +263,7 @@ NAS-MZ MPI:
   stage: Applications
   script:
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_app_nasmpimz $HOME/repo/mpc_ci/hybrid/NAS/MZ-MPI/
+    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_app_nasmpimz $HOME/repo/mpc_ci/hybrid/NAS/MZ-MPI/
 
 NAS-MZ OMP:
   <<: *run_by_main
@@ -271,7 +271,7 @@ NAS-MZ OMP:
   stage: Applications
   script:
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_app_nasompmz $HOME/repo/mpc_ci/hybrid/NAS/MZ-OMP/
+    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_app_nasompmz $HOME/repo/mpc_ci/hybrid/NAS/MZ-OMP/
 
 
 ###################################
