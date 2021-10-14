@@ -445,4 +445,10 @@ _mpc_omp_task_loop_compute_num_iters(long start, long end, long step);
 /* Task callbacks */
 void _mpc_omp_callback_run(mpc_omp_callback_when_t when);
 
+/* extra clauses for mpc-omp tasks */
+# define MPC_OMP_NO_CLAUSE          (0 << 0)
+# define MPC_OMP_CLAUSE_USE_FIBER   (1 << 0)
+
+void mpc_omp_task_unblock(mpc_omp_event_handle_t * event);
+
 #endif /* __MPC_OMP_TASK_H__ */

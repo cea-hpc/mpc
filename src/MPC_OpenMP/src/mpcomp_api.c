@@ -472,3 +472,34 @@ mpc_omp_event_handle_init(mpc_omp_event_handle_t * handle, mpc_omp_event_t type)
         }
     }
 }
+
+/***************************************************************************/
+/* EXTRA CALLS FOR LACKING FEATURES IN GCC, LLVM, or OPENMP SPECIFICATIONS */
+/***************************************************************************/
+
+/** # pragma omp task label("potrf") */
+void
+mpc_omp_task_label(char * label)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+# if MPC_OMP_TASK_COMPILE_TRACE
+    thread->task_infos.incoming.label = label;
+# endif /* MPC_OMP_TASK_COMPILE_TRACE */
+}
+
+/** # pragma omp task fiber */
+void
+mpc_omp_task_fiber(void)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+    thread->task_infos.incoming.extra_clauses |= MPC_OMP_CLAUSE_USE_FIBER;
+}
+
+/** explicit dependency constructor */
+void
+mpc_omp_task_dependencies(mpc_omp_task_dependency_t * dependencies, int n)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+    thread->task_infos.incoming.dependencies = dependencies;
+    thread->task_infos.incoming.ndependencies = n;
+}

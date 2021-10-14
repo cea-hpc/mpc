@@ -748,7 +748,8 @@ typedef struct  mpc_omp_task_thread_infos_s
     {
         char * label;
         int extra_clauses;
-        gomp_omp_depend_t * dependencies;
+        mpc_omp_task_dependency_t * dependencies;
+        int ndependencies;
     } incoming;
 
 # if MPC_OMP_TASK_COMPILE_TRACE
@@ -759,7 +760,7 @@ typedef struct  mpc_omp_task_thread_infos_s
     size_t sizeof_kmp_task_t;
 
 }               mpc_omp_task_thread_infos_t;
-#include <thread.h>
+
 /**
  * Extend mpc_omp_instance_t struct for openmp task support
  */
