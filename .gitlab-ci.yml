@@ -167,6 +167,7 @@ Simple run:
   <<: *uses_slurm
   stage: Basic Testing
   script:
+    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_basic/ && cd $HOME/GL_$CI_PIPELINE_ID/r_basic/
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
     - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_simple $HOME/repo/mpc_ci/trivial/
 
@@ -176,6 +177,7 @@ Privatization:
   <<: *uses_slurm
   stage: Basic Testing
   script:
+    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_priv/ && cd $HOME/GL_$CI_PIPELINE_ID/r_priv/
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
     - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_priv $HOME/repo/mpc_ci/privatization/
 
@@ -188,6 +190,7 @@ MPI Simple C:
   <<: *uses_slurm
   stage: Regular Testing
   script:
+    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_sc/ && cd $HOME/GL_$CI_PIPELINE_ID/r_sc/
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
     - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_simple_c $HOME/repo/mpc_ci/MPI/simple/c/
 
@@ -196,6 +199,7 @@ MPI Simple Fortran:
   <<: *uses_slurm
   stage: Regular Testing
   script:
+    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_sf/ && cd $HOME/GL_$CI_PIPELINE_ID/r_sf/
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
     - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_simple_fortran $HOME/repo/mpc_ci/MPI/simple/fortran/
 
@@ -204,6 +208,7 @@ MPI NBC:
   <<: *uses_slurm
   stage: Regular Testing
   script:
+    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_nbc/ && cd $HOME/GL_$CI_PIPELINE_ID/r_nbc/
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
     - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_nbc $HOME/repo/mpc_ci/MPI/NBC/
 
@@ -212,6 +217,7 @@ Lowcomm:
   <<: *uses_slurm
   stage: Regular Testing
   script:
+    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_lowcomm/ && cd $HOME/GL_$CI_PIPELINE_ID/r_lowcomm/
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
     - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_nbc $HOME/repo/mpc_ci/lowcomm/
 
@@ -225,6 +231,7 @@ MPI IMB-MPI 2017:
   <<: *uses_slurm
   stage: Benchmarks
   script:
+    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_imbmpi/ && cd $HOME/GL_$CI_PIPELINE_ID/r_imbmpi/
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
     - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_imb_mpi1 $HOME/repo/mpc_ci/MPI/IMB_2017/check-mpi/
 
@@ -233,6 +240,7 @@ MPI IMB-NBC 2017:
   <<: *uses_slurm
   stage: Benchmarks
   script:
+    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_imbnbc/ && cd $HOME/GL_$CI_PIPELINE_ID/r_imbnbc/
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
     - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_imb_nbc $HOME/repo/mpc_ci/MPI/IMB_2017/check-nbc/
 
@@ -246,6 +254,7 @@ Lulesh:
   <<: *uses_slurm
   stage: Applications
   script:
+    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_lul/ && cd $HOME/GL_$CI_PIPELINE_ID/r_lul/
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
     - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_app_lulesh $HOME/repo/mpc_ci/corals/lulesh-2.0.3/
 
@@ -254,6 +263,7 @@ miniFe:
   <<: *uses_slurm
   stage: Applications
   script:
+    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_fe/ && cd $HOME/GL_$CI_PIPELINE_ID/r_fe/
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
     - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_app_minife $HOME/repo/mpc_ci/corals/miniFe/
 
@@ -262,6 +272,7 @@ NAS-MZ MPI:
   <<: *uses_slurm
   stage: Applications
   script:
+    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_nmzmpi/ && cd $HOME/GL_$CI_PIPELINE_ID/r_nmzmpi/
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
     - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_app_nasmpimz $HOME/repo/mpc_ci/hybrid/NAS/MZ-MPI/
 
@@ -270,6 +281,7 @@ NAS-MZ OMP:
   <<: *uses_slurm
   stage: Applications
   script:
+    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_nmzomp/ && cd $HOME/GL_$CI_PIPELINE_ID/r_nmzomp/
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
     - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_app_nasompmz $HOME/repo/mpc_ci/hybrid/NAS/MZ-OMP/
 
