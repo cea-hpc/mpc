@@ -168,111 +168,112 @@ Simple run:
   stage: Basic Testing
   script:
     - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_simple ~/repo/mpc_ci/trivial/
+    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_simple $HOME/repo/mpc_ci/trivial/
 
-#Fortran:
-#  <<: *run_by_main
-#  <<: *uses_slurm
-#  stage: Basic Testing
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=fortran/UnitTests --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/fortran
-#
-#      #Types:
-#      #  stage: Basic Testing
-#      #  script:
-#      #    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#      #    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=UnitTests/check_types --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/types
+
+Privatization:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Basic Testing
+  script:
+    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
+    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_priv $HOME/repo/mpc_ci/privatization/
+
 #
 ## a regular test, to assess some basic MPC feature
 #
-#Lowcomm:
-#  <<: *run_by_main
-#  <<: *uses_slurm
-#  stage: Regular Testing
-#  allow_failure: true
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=lowcomm --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/lowcomm
+
+MPI Simple C:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Regular Testing
+  script:
+    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
+    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_simple_c $HOME/repo/mpc_ci/MPI/simple/c/
+
+MPI Simple Fortran:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Regular Testing
+  script:
+    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
+    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_simple_fortran $HOME/repo/mpc_ci/MPI/simple/fortran/
+
+MPI NBC:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Regular Testing
+  script:
+    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
+    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_nbc $HOME/repo/mpc_ci/MPI/NBC/
+
+Lowcomm:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Regular Testing
+  script:
+    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
+    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_nbc $HOME/repo/mpc_ci/lowcomm/
+
+
 #
-#Privatization:
-#  <<: *run_by_main
-#  <<: *uses_slurm
-#  stage: Regular Testing
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=gcc --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/privatization
+# Benchmarks
 #
-#Message Passing:
-#  <<: *run_by_main
-#  <<: *uses_slurm
-#  stage: Regular Testing
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=MPI/MessagePassing --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/mp
+
+MPI IMB-MPI 2017:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Benchmarks
+  script:
+    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
+    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_imb_mpi1 $HOME/repo/mpc_ci/MPI/IMB_2017/check-mpi/
+
+MPI IMB-NBC 2017:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Benchmarks
+  script:
+    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
+    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_imb_nbc $HOME/repo/mpc_ci/MPI/IMB_2017/check-nbc/
+
 #
-#OpenMP:
-#  <<: *run_by_main
-#  <<: *uses_slurm
-#  stage: Regular Testing
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=OpenMP/BOTS,OpenMP/Simple,OpenMP/EPCC --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/omp
+# Applications
 #
-#Fortran 90:
-#  <<: *run_by_main
-#  <<: *uses_slurm
-#  stage: Regular Testing
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=fortran/f90/Examples --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/fortran90
-#
-## a larger test, known to take more time and to stress the runtime a bit more than previous jobs
-#IMB (Check):
-#  <<: *run_by_main
-#  <<: *uses_slurm
-#  stage: Benchmarks
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=MPI/IMB/check --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/imb
-#
-#Communicators (ANL):
-#  <<: *run_by_main
-#  <<: *uses_slurm
-#  stage: Benchmarks
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=MPI/Intel_ANL/communicators --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/comms
-#
-#Lulesh:
-#  <<: *run_by_main
-#  <<: *uses_slurm
-#  stage: Applications
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=applications/lulesh --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/lulesh
-#
-#MiniFE:
-#  <<: *run_by_main
-#  <<: *uses_slurm
-#  stage: Applications
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=applications/miniFe --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/minife
-#
-#################################
-## TEsts not supported by MPC ###
-## ##############################
-##
-#tofix-OpenMP:
-#  <<: *run_by_main
-#  <<: *breaking_tests
-#  <<: *uses_slurm
-#  stage: Breaking tests
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=unsupported/OpenMP --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/tofix-omp
-#
+
+
+Lulesh:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Applications
+  script:
+    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
+    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_app_lulesh $HOME/repo/mpc_ci/corals/lulesh-2.0.3/
+
+miniFe:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Applications
+  script:
+    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
+    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_app_minife $HOME/repo/mpc_ci/corals/miniFe/
+
+NAS-MZ MPI:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Applications
+  script:
+    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
+    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_app_nasmpimz $HOME/repo/mpc_ci/hybrid/NAS/MZ-MPI/
+
+NAS-MZ OMP:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Applications
+  script:
+    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
+    - pcvs run -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_app_nasompmz $HOME/repo/mpc_ci/hybrid/NAS/MZ-OMP/
+
+
 ###################################
 ####### MANUALLY TRIGGERED ########
 ###################################
