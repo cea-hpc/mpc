@@ -171,8 +171,8 @@ extern "C" {
         MPC_OMP_TASK_DEP_IN              = 1,
         MPC_OMP_TASK_DEP_OUT             = 2,
         MPC_OMP_TASK_DEP_INOUT           = 3,
-        MPC_OMP_TASK_DEP_MUTEXINOUTSET   = 4,
-        MPC_OMP_TASK_DEP_INOUTSET        = 5,
+        MPC_OMP_TASK_DEP_INOUTSET        = 4,
+        MPC_OMP_TASK_DEP_MUTEXINOUTSET   = 5,
         MPC_OMP_TASK_DEP_COUNT           = 6
     }               mpc_omp_task_dep_type_t;
 

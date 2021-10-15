@@ -1103,8 +1103,9 @@ __task_dep_htable_entry_add(mpc_omp_task_dep_htable_t * htable, void * addr)
             entry = (mpc_omp_task_dep_htable_entry_t *)mpc_omp_alloc(sizeof(mpc_omp_task_dep_htable_entry_t));
             assert(entry);
             entry->key = (uint64_t) addr;
-            entry->last_out = NULL;
-            entry->last_in = NULL;
+            entry->out      = NULL;
+            entry->ins      = NULL;
+            entry->inoutset = NULL;
             entry->next = htable->entries[hash];
             htable->entries[hash] = entry;
         }
@@ -1127,14 +1128,9 @@ __task_dep_htable_delete(mpc_omp_task_dep_htable_t * htable)
             while (entry)
             {
                 mpc_omp_task_dep_htable_entry_t * next = entry->next;
-                if (entry->last_in)
-                {
-                    __task_list_delete(entry->last_in);
-                }
-                if (entry->last_out)
-                {
-                    __task_unref(entry->last_out);
-                }
+                if (entry->out)         __task_unref(entry->out);
+                if (entry->ins)         __task_list_delete(entry->ins);
+                if (entry->inoutset)    __task_list_delete(entry->ins);
                 mpc_omp_free(entry);
                 entry = next;
             }
@@ -1159,7 +1155,7 @@ __task_dep_htable_new(mpc_omp_task_dep_hash_func_t hfunc)
 }
 
 static inline void
-__task_process_deps_link(mpc_omp_task_t * predecessor, mpc_omp_task_t * successor)
+__task_precedence_constraints(mpc_omp_task_t * predecessor, mpc_omp_task_t * successor)
 {
     if (OPA_load_int(&(predecessor->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED)
     {
@@ -1184,6 +1180,7 @@ __task_process_deps_link(mpc_omp_task_t * predecessor, mpc_omp_task_t * successo
     }
 }
 
+TODO("This can be optimized. But shall we keep the code naive as it is, to keep it readable ?");
 static inline void
 __task_process_mpc_dep(
         mpc_omp_task_t * task,
@@ -1195,82 +1192,97 @@ __task_process_mpc_dep(
     mpc_omp_task_dep_htable_entry_t * entry = __task_dep_htable_entry_add(htable, addr);
     assert(entry);
 
-    /* process the dependency */
-    switch (type)
+    /* case 1.1 - the generated task is dependant of previous 'in' */
+    if (type == MPC_OMP_TASK_DEP_OUT ||
+        type == MPC_OMP_TASK_DEP_INOUT ||
+        type == MPC_OMP_TASK_DEP_INOUTSET ||
+        type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
     {
-        /**
-         * For the in dependence-type, if the storage location of at least one
-         * of the list items matches the storage location of a list item appearing
-         * in a depend clause with an out or inout dependence-type
-         * on a construct from which a sibling task was previously generated,
-         * then the generated task will be a dependent task of that sibling task.
-         */
-        case (MPC_OMP_TASK_DEP_IN):
+        mpc_omp_task_dep_list_elt_t * ins = entry->ins;
+        while (ins)
         {
-            if (entry->last_out)
-            {
-                __task_process_deps_link(entry->last_out, task);
-            }
-            entry->last_in = __task_list_elt_new(entry->last_in, task);
-            break ;
+            __task_precedence_constraints(ins->task, task);
+            ins = ins->next;
         }
+    }
 
-        /**
-         * For the out and inout dependence-types, if the storage location of at
-         * least one of the list items matches the storage location of a list
-         * item appearing in a depend clause with an in, out or inout dependence-type
-         * on a construct from which a sibling task was previously generated,
-         * then the generated task will be a dependent task of that sibling task.
-         */
-        case (MPC_OMP_TASK_DEP_OUT):
-        case (MPC_OMP_TASK_DEP_INOUT):
+    /* case 1.2 - the generated task is dependant of previous 'out' and 'inout' */
+    if (type == MPC_OMP_TASK_DEP_IN ||
+        type == MPC_OMP_TASK_DEP_OUT ||
+        type == MPC_OMP_TASK_DEP_INOUT ||
+        type == MPC_OMP_TASK_DEP_INOUTSET ||
+        type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
+    {
+        if (entry->out)
         {
-            /* with an in */
-            if (entry->last_in)
-            {
-                mpc_omp_task_dep_list_elt_t * last_in = entry->last_in;
-                while (last_in)
-                {
-                    __task_process_deps_link(last_in->task, task);
-                    last_in = last_in->next;
-                }
-                __task_list_delete(entry->last_in);
-                entry->last_in = NULL;
-            }
-            /* 'else if' here, because 'entry->last_in' depends from 'entry->last_out' */
-            /* so we save an implicit edge here */
-            else if (entry->last_out)
-            {
-                __task_process_deps_link(entry->last_out, task);
-            }
-
-            /* save the dependency for next tasks */ 
-            if (entry->last_out)
-            {
-                __task_unref(entry->last_out);
-            }
-            __task_ref(task);
-            entry->last_out = task;
-            break ;
+            __task_precedence_constraints(entry->out, task);
         }
+    }
 
-        case (MPC_OMP_TASK_DEP_MUTEXINOUTSET):
+    /* case 1.3 - the generated task is dependant of previous 'inoutset' */
+    if (type == MPC_OMP_TASK_DEP_IN ||
+        type == MPC_OMP_TASK_DEP_OUT ||
+        type == MPC_OMP_TASK_DEP_INOUT ||
+        type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
+    {
+        mpc_omp_task_dep_list_elt_t * inoutset = entry->inoutset;
+        while (inoutset)
         {
-            not_implemented();
-            break ;
+            __task_precedence_constraints(inoutset->task, task);
+            inoutset = inoutset->next;
         }
+    }
 
-        case (MPC_OMP_TASK_DEP_INOUTSET):
-        {
-            not_implemented();
-            break ;
-        }
+    /* case 1.4 - the generated task is dependant of previous 'mutexinoutset' */
+# if 0
+    if (type == MPC_OMP_TASK_DEP_IN ||
+        type == MPC_OMP_TASK_DEP_OUT ||
+        type == MPC_OMP_TASK_DEP_INOUT ||
+        type == MPC_OMP_TASK_DEP_INOUTSET)
+    {
+        not_implemented();
+    }
+# endif
 
-        default:
-        {
-            not_implemented();
-            break ;
-        }
+    /************************************************************/
+    /* finally, clean-up and save dependencies for future tasks */
+    /************************************************************/
+
+    /* case 2.1 - if generating dependency is an 'in'
+     *  - add it to the list of 'ins'
+     */
+    if (type == MPC_OMP_TASK_DEP_IN)
+    {
+        entry->ins = __task_list_elt_new(entry->ins, task);
+    }
+
+    /* case 2.2 - if generating dependency is 'out' or 'inout'
+     *  - delete siblings 'out' - it is now dependant of generating task
+     *  - delete siblings 'ins' - they are all dependant of generating task
+     *  - delete siblings 'inoutset' - they are all dependant of generating task
+     */
+    if (type == MPC_OMP_TASK_DEP_OUT || type == MPC_OMP_TASK_DEP_INOUT)
+    {
+         __task_list_delete(entry->ins);
+         entry->ins = NULL;
+
+         __task_list_delete(entry->inoutset);
+         entry->inoutset = NULL;
+
+        if (entry->out) __task_unref(entry->out);
+        __task_ref(task);
+        entry->out = task;
+    }
+
+    /* case 2.3 - if generating dependency is 'inoutset' */
+    if (type == MPC_OMP_TASK_DEP_INOUTSET)
+    {
+        entry->inoutset = __task_list_elt_new(entry->inoutset, task);
+    }
+    
+    if (type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
+    {
+        not_implemented();
     }
 }
 
@@ -1286,8 +1298,14 @@ __task_process_mpc_deps(
         mpc_omp_task_dependency_t * dependencies,
         int ndependencies)
 {
-    TODO("Add a redundancy check ?");
+    int ndeps_total = 0;
     int i;
+    for (i = 0 ; i < ndependencies ; ++i) ndeps_total += dependencies[i].addrs_size;
+
+    void ** processed = (void **) malloc(sizeof(void *) * ndeps_total);
+    assert(processed);
+    int nprocessed = 0;
+
     for (i = 0 ; i < ndependencies ; ++i)
     {
         mpc_omp_task_dependency_t * dependency = dependencies + i;
@@ -1295,6 +1313,21 @@ __task_process_mpc_deps(
         for (j = 0 ; j < dependency->addrs_size ; j++)
         {
             void * addr = dependency->addrs[j];
+
+            /* redundancy check */
+            int redundant = 0;
+            int k;
+            for (k = 0; k < nprocessed; k++)
+            {
+                if (processed[k] == addr)
+                {
+                    redundant = 1;
+                    break;
+                }
+            }
+            if (redundant) continue ;
+            processed[nprocessed++] = addr;
+
             __task_process_mpc_dep(task, htable, addr, dependency->type);
         }
     }
@@ -2990,6 +3023,7 @@ _mpc_omp_task_init(
     return task;
 }
 
+TODO("refactor this call to avoid LLVM > GOMP depend array conversion");
 /**
  * set task dependencies
  *  - task is the task
@@ -3029,9 +3063,8 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
         task->dep_node.top_level = 0;
 
         /* parse dependencies */
-        if (depend)
+        if (depend && (uintptr_t)depend[0])
         {
-            assert((uintptr_t)depend[0] > (uintptr_t)0);
             __task_process_deps(task, parent->dep_node.htable, depend);
         }
 
@@ -3044,8 +3077,6 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
         if (dependencies)
         {
             __task_process_mpc_deps(task, parent->dep_node.htable, dependencies, ndependencies);
-            TODO("__task_process_deps");
-            assert(0);
         }
     }
 
@@ -3063,6 +3094,13 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
 int
 _mpc_omp_task_process(mpc_omp_task_t * task)
 {
+    /* in sequential mode, run task directly */
+    if (mpc_omp_conf_get()->task_sequential)
+    {
+        __task_run(task);
+        return 1;
+    }
+
     /* Retrieve the information (microthread structure and current region) */
     int r = 0;
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;

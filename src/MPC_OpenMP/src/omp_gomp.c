@@ -2159,7 +2159,7 @@ void mpc_omp_GOMP_taskgroup_end( void )
 #endif /* OMPT_SUPPORT */
 }
 
-
+TODO("taskloop is broken");
 void mpc_omp_GOMP_taskloop( void (*fn)(void *), void *data,
                            void (*cpyfn)(void *, void *), long arg_size, long arg_align,
                            unsigned flags, unsigned long num_tasks, int priority,
@@ -2167,7 +2167,6 @@ void mpc_omp_GOMP_taskloop( void (*fn)(void *), void *data,
 {
     mpc_omp_init();
 
-    TODO("task loop implementation does not support 'if' clause, and private/shared variables");
     (void)cpyfn;
 
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
@@ -2209,7 +2208,7 @@ void mpc_omp_GOMP_taskloop( void (*fn)(void *), void *data,
 
         /* tasks size and properties */
         if (arg_align == 0) arg_align = sizeof(void *);
-        const size_t size = _mpc_omp_task_align_single_malloc(sizeof(mpc_omp_task_t) + arg_size, arg_align);
+        const size_t size = _mpc_omp_task_align_single_malloc(sizeof(mpc_omp_task_t) + 2 * sizeof(long) + arg_size, arg_align);
         mpc_omp_task_property_t properties = ___gomp_convert_flags(1, flags);
 
         /* task instantiations */
@@ -2217,6 +2216,14 @@ void mpc_omp_GOMP_taskloop( void (*fn)(void *), void *data,
         {
             mpc_omp_task_t * task = _mpc_omp_task_allocate(size);
             long * data_storage = (long *) (task + 1);
+            if (cpyfn)
+            {
+                cpyfn(data_storage, data);
+            }
+            else
+            {
+                memcpy(data_storage, data, arg_size);
+            }
             data_storage[0] = start;
             data_storage[1] = start + taskstep;
             _mpc_omp_task_init(task, fn, data, size, properties);

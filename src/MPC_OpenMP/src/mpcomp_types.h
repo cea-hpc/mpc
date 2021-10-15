@@ -517,9 +517,15 @@ typedef struct  mpc_omp_task_dep_htable_entry_s
     /* the next entry of the same hash */
     struct mpc_omp_task_dep_htable_entry_s * next;
 
-    /* dependency informations */
-    struct mpc_omp_task_s * last_out;
-    mpc_omp_task_dep_list_elt_t * last_in;
+    /* last 'out' or 'inout' task for this key */
+    struct mpc_omp_task_s * out;
+
+    /* list of last 'in' tasks for this key */
+    mpc_omp_task_dep_list_elt_t * ins;
+
+    /* list of last 'inoutset' tasks for this key */
+    mpc_omp_task_dep_list_elt_t * inoutset;
+
 }               mpc_omp_task_dep_htable_entry_t;
 
 # define MPC_OMP_TASK_DEP_HTABLE_CAPACITY    1001   /* 7 * 11 * 13 */

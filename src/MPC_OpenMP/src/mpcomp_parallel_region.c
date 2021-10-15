@@ -132,8 +132,6 @@ _mpc_omp_internal_begin_parallel_region( mpc_omp_parallel_region_t *info, const 
         _mpc_omp_instance_tree_array_root_init( t->root, t->children_instance, instance_info->num_threads );
 
     _mpc_spin_node_wakeup( t->root );    
-
-	return ;
 }
 
 void _mpc_omp_internal_end_parallel_region( __UNUSED__ mpc_omp_instance_t *instance) 
