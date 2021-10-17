@@ -180,12 +180,12 @@ extern "C" {
     typedef struct  mpc_omp_task_dependency_t
     {
         void ** addrs;
-        int addrs_size;
+        unsigned int addrs_size;
         mpc_omp_task_dep_type_t type;
     }               mpc_omp_task_dependency_t;
 
     /** # pragma omp task depend(dependencies) */
-    void mpc_omp_task_dependencies(mpc_omp_task_dependency_t * dependencies, int n);
+    void mpc_omp_task_dependencies(mpc_omp_task_dependency_t * dependencies, unsigned int n);
 
     /**
      * # pragma omp taskyield block(event) 

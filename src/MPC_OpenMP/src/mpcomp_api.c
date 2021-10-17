@@ -497,7 +497,7 @@ mpc_omp_task_fiber(void)
 
 /** explicit dependency constructor */
 void
-mpc_omp_task_dependencies(mpc_omp_task_dependency_t * dependencies, int n)
+mpc_omp_task_dependencies(mpc_omp_task_dependency_t * dependencies, unsigned int n)
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     thread->task_infos.incoming.dependencies = dependencies;

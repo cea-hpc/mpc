@@ -1130,7 +1130,7 @@ __task_dep_htable_delete(mpc_omp_task_dep_htable_t * htable)
                 mpc_omp_task_dep_htable_entry_t * next = entry->next;
                 if (entry->out)         __task_unref(entry->out);
                 if (entry->ins)         __task_list_delete(entry->ins);
-                if (entry->inoutset)    __task_list_delete(entry->ins);
+                if (entry->inoutset)    __task_list_delete(entry->inoutset);
                 mpc_omp_free(entry);
                 entry = next;
             }
@@ -1291,32 +1291,50 @@ __task_process_mpc_dep(
  * @param htable - task's parent htable, to retrieve previous data dependencies
  * @param depend - gomp formatted 'depend' array
  */
-static inline void
-__task_process_mpc_deps(
-        mpc_omp_task_t * task,
+static void
+__task_process_deps(mpc_omp_task_t * task,
         mpc_omp_task_dep_htable_t * htable,
-        mpc_omp_task_dependency_t * dependencies,
-        int ndependencies)
+        void ** depend)
 {
-    int ndeps_total = 0;
-    int i;
-    for (i = 0 ; i < ndependencies ; ++i) ndeps_total += dependencies[i].addrs_size;
+    assert(task);
+    assert(htable);
 
-    void ** processed = (void **) malloc(sizeof(void *) * ndeps_total);
-    assert(processed);
-    int nprocessed = 0;
+    /* retrieve threads */
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
 
-    for (i = 0 ; i < ndependencies ; ++i)
+    /* mpc specific dependencies */
+    mpc_omp_task_dependency_t * dependencies = thread->task_infos.incoming.dependencies;
+    uintptr_t ndependencies = thread->task_infos.incoming.ndependencies;
+    thread->task_infos.incoming.dependencies = NULL;
+    thread->task_infos.incoming.ndependencies = 0;
+
+    /* if no dependencies, return */
+    if (dependencies == NULL)
     {
-        mpc_omp_task_dependency_t * dependency = dependencies + i;
-        int j;
-        for (j = 0 ; j < dependency->addrs_size ; j++)
-        {
-            void * addr = dependency->addrs[j];
+        if (depend == NULL)     return ;
+        if (depend[0] == NULL)  return;
+    }
 
-            /* redundancy check */
+    /* compiler dependencies */
+    uintptr_t omp_ndeps_tot = depend ? (uintptr_t) depend[0] : 0;
+   
+    /* runtime specific dependencies */
+    uintptr_t mpc_ndeps = 0;
+    uintptr_t i, j, k, redundant;
+    for (i = 0 ; i < ndependencies ; ++i) mpc_ndeps += dependencies[i].addrs_size;
+
+    /* redundant check */
+    TODO("Redundancy check performances - O(n) with n = number of dependency");
+    void ** processed = (void **) mpc_omp_alloc(sizeof(void *) * (omp_ndeps_tot + mpc_ndeps));
+    uintptr_t nprocessed = 0;
+
+    if (depend && omp_ndeps_tot)
+    {
+        uintptr_t omp_ndeps_out = (uintptr_t) depend[1];
+        for (i = 0; i < omp_ndeps_tot ; i++)
+        {
+            void * addr = depend[2 + i];
             int redundant = 0;
-            int k;
             for (k = 0; k < nprocessed; k++)
             {
                 if (processed[k] == addr)
@@ -1325,70 +1343,37 @@ __task_process_mpc_deps(
                     break;
                 }
             }
-            if (redundant) continue ;
+            if (redundant) continue;
             processed[nprocessed++] = addr;
-
-            __task_process_mpc_dep(task, htable, addr, dependency->type);
+            mpc_omp_task_dep_type_t type = (i < omp_ndeps_out) ? MPC_OMP_TASK_DEP_OUT : MPC_OMP_TASK_DEP_IN;
+            __task_process_mpc_dep(task, htable, addr, type);
         }
     }
-}
 
-/**
- * @param task - the task
- * @param htable - task's parent htable, to retrieve previous data dependencies
- * @param depend - gomp formatted 'depend' array
- */
-static inline void
-__task_process_deps(mpc_omp_task_t * task,
-        mpc_omp_task_dep_htable_t * htable,
-        void ** depend)
-{
-    assert(task);
-    assert(htable);
-    assert(depend);
-
-    const size_t tot_deps_num = (size_t)depend[0];
-    if (tot_deps_num == 0)
+    if (dependencies)
     {
-        return ; 
-    }
-    const size_t out_deps_num = (size_t)depend[1];
-
-    /* Filter redundant value */
-    size_t dep_already_processed_n = 0;
-    void ** dep_already_processed_list = (void **) mpc_omp_alloc(sizeof(void *) * tot_deps_num);
-    assert(dep_already_processed_list);
-
-    size_t i;
-    for (i = 0; i < tot_deps_num; i++)
-    {
-        TODO("Redundancy check performances - O(n) with n = number of dependency");
-        /* get the data dependency address, and check that it is not redundant */
-        void * addr = depend[2 + i];
-        int redundant = 0;
-        size_t j;
-        for (j = 0; j < dep_already_processed_n; j++)
+        for (i = 0 ; i < ndependencies ; ++i)
         {
-            if (dep_already_processed_list[j] == addr)
+            mpc_omp_task_dependency_t * dependency = dependencies + i;
+            for (j = 0 ; j < dependency->addrs_size ; ++j)
             {
-                redundant = 1;
-                break;
+                void * addr = dependency->addrs[j];
+                for (k = 0; k < nprocessed; ++k)
+                {
+                    if (processed[k] == addr)
+                    {
+                        redundant = 1;
+                        break;
+                    }
+                }
+                if (redundant) continue ;
+                processed[nprocessed++] = addr;
+                __task_process_mpc_dep(task, htable, addr, dependency->type);
             }
         }
-        if (redundant)
-        {
-            continue;
-        }
-
-        /* mark the dependency address as processed */
-        dep_already_processed_list[dep_already_processed_n++] = addr;
-
-        /* retrieve dependency type */
-        mpc_omp_task_dep_type_t type = (i < out_deps_num) ? MPC_OMP_TASK_DEP_OUT : MPC_OMP_TASK_DEP_IN;
-        __task_process_mpc_dep(task, htable, addr, type);
     }
 
-    mpc_omp_free(dep_already_processed_list);
+    free(processed);
 }
 
 /** Given task completed -> fulfill its successors dependencies */
@@ -2980,7 +2965,6 @@ _mpc_omp_task_init_attributes(
  * \param task the task buffer to use (may be NULL, and so, a new task is allocated)
  * \param fn the task entry point
  * \param data the task data (fn parameters)
- * \param cpyfn function to copy the data
  * \param size total size of the task (sizeof(mpc_omp_task) + data_size)
  * \param properties
  */
@@ -3063,21 +3047,7 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
         task->dep_node.top_level = 0;
 
         /* parse dependencies */
-        if (depend && (uintptr_t)depend[0])
-        {
-            __task_process_deps(task, parent->dep_node.htable, depend);
-        }
-
-        /* mpc specific dependencies */
-        mpc_omp_task_dependency_t * dependencies = thread->task_infos.incoming.dependencies;
-        int ndependencies = thread->task_infos.incoming.ndependencies;
-        thread->task_infos.incoming.dependencies = NULL;
-        thread->task_infos.incoming.ndependencies = 0;
-
-        if (dependencies)
-        {
-            __task_process_mpc_deps(task, parent->dep_node.htable, dependencies, ndependencies);
-        }
+        __task_process_deps(task, parent->dep_node.htable, depend);
     }
 
     /* compute priorities */
