@@ -120,8 +120,8 @@ typedef struct  mpc_omp_task_trace_record_schedule_s
     /* the task properties */
     int properties;
 
-    /* number of predecessors (data dependencies) */
-    int predecessors;
+    /* number of predecessors */
+    int npredecessors;
 
     /* number of tasks that were scheduled before this one */
     int schedule_id;
@@ -270,4 +270,4 @@ void _mpc_omp_task_trace_recv(int count, int datatype, int src, int tag, int com
 #  define MPC_OMP_TASK_TRACE_RECV(...)
 # endif /* MPC_OMP_TASK_COMPILE_TRACE */
 
-# endif /* __MPC_OMP_TASK_TRACE_H__ */ 
+# endif /* __MPC_OMP_TASK_TRACE_H__ */

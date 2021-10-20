@@ -2105,6 +2105,8 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
     /* process the task (differ or run it) */
     _mpc_omp_task_process(task);
 
+    _mpc_omp_task_deinit(task);
+
     mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
 }
 
@@ -2229,6 +2231,7 @@ void mpc_omp_GOMP_taskloop( void (*fn)(void *), void *data,
             _mpc_omp_task_init(task, fn, data, size, properties);
             _mpc_omp_task_deps(task, NULL, priority);
             _mpc_omp_task_process(task);
+            _mpc_omp_task_deinit(task);
 
             start += taskstep;
             taskstep -= (i == extra_chunk) ? step : 0;

@@ -120,7 +120,7 @@ __record_sizeof(mpc_omp_task_trace_record_type_t type)
         {
             return sizeof(mpc_omp_task_trace_record_dependency_t);
         }
-        
+
         case (MPC_OMP_TASK_TRACE_TYPE_SCHEDULE):
         case (MPC_OMP_TASK_TRACE_TYPE_CREATE):
         {
@@ -184,8 +184,8 @@ _mpc_omp_task_trace_dependency(mpc_omp_task_t * out, mpc_omp_task_t * in)
     mpc_omp_task_trace_record_dependency_t * record = (mpc_omp_task_trace_record_dependency_t *) __node_record(node);
     record->out_uid = out->uid;
     record->in_uid  = in->uid;
-   
-    __node_insert(node); 
+
+    __node_insert(node);
 }
 
 static void
@@ -200,7 +200,7 @@ __task_trace(mpc_omp_task_t * task, mpc_omp_task_trace_record_type_t type)
     record->priority        = task->priority;
     record->omp_priority    = task->omp_priority_hint;
     record->properties      = task->property;
-    record->predecessors    = OPA_load_int(&(task->dep_node.ref_predecessors));
+    record->npredecessors   = OPA_load_int(&(task->dep_node.npredecessors));
     record->schedule_id     = task->schedule_id;
     record->statuses        = task->statuses;
 
@@ -252,8 +252,8 @@ _mpc_omp_task_trace_send(int count, int datatype, int dst, int tag, int comm)
     record->dst = dst;
     record->tag = tag;
     record->comm = comm;
-   
-    __node_insert(node); 
+
+    __node_insert(node);
 }
 
 void
@@ -275,8 +275,8 @@ _mpc_omp_task_trace_recv(int count, int datatype, int src, int tag, int comm)
     record->src = src;
     record->tag = tag;
     record->comm = comm;
-   
-    __node_insert(node); 
+
+    __node_insert(node);
 }
 
 # endif /* MPC_MPI */
@@ -327,7 +327,7 @@ mpc_omp_task_trace_end(void)
     if (!mpc_omp_conf_get()->task_trace) return ;
 
     _mpc_omp_task_trace_flush();
-    
+
     mpc_omp_thread_task_trace_infos_t * infos = __get_infos();
     close(infos->writer.fd);
 

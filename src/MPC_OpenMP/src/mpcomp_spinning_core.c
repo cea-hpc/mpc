@@ -789,80 +789,45 @@ _mpc_omp_exit_node_signal( mpc_omp_node_t* node ) {
     _mpc_omp_exit_node_signal( node->children.node[0] );
 }
 
-TODO("ompt callback are missing here");
 void _mpc_omp_start_openmp_thread(mpc_omp_mvp_t * mvp)
 {
-    mpc_omp_thread_t *next_thread = NULL;
-    mpc_omp_thread_t *cur_thread = (mpc_omp_thread_t*) mpc_omp_tls;
-    volatile int *spin_status;
-    assert( mvp );
+    assert(mvp);
+    __mvp_add_saved_ctx(mvp);
 
-    __mvp_add_saved_ctx( mvp );
+    mpc_omp_thread_t * cur_thread =  __mvp_wakeup(mvp);
+    assert(cur_thread->mvp);
+
+    mpc_omp_tls = (void *) cur_thread;
+
 #ifdef TLS_ALLOCATORS
     mpc_omp_init_allocators();
 #endif
 
-    next_thread =  __mvp_wakeup( mvp );
-    assert( next_thread->mvp );
-
-    __scatter_instance_post_init( next_thread );
-
-#if OMPT_SUPPORT
-    if( cur_thread ) {
-        _mpc_omp_ompt_callback_task_schedule(
-                &( MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(cur_thread)->ompt_task_data ),
-                ompt_task_switch,
-                &( MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(next_thread)->ompt_task_data ));
-    }
-
-    _mpc_omp_ompt_callback_implicit_task( ompt_scope_begin,
-            next_thread->instance->nb_mvps,
-            next_thread->rank,
-            ompt_task_implicit );
-#endif /* OMPT_SUPPORT */
-
-    _mpc_omp_in_order_scheduler( next_thread );
+    __scatter_instance_post_init(cur_thread);
+    _mpc_omp_in_order_scheduler(cur_thread);
 
     /* Must be set before barrier for thread safety*/
-    spin_status = ( mvp->spin_node ) ? &( mvp->spin_node->spin_status ) : &( mvp->spin_status );
+    volatile int * spin_status = ( mvp->spin_node ) ? &( mvp->spin_node->spin_status ) : &( mvp->spin_status );
     *spin_status = MPC_OMP_MVP_STATE_SLEEP;
-    
-#if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_sync_region( ompt_sync_region_barrier_implicit, ompt_scope_begin );
-#endif /* OMPT_SUPPORT */
 
     mpc_omp_barrier();
+    _mpc_omp_task_tree_deinit(cur_thread);
 
-#if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_sync_region( ompt_sync_region_barrier_implicit, ompt_scope_end );
-    _mpc_omp_ompt_callback_implicit_task( ompt_scope_end,
-            0,
-            next_thread->rank,
-            ompt_task_implicit );
-#endif /* OMPT_SUPPORT */
+    mpc_omp_tls = (void *) mvp->threads->next;
 
-    if ( cur_thread )
+    if (mpc_omp_tls)
     {
-#if OMPT_SUPPORT
-        _mpc_omp_ompt_callback_task_schedule(
-                &( MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(next_thread)->ompt_task_data ),
-                ompt_task_complete,
-                &( MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(cur_thread)->ompt_task_data ));
-#endif /* OMPT_SUPPORT */
+        mvp->threads = mpc_omp_tls;
+        // mpc_omp_free( cur_thread );
+    }
 
+    __mvp_del_saved_ctx(mvp);
+
+    if (mpc_omp_tls)
+    {
+        cur_thread = (mpc_omp_thread_t *) mpc_omp_tls;
         mvp->instance = cur_thread->instance;
-        mvp->threads = cur_thread;
     }
-#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    else {
-        /* Unset outter caller if transfered at openning of the parallel region */
-        _mpc_omp_ompt_frame_unset_no_reentrant();
-    }
-#endif /* OMPT_SUPPORT */
-
-    mpc_omp_tls = (void*) cur_thread;
-
-    __mvp_del_saved_ctx( mvp );
 }
 
 /**

@@ -72,7 +72,10 @@
 
 /* config */
 # define MPC_OMP_TASK_COMPILE_FIBER 1
-# define MPC_OMP_TASK_COND_WAIT     1
+
+/* openmp barrier algorithm */
+# define MPC_OMP_NAIVE_BARRIER      0
+# define MPC_OMP_TASK_COND_WAIT     0
 
 #if MPC_OMP_TASK_COMPILE_FIBER
 # define MPC_OMP_TASK_FIBER_ENABLED mpc_omp_conf_get()->task_use_fiber
@@ -82,13 +85,10 @@
 
 # define MPC_OMP_TASK_TRACE_ENABLED mpc_omp_conf_get()->task_trace
 
-# define MPC_OMP_TASK_USE_RECYCLERS  1
+# define MPC_OMP_TASK_USE_RECYCLERS  0
 # define MPC_OMP_TASK_ALLOCATOR      mpc_omp_alloc
 # define MPC_OMP_TASK_DEALLOCATOR    mpc_omp_free
 # define MPC_OMP_TASK_DEFAULT_ALIGN  8
-
-/* openmp barrier algorithm */
-# define MPC_OMP_NAIVE_BARRIER 0
 
 /* task fiber stack size */
 # define MPC_OMP_TASK_FIBER_STACK_SIZE (mpc_omp_conf_get()->task_fiber_stack_size)
@@ -294,14 +294,6 @@ typedef enum    mpc_omp_loop_gen_type_e
 	MPC_OMP_LOOP_TYPE_ULL,
 }              mpc_omp_loop_gen_type_t;
 
-typedef enum    _mpc_omp_task_init_status_e
-{
-    MPC_OMP_TASK_INIT_STATUS_UNINITIALIZED,
-    MPC_OMP_TASK_INIT_STATUS_INIT_IN_PROCESS,
-    MPC_OMP_TASK_INIT_STATUS_INITIALIZED,
-    MPC_OMP_TASK_INIT_STATUS_COUNT
-}               _mpc_omp_task_init_status_t;
-
 /** Type of task pqueues */
 typedef enum    mpc_omp_pqueue_type_e
 {
@@ -321,10 +313,11 @@ typedef enum    mpc_omp_task_list_type_e
 
 typedef enum    mpcomp_task_dep_task_status_e
 {
-    MPC_OMP_TASK_STATUS_NOT_READY  = 0,
-    MPC_OMP_TASK_STATUS_READY      = 1,
-    MPC_OMP_TASK_STATUS_FINALIZED  = 2,
-    MPC_OMP_TASK_STATUS_COUNT      = 3
+    MPC_OMP_TASK_STATUS_INITIALIZING    = 0,
+    MPC_OMP_TASK_STATUS_NOT_READY       = 1,
+    MPC_OMP_TASK_STATUS_READY           = 2,
+    MPC_OMP_TASK_STATUS_FINALIZED       = 3,
+    MPC_OMP_TASK_STATUS_COUNT           = 4
 }               mpcomp_task_dep_task_status_t;
 
 /**********************
@@ -731,7 +724,6 @@ typedef struct  mpc_omp_task_mvp_infos_s
 typedef struct  mpc_omp_task_thread_infos_s
 {
     int * larceny_order;
-    OPA_int_t status;                   /* Thread task's init tag */
     mpc_omp_task_t * current_task;      /* Currently running task */
     void* opaque;                       /* use mcslock buffered */
 
