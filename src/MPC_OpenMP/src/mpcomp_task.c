@@ -932,6 +932,7 @@ static inline void
 __task_ref(mpc_omp_task_t * task)
 {
     assert(task);
+    assert(OPA_load_int(&(task->ref_counter)) > 0);
     OPA_incr_int(&(task->ref_counter));
 }
 
@@ -1416,7 +1417,7 @@ __task_finalize_deps(mpc_omp_task_t * task)
 {
     assert(task);
 
-    if (task->dep_node.htable)  __task_dep_htable_delete(task->dep_node.htable);
+    if (task->dep_node.htable) __task_dep_htable_delete(task->dep_node.htable);
     if (!mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_DEPEND)) return ;
 
     MPC_OMP_TASK_LOCK(task);
@@ -2513,7 +2514,6 @@ __task_run_coherency_check_post(mpc_omp_task_t * task)
     assert(task->statuses.completed         == true);
     assert(task->statuses.blocking          == false);
     assert(task->statuses.blocked           == false);
-    assert(task->statuses.in_blocked_list   == false);
 }
 
 /**
@@ -2979,15 +2979,13 @@ _mpc_omp_task_init_attributes(
 
     task->parent = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
     task->depth = (task->parent) ? task->parent->depth + 1 : 0;
-    OPA_store_int(&(task->ref_counter), 0);
+    OPA_store_int(&(task->ref_counter), 1); /* _mpc_omp_task_deinit */
     OPA_store_int(&(task->children_count), 0);
     task->uid = OPA_fetch_and_incr_int(&(thread->instance->task_infos.next_task_uid));
 
 #if MPC_USE_SISTER_LIST
     task->children_lock = SCTK_SPINLOCK_INITIALIZER;
 #endif
-
-    __task_ref(task); /* _mpc_omp_task_deinit */
 }
 
 /*
@@ -3334,13 +3332,11 @@ __thread_task_init_initial(mpc_omp_thread_t * thread)
     const size_t size = sizeof(mpc_omp_task_t);
     mpc_omp_task_t * initial_task = _mpc_omp_task_allocate(size);
     assert(initial_task);
-    __task_ref(initial_task);   /* __thread_task_deinit_initial */
 
     mpc_omp_task_property_t properties = 0;
     mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_INITIAL);
     mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_IMPLICIT);
     _mpc_omp_task_init_attributes(initial_task, NULL, NULL, size, properties);
-    MPC_OMP_TASK_TRACE_CREATE(initial_task);
 # if MPC_OMP_TASK_COMPILE_TRACE
     snprintf(initial_task->label, MPC_OMP_TASK_LABEL_MAX_LENGTH, "initial-%p", initial_task);
 # endif /* MPC_OMP_TASK_COMPILE_TRACE */
@@ -3351,6 +3347,7 @@ __thread_task_init_initial(mpc_omp_thread_t * thread)
     thread->task_infos.opaque = NULL;
 #endif /* MPC_OMP_USE_MCS_LOCK  */
 
+    MPC_OMP_TASK_TRACE_CREATE(initial_task);
     MPC_OMP_TASK_THREAD_SET_CURRENT_TASK(thread, initial_task);
 }
 
