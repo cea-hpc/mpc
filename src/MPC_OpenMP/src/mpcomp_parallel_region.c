@@ -50,8 +50,8 @@
 /* Add header for spinning core */
 mpc_omp_instance_t* _mpc_omp_tree_array_instance_init( mpc_omp_thread_t*, const int);
 
-void 
-_mpc_omp_internal_begin_parallel_region( mpc_omp_parallel_region_t *info, const unsigned expected_num_threads ) 
+void
+_mpc_omp_internal_begin_parallel_region( mpc_omp_parallel_region_t *info, const unsigned expected_num_threads )
 {
     mpc_omp_thread_t *t;
 
@@ -62,7 +62,7 @@ _mpc_omp_internal_begin_parallel_region( mpc_omp_parallel_region_t *info, const 
     /* Grab the thread info */
     t = (mpc_omp_thread_t *) mpc_omp_tls;
     assert(t != NULL);
-   
+
 
     /* Compute new num threads value */
     if( t->root )
@@ -81,9 +81,9 @@ _mpc_omp_internal_begin_parallel_region( mpc_omp_parallel_region_t *info, const 
     }
 
     assert(real_num_threads > 0);
-   
+
     if( !t->children_instance ||
-        (t->children_instance && 
+        (t->children_instance &&
         t->children_instance->nb_mvps != real_num_threads ) )
     {
         t->children_instance = _mpc_omp_tree_array_instance_init( t, real_num_threads );
@@ -112,12 +112,13 @@ _mpc_omp_internal_begin_parallel_region( mpc_omp_parallel_region_t *info, const 
     instance_info->func = info->func;
     instance_info->shared = info->shared;
     instance_info->num_threads = real_num_threads;
+    OPA_store_int(&(instance_info->task_ref), 0);
 
     instance_info->combined_pragma = info->combined_pragma;
     instance_info->icvs = info->icvs;
     instance_info->icvs.levels_var = t->info.icvs.levels_var + 1;
 
-    if( real_num_threads > 1 ) 
+    if( real_num_threads > 1 )
         instance_info->icvs.active_levels_var = t->info.icvs.active_levels_var + 1;
 
     _mpc_omp_loop_gen_loop_infos_cpy( &(info->loop_infos), &(instance_info->loop_infos) );
@@ -128,45 +129,44 @@ _mpc_omp_internal_begin_parallel_region( mpc_omp_parallel_region_t *info, const 
     for(i=0;i<MPC_OMP_MAX_ALIVE_FOR_DYN + 1;i++)
       instance->team->is_first[i] = 1;
 
-    if( !t->children_instance->buffered ) 
+    if( !t->children_instance->buffered )
         _mpc_omp_instance_tree_array_root_init( t->root, t->children_instance, instance_info->num_threads );
 
-    _mpc_spin_node_wakeup( t->root );    
-
-	return ;
+    _mpc_spin_node_wakeup( t->root );
 }
 
-void _mpc_omp_internal_end_parallel_region( __UNUSED__ mpc_omp_instance_t *instance) 
+void _mpc_omp_internal_end_parallel_region( __UNUSED__ mpc_omp_instance_t *instance)
 {
 #if MPC_OMP_COHERENCY_CHECKING
     _mpc_task_new_coherency_ending_parallel_region();
 #endif
-#if OMPT_SUPPORT 
+#if OMPT_SUPPORT
     _mpc_omp_ompt_callback_parallel_end( ompt_parallel_invoker_program | ompt_parallel_team );
 #endif /* OMPT_SUPPORT */
 }
 
 typedef void*(*mpc_omp_start_func_t)(void*);
 
-void _mpc_omp_start_parallel_region(void (*func)(void *), void *shared,
-                                    unsigned arg_num_threads) {
+void
+_mpc_omp_start_parallel_region(
+        void (*func)(void *),
+        void *shared,
+        unsigned arg_num_threads)
+{
+    mpc_omp_init();
+
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
     _mpc_omp_ompt_frame_set_no_reentrant();
 #endif /* OMPT_SUPPORT */
 
- 	mpc_omp_thread_t *t;
-  	mpc_omp_parallel_region_t info;
-
 	mpc_omp_start_func_t start = ( mpc_omp_start_func_t ) func;
 	assert( start );
 
-  	mpc_omp_init();
-
-
-  	t = (mpc_omp_thread_t *) mpc_omp_tls;
+    mpc_omp_thread_t * t = (mpc_omp_thread_t *) mpc_omp_tls;
   	assert(t != NULL);
 
+    mpc_omp_parallel_region_t info;
   	_mpc_omp_parallel_region_infos_init(&info);
   	_mpc_omp_parallel_set_specific_infos(&info, start, shared, t->info.icvs, MPC_OMP_COMBINED_NONE);
 
@@ -176,8 +176,8 @@ void _mpc_omp_start_parallel_region(void (*func)(void *), void *shared,
 
   	_mpc_omp_internal_begin_parallel_region(&info, arg_num_threads);
   	t->mvp->instance = t->children_instance;
-  	_mpc_omp_start_openmp_thread( t->mvp );  
-  	_mpc_omp_internal_end_parallel_region(t->children_instance);
+    _mpc_omp_start_openmp_thread( t->mvp );
+    _mpc_omp_internal_end_parallel_region(t->children_instance);
 
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_unset_no_reentrant();
@@ -186,7 +186,7 @@ void _mpc_omp_start_parallel_region(void (*func)(void *), void *shared,
 
 /****
  *
- * COMBINED VERSION 
+ * COMBINED VERSION
  *
  *
  *****/
@@ -220,7 +220,7 @@ void _mpc_omp_start_sections_parallel_region(void (*func)(void *), void *shared,
 
   	_mpc_omp_internal_begin_parallel_region(&info, arg_num_threads);
   	t->mvp->instance = t->children_instance;
-  	_mpc_omp_start_openmp_thread( t->mvp );  
+    _mpc_omp_start_openmp_thread( t->mvp );
   	_mpc_omp_internal_end_parallel_region(t->children_instance);
 
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
@@ -260,7 +260,7 @@ void _mpc_omp_start_parallel_dynamic_loop(void (*func)(void *), void *shared,
 
   	_mpc_omp_internal_begin_parallel_region(&info, arg_num_threads);
   	t->mvp->instance = t->children_instance;
-  	_mpc_omp_start_openmp_thread( t->mvp );  
+    _mpc_omp_start_openmp_thread( t->mvp );
   	_mpc_omp_internal_end_parallel_region(t->children_instance);
 
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
@@ -299,7 +299,7 @@ void _mpc_omp_start_parallel_static_loop(void (*func)(void *), void *shared,
 
   	_mpc_omp_internal_begin_parallel_region(&info, arg_num_threads);
   	t->mvp->instance = t->children_instance;
-  	_mpc_omp_start_openmp_thread( t->mvp );  
+    _mpc_omp_start_openmp_thread( t->mvp );
   	_mpc_omp_internal_end_parallel_region(t->children_instance);
 
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
@@ -339,7 +339,7 @@ void _mpc_omp_start_parallel_guided_loop(void (*func)(void *), void *shared,
 
   	_mpc_omp_internal_begin_parallel_region(&info, arg_num_threads);
   	t->mvp->instance = t->children_instance;
-  	_mpc_omp_start_openmp_thread( t->mvp );  
+    _mpc_omp_start_openmp_thread( t->mvp );
   	_mpc_omp_internal_end_parallel_region(t->children_instance);
 
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT

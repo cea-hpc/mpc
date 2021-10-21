@@ -108,6 +108,7 @@ static inline void __omp_conf_set_default(void)
 	__omp_conf.OMP_DYNAMIC=0;
 
     /* Tasks */
+    __omp_conf.task_sequential                  = 0;
     __omp_conf.maximum_tasks                    = 10000000;
     __omp_conf.maximum_ready_tasks              = 16384;
     __omp_conf.pqueue_new_depth                 = 0;
@@ -152,6 +153,7 @@ static inline void __omp_conf_init(void)
     );
 
     mpc_conf_config_type_t *task = mpc_conf_config_type_init("task",
+            PARAM("sequential",                 &__omp_conf.task_sequential,                    MPC_CONF_INT,   "If true, the tasks are run sequentially by their producer"),
             PARAM("maximum",                    &__omp_conf.maximum_tasks,                      MPC_CONF_INT,   "Maximum number of tasks that can exists concurrently in the runtime"),
             PARAM("maximumready",               &__omp_conf.maximum_ready_tasks,                MPC_CONF_INT,   "Maximum number of ready tasks that can exists concurrently in the runtime"),
             PARAM("newdepth",                   &__omp_conf.pqueue_new_depth,                   MPC_CONF_INT,   "Depth of the new tasks lists in the tree"),

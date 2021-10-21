@@ -36,13 +36,16 @@ AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/ib/
 endif
 
 if PORTALS4_DRIVER_ENABLED
-        AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/portals/
+AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/portals/
 endif
 
 if OFI_DRIVER_ENABLED
-        AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/ofi/
+AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/ofi/
 endif
 
+if MPC_OPENMP_ENABLED
+AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_OpenMP/include/
+endif
 
 #Yes drivers are leaking out
 

@@ -50,6 +50,7 @@ extern "C" {
 #include <stdint.h>
 
 #include "omp.h"
+#include "omp_gomp_constants.h"
 
     /* OpenMP 2.5 API - For backward compatibility with old patched GCC */
     int mpc_omp_get_num_threads( void );
@@ -95,8 +96,8 @@ extern "C" {
     void mpc_omp_tree_print(FILE * file);
 
     /**
-     *  * Async callback
-     *   */
+     * Async. callback
+     */
     typedef enum    mpc_omp_callback_when_t
     {
         /* scheduler points */
@@ -157,15 +158,40 @@ extern "C" {
     /** Maximum length of a task label */
     # define MPC_OMP_TASK_LABEL_MAX_LENGTH 64
 
-    # define MPC_OMP_NO_CLAUSE          (0 << 0)
-    # define MPC_OMP_CLAUSE_USE_FIBER   (1 << 0)
+    /** # pragma omp task label("potrf") */
+    void mpc_omp_task_label(char * label);
 
-    /** Give extra information of the incoming task - must be called right before a `#pragma omp task` */
-    void mpc_omp_task_extra(char * label, int extra_clauses);
+    /** # pragma omp task fiber */
+    void mpc_omp_task_fiber(void);
 
-    /** Taskyield which blocks on event */
+    /* tasks dependencies */
+    typedef enum    mpc_omp_task_dep_type_e
+    {
+        MPC_OMP_TASK_DEP_NONE            = 0,
+        MPC_OMP_TASK_DEP_IN              = 1,
+        MPC_OMP_TASK_DEP_OUT             = 2,
+        MPC_OMP_TASK_DEP_INOUT           = 3,
+        MPC_OMP_TASK_DEP_MUTEXINOUTSET   = 4,
+        MPC_OMP_TASK_DEP_INOUTSET        = 5,
+        MPC_OMP_TASK_DEP_COUNT           = 6
+    }               mpc_omp_task_dep_type_t;
+
+    /* a dependency */
+    typedef struct  mpc_omp_task_dependency_t
+    {
+        void ** addrs;
+        unsigned int addrs_size;
+        mpc_omp_task_dep_type_t type;
+    }               mpc_omp_task_dependency_t;
+
+    /** # pragma omp task depend(dependencies) */
+    void mpc_omp_task_dependencies(mpc_omp_task_dependency_t * dependencies, unsigned int n);
+
+    /**
+     * # pragma omp taskyield block(event)
+     * suspend current task until the associated event is fulfilled
+     */
     void mpc_omp_task_block(mpc_omp_event_handle_t * event);
-    void mpc_omp_task_unblock(mpc_omp_event_handle_t * event);
 
     /* task trace calls */
     void mpc_omp_task_trace_begin(void);

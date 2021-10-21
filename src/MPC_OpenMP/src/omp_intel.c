@@ -2875,6 +2875,8 @@ __intel_translate_taskdep_to_gomp(  kmp_int32 ndeps, kmp_depend_info_t *dep_list
 	return;
 }
 
+TODO("1) do not translate: directly interpret dependencies");
+TODO("2) add support for inoutset, mutexinoutset, and depobj");
 kmp_int32 __kmpc_omp_task_with_deps( __UNUSED__ ident_t * loc_ref, __UNUSED__ kmp_int32 gtid,
                                      kmp_task_t * kmp_task, kmp_int32 ndeps,
                                      kmp_depend_info_t * dep_list,
@@ -2899,7 +2901,11 @@ kmp_int32 __kmpc_omp_task_with_deps( __UNUSED__ ident_t * loc_ref, __UNUSED__ km
     /* register dependencies and priority */
     _mpc_omp_task_deps(task, depend, priority);
 
-	return (kmp_int32) _mpc_omp_task_process(task);
+	kmp_int32 r = (kmp_int32) _mpc_omp_task_process(task);
+
+    _mpc_omp_task_deinit(task);
+
+    return r;
 }
 
 void __kmpc_omp_wait_deps( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid, kmp_int32 ndeps,

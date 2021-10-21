@@ -53,30 +53,7 @@
 #define MPC_OMP_TASK_COMPUTE_TASK_DATA_PTR( ptr, size, arg_align ) \
     ptr + MPC_OMP_TASK_ALIGN_SINGLE( size, arg_align )
 
-#define MPC_OMP_TASK_STATUS_IS_INITIALIZED( status ) \
-    ( OPA_load_int( &( status ) ) == MPC_OMP_TASK_INIT_STATUS_INITIALIZED )
-
-#define MPC_OMP_TASK_STATUS_TRY_INIT( status )                          \
-    ( OPA_cas_int( &( status ), MPC_OMP_TASK_INIT_STATUS_UNINITIALIZED, \
-                   MPC_OMP_TASK_INIT_STATUS_INIT_IN_PROCESS ) ==        \
-      MPC_OMP_TASK_INIT_STATUS_UNINITIALIZED )
-
-#define MPC_OMP_TASK_STATUS_CMPL_INIT( status ) \
-    ( OPA_store_int( &( status ), MPC_OMP_TASK_INIT_STATUS_INITIALIZED ) )
-
 /*** THREAD ACCESSORS MACROS ***/
-
-/** Check if thread is initialized */
-#define MPC_OMP_TASK_THREAD_IS_INITIALIZED(thread) MPC_OMP_TASK_STATUS_IS_INITIALIZED(thread->task_infos.status)
-
-/** Avoid multiple team init (one thread per team ) */
-#define MPC_OMP_TASK_THREAD_TRY_INIT( thread ) \
-    MPC_OMP_TASK_STATUS_TRY_INIT( thread->task_infos.status )
-
-/** Set thread status to INITIALIZED */
-#define MPC_OMP_TASK_THREAD_CMPL_INIT( thread ) \
-    MPC_OMP_TASK_STATUS_CMPL_INIT( thread->task_infos.status )
-
 #define MPC_OMP_TASK_THREAD_GET_LARCENY_ORDER( thread ) \
     thread->task_infos.larceny_order
 
@@ -362,14 +339,19 @@ mpc_omp_task_t * _mpc_omp_task_init(
     mpc_omp_task_property_t properties);
 
 /**
+ * Between `_mpc_omp_task_init` and `_mpc_omp_task_deinit` - the task can be accessed safely
+ * Calling `_mpc_omp_task_deinit` ensure to the runtime
+ * that the task will no longer be accessed, and thatit can release it anytime
+ */
+void _mpc_omp_task_deinit(mpc_omp_task_t * task);
+
+/**
  * set task dependencies
  *  - task is the task
  *  - depend is the dependency array (GOMP format)
  *  - priority_hint is the user task priority hint
  */
 void _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint);
-
-void _mpc_omp_task_finalize_deps(mpc_omp_task_t *task);
 
 /*************
  * TASKGROUP *
@@ -444,5 +426,11 @@ _mpc_omp_task_loop_compute_num_iters(long start, long end, long step);
 
 /* Task callbacks */
 void _mpc_omp_callback_run(mpc_omp_callback_when_t when);
+
+/* extra clauses for mpc-omp tasks */
+# define MPC_OMP_NO_CLAUSE          (0 << 0)
+# define MPC_OMP_CLAUSE_USE_FIBER   (1 << 0)
+
+void mpc_omp_task_unblock(mpc_omp_event_handle_t * event);
 
 #endif /* __MPC_OMP_TASK_H__ */

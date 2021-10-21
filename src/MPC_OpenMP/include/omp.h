@@ -225,6 +225,12 @@ extern "C" {
     void *omp_alloc (size_t size, omp_allocator_handle_t allocator);
     void omp_free (void *ptr, omp_allocator_handle_t allocator);
 
+    /** depobj */
+    typedef struct  omp_depend_t
+    {
+        char __omp_depend_t__[2 * sizeof (void *)];
+    }               omp_depend_t;
+
 #ifdef __cplusplus
 }
 #endif

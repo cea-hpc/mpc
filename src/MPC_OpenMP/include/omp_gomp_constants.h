@@ -42,12 +42,21 @@
 # define GOMP_TASK_FLAG_NOGROUP     (1 << 11)
 
 /* tasks dependencies flags */
-typedef enum    gomp_omp_task_dep_type_e {
-  GOMP_OMP_TASK_DEP_NONE     = 0,
-  GOMP_OMP_TASK_DEP_IN       = 1,
-  GOMP_OMP_TASK_DEP_OUT      = 2,
-  GOMP_OMP_TASK_DEP_INOUT    = 3,
-  GOMP_OMP_TASK_DEP_COUNT    = 4
+typedef enum    gomp_omp_task_dep_type_e
+{
+  GOMP_OMP_TASK_DEP_NONE            = 0,
+  GOMP_OMP_TASK_DEP_IN              = 1,
+  GOMP_OMP_TASK_DEP_OUT             = 2,
+  GOMP_OMP_TASK_DEP_INOUT           = 3,
+  GOMP_OMP_TASK_DEP_MUTEXINOUTSET   = 4,
+  GOMP_OMP_TASK_DEP_INOUTSET        = 5,
+  GOMP_OMP_TASK_DEP_COUNT           = 6
 }               gomp_omp_task_dep_type_t;
+
+/** depobj */
+typedef struct  gomp_omp_depend_t
+{   
+    char __omp_depend_t__[2 * sizeof (void *)];
+}               gomp_omp_depend_t;
 
 #endif /* OMP_GOMP_CONSTANTS_H_ */

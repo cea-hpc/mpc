@@ -54,12 +54,14 @@
 #include "mpcompt_frame_types.h"
 
 #include "mpc_common_recycler.h"
+#include "mpc_omp_task_trace.h"
 
-// #define TLS_ALLOCATORS
-# define MPC_OMP_USE_INTEL_ABI 1
-#ifdef MPC_OMP_USE_INTEL_ABI
-	#include "omp_intel_types.h"
-#endif /* MPC_OMP_USE_INTEL_ABI */
+#define MPC_OMP_USE_INTEL_ABI 1
+# ifdef MPC_OMP_USE_INTEL_ABI
+#  include "omp_intel_types.h"
+# endif /* MPC_OMP_USE_INTEL_ABI */
+
+#include "omp_gomp_constants.h"
 
 /*******************
  * OMP DEFINITIONS *
@@ -68,9 +70,12 @@
 # define MPC_OMP_VERSION_MAJOR  3
 # define MPC_OMP_VERSION_MINOR  1
 
-/* tasking */
+/* config */
 # define MPC_OMP_TASK_COMPILE_FIBER 1
-# define MPC_OMP_TASK_COMPILE_TRACE 1
+
+/* openmp barrier algorithm */
+# define MPC_OMP_NAIVE_BARRIER      1
+# define MPC_OMP_TASK_COND_WAIT     0
 
 #if MPC_OMP_TASK_COMPILE_FIBER
 # define MPC_OMP_TASK_FIBER_ENABLED mpc_omp_conf_get()->task_use_fiber
@@ -80,30 +85,13 @@
 
 # define MPC_OMP_TASK_TRACE_ENABLED mpc_omp_conf_get()->task_trace
 
-# define MPC_OMP_TASK_USE_RECYCLERS  1
+# define MPC_OMP_TASK_USE_RECYCLERS  0
 # define MPC_OMP_TASK_ALLOCATOR      mpc_omp_alloc
 # define MPC_OMP_TASK_DEALLOCATOR    mpc_omp_free
 # define MPC_OMP_TASK_DEFAULT_ALIGN  8
 
-/* openmp barrier algorithm */
-# define MPC_OMP_NAIVE_BARRIER 0
-
 /* task fiber stack size */
 # define MPC_OMP_TASK_FIBER_STACK_SIZE (mpc_omp_conf_get()->task_fiber_stack_size)
-
-# if MPC_OMP_TASK_COMPILE_TRACE
-#  include "mpc_omp_task_trace.h"
-#  define MPC_OMP_TASK_TRACE_DEPENDENCY(out, in)    if (MPC_OMP_TASK_TRACE_ENABLED && _mpc_omp_task_trace_begun()) _mpc_omp_task_trace_dependency(out, in)
-#  define MPC_OMP_TASK_TRACE_SCHEDULE(task)         if (MPC_OMP_TASK_TRACE_ENABLED && _mpc_omp_task_trace_begun()) _mpc_omp_task_trace_schedule(task)
-#  define MPC_OMP_TASK_TRACE_CREATE(task)           if (MPC_OMP_TASK_TRACE_ENABLED && _mpc_omp_task_trace_begun()) _mpc_omp_task_trace_create(task)
-#  define MPC_OMP_TASK_TRACE_CALLBACK(when, status) if (MPC_OMP_TASK_TRACE_ENABLED && _mpc_omp_task_trace_begun()) _mpc_omp_task_trace_async(when, status)
-# else  /* MPC_OMP_TASK_COMPILE_TRACE */
-#  define MPC_OMP_TASK_TRACE_DEPENDENCY(...)
-#  define MPC_OMP_TASK_TRACE_SCHEDULE(...)
-#  define MPC_OMP_TASK_TRACE_CREATE(...)
-#  define MPC_OMP_TASK_TRACE_FAMINE_OVERLAP(...)
-#  define MPC_OMP_TASK_TRACE_CALLBACK(...)
-# endif /* MPC_OMP_TASK_COMPILE_TRACE */
 
 /* Use MCS locks or not */
 #define MPC_OMP_USE_MCS_LOCK 1
@@ -306,14 +294,6 @@ typedef enum    mpc_omp_loop_gen_type_e
 	MPC_OMP_LOOP_TYPE_ULL,
 }              mpc_omp_loop_gen_type_t;
 
-typedef enum    _mpc_omp_task_init_status_e
-{
-    MPC_OMP_TASK_INIT_STATUS_UNINITIALIZED,
-    MPC_OMP_TASK_INIT_STATUS_INIT_IN_PROCESS,
-    MPC_OMP_TASK_INIT_STATUS_INITIALIZED,
-    MPC_OMP_TASK_INIT_STATUS_COUNT
-}               _mpc_omp_task_init_status_t;
-
 /** Type of task pqueues */
 typedef enum    mpc_omp_pqueue_type_e
 {
@@ -333,10 +313,11 @@ typedef enum    mpc_omp_task_list_type_e
 
 typedef enum    mpcomp_task_dep_task_status_e
 {
-    MPC_OMP_TASK_STATUS_NOT_READY  = 0,
-    MPC_OMP_TASK_STATUS_READY      = 1,
-    MPC_OMP_TASK_STATUS_FINALIZED  = 2,
-    MPC_OMP_TASK_STATUS_COUNT      = 3
+    MPC_OMP_TASK_STATUS_INITIALIZING    = 0,
+    MPC_OMP_TASK_STATUS_NOT_READY       = 1,
+    MPC_OMP_TASK_STATUS_READY           = 2,
+    MPC_OMP_TASK_STATUS_FINALIZED       = 3,
+    MPC_OMP_TASK_STATUS_COUNT           = 4
 }               mpcomp_task_dep_task_status_t;
 
 /**********************
@@ -529,9 +510,15 @@ typedef struct  mpc_omp_task_dep_htable_entry_s
     /* the next entry of the same hash */
     struct mpc_omp_task_dep_htable_entry_s * next;
 
-    /* dependency informations */
-    struct mpc_omp_task_s * last_out;
-    mpc_omp_task_dep_list_elt_t * last_in;
+    /* last 'out' or 'inout' task for this key */
+    struct mpc_omp_task_s * out;
+
+    /* list of last 'in' tasks for this key */
+    mpc_omp_task_dep_list_elt_t * ins;
+
+    /* list of last 'inoutset' tasks for this key */
+    mpc_omp_task_dep_list_elt_t * inoutset;
+
 }               mpc_omp_task_dep_htable_entry_t;
 
 # define MPC_OMP_TASK_DEP_HTABLE_CAPACITY    1001   /* 7 * 11 * 13 */
@@ -737,7 +724,6 @@ typedef struct  mpc_omp_task_mvp_infos_s
 typedef struct  mpc_omp_task_thread_infos_s
 {
     int * larceny_order;
-    OPA_int_t status;                   /* Thread task's init tag */
     mpc_omp_task_t * current_task;      /* Currently running task */
     void* opaque;                       /* use mcslock buffered */
 
@@ -755,20 +741,20 @@ typedef struct  mpc_omp_task_thread_infos_s
 #  endif /* MPC_OMP_TASK_COMPILE_FIBER */
 # endif /* MPC_OMP_TASK_USE_RECYCLERS */
 
-    /* immediate successor of previous task */
-    mpc_omp_task_t * immediate_successor;
-
     /* extra data for incoming task */
     struct
     {
         char * label;
         int extra_clauses;
+        mpc_omp_task_dependency_t * dependencies;
+        unsigned int ndependencies;
     } incoming;
 
 # if MPC_OMP_TASK_COMPILE_TRACE
     mpc_omp_thread_task_trace_infos_t tracer;
 # endif
 
+    /* ? */
     size_t sizeof_kmp_task_t;
 
 }               mpc_omp_task_thread_infos_t;
@@ -790,13 +776,19 @@ typedef struct  mpc_omp_task_instance_infos_s
     OPA_int_t next_task_uid;
 
     /* number of existing tasks */
-    OPA_int_t ntasks;
+    OPA_int_t ntasks_allocated;
 
     /* number of ready tasks overall */
     OPA_int_t ntasks_ready;
 
     /* blocked tasks list */
     mpc_omp_task_list_t blocked_tasks;
+
+# if MPC_OMP_TASK_COND_WAIT
+    /* condition to make threads sleep when waiting for tasks */
+    pthread_mutex_t work_cond_mutex;
+    pthread_cond_t  work_cond;
+# endif
 
 }               mpc_omp_task_instance_infos_t;
 
@@ -938,6 +930,9 @@ typedef struct mpc_omp_new_parallel_region_info_s
     int doing_single;
     int in_single;
 #endif /* OMPT_SUPPORT */
+
+    /* number of existing tasks in the region */
+    OPA_int_t task_ref;
 } mpc_omp_parallel_region_t;
 
 static inline void
@@ -980,11 +975,11 @@ typedef struct mpc_omp_team_s
 	volatile long next_ordered_offset;
 	volatile unsigned long long next_ordered_offset_ull;
 	OPA_int_t next_ordered_offset_finalized;
-  
+
 	/* ATOMIC/CRITICAL CONSTRUCT */
   mpc_common_spinlock_t atomic_lock;
   omp_lock_t* critical_lock;
-  
+
 	struct mpc_omp_task_team_infos_s task_infos;
 
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
