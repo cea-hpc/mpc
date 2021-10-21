@@ -87,6 +87,61 @@ struct _mpc_mpi_config_coll_array
 
 };
 
+struct _mpc_mpi_config_coll_algorithm_array
+{
+    char barrier_name[MPC_CONF_STRING_SIZE];
+    int (*barrier)(MPI_Comm, int, void *, void *);
+
+    char bcast_name[MPC_CONF_STRING_SIZE];
+    int (*bcast)(void *, int, MPI_Datatype, int, MPI_Comm, int, void *, void *);
+
+    char allgather_name[MPC_CONF_STRING_SIZE];
+    int (*allgather)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm, int, void *, void *);
+
+    char allgatherv_name[MPC_CONF_STRING_SIZE];
+    int (*allgatherv)(const void *, int, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm, int, void *, void *);
+
+    char alltoall_name[MPC_CONF_STRING_SIZE];
+    int (*alltoall)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm, int, void *, void *); 
+
+    char alltoallv_name[MPC_CONF_STRING_SIZE];
+    int (*alltoallv)(const void *, const int *, const int *, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm, int, void *, void *);
+
+    char alltoallw_name[MPC_CONF_STRING_SIZE];
+    int (*alltoallw)(const void *, const int *, const int *, const MPI_Datatype *, void *, const int *, const int *, const MPI_Datatype *, MPI_Comm, int, void *, void *);
+
+    char gather_name[MPC_CONF_STRING_SIZE];
+    int (*gather)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm, int, void *, void *);
+
+    char gatherv_name[MPC_CONF_STRING_SIZE];
+    int (*gatherv)(const void *, int, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, int, MPI_Comm, int, void *, void *);
+
+    char scatter_name[MPC_CONF_STRING_SIZE];
+    int (*scatter)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm, int, void *, void *);
+
+    char scatterv_name[MPC_CONF_STRING_SIZE];
+    int (*scatterv)(const void *, const int *, const int *, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm, int, void *, void *);
+
+    char reduce_name[MPC_CONF_STRING_SIZE];
+    int (*reduce)(const void *, void *, int, MPI_Datatype, MPI_Op, int, MPI_Comm, int, void *, void *);
+
+    char allreduce_name[MPC_CONF_STRING_SIZE];
+    int (*allreduce)(const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm, int, void *, void *);
+
+    char reduce_scatter_name[MPC_CONF_STRING_SIZE];
+    int (*reduce_scatter)(const void *, void *, const int *, MPI_Datatype, MPI_Op, MPI_Comm, int, void *, void *);
+
+    char reduce_scatter_block_name[MPC_CONF_STRING_SIZE];
+    int (*reduce_scatter_block)(const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm, int, void *, void *);
+
+    char scan_name[MPC_CONF_STRING_SIZE];
+    int (*scan)(const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm, int, void *, void *);
+
+    char exscan_name[MPC_CONF_STRING_SIZE];
+    int (*exscan)(const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm, int, void *, void *);
+
+};
+
 void _mpc_mpi_config_coll_array_resolve(struct _mpc_mpi_config_coll_array *coll, char *family);
 
 
@@ -205,6 +260,8 @@ struct _mpc_mpi_config
     struct _mpc_mpi_config_coll_array coll_intracomm_shm;
     struct _mpc_mpi_config_coll_array coll_intracomm_shared_node;
     struct _mpc_mpi_config_coll_array coll_intracomm;
+    
+    struct _mpc_mpi_config_coll_algorithm_array coll_algorithm_intracomm;
 
     struct _mpc_mpi_config_mem_pool mempool;
 };

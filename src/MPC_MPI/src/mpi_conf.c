@@ -176,6 +176,67 @@ mpc_conf_config_type_t *_mpc_mpi_config_coll_array_conf( struct _mpc_mpi_config_
 	return ret;
 }
 
+/* Coll algorithm array */
+
+mpc_conf_config_type_t *_mpc_mpi_config_coll_algorithm_array_conf( struct _mpc_mpi_config_coll_algorithm_array *coll )
+{
+	mpc_conf_config_type_t *ret = mpc_conf_config_type_init( "algorithmpointers",
+															   PARAM( "allgather", coll->allgather_name,
+																	  MPC_CONF_STRING,
+																	  "allgather function pointer" ),
+															   PARAM( "allgatherv", coll->allgatherv_name,
+																	  MPC_CONF_STRING,
+																	  "allgatherv function pointer" ),
+															   PARAM( "allreduce", coll->allreduce_name,
+																	  MPC_CONF_STRING,
+																	  "allreduce function pointer" ),
+															   PARAM( "alltoall", coll->alltoall_name,
+																	  MPC_CONF_STRING,
+																	  "alltoall function pointer" ),
+															   PARAM( "alltoallv", coll->alltoallv_name,
+																	  MPC_CONF_STRING,
+																	  "alltoallv function pointer" ),
+															   PARAM( "alltoallw", coll->alltoallw_name,
+																	  MPC_CONF_STRING,
+																	  "alltoallw function pointer" ),
+															   PARAM( "barrier", coll->barrier_name,
+																	  MPC_CONF_STRING,
+																	  "barrier function pointer" ),
+															   PARAM( "bcast", coll->bcast_name,
+																	  MPC_CONF_STRING,
+																	  "bcast function pointer" ),
+															   PARAM( "exscan", coll->exscan_name,
+																	  MPC_CONF_STRING,
+																	  "exscan function pointer" ),
+															   PARAM( "gather", coll->gather_name,
+																	  MPC_CONF_STRING,
+																	  "gather function pointer" ),
+															   PARAM( "gatherv", coll->gatherv_name,
+																	  MPC_CONF_STRING,
+																	  "gatherv function pointer" ),
+															   PARAM( "scan", coll->scan_name,
+																	  MPC_CONF_STRING,
+																	  "scan function pointer" ),
+															   PARAM( "scatter", coll->scatter_name,
+																	  MPC_CONF_STRING,
+																	  "scatter function pointer" ),
+															   PARAM( "scatterv", coll->scatterv_name,
+																	  MPC_CONF_STRING,
+																	  "scatterv function pointer" ),
+															   PARAM( "reduce", coll->reduce_name,
+																	  MPC_CONF_STRING,
+																	  "Reduce function pointer" ),
+															   PARAM( "reducescatter", coll->reduce_scatter_name,
+																	  MPC_CONF_STRING,
+																	  "Reduce scatter function pointer" ),
+															   PARAM( "reducescatterblock", coll->reduce_scatter_block_name,
+																	  MPC_CONF_STRING,
+																	  "Reduce scatter block function pointer" ),
+															   NULL );
+
+	return ret;
+}
+
 
 /* Intercomm */
 
@@ -223,6 +284,30 @@ static inline void __coll_intracomm_defaults( void )
 	snprintf( coll->reduce_scatter_block_name, MPC_CONF_STRING_SIZE, "__INTERNAL__PMPI_Reduce_scatter_block_intra" );
 	snprintf( coll->scan_name, MPC_CONF_STRING_SIZE, "__INTERNAL__PMPI_Scan_intra" );
 	snprintf( coll->exscan_name, MPC_CONF_STRING_SIZE, "__INTERNAL__PMPI_Exscan_intra" );
+}
+
+static inline void __coll_algorithm_intracomm_defaults( void )
+{
+	struct _mpc_mpi_config_coll_algorithm_array *coll = &__mpc_mpi_config.coll_algorithm_intracomm;
+
+	snprintf( coll->barrier_name, MPC_CONF_STRING_SIZE, "" );
+	snprintf( coll->bcast_name, MPC_CONF_STRING_SIZE, "___collectives_bcast_switch" );
+	//snprintf( coll->bcast_name, MPC_CONF_STRING_SIZE, "_mpc_mpi_collectives_bcast" );
+	snprintf( coll->allgather_name, MPC_CONF_STRING_SIZE, "" );
+	snprintf( coll->allgatherv_name, MPC_CONF_STRING_SIZE, "" );
+	snprintf( coll->alltoall_name, MPC_CONF_STRING_SIZE, "" );
+	snprintf( coll->alltoallv_name, MPC_CONF_STRING_SIZE, "" );
+	snprintf( coll->alltoallw_name, MPC_CONF_STRING_SIZE, "" );
+	snprintf( coll->gather_name, MPC_CONF_STRING_SIZE, "" );
+	snprintf( coll->gatherv_name, MPC_CONF_STRING_SIZE, "" );
+	snprintf( coll->scatter_name, MPC_CONF_STRING_SIZE, "" );
+	snprintf( coll->scatterv_name, MPC_CONF_STRING_SIZE, "" );
+	snprintf( coll->reduce_name, MPC_CONF_STRING_SIZE, "" );
+	snprintf( coll->allreduce_name, MPC_CONF_STRING_SIZE, "" );
+	snprintf( coll->reduce_scatter_name, MPC_CONF_STRING_SIZE, "" );
+	snprintf( coll->reduce_scatter_block_name, MPC_CONF_STRING_SIZE, "" );
+	snprintf( coll->scan_name, MPC_CONF_STRING_SIZE, "" );
+	snprintf( coll->exscan_name, MPC_CONF_STRING_SIZE, "" );
 }
 
 static inline void __coll_intracomm_shm_defaults( void )
@@ -314,10 +399,30 @@ void _mpc_mpi_config_coll_array_resolve( struct _mpc_mpi_config_coll_array *coll
 	__load_coll_function( family, coll->reduce_scatter_block_name, &coll->reduce_scatter_block );
 }
 
+void _mpc_mpi_config_coll_algorithm_array_resolve( struct _mpc_mpi_config_coll_algorithm_array *coll, char *family )
+{
+	__load_coll_function( family, coll->barrier_name, &coll->barrier );
+	__load_coll_function( family, coll->bcast_name, &coll->bcast );
+	__load_coll_function( family, coll->allgather_name, &coll->allgather );
+	__load_coll_function( family, coll->allgatherv_name, &coll->allgatherv );
+	__load_coll_function( family, coll->alltoall_name, &coll->alltoall );
+	__load_coll_function( family, coll->alltoallv_name, &coll->alltoallv );
+	__load_coll_function( family, coll->alltoallw_name, &coll->alltoallw );
+	__load_coll_function( family, coll->gather_name, &coll->gather );
+	__load_coll_function( family, coll->gatherv_name, &coll->gatherv );
+	__load_coll_function( family, coll->scatter_name, &coll->scatter );
+	__load_coll_function( family, coll->scatterv_name, &coll->scatterv );
+	__load_coll_function( family, coll->reduce_name, &coll->reduce );
+	__load_coll_function( family, coll->allreduce_name, &coll->allreduce );
+	__load_coll_function( family, coll->reduce_scatter_name, &coll->reduce_scatter );
+	__load_coll_function( family, coll->reduce_scatter_block_name, &coll->reduce_scatter_block );
+}
+
 static inline void __coll_check( void )
 {
 	_mpc_mpi_config_coll_array_resolve( &__mpc_mpi_config.coll_intercomm, "intercomm" );
 	_mpc_mpi_config_coll_array_resolve( &__mpc_mpi_config.coll_intracomm, "intracomm" );
+	_mpc_mpi_config_coll_algorithm_array_resolve( &__mpc_mpi_config.coll_algorithm_intracomm, "intracomm algorithm" );
 	_mpc_mpi_config_coll_array_resolve( &__mpc_mpi_config.coll_intracomm_shm, "intracomm shm" );
 	_mpc_mpi_config_coll_array_resolve( &__mpc_mpi_config.coll_intracomm_shared_node, "intracomm shared-node" );
 }
@@ -327,6 +432,7 @@ static inline void __coll_defaults( void )
 	__coll_param_defaults();
 	__coll_intercomm_defaults();
 	__coll_intracomm_defaults();
+  __coll_algorithm_intracomm_defaults();
 	__coll_intracomm_shm_defaults();
 	__coll_intracomm_shared_node_defaults();
 }
@@ -380,6 +486,8 @@ mpc_conf_config_type_t *__init_coll_config( void )
 																	"Maximum number of process for using a trivial for in the Bcast" ),	
 															PARAM( "pointers", _mpc_mpi_config_coll_array_conf(&__mpc_mpi_config.coll_intracomm), MPC_CONF_TYPE,
 																	"Function pointers for intracomm collectives" ),
+                              PARAM("algorithmpointers", _mpc_mpi_config_coll_algorithm_array_conf(&__mpc_mpi_config.coll_algorithm_intracomm), MPC_CONF_TYPE,
+                                  "Function pointers for intracomm collectives algorithms" ),
 															NULL );
 	
 	mpc_conf_config_type_t *ret = mpc_conf_config_type_init( "coll",

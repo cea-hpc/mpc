@@ -154,11 +154,11 @@ static inline int ___collectives_ibcast(void *buffer, int count, MPI_Datatype da
 int PMPI_Bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPI_Info info, MPI_Request *request);
 static inline int ___collectives_bcast_init(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle* handle);
 int _mpc_mpi_collectives_bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
-static inline int ___collectives_bcast_switch(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int ___collectives_bcast_linear(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int ___collectives_bcast_binomial(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int ___collectives_bcast_scatter_allgather(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
-static inline int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+int ___collectives_bcast_switch(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+int ___collectives_bcast_linear(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+int ___collectives_bcast_binomial(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+int ___collectives_bcast_scatter_allgather(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
 int PMPI_Ireduce (const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPI_Request *request);
@@ -1229,11 +1229,13 @@ static inline int ___collectives_ibcast( void *buffer, int count, MPI_Datatype d
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  ___collectives_bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  //___collectives_bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  _mpc_mpi_config()->coll_algorithm_intracomm.bcast(buffer, count, datatype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
   ___collectives_sched_alloc_init(handle, schedule, &info);
 
-  ___collectives_bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  //___collectives_bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
+  _mpc_mpi_config()->coll_algorithm_intracomm.bcast(buffer, count, datatype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
   res = ___collectives_sched_commit(schedule, &info);
   if (NBC_OK != res)
@@ -1323,11 +1325,13 @@ static inline int ___collectives_bcast_init(void *buffer, int count, MPI_Datatyp
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  ___collectives_bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  //___collectives_bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
+  _mpc_mpi_config()->coll_algorithm_intracomm.bcast(buffer, count, datatype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
   ___collectives_sched_alloc_init(handle, schedule, &info);
 
-  ___collectives_bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  //___collectives_bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
+  _mpc_mpi_config()->coll_algorithm_intracomm.bcast(buffer, count, datatype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
   res = ___collectives_sched_commit(schedule, &info);
   if (res != MPI_SUCCESS)
@@ -1360,9 +1364,9 @@ int _mpc_mpi_collectives_bcast(void *buffer, int count, MPI_Datatype datatype, i
     info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
   }
 
-  return ___collectives_bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info); 
+  //return ___collectives_bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info); 
+  return _mpc_mpi_config()->coll_algorithm_intracomm.bcast(buffer, count, datatype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info); 
 }
-
 
 /**
   \brief Swith between the different broadcast algorithms
@@ -1376,7 +1380,7 @@ int _mpc_mpi_collectives_bcast(void *buffer, int count, MPI_Datatype datatype, i
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int ___collectives_bcast_switch(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+int ___collectives_bcast_switch(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
 #ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
@@ -1452,7 +1456,7 @@ static inline int ___collectives_bcast_switch(void *buffer, int count, MPI_Datat
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int ___collectives_bcast_linear(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+int ___collectives_bcast_linear(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size;
   _mpc_cl_comm_size(comm, &size);
@@ -1513,7 +1517,7 @@ static inline int ___collectives_bcast_linear(void *buffer, int count, MPI_Datat
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int ___collectives_bcast_binomial(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+int ___collectives_bcast_binomial(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int size, rank;
 
@@ -1580,7 +1584,7 @@ static inline int ___collectives_bcast_binomial(void *buffer, int count, MPI_Dat
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int ___collectives_bcast_scatter_allgather(__UNUSED__ void *buffer, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+int ___collectives_bcast_scatter_allgather(__UNUSED__ void *buffer, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ int root, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
 
   not_implemented();
   
@@ -1601,7 +1605,7 @@ static inline int ___collectives_bcast_scatter_allgather(__UNUSED__ void *buffer
   \param info Adress on the information structure about the schedule
   \return error code
   */
-static inline int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int initial_flag = info->flag;
   info->flag &=(!SCHED_INFO_TOPO_COMM_ALLOWED); 
@@ -1619,6 +1623,19 @@ static inline int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatyp
   }
 
   if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
+
+    if(!__Get_topo_comm_allowed(coll_type)) {
+      // For some reason, we ended up here
+      // We cannot create topological and they aren't already created
+      // Fallback on non-topological algorithms
+      
+      //res = ___collectives_bcast_switch(buffer, count, datatype, root, comm, coll_type, schedule, info);
+      res = _mpc_mpi_config()->coll_algorithm_intracomm.bcast(buffer, count, datatype, root, comm, coll_type, schedule, info);
+      info->flag = initial_flag; 
+      return res;
+    }
+
+
     /* choose max topological level on which to do hardware split */
     /*TODO choose level wisely */
     int max_level = TOPO_MAX_LEVEL;
@@ -1638,7 +1655,8 @@ static inline int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatyp
     if(!rank_split) { /* if master */
       MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[k];
 
-      res = ___collectives_bcast_switch(buffer, count, datatype, 0, master_comm, coll_type, schedule, info);
+      //res = ___collectives_bcast_switch(buffer, count, datatype, 0, master_comm, coll_type, schedule, info);
+      res = _mpc_mpi_config()->coll_algorithm_intracomm.bcast(buffer, count, datatype, 0, master_comm, coll_type, schedule, info);
       
       ___collectives_barrier_type(coll_type, schedule, info);
     }
@@ -1647,7 +1665,8 @@ static inline int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatyp
   /* last level topology binomial bcast */
   MPI_Comm hardware_comm = info->hardware_info_ptr->hwcomm[deepest_level];
 
-  res = ___collectives_bcast_switch(buffer, count, datatype, 0, hardware_comm, coll_type, schedule, info);
+  //res = ___collectives_bcast_switch(buffer, count, datatype, 0, hardware_comm, coll_type, schedule, info);
+  res = _mpc_mpi_config()->coll_algorithm_intracomm.bcast(buffer, count, datatype, 0, hardware_comm, coll_type, schedule, info);
   
   info->flag = initial_flag; 
 
@@ -2696,7 +2715,8 @@ static inline int ___collectives_allreduce_reduce_broadcast(const void *sendbuf,
 
   ___collectives_reduce_switch(sendbuf, recvbuf, count, datatype, op, 0, comm, coll_type, schedule, info);
   ___collectives_barrier_type(coll_type, schedule, info);
-  ___collectives_bcast_switch(recvbuf, count, datatype, 0, comm, coll_type, schedule, info);
+  //___collectives_bcast_switch(recvbuf, count, datatype, 0, comm, coll_type, schedule, info);
+  _mpc_mpi_config()->coll_algorithm_intracomm.bcast(recvbuf, count, datatype, 0, comm, coll_type, schedule, info);
 
   return MPI_SUCCESS;
 }
@@ -6592,7 +6612,8 @@ static inline int ___collectives_allgather_gather_broadcast(const void *sendbuf,
 
  ___collectives_gather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, 0, comm, coll_type, schedule, info);
  ___collectives_barrier_type(coll_type, schedule, info);
- ___collectives_bcast_switch(recvbuf, recvcount * size, recvtype, 0, comm, coll_type, schedule, info);
+ //___collectives_bcast_switch(recvbuf, recvcount * size, recvtype, 0, comm, coll_type, schedule, info);
+ _mpc_mpi_config()->coll_algorithm_intracomm.bcast(recvbuf, recvcount * size, recvtype, 0, comm, coll_type, schedule, info);
 
   return MPI_SUCCESS;
 }
@@ -7201,7 +7222,8 @@ static inline int ___collectives_allgatherv_gatherv_broadcast(const void *sendbu
 
   ___collectives_gatherv_switch(tmp_sendbuf, tmp_sendcount, tmp_sendtype, recvbuf, recvcounts, displs, recvtype, 0, comm, coll_type, schedule, info);
   ___collectives_barrier_type(coll_type, schedule, info);
-  ___collectives_bcast_switch(recvbuf, count, recvtype, 0, comm, coll_type, schedule, info);
+  //___collectives_bcast_switch(recvbuf, count, recvtype, 0, comm, coll_type, schedule, info);
+  _mpc_mpi_config()->coll_algorithm_intracomm.bcast(recvbuf, count, recvtype, 0, comm, coll_type, schedule, info);
 
   return MPI_SUCCESS;
 }
