@@ -92,6 +92,20 @@ Resource Relinquishing:
 ####### CONF STAGE  ########
 ############################
 
+MPC Compilation Workshare:
+  <<: *run_by_main
+  stage: Configurations
+  script:
+  - cd $HOME/GL_$CI_PIPELINE_ID/build_workshare
+  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_workshare --mpc-option='--with-pmi1 --enable-debug' --enable-workshare
+
+MPC Default Configuration:
+  <<: *run_by_main
+  stage: Configurations
+  script:
+  - cd $HOME/GL_$CI_PIPELINE_ID/build
+  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install --mpc-option='--with-pmi1 --enable-debug'
+
 MPC Process Mode:
   <<: *run_by_main
   stage: Configurations
@@ -150,6 +164,7 @@ MPC PMIx:
   - cd $HOME/GL_$CI_PIPELINE_ID/build_pmix/
   - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_pmix --disable-mpc-autopriv --mpc-option="--with-pmix"
 
+<<<<<<< HEAD
 MPC Compilation Workshare:
   <<: *run_by_main
   stage: Configurations
@@ -165,6 +180,8 @@ MPC Default Configuration:
   - cd $HOME/GL_$CI_PIPELINE_ID/build
   - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install --with-slurm --mpc-option='--enable-debug'
 
+=======
+>>>>>>> 2d7191891 (CI: move large compilations first)
 ############################
 ####### TEST STAGE ########
 ############################
