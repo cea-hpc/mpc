@@ -15,6 +15,17 @@ stages:
 variables:
   GIT_DEPTH: 10 # No need to clone the whole history
   GIT_CLONE_PATH: $CI_BUILDS_DIR/$CI_RUNNER_ID/$CI_CONCURRENT_ID/$CI_PROJECT_PATH
+  # PCVS CONF
+  PCVS_COMMAND: pcvs run -v -f -p mpc
+
+
+.pcvs_prepare: &pcvs_prepare
+  - export CI_PCVS_DIR="$HOME/GL_${CI_PIPELINE_ID}/pcvs_run_$(echo $CI_JOB_NAME | sed "s/ /_/g")/"
+  - mkdir "${CI_PCVS_DIR}"
+  - cd "${CI_PCVS_DIR}"
+  - echo "PCVS RUN Directory is "${CI_PCVS_DIR}"
+  - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
+  - echo "SOURCING MPC from $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh"
 
 .run_by_main: &run_by_main
   only:
@@ -32,6 +43,9 @@ variables:
 .uses_slurm: &uses_slurm
   tags:
     - slurm
+
+
+
 
 ############################
 ##### EXTRA ACTIONS ########
@@ -167,9 +181,8 @@ Simple run:
   <<: *uses_slurm
   stage: Basic Testing
   script:
-    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_basic/ && cd $HOME/GL_$CI_PIPELINE_ID/r_basic/
-    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_simple $HOME/repo/mpc_ci/trivial/
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/trivial/
 
 
 Privatization:
@@ -177,9 +190,8 @@ Privatization:
   <<: *uses_slurm
   stage: Basic Testing
   script:
-    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_priv/ && cd $HOME/GL_$CI_PIPELINE_ID/r_priv/
-    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_priv $HOME/repo/mpc_ci/privatization/
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/privatization/
 
 #
 ## a regular test, to assess some basic MPC feature
@@ -190,36 +202,32 @@ MPI Simple C:
   <<: *uses_slurm
   stage: Regular Testing
   script:
-    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_sc/ && cd $HOME/GL_$CI_PIPELINE_ID/r_sc/
-    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_simple_c $HOME/repo/mpc_ci/MPI/simple/c/
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/MPI/simple/c/
 
 MPI Simple Fortran:
   <<: *run_by_main
   <<: *uses_slurm
   stage: Regular Testing
   script:
-    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_sf/ && cd $HOME/GL_$CI_PIPELINE_ID/r_sf/
-    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_simple_fortran $HOME/repo/mpc_ci/MPI/simple/fortran/
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/MPI/simple/fortran/
 
 MPI NBC:
   <<: *run_by_main
   <<: *uses_slurm
   stage: Regular Testing
   script:
-    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_nbc/ && cd $HOME/GL_$CI_PIPELINE_ID/r_nbc/
-    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_nbc $HOME/repo/mpc_ci/MPI/NBC/
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/MPI/NBC/
 
 Lowcomm:
   <<: *run_by_main
   <<: *uses_slurm
   stage: Regular Testing
   script:
-    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_lowcomm/ && cd $HOME/GL_$CI_PIPELINE_ID/r_lowcomm/
-    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_nbc $HOME/repo/mpc_ci/lowcomm/
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/lowcomm/
 
 
 #
@@ -231,18 +239,16 @@ MPI IMB-MPI 2017:
   <<: *uses_slurm
   stage: Benchmarks
   script:
-    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_imbmpi/ && cd $HOME/GL_$CI_PIPELINE_ID/r_imbmpi/
-    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_imb_mpi1 $HOME/repo/mpc_ci/MPI/IMB_2017/check-mpi/
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/MPI/IMB_2017/check-mpi/
 
 MPI IMB-NBC 2017:
   <<: *run_by_main
   <<: *uses_slurm
   stage: Benchmarks
   script:
-    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_imbnbc/ && cd $HOME/GL_$CI_PIPELINE_ID/r_imbnbc/
-    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_mpi_imb_nbc $HOME/repo/mpc_ci/MPI/IMB_2017/check-nbc/
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/MPI/IMB_2017/check-nbc/
 
 #
 # Applications
@@ -254,36 +260,32 @@ Lulesh:
   <<: *uses_slurm
   stage: Applications
   script:
-    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_lul/ && cd $HOME/GL_$CI_PIPELINE_ID/r_lul/
-    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_app_lulesh $HOME/repo/mpc_ci/corals/lulesh-2.0.3/
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/corals/lulesh-2.0.3/
 
 miniFe:
   <<: *run_by_main
   <<: *uses_slurm
   stage: Applications
   script:
-    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_fe/ && cd $HOME/GL_$CI_PIPELINE_ID/r_fe/
-    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_app_minife $HOME/repo/mpc_ci/corals/miniFe/
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/corals/miniFe/
 
 NAS-MZ MPI:
   <<: *run_by_main
   <<: *uses_slurm
   stage: Applications
   script:
-    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_nmzmpi/ && cd $HOME/GL_$CI_PIPELINE_ID/r_nmzmpi/
-    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_app_nasmpimz $HOME/repo/mpc_ci/hybrid/NAS/MZ-MPI/
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/hybrid/NAS/MZ-MPI/
 
 NAS-MZ OMP:
   <<: *run_by_main
   <<: *uses_slurm
   stage: Applications
   script:
-    - mkdir $HOME/GL_$CI_PIPELINE_ID/r_nmzomp/ && cd $HOME/GL_$CI_PIPELINE_ID/r_nmzomp/
-    - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
-    - pcvs run -f -p mpc -o $HOME/GL_$CI_PIPELINE_ID/PCVS_app_nasompmz $HOME/repo/mpc_ci/hybrid/NAS/MZ-OMP/
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/hybrid/NAS/MZ-OMP/
 
 
 ###################################
