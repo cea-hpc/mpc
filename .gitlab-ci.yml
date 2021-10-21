@@ -92,20 +92,6 @@ Resource Relinquishing:
 ####### CONF STAGE  ########
 ############################
 
-MPC Compilation Workshare:
-  <<: *run_by_main
-  stage: Configurations
-  script:
-  - cd $HOME/GL_$CI_PIPELINE_ID/build_workshare
-  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_workshare --mpc-option='--with-pmi1 --enable-debug' --enable-workshare
-
-MPC Default Configuration:
-  <<: *run_by_main
-  stage: Configurations
-  script:
-  - cd $HOME/GL_$CI_PIPELINE_ID/build
-  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install --mpc-option='--with-pmi1 --enable-debug'
-
 MPC Process Mode:
   <<: *run_by_main
   stage: Configurations
@@ -122,7 +108,6 @@ MPC Disable Lowcomm:
   - cd $HOME/GL_$CI_PIPELINE_ID/build_no_lowcomm/
   - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_nolowcomm --disable-mpc-autopriv --mpc-option="--disable-lowcomm"
 
-
 MPC Disable MPI:
   <<: *run_by_main
   stage: Configurations
@@ -130,7 +115,6 @@ MPC Disable MPI:
   - mkdir $HOME/GL_$CI_PIPELINE_ID/build_nompi/
   - cd $HOME/GL_$CI_PIPELINE_ID/build_nompi/
   - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_nompi --disable-mpc-autopriv --mpc-option="--disable-mpi"
-
 
 MPC Disable Threads:
   <<: *run_by_main
@@ -164,14 +148,13 @@ MPC PMIx:
   - cd $HOME/GL_$CI_PIPELINE_ID/build_pmix/
   - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_pmix --disable-mpc-autopriv --mpc-option="--with-pmix"
 
-<<<<<<< HEAD
 MPC Compilation Workshare:
   <<: *run_by_main
   stage: Configurations
   allow_failure: true
   script:
   - cd $HOME/GL_$CI_PIPELINE_ID/build_workshare
-  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_workshare --mpc-option='--with-pmi1 --enable-debug' --enable-workshare
+  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --with-slurm --prefix=$HOME/GL_$CI_PIPELINE_ID/install_workshare --mpc-option='--enable-debug' --enable-workshare
 
 MPC Default Configuration:
   <<: *run_by_main
@@ -180,8 +163,6 @@ MPC Default Configuration:
   - cd $HOME/GL_$CI_PIPELINE_ID/build
   - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install --with-slurm --mpc-option='--enable-debug'
 
-=======
->>>>>>> 2d7191891 (CI: move large compilations first)
 ############################
 ####### TEST STAGE ########
 ############################
@@ -224,13 +205,13 @@ MPI Simple Fortran:
     - *pcvs_prepare
     - ${PCVS_COMMAND} $HOME/repo/mpc_ci/MPI/simple/fortran/
 
-MPI NBC:
-  <<: *run_by_main
-  <<: *uses_slurm
-  stage: Regular Testing
-  script:
-    - *pcvs_prepare
-    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/MPI/NBC/
+#MPI NBC:
+#  <<: *run_by_main
+#  <<: *uses_slurm
+#  stage: Regular Testing
+#  script:
+#    - *pcvs_prepare
+#    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/MPI/NBC/
 
 Lowcomm:
   <<: *run_by_main
