@@ -20,7 +20,7 @@ variables:
 
 .pcvs_prepare: &pcvs_prepare
   - export CI_PCVS_DIR="$HOME/GL_${CI_PIPELINE_ID}/pcvs_run_$(echo $CI_JOB_NAME | sed "s/ /_/g")/"
-  - mkdir "${CI_PCVS_DIR}"
+  - test -d "${CI_PCVS_DIR}" || mkdir "${CI_PCVS_DIR}"
   - cd "${CI_PCVS_DIR}"
   - echo "PCVS RUN Directory is ${CI_PCVS_DIR}"
   - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
