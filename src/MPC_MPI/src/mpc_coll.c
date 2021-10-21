@@ -1019,7 +1019,7 @@ static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info 
          buf = info->hardware_info_ptr->childs_data_count[i];
        }
 
-       ___collectives_gather_switch(&data_count, 1, MPI_INT, buf, 1, MPI_INT, 0, info->hardware_info_ptr->rootcomm[i], MPC_COLL_TYPE_BLOCKING, NULL, info);
+       _mpc_mpi_config()->coll_algorithm_intracomm.gather(&data_count, 1, MPI_INT, buf, 1, MPI_INT, 0, info->hardware_info_ptr->rootcomm[i], MPC_COLL_TYPE_BLOCKING, NULL, info);
 
        int j;
 
