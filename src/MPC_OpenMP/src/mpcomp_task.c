@@ -957,6 +957,7 @@ __task_ref_parent_task(mpc_omp_task_t * task)
     assert(task);
     assert(task->parent);
     OPA_incr_int(&(task->parent->children_count));
+    __task_ref(task->parent);
 }
 
 static void
@@ -965,6 +966,7 @@ __task_unref_parent_task(mpc_omp_task_t *task)
     assert(task);
     assert(task->parent);
     OPA_decr_int(&(task->parent->children_count));
+    __task_unref(task->parent);
 }
 
 static inline void
@@ -3066,7 +3068,8 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
     if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_DEPEND))
     {
         /* parent task */
-        mpc_omp_task_t * parent = (mpc_omp_task_t *)MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+        mpc_omp_task_t * parent = (mpc_omp_task_t *) MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+        assert(parent == task->parent);
 
         /* if this task has any predecessors/successors constraints, initialize its node */
         if (parent->dep_node.htable == NULL)
