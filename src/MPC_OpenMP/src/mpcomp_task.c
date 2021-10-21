@@ -1092,7 +1092,7 @@ __task_dep_htable_entry_add(mpc_omp_task_dep_htable_t * htable, void * addr)
             entry->out      = NULL;
             entry->ins      = NULL;
             entry->inoutset = NULL;
-            entry->next = htable->entries[hash];
+            entry->next     = htable->entries[hash];
             htable->entries[hash] = entry;
         }
         ++htable->size;
@@ -1140,6 +1140,10 @@ __task_dep_htable_new(mpc_omp_task_dep_hash_func_t hfunc)
 static inline void
 __task_precedence_constraints(mpc_omp_task_t * predecessor, mpc_omp_task_t * successor)
 {
+    /* the 2 tasks must be siblings */
+    assert(predecessor->parent == successor->parent);
+    assert(predecessor->depth == successor->depth);
+
     if (OPA_load_int(&(predecessor->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED)
     {
         MPC_OMP_TASK_LOCK(predecessor);
@@ -1164,6 +1168,7 @@ __task_precedence_constraints(mpc_omp_task_t * predecessor, mpc_omp_task_t * suc
 }
 
 TODO("This can be optimized. But shall we keep the code naive as it is, to keep it readable ?");
+TODO("When a task completes, maybe remove it dependences from its parent htable");
 static void
 __task_process_mpc_dep(
         mpc_omp_task_t * task,
@@ -3352,7 +3357,6 @@ __thread_task_init_initial(mpc_omp_thread_t * thread)
 #else /* MPC_OMP_USE_MCS_LOCK  */
     thread->task_infos.opaque = NULL;
 #endif /* MPC_OMP_USE_MCS_LOCK  */
-
     MPC_OMP_TASK_TRACE_CREATE(initial_task);
     MPC_OMP_TASK_THREAD_SET_CURRENT_TASK(thread, initial_task);
 }
@@ -3406,6 +3410,7 @@ _mpc_omp_task_tree_init(mpc_omp_thread_t * thread)
 # if MPC_OMP_TASK_USE_RECYCLERS
     __thread_task_init_recyclers(thread);
 # endif
+    mpc_omp_task_trace_begin();
     __thread_task_init_initial(thread);
 }
 
@@ -3413,6 +3418,8 @@ static void
 __thread_task_deinit_initial(mpc_omp_thread_t * thread)
 {
     mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
     MPC_OMP_TASK_THREAD_SET_CURRENT_TASK(thread, NULL);
     __task_finalize_deps(task);
     _mpc_omp_task_deinit(task);
@@ -3442,6 +3449,7 @@ _mpc_omp_task_tree_deinit(mpc_omp_thread_t * thread)
 {
     assert(thread);
     __thread_task_deinit_initial(thread);
+    mpc_omp_task_trace_end();
 # if MPC_OMP_TASK_USE_RECYCLERS
     __thread_task_deinit_recyclers(thread);
 # endif /* MPC_OMP_TASK_USE_RECYCLER */

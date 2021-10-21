@@ -27,7 +27,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __MPC_OMP_TASK_PROPERTY_H__ 
+#ifndef __MPC_OMP_TASK_PROPERTY_H__
 # define __MPC_OMP_TASK_PROPERTY_H__
 
 /* MPC_OMP bit flags */

@@ -131,8 +131,14 @@ typedef struct  mpc_omp_task_trace_record_schedule_s
 
 }               mpc_omp_task_trace_record_schedule_t;
 
-/* task creation record is the same as schedule one */
-typedef mpc_omp_task_trace_record_schedule_t mpc_omp_task_trace_record_create_t;
+typedef struct  mpc_omp_task_trace_record_create_s
+{
+    /* inheritance */
+    mpc_omp_task_trace_record_schedule_t parent;
+
+    /* control parent task */
+    int parent_uid;
+}               mpc_omp_task_trace_record_create_t;
 
 typedef struct  mpc_omp_task_trace_record_dependency_s
 {
