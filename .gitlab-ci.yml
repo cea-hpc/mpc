@@ -22,7 +22,7 @@ variables:
   - export CI_PCVS_DIR="$HOME/GL_${CI_PIPELINE_ID}/pcvs_run_$(echo $CI_JOB_NAME | sed "s/ /_/g")/"
   - mkdir "${CI_PCVS_DIR}"
   - cd "${CI_PCVS_DIR}"
-  - echo "PCVS RUN Directory is "${CI_PCVS_DIR}"
+  - echo "PCVS RUN Directory is ${CI_PCVS_DIR}"
   - source $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh
   - echo "SOURCING MPC from $HOME/GL_$CI_PIPELINE_ID/install/mpcvars.sh"
 
