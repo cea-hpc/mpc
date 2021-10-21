@@ -290,24 +290,23 @@ static inline void __coll_algorithm_intracomm_defaults( void )
 {
 	struct _mpc_mpi_config_coll_algorithm_array *coll = &__mpc_mpi_config.coll_algorithm_intracomm;
 
-	snprintf( coll->barrier_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->bcast_name, MPC_CONF_STRING_SIZE, "___collectives_bcast_switch" );
-	//snprintf( coll->bcast_name, MPC_CONF_STRING_SIZE, "_mpc_mpi_collectives_bcast" );
-	snprintf( coll->allgather_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->allgatherv_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->alltoall_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->alltoallv_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->alltoallw_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->gather_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->gatherv_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->scatter_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->scatterv_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->reduce_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->allreduce_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->reduce_scatter_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->reduce_scatter_block_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->scan_name, MPC_CONF_STRING_SIZE, "" );
-	snprintf( coll->exscan_name, MPC_CONF_STRING_SIZE, "" );
+	snprintf( coll->barrier_name              , MPC_CONF_STRING_SIZE, "___collectives_barrier_switch" );
+	snprintf( coll->bcast_name                , MPC_CONF_STRING_SIZE, "___collectives_bcast_switch" );
+	snprintf( coll->allgather_name            , MPC_CONF_STRING_SIZE, "___collectives_allgather_switch" );
+	snprintf( coll->allgatherv_name           , MPC_CONF_STRING_SIZE, "___collectives_allgatherv_switch" );
+	snprintf( coll->alltoall_name             , MPC_CONF_STRING_SIZE, "___collectives_alltoall_switch" );
+	snprintf( coll->alltoallv_name            , MPC_CONF_STRING_SIZE, "___collectives_alltoallv_switch" );
+	snprintf( coll->alltoallw_name            , MPC_CONF_STRING_SIZE, "___collectives_alltoallw_switch" );
+	snprintf( coll->gather_name               , MPC_CONF_STRING_SIZE, "___collectives_gather_switch" );
+	snprintf( coll->gatherv_name              , MPC_CONF_STRING_SIZE, "___collectives_gatherv_switch" );
+	snprintf( coll->scatter_name              , MPC_CONF_STRING_SIZE, "___collectives_scatter_switch" );
+	snprintf( coll->scatterv_name             , MPC_CONF_STRING_SIZE, "___collectives_scatterv_switch" );
+	snprintf( coll->reduce_name               , MPC_CONF_STRING_SIZE, "___collectives_reduce_switch" );
+	snprintf( coll->allreduce_name            , MPC_CONF_STRING_SIZE, "___collectives_allreduce_switch" );
+	snprintf( coll->reduce_scatter_name       , MPC_CONF_STRING_SIZE, "___collectives_reduce_scatter_switch" );
+	snprintf( coll->reduce_scatter_block_name , MPC_CONF_STRING_SIZE, "___collectives_reduce_scatter_block_switch" );
+	snprintf( coll->scan_name                 , MPC_CONF_STRING_SIZE, "___collectives_scan_switch" );
+	snprintf( coll->exscan_name               , MPC_CONF_STRING_SIZE, "___collectives_exscan_switch" );
 }
 
 static inline void __coll_intracomm_shm_defaults( void )
