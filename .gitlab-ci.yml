@@ -15,7 +15,7 @@ variables:
   GIT_DEPTH: 10 # No need to clone the whole history
   GIT_CLONE_PATH: $CI_BUILDS_DIR/$CI_RUNNER_ID/$CI_CONCURRENT_ID/$CI_PROJECT_PATH
   # PCVS CONF
-  PCVS_COMMAND: pcvs run -v -f -p mpc
+  PCVS_COMMAND: pcvs -v run -f -p mpc
 
 
 .pcvs_prepare: &pcvs_prepare
