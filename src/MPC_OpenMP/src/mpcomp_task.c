@@ -63,7 +63,7 @@ __task_reached_thresholds(mpc_omp_task_t * task)
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     assert(thread);
     return (task->depth > mpc_omp_conf_get()->task_depth_threshold
-           || OPA_load_int(&(thread->instance->task_infos.ntasks)) >= mpc_omp_conf_get()->maximum_tasks
+           || OPA_load_int(&(thread->instance->task_infos.ntasks_allocated)) >= mpc_omp_conf_get()->maximum_tasks
            || OPA_load_int(&(thread->instance->task_infos.ntasks_ready)) >= mpc_omp_conf_get()->maximum_ready_tasks);
 }
 
@@ -89,30 +89,6 @@ __instance_decr_ready_tasks(void)
     assert(instance);
 
     OPA_decr_int(&(instance->task_infos.ntasks_ready));
-}
-
-static inline void
-__instance_incr_tasks(void)
-{
-    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
-    assert(thread);
-
-    mpc_omp_instance_t * instance = (mpc_omp_instance_t *) thread->instance;
-    assert(instance);
-
-    OPA_incr_int(&(instance->task_infos.ntasks));
-}
-
-static inline void
-__instance_decr_tasks(void)
-{
-    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
-    assert(thread);
-
-    mpc_omp_instance_t * instance = (mpc_omp_instance_t *) thread->instance;
-    assert(instance);
-
-    OPA_decr_int(&(instance->task_infos.ntasks));
 }
 
 /****************
@@ -969,6 +945,30 @@ __task_unref_parent_task(mpc_omp_task_t *task)
     __task_unref(task->parent);
 }
 
+static void
+__task_ref_parallel_region(void)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+    assert(thread->instance);
+    assert(thread->instance->team);
+
+    mpc_omp_parallel_region_t * region = &(thread->instance->team->info);
+    OPA_incr_int(&(region->task_ref));
+}
+
+static void
+__task_unref_parallel_region(void)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+    assert(thread->instance);
+    assert(thread->instance->team);
+
+    mpc_omp_parallel_region_t * region = &(thread->instance->team->info);
+    OPA_decr_int(&(region->task_ref));
+}
+
 static inline void
 __task_list_elt_delete(mpc_omp_task_dep_list_elt_t * elt)
 {
@@ -1037,7 +1037,7 @@ __task_delete(mpc_omp_task_t * task)
 # endif /* MPC_OMP_TASK_USE_RECYCLERS */
 
     /* decrement number of existing tasks */
-    __instance_decr_tasks();
+    OPA_decr_int(&(thread->instance->task_infos.ntasks_allocated));
 }
 
 /****************
@@ -1469,6 +1469,7 @@ __task_finalize(mpc_omp_task_t * task)
     __task_delete_fiber(task);
 # endif /* MPC_OMP_TASK_COMPILE_FIBER */
     mpc_omp_taskgroup_del_task(task);
+    __task_unref_parallel_region();
     __task_unref_parent_task(task);
     __task_finalize_deps(task);
     __task_unref(task); /* _mpc_omp_task_init */
@@ -2936,19 +2937,20 @@ _mpc_omp_task_allocate(size_t size)
     /* Intialize the OpenMP environnement (if needed) */
     mpc_omp_init();
 
-    /* increment number of existing tasks */
-    __instance_incr_tasks();
-
     /* Retrieve the information (microthread structure and current region) */
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     assert(thread);
     assert(thread->instance);
+
+    /* increment number of existing tasks */
+    OPA_incr_int(&(thread->instance->task_infos.ntasks_allocated));
 
 # if MPC_OMP_TASK_USE_RECYCLERS
     mpc_omp_task_t * task = mpc_common_nrecycler_alloc(&(thread->task_infos.task_recycler), size);
 # else
     mpc_omp_task_t * task = mpc_omp_alloc(size);
 # endif
+
     return task;
 }
 
@@ -3017,6 +3019,7 @@ _mpc_omp_task_init(
 
     /* reference the task */
     _mpc_omp_taskgroup_add_task(task);
+    __task_ref_parallel_region();
     __task_ref_parent_task(task);
     __task_ref(task); /* __task_finalize */
 
@@ -3442,7 +3445,6 @@ _mpc_omp_task_tree_deinit(mpc_omp_thread_t * thread)
 # if MPC_OMP_TASK_USE_RECYCLERS
     __thread_task_deinit_recyclers(thread);
 # endif /* MPC_OMP_TASK_USE_RECYCLER */
-
     // this may not be true since every threads are deinitialized concurrently
     // assert(OPA_load_int(&(thread->instance->task_infos.ntasks)) == 0);
     // assert(OPA_load_int(&(thread->instance->task_infos.ntasks_ready)) == 0);

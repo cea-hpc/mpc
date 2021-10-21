@@ -74,7 +74,7 @@
 # define MPC_OMP_TASK_COMPILE_FIBER 1
 
 /* openmp barrier algorithm */
-# define MPC_OMP_NAIVE_BARRIER      0
+# define MPC_OMP_NAIVE_BARRIER      1
 # define MPC_OMP_TASK_COND_WAIT     0
 
 #if MPC_OMP_TASK_COMPILE_FIBER
@@ -776,7 +776,7 @@ typedef struct  mpc_omp_task_instance_infos_s
     OPA_int_t next_task_uid;
 
     /* number of existing tasks */
-    OPA_int_t ntasks;
+    OPA_int_t ntasks_allocated;
 
     /* number of ready tasks overall */
     OPA_int_t ntasks_ready;
@@ -930,6 +930,9 @@ typedef struct mpc_omp_new_parallel_region_info_s
     int doing_single;
     int in_single;
 #endif /* OMPT_SUPPORT */
+
+    /* number of existing tasks in the region */
+    OPA_int_t task_ref;
 } mpc_omp_parallel_region_t;
 
 static inline void
@@ -972,11 +975,11 @@ typedef struct mpc_omp_team_s
 	volatile long next_ordered_offset;
 	volatile unsigned long long next_ordered_offset_ull;
 	OPA_int_t next_ordered_offset_finalized;
-  
+
 	/* ATOMIC/CRITICAL CONSTRUCT */
   mpc_common_spinlock_t atomic_lock;
   omp_lock_t* critical_lock;
-  
+
 	struct mpc_omp_task_team_infos_s task_infos;
 
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT

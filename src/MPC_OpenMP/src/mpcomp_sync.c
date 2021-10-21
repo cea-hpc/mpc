@@ -440,7 +440,6 @@ void _mpc_omp_single_coherency_end_barrier( void )
 /***********
  * BARRIER *
  ***********/
-
 /*
    OpenMP barrier.
    All threads of the same team must meet.
@@ -474,29 +473,31 @@ mpc_omp_barrier(void)
     _mpc_omp_ompt_callback_sync_region_wait(kind, ompt_scope_begin);
 #endif /* OMPT_SUPPORT */
 
-    /* wait for children tasks to complete */
-    _mpc_omp_task_wait();
-
     /* retrieve mvp */
     mpc_omp_mvp_t * mvp = thread->mvp;
     assert(mvp);
 
     /* retrieve current thread team */
     mpc_omp_team_t * team = thread->instance->team;
+    mpc_omp_parallel_region_t * region = &(team->info);
     int num_threads = team->info.num_threads;
-    if (num_threads > 1)
+    if (num_threads == 1)
     {
+        while (OPA_load_int(&(region->task_ref))) _mpc_omp_task_schedule();
+    }
+    else
+    {
+        assert(num_threads > 1);
 /* naive barrier implementation */
 # if MPC_OMP_NAIVE_BARRIER
 # if MPC_OMP_TASK_COND_WAIT
         pthread_mutex_t * mutex = &(thread->instance->task_infos.work_cond_mutex);
         pthread_cond_t * cond = &(thread->instance->task_infos.work_cond);
 # endif /* MPC_OMP_TASK_COND_WAIT */
-
         int old_version = team->barrier_version;
-
         if (OPA_fetch_and_incr_int(&(team->threads_in_barrier)) == num_threads - 1)
         {
+            while (OPA_load_int(&(region->task_ref))) _mpc_omp_task_schedule();
             OPA_store_int(&(team->threads_in_barrier), 0);
             ++team->barrier_version;
 
@@ -528,6 +529,7 @@ mpc_omp_barrier(void)
 # endif /* MPC_OMP_TASK_COND_WAIT */
             }
         }
+
 /* tree implementation */
 # else /* MPC_OMP_NAIVE_BARRIER */
         mpc_omp_node_t * c = mvp->father;
