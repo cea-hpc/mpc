@@ -136,6 +136,7 @@ __record_sizeof(mpc_omp_task_trace_record_type_t type)
             return sizeof(mpc_omp_task_trace_record_callback_t);
         }
 
+# if MPC_MPI
         case (MPC_OMP_TASK_TRACE_TYPE_SEND):
         {
             return sizeof(mpc_omp_task_trace_record_send_t);
@@ -145,6 +146,7 @@ __record_sizeof(mpc_omp_task_trace_record_type_t type)
         {
             return sizeof(mpc_omp_task_trace_record_recv_t);
         }
+# endif /* MPC_MPI */
 
         default:
         {
