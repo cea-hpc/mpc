@@ -2725,8 +2725,6 @@ __taskyield_return(void)
 static inline void
 __thread_requeue_task(mpc_omp_task_t * task)
 {
-    mpc_omp_thread_t * thread = __thread_task_coherency(NULL);
-
     mpc_omp_task_pqueue_type_t type;
     if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_UNTIED))
     {
@@ -2737,9 +2735,8 @@ __thread_requeue_task(mpc_omp_task_t * task)
         type = MPC_OMP_PQUEUE_TYPE_TIED;
     }
 
-    mpc_omp_task_pqueue_t * pqueue = __thread_get_task_pqueue(thread, type);
+    mpc_omp_task_pqueue_t * pqueue = __thread_get_task_pqueue(task->thread, type);
     assert(pqueue);
-
     __task_pqueue_push(pqueue, task);
 }
 
@@ -2805,7 +2802,7 @@ mpc_omp_task_unblock(mpc_omp_event_handle_t * event)
                 }
                 mpc_common_spinlock_unlock(&(event->lock));
             }
-            /* otherwise, it will be resumed by it suspending threads once ready */
+            /* otherwise, it will be resumed by its suspending thread once ready */
             else
             {
                 /* nothing to do */
