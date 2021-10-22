@@ -83,8 +83,10 @@ typedef enum    mpc_omp_task_trace_record_type_e
     MPC_OMP_TASK_TRACE_TYPE_SCHEDULE,
     MPC_OMP_TASK_TRACE_TYPE_CREATE,
     MPC_OMP_TASK_TRACE_TYPE_CALLBACK,
+# if MPC_MPI
     MPC_OMP_TASK_TRACE_TYPE_SEND,
     MPC_OMP_TASK_TRACE_TYPE_RECV,
+# endif /* MPC_MPI */
     MPC_OMP_TASK_TRACE_TYPE_COUNT
 }               mpc_omp_task_trace_record_type_t;
 
