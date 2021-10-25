@@ -23,7 +23,7 @@
 /* # - TABOADA Hugo hugo.taboada@cea.fr                                   # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* # - Romain PEREIRA <pereirar@r1login.c-inti.ccc.ocre.cea.fr>           # */
+/* # - Romain PEREIRA <pereirar@ocre.cea.fr>                              # */
 /* #                                                                      # */
 /* ######################################################################## */
 
