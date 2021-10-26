@@ -26,7 +26,7 @@
 /* # - Adrien Roussel <adrien.roussel@cea.fr>                             # */
 /* # - Antoine Capra <capra@paratools.com>                                # */
 /* # - Jean-Baptiste Besnard <jbbesnard@paratools.com>                    # */
-/* # - Romain Pereira <pereirar@ocre.cea.fr>                              # */
+/* # - Romain Pereira <romain.pereira@cea.fr>                             # */
 /* #                                                                      # */
 /* ######################################################################## */
 #ifndef __MPC_OMP_OPENMP_THREAD_TLS_H__

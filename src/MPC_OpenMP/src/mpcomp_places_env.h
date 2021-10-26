@@ -26,7 +26,7 @@
 /* # - Antoine Capra <capra@paratools.com>                                # */
 /* # - Jean-Baptiste Besnard <jbbesnard@paratools.com>                    # */
 /* # - Patrick Carribault <patrick.carribault@cea.fr>                     # */
-/* # - Romain Pereira <pereirar@ocre.cea.fr>                              # */
+/* # - Romain Pereira <romain.pereira@cea.fr>                             # */
 /* #                                                                      # */
 /* ######################################################################## */
 #ifndef __MPC_OMP_PLACES_ENV_H__

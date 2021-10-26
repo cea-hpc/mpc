@@ -26,7 +26,7 @@
 /* # - Adrien Roussel <adrien.roussel@cea.fr>                             # */
 /* # - Jean-Baptiste Besnard <jbbesnard@paratools.com>                    # */
 /* # - Julien Adam <adamj@paratools.com>                                  # */
-/* # - Romain Pereira <pereirar@ocre.cea.fr>                              # */
+/* # - Romain Pereira <romain.pereira@cea.fr>                             # */
 /* # - Thomas Dionisi <thomas.dionisi@exascale-computing.eu>              # */
 /* #                                                                      # */
 /* ######################################################################## */

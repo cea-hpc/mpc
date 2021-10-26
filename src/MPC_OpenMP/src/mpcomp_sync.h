@@ -27,7 +27,7 @@
 /* # - Antoine Capra <capra@paratools.com>                                # */
 /* # - Augustin Serraz <augustin.serraz@exascale-computing.eu>            # */
 /* # - Jean-Baptiste Besnard <jbbesnard@paratools.com>                    # */
-/* # - Romain Pereira <pereirar@ocre.cea.fr>                              # */
+/* # - Romain Pereira <romain.pereira@cea.fr>                             # */
 /* # - Sylvain Didelot <sylvain.didelot@exascale-computing.eu>            # */
 /* #                                                                      # */
 /* ######################################################################## */

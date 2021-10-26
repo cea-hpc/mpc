@@ -25,7 +25,7 @@
 /* # Authors:                                                             # */
 /* # - Antoine Capra <capra@paratools.com>                                # */
 /* # - Jean-Baptiste Besnard <jbbesnard@paratools.com>                    # */
-/* # - Romain Pereira <pereirar@ocre.cea.fr>                              # */
+/* # - Romain Pereira <romain.pereira@cea.fr>                             # */
 /* #                                                                      # */
 /* ######################################################################## */
 

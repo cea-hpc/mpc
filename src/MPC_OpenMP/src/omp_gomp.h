@@ -24,7 +24,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* # - Jean-Baptiste Besnard <jbbesnard@paratools.com>                    # */
-/* # - Romain Pereira <pereirar@ocre.cea.fr>                              # */
+/* # - Romain Pereira <romain.pereira@cea.fr>                             # */
 /* #                                                                      # */
 /* ######################################################################## */
 #ifndef OMP_GOMP_H_

@@ -32,7 +32,7 @@
 /* # - Marc Perache <marc.perache@cea.fr>                                 # */
 /* # - Patrick Carribault <patrick.carribault@cea.fr>                     # */
 /* # - Ricardo Bispo vieira <ricardo.bispo-vieira@exascale-computing.eu>  # */
-/* # - Romain Pereira <pereirar@ocre.cea.fr>                              # */
+/* # - Romain Pereira <romain.pereira@cea.fr>                             # */
 /* # - Stephane Bouhrour <stephane.bouhrour@exascale-computing.eu>        # */
 /* # - Thomas Dionisi <thomas.dionisi@exascale-computing.eu>              # */
 /* #                                                                      # */
