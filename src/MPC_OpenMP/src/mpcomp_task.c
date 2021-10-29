@@ -1305,67 +1305,61 @@ __task_process_deps(mpc_omp_task_t * task,
 
     /* compiler dependencies */
     uintptr_t omp_ndeps_tot = depend ? (uintptr_t) depend[0] : 0;
+    uintptr_t omp_ndeps_out = (uintptr_t) depend[1];
 
     /* runtime specific dependencies */
     uintptr_t mpc_ndeps = 0;
-    uintptr_t i, j, k, redundant;
+    uintptr_t i, j;
+    void * addr;
     for (i = 0 ; i < ndependencies ; ++i) mpc_ndeps += dependencies[i].addrs_size;
 
-    /* redundant check */
-    TODO("Redundancy check performances - O(n) with n = number of dependency");
-    size_t size = sizeof(void *) * (omp_ndeps_tot + mpc_ndeps);
-    assert(size);
+    /* total number of dependencies */
+    uintptr_t total_deps = omp_ndeps_tot + mpc_ndeps;
+    assert(total_deps > 0);
 
-    void ** processed = (void **) mpc_omp_alloc(size);
-    assert(processed);
-
-    uintptr_t nprocessed = 0;
-    void * addr;
-
-    if (omp_ndeps_tot)
+    /* if there is more than 1 dependency, perform redundancy checks */
+    if (total_deps > 1)
     {
-        uintptr_t omp_ndeps_out = (uintptr_t) depend[1];
-        for (i = 0; i < omp_ndeps_tot ; i++)
+        mpc_omp_task_deps_redundancy_checker_t * checker = _mpc_omp_task_deps_redundancy_checker_reset(thread, total_deps);
+
+        for (i = 0; i < omp_ndeps_tot ; ++i)
         {
             addr = depend[2 + i];
-            redundant = 0;
-            for (k = 0; k < nprocessed; k++)
+            if (!_mpc_omp_task_deps_redundancy_checker_check(checker, addr))
             {
-                if (processed[k] == addr)
+                mpc_omp_task_dep_type_t type = (i < omp_ndeps_out) ? MPC_OMP_TASK_DEP_OUT : MPC_OMP_TASK_DEP_IN;
+                __task_process_mpc_dep(task, htable, addr, type);
+            }
+        }
+
+        for (i = 0 ; i < ndependencies ; ++i)
+        {
+            mpc_omp_task_dependency_t * dependency = dependencies + i;
+            for (j = 0 ; j < dependency->addrs_size ; ++j)
+            {
+                addr = dependency->addrs[j];
+                if (!_mpc_omp_task_deps_redundancy_checker_check(checker, addr))
                 {
-                    redundant = 1;
-                    break;
+                    __task_process_mpc_dep(task, htable, addr, dependency->type);
                 }
             }
-            if (redundant) continue;
-            processed[nprocessed++] = addr;
+        }
+    }
+    /* otherwise, save few cycles by performing no checks */
+    else
+    {
+        if (omp_ndeps_tot)
+        {
+            addr = depend[2];
             mpc_omp_task_dep_type_t type = (i < omp_ndeps_out) ? MPC_OMP_TASK_DEP_OUT : MPC_OMP_TASK_DEP_IN;
             __task_process_mpc_dep(task, htable, addr, type);
         }
-    }
 
-    for (i = 0 ; i < ndependencies ; ++i)
-    {
-        mpc_omp_task_dependency_t * dependency = dependencies + i;
-        for (j = 0 ; j < dependency->addrs_size ; ++j)
+        if (ndependencies)
         {
-            addr = dependency->addrs[j];
-            redundant = 0;
-            for (k = 0; k < nprocessed; ++k)
-            {
-                if (processed[k] == addr)
-                {
-                    redundant = 1;
-                    break;
-                }
-            }
-            if (redundant) continue ;
-            processed[nprocessed++] = addr;
-            __task_process_mpc_dep(task, htable, addr, dependency->type);
+            __task_process_mpc_dep(task, htable, dependencies->addrs[0], dependencies->type);
         }
     }
-
-    free(processed);
 }
 
 static void
@@ -3407,8 +3401,8 @@ _mpc_omp_task_tree_init(mpc_omp_thread_t * thread)
 # if MPC_OMP_TASK_USE_RECYCLERS
     __thread_task_init_recyclers(thread);
 # endif
-    mpc_omp_task_trace_begin();
     __thread_task_init_initial(thread);
+    _mpc_omp_task_deps_redundancy_checker_init(thread);
 }
 
 static void
@@ -3445,8 +3439,8 @@ void
 _mpc_omp_task_tree_deinit(mpc_omp_thread_t * thread)
 {
     assert(thread);
+    _mpc_omp_task_deps_redundancy_checker_deinit(thread);
     __thread_task_deinit_initial(thread);
-    mpc_omp_task_trace_end();
 # if MPC_OMP_TASK_USE_RECYCLERS
     __thread_task_deinit_recyclers(thread);
 # endif /* MPC_OMP_TASK_USE_RECYCLER */

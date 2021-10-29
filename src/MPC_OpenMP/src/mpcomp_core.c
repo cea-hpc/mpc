@@ -119,6 +119,7 @@ static inline void __omp_conf_set_default(void)
     __omp_conf.task_depth_threshold             = 4;
     __omp_conf.task_use_fiber                   = 1;
     __omp_conf.task_trace                       = 0;
+    __omp_conf.task_deps_hmap_threshold         = 256;  // TODO : evaluate and optimize this default value
     __omp_conf.task_yield_mode                  = MPC_OMP_TASK_YIELD_MODE_NOOP;
     __omp_conf.task_priority_policy             = MPC_OMP_TASK_PRIORITY_POLICY_ZERO;
     __omp_conf.task_priority_propagation_policy = MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_NOOP;
@@ -165,6 +166,7 @@ static inline void __omp_conf_init(void)
             PARAM("fiber",                      &__omp_conf.task_use_fiber,                     MPC_CONF_BOOL,  "Enable task fiber"),
             PARAM("trace",                      &__omp_conf.task_trace,                         MPC_CONF_BOOL,  "Enable task tracing"),
             PARAM("prioritypolicy",             &__omp_conf.task_priority_policy,               MPC_CONF_INT,   "Task priority policy"),
+            PARAM("taskdepshmapthreshold",      &__omp_conf.task_deps_hmap_threshold,           MPC_CONF_INT,   "Number of dependencies threshold before using a hashmap to detect task dependency redundancy instead of an array-list"),
             PARAM("propagationpolicy",          &__omp_conf.task_priority_propagation_policy,   MPC_CONF_INT,   "Task priority propagation policy"),
             PARAM("listpolicy",                 &__omp_conf.task_list_policy,                   MPC_CONF_INT,   "Task list policy"),
             // TODO("yieldmode -> replace with a string and parse it");

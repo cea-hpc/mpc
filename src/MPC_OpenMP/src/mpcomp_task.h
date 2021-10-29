@@ -35,7 +35,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __MPC_OMP_TASK_H__ 
+#ifndef __MPC_OMP_TASK_H__
 # define __MPC_OMP_TASK_H__
 
 # include "mpcomp_types.h"

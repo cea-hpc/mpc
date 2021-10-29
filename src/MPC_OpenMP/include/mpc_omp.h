@@ -140,12 +140,12 @@ extern "C" {
 
     /**
      * `pragma omp callback [when(indicator)] [repeat(when)]`
-     * 
+     *
      *  A **callback** region defines a routine that is executed by the runtime.
-     * 
+     *
      *  The **when** clause defines when the region should be executed (see `mpc_omp_callback_when`)
      *  Default value is `MPC_OMP_CALLBACK_SCHEDULER_FAMINE`.
-     * 
+     *
      * The **repeat** clause defines how many times should the region run.
      *     - `repeat(until: event-handle)` will make the region run as long
      *      as the event represented by `event-handle` is not fullfiled.

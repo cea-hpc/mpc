@@ -55,6 +55,7 @@
 
 #include "mpc_common_recycler.h"
 #include "mpc_omp_task_trace.h"
+#include "mpcomp_task_deps_redundancy_checker.h"
 
 #define MPC_OMP_USE_INTEL_ABI 1
 # ifdef MPC_OMP_USE_INTEL_ABI
@@ -749,6 +750,14 @@ typedef struct  mpc_omp_task_thread_infos_s
         mpc_omp_task_dependency_t * dependencies;
         unsigned int ndependencies;
     } incoming;
+
+    /* task dependency redundancy checkers */
+    struct
+    {
+        mpc_omp_task_deps_redundancy_checker_list_t list;
+        mpc_omp_task_deps_redundancy_checker_hmap_t hmap;
+    }
+    deps_redundancy_checkers;
 
 # if MPC_OMP_TASK_COMPILE_TRACE
     mpc_omp_thread_task_trace_infos_t tracer;
