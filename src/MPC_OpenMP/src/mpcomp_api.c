@@ -503,3 +503,8 @@ mpc_omp_task_dependencies(mpc_omp_task_dependency_t * dependencies, unsigned int
     thread->task_infos.incoming.dependencies = dependencies;
     thread->task_infos.incoming.ndependencies = n;
 }
+
+void mpc_omp_task_deps_hmap_threshold(unsigned int threshold)
+{
+    mpc_omp_conf_get()->task_deps_hmap_threshold = threshold;
+}

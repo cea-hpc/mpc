@@ -47,8 +47,9 @@
 
 #include "mpcomp_core.h"
 #include "mpcomp_tree.h"
-
 #include "omp_gomp_constants.h"
+
+#include "uthash.h"
 
 /************************
  * OMP INSTANCE RELATED
@@ -1064,79 +1065,6 @@ __task_list_elt_new(mpc_omp_task_dep_list_elt_t * list, mpc_omp_task_t * task)
     return new_node;
 }
 
-static mpc_omp_task_dep_htable_entry_t *
-__task_dep_htable_entry_add(mpc_omp_task_dep_htable_t * htable, void * addr)
-{
-    mpc_omp_task_dep_htable_entry_t * entry;
-
-    mpc_common_spinlock_lock(&(htable->lock));
-    {
-        const uint32_t hash = htable->hfunc((uint64_t)addr) % htable->capacity;
-        entry = htable->entries[hash];
-        while (entry)
-        {
-            if (entry->key == (uint64_t)addr)
-            {
-                break ;
-            }
-            entry = entry->next;
-        }
-
-        /* Allocation */
-        TODO("use a recycler for mpc_omp_task_dep_htable_entry_t");
-        if (entry == NULL)
-        {
-            entry = (mpc_omp_task_dep_htable_entry_t *)mpc_omp_alloc(sizeof(mpc_omp_task_dep_htable_entry_t));
-            assert(entry);
-            entry->key = (uint64_t) addr;
-            entry->out      = NULL;
-            entry->ins      = NULL;
-            entry->inoutset = NULL;
-            entry->next     = htable->entries[hash];
-            htable->entries[hash] = entry;
-        }
-        ++htable->size;
-    }
-    mpc_common_spinlock_unlock(&(htable->lock));
-
-    return entry;
-}
-
-static void
-__task_dep_htable_delete(mpc_omp_task_dep_htable_t * htable)
-{
-    unsigned int i;
-    for (i = 0; htable && i < htable->capacity; ++i)
-    {
-        mpc_omp_task_dep_htable_entry_t * entry = htable->entries[i];
-        while (entry)
-        {
-            mpc_omp_task_dep_htable_entry_t * next = entry->next;
-            if (entry->out)         __task_unref(entry->out);
-            if (entry->ins)         __task_list_delete(entry->ins);
-            if (entry->inoutset)    __task_list_delete(entry->inoutset);
-            mpc_omp_free(entry);
-            entry = next;
-        }
-    }
-    mpc_omp_free(htable);
-}
-
-static mpc_omp_task_dep_htable_t *
-__task_dep_htable_new(mpc_omp_task_dep_hash_func_t hfunc)
-{
-    assert(hfunc);
-
-    mpc_omp_task_dep_htable_t * htable = (mpc_omp_task_dep_htable_t *) mpc_omp_alloc(sizeof(mpc_omp_task_dep_htable_t));
-    htable->hfunc       = hfunc;
-    htable->size        = 0;
-    htable->capacity    = MPC_OMP_TASK_DEP_HTABLE_CAPACITY;
-    mpc_common_spinlock_init(&(htable->lock), 0);
-    memset(htable->entries, 0, sizeof(htable->entries));
-
-    return htable;
-}
-
 static inline void
 __task_precedence_constraints(mpc_omp_task_t * predecessor, mpc_omp_task_t * successor)
 {
@@ -1172,12 +1100,23 @@ TODO("When a task completes, maybe remove it dependences from its parent htable"
 static void
 __task_process_mpc_dep(
         mpc_omp_task_t * task,
-        mpc_omp_task_dep_htable_t * htable,
         void * addr,
         mpc_omp_task_dep_type_t type)
 {
-    /* retrieve parent's data dependency entry, or generate a new one for this data */
-    mpc_omp_task_dep_htable_entry_t * entry = __task_dep_htable_entry_add(htable, addr);
+    /* retrieve dependencies for the given address, or generate a new one */
+    mpc_omp_task_dep_htable_entry_t * entry;
+    HASH_FIND_PTR(task->parent->dep_node.hmap, &addr, entry);
+    TODO("use a recycler for mpc_omp_task_dep_htable_entry_t");
+    if (entry == NULL)
+    {
+        entry = (mpc_omp_task_dep_htable_entry_t *)mpc_omp_alloc(sizeof(mpc_omp_task_dep_htable_entry_t));
+        assert(entry);
+        entry->addr     = addr;
+        entry->out      = NULL;
+        entry->ins      = NULL;
+        entry->inoutset = NULL;
+        HASH_ADD_PTR(task->parent->dep_node.hmap, addr, entry);
+    }
     assert(entry);
 
     /* case 1.1 - the generated task is dependant of previous 'in' */
@@ -1276,16 +1215,12 @@ __task_process_mpc_dep(
 
 /**
  * @param task - the task
- * @param htable - task's parent htable, to retrieve previous data dependencies
  * @param depend - gomp formatted 'depend' array
  */
 static void
-__task_process_deps(mpc_omp_task_t * task,
-        mpc_omp_task_dep_htable_t * htable,
-        void ** depend)
+__task_process_deps(mpc_omp_task_t * task, void ** depend)
 {
     assert(task);
-    assert(htable);
 
     /* retrieve threads */
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
@@ -1328,7 +1263,7 @@ __task_process_deps(mpc_omp_task_t * task,
             if (!_mpc_omp_task_deps_redundancy_checker_check(checker, addr))
             {
                 mpc_omp_task_dep_type_t type = (i < omp_ndeps_out) ? MPC_OMP_TASK_DEP_OUT : MPC_OMP_TASK_DEP_IN;
-                __task_process_mpc_dep(task, htable, addr, type);
+                __task_process_mpc_dep(task, addr, type);
             }
         }
 
@@ -1340,7 +1275,7 @@ __task_process_deps(mpc_omp_task_t * task,
                 addr = dependency->addrs[j];
                 if (!_mpc_omp_task_deps_redundancy_checker_check(checker, addr))
                 {
-                    __task_process_mpc_dep(task, htable, addr, dependency->type);
+                    __task_process_mpc_dep(task, addr, dependency->type);
                 }
             }
         }
@@ -1352,12 +1287,12 @@ __task_process_deps(mpc_omp_task_t * task,
         {
             addr = depend[2];
             mpc_omp_task_dep_type_t type = (i < omp_ndeps_out) ? MPC_OMP_TASK_DEP_OUT : MPC_OMP_TASK_DEP_IN;
-            __task_process_mpc_dep(task, htable, addr, type);
+            __task_process_mpc_dep(task, addr, type);
         }
 
         if (ndependencies)
         {
-            __task_process_mpc_dep(task, htable, dependencies->addrs[0], dependencies->type);
+            __task_process_mpc_dep(task, dependencies->addrs[0], dependencies->type);
         }
     }
 }
@@ -1418,7 +1353,19 @@ __task_finalize_deps(mpc_omp_task_t * task)
 {
     assert(task);
 
-    if (task->dep_node.htable) __task_dep_htable_delete(task->dep_node.htable);
+    /* clean data dependency hmap */
+    mpc_omp_task_dep_htable_entry_t * entry, * tmp;
+    HASH_ITER(hh, task->dep_node.hmap, entry, tmp)
+    {
+        if (entry->out)         __task_unref(entry->out);
+        if (entry->ins)         __task_list_delete(entry->ins);
+        if (entry->inoutset)    __task_list_delete(entry->inoutset);
+        HASH_DEL(task->dep_node.hmap, entry);
+        free(entry);
+    }
+    HASH_CLEAR(hh, task->dep_node.hmap);
+
+    /* if the task has no dependencies, there is no successors to release, return now */
     if (!mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_DEPEND)) return ;
 
     MPC_OMP_TASK_LOCK(task);
@@ -3066,18 +3013,8 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
 
     if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_DEPEND))
     {
-        /* parent task */
-        mpc_omp_task_t * parent = (mpc_omp_task_t *) MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
-        assert(parent == task->parent);
-
-        /* if this task has any predecessors/successors constraints, initialize its node */
-        if (parent->dep_node.htable == NULL)
-        {
-            parent->dep_node.htable = __task_dep_htable_new(__task_dep_hash);
-            assert(parent->dep_node.htable);
-        }
-
         /* parse dependencies */
+        task->dep_node.hmap = NULL;
         mpc_common_spinlock_init(&(task->lock), 0);
         task->dep_node.successors = NULL;
         OPA_store_int(&(task->dep_node.nsuccessors), 0);
@@ -3086,7 +3023,7 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
         OPA_store_int(&(task->dep_node.ref_predecessors), 0);
         task->dep_node.top_level = 0;
         OPA_store_int(&(task->dep_node.status), MPC_OMP_TASK_STATUS_INITIALIZING);
-        __task_process_deps(task, parent->dep_node.htable, depend);
+        __task_process_deps(task, depend);
         OPA_store_int(&(task->dep_node.status), MPC_OMP_TASK_STATUS_NOT_READY);
     }
 

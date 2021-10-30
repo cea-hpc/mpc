@@ -200,6 +200,9 @@ extern "C" {
     /* return true if the thread is currently within an omp task */
     int mpc_omp_in_explicit_task(void);
 
+    /* modify thresholds at run-time */
+    void mpc_omp_task_deps_hmap_threshold(unsigned int threshold);
+
 #ifdef __cplusplus
 }
 #endif

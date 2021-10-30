@@ -470,10 +470,32 @@ typedef struct  mpc_omp_task_fiber_s
 struct mpcomp_task_list;
 struct mpcomp_task_pqueue_s;
 
+/* hash table entry,
+ * note that collisions handle could be optimized
+ * by using a tree structure, ordered by the 'addr' value */
+typedef struct  mpc_omp_task_dep_htable_entry_s
+{
+    /* the data dependnecy address */
+    void * addr;
+
+    /* last 'out' or 'inout' task for this key */
+    struct mpc_omp_task_s * out;
+
+    /* list of last 'in' tasks for this key */
+    mpc_omp_task_dep_list_elt_t * ins;
+
+    /* list of last 'inoutset' tasks for this key */
+    mpc_omp_task_dep_list_elt_t * inoutset;
+
+    /* the hmap handle */
+    UT_hash_handle hh;
+}               mpc_omp_task_dep_htable_entry_t;
+
+
 typedef struct  mpc_omp_task_dep_node_s
 {
     /* hash table for child tasks dependencies */
-    struct mpc_omp_task_dep_htable_s * htable;
+    mpc_omp_task_dep_htable_entry_t * hmap;
 
     /* lists */
     struct mpc_omp_task_list_elt_s * successors;
@@ -500,48 +522,6 @@ typedef struct  mpc_omp_task_dep_node_s
 #endif /* OMPT_SUPPORT */
 
 }               mpc_omp_task_dep_node_t;
-
-/* hash table entry, note that this could be optimized by using a tree structure
- * ordered by the 'key' value */
-typedef struct  mpc_omp_task_dep_htable_entry_s
-{
-    /* the key */
-    uint64_t key;
-
-    /* the next entry of the same hash */
-    struct mpc_omp_task_dep_htable_entry_s * next;
-
-    /* last 'out' or 'inout' task for this key */
-    struct mpc_omp_task_s * out;
-
-    /* list of last 'in' tasks for this key */
-    mpc_omp_task_dep_list_elt_t * ins;
-
-    /* list of last 'inoutset' tasks for this key */
-    mpc_omp_task_dep_list_elt_t * inoutset;
-
-}               mpc_omp_task_dep_htable_entry_t;
-
-# define MPC_OMP_TASK_DEP_HTABLE_CAPACITY    1001   /* 7 * 11 * 13 */
-
-typedef struct  mpc_omp_task_dep_htable_s
-{
-    /* lock */
-    mpc_common_spinlock_t lock;
-
-    /* hash function, must return an int x so that 0 <= x < capacity */
-    mpc_omp_task_dep_hash_func_t hfunc;
-
-    /* htable capacity storage */
-    uint32_t capacity;
-
-    /* number of inserted elements */
-    uint32_t size;
-
-    /* entries */
-    mpc_omp_task_dep_htable_entry_t * entries[MPC_OMP_TASK_DEP_HTABLE_CAPACITY];
-
-}               mpc_omp_task_dep_htable_t;
 
 /** OpenMP task data structure */
 typedef struct  mpc_omp_task_s
