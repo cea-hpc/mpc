@@ -55,7 +55,6 @@
 
 #include "mpc_common_recycler.h"
 #include "mpc_omp_task_trace.h"
-#include "mpcomp_task_deps_redundancy_checker.h"
 
 #define MPC_OMP_USE_INTEL_ABI 1
 # ifdef MPC_OMP_USE_INTEL_ABI
@@ -63,6 +62,15 @@
 # endif /* MPC_OMP_USE_INTEL_ABI */
 
 #include "omp_gomp_constants.h"
+
+/* uthash implementations */
+
+/*
+# define HASH_FUNCTION(keyptr, keylen, hashv)    do { \
+                                                        hashv = (uintptr_t) keyptr; \
+                                                    } while(0)
+*/
+#include "uthash.h"
 
 /*******************
  * OMP DEFINITIONS *
@@ -450,10 +458,29 @@ struct mpc_omp_task_dep_node_s;
  */
 typedef uint32_t (*mpc_omp_task_dep_hash_func_t)(uintptr_t);
 
+/* mpc_omp_task_t successors and predecessors lists */
 typedef struct mpc_omp_task_list_elt_s
 {
     struct mpc_omp_task_s           * task;
     struct mpc_omp_task_list_elt_s  * next;
+}               mpc_omp_task_list_elt_t;
+
+/* in, out, inoutset list element */
+typedef struct mpc_omp_task_dep_list_elt_s
+{
+    /* the task for this dependency node */
+    struct mpc_omp_task_s * task;
+
+    /* the hmap entry in which this node is inserted */
+    struct mpc_omp_task_dep_htable_entry_s * entry;
+
+    /* next and previous elements in the list of the hmap entry */
+    struct mpc_omp_task_dep_list_elt_s * next;
+    struct mpc_omp_task_dep_list_elt_s * prev;
+
+    /* the task allocated dependency elements, to be free-ed on task completion */
+    struct mpc_omp_task_dep_list_elt_s * task_next;
+    struct mpc_omp_task_dep_list_elt_s * task_prev;
 }               mpc_omp_task_dep_list_elt_t;
 
 /** Task context structure */
@@ -475,17 +502,21 @@ struct mpcomp_task_pqueue_s;
  * by using a tree structure, ordered by the 'addr' value */
 typedef struct  mpc_omp_task_dep_htable_entry_s
 {
-    /* the data dependnecy address */
+    /* address for the dependency */
     void * addr;
 
     /* last 'out' or 'inout' task for this key */
-    struct mpc_omp_task_s * out;
+    mpc_omp_task_dep_list_elt_t * out;
 
     /* list of last 'in' tasks for this key */
     mpc_omp_task_dep_list_elt_t * ins;
 
     /* list of last 'inoutset' tasks for this key */
     mpc_omp_task_dep_list_elt_t * inoutset;
+
+    /* the last task that had a dependency for this address
+     * (used for redundancy check) */
+    int task_uid;
 
     /* the hmap handle */
     UT_hash_handle hh;
@@ -496,6 +527,9 @@ typedef struct  mpc_omp_task_dep_node_s
 {
     /* hash table for child tasks dependencies */
     mpc_omp_task_dep_htable_entry_t * hmap;
+
+    /* hmap lock */
+    mpc_common_spinlock_t hmap_lock;
 
     /* lists */
     struct mpc_omp_task_list_elt_s * successors;
@@ -515,6 +549,10 @@ typedef struct  mpc_omp_task_dep_node_s
 
     /* status */
     OPA_int_t status;
+
+    /* entries in the parent hash map for dependencies */
+    mpc_omp_task_dep_list_elt_t * dep_list;
+    unsigned int dep_list_size;
 
 #if OMPT_SUPPORT
     /* Task dependences record */
@@ -716,7 +754,6 @@ typedef struct  mpc_omp_task_thread_infos_s
 
 # if MPC_OMP_TASK_USE_RECYCLERS
     mpc_common_nrecycler_t task_recycler;   /* Recycler for mpc_omp_task_t and its data */
-    mpc_common_recycler_t list_recycler;    /* Recycler for mpc_omp_task_dep_list_elt_t */
 #  if MPC_OMP_TASK_COMPILE_FIBER
     mpc_common_recycler_t  fiber_recycler;  /* Recycler for mpc_omp_task_fiber_t */
 #  endif /* MPC_OMP_TASK_COMPILE_FIBER */
@@ -730,14 +767,6 @@ typedef struct  mpc_omp_task_thread_infos_s
         mpc_omp_task_dependency_t * dependencies;
         unsigned int ndependencies;
     } incoming;
-
-    /* task dependency redundancy checkers */
-    struct
-    {
-        mpc_omp_task_deps_redundancy_checker_list_t list;
-        mpc_omp_task_deps_redundancy_checker_hmap_t hmap;
-    }
-    deps_redundancy_checkers;
 
 # if MPC_OMP_TASK_COMPILE_TRACE
     mpc_omp_thread_task_trace_infos_t tracer;
