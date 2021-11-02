@@ -64,13 +64,14 @@
 #include "omp_gomp_constants.h"
 
 /* uthash implementations */
-
-/*
-# define HASH_FUNCTION(keyptr, keylen, hashv)    do { \
-                                                        hashv = (uintptr_t) keyptr; \
+# ifndef HASH_FUNCTION
+#  define HASH_FUNCTION(keyptr, keylen, hashv)    do { \
+                                                        hashv = (uintptr_t) (*keyptr) / sizeof(void *); \
                                                     } while(0)
-*/
-#include "uthash.h"
+# pragma message("defined hash function")
+#  include "uthash.h"
+# endif
+
 
 /*******************
  * OMP DEFINITIONS *
@@ -515,6 +516,9 @@ typedef struct  mpc_omp_task_dep_htable_entry_s
     /* list of last 'inoutset' tasks for this key */
     mpc_omp_task_dep_list_elt_t * inoutset;
 
+    /* the lock to access lists */
+    mpc_common_spinlock_t lock;
+
     /* the last task that had a dependency for this address
      * (used for redundancy check) */
     int task_uid;
@@ -528,9 +532,6 @@ typedef struct  mpc_omp_task_dep_node_s
 {
     /* hash table for child tasks dependencies */
     mpc_omp_task_dep_htable_entry_t * hmap;
-
-    /* hmap lock */
-    mpc_common_spinlock_t hmap_lock;
 
     /* lists */
     struct mpc_omp_task_list_elt_s * successors;
