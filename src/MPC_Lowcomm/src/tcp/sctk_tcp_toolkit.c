@@ -358,7 +358,14 @@ void tcp_on_demand_connection_handler(sctk_rail_info_t *rail, mpc_lowcomm_peer_u
 																	   rail->network.tcp.connection_infos,
 																	   &ret);
 
-	if(ret != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
+	if(!resp)
+	{
+		mpc_common_debug_fatal("Could not connect to UID %lu (timeout)", dest_process);
+	}
+
+	mpc_lowcomm_monitor_args_t *content = mpc_lowcomm_monitor_response_get_content(resp);
+
+	if(content->on_demand.retcode != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
 	{
 		mpc_common_debug_fatal("Could not connect to UID %lu", dest_process);
 	}

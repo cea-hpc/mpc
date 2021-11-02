@@ -40,11 +40,12 @@ int _mpc_lowcomm_monitor_wrap_free(_mpc_lowcomm_monitor_wrap_t *wr)
 char * _mpc_lowcomm_monitor_wrap_debug(_mpc_lowcomm_monitor_wrap_t * cmd, char *state, char * buffer, int len)
 {
 	char meb[32], fromb[32], tob[32];
-	snprintf(buffer, len,"%s [%s] COMMAND %s from %s to %s",mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), meb, 32),
+	snprintf(buffer, len,"%s [%s] COMMAND %s from %s to %s (IDX %lu)",mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), meb, 32),
 																				state,
 																				mpc_lowcomm_monitor_command_tostring(cmd->command),
 																				mpc_lowcomm_peer_format_r(cmd->from, fromb, 32),
-																				mpc_lowcomm_peer_format_r(cmd->dest, tob, 32) );
+																				mpc_lowcomm_peer_format_r(cmd->dest, tob, 32),
+																				cmd->match_key );
 
 	return buffer;
 }

@@ -848,17 +848,21 @@ static void *__per_client_loop(void *pctx)
 			break;
 		}
 
-#ifdef MONITOR_DEBUG
-		_mpc_lowcomm_monitor_wrap_print(query, "INCOMING QUERY");
-#endif
 
 		/* Check if we are the dest or if we are routing */
 		if(_mpc_lowcomm_peer_is_local(query->dest) )
 		{
+#ifdef MONITOR_DEBUG
+		_mpc_lowcomm_monitor_wrap_print(query, "INCOMING QUERY");
+#endif
 			__monitor_worker_work_push(ctx, query);
 		}
 		else
 		{
+#ifdef MONITOR_DEBUG
+			_mpc_lowcomm_monitor_wrap_print(query, "ROUTED QUERY");
+#endif
+
 			/* We need to route */
 			mpc_lowcomm_monitor_retcode_t route_ret;
 			if(_mpc_lowcomm_monitor_command_send(query, &route_ret) < 0)
@@ -1985,10 +1989,8 @@ static inline _mpc_lowcomm_monitor_wrap_t * __generate_ping_cmd(mpc_lowcomm_peer
 	{
 		cmd->content->ping.retcode = MPC_LOWCOMM_MONITOR_RET_INVALID_UID;
 	}
-	else
-	{
-		cmd->content->ping.ping = time(NULL);
-	}
+
+	cmd->content->ping.ping = time(NULL);
 
 	return cmd;
 }
@@ -2190,12 +2192,10 @@ static inline _mpc_lowcomm_monitor_wrap_t * __generate_comm_info_cmd(mpc_lowcomm
 	{
 		cmd->content->comm_info.retcode = MPC_LOWCOMM_MONITOR_RET_INVALID_UID;
 	}
-	else
-	{
-		cmd->content->comm_info.id = target_id;
-		cmd->content->comm_info.size = size;
-		cmd->content->comm_info.retcode = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
-	}
+
+	cmd->content->comm_info.id = target_id;
+	cmd->content->comm_info.size = size;
+	cmd->content->comm_info.retcode = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 
 	return cmd;
 }
@@ -2286,14 +2286,12 @@ static inline _mpc_lowcomm_monitor_wrap_t * __generate_ondemand_cmd(mpc_lowcomm_
 
 	if(!rpeer)
 	{
+		/* Peer is not known locally inform of possibly invalid UID */
 		cmd->content->on_demand.retcode = MPC_LOWCOMM_MONITOR_RET_INVALID_UID;
 	}
-	else
-	{
-		snprintf(cmd->content->on_demand.target, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, target);
-		snprintf(cmd->content->on_demand.data, MPC_LOWCOMM_ONDEMAND_DATA_LEN, data);
 
-	}
+	snprintf(cmd->content->on_demand.target, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, target);
+	snprintf(cmd->content->on_demand.data, MPC_LOWCOMM_ONDEMAND_DATA_LEN, data);
 
 	return cmd;
 }
@@ -2305,11 +2303,12 @@ mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_ondemand(mpc_lowcomm_peer_uid
 															mpc_lowcomm_monitor_retcode_t *ret)
 {
 	assume( mpc_lowcomm_peer_get_set(dest) != 0);
-#ifdef MONITOR_DEBUG
-	mpc_common_debug_error("Sending OD on CPLANE for %s", mpc_lowcomm_peer_format(dest));
-#endif
 
 	_mpc_lowcomm_monitor_wrap_t * cmd = __generate_ondemand_cmd(dest, target, data, 0);
+
+#ifdef MONITOR_DEBUG
+	mpc_common_debug_error("Sending OD on CPLANE for net %s for %s (IDX: %llu)", target, mpc_lowcomm_peer_format(dest), cmd->match_key);
+#endif
 
 	if(_mpc_lowcomm_monitor_command_send(cmd, ret) < 0)
 	{
@@ -2346,6 +2345,7 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_process_ondemand(mpc_l
 
 	if(!cb)
 	{
+		mpc_common_debug_error("No CB for %s (IDX %llu)", ondemand->on_demand.target, response_index);
 		resp->content->on_demand.retcode = MPC_LOWCOMM_MONITOR_RET_ERROR;
 	}
 	else
@@ -2502,11 +2502,9 @@ static inline _mpc_lowcomm_monitor_wrap_t *__generate_peer_decription(mpc_lowcom
 	{
 		cmd->content->peer.retcode = MPC_LOWCOMM_MONITOR_RET_INVALID_UID;
 	}
-	else
-	{
-		cmd->content->peer.retcode = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
-		memcpy(&cmd->content->peer.info, &rpeer->infos, sizeof(mpc_lowcomm_monitor_peer_info_t) );
-	}
+
+	cmd->content->peer.retcode = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
+	memcpy(&cmd->content->peer.info, &rpeer->infos, sizeof(mpc_lowcomm_monitor_peer_info_t) );
 
 	return cmd;
 }
