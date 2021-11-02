@@ -481,6 +481,7 @@ typedef struct mpc_omp_task_dep_list_elt_s
     /* the task allocated dependency elements, to be free-ed on task completion */
     struct mpc_omp_task_dep_list_elt_s * task_next;
     struct mpc_omp_task_dep_list_elt_s * task_prev;
+
 }               mpc_omp_task_dep_list_elt_t;
 
 /** Task context structure */
