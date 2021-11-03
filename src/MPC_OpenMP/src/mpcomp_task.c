@@ -1133,9 +1133,9 @@ __task_delete_dependencies_hmap(mpc_omp_task_t * task)
         mpc_omp_task_dep_htable_entry_t * entry, * tmp;
         HASH_ITER(hh, task->dep_node.hmap, entry, tmp)
         {
-            if (entry->out)         __task_entry_dep_list_elt_delete(entry->out);
-            if (entry->ins)         __task_entry_dep_list_delete(entry->ins);
-            if (entry->inoutset)    __task_entry_dep_list_delete(entry->inoutset);
+            assert(!entry->out);
+            assert(!entry->ins);
+            assert(!entry->inoutset);
             HASH_DEL(task->dep_node.hmap, entry);
             mpc_omp_free(entry);
         }
@@ -1194,7 +1194,7 @@ __task_finalize_deps_list(mpc_omp_task_t * task)
 }
 
 /** Note : only 1 thread may run this function for a given `task->parent` */
-    static void
+static void
 __task_process_mpc_dep(
         mpc_omp_task_t * task,
         void * addr,
