@@ -417,7 +417,7 @@ static inline sctk_ptl_id_t __map_id_monitor(sctk_rail_info_t* rail, mpc_lowcomm
 
 	mpc_lowcomm_monitor_args_t * content = mpc_lowcomm_monitor_response_get_content(resp);
 
-	mpc_common_debug_warning("OD got %s", content->on_demand.data);
+	mpc_common_debug("PORTALS OD got %s", content->on_demand.data);
 	sctk_ptl_id_t out_id;
 
 	sctk_ptl_data_deserialize(
@@ -480,7 +480,7 @@ static int __ptl_monitor_callback(mpc_lowcomm_peer_uid_t from,
 	assume(0 < srail->connection_infos_size);
 	assume((int)srail->connection_infos_size < return_data_len);
 
-	mpc_common_debug_warning("OD CB SENDS %s", srail->connection_infos);
+	mpc_common_debug("PORTALS OD CB SENDS %s", srail->connection_infos);
 
 	snprintf(return_data, return_data_len, "%s", srail->connection_infos);
 
@@ -527,15 +527,14 @@ void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, mpc_lowcomm_communicato
  */
 int sctk_ptl_pending_me_probe(sctk_rail_info_t* rail, mpc_lowcomm_ptp_message_header_t* hdr, int probe_level)
 {
-	uint32_t comm = hdr->communicator_id;
 	int rank = hdr->source_task;
 	int tag = hdr->message_tag;
 	int ret = -1;
 
-	mpc_common_nodebug("PROBE: c%d r%d t%d", comm, rank, tag);
+	mpc_common_nodebug("PROBE: c%ld r%d t%d", hdr->communicator_id, rank, tag);
 	
 	sctk_ptl_rail_info_t* prail = &rail->network.ptl;
-	sctk_ptl_pte_t* pte = mpc_common_hashtable_get(&prail->pt_table, (int)((comm + SCTK_PTL_PTE_HIDDEN_NB) % prail->nb_entries));
+	sctk_ptl_pte_t* pte = mpc_common_hashtable_get(&prail->pt_table, (int)((hdr->communicator_id + SCTK_PTL_PTE_HIDDEN_NB) % prail->nb_entries));
 	sctk_ptl_matchbits_t match, ign;
 
 	/* build a temporary ME to match caller criteria */

@@ -165,7 +165,7 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 		/* if the should take '+1' to compensate non-distributed bytes */
 		size_t cur_sz = (chunk < chunk_rest) ? chunk_sz + 1 : chunk_sz;
 
-		mpc_common_debug_warning("GET IS to @ %s", __sctk_ptl_match_str(malloc(32), 32, md_match.raw));
+		mpc_common_debug("GET IS to @ %s", __sctk_ptl_match_str(malloc(32), 32, md_match.raw));
 
 		mpc_common_debug("EMIT GET %d - %d (sz=%d for %d chunks)", cur_off, cur_off + cur_sz, cur_sz, chunk_nb);
 		sctk_ptl_emit_get(
@@ -346,7 +346,7 @@ void sctk_ptl_rdv_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_endp
 		me_flags
 	);
 
-	mpc_common_debug_warning("GET IS @ %s", __sctk_ptl_match_str(malloc(32), 32, me_match.raw));
+	mpc_common_debug("GET IS @ %s", __sctk_ptl_match_str(malloc(32), 32, me_match.raw));
 
 	me_request->msg        = msg;
 	me_request->type       = SCTK_PTL_TYPE_STD;
@@ -438,7 +438,6 @@ void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			break;
 
 		case PTL_EVENT_GET:                  /* a remote process get the data back */
-			mpc_common_debug_warning("REMOTE GOT DATA");
 			cur = OPA_fetch_and_decr_int(&ptr->cnt_frag) - 1;
 			/* fun fact here...
 			 * We set the cnt_frag differently, depending on the number of chunkds :
@@ -486,7 +485,6 @@ void sctk_ptl_rdv_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
 
-		mpc_common_debug_warning("TYPE %d", ev.type);
 
 
 	int cur = 0;
@@ -494,12 +492,10 @@ void sctk_ptl_rdv_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 	{
 		case PTL_EVENT_ACK:   /* a PUT reached a remote process */
 			/* just release the PUT MD, (no memory to free) */
-			mpc_common_debug_warning("PUT REACHED");
 			sctk_ptl_md_release(ptr);
 			break;
 
 		case PTL_EVENT_REPLY: /* a GET operation completed */
-			mpc_common_debug_warning("GET COMPLETED");
 			cur = OPA_fetch_and_decr_int(&ptr->cnt_frag) - 1;
 			if(cur <= 0)
 			{
