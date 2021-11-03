@@ -1078,9 +1078,9 @@ __task_dep_list_append(
     dep->prev   = NULL;
     dep->next   = list;
     if (list) list->prev = dep;
- 
+
     ++task->dep_node.dep_list_size;
-    
+
     return dep;
 }
 
@@ -1441,7 +1441,7 @@ __task_finalize(mpc_omp_task_t * task)
 
     mpc_omp_task_t * parent = task->parent;
     __task_unref(task);                 /* _mpc_omp_task_init */
-    __task_unref_parent_task(parent);   /* _mpc_omp_task_init */ 
+    __task_unref_parent_task(parent);   /* _mpc_omp_task_init */
 }
 
 /* task deletion function, when it is no longer referenced anywhere */
@@ -1460,6 +1460,8 @@ __task_delete(mpc_omp_task_t * task)
      /* Release successors */
      __task_list_delete(task->dep_node.successors);
      task->dep_node.successors = NULL;
+
+    // TODO : MPC_OMP_TASK_TRACE_DELETE(task);
 
 # if MPC_OMP_TASK_USE_RECYCLERS
     mpc_common_nrecycler_recycle(&(thread->task_infos.task_recycler), task, task->size);
@@ -3125,8 +3127,14 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
         task->dep_node.top_level = 0;
         task->dep_node.dep_list = NULL;
         task->dep_node.dep_list_size = 0;
+
+        /* status 'MPC_OMP_TASK_STATUS_INITIALIZING' means this task cannot be queued by its predecessors completion event */
         OPA_store_int(&(task->dep_node.status), MPC_OMP_TASK_STATUS_INITIALIZING);
+
+        /* link task with predecessors, and register dependencies to the hmap */
         __task_process_deps(task, depend);
+
+        /* now this task can be queued */
         OPA_store_int(&(task->dep_node.status), MPC_OMP_TASK_STATUS_NOT_READY);
     }
 

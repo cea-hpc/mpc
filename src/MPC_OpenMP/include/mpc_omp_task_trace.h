@@ -102,6 +102,8 @@ typedef struct  mpc_omp_task_trace_record_s
     mpc_omp_task_trace_record_type_t type;
 }               mpc_omp_task_trace_record_t;
 
+// TODO("optimize records : for instance, label should only be present on CREATE event");
+
 typedef struct  mpc_omp_task_trace_record_schedule_s
 {
     /* inheritance */

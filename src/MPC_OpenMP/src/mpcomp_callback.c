@@ -35,13 +35,25 @@
  * @param callback
  */
 void
-mpc_omp_callback(mpc_omp_callback_t * callback)
+mpc_omp_callback(
+    int (* func)(void * data),
+    void * data,
+    mpc_omp_callback_when_t when,
+    mpc_omp_callback_repeat_t repeat)
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
     assert(thread);
 
     mpc_omp_instance_t * instance = thread->instance;
     assert(instance);
+
+    mpc_omp_callback_t * callback = (mpc_omp_callback_t *) malloc(sizeof(mpc_omp_callback_t));
+    assert(callback);
+
+    callback->func      = func;
+    callback->data      = data;
+    callback->when      = when;
+    callback->repeat    = repeat;
 
     mpc_omp_instance_callback_infos_t * infos = &(instance->callback_infos);
     mpc_common_spinlock_t * lock = &(infos->locks[callback->when]);
@@ -107,14 +119,17 @@ _mpc_omp_callback_run(mpc_omp_callback_when_t when)
                 {
                     infos->callbacks[when] = callback->_next;
                 }
+                mpc_omp_callback_t * next = callback->_next;
+                mpc_omp_free(callback);
+                callback = next;
             }
             else
             {
                 prev = callback;
+                callback = callback->_next;
             }
 
             /* process next callback for this event */
-            callback = callback->_next;
         }
         mpc_common_spinlock_unlock(lock);
     }

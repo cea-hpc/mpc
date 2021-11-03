@@ -139,18 +139,15 @@ ___task_block(int n, MPI_Request * reqs, int * index, MPI_Status * statuses)
     /* progression callback */
     mpc_omp_event_handle_t event;
     mpc_omp_event_handle_init(&event, MPC_OMP_EVENT_TASK_BLOCK);
-
     infos.event = &event;
 
-    mpc_omp_callback_t callback;
-    callback.func      = (int (*)(void *)) __request_progress;
-    callback.data      = &infos;
-    callback.when      = MPC_OMP_CALLBACK_TASK_SCHEDULE_BEFORE;
-    callback.repeat    = MPC_OMP_CALLBACK_REPEAT_RETURN;
-    callback.n         = 0;
-
     /* register the progression callback */
-    mpc_omp_callback(&callback);
+    mpc_omp_callback(
+        (int (*)(void *)) __request_progress,
+        &infos,
+        MPC_OMP_CALLBACK_TASK_SCHEDULE_BEFORE,
+        MPC_OMP_CALLBACK_REPEAT_RETURN
+    );
 
     /* block current task until the associated event is fulfilled */
     mpc_omp_task_block(&event);

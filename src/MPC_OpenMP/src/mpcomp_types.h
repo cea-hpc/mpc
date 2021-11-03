@@ -68,7 +68,6 @@
 #  define HASH_FUNCTION(keyptr, keylen, hashv)    do { \
                                                         hashv = (uintptr_t) (*keyptr) / sizeof(void *); \
                                                     } while(0)
-# pragma message("defined hash function")
 #  include "uthash.h"
 # endif
 

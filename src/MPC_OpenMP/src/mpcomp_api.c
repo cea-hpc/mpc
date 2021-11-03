@@ -401,6 +401,10 @@ int mpc_omp_get_num_threads(void) { return omp_get_num_threads(); }
 
 int mpc_omp_get_thread_num(void) { return omp_get_thread_num(); }
 
+/***************************************************************************/
+/* EXTRA CALLS FOR LACKING FEATURES IN GCC, LLVM, or OPENMP SPECIFICATIONS */
+/***************************************************************************/
+
 /**
  * @return true if current task is explicit
  */
@@ -472,10 +476,6 @@ mpc_omp_event_handle_init(mpc_omp_event_handle_t * handle, mpc_omp_event_t type)
         }
     }
 }
-
-/***************************************************************************/
-/* EXTRA CALLS FOR LACKING FEATURES IN GCC, LLVM, or OPENMP SPECIFICATIONS */
-/***************************************************************************/
 
 /** # pragma omp task label("potrf") */
 void
