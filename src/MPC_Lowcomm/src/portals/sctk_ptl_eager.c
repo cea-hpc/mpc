@@ -97,7 +97,18 @@ static inline void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_
 	   we need to rebuild it from the (comm + task_id) infos */
 	mpc_lowcomm_communicator_id_t comm_id = sctk_ptl_pte_idx_to_comm_id(&rail->network.ptl, ev.pt_index);
 	mpc_lowcomm_communicator_t comm = mpc_lowcomm_get_communicator_from_id(comm_id);
-	mpc_lowcomm_peer_uid_t process_uid = mpc_lowcomm_communicator_uid(comm, match.data.rank);
+
+
+
+	int comm_rank = mpc_lowcomm_communicator_rank_of_as(comm,
+							    match.data.rank,
+							    mpc_lowcomm_get_process_rank(),
+	/* WARNING this line breaks portals for INTER process-set but we have no way to guess UID */
+							    mpc_lowcomm_monitor_local_uid_of(match.data.rank)); 
+
+	assert(0 <= comm_rank);
+
+	mpc_lowcomm_peer_uid_t process_uid = mpc_lowcomm_communicator_uid(comm, comm_rank);
 
 	SCTK_MSG_SRC_PROCESS_UID_SET ( net_msg ,  process_uid);
 	SCTK_MSG_SRC_TASK_SET        ( net_msg ,  match.data.rank);
@@ -201,7 +212,6 @@ void sctk_ptl_eager_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_en
 	/* emit the request */
 	sctk_ptl_md_register(srail, request);
 	sctk_ptl_emit_put(request, size, remote, pte, match, 0, 0, hdr.raw, request);
-
 
 	mpc_common_debug("PORTALS: SEND-EAGER to %d (idx=%d, match=%s, sz=%llu)", SCTK_MSG_DEST_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), size);
 }
