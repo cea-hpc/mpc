@@ -207,7 +207,7 @@ static inline void sctk_ptl_rdv_reply_message(sctk_rail_info_t* rail, sctk_ptl_e
 	   we need to rebuild it from the (comm + task_id) infos */
 	mpc_lowcomm_communicator_id_t comm_id = SCTK_MSG_COMMUNICATOR_ID(((mpc_lowcomm_ptp_message_t*)ptr->msg));
 	mpc_lowcomm_communicator_t comm = mpc_lowcomm_get_communicator_from_id(comm_id);
-	mpc_lowcomm_peer_uid_t process_uid = mpc_lowcomm_communicator_uid_for(comm, ptr->match.data.rank);
+	mpc_lowcomm_peer_uid_t process_uid = mpc_lowcomm_communicator_uid(comm, ptr->match.data.rank);
 
 	/* rebuild a complete MPC header msg (inter_thread_comm needs it) */
 	mpc_lowcomm_ptp_message_header_clear(net_msg, MPC_LOWCOMM_MESSAGE_CONTIGUOUS , sctk_ptl_rdv_free_memory, sctk_ptl_rdv_message_copy);

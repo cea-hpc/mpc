@@ -320,7 +320,7 @@ void _mpc_lowcomm_ib_buffered_poll_recv(sctk_rail_info_t *rail, _mpc_lowcomm_ib_
     
     
     mpc_lowcomm_communicator_t comm = mpc_lowcomm_get_communicator_from_id(comm_id);
-    mpc_lowcomm_peer_uid_t src_process = mpc_lowcomm_communicator_uid_for(comm, integer_src_task);
+    mpc_lowcomm_peer_uid_t src_process = mpc_lowcomm_communicator_uid(comm, integer_src_task);
     
     //mpc_common_debug_error("MSG from %d to %d on comm %d src %s", body->header.source, body->header.destination, comm_id, mpc_lowcomm_peer_format(src_process));
     

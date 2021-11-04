@@ -97,7 +97,7 @@ static inline void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_
 	   we need to rebuild it from the (comm + task_id) infos */
 	mpc_lowcomm_communicator_id_t comm_id = sctk_ptl_pte_idx_to_comm_id(&rail->network.ptl, ev.pt_index);
 	mpc_lowcomm_communicator_t comm = mpc_lowcomm_get_communicator_from_id(comm_id);
-	mpc_lowcomm_peer_uid_t process_uid = mpc_lowcomm_communicator_uid_for(comm, match.data.rank);
+	mpc_lowcomm_peer_uid_t process_uid = mpc_lowcomm_communicator_uid(comm, match.data.rank);
 
 	SCTK_MSG_SRC_PROCESS_UID_SET ( net_msg ,  process_uid);
 	SCTK_MSG_SRC_TASK_SET        ( net_msg ,  match.data.rank);

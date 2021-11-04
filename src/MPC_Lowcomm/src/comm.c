@@ -1722,19 +1722,19 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 				{
 					/* If this is a RECV make sure the translation is done on the source according to remote */
 					source_task = mpc_lowcomm_communicator_remote_world_rank(communicator, isource);
-					source_process = mpc_lowcomm_communicator_remote_uid_for(communicator, isource);
+					source_process = mpc_lowcomm_communicator_remote_uid(communicator, isource);
 				}
 				else if(request_type == REQUEST_SEND)
 				{
 					/* If this is a SEND make sure the translation is done on the dest according to remote */
 					source_task = mpc_lowcomm_communicator_world_rank_of(communicator, isource);
-					source_process = mpc_lowcomm_communicator_uid_for(communicator, isource);
+					source_process = mpc_lowcomm_communicator_uid(communicator, isource);
 				}
 			}
 			else
 			{
 				source_task = mpc_lowcomm_communicator_world_rank_of(communicator, isource);
-				source_process = mpc_lowcomm_communicator_uid_for(communicator, isource);
+				source_process = mpc_lowcomm_communicator_uid(communicator, isource);
 			}
 
 		}
@@ -1753,19 +1753,19 @@ void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg,
 			{
 				/* If this is a RECV make sure the translation is done on the source according to remote */
 				dest_task   = mpc_lowcomm_communicator_world_rank_of(communicator, idestination);
-				dest_process = mpc_lowcomm_communicator_uid_for(communicator, idestination);
+				dest_process = mpc_lowcomm_communicator_uid(communicator, idestination);
 			}
 			else if(request_type == REQUEST_SEND)
 			{
 				/* If this is a SEND make sure the translation is done on the dest according to remote */
 				dest_task   = mpc_lowcomm_communicator_remote_world_rank(communicator, idestination);
-				dest_process = mpc_lowcomm_communicator_remote_uid_for(communicator, idestination);
+				dest_process = mpc_lowcomm_communicator_remote_uid(communicator, idestination);
 			}
 		}
 		else
 		{
 			dest_task = mpc_lowcomm_communicator_world_rank_of(communicator, idestination);
-			dest_process = mpc_lowcomm_communicator_uid_for(communicator, idestination);
+			dest_process = mpc_lowcomm_communicator_uid(communicator, idestination);
 		}
 
 		assert(source_process != 0);

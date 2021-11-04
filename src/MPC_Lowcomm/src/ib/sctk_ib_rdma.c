@@ -479,7 +479,7 @@ _mpc_lowcomm_ib_rdma_rendezvous_recv_req(sctk_rail_info_t *rail, _mpc_lowcomm_ib
 	
         mpc_lowcomm_communicator_id_t comm_id = SCTK_MSG_COMMUNICATOR_ID(msg);
         mpc_lowcomm_communicator_t comm = mpc_lowcomm_get_communicator_from_id(comm_id);
-        mpc_lowcomm_peer_uid_t src_process = mpc_lowcomm_communicator_uid_for(comm, integer_src_task);
+        mpc_lowcomm_peer_uid_t src_process = mpc_lowcomm_communicator_uid(comm, integer_src_task);
         
         _mpc_lowcomm_endpoint_t *route;
 		src_process = msg->body.header.source;

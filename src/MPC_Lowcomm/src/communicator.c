@@ -1479,18 +1479,6 @@ int mpc_lowcomm_communicator_local_lead(mpc_lowcomm_communicator_t comm)
 }
 
 
-mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_uid(const mpc_lowcomm_communicator_t comm, int rank)
-{
-	assert(0 <= rank);
-	assert(comm != NULL);
-
-	mpc_lowcomm_communicator_t tcomm = mpc_lowcomm_communicator_get_local(comm);
-
-	assert(tcomm != NULL);
-
-	return mpc_lowcomm_group_process_uid_for_rank(tcomm->group, rank);
-}
-
 int mpc_lowcomm_communicator_contains(const mpc_lowcomm_communicator_t comm,
                                       const mpc_lowcomm_peer_uid_t uid)
 {
@@ -1629,7 +1617,7 @@ int *mpc_lowcomm_communicator_get_process_list(const mpc_lowcomm_communicator_t 
 	return _mpc_lowcomm_group_process_list(tcomm->group);
 }
 
-mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_remote_uid_for(const mpc_lowcomm_communicator_t comm, int rank)
+mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_remote_uid(const mpc_lowcomm_communicator_t comm, int rank)
 {
 	assert(comm != NULL);
 	mpc_lowcomm_communicator_t tcomm = mpc_lowcomm_communicator_get_remote(comm);
@@ -1638,7 +1626,7 @@ mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_remote_uid_for(const mpc_lowcomm
 	return mpc_lowcomm_group_process_uid_for_rank(tcomm->group, rank);
 }
 
-mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_uid_for(const mpc_lowcomm_communicator_t comm, int rank)
+mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_uid(const mpc_lowcomm_communicator_t comm, int rank)
 {
 	assert(comm != NULL);
 	mpc_lowcomm_communicator_t tcomm = mpc_lowcomm_communicator_get_local(comm);

@@ -253,15 +253,6 @@ int mpc_lowcomm_communicator_free(mpc_lowcomm_communicator_t *pcomm);
 /* Query */
 
 /**
- * @brief Get rank in communicator for current process
- *
- * @param comm communicator to query
- * @param rank rank to query
- * @return mpc_lowcomm_peer_uid_t uid for given peer
- */
-mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_uid(const mpc_lowcomm_communicator_t comm, int rank);
-
-/**
  * @brief Check if a given communicator contains a given UID
  *
  * @param comm the comm to check
@@ -372,10 +363,10 @@ int *mpc_lowcomm_communicator_get_process_list(const mpc_lowcomm_communicator_t 
  * @brief Get the process UID for a given rank in local comm
  *
  * @param comm the communicator to look into
- * @param rank the task rank to target
+ * @param rank the task rank to target (in comm)
  * @return mpc_lowcomm_peer_uid_t the corresponding process UID
  */
-mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_uid_for(const mpc_lowcomm_communicator_t comm, int rank);
+mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_uid(const mpc_lowcomm_communicator_t comm, int rank);
 
 /**
  * @brief Get the process UID for a given rank in remote comm
@@ -384,7 +375,7 @@ mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_uid_for(const mpc_lowcomm_commun
  * @param rank the task rank to target
  * @return mpc_lowcomm_peer_uid_t the corresponding process UID
  */
-mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_remote_uid_for(const mpc_lowcomm_communicator_t comm, int rank);
+mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_remote_uid(const mpc_lowcomm_communicator_t comm, int rank);
 
 /*********************
 * INTERCOMM SUPPORT *
