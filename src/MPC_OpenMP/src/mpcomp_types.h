@@ -766,7 +766,7 @@ typedef struct  mpc_omp_task_thread_infos_s
         char * label;
         int extra_clauses;
         mpc_omp_task_dependency_t * dependencies;
-        unsigned int ndependencies;
+        unsigned int ndependencies_type;
     } incoming;
 
 # if MPC_OMP_TASK_COMPILE_TRACE

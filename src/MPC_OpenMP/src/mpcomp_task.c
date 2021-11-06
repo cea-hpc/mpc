@@ -1064,16 +1064,12 @@ __task_dep_list_append(
     assert(task);
     assert(entry);
 
-    mpc_omp_task_dep_list_elt_t * dep = (mpc_omp_task_dep_list_elt_t *) mpc_omp_alloc(sizeof(mpc_omp_task_dep_list_elt_t));
+    // mpc_omp_task_dep_list_elt_t * dep = (mpc_omp_task_dep_list_elt_t *) mpc_omp_alloc(sizeof(mpc_omp_task_dep_list_elt_t));
+    mpc_omp_task_dep_list_elt_t * dep = task->dep_node.dep_list + task->dep_node.dep_list_size;
     assert(dep);
 
     dep->task   = task;
     dep->entry  = entry;
-
-    dep->task_prev = NULL;
-    dep->task_next = task->dep_node.dep_list;
-    if (task->dep_node.dep_list) task->dep_node.dep_list->task_prev = dep;
-    task->dep_node.dep_list = dep;
 
     dep->prev   = NULL;
     dep->next   = list;
@@ -1082,108 +1078,6 @@ __task_dep_list_append(
     ++task->dep_node.dep_list_size;
 
     return dep;
-}
-
-static void
-__task_dep_list_elt_delete(mpc_omp_task_dep_list_elt_t * elt)
-{
-    --elt->task->dep_node.dep_list_size;
-    mpc_omp_free(elt);
-}
-
-static void
-__task_entry_dep_list_elt_delete(mpc_omp_task_dep_list_elt_t * elt)
-{
-    mpc_omp_task_t * task = elt->task;
-    assert(task);
-
-    if (OPA_load_int(&(task->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED)
-    {
-        MPC_OMP_TASK_LOCK(task);
-        {
-            if (OPA_load_int(&(task->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED)
-            {
-                if (elt->task_prev) elt->task_prev->task_next = elt->task_next;
-                if (elt->task_next) elt->task_next->task_prev = elt->task_prev;
-                if (task->dep_node.dep_list == elt) task->dep_node.dep_list = elt->task_next;
-                __task_dep_list_elt_delete(elt);
-            }
-        }
-        MPC_OMP_TASK_UNLOCK(task);
-    }
-}
-
-static void
-__task_delete_dependencies_hmap(mpc_omp_task_t * task)
-{
-    if (task->dep_node.hmap)
-    {
-        /* clean data dependency hmap */
-        mpc_omp_task_dep_htable_entry_t * entry, * tmp;
-        HASH_ITER(hh, task->dep_node.hmap, entry, tmp)
-        {
-            assert(!entry->out);
-            assert(!entry->ins);
-            assert(!entry->inoutset);
-            HASH_DEL(task->dep_node.hmap, entry);
-            mpc_omp_free(entry);
-        }
-        assert(HASH_COUNT(task->dep_node.hmap) == 0);
-        HASH_CLEAR(hh, task->dep_node.hmap);
-    }
-}
-
-static void
-__task_finalize_deps_list(mpc_omp_task_t * task)
-{
-    assert(task->parent);
-
-    mpc_omp_task_dep_list_elt_t * elt = task->dep_node.dep_list;
-    assert(elt == NULL || elt->task_prev == NULL);
-
-    while (elt)
-    {
-        mpc_omp_task_dep_htable_entry_t * entry = elt->entry;
-        assert(entry);
-
-        mpc_common_spinlock_lock(&(entry->lock));
-        {
-            mpc_omp_task_dep_list_elt_t * next = elt->task_next;
-
-            /* pop this task dependency element for the parent htable lists */
-            if (entry->out == elt)
-            {
-                assert(elt->next == NULL);
-                assert(elt->prev == NULL);
-                entry->out = NULL;
-            }
-            else if (entry->ins == elt)
-            {
-                assert(elt->prev == NULL);
-                entry->ins = entry->ins->next;
-                if (entry->ins) entry->ins->prev = NULL;
-            }
-            else if (entry->inoutset == elt)
-            {
-                assert(elt->prev == NULL);
-                entry->inoutset = entry->inoutset->next;
-                if (entry->inoutset) entry->inoutset->prev = NULL;
-            }
-            else
-            {
-                if (elt->prev) elt->prev->next = elt->next;
-                if (elt->next) elt->next->prev = elt->prev;
-            }
-
-            // TODO : maybe delete the hmap entry if it is now empty ?
-
-            __task_dep_list_elt_delete(elt);
-            elt = next;
-        }
-        mpc_common_spinlock_unlock(&(entry->lock));
-    }
-    task->dep_node.dep_list = NULL;
-    assert(task->dep_node.dep_list_size == 0);
 }
 
 /** Note : only 1 thread may run this function for a given `task->parent` */
@@ -1323,9 +1217,9 @@ __task_process_deps(mpc_omp_task_t * task, void ** depend)
 
     /* mpc specific dependencies */
     mpc_omp_task_dependency_t * dependencies = thread->task_infos.incoming.dependencies;
-    uintptr_t ndependencies = thread->task_infos.incoming.ndependencies;
+    uintptr_t ndependencies_type = thread->task_infos.incoming.ndependencies_type;
     thread->task_infos.incoming.dependencies = NULL;
-    thread->task_infos.incoming.ndependencies = 0;
+    thread->task_infos.incoming.ndependencies_type = 0;
 
     /* if no dependencies, return */
     if (dependencies == NULL)
@@ -1341,20 +1235,35 @@ __task_process_deps(mpc_omp_task_t * task, void ** depend)
     /* runtime specific dependencies */
     uintptr_t mpc_ndeps = 0;
     uintptr_t i, j;
-    for (i = 0 ; i < ndependencies ; ++i) mpc_ndeps += dependencies[i].addrs_size;
+    for (i = 0 ; i < ndependencies_type ; ++i) mpc_ndeps += dependencies[i].addrs_size;
 
     /* total number of dependencies */
-    assert(omp_ndeps_tot + mpc_ndeps > 0);
+    uintptr_t ndeps = omp_ndeps_tot + mpc_ndeps;
+    assert(ndeps > 0);
 
-    /* TODO : if a dependency is redundant, it should be interpret as a 'OUT' dependency */
-    /* TODO : to do so, process OUT dependencies first */
+    /* TODO : we may allocate useless dep_list_elt_t when there is redundancy.
+     * 1) count unique element
+     * 2) allocate
+     * For now, we may allocate too much memory
+     */
+    task->dep_node.dep_list = (mpc_omp_task_dep_list_elt_t *) malloc(sizeof(mpc_omp_task_dep_list_elt_t) * ndeps);
+    assert(task->dep_node.dep_list);
 
-    /* openmp dependencies */
+    /* TODO : If a dependency is redundant, it should be interpreted as a 'OUT' dependency
+     * Ensure that dependencies are processed in the following order
+     * 1) 'OUT' or 'INOUT'
+     * 2) 'MUTEX_INOUTSET'
+     * 3) 'INOUTSET'
+     * 4) 'IN'
+     * For now, trust the user to give a properly sorted 'mpc_omp_task_dependency_t' array
+     */
+
+    /* openmp 'out' dependencies */
     for (i = 0 ; i < omp_ndeps_out ; ++i)   __task_process_mpc_dep(task, depend[2 + i], MPC_OMP_TASK_DEP_OUT);
-    for (      ; i < omp_ndeps_tot ; ++i)   __task_process_mpc_dep(task, depend[2 + i], MPC_OMP_TASK_DEP_IN);
 
-    /* mpc dependencies */
-    for (i = 0 ; i < ndependencies ; ++i)
+    /* sort mpc dependencies */
+    /* mpc 'out' dependencies */
+    for (i = 0 ; i < ndependencies_type ; ++i)
     {
         mpc_omp_task_dependency_t * dependency = dependencies + i;
         for (j = 0 ; j < dependency->addrs_size ; ++j)
@@ -1362,8 +1271,80 @@ __task_process_deps(mpc_omp_task_t * task, void ** depend)
             __task_process_mpc_dep(task, dependency->addrs[j], dependency->type);
         }
     }
+
+    /* openmp 'in' dependencies */
+    for (i = omp_ndeps_out ; i < omp_ndeps_tot ; ++i)   __task_process_mpc_dep(task, depend[2 + i], MPC_OMP_TASK_DEP_IN);
 }
 
+    static void
+__task_delete_dependencies_hmap(mpc_omp_task_t * task)
+{
+    if (task->dep_node.hmap)
+    {
+        /* clean data dependency hmap */
+        mpc_omp_task_dep_htable_entry_t * entry, * tmp;
+        HASH_ITER(hh, task->dep_node.hmap, entry, tmp)
+        {
+            assert(!entry->out);
+            assert(!entry->ins);
+            assert(!entry->inoutset);
+            HASH_DEL(task->dep_node.hmap, entry);
+            mpc_omp_free(entry);
+        }
+        assert(HASH_COUNT(task->dep_node.hmap) == 0);
+        HASH_CLEAR(hh, task->dep_node.hmap);
+    }
+}
+
+static void
+__task_finalize_deps_list(mpc_omp_task_t * task)
+{
+    assert(task->parent);
+
+    unsigned int i;
+    for (i = 0 ; i < task->dep_node.dep_list_size ; ++i)
+    {
+        mpc_omp_task_dep_list_elt_t * elt = task->dep_node.dep_list + i;
+        mpc_omp_task_dep_htable_entry_t * entry = elt->entry;
+        assert(entry);
+
+        mpc_common_spinlock_lock(&(entry->lock));
+        {
+            mpc_omp_task_dep_list_elt_t * next = elt->task_next;
+
+            /* pop this task dependency element for the parent htable lists */
+            if (entry->out == elt)
+            {
+                assert(elt->next == NULL);
+                assert(elt->prev == NULL);
+                entry->out = NULL;
+            }
+            else if (entry->ins == elt)
+            {
+                assert(elt->prev == NULL);
+                entry->ins = entry->ins->next;
+                if (entry->ins) entry->ins->prev = NULL;
+            }
+            else if (entry->inoutset == elt)
+            {
+                assert(elt->prev == NULL);
+                entry->inoutset = entry->inoutset->next;
+                if (entry->inoutset) entry->inoutset->prev = NULL;
+            }
+            else
+            {
+                if (elt->prev) elt->prev->next = elt->next;
+                if (elt->next) elt->next->prev = elt->prev;
+            }
+
+            // TODO : maybe delete the hmap entry if it is now empty ?
+
+            elt = next;
+        }
+        mpc_common_spinlock_unlock(&(entry->lock));
+    }
+    free(task->dep_node.dep_list);
+}
 /** Given task completed -> fulfill its successors dependencies */
 static void
 __task_finalize_deps(mpc_omp_task_t * task)
