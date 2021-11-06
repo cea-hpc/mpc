@@ -1114,17 +1114,6 @@ __task_entry_dep_list_elt_delete(mpc_omp_task_dep_list_elt_t * elt)
 }
 
 static void
-__task_entry_dep_list_delete(mpc_omp_task_dep_list_elt_t * elt)
-{
-    while (elt)
-    {
-        mpc_omp_task_dep_list_elt_t * next = elt->next;
-        __task_entry_dep_list_elt_delete(elt);
-        elt = next;
-    }
-}
-
-static void
 __task_delete_dependencies_hmap(mpc_omp_task_t * task)
 {
     if (task->dep_node.hmap)
@@ -1164,22 +1153,26 @@ __task_finalize_deps_list(mpc_omp_task_t * task)
             /* pop this task dependency element for the parent htable lists */
             if (entry->out == elt)
             {
+                assert(elt->next == NULL);
+                assert(elt->prev == NULL);
                 entry->out = NULL;
             }
             else if (entry->ins == elt)
             {
+                assert(elt->prev == NULL);
                 entry->ins = entry->ins->next;
                 if (entry->ins) entry->ins->prev = NULL;
             }
             else if (entry->inoutset == elt)
             {
+                assert(elt->prev == NULL);
                 entry->inoutset = entry->inoutset->next;
                 if (entry->inoutset) entry->inoutset->prev = NULL;
             }
             else
             {
-                if (elt->next) elt->next->prev = elt->prev;
                 if (elt->prev) elt->prev->next = elt->next;
+                if (elt->next) elt->next->prev = elt->prev;
             }
 
             // TODO : maybe delete the hmap entry if it is now empty ?
@@ -1221,7 +1214,6 @@ __task_process_mpc_dep(
     if (entry->task_uid != task->uid)
     {
         entry->task_uid = task->uid;
-
         mpc_common_spinlock_lock(&(entry->lock));
         {
             /* case 1.1 - the generated task is dependant of previous 'in' */
@@ -1297,13 +1289,8 @@ __task_process_mpc_dep(
              */
             else if (type == MPC_OMP_TASK_DEP_OUT || type == MPC_OMP_TASK_DEP_INOUT)
             {
-                __task_entry_dep_list_delete(entry->ins);
                 entry->ins = NULL;
-
-                __task_entry_dep_list_delete(entry->inoutset);
                 entry->inoutset = NULL;
-
-                if (entry->out) __task_entry_dep_list_elt_delete(entry->out);
                 entry->out = __task_dep_list_append(task, entry, NULL);
             }
 
@@ -1461,7 +1448,7 @@ __task_delete(mpc_omp_task_t * task)
      __task_list_delete(task->dep_node.successors);
      task->dep_node.successors = NULL;
 
-    // TODO : MPC_OMP_TASK_TRACE_DELETE(task);
+    MPC_OMP_TASK_TRACE_DELETE(task);
 
 # if MPC_OMP_TASK_USE_RECYCLERS
     mpc_common_nrecycler_recycle(&(thread->task_infos.task_recycler), task, task->size);
@@ -3135,6 +3122,7 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
         __task_process_deps(task, depend);
 
         /* now this task can be queued */
+        assert(!task->statuses.started);
         OPA_store_int(&(task->dep_node.status), MPC_OMP_TASK_STATUS_NOT_READY);
     }
 
@@ -3180,7 +3168,7 @@ _mpc_omp_task_process(mpc_omp_task_t * task)
             became_ready = 0;
         }
     }
-    /* other, no dependencies means no concurrency issues */
+    /* otherwise, no dependencies means no concurrency issues */
     else
     {
         became_ready = 1;

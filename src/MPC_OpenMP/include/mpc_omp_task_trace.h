@@ -41,6 +41,7 @@
 #  define MPC_OMP_TASK_TRACE_DEPENDENCY(out, in)    if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_dependency(out, in)
 #  define MPC_OMP_TASK_TRACE_SCHEDULE(task)         if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_schedule(task)
 #  define MPC_OMP_TASK_TRACE_CREATE(task)           if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_create(task)
+#  define MPC_OMP_TASK_TRACE_DELETE(task)           if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_delete(task)
 #  define MPC_OMP_TASK_TRACE_CALLBACK(when, status) if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_async(when, status)
 #  define MPC_OMP_TASK_TRACE_SEND(count, dtype, dst, tag, comm) if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_send(count, dtype, dst, tag, comm)
 #  define MPC_OMP_TASK_TRACE_RECV(count, dtype, src, tag, comm) if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_recv(count, dtype, src, tag, comm)
@@ -82,6 +83,7 @@ typedef enum    mpc_omp_task_trace_record_type_e
     MPC_OMP_TASK_TRACE_TYPE_DEPENDENCY,
     MPC_OMP_TASK_TRACE_TYPE_SCHEDULE,
     MPC_OMP_TASK_TRACE_TYPE_CREATE,
+    MPC_OMP_TASK_TRACE_TYPE_DELETE,
     MPC_OMP_TASK_TRACE_TYPE_CALLBACK,
 # if MPC_MPI
     MPC_OMP_TASK_TRACE_TYPE_SEND,
@@ -108,9 +110,6 @@ typedef struct  mpc_omp_task_trace_record_schedule_s
 {
     /* inheritance */
     mpc_omp_task_trace_record_t parent;
-
-    /* the task label */
-    char label[MPC_OMP_TASK_LABEL_MAX_LENGTH];
 
     /* the task uid */
     int uid;
@@ -140,9 +139,18 @@ typedef struct  mpc_omp_task_trace_record_create_s
     /* inheritance */
     mpc_omp_task_trace_record_schedule_t parent;
 
+    /* the task label */
+    char label[MPC_OMP_TASK_LABEL_MAX_LENGTH];
+
     /* control parent task */
     int parent_uid;
 }               mpc_omp_task_trace_record_create_t;
+
+typedef struct  mpc_omp_task_trace_record_delete_s
+{
+    /* inheritance */
+    mpc_omp_task_trace_record_schedule_t parent;
+}               mpc_omp_task_trace_record_delete_t;
 
 typedef struct  mpc_omp_task_trace_record_dependency_s
 {
@@ -267,6 +275,7 @@ int _mpc_omp_task_trace_begun(void);
 void _mpc_omp_task_trace_dependency(struct mpc_omp_task_s * out, struct mpc_omp_task_s * in);
 void _mpc_omp_task_trace_schedule(struct mpc_omp_task_s * task);
 void _mpc_omp_task_trace_create(struct mpc_omp_task_s * task);
+void _mpc_omp_task_trace_delete(struct mpc_omp_task_s * task);
 void _mpc_omp_task_trace_callback(int when, int status);
 void _mpc_omp_task_trace_send(int count, int datatype, int dst, int tag, int comm);
 void _mpc_omp_task_trace_recv(int count, int datatype, int src, int tag, int comm);
