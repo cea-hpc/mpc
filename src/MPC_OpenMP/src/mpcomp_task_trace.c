@@ -205,7 +205,6 @@ __task_trace(mpc_omp_task_t * task, mpc_omp_task_trace_node_t * node)
     mpc_omp_task_trace_record_schedule_t * record = (mpc_omp_task_trace_record_schedule_t *) __node_record(node);
     record->uid             = task->uid;
     record->priority        = task->priority;
-    record->omp_priority    = task->omp_priority_hint;
     record->properties      = task->property;
     record->npredecessors   = OPA_load_int(&(task->dep_node.npredecessors));
     record->schedule_id     = task->schedule_id;
@@ -230,6 +229,7 @@ _mpc_omp_task_trace_create(mpc_omp_task_t * task)
     mpc_omp_task_trace_record_create_t * record = (mpc_omp_task_trace_record_create_t *) __node_record(node);
     strncpy(record->label, task->label ? task->label : "(null)", MPC_OMP_TASK_LABEL_MAX_LENGTH);
     record->parent_uid = task->parent ? task->parent->uid : -1;
+    record->omp_priority = task->omp_priority_hint;
     __node_insert(node);
 }
 
@@ -238,7 +238,14 @@ _mpc_omp_task_trace_delete(mpc_omp_task_t * task)
 {
     mpc_omp_task_trace_node_t * node = __node_new(MPC_OMP_TASK_TRACE_TYPE_DELETE);
     assert(node);
-    __task_trace(task, node);
+    
+    mpc_omp_task_trace_record_delete_t * record = (mpc_omp_task_trace_record_delete_t *) __node_record(node);
+   
+    record->uid             = task->uid;
+    record->priority        = task->priority;
+    record->properties      = task->property;
+    record->statuses        = task->statuses;
+    
     __node_insert(node);
 }
 
@@ -333,6 +340,7 @@ mpc_omp_task_trace_begin(void)
     mpc_omp_task_trace_record_type_t type;
     for (type = 0 ; type < MPC_OMP_TASK_TRACE_TYPE_COUNT ; type++)
     {
+        printf("type=%d - size=%lu\n", type, __record_sizeof(type));
         mpc_common_recycler_init(
                 &(infos->recyclers[type]),
                 mpc_omp_alloc, mpc_omp_free,

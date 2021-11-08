@@ -172,7 +172,7 @@ extern "C" {
         MPC_OMP_TASK_DEP_COUNT           = 6
     }               mpc_omp_task_dep_type_t;
 
-    /* a dependency */
+    /* a task data dependency */
     typedef struct  mpc_omp_task_dependency_t
     {
         void ** addrs;
@@ -180,7 +180,13 @@ extern "C" {
         mpc_omp_task_dep_type_t type;
     }               mpc_omp_task_dependency_t;
 
-    /** # pragma omp task depend(dependencies) */
+    /**
+     * Add a data dependencies for the next task to be created.
+     * \param dependencies a dependency array
+     * \param n size of the dependency array
+     * ATTENTION : the 'dependencies' array should be sorted by types, so that
+     *  OUT >= INOUT > MUTEXINOUTSET > INOUTSET > IN  
+     */
     void mpc_omp_task_dependencies(mpc_omp_task_dependency_t * dependencies, unsigned int n);
 
     /**

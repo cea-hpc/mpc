@@ -1025,6 +1025,17 @@ __task_list_elt_new(mpc_omp_task_list_elt_t * list, mpc_omp_task_t * task)
     return elt;
 }
 
+static inline int
+__task_in_list(mpc_omp_task_list_elt_t * list, mpc_omp_task_t * task)
+{
+    while (list)
+    {
+        if (list->task == task) return 1;
+        list = list->next;
+    }
+    return 0;
+}
+
 static inline void
 __task_precedence_constraints(mpc_omp_task_t * predecessor, mpc_omp_task_t * successor)
 {
@@ -1038,12 +1049,15 @@ __task_precedence_constraints(mpc_omp_task_t * predecessor, mpc_omp_task_t * suc
         {
             if (OPA_load_int(&(predecessor->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED)
             {
-                predecessor->dep_node.successors = __task_list_elt_new(predecessor->dep_node.successors, successor);
-                OPA_incr_int(&(predecessor->dep_node.nsuccessors));
-
-                successor->dep_node.predecessors = __task_list_elt_new(successor->dep_node.predecessors, predecessor);
-                OPA_incr_int(&(successor->dep_node.npredecessors));
-                OPA_incr_int(&(successor->dep_node.ref_predecessors));
+                if (!__task_in_list(predecessor->dep_node.successors, successor))
+                {
+                    predecessor->dep_node.successors = __task_list_elt_new(predecessor->dep_node.successors, successor);
+                    OPA_incr_int(&(predecessor->dep_node.nsuccessors));
+                    
+                    successor->dep_node.predecessors = __task_list_elt_new(successor->dep_node.predecessors, predecessor);
+                    OPA_incr_int(&(successor->dep_node.npredecessors));
+                    OPA_incr_int(&(successor->dep_node.ref_predecessors));
+                }
 
                 if (predecessor->dep_node.top_level + 1 > successor->dep_node.top_level)
                 {
@@ -1249,20 +1263,18 @@ __task_process_deps(mpc_omp_task_t * task, void ** depend)
     task->dep_node.dep_list = (mpc_omp_task_dep_list_elt_t *) malloc(sizeof(mpc_omp_task_dep_list_elt_t) * ndeps);
     assert(task->dep_node.dep_list);
 
-    /* TODO : If a dependency is redundant, it should be interpreted as a 'OUT' dependency
-     * Ensure that dependencies are processed in the following order
+     /* Ensure that dependencies are processed in the following order
+     * So that we have correct behaviour on redundancy
      * 1) 'OUT' or 'INOUT'
      * 2) 'MUTEX_INOUTSET'
      * 3) 'INOUTSET'
      * 4) 'IN'
-     * For now, trust the user to give a properly sorted 'mpc_omp_task_dependency_t' array
      */
 
     /* openmp 'out' dependencies */
     for (i = 0 ; i < omp_ndeps_out ; ++i)   __task_process_mpc_dep(task, depend[2 + i], MPC_OMP_TASK_DEP_OUT);
 
-    /* sort mpc dependencies */
-    /* mpc 'out' dependencies */
+    /* mpc dependencies */
     for (i = 0 ; i < ndependencies_type ; ++i)
     {
         mpc_omp_task_dependency_t * dependency = dependencies + i;
@@ -3101,7 +3113,7 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
 
         /* link task with predecessors, and register dependencies to the hmap */
         __task_process_deps(task, depend);
-
+        
         /* now this task can be queued */
         assert(!task->statuses.started);
         OPA_store_int(&(task->dep_node.status), MPC_OMP_TASK_STATUS_NOT_READY);
@@ -3405,6 +3417,7 @@ __thread_task_init_recyclers(mpc_omp_thread_t * thread)
 void
 _mpc_omp_task_tree_init(mpc_omp_thread_t * thread)
 {
+    mpc_omp_task_trace_begin();
     memset(&(thread->task_infos.incoming), 0, sizeof(thread->task_infos.incoming));
 # if MPC_OMP_TASK_USE_RECYCLERS
     __thread_task_init_recyclers(thread);
@@ -3448,6 +3461,7 @@ _mpc_omp_task_tree_deinit(mpc_omp_thread_t * thread)
 # if MPC_OMP_TASK_USE_RECYCLERS
     __thread_task_deinit_recyclers(thread);
 # endif /* MPC_OMP_TASK_USE_RECYCLER */
+    mpc_omp_task_trace_end();
     // this may not be true since every threads are deinitialized concurrently
     // assert(OPA_load_int(&(thread->instance->task_infos.ntasks)) == 0);
     // assert(OPA_load_int(&(thread->instance->task_infos.ntasks_ready)) == 0);

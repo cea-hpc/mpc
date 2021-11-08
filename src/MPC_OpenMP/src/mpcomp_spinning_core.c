@@ -812,6 +812,7 @@ void _mpc_omp_start_openmp_thread(mpc_omp_mvp_t * mvp)
 
     mpc_omp_barrier();
     _mpc_omp_task_tree_deinit(cur_thread);
+    mpc_omp_barrier();
 
     mpc_omp_tls = (void *) mvp->threads->next;
 

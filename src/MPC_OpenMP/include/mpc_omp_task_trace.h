@@ -117,9 +117,6 @@ typedef struct  mpc_omp_task_trace_record_schedule_s
     /* the task->priority attribute */
     int priority;
 
-    /* the task->omp_priority attribute */
-    int omp_priority;
-
     /* the task properties */
     int properties;
 
@@ -144,12 +141,28 @@ typedef struct  mpc_omp_task_trace_record_create_s
 
     /* control parent task */
     int parent_uid;
+
+    /* openmp constructor priority */
+    int omp_priority;
 }               mpc_omp_task_trace_record_create_t;
 
 typedef struct  mpc_omp_task_trace_record_delete_s
 {
     /* inheritance */
-    mpc_omp_task_trace_record_schedule_t parent;
+    mpc_omp_task_trace_record_t parent;
+
+    /* the task uid */
+    int uid;
+
+    /* the task->priority attribute */
+    int priority;
+
+    /* the task properties */
+    int properties;
+
+    /* the task statuses */
+    mpc_omp_task_statuses_t statuses;
+
 }               mpc_omp_task_trace_record_delete_t;
 
 typedef struct  mpc_omp_task_trace_record_dependency_s
