@@ -2048,7 +2048,7 @@ static inline int ___collectives_reduce_linear(const void *sendbuf, void* recvbu
   }
 
   if(coll_type == MPC_COLL_TYPE_BLOCKING && rank == root) {
-    free(tmpbuf);
+    sctk_free(tmpbuf);
   }
 
   return res;
@@ -2179,7 +2179,7 @@ static inline int ___collectives_reduce_binomial(const void *sendbuf, void* recv
 
 
   if(coll_type == MPC_COLL_TYPE_BLOCKING) {
-    free(tmpbuf);
+    sctk_free(tmpbuf);
   }
 
   return MPI_SUCCESS;
@@ -2291,7 +2291,7 @@ static inline int ___collectives_reduce_topo(const void *sendbuf, void* recvbuf,
   }
 
   if(coll_type == MPC_COLL_TYPE_BLOCKING && rank == root) {
-    free(tmpbuf);
+    sctk_free(tmpbuf);
   }
 
   return res;
@@ -3772,7 +3772,7 @@ static inline int ___collectives_scatter_binomial(const void *sendbuf, int sendc
 
 
   if(coll_type == MPC_COLL_TYPE_BLOCKING) {
-    free(tmpbuf);
+    sctk_free(tmpbuf);
   }
 
   return MPI_SUCCESS;
@@ -3929,7 +3929,7 @@ static inline int ___collectives_scatter_topo(const void *sendbuf, int sendcount
   info->flag = initial_flag; 
 
   if(coll_type == MPC_COLL_TYPE_BLOCKING) {
-    free(tmpbuf);
+    sctk_free(tmpbuf);
   }
 
   return res;
@@ -4831,7 +4831,7 @@ static inline int ___collectives_gather_binomial(const void *sendbuf, int sendco
   }
 
   if(coll_type == MPC_COLL_TYPE_BLOCKING) {
-    free(tmpbuf);
+    sctk_free(tmpbuf);
   }
 
   return MPI_SUCCESS;
@@ -4979,7 +4979,7 @@ static inline int ___collectives_gather_topo(const void *sendbuf, int sendcount,
   info->flag = initial_flag; 
   
   if(coll_type == MPC_COLL_TYPE_BLOCKING) {
-    free(tmpbuf);
+    sctk_free(tmpbuf);
   }
 
   return res;
@@ -5694,7 +5694,7 @@ static inline int ___collectives_reduce_scatter_block_reduce_scatter(const void 
 
 
   if(coll_type == MPC_COLL_TYPE_BLOCKING) {
-    free(tmpbuf);
+    sctk_free(tmpbuf);
   }
 
   return MPI_SUCCESS;
@@ -5838,7 +5838,7 @@ static inline int ___collectives_reduce_scatter_block_pairwise(const void *sendb
   }
 
   if(coll_type == MPC_COLL_TYPE_BLOCKING) {
-    free(tmpbuf);
+    sctk_free(tmpbuf);
   }
   
   return MPI_SUCCESS;
@@ -6194,7 +6194,7 @@ static inline int ___collectives_reduce_scatter_reduce_scatterv(const void *send
   ___collectives_scatterv_switch(tmpbuf, recvcounts, displs, datatype, recvbuf, recvcounts[rank], datatype, 0, comm, coll_type, schedule, info);
 
   if(coll_type == MPC_COLL_TYPE_BLOCKING) {
-    free(tmpbuf);
+    sctk_free(tmpbuf);
   }
 
   return MPI_SUCCESS;
@@ -8879,7 +8879,7 @@ static inline int ___collectives_scan_linear (const void *sendbuf, void *recvbuf
 
 
   if(coll_type == MPC_COLL_TYPE_BLOCKING) {
-    free(tmpbuf);
+    sctk_free(tmpbuf);
   }
 
   return res;
@@ -9286,7 +9286,7 @@ static inline int ___collectives_exscan_linear (const void *sendbuf, void *recvb
   }
 
   if(coll_type == MPC_COLL_TYPE_BLOCKING) {
-    free(tmpbuf);
+    sctk_free(tmpbuf);
   }
 
   return res;
