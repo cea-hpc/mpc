@@ -54,12 +54,13 @@
 /** the task statuses */
 typedef struct  mpc_omp_task_statuses_s
 {
-    volatile bool started;           /* if the task started */
-    volatile bool completed;         /* if the task completed */
-    volatile bool blocking;          /* if the task is blocking (still running but will be blocked) */
-    volatile bool blocked;           /* if the task is blocked (suspended) */
-    volatile bool unblocked;         /* if the task was unblocked */
-    volatile bool in_blocked_list;   /* if the task is in a blocked list */
+    volatile bool started;          /* if the task started */
+    volatile bool completed;        /* if the task completed */
+    volatile bool blocking;         /* if the task is blocking (still running but will be blocked) */
+    volatile bool blocked;          /* if the task is blocked (suspended) */
+    volatile bool unblocked;        /* if the task was unblocked */
+    volatile bool in_blocked_list;  /* if the task is in a blocked list */
+    volatile bool cancelled;        /* if the taskgroup was cancelled */
 }               mpc_omp_task_statuses_t;
 
 /** Property of an OpenMP task */

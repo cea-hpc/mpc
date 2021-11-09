@@ -383,11 +383,26 @@ bool mpc_omp_GOMP_cancellation_point( __UNUSED__ int which )
 	return false;
 }
 
-bool mpc_omp_GOMP_cancel( __UNUSED__ int which, __UNUSED__ bool do_cancel )
+bool mpc_omp_GOMP_cancel(int which, __UNUSED__ bool do_cancel )
 {
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-	not_implemented();
-	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+    if (!do_cancel) return mpc_omp_GOMP_cancellation_point(which);
+
+	switch (which)
+    {
+        case (GOMP_CANCEL_TASKGROUP):
+            {
+                _mpc_omp_task_taskgroup_cancel();
+                break ;
+            }
+
+        default:
+            {
+                not_implemented();
+                break ;
+            }
+    }
+    mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return false;
 }
 

@@ -437,9 +437,9 @@ typedef struct mpc_omp_mvp_thread_args_s
 /* Data structures */
 typedef struct  mpc_omp_task_taskgroup_s
 {
-	struct mpc_omp_task_s *children;
-	struct mpc_omp_task_taskgroup_s *prev;
+	struct mpc_omp_task_taskgroup_s * prev;
 	OPA_int_t children_num;
+    OPA_int_t cancelled;
 }               mpc_omp_task_taskgroup_t;
 
 #ifdef MPC_OMP_USE_MCS_LOCK
@@ -771,6 +771,10 @@ typedef struct  mpc_omp_task_thread_infos_s
 
 # if MPC_OMP_TASK_COMPILE_TRACE
     mpc_omp_thread_task_trace_infos_t tracer;
+# endif
+
+# if WIP
+    mpc_omp_task_list leaves;
 # endif
 
     /* ? */
