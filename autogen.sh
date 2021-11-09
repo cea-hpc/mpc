@@ -57,6 +57,15 @@ test -n "$am" || err "No 'automake' command in PATH. Please install automake fir
 test -n "$lt" || err "No 'libtoolize' command in PATH. Please install libtool first."
 test -n "$ptch" || err "No 'patch' command in PATH. Please install patch first."
 
+if test "$ret" = "1"; then
+	echo "========================="
+	echo "Consider running:"
+	echo "$ spack install autoconf@${ac_expect} automake@${am_expect} libtool@${lt_expect}"
+	echo "$ spack load autoconf@${ac_expect} automake@${am_expect} libtool@${lt_expect}"
+	echo "========================="
+
+	exit 1
+fi
 
 ac_version=$(extract_version "$ac")
 am_version=$(extract_version "$am")

@@ -23632,7 +23632,8 @@ $as_echo "$as_me: Checking for '$looked_up_lib' library in different places" >&6
                 for suffix in $prefix_candidate_sub_lib_path
                 do
                         lib_found=0
-
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: \"Looking in $pref/$suffix/\"" >&5
+$as_echo "$as_me: \"Looking in $pref/$suffix/\"" >&6;}
 
                         OLD_LDFLAGS=$LDFLAGS
                         LDFLAGS=$(promote_to_rpath " -L$pref/$suffix/ -Wl,-rpath=$pref/$suffix/ -l$1 $LDFLAGS")
@@ -23788,6 +23789,189 @@ append_to_pkg_config_if_needed()
 $as_echo "$as_me: ${TSOURCE} prepended to pkg-config search paths" >&6;}
         export PKG_CONFIG_PATH=${TSOURCE}:$PKG_CONFIG_PATH
 }
+
+
+# Get a var from PKG-CONFIG
+#
+# $1: pkg-name
+# $2: var name
+#
+# echos content if found "" if not
+#
+#
+__get_pkg_config_var()
+{
+    VARS=$(pkg-config --print-variables "$1" 2>/dev/null)
+
+    # Command worked
+    if test "$?" = "0"; then
+        # Make sure var is known
+        if echo "$VARS" | grep "$2" > /dev/null 2>&1 ; then
+            # Get var content
+            DATA=$(pkg-config --variable="$2" "$1" 2>/dev/null)
+
+            if test "$?" = "0"; then
+                echo "$DATA"
+            fi
+        fi
+    fi
+}
+
+#
+# Add a given path arg if not present yet
+#
+#  $1 : Args (-L / -I)
+#  $2 : PATH to add
+#  $3 : existing flags
+#
+#
+__append_if_not_here()
+{
+    if test -z "${2}"; then
+        return
+    fi
+
+    if echo "$3" | grep "$2" > /dev/null 2>&1 ; then
+        echo "$3"
+    else
+        echo "${3} ${1}${2}"
+    fi
+}
+
+# Ensure -L are present for faulty pkg-config files
+#
+#  $1 : pkg-name
+#  $2 : LDFLAGS (single string)
+#
+#
+extract_pkg_config_lib_prefixes()
+{
+    PLDFLAGS="$2"
+
+    # Do we have a libdir var ?
+    PLIBD=$(__get_pkg_config_var "$1" libdir)
+
+    if test -d "$PLIBD"; then
+        # LIBDIR EXISTS
+        RET=$(__append_if_not_here "-L" "$PLIBD" "$PLDFLAGS")
+
+        # On some debian systems PMIX is installed in a subdir of libdir
+        # This is a special case we handle here
+        if test "$1" = "pmix"; then
+                if test -d "${PLIBD}/pmix2/lib/"; then
+                        RET=$(__append_if_not_here "-L" "${PLIBD}/pmix2/lib/" "$RET")
+                fi
+        fi
+
+        echo "$RET"
+        # DONE
+        return
+    fi
+
+    # Do we have a pcfiledir var ?
+    PCDIR=$(__get_pkg_config_var "$1" pcfiledir)
+
+    if test -n "$PCDIR"; then
+        if test -d "${PCDIR}/../"; then
+                # LIBDIR EXISTS
+                RET=$(__append_if_not_here "-L" "${PCDIR}/../" "$PLDFLAGS")
+                echo "$RET"
+                # DONE
+                return
+        fi
+    fi
+
+    # Nothing to add
+    echo "$PLDFLAGS"
+}
+
+# Ensure -I are present for faulty pkg-config files
+#
+#  $1 : pkg-name
+#  $2 : CFLAGS (single string)
+#
+#
+extract_pkg_config_inc_prefixes()
+{
+    PCFLAGS="$2"
+
+    # Do we have an includedir var ?
+    PINCD=$(__get_pkg_config_var "$1" includedir)
+
+    if test -d "$PINCD"; then
+        # INCIDR EXISTS
+        RET=$(__append_if_not_here "-I" "$PINCD" "$PCFLAGS")
+
+        # On some debian systems PMIX is installed in a subdir of libdir
+        # This is a special case we handle here
+        if test "$1" = "pmix"; then
+                PLIBD=$(__get_pkg_config_var "$1" libdir)
+                if test -n "$PLIBD"; then
+                        if test -d "${PLIBD}/pmix2/include/"; then
+                                RET=$(__append_if_not_here "-I" "${PLIBD}/pmix2/include/" "$RET")
+                        fi
+                fi
+        fi
+
+        echo "$RET"
+        # DONE
+        return
+    fi
+
+    # Do we have a pcfiledir var ?
+    PCDIR=$(__get_pkg_config_var "$1" pcfiledir)
+
+    if test -n "$PCDIR"; then
+        if test -d "${PCDIR}/../../include/"; then
+                # PCDIR EXISTS
+                RET=$(__append_if_not_here "-I" "${PCDIR}/../../include/" "$PCFLAGS")
+                echo "$RET"
+                # DONE
+                return
+        fi
+    fi
+
+    # Nothing to add
+    echo "$PCFLAGS"
+}
+
+ALL_LIBS_CONFIGURATION=""
+
+#
+# $1 : package name
+# $2 : CFLAGS
+# $3 : LDFLAGS
+add_to_lib_configuration()
+{
+        TO_ADD=""
+
+        if test -n "$2"; then
+                TO_ADD="CFLAGS: $2\n"
+        fi
+        if test -n "$3"; then
+                TO_ADD="${TO_ADD}LDFLAGS: $3"
+        fi
+
+
+if test -n "${TO_ADD}"; then
+
+
+ALL_LIBS_CONFIGURATION=$(
+cat << EOF
+$ALL_LIBS_CONFIGURATION
+
+=== $1 ==================
+${TO_ADD}
+=========================
+
+EOF
+)
+
+fi
+
+}
+
+
 
 #
 # $1 header_name (ex. hwloc.h)
@@ -24065,6 +24249,11 @@ fi
 
                         if test "x$pkg_found" = "x1"
                         then
+                                # Make sure lib paths are explicitly known
+
+                                HWLOC_LIBS=$(extract_pkg_config_lib_prefixes "$libname" "${HWLOC_LIBS}")
+                                HWLOC_CFLAGS=$(extract_pkg_config_inc_prefixes "$libname" "${HWLOC_CFLAGS}")
+
                                 # Ensure PKG config dependencies are also
                                 # injected using RPATH
                                 HWLOC_LIBS=$(promote_to_rpath ${HWLOC_LIBS})
@@ -24078,8 +24267,32 @@ $as_echo "$as_me: HWLOC FLAGS are ${HWLOC_LIBS}" >&6;}
 
 
 
-                                #AC_MSG_NOTICE([$libname found using pkg-config])
-                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: checking Compiling a simple progam with $libname flags" >&5
+$as_echo_n "checking Compiling a simple progam with $libname flags... " >&6; }
+                                # Make sure we still link to crash early
+                                cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main() {return 0;}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                                        as_fn_error $? "Cannot link after adding $libname flags." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+
                                 check_or_infer_prefix_result="yes"
                         else
                                 __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
@@ -24100,15 +24313,17 @@ $as_echo "$as_me: HWLOC FLAGS are ${HWLOC_LIBS}" >&6;}
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking hwloc cflags" >&5
 $as_echo_n "checking hwloc cflags... " >&6; }
-                        XXTMP=$(eval echo \${HWLOC_CFLAGS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXCFLAGS=$(eval echo \${HWLOC_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXCFLAGS" >&5
+$as_echo "$XXCFLAGS" >&6; }
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking hwloc ldflags" >&5
 $as_echo_n "checking hwloc ldflags... " >&6; }
-                        XXTMP=$(eval echo \${HWLOC_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXLIB=$(eval echo \${HWLOC_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
+$as_echo "$XXLIB" >&6; }
+
+                        add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
                         mpc_dep_found=$check_or_infer_prefix_result
                 else
@@ -24117,6 +24332,7 @@ $as_echo "$as_me: !! hwloc is explicitly deactivated" >&6;}
                         mpc_dep_found="no"
                 fi
                 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                whole_prefix=""
 
 
                 if test "x$mpc_dep_found" = "xno"
@@ -24273,6 +24489,11 @@ fi
 
                         if test "x$pkg_found" = "x1"
                         then
+                                # Make sure lib paths are explicitly known
+
+                                OPA_LIBS=$(extract_pkg_config_lib_prefixes "$libname" "${OPA_LIBS}")
+                                OPA_CFLAGS=$(extract_pkg_config_inc_prefixes "$libname" "${OPA_CFLAGS}")
+
                                 # Ensure PKG config dependencies are also
                                 # injected using RPATH
                                 OPA_LIBS=$(promote_to_rpath ${OPA_LIBS})
@@ -24286,8 +24507,32 @@ $as_echo "$as_me: OPA FLAGS are ${OPA_LIBS}" >&6;}
 
 
 
-                                #AC_MSG_NOTICE([$libname found using pkg-config])
-                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: checking Compiling a simple progam with $libname flags" >&5
+$as_echo_n "checking Compiling a simple progam with $libname flags... " >&6; }
+                                # Make sure we still link to crash early
+                                cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main() {return 0;}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                                        as_fn_error $? "Cannot link after adding $libname flags." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+
                                 check_or_infer_prefix_result="yes"
                         else
                                 __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
@@ -24308,15 +24553,17 @@ $as_echo "$as_me: OPA FLAGS are ${OPA_LIBS}" >&6;}
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking openpa cflags" >&5
 $as_echo_n "checking openpa cflags... " >&6; }
-                        XXTMP=$(eval echo \${OPA_CFLAGS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXCFLAGS=$(eval echo \${OPA_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXCFLAGS" >&5
+$as_echo "$XXCFLAGS" >&6; }
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking openpa ldflags" >&5
 $as_echo_n "checking openpa ldflags... " >&6; }
-                        XXTMP=$(eval echo \${OPA_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXLIB=$(eval echo \${OPA_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
+$as_echo "$XXLIB" >&6; }
+
+                        add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
                         mpc_dep_found=$check_or_infer_prefix_result
                 else
@@ -24325,6 +24572,7 @@ $as_echo "$as_me: !! openpa is explicitly deactivated" >&6;}
                         mpc_dep_found="no"
                 fi
                 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                whole_prefix=""
 
 
                 if test "x$mpc_dep_found" = "xno"
@@ -24501,6 +24749,11 @@ fi
 
                         if test "x$pkg_found" = "x1"
                         then
+                                # Make sure lib paths are explicitly known
+
+                                ALLOC_LIBS=$(extract_pkg_config_lib_prefixes "$libname" "${ALLOC_LIBS}")
+                                ALLOC_CFLAGS=$(extract_pkg_config_inc_prefixes "$libname" "${ALLOC_CFLAGS}")
+
                                 # Ensure PKG config dependencies are also
                                 # injected using RPATH
                                 ALLOC_LIBS=$(promote_to_rpath ${ALLOC_LIBS})
@@ -24514,8 +24767,32 @@ $as_echo "$as_me: ALLOC FLAGS are ${ALLOC_LIBS}" >&6;}
 
 
 
-                                #AC_MSG_NOTICE([$libname found using pkg-config])
-                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: checking Compiling a simple progam with $libname flags" >&5
+$as_echo_n "checking Compiling a simple progam with $libname flags... " >&6; }
+                                # Make sure we still link to crash early
+                                cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main() {return 0;}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                                        as_fn_error $? "Cannot link after adding $libname flags." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+
                                 check_or_infer_prefix_result="yes"
                         else
                                 __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
@@ -24536,15 +24813,17 @@ $as_echo "$as_me: ALLOC FLAGS are ${ALLOC_LIBS}" >&6;}
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking mpcalloc cflags" >&5
 $as_echo_n "checking mpcalloc cflags... " >&6; }
-                        XXTMP=$(eval echo \${ALLOC_CFLAGS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXCFLAGS=$(eval echo \${ALLOC_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXCFLAGS" >&5
+$as_echo "$XXCFLAGS" >&6; }
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking mpcalloc ldflags" >&5
 $as_echo_n "checking mpcalloc ldflags... " >&6; }
-                        XXTMP=$(eval echo \${ALLOC_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXLIB=$(eval echo \${ALLOC_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
+$as_echo "$XXLIB" >&6; }
+
+                        add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
                         mpc_dep_found=$check_or_infer_prefix_result
                 else
@@ -24553,6 +24832,7 @@ $as_echo "$as_me: !! mpcalloc is explicitly deactivated" >&6;}
                         mpc_dep_found="no"
                 fi
                 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                whole_prefix=""
 
         if test "x$mpc_dep_found" = "xyes"; then
 
@@ -24738,6 +25018,11 @@ fi
 
                         if test "x$pkg_found" = "x1"
                         then
+                                # Make sure lib paths are explicitly known
+
+                                FFI_LIBS=$(extract_pkg_config_lib_prefixes "$libname" "${FFI_LIBS}")
+                                FFI_CFLAGS=$(extract_pkg_config_inc_prefixes "$libname" "${FFI_CFLAGS}")
+
                                 # Ensure PKG config dependencies are also
                                 # injected using RPATH
                                 FFI_LIBS=$(promote_to_rpath ${FFI_LIBS})
@@ -24751,8 +25036,32 @@ $as_echo "$as_me: FFI FLAGS are ${FFI_LIBS}" >&6;}
 
 
 
-                                #AC_MSG_NOTICE([$libname found using pkg-config])
-                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: checking Compiling a simple progam with $libname flags" >&5
+$as_echo_n "checking Compiling a simple progam with $libname flags... " >&6; }
+                                # Make sure we still link to crash early
+                                cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main() {return 0;}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                                        as_fn_error $? "Cannot link after adding $libname flags." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+
                                 check_or_infer_prefix_result="yes"
                         else
                                 __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
@@ -24773,15 +25082,17 @@ $as_echo "$as_me: FFI FLAGS are ${FFI_LIBS}" >&6;}
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking libffi cflags" >&5
 $as_echo_n "checking libffi cflags... " >&6; }
-                        XXTMP=$(eval echo \${FFI_CFLAGS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXCFLAGS=$(eval echo \${FFI_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXCFLAGS" >&5
+$as_echo "$XXCFLAGS" >&6; }
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking libffi ldflags" >&5
 $as_echo_n "checking libffi ldflags... " >&6; }
-                        XXTMP=$(eval echo \${FFI_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXLIB=$(eval echo \${FFI_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
+$as_echo "$XXLIB" >&6; }
+
+                        add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
                         mpc_dep_found=$check_or_infer_prefix_result
                 else
@@ -24790,6 +25101,7 @@ $as_echo "$as_me: !! libffi is explicitly deactivated" >&6;}
                         mpc_dep_found="no"
                 fi
                 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                whole_prefix=""
 
 HAVE_LIB_FFI="no"
 
@@ -24976,6 +25288,11 @@ fi
 
                         if test "x$pkg_found" = "x1"
                         then
+                                # Make sure lib paths are explicitly known
+
+                                VMEM_LIBS=$(extract_pkg_config_lib_prefixes "$libname" "${VMEM_LIBS}")
+                                VMEM_CFLAGS=$(extract_pkg_config_inc_prefixes "$libname" "${VMEM_CFLAGS}")
+
                                 # Ensure PKG config dependencies are also
                                 # injected using RPATH
                                 VMEM_LIBS=$(promote_to_rpath ${VMEM_LIBS})
@@ -24989,8 +25306,32 @@ $as_echo "$as_me: VMEM FLAGS are ${VMEM_LIBS}" >&6;}
 
 
 
-                                #AC_MSG_NOTICE([$libname found using pkg-config])
-                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: checking Compiling a simple progam with $libname flags" >&5
+$as_echo_n "checking Compiling a simple progam with $libname flags... " >&6; }
+                                # Make sure we still link to crash early
+                                cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main() {return 0;}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                                        as_fn_error $? "Cannot link after adding $libname flags." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+
                                 check_or_infer_prefix_result="yes"
                         else
                                 __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
@@ -25011,15 +25352,17 @@ $as_echo "$as_me: VMEM FLAGS are ${VMEM_LIBS}" >&6;}
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking libvmem cflags" >&5
 $as_echo_n "checking libvmem cflags... " >&6; }
-                        XXTMP=$(eval echo \${VMEM_CFLAGS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXCFLAGS=$(eval echo \${VMEM_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXCFLAGS" >&5
+$as_echo "$XXCFLAGS" >&6; }
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking libvmem ldflags" >&5
 $as_echo_n "checking libvmem ldflags... " >&6; }
-                        XXTMP=$(eval echo \${VMEM_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXLIB=$(eval echo \${VMEM_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
+$as_echo "$XXLIB" >&6; }
+
+                        add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
                         mpc_dep_found=$check_or_infer_prefix_result
                 else
@@ -25028,6 +25371,7 @@ $as_echo "$as_me: !! libvmem is explicitly deactivated" >&6;}
                         mpc_dep_found="no"
                 fi
                 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                whole_prefix=""
 
 
 if test "x$mpc_dep_found" = "xyes"; then
@@ -25190,6 +25534,11 @@ fi
 
                         if test "x$pkg_found" = "x1"
                         then
+                                # Make sure lib paths are explicitly known
+
+                                UNW_LIBS=$(extract_pkg_config_lib_prefixes "$libname" "${UNW_LIBS}")
+                                UNW_CFLAGS=$(extract_pkg_config_inc_prefixes "$libname" "${UNW_CFLAGS}")
+
                                 # Ensure PKG config dependencies are also
                                 # injected using RPATH
                                 UNW_LIBS=$(promote_to_rpath ${UNW_LIBS})
@@ -25203,8 +25552,32 @@ $as_echo "$as_me: UNW FLAGS are ${UNW_LIBS}" >&6;}
 
 
 
-                                #AC_MSG_NOTICE([$libname found using pkg-config])
-                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: checking Compiling a simple progam with $libname flags" >&5
+$as_echo_n "checking Compiling a simple progam with $libname flags... " >&6; }
+                                # Make sure we still link to crash early
+                                cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main() {return 0;}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                                        as_fn_error $? "Cannot link after adding $libname flags." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+
                                 check_or_infer_prefix_result="yes"
                         else
                                 __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
@@ -25225,15 +25598,17 @@ $as_echo "$as_me: UNW FLAGS are ${UNW_LIBS}" >&6;}
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking libunwind cflags" >&5
 $as_echo_n "checking libunwind cflags... " >&6; }
-                        XXTMP=$(eval echo \${UNW_CFLAGS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXCFLAGS=$(eval echo \${UNW_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXCFLAGS" >&5
+$as_echo "$XXCFLAGS" >&6; }
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking libunwind ldflags" >&5
 $as_echo_n "checking libunwind ldflags... " >&6; }
-                        XXTMP=$(eval echo \${UNW_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXLIB=$(eval echo \${UNW_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
+$as_echo "$XXLIB" >&6; }
+
+                        add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
                         mpc_dep_found=$check_or_infer_prefix_result
                 else
@@ -25242,6 +25617,7 @@ $as_echo "$as_me: !! libunwind is explicitly deactivated" >&6;}
                         mpc_dep_found="no"
                 fi
                 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                whole_prefix=""
 
 
 if test "x$mpc_dep_found" = "xyes"; then
@@ -25412,6 +25788,11 @@ fi
 
                         if test "x$pkg_found" = "x1"
                         then
+                                # Make sure lib paths are explicitly known
+
+                                IBV_LIBS=$(extract_pkg_config_lib_prefixes "$libname" "${IBV_LIBS}")
+                                IBV_CFLAGS=$(extract_pkg_config_inc_prefixes "$libname" "${IBV_CFLAGS}")
+
                                 # Ensure PKG config dependencies are also
                                 # injected using RPATH
                                 IBV_LIBS=$(promote_to_rpath ${IBV_LIBS})
@@ -25425,8 +25806,32 @@ $as_echo "$as_me: IBV FLAGS are ${IBV_LIBS}" >&6;}
 
 
 
-                                #AC_MSG_NOTICE([$libname found using pkg-config])
-                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: checking Compiling a simple progam with $libname flags" >&5
+$as_echo_n "checking Compiling a simple progam with $libname flags... " >&6; }
+                                # Make sure we still link to crash early
+                                cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main() {return 0;}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                                        as_fn_error $? "Cannot link after adding $libname flags." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+
                                 check_or_infer_prefix_result="yes"
                         else
                                 __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
@@ -25447,15 +25852,17 @@ $as_echo "$as_me: IBV FLAGS are ${IBV_LIBS}" >&6;}
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking ibverbs cflags" >&5
 $as_echo_n "checking ibverbs cflags... " >&6; }
-                        XXTMP=$(eval echo \${IBV_CFLAGS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXCFLAGS=$(eval echo \${IBV_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXCFLAGS" >&5
+$as_echo "$XXCFLAGS" >&6; }
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking ibverbs ldflags" >&5
 $as_echo_n "checking ibverbs ldflags... " >&6; }
-                        XXTMP=$(eval echo \${IBV_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXLIB=$(eval echo \${IBV_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
+$as_echo "$XXLIB" >&6; }
+
+                        add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
                         mpc_dep_found=$check_or_infer_prefix_result
                 else
@@ -25464,6 +25871,7 @@ $as_echo "$as_me: !! ibverbs is explicitly deactivated" >&6;}
                         mpc_dep_found="no"
                 fi
                 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                whole_prefix=""
 
 if test "x$mpc_dep_found" = "xyes"; then
         MPC_NETWORK_LIST="$MPC_NETWORK_LIST verbs"
@@ -25630,6 +26038,11 @@ fi
 
                         if test "x$pkg_found" = "x1"
                         then
+                                # Make sure lib paths are explicitly known
+
+                                OFI_LIBS=$(extract_pkg_config_lib_prefixes "$libname" "${OFI_LIBS}")
+                                OFI_CFLAGS=$(extract_pkg_config_inc_prefixes "$libname" "${OFI_CFLAGS}")
+
                                 # Ensure PKG config dependencies are also
                                 # injected using RPATH
                                 OFI_LIBS=$(promote_to_rpath ${OFI_LIBS})
@@ -25643,8 +26056,32 @@ $as_echo "$as_me: OFI FLAGS are ${OFI_LIBS}" >&6;}
 
 
 
-                                #AC_MSG_NOTICE([$libname found using pkg-config])
-                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: checking Compiling a simple progam with $libname flags" >&5
+$as_echo_n "checking Compiling a simple progam with $libname flags... " >&6; }
+                                # Make sure we still link to crash early
+                                cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main() {return 0;}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                                        as_fn_error $? "Cannot link after adding $libname flags." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+
                                 check_or_infer_prefix_result="yes"
                         else
                                 __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
@@ -25665,15 +26102,17 @@ $as_echo "$as_me: OFI FLAGS are ${OFI_LIBS}" >&6;}
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking libfabric cflags" >&5
 $as_echo_n "checking libfabric cflags... " >&6; }
-                        XXTMP=$(eval echo \${OFI_CFLAGS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXCFLAGS=$(eval echo \${OFI_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXCFLAGS" >&5
+$as_echo "$XXCFLAGS" >&6; }
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking libfabric ldflags" >&5
 $as_echo_n "checking libfabric ldflags... " >&6; }
-                        XXTMP=$(eval echo \${OFI_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXLIB=$(eval echo \${OFI_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
+$as_echo "$XXLIB" >&6; }
+
+                        add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
                         mpc_dep_found=$check_or_infer_prefix_result
                 else
@@ -25682,6 +26121,7 @@ $as_echo "$as_me: !! libfabric is explicitly deactivated" >&6;}
                         mpc_dep_found="no"
                 fi
                 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                whole_prefix=""
 
 if test "x$mpc_dep_found" = "xyes"; then
         MPC_NETWORK_LIST="$MPC_NETWORK_LIST ofi"
@@ -25850,6 +26290,11 @@ fi
 
                         if test "x$pkg_found" = "x1"
                         then
+                                # Make sure lib paths are explicitly known
+
+                                PORTALS_LIBS=$(extract_pkg_config_lib_prefixes "$libname" "${PORTALS_LIBS}")
+                                PORTALS_CFLAGS=$(extract_pkg_config_inc_prefixes "$libname" "${PORTALS_CFLAGS}")
+
                                 # Ensure PKG config dependencies are also
                                 # injected using RPATH
                                 PORTALS_LIBS=$(promote_to_rpath ${PORTALS_LIBS})
@@ -25863,8 +26308,32 @@ $as_echo "$as_me: PORTALS FLAGS are ${PORTALS_LIBS}" >&6;}
 
 
 
-                                #AC_MSG_NOTICE([$libname found using pkg-config])
-                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: checking Compiling a simple progam with $libname flags" >&5
+$as_echo_n "checking Compiling a simple progam with $libname flags... " >&6; }
+                                # Make sure we still link to crash early
+                                cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main() {return 0;}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                                        as_fn_error $? "Cannot link after adding $libname flags." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+
                                 check_or_infer_prefix_result="yes"
                         else
                                 __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
@@ -25885,15 +26354,17 @@ $as_echo "$as_me: PORTALS FLAGS are ${PORTALS_LIBS}" >&6;}
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking portals cflags" >&5
 $as_echo_n "checking portals cflags... " >&6; }
-                        XXTMP=$(eval echo \${PORTALS_CFLAGS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXCFLAGS=$(eval echo \${PORTALS_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXCFLAGS" >&5
+$as_echo "$XXCFLAGS" >&6; }
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking portals ldflags" >&5
 $as_echo_n "checking portals ldflags... " >&6; }
-                        XXTMP=$(eval echo \${PORTALS_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXLIB=$(eval echo \${PORTALS_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
+$as_echo "$XXLIB" >&6; }
+
+                        add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
                         mpc_dep_found=$check_or_infer_prefix_result
                 else
@@ -25902,6 +26373,7 @@ $as_echo "$as_me: !! portals is explicitly deactivated" >&6;}
                         mpc_dep_found="no"
                 fi
                 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                whole_prefix=""
 
 if test "x$mpc_dep_found" = "xyes"; then
         MPC_NETWORK_LIST="$MPC_NETWORK_LIST portals4 portals4_am"
@@ -26158,6 +26630,11 @@ fi
 
                         if test "x$pkg_found" = "x1"
                         then
+                                # Make sure lib paths are explicitly known
+
+                                PMI_LIBS=$(extract_pkg_config_lib_prefixes "$libname" "${PMI_LIBS}")
+                                PMI_CFLAGS=$(extract_pkg_config_inc_prefixes "$libname" "${PMI_CFLAGS}")
+
                                 # Ensure PKG config dependencies are also
                                 # injected using RPATH
                                 PMI_LIBS=$(promote_to_rpath ${PMI_LIBS})
@@ -26171,8 +26648,32 @@ $as_echo "$as_me: PMI FLAGS are ${PMI_LIBS}" >&6;}
 
 
 
-                                #AC_MSG_NOTICE([$libname found using pkg-config])
-                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: checking Compiling a simple progam with $libname flags" >&5
+$as_echo_n "checking Compiling a simple progam with $libname flags... " >&6; }
+                                # Make sure we still link to crash early
+                                cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main() {return 0;}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                                        as_fn_error $? "Cannot link after adding $libname flags." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+
                                 check_or_infer_prefix_result="yes"
                         else
                                 __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
@@ -26193,15 +26694,17 @@ $as_echo "$as_me: PMI FLAGS are ${PMI_LIBS}" >&6;}
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking pmi cflags" >&5
 $as_echo_n "checking pmi cflags... " >&6; }
-                        XXTMP=$(eval echo \${PMI_CFLAGS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXCFLAGS=$(eval echo \${PMI_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXCFLAGS" >&5
+$as_echo "$XXCFLAGS" >&6; }
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking pmi ldflags" >&5
 $as_echo_n "checking pmi ldflags... " >&6; }
-                        XXTMP=$(eval echo \${PMI_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXLIB=$(eval echo \${PMI_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
+$as_echo "$XXLIB" >&6; }
+
+                        add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
                         mpc_dep_found=$check_or_infer_prefix_result
                 else
@@ -26210,6 +26713,7 @@ $as_echo "$as_me: !! pmi is explicitly deactivated" >&6;}
                         mpc_dep_found="no"
                 fi
                 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                whole_prefix=""
 
 
                 if test "x$mpc_dep_found" = "xno"
@@ -26370,6 +26874,11 @@ fi
 
                         if test "x$pkg_found" = "x1"
                         then
+                                # Make sure lib paths are explicitly known
+
+                                PMIX_LIBS=$(extract_pkg_config_lib_prefixes "$libname" "${PMIX_LIBS}")
+                                PMIX_CFLAGS=$(extract_pkg_config_inc_prefixes "$libname" "${PMIX_CFLAGS}")
+
                                 # Ensure PKG config dependencies are also
                                 # injected using RPATH
                                 PMIX_LIBS=$(promote_to_rpath ${PMIX_LIBS})
@@ -26383,8 +26892,32 @@ $as_echo "$as_me: PMIX FLAGS are ${PMIX_LIBS}" >&6;}
 
 
 
-                                #AC_MSG_NOTICE([$libname found using pkg-config])
-                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: checking Compiling a simple progam with $libname flags" >&5
+$as_echo_n "checking Compiling a simple progam with $libname flags... " >&6; }
+                                # Make sure we still link to crash early
+                                cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main() {return 0;}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                                        as_fn_error $? "Cannot link after adding $libname flags." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+
                                 check_or_infer_prefix_result="yes"
                         else
                                 __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
@@ -26405,15 +26938,17 @@ $as_echo "$as_me: PMIX FLAGS are ${PMIX_LIBS}" >&6;}
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking pmix cflags" >&5
 $as_echo_n "checking pmix cflags... " >&6; }
-                        XXTMP=$(eval echo \${PMIX_CFLAGS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXCFLAGS=$(eval echo \${PMIX_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXCFLAGS" >&5
+$as_echo "$XXCFLAGS" >&6; }
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking pmix ldflags" >&5
 $as_echo_n "checking pmix ldflags... " >&6; }
-                        XXTMP=$(eval echo \${PMIX_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXLIB=$(eval echo \${PMIX_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
+$as_echo "$XXLIB" >&6; }
+
+                        add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
                         mpc_dep_found=$check_or_infer_prefix_result
                 else
@@ -26422,6 +26957,7 @@ $as_echo "$as_me: !! pmix is explicitly deactivated" >&6;}
                         mpc_dep_found="no"
                 fi
                 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                whole_prefix=""
 
 
                 if test "x$mpc_dep_found" = "xno"
@@ -26708,6 +27244,15 @@ else
 fi
 
 
+if test "${MPC_LAUNCHER_PROGRAM}" = "none"; then
+        if test "x${SRUN_LAUNCH_SUPPORT}" = "xyes"; then
+                { $as_echo "$as_me:${as_lineno-$LINENO}: MPC will use SRUN to launch programs" >&5
+$as_echo "$as_me: MPC will use SRUN to launch programs" >&6;}
+        else
+                as_fn_error $? "MPC has no launcher program (HYDRA or PRRTE) but srun was not found in PATH." "$LINENO" 5
+        fi
+fi
+
 
 
 
@@ -26879,6 +27424,11 @@ fi
 
                         if test "x$pkg_found" = "x1"
                         then
+                                # Make sure lib paths are explicitly known
+
+                                CUDA_LIBS=$(extract_pkg_config_lib_prefixes "$libname" "${CUDA_LIBS}")
+                                CUDA_CFLAGS=$(extract_pkg_config_inc_prefixes "$libname" "${CUDA_CFLAGS}")
+
                                 # Ensure PKG config dependencies are also
                                 # injected using RPATH
                                 CUDA_LIBS=$(promote_to_rpath ${CUDA_LIBS})
@@ -26892,8 +27442,32 @@ $as_echo "$as_me: CUDA FLAGS are ${CUDA_LIBS}" >&6;}
 
 
 
-                                #AC_MSG_NOTICE([$libname found using pkg-config])
-                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: checking Compiling a simple progam with $libname flags" >&5
+$as_echo_n "checking Compiling a simple progam with $libname flags... " >&6; }
+                                # Make sure we still link to crash early
+                                cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main() {return 0;}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                                        as_fn_error $? "Cannot link after adding $libname flags." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+
                                 check_or_infer_prefix_result="yes"
                         else
                                 __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
@@ -26914,15 +27488,17 @@ $as_echo "$as_me: CUDA FLAGS are ${CUDA_LIBS}" >&6;}
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking cuda cflags" >&5
 $as_echo_n "checking cuda cflags... " >&6; }
-                        XXTMP=$(eval echo \${CUDA_CFLAGS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXCFLAGS=$(eval echo \${CUDA_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXCFLAGS" >&5
+$as_echo "$XXCFLAGS" >&6; }
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking cuda ldflags" >&5
 $as_echo_n "checking cuda ldflags... " >&6; }
-                        XXTMP=$(eval echo \${CUDA_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXLIB=$(eval echo \${CUDA_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
+$as_echo "$XXLIB" >&6; }
+
+                        add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
                         mpc_dep_found=$check_or_infer_prefix_result
                 else
@@ -26931,6 +27507,7 @@ $as_echo "$as_me: !! cuda is explicitly deactivated" >&6;}
                         mpc_dep_found="no"
                 fi
                 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                whole_prefix=""
 
 
                 if test "x$mpc_dep_found" = "xno"
@@ -27088,6 +27665,11 @@ fi
 
                         if test "x$pkg_found" = "x1"
                         then
+                                # Make sure lib paths are explicitly known
+
+                                CUDART_LIBS=$(extract_pkg_config_lib_prefixes "$libname" "${CUDART_LIBS}")
+                                CUDART_CFLAGS=$(extract_pkg_config_inc_prefixes "$libname" "${CUDART_CFLAGS}")
+
                                 # Ensure PKG config dependencies are also
                                 # injected using RPATH
                                 CUDART_LIBS=$(promote_to_rpath ${CUDART_LIBS})
@@ -27101,8 +27683,32 @@ $as_echo "$as_me: CUDART FLAGS are ${CUDART_LIBS}" >&6;}
 
 
 
-                                #AC_MSG_NOTICE([$libname found using pkg-config])
-                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: checking Compiling a simple progam with $libname flags" >&5
+$as_echo_n "checking Compiling a simple progam with $libname flags... " >&6; }
+                                # Make sure we still link to crash early
+                                cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main() {return 0;}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                                        as_fn_error $? "Cannot link after adding $libname flags." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+
                                 check_or_infer_prefix_result="yes"
                         else
                                 __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
@@ -27123,15 +27729,17 @@ $as_echo "$as_me: CUDART FLAGS are ${CUDART_LIBS}" >&6;}
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking cudart cflags" >&5
 $as_echo_n "checking cudart cflags... " >&6; }
-                        XXTMP=$(eval echo \${CUDART_CFLAGS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXCFLAGS=$(eval echo \${CUDART_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXCFLAGS" >&5
+$as_echo "$XXCFLAGS" >&6; }
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking cudart ldflags" >&5
 $as_echo_n "checking cudart ldflags... " >&6; }
-                        XXTMP=$(eval echo \${CUDART_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXLIB=$(eval echo \${CUDART_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
+$as_echo "$XXLIB" >&6; }
+
+                        add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
                         mpc_dep_found=$check_or_infer_prefix_result
                 else
@@ -27140,6 +27748,7 @@ $as_echo "$as_me: !! cudart is explicitly deactivated" >&6;}
                         mpc_dep_found="no"
                 fi
                 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                whole_prefix=""
 
 
                 if test "x$mpc_dep_found" = "xno"
@@ -31856,6 +32465,11 @@ fi
 
                         if test "x$pkg_found" = "x1"
                         then
+                                # Make sure lib paths are explicitly known
+
+                                EXTLS_LIBS=$(extract_pkg_config_lib_prefixes "$libname" "${EXTLS_LIBS}")
+                                EXTLS_CFLAGS=$(extract_pkg_config_inc_prefixes "$libname" "${EXTLS_CFLAGS}")
+
                                 # Ensure PKG config dependencies are also
                                 # injected using RPATH
                                 EXTLS_LIBS=$(promote_to_rpath ${EXTLS_LIBS})
@@ -31869,8 +32483,32 @@ $as_echo "$as_me: EXTLS FLAGS are ${EXTLS_LIBS}" >&6;}
 
 
 
-                                #AC_MSG_NOTICE([$libname found using pkg-config])
-                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
+$as_echo "$as_me: $libname found using pkg-config" >&6;}
+
+                                { $as_echo "$as_me:${as_lineno-$LINENO}: checking Compiling a simple progam with $libname flags" >&5
+$as_echo_n "checking Compiling a simple progam with $libname flags... " >&6; }
+                                # Make sure we still link to crash early
+                                cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main() {return 0;}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+
+                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                                        as_fn_error $? "Cannot link after adding $libname flags." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+
                                 check_or_infer_prefix_result="yes"
                         else
                                 __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
@@ -31891,15 +32529,17 @@ $as_echo "$as_me: EXTLS FLAGS are ${EXTLS_LIBS}" >&6;}
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking autopriv cflags" >&5
 $as_echo_n "checking autopriv cflags... " >&6; }
-                        XXTMP=$(eval echo \${EXTLS_CFLAGS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXCFLAGS=$(eval echo \${EXTLS_CFLAGS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXCFLAGS" >&5
+$as_echo "$XXCFLAGS" >&6; }
 
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking autopriv ldflags" >&5
 $as_echo_n "checking autopriv ldflags... " >&6; }
-                        XXTMP=$(eval echo \${EXTLS_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXTMP" >&5
-$as_echo "$XXTMP" >&6; }
+                        XXLIB=$(eval echo \${EXTLS_LIBS})
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
+$as_echo "$XXLIB" >&6; }
+
+                        add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
                         mpc_dep_found=$check_or_infer_prefix_result
                 else
@@ -31908,6 +32548,7 @@ $as_echo "$as_me: !! autopriv is explicitly deactivated" >&6;}
                         mpc_dep_found="no"
                 fi
                 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                whole_prefix=""
 
         if test "x$mpc_dep_found" = "xyes"; then
 
@@ -35506,7 +36147,7 @@ fi
 
 
 
-
+printf "${ALL_LIBS_CONFIGURATION}\n\n"
 printf "\n$MPC_CONFIG_RESULT"
 
 if test "x${MPC_CONFIG_RELOADED}" = "xyes"; then
