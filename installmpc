@@ -1178,7 +1178,7 @@ add_process_mode_flag_to_mpc()
 enable_debug()
 {
 	MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-debug"
-	BUILD_PARAMETERS="${MPC_COMP_ADD_BUILD_PARAMETERS} --opts=--enable-debug"
+	MPC_COMP_ADD_BUILD_PARAMETERS="${MPC_COMP_ADD_BUILD_PARAMETERS} --opts=--enable-debug"
 }
 
 #
@@ -1311,7 +1311,7 @@ do
 		############### MPCFRAMEWORK ################
 		--enable-color)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-shell-colors"
-			BUILD_PARAMETERS="${MPC_COMP_ADD_BUILD_PARAMETERS} --opts=--enable-color"
+			MPC_COMP_ADD_BUILD_PARAMETERS="${MPC_COMP_ADD_BUILD_PARAMETERS} --opts=--enable-color"
 			USE_COLOR="yes"
 			;;
 		--disable-color)
