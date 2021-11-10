@@ -27,7 +27,7 @@
 /* # - Jean-Baptiste Besnard <jbbesnard@paratools.com>                    # */
 /* # - Julien Adam <adamj@paratools.com>                                  # */
 /* # - Patrick Carribault <patrick.carribault@cea.fr>                     # */
-/* # - Romain Pereira <pereirar@ocre.cea.fr>                              # */
+/* # - Romain Pereira <romain.pereira@cea.fr>                             # */
 /* # - Stephane Bouhrour <stephane.bouhrour@exascale-computing.eu>        # */
 /* #                                                                      # */
 /* ######################################################################## */

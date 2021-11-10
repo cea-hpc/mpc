@@ -31,7 +31,7 @@
 /* # - Julien Adam <adamj@paratools.com>                                  # */
 /* # - Patrick Carribault <patrick.carribault@cea.fr>                     # */
 /* # - Ricardo Bispo vieira <ricardo.bispo-vieira@exascale-computing.eu>  # */
-/* # - Romain Pereira <pereirar@ocre.cea.fr>                              # */
+/* # - Romain Pereira <romain.pereira@cea.fr>                             # */
 /* # - Thomas Dionisi <thomas.dionisi@exascale-computing.eu>              # */
 /* #                                                                      # */
 /* ######################################################################## */

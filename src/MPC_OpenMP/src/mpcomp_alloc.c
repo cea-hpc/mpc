@@ -25,7 +25,7 @@
 /* # Authors:                                                             # */
 /* # - Adrien Roussel <adrien.roussel@cea.fr>                             # */
 /* # - Jean-Baptiste Besnard <jbbesnard@paratools.com>                    # */
-/* # - Romain Pereira <pereirar@ocre.cea.fr>                              # */
+/* # - Romain Pereira <romain.pereira@cea.fr>                             # */
 /* #                                                                      # */
 /* ######################################################################## */
 #include <mpc_config.h>

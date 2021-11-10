@@ -30,7 +30,7 @@
 /* # - Jean-Baptiste Besnard <jbbesnard@paratools.com>                    # */
 /* # - Julien Adam <adamj@paratools.com>                                  # */
 /* # - Patrick Carribault <patrick.carribault@cea.fr>                     # */
-/* # - Romain Pereira <pereirar@ocre.cea.fr>                              # */
+/* # - Romain Pereira <romain.pereira@cea.fr>                             # */
 /* # - Sylvain Didelot <sylvain.didelot@exascale-computing.eu>            # */
 /* # - Thomas Dionisi <thomas.dionisi@exascale-computing.eu>              # */
 /* #                                                                      # */
