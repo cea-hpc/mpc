@@ -452,9 +452,8 @@ void
 mpc_omp_event_handle_init(mpc_omp_event_handle_t * handle, mpc_omp_event_t type)
 {
     OPA_store_int(&(handle->status), MPC_OMP_EVENT_HANDLE_STATUS_INIT);
-    handle->attr = NULL;
-    handle->type = MPC_OMP_EVENT_NULL;
     mpc_common_spinlock_init(&(handle->lock), 0);
+    handle->type = type;
 
     switch (type)
     {
@@ -466,13 +465,15 @@ mpc_omp_event_handle_init(mpc_omp_event_handle_t * handle, mpc_omp_event_t type)
             mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
             assert(task);
 
-            handle->type = type;
             handle->attr = (void *) task;
+            handle->cancelled = task->taskgroup ? &(task->taskgroup->cancelled) : NULL;
             break ;
         }
+
         default:
         {
             not_implemented();
+            break ;
         }
     }
 }

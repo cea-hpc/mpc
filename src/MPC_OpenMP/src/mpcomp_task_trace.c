@@ -135,7 +135,7 @@ __record_sizeof(mpc_omp_task_trace_record_type_t type)
         {
             return sizeof(mpc_omp_task_trace_record_delete_t);
         }
-        
+
         case (MPC_OMP_TASK_TRACE_TYPE_CALLBACK):
         {
             return sizeof(mpc_omp_task_trace_record_callback_t);
@@ -238,14 +238,14 @@ _mpc_omp_task_trace_delete(mpc_omp_task_t * task)
 {
     mpc_omp_task_trace_node_t * node = __node_new(MPC_OMP_TASK_TRACE_TYPE_DELETE);
     assert(node);
-    
+
     mpc_omp_task_trace_record_delete_t * record = (mpc_omp_task_trace_record_delete_t *) __node_record(node);
-   
+
     record->uid             = task->uid;
     record->priority        = task->priority;
     record->properties      = task->property;
     record->statuses        = task->statuses;
-    
+
     __node_insert(node);
 }
 
@@ -340,7 +340,6 @@ mpc_omp_task_trace_begin(void)
     mpc_omp_task_trace_record_type_t type;
     for (type = 0 ; type < MPC_OMP_TASK_TRACE_TYPE_COUNT ; type++)
     {
-        printf("type=%d - size=%lu\n", type, __record_sizeof(type));
         mpc_common_recycler_init(
                 &(infos->recyclers[type]),
                 mpc_omp_alloc, mpc_omp_free,

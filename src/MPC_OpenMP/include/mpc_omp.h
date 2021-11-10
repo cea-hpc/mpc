@@ -80,10 +80,11 @@ extern "C" {
      */
     typedef struct  mpc_omp_event_handle_s
     {
-        void            * attr; /* the event attributes */
-        OPA_int_t       lock;   /* a spinlock */
-        mpc_omp_event_t type;   /* the event type */
-        OPA_int_t       status; /* the handle status */
+        void            * attr;         /* the event attributes */
+        OPA_int_t       lock;           /* a spinlock */
+        mpc_omp_event_t type;           /* the event type */
+        OPA_int_t       status;         /* the handle status */
+        OPA_int_t       * cancelled;    /* point to 1 if the handle should be cancelled */
     }               mpc_omp_event_handle_t;
 
     /* initialize an event handler */

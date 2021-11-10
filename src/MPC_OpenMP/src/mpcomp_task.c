@@ -1056,7 +1056,7 @@ __task_precedence_constraints(mpc_omp_task_t * predecessor, mpc_omp_task_t * suc
                 {
                     predecessor->dep_node.successors = __task_list_elt_new(predecessor->dep_node.successors, successor);
                     OPA_incr_int(&(predecessor->dep_node.nsuccessors));
-                    
+
                     successor->dep_node.predecessors = __task_list_elt_new(successor->dep_node.predecessors, predecessor);
                     OPA_incr_int(&(successor->dep_node.npredecessors));
                     OPA_incr_int(&(successor->dep_node.ref_predecessors));
@@ -1590,7 +1590,7 @@ void _mpc_omp_task_compute_priorities(void)
             leaves.pop(leaf);
         }
     }
-    
+
     /*  PHASE 1.2   - Find new leaves */
     for (mpc_omp_task_t * root : roots)
     {
@@ -1614,7 +1614,7 @@ void _mpc_omp_task_compute_priorities(void)
 
     // TODO : phase 1.2, do it in breadth first search in the TDG,
     // so that leaves are sorted by their depth
-    
+
     /* PHASE 2 - From leaves, go up to roots and set priorities */
     for (mpc_omp_task_t * leaf : leaves)
     {
@@ -3194,7 +3194,7 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
 
         /* link task with predecessors, and register dependencies to the hmap */
         __task_process_deps(task, depend);
-        
+
         /* now this task can be queued */
         assert(!task->statuses.started);
         OPA_store_int(&(task->dep_node.status), MPC_OMP_TASK_STATUS_NOT_READY);
@@ -3310,7 +3310,7 @@ _mpc_omp_task_taskgroup_start( void )
     OPA_store_int(&(new_taskgroup->children_num), 0);
     OPA_store_int(&(new_taskgroup->cancelled), 0);
     new_taskgroup->prev = task->taskgroup;
-    
+
     task->taskgroup = new_taskgroup;
 }
 
@@ -3322,7 +3322,7 @@ _mpc_omp_task_taskgroup_end(void)
 
     mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
     assert(task);
-    
+
     mpc_omp_task_taskgroup_t * taskgroup = task->taskgroup;
     if (!taskgroup) return ;
 
@@ -3343,7 +3343,7 @@ _mpc_omp_task_taskgroup_cancel(void)
 
     mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
     assert(task);
-    
+
     mpc_omp_task_taskgroup_t * taskgroup = task->taskgroup;
     if (!taskgroup) return ;
 
@@ -3508,7 +3508,7 @@ __thread_task_init_recyclers(mpc_omp_thread_t * thread)
 void
 _mpc_omp_task_tree_init(mpc_omp_thread_t * thread)
 {
-    mpc_omp_task_trace_begin();
+    if (mpc_omp_conf_get()->task_trace_auto) mpc_omp_task_trace_begin();
     memset(&(thread->task_infos.incoming), 0, sizeof(thread->task_infos.incoming));
 # if MPC_OMP_TASK_USE_RECYCLERS
     __thread_task_init_recyclers(thread);
@@ -3552,7 +3552,7 @@ _mpc_omp_task_tree_deinit(mpc_omp_thread_t * thread)
 # if MPC_OMP_TASK_USE_RECYCLERS
     __thread_task_deinit_recyclers(thread);
 # endif /* MPC_OMP_TASK_USE_RECYCLER */
-    mpc_omp_task_trace_end();
+    if (mpc_omp_conf_get()->task_trace_auto) mpc_omp_task_trace_end();
     // this may not be true since every threads are deinitialized concurrently
     // assert(OPA_load_int(&(thread->instance->task_infos.ntasks)) == 0);
     // assert(OPA_load_int(&(thread->instance->task_infos.ntasks_ready)) == 0);

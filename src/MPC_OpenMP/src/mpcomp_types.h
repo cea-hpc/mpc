@@ -207,7 +207,7 @@ typedef enum    mpc_omp_task_priority_policy_e
     /** 2) COPY
      *      - user set a priority hint on tasks
      *      - runtime copies the tasks hint as its internal priority
-     */  
+     */
     MPC_OMP_TASK_PRIORITY_POLICY_COPY
 
 }               mpc_omp_task_priority_policy_t;
@@ -706,7 +706,7 @@ typedef struct  mpc_omp_task_pqueue_s
 {
     /* the tree head */
     mpc_omp_task_pqueue_node_t * root;
-    
+
     /* the tree lock */
     mpc_common_spinlock_t lock;
 
