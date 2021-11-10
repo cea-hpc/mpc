@@ -556,9 +556,6 @@ static inline void __config_defaults( void )
 	__mpc_mpi_config.message_buffering = 1;
 	__coll_defaults();
 	__mem_pool_defaults();
-
-	/* Run a check to resolve the default functions */
-	_mpc_mpi_config_check();
 }
 
 void _mpc_mpi_config_init( void )

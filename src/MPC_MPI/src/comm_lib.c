@@ -4144,6 +4144,7 @@ void mpc_cl_comm_lib_init()
 
 	/* Register MPC MPI Config */
 	mpc_common_init_callback_register("Config Sources", "MPC MPI Config Registration", _mpc_mpi_config_init, 256);
+  mpc_common_init_callback_register("Config Checks", "MPC MPI Collective Pointers Validation", _mpc_mpi_config_check, 128);
 
 	/* Before Starting MPI tasks */
 #ifdef MPC_Threads

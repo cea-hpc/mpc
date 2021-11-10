@@ -1229,12 +1229,10 @@ static inline int ___collectives_ibcast( void *buffer, int count, MPI_Datatype d
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  //___collectives_bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   _mpc_mpi_config()->coll_algorithm_intracomm.bcast(buffer, count, datatype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
   ___collectives_sched_alloc_init(handle, schedule, &info);
 
-  //___collectives_bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   _mpc_mpi_config()->coll_algorithm_intracomm.bcast(buffer, count, datatype, root, comm, MPC_COLL_TYPE_NONBLOCKING, schedule, &info);
   
   res = ___collectives_sched_commit(schedule, &info);
@@ -1325,12 +1323,10 @@ static inline int ___collectives_bcast_init(void *buffer, int count, MPI_Datatyp
   /* alloc schedule */
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
 
-  //___collectives_bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
   _mpc_mpi_config()->coll_algorithm_intracomm.bcast(buffer, count, datatype, root, comm, MPC_COLL_TYPE_COUNT, NULL, &info);
 
   ___collectives_sched_alloc_init(handle, schedule, &info);
 
-  //___collectives_bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
   _mpc_mpi_config()->coll_algorithm_intracomm.bcast(buffer, count, datatype, root, comm, MPC_COLL_TYPE_PERSISTENT, schedule, &info);
 
   res = ___collectives_sched_commit(schedule, &info);
@@ -1364,7 +1360,6 @@ int _mpc_mpi_collectives_bcast(void *buffer, int count, MPI_Datatype datatype, i
     info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
   }
 
-  //return ___collectives_bcast_switch(buffer, count, datatype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info); 
   return _mpc_mpi_config()->coll_algorithm_intracomm.bcast(buffer, count, datatype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info); 
 }
 
@@ -1629,7 +1624,6 @@ int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatype datatype, in
       // We cannot create topological and they aren't already created
       // Fallback on non-topological algorithms
       
-      //res = ___collectives_bcast_switch(buffer, count, datatype, root, comm, coll_type, schedule, info);
       res = _mpc_mpi_config()->coll_algorithm_intracomm.bcast(buffer, count, datatype, root, comm, coll_type, schedule, info);
       info->flag = initial_flag; 
       return res;
@@ -1655,7 +1649,6 @@ int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatype datatype, in
     if(!rank_split) { /* if master */
       MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[k];
 
-      //res = ___collectives_bcast_switch(buffer, count, datatype, 0, master_comm, coll_type, schedule, info);
       res = _mpc_mpi_config()->coll_algorithm_intracomm.bcast(buffer, count, datatype, 0, master_comm, coll_type, schedule, info);
       
       ___collectives_barrier_type(coll_type, schedule, info);
@@ -1665,7 +1658,6 @@ int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatype datatype, in
   /* last level topology binomial bcast */
   MPI_Comm hardware_comm = info->hardware_info_ptr->hwcomm[deepest_level];
 
-  //res = ___collectives_bcast_switch(buffer, count, datatype, 0, hardware_comm, coll_type, schedule, info);
   res = _mpc_mpi_config()->coll_algorithm_intracomm.bcast(buffer, count, datatype, 0, hardware_comm, coll_type, schedule, info);
   
   info->flag = initial_flag; 
@@ -7499,8 +7491,6 @@ static inline int ___collectives_alltoall_init(const void *sendbuf, int sendcoun
   \return error code
   */
 int _mpc_mpi_collectives_alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm) {
-  //return ___collectives_alltoall_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
-
 
   MPI_Request req;
   MPI_Status status;
@@ -7920,7 +7910,6 @@ static inline int ___collectives_alltoallv_init(const void *sendbuf, const int *
   \return error code
   */
 int _mpc_mpi_collectives_alltoallv(const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm) {
-  //return ___collectives_alltoall_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_BLOCKING, NULL, NULL);
 
   MPI_Request req;
   MPI_Status status;
