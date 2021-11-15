@@ -37,7 +37,7 @@
 typedef struct  mpc_lowcomm_request_omp_progress_s
 {
     /* the omp event */
-    mpc_omp_event_handle_t * event;
+    mpc_omp_event_handle_t * handle;
 
     /* the request array */
     MPI_Request * req;
@@ -49,7 +49,7 @@ typedef struct  mpc_lowcomm_request_omp_progress_s
     int * index;
 
     /* number of requests */
-    int n;
+    unsigned int n;
 }               mpc_lowcomm_request_omp_progress_t;
 
 /* test of request completion */
@@ -107,11 +107,14 @@ static int
 __request_progress(mpc_lowcomm_request_omp_progress_t * infos)
 {
     mpc_lowcomm_request_test_t test = __request_get_test(infos);
+
+    /* check if the request completed */
     if (test(infos))
     {
-        mpc_omp_fulfill_event(infos->event);
+        mpc_omp_fulfill_event(infos->handle);
         return 0;
     }
+
     return 1;
 }
 
@@ -137,23 +140,20 @@ ___task_block(int n, MPI_Request * reqs, int * index, MPI_Status * statuses)
     /* communication is blocking, block the task */
 
     /* progression callback */
-    mpc_omp_event_handle_t event;
-    mpc_omp_event_handle_init(&event, MPC_OMP_EVENT_TASK_BLOCK);
-
-    infos.event = &event;
-
-    mpc_omp_callback_t callback;
-    callback.func      = (int (*)(void *)) __request_progress;
-    callback.data      = &infos;
-    callback.when      = MPC_OMP_CALLBACK_TASK_SCHEDULE_BEFORE;
-    callback.repeat    = MPC_OMP_CALLBACK_REPEAT_RETURN;
-    callback.n         = 0;
+    mpc_omp_event_handle_t handle;
+    mpc_omp_event_handle_init(&handle, MPC_OMP_EVENT_TASK_BLOCK);
+    infos.handle = &handle;
 
     /* register the progression callback */
-    mpc_omp_callback(&callback);
+    mpc_omp_callback(
+        (int (*)(void *)) __request_progress,
+        &infos,
+        MPC_OMP_CALLBACK_TASK_SCHEDULE_BEFORE,
+        MPC_OMP_CALLBACK_REPEAT_RETURN
+    );
 
     /* block current task until the associated event is fulfilled */
-    mpc_omp_task_block(&event);
+    mpc_omp_task_block(&handle);
 }
 
 /** Parameters correspond to the ones of MPI_Test, MPI_Testall and MPI_Testany */

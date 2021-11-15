@@ -80,10 +80,10 @@ extern "C" {
      */
     typedef struct  mpc_omp_event_handle_s
     {
-        void            * attr; /* the event attributes */
-        OPA_int_t       lock;   /* a spinlock */
-        mpc_omp_event_t type;   /* the event type */
-        OPA_int_t       status; /* the handle status */
+        void            * attr;         /* the event attributes */
+        OPA_int_t       lock;           /* a spinlock */
+        mpc_omp_event_t type;           /* the event type */
+        OPA_int_t       status;         /* the handle status */
     }               mpc_omp_event_handle_t;
 
     /* initialize an event handler */
@@ -119,9 +119,7 @@ extern "C" {
 
     typedef enum    mpc_omp_callback_repeat_t
     {
-        MPC_OMP_CALLBACK_REPEAT_RETURN,    /* repeat until the callback returned 0 */
-        MPC_OMP_CALLBACK_REPEAT_EVENT,     /* repeat until the event is fulfilled */
-        MPC_OMP_CALLBACK_REPEAT_N          /* repeat n times */
+        MPC_OMP_CALLBACK_REPEAT_RETURN  /* repeat until the callback returned 0 */
     }               mpc_omp_callback_repeat_t;
 
     typedef struct  mpc_omp_callback_s
@@ -134,26 +132,24 @@ extern "C" {
         void * data;
         mpc_omp_callback_when_t when;
         mpc_omp_callback_repeat_t repeat;
-        mpc_omp_event_handle_t * event; /* the event in case of `MPC_MPC_OMP_CALLBACK_REPEAT_UNTIL`    */
-        size_t n;                       /* the `n` in case of `MPC_MPC_OMP_CALLBACK_REPEAT_N`          */
     }               mpc_omp_callback_t;
 
     /**
      * `pragma omp callback [when(indicator)] [repeat(when)]`
-     * 
+     *
      *  A **callback** region defines a routine that is executed by the runtime.
-     * 
+     *
      *  The **when** clause defines when the region should be executed (see `mpc_omp_callback_when`)
      *  Default value is `MPC_OMP_CALLBACK_SCHEDULER_FAMINE`.
-     * 
+     *
      * The **repeat** clause defines how many times should the region run.
      *     - `repeat(until: event-handle)` will make the region run as long
      *      as the event represented by `event-handle` is not fullfiled.
-     *      - `repeat(n > 0)` will make the region run `n` times.
+     *     - `repeat(n > 0)` will make the region run `n` times.
      *
      *  Default value is `repeat(1)`
      */
-    void mpc_omp_callback(mpc_omp_callback_t * callback);
+    void mpc_omp_callback(int (* func)(void * data), void * data, mpc_omp_callback_when_t when, mpc_omp_callback_repeat_t repeat);
 
     /** Maximum length of a task label */
     # define MPC_OMP_TASK_LABEL_MAX_LENGTH 64
@@ -176,7 +172,7 @@ extern "C" {
         MPC_OMP_TASK_DEP_COUNT           = 6
     }               mpc_omp_task_dep_type_t;
 
-    /* a dependency */
+    /* a task data dependency */
     typedef struct  mpc_omp_task_dependency_t
     {
         void ** addrs;
@@ -184,7 +180,13 @@ extern "C" {
         mpc_omp_task_dep_type_t type;
     }               mpc_omp_task_dependency_t;
 
-    /** # pragma omp task depend(dependencies) */
+    /**
+     * Add a data dependencies for the next task to be created.
+     * \param dependencies a dependency array
+     * \param n size of the dependency array
+     * ATTENTION : the 'dependencies' array should be sorted by types, so that
+     *  OUT >= INOUT > MUTEXINOUTSET > INOUTSET > IN
+     */
     void mpc_omp_task_dependencies(mpc_omp_task_dependency_t * dependencies, unsigned int n);
 
     /**

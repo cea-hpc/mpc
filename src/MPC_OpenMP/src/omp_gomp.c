@@ -2035,7 +2035,7 @@ ___gomp_convert_flags(bool if_clause, int flags)
     }
 
     /* mpc specific dependencies */
-    if (thread->task_infos.incoming.dependencies && thread->task_infos.incoming.ndependencies)
+    if (thread->task_infos.incoming.dependencies && thread->task_infos.incoming.ndependencies_type)
     {
         mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_DEPEND);
     }

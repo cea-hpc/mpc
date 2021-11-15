@@ -401,6 +401,10 @@ int mpc_omp_get_num_threads(void) { return omp_get_num_threads(); }
 
 int mpc_omp_get_thread_num(void) { return omp_get_thread_num(); }
 
+/***************************************************************************/
+/* EXTRA CALLS FOR LACKING FEATURES IN GCC, LLVM, or OPENMP SPECIFICATIONS */
+/***************************************************************************/
+
 /**
  * @return true if current task is explicit
  */
@@ -448,9 +452,8 @@ void
 mpc_omp_event_handle_init(mpc_omp_event_handle_t * handle, mpc_omp_event_t type)
 {
     OPA_store_int(&(handle->status), MPC_OMP_EVENT_HANDLE_STATUS_INIT);
-    handle->attr = NULL;
-    handle->type = MPC_OMP_EVENT_NULL;
     mpc_common_spinlock_init(&(handle->lock), 0);
+    handle->type = type;
 
     switch (type)
     {
@@ -462,20 +465,17 @@ mpc_omp_event_handle_init(mpc_omp_event_handle_t * handle, mpc_omp_event_t type)
             mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
             assert(task);
 
-            handle->type = type;
             handle->attr = (void *) task;
             break ;
         }
+
         default:
         {
             not_implemented();
+            break ;
         }
     }
 }
-
-/***************************************************************************/
-/* EXTRA CALLS FOR LACKING FEATURES IN GCC, LLVM, or OPENMP SPECIFICATIONS */
-/***************************************************************************/
 
 /** # pragma omp task label("potrf") */
 void
@@ -501,5 +501,5 @@ mpc_omp_task_dependencies(mpc_omp_task_dependency_t * dependencies, unsigned int
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     thread->task_infos.incoming.dependencies = dependencies;
-    thread->task_infos.incoming.ndependencies = n;
+    thread->task_infos.incoming.ndependencies_type = n;
 }
