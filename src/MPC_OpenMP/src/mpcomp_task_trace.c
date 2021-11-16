@@ -69,7 +69,7 @@ __get_infos(void)
 int
 _mpc_omp_task_trace_begun(void)
 {
-    return __get_infos()->begun;
+    return mpc_omp_tls && __get_infos()->begun;
 }
 
 static inline mpc_omp_task_trace_record_t *
