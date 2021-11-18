@@ -26,6 +26,7 @@
 /* # - Romain Pereira <romain.pereira@cea.fr>                             # */
 /* #                                                                      # */
 /* ######################################################################## */
+
 # include "mpc_thread_mpi_omp_interop.h"
 
 # if MPC_ENABLE_INTEROP_MPI_OMP
@@ -42,8 +43,8 @@ typedef struct  mpc_lowcomm_request_omp_progress_s
     /* the request array */
     MPI_Request * req;
 
-    /* statuses */
-    MPI_Status * statuses;
+    /* status */
+    MPI_Status * status;
 
     /* index */
     int * index;
@@ -61,7 +62,7 @@ __request_test(mpc_lowcomm_request_omp_progress_t * infos)
     assert(infos->n == 1);
 
     int completed;
-    MPI_Test(infos->req, &completed, infos->statuses);
+    MPI_Test(infos->req, &completed, infos->status);
     return completed;
 }
 
@@ -72,7 +73,7 @@ __request_testall(mpc_lowcomm_request_omp_progress_t * infos)
     assert(infos->index == NULL);
 
     int completed;
-    MPI_Testall(infos->n, infos->req, &completed, infos->statuses);
+    MPI_Testall(infos->n, infos->req, &completed, infos->status);
     return completed;
 }
 
@@ -83,7 +84,7 @@ __request_testany(mpc_lowcomm_request_omp_progress_t * infos)
     assert(infos->index);
 
     int completed;
-    MPI_Testany(infos->n, infos->req, infos->index, &completed, infos->statuses);
+    MPI_Testany(infos->n, infos->req, infos->index, &completed, infos->status);
     return completed;
 }
 
@@ -116,30 +117,32 @@ __request_progress(mpc_lowcomm_request_omp_progress_t * infos)
     }
 
     /* check if the blocking event was cancelled */
-    if (infos->handle->cancelled && OPA_load_int(infos->handle->cancelled))
+    if (infos->handle->cancel && OPA_load_int(infos->handle->cancel))
     {
-        unsigned int i;
-        for (i = 0 ; i < infos->n ; ++i)
+        if (OPA_cas_int(&(infos->handle->cancelled), 0, 1) == 0)
         {
-            MPI_Cancel(infos->req + i);
+            unsigned int i;
+            for (i = 0 ; i < infos->n ; ++i)
+            {
+                MPI_Cancel(infos->req + i);
+            }
+            mpc_omp_fulfill_event(infos->handle);
+            return 0;
         }
-        mpc_omp_fulfill_event(infos->handle);
-        return 0;
     }
-
     return 1;
 }
 
 /* task blocking */
 
 static inline void
-___task_block(int n, MPI_Request * reqs, int * index, MPI_Status * statuses)
+___task_block(int n, MPI_Request * reqs, int * index, MPI_Status * status)
 {
     /* generate test function */
     mpc_lowcomm_request_omp_progress_t infos;
     infos.req       = reqs;
     infos.index     = index;
-    infos.statuses  = statuses;
+    infos.status    = status;
     infos.n         = n;
 
     /* test before blocking */
@@ -170,13 +173,12 @@ ___task_block(int n, MPI_Request * reqs, int * index, MPI_Status * statuses)
 
 /** Parameters correspond to the ones of MPI_Test, MPI_Testall and MPI_Testany */
 int
-mpc_thread_mpi_omp_wait(int n, MPI_Request * reqs, int * index, MPI_Status * statuses)
+mpc_thread_mpi_omp_wait(int n, MPI_Request * reqs, int * index, MPI_Status * status)
 {
     if (mpc_omp_in_explicit_task())
     {
         /* suspend the task*/
-        ___task_block(n, reqs, index, statuses);
-
+        ___task_block(n, reqs, index, status);
         return 1;
     }
     return 0;

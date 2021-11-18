@@ -84,7 +84,8 @@ extern "C" {
         OPA_int_t       lock;           /* a spinlock */
         mpc_omp_event_t type;           /* the event type */
         OPA_int_t       status;         /* the handle status */
-        OPA_int_t       * cancelled;    /* point to 1 if the handle should be cancelled */
+        OPA_int_t       * cancel;       /* point to 1 if the handle should be cancelled */
+        OPA_int_t       cancelled;      /* point to 1 if the handle was cancelled already */
     }               mpc_omp_event_handle_t;
 
     /* initialize an event handler */
@@ -125,8 +126,8 @@ extern "C" {
 
     typedef struct  mpc_omp_callback_s
     {
-        /* internal */
-        struct mpc_omp_callback_s * _next;
+        /* next callback for this event */
+        struct mpc_omp_callback_s * next;
 
         /* user */
         int (* func)(void * data);      /* Return > 0 if the function should be re-run later on */

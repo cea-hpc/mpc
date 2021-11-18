@@ -466,7 +466,8 @@ mpc_omp_event_handle_init(mpc_omp_event_handle_t * handle, mpc_omp_event_t type)
             assert(task);
 
             handle->attr = (void *) task;
-            handle->cancelled = task->taskgroup ? &(task->taskgroup->cancelled) : NULL;
+            handle->cancel = task->taskgroup ? &(task->taskgroup->cancelled) : NULL;
+            OPA_store_int(&(handle->cancelled), 0);
             break ;
         }
 

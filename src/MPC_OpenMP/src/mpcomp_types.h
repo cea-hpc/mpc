@@ -94,7 +94,7 @@
 
 # define MPC_OMP_TASK_TRACE_ENABLED mpc_omp_conf_get()->task_trace
 
-# define MPC_OMP_TASK_USE_RECYCLERS  0
+# define MPC_OMP_TASK_USE_RECYCLERS  1
 # define MPC_OMP_TASK_ALLOCATOR      mpc_omp_alloc
 # define MPC_OMP_TASK_DEALLOCATOR    mpc_omp_free
 # define MPC_OMP_TASK_DEFAULT_ALIGN  8
@@ -322,11 +322,10 @@ typedef enum    mpc_omp_task_list_type_e
 
 typedef enum    mpcomp_task_dep_task_status_e
 {
-    MPC_OMP_TASK_STATUS_INITIALIZING    = 0,
-    MPC_OMP_TASK_STATUS_NOT_READY       = 1,
-    MPC_OMP_TASK_STATUS_READY           = 2,
-    MPC_OMP_TASK_STATUS_FINALIZED       = 3,
-    MPC_OMP_TASK_STATUS_COUNT           = 4
+    MPC_OMP_TASK_STATUS_NOT_READY       = 0,
+    MPC_OMP_TASK_STATUS_READY           = 1,
+    MPC_OMP_TASK_STATUS_FINALIZED       = 2,
+    MPC_OMP_TASK_STATUS_COUNT           = 3
 }               mpcomp_task_dep_task_status_t;
 
 /**********************
