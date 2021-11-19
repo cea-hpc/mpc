@@ -1377,11 +1377,14 @@ int _mpc_mpi_collectives_bcast(void *buffer, int count, MPI_Datatype datatype, i
   */
 int ___collectives_bcast_switch(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
+  int rank, size;
+  MPI_Aint ext;
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+  PMPI_Type_extent(datatype, &ext);
+
 #ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
-    int rank = -1, size = -1;
-    _mpc_cl_comm_rank(comm, &rank);
-    _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
     mpc_common_debug_log("%sBCAST | %d / %d (%d)\n", __debug_indentation, rank, size, global_rank);
@@ -1411,7 +1414,12 @@ int ___collectives_bcast_switch(void *buffer, int count, MPI_Datatype datatype, 
   if(topo) {
     alg = NBC_BCAST_TOPO;
   } else {
-    alg = NBC_BCAST_BINOMIAL;
+    //alg = NBC_BCAST_BINOMIAL;
+    if(size <= 4 || (size <= 16 && ext * count > 2 << 10)) {
+      alg = NBC_BCAST_LINEAR;
+    } else {
+      alg = NBC_BCAST_BINOMIAL;
+    }
   }
 
   int res;
@@ -1908,11 +1916,14 @@ int _mpc_mpi_collectives_reduce(const void *sendbuf, void* recvbuf, int count, M
   */
 int ___collectives_reduce_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
+  int rank, size;
+  MPI_Aint ext;
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+  PMPI_Type_extent(datatype, &ext);
+
 #ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
-    int rank = -1, size = -1;
-    _mpc_cl_comm_rank(comm, &rank);
-    _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
     mpc_common_debug_log("%sREDUCE | %d / %d (%d)\n", __debug_indentation, rank, size, global_rank);
@@ -1947,7 +1958,12 @@ int ___collectives_reduce_switch(const void *sendbuf, void* recvbuf, int count, 
       alg = NBC_REDUCE_TOPO;
     }
   } else {
-    alg = NBC_REDUCE_BINOMIAL;
+    //alg = NBC_REDUCE_BINOMIAL;
+    if(size <= 16) {
+      alg = NBC_REDUCE_LINEAR;
+    } else {
+      alg = NBC_REDUCE_BINOMIAL;
+    }
   }
 
   int res;
@@ -2619,11 +2635,14 @@ int _mpc_mpi_collectives_allreduce(const void *sendbuf, void* recvbuf, int count
   */
 int ___collectives_allreduce_switch(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
+  int rank, size;
+  MPI_Aint ext;
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+  PMPI_Type_extent(datatype, &ext);
+
 #ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
-    int rank = -1, size = -1;
-    _mpc_cl_comm_rank(comm, &rank);
-    _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
     mpc_common_debug_log("%sALLREDUCE | %d / %d (%d)\n", __debug_indentation, rank, size, global_rank);
@@ -2654,10 +2673,15 @@ int ___collectives_allreduce_switch(const void *sendbuf, void* recvbuf, int coun
   if(topo) {
     alg = NBC_ALLREDUCE_TOPO;
   } else {
-    alg = NBC_ALLREDUCE_REDUCE_BROADCAST;
+    //alg = NBC_ALLREDUCE_REDUCE_BROADCAST;
+    if(size <= 64 && count * ext >= 2 << 13) {
+      alg = NBC_ALLREDUCE_BINARY_BLOCK;
+    } else if(size == 32 && count * ext <= 2 << 15) {
+      alg = NBC_ALLREDUCE_REDUCE_BROADCAST;
+    } else {
+      alg = NBC_ALLREDUCE_DISTANCE_DOUBLING;
+    }
   }
-    
-  alg = NBC_ALLREDUCE_REDUCE_BROADCAST;
 
   int res;
 
@@ -3525,11 +3549,19 @@ int _mpc_mpi_collectives_scatter(const void *sendbuf, int sendcount, MPI_Datatyp
   */
 int ___collectives_scatter_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
+  int rank, size, tmp_count = recvcount;
+  MPI_Datatype tmp_type = recvtype;
+  MPI_Aint ext;
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+  if(rank == root && recvbuf == MPI_IN_PLACE) {
+    tmp_type = sendtype;
+    tmp_count = sendcount;
+  }
+  PMPI_Type_extent(tmp_type, &ext);
+
 #ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
-    int rank = -1, size = -1;
-    _mpc_cl_comm_rank(comm, &rank);
-    _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
     mpc_common_debug_log("%sSCATTER | %d / %d (%d)\n", __debug_indentation, rank, size, global_rank);
@@ -3557,7 +3589,12 @@ int ___collectives_scatter_switch(const void *sendbuf, int sendcount, MPI_Dataty
   if(topo) {
     alg = NBC_SCATTER_TOPO;
   } else {
-    alg = NBC_SCATTER_BINOMIAL;
+    //alg = NBC_SCATTER_BINOMIAL;
+    if(size <= 64 && ext * tmp_count > 2 << 10) {
+      alg = NBC_SCATTER_LINEAR;
+    } else {
+      alg = NBC_SCATTER_BINOMIAL;
+    }
   }
 
   int res;
@@ -4583,11 +4620,19 @@ int _mpc_mpi_collectives_gather(const void *sendbuf, int sendcount, MPI_Datatype
   */
 int ___collectives_gather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
+  int rank, size, tmp_count = sendcount;
+  MPI_Datatype tmp_type = sendtype;
+  MPI_Aint ext;
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+  if(rank == root && sendbuf == MPI_IN_PLACE) {
+    tmp_type = recvtype;
+    tmp_count = recvcount;
+  }
+  PMPI_Type_extent(tmp_type, &ext);
+
 #ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
-    int rank = -1, size = -1;
-    _mpc_cl_comm_rank(comm, &rank);
-    _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
     mpc_common_debug_log("%sGATHER | %d / %d (%d)\n", __debug_indentation, rank, size, global_rank);
@@ -4615,7 +4660,12 @@ int ___collectives_gather_switch(const void *sendbuf, int sendcount, MPI_Datatyp
   if(topo) {
     alg = NBC_GATHER_TOPO;
   } else {
-    alg = NBC_GATHER_LINEAR;
+    //alg = NBC_GATHER_LINEAR;
+    if(size <= 8 || (size <= 128 && ext * tmp_count >= 2 << 20)) {
+      alg = NBC_GATHER_LINEAR;
+    } else {
+      alg = NBC_GATHER_BINOMIAL;
+    }
   }
 
   int res;
@@ -6518,11 +6568,15 @@ int _mpc_mpi_collectives_allgather(const void *sendbuf, int sendcount, MPI_Datat
   */
 int ___collectives_allgather_switch(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
+  int rank, size, tmp_count = recvcount;
+  MPI_Datatype tmp_type = recvtype;
+  MPI_Aint ext;
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+  PMPI_Type_extent(tmp_type, &ext);
+
 #ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   {
-    int rank = -1, size = -1;
-    _mpc_cl_comm_rank(comm, &rank);
-    _mpc_cl_comm_size(comm, &size);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
     mpc_common_debug_log("%sALLGATHER | %d / %d (%d)\n", __debug_indentation, rank, size, global_rank);
@@ -6552,7 +6606,14 @@ int ___collectives_allgather_switch(const void *sendbuf, int sendcount, MPI_Data
   if(topo) {
     alg = NBC_ALLGATHER_TOPO;
   } else {
-    alg = NBC_ALLGATHER_DISTANCE_DOUBLING;
+    //alg = NBC_ALLGATHER_DISTANCE_DOUBLING;
+    if(size <= 2 || (size <= 16 && tmp_count * ext >= 2 << 15)) {
+      alg = NBC_ALLGATHER_RING;
+    } else if(size >= 16 && size <= 32 && tmp_count * ext <= 2 << 10) {
+      alg = NBC_ALLGATHER_GATHER_BROADCAST;
+    } else {
+      alg = NBC_ALLGATHER_DISTANCE_DOUBLING;
+    }
   }
 
   int res;
