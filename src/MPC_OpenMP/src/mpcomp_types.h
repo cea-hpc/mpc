@@ -79,28 +79,37 @@
 # define MPC_OMP_VERSION_MAJOR  3
 # define MPC_OMP_VERSION_MINOR  1
 
-/* config */
-# define MPC_OMP_TASK_COMPILE_FIBER 1
-
-/* openmp barrier algorithm */
-# define MPC_OMP_NAIVE_BARRIER      1
-# define MPC_OMP_TASK_COND_WAIT     0
+/* FIBER */
+#define MPC_OMP_TASK_COMPILE_FIBER 1
 
 #if MPC_OMP_TASK_COMPILE_FIBER
-# define MPC_OMP_TASK_FIBER_ENABLED mpc_omp_conf_get()->task_use_fiber
+# define MPC_OMP_TASK_FIBER_ENABLED     mpc_omp_conf_get()->task_use_fiber
+# define MPC_OMP_TASK_FIBER_STACK_SIZE  mpc_omp_conf_get()->task_fiber_stack_size
 # else
 # define MPC_OMP_TASK_FIBER_ENABLED 0
 #endif
 
-# define MPC_OMP_TASK_TRACE_ENABLED mpc_omp_conf_get()->task_trace
+/* RECYCLER */
+# define MPC_OMP_TASK_USE_RECYCLERS 1
+# if MPC_OMP_TASK_USE_RECYCLERS
+#  define MPC_OMP_TASK_ALLOCATOR      mpc_omp_alloc
+#  define MPC_OMP_TASK_DEALLOCATOR    mpc_omp_free
+#  define MPC_OMP_TASK_DEFAULT_ALIGN  8
+# endif
 
-# define MPC_OMP_TASK_USE_RECYCLERS  1
-# define MPC_OMP_TASK_ALLOCATOR      mpc_omp_alloc
-# define MPC_OMP_TASK_DEALLOCATOR    mpc_omp_free
-# define MPC_OMP_TASK_DEFAULT_ALIGN  8
+/* BARRIER ALGORITHM */
+# define MPC_OMP_NAIVE_BARRIER              1
+# define MPC_OMP_BARRIER_COMPILE_COND_WAIT  1
 
-/* task fiber stack size */
-# define MPC_OMP_TASK_FIBER_STACK_SIZE (mpc_omp_conf_get()->task_fiber_stack_size)
+#if MPC_OMP_BARRIER_COMPILE_COND_WAIT
+# if MPC_OMP_NAIVE_BARRIER != 1
+#  error "You can only use MPC_OMP_TASK_BARRIER_COND_WAIT with MPC_OMP_NAIVE_BARRIER"
+# endif /* MPC_OMP_NAIVE_BARRIER */
+# define MPC_OMP_TASK_BARRIER_COND_WAIT_ENABLED        mpc_omp_conf_get()->task_cond_wait_enabled
+# define MPC_OMP_TASK_BARRIER_COND_WAIT_NHYPERACTIVE   mpc_omp_conf_get()->task_cond_wait_nhyperactive
+#else /* MPC_OMP_BARRIER_COMPILE_COND_WAIT */
+# define MPC_OMP_TASK_BARRIER_COND_WAIT_ENABLED     0
+#endif /* MPC_OMP_BARRIER_COMPILE_COND_WAIT */
 
 /* Use MCS locks or not */
 #define MPC_OMP_USE_MCS_LOCK 1
@@ -530,6 +539,7 @@ typedef struct  mpc_omp_task_dep_node_s
 {
     /* hash table for child tasks dependencies */
     mpc_omp_task_dep_htable_entry_t * hmap;
+    mpc_common_spinlock_t hmap_lock;
 
     /* lists */
     struct mpc_omp_task_list_elt_s * successors;
@@ -806,10 +816,11 @@ typedef struct  mpc_omp_task_instance_infos_s
     /* blocked tasks list */
     mpc_omp_task_list_t blocked_tasks;
 
-# if MPC_OMP_TASK_COND_WAIT
+# if MPC_OMP_BARRIER_COMPILE_COND_WAIT
     /* condition to make threads sleep when waiting for tasks */
     pthread_mutex_t work_cond_mutex;
     pthread_cond_t  work_cond;
+    int             work_cond_nthreads;
 # endif
 
 }               mpc_omp_task_instance_infos_t;

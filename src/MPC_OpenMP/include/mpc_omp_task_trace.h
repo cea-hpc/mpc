@@ -32,6 +32,13 @@
 /* enable trace compiling */
 # define MPC_OMP_TASK_COMPILE_TRACE 1
 
+#if MPC_OMP_TASK_COMPILE_TRACE
+# define MPC_OMP_TASK_FIBER_ENABLED mpc_omp_conf_get()->task_use_fiber
+# define MPC_OMP_TASK_TRACE_ENABLED mpc_omp_conf_get()->task_trace
+# else
+# define MPC_OMP_TASK_TRACE_ENABLED 0
+#endif
+
 # if MPC_OMP_TASK_COMPILE_TRACE
 
 # include "mpc_common_recycler.h"

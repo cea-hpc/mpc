@@ -490,10 +490,10 @@ mpc_omp_barrier(void)
         assert(num_threads > 1);
 /* naive barrier implementation */
 # if MPC_OMP_NAIVE_BARRIER
-# if MPC_OMP_TASK_COND_WAIT
+# if MPC_OMP_BARRIER_COMPILE_COND_WAIT
         pthread_mutex_t * mutex = &(thread->instance->task_infos.work_cond_mutex);
         pthread_cond_t * cond = &(thread->instance->task_infos.work_cond);
-# endif /* MPC_OMP_TASK_COND_WAIT */
+# endif /* MPC_OMP_BARRIER_COMPILE_COND_WAIT */
         int old_version = team->barrier_version;
         if (OPA_fetch_and_incr_int(&(team->threads_in_barrier)) == num_threads - 1)
         {
@@ -503,14 +503,14 @@ mpc_omp_barrier(void)
 
             /* wake up threads */
             /* ensure that mpc did not override glibc call */
-# if MPC_OMP_TASK_COND_WAIT
+# if MPC_OMP_BARRIER_COMPILE_COND_WAIT
             assert(pthread_mutex_lock != mpc_thread_mutex_lock);
             pthread_mutex_lock(mutex);
             {
                 pthread_cond_broadcast(cond);
             }
             pthread_mutex_unlock(mutex);
-# endif /* MPC_OMP_TASK_COND_WAIT */
+# endif /* MPC_OMP_BARRIER_COMPILE_COND_WAIT */
         }
 
         /* work steal */
@@ -518,15 +518,25 @@ mpc_omp_barrier(void)
         {
             if (_mpc_omp_task_schedule() == 0)
             {
-# if MPC_OMP_TASK_COND_WAIT
                 /* Famine detected */
-                pthread_mutex_lock(mutex);
-                if (team->barrier_version == old_version)
+# if MPC_OMP_BARRIER_COMPILE_COND_WAIT
+                if (MPC_OMP_TASK_BARRIER_COND_WAIT_ENABLED)
                 {
-                    pthread_cond_wait(cond, mutex);
+                    pthread_mutex_lock(mutex);
+                    {
+                        if (team->barrier_version == old_version)
+                        {
+                            if (num_threads - thread->instance->task_infos.work_cond_nthreads > MPC_OMP_TASK_BARRIER_COND_WAIT_NHYPERACTIVE)
+                            {
+                                ++thread->instance->task_infos.work_cond_nthreads;
+                                pthread_cond_wait(cond, mutex);
+                                --thread->instance->task_infos.work_cond_nthreads;
+                            }
+                        }
+                    }
+                    pthread_mutex_unlock(mutex);
                 }
-                pthread_mutex_unlock(mutex);
-# endif /* MPC_OMP_TASK_COND_WAIT */
+# endif /* MPC_OMP_BARRIER_COMPILE_COND_WAIT */
             }
         }
 

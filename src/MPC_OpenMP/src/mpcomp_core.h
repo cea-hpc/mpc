@@ -108,9 +108,10 @@ typedef struct  mpc_omp_conf_s
     int task_depth_threshold;
     int task_sequential;
     int task_use_fiber;
-    unsigned int task_deps_hmap_threshold;
     int task_trace;
     int task_trace_auto;
+    int task_cond_wait_enabled;
+    int task_cond_wait_nhyperactive;
     mpc_omp_task_yield_mode_t task_yield_mode;
     mpc_omp_task_priority_policy_t task_priority_policy;
     mpc_omp_task_priority_propagation_policy_t task_priority_propagation_policy;
