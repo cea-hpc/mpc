@@ -12,7 +12,7 @@
 #endif
 
 #ifdef MPC_USE_PORTALS
-#include <sctk_portals.h>
+#include "portals/sctk_portals.h"
 #endif
 
 #ifdef MPC_USE_OFI
