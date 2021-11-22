@@ -878,7 +878,7 @@ inline void sctk_check_auto_free_list(MPI_request_struct_t *requests)
 		tmp = (MPI_internal_request_t *)requests->auto_free_list;
 
 		/* Test it */
-		mpc_lowcomm_test(&(tmp->req), &flag, SCTK_STATUS_NULL);
+		mpc_lowcomm_test(&(tmp->req), &flag, MPI_STATUS_IGNORE);
 
 		/* If call has ended */
 		if(flag != 0)
@@ -4016,7 +4016,7 @@ int __INTERNAL__PMPI_Scatter_intra(void *sendbuf, int sendcnt,
 //    }
 //  }
 //
-//  res = PMPI_Wait(&(request), SCTK_STATUS_NULL);
+//  res = PMPI_Wait(&(request), MPI_STATUS_IGNORE);
 //  sctk_free(sendrequest);
 //  sctk_free(sendstatus);
 //  return res;
@@ -5478,7 +5478,7 @@ int __INTERNAL__PMPI_Alltoallv_intra(void *sendbuf, int *sendcnts, int *sdispls,
 //         return res;
 //       }
 //     }
-//     res = PMPI_Waitall(2 * ss, requests, SCTK_STATUS_NULL);
+//     res = PMPI_Waitall(2 * ss, requests, MPI_STATUS_IGNORE);
 //     if(res != MPI_SUCCESS)
 //     {
 //       return res;
@@ -10541,16 +10541,23 @@ int PMPI_Test(MPI_Request *request, int *flag, MPI_Status *status)
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res       = MPI_ERR_INTERN;
 
+	/* Initialize status error to success */
+	if(status != MPI_STATUS_IGNORE)
+	{
+		status->MPC_ERROR=MPI_SUCCESS;
+	}
+
 	if(*request == MPI_REQUEST_NULL)
 	{
-		res = MPI_SUCCESS;
-		if(status)
+		/* Status for NULL requests */
+		if(status != MPI_STATUS_IGNORE)
 		{
 			status->MPC_SOURCE = MPI_PROC_NULL;
 			status->MPC_TAG    = MPI_ANY_TAG;
-			status->MPC_ERROR  = MPI_SUCCESS;
 			status->size       = 0;
 		}
+
+		res = MPI_SUCCESS;
 		*flag = 1;
 		return res;
 	}
@@ -10577,7 +10584,7 @@ int PMPI_Test(MPI_Request *request, int *flag, MPI_Status *status)
 	else
 	{
 		mpc_thread_yield();
-    MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+    	MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 	}
 
 	if(status != MPI_STATUS_IGNORE)
@@ -10679,7 +10686,7 @@ int PMPI_Testany(int count,
 
 	MPI_request_struct_t *requests;
 
-	if(status != SCTK_STATUS_NULL)
+	if(status != MPI_STATUS_IGNORE)
 	{
 		status->MPI_ERROR = SCTK_SUCCESS;
 	}
@@ -10771,7 +10778,7 @@ static int __testall_for_NBC(int count, MPI_Request array_of_requests[], int *fl
 
 	requests = __sctk_internal_get_MPC_requests();
 	*flag    = 0;
-	if(array_of_statuses != SCTK_STATUS_NULL)
+	if(array_of_statuses != MPI_STATUSES_IGNORE)
 	{
 		for(i = 0; i < count; i++)
 		{
@@ -10819,8 +10826,8 @@ static int __testall_for_NBC(int count, MPI_Request array_of_requests[], int *fl
 				{
 					res = mpc_lowcomm_test(
 						req, &loc_flag,
-						(array_of_statuses == SCTK_STATUS_NULL)
-						? SCTK_STATUS_NULL
+						(array_of_statuses == MPI_STATUSES_IGNORE)
+						? MPI_STATUS_IGNORE
 						: &(array_of_statuses[i]) );
 				}
 			}
@@ -11010,7 +11017,7 @@ int PMPI_Testall(int count, MPI_Request array_of_requests[], int *flag,
 
 	requests = __sctk_internal_get_MPC_requests();
 	*flag    = 0;
-	if(array_of_statuses != SCTK_STATUS_NULL)
+	if(array_of_statuses != MPI_STATUSES_IGNORE)
 	{
 		for(i = 0; i < count; i++)
 		{
@@ -11054,8 +11061,8 @@ int PMPI_Testall(int count, MPI_Request array_of_requests[], int *flag,
 				{
 					res = mpc_lowcomm_test(
 						req, &loc_flag,
-						(array_of_statuses == SCTK_STATUS_NULL)
-						? SCTK_STATUS_NULL
+						(array_of_statuses == MPI_STATUSES_IGNORE)
+						? MPI_STATUS_IGNORE
 						: &(array_of_statuses[i]) );
 				}
 			}
@@ -11170,17 +11177,7 @@ int PMPI_Testsome(int incount, MPI_Request array_of_requests[], int *outcount, i
 	{
 		res = MPI_ERR_REQUEST;
 	}
-/*      else */
-/*      { */
-/*              for (index = 0; index < incount; ++index) */
-/*              { */
-/*                      if (array_of_requests[index] == -1) */
-/*                      { */
-/*                              res = MPI_ERR_REQUEST; */
-/*                              break; */
-/*                      } */
-/*              } */
-/*      } */
+
 	if( ( (outcount == NULL || array_of_indices == NULL) && incount > 0) || incount < 0)
 	{
 		return MPI_ERR_ARG;
@@ -11213,11 +11210,11 @@ int PMPI_Testsome(int incount, MPI_Request array_of_requests[], int *outcount, i
                 req_internal = __sctk_convert_mpc_request_internal(&array_of_requests[i], requests);
                 if( (req_internal != NULL) && (req_internal->is_nbc == 1) )
                 {
-                    tmp = NBC_Test(&(req_internal ->nbc_handle), &loc_flag, (array_of_statuses == MPI_STATUSES_IGNORE) ? SCTK_STATUS_NULL : &(array_of_statuses[done]));
+                    tmp = NBC_Test(&(req_internal ->nbc_handle), &loc_flag, (array_of_statuses == MPI_STATUSES_IGNORE) ? MPI_STATUS_IGNORE : &(array_of_statuses[done]));
                 }
                 else
                 {
-                    tmp = mpc_lowcomm_test(req, &loc_flag, (array_of_statuses == MPI_STATUSES_IGNORE) ? SCTK_STATUS_NULL : &(array_of_statuses[done]));
+                    tmp = mpc_lowcomm_test(req, &loc_flag, (array_of_statuses == MPI_STATUSES_IGNORE) ? MPI_STATUS_IGNORE : &(array_of_statuses[done]));
                 }
 			}
 			if(loc_flag)

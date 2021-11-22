@@ -9951,6 +9951,11 @@ int NBC_Test(NBC_Handle *handle, int *flag, __UNUSED__ MPI_Status *status)
       _mpc_mpi_config()->nbc.progress_thread;
   int ret = NBC_CONTINUE;
 
+  if(status != MPI_STATUS_IGNORE)
+  {
+    status->MPI_ERROR = MPI_SUCCESS;
+  }
+
   if (use_progress_thread == 1)
   {
     ret = NBC_CONTINUE;
