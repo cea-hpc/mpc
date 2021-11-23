@@ -116,44 +116,47 @@ static inline int __unfold_rails(mpc_conf_config_type_t *cli_option)
 
 					if(matching_rails == 0)
 					{
-						bad_parameter("Could not locate any device matching the '%s' regular expression in rail %s", rail->device + 1, rail->name);
+						/* This rail does not have subrails as no device matched */
+						rail->subrails_size = -1;
+						//total_rail_nb++;
 					}
-
-					/* Now we build the subrail array
-					 * we duplicate the config of current rail
-					 * while just overriding device name with the
-					 * one we extracted from the device array */
-					struct _mpc_lowcomm_config_struct_net_rail *subrails =
-						sctk_malloc(sizeof(struct _mpc_lowcomm_config_struct_net_rail) * matching_rails);
-
-					int i;
-
-					for(i = 0; i < matching_rails; i++)
+					else
 					{
-						/* Copy Current rail (note that at this point the rail has no subrails ) */
-						memcpy(&subrails[i], rail, sizeof(struct _mpc_lowcomm_config_struct_net_rail) );
+						/* Now we build the subrail array
+						* we duplicate the config of current rail
+						* while just overriding device name with the
+						* one we extracted from the device array */
+						struct _mpc_lowcomm_config_struct_net_rail *subrails =
+							sctk_malloc(sizeof(struct _mpc_lowcomm_config_struct_net_rail) * matching_rails);
 
-						/* Update device name with matching device */
-						snprintf(subrails[i].device, MPC_CONF_STRING_SIZE, matching_device[i]->name);
+						int i;
 
-						/* Make sure that the topological rail has the highest priority
-						 * this is important during the on-demand election process
-						 * as we want the topological rail to make this choice */
-						subrails[i].priority = rail->priority - 1;
+						for(i = 0; i < matching_rails; i++)
+						{
+							/* Copy Current rail (note that at this point the rail has no subrails ) */
+							memcpy(&subrails[i], rail, sizeof(struct _mpc_lowcomm_config_struct_net_rail) );
 
-						/* Make sure that subrails do not have a subrail */
-						subrails[i].subrails_size = 0;
+							/* Update device name with matching device */
+							snprintf(subrails[i].device, MPC_CONF_STRING_SIZE, matching_device[i]->name);
+
+							/* Make sure that the topological rail has the highest priority
+							* this is important during the on-demand election process
+							* as we want the topological rail to make this choice */
+							subrails[i].priority = rail->priority - 1;
+
+							/* Make sure that subrails do not have a subrail */
+							subrails[i].subrails_size = 0;
+						}
+
+						sctk_free(matching_device);
+
+						/* Store the new subrail array in the rail */
+						rail->subrails      = subrails;
+						rail->subrails_size = matching_rails;
+
+						/* Increment total rails by matching rails */
+						total_rail_nb += matching_rails;
 					}
-
-					sctk_free(matching_device);
-
-					/* Store the new subrail array in the rail */
-					rail->subrails      = subrails;
-					rail->subrails_size = matching_rails;
-
-
-					/* Increment total rails by matching rails */
-					total_rail_nb += matching_rails;
 				}
 			}
 		}
@@ -350,14 +353,14 @@ void sctk_net_init_driver(char *name)
 		if(strcmp(rail_name, "ib_mpi") == 0)
 		{
 			mpc_common_debug_warning("Network support %s not available switching to tcp_mpi", rail_name);
-			rail_name = "tcp_mpi";
+			rail_name = "tcpmpi";
 		}
 #endif
 #ifndef MPC_USE_PORTALS
 		if(strcmp(rail_name, "portals_mpi") == 0)
 		{
 			mpc_common_debug_warning("Network support %s not available switching to tcp_mpi", rail_name);
-			rail_name = "tcp_mpi";
+			rail_name = "tcpmpi";
 		}
 #endif
 		rail_config_struct = _mpc_lowcomm_conf_rail_unfolded_get(rail_name);
@@ -366,6 +369,16 @@ void sctk_net_init_driver(char *name)
 		{
 			mpc_common_debug_error("Rail with name '%s' not found in config!", rail_name);
 			mpc_common_debug_abort();
+		}
+
+		/* Handle the case where no matching decice was found and flag as no_device */
+		if(rail_config_struct->subrails_size == -1)
+		{
+			mpc_common_debug_warning("Rail %s expect %s devices but none were found", rail_config_struct->name, rail_config_struct->device);
+			mpc_common_debug_warning("MPC will fallback to TCP, consider changing your default network");
+			rail_name = "tcpmpi";
+			rail_config_struct = _mpc_lowcomm_conf_rail_unfolded_get("tcpmpi");
+			assume(rail_config_struct != NULL);
 		}
 
 		/* For this rail retrieve the config */

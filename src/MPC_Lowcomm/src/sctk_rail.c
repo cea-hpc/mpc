@@ -425,7 +425,12 @@ void sctk_rail_commit()
 	for ( i = 0; i <  sctk_rail_count(); i++ )
 	{
 		sctk_rail_info_t *  rail = sctk_rail_get_by_id ( i );
-		rail->route_init( rail );
+
+		if(rail->route_init)
+		{
+			rail->route_init( rail );
+		}
+
 		rail->state = SCTK_RAIL_ST_ENABLED;
 	}
 
