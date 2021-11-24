@@ -712,11 +712,14 @@ mpc_omp_instance_t *_mpc_omp_tree_array_instance_init( mpc_omp_thread_t *thread,
 #endif /* OMPT_SUPPORT */
 
     /* instance initialization */
-# if MPC_OMP_BARRIER_COMPILE_COND_WAIT
     instance->task_infos.blocked_tasks.type = MPC_OMP_TASK_LIST_TYPE_SCHEDULER;
-    pthread_mutex_init(&instance->task_infos.work_cond_mutex, NULL);
-    pthread_cond_init(&instance->task_infos.work_cond, NULL);
-    instance->task_infos.work_cond_nthreads = 0;
+# if MPC_OMP_BARRIER_COMPILE_COND_WAIT
+    if (MPC_OMP_TASK_BARRIER_COND_WAIT_ENABLED)
+    {
+        pthread_mutex_init(&instance->task_infos.work_cond_mutex, NULL);
+        pthread_cond_init(&instance->task_infos.work_cond, NULL);
+        instance->task_infos.work_cond_nthreads = 0;
+    }
 # endif /* MPC_OMP_TASK_COND_WAIT */
 
 	return instance;

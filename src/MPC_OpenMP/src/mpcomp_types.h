@@ -65,12 +65,22 @@
 
 /* uthash implementations */
 # ifndef HASH_FUNCTION
-#  define HASH_FUNCTION(keyptr, keylen, hashv)    do { \
-                                                        hashv = (uintptr_t) (*keyptr) / sizeof(void *); \
-                                                    } while(0)
+#if 0
+#  define HASH_FUNCTION(keyptr, keylen, hashv)  do { \
+                                                    uintptr_t addr = (uintptr_t) (*keyptr); \
+                                                    hashv = 0;                              \
+                                                    hashv ^= (addr >> 32);                  \
+                                                    hashv ^= (addr >> 16);                  \
+                                                    hashv ^= (addr >> 8);                   \
+                                                    hashv ^= (addr >> 2);               \
+                                                } while(0)
+
+#  define HASH_FUNCTION(keyptr, keylen, hashv)  do { \
+                                                    hashv = (uintptr_t) (*keyptr) / sizeof(void *);
+                                                } while(0)
+#endif
 #  include "uthash.h"
 # endif
-
 
 /*******************
  * OMP DEFINITIONS *
@@ -99,7 +109,7 @@
 
 /* BARRIER ALGORITHM */
 # define MPC_OMP_NAIVE_BARRIER              1
-# define MPC_OMP_BARRIER_COMPILE_COND_WAIT  1
+# define MPC_OMP_BARRIER_COMPILE_COND_WAIT  0
 
 #if MPC_OMP_BARRIER_COMPILE_COND_WAIT
 # if MPC_OMP_NAIVE_BARRIER != 1

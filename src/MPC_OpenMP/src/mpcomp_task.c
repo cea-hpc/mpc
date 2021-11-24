@@ -881,10 +881,13 @@ __task_pqueue_push(mpc_omp_task_pqueue_t * pqueue, mpc_omp_task_t * task)
     __instance_incr_ready_tasks();
 
 # if MPC_OMP_BARRIER_COMPILE_COND_WAIT
-    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
-    assert(thread);
-    pthread_cond_t * cond = &(thread->instance->task_infos.work_cond);
-    pthread_cond_signal(cond);
+    if (MPC_OMP_TASK_BARRIER_COND_WAIT_ENABLED)
+    {
+        mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+        assert(thread);
+        pthread_cond_t * cond = &(thread->instance->task_infos.work_cond);
+        pthread_cond_signal(cond);
+    }
 # endif /* MPC_OMP_BARRIER_COMPILE_COND_WAIT */
 }
 
@@ -1098,7 +1101,7 @@ __task_dep_list_append(
 }
 
 /** Note : only 1 thread may run this function for a given `task->parent` */
-    static void
+static void
 __task_process_mpc_dep(
         mpc_omp_task_t * task,
         void * addr,
@@ -1109,7 +1112,10 @@ __task_process_mpc_dep(
 //    mpc_common_spinlock_lock(&(task->parent->dep_node.hmap_lock));
     {
         mpc_omp_task_dep_htable_entry_t * entry;
-        HASH_FIND_PTR(task->parent->dep_node.hmap, &addr, entry);
+        unsigned hashv;
+        HASH_VALUE(&addr, sizeof(void *), hashv);
+        HASH_FIND_BYHASHVALUE(hh, task->parent->dep_node.hmap, &addr, sizeof(void *), hashv, entry);
+
         if (entry == NULL)
         {
             entry = (mpc_omp_task_dep_htable_entry_t *) mpc_omp_alloc(sizeof(mpc_omp_task_dep_htable_entry_t));
@@ -1120,11 +1126,11 @@ __task_process_mpc_dep(
             entry->inoutset = NULL;
             entry->task_uid = 0;
             mpc_common_spinlock_init(&(entry->lock), 1);
-            HASH_ADD_PTR(task->parent->dep_node.hmap, addr, entry);
+            HASH_ADD_KEYPTR_BYHASHVALUE(hh, task->parent->dep_node.hmap, &addr, sizeof(void *), hashv, entry);
         }
         else
         {
-            mpc_common_spinlock_lock(&(entry->lock));
+                mpc_common_spinlock_lock(&(entry->lock));
         }
 
         /* redundancy check */
@@ -1570,6 +1576,7 @@ __task_priority_compute(mpc_omp_task_t * task)
 
 #ifdef WIP
 
+/** Condition to stop computing priorities */
 static inline int
 _mpc_omp_task_compute_priorities_exit_condition(mpc_omp_instance_t * instance, mpc_omp_thread_t * thread)
 {
@@ -1590,7 +1597,7 @@ void _mpc_omp_task_compute_priorities(void)
 
     mpc_omp_task_list * leaves = &(thread->task_infos.leaves);
 
-    /* PHASE 1      - Update leaves for this thread */
+    /*  PHASE 1      - Update leaves for this thread */
     /*  PHASE 1.1   - Clean up remains of previous call */
     for (mpc_omp_task_t * leaf : leaves)
     {
@@ -1625,7 +1632,7 @@ void _mpc_omp_task_compute_priorities(void)
     // TODO : phase 1.2, do it in breadth first search in the TDG,
     // so that leaves are sorted by their depth
 
-    /* PHASE 2 - From leaves, go up to roots and set priorities */
+    /*  PHASE 2 - From leaves, go up to roots and set priorities */
     for (mpc_omp_task_t * leaf : leaves)
     {
         mpc_omp_task_t * task = leaf;
@@ -2564,6 +2571,10 @@ _mpc_omp_task_wait(void)
 static inline mpc_omp_task_t *
 __task_schedule_next(mpc_omp_thread_t * thread)
 {
+    /* fast non-blocking emptiness check */
+    if (OPA_load_int(&(thread->instance->task_infos.ntasks_ready)) == 0) return NULL;
+
+    /* find a task */
     mpc_omp_task_t * task;
 
     /* current thread tied tasks */
@@ -2811,18 +2822,15 @@ _mpc_omp_task_schedule(void)
             __task_finalize(task);
             return 0;
         }
-
 # if MPC_OMP_TASK_COMPILE_TRACE
         task->schedule_id = OPA_fetch_and_incr_int(&(thread->instance->task_infos.next_schedule_id));
 # endif
         __task_run(task);
         return 1;
     }
-    else
-    {
-        /* Famine detected */
-        return 0;
-    }
+
+    /* Famine detected */
+    return 0;
 }
 
 # if MPC_OMP_TASK_COMPILE_FIBER

@@ -268,13 +268,13 @@ void mpc_omp_named_critical_end( void **l )
  * SINGLE *
  **********/
 
-/* 
+/*
    Perform a single construct.
    This function handles the 'nowait' clause.
-   Return '1' if the next single construct has to be executed, '0' otherwise 
+   Return '1' if the next single construct has to be executed, '0' otherwise
  */
 
-int mpc_omp_do_single(void) 
+int mpc_omp_do_single(void)
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
@@ -293,10 +293,10 @@ int mpc_omp_do_single(void)
   	const long num_threads = t->info.num_threads;
   	assert( num_threads > 0 ) ;
 
-  	/* If this function is called from a sequential part (orphaned directive) or 
+  	/* If this function is called from a sequential part (orphaned directive) or
      this team has only 1 thread, the current thread will execute the single block
    */
-  	if( num_threads == 1	) 
+  	if( num_threads == 1	)
 	{
 		retval = 1;
 	}
@@ -319,14 +319,14 @@ int mpc_omp_do_single(void)
   		mpc_common_nodebug("[%d]%s : team current is %d", __func__, t->rank,
                OPA_load_int(&(team->single_sections_last_current)));
 
-  		if (current == OPA_load_int(&(team->single_sections_last_current))) 
+  		if (current == OPA_load_int(&(team->single_sections_last_current)))
 		{
     		const int res = OPA_cas_int(&(team->single_sections_last_current),
                                          current, current + 1);
     		mpc_common_nodebug("[%d]%s: incr team %d -> %d ==> %d", __func__, t->rank,
                  current, current + 1, res);
     		/* Success => execute the single block */
-    		if (res == current) 
+    		if (res == current)
 			{
 				retval = 1;
 			}
@@ -504,12 +504,15 @@ mpc_omp_barrier(void)
             /* wake up threads */
             /* ensure that mpc did not override glibc call */
 # if MPC_OMP_BARRIER_COMPILE_COND_WAIT
-            assert(pthread_mutex_lock != mpc_thread_mutex_lock);
-            pthread_mutex_lock(mutex);
+            if (MPC_OMP_TASK_BARRIER_COND_WAIT_ENABLED)
             {
-                pthread_cond_broadcast(cond);
+                assert(pthread_mutex_lock != mpc_thread_mutex_lock);
+                pthread_mutex_lock(mutex);
+                {
+                    pthread_cond_broadcast(cond);
+                }
+                pthread_mutex_unlock(mutex);
             }
-            pthread_mutex_unlock(mutex);
 # endif /* MPC_OMP_BARRIER_COMPILE_COND_WAIT */
         }
 
@@ -518,23 +521,29 @@ mpc_omp_barrier(void)
         {
             if (_mpc_omp_task_schedule() == 0)
             {
-                /* Famine detected */
 # if MPC_OMP_BARRIER_COMPILE_COND_WAIT
                 if (MPC_OMP_TASK_BARRIER_COND_WAIT_ENABLED)
                 {
-                    pthread_mutex_lock(mutex);
+                    pthread_mutex_t * mutex = &(thread->instance->task_infos.work_cond_mutex);
+                    pthread_cond_t * cond   = &(thread->instance->task_infos.work_cond);
+                    int num_threads         = thread->instance->team->info.num_threads;
+
+                    if (num_threads - thread->instance->task_infos.work_cond_nthreads > MPC_OMP_TASK_BARRIER_COND_WAIT_NHYPERACTIVE)
                     {
-                        if (team->barrier_version == old_version)
+                        pthread_mutex_lock(mutex);
                         {
                             if (num_threads - thread->instance->task_infos.work_cond_nthreads > MPC_OMP_TASK_BARRIER_COND_WAIT_NHYPERACTIVE)
                             {
-                                ++thread->instance->task_infos.work_cond_nthreads;
-                                pthread_cond_wait(cond, mutex);
-                                --thread->instance->task_infos.work_cond_nthreads;
+                                if (team->barrier_version == old_version)
+                                {
+                                    ++thread->instance->task_infos.work_cond_nthreads;
+                                    pthread_cond_wait(cond, mutex);
+                                    --thread->instance->task_infos.work_cond_nthreads;
+                                }
                             }
                         }
+                        pthread_mutex_unlock(mutex);
                     }
-                    pthread_mutex_unlock(mutex);
                 }
 # endif /* MPC_OMP_BARRIER_COMPILE_COND_WAIT */
             }
@@ -695,8 +704,8 @@ int mpc_omp_sections_begin(int nb_sections) {
   num_threads = t->info.num_threads;
   assert( num_threads > 0 ) ;
 
-  /* If this function is called from a sequential part (orphaned directive) or 
-     this team has only 1 thread, the current thread will execute all sections 
+  /* If this function is called from a sequential part (orphaned directive) or
+     this team has only 1 thread, the current thread will execute all sections
    */
   if (num_threads == 1) {
 	  /* Start with the first section */
@@ -729,8 +738,8 @@ int mpc_omp_sections_next(void) {
                t->single_sections_current, t->single_sections_start_current,
                t->single_sections_target_current);
 
-  /* If this function is called from a sequential part (orphaned directive) or 
-     this team has only 1 thread, the current thread will execute all sections 
+  /* If this function is called from a sequential part (orphaned directive) or
+     this team has only 1 thread, the current thread will execute all sections
    */
   if (num_threads == 1) {
 	  /* Proceed to the next section if available */
@@ -752,16 +761,16 @@ int mpc_omp_sections_next(void) {
   return __sync_section_next( t, team ) ;
 }
 
-void mpc_omp_sections_end_nowait(void) { 
+void mpc_omp_sections_end_nowait(void) {
 #if OMPT_SUPPORT
   _mpc_omp_ompt_callback_work( ompt_work_sections, ompt_scope_end, 0 );
 #endif /* OMPT_SUPPORT */
 }
 
-void mpc_omp_sections_end(void) 
-{ 
+void mpc_omp_sections_end(void)
+{
 	mpc_omp_sections_end_nowait();
-	mpc_omp_barrier(); 
+	mpc_omp_barrier();
 }
 
 int _mpc_omp_sections_coherency_exiting_paralel_region(void) { return 0; }
@@ -943,7 +952,7 @@ void omp_destroy_nest_lock( omp_nest_lock_t *lock )
 void omp_set_nest_lock( omp_nest_lock_t *lock )
 {
     assert(lock);
-	
+
     mpc_omp_init();
 
 	mpc_omp_thread_t *thread = mpc_omp_get_thread_tls();
