@@ -64,7 +64,6 @@
 #include "omp_gomp_constants.h"
 
 /* uthash implementations */
-# ifndef HASH_FUNCTION
 #if 0
 #  define HASH_FUNCTION(keyptr, keylen, hashv)  do { \
                                                     uintptr_t addr = (uintptr_t) (*keyptr); \
@@ -79,8 +78,7 @@
                                                     hashv = (uintptr_t) (*keyptr) / sizeof(void *);
                                                 } while(0)
 #endif
-#  include "uthash.h"
-# endif
+#include "uthash.h"
 
 /*******************
  * OMP DEFINITIONS *

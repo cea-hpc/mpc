@@ -65,7 +65,7 @@ typedef enum    gomp_cancel_kind_e
 
 /** depobj */
 typedef struct  gomp_omp_depend_t
-{   
+{
     char __omp_depend_t__[2 * sizeof (void *)];
 }               gomp_omp_depend_t;
 

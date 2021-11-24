@@ -1375,7 +1375,6 @@ __task_finalize_deps_list(mpc_omp_task_t * task)
     }
 //    mpc_common_spinlock_unlock(&(task->parent->dep_node.hmap_lock));
 }
-
 /** Given task completed -> fulfill its successors dependencies */
 static void
 __task_finalize_deps(mpc_omp_task_t * task)
@@ -3214,7 +3213,6 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
         /* link task with predecessors, and register dependencies to the hmap */
         __task_process_deps(task, depend);
 
-        /* remove protection */
         OPA_decr_int(&(task->dep_node.ref_predecessors));
 
         /* now this task can be queued */

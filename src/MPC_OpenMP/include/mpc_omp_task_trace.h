@@ -304,6 +304,7 @@ void _mpc_omp_task_trace_recv(int count, int datatype, int src, int tag, int com
 #  define MPC_OMP_TASK_TRACE_DEPENDENCY(...)
 #  define MPC_OMP_TASK_TRACE_SCHEDULE(...)
 #  define MPC_OMP_TASK_TRACE_CREATE(...)
+#  define MPC_OMP_TASK_TRACE_DELETE(...)
 #  define MPC_OMP_TASK_TRACE_CALLBACK(...)
 #  define MPC_OMP_TASK_TRACE_SEND(...)
 #  define MPC_OMP_TASK_TRACE_RECV(...)

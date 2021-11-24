@@ -533,7 +533,7 @@ mpc_headerdir = $(pkgincludedir)
 lib_LTLIBRARIES = libmpclaunch.la
 libmpclaunch_la_SOURCES = main.c libc_main.c mpc_launch.c pmi.c shm.c \
 	$(am__append_3)
-libmpclaunch_la_LIBADD = ../../MPC_Topology/src/libmpctopology.la -ldl $(PMIX_LIBS) $(PMI_LIBS)
+libmpclaunch_la_LIBADD = ../../MPC_Topology/src/libmpctopology.la -ldl -lrt $(PMIX_LIBS) $(PMI_LIBS)
 all: all-am
 
 .SUFFIXES:

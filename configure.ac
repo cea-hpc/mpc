@@ -524,7 +524,7 @@ __check_or_infer_prefix_lib()
                 for suffix in $prefix_candidate_sub_lib_path
                 do
                         lib_found=0
-
+                        AC_MSG_NOTICE("Looking in $pref/$suffix/")
 
                         OLD_LDFLAGS=$LDFLAGS
                         LDFLAGS=$(promote_to_rpath " -L$pref/$suffix/ -Wl,-rpath=$pref/$suffix/ -l$1 $LDFLAGS")
@@ -609,6 +609,189 @@ append_to_pkg_config_if_needed()
         export PKG_CONFIG_PATH=${TSOURCE}:$PKG_CONFIG_PATH
 }
 
+
+# Get a var from PKG-CONFIG
+#
+# $1: pkg-name
+# $2: var name
+#
+# echos content if found "" if not
+#
+#
+__get_pkg_config_var()
+{
+    VARS=$(pkg-config --print-variables "$1" 2>/dev/null)
+
+    # Command worked
+    if test "$?" = "0"; then
+        # Make sure var is known
+        if echo "$VARS" | grep "$2" > /dev/null 2>&1 ; then
+            # Get var content
+            DATA=$(pkg-config --variable="$2" "$1" 2>/dev/null)
+
+            if test "$?" = "0"; then
+                echo "$DATA"
+            fi
+        fi
+    fi
+}
+
+#
+# Add a given path arg if not present yet
+#
+#  $1 : Args (-L / -I)
+#  $2 : PATH to add
+#  $3 : existing flags
+#
+#
+__append_if_not_here()
+{
+    if test -z "${2}"; then
+        return
+    fi
+
+    if echo "$3" | grep "$2" > /dev/null 2>&1 ; then
+        echo "$3"
+    else
+        echo "${3} ${1}${2}"
+    fi
+}
+
+# Ensure -L are present for faulty pkg-config files
+#
+#  $1 : pkg-name
+#  $2 : LDFLAGS (single string)
+#
+#
+extract_pkg_config_lib_prefixes()
+{
+    PLDFLAGS="$2"
+    
+    # Do we have a libdir var ?
+    PLIBD=$(__get_pkg_config_var "$1" libdir)
+    
+    if test -d "$PLIBD"; then
+        # LIBDIR EXISTS
+        RET=$(__append_if_not_here "-L" "$PLIBD" "$PLDFLAGS")
+
+        # On some debian systems PMIX is installed in a subdir of libdir
+        # This is a special case we handle here
+        if test "$1" = "pmix"; then
+                if test -d "${PLIBD}/pmix2/lib/"; then
+                        RET=$(__append_if_not_here "-L" "${PLIBD}/pmix2/lib/" "$RET")    
+                fi
+        fi
+
+        echo "$RET"
+        # DONE
+        return
+    fi
+
+    # Do we have a pcfiledir var ?
+    PCDIR=$(__get_pkg_config_var "$1" pcfiledir)
+    
+    if test -n "$PCDIR"; then
+        if test -d "${PCDIR}/../"; then
+                # LIBDIR EXISTS
+                RET=$(__append_if_not_here "-L" "${PCDIR}/../" "$PLDFLAGS")
+                echo "$RET"
+                # DONE
+                return
+        fi
+    fi
+
+    # Nothing to add
+    echo "$PLDFLAGS"
+}
+
+# Ensure -I are present for faulty pkg-config files
+#
+#  $1 : pkg-name
+#  $2 : CFLAGS (single string)
+#
+#
+extract_pkg_config_inc_prefixes()
+{
+    PCFLAGS="$2"
+    
+    # Do we have an includedir var ?
+    PINCD=$(__get_pkg_config_var "$1" includedir)
+    
+    if test -d "$PINCD"; then
+        # INCIDR EXISTS
+        RET=$(__append_if_not_here "-I" "$PINCD" "$PCFLAGS")
+
+        # On some debian systems PMIX is installed in a subdir of libdir
+        # This is a special case we handle here
+        if test "$1" = "pmix"; then
+                PLIBD=$(__get_pkg_config_var "$1" libdir)
+                if test -n "$PLIBD"; then
+                        if test -d "${PLIBD}/pmix2/include/"; then
+                                RET=$(__append_if_not_here "-I" "${PLIBD}/pmix2/include/" "$RET")    
+                        fi
+                fi
+        fi
+
+        echo "$RET"
+        # DONE
+        return
+    fi
+
+    # Do we have a pcfiledir var ?
+    PCDIR=$(__get_pkg_config_var "$1" pcfiledir)
+    
+    if test -n "$PCDIR"; then
+        if test -d "${PCDIR}/../../include/"; then
+                # PCDIR EXISTS
+                RET=$(__append_if_not_here "-I" "${PCDIR}/../../include/" "$PCFLAGS")        
+                echo "$RET"
+                # DONE
+                return
+        fi
+    fi
+
+    # Nothing to add
+    echo "$PCFLAGS"
+}
+
+ALL_LIBS_CONFIGURATION=""
+
+#
+# $1 : package name
+# $2 : CFLAGS
+# $3 : LDFLAGS
+add_to_lib_configuration()
+{
+        TO_ADD=""
+
+        if test -n "$2"; then
+                TO_ADD="CFLAGS: $2\n"
+        fi
+        if test -n "$3"; then
+                TO_ADD="${TO_ADD}LDFLAGS: $3"
+        fi
+
+
+if test -n "${TO_ADD}"; then
+
+
+ALL_LIBS_CONFIGURATION=$(
+cat << EOF
+$ALL_LIBS_CONFIGURATION
+
+=== $1 ==================
+${TO_ADD}
+=========================
+
+EOF
+)
+
+fi
+
+}
+
+
+
 #
 # $1 header_name (ex. hwloc.h)
 # $2 libname     (ex. hwloc)
@@ -680,6 +863,11 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
 
                         if test "x$pkg_found" = "x1"
                         then
+                                # Make sure lib paths are explicitly known
+
+                                $4_LIBS=$(extract_pkg_config_lib_prefixes "$libname" "${$4_LIBS}")
+                                $4_CFLAGS=$(extract_pkg_config_inc_prefixes "$libname" "${$4_CFLAGS}")
+
                                 # Ensure PKG config dependencies are also
                                 # injected using RPATH
                                 $4_LIBS=$(promote_to_rpath ${$4_LIBS})
@@ -692,8 +880,19 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                                 AC_SUBST([$4_CFLAGS])
                                 AC_SUBST([$4_LIBS])
 
-                                #AC_MSG_NOTICE([$libname found using pkg-config])
-                                #AC_CHECK_LIB($libname,$function_name,[], [AC_MSG_ERROR([Could not locate '$function_name' in '$libname'])])
+                                AC_MSG_NOTICE([$libname found using pkg-config])
+
+                                AC_MSG_CHECKING([Compiling a simple progam with $libname flags])
+                                # Make sure we still link to crash early
+                                AC_LINK_IFELSE([AC_LANG_SOURCE([int main() {return 0;}])],
+                                [
+                                        AC_MSG_RESULT([yes])
+                                ], [
+                                        AC_MSG_RESULT([no])
+                                        AC_MSG_ERROR([Cannot link after adding $libname flags.])
+                                ])
+
+
                                 check_or_infer_prefix_result="yes"
                         else
                                 __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
@@ -713,12 +912,14 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                         fi
 
                         AC_MSG_CHECKING([$2 cflags])
-                        XXTMP=$(eval echo \${$4_CFLAGS})
-                        AC_MSG_RESULT([$XXTMP])
+                        XXCFLAGS=$(eval echo \${$4_CFLAGS})
+                        AC_MSG_RESULT([$XXCFLAGS])
 
                         AC_MSG_CHECKING([$2 ldflags])
-                        XXTMP=$(eval echo \${$4_LIBS})
-                        AC_MSG_RESULT([$XXTMP])
+                        XXLIB=$(eval echo \${$4_LIBS})
+                        AC_MSG_RESULT([$XXLIB])
+
+                        add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
                         AS_VAR_SET([dep_found], [$check_or_infer_prefix_result])
                 else
@@ -726,6 +927,7 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                         AS_VAR_SET([dep_found], ["no"])
                 fi
                 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                whole_prefix=""
          ])
 
 
@@ -1072,6 +1274,14 @@ fi
 AM_CONDITIONAL([MPC_HAS_SRUN_SUPPORT], [test "x${SRUN_LAUNCH_SUPPORT}" = "xyes"])
 AM_CONDITIONAL([HYDRA_LAUNCHER_ENABLED], [test "x$MPC_LAUNCHER_PROGRAM" = "xHYDRA"])
 AM_CONDITIONAL([PRRTE_LAUNCHER_ENABLED], [test "x$MPC_LAUNCHER_PROGRAM" = "xPRRTE"])
+
+if test "${MPC_LAUNCHER_PROGRAM}" = "none"; then
+        if test "x${SRUN_LAUNCH_SUPPORT}" = "xyes"; then
+                AC_MSG_NOTICE([MPC will use SRUN to launch programs])
+        else
+                AC_MSG_ERROR([MPC has no launcher program (HYDRA or PRRTE) but srun was not found in PATH.])
+        fi
+fi
 
 AC_SUBST([PRTERUN])
 AC_SUBST([MPIEXEC_HYDRA])
@@ -3090,7 +3300,7 @@ AC_OUTPUT([Makefile
            cmake/Makefile])
 
 
-
+printf "${ALL_LIBS_CONFIGURATION}\n\n"
 printf "\n$MPC_CONFIG_RESULT"
 
 if test "x${MPC_CONFIG_RELOADED}" = "xyes"; then

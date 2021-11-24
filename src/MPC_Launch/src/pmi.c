@@ -325,8 +325,8 @@ static inline int __mpc_pmi_get_node_rank( int *rank )
 		for example on 3.2.2rc1 it works in slurm but not with prrte
 		we then use the fallback lookup inside the local process map */
 		int prank = -1;
-		rc = __mpc_pmi_get_local_process_rank( &prank );
-		PMI_CHECK_RC( rc, "__mpc_pmi_get_local_process_rank for Node Rank" );
+		rc = __mpc_pmi_get_process_rank( &prank );
+		PMI_CHECK_RC( rc, "__mpc_pmi_get_process_rank for Node Rank" );
 		*rank = __get_node_rank_from_process_rank_fallback(prank);
 		PMI_RETURN( rc );
 	}
@@ -693,7 +693,7 @@ static inline int __get_node_rank_from_process_rank_fallback(int process_rank)
 		int i;
 		for(i = 0 ; i < current->nb_process; i++)
 		{
-			if(i == process_rank){
+			if(current->process_list[i] == process_rank){
 				return current->node_rank;
 			}
 		}

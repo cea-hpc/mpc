@@ -1178,7 +1178,7 @@ add_process_mode_flag_to_mpc()
 enable_debug()
 {
 	MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-debug"
-	BUILD_PARAMETERS="${MPC_COMP_ADD_BUILD_PARAMETERS} --opts=--enable-debug"
+	MPC_COMP_ADD_BUILD_PARAMETERS="${MPC_COMP_ADD_BUILD_PARAMETERS} --opts=--enable-debug"
 }
 
 #
@@ -1311,7 +1311,7 @@ do
 		############### MPCFRAMEWORK ################
 		--enable-color)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-shell-colors"
-			BUILD_PARAMETERS="${MPC_COMP_ADD_BUILD_PARAMETERS} --opts=--enable-color"
+			MPC_COMP_ADD_BUILD_PARAMETERS="${MPC_COMP_ADD_BUILD_PARAMETERS} --opts=--enable-color"
 			USE_COLOR="yes"
 			;;
 		--disable-color)
@@ -1662,7 +1662,7 @@ MPC_CONFIGURE_OPTS="--prefix=${PREFIX} $MPCFRAMEWORK_BUILD_PARAMETERS"
 
 checking "Configuring MPC"
 
-if test "x${PREFIX}" = "xdisabled"; then
+if test "${MPC_COMP_ADD_PREFIX}" = "disabled"; then
 	# we want parameter expansion
 	# shellcheck disable=SC2086
 	wrap_output "$SCRIPTPATH/configure" $MPC_CONFIGURE_OPTS $ALL_PACKAGE_ARGS
@@ -1671,7 +1671,7 @@ else
 	# We have mpc-compiler-additions so we explicitly set CC CXX and FC
 	# we want parameter expansion
 	# shellcheck disable=SC2086
-	wrap_output "$SCRIPTPATH/configure" $MPC_CONFIGURE_OPTS CC=$(command -v apcc) CXX=$(command -v ap++) FC=$(command -v apfortran)
+	wrap_output "$SCRIPTPATH/configure" $MPC_CONFIGURE_OPTS CC="$(command -v apcc)" CXX="$(command -v ap++)" FC="$(command -v apfortran)"
 	ok
 fi
 
