@@ -514,7 +514,7 @@ int _mpc_lowcomm_monitor_setup()
 
 	if(mpc_common_get_process_rank() != 0)
 	{
-		mpc_launch_pmi_get(data, 32, buff, 1);
+		mpc_launch_pmi_get(data, 32, buff, 0);
 		sscanf(data,"%u", &__monitor.monitor_gid);
 	}
 
@@ -1389,7 +1389,7 @@ static inline _mpc_lowcomm_client_ctx_t *__get_client(struct _mpc_lowcomm_monito
 		/* We need to PMI resolve */
 		char *key = peer->infos.uri + 6;
 		char  value[MPC_LOWCOMM_PEER_URI_SIZE];
-		if(mpc_launch_pmi_get(value, MPC_LOWCOMM_PEER_URI_SIZE, key, 1) != MPC_LAUNCH_PMI_SUCCESS)
+		if(mpc_launch_pmi_get(value, MPC_LOWCOMM_PEER_URI_SIZE, key, mpc_lowcomm_peer_get_rank(peer->infos.uid)) != MPC_LAUNCH_PMI_SUCCESS)
 		{
 			mpc_common_debug_fatal("Failed retrieving remote monitor key %s", key);
 		}

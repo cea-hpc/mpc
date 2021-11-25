@@ -287,29 +287,29 @@ int mpc_MPI_allocmem_pool_init()
 	int my_node_size;
 	PMPI_Comm_size(per_node_comm, &my_node_size);
 
+
+	/* Allocate Workshare */
+	MPI_Comm per_process_comm;
+	int      split_ws = mpc_common_get_process_rank();
+	PMPI_Comm_split(MPI_COMM_WORLD, split_ws, cw_rank, &per_process_comm);
+	alloc_workshare(per_process_comm);
+	PMPI_Comm_free(&per_process_comm);
+
+
 	/* Are all the tasks in the same process ? */
 	if( my_node_size == 1 )
 	{
 		/* Memory pool is only local */
 		_pool_only_local = 1;
-		/* Allocate Workshare */
-		alloc_workshare(MPI_COMM_WORLD);
 		/* Set accumulate lock in shared */
 		mpc_MPI_accumulate_op_lock_init_shared();
 		return 0;
 	}
 	else
 	{
-		/* Allocate Workshare */
-		MPI_Comm per_process_comm;
-		int      split_ws = mpc_common_get_process_rank();
-		PMPI_Comm_split(MPI_COMM_WORLD, split_ws, cw_rank, &per_process_comm);
-		alloc_workshare(per_process_comm);
-		PMPI_Comm_free(&per_process_comm);
-
 		__setup_pool(per_node_comm);
 
-		mpc_lowcomm_barrier(MPI_COMM_WORLD);
+		mpc_lowcomm_barrier(per_node_comm);
 
 		mpc_MPI_accumulate_op_lock_init(per_node_comm);
 
@@ -321,7 +321,6 @@ int mpc_MPI_allocmem_pool_init()
 
 int mpc_MPI_allocmem_pool_release()
 {
-	mpc_lowcomm_barrier(MPI_COMM_WORLD);
 
 	/* Are all the tasks in the same process ? */
 	if(_pool_only_local)
@@ -343,8 +342,6 @@ int mpc_MPI_allocmem_pool_release()
 
 	mpc_launch_shm_unmap(_mpc_MPI_mem_pool._pool,
 							_mpc_MPI_mem_pool.mapped_size);
-
-	mpc_lowcomm_barrier(MPI_COMM_WORLD);
 
 	if(is_master)
 	{
