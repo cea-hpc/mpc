@@ -141,6 +141,7 @@ int _mpc_lowcomm_pset_push(char *name, mpc_lowcomm_group_t *group, int is_comm_s
 	}
 
 	struct _mpc_lowcomm_pset_list_entry *new = __new_entry(name, group, is_comm_self);
+
 	new->next        = __pset_list.head;
 	__pset_list.head = new;
 
@@ -170,6 +171,7 @@ static inline mpc_lowcomm_process_set_t *__rebuild_and_dup(struct _mpc_lowcomm_p
 	}
 
 	mpc_lowcomm_process_set_t *ret = sctk_malloc(sizeof(mpc_lowcomm_process_set_t) );
+
 	assume(ret);
 
 	memcpy(ret, &entry->pset, sizeof(mpc_lowcomm_process_set_t) );
@@ -295,7 +297,7 @@ int _mpc_lowcomm_pset_bootstrap(void)
 
 	mpc_launch_pmi_get_app_rank(&my_app_id);
 
-    __split_for(MPC_COMM_WORLD, "app://", my_app_id);
+	__split_for(MPC_COMM_WORLD, "app://", my_app_id);
 
 	/* Node PSETS */
 	__split_for(MPC_COMM_WORLD, "node://", mpc_common_get_node_rank() );
@@ -323,34 +325,13 @@ int _mpc_lowcomm_pset_bootstrap(void)
 
 	int i;
 
-	int cw_size = mpc_lowcomm_communicator_size(MPC_COMM_WORLD);
-
-	int * all_colors = sctk_malloc(sizeof(int) * cw_size);
-	assume(all_colors != NULL);
-
-	for(i = 0 ; i < MPC_LOWCOMM_HW_TYPE_COUNT ; i++)
+	for(i = 0; i < MPC_LOWCOMM_HW_TYPE_COUNT; i++)
 	{
-		int color = mpc_topology_guided_compute_color((char *)mpc_topology_split_hardware_type_name[i]);
+		int color = mpc_topology_guided_compute_color( (char *)mpc_topology_split_hardware_type_name[i]);
 
-		/* Make sure all ranks have this level defined
-		   for example in the case of etherogeneous hardware  */
-		mpc_lowcomm_allgather(&color, all_colors, sizeof(int), MPC_COMM_WORLD);
-
-		int skip = 0;
-
-		int j;
-		for(j = 0 ; j < cw_size ; j++)
+		if(color < 0)
 		{
-			if(all_colors[j] < 0)
-			{
-				skip = 1;
-				break;
-			}
-		}
-
-		if(skip)
-		{
-			continue;
+			color = MPC_UNDEFINED;
 		}
 
 		/* If we are here all ranks have a color */
@@ -360,8 +341,6 @@ int _mpc_lowcomm_pset_bootstrap(void)
 	}
 
 	mpc_lowcomm_communicator_free(&node_comm);
-
-	sctk_free(all_colors);
 
 	return MPC_LOWCOMM_SUCCESS;
 }

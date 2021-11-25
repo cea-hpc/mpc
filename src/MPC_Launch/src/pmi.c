@@ -815,10 +815,12 @@ int mpc_launch_pmi_barrier()
 	pmix_info_t *info = NULL;
     PMIX_INFO_CREATE(info, 1);
     int flag = true;
+
     PMIX_INFO_LOAD(info, PMIX_COLLECT_DATA, &flag, PMIX_BOOL);
     pmix_status_t rc = PMIx_Fence(NULL, 0, info, 1);
 	PMI_CHECK_RC( rc, "PMIx_Fence" );
 	PMIX_INFO_FREE(info, 1);
+
 	return MPC_LAUNCH_PMI_SUCCESS;
 #else
 	int rc;
