@@ -1972,7 +1972,7 @@ void mpc_lowcomm_terminaison_barrier( void )
 	static volatile int done = 0;
 	static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 	static pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
-	local = mpc_lowcomm_communicator_local_task_count( MPC_COMM_WORLD );
+	local = mpc_common_get_local_task_count();
 	pthread_mutex_lock( &lock );
 	done++;
 	mpc_common_nodebug( "mpc_lowcomm_terminaison_barrier %d %d", done, local );
@@ -2238,6 +2238,35 @@ static inline int ___gather_intra(void *sendbuf, void *recvbuf, const size_t siz
 {
 	int comm_size = mpc_lowcomm_communicator_size(comm);
 	int rank = mpc_lowcomm_communicator_rank(comm);
+
+#if 0
+	if(rank == root)
+	{
+		if(sendbuf != MPC_IN_PLACE )
+		{
+			memcpy(recvbuf + rank * size, sendbuf, size);
+		}
+
+		int i;
+
+		for(i = 0 ; i < comm_size; i++)
+		{
+			if( i == rank)
+			{
+				continue;
+			}
+
+			mpc_lowcomm_recv(i, recvbuf + i * size, size, MPC_GATHER_TAG, comm); 
+		}
+
+	}
+	else
+	{
+		mpc_lowcomm_send(root, sendbuf, size, MPC_GATHER_TAG, comm);
+	}
+
+	return MPC_LOWCOMM_SUCCESS;
+#endif
 
 	/* Handle trivial case */
 

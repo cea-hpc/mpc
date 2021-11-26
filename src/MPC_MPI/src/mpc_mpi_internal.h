@@ -488,8 +488,7 @@ int PMPI_Irecv_internal(void *buf, int count, MPI_Datatype datatype, int source,
 			MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_OTHER, "The runtime is not initialized");                     \
 		}\
 	} \
-	else if((comm == MPI_COMM_NULL) || (!mpc_lowcomm_communicator_exists(comm)) ) \
-	{             fprintf(stderr, "COMM %p EXISTS %d", comm, mpc_lowcomm_communicator_exists(comm));                          \
+	else if((comm == MPI_COMM_NULL) || (!mpc_lowcomm_communicator_exists(comm)) ) { \
 		MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_COMM, "Error in communicator"); \
 	}
 
