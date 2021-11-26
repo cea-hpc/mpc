@@ -187,11 +187,7 @@ extern "C" {
      * \param dependencies a dependency array
      * \param n size of the dependency array
      * ATTENTION : the 'dependencies' array should be sorted by types, so that
-<<<<<<< HEAD
-     *  OUT >= INOUT > MUTEXINOUTSET > INOUTSET > IN  
-=======
      *  OUT >= INOUT > MUTEXINOUTSET > INOUTSET > IN
->>>>>>> 36a11a08d7d697f8f56d73af4cc8dee35bf0eaa0
      */
     void mpc_omp_task_dependencies(mpc_omp_task_dependency_t * dependencies, unsigned int n);
 
