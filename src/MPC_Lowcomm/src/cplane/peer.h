@@ -39,6 +39,5 @@ int _mpc_lowcomm_peer_remove(uint64_t uid);
 *******************/
 
 _mpc_lowcomm_peer_t *_mpc_lowcomm_peer_get(mpc_lowcomm_peer_uid_t uid);
-int _mpc_lowcomm_peer_alive(mpc_lowcomm_peer_uid_t uid);
 
 #endif /* PEER_H_ */

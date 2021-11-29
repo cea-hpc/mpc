@@ -225,6 +225,7 @@ mpc_lowcomm_group_t * mpc_lowcomm_group_union(mpc_lowcomm_group_t *grp,
  *
  * @param g the group to check
  * @param cw_rank the comm_world rank
+ * @param uid the UID of the rank (to differenciate sets)
  * @return int true if the rank is part of the group
  */
 int mpc_lowcomm_group_includes(mpc_lowcomm_group_t *g, int cw_rank, mpc_lowcomm_peer_uid_t uid);

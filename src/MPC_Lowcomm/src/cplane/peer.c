@@ -86,12 +86,6 @@ _mpc_lowcomm_peer_t *_mpc_lowcomm_peer_get(mpc_lowcomm_peer_uid_t uid)
 	return (_mpc_lowcomm_peer_t *)mpc_common_hashtable_get(&__peer_ht, uid);
 }
 
-int _mpc_lowcomm_peer_alive(mpc_lowcomm_peer_uid_t uid)
-{
-	return 1;
-}
-
-
 int mpc_lowcomm_peer_closer(mpc_lowcomm_peer_uid_t dest, mpc_lowcomm_peer_uid_t current, mpc_lowcomm_peer_uid_t candidate)
 {
 	//mpc_common_debug_error("Dest is %lu CURRENT %lu CANDIDATE %lu", dest, current, candidate);

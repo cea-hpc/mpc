@@ -123,6 +123,7 @@ void mpc_lowcomm_request_init(mpc_lowcomm_request_t *request, mpc_lowcomm_commun
  * @param data data to be sent
  * @param size size of data pointer
  * @param tag tag to be used
+ * @param remote_world remote world communicator
  * @param req request to fill in
  * @return int MPC_LOWCOMM_SUCCESS if all ok
  */
