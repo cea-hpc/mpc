@@ -3558,7 +3558,8 @@ static void __lowcomm_init_per_task()
 		mpc_lowcomm_terminaison_barrier();
 
 		mpc_lowcomm_init_per_task(task_rank);
-        	_mpc_lowcomm_monitor_setup_per_task();
+
+        _mpc_lowcomm_monitor_setup_per_task();
 
 		mpc_lowcomm_terminaison_barrier();
 
@@ -3574,12 +3575,10 @@ static void __lowcomm_release_per_task()
 	{
 		mpc_common_nodebug("mpc_lowcomm_terminaison_barrier");
 		mpc_lowcomm_terminaison_barrier();
-		mpc_lowcomm_terminaison_barrier();
+		_mpc_lowcomm_release_psets();
 		mpc_lowcomm_release_per_task(task_rank);
 		mpc_common_nodebug("mpc_lowcomm_terminaison_barrier done");
-
 		_mpc_lowcomm_monitor_teardown_per_task();
-
 	}
 	else
 	{
@@ -3593,18 +3592,11 @@ static void __initialize_drivers()
 
 	sctk_net_init_driver(mpc_common_get_flags()->network_driver_name);
 
-	mpc_lowcomm_terminaison_barrier();
-
 	__init_request_null();
-	
+
  	mpc_lowcomm_rdma_window_init_ht();
 
 	_mpc_lowcomm_communicator_init();
-	
-	mpc_lowcomm_terminaison_barrier();
-
-	_mpc_lowcomm_init_psets();
-
 }
 
 static void __finalize_driver()
@@ -3612,7 +3604,6 @@ static void __finalize_driver()
 	_mpc_lowcomm_monitor_teardown();
 	mpc_lowcomm_rdma_window_release_ht();
 	_mpc_lowcomm_communicator_release();
-	_mpc_lowcomm_release_psets();
 }
 
 #ifdef MPC_USE_DMTCP

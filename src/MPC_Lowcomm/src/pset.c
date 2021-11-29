@@ -67,7 +67,7 @@ struct _mpc_lowcomm_pset_list_entry *__new_entry(char *name,
 
 int __free_entry(struct _mpc_lowcomm_pset_list_entry *entry)
 {
-	//mpc_lowcomm_group_free(&entry->pset.group);
+	mpc_lowcomm_group_free(&entry->pset.group);
 	sctk_free(entry);
 
 	return MPC_LOWCOMM_SUCCESS;
@@ -80,37 +80,85 @@ struct _mpc_lowcomm_pset_list
 	uint64_t                             count;
 };
 
-static struct _mpc_lowcomm_pset_list __pset_list = { 0 };
+/**
+ * @brief One list per local task
+ *
+ */
+
+static mpc_common_spinlock_t __pset_init_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
+static struct _mpc_lowcomm_pset_list * __pset_lists = NULL;
 
 int _mpc_lowcomm_init_psets(void)
 {
-	mpc_common_spinlock_init(&__pset_list.lock, 0);
-	__pset_list.head  = NULL;
-	__pset_list.count = 0;
+	mpc_common_spinlock_lock(&__pset_init_lock);
 
-	_mpc_lowcomm_pset_register();
+	if(!__pset_lists)
+	{
+
+		int loc_count = mpc_common_get_local_task_count();
+		__pset_lists = sctk_malloc(sizeof(struct _mpc_lowcomm_pset_list) * loc_count);
+
+		assume(__pset_lists != NULL);
+
+		int i;
+
+		for(i=0 ; i < loc_count ; i++)
+		{
+			mpc_common_spinlock_init(&__pset_lists[i].lock, 0);
+			__pset_lists[i].head  = NULL;
+			__pset_lists[i].count = 0;
+		}
+	}
+
+	mpc_common_spinlock_unlock(&__pset_init_lock);
 
 	return 0;
 }
 
+
+
+static inline struct _mpc_lowcomm_pset_list * __get_my_list(void)
+{
+	int local_rank = mpc_common_get_local_task_rank();
+	assume(0 <= local_rank);
+	return &__pset_lists[local_rank];
+}
+
+
 int _mpc_lowcomm_release_psets(void)
 {
-	struct _mpc_lowcomm_pset_list_entry *cur = __pset_list.head;
+	struct _mpc_lowcomm_pset_list * my_list = __get_my_list();
+
+	struct _mpc_lowcomm_pset_list_entry *cur = my_list->head;
 
 	while(cur)
 	{
 		struct _mpc_lowcomm_pset_list_entry *to_free = cur;
 		cur = cur->next;
-		__pset_list.count--;
+		my_list->count--;
 		__free_entry(to_free);
 	}
+
+	mpc_common_spinlock_lock(&__pset_init_lock);
+
+	static int free_counter = 0;
+
+	free_counter++;
+
+	if(free_counter == mpc_common_get_local_task_count())
+	{
+		sctk_free(__pset_lists);
+		__pset_lists = NULL;
+	}
+
+	mpc_common_spinlock_unlock(&__pset_init_lock);
 
 	return 0;
 }
 
 static inline struct _mpc_lowcomm_pset_list_entry *__pset_get_by_name_no_lock(const char *name)
 {
-	struct _mpc_lowcomm_pset_list_entry *cur = __pset_list.head;
+	struct _mpc_lowcomm_pset_list_entry *cur = __get_my_list()->head;
 
 	struct _mpc_lowcomm_pset_list_entry *ret = NULL;
 
@@ -130,35 +178,38 @@ static inline struct _mpc_lowcomm_pset_list_entry *__pset_get_by_name_no_lock(co
 
 int _mpc_lowcomm_pset_push(char *name, mpc_lowcomm_group_t *group, int is_comm_self)
 {
-	mpc_common_spinlock_lock(&__pset_list.lock);
+	struct _mpc_lowcomm_pset_list * my_list = __get_my_list();
+
+	mpc_common_spinlock_lock(&my_list->lock);
 
 	/* Ensure we do not have a set with same name */
 	if(__pset_get_by_name_no_lock(name) )
 	{
-		mpc_common_spinlock_unlock(&__pset_list.lock);
+		mpc_common_spinlock_unlock(&my_list->lock);
 		mpc_common_debug_error("Pset %s is already registered", name);
 		return MPC_LOWCOMM_ERROR;
 	}
 
 	struct _mpc_lowcomm_pset_list_entry *new = __new_entry(name, group, is_comm_self);
 
-	new->next        = __pset_list.head;
-	__pset_list.head = new;
+	new->next        = my_list->head;
+	my_list->head = new;
+	my_list->count++;
 
-	__pset_list.count++;
-
-	mpc_common_spinlock_unlock(&__pset_list.lock);
+	mpc_common_spinlock_unlock(&my_list->lock);
 
 	return MPC_LOWCOMM_SUCCESS;
 }
 
 int mpc_lowcomm_group_pset_count(void)
 {
+	struct _mpc_lowcomm_pset_list * my_list = __get_my_list();
+
 	int ret = 0;
 
-	mpc_common_spinlock_lock(&__pset_list.lock);
-	ret = __pset_list.count;
-	mpc_common_spinlock_unlock(&__pset_list.lock);
+	mpc_common_spinlock_lock(&my_list->lock);
+	ret = my_list->count;
+	mpc_common_spinlock_unlock(&my_list->lock);
 
 	return ret;
 }
@@ -211,11 +262,14 @@ mpc_lowcomm_process_set_t *mpc_lowcomm_group_pset_get_nth(int n)
 		return NULL;
 	}
 
+
+	struct _mpc_lowcomm_pset_list * my_list = __get_my_list();
+
 	struct _mpc_lowcomm_pset_list_entry *ret = NULL;
 
-	mpc_common_spinlock_lock(&__pset_list.lock);
+	mpc_common_spinlock_lock(&my_list->lock);
 
-	struct _mpc_lowcomm_pset_list_entry *cur = __pset_list.head;
+	struct _mpc_lowcomm_pset_list_entry *cur = my_list->head;
 
 	int cnt = 0;
 
@@ -230,22 +284,24 @@ mpc_lowcomm_process_set_t *mpc_lowcomm_group_pset_get_nth(int n)
 		cur = cur->next;
 	}
 
-	mpc_common_spinlock_unlock(&__pset_list.lock);
+	mpc_common_spinlock_unlock(&my_list->lock);
 
 	return __rebuild_and_dup(ret);
 }
 
 mpc_lowcomm_process_set_t *mpc_lowcomm_group_pset_get_by_name(const char *name)
 {
+	struct _mpc_lowcomm_pset_list * my_list = __get_my_list();
+
 	struct _mpc_lowcomm_pset_list_entry *ret = NULL;
 
-	mpc_common_spinlock_lock(&__pset_list.lock);
+	mpc_common_spinlock_lock(&my_list->lock);
 	ret = __pset_get_by_name_no_lock(name);
-	mpc_common_spinlock_unlock(&__pset_list.lock);
+	mpc_common_spinlock_unlock(&my_list->lock);
 	return __rebuild_and_dup(ret);
 }
 
-int _mpc_lowcomm_pset_register(void)
+static inline int __register_base_comms(void)
 {
 	/* SELF */
 	_mpc_lowcomm_pset_push("mpi://SELF", NULL, 1);
@@ -271,8 +327,8 @@ static inline int __split_for(mpc_lowcomm_communicator_t src_comm, const char *d
 
 	mpc_lowcomm_group_t *grp = mpc_lowcomm_communicator_group(comm);
 
-	/* Only one rank per UNIX process does register */
-	if(mpc_common_get_local_task_rank() == 0)
+	/* Store only processes you belong to */
+	if(color != MPC_UNDEFINED)
 	{
 		char sappid[200];
 
@@ -292,6 +348,13 @@ static inline int __split_for(mpc_lowcomm_communicator_t src_comm, const char *d
 
 int _mpc_lowcomm_pset_bootstrap(void)
 {
+	_mpc_lowcomm_init_psets();
+
+	mpc_lowcomm_barrier(MPC_COMM_WORLD);
+
+	__register_base_comms();
+
+
 	/* Application PSETS */
 	int my_app_id;
 
