@@ -979,7 +979,7 @@ mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size, _mpc_lowcomm_g
 	return _mpc_lowcomm_group_list_register(ret);
 }
 
-mpc_lowcomm_group_t *mpc_lowcomm_group_create(unsigned int size, int *comm_world_ranks)
+mpc_lowcomm_group_t * mpc_lowcomm_group_create(unsigned int size, int *comm_world_ranks)
 {
 	_mpc_lowcomm_group_rank_descriptor_t *cw_desc = sctk_malloc(sizeof(_mpc_lowcomm_group_rank_descriptor_t) * size);
 

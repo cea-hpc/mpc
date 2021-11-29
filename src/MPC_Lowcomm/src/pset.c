@@ -67,7 +67,12 @@ struct _mpc_lowcomm_pset_list_entry *__new_entry(char *name,
 
 int __free_entry(struct _mpc_lowcomm_pset_list_entry *entry)
 {
-	mpc_lowcomm_group_free(&entry->pset.group);
+
+	if(!entry->is_comm_self)
+	{
+		mpc_lowcomm_group_free(&entry->pset.group);
+	}
+
 	sctk_free(entry);
 
 	return MPC_LOWCOMM_SUCCESS;
