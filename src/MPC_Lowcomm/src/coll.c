@@ -1972,7 +1972,9 @@ void mpc_lowcomm_terminaison_barrier( void )
 	static volatile int done = 0;
 	static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 	static pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
-	local = mpc_common_get_local_task_count();
+	/* DO NOT USE mpc_common_get_local_task_count() here
+	  as this value is computed as threads start ! */
+	local =  mpc_lowcomm_communicator_local_task_count( MPC_COMM_WORLD );
 	pthread_mutex_lock( &lock );
 	done++;
 	mpc_common_nodebug( "mpc_lowcomm_terminaison_barrier %d %d", done, local );

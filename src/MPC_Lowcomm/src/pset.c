@@ -145,7 +145,7 @@ int _mpc_lowcomm_release_psets(void)
 
 	free_counter++;
 
-	if(free_counter == mpc_common_get_local_task_count())
+	if(free_counter == mpc_lowcomm_communicator_local_task_count(MPC_COMM_WORLD))
 	{
 		sctk_free(__pset_lists);
 		__pset_lists = NULL;
