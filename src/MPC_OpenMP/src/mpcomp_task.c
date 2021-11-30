@@ -1084,7 +1084,6 @@ __task_dep_list_append(
     assert(task);
     assert(entry);
 
-    // mpc_omp_task_dep_list_elt_t * dep = (mpc_omp_task_dep_list_elt_t *) mpc_omp_alloc(sizeof(mpc_omp_task_dep_list_elt_t));
     mpc_omp_task_dep_list_elt_t * dep = task->dep_node.dep_list + task->dep_node.dep_list_size;
     assert(dep);
 
@@ -1115,7 +1114,6 @@ __task_process_mpc_dep(
         unsigned hashv;
         HASH_VALUE(&addr, sizeof(void *), hashv);
         HASH_FIND_BYHASHVALUE(hh, task->parent->dep_node.hmap, &addr, sizeof(void *), hashv, entry);
-
         if (entry == NULL)
         {
             entry = (mpc_omp_task_dep_htable_entry_t *) mpc_omp_alloc(sizeof(mpc_omp_task_dep_htable_entry_t));
@@ -1126,11 +1124,11 @@ __task_process_mpc_dep(
             entry->inoutset = NULL;
             entry->task_uid = 0;
             mpc_common_spinlock_init(&(entry->lock), 1);
-            HASH_ADD_KEYPTR_BYHASHVALUE(hh, task->parent->dep_node.hmap, &addr, sizeof(void *), hashv, entry);
+            HASH_ADD_KEYPTR_BYHASHVALUE(hh, task->parent->dep_node.hmap, &(entry->addr), sizeof(void *), hashv, entry);
         }
         else
         {
-                mpc_common_spinlock_lock(&(entry->lock));
+            mpc_common_spinlock_lock(&(entry->lock));
         }
 
         /* redundancy check */
@@ -1276,14 +1274,16 @@ __task_process_deps(mpc_omp_task_t * task, void ** depend)
      */
     task->dep_node.dep_list = (mpc_omp_task_dep_list_elt_t *) malloc(sizeof(mpc_omp_task_dep_list_elt_t) * ndeps);
     assert(task->dep_node.dep_list);
+    task->dep_node.dep_list_size = 0;
 
-     /* Ensure that dependencies are processed in the following order
-     * So that we have correct behaviour on redundancy
-     * 1) 'OUT' or 'INOUT'
-     * 2) 'MUTEX_INOUTSET'
-     * 3) 'INOUTSET'
-     * 4) 'IN'
-     */
+     /**
+      * Ensure that dependencies are processed in the following order
+      * So that we have correct behaviour on redundancy
+      * 1) 'OUT' or 'INOUT'
+      * 2) 'MUTEX_INOUTSET'
+      * 3) 'INOUTSET'
+      * 4) 'IN'
+      */
 
     /* openmp 'out' dependencies */
     for (i = 0 ; i < omp_ndeps_out ; ++i)   __task_process_mpc_dep(task, depend[2 + i], MPC_OMP_TASK_DEP_OUT);
@@ -1338,8 +1338,6 @@ __task_finalize_deps_list(mpc_omp_task_t * task)
 
             mpc_common_spinlock_lock(&(entry->lock));
             {
-                mpc_omp_task_dep_list_elt_t * next = elt->task_next;
-
                 /* pop this task dependency element for the parent htable lists */
                 if (entry->out == elt)
                 {
@@ -1366,8 +1364,6 @@ __task_finalize_deps_list(mpc_omp_task_t * task)
                 }
 
                 // TODO : maybe delete the hmap entry if it is now empty ?
-
-                elt = next;
             }
             mpc_common_spinlock_unlock(&(entry->lock));
         }
