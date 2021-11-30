@@ -217,6 +217,25 @@ int PMPI_Session_call_errhandler(MPI_Session session, int error_code)
 	MPI_ERROR_SUCCESS();
 }
 
+
+static inline int __session_report_error(MPI_Session session, int error_code, char * desc)
+{
+	MPI_Errhandler errh;
+	PMPI_Session_get_errhandler(session, &errh);
+
+	if(errh != MPI_ERRHANDLER_NULL)
+	{
+		mpc_common_debug_error("MPI_SESSION : code %d : %s", error_code, desc);
+		PMPI_Session_call_errhandler(session, error_code);
+	}
+	else
+	{
+		MPI_ERROR_REPORT(MPI_COMM_SELF, error_code, desc);
+	}
+
+	return error_code;
+}
+
 /*********************
 * INIT AND FINALIZE *
 *********************/
@@ -240,6 +259,8 @@ int PMPI_Session_init(MPI_Info info, MPI_Errhandler errhandler, MPI_Session *ses
 
 	*session = __session_new();
 
+	PMPI_Session_set_errhandler(*session, errhandler);
+
 	if(info == MPI_INFO_NULL)
 	{
 		/* Store empty info */
@@ -250,7 +271,10 @@ int PMPI_Session_init(MPI_Info info, MPI_Errhandler errhandler, MPI_Session *ses
 		res = PMPI_Info_dup(info, &(*session)->infos);
 	}
 
-	MPI_HANDLE_ERROR(res, MPI_COMM_SELF, "Could not create session info object");
+	if(res != MPI_SUCCESS)
+	{
+		return __session_report_error(*session, res, "Could not duplicate info object");
+	}
 
 	/* Now as MPC is always thread multiple set the thread_support level accordingly */
 	res = PMPI_Info_set( (*session)->infos, "mpi_thread_support_level", "MPI_THREAD_MULTIPLE");
@@ -258,8 +282,7 @@ int PMPI_Session_init(MPI_Info info, MPI_Errhandler errhandler, MPI_Session *ses
 	if(res != MPI_SUCCESS)
 	{
 		/* Call errhandler */
-		PMPI_Session_call_errhandler(*session, res);
-		return res;
+		return __session_report_error(*session, res, "Could not set mpi_thread_support_level in info object ");
 	}
 
 	__init_id_factory();
@@ -278,12 +301,15 @@ int PMPI_Session_finalize(MPI_Session *session)
 
 	if(*session == MPI_SESSION_NULL)
 	{
-		MPI_ERROR_REPORT(MPI_COMM_SELF, MPI_ERR_COMM, "Cannot Free a NULL session");
+		return __session_report_error(*session, MPI_ERR_ARG, "Cannot Free a NULL session");
 	}
 
 	res = PMPI_Info_free(&(*session)->infos);
 
-	MPI_HANDLE_ERROR(res, MPI_COMM_SELF, "Could not free session info object");
+	if(res != MPI_SUCCESS)
+	{
+		return __session_report_error(*session, res, "Cannot Free Session Info Object");
+	}
 
 	__session_free_id((*session)->id);
 
@@ -320,7 +346,7 @@ int PMPI_Session_get_nth_pset(MPI_Session session, MPI_Info info, int n, int *ps
 
 	if(!pset)
 	{
-		MPI_ERROR_REPORT(MPI_COMM_SELF, MPI_ERR_ARG, "Could not retrieve this pset at rank n");
+		return __session_report_error(session, MPI_ERR_ARG, "Could not retrieve this pset at rank n");
 	}
 
 	if(*pset_len)
@@ -342,12 +368,15 @@ int PMPI_Session_get_pset_info(MPI_Session session, const char *pset_name, MPI_I
 	if(!pset)
 	{
 		mpc_common_debug_error("No such PSET %s", pset_name);
-		MPI_ERROR_REPORT(MPI_COMM_SELF, MPI_ERR_ARG, "Could not retrieve this pset");
+		return __session_report_error(session, MPI_ERR_ARG, "Could not retrieve PSET");
 	}
 
 	int res = PMPI_Info_create(info);
 
-	MPI_HANDLE_ERROR(res, MPI_COMM_SELF, "Could not create pset info object");
+	if(res != MPI_SUCCESS)
+	{
+		return __session_report_error(session, res, "Could not create pset info object");
+	}
 
 	char smpi_size[64];
 	char sname[128];
@@ -370,7 +399,12 @@ int PMPI_Group_from_session_pset(MPI_Session session, const char *pset_name, MPI
 	if(!pset)
 	{
 		mpc_common_debug_error("No such PSET %s", pset_name);
-		MPI_ERROR_REPORT(MPI_COMM_SELF, MPI_ERR_ARG, "Could not retrieve this pset");
+		return __session_report_error(session, MPI_ERR_ARG, "Could not retrieve PSET");
+	}
+
+	if(newgroup == MPI_GROUP_NULL)
+	{
+		return __session_report_error(session, MPI_ERR_ARG, "Cannot create group on MPI_GROUP_NULL");
 	}
 
     *newgroup = mpc_lowcomm_group_dup(pset->group);
