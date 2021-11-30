@@ -402,7 +402,8 @@ typedef struct mpc_mpi_cl_per_mpi_process_ctx_s
 	int task_id; /**< MPI comm rank of the task */
 
 	/* Status */
-	int init_done; /**< =1 if the task has called MPI_Init() 2
+	int init_done; /**< This is the init/release counter */
+        int mpi_init_state;/**< =1 if the task has called MPI_Init() 2
 			     =2 if the task has called MPI_Finalize */
 	int thread_level;
 

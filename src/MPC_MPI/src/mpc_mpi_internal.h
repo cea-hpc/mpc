@@ -477,14 +477,17 @@ int PMPI_Irecv_internal(void *buf, int count, MPI_Datatype datatype, int source,
 	if( (datatype >= SCTK_USER_DATA_TYPES_MAX) && (_mpc_dt_is_derived(datatype) != 1) && (_mpc_dt_is_contiguous(datatype) != 1) && ( (datatype != MPI_UB) && (datatype != MPI_LB) ) ){ \
 		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, ""); }
 
+int _mpc_mpi_init_counter(int *counter);
 
 #define mpi_check_comm(comm)                                                        \
 	if( comm == MPI_COMM_WORLD ){                              \
 		int ____is_init = 0; \
 		int ____is_fini = 0; \
+		int ___init_counter = 0; \
+		_mpc_mpi_init_counter(&___init_counter); \
 		PMPI_Initialized(&____is_init);     \
 		PMPI_Finalized(&____is_fini);        \
-		if(!____is_init || ____is_fini) { \
+		if(!( ____is_init || (0 < ___init_counter) ) || ____is_fini) { \
 			MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_OTHER, "The runtime is not initialized");                     \
 		}\
 	} \

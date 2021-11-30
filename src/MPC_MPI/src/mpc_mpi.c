@@ -16372,17 +16372,17 @@ int mpc_mpi_initialize(void)
 {
 	mpc_common_spinlock_lock(&__init_lock);
 
-	int flag;
+	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = mpc_cl_per_mpi_process_ctx_get();
+	assume(task_specific != NULL);
 
-	PMPI_Initialized(&flag);
-
-	if(0 < flag )
+	if(0 < task_specific->init_done )
 	{
-		struct mpc_mpi_cl_per_mpi_process_ctx_s *task_specific = mpc_cl_per_mpi_process_ctx_get();
 		task_specific->init_done++;
 		mpc_common_spinlock_unlock(&__init_lock);
 		MPI_ERROR_SUCCESS();
 	}
+
+	task_specific->init_done    = 1;
 
 	mpc_common_spinlock_unlock(&__init_lock);
 
@@ -16390,8 +16390,6 @@ int mpc_mpi_initialize(void)
 
 	sctk_init_yield_as_overloaded();
 
-
-	struct mpc_mpi_cl_per_mpi_process_ctx_s *task_specific = mpc_cl_per_mpi_process_ctx_get();
 	task_specific->mpc_mpi_data = sctk_malloc(sizeof(struct mpc_mpi_data_s) );
 	memset(task_specific->mpc_mpi_data, 0, sizeof(struct mpc_mpi_data_s) );
 	mpc_common_spinlock_init(&task_specific->mpc_mpi_data->lock, 0);
@@ -16399,7 +16397,7 @@ int mpc_mpi_initialize(void)
 	task_specific->mpc_mpi_data->groups   = NULL;
 	task_specific->mpc_mpi_data->buffers  = NULL;
 	task_specific->mpc_mpi_data->ops      = NULL;
-	task_specific->init_done    = 1;
+
 	task_specific->thread_level = MPC_THREAD_MULTIPLE;
 
 	__sctk_init_mpc_request();
@@ -16451,6 +16449,7 @@ int mpc_mpi_initialize(void)
 	mpc_common_spinlock_unlock(&(task_specific->per_communicator_lock) );
 
 	mpc_MPI_allocmem_pool_init();
+  	_mpc_mpi_coll_allow_topological_comm();
 
 	MPI_ERROR_SUCCESS();
 }
@@ -16538,12 +16537,12 @@ int PMPI_Init(int *argc, char ***argv)
 	}
 	else
 	{
+		/* Set state to Initialized */
+		mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = mpc_cl_per_mpi_process_ctx_get();
+		assume(task_specific != NULL);
+		task_specific->mpi_init_state = 1;
 		res = mpc_mpi_initialize();
 	}
-
-
-
-  _mpc_mpi_coll_allow_topological_comm();
 
 	MPI_HANDLE_RETURN_VAL(res, MPI_COMM_WORLD);
 }
@@ -16570,6 +16569,11 @@ int PMPI_Finalize(void)
 
 	res = mpc_mpi_release();
 
+	/* Set state to Finalized */
+	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = mpc_cl_per_mpi_process_ctx_get();
+	assume(task_specific != NULL);
+	task_specific->mpi_init_state = 2;
+
 	MPI_HANDLE_RETURN_VAL(res, MPI_COMM_WORLD);
 }
 
@@ -16577,15 +16581,24 @@ int PMPI_Finalized(int *flag)
 {
 	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = mpc_cl_per_mpi_process_ctx_get();
 	assume(task_specific != NULL);
-	*flag = (task_specific->init_done < 0);
+	*flag = (task_specific->mpi_init_state == 2);
 	MPI_ERROR_SUCCESS();
 }
+
+int _mpc_mpi_init_counter(int *counter)
+{
+	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = mpc_cl_per_mpi_process_ctx_get();
+	assume(task_specific != NULL);
+	*counter = task_specific->init_done;
+	MPI_ERROR_SUCCESS();
+}
+
 
 int PMPI_Initialized(int *flag)
 {
 	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = mpc_cl_per_mpi_process_ctx_get();
 	assume(task_specific != NULL);
-	*flag = task_specific->init_done;
+	*flag = (task_specific->mpi_init_state == 1);
 	MPI_ERROR_SUCCESS();
 }
 
