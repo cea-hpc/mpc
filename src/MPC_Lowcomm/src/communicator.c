@@ -600,6 +600,21 @@ int mpc_lowcomm_communicator_accept(const char *port_name,
 }
 
 
+/********************
+ * CONTEXT POINTERS *
+ ********************/
+
+int mpc_lowcomm_communicator_set_context_pointer(mpc_lowcomm_communicator_t comm, void *ctxptr)
+{
+
+}
+
+void * mpc_lowcomm_communicator_get_context_pointer(mpc_lowcomm_communicator_t comm)
+{
+
+}
+
+
 /*********************************
 * COLL GETTERS FOR COMMUNICATOR *
 *********************************/
@@ -781,6 +796,7 @@ static inline mpc_lowcomm_internal_communicator_t *__init_communicator_with_id(m
 	ret->process_span = 1;
 	ret->shm_coll     = NULL;
 	ret->linear_comm_id = -1;
+	ret->extra_ctx_ptr = NULL;
 
 	/* Intercomm ctx */
 	ret->is_comm_self = is_comm_self;
@@ -801,8 +817,8 @@ static inline mpc_lowcomm_internal_communicator_t *__init_communicator_with_id(m
 		_mpc_lowcomm_communicator_acquire(ret->right_comm);
 	}
 
-  /* Topo comms */
-  ___init_topo_comm(ret);
+	/* Topo comms */
+	___init_topo_comm(ret);
 
 
 	if(comm_id == MPC_LOWCOMM_COMM_SELF_ID)
@@ -1271,6 +1287,12 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 			/* We can then directly create a new group using the current group */
 			ret = __init_communicator_with_id(new_id, group, is_comm_self, left_comm, right_comm, -1);
 			/* Make sure that dups of comm self behave as comm self */
+
+			/* If parent has a ctx pointer make sure to propagate */
+			if(comm->extra_ctx_ptr)
+			{
+				ret->extra_ctx_ptr = comm->extra_ctx_ptr;
+			}
 		}
 
 		mpc_common_spinlock_unlock(&lock);
@@ -1304,14 +1326,20 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_from_group_forced_id(mpc_lowcomm_group_t *group,
 																		 mpc_lowcomm_communicator_id_t forced_id)
 {
-	return __init_communicator_with_id(forced_id, group, 0, MPC_COMM_NULL, MPC_COMM_NULL, -1);
+	mpc_lowcomm_communicator_t ret = __init_communicator_with_id(forced_id, group, 0, MPC_COMM_NULL, MPC_COMM_NULL, -1);
+	/* Make sure we inherit ctx pointer from the group */
+	mpc_lowcomm_communicator_set_context_pointer(ret, mpc_lowcomm_group_get_context_pointer(group));
+	return ret;
 }
 
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_from_group(mpc_lowcomm_communicator_t comm,
                                                                mpc_lowcomm_group_t *group)
 {
 	/* This is necessarily an intracomm */
-	return __new_communicator(comm, group, NULL, NULL, comm->is_comm_self, 1, MPC_LOWCOMM_COMM_NULL_ID);
+	mpc_lowcomm_communicator_t ret = __new_communicator(comm, group, NULL, NULL, comm->is_comm_self, 1, MPC_LOWCOMM_COMM_NULL_ID);
+	/* Make sure we inherit ctx pointer from the group */
+	mpc_lowcomm_communicator_set_context_pointer(ret, mpc_lowcomm_group_get_context_pointer(group));
+	return ret;
 }
 
 mpc_lowcomm_group_t * mpc_lowcomm_communicator_group(mpc_lowcomm_communicator_t comm)

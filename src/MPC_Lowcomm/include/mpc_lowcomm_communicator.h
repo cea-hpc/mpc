@@ -562,6 +562,27 @@ int mpc_lowcomm_communicator_accept(const char *port_name,
                                     mpc_lowcomm_communicator_t comm,
                                     mpc_lowcomm_communicator_t *new_comm);
 
+/********************
+ * CONTEXT POINTERS *
+ ********************/
+
+/**
+ * @brief Attach an extra context pointer to a communicator group
+ * 
+ * @param comm the target communicator
+ * @param ctxptr the context pointer to attach
+ * @return int 0 on success
+ */
+int mpc_lowcomm_communicator_set_context_pointer(mpc_lowcomm_communicator_t comm, void *ctxptr);
+
+/**
+ * @brief Get the extra context pointer from the communicator object (it is inherited from parents)
+ * 
+ * @param comm the communicator to querry
+ * @return void* the context pointer (NULL if none)
+ */
+void * mpc_lowcomm_communicator_get_context_pointer(mpc_lowcomm_communicator_t comm);
+
 
 /***********************************
 * COMMUNICATOR COLLECTIVE CONTEXT *
