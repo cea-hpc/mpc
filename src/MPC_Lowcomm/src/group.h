@@ -77,6 +77,9 @@ struct _mpc_lowcomm_group_s
 	int                                   tasks_count_in_process;
 
 	int                                   local_leader;
+
+	int                                   is_a_copy;
+	void *                                extra_ctx_ptr;
 };
 
 static inline void _mpc_lowcomm_group_acquire(mpc_lowcomm_group_t *g)
@@ -89,7 +92,7 @@ static inline void _mpc_lowcomm_group_relax(mpc_lowcomm_group_t *g)
 	OPA_decr_int(&g->refcount);
 }
 
-mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size, _mpc_lowcomm_group_rank_descriptor_t *ranks);
+mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size, _mpc_lowcomm_group_rank_descriptor_t *ranks, int deduplicate);
 
 _mpc_lowcomm_group_rank_descriptor_t *mpc_lowcomm_group_descriptor(mpc_lowcomm_group_t *g, int rank);
 
@@ -103,7 +106,6 @@ int _mpc_lowcomm_group_local_process_count(mpc_lowcomm_group_t *g);
 
 mpc_lowcomm_group_t *_mpc_lowcomm_group_list_register(mpc_lowcomm_group_t *group);
 int _mpc_lowcomm_group_list_pop(mpc_lowcomm_group_t *group);
-
 
 /*************
 * UTILITIES *

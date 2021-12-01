@@ -407,9 +407,15 @@ int PMPI_Group_from_session_pset(MPI_Session session, const char *pset_name, MPI
 		return __session_report_error(session, MPI_ERR_ARG, "Cannot create group on MPI_GROUP_NULL");
 	}
 
-    *newgroup = mpc_lowcomm_group_dup(pset->group);
+    *newgroup = mpc_lowcomm_group_copy(pset->group);
+
+	/* Make sure we hold a new handle */
+	assume(pset->group != *newgroup);
 
 	mpc_lowcomm_group_pset_free(pset);
+
+	/* Attach session to the group handle */
+	mpc_lowcomm_group_set_context_pointer(*newgroup, (void*)session);
 
 	MPI_ERROR_SUCCESS();
 }

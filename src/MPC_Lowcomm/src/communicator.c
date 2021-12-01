@@ -204,7 +204,7 @@ int mpc_lowcomm_communicator_build_remote(mpc_lowcomm_peer_uid_t remote,
 
 	mpc_lowcomm_monitor_response_free(resp);
 
-	mpc_lowcomm_group_t *remote_group = _mpc_lowcomm_group_create(peer_count, remote_desc);
+	mpc_lowcomm_group_t *remote_group = _mpc_lowcomm_group_create(peer_count, remote_desc, 1);
 	mpc_lowcomm_internal_communicator_t *ret = __init_communicator_with_id(id,
                                                                            remote_group,
 																		   0,
@@ -292,7 +292,7 @@ static inline int __broadcast_new_comm(mpc_lowcomm_communicator_t local_comm,
 		mpc_lowcomm_bcast(descs, group_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t), root, local_comm);
 
 		/* Now we create a group from descriptors */
-		mpc_lowcomm_group_t *comm_group = _mpc_lowcomm_group_create(group_size, descs);
+		mpc_lowcomm_group_t *comm_group = _mpc_lowcomm_group_create(group_size, descs, 1);
 
 		static mpc_common_spinlock_t __bcast_creation_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
@@ -1365,7 +1365,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_create(const mpc_lowcomm_com
 		_mpc_lowcomm_group_rank_descriptor_set(&rank_desc[0], mpc_lowcomm_get_rank() );
 	}
 
-	mpc_lowcomm_group_t *new = _mpc_lowcomm_group_create(size, rank_desc);
+	mpc_lowcomm_group_t *new = _mpc_lowcomm_group_create(size, rank_desc, 1);
 	mpc_lowcomm_communicator_t ret = mpc_lowcomm_communicator_from_group(comm, new);
 	mpc_lowcomm_group_free(&new);
 
@@ -1961,7 +1961,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_intercommunicator_merge(mpc_lowcomm_commu
 	                  0,
 	                  local_comm);
 
-	mpc_lowcomm_group_t *intracomm_group = _mpc_lowcomm_group_create(total_size, remote_descriptors);
+	mpc_lowcomm_group_t *intracomm_group = _mpc_lowcomm_group_create(total_size, remote_descriptors, 1);
 
 	mpc_lowcomm_communicator_t intracomm = __new_communicator(intercomm,
 															  intracomm_group,
@@ -2178,7 +2178,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_intercomm_create(const mpc_l
 		mpc_lowcomm_bcast(remote_descriptors, right_comm_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t), local_leader, left_comm);
 
 		/* Now we create a group from descriptors */
-		mpc_lowcomm_group_t *right_group = _mpc_lowcomm_group_create(right_comm_size, remote_descriptors);
+		mpc_lowcomm_group_t *right_group = _mpc_lowcomm_group_create(right_comm_size, remote_descriptors, 1);
 
 		/* And eventually our comm of interest */
 		right_comm = __new_communicator(left_comm,

@@ -737,7 +737,7 @@ mpc_lowcomm_group_t *mpc_lowcomm_group_excl(mpc_lowcomm_group_t *grp, int n, con
 		cnt++;
 	}
 
-	return _mpc_lowcomm_group_create(new_size, descs);
+	return _mpc_lowcomm_group_create(new_size, descs, 1);
 }
 
 mpc_lowcomm_group_t *mpc_lowcomm_group_incl(mpc_lowcomm_group_t *grp, int n, const int ranks[])
@@ -765,7 +765,7 @@ mpc_lowcomm_group_t *mpc_lowcomm_group_incl(mpc_lowcomm_group_t *grp, int n, con
 		memcpy(&descs[i], mpc_lowcomm_group_descriptor(grp, ranks[i]), sizeof(_mpc_lowcomm_group_rank_descriptor_t) );
 	}
 
-	return _mpc_lowcomm_group_create(new_size, descs);
+	return _mpc_lowcomm_group_create(new_size, descs, 1);
 }
 
 mpc_lowcomm_group_t *mpc_lowcomm_group_difference(mpc_lowcomm_group_t *grp, mpc_lowcomm_group_t *grp_to_sub)
@@ -809,7 +809,7 @@ mpc_lowcomm_group_t *mpc_lowcomm_group_difference(mpc_lowcomm_group_t *grp, mpc_
 		assume(descs != NULL);
 	}
 
-	return _mpc_lowcomm_group_create(new_size, descs);
+	return _mpc_lowcomm_group_create(new_size, descs, 1);
 }
 
 mpc_lowcomm_group_t *mpc_lowcomm_group_instersection(mpc_lowcomm_group_t *grp, mpc_lowcomm_group_t *grp2)
@@ -853,7 +853,7 @@ mpc_lowcomm_group_t *mpc_lowcomm_group_instersection(mpc_lowcomm_group_t *grp, m
 		assume(descs != NULL);
 	}
 
-	return _mpc_lowcomm_group_create(new_size, descs);
+	return _mpc_lowcomm_group_create(new_size, descs, 1);
 }
 
 mpc_lowcomm_group_t *mpc_lowcomm_group_union(mpc_lowcomm_group_t *grp, mpc_lowcomm_group_t *grp2)
@@ -911,7 +911,7 @@ mpc_lowcomm_group_t *mpc_lowcomm_group_union(mpc_lowcomm_group_t *grp, mpc_lowco
 		assume(descs != NULL);
 	}
 
-	return _mpc_lowcomm_group_create(new_size, descs);
+	return _mpc_lowcomm_group_create(new_size, descs, 1);
 }
 
 static inline void __fill_global_to_local(mpc_lowcomm_group_t *g)
@@ -942,7 +942,7 @@ static inline void __fill_global_to_local(mpc_lowcomm_group_t *g)
 	}
 }
 
-mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size, _mpc_lowcomm_group_rank_descriptor_t *ranks)
+mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size, _mpc_lowcomm_group_rank_descriptor_t *ranks, int deduplicate)
 {
 	mpc_lowcomm_group_t *ret = sctk_malloc(sizeof(mpc_lowcomm_group_t) );
 
@@ -960,6 +960,8 @@ mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size, _mpc_lowcomm_g
 	ret->process_list           = NULL;
 	ret->tasks_count_in_process = MPC_PROC_NULL;
 	ret->local_leader           = MPC_PROC_NULL;
+	ret->extra_ctx_ptr          = NULL;
+	ret->is_a_copy              = 0;
 
 	if(_mpc_lowcomm_group_rank_descriptor_all_from_local_set(size, ranks) )
 	{
@@ -976,7 +978,12 @@ mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size, _mpc_lowcomm_g
 	/* Force compute of local leader */
 	ret->local_leader = mpc_lowcomm_group_get_local_leader(ret);
 
-	return _mpc_lowcomm_group_list_register(ret);
+	if(deduplicate)
+	{
+		return _mpc_lowcomm_group_list_register(ret);
+	}
+
+	return ret;
 }
 
 mpc_lowcomm_group_t * mpc_lowcomm_group_create(unsigned int size, int *comm_world_ranks)
@@ -995,7 +1002,7 @@ mpc_lowcomm_group_t * mpc_lowcomm_group_create(unsigned int size, int *comm_worl
 		}
 	}
 
-	return _mpc_lowcomm_group_create(size, cw_desc);
+	return _mpc_lowcomm_group_create(size, cw_desc, 1);
 }
 
 mpc_lowcomm_group_t *mpc_lowcomm_group_dup(mpc_lowcomm_group_t *g)
@@ -1006,6 +1013,32 @@ mpc_lowcomm_group_t *mpc_lowcomm_group_dup(mpc_lowcomm_group_t *g)
 	}
 
 	return g;
+}
+
+mpc_lowcomm_group_t *mpc_lowcomm_group_copy(mpc_lowcomm_group_t *g)
+{
+	mpc_lowcomm_group_t * ret = NULL;
+
+	if(!g)
+	{
+		return g;
+	}
+
+	_mpc_lowcomm_group_rank_descriptor_t * rd = NULL;
+
+	if(g->size)
+	{
+		rd = sctk_malloc(sizeof(_mpc_lowcomm_group_rank_descriptor_t) * g->size);
+		assume(rd != NULL);
+		memcpy(rd, g->ranks, sizeof(_mpc_lowcomm_group_rank_descriptor_t) * g->size);
+	}
+
+	ret = _mpc_lowcomm_group_create( g->size, rd, 0 /* No deduplication */);
+
+	/* Flag as an independent copy */
+	ret->is_a_copy = 1;
+
+	return ret;
 }
 
 /*****************************
@@ -1160,6 +1193,40 @@ int _mpc_lowcomm_group_list_pop(mpc_lowcomm_group_t *group)
 	return ret;
 }
 
+/****************************
+ * CONTEXT POINTER HANDLING *
+ ****************************/
+
+void * mpc_lowcomm_group_get_context_pointer(mpc_lowcomm_group_t * g)
+{
+	if(!g)
+	{
+		return NULL;
+	}
+
+	return g->extra_ctx_ptr;
+}
+
+
+int mpc_lowcomm_group_set_context_pointer(mpc_lowcomm_group_t * g, void * ctxptr)
+{
+	if(!g)
+	{
+		return 1;
+	}
+
+	if(!g->is_a_copy)
+	{
+		mpc_common_debug_error("Cannot set a context on a non-copied group");
+		return 1;
+	}
+
+
+	g->extra_ctx_ptr = ctxptr;
+
+	return 0;
+}
+
 /*******************************
 * CREATION OF STANDARD GROUPS *
 *******************************/
@@ -1191,7 +1258,7 @@ void _mpc_lowcomm_group_create_world(void)
 	__group_list_init();
 
 	/* Create the empty group */
-	__empty_group = _mpc_lowcomm_group_create(0, NULL);
+	__empty_group = _mpc_lowcomm_group_create(0, NULL, 1);
 	__empty_group->do_not_free = 1;
 
 	/* Comm world */
@@ -1211,7 +1278,7 @@ void _mpc_lowcomm_group_create_world(void)
 	}
 
 	assume(__world_group == NULL);
-	__world_group = _mpc_lowcomm_group_create(size, cw_desc);
+	__world_group = _mpc_lowcomm_group_create(size, cw_desc, 1);
 	__world_group->do_not_free = 1;
 }
 
@@ -1279,5 +1346,5 @@ mpc_lowcomm_group_t *_mpc_lowcomm_group_create_from_world_ranks(int size, int *w
 		}
 	}
 
-	return _mpc_lowcomm_group_create(size, desc);
+	return _mpc_lowcomm_group_create(size, desc, 1);
 }

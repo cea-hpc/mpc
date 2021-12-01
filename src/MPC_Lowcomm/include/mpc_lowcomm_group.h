@@ -62,10 +62,24 @@ int mpc_lowcomm_group_free(mpc_lowcomm_group_t **group);
 /**
  * @brief Duplicate a group handle
  *
+ * @warning DUP may return the *same* handle !
+ * 
  * @param g the group to duplicate
  * @return mpc_lowcomm_group_t* a pointer to the duplicated group
  */
 mpc_lowcomm_group_t *mpc_lowcomm_group_dup(mpc_lowcomm_group_t *g);
+
+
+/**
+ * @brief Duplicate a group handle (full copy)
+ *
+ * @note This forces a handle copy (when storing info is needed)
+ * 
+ * @param g the group to duplicate
+ * @return mpc_lowcomm_group_t* a pointer to the duplicated group
+ */
+mpc_lowcomm_group_t *mpc_lowcomm_group_copy(mpc_lowcomm_group_t *g);
+
 
 /***************
 * GROUP QUERY *
@@ -267,6 +281,27 @@ mpc_lowcomm_peer_uid_t mpc_lowcomm_group_process_uid_for_rank(mpc_lowcomm_group_
  */
 int * mpc_lowcomm_group_world_ranks(mpc_lowcomm_group_t *g);
 
+/*****************************************
+ * EXTRA CTX POINTERS (SESSIONS HANDLES) *
+ *****************************************/
+
+/**
+ * @brief Get the context pointer from a group
+ * 
+ * @param g the group handle to query
+ * @return void* the context pointer (NULL if None)
+ */
+void * mpc_lowcomm_group_get_context_pointer(mpc_lowcomm_group_t * g);
+
+/**
+ * @brief Add an extra context pointer to the handle (note MUST be copied)
+ * 
+ * @param g the group to add information to
+ * @param ctxptr the context pointer to add
+ * @return int 0 on success 
+ */
+int mpc_lowcomm_group_set_context_pointer(mpc_lowcomm_group_t * g, void * ctxptr);
+
 /****************
 * PROCESS SETS *
 ****************/
@@ -322,6 +357,7 @@ int mpc_lowcomm_group_pset_free(mpc_lowcomm_process_set_t *pset);
  * @return int MPC_LOWCOMM_SUCCESS if all ok
  */
 int _mpc_lowcomm_pset_bootstrap(void);
+
 
 #ifdef __cplusplus
 }
