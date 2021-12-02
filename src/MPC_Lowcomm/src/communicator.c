@@ -114,7 +114,6 @@ void mpc_lowcomm_communicator_print(mpc_lowcomm_communicator_t comm, int root_on
 
 
 	mpc_common_debug_error("==========================");
-	
 }
 
 
@@ -167,7 +166,7 @@ int mpc_lowcomm_communicator_build_remote(mpc_lowcomm_peer_uid_t remote,
 		return MPC_LOWCOMM_ERROR;
 	}
 
-	/* Now we need set info from the remote 
+	/* Now we need set info from the remote
 	   not for now it only resolves world, we need a call to target specific comm */
 
 	mpc_lowcomm_monitor_retcode_t cret;
@@ -604,7 +603,7 @@ int mpc_lowcomm_communicator_accept(const char *port_name,
  * CONTEXT POINTERS *
  ********************/
 
-int mpc_lowcomm_communicator_set_context_pointer(mpc_lowcomm_communicator_t comm, void *ctxptr)
+int mpc_lowcomm_communicator_set_context_pointer(mpc_lowcomm_communicator_t comm, mpc_lowcomm_handle_ctx_t ctxptr)
 {
 	if(!comm)
 	{
@@ -616,11 +615,11 @@ int mpc_lowcomm_communicator_set_context_pointer(mpc_lowcomm_communicator_t comm
 	return 0;
 }
 
-void * mpc_lowcomm_communicator_get_context_pointer(mpc_lowcomm_communicator_t comm)
+mpc_lowcomm_handle_ctx_t mpc_lowcomm_communicator_get_context_pointer(mpc_lowcomm_communicator_t comm)
 {
 	if(!comm)
 	{
-		return NULL;
+		return MPC_LOWCOMM_HANDLE_CTX_NULL;
 	}
 
 	return comm->extra_ctx_ptr;
@@ -808,7 +807,7 @@ static inline mpc_lowcomm_internal_communicator_t *__init_communicator_with_id(m
 	ret->process_span = 1;
 	ret->shm_coll     = NULL;
 	ret->linear_comm_id = -1;
-	ret->extra_ctx_ptr = NULL;
+	ret->extra_ctx_ptr = MPC_LOWCOMM_HANDLE_CTX_NULL;
 
 	/* Intercomm ctx */
 	ret->is_comm_self = is_comm_self;
@@ -2542,7 +2541,7 @@ int mpc_lowcomm_communicator_create_group(mpc_lowcomm_communicator_t comm, mpc_l
 			{
 				mpc_common_debug_error("Failed translating ranks 3");
 				return MPC_LOWCOMM_ERROR;
-			}	
+			}
 		}
 
 		if(0 <= rc)
@@ -2553,7 +2552,7 @@ int mpc_lowcomm_communicator_create_group(mpc_lowcomm_communicator_t comm, mpc_l
 			{
 				mpc_common_debug_error("Failed translating ranks 4");
 				return MPC_LOWCOMM_ERROR;
-			}		
+			}
 		}
 
 		//mpc_common_debug_error("IN COMM P: %d LC : %d  RC : %d", parent, lc, rc);

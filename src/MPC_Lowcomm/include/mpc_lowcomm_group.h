@@ -290,7 +290,7 @@ int * mpc_lowcomm_group_world_ranks(mpc_lowcomm_group_t *g);
  * @brief Get the context pointer from a group
  * 
  * @param g the group handle to query
- * @return void* the context pointer (NULL if None)
+ * @return mpc_lowcomm_handle_ctx_t the context pointer (NULL if None)
  */
 mpc_lowcomm_handle_ctx_t mpc_lowcomm_group_get_context_pointer(mpc_lowcomm_group_t * g);
 

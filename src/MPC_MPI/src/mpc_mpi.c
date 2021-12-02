@@ -10358,6 +10358,50 @@ int PMPI_Request_free(MPI_Request *request)
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
+static inline int __check_unified_handle_ctx(int count, MPI_Request array_of_requests[])
+{
+	MPI_request_struct_t *requests = __sctk_internal_get_MPC_requests();
+
+	/* Check for session Coherency */
+	mpc_lowcomm_communicator_id_t seen_handle_ctx_id = MPC_LOWCOMM_COMM_NULL_ID;
+
+	mpc_lowcomm_request_t *req;
+
+	int i;
+
+	for(i = 0; i < count; i++)
+	{
+
+		if(array_of_requests[i] == MPI_REQUEST_NULL)
+			continue;
+
+		req = __sctk_convert_mpc_request(&(array_of_requests[i]), requests);
+
+		if(req == &MPC_REQUEST_NULL)
+		{
+			continue;
+		}
+
+		void * req_handle_ctx = mpc_lowcomm_communicator_get_context_pointer(req->comm);
+		mpc_lowcomm_communicator_id_t req_handle_ctx_id = mpc_lowcomm_communicator_handle_ctx_id(req_handle_ctx);
+
+		if(seen_handle_ctx_id != MPC_LOWCOMM_COMM_NULL_ID)
+		{
+			if(seen_handle_ctx_id != req_handle_ctx_id)
+			{
+				MPI_ERROR_REPORT(req->comm, MPI_ERR_REQUEST, "It is not legal to mix requests from multiple sessions in MPI Calls");
+			}
+		}
+		else
+		{
+			seen_handle_ctx_id = req_handle_ctx_id;
+		}
+	}
+
+	MPI_ERROR_SUCCESS();
+}
+
+
 int PMPI_Waitany(int count,
 				 MPI_Request array_of_requests[],
 				 int *index,
@@ -10371,6 +10415,13 @@ int PMPI_Waitany(int count,
 
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res       = MPI_SUCCESS;
+
+	res = __check_unified_handle_ctx(count, array_of_requests);
+	if(res != MPI_SUCCESS)
+	{
+		/* Note error handler is already called in __check_unified_handle_ctx */
+		return res;
+	}
 
 	int flag = 0;
 
@@ -10393,52 +10444,6 @@ int PMPI_Waitany(int count,
 	}
 
 	MPI_HANDLE_RETURN_VAL(res, comm);
-}
-
-static inline int __check_request_array_for_sessions(int count, MPI_Request array_of_requests[])
-{
-	MPI_request_struct_t *requests = __sctk_internal_get_MPC_requests();
-
-	/* Check for session Coherency */
-	void * seen_session_context = NULL;
-	
-	mpc_lowcomm_request_t *req;
-
-	int i;
-
-	for(i = 0; i < count; i++)
-	{
-
-		if(array_of_requests[i] == MPI_REQUEST_NULL)
-			continue;
-
-		req = __sctk_convert_mpc_request(&(array_of_requests[i]), requests);
-
-		if(req == &MPC_REQUEST_NULL)
-		{
-			continue;
-		}
-
-		void * req_session_ctx = mpc_lowcomm_communicator_get_context_pointer(req->comm);
-		
-
-		mpc_common_debug_error("%p == %d CTX %p COMM %p", req, i, req_session_ctx, req->comm);
-
-
-		if(seen_session_context)
-		{
-			if(seen_session_context != req_session_ctx)
-			{
-				MPI_ERROR_REPORT(req->comm, MPI_ERR_REQUEST, "It is not legal to mix requests from multiple sessions in MPI Calls");
-			}
-		}
-		else
-		{
-			seen_session_context = req_session_ctx;
-		}
-	}
-
-	MPI_ERROR_SUCCESS();
 }
 
 
@@ -10470,8 +10475,12 @@ int PMPI_Testany(int count,
 
 	requests = __sctk_internal_get_MPC_requests();
 
-	res = __check_request_array_for_sessions(count, array_of_requests);
-	MPI_HANDLE_ERROR(res, MPI_COMM_SELF, "Incoherent Session handles");
+	res = __check_unified_handle_ctx(count, array_of_requests);
+	if(res != MPI_SUCCESS)
+	{
+		/* Note error handler is already called in __check_unified_handle_ctx */
+		return res;
+	}
 
 	for(i = 0; i < count; i++)
 	{
@@ -10655,10 +10664,12 @@ int PMPI_Waitall(int count, MPI_Request array_of_requests[],
 		}
 	}
 
-	mpc_common_debug_error("HEER %d %p", count, array_of_requests);
-
-	int res = __check_request_array_for_sessions(count, array_of_requests);
-	MPI_HANDLE_ERROR(res, MPI_COMM_SELF, "Incoherent Session handles");
+	int res = __check_unified_handle_ctx(count, array_of_requests);
+	if(res != MPI_SUCCESS)
+	{
+		/* Note error handler is already called in __check_unified_handle_ctx */
+		return res;
+	}
 
 	/* Convert MPI resquests to MPC ones */
 
@@ -10789,8 +10800,12 @@ int PMPI_Testall(int count, MPI_Request array_of_requests[], int *flag,
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res       = MPI_ERR_INTERN;
 
-	res = __check_request_array_for_sessions(count, array_of_requests);
-	MPI_HANDLE_ERROR(res, MPI_COMM_SELF, "Incoherent Session handles");
+	res = __check_unified_handle_ctx(count, array_of_requests);
+	if(res != MPI_SUCCESS)
+	{
+		/* Note error handler is already called in __check_unified_handle_ctx */
+		return res;
+	}
 
 	int i;
 	int done = 0;
@@ -10896,6 +10911,13 @@ int PMPI_Waitsome(int incount, MPI_Request array_of_requests[],
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res       = MPI_ERR_INTERN;
 
+	res = __check_unified_handle_ctx(incount, array_of_requests);
+	if(res != MPI_SUCCESS)
+	{
+		/* Note error handler is already called in __check_unified_handle_ctx */
+		return res;
+	}
+
 	int i;
 	int req_null_count = 0;
 	MPI_request_struct_t *requests;
@@ -10965,8 +10987,12 @@ int PMPI_Testsome(int incount, MPI_Request array_of_requests[], int *outcount, i
 		return MPI_ERR_ARG;
 	}
 
-	res = __check_request_array_for_sessions(incount, array_of_requests);
-	MPI_HANDLE_ERROR(res, MPI_COMM_SELF, "Incoherent Session handles");
+	res = __check_unified_handle_ctx(incount, array_of_requests);
+	if(res != MPI_SUCCESS)
+	{
+		/* Note error handler is already called in __check_unified_handle_ctx */
+		return res;
+	}
 
 	int i;
 	int done           = 0;

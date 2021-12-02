@@ -1221,7 +1221,6 @@ int mpc_lowcomm_group_set_context_pointer(mpc_lowcomm_group_t * g, mpc_lowcomm_h
 		return 1;
 	}
 
-
 	g->extra_ctx_ptr = ctxptr;
 
 	return 0;

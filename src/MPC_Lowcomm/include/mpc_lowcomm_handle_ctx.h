@@ -86,9 +86,6 @@ int mpc_lowcomm_handle_ctx_set_session(mpc_lowcomm_handle_ctx_t hctx, void * ses
  */
 void * mpc_lowcomm_handle_ctx_get_session(mpc_lowcomm_handle_ctx_t hctx);
 
-
-
-
 #ifdef __cplusplus
 }
 #endif

@@ -79,7 +79,7 @@ typedef struct mpc_lowcomm_internal_communicator_s
 	mpc_lowcomm_topo_comms *topo_comms;  /**< Topological communicators. */
   
 	/* Extra context (sessions) */
-	void *                  extra_ctx_ptr;
+	mpc_lowcomm_handle_ctx_t extra_ctx_ptr;
 }mpc_lowcomm_internal_communicator_t;
 
 /*********************************

@@ -250,6 +250,7 @@ struct mpc_mpi_session_s *__session_new(void)
 
 void __session_free(struct mpc_mpi_session_s *session)
 {
+	mpc_lowcomm_handle_ctx_free(&session->handle_ctx);
 	sctk_free(session);
 }
 
@@ -409,6 +410,15 @@ int PMPI_Group_from_session_pset(MPI_Session session, const char *pset_name, MPI
 
     *newgroup = mpc_lowcomm_group_copy(pset->group);
 
+	/**
+	 * @brief Important note on this context:
+	 * Session are initially local and therefore
+	 * when you do session init on N processes
+	 * you get N sessions, we can only "unify"
+	 * these sessions when actually creating
+	 * a communicator with them. NOT BEFORE.
+	 */
+
 	/* Make sure we hold a new handle (not a refcounted one) */
 	assume(pset->group != *newgroup);
 
@@ -416,6 +426,9 @@ int PMPI_Group_from_session_pset(MPI_Session session, const char *pset_name, MPI
 
 	/* Create a new handle context for this sessions */
 	mpc_lowcomm_handle_ctx_t hctx = mpc_lowcomm_handle_ctx_new();
+
+	/* Save CTX in the session */
+	session->handle_ctx = hctx;
 
 	/* Register this session in the handle context */
 	mpc_lowcomm_handle_ctx_set_session(hctx, (void*)session);

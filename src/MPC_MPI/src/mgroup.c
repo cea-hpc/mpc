@@ -99,17 +99,14 @@ int PMPI_Comm_create_from_group(MPI_Group group, const char *stringtag, MPI_Info
 		MPI_HANDLE_ERROR(res, *newcomm, "Failed attaching the comm errhandler");
 	}
 
+	/* NOTE: this is the only moment multiple contexts from
+	   various places can join on a given communicator this is where
+	   we "unify" these contextes to share their ID and parameters */
+	mpc_lowcomm_handle_ctx_t gctx = mpc_lowcomm_group_get_context_pointer(group);
 
-	/* Sanity checks on session context */
-	void * gctx = mpc_lowcomm_group_get_context_pointer(group);
 	if(gctx && (*newcomm != MPI_COMM_NULL))
 	{
-		mpc_common_debug_error("GRP %p COMM %p", gctx, mpc_lowcomm_communicator_get_context_pointer(*newcomm));
-		mpc_common_debug_error("GRP %p COMM %p", gctx, mpc_lowcomm_communicator_get_context_pointer(*newcomm));
-		mpc_common_debug_error("GRP %p COMM %p", gctx, mpc_lowcomm_communicator_get_context_pointer(*newcomm));
-		mpc_common_debug_error("GRP %p COMM %p", gctx, mpc_lowcomm_communicator_get_context_pointer(*newcomm));
-
-		assume(mpc_lowcomm_communicator_get_context_pointer(*newcomm) == gctx);
+		mpc_lowcomm_communicator_handle_ctx_unify(*newcomm, gctx);
 	}
 
 	MPI_ERROR_SUCCESS();

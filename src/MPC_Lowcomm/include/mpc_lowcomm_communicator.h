@@ -573,15 +573,42 @@ int mpc_lowcomm_communicator_accept(const char *port_name,
  * @param ctxptr the context pointer to attach
  * @return int 0 on success
  */
-int mpc_lowcomm_communicator_set_context_pointer(mpc_lowcomm_communicator_t comm, void *ctxptr);
+int mpc_lowcomm_communicator_set_context_pointer(mpc_lowcomm_communicator_t comm, mpc_lowcomm_handle_ctx_t ctxptr);
 
 /**
  * @brief Get the extra context pointer from the communicator object (it is inherited from parents)
  * 
  * @param comm the communicator to querry
- * @return void* the context pointer (NULL if none)
+ * @return mpc_lowcomm_handle_ctx_t the context pointer (NULL if none)
  */
-void * mpc_lowcomm_communicator_get_context_pointer(mpc_lowcomm_communicator_t comm);
+mpc_lowcomm_handle_ctx_t mpc_lowcomm_communicator_get_context_pointer(mpc_lowcomm_communicator_t comm);
+
+
+/******************************
+ * HANDLE CONTEXT UNIFICATION *
+ ******************************/
+
+/**
+ * @brief Initially all sessions have their own context this calls unify them with the same ID
+ *        called in @ref PMPI_Comm_create_from_group
+ *
+ *  @note This call is defined in the handle_ctx.c file but depends on communicators
+ *
+ * @param comm the communicator to rely on to build unified context
+ * @param hctx the context to unify
+ * @return int 0 on success
+ */
+int mpc_lowcomm_communicator_handle_ctx_unify(mpc_lowcomm_communicator_t comm, mpc_lowcomm_handle_ctx_t hctx);
+
+/**
+ * @brief Get the identifier from the Handle CTX
+ *
+ *  @note This call is defined in the handle_ctx.c file but depends on communicators
+ *
+ * @param hctx the handle CTX to query
+ * @return mpc_lowcomm_communicator_id_t the corresponding ID (MPC_LOWCOMM_COMM_NULL_ID if none or error)
+ */
+mpc_lowcomm_communicator_id_t mpc_lowcomm_communicator_handle_ctx_id(mpc_lowcomm_handle_ctx_t hctx);
 
 
 /***********************************

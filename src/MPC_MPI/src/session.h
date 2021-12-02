@@ -23,13 +23,14 @@
 #define MPC_MPI_SESSION_H
 
 #include <mpc_mpi.h>
-
+#include <mpc_lowcomm_handle_ctx.h>
 
 typedef struct mpc_mpi_session_s
 {
 	int            id;
 	MPI_Errhandler errh;
 	MPI_Info       infos;
+	mpc_lowcomm_handle_ctx_t handle_ctx;
 }mpc_mpi_session_t;
 
 MPI_Session mpc_mpi_session_f2c(int session_id);
