@@ -409,13 +409,19 @@ int PMPI_Group_from_session_pset(MPI_Session session, const char *pset_name, MPI
 
     *newgroup = mpc_lowcomm_group_copy(pset->group);
 
-	/* Make sure we hold a new handle */
+	/* Make sure we hold a new handle (not a refcounted one) */
 	assume(pset->group != *newgroup);
 
 	mpc_lowcomm_group_pset_free(pset);
 
-	/* Attach session to the group handle */
-	mpc_lowcomm_group_set_context_pointer(*newgroup, (void*)session);
+	/* Create a new handle context for this sessions */
+	mpc_lowcomm_handle_ctx_t hctx = mpc_lowcomm_handle_ctx_new();
+
+	/* Register this session in the handle context */
+	mpc_lowcomm_handle_ctx_set_session(hctx, (void*)session);
+
+	/* Attach handle context to the group handle */
+	mpc_lowcomm_group_set_context_pointer(*newgroup, hctx);
 
 	MPI_ERROR_SUCCESS();
 }

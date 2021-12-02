@@ -23,6 +23,7 @@
 #define MPC_LOWCOMM_GROUP_INC_H
 
 #include <mpc_lowcomm_monitor.h>
+#include <mpc_lowcomm_handle_ctx.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -291,7 +292,7 @@ int * mpc_lowcomm_group_world_ranks(mpc_lowcomm_group_t *g);
  * @param g the group handle to query
  * @return void* the context pointer (NULL if None)
  */
-void * mpc_lowcomm_group_get_context_pointer(mpc_lowcomm_group_t * g);
+mpc_lowcomm_handle_ctx_t mpc_lowcomm_group_get_context_pointer(mpc_lowcomm_group_t * g);
 
 /**
  * @brief Add an extra context pointer to the handle (note MUST be copied)
@@ -300,7 +301,7 @@ void * mpc_lowcomm_group_get_context_pointer(mpc_lowcomm_group_t * g);
  * @param ctxptr the context pointer to add
  * @return int 0 on success 
  */
-int mpc_lowcomm_group_set_context_pointer(mpc_lowcomm_group_t * g, void * ctxptr);
+int mpc_lowcomm_group_set_context_pointer(mpc_lowcomm_group_t * g, mpc_lowcomm_handle_ctx_t ctxptr);
 
 /****************
 * PROCESS SETS *

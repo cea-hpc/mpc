@@ -79,7 +79,7 @@ struct _mpc_lowcomm_group_s
 	int                                   local_leader;
 
 	int                                   is_a_copy;
-	void *                                extra_ctx_ptr;
+	mpc_lowcomm_handle_ctx_t              extra_ctx_ptr;
 };
 
 static inline void _mpc_lowcomm_group_acquire(mpc_lowcomm_group_t *g)

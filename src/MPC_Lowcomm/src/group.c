@@ -960,7 +960,7 @@ mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size, _mpc_lowcomm_g
 	ret->process_list           = NULL;
 	ret->tasks_count_in_process = MPC_PROC_NULL;
 	ret->local_leader           = MPC_PROC_NULL;
-	ret->extra_ctx_ptr          = NULL;
+	ret->extra_ctx_ptr          = MPC_LOWCOMM_HANDLE_CTX_NULL;
 	ret->is_a_copy              = 0;
 
 	if(_mpc_lowcomm_group_rank_descriptor_all_from_local_set(size, ranks) )
@@ -1197,18 +1197,18 @@ int _mpc_lowcomm_group_list_pop(mpc_lowcomm_group_t *group)
  * CONTEXT POINTER HANDLING *
  ****************************/
 
-void * mpc_lowcomm_group_get_context_pointer(mpc_lowcomm_group_t * g)
+mpc_lowcomm_handle_ctx_t mpc_lowcomm_group_get_context_pointer(mpc_lowcomm_group_t * g)
 {
 	if(!g)
 	{
-		return NULL;
+		return MPC_LOWCOMM_HANDLE_CTX_NULL;
 	}
 
 	return g->extra_ctx_ptr;
 }
 
 
-int mpc_lowcomm_group_set_context_pointer(mpc_lowcomm_group_t * g, void * ctxptr)
+int mpc_lowcomm_group_set_context_pointer(mpc_lowcomm_group_t * g, mpc_lowcomm_handle_ctx_t ctxptr)
 {
 	if(!g)
 	{
