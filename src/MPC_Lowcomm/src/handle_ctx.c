@@ -51,6 +51,24 @@ mpc_lowcomm_communicator_id_t mpc_lowcomm_communicator_handle_ctx_id(mpc_lowcomm
     return hctx->handle_ctx_id;
 }
 
+int mpc_lowcomm_handle_ctx_equal(mpc_lowcomm_handle_ctx_t a, mpc_lowcomm_handle_ctx_t b)
+{
+    if(a == b)
+    {
+        return 1;
+    }
+
+    mpc_lowcomm_communicator_id_t ida = mpc_lowcomm_communicator_handle_ctx_id(a);
+    mpc_lowcomm_communicator_id_t idb = mpc_lowcomm_communicator_handle_ctx_id(b);
+
+    if(ida != idb)
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
 
 /*****************************************
  * HANDLE CONTEXT ALLOCATION AND FREEING *

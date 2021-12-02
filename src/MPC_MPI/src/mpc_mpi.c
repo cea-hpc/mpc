@@ -14397,6 +14397,14 @@ int PMPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result)
 	mpi_check_comm(comm1);
 	mpi_check_comm(comm2);
 
+	mpc_lowcomm_handle_ctx_t comm1ctx = mpc_lowcomm_communicator_get_context_pointer(comm1);
+	mpc_lowcomm_handle_ctx_t comm2ctx = mpc_lowcomm_communicator_get_context_pointer(comm2);
+
+	if(!mpc_lowcomm_handle_ctx_equal(comm1ctx,comm2ctx))
+	{
+		MPI_ERROR_REPORT(comm1, MPI_ERR_COMM, "Cannot compare communicators from different sessions.");
+	}
+
 	int result_group;
 
 	*result = MPI_UNEQUAL;

@@ -70,6 +70,16 @@ int mpc_lowcomm_handle_ctx_free(mpc_lowcomm_handle_ctx_t * hctx);
  ****************************/
 
 /**
+ * @brief Check if two contexes are equal
+ *
+ * @param a first context
+ * @param b second contex
+ * @return int 1 if equal
+ */
+int mpc_lowcomm_handle_ctx_equal(mpc_lowcomm_handle_ctx_t a, mpc_lowcomm_handle_ctx_t b);
+
+
+/**
  * @brief Attach a session to the handle context
  *
  * @param hctx the handle context to enrich
