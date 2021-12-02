@@ -106,7 +106,11 @@ int PMPI_Comm_create_from_group(MPI_Group group, const char *stringtag, MPI_Info
 
 	if(gctx && (*newcomm != MPI_COMM_NULL))
 	{
-		mpc_lowcomm_communicator_handle_ctx_unify(*newcomm, gctx);
+		res = mpc_lowcomm_communicator_handle_ctx_unify(*newcomm, gctx);
+		if( res != MPC_LOWCOMM_SUCCESS)
+		{
+			MPI_ERROR_REPORT(*newcomm, MPI_ERR_COMM, "Incoherent parameters on Session info");
+		}
 	}
 
 	MPI_ERROR_SUCCESS();
