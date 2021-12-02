@@ -606,12 +606,24 @@ int mpc_lowcomm_communicator_accept(const char *port_name,
 
 int mpc_lowcomm_communicator_set_context_pointer(mpc_lowcomm_communicator_t comm, void *ctxptr)
 {
+	if(!comm)
+	{
+		return 1;
+	}
 
+	comm->extra_ctx_ptr = ctxptr;
+
+	return 0;
 }
 
 void * mpc_lowcomm_communicator_get_context_pointer(mpc_lowcomm_communicator_t comm)
 {
+	if(!comm)
+	{
+		return NULL;
+	}
 
+	return comm->extra_ctx_ptr;
 }
 
 

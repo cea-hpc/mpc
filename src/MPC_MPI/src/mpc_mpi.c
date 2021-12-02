@@ -10395,6 +10395,53 @@ int PMPI_Waitany(int count,
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
+static inline int __check_request_array_for_sessions(int count, MPI_Request array_of_requests[])
+{
+	MPI_request_struct_t *requests = __sctk_internal_get_MPC_requests();
+
+	/* Check for session Coherency */
+	void * seen_session_context = NULL;
+	
+	mpc_lowcomm_request_t *req;
+
+	int i;
+
+	for(i = 0; i < count; i++)
+	{
+
+		if(array_of_requests[i] == MPI_REQUEST_NULL)
+			continue;
+
+		req = __sctk_convert_mpc_request(&(array_of_requests[i]), requests);
+
+		if(req == &MPC_REQUEST_NULL)
+		{
+			continue;
+		}
+
+		void * req_session_ctx = mpc_lowcomm_communicator_get_context_pointer(req->comm);
+		
+
+		mpc_common_debug_error("%p == %d CTX %p COMM %p", req, i, req_session_ctx, req->comm);
+
+
+		if(seen_session_context)
+		{
+			if(seen_session_context != req_session_ctx)
+			{
+				MPI_ERROR_REPORT(req->comm, MPI_ERR_REQUEST, "It is not legal to mix requests from multiple sessions in MPI Calls");
+			}
+		}
+		else
+		{
+			seen_session_context = req_session_ctx;
+		}
+	}
+
+	MPI_ERROR_SUCCESS();
+}
+
+
 int PMPI_Testany(int count,
 				 MPI_Request array_of_requests[],
 				 int *index,
@@ -10422,6 +10469,9 @@ int PMPI_Testany(int count,
 	}
 
 	requests = __sctk_internal_get_MPC_requests();
+
+	res = __check_request_array_for_sessions(count, array_of_requests);
+	MPI_HANDLE_ERROR(res, MPI_COMM_SELF, "Incoherent Session handles");
 
 	for(i = 0; i < count; i++)
 	{
@@ -10605,6 +10655,11 @@ int PMPI_Waitall(int count, MPI_Request array_of_requests[],
 		}
 	}
 
+	mpc_common_debug_error("HEER %d %p", count, array_of_requests);
+
+	int res = __check_request_array_for_sessions(count, array_of_requests);
+	MPI_HANDLE_ERROR(res, MPI_COMM_SELF, "Incoherent Session handles");
+
 	/* Convert MPI resquests to MPC ones */
 
 	/* Prepare arrays for MPC requests */
@@ -10734,6 +10789,8 @@ int PMPI_Testall(int count, MPI_Request array_of_requests[], int *flag,
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res       = MPI_ERR_INTERN;
 
+	res = __check_request_array_for_sessions(count, array_of_requests);
+	MPI_HANDLE_ERROR(res, MPI_COMM_SELF, "Incoherent Session handles");
 
 	int i;
 	int done = 0;
@@ -10908,6 +10965,9 @@ int PMPI_Testsome(int incount, MPI_Request array_of_requests[], int *outcount, i
 		return MPI_ERR_ARG;
 	}
 
+	res = __check_request_array_for_sessions(incount, array_of_requests);
+	MPI_HANDLE_ERROR(res, MPI_COMM_SELF, "Incoherent Session handles");
+
 	int i;
 	int done           = 0;
 	int no_active_done = 0;
@@ -10915,6 +10975,7 @@ int PMPI_Testsome(int incount, MPI_Request array_of_requests[], int *outcount, i
 	MPI_request_struct_t *requests;
 
 	requests = __sctk_internal_get_MPC_requests();
+
 
 	for(i = 0; i < incount; i++)
 	{

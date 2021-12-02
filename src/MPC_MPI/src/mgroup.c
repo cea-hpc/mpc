@@ -104,6 +104,11 @@ int PMPI_Comm_create_from_group(MPI_Group group, const char *stringtag, MPI_Info
 	void * gctx = mpc_lowcomm_group_get_context_pointer(group);
 	if(gctx && (*newcomm != MPI_COMM_NULL))
 	{
+		mpc_common_debug_error("GRP %p COMM %p", gctx, mpc_lowcomm_communicator_get_context_pointer(*newcomm));
+		mpc_common_debug_error("GRP %p COMM %p", gctx, mpc_lowcomm_communicator_get_context_pointer(*newcomm));
+		mpc_common_debug_error("GRP %p COMM %p", gctx, mpc_lowcomm_communicator_get_context_pointer(*newcomm));
+		mpc_common_debug_error("GRP %p COMM %p", gctx, mpc_lowcomm_communicator_get_context_pointer(*newcomm));
+
 		assume(mpc_lowcomm_communicator_get_context_pointer(*newcomm) == gctx);
 	}
 
