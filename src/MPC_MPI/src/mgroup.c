@@ -110,6 +110,7 @@ int PMPI_Comm_create_from_group(MPI_Group group, const char *stringtag, MPI_Info
 	if(*newcomm != MPI_COMM_NULL)
 	{
 		mpc_lowcomm_communicator_id_t roots_id = MPC_LOWCOMM_COMM_NULL_ID;
+		mpc_lowcomm_communicator_id_t my_id = mpc_lowcomm_communicator_handle_ctx_id(gctx);
 
 		if(mpc_lowcomm_communicator_rank(*newcomm) == 0)
 		{
@@ -118,9 +119,16 @@ int PMPI_Comm_create_from_group(MPI_Group group, const char *stringtag, MPI_Info
 
 		mpc_lowcomm_bcast(&roots_id, sizeof(mpc_lowcomm_communicator_id_t), 0, *newcomm);
 
-		if( roots_id != mpc_lowcomm_communicator_handle_ctx_id(gctx) )
+		if( roots_id != my_id)
 		{
-			MPI_ERROR_REPORT(*newcomm, MPI_ERR_ARG, "Handles from different sessions called PMPI_Comm_create_from_group");
+			/* Here is a subtelty if the mismatching session has a NULL handle
+			   it means it wants to "join" this previously initialized session
+			   and therefore it is not erroneous, what is are two already
+			   diverged sessions trying to join */
+			if(my_id == MPC_LOWCOMM_COMM_NULL_ID)
+			{
+				MPI_ERROR_REPORT(*newcomm, MPI_ERR_ARG, "Handles from different sessions called PMPI_Comm_create_from_group");
+			}
 		}
 
 		if(gctx)
