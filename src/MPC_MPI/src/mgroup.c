@@ -19,6 +19,8 @@
 /* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include <mpc_common_debug.h>
+
 #include "mpc_mpi.h"
 #include "mpc_mpi_internal.h"
 
@@ -104,14 +106,34 @@ int PMPI_Comm_create_from_group(MPI_Group group, const char *stringtag, MPI_Info
 	   we "unify" these contextes to share their ID and parameters */
 	mpc_lowcomm_handle_ctx_t gctx = mpc_lowcomm_group_get_context_pointer(group);
 
-	if(gctx && (*newcomm != MPI_COMM_NULL))
+    /* First Make sure all handles have the same value */
+	if(*newcomm != MPI_COMM_NULL)
 	{
-		res = mpc_lowcomm_communicator_handle_ctx_unify(*newcomm, gctx);
-		if( res != MPC_LOWCOMM_SUCCESS)
+		mpc_lowcomm_communicator_id_t roots_id = MPC_LOWCOMM_COMM_NULL_ID;
+
+		if(mpc_lowcomm_communicator_rank(*newcomm) == 0)
 		{
-			MPI_ERROR_REPORT(*newcomm, MPI_ERR_COMM, "Incoherent parameters on Session info");
+			roots_id = mpc_lowcomm_communicator_handle_ctx_id(gctx);
 		}
+
+		mpc_lowcomm_bcast(&roots_id, sizeof(mpc_lowcomm_communicator_id_t), 0, *newcomm);
+
+		if( roots_id != mpc_lowcomm_communicator_handle_ctx_id(gctx) )
+		{
+			MPI_ERROR_REPORT(*newcomm, MPI_ERR_ARG, "Handles from different sessions called PMPI_Comm_create_from_group");
+		}
+
+		if(gctx)
+		{
+			res = mpc_lowcomm_communicator_handle_ctx_unify(*newcomm, gctx);
+			if( res != MPC_LOWCOMM_SUCCESS)
+			{
+				MPI_ERROR_REPORT(*newcomm, MPI_ERR_COMM, "Incoherent parameters on Session info");
+			}
+		}
+
 	}
+
 
 	MPI_ERROR_SUCCESS();
 }

@@ -14,9 +14,15 @@
 
 int mpc_lowcomm_communicator_handle_ctx_unify(mpc_lowcomm_communicator_t comm, mpc_lowcomm_handle_ctx_t hctx)
 {
-    /* Now all set their ID to the the source communicator */
-    hctx->handle_ctx_id = mpc_lowcomm_communicator_id(comm);
+    if(hctx->handle_ctx_id == MPC_LOWCOMM_COMM_NULL_ID)
+    {
+        /* This is the first time we encounter a SESSION ID
+           inside the GROUP Handle CTX then save a new UNIQUE
+           Identifier for the Session */
 
+        /* Now all set their ID to the the source communicator */
+        hctx->handle_ctx_id = mpc_lowcomm_communicator_id(comm);
+    }
 
     return MPC_LOWCOMM_SUCCESS;;
 }
