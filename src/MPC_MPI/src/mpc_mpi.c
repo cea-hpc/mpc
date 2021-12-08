@@ -20320,6 +20320,10 @@ int PMPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype data
 int PMPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
                    MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
+# if MPC_ENABLE_INTEROP_MPI_OMP
+    MPC_OMP_TASK_TRACE_ALLREDUCE(count, (int)datatype, (int)op, mpc_lowcomm_communicator_id(comm));
+# endif /* MPC_ENABLE_INTEROP_MPI_OMP */
+
 	int res = MPI_ERR_INTERN;
 
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM

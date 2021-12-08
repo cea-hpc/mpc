@@ -52,6 +52,7 @@
 #  define MPC_OMP_TASK_TRACE_CALLBACK(when, status) if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_async(when, status)
 #  define MPC_OMP_TASK_TRACE_SEND(count, dtype, dst, tag, comm) if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_send(count, dtype, dst, tag, comm)
 #  define MPC_OMP_TASK_TRACE_RECV(count, dtype, src, tag, comm) if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_recv(count, dtype, src, tag, comm)
+#  define MPC_OMP_TASK_TRACE_ALLREDUCE(count, dtype, op, comm)  if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_allreduce(count, dtype, op, comm)
 
 # define MPC_OMP_TASK_TRACE_FILE_VERSION    1
 # define MPC_OMP_TASK_TRACE_FILE_MAGIC      (0x6B736174) /* 't' 'a' 's' 'k' */
@@ -95,6 +96,7 @@ typedef enum    mpc_omp_task_trace_record_type_e
 # if MPC_MPI
     MPC_OMP_TASK_TRACE_TYPE_SEND,
     MPC_OMP_TASK_TRACE_TYPE_RECV,
+    MPC_OMP_TASK_TRACE_TYPE_ALLREDUCE,
 # endif /* MPC_MPI */
     MPC_OMP_TASK_TRACE_TYPE_COUNT
 }               mpc_omp_task_trace_record_type_t;
@@ -240,6 +242,22 @@ typedef struct  mpc_omp_task_trace_record_recv_s
     int tag;
     int comm;
 }               mpc_omp_task_trace_record_recv_t;
+
+typedef struct  mpc_omp_task_trace_record_allreduce_s
+{
+    /* inheritance */
+    mpc_omp_task_trace_record_t parent;
+
+    /* task uid */
+    int uid;
+
+    /* mpi informations */
+    int count;
+    int datatype;
+    int op;
+    int comm;
+}               mpc_omp_task_trace_record_allreduce_t;
+
 # endif /* MPC_MPI */
 
 /**
@@ -299,6 +317,7 @@ void _mpc_omp_task_trace_delete(struct mpc_omp_task_s * task);
 void _mpc_omp_task_trace_callback(int when, int status);
 void _mpc_omp_task_trace_send(int count, int datatype, int dst, int tag, int comm);
 void _mpc_omp_task_trace_recv(int count, int datatype, int src, int tag, int comm);
+void _mpc_omp_task_trace_allreduce(int count, int datatype, int op, int comm);
 
 # else  /* MPC_OMP_TASK_COMPILE_TRACE */
 #  define MPC_OMP_TASK_TRACE_DEPENDENCY(...)
@@ -308,6 +327,7 @@ void _mpc_omp_task_trace_recv(int count, int datatype, int src, int tag, int com
 #  define MPC_OMP_TASK_TRACE_CALLBACK(...)
 #  define MPC_OMP_TASK_TRACE_SEND(...)
 #  define MPC_OMP_TASK_TRACE_RECV(...)
+#  define MPC_OMP_TASK_TRACE_ALLREDUCE(...)
 # endif /* MPC_OMP_TASK_COMPILE_TRACE */
 
 # endif /* __MPC_OMP_TASK_TRACE_H__ */

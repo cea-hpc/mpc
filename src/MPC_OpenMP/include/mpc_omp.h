@@ -197,6 +197,22 @@ extern "C" {
      */
     void mpc_omp_task_block(mpc_omp_event_handle_t * event);
 
+    /**
+     *  Cancel tasks that did not started yet, or that were created after
+     *  the one calling the cancellation.
+     *
+     *  Said differently :
+     *      - tasks started will complete
+     *      - tasks not started, but created before the task that call the cancellation,
+     *        will be started and completed
+     *      - tasks not started, and created after the task that call the cancellation
+     *        will not be started
+     *
+     * API could be something like :
+     *  # pragma omp cancel taskgroup `start-previous`
+     */
+    void mpc_omp_task_taskgroup_cancel_next(void);
+
     /* task trace calls */
     void mpc_omp_task_trace_begin(void);
     void mpc_omp_task_trace_end(void);

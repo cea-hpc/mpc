@@ -64,6 +64,7 @@
 #include "omp_gomp_constants.h"
 
 /* uthash implementations */
+#ifndef HASH_FUNCTION
 #if 0
 #  define HASH_FUNCTION(keyptr, keylen, hashv)  do { \
                                                     uintptr_t addr = (uintptr_t) (*keyptr); \
@@ -73,12 +74,12 @@
                                                     hashv ^= (addr >> 8);                   \
                                                     hashv ^= (addr >> 2);               \
                                                 } while(0)
-
 #  define HASH_FUNCTION(keyptr, keylen, hashv)  do { \
-                                                    hashv = (uintptr_t) (*keyptr) / sizeof(void *);
+                                                    hashv = (uintptr_t) (*keyptr) / sizeof(void *);\
                                                 } while(0)
-#endif
+#endif /* 0 */
 #include "uthash.h"
+#endif /* HASH_FUNCTION */
 
 /*******************
  * OMP DEFINITIONS *
@@ -98,11 +99,11 @@
 #endif
 
 /* RECYCLER */
-# define MPC_OMP_TASK_USE_RECYCLERS 1
+# define MPC_OMP_TASK_USE_RECYCLERS     1
 # if MPC_OMP_TASK_USE_RECYCLERS
-#  define MPC_OMP_TASK_ALLOCATOR      mpc_omp_alloc
-#  define MPC_OMP_TASK_DEALLOCATOR    mpc_omp_free
-#  define MPC_OMP_TASK_DEFAULT_ALIGN  8
+#  define MPC_OMP_TASK_ALLOCATOR        mpc_omp_alloc
+#  define MPC_OMP_TASK_DEALLOCATOR      mpc_omp_free
+#  define MPC_OMP_TASK_DEFAULT_ALIGN    8
 # endif
 
 /* BARRIER ALGORITHM */
@@ -456,6 +457,7 @@ typedef struct  mpc_omp_task_taskgroup_s
 	struct mpc_omp_task_taskgroup_s * prev;
 	OPA_int_t children_num;
     OPA_int_t cancelled;
+    int last_task_uid;
 }               mpc_omp_task_taskgroup_t;
 
 #ifdef MPC_OMP_USE_MCS_LOCK

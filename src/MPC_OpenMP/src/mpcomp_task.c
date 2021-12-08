@@ -1060,7 +1060,13 @@ __task_precedence_constraints(mpc_omp_task_t * predecessor, mpc_omp_task_t * suc
                     predecessor->dep_node.successors = __task_list_elt_new(predecessor->dep_node.successors, successor);
                     OPA_incr_int(&(predecessor->dep_node.nsuccessors));
 
-                    successor->dep_node.predecessors = __task_list_elt_new(successor->dep_node.predecessors, predecessor);
+                    // if the priority should be propagated to predecessors
+                    // -> link through predecessor's list
+                    if (mpc_omp_conf_get()->task_priority_propagation_policy
+                            != MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_NOOP)
+                    {
+                        successor->dep_node.predecessors = __task_list_elt_new(successor->dep_node.predecessors, predecessor);
+                    }
                     OPA_incr_int(&(successor->dep_node.npredecessors));
                     OPA_incr_int(&(successor->dep_node.ref_predecessors));
                 }
@@ -1262,10 +1268,10 @@ __task_process_deps(mpc_omp_task_t * task, void ** depend)
     uintptr_t mpc_ndeps = 0;
     uintptr_t i, j;
     for (i = 0 ; i < ndependencies_type ; ++i) mpc_ndeps += dependencies[i].addrs_size;
+    if (mpc_ndeps == 0 && omp_ndeps_tot == 0) return ;
 
     /* total number of dependencies */
     uintptr_t ndeps = omp_ndeps_tot + mpc_ndeps;
-    assert(ndeps > 0);
 
     /* We may allocate useless dep_list_elt_t when there is redundancy.
      * 1) count unique element
@@ -1273,7 +1279,6 @@ __task_process_deps(mpc_omp_task_t * task, void ** depend)
      * For now, we may allocate too much memory in redundancy cases
      */
     task->dep_node.dep_list = (mpc_omp_task_dep_list_elt_t *) malloc(sizeof(mpc_omp_task_dep_list_elt_t) * ndeps);
-    assert(task->dep_node.dep_list);
     task->dep_node.dep_list_size = 0;
 
      /**
@@ -1401,10 +1406,7 @@ __task_finalize_deps(mpc_omp_task_t * task)
         /* if successor's dependencies are fullfilled, process it */
         if (OPA_fetch_and_decr_int(&(succ->task->dep_node.ref_predecessors)) == 1)
         {
-            if (OPA_load_int(&(succ->task->dep_node.status)) == MPC_OMP_TASK_STATUS_NOT_READY)
-            {
-                _mpc_omp_task_process(succ->task);
-            }
+            _mpc_omp_task_process(succ->task);
         }
 
         /* process next successor */
@@ -1477,7 +1479,8 @@ __task_priority_propagate_on_predecessors(mpc_omp_task_t * task)
             if (OPA_load_int(&(task->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED)
             {
                 /* if the task is not in queue, propagate the priority */
-                switch (mpc_omp_conf_get()->task_priority_policy)
+                const struct mpc_omp_conf_s * config = mpc_omp_conf_get();
+                switch (config->task_priority_propagation_policy)
                 {
                     case (MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_NOOP):
                     {
@@ -1541,18 +1544,18 @@ __task_priority_compute(mpc_omp_task_t * task)
             break ;
         }
 
-        case (MPC_OMP_TASK_PRIORITY_POLICY_COPY):
-        {
-            task->priority = task->omp_priority_hint;
-            break ;
-        }
-
         case (MPC_OMP_TASK_PRIORITY_POLICY_CONVERT):
         {
             if (task->omp_priority_hint)
             {
                 task->priority = INT_MAX;
             }
+            break ;
+        }
+
+        case (MPC_OMP_TASK_PRIORITY_POLICY_COPY):
+        {
+            task->priority = task->omp_priority_hint;
             break ;
         }
 
@@ -2783,6 +2786,16 @@ __task_run_with_fiber(mpc_omp_task_t * task)
 void
 __task_run(mpc_omp_task_t * task)
 {
+    /* check if this task was cancelled */
+    if (task->taskgroup
+            && OPA_load_int(&(task->taskgroup->cancelled))
+            && task->taskgroup->last_task_uid < task->uid)
+    {
+        task->statuses.cancelled = true;
+        __task_finalize(task);
+        return ;
+    }
+
 # if MPC_OMP_TASK_COMPILE_FIBER
     if (MPC_OMP_TASK_FIBER_ENABLED && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_HAS_FIBER))
     {
@@ -2811,12 +2824,6 @@ _mpc_omp_task_schedule(void)
 
     if (task)
     {
-        if (task->taskgroup && OPA_load_int(&(task->taskgroup->cancelled)))
-        {
-            task->statuses.cancelled = true;
-            __task_finalize(task);
-            return 0;
-        }
 # if MPC_OMP_TASK_COMPILE_TRACE
         task->schedule_id = OPA_fetch_and_incr_int(&(thread->instance->task_infos.next_schedule_id));
 # endif
@@ -3209,10 +3216,9 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
         /* link task with predecessors, and register dependencies to the hmap */
         __task_process_deps(task, depend);
 
-        OPA_decr_int(&(task->dep_node.ref_predecessors));
-
         /* now this task can be queued */
         assert(!task->statuses.started);
+        OPA_decr_int(&(task->dep_node.ref_predecessors));
     }
 
     /* compute priority */
@@ -3350,6 +3356,14 @@ _mpc_omp_task_taskgroup_end(void)
     mpc_omp_free(taskgroup);
 }
 
+static inline void
+__taskgroup_cancel(mpc_omp_task_taskgroup_t * taskgroup, int last_task_uid)
+{
+    assert(taskgroup);
+    taskgroup->last_task_uid = last_task_uid;
+    OPA_cas_int(&(taskgroup->cancelled), 0, 1);
+}
+
 void
 _mpc_omp_task_taskgroup_cancel(void)
 {
@@ -3362,7 +3376,22 @@ _mpc_omp_task_taskgroup_cancel(void)
     mpc_omp_task_taskgroup_t * taskgroup = task->taskgroup;
     if (!taskgroup) return ;
 
-    OPA_cas_int(&(taskgroup->cancelled), 0, 1);
+    __taskgroup_cancel(taskgroup, INT_MAX);
+}
+
+void
+mpc_omp_task_taskgroup_cancel_next(void)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
+    mpc_omp_task_taskgroup_t * taskgroup = task->taskgroup;
+    if (!taskgroup) return ;
+
+    __taskgroup_cancel(taskgroup, task->uid);
 }
 
 /************
