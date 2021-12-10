@@ -2869,36 +2869,38 @@ __thread_requeue_task(mpc_omp_task_t * task)
  * Note that while only a single thread may block a task at a time,
  * multiple threads may unblock the same task concurrently */
 void
-mpc_omp_task_unblock(mpc_omp_event_handle_t * event)
+_mpc_omp_task_unblock(mpc_omp_event_handle_block_t * handle)
 {
-    assert(event);
-    assert(event->type & MPC_OMP_EVENT_TASK_BLOCK);
+    assert(handle);
+    assert(handle->parent.type == MPC_OMP_EVENT_TASK_BLOCK);
 
     mpc_omp_thread_t * thread = __thread_task_coherency(NULL);
     assert(thread);
 
-    mpc_omp_task_t * task = (mpc_omp_task_t *) event->attr;
+    mpc_omp_task_t * task = (mpc_omp_task_t *) handle->task;
     assert(task);
+
+    _mpc_omp_event_handle_ref((mpc_omp_event_handle_t *) handle);  /* mpc_omp_task_unblock */
 
     /* if the task unblocked before blocking, there is nothing to do */
     if (OPA_cas_int(
-                &(event->status),
-                MPC_OMP_EVENT_HANDLE_STATUS_INIT,
-                MPC_OMP_EVENT_HANDLE_STATUS_UNBLOCKED) == MPC_OMP_EVENT_HANDLE_STATUS_INIT)
+                &(handle->status),
+                MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_INIT,
+                MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_UNBLOCKED) == MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_INIT)
     {
         /* nothing to do, task unblocked before blocking */
     }
     else
     {
         assert(
-            OPA_load_int(&(event->status)) == MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED ||
-            OPA_load_int(&(event->status)) == MPC_OMP_EVENT_HANDLE_STATUS_UNBLOCKED
+            OPA_load_int(&(handle->status)) == MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_BLOCKED ||
+            OPA_load_int(&(handle->status)) == MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_UNBLOCKED
         );
 
         if (OPA_cas_int(
-                    &(event->status),
-                    MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED,
-                    MPC_OMP_EVENT_HANDLE_STATUS_UNBLOCKED) == MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED)
+                    &(handle->status),
+                    MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_BLOCKED,
+                    MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_UNBLOCKED) == MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_BLOCKED)
         {
             /* remove the task from the blocked list */
             mpc_omp_task_list_t * list = &(thread->instance->task_infos.blocked_tasks);
@@ -2916,16 +2918,18 @@ mpc_omp_task_unblock(mpc_omp_event_handle_t * event)
 # if MPC_OMP_TASK_COMPILE_FIBER
             if (MPC_OMP_TASK_FIBER_ENABLED && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_HAS_FIBER))
             {
-                mpc_common_spinlock_lock(&(event->lock));
+                int requeue = 0;
+                mpc_common_spinlock_lock(&(handle->lock));
                 {
                     task->statuses.unblocked = true;
                     if (task->statuses.blocked)
                     {
                         task->statuses.blocked = false;
-                        __thread_requeue_task(task);
+                        requeue = 1;
                     }
                 }
-                mpc_common_spinlock_unlock(&(event->lock));
+                mpc_common_spinlock_unlock(&(handle->lock));
+                if (requeue) __thread_requeue_task(task);
             }
             /* otherwise, it will be resumed by its suspending thread once ready */
             else
@@ -2939,23 +2943,24 @@ mpc_omp_task_unblock(mpc_omp_event_handle_t * event)
             /* nothing to do, the task is already being unblocked by another thread */
         }
     }
+    _mpc_omp_event_handle_unref((mpc_omp_event_handle_t *) handle);    /* mpc_omp_task_unblock */
 }
 
 /* Warning: a task may unblock before it was actually suspended
  * Note that only the executing thread may block the task,
  * so only 1 thread may block the same task at a time */
 void
-mpc_omp_task_block(mpc_omp_event_handle_t * event)
+mpc_omp_task_block(mpc_omp_event_handle_block_t * handle)
 {
-    assert(event);
+    assert(handle);
+    assert(handle->parent.type == MPC_OMP_EVENT_TASK_BLOCK);
 
     /* if the task did not unblock */
     if (OPA_cas_int(
-        &(event->status),
-        MPC_OMP_EVENT_HANDLE_STATUS_INIT,
-        MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED) == MPC_OMP_EVENT_HANDLE_STATUS_INIT)
+        &(handle->status),
+        MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_INIT,
+        MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_BLOCKED) == MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_INIT)
     {
-
         mpc_omp_thread_t * thread = __thread_task_coherency(NULL);
         assert(thread);
 
@@ -2966,7 +2971,7 @@ mpc_omp_task_block(mpc_omp_event_handle_t * event)
         mpc_omp_task_list_t * list = &(thread->instance->task_infos.blocked_tasks);
         mpc_common_spinlock_lock(&(list->lock));
         {
-            if (OPA_load_int(&(event->status)) == MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED)
+            if (OPA_load_int(&(handle->status)) == MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_BLOCKED)
             {
                 task->statuses.in_blocked_list = true;
                 __task_list_push_to_head(list, task);
@@ -2978,17 +2983,20 @@ mpc_omp_task_block(mpc_omp_event_handle_t * event)
 # if MPC_OMP_TASK_COMPILE_FIBER
         if (MPC_OMP_TASK_FIBER_ENABLED && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_HAS_FIBER))
         {
-            mpc_common_spinlock_lock(&(event->lock));
+            if (OPA_load_int(&(handle->status)) == MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_BLOCKED)
             {
-                if (OPA_load_int(&(event->status)) == MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED)
+                mpc_common_spinlock_lock(&(handle->lock));
                 {
-                    thread->task_infos.spinlock_to_unlock = &(event->lock);
-                    task->statuses.blocking = true;
-                    __taskyield_return();
-                }
-                else
-                {
-                    mpc_common_spinlock_unlock(&(event->lock));
+                    if (OPA_load_int(&(handle->status)) == MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_BLOCKED)
+                    {
+                        thread->task_infos.spinlock_to_unlock = &(handle->lock);
+                        task->statuses.blocking = true;
+                        __taskyield_return();
+                    }
+                    else
+                    {
+                        mpc_common_spinlock_unlock(&(handle->lock));
+                    }
                 }
             }
         }
@@ -3002,6 +3010,7 @@ mpc_omp_task_block(mpc_omp_event_handle_t * event)
             }
         }
     }
+    _mpc_omp_event_handle_unref((mpc_omp_event_handle_t *) handle); /* mpc_omp_event_handle_init */
 }
 
 static void

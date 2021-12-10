@@ -108,7 +108,7 @@
 
 /* BARRIER ALGORITHM */
 # define MPC_OMP_NAIVE_BARRIER              1
-# define MPC_OMP_BARRIER_COMPILE_COND_WAIT  0
+# define MPC_OMP_BARRIER_COMPILE_COND_WAIT  1
 
 #if MPC_OMP_BARRIER_COMPILE_COND_WAIT
 # if MPC_OMP_NAIVE_BARRIER != 1
@@ -1155,11 +1155,14 @@ typedef struct mpc_omp_thread_s
 
 typedef struct  mpc_omp_instance_callback_infos_s
 {
-    /* async per events */
+    /* callbacks per events */
     mpc_omp_callback_t * callbacks[MPC_OMP_CALLBACK_MAX];
 
-    /* asyncs lock per event */
+    /* callback lock per event */
     mpc_common_spinlock_t locks[MPC_OMP_CALLBACK_MAX];
+
+    /* number of callbacks per event */
+    int length[MPC_OMP_CALLBACK_MAX];
 }               mpc_omp_instance_callback_infos_t;
 
 /* Instance of OpenMP runtime */
@@ -1198,7 +1201,7 @@ typedef struct mpc_omp_instance_s
 	struct mpc_omp_task_instance_infos_s task_infos;
 
     /* asynchronous callbacks */
-    struct mpc_omp_instance_callback_infos_s callback_infos;
+    mpc_omp_instance_callback_infos_t callback_infos;
 
 } mpc_omp_instance_t;
 

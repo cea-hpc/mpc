@@ -59,18 +59,9 @@ extern "C" {
     /* MPC-OpenMP event types */
     typedef enum    mpc_omp_event_e
     {
-        MPC_OMP_EVENT_NULL,
         MPC_OMP_EVENT_TASK_BLOCK,
         MPC_OMP_EVENT_MAX
     }               mpc_omp_event_t;
-
-    /* event status */
-    typedef enum    mpc_omp_event_handle_status_e
-    {
-        MPC_OMP_EVENT_HANDLE_STATUS_INIT,
-        MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED,
-        MPC_OMP_EVENT_HANDLE_STATUS_UNBLOCKED
-    }               mpc_omp_event_handle_status_t;
 
     /**
      * OpenMP specificates that :
@@ -80,16 +71,34 @@ extern "C" {
      */
     typedef struct  mpc_omp_event_handle_s
     {
-        void            * attr;         /* the event attributes */
+        mpc_omp_event_t type;   /* the event type */
+        OPA_int_t       ref;    /* reference counter */
+    }               mpc_omp_event_handle_t;
+
+    /* event status */
+    typedef enum    mpc_omp_event_handle_block_status_e
+    {
+        MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_INIT,
+        MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_BLOCKED,
+        MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_UNBLOCKED
+    }               mpc_omp_event_handle_block_status_t;
+
+    /**
+     * Event handler for task block/unblock
+     */
+    typedef struct   mpc_omp_event_handle_block_s
+    {
+        mpc_omp_event_handle_t parent;  /* C inheritance */
+
+        void            * task;         /* the blocked task */
         OPA_int_t       lock;           /* a spinlock */
-        mpc_omp_event_t type;           /* the event type */
         OPA_int_t       status;         /* the handle status */
         OPA_int_t       * cancel;       /* point to 1 if the handle should be cancelled */
         OPA_int_t       cancelled;      /* point to 1 if the handle was cancelled already */
-    }               mpc_omp_event_handle_t;
+    }               mpc_omp_event_handle_block_t;
 
     /* initialize an event handler */
-    void mpc_omp_event_handle_init(mpc_omp_event_handle_t * event, mpc_omp_event_t type);
+    void mpc_omp_event_handle_init(mpc_omp_event_handle_t ** handle, mpc_omp_event_t type);
 
     /* fulfill an mpc-omp event handler */
     void mpc_omp_fulfill_event(mpc_omp_event_handle_t * handle);
@@ -97,10 +106,8 @@ extern "C" {
     /** Dump the openmp thread tree */
     void mpc_omp_tree_print(FILE * file);
 
-    /**
-     * Async. callback
-     */
-    typedef enum    mpc_omp_callback_when_t
+    /** Asynchronous callbacks */
+    typedef enum    mpc_omp_callback_when_s
     {
         /* scheduler points */
         MPC_OMP_CALLBACK_TASK_SCHEDULER_POINT_NEW,
@@ -193,9 +200,12 @@ extern "C" {
 
     /**
      * # pragma omp taskyield block(event)
-     * suspend current task until the associated event is fulfilled
+     * suspend current task until the associated event is fulfilled.
+     *
+     * @param handle :  an 'mpc_omp_event_handle_block_t' initialized through
+     *                  mpc_omp_event_handle_init(&handle, MPC_OMP_EVENT_TASK_BLOCK);
      */
-    void mpc_omp_task_block(mpc_omp_event_handle_t * event);
+    void mpc_omp_task_block(mpc_omp_event_handle_block_t * handle);
 
     /**
      *  Cancel tasks that did not started yet, or that were created after

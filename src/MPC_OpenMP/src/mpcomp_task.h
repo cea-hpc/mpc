@@ -425,13 +425,11 @@ _mpc_task_loop_compute_loop_value(
 unsigned long
 _mpc_omp_task_loop_compute_num_iters(long start, long end, long step);
 
-/* Task callbacks */
-void _mpc_omp_callback_run(mpc_omp_callback_when_t when);
-
-/* extra clauses for mpc-omp tasks */
-# define MPC_OMP_NO_CLAUSE          (0 << 0)
+/* TODO : refractor this prototype, move them to another more appropriate file */
 # define MPC_OMP_CLAUSE_USE_FIBER   (1 << 0)
-
-void mpc_omp_task_unblock(mpc_omp_event_handle_t * event);
+void _mpc_omp_callback_run(mpc_omp_callback_when_t when);
+void _mpc_omp_task_unblock(mpc_omp_event_handle_block_t * handle);
+void _mpc_omp_event_handle_ref(mpc_omp_event_handle_t * handle);
+void _mpc_omp_event_handle_unref(mpc_omp_event_handle_t * handle);
 
 #endif /* __MPC_OMP_TASK_H__ */

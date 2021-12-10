@@ -38,7 +38,7 @@
 typedef struct  mpc_lowcomm_request_omp_progress_s
 {
     /* the omp event */
-    mpc_omp_event_handle_t * handle;
+    mpc_omp_event_handle_block_t * handle;
 
     /* the request array */
     MPI_Request * req;
@@ -112,7 +112,7 @@ __request_progress(mpc_lowcomm_request_omp_progress_t * infos)
     /* check if the request completed */
     if (test(infos))
     {
-        mpc_omp_fulfill_event(infos->handle);
+        mpc_omp_fulfill_event((mpc_omp_event_handle_t *) infos->handle);
         return 0;
     }
 
@@ -124,10 +124,11 @@ __request_progress(mpc_lowcomm_request_omp_progress_t * infos)
             unsigned int i;
             for (i = 0 ; i < infos->n ; ++i)
             {
+                /** cancel MPI requests, but do not fulfill the event
+                 *  the event will be fulfilled later on
+                 *  by a succesful MPI_Test on the cancelled request */
                 MPI_Cancel(infos->req + i);
             }
-            mpc_omp_fulfill_event(infos->handle);
-            return 0;
         }
     }
     return 1;
@@ -154,10 +155,8 @@ ___task_block(int n, MPI_Request * reqs, int * index, MPI_Status * status)
 
     /* communication is blocking, block the task */
 
-    /* progression callback */
-    mpc_omp_event_handle_t handle;
-    mpc_omp_event_handle_init(&handle, MPC_OMP_EVENT_TASK_BLOCK);
-    infos.handle = &handle;
+    /* create a task-blocking handler */
+    mpc_omp_event_handle_init((mpc_omp_event_handle_t **) &(infos.handle), MPC_OMP_EVENT_TASK_BLOCK);
 
     /* register the progression callback */
     mpc_omp_callback(
@@ -168,7 +167,7 @@ ___task_block(int n, MPI_Request * reqs, int * index, MPI_Status * status)
     );
 
     /* block current task until the associated event is fulfilled */
-    mpc_omp_task_block(&handle);
+    mpc_omp_task_block(infos.handle);
 }
 
 /** Parameters correspond to the ones of MPI_Test, MPI_Testall and MPI_Testany */
