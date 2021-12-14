@@ -316,12 +316,26 @@ void _mpc_lowcomm_ib_buffered_poll_recv(sctk_rail_info_t *rail, _mpc_lowcomm_ib_
 	/* Determine the Source process */
 	int integer_src_task = body->header.source_task;
 
+
     mpc_lowcomm_communicator_id_t comm_id = body->header.communicator_id;
     
     
     mpc_lowcomm_communicator_t comm = mpc_lowcomm_get_communicator_from_id(comm_id);
-    mpc_lowcomm_peer_uid_t src_process = mpc_lowcomm_communicator_uid(comm, integer_src_task);
-    
+    mpc_lowcomm_peer_uid_t src_process = -1;
+   
+
+    if(!mpc_lowcomm_communicator_is_intercomm(comm))
+    {
+        src_process = mpc_lowcomm_communicator_uid(comm, integer_src_task);
+    }
+    else
+    {
+        mpc_lowcomm_communicator_t rcomm = mpc_lowcomm_communicator_get_remote(comm);
+        integer_src_task = mpc_lowcomm_group_rank_for(mpc_lowcomm_communicator_group(rcomm), integer_src_task, mpc_lowcomm_monitor_uid_of(mpc_lowcomm_peer_get_set(comm_id), integer_src_task));
+        
+        src_process = mpc_lowcomm_communicator_remote_uid(comm, integer_src_task);
+    }
+
     //mpc_common_debug_error("MSG from %d to %d on comm %d src %s", body->header.source, body->header.destination, comm_id, mpc_lowcomm_peer_format(src_process));
     
     ib_assume(src_process != -1);
