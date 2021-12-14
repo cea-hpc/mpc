@@ -61,6 +61,7 @@ typedef struct  mpc_omp_task_statuses_s
     volatile bool unblocked;        /* if the task was unblocked */
     volatile bool in_blocked_list;  /* if the task is in a blocked list */
     volatile bool cancelled;        /* if the taskgroup was cancelled */
+    volatile bool direct_successor; /* if the task is in a 'SUCCESSOR' ready task list */
 }               mpc_omp_task_statuses_t;
 
 /** Property of an OpenMP task */

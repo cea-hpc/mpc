@@ -1406,6 +1406,7 @@ __task_finalize_deps(mpc_omp_task_t * task)
         /* if successor's dependencies are fullfilled, process it */
         if (OPA_fetch_and_decr_int(&(succ->task->dep_node.ref_predecessors)) == 1)
         {
+            succ->task->statuses.direct_successor = true;
             _mpc_omp_task_process(succ->task);
         }
 
@@ -2473,6 +2474,7 @@ _mpc_omp_task_team_info_init(struct mpc_omp_team_s * team, int depth)
 
     /* Ensure tasks lists depths are correct */
     MPC_OMP_TASK_TEAM_SET_PQUEUE_DEPTH(team, MPC_OMP_PQUEUE_TYPE_TIED, depth - 1);
+    MPC_OMP_TASK_TEAM_SET_PQUEUE_DEPTH(team, MPC_OMP_PQUEUE_TYPE_SUCCESSOR, depth - 1);
 
     const int x = mpc_omp_conf_get()->pqueue_untied_depth;
     const int pqueue_untied_depth = (x < depth) ? x : depth - 1;
@@ -2563,6 +2565,19 @@ _mpc_omp_task_wait(void)
  * Get the next task to run on this thread, and pop it from the thread list
  * If no task are found, a task is stolen from another thread
  * If no tasks could be stolen, NULL is returned, meaning there is no task to run.
+ *
+ * Tasks are scheduled in this order :
+ *  - tied tasks that paused, and are now ready to resume
+ *  - untied tasks that paused, and are now ready to resume, from current thread topological queue
+ *  - direct successor tasks (if enabled)
+ *  - tasks that never run, from current thread 'NEW' topological queue
+ *  - untied tasks that paused, and are now ready to resume, from another thread topological queue
+ *  - tasks that never run, from another thread 'NEW' topological queue
+ *  - direct successor tasks of other threads (if enabled)
+ *
+ *
+ *  TODO : this function can likely be optimized
+ *
  * \param the thread
  * \return the task
  */
@@ -2584,6 +2599,10 @@ __task_schedule_next(mpc_omp_thread_t * thread)
     if (task) return task;
 
     /* current thread new tasks */
+    task = __thread_task_pop_type(thread, MPC_OMP_PQUEUE_TYPE_SUCCESSOR);
+    if (task) return task;
+
+    /* current thread new tasks */
     task = __thread_task_pop_type(thread, MPC_OMP_PQUEUE_TYPE_NEW);
     if (task) return task;
 
@@ -2593,6 +2612,10 @@ __task_schedule_next(mpc_omp_thread_t * thread)
 
     /* other thread new tasks */
     task = __task_larceny(MPC_OMP_PQUEUE_TYPE_NEW);
+    if (task) return task;
+
+    /* other thread new tasks, but direct successors */
+    task = __task_larceny(MPC_OMP_PQUEUE_TYPE_SUCCESSOR);
     if (task) return task;
 
     return NULL;
@@ -3282,7 +3305,9 @@ _mpc_omp_task_process(mpc_omp_task_t * task)
     if (became_ready)
     {
         /* if the task is undeferred, or we reached thresholds */
-        if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_UNDEFERRED) || __task_reached_thresholds(task) || mpc_omp_conf_get()->task_sequential)
+        if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_UNDEFERRED)
+            || __task_reached_thresholds(task)
+            || mpc_omp_conf_get()->task_sequential)
         {
             /* run it */
             __task_run(task);
@@ -3291,7 +3316,8 @@ _mpc_omp_task_process(mpc_omp_task_t * task)
         else
         {
             /* else, differ it */
-            mpc_omp_task_pqueue_t * pqueue = __thread_get_task_pqueue(thread, MPC_OMP_PQUEUE_TYPE_NEW);
+            int type = mpc_omp_conf_get()->task_direct_successor_enabled && task->statuses.direct_successor ? MPC_OMP_PQUEUE_TYPE_SUCCESSOR : MPC_OMP_PQUEUE_TYPE_NEW;
+            mpc_omp_task_pqueue_t * pqueue = __thread_get_task_pqueue(thread, type);
             __task_pqueue_push(pqueue, task);
         }
     }
@@ -3567,6 +3593,18 @@ _mpc_omp_task_tree_init(mpc_omp_thread_t * thread)
     __thread_task_init_recyclers(thread);
 # endif
     __thread_task_init_initial(thread);
+    if (mpc_omp_conf_get()->bindings)
+    {
+        mpc_common_spinlock_lock(&(thread->instance->debug_lock));
+        {
+            printf("OpenMP Thread %ld\n", thread->rank);
+            printf("    sched_getcpu() = %d\n", sched_getcpu());
+            printf("    mpc_thread_get_pu() = %d\n", mpc_thread_get_pu());
+            printf("    mpc_topology_get_numa_node_from_cpu() = %d\n", mpc_topology_get_numa_node_from_cpu(mpc_thread_get_pu()));
+            fflush(stdout);
+        }
+        mpc_common_spinlock_unlock(&(thread->instance->debug_lock));
+    }
 }
 
 static void

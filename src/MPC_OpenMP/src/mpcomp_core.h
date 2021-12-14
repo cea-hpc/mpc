@@ -95,24 +95,52 @@ typedef struct  mpc_omp_conf_s
 	/* Is dynamic adaptation on? */
     int OMP_DYNAMIC ;
 
+    /* Print (debug) the cores binding */
+    int bindings;
+
     /* Tasks */
+
+    /* maximum number of tasks that can exist in the runtime */
     int maximum_tasks;
+
+    /* maximum number of ready tasks that can exist in the runtime */
     int maximum_ready_tasks;
+
+    /* task recycler capacity */
+    int task_recycler_capacity;
+
+    /* priority queues topological depth */
     int pqueue_new_depth;
     int pqueue_untied_depth;
-    int task_recycler_capacity;
+
+    /* task list policy (LIFO/FIFO) */
     int task_list_policy;
+
+    /* task fiber */
+    int task_use_fiber;
     int task_fiber_stack_size;
     int task_fiber_recycler_capacity;
-    int queue_empty_if_full;
+
+    /* nested task depth threshold until they are serialized */
     int task_depth_threshold;
+
+    /* if the tasks should be run sequentially by their producer thread */
     int task_sequential;
-    int task_use_fiber;
+
+    /* task tracing */
     int task_trace;
     int task_trace_auto;
+    char task_trace_dir[MPC_CONF_STRING_SIZE];
+
+    /* openmp thread condition wait, when there is no ready tasks */
     int task_cond_wait_enabled;
     int task_cond_wait_nhyperactive;
+
+    /* taskyield */
     mpc_omp_task_yield_mode_t task_yield_mode;
+
+    /* priorities */
+    int task_direct_successor_enabled;
     mpc_omp_task_priority_policy_t task_priority_policy;
     mpc_omp_task_priority_propagation_policy_t task_priority_propagation_policy;
 

@@ -69,7 +69,7 @@ __get_infos(void)
 int
 _mpc_omp_task_trace_begun(void)
 {
-    return mpc_omp_tls && __get_infos()->begun;
+    return mpc_omp_tls && mpc_omp_conf_get()->task_trace && __get_infos()->begun;
 }
 
 static inline mpc_omp_task_trace_record_t *
@@ -339,12 +339,28 @@ _mpc_omp_task_trace_allreduce(int count, int datatype, int op, int comm)
 
 # endif /* MPC_MPI */
 
-static inline void
+static inline int
 __task_trace_create_file(void)
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
-    char filepath[64];
-    sprintf(filepath, "mpc_omp_trace_%d_%ld_%d.dat", __getpid(), thread->rank, thread->task_infos.tracer.id++);
+    char filepath[1024];
+    char * tracedir = mpc_omp_conf_get()->task_trace_dir;
+    if (tracedir == NULL || strlen(tracedir) == 0)
+    {
+        tracedir = ".";
+    }
+    else
+    {
+        struct stat st = {0};
+        if (stat(tracedir, &st) == -1)
+        {
+            if (mkdir(tracedir, 0777) == -1)
+            {
+                return -1;
+            }
+        }
+    }
+    sprintf(filepath, "%s/%d-%ld-%d.dat", tracedir, __getpid(), thread->rank, thread->task_infos.tracer.id++);
     thread->task_infos.tracer.writer.fd = open(filepath, O_WRONLY | O_TRUNC | O_CREAT, 0644);
     assert(thread->task_infos.tracer.writer.fd >= 0);
 
@@ -354,6 +370,7 @@ __task_trace_create_file(void)
     header.rank     = thread->rank;
     header.pid      = __getpid();
     write(thread->task_infos.tracer.writer.fd, &header, sizeof(mpc_omp_task_trace_file_header_t));
+    return 0;
 }
 
 void
@@ -375,8 +392,10 @@ mpc_omp_task_trace_begin(void)
                 MPC_OMP_TASK_TRACE_RECYCLER_CAPACITY);
     }
 
-    __task_trace_create_file();
-    infos->begun = 1;
+    if (__task_trace_create_file() == 0)
+    {
+        infos->begun = 1;
+    }
 }
 
 void

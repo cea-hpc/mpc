@@ -324,10 +324,11 @@ typedef enum    mpc_omp_loop_gen_type_e
 /** Type of task pqueues */
 typedef enum    mpc_omp_pqueue_type_e
 {
-    MPC_OMP_PQUEUE_TYPE_TIED    = 0,  /* ready-tied tasks (run once) */
-    MPC_OMP_PQUEUE_TYPE_UNTIED  = 1,  /* ready-untied tasks (run once) */
-    MPC_OMP_PQUEUE_TYPE_NEW     = 2,  /* ready tasks (never run) */
-    MPC_OMP_PQUEUE_TYPE_COUNT   = 3
+    MPC_OMP_PQUEUE_TYPE_TIED        = 0,  /* ready-tied tasks (run once) */
+    MPC_OMP_PQUEUE_TYPE_UNTIED      = 1,  /* ready-untied tasks (run once) */
+    MPC_OMP_PQUEUE_TYPE_NEW         = 2,  /* ready tasks (never run) */
+    MPC_OMP_PQUEUE_TYPE_SUCCESSOR   = 3,  /* ready tasks (never run, direct successors or a task that just finished, may be tied or untied) */
+    MPC_OMP_PQUEUE_TYPE_COUNT       = 4
 }               mpc_omp_task_pqueue_type_t;
 
 /** Various lists that a task may be hold */
@@ -1202,6 +1203,9 @@ typedef struct mpc_omp_instance_s
 
     /* asynchronous callbacks */
     mpc_omp_instance_callback_infos_t callback_infos;
+
+    /* mutex to dump thread debugging informations */
+    mpc_common_spinlock_t debug_lock;
 
 } mpc_omp_instance_t;
 
