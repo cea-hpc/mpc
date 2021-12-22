@@ -20,8 +20,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "sctk_ib_mmu.h"
-#include "sctk_ib_device.h"
+#include "ibmmu.h"
+#include "ibdevice.h"
 #include "mpc_conf.h"
 #include "mpc_common_asm.h"
 

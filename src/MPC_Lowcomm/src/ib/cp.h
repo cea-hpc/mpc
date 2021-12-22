@@ -29,8 +29,8 @@
 #include <mpc_common_spinlock.h>
 #include <uthash.h>
 #include <comm.h>
-#include <sctk_ibufs.h>
-#include "sctk_ib_polling.h"
+#include <ibufs.h>
+#include "ibpolling.h"
 
 typedef struct _mpc_lowcomm_ib_cp_ctx_task_s
 {

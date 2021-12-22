@@ -8,7 +8,7 @@
 #include <mpc_lowcomm_monitor.h>
 
 #ifdef MPC_USE_INFINIBAND
-#include "ib/sctk_ib.h"
+#include "ib/ib.h"
 #endif
 
 #ifdef MPC_USE_PORTALS

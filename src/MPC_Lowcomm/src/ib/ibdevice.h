@@ -29,7 +29,7 @@
 #include <inttypes.h>
 
 #include "mpc_common_spinlock.h"
-#include "sctk_ib.h"
+#include "ib.h"
 #include "mpc_conf.h"
 
 struct sctk_ib_qp_s;

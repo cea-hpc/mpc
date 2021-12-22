@@ -57,11 +57,11 @@ libmpclowcomm_la_SOURCES += ./shm/sctk_shm_cma.c  ./shm/sctk_shm_frag.c   ./shm/
 # IB driver #
 if INFINIBAND_DRIVER_ENABLED
 AM_CPPFLAGS += -I$(abs_srcdir)/ib/
-libmpclowcomm_la_SOURCES += ./ib/sctk_ib_async.c ./ib/sctk_ib_buffered.c ./ib/sctk_ib.c ./ib/sctk_ib_cm.c
-libmpclowcomm_la_SOURCES += ./ib/sctk_ib_config.c ./ib/sctk_ib_cp.c ./ib/sctk_ib_device.c ./ib/sctk_ib_eager.c
-libmpclowcomm_la_SOURCES += ./ib/sctk_ib_mmu.c ./ib/sctk_ib_mpi.c ./ib/sctk_ib_polling.c
-libmpclowcomm_la_SOURCES += ./ib/sctk_ib_qp.c ./ib/sctk_ib_rdma.c ./ib/sctk_ib_toolkit.c ./ib/sctk_ib_topology.c
-libmpclowcomm_la_SOURCES += ./ib/sctk_ibufs.c ./ib/sctk_ibufs_rdma.c
+libmpclowcomm_la_SOURCES += ./ib/async.c ./ib/buffered.c ./ib/ib.c ./ib/cm.c
+libmpclowcomm_la_SOURCES += ./ib/ibconfig.c ./ib/cp.c ./ib/ibdevice.c ./ib/ibeager.c
+libmpclowcomm_la_SOURCES += ./ib/ibmmu.c ./ib/ibmpi.c ./ib/ibpolling.c
+libmpclowcomm_la_SOURCES += ./ib/qp.c ./ib/ibrdma.c ./ib/ibtoolkit.c ./ib/ibtopology.c
+libmpclowcomm_la_SOURCES += ./ib/ibufs.c ./ib/ibufs_rdma.c
 endif
 
 # PTL driver #

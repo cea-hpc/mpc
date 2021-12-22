@@ -23,18 +23,21 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifndef __SCTK__IB_ASYNC_H_
+#define __SCTK__IB_ASYNC_H_
 
-#include "sctk_ib_polling.h"
-#include "sctk_ibufs.h"
+#include "infiniband/verbs.h"
+#include "ib.h"
 
-/* IB debug macros */
-#if defined MPC_LOWCOMM_IB_MODULE_NAME
-#error "MPC_LOWCOMM_IB_MODULE already defined"
+struct sctk_rail_info_s;
+
+/** \brief This function creates the async event processing thread for each rail
+ * \param rail_ib Target rail
+ *
+ * In this function a system_scope thread processing IB asynchronous calls
+ * is created. It allows the monitoring of card events for rail context.
+ */
+void sctk_ib_async_init ( struct sctk_rail_info_s *rail_ib );
+void sctk_ib_async_finalize( struct sctk_rail_info_s * rail_ib);
+
 #endif
-#define MPC_LOWCOMM_IB_MODULE_DEBUG
-#define MPC_LOWCOMM_IB_MODULE_NAME "POLLING"
-#include "sctk_ib_toolkit.h"
-
-/*-----------------------------------------------------------
- *  FUNCTION
- *----------------------------------------------------------*/

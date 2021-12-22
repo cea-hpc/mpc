@@ -32,7 +32,7 @@
 
 /*Networks*/
 #ifdef MPC_USE_INFINIBAND
-#include <sctk_ib_mpi.h>
+#include <ibmpi.h>
 #endif
 
 #include <sctk_alloc.h>

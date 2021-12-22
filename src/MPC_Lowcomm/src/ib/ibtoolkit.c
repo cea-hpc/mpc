@@ -23,51 +23,52 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __SCTK__INFINIBAND_TOPOLOGY_H_
-#define __SCTK__INFINIBAND_TOPOLOGY_H_
+#include "string.h"
+
+#include "ibtoolkit.h"
+#include <execinfo.h>
+#include <stdlib.h>
 
 
-#include "sctk_ibufs.h"
+#define HAVE_SHELL_COLORS
 
-typedef struct _mpc_lowcomm_ib_topology_numa_node_s
+static volatile char is_ib_used = 0;
+
+char sctk_network_is_ib_used()
 {
-	int                         id;
-	mpc_common_spinlock_t       polling_lock;
-	_mpc_lowcomm_ib_ibuf_numa_t ibufs;
-	char                        padd[4096];
-} _mpc_lowcomm_ib_topology_numa_node_t;
+	return is_ib_used;
+}
 
-/* Structure only used for the topology initialization */
-typedef struct _mpc_lowcomm_ib_topology_numa_node_init_s
+void sctk_network_set_ib_used()
 {
-	int                   is_leader;
-	mpc_common_spinlock_t initialization_lock;
-} _mpc_lowcomm_ib_topology_numa_node_init_t;
+	is_ib_used = 1;
+}
 
-typedef struct _mpc_lowcomm_ib_topology_s
+void sctk_network_set_ib_unused()
 {
-	struct _mpc_lowcomm_ib_topology_numa_node_s **    nodes;
-	struct _mpc_lowcomm_ib_topology_numa_node_init_s *init;
+	is_ib_used = 0;
+}
 
-	/* Default node where the leader has allocated the IB structures.
-	 * May be used if a task is trying to access NUMA structures and none are allocated */
-	struct _mpc_lowcomm_ib_topology_numa_node_s *     default_node;
+#define BT_SIZE 100
+void
+sctk_ib_toolkit_print_backtrace ( void )
+{
+	int j, nptrs;
+	void *buffer[BT_SIZE];
+	char **strings;
 
-	int                                               numa_node_count;
-} _mpc_lowcomm_ib_topology_t;
+	nptrs = backtrace ( buffer, BT_SIZE );
 
-void _mpc_lowcomm_ib_topology_init(_mpc_lowcomm_ib_topology_t *topology);
-void _mpc_lowcomm_ib_topology_free(struct sctk_ib_rail_info_s *rail);
-void _mpc_lowcomm_ib_topology_init_rail(struct sctk_ib_rail_info_s *rail_ib);
+	strings = backtrace_symbols ( buffer, nptrs );
 
-void _mpc_lowcomm_ib_topology_init_task(struct sctk_rail_info_s *rail, int vp);
-void _mpc_lowcomm_ib_topology_free_task();
+	if ( strings == NULL )
+	{
+		perror ( "backtrace_symbols" );
+		exit ( EXIT_FAILURE );
+	}
 
-/* Return the IB topology structure the closest from the current task
- *
- * / ! \ MAY return NULL */
-_mpc_lowcomm_ib_topology_numa_node_t * _mpc_lowcomm_ib_topology_get_numa_node(struct sctk_ib_rail_info_s *rail_ib);
+	for ( j = 0; j < nptrs; j++ )
+		fprintf ( stderr, "%s\n", strings[j] );
 
-_mpc_lowcomm_ib_topology_numa_node_t * _mpc_lowcomm_ib_topology_get_default_numa_node(struct sctk_ib_rail_info_s *rail_ib);
-
-#endif
+	free ( strings );
+}

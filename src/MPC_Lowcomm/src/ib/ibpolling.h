@@ -29,9 +29,9 @@
 #include <infiniband/verbs.h>
 #include <mpc_common_rank.h>
 
-#include "sctk_ib.h"
-#include "sctk_ib_config.h"
-#include "sctk_ib_qp.h"
+#include "ib.h"
+#include "ibconfig.h"
+#include "qp.h"
 #include "utlist.h"
 
 #include "mpc_conf.h"

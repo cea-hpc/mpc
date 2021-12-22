@@ -23,10 +23,10 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "sctk_ib.h"
-#include "sctk_ib_buffered.h"
+#include "ib.h"
+#include "buffered.h"
 #include "endpoint.h"
-#include "sctk_ib_qp.h"
+#include "qp.h"
 
 #include <sctk_net_tools.h>
 #include <sctk_alloc.h>

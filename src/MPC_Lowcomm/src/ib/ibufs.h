@@ -31,8 +31,8 @@
 #include <mpc_common_spinlock.h>
 #include <mpc_common_debug.h>
 
-#include "sctk_ib.h"
-#include "sctk_ib_mmu.h"
+#include "ib.h"
+#include "ibmmu.h"
 
 enum   _mpc_lowcomm_ib_cq_type_t
 {

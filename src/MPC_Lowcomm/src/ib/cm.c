@@ -23,12 +23,12 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "sctk_ib.h"
-#include "sctk_ib_cm.h"
-#include "sctk_ib_polling.h"
-#include "sctk_ib_eager.h"
+#include "ib.h"
+#include "cm.h"
+#include "ibpolling.h"
+#include "ibeager.h"
 
-#include "sctk_ibufs_rdma.h"
+#include "ibufs_rdma.h"
 #include "mpc_common_asm.h"
 
 #include <mpc_launch_pmi.h>
@@ -39,7 +39,7 @@
 #endif
 #define MPC_LOWCOMM_IB_MODULE_DEBUG
 #define MPC_LOWCOMM_IB_MODULE_NAME    "CM"
-#include "sctk_ib_toolkit.h"
+#include "ibtoolkit.h"
 
 #include "mpc_lowcomm_msg.h"
 #include "sctk_control_messages.h"

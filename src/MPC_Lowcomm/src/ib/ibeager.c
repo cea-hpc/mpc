@@ -26,7 +26,7 @@
 #include <sctk_alloc.h>
 #include <utlist.h>
 
-#include "sctk_ib_eager.h"
+#include "ibeager.h"
 #include "sctk_net_tools.h"
 #include "sctk_rail.h"
 /*-----------------------------------------------------------

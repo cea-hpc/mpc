@@ -27,10 +27,10 @@
 #define __SCTK__IB_RDMA_H_
 
 #include <infiniband/verbs.h>
-#include "sctk_ib.h"
-#include "sctk_ib_config.h"
-#include "sctk_ibufs.h"
-#include "sctk_ib_qp.h"
+#include "ib.h"
+#include "ibconfig.h"
+#include "ibufs.h"
+#include "qp.h"
 #include "mpc_launch_pmi.h"
 #include "utlist.h"
 #include "sctk_rail.h"

@@ -28,7 +28,7 @@
 #include <sctk_tcp.h>
 
 #ifdef MPC_USE_INFINIBAND
-#include <sctk_ib.h>
+#include <ib.h>
 #endif
 
 #ifdef MPC_USE_PORTALS

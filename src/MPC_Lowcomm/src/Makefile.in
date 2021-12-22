@@ -93,23 +93,16 @@ host_triplet = @host@
 
 # IB driver #
 @INFINIBAND_DRIVER_ENABLED_TRUE@am__append_3 = -I$(abs_srcdir)/ib/
-@INFINIBAND_DRIVER_ENABLED_TRUE@am__append_4 = ./ib/sctk_ib_async.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_buffered.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_cm.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_config.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_cp.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_device.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_eager.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_mmu.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_mpi.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_polling.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_qp.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_rdma.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_toolkit.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_topology.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ibufs.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ibufs_rdma.c
+@INFINIBAND_DRIVER_ENABLED_TRUE@am__append_4 = ./ib/async.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/buffered.c ./ib/ib.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/cm.c ./ib/ibconfig.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/cp.c ./ib/ibdevice.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibeager.c ./ib/ibmmu.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibmpi.c ./ib/ibpolling.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/qp.c ./ib/ibrdma.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibtoolkit.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibtopology.c ./ib/ibufs.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibufs_rdma.c
 
 # PTL driver #
 @PORTALS4_DRIVER_ENABLED_TRUE@am__append_5 = -I$(abs_srcdir)/portals/
@@ -195,13 +188,11 @@ am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c sctk_checksum.c \
 	./shm/sctk_shm_eager.c ./shm/sctk_shm_raw_queues.c \
 	./shm/sctk_shm_cma.c ./shm/sctk_shm_frag.c \
 	./shm/sctk_shm_qemu.c ./shm/sctk_shm_raw_queues_internals.c \
-	./ib/sctk_ib_async.c ./ib/sctk_ib_buffered.c ./ib/sctk_ib.c \
-	./ib/sctk_ib_cm.c ./ib/sctk_ib_config.c ./ib/sctk_ib_cp.c \
-	./ib/sctk_ib_device.c ./ib/sctk_ib_eager.c ./ib/sctk_ib_mmu.c \
-	./ib/sctk_ib_mpi.c ./ib/sctk_ib_polling.c ./ib/sctk_ib_qp.c \
-	./ib/sctk_ib_rdma.c ./ib/sctk_ib_toolkit.c \
-	./ib/sctk_ib_topology.c ./ib/sctk_ibufs.c \
-	./ib/sctk_ibufs_rdma.c ./portals/sctk_portals.c \
+	./ib/async.c ./ib/buffered.c ./ib/ib.c ./ib/cm.c \
+	./ib/ibconfig.c ./ib/cp.c ./ib/ibdevice.c ./ib/ibeager.c \
+	./ib/ibmmu.c ./ib/ibmpi.c ./ib/ibpolling.c ./ib/qp.c \
+	./ib/ibrdma.c ./ib/ibtoolkit.c ./ib/ibtopology.c ./ib/ibufs.c \
+	./ib/ibufs_rdma.c ./portals/sctk_portals.c \
 	./portals/sctk_ptl_cm.c ./portals/sctk_ptl_eager.c \
 	./portals/sctk_ptl_iface.c ./portals/sctk_ptl_offcoll.c \
 	./portals/sctk_ptl_rdma.c ./portals/sctk_ptl_rdv.c \
@@ -213,23 +204,18 @@ am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c sctk_checksum.c \
 	./cplane/proto.c ./cplane/port.c ./cplane/monitor.c \
 	./cplane/set.c ./cplane/uid.c ./cplane/name.c am.c
 am__dirstamp = $(am__leading_dot)dirstamp
-@INFINIBAND_DRIVER_ENABLED_TRUE@am__objects_1 = ./ib/sctk_ib_async.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_buffered.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_cm.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_config.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_cp.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_device.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_eager.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_mmu.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_mpi.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_polling.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_qp.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_rdma.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_toolkit.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_topology.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ibufs.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ibufs_rdma.lo
+@INFINIBAND_DRIVER_ENABLED_TRUE@am__objects_1 = ./ib/async.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/buffered.lo ./ib/ib.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/cm.lo ./ib/ibconfig.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/cp.lo ./ib/ibdevice.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibeager.lo ./ib/ibmmu.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibmpi.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibpolling.lo ./ib/qp.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibrdma.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibtoolkit.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibtopology.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibufs.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibufs_rdma.lo
 @PORTALS4_DRIVER_ENABLED_TRUE@am__objects_2 =  \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals/sctk_portals.lo \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals/sctk_ptl_cm.lo \
@@ -773,30 +759,23 @@ ib/$(am__dirstamp):
 ib/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) ./ib/$(DEPDIR)
 	@: > ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_async.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_buffered.lo: ib/$(am__dirstamp) \
-	ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_cm.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_config.lo: ib/$(am__dirstamp) \
-	ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_cp.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_device.lo: ib/$(am__dirstamp) \
-	ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_eager.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_mmu.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_mpi.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_polling.lo: ib/$(am__dirstamp) \
-	ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_qp.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_rdma.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_toolkit.lo: ib/$(am__dirstamp) \
-	ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_topology.lo: ib/$(am__dirstamp) \
-	ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ibufs.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ibufs_rdma.lo: ib/$(am__dirstamp) \
-	ib/$(DEPDIR)/$(am__dirstamp)
+./ib/async.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/buffered.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ib.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/cm.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ibconfig.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/cp.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ibdevice.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ibeager.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ibmmu.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ibmpi.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ibpolling.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/qp.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ibrdma.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ibtoolkit.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ibtopology.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ibufs.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ibufs_rdma.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
 portals/$(am__dirstamp):
 	@$(MKDIR_P) ./portals
 	@: > portals/$(am__dirstamp)
@@ -922,23 +901,23 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/proto.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/set.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/uid.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_async.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_buffered.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_cm.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_config.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_cp.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_device.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_eager.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_mmu.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_mpi.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_polling.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_qp.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_rdma.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_toolkit.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_topology.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ibufs.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ibufs_rdma.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/async.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/buffered.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/cm.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/cp.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ib.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ibconfig.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ibdevice.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ibeager.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ibmmu.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ibmpi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ibpolling.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ibrdma.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ibtoolkit.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ibtopology.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ibufs.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ibufs_rdma.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/qp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./ofi/$(DEPDIR)/ofi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./ofi/$(DEPDIR)/ofi_msg.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./ofi/$(DEPDIR)/ofi_rdma.Plo@am__quote@

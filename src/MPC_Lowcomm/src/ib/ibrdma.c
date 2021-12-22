@@ -23,15 +23,15 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "sctk_ib.h"
-#include "sctk_ib_rdma.h"
-#include "sctk_ib_eager.h"
-#include "sctk_ib_topology.h"
-#include "sctk_ib_polling.h"
-#include "sctk_ibufs.h"
-#include "sctk_ib_mmu.h"
+#include "ib.h"
+#include "ibrdma.h"
+#include "ibeager.h"
+#include "ibtopology.h"
+#include "ibpolling.h"
+#include "ibufs.h"
+#include "ibmmu.h"
 #include "sctk_net_tools.h"
-#include "sctk_ib_cp.h"
+#include "cp.h"
 
 #include <sctk_alloc.h>
 
@@ -42,7 +42,7 @@
 #endif
 //#define MPC_LOWCOMM_IB_MODULE_DEBUG
 #define MPC_LOWCOMM_IB_MODULE_NAME    "RDMA"
-#include "sctk_ib_toolkit.h"
+#include "ibtoolkit.h"
 #include "sctk_checksum.h"
 
 /*-----------------------------------------------------------

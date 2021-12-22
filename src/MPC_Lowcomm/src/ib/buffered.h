@@ -30,7 +30,7 @@
 #include <uthash.h>
 #include <comm.h>
 
-#include "sctk_ibufs.h"
+#include "ibufs.h"
 
 /********************************************************************/
 /* Structures                                                       */

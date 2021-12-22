@@ -23,10 +23,10 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "sctk_ib_device.h"
+#include "ibdevice.h"
 
 #include <lowcomm_config.h>
-#include "sctk_ib_toolkit.h"
+#include "ibtoolkit.h"
 
 #include <mpc_topology_device.h>
 #include <sctk_alloc.h>

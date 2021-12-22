@@ -23,18 +23,18 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "sctk_ib_config.h"
+#include "ibconfig.h"
 
 /* IB debug macros */
 #if defined MPC_LOWCOMM_IB_MODULE_NAME
 #error "MPC_LOWCOMM_IB_MODULE already defined"
 #endif
 #define MPC_LOWCOMM_IB_MODULE_NAME "CONFIG"
-#include "sctk_ib_toolkit.h"
-#include "sctk_ib.h"
-#include "sctk_ib_eager.h"
-#include "sctk_ibufs_rdma.h"
-#include "sctk_ib_buffered.h"
+#include "ibtoolkit.h"
+#include "ib.h"
+#include "ibeager.h"
+#include "ibufs_rdma.h"
+#include "buffered.h"
 #include "mpc_conf.h"
 #include "sctk_rail.h"
 #include <mpc_common_rank.h>

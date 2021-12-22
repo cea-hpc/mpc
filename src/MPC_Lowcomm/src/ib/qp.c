@@ -23,18 +23,18 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "sctk_ib.h"
-#include "sctk_ib_config.h"
-#include "sctk_ibufs.h"
-#include "sctk_ibufs_rdma.h"
-#include "sctk_ib_qp.h"
-#include "sctk_ib_polling.h"
+#include "ib.h"
+#include "ibconfig.h"
+#include "ibufs.h"
+#include "ibufs_rdma.h"
+#include "qp.h"
+#include "ibpolling.h"
 #include <mpc_common_debug.h>
 #include <sctk_alloc.h>
 #include "mpc_launch_pmi.h"
 #include "mpc_common_asm.h"
 #include "utlist.h"
-#include "sctk_ib_mpi.h"
+#include "ibmpi.h"
 #include <mpc_common_spinlock.h>
 #include <errno.h>
 #include <string.h>
@@ -47,7 +47,7 @@
 #endif
 //#define MPC_LOWCOMM_IB_MODULE_DEBUG
 #define MPC_LOWCOMM_IB_MODULE_NAME "QP"
-#include "sctk_ib_toolkit.h"
+#include "ibtoolkit.h"
 
 /*-----------------------------------------------------------
  *  HT of remote peers.

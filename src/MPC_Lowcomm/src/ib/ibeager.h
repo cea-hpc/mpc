@@ -23,52 +23,40 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "string.h"
 
-#include "sctk_ib_toolkit.h"
-#include <execinfo.h>
-#include <stdlib.h>
+#ifndef __SCTK__IB_EAGER_H_
+#define __SCTK__IB_EAGER_H_
 
+#include <infiniband/verbs.h>
+#include "ib.h"
+#include "ibufs.h"
+#include "qp.h"
 
-#define HAVE_SHELL_COLORS
-
-static volatile char is_ib_used = 0;
-
-char sctk_network_is_ib_used()
+typedef struct _mpc_lowcomm_ib_eager_header_s
 {
-	return is_ib_used;
-}
+	size_t payload_size;
+} _mpc_lowcomm_ib_eager_header_t;
 
-void sctk_network_set_ib_used()
+
+/* This the ibuf layout of an eager message */
+typedef struct _mpc_lowcomm_ib_eager_s
 {
-	is_ib_used = 1;
-}
+	_mpc_lowcomm_ib_ibuf_header_t  ibuf_header;
+	_mpc_lowcomm_ib_eager_header_t eager_header;
+	mpc_lowcomm_ptp_message_body_t msg;
+	char                           payload[0];
+} _mpc_lowcomm_ib_eager_t;
 
-void sctk_network_set_ib_unused()
-{
-	is_ib_used = 0;
-}
+#define IBUF_GET_EAGER_SIZE    sizeof(_mpc_lowcomm_ib_eager_t)
 
-#define BT_SIZE 100
-void
-sctk_ib_toolkit_print_backtrace ( void )
-{
-	int j, nptrs;
-	void *buffer[BT_SIZE];
-	char **strings;
+/*-----------------------------------------------------------
+*  FUNCTIONS
+*----------------------------------------------------------*/
+_mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_eager_prepare_msg(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *route_data, mpc_lowcomm_ptp_message_t *msg, size_t size, char is_control_message);
+void _mpc_lowcomm_ib_eager_free_msg_no_recopy(void *arg);
+void _mpc_lowcomm_ib_eager_recv_msg_no_recopy(mpc_lowcomm_ptp_message_content_to_copy_t *tmp);
+void _mpc_lowcomm_ib_eager_init(struct sctk_ib_rail_info_s *rail_ib);
+void _mpc_lowcomm_ib_eager_finalize(struct sctk_ib_rail_info_s *rail_ib);
+int _mpc_lowcomm_ib_eager_poll_recv(struct sctk_rail_info_s *rail, _mpc_lowcomm_ib_ibuf_t *ibuf);
 
-	nptrs = backtrace ( buffer, BT_SIZE );
-
-	strings = backtrace_symbols ( buffer, nptrs );
-
-	if ( strings == NULL )
-	{
-		perror ( "backtrace_symbols" );
-		exit ( EXIT_FAILURE );
-	}
-
-	for ( j = 0; j < nptrs; j++ )
-		fprintf ( stderr, "%s\n", strings[j] );
-
-	free ( strings );
-}
+#endif

@@ -23,21 +23,40 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __SCTK__IB_ASYNC_H_
-#define __SCTK__IB_ASYNC_H_
+#ifndef __MPC_LOWCOMM_IB_MPI_H_
+#define __MPC_LOWCOMM_IB_MPI_H_
 
-#include "infiniband/verbs.h"
-#include "sctk_ib.h"
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
-struct sctk_rail_info_s;
+#include "lowcomm_types_internal.h"
 
-/** \brief This function creates the async event processing thread for each rail
- * \param rail_ib Target rail
- *
- * In this function a system_scope thread processing IB asynchronous calls
- * is created. It allows the monitoring of card events for rail context.
- */
-void sctk_ib_async_init ( struct sctk_rail_info_s *rail_ib );
-void sctk_ib_async_finalize( struct sctk_rail_info_s * rail_ib);
+#include <ibufs.h>
+#include <mpc_common_spinlock.h>
+#include <mpc_common_helper.h>
+
+
+struct _mpc_lowcomm_ib_ibuf_s;
+struct sctk_ib_polling_s;
+
+void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail );
+void sctk_network_finalize_mpi_ib(sctk_rail_info_t *rail);
+
+void sctk_network_memory_free_hook_ib ( void * ptr, size_t size );
+
+int sctk_network_poll_recv_ibuf ( const sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *ibuf);
+int sctk_network_poll_send_ibuf ( sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *ibuf );
+int sctk_network_poll_all ( sctk_rail_info_t *rail, struct sctk_ib_polling_s *poll );
+
+int sctk_ib_device_found();
+
+char sctk_network_is_ib_used();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
+

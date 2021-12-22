@@ -45,7 +45,7 @@
 
 #include "communicator.h"
 #ifdef MPC_USE_INFINIBAND
-#include <sctk_ib_device.h>
+#include <ibdevice.h>
 #endif
 
 #include "mpc_lowcomm_workshare.h"

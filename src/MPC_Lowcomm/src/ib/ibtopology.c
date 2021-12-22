@@ -23,16 +23,16 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "sctk_ibufs.h"
+#include "ibufs.h"
 
 /* #define MPC_LOWCOMM_IB_MODULE_DEBUG */
 #define MPC_LOWCOMM_IB_MODULE_NAME    "TOPO"
-#include "sctk_ib_toolkit.h"
-#include "sctk_ib.h"
-#include "sctk_ib_eager.h"
-#include "sctk_ib_config.h"
-#include "sctk_ibufs_rdma.h"
-#include "sctk_ib_topology.h"
+#include "ibtoolkit.h"
+#include "ib.h"
+#include "ibeager.h"
+#include "ibconfig.h"
+#include "ibufs_rdma.h"
+#include "ibtopology.h"
 #include "sctk_rail.h"
 
 #include <mpc_thread.h>

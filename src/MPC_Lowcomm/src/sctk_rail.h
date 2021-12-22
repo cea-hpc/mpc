@@ -65,7 +65,7 @@ typedef union
 
 #ifdef MPC_USE_INFINIBAND
 
-#include "sctk_ib_mmu.h"
+#include "ibmmu.h"
 #include <infiniband/verbs.h>
 
 struct sctk_rail_ib_pin_ctx

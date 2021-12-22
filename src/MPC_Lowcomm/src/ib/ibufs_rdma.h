@@ -29,10 +29,10 @@
 #include "infiniband/verbs.h"
 
 #include "mpc_common_spinlock.h"
-#include "sctk_ib_mmu.h"
-#include "sctk_ib.h"
-#include "sctk_ib_qp.h"
-#include "sctk_ib_cm.h"
+#include "ibmmu.h"
+#include "ib.h"
+#include "qp.h"
+#include "cm.h"
 #include "mpc_common_types.h"
 
 struct sctk_ib_rail_info_s;

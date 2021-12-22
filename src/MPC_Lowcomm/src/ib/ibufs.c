@@ -22,16 +22,16 @@
 /* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "sctk_ibufs.h"
+#include "ibufs.h"
 
 //#define MPC_LOWCOMM_IB_MODULE_DEBUG
 #define MPC_LOWCOMM_IB_MODULE_NAME    "IBUF"
-#include "sctk_ib_toolkit.h"
-#include "sctk_ib.h"
-#include "sctk_ib_eager.h"
-#include "sctk_ib_config.h"
-#include "sctk_ib_topology.h"
-#include "sctk_ibufs_rdma.h"
+#include "ibtoolkit.h"
+#include "ib.h"
+#include "ibeager.h"
+#include "ibconfig.h"
+#include "ibtopology.h"
+#include "ibufs_rdma.h"
 #include "utlist.h"
 #include "sctk_rail.h"
 #include <sctk_alloc.h>

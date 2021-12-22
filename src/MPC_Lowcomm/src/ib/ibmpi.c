@@ -24,24 +24,24 @@
 /* ######################################################################## */
 
 #include <mpc_common_debug.h>
-#include <sctk_ib_toolkit.h>
+#include <ibtoolkit.h>
 #include "endpoint.h"
 #include <sctk_net_tools.h>
-#include "sctk_ib.h"
-#include <sctk_ibufs.h>
-#include <sctk_ibufs_rdma.h>
-#include <sctk_ib_mmu.h>
-#include <sctk_ib_config.h>
+#include "ib.h"
+#include <ibufs.h>
+#include <ibufs_rdma.h>
+#include <ibmmu.h>
+#include <ibconfig.h>
 #include <mpc_topology.h>
-#include "sctk_ib_qp.h"
-#include "sctk_ib_cm.h"
-#include "sctk_ib_eager.h"
-#include "sctk_ib_polling.h"
-#include "sctk_ib_async.h"
-#include "sctk_ib_rdma.h"
-#include "sctk_ib_buffered.h"
-#include "sctk_ib_topology.h"
-#include "sctk_ib_cp.h"
+#include "qp.h"
+#include "cm.h"
+#include "ibeager.h"
+#include "ibpolling.h"
+#include "async.h"
+#include "ibrdma.h"
+#include "buffered.h"
+#include "ibtopology.h"
+#include "cp.h"
 #include "mpc_common_asm.h"
 #include "sctk_rail.h"
 

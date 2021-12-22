@@ -23,19 +23,19 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "sctk_ibufs.h"
+#include "ibufs.h"
 
 //#define MPC_LOWCOMM_IB_MODULE_DEBUG
 #define MPC_LOWCOMM_IB_MODULE_NAME    "IBUFR"
-#include "sctk_ib_toolkit.h"
-#include "sctk_ibufs_rdma.h"
-#include "sctk_ib.h"
+#include "ibtoolkit.h"
+#include "ibufs_rdma.h"
+#include "ib.h"
 #include "mpc_common_asm.h"
-#include "sctk_ib_eager.h"
-#include "sctk_ib_rdma.h"
-#include "sctk_ib_config.h"
-#include "sctk_ib_qp.h"
-#include "sctk_ib_eager.h"
+#include "ibeager.h"
+#include "ibrdma.h"
+#include "ibconfig.h"
+#include "qp.h"
+#include "ibeager.h"
 #include "sctk_net_tools.h"
 #include "utlist.h"
 

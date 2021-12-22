@@ -24,18 +24,18 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "sctk_ib.h"
-#include "sctk_ib_cp.h"
-#include "sctk_ib_polling.h"
-#include "sctk_ibufs.h"
-#include "sctk_ib_mmu.h"
+#include "ib.h"
+#include "cp.h"
+#include "ibpolling.h"
+#include "ibufs.h"
+#include "ibmmu.h"
 #include "sctk_net_tools.h"
-#include "sctk_ib_eager.h"
+#include "ibeager.h"
 #include "mpc_common_asm.h"
 #include "utlist.h"
-#include "sctk_ib_mpi.h"
-#include "sctk_ib_rdma.h"
-#include "sctk_ib_topology.h"
+#include "ibmpi.h"
+#include "ibrdma.h"
+#include "ibtopology.h"
 #include "sctk_rail.h"
 
 #include <mpc_topology.h>
@@ -46,7 +46,7 @@
 #endif
 //#define MPC_LOWCOMM_IB_MODULE_DEBUG
 #define MPC_LOWCOMM_IB_MODULE_NAME    "CP"
-#include "sctk_ib_toolkit.h"
+#include "ibtoolkit.h"
 #include "math.h"
 
 #define MPC_LOWCOMM_IB_PROFILER

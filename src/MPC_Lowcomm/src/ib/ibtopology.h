@@ -23,40 +23,51 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __MPC_LOWCOMM_IB_MPI_H_
-#define __MPC_LOWCOMM_IB_MPI_H_
+#ifndef __SCTK__INFINIBAND_TOPOLOGY_H_
+#define __SCTK__INFINIBAND_TOPOLOGY_H_
 
-#ifdef __cplusplus
-extern "C"
+
+#include "ibufs.h"
+
+typedef struct _mpc_lowcomm_ib_topology_numa_node_s
 {
+	int                         id;
+	mpc_common_spinlock_t       polling_lock;
+	_mpc_lowcomm_ib_ibuf_numa_t ibufs;
+	char                        padd[4096];
+} _mpc_lowcomm_ib_topology_numa_node_t;
+
+/* Structure only used for the topology initialization */
+typedef struct _mpc_lowcomm_ib_topology_numa_node_init_s
+{
+	int                   is_leader;
+	mpc_common_spinlock_t initialization_lock;
+} _mpc_lowcomm_ib_topology_numa_node_init_t;
+
+typedef struct _mpc_lowcomm_ib_topology_s
+{
+	struct _mpc_lowcomm_ib_topology_numa_node_s **    nodes;
+	struct _mpc_lowcomm_ib_topology_numa_node_init_s *init;
+
+	/* Default node where the leader has allocated the IB structures.
+	 * May be used if a task is trying to access NUMA structures and none are allocated */
+	struct _mpc_lowcomm_ib_topology_numa_node_s *     default_node;
+
+	int                                               numa_node_count;
+} _mpc_lowcomm_ib_topology_t;
+
+void _mpc_lowcomm_ib_topology_init(_mpc_lowcomm_ib_topology_t *topology);
+void _mpc_lowcomm_ib_topology_free(struct sctk_ib_rail_info_s *rail);
+void _mpc_lowcomm_ib_topology_init_rail(struct sctk_ib_rail_info_s *rail_ib);
+
+void _mpc_lowcomm_ib_topology_init_task(struct sctk_rail_info_s *rail, int vp);
+void _mpc_lowcomm_ib_topology_free_task();
+
+/* Return the IB topology structure the closest from the current task
+ *
+ * / ! \ MAY return NULL */
+_mpc_lowcomm_ib_topology_numa_node_t * _mpc_lowcomm_ib_topology_get_numa_node(struct sctk_ib_rail_info_s *rail_ib);
+
+_mpc_lowcomm_ib_topology_numa_node_t * _mpc_lowcomm_ib_topology_get_default_numa_node(struct sctk_ib_rail_info_s *rail_ib);
+
 #endif
-
-#include "lowcomm_types_internal.h"
-
-#include <sctk_ibufs.h>
-#include <mpc_common_spinlock.h>
-#include <mpc_common_helper.h>
-
-
-struct _mpc_lowcomm_ib_ibuf_s;
-struct sctk_ib_polling_s;
-
-void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail );
-void sctk_network_finalize_mpi_ib(sctk_rail_info_t *rail);
-
-void sctk_network_memory_free_hook_ib ( void * ptr, size_t size );
-
-int sctk_network_poll_recv_ibuf ( const sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *ibuf);
-int sctk_network_poll_send_ibuf ( sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *ibuf );
-int sctk_network_poll_all ( sctk_rail_info_t *rail, struct sctk_ib_polling_s *poll );
-
-int sctk_ib_device_found();
-
-char sctk_network_is_ib_used();
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif
-

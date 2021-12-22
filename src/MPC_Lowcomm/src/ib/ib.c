@@ -24,7 +24,7 @@
 /* ######################################################################## */
 #include <mpc_common_debug.h>
 #include <sctk_net_tools.h>
-#include <sctk_ib.h>
+#include <ib.h>
 #include <mpc_launch_pmi.h>
 #include <unistd.h>
 #include <string.h>
@@ -36,15 +36,15 @@
 #include <netdb.h>
 #include <mpc_common_spinlock.h>
 #include <sctk_net_tools.h>
-#include <sctk_ib.h>
-#include <sctk_ib_qp.h>
-#include <sctk_ib_cp.h>
-#include <sctk_ib_toolkit.h>
-#include <sctk_ib_rdma.h>
-#include <sctk_ib_eager.h>
+#include <ib.h>
+#include <qp.h>
+#include <cp.h>
+#include <ibtoolkit.h>
+#include <ibrdma.h>
+#include <ibeager.h>
 
 #include "sctk_rail.h"
-#include <sctk_ibufs_rdma.h>
+#include <ibufs_rdma.h>
 #include <mpc_common_helper.h>
 #include <sctk_alloc.h>
 

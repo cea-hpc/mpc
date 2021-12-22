@@ -23,7 +23,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "sctk_ib_config.h"
+#include "ibconfig.h"
 #include "endpoint.h"
 #include <mpc_topology.h>
 
@@ -39,12 +39,12 @@
 #endif
 #define MPC_LOWCOMM_IB_MODULE_DEBUG
 #define MPC_LOWCOMM_IB_MODULE_NAME "ASYNC"
-#include "sctk_ib_toolkit.h"
+#include "ibtoolkit.h"
 
 #include "sctk_rail.h"
-#include "sctk_ib.h"
-#include "sctk_ib_async.h"
-#include "sctk_ib_qp.h"
+#include "ib.h"
+#include "async.h"
+#include "qp.h"
 #include <errno.h>
 
 /********************************************************************/

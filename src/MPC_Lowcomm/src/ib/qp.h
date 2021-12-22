@@ -26,12 +26,12 @@
 #ifndef __SCTK__IB_QP_H_
 #define __SCTK__IB_QP_H_
 
-#include "sctk_ib_config.h"
-#include "sctk_ib_buffered.h"
+#include "ibconfig.h"
+#include "buffered.h"
 #include "mpc_common_spinlock.h"
-#include "sctk_ibufs.h"
-#include "sctk_ib_cm.h"
-#include "sctk_ib_device.h"
+#include "ibufs.h"
+#include "cm.h"
+#include "ibdevice.h"
 
 #include <mpc_lowcomm_monitor.h>
 
