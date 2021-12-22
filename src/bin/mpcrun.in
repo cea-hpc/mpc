@@ -22,13 +22,44 @@
 #                                                                      #
 ########################################################################
 
-mpcrun_error(){
-	echo "================ ERROR ================"
-	echo "$1"
+mpcrun_msg(){
+	echo "================ $1 ================"
+	shift
+	echo "$@"
 	echo "======================================="
+}
+
+
+
+mpcrun_error(){
+	mpcrun_msg "ERROR" "$@"
 	exit 1
 }
 
+mpcrun_warning(){
+	mpcrun_msg "WARNING" "$@"
+}
+
+
+_MPC_PRINT_CONFIG_WORKS=""
+
+mpc_print_config_works(){
+	if test -z "${_MPC_PRINT_CONFIG_WORKS}"; then
+		mpc_print_config > /dev/null 2>&1
+
+		if test "$?" = "0"; then
+			_MPC_PRINT_CONFIG_WORKS="yes"
+		else
+			_MPC_PRINT_CONFIG_WORKS="no"
+		fi
+	fi
+
+	if test "${_MPC_PRINT_CONFIG_WORKS}" = "yes"; then
+		return 0
+	else
+		return 1
+	fi
+}
 
 #########################
 # General Configuration #
@@ -213,58 +244,62 @@ load_mpc_configuration()
 		export ASAN_OPTION="${ASAN_OPTION}:exitcode=0"
 	fi
 
-	config_files_vars="$(${MPC_BIN_DIR}/mpc_print_config --conf conf mpcframework.launch 2>/dev/null)"
+	LAUNCHER_PLUGIN="none"
 
-	# Load configuration variables
-	test "x$?" = "x0" && eval "${config_files_vars}"
+	if mpc_print_config_works; then
+		config_files_vars="$(${MPC_BIN_DIR}/mpc_print_config --conf conf mpcframework.launch 2>/dev/null)"
 
-	if test -n "${ASAN_OPTION}"; then
-		export ASAN_OPTION="${SAVED_ASAN}"
-	fi
+		# Load configuration variables
+		test "$?" = "0" && eval "${config_files_vars}"
 
-	if [ "${CONF_VALID}" = "true" ]; then
-		# Default value related to --enable-smt
-		if test "x${MPCFRAMEWORK_LAUNCH_MPCRUN_SMT}" = "xtrue"; then
-			CONFIG_ENABLE_SMT="1"
-		else
-			CONFIG_ENABLE_SMT="0"
+		if test -n "${ASAN_OPTION}"; then
+			export ASAN_OPTION="${SAVED_ASAN}"
 		fi
-		# Default value related to -v/-vv/-vvv
-		CONFIG_MPC_VERBOSE="${MPCFRAMEWORK_LAUNCH_VERBOSITY}"
-		# User launchers
-		CONFIG_USER_LAUNCHERS="${MPCFRAMEWORK_LAUNCH_MPCRUN_USER}"
-		# Autokill parameter
-		CONFIG_AUTOKILL="${MPCFRAMEWORK_LAUNCH_AUTOKILL}"
-		# Configure if ASLR is to be disabled
-		CONFIG_DISABLE_ASLR="${MPCFRAMEWORK_LAUNCH_MPCRUN_ASLR}"
-		# Number of process
-		LAUNCHER_OPTION_PROCESS_NB="${MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS}"
-		# Number of node
-		LAUNCHER_OPTION_NODE_NB="${MPCFRAMEWORK_LAUNCH_MPCRUN_NODE}"
-		# Number of task
-		MPC_ARG_TASK_NB="${MPCFRAMEWORK_LAUNCH_MPCRUN_TASK}"
-		# Number of core
-		LAUNCHER_OPTION_CPU_NB="${MPCFRAMEWORK_LAUNCH_MPCRUN_CORE}"
-		# Define the launcher to use
-		LAUNCHER_PLUGIN="${MPCFRAMEWORK_LAUNCH_MPCRUN_PLUGIN}"
 
-		if test "$LAUNCHER_PLUGIN" = 'none'; then
-			case "$MPC_LAUNCHER_PROGRAM" in
-				HYDRA)
-				LAUNCHER_PLUGIN="hydra"
-				;;
-				PRRTE)
-				LAUNCHER_PLUGIN="prrte"
-				;;
-				none)
-				LAUNCHER_PLUGIN="srun"
-				;;
-			esac
+		if [ "${CONF_VALID}" = "true" ]; then
+			# Default value related to --enable-smt
+			if test "x${MPCFRAMEWORK_LAUNCH_MPCRUN_SMT}" = "xtrue"; then
+				CONFIG_ENABLE_SMT="1"
+			else
+				CONFIG_ENABLE_SMT="0"
+			fi
+			# Default value related to -v/-vv/-vvv
+			CONFIG_MPC_VERBOSE="${MPCFRAMEWORK_LAUNCH_VERBOSITY}"
+			# User launchers
+			CONFIG_USER_LAUNCHERS="${MPCFRAMEWORK_LAUNCH_MPCRUN_USER}"
+			# Autokill parameter
+			CONFIG_AUTOKILL="${MPCFRAMEWORK_LAUNCH_AUTOKILL}"
+			# Configure if ASLR is to be disabled
+			CONFIG_DISABLE_ASLR="${MPCFRAMEWORK_LAUNCH_MPCRUN_ASLR}"
+			# Number of process
+			LAUNCHER_OPTION_PROCESS_NB="${MPCFRAMEWORK_LAUNCH_MPCRUN_PROCESS}"
+			# Number of node
+			LAUNCHER_OPTION_NODE_NB="${MPCFRAMEWORK_LAUNCH_MPCRUN_NODE}"
+			# Number of task
+			MPC_ARG_TASK_NB="${MPCFRAMEWORK_LAUNCH_MPCRUN_TASK}"
+			# Number of core
+			LAUNCHER_OPTION_CPU_NB="${MPCFRAMEWORK_LAUNCH_MPCRUN_CORE}"
+			# Define the launcher to use
+			LAUNCHER_PLUGIN="${MPCFRAMEWORK_LAUNCH_MPCRUN_PLUGIN}"
 		fi
 	else
-		# Call again to display the error (usually link error)
-		${MPC_BIN_DIR}/mpc_print_config --conf conf mpcframework.launch
-		mpcrun_error "Error while loading MPC configuration files."
+		mpcrun_warning "INFO: could not infer MPC configuration on launch node (running mpc_print_config failed)."
+	fi
+
+	# Make sure we have a launcher matching
+	# launch program if config fails
+	if test "$LAUNCHER_PLUGIN" = 'none'; then
+		case "$MPC_LAUNCHER_PROGRAM" in
+			HYDRA)
+			LAUNCHER_PLUGIN="hydra"
+			;;
+			PRRTE)
+			LAUNCHER_PLUGIN="prrte"
+			;;
+			none)
+			LAUNCHER_PLUGIN="srun"
+			;;
+		esac
 	fi
 
 	# Make config loading silent in case of error in all MPC processes and avoid to revalidate XML files
@@ -327,7 +362,11 @@ fi
 
 print_network_list()
 {
-	mpc_print_config --cli
+	if mpc_print_config_works; then
+		mpc_print_config --cli
+	else
+		mpcrun_warning "WARNING: Could not run 'mpc_print_config --cli' on this node"
+	fi
 }
 
 print_help(){
