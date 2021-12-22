@@ -36,13 +36,13 @@
 
 #include "mpc_conf.h"
 
-typedef struct sctk_ib_polling_s
+typedef struct _mpc_lowcomm_ib_polling_s
 {
 	int recv_own;
 	int recv_other;
 	int recv_cq;
 	int recv;
-} sctk_ib_polling_t;
+} _mpc_lowcomm_ib_polling_t;
 
 #define  POLL_CQ_BUSY       -1
 #define  POLL_CQ_SKIPPED    -2

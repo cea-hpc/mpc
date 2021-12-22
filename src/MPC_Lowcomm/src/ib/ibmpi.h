@@ -39,7 +39,7 @@ extern "C"
 
 
 struct _mpc_lowcomm_ib_ibuf_s;
-struct sctk_ib_polling_s;
+struct _mpc_lowcomm_ib_polling_s;
 
 void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail );
 void sctk_network_finalize_mpi_ib(sctk_rail_info_t *rail);
@@ -48,9 +48,9 @@ void sctk_network_memory_free_hook_ib ( void * ptr, size_t size );
 
 int sctk_network_poll_recv_ibuf ( const sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *ibuf);
 int sctk_network_poll_send_ibuf ( sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *ibuf );
-int sctk_network_poll_all ( sctk_rail_info_t *rail, struct sctk_ib_polling_s *poll );
+int sctk_network_poll_all ( sctk_rail_info_t *rail, struct _mpc_lowcomm_ib_polling_s *poll );
 
-int sctk_ib_device_found();
+int _mpc_lowcomm_ib_device_found();
 
 char sctk_network_is_ib_used();
 

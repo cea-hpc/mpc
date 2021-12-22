@@ -50,9 +50,9 @@
 
 
 /* Initialize a new route table */
-void sctk_ib_init_remote ( mpc_lowcomm_peer_uid_t dest, sctk_rail_info_t *rail, struct _mpc_lowcomm_endpoint_s *route_table, int ondemand )
+void _mpc_lowcomm_ib_init_remote ( mpc_lowcomm_peer_uid_t dest, sctk_rail_info_t *rail, struct _mpc_lowcomm_endpoint_s *route_table, int ondemand )
 {
-	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+	_mpc_lowcomm_ib_rail_info_t *rail_ib = &rail->network.ib;
 	_mpc_lowcomm_endpoint_info_ib_t *route_ib;
 
 	/* Init endpoint */
@@ -68,18 +68,18 @@ void sctk_ib_init_remote ( mpc_lowcomm_peer_uid_t dest, sctk_rail_info_t *rail, 
 	/* Fill IB dependent CTX */
 
 	route_ib = &route_table->data.ib;
-	route_ib->remote = sctk_ib_qp_new();
+	route_ib->remote = _mpc_lowcomm_ib_qp_new();
 
 	mpc_common_nodebug ( "Initializing QP for dest %d", dest );
 	
 	/* Allocate QP */
-	sctk_ib_qp_allocate_init ( rail_ib, dest, route_ib->remote, ondemand, route_table );
+	_mpc_lowcomm_ib_qp_allocate_init ( rail_ib, dest, route_ib->remote, ondemand, route_table );
 	
 	return;
 }
 
 /* Create a new route table */
-_mpc_lowcomm_endpoint_t * sctk_ib_create_remote()
+_mpc_lowcomm_endpoint_t * _mpc_lowcomm_ib_create_remote()
 {
 	_mpc_lowcomm_endpoint_t *tmp;
 
@@ -91,7 +91,7 @@ _mpc_lowcomm_endpoint_t * sctk_ib_create_remote()
 	return tmp;
 }
 
-char *sctk_ib_print_procotol ( _mpc_lowcomm_ib_protocol_t p )
+char *_mpc_lowcomm_ib_print_procotol ( _mpc_lowcomm_ib_protocol_t p )
 {
 	switch ( p )
 	{
@@ -111,9 +111,9 @@ char *sctk_ib_print_procotol ( _mpc_lowcomm_ib_protocol_t p )
 	return NULL;
 }
 
-void sctk_ib_print_msg ( mpc_lowcomm_ptp_message_t *msg )
+void _mpc_lowcomm_ib_print_msg ( mpc_lowcomm_ptp_message_t *msg )
 {
-	mpc_common_debug_error ( "IB protocol: %s", sctk_ib_print_procotol ( msg->tail.ib.protocol ) );
+	mpc_common_debug_error ( "IB protocol: %s", _mpc_lowcomm_ib_print_procotol ( msg->tail.ib.protocol ) );
 
 	switch ( msg->tail.ib.protocol )
 	{

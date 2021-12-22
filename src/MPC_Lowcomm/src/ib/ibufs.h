@@ -41,8 +41,8 @@ enum   _mpc_lowcomm_ib_cq_type_t
 };
 
 struct sctk_rail_info_s;
-struct sctk_ib_rail_info_s;
-struct sctk_ib_qp_s;
+struct _mpc_lowcomm_ib_rail_info_s;
+struct _mpc_lowcomm_ib_qp_s;
 struct _mpc_lowcomm_ib_ibuf_rdma_region_s;
 
 /**
@@ -178,7 +178,7 @@ typedef struct _mpc_lowcomm_ib_ibuf_region_s
 	uint32_t                              nb_previous;         /**< Number of buffer for the region (previous)*/
 	int                                   size_ibufs_previous; /**< Size of the buffers (previous)*/
 	size_t                                allocated_size;      /**< Memory allocated for the region */
-	struct sctk_ib_rail_info_s *          rail;                /**< A region is associated to a rail */
+	struct _mpc_lowcomm_ib_rail_info_s *          rail;                /**< A region is associated to a rail */
 	_mpc_lowcomm_ib_mmu_entry_t *                 mmu_entry;           /**< MMU entry */
 	uint32_t                              polled_nb;           /**< Number of messages polled */
 	struct _mpc_lowcomm_ib_ibuf_s *       list;                /** List of buffers */
@@ -190,7 +190,7 @@ typedef struct _mpc_lowcomm_ib_ibuf_region_s
 	/* Pointers to 'head' and 'tail' pointers */
 	struct _mpc_lowcomm_ib_ibuf_s *       head;
 	struct _mpc_lowcomm_ib_ibuf_s *       tail;
-	struct sctk_ib_qp_s *                 remote;
+	struct _mpc_lowcomm_ib_qp_s *                 remote;
 	/* For clock algorithm */
 	int                                   R_bit;
 } _mpc_lowcomm_ib_ibuf_region_t;
@@ -236,7 +236,7 @@ typedef struct _mpc_lowcomm_ib_ibuf_s
 	size_t                                size;   /**< size of the buffer */
 	enum _mpc_lowcomm_ib_ibuf_status      flag;   /**< status of the buffer */
 	/* the following infos aren't transmitted by the network */
-	struct sctk_ib_qp_s *                 remote;
+	struct _mpc_lowcomm_ib_qp_s *                 remote;
 	void *                                supp_ptr;
 	char                                  in_srq; /**< If the buffer is in a shaed receive queue */
 	char                                  to_release;
@@ -257,18 +257,18 @@ typedef struct _mpc_lowcomm_ib_ibuf_s
 /*-----------------------------------------------------------
 *  FUNCTIONS
 *----------------------------------------------------------*/
-void _mpc_lowcomm_ib_ibuf_pool_init(struct sctk_ib_rail_info_s *rail);
-void _mpc_lowcomm_ib_ibuf_pool_free(struct sctk_ib_rail_info_s *rail);
+void _mpc_lowcomm_ib_ibuf_pool_init(struct _mpc_lowcomm_ib_rail_info_s *rail);
+void _mpc_lowcomm_ib_ibuf_pool_free(struct _mpc_lowcomm_ib_rail_info_s *rail);
 
-_mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send_tst(struct sctk_ib_rail_info_s *rail_ib, struct sctk_ib_qp_s *remote, size_t *size);
+_mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send_tst(struct _mpc_lowcomm_ib_rail_info_s *rail_ib, struct _mpc_lowcomm_ib_qp_s *remote, size_t *size);
 
-_mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, struct sctk_ib_qp_s *remote, size_t *size);
+_mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send(struct _mpc_lowcomm_ib_rail_info_s *rail_ib, struct _mpc_lowcomm_ib_qp_s *remote, size_t *size);
 
-_mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send_sr(struct sctk_ib_rail_info_s *rail_ib);
+_mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send_sr(struct _mpc_lowcomm_ib_rail_info_s *rail_ib);
 
-int _mpc_lowcomm_ib_ibuf_srq_post(struct sctk_ib_rail_info_s *rail_ib);
+int _mpc_lowcomm_ib_ibuf_srq_post(struct _mpc_lowcomm_ib_rail_info_s *rail_ib);
 
-void _mpc_lowcomm_ib_ibuf_srq_release(struct sctk_ib_rail_info_s *rail_ib, _mpc_lowcomm_ib_ibuf_t *ibuf);
+void _mpc_lowcomm_ib_ibuf_srq_release(struct _mpc_lowcomm_ib_rail_info_s *rail_ib, _mpc_lowcomm_ib_ibuf_t *ibuf);
 
 void _mpc_lowcomm_ib_ibuf_print(_mpc_lowcomm_ib_ibuf_t *ibuf, char *desc);
 
@@ -322,20 +322,20 @@ void _mpc_lowcomm_ib_ibuf_compare_and_swap_init(_mpc_lowcomm_ib_ibuf_t *ibuf,
                                                 uint64_t comp,
                                                 uint64_t new);
 
-void _mpc_lowcomm_ib_ibuf_release(struct sctk_ib_rail_info_s *rail_ib,
+void _mpc_lowcomm_ib_ibuf_release(struct _mpc_lowcomm_ib_rail_info_s *rail_ib,
                                   _mpc_lowcomm_ib_ibuf_t *ibuf,
                                   int decr_free_srq_nb);
 
-void _mpc_lowcomm_ib_ibuf_prepare(struct sctk_ib_qp_s *remote,
+void _mpc_lowcomm_ib_ibuf_prepare(struct _mpc_lowcomm_ib_qp_s *remote,
                                   _mpc_lowcomm_ib_ibuf_t *ibuf,
                                   size_t size);
 
 void _mpc_lowcomm_ib_ibuf_init_task(int rank, int vp);
 
-void _mpc_lowcomm_ib_ibuf_set_node_srq_buffers(struct sctk_ib_rail_info_s *rail_ib,
+void _mpc_lowcomm_ib_ibuf_set_node_srq_buffers(struct _mpc_lowcomm_ib_rail_info_s *rail_ib,
                                                _mpc_lowcomm_ib_ibuf_numa_t *node);
 
-void _mpc_lowcomm_ib_ibuf_init_numa(struct sctk_ib_rail_info_s *rail_ib,
+void _mpc_lowcomm_ib_ibuf_init_numa(struct _mpc_lowcomm_ib_rail_info_s *rail_ib,
                                     struct _mpc_lowcomm_ib_ibuf_numa_s *node,
                                     int nb_ibufs,
                                     char is_initial_allocation);

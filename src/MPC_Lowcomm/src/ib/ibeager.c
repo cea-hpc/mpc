@@ -43,7 +43,7 @@
  *
  * @param rail_ib The Infiniband rail
  */
-void _mpc_lowcomm_ib_eager_init(sctk_ib_rail_info_t *rail_ib)
+void _mpc_lowcomm_ib_eager_init(_mpc_lowcomm_ib_rail_info_t *rail_ib)
 {
 	int i;
 
@@ -68,7 +68,7 @@ void _mpc_lowcomm_ib_eager_init(sctk_ib_rail_info_t *rail_ib)
  *
  * @param rail_ib The Infiniband rail
  */
-void _mpc_lowcomm_ib_eager_finalize(sctk_ib_rail_info_t *rail_ib)
+void _mpc_lowcomm_ib_eager_finalize(_mpc_lowcomm_ib_rail_info_t *rail_ib)
 {
 	mpc_lowcomm_ptp_message_t *elt, *tmp;
 
@@ -113,7 +113,7 @@ void _mpc_lowcomm_ib_eager_finalize(sctk_ib_rail_info_t *rail_ib)
  */
 static inline mpc_lowcomm_ptp_message_t *__pick_buffered_ptp_msg(sctk_rail_info_t *rail)
 {
-	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+	_mpc_lowcomm_ib_rail_info_t *rail_ib = &rail->network.ib;
 
 	mpc_lowcomm_ptp_message_t *tmp = NULL;
 
@@ -148,7 +148,7 @@ static inline void __release_buffered_ptp_msg(sctk_rail_info_t *rail, mpc_lowcom
 {
 	if(msg->from_buffered)
 	{
-		sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+		_mpc_lowcomm_ib_rail_info_t *rail_ib = &rail->network.ib;
 
 		mpc_common_spinlock_lock(&rail_ib->eager_lock_buffered_ptp_message);
 		LL_PREPEND(rail_ib->eager_buffered_ptp_message, msg);
@@ -161,8 +161,8 @@ static inline void __release_buffered_ptp_msg(sctk_rail_info_t *rail, mpc_lowcom
 	}
 }
 
-_mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_eager_prepare_msg(sctk_ib_rail_info_t *rail_ib,
-                                                          sctk_ib_qp_t *remote,
+_mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_eager_prepare_msg(_mpc_lowcomm_ib_rail_info_t *rail_ib,
+                                                          _mpc_lowcomm_ib_qp_t *remote,
                                                           mpc_lowcomm_ptp_message_t *msg,
                                                           size_t size,
                                                           char is_control_message)

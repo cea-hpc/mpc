@@ -51,7 +51,7 @@ void sctk_network_set_ib_unused()
 
 #define BT_SIZE 100
 void
-sctk_ib_toolkit_print_backtrace ( void )
+_mpc_lowcomm_ib_toolkit_print_backtrace ( void )
 {
 	int j, nptrs;
 	void *buffer[BT_SIZE];

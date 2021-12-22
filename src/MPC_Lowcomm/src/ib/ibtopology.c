@@ -78,7 +78,7 @@ static void __check_reset_tls(void)
 	}
 }
 
-static void __init_tls(sctk_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_topology_numa_node_t *node)
+static void __init_tls(_mpc_lowcomm_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_topology_numa_node_t *node)
 {
 	assume(__ib_rail_numas);
 
@@ -90,7 +90,7 @@ static void __init_tls(sctk_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_topology_nu
 
 void _mpc_lowcomm_ib_topology_init_task(struct sctk_rail_info_s *rail, int vp)
 {
-	sctk_ib_rail_info_t *rail_ib            = &rail->network.ib;
+	_mpc_lowcomm_ib_rail_info_t *rail_ib            = &rail->network.ib;
 	struct _mpc_lowcomm_ib_topology_s *topo = rail_ib->topology;
 	struct _mpc_lowcomm_config_struct_net_driver_infiniband *config = rail_ib->config;
 	int node_nb         = mpc_topology_get_numa_node_from_cpu(vp);
@@ -229,7 +229,7 @@ void _mpc_lowcomm_ib_topology_init(_mpc_lowcomm_ib_topology_t *topology)
 	}
 }
 
-void _mpc_lowcomm_ib_topology_init_rail(struct sctk_ib_rail_info_s *rail_ib)
+void _mpc_lowcomm_ib_topology_init_rail(struct _mpc_lowcomm_ib_rail_info_s *rail_ib)
 {
 	/* Allocate the topology structure */
 	struct _mpc_lowcomm_ib_topology_s *topology = sctk_malloc(sizeof(_mpc_lowcomm_ib_topology_t) );
@@ -247,7 +247,7 @@ void _mpc_lowcomm_ib_topology_init_rail(struct sctk_ib_rail_info_s *rail_ib)
 	_mpc_lowcomm_ib_ibuf_pool_init(rail_ib);
 }
 
-void _mpc_lowcomm_ib_topology_free(struct sctk_ib_rail_info_s *rail_ib)
+void _mpc_lowcomm_ib_topology_free(struct _mpc_lowcomm_ib_rail_info_s *rail_ib)
 {
 	_mpc_lowcomm_ib_ibuf_pool_free(rail_ib);
 
@@ -275,7 +275,7 @@ void _mpc_lowcomm_ib_topology_free(struct sctk_ib_rail_info_s *rail_ib)
 }
 
 _mpc_lowcomm_ib_topology_numa_node_t *
-_mpc_lowcomm_ib_topology_get_default_numa_node(struct sctk_ib_rail_info_s *rail_ib)
+_mpc_lowcomm_ib_topology_get_default_numa_node(struct _mpc_lowcomm_ib_rail_info_s *rail_ib)
 {
 	__check_reset_tls();
 
@@ -284,7 +284,7 @@ _mpc_lowcomm_ib_topology_get_default_numa_node(struct sctk_ib_rail_info_s *rail_
 }
 
 _mpc_lowcomm_ib_topology_numa_node_t *
-_mpc_lowcomm_ib_topology_get_numa_node(struct sctk_ib_rail_info_s *rail_ib)
+_mpc_lowcomm_ib_topology_get_numa_node(struct _mpc_lowcomm_ib_rail_info_s *rail_ib)
 {
 	const int rail_nb = rail_ib->rail_nb;
 

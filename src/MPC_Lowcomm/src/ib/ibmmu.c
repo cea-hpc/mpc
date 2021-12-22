@@ -39,7 +39,7 @@
 
 #include <sctk_alloc.h>
 
-_mpc_lowcomm_ib_mmu_entry_t * _mpc_lowcomm_ib_mmu_entry_new(sctk_ib_rail_info_t *rail_ib, void *addr, size_t size)
+_mpc_lowcomm_ib_mmu_entry_t * _mpc_lowcomm_ib_mmu_entry_new(_mpc_lowcomm_ib_rail_info_t *rail_ib, void *addr, size_t size)
 {
 	_mpc_lowcomm_ib_mmu_entry_t *new = sctk_malloc(sizeof(_mpc_lowcomm_ib_mmu_entry_t) );
 
@@ -250,7 +250,7 @@ static inline int ___mpc_lowcomm_ib_mmu_get_entry_containing(_mpc_lowcomm_ib_mmu
 	return 0;
 }
 
-_mpc_lowcomm_ib_mmu_entry_t *_mpc_lowcomm_ib_mmu_get_entry_containing_no_lock(struct _mpc_lowcomm_ib_mmu *mmu, void *addr, size_t size, sctk_ib_rail_info_t *rail_ib)
+_mpc_lowcomm_ib_mmu_entry_t *_mpc_lowcomm_ib_mmu_get_entry_containing_no_lock(struct _mpc_lowcomm_ib_mmu *mmu, void *addr, size_t size, _mpc_lowcomm_ib_rail_info_t *rail_ib)
 {
 	unsigned int i;
 
@@ -287,7 +287,7 @@ _mpc_lowcomm_ib_mmu_entry_t *_mpc_lowcomm_ib_mmu_get_entry_containing_no_lock(st
 	return NULL;
 }
 
-_mpc_lowcomm_ib_mmu_entry_t *__mpc_lowcomm_ib_mmu_get_entry_containing(struct _mpc_lowcomm_ib_mmu *mmu, void *addr, size_t size, sctk_ib_rail_info_t *rail_ib)
+_mpc_lowcomm_ib_mmu_entry_t *__mpc_lowcomm_ib_mmu_get_entry_containing(struct _mpc_lowcomm_ib_mmu *mmu, void *addr, size_t size, _mpc_lowcomm_ib_rail_info_t *rail_ib)
 {
 	/* No cache means no HIT */
 	if(!mmu->cache_enabled)
@@ -399,7 +399,7 @@ void __mpc_lowcomm_ib_mmu_push_entry(struct _mpc_lowcomm_ib_mmu *mmu, _mpc_lowco
 	entry->free_on_relax = 1;
 }
 
-_mpc_lowcomm_ib_mmu_entry_t *__mpc_lowcomm_ib_mmu_pin(struct _mpc_lowcomm_ib_mmu *mmu, sctk_ib_rail_info_t *rail_ib, void *addr, size_t size)
+_mpc_lowcomm_ib_mmu_entry_t *__mpc_lowcomm_ib_mmu_pin(struct _mpc_lowcomm_ib_mmu *mmu, _mpc_lowcomm_ib_rail_info_t *rail_ib, void *addr, size_t size)
 {
 	_mpc_lowcomm_ib_mmu_entry_t *entry = NULL;
 
@@ -511,7 +511,7 @@ void _mpc_lowcomm_ib_mmu_release()
 	__main_ib_mmu_init_done = 0;
 }
 
-_mpc_lowcomm_ib_mmu_entry_t *_mpc_lowcomm_ib_mmu_pin(sctk_ib_rail_info_t *rail_ib, void *addr, size_t size)
+_mpc_lowcomm_ib_mmu_entry_t *_mpc_lowcomm_ib_mmu_pin(_mpc_lowcomm_ib_rail_info_t *rail_ib, void *addr, size_t size)
 {
 	mpc_common_nodebug("Pin %p side %ld", addr, size);
 	return __mpc_lowcomm_ib_mmu_pin(&__main_ib_mmu, rail_ib, addr, size);

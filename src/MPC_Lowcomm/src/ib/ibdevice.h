@@ -32,19 +32,19 @@
 #include "ib.h"
 #include "mpc_conf.h"
 
-struct sctk_ib_qp_s;
+struct _mpc_lowcomm_ib_qp_s;
 
 /** Structure related to ondemand connexions */
-typedef struct sctk_ib_qp_ondemand_s
+typedef struct _mpc_lowcomm_ib_qp_ondemand_s
 {
-	struct sctk_ib_qp_s *qp_list;
-	struct sctk_ib_qp_s *qp_list_ptr; /** 'Hand' of the clock */
+	struct _mpc_lowcomm_ib_qp_s *qp_list;
+	struct _mpc_lowcomm_ib_qp_s *qp_list_ptr; /** 'Hand' of the clock */
 	mpc_common_spinlock_t lock;
-} sctk_ib_qp_ondemand_t;
+} _mpc_lowcomm_ib_qp_ondemand_t;
 
 
 /** Structure associated to a device */
-typedef struct sctk_ib_device_s
+typedef struct _mpc_lowcomm_ib_device_s
 {
 
 	struct ibv_device **dev_list; 		/**< Devices */
@@ -66,7 +66,7 @@ typedef struct sctk_ib_device_s
 	struct ibv_comp_channel *send_comp_channel;
 	struct ibv_comp_channel *recv_comp_channel;
 
-	struct sctk_ib_qp_ondemand_s ondemand;
+	struct _mpc_lowcomm_ib_qp_ondemand_s ondemand;
 
 	char pad1[64];
 	mpc_common_spinlock_t cq_polling_lock;
@@ -79,25 +79,25 @@ typedef struct sctk_ib_device_s
 	int index_pkey;
 
 	int eager_rdma_connections; 		/**< For eager RDMA channel */
-} sctk_ib_device_t;
+} _mpc_lowcomm_ib_device_t;
 
 
 
-sctk_ib_device_t *sctk_ib_device_init ( struct sctk_ib_rail_info_s *rail_ib );
+_mpc_lowcomm_ib_device_t *_mpc_lowcomm_ib_device_init ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib );
 
-sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, char * device_name );
-void sctk_ib_device_close( struct sctk_ib_rail_info_s *);
+_mpc_lowcomm_ib_device_t *_mpc_lowcomm_ib_device_open ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib, char * device_name );
+void _mpc_lowcomm_ib_device_close( struct _mpc_lowcomm_ib_rail_info_s *);
 
-struct ibv_pd *sctk_ib_pd_init ( sctk_ib_device_t *device );
-void sctk_ib_pd_free(sctk_ib_device_t *device);
+struct ibv_pd *_mpc_lowcomm_ib_pd_init ( _mpc_lowcomm_ib_device_t *device );
+void _mpc_lowcomm_ib_pd_free(_mpc_lowcomm_ib_device_t *device);
 
-struct ibv_comp_channel *sctk_ib_comp_channel_init ( sctk_ib_device_t *device );
+struct ibv_comp_channel *_mpc_lowcomm_ib_comp_channel_init ( _mpc_lowcomm_ib_device_t *device );
 
-struct ibv_cq *sctk_ib_cq_init ( sctk_ib_device_t *device,
+struct ibv_cq *_mpc_lowcomm_ib_cq_init ( _mpc_lowcomm_ib_device_t *device,
                                  struct _mpc_lowcomm_config_struct_net_driver_infiniband *config,
                                  struct ibv_comp_channel *comp_chan );
-void sctk_ib_cq_free(struct ibv_cq*);
+void _mpc_lowcomm_ib_cq_free(struct ibv_cq*);
 
-int sctk_ib_device_found();
+int _mpc_lowcomm_ib_device_found();
 
 #endif /* MPC_LOWCOMM_IB_DEVICE */

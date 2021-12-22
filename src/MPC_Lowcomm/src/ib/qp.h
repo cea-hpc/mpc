@@ -76,7 +76,7 @@ typedef struct _mpc_lowcomm_ib_ibuf_sr_s
 } _mpc_lowcomm_ib_ibuf_sr_t;
 
 /*Structure associated to a remote QP */
-typedef struct sctk_ib_qp_s
+typedef struct _mpc_lowcomm_ib_qp_s
 {
 	struct ibv_qp           *qp;        /**< queue pair */
 	uint32_t           rq_psn;     /**< starting receive packet sequence number
@@ -94,8 +94,8 @@ typedef struct sctk_ib_qp_s
 	OPA_int_t               pending_data; 	/**< Number of pending requests */
 	_mpc_lowcomm_endpoint_t      * endpoint; /** Routes */
 	/* For linked-list */
-	struct sctk_ib_qp_s *prev;
-	struct sctk_ib_qp_s *next;
+	struct _mpc_lowcomm_ib_qp_s *prev;
+	struct _mpc_lowcomm_ib_qp_s *next;
 	/* ---------------- */
 	mpc_common_spinlock_t lock_send;		/**< Lock for sending messages */
 	char dummy [64];
@@ -117,156 +117,156 @@ typedef struct sctk_ib_qp_s
 	} od_request; 			/**< Structs for requests */
 	int ondemand;			/**< Is remote dynamically created ? */
 	int R;				/**< Bit for clock algorithm */
-} sctk_ib_qp_t;
+} _mpc_lowcomm_ib_qp_t;
 
-void sctk_ib_qp_key_create_value ( char *msg, size_t size, sctk_ib_cm_qp_connection_t *keys );
-void sctk_ib_qp_key_fill ( sctk_ib_cm_qp_connection_t *keys,
+void _mpc_lowcomm_ib_qp_key_create_value ( char *msg, size_t size, _mpc_lowcomm_ib_cm_qp_connection_t *keys );
+void _mpc_lowcomm_ib_qp_key_fill ( _mpc_lowcomm_ib_cm_qp_connection_t *keys,
                            uint16_t lid,
                            uint32_t qp_num,
                            uint32_t psn );
 
-void sctk_ib_qp_key_create_key ( char *msg, size_t size, int rail, int src, int dest );
-sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_convert ( char *msg );
+void _mpc_lowcomm_ib_qp_key_create_key ( char *msg, size_t size, int rail, int src, int dest );
+_mpc_lowcomm_ib_cm_qp_connection_t _mpc_lowcomm_ib_qp_keys_convert ( char *msg );
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
 
-char *sctk_ib_cq_print_status ( enum ibv_wc_status status );
+char *_mpc_lowcomm_ib_cq_print_status ( enum ibv_wc_status status );
 
-sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_convert ( char *msg );
+_mpc_lowcomm_ib_cm_qp_connection_t _mpc_lowcomm_ib_qp_keys_convert ( char *msg );
 
-void sctk_ib_qp_keys_send ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote );
+void _mpc_lowcomm_ib_qp_keys_send ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib, _mpc_lowcomm_ib_qp_t *remote );
 
-sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_recv ( struct sctk_ib_rail_info_s *rail_ib, int dest_process );
+_mpc_lowcomm_ib_cm_qp_connection_t _mpc_lowcomm_ib_qp_keys_recv ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib, int dest_process );
 
-sctk_ib_qp_t *sctk_ib_qp_new();
-void sctk_ib_qp_destroy(sctk_ib_qp_t *remote);
+_mpc_lowcomm_ib_qp_t *_mpc_lowcomm_ib_qp_new();
+void _mpc_lowcomm_ib_qp_destroy(_mpc_lowcomm_ib_qp_t *remote);
 
-struct ibv_qp *sctk_ib_qp_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, struct ibv_qp_init_attr *attr, mpc_lowcomm_peer_uid_t rank );
-void sctk_ib_qp_free_all(struct sctk_ib_rail_info_s* rail_ib);
+struct ibv_qp *_mpc_lowcomm_ib_qp_init ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib, _mpc_lowcomm_ib_qp_t *remote, struct ibv_qp_init_attr *attr, mpc_lowcomm_peer_uid_t rank );
+void _mpc_lowcomm_ib_qp_free_all(struct _mpc_lowcomm_ib_rail_info_s* rail_ib);
 
-struct ibv_qp_init_attr sctk_ib_qp_init_attr ( struct sctk_ib_rail_info_s *rail_ib );
+struct ibv_qp_init_attr _mpc_lowcomm_ib_qp_init_attr ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib );
 
-struct ibv_qp_attr sctk_ib_qp_state_init_attr ( struct sctk_ib_rail_info_s *rail_ib,  int *flags );
+struct ibv_qp_attr _mpc_lowcomm_ib_qp_state_init_attr ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib,  int *flags );
 
-struct ibv_qp_attr sctk_ib_qp_state_rtr_attr ( struct sctk_ib_rail_info_s *rail_ib,  sctk_ib_cm_qp_connection_t *keys, int *flags );
+struct ibv_qp_attr _mpc_lowcomm_ib_qp_state_rtr_attr ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib,  _mpc_lowcomm_ib_cm_qp_connection_t *keys, int *flags );
 
-struct ibv_qp_attr sctk_ib_qp_state_rts_attr ( struct sctk_ib_rail_info_s *rail_ib,  uint32_t psn, int *flags );
+struct ibv_qp_attr _mpc_lowcomm_ib_qp_state_rts_attr ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib,  uint32_t psn, int *flags );
 
-void sctk_ib_qp_modify ( sctk_ib_qp_t *remote, struct ibv_qp_attr *attr, int flags );
+void _mpc_lowcomm_ib_qp_modify ( _mpc_lowcomm_ib_qp_t *remote, struct ibv_qp_attr *attr, int flags );
 
-void sctk_ib_qp_allocate_init ( struct sctk_ib_rail_info_s *rail_ib, mpc_lowcomm_peer_uid_t rank, sctk_ib_qp_t *remote, int ondemand, _mpc_lowcomm_endpoint_t *route );
+void _mpc_lowcomm_ib_qp_allocate_init ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib, mpc_lowcomm_peer_uid_t rank, _mpc_lowcomm_ib_qp_t *remote, int ondemand, _mpc_lowcomm_endpoint_t *route );
 
-void sctk_ib_qp_allocate_rtr ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, sctk_ib_cm_qp_connection_t *keys );
+void _mpc_lowcomm_ib_qp_allocate_rtr ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib, _mpc_lowcomm_ib_qp_t *remote, _mpc_lowcomm_ib_cm_qp_connection_t *keys );
 
-void sctk_ib_qp_allocate_rts ( struct sctk_ib_rail_info_s *rail_ib,  sctk_ib_qp_t *remote );
+void _mpc_lowcomm_ib_qp_allocate_rts ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib,  _mpc_lowcomm_ib_qp_t *remote );
 
-void sctk_ib_qp_allocate_reset ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote );
+void _mpc_lowcomm_ib_qp_allocate_reset ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib, _mpc_lowcomm_ib_qp_t *remote );
 
-struct ibv_srq *sctk_ib_srq_init ( struct sctk_ib_rail_info_s *rail_ib,  struct ibv_srq_init_attr *attr );
-void sctk_ib_srq_free(sctk_ib_rail_info_t *rail_ib);
+struct ibv_srq *_mpc_lowcomm_ib_srq_init ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib,  struct ibv_srq_init_attr *attr );
+void _mpc_lowcomm_ib_srq_free(_mpc_lowcomm_ib_rail_info_t *rail_ib);
 
-struct ibv_srq_init_attr sctk_ib_srq_init_attr ( struct sctk_ib_rail_info_s *rail_ib );
+struct ibv_srq_init_attr _mpc_lowcomm_ib_srq_init_attr ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib );
 
-int sctk_ib_qp_send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, _mpc_lowcomm_ib_ibuf_t *ibuf );
+int _mpc_lowcomm_ib_qp_send_ibuf ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib, _mpc_lowcomm_ib_qp_t *remote, _mpc_lowcomm_ib_ibuf_t *ibuf );
 
-void sctk_ib_qp_release_entry ( struct sctk_ib_rail_info_s *rail_ib,  sctk_ib_qp_t *remote );
+void _mpc_lowcomm_ib_qp_release_entry ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib,  _mpc_lowcomm_ib_qp_t *remote );
 
-int sctk_ib_qp_get_cap_flags ( struct sctk_ib_rail_info_s *rail_ib );
+int _mpc_lowcomm_ib_qp_get_cap_flags ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib );
 
 /* Amount of data pending */
-__UNUSED__ static int sctk_ib_qp_fetch_and_add_pending_data ( sctk_ib_qp_t *remote, _mpc_lowcomm_ib_ibuf_t *ibuf )
+__UNUSED__ static int _mpc_lowcomm_ib_qp_fetch_and_add_pending_data ( _mpc_lowcomm_ib_qp_t *remote, _mpc_lowcomm_ib_ibuf_t *ibuf )
 {
 	const int size = ( int ) ibuf->desc.sg_entry.length;
 	return OPA_fetch_and_add_int ( &remote->pending_data, size );
 }
 
-__UNUSED__ static int sctk_ib_qp_fetch_and_sub_pending_data ( sctk_ib_qp_t *remote, _mpc_lowcomm_ib_ibuf_t *ibuf )
+__UNUSED__ static int _mpc_lowcomm_ib_qp_fetch_and_sub_pending_data ( _mpc_lowcomm_ib_qp_t *remote, _mpc_lowcomm_ib_ibuf_t *ibuf )
 {
 	const int size = - ( ( int ) ibuf->desc.sg_entry.length );
 	return OPA_fetch_and_add_int ( &remote->pending_data, size );
 }
 
-__UNUSED__ static void sctk_ib_qp_add_pending_data ( sctk_ib_qp_t *remote, _mpc_lowcomm_ib_ibuf_t *ibuf )
+__UNUSED__ static void _mpc_lowcomm_ib_qp_add_pending_data ( _mpc_lowcomm_ib_qp_t *remote, _mpc_lowcomm_ib_ibuf_t *ibuf )
 {
 	const size_t size = ibuf->desc.sg_entry.length;
 	OPA_add_int ( &remote->pending_data, size );
 }
 
-__UNUSED__ static int sctk_ib_qp_get_pending_data ( sctk_ib_qp_t *remote )
+__UNUSED__ static int _mpc_lowcomm_ib_qp_get_pending_data ( _mpc_lowcomm_ib_qp_t *remote )
 {
 	return OPA_load_int ( &remote->pending_data );
 }
-__UNUSED__ static void sctk_ib_qp_set_pending_data ( sctk_ib_qp_t *remote, int i )
+__UNUSED__ static void _mpc_lowcomm_ib_qp_set_pending_data ( _mpc_lowcomm_ib_qp_t *remote, int i )
 {
 	OPA_store_int ( &remote->pending_data, i );
 }
 
 /* Flush ACK */
-__UNUSED__ static int sctk_ib_qp_get_local_flush_ack ( sctk_ib_qp_t *remote )
+__UNUSED__ static int _mpc_lowcomm_ib_qp_get_local_flush_ack ( _mpc_lowcomm_ib_qp_t *remote )
 {
 	return remote->local_ack;
 }
-__UNUSED__ static void sctk_ib_qp_set_local_flush_ack ( sctk_ib_qp_t *remote, int i )
+__UNUSED__ static void _mpc_lowcomm_ib_qp_set_local_flush_ack ( _mpc_lowcomm_ib_qp_t *remote, int i )
 {
 	remote->local_ack = i;
 }
-__UNUSED__ static int sctk_ib_qp_get_remote_flush_ack ( sctk_ib_qp_t *remote )
+__UNUSED__ static int _mpc_lowcomm_ib_qp_get_remote_flush_ack ( _mpc_lowcomm_ib_qp_t *remote )
 {
 	return remote->remote_ack;
 }
-__UNUSED__ static void sctk_ib_qp_set_remote_flush_ack ( sctk_ib_qp_t *remote, int i )
+__UNUSED__ static void _mpc_lowcomm_ib_qp_set_remote_flush_ack ( _mpc_lowcomm_ib_qp_t *remote, int i )
 {
 	remote->remote_ack = i;
 }
 
 
 /* Flush cancel */
-__UNUSED__ static int sctk_ib_qp_get_deco_canceled ( sctk_ib_qp_t *remote )
+__UNUSED__ static int _mpc_lowcomm_ib_qp_get_deco_canceled ( _mpc_lowcomm_ib_qp_t *remote )
 {
 	return OPA_load_int ( &remote->deco_canceled );
 }
 
-__UNUSED__ static void sctk_ib_qp_set_deco_canceled ( sctk_ib_qp_t *remote, int i )
+__UNUSED__ static void _mpc_lowcomm_ib_qp_set_deco_canceled ( _mpc_lowcomm_ib_qp_t *remote, int i )
 {
 	OPA_store_int ( &remote->deco_canceled, i );
 }
 
-int sctk_ib_srq_get_max_srq_wr ( struct sctk_ib_rail_info_s *rail_ib );
+int _mpc_lowcomm_ib_srq_get_max_srq_wr ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib );
 
 /*-----------------------------------------------------------
  *  Change the state of a QP
  *----------------------------------------------------------*/
-__UNUSED__ static inline void sctk_ib_qp_allocate_set_rtr ( sctk_ib_qp_t *remote, int enabled )
+__UNUSED__ static inline void _mpc_lowcomm_ib_qp_allocate_set_rtr ( _mpc_lowcomm_ib_qp_t *remote, int enabled )
 {
 	OPA_store_int ( &remote->is_rtr, enabled );
 }
 
-__UNUSED__ static inline void sctk_ib_qp_allocate_set_rts ( sctk_ib_qp_t *remote, int enabled )
+__UNUSED__ static inline void _mpc_lowcomm_ib_qp_allocate_set_rts ( _mpc_lowcomm_ib_qp_t *remote, int enabled )
 {
 	OPA_store_int ( &remote->is_rts, enabled );
 }
 
-__UNUSED__ static inline int sctk_ib_qp_allocate_get_rtr ( sctk_ib_qp_t *remote )
+__UNUSED__ static inline int _mpc_lowcomm_ib_qp_allocate_get_rtr ( _mpc_lowcomm_ib_qp_t *remote )
 {
 	return ( int ) OPA_load_int ( &remote->is_rtr );
 }
-__UNUSED__ static inline int sctk_ib_qp_allocate_get_rts ( sctk_ib_qp_t *remote )
+__UNUSED__ static inline int _mpc_lowcomm_ib_qp_allocate_get_rts ( _mpc_lowcomm_ib_qp_t *remote )
 {
 	return ( int ) OPA_load_int ( &remote->is_rts );
 }
 
-void sctk_ib_qp_select_victim ( struct sctk_ib_rail_info_s *rail_ib );
-void sctk_ib_qp_deco_victim ( struct sctk_ib_rail_info_s *rail_ib, _mpc_lowcomm_endpoint_t *endpoint );
+void _mpc_lowcomm_ib_qp_select_victim ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib );
+void _mpc_lowcomm_ib_qp_deco_victim ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib, _mpc_lowcomm_endpoint_t *endpoint );
 
-int sctk_ib_qp_check_flush ( struct sctk_ib_rail_info_s *rail_ib,  sctk_ib_qp_t *remote );
+int _mpc_lowcomm_ib_qp_check_flush ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib,  _mpc_lowcomm_ib_qp_t *remote );
 
-void sctk_ib_qp_try_flush ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote );
+void _mpc_lowcomm_ib_qp_try_flush ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib, _mpc_lowcomm_ib_qp_t *remote );
 
 /*-----------------------------------------------------------
  *  QP HT
  *----------------------------------------------------------*/
-sctk_ib_qp_t  *sctk_ib_qp_ht_find ( struct sctk_ib_rail_info_s *rail_ib, int key );
+_mpc_lowcomm_ib_qp_t  *_mpc_lowcomm_ib_qp_ht_find ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib, int key );
 
 #endif

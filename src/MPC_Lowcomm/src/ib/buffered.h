@@ -89,7 +89,7 @@ struct _mpc_lowcomm_ib_ibuf_s;
 /********************************************************************/
 
 int _mpc_lowcomm_ib_buffered_prepare_msg ( struct sctk_rail_info_s *rail,
-                                   struct sctk_ib_qp_s *remote,
+                                   struct _mpc_lowcomm_ib_qp_s *remote,
                                    struct mpc_lowcomm_ptp_message_s *msg,
                                    size_t size );
 

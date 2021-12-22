@@ -28,14 +28,14 @@
 
 /** This is the actual payload */
 struct ibv_mr;
-struct sctk_ib_rail_info_s;
+struct _mpc_lowcomm_ib_rail_info_s;
 
 typedef struct _mpc_lowcomm_ib_mmu_entry_s
 {
 	/* Content */
 	void * addr; /** Adress of the pinned block */
 	size_t size; /** Size of the pinned block */
-	struct sctk_ib_rail_info_s *rail; /** Rail for which the block is pinned */
+	struct _mpc_lowcomm_ib_rail_info_s *rail; /** Rail for which the block is pinned */
 	struct ibv_mr *mr; /** Pointer to the IBV memory region */
 
 	mpc_common_rwlock_t entry_refcounter; /** Refcounter */
@@ -43,7 +43,7 @@ typedef struct _mpc_lowcomm_ib_mmu_entry_s
 	int free_on_relax;
 }_mpc_lowcomm_ib_mmu_entry_t;
 
-_mpc_lowcomm_ib_mmu_entry_t * _mpc_lowcomm_ib_mmu_entry_new( struct sctk_ib_rail_info_s *rail_ib, void * addr, size_t size );
+_mpc_lowcomm_ib_mmu_entry_t * _mpc_lowcomm_ib_mmu_entry_new( struct _mpc_lowcomm_ib_rail_info_s *rail_ib, void * addr, size_t size );
 void _mpc_lowcomm_ib_mmu_entry_release( _mpc_lowcomm_ib_mmu_entry_t * release );
 
 int _mpc_lowcomm_ib_mmu_entry_contains( _mpc_lowcomm_ib_mmu_entry_t * entry, void * addr, size_t size );
@@ -69,7 +69,7 @@ struct _mpc_lowcomm_ib_mmu
 void __mpc_lowcomm_ib_mmu_init( struct _mpc_lowcomm_ib_mmu * mmu );
 void __mpc_lowcomm_ib_mmu_release( struct _mpc_lowcomm_ib_mmu * mmu );
 
-_mpc_lowcomm_ib_mmu_entry_t * __mpc_lowcomm_ib_mmu_pin(  struct _mpc_lowcomm_ib_mmu * mmu,  struct sctk_ib_rail_info_s *rail_ib, void * addr, size_t size);
+_mpc_lowcomm_ib_mmu_entry_t * __mpc_lowcomm_ib_mmu_pin(  struct _mpc_lowcomm_ib_mmu * mmu,  struct _mpc_lowcomm_ib_rail_info_s *rail_ib, void * addr, size_t size);
 int __mpc_lowcomm_ib_mmu_unpin(  struct _mpc_lowcomm_ib_mmu * mmu, void * addr, size_t size);
 
 /** This is the main interface (abstracting storage) */
@@ -77,7 +77,7 @@ int __mpc_lowcomm_ib_mmu_unpin(  struct _mpc_lowcomm_ib_mmu * mmu, void * addr, 
 void _mpc_lowcomm_ib_mmu_init();
 void _mpc_lowcomm_ib_mmu_release();
 
-_mpc_lowcomm_ib_mmu_entry_t * _mpc_lowcomm_ib_mmu_pin( struct sctk_ib_rail_info_s *rail_ib, void * addr, size_t size);
+_mpc_lowcomm_ib_mmu_entry_t * _mpc_lowcomm_ib_mmu_pin( struct _mpc_lowcomm_ib_rail_info_s *rail_ib, void * addr, size_t size);
 void _mpc_lowcomm_ib_mmu_relax( _mpc_lowcomm_ib_mmu_entry_t * handler );
 int _mpc_lowcomm_ib_mmu_unpin(  void * addr, size_t size);
 

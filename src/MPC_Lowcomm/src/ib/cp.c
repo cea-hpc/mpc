@@ -145,7 +145,7 @@ _mpc_lowcomm_ib_cp_task_t *_mpc_lowcomm_ib_cp_ctx_get_task(int rank)
 #endif
 
 /* XXX: is called before 'cp_init_task' */
-void _mpc_lowcomm_ib_cp_ctx_init(struct sctk_ib_rail_info_s *rail_ib)
+void _mpc_lowcomm_ib_cp_ctx_init(struct _mpc_lowcomm_ib_rail_info_s *rail_ib)
 {
 	CHECK_AND_QUIT(rail_ib);
 	_mpc_lowcomm_ib_cp_ctx_t *cp;
@@ -160,7 +160,7 @@ void _mpc_lowcomm_ib_cp_ctx_init(struct sctk_ib_rail_info_s *rail_ib)
 	assume(all_tasks == NULL);
 }
 
-void _mpc_lowcomm_ib_cp_ctx_finalize(struct sctk_ib_rail_info_s *rail_ib)
+void _mpc_lowcomm_ib_cp_ctx_finalize(struct _mpc_lowcomm_ib_rail_info_s *rail_ib)
 {
 	int i;
 
@@ -350,7 +350,7 @@ void _mpc_lowcomm_ib_cp_ctx_finalize_task(int rank)
 
 
 
-static inline void __poll_ibuf(struct sctk_ib_polling_s *poll, _mpc_lowcomm_ib_ibuf_t *ibuf, int no_steal)
+static inline void __poll_ibuf(struct _mpc_lowcomm_ib_polling_s *poll, _mpc_lowcomm_ib_ibuf_t *ibuf, int no_steal)
 {
 		/* Run the polling function according to the type of message */
 		if(ibuf->cq == MPC_LOWCOMM_IB_RECV_CQ)
@@ -405,7 +405,7 @@ static inline void __poll_ibuf(struct sctk_ib_polling_s *poll, _mpc_lowcomm_ib_i
 							}while(no_steal)
 
 
-int _mpc_lowcomm_ib_cp_ctx_poll_global_list(struct sctk_ib_polling_s *poll)
+int _mpc_lowcomm_ib_cp_ctx_poll_global_list(struct _mpc_lowcomm_ib_polling_s *poll)
 {
 	_mpc_lowcomm_ib_cp_task_t *task = NULL;
 
@@ -430,7 +430,7 @@ int _mpc_lowcomm_ib_cp_ctx_poll_global_list(struct sctk_ib_polling_s *poll)
 	return counter;
 }
 
-int _mpc_lowcomm_ib_cp_ctx_poll(struct sctk_ib_polling_s *poll, int task_id)
+int _mpc_lowcomm_ib_cp_ctx_poll(struct _mpc_lowcomm_ib_polling_s *poll, int task_id)
 {
 	_mpc_lowcomm_ib_cp_task_t *task = NULL;
 
@@ -484,7 +484,7 @@ int _mpc_lowcomm_ib_cp_ctx_poll(struct sctk_ib_polling_s *poll, int task_id)
 	return 0;
 }
 
-int _mpc_lowcomm_ib_cp_ctx_steal(struct sctk_ib_polling_s *poll, char other_numa)
+int _mpc_lowcomm_ib_cp_ctx_steal(struct _mpc_lowcomm_ib_polling_s *poll, char other_numa)
 {
 	int nb_found = 0;
 

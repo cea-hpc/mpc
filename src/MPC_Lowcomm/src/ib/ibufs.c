@@ -37,7 +37,7 @@
 #include <sctk_alloc.h>
 
 
-static inline _mpc_lowcomm_ib_ibuf_numa_t *__ibuf_get_numaware(struct sctk_ib_rail_info_s *rail_ib)
+static inline _mpc_lowcomm_ib_ibuf_numa_t *__ibuf_get_numaware(struct _mpc_lowcomm_ib_rail_info_s *rail_ib)
 {
 	struct _mpc_lowcomm_ib_topology_numa_node_s *closest_node = _mpc_lowcomm_ib_topology_get_numa_node(rail_ib);
 	_mpc_lowcomm_ib_ibuf_numa_t *node = NULL;
@@ -50,7 +50,7 @@ static inline _mpc_lowcomm_ib_ibuf_numa_t *__ibuf_get_numaware(struct sctk_ib_ra
 /* Init a pool of buffers on the numa node pointed by 'node'
  * FIXME: use malloc_on_node instead of memalign
  * Carreful: this function is *NOT* thread-safe */
-void _mpc_lowcomm_ib_ibuf_init_numa(struct sctk_ib_rail_info_s *rail_ib,
+void _mpc_lowcomm_ib_ibuf_init_numa(struct _mpc_lowcomm_ib_rail_info_s *rail_ib,
                                     struct _mpc_lowcomm_ib_ibuf_numa_s *node,
                                     int nb_ibufs,
                                     char is_initial_allocation)
@@ -165,7 +165,7 @@ void _mpc_lowcomm_ib_ibuf_free_numa(struct _mpc_lowcomm_ib_ibuf_numa_s *node)
 	assume(node->regions == NULL);
 }
 
-void _mpc_lowcomm_ib_ibuf_set_node_srq_buffers(struct sctk_ib_rail_info_s *rail_ib,
+void _mpc_lowcomm_ib_ibuf_set_node_srq_buffers(struct _mpc_lowcomm_ib_rail_info_s *rail_ib,
                                                _mpc_lowcomm_ib_ibuf_numa_t *node)
 {
 	LOAD_POOL(rail_ib);
@@ -174,7 +174,7 @@ void _mpc_lowcomm_ib_ibuf_set_node_srq_buffers(struct sctk_ib_rail_info_s *rail_
 }
 
 /* Init the pool of buffers on each NUMA node */
-void _mpc_lowcomm_ib_ibuf_pool_init(struct sctk_ib_rail_info_s *rail_ib)
+void _mpc_lowcomm_ib_ibuf_pool_init(struct _mpc_lowcomm_ib_rail_info_s *rail_ib)
 {
 	_mpc_lowcomm_ib_ibuf_poll_t *pool;
 
@@ -188,7 +188,7 @@ void _mpc_lowcomm_ib_ibuf_pool_init(struct sctk_ib_rail_info_s *rail_ib)
 	rail_ib->pool_buffers = pool;
 }
 
-void _mpc_lowcomm_ib_ibuf_pool_free(sctk_ib_rail_info_t *rail_ib)
+void _mpc_lowcomm_ib_ibuf_pool_free(_mpc_lowcomm_ib_rail_info_t *rail_ib)
 {
 	sctk_free(rail_ib->pool_buffers);
 	rail_ib->pool_buffers = NULL;
@@ -572,7 +572,7 @@ void _mpc_lowcomm_ib_ibuf_print(_mpc_lowcomm_ib_ibuf_t *ibuf, char *desc)
 	        poison);
 }
 
-_mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send_sr(struct sctk_ib_rail_info_s *rail_ib)
+_mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send_sr(struct _mpc_lowcomm_ib_rail_info_s *rail_ib)
 {
 	LOAD_CONFIG(rail_ib);
 	_mpc_lowcomm_ib_ibuf_t *     ibuf;
@@ -616,10 +616,10 @@ _mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send_sr(struct sctk_ib_rail_in
  * Prepare a message to send. According to the size and the remote, the function
  * choose between the SR and the RDMA channel.
  * If '*size' == ULONG_MAX, the fonction returns in '*size' the maximum size
- * of the payload for the buffer. The user next needs to manually call sctk_ib_prepare.
+ * of the payload for the buffer. The user next needs to manually call _mpc_lowcomm_ib_prepare.
  */
-_mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib,
-                                            sctk_ib_qp_t *remote,
+_mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_send(struct _mpc_lowcomm_ib_rail_info_s *rail_ib,
+                                            _mpc_lowcomm_ib_qp_t *remote,
                                             size_t *size)
 {
 	LOAD_CONFIG(rail_ib);
@@ -769,7 +769,7 @@ exit:
  * oncurrent calls.
  * - remote: process where picking buffer. It may be NULL. In this case,
  *   we pick a buffer from the SR channel */
-static inline _mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_recv(struct sctk_ib_rail_info_s *rail_ib, struct _mpc_lowcomm_ib_ibuf_numa_s *node)
+static inline _mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_recv(struct _mpc_lowcomm_ib_rail_info_s *rail_ib, struct _mpc_lowcomm_ib_ibuf_numa_s *node)
 {
 	LOAD_CONFIG(rail_ib);
 	_mpc_lowcomm_ib_ibuf_t *ibuf;
@@ -803,7 +803,7 @@ static inline _mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_pick_recv(struct sctk
 	return ibuf;
 }
 
-static inline int __srq_post(struct sctk_ib_rail_info_s *rail_ib,
+static inline int __srq_post(struct _mpc_lowcomm_ib_rail_info_s *rail_ib,
                              _mpc_lowcomm_ib_ibuf_numa_t *node,
                              int force)
 {
@@ -888,14 +888,14 @@ exit:
 }
 
 /* FIXME: check with buffers near IB card */
-int _mpc_lowcomm_ib_ibuf_srq_post(struct sctk_ib_rail_info_s *rail_ib)
+int _mpc_lowcomm_ib_ibuf_srq_post(struct _mpc_lowcomm_ib_rail_info_s *rail_ib)
 {
 	LOAD_POOL(rail_ib);
 
 	return __srq_post(rail_ib, pool->node_srq_buffers, 1);
 }
 
-static inline void __release_in_srq(struct sctk_ib_rail_info_s *rail_ib,
+static inline void __release_in_srq(struct _mpc_lowcomm_ib_rail_info_s *rail_ib,
                                     _mpc_lowcomm_ib_ibuf_numa_t *node,
                                     int decr_free_srq_nb)
 {
@@ -908,7 +908,7 @@ static inline void __release_in_srq(struct sctk_ib_rail_info_s *rail_ib,
 	__srq_post(rail_ib, node, 0);
 }
 
-void _mpc_lowcomm_ib_ibuf_srq_release(struct sctk_ib_rail_info_s *rail_ib, _mpc_lowcomm_ib_ibuf_t *ibuf)
+void _mpc_lowcomm_ib_ibuf_srq_release(struct _mpc_lowcomm_ib_rail_info_s *rail_ib, _mpc_lowcomm_ib_ibuf_t *ibuf)
 {
 	_mpc_lowcomm_ib_ibuf_numa_t *node = ibuf->region->node;
 
@@ -917,7 +917,7 @@ void _mpc_lowcomm_ib_ibuf_srq_release(struct sctk_ib_rail_info_s *rail_ib, _mpc_
 
 /* release one buffer given as parameter.
  * is_srq: if the buffer is released from the SRQ */
-void _mpc_lowcomm_ib_ibuf_release(struct sctk_ib_rail_info_s *rail_ib,
+void _mpc_lowcomm_ib_ibuf_release(struct _mpc_lowcomm_ib_rail_info_s *rail_ib,
                                   _mpc_lowcomm_ib_ibuf_t *ibuf,
                                   int decr_free_srq_nb)
 {
@@ -994,7 +994,7 @@ void _mpc_lowcomm_ib_ibuf_release(struct sctk_ib_rail_info_s *rail_ib,
 	}
 }
 
-void _mpc_lowcomm_ib_ibuf_prepare(sctk_ib_qp_t *remote,
+void _mpc_lowcomm_ib_ibuf_prepare(_mpc_lowcomm_ib_qp_t *remote,
                                   _mpc_lowcomm_ib_ibuf_t *ibuf,
                                   size_t size)
 {

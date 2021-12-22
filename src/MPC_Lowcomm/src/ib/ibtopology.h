@@ -57,8 +57,8 @@ typedef struct _mpc_lowcomm_ib_topology_s
 } _mpc_lowcomm_ib_topology_t;
 
 void _mpc_lowcomm_ib_topology_init(_mpc_lowcomm_ib_topology_t *topology);
-void _mpc_lowcomm_ib_topology_free(struct sctk_ib_rail_info_s *rail);
-void _mpc_lowcomm_ib_topology_init_rail(struct sctk_ib_rail_info_s *rail_ib);
+void _mpc_lowcomm_ib_topology_free(struct _mpc_lowcomm_ib_rail_info_s *rail);
+void _mpc_lowcomm_ib_topology_init_rail(struct _mpc_lowcomm_ib_rail_info_s *rail_ib);
 
 void _mpc_lowcomm_ib_topology_init_task(struct sctk_rail_info_s *rail, int vp);
 void _mpc_lowcomm_ib_topology_free_task();
@@ -66,8 +66,8 @@ void _mpc_lowcomm_ib_topology_free_task();
 /* Return the IB topology structure the closest from the current task
  *
  * / ! \ MAY return NULL */
-_mpc_lowcomm_ib_topology_numa_node_t * _mpc_lowcomm_ib_topology_get_numa_node(struct sctk_ib_rail_info_s *rail_ib);
+_mpc_lowcomm_ib_topology_numa_node_t * _mpc_lowcomm_ib_topology_get_numa_node(struct _mpc_lowcomm_ib_rail_info_s *rail_ib);
 
-_mpc_lowcomm_ib_topology_numa_node_t * _mpc_lowcomm_ib_topology_get_default_numa_node(struct sctk_ib_rail_info_s *rail_ib);
+_mpc_lowcomm_ib_topology_numa_node_t * _mpc_lowcomm_ib_topology_get_default_numa_node(struct _mpc_lowcomm_ib_rail_info_s *rail_ib);
 
 #endif

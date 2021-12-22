@@ -74,9 +74,9 @@ typedef struct _mpc_lowcomm_ib_cp_ctx_task_s
  *----------------------------------------------------------*/
 struct sctk_rail_info_s;
 
-void _mpc_lowcomm_ib_cp_ctx_init ( struct sctk_ib_rail_info_s *rail_ib );
+void _mpc_lowcomm_ib_cp_ctx_init ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib );
 
-void _mpc_lowcomm_ib_cp_ctx_finalize( struct sctk_ib_rail_info_s *rail_ib);
+void _mpc_lowcomm_ib_cp_ctx_finalize( struct _mpc_lowcomm_ib_rail_info_s *rail_ib);
 
 void _mpc_lowcomm_ib_cp_ctx_init_task ( int rank, int vp );
 
@@ -84,18 +84,18 @@ void _mpc_lowcomm_ib_cp_ctx_finalize_task ( int rank );
 
 int _mpc_lowcomm_ib_cp_ctx_handle_message ( _mpc_lowcomm_ib_ibuf_t *ibuf, int dest_task, int target_task );
 
-int _mpc_lowcomm_ib_cp_ctx_poll ( struct sctk_ib_polling_s *poll,
+int _mpc_lowcomm_ib_cp_ctx_poll ( struct _mpc_lowcomm_ib_polling_s *poll,
                       int task_id );
 
-void _mpc_lowcomm_ib_cp_ctx_poll_all ( const struct sctk_rail_info_s *rail, struct sctk_ib_polling_s *poll );
+void _mpc_lowcomm_ib_cp_ctx_poll_all ( const struct sctk_rail_info_s *rail, struct _mpc_lowcomm_ib_polling_s *poll );
 
-int _mpc_lowcomm_ib_cp_ctx_steal ( struct sctk_ib_polling_s *poll, char other_numa );
+int _mpc_lowcomm_ib_cp_ctx_steal ( struct _mpc_lowcomm_ib_polling_s *poll, char other_numa );
 
 _mpc_lowcomm_ib_cp_task_t *_mpc_lowcomm_ib_cp_ctx_get_task ( int rank );
 
 _mpc_lowcomm_ib_cp_task_t *_mpc_lowcomm_ib_cp_ctx_get_polling_task();
 
-int _mpc_lowcomm_ib_cp_ctx_poll_global_list ( struct sctk_ib_polling_s *poll );
+int _mpc_lowcomm_ib_cp_ctx_poll_global_list ( struct _mpc_lowcomm_ib_polling_s *poll );
 
 int _mpc_lowcomm_ib_cp_ctx_get_nb_pending_msg();
 /*-----------------------------------------------------------

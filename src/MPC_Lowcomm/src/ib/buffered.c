@@ -51,11 +51,11 @@ static inline void *__pack_non_contig_msg(mpc_lowcomm_ptp_message_t *msg,
 }
 
 int _mpc_lowcomm_ib_buffered_prepare_msg(sctk_rail_info_t *rail,
-                                         sctk_ib_qp_t *remote,
+                                         _mpc_lowcomm_ib_qp_t *remote,
                                          mpc_lowcomm_ptp_message_t *msg,
                                          size_t size)
 {
-	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+	_mpc_lowcomm_ib_rail_info_t *rail_ib = &rail->network.ib;
 
 	/* Maximum size for an eager buffer */
 	size = size - sizeof(mpc_lowcomm_ptp_message_body_t);
@@ -132,7 +132,7 @@ int _mpc_lowcomm_ib_buffered_prepare_msg(sctk_rail_info_t *rail,
 
 		/* Recalculate size and send */
 		_mpc_lowcomm_ib_ibuf_prepare(remote, ibuf, payload_size + sizeof(_mpc_lowcomm_ib_buffered_t) );
-		sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
+		_mpc_lowcomm_ib_qp_send_ibuf(rail_ib, remote, ibuf);
 
 		buffer_index++;
 		already_sent += payload_size;
@@ -235,7 +235,7 @@ static void __buffered_copy_msg(mpc_lowcomm_ptp_message_content_to_copy_t *tmp)
 }
 
 static inline _mpc_lowcomm_ib_buffered_entry_t *__buffered_get_entry(sctk_rail_info_t *rail,
-                                                                     sctk_ib_qp_t *remote,
+                                                                     _mpc_lowcomm_ib_qp_t *remote,
                                                                      _mpc_lowcomm_ib_ibuf_t *ibuf)
 {
 	_mpc_lowcomm_ib_buffered_entry_t *entry        = NULL;
@@ -344,7 +344,7 @@ void _mpc_lowcomm_ib_buffered_poll_recv(sctk_rail_info_t *rail, _mpc_lowcomm_ib_
 	
 
     ib_assume(route_table);
-    sctk_ib_qp_t * remote = route_table->data.ib.remote;
+    _mpc_lowcomm_ib_qp_t * remote = route_table->data.ib.remote;
 
 	/* Get the entry */
 	_mpc_lowcomm_ib_buffered_entry_t *entry = __buffered_get_entry(rail, remote, ibuf);

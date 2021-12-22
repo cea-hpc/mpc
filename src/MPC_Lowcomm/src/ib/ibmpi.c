@@ -52,7 +52,7 @@
 volatile char *vps_reset = NULL;
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
-static char *sctk_ib_protocol_print(_mpc_lowcomm_ib_protocol_t prot)
+static char *_mpc_lowcomm_ib_protocol_print(_mpc_lowcomm_ib_protocol_t prot)
 {
 	switch(prot)
 	{
@@ -90,11 +90,11 @@ static char *sctk_ib_protocol_print(_mpc_lowcomm_ib_protocol_t prot)
 static void _mpc_lowcomm_ib_send_message(mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint)
 {
 	sctk_rail_info_t *   rail    = endpoint->rail;
-	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+	_mpc_lowcomm_ib_rail_info_t *rail_ib = &rail->network.ib;
 
 	LOAD_CONFIG(rail_ib);
 	_mpc_lowcomm_endpoint_info_ib_t *  route_data;
-	sctk_ib_qp_t *          remote;
+	_mpc_lowcomm_ib_qp_t *          remote;
 	_mpc_lowcomm_ib_ibuf_t *ibuf;
 	size_t size;
 
@@ -127,7 +127,7 @@ static void _mpc_lowcomm_ib_send_message(mpc_lowcomm_ptp_message_t *msg, _mpc_lo
 		}
 
 		/* Send message */
-		sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
+		_mpc_lowcomm_ib_qp_send_ibuf(rail_ib, remote, ibuf);
 		mpc_lowcomm_ptp_message_complete_and_free(msg);
 
 		/* Remote profiling */
@@ -155,7 +155,7 @@ buffered:
 	ibuf = _mpc_lowcomm_ib_rdma_rendezvous_prepare_req(rail, remote, msg, size);
 
 	/* Send message */
-	sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
+	_mpc_lowcomm_ib_qp_send_ibuf(rail_ib, remote, ibuf);
 	_mpc_lowcomm_ib_rdma_rendezvous_prepare_send_msg(msg, size);
 exit:
 	{}
@@ -187,7 +187,7 @@ _mpc_lowcomm_endpoint_t *sctk_on_demand_connection_ib(struct sctk_rail_info_s *r
 		} while(state != _MPC_LOWCOMM_ENDPOINT_DECONNECTED && state != _MPC_LOWCOMM_ENDPOINT_CONNECTED && state != _MPC_LOWCOMM_ENDPOINT_RECONNECTING);
 	}
 	/* We send the request using the signalization rail */
-	tmp = sctk_ib_cm_on_demand_request_monitor(rail, dest);
+	tmp = _mpc_lowcomm_ib_cm_on_demand_request_monitor(rail, dest);
 	assume(tmp);
 
 	/* If route not connected, so we wait for until it is connected */
@@ -206,7 +206,7 @@ _mpc_lowcomm_endpoint_t *sctk_on_demand_connection_ib(struct sctk_rail_info_s *r
 
 int sctk_network_poll_send_ibuf(sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *ibuf)
 {
-	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+	_mpc_lowcomm_ib_rail_info_t *rail_ib = &rail->network.ib;
 	int release_ibuf             = 1;
 
 	/* Switch on the protocol of the received message */
@@ -242,7 +242,7 @@ int sctk_network_poll_send_ibuf(sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *
 
 	if(release_ibuf)
 	{
-		/* sctk_ib_qp_release_entry(&rail->network.ib, ibuf->remote); */
+		/* _mpc_lowcomm_ib_qp_release_entry(&rail->network.ib, ibuf->remote); */
 		_mpc_lowcomm_ib_ibuf_release(rail_ib, ibuf, 1);
 	}
 	else
@@ -260,13 +260,13 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *
 	const struct ibv_wc wc = ibuf->wc;
 
 	mpc_common_nodebug("[%d] Recv ibuf:%p", rail->rail_number, ibuf);
-	mpc_common_nodebug("Protocol received: %s", sctk_ib_protocol_print(protocol) );
+	mpc_common_nodebug("Protocol received: %s", _mpc_lowcomm_ib_protocol_print(protocol) );
 
 	/* First we check if the message has an immediate data */
 	if(wc.wc_flags == IBV_WC_WITH_IMM)
 	{
-		sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-		sctk_ib_qp_t *       remote  = sctk_ib_qp_ht_find(rail_ib, wc.qp_num);
+		_mpc_lowcomm_ib_rail_info_t *rail_ib = &rail->network.ib;
+		_mpc_lowcomm_ib_qp_t *       remote  = _mpc_lowcomm_ib_qp_ht_find(rail_ib, wc.qp_num);
 
 		if(wc.imm_data & IMM_DATA_RDMA_PIGGYBACK)
 		{
@@ -318,7 +318,7 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *
 
 	if(release_ibuf)
 	{
-		/* sctk_ib_qp_release_entry(&rail->network.ib, ibuf->remote); */
+		/* _mpc_lowcomm_ib_qp_release_entry(&rail->network.ib, ibuf->remote); */
 		_mpc_lowcomm_ib_ibuf_release(&rail->network.ib, ibuf, 1);
 	}
 	else
@@ -374,7 +374,7 @@ static int sctk_network_poll_recv(sctk_rail_info_t *rail, struct ibv_wc *wc)
 
 static int sctk_network_poll_send(sctk_rail_info_t *rail, struct ibv_wc *wc)
 {
-	sctk_ib_rail_info_t *   rail_ib = &rail->network.ib;
+	_mpc_lowcomm_ib_rail_info_t *   rail_ib = &rail->network.ib;
 	_mpc_lowcomm_ib_ibuf_t *ibuf    = NULL;
 
 	ibuf = ( _mpc_lowcomm_ib_ibuf_t * )
@@ -396,7 +396,7 @@ static int sctk_network_poll_send(sctk_rail_info_t *rail, struct ibv_wc *wc)
 		if(ibuf->send_imm_data & IMM_DATA_RDMA_PIGGYBACK)
 		{
 			int current_pending;
-			current_pending = sctk_ib_qp_fetch_and_sub_pending_data(ibuf->remote, ibuf);
+			current_pending = _mpc_lowcomm_ib_qp_fetch_and_sub_pending_data(ibuf->remote, ibuf);
 			_mpc_lowcomm_ib_ibuf_rdma_max_pending_data_update(ibuf->remote,
 			                                                  current_pending);
 
@@ -428,7 +428,7 @@ static int sctk_network_poll_send(sctk_rail_info_t *rail, struct ibv_wc *wc)
 
 	/* Decrease the number of pending requests */
 	int current_pending;
-	current_pending = sctk_ib_qp_fetch_and_sub_pending_data(ibuf->remote, ibuf);
+	current_pending = _mpc_lowcomm_ib_qp_fetch_and_sub_pending_data(ibuf->remote, ibuf);
 	_mpc_lowcomm_ib_ibuf_rdma_max_pending_data_update(ibuf->remote,
 	                                                  current_pending);
 
@@ -454,7 +454,7 @@ static int sctk_network_poll_send(sctk_rail_info_t *rail, struct ibv_wc *wc)
 	}
 }
 
-static inline void __check_wc(struct sctk_ib_rail_info_s *rail_ib, struct ibv_wc wc)
+static inline void __check_wc(struct _mpc_lowcomm_ib_rail_info_s *rail_ib, struct ibv_wc wc)
 {
 	struct _mpc_lowcomm_config_struct_net_driver_infiniband *config = (rail_ib)->config;
 	struct _mpc_lowcomm_ib_ibuf_s *ibuf;
@@ -502,10 +502,10 @@ static inline void __check_wc(struct sctk_ib_rail_info_s *rail_ib, struct ibv_wc
 #define WC_COUNT    32
 static inline void __poll_cq(sctk_rail_info_t *rail,
                              struct ibv_cq *cq,
-                             struct sctk_ib_polling_s *poll,
+                             struct _mpc_lowcomm_ib_polling_s *poll,
                              int (*ptr_func)(sctk_rail_info_t *rail, struct ibv_wc *) )
 {
-	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+	_mpc_lowcomm_ib_rail_info_t *rail_ib = &rail->network.ib;
 	struct ibv_wc        wc[WC_COUNT];
 	int res = 0;
 	int i;
@@ -535,9 +535,9 @@ mpc_common_spinlock_t __cq_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 #define POLL_CQ_CONCURENCY 4
 
-static inline void __poll_send(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
+static inline void __poll_send(sctk_rail_info_t *rail, _mpc_lowcomm_ib_polling_t *poll)
 {
-	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+	_mpc_lowcomm_ib_rail_info_t *rail_ib = &rail->network.ib;
 
 	LOAD_DEVICE(rail_ib);
 	LOAD_CONFIG(rail_ib);
@@ -555,9 +555,9 @@ static inline void __poll_send(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
     OPA_decr_int(&max_cq_poll);
 }
 
-static inline void __poll_recv(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
+static inline void __poll_recv(sctk_rail_info_t *rail, _mpc_lowcomm_ib_polling_t *poll)
 {
-	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+	_mpc_lowcomm_ib_rail_info_t *rail_ib = &rail->network.ib;
 
 	LOAD_DEVICE(rail_ib);
 	LOAD_CONFIG(rail_ib);
@@ -579,9 +579,9 @@ static inline void __poll_recv(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
 
 }
 
-static inline void __poll_all_cq(sctk_rail_info_t *rail, sctk_ib_polling_t *poll)
+static inline void __poll_all_cq(sctk_rail_info_t *rail, _mpc_lowcomm_ib_polling_t *poll)
 {
-	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+	_mpc_lowcomm_ib_rail_info_t *rail_ib = &rail->network.ib;
 
 	__poll_send(rail, poll);
 	__poll_recv(rail, poll);
@@ -590,7 +590,7 @@ static inline void __poll_all_cq(sctk_rail_info_t *rail, sctk_ib_polling_t *poll
 
 static void _mpc_lowcomm_ib_receive_message(__UNUSED__ mpc_lowcomm_ptp_message_t *msg, __UNUSED__ sctk_rail_info_t *rail)
 {
-    struct sctk_ib_polling_s poll;
+    struct _mpc_lowcomm_ib_polling_s poll;
 
 	POLL_INIT(&poll);
 
@@ -606,9 +606,9 @@ static void _mpc_lowcomm_ib_receive_message(__UNUSED__ mpc_lowcomm_ptp_message_t
 /* WARNING: This function can be called with dest == mpc_common_get_process_rank() */
 static void _mpc_lowcomm_ib_notify_perform(__UNUSED__ mpc_lowcomm_peer_uid_t remote_process, __UNUSED__ int remote_task_id, __UNUSED__ int polling_task_id, __UNUSED__ int blocking, sctk_rail_info_t *rail)
 {
-	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+	_mpc_lowcomm_ib_rail_info_t *rail_ib = &rail->network.ib;
 
-	struct sctk_ib_polling_s poll;
+	struct _mpc_lowcomm_ib_polling_s poll;
 
 	int ret;
 
@@ -647,10 +647,10 @@ __thread int idle_poll_all  = 0;
 __thread int idle_poll_freq = 100;
 static void _mpc_lowcomm_ib_notify_idle(sctk_rail_info_t *rail)
 {
-	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+	_mpc_lowcomm_ib_rail_info_t *rail_ib = &rail->network.ib;
 
 
-	struct sctk_ib_polling_s poll;
+	struct _mpc_lowcomm_ib_polling_s poll;
 
 	if(rail->state != SCTK_RAIL_ST_ENABLED)
 	{
@@ -716,9 +716,9 @@ static void _mpc_lowcomm_ib_notify_idle(sctk_rail_info_t *rail)
 
 static void _mpc_lowcomm_ib_notify_anysource(int polling_task_id, __UNUSED__ int blocking, sctk_rail_info_t *rail)
 {
-	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+	_mpc_lowcomm_ib_rail_info_t *rail_ib = &rail->network.ib;
 
-	struct sctk_ib_polling_s poll;
+	struct _mpc_lowcomm_ib_polling_s poll;
 
 	{
 		int ret;
@@ -752,13 +752,13 @@ static void _mpc_lowcomm_ib_notify_anysource(int polling_task_id, __UNUSED__ int
 
 static void sctk_network_connection_to_ib(int from, int to, sctk_rail_info_t *rail)
 {
-	sctk_ib_cm_connect_to(from, to, rail);
+	_mpc_lowcomm_ib_cm_connect_to(from, to, rail);
 }
 
 static void
 sctk_network_connection_from_ib(int from, int to, sctk_rail_info_t *rail)
 {
-	sctk_ib_cm_connect_from(from, to, rail);
+	_mpc_lowcomm_ib_cm_connect_from(from, to, rail);
 }
 
 int sctk_send_message_from_network_mpi_ib(mpc_lowcomm_ptp_message_t *msg)
@@ -779,7 +779,7 @@ int sctk_send_message_from_network_mpi_ib(mpc_lowcomm_ptp_message_t *msg)
 void sctk_connect_on_demand_mpi_ib(struct sctk_rail_info_s *rail, mpc_lowcomm_peer_uid_t dest)
 {
 	//sctk_on_demand_connection_ib(rail, dest);
-    sctk_ib_cm_on_demand_request_monitor(rail, dest);
+    _mpc_lowcomm_ib_cm_on_demand_request_monitor(rail, dest);
 
 	/* add_dynamic_route() is not necessary here, as its is done
 	 * by the IB handshake protocol deeply in the function above */
@@ -787,13 +787,13 @@ void sctk_connect_on_demand_mpi_ib(struct sctk_rail_info_s *rail, mpc_lowcomm_pe
 
 void sctk_network_initialize_leader_task_mpi_ib(sctk_rail_info_t *rail)
 {
-	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+	_mpc_lowcomm_ib_rail_info_t *rail_ib = &rail->network.ib;
 
 	/* Fill SRQ with buffers */
 	_mpc_lowcomm_ib_ibuf_srq_post(rail_ib);
 
 	/* Initialize Async thread */
-	sctk_ib_async_init(rail_ib->rail);
+	_mpc_lowcomm_ib_async_init(rail_ib->rail);
 
 	/* Initialize collaborative polling */
 	_mpc_lowcomm_ib_cp_ctx_init(rail_ib);
@@ -824,7 +824,7 @@ void sctk_network_memory_free_hook_ib(void *ptr, size_t size)
 
 /* Pinning */
 
-void sctk_ib_pin_region(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list, void *addr, size_t size)
+void _mpc_lowcomm_ib_pin_region(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list, void *addr, size_t size)
 {
 	/* Fill entry */
 	list->rail_id = rail->rail_number;
@@ -835,7 +835,7 @@ void sctk_ib_pin_region(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_
 	memcpy(&list->pin.ib.mr, list->pin.ib.p_entry->mr, sizeof(struct ibv_mr) );
 }
 
-void sctk_ib_unpin_region(__UNUSED__ struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list)
+void _mpc_lowcomm_ib_unpin_region(__UNUSED__ struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list)
 {
 	mpc_common_nodebug("Unpin %p at %p size %ld releaseon %d", list->pin.ib.p_entry, list->pin.ib.p_entry->addr, list->pin.ib.p_entry->size, list->pin.ib.p_entry->free_on_relax);
 
@@ -848,15 +848,15 @@ void sctk_ib_unpin_region(__UNUSED__ struct sctk_rail_info_s *rail, struct sctk_
 void sctk_network_finalize_mpi_ib(sctk_rail_info_t *rail)
 {
 	sctk_network_set_ib_unused();
-	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+	_mpc_lowcomm_ib_rail_info_t *rail_ib = &rail->network.ib;
 
 	LOAD_DEVICE(rail_ib);
 
 	/* Clear the QPs                                              */
-	sctk_ib_qp_free_all(rail_ib);
+	_mpc_lowcomm_ib_qp_free_all(rail_ib);
 
 	/* Stop the async event polling thread                        */
-	sctk_ib_async_finalize(rail);
+	_mpc_lowcomm_ib_async_finalize(rail);
 
 	/* collaborative polling shutdown (from leader_initialize)    */
 	_mpc_lowcomm_ib_cp_ctx_finalize(rail_ib);
@@ -867,22 +867,22 @@ void sctk_network_finalize_mpi_ib(sctk_rail_info_t *rail)
 	/* - Flush the eager entries (_mpc_lowcomm_ib_eager_init)             */
 	_mpc_lowcomm_ib_eager_finalize(rail_ib);
 
-	/* - Destroy the Shared Receive Queue (sctk_ib_srq_init)      */
-	sctk_ib_srq_free(rail_ib);
+	/* - Destroy the Shared Receive Queue (_mpc_lowcomm_ib_srq_init)      */
+	_mpc_lowcomm_ib_srq_free(rail_ib);
 
-	/* - Free completion queues (send & recv) sctk_ib_cq_init)    */
-	sctk_ib_cq_free(device->send_cq); device->send_cq = NULL;
-	sctk_ib_cq_free(device->recv_cq); device->recv_cq = NULL;
+	/* - Free completion queues (send & recv) _mpc_lowcomm_ib_cq_init)    */
+	_mpc_lowcomm_ib_cq_free(device->send_cq); device->send_cq = NULL;
+	_mpc_lowcomm_ib_cq_free(device->recv_cq); device->recv_cq = NULL;
 
-	/* - Free the protected domain (sctk_ib_pd_init)              */
-	sctk_ib_pd_free(device);
+	/* - Free the protected domain (_mpc_lowcomm_ib_pd_init)              */
+	_mpc_lowcomm_ib_pd_free(device);
 
 	/* - Free MMU */
 	_mpc_lowcomm_ib_mmu_release();
 
-	/* - unload IB device (sctk_ib_device_open)                   */
-	/* - close IB device struct (sctk_ib_device_init)             */
-	sctk_ib_device_close(&rail->network.ib);
+	/* - unload IB device (_mpc_lowcomm_ib_device_open)                   */
+	/* - close IB device struct (_mpc_lowcomm_ib_device_init)             */
+	_mpc_lowcomm_ib_device_close(&rail->network.ib);
 
 
 	memset( (void *)vps_reset, 0, sizeof(char) * mpc_topology_get_pu_count() );
@@ -912,37 +912,37 @@ void sctk_network_init_mpi_ib(sctk_rail_info_t *rail)
 	sctk_rail_init_route(rail, rail_config->topology, NULL);
 
 	/* Infiniband Init */
-	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-	memset(rail_ib, 0, sizeof(sctk_ib_rail_info_t) );
+	_mpc_lowcomm_ib_rail_info_t *rail_ib = &rail->network.ib;
+	memset(rail_ib, 0, sizeof(_mpc_lowcomm_ib_rail_info_t) );
 	rail_ib->rail    = rail;
 	rail_ib->rail_nb = rail->rail_number;
 
 	/* Profiler init */
-	sctk_ib_device_t *       device;
+	_mpc_lowcomm_ib_device_t *       device;
 	struct ibv_srq_init_attr srq_attr;
 
 	/* Open config */
-	sctk_ib_config_init(rail_ib, "MPI");
+	_mpc_lowcomm_ib_config_init(rail_ib, "MPI");
 
 	/* Open device */
-	device = sctk_ib_device_init(rail_ib);
+	device = _mpc_lowcomm_ib_device_init(rail_ib);
 
 	/* Automatically open the closest IB HCA */
-	sctk_ib_device_open(rail_ib, rail_config->device);
+	_mpc_lowcomm_ib_device_open(rail_ib, rail_config->device);
 
 	/* Init the MMU (done once) */
 	_mpc_lowcomm_ib_mmu_init();
 
 	/* Init Proctection Domain */
-	sctk_ib_pd_init(device);
+	_mpc_lowcomm_ib_pd_init(device);
 
 	/* Init Completion Queues */
-	device->send_cq = sctk_ib_cq_init(device, rail_ib->config, NULL);
-	device->recv_cq = sctk_ib_cq_init(device, rail_ib->config, NULL);
+	device->send_cq = _mpc_lowcomm_ib_cq_init(device, rail_ib->config, NULL);
+	device->recv_cq = _mpc_lowcomm_ib_cq_init(device, rail_ib->config, NULL);
 
 	/* Init SRQ */
-	srq_attr = sctk_ib_srq_init_attr(rail_ib);
-	sctk_ib_srq_init(rail_ib, &srq_attr);
+	srq_attr = _mpc_lowcomm_ib_srq_init_attr(rail_ib);
+	_mpc_lowcomm_ib_srq_init(rail_ib, &srq_attr);
 
 	/* Configure all channels */
 	_mpc_lowcomm_ib_eager_init(rail_ib);
@@ -950,7 +950,7 @@ void sctk_network_init_mpi_ib(sctk_rail_info_t *rail)
 	/* Print config */
 	if(mpc_common_get_flags()->verbosity >= 2)
 	{
-		sctk_ib_config_print(rail_ib);
+		_mpc_lowcomm_ib_config_print(rail_ib);
 	}
 
 	_mpc_lowcomm_ib_topology_init_rail(rail_ib);
@@ -972,7 +972,7 @@ void sctk_network_init_mpi_ib(sctk_rail_info_t *rail)
 	sctk_network_initialize_leader_task_mpi_ib(rail);
 
 
-	rail->control_message_handler = sctk_ib_cm_control_message_handler;
+	rail->control_message_handler = _mpc_lowcomm_ib_cm_control_message_handler;
 
 	rail->connect_to        = sctk_network_connection_to_ib;
 	rail->connect_from      = sctk_network_connection_from_ib;
@@ -988,8 +988,8 @@ void sctk_network_init_mpi_ib(sctk_rail_info_t *rail)
 	rail->notify_any_source_message = _mpc_lowcomm_ib_notify_anysource;
 
 	/* PIN */
-	rail->rail_pin_region   = sctk_ib_pin_region;
-	rail->rail_unpin_region = sctk_ib_unpin_region;
+	rail->rail_pin_region   = _mpc_lowcomm_ib_pin_region;
+	rail->rail_unpin_region = _mpc_lowcomm_ib_unpin_region;
 
 	/* RDMA */
 	rail->rdma_write = _mpc_lowcomm_ib_rdma_write;
@@ -1009,10 +1009,10 @@ void sctk_network_init_mpi_ib(sctk_rail_info_t *rail)
 	if(rail->requires_bootstrap_ring)
 	{
 		/* Bootstrap a ring on this network */
-		//sctk_ib_cm_connect_ring(rail);
+		//_mpc_lowcomm_ib_cm_connect_ring(rail);
 	}
 
 
-    sctk_ib_cm_monitor_register_callbacks(rail);
+    _mpc_lowcomm_ib_cm_monitor_register_callbacks(rail);
 
 }

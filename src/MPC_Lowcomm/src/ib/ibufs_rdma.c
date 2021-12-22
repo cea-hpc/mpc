@@ -78,7 +78,7 @@ static mpc_common_rwlock_t   rdma_polling_lock = MPC_COMMON_SPIN_RWLOCK_INITIALI
  * Init the remote for the RDMA connection
  */
 //#warning "To reinit when disconnected"
-void _mpc_lowcomm_ib_ibuf_rdma_remote_init(sctk_ib_qp_t *remote)
+void _mpc_lowcomm_ib_ibuf_rdma_remote_init(_mpc_lowcomm_ib_qp_t *remote)
 {
 	_mpc_lowcomm_ib_ibuf_rdma_set_remote_state_rtr(remote, _MPC_LOWCOMM_ENDPOINT_DECONNECTED);
 	_mpc_lowcomm_ib_ibuf_rdma_set_remote_state_rts(remote, _MPC_LOWCOMM_ENDPOINT_DECONNECTED);
@@ -130,7 +130,7 @@ static inline void __init_rdma_slots(_mpc_lowcomm_ib_ibuf_region_t *region,
 	}
 }
 
-void __rdma_region_resize(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
+void __rdma_region_resize(struct _mpc_lowcomm_ib_rail_info_s *rail_ib, _mpc_lowcomm_ib_qp_t *remote,
                           _mpc_lowcomm_ib_ibuf_region_t *region, enum _mpc_lowcomm_ib_ibuf_channel_t channel, int nb_ibufs, int size_ibufs)
 {
 	void *ptr = NULL;
@@ -271,14 +271,14 @@ void __rdma_region_resize(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *rem
 		remote->rdma.pool->send_credit = nb_ibufs;
 		OPA_store_int(&remote->rdma.pool->busy_nb[REGION_SEND], 0);
 
-		sctk_ib_nodebug("RESIZING SEND channel initialized for remote %d (nb_ibufs=%d, size_ibufs=%d (send_credit:%d)",
+		_mpc_lowcomm_ib_nodebug("RESIZING SEND channel initialized for remote %d (nb_ibufs=%d, size_ibufs=%d (send_credit:%d)",
 		                remote->rank, nb_ibufs, size_ibufs, remote->rdma.pool->send_credit);
 	}
 	else
 	if(channel == (MPC_LOWCOMM_IB_RDMA_CHANNEL | MPC_LOWCOMM_IB_RECV_CHANNEL) )
 	/* RECV CHANNEL */
 	{
-		sctk_ib_nodebug("RESIZING RECV channel initialized for remote %d (nb_ibufs=%d, size_ibufs=%d)",
+		_mpc_lowcomm_ib_nodebug("RESIZING RECV channel initialized for remote %d (nb_ibufs=%d, size_ibufs=%d)",
 		                remote->rank, nb_ibufs, size_ibufs);
 
 		/* Add the entry to the pooling list */
@@ -293,7 +293,7 @@ void __rdma_region_resize(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *rem
 	                   region->tail, region->tail->index);
 }
 
-void __rdma_region_free(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
+void __rdma_region_free(struct _mpc_lowcomm_ib_rail_info_s *rail_ib, _mpc_lowcomm_ib_qp_t *remote,
                         _mpc_lowcomm_ib_ibuf_region_t *region, enum _mpc_lowcomm_ib_ibuf_channel_t channel)
 {
 	LOAD_DEVICE(rail_ib);
@@ -359,7 +359,7 @@ void __rdma_region_free(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remot
 /*
  * Reinitialize a RDMA region with a different number of ibufs and a different size of ibufs
  */
-void _mpc_lowcomm_ib_ibuf_rdma_region_reinit(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
+void _mpc_lowcomm_ib_ibuf_rdma_region_reinit(struct _mpc_lowcomm_ib_rail_info_s *rail_ib, _mpc_lowcomm_ib_qp_t *remote,
                                              _mpc_lowcomm_ib_ibuf_region_t *region, enum _mpc_lowcomm_ib_ibuf_channel_t channel, int nb_ibufs, int size_ibufs)
 {
 	/* If we need to free the region */
@@ -379,7 +379,7 @@ void _mpc_lowcomm_ib_ibuf_rdma_region_reinit(struct sctk_ib_rail_info_s *rail_ib
 /*
  * Initialize a new RDMA buffer region
  */
-void _mpc_lowcomm_ib_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
+void _mpc_lowcomm_ib_ibuf_rdma_region_init(struct _mpc_lowcomm_ib_rail_info_s *rail_ib, _mpc_lowcomm_ib_qp_t *remote,
                                            _mpc_lowcomm_ib_ibuf_region_t *region, enum _mpc_lowcomm_ib_ibuf_channel_t channel, int nb_ibufs, int size_ibufs)
 {
 	void *ptr = NULL;
@@ -436,14 +436,14 @@ void _mpc_lowcomm_ib_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib, 
 		remote->rdma.pool->send_credit = nb_ibufs;
 		OPA_store_int(&remote->rdma.pool->busy_nb[REGION_SEND], 0);
 
-		sctk_ib_nodebug("SEND channel initialized for remote %d (nb_ibufs=%d, size_ibufs=%d (send_credit:%d)",
+		_mpc_lowcomm_ib_nodebug("SEND channel initialized for remote %d (nb_ibufs=%d, size_ibufs=%d (send_credit:%d)",
 		                remote->rank, nb_ibufs, size_ibufs, remote->rdma.pool->send_credit);
 	}
 	else
 	if(channel == (MPC_LOWCOMM_IB_RDMA_CHANNEL | MPC_LOWCOMM_IB_RECV_CHANNEL) )
 	/* RECV CHANNEL */
 	{
-		sctk_ib_nodebug("RECV channel initialized for remote %d (nb_ibufs=%d, size_ibufs=%d",
+		_mpc_lowcomm_ib_nodebug("RECV channel initialized for remote %d (nb_ibufs=%d, size_ibufs=%d",
 		                remote->rank, nb_ibufs, size_ibufs);
 
 		/* Add the entry to the pooling list */
@@ -475,7 +475,7 @@ void _mpc_lowcomm_ib_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib, 
 /*
  * Create a region of ibufs for RDMA
  */
-_mpc_lowcomm_ib_ibuf_rdma_pool_t *_mpc_lowcomm_ib_ibuf_rdma_pool_init(sctk_ib_qp_t *remote)
+_mpc_lowcomm_ib_ibuf_rdma_pool_t *_mpc_lowcomm_ib_ibuf_rdma_pool_init(_mpc_lowcomm_ib_qp_t *remote)
 {
 	_mpc_lowcomm_ib_ibuf_rdma_pool_t *pool;
 
@@ -507,7 +507,7 @@ _mpc_lowcomm_ib_ibuf_rdma_pool_t *_mpc_lowcomm_ib_ibuf_rdma_pool_init(sctk_ib_qp
 /*
  * Delete a RDMA poll from a remote
  */
-void _mpc_lowcomm_ib_ibuf_rdma_pool_free(__UNUSED__ struct sctk_ib_rail_info_s *rail_ib, __UNUSED__ sctk_ib_qp_t *remote)
+void _mpc_lowcomm_ib_ibuf_rdma_pool_free(__UNUSED__ struct _mpc_lowcomm_ib_rail_info_s *rail_ib, __UNUSED__ _mpc_lowcomm_ib_qp_t *remote)
 {
 /* Needs to be re-written */
 #if 0
@@ -521,7 +521,7 @@ void _mpc_lowcomm_ib_ibuf_rdma_pool_free(__UNUSED__ struct sctk_ib_rail_info_s *
 		--device->eager_rdma_connections;
 		mpc_common_spinlock_unlock(&rdma_lock);
 
-		sctk_ib_debug("Freeing RDMA buffers (connections: %d)", device->eager_rdma_connections);
+		_mpc_lowcomm_ib_debug("Freeing RDMA buffers (connections: %d)", device->eager_rdma_connections);
 
 		/* Free regions for send and recv */
 		__rdma_region_free(rail_ib, &pool->region[REGION_SEND]);
@@ -535,7 +535,7 @@ void _mpc_lowcomm_ib_ibuf_rdma_pool_free(__UNUSED__ struct sctk_ib_rail_info_s *
 		free(remote->rdma.pool);
 		remote->rdma.pool = NULL;
 
-		sctk_ib_debug("[rank:%d] Free RDMA buffers", remote->rank);
+		_mpc_lowcomm_ib_debug("[rank:%d] Free RDMA buffers", remote->rank);
 	}
 	else
 	{
@@ -547,7 +547,7 @@ void _mpc_lowcomm_ib_ibuf_rdma_pool_free(__UNUSED__ struct sctk_ib_rail_info_s *
 /*
  * Pick a RDMA buffer from the RDMA channel
  */
-inline _mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_rdma_pick(sctk_ib_qp_t *remote)
+inline _mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_rdma_pick(_mpc_lowcomm_ib_qp_t *remote)
 {
 	_mpc_lowcomm_ib_ibuf_t *tail;
 	int          piggyback;
@@ -661,7 +661,7 @@ void _mpc_lowcomm_ib_ibuf_rdma_set_tail_flag(_mpc_lowcomm_ib_ibuf_t *ibuf, size_
 /*
  * Handle a message received
  */
-static inline void __poll_ibuf(sctk_ib_rail_info_t *rail_ib,
+static inline void __poll_ibuf(_mpc_lowcomm_ib_rail_info_t *rail_ib,
                                _mpc_lowcomm_ib_ibuf_t *ibuf)
 {
 	sctk_rail_info_t *rail = rail_ib->rail;
@@ -709,7 +709,7 @@ static inline void __poll_ibuf(sctk_ib_rail_info_t *rail_ib,
 /*
  * Walk on each remotes
  */
-void _mpc_lowcomm_ib_ibuf_rdma_eager_walk_remote(sctk_ib_rail_info_t *rail, int(func) (sctk_ib_rail_info_t * rail, sctk_ib_qp_t * remote), int *ret)
+void _mpc_lowcomm_ib_ibuf_rdma_eager_walk_remote(_mpc_lowcomm_ib_rail_info_t *rail, int(func) (_mpc_lowcomm_ib_rail_info_t * rail, _mpc_lowcomm_ib_qp_t * remote), int *ret)
 {
 	_mpc_lowcomm_ib_ibuf_rdma_pool_t *pool, *tmp_pool;
 	int tmp_ret;
@@ -764,7 +764,7 @@ void _mpc_lowcomm_ib_ibuf_rdma_eager_walk_remote(sctk_ib_rail_info_t *rail, int(
  *  -1 if the lock had not been taken
  *  0 if no message has been found
  */
-static inline int __eager_poll_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote)
+static inline int __eager_poll_remote(_mpc_lowcomm_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_qp_t *remote)
 {
 	/* We return if the remote is not connected to the RDMA channel */
 	_mpc_lowcomm_endpoint_state_t state = _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rtr(remote);
@@ -867,7 +867,7 @@ retry:
  *  -1 if the lock had not been taken
  *  0 if no message has been found
  */
-int _mpc_lowcomm_ib_ibuf_rdma_eager_poll_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote)
+int _mpc_lowcomm_ib_ibuf_rdma_eager_poll_remote(_mpc_lowcomm_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_qp_t *remote)
 {
 	/* We return if the remote is not connected to the RDMA channel */
 	_mpc_lowcomm_endpoint_state_t state = _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rtr(remote);
@@ -893,9 +893,9 @@ int _mpc_lowcomm_ib_ibuf_rdma_eager_poll_remote(sctk_ib_rail_info_t *rail_ib, sc
 }
 
 /* / ! \ This function requires the region to be previously locked !! */
-static inline void __check_piggyback(sctk_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_ibuf_region_t *region)
+static inline void __check_piggyback(_mpc_lowcomm_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_ibuf_region_t *region)
 {
-	sctk_ib_qp_t *remote = region->remote;
+	_mpc_lowcomm_ib_qp_t *remote = region->remote;
 	int           ret;
 	int           piggyback = 0;
 	_mpc_lowcomm_ib_ibuf_t * ibuf;
@@ -949,7 +949,7 @@ static inline void __check_piggyback(sctk_ib_rail_info_t *rail_ib, _mpc_lowcomm_
 
 		/* Send the piggyback. This event will generate an event to
 		 * the CQ */
-		ret = sctk_ib_qp_send_ibuf(rail_ib, remote, tail);
+		ret = _mpc_lowcomm_ib_qp_send_ibuf(rail_ib, remote, tail);
 		assume(ret == 1);
 	}
 	else
@@ -969,10 +969,10 @@ static inline void __check_piggyback(sctk_ib_rail_info_t *rail_ib, _mpc_lowcomm_
 /*
  * Release a buffer from the RDMA channel
  */
-void _mpc_lowcomm_ib_ibuf_rdma_release(sctk_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_ibuf_t *ibuf)
+void _mpc_lowcomm_ib_ibuf_rdma_release(_mpc_lowcomm_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_ibuf_t *ibuf)
 {
 	_mpc_lowcomm_ib_ibuf_region_t *region = ibuf->region;
-	sctk_ib_qp_t *      remote = ibuf->region->remote;
+	_mpc_lowcomm_ib_qp_t *      remote = ibuf->region->remote;
 
 
 	if(IBUF_GET_CHANNEL(ibuf) & MPC_LOWCOMM_IB_RECV_CHANNEL)
@@ -1057,7 +1057,7 @@ void _mpc_lowcomm_ib_ibuf_rdma_release(sctk_ib_rail_info_t *rail_ib, _mpc_lowcom
  * Check if a remote can be connected using RDMA.
  * The number of connections is automatically increased
  */
-int _mpc_lowcomm_ib_ibuf_rdma_is_connectable(sctk_ib_rail_info_t *rail_ib)
+int _mpc_lowcomm_ib_ibuf_rdma_is_connectable(_mpc_lowcomm_ib_rail_info_t *rail_ib)
 {
 	LOAD_CONFIG(rail_ib);
 	LOAD_DEVICE(rail_ib);
@@ -1065,7 +1065,7 @@ int _mpc_lowcomm_ib_ibuf_rdma_is_connectable(sctk_ib_rail_info_t *rail_ib)
 
 	/* Check if the memory used is correct */
 #if 0
-	if( (sctk_ib_prof_get_mem_used() + entry_nb * entry_size) > IBV_MEM_USED_LIMIT)
+	if( (_mpc_lowcomm_ib_prof_get_mem_used() + entry_nb * entry_size) > IBV_MEM_USED_LIMIT)
 	{
 		mpc_common_nodebug("Cannot connect with RDMA because max memory used reached");
 		return 0;
@@ -1085,7 +1085,7 @@ int _mpc_lowcomm_ib_ibuf_rdma_is_connectable(sctk_ib_rail_info_t *rail_ib)
 	return ret;
 }
 
-void _mpc_lowcomm_ib_ibuf_rdma_connexion_cancel(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote)
+void _mpc_lowcomm_ib_ibuf_rdma_connexion_cancel(_mpc_lowcomm_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_qp_t *remote)
 {
 	LOAD_DEVICE(rail_ib);
 
@@ -1101,7 +1101,7 @@ void _mpc_lowcomm_ib_ibuf_rdma_connexion_cancel(sctk_ib_rail_info_t *rail_ib, sc
 	OPA_incr_int(&remote->rdma.cancel_nb);
 	_mpc_lowcomm_ib_ibuf_rdma_set_remote_state_rts(remote, _MPC_LOWCOMM_ENDPOINT_DECONNECTED);
 
-	sctk_ib_debug("[%d] OD QP RDMA connexion canceled to %d (rdma_connections:%d rdma_cancel:%d)",
+	_mpc_lowcomm_ib_debug("[%d] OD QP RDMA connexion canceled to %d (rdma_connections:%d rdma_cancel:%d)",
 	              rail_ib->rail->rail_number, remote->rank, device->eager_rdma_connections, remote->rdma.cancel_nb);
 }
 
@@ -1109,7 +1109,7 @@ void _mpc_lowcomm_ib_ibuf_rdma_connexion_cancel(sctk_ib_rail_info_t *rail_ib, sc
  * Return the size allocated by the RDMA channel for a
  * remote and for a specific region (send or recv)
  */
-static inline size_t __get_region_size(sctk_ib_qp_t *remote, int reg)
+static inline size_t __get_region_size(_mpc_lowcomm_ib_qp_t *remote, int reg)
 {
 	_mpc_lowcomm_ib_ibuf_region_t *region = NULL;
 
@@ -1151,7 +1151,7 @@ static inline size_t __get_region_size(sctk_ib_qp_t *remote, int reg)
  * remote (This function cummulate the size allocated
  * for the send AND for the receive regions)
  */
-size_t _mpc_lowcomm_ib_ibuf_rdma_region_size_get(sctk_ib_qp_t *remote)
+size_t _mpc_lowcomm_ib_ibuf_rdma_region_size_get(_mpc_lowcomm_ib_qp_t *remote)
 {
 	size_t sum = 0;
 
@@ -1164,7 +1164,7 @@ size_t _mpc_lowcomm_ib_ibuf_rdma_region_size_get(sctk_ib_qp_t *remote)
  * Update the maximum number of pending requests.
  * Should be called just before calling incr_requests_nb
  */
-void _mpc_lowcomm_ib_ibuf_rdma_max_pending_data_update(sctk_ib_qp_t *remote, int current_pending)
+void _mpc_lowcomm_ib_ibuf_rdma_max_pending_data_update(_mpc_lowcomm_ib_qp_t *remote, int current_pending)
 {
 	mpc_common_spinlock_lock(&remote->rdma.pending_data_lock);
 
@@ -1176,8 +1176,8 @@ void _mpc_lowcomm_ib_ibuf_rdma_max_pending_data_update(sctk_ib_qp_t *remote, int
 	mpc_common_spinlock_unlock(&remote->rdma.pending_data_lock);
 }
 
-static inline int __determine_config(sctk_ib_rail_info_t *rail_ib,
-                                           sctk_ib_qp_t *remote, unsigned int *determined_size, int *determined_nb, char resizing)
+static inline int __determine_config(_mpc_lowcomm_ib_rail_info_t *rail_ib,
+                                           _mpc_lowcomm_ib_qp_t *remote, unsigned int *determined_size, int *determined_nb, char resizing)
 {
 	LOAD_CONFIG(rail_ib);
 	/* Compute the mean size of messages */
@@ -1294,7 +1294,7 @@ static inline int __determine_config(sctk_ib_rail_info_t *rail_ib,
 	return 1;
 }
 
-void _mpc_lowcomm_ib_ibuf_rdma_remote_update(sctk_ib_qp_t *remote, size_t size)
+void _mpc_lowcomm_ib_ibuf_rdma_remote_update(_mpc_lowcomm_ib_qp_t *remote, size_t size)
 {
 	mpc_common_spinlock_lock(&remote->rdma.stats_lock);
 	size_t old_messages_size = remote->rdma.messages_size;
@@ -1315,7 +1315,7 @@ void _mpc_lowcomm_ib_ibuf_rdma_remote_update(sctk_ib_qp_t *remote, size_t size)
 /*
  * Check if we need to change the RDMA state of a remote
  */
-void _mpc_lowcomm_ib_ibuf_rdma_remote_check(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote)
+void _mpc_lowcomm_ib_ibuf_rdma_remote_check(_mpc_lowcomm_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_qp_t *remote)
 {
 	LOAD_CONFIG(rail_ib);
 
@@ -1338,7 +1338,7 @@ void _mpc_lowcomm_ib_ibuf_rdma_remote_check(sctk_ib_rail_info_t *rail_ib, sctk_i
 		{
 			/* Check if we can connect using RDMA. If == 1, only one thread can have an access to
 			 * this code's part */
-			if(sctk_ib_cm_on_demand_rdma_check_request(rail_ib->rail, remote) == 1)
+			if(_mpc_lowcomm_ib_cm_on_demand_rdma_check_request(rail_ib->rail, remote) == 1)
 			{
 				__determine_config(rail_ib, remote, &determined_size, &determined_nb, 0);
 
@@ -1346,7 +1346,7 @@ void _mpc_lowcomm_ib_ibuf_rdma_remote_check(sctk_ib_rail_info_t *rail_ib, sctk_i
 				                   determined_nb);
 
 				/* Sending the request. If the request has been sent, we reinit */
-				sctk_ib_cm_on_demand_rdma_request(rail_ib->rail, remote,
+				_mpc_lowcomm_ib_cm_on_demand_rdma_request(rail_ib->rail, remote,
 				                                  determined_size, determined_nb);
 			}
 		}
@@ -1403,8 +1403,8 @@ void _mpc_lowcomm_ib_ibuf_rdma_remote_check(sctk_ib_rail_info_t *rail_ib, sctk_i
  * Fill RDMA connection keys with the configuration of a send and receive region
  */
 void
-_mpc_lowcomm_ib_ibuf_rdma_fill_remote_addr(sctk_ib_qp_t *remote,
-                                sctk_ib_cm_rdma_connection_t *keys, int region)
+_mpc_lowcomm_ib_ibuf_rdma_fill_remote_addr(_mpc_lowcomm_ib_qp_t *remote,
+                                _mpc_lowcomm_ib_cm_rdma_connection_t *keys, int region)
 {
 	ib_assume(remote->rdma.pool);
 	keys->addr = remote->rdma.pool->region[region].buffer_addr;
@@ -1418,7 +1418,7 @@ _mpc_lowcomm_ib_ibuf_rdma_fill_remote_addr(sctk_ib_qp_t *remote,
  * Update a remote from the keys received by a peer. This function must be
  * called before sending any message to the RDMA channel
  */
-void _mpc_lowcomm_ib_ibuf_rdma_update_remote_addr(sctk_ib_qp_t *remote, sctk_ib_cm_rdma_connection_t *key, int region)
+void _mpc_lowcomm_ib_ibuf_rdma_update_remote_addr(_mpc_lowcomm_ib_qp_t *remote, _mpc_lowcomm_ib_cm_rdma_connection_t *key, int region)
 {
 	mpc_common_nodebug("REMOTE addr updated:: addr=%p rkey=%u (connected: %d)",
 	                   key->addr, key->rkey, key->connected);
@@ -1435,7 +1435,7 @@ void _mpc_lowcomm_ib_ibuf_rdma_update_remote_addr(sctk_ib_qp_t *remote, sctk_ib_
  * Return the RDMA eager ibufs limit for
  * sending a message
  */
-size_t _mpc_lowcomm_ib_ibuf_rdma_eager_limit_get(sctk_ib_qp_t *remote)
+size_t _mpc_lowcomm_ib_ibuf_rdma_eager_limit_get(_mpc_lowcomm_ib_qp_t *remote)
 {
 	return remote->rdma.pool->region[REGION_SEND].size_ibufs;
 }
@@ -1448,7 +1448,7 @@ size_t _mpc_lowcomm_ib_ibuf_rdma_eager_limit_get(sctk_ib_qp_t *remote)
  * Check if a remote is in a flushing state. If it is, it
  * sends a flush REQ to the process
  */
-int _mpc_lowcomm_ib_ibuf_rdma_flush_send(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote)
+int _mpc_lowcomm_ib_ibuf_rdma_flush_send(_mpc_lowcomm_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_qp_t *remote)
 {
 	/* Check if the RDMA is in flushing mode and if all messages
 	 * have be flushed to the network */
@@ -1466,11 +1466,11 @@ int _mpc_lowcomm_ib_ibuf_rdma_flush_send(sctk_ib_rail_info_t *rail_ib, sctk_ib_q
 
 			if(ret == _MPC_LOWCOMM_ENDPOINT_FLUSHING)
 			{
-				sctk_ib_debug("SEND DONE Trying to flush RDMA for for remote %d", remote->rank);
+				_mpc_lowcomm_ib_debug("SEND DONE Trying to flush RDMA for for remote %d", remote->rank);
 
 				/* All the requests have been flushed. We can now send the resizing request.
 				 * NOTE: we are sure that only one thread call the resizing request */
-				sctk_ib_nodebug("Sending a FLUSH message to remote %d", remote->rank);
+				_mpc_lowcomm_ib_nodebug("Sending a FLUSH message to remote %d", remote->rank);
 
 				/* Send the request. We need to lock in order to be sure that we do not
 				 * emit a resizing request before changing the size_slots and the size and
@@ -1479,7 +1479,7 @@ int _mpc_lowcomm_ib_ibuf_rdma_flush_send(sctk_ib_rail_info_t *rail_ib, sctk_ib_q
 				int nb         = remote->rdma.pool->resizing_request.send_keys.nb;
 				mpc_common_spinlock_unlock(&remote->rdma.flushing_lock);
 
-				sctk_ib_cm_resizing_rdma_request(rail_ib->rail, remote,
+				_mpc_lowcomm_ib_cm_resizing_rdma_request(rail_ib->rail, remote,
 				                                 size_ibufs, nb);
 				return 1;
 			}
@@ -1501,7 +1501,7 @@ int _mpc_lowcomm_ib_ibuf_rdma_flush_send(sctk_ib_rail_info_t *rail_ib, sctk_ib_q
  * Check if a remote is in a flushing state. If it is, it
  * sends a flush REQ to the process
  */
-int _mpc_lowcomm_ib_ibuf_rdma_check_flush_recv(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote)
+int _mpc_lowcomm_ib_ibuf_rdma_check_flush_recv(_mpc_lowcomm_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_qp_t *remote)
 {
 	/* Check if the RDMA is in flushing mode and if all messages
 	 * have be flushed to the network */
@@ -1525,7 +1525,7 @@ int _mpc_lowcomm_ib_ibuf_rdma_check_flush_recv(sctk_ib_rail_info_t *rail_ib, sct
 
 			if(ret == _MPC_LOWCOMM_ENDPOINT_FLUSHING)
 			{
-				sctk_ib_nodebug("RECV DONE Trying to flush RDMA for for remote %d", remote->rank);
+				_mpc_lowcomm_ib_nodebug("RECV DONE Trying to flush RDMA for for remote %d", remote->rank);
 
 				/* All the requests have been flushed. We can now send the resizing request.
 				 * NOTE: we are sure that only one thread call the resizing request */
@@ -1538,12 +1538,12 @@ int _mpc_lowcomm_ib_ibuf_rdma_check_flush_recv(sctk_ib_rail_info_t *rail_ib, sct
 				                                        remote->rdma.pool->resizing_request.recv_keys.size);
 
 				/* Fill the keys */
-				sctk_ib_cm_rdma_connection_t *send_keys = &remote->rdma.pool->resizing_request.send_keys;
+				_mpc_lowcomm_ib_cm_rdma_connection_t *send_keys = &remote->rdma.pool->resizing_request.send_keys;
 				_mpc_lowcomm_ib_ibuf_rdma_fill_remote_addr(remote, send_keys, REGION_RECV);
 				send_keys->connected = 1;
 
-				sctk_ib_nodebug("Sending a FLUSH ACK message to remote %d", remote->rank);
-				sctk_ib_cm_resizing_rdma_ack(rail_ib->rail, remote, send_keys);
+				_mpc_lowcomm_ib_nodebug("Sending a FLUSH ACK message to remote %d", remote->rank);
+				_mpc_lowcomm_ib_cm_resizing_rdma_ack(rail_ib->rail, remote, send_keys);
 				return 1;
 			}
 		}
@@ -1556,11 +1556,11 @@ int _mpc_lowcomm_ib_ibuf_rdma_check_flush_recv(sctk_ib_rail_info_t *rail_ib, sct
 	return 0;
 }
 
-void _mpc_lowcomm_ib_ibuf_rdma_flush_recv(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote)
+void _mpc_lowcomm_ib_ibuf_rdma_flush_recv(_mpc_lowcomm_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_qp_t *remote)
 {
 	int ret = -1;
 
-	sctk_ib_nodebug("RECV Trying to flush RDMA for for remote %d", remote->rank);
+	_mpc_lowcomm_ib_nodebug("RECV Trying to flush RDMA for for remote %d", remote->rank);
 
 	/*
 	 * Flush the RDMA buffers.
@@ -1638,14 +1638,14 @@ static inline void __get_size_from_all_remotes(
 /*
  *  Normalize RDMA buffers
  */
-int _mpc_lowcomm_ib_ibuf_rdma_normalize(sctk_ib_rail_info_t *rail_ib, size_t mem_to_save)
+int _mpc_lowcomm_ib_ibuf_rdma_normalize(_mpc_lowcomm_ib_rail_info_t *rail_ib, size_t mem_to_save)
 {
 	size_t allocated_size;
 	int    regions_nb;
 	double average_size;
 	_mpc_lowcomm_ib_ibuf_region_t *  region;
 	_mpc_lowcomm_endpoint_state_t state;
-	sctk_ib_qp_t *        remote;
+	_mpc_lowcomm_ib_qp_t *        remote;
 
 	mpc_common_spinlock_read_lock(&rdma_region_list_lock);
 	__get_size_from_all_remotes(&allocated_size,
@@ -1689,7 +1689,7 @@ int _mpc_lowcomm_ib_ibuf_rdma_normalize(sctk_ib_rail_info_t *rail_ib, size_t mem
 						remote->rdma.pool->resizing_request.send_keys.size = 0;
 						mpc_common_spinlock_unlock(&remote->rdma.flushing_lock);
 
-						sctk_ib_debug("Resizing the RMDA buffer for remote %d", remote->rank);
+						_mpc_lowcomm_ib_debug("Resizing the RMDA buffer for remote %d", remote->rank);
 						_mpc_lowcomm_ib_ibuf_rdma_flush_send(rail_ib, remote);
 					}
 					else
@@ -1844,7 +1844,7 @@ static inline _mpc_lowcomm_ib_ibuf_region_t *__get_max_allocated_size(char *name
 /*
  *  Disconnect RDMA buffers
  */
-size_t _mpc_lowcomm_ib_ibuf_rdma_remote_disconnect(sctk_ib_rail_info_t *rail_ib)
+size_t _mpc_lowcomm_ib_ibuf_rdma_remote_disconnect(_mpc_lowcomm_ib_rail_info_t *rail_ib)
 {
 	size_t memory_used = (~0);
 	char   name[256]   = "";
@@ -1859,7 +1859,7 @@ size_t _mpc_lowcomm_ib_ibuf_rdma_remote_disconnect(sctk_ib_rail_info_t *rail_ib)
 	/* If we find a process to deconnect, we deconnect it */
 	if(region != NULL)
 	{
-		sctk_ib_qp_t *remote;
+		_mpc_lowcomm_ib_qp_t *remote;
 		mpc_common_nodebug("%s %d -> %.02f",
 		                   name, region->remote->rank, region->allocated_size);
 
@@ -1882,7 +1882,7 @@ size_t _mpc_lowcomm_ib_ibuf_rdma_remote_disconnect(sctk_ib_rail_info_t *rail_ib)
 				remote->rdma.pool->resizing_request.send_keys.size = 0;
 				mpc_common_spinlock_unlock(&remote->rdma.flushing_lock);
 
-				sctk_ib_debug("Resizing the RMDA buffer for remote %d", remote->rank);
+				_mpc_lowcomm_ib_debug("Resizing the RMDA buffer for remote %d", remote->rank);
 				_mpc_lowcomm_ib_ibuf_rdma_flush_send(rail_ib, remote);
 			}
 			else

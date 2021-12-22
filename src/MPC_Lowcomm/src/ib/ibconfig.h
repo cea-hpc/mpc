@@ -30,7 +30,7 @@
 
 /* Config Struct For Reference
 
-typedef struct sctk_ib_config_s
+typedef struct _mpc_lowcomm_ib_config_s
 {
   / Network name /
   char *network_name;
@@ -87,13 +87,13 @@ typedef struct sctk_ib_config_s
 
   / DEVICE /
   struct ibv_device_attr *device_attr;
-} sctk_ib_config_t;
+} _mpc_lowcomm_ib_config_t;
 
 */
 
-struct sctk_ib_rail_info_s;
+struct _mpc_lowcomm_ib_rail_info_s;
 
-void sctk_ib_config_init ( struct sctk_ib_rail_info_s *rail_ib, char *network_name );
-void sctk_ib_config_print ( struct sctk_ib_rail_info_s *rail_ib );
+void _mpc_lowcomm_ib_config_init ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib, char *network_name );
+void _mpc_lowcomm_ib_config_print ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib );
 
 #endif

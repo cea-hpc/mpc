@@ -41,10 +41,10 @@
 #define MPC_LOWCOMM_IB_MODULE_NAME "NONE"
 #endif
 
-void sctk_ib_toolkit_print_backtrace ( void );
+void _mpc_lowcomm_ib_toolkit_print_backtrace ( void );
 
 #ifdef MPC_LOWCOMM_IB_MODULE_DEBUG
-__UNUSED__ static void sctk_ib_debug ( const char *fmt, ... )
+__UNUSED__ static void _mpc_lowcomm_ib_debug ( const char *fmt, ... )
 {
 	va_list ap;
 	char buff[SMALL_BUFFER_SIZE];
@@ -68,28 +68,28 @@ __UNUSED__ static void sctk_ib_debug ( const char *fmt, ... )
 }
 #else
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)
-#define sctk_ib_debug(fmt,...) (void)(0)
+#define _mpc_lowcomm_ib_debug(fmt,...) (void)(0)
 #else
-static inline void sctk_ib_debug ( const char *fmt, ... )
+static inline void _mpc_lowcomm_ib_debug ( const char *fmt, ... )
 {
 }
 #endif
 #endif
 
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)
-#define sctk_ib_nodebug(fmt,...) (void)(0)
+#define _mpc_lowcomm_ib_nodebug(fmt,...) (void)(0)
 #else
-static inline void sctk_ib_nodebug ( const char *fmt, ... )
+static inline void _mpc_lowcomm_ib_nodebug ( const char *fmt, ... )
 {
 }
 #endif
-#define LOAD_RAIL(x) sctk_ib_rail_info_t *rail_ib = &(x)->network.ib;
+#define LOAD_RAIL(x) _mpc_lowcomm_ib_rail_info_t *rail_ib = &(x)->network.ib;
 #define LOAD_CONFIG(x) struct _mpc_lowcomm_config_struct_net_driver_infiniband *config = (x)->config;
 #define LOAD_MMU(x)    _mpc_lowcomm_ib_mmu_t* mmu = (x)->mmu;
-#define LOAD_DEVICE(x)    sctk_ib_device_t* device = (x)->device;
+#define LOAD_DEVICE(x)    _mpc_lowcomm_ib_device_t* device = (x)->device;
 #define LOAD_POOL(x)    _mpc_lowcomm_ib_ibuf_poll_t* pool = (x)->pool_buffers;
 #define LOAD_CP(x)    _mpc_lowcomm_ib_cp_ctx_t* cp = (x)->cp;
-#define LOAD_PROFILER(x)    sctk_ib_prof_t* profiler = (x)->profiler;
+#define LOAD_PROFILER(x)    _mpc_lowcomm_ib_prof_t* profiler = (x)->profiler;
 
 
 /* Error handler */

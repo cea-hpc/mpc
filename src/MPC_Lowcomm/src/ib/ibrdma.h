@@ -136,7 +136,7 @@ typedef struct _mpc_lowcomm_ib_rdma_s
 /* Rendez-vous */
 
 _mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_rdma_rendezvous_prepare_req(sctk_rail_info_t *rail,
-                                                            sctk_ib_qp_t *remote, mpc_lowcomm_ptp_message_t *msg, size_t size);
+                                                            _mpc_lowcomm_ib_qp_t *remote, mpc_lowcomm_ptp_message_t *msg, size_t size);
 
 void _mpc_lowcomm_ib_rdma_rendezvous_prepare_send_msg(mpc_lowcomm_ptp_message_t *msg, size_t size);
 
@@ -187,8 +187,8 @@ _mpc_lowcomm_ib_rdma_poll_send(sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf_t *i
 
 void _mpc_lowcomm_ib_rdma_print(mpc_lowcomm_ptp_message_t *msg);
 
-_mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_rdma_eager_prepare_msg(sctk_ib_rail_info_t *rail_ib,
-                                                       sctk_ib_qp_t *remote, mpc_lowcomm_ptp_message_t *msg, size_t size);
+_mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_rdma_eager_prepare_msg(_mpc_lowcomm_ib_rail_info_t *rail_ib,
+                                                       _mpc_lowcomm_ib_qp_t *remote, mpc_lowcomm_ptp_message_t *msg, size_t size);
 
 mpc_lowcomm_ptp_message_t *_mpc_lowcomm_ib_rdma_recv_done_remote_imm(sctk_rail_info_t *rail, int imm_data);
 

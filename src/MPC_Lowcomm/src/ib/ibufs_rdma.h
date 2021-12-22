@@ -35,7 +35,7 @@
 #include "cm.h"
 #include "mpc_common_types.h"
 
-struct sctk_ib_rail_info_s;
+struct _mpc_lowcomm_ib_rail_info_s;
 
 #define IBUF_RDMA_GET_HEAD(remote, ptr)    (remote->rdma.pool->region[ptr].head)
 #define IBUF_RDMA_GET_TAIL(remote, ptr)    (remote->rdma.pool->region[ptr].tail)
@@ -156,8 +156,8 @@ typedef struct _mpc_lowcomm_ib_ibuf_rdma_pool_s
 	/* Request for resizing */
 	struct
 	{
-		sctk_ib_cm_rdma_connection_t send_keys;
-		sctk_ib_cm_rdma_connection_t recv_keys;
+		_mpc_lowcomm_ib_cm_rdma_connection_t send_keys;
+		_mpc_lowcomm_ib_cm_rdma_connection_t recv_keys;
 	}                                        resizing_request;
 
 	/* The maximum number of data pending */
@@ -165,7 +165,7 @@ typedef struct _mpc_lowcomm_ib_ibuf_rdma_pool_s
 	int                                      send_credit;
 
 	/* Pointer to the remote */
-	sctk_ib_qp_t *                           remote;
+	_mpc_lowcomm_ib_qp_t *                           remote;
 	/* Pointer to next and tail for list */
 	struct _mpc_lowcomm_ib_ibuf_rdma_pool_s *next;
 	struct _mpc_lowcomm_ib_ibuf_rdma_pool_s *prev;
@@ -175,87 +175,87 @@ typedef struct _mpc_lowcomm_ib_ibuf_rdma_pool_s
 /*-----------------------------------------------------------
 *  FUNCTIONS
 *----------------------------------------------------------*/
-void _mpc_lowcomm_ib_ibuf_rdma_remote_init(sctk_ib_qp_t *remote);
+void _mpc_lowcomm_ib_ibuf_rdma_remote_init(_mpc_lowcomm_ib_qp_t *remote);
 
-int _mpc_lowcomm_ib_ibuf_rdma_is_connectable(sctk_ib_rail_info_t *rail_ib);
+int _mpc_lowcomm_ib_ibuf_rdma_is_connectable(_mpc_lowcomm_ib_rail_info_t *rail_ib);
 
-void _mpc_lowcomm_ib_ibuf_rdma_remote_update(sctk_ib_qp_t *remote, size_t size);
+void _mpc_lowcomm_ib_ibuf_rdma_remote_update(_mpc_lowcomm_ib_qp_t *remote, size_t size);
 
-void _mpc_lowcomm_ib_ibuf_rdma_remote_check(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote);
+void _mpc_lowcomm_ib_ibuf_rdma_remote_check(_mpc_lowcomm_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_qp_t *remote);
 
-_mpc_lowcomm_ib_ibuf_rdma_pool_t * _mpc_lowcomm_ib_ibuf_rdma_pool_init(sctk_ib_qp_t *remote);
+_mpc_lowcomm_ib_ibuf_rdma_pool_t * _mpc_lowcomm_ib_ibuf_rdma_pool_init(_mpc_lowcomm_ib_qp_t *remote);
 
-void _mpc_lowcomm_ib_ibuf_rdma_update_remote_addr(sctk_ib_qp_t *remote, sctk_ib_cm_rdma_connection_t *key, int region);
+void _mpc_lowcomm_ib_ibuf_rdma_update_remote_addr(_mpc_lowcomm_ib_qp_t *remote, _mpc_lowcomm_ib_cm_rdma_connection_t *key, int region);
 
-void _mpc_lowcomm_ib_ibuf_rdma_release(sctk_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_ibuf_t *ibuf);
+void _mpc_lowcomm_ib_ibuf_rdma_release(_mpc_lowcomm_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_ibuf_t *ibuf);
 
-int _mpc_lowcomm_ib_ibuf_rdma_eager_poll_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote);
+int _mpc_lowcomm_ib_ibuf_rdma_eager_poll_remote(_mpc_lowcomm_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_qp_t *remote);
 
-void _mpc_lowcomm_ib_ibuf_rdma_eager_walk_remote(sctk_ib_rail_info_t * rail, int(func) (sctk_ib_rail_info_t * rail, sctk_ib_qp_t * remote), int *ret);
+void _mpc_lowcomm_ib_ibuf_rdma_eager_walk_remote(_mpc_lowcomm_ib_rail_info_t * rail, int(func) (_mpc_lowcomm_ib_rail_info_t * rail, _mpc_lowcomm_ib_qp_t * remote), int *ret);
 
-_mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_rdma_pick(sctk_ib_qp_t *remote);
+_mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_ibuf_rdma_pick(_mpc_lowcomm_ib_qp_t *remote);
 
 void _mpc_lowcomm_ib_ibuf_rdma_set_tail_flag(_mpc_lowcomm_ib_ibuf_t *ibuf, size_t size);
 
-void _mpc_lowcomm_ib_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
+void _mpc_lowcomm_ib_ibuf_rdma_region_init(struct _mpc_lowcomm_ib_rail_info_s *rail_ib, _mpc_lowcomm_ib_qp_t *remote,
                                            _mpc_lowcomm_ib_ibuf_region_t *region, enum _mpc_lowcomm_ib_ibuf_channel_t channel, int nb_ibufs, int size_ibufs);
 
-void _mpc_lowcomm_ib_ibuf_rdma_region_reinit(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
+void _mpc_lowcomm_ib_ibuf_rdma_region_reinit(struct _mpc_lowcomm_ib_rail_info_s *rail_ib, _mpc_lowcomm_ib_qp_t *remote,
                                              _mpc_lowcomm_ib_ibuf_region_t *region, enum _mpc_lowcomm_ib_ibuf_channel_t channel, int nb_ibufs, int size_ibufs);
 
-size_t _mpc_lowcomm_ib_ibuf_rdma_eager_limit_get(sctk_ib_qp_t *remote);
+size_t _mpc_lowcomm_ib_ibuf_rdma_eager_limit_get(_mpc_lowcomm_ib_qp_t *remote);
 
-void _mpc_lowcomm_ib_ibuf_rdma_determine_config_from_sample(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, int *nb,
+void _mpc_lowcomm_ib_ibuf_rdma_determine_config_from_sample(_mpc_lowcomm_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_qp_t *remote, int *nb,
                                                  int *size_ibufs);
 
-void _mpc_lowcomm_ib_ibuf_rdma_connexion_cancel(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote);
+void _mpc_lowcomm_ib_ibuf_rdma_connexion_cancel(_mpc_lowcomm_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_qp_t *remote);
 
-void _mpc_lowcomm_ib_ibuf_rdma_fill_remote_addr(sctk_ib_qp_t *remote,
-                                                sctk_ib_cm_rdma_connection_t *keys, int region);
+void _mpc_lowcomm_ib_ibuf_rdma_fill_remote_addr(_mpc_lowcomm_ib_qp_t *remote,
+                                                _mpc_lowcomm_ib_cm_rdma_connection_t *keys, int region);
 
 /*-----------------------------------------------------------
 *  ACESSORS
 *----------------------------------------------------------*/
 
-static __UNUSED__ void _mpc_lowcomm_ib_ibuf_rdma_set_remote_state_rtr(sctk_ib_qp_t *remote, _mpc_lowcomm_endpoint_state_t state)
+static __UNUSED__ void _mpc_lowcomm_ib_ibuf_rdma_set_remote_state_rtr(_mpc_lowcomm_ib_qp_t *remote, _mpc_lowcomm_endpoint_state_t state)
 {
 	OPA_store_int(&remote->rdma.state_rtr, ( int )state);
 }
 
-static __UNUSED__ _mpc_lowcomm_endpoint_state_t _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rtr(sctk_ib_qp_t *remote)
+static __UNUSED__ _mpc_lowcomm_endpoint_state_t _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rtr(_mpc_lowcomm_ib_qp_t *remote)
 {
 	return ( _mpc_lowcomm_endpoint_state_t )OPA_load_int(&remote->rdma.state_rtr);
 }
 
 /* Return the old value */
-static __UNUSED__ _mpc_lowcomm_endpoint_state_t _mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rtr(sctk_ib_qp_t *remote,
+static __UNUSED__ _mpc_lowcomm_endpoint_state_t _mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rtr(_mpc_lowcomm_ib_qp_t *remote,
                                     _mpc_lowcomm_endpoint_state_t oldv, _mpc_lowcomm_endpoint_state_t newv)
 {
 	return ( _mpc_lowcomm_endpoint_state_t )OPA_cas_int(&remote->rdma.state_rtr, oldv, newv);
 }
 
-static __UNUSED__ void _mpc_lowcomm_ib_ibuf_rdma_set_remote_state_rts(sctk_ib_qp_t *remote, _mpc_lowcomm_endpoint_state_t state)
+static __UNUSED__ void _mpc_lowcomm_ib_ibuf_rdma_set_remote_state_rts(_mpc_lowcomm_ib_qp_t *remote, _mpc_lowcomm_endpoint_state_t state)
 {
 	OPA_store_int(&remote->rdma.state_rts, ( int )state);
 }
 
-static __UNUSED__ _mpc_lowcomm_endpoint_state_t _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts(sctk_ib_qp_t *remote)
+static __UNUSED__ _mpc_lowcomm_endpoint_state_t _mpc_lowcomm_ib_ibuf_rdma_get_remote_state_rts(_mpc_lowcomm_ib_qp_t *remote)
 {
 	return ( _mpc_lowcomm_endpoint_state_t )OPA_load_int(&remote->rdma.state_rts);
 }
 
 /* Return the old value */
 static __UNUSED__ _mpc_lowcomm_endpoint_state_t
-_mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rts(sctk_ib_qp_t *remote,
+_mpc_lowcomm_ib_ibuf_rdma_cas_remote_state_rts(_mpc_lowcomm_ib_qp_t *remote,
                                     _mpc_lowcomm_endpoint_state_t oldv, _mpc_lowcomm_endpoint_state_t newv)
 {
 	return ( _mpc_lowcomm_endpoint_state_t )OPA_cas_int(&remote->rdma.state_rts, oldv, newv);
 }
 
-void _mpc_lowcomm_ib_ibuf_rdma_flush_recv(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote);
-int  _mpc_lowcomm_ib_ibuf_rdma_flush_send(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote);
-int _mpc_lowcomm_ib_ibuf_rdma_check_flush_recv(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote);
-size_t _mpc_lowcomm_ib_ibuf_rdma_region_size_get(sctk_ib_qp_t *remote);
-void _mpc_lowcomm_ib_ibuf_rdma_max_pending_data_update(sctk_ib_qp_t *remote, int current_pending);
+void _mpc_lowcomm_ib_ibuf_rdma_flush_recv(_mpc_lowcomm_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_qp_t *remote);
+int  _mpc_lowcomm_ib_ibuf_rdma_flush_send(_mpc_lowcomm_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_qp_t *remote);
+int _mpc_lowcomm_ib_ibuf_rdma_check_flush_recv(_mpc_lowcomm_ib_rail_info_t *rail_ib, _mpc_lowcomm_ib_qp_t *remote);
+size_t _mpc_lowcomm_ib_ibuf_rdma_region_size_get(_mpc_lowcomm_ib_qp_t *remote);
+void _mpc_lowcomm_ib_ibuf_rdma_max_pending_data_update(_mpc_lowcomm_ib_qp_t *remote, int current_pending);
 
 #endif

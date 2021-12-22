@@ -62,29 +62,29 @@ struct _mpc_lowcomm_ib_ibuf_poll_s;
 struct _mpc_lowcomm_ib_ibuf_s;
 struct _mpc_lowcomm_ib_mmu_s;
 struct _mpc_lowcomm_ib_topology_s;
-struct sctk_ib_config_s;
-struct sctk_ib_device_s;
-struct sctk_ib_qp_s;
+struct _mpc_lowcomm_ib_config_s;
+struct _mpc_lowcomm_ib_device_s;
+struct _mpc_lowcomm_ib_qp_s;
 struct _mpc_lowcomm_ib_cp_ctx_s;
 struct mpc_lowcomm_ptp_message_s;
 struct sctk_rail_info_s;
 struct mpc_lowcomm_ptp_message_content_to_copy_s;
 struct _mpc_lowcomm_ib_buffered_entry_s;
-struct sctk_ib_qp_ht_s;
+struct _mpc_lowcomm_ib_qp_ht_s;
 
-typedef struct sctk_ib_rail_info_s
+typedef struct _mpc_lowcomm_ib_rail_info_s
 {
 	struct _mpc_lowcomm_ib_ibuf_poll_s *                     pool_buffers;
 	/* struct _mpc_lowcomm_ib_mmu_s    *mmu; */
 	struct _mpc_lowcomm_ib_topology_s *                      topology;
 	struct _mpc_lowcomm_config_struct_net_driver_infiniband *config;
-	struct sctk_ib_device_s *                                device;
+	struct _mpc_lowcomm_ib_device_s *                                device;
 	/* Collaborative polling */
 	struct _mpc_lowcomm_ib_cp_ctx_s *                        cp;
 
 	/* HashTable where all remote are stored.
 	 * qp_num is the key of the HT */
-	struct sctk_ib_qp_ht_s *                                 remotes;
+	struct _mpc_lowcomm_ib_qp_ht_s *                                 remotes;
 	/* Pointer to the generic rail */
 	struct sctk_rail_info_s *                                rail;
 	/* Rail number among other IB rails */
@@ -94,15 +94,15 @@ typedef struct sctk_ib_rail_info_s
 	struct mpc_lowcomm_ptp_message_s *                       eager_buffered_ptp_message;
 	void *                                                   eager_buffered_start_addr;
 	mpc_common_spinlock_t                                    eager_lock_buffered_ptp_message;
-} sctk_ib_rail_info_t;
+} _mpc_lowcomm_ib_rail_info_t;
 
-typedef struct sctk_ib_route_info_s
+typedef struct _mpc_lowcomm_ib_route_info_s
 {
-	struct sctk_ib_qp_s *remote;
+	struct _mpc_lowcomm_ib_qp_s *remote;
 } _mpc_lowcomm_endpoint_info_ib_t;
 
 /* ib protocol used */
-typedef enum sctk_ib_protocol_e
+typedef enum _mpc_lowcomm_ib_protocol_e
 {
 	MPC_LOWCOMM_IB_EAGER_PROTOCOL = 1,
 	MPC_LOWCOMM_IB_BUFFERED_PROTOCOL,
@@ -131,12 +131,12 @@ _mpc_lowcomm_ib_rdma_status_t;
 #define MASK_DONE     0x08
 
 /* Headers */
-typedef struct sctk_ib_header_rdma_s
+typedef struct _mpc_lowcomm_ib_header_rdma_s
 {
 	size_t                                            requested_size;
 	struct sctk_rail_info_s *                         rail;
 	struct sctk_rail_info_s *                         remote_rail;
-	struct sctk_ib_qp_s *                             remote_peer;
+	struct _mpc_lowcomm_ib_qp_s *                             remote_peer;
 	struct mpc_lowcomm_ptp_message_content_to_copy_s *copy_ptr;
 	/* For collaborative polling: src and dest of msg */
 	int                                               source_task;
@@ -173,7 +173,7 @@ typedef struct sctk_ib_header_rdma_s
 	UT_hash_handle                                    hh;
 	int                                               ht_key;
 	mpc_common_spinlock_t                             lock;
-} sctk_ib_header_rdma_t;
+} _mpc_lowcomm_ib_header_rdma_t;
 
 
 /* Structure included in msg header */
@@ -195,19 +195,19 @@ typedef struct mpc_lowcomm_ib_tail_s
 			struct sctk_rail_info_s *        rail;
 			int                              ready;
 		}                            buffered;
-		struct sctk_ib_header_rdma_s rdma;
+		struct _mpc_lowcomm_ib_header_rdma_s rdma;
 	};
 	_mpc_lowcomm_ib_protocol_t protocol;
-} sctk_ib_msg_header_t;
+} _mpc_lowcomm_ib_msg_header_t;
 
 /* XXX: Should not be declared here but in CM */
-struct _mpc_lowcomm_endpoint_s *sctk_ib_create_remote();
-void sctk_ib_init_remote(mpc_lowcomm_peer_uid_t dest, struct sctk_rail_info_s *rail, struct _mpc_lowcomm_endpoint_s *route_table, int ondemand);
+struct _mpc_lowcomm_endpoint_s *_mpc_lowcomm_ib_create_remote();
+void _mpc_lowcomm_ib_init_remote(mpc_lowcomm_peer_uid_t dest, struct sctk_rail_info_s *rail, struct _mpc_lowcomm_endpoint_s *route_table, int ondemand);
 
-void sctk_ib_add_static_route(int dest, struct _mpc_lowcomm_endpoint_s *tmp, struct sctk_rail_info_s *rail);
-void sctk_ib_add_dynamic_route(int dest, struct _mpc_lowcomm_endpoint_s *tmp, struct sctk_rail_info_s *rail);
-int sctk_ib_route_dynamic_is_connected(struct _mpc_lowcomm_endpoint_s *tmp);
-void sctk_ib_route_dynamic_set_connected(struct _mpc_lowcomm_endpoint_s *tmp, int connected);
+void _mpc_lowcomm_ib_add_static_route(int dest, struct _mpc_lowcomm_endpoint_s *tmp, struct sctk_rail_info_s *rail);
+void _mpc_lowcomm_ib_add_dynamic_route(int dest, struct _mpc_lowcomm_endpoint_s *tmp, struct sctk_rail_info_s *rail);
+int _mpc_lowcomm_ib_route_dynamic_is_connected(struct _mpc_lowcomm_endpoint_s *tmp);
+void _mpc_lowcomm_ib_route_dynamic_set_connected(struct _mpc_lowcomm_endpoint_s *tmp, int connected);
 
 
 

@@ -55,7 +55,7 @@ typedef enum
 	
 	CM_RESIZING_RDMA_DECO_REQ_TAG
 	
-}sctk_ib_Control_message_t;
+}_mpc_lowcomm_ib_Control_message_t;
 
 
 struct sctk_thread_ptp_message_body_s;
@@ -66,7 +66,7 @@ struct sctk_thread_ptp_message_body_s;
 
 #define CM_SET_REQUEST(r,x) (r->request_id = x)
 #define CM_GET_REQUEST(r) (r->request_id)
-enum sctk_ib_cm_change_state_type_e
+enum _mpc_lowcomm_ib_cm_change_state_type_e
 {
     CONNECTION = 111,
     RESIZING = 222,
@@ -77,14 +77,14 @@ typedef struct
 {
 	int rail_id;  /* rail id. *MUST* be the first field */
 	int ack;
-} sctk_ib_cm_ack_t;
+} _mpc_lowcomm_ib_cm_ack_t;
 
 /* DONE */
 typedef struct
 {
 	int rail_id;  /* rail id. *MUST* be the first field */
 	int done;
-} sctk_ib_cm_done_t;
+} _mpc_lowcomm_ib_cm_done_t;
 
 /* QP */
 typedef struct
@@ -93,12 +93,12 @@ typedef struct
 	uint16_t lid;
 	uint32_t qp_num;
 	uint32_t psn;
-} sctk_ib_cm_qp_connection_t;
+} _mpc_lowcomm_ib_cm_qp_connection_t;
 
 typedef struct
 {
 	int rail_id;  /* rail id. *MUST* be the first field */
-} sctk_ib_cm_qp_deconnection_t;
+} _mpc_lowcomm_ib_cm_qp_deconnection_t;
 
 /* RDMA connection and resizing */
 typedef struct
@@ -109,61 +109,61 @@ typedef struct
 	int nb;     /* Number of slots */
 	uint32_t rkey;
 	void *addr;
-} sctk_ib_cm_rdma_connection_t;
+} _mpc_lowcomm_ib_cm_rdma_connection_t;
 
 typedef struct
 {
 	int rail_id;  /* rail id. *MUST* be the first field */
-} sctk_ib_cm_rdma_deconnection_t;
+} _mpc_lowcomm_ib_cm_rdma_deconnection_t;
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
 /* Ring connexion */
-void sctk_ib_cm_connect_ring ( sctk_rail_info_t *rail );
+void _mpc_lowcomm_ib_cm_connect_ring ( sctk_rail_info_t *rail );
 
 /* Fully-connected */
-void sctk_ib_cm_connect_to ( int from, int to, struct sctk_rail_info_s *rail );
-void sctk_ib_cm_connect_from ( int from, int to, sctk_rail_info_t *rail );
+void _mpc_lowcomm_ib_cm_connect_to ( int from, int to, struct sctk_rail_info_s *rail );
+void _mpc_lowcomm_ib_cm_connect_from ( int from, int to, sctk_rail_info_t *rail );
 
 /* On-demand connexions */
-int sctk_ib_cm_on_demand_recv_check ( mpc_lowcomm_ptp_message_body_t *msg );
+int _mpc_lowcomm_ib_cm_on_demand_recv_check ( mpc_lowcomm_ptp_message_body_t *msg );
  
-void sctk_ib_cm_control_message_handler( struct sctk_rail_info_s * rail, int process_src, int source_rank, char subtype,  char param, void * payload, size_t size );
+void _mpc_lowcomm_ib_cm_control_message_handler( struct sctk_rail_info_s * rail, int process_src, int source_rank, char subtype,  char param, void * payload, size_t size );
 
-_mpc_lowcomm_endpoint_t *sctk_ib_cm_on_demand_request ( int dest, sctk_rail_info_t *rail );
+_mpc_lowcomm_endpoint_t *_mpc_lowcomm_ib_cm_on_demand_request ( int dest, sctk_rail_info_t *rail );
 
-_mpc_lowcomm_endpoint_t * sctk_ib_cm_on_demand_request_monitor(sctk_rail_info_t *rail, mpc_lowcomm_peer_uid_t dest);
-void sctk_ib_cm_monitor_register_callbacks(sctk_rail_info_t * rail);
+_mpc_lowcomm_endpoint_t * _mpc_lowcomm_ib_cm_on_demand_request_monitor(sctk_rail_info_t *rail, mpc_lowcomm_peer_uid_t dest);
+void _mpc_lowcomm_ib_cm_monitor_register_callbacks(sctk_rail_info_t * rail);
 
-void sctk_ib_cm_deco_ack ( sctk_rail_info_t *rail,
+void _mpc_lowcomm_ib_cm_deco_ack ( sctk_rail_info_t *rail,
                            _mpc_lowcomm_endpoint_t *route_table, int ack );
 
 /* RDMA resizing */
-int sctk_ib_cm_resizing_rdma_request ( sctk_rail_info_t *rail_targ, struct sctk_ib_qp_s *remote,
+int _mpc_lowcomm_ib_cm_resizing_rdma_request ( sctk_rail_info_t *rail_targ, struct _mpc_lowcomm_ib_qp_s *remote,
                                        int entry_size, int entry_nb );
-void sctk_ib_cm_resizing_rdma_ack ( sctk_rail_info_t *rail_targ,  struct sctk_ib_qp_s *remote,
-                                    sctk_ib_cm_rdma_connection_t *send_keys );
+void _mpc_lowcomm_ib_cm_resizing_rdma_ack ( sctk_rail_info_t *rail_targ,  struct _mpc_lowcomm_ib_qp_s *remote,
+                                    _mpc_lowcomm_ib_cm_rdma_connection_t *send_keys );
 
 /*-----------------------------------------------------------
  *  On demand QP deconnexion
  *----------------------------------------------------------*/
 /* Recv */
-//void sctk_ib_cm_deco_request_recv ( sctk_rail_info_t *rail, void *payload, int src );
-//void sctk_ib_cm_deco_ack_recv ( sctk_rail_info_t *rail, void *ack, int src );
-//void sctk_ib_cm_deco_done_ack_recv ( sctk_rail_info_t *rail, void *ack, int src );
-//void sctk_ib_cm_deco_done_request_recv ( sctk_rail_info_t *rail, void *ack, int src );
+//void _mpc_lowcomm_ib_cm_deco_request_recv ( sctk_rail_info_t *rail, void *payload, int src );
+//void _mpc_lowcomm_ib_cm_deco_ack_recv ( sctk_rail_info_t *rail, void *ack, int src );
+//void _mpc_lowcomm_ib_cm_deco_done_ack_recv ( sctk_rail_info_t *rail, void *ack, int src );
+//void _mpc_lowcomm_ib_cm_deco_done_request_recv ( sctk_rail_info_t *rail, void *ack, int src );
 
 /* Send */
-//void sctk_ib_cm_deco_request_send ( sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_t *route_table );
-//void sctk_ib_cm_deco_done_request_send ( sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_t *route_table );
-//void sctk_ib_cm_deco_ack_send ( sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_t *route_table, int ack );
-//void sctk_ib_cm_deco_done_ack_send ( sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_t *route_table, int ack );
+//void _mpc_lowcomm_ib_cm_deco_request_send ( sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_t *route_table );
+//void _mpc_lowcomm_ib_cm_deco_done_request_send ( sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_t *route_table );
+//void _mpc_lowcomm_ib_cm_deco_ack_send ( sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_t *route_table, int ack );
+//void _mpc_lowcomm_ib_cm_deco_done_ack_send ( sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_t *route_table, int ack );
 
-int sctk_ib_cm_on_demand_rdma_check_request (
-    sctk_rail_info_t *rail_targ, struct sctk_ib_qp_s *remote );
+int _mpc_lowcomm_ib_cm_on_demand_rdma_check_request (
+    sctk_rail_info_t *rail_targ, struct _mpc_lowcomm_ib_qp_s *remote );
 
-int sctk_ib_cm_on_demand_rdma_request (
-    sctk_rail_info_t *rail_targ, struct sctk_ib_qp_s *remote,
+int _mpc_lowcomm_ib_cm_on_demand_rdma_request (
+    sctk_rail_info_t *rail_targ, struct _mpc_lowcomm_ib_qp_s *remote,
     int entry_size, int entry_nb );
 #endif

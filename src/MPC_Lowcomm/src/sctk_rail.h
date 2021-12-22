@@ -47,7 +47,7 @@ typedef union
 {
 	sctk_tcp_rail_info_t tcp;	/**< TCP Rail Info */
 #ifdef MPC_USE_INFINIBAND
-	sctk_ib_rail_info_t ib;		/**< IB Rail Info */
+	_mpc_lowcomm_ib_rail_info_t ib;		/**< IB Rail Info */
 #endif
 	sctk_shm_rail_info_t shm;	/**< SHM Rail Info */
 #ifdef MPC_USE_PORTALS

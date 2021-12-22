@@ -34,7 +34,7 @@
 #include <string.h>
 #include <arpa/inet.h> /* ntohs() */
 
-int sctk_ib_device_found() {
+int _mpc_lowcomm_ib_device_found() {
   struct ibv_device **dev_list = NULL;
 
   int devices_nb;
@@ -48,10 +48,10 @@ int sctk_ib_device_found() {
   }
 }
 
-sctk_ib_device_t *sctk_ib_device_init ( struct sctk_ib_rail_info_s *rail_ib )
+_mpc_lowcomm_ib_device_t *_mpc_lowcomm_ib_device_init ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib )
 {
 	struct ibv_device **dev_list;
-	sctk_ib_device_t *device;
+	_mpc_lowcomm_ib_device_t *device;
 	int devices_nb;
 
 	dev_list = ibv_get_device_list ( &devices_nb );
@@ -63,7 +63,7 @@ sctk_ib_device_t *sctk_ib_device_init ( struct sctk_ib_rail_info_s *rail_ib )
 	}
 
 
-	device = sctk_malloc ( sizeof ( sctk_ib_device_t ) );
+	device = sctk_malloc ( sizeof ( _mpc_lowcomm_ib_device_t ) );
 	ib_assume ( device );
 	rail_ib->device = device;
 	
@@ -83,7 +83,7 @@ sctk_ib_device_t *sctk_ib_device_init ( struct sctk_ib_rail_info_s *rail_ib )
 
 
 
-sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, char * device_name )
+_mpc_lowcomm_ib_device_t *_mpc_lowcomm_ib_device_open ( struct _mpc_lowcomm_ib_rail_info_s *rail_ib, char * device_name )
 {
 	LOAD_DEVICE ( rail_ib );
 	LOAD_CONFIG ( rail_ib );
@@ -120,7 +120,7 @@ sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, cha
 		MPC_LOWCOMM_IB_ABORT ( "Cannot open rail. You asked rail %d on %d", device_id, devices_nb );
 	}
 
-	sctk_ib_nodebug ( "Opening rail %d on %d", device_id, devices_nb );
+	_mpc_lowcomm_ib_nodebug ( "Opening rail %d on %d", device_id, devices_nb );
 
 	device->context = ibv_open_device ( dev_list[device_id] );
 
@@ -144,15 +144,15 @@ sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, cha
 	        uint16_t pkey;
 		uint16_t specific_pkey = 0x0000;
 		device->index_pkey = 0;
-		sctk_ib_nodebug("PKEY %s\n", config->pkey);
+		_mpc_lowcomm_ib_nodebug("PKEY %s\n", config->pkey);
 		if(strcmp(config->pkey,"undefined") != 0){
 			device->index_pkey = -1;
 			specific_pkey = strtoul(config->pkey,NULL,16); 
-			sctk_ib_nodebug("PKEY %s = %p\n",config->pkey,specific_pkey);
+			_mpc_lowcomm_ib_nodebug("PKEY %s = %p\n",config->pkey,specific_pkey);
 		        for(i_pkey = 0; ; i_pkey++){
 		            if(ibv_query_pkey(device->context,1, i_pkey,&pkey) != 0) break;
 		            pkey = ntohs(pkey);
-		            if(pkey) sctk_ib_nodebug("PKEY index %d value %p\n",i_pkey,pkey);
+		            if(pkey) _mpc_lowcomm_ib_nodebug("PKEY index %d value %p\n",i_pkey,pkey);
 			    if(pkey == specific_pkey) {
 				device->index_pkey = i_pkey;
 				break;
@@ -226,7 +226,7 @@ sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, cha
 	return device;
 }
 
-void sctk_ib_device_close (struct sctk_ib_rail_info_s *rail_ib)
+void _mpc_lowcomm_ib_device_close (struct _mpc_lowcomm_ib_rail_info_s *rail_ib)
 {
 	int ret = ibv_close_device(rail_ib->device->context);
 
@@ -237,7 +237,7 @@ void sctk_ib_device_close (struct sctk_ib_rail_info_s *rail_ib)
 }
 
 
-struct ibv_pd *sctk_ib_pd_init ( sctk_ib_device_t *device )
+struct ibv_pd *_mpc_lowcomm_ib_pd_init ( _mpc_lowcomm_ib_device_t *device )
 {
 	device->pd = ibv_alloc_pd ( device->context );
 
@@ -249,7 +249,7 @@ struct ibv_pd *sctk_ib_pd_init ( sctk_ib_device_t *device )
 	return device->pd;
 }
 
-void sctk_ib_pd_free(sctk_ib_device_t *device)
+void _mpc_lowcomm_ib_pd_free(_mpc_lowcomm_ib_device_t *device)
 {
 	int ret = ibv_dealloc_pd(device->pd);
 
@@ -259,7 +259,7 @@ void sctk_ib_pd_free(sctk_ib_device_t *device)
 	device->pd = NULL;
 }
 
-struct ibv_comp_channel *sctk_ib_comp_channel_init ( sctk_ib_device_t *device )
+struct ibv_comp_channel *_mpc_lowcomm_ib_comp_channel_init ( _mpc_lowcomm_ib_device_t *device )
 {
 	struct ibv_comp_channel *comp_channel;
 
@@ -276,7 +276,7 @@ struct ibv_comp_channel *sctk_ib_comp_channel_init ( sctk_ib_device_t *device )
 
 /** \brief Create a completion queue and associate it a completion channel.
 */
-struct ibv_cq *sctk_ib_cq_init ( sctk_ib_device_t *device,
+struct ibv_cq *_mpc_lowcomm_ib_cq_init ( _mpc_lowcomm_ib_device_t *device,
                                  struct _mpc_lowcomm_config_struct_net_driver_infiniband *config,
                                  struct ibv_comp_channel *comp_channel )
 {
@@ -302,7 +302,7 @@ struct ibv_cq *sctk_ib_cq_init ( sctk_ib_device_t *device,
 	return cq;
 }
 
-void sctk_ib_cq_free(struct ibv_cq * queue)
+void _mpc_lowcomm_ib_cq_free(struct ibv_cq * queue)
 {
 	int ret = ibv_destroy_cq(queue);
 

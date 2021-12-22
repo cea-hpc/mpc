@@ -52,7 +52,7 @@
 /********************************************************************/
 #define DESC_EVENT(config, event, desc, level, fatal)  do { \
   if ( (level != -1) && ( (level <= (config)->verbose_level) || fatal )) \
-    sctk_ib_debug(event":\t"desc); \
+    _mpc_lowcomm_ib_debug(event":\t"desc); \
   if (fatal) mpc_common_debug_abort(); \
   } while(0)
 
@@ -67,7 +67,7 @@
 void *async_thread ( void *arg )
 {
 	sctk_rail_info_t *rail = ( sctk_rail_info_t * ) arg;
-	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+	_mpc_lowcomm_ib_rail_info_t *rail_ib = &rail->network.ib;
 	LOAD_CONFIG ( rail_ib );
 	LOAD_DEVICE ( rail_ib );
 	struct ibv_async_event event;
@@ -75,7 +75,7 @@ void *async_thread ( void *arg )
 	int rc;
  mpc_topology_bind_to_cpu(-1);
 
-	sctk_ib_nodebug ( "Async thread running on context %p", device->context );
+	_mpc_lowcomm_ib_nodebug ( "Async thread running on context %p", device->context );
 
 	while ( 1 )
 	{
@@ -219,9 +219,9 @@ void *async_thread ( void *arg )
 	static pthread_t async_pidt;
 #endif
 
-void sctk_ib_async_init ( sctk_rail_info_t *rail )
+void _mpc_lowcomm_ib_async_init ( sctk_rail_info_t *rail )
 {
-	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+	_mpc_lowcomm_ib_rail_info_t *rail_ib = &rail->network.ib;
 	LOAD_CONFIG ( rail_ib );
 
 	/* Activate or not the async thread */
@@ -239,9 +239,9 @@ void sctk_ib_async_init ( sctk_rail_info_t *rail )
 	}
 }
 
-void sctk_ib_async_finalize( sctk_rail_info_t *rail)
+void _mpc_lowcomm_ib_async_finalize( sctk_rail_info_t *rail)
 {
-	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+	_mpc_lowcomm_ib_rail_info_t *rail_ib = &rail->network.ib;
 	LOAD_CONFIG ( rail_ib );
 
 	if(config->async_thread)

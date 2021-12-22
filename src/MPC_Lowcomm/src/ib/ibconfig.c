@@ -45,7 +45,7 @@
 
 
 #define EXPERIMENTAL(str) #str" (experimental)"
-void sctk_ib_config_print ( sctk_ib_rail_info_t *rail_ib )
+void _mpc_lowcomm_ib_config_print ( _mpc_lowcomm_ib_rail_info_t *rail_ib )
 {
 	LOAD_CONFIG ( rail_ib );
 
@@ -114,7 +114,7 @@ void sctk_ib_config_print ( sctk_ib_rail_info_t *rail_ib )
 	}
 }
 
-void sctk_ib_config_mutate ( sctk_ib_rail_info_t *rail_ib )
+void _mpc_lowcomm_ib_config_mutate ( _mpc_lowcomm_ib_rail_info_t *rail_ib )
 {
 	LOAD_CONFIG ( rail_ib );
 
@@ -122,10 +122,10 @@ void sctk_ib_config_mutate ( sctk_ib_rail_info_t *rail_ib )
 	config->buffered_limit  = ( config->buffered_limit + sizeof ( mpc_lowcomm_ptp_message_body_t ) );
 }
 
-void sctk_ib_config_init ( sctk_ib_rail_info_t *rail_ib, __UNUSED__ char *network_name )
+void _mpc_lowcomm_ib_config_init ( _mpc_lowcomm_ib_rail_info_t *rail_ib, __UNUSED__ char *network_name )
 {
 
 
 	rail_ib->config = &rail_ib->rail->runtime_config_driver_config->driver.value.infiniband;
-	sctk_ib_config_mutate ( rail_ib );
+	_mpc_lowcomm_ib_config_mutate ( rail_ib );
 }
