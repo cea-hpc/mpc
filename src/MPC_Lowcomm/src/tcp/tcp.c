@@ -177,7 +177,7 @@ static int _mpc_lowcomm_tcp_send_message_from_network(mpc_lowcomm_ptp_message_t 
  */
 void _mpc_lowcomm_tcp_finalize(sctk_rail_info_t *rail)
 {
-	sctk_tcp_rail_info_t *rail_tcp = &rail->network.tcp;
+	_mpc_lowcomm_tcp_rail_info_t *rail_tcp = &rail->network.tcp;
 
 	shutdown(rail_tcp->sockfd, SHUT_RDWR);
 	close(rail_tcp->sockfd);

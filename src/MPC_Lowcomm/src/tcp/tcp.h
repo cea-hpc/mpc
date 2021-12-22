@@ -55,7 +55,7 @@ typedef struct
 	char connection_infos[MPC_COMMON_MAX_STRING_SIZE];              /**< Connection info for this listening socket */
 	size_t connection_infos_size;                        /**< Length of the connection_info field */
 	void * ( *tcp_thread_loop ) ( struct _mpc_lowcomm_endpoint_s * ); /**< Function to call when registering a route (RDMA/MULTIRAIL/TCP) */
-} sctk_tcp_rail_info_t;
+} _mpc_lowcomm_tcp_rail_info_t;
 
 
 void sctk_network_finalize_tcp(sctk_rail_info_t *rail);

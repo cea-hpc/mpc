@@ -408,7 +408,7 @@ static int __tcp_on_demand_callback(mpc_lowcomm_peer_uid_t from,
 void * __accept_loop(void *prail)
 {
 	sctk_rail_info_t * rail = (sctk_rail_info_t*)prail;
-	sctk_tcp_rail_info_t *tcp = (sctk_tcp_rail_info_t*)&rail->network.tcp;
+	_mpc_lowcomm_tcp_rail_info_t *tcp = (_mpc_lowcomm_tcp_rail_info_t*)&rail->network.tcp;
 
 	while(1)
 	{
