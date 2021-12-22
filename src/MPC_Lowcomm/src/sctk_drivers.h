@@ -25,7 +25,7 @@
 #include <mpc_config.h>
 
 /* Networks */
-#include <sctk_tcp.h>
+#include <tcp.h>
 
 #ifdef MPC_USE_INFINIBAND
 #include <ib.h>

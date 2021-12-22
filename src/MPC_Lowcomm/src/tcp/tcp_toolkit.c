@@ -20,10 +20,11 @@
 /* #   - BESNARD Jean-Baptiste jbbesnard@paratools                        # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include "tcp_toolkit.h"
 
 
 #include <mpc_common_debug.h>
-#include <sctk_tcp.h>
+
 #include <mpc_launch_pmi.h>
 #include <unistd.h>
 #include <string.h>
@@ -31,7 +32,6 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "sctk_tcp_toolkit.h"
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <netdb.h>
@@ -43,6 +43,9 @@
 #include <mpc_common_rank.h>
 #include <sctk_alloc.h>
 #include <arpa/inet.h>
+
+
+#include "tcp.h"
 #include "sctk_rail.h"
 
 #include "lowcomm_thread.h"

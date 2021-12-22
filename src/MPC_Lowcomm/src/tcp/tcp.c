@@ -23,7 +23,7 @@
 
 #include <mpc_common_debug.h>
 #include <sctk_net_tools.h>
-#include <sctk_tcp_toolkit.h>
+#include <tcp_toolkit.h>
 #include <sys/socket.h> /* shutdown() */
 
 #include <sctk_alloc.h>

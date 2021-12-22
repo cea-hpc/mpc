@@ -47,7 +47,7 @@ libmpclowcomm_la_SOURCES += sctk_low_level_comm.c multirail.c sctk_net_tools.c s
 libmpclowcomm_la_SOURCES += sctk_rail.c reorder.c endpoint.c sctk_topological_polling.c sctk_topological_rail.c sctk_window.c workshare.c pset.c handle_ctx.c
 
 # TCP driver #
-libmpclowcomm_la_SOURCES += ./tcp/sctk_tcp.c  ./tcp/sctk_tcp_rdma.c  ./tcp/sctk_tcp_toolkit.c
+libmpclowcomm_la_SOURCES += ./tcp/tcp.c ./tcp/tcp_toolkit.c
 
 # SHM driver #
 libmpclowcomm_la_SOURCES += ./shm/sctk_shm.c      ./shm/sctk_shm_eager.c  ./shm/sctk_shm_raw_queues.c
