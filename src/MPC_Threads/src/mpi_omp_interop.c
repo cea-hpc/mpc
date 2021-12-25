@@ -170,12 +170,32 @@ ___task_block(int n, MPI_Request * reqs, int * index, MPI_Status * status)
     mpc_omp_task_block(infos.handle);
 }
 
+static inline void
+__task_check_send(int n, MPI_Request * reqs)
+{
+    MPI_request_struct_t * requests = __sctk_internal_get_MPC_requests();
+    int i;
+    for (i = 0; i < n; i++)
+    {
+        MPI_internal_request_t * internal_req = __sctk_convert_mpc_request_internal(reqs + i, requests);
+        mpc_lowcomm_request_t * lowcomm_req = &(internal_req->req);
+        if (lowcomm_req->request_type == REQUEST_SEND)
+        {
+            mpc_omp_task_is_send();
+            break ;
+        }
+    }
+}
+
 /** Parameters correspond to the ones of MPI_Test, MPI_Testall and MPI_Testany */
 int
 mpc_thread_mpi_omp_wait(int n, MPI_Request * reqs, int * index, MPI_Status * status)
 {
     if (mpc_omp_in_explicit_task())
     {
+        /* check task */
+        __task_check_send(n, reqs);
+
         /* suspend the task*/
         ___task_block(n, reqs, index, status);
         return 1;

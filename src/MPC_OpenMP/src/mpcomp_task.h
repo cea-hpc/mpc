@@ -431,5 +431,6 @@ void _mpc_omp_callback_run(mpc_omp_callback_when_t when);
 void _mpc_omp_task_unblock(mpc_omp_event_handle_block_t * handle);
 void _mpc_omp_event_handle_ref(mpc_omp_event_handle_t * handle);
 void _mpc_omp_event_handle_unref(mpc_omp_event_handle_t * handle);
+void _mpc_omp_task_profile_register_current(int priority);
 
 #endif /* __MPC_OMP_TASK_H__ */

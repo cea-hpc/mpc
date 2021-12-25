@@ -49,6 +49,18 @@
 # define MPC_OMP_TASK_PROP_HAS_FIBER     (1 << 15) /* if the task has it own fiber */
 # define MPC_OMP_TASK_PROP_CREATED       (1 << 16) /* if the task is fully created */
 
+/* the properties to consider when comparing to a task profile */
+# define MPC_OMP_TASK_PROP_PROFILE_MASK \
+    (MPC_OMP_TASK_PROP_UNDEFERRED    |  \
+     MPC_OMP_TASK_PROP_UNTIED        |  \
+     MPC_OMP_TASK_PROP_EXPLICIT      |  \
+     MPC_OMP_TASK_PROP_INCLUDED      |  \
+     MPC_OMP_TASK_PROP_FINAL         |  \
+     MPC_OMP_TASK_PROP_MERGEABLE     |  \
+     MPC_OMP_TASK_PROP_DEPEND        |  \
+     MPC_OMP_TASK_PROP_PRIORITY      |  \
+     MPC_OMP_TASK_PROP_IF)
+
 # include <stdbool.h>
 
 /** the task statuses */

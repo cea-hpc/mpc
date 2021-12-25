@@ -206,6 +206,27 @@ typedef enum    mpc_omp_task_list_policy_e
     MPC_OMP_TASK_LIST_POLICY_FIFO
 }               mpc_omp_task_list_policy_t;
 
+/**
+ *  TO IGNORE PRIORITIES, USE :
+ *      - MPC_OMP_TASK_PRIORITY_POLICY_ZERO (== 0)
+ *      - MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_NOOP (== 0)
+ *      - MPC_OMP_TASK_PRIORITY_PROPAGATION_SYNCHRONOUS (== 0)
+ *
+ *  « SA1 » is (= SA IWOMP) :
+ *      - MPC_OMP_TASK_PRIORITY_POLICY_CONVERT (== 1)
+ *      - MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_DECR (== 1)
+ *      - MPC_OMP_TASK_PRIORITY_PROPAGATION_SYNCHRONOUS (== 0)
+ *
+ *  « SA 2 » is :
+ *      - MPC_OMP_TASK_PRIORITY_POLICY_COPY (== 2)
+ *      - MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_EQUAL (== 2)
+ *      - MPC_OMP_TASK_PRIORITY_PROPAGATION_SYNCHRONOUS (== 0)
+ *
+ *  « FA » is :
+ *      - MPC_OMP_TASK_PRIORITY_POLICY_ZERO (== 0)
+ *      - MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_DECR (== 1)
+ *      - MPC_OMP_TASK_PRIORITY_PROPAGATION_ASYNCHRONOUS (== 1)
+ */
 
 /* priority policies */
 typedef enum    mpc_omp_task_priority_policy_e
@@ -252,6 +273,15 @@ typedef enum    mpc_omp_task_priority_propagation_policy_e
     MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_EQUAL
 
 }               mpc_omp_task_priority_propagation_policy_t;
+
+typedef enum    mpc_omp_task_priority_propagation_synchronousity_e
+{
+    /* if priorities should be propagated synchronously, on task creation */
+    MPC_OMP_TASK_PRIORITY_PROPAGATION_SYNCHRONOUS,
+
+    /* if priorities should be propagated asynchronously, during idle time */
+    MPC_OMP_TASK_PRIORITY_PROPAGATION_ASYNCHRONOUS
+}               mpc_omp_task_priority_propagation_synchronousity_t;
 
 /* Type of children in the topology tree */
 typedef enum    mpc_omp_children_e
@@ -510,8 +540,26 @@ typedef struct  mpc_omp_task_fiber_s
 }               mpc_omp_task_fiber_t;
 #endif
 
-struct mpcomp_task_list;
-struct mpcomp_task_pqueue_s;
+struct mpc_omp_task_pqueue_s;
+
+/* a task list */
+typedef struct  mpc_omp_task_list_s
+{
+    /* number of tasks in the list */
+    OPA_int_t nb_elements;
+
+    /* head task in the list */
+    struct mpc_omp_task_s * head;
+
+    /* tail task inf the list */
+    struct mpc_omp_task_s * tail;
+
+    /* mutex */
+    mpc_common_spinlock_t lock;
+
+    /* list type */
+    int type;
+}               mpc_omp_task_list_t;
 
 /* hash table entry,
  * note that collisions handle could be optimized
@@ -541,6 +589,59 @@ typedef struct  mpc_omp_task_dep_htable_entry_s
     UT_hash_handle hh;
 }               mpc_omp_task_dep_htable_entry_t;
 
+/* a task profile */
+typedef struct  mpc_omp_task_profile_s
+{
+    /* next node */
+    struct mpc_omp_task_profile_s * next;
+
+    /* the task size */
+    unsigned int size;
+
+    /* the task properties */
+    unsigned int property;
+
+    /* number of successors (may be incomplete) */
+    int nsuccessors;
+
+    /* number of predecessors (is complete) */
+    int npredecessors;
+
+    /* priority associated to the profile */
+    int priority;
+
+    /* the parent task uid (control parent) */
+    int parent_uid;
+}               mpc_omp_task_profile_t;
+
+/* critical tasks infos */
+typedef struct  mpc_omp_task_profile_info_s
+{
+    /* head info node */
+    OPA_ptr_t head;
+
+    /* number of 'mpc_omp_task_profile_t' in list */
+    OPA_int_t n;
+
+    /* spinlock for concurrency issues */
+    mpc_common_spinlock_t spinlock;
+}               mpc_omp_task_profile_info_t;
+
+/** Task priorities propagation context */
+typedef struct  mpc_omp_task_priority_propagation_context_s
+{
+    /* lock so that only 1 thread my propagate priorities (for now) */
+    mpc_common_spinlock_t lock;
+
+    /* tasks to climb down to find leaves */
+    mpc_omp_task_list_t down;
+
+    /* tasks to climb up to match profile and propagate priorities */
+    mpc_omp_task_list_t up;
+
+    /* version to mark task and no visit them twice */
+    OPA_int_t version;
+}               mpc_omp_task_priority_propagation_context_t;
 
 typedef struct  mpc_omp_task_dep_node_s
 {
@@ -575,6 +676,9 @@ typedef struct  mpc_omp_task_dep_node_s
     /* Task dependences record */
     ompt_dependence_t * ompt_task_deps;
 #endif /* OMPT_SUPPORT */
+
+    /* profile version, to know if the profile matching should be performed */
+    int profile_version;
 
 }               mpc_omp_task_dep_node_t;
 
@@ -667,26 +771,10 @@ typedef struct  mpc_omp_task_s
     ompt_frame_t ompt_task_frame;
 #endif /* OMPT_SUPPORT */
 
+    /* task priorities propagation version */
+    int propagation_version;
+
 }               mpc_omp_task_t;
-
-/* a task list */
-typedef struct  mpc_omp_task_list_s
-{
-    /* number of tasks in the list */
-    OPA_int_t nb_elements;
-
-    /* head task in the list */
-    struct mpc_omp_task_s * head;
-
-    /* tail task inf the list */
-    struct mpc_omp_task_s * tail;
-
-    /* mutex */
-    mpc_common_spinlock_t lock;
-
-    /* list type */
-    int type;
-}               mpc_omp_task_list_t;
 
 /** RB tree for task priorities */
 typedef struct  mpc_omp_task_pqueue_node_s
@@ -829,6 +917,12 @@ typedef struct  mpc_omp_task_instance_infos_s
     pthread_cond_t  work_cond;
     int             work_cond_nthreads;
 # endif
+
+    /* task profiles for asynchronous priority propagation */
+    mpc_omp_task_profile_info_t profiles;
+
+    /* priority propagation information */
+    mpc_omp_task_priority_propagation_context_t propagation;
 
 }               mpc_omp_task_instance_infos_t;
 

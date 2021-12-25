@@ -41,6 +41,7 @@
 #include "mpcomp_task.h"
 #include "mpcomp_openmp_tls.h"
 #include <stdbool.h>
+#include <limits.h>
 #include "mpcompt_control_tool.h"
 #include "mpcompt_frame.h"
 void omp_set_num_threads(int num_threads) {
@@ -536,6 +537,38 @@ void
 mpc_omp_task_dependencies(mpc_omp_task_dependency_t * dependencies, unsigned int n)
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+    assert(thread);
     thread->task_infos.incoming.dependencies = dependencies;
     thread->task_infos.incoming.ndependencies_type = n;
+}
+
+/** Reset the 'in' and the 'inoutset' list of a given data dependency,
+ * as if an empty task with an 'out' dependency on 'addr' was inserted */
+void
+mpc_omp_task_dependency_reset(void * addr)
+{
+    mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
+    assert(thread);
+
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
+    unsigned hashv;
+    HASH_VALUE(&addr, sizeof(void *), hashv);
+
+    mpc_omp_task_dep_htable_entry_t * entry;
+    HASH_FIND_BYHASHVALUE(hh, task->dep_node.hmap, &addr, sizeof(void *), hashv, entry);
+
+    if (entry)
+    {
+        entry->ins = NULL;
+        entry->inoutset = NULL;
+    }
+}
+
+/* mark a task as a send-task */
+void
+mpc_omp_task_is_send(void)
+{
+    _mpc_omp_task_profile_register_current(INT_MAX);
 }

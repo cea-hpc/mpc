@@ -143,6 +143,7 @@ typedef struct  mpc_omp_conf_s
     int task_direct_successor_enabled;
     mpc_omp_task_priority_policy_t task_priority_policy;
     mpc_omp_task_priority_propagation_policy_t task_priority_propagation_policy;
+    mpc_omp_task_priority_propagation_synchronousity_t task_priority_propagation_synchronousity;
 
     /* task steal */
     int task_steal_last_stolen;

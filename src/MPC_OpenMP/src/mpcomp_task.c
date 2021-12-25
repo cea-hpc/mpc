@@ -1057,18 +1057,18 @@ __task_precedence_constraints(mpc_omp_task_t * predecessor, mpc_omp_task_t * suc
             {
                 if (!__task_in_list(predecessor->dep_node.successors, successor))
                 {
-                    predecessor->dep_node.successors = __task_list_elt_new(predecessor->dep_node.successors, successor);
                     OPA_incr_int(&(predecessor->dep_node.nsuccessors));
+                    OPA_incr_int(&(successor->dep_node.npredecessors));
+                    OPA_incr_int(&(successor->dep_node.ref_predecessors));
 
+                    predecessor->dep_node.successors = __task_list_elt_new(predecessor->dep_node.successors, successor);
                     // if the priority should be propagated to predecessors
                     // -> link through predecessor's list
                     if (mpc_omp_conf_get()->task_priority_propagation_policy
-                            != MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_NOOP)
+                        != MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_NOOP)
                     {
                         successor->dep_node.predecessors = __task_list_elt_new(successor->dep_node.predecessors, predecessor);
                     }
-                    OPA_incr_int(&(successor->dep_node.npredecessors));
-                    OPA_incr_int(&(successor->dep_node.ref_predecessors));
                 }
 
                 if (predecessor->dep_node.top_level + 1 > successor->dep_node.top_level)
@@ -1468,6 +1468,215 @@ __task_delete(mpc_omp_task_t * task)
 
     /* decrement number of existing tasks */
     OPA_decr_int(&(thread->instance->task_infos.ntasks_allocated));
+}
+
+/** TASK PRIORITIES AND PROFILES */
+
+/** Return 1 if given task profile alraedy was registered */
+static int
+__task_profile_exists(mpc_omp_task_t * task)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_task_profile_t * profile = (mpc_omp_task_profile_t *) OPA_load_ptr(&(thread->instance->task_infos.profiles.head));
+    while (profile)
+    {
+        /** TODO : this matching function is optimized for apps with:
+         *  - mono productor
+         *  - no task recursion
+         *  - complete graph discovery before running a match (so that we have the correct number of successors)
+         */
+        if (task->size == profile->size &&
+            (task->property & MPC_OMP_TASK_PROP_PROFILE_MASK) == (profile->property & MPC_OMP_TASK_PROP_PROFILE_MASK) &&
+            OPA_load_int(&(task->dep_node.npredecessors)) == profile->npredecessors &&
+            OPA_load_int(&(task->dep_node.nsuccessors)) == profile->nsuccessors &&
+            task->parent->uid == profile->parent_uid)
+        {
+            return 1;
+        }
+        profile = profile->next;
+    }
+    return 0;
+}
+
+void _mpc_omp_task_profile_register_current(int priority)
+{
+    /* no need to register the profile if the policy is not set to asynchronous priority propagation */
+    if (mpc_omp_conf_get()->task_priority_propagation_synchronousity != MPC_OMP_TASK_PRIORITY_PROPAGATION_ASYNCHRONOUS)
+    {
+        return ;
+    }
+
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
+    if (__task_profile_exists(task))
+    {
+        return ;
+    }
+
+    mpc_common_spinlock_lock(&(thread->instance->task_infos.profiles.spinlock));
+    {
+        mpc_omp_task_profile_t * profile = (mpc_omp_task_profile_t *) mpc_omp_alloc(sizeof(mpc_omp_task_profile_t));
+        assert(profile);
+
+        profile->size           = task->size;
+        profile->property       = task->property;
+        profile->npredecessors  = OPA_load_int(&(task->dep_node.npredecessors));
+        profile->nsuccessors    = OPA_load_int(&(task->dep_node.nsuccessors));
+        profile->priority       = priority;
+        profile->next           = (mpc_omp_task_profile_t *) OPA_load_ptr(&(thread->instance->task_infos.profiles.head));
+        profile->parent_uid     = task->parent->uid;
+        OPA_store_ptr(&(thread->instance->task_infos.profiles.head), profile);
+        OPA_fetch_and_incr_int(&(thread->instance->task_infos.profiles.n));
+    }
+    mpc_common_spinlock_unlock(&(thread->instance->task_infos.profiles.spinlock));
+}
+
+
+static inline void
+__task_profile_priority_compute(mpc_omp_task_t * task)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_instance_t * instance = thread->instance;
+    assert(instance);
+
+    int profile_version = OPA_load_int(&(instance->task_infos.profiles.n));
+    if (task->dep_node.profile_version == profile_version) return;
+    task->dep_node.profile_version = profile_version;
+
+    int priority = __task_profile_exists(task) ? INT_MAX : 0;
+    if (task->priority < priority)
+    {
+        task->priority = priority;
+    }
+}
+
+static void
+__task_profile_propagate(void)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_instance_t * instance = thread->instance;
+    assert(instance);
+
+    // TAKE LOCK: only 1 thread may propagate at once
+    if (mpc_common_spinlock_trylock(&(instance->task_infos.propagation.lock)) == 0)
+    {
+        int version = OPA_fetch_and_incr_int(&(instance->task_infos.propagation.version));
+
+        // list to find leaves
+        mpc_omp_task_list_t * down = &(instance->task_infos.propagation.down);
+
+        // list to propagate priorities up
+        mpc_omp_task_list_t * up = &(instance->task_infos.propagation.up);
+
+        // list of blocked tasks
+        mpc_omp_task_list_t * blocked_tasks = &(thread->instance->task_infos.blocked_tasks);
+
+        assert(blocked_tasks->type == MPC_OMP_TASK_LIST_TYPE_SCHEDULER);
+        assert(down->type == MPC_OMP_TASK_LIST_TYPE_UP_DOWN);
+        assert(up->type == MPC_OMP_TASK_LIST_TYPE_UP_DOWN);
+
+        assert(__task_list_is_empty(down));
+        assert(__task_list_is_empty(up));
+
+        // RETRIEVE BLOCKED TASKS
+        mpc_common_spinlock_lock(&(blocked_tasks->lock));
+        {
+            mpc_omp_task_t * task = blocked_tasks->head;
+            while (task)
+            {
+                assert(OPA_load_int(&(task->ref_counter)) > 0);
+                task->propagation_version = version;
+                __task_ref(task);
+                __task_list_push_to_tail(down, task);
+                task = task->next[MPC_OMP_TASK_LIST_TYPE_SCHEDULER];
+            }
+        }
+        mpc_common_spinlock_unlock(&(blocked_tasks->lock));
+
+        // FIND LEAVES
+        while (!__task_list_is_empty(down))
+        {
+            mpc_omp_task_t * task = __task_list_pop_from_head(down);
+            assert(OPA_load_int(&(task->ref_counter)) > 0);
+            MPC_OMP_TASK_LOCK(task);
+            {
+                if (task->dep_node.successors)
+                {
+                    mpc_omp_task_list_elt_t * elt = task->dep_node.successors;
+                    while (elt)
+                    {
+                        mpc_omp_task_t * successor = elt->task;
+                        if (successor->propagation_version < version)
+                        {
+                            successor->propagation_version = version;
+                            __task_ref(successor);
+                            __task_list_push_to_tail(down, successor);
+                        }
+                        elt = elt->next;
+                    }
+                }
+                else
+                {
+                    __task_ref(task);
+                    __task_list_push_to_tail(up, task);
+                }
+            }
+            MPC_OMP_TASK_UNLOCK(task);
+            __task_unref(task);
+
+            // PROPAGATE UP FROM LEAVES
+            while (!__task_list_is_empty(up))
+            {
+                mpc_omp_task_t * task = __task_list_pop_from_head(up);
+
+                /* check if the task is not already queued */
+                if (OPA_load_int(&(task->dep_node.status)) < MPC_OMP_TASK_STATUS_READY)
+                {
+                    MPC_OMP_TASK_LOCK(task);
+                    {
+                        if (OPA_load_int(&(task->dep_node.status)) < MPC_OMP_TASK_STATUS_READY)
+                        {
+                            __task_profile_priority_compute(task);
+                            if (task->dep_node.predecessors)
+                            {
+                                assert(task->dep_node.predecessors);
+                                mpc_omp_task_list_elt_t * elt = task->dep_node.predecessors;
+                                while (elt)
+                                {
+                                    mpc_omp_task_t * predecessor = elt->task;
+
+                                    // TODO : handle propagation policy here also
+
+                                    if (predecessor->priority < task->priority - 1)
+                                    {
+                                        predecessor->priority = task->priority - 1;
+                                        __task_ref(predecessor);
+                                        __task_list_push_to_head(up, predecessor);
+                                    }
+                                    elt = elt->next;
+                                }
+                            }
+                        }
+                    }
+                    MPC_OMP_TASK_UNLOCK(task);
+                }
+                __task_unref(task);
+            }
+        }
+
+        // RELEASE LOCK
+        mpc_common_spinlock_unlock(&(instance->task_infos.propagation.lock));
+    }
 }
 
 static void
@@ -2855,6 +3064,11 @@ _mpc_omp_task_schedule(void)
     }
 
     /* Famine detected */
+    if (mpc_omp_conf_get()->task_priority_propagation_synchronousity == MPC_OMP_TASK_PRIORITY_PROPAGATION_ASYNCHRONOUS)
+    {
+        __task_profile_propagate();
+    }
+
     return 0;
 }
 

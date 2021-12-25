@@ -230,6 +230,13 @@ extern "C" {
     /* return true if the thread is currently within an omp task */
     int mpc_omp_in_explicit_task(void);
 
+    /* Reset the 'in' and 'inoutset' list of a given data address
+     * It means that previously generated 'in' and 'inoutset' tasks on this address will be ignored on future tasks */
+    void mpc_omp_task_dependency_reset(void * addr);
+
+    /* mark current task as a send task */
+    void mpc_omp_task_is_send(void);
+
 #ifdef __cplusplus
 }
 #endif
