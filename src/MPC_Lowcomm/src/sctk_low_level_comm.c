@@ -196,10 +196,6 @@ void sctk_rail_init_driver(sctk_rail_info_t *rail, int driver_type)
 			sctk_network_init_tcp(rail);
 			break;
 
-		case SCTK_RTCFG_net_driver_tcprdma:
-			sctk_network_init_tcp_rdma(rail);
-			break;
-
 		case SCTK_RTCFG_net_driver_shm:
 			sctk_network_init_shm(rail);
 			break;

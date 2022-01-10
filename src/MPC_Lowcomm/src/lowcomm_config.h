@@ -312,7 +312,6 @@ enum _mpc_lowcomm_config_struct_net_driver_type
 	SCTK_RTCFG_net_driver_infiniband,
 	SCTK_RTCFG_net_driver_portals,
 	SCTK_RTCFG_net_driver_tcp,
-	SCTK_RTCFG_net_driver_tcprdma,
 	SCTK_RTCFG_net_driver_shm,
 	SCTK_RTCFG_net_driver_ofi,
 	SCTK_RTCFG_net_driver_topological,
@@ -335,7 +334,6 @@ struct _mpc_lowcomm_config_struct_net_driver
 		struct _mpc_lowcomm_config_struct_net_driver_ofi ofi;
 #endif
 		struct _mpc_lowcomm_config_struct_net_driver_tcp         tcp;
-		struct _mpc_lowcomm_config_struct_net_driver_tcp_rdma    tcprdma;
 		struct _mpc_lowcomm_config_struct_net_driver_shm         shm;
 	}                                               value;
 };
