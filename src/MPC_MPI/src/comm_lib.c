@@ -4191,14 +4191,6 @@ void mpc_cl_comm_lib_init()
 	/* Main END */
 
 	mpc_common_init_callback_register("Ending Main",
-	                                  "Per Thread CTX Release",
-	                                  mpc_mpi_cl_per_thread_ctx_release, 22);
-
-	mpc_common_init_callback_register("Ending Main",
-	                                  "Release Barrier",
-	                                  __release_barrier, 23);
-
-	mpc_common_init_callback_register("Ending Main",
 	                                  "Per MPI Process CTX Release",
 	                                  __mpc_cl_per_mpi_process_ctx_release, 0);
 
