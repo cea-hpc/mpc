@@ -3601,9 +3601,9 @@ static void __initialize_drivers()
 
 static void __finalize_driver()
 {
-	_mpc_lowcomm_monitor_teardown();
 	mpc_lowcomm_rdma_window_do_release();
 	_mpc_lowcomm_communicator_release();
+	_mpc_lowcomm_monitor_teardown();
 }
 
 #ifdef MPC_USE_DMTCP
