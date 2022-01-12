@@ -16647,6 +16647,8 @@ int PMPI_Finalize(void)
 {
 	int res = MPI_ERR_INTERN;
 
+	PMPI_Barrier(MPI_COMM_WORLD);
+
 #ifdef MPC_Profiler
 	mpc_common_init_callback_register("MPC Profile reduce",
 	                                  "Reduce profile data before rendering them",

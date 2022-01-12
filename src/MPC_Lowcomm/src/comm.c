@@ -544,7 +544,7 @@ static inline int ___mpc_comm_ptp_task_perform(unsigned int key, unsigned int de
 	int target_list        = key & PTP_TASKING_QUEUE_COUNT;
 
 	/* Each element of this list has already been matched */
-	while(__mpc_ptp_task_list[target_list].cpy != NULL )
+	while(1)
 	{
 		mpc_lowcomm_ptp_message_content_to_copy_t *tmp = NULL;
 
@@ -569,6 +569,10 @@ static inline int ___mpc_comm_ptp_task_perform(unsigned int key, unsigned int de
 			 * the matching user buffer */
 			tmp->msg_send->tail.message_copy(tmp);
 			nb_messages_copied++;
+		}
+		else
+		{
+			break;
 		}
 	}
 
