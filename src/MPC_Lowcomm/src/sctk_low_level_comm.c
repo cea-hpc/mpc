@@ -376,7 +376,7 @@ void sctk_net_init_driver(char *name)
 		}
 
 		/* Handle the case where no matching decice was found and flag as no_device */
-		if(rail_config_struct->subrails_size == -1)
+		if( (rail_config_struct->subrails_size == -1) && (mpc_common_get_process_rank() == 0) )
 		{
 			mpc_common_debug_warning("Rail %s expect %s devices but none were found", rail_config_struct->name, rail_config_struct->device);
 			mpc_common_debug_warning("MPC will fallback to TCP, consider changing your default network");
