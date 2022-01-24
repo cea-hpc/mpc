@@ -141,7 +141,6 @@ __record_sizeof(mpc_omp_task_trace_record_type_t type)
             return sizeof(mpc_omp_task_trace_record_callback_t);
         }
 
-# if MPC_MPI
         case (MPC_OMP_TASK_TRACE_TYPE_SEND):
         {
             return sizeof(mpc_omp_task_trace_record_send_t);
@@ -156,7 +155,6 @@ __record_sizeof(mpc_omp_task_trace_record_type_t type)
         {
             return sizeof(mpc_omp_task_trace_record_allreduce_t);
         }
-# endif /* MPC_MPI */
 
         default:
         {
@@ -267,7 +265,6 @@ _mpc_omp_task_trace_callback(int when, int status)
     __node_insert(node);
 }
 
-# if MPC_MPI
 void
 _mpc_omp_task_trace_send(int count, int datatype, int dst, int tag, int comm)
 {
@@ -335,9 +332,6 @@ _mpc_omp_task_trace_allreduce(int count, int datatype, int op, int comm)
 
     __node_insert(node);
 }
-
-
-# endif /* MPC_MPI */
 
 static inline int
 __task_trace_create_file(void)

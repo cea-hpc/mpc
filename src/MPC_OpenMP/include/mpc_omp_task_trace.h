@@ -45,14 +45,14 @@
 # include "mpc_omp.h"
 # include "mpc_omp_task_property.h"
 
-#  define MPC_OMP_TASK_TRACE_DEPENDENCY(out, in)    if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_dependency(out, in)
-#  define MPC_OMP_TASK_TRACE_SCHEDULE(task)         if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_schedule(task)
-#  define MPC_OMP_TASK_TRACE_CREATE(task)           if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_create(task)
-#  define MPC_OMP_TASK_TRACE_DELETE(task)           if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_delete(task)
-#  define MPC_OMP_TASK_TRACE_CALLBACK(when, status) if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_async(when, status)
-#  define MPC_OMP_TASK_TRACE_SEND(count, dtype, dst, tag, comm) if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_send(count, dtype, dst, tag, comm)
-#  define MPC_OMP_TASK_TRACE_RECV(count, dtype, src, tag, comm) if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_recv(count, dtype, src, tag, comm)
-#  define MPC_OMP_TASK_TRACE_ALLREDUCE(count, dtype, op, comm)  if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_allreduce(count, dtype, op, comm)
+#  define MPC_OMP_TASK_TRACE_DEPENDENCY(out, in)                 if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_dependency(out, in)
+#  define MPC_OMP_TASK_TRACE_SCHEDULE(task)                      if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_schedule(task)
+#  define MPC_OMP_TASK_TRACE_CREATE(task)                        if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_create(task)
+#  define MPC_OMP_TASK_TRACE_DELETE(task)                        if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_delete(task)
+#  define MPC_OMP_TASK_TRACE_CALLBACK(when, status)              if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_async(when, status)
+#  define MPC_OMP_TASK_TRACE_SEND(count, dtype, dst, tag, comm)  if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_send(count, dtype, dst, tag, comm)
+#  define MPC_OMP_TASK_TRACE_RECV(count, dtype, src, tag, comm)  if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_recv(count, dtype, src, tag, comm)
+#  define MPC_OMP_TASK_TRACE_ALLREDUCE(count, dtype, op, comm)   if (_mpc_omp_task_trace_begun()) _mpc_omp_task_trace_allreduce(count, dtype, op, comm)
 
 # define MPC_OMP_TASK_TRACE_FILE_VERSION    1
 # define MPC_OMP_TASK_TRACE_FILE_MAGIC      (0x6B736174) /* 't' 'a' 's' 'k' */
@@ -93,11 +93,9 @@ typedef enum    mpc_omp_task_trace_record_type_e
     MPC_OMP_TASK_TRACE_TYPE_CREATE,
     MPC_OMP_TASK_TRACE_TYPE_DELETE,
     MPC_OMP_TASK_TRACE_TYPE_CALLBACK,
-# if MPC_MPI
     MPC_OMP_TASK_TRACE_TYPE_SEND,
     MPC_OMP_TASK_TRACE_TYPE_RECV,
     MPC_OMP_TASK_TRACE_TYPE_ALLREDUCE,
-# endif /* MPC_MPI */
     MPC_OMP_TASK_TRACE_TYPE_COUNT
 }               mpc_omp_task_trace_record_type_t;
 
@@ -207,9 +205,6 @@ typedef struct  mpc_omp_task_trace_record_callback_s
     int when;
 }               mpc_omp_task_trace_record_callback_t;
 
-# if MPC_MPI
-# include <mpc_mpi.h>
-
 typedef struct  mpc_omp_task_trace_record_send_s
 {
     /* inheritance */
@@ -258,8 +253,6 @@ typedef struct  mpc_omp_task_trace_record_allreduce_s
     int comm;
 }               mpc_omp_task_trace_record_allreduce_t;
 
-# endif /* MPC_MPI */
-
 /**
  *  A record node
  */
@@ -297,27 +290,35 @@ typedef struct  mpc_omp_thread_task_trace_infos_s
     int id;
 }               mpc_omp_thread_task_trace_infos_t;
 
-/**
- *  Flush the thread events to the file descriptor
- */
-void _mpc_omp_task_trace_flush(void);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/**
- *  Return true if between a 'begin' and 'end' trace section
- */
-int _mpc_omp_task_trace_begun(void);
+    /**
+     *  Flush the thread events to the file descriptor
+     */
+    void _mpc_omp_task_trace_flush(void);
 
-/**
- * Add events to the thread event queue
- */
-void _mpc_omp_task_trace_dependency(struct mpc_omp_task_s * out, struct mpc_omp_task_s * in);
-void _mpc_omp_task_trace_schedule(struct mpc_omp_task_s * task);
-void _mpc_omp_task_trace_create(struct mpc_omp_task_s * task);
-void _mpc_omp_task_trace_delete(struct mpc_omp_task_s * task);
-void _mpc_omp_task_trace_callback(int when, int status);
-void _mpc_omp_task_trace_send(int count, int datatype, int dst, int tag, int comm);
-void _mpc_omp_task_trace_recv(int count, int datatype, int src, int tag, int comm);
-void _mpc_omp_task_trace_allreduce(int count, int datatype, int op, int comm);
+    /**
+     *  Return true if between a 'begin' and 'end' trace section
+     */
+    int _mpc_omp_task_trace_begun(void);
+
+    /**
+     * Add events to the thread event queue
+     */
+    void _mpc_omp_task_trace_dependency(struct mpc_omp_task_s * out, struct mpc_omp_task_s * in);
+    void _mpc_omp_task_trace_schedule(struct mpc_omp_task_s * task);
+    void _mpc_omp_task_trace_create(struct mpc_omp_task_s * task);
+    void _mpc_omp_task_trace_delete(struct mpc_omp_task_s * task);
+    void _mpc_omp_task_trace_callback(int when, int status);
+    void _mpc_omp_task_trace_send(int count, int datatype, int dst, int tag, int comm);
+    void _mpc_omp_task_trace_recv(int count, int datatype, int src, int tag, int comm);
+    void _mpc_omp_task_trace_allreduce(int count, int datatype, int op, int comm);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 # else  /* MPC_OMP_TASK_COMPILE_TRACE */
 #  define MPC_OMP_TASK_TRACE_DEPENDENCY(...)
