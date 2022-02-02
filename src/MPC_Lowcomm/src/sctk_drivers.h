@@ -25,10 +25,10 @@
 #include <mpc_config.h>
 
 /* Networks */
-#include <sctk_tcp.h>
+#include <tcp.h>
 
 #ifdef MPC_USE_INFINIBAND
-#include <sctk_ib.h>
+#include <ib.h>
 #endif
 
 #ifdef MPC_USE_PORTALS
@@ -40,6 +40,7 @@
 #endif
 
 #include <sctk_shm.h>
+
 #include <sctk_topological_rail.h>
 
 #endif

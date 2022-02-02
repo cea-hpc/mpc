@@ -316,7 +316,6 @@ int _mpc_egreq_progress_pool_release( struct _mpc_egreq_progress_pool *p )
 
 struct _mpc_egreq_progress_list *_mpc_egreq_progress_pool_join( struct _mpc_egreq_progress_pool *p )
 {
-
 	struct _mpc_egreq_progress_list *ret = NULL;
 
 	mpc_common_spinlock_lock( &p->pool_lock );

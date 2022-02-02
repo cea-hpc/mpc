@@ -23,13 +23,9 @@
 #define __SCTK_INTER_THREAD_COMMUNICATIONS_H_
 
 #include <mpc_lowcomm_msg.h>
-
 #include <mpc_config.h>
 #include <mpc_common_debug.h>
-
 #include <mpc_lowcomm.h>
-
-
 #include <mpc_common_asm.h>
 
 
@@ -75,7 +71,7 @@ static inline int _mpc_comm_ptp_message_is_for_process( mpc_lowcomm_ptp_message_
 		case MPC_LOWCOMM_ALLREDUCE_OFFLOAD_MESSAGE:
 		case MPC_LOWCOMM_CONTROL_MESSAGE_RAIL:
 		case MPC_LOWCOMM_CONTROL_MESSAGE_PROCESS:
-		case MPC_LOWCOMM_CONTROL_MESSAGE_USER:
+		case MPC_LOWCOMM_MESSAGE_UNIVERSE:
 			return 1;
 
 		case MPC_LOWCOMM_MESSAGE_CLASS_COUNT:
@@ -109,12 +105,12 @@ static inline int _mpc_comm_ptp_message_is_for_control( mpc_lowcomm_ptp_message_
 		case MPC_LOWCOMM_RDMA_WINDOW_MESSAGES:
 		case MPC_LOWCOMM_CONTROL_MESSAGE_FENCE:
 		case MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL:
+		case MPC_LOWCOMM_MESSAGE_UNIVERSE:
 			return 0;
 
 		case MPC_LOWCOMM_CONTROL_MESSAGE_TASK:
 		case MPC_LOWCOMM_CONTROL_MESSAGE_RAIL:
 		case MPC_LOWCOMM_CONTROL_MESSAGE_PROCESS:
-		case MPC_LOWCOMM_CONTROL_MESSAGE_USER:
 			return 1;
 
 		case MPC_LOWCOMM_MESSAGE_CLASS_COUNT:
@@ -153,19 +149,25 @@ static inline void _mpc_comm_ptp_message_set_copy_and_free( mpc_lowcomm_ptp_mess
 		msg->body.header.use_message_numbering = num;  \
 	} while ( 0 )
 
-#define SCTK_MSG_SRC_PROCESS( msg ) msg->body.header.source
+#define SCTK_MSG_SRC_PROCESS_UID( msg ) msg->body.header.source
+#define SCTK_MSG_SRC_PROCESS_UID_SET( msg, uid )  msg->body.header.source = uid
+#define SCTK_MSG_SRC_PROCESS( msg ) mpc_lowcomm_peer_get_rank(SCTK_MSG_SRC_PROCESS_UID(msg))
 #define SCTK_MSG_SRC_PROCESS_SET( msg, src ) \
 	do                                       \
 	{                                        \
-		msg->body.header.source = src;       \
+		msg->body.header.source = mpc_lowcomm_monitor_uid_of(mpc_lowcomm_monitor_get_gid(), src);       \
 	} while ( 0 )
+	
 
-#define SCTK_MSG_DEST_PROCESS( msg ) msg->body.header.destination
+#define SCTK_MSG_DEST_PROCESS_UID( msg ) msg->body.header.destination
+#define SCTK_MSG_DEST_PROCESS_UID_SET( msg, uid )  msg->body.header.destination = uid
+#define SCTK_MSG_DEST_PROCESS( msg ) mpc_lowcomm_peer_get_rank(SCTK_MSG_DEST_PROCESS_UID(msg))
 #define SCTK_MSG_DEST_PROCESS_SET( msg, dest ) \
 	do                                         \
 	{                                          \
-		msg->body.header.destination = dest;   \
+		msg->body.header.destination = mpc_lowcomm_monitor_uid_of(mpc_lowcomm_monitor_get_gid(), dest);   \
 	} while ( 0 )
+
 
 #define SCTK_MSG_SRC_TASK( msg ) msg->body.header.source_task
 #define SCTK_MSG_SRC_TASK_SET( msg, src )   \
@@ -274,7 +276,7 @@ static inline void _mpc_comm_ptp_message_set_copy_and_free( mpc_lowcomm_ptp_mess
 /************************************************************************/
 
 struct mpc_comm_ptp_s *_mpc_comm_ptp_array_get( mpc_lowcomm_communicator_t comm, int rank );
-sctk_reorder_list_t *_mpc_comm_ptp_array_get_reorder( mpc_lowcomm_communicator_t communicator, int rank );
+_mpc_lowcomm_reorder_list_t *_mpc_comm_ptp_array_get_reorder( mpc_lowcomm_communicator_t communicator, int rank );
 
 void _mpc_comm_ptp_message_reinit_comm(mpc_lowcomm_ptp_message_t *msg);
 
@@ -292,19 +294,28 @@ static inline int sctk_is_process_specific_message( mpc_lowcomm_ptp_message_head
 }
 
 
+/** Message for a process with ordering and a tag */
+static inline int _mpc_lowcomm_message_is_for_universe( mpc_lowcomm_ptp_message_header_t *header )
+{
+	return (header->message_type.type == MPC_LOWCOMM_MESSAGE_UNIVERSE);
+}
+
 
 static inline void _mpc_comm_ptp_message_clear_request( mpc_lowcomm_ptp_message_t *msg )
 {
 	msg->tail.request = NULL;
     msg->tail.internal_ptp = NULL;
 
-	if (sctk_is_process_specific_message(SCTK_MSG_HEADER(msg))) {
+	if (sctk_is_process_specific_message(SCTK_MSG_HEADER(msg)))
+	{
 		return;
+#if 0
 	} else {
 		if (SCTK_MSG_SRC_PROCESS(msg) == MPC_ANY_SOURCE) {
 			/* Source task not available */
 			SCTK_MSG_SRC_TASK_SET(msg, -1);
 		}
+#endif
 	}
 }
 

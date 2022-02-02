@@ -27,7 +27,7 @@
 #include "sctk_alloc.h"
 #include "mpc_lowcomm.h"
 #include "mpc_common_debug.h"
-#include "sctk_handle.h"
+#include "errh.h"
 #include <mpc_lowcomm_msg.h>
 #include "mpc_common_spinlock.h"
 #include "mpc_coll.h"
@@ -51,6 +51,16 @@ TODO("Expose this header cleanly");
 //#define MPC_MPI_USE_REQUEST_CACHE
 //#define MPC_MPI_USE_LOCAL_REQUESTS_QUEUE
 
+/********************
+ * INIT AND RELEASE *
+ ********************/
+
+int mpc_mpi_initialize(void);
+int mpc_mpi_release(void);
+
+/*******************
+ * ERROR REPORTING *
+ *******************/
 
 /*
  * TODO: RULE FROM THE MPI STANDARD
@@ -64,17 +74,6 @@ int _mpc_mpi_report_error(mpc_lowcomm_communicator_t comm, int error, char *mess
 #define MPI_HANDLE_RETURN_VAL(res, comm)            do { if(res == MPI_SUCCESS){ return res; } else { MPI_ERROR_REPORT(comm, res, "Generic error return"); } } while(0)
 #define MPI_HANDLE_ERROR(res, comm, desc_string)    do { if(res != MPI_SUCCESS){ MPI_ERROR_REPORT(comm, res, desc_string); } } while(0)
 
-
-char * sctk_char_fortran_to_c (char *buf, int size, char ** free_ptr);
-void sctk_char_c_to_fortran (char *buf, int size);
-
-#if defined(SCTK_USE_CHAR_MIXED)
-#define SCTK_CHAR_END(size)
-#define SCTK_CHAR_MIXED(size)  ,long int size
-#else
-#define SCTK_CHAR_END(size) ,long int size
-#define SCTK_CHAR_MIXED(size)
-#endif
 
 
 struct sctk_list_elem {
@@ -228,8 +227,6 @@ typedef struct MPI_internal_request_s
 
 } MPI_internal_request_t;
 
-
-
 /** \brief MPI_Request managment structure 
  * 
  * 	In order to simplify the fortran interface it is preferable
@@ -289,7 +286,6 @@ void __sctk_delete_mpc_request(MPI_Request *req,
                                MPI_request_struct_t *requests);
 
 _mpc_dt_derived_t *_mpc_cl_per_mpi_process_ctx_derived_datatype_get(mpc_lowcomm_datatype_t datatype);
-int *sctk_group_raw_ranks(MPI_Group group);
 
 typedef struct {
   sctk_Op op;
@@ -436,7 +432,6 @@ int NBC_Finalize(mpc_thread_t *NBC_thread);
 /* All these functions do not check for negative
    tags to allow internal use */
 
-
 int PMPI_Send_internal(const void *buf, int count, MPI_Datatype datatype, int dest, int tag,
               MPI_Comm comm);
 
@@ -456,10 +451,7 @@ int PMPI_Irecv_internal(void *buf, int count, MPI_Datatype datatype, int source,
 
 /* error handling */
 
-extern int is_finalized;
-extern int is_initialized;
-
-#define MPI_ERROR_SUCESS()    return MPI_SUCCESS
+#define MPI_ERROR_SUCCESS()    return MPI_SUCCESS
 
 #define mpi_check_status_error(status) do{\
 	if( (status)->MPI_ERROR != MPI_SUCCESS )\
@@ -485,13 +477,21 @@ extern int is_initialized;
 	if( (datatype >= SCTK_USER_DATA_TYPES_MAX) && (_mpc_dt_is_derived(datatype) != 1) && (_mpc_dt_is_contiguous(datatype) != 1) && ( (datatype != MPI_UB) && (datatype != MPI_LB) ) ){ \
 		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, ""); }
 
+int _mpc_mpi_init_counter(int *counter);
 
 #define mpi_check_comm(comm)                                                        \
-	if( (is_finalized != 0) || (is_initialized != 1) ){                              \
-		MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_OTHER, "The runtime is not initialized");                     \
+	if( comm == MPI_COMM_WORLD ){                              \
+		int ____is_init = 0; \
+		int ____is_fini = 0; \
+		int ___init_counter = 0; \
+		_mpc_mpi_init_counter(&___init_counter); \
+		PMPI_Initialized(&____is_init);     \
+		PMPI_Finalized(&____is_fini);        \
+		if(!( ____is_init || (0 < ___init_counter) ) || ____is_fini) { \
+			MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_OTHER, "The runtime is not initialized");                     \
+		}\
 	} \
-	else if((comm == MPI_COMM_NULL) || (!mpc_lowcomm_communicator_exists(comm)) ) \
-	{                                                 \
+	else if((comm == MPI_COMM_NULL) || (!mpc_lowcomm_communicator_exists(comm)) ) { \
 		MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_COMM, "Error in communicator"); \
 	}
 

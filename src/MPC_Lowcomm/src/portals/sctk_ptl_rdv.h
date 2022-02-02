@@ -25,9 +25,11 @@
 #ifndef __SCTK_PTL_RDV_H_
 #define __SCTK_PTL_RDV_H_
 
+#include <mpc_lowcomm_msg.h>
+
 void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev);
 void sctk_ptl_rdv_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev);
 
 void sctk_ptl_rdv_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_ptl_rail_info_t* srail);
-void sctk_ptl_rdv_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t* endpoint);
+void sctk_ptl_rdv_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_endpoint_t* endpoint);
 #endif /* ifndef __SCTK_PTL_RDV_H_ */

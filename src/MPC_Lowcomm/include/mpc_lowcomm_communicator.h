@@ -1,5 +1,5 @@
 /* ############################# MPC License ############################## */
-/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* # Thu May  6 10:26:16 CEST 2021                                        # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -15,8 +15,15 @@
 /* # had knowledge of the CeCILL-C license and that you accept its        # */
 /* # terms.                                                               # */
 /* #                                                                      # */
+/* # Maintainers:                                                         # */
+/* # - CARRIBAULT Patrick patrick.carribault@cea.fr                       # */
+/* # - JAEGER Julien julien.jaeger@cea.fr                                 # */
+/* # - PERACHE Marc marc.perache@cea.fr                                   # */
+/* # - ROUSSEL Adrien adrien.roussel@cea.fr                               # */
+/* # - TABOADA Hugo hugo.taboada@cea.fr                                   # */
+/* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
+/* # - BESNARD Jean-Baptiste jbbesnard@paratools.fr                       # */
 /* #                                                                      # */
 /* ######################################################################## */
 #ifndef MPC_LOWCOMM_COMMUNICATOR_H
@@ -28,6 +35,7 @@ extern "C" {
 
 #include <mpc_lowcomm_group.h>
 #include <mpc_common_types.h>
+#include <mpc_lowcomm_monitor.h>
 
 /*********************************
 * PUBLIC TYPE FOR COMMUNICATORS *
@@ -35,18 +43,45 @@ extern "C" {
 
 struct mpc_lowcomm_internal_communicator_s;
 typedef struct mpc_lowcomm_internal_communicator_s *mpc_lowcomm_communicator_t;
+typedef uint64_t mpc_lowcomm_communicator_id_t;
 
 
 /************************
 * COMMON COMMUNICATORS *
 ************************/
 
+/** This is the id of COMM world */
+#define MPC_LOWCOMM_COMM_WORLD_NUMERIC_ID    1
+/** This is the ID of COMM self */
+#define MPC_LOWCOMM_COMM_SELF_NUMERIC_ID     2
+
+/**
+ * @brief Get COMM_WORLD identifier
+ * 
+ * @return mpc_lowcomm_communicator_id_t comm_world communicator ID
+ */
+mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_world_id(void);
+
+/**
+ * @brief Get COMM_SELF id
+ * 
+ * @return mpc_lowcomm_communicator_id_t comm_self communicator ID
+ */
+mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_self_id(void);
+
+/**
+ * @brief Book a local communicator ID
+ * 
+ * @return mpc_lowcomm_communicator_id_t local communicator ID
+ */
+mpc_lowcomm_communicator_id_t mpc_lowcomm_communicator_gen_local_id(void);
+
 /** define the ID of a NULL communicator */
 #define MPC_LOWCOMM_COMM_NULL_ID     0
 /** This is the id of COMM world */
-#define MPC_LOWCOMM_COMM_WORLD_ID    1
+#define MPC_LOWCOMM_COMM_WORLD_ID    (mpc_lowcomm_get_comm_world_id())
 /** This is the ID of COMM self */
-#define MPC_LOWCOMM_COMM_SELF_ID     2
+#define MPC_LOWCOMM_COMM_SELF_ID     (mpc_lowcomm_get_comm_self_id())
 /** This is the wildcard for COMMs to be used as ANY source/tag */
 #define MPC_ANY_COMM                 3
 
@@ -56,6 +91,23 @@ typedef struct mpc_lowcomm_internal_communicator_s *mpc_lowcomm_communicator_t;
  * @return mpc_lowcomm_communicator_t pointer to world
  */
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_world();
+
+/**
+ * @brief Get the set id corresponding to a given comm ID
+ *
+ * @param comm_id the comm to querry
+ * @return The set ID holding this comm
+ */
+mpc_lowcomm_set_uid_t mpc_lowcomm_get_comm_gid(mpc_lowcomm_communicator_id_t comm_id);
+
+
+/**
+ * @brief Compute the world ID for a remote set of processes
+ *
+ * @param gid the target group id
+ * @return mpc_lowcomm_communicator_id_t the corresponding comm_world
+ */
+mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_world_id_gid(mpc_lowcomm_set_uid_t gid);
 
 /**
  * @brief Get a pointer to COMM_SELF
@@ -81,7 +133,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_self();
  * @param id iteger identifier of the comm
  * @return mpc_lowcomm_communicator_t pointer to the comm NULL is not existing
  */
-mpc_lowcomm_communicator_t mpc_lowcomm_get_communicator_from_id(uint32_t id);
+mpc_lowcomm_communicator_t mpc_lowcomm_get_communicator_from_id(mpc_lowcomm_communicator_id_t id);
 
 /**
  * @brief Get the numerical identifier of a communicator
@@ -89,7 +141,26 @@ mpc_lowcomm_communicator_t mpc_lowcomm_get_communicator_from_id(uint32_t id);
  * @param comm communicator to get the ID from
  * @return uint32_t Communicator ID (MPC_LOWCOMM_COMM_NULL_ID if error)
  */
-uint32_t mpc_lowcomm_communicator_id(mpc_lowcomm_communicator_t comm);
+mpc_lowcomm_communicator_id_t mpc_lowcomm_communicator_id(mpc_lowcomm_communicator_t comm);
+
+
+/**
+ * @brief Retrieve a local communicator from its linear id (useful for FORTRAN)
+ *
+ * @param id the linear id to use
+ * @return mpc_lowcomm_communicator_t pointer to the comm NULL is not existing
+ */
+mpc_lowcomm_communicator_t mpc_lowcomm_get_communicator_from_linear_id(int linear_id);
+
+/**
+ * @brief Return a  linear integer ID for comm (only valid locally)
+ *        mostly useful for FORTRAN
+ *
+ * @param comm communicator to translate
+ * @return int linear local id
+ */
+int mpc_lowcomm_communicator_linear_id(mpc_lowcomm_communicator_t comm);
+
 
 /**************
 * INTRACOMMS *
@@ -110,6 +181,20 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_create(const mpc_lowcomm_com
                                                            const int *members);
 
 /**
+ * @brief Create a communicator from a comm subgroup
+ * 
+ * @param comm the communicator to use as source
+ * @param group the subgroup to create on
+ * @param tag the tag to use for ID exchange
+ * @param newcomm the new communicator
+ * @return int MPC_LOWCOMM_SUCCESS if all OK
+ */
+int mpc_lowcomm_communicator_create_group(mpc_lowcomm_communicator_t comm,
+                                          mpc_lowcomm_group_t* group,
+                                          int tag,
+                                          mpc_lowcomm_communicator_t *newcomm);
+
+/**
  * @brief Create a communicator from a group object
  *
  * @param comm Source communicator
@@ -118,6 +203,26 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_create(const mpc_lowcomm_com
  */
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_from_group(mpc_lowcomm_communicator_t comm,
                                                                mpc_lowcomm_group_t *group);
+
+/**
+ * @brief Creare a communicator with a group using a pre-exchanged ID (see @ref mpc_lowcomm_communicator_gen_local_id)
+ * 
+ * @param comm the comm to rely on to build the new comm
+ * @param group the group to use for exchange
+ * @param forced_id the ID to rely on (same as mpc_lowcomm_communicator_from_group if MPC_LOWCOMM_COMM_NULL_ID)
+ * @return mpc_lowcomm_communicator_t  new communicator (if member or MPI_COMM_NULL if not)
+ */
+mpc_lowcomm_communicator_t mpc_lowcomm_communicator_from_group_forced_id(mpc_lowcomm_group_t *group,
+																		 mpc_lowcomm_communicator_id_t forced_id);
+
+
+/**
+ * @brief Get the group associated with the communicator (must be intracomm)
+ *
+ * @param comm communicator to get the group of
+ * @return mpc_lowcomm_group_t* the group of this communicator (to free)
+ */
+mpc_lowcomm_group_t * mpc_lowcomm_communicator_group(mpc_lowcomm_communicator_t comm);
 
 /**
  * @brief Duplicate a communicator
@@ -141,11 +246,21 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_split(mpc_lowcomm_communicat
  * @brief Free a communicator
  *
  * @param pcomm pointer to a communicator (set to MPC_COMM_NULL)
- * @return int SCTK_SUCCESS if no error
+ * @return int MPC_LOWCOMM_SUCCESS if no error
  */
 int mpc_lowcomm_communicator_free(mpc_lowcomm_communicator_t *pcomm);
 
 /* Query */
+
+/**
+ * @brief Check if a given communicator contains a given UID
+ *
+ * @param comm the comm to check
+ * @param uid the UID to check
+ * @return int true if UID is part of the comm
+ */
+int mpc_lowcomm_communicator_contains(const mpc_lowcomm_communicator_t comm,
+                                      const mpc_lowcomm_peer_uid_t uid);
 
 /**
  * @brief Get rank in communicator for current process
@@ -208,7 +323,8 @@ int mpc_lowcomm_communicator_rank_of(const mpc_lowcomm_communicator_t comm, cons
  */
 int mpc_lowcomm_communicator_rank_of_as(const mpc_lowcomm_communicator_t comm,
                                         const int comm_world_rank,
-                                        const int lookup_cw_rank);
+                                        const int lookup_cw_rank,
+                                        mpc_lowcomm_peer_uid_t lookup_uid);
 
 /**
  * @brief Get comm world rank for a given communicator rank
@@ -242,6 +358,24 @@ int mpc_lowcomm_communicator_get_process_count(const mpc_lowcomm_communicator_t 
  * @return int* list of processes
  */
 int *mpc_lowcomm_communicator_get_process_list(const mpc_lowcomm_communicator_t comm);
+
+/**
+ * @brief Get the process UID for a given rank in local comm
+ *
+ * @param comm the communicator to look into
+ * @param rank the task rank to target (in comm)
+ * @return mpc_lowcomm_peer_uid_t the corresponding process UID
+ */
+mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_uid(const mpc_lowcomm_communicator_t comm, int rank);
+
+/**
+ * @brief Get the process UID for a given rank in remote comm
+ *
+ * @param comm the communicator to look into
+ * @param rank the task rank to target
+ * @return mpc_lowcomm_peer_uid_t the corresponding process UID
+ */
+mpc_lowcomm_peer_uid_t mpc_lowcomm_communicator_remote_uid(const mpc_lowcomm_communicator_t comm, int rank);
 
 /*********************
 * INTERCOMM SUPPORT *
@@ -308,7 +442,9 @@ int mpc_lowcomm_communicator_in_left_group(const mpc_lowcomm_communicator_t comm
  * @param comm_world_rank the rank to be checked
  * @return int true if the rank is in left group
  */
-int mpc_lowcomm_communicator_in_left_group_rank(const mpc_lowcomm_communicator_t communicator, int comm_world_rank);
+int mpc_lowcomm_communicator_in_left_group_rank(const mpc_lowcomm_communicator_t communicator,
+                                                int comm_world_rank,
+                                                mpc_lowcomm_peer_uid_t uid);
 
 /**
  * @brief Check if the rank is in the right group
@@ -325,13 +461,15 @@ int mpc_lowcomm_communicator_in_right_group(const mpc_lowcomm_communicator_t com
  * @param comm_world_rank the rank to be checked
  * @return int true if the rank is in right group
  */
-int mpc_lowcomm_communicator_in_right_group_rank(const mpc_lowcomm_communicator_t communicator, int comm_world_rank);
+int mpc_lowcomm_communicator_in_right_group_rank(const mpc_lowcomm_communicator_t communicator,
+                                                 int comm_world_rank,
+                                                 mpc_lowcomm_peer_uid_t uid);
 
 /* Accessors */
 
 /**
  * @brief Get the local communicator (on intracomm returns intracomm)
- * 
+ *
  * @param comm the communicator to querry
  * @return mpc_lowcomm_communicator_t the local comm for current rank
  */
@@ -339,17 +477,18 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_local(mpc_lowcomm_commun
 
 /**
  * @brief Get the local communicator (on intracomm returns intracomm) for a given rank
- * 
+ *
  * @param comm the communicator to querry
  * @param lookup_cw_rank the rank to check for membership in the comm (in comm_world)
  * @return mpc_lowcomm_communicator_t the local comm for lookup_cw_rank
  */
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_local_as(mpc_lowcomm_communicator_t comm,
-                                                                 int lookup_cw_rank);
-                                                            
+                                                                 int lookup_cw_rank,
+                                                                 mpc_lowcomm_peer_uid_t uid);
+
 /**
  * @brief Get the remote communicator (on intracomm returns intracomm)
- * 
+ *
  * @param comm the communicator to querry
  * @return mpc_lowcomm_communicator_t the remote comm for current rank
  */
@@ -357,16 +496,18 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote(mpc_lowcomm_commu
 
 /**
  * @brief Get the remote communicator (on intracomm returns intracomm) from a given cw rank
- * 
+ *
  * @param comm the communicator to querry
  * @param lookup_cw_rank the rank to check for membership in the comm (in comm_world)
  * @return mpc_lowcomm_communicator_t the remote comm for current rank
  */
-mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote_as(mpc_lowcomm_communicator_t comm, int lookup_cw_rank);
+mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote_as(mpc_lowcomm_communicator_t comm,
+                                                                  int lookup_cw_rank,
+																  mpc_lowcomm_peer_uid_t uid);
 
 /**
  * @brief Get the size for the remote comm
- * 
+ *
  * @param comm intercomm to querry
  * @return int the size of the remote comm
  */
@@ -374,12 +515,101 @@ int mpc_lowcomm_communicator_remote_size(mpc_lowcomm_communicator_t comm);
 
 /**
  * @brief Get world rank for a process in the remote comm
- * 
+ *
  * @param communicator the intercomm to query
  * @param rank the remote rank
  * @return int the comm world rank for the remote rank
  */
 int mpc_lowcomm_communicator_remote_world_rank(const mpc_lowcomm_communicator_t communicator, const int rank);
+
+/*****************
+ * UNIVERSE COMM *
+ *****************/
+
+/**
+ * @brief Build a given communicator ID as seen by a remote peer
+ *
+ * @param remote remote peer aware of the communicator with given ID
+ * @param id the ID of the communicator to build
+ * @param outcomm the output communicator
+ * @return int MPC_LOWCOMM_SUCCESS if all OK
+ */
+int mpc_lowcomm_communicator_build_remote(mpc_lowcomm_peer_uid_t remote,
+										  const mpc_lowcomm_communicator_id_t id,
+										  mpc_lowcomm_communicator_t *outcomm);
+
+/**
+ * @brief Build the remote comm_world as seen by the remote group
+ *
+ * @param gid the identifier of the group to be targetted
+ * @param comm output communicator
+ * @return int MPC_LOWCOMM_SUCCESS if all OK
+ */
+int mpc_lowcomm_communicator_build_remote_world(const mpc_lowcomm_set_uid_t gid,
+                                                mpc_lowcomm_communicator_t *comm);
+
+/***********************************
+ * COMMUNICATOR CONNECT AND ACCEPT *
+ ***********************************/
+
+int mpc_lowcomm_communicator_connect(const char *port_name,
+                                     int root,
+                                     mpc_lowcomm_communicator_t comm,
+                                     mpc_lowcomm_communicator_t *new_comm);
+
+int mpc_lowcomm_communicator_accept(const char *port_name,
+                                    int root,
+                                    mpc_lowcomm_communicator_t comm,
+                                    mpc_lowcomm_communicator_t *new_comm);
+
+/********************
+ * CONTEXT POINTERS *
+ ********************/
+
+/**
+ * @brief Attach an extra context pointer to a communicator group
+ * 
+ * @param comm the target communicator
+ * @param ctxptr the context pointer to attach
+ * @return int 0 on success
+ */
+int mpc_lowcomm_communicator_set_context_pointer(mpc_lowcomm_communicator_t comm, mpc_lowcomm_handle_ctx_t ctxptr);
+
+/**
+ * @brief Get the extra context pointer from the communicator object (it is inherited from parents)
+ * 
+ * @param comm the communicator to querry
+ * @return mpc_lowcomm_handle_ctx_t the context pointer (NULL if none)
+ */
+mpc_lowcomm_handle_ctx_t mpc_lowcomm_communicator_get_context_pointer(mpc_lowcomm_communicator_t comm);
+
+
+/******************************
+ * HANDLE CONTEXT UNIFICATION *
+ ******************************/
+
+/**
+ * @brief Initially all sessions have their own context this calls unify them with the same ID
+ *        called in @ref PMPI_Comm_create_from_group
+ *
+ *  @note This call is defined in the handle_ctx.c file but depends on communicators
+ *
+ * @param comm the communicator to rely on to build unified context
+ * @param hctx the context to unify
+ * @return int 0 on success
+ */
+int mpc_lowcomm_communicator_handle_ctx_unify(mpc_lowcomm_communicator_t comm, mpc_lowcomm_handle_ctx_t hctx);
+
+/**
+ * @brief Get the identifier from the Handle CTX
+ *
+ *  @note This call is defined in the handle_ctx.c file but depends on communicators
+ *
+ * @param hctx the handle CTX to query
+ * @return mpc_lowcomm_communicator_id_t the corresponding ID (MPC_LOWCOMM_COMM_NULL_ID if none or error)
+ */
+mpc_lowcomm_communicator_id_t mpc_lowcomm_communicator_handle_ctx_id(mpc_lowcomm_handle_ctx_t hctx);
+
 
 /***********************************
 * COMMUNICATOR COLLECTIVE CONTEXT *
@@ -387,12 +617,12 @@ int mpc_lowcomm_communicator_remote_world_rank(const mpc_lowcomm_communicator_t 
 
 /**
  * @brief Retrieve all infos about a comm in one call (fastpath for collectives)
- * 
+ *
  * @param comm the communicator of interest
  * @param is_intercomm set to true if it is an intercomm
  * @param is_shm set to true if the comm resides in shared memory
  * @param is_shared_node set to true if the comm is on a single node
- * @return int SCTK_SUCCESS if all OK
+ * @return int MPC_LOWCOMM_SUCCESS if all OK
  */
 int mpc_lowcomm_communicator_attributes(const mpc_lowcomm_communicator_t comm,
                                         int *is_intercomm,
@@ -401,7 +631,7 @@ int mpc_lowcomm_communicator_attributes(const mpc_lowcomm_communicator_t comm,
 
 /**
  * @brief Check if the communicator is in shared memory
- * 
+ *
  * @param comm the communicator  
  * @return int true if the comm is shared memory
  */
@@ -409,7 +639,7 @@ int mpc_lowcomm_communicator_is_shared_mem(const mpc_lowcomm_communicator_t comm
 
 /**
  * @brief Check if the communicator is on a single node
- * 
+ *
  * @param comm the communicator
  * @return int true if it is in shared-node
  */

@@ -76,7 +76,7 @@ static ompt_wait_id_t _mpcomp_ompt_atomic_lock_wait_id = 0;
 
 //static mpc_common_spinlock_t *_mpcomp_omp_global_atomic_lock = NULL;
 //static omp_lock_t 	*_mpcomp_omp_global_critical_lock = NULL;
-static mpc_common_spinlock_t 	_mpcomp_global_init_critical_named_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t 	__mpcomp_global_init_critical_named_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 void mpc_omp_atomic_begin( void )
 {
@@ -209,7 +209,7 @@ void mpc_omp_named_critical_begin( void **l )
 
 	if ( *l == NULL )
 	{
-		mpc_common_spinlock_lock( &( _mpcomp_global_init_critical_named_lock ) );
+		mpc_common_spinlock_lock( &( __mpcomp_global_init_critical_named_lock ) );
 
 		if ( *l == NULL )
 		{
@@ -226,7 +226,7 @@ void mpc_omp_named_critical_begin( void **l )
 			*l = named_critical_lock;
 		}
 
-		mpc_common_spinlock_unlock( &( _mpcomp_global_init_critical_named_lock ) );
+		mpc_common_spinlock_unlock( &( __mpcomp_global_init_critical_named_lock ) );
 	}
 
 	named_critical_lock = ( omp_lock_t * )( *l );

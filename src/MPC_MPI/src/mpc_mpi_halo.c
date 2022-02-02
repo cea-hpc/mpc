@@ -231,7 +231,7 @@ struct sctk_mpi_halo_exchange_s *  sctk_mpi_halo_context_exchange_new( struct sc
 /************************************************************************/
 
 static volatile int __halo_local_tag = 25000;
-mpc_common_spinlock_t  __halo_local_tag_lock = SCTK_SPINLOCK_INITIALIZER;
+mpc_common_spinlock_t  __halo_local_tag_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 int sctk_mpi_halo_init( struct sctk_mpi_halo_s * halo , char * label , MPI_Datatype type, int count )
 {

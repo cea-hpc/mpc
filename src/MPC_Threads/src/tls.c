@@ -143,7 +143,7 @@ void sctk_tls_dtors_init(struct sctk_tls_dtors_s **head)
 	*head = NULL;
 }
 
-static mpc_common_spinlock_t dtors_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t dtors_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 
 /**

@@ -44,6 +44,7 @@ integer, parameter :: c_File = c_int
 integer, parameter :: c_Comm = c_int
 integer, parameter :: c_Win = c_int
 integer, parameter :: c_Request = c_int
+integer, parameter :: c_Session = c_int
 integer, parameter :: c_Info = c_int
 
 !If you ever need to change this STATUS edit genmod.py

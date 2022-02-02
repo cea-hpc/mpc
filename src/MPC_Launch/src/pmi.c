@@ -25,6 +25,7 @@
 
 #include <mpc_common_helper.h>
 #include <mpc_common_rank.h>
+#include <mpc_common_spinlock.h>
 #include <mpc_common_types.h>
 #include <mpc_common_flags.h>
 #include "sctk_alloc.h"
@@ -159,6 +160,9 @@ static inline pmix_status_t __pmix_get_attribute(int rank_level, const char key[
 		break;
 		case PMIX_PROC_RANK:
 			memcpy(out, &val->data.rank, sizeof(pmix_rank_t));
+		break;
+		case PMIX_SIZE:
+			memcpy(out, &val->data.size, sizeof(size_t));
 		break;
 	}
 
@@ -718,6 +722,7 @@ int mpc_launch_pmi_init()
 		mpc_common_tracepoint_fmt("PMI: Failed initializing PMI (ret %d)", rc);
 
 		return MPC_LAUNCH_PMI_FAIL;
+		pmi_context.kvsname = "singleton";
 	}
 
 	/* In this case PMI_Init instructed to skip init */
@@ -810,10 +815,12 @@ int mpc_launch_pmi_barrier()
 	pmix_info_t *info = NULL;
     PMIX_INFO_CREATE(info, 1);
     int flag = true;
+
     PMIX_INFO_LOAD(info, PMIX_COLLECT_DATA, &flag, PMIX_BOOL);
     pmix_status_t rc = PMIx_Fence(NULL, 0, info, 1);
 	PMI_CHECK_RC( rc, "PMIx_Fence" );
 	PMIX_INFO_FREE(info, 1);
+
 	return MPC_LAUNCH_PMI_SUCCESS;
 #else
 	int rc;
@@ -865,12 +872,32 @@ void mpc_launch_pmi_abort()
 /*! \brief Get the job id
  * @param id Pointer to store the job id
 */
-int mpc_launch_pmi_get_job_id( int *id )
+int mpc_launch_pmi_get_job_id( uint64_t *id )
 {
 #if MPC_USE_HYDRA
 	/* in mpich with pmi1, kvs name is used as job id. */
-	*id = atoi( pmi_context.kvsname );
+
+	/* ID is in the form kvs_XXX_X */
+
+	char _tmp[512];
+	char * tmp = _tmp;
+	snprintf(tmp, 512, pmi_context.kvsname);
+	char * last_ = strrchr(tmp, '_');
+	if(last_)
+	{
+		*last_ = '\0';
+	}
+	char * first_ = strchr(tmp, '_');
+	if(first_)
+	{
+		tmp = first_ + 1;
+	}
+
+	*id = atoi( tmp );
+
 	return MPC_LAUNCH_PMI_SUCCESS;
+#elif defined(MPC_USE_PMIX)
+	not_implemented();
 #elif defined( MPC_USE_PMI1 )
 	char *env = NULL;
 	env = getenv( "SLURM_JOB_ID" );
@@ -1002,8 +1029,11 @@ int mpc_launch_pmi_get_univ_size(int* univsize){
 		ret = PMIx_Get(&proc, PMIX_UNIV_SIZE, NULL, 0 , &val);
 		if(PMIX_SUCCESS == ret) *univsize = val->data.uint32;
 		return ret == PMIX_SUCCESS;
+	#elif defined( MPC_USE_PMI1 )
+		int rc = PMI_Get_universe_size(univsize);
+		PMI_CHECK_RC( rc, "PMI_Get_universe_size" );
 	#else
-	// TODO
+		not_available();
 	#endif
 }
 
@@ -1014,10 +1044,31 @@ int mpc_launch_pmi_get_app_rank(int* appname){
 		pmix_value_t* val;
 		ret = PMIx_Get(&pmi_context.pmix_proc, PMIX_APPNUM, NULL, 0 , &val);
 		if(PMIX_SUCCESS == ret) *appname = val->data.uint32;
-		else printf("get appnum returned %d", ret);
+		else
 		return ret == PMIX_SUCCESS;
+	#elif defined( MPC_USE_PMI1 ) || defined(MPC_USE_HYDRA)
+		/* Hydra is not threadsafe */
+		static mpc_common_spinlock_t lock = MPC_COMMON_SPINLOCK_INITIALIZER;
+
+		static int prev_value = -1;
+
+		mpc_common_spinlock_lock(&lock);
+
+		*appname = -1;
+
+		if(0 <= prev_value)
+		{
+			*appname = prev_value;
+		}
+		else
+		{
+			PMI_Get_appnum(appname);
+		}
+
+		mpc_common_spinlock_unlock(&lock);
+
 	#else
-	// TODO
+		not_available();
 	#endif
 }
 

@@ -25,6 +25,8 @@
 #ifndef __SCTK_PTL_RDMA_H_
 #define __SCTK_PTL_RDMA_H_
 
+#include "sctk_rail.h"
+
 int sctk_ptl_rdma_fetch_and_op_gate( sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type );
 void sctk_ptl_rdma_fetch_and_op(  sctk_rail_info_t *rail,
 		mpc_lowcomm_ptp_message_t *msg,

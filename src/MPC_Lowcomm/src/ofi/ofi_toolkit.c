@@ -24,7 +24,6 @@
 #include "ofi_toolkit.h"
 #include "ofi_headers.h"
 #include <sctk_rail.h>
-#include <sctk_route.h>
 #include <sctk_alloc.h>
 
 #include <mpc_common_rank.h>
@@ -223,20 +222,20 @@ void mpc_lowcomm_ofi_setup_hints_from_config(struct fi_info* hint, struct _mpc_l
  * @param rail the current rail, owning the route
  * @param origin the route type (DYNAMIC / STATIC)
  * @param state the route state (CONNECTED / UNCONNECTED ...)
- * @return sctk_endpoint_t* the created MPC endpoint
+ * @return _mpc_lowcomm_endpoint_t* the created MPC endpoint
  */
-sctk_endpoint_t* mpc_lowcomm_ofi_add_route(int dest, void* ctx, sctk_rail_info_t* rail, sctk_route_origin_t origin, sctk_endpoint_state_t state)
+_mpc_lowcomm_endpoint_t* mpc_lowcomm_ofi_add_route(mpc_lowcomm_peer_uid_t dest, void* ctx, sctk_rail_info_t* rail, _mpc_lowcomm_endpoint_type_t origin, _mpc_lowcomm_endpoint_state_t state)
 {
 	assert(rail);
-	sctk_endpoint_t * route = sctk_malloc(sizeof(sctk_endpoint_t));
+	_mpc_lowcomm_endpoint_t * route = sctk_malloc(sizeof(_mpc_lowcomm_endpoint_t));
 	assert(route);
 
-	sctk_endpoint_init(route, dest, rail, origin);
-	sctk_endpoint_set_state(route, state);
+	_mpc_lowcomm_endpoint_init(route, dest, rail, origin);
+	_mpc_lowcomm_endpoint_set_state(route, state);
 
 	route->data.ofi.ctx = ctx;
 
-	if(origin == ROUTE_ORIGIN_STATIC)
+	if(origin == _MPC_LOWCOMM_ENDPOINT_STATIC)
 	{
 		sctk_rail_add_static_route (  rail, route );
 	}

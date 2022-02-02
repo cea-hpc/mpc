@@ -104,6 +104,9 @@
  */
 #define mpc_common_min( a, b ) ( ( a ) < ( b ) ? ( a ) : ( b ) )
 
+
+#define mpc_common_abs(a) (((a) < 0)?(-(a)):(a) )
+
 /*********************
  * HASHING FUNCTIONS *
  *********************/
@@ -119,6 +122,44 @@ static inline uint64_t mpc_common_hash( uint64_t val )
 	h *= 0xc4ceb9fe1a85ec53llu;
 	h ^= h >> 33;
 	return h;
+}
+
+static inline uint64_t mpc_common_hash_string(const char * string)
+{
+	uint64_t ret = 1337;
+
+	if(!string)
+	{
+		return ret;
+	}
+
+	const unsigned char * cur = (unsigned char *)string;
+	int cnt = 0;
+
+	while(*cur != '\0')
+	{
+		ret ^= (*cur << ((cnt << 4)%32));
+		cur++;
+		cnt++;
+	}
+
+	return ret;
+}
+
+/****************************
+ * ROUND TO NEXT POWER OF 2 *
+ ****************************/
+
+// FROM Henry S. Warren, Jr.'s "Hacker's Delight."
+static inline unsigned long mpc_common_roundup_powerof2(unsigned long n)
+{
+	--n;
+	n |= n >> 1;
+	n |= n >> 2;
+	n |= n >> 4;
+	n |= n >> 8;
+	n |= n >> 16;
+	return (n + 1);
 }
 
 /**
@@ -211,6 +252,80 @@ static inline int sctk_safe_cast_long_int(long l)
 #define sctk_safe_cast_long_int(l)    l
 #endif
 
+/**********************
+ * CMD LINE ARGUMENTS *
+ **********************/
+
+char * mpc_common_helper_command_line_pretty(int json, char * buff, int len);
+char ** mpc_common_helper_command_line(void);
+void mpc_common_helper_command_line_free(char **cmd);
+
+/**********************
+ * NETWORKING HELPERS *
+ **********************/
+
+/**
+ * @brief Returns true if a given address is part of a given network
+ *
+ * @param network_addr network device address
+ * @param network_mask network mask
+ * @param candidate candidate address
+ * @return int 1 if device is part of the net supported by this device
+ */
+int mpc_common_address_in_range(in_addr_t network_addr, in_addr_t network_mask, in_addr_t candidate);
+
+
+/**
+ * @brief Get the network interface name supporting a given IPV4 address
+ *
+ * @param addr address to check for support
+ * @param ifname output interface name
+ * @param ifname_len length of output buffer
+ * @return int 0 if resolution succeeded
+ */
+int mpc_common_getaddr_interface(struct sockaddr_in *addr, char * ifname, int ifname_len);
+
+/**
+ * @brief Get the network interface supporting a given socket
+ *
+ * @param socket socket to look for
+ * @param ifname output interface name
+ * @param ifname_len length of output buffer
+ * @return int 0 if resolution succeeded
+ */
+int mpc_common_getsocket_interface(int socket, char * ifname, int ifname_len);
+
+/**
+ * @brief This is a wrapper aroung getaddrinfo which reorders results with preffered interface
+ *
+ * @param node see getaddrinfo
+ * @param service see getaddrinfo
+ * @param hints see getaddrinfo
+ * @param res see getaddrinfo (NOTE !! free it with mpc_common_freeaddrinfo)
+ * @param preffered_device Either the exact device name or part of it (nothing done if "")
+ * @return int see getaddrinfo
+ */
+int mpc_common_getaddrinfo(const char *node, const char *service,
+                           const struct addrinfo *hints,
+                           struct addrinfo **res,
+                           const char *preffered_device);
+
+/**
+ * @brief Free a list as returned by mpc_common_getaddrinfo
+ *
+ * @param res the response to free
+ */
+void mpc_common_freeaddrinfo(struct addrinfo *res);
+
+/**
+ * @brief We want to save the DNS so provide a function to do the local resolution
+ *
+ * @param ip the output buffer where the ip is set
+ * @param iplen the lenght of the output buffer (should be enough for ipv6)
+ * @param preffered_device the device to look at first same rule as @mpc_common_getaddrinfo
+ * @return -1 on error
+ */
+int mpc_common_resolve_local_ip_for_iface(char * ip, int iplen, char *preffered_device);
 
 /**********************
  * NETWORKING HELPERS *

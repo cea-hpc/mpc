@@ -159,7 +159,7 @@ int mpc_conf_config_loader_push(char *conf_name, char *key, char *value, char *s
 
 	if(elem)
 	{
-		_utils_verbose_output(0, "%s: set %s = %s\n", conf_name, expanded_key, value);
+		_utils_verbose_output(1, "%s: set %s = %s\n", conf_name, expanded_key, value);
 		type_to_set = elem->type;
 	}
 	else

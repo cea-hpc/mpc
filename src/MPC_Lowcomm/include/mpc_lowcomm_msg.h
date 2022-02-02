@@ -3,14 +3,16 @@
 
 #include <mpc_config.h>
 #include <mpc_lowcomm_types.h>
-#include <sctk_reorder.h>
+#include <reorder.h>
+
+#include <mpc_lowcomm_monitor.h>
 
 #ifdef MPC_USE_INFINIBAND
-#include "ib/sctk_ib.h"
+#include "ib/ib.h"
 #endif
 
 #ifdef MPC_USE_PORTALS
-#include <sctk_portals.h>
+#include "portals/sctk_portals.h"
 #endif
 
 #ifdef MPC_USE_OFI
@@ -74,7 +76,9 @@ typedef enum
 	MPC_LOWCOMM_CONTROL_MESSAGE_RAIL,     /**< This message goes to a rail */
 	MPC_LOWCOMM_CONTROL_MESSAGE_PROCESS,  /**< This message goes to a process (\ref sctk_control_message_process_level) */
 	MPC_LOWCOMM_CONTROL_MESSAGE_TASK,     /**< This message goes to a task */
-	MPC_LOWCOMM_CONTROL_MESSAGE_USER,     /**< This message goes to the application using an optionnal handler */
+
+	MPC_LOWCOMM_MESSAGE_UNIVERSE,         /**< This message is for a given UID */
+
 	MPC_LOWCOMM_MESSAGE_CLASS_COUNT       /**< This value allows to track the  number of control message types */
 } mpc_lowcomm_ptp_message_class_t;
 
@@ -106,7 +110,8 @@ static const char *const mpc_lowcomm_ptp_message_class_name[MPC_LOWCOMM_MESSAGE_
 	"MPC_LOWCOMM_CONTROL_MESSAGE_RAIL",
 	"MPC_LOWCOMM_CONTROL_MESSAGE_PROCESS",
 	"MPC_LOWCOMM_CONTROL_MESSAGE_TASK",
-	"MPC_LOWCOMM_CONTROL_MESSAGE_USER"
+
+	"MPC_LOWCOMM_MESSAGE_UNIVERSE"
 };
 
 /************************************************************************/
@@ -129,7 +134,7 @@ struct mpc_lowcomm_ptp_ctrl_message_header_s
 	char subtype; /**< Subtype of the message (can be freely set -- usually to do a switch) */
 	char param;   /**< Parameter value (depending on type and subtypes)
 	               *                             for rails it is used to store rail number */
-	char rail_id; /**< The id of the rail sending the message (set during multirail selection \ref sctk_multirail_send_message)
+	char rail_id; /**< The id of the rail sending the message (set during multirail selection \ref _mpc_lowcomm_multirail_send_message)
 	               *                             it allows RAIL level messages to be routed accordingly */
 };
 
@@ -141,14 +146,14 @@ struct mpc_lowcomm_ptp_ctrl_message_header_s
 typedef struct mpc_lowcomm_ptp_message_header_s
 {
 	/* Process */
-	int                                          source;                /**< Source Process */
-	int                                          destination;           /**< Destination Process */
+	mpc_lowcomm_peer_uid_t                       source;                /**< Source Process */
+	mpc_lowcomm_peer_uid_t                       destination;           /**< Destination Process */
 	/* Task */
 	int                                          source_task;           /**< Source Task id */
 	int                                          destination_task;      /**< Destination Task ID */
 	/* Context */
 	int                                          message_tag;           /**< Message TAG */
-	unsigned int                                 communicator_id;       /**< Message communicator */
+	mpc_lowcomm_communicator_id_t                communicator_id;       /**< Message communicator */
 	struct mpc_lowcomm_ptp_ctrl_message_header_s message_type;          /**< Control Message Infos */
 	/* Content */
 	mpc_lowcomm_datatype_t                       datatype;              /**< Caried data-type (for matching check) */
@@ -384,8 +389,8 @@ void mpc_lowcomm_ptp_message_add_pack_absolute(mpc_lowcomm_ptp_message_t *msg, c
 
 void mpc_lowcomm_ptp_message_header_init(mpc_lowcomm_ptp_message_t *msg, const int message_tag,
                                          const mpc_lowcomm_communicator_t communicator,
-                                         const int source,
-                                         const int destination,
+                                         const mpc_lowcomm_peer_uid_t source,
+                                         const mpc_lowcomm_peer_uid_t destination,
                                          mpc_lowcomm_request_t *request,
                                          const size_t count,
                                          mpc_lowcomm_ptp_message_class_t message_class,
@@ -423,7 +428,7 @@ typedef struct mpc_lowcomm_ptp_msg_progress_s
 	mpc_lowcomm_request_t *request;
 	struct mpc_comm_ptp_s *recv_ptp;
 	struct mpc_comm_ptp_s *send_ptp;
-	int                    remote_process;
+	mpc_lowcomm_peer_uid_t remote_process;
 	int                    source_task_id;
 	int                    dest_task_id;
 	int                    polling_task_id;
@@ -502,13 +507,13 @@ static inline void mpc_lowcomm_request_set_null(mpc_lowcomm_request_t *request, 
 static inline int mpc_lowcomm_status_set_cancelled(mpc_lowcomm_status_t *status, int cancelled)
 {
 	status->cancelled = cancelled;
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 static inline int mpc_lowcomm_status_get_cancelled(const mpc_lowcomm_status_t *status, int *flag)
 {
 	*flag = (status->cancelled == 1);
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 /************************************************************************/

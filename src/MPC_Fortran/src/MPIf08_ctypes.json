@@ -1,6 +1,7 @@
 {
 	"MPI_Datatype" : "c_int",
 	"MPI_Comm" : "c_int",
+	"MPI_Session" : "c_int",
 	"MPI_Group" : "c_int",
 	"MPI_Win" : "c_int",
 	"MPI_Op" : "c_int",
@@ -8,11 +9,10 @@
 	"MPI_Errhandler" : "c_int",
 	"MPI_Message" : "c_int",
 	"MPI_File" : "c_int",
-	"MPI_Request" : "c_int",	
+	"MPI_Request" : "c_int",
 	"MPI_Count" : "c_intptr_t",
 	"MPI_Aint" : "c_intptr_t",
 	"MPI_Offset" : "c_intptr_t",
-	
 	"bool" : "c_int",
 	"int" : "c_int"
 }

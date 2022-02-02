@@ -141,9 +141,9 @@ void mpc_common_bit_array_dump( struct mpc_common_bit_array *ba );
 static inline void mpc_common_bit_array_set( struct mpc_common_bit_array *ba,
 									   uint64_t key, uint8_t value )
 {
-        static const int unset_bit_mask[] = BIT_LEVEL_ARRAY_UNSET_MASK;
+    static const uint8_t unset_bit_mask[] = BIT_LEVEL_ARRAY_UNSET_MASK;
 
-        static const int get_set_bit_mask[] = BIT_LEVEL_ARRAY_GET_SET_MASK;
+    static const uint8_t get_set_bit_mask[] = BIT_LEVEL_ARRAY_GET_SET_MASK;
 
 	if ( ba->real_size <= key )
 	{
@@ -152,7 +152,7 @@ static inline void mpc_common_bit_array_set( struct mpc_common_bit_array *ba,
 	}
 
 	uint64_t extern_offset = key >> 3;
-	uint8_t local_offset = key - extern_offset * 8;
+	uint8_t local_offset = (uint8_t)(key - extern_offset) * 8;
 
 	uint8_t *target = &ba->array[extern_offset];
 
@@ -171,7 +171,7 @@ static inline void mpc_common_bit_array_set( struct mpc_common_bit_array *ba,
 static inline uint8_t mpc_common_bit_array_get( struct mpc_common_bit_array *ba,
 										  uint64_t key )
 {
-        static const int get_set_bit_mask[] = BIT_LEVEL_ARRAY_GET_SET_MASK;
+    static const uint8_t get_set_bit_mask[] = BIT_LEVEL_ARRAY_GET_SET_MASK;
 
 	if ( ba->real_size <= key )
 	{
@@ -180,7 +180,7 @@ static inline uint8_t mpc_common_bit_array_get( struct mpc_common_bit_array *ba,
 	}
 
 	uint64_t extern_offset = key >> 3;
-	uint8_t local_offset = key - extern_offset * 8;
+	uint8_t local_offset = (uint8_t)(key - extern_offset) * 8;
 
 	return ( ba->array[extern_offset] & get_set_bit_mask[local_offset] ) >>
 		   local_offset;
@@ -429,7 +429,6 @@ void mpc_common_hashtable_unlock_cell_write( struct mpc_common_hashtable *ht, ui
 	____c = ____c->next; \
 	}                    \
 	}
-
 /**
  * @}
  */

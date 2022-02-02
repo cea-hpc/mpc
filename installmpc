@@ -795,10 +795,14 @@ download_all_missing_deps()
 		FNAME=$(package_filename "$p" "${VERSION}")
 		locate_tarball "$p" "$VERSION"
 
-		# Only consider deps not already in source tree
-		if test -f "./${FNAME}"; then
-			DEP_LIST="${TARBALL_PATH} ${DEP_LIST}"
+		# Copy from other place to here if not present
+		if test ! -f "./${FNAME}"; then
+			checking "Copying tarball from ${TARBALL_PATH}"
+			wrap_output cp ${TARBALL_PATH} ./${FNAME}
+			ok
 		fi
+
+		DEP_LIST="./${FNAME} ${DEP_LIST}"
 	done
 	echo "DEP_LIST=${DEP_LIST}"
 }
@@ -909,7 +913,8 @@ build_configure_based_package()
 			cd "${PROJECT_BUILD_DIR}"
 		fi
 	else
-		skip
+        checking "Tarball for ${package}-${version} already extracted"
+        skip
 	fi
 
 	#

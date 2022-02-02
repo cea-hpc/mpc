@@ -63,6 +63,20 @@ mpc_conf_output_type_t mpc_conf_output_type_infer_from_file(char *path)
 * CONFIGURATION TYPE ELEM *
 ***************************/
 
+static inline char * __stringtolower(char * string)
+{
+	int l = strlen(string);
+	int i;
+
+	for(i = 0 ; i < l ; i++)
+	{
+		string[i] = tolower(string[i]);
+	}
+
+	return string;
+}
+
+
 mpc_conf_config_type_elem_t *mpc_conf_config_type_elem_init(char *name, void *addr, mpc_conf_type_t type, char *doc)
 {
 	_utils_verbose_output(2, "ELEM: init %s @ %p type %s // %s\n", name, addr, mpc_conf_type_name(type), doc);
@@ -72,7 +86,7 @@ mpc_conf_config_type_elem_t *mpc_conf_config_type_elem_init(char *name, void *ad
 
 	ret->addr_is_to_free = 0;
 	ret->is_locked       = 0;
-	ret->name            = strdup(name);
+	ret->name            = __stringtolower(strdup(name));
 	ret->parent          = NULL;
 
 	if(strchr(name, '_'))
@@ -87,7 +101,7 @@ mpc_conf_config_type_elem_t *mpc_conf_config_type_elem_init(char *name, void *ad
 	/* Ensure that names do match if elem holds a type */
 	if(addr && (type == MPC_CONF_TYPE))
 	{
-		if(strcmp(name, ((mpc_conf_config_type_t*)addr)->name))
+		if(strcmp(ret->name, ((mpc_conf_config_type_t*)addr)->name))
 		{
 			_utils_verbose_output(0, "cannot create a config element holding %s with a name %s they must be identical\n", name, ((mpc_conf_config_type_t*)addr)->name);
 			abort();
@@ -1049,7 +1063,6 @@ static inline int __read_environ(mpc_conf_env_manager_t *envm)
 
 	if(env_len == 0)
 	{
-		perror("fread");
 		free(envdat);
 		return 1;
 	}

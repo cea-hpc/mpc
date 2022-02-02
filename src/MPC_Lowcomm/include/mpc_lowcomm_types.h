@@ -34,14 +34,14 @@ typedef int mpc_lowcomm_msg_count_t;
 /** A message header to be put in the request **/
 typedef struct
 {
-	int source;
-	int destination;
+	mpc_lowcomm_peer_uid_t source;
+	mpc_lowcomm_peer_uid_t destination;
 	int destination_task;
 	int source_task;
 	int message_tag;
-	unsigned int communicator_id;
-	mpc_lowcomm_msg_count_t msg_size;
-} sctk_header_t;
+	mpc_lowcomm_communicator_id_t communicator_id;
+	size_t msg_size;
+} mpc_lowcomm_request_header_t;
 /** Status Definition **/
 typedef struct
 {
@@ -52,8 +52,8 @@ typedef struct
 	mpc_lowcomm_msg_count_t size;	/**< Size of the message */
 } mpc_lowcomm_status_t;
 
-#define SCTK_STATUS_NULL NULL
-#define SCTK_STATUS_INIT {MPC_ANY_SOURCE,MPC_ANY_TAG,SCTK_SUCCESS,0,0}
+#define MPC_LOWCOMM_STATUS_NULL NULL
+#define MPC_LOWCOMM_STATUS_INIT {MPC_ANY_SOURCE,MPC_ANY_TAG,MPC_LOWCOMM_SUCCESS,0,0}
 
 
 /** Generalized requests functions **/
@@ -74,7 +74,7 @@ struct mpc_lowcomm_request_t
 	volatile int completion_flag;
     char pad[128];
 	int request_type;
-	sctk_header_t header;
+	mpc_lowcomm_request_header_t header;
 	struct mpc_lowcomm_ptp_message_s *msg;
 	mpc_lowcomm_datatype_t source_type; /**< Type in the remote message */
 	mpc_lowcomm_datatype_t dest_type; /**< Type in the local message */
@@ -187,7 +187,6 @@ enum
 	MPC_LOWCOMM_ERR_LASTCODE
 };
 
-
 /*******************
  * FAULT TOLERANCE *
  *******************/
@@ -217,8 +216,8 @@ typedef enum sctk_ft_state_e
 /** PROC_NULL **/
 #define MPC_PROC_NULL -2
 /** SUCCESS and ERROR **/
-#define SCTK_SUCCESS 0
-#define SCTK_ERROR 1
+#define MPC_LOWCOMM_SUCCESS 0
+#define MPC_LOWCOMM_ERROR 1
 
 /** Wildcards **/
 #define MPC_ANY_TAG -1

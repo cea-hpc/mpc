@@ -849,7 +849,7 @@ mpc_omp_places_get_default_include_bitmap( const int nb_mvps )
 	int i;
 	hwloc_obj_t pu;
 	static volatile hwloc_bitmap_t __default_num_threads_bitmap = NULL;
-	static mpc_common_spinlock_t multiple_tasks_lock = SCTK_SPINLOCK_INITIALIZER;
+	static mpc_common_spinlock_t multiple_tasks_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 	if ( !__default_num_threads_bitmap )
 	{

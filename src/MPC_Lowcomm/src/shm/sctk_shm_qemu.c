@@ -5,7 +5,7 @@
 static void* sctk_qemu_shm_shmem_base = NULL;
 
 // FROM Henry S. Warren, Jr.'s "Hacker's Delight."
-static long sctk_shm_roundup_powerof2(unsigned long n)
+static long mpc_common_roundup_powerof2(unsigned long n)
 {
     assume( n < ( 1 << 31));
     --n;

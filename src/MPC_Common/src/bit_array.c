@@ -81,7 +81,7 @@ void mpc_common_bit_array_replicate(struct mpc_common_bit_array *dest,
 void mpc_common_bit_array_dump(struct mpc_common_bit_array *ba) {
 
   unsigned int i = 0;
-  unsigned int size = ba->size * 8;
+  uint64_t size = ba->size * 8;
 
   printf("Array size is %d \n", size);
 

@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include <uthash.h>
 #include <mpc_config.h>
+#include <mpc_common_types.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -216,7 +217,7 @@ int mpc_launch_pmi_get_process_layout( struct mpc_launch_pmi_process_layout **la
 /*! \brief Get the job id
  * @param id Pointer to store the job id
 */
-int mpc_launch_pmi_get_job_id( int *id );
+int mpc_launch_pmi_get_job_id( uint64_t *id );
 
 /* End Process Management Interface */
 /**

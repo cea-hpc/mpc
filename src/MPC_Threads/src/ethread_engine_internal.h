@@ -1524,7 +1524,7 @@ static inline void ___mpc_thread_ethread_idle_task(void *arg)
  * Actually, when calling mpc_thread_yield(), the polling
  * function is not called. */
     TODO("CHECK CONSEQUENCES OF COMMENT");
-	//sctk_network_notify_idle_message();
+	//_mpc_lowcomm_multirail_notify_idle();
 #endif
 		if(no_work)
         {

@@ -22,7 +22,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "sctk_route.h"
+#include "endpoint.h"
 #include "sctk_ptl_rdv.h"
 #include "sctk_ptl_iface.h"
 #include "sctk_net_tools.h"
@@ -157,13 +157,17 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	cur_off = 0;
 	sctk_ptl_matchbits_t md_match = get_request->match;
 	SCTK_PTL_TYPE_RDV_SET(md_match.data.type);
+
 	md_match.data.rank = mpc_common_get_process_rank();
-	for (chunk = 0; chunk < chunk_nb; ++chunk) 
+
+	for (chunk = 0; chunk < chunk_nb; ++chunk)
 	{
 		/* if the should take '+1' to compensate non-distributed bytes */
 		size_t cur_sz = (chunk < chunk_rest) ? chunk_sz + 1 : chunk_sz;
 
-		mpc_common_nodebug("EMIT GET %d - %d (sz=%d for %d chunks)", cur_off, cur_off + cur_sz, cur_sz, chunk_nb);
+		mpc_common_debug("GET IS to @ %s", __sctk_ptl_match_str(malloc(32), 32, md_match.raw));
+
+		mpc_common_debug("EMIT GET %d - %d (sz=%d for %d chunks)", cur_off, cur_off + cur_sz, cur_sz, chunk_nb);
 		sctk_ptl_emit_get(
 			get_request,        /* the current GET request */
 			cur_sz,             /* the size for this chunk */
@@ -177,7 +181,7 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 		cur_off += cur_sz;
 	}
 
-	mpc_common_debug("PORTALS: RECV-RDV to %d (idx=%d, match=%s, ch_nb=%llu, ch_sz=%llu)", SCTK_MSG_SRC_PROCESS(msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), chunk_nb, chunk_sz);
+	mpc_common_debug("PORTALS: RECV-RDV to %llu (idx=%d, match=%s, ch_nb=%llu, ch_sz=%llu)", SCTK_MSG_SRC_PROCESS_UID(msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), chunk_nb, chunk_sz);
 }
 
 /**
@@ -199,11 +203,17 @@ static inline void sctk_ptl_rdv_reply_message(sctk_rail_info_t* rail, sctk_ptl_e
 	assert(rail);
 	assert(ev.ni_fail_type == PTL_NI_OK);
 
+	/* As the UID cannot be transported in the portals matchbit
+	   we need to rebuild it from the (comm + task_id) infos */
+	mpc_lowcomm_communicator_id_t comm_id = SCTK_MSG_COMMUNICATOR_ID(((mpc_lowcomm_ptp_message_t*)ptr->msg));
+	mpc_lowcomm_communicator_t comm = mpc_lowcomm_get_communicator_from_id(comm_id);
+	mpc_lowcomm_peer_uid_t process_uid = mpc_lowcomm_communicator_uid(comm, ptr->match.data.rank);
+
 	/* rebuild a complete MPC header msg (inter_thread_comm needs it) */
 	mpc_lowcomm_ptp_message_header_clear(net_msg, MPC_LOWCOMM_MESSAGE_CONTIGUOUS , sctk_ptl_rdv_free_memory, sctk_ptl_rdv_message_copy);
-	SCTK_MSG_SRC_PROCESS_SET     ( net_msg ,  ptr->match.data.rank);
+	SCTK_MSG_SRC_PROCESS_UID_SET ( net_msg ,  process_uid);
 	SCTK_MSG_SRC_TASK_SET        ( net_msg ,  ptr->match.data.rank);
-	SCTK_MSG_DEST_PROCESS_SET    ( net_msg ,  mpc_common_get_process_rank());
+	SCTK_MSG_DEST_PROCESS_UID_SET    ( net_msg ,  mpc_lowcomm_monitor_get_uid());
 	SCTK_MSG_DEST_TASK_SET       ( net_msg ,  mpc_common_get_process_rank());
 	SCTK_MSG_COMMUNICATOR_ID_SET ( net_msg ,  SCTK_MSG_COMMUNICATOR_ID(recv_msg));
 	SCTK_MSG_TAG_SET             ( net_msg ,  ptr->match.data.tag);
@@ -223,7 +233,7 @@ static inline void sctk_ptl_rdv_reply_message(sctk_rail_info_t* rail, sctk_ptl_e
 	/* finish creating an MPC message header */
 	_mpc_comm_ptp_message_clear_request(net_msg);
 
-	mpc_common_debug("PORTALS: REPLY-RDV from %d (match=%s, rsize=%llu, size=%llu) -> %p", SCTK_MSG_SRC_TASK(net_msg), __sctk_ptl_match_str(malloc(32), 32, ptr->match.raw),ptr->slot.md.length , ev.mlength, ptr->slot.md.start);
+	mpc_common_debug("PORTALS: REPLY-RDV !! from %llu (match=%s, rsize=%llu, size=%llu) -> %p", SCTK_MSG_SRC_PROCESS_UID(net_msg), __sctk_ptl_match_str(malloc(32), 32, ptr->match.raw),ptr->slot.md.length , ev.mlength, ptr->slot.md.start);
 
 	/* notify ther inter_thread_comm a new message has arrived */
 	rail->send_message_from_network(net_msg);
@@ -245,7 +255,7 @@ static inline void sctk_ptl_rdv_complete_message(sctk_rail_info_t* rail, sctk_pt
 
 	UNUSED(rail);
 
-	mpc_common_debug("PORTALS: COMPLETE-RDV to %d (idx=%d, match=%s, rsize=%llu, size=%llu) -> %p", SCTK_MSG_SRC_PROCESS(msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits),ev.mlength , ev.mlength, ev.start);
+	mpc_common_debug("PORTALS: COMPLETE-RDV to %llu (idx=%d, match=%s, rsize=%llu, size=%llu) -> %p", SCTK_MSG_SRC_PROCESS_UID(msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits),ev.mlength , ev.mlength, ev.start);
 	if(msg->tail.ptl.copy)
 		sctk_free(ptr->slot.me.start);
 
@@ -258,10 +268,10 @@ static inline void sctk_ptl_rdv_complete_message(sctk_rail_info_t* rail, sctk_pt
  * \param[in] msg the msg to send
  * \param[in] endpoint the route to use
  */
-void sctk_ptl_rdv_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t* endpoint)
+void sctk_ptl_rdv_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_endpoint_t* endpoint)
 {
 	sctk_ptl_rail_info_t* srail    = &endpoint->rail->network.ptl;
-	sctk_ptl_route_info_t* infos   = &endpoint->data.ptl;
+	_mpc_lowcomm_endpoint_info_portals_t* infos   = &endpoint->data.ptl;
 	sctk_ptl_local_data_t *md_request , *me_request;
 	int md_flags                      , me_flags;
 	void* start;
@@ -278,7 +288,7 @@ void sctk_ptl_rdv_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t* 
 	remote          = infos->dest;
 	start           = NULL;
 	match.data.tag  = SCTK_MSG_TAG(msg)            % SCTK_PTL_MAX_TAGS;
-	match.data.rank = SCTK_MSG_SRC_PROCESS(msg)    % SCTK_PTL_MAX_RANKS;
+	match.data.rank = SCTK_MSG_SRC_TASK(msg)    % SCTK_PTL_MAX_RANKS;
 	match.data.uid  = SCTK_MSG_NUMBER(msg)         % SCTK_PTL_MAX_UIDS;
 	match.data.type = SCTK_MSG_SPECIFIC_CLASS(msg) % SCTK_PTL_MAX_TYPES;
 	SCTK_PTL_TYPE_RDV_UNSET(match.data.type); /* the PUT does not carry that information */
@@ -324,7 +334,7 @@ void sctk_ptl_rdv_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t* 
 	 * Set the rank to DEST process to identify it among others 
 	 * It is this one which is stored into rdv_extras struct
 	 */
-	me_match.data.rank = SCTK_MSG_DEST_PROCESS(msg);
+	me_match.data.rank = SCTK_MSG_DEST_TASK(msg);
 	SCTK_PTL_TYPE_RDV_SET(me_match.data.type);
 	/* create the MD request and configure it */
 	me_request = sctk_ptl_me_create(
@@ -335,6 +345,9 @@ void sctk_ptl_rdv_send_message(mpc_lowcomm_ptp_message_t* msg, sctk_endpoint_t* 
 		ign,
 		me_flags
 	);
+
+	mpc_common_debug("GET IS @ %s", __sctk_ptl_match_str(malloc(32), 32, me_match.raw));
+
 	me_request->msg        = msg;
 	me_request->type       = SCTK_PTL_TYPE_STD;
 	me_request->prot       = SCTK_PTL_PROT_RDV;
@@ -367,12 +380,12 @@ void sctk_ptl_rdv_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_ptl_rail_info
 	/****** INIT COMMON ATTRIBUTES ******/
 	pte             = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR_ID(msg));
 	match.data.tag  = SCTK_MSG_TAG(msg)            % SCTK_PTL_MAX_TAGS;
-	match.data.rank = SCTK_MSG_SRC_PROCESS(msg)    % SCTK_PTL_MAX_RANKS;
+	match.data.rank = SCTK_MSG_SRC_TASK(msg)    % SCTK_PTL_MAX_RANKS;
 	match.data.uid  = SCTK_MSG_NUMBER(msg)         % SCTK_PTL_MAX_UIDS;
 	match.data.type = SCTK_MSG_SPECIFIC_CLASS(msg) % SCTK_PTL_MAX_TYPES;
 	SCTK_PTL_TYPE_RDV_UNSET(match.data.type); /* the emitted PUT does not carry the information */
 	ign.data.tag    = (SCTK_MSG_TAG(msg)         == MPC_ANY_TAG)    ? SCTK_PTL_IGN_TAG  : SCTK_PTL_MATCH_TAG;
-	ign.data.rank   = (SCTK_MSG_SRC_PROCESS(msg) == MPC_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK;
+	ign.data.rank   = (SCTK_MSG_SRC_TASK(msg) == MPC_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK;
 	ign.data.uid    = SCTK_PTL_IGN_UID;
 	ign.data.type   = SCTK_PTL_MATCH_TYPE;
 
@@ -399,7 +412,7 @@ void sctk_ptl_rdv_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_ptl_rail_info
 	/* this should be the last operation, to optimize the triggeredOps use */
 	sctk_ptl_me_register(srail, put_request, pte);
 
-	mpc_common_debug("PORTALS: NOTIFY-RECV-RDV from %d (idx=%llu, match=%s, ign=%s, msg=%p)", SCTK_MSG_SRC_PROCESS(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), msg);
+	mpc_common_debug("PORTALS: NOTIFY-RECV-RDV from %llu (idx=%llu, match=%s, ign=%s, msg=%p)", SCTK_MSG_SRC_PROCESS_UID(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), msg);
 }
 
 /**
@@ -471,6 +484,8 @@ void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 void sctk_ptl_rdv_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
+
+
 
 	int cur = 0;
 	switch(ev.type)

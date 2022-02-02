@@ -13,8 +13,8 @@
 static volatile int sctk_shm_idle_frag_msg = 0;
 static volatile int sctk_shm_process_msg_id = 0;
 
-static mpc_common_spinlock_t sctk_shm_sending_frag_hastable_lock = SCTK_SPINLOCK_INITIALIZER;
-static mpc_common_spinlock_t sctk_shm_recving_frag_hastable_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t sctk_shm_sending_frag_hastable_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t sctk_shm_recving_frag_hastable_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 static struct mpc_common_hashtable *sctk_shm_sending_frag_hastable_ptr = NULL;
 static struct mpc_common_hashtable *sctk_shm_recving_frag_hastable_ptr = NULL;
   

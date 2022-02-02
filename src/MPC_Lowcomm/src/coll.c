@@ -352,8 +352,7 @@ static void _mpc_coll_opt_barrier( const mpc_lowcomm_communicator_t communicator
 		_mpc_coll_message_table_init( &table );
 		total = mpc_lowcomm_communicator_size( communicator );
 		myself = mpc_lowcomm_communicator_rank_of( communicator, mpc_common_get_task_rank() );
-		mpc_common_nodebug( "enter barrier total = %d, myself = %d", total,
-		              myself );
+		//mpc_common_nodebug( "enter barrier total = %d, myself = %d", total, myself );
 		total_max = log( total ) / log( barrier_arity );
 		total_max = pow( barrier_arity, total_max );
 
@@ -814,6 +813,8 @@ static void _mpc_coll_hetero_barrier_inter( const mpc_lowcomm_communicator_t com
 	myself_ptr = ( ( int * ) bsearch( ( void * ) &process_rank,
 	                                  process_array,
 	                                  total, sizeof( int ), int_cmp ) );
+	assume(process_array != NULL);
+	assume(myself_ptr != NULL);
 	mpc_common_nodebug( "rank : %d, myself_ptr: %p", mpc_common_get_process_rank(), myself_ptr );
 	assume( myself_ptr );
 	myself = ( myself_ptr - process_array );
@@ -990,6 +991,8 @@ void _mpc_coll_hetero_bcast_inter( void *buffer, const size_t size,
 		                                  process_array,
 		                                  total, sizeof( int ), int_cmp ) );
 		assume( myself_ptr );
+		assume(process_array != NULL);
+
 		myself = ( myself_ptr - process_array );
 		myself_ptr = ( ( int * ) bsearch( ( void * ) &root_process,
 		                                  process_array,
@@ -1209,6 +1212,8 @@ static void _mpc_coll_hetero_allreduce_intern_inter( const void *buffer_in, void
 	                                  process_array,
 	                                  total, sizeof( int ), int_cmp ) );
 	assume( myself_ptr );
+	assume(process_array != NULL);
+
 	myself = ( myself_ptr - process_array );
 	total_max = log( total ) / log( ALLREDUCE_ARRITY );
 	total_max = pow( ALLREDUCE_ARRITY, total_max );
@@ -1476,8 +1481,7 @@ static void _mpc_coll_noalloc_barrier(const mpc_lowcomm_communicator_t communica
 	}
 
 	myself = mpc_lowcomm_communicator_rank(communicator);
-	mpc_common_nodebug("enter barrier total = %d, myself = %d", total,
-	                   myself);
+	//mpc_common_debug_error("enter barrier total = %d, myself = %d", total, myself);
 
 
 	total_max = log(total) / log(barrier_arity);
@@ -1968,7 +1972,9 @@ void mpc_lowcomm_terminaison_barrier( void )
 	static volatile int done = 0;
 	static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 	static pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
-	local = mpc_lowcomm_communicator_local_task_count( MPC_COMM_WORLD );
+	/* DO NOT USE mpc_common_get_local_task_count() here
+	  as this value is computed as threads start ! */
+	local =  mpc_lowcomm_communicator_local_task_count( MPC_COMM_WORLD );
 	pthread_mutex_lock( &lock );
 	done++;
 	mpc_common_nodebug( "mpc_lowcomm_terminaison_barrier %d %d", done, local );
@@ -2026,14 +2032,14 @@ int mpc_lowcomm_barrier_shm_on_context(struct shared_mem_barrier *barrier_ctx,
 				{
 					if(128 < cnt++)
 					{
-						sctk_network_notify_idle_message();
+						_mpc_lowcomm_multirail_notify_idle();
             MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 						mpc_thread_yield();
 					}
 				}
 	}
 	
-    return SCTK_SUCCESS;
+    return MPC_LOWCOMM_SUCCESS;
 }
 
 
@@ -2064,7 +2070,7 @@ int __intercomm_barrier( const mpc_lowcomm_communicator_t communicator )
 		mpc_lowcomm_barrier(local_comm);
 	}
 
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 
@@ -2074,7 +2080,7 @@ int __lowcomm_barrier( const mpc_lowcomm_communicator_t communicator, int can_sh
 
 	if ( communicator == MPC_COMM_SELF )
 	{
-		return SCTK_SUCCESS;
+		return MPC_LOWCOMM_SUCCESS;
 	}
 
 	if(mpc_lowcomm_communicator_is_intercomm(communicator))
@@ -2089,7 +2095,7 @@ int __lowcomm_barrier( const mpc_lowcomm_communicator_t communicator, int can_sh
 
 		if(!coll)
 		{
-			return SCTK_ERROR;
+			return MPC_LOWCOMM_ERROR;
 		}
 
 		struct shared_mem_barrier *barrier_ctx = &coll->shm_barrier;
@@ -2102,7 +2108,7 @@ int __lowcomm_barrier( const mpc_lowcomm_communicator_t communicator, int can_sh
 		tmp->barrier_func( communicator, tmp );
 	}
 
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 int mpc_lowcomm_barrier( const mpc_lowcomm_communicator_t communicator )
@@ -2124,14 +2130,14 @@ int mpc_lowcomm_bcast( void *buffer, const size_t size,
 
 	if( mpc_lowcomm_communicator_size(communicator) == 0 )
 	{
-		return SCTK_SUCCESS;
+		return MPC_LOWCOMM_SUCCESS;
 	}
 
 	if(mpc_lowcomm_communicator_is_intercomm(communicator) )
 	{
 		if(root == MPC_PROC_NULL)
 		{
-			return SCTK_SUCCESS;
+			return MPC_LOWCOMM_SUCCESS;
 		}
 		else if(root == MPC_ROOT)
 		{
@@ -2155,7 +2161,7 @@ int mpc_lowcomm_bcast( void *buffer, const size_t size,
 		tmp->broadcast_func( buffer, size, root, communicator, tmp );
 	}
 
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 /************************************************************************/
@@ -2201,7 +2207,7 @@ static inline int ___gather_inter(void *sendbuf, void *recvbuf, const size_t siz
 
 	if(root == MPC_PROC_NULL)
 	{
-		return SCTK_SUCCESS;
+		return MPC_LOWCOMM_SUCCESS;
 	}
 	else if(root == MPC_ROOT)
 	{
@@ -2215,7 +2221,7 @@ static inline int ___gather_inter(void *sendbuf, void *recvbuf, const size_t siz
 				j++;
 			}
 
-			mpc_lowcomm_waitall(j , recvrequest, SCTK_STATUS_NULL);
+			mpc_lowcomm_waitall(j , recvrequest, MPC_LOWCOMM_STATUS_NULL);
 		}
 	}
 	else
@@ -2224,7 +2230,7 @@ static inline int ___gather_inter(void *sendbuf, void *recvbuf, const size_t siz
 	}
 
 	sctk_free(recvrequest);
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 
@@ -2235,6 +2241,35 @@ static inline int ___gather_intra(void *sendbuf, void *recvbuf, const size_t siz
 	int comm_size = mpc_lowcomm_communicator_size(comm);
 	int rank = mpc_lowcomm_communicator_rank(comm);
 
+#if 0
+	if(rank == root)
+	{
+		if(sendbuf != MPC_IN_PLACE )
+		{
+			memcpy(recvbuf + rank * size, sendbuf, size);
+		}
+
+		int i;
+
+		for(i = 0 ; i < comm_size; i++)
+		{
+			if( i == rank)
+			{
+				continue;
+			}
+
+			mpc_lowcomm_recv(i, recvbuf + i * size, size, MPC_GATHER_TAG, comm); 
+		}
+
+	}
+	else
+	{
+		mpc_lowcomm_send(root, sendbuf, size, MPC_GATHER_TAG, comm);
+	}
+
+	return MPC_LOWCOMM_SUCCESS;
+#endif
+
 	/* Handle trivial case */
 
 	if(comm_size == 1)
@@ -2244,7 +2279,7 @@ static inline int ___gather_intra(void *sendbuf, void *recvbuf, const size_t siz
 			memcpy(recvbuf, sendbuf, size);
 		}
 
-		return SCTK_SUCCESS;
+		return MPC_LOWCOMM_SUCCESS;
 	}
 
 	/* We need a buffer on all except root */
@@ -2357,7 +2392,7 @@ static inline int ___gather_intra(void *sendbuf, void *recvbuf, const size_t siz
 				}
 			}
 
-			mpc_lowcomm_wait(&round_exchange, SCTK_STATUS_NULL);
+			mpc_lowcomm_wait(&round_exchange, MPC_LOWCOMM_STATUS_NULL);
 
 			if(will_break)
 			{
@@ -2417,7 +2452,7 @@ static inline int ___gather_intra(void *sendbuf, void *recvbuf, const size_t siz
 		sctk_free(gather_buffer);
 	}
 
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 
@@ -2446,7 +2481,7 @@ int mpc_lowcomm_allgather(void *sendbuf,  void *recvbuf, size_t data_size, mpc_l
 
 	if(data_size == 0)
 	{
-		return SCTK_SUCCESS;
+		return MPC_LOWCOMM_SUCCESS;
 	}
 
 	if(mpc_lowcomm_communicator_is_intercomm(comm) )
@@ -2499,7 +2534,7 @@ int mpc_lowcomm_allgather(void *sendbuf,  void *recvbuf, size_t data_size, mpc_l
 		mpc_lowcomm_bcast(recvbuf, size * data_size, root, comm);
 	}
 
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 /************************************************************************/

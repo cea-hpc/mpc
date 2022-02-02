@@ -8,6 +8,7 @@
 #include <uthash.h>
 
 #include <mpc_lowcomm_communicator.h>
+#include "session.h"
 
 /*******************
  * FORTRAN SUPPORT *
@@ -126,7 +127,19 @@ static void __initialize_handle_factories()
 #endif
 }
 
+/********************
+ * SESSIONS HANDLES *
+ ********************/
 
+MPI_Session PMPI_Session_f2c(MPI_Fint session)
+{
+	return mpc_mpi_session_f2c(session);
+}
+
+MPI_Fint PMPI_Session_c2f(MPI_Session session)
+{
+	return mpc_mpi_session_c2f(session);
+}
 
 /*************************************
  *  MPI-2 : Fortran handle conversion *
@@ -138,17 +151,12 @@ static void __initialize_handle_factories()
 
 MPI_Comm PMPI_Comm_f2c(MPI_Fint comm)
 {
-	if(comm == MPC_LOWCOMM_COMM_NULL_ID)
-	{
-		return MPI_COMM_NULL;
-	}
-
-	return mpc_lowcomm_get_communicator_from_id(comm);
+	return mpc_lowcomm_get_communicator_from_linear_id(comm);
 }
 
 MPI_Fint PMPI_Comm_c2f(MPI_Comm comm)
 {
-	return mpc_lowcomm_communicator_id(comm);
+	return mpc_lowcomm_communicator_linear_id(comm);
 }
 
 void mpc_fortran_comm_delete(__UNUSED__ MPI_Fint comm)
@@ -203,29 +211,32 @@ void mpc_fortran_datatype_delete(__UNUSED__ MPI_Fint datatype)
 
 MPI_Group PMPI_Group_f2c(MPI_Fint group)
 {
-#if 0
-	_fortran_handle_storage_t pgroup = NULL;
-	pgroup = _mpc_handle_factory_get(&__groups_factory, group);
+	if(group == -1)
+	{
+		return mpc_lowcomm_group_empty();
+	}
 
-	MPI_Group ret = MPI_GROUP_NULL;
-	memcpy(&ret, &pgroup, sizeof(MPI_Group));
+	if(group == 0)
+	{
+		return NULL;
+	}
 
-	return ret;
-#else
-	return group;
-#endif
+	return mpc_lowcomm_group_from_id(group);
 }
 
 MPI_Fint PMPI_Group_c2f(MPI_Group group)
 {
-#if 0
-	_fortran_handle_storage_t pgroup = NULL;
-	memcpy(&pgroup, &group, sizeof(MPI_Group));
+	if(group == NULL)
+	{
+		return 0;
+	}
 
-	return _mpc_handle_factory_set(&__groups_factory, pgroup);
-#else
-	return group;
-#endif
+	if(group == mpc_lowcomm_group_empty())
+	{
+		return -1;
+	}
+
+	return mpc_lowcomm_group_linear_id(group);
 }
 
 void mpc_fortran_group_delete(__UNUSED__ MPI_Fint group)
@@ -440,6 +451,41 @@ void mpc_fortran_interface_registration()
 
 }
 
+/* 
+F08 Bindings
+ */
+#if 0
+MPI_Status * mpc_f08_status_ignore()
+{
+	return (MPI_Status*)MPI_STATUS_IGNORE;
+}
+
+MPI_Status * mpc_f08_statuses_ignore()
+{
+	return (MPI_Status*)MPI_STATUSES_IGNORE;
+}
+
+void * mpc_f08_in_place()
+{
+	return MPI_IN_PLACE;
+}
+
+MPI_Comm mpc_f08_world()
+{
+	return MPI_COMM_WORLD;
+}
+
+MPI_Comm mpc_f08_self()
+{
+	return MPI_COMM_SELF;
+}
+
+MPI_Comm mpc_f08_null()
+{
+	return MPI_COMM_NULL;
+}
+#endif
+
 /*****************
  * WEAK BINDINGS *
  *****************/
@@ -460,3 +506,5 @@ void mpc_fortran_interface_registration()
 #pragma weak MPI_Info_c2f = PMPI_Info_c2f
 #pragma weak MPI_Errhandler_f2c = PMPI_Errhandler_f2c
 #pragma weak MPI_Errhandler_c2f = PMPI_Errhandler_c2f
+#pragma weak MPI_Session_f2c = PMPI_Session_f2c
+#pragma weak MPI_Session_c2f = PMPI_Session_c2f

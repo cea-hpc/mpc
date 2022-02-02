@@ -29,6 +29,7 @@ AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Launch/include/  -I$(abs_top_builddir
 
 AM_CPPFLAGS += -I$(abs_srcdir)/tcp/
 AM_CPPFLAGS += -I$(abs_srcdir)/shm/
+AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/cplane/
 
 if MPC_THREAD_ENABLED
         AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/
@@ -42,11 +43,11 @@ lib_LTLIBRARIES = libmpclowcomm.la
 
 # low-level communication #
 libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c sctk_control_messages.c ft.c group.c communicator.c shm_coll.c lowcomm_config.c
-libmpclowcomm_la_SOURCES += sctk_handle.c sctk_low_level_comm.c sctk_multirail.c sctk_net_tools.c sctk_net_topology.c
-libmpclowcomm_la_SOURCES += sctk_rail.c sctk_reorder.c sctk_route.c sctk_topological_polling.c sctk_topological_rail.c sctk_window.c workshare.c
+libmpclowcomm_la_SOURCES += sctk_low_level_comm.c multirail.c sctk_net_tools.c sctk_net_topology.c lowcomm_thread.c
+libmpclowcomm_la_SOURCES += sctk_rail.c reorder.c endpoint.c sctk_topological_polling.c sctk_topological_rail.c sctk_window.c workshare.c pset.c handle_ctx.c
 
 # TCP driver #
-libmpclowcomm_la_SOURCES += ./tcp/sctk_tcp.c  ./tcp/sctk_tcp_rdma.c  ./tcp/sctk_tcp_toolkit.c
+libmpclowcomm_la_SOURCES += ./tcp/tcp.c ./tcp/tcp_toolkit.c
 
 # SHM driver #
 libmpclowcomm_la_SOURCES += ./shm/sctk_shm.c      ./shm/sctk_shm_eager.c  ./shm/sctk_shm_raw_queues.c
@@ -56,11 +57,11 @@ libmpclowcomm_la_SOURCES += ./shm/sctk_shm_cma.c  ./shm/sctk_shm_frag.c   ./shm/
 # IB driver #
 if INFINIBAND_DRIVER_ENABLED
 AM_CPPFLAGS += -I$(abs_srcdir)/ib/
-libmpclowcomm_la_SOURCES += ./ib/sctk_ib_async.c ./ib/sctk_ib_buffered.c ./ib/sctk_ib.c ./ib/sctk_ib_cm.c
-libmpclowcomm_la_SOURCES += ./ib/sctk_ib_config.c ./ib/sctk_ib_cp.c ./ib/sctk_ib_device.c ./ib/sctk_ib_eager.c
-libmpclowcomm_la_SOURCES += ./ib/sctk_ib_mmu.c ./ib/sctk_ib_mpi.c ./ib/sctk_ib_polling.c
-libmpclowcomm_la_SOURCES += ./ib/sctk_ib_qp.c ./ib/sctk_ib_rdma.c ./ib/sctk_ib_toolkit.c ./ib/sctk_ib_topology.c
-libmpclowcomm_la_SOURCES += ./ib/sctk_ibufs.c ./ib/sctk_ibufs_rdma.c
+libmpclowcomm_la_SOURCES += ./ib/async.c ./ib/buffered.c ./ib/ib.c ./ib/cm.c
+libmpclowcomm_la_SOURCES += ./ib/ibconfig.c ./ib/cp.c ./ib/ibdevice.c ./ib/ibeager.c
+libmpclowcomm_la_SOURCES += ./ib/ibmmu.c ./ib/ibmpi.c ./ib/ibpolling.c
+libmpclowcomm_la_SOURCES += ./ib/qp.c ./ib/ibrdma.c ./ib/ibtoolkit.c ./ib/ibtopology.c
+libmpclowcomm_la_SOURCES += ./ib/ibufs.c ./ib/ibufs_rdma.c
 endif
 
 # PTL driver #
@@ -79,6 +80,8 @@ AM_CPPFLAGS += -I$(abs_srcdir)/ofi/
 libmpclowcomm_la_SOURCES +=./ofi/ofi.c ./ofi/ofi_msg.c ./ofi/ofi_rdma.c ./ofi/ofi_toolkit.c
 endif
 
+libmpclowcomm_la_SOURCES += ./cplane/auth.c ./cplane/peer.c  ./cplane/proto.c ./cplane/port.c
+libmpclowcomm_la_SOURCES += ./cplane/monitor.c  ./cplane/set.c ./cplane/uid.c ./cplane/name.c
 
 # library dependency #
 libmpclowcomm_la_LIBADD =  $(ALLOC_LIBS) ../../MPC_Launch/src/libmpclaunch.la -lm -lrt

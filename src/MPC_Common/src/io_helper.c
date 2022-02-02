@@ -35,6 +35,7 @@
 #include <arpa/inet.h>
 #include <ifaddrs.h>
 #include <sctk_alloc.h>
+#include <sctk_alloc.h>
 
 /********************************** GLOBALS *********************************/
 
@@ -101,7 +102,16 @@ ssize_t mpc_common_io_safe_read( int fd, void *buf, size_t count )
 		/* check errors */
 		if ( tmp == 0 )
 		{
-			res = nb_total_received_bytes;
+			if(nb_total_received_bytes != count)
+			{
+				/* Early EOF */
+				res = -1;
+			}
+			else
+			{
+				res = nb_total_received_bytes;
+			}
+
 			break;
 		}
 		else if ( tmp < 0 )
@@ -120,7 +130,7 @@ ssize_t mpc_common_io_safe_read( int fd, void *buf, size_t count )
 			else
 			{
 				mpc_common_debug( "READ %p %lu/%lu FAIL\n", buf, count );
-				perror( "mpc_common_io_safe_read" );
+				//perror( "mpc_common_io_safe_read" );
 				res = -1;
 				break;
 			}
@@ -352,7 +362,135 @@ size_t mpc_common_helper_memory_in_use( void )
 {
 	return 0;
 }
+
 #endif
+
+
+/**********************
+ * CMD LINE ARGUMENTS *
+ **********************/
+
+char * mpc_common_helper_command_line_pretty(int json, char * buff, int len)
+{
+	char ** cmd = mpc_common_helper_command_line();
+
+	if(!cmd)
+	{
+		return NULL;
+	}
+
+	if(json)
+	{
+		buff[0] = '[';
+		buff[1] = '\0';
+	}
+	else
+	{
+		buff[0] = '\0';
+	}
+
+	int cnt = 0;
+
+	while(cmd[cnt])
+	{
+		char tmp[512];
+
+		char * sep = " ";
+
+		if(json)
+		{
+			sep = (cnt>0)?(", "):("");
+		}
+
+		snprintf(tmp, 512, "%s%s", sep, cmd[cnt]);
+		strncat(buff, tmp, len);
+		cnt++;
+	}
+
+	if(json)
+	{
+		strncat(buff, "]", len);
+	}
+
+	return buff;
+}
+
+char ** mpc_common_helper_command_line(void)
+{
+
+	FILE * cmdline = fopen("/proc/self/cmdline", "r");
+
+	if(!cmdline)
+	{
+		return NULL;
+	}
+
+	char* buff = sctk_malloc(1024 * 1024);
+
+	assume(buff != NULL);
+
+	ssize_t size = fread(buff, sizeof(char), 1024*1024, cmdline);
+
+	if(size < 0)
+	{
+		sctk_free(buff);
+		return NULL;
+	}
+
+	/* Now count the number of \0 */
+	int cnt = 0;
+	ssize_t i;
+	for( i = 0 ; i < size ; i++)
+	{
+		if(buff[i] == '\0')
+		{
+			cnt++;
+		}
+	}
+
+	char ** ret = sctk_malloc( (cnt + 1) * sizeof(char *));
+	assume(ret != NULL);
+
+	for(i = 0 ; i < cnt; i++)
+	{
+		ret[i] = NULL;
+	}
+
+	cnt = 0;
+
+	for(i = 0; i < size; i++)
+	{
+
+		
+		if(buff[i] == '\0')
+		{
+			cnt++;
+		}
+		else if(ret[cnt] == NULL)
+		{
+			ret[cnt] = &buff[i];
+		}
+
+	}
+
+	ret[cnt] = NULL;
+
+	return ret;
+}
+
+void mpc_common_helper_command_line_free(char **cmd)
+{
+	if(!cmd)
+	{
+		return;
+	}
+
+	sctk_free(cmd[0]);
+	sctk_free(cmd);
+}
+
+
+
 /**************************************
  * GETADDRINFO WITH DEVICE PREFERENCE *
  **************************************/
@@ -464,7 +602,7 @@ struct addrinfo * __linearize_addrinfo(struct addrinfo * info)
 
     while(tmp)
     {
-        memcpy(&reorder_buff[cnt], tmp, sizeof(struct addrinfo));
+        memcpy(reorder_buff + cnt, tmp, sizeof(struct addrinfo));
         tmp = tmp->ai_next;
         cnt++;
     }
@@ -482,7 +620,6 @@ void __addr_info_swap(struct addrinfo * from, struct addrinfo * to)
     memcpy(to, from, sizeof(struct addrinfo));
     memcpy(from, &tmp, sizeof(struct addrinfo));
 }
-
 
 int mpc_common_getaddrinfo(const char *node, const char *service,
                            const struct addrinfo *hints,
@@ -532,7 +669,7 @@ int mpc_common_getaddrinfo(const char *node, const char *service,
     }
 
     /* Did we match exactly if not try to match partially */
-    if(!did_match_exactly && 0)
+    if(!did_match_exactly)
     {
         int cnt = 0;
         for( i = 0 ; i < res_count ; i++)
@@ -568,6 +705,108 @@ MPC_COMMON_AIDDR_DONE:
     return 0;
 }
 
+static inline void __print_ipv4(struct sockaddr_in * inaddr, char * ip, int iplen)
+{
+    inet_ntop( AF_INET, &inaddr->sin_addr, ip, iplen );
+}
+
+
+int mpc_common_resolve_local_ip_for_iface(char * ip, int iplen, char *preferred_device)
+{
+
+    if(!ip || !iplen)
+    {
+        return -1;
+    }
+
+    assume(INET6_ADDRSTRLEN <= iplen);
+
+    ip[0] = '\0';
+
+    struct ifaddrs* ifaddr;
+
+    if( getifaddrs(&ifaddr) < 0 )
+    {
+        return -1;
+    }
+
+    struct ifaddrs* ifa = NULL;
+
+    /* First pass Exact Match */
+
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
+    {
+        if (ifa->ifa_addr && ifa->ifa_name)
+        {
+            if (AF_INET == ifa->ifa_addr->sa_family)
+            {
+    		struct sockaddr_in* inaddr = (struct sockaddr_in*)ifa->ifa_addr;
+              	/* Exact Match */
+		if(!strcmp(ifa->ifa_name, preferred_device) )
+		{
+			__print_ipv4(inaddr, ip, iplen);
+			goto LOCADDRDONE;
+		}
+            }
+        }
+    }
+
+    /* Second Pass Partial Match */
+
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
+    {
+        if (ifa->ifa_addr && ifa->ifa_name)
+        {
+            if (AF_INET == ifa->ifa_addr->sa_family)
+            {
+    		struct sockaddr_in* inaddr = (struct sockaddr_in*)ifa->ifa_addr;
+              	/* Exact Match */
+		if(strstr(ifa->ifa_name, preferred_device) )
+		{
+			__print_ipv4(inaddr, ip, iplen);
+			goto LOCADDRDONE;
+		}
+            }
+        }
+    }
+
+
+    /* Last Pass First not localhost */
+
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
+    {
+        if (ifa->ifa_addr && ifa->ifa_name)
+        {
+            if(!strcmp(ifa->ifa_name, "lo"))
+	    {
+		    continue;
+	    }
+
+            if (AF_INET == ifa->ifa_addr->sa_family)
+            {
+    		struct sockaddr_in* inaddr = (struct sockaddr_in*)ifa->ifa_addr;
+		__print_ipv4(inaddr, ip, iplen);
+	
+		/* We really dont want to answer localhost ! */	
+		if(!strstr(ip, "127.0."))
+		{
+			goto LOCADDRDONE;
+		}
+            }
+        }
+    }
+
+    if(strlen(ip) == 0 )
+    {
+	return -1;
+    }
+
+
+LOCADDRDONE:
+    freeifaddrs(ifaddr);
+
+    return 0;
+}
 
 void mpc_common_freeaddrinfo(struct addrinfo *res)
 {

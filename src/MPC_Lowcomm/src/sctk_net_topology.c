@@ -20,8 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include "sctk_net_topology.h"
-#include "sctk_route.h"
-
+#include <math.h>
 #include <mpc_launch_pmi.h>
 #include <mpc_common_rank.h>
 #include <mpc_common_profiler.h>
@@ -105,7 +104,7 @@ void sctk_route_fully_init ( sctk_rail_info_t *rail )
 			{
 				if ( to > from )
 				{
-					sctk_endpoint_t *tmp;
+					_mpc_lowcomm_endpoint_t *tmp;
 
 					if ( from == mpc_common_get_process_rank() )
 					{

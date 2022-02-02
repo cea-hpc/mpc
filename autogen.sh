@@ -45,6 +45,16 @@ extract_version()
 	"$1" --version | head -n 1 | grep -E -o "[0-9]+(\.[0-9]+)*"
 }
 
+spack_tips()
+{
+	echo "========================="
+	echo "Consider running:"
+	echo "$ spack install autoconf@${ac_expect} automake@${am_expect} libtool@${lt_expect}"
+	echo "$ spack load autoconf@${ac_expect} automake@${am_expect} libtool@${lt_expect}"
+	echo "========================="
+}
+
+
 arc=$(command -v autoreconf)
 ac=$(command -v autoconf)
 am=$(command -v automake)
@@ -58,12 +68,7 @@ test -n "$lt" || err "No 'libtoolize' command in PATH. Please install libtool fi
 test -n "$ptch" || err "No 'patch' command in PATH. Please install patch first."
 
 if test "$ret" = "1"; then
-	echo "========================="
-	echo "Consider running:"
-	echo "$ spack install autoconf@${ac_expect} automake@${am_expect} libtool@${lt_expect}"
-	echo "$ spack load autoconf@${ac_expect} automake@${am_expect} libtool@${lt_expect}"
-	echo "========================="
-
+	spack_tips
 	exit 1
 fi
 
@@ -79,9 +84,10 @@ test "$lt_version" = "$lt_expect" || err "Exact version required for Libtool: $l
 if test "$ret" = "0"; then
 	$arc -vi
 	ret=$?
+else
+	spack_tips
+	die "Abort configuration due to error(s) above.\n"
 fi
-
-test "$ret" = "0" || die "Abort configuration due to error(s) above.\n"
 
 #
 # Patching Phase

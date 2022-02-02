@@ -23,7 +23,7 @@
 #define __SCTK_LOW_LEVEL_COMM_H_
 
 #include <comm.h>
-
+#include <multirail.h>
 
 struct sctk_rail_info_s;
 
@@ -62,29 +62,7 @@ struct _mpc_lowcomm_config_struct_net_rail *sctk_get_rail_config_by_name ( char 
 */
 struct _mpc_lowcomm_config_struct_net_driver_config *sctk_get_driver_config_by_name ( char *name );
 
-void sctk_network_send_message ( mpc_lowcomm_ptp_message_t *msg );
-void sctk_network_send_message_set ( void ( *sctk_network_send_message_val ) ( mpc_lowcomm_ptp_message_t * ) );
 
-void sctk_network_notify_recv_message ( mpc_lowcomm_ptp_message_t *msg );
-void sctk_network_notify_recv_message_set ( void ( *sctk_network_notify_recv_message_val ) ( mpc_lowcomm_ptp_message_t * ) );
-
-void sctk_network_notify_matching_message ( mpc_lowcomm_ptp_message_t *msg );
-void sctk_network_notify_matching_message_set ( void ( *sctk_network_notify_matching_message_val ) ( mpc_lowcomm_ptp_message_t * ) );
-
-void sctk_network_notify_perform_message ( int remote_process, int remote_task_id, int polling_task_id, int blocking );
-void sctk_network_notify_perform_message_set ( void ( *sctk_network_notify_perform_message_val ) ( int, int, int, int ) );
-
-void sctk_network_notify_idle_message ();
-void sctk_network_notify_idle_message_set ( void ( *sctk_network_notify_idle_message_val ) () );
-
-void sctk_network_notify_any_source_message ( int polling_task_id, int blocking );
-void sctk_network_notify_any_source_message_set ( void ( *sctk_network_notify_perform_message_val ) ( int polling_task_id, int blocking ) );
-
-void sctk_network_notify_new_communicator ( int comm_idx, size_t comm_size);
-void sctk_network_notify_new_communicator_set ( void ( *sctk_network_notify_new_comm_val ) ( int comm_idx, size_t comm_size ) );
-
-void sctk_network_notify_probe_message (mpc_lowcomm_ptp_message_header_t* hdr, int *status);
-void sctk_network_notify_probe_message_set (void ( *sctk_network_notify_probe_message_val)  (mpc_lowcomm_ptp_message_header_t* hdr, int *status) );
 
 size_t sctk_net_memory_allocation_hook ( size_t size_origin );
 void sctk_net_memory_free_hook ( void * ptr , size_t size );

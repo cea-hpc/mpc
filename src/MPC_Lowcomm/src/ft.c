@@ -28,7 +28,8 @@
 #include <mpc_launch.h>
 #include <mpc_common_flags.h>
 #include "sctk_ft_types.h"
-#include "sctk_multirail.h"
+
+#include "sctk_rail.h"
 
 #ifdef MPC_USE_DMTCP
 #include <dmtcp.h>
@@ -46,7 +47,7 @@ static int nb_restarts = 0;
 static mpc_lowcomm_checkpoint_state_t __state = MPC_STATE_NO_SUPPORT;
 
 /** Lock to create a critical section for C/R */
-static mpc_common_rwlock_t checkpoint_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
+static mpc_common_rwlock_t checkpoint_lock = MPC_COMMON_SPIN_RWLOCK_INITIALIZER;
 /** Number of threads blocking the C/R to be started */
 __thread int sctk_ft_critical_section = 0;
 

@@ -145,19 +145,18 @@ am__installdirs = "$(DESTDIR)$(libdir)" \
 	"$(DESTDIR)$(mpc_fort_headerdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libmpcfortran_la_LIBADD =
-am_libmpcfortran_la_OBJECTS = mpi_f08_c_iface.lo mpi08_module.lo \
-	mpi_module.lo mpc_fortran.lo mpc_fortran_helpers.lo omp.lo
+am_libmpcfortran_la_OBJECTS = mpi08_module.lo mpi_module.lo \
+	mpc_fortran.lo mpc_fortran_helpers.lo omp.lo
 libmpcfortran_la_OBJECTS = $(am_libmpcfortran_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
 libmpcfortran_priv_la_LIBADD =
-am__libmpcfortran_priv_la_SOURCES_DIST = mpi_f08_c_iface.c \
-	mpi08_module_priv.f90 mpi_module_priv.f90 mpc_fortran.c \
-	mpc_fortran_helpers.c omp_priv.f90
-@MPC_HAVE_AUTOPRIV_TRUE@am_libmpcfortran_priv_la_OBJECTS = libmpcfortran_priv_la-mpi_f08_c_iface.lo \
-@MPC_HAVE_AUTOPRIV_TRUE@	libmpcfortran_priv_la-mpi08_module_priv.lo \
+am__libmpcfortran_priv_la_SOURCES_DIST = mpi08_module_priv.f90 \
+	mpi_module_priv.f90 mpc_fortran.c mpc_fortran_helpers.c \
+	omp_priv.f90
+@MPC_HAVE_AUTOPRIV_TRUE@am_libmpcfortran_priv_la_OBJECTS = libmpcfortran_priv_la-mpi08_module_priv.lo \
 @MPC_HAVE_AUTOPRIV_TRUE@	libmpcfortran_priv_la-mpi_module_priv.lo \
 @MPC_HAVE_AUTOPRIV_TRUE@	libmpcfortran_priv_la-mpc_fortran.lo \
 @MPC_HAVE_AUTOPRIV_TRUE@	libmpcfortran_priv_la-mpc_fortran_helpers.lo \
@@ -535,7 +534,7 @@ AM_CPPFLAGS = -I$(abs_top_builddir)/ \
 	-I$(abs_top_builddir)/src/MPC_Common/include/ \
 	-I$(abs_top_builddir)/src/MPC_Fortran/src/
 AM_FCFLAGS = -I$(abs_top_builddir)/src/MPC_Fortran/src/
-@HAVE_PYTHON_TRUE@MPCFORT_FILES = mpi_f08_c_iface.c mpi_constants.f90 mpi_f08_c.f90 mpi_f08_constants.f90 mpi_f08_ctypes.f90 mpi_f08.f90 mpi_f08_types.f90 mpi.f90 mpi_sizeofs.f90 mpi_base.f90
+@HAVE_PYTHON_TRUE@MPCFORT_FILES = mpi_constants.f90 mpi_f08_c.f90 mpi_f08_constants.f90 mpi_f08_ctypes.f90 mpi_f08.f90 mpi_f08_types.f90 mpi.f90 mpi_sizeofs.f90 mpi_base.f90
 BUILT_SOURCES = $(MPCFORT_FILES) mpif.h
 lib_LTLIBRARIES = libmpcfortran.la $(am__append_1)
 
@@ -543,13 +542,12 @@ lib_LTLIBRARIES = libmpcfortran.la $(am__append_1)
 # F90 Iface
 # F77 Iface
 # OMP
-libmpcfortran_la_SOURCES = mpi_f08_c_iface.c mpi08_module.f90 \
-	mpi_module.f90 mpc_fortran.c mpc_fortran_helpers.c omp.f90
+libmpcfortran_la_SOURCES = mpi08_module.f90 mpi_module.f90 \
+	mpc_fortran.c mpc_fortran_helpers.c omp.f90
 
 # F08 Iface
 # F77 Iface
 @MPC_HAVE_AUTOPRIV_TRUE@libmpcfortran_priv_la_SOURCES =  \
-@MPC_HAVE_AUTOPRIV_TRUE@	mpi_f08_c_iface.c \
 @MPC_HAVE_AUTOPRIV_TRUE@	mpi08_module_priv.f90 \
 @MPC_HAVE_AUTOPRIV_TRUE@	mpi_module_priv.f90 mpc_fortran.c \
 @MPC_HAVE_AUTOPRIV_TRUE@	mpc_fortran_helpers.c omp_priv.f90
@@ -646,10 +644,8 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libmpcfortran_priv_la-mpc_fortran.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libmpcfortran_priv_la-mpc_fortran_helpers.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libmpcfortran_priv_la-mpi_f08_c_iface.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_fortran.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_fortran_helpers.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpi_f08_c_iface.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -674,13 +670,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
-
-libmpcfortran_priv_la-mpi_f08_c_iface.lo: mpi_f08_c_iface.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libmpcfortran_priv_la_CFLAGS) $(CFLAGS) -MT libmpcfortran_priv_la-mpi_f08_c_iface.lo -MD -MP -MF $(DEPDIR)/libmpcfortran_priv_la-mpi_f08_c_iface.Tpo -c -o libmpcfortran_priv_la-mpi_f08_c_iface.lo `test -f 'mpi_f08_c_iface.c' || echo '$(srcdir)/'`mpi_f08_c_iface.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libmpcfortran_priv_la-mpi_f08_c_iface.Tpo $(DEPDIR)/libmpcfortran_priv_la-mpi_f08_c_iface.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='mpi_f08_c_iface.c' object='libmpcfortran_priv_la-mpi_f08_c_iface.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libmpcfortran_priv_la_CFLAGS) $(CFLAGS) -c -o libmpcfortran_priv_la-mpi_f08_c_iface.lo `test -f 'mpi_f08_c_iface.c' || echo '$(srcdir)/'`mpi_f08_c_iface.c
 
 libmpcfortran_priv_la-mpc_fortran.lo: mpc_fortran.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libmpcfortran_priv_la_CFLAGS) $(CFLAGS) -MT libmpcfortran_priv_la-mpc_fortran.lo -MD -MP -MF $(DEPDIR)/libmpcfortran_priv_la-mpc_fortran.Tpo -c -o libmpcfortran_priv_la-mpc_fortran.lo `test -f 'mpc_fortran.c' || echo '$(srcdir)/'`mpc_fortran.c

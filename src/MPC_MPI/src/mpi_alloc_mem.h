@@ -41,7 +41,7 @@ struct mpc_MPI_allocmem_pool {
   struct mpc_common_hashtable size_ht;
 };
 
-extern struct mpc_MPI_allocmem_pool ____mpc_sctk_mpi_alloc_mem_pool;
+extern struct mpc_MPI_allocmem_pool _mpc_MPI_mem_pool;
 
 int mpc_MPI_allocmem_pool_init();
 int mpc_MPI_allocmem_pool_release();
@@ -54,7 +54,7 @@ int mpc_MPI_allocmem_pool_free_size(void *ptr, ssize_t known_size);
 int mpc_MPI_allocmem_is_in_pool(void *ptr);
 
 static inline int _mpc_MPI_allocmem_is_in_pool(void *ptr) {
-  struct mpc_MPI_allocmem_pool *p = &____mpc_sctk_mpi_alloc_mem_pool;
+  struct mpc_MPI_allocmem_pool *p = &_mpc_MPI_mem_pool;
   if ((p->pool <= ptr) && (ptr < (p->pool + p->size))) {
     return 1;
   }

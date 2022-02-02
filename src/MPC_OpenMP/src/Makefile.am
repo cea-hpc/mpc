@@ -29,7 +29,7 @@ AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Launch/include/ -I$(abs_top_builddir)
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_MPI/src/ -I$(abs_top_srcdir)/src/MPC_MPI/include/
 
-AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_OpenMP/include/ $(VMEM_CFLAGS)
+AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_OpenMP/include/ $(VMEM_CFLAGS) $(OPA_CFLAGS)
 
 tools_inc = -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/src/ \
             -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/callback/ \
@@ -56,7 +56,7 @@ tools_src = tools/src/mpcompt_entryPoints.c tools/src/mpcompt_init.c tools/src/m
 libmpcomp_la_SOURCES += $(tools_src)
 
 libmpcomp_la_LDFLAGS = -Wl,--version-script=$(abs_top_srcdir)/src/MPC_OpenMP/version_gomp.txt
-libmpcomp_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la $(VMEM_LIBS)
+libmpcomp_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la $(VMEM_LIBS) $(OPA_LIBS)
 
 lib_LTLIBRARIES += libiomp5.la libgomp.la
 

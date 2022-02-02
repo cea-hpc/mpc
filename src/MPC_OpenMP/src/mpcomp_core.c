@@ -1020,7 +1020,7 @@ static inline void __read_env_variables()
 void mpc_omp_init( void )
 {
 	static volatile int done = 0;
-	static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+	static mpc_common_spinlock_t lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 	int nb_mvps;
 	int task_rank;
 

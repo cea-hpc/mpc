@@ -73,7 +73,7 @@ ompt_set_callback ( ompt_callbacks_t event,
         /* Allocate callback array if needed */
         if( !tool_instance->callbacks )
         {
-            mpc_common_rwlock_t ini_lk = SCTK_SPIN_RWLOCK_INITIALIZER;
+            mpc_common_rwlock_t ini_lk = MPC_COMMON_SPIN_RWLOCK_INITIALIZER;
             tool_instance->lock = ini_lk;
 
             tool_instance->callbacks =

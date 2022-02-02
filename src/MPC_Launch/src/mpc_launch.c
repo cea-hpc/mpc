@@ -31,29 +31,25 @@
 #include <signal.h>
 
 #include <mpc_conf.h>
+
+#include <opa_primitives.h>
+#include <sctk_alloc.h>
+
+#include <mpc_common_asm.h>
 #include <mpc_common_flags.h>
 #include <mpc_common_helper.h>
 #include <mpc_common_rank.h>
-
-#include <sctk_alloc.h>
-
-#include "mpc_launch.h"
-#include "mpc_common_debug.h"
-#include "mpc_common_asm.h"
-#include "opa_primitives.h"
-
-#include "mpc_topology.h"
-#include <mpc_launch_pmi.h>
-
+#include <mpc_common_types.h>
+#include <mpc_common_debug.h>
+#include <mpc_topology.h>
 #ifdef MPC_Threads
 #include <mpc_thread.h>
 #endif
 
+#include <mpc_launch_pmi.h>
 
-#include <mpc_common_types.h>
-
+#include "mpc_launch.h"
 #include "main.h"
-
 
 #if defined(MPC_ENABLE_DEBUG_MESSAGES)
 #define SCTK_DEBUG_MODE    " Debug Messages Enabled"
@@ -684,7 +680,7 @@ static void __topology_init()
 
 void mpc_launch_init_runtime()
 {
-	static int __init_already_done = 0;
+	static volatile int __init_already_done = 0;
 
 	if(__init_already_done)
 	{
@@ -716,7 +712,6 @@ void mpc_launch_init_runtime()
 
 	/* As a first step initialize the PMI */
 	mpc_launch_pmi_init();
-
 
 	__topology_init();
 

@@ -29,17 +29,12 @@
 #include <mpc_common_rank.h>
 #include <mpc_common_datastructure.h>
 
+#include "peer.h"
+
 /*******************************
 * COMMUNICATORS AND PROCESSES *
 *******************************/
 
-struct __rank_to_process_map
-{
-	int           size;
-	unsigned int *process_id;
-};
-
-struct __rank_to_process_map __process_map = { 0 };
 
 
 static inline int ___process_rank_from_world_rank(int world_rank)
@@ -80,40 +75,109 @@ static inline int ___process_rank_from_world_rank(int world_rank)
 	return proc_rank;
 }
 
-void __rank_to_process_map_init(void)
+mpc_lowcomm_peer_uid_t mpc_lowcomm_group_process_uid_for_rank(mpc_lowcomm_group_t *g, int rank)
 {
-	assume(__process_map.process_id == 0);
+	_mpc_lowcomm_group_rank_descriptor_t *desc = mpc_lowcomm_group_descriptor(g, rank);
 
-	__process_map.size       = mpc_lowcomm_get_size();
-	__process_map.process_id = sctk_malloc(__process_map.size * sizeof(unsigned int) );
-
-	assume(__process_map.process_id != NULL);
-
-	int i;
-
-	for(i = 0; i < __process_map.size; i++)
-	{
-		__process_map.process_id[i] = ___process_rank_from_world_rank(i);
-	}
+	assume(desc != NULL);
+	return desc->host_process_uid;
 }
 
-void __rank_to_process_map_release(void)
+int *mpc_lowcomm_group_world_ranks(mpc_lowcomm_group_t *g)
 {
-	__process_map.size = 0;
-	sctk_free(__process_map.process_id);
-	__process_map.process_id = NULL;
+	if(!_mpc_lowcomm_group_rank_descriptor_all_from_local_set(g->size, g->ranks) )
+	{
+		return NULL;
+	}
+
+	int *ret = sctk_malloc(sizeof(int) * g->size);
+
+	assume(ret != NULL);
+
+	unsigned int i;
+
+	for(i = 0; i < g->size; i++)
+	{
+		ret[i] = g->ranks->comm_world_rank;
+	}
+
+	return ret;
 }
 
 int mpc_lowcomm_group_process_rank_from_world(int comm_world_rank)
 {
-	assert(__process_map.size != 0);
-	assert(comm_world_rank < mpc_lowcomm_get_size() );
+	mpc_lowcomm_group_t *gworld = _mpc_lowcomm_group_world_no_assert();
 
-	return __process_map.process_id[comm_world_rank];
+	if(!gworld)
+	{
+		/* World is not ready yet use computation */
+		return mpc_lowcomm_peer_get_rank(___process_rank_from_world_rank(comm_world_rank) );
+	}
+
+	return mpc_lowcomm_group_process_uid_for_rank(gworld, comm_world_rank);
+}
+
+static inline int __compar_uid(const void *pa, const void *pb)
+{
+	mpc_lowcomm_peer_uid_t *a = (mpc_lowcomm_peer_uid_t *)pa;
+	mpc_lowcomm_peer_uid_t *b = (mpc_lowcomm_peer_uid_t *)pb;
+
+	return *a < *b;
+}
+
+static inline void __fill_process_info_remote(mpc_lowcomm_group_t *g)
+{
+	mpc_lowcomm_peer_uid_t *all_proc_uids = sctk_malloc(g->size * sizeof(mpc_lowcomm_peer_uid_t) );
+
+	assume(all_proc_uids != NULL);
+
+	unsigned int i;
+
+	for(i = 0; i < g->size; i++)
+	{
+		all_proc_uids[i] = g->ranks[i].host_process_uid;
+	}
+
+	qsort(all_proc_uids, g->size, sizeof(mpc_lowcomm_peer_uid_t), __compar_uid);
+
+	/* Now count number of ids */
+	mpc_lowcomm_peer_uid_t last_seen_uid = 0;
+	int uid_count = 0;
+
+	mpc_lowcomm_peer_uid_t my_uid = mpc_lowcomm_monitor_get_uid();
+	int local_task_count          = 0;
+
+	for(i = 0; i < g->size; i++)
+	{
+		if(!last_seen_uid || (last_seen_uid != all_proc_uids[i]) )
+		{
+			last_seen_uid = all_proc_uids[i];
+			uid_count++;
+		}
+		if(my_uid == all_proc_uids[i])
+		{
+			local_task_count++;
+		}
+	}
+
+	g->tasks_count_in_process = 0;
+	g->process_count          = uid_count;
+	g->tasks_count_in_process = local_task_count;
+
+	sctk_free(all_proc_uids);
 }
 
 static inline void __fill_process_info(mpc_lowcomm_group_t *g)
 {
+	/* It is a remote group ? */
+	if(!_mpc_lowcomm_group_rank_descriptor_all_from_local_set(g->size, g->ranks) )
+	{
+		__fill_process_info_remote(g);
+		return;
+	}
+
+	/* Here is the response for a local group */
+
 	unsigned int  process_count = (unsigned int)mpc_common_get_process_count();
 	unsigned int *counter       = sctk_malloc(process_count * sizeof(unsigned int) );
 
@@ -169,8 +233,6 @@ static inline void __fill_process_info(mpc_lowcomm_group_t *g)
 
 int _mpc_lowcomm_group_local_process_count(mpc_lowcomm_group_t *g)
 {
-	assert(__process_map.size != 0);
-
 	mpc_common_spinlock_lock(&g->process_lock);
 	/* Already computed */
 	if(0 < g->tasks_count_in_process)
@@ -190,8 +252,6 @@ int _mpc_lowcomm_group_local_process_count(mpc_lowcomm_group_t *g)
 
 int _mpc_lowcomm_group_process_count(mpc_lowcomm_group_t *g)
 {
-	assert(__process_map.size != 0);
-
 	mpc_common_spinlock_lock(&g->process_lock);
 	/* Already computed */
 	if(0 < g->process_count)
@@ -211,8 +271,6 @@ int _mpc_lowcomm_group_process_count(mpc_lowcomm_group_t *g)
 
 int *_mpc_lowcomm_group_process_list(mpc_lowcomm_group_t *g)
 {
-	assert(__process_map.size != 0);
-
 	mpc_common_spinlock_lock(&g->process_lock);
 	/* Already computed */
 	if(g->process_list != NULL)
@@ -253,14 +311,16 @@ int mpc_lowcomm_group_get_local_leader(mpc_lowcomm_group_t *g)
 	return g->local_leader;
 }
 
-int mpc_lowcomm_group_includes(mpc_lowcomm_group_t *g, int cw_rank)
+int mpc_lowcomm_group_includes(mpc_lowcomm_group_t *g, int cw_rank, mpc_lowcomm_peer_uid_t uid)
 {
 	if(cw_rank == MPC_PROC_NULL)
 	{
 		return 0;
 	}
 
-	return mpc_lowcomm_group_rank_for(g, cw_rank) != MPC_PROC_NULL;
+	int rank = mpc_lowcomm_group_rank_for(g, cw_rank, uid);
+
+	return rank != MPC_PROC_NULL;
 }
 
 /****************************************
@@ -270,24 +330,72 @@ int mpc_lowcomm_group_includes(mpc_lowcomm_group_t *g, int cw_rank)
 int _mpc_lowcomm_group_rank_descriptor_equal(_mpc_lowcomm_group_rank_descriptor_t *a,
                                              _mpc_lowcomm_group_rank_descriptor_t *b)
 {
-	return memcmp( (void *)a, (void *)b, sizeof(_mpc_lowcomm_group_rank_descriptor_t) ) == 0;
+	//mpc_common_debug_error("\t %d %lld == %d %lld", a->comm_world_rank, a->host_process_uid, b->comm_world_rank, b->host_process_uid);
+
+	/* No memcmp as there is a hole in the struct */
+	if( (a->comm_world_rank == b->comm_world_rank) && (a->host_process_uid == b->host_process_uid) )
+	{
+		return 1;
+	}
+
+	return 0;
 }
 
-int _mpc_lowcomm_group_rank_descriptor_set(_mpc_lowcomm_group_rank_descriptor_t *rd, int comm_world_rank)
+int _mpc_lowcomm_group_rank_descriptor_all_from_local_set(unsigned int size, _mpc_lowcomm_group_rank_descriptor_t *ranks)
+{
+	unsigned int i;
+
+	mpc_lowcomm_set_uid_t my_id = mpc_lowcomm_monitor_get_gid();
+
+
+	for(i = 0; i < size; i++)
+	{
+		if(mpc_lowcomm_peer_get_set(ranks[i].host_process_uid) != my_id)
+		{
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+int _mpc_lowcomm_group_rank_descriptor_set_in_grp(_mpc_lowcomm_group_rank_descriptor_t *rd,
+                                                  mpc_lowcomm_set_uid_t set,
+                                                  int cw_rank)
 {
 	if(!rd)
 	{
-		return SCTK_ERROR;
+		return MPC_LOWCOMM_ERROR;
 	}
 
-	rd->comm_world_rank = comm_world_rank;
+	rd->comm_world_rank  = cw_rank;
+	rd->host_process_uid = mpc_lowcomm_monitor_uid_of(set, ___process_rank_from_world_rank(cw_rank) );
 
-	return SCTK_SUCCESS;
+
+	return MPC_LOWCOMM_SUCCESS;
+}
+
+int _mpc_lowcomm_group_rank_descriptor_set_uid(_mpc_lowcomm_group_rank_descriptor_t *rd, mpc_lowcomm_peer_uid_t uid)
+{
+	if(!rd)
+	{
+		return MPC_LOWCOMM_ERROR;
+	}
+
+	rd->comm_world_rank  = mpc_lowcomm_peer_get_rank(uid);
+	rd->host_process_uid = uid;
+
+	return MPC_LOWCOMM_SUCCESS;
+}
+
+int _mpc_lowcomm_group_rank_descriptor_set(_mpc_lowcomm_group_rank_descriptor_t *rd, int cw_rank)
+{
+	return _mpc_lowcomm_group_rank_descriptor_set_in_grp(rd, mpc_lowcomm_monitor_get_gid(), cw_rank);
 }
 
 uint32_t _mpc_lowcomm_group_rank_descriptor_hash(_mpc_lowcomm_group_rank_descriptor_t *rd)
 {
-	return (uint32_t)rd->comm_world_rank;
+	return (uint32_t)rd->comm_world_rank ^ rd->host_process_uid ^ rd->host_process_uid >> 32;
 }
 
 /************************
@@ -365,7 +473,11 @@ mpc_lowcomm_group_eq_e __group_compare(mpc_lowcomm_group_t *g1, mpc_lowcomm_grou
 	unsigned int           i;
 	mpc_lowcomm_group_eq_e ret = MPC_GROUP_UNEQUAL;
 
-	if(g1->size == g2->size)
+	if(g1 == g2)
+	{
+		return MPC_GROUP_IDENT;
+	}
+	else if(g1->size == g2->size)
 	{
 		ret = MPC_GROUP_IDENT;
 
@@ -386,12 +498,8 @@ mpc_lowcomm_group_eq_e __group_compare(mpc_lowcomm_group_t *g1, mpc_lowcomm_grou
 			return ret;
 		}
 	}
-	else
-	{
-		return MPC_GROUP_UNEQUAL;
-	}
 
-	if(!do_similar)
+	if(!do_similar || (g1->size != g2->size) )
 	{
 		return MPC_GROUP_UNEQUAL;
 	}
@@ -436,6 +544,7 @@ unsigned int mpc_lowcomm_group_size(mpc_lowcomm_group_t *g)
 
 _mpc_lowcomm_group_rank_descriptor_t *mpc_lowcomm_group_descriptor(mpc_lowcomm_group_t *g, int rank)
 {
+	//mpc_common_debug_warning("GET %d / %d", rank, g->size);
 	assert(g != NULL);
 	assert(0 <= rank);
 	assert(rank < (int)g->size);
@@ -453,23 +562,29 @@ int mpc_lowcomm_group_world_rank(mpc_lowcomm_group_t *g, int rank)
 	return desc->comm_world_rank;
 }
 
-int mpc_lowcomm_group_rank_for(mpc_lowcomm_group_t *g, int rank)
+int mpc_lowcomm_group_rank_for(mpc_lowcomm_group_t *g, int rank, mpc_lowcomm_peer_uid_t uid)
 {
-	assert( (0 <= rank) && (rank < mpc_lowcomm_get_size() ) );
+	assert(0 <= rank);
+
+	if(g->size == 0)
+	{
+		/* Nobody in the empty group */
+		return MPC_PROC_NULL;
+	}
 
 	if(rank == MPC_PROC_NULL)
 	{
 		return rank;
 	}
 
-
 	if(g->global_to_local)
 	{
-		//mpc_common_debug_error("RANK %d MAPS to %d", rank, g->global_to_local[rank]);
-		return g->global_to_local[rank];
+		int trank = g->global_to_local[rank];
+		if(g->ranks[trank].host_process_uid == uid)
+		{
+			return trank;
+		}
 	}
-
-
 
 	assume(g->ranks != NULL);
 
@@ -479,7 +594,7 @@ int mpc_lowcomm_group_rank_for(mpc_lowcomm_group_t *g, int rank)
 	{
 		//mpc_common_debug_error("[%d] %d == %d ?",i,  rank, g->ranks[i].comm_world_rank);
 
-		if(g->ranks[i].comm_world_rank == rank)
+		if( (g->ranks[i].comm_world_rank == rank) && (g->ranks[i].host_process_uid == uid) )
 		{
 			return i;
 		}
@@ -490,7 +605,7 @@ int mpc_lowcomm_group_rank_for(mpc_lowcomm_group_t *g, int rank)
 
 int mpc_lowcomm_group_rank(mpc_lowcomm_group_t *g)
 {
-	return mpc_lowcomm_group_rank_for(g, mpc_lowcomm_get_rank() );
+	return mpc_lowcomm_group_rank_for(g, mpc_lowcomm_get_rank(), mpc_lowcomm_monitor_get_uid() );
 }
 
 int mpc_lowcomm_group_translate_ranks(mpc_lowcomm_group_t *g1, int n, const int ranks1[], mpc_lowcomm_group_t *g2, int ranks2[])
@@ -501,32 +616,302 @@ int mpc_lowcomm_group_translate_ranks(mpc_lowcomm_group_t *g1, int n, const int 
 	{
 		unsigned int j;
 
-		if(ranks1[n] == MPC_PROC_NULL)
+		if(ranks1[i] == MPC_PROC_NULL)
 		{
-			ranks2[n] = MPC_PROC_NULL;
+			ranks2[i] = MPC_PROC_NULL;
 			continue;
 		}
 
-		if(g1->size <= (unsigned int)ranks1[n])
+		//mpc_common_debug_error("%d / %d", ranks1[i], g1->size);
+
+		if(g1->size <= (unsigned int)ranks1[i])
 		{
-			return SCTK_ERROR;
+			return MPC_LOWCOMM_ERROR;
 		}
 
-		_mpc_lowcomm_group_rank_descriptor_t *rd = &g1->ranks[n];
+		_mpc_lowcomm_group_rank_descriptor_t *rd = &g1->ranks[ranks1[i]];
 
-		ranks2[n] = MPC_UNDEFINED;
+		ranks2[i] = MPC_UNDEFINED;
 
 		for(j = 0; j < g2->size; j++)
 		{
 			if(_mpc_lowcomm_group_rank_descriptor_equal(rd, &g2->ranks[j]) )
 			{
-				ranks2[n] = j;
+				ranks2[i] = j;
 				break;
 			}
 		}
 	}
 
-	return SCTK_SUCCESS;
+
+	return MPC_LOWCOMM_SUCCESS;
+}
+
+static inline int __rank_array_invalid(mpc_lowcomm_group_t *grp, const int ranks[], int n)
+{
+	int i;
+
+	/* Check size memberhship */
+	for(i = 0; i < n; i++)
+	{
+		if((int)grp->size < ranks[i] || (ranks[i] < 0) )
+		{
+			mpc_common_debug_error("%d is not part of group of size %d", ranks[i], grp->size);
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+static inline int __ranks_array_has_duplicate(const int ranks[], int n)
+{
+	/* Check for unicity */
+	int i, j;
+
+	for(i = 0; i < n; i++)
+	{
+		for(j = 0; j < n; j++)
+		{
+			if(j == i)
+			{
+				continue;
+			}
+
+			if(ranks[i] == ranks[j])
+			{
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
+
+static inline int __rank_in_ranks_array(const int ranks[], int n, int candidate)
+{
+	/* Check for unicity */
+	int i;
+
+	for(i = 0; i < n; i++)
+	{
+		if(candidate == ranks[i])
+		{
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+mpc_lowcomm_group_t *mpc_lowcomm_group_excl(mpc_lowcomm_group_t *grp, int n, const int ranks[])
+{
+	unsigned int i;
+
+	if(__rank_array_invalid(grp, ranks, n) )
+	{
+		return NULL;
+	}
+
+	if(__ranks_array_has_duplicate(ranks, n) )
+	{
+		return NULL;
+	}
+
+	size_t new_size = grp->size - n;
+
+	_mpc_lowcomm_group_rank_descriptor_t *descs = sctk_malloc(new_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t) );
+
+	assume(descs != NULL);
+
+	int cnt = 0;
+
+	for(i = 0; i < grp->size; i++)
+	{
+		if(__rank_in_ranks_array(ranks, n, i) )
+		{
+			continue;
+		}
+
+		memcpy(&descs[cnt], mpc_lowcomm_group_descriptor(grp, i), sizeof(_mpc_lowcomm_group_rank_descriptor_t) );
+		cnt++;
+	}
+
+	return _mpc_lowcomm_group_create(new_size, descs, 1);
+}
+
+mpc_lowcomm_group_t *mpc_lowcomm_group_incl(mpc_lowcomm_group_t *grp, int n, const int ranks[])
+{
+	unsigned int i;
+
+	if(__rank_array_invalid(grp, ranks, n) )
+	{
+		return NULL;
+	}
+
+	if(__ranks_array_has_duplicate(ranks, n) )
+	{
+		return NULL;
+	}
+
+	size_t new_size = n;
+
+	_mpc_lowcomm_group_rank_descriptor_t *descs = sctk_malloc(new_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t) );
+
+	assume(descs != NULL);
+
+	for(i = 0; i < (unsigned int)n; i++)
+	{
+		memcpy(&descs[i], mpc_lowcomm_group_descriptor(grp, ranks[i]), sizeof(_mpc_lowcomm_group_rank_descriptor_t) );
+	}
+
+	return _mpc_lowcomm_group_create(new_size, descs, 1);
+}
+
+mpc_lowcomm_group_t *mpc_lowcomm_group_difference(mpc_lowcomm_group_t *grp, mpc_lowcomm_group_t *grp_to_sub)
+{
+	/* We know that at most all members of grp remain */
+	_mpc_lowcomm_group_rank_descriptor_t *descs = sctk_malloc(grp->size * sizeof(_mpc_lowcomm_group_rank_descriptor_t) );
+
+	assume(descs != NULL);
+
+	unsigned int i, j;
+
+	unsigned int new_size = 0;
+
+	for(i = 0; i < grp->size; i++)
+	{
+		int is_in_grp_to_sub = 0;
+
+		for(j = 0; j < grp_to_sub->size; j++)
+		{
+			if(_mpc_lowcomm_group_rank_descriptor_equal(&grp->ranks[i], &grp_to_sub->ranks[j]) )
+			{
+				is_in_grp_to_sub = 1;
+				break;
+			}
+		}
+
+		if(is_in_grp_to_sub)
+		{
+			/* Skip */
+			continue;
+		}
+
+		memcpy(&descs[new_size], &grp->ranks[i], sizeof(_mpc_lowcomm_group_rank_descriptor_t) );
+		new_size++;
+	}
+
+	/* Realloc */
+	if(new_size)
+	{
+		descs = sctk_realloc(descs, new_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t) );
+		assume(descs != NULL);
+	}
+
+	return _mpc_lowcomm_group_create(new_size, descs, 1);
+}
+
+mpc_lowcomm_group_t *mpc_lowcomm_group_instersection(mpc_lowcomm_group_t *grp, mpc_lowcomm_group_t *grp2)
+{
+	/* We know that at most all members of grp remain */
+	_mpc_lowcomm_group_rank_descriptor_t *descs = sctk_malloc(grp->size * sizeof(_mpc_lowcomm_group_rank_descriptor_t) );
+
+	assume(descs != NULL);
+
+	unsigned int i, j;
+
+	unsigned int new_size = 0;
+
+	for(i = 0; i < grp->size; i++)
+	{
+		int is_in_grp2 = 0;
+
+		for(j = 0; j < grp2->size; j++)
+		{
+			if(_mpc_lowcomm_group_rank_descriptor_equal(&grp->ranks[i], &grp2->ranks[j]) )
+			{
+				is_in_grp2 = 1;
+				break;
+			}
+		}
+
+		if(!is_in_grp2)
+		{
+			/* Skip as not in second group*/
+			continue;
+		}
+
+		memcpy(&descs[new_size], &grp->ranks[i], sizeof(_mpc_lowcomm_group_rank_descriptor_t) );
+		new_size++;
+	}
+
+	if(new_size)
+	{
+		/* Realloc */
+		descs = sctk_realloc(descs, new_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t) );
+		assume(descs != NULL);
+	}
+
+	return _mpc_lowcomm_group_create(new_size, descs, 1);
+}
+
+mpc_lowcomm_group_t *mpc_lowcomm_group_union(mpc_lowcomm_group_t *grp, mpc_lowcomm_group_t *grp2)
+{
+	/* Max size if sum of both */
+	unsigned int max_size = (grp->size + grp2->size);
+	_mpc_lowcomm_group_rank_descriptor_t *descs = sctk_malloc(max_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t) );
+
+	assume(descs != NULL);
+
+	unsigned int i, j;
+
+	unsigned int new_size = 0;
+
+	mpc_lowcomm_group_t *ptrs[2];
+
+	ptrs[0] = grp;
+	ptrs[1] = grp2;
+
+	int g;
+
+	for(g = 0; g < 2; g++)
+	{
+		mpc_lowcomm_group_t *refgroup = ptrs[g];
+
+		for(i = 0; i < refgroup->size; i++)
+		{
+			int already_present = 0;
+
+			for(j = 0; j < new_size; j++)
+			{
+				if(_mpc_lowcomm_group_rank_descriptor_equal(&refgroup->ranks[i], &descs[j]) )
+				{
+					already_present = 1;
+					break;
+				}
+			}
+
+			if(already_present)
+			{
+				continue;
+			}
+
+			memcpy(&descs[new_size], &refgroup->ranks[i], sizeof(_mpc_lowcomm_group_rank_descriptor_t) );
+			new_size++;
+
+			assume(new_size <= max_size);
+		}
+	}
+
+	if(new_size)
+	{
+		/* Realloc */
+		descs = sctk_realloc(descs, new_size * sizeof(_mpc_lowcomm_group_rank_descriptor_t) );
+		assume(descs != NULL);
+	}
+
+	return _mpc_lowcomm_group_create(new_size, descs, 1);
 }
 
 static inline void __fill_global_to_local(mpc_lowcomm_group_t *g)
@@ -557,7 +942,7 @@ static inline void __fill_global_to_local(mpc_lowcomm_group_t *g)
 	}
 }
 
-mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size, _mpc_lowcomm_group_rank_descriptor_t *ranks)
+mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size, _mpc_lowcomm_group_rank_descriptor_t *ranks, int deduplicate)
 {
 	mpc_lowcomm_group_t *ret = sctk_malloc(sizeof(mpc_lowcomm_group_t) );
 
@@ -575,12 +960,17 @@ mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size, _mpc_lowcomm_g
 	ret->process_list           = NULL;
 	ret->tasks_count_in_process = MPC_PROC_NULL;
 	ret->local_leader           = MPC_PROC_NULL;
+	ret->extra_ctx_ptr          = MPC_LOWCOMM_HANDLE_CTX_NULL;
+	ret->is_a_copy              = 0;
 
-#if 1
-	__fill_global_to_local(ret);
-#else
-	ret->global_to_local = NULL;
-#endif
+	if(_mpc_lowcomm_group_rank_descriptor_all_from_local_set(size, ranks) )
+	{
+		__fill_global_to_local(ret);
+	}
+	else
+	{
+		ret->global_to_local = NULL;
+	}
 
 	/* As we create we set refcounter to 1 */
 	OPA_store_int(&ret->refcount, 1);
@@ -588,10 +978,15 @@ mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size, _mpc_lowcomm_g
 	/* Force compute of local leader */
 	ret->local_leader = mpc_lowcomm_group_get_local_leader(ret);
 
-	return _mpc_lowcomm_group_list_register(ret);
+	if(deduplicate)
+	{
+		return _mpc_lowcomm_group_list_register(ret);
+	}
+
+	return ret;
 }
 
-mpc_lowcomm_group_t *mpc_lowcomm_group_create(unsigned int size, int *comm_world_ranks)
+mpc_lowcomm_group_t * mpc_lowcomm_group_create(unsigned int size, int *comm_world_ranks)
 {
 	_mpc_lowcomm_group_rank_descriptor_t *cw_desc = sctk_malloc(sizeof(_mpc_lowcomm_group_rank_descriptor_t) * size);
 
@@ -601,13 +996,13 @@ mpc_lowcomm_group_t *mpc_lowcomm_group_create(unsigned int size, int *comm_world
 
 	for(i = 0; i < size; i++)
 	{
-		if(_mpc_lowcomm_group_rank_descriptor_set(&cw_desc[i], comm_world_ranks[i]) != SCTK_SUCCESS)
+		if(_mpc_lowcomm_group_rank_descriptor_set(&cw_desc[i], comm_world_ranks[i]) != MPC_LOWCOMM_SUCCESS)
 		{
 			mpc_common_debug_fatal("An error occured when creating descriptor for RANK %d in COMM_WORLD", i);
 		}
 	}
 
-	return _mpc_lowcomm_group_create(size, cw_desc);
+	return _mpc_lowcomm_group_create(size, cw_desc, 1);
 }
 
 mpc_lowcomm_group_t *mpc_lowcomm_group_dup(mpc_lowcomm_group_t *g)
@@ -620,12 +1015,41 @@ mpc_lowcomm_group_t *mpc_lowcomm_group_dup(mpc_lowcomm_group_t *g)
 	return g;
 }
 
+mpc_lowcomm_group_t *mpc_lowcomm_group_copy(mpc_lowcomm_group_t *g)
+{
+	mpc_lowcomm_group_t * ret = NULL;
+
+	if(!g)
+	{
+		return g;
+	}
+
+	_mpc_lowcomm_group_rank_descriptor_t * rd = NULL;
+
+	if(g->size)
+	{
+		rd = sctk_malloc(sizeof(_mpc_lowcomm_group_rank_descriptor_t) * g->size);
+		assume(rd != NULL);
+		memcpy(rd, g->ranks, sizeof(_mpc_lowcomm_group_rank_descriptor_t) * g->size);
+	}
+
+	ret = _mpc_lowcomm_group_create( g->size, rd, 0 /* No deduplication */);
+
+	/* Flag as an independent copy */
+	ret->is_a_copy = 1;
+
+	return ret;
+}
+
 /*****************************
 *  mpc_lowcomm_group_list_t *
 *****************************/
 
 typedef struct _mpc_lowcomm_group_list_s
 {
+	OPA_int_t                   group_id;
+	struct mpc_common_hashtable id_to_grp;
+	struct mpc_common_hashtable grp_to_id;
 	struct mpc_common_hashtable ht;
 	mpc_common_spinlock_t       lock;
 }_mpc_lowcomm_group_list_t;
@@ -638,11 +1062,28 @@ static inline void __group_list_init(void)
 {
 	mpc_common_spinlock_init(&__group_list.lock, 0);
 	mpc_common_hashtable_init(&__group_list.ht, 1024);
+
+	/* For Fortran IDs */
+	mpc_common_hashtable_init(&__group_list.id_to_grp, 1024);
+	OPA_store_int(&__group_list.group_id, 1);
 }
 
 static inline void __group_list_release(void)
 {
 	mpc_common_hashtable_release(&__group_list.ht);
+	mpc_common_hashtable_release(&__group_list.id_to_grp);
+}
+
+mpc_lowcomm_group_t *mpc_lowcomm_group_from_id(int linear_id)
+{
+	uint64_t lid = linear_id;
+
+	return (mpc_lowcomm_group_t *)mpc_common_hashtable_get(&__group_list.id_to_grp, lid);
+}
+
+int mpc_lowcomm_group_linear_id(mpc_lowcomm_group_t *group)
+{
+	return group->id;
 }
 
 static inline uint64_t __hash_group(mpc_lowcomm_group_t *group)
@@ -660,7 +1101,7 @@ static inline uint64_t __hash_group(mpc_lowcomm_group_t *group)
 
 	for(i = 0; i < group->size; i++)
 	{
-		int      off = (i*4 % 32);
+		int      off = (i * 4 % 32);
 		uint32_t rdh = _mpc_lowcomm_group_rank_descriptor_hash(&group->ranks[i]);
 		ret = ret ^ (rdh << off);
 	}
@@ -697,6 +1138,11 @@ mpc_lowcomm_group_t *_mpc_lowcomm_group_list_register(mpc_lowcomm_group_t *group
 	{
 		/* Insert */
 		mpc_common_hashtable_set(&__group_list.ht, group_hash, (void *)group);
+
+		/* Gen New ID and store in resolution HT */
+		group->id = OPA_fetch_and_incr_int(&__group_list.group_id);
+		uint64_t lid = group->id;
+		mpc_common_hashtable_set(&__group_list.id_to_grp, lid, (void *)group);
 	}
 	else
 	{
@@ -736,6 +1182,8 @@ int _mpc_lowcomm_group_list_pop(mpc_lowcomm_group_t *group)
 		if(OPA_load_int(&existing->refcount) == 0)
 		{
 			mpc_common_hashtable_delete(&__group_list.ht, group_hash);
+			mpc_common_hashtable_delete(&__group_list.id_to_grp, group->id);
+			ret = 0;
 		}
 	}
 
@@ -745,16 +1193,62 @@ int _mpc_lowcomm_group_list_pop(mpc_lowcomm_group_t *group)
 	return ret;
 }
 
+/****************************
+ * CONTEXT POINTER HANDLING *
+ ****************************/
+
+mpc_lowcomm_handle_ctx_t mpc_lowcomm_group_get_context_pointer(mpc_lowcomm_group_t * g)
+{
+	if(!g)
+	{
+		return MPC_LOWCOMM_HANDLE_CTX_NULL;
+	}
+
+	return g->extra_ctx_ptr;
+}
+
+
+int mpc_lowcomm_group_set_context_pointer(mpc_lowcomm_group_t * g, mpc_lowcomm_handle_ctx_t ctxptr)
+{
+	if(!g)
+	{
+		return 1;
+	}
+
+	if(!g->is_a_copy)
+	{
+		mpc_common_debug_error("Cannot set a context on a non-copied group");
+		return 1;
+	}
+
+	g->extra_ctx_ptr = ctxptr;
+
+	return 0;
+}
+
 /*******************************
 * CREATION OF STANDARD GROUPS *
 *******************************/
 
 static mpc_lowcomm_group_t *__world_group = NULL;
+static mpc_lowcomm_group_t *__empty_group = NULL;
+
+
+mpc_lowcomm_group_t *_mpc_lowcomm_group_world_no_assert(void)
+{
+	return __world_group;
+}
 
 mpc_lowcomm_group_t *_mpc_lowcomm_group_world(void)
 {
 	assume(__world_group != NULL);
-	return __world_group;
+	return _mpc_lowcomm_group_world_no_assert();
+}
+
+mpc_lowcomm_group_t *mpc_lowcomm_group_empty(void)
+{
+	assume(__empty_group != NULL);
+	return __empty_group;
 }
 
 void _mpc_lowcomm_group_create_world(void)
@@ -762,9 +1256,9 @@ void _mpc_lowcomm_group_create_world(void)
 	/* This creates the group list */
 	__group_list_init();
 
-	/* This map holds world rank to process translations */
-	__rank_to_process_map_init();
-
+	/* Create the empty group */
+	__empty_group = _mpc_lowcomm_group_create(0, NULL, 1);
+	__empty_group->do_not_free = 1;
 
 	/* Comm world */
 	int i;
@@ -776,14 +1270,14 @@ void _mpc_lowcomm_group_create_world(void)
 
 	for(i = 0; i < size; i++)
 	{
-		if(_mpc_lowcomm_group_rank_descriptor_set(&cw_desc[i], i) != SCTK_SUCCESS)
+		if(_mpc_lowcomm_group_rank_descriptor_set(&cw_desc[i], i) != MPC_LOWCOMM_SUCCESS)
 		{
 			mpc_common_debug_fatal("An error occured when creating descriptor for RANK %d in COMM_WORLD", i);
 		}
 	}
 
 	assume(__world_group == NULL);
-	__world_group = _mpc_lowcomm_group_create(size, cw_desc);
+	__world_group = _mpc_lowcomm_group_create(size, cw_desc, 1);
 	__world_group->do_not_free = 1;
 }
 
@@ -791,7 +1285,6 @@ void _mpc_lowcomm_group_release_world(void)
 {
 	mpc_lowcomm_group_free(&__world_group);
 	__group_list_release();
-	__rank_to_process_map_release();
 }
 
 int _mpc_lowcomm_communicator_world_first_local_task()
@@ -846,11 +1339,11 @@ mpc_lowcomm_group_t *_mpc_lowcomm_group_create_from_world_ranks(int size, int *w
 
 	for(i = 0; i < size; i++)
 	{
-		if(_mpc_lowcomm_group_rank_descriptor_set(&desc[i], world_ranks[i]) != SCTK_SUCCESS)
+		if(_mpc_lowcomm_group_rank_descriptor_set(&desc[i], world_ranks[i]) != MPC_LOWCOMM_SUCCESS)
 		{
 			mpc_common_debug_fatal("An error occured when creating descriptor for RANK %d", i);
 		}
 	}
 
-	return _mpc_lowcomm_group_create(size, desc);
+	return _mpc_lowcomm_group_create(size, desc, 1);
 }

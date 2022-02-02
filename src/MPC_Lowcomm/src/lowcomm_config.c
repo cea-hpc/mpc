@@ -296,42 +296,16 @@ static inline mpc_conf_config_type_t *__init_driver_tcp(struct _mpc_lowcomm_conf
 	
 	struct _mpc_lowcomm_config_struct_net_driver_tcp *tcp = &driver->value.tcp;
 
-	tcp->tcpoib = 1;
-
 	/*
 	  Create the config object
 	*/
 
 	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("tcp",
-															PARAM("tcpoib", &tcp->tcpoib, MPC_CONF_BOOL, "Enable TCP over Infiniband (if elligible)."),
 	                                                        NULL);
 
 	return ret;
 }
 
-
-static inline mpc_conf_config_type_t *__init_driver_tcprdma(struct _mpc_lowcomm_config_struct_net_driver *driver)
-{
-	driver->type = SCTK_RTCFG_net_driver_tcprdma;
-
-	/* 
-	Set defaults
-	*/
-	
-	struct _mpc_lowcomm_config_struct_net_driver_tcp_rdma *tcp = &driver->value.tcprdma;
-
-	tcp->tcpoib = 1;
-
-	/*
-	  Create the config object
-	*/
-
-	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("tcprdma",
-															PARAM("tcpoib", &tcp->tcpoib, MPC_CONF_BOOL, "Enable TCP over Infiniband (if elligible)."),
-	                                                        NULL);
-
-	return ret;
-}
 
 #ifdef MPC_USE_PORTALS
 
@@ -357,8 +331,8 @@ static inline mpc_conf_config_type_t *__init_driver_portals(struct _mpc_lowcomm_
 	*/
 
 	mpc_conf_config_type_t *offload = mpc_conf_config_type_init("offload",
-															PARAM("collective", &portals->offloading.collectives, MPC_CONF_BOOL, "Enable on-demand optimization through ID hardware propagation."),
-															PARAM("ondemand", &portals->offloading.ondemand, MPC_CONF_BOOL, "Enable collective optimization for Portals."),
+															PARAM("collective", &portals->offloading.collectives, MPC_CONF_BOOL, "Enable collective optimization for Portals."),
+															PARAM("ondemand", &portals->offloading.ondemand, MPC_CONF_BOOL, "Enable on-demand optimization through ID hardware propagation."),
 	                                                        NULL);
 
 
@@ -595,10 +569,6 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_default_driver(c
 	{
 		driver = __init_driver_tcp(&new_conf->driver);
 	}
-	else if(!strcmp(driver_type, "tcprdma"))
-	{
-		driver = __init_driver_tcprdma(&new_conf->driver);
-	}
 #ifdef MPC_USE_OFI
 	else if(!strcmp(driver_type, "ofi"))
 	{
@@ -691,7 +661,11 @@ void ___mpc_lowcomm_driver_conf_validate()
 			all_configs->elems[i]->addr = new_config;
 			/* Reget new conf */
 			unfold = _mpc_lowcomm_conf_driver_unfolded_get(config->name);
-			assume(unfold != NULL);
+			
+			if(!unfold)
+			{
+				continue;
+			}
 		}
 
 		/* This updates enums from string values */
@@ -705,7 +679,6 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_init()
 
 	mpc_conf_config_type_t * shm = __mpc_lowcomm_driver_conf_default_driver("shmconfigmpi", "shm");
 	mpc_conf_config_type_t * tcp = __mpc_lowcomm_driver_conf_default_driver("tcpconfigmpi", "tcp");
-	mpc_conf_config_type_t * tcprma = __mpc_lowcomm_driver_conf_default_driver("tcprdmaconfigmpi", "tcprdma");
 
 #if defined(MPC_USE_PORTALS)
 	mpc_conf_config_type_t * portals = __mpc_lowcomm_driver_conf_default_driver("portalsconfigmpi", "portals");
@@ -720,7 +693,6 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_init()
 	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("configs",
 	                                                        PARAM("shmconfigmpi", shm, MPC_CONF_TYPE, "Default configuration for the SHM driver"),
 	                                                        PARAM("tcpconfigmpi", tcp, MPC_CONF_TYPE, "Default configuration for the TCP driver"),
-	                                                        PARAM("tcprdmaconfigmpi", tcprma, MPC_CONF_TYPE, "Default configuration for the TCP zero-copy driver"),
 #if defined(MPC_USE_PORTALS)
 	                                                        PARAM("portalsconfigmpi", portals, MPC_CONF_TYPE, "Default configuration for the Portals4 Driver"),
 #endif

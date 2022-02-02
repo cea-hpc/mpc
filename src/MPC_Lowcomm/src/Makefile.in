@@ -93,23 +93,16 @@ host_triplet = @host@
 
 # IB driver #
 @INFINIBAND_DRIVER_ENABLED_TRUE@am__append_3 = -I$(abs_srcdir)/ib/
-@INFINIBAND_DRIVER_ENABLED_TRUE@am__append_4 = ./ib/sctk_ib_async.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_buffered.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_cm.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_config.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_cp.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_device.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_eager.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_mmu.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_mpi.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_polling.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_qp.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_rdma.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_toolkit.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_topology.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ibufs.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ibufs_rdma.c
+@INFINIBAND_DRIVER_ENABLED_TRUE@am__append_4 = ./ib/async.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/buffered.c ./ib/ib.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/cm.c ./ib/ibconfig.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/cp.c ./ib/ibdevice.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibeager.c ./ib/ibmmu.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibmpi.c ./ib/ibpolling.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/qp.c ./ib/ibrdma.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibtoolkit.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibtopology.c ./ib/ibufs.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibufs_rdma.c
 
 # PTL driver #
 @PORTALS4_DRIVER_ENABLED_TRUE@am__append_5 = -I$(abs_srcdir)/portals/
@@ -186,49 +179,42 @@ libmpclowcomm_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	../../MPC_Launch/src/libmpclaunch.la $(am__DEPENDENCIES_2)
 am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c sctk_checksum.c \
 	sctk_control_messages.c ft.c group.c communicator.c shm_coll.c \
-	lowcomm_config.c sctk_handle.c sctk_low_level_comm.c \
-	sctk_multirail.c sctk_net_tools.c sctk_net_topology.c \
-	sctk_rail.c sctk_reorder.c sctk_route.c \
-	sctk_topological_polling.c sctk_topological_rail.c \
-	sctk_window.c workshare.c ./tcp/sctk_tcp.c \
-	./tcp/sctk_tcp_rdma.c ./tcp/sctk_tcp_toolkit.c \
-	./shm/sctk_shm.c ./shm/sctk_shm_eager.c \
-	./shm/sctk_shm_raw_queues.c ./shm/sctk_shm_cma.c \
-	./shm/sctk_shm_frag.c ./shm/sctk_shm_qemu.c \
-	./shm/sctk_shm_raw_queues_internals.c ./ib/sctk_ib_async.c \
-	./ib/sctk_ib_buffered.c ./ib/sctk_ib.c ./ib/sctk_ib_cm.c \
-	./ib/sctk_ib_config.c ./ib/sctk_ib_cp.c ./ib/sctk_ib_device.c \
-	./ib/sctk_ib_eager.c ./ib/sctk_ib_mmu.c ./ib/sctk_ib_mpi.c \
-	./ib/sctk_ib_polling.c ./ib/sctk_ib_qp.c ./ib/sctk_ib_rdma.c \
-	./ib/sctk_ib_toolkit.c ./ib/sctk_ib_topology.c \
-	./ib/sctk_ibufs.c ./ib/sctk_ibufs_rdma.c \
-	./portals/sctk_portals.c ./portals/sctk_ptl_cm.c \
-	./portals/sctk_ptl_eager.c ./portals/sctk_ptl_iface.c \
-	./portals/sctk_ptl_offcoll.c ./portals/sctk_ptl_rdma.c \
-	./portals/sctk_ptl_rdv.c ./portals/sctk_ptl_toolkit.c \
-	./portals_am/sctk_ptl_am_iface.c \
+	lowcomm_config.c sctk_low_level_comm.c multirail.c \
+	sctk_net_tools.c sctk_net_topology.c lowcomm_thread.c \
+	sctk_rail.c reorder.c endpoint.c sctk_topological_polling.c \
+	sctk_topological_rail.c sctk_window.c workshare.c pset.c \
+	handle_ctx.c ./tcp/tcp.c ./tcp/tcp_toolkit.c ./shm/sctk_shm.c \
+	./shm/sctk_shm_eager.c ./shm/sctk_shm_raw_queues.c \
+	./shm/sctk_shm_cma.c ./shm/sctk_shm_frag.c \
+	./shm/sctk_shm_qemu.c ./shm/sctk_shm_raw_queues_internals.c \
+	./ib/async.c ./ib/buffered.c ./ib/ib.c ./ib/cm.c \
+	./ib/ibconfig.c ./ib/cp.c ./ib/ibdevice.c ./ib/ibeager.c \
+	./ib/ibmmu.c ./ib/ibmpi.c ./ib/ibpolling.c ./ib/qp.c \
+	./ib/ibrdma.c ./ib/ibtoolkit.c ./ib/ibtopology.c ./ib/ibufs.c \
+	./ib/ibufs_rdma.c ./portals/sctk_portals.c \
+	./portals/sctk_ptl_cm.c ./portals/sctk_ptl_eager.c \
+	./portals/sctk_ptl_iface.c ./portals/sctk_ptl_offcoll.c \
+	./portals/sctk_ptl_rdma.c ./portals/sctk_ptl_rdv.c \
+	./portals/sctk_ptl_toolkit.c ./portals_am/sctk_ptl_am_iface.c \
 	./portals_am/sctk_ptl_am_toolkit.c \
 	./portals_am/sctk_ptl_am_arpc_api.c ./portals_am/arpc_weak.c \
 	./ofi/ofi.c ./ofi/ofi_msg.c ./ofi/ofi_rdma.c \
-	./ofi/ofi_toolkit.c am.c
+	./ofi/ofi_toolkit.c ./cplane/auth.c ./cplane/peer.c \
+	./cplane/proto.c ./cplane/port.c ./cplane/monitor.c \
+	./cplane/set.c ./cplane/uid.c ./cplane/name.c am.c
 am__dirstamp = $(am__leading_dot)dirstamp
-@INFINIBAND_DRIVER_ENABLED_TRUE@am__objects_1 = ./ib/sctk_ib_async.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_buffered.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_cm.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_config.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_cp.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_device.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_eager.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_mmu.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_mpi.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_polling.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_qp.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_rdma.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_toolkit.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ib_topology.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ibufs.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/sctk_ibufs_rdma.lo
+@INFINIBAND_DRIVER_ENABLED_TRUE@am__objects_1 = ./ib/async.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/buffered.lo ./ib/ib.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/cm.lo ./ib/ibconfig.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/cp.lo ./ib/ibdevice.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibeager.lo ./ib/ibmmu.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibmpi.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibpolling.lo ./ib/qp.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibrdma.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibtoolkit.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibtopology.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibufs.lo \
+@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibufs_rdma.lo
 @PORTALS4_DRIVER_ENABLED_TRUE@am__objects_2 =  \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals/sctk_portals.lo \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals/sctk_ptl_cm.lo \
@@ -248,18 +234,19 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @MPC_HAVE_AM_TRUE@am__objects_4 = am.lo
 am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo \
 	sctk_control_messages.lo ft.lo group.lo communicator.lo \
-	shm_coll.lo lowcomm_config.lo sctk_handle.lo \
-	sctk_low_level_comm.lo sctk_multirail.lo sctk_net_tools.lo \
-	sctk_net_topology.lo sctk_rail.lo sctk_reorder.lo \
-	sctk_route.lo sctk_topological_polling.lo \
-	sctk_topological_rail.lo sctk_window.lo workshare.lo \
-	./tcp/sctk_tcp.lo ./tcp/sctk_tcp_rdma.lo \
-	./tcp/sctk_tcp_toolkit.lo ./shm/sctk_shm.lo \
-	./shm/sctk_shm_eager.lo ./shm/sctk_shm_raw_queues.lo \
-	./shm/sctk_shm_cma.lo ./shm/sctk_shm_frag.lo \
-	./shm/sctk_shm_qemu.lo ./shm/sctk_shm_raw_queues_internals.lo \
-	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
-	$(am__objects_4)
+	shm_coll.lo lowcomm_config.lo sctk_low_level_comm.lo \
+	multirail.lo sctk_net_tools.lo sctk_net_topology.lo \
+	lowcomm_thread.lo sctk_rail.lo reorder.lo endpoint.lo \
+	sctk_topological_polling.lo sctk_topological_rail.lo \
+	sctk_window.lo workshare.lo pset.lo handle_ctx.lo ./tcp/tcp.lo \
+	./tcp/tcp_toolkit.lo ./shm/sctk_shm.lo ./shm/sctk_shm_eager.lo \
+	./shm/sctk_shm_raw_queues.lo ./shm/sctk_shm_cma.lo \
+	./shm/sctk_shm_frag.lo ./shm/sctk_shm_qemu.lo \
+	./shm/sctk_shm_raw_queues_internals.lo $(am__objects_1) \
+	$(am__objects_2) $(am__objects_3) ./cplane/auth.lo \
+	./cplane/peer.lo ./cplane/proto.lo ./cplane/port.lo \
+	./cplane/monitor.lo ./cplane/set.lo ./cplane/uid.lo \
+	./cplane/name.lo $(am__objects_4)
 libmpclowcomm_la_OBJECTS = $(am_libmpclowcomm_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -636,8 +623,10 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Lowcomm/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Launch/include/ \
 	-I$(abs_top_builddir)/src/include/ -I$(abs_srcdir)/tcp/ \
-	-I$(abs_srcdir)/shm/ $(am__append_1) $(am__append_2) \
-	$(am__append_3) $(am__append_5) $(am__append_7)
+	-I$(abs_srcdir)/shm/ \
+	-I$(abs_top_srcdir)/src/MPC_Lowcomm/src/cplane/ \
+	$(am__append_1) $(am__append_2) $(am__append_3) \
+	$(am__append_5) $(am__append_7)
 lib_LTLIBRARIES = libmpclowcomm.la
 
 # low-level communication #
@@ -647,17 +636,18 @@ lib_LTLIBRARIES = libmpclowcomm.la
 # SHM driver #
 libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c \
 	sctk_control_messages.c ft.c group.c communicator.c shm_coll.c \
-	lowcomm_config.c sctk_handle.c sctk_low_level_comm.c \
-	sctk_multirail.c sctk_net_tools.c sctk_net_topology.c \
-	sctk_rail.c sctk_reorder.c sctk_route.c \
-	sctk_topological_polling.c sctk_topological_rail.c \
-	sctk_window.c workshare.c ./tcp/sctk_tcp.c \
-	./tcp/sctk_tcp_rdma.c ./tcp/sctk_tcp_toolkit.c \
-	./shm/sctk_shm.c ./shm/sctk_shm_eager.c \
-	./shm/sctk_shm_raw_queues.c ./shm/sctk_shm_cma.c \
-	./shm/sctk_shm_frag.c ./shm/sctk_shm_qemu.c \
-	./shm/sctk_shm_raw_queues_internals.c $(am__append_4) \
-	$(am__append_6) $(am__append_8) $(am__append_9)
+	lowcomm_config.c sctk_low_level_comm.c multirail.c \
+	sctk_net_tools.c sctk_net_topology.c lowcomm_thread.c \
+	sctk_rail.c reorder.c endpoint.c sctk_topological_polling.c \
+	sctk_topological_rail.c sctk_window.c workshare.c pset.c \
+	handle_ctx.c ./tcp/tcp.c ./tcp/tcp_toolkit.c ./shm/sctk_shm.c \
+	./shm/sctk_shm_eager.c ./shm/sctk_shm_raw_queues.c \
+	./shm/sctk_shm_cma.c ./shm/sctk_shm_frag.c \
+	./shm/sctk_shm_qemu.c ./shm/sctk_shm_raw_queues_internals.c \
+	$(am__append_4) $(am__append_6) $(am__append_8) \
+	./cplane/auth.c ./cplane/peer.c ./cplane/proto.c \
+	./cplane/port.c ./cplane/monitor.c ./cplane/set.c \
+	./cplane/uid.c ./cplane/name.c $(am__append_9)
 
 # library dependency #
 libmpclowcomm_la_LIBADD = $(ALLOC_LIBS) \
@@ -736,10 +726,8 @@ tcp/$(am__dirstamp):
 tcp/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) ./tcp/$(DEPDIR)
 	@: > tcp/$(DEPDIR)/$(am__dirstamp)
-./tcp/sctk_tcp.lo: tcp/$(am__dirstamp) tcp/$(DEPDIR)/$(am__dirstamp)
-./tcp/sctk_tcp_rdma.lo: tcp/$(am__dirstamp) \
-	tcp/$(DEPDIR)/$(am__dirstamp)
-./tcp/sctk_tcp_toolkit.lo: tcp/$(am__dirstamp) \
+./tcp/tcp.lo: tcp/$(am__dirstamp) tcp/$(DEPDIR)/$(am__dirstamp)
+./tcp/tcp_toolkit.lo: tcp/$(am__dirstamp) \
 	tcp/$(DEPDIR)/$(am__dirstamp)
 shm/$(am__dirstamp):
 	@$(MKDIR_P) ./shm
@@ -766,30 +754,23 @@ ib/$(am__dirstamp):
 ib/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) ./ib/$(DEPDIR)
 	@: > ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_async.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_buffered.lo: ib/$(am__dirstamp) \
-	ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_cm.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_config.lo: ib/$(am__dirstamp) \
-	ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_cp.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_device.lo: ib/$(am__dirstamp) \
-	ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_eager.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_mmu.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_mpi.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_polling.lo: ib/$(am__dirstamp) \
-	ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_qp.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_rdma.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_toolkit.lo: ib/$(am__dirstamp) \
-	ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ib_topology.lo: ib/$(am__dirstamp) \
-	ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ibufs.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/sctk_ibufs_rdma.lo: ib/$(am__dirstamp) \
-	ib/$(DEPDIR)/$(am__dirstamp)
+./ib/async.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/buffered.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ib.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/cm.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ibconfig.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/cp.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ibdevice.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ibeager.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ibmmu.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ibmpi.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ibpolling.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/qp.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ibrdma.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ibtoolkit.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ibtopology.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ibufs.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
+./ib/ibufs_rdma.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
 portals/$(am__dirstamp):
 	@$(MKDIR_P) ./portals
 	@: > portals/$(am__dirstamp)
@@ -837,12 +818,36 @@ ofi/$(DEPDIR)/$(am__dirstamp):
 ./ofi/ofi_rdma.lo: ofi/$(am__dirstamp) ofi/$(DEPDIR)/$(am__dirstamp)
 ./ofi/ofi_toolkit.lo: ofi/$(am__dirstamp) \
 	ofi/$(DEPDIR)/$(am__dirstamp)
+cplane/$(am__dirstamp):
+	@$(MKDIR_P) ./cplane
+	@: > cplane/$(am__dirstamp)
+cplane/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) ./cplane/$(DEPDIR)
+	@: > cplane/$(DEPDIR)/$(am__dirstamp)
+./cplane/auth.lo: cplane/$(am__dirstamp) \
+	cplane/$(DEPDIR)/$(am__dirstamp)
+./cplane/peer.lo: cplane/$(am__dirstamp) \
+	cplane/$(DEPDIR)/$(am__dirstamp)
+./cplane/proto.lo: cplane/$(am__dirstamp) \
+	cplane/$(DEPDIR)/$(am__dirstamp)
+./cplane/port.lo: cplane/$(am__dirstamp) \
+	cplane/$(DEPDIR)/$(am__dirstamp)
+./cplane/monitor.lo: cplane/$(am__dirstamp) \
+	cplane/$(DEPDIR)/$(am__dirstamp)
+./cplane/set.lo: cplane/$(am__dirstamp) \
+	cplane/$(DEPDIR)/$(am__dirstamp)
+./cplane/uid.lo: cplane/$(am__dirstamp) \
+	cplane/$(DEPDIR)/$(am__dirstamp)
+./cplane/name.lo: cplane/$(am__dirstamp) \
+	cplane/$(DEPDIR)/$(am__dirstamp)
 
 libmpclowcomm.la: $(libmpclowcomm_la_OBJECTS) $(libmpclowcomm_la_DEPENDENCIES) $(EXTRA_libmpclowcomm_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) -rpath $(libdir) $(libmpclowcomm_la_OBJECTS) $(libmpclowcomm_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f ./cplane/*.$(OBJEXT)
+	-rm -f ./cplane/*.lo
 	-rm -f ./ib/*.$(OBJEXT)
 	-rm -f ./ib/*.lo
 	-rm -f ./ofi/*.$(OBJEXT)
@@ -863,41 +868,51 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/coll.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/comm.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/communicator.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/endpoint.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ft.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/group.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/handle_ctx.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lowcomm_config.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lowcomm_thread.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/multirail.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pset.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/reorder.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_checksum.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_control_messages.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_handle.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_low_level_comm.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_multirail.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_net_tools.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_net_topology.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_rail.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_reorder.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_route.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_topological_polling.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_topological_rail.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_window.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/shm_coll.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/workshare.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_async.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_buffered.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_cm.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_config.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_cp.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_device.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_eager.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_mmu.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_mpi.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_polling.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_qp.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_rdma.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_toolkit.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ib_topology.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ibufs.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/sctk_ibufs_rdma.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/auth.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/monitor.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/name.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/peer.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/port.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/proto.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/set.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./cplane/$(DEPDIR)/uid.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/async.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/buffered.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/cm.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/cp.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ib.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ibconfig.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ibdevice.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ibeager.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ibmmu.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ibmpi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ibpolling.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ibrdma.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ibtoolkit.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ibtopology.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ibufs.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/ibufs_rdma.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./ib/$(DEPDIR)/qp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./ofi/$(DEPDIR)/ofi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./ofi/$(DEPDIR)/ofi_msg.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./ofi/$(DEPDIR)/ofi_rdma.Plo@am__quote@
@@ -921,9 +936,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./shm/$(DEPDIR)/sctk_shm_qemu.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./shm/$(DEPDIR)/sctk_shm_raw_queues.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./shm/$(DEPDIR)/sctk_shm_raw_queues_internals.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./tcp/$(DEPDIR)/sctk_tcp.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./tcp/$(DEPDIR)/sctk_tcp_rdma.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./tcp/$(DEPDIR)/sctk_tcp_toolkit.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./tcp/$(DEPDIR)/tcp.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./tcp/$(DEPDIR)/tcp_toolkit.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -954,6 +968,7 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+	-rm -rf ./cplane/.libs ./cplane/_libs
 	-rm -rf ./ib/.libs ./ib/_libs
 	-rm -rf ./ofi/.libs ./ofi/_libs
 	-rm -rf ./portals/.libs ./portals/_libs
@@ -1076,6 +1091,8 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f cplane/$(DEPDIR)/$(am__dirstamp)
+	-rm -f cplane/$(am__dirstamp)
 	-rm -f ib/$(DEPDIR)/$(am__dirstamp)
 	-rm -f ib/$(am__dirstamp)
 	-rm -f ofi/$(DEPDIR)/$(am__dirstamp)
@@ -1098,7 +1115,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR) ./ib/$(DEPDIR) ./ofi/$(DEPDIR) ./portals/$(DEPDIR) ./portals_am/$(DEPDIR) ./shm/$(DEPDIR) ./tcp/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) ./cplane/$(DEPDIR) ./ib/$(DEPDIR) ./ofi/$(DEPDIR) ./portals/$(DEPDIR) ./portals_am/$(DEPDIR) ./shm/$(DEPDIR) ./tcp/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -1144,7 +1161,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR) ./ib/$(DEPDIR) ./ofi/$(DEPDIR) ./portals/$(DEPDIR) ./portals_am/$(DEPDIR) ./shm/$(DEPDIR) ./tcp/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) ./cplane/$(DEPDIR) ./ib/$(DEPDIR) ./ofi/$(DEPDIR) ./portals/$(DEPDIR) ./portals_am/$(DEPDIR) ./shm/$(DEPDIR) ./tcp/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

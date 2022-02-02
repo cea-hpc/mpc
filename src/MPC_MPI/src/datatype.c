@@ -27,11 +27,10 @@
 
 #include "mpc_reduction.h"
 #include "comm_lib.h"
-#include "sctk_handle.h"
+#include "errh.h"
 #include "mpc_common_types.h"
 #include "mpc_common_types.h"
 #include "uthash.h"
-#include "sctk_handle.h"
 
 #include <sctk_alloc.h>
 
@@ -90,7 +89,7 @@ static inline void __mpc_composed_common_types_init();
 
 void _mpc_dt_init()
 {
-	static mpc_common_spinlock_t init_lock = SCTK_SPINLOCK_INITIALIZER;
+	static mpc_common_spinlock_t init_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 	mpc_common_spinlock_lock(&init_lock);
 
@@ -115,7 +114,7 @@ static inline void __mpc_dt_name_clear();
 
 void _mpc_dt_release()
 {
-	static mpc_common_spinlock_t clear_lock = SCTK_SPINLOCK_INITIALIZER;
+	static mpc_common_spinlock_t clear_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 	mpc_common_spinlock_lock(&clear_lock);
 
@@ -154,7 +153,7 @@ static unsigned int __keyval_array_size = 0;
 /** This is the current ID offset */
 static unsigned int __keyval_array_offset = 0;
 /** This is the Keyval array lock */
-mpc_common_spinlock_t __keyval_array_lock = SCTK_SPINLOCK_INITIALIZER;
+mpc_common_spinlock_t __keyval_array_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 /** \brief This function retrieves a keyval from an id
  * 	\param type_keyval ID of keyval to retrieve (offset in a static table)
@@ -193,7 +192,7 @@ static inline int __mpc_dt_keyval_delete( unsigned int type_keyval )
 
 	key->free_cell = 1;
 
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 /** \brief This function create a new keyval
@@ -335,7 +334,7 @@ int _mpc_dt_keyval_create( MPC_Type_copy_attr_function *copy,
 	new->delete = delete;
 	new->extra_state = extra_state;
 
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 /** \brief Delete a keyval
@@ -352,7 +351,7 @@ int _mpc_dt_keyval_free( int *type_keyval )
 	int ret = __mpc_dt_keyval_delete( *type_keyval );
 
 	/* Clear key handler */
-	if ( ret == SCTK_SUCCESS )
+	if ( ret == MPC_LOWCOMM_SUCCESS )
 		*type_keyval = MPC_KEYVAL_INVALID;
 
 	return ret;
@@ -736,7 +735,7 @@ void _mpc_dt_contiguous_init( _mpc_dt_contiguout_t *type, size_t id_rank, size_t
 	/* Clear context */
 	__mpc_dt_footprint_clear( &type->context );
 
-	sctk_handle_new_from_id( datatype, SCTK_HANDLE_DATATYPE );
+	_mpc_mpi_handle_new_from_id( datatype, _MPC_MPI_HANDLE_DATATYPE );
 
 	/* Attrs */
 	__mpc_dt_attr_store_init( &type->attrs );
@@ -756,7 +755,7 @@ void _mpc_dt_contiguous_release( _mpc_dt_contiguout_t *type )
 
 		__mpc_context_free( &type->context );
 
-		sctk_handle_free( type->datatype, SCTK_HANDLE_DATATYPE );
+		_mpc_mpi_handle_free( type->datatype, _MPC_MPI_HANDLE_DATATYPE );
 		/* Counter == 0 then free */
 		memset( type, 0, sizeof( _mpc_dt_contiguout_t ) );
 	}
@@ -873,7 +872,7 @@ void _mpc_dt_derived_init( _mpc_dt_derived_t *type,
 	/* Clear context */
 	__mpc_dt_footprint_clear( &type->context );
 
-	sctk_handle_new_from_id( id, SCTK_HANDLE_DATATYPE );
+	_mpc_mpi_handle_new_from_id( id, _MPC_MPI_HANDLE_DATATYPE );
 	/* Attrs */
 	__mpc_dt_attr_store_init( &type->attrs );
 }
@@ -888,7 +887,7 @@ int _mpc_dt_derived_release( _mpc_dt_derived_t *type )
 	if ( type->ref_count == 0 )
 	{
 
-		sctk_handle_free( type->id, SCTK_HANDLE_DATATYPE );
+		_mpc_mpi_handle_free( type->id, _MPC_MPI_HANDLE_DATATYPE );
 
 		/* Attrs */
 		__mpc_dt_attr_store_release( &type->attrs, type->id );
@@ -1026,7 +1025,7 @@ int _mpc_dt_derived_optimize( _mpc_dt_derived_t *target_type )
 
 	/* Do we have at least two blocks */
 	if ( count <= 1 )
-		return SCTK_SUCCESS;
+		return MPC_LOWCOMM_SUCCESS;
 
 	/* Extract the layout in cells */
 	struct __mpc_derived_type_desc *cells = sctk_malloc( sizeof( struct __mpc_derived_type_desc ) * count );
@@ -1101,7 +1100,7 @@ int _mpc_dt_derived_optimize( _mpc_dt_derived_t *target_type )
 
 	sctk_free( cells );
 
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 void _mpc_dt_derived_display( _mpc_dt_derived_t *target_type )
@@ -1309,7 +1308,7 @@ int _mpc_dt_attr_set( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
 		mpc_common_hashtable_set( &store->attrs, type_keyval, new );
 	}
 
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 int _mpc_dt_attr_get( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
@@ -1337,7 +1336,7 @@ int _mpc_dt_attr_get( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
 		*flag = 0;
 	}
 
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 int _mpc_dt_attr_delete( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
@@ -1359,7 +1358,7 @@ int _mpc_dt_attr_delete( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type
 
 	sctk_free( pret );
 
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 /************************************************************************/
@@ -1384,7 +1383,7 @@ struct __mpc_dt_name_cell
 /** \brief Static variable used to store type names */
 struct __mpc_dt_name_cell *datatype_names = NULL;
 /** \brief Lock protecting \ref datatype_names */
-mpc_common_spinlock_t datatype_names_lock = SCTK_SPINLOCK_INITIALIZER;
+mpc_common_spinlock_t datatype_names_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 static inline struct __mpc_dt_name_cell *__mpc_dt_get_name_cell( mpc_lowcomm_datatype_t datatype )
 {
@@ -2051,7 +2050,7 @@ static inline int _mpc_dt_layout_fill( struct _mpc_dt_layout *l, mpc_lowcomm_dat
 	_mpc_cl_type_size( datatype, &size );
 	l->size = (size_t) size;
 
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 struct _mpc_dt_layout *_mpc_dt_get_layout( struct _mpc_dt_footprint *ctx, size_t *ly_count )

@@ -21,7 +21,6 @@
 /* ######################################################################## */
 
 #include "sctk_window.h"
-#include "sctk_handle.h"
 #include "comm.h"
 #include "uthash.h"
 #include <sctk_alloc.h>
@@ -29,7 +28,6 @@
 #include <sctk_control_messages.h>
 #include <mpc_common_spinlock.h>
 #include <mpc_common_types.h>
-#include "sctk_handle.h"
 
 #include <group.h>
 #include <communicator.h>
@@ -111,8 +109,6 @@ static struct mpc_lowcomm_rdma_window *sctk_win_register()
 
 	mpc_common_hashtable_set(&___window_hash_table, new_id, (void *)new);
 
-	sctk_handle_new_from_id(new_id, SCTK_HANDLE_WIN);
-
 	return new;
 }
 
@@ -152,8 +148,6 @@ static void sctk_win_delete(struct mpc_lowcomm_rdma_window *win)
 	int id = win->id;
 
 	mpc_common_hashtable_delete(&___window_hash_table, id);
-
-	sctk_handle_free(id, SCTK_HANDLE_WIN);
 
 	sctk_free(win->incoming_emulated_rma);
 	memset(win, 0, sizeof(struct mpc_lowcomm_rdma_window) );
@@ -202,7 +196,6 @@ static int _sctk_win_relax(struct mpc_lowcomm_rdma_window *win)
 
 int sctk_win_relax(mpc_lowcomm_rdma_window_t win_id)
 {
-	mpc_common_debug_error("%s", __FUNCTION__);
 	struct mpc_lowcomm_rdma_window *win = sctk_win_translate(win_id);
 
 	if(!win)
@@ -485,8 +478,6 @@ void mpc_lowcomm_rdma_window_map_remote_ctrl_msg_handler(struct mpc_lowcomm_rdma
 		return;
 	}
 
-	mpc_common_nodebug("MAP REMOTE HANDLER RESPONDS TO %d", mr->source_rank);
-
 	/* We have a local window matching */
 
 	/* Increment its refcounter */
@@ -585,10 +576,8 @@ void mpc_lowcomm_rdma_window_RDMA_emulated_write_ctrl_msg_handler(
 		mpc_common_debug_fatal("Error RDMA emulated write operation overflows the window");
 	}
 
-	int remote_rank = mpc_lowcomm_communicator_rank_of(win->communicator, erma->source_rank);
-
 	mpc_lowcomm_request_t req[2];
-	mpc_lowcomm_irecv_class_dest(remote_rank,
+	mpc_lowcomm_irecv_class_dest(erma->source_rank,
 	                             win->comm_rank, win->start_addr + offset,
 	                             erma->size, TAG_RDMA_WRITE, win->communicator,
 	                             MPC_LOWCOMM_RDMA_WINDOW_MESSAGES, &req[0]);
@@ -596,10 +585,10 @@ void mpc_lowcomm_rdma_window_RDMA_emulated_write_ctrl_msg_handler(
 
 	int dummy;
 	mpc_lowcomm_isend_class_src(
-		win->comm_rank, remote_rank,
+		win->comm_rank, erma->source_rank,
 		&dummy, sizeof(int), TAG_RDMA_WRITE_ACK, win->communicator,
 		MPC_LOWCOMM_RDMA_WINDOW_MESSAGES, &req[1]);
-	mpc_lowcomm_waitall(2, req, SCTK_STATUS_NULL);
+	mpc_lowcomm_waitall(2, req, MPC_LOWCOMM_STATUS_NULL);
 
 	OPA_incr_int(&win->incoming_emulated_rma[erma->source_rank]);
 
@@ -786,7 +775,7 @@ void mpc_lowcomm_rdma_window_RDMA_emulated_read_ctrl_msg_handler(struct mpc_lowc
 
 	mpc_lowcomm_request_t req;
 	mpc_lowcomm_isend_class_src(
-		win->comm_rank, mpc_lowcomm_communicator_rank_of(win->communicator, erma->source_rank),
+		win->comm_rank, erma->source_rank,
 		win->start_addr + offset, erma->size, TAG_RDMA_READ, win->communicator,
 		MPC_LOWCOMM_RDMA_WINDOW_MESSAGES, &req);
 	mpc_lowcomm_request_wait(&req);
@@ -1088,7 +1077,7 @@ static inline void mpc_lowcomm_rdma_window_fetch_and_op_operate_int(RDMA_op op, 
 
 #define RDMA_OP_def(type, type2, type3)                                                                  \
 	static mpc_common_spinlock_t __RDMA_OP_ ## type ## type2 ## type3 ## _lock =                     \
-		SCTK_SPINLOCK_INITIALIZER;                                                               \
+		MPC_COMMON_SPINLOCK_INITIALIZER;                                                               \
                                                                                                          \
 	static inline void mpc_lowcomm_rdma_window_fetch_and_op_operate_ ## type ## type2 ## type3 ## _( \
 		RDMA_op op, void *add, void *src, void *dest){                                           \
@@ -1159,7 +1148,7 @@ static inline void mpc_lowcomm_rdma_window_fetch_and_op_operate_int(RDMA_op op, 
 
 #define RDMA_OP_def_nobin(type, type2)                                                                      \
 	static mpc_common_spinlock_t __RDMA_OP_ ## type ## type2 ## _lock =                                 \
-		SCTK_SPINLOCK_INITIALIZER;                                                                  \
+		MPC_COMMON_SPINLOCK_INITIALIZER;                                                                  \
                                                                                                             \
 	static inline void mpc_lowcomm_rdma_window_fetch_and_op_operate_ ## type ## type2 ## _(             \
 		RDMA_op op, void *add, void *src, void *dest){                                              \
@@ -1351,7 +1340,7 @@ void mpc_lowcomm_rdma_window_RDMA_fetch_and_op_ctrl_msg_handler(struct mpc_lowco
 	                                             win->start_addr + offset, &fetch);
 
 	mpc_lowcomm_isend_class_src(
-		win->comm_rank, mpc_lowcomm_communicator_rank_of(win->communicator, fop->rdma.source_rank),
+		win->comm_rank, fop->rdma.source_rank,
 		&fetch, fop->rdma.size, TAG_RDMA_FETCH_AND_OP, win->communicator,
 		MPC_LOWCOMM_RDMA_MESSAGE, NULL);
 }
@@ -1572,7 +1561,7 @@ void mpc_lowcomm_rdma_window_RDMA_CAS_ptr_local(void **cmp, void **new, void *ta
 	}
 }
 
-static mpc_common_spinlock_t __RDMA_CAS_16_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t __RDMA_CAS_16_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 void mpc_lowcomm_rdma_window_RDMA_CAS_16_local(void *cmp, void *new, void *target, void *res)
 {
@@ -1591,7 +1580,7 @@ void mpc_lowcomm_rdma_window_RDMA_CAS_16_local(void *cmp, void *new, void *targe
 	mpc_common_spinlock_unlock(&__RDMA_CAS_16_lock);
 }
 
-static mpc_common_spinlock_t __RDMA_CAS_any_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t __RDMA_CAS_any_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 void mpc_lowcomm_rdma_window_RDMA_CAS_any_local(void *cmp, void *new, void *target, void *res, size_t size)
 {
@@ -1674,7 +1663,7 @@ void mpc_lowcomm_rdma_window_RDMA_CAS_ctrl_msg_handler(struct mpc_lowcomm_rdma_w
 	                                       fcas->comp, fcas->new, res, fcas->type);
 
 	mpc_lowcomm_isend_class_src(
-		win->comm_rank, mpc_lowcomm_communicator_rank_of(win->communicator, fcas->rdma.source_rank),
+		win->comm_rank, fcas->rdma.source_rank,
 		&res, fcas->rdma.size, TAG_RDMA_CAS, win->communicator, MPC_LOWCOMM_RDMA_MESSAGE,
 		NULL);
 }

@@ -545,7 +545,7 @@ typedef struct
 	volatile _mpc_thread_ethread_sem_name_t *next;
 } _mpc_thread_ethread_sem_head_list;
 
-#define SCTK_SEM_HEAD_INITIALIZER    { SCTK_SPINLOCK_INITIALIZER, NULL }
+#define SCTK_SEM_HEAD_INITIALIZER    { MPC_COMMON_SPINLOCK_INITIALIZER, NULL }
 
 static _mpc_thread_ethread_sem_head_list __sctk_head_sem = SCTK_SEM_HEAD_INITIALIZER;
 

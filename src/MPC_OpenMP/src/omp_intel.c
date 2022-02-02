@@ -199,7 +199,7 @@ void __kmpc_fork_call( __UNUSED__ ident_t *loc, kmp_int32 argc, kmpc_micro micro
 	void **args_copy;
 	mpc_omp_intel_wrapper_t *w;
 	mpc_omp_thread_t __UNUSED__ *t;
-	static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+	static mpc_common_spinlock_t lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 	mpc_common_nodebug( "__kmpc_fork_call: entering w/ %d arg(s)...", argc );
 	mpc_omp_intel_wrapper_t w_noalloc;
 	w = &w_noalloc;
@@ -3186,7 +3186,7 @@ struct private_common *kmp_threadprivate_insert( int gtid, void *pc_addr,
         size_t pc_size )
 {
 	struct private_common *tn, **tt;
-	static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+	static mpc_common_spinlock_t lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 	mpc_omp_thread_t __UNUSED__ *t;
 	t = ( mpc_omp_thread_t * )mpc_omp_tls;
 	/* critical section */
@@ -3313,7 +3313,7 @@ void __kmpc_copyprivate( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_ti
 void *__kmpc_threadprivate_cached( ident_t *loc, kmp_int32 global_tid,
                                    void *data, size_t size, void ***cache )
 {
-	static mpc_common_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+	static mpc_common_spinlock_t lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 	int __kmp_tp_capacity = __kmp_default_tp_capacity();
 
 	if ( *cache == 0 )

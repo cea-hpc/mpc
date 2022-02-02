@@ -287,16 +287,16 @@ int mpc_topology_has_nvdimm();
 
 typedef enum
 {
-    HW_NODE = 0,
-    HW_PACKAGE,
-    HW_NUMANODE,
-    HW_CACHEL3,
-    HW_CACHEL2,
-    HW_CACHEL1,
-    HW_TYPE_COUNT
+    MPC_LOWCOMM_HW_NODE = 0,
+    MPC_LOWCOMM_HW_PACKAGE,
+    MPC_LOWCOMM_HW_NUMANODE,
+    MPC_LOWCOMM_HW_CACHEL3,
+    MPC_LOWCOMM_HW_CACHEL2,
+    MPC_LOWCOMM_HW_CACHEL1,
+    MPC_LOWCOMM_HW_TYPE_COUNT
 } mpc_topology_split_hardware_type_t;
 
-static const char *const mpc_topology_split_hardware_type_name[HW_TYPE_COUNT] =
+static const char *const mpc_topology_split_hardware_type_name[MPC_LOWCOMM_HW_TYPE_COUNT] =
 {
         "Node",
         "Package",
@@ -309,7 +309,7 @@ static const char *const mpc_topology_split_hardware_type_name[HW_TYPE_COUNT] =
 #if (HWLOC_API_VERSION < 0x00020000)
 // As HWLOC_OBJ_CACHE has no specific level before Hwloc 2.0.0
 // It it not possible to retrieve specific level of cache id from pu ancestor
-static const hwloc_obj_type_t mpc_topology_split_hardware_hwloc_type[HW_TYPE_COUNT] =
+static const hwloc_obj_type_t mpc_topology_split_hardware_hwloc_type[MPC_LOWCOMM_HW_TYPE_COUNT] =
 {
         HWLOC_OBJ_MACHINE,
         HWLOC_OBJ_PACKAGE,
@@ -319,7 +319,7 @@ static const hwloc_obj_type_t mpc_topology_split_hardware_hwloc_type[HW_TYPE_COU
         HWLOC_OBJ_CACHE
 };
 #else
-static const hwloc_obj_type_t mpc_topology_split_hardware_hwloc_type[HW_TYPE_COUNT] =
+static const hwloc_obj_type_t mpc_topology_split_hardware_hwloc_type[MPC_LOWCOMM_HW_TYPE_COUNT] =
 {
         HWLOC_OBJ_MACHINE,
         HWLOC_OBJ_PACKAGE,

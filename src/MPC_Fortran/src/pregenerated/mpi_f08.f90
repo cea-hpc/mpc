@@ -41,8 +41,18 @@ module procedure MPI_Start_f08
 end interface
 
 
+interface MPI_Imrecv
+module procedure MPI_Imrecv_f08
+end interface
+
+
 interface MPI_Win_post
 module procedure MPI_Win_post_f08
+end interface
+
+
+interface MPI_Session_create_errhandler
+module procedure MPI_Session_create_errhandler_f08
 end interface
 
 
@@ -86,6 +96,11 @@ module procedure MPI_Error_class_f08
 end interface
 
 
+interface MPI_Session_get_num_psets
+module procedure MPI_Session_get_num_psets_f08
+end interface
+
+
 interface MPI_Free_mem
 module procedure MPI_Free_mem_f08
 end interface
@@ -121,6 +136,11 @@ module procedure MPI_Intercomm_create_f08
 end interface
 
 
+interface MPI_Group_from_session_pset
+module procedure MPI_Group_from_session_pset_f08
+end interface
+
+
 interface MPI_Allreduce
 module procedure MPI_Allreduce_f08
 end interface
@@ -151,8 +171,13 @@ module procedure MPI_Send_init_f08
 end interface
 
 
-interface MPI_Reduce
-module procedure MPI_Reduce_f08
+interface MPI_Type_get_name
+module procedure MPI_Type_get_name_f08
+end interface
+
+
+interface MPI_Session_get_info
+module procedure MPI_Session_get_info_f08
 end interface
 
 
@@ -161,8 +186,8 @@ module procedure MPI_Type_commit_f08
 end interface
 
 
-interface MPI_Comm_get_parent
-module procedure MPI_Comm_get_parent_f08
+interface MPI_Session_set_errhandler
+module procedure MPI_Session_set_errhandler_f08
 end interface
 
 
@@ -216,13 +241,13 @@ module procedure MPI_Recv_init_f08
 end interface
 
 
-interface MPI_Type_dup
-module procedure MPI_Type_dup_f08
+interface MPI_Win_set_name
+module procedure MPI_Win_set_name_f08
 end interface
 
 
-interface MPI_Query_thread
-module procedure MPI_Query_thread_f08
+interface MPI_Type_dup
+module procedure MPI_Type_dup_f08
 end interface
 
 
@@ -238,6 +263,11 @@ end interface
 
 interface MPI_Type_create_resized
 module procedure MPI_Type_create_resized_f08
+end interface
+
+
+interface MPI_Unpublish_name
+module procedure MPI_Unpublish_name_f08
 end interface
 
 
@@ -281,6 +311,11 @@ module procedure MPI_Get_count_f08
 end interface
 
 
+interface MPI_Error_string
+module procedure MPI_Error_string_f08
+end interface
+
+
 interface MPI_Grequest_start
 module procedure MPI_Grequest_start_f08
 end interface
@@ -316,6 +351,11 @@ module procedure MPI_Abort_f08
 end interface
 
 
+interface MPI_Session_call_errhandler
+module procedure MPI_Session_call_errhandler_f08
+end interface
+
+
 interface MPI_Grequest_complete
 module procedure MPI_Grequest_complete_f08
 end interface
@@ -343,6 +383,11 @@ end interface
 
 interface MPI_Type_get_attr
 module procedure MPI_Type_get_attr_f08
+end interface
+
+
+interface MPI_Comm_set_name
+module procedure MPI_Comm_set_name_f08
 end interface
 
 
@@ -381,6 +426,11 @@ module procedure MPI_File_set_errhandler_f08
 end interface
 
 
+interface MPI_Register_datarep
+module procedure MPI_Register_datarep_f08
+end interface
+
+
 interface MPI_Group_difference
 module procedure MPI_Group_difference_f08
 end interface
@@ -391,13 +441,18 @@ module procedure MPI_Attr_get_f08
 end interface
 
 
+interface MPI_Win_get_name
+module procedure MPI_Win_get_name_f08
+end interface
+
+
 interface MPI_Type_create_f90_real
 module procedure MPI_Type_create_f90_real_f08
 end interface
 
 
-interface MPI_Imrecv
-module procedure MPI_Imrecv_f08
+interface MPI_Win_create_keyval
+module procedure MPI_Win_create_keyval_f08
 end interface
 
 
@@ -406,8 +461,8 @@ module procedure MPI_Wait_f08
 end interface
 
 
-interface MPI_Testall
-module procedure MPI_Testall_f08
+interface MPI_Session_get_errhandler
+module procedure MPI_Session_get_errhandler_f08
 end interface
 
 
@@ -428,6 +483,16 @@ end interface
 
 interface MPI_Comm_create_errhandler
 module procedure MPI_Comm_create_errhandler_f08
+end interface
+
+
+interface MPI_Session_get_pset_info
+module procedure MPI_Session_get_pset_info_f08
+end interface
+
+
+interface MPI_Comm_connect
+module procedure MPI_Comm_connect_f08
 end interface
 
 
@@ -461,8 +526,8 @@ module procedure MPI_Topo_test_f08
 end interface
 
 
-interface MPI_Buffer_attach
-module procedure MPI_Buffer_attach_f08
+interface MPI_Query_thread
+module procedure MPI_Query_thread_f08
 end interface
 
 
@@ -516,6 +581,11 @@ module procedure MPI_Scatter_f08
 end interface
 
 
+interface MPI_Comm_set_attr
+module procedure MPI_Comm_set_attr_f08
+end interface
+
+
 interface MPI_Comm_free_keyval
 module procedure MPI_Comm_free_keyval_f08
 end interface
@@ -526,8 +596,13 @@ module procedure MPI_Op_create_f08
 end interface
 
 
-interface MPI_Mprobe
-module procedure MPI_Mprobe_f08
+interface MPI_Add_error_string
+module procedure MPI_Add_error_string_f08
+end interface
+
+
+interface MPI_Session_finalize
+module procedure MPI_Session_finalize_f08
 end interface
 
 
@@ -546,8 +621,23 @@ module procedure MPI_Info_free_f08
 end interface
 
 
+interface MPI_Publish_name
+module procedure MPI_Publish_name_f08
+end interface
+
+
 interface MPI_Bcast
 module procedure MPI_Bcast_f08
+end interface
+
+
+interface MPI_Get_processor_name
+module procedure MPI_Get_processor_name_f08
+end interface
+
+
+interface MPI_Info_set
+module procedure MPI_Info_set_f08
 end interface
 
 
@@ -576,6 +666,11 @@ module procedure MPI_Comm_test_inter_f08
 end interface
 
 
+interface MPI_Comm_create_from_group
+module procedure MPI_Comm_create_from_group_f08
+end interface
+
+
 interface MPI_Intercomm_merge
 module procedure MPI_Intercomm_merge_f08
 end interface
@@ -586,8 +681,18 @@ module procedure MPI_Win_complete_f08
 end interface
 
 
+interface MPI_Pack_external
+module procedure MPI_Pack_external_f08
+end interface
+
+
 interface MPI_Type_set_attr
 module procedure MPI_Type_set_attr_f08
+end interface
+
+
+interface MPI_Info_get_valuelen
+module procedure MPI_Info_get_valuelen_f08
 end interface
 
 
@@ -616,8 +721,13 @@ module procedure MPI_Alltoall_f08
 end interface
 
 
-interface MPI_File_create_errhandler
-module procedure MPI_File_create_errhandler_f08
+interface MPI_Buffer_attach
+module procedure MPI_Buffer_attach_f08
+end interface
+
+
+interface MPI_Info_get
+module procedure MPI_Info_get_f08
 end interface
 
 
@@ -653,6 +763,16 @@ end interface
 
 interface MPI_Type_free
 module procedure MPI_Type_free_f08
+end interface
+
+
+interface MPI_Info_get_nthkey
+module procedure MPI_Info_get_nthkey_f08
+end interface
+
+
+interface MPI_Unpack_external
+module procedure MPI_Unpack_external_f08
 end interface
 
 
@@ -706,6 +826,11 @@ module procedure MPI_Finalized_f08
 end interface
 
 
+interface MPI_Reduce
+module procedure MPI_Reduce_f08
+end interface
+
+
 interface MPI_Win_free_keyval
 module procedure MPI_Win_free_keyval_f08
 end interface
@@ -713,6 +838,11 @@ end interface
 
 interface MPI_Waitany
 module procedure MPI_Waitany_f08
+end interface
+
+
+interface MPI_Open_port
+module procedure MPI_Open_port_f08
 end interface
 
 
@@ -738,6 +868,11 @@ end interface
 
 interface MPI_Get_elements
 module procedure MPI_Get_elements_f08
+end interface
+
+
+interface MPI_Comm_get_parent
+module procedure MPI_Comm_get_parent_f08
 end interface
 
 
@@ -771,6 +906,11 @@ module procedure MPI_Type_hindexed_f08
 end interface
 
 
+interface MPI_Op_free
+module procedure MPI_Op_free_f08
+end interface
+
+
 interface MPI_Group_range_incl
 module procedure MPI_Group_range_incl_f08
 end interface
@@ -796,6 +936,11 @@ module procedure MPI_Graph_get_f08
 end interface
 
 
+interface MPI_Info_delete
+module procedure MPI_Info_delete_f08
+end interface
+
+
 interface MPI_Win_get_attr
 module procedure MPI_Win_get_attr_f08
 end interface
@@ -808,6 +953,16 @@ end interface
 
 interface MPI_Comm_create
 module procedure MPI_Comm_create_f08
+end interface
+
+
+interface MPI_Pack_external_size
+module procedure MPI_Pack_external_size_f08
+end interface
+
+
+interface MPI_Testall
+module procedure MPI_Testall_f08
 end interface
 
 
@@ -841,6 +996,16 @@ module procedure MPI_Type_size_f08
 end interface
 
 
+interface MPI_Lookup_name
+module procedure MPI_Lookup_name_f08
+end interface
+
+
+interface MPI_Mprobe
+module procedure MPI_Mprobe_f08
+end interface
+
+
 interface MPI_Type_create_darray
 module procedure MPI_Type_create_darray_f08
 end interface
@@ -856,13 +1021,23 @@ module procedure MPI_Cart_map_f08
 end interface
 
 
-interface MPI_Type_create_subarray
-module procedure MPI_Type_create_subarray_f08
+interface MPI_Comm_accept
+module procedure MPI_Comm_accept_f08
 end interface
 
 
-interface MPI_Comm_set_attr
-module procedure MPI_Comm_set_attr_f08
+interface MPI_Type_set_name
+module procedure MPI_Type_set_name_f08
+end interface
+
+
+interface MPI_Close_port
+module procedure MPI_Close_port_f08
+end interface
+
+
+interface MPI_Type_create_subarray
+module procedure MPI_Type_create_subarray_f08
 end interface
 
 
@@ -926,11 +1101,6 @@ module procedure MPI_Exscan_f08
 end interface
 
 
-interface MPI_Op_free
-module procedure MPI_Op_free_f08
-end interface
-
-
 interface MPI_Win_set_errhandler
 module procedure MPI_Win_set_errhandler_f08
 end interface
@@ -938,6 +1108,16 @@ end interface
 
 interface MPI_Accumulate
 module procedure MPI_Accumulate_f08
+end interface
+
+
+interface MPI_Comm_get_name
+module procedure MPI_Comm_get_name_f08
+end interface
+
+
+interface MPI_File_create_errhandler
+module procedure MPI_File_create_errhandler_f08
 end interface
 
 
@@ -981,6 +1161,11 @@ module procedure MPI_Comm_rank_f08
 end interface
 
 
+interface MPI_Session_get_nth_pset
+module procedure MPI_Session_get_nth_pset_f08
+end interface
+
+
 interface MPI_Cancel
 module procedure MPI_Cancel_f08
 end interface
@@ -991,8 +1176,8 @@ module procedure MPI_Win_fence_f08
 end interface
 
 
-interface MPI_Win_create_keyval
-module procedure MPI_Win_create_keyval_f08
+interface MPI_Session_init
+module procedure MPI_Session_init_f08
 end interface
 
 
@@ -1017,7 +1202,9 @@ end interface
 
 
 private :: MPI_Start_f08
+private :: MPI_Imrecv_f08
 private :: MPI_Win_post_f08
+private :: MPI_Session_create_errhandler_f08
 private :: MPI_Win_get_errhandler_f08
 private :: MPI_Sendrecv_f08
 private :: MPI_Scan_f08
@@ -1026,6 +1213,7 @@ private :: MPI_Attr_delete_f08
 private :: MPI_Comm_get_attr_f08
 private :: MPI_Type_delete_attr_f08
 private :: MPI_Error_class_f08
+private :: MPI_Session_get_num_psets_f08
 private :: MPI_Free_mem_f08
 private :: MPI_Info_dup_f08
 private :: MPI_Type_lb_f08
@@ -1033,15 +1221,17 @@ private :: MPI_Cart_get_f08
 private :: MPI_Add_error_class_f08
 private :: MPI_Buffer_detach_f08
 private :: MPI_Intercomm_create_f08
+private :: MPI_Group_from_session_pset_f08
 private :: MPI_Allreduce_f08
 private :: MPI_Comm_create_keyval_f08
 private :: MPI_Ibsend_f08
 private :: MPI_Comm_remote_size_f08
 private :: MPI_Type_contiguous_f08
 private :: MPI_Send_init_f08
-private :: MPI_Reduce_f08
+private :: MPI_Type_get_name_f08
+private :: MPI_Session_get_info_f08
 private :: MPI_Type_commit_f08
-private :: MPI_Comm_get_parent_f08
+private :: MPI_Session_set_errhandler_f08
 private :: MPI_Type_create_f90_integer_f08
 private :: MPI_Testany_f08
 private :: MPI_Type_extent_f08
@@ -1052,11 +1242,12 @@ private :: MPI_Mrecv_f08
 private :: MPI_Type_hvector_f08
 private :: MPI_Group_translate_ranks_f08
 private :: MPI_Recv_init_f08
+private :: MPI_Win_set_name_f08
 private :: MPI_Type_dup_f08
-private :: MPI_Query_thread_f08
 private :: MPI_Comm_group_f08
 private :: MPI_Add_error_code_f08
 private :: MPI_Type_create_resized_f08
+private :: MPI_Unpublish_name_f08
 private :: MPI_Get_address_f08
 private :: MPI_Is_thread_main_f08
 private :: MPI_Irecv_f08
@@ -1065,6 +1256,7 @@ private :: MPI_Initialized_f08
 private :: MPI_Bsend_f08
 private :: MPI_Group_excl_f08
 private :: MPI_Get_count_f08
+private :: MPI_Error_string_f08
 private :: MPI_Grequest_start_f08
 private :: MPI_Cartdim_get_f08
 private :: MPI_Allgather_f08
@@ -1072,12 +1264,14 @@ private :: MPI_Cart_coords_f08
 private :: MPI_Issend_f08
 private :: MPI_Rsend_f08
 private :: MPI_Abort_f08
+private :: MPI_Session_call_errhandler_f08
 private :: MPI_Grequest_complete_f08
 private :: MPI_Pack_f08
 private :: MPI_Win_set_attr_f08
 private :: MPI_Info_create_f08
 private :: MPI_Type_create_f90_complex_f08
 private :: MPI_Type_get_attr_f08
+private :: MPI_Comm_set_name_f08
 private :: MPI_Comm_disconnect_f08
 private :: MPI_Comm_remote_group_f08
 private :: MPI_Cart_shift_f08
@@ -1085,23 +1279,27 @@ private :: MPI_Group_incl_f08
 private :: MPI_Comm_size_f08
 private :: MPI_Type_create_hindexed_f08
 private :: MPI_File_set_errhandler_f08
+private :: MPI_Register_datarep_f08
 private :: MPI_Group_difference_f08
 private :: MPI_Attr_get_f08
+private :: MPI_Win_get_name_f08
 private :: MPI_Type_create_f90_real_f08
-private :: MPI_Imrecv_f08
+private :: MPI_Win_create_keyval_f08
 private :: MPI_Wait_f08
-private :: MPI_Testall_f08
+private :: MPI_Session_get_errhandler_f08
 private :: MPI_Irsend_f08
 private :: MPI_Get_version_f08
 private :: MPI_File_call_errhandler_f08
 private :: MPI_Comm_create_errhandler_f08
+private :: MPI_Session_get_pset_info_f08
+private :: MPI_Comm_connect_f08
 private :: MPI_Group_compare_f08
 private :: MPI_Address_f08
 private :: MPI_Comm_compare_f08
 private :: MPI_Win_unlock_f08
 private :: MPI_Request_free_f08
 private :: MPI_Topo_test_f08
-private :: MPI_Buffer_attach_f08
+private :: MPI_Query_thread_f08
 private :: MPI_Win_call_errhandler_f08
 private :: MPI_Win_get_group_f08
 private :: MPI_Errhandler_create_f08
@@ -1112,27 +1310,36 @@ private :: MPI_Graph_neighbors_count_f08
 private :: MPI_Graph_neighbors_f08
 private :: MPI_Dims_create_f08
 private :: MPI_Scatter_f08
+private :: MPI_Comm_set_attr_f08
 private :: MPI_Comm_free_keyval_f08
 private :: MPI_Op_create_f08
-private :: MPI_Mprobe_f08
+private :: MPI_Add_error_string_f08
+private :: MPI_Session_finalize_f08
 private :: MPI_Ssend_init_f08
 private :: MPI_Rsend_init_f08
 private :: MPI_Info_free_f08
+private :: MPI_Publish_name_f08
 private :: MPI_Bcast_f08
+private :: MPI_Get_processor_name_f08
+private :: MPI_Info_set_f08
 private :: MPI_Comm_free_f08
 private :: MPI_Errhandler_get_f08
 private :: MPI_Pack_size_f08
 private :: MPI_Comm_call_errhandler_f08
 private :: MPI_Comm_test_inter_f08
+private :: MPI_Comm_create_from_group_f08
 private :: MPI_Intercomm_merge_f08
 private :: MPI_Win_complete_f08
+private :: MPI_Pack_external_f08
 private :: MPI_Type_set_attr_f08
+private :: MPI_Info_get_valuelen_f08
 private :: MPI_Put_f08
 private :: MPI_Isend_f08
 private :: MPI_Type_get_envelope_f08
 private :: MPI_Group_rank_f08
 private :: MPI_Alltoall_f08
-private :: MPI_File_create_errhandler_f08
+private :: MPI_Buffer_attach_f08
+private :: MPI_Info_get_f08
 private :: MPI_Group_intersection_f08
 private :: MPI_Type_free_keyval_f08
 private :: MPI_Type_create_struct_f08
@@ -1140,6 +1347,8 @@ private :: MPI_Type_get_contents_f08
 private :: MPI_Reduce_local_f08
 private :: MPI_Group_union_f08
 private :: MPI_Type_free_f08
+private :: MPI_Info_get_nthkey_f08
+private :: MPI_Unpack_external_f08
 private :: MPI_Errhandler_set_f08
 private :: MPI_Comm_get_errhandler_f08
 private :: MPI_Test_cancelled_f08
@@ -1150,38 +1359,49 @@ private :: MPI_Type_create_hvector_f08
 private :: MPI_Info_get_nkeys_f08
 private :: MPI_Win_start_f08
 private :: MPI_Finalized_f08
+private :: MPI_Reduce_f08
 private :: MPI_Win_free_keyval_f08
 private :: MPI_Waitany_f08
+private :: MPI_Open_port_f08
 private :: MPI_Type_indexed_f08
 private :: MPI_Op_commutative_f08
 private :: MPI_Gather_f08
 private :: MPI_Type_vector_f08
 private :: MPI_Get_elements_f08
+private :: MPI_Comm_get_parent_f08
 private :: MPI_Probe_f08
 private :: MPI_Unpack_f08
 private :: MPI_Type_ub_f08
 private :: MPI_Status_set_elements_f08
 private :: MPI_Win_delete_attr_f08
 private :: MPI_Type_hindexed_f08
+private :: MPI_Op_free_f08
 private :: MPI_Group_range_incl_f08
 private :: MPI_Get_f08
 private :: MPI_Iprobe_f08
 private :: MPI_Type_get_true_extent_f08
 private :: MPI_Graph_get_f08
+private :: MPI_Info_delete_f08
 private :: MPI_Win_get_attr_f08
 private :: MPI_Finalize_f08
 private :: MPI_Comm_create_f08
+private :: MPI_Pack_external_size_f08
+private :: MPI_Testall_f08
 private :: MPI_Comm_join_f08
 private :: MPI_Keyval_free_f08
 private :: MPI_Win_wait_f08
 private :: MPI_Alloc_mem_f08
 private :: MPI_Improbe_f08
 private :: MPI_Type_size_f08
+private :: MPI_Lookup_name_f08
+private :: MPI_Mprobe_f08
 private :: MPI_Type_create_darray_f08
 private :: MPI_Win_create_errhandler_f08
 private :: MPI_Cart_map_f08
+private :: MPI_Comm_accept_f08
+private :: MPI_Type_set_name_f08
+private :: MPI_Close_port_f08
 private :: MPI_Type_create_subarray_f08
-private :: MPI_Comm_set_attr_f08
 private :: MPI_Recv_f08
 private :: MPI_Comm_dup_f08
 private :: MPI_Waitall_f08
@@ -1194,9 +1414,10 @@ private :: MPI_Barrier_f08
 private :: MPI_Win_free_f08
 private :: MPI_Bsend_init_f08
 private :: MPI_Exscan_f08
-private :: MPI_Op_free_f08
 private :: MPI_Win_set_errhandler_f08
 private :: MPI_Accumulate_f08
+private :: MPI_Comm_get_name_f08
+private :: MPI_File_create_errhandler_f08
 private :: MPI_Group_range_excl_f08
 private :: MPI_Comm_split_f08
 private :: MPI_Comm_set_errhandler_f08
@@ -1205,9 +1426,10 @@ private :: MPI_Group_free_f08
 private :: MPI_Type_create_keyval_f08
 private :: MPI_Graphdims_get_f08
 private :: MPI_Comm_rank_f08
+private :: MPI_Session_get_nth_pset_f08
 private :: MPI_Cancel_f08
 private :: MPI_Win_fence_f08
-private :: MPI_Win_create_keyval_f08
+private :: MPI_Session_init_f08
 private :: MPI_Errhandler_free_f08
 private :: MPI_Win_test_f08
 private :: MPI_Type_match_size_f08
@@ -1227,7 +1449,9 @@ type(MPI_Request), intent(inout) :: request
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Request*
 integer(c_int) :: request_c     !MPI_Request* request
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -1243,6 +1467,60 @@ request%val = request_c
 if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Start_f08
+
+
+subroutine MPI_Imrecv_f08( buf,&
+count,&
+datatype,&
+message,&
+status,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(*), dimension(..) :: buf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+type(MPI_Message), intent(inout) :: message
+type(MPI_Request), intent(out) :: status
+integer, optional, intent(out) :: ierror
+
+
+! int
+integer(c_int) :: count_c     !int count
+! MPI_Datatype
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! MPI_Message*
+integer(c_int) :: message_c     !MPI_Message* message
+! MPI_Request*
+integer(c_int) :: status_c     !MPI_Request* status
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+count_c = count
+datatype_c = datatype%val
+message_c = message%val
+
+ret = MPI_Imrecv_c(buf,&
+count_c,&
+datatype_c,&
+message_c,&
+status_c,&
+ierror_c)
+
+message%val = message_c
+status%val = status_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Imrecv_f08
 
 ! MPI_File_write_all_begin NOT IMPLEMENTED in MPC
 
@@ -1265,9 +1543,13 @@ type(MPI_Win), intent(in) :: win
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Group
 integer(c_int) :: group_c     !MPI_Group group
+! int
 integer(c_int) :: assert_c     !int assert
+! MPI_Win
 integer(c_int) :: win_c     !MPI_Win win
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -1288,6 +1570,44 @@ if( present(ierror)) ierror = ierror_c
 end subroutine MPI_Win_post_f08
 
 
+subroutine MPI_Session_create_errhandler_f08( errhfn,&
+errh,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Session_errhandler_function), intent(in) :: errhfn
+type(MPI_Errhandler), intent(out) :: errh
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Session_errhandler_function*
+type(c_ptr) :: errhfn_c     !MPI_Session_errhandler_function* errhfn
+! MPI_Errhandler*
+integer(c_int) :: errh_c     !MPI_Errhandler* errh
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+errhfn_c = errhfn%val
+
+ret = MPI_Session_create_errhandler_c(errhfn_c,&
+errh_c,&
+ierror_c)
+
+errh%val = errh_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Session_create_errhandler_f08
+
+
 subroutine MPI_Win_get_errhandler_f08( win,&
 errhandler,&
 ierror)
@@ -1303,8 +1623,11 @@ type(MPI_Errhandler), intent(out) :: errhandler
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Win
 integer(c_int) :: win_c     !MPI_Win win
+! MPI_Errhandler*
 integer(c_int) :: errhandler_c     !MPI_Errhandler* errhandler
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -1361,16 +1684,27 @@ type(MPI_Status) :: status
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: sendcount_c     !int sendcount
+! MPI_Datatype
 integer(c_int) :: sendtype_c     !MPI_Datatype sendtype
+! int
 integer(c_int) :: dest_c     !int dest
+! int
 integer(c_int) :: sendtag_c     !int sendtag
+! int
 integer(c_int) :: recvcount_c     !int recvcount
+! MPI_Datatype
 integer(c_int) :: recvtype_c     !MPI_Datatype recvtype
+! int
 integer(c_int) :: source_c     !int source
+! int
 integer(c_int) :: recvtag_c     !int recvtag
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Status*
 type(c_Status) :: status_c     !MPI_Status* status
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -1431,10 +1765,15 @@ type(MPI_Comm), intent(in) :: comm
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! MPI_Op
 integer(c_int) :: op_c     !MPI_Op op
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -1474,8 +1813,11 @@ type(MPI_Request), target, intent(inout) :: array_of_requests(count)
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Request[]
 integer(c_int), target  :: array_of_requests_c(count)     !MPI_Request[] array_of_requests
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -1514,8 +1856,11 @@ integer, intent(in) :: keyval
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: keyval_c     !int keyval
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -1556,9 +1901,13 @@ logical, intent(out) :: flag
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: comm_keyval_c     !int comm_keyval
+! bool
 integer(c_int) :: flag_c     !bool flag
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -1598,8 +1947,11 @@ integer, intent(in) :: type_keyval
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Datatype
 integer(c_int) :: type_c     !MPI_Datatype type
+! int
 integer(c_int) :: type_keyval_c     !int type_keyval
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -1633,8 +1985,11 @@ integer, intent(out) :: errorclass
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: errorcode_c     !int errorcode
+! int*
 integer(c_int) :: errorclass_c     !int* errorclass
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -1653,6 +2008,50 @@ if( present(ierror)) ierror = ierror_c
 end subroutine MPI_Error_class_f08
 
 
+subroutine MPI_Session_get_num_psets_f08( session,&
+info,&
+npset_names,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Session), intent(in) :: session
+type(MPI_Info), intent(in) :: info
+integer, intent(out) :: npset_names
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Session
+integer(c_int) :: session_c     !MPI_Session session
+! MPI_Info
+integer(c_int) :: info_c     !MPI_Info info
+! int*
+integer(c_int) :: npset_names_c     !int* npset_names
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+session_c = session%val
+info_c = info%val
+
+ret = MPI_Session_get_num_psets_c(session_c,&
+info_c,&
+npset_names_c,&
+ierror_c)
+
+npset_names = npset_names_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Session_get_num_psets_f08
+
+
 subroutine MPI_Free_mem_f08( base,&
 ierror)
 
@@ -1666,6 +2065,7 @@ type(*), dimension(..) :: base
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -1696,8 +2096,11 @@ type(MPI_Info), intent(out) :: newinfo
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Info
 integer(c_int) :: info_c     !MPI_Info info
+! MPI_Info*
 integer(c_int) :: newinfo_c     !MPI_Info* newinfo
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -1731,8 +2134,11 @@ integer*8, intent(in) :: lb
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Datatype
 integer(c_int) :: type_c     !MPI_Datatype type
+! MPI_Aint*
 integer(c_intptr_t) :: lb_c     !MPI_Aint* lb
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -1772,11 +2178,17 @@ integer, intent(out) :: coords(maxdims)
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: maxdims_c     !int maxdims
+! int[]
 integer(c_int), target  :: dims_c(maxdims)     !int[] dims
+! bool[]
 integer(c_int), target  :: periods_c(maxdims)     !bool[] periods
+! int[]
 integer(c_int), target  :: coords_c(maxdims)     !int[] coords
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -1820,7 +2232,9 @@ integer, intent(out) :: errorclass
 integer, optional, intent(out) :: ierror
 
 
+! int*
 integer(c_int) :: errorclass_c     !int* errorclass
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -1855,7 +2269,9 @@ integer :: size
 integer, optional, intent(out) :: ierror
 
 
+! int*
 integer(c_int) :: size_c     !int* size
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -1900,12 +2316,19 @@ type(MPI_Comm), intent(out) :: newintercomm
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: local_comm_c     !MPI_Comm local_comm
+! int
 integer(c_int) :: local_leader_c     !int local_leader
+! MPI_Comm
 integer(c_int) :: bridge_comm_c     !MPI_Comm bridge_comm
+! int
 integer(c_int) :: remote_leader_c     !int remote_leader
+! int
 integer(c_int) :: tag_c     !int tag
+! MPI_Comm*
 integer(c_int) :: newintercomm_c     !MPI_Comm* newintercomm
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -1930,6 +2353,53 @@ newintercomm%val = newintercomm_c
 if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Intercomm_create_f08
+
+
+subroutine MPI_Group_from_session_pset_f08( session,&
+pset_name,&
+newgroup,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Session), intent(in) :: session
+character(len=*), target, intent(in) :: pset_name
+integer(c_int) :: pset_name_len
+type(MPI_Group), intent(out) :: newgroup
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Session
+integer(c_int) :: session_c     !MPI_Session session
+! char*
+type(C_PTR) :: pset_name_c     !char* pset_name
+! MPI_Group*
+integer(c_int) :: newgroup_c     !MPI_Group* newgroup
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+session_c = session%val
+pset_name_c = c_loc(pset_name)
+pset_name_len = LEN(pset_name)
+
+ret = MPI_Group_from_session_pset_c(session_c,&
+pset_name_c,&
+newgroup_c,&
+ierror_c,&
+pset_name_len)
+
+newgroup%val = newgroup_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Group_from_session_pset_f08
 
 ! MPI_File_iread_at NOT IMPLEMENTED in MPC
 
@@ -1958,10 +2428,15 @@ type(MPI_Comm), intent(in) :: comm
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! MPI_Op
 integer(c_int) :: op_c     !MPI_Op op
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -2005,9 +2480,13 @@ type(*), dimension(..) :: extra_state
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm_copy_attr_function*
 type(c_ptr) :: comm_copy_attr_fn_c     !MPI_Comm_copy_attr_function* comm_copy_attr_fn
+! MPI_Comm_delete_attr_function*
 type(c_ptr) :: comm_delete_attr_fn_c     !MPI_Comm_delete_attr_function* comm_delete_attr_fn
+! int*
 integer(c_int) :: comm_keyval_c     !int* comm_keyval
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -2054,12 +2533,19 @@ type(MPI_Request), intent(inout) :: request
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! int
 integer(c_int) :: dest_c     !int dest
+! int
 integer(c_int) :: tag_c     !int tag
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Request*
 integer(c_int) :: request_c     !MPI_Request* request
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -2106,8 +2592,11 @@ integer, intent(out) :: size
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int*
 integer(c_int) :: size_c     !int* size
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -2143,9 +2632,13 @@ type(MPI_Datatype), intent(out) :: newtype
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Datatype
 integer(c_int) :: oldtype_c     !MPI_Datatype oldtype
+! MPI_Datatype*
 integer(c_int) :: newtype_c     !MPI_Datatype* newtype
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -2191,12 +2684,19 @@ type(MPI_Request), intent(inout) :: request
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! int
 integer(c_int) :: dest_c     !int dest
+! int
 integer(c_int) :: tag_c     !int tag
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Request*
 integer(c_int) :: request_c     !MPI_Request* request
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -2224,16 +2724,10 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Send_init_f08
 
-!Skipped convert function in MPI_Type_get_name
 
-
-subroutine MPI_Reduce_f08( sendbuf,&
-recvbuf,&
-count,&
-datatype,&
-op,&
-root,&
-comm,&
+subroutine MPI_Type_get_name_f08( type,&
+type_name,&
+resultlen,&
 ierror)
 
 use :: mpi_f08_ctypes
@@ -2242,45 +2736,77 @@ use :: mpi_f08_c
 
 implicit none
 
-type(*), dimension(..) :: sendbuf
-type(*), dimension(..) :: recvbuf
-integer, intent(in) :: count
-type(MPI_Datatype), intent(in) :: datatype
-type(MPI_Op), intent(in) :: op
-integer, intent(in) :: root
-type(MPI_Comm), intent(in) :: comm
+type(MPI_Datatype), intent(in) :: type
+character(len=*), target, intent(out) :: type_name
+integer(c_int) :: type_name_len
+integer, intent(out) :: resultlen
 integer, optional, intent(out) :: ierror
 
 
-integer(c_int) :: count_c     !int count
-integer(c_int) :: datatype_c     !MPI_Datatype datatype
-integer(c_int) :: op_c     !MPI_Op op
-integer(c_int) :: root_c     !int root
-integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Datatype
+integer(c_int) :: type_c     !MPI_Datatype type
+! char*
+type(C_PTR) :: type_name_c     !char* type_name
+! int*
+integer(c_int) :: resultlen_c     !int* resultlen
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
 integer(c_int) ::  r_ ! for comm array expansion
 
-count_c = count
-datatype_c = datatype%val
-op_c = op%val
-root_c = root
-comm_c = comm%val
+type_c = type%val
 
-ret = MPI_Reduce_c(sendbuf,&
-recvbuf,&
-count_c,&
-datatype_c,&
-op_c,&
-root_c,&
-comm_c,&
-ierror_c)
+ret = MPI_Type_get_name_c(type_c,&
+type_name_c,&
+resultlen_c,&
+ierror_c,&
+type_name_len)
 
+!FAIL no conversion to char for type_name
+resultlen = resultlen_c
 
 if( present(ierror)) ierror = ierror_c
 
-end subroutine MPI_Reduce_f08
+end subroutine MPI_Type_get_name_f08
+
+
+subroutine MPI_Session_get_info_f08( session,&
+infoused,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Session), intent(in) :: session
+type(MPI_Info), intent(out) :: infoused
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Session
+integer(c_int) :: session_c     !MPI_Session session
+! MPI_Info*
+integer(c_int) :: infoused_c     !MPI_Info* infoused
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+session_c = session%val
+
+ret = MPI_Session_get_info_c(session_c,&
+infoused_c,&
+ierror_c)
+
+infoused%val = infoused_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Session_get_info_f08
 
 
 subroutine MPI_Type_commit_f08( type,&
@@ -2296,7 +2822,9 @@ type(MPI_Datatype), intent(inout) :: type
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Datatype*
 integer(c_int) :: type_c     !MPI_Datatype* type
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -2314,7 +2842,8 @@ if( present(ierror)) ierror = ierror_c
 end subroutine MPI_Type_commit_f08
 
 
-subroutine MPI_Comm_get_parent_f08( parent,&
+subroutine MPI_Session_set_errhandler_f08( session,&
+errh,&
 ierror)
 
 use :: mpi_f08_ctypes
@@ -2323,25 +2852,32 @@ use :: mpi_f08_c
 
 implicit none
 
-type(MPI_Comm), intent(out) :: parent
+type(MPI_Session), intent(in) :: session
+type(MPI_Errhandler), intent(in) :: errh
 integer, optional, intent(out) :: ierror
 
 
-integer(c_int) :: parent_c     !MPI_Comm* parent
+! MPI_Session
+integer(c_int) :: session_c     !MPI_Session session
+! MPI_Errhandler
+integer(c_int) :: errh_c     !MPI_Errhandler errh
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
 integer(c_int) ::  r_ ! for comm array expansion
 
+session_c = session%val
+errh_c = errh%val
 
-ret = MPI_Comm_get_parent_c(parent_c,&
+ret = MPI_Session_set_errhandler_c(session_c,&
+errh_c,&
 ierror_c)
 
-parent%val = parent_c
 
 if( present(ierror)) ierror = ierror_c
 
-end subroutine MPI_Comm_get_parent_f08
+end subroutine MPI_Session_set_errhandler_f08
 
 
 subroutine MPI_Type_create_f90_integer_f08( r,&
@@ -2359,8 +2895,11 @@ type(MPI_Datatype), intent(out) :: newtype
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: r_c     !int r
+! MPI_Datatype*
 integer(c_int) :: newtype_c     !MPI_Datatype* newtype
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -2400,11 +2939,17 @@ type(MPI_Status) :: status
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Request[]
 integer(c_int), target  :: array_of_requests_c(count)     !MPI_Request[] array_of_requests
+! int*
 integer(c_int) :: index_c     !int* index
+! bool
 integer(c_int) :: flag_c     !bool flag
+! MPI_Status*
 type(c_Status) :: status_c     !MPI_Status* status
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -2447,8 +2992,11 @@ integer*8, intent(out) :: extent
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Datatype
 integer(c_int) :: type_c     !MPI_Datatype type
+! MPI_Aint*
 integer(c_intptr_t) :: extent_c     !MPI_Aint* extent
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -2502,14 +3050,23 @@ type(MPI_Status) :: status
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! int
 integer(c_int) :: dest_c     !int dest
+! int
 integer(c_int) :: sendtag_c     !int sendtag
+! int
 integer(c_int) :: source_c     !int source
+! int
 integer(c_int) :: recvtag_c     !int recvtag
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Status*
 type(c_Status) :: status_c     !MPI_Status* status
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -2559,9 +3116,13 @@ integer*8, intent(out) :: extent
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Datatype
 integer(c_int) :: type_c     !MPI_Datatype type
+! MPI_Aint*
 integer(c_intptr_t) :: lb_c     !MPI_Aint* lb
+! MPI_Aint*
 integer(c_intptr_t) :: extent_c     !MPI_Aint* extent
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -2601,9 +3162,13 @@ type(*), dimension(..) :: extra_state
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Copy_function*
 type(c_ptr) :: copy_fn_c     !MPI_Copy_function* copy_fn
+! MPI_Delete_function*
 type(c_ptr) :: delete_fn_c     !MPI_Delete_function* delete_fn
+! int*
 integer(c_int) :: keyval_c     !int* keyval
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -2646,10 +3211,15 @@ type(MPI_Status) :: status
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! MPI_Message*
 integer(c_int) :: message_c     !MPI_Message* message
+! MPI_Status*
 type(c_Status) :: status_c     !MPI_Status* status
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -2695,11 +3265,17 @@ type(MPI_Datatype), intent(out) :: newtype
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! int
 integer(c_int) :: blocklength_c     !int blocklength
+! int
 integer(c_int) :: stride_c     !int stride
+! MPI_Datatype
 integer(c_int) :: oldtype_c     !MPI_Datatype oldtype
+! MPI_Datatype*
 integer(c_int) :: newtype_c     !MPI_Datatype* newtype
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -2745,11 +3321,17 @@ integer, intent(out) :: ranks2(n)
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Group
 integer(c_int) :: group1_c     !MPI_Group group1
+! int
 integer(c_int) :: n_c     !int n
+! int[]
 integer(c_int), target  :: ranks1_c(n)     !int[] ranks1
+! MPI_Group
 integer(c_int) :: group2_c     !MPI_Group group2
+! int[]
 integer(c_int), target  :: ranks2_c(n)     !int[] ranks2
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -2805,12 +3387,19 @@ type(MPI_Request), intent(inout) :: request
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! int
 integer(c_int) :: source_c     !int source
+! int
 integer(c_int) :: tag_c     !int tag
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Request*
 integer(c_int) :: request_c     !MPI_Request* request
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -2838,7 +3427,46 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Recv_init_f08
 
-!Skipped convert function in MPI_Win_set_name
+
+subroutine MPI_Win_set_name_f08( win,&
+win_name,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Win), intent(in) :: win
+character(len=*), target, intent(in) :: win_name
+integer(c_int) :: win_name_len
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Win
+integer(c_int) :: win_c     !MPI_Win win
+! char*
+type(C_PTR) :: win_name_c     !char* win_name
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+win_c = win%val
+win_name_c = c_loc(win_name)
+win_name_len = LEN(win_name)
+
+ret = MPI_Win_set_name_c(win_c,&
+win_name_c,&
+ierror_c,&
+win_name_len)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Win_set_name_f08
 
 
 subroutine MPI_Type_dup_f08( type,&
@@ -2856,8 +3484,11 @@ type(MPI_Datatype), intent(out) :: newtype
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Datatype
 integer(c_int) :: type_c     !MPI_Datatype type
+! MPI_Datatype*
 integer(c_int) :: newtype_c     !MPI_Datatype* newtype
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -2876,36 +3507,6 @@ if( present(ierror)) ierror = ierror_c
 end subroutine MPI_Type_dup_f08
 
 
-subroutine MPI_Query_thread_f08( provided,&
-ierror)
-
-use :: mpi_f08_ctypes
-use :: mpi_f08_types
-use :: mpi_f08_c
-
-implicit none
-
-integer, intent(out) :: provided
-integer, optional, intent(out) :: ierror
-
-
-integer(c_int) :: provided_c     !int* provided
-integer(c_int) :: ierror_c     !int ierror
-integer(c_int) :: ret ! dummy
-integer(c_int) ::  n_ ! for array expansion
-integer(c_int) ::  r_ ! for comm array expansion
-
-
-ret = MPI_Query_thread_c(provided_c,&
-ierror_c)
-
-provided = provided_c
-
-if( present(ierror)) ierror = ierror_c
-
-end subroutine MPI_Query_thread_f08
-
-
 subroutine MPI_Comm_group_f08( comm,&
 group,&
 ierror)
@@ -2921,8 +3522,11 @@ type(MPI_Group), intent(out) :: group
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Group*
 integer(c_int) :: group_c     !MPI_Group* group
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -2956,8 +3560,11 @@ integer, intent(out) :: errorcode
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: errorclass_c     !int errorclass
+! int*
 integer(c_int) :: errorcode_c     !int* errorcode
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -2995,10 +3602,15 @@ type(MPI_Datatype), intent(out) :: newtype
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Datatype
 integer(c_int) :: oldtype_c     !MPI_Datatype oldtype
+! MPI_Aint
 integer(c_intptr_t) :: lb_c     !MPI_Aint lb
+! MPI_Aint
 integer(c_intptr_t) :: extent_c     !MPI_Aint extent
+! MPI_Datatype*
 integer(c_int) :: newtype_c     !MPI_Datatype* newtype
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -3023,7 +3635,55 @@ end subroutine MPI_Type_create_resized_f08
 ! MPI_File_seek_shared NOT IMPLEMENTED in MPC
 
 
-!Skipped convert function in MPI_Unpublish_name
+
+subroutine MPI_Unpublish_name_f08( service_name,&
+info,&
+port_name,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+character(len=*), target, intent(in) :: service_name
+integer(c_int) :: service_name_len
+type(MPI_Info), intent(in) :: info
+character(len=*), target, intent(in) :: port_name
+integer(c_int) :: port_name_len
+integer, optional, intent(out) :: ierror
+
+
+! char*
+type(C_PTR) :: service_name_c     !char* service_name
+! MPI_Info
+integer(c_int) :: info_c     !MPI_Info info
+! char*
+type(C_PTR) :: port_name_c     !char* port_name
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+service_name_c = c_loc(service_name)
+service_name_len = LEN(service_name)
+info_c = info%val
+port_name_c = c_loc(port_name)
+port_name_len = LEN(port_name)
+
+ret = MPI_Unpublish_name_c(service_name_c,&
+info_c,&
+port_name_c,&
+ierror_c,&
+service_name_len,&
+port_name_len)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Unpublish_name_f08
 
 
 subroutine MPI_Get_address_f08( location,&
@@ -3041,7 +3701,9 @@ integer*8, intent(out) :: address
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Aint*
 integer(c_intptr_t) :: address_c     !MPI_Aint* address
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -3072,7 +3734,9 @@ logical, intent(inout) :: flag
 integer, optional, intent(out) :: ierror
 
 
+! bool
 integer(c_int) :: flag_c     !bool flag
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -3115,12 +3779,19 @@ type(MPI_Request), intent(inout) :: request
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! int
 integer(c_int) :: source_c     !int source
+! int
 integer(c_int) :: tag_c     !int tag
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Request*
 integer(c_int) :: request_c     !MPI_Request* request
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -3170,11 +3841,17 @@ type(MPI_Datatype), intent(out) :: newtype
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! int
 integer(c_int) :: blocklength_c     !int blocklength
+! int[]
 integer(c_int), target  :: array_of_displacements_c(count)     !int[] array_of_displacements
+! MPI_Datatype
 integer(c_int) :: oldtype_c     !MPI_Datatype oldtype
+! MPI_Datatype*
 integer(c_int) :: newtype_c     !MPI_Datatype* newtype
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -3214,7 +3891,9 @@ logical, intent(out) :: flag
 integer, optional, intent(out) :: ierror
 
 
+! bool
 integer(c_int) :: flag_c     !bool flag
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -3257,11 +3936,17 @@ type(MPI_Comm) :: comm
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! int
 integer(c_int) :: dest_c     !int dest
+! int
 integer(c_int) :: tag_c     !int tag
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -3311,10 +3996,15 @@ type(MPI_Group), intent(out) :: newgroup
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Group
 integer(c_int) :: group_c     !MPI_Group group
+! int
 integer(c_int) :: n_c     !int n
+! int[]
 integer(c_int), target  :: ranks_c(n)     !int[] ranks
+! MPI_Group*
 integer(c_int) :: newgroup_c     !MPI_Group* newgroup
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -3356,9 +4046,13 @@ integer, intent(out) :: count
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Status*
 type(c_Status) :: status_c     !MPI_Status* status
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! int*
 integer(c_int) :: count_c     !int* count
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -3378,7 +4072,51 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Get_count_f08
 
-!Skipped convert function in MPI_Error_string
+
+subroutine MPI_Error_string_f08( errorcode,&
+string,&
+resultlen,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+integer, intent(in) :: errorcode
+character(len=*), target, intent(out) :: string
+integer(c_int) :: string_len
+integer, intent(out) :: resultlen
+integer, optional, intent(out) :: ierror
+
+
+! int
+integer(c_int) :: errorcode_c     !int errorcode
+! char*
+type(C_PTR) :: string_c     !char* string
+! int*
+integer(c_int) :: resultlen_c     !int* resultlen
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+errorcode_c = errorcode
+
+ret = MPI_Error_string_c(errorcode_c,&
+string_c,&
+resultlen_c,&
+ierror_c,&
+string_len)
+
+!FAIL no conversion to char for string
+resultlen = resultlen_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Error_string_f08
 
 
 subroutine MPI_Grequest_start_f08( query_fn,&
@@ -3402,10 +4140,15 @@ type(MPI_Request), intent(inout) :: request
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Grequest_query_function*
 type(c_ptr) :: query_fn_c     !MPI_Grequest_query_function* query_fn
+! MPI_Grequest_free_function*
 type(c_ptr) :: free_fn_c     !MPI_Grequest_free_function* free_fn
+! MPI_Grequest_cancel_function*
 type(c_ptr) :: cancel_fn_c     !MPI_Grequest_cancel_function* cancel_fn
+! MPI_Request*
 integer(c_int) :: request_c     !MPI_Request* request
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -3445,8 +4188,11 @@ integer, intent(out) :: ndims
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int*
 integer(c_int) :: ndims_c     !int* ndims
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -3490,11 +4236,17 @@ type(MPI_Comm), intent(in) :: comm
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: sendcount_c     !int sendcount
+! MPI_Datatype
 integer(c_int) :: sendtype_c     !MPI_Datatype sendtype
+! int
 integer(c_int) :: recvcount_c     !int recvcount
+! MPI_Datatype
 integer(c_int) :: recvtype_c     !MPI_Datatype recvtype
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -3540,10 +4292,15 @@ integer, intent(out) :: coords(maxdims)
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: rank_c     !int rank
+! int
 integer(c_int) :: maxdims_c     !int maxdims
+! int[]
 integer(c_int), target  :: coords_c(maxdims)     !int[] coords
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -3595,12 +4352,19 @@ type(MPI_Request), intent(inout) :: request
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! int
 integer(c_int) :: dest_c     !int dest
+! int
 integer(c_int) :: tag_c     !int tag
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Request*
 integer(c_int) :: request_c     !MPI_Request* request
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -3655,11 +4419,17 @@ type(MPI_Comm), intent(in) :: comm
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! int
 integer(c_int) :: dest_c     !int dest
+! int
 integer(c_int) :: tag_c     !int tag
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -3703,8 +4473,11 @@ integer, intent(in) :: errorcode
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: errorcode_c     !int errorcode
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -3723,6 +4496,44 @@ if( present(ierror)) ierror = ierror_c
 end subroutine MPI_Abort_f08
 
 
+subroutine MPI_Session_call_errhandler_f08( session,&
+errorcode,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Session), intent(in) :: session
+integer, intent(in) :: errorcode
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Session
+integer(c_int) :: session_c     !MPI_Session session
+! int
+integer(c_int) :: errorcode_c     !int errorcode
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+session_c = session%val
+errorcode_c = errorcode
+
+ret = MPI_Session_call_errhandler_c(session_c,&
+errorcode_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Session_call_errhandler_f08
+
+
 subroutine MPI_Grequest_complete_f08( request,&
 ierror)
 
@@ -3736,7 +4547,9 @@ type(MPI_Request), intent(inout) :: request
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Request
 integer(c_int) :: request_c     !MPI_Request request
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -3779,11 +4592,17 @@ type(MPI_Comm), intent(in) :: comm
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: incount_c     !int incount
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! int
 integer(c_int) :: outsize_c     !int outsize
+! int*
 integer(c_int) :: position_c     !int* position
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -3827,8 +4646,11 @@ type(*), dimension(..) :: attribute_val
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Win
 integer(c_int) :: win_c     !MPI_Win win
+! int
 integer(c_int) :: win_keyval_c     !int win_keyval
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -3861,7 +4683,9 @@ type(MPI_Info), intent(out) :: info
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Info*
 integer(c_int) :: info_c     !MPI_Info* info
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -3898,9 +4722,13 @@ type(MPI_Datatype), intent(out) :: newtype
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: p_c     !int p
+! int
 integer(c_int) :: r_c     !int r
+! MPI_Datatype*
 integer(c_int) :: newtype_c     !MPI_Datatype* newtype
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -3942,9 +4770,13 @@ logical, intent(out) :: flag
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Datatype
 integer(c_int) :: type_c     !MPI_Datatype type
+! int
 integer(c_int) :: type_keyval_c     !int type_keyval
+! bool
 integer(c_int) :: flag_c     !bool flag
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -3965,7 +4797,46 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Type_get_attr_f08
 
-!Skipped convert function in MPI_Comm_set_name
+
+subroutine MPI_Comm_set_name_f08( comm,&
+comm_name,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Comm), intent(in) :: comm
+character(len=*), target, intent(in) :: comm_name
+integer(c_int) :: comm_name_len
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Comm
+integer(c_int) :: comm_c     !MPI_Comm comm
+! char*
+type(C_PTR) :: comm_name_c     !char* comm_name
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+comm_c = comm%val
+comm_name_c = c_loc(comm_name)
+comm_name_len = LEN(comm_name)
+
+ret = MPI_Comm_set_name_c(comm_c,&
+comm_name_c,&
+ierror_c,&
+comm_name_len)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Comm_set_name_f08
 
 
 subroutine MPI_Comm_disconnect_f08( comm,&
@@ -3981,7 +4852,9 @@ type(MPI_Comm), intent(in) :: comm
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm*
 integer(c_int) :: comm_c     !MPI_Comm* comm
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -4013,8 +4886,11 @@ type(MPI_Group), intent(out) :: group
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Group*
 integer(c_int) :: group_c     !MPI_Group* group
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -4054,11 +4930,17 @@ integer, intent(out) :: rank_dest
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: direction_c     !int direction
+! int
 integer(c_int) :: disp_c     !int disp
+! int*
 integer(c_int) :: rank_source_c     !int* rank_source
+! int*
 integer(c_int) :: rank_dest_c     !int* rank_dest
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -4102,10 +4984,15 @@ type(MPI_Group), intent(out) :: newgroup
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Group
 integer(c_int) :: group_c     !MPI_Group group
+! int
 integer(c_int) :: n_c     !int n
+! int[]
 integer(c_int), target  :: ranks_c(n)     !int[] ranks
+! MPI_Group*
 integer(c_int) :: newgroup_c     !MPI_Group* newgroup
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -4145,8 +5032,11 @@ integer, intent(out) :: size
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int*
 integer(c_int) :: size_c     !int* size
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -4186,11 +5076,17 @@ type(MPI_Datatype), intent(out) :: newtype
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! int[]
 integer(c_int), target  :: array_of_blocklengths_c(count)     !int[] array_of_blocklengths
+! MPI_Aint[]
 integer(c_intptr_t), target  :: array_of_displacements_c(count)     !MPI_Aint[] array_of_displacements
+! MPI_Datatype
 integer(c_int) :: oldtype_c     !MPI_Datatype oldtype
+! MPI_Datatype*
 integer(c_int) :: newtype_c     !MPI_Datatype* newtype
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -4237,8 +5133,11 @@ type(MPI_Errhandler), intent(in) :: errhandler
 integer, optional, intent(out) :: ierror
 
 
+! MPI_File
 integer(c_int) :: file_c     !MPI_File file
+! MPI_Errhandler
 integer(c_int) :: errhandler_c     !MPI_Errhandler errhandler
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -4256,7 +5155,61 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_File_set_errhandler_f08
 
-!Skipped convert function in MPI_Register_datarep
+
+subroutine MPI_Register_datarep_f08( datarep,&
+read_conversion_fn,&
+write_conversion_fn,&
+dtype_file_extent_fn,&
+extra_state,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+character(len=*), target, intent(in) :: datarep
+integer(c_int) :: datarep_len
+type(MPI_Datarep_conversion_function), intent(in) :: read_conversion_fn
+type(MPI_Datarep_conversion_function), intent(in) :: write_conversion_fn
+type(MPI_Datarep_extent_function), intent(in) :: dtype_file_extent_fn
+type(*), dimension(..) :: extra_state
+integer, optional, intent(out) :: ierror
+
+
+! char*
+type(C_PTR) :: datarep_c     !char* datarep
+! MPI_Datarep_conversion_function*
+type(c_ptr) :: read_conversion_fn_c     !MPI_Datarep_conversion_function* read_conversion_fn
+! MPI_Datarep_conversion_function*
+type(c_ptr) :: write_conversion_fn_c     !MPI_Datarep_conversion_function* write_conversion_fn
+! MPI_Datarep_extent_function*
+type(c_ptr) :: dtype_file_extent_fn_c     !MPI_Datarep_extent_function* dtype_file_extent_fn
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+datarep_c = c_loc(datarep)
+datarep_len = LEN(datarep)
+read_conversion_fn_c = read_conversion_fn%val
+write_conversion_fn_c = write_conversion_fn%val
+dtype_file_extent_fn_c = dtype_file_extent_fn%val
+
+ret = MPI_Register_datarep_c(datarep_c,&
+read_conversion_fn_c,&
+write_conversion_fn_c,&
+dtype_file_extent_fn_c,&
+extra_state,&
+ierror_c,&
+datarep_len)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Register_datarep_f08
 
 ! MPI_File_read_ordered NOT IMPLEMENTED in MPC
 
@@ -4281,9 +5234,13 @@ type(MPI_Group), intent(out) :: newgroup
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Group
 integer(c_int) :: group1_c     !MPI_Group group1
+! MPI_Group
 integer(c_int) :: group2_c     !MPI_Group group2
+! MPI_Group*
 integer(c_int) :: newgroup_c     !MPI_Group* newgroup
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -4323,9 +5280,13 @@ logical, intent(out) :: flag
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: keyval_c     !int keyval
+! bool
 integer(c_int) :: flag_c     !bool flag
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -4348,7 +5309,51 @@ end subroutine MPI_Attr_get_f08
 
 !Skipped convert function in MPI_Reduce_scatter
 
-!Skipped convert function in MPI_Win_get_name
+
+subroutine MPI_Win_get_name_f08( win,&
+win_name,&
+resultlen,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Win), intent(in) :: win
+character(len=*), target, intent(out) :: win_name
+integer(c_int) :: win_name_len
+integer, intent(out) :: resultlen
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Win
+integer(c_int) :: win_c     !MPI_Win win
+! char*
+type(C_PTR) :: win_name_c     !char* win_name
+! int*
+integer(c_int) :: resultlen_c     !int* resultlen
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+win_c = win%val
+
+ret = MPI_Win_get_name_c(win_c,&
+win_name_c,&
+resultlen_c,&
+ierror_c,&
+win_name_len)
+
+!FAIL no conversion to char for win_name
+resultlen = resultlen_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Win_get_name_f08
 
 
 subroutine MPI_Type_create_f90_real_f08( p,&
@@ -4368,9 +5373,13 @@ type(MPI_Datatype), intent(out) :: newtype
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: p_c     !int p
+! int
 integer(c_int) :: r_c     !int r
+! MPI_Datatype*
 integer(c_int) :: newtype_c     !MPI_Datatype* newtype
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -4391,11 +5400,10 @@ if( present(ierror)) ierror = ierror_c
 end subroutine MPI_Type_create_f90_real_f08
 
 
-subroutine MPI_Imrecv_f08( buf,&
-count,&
-datatype,&
-message,&
-status,&
+subroutine MPI_Win_create_keyval_f08( win_copy_attr_fn,&
+win_delete_attr_fn,&
+win_keyval,&
+extra_state,&
 ierror)
 
 use :: mpi_f08_ctypes
@@ -4404,40 +5412,39 @@ use :: mpi_f08_c
 
 implicit none
 
-type(*), dimension(..) :: buf
-integer, intent(in) :: count
-type(MPI_Datatype), intent(in) :: datatype
-type(MPI_Message), intent(inout) :: message
-type(MPI_Request), intent(out) :: status
+type(MPI_Win_copy_attr_function), intent(in) :: win_copy_attr_fn
+type(MPI_Win_delete_attr_function), intent(in) :: win_delete_attr_fn
+integer, intent(out) :: win_keyval
+type(*), dimension(..) :: extra_state
 integer, optional, intent(out) :: ierror
 
 
-integer(c_int) :: count_c     !int count
-integer(c_int) :: datatype_c     !MPI_Datatype datatype
-integer(c_int) :: message_c     !MPI_Message* message
-integer(c_int) :: status_c     !MPI_Request* status
+! MPI_Win_copy_attr_function*
+type(c_ptr) :: win_copy_attr_fn_c     !MPI_Win_copy_attr_function* win_copy_attr_fn
+! MPI_Win_delete_attr_function*
+type(c_ptr) :: win_delete_attr_fn_c     !MPI_Win_delete_attr_function* win_delete_attr_fn
+! int*
+integer(c_int) :: win_keyval_c     !int* win_keyval
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
 integer(c_int) ::  r_ ! for comm array expansion
 
-count_c = count
-datatype_c = datatype%val
-message_c = message%val
+win_copy_attr_fn_c = win_copy_attr_fn%val
+win_delete_attr_fn_c = win_delete_attr_fn%val
 
-ret = MPI_Imrecv_c(buf,&
-count_c,&
-datatype_c,&
-message_c,&
-status_c,&
+ret = MPI_Win_create_keyval_c(win_copy_attr_fn_c,&
+win_delete_attr_fn_c,&
+win_keyval_c,&
+extra_state,&
 ierror_c)
 
-message%val = message_c
-status%val = status_c
+win_keyval = win_keyval_c
 
 if( present(ierror)) ierror = ierror_c
 
-end subroutine MPI_Imrecv_f08
+end subroutine MPI_Win_create_keyval_f08
 
 
 subroutine MPI_Wait_f08( request,&
@@ -4455,8 +5462,11 @@ type(MPI_Status) :: status
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Request*
 integer(c_int) :: request_c     !MPI_Request* request
+! MPI_Status*
 type(c_Status) :: status_c     !MPI_Status* status
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -4477,10 +5487,8 @@ if( present(ierror)) ierror = ierror_c
 end subroutine MPI_Wait_f08
 
 
-subroutine MPI_Testall_f08( count,&
-array_of_requests,&
-flag,&
-array_of_statuses,&
+subroutine MPI_Session_get_errhandler_f08( session,&
+errh,&
 ierror)
 
 use :: mpi_f08_ctypes
@@ -4489,46 +5497,35 @@ use :: mpi_f08_c
 
 implicit none
 
-integer, intent(in) :: count
-type(MPI_Request), target, intent(in) :: array_of_requests(count)
-logical, intent(out) :: flag
-type(MPI_Status), target :: array_of_statuses(count)
+type(MPI_Session), intent(in) :: session
+type(MPI_Errhandler), intent(out) :: errh
 integer, optional, intent(out) :: ierror
 
 
-integer(c_int) :: count_c     !int count
-integer(c_int), target  :: array_of_requests_c(count)     !MPI_Request[] array_of_requests
-integer(c_int) :: flag_c     !bool flag
-type(c_Status), target  :: array_of_statuses_c(count)     !MPI_Status[] array_of_statuses
+! MPI_Session
+integer(c_int) :: session_c     !MPI_Session session
+! MPI_Errhandler*
+integer(c_int) :: errh_c     !MPI_Errhandler* errh
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
 integer(c_int) ::  r_ ! for comm array expansion
 
-count_c = count
-do 15 n_ = 1 , count
-array_of_requests_c(n_) = array_of_requests(n_)
-15 continue
+session_c = session%val
 
-ret = MPI_Testall_c(count_c,&
-array_of_requests%val,&
-flag_c,&
-c_loc(array_of_statuses_c),&
+ret = MPI_Session_get_errhandler_c(session_c,&
+errh_c,&
 ierror_c)
 
-flag = flag_c
-if ( c_associated(c_loc(array_of_statuses), c_loc(MPI_STATUSES_IGNORE))&
-.OR. ( c_associated(c_loc(array_of_statuses), c_loc(MPI_STATUS_IGNORE)))) then
-    n_=2 !dummy operation
-else
-do 16 n_ = 1 , count
-array_of_statuses(n_) = array_of_statuses_c(n_)
-16 continue
-end if
+errh%val = errh_c
 
 if( present(ierror)) ierror = ierror_c
 
-end subroutine MPI_Testall_f08
+end subroutine MPI_Session_get_errhandler_f08
+
+! MPI_File_write_all NOT IMPLEMENTED in MPC
+
 
 ! MPI_File_set_info NOT IMPLEMENTED in MPC
 
@@ -4559,12 +5556,19 @@ type(MPI_Request), intent(inout) :: request
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! int
 integer(c_int) :: dest_c     !int dest
+! int
 integer(c_int) :: tag_c     !int tag
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Request*
 integer(c_int) :: request_c     !MPI_Request* request
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -4608,8 +5612,11 @@ integer, intent(inout) :: subversion
 integer, optional, intent(out) :: ierror
 
 
+! int*
 integer(c_int) :: version_c     !int* version
+! int*
 integer(c_int) :: subversion_c     !int* subversion
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -4645,8 +5652,11 @@ integer, intent(in) :: errorcode
 integer, optional, intent(out) :: ierror
 
 
+! MPI_File
 integer(c_int) :: fh_c     !MPI_File fh
+! int
 integer(c_int) :: errorcode_c     !int errorcode
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -4680,8 +5690,11 @@ type(MPI_Errhandler), intent(in) :: errhandler
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm_errhandler_function*
 type(c_ptr) :: function_c     !MPI_Comm_errhandler_function* function
+! MPI_Errhandler*
 integer(c_int) :: errhandler_c     !MPI_Errhandler* errhandler
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -4699,10 +5712,111 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Comm_create_errhandler_f08
 
-! MPI_File_write_all NOT IMPLEMENTED in MPC
+
+subroutine MPI_Session_get_pset_info_f08( session,&
+pset_name,&
+info,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Session), intent(in) :: session
+character(len=*), target, intent(in) :: pset_name
+integer(c_int) :: pset_name_len
+type(MPI_Info), intent(out) :: info
+integer, optional, intent(out) :: ierror
 
 
-!Skipped convert function in MPI_Comm_connect
+! MPI_Session
+integer(c_int) :: session_c     !MPI_Session session
+! char*
+type(C_PTR) :: pset_name_c     !char* pset_name
+! MPI_Info*
+integer(c_int) :: info_c     !MPI_Info* info
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+session_c = session%val
+pset_name_c = c_loc(pset_name)
+pset_name_len = LEN(pset_name)
+
+ret = MPI_Session_get_pset_info_c(session_c,&
+pset_name_c,&
+info_c,&
+ierror_c,&
+pset_name_len)
+
+info%val = info_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Session_get_pset_info_f08
+
+
+subroutine MPI_Comm_connect_f08( port_name,&
+info,&
+root,&
+comm,&
+newcomm,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+character(len=*), target, intent(in) :: port_name
+integer(c_int) :: port_name_len
+type(MPI_Info), intent(in) :: info
+integer, intent(in) :: root
+type(MPI_Comm), intent(in) :: comm
+type(MPI_Comm), intent(out) :: newcomm
+integer, optional, intent(out) :: ierror
+
+
+! char*
+type(C_PTR) :: port_name_c     !char* port_name
+! MPI_Info
+integer(c_int) :: info_c     !MPI_Info info
+! int
+integer(c_int) :: root_c     !int root
+! MPI_Comm
+integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Comm*
+integer(c_int) :: newcomm_c     !MPI_Comm* newcomm
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+port_name_c = c_loc(port_name)
+port_name_len = LEN(port_name)
+info_c = info%val
+root_c = root
+comm_c = comm%val
+
+ret = MPI_Comm_connect_c(port_name_c,&
+info_c,&
+root_c,&
+comm_c,&
+newcomm_c,&
+ierror_c,&
+port_name_len)
+
+newcomm%val = newcomm_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Comm_connect_f08
 
 
 subroutine MPI_Group_compare_f08( group1,&
@@ -4722,9 +5836,13 @@ integer, intent(out) :: result
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Group
 integer(c_int) :: group1_c     !MPI_Group group1
+! MPI_Group
 integer(c_int) :: group2_c     !MPI_Group group2
+! int*
 integer(c_int) :: result_c     !int* result
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -4760,7 +5878,9 @@ integer*8, intent(out) :: address
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Aint*
 integer(c_intptr_t) :: address_c     !MPI_Aint* address
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -4795,9 +5915,13 @@ integer, intent(out) :: result
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm1_c     !MPI_Comm comm1
+! MPI_Comm
 integer(c_int) :: comm2_c     !MPI_Comm comm2
+! int*
 integer(c_int) :: result_c     !int* result
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -4833,8 +5957,11 @@ type(MPI_Win), intent(in) :: win
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: rank_c     !int rank
+! MPI_Win
 integer(c_int) :: win_c     !MPI_Win win
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -4868,7 +5995,9 @@ type(MPI_Request), intent(inout) :: request
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Request*
 integer(c_int) :: request_c     !MPI_Request* request
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -4901,8 +6030,11 @@ integer, intent(out) :: status
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int*
 integer(c_int) :: status_c     !int* status
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -4924,8 +6056,7 @@ end subroutine MPI_Topo_test_f08
 
 
 
-subroutine MPI_Buffer_attach_f08( buffer,&
-size,&
+subroutine MPI_Query_thread_f08( provided,&
 ierror)
 
 use :: mpi_f08_ctypes
@@ -4934,28 +6065,27 @@ use :: mpi_f08_c
 
 implicit none
 
-type(*), dimension(..) :: buffer
-integer :: size
+integer, intent(out) :: provided
 integer, optional, intent(out) :: ierror
 
 
-integer(c_int) :: size_c     !int size
+! int*
+integer(c_int) :: provided_c     !int* provided
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
 integer(c_int) ::  r_ ! for comm array expansion
 
-size_c = size
 
-ret = MPI_Buffer_attach_c(buffer,&
-size_c,&
+ret = MPI_Query_thread_c(provided_c,&
 ierror_c)
 
-size = size_c
+provided = provided_c
 
 if( present(ierror)) ierror = ierror_c
 
-end subroutine MPI_Buffer_attach_f08
+end subroutine MPI_Query_thread_f08
 
 
 subroutine MPI_Win_call_errhandler_f08( win,&
@@ -4973,8 +6103,11 @@ integer, intent(in) :: errorcode
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Win
 integer(c_int) :: win_c     !MPI_Win win
+! int
 integer(c_int) :: errorcode_c     !int errorcode
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -5008,8 +6141,11 @@ type(MPI_Group), intent(out) :: group
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Win
 integer(c_int) :: win_c     !MPI_Win win
+! MPI_Group*
 integer(c_int) :: group_c     !MPI_Group* group
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -5043,8 +6179,11 @@ type(MPI_Errhandler), intent(out) :: errhandler
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Handler_function*
 type(c_ptr) :: function_c     !MPI_Handler_function* function
+! MPI_Errhandler*
 integer(c_int) :: errhandler_c     !MPI_Errhandler* errhandler
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -5086,12 +6225,19 @@ type(MPI_Comm), intent(out) :: comm_cart
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: old_comm_c     !MPI_Comm old_comm
+! int
 integer(c_int) :: ndims_c     !int ndims
+! int[]
 integer(c_int), target  :: dims_c(ndims)     !int[] dims
+! bool[]
 integer(c_int), target  :: periods_c(ndims)     !bool[] periods
+! bool
 integer(c_int) :: reorder_c     !bool reorder
+! MPI_Comm*
 integer(c_int) :: comm_cart_c     !MPI_Comm* comm_cart
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -5099,12 +6245,12 @@ integer(c_int) ::  r_ ! for comm array expansion
 
 old_comm_c = old_comm%val
 ndims_c = ndims
-do 17 n_ = 1 , ndims
+do 15 n_ = 1 , ndims
 dims_c(n_) = dims(n_)
-17 continue
-do 18 n_ = 1 , ndims
+15 continue
+do 16 n_ = 1 , ndims
 !ERR LAYOUT bool[] 
-18 continue
+16 continue
 reorder_c = reorder
 
 ret = MPI_Cart_create_c(old_comm_c,&
@@ -5137,8 +6283,11 @@ logical, intent(out) :: flag
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Status*
 type(c_Status) :: status_c     !MPI_Status* status
+! bool
 integer(c_int) :: flag_c     !bool flag
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -5182,26 +6331,32 @@ type(MPI_Datatype), intent(out) :: newtype
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! int[]
 integer(c_int), target  :: array_of_blocklengths_c(count)     !int[] array_of_blocklengths
+! int[]
 integer(c_int), target  :: array_of_displacements_c(count)     !int[] array_of_displacements
+! MPI_Datatype[]
 integer(c_int), target  :: array_of_types_c(count)     !MPI_Datatype[] array_of_types
+! MPI_Datatype*
 integer(c_int) :: newtype_c     !MPI_Datatype* newtype
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
 integer(c_int) ::  r_ ! for comm array expansion
 
 count_c = count
-do 19 n_ = 1 , count
+do 17 n_ = 1 , count
 array_of_blocklengths_c(n_) = array_of_blocklengths(n_)
-19 continue
-do 20 n_ = 1 , count
+17 continue
+do 18 n_ = 1 , count
 array_of_displacements_c(n_) = array_of_displacements(n_)
-20 continue
-do 21 n_ = 1 , count
+18 continue
+do 19 n_ = 1 , count
 array_of_types_c(n_) = array_of_types(n_)
-21 continue
+19 continue
 
 ret = MPI_Type_struct_c(count_c,&
 c_loc(array_of_blocklengths_c),&
@@ -5234,9 +6389,13 @@ integer, intent(out) :: nneighbors
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: rank_c     !int rank
+! int*
 integer(c_int) :: nneighbors_c     !int* nneighbors
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -5284,10 +6443,15 @@ integer, intent(out) :: neighbors(maxneighbors)
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: rank_c     !int rank
+! int
 integer(c_int) :: maxneighbors_c     !int maxneighbors
+! int[]
 integer(c_int), target  :: neighbors_c(maxneighbors)     !int[] neighbors
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -5303,9 +6467,9 @@ maxneighbors_c,&
 c_loc(neighbors_c),&
 ierror_c)
 
-do 22 n_ = 1 , maxneighbors
+do 20 n_ = 1 , maxneighbors
 neighbors(n_) = neighbors_c(n_)
-22 continue
+20 continue
 
 if( present(ierror)) ierror = ierror_c
 
@@ -5329,9 +6493,13 @@ integer, intent(inout) :: dims(ndims)
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: nnodes_c     !int nnodes
+! int
 integer(c_int) :: ndims_c     !int ndims
+! int[]
 integer(c_int), target  :: dims_c(ndims)     !int[] dims
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -5339,18 +6507,18 @@ integer(c_int) ::  r_ ! for comm array expansion
 
 nnodes_c = nnodes
 ndims_c = ndims
-do 23 n_ = 1 , ndims
+do 21 n_ = 1 , ndims
 dims_c(n_) = dims(n_)
-23 continue
+21 continue
 
 ret = MPI_Dims_create_c(nnodes_c,&
 ndims_c,&
 c_loc(dims_c),&
 ierror_c)
 
-do 24 n_ = 1 , ndims
+do 22 n_ = 1 , ndims
 dims(n_) = dims_c(n_)
-24 continue
+22 continue
 
 if( present(ierror)) ierror = ierror_c
 
@@ -5387,12 +6555,19 @@ type(MPI_Comm), intent(in) :: comm
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: sendcount_c     !int sendcount
+! MPI_Datatype
 integer(c_int) :: sendtype_c     !MPI_Datatype sendtype
+! int
 integer(c_int) :: recvcount_c     !int recvcount
+! MPI_Datatype
 integer(c_int) :: recvtype_c     !MPI_Datatype recvtype
+! int
 integer(c_int) :: root_c     !int root
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -5420,8 +6595,46 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Scatter_f08
 
-! MPI_File_get_byte_offset NOT IMPLEMENTED in MPC
 
+subroutine MPI_Comm_set_attr_f08( comm,&
+comm_keyval,&
+attribute_val,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Comm), intent(in) :: comm
+integer, intent(in) :: comm_keyval
+type(*), dimension(..) :: attribute_val
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Comm
+integer(c_int) :: comm_c     !MPI_Comm comm
+! int
+integer(c_int) :: comm_keyval_c     !int comm_keyval
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+comm_c = comm%val
+comm_keyval_c = comm_keyval
+
+ret = MPI_Comm_set_attr_c(comm_c,&
+comm_keyval_c,&
+attribute_val,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Comm_set_attr_f08
 
 
 subroutine MPI_Comm_free_keyval_f08( comm_keyval,&
@@ -5437,7 +6650,9 @@ integer, intent(inout) :: comm_keyval
 integer, optional, intent(out) :: ierror
 
 
+! int*
 integer(c_int) :: comm_keyval_c     !int* comm_keyval
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -5472,9 +6687,13 @@ type(MPI_Op), intent(out) :: op
 integer, optional, intent(out) :: ierror
 
 
+! MPI_User_function*
 type(c_ptr) :: function_c     !MPI_User_function* function
+! bool
 integer(c_int) :: commute_c     !bool commute
+! MPI_Op*
 integer(c_int) :: op_c     !MPI_Op* op
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -5497,14 +6716,9 @@ end subroutine MPI_Op_create_f08
 ! MPI_File_seek NOT IMPLEMENTED in MPC
 
 
-!Skipped convert function in MPI_Add_error_string
 
-
-subroutine MPI_Mprobe_f08( source,&
-tag,&
-comm,&
-message,&
-status,&
+subroutine MPI_Add_error_string_f08( errorcode,&
+string,&
 ierror)
 
 use :: mpi_f08_ctypes
@@ -5513,42 +6727,68 @@ use :: mpi_f08_c
 
 implicit none
 
-integer, intent(in) :: source
-integer, intent(in) :: tag
-type(MPI_Comm), intent(in) :: comm
-type(MPI_Message), intent(inout) :: message
-type(MPI_Status) :: status
+integer, intent(in) :: errorcode
+character(len=*), target, intent(in) :: string
+integer(c_int) :: string_len
 integer, optional, intent(out) :: ierror
 
 
-integer(c_int) :: source_c     !int source
-integer(c_int) :: tag_c     !int tag
-integer(c_int) :: comm_c     !MPI_Comm comm
-integer(c_int) :: message_c     !MPI_Message* message
-type(c_Status) :: status_c     !MPI_Status* status
+! int
+integer(c_int) :: errorcode_c     !int errorcode
+! char*
+type(C_PTR) :: string_c     !char* string
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
 integer(c_int) ::  r_ ! for comm array expansion
 
-source_c = source
-tag_c = tag
-comm_c = comm%val
-message_c = message%val
+errorcode_c = errorcode
+string_c = c_loc(string)
+string_len = LEN(string)
 
-ret = MPI_Mprobe_c(source_c,&
-tag_c,&
-comm_c,&
-message_c,&
-status_c,&
-ierror_c)
+ret = MPI_Add_error_string_c(errorcode_c,&
+string_c,&
+ierror_c,&
+string_len)
 
-message%val = message_c
-status = status_c
 
 if( present(ierror)) ierror = ierror_c
 
-end subroutine MPI_Mprobe_f08
+end subroutine MPI_Add_error_string_f08
+
+
+subroutine MPI_Session_finalize_f08( session,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Session), intent(inout) :: session
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Session*
+integer(c_int) :: session_c     !MPI_Session* session
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+session_c = session%val
+
+ret = MPI_Session_finalize_c(session_c,&
+ierror_c)
+
+session%val = session_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Session_finalize_f08
 
 
 subroutine MPI_Ssend_init_f08( buf,&
@@ -5576,12 +6816,19 @@ type(MPI_Request), intent(inout) :: request
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! int
 integer(c_int) :: dest_c     !int dest
+! int
 integer(c_int) :: tag_c     !int tag
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Request*
 integer(c_int) :: request_c     !MPI_Request* request
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -5635,12 +6882,19 @@ type(MPI_Request), intent(inout) :: request
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! int
 integer(c_int) :: dest_c     !int dest
+! int
 integer(c_int) :: tag_c     !int tag
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Request*
 integer(c_int) :: request_c     !MPI_Request* request
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -5682,7 +6936,9 @@ type(MPI_Info), intent(inout) :: info
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Info*
 integer(c_int) :: info_c     !MPI_Info* info
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -5699,7 +6955,55 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Info_free_f08
 
-!Skipped convert function in MPI_Publish_name
+
+subroutine MPI_Publish_name_f08( service_name,&
+info,&
+port_name,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+character(len=*), target, intent(in) :: service_name
+integer(c_int) :: service_name_len
+type(MPI_Info), intent(in) :: info
+character(len=*), target, intent(in) :: port_name
+integer(c_int) :: port_name_len
+integer, optional, intent(out) :: ierror
+
+
+! char*
+type(C_PTR) :: service_name_c     !char* service_name
+! MPI_Info
+integer(c_int) :: info_c     !MPI_Info info
+! char*
+type(C_PTR) :: port_name_c     !char* port_name
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+service_name_c = c_loc(service_name)
+service_name_len = LEN(service_name)
+info_c = info%val
+port_name_c = c_loc(port_name)
+port_name_len = LEN(port_name)
+
+ret = MPI_Publish_name_c(service_name_c,&
+info_c,&
+port_name_c,&
+ierror_c,&
+service_name_len,&
+port_name_len)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Publish_name_f08
 
 
 subroutine MPI_Bcast_f08( buffer,&
@@ -5723,10 +7027,15 @@ type(MPI_Comm), intent(in) :: comm
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! int
 integer(c_int) :: root_c     !int root
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -5749,9 +7058,95 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Bcast_f08
 
-!Skipped convert function in MPI_Get_processor_name
 
-!Skipped convert function in MPI_Info_set
+subroutine MPI_Get_processor_name_f08( name,&
+resultlen,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+character(len=*), target, intent(out) :: name
+integer(c_int) :: name_len
+integer, intent(out) :: resultlen
+integer, optional, intent(out) :: ierror
+
+
+! char*
+type(C_PTR) :: name_c     !char* name
+! int*
+integer(c_int) :: resultlen_c     !int* resultlen
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+
+ret = MPI_Get_processor_name_c(name_c,&
+resultlen_c,&
+ierror_c,&
+name_len)
+
+!FAIL no conversion to char for name
+resultlen = resultlen_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Get_processor_name_f08
+
+
+subroutine MPI_Info_set_f08( info,&
+key,&
+value,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Info), intent(in) :: info
+character(len=*), target, intent(in) :: key
+integer(c_int) :: key_len
+character(len=*), target, intent(in) :: value
+integer(c_int) :: value_len
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Info
+integer(c_int) :: info_c     !MPI_Info info
+! char*
+type(C_PTR) :: key_c     !char* key
+! char*
+type(C_PTR) :: value_c     !char* value
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+info_c = info%val
+key_c = c_loc(key)
+key_len = LEN(key)
+value_c = c_loc(value)
+value_len = LEN(value)
+
+ret = MPI_Info_set_c(info_c,&
+key_c,&
+value_c,&
+ierror_c,&
+key_len,&
+value_len)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Info_set_f08
 
 ! MPI_File_write_ordered_end NOT IMPLEMENTED in MPC
 
@@ -5772,7 +7167,9 @@ type(MPI_Comm), intent(inout) :: comm
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm*
 integer(c_int) :: comm_c     !MPI_Comm* comm
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -5808,8 +7205,11 @@ type(MPI_Errhandler), intent(out) :: errhandler
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Errhandler*
 integer(c_int) :: errhandler_c     !MPI_Errhandler* errhandler
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -5847,10 +7247,15 @@ integer, intent(out) :: size
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: incount_c     !int incount
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int*
 integer(c_int) :: size_c     !int* size
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -5888,8 +7293,11 @@ integer, intent(in) :: errorcode
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: errorcode_c     !int errorcode
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -5923,8 +7331,11 @@ logical, intent(out) :: flag
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! bool
 integer(c_int) :: flag_c     !bool flag
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -5941,6 +7352,65 @@ flag = flag_c
 if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Comm_test_inter_f08
+
+
+subroutine MPI_Comm_create_from_group_f08( group,&
+stringtag,&
+info,&
+errh,&
+newcomm,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Group), intent(in) :: group
+character(len=*), target, intent(in) :: stringtag
+integer(c_int) :: stringtag_len
+type(MPI_Info), intent(in) :: info
+type(MPI_Errhandler), intent(in) :: errh
+type(MPI_Comm), intent(out) :: newcomm
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Group
+integer(c_int) :: group_c     !MPI_Group group
+! char*
+type(C_PTR) :: stringtag_c     !char* stringtag
+! MPI_Info
+integer(c_int) :: info_c     !MPI_Info info
+! MPI_Errhandler
+integer(c_int) :: errh_c     !MPI_Errhandler errh
+! MPI_Comm*
+integer(c_int) :: newcomm_c     !MPI_Comm* newcomm
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+group_c = group%val
+stringtag_c = c_loc(stringtag)
+stringtag_len = LEN(stringtag)
+info_c = info%val
+errh_c = errh%val
+
+ret = MPI_Comm_create_from_group_c(group_c,&
+stringtag_c,&
+info_c,&
+errh_c,&
+newcomm_c,&
+ierror_c,&
+stringtag_len)
+
+newcomm%val = newcomm_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Comm_create_from_group_f08
 
 
 subroutine MPI_Intercomm_merge_f08( intercomm,&
@@ -5960,9 +7430,13 @@ type(MPI_Comm), intent(out) :: newintercomm
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: intercomm_c     !MPI_Comm intercomm
+! bool
 integer(c_int) :: high_c     !bool high
+! MPI_Comm*
 integer(c_int) :: newintercomm_c     !MPI_Comm* newintercomm
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -5996,7 +7470,9 @@ type(MPI_Win), intent(in) :: win
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Win
 integer(c_int) :: win_c     !MPI_Win win
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -6012,7 +7488,70 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Win_complete_f08
 
-!Skipped convert function in MPI_Pack_external
+
+subroutine MPI_Pack_external_f08( datarep,&
+inbuf,&
+incount,&
+datatype,&
+outbuf,&
+outsize,&
+position,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+character(len=*), target, intent(in) :: datarep
+integer(c_int) :: datarep_len
+type(*), dimension(..) :: inbuf
+integer, intent(in) :: incount
+type(MPI_Datatype), intent(in) :: datatype
+type(*), dimension(..) :: outbuf
+integer*8, intent(in) :: outsize
+integer*8, intent(out) :: position
+integer, optional, intent(out) :: ierror
+
+
+! char*
+type(C_PTR) :: datarep_c     !char* datarep
+! int
+integer(c_int) :: incount_c     !int incount
+! MPI_Datatype
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! MPI_Aint
+integer(c_intptr_t) :: outsize_c     !MPI_Aint outsize
+! MPI_Aint*
+integer(c_intptr_t) :: position_c     !MPI_Aint* position
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+datarep_c = c_loc(datarep)
+datarep_len = LEN(datarep)
+incount_c = incount
+datatype_c = datatype%val
+outsize_c = outsize
+
+ret = MPI_Pack_external_c(datarep_c,&
+inbuf,&
+incount_c,&
+datatype_c,&
+outbuf,&
+outsize_c,&
+position_c,&
+ierror_c,&
+datarep_len)
+
+position = position_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Pack_external_f08
 
 ! MPI_File_get_type_extent NOT IMPLEMENTED in MPC
 
@@ -6038,8 +7577,11 @@ type(*), dimension(..) :: attr_val
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Datatype
 integer(c_int) :: type_c     !MPI_Datatype type
+! int
 integer(c_int) :: type_keyval_c     !int type_keyval
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -6058,7 +7600,58 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Type_set_attr_f08
 
-!Skipped convert function in MPI_Info_get_valuelen
+
+subroutine MPI_Info_get_valuelen_f08( info,&
+key,&
+valuelen,&
+flag,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Info), intent(in) :: info
+character(len=*), target, intent(in) :: key
+integer(c_int) :: key_len
+integer, intent(out) :: valuelen
+logical, intent(out) :: flag
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Info
+integer(c_int) :: info_c     !MPI_Info info
+! char*
+type(C_PTR) :: key_c     !char* key
+! int*
+integer(c_int) :: valuelen_c     !int* valuelen
+! bool
+integer(c_int) :: flag_c     !bool flag
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+info_c = info%val
+key_c = c_loc(key)
+key_len = LEN(key)
+
+ret = MPI_Info_get_valuelen_c(info_c,&
+key_c,&
+valuelen_c,&
+flag_c,&
+ierror_c,&
+key_len)
+
+valuelen = valuelen_c
+flag = flag_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Info_get_valuelen_f08
 
 
 subroutine MPI_Put_f08( origin_addr,&
@@ -6088,13 +7681,21 @@ type(MPI_Win), intent(in) :: win
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: origin_count_c     !int origin_count
+! MPI_Datatype
 integer(c_int) :: origin_datatype_c     !MPI_Datatype origin_datatype
+! int
 integer(c_int) :: target_rank_c     !int target_rank
+! MPI_Aint
 integer(c_intptr_t) :: target_disp_c     !MPI_Aint target_disp
+! int
 integer(c_int) :: target_count_c     !int target_count
+! MPI_Datatype
 integer(c_int) :: target_datatype_c     !MPI_Datatype target_datatype
+! MPI_Win
 integer(c_int) :: win_c     !MPI_Win win
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -6155,12 +7756,19 @@ type(MPI_Request), intent(inout) :: request
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! int
 integer(c_int) :: dest_c     !int dest
+! int
 integer(c_int) :: tag_c     !int tag
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Request*
 integer(c_int) :: request_c     !MPI_Request* request
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -6210,11 +7818,17 @@ integer, intent(out) :: combiner
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Datatype
 integer(c_int) :: type_c     !MPI_Datatype type
+! int*
 integer(c_int) :: num_integers_c     !int* num_integers
+! int*
 integer(c_int) :: num_addresses_c     !int* num_addresses
+! int*
 integer(c_int) :: num_datatypes_c     !int* num_datatypes
+! int*
 integer(c_int) :: combiner_c     !int* combiner
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -6254,8 +7868,11 @@ integer, intent(out) :: rank
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Group
 integer(c_int) :: group_c     !MPI_Group group
+! int*
 integer(c_int) :: rank_c     !int* rank
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -6299,11 +7916,17 @@ type(MPI_Comm), intent(in) :: comm
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: sendcount_c     !int sendcount
+! MPI_Datatype
 integer(c_int) :: sendtype_c     !MPI_Datatype sendtype
+! int
 integer(c_int) :: recvcount_c     !int recvcount
+! MPI_Datatype
 integer(c_int) :: recvtype_c     !MPI_Datatype recvtype
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -6330,8 +7953,8 @@ if( present(ierror)) ierror = ierror_c
 end subroutine MPI_Alltoall_f08
 
 
-subroutine MPI_File_create_errhandler_f08( function,&
-errhandler,&
+subroutine MPI_Buffer_attach_f08( buffer,&
+size,&
 ierror)
 
 use :: mpi_f08_ctypes
@@ -6340,31 +7963,91 @@ use :: mpi_f08_c
 
 implicit none
 
-type(MPI_File_errhandler_function), intent(in) :: function
-type(MPI_Errhandler), intent(out) :: errhandler
+type(*), dimension(..) :: buffer
+integer :: size
 integer, optional, intent(out) :: ierror
 
 
-type(c_ptr) :: function_c     !MPI_File_errhandler_function* function
-integer(c_int) :: errhandler_c     !MPI_Errhandler* errhandler
+! int
+integer(c_int) :: size_c     !int size
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
 integer(c_int) ::  r_ ! for comm array expansion
 
-function_c = function%val
+size_c = size
 
-ret = MPI_File_create_errhandler_c(function_c,&
-errhandler_c,&
+ret = MPI_Buffer_attach_c(buffer,&
+size_c,&
 ierror_c)
 
-errhandler%val = errhandler_c
+size = size_c
 
 if( present(ierror)) ierror = ierror_c
 
-end subroutine MPI_File_create_errhandler_f08
+end subroutine MPI_Buffer_attach_f08
 
-!Skipped convert function in MPI_Info_get
+
+subroutine MPI_Info_get_f08( info,&
+key,&
+valuelen,&
+value,&
+flag,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Info), intent(in) :: info
+character(len=*), target, intent(in) :: key
+integer(c_int) :: key_len
+integer, intent(in) :: valuelen
+character(len=*), target, intent(out) :: value
+integer(c_int) :: value_len
+logical, intent(out) :: flag
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Info
+integer(c_int) :: info_c     !MPI_Info info
+! char*
+type(C_PTR) :: key_c     !char* key
+! int
+integer(c_int) :: valuelen_c     !int valuelen
+! char*
+type(C_PTR) :: value_c     !char* value
+! bool
+integer(c_int) :: flag_c     !bool flag
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+info_c = info%val
+key_c = c_loc(key)
+key_len = LEN(key)
+valuelen_c = valuelen
+
+ret = MPI_Info_get_c(info_c,&
+key_c,&
+valuelen_c,&
+value_c,&
+flag_c,&
+ierror_c,&
+key_len,&
+value_len)
+
+!FAIL no conversion to char for value
+flag = flag_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Info_get_f08
 
 ! MPI_File_iwrite_at NOT IMPLEMENTED in MPC
 
@@ -6387,9 +8070,13 @@ type(MPI_Group), intent(out) :: newgroup
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Group
 integer(c_int) :: group1_c     !MPI_Group group1
+! MPI_Group
 integer(c_int) :: group2_c     !MPI_Group group2
+! MPI_Group*
 integer(c_int) :: newgroup_c     !MPI_Group* newgroup
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -6423,7 +8110,9 @@ integer, intent(inout) :: type_keyval
 integer, optional, intent(out) :: ierror
 
 
+! int*
 integer(c_int) :: type_keyval_c     !int* type_keyval
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -6462,26 +8151,32 @@ type(MPI_Datatype), intent(out) :: newtype
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! int[]
 integer(c_int), target  :: array_of_block_lengths_c(count)     !int[] array_of_block_lengths
+! MPI_Aint[]
 integer(c_intptr_t), target  :: array_of_displacements_c(count)     !MPI_Aint[] array_of_displacements
+! MPI_Datatype[]
 integer(c_int), target  :: array_of_types_c(count)     !MPI_Datatype[] array_of_types
+! MPI_Datatype*
 integer(c_int) :: newtype_c     !MPI_Datatype* newtype
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
 integer(c_int) ::  r_ ! for comm array expansion
 
 count_c = count
-do 25 n_ = 1 , count
+do 23 n_ = 1 , count
 array_of_block_lengths_c(n_) = array_of_block_lengths(n_)
-25 continue
-do 26 n_ = 1 , count
+23 continue
+do 24 n_ = 1 , count
 array_of_displacements_c(n_) = array_of_displacements(n_)
-26 continue
-do 27 n_ = 1 , count
+24 continue
+do 25 n_ = 1 , count
 array_of_types_c(n_) = array_of_types(n_)
-27 continue
+25 continue
 
 ret = MPI_Type_create_struct_c(count_c,&
 c_loc(array_of_block_lengths_c),&
@@ -6522,13 +8217,21 @@ type(MPI_Datatype), target, intent(in) :: array_of_datatypes(max_datatypes)
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Datatype
 integer(c_int) :: mtype_c     !MPI_Datatype mtype
+! int
 integer(c_int) :: max_integers_c     !int max_integers
+! int
 integer(c_int) :: max_addresses_c     !int max_addresses
+! int
 integer(c_int) :: max_datatypes_c     !int max_datatypes
+! int[]
 integer(c_int), target  :: array_of_integers_c(max_integers)     !int[] array_of_integers
+! MPI_Aint[]
 integer(c_intptr_t), target  :: array_of_addresses_c(max_addresses)     !MPI_Aint[] array_of_addresses
+! MPI_Datatype[]
 integer(c_int), target  :: array_of_datatypes_c(max_datatypes)     !MPI_Datatype[] array_of_datatypes
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -6538,15 +8241,15 @@ mtype_c = mtype%val
 max_integers_c = max_integers
 max_addresses_c = max_addresses
 max_datatypes_c = max_datatypes
-do 28 n_ = 1 , max_integers
+do 26 n_ = 1 , max_integers
 array_of_integers_c(n_) = array_of_integers(n_)
-28 continue
-do 29 n_ = 1 , max_addresses
+26 continue
+do 27 n_ = 1 , max_addresses
 array_of_addresses_c(n_) = array_of_addresses(n_)
-29 continue
-do 30 n_ = 1 , max_datatypes
+27 continue
+do 28 n_ = 1 , max_datatypes
 array_of_datatypes_c(n_) = array_of_datatypes(n_)
-30 continue
+28 continue
 
 ret = MPI_Type_get_contents_c(mtype_c,&
 max_integers_c,&
@@ -6584,9 +8287,13 @@ type(MPI_Op), intent(in) :: op
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! MPI_Op
 integer(c_int) :: op_c     !MPI_Op op
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -6626,9 +8333,13 @@ type(MPI_Group), intent(out) :: newgroup
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Group
 integer(c_int) :: group1_c     !MPI_Group group1
+! MPI_Group
 integer(c_int) :: group2_c     !MPI_Group group2
+! MPI_Group*
 integer(c_int) :: newgroup_c     !MPI_Group* newgroup
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -6662,7 +8373,9 @@ type(MPI_Datatype), intent(inout) :: type
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Datatype*
 integer(c_int) :: type_c     !MPI_Datatype* type
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -6679,12 +8392,120 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Type_free_f08
 
-!Skipped convert function in MPI_Info_get_nthkey
+
+subroutine MPI_Info_get_nthkey_f08( info,&
+n,&
+key,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Info), intent(in) :: info
+integer, intent(in) :: n
+character(len=*), target, intent(out) :: key
+integer(c_int) :: key_len
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Info
+integer(c_int) :: info_c     !MPI_Info info
+! int
+integer(c_int) :: n_c     !int n
+! char*
+type(C_PTR) :: key_c     !char* key
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+info_c = info%val
+n_c = n
+
+ret = MPI_Info_get_nthkey_c(info_c,&
+n_c,&
+key_c,&
+ierror_c,&
+key_len)
+
+!FAIL no conversion to char for key
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Info_get_nthkey_f08
 
 ! MPI_File_write_at_all_begin NOT IMPLEMENTED in MPC
 
 
-!Skipped convert function in MPI_Unpack_external
+
+subroutine MPI_Unpack_external_f08( datarep,&
+inbuf,&
+insize,&
+position,&
+outbuf,&
+outcount,&
+datatype,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+character(len=*), target, intent(in) :: datarep
+integer(c_int) :: datarep_len
+type(*), dimension(..) :: inbuf
+integer*8, intent(in) :: insize
+integer*8, intent(inout) :: position
+type(*), dimension(..) :: outbuf
+integer, intent(in) :: outcount
+type(MPI_Datatype), intent(in) :: datatype
+integer, optional, intent(out) :: ierror
+
+
+! char*
+type(C_PTR) :: datarep_c     !char* datarep
+! MPI_Aint
+integer(c_intptr_t) :: insize_c     !MPI_Aint insize
+! MPI_Aint*
+integer(c_intptr_t) :: position_c     !MPI_Aint* position
+! int
+integer(c_int) :: outcount_c     !int outcount
+! MPI_Datatype
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+datarep_c = c_loc(datarep)
+datarep_len = LEN(datarep)
+insize_c = insize
+position_c = position
+outcount_c = outcount
+datatype_c = datatype%val
+
+ret = MPI_Unpack_external_c(datarep_c,&
+inbuf,&
+insize_c,&
+position_c,&
+outbuf,&
+outcount_c,&
+datatype_c,&
+ierror_c,&
+datarep_len)
+
+position = position_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Unpack_external_f08
 
 
 subroutine MPI_Errhandler_set_f08( comm,&
@@ -6702,8 +8523,11 @@ type(MPI_Errhandler), intent(in) :: errhandler
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Errhandler
 integer(c_int) :: errhandler_c     !MPI_Errhandler errhandler
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -6740,8 +8564,11 @@ type(MPI_Errhandler), intent(in) :: erhandler
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Errhandler*
 integer(c_int) :: erhandler_c     !MPI_Errhandler* erhandler
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -6775,8 +8602,11 @@ logical, intent(out) :: flag
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Status*
 type(c_Status) :: status_c     !MPI_Status* status
+! bool
 integer(c_int) :: flag_c     !bool flag
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -6814,10 +8644,15 @@ type(MPI_Win), intent(in) :: win
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: lock_type_c     !int lock_type
+! int
 integer(c_int) :: rank_c     !int rank
+! int
 integer(c_int) :: assert_c     !int assert
+! MPI_Win
 integer(c_int) :: win_c     !MPI_Win win
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -6863,11 +8698,17 @@ type(MPI_Win), intent(in) :: win
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Aint
 integer(c_intptr_t) :: size_c     !MPI_Aint size
+! int
 integer(c_int) :: disp_unit_c     !int disp_unit
+! MPI_Info
 integer(c_int) :: info_c     !MPI_Info info
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Win*
 integer(c_int) :: win_c     !MPI_Win* win
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -6910,9 +8751,13 @@ type(MPI_Status) :: status
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Request*
 integer(c_int) :: request_c     !MPI_Request* request
+! bool
 integer(c_int) :: flag_c     !bool flag
+! MPI_Status*
 type(c_Status) :: status_c     !MPI_Status* status
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -6955,11 +8800,17 @@ type(MPI_Datatype), intent(out) :: newtype
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! int
 integer(c_int) :: blocklength_c     !int blocklength
+! MPI_Aint
 integer(c_intptr_t) :: stride_c     !MPI_Aint stride
+! MPI_Datatype
 integer(c_int) :: oldtype_c     !MPI_Datatype oldtype
+! MPI_Datatype*
 integer(c_int) :: newtype_c     !MPI_Datatype* newtype
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -7002,8 +8853,11 @@ integer, intent(out) :: nkeys
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Info
 integer(c_int) :: info_c     !MPI_Info info
+! int*
 integer(c_int) :: nkeys_c     !int* nkeys
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -7039,9 +8893,13 @@ type(MPI_Win) :: win
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Group
 integer(c_int) :: group_c     !MPI_Group group
+! int
 integer(c_int) :: assert_c     !int assert
+! MPI_Win
 integer(c_int) :: win_c     !MPI_Win win
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -7079,7 +8937,9 @@ logical, intent(out) :: flag
 integer, optional, intent(out) :: ierror
 
 
+! bool
 integer(c_int) :: flag_c     !bool flag
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -7096,6 +8956,68 @@ if( present(ierror)) ierror = ierror_c
 end subroutine MPI_Finalized_f08
 
 
+subroutine MPI_Reduce_f08( sendbuf,&
+recvbuf,&
+count,&
+datatype,&
+op,&
+root,&
+comm,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(*), dimension(..) :: sendbuf
+type(*), dimension(..) :: recvbuf
+integer, intent(in) :: count
+type(MPI_Datatype), intent(in) :: datatype
+type(MPI_Op), intent(in) :: op
+integer, intent(in) :: root
+type(MPI_Comm), intent(in) :: comm
+integer, optional, intent(out) :: ierror
+
+
+! int
+integer(c_int) :: count_c     !int count
+! MPI_Datatype
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! MPI_Op
+integer(c_int) :: op_c     !MPI_Op op
+! int
+integer(c_int) :: root_c     !int root
+! MPI_Comm
+integer(c_int) :: comm_c     !MPI_Comm comm
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+count_c = count
+datatype_c = datatype%val
+op_c = op%val
+root_c = root
+comm_c = comm%val
+
+ret = MPI_Reduce_c(sendbuf,&
+recvbuf,&
+count_c,&
+datatype_c,&
+op_c,&
+root_c,&
+comm_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Reduce_f08
+
+
 subroutine MPI_Win_free_keyval_f08( win_keyval,&
 ierror)
 
@@ -7109,7 +9031,9 @@ integer, intent(inout) :: win_keyval
 integer, optional, intent(out) :: ierror
 
 
+! int*
 integer(c_int) :: win_keyval_c     !int* win_keyval
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -7146,19 +9070,24 @@ type(MPI_Status) :: status
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Request[]
 integer(c_int), target  :: array_of_requests_c(count)     !MPI_Request[] array_of_requests
+! int*
 integer(c_int) :: index_c     !int* index
+! MPI_Status*
 type(c_Status) :: status_c     !MPI_Status* status
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
 integer(c_int) ::  r_ ! for comm array expansion
 
 count_c = count
-do 31 n_ = 1 , count
+do 29 n_ = 1 , count
 array_of_requests_c(n_) = array_of_requests(n_)
-31 continue
+29 continue
 index_c = index
 status_c = status
 
@@ -7168,9 +9097,9 @@ index_c,&
 status_c,&
 ierror_c)
 
-do 32 n_ = 1 , count
+do 30 n_ = 1 , count
 array_of_requests(n_) = array_of_requests_c(n_)
-32 continue
+30 continue
 index = index_c
 status = status_c
 
@@ -7178,7 +9107,46 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Waitany_f08
 
-!Skipped convert function in MPI_Open_port
+
+subroutine MPI_Open_port_f08( info,&
+port_name,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Info), intent(in) :: info
+character(len=*), target, intent(in) :: port_name
+integer(c_int) :: port_name_len
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Info
+integer(c_int) :: info_c     !MPI_Info info
+! char*
+type(C_PTR) :: port_name_c     !char* port_name
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+info_c = info%val
+port_name_c = c_loc(port_name)
+port_name_len = LEN(port_name)
+
+ret = MPI_Open_port_c(info_c,&
+port_name_c,&
+ierror_c,&
+port_name_len)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Open_port_f08
 
 
 subroutine MPI_Type_indexed_f08( count,&
@@ -7202,23 +9170,29 @@ type(MPI_Datatype), intent(out) :: newtype
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! int[]
 integer(c_int), target  :: array_of_blocklengths_c(count)     !int[] array_of_blocklengths
+! int[]
 integer(c_int), target  :: array_of_displacements_c(count)     !int[] array_of_displacements
+! MPI_Datatype
 integer(c_int) :: oldtype_c     !MPI_Datatype oldtype
+! MPI_Datatype*
 integer(c_int) :: newtype_c     !MPI_Datatype* newtype
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
 integer(c_int) ::  r_ ! for comm array expansion
 
 count_c = count
-do 33 n_ = 1 , count
+do 31 n_ = 1 , count
 array_of_blocklengths_c(n_) = array_of_blocklengths(n_)
-33 continue
-do 34 n_ = 1 , count
+31 continue
+do 32 n_ = 1 , count
 array_of_displacements_c(n_) = array_of_displacements(n_)
-34 continue
+32 continue
 oldtype_c = oldtype%val
 
 ret = MPI_Type_indexed_c(count_c,&
@@ -7250,8 +9224,11 @@ logical, intent(out) :: commute
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Op
 integer(c_int) :: op_c     !MPI_Op op
+! bool
 integer(c_int) :: commute_c     !bool commute
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -7297,12 +9274,19 @@ type(MPI_Comm), intent(in) :: comm
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: sendcount_c     !int sendcount
+! MPI_Datatype
 integer(c_int) :: sendtype_c     !MPI_Datatype sendtype
+! int
 integer(c_int) :: recvcount_c     !int recvcount
+! MPI_Datatype
 integer(c_int) :: recvtype_c     !MPI_Datatype recvtype
+! int
 integer(c_int) :: root_c     !int root
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -7352,11 +9336,17 @@ type(MPI_Datatype), intent(out) :: newtype
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! int
 integer(c_int) :: blocklength_c     !int blocklength
+! int
 integer(c_int) :: stride_c     !int stride
+! MPI_Datatype
 integer(c_int) :: oldtype_c     !MPI_Datatype oldtype
+! MPI_Datatype*
 integer(c_int) :: newtype_c     !MPI_Datatype* newtype
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -7398,9 +9388,13 @@ integer, intent(out) :: count
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Status*
 type(c_Status) :: status_c     !MPI_Status* status
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! int*
 integer(c_int) :: count_c     !int* count
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -7422,6 +9416,38 @@ end subroutine MPI_Get_elements_f08
 
 ! MPI_File_write NOT IMPLEMENTED in MPC
 
+
+
+subroutine MPI_Comm_get_parent_f08( parent,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Comm), intent(out) :: parent
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Comm*
+integer(c_int) :: parent_c     !MPI_Comm* parent
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+
+ret = MPI_Comm_get_parent_c(parent_c,&
+ierror_c)
+
+parent%val = parent_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Comm_get_parent_f08
 
 ! MPI_File_read_at_all_end NOT IMPLEMENTED in MPC
 
@@ -7446,10 +9472,15 @@ type(MPI_Status) :: status
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: source_c     !int source
+! int
 integer(c_int) :: tag_c     !int tag
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Status*
 type(c_Status) :: status_c     !MPI_Status* status
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -7501,11 +9532,17 @@ type(MPI_Comm), intent(in) :: comm
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: insize_c     !int insize
+! int*
 integer(c_int) :: position_c     !int* position
+! int
 integer(c_int) :: outcount_c     !int outcount
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -7548,8 +9585,11 @@ integer*8, intent(in) :: ub
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Datatype
 integer(c_int) :: mtype_c     !MPI_Datatype mtype
+! MPI_Aint*
 integer(c_intptr_t) :: ub_c     !MPI_Aint* ub
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -7585,9 +9625,13 @@ integer, intent(in) :: count
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Status*
 type(c_Status) :: status_c     !MPI_Status* status
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! int
 integer(c_int) :: count_c     !int count
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -7624,8 +9668,11 @@ integer, intent(in) :: win_keyval
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Win
 integer(c_int) :: win_c     !MPI_Win win
+! int
 integer(c_int) :: win_keyval_c     !int win_keyval
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -7665,23 +9712,29 @@ type(MPI_Datatype), intent(out) :: newtype
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! int[]
 integer(c_int), target  :: array_of_blocklengths_c(count)     !int[] array_of_blocklengths
+! int[]
 integer(c_int), target  :: array_of_displacements_c(count)     !int[] array_of_displacements
+! MPI_Datatype
 integer(c_int) :: oldtype_c     !MPI_Datatype oldtype
+! MPI_Datatype*
 integer(c_int) :: newtype_c     !MPI_Datatype* newtype
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
 integer(c_int) ::  r_ ! for comm array expansion
 
 count_c = count
-do 35 n_ = 1 , count
+do 33 n_ = 1 , count
 array_of_blocklengths_c(n_) = array_of_blocklengths(n_)
-35 continue
-do 36 n_ = 1 , count
+33 continue
+do 34 n_ = 1 , count
 array_of_displacements_c(n_) = array_of_displacements(n_)
-36 continue
+34 continue
 oldtype_c = oldtype%val
 
 ret = MPI_Type_hindexed_c(count_c,&
@@ -7699,6 +9752,39 @@ end subroutine MPI_Type_hindexed_f08
 
 ! MPI_File_set_atomicity NOT IMPLEMENTED in MPC
 
+
+
+subroutine MPI_Op_free_f08( op,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Op), intent(inout) :: op
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Op*
+integer(c_int) :: op_c     !MPI_Op* op
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+op_c = op%val
+
+ret = MPI_Op_free_c(op_c,&
+ierror_c)
+
+op%val = op_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Op_free_f08
 
 
 subroutine MPI_Group_range_incl_f08( group,&
@@ -7720,10 +9806,15 @@ type(MPI_Group), intent(out) :: newgroup
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Group
 integer(c_int) :: group_c     !MPI_Group group
+! int
 integer(c_int) :: n_c     !int n
+! int[][3]
 integer(c_int), target  :: ranges_c(3,n), target      !int[][3] ranges
+! MPI_Group*
 integer(c_int) :: newgroup_c     !MPI_Group* newgroup
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -7731,9 +9822,9 @@ integer(c_int) ::  r_ ! for comm array expansion
 
 group_c = group%val
 n_c = n
-do 37 n_ = 1 , n
+do 35 n_ = 1 , n
 !ERR LAYOUT int[][3] 
-37 continue
+35 continue
 
 ret = MPI_Group_range_incl_c(group_c,&
 n_c,&
@@ -7775,13 +9866,21 @@ type(MPI_Win), intent(in) :: win
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: origin_count_c     !int origin_count
+! MPI_Datatype
 integer(c_int) :: origin_datatype_c     !MPI_Datatype origin_datatype
+! int
 integer(c_int) :: target_rank_c     !int target_rank
+! MPI_Aint
 integer(c_intptr_t) :: target_disp_c     !MPI_Aint target_disp
+! int
 integer(c_int) :: target_count_c     !int target_count
+! MPI_Datatype
 integer(c_int) :: target_datatype_c     !MPI_Datatype target_datatype
+! MPI_Win
 integer(c_int) :: win_c     !MPI_Win win
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -7832,11 +9931,17 @@ type(MPI_Status) :: status
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: source_c     !int source
+! int
 integer(c_int) :: tag_c     !int tag
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! bool
 integer(c_int) :: flag_c     !bool flag
+! MPI_Status*
 type(c_Status) :: status_c     !MPI_Status* status
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -7882,9 +9987,13 @@ integer*8, intent(out) :: true_extent
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! MPI_Aint*
 integer(c_intptr_t) :: true_lb_c     !MPI_Aint* true_lb
+! MPI_Aint*
 integer(c_intptr_t) :: true_extent_c     !MPI_Aint* true_extent
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -7926,11 +10035,17 @@ integer, intent(out) :: edges(maxedges)
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: maxindex_c     !int maxindex
+! int
 integer(c_int) :: maxedges_c     !int maxedges
+! int[]
 integer(c_int), target  :: index_c(maxindex)     !int[] index
+! int[]
 integer(c_int), target  :: edges_c(maxedges)     !int[] edges
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -7947,18 +10062,57 @@ c_loc(index_c),&
 c_loc(edges_c),&
 ierror_c)
 
-do 38 n_ = 1 , maxindex
+do 36 n_ = 1 , maxindex
 index(n_) = index_c(n_)
-38 continue
-do 39 n_ = 1 , maxedges
+36 continue
+do 37 n_ = 1 , maxedges
 edges(n_) = edges_c(n_)
-39 continue
+37 continue
 
 if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Graph_get_f08
 
-!Skipped convert function in MPI_Info_delete
+
+subroutine MPI_Info_delete_f08( info,&
+key,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Info), intent(in) :: info
+character(len=*), target, intent(in) :: key
+integer(c_int) :: key_len
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Info
+integer(c_int) :: info_c     !MPI_Info info
+! char*
+type(C_PTR) :: key_c     !char* key
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+info_c = info%val
+key_c = c_loc(key)
+key_len = LEN(key)
+
+ret = MPI_Info_delete_c(info_c,&
+key_c,&
+ierror_c,&
+key_len)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Info_delete_f08
 
 
 subroutine MPI_Win_get_attr_f08( win,&
@@ -7980,9 +10134,13 @@ logical, intent(out) :: flag
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Win
 integer(c_int) :: win_c     !MPI_Win win
+! int
 integer(c_int) :: win_keyval_c     !int win_keyval
+! bool
 integer(c_int) :: flag_c     !bool flag
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -8017,6 +10175,7 @@ implicit none
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -8048,9 +10207,13 @@ type(MPI_Comm), intent(out) :: newcomm
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Group
 integer(c_int) :: group_c     !MPI_Group group
+! MPI_Comm*
 integer(c_int) :: newcomm_c     !MPI_Comm* newcomm
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -8070,7 +10233,117 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Comm_create_f08
 
-!Skipped convert function in MPI_Pack_external_size
+
+subroutine MPI_Pack_external_size_f08( datarep,&
+incount,&
+datatype,&
+size,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+character(len=*), target, intent(in) :: datarep
+integer(c_int) :: datarep_len
+integer, intent(in) :: incount
+type(MPI_Datatype), intent(in) :: datatype
+integer*8, intent(out) :: size
+integer, optional, intent(out) :: ierror
+
+
+! char*
+type(C_PTR) :: datarep_c     !char* datarep
+! int
+integer(c_int) :: incount_c     !int incount
+! MPI_Datatype
+integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! MPI_Aint*
+integer(c_intptr_t) :: size_c     !MPI_Aint* size
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+datarep_c = c_loc(datarep)
+datarep_len = LEN(datarep)
+incount_c = incount
+datatype_c = datatype%val
+
+ret = MPI_Pack_external_size_c(datarep_c,&
+incount_c,&
+datatype_c,&
+size_c,&
+ierror_c,&
+datarep_len)
+
+size = size_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Pack_external_size_f08
+
+
+subroutine MPI_Testall_f08( count,&
+array_of_requests,&
+flag,&
+array_of_statuses,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+integer, intent(in) :: count
+type(MPI_Request), target, intent(in) :: array_of_requests(count)
+logical, intent(out) :: flag
+type(MPI_Status), target :: array_of_statuses(count)
+integer, optional, intent(out) :: ierror
+
+
+! int
+integer(c_int) :: count_c     !int count
+! MPI_Request[]
+integer(c_int), target  :: array_of_requests_c(count)     !MPI_Request[] array_of_requests
+! bool
+integer(c_int) :: flag_c     !bool flag
+! MPI_Status[]
+type(c_Status), target  :: array_of_statuses_c(count)     !MPI_Status[] array_of_statuses
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+count_c = count
+do 38 n_ = 1 , count
+array_of_requests_c(n_) = array_of_requests(n_)
+38 continue
+
+ret = MPI_Testall_c(count_c,&
+array_of_requests%val,&
+flag_c,&
+c_loc(array_of_statuses_c),&
+ierror_c)
+
+flag = flag_c
+if ( c_associated(c_loc(array_of_statuses), c_loc(MPI_STATUSES_IGNORE))&
+.OR. ( c_associated(c_loc(array_of_statuses), c_loc(MPI_STATUS_IGNORE)))) then
+    n_=2 !dummy operation
+else
+do 39 n_ = 1 , count
+array_of_statuses(n_) = array_of_statuses_c(n_)
+39 continue
+end if
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Testall_f08
 
 
 subroutine MPI_Comm_join_f08( fd,&
@@ -8088,8 +10361,11 @@ type(MPI_Comm), intent(out) :: intercomm
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: fd_c     !int fd
+! MPI_Comm*
 integer(c_int) :: intercomm_c     !MPI_Comm* intercomm
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -8124,7 +10400,9 @@ integer, intent(inout) :: keyval
 integer, optional, intent(out) :: ierror
 
 
+! int*
 integer(c_int) :: keyval_c     !int* keyval
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -8155,7 +10433,9 @@ type(MPI_Win), intent(in) :: win
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Win
 integer(c_int) :: win_c     !MPI_Win win
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -8189,8 +10469,11 @@ type(*), dimension(..) :: baseptr
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Aint
 integer(c_intptr_t) :: size_c     !MPI_Aint size
+! MPI_Info
 integer(c_int) :: info_c     !MPI_Info info
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -8233,12 +10516,19 @@ type(MPI_Status) :: status
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: source_c     !int source
+! int
 integer(c_int) :: tag_c     !int tag
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! bool
 integer(c_int) :: flag_c     !bool flag
+! MPI_Message*
 integer(c_int) :: message_c     !MPI_Message* message
+! MPI_Status*
 type(c_Status) :: status_c     !MPI_Status* status
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -8281,8 +10571,11 @@ integer, intent(out) :: size
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Datatype
 integer(c_int) :: type_c     !MPI_Datatype type
+! int*
 integer(c_int) :: size_c     !int* size
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -8300,10 +10593,115 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Type_size_f08
 
-!Skipped convert function in MPI_Lookup_name
+
+subroutine MPI_Lookup_name_f08( service_name,&
+info,&
+port_name,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+character(len=*), target, intent(in) :: service_name
+integer(c_int) :: service_name_len
+type(MPI_Info), intent(in) :: info
+character(len=*), target, intent(in) :: port_name
+integer(c_int) :: port_name_len
+integer, optional, intent(out) :: ierror
+
+
+! char*
+type(C_PTR) :: service_name_c     !char* service_name
+! MPI_Info
+integer(c_int) :: info_c     !MPI_Info info
+! char*
+type(C_PTR) :: port_name_c     !char* port_name
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+service_name_c = c_loc(service_name)
+service_name_len = LEN(service_name)
+info_c = info%val
+port_name_c = c_loc(port_name)
+port_name_len = LEN(port_name)
+
+ret = MPI_Lookup_name_c(service_name_c,&
+info_c,&
+port_name_c,&
+ierror_c,&
+service_name_len,&
+port_name_len)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Lookup_name_f08
 
 ! MPI_File_get_atomicity NOT IMPLEMENTED in MPC
 
+
+
+subroutine MPI_Mprobe_f08( source,&
+tag,&
+comm,&
+message,&
+status,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+integer, intent(in) :: source
+integer, intent(in) :: tag
+type(MPI_Comm), intent(in) :: comm
+type(MPI_Message), intent(inout) :: message
+type(MPI_Status) :: status
+integer, optional, intent(out) :: ierror
+
+
+! int
+integer(c_int) :: source_c     !int source
+! int
+integer(c_int) :: tag_c     !int tag
+! MPI_Comm
+integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Message*
+integer(c_int) :: message_c     !MPI_Message* message
+! MPI_Status*
+type(c_Status) :: status_c     !MPI_Status* status
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+source_c = source
+tag_c = tag
+comm_c = comm%val
+message_c = message%val
+
+ret = MPI_Mprobe_c(source_c,&
+tag_c,&
+comm_c,&
+message_c,&
+status_c,&
+ierror_c)
+
+message%val = message_c
+status = status_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Mprobe_f08
 
 ! MPI_File_read_shared NOT IMPLEMENTED in MPC
 
@@ -8340,16 +10738,27 @@ type(MPI_Datatype), intent(out) :: newtype
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: size_c     !int size
+! int
 integer(c_int) :: rank_c     !int rank
+! int
 integer(c_int) :: ndims_c     !int ndims
+! int[]
 integer(c_int), target  :: gsize_array_c(ndims)     !int[] gsize_array
+! int[]
 integer(c_int), target  :: distrib_array_c(ndims)     !int[] distrib_array
+! int[]
 integer(c_int), target  :: darg_array_c(ndims)     !int[] darg_array
+! int[]
 integer(c_int), target  :: psize_array_c(ndims)     !int[] psize_array
+! int
 integer(c_int) :: order_c     !int order
+! MPI_Datatype
 integer(c_int) :: oldtype_c     !MPI_Datatype oldtype
+! MPI_Datatype*
 integer(c_int) :: newtype_c     !MPI_Datatype* newtype
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -8407,8 +10816,11 @@ type(MPI_Errhandler), intent(in) :: errhandler
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Win_errhandler_function*
 type(c_ptr) :: function_c     !MPI_Win_errhandler_function* function
+! MPI_Errhandler*
 integer(c_int) :: errhandler_c     !MPI_Errhandler* errhandler
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -8448,11 +10860,17 @@ integer, intent(out) :: newrank
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: ndims_c     !int ndims
+! int[]
 integer(c_int), target  :: dims_c(ndims)     !int[] dims
+! bool[]
 integer(c_int), target  :: periods_c(ndims)     !bool[] periods
+! int*
 integer(c_int) :: newrank_c     !int* newrank
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -8483,11 +10901,140 @@ end subroutine MPI_Cart_map_f08
 ! MPI_File_write_at NOT IMPLEMENTED in MPC
 
 
-!Skipped convert function in MPI_Comm_accept
 
-!Skipped convert function in MPI_Type_set_name
+subroutine MPI_Comm_accept_f08( port_name,&
+info,&
+root,&
+comm,&
+newcomm,&
+ierror)
 
-!Skipped convert function in MPI_Close_port
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+character(len=*), target, intent(in) :: port_name
+integer(c_int) :: port_name_len
+type(MPI_Info), intent(in) :: info
+integer, intent(in) :: root
+type(MPI_Comm), intent(in) :: comm
+type(MPI_Comm), intent(out) :: newcomm
+integer, optional, intent(out) :: ierror
+
+
+! char*
+type(C_PTR) :: port_name_c     !char* port_name
+! MPI_Info
+integer(c_int) :: info_c     !MPI_Info info
+! int
+integer(c_int) :: root_c     !int root
+! MPI_Comm
+integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Comm*
+integer(c_int) :: newcomm_c     !MPI_Comm* newcomm
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+port_name_c = c_loc(port_name)
+port_name_len = LEN(port_name)
+info_c = info%val
+root_c = root
+comm_c = comm%val
+
+ret = MPI_Comm_accept_c(port_name_c,&
+info_c,&
+root_c,&
+comm_c,&
+newcomm_c,&
+ierror_c,&
+port_name_len)
+
+newcomm%val = newcomm_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Comm_accept_f08
+
+
+subroutine MPI_Type_set_name_f08( type,&
+type_name,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Datatype), intent(in) :: type
+character(len=*), target, intent(in) :: type_name
+integer(c_int) :: type_name_len
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Datatype
+integer(c_int) :: type_c     !MPI_Datatype type
+! char*
+type(C_PTR) :: type_name_c     !char* type_name
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+type_c = type%val
+type_name_c = c_loc(type_name)
+type_name_len = LEN(type_name)
+
+ret = MPI_Type_set_name_c(type_c,&
+type_name_c,&
+ierror_c,&
+type_name_len)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Type_set_name_f08
+
+
+subroutine MPI_Close_port_f08( port_name,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+character(len=*), target, intent(in) :: port_name
+integer(c_int) :: port_name_len
+integer, optional, intent(out) :: ierror
+
+
+! char*
+type(C_PTR) :: port_name_c     !char* port_name
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+port_name_c = c_loc(port_name)
+port_name_len = LEN(port_name)
+
+ret = MPI_Close_port_c(port_name_c,&
+ierror_c,&
+port_name_len)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Close_port_f08
 
 ! MPI_File_close NOT IMPLEMENTED in MPC
 
@@ -8518,13 +11065,21 @@ type(MPI_Datatype), intent(out) :: newtype
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: ndims_c     !int ndims
+! int[]
 integer(c_int), target  :: size_array_c(ndims)     !int[] size_array
+! int[]
 integer(c_int), target  :: subsize_array_c(ndims)     !int[] subsize_array
+! int[]
 integer(c_int), target  :: start_array_c(ndims)     !int[] start_array
+! int
 integer(c_int) :: order_c     !int order
+! MPI_Datatype
 integer(c_int) :: oldtype_c     !MPI_Datatype oldtype
+! MPI_Datatype*
 integer(c_int) :: newtype_c     !MPI_Datatype* newtype
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -8561,43 +11116,8 @@ end subroutine MPI_Type_create_subarray_f08
 ! MPI_File_delete NOT IMPLEMENTED in MPC
 
 
+! MPI_File_get_byte_offset NOT IMPLEMENTED in MPC
 
-subroutine MPI_Comm_set_attr_f08( comm,&
-comm_keyval,&
-attribute_val,&
-ierror)
-
-use :: mpi_f08_ctypes
-use :: mpi_f08_types
-use :: mpi_f08_c
-
-implicit none
-
-type(MPI_Comm), intent(in) :: comm
-integer, intent(in) :: comm_keyval
-type(*), dimension(..) :: attribute_val
-integer, optional, intent(out) :: ierror
-
-
-integer(c_int) :: comm_c     !MPI_Comm comm
-integer(c_int) :: comm_keyval_c     !int comm_keyval
-integer(c_int) :: ierror_c     !int ierror
-integer(c_int) :: ret ! dummy
-integer(c_int) ::  n_ ! for array expansion
-integer(c_int) ::  r_ ! for comm array expansion
-
-comm_c = comm%val
-comm_keyval_c = comm_keyval
-
-ret = MPI_Comm_set_attr_c(comm_c,&
-comm_keyval_c,&
-attribute_val,&
-ierror_c)
-
-
-if( present(ierror)) ierror = ierror_c
-
-end subroutine MPI_Comm_set_attr_f08
 
 ! MPI_File_read_all NOT IMPLEMENTED in MPC
 
@@ -8628,12 +11148,19 @@ type(MPI_Status) :: status
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! int
 integer(c_int) :: source_c     !int source
+! int
 integer(c_int) :: tag_c     !int tag
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Status*
 type(c_Status) :: status_c     !MPI_Status* status
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -8677,8 +11204,11 @@ type(MPI_Comm), intent(out) :: newcomm
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Comm*
 integer(c_int) :: newcomm_c     !MPI_Comm* newcomm
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -8714,9 +11244,13 @@ type(MPI_Status), target :: array_of_statuses(count)
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Request[]
 integer(c_int), target  :: array_of_requests_c(count)     !MPI_Request[] array_of_requests
+! MPI_Status[]
 type(c_Status), target  :: array_of_statuses_c(count)     !MPI_Status[] array_of_statuses
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -8767,8 +11301,11 @@ integer, intent(in) :: comm_keyval
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: comm_keyval_c     !int comm_keyval
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -8810,11 +11347,17 @@ type(MPI_Comm), intent(in) :: comm
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! int
 integer(c_int) :: dest_c     !int dest
+! int
 integer(c_int) :: tag_c     !int tag
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -8855,8 +11398,11 @@ integer, intent(out) :: size
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Group
 integer(c_int) :: group_c     !MPI_Group group
+! int*
 integer(c_int) :: size_c     !int* size
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -8890,8 +11436,11 @@ type(MPI_Errhandler), intent(out) :: errhandler
 integer, optional, intent(out) :: ierror
 
 
+! MPI_File
 integer(c_int) :: file_c     !MPI_File file
+! MPI_Errhandler*
 integer(c_int) :: errhandler_c     !MPI_Errhandler* errhandler
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -8927,8 +11476,11 @@ type(*), dimension(..) :: attribute_val
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: keyval_c     !int keyval
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -8961,7 +11513,9 @@ type(MPI_Comm), intent(in) :: comm
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -8991,7 +11545,9 @@ type(MPI_Win), intent(inout) :: win
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Win*
 integer(c_int) :: win_c     !MPI_Win* win
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -9038,12 +11594,19 @@ type(MPI_Request) :: request
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! int
 integer(c_int) :: dest_c     !int dest
+! int
 integer(c_int) :: tag_c     !int tag
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Request*
 integer(c_int) :: request_c     !MPI_Request* request
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -9100,10 +11663,15 @@ type(MPI_Comm), intent(in) :: comm
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! MPI_Op
 integer(c_int) :: op_c     !MPI_Op op
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -9127,36 +11695,7 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Exscan_f08
 
-
-subroutine MPI_Op_free_f08( op,&
-ierror)
-
-use :: mpi_f08_ctypes
-use :: mpi_f08_types
-use :: mpi_f08_c
-
-implicit none
-
-type(MPI_Op), intent(inout) :: op
-integer, optional, intent(out) :: ierror
-
-
-integer(c_int) :: op_c     !MPI_Op* op
-integer(c_int) :: ierror_c     !int ierror
-integer(c_int) :: ret ! dummy
-integer(c_int) ::  n_ ! for array expansion
-integer(c_int) ::  r_ ! for comm array expansion
-
-op_c = op%val
-
-ret = MPI_Op_free_c(op_c,&
-ierror_c)
-
-op%val = op_c
-
-if( present(ierror)) ierror = ierror_c
-
-end subroutine MPI_Op_free_f08
+!Skipped convert function in MPI_Cart_sub
 
 
 subroutine MPI_Win_set_errhandler_f08( win,&
@@ -9174,8 +11713,11 @@ type(MPI_Errhandler), intent(in) :: errhandler
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Win
 integer(c_int) :: win_c     !MPI_Win win
+! MPI_Errhandler
 integer(c_int) :: errhandler_c     !MPI_Errhandler errhandler
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -9223,14 +11765,23 @@ type(MPI_Win), intent(in) :: win
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: origin_count_c     !int origin_count
+! MPI_Datatype
 integer(c_int) :: origin_datatype_c     !MPI_Datatype origin_datatype
+! int
 integer(c_int) :: target_rank_c     !int target_rank
+! MPI_Aint
 integer(c_intptr_t) :: target_disp_c     !MPI_Aint target_disp
+! int
 integer(c_int) :: target_count_c     !int target_count
+! MPI_Datatype
 integer(c_int) :: target_datatype_c     !MPI_Datatype target_datatype
+! MPI_Op
 integer(c_int) :: op_c     !MPI_Op op
+! MPI_Win
 integer(c_int) :: win_c     !MPI_Win win
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -9261,9 +11812,89 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Accumulate_f08
 
-!Skipped convert function in MPI_Comm_get_name
 
-!Skipped convert function in MPI_Cart_sub
+subroutine MPI_Comm_get_name_f08( comm,&
+comm_name,&
+resultlen,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Comm), intent(in) :: comm
+character(len=*), target, intent(out) :: comm_name
+integer(c_int) :: comm_name_len
+integer, intent(out) :: resultlen
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Comm
+integer(c_int) :: comm_c     !MPI_Comm comm
+! char*
+type(C_PTR) :: comm_name_c     !char* comm_name
+! int*
+integer(c_int) :: resultlen_c     !int* resultlen
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+comm_c = comm%val
+
+ret = MPI_Comm_get_name_c(comm_c,&
+comm_name_c,&
+resultlen_c,&
+ierror_c,&
+comm_name_len)
+
+!FAIL no conversion to char for comm_name
+resultlen = resultlen_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Comm_get_name_f08
+
+
+subroutine MPI_File_create_errhandler_f08( function,&
+errhandler,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_File_errhandler_function), intent(in) :: function
+type(MPI_Errhandler), intent(out) :: errhandler
+integer, optional, intent(out) :: ierror
+
+
+! MPI_File_errhandler_function*
+type(c_ptr) :: function_c     !MPI_File_errhandler_function* function
+! MPI_Errhandler*
+integer(c_int) :: errhandler_c     !MPI_Errhandler* errhandler
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+function_c = function%val
+
+ret = MPI_File_create_errhandler_c(function_c,&
+errhandler_c,&
+ierror_c)
+
+errhandler%val = errhandler_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_File_create_errhandler_f08
 
 ! MPI_File_write_ordered NOT IMPLEMENTED in MPC
 
@@ -9288,10 +11919,15 @@ type(MPI_Group), intent(out) :: newgroup
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Group
 integer(c_int) :: group_c     !MPI_Group group
+! int
 integer(c_int) :: n_c     !int n
+! int[][3]
 integer(c_int), target  :: ranges_c(3,n), target      !int[][3] ranges
+! MPI_Group*
 integer(c_int) :: newgroup_c     !MPI_Group* newgroup
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -9335,10 +11971,15 @@ type(MPI_Comm), intent(out) :: newcomm
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: color_c     !int color
+! int
 integer(c_int) :: key_c     !int key
+! MPI_Comm*
 integer(c_int) :: newcomm_c     !MPI_Comm* newcomm
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -9376,8 +12017,11 @@ type(MPI_Errhandler), intent(in) :: errhandler
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! MPI_Errhandler
 integer(c_int) :: errhandler_c     !MPI_Errhandler errhandler
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -9413,9 +12057,13 @@ type(MPI_Status) :: status
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Request
 integer(c_int) :: request_c     !MPI_Request request
+! bool
 integer(c_int) :: flag_c     !bool flag
+! MPI_Status*
 type(c_Status) :: status_c     !MPI_Status* status
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -9450,7 +12098,9 @@ type(MPI_Group), intent(inout) :: group
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Group*
 integer(c_int) :: group_c     !MPI_Group* group
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -9487,9 +12137,13 @@ type(*), dimension(..) :: extra_state
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Type_copy_attr_function*
 type(c_ptr) :: type_copy_attr_fn_c     !MPI_Type_copy_attr_function* type_copy_attr_fn
+! MPI_Type_delete_attr_function*
 type(c_ptr) :: type_delete_attr_fn_c     !MPI_Type_delete_attr_function* type_delete_attr_fn
+! int*
 integer(c_int) :: type_keyval_c     !int* type_keyval
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -9534,9 +12188,13 @@ integer, intent(out) :: nedges
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int*
 integer(c_int) :: nnodes_c     !int* nnodes
+! int*
 integer(c_int) :: nedges_c     !int* nedges
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -9572,8 +12230,11 @@ integer, intent(out) :: rank
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int*
 integer(c_int) :: rank_c     !int* rank
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -9592,6 +12253,67 @@ if( present(ierror)) ierror = ierror_c
 end subroutine MPI_Comm_rank_f08
 
 
+subroutine MPI_Session_get_nth_pset_f08( session,&
+info,&
+n,&
+pset_len,&
+pset_name,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Session), intent(in) :: session
+type(MPI_Info), intent(in) :: info
+integer, intent(in) :: n
+integer, intent(inout) :: pset_len
+character(len=*), target, intent(inout) :: pset_name
+integer(c_int) :: pset_name_len
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Session
+integer(c_int) :: session_c     !MPI_Session session
+! MPI_Info
+integer(c_int) :: info_c     !MPI_Info info
+! int
+integer(c_int) :: n_c     !int n
+! int*
+integer(c_int) :: pset_len_c     !int* pset_len
+! char*
+type(C_PTR) :: pset_name_c     !char* pset_name
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+session_c = session%val
+info_c = info%val
+n_c = n
+pset_len_c = pset_len
+pset_name_c = c_loc(pset_name)
+pset_name_len = LEN(pset_name)
+
+ret = MPI_Session_get_nth_pset_c(session_c,&
+info_c,&
+n_c,&
+pset_len_c,&
+pset_name_c,&
+ierror_c,&
+pset_name_len)
+
+pset_len = pset_len_c
+!FAIL no conversion to char for pset_name
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Session_get_nth_pset_f08
+
+
 subroutine MPI_Cancel_f08( request,&
 ierror)
 
@@ -9605,7 +12327,9 @@ type(MPI_Request) :: request
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Request*
 integer(c_int) :: request_c     !MPI_Request* request
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -9638,8 +12362,11 @@ type(MPI_Win), intent(in) :: win
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: assert_c     !int assert
+! MPI_Win
 integer(c_int) :: win_c     !MPI_Win win
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -9658,10 +12385,9 @@ if( present(ierror)) ierror = ierror_c
 end subroutine MPI_Win_fence_f08
 
 
-subroutine MPI_Win_create_keyval_f08( win_copy_attr_fn,&
-win_delete_attr_fn,&
-win_keyval,&
-extra_state,&
+subroutine MPI_Session_init_f08( info,&
+errh,&
+session,&
 ierror)
 
 use :: mpi_f08_ctypes
@@ -9670,35 +12396,37 @@ use :: mpi_f08_c
 
 implicit none
 
-type(MPI_Win_copy_attr_function), intent(in) :: win_copy_attr_fn
-type(MPI_Win_delete_attr_function), intent(in) :: win_delete_attr_fn
-integer, intent(out) :: win_keyval
-type(*), dimension(..) :: extra_state
+type(MPI_Info), intent(in) :: info
+type(MPI_Errhandler), intent(in) :: errh
+type(MPI_Session), intent(out) :: session
 integer, optional, intent(out) :: ierror
 
 
-type(c_ptr) :: win_copy_attr_fn_c     !MPI_Win_copy_attr_function* win_copy_attr_fn
-type(c_ptr) :: win_delete_attr_fn_c     !MPI_Win_delete_attr_function* win_delete_attr_fn
-integer(c_int) :: win_keyval_c     !int* win_keyval
+! MPI_Info
+integer(c_int) :: info_c     !MPI_Info info
+! MPI_Errhandler
+integer(c_int) :: errh_c     !MPI_Errhandler errh
+! MPI_Session*
+integer(c_int) :: session_c     !MPI_Session* session
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
 integer(c_int) ::  r_ ! for comm array expansion
 
-win_copy_attr_fn_c = win_copy_attr_fn%val
-win_delete_attr_fn_c = win_delete_attr_fn%val
+info_c = info%val
+errh_c = errh%val
 
-ret = MPI_Win_create_keyval_c(win_copy_attr_fn_c,&
-win_delete_attr_fn_c,&
-win_keyval_c,&
-extra_state,&
+ret = MPI_Session_init_c(info_c,&
+errh_c,&
+session_c,&
 ierror_c)
 
-win_keyval = win_keyval_c
+session%val = session_c
 
 if( present(ierror)) ierror = ierror_c
 
-end subroutine MPI_Win_create_keyval_f08
+end subroutine MPI_Session_init_f08
 
 
 subroutine MPI_Errhandler_free_f08( errhandler,&
@@ -9714,7 +12442,9 @@ type(MPI_Errhandler), intent(inout) :: errhandler
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Errhandler*
 integer(c_int) :: errhandler_c     !MPI_Errhandler* errhandler
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -9747,8 +12477,11 @@ logical, intent(out) :: flag
 integer, optional, intent(out) :: ierror
 
 
+! MPI_Win
 integer(c_int) :: win_c     !MPI_Win win
+! bool
 integer(c_int) :: flag_c     !bool flag
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -9784,9 +12517,13 @@ type(MPI_Datatype), intent(out) :: type
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: typeclass_c     !int typeclass
+! int
 integer(c_int) :: size_c     !int size
+! MPI_Datatype*
 integer(c_int) :: type_c     !MPI_Datatype* type
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion
@@ -9830,11 +12567,17 @@ type(MPI_Comm), intent(in) :: comm
 integer, optional, intent(out) :: ierror
 
 
+! int
 integer(c_int) :: count_c     !int count
+! MPI_Datatype
 integer(c_int) :: datatype_c     !MPI_Datatype datatype
+! int
 integer(c_int) :: dest_c     !int dest
+! int
 integer(c_int) :: tag_c     !int tag
+! MPI_Comm
 integer(c_int) :: comm_c     !MPI_Comm comm
+! int
 integer(c_int) :: ierror_c     !int ierror
 integer(c_int) :: ret ! dummy
 integer(c_int) ::  n_ ! for array expansion

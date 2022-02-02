@@ -163,6 +163,17 @@ SUBROUTINE MPI_WIN_POST(group,assert,win,&
 END SUBROUTINE MPI_WIN_POST
 
 
+SUBROUTINE MPI_SESSION_CREATE_ERRHANDLER(errhfn,errh,ierror)
+   INTERFACE 
+	SUBROUTINE errhfn(vv0,vv1)
+	INTEGER vv0,vv1
+	END SUBROUTINE
+	END INTERFACE
+   INTEGER	errh
+   INTEGER	ierror
+END SUBROUTINE MPI_SESSION_CREATE_ERRHANDLER
+
+
 SUBROUTINE MPI_WIN_GET_ERRHANDLER(win,errhandler,ierror)
    INTEGER	win
    INTEGER	errhandler
@@ -196,6 +207,15 @@ SUBROUTINE MPI_ERROR_CLASS(errorcode,errorclass,ierror)
    INTEGER	errorclass
    INTEGER	ierror
 END SUBROUTINE MPI_ERROR_CLASS
+
+
+SUBROUTINE MPI_SESSION_GET_NUM_PSETS(session,info,npset_names,&
+   ierror)
+   INTEGER	session
+   INTEGER	info
+   INTEGER	npset_names
+   INTEGER	ierror
+END SUBROUTINE MPI_SESSION_GET_NUM_PSETS
 
 
 SUBROUTINE MPI_INFO_DUP(info,newinfo,ierror)
@@ -243,6 +263,15 @@ SUBROUTINE MPI_INTERCOMM_CREATE(local_comm,local_leader,bridge_comm,&
 END SUBROUTINE MPI_INTERCOMM_CREATE
 
 
+SUBROUTINE MPI_GROUP_FROM_SESSION_PSET(session,pset_name,newgroup,&
+   ierror)
+   INTEGER	session
+   CHARACTER (LEN=*)	pset_name
+   INTEGER	newgroup
+   INTEGER	ierror
+END SUBROUTINE MPI_GROUP_FROM_SESSION_PSET
+
+
 SUBROUTINE MPI_COMM_REMOTE_SIZE(comm,size,ierror)
    INTEGER	comm
    INTEGER	size
@@ -268,16 +297,24 @@ SUBROUTINE MPI_TYPE_GET_NAME(type,type_name,resultlen,&
 END SUBROUTINE MPI_TYPE_GET_NAME
 
 
+SUBROUTINE MPI_SESSION_GET_INFO(session,infoused,ierror)
+   INTEGER	session
+   INTEGER	infoused
+   INTEGER	ierror
+END SUBROUTINE MPI_SESSION_GET_INFO
+
+
 SUBROUTINE MPI_TYPE_COMMIT(type,ierror)
    INTEGER	type
    INTEGER	ierror
 END SUBROUTINE MPI_TYPE_COMMIT
 
 
-SUBROUTINE MPI_COMM_GET_PARENT(parent,ierror)
-   INTEGER	parent
+SUBROUTINE MPI_SESSION_SET_ERRHANDLER(session,errh,ierror)
+   INTEGER	session
+   INTEGER	errh
    INTEGER	ierror
-END SUBROUTINE MPI_COMM_GET_PARENT
+END SUBROUTINE MPI_SESSION_SET_ERRHANDLER
 
 
 SUBROUTINE MPI_TYPE_CREATE_F90_INTEGER(r,newtype,ierror)
@@ -363,12 +400,6 @@ SUBROUTINE MPI_TYPE_DUP(type,newtype,ierror)
    INTEGER	newtype
    INTEGER	ierror
 END SUBROUTINE MPI_TYPE_DUP
-
-
-SUBROUTINE MPI_QUERY_THREAD(provided,ierror)
-   INTEGER	provided
-   INTEGER	ierror
-END SUBROUTINE MPI_QUERY_THREAD
 
 
 SUBROUTINE MPI_COMM_GROUP(comm,group,ierror)
@@ -479,6 +510,13 @@ SUBROUTINE MPI_ABORT(comm,errorcode,ierror)
    INTEGER	errorcode
    INTEGER	ierror
 END SUBROUTINE MPI_ABORT
+
+
+SUBROUTINE MPI_SESSION_CALL_ERRHANDLER(session,errorcode,ierror)
+   INTEGER	session
+   INTEGER	errorcode
+   INTEGER	ierror
+END SUBROUTINE MPI_SESSION_CALL_ERRHANDLER
 
 
 SUBROUTINE MPI_GREQUEST_COMPLETE(request,ierror)
@@ -622,15 +660,11 @@ SUBROUTINE MPI_WAIT(request,status,ierror)
 END SUBROUTINE MPI_WAIT
 
 
-SUBROUTINE MPI_TESTALL(count,array_of_requests,flag,&
-   array_of_statuses,ierror)
-   USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
-   INTEGER	count
-   INTEGER array_of_requests(*)
-   LOGICAL	flag
-   INTEGER array_of_statuses(MPI_STATUS_SIZE,*)
+SUBROUTINE MPI_SESSION_GET_ERRHANDLER(session,errh,ierror)
+   INTEGER	session
+   INTEGER	errh
    INTEGER	ierror
-END SUBROUTINE MPI_TESTALL
+END SUBROUTINE MPI_SESSION_GET_ERRHANDLER
 
 
 SUBROUTINE MPI_GET_VERSION(version,subversion,ierror)
@@ -656,6 +690,15 @@ SUBROUTINE MPI_COMM_CREATE_ERRHANDLER(function,errhandler,ierror)
    INTEGER	errhandler
    INTEGER	ierror
 END SUBROUTINE MPI_COMM_CREATE_ERRHANDLER
+
+
+SUBROUTINE MPI_SESSION_GET_PSET_INFO(session,pset_name,info,&
+   ierror)
+   INTEGER	session
+   CHARACTER (LEN=*)	pset_name
+   INTEGER	info
+   INTEGER	ierror
+END SUBROUTINE MPI_SESSION_GET_PSET_INFO
 
 
 SUBROUTINE MPI_COMM_CONNECT(port_name,info,root,&
@@ -716,6 +759,12 @@ SUBROUTINE MPI_TOPO_TEST(comm,status,ierror)
    INTEGER	status
    INTEGER	ierror
 END SUBROUTINE MPI_TOPO_TEST
+
+
+SUBROUTINE MPI_QUERY_THREAD(provided,ierror)
+   INTEGER	provided
+   INTEGER	ierror
+END SUBROUTINE MPI_QUERY_THREAD
 
 
 SUBROUTINE MPI_WIN_CALL_ERRHANDLER(win,errorcode,ierror)
@@ -822,16 +871,10 @@ SUBROUTINE MPI_ADD_ERROR_STRING(errorcode,string,ierror)
 END SUBROUTINE MPI_ADD_ERROR_STRING
 
 
-SUBROUTINE MPI_MPROBE(source,tag,comm,&
-   message,status,ierror)
-   USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
-   INTEGER	source
-   INTEGER	tag
-   INTEGER	comm
-   INTEGER	message
-   INTEGER status(MPI_STATUS_SIZE)
+SUBROUTINE MPI_SESSION_FINALIZE(session,ierror)
+   INTEGER	session
    INTEGER	ierror
-END SUBROUTINE MPI_MPROBE
+END SUBROUTINE MPI_SESSION_FINALIZE
 
 
 SUBROUTINE MPI_INFO_FREE(info,ierror)
@@ -915,6 +958,17 @@ SUBROUTINE MPI_COMM_TEST_INTER(comm,flag,ierror)
 END SUBROUTINE MPI_COMM_TEST_INTER
 
 
+SUBROUTINE MPI_COMM_CREATE_FROM_GROUP(group,stringtag,info,&
+   errh,newcomm,ierror)
+   INTEGER	group
+   CHARACTER (LEN=*)	stringtag
+   INTEGER	info
+   INTEGER	errh
+   INTEGER	newcomm
+   INTEGER	ierror
+END SUBROUTINE MPI_COMM_CREATE_FROM_GROUP
+
+
 SUBROUTINE MPI_INTERCOMM_MERGE(intercomm,high,newintercomm,&
    ierror)
    INTEGER	intercomm
@@ -956,17 +1010,6 @@ SUBROUTINE MPI_GROUP_RANK(group,rank,ierror)
    INTEGER	rank
    INTEGER	ierror
 END SUBROUTINE MPI_GROUP_RANK
-
-
-SUBROUTINE MPI_FILE_CREATE_ERRHANDLER(function,errhandler,ierror)
-   INTERFACE 
-	SUBROUTINE function(vv0,vv1)
-	INTEGER vv0,vv1
-	END SUBROUTINE
-	END INTERFACE
-   INTEGER	errhandler
-   INTEGER	ierror
-END SUBROUTINE MPI_FILE_CREATE_ERRHANDLER
 
 
 SUBROUTINE MPI_INFO_GET(info,key,valuelen,&
@@ -1197,6 +1240,12 @@ SUBROUTINE MPI_GET_ELEMENTS(status,datatype,count,&
 END SUBROUTINE MPI_GET_ELEMENTS
 
 
+SUBROUTINE MPI_COMM_GET_PARENT(parent,ierror)
+   INTEGER	parent
+   INTEGER	ierror
+END SUBROUTINE MPI_COMM_GET_PARENT
+
+
 SUBROUTINE MPI_PROBE(source,tag,comm,&
    status,ierror)
    USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
@@ -1242,6 +1291,12 @@ SUBROUTINE MPI_TYPE_HINDEXED(count,array_of_blocklengths,array_of_displacements,
    INTEGER	newtype
    INTEGER	ierror
 END SUBROUTINE MPI_TYPE_HINDEXED
+
+
+SUBROUTINE MPI_OP_FREE(op,ierror)
+   INTEGER	op
+   INTEGER	ierror
+END SUBROUTINE MPI_OP_FREE
 
 
 SUBROUTINE MPI_GROUP_RANGE_INCL(group,n,ranges,&
@@ -1328,6 +1383,17 @@ SUBROUTINE MPI_PACK_EXTERNAL_SIZE(datarep,incount,datatype,&
 END SUBROUTINE MPI_PACK_EXTERNAL_SIZE
 
 
+SUBROUTINE MPI_TESTALL(count,array_of_requests,flag,&
+   array_of_statuses,ierror)
+   USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
+   INTEGER	count
+   INTEGER array_of_requests(*)
+   LOGICAL	flag
+   INTEGER array_of_statuses(MPI_STATUS_SIZE,*)
+   INTEGER	ierror
+END SUBROUTINE MPI_TESTALL
+
+
 SUBROUTINE MPI_COMM_JOIN(fd,intercomm,ierror)
    INTEGER	fd
    INTEGER	intercomm
@@ -1375,6 +1441,18 @@ SUBROUTINE MPI_LOOKUP_NAME(service_name,info,port_name,&
    CHARACTER (LEN=*)	port_name
    INTEGER	ierror
 END SUBROUTINE MPI_LOOKUP_NAME
+
+
+SUBROUTINE MPI_MPROBE(source,tag,comm,&
+   message,status,ierror)
+   USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
+   INTEGER	source
+   INTEGER	tag
+   INTEGER	comm
+   INTEGER	message
+   INTEGER status(MPI_STATUS_SIZE)
+   INTEGER	ierror
+END SUBROUTINE MPI_MPROBE
 
 
 SUBROUTINE MPI_TYPE_CREATE_DARRAY(size,rank,ndims,&
@@ -1517,10 +1595,13 @@ SUBROUTINE MPI_WIN_FREE(win,ierror)
 END SUBROUTINE MPI_WIN_FREE
 
 
-SUBROUTINE MPI_OP_FREE(op,ierror)
-   INTEGER	op
+SUBROUTINE MPI_CART_SUB(comm,remain_dims,new_comm,&
+   ierror)
+   INTEGER	comm
+   LOGICAL remain_dims(*)
+   INTEGER	new_comm
    INTEGER	ierror
-END SUBROUTINE MPI_OP_FREE
+END SUBROUTINE MPI_CART_SUB
 
 
 SUBROUTINE MPI_WIN_SET_ERRHANDLER(win,errhandler,ierror)
@@ -1539,13 +1620,15 @@ SUBROUTINE MPI_COMM_GET_NAME(comm,comm_name,resultlen,&
 END SUBROUTINE MPI_COMM_GET_NAME
 
 
-SUBROUTINE MPI_CART_SUB(comm,remain_dims,new_comm,&
-   ierror)
-   INTEGER	comm
-   LOGICAL remain_dims(*)
-   INTEGER	new_comm
+SUBROUTINE MPI_FILE_CREATE_ERRHANDLER(function,errhandler,ierror)
+   INTERFACE 
+	SUBROUTINE function(vv0,vv1)
+	INTEGER vv0,vv1
+	END SUBROUTINE
+	END INTERFACE
+   INTEGER	errhandler
    INTEGER	ierror
-END SUBROUTINE MPI_CART_SUB
+END SUBROUTINE MPI_FILE_CREATE_ERRHANDLER
 
 
 SUBROUTINE MPI_WIN_C2F(win,ierror)
@@ -1613,6 +1696,17 @@ SUBROUTINE MPI_COMM_RANK(comm,rank,ierror)
 END SUBROUTINE MPI_COMM_RANK
 
 
+SUBROUTINE MPI_SESSION_GET_NTH_PSET(session,info,n,&
+   pset_len,pset_name,ierror)
+   INTEGER	session
+   INTEGER	info
+   INTEGER	n
+   INTEGER	pset_len
+   CHARACTER (LEN=*)	pset_name
+   INTEGER	ierror
+END SUBROUTINE MPI_SESSION_GET_NTH_PSET
+
+
 SUBROUTINE MPI_CANCEL(request,ierror)
    INTEGER	request
    INTEGER	ierror
@@ -1624,6 +1718,15 @@ SUBROUTINE MPI_WIN_FENCE(assert,win,ierror)
    INTEGER	win
    INTEGER	ierror
 END SUBROUTINE MPI_WIN_FENCE
+
+
+SUBROUTINE MPI_SESSION_INIT(info,errh,session,&
+   ierror)
+   INTEGER	info
+   INTEGER	errh
+   INTEGER	session
+   INTEGER	ierror
+END SUBROUTINE MPI_SESSION_INIT
 
 
 SUBROUTINE MPI_ERRHANDLER_FREE(errhandler,ierror)

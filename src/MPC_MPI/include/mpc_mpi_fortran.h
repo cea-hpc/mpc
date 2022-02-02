@@ -23,6 +23,8 @@ MPI_Info MPI_Info_f2c(MPI_Fint info);
 MPI_Fint MPI_Info_c2f(MPI_Info info);
 MPI_Errhandler MPI_Errhandler_f2c(MPI_Fint errhandler);
 MPI_Fint MPI_Errhandler_c2f(MPI_Errhandler errhandler);
+MPI_Session MPI_Session_f2c( MPI_Fint session );
+MPI_Fint MPI_Session_c2f( MPI_Session session );
 
 /* This is the PMPI Interface */
 
@@ -42,5 +44,7 @@ MPI_Info PMPI_Info_f2c(MPI_Fint info);
 MPI_Fint PMPI_Info_c2f(MPI_Info info);
 MPI_Errhandler PMPI_Errhandler_f2c(MPI_Fint errhandler);
 MPI_Fint PMPI_Errhandler_c2f(MPI_Errhandler errhandler);
+MPI_Session PMPI_Session_f2c( MPI_Fint session );
+MPI_Fint PMPI_Session_c2f( MPI_Session session );
 
 #endif /* MPC_FORTRAN_H_ */

@@ -61,14 +61,17 @@ static inline void *__map_shm_segment_pmi(size_t size)
 	__get_per_node_segment_key(segment_key, 32);
 
 	int shm_fd = -1;
+	/* It is to avoid using the PMI when launched as singleton */
+	int is_singleton = (1 == mpc_common_get_process_count());
 
 	/* We need an unique name let 0 in each process define it */
 	if(mpc_common_get_local_process_rank() == 0)
 	{
 		__get_per_node_unique_name(segment_name, 128);
 
-		mpc_launch_pmi_put(segment_name, segment_key, 0);
-
+		if(!is_singleton)
+			mpc_launch_pmi_put(segment_name, segment_key, 1 /* local to node */);
+		
 		/* Time to create the segment */
 		shm_fd = shm_open(segment_name, O_CREAT | O_EXCL | O_RDWR | O_TRUNC, 0600);
 
@@ -88,7 +91,8 @@ static inline void *__map_shm_segment_pmi(size_t size)
 		}
 	}
 
-	mpc_launch_pmi_barrier();
+	if(!is_singleton)
+		mpc_launch_pmi_barrier();
 
 	/* Now time to retrieve the local segments in non leaders */
 	if(mpc_common_get_local_process_rank() != 0)
@@ -123,7 +127,8 @@ static inline void *__map_shm_segment_pmi(size_t size)
 		mpc_common_debug_fatal("Failed to map shm segment");
 	}
 
-	mpc_launch_pmi_barrier();
+	if(!is_singleton)
+		mpc_launch_pmi_barrier();
 
 	if(mpc_common_get_local_process_rank() == 0)
 	{

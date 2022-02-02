@@ -108,20 +108,7 @@
 #pragma weak MPI_Reduce_scatter_block = PMPI_Reduce_scatter_block
 #pragma weak MPI_Scan = PMPI_Scan
 #pragma weak MPI_Exscan = PMPI_Exscan
-// PROFILER MPI_GROUP MPI Group operation
-#pragma weak MPI_Group_size = PMPI_Group_size
-#pragma weak MPI_Group_rank = PMPI_Group_rank
-#pragma weak MPI_Group_translate_ranks = PMPI_Group_translate_ranks
-#pragma weak MPI_Group_compare = PMPI_Group_compare
-#pragma weak MPI_Comm_group = PMPI_Comm_group
-#pragma weak MPI_Group_union = PMPI_Group_union
-#pragma weak MPI_Group_intersection = PMPI_Group_intersection
-#pragma weak MPI_Group_difference = PMPI_Group_difference
-#pragma weak MPI_Group_incl = PMPI_Group_incl
-#pragma weak MPI_Group_excl = PMPI_Group_excl
-#pragma weak MPI_Group_range_incl = PMPI_Group_range_incl
-#pragma weak MPI_Group_range_excl = PMPI_Group_range_excl
-#pragma weak MPI_Group_free = PMPI_Group_free
+
 // PROFILER MPI_COMM MPI Communicator operation
 #pragma weak MPI_Comm_size = PMPI_Comm_size
 #pragma weak MPI_Comm_rank = PMPI_Comm_rank
@@ -132,7 +119,6 @@
 #pragma weak MPI_Comm_free = PMPI_Comm_free
 #pragma weak MPI_Comm_test_inter = PMPI_Comm_test_inter
 #pragma weak MPI_Comm_remote_size = PMPI_Comm_remote_size
-#pragma weak MPI_Comm_remote_group = PMPI_Comm_remote_group
 #pragma weak MPI_Intercomm_create = PMPI_Intercomm_create
 #pragma weak MPI_Intercomm_merge = PMPI_Intercomm_merge
 // PROFILER MPI_KEYS MPI keys operations
@@ -263,7 +249,6 @@
 #pragma weak MPI_Comm_set_info = PMPI_Comm_set_info
 #pragma weak MPI_Comm_get_info = PMPI_Comm_get_info
 #pragma weak MPI_Comm_idup = PMPI_Comm_idup
-#pragma weak MPI_Comm_create_group = PMPI_Comm_create_group
 #pragma weak MPI_Comm_get_errhandler = PMPI_Comm_get_errhandler
 #pragma weak MPI_Comm_call_errhandler = PMPI_Comm_call_errhandler
 #pragma weak MPI_Comm_set_errhandler = PMPI_Comm_set_errhandler

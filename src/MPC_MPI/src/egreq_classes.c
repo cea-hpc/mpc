@@ -71,7 +71,7 @@ int _mpc_egreq_classes_storage_add_class( struct _mpc_egreq_classes_storage *ctx
 	/* Increment Id */
 	ctx->current_id++;
 
-	return SCTK_SUCCESS;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 MPCX_GRequest_class_t *_mpc_egreq_classes_storage_get_class( struct _mpc_egreq_classes_storage *ctx, sctk_Request_class requested_class )

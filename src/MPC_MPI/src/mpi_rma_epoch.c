@@ -116,7 +116,7 @@ void *mpc_MPI_Win_tmp_alloc(struct mpc_MPI_Win_tmp *tmp, size_t size) {
 /************************************************************************/
 
 static struct mpc_common_hashtable __request_pool_ht;
-static mpc_common_spinlock_t __request_pool_lock = SCTK_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t __request_pool_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 static volatile int __request_pool_init_done = 0;
 
 static inline void request_poll_ht_check_init() {
@@ -216,7 +216,7 @@ int mpc_MPI_Win_request_array_fence_no_ops(
   while (OPA_load_int(&ra->available_req) != MAX_PENDING_RMA) {
     mpc_MPI_Win_request_array_test(ra);
 
-    sctk_network_notify_idle_message();
+    _mpc_lowcomm_multirail_notify_idle();
     mpc_thread_yield();
   }
 
@@ -1739,7 +1739,7 @@ int mpc_Win_contexes_fence_control(MPI_Win win) {
     {
       sctk_control_message_process_all();
       sctk_control_message_process_local(mpc_common_get_task_rank());
-      sctk_network_notify_idle_message();
+      _mpc_lowcomm_multirail_notify_idle();
       mpc_thread_yield();
     }
 
@@ -2067,13 +2067,15 @@ int mpc_MPI_Win_post(MPI_Group group, __UNUSED__ int assert, MPI_Win win) {
   if (!group_size)
     return MPI_SUCCESS;
 
-  ranks = sctk_group_raw_ranks(group);
+  ranks = mpc_lowcomm_group_world_ranks(group);
 
   if (mpc_Win_target_ctx_start_exposure(win, MPC_WIN_MULTIPLE_REMOTE, ranks,
                                         group_size, MPC_WIN_TARGET_ACTIVE)) {
+    sctk_free(ranks);
     return MPI_ERR_INTERN;
   }
 
+  sctk_free(ranks);
   return MPI_SUCCESS;
 }
 
@@ -2107,13 +2109,15 @@ int mpc_MPI_Win_start(MPI_Group group, __UNUSED__ int assert, MPI_Win win) {
   if (!group_size)
     return MPI_SUCCESS;
 
-  ranks = sctk_group_raw_ranks(group);
+  ranks = mpc_lowcomm_group_world_ranks(group);
 
   if (mpc_Win_source_ctx_start_access(win, MPC_WIN_MULTIPLE_REMOTE, ranks,
                                       group_size, MPC_WIN_SOURCE_ACTIVE)) {
+    sctk_free(ranks);
     return MPI_ERR_INTERN;
   }
 
+  sctk_free(ranks);
   return MPI_SUCCESS;
 }
 

@@ -726,6 +726,8 @@ for mpitype in f08types:
             module_file_data += "    integer :: " + tname + "\n"
         elif ttype == "func":
             module_file_data += "    type(c_ptr) :: " + tname + "\n"
+        elif ttype == "ptr":
+            module_file_data += "    integer*8 :: " + tname + "\n"
         elif ttype == "long":
             module_file_data += "    integer*8 :: " + tname + "\n"
         # Done emmiting content
@@ -1071,9 +1073,15 @@ for const in mpcconstants:
     fval = const["value"]
     # Skip F77 Procedures
     if ismpif:
-        continue
+        continue 
     # HANDLE LINK TIME VALUES
-    if name == "MPI_IN_PLACE":
+    if name == "MPI_COMM_WORLD":
+        module_file_data += "	type(MPI_Comm), dimension(1), bind(C, name=\"mpc_f08_world\"), target :: MPI_COMM_WORLD\n"
+    elif name == "MPI_COMM_SELF":
+        module_file_data += "	type(MPI_Comm), dimension(1), bind(C, name=\"mpc_f08_self\"), target :: MPI_COMM_SELF\n"
+    elif name == "MPI_COMM_NULL":
+        module_file_data += "	type(MPI_Comm), dimension(1), bind(C, name=\"mpc_f08_null\"), target :: MPI_COMM_NULL\n"
+    elif name == "MPI_IN_PLACE":
         module_file_data += "	integer(c_int), bind(C, name=\"mpc_f08_in_place\"), target :: MPI_IN_PLACE\n"
     elif ftype == "int":
         module_file_data += "	integer, parameter :: " + \
@@ -1111,7 +1119,7 @@ f.close()
 #
 
 
-def genCallArgs(argArray, ierror=0, fortranskip=1, pointer_args=0):
+def genCallArgs(argArray, ierror=0, fortranskip=1, pointer_args=0, add_char_len=0):
     ret = "( "
     length = len(argArray)
     # Is there an errror flag to skip
@@ -1141,6 +1149,15 @@ def genCallArgs(argArray, ierror=0, fortranskip=1, pointer_args=0):
                 ret += ",&\n"
             else:
                 ret += ",\n"
+
+
+    if add_char_len:
+        for i in range(0, length):
+            arg = argArray[i]
+            if arg[0] == "char*":
+                ret += ", " + arg[1] + "_len"
+
+
     ret += ")"
     return ret
 
@@ -1200,6 +1217,7 @@ def genCTypesforArg(args, suffix="", transtyping=0, doval=0, flat_ptr=0):
         #
         # TYPING
         #
+        comment = arg[0]
 
         # Handle the case of assumed size when using
         # this function to genereate trans-typing constructs
@@ -1243,9 +1261,8 @@ def genCTypesforArg(args, suffix="", transtyping=0, doval=0, flat_ptr=0):
             elif (arg[0].find("[]") != -1) or arg[0] == "char*":  # Array case
                 value = ""
                 if arg[0] == "char*":
-                    ctype = "character(kind=c_char)"
-                    carray = "(*)"
-                    assumed_size = 1
+                    ctype = "type(C_PTR)"
+                    value= ", value"
                 elif len(arg) != 4:
                     ctype = "ARRERR " + arg[0]
                 else:
@@ -1280,6 +1297,7 @@ def genCTypesforArg(args, suffix="", transtyping=0, doval=0, flat_ptr=0):
         if assumed_size and transtyping:
             continue
 
+        ret += "! " + comment +"\n"
         ret += ctype + value + cintent + " :: " + cname + suffix + carray
         ret += "     !" + arg[0] + " " + arg[1] + "\n"
     # DONE WALKING ARGS
@@ -1302,9 +1320,11 @@ for mpi_func, args in mpi_interface.items():
 
     c_func = mpi_func + "_c"
     module_file_data += "function " + c_func
-    module_file_data += genCallArgs(args, 1) + "&\n"
+    module_file_data += genCallArgs(args, 1, add_char_len=1) + "&\n"
+
+
     module_file_data += "bind(C, name=\"" + \
-        mpi_func.lower() + "_f08\") result(ret)\n"
+        mpi_func.lower() + "_\") result(ret)\n"
     module_file_data += "\n"
     module_file_data += "use, intrinsic :: iso_c_binding\n"
     module_file_data += "use :: mpi_f08_constants\n"
@@ -1312,9 +1332,17 @@ for mpi_func, args in mpi_interface.items():
     module_file_data += "implicit none\n"
     module_file_data += "\n"
 
-    module_file_data += genCTypesforArg(args, "", 0, 1, 1)
-
+    module_file_data += genCTypesforArg(args, "", 0, 0, 1)
     module_file_data += "integer(c_int) :: ret ! dummy\n"
+
+
+    # Handle string length args
+    for a in args:
+        if a[0] == "char*":
+            module_file_data += "integer(c_int), value :: {} ! {} lenght\n".format(a[1] + "_len", a[1])
+
+
+
 
     # DONE WALKING ARGS
     module_file_data += "\n"
@@ -1353,6 +1381,7 @@ def genFTypesforArg(args):
         fname = arg[1]
         fintent = ""
         farray = ""
+        addlen = False
 
         if (arg[0].find("[]") != -1):
             if len(arg) != 4:
@@ -1396,7 +1425,8 @@ def genFTypesforArg(args):
             elif arg[0] == "int[]":
                 ftype = "integer"
             elif arg[0] == "char*":
-                ftype = "character(len=*)"
+                ftype = "character(len=*), target"
+                addlen = True
             elif arg[0] == "bool":
                 ftype = "logical"
             elif arg[0] == "void*":
@@ -1407,6 +1437,8 @@ def genFTypesforArg(args):
         fintent = getIntentforArg(arg)
 
         ret += ftype + fintent + " :: " + fname + farray + "\n"
+        if addlen:
+            ret += "integer(c_int) :: " + fname + "_len\n"
     # DONE WALKING ARGS
     return ret
 
@@ -1453,7 +1485,7 @@ for mpi_func, args in mpi_interface.items():
     if MPIFunctionsisPresentinMPC(mpi_func) == 0:
         continue
 
-    if containsConvert(args):
+    if containsConvert(args,char=0):
         continue
 
     if (mpi_func.find("_c2f") != -1):
@@ -1476,7 +1508,7 @@ for mpi_func, args in mpi_interface.items():
     if MPIFunctionsisPresentinMPC(mpi_func) == 0:
         continue
 
-    if containsConvert(args):
+    if containsConvert(args, char=0):
         continue
 
     if (mpi_func.find("_c2f") != -1):
@@ -1521,7 +1553,9 @@ def convertToC(arg):
     if ftype != None:
         layout = ftype["layout"]
 
-    if intype.find("[]") != -1:
+    if intype == "char":
+        return inname + "_c = c_loc(" + inname + ")\n" + inname + "_len = LEN(" + inname + ")\n"
+    elif intype.find("[]") != -1:
         tinner = intype.replace("[]", "")
         if 3 < len(arg):
             convertToC.cnt += 1
@@ -1627,7 +1661,7 @@ def f08wrapperGen(mpi_func, args):
         ret += "\n"
         return ret
 
-    if containsConvert(args) == 1:
+    if containsConvert(args, char=0) == 1:
         return "\n!Skipped convert function in " + mpi_func + "\n"
 
     ret += "\n"
@@ -1694,6 +1728,11 @@ def f08wrapperGen(mpi_func, args):
     ret += "\n"
     ret += "ret = " + mpi_func + "_c("
 
+    # If one arg is a char we need to add it in the call
+    for arg in args:
+        if arg[0] == "char*":
+            args_to_pass.append(arg[1] + "_len")
+
     l = len(args_to_pass)
     for i in range(0, l):
         ret += args_to_pass[i]
@@ -1744,177 +1783,3 @@ f.write(module_file_data)
 
 f.close()
 
-
-print("\n###################################")
-print("Generating the c MPIF08 Interface")
-print("#####################################\n")
-
-
-def containsVoid(args):
-    for arg in args:
-        if arg[0] == "void*":
-            return 1
-
-    return 0
-
-
-def gencfunc(mpi_func, args, prefix="", suffix="", lower=0, rewrite_void=0, handle_char=0, all_pointers=0):
-    rtype = "void"
-    ret = ""
-    if lower == 1:
-        mpi_func = mpi_func.lower()
-    ret += rtype + " " + prefix + mpi_func + suffix + "(\n"
-
-    suffixed_char_size = ""
-
-    for i in range(len(args)):
-        arg = args[i]
-        atype = arg[0]
-        aname = arg[1]
-        if len(arg) >= 3:
-            intent = arg[2]
-        else:
-            intent = "notset"
-        if atype.find("bool") != -1:
-            atype = atype.replace("bool", "int*")
-        if rewrite_void == 1:
-            if atype == "void*":
-                atype = "CFI_cdesc_t*"
-                aname = aname + "_ptr"
-        atype = atype.replace("[]", "*")
-        atype = atype.replace("[3]", "*")
-        if aname == "ierror":
-            atype = "int *"
-            aname = "ierror"
-        if handle_char == 1:
-            if atype == "char*":
-                ret += " CHAR_MIXED(size_{0})".format(aname)
-                suffixed_char_size += " CHAR_END(size_{0}),".format(aname)
-        if all_pointers:
-            if intent == "in":
-                atype = atype+" *"
-        ret += atype + " " + aname
-
-        if i != (len(args) - 1):
-            ret += ",\n"
-
-    if suffixed_char_size:
-        ret += "," + suffixed_char_size[:-1] + ")"
-    else:
-        ret += ")"
-    return ret
-
-
-def fortran_c_wrapper_gen(mpi_func, args, prefix="", suffix="", lower_names=1, rewrite_void=0, handle_char=0, all_pointers=0):
-    ret = ""
-    if MPIFunctionsisPresentinMPC(mpi_func) == 0:
-        ret += "\n"
-        ret += "/* " + mpi_func + " NOT IMPLEMENTED in MPC */\n"
-        ret += "\n"
-        return ret, True
-
-    # We only want to convert cho
-    skip_if_char = (not handle_char)
-    if (containsConvert(args, char=skip_if_char) == 1):
-        return "/* Skipped function " + mpi_func + "with conversion */\n", True
-
-    ret += "\n"
-    ret += "\n"
-
-    # Gen delc (w underscore in lower)
-    #ret += gencfunc( mpi_func, args, "_", 0)
-    #ret += ";\n\n"
-
-    # Gen Wrapper function
-    ret += gencfunc(mpi_func, args, prefix, suffix, lower_names,
-                    rewrite_void, handle_char, all_pointers=all_pointers)
-    ret += "\n{\n"
-
-    # EMIT CONVERSIONS
-    for i in range(len(args)):
-        arg = args[i]
-        atype = arg[0]
-        aname = arg[1]
-        if len(arg) >= 3:
-            intent = arg[2]
-        else:
-            intent = "notset"
-        if rewrite_void and atype == "void*":
-            ret += "void* " + aname + " = " + aname + "_ptr->base_addr;\n"
-        if handle_char and atype == "char*" and intent.startswith("in"):
-            ret += "char *tmp_{0}, *ptr_{0};\n".format(aname)
-            ret += "tmp_{0} = sctk_char_fortran_to_c({0}, size_{0}, &ptr_{0});\n".format(
-                aname)
-
-    ret += "*ierror = " + mpi_func + \
-        genCallArgs(args, 0, 0, pointer_args=all_pointers) + ";\n"
-
-    # EMIT CONVERSIONS
-    for i in range(len(args)):
-        arg = args[i]
-        atype = arg[0]
-        aname = arg[1]
-        if len(arg) >= 3:
-            intent = arg[2]
-        else:
-            intent = "notset"
-        if handle_char and atype == "char*" and intent.startswith("in"):
-            ret += "sctk_free(ptr_{0});\n".format(aname)
-        if handle_char and atype == "char*" and intent.endswith("out"):
-            ret += "sctk_char_c_to_fortran({0}, size_{0});\n".format(aname)
-        # if atype == "MPI_Status*":
-            #ret += "fprintf(stderr, \"S : %d T : %d C : %ld \\n\" , status->MPC_SOURCE, status->MPC_TAG, status->size );\n"
-
-    ret += "}"
-    return ret, False
-
-
-module_file_data = """
-#include <mpi.h>
-#include <stdint.h>
-#include <stddef.h>
-
-typedef struct {
-         intptr_t  lower_bound,
-                   extent,
-                   sm;
-} CFI_dim_t;
-
-/* Maximum rank supported by the companion Fortran processor */
-
-/* Changed from 15 to F2003 value of 7 (CER) */
-#define CFI_MAX_RANK  7
-
-/* Struct CFI_cdesc_t for holding all the information about a
-   descriptor-based Fortran object */
-
-typedef struct {
-  void *        base_addr;          /* base address of object                      */
-  size_t        elem_len;           /* length of one element, in bytes             */
-  int           rank;               /* object rank, 0 .. CF_MAX_RANK               */
-  int           type;               /* identifier for type of object               */
-  int           attribute;          /* object attribute: 0..2, or -1               */
-  int           state;              /* allocation/association state: 0 or 1        */
-//Removed (CER)
-//void *        fdesc;              /* pointer to corresponding Fortran descriptor */
-  CFI_dim_t     dim[CFI_MAX_RANK];  /* dimension triples                           */
-} CFI_cdesc_t;
-"""
-
-for mpi_func, args in mpi_interface.items():
-    if (mpi_func.find("_c2f") != -1):
-        continue
-    (data, did_skip) = fortran_c_wrapper_gen(
-        mpi_func, args, suffix="_f08", rewrite_void=1)
-    module_file_data += data
-
-
-"""
- Open Output C FILE
-"""
-
-f = open("mpi_f08_c_iface.c", "w")
-
-f.write(module_file_data)
-
-f.close()

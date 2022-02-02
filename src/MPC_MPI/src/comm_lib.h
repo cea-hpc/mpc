@@ -80,36 +80,7 @@ extern "C" {
  * INIT AND RELEASE *
  ********************/
 
-int _mpc_cl_init( int *argc, char ***argv );
-int _mpc_cl_init_thread( int *argc, char ***argv, int required, int *provided );
-int _mpc_cl_initialized( int *flag );
-int _mpc_cl_finalize( void );
 int _mpc_cl_abort( mpc_lowcomm_communicator_t, int );
-int _mpc_cl_query_thread( int *provided );
-
-/********************
- * GROUP MANAGEMENT *
- ********************/
-
-typedef struct
-{
-	int task_nb;
-	/* Task list rank are valid in COMM_WORLD  */
-	int *task_list_in_global_ranks;
-} _mpc_cl_group_t;
-
-extern const _mpc_cl_group_t mpc_group_empty;
-extern const _mpc_cl_group_t mpc_group_null;
-
-#define MPC_GROUP_EMPTY &mpc_group_empty
-#define MPC_GROUP_NULL ( (_mpc_cl_group_t *) NULL )
-
-int _mpc_cl_comm_group( mpc_lowcomm_communicator_t, _mpc_cl_group_t ** );
-int _mpc_cl_comm_remote_group( mpc_lowcomm_communicator_t, _mpc_cl_group_t ** );
-int _mpc_cl_group_free( _mpc_cl_group_t ** );
-int _mpc_cl_group_incl( _mpc_cl_group_t *, int, const int *, _mpc_cl_group_t ** );
-int _mpc_cl_group_difference( _mpc_cl_group_t *, _mpc_cl_group_t *, _mpc_cl_group_t ** );
-
 
 /***********************************
  * (EXTENDED) GENERALIZED REQUESTS *
@@ -308,7 +279,7 @@ int _mpc_cl_waitany( mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t array_
  * COMMUNICATORS *
  *****************/
 
-int _mpc_cl_comm_create( mpc_lowcomm_communicator_t comm, _mpc_cl_group_t *group, mpc_lowcomm_communicator_t *comm_out );
+int _mpc_cl_comm_create(mpc_lowcomm_communicator_t comm, mpc_lowcomm_group_t*group, mpc_lowcomm_communicator_t *comm_out);
 
 int _mpc_cl_intercomm_create( mpc_lowcomm_communicator_t local_comm,
                               int local_leader, mpc_lowcomm_communicator_t peer_comm,
@@ -431,7 +402,8 @@ typedef struct mpc_mpi_cl_per_mpi_process_ctx_s
 	int task_id; /**< MPI comm rank of the task */
 
 	/* Status */
-	int init_done; /**< =1 if the task has called MPI_Init() 2
+	int init_done; /**< This is the init/release counter */
+        int mpi_init_state;/**< =1 if the task has called MPI_Init() 2
 			     =2 if the task has called MPI_Finalize */
 	int thread_level;
 
@@ -614,6 +586,8 @@ _mpc_dt_contiguout_t *_mpc_cl_per_mpi_process_ctx_contiguous_datatype_get( mpc_l
 
 _mpc_dt_derived_t *_mpc_cl_per_mpi_process_ctx_derived_datatype_ts_get(  mpc_mpi_cl_per_mpi_process_ctx_t *task_specific, mpc_lowcomm_datatype_t datatype );
 _mpc_dt_derived_t *_mpc_cl_per_mpi_process_ctx_derived_datatype_get( mpc_lowcomm_datatype_t datatype );
+
+int _mpc_cl_attach_per_comm(mpc_lowcomm_communicator_t comm, mpc_lowcomm_communicator_t new_comm);
 
 int _mpc_cl_type_hcontiguous_ctx ( mpc_lowcomm_datatype_t *datatype, size_t count, mpc_lowcomm_datatype_t *data_in, struct _mpc_dt_context *ctx );
 

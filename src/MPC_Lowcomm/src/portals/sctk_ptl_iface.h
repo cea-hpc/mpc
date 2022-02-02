@@ -35,6 +35,7 @@
 #include "mpc_common_debug.h"
 #include "sctk_rail.h"
 #include <sctk_alloc.h>
+#include <mpc_lowcomm_types.h>
 
 #if !defined(NDEBUG)
 #define SCTK_PTL_STR_PROT(i) __sctk_ptl_str_prot[i]
@@ -92,7 +93,8 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t*, size_t);
 void sctk_ptl_software_fini(sctk_ptl_rail_info_t*);
 
 /* Portals table management */
-void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t key);
+void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, ptl_pt_index_t requested_index, size_t key);
+mpc_lowcomm_communicator_id_t sctk_ptl_pte_idx_to_comm_id(sctk_ptl_rail_info_t* srail, ptl_pt_index_t idx);
 
 /* ME management */
 sctk_ptl_local_data_t* sctk_ptl_me_create(void*, size_t, sctk_ptl_id_t, sctk_ptl_matchbits_t, sctk_ptl_matchbits_t, int);

@@ -28,19 +28,33 @@
 #include <mpc_common_spinlock.h>
 #include <mpc_common_debug.h>
 
+#include <mpc_lowcomm_monitor.h>
+
 /****************************************
 * _MPC_LOWCOMM_GROUP_RANK_DESCRIPTOR_S *
 ****************************************/
 
 typedef struct _mpc_lowcomm_group_rank_descriptor_s
 {
-	int comm_world_rank;
+	int                    comm_world_rank;
+	mpc_lowcomm_peer_uid_t host_process_uid;
 }_mpc_lowcomm_group_rank_descriptor_t;
 
 int _mpc_lowcomm_group_rank_descriptor_equal(_mpc_lowcomm_group_rank_descriptor_t *a,
                                              _mpc_lowcomm_group_rank_descriptor_t *b);
 
-int _mpc_lowcomm_group_rank_descriptor_set(_mpc_lowcomm_group_rank_descriptor_t *rd, int comm_world_rank);
+int _mpc_lowcomm_group_rank_descriptor_set(_mpc_lowcomm_group_rank_descriptor_t *rd,
+                                           int comm_world_rank);
+
+int _mpc_lowcomm_group_rank_descriptor_set_uid(_mpc_lowcomm_group_rank_descriptor_t *rd,
+                                               mpc_lowcomm_peer_uid_t uid);
+
+int _mpc_lowcomm_group_rank_descriptor_set_in_grp(_mpc_lowcomm_group_rank_descriptor_t *rd,
+                                                  mpc_lowcomm_set_uid_t set,
+                                                  int group_rank);
+
+int _mpc_lowcomm_group_rank_descriptor_all_from_local_set(unsigned int size, _mpc_lowcomm_group_rank_descriptor_t *ranks);
+
 
 /************************
 * _MPC_LOWCOMM_GROUP_T *
@@ -48,13 +62,14 @@ int _mpc_lowcomm_group_rank_descriptor_set(_mpc_lowcomm_group_rank_descriptor_t 
 
 struct _mpc_lowcomm_group_s
 {
+	int                                   id;
 	OPA_int_t                             refcount;
 	int                                   do_not_free;
 
 	unsigned int                          size;
 	_mpc_lowcomm_group_rank_descriptor_t *ranks;
 
-    int                                  *global_to_local;
+	int *                                 global_to_local;
 
 	mpc_common_spinlock_t                 process_lock;
 	int                                   process_count;
@@ -62,6 +77,9 @@ struct _mpc_lowcomm_group_s
 	int                                   tasks_count_in_process;
 
 	int                                   local_leader;
+
+	int                                   is_a_copy;
+	mpc_lowcomm_handle_ctx_t              extra_ctx_ptr;
 };
 
 static inline void _mpc_lowcomm_group_acquire(mpc_lowcomm_group_t *g)
@@ -74,31 +92,31 @@ static inline void _mpc_lowcomm_group_relax(mpc_lowcomm_group_t *g)
 	OPA_decr_int(&g->refcount);
 }
 
-mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size, _mpc_lowcomm_group_rank_descriptor_t *ranks);
+mpc_lowcomm_group_t *_mpc_lowcomm_group_create(unsigned int size, _mpc_lowcomm_group_rank_descriptor_t *ranks, int deduplicate);
 
-_mpc_lowcomm_group_rank_descriptor_t * mpc_lowcomm_group_descriptor(mpc_lowcomm_group_t *g, int rank);
+_mpc_lowcomm_group_rank_descriptor_t *mpc_lowcomm_group_descriptor(mpc_lowcomm_group_t *g, int rank);
 
-int _mpc_lowcomm_group_process_count(mpc_lowcomm_group_t * g);
-int * _mpc_lowcomm_group_process_list(mpc_lowcomm_group_t * g);
-int _mpc_lowcomm_group_local_process_count(mpc_lowcomm_group_t * g);
+int _mpc_lowcomm_group_process_count(mpc_lowcomm_group_t *g);
+int *_mpc_lowcomm_group_process_list(mpc_lowcomm_group_t *g);
+int _mpc_lowcomm_group_local_process_count(mpc_lowcomm_group_t *g);
 
 /*******************
- * LIST MANAGEMENT *
- *******************/
+* LIST MANAGEMENT *
+*******************/
 
 mpc_lowcomm_group_t *_mpc_lowcomm_group_list_register(mpc_lowcomm_group_t *group);
 int _mpc_lowcomm_group_list_pop(mpc_lowcomm_group_t *group);
 
-
 /*************
- * UTILITIES *
- *************/
+* UTILITIES *
+*************/
 
 void _mpc_lowcomm_group_create_world(void);
 void _mpc_lowcomm_group_release_world(void);
 
-mpc_lowcomm_group_t * _mpc_lowcomm_group_world(void);
+mpc_lowcomm_group_t *_mpc_lowcomm_group_world(void);
+mpc_lowcomm_group_t *_mpc_lowcomm_group_world_no_assert(void);
 
-mpc_lowcomm_group_t * _mpc_lowcomm_group_create_from_world_ranks(int size, int * world_ranks);
+mpc_lowcomm_group_t *_mpc_lowcomm_group_create_from_world_ranks(int size, int *world_ranks);
 
 #endif /* MPC_LOWCOMM_GROUP_H */

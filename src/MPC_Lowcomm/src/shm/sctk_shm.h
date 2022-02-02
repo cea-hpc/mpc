@@ -1,17 +1,13 @@
 #ifndef __SCTK_SHM_H__
 #define __SCTK_SHM_H__
 
-#include "sctk_rail.h"
-#include "sctk_shm_eager.h"
-#include "sctk_shm_frag.h"
-#include "sctk_shm_cma.h"
-#include "sctk_shm_raw_queues.h"
+#include <mpc_common_spinlock.h>
 
 
 /** \brief ROUTE level data structure for SHM 
 *
-*   This structure is stored in each \ref sctk_endpoint_s structure
-*   using the \ref sctk_route_info_spec_t union
+*   This structure is stored in each \ref _mpc_lowcomm_endpoint_s structure
+*   using the \ref _mpc_lowcomm_endpoint_info_t union
 */
 
 typedef volatile struct sctk_shm_msg_list_s
@@ -25,10 +21,17 @@ typedef volatile struct sctk_shm_msg_list_s
 typedef struct
 {
     int dest;
-} sctk_shm_route_info_t;
+} _mpc_lowcomm_endpoint_info_shm_t;
 
 typedef struct
 {
+	int			 cma_enabled;
+	volatile int driver_initialized;
+	unsigned int          pending_msg_num;
+	mpc_common_spinlock_t polling_lock;
+	mpc_common_spinlock_t pending_lock;
+	sctk_shm_msg_list_t *pending_msg_list;
+	void                *regions_infos;
 } sctk_shm_rail_info_t;
 
 void sctk_network_init_shm ( sctk_rail_info_t *rail );
