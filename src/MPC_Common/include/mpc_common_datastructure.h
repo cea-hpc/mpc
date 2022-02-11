@@ -382,6 +382,7 @@ int mpc_common_hashtable_empty( struct mpc_common_hashtable *ht );
  * @param key the key to be locked (locks the cell)
  */
 void mpc_common_hashtable_lock_cell_read( struct mpc_common_hashtable *ht, uint64_t key );
+void mpc_common_hashtable_lock_read( struct mpc_common_hashtable *ht, uint64_t bucket );
 
 /**
  * @brief Unlock a cell for reading
@@ -390,6 +391,8 @@ void mpc_common_hashtable_lock_cell_read( struct mpc_common_hashtable *ht, uint6
  * @param key the key to be unlocked (unlocks the cell)
  */
 void mpc_common_hashtable_unlock_cell_read( struct mpc_common_hashtable *ht, uint64_t key );
+void mpc_common_hashtable_unlock_read( struct mpc_common_hashtable *ht, uint64_t bucket );
+
 
 /**
  * @brief Lock a cell for writing
@@ -416,18 +419,23 @@ void mpc_common_hashtable_unlock_cell_write( struct mpc_common_hashtable *ht, ui
 	unsigned int ____i;                                    \
 	for ( ____i = 0; ____i < ( ht )->table_size; ____i++ ) \
 	{                                                      \
+		mpc_common_hashtable_lock_read( ht , ____i);             \
 		struct _mpc_ht_cell *____c = &( ht )->cells[____i];  \
 		if ( ____c->use_flag == 0 )                        \
+		{\
+				mpc_common_hashtable_unlock_read( ht , ____i);             \
 			continue;                                      \
+		} \
                                                            \
 		while ( ____c )                                    \
 		{                                                  \
 			var = ____c->data;
 
 /** End an HT walk block */
-#define MPC_HT_ITER_END  \
+#define MPC_HT_ITER_END(ht)  \
 	____c = ____c->next; \
 	}                    \
+		mpc_common_hashtable_unlock_read( ht , ____i);             \
 	}
 /**
  * @}

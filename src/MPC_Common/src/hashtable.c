@@ -125,13 +125,13 @@ static inline uint64_t murmur_hash( uint64_t val )
 
 /* THESE Functions are locking buckets (as offset) */
 
-static inline void mpc_common_hashtable_lock_read( struct mpc_common_hashtable *ht, uint64_t bucket )
+void mpc_common_hashtable_lock_read( struct mpc_common_hashtable *ht, uint64_t bucket )
 {
 	mpc_common_rwlock_t *lock = &ht->rwlocks[bucket];
 	mpc_common_spinlock_read_lock_yield( lock );
 }
 
-static inline void mpc_common_hashtable_unlock_read( struct mpc_common_hashtable *ht, uint64_t bucket )
+void mpc_common_hashtable_unlock_read( struct mpc_common_hashtable *ht, uint64_t bucket )
 {
 	mpc_common_rwlock_t *lock = &ht->rwlocks[bucket];
 	mpc_common_spinlock_read_unlock( lock );

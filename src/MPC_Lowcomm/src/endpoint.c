@@ -186,7 +186,7 @@ void _mpc_lowcomm_endpoint_table_walk_dynamic(_mpc_lowcomm_endpoint_table_t *tab
 	/* Do not walk on static routes */
 	MPC_HT_ITER(&table->dynamic_route_table, current_route)
 	func(current_route, arg);
-	MPC_HT_ITER_END
+	MPC_HT_ITER_END(&table->dynamic_route_table)
 }
 
 /* Walk through all registered routes and call the function 'func'.
@@ -202,5 +202,5 @@ void _mpc_lowcomm_endpoint_table_walk_static(_mpc_lowcomm_endpoint_table_t *tabl
 
 	MPC_HT_ITER(&table->static_route_table, current_route)
 	func(current_route, arg);
-	MPC_HT_ITER_END
+	MPC_HT_ITER_END(&table->dynamic_route_table)
 }

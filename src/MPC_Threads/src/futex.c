@@ -677,7 +677,7 @@ int *futex_queue_HT_register_thread(struct futex_queue_HT *ht, int *futex_key, i
 				futex_queue_release(queue);
 			}
 		}
-		MPC_HT_ITER_END
+		MPC_HT_ITER_END(&ht->queue_hash_table)
 
 
 		/* This done we leave the negative locking phase */

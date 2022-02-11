@@ -1003,6 +1003,28 @@ mpc_lowcomm_communicator_t mpc_lowcomm_get_communicator_from_id(mpc_lowcomm_comm
 	return ret;
 }
 
+int mpc_lowcomm_communicator_scan(void (*callback)(mpc_lowcomm_communicator_t comm, void * arg), void *arg)
+{
+	if(!callback)
+	{
+		return MPC_LOWCOMM_ERROR;
+	}
+
+	void * tmp = NULL;
+	MPC_HT_ITER(&__id_factory.id_table, tmp)
+	{
+		mpc_lowcomm_communicator_t pcomm = (mpc_lowcomm_communicator_t)tmp;
+
+		(callback)(tmp, arg);
+
+	}
+	MPC_HT_ITER_END(&__id_factory.id_table)
+
+	return MPC_LOWCOMM_SUCCESS;
+}
+
+
+
 int mpc_lowcomm_communicator_exists(mpc_lowcomm_communicator_t comm)
 {
 	if(!mpc_common_bit_array_get(&__id_factory.comm_bit_array,(uint64_t)comm ))

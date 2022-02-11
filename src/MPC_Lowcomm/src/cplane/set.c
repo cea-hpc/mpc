@@ -228,7 +228,7 @@ int _mpc_lowcomm_set_iterate(int (*set_cb)(_mpc_lowcomm_set_t *set, void *arg), 
 			break;
 		}
 	}
-	MPC_HT_ITER_END
+	MPC_HT_ITER_END(&__set_ht)
 
 	return 0;
 }
@@ -250,7 +250,7 @@ mpc_lowcomm_peer_uid_t * _mpc_lowcomm_get_set_roots(int * root_table_len)
 
 		len++;
 	}
-	MPC_HT_ITER_END
+	MPC_HT_ITER_END(&__set_ht)
 
 	*root_table_len = len;
 
@@ -272,7 +272,7 @@ mpc_lowcomm_peer_uid_t * _mpc_lowcomm_get_set_roots(int * root_table_len)
 			ret[cnt] = set->peers[0]->infos.uid;
 			cnt++;
 		}
-		MPC_HT_ITER_END
+		MPC_HT_ITER_END(&__set_ht)
 	}
 
 	/* Now as an optimization always put current set first */

@@ -928,7 +928,7 @@ int mpc_MPI_Win_attr_ht_release(struct mpc_MPI_Win_attr_ht *atht) {
       }
     }
 
-    MPC_HT_ITER_END
+    MPC_HT_ITER_END(&atht->ht)
 
     if (found != -1) {
 

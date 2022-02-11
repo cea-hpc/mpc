@@ -1446,7 +1446,7 @@ static inline _mpc_lowcomm_client_ctx_t *__get_closest_in_set(struct _mpc_lowcom
                 has_routes = 1;
 			}
 		}
-		MPC_HT_ITER_END
+		MPC_HT_ITER_END(&monitor->client_contexts)
 
 		pthread_mutex_unlock(&monitor->client_lock);
 
@@ -1591,7 +1591,7 @@ mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_disconnect(struct _mpc_lowcom
 				break;
 			}
 		}
-		MPC_HT_ITER_END
+		MPC_HT_ITER_END(&monitor->client_contexts)
 	} while(did_delete);
 
 	return MPC_LOWCOMM_MONITOR_RET_SUCCESS;
@@ -2416,7 +2416,7 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_connectivity_in
 
 	    peer_count++;
 	}
-	MPC_HT_ITER_END
+	MPC_HT_ITER_END(&__monitor.client_contexts)
     }
 
 	pthread_mutex_unlock(&__monitor.client_lock);
@@ -2441,7 +2441,7 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_connectivity_in
 		    resp->content->connectivity.peers_count++;
         }
 	}
-	MPC_HT_ITER_END
+	MPC_HT_ITER_END(&__monitor.client_contexts)
 
 	pthread_mutex_unlock(&__monitor.client_lock);
 
@@ -2819,7 +2819,7 @@ void mpc_lowcomm_monitor_synchronous_connectivity_dump(void)
 
 				printf("%lu -- %lu\n", mpc_lowcomm_monitor_get_uid(), ctx->uid);
 			}
-			MPC_HT_ITER_END
+			MPC_HT_ITER_END(&__monitor.client_contexts)
 
 			pthread_mutex_unlock(&__monitor.client_lock);
 		}

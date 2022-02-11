@@ -142,7 +142,8 @@ am__mpc_header_HEADERS_DIST = ./include/mpc_lowcomm.h \
 	./include/mpc_lowcomm_communicator.h \
 	./include/mpc_lowcomm_group.h ./include/mpc_lowcomm_types.h \
 	./include/mpc_lowcomm_arpc.h ./include/mpc_lowcomm_monitor.h \
-	./include/mpc_lowcomm_handle_ctx.h ./include/mpc_lowcomm_am.h
+	./include/mpc_lowcomm_handle_ctx.h ./include/mpc_lowcomm_mqd.h \
+	./include/mpc_lowcomm_am.h
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
@@ -530,7 +531,8 @@ mpc_header_HEADERS = ./include/mpc_lowcomm.h \
 	./include/mpc_lowcomm_communicator.h \
 	./include/mpc_lowcomm_group.h ./include/mpc_lowcomm_types.h \
 	./include/mpc_lowcomm_arpc.h ./include/mpc_lowcomm_monitor.h \
-	./include/mpc_lowcomm_handle_ctx.h $(am__append_1)
+	./include/mpc_lowcomm_handle_ctx.h ./include/mpc_lowcomm_mqd.h \
+	$(am__append_1)
 SUBDIRS = src
 all: all-recursive
 

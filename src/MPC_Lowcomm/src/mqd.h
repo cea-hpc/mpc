@@ -14,8 +14,9 @@ struct mpc_lowcomm_mqs_process
 {
     int local_rank;
     int global_rank;
-    mpc_comm_ptp_message_lists_t * ptp;
 
+    mpc_lowcomm_ptp_message_lists_t ** ptp;
+    unsigned int list_count;
 
     mqs_communicator *comms;
     unsigned int comm_count;

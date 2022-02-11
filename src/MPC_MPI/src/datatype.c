@@ -419,7 +419,7 @@ static inline int __mpc_dt_attr_store_release( struct __mpc_dt_attr_store *store
 		sctk_free( attr );
 	}
 
-	MPC_HT_ITER_END
+	MPC_HT_ITER_END(&store->attrs)
 
 	mpc_common_hashtable_release( &store->attrs );
 

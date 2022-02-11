@@ -162,6 +162,8 @@ mpc_lowcomm_communicator_t mpc_lowcomm_get_communicator_from_linear_id(int linea
 int mpc_lowcomm_communicator_linear_id(mpc_lowcomm_communicator_t comm);
 
 
+int mpc_lowcomm_communicator_scan(void (*callback)(mpc_lowcomm_communicator_t comm, void * arg), void *arg);
+
 /**************
 * INTRACOMMS *
 **************/
