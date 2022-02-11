@@ -69,29 +69,6 @@ static inline void _mpc_comm_dest_key_init(mpc_comm_dest_key_t *key, mpc_lowcomm
 	key->comm_id = comm;
 }
 
-typedef struct
-{
-	mpc_common_spinlock_t            lock;
-	mpc_lowcomm_msg_list_t *list;
-} mpc_comm_ptp_list_incomming_t;
-
-typedef struct
-{
-	volatile mpc_lowcomm_msg_list_t *list;
-} mpc_comm_ptp_list_pending_t;
-
-typedef struct
-{
-	mpc_common_spinlock_t         pending_lock;
-	char                          pad[256];
-	/* Messages are posted to the 'incoming' lists before being merged to the pending list. */
-	mpc_comm_ptp_list_incomming_t incomming_send;
-	mpc_comm_ptp_list_incomming_t incomming_recv;
-	/* Messages in the 'pending' lists are waiting to be matched */
-    mpc_comm_ptp_list_pending_t   pending_send;
-	mpc_comm_ptp_list_pending_t   pending_recv;
-} mpc_comm_ptp_message_lists_t;
-
 typedef struct mpc_comm_ptp_s
 {
 	mpc_comm_dest_key_t          key;
@@ -377,6 +354,39 @@ static inline struct mpc_comm_ptp_s *__mpc_comm_ptp_array_get(mpc_lowcomm_commun
 	_mpc_comm_dest_key_init(&key, comm->id, rank);
 	return __mpc_comm_ptp_array_get_key(&key);
 }
+
+int _mpc_lowcomm_comm_get_list(int rank, mpc_comm_ptp_message_lists_t **lists, int *list_count)
+{
+	int i;
+	int ret_cnt = 0;
+
+	for(i = 0 ; (i < SCTK_PARALLEL_COMM_QUEUES_NUMBER)  && (i < *list_count);i++)
+	{
+		mpc_comm_dest_key_t key;
+		key.comm_id = i;
+		key.rank = rank;
+
+		struct mpc_comm_ptp_s * ptp = __mpc_comm_ptp_array_get_key(&key);
+
+		if(ptp)
+		{
+			lists[ret_cnt] = &ptp->lists;
+			ret_cnt++;
+		} 
+	}
+
+	*list_count = ret_cnt;
+
+
+
+	if( mpc_common_get_local_process_count() <= *list_count)
+	{
+		return MPC_LOWCOMM_ERR_TRUNCATE;
+	}
+
+	return MPC_LOWCOMM_SUCCESS;
+}
+
 
 struct mpc_comm_ptp_s *_mpc_comm_ptp_array_get(mpc_lowcomm_communicator_t comm, int rank)
 {
