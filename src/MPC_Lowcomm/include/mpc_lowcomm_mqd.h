@@ -196,6 +196,7 @@ int mqs_destroy_image_info(mqs_image_info *info);
 * PROCESS RELATED FUNCTIONS *
 *****************************/
 
+int mqsx_rewind_process(void);
 int mqs_setup_process(mqs_process *process, const mqs_process_callbacks *cb);
 int mqs_process_has_queues(mqs_process *process, char **message);
 int mqs_destroy_process_info(mqs_process_info *processinfo);

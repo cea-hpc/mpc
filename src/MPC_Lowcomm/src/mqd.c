@@ -40,6 +40,19 @@ int mqs_destroy_image_info(mqs_image_info *info)
 * PROCESS RELATED FUNCTIONS *
 *****************************/
 
+static int current_exported_process_offset = 0;
+static mpc_common_spinlock_t proc_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
+
+int mqsx_rewind_process(void)
+{
+    mpc_common_spinlock_lock(&proc_lock);
+    current_exported_process_offset = 0;
+    mpc_common_spinlock_unlock(&proc_lock);
+
+}
+
+
+
 int mqs_setup_process(mqs_process *process, const mqs_process_callbacks *cb)
 {
 	struct mpc_lowcomm_mqs_process *ret = sctk_malloc(sizeof(struct mpc_lowcomm_mqs_process) );
@@ -51,11 +64,8 @@ int mqs_setup_process(mqs_process *process, const mqs_process_callbacks *cb)
 		return mqs_no_information;
 	}
 
-	static mpc_common_spinlock_t proc_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 	mpc_common_spinlock_lock(&proc_lock);
-
-	static int current_exported_process_offset = 0;
 
 	if(mpc_common_get_local_task_count() <= current_exported_process_offset)
 	{
@@ -651,6 +661,7 @@ int mqsx_dump_comms_json(mqs_process *proc, FILE *out)
 
 static int reg_sigusr2 = 1;
 static int reg_sigint  = 1;
+static int dump_to_file_on_sigint = 0;
 static int dump_comms  = 0;
 
 
@@ -658,8 +669,7 @@ static int dump_comms  = 0;
 * SIG HANDLING *
 ****************/
 
-
-void __dump_comm_info(int sig)
+static void __dump_to_file()
 {
 	mqs_image img;
 
@@ -722,6 +732,14 @@ void __dump_comm_info(int sig)
 	fprintf(out, "\n}\n");
 
 	fclose(out);
+
+}
+
+
+void __dump_comm_info(int sig)
+{
+    __dump_to_file();
+    mqsx_rewind_process();
 }
 
 void __dump_comm_console(int sig)
@@ -748,6 +766,13 @@ void __dump_comm_console(int sig)
 		mqsx_dump_comms(&proc);
 	}while(1);
 
+    mqsx_rewind_process();
+
+    if(dump_to_file_on_sigint)
+    {
+        __dump_to_file();
+    }
+
 	exit(1);
 }
 
@@ -756,7 +781,8 @@ static void __register_mqd_config(void)
 	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("mqd",
 	                                                        PARAM("regsigusr2", &reg_sigusr2, MPC_CONF_INT, "Save communications queues to files on SIGUSR2"),
 	                                                        PARAM("regsigint", &reg_sigint, MPC_CONF_INT, "Dump communication queues to console on SIGINT"),
-	                                                        PARAM("dumpcomms", &dump_comms, MPC_CONF_INT, "Add communicator information to mqd output"),
+	                                                        PARAM("fileonsigint", &dump_to_file_on_sigint, MPC_CONF_INT, "Also dump to file on SIGINT (in addition of console)"),
+                                                            PARAM("dumpcomms", &dump_comms, MPC_CONF_INT, "Add communicator information to mqd output"),
 	                                                        NULL);
 
 
