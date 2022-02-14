@@ -1433,17 +1433,15 @@ static inline _mpc_lowcomm_client_ctx_t *__get_closest_in_set(struct _mpc_lowcom
 		MPC_HT_ITER(&monitor->client_contexts, ctx)
 		{
 			//mpc_common_debug_error("CTX == %p", ctx);
-			if(!ctx)
+			if(ctx)
 			{
-				continue;
-			}
-
-			if(mpc_lowcomm_peer_closer(dest, current_route_uid, ctx->uid) )
-			{
-				/* We have one pick it if closer */
-				current_route_uid = ctx->uid;
-				ellected_ctx      = ctx;
-                has_routes = 1;
+				if(mpc_lowcomm_peer_closer(dest, current_route_uid, ctx->uid) )
+				{
+					/* We have one pick it if closer */
+					current_route_uid = ctx->uid;
+					ellected_ctx      = ctx;
+					has_routes = 1;
+				}
 			}
 		}
 		MPC_HT_ITER_END(&monitor->client_contexts)
@@ -1577,6 +1575,7 @@ mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_disconnect(struct _mpc_lowcom
 	_mpc_lowcomm_client_ctx_t *client = NULL;
 
 	int did_delete = 0;
+	uint64_t to_delete = 0;
 
 	do
 	{
@@ -1586,12 +1585,18 @@ mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_disconnect(struct _mpc_lowcom
 			if(client)
 			{
 				did_delete = 1;
-				mpc_common_hashtable_delete(&monitor->client_contexts, client->uid);
-				_mpc_lowcomm_client_ctx_release(&client);
-				break;
+
+				MPC_HT_ITER_BREAK(&monitor->client_contexts);
 			}
 		}
 		MPC_HT_ITER_END(&monitor->client_contexts)
+
+		if(did_delete)
+		{
+			mpc_common_hashtable_delete(&monitor->client_contexts, client->uid);
+			_mpc_lowcomm_client_ctx_release(&client);
+		}
+
 	} while(did_delete);
 
 	return MPC_LOWCOMM_MONITOR_RET_SUCCESS;
@@ -2409,12 +2414,10 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_connectivity_in
     {
 	MPC_HT_ITER(&__monitor.client_contexts, ctx)
 	{
-		if(!ctx)
+		if(ctx)
 		{
-			continue;
+	    	peer_count++;
 		}
-
-	    peer_count++;
 	}
 	MPC_HT_ITER_END(&__monitor.client_contexts)
     }
@@ -2430,16 +2433,14 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_connectivity_in
 
 	MPC_HT_ITER(&__monitor.client_contexts, ctx)
 	{
-		if(!ctx)
+		if(ctx)
 		{
-			continue;
+			if( resp->content->connectivity.peers_count < peer_count )
+			{
+				resp->content->connectivity.peers[resp->content->connectivity.peers_count] = ctx->uid;
+				resp->content->connectivity.peers_count++;
+			}
 		}
-
-		if( resp->content->connectivity.peers_count < peer_count )
-        {
-		    resp->content->connectivity.peers[resp->content->connectivity.peers_count] = ctx->uid;
-		    resp->content->connectivity.peers_count++;
-        }
 	}
 	MPC_HT_ITER_END(&__monitor.client_contexts)
 
@@ -2812,12 +2813,10 @@ void mpc_lowcomm_monitor_synchronous_connectivity_dump(void)
 
 			MPC_HT_ITER(&__monitor.client_contexts, ctx)
 			{
-				if(!ctx)
+				if(ctx)
 				{
-					continue;
+					printf("%lu -- %lu\n", mpc_lowcomm_monitor_get_uid(), ctx->uid);
 				}
-
-				printf("%lu -- %lu\n", mpc_lowcomm_monitor_get_uid(), ctx->uid);
 			}
 			MPC_HT_ITER_END(&__monitor.client_contexts)
 

@@ -286,7 +286,6 @@ typedef struct
         op->desired_local_rank = SCTK_MSG_DEST_TASK(msg);
     }
 
-    mpc_lowcomm_communicator_print(msg->tail.communicator, 0);
 
     op->desired_global_rank = mpc_lowcomm_communicator_rank_of(msg->tail.communicator, op->desired_local_rank);
 
@@ -303,7 +302,7 @@ typedef struct
     op->desired_length = SCTK_MSG_SIZE(msg);
 
 
-    mpc_common_debug_error("TAG %d LEN %d", op->desired_tag, op->desired_length);
+    //mpc_common_debug_error("TAG %d LEN %d", op->desired_tag, op->desired_length);
 
 
     op->system_buffer = 0;
@@ -313,7 +312,6 @@ typedef struct
     if(msg->tail.message_type == MPC_LOWCOMM_MESSAGE_CONTIGUOUS)
     {
         op->buffer = msg->tail.message.contiguous.addr;
-        op->desired_length = msg->tail.message.contiguous.size;
     }
 
     process->ops_count = process->ops_count + 1;

@@ -416,6 +416,8 @@ void mpc_common_hashtable_unlock_cell_write( struct mpc_common_hashtable *ht, ui
  *
  */
 #define MPC_HT_ITER( ht, var )                             \
+	{\
+	int __do_break = 0; \
 	unsigned int ____i;                                    \
 	for ( ____i = 0; ____i < ( ht )->table_size; ____i++ ) \
 	{                                                      \
@@ -436,7 +438,19 @@ void mpc_common_hashtable_unlock_cell_write( struct mpc_common_hashtable *ht, ui
 	____c = ____c->next; \
 	}                    \
 		mpc_common_hashtable_unlock_read( ht , ____i);             \
+		if(__do_break) \
+		{\
+			break;\
+		}\
+	} \
 	}
+
+
+
+#define MPC_HT_ITER_BREAK(ht) \
+		__do_break = 1; \
+		break;
+
 /**
  * @}
  */
