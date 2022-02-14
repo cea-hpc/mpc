@@ -898,12 +898,6 @@ __task_pqueue_push(mpc_omp_task_pqueue_t * pqueue, mpc_omp_task_t * task)
 # define MPC_OMP_TASK_LOCK(task)     mpc_common_spinlock_lock(&(task->lock))
 # define MPC_OMP_TASK_UNLOCK(task)   mpc_common_spinlock_unlock(&(task->lock))
 
-static inline uint32_t
-__task_dep_hash(uintptr_t addr)
-{
-    return addr;
-}
-
 /* increase task reference counter by 1 */
 static inline void
 __task_ref(mpc_omp_task_t * task)
@@ -1105,6 +1099,43 @@ __task_dep_list_append(
     return dep;
 }
 
+static mpc_omp_task_dep_htable_entry_t *
+__task_process_mpc_dep_entry(mpc_omp_task_t * task, void * addr)
+{
+    double t0 = omp_get_wtime();
+
+    unsigned hashv;
+    HASH_VALUE(&addr, sizeof(void *), hashv);
+
+    mpc_omp_task_dep_htable_entry_t * entry;
+    HASH_FIND_BYHASHVALUE(hh, task->parent->dep_node.hmap, &addr, sizeof(void *), hashv, entry);
+
+    double tf = omp_get_wtime();
+    double t_hash = tf - t0;
+
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_instance_t * instance = thread->instance;
+    assert(instance);
+    instance->t_hash += t_hash;
+
+    if (entry == NULL)
+    {
+        entry = (mpc_omp_task_dep_htable_entry_t *) mpc_omp_alloc(sizeof(mpc_omp_task_dep_htable_entry_t));
+        assert(entry);
+        entry->addr     = addr;
+        entry->out      = NULL;
+        entry->ins      = NULL;
+        entry->inoutset = NULL;
+        entry->task_uid = 0;
+        mpc_common_spinlock_init(&(entry->lock), 0);
+        HASH_ADD_KEYPTR_BYHASHVALUE(hh, task->parent->dep_node.hmap, &(entry->addr), sizeof(void *), hashv, entry);
+    }
+
+    return entry;
+}
+
 /** Note : only 1 thread may run this function for a given `task->parent` */
 static void
 __task_process_mpc_dep(
@@ -1116,26 +1147,10 @@ __task_process_mpc_dep(
      * Also performon redundancy check */
 //    mpc_common_spinlock_lock(&(task->parent->dep_node.hmap_lock));
     {
-        mpc_omp_task_dep_htable_entry_t * entry;
-        unsigned hashv;
-        HASH_VALUE(&addr, sizeof(void *), hashv);
-        HASH_FIND_BYHASHVALUE(hh, task->parent->dep_node.hmap, &addr, sizeof(void *), hashv, entry);
-        if (entry == NULL)
-        {
-            entry = (mpc_omp_task_dep_htable_entry_t *) mpc_omp_alloc(sizeof(mpc_omp_task_dep_htable_entry_t));
-            assert(entry);
-            entry->addr     = addr;
-            entry->out      = NULL;
-            entry->ins      = NULL;
-            entry->inoutset = NULL;
-            entry->task_uid = 0;
-            mpc_common_spinlock_init(&(entry->lock), 1);
-            HASH_ADD_KEYPTR_BYHASHVALUE(hh, task->parent->dep_node.hmap, &(entry->addr), sizeof(void *), hashv, entry);
-        }
-        else
-        {
-            mpc_common_spinlock_lock(&(entry->lock));
-        }
+        mpc_omp_task_dep_htable_entry_t * entry = __task_process_mpc_dep_entry(task, addr);
+        assert(entry);
+
+        mpc_common_spinlock_lock(&(entry->lock));
 
         /* redundancy check */
         if (entry->task_uid != task->uid)
@@ -3852,6 +3867,10 @@ __thread_task_deinit_recyclers(mpc_omp_thread_t * thread)
 void
 _mpc_omp_task_tree_deinit(mpc_omp_thread_t * thread)
 {
+    mpc_omp_instance_t * instance = (mpc_omp_instance_t *) thread->instance;
+    assert(instance);
+    printf("t_total=%lf, t_deps=%lf, t_hash=%lf\n", instance->t_total, instance->t_deps, instance->t_hash);
+
     assert(thread);
     __thread_task_deinit_initial(thread);
 # if MPC_OMP_TASK_USE_RECYCLERS

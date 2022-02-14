@@ -923,7 +923,6 @@ typedef struct  mpc_omp_task_instance_infos_s
 
     /* priority propagation information */
     mpc_omp_task_priority_propagation_context_t propagation;
-
 }               mpc_omp_task_instance_infos_t;
 
 /**
@@ -1301,6 +1300,10 @@ typedef struct mpc_omp_instance_s
     /* mutex to dump thread debugging informations */
     mpc_common_spinlock_t debug_lock;
 
+    /* DEBUGING */
+    double t_hash;
+    double t_deps;
+    double t_total;
 } mpc_omp_instance_t;
 
 typedef union mpc_omp_node_or_leaf_u

@@ -2099,6 +2099,8 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
 
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tBegin", __func__ );
 
+    double t0 = omp_get_wtime();
+
     /* convert GOMP flags to MPC-OpenMP task properties */
     mpc_omp_task_property_t properties = ___gomp_convert_flags(if_clause, flags);
 
@@ -2115,12 +2117,27 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
     _mpc_omp_task_init(task, fn, data_storage, size, properties);
 
     /* set dependencies (and compute priorities) */
+    double t1 = omp_get_wtime();
     _mpc_omp_task_deps(task, depend, priority);
+    double t2 = omp_get_wtime();
 
     /* process the task (differ or run it) */
     _mpc_omp_task_process(task);
 
     _mpc_omp_task_deinit(task);
+
+    double tf = omp_get_wtime();
+    double t_deps  = t2 - t1;
+    double t_total = tf - t0;
+
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_instance_t * instance = (mpc_omp_instance_t *) thread->instance;
+    assert(instance);
+
+    instance->t_deps += t_deps;
+    instance->t_total += t_total;
 
     mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
 }
