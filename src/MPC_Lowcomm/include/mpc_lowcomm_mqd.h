@@ -1,6 +1,8 @@
 #ifndef MPC_LOWCOMM_MQD_H
 #define MPC_LOWCOMM_MQD_H
 
+#include <stdio.h>
+#include <stdlib.h>
 
 /**
  * @brief Name of the library hosting MQD
@@ -14,7 +16,7 @@ extern char MPIR_dll_name[];
 *********/
 
 typedef long   mqs_tword_t;
-typedef void * mqs_taddr_t;
+typedef size_t mqs_taddr_t;
 
 typedef struct
 {
@@ -125,6 +127,7 @@ typedef struct
 	mqs_taddr_t desired_length;
 	int         system_buffer;
 	mqs_taddr_t buffer;
+	mqs_taddr_t comm_id;
 
 	/* Fields valid if status >= matched */
 	mqs_tword_t actual_local_rank;
@@ -211,5 +214,15 @@ int mqs_next_communicator(mqs_process *process);
 /* Operations */
 int mqs_setup_operation_iterator(mqs_process *process, int opclass);
 int mqs_next_operation(mqs_process *process, mqs_pending_operation *op);
+
+/****************
+ * DUMP HELPERS *
+ ****************/
+
+void mqsx_dump_communicators(mqs_process * proc);
+void mqsx_dump_comms(mqs_process * proc);
+
+int mqsx_dump_communicators_json(mqs_process * proc, FILE *out);
+int mqsx_dump_comms_json(mqs_process * proc, FILE *out);
 
 #endif /* MPC_LOWCOMM_MQD */
