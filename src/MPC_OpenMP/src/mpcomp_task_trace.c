@@ -334,26 +334,53 @@ _mpc_omp_task_trace_allreduce(int count, int datatype, int op, int comm)
 }
 
 static inline int
+__task_trace_create_directory(void)
+{
+    char * tracedir = mpc_omp_conf_get()->task_trace_dir;
+    if (tracedir[0] == 0)
+    {
+        snprintf(tracedir, MPC_CONF_STRING_SIZE, "mpc-omp-task-trace-%ld", (unsigned long) time(NULL));
+    }
+
+    char buffer[MPC_CONF_STRING_SIZE];
+    strncpy(buffer, tracedir, MPC_CONF_STRING_SIZE);
+
+    struct stat sb;
+    char * tmp = buffer;
+    while (*tmp)
+    {
+        if (*tmp == '/')
+        {
+            *tmp = 0;
+            if (mkdir(buffer, S_IRWXU) == -1)
+            {
+                if (stat(buffer, &sb) == -1 || !S_ISDIR(sb.st_mode))
+                {
+                    return -1;
+                }
+            }
+            *tmp = '/';
+        }
+        ++tmp;
+    }
+
+    if (mkdir(buffer, S_IRWXU) == -1)
+    {
+        if (stat(buffer, &sb) == -1 || !S_ISDIR(sb.st_mode))
+        {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+static inline int
 __task_trace_create_file(void)
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     char filepath[1024];
     char * tracedir = mpc_omp_conf_get()->task_trace_dir;
-    if (tracedir == NULL || strlen(tracedir) == 0)
-    {
-        tracedir = ".";
-    }
-    else
-    {
-        struct stat st = {0};
-        if (stat(tracedir, &st) == -1)
-        {
-            if (mkdir(tracedir, 0777) == -1)
-            {
-                return -1;
-            }
-        }
-    }
+
     sprintf(filepath, "%s/%d-%ld-%d.dat", tracedir, __getpid(), thread->rank, thread->task_infos.tracer.id++);
     thread->task_infos.tracer.writer.fd = open(filepath, O_WRONLY | O_TRUNC | O_CREAT, 0644);
     assert(thread->task_infos.tracer.writer.fd >= 0);
@@ -386,6 +413,7 @@ mpc_omp_task_trace_begin(void)
                 MPC_OMP_TASK_TRACE_RECYCLER_CAPACITY);
     }
 
+    __task_trace_create_directory();
     if (__task_trace_create_file() == 0)
     {
         infos->begun = 1;

@@ -122,7 +122,7 @@ static inline void __omp_conf_set_default(void)
     __omp_conf.task_use_fiber                   = 1;
     __omp_conf.task_trace                       = 0;
     __omp_conf.task_trace_auto                  = 0;
-    snprintf(__omp_conf.task_trace_dir, MPC_CONF_STRING_SIZE, ".");
+    __omp_conf.task_trace_dir[0]                = '\0';
     __omp_conf.task_cond_wait_enabled           = 0;
     __omp_conf.task_cond_wait_nhyperactive      = 4;
     __omp_conf.task_yield_mode                  = MPC_OMP_TASK_YIELD_MODE_NOOP;
@@ -206,8 +206,6 @@ static inline void __omp_conf_init(void)
 	mpc_conf_root_config_append("mpcframework", omp, "MPC OpenMP Configuration");
 }
 
-
-
 void mpc_openmp_registration() __attribute__( (constructor) );
 
 void mpc_openmp_registration()
@@ -215,7 +213,6 @@ void mpc_openmp_registration()
 	MPC_INIT_CALL_ONLY_ONCE
 
 	mpc_common_init_callback_register("Config Sources", "MPC_OMP Init", __omp_conf_init, 32);
-
 }
 
 /*****************
