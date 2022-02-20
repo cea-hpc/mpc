@@ -3869,7 +3869,7 @@ _mpc_omp_task_tree_deinit(mpc_omp_thread_t * thread)
 {
     mpc_omp_instance_t * instance = (mpc_omp_instance_t *) thread->instance;
     assert(instance);
-    printf("t_total=%lf, t_deps=%lf, t_hash=%lf\n", instance->t_total, instance->t_deps, instance->t_hash);
+    //printf("t_total=%lf, t_deps=%lf, t_hash=%lf\n", instance->t_total, instance->t_deps, instance->t_hash);
 
     assert(thread);
     __thread_task_deinit_initial(thread);
