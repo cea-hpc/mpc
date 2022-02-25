@@ -340,6 +340,7 @@ __task_trace_create_directory(void)
     if (tracedir[0] == 0)
     {
         snprintf(tracedir, MPC_CONF_STRING_SIZE, "mpc-omp-task-trace-%ld", (unsigned long) time(NULL));
+        if (omp_get_thread_num() == 0) printf("[MPC] Generating trace to %s\n", tracedir);
     }
 
     char buffer[MPC_CONF_STRING_SIZE];
