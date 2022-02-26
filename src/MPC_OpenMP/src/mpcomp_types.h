@@ -65,19 +65,9 @@
 
 /* uthash implementations */
 #ifndef HASH_FUNCTION
-#if 0
-#  define HASH_FUNCTION(keyptr, keylen, hashv)  do { \
-                                                    uintptr_t addr = (uintptr_t) (*keyptr); \
-                                                    hashv = 0;                              \
-                                                    hashv ^= (addr >> 32);                  \
-                                                    hashv ^= (addr >> 16);                  \
-                                                    hashv ^= (addr >> 8);                   \
-                                                    hashv ^= (addr >> 2);               \
+#  define HASH_FUNCTION(keyptr, keylen, hashv)  do {                                                                            \
+                                                    hashv = ((mpc_omp_thread_t *) mpc_omp_tls)->task_infos.hash_deps(*keyptr);  \
                                                 } while(0)
-#  define HASH_FUNCTION(keyptr, keylen, hashv)  do { \
-                                                    hashv = (uintptr_t) (*keyptr) / sizeof(void *);\
-                                                } while(0)
-#endif /* 0 */
 #include "uthash.h"
 #endif /* HASH_FUNCTION */
 
@@ -877,6 +867,8 @@ typedef struct  mpc_omp_task_thread_infos_s
     mpc_omp_thread_task_trace_infos_t tracer;
 # endif
 
+    uintptr_t (*hash_deps)(void * addr);
+
 # if WIP
     mpc_omp_task_list leaves;
 # endif
@@ -1222,26 +1214,34 @@ typedef struct mpc_omp_thread_s
 
 	/** Nested thread chaining ( heap ) */
 	struct mpc_omp_thread_s *next;
+
 	/** Father thread */
 	struct mpc_omp_thread_s *father;
 
 	/* copy __kmpc_fork_call args */
 	void **args_copy;
+
 	/* Current size of args_copy */
 	int temp_argc;
 #if OMPT_SUPPORT
+
     /* Thread state */
     ompt_state_t state;
+
     /* Wait id */
     ompt_wait_id_t wait_id;
+
     /* Thread data */
     ompt_data_t ompt_thread_data;
+
 #if MPCOMPT_HAS_FRAME_SUPPORT
     /* Frame addr and frame return addr infos */
     mpc_omp_ompt_frame_info_t frame_infos;
 #endif
+
     /* Common tool instance status */
     mpc_omp_ompt_tool_status_t tool_status;
+
     /* Common tool instance infos */
     mpc_omp_ompt_tool_instance_t* tool_instance;
 #endif /* OMPT_SUPPORT */

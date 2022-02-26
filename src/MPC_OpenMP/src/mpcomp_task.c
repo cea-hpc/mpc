@@ -3813,11 +3813,20 @@ __thread_task_init_recyclers(mpc_omp_thread_t * thread)
 }
 # endif
 
+static uintptr_t
+_mpc_omp_task_deps_hash(void * addr)
+{
+    uintptr_t hashv;
+    HASH_JEN(&addr, sizeof(void *), hashv);
+    return hashv;
+}
+
 void
 _mpc_omp_task_tree_init(mpc_omp_thread_t * thread)
 {
     if (mpc_omp_conf_get()->task_trace_auto) mpc_omp_task_trace_begin();
     memset(&(thread->task_infos.incoming), 0, sizeof(thread->task_infos.incoming));
+    mpc_omp_task_dependencies_hash_func(_mpc_omp_task_deps_hash);
 # if MPC_OMP_TASK_USE_RECYCLERS
     __thread_task_init_recyclers(thread);
 # endif
@@ -3869,7 +3878,7 @@ _mpc_omp_task_tree_deinit(mpc_omp_thread_t * thread)
 {
     mpc_omp_instance_t * instance = (mpc_omp_instance_t *) thread->instance;
     assert(instance);
-    //printf("t_total=%lf, t_deps=%lf, t_hash=%lf\n", instance->t_total, instance->t_deps, instance->t_hash);
+    printf("t_total=%lf, t_deps=%lf, t_hash=%lf\n", instance->t_total, instance->t_deps, instance->t_hash);
 
     assert(thread);
     __thread_task_deinit_initial(thread);

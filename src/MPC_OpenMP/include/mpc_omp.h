@@ -237,6 +237,10 @@ extern "C" {
     /* mark current task as a send task */
     void mpc_omp_task_is_send(void);
 
+    /* set function to hash task dependencies address for current thread */
+    void mpc_omp_task_dependencies_hash_func(uintptr_t (*hash_deps)(void *));
+
+
 #ifdef __cplusplus
 }
 #endif
