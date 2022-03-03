@@ -139,4 +139,10 @@ void _mpc_omp_instance_init(mpc_omp_instance_t *, int, mpc_omp_team_t *);
 void _mpc_omp_in_order_scheduler(mpc_omp_thread_t *);
 void _mpc_omp_flush(void);
 
+//////////////TARGET/////////////////
+
+void __omp_conf_init_target(void);
+
+/////////////////////////////////////
+
 #endif /* __MPC_OMP_CORE_H__ */

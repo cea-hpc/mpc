@@ -1260,3 +1260,12 @@ void _mpc_omp_in_order_scheduler( mpc_omp_thread_t *thread )
     _mpc_omp_ompt_frame_set_infos( &prev_frame_infos );
 #endif /* OMPT_SUPPORT */
 }
+
+//////////////TARGET/////////////////
+
+void __omp_conf_init_target(void) 
+{
+	__omp_conf_init();
+}
+
+/////////////////////////////////////

@@ -503,3 +503,26 @@ mpc_omp_task_dependencies(mpc_omp_task_dependency_t * dependencies, unsigned int
     thread->task_infos.incoming.dependencies = dependencies;
     thread->task_infos.incoming.ndependencies_type = n;
 }
+
+//////////////TARGET/////////////////
+
+kmp_target_offload_kind_t __kmp_target_offload = tgt_default;
+
+int __kmpc_get_target_offload(void) {
+  //if (!__kmp_init_serial) {
+  //  __kmp_serial_initialize();
+  //}
+  __omp_conf_init_target();
+
+  return __kmp_target_offload;
+}
+
+int omp_get_default_device() {
+  return 0;
+}
+
+int omp_is_initial_device() {
+  return 1;
+}
+
+/////////////////////////////////////

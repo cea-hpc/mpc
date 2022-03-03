@@ -63,4 +63,12 @@ int omp_control_tool(int, int, void*);
 int mpc_omp_get_num_threads(void);
 int mpc_omp_get_thread_num(void);
 
+//////////////TARGET/////////////////
+
+int __kmpc_get_target_offload(void);
+int omp_get_default_device(void);
+int omp_is_initial_device(void);
+
+/////////////////////////////////////
+
 #endif /* __MPC_OMP_API_H__ */
