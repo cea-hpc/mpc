@@ -63,11 +63,20 @@ mpc_lowcomm_datatype mpc_lowcomm_datatypes_list[MPC_LOWCOMM_DATATYPES_NUMBER];
         mpc_lowcomm_datatypes_list[datatype].typesize = sizeof( t );\
         mpc_lowcomm_datatypes_list[datatype].typename = #datatype;
 
-/***
- * 
-*/
+/**
+ * @brief initializes common datatypes
+ *
+ * @return MPI_SUCCESS on success
+ */
 
 int mpc_lowcomm_datatype_init_common();
+
+/**
+ * @brief get the size of a datatype
+ * 
+ * @param datatype datatype to get the size of
+ * @return MPI_SUCCESS on success
+ */
 
 int mpc_lowcomm_datatype_get_size(int datatype);
 
