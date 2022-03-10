@@ -573,10 +573,18 @@ mpc_omp_task_is_send(void)
     _mpc_omp_task_profile_register_current(INT_MAX);
 }
 
+static uintptr_t
+__task_deps_hash_jenkins(void * addr)
+{
+    uintptr_t hashv;
+    HASH_JEN(&addr, sizeof(void *), hashv);
+    return hashv;
+}
+
 void
 mpc_omp_task_dependencies_hash_func(uintptr_t (*hash_deps)(void *))
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     assert(thread);
-    thread->task_infos.hash_deps = hash_deps;
+    thread->task_infos.hash_deps = hash_deps ? hash_deps : __task_deps_hash_jenkins;
 }
