@@ -36,6 +36,8 @@
 #include "mpc_common_spinlock.h"
 #include "mpc_thread.h"
 
+#include "mpc_lowcomm_datatypes.h"
+
 /************************************************************************/
 /* Datatype Init and Release                                            */
 /************************************************************************/
@@ -242,7 +244,7 @@ extern size_t *__sctk_common_type_sizes;
 static inline size_t _mpc_dt_common_get_size( mpc_lowcomm_datatype_t datatype )
 {
 	assert( _mpc_dt_is_common( datatype ) );
-	return __sctk_common_type_sizes[datatype];
+	return mpc_lowcomm_datatype_common_get_size(datatype);
 }
 
 /** \brief Display debug informations about a common datatype
