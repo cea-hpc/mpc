@@ -181,21 +181,22 @@ am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c sctk_checksum.c \
 	sctk_control_messages.c ft.c group.c communicator.c shm_coll.c \
 	lowcomm_config.c sctk_low_level_comm.c multirail.c \
 	sctk_net_tools.c sctk_net_topology.c lowcomm_thread.c mqd.c \
-	sctk_rail.c reorder.c endpoint.c sctk_topological_polling.c \
-	sctk_topological_rail.c sctk_window.c workshare.c pset.c \
-	handle_ctx.c ./tcp/tcp.c ./tcp/tcp_toolkit.c ./shm/sctk_shm.c \
-	./shm/sctk_shm_eager.c ./shm/sctk_shm_raw_queues.c \
-	./shm/sctk_shm_cma.c ./shm/sctk_shm_frag.c \
-	./shm/sctk_shm_qemu.c ./shm/sctk_shm_raw_queues_internals.c \
-	./ib/async.c ./ib/buffered.c ./ib/ib.c ./ib/cm.c \
-	./ib/ibconfig.c ./ib/cp.c ./ib/ibdevice.c ./ib/ibeager.c \
-	./ib/ibmmu.c ./ib/ibmpi.c ./ib/ibpolling.c ./ib/qp.c \
-	./ib/ibrdma.c ./ib/ibtoolkit.c ./ib/ibtopology.c ./ib/ibufs.c \
-	./ib/ibufs_rdma.c ./portals/sctk_portals.c \
-	./portals/sctk_ptl_cm.c ./portals/sctk_ptl_eager.c \
-	./portals/sctk_ptl_iface.c ./portals/sctk_ptl_offcoll.c \
-	./portals/sctk_ptl_rdma.c ./portals/sctk_ptl_rdv.c \
-	./portals/sctk_ptl_toolkit.c ./portals_am/sctk_ptl_am_iface.c \
+	datatypes_common.c sctk_rail.c reorder.c endpoint.c \
+	sctk_topological_polling.c sctk_topological_rail.c \
+	sctk_window.c workshare.c pset.c handle_ctx.c ./tcp/tcp.c \
+	./tcp/tcp_toolkit.c ./shm/sctk_shm.c ./shm/sctk_shm_eager.c \
+	./shm/sctk_shm_raw_queues.c ./shm/sctk_shm_cma.c \
+	./shm/sctk_shm_frag.c ./shm/sctk_shm_qemu.c \
+	./shm/sctk_shm_raw_queues_internals.c ./ib/async.c \
+	./ib/buffered.c ./ib/ib.c ./ib/cm.c ./ib/ibconfig.c ./ib/cp.c \
+	./ib/ibdevice.c ./ib/ibeager.c ./ib/ibmmu.c ./ib/ibmpi.c \
+	./ib/ibpolling.c ./ib/qp.c ./ib/ibrdma.c ./ib/ibtoolkit.c \
+	./ib/ibtopology.c ./ib/ibufs.c ./ib/ibufs_rdma.c \
+	./portals/sctk_portals.c ./portals/sctk_ptl_cm.c \
+	./portals/sctk_ptl_eager.c ./portals/sctk_ptl_iface.c \
+	./portals/sctk_ptl_offcoll.c ./portals/sctk_ptl_rdma.c \
+	./portals/sctk_ptl_rdv.c ./portals/sctk_ptl_toolkit.c \
+	./portals_am/sctk_ptl_am_iface.c \
 	./portals_am/sctk_ptl_am_toolkit.c \
 	./portals_am/sctk_ptl_am_arpc_api.c ./portals_am/arpc_weak.c \
 	./ofi/ofi.c ./ofi/ofi_msg.c ./ofi/ofi_rdma.c \
@@ -236,10 +237,11 @@ am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo \
 	sctk_control_messages.lo ft.lo group.lo communicator.lo \
 	shm_coll.lo lowcomm_config.lo sctk_low_level_comm.lo \
 	multirail.lo sctk_net_tools.lo sctk_net_topology.lo \
-	lowcomm_thread.lo mqd.lo sctk_rail.lo reorder.lo endpoint.lo \
-	sctk_topological_polling.lo sctk_topological_rail.lo \
-	sctk_window.lo workshare.lo pset.lo handle_ctx.lo ./tcp/tcp.lo \
-	./tcp/tcp_toolkit.lo ./shm/sctk_shm.lo ./shm/sctk_shm_eager.lo \
+	lowcomm_thread.lo mqd.lo datatypes_common.lo sctk_rail.lo \
+	reorder.lo endpoint.lo sctk_topological_polling.lo \
+	sctk_topological_rail.lo sctk_window.lo workshare.lo pset.lo \
+	handle_ctx.lo ./tcp/tcp.lo ./tcp/tcp_toolkit.lo \
+	./shm/sctk_shm.lo ./shm/sctk_shm_eager.lo \
 	./shm/sctk_shm_raw_queues.lo ./shm/sctk_shm_cma.lo \
 	./shm/sctk_shm_frag.lo ./shm/sctk_shm_qemu.lo \
 	./shm/sctk_shm_raw_queues_internals.lo $(am__objects_1) \
@@ -638,16 +640,17 @@ libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c \
 	sctk_control_messages.c ft.c group.c communicator.c shm_coll.c \
 	lowcomm_config.c sctk_low_level_comm.c multirail.c \
 	sctk_net_tools.c sctk_net_topology.c lowcomm_thread.c mqd.c \
-	sctk_rail.c reorder.c endpoint.c sctk_topological_polling.c \
-	sctk_topological_rail.c sctk_window.c workshare.c pset.c \
-	handle_ctx.c ./tcp/tcp.c ./tcp/tcp_toolkit.c ./shm/sctk_shm.c \
-	./shm/sctk_shm_eager.c ./shm/sctk_shm_raw_queues.c \
-	./shm/sctk_shm_cma.c ./shm/sctk_shm_frag.c \
-	./shm/sctk_shm_qemu.c ./shm/sctk_shm_raw_queues_internals.c \
-	$(am__append_4) $(am__append_6) $(am__append_8) \
-	./cplane/auth.c ./cplane/peer.c ./cplane/proto.c \
-	./cplane/port.c ./cplane/monitor.c ./cplane/set.c \
-	./cplane/uid.c ./cplane/name.c $(am__append_9)
+	datatypes_common.c sctk_rail.c reorder.c endpoint.c \
+	sctk_topological_polling.c sctk_topological_rail.c \
+	sctk_window.c workshare.c pset.c handle_ctx.c ./tcp/tcp.c \
+	./tcp/tcp_toolkit.c ./shm/sctk_shm.c ./shm/sctk_shm_eager.c \
+	./shm/sctk_shm_raw_queues.c ./shm/sctk_shm_cma.c \
+	./shm/sctk_shm_frag.c ./shm/sctk_shm_qemu.c \
+	./shm/sctk_shm_raw_queues_internals.c $(am__append_4) \
+	$(am__append_6) $(am__append_8) ./cplane/auth.c \
+	./cplane/peer.c ./cplane/proto.c ./cplane/port.c \
+	./cplane/monitor.c ./cplane/set.c ./cplane/uid.c \
+	./cplane/name.c $(am__append_9)
 
 # library dependency #
 libmpclowcomm_la_LIBADD = $(ALLOC_LIBS) \
@@ -868,6 +871,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/coll.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/comm.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/communicator.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/datatypes_common.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/endpoint.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ft.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/group.Plo@am__quote@
