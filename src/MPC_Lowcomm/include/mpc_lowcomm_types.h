@@ -171,9 +171,6 @@ size_t RDMA_type_size( RDMA_type type );
 
 void mpc_lowcomm_register_type_is_common( int (*type_ptr)(mpc_lowcomm_datatype_t) );
 
-#define MPC_PACKED 0
-#define MPC_BYTE 1
-
 /*********
  * ERROR *
  *********/

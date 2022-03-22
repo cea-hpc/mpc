@@ -23,7 +23,7 @@
 #include "mpc_common_debug.h"
 #include "mpc_reduction.h"
 #include "mpc_common_types.h"
-
+#include <mpc_lowcomm_datatypes.h>
 
 
 #if 0
@@ -93,12 +93,12 @@ mpc_redution_check_type (__UNUSED__ mpc_lowcomm_datatype_t a, __UNUSED__ mpc_low
   }
 
  void
-MPC_MAX_func_MPC_COMPLEX8 (const mpc_float_float *  restrict in,
+MPC_MAX_func_MPC_LOWCOMM_COMPLEX8 (const mpc_float_float *  restrict in,
         mpc_float_float *  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
-  mpc_redution_check_type (datatype, MPC_COMPLEX8);
+  mpc_redution_check_type (datatype, MPC_LOWCOMM_COMPLEX8);
   for (i = 0; i < size; i++)
     {
       inout[i].a = in[i].a + inout[i].a;
@@ -107,12 +107,12 @@ MPC_MAX_func_MPC_COMPLEX8 (const mpc_float_float *  restrict in,
 }
 
 void
-MPC_MIN_func_MPC_COMPLEX8 (const mpc_float_float *  restrict in,
+MPC_MIN_func_MPC_LOWCOMM_COMPLEX8 (const mpc_float_float *  restrict in,
         mpc_float_float *  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
-  mpc_redution_check_type (datatype, MPC_COMPLEX8);
+  mpc_redution_check_type (datatype, MPC_LOWCOMM_COMPLEX8);
   for (i = 0; i < size; i++)
     {
       inout[i].a = in[i].a + inout[i].a;
@@ -121,12 +121,12 @@ MPC_MIN_func_MPC_COMPLEX8 (const mpc_float_float *  restrict in,
 }
 
 void
-MPC_SUM_func_MPC_COMPLEX8 (const mpc_float_float *  restrict in,
+MPC_SUM_func_MPC_LOWCOMM_COMPLEX8 (const mpc_float_float *  restrict in,
         mpc_float_float *  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
-  mpc_redution_check_type (datatype, MPC_COMPLEX8);
+  mpc_redution_check_type (datatype, MPC_LOWCOMM_COMPLEX8);
   for (i = 0; i < size; i++)
     {
       inout[i].a = in[i].a + inout[i].a;
@@ -134,12 +134,12 @@ MPC_SUM_func_MPC_COMPLEX8 (const mpc_float_float *  restrict in,
     }
 }
 void
-MPC_PROD_func_MPC_COMPLEX8 (const mpc_float_float *  restrict in,
+MPC_PROD_func_MPC_LOWCOMM_COMPLEX8 (const mpc_float_float *  restrict in,
         mpc_float_float *  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
-  mpc_redution_check_type (datatype, MPC_COMPLEX8);
+  mpc_redution_check_type (datatype, MPC_LOWCOMM_COMPLEX8);
   for (i = 0; i < size; i++)
     {
       inout[i].a = (in[i].a * inout[i].a) - (in[i].b * inout[i].b);
@@ -148,12 +148,12 @@ MPC_PROD_func_MPC_COMPLEX8 (const mpc_float_float *  restrict in,
 }
 
  void
-MPC_MAX_func_MPC_COMPLEX16 (const mpc_double_double *  restrict in,
+MPC_MAX_func_MPC_LOWCOMM_COMPLEX16 (const mpc_double_double *  restrict in,
         mpc_double_double *  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
-  mpc_redution_check_type (datatype, MPC_COMPLEX16);
+  mpc_redution_check_type (datatype, MPC_LOWCOMM_COMPLEX16);
   for (i = 0; i < size; i++)
     {
       inout[i].a = in[i].a + inout[i].a;
@@ -162,12 +162,12 @@ MPC_MAX_func_MPC_COMPLEX16 (const mpc_double_double *  restrict in,
 }
 
 void
-MPC_MIN_func_MPC_COMPLEX16 (const mpc_double_double *  restrict in,
+MPC_MIN_func_MPC_LOWCOMM_COMPLEX16 (const mpc_double_double *  restrict in,
         mpc_double_double *  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
-  mpc_redution_check_type (datatype, MPC_COMPLEX16);
+  mpc_redution_check_type (datatype, MPC_LOWCOMM_COMPLEX16);
   for (i = 0; i < size; i++)
     {
       inout[i].a = in[i].a + inout[i].a;
@@ -176,12 +176,12 @@ MPC_MIN_func_MPC_COMPLEX16 (const mpc_double_double *  restrict in,
 }
 
 void
-MPC_SUM_func_MPC_COMPLEX16 (const mpc_double_double *  restrict in,
+MPC_SUM_func_MPC_LOWCOMM_COMPLEX16 (const mpc_double_double *  restrict in,
         mpc_double_double *  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
-  mpc_redution_check_type (datatype, MPC_COMPLEX16);
+  mpc_redution_check_type (datatype, MPC_LOWCOMM_COMPLEX16);
   for (i = 0; i < size; i++)
     {
       inout[i].a = in[i].a + inout[i].a;
@@ -190,12 +190,12 @@ MPC_SUM_func_MPC_COMPLEX16 (const mpc_double_double *  restrict in,
 
 }
 void
-MPC_PROD_func_MPC_COMPLEX16 (const mpc_double_double *  restrict in,
+MPC_PROD_func_MPC_LOWCOMM_COMPLEX16 (const mpc_double_double *  restrict in,
         mpc_double_double *  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
-  mpc_redution_check_type (datatype, MPC_COMPLEX16);
+  mpc_redution_check_type (datatype, MPC_LOWCOMM_COMPLEX16);
   for (i = 0; i < size; i++)
     {
       inout[i].a = (in[i].a * inout[i].a) - (in[i].b * inout[i].b);
@@ -205,12 +205,12 @@ MPC_PROD_func_MPC_COMPLEX16 (const mpc_double_double *  restrict in,
 }
 
  void
-MPC_MAX_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble*  restrict in,
+MPC_MAX_func_MPC_LOWCOMM_COMPLEX32 (const mpc_longdouble_longdouble*  restrict in,
         mpc_longdouble_longdouble *  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
-  mpc_redution_check_type (datatype, MPC_COMPLEX32);
+  mpc_redution_check_type (datatype, MPC_LOWCOMM_COMPLEX32);
   for (i = 0; i < size; i++)
     {
       inout[i].a = in[i].a + inout[i].a;
@@ -219,12 +219,12 @@ MPC_MAX_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble*  restrict in,
 }
 
 void
-MPC_MIN_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble*  restrict in,
+MPC_MIN_func_MPC_LOWCOMM_COMPLEX32 (const mpc_longdouble_longdouble*  restrict in,
         mpc_longdouble_longdouble *  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
-  mpc_redution_check_type (datatype, MPC_COMPLEX32);
+  mpc_redution_check_type (datatype, MPC_LOWCOMM_COMPLEX32);
   for (i = 0; i < size; i++)
     {
       inout[i].a = in[i].a + inout[i].a;
@@ -233,12 +233,12 @@ MPC_MIN_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble*  restrict in,
 }
 
 void
-MPC_SUM_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble *  restrict in,
+MPC_SUM_func_MPC_LOWCOMM_COMPLEX32 (const mpc_longdouble_longdouble *  restrict in,
         mpc_longdouble_longdouble*  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
-  mpc_redution_check_type (datatype, MPC_COMPLEX32);
+  mpc_redution_check_type (datatype, MPC_LOWCOMM_COMPLEX32);
   for (i = 0; i < size; i++)
     {
       inout[i].a = in[i].a + inout[i].a;
@@ -246,12 +246,12 @@ MPC_SUM_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble *  restrict in,
     }
 }
 void
-MPC_PROD_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble *  restrict in,
+MPC_PROD_func_MPC_LOWCOMM_COMPLEX32 (const mpc_longdouble_longdouble *  restrict in,
         mpc_longdouble_longdouble *  restrict inout, size_t size,
         mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
-  mpc_redution_check_type (datatype, MPC_COMPLEX32);
+  mpc_redution_check_type (datatype, MPC_LOWCOMM_COMPLEX32);
   for (i = 0; i < size; i++)
     {
       inout[i].a = (in[i].a * inout[i].a) - (in[i].b * inout[i].b);
@@ -260,12 +260,12 @@ MPC_PROD_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble *  restrict in,
 }
 
 void
-MPC_SUM_func_MPC_DOUBLE_COMPLEX (const mpc_double_double *  restrict in,
+MPC_SUM_func_MPC_LOWCOMM_DOUBLE_COMPLEX (const mpc_double_double *  restrict in,
 			  mpc_double_double *  restrict inout, size_t size,
 			  mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
-  mpc_redution_check_type (datatype, MPC_DOUBLE_COMPLEX);
+  mpc_redution_check_type (datatype, MPC_LOWCOMM_DOUBLE_COMPLEX);
   for (i = 0; i < size; i++)
     {
       inout[i].a = in[i].a + inout[i].a;
@@ -274,11 +274,11 @@ MPC_SUM_func_MPC_DOUBLE_COMPLEX (const mpc_double_double *  restrict in,
 }
 
 void
-MPC_MIN_func_MPC_DOUBLE_COMPLEX (const mpc_double_double *  restrict in,
+MPC_MIN_func_MPC_LOWCOMM_DOUBLE_COMPLEX (const mpc_double_double *  restrict in,
 			  mpc_double_double *  restrict inout, size_t size,
 			  mpc_lowcomm_datatype_t datatype)
 {
-  mpc_redution_check_type (datatype, MPC_DOUBLE_COMPLEX);
+  mpc_redution_check_type (datatype, MPC_LOWCOMM_DOUBLE_COMPLEX);
   not_available ();
   assert (in == NULL);
   assert (inout == NULL);
@@ -287,11 +287,11 @@ MPC_MIN_func_MPC_DOUBLE_COMPLEX (const mpc_double_double *  restrict in,
 }
 
 void
-MPC_MAX_func_MPC_DOUBLE_COMPLEX (const mpc_double_double *  restrict in,
+MPC_MAX_func_MPC_LOWCOMM_DOUBLE_COMPLEX (const mpc_double_double *  restrict in,
 			  mpc_double_double *  restrict inout, size_t size,
 			  mpc_lowcomm_datatype_t datatype)
 {
-  mpc_redution_check_type (datatype, MPC_DOUBLE_COMPLEX);
+  mpc_redution_check_type (datatype, MPC_LOWCOMM_DOUBLE_COMPLEX);
   not_available ();
   assert (in == NULL);
   assert (inout == NULL);
@@ -300,12 +300,12 @@ MPC_MAX_func_MPC_DOUBLE_COMPLEX (const mpc_double_double *  restrict in,
 }
 
 void
-MPC_PROD_func_MPC_DOUBLE_COMPLEX (const mpc_double_double *  restrict in,
+MPC_PROD_func_MPC_LOWCOMM_DOUBLE_COMPLEX (const mpc_double_double *  restrict in,
 			   mpc_double_double *  restrict inout, size_t size,
 			   mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
-  mpc_redution_check_type (datatype, MPC_DOUBLE_COMPLEX);
+  mpc_redution_check_type (datatype, MPC_LOWCOMM_DOUBLE_COMPLEX);
   for (i = 0; i < size; i++)
     {
       inout[i].a = (in[i].a * inout[i].a) - (in[i].b * inout[i].b);
@@ -314,12 +314,12 @@ MPC_PROD_func_MPC_DOUBLE_COMPLEX (const mpc_double_double *  restrict in,
 }
 
 void
-MPC_SUM_func_MPC_COMPLEX (const mpc_float_float *  restrict in,
+MPC_SUM_func_MPC_LOWCOMM_COMPLEX (const mpc_float_float *  restrict in,
 			  mpc_float_float *  restrict inout, size_t size,
 			  mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
-  mpc_redution_check_type (datatype, MPC_COMPLEX);
+  mpc_redution_check_type (datatype, MPC_LOWCOMM_COMPLEX);
   for (i = 0; i < size; i++)
     {
       inout[i].a = in[i].a + inout[i].a;
@@ -327,11 +327,11 @@ MPC_SUM_func_MPC_COMPLEX (const mpc_float_float *  restrict in,
     }
 }
 void
-MPC_MIN_func_MPC_COMPLEX (const mpc_float_float *  restrict in,
+MPC_MIN_func_MPC_LOWCOMM_COMPLEX (const mpc_float_float *  restrict in,
 			  mpc_float_float *  restrict inout, size_t size,
 			  mpc_lowcomm_datatype_t datatype)
 {
-  mpc_redution_check_type (datatype, MPC_COMPLEX);
+  mpc_redution_check_type (datatype, MPC_LOWCOMM_COMPLEX);
   not_available ();
   assert (in == NULL);
   assert (inout == NULL);
@@ -340,11 +340,11 @@ MPC_MIN_func_MPC_COMPLEX (const mpc_float_float *  restrict in,
 }
 
 void
-MPC_MAX_func_MPC_COMPLEX (const mpc_float_float *  restrict in,
+MPC_MAX_func_MPC_LOWCOMM_COMPLEX (const mpc_float_float *  restrict in,
 			  mpc_float_float *  restrict inout, size_t size,
 			  mpc_lowcomm_datatype_t datatype)
 {
-  mpc_redution_check_type (datatype, MPC_COMPLEX);
+  mpc_redution_check_type (datatype, MPC_LOWCOMM_COMPLEX);
   not_available ();
   assert (in == NULL);
   assert (inout == NULL);
@@ -353,12 +353,12 @@ MPC_MAX_func_MPC_COMPLEX (const mpc_float_float *  restrict in,
 }
 
 void
-MPC_PROD_func_MPC_COMPLEX (const mpc_float_float *  restrict in,
+MPC_PROD_func_MPC_LOWCOMM_COMPLEX (const mpc_float_float *  restrict in,
 			   mpc_float_float *  restrict inout, size_t size,
 			   mpc_lowcomm_datatype_t datatype)
 {
   size_t i;
-  mpc_redution_check_type (datatype, MPC_COMPLEX);
+  mpc_redution_check_type (datatype, MPC_LOWCOMM_COMPLEX);
   for (i = 0; i < size; i++)
     {
       inout[i].a = (in[i].a * inout[i].a) - (in[i].b * inout[i].b);
@@ -535,144 +535,144 @@ MPC_PROTOTYPES_IMPL (BXOR)
 MPC_PROTOTYPES_IMPL (LAND)
 MPC_PROTOTYPES_IMPL (BAND) 
 
-MPC_DEFINED_FUNCS_IMPL (MPC_CHAR, char)
-MPC_DEFINED_FUNCS_IMPL (MPC_SIGNED_CHAR, char)
-MPC_DEFINED_FUNCS_IMPL (MPC_CHARACTER, char)
-MPC_DEFINED_FUNCS_IMPL (MPC_BYTE, unsigned char)
-MPC_DEFINED_FUNCS_IMPL (MPC_SHORT, short)
-MPC_DEFINED_FUNCS_IMPL (MPC_INT, int)
-MPC_DEFINED_FUNCS_IMPL (MPC_INTEGER, int)
-MPC_DEFINED_FUNCS_IMPL (MPC_LONG, long)
-MPC_DEFINED_FUNCS_IMPL (MPC_LONG_LONG, mpc_long_long)
-MPC_DEFINED_FUNCS_IMPL (MPC_FLOAT, float)
-MPC_DEFINED_FUNCS_IMPL(MPC_DOUBLE, double)
-MPC_DEFINED_FUNCS_IMPL (MPC_DOUBLE_PRECISION, double)
-MPC_DEFINED_FUNCS_IMPL (MPC_UNSIGNED_CHAR, unsigned char)
-MPC_DEFINED_FUNCS_IMPL (MPC_UNSIGNED_SHORT, unsigned short)
-MPC_DEFINED_FUNCS_IMPL (MPC_UNSIGNED, unsigned int)
-MPC_DEFINED_FUNCS_IMPL (MPC_UNSIGNED_LONG, unsigned long)
-MPC_DEFINED_FUNCS_IMPL (MPC_LONG_LONG_INT, mpc_long_long_int)
-MPC_DEFINED_FUNCS_IMPL (MPC_UNSIGNED_LONG_LONG_INT, mpc_unsigned_long_long_int)
-MPC_DEFINED_FUNCS_IMPL (MPC_UNSIGNED_LONG_LONG, mpc_unsigned_long_long_int)
-MPC_DEFINED_FUNCS_IMPL (MPC_LONG_DOUBLE, long double)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_CHAR, char)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_SIGNED_CHAR, char)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_CHARACTER, char)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_BYTE, unsigned char)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_SHORT, short)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_INT, int)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_INTEGER, int)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_LONG, long)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_LONG_LONG, mpc_long_long)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_FLOAT, float)
+MPC_DEFINED_FUNCS_IMPL(MPC_LOWCOMM_DOUBLE, double)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_DOUBLE_PRECISION, double)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_UNSIGNED_CHAR, unsigned char)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_UNSIGNED_SHORT, unsigned short)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_UNSIGNED, unsigned int)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_UNSIGNED_LONG, unsigned long)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_LONG_LONG_INT, mpc_long_long_int)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_UNSIGNED_LONG_LONG_INT, mpc_unsigned_long_long_int)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_UNSIGNED_LONG_LONG, mpc_unsigned_long_long_int)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_LONG_DOUBLE, long double)
 
-MPC_DEFINED_FUNCS_IMPL (MPC_COUNT, size_t)
-MPC_DEFINED_FUNCS_IMPL (MPC_AINT, size_t)
-MPC_DEFINED_FUNCS_IMPL (MPC_OFFSET, size_t)
-MPC_DEFINED_FUNCS_IMPL (MPC_C_BOOL, char)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_COUNT, size_t)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_AINT, size_t)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_OFFSET, size_t)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_C_BOOL, char)
 
-MPC_DEFINED_FUNCS_IMPL (MPC_INTEGER1, int8_t)
-MPC_DEFINED_FUNCS_IMPL (MPC_INTEGER2, int16_t)
-MPC_DEFINED_FUNCS_IMPL (MPC_INTEGER4, int32_t)
-MPC_DEFINED_FUNCS_IMPL (MPC_INTEGER8, int64_t)
-MPC_DEFINED_FUNCS_IMPL (MPC_REAL, float)
-MPC_DEFINED_FUNCS_IMPL (MPC_REAL4, float)
-MPC_DEFINED_FUNCS_IMPL (MPC_REAL8, double)
-MPC_DEFINED_FUNCS_IMPL (MPC_REAL16, long double)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_INTEGER1, int8_t)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_INTEGER2, int16_t)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_INTEGER4, int32_t)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_INTEGER8, int64_t)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_REAL, float)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_REAL4, float)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_REAL8, double)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_REAL16, long double)
 
-MPC_DEFINED_FUNCS_IMPL (MPC_UINT8_T, uint8_t)
-MPC_DEFINED_FUNCS_IMPL (MPC_UINT16_T, uint16_t)
-MPC_DEFINED_FUNCS_IMPL (MPC_UINT32_T, uint32_t)
-MPC_DEFINED_FUNCS_IMPL (MPC_UINT64_T, uint64_t)
-MPC_DEFINED_FUNCS_IMPL (MPC_INT8_T, int8_t)
-MPC_DEFINED_FUNCS_IMPL (MPC_INT16_T, int16_t)
-MPC_DEFINED_FUNCS_IMPL (MPC_INT32_T, int32_t)
-MPC_DEFINED_FUNCS_IMPL (MPC_INT64_T, int64_t)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_UINT8_T, uint8_t)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_UINT16_T, uint16_t)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_UINT32_T, uint32_t)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_UINT64_T, uint64_t)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_INT8_T, int8_t)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_INT16_T, int16_t)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_INT32_T, int32_t)
+MPC_DEFINED_FUNCS_IMPL (MPC_LOWCOMM_INT64_T, int64_t)
 
-MPC_DEFINED_FUNCS_IMPL2 (MPC_UINT8_T, uint8_t)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_UINT16_T, uint16_t)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_UINT32_T, uint32_t)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_UINT64_T, uint64_t)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_INT8_T, int8_t)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_INT16_T, int16_t)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_INT32_T, int32_t)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_INT64_T, int64_t)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_UINT8_T, uint8_t)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_UINT16_T, uint16_t)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_UINT32_T, uint32_t)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_UINT64_T, uint64_t)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_INT8_T, int8_t)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_INT16_T, int16_t)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_INT32_T, int32_t)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_INT64_T, int64_t)
   
 
-MPC_DEFINED_FUNCS_IMPL2 (MPC_COUNT, size_t)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_AINT, size_t)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_OFFSET, size_t)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_C_BOOL, char)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_COUNT, size_t)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_AINT, size_t)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_OFFSET, size_t)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_C_BOOL, char)
 
-MPC_DEFINED_FUNCS_NOIMPL (MPC_FLOAT_INT, mpc_float_int)
-MPC_DEFINED_FUNCS_NOIMPL (MPC_LONG_INT, mpc_long_int)
-MPC_DEFINED_FUNCS_NOIMPL (MPC_DOUBLE_INT, mpc_double_int)
-MPC_DEFINED_FUNCS_NOIMPL (MPC_LONG_DOUBLE_INT, mpc_long_double_int)
-MPC_DEFINED_FUNCS_NOIMPL (MPC_SHORT_INT, mpc_short_int)
-MPC_DEFINED_FUNCS_NOIMPL (MPC_2INT, mpc_int_int)
-MPC_DEFINED_FUNCS_NOIMPL (MPC_2FLOAT, mpc_float_float)
-MPC_DEFINED_FUNCS_NOIMPL (MPC_2INTEGER, mpc_integer_integer)
-MPC_DEFINED_FUNCS_NOIMPL (MPC_2REAL, mpc_real_real)
-MPC_DEFINED_FUNCS_NOIMPL (MPC_2DOUBLE_PRECISION, mpc_double_double)
-MPC_DEFINED_FUNCS_NOIMPL (MPC_LOGICAL, int)
+MPC_DEFINED_FUNCS_NOIMPL (MPC_LOWCOMM_FLOAT_INT, mpc_float_int)
+MPC_DEFINED_FUNCS_NOIMPL (MPC_LOWCOMM_LONG_INT, mpc_long_int)
+MPC_DEFINED_FUNCS_NOIMPL (MPC_LOWCOMM_DOUBLE_INT, mpc_double_int)
+MPC_DEFINED_FUNCS_NOIMPL (MPC_LOWCOMM_LONG_DOUBLE_INT, mpc_long_double_int)
+MPC_DEFINED_FUNCS_NOIMPL (MPC_LOWCOMM_SHORT_INT, mpc_short_int)
+MPC_DEFINED_FUNCS_NOIMPL (MPC_LOWCOMM_2INT, mpc_int_int)
+MPC_DEFINED_FUNCS_NOIMPL (MPC_LOWCOMM_2FLOAT, mpc_float_float)
+MPC_DEFINED_FUNCS_NOIMPL (MPC_LOWCOMM_2INTEGER, mpc_integer_integer)
+MPC_DEFINED_FUNCS_NOIMPL (MPC_LOWCOMM_2REAL, mpc_real_real)
+MPC_DEFINED_FUNCS_NOIMPL (MPC_LOWCOMM_2DOUBLE_PRECISION, mpc_double_double)
+MPC_DEFINED_FUNCS_NOIMPL (MPC_LOWCOMM_LOGICAL, int)
 
-MPC_DEFINED_FUNCS_IMPL2 (MPC_CHAR, char)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_SIGNED_CHAR, char)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_LOGICAL, int)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_BYTE, unsigned char)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_SHORT, short)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_INT, int)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_INTEGER, int)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_LONG, long)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_LONG_LONG, mpc_long_long)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_UNSIGNED_CHAR, unsigned char)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_UNSIGNED_SHORT, unsigned short)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_UNSIGNED, unsigned int)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_UNSIGNED_LONG, unsigned long)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_INTEGER1, int8_t)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_INTEGER2, int16_t)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_INTEGER4, int32_t)
-MPC_DEFINED_FUNCS_IMPL2 (MPC_INTEGER8, int64_t)
-MPC_DEFINED_FUNCS_NOIMPL2 (MPC_REAL4, float)
-MPC_DEFINED_FUNCS_NOIMPL2 (MPC_REAL8, double)
-MPC_DEFINED_FUNCS_NOIMPL2 (MPC_REAL16, long double)
-
-
-MPC_DEFINED_FUNCS_NOIMPL2 (MPC_FLOAT, float)
-MPC_DEFINED_FUNCS_NOIMPL2 (MPC_DOUBLE, double)
-MPC_DEFINED_FUNCS_NOIMPL2 (MPC_LONG_DOUBLE, long double)
-
-MPC_DEFINED_FUNCS_NOIMPL3 (MPC_CHAR, char)
-MPC_DEFINED_FUNCS_NOIMPL3 (MPC_SIGNED_CHAR, char)
-MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LOGICAL, int)
-MPC_DEFINED_FUNCS_NOIMPL3 (MPC_BYTE, unsigned char)
-MPC_DEFINED_FUNCS_NOIMPL3 (MPC_SHORT, short)
-MPC_DEFINED_FUNCS_NOIMPL3 (MPC_INT, int)
-MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LONG, long)
-MPC_DEFINED_FUNCS_NOIMPL3 (MPC_FLOAT, float)
-MPC_DEFINED_FUNCS_NOIMPL3 (MPC_DOUBLE, double)
-MPC_DEFINED_FUNCS_NOIMPL3 (MPC_UNSIGNED_CHAR, unsigned char)
-MPC_DEFINED_FUNCS_NOIMPL3 (MPC_UNSIGNED_SHORT, unsigned short)
-MPC_DEFINED_FUNCS_NOIMPL3 (MPC_UNSIGNED, unsigned int)
-MPC_DEFINED_FUNCS_NOIMPL3 (MPC_UNSIGNED_LONG, unsigned long)
-MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LONG_DOUBLE, long double)
-
-MPC_DEFINED_FUNCS_NOIMPL3 (MPC_INTEGER1, int8_t)
-MPC_DEFINED_FUNCS_NOIMPL3 (MPC_INTEGER2, int16_t)
-MPC_DEFINED_FUNCS_NOIMPL3 (MPC_INTEGER4, int32_t)
-MPC_DEFINED_FUNCS_NOIMPL3 (MPC_INTEGER8, int64_t)
-MPC_DEFINED_FUNCS_NOIMPL3 (MPC_REAL4, float)
-MPC_DEFINED_FUNCS_NOIMPL3 (MPC_REAL8, double)
-MPC_DEFINED_FUNCS_NOIMPL3 (MPC_REAL16, long double)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_CHAR, char)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_SIGNED_CHAR, char)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_LOGICAL, int)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_BYTE, unsigned char)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_SHORT, short)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_INT, int)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_INTEGER, int)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_LONG, long)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_LONG_LONG, mpc_long_long)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_UNSIGNED_CHAR, unsigned char)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_UNSIGNED_SHORT, unsigned short)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_UNSIGNED, unsigned int)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_UNSIGNED_LONG, unsigned long)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_INTEGER1, int8_t)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_INTEGER2, int16_t)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_INTEGER4, int32_t)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_LOWCOMM_INTEGER8, int64_t)
+MPC_DEFINED_FUNCS_NOIMPL2 (MPC_LOWCOMM_REAL4, float)
+MPC_DEFINED_FUNCS_NOIMPL2 (MPC_LOWCOMM_REAL8, double)
+MPC_DEFINED_FUNCS_NOIMPL2 (MPC_LOWCOMM_REAL16, long double)
 
 
+MPC_DEFINED_FUNCS_NOIMPL2 (MPC_LOWCOMM_FLOAT, float)
+MPC_DEFINED_FUNCS_NOIMPL2 (MPC_LOWCOMM_DOUBLE, double)
+MPC_DEFINED_FUNCS_NOIMPL2 (MPC_LOWCOMM_LONG_DOUBLE, long double)
 
-MPC_DEFINED_FUNCS_IMPL3 (MPC_FLOAT_INT, mpc_float_int)
-MPC_DEFINED_FUNCS_IMPL3 (MPC_LONG_INT, mpc_long_int)
-MPC_DEFINED_FUNCS_IMPL3 (MPC_DOUBLE_INT, mpc_double_int)
-MPC_DEFINED_FUNCS_IMPL3 (MPC_LONG_DOUBLE_INT, mpc_long_double_int)
-MPC_DEFINED_FUNCS_IMPL3 (MPC_SHORT_INT, mpc_short_int)
-MPC_DEFINED_FUNCS_IMPL3 (MPC_2INT, mpc_int_int)
-MPC_DEFINED_FUNCS_IMPL3 (MPC_2FLOAT, mpc_float_float)
-MPC_DEFINED_FUNCS_IMPL3 (MPC_2INTEGER, mpc_integer_integer)
-MPC_DEFINED_FUNCS_IMPL3 (MPC_2REAL, mpc_real_real)
-MPC_DEFINED_FUNCS_IMPL3 (MPC_COMPLEX, mpc_float_float)
-MPC_DEFINED_FUNCS_IMPL3 (MPC_2DOUBLE_PRECISION, mpc_double_double)
-MPC_DEFINED_FUNCS_IMPL3 (MPC_COMPLEX8, mpc_float_float)
-MPC_DEFINED_FUNCS_IMPL3 (MPC_COMPLEX16, mpc_double_double)
-MPC_DEFINED_FUNCS_IMPL3 (MPC_DOUBLE_COMPLEX, mpc_double_double)
-MPC_DEFINED_FUNCS_IMPL3 (MPC_COMPLEX32, mpc_longdouble_longdouble)
-MPC_DEFINED_FUNCS_NOIMPL3 (MPC_UNSIGNED_LONG_LONG_INT, mpc_unsigned_long_long_int)
+MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LOWCOMM_CHAR, char)
+MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LOWCOMM_SIGNED_CHAR, char)
+MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LOWCOMM_LOGICAL, int)
+MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LOWCOMM_BYTE, unsigned char)
+MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LOWCOMM_SHORT, short)
+MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LOWCOMM_INT, int)
+MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LOWCOMM_LONG, long)
+MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LOWCOMM_FLOAT, float)
+MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LOWCOMM_DOUBLE, double)
+MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LOWCOMM_UNSIGNED_CHAR, unsigned char)
+MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LOWCOMM_UNSIGNED_SHORT, unsigned short)
+MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LOWCOMM_UNSIGNED, unsigned int)
+MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LOWCOMM_UNSIGNED_LONG, unsigned long)
+MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LOWCOMM_LONG_DOUBLE, long double)
+
+MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LOWCOMM_INTEGER1, int8_t)
+MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LOWCOMM_INTEGER2, int16_t)
+MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LOWCOMM_INTEGER4, int32_t)
+MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LOWCOMM_INTEGER8, int64_t)
+MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LOWCOMM_REAL4, float)
+MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LOWCOMM_REAL8, double)
+MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LOWCOMM_REAL16, long double)
+
+
+
+MPC_DEFINED_FUNCS_IMPL3 (MPC_LOWCOMM_FLOAT_INT, mpc_float_int)
+MPC_DEFINED_FUNCS_IMPL3 (MPC_LOWCOMM_LONG_INT, mpc_long_int)
+MPC_DEFINED_FUNCS_IMPL3 (MPC_LOWCOMM_DOUBLE_INT, mpc_double_int)
+MPC_DEFINED_FUNCS_IMPL3 (MPC_LOWCOMM_LONG_DOUBLE_INT, mpc_long_double_int)
+MPC_DEFINED_FUNCS_IMPL3 (MPC_LOWCOMM_SHORT_INT, mpc_short_int)
+MPC_DEFINED_FUNCS_IMPL3 (MPC_LOWCOMM_2INT, mpc_int_int)
+MPC_DEFINED_FUNCS_IMPL3 (MPC_LOWCOMM_2FLOAT, mpc_float_float)
+MPC_DEFINED_FUNCS_IMPL3 (MPC_LOWCOMM_2INTEGER, mpc_integer_integer)
+MPC_DEFINED_FUNCS_IMPL3 (MPC_LOWCOMM_2REAL, mpc_real_real)
+MPC_DEFINED_FUNCS_IMPL3 (MPC_LOWCOMM_COMPLEX, mpc_float_float)
+MPC_DEFINED_FUNCS_IMPL3 (MPC_LOWCOMM_2DOUBLE_PRECISION, mpc_double_double)
+MPC_DEFINED_FUNCS_IMPL3 (MPC_LOWCOMM_COMPLEX8, mpc_float_float)
+MPC_DEFINED_FUNCS_IMPL3 (MPC_LOWCOMM_COMPLEX16, mpc_double_double)
+MPC_DEFINED_FUNCS_IMPL3 (MPC_LOWCOMM_DOUBLE_COMPLEX, mpc_double_double)
+MPC_DEFINED_FUNCS_IMPL3 (MPC_LOWCOMM_COMPLEX32, mpc_longdouble_longdouble)
+MPC_DEFINED_FUNCS_NOIMPL3 (MPC_LOWCOMM_UNSIGNED_LONG_LONG_INT, mpc_unsigned_long_long_int)
 
 
 

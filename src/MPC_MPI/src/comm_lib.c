@@ -62,6 +62,7 @@
 #include <sctk_alloc.h>
 
 #include "mpc_lowcomm_workshare.h"
+#include <mpc_lowcomm_datatypes.h>
 
 sctk_Op_f sctk_get_common_function(mpc_lowcomm_datatype_t datatype, sctk_Op op);
 
@@ -1119,7 +1120,7 @@ int _mpc_cl_type_free(mpc_lowcomm_datatype_t *datatype_p)
 	}
 
 	/* Is the datatype NULL or PACKED ? */
-	if(datatype == MPC_PACKED)
+	if(datatype == MPC_LOWCOMM_PACKED)
 	{
 		/* ERROR */
 		SCTK_PROFIL_END(MPC_Type_free);
@@ -1382,16 +1383,16 @@ static inline size_t __mpc_cl_datatype_get_size(mpc_lowcomm_datatype_t datatype,
 	switch(datatype)
 	{
 		/* FASTPATH */
-		case MPC_BYTE:
+		case MPC_LOWCOMM_BYTE:
 			return sizeof(char);
 
-		case MPC_DOUBLE:
+		case MPC_LOWCOMM_DOUBLE:
 			return sizeof(double);
 
-		case MPC_FLOAT:
+		case MPC_LOWCOMM_FLOAT:
 			return sizeof(float);
 
-		case MPC_INT:
+		case MPC_LOWCOMM_INT:
 			return sizeof(int);
 
 		/* Exceptions */
@@ -1404,7 +1405,7 @@ static inline size_t __mpc_cl_datatype_get_size(mpc_lowcomm_datatype_t datatype,
 		case MPC_LB:
 			return 0;
 
-		case MPC_PACKED:
+		case MPC_LOWCOMM_PACKED:
 			return 1;
 	}
 
@@ -3776,7 +3777,7 @@ int mpc_mpi_cl_isend_pack(int dest, int tag, mpc_lowcomm_communicator_t comm, mp
 	mpc_lowcomm_ptp_message_t *msg = mpc_lowcomm_request_get_msg(request);
 	mpc_lowcomm_ptp_message_header_init(msg, tag, comm, src, dest, request,
 	                                    mpc_lowcomm_request_get_size(request),
-	                                    MPC_LOWCOMM_P2P_MESSAGE, MPC_PACKED, REQUEST_SEND);
+	                                    MPC_LOWCOMM_P2P_MESSAGE, MPC_LOWCOMM_PACKED, REQUEST_SEND);
 	mpc_lowcomm_ptp_message_send(msg);
 	SCTK_PROFIL_END(MPC_Isend_pack);
 	MPC_ERROR_SUCESS();
@@ -3802,7 +3803,7 @@ int mpc_mpi_cl_irecv_pack(int source, int tag, mpc_lowcomm_communicator_t comm, 
 	mpc_lowcomm_ptp_message_t *msg = mpc_lowcomm_request_get_msg(request);
 	mpc_lowcomm_ptp_message_header_init(msg, tag, comm, source, src, request,
 	                                    mpc_lowcomm_request_get_size(request),
-	                                    MPC_LOWCOMM_P2P_MESSAGE, MPC_PACKED, REQUEST_RECV);
+	                                    MPC_LOWCOMM_P2P_MESSAGE, MPC_LOWCOMM_PACKED, REQUEST_RECV);
 	mpc_lowcomm_ptp_message_recv(msg);
 	SCTK_PROFIL_END(MPC_Irecv_pack);
 	MPC_ERROR_SUCESS();

@@ -44,6 +44,7 @@
 #include <mpc_topology.h>
 
 #include "communicator.h"
+#include <mpc_lowcomm_datatypes.h>
 #ifdef MPC_USE_INFINIBAND
 #include <ibdevice.h>
 #endif
@@ -135,9 +136,9 @@ int mpc_lowcomm_check_type_compat(mpc_lowcomm_datatype_t src, mpc_lowcomm_dataty
 			if( (src != MPC_DATATYPE_IGNORE) && (dest != MPC_DATATYPE_IGNORE))
 			{
 				/* See page 33 of 3.0 PACKED and BYTE are exceptions */
-				if((src != MPC_PACKED) && (dest != MPC_PACKED))
+				if((src != MPC_LOWCOMM_PACKED) && (dest != MPC_LOWCOMM_PACKED))
 				{
-					if((src != MPC_BYTE) && (dest != MPC_BYTE))
+					if((src != MPC_LOWCOMM_BYTE) && (dest != MPC_LOWCOMM_BYTE))
 					{
 						if((mpc_lowcomm_type_is_common)(src) &&
 						   (mpc_lowcomm_type_is_common)(dest) )

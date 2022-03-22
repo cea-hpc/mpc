@@ -49,15 +49,15 @@ static void FLOAT_convert(int type_byte_size, char *src, char *dest) {
 
 static inline int sctk_is_float_datatype( mpc_lowcomm_datatype_t type)
 {
-    return ((type == MPC_FLOAT) || 
-	    (type == MPC_DOUBLE) ||
-            (type == MPC_LONG_DOUBLE) ||
-            (type == MPC_DOUBLE_PRECISION) ||
-            (type == MPC_COMPLEX) ||
-            (type == MPC_DOUBLE_COMPLEX) ||
-            (type == MPC_REAL4) ||
-            (type == MPC_REAL8) || 
-            (type == MPC_REAL16));
+    return ((type == MPC_LOWCOMM_FLOAT) || 
+	    (type == MPC_LOWCOMM_DOUBLE) ||
+            (type == MPC_LOWCOMM_LONG_DOUBLE) ||
+            (type == MPC_LOWCOMM_DOUBLE_PRECISION) ||
+            (type == MPC_LOWCOMM_COMPLEX) ||
+            (type == MPC_LOWCOMM_DOUBLE_COMPLEX) ||
+            (type == MPC_LOWCOMM_REAL4) ||
+            (type == MPC_LOWCOMM_REAL8) || 
+            (type == MPC_LOWCOMM_REAL16));
 }
 
 

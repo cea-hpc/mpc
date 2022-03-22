@@ -569,10 +569,10 @@ static int mpi_check_op_type_func_MPI_(MPI_Datatype datatype)
 
 #endif
 #define mpi_check_op_type_func_integer()          \
-	mpi_check_op_type_func_notavail(MPC_INT); \
-	mpi_check_op_type_func_notavail(MPC_LONG)
+	mpi_check_op_type_func_notavail(MPC_LOWCOMM_INT); \
+	mpi_check_op_type_func_notavail(MPC_LOWCOMM_LONG)
 
 #define mpi_check_op_type_func_float()               \
-	mpi_check_op_type_func_notavail(MPC_FLOAT);  \
-	mpi_check_op_type_func_notavail(MPC_DOUBLE); \
-	mpi_check_op_type_func_notavail(MPC_LONG_DOUBLE)
+	mpi_check_op_type_func_notavail(MPC_LOWCOMM_FLOAT);  \
+	mpi_check_op_type_func_notavail(MPC_LOWCOMM_DOUBLE); \
+	mpi_check_op_type_func_notavail(MPC_LOWCOMM_LONG_DOUBLE)
