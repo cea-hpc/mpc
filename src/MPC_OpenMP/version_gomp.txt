@@ -26,3 +26,6 @@ GOMP_5.1 {
 # sets up GCC GOMP_ version dependency chain
 OMP_1.0{
 };
+
+VERS1.0 {
+};

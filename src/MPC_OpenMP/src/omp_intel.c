@@ -2928,8 +2928,23 @@ void __kmpc_omp_wait_deps( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gti
     void ** depend = (void**)sctk_malloc(sizeof(uintptr_t) * ((int)(ndeps + ndeps_noalias)+2));
     __intel_translate_taskdep_to_gomp(ndeps, dep_list, ndeps_noalias, noalias_dep_list, depend);
 
-    TODO("implement '__kmpc_omp_wait_deps'");
-    not_implemented();
+
+	/* allocate empty task */
+	mpc_omp_task_t * empty = _mpc_omp_task_allocate(sizeof(mpc_omp_task_t));
+
+    /* init empty task */
+    _mpc_omp_task_init(empty, NULL, NULL, sizeof(mpc_omp_task_t), current_task->property);
+
+    /* set dependencies (and compute priorities) */
+    _mpc_omp_task_deps(empty, depend, current_task->priority);
+
+
+
+	while (OPA_load_int(&(empty->dep_node.ref_predecessors)))
+    {
+        /* Schedule any other task */
+        _mpc_omp_task_schedule();
+    }
 
     /* next call should be __kmpc_omp_task_begin_if0 to execute undeferred if0 task */
 }
