@@ -2692,7 +2692,11 @@ kmp_task_t *__kmpc_omp_task_alloc( __UNUSED__ ident_t *loc_ref, __UNUSED__  kmp_
     /* mpc_omp_task_t */
     kmp_tasking_flags_t * kmp_task_flags = (kmp_tasking_flags_t *) &flags;
     mpc_omp_task_property_t properties = ___convert_flags(kmp_task_flags);
-    mpc_omp_task_t * task = _mpc_omp_task_allocate(size);
+    /* if not in a parallel region then serial execution */
+	if (thread->info.func == NULL) {
+		mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_UNDEFERRED);
+	}
+	mpc_omp_task_t * task = _mpc_omp_task_allocate(size);
     assert(task);
 
     /* kmp_task_t / shared variables*/
@@ -2711,6 +2715,17 @@ kmp_task_t *__kmpc_omp_task_alloc( __UNUSED__ ident_t *loc_ref, __UNUSED__  kmp_
     MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread)->last_task_alloc = task;
 
     return kmp_task;
+}
+
+kmp_task_t *__kmpc_omp_target_task_alloc(ident_t *loc_ref, kmp_int32 gtid,
+                                         kmp_int32 flags,
+                                         size_t sizeof_kmp_task_t,
+                                         size_t sizeof_shareds,
+                                         kmp_routine_entry_t task_entry,
+                                         kmp_int64 device_id) {
+
+  return __kmpc_omp_task_alloc(loc_ref, gtid, flags, sizeof_kmp_task_t,
+                               sizeof_shareds, task_entry);
 }
 
 void __kmpc_omp_task_begin_if0( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid,
