@@ -139,6 +139,9 @@ typedef struct  mpc_omp_conf_s
     /* taskyield */
     mpc_omp_task_yield_mode_t task_yield_mode;
 
+    /* task default hashing function */
+    int task_dependency_default_hash;
+
     /* priorities */
     int task_direct_successor_enabled;
     mpc_omp_task_priority_policy_t task_priority_policy;
@@ -157,9 +160,7 @@ typedef struct  mpc_omp_conf_s
 
 }               mpc_omp_conf_t;
 
-
 struct mpc_omp_conf_s * mpc_omp_conf_get(void);
-
 
 /*******************************
  * INITIALIZATION AND FINALIZE *

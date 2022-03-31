@@ -68,6 +68,8 @@
 #  define HASH_FUNCTION(keyptr, keylen, hashv)  do {                                                                            \
                                                     hashv = ((mpc_omp_thread_t *) mpc_omp_tls)->task_infos.hash_deps(*keyptr);  \
                                                 } while(0)
+#define uthash_collision_fyi(tbl) (++(((mpc_omp_thread_t *) mpc_omp_tls)->hash_collision))
+#define uthash_expand_fyi(tbl) (++(((mpc_omp_thread_t *) mpc_omp_tls)->hash_resize))
 #include "uthash.h"
 #endif /* HASH_FUNCTION */
 
@@ -1245,6 +1247,8 @@ typedef struct mpc_omp_thread_s
     /* Common tool instance infos */
     mpc_omp_ompt_tool_instance_t* tool_instance;
 #endif /* OMPT_SUPPORT */
+    size_t hash_collision;
+    size_t hash_resize;
 }       mpc_omp_thread_t;
 
 typedef struct  mpc_omp_instance_callback_infos_s

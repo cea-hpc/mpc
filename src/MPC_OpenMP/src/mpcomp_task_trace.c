@@ -156,6 +156,11 @@ __record_sizeof(mpc_omp_task_trace_record_type_t type)
             return sizeof(mpc_omp_task_trace_record_allreduce_t);
         }
 
+        case (MPC_OMP_TASK_TRACE_TYPE_RANK):
+        {
+            return sizeof(mpc_omp_task_trace_record_rank_t);
+        }
+
         default:
         {
             printf("invalid record : type=%d\n", type);
@@ -329,6 +334,25 @@ _mpc_omp_task_trace_allreduce(int count, int datatype, int op, int comm)
     record->datatype = datatype;
     record->op = op;
     record->comm = comm;
+
+    __node_insert(node);
+}
+
+void
+_mpc_omp_task_trace_rank(int comm, int rank)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
+    mpc_omp_task_trace_node_t * node = __node_new(MPC_OMP_TASK_TRACE_TYPE_RANK);
+    assert(node);
+
+    mpc_omp_task_trace_record_rank_t * record = (mpc_omp_task_trace_record_rank_t *) __node_record(node);
+    record->comm = comm;
+    record->rank = rank;
 
     __node_insert(node);
 }
