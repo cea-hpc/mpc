@@ -73,26 +73,26 @@ MPC_DEFINED_FUNCS(MPC_LOWCOMM_UNSIGNED_SHORT, unsigned short,name);		\
 MPC_DEFINED_FUNCS(MPC_LOWCOMM_UNSIGNED, unsigned int,name);			\
 MPC_DEFINED_FUNCS(MPC_LOWCOMM_UNSIGNED_LONG, unsigned long,name);		\
 MPC_DEFINED_FUNCS(MPC_LOWCOMM_LONG_DOUBLE, long double,name);		\
-MPC_DEFINED_FUNCS(MPC_LOWCOMM_FLOAT_INT,mpc_float_int ,name);		\
-MPC_DEFINED_FUNCS(MPC_LOWCOMM_LONG_INT,mpc_long_int ,name);			\
-MPC_DEFINED_FUNCS(MPC_LOWCOMM_DOUBLE_INT,mpc_double_int ,name);		\
-MPC_DEFINED_FUNCS(MPC_LOWCOMM_LONG_DOUBLE_INT,mpc_long_double_int ,name);		\
-MPC_DEFINED_FUNCS(MPC_LOWCOMM_SHORT_INT,mpc_short_int ,name);		\
-MPC_DEFINED_FUNCS(MPC_LOWCOMM_2INT,mpc_int_int ,name);			\
-MPC_DEFINED_FUNCS(MPC_LOWCOMM_2INTEGER,mpc_integer_integer ,name);          \
-MPC_DEFINED_FUNCS(MPC_LOWCOMM_2FLOAT,mpc_float_float ,name)	;		\
-MPC_DEFINED_FUNCS(MPC_LOWCOMM_COMPLEX,mpc_float_float ,name)	;		\
-MPC_DEFINED_FUNCS(MPC_LOWCOMM_COMPLEX8,mpc_float_float ,name)	;		\
-MPC_DEFINED_FUNCS(MPC_LOWCOMM_COMPLEX16,mpc_double_double ,name)	;		\
-MPC_DEFINED_FUNCS(MPC_LOWCOMM_DOUBLE_COMPLEX,mpc_double_double ,name)	;		\
-MPC_DEFINED_FUNCS(MPC_LOWCOMM_COMPLEX32,mpc_longdouble_longdouble ,name)	;		\
+MPC_DEFINED_FUNCS(MPC_FLOAT_INT,mpc_float_int ,name);		\
+MPC_DEFINED_FUNCS(MPC_LONG_INT,mpc_long_int ,name);			\
+MPC_DEFINED_FUNCS(MPC_DOUBLE_INT,mpc_double_int ,name);		\
+MPC_DEFINED_FUNCS(MPC_LONG_DOUBLE_INT,mpc_long_double_int ,name);		\
+MPC_DEFINED_FUNCS(MPC_SHORT_INT,mpc_short_int ,name);		\
+MPC_DEFINED_FUNCS(MPC_2INT,mpc_int_int ,name);			\
+MPC_DEFINED_FUNCS(MPC_2INTEGER,mpc_integer_integer ,name);          \
+MPC_DEFINED_FUNCS(MPC_2FLOAT,mpc_float_float ,name)	;		\
+MPC_DEFINED_FUNCS(MPC_COMPLEX,mpc_float_float ,name)	;		\
+MPC_DEFINED_FUNCS(MPC_COMPLEX8,mpc_float_float ,name)	;		\
+MPC_DEFINED_FUNCS(MPC_COMPLEX16,mpc_double_double ,name)	;		\
+MPC_DEFINED_FUNCS(MPC_DOUBLE_COMPLEX,mpc_double_double ,name)	;		\
+MPC_DEFINED_FUNCS(MPC_COMPLEX32,mpc_longdouble_longdouble ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_LOWCOMM_UNSIGNED_LONG_LONG_INT,mpc_unsigned_long_long_int ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_LOWCOMM_UNSIGNED_LONG_LONG,mpc_unsigned_long_long_int ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_LOWCOMM_LONG_LONG_INT, mpc_long_long_int ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_LOWCOMM_LOGICAL, int,name);				\
-MPC_DEFINED_FUNCS(MPC_LOWCOMM_2DOUBLE_PRECISION,mpc_double_double ,name);	\
+MPC_DEFINED_FUNCS(MPC_2DOUBLE_PRECISION,mpc_double_double ,name);	\
 MPC_DEFINED_FUNCS(MPC_LOWCOMM_REAL,float,name);                                \
-MPC_DEFINED_FUNCS(MPC_LOWCOMM_2REAL,mpc_real_real,name);                                \
+MPC_DEFINED_FUNCS(MPC_2REAL,mpc_real_real,name);                                \
 MPC_DEFINED_FUNCS(MPC_LOWCOMM_REAL4,float,name);				\
 MPC_DEFINED_FUNCS(MPC_LOWCOMM_REAL8,double,name);				\
 MPC_DEFINED_FUNCS(MPC_LOWCOMM_REAL16,long double,name);			\

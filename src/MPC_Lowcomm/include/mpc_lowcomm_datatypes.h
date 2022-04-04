@@ -61,53 +61,6 @@ typedef enum{
     MPC_Lowcomm_type_common_limit
 } mpc_lowcomm_type_common;
 
-/* ******************
- * struct datatypes *
- * *****************/
-
-typedef enum{
-    MPC_LOWCOMM_FLOAT_INT = MPC_Lowcomm_type_common_limit,
-    MPC_LOWCOMM_LONG_INT,
-    MPC_LOWCOMM_DOUBLE_INT,
-    MPC_LOWCOMM_SHORT_INT,
-    MPC_LOWCOMM_2INT,
-    MPC_LOWCOMM_2FLOAT,
-    MPC_LOWCOMM_COMPLEX,
-    MPC_LOWCOMM_2DOUBLE_PRECISION,
-    MPC_LOWCOMM_LONG_DOUBLE_INT,
-    MPC_LOWCOMM_COMPLEX8,
-    MPC_LOWCOMM_COMPLEX16,
-    MPC_LOWCOMM_COMPLEX32,
-    MPC_LOWCOMM_DOUBLE_COMPLEX,
-    MPC_LOWCOMM_2INTEGER,
-    MPC_LOWCOMM_2REAL,
-    MPC_Lowcomm_type_struct_limit
-} mpc_lowcomm_type_struct;
-
-/* ***************************
- * Aliased struct data-types *
- * ***************************/
-
-typedef enum{
-    MPC_LOWCOMM_C_COMPLEX = MPC_LOWCOMM_COMPLEX,
-    MPC_LOWCOMM_C_FLOAT_COMPLEX = MPC_LOWCOMM_COMPLEX8,
-    MPC_LOWCOMM_C_DOUBLE_COMPLEX = MPC_LOWCOMM_COMPLEX16,
-    MPC_LOWCOMM_C_LONG_DOUBLE_COMPLEX = MPC_LOWCOMM_COMPLEX32
-} mpc_lowcomm_type_aliased;
-
-/* ************************************************************************
-/* Predefined MPI datatypes corresponding to both C and Fortran datatypes *
-* ************************************************************************/
-
-typedef enum{
-    MPC_LOWCOMM_CXX__BOOL = MPC_Lowcomm_type_struct_limit,
-    MPC_Lowcomm_type_cxx_limit,
-    MPC_LOWCOMM_CXX__FLOAT_COMPLEX = MPC_LOWCOMM_COMPLEX8,
-    MPC_LOWCOMM_CXX__DOUBLE_COMPLEX = MPC_LOWCOMM_COMPLEX16,
-    MPC_LOWCOMM_CXX__LONG_DOUBLE_COMPLEX = MPC_LOWCOMM_COMPLEX32
-} mpc_lowcomm_type_cxx;
-
-
 /* ****************************
  * common datatypes functions *
  * ***************************/
@@ -137,17 +90,5 @@ int mpc_lowcomm_datatype_common_get_size(int datatype);
  */
 
 char* mpc_lowcomm_datatype_common_get_name(int datatype);
-
-/* ****************************
- * struct datatypes functions *
- * ***************************/
-
-/**
- * @brief initializes struct datatypes, with sized calculated with a generated struct containing MPI types
- * 
- * @return MPI_SUCCESS in case of success
- */
-
-int mpc_lowcomm_datatype_init_struct();
 
 #endif

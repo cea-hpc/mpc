@@ -53,8 +53,8 @@ static inline int sctk_is_float_datatype( mpc_lowcomm_datatype_t type)
 	    (type == MPC_LOWCOMM_DOUBLE) ||
             (type == MPC_LOWCOMM_LONG_DOUBLE) ||
             (type == MPC_LOWCOMM_DOUBLE_PRECISION) ||
-            (type == MPC_LOWCOMM_COMPLEX) ||
-            (type == MPC_LOWCOMM_DOUBLE_COMPLEX) ||
+            (type == MPC_COMPLEX) ||
+            (type == MPC_DOUBLE_COMPLEX) ||
             (type == MPC_LOWCOMM_REAL4) ||
             (type == MPC_LOWCOMM_REAL8) || 
             (type == MPC_LOWCOMM_REAL16));

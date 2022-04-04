@@ -102,7 +102,6 @@ void _mpc_dt_init()
 		assume( __sctk_common_type_sizes != NULL );
 		// __mpc_common_types_init();
 		mpc_lowcomm_datatype_init_common();	
-		mpc_lowcomm_datatype_init_struct();
 	}
 
 	mpc_common_spinlock_unlock(&init_lock);

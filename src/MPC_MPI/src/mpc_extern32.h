@@ -356,17 +356,17 @@ static inline size_t MPC_Extern32_common_type_size( mpc_lowcomm_datatype_t commo
 		case MPC_LOWCOMM_AINT:
 		case MPC_LOWCOMM_COUNT:
 		case MPC_LOWCOMM_OFFSET:
-		case MPC_LOWCOMM_C_COMPLEX:
-		case MPC_LOWCOMM_C_FLOAT_COMPLEX:
+		case MPC_C_COMPLEX:
+		case MPC_C_FLOAT_COMPLEX:
 		case MPC_LOWCOMM_INTEGER8:
 		case MPC_LOWCOMM_REAL8:
 			return 8;
 		case MPC_LOWCOMM_LONG_DOUBLE:
-		case MPC_LOWCOMM_C_DOUBLE_COMPLEX:
+		case MPC_C_DOUBLE_COMPLEX:
 		case MPC_LOWCOMM_INTEGER16:
 		case MPC_LOWCOMM_REAL16:
 			return 16;
-		case MPC_LOWCOMM_C_LONG_DOUBLE_COMPLEX:
+		case MPC_C_LONG_DOUBLE_COMPLEX:
 			return 32;
 		
 	}

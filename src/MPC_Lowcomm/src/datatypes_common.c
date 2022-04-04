@@ -15,7 +15,7 @@
 	mpc_lowcomm_datatypes_list[datatype].typesize = sizeof( datatype##_TYPE );\
 	sprintf(mpc_lowcomm_datatypes_list[datatype].typename, "%s", #datatype);
 
-mpc_lowcomm_datatype mpc_lowcomm_datatypes_list[MPC_Lowcomm_type_cxx_limit];
+mpc_lowcomm_datatype mpc_lowcomm_datatypes_list[MPC_Lowcomm_type_common_limit];
 
 int mpc_lowcomm_datatype_init_common(){
 	mpc_lowcomm_datatype_init( MPC_LOWCOMM_CHAR );
@@ -70,27 +70,4 @@ int mpc_lowcomm_datatype_common_get_size(int datatype)
 char* mpc_lowcomm_datatype_common_get_name(int datatype)
 {
     return mpc_lowcomm_datatypes_list[datatype].typename;
-}
-
-#define mpc_lowcomm_datatype_composed_init( datatype, type1, type2 )\
-	mpc_lowcomm_datatypes_list[datatype].typesize = sizeof(struct{type1 a; type2 b;});\
-    sprintf(mpc_lowcomm_datatypes_list[datatype].typename, "%s", #datatype);
-
-
-int mpc_lowcomm_datatype_init_struct(){
-	mpc_lowcomm_datatype_composed_init( MPC_LOWCOMM_FLOAT_INT, MPC_LOWCOMM_FLOAT_TYPE, MPC_LOWCOMM_FLOAT_TYPE ) ;
-    mpc_lowcomm_datatype_composed_init( MPC_LOWCOMM_LONG_INT, MPC_LOWCOMM_LONG_TYPE, MPC_LOWCOMM_INT_TYPE ) ;
-    mpc_lowcomm_datatype_composed_init( MPC_LOWCOMM_DOUBLE_INT, MPC_LOWCOMM_DOUBLE_TYPE, MPC_LOWCOMM_INT_TYPE ) ;
-    mpc_lowcomm_datatype_composed_init( MPC_LOWCOMM_SHORT_INT, MPC_LOWCOMM_SHORT_TYPE, MPC_LOWCOMM_INT_TYPE ) ;
-    mpc_lowcomm_datatype_composed_init( MPC_LOWCOMM_2INT, MPC_LOWCOMM_INT_TYPE, MPC_LOWCOMM_INT_TYPE ) ;
-    mpc_lowcomm_datatype_composed_init( MPC_LOWCOMM_2FLOAT, MPC_LOWCOMM_FLOAT_TYPE, MPC_LOWCOMM_FLOAT_TYPE ) ;
-    mpc_lowcomm_datatype_composed_init( MPC_LOWCOMM_COMPLEX, MPC_LOWCOMM_FLOAT_TYPE, MPC_LOWCOMM_FLOAT_TYPE ) ;
-    mpc_lowcomm_datatype_composed_init( MPC_LOWCOMM_2DOUBLE_PRECISION, MPC_LOWCOMM_DOUBLE_TYPE, MPC_LOWCOMM_DOUBLE_TYPE ) ;
-    mpc_lowcomm_datatype_composed_init( MPC_LOWCOMM_LONG_DOUBLE_INT, MPC_LOWCOMM_LONG_DOUBLE_TYPE, MPC_LOWCOMM_LONG_DOUBLE_TYPE ) ;
-    mpc_lowcomm_datatype_composed_init( MPC_LOWCOMM_COMPLEX8, MPC_LOWCOMM_FLOAT_TYPE, MPC_LOWCOMM_FLOAT_TYPE ) ;
-    mpc_lowcomm_datatype_composed_init( MPC_LOWCOMM_COMPLEX16, MPC_LOWCOMM_DOUBLE_TYPE, MPC_LOWCOMM_DOUBLE_TYPE ) ;
-    mpc_lowcomm_datatype_composed_init( MPC_LOWCOMM_COMPLEX32, MPC_LOWCOMM_LONG_DOUBLE_TYPE, MPC_LOWCOMM_LONG_DOUBLE_TYPE ) ;
-    mpc_lowcomm_datatype_composed_init( MPC_LOWCOMM_DOUBLE_COMPLEX, MPC_LOWCOMM_DOUBLE_TYPE, MPC_LOWCOMM_DOUBLE_TYPE ) ;
-    mpc_lowcomm_datatype_composed_init( MPC_LOWCOMM_2INTEGER, MPC_LOWCOMM_INT_TYPE, MPC_LOWCOMM_INT_TYPE ) ;
-    mpc_lowcomm_datatype_composed_init( MPC_LOWCOMM_2REAL, MPC_LOWCOMM_REAL_TYPE, MPC_LOWCOMM_REAL_TYPE );
 }
