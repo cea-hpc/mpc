@@ -507,142 +507,142 @@ static inline void ___mpc_init_composed_common_type( mpc_lowcomm_datatype_t targ
 /** \brief Initialize Common data-types based on derived ones
  *  This is called at mpi tasc context creation
  */
-// static inline void __mpc_composed_common_types_init()
-// {
-// 	size_t disp;
-// 	mpc_lowcomm_datatype_t tmp;
-// 	/* MPC_FLOAT_INT (SCTK_DERIVED_DATATYPE_BASE */
-// 	mpc_float_int foo_0;
-// 	disp = ( (char *) &foo_0.b - (char *) &foo_0.a );
-// 	___mpc_init_composed_common_type( MPC_FLOAT_INT, disp, MPC_FLOAT, MPC_INT, sizeof( mpc_float_int ) );
-// 	__mpc_common_dt_set_name( MPC_FLOAT_INT, "MPI_FLOAT_INT" );
-// 	tmp = MPC_FLOAT_INT;
-// 	_mpc_cl_type_commit( &tmp );
+static inline void __mpc_composed_common_types_init()
+{
+	size_t disp;
+	mpc_lowcomm_datatype_t tmp;
+	/* MPC_FLOAT_INT (SCTK_DERIVED_DATATYPE_BASE */
+	mpc_float_int foo_0;
+	disp = ( (char *) &foo_0.b - (char *) &foo_0.a );
+	___mpc_init_composed_common_type( MPC_FLOAT_INT, disp, MPC_LOWCOMM_FLOAT, MPC_LOWCOMM_INT, sizeof( mpc_float_int ) );
+	__mpc_common_dt_set_name( MPC_FLOAT_INT, "MPI_FLOAT_INT" );
+	tmp = MPC_FLOAT_INT;
+	_mpc_cl_type_commit( &tmp );
 
-// 	/* MPC_LONG_INT (SCTK_DERIVED_DATATYPE_BASE + 1 */
-// 	mpc_long_int foo_1;
-// 	disp = ( (char *) &foo_1.b - (char *) &foo_1.a );
-// 	___mpc_init_composed_common_type( MPC_LONG_INT, disp, MPC_LONG, MPC_INT,
-// 									  sizeof( mpc_long_int ) );
-// 	__mpc_common_dt_set_name( MPC_LONG_INT, "MPI_LONG_INT" );
-// 	tmp = MPC_LONG_INT;
-// 	_mpc_cl_type_commit( &tmp );
+	/* MPC_LONG_INT (SCTK_DERIVED_DATATYPE_BASE + 1 */
+	mpc_long_int foo_1;
+	disp = ( (char *) &foo_1.b - (char *) &foo_1.a );
+	___mpc_init_composed_common_type( MPC_LONG_INT, disp, MPC_LOWCOMM_LONG, MPC_LOWCOMM_INT,
+									  sizeof( mpc_long_int ) );
+	__mpc_common_dt_set_name( MPC_LONG_INT, "MPI_LONG_INT" );
+	tmp = MPC_LONG_INT;
+	_mpc_cl_type_commit( &tmp );
 
-// 	/* MPC_DOUBLE_INT  (SCTK_DERIVED_DATATYPE_BASE + 2 */
-// 	mpc_double_int foo_2;
-// 	disp = ( (char *) &foo_2.b - (char *) &foo_2.a );
-// 	___mpc_init_composed_common_type( MPC_DOUBLE_INT, disp, MPC_DOUBLE,
-// 									  MPC_INT, sizeof( mpc_double_int ) );
-// 	__mpc_common_dt_set_name( MPC_DOUBLE_INT, "MPI_DOUBLE_INT" );
-// 	tmp = MPC_DOUBLE_INT;
-// 	_mpc_cl_type_commit( &tmp );
+	/* MPC_DOUBLE_INT  (SCTK_DERIVED_DATATYPE_BASE + 2 */
+	mpc_double_int foo_2;
+	disp = ( (char *) &foo_2.b - (char *) &foo_2.a );
+	___mpc_init_composed_common_type( MPC_DOUBLE_INT, disp, MPC_LOWCOMM_DOUBLE,
+									  MPC_LOWCOMM_INT, sizeof( mpc_double_int ) );
+	__mpc_common_dt_set_name( MPC_DOUBLE_INT, "MPI_DOUBLE_INT" );
+	tmp = MPC_DOUBLE_INT;
+	_mpc_cl_type_commit( &tmp );
 
-// 	/* MPC_SHORT_INT  (SCTK_DERIVED_DATATYPE_BASE + 3 */
-// 	mpc_short_int foo_3;
-// 	disp = ( (char *) &foo_3.b - (char *) &foo_3.a );
-// 	___mpc_init_composed_common_type( MPC_SHORT_INT, disp, MPC_SHORT, MPC_INT,
-// 									  sizeof( mpc_short_int ) );
-// 	__mpc_common_dt_set_name( MPC_SHORT_INT, "MPI_SHORT_INT" );
-// 	tmp = MPC_SHORT_INT;
-// 	_mpc_cl_type_commit( &tmp );
+	/* MPC_SHORT_INT  (SCTK_DERIVED_DATATYPE_BASE + 3 */
+	mpc_short_int foo_3;
+	disp = ( (char *) &foo_3.b - (char *) &foo_3.a );
+	___mpc_init_composed_common_type( MPC_SHORT_INT, disp, MPC_LOWCOMM_SHORT, MPC_LOWCOMM_INT,
+									  sizeof( mpc_short_int ) );
+	__mpc_common_dt_set_name( MPC_SHORT_INT, "MPI_SHORT_INT" );
+	tmp = MPC_SHORT_INT;
+	_mpc_cl_type_commit( &tmp );
 
-// 	/* MPC_2INT  (SCTK_DERIVED_DATATYPE_BASE + 4 */
-// 	mpc_int_int foo_4;
-// 	disp = ( (char *) &foo_4.b - (char *) &foo_4.a );
-// 	___mpc_init_composed_common_type( MPC_2INT, disp, MPC_INT, MPC_INT,
-// 									  sizeof( mpc_int_int ) );
-// 	__mpc_common_dt_set_name( MPC_2INT, "MPI_2INT" );
-// 	tmp = MPC_2INT;
-// 	_mpc_cl_type_commit( &tmp );
+	/* MPC_2INT  (SCTK_DERIVED_DATATYPE_BASE + 4 */
+	mpc_int_int foo_4;
+	disp = ( (char *) &foo_4.b - (char *) &foo_4.a );
+	___mpc_init_composed_common_type( MPC_2INT, disp, MPC_LOWCOMM_INT, MPC_LOWCOMM_INT,
+									  sizeof( mpc_int_int ) );
+	__mpc_common_dt_set_name( MPC_2INT, "MPI_2INT" );
+	tmp = MPC_2INT;
+	_mpc_cl_type_commit( &tmp );
 
-// 	/* MPC_2FLOAT  (SCTK_DERIVED_DATATYPE_BASE + 5 */
-// 	mpc_float_float foo_5;
-// 	disp = ( (char *) &foo_5.b - (char *) &foo_5.a );
-// 	___mpc_init_composed_common_type( MPC_2FLOAT, disp, MPC_FLOAT, MPC_FLOAT,
-// 									  sizeof( mpc_float_float ) );
-// 	__mpc_common_dt_set_name( MPC_2FLOAT, "MPI_2FLOAT" );
-// 	tmp = MPC_2FLOAT;
-// 	_mpc_cl_type_commit( &tmp );
+	/* MPC_2FLOAT  (SCTK_DERIVED_DATATYPE_BASE + 5 */
+	mpc_float_float foo_5;
+	disp = ( (char *) &foo_5.b - (char *) &foo_5.a );
+	___mpc_init_composed_common_type( MPC_2FLOAT, disp, MPC_LOWCOMM_FLOAT, MPC_LOWCOMM_FLOAT,
+									  sizeof( mpc_float_float ) );
+	__mpc_common_dt_set_name( MPC_2FLOAT, "MPI_2FLOAT" );
+	tmp = MPC_2FLOAT;
+	_mpc_cl_type_commit( &tmp );
 
-// 	/* MPC_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 6 */
-// 	___mpc_init_composed_common_type( MPC_COMPLEX, disp, MPC_FLOAT, MPC_FLOAT,
-// 									  sizeof( mpc_float_float ) );
-// 	__mpc_common_dt_set_name( MPC_COMPLEX, "MPI_COMPLEX" );
-// 	tmp = MPC_COMPLEX;
-// 	_mpc_cl_type_commit( &tmp );
+	/* MPC_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 6 */
+	___mpc_init_composed_common_type( MPC_COMPLEX, disp, MPC_LOWCOMM_FLOAT, MPC_LOWCOMM_FLOAT,
+									  sizeof( mpc_float_float ) );
+	__mpc_common_dt_set_name( MPC_COMPLEX, "MPI_COMPLEX" );
+	tmp = MPC_COMPLEX;
+	_mpc_cl_type_commit( &tmp );
 
-// 	/* MPC_COMPLEX8  (SCTK_DERIVED_DATATYPE_BASE + 10 */
-// 	___mpc_init_composed_common_type( MPC_COMPLEX8, disp, MPC_FLOAT, MPC_FLOAT,
-// 									  sizeof( mpc_float_float ) );
-// 	__mpc_common_dt_set_name( MPC_COMPLEX8, "MPI_COMPLEX8" );
-// 	tmp = MPC_COMPLEX8;
-// 	_mpc_cl_type_commit( &tmp );
+	/* MPC_COMPLEX8  (SCTK_DERIVED_DATATYPE_BASE + 10 */
+	___mpc_init_composed_common_type( MPC_COMPLEX8, disp, MPC_LOWCOMM_FLOAT, MPC_LOWCOMM_FLOAT,
+									  sizeof( mpc_float_float ) );
+	__mpc_common_dt_set_name( MPC_COMPLEX8, "MPI_COMPLEX8" );
+	tmp = MPC_COMPLEX8;
+	_mpc_cl_type_commit( &tmp );
 
-// 	/* MPC_2DOUBLE_PRECISION  (SCTK_DERIVED_DATATYPE_BASE + 7 */
-// 	mpc_double_double foo_6;
-// 	disp = ( (char *) &foo_6.b - (char *) &foo_6.a );
-// 	___mpc_init_composed_common_type( MPC_2DOUBLE_PRECISION, disp, MPC_DOUBLE,
-// 									  MPC_DOUBLE, sizeof( mpc_double_double ) );
-// 	__mpc_common_dt_set_name( MPC_2DOUBLE_PRECISION,
-// 							  "MPI_2DOUBLE_PRECISION" );
-// 	tmp = MPC_2DOUBLE_PRECISION;
-// 	_mpc_cl_type_commit( &tmp );
+	/* MPC_2DOUBLE_PRECISION  (SCTK_DERIVED_DATATYPE_BASE + 7 */
+	mpc_double_double foo_6;
+	disp = ( (char *) &foo_6.b - (char *) &foo_6.a );
+	___mpc_init_composed_common_type( MPC_2DOUBLE_PRECISION, disp, MPC_LOWCOMM_DOUBLE,
+									  MPC_LOWCOMM_DOUBLE, sizeof( mpc_double_double ) );
+	__mpc_common_dt_set_name( MPC_2DOUBLE_PRECISION,
+							  "MPI_2DOUBLE_PRECISION" );
+	tmp = MPC_2DOUBLE_PRECISION;
+	_mpc_cl_type_commit( &tmp );
 
-// 	/* MPC_COMPLEX16  (SCTK_DERIVED_DATATYPE_BASE + 11 */
-// 	___mpc_init_composed_common_type( MPC_COMPLEX16, disp, MPC_DOUBLE,
-// 									  MPC_DOUBLE, sizeof( mpc_double_double ) );
-// 	__mpc_common_dt_set_name( MPC_COMPLEX16, "MPI_COMPLEX16" );
-// 	tmp = MPC_COMPLEX16;
-// 	_mpc_cl_type_commit( &tmp );
+	/* MPC_COMPLEX16  (SCTK_DERIVED_DATATYPE_BASE + 11 */
+	___mpc_init_composed_common_type( MPC_COMPLEX16, disp, MPC_LOWCOMM_DOUBLE,
+									  MPC_LOWCOMM_DOUBLE, sizeof( mpc_double_double ) );
+	__mpc_common_dt_set_name( MPC_COMPLEX16, "MPI_COMPLEX16" );
+	tmp = MPC_COMPLEX16;
+	_mpc_cl_type_commit( &tmp );
 
-// 	/* MPC_DOUBLE_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 12 */
-// 	___mpc_init_composed_common_type( MPC_DOUBLE_COMPLEX, disp, MPC_DOUBLE,
-// 									  MPC_DOUBLE, sizeof( mpc_double_double ) );
-// 	__mpc_common_dt_set_name( MPC_DOUBLE_COMPLEX,
-// 							  "MPI_DOUBLE_COMPLEX" );
-// 	tmp = MPC_DOUBLE_COMPLEX;
-// 	_mpc_cl_type_commit( &tmp );
+	/* MPC_DOUBLE_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 12 */
+	___mpc_init_composed_common_type( MPC_DOUBLE_COMPLEX, disp, MPC_LOWCOMM_DOUBLE,
+									  MPC_LOWCOMM_DOUBLE, sizeof( mpc_double_double ) );
+	__mpc_common_dt_set_name( MPC_DOUBLE_COMPLEX,
+							  "MPI_DOUBLE_COMPLEX" );
+	tmp = MPC_DOUBLE_COMPLEX;
+	_mpc_cl_type_commit( &tmp );
 
-// 	/* MPC_LONG_DOUBLE_INT  (SCTK_DERIVED_DATATYPE_BASE + 8 */
-// 	mpc_long_double_int foo_7;
-// 	disp = ( (char *) &foo_7.b - (char *) &foo_7.a );
-// 	___mpc_init_composed_common_type( MPC_LONG_DOUBLE_INT, disp,
-// 									  MPC_LONG_DOUBLE, MPC_INT,
-// 									  sizeof( mpc_long_double_int ) );
-// 	__mpc_common_dt_set_name( MPC_LONG_DOUBLE_INT,
-// 							  "MPI_LONG_DOUBLE_INT" );
-// 	tmp = MPC_LONG_DOUBLE_INT;
-// 	_mpc_cl_type_commit( &tmp );
+	/* MPC_LONG_DOUBLE_INT  (SCTK_DERIVED_DATATYPE_BASE + 8 */
+	mpc_long_double_int foo_7;
+	disp = ( (char *) &foo_7.b - (char *) &foo_7.a );
+	___mpc_init_composed_common_type( MPC_LONG_DOUBLE_INT, disp,
+									  MPC_LOWCOMM_LONG_DOUBLE, MPC_LOWCOMM_INT,
+									  sizeof( mpc_long_double_int ) );
+	__mpc_common_dt_set_name( MPC_LONG_DOUBLE_INT,
+							  "MPI_LONG_DOUBLE_INT" );
+	tmp = MPC_LONG_DOUBLE_INT;
+	_mpc_cl_type_commit( &tmp );
 
-// 	/* MPC_2INTEGER  (SCTK_DERIVED_DATATYPE_BASE + 13 */
-// 	mpc_integer_integer foo_13;
-// 	disp = ( (char *) &foo_13.b - (char *) &foo_13.a );
-// 	___mpc_init_composed_common_type( MPC_2INTEGER, disp, MPC_INTEGER,
-// 									  MPC_INTEGER,
-// 									  sizeof( mpc_integer_integer ) );
-// 	__mpc_common_dt_set_name( MPC_2INTEGER, "MPI_2INTEGER" );
-// 	tmp = MPC_2INTEGER;
-// 	_mpc_cl_type_commit( &tmp );
+	/* MPC_2INTEGER  (SCTK_DERIVED_DATATYPE_BASE + 13 */
+	mpc_integer_integer foo_13;
+	disp = ( (char *) &foo_13.b - (char *) &foo_13.a );
+	___mpc_init_composed_common_type( MPC_2INTEGER, disp, MPC_LOWCOMM_INTEGER,
+									  MPC_LOWCOMM_INTEGER,
+									  sizeof( mpc_integer_integer ) );
+	__mpc_common_dt_set_name( MPC_2INTEGER, "MPI_2INTEGER" );
+	tmp = MPC_2INTEGER;
+	_mpc_cl_type_commit( &tmp );
 
-// 	/* MPC_2REAL  (SCTK_DERIVED_DATATYPE_BASE + 14 */
-// 	mpc_real_real foo_14;
-// 	disp = ( (char *) &foo_14.b - (char *) &foo_14.a );
-// 	___mpc_init_composed_common_type( MPC_2REAL, disp, MPC_REAL, MPC_REAL,
-// 									  sizeof( mpc_real_real ) );
-// 	__mpc_common_dt_set_name( MPC_2REAL, "MPI_2REAL" );
-// 	tmp = MPC_2REAL;
-// 	_mpc_cl_type_commit( &tmp );
+	/* MPC_2REAL  (SCTK_DERIVED_DATATYPE_BASE + 14 */
+	mpc_real_real foo_14;
+	disp = ( (char *) &foo_14.b - (char *) &foo_14.a );
+	___mpc_init_composed_common_type( MPC_2REAL, disp, MPC_LOWCOMM_REAL, MPC_LOWCOMM_REAL,
+									  sizeof( mpc_real_real ) );
+	__mpc_common_dt_set_name( MPC_2REAL, "MPI_2REAL" );
+	tmp = MPC_2REAL;
+	_mpc_cl_type_commit( &tmp );
 
-// 	/* MPC_COMPLEX32  (SCTK_DERIVED_DATATYPE_BASE + 12 */
-// 	mpc_longdouble_longdouble foo_9;
-// 	disp = ( (char *) &foo_9.b - (char *) &foo_9.a );
-// 	___mpc_init_composed_common_type( MPC_COMPLEX32, disp, MPC_LONG_DOUBLE,
-// 									  MPC_LONG_DOUBLE,
-// 									  sizeof( mpc_longdouble_longdouble ) );
-// 	__mpc_common_dt_set_name( MPC_COMPLEX32, "MPI_COMPLEX32" );
-// 	tmp = MPC_COMPLEX32;
-// 	_mpc_cl_type_commit( &tmp );
-// }
+	/* MPC_COMPLEX32  (SCTK_DERIVED_DATATYPE_BASE + 12 */
+	mpc_longdouble_longdouble foo_9;
+	disp = ( (char *) &foo_9.b - (char *) &foo_9.a );
+	___mpc_init_composed_common_type( MPC_COMPLEX32, disp, MPC_LOWCOMM_LONG_DOUBLE,
+									  MPC_LOWCOMM_LONG_DOUBLE,
+									  sizeof( mpc_longdouble_longdouble ) );
+	__mpc_common_dt_set_name( MPC_COMPLEX32, "MPI_COMPLEX32" );
+	tmp = MPC_COMPLEX32;
+	_mpc_cl_type_commit( &tmp );
+}
 
 #define tostring( a ) #a
 #define SCTK_INIT_TYPE_SIZE( datatype, t )              \
