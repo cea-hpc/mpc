@@ -271,10 +271,10 @@ extern "C"
 
 /* Predefined MPI datatypes corresponding to both C and Fortran datatypes */
 
-#define MPI_CXX_BOOL MPC_LOWCOMM_CXX_BOOL
-#define MPI_CXX_FLOAT_COMPLEX MPC_LOWCOMM_CXX_FLOAT_COMPLEX
-#define MPI_CXX_DOUBLE_COMPLEX MPC_LOWCOMM_CXX_DOUBLE_COMPLEX
-#define MPI_CXX_LONG_DOUBLE_COMPLEX MPC_LOWCOMM_CXX_LONG_DOUBLE_COMPLEX
+#define MPI_CXX_BOOL MPC_CXX_BOOL
+#define MPI_CXX_FLOAT_COMPLEX MPC_CXX_FLOAT_COMPLEX
+#define MPI_CXX_DOUBLE_COMPLEX MPC_CXX_DOUBLE_COMPLEX
+#define MPI_CXX_LONG_DOUBLE_COMPLEX MPC_CXX_LONG_DOUBLE_COMPLEX
 
 /* These are deprecated MPI 1.0 constants in MPI 3.0
  * however they are never returned by get envelope but as ROMIO uses them */
