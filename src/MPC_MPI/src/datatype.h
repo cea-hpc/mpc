@@ -244,7 +244,8 @@ extern size_t *__sctk_common_type_sizes;
 static inline size_t _mpc_dt_common_get_size( mpc_lowcomm_datatype_t datatype )
 {
 	assert( _mpc_dt_is_common( datatype ) );
-	return mpc_lowcomm_datatype_common_get_size(datatype);
+	if(datatype < MPC_Lowcomm_type_common_limit) return mpc_lowcomm_datatype_common_get_size(datatype);
+	return __sctk_common_type_sizes[datatype];
 }
 
 /** \brief Display debug informations about a common datatype
