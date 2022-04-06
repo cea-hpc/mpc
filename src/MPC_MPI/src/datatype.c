@@ -107,7 +107,7 @@ void _mpc_dt_init()
 	mpc_common_spinlock_unlock(&init_lock);
 
 	/* Initialize composed datatypes */
-	// __mpc_composed_common_types_init();
+	__mpc_composed_common_types_init();
 
 }
 
@@ -1399,6 +1399,13 @@ int _mpc_dt_name_set( mpc_lowcomm_datatype_t datatype, const char *name )
 {
 	/* First locate a previous cell */
 	mpc_common_spinlock_lock( &datatype_names_lock );
+
+	int ret = mpc_lowcomm_datatype_common_set_name(datatype, name);
+	if(ret = MPC_LOWCOMM_SUCCESS){
+		mpc_common_spinlock_unlock( &datatype_names_lock );
+		return ret;
+	}
+
 	struct __mpc_dt_name_cell *cell = __mpc_dt_get_name_cell( datatype );
 
 	if ( cell )

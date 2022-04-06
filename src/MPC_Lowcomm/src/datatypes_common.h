@@ -47,5 +47,7 @@
 #define MPC_LOWCOMM_INTEGER_TYPE int
 #define MPC_LOWCOMM_REAL_TYPE float
 #define MPC_LOWCOMM_DOUBLE_PRECISION_TYPE double
+#define MPC_LOWCOMM_CXX_BOOL_TYPE void
+#define MPC_LOWCOMM_PACKED_TYPE void
 
 #endif

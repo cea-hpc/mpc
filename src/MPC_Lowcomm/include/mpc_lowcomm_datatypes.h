@@ -91,4 +91,14 @@ int mpc_lowcomm_datatype_common_get_size(int datatype);
 
 char* mpc_lowcomm_datatype_common_get_name(int datatype);
 
+/**
+ * @brief set the name of a common datatype
+ * 
+ * @param datatype datatype to set the name of
+ * @param name new name of the datatype
+ * @return MPI_SUCCESS on success
+ */
+
+char* mpc_lowcomm_datatype_common_set_name(int datatype, char *name);
+
 #endif

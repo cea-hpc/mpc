@@ -1,6 +1,6 @@
-#include<mpc_lowcomm_datatypes.h>
-#include<datatypes_common.h>
-
+#include <mpc_lowcomm_datatypes.h>
+#include <datatypes_common.h>
+#include <mpc_lowcomm_types.h>
 
 /**
  * @brief initializes a datatype
@@ -12,12 +12,14 @@
 #define sctk_wchar_t int
 
 #define mpc_lowcomm_datatype_init( datatype ) \
-	mpc_lowcomm_datatypes_list[datatype].typesize = sizeof( datatype##_TYPE );\
-	sprintf(mpc_lowcomm_datatypes_list[datatype].typename, "%s", #datatype);
+	mpc_lowcomm_datatypes_list[datatype].typesize = sizeof( datatype ## _TYPE );\
+	n = &#datatype[12]; \
+	sprintf(mpc_lowcomm_datatypes_list[datatype].typename, "%s_%s", "MPI", n);
 
 mpc_lowcomm_datatype mpc_lowcomm_datatypes_list[MPC_Lowcomm_type_common_limit];
 
 int mpc_lowcomm_datatype_init_common(){
+	char *n;
 	mpc_lowcomm_datatype_init( MPC_LOWCOMM_CHAR );
 	mpc_lowcomm_datatype_init( MPC_LOWCOMM_LOGICAL );
 	mpc_lowcomm_datatype_init( MPC_LOWCOMM_BYTE );
@@ -60,6 +62,8 @@ int mpc_lowcomm_datatype_init_common(){
 	mpc_lowcomm_datatype_init( MPC_LOWCOMM_INTEGER );
 	mpc_lowcomm_datatype_init( MPC_LOWCOMM_REAL );
 	mpc_lowcomm_datatype_init( MPC_LOWCOMM_DOUBLE_PRECISION );
+	
+	mpc_lowcomm_datatype_init( MPC_LOWCOMM_PACKED );
 }
 
 int mpc_lowcomm_datatype_common_get_size(int datatype)
@@ -70,4 +74,14 @@ int mpc_lowcomm_datatype_common_get_size(int datatype)
 char* mpc_lowcomm_datatype_common_get_name(int datatype)
 {
     return mpc_lowcomm_datatypes_list[datatype].typename;
+}
+
+
+char* mpc_lowcomm_datatype_common_set_name(int datatype, char *name)
+{
+	if(datatype < MPC_Lowcomm_type_common_limit){
+    	sprintf(mpc_lowcomm_datatypes_list[datatype].typename, "%s", name);
+		return MPC_LOWCOMM_SUCCESS;
+	}
+	return MPC_LOWCOMM_ERR_TYPE;
 }
