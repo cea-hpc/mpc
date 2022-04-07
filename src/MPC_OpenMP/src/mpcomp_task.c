@@ -1476,6 +1476,8 @@ __task_delete(mpc_omp_task_t * task)
     MPC_OMP_TASK_TRACE_DELETE(task);
 
 # if MPC_OMP_TASK_USE_RECYCLERS
+    TODO(   "instead of recycling to current thread recycler, we may want to recycle "
+            "into the producer thread recycler, particularly in mono-producer");
     mpc_common_nrecycler_recycle(&(thread->task_infos.task_recycler), task, task->size);
 # else
     mpc_omp_free(task);
@@ -3878,7 +3880,7 @@ _mpc_omp_task_tree_deinit(mpc_omp_thread_t * thread)
 {
     mpc_omp_instance_t * instance = (mpc_omp_instance_t *) thread->instance;
     assert(instance);
-    printf("t_total=%lf, t_deps=%lf, t_hash=%lf\n", instance->t_total, instance->t_deps, instance->t_hash);
+    //printf("t_total=%lf, t_deps=%lf, t_hash=%lf\n", instance->t_total, instance->t_deps, instance->t_hash);
 
     assert(thread);
     __thread_task_deinit_initial(thread);
