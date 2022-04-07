@@ -99,6 +99,9 @@ do {                                                                            
 #ifndef uthash_expand_fyi
 #define uthash_expand_fyi(tbl)            /* can be defined to log expands   */
 #endif
+#ifndef uthash_collision_fyi
+#define uthash_collision_fyi(tbl)         /* can be defined to log collisions */
+#endif
 
 #ifndef HASH_NONFATAL_OOM
 #define HASH_NONFATAL_OOM 0
@@ -133,8 +136,8 @@ do {                                                                            
 #define HASH_BKT_CAPACITY_THRESH 10U     /* expand when bucket count reaches */
 #endif
 
-#define HASH_INITIAL_NUM_BUCKETS        32768U  /* initial number of buckets        */
-#define HASH_INITIAL_NUM_BUCKETS_LOG2   15U     /* lg2 of initial number of buckets */
+#define HASH_INITIAL_NUM_BUCKETS        65536U  /* initial number of buckets        */
+#define HASH_INITIAL_NUM_BUCKETS_LOG2   16U     /* lg2 of initial number of buckets */
 #define HASH_BKT_CAPACITY_THRESH        16U     /* expand when bucket count reaches */
 
 /* calculate the element whose hash handle address is hhp */
@@ -777,6 +780,7 @@ do {                                                                            
   (addhh)->hh_prev = NULL;                                                       \
   if (_ha_head->hh_head != NULL) {                                               \
     _ha_head->hh_head->hh_prev = (addhh);                                        \
+    uthash_collision_fyi((addhh)->tbl);                                          \
   }                                                                              \
   _ha_head->hh_head = (addhh);                                                   \
   if ((_ha_head->count >= ((_ha_head->expand_mult + 1U) * HASH_BKT_CAPACITY_THRESH)) \

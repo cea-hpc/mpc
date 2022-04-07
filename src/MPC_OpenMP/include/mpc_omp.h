@@ -240,6 +240,11 @@ extern "C" {
     /* set function to hash task dependencies address for current thread */
     void mpc_omp_task_dependencies_hash_func(uintptr_t (*hash_deps)(void *));
 
+    /* various hashing functions */
+    uintptr_t mpc_omp_task_dependency_hash_gomp     (void * addr);
+    uintptr_t mpc_omp_task_dependency_hash_jenkins  (void * addr);
+    uintptr_t mpc_omp_task_dependency_hash_kmp      (void * addr);
+    uintptr_t mpc_omp_task_dependency_hash_nanos6   (void * addr);
 
 #ifdef __cplusplus
 }

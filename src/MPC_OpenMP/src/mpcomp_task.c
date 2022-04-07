@@ -1145,109 +1145,105 @@ __task_process_mpc_dep(
 {
     /* Retrieve entry for the given address, or generate a new one.
      * Also performon redundancy check */
-//    mpc_common_spinlock_lock(&(task->parent->dep_node.hmap_lock));
+    mpc_omp_task_dep_htable_entry_t * entry = __task_process_mpc_dep_entry(task, addr);
+    assert(entry);
+
+    mpc_common_spinlock_lock(&(entry->lock));
+
+    /* redundancy check */
+    if (entry->task_uid != task->uid)
     {
-        mpc_omp_task_dep_htable_entry_t * entry = __task_process_mpc_dep_entry(task, addr);
-        assert(entry);
-
-        mpc_common_spinlock_lock(&(entry->lock));
-
-        /* redundancy check */
-        if (entry->task_uid != task->uid)
+        entry->task_uid = task->uid;
+        /* case 1.1 - the generated task is dependant of previous 'in' */
+        if (    type == MPC_OMP_TASK_DEP_OUT ||
+                type == MPC_OMP_TASK_DEP_INOUT ||
+                type == MPC_OMP_TASK_DEP_INOUTSET ||
+                type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
         {
-            entry->task_uid = task->uid;
-            /* case 1.1 - the generated task is dependant of previous 'in' */
-            if (    type == MPC_OMP_TASK_DEP_OUT ||
-                    type == MPC_OMP_TASK_DEP_INOUT ||
-                    type == MPC_OMP_TASK_DEP_INOUTSET ||
-                    type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
+            mpc_omp_task_dep_list_elt_t * in = entry->ins;
+            while (in)
             {
-                mpc_omp_task_dep_list_elt_t * in = entry->ins;
-                while (in)
-                {
-                    __task_precedence_constraints(in->task, task);
-                    in = in->next;
-                }
-            }
-
-            /* case 1.2 - the generated task is dependant of previous 'out' and 'inout' */
-            if (    type == MPC_OMP_TASK_DEP_IN ||
-                    type == MPC_OMP_TASK_DEP_OUT ||
-                    type == MPC_OMP_TASK_DEP_INOUT ||
-                    type == MPC_OMP_TASK_DEP_INOUTSET ||
-                    type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
-            {
-                if (entry->out)
-                {
-                    assert(entry->out->next == NULL);
-                    assert(entry->out->prev == NULL);
-                    __task_precedence_constraints(entry->out->task, task);
-                }
-            }
-
-            /* case 1.3 - the generated task is dependant of previous 'inoutset' */
-            if (    type == MPC_OMP_TASK_DEP_IN ||
-                    type == MPC_OMP_TASK_DEP_OUT ||
-                    type == MPC_OMP_TASK_DEP_INOUT ||
-                    type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
-            {
-                mpc_omp_task_dep_list_elt_t * inoutset = entry->inoutset;
-                while (inoutset)
-                {
-                    __task_precedence_constraints(inoutset->task, task);
-                    inoutset = inoutset->next;
-                }
-            }
-
-            /* case 1.4 - the generated task is dependant of previous 'mutexinoutset' */
-# if 0
-            if (    type == MPC_OMP_TASK_DEP_IN ||
-                    type == MPC_OMP_TASK_DEP_OUT ||
-                    type == MPC_OMP_TASK_DEP_INOUT ||
-                    type == MPC_OMP_TASK_DEP_INOUTSET)
-            {
-                not_implemented();
-            }
-# endif
-
-            /************************************************************/
-            /* finally, clean-up and save dependencies for future tasks */
-            /************************************************************/
-
-            /* case 2.1 - if generating dependency is an 'in'
-             *  - add it to the list of 'ins'
-             */
-            if (type == MPC_OMP_TASK_DEP_IN)
-            {
-                entry->ins = __task_dep_list_append(task, entry, entry->ins);
-            }
-
-            /* case 2.2 - if generating dependency is 'out' or 'inout'
-             *  - delete siblings 'out' - it is now dependant of generating task
-             *  - delete siblings 'ins' - they are all dependant of generating task
-             *  - delete siblings 'inoutset' - they are all dependant of generating task
-             */
-            else if (type == MPC_OMP_TASK_DEP_OUT || type == MPC_OMP_TASK_DEP_INOUT)
-            {
-                entry->ins = NULL;
-                entry->inoutset = NULL;
-                entry->out = __task_dep_list_append(task, entry, NULL);
-            }
-
-            /* case 2.3 - if generating dependency is 'inoutset' */
-            else if (type == MPC_OMP_TASK_DEP_INOUTSET)
-            {
-                entry->inoutset = __task_dep_list_append(task, entry, entry->inoutset);
-            }
-
-            else if (type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
-            {
-                not_implemented();
+                __task_precedence_constraints(in->task, task);
+                in = in->next;
             }
         }
-        mpc_common_spinlock_unlock(&(entry->lock));
+
+        /* case 1.2 - the generated task is dependant of previous 'out' and 'inout' */
+        if (    type == MPC_OMP_TASK_DEP_IN ||
+                type == MPC_OMP_TASK_DEP_OUT ||
+                type == MPC_OMP_TASK_DEP_INOUT ||
+                type == MPC_OMP_TASK_DEP_INOUTSET ||
+                type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
+        {
+            if (entry->out)
+            {
+                assert(entry->out->next == NULL);
+                assert(entry->out->prev == NULL);
+                __task_precedence_constraints(entry->out->task, task);
+            }
+        }
+
+        /* case 1.3 - the generated task is dependant of previous 'inoutset' */
+        if (    type == MPC_OMP_TASK_DEP_IN ||
+                type == MPC_OMP_TASK_DEP_OUT ||
+                type == MPC_OMP_TASK_DEP_INOUT ||
+                type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
+        {
+            mpc_omp_task_dep_list_elt_t * inoutset = entry->inoutset;
+            while (inoutset)
+            {
+                __task_precedence_constraints(inoutset->task, task);
+                inoutset = inoutset->next;
+            }
+        }
+
+#if 0
+        /* case 1.4 - the generated task is dependant of previous 'mutexinoutset' */
+        if (    type == MPC_OMP_TASK_DEP_IN ||
+                type == MPC_OMP_TASK_DEP_OUT ||
+                type == MPC_OMP_TASK_DEP_INOUT ||
+                type == MPC_OMP_TASK_DEP_INOUTSET)
+        {
+            not_implemented();
+        }
+#endif
+
+        /************************************************************/
+        /* finally, clean-up and save dependencies for future tasks */
+        /************************************************************/
+
+        /* case 2.1 - if generating dependency is an 'in'
+         *  - add it to the list of 'ins'
+         */
+        if (type == MPC_OMP_TASK_DEP_IN)
+        {
+            entry->ins = __task_dep_list_append(task, entry, entry->ins);
+        }
+
+        /* case 2.2 - if generating dependency is 'out' or 'inout'
+         *  - delete siblings 'out' - it is now dependant of generating task
+         *  - delete siblings 'ins' - they are all dependant of generating task
+         *  - delete siblings 'inoutset' - they are all dependant of generating task
+         */
+        else if (type == MPC_OMP_TASK_DEP_OUT || type == MPC_OMP_TASK_DEP_INOUT)
+        {
+            entry->ins = NULL;
+            entry->inoutset = NULL;
+            entry->out = __task_dep_list_append(task, entry, NULL);
+        }
+
+        /* case 2.3 - if generating dependency is 'inoutset' */
+        else if (type == MPC_OMP_TASK_DEP_INOUTSET)
+        {
+            entry->inoutset = __task_dep_list_append(task, entry, entry->inoutset);
+        }
+
+        else if (type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
+        {
+            not_implemented();
+        }
     }
-//    mpc_common_spinlock_unlock(&(task->parent->dep_node.hmap_lock));
+    mpc_common_spinlock_unlock(&(entry->lock));
 }
 
 /**
@@ -3815,20 +3811,14 @@ __thread_task_init_recyclers(mpc_omp_thread_t * thread)
 }
 # endif
 
-static uintptr_t
-_mpc_omp_task_deps_hash(void * addr)
-{
-    uintptr_t hashv;
-    HASH_JEN(&addr, sizeof(void *), hashv);
-    return hashv;
-}
-
 void
 _mpc_omp_task_tree_init(mpc_omp_thread_t * thread)
 {
+    thread->hash_collision = 0;
+    thread->hash_resize = 0;
     if (mpc_omp_conf_get()->task_trace_auto) mpc_omp_task_trace_begin();
     memset(&(thread->task_infos.incoming), 0, sizeof(thread->task_infos.incoming));
-    mpc_omp_task_dependencies_hash_func(_mpc_omp_task_deps_hash);
+    mpc_omp_task_dependencies_hash_func(NULL);
 # if MPC_OMP_TASK_USE_RECYCLERS
     __thread_task_init_recyclers(thread);
 # endif
@@ -3878,8 +3868,8 @@ __thread_task_deinit_recyclers(mpc_omp_thread_t * thread)
 void
 _mpc_omp_task_tree_deinit(mpc_omp_thread_t * thread)
 {
-    mpc_omp_instance_t * instance = (mpc_omp_instance_t *) thread->instance;
-    assert(instance);
+    //mpc_omp_instance_t * instance = (mpc_omp_instance_t *) thread->instance;
+    //assert(instance);
     //printf("t_total=%lf, t_deps=%lf, t_hash=%lf\n", instance->t_total, instance->t_deps, instance->t_hash);
 
     assert(thread);

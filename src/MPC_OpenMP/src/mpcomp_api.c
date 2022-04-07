@@ -573,9 +573,50 @@ mpc_omp_task_is_send(void)
     _mpc_omp_task_profile_register_current(INT_MAX);
 }
 
+/** HASHING FUNCTIONS */
+uintptr_t
+mpc_omp_task_dependency_hash_gomp(void * addr)
+{
+    uintptr_t v = (uintptr_t) addr;
+    v ^= v >> (sizeof (uintptr_t) / 2 * CHAR_BIT);
+    return v;
+}
+
+uintptr_t
+mpc_omp_task_dependency_hash_jenkins(void * addr)
+{
+    uintptr_t hashv;
+    HASH_JEN(&addr, sizeof(void *), hashv);
+    return hashv;
+}
+
+uintptr_t
+mpc_omp_task_dependency_hash_kmp(void * addr)
+{
+    uintptr_t v = (uintptr_t) addr;
+    return (v >> 6) ^ (v >> 2);
+}
+
+uintptr_t
+mpc_omp_task_dependency_hash_nanos6(void * addr)
+{
+    return ((uintptr_t)addr) >> 3;
+}
+
 void
 mpc_omp_task_dependencies_hash_func(uintptr_t (*hash_deps)(void *))
 {
+    if (!hash_deps)
+    {
+        switch (mpc_omp_conf_get()->task_dependency_default_hash)
+        {
+            case (0):   hash_deps = mpc_omp_task_dependency_hash_jenkins;   break;
+            case (1):   hash_deps = mpc_omp_task_dependency_hash_gomp;      break;
+            case (2):   hash_deps = mpc_omp_task_dependency_hash_kmp;       break;
+            case (3):   hash_deps = mpc_omp_task_dependency_hash_nanos6;    break;
+            default:    hash_deps = mpc_omp_task_dependency_hash_jenkins;   break;
+        }
+    }
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     assert(thread);
     thread->task_infos.hash_deps = hash_deps;
