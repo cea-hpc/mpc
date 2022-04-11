@@ -1,6 +1,16 @@
 #ifndef MPC_LOWCOMM_DT_COMMON
 #define MPC_LOWCOMM_DT_COMMON
 
+#include <mpc_lowcomm_datatypes.h>
+#include <mpc_common_types.h>
+
+
+typedef struct{
+    int typesize;
+    char typename[64];
+} _mpc_lowcomm_datatype_ctx_t;
+
+
 /* *********************
  * defining type sizes *
 * *********************/

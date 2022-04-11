@@ -1,6 +1,6 @@
-#include <mpc_lowcomm_datatypes.h>
-#include <datatypes_common.h>
-#include <mpc_lowcomm_types.h>
+#include "datatypes_common.h"
+
+#include <stdio.h>
 
 /**
  * @brief initializes a datatype
@@ -13,7 +13,7 @@
 	mpc_lowcomm_datatypes_list[datatype].typesize = sizeof( datatype ## _TYPE );\
 	sprintf(mpc_lowcomm_datatypes_list[datatype].typename, "%s_%s", "MPI", #datatype);
 
-mpc_lowcomm_datatype mpc_lowcomm_datatypes_list[MPC_LOWCOMM_TYPE_COMMON_LIMIT];
+_mpc_lowcomm_datatype_ctx_t mpc_lowcomm_datatypes_list[MPC_LOWCOMM_TYPE_COMMON_LIMIT];
 
 int mpc_lowcomm_datatype_init_common(){
 	mpc_lowcomm_datatype_init( MPC_LOWCOMM_CHAR );
@@ -64,18 +64,18 @@ int mpc_lowcomm_datatype_init_common(){
 	return MPC_LOWCOMM_SUCCESS;
 }
 
-int mpc_lowcomm_datatype_common_get_size(int datatype)
+int mpc_lowcomm_datatype_common_get_size(mpc_lowcomm_datatype_t datatype)
 {
     return mpc_lowcomm_datatypes_list[datatype].typesize;
 }
 
-char* mpc_lowcomm_datatype_common_get_name(int datatype)
+char* mpc_lowcomm_datatype_common_get_name(mpc_lowcomm_datatype_t datatype)
 {
     return mpc_lowcomm_datatypes_list[datatype].typename;
 }
 
 
-int mpc_lowcomm_datatype_common_set_name(int datatype, char *name)
+int mpc_lowcomm_datatype_common_set_name(mpc_lowcomm_datatype_t datatype, char *name)
 {
 	if(datatype < MPC_LOWCOMM_TYPE_COMMON_LIMIT){
     	sprintf(mpc_lowcomm_datatypes_list[datatype].typename, "%s", name);

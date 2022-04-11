@@ -1,13 +1,8 @@
 #ifndef MPC_LOWCOMM_DATATYPES
 #define MPC_LOWCOMM_DATATYPES
 
-#include<stdio.h>
-#include<stdint.h>
+#include <mpc_lowcomm_types.h>
 
-typedef struct{
-    int typesize;
-    char typename[64];
-} mpc_lowcomm_datatype;
 
 /* ******************
  * Common datatypes *
@@ -80,7 +75,7 @@ int mpc_lowcomm_datatype_common_init();
  * @return MPI_SUCCESS on success
  */
 
-int mpc_lowcomm_datatype_common_get_size(int datatype);
+int mpc_lowcomm_datatype_common_get_size(mpc_lowcomm_datatype_t datatype);
 
 /**
  * @brief get the name of a common datatype
@@ -89,7 +84,7 @@ int mpc_lowcomm_datatype_common_get_size(int datatype);
  * @return MPI_SUCCESS on success
  */
 
-char* mpc_lowcomm_datatype_common_get_name(int datatype);
+char* mpc_lowcomm_datatype_common_get_name(mpc_lowcomm_datatype_t datatype);
 
 /**
  * @brief set the name of a common datatype
@@ -99,6 +94,6 @@ char* mpc_lowcomm_datatype_common_get_name(int datatype);
  * @return MPI_SUCCESS on success
  */
 
-int mpc_lowcomm_datatype_common_set_name(int datatype, char *name);
+int mpc_lowcomm_datatype_common_set_name(mpc_lowcomm_datatype_t datatype, char *name);
 
 #endif
