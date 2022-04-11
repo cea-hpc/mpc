@@ -1248,7 +1248,7 @@ int _mpc_cl_type_get_name(mpc_lowcomm_datatype_t datatype, char *name, int *resu
 {
 	
 	char *retname = _mpc_dt_name_get(datatype);
-	if(datatype < MPC_Lowcomm_type_common_limit){
+	if(datatype < MPC_LOWCOMM_TYPE_COMMON_LIMIT){
 		retname = mpc_lowcomm_datatype_common_get_name(datatype);
 	}
 

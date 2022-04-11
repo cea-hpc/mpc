@@ -100,7 +100,6 @@ void _mpc_dt_init()
 		__sctk_common_type_sizes =
 			sctk_malloc( sizeof( size_t ) * SCTK_COMMON_DATA_TYPE_COUNT );
 		assume( __sctk_common_type_sizes != NULL );
-		// __mpc_common_types_init();
 		mpc_lowcomm_datatype_init_common();	
 	}
 
@@ -1348,6 +1347,7 @@ int _mpc_dt_name_set( mpc_lowcomm_datatype_t datatype, const char *name )
 	mpc_common_spinlock_lock( &datatype_names_lock );
 
 	int ret = mpc_lowcomm_datatype_common_set_name(datatype, name);
+
 	if(ret = MPC_LOWCOMM_SUCCESS){
 		mpc_common_spinlock_unlock( &datatype_names_lock );
 		return ret;

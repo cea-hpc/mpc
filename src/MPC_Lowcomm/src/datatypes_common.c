@@ -7,19 +7,15 @@
  * 
  * @param datatype datatype name
  * @param t type (registering its size)
-**/
-
-#define sctk_wchar_t int
+ */
 
 #define mpc_lowcomm_datatype_init( datatype ) \
 	mpc_lowcomm_datatypes_list[datatype].typesize = sizeof( datatype ## _TYPE );\
-	n = &#datatype[12]; \
-	sprintf(mpc_lowcomm_datatypes_list[datatype].typename, "%s_%s", "MPI", n);
+	sprintf(mpc_lowcomm_datatypes_list[datatype].typename, "%s_%s", "MPI", #datatype);
 
-mpc_lowcomm_datatype mpc_lowcomm_datatypes_list[MPC_Lowcomm_type_common_limit];
+mpc_lowcomm_datatype mpc_lowcomm_datatypes_list[MPC_LOWCOMM_TYPE_COMMON_LIMIT];
 
 int mpc_lowcomm_datatype_init_common(){
-	char *n;
 	mpc_lowcomm_datatype_init( MPC_LOWCOMM_CHAR );
 	mpc_lowcomm_datatype_init( MPC_LOWCOMM_LOGICAL );
 	mpc_lowcomm_datatype_init( MPC_LOWCOMM_BYTE );
@@ -64,6 +60,8 @@ int mpc_lowcomm_datatype_init_common(){
 	mpc_lowcomm_datatype_init( MPC_LOWCOMM_DOUBLE_PRECISION );
 	
 	mpc_lowcomm_datatype_init( MPC_LOWCOMM_PACKED );
+
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 int mpc_lowcomm_datatype_common_get_size(int datatype)
@@ -77,9 +75,9 @@ char* mpc_lowcomm_datatype_common_get_name(int datatype)
 }
 
 
-char* mpc_lowcomm_datatype_common_set_name(int datatype, char *name)
+int mpc_lowcomm_datatype_common_set_name(int datatype, char *name)
 {
-	if(datatype < MPC_Lowcomm_type_common_limit){
+	if(datatype < MPC_LOWCOMM_TYPE_COMMON_LIMIT){
     	sprintf(mpc_lowcomm_datatypes_list[datatype].typename, "%s", name);
 		return MPC_LOWCOMM_SUCCESS;
 	}

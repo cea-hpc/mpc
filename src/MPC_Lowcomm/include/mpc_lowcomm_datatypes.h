@@ -58,7 +58,7 @@ typedef enum{
     MPC_LOWCOMM_REAL,
     MPC_LOWCOMM_DOUBLE_PRECISION,
     MPC_LOWCOMM_UNSIGNED_LONG_LONG_INT,
-    MPC_Lowcomm_type_common_limit
+    MPC_LOWCOMM_TYPE_COMMON_LIMIT
 } mpc_lowcomm_type_common;
 
 /* ****************************
@@ -99,6 +99,6 @@ char* mpc_lowcomm_datatype_common_get_name(int datatype);
  * @return MPI_SUCCESS on success
  */
 
-char* mpc_lowcomm_datatype_common_set_name(int datatype, char *name);
+int mpc_lowcomm_datatype_common_set_name(int datatype, char *name);
 
 #endif

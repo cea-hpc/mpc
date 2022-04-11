@@ -2,7 +2,7 @@
 #define MPC_LOWCOMM_DT_COMMON
 
 /* *********************
-/* defining type sizes *
+ * defining type sizes *
 * *********************/
 
 #define MPC_LOWCOMM_CHAR_TYPE char
