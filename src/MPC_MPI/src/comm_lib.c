@@ -1777,7 +1777,7 @@ int _mpc_cl_type_debug(mpc_lowcomm_datatype_t datatype)
 	switch(_mpc_dt_get_kind(datatype) )
 	{
 		case MPC_DATATYPES_COMMON:
-			_mpc_dt_common_display(datatype);
+			mpc_lowcomm_datatype_common_display(datatype);
 			break;
 
 		case MPC_DATATYPES_CONTIGUOUS:

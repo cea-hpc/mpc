@@ -636,20 +636,6 @@ static inline void __mpc_composed_common_types_init()
 	_mpc_cl_type_commit( &tmp );
 }
 
-void _mpc_dt_common_display( mpc_lowcomm_datatype_t datatype )
-{
-	if ( !mpc_lowcomm_datatype_is_common( datatype ) )
-	{
-		mpc_common_debug_error( "Unknown datatype provided to %s\n", __FUNCTION__ );
-		abort();
-	}
-
-	mpc_common_debug_error( "=============COMMON=================" );
-	mpc_common_debug_error( "NAME %s", _mpc_dt_name_get( datatype ) );
-	mpc_common_debug_error( "SIZE %ld", mpc_lowcomm_datatype_common_get_size(datatype) );
-	mpc_common_debug_error( "====================================" );
-}
-
 /************************************************************************/
 /* Contiguous Datatype                                                  */
 /************************************************************************/

@@ -215,14 +215,6 @@ struct _mpc_dt_layout
  */
 struct _mpc_dt_layout *_mpc_dt_get_layout( struct _mpc_dt_footprint *ctx, size_t *ly_count );
 
-/************************************************************************/
-/* Common Datatype                                                      */
-/************************************************************************/
-
-/** \brief Display debug informations about a common datatype
- *  \param target_type Type to be displayed
- */
-void _mpc_dt_common_display( mpc_lowcomm_datatype_t datatype );
 
 /************************************************************************/
 /* Contiguous Datatype                                                  */

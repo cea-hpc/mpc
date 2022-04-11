@@ -96,7 +96,19 @@ char* mpc_lowcomm_datatype_common_get_name(mpc_lowcomm_datatype_t datatype);
 
 int mpc_lowcomm_datatype_common_set_name(mpc_lowcomm_datatype_t datatype, char *name);
 
+/**
+ * @brief Display a common datatype for debug
+ * 
+ * @param datatype the datatype to display
+ */
+void mpc_lowcomm_datatype_common_display( mpc_lowcomm_datatype_t datatype );
 
+/**
+ * @brief Check if a given datatype is common
+ * 
+ * @param datatype the datatype to check
+ * @return int 1 if common
+ */
 static inline int mpc_lowcomm_datatype_is_common(mpc_lowcomm_datatype_t datatype)
 {
     if( (0 <= datatype) &&  (datatype < MPC_LOWCOMM_TYPE_COMMON_LIMIT) )

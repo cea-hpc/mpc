@@ -1,5 +1,7 @@
 #include "datatypes_common.h"
 
+#include "mpc_common_debug.h"
+
 #include <stdio.h>
 
 /**
@@ -82,4 +84,19 @@ int mpc_lowcomm_datatype_common_set_name(mpc_lowcomm_datatype_t datatype, char *
 		return MPC_LOWCOMM_SUCCESS;
 	}
 	return MPC_LOWCOMM_ERR_TYPE;
+}
+
+
+void mpc_lowcomm_datatype_common_display( mpc_lowcomm_datatype_t datatype )
+{
+	if ( !mpc_lowcomm_datatype_is_common( datatype ) )
+	{
+		mpc_common_debug_error( "Unknown datatype provided to %s\n", __FUNCTION__ );
+		abort();
+	}
+
+	mpc_common_debug_error( "=============COMMON=================" );
+	mpc_common_debug_error( "NAME %s", mpc_lowcomm_datatype_common_get_name( datatype ) );
+	mpc_common_debug_error( "SIZE %ld", mpc_lowcomm_datatype_common_get_size(datatype) );
+	mpc_common_debug_error( "====================================" );
 }
