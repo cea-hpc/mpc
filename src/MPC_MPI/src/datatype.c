@@ -42,9 +42,6 @@
 #define MPC_TYPE_COUNT ( SCTK_COMMON_DATA_TYPE_COUNT + 2 * SCTK_USER_DATA_TYPES_MAX )
 
 
-/** Common datatypes sizes are initialized in \ref __mpc_common_types_init */
-size_t *__sctk_common_type_sizes;
-
 static const char *const type_combiner_names[MPC_COMBINER_COUNT__] =
 	{
 		"MPC_COMBINER_UNKNOWN",
@@ -97,9 +94,6 @@ void _mpc_dt_init()
 	if ( !__mpc_dt_initialized )
 	{
 		__mpc_dt_initialized = 1;
-		__sctk_common_type_sizes =
-			sctk_malloc( sizeof( size_t ) * SCTK_COMMON_DATA_TYPE_COUNT );
-		assume( __sctk_common_type_sizes != NULL );
 		mpc_lowcomm_datatype_init_common();	
 	}
 
@@ -127,7 +121,6 @@ void _mpc_dt_release()
 	__mpc_dt_initialized = 0;
 
 	__mpc_dt_name_clear();
-	sctk_free( __sctk_common_type_sizes );
 
 	mpc_common_spinlock_unlock(&clear_lock);
 
@@ -643,16 +636,9 @@ static inline void __mpc_composed_common_types_init()
 	_mpc_cl_type_commit( &tmp );
 }
 
-#define tostring( a ) #a
-#define SCTK_INIT_TYPE_SIZE( datatype, t )              \
-	__sctk_common_type_sizes[datatype] = sizeof( t );   \
-	assert( datatype >= 0 );                       \
-	assert( _mpc_dt_is_common( datatype ) ); \
-	__mpc_common_dt_set_name( datatype, #datatype );
-
 void _mpc_dt_common_display( mpc_lowcomm_datatype_t datatype )
 {
-	if ( !_mpc_dt_is_common( datatype ) )
+	if ( !mpc_lowcomm_datatype_is_common( datatype ) )
 	{
 		mpc_common_debug_error( "Unknown datatype provided to %s\n", __FUNCTION__ );
 		abort();
@@ -660,7 +646,7 @@ void _mpc_dt_common_display( mpc_lowcomm_datatype_t datatype )
 
 	mpc_common_debug_error( "=============COMMON=================" );
 	mpc_common_debug_error( "NAME %s", _mpc_dt_name_get( datatype ) );
-	mpc_common_debug_error( "SIZE %ld", __sctk_common_type_sizes[datatype] );
+	mpc_common_debug_error( "SIZE %ld", mpc_lowcomm_datatype_common_get_size(datatype) );
 	mpc_common_debug_error( "====================================" );
 }
 
@@ -889,7 +875,7 @@ int _mpc_dt_derived_release( _mpc_dt_derived_t *type )
 				_mpc_cl_type_is_allocated( i, &not_released_yet );
 
 				if ( to_free[i] && not_released_yet &&
-					 !_mpc_dt_is_common( i ) &&
+					 !mpc_lowcomm_datatype_is_common( i ) &&
 					 !_mpc_dt_is_boundary( i ) )
 				{
 					mpc_lowcomm_datatype_t tmp = i;
@@ -1158,7 +1144,7 @@ void _mpc_dt_storage_release( struct _mpc_dt_storage * da )
 		int to_release = 0;
 		to_release = _mpc_dt_storage_type_can_be_released(da, i);
 
-		if( to_release && !_mpc_dt_is_common(i) && !_mpc_dt_is_struct(i))
+		if( to_release && !mpc_lowcomm_datatype_is_common(i) && !_mpc_dt_is_struct(i))
 		{
                   mpc_common_debug("Freeing unfreed datatype [%d] did you call "
                              "MPI_Type_free on all your MPI_Datatypes ?",

@@ -1286,7 +1286,7 @@ int _mpc_cl_type_get_envelope(mpc_lowcomm_datatype_t datatype, int *num_integers
 	*num_datatypes = 0;
 
 	/* Handle the common data-type case */
-	if(_mpc_dt_is_common(datatype) ||
+	if(mpc_lowcomm_datatype_is_common(datatype) ||
 	   _mpc_dt_is_boundary(datatype) )
 	{
 		*combiner      = MPC_COMBINER_NAMED;
@@ -1316,7 +1316,7 @@ int _mpc_cl_type_get_contents(mpc_lowcomm_datatype_t datatype, int max_integers,
                               mpc_lowcomm_datatype_t array_of_datatypes[])
 {
 	/* First make sure we were not called on a common type */
-	if(_mpc_dt_is_common(datatype) )
+	if(mpc_lowcomm_datatype_is_common(datatype) )
 	{
 		MPC_ERROR_REPORT(MPC_COMM_SELF, MPC_ERR_ARG,
 		                 "Cannot call MPI_Type_get_contents on a defaut datatype");
@@ -1423,7 +1423,12 @@ static inline size_t __mpc_cl_datatype_get_size(mpc_lowcomm_datatype_t datatype,
 	{
 		case MPC_DATATYPES_COMMON:
 			/* Common datatype sizes */
-			return _mpc_dt_common_get_size(datatype);
+			if( (datatype == MPI_UB) || (datatype == MPI_LB) )
+			{
+				return 0;
+			}
+
+			return mpc_lowcomm_datatype_common_get_size(datatype);
 
 			break;
 
@@ -2088,9 +2093,6 @@ int _mpc_cl_type_ctx_set(mpc_lowcomm_datatype_t datatype,
 	MPC_ERROR_SUCESS();
 }
 
-int mpc_mpi_cl_type_is_common(mpc_lowcomm_datatype_t type){
-	return _mpc_dt_is_common(type);
-}
 
 int mpc_mpi_cl_type_is_contiguous(mpc_lowcomm_datatype_t type)
 {
@@ -2100,7 +2102,7 @@ int mpc_mpi_cl_type_is_contiguous(mpc_lowcomm_datatype_t type)
 		return 0;
 	}
 
-	if(_mpc_dt_is_contiguous(type) || _mpc_dt_is_common(type) )
+	if(_mpc_dt_is_contiguous(type) || mpc_lowcomm_datatype_is_common(type) )
 	{
 		return 1;
 	}
@@ -2274,7 +2276,7 @@ mpc_lowcomm_datatype_t _mpc_cl_derived_type_deserialize(void *buff, size_t size,
 
 mpc_lowcomm_datatype_t _mpc_cl_type_get_inner(mpc_lowcomm_datatype_t type)
 {
-	assume(!_mpc_dt_is_common(type) );
+	assume(!mpc_lowcomm_datatype_is_common(type) );
 
 	if(_mpc_dt_is_struct(type) )
 	{
@@ -2309,7 +2311,7 @@ mpc_lowcomm_datatype_t _mpc_cl_type_get_inner(mpc_lowcomm_datatype_t type)
 		}
 	}
 
-	assume(_mpc_dt_is_common(itype) );
+	assume(mpc_lowcomm_datatype_is_common(itype) );
 	/* if we are here, all types are the same */
 	return itype;
 }
@@ -4200,8 +4202,4 @@ void mpc_cl_comm_lib_init()
 	mpc_common_init_callback_register("Ending Main",
 	                                  "Per MPI Process CTX Release",
 	                                  __mpc_cl_per_mpi_process_ctx_release, 0);
-
-	/* Temporary before moving types down */
-	mpc_lowcomm_register_type_is_common(mpc_mpi_cl_type_is_common);
-
 }

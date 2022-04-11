@@ -219,35 +219,6 @@ struct _mpc_dt_layout *_mpc_dt_get_layout( struct _mpc_dt_footprint *ctx, size_t
 /* Common Datatype                                                      */
 /************************************************************************/
 
-/** \brief Returns 1 if datatype is a common datatype
- */
-static inline int _mpc_dt_is_common( mpc_lowcomm_datatype_t datatype )
-{
-	if ( ( 0 <= datatype ) && ( datatype < SCTK_COMMON_DATA_TYPE_COUNT ) )
-	{
-		return 1;
-	}
-
-	return 0;
-}
-
-/* This is the internal array holding common type sizes*/
-extern size_t *__sctk_common_type_sizes;
-/** \brief Get common datatypes sizes
- *
- *  \warning This function should only be called after MPC init
- *  it aborts if not provided with a common datatype
- *
- *  \param datatype target common datatype
- *  \return datatype size
- */
-static inline size_t _mpc_dt_common_get_size( mpc_lowcomm_datatype_t datatype )
-{
-	assert( _mpc_dt_is_common( datatype ) );
-	if(datatype < MPC_LOWCOMM_TYPE_COMMON_LIMIT) return mpc_lowcomm_datatype_common_get_size(datatype);
-	return __sctk_common_type_sizes[datatype];
-}
-
 /** \brief Display debug informations about a common datatype
  *  \param target_type Type to be displayed
  */
@@ -401,8 +372,8 @@ void _mpc_dt_derived_display( _mpc_dt_derived_t *target_type );
  * Datatypes are identified in function of their position in a contiguous
  * array such as :
  *
- * 	Common datatypes ==> [ 0 , SCTK_COMMON_DATA_TYPE_COUNT[
- *  Contiguous datatypes => [ SCTK_COMMON_DATA_TYPE_COUNT, SCTK_USER_DATA_TYPES_MAX[
+ * 	Common datatypes ==> [ 0 , MPC_LOWCOMM_TYPE_COMMON_LIMIT[
+ *  Contiguous datatypes => [ MPC_LOWCOMM_TYPE_COMMON_LIMIT, SCTK_USER_DATA_TYPES_MAX[
  *  Derived datatypes => [ SCTK_USER_DATA_TYPES_MAX, SCTK_USER_DATA_TYPES_MAX * 2 [
  *
  *  This layout is useful as we can directly pass around a single int to identify
@@ -432,7 +403,7 @@ typedef enum {
  */
 static inline int _mpc_dt_is_contiguous( mpc_lowcomm_datatype_t datatype )
 {
-	if ( ( SCTK_COMMON_DATA_TYPE_COUNT <= datatype ) && ( datatype < ( SCTK_COMMON_DATA_TYPE_COUNT + SCTK_USER_DATA_TYPES_MAX ) ) )
+	if ( ( MPC_LOWCOMM_TYPE_COMMON_LIMIT <= datatype ) && ( datatype < ( MPC_LOWCOMM_TYPE_COMMON_LIMIT + SCTK_USER_DATA_TYPES_MAX ) ) )
 	{
 		return 1;
 	}
@@ -444,7 +415,7 @@ static inline int _mpc_dt_is_contiguous( mpc_lowcomm_datatype_t datatype )
  */
 static inline int _mpc_dt_is_derived( mpc_lowcomm_datatype_t data_in )
 {
-	if ( ( data_in >= SCTK_COMMON_DATA_TYPE_COUNT + SCTK_USER_DATA_TYPES_MAX ) && ( data_in < ( SCTK_COMMON_DATA_TYPE_COUNT + 2 * SCTK_USER_DATA_TYPES_MAX ) ) )
+	if ( ( data_in >= MPC_LOWCOMM_TYPE_COMMON_LIMIT + SCTK_USER_DATA_TYPES_MAX ) && ( data_in < ( MPC_LOWCOMM_TYPE_COMMON_LIMIT + 2 * SCTK_USER_DATA_TYPES_MAX ) ) )
 	{
 		return 1;
 	}
@@ -456,7 +427,7 @@ static inline int _mpc_dt_is_derived( mpc_lowcomm_datatype_t data_in )
  */
 static inline int _mpc_dt_is_struct( mpc_lowcomm_datatype_t data_in )
 {
-	if ( ( data_in >= SCTK_COMMON_DATA_TYPE_COUNT + SCTK_USER_DATA_TYPES_MAX ) && ( data_in < ( SCTK_COMMON_DATA_TYPE_COUNT + SCTK_USER_DATA_TYPES_MAX + MPC_STRUCT_DATATYPE_COUNT ) ) )
+	if ( ( data_in >= MPC_LOWCOMM_TYPE_COMMON_LIMIT + SCTK_USER_DATA_TYPES_MAX ) && ( data_in < ( MPC_LOWCOMM_TYPE_COMMON_LIMIT + SCTK_USER_DATA_TYPES_MAX + MPC_STRUCT_DATATYPE_COUNT ) ) )
 	{
 		return 1;
 	}
@@ -499,7 +470,7 @@ static inline mpc_dt_kind_t _mpc_dt_get_kind( mpc_lowcomm_datatype_t datatype )
 {
 	mpc_dt_kind_t ret = MPC_DATATYPES_UNKNOWN;
 
-	if ( _mpc_dt_is_common( datatype ) || _mpc_dt_is_boundary( datatype ) )
+	if ( mpc_lowcomm_datatype_is_common( datatype ) || _mpc_dt_is_boundary( datatype ) )
 	{
 		ret = MPC_DATATYPES_COMMON;
 	}
@@ -520,14 +491,14 @@ static inline mpc_dt_kind_t _mpc_dt_get_kind( mpc_lowcomm_datatype_t datatype )
  *  */
 
 /** \brief Takes a global contiguous type and computes its local offset */
-#define _MPC_DT_MAP_TO_CONTIGUOUS( type ) ( type - SCTK_COMMON_DATA_TYPE_COUNT )
+#define _MPC_DT_MAP_TO_CONTIGUOUS( type ) ( type - MPC_LOWCOMM_TYPE_COMMON_LIMIT )
 /** \brief Takes a local contiguous offset and translates it to a local offset */
-#define _MPC_DT_MAP_FROM_CONTIGUOUS( type ) ( type + SCTK_COMMON_DATA_TYPE_COUNT )
+#define _MPC_DT_MAP_FROM_CONTIGUOUS( type ) ( type + MPC_LOWCOMM_TYPE_COMMON_LIMIT )
 
 /** \brief Takes a global derived type and computes its local offset */
-#define _MPC_DT_MAP_TO_DERIVED( a ) ( a - SCTK_USER_DATA_TYPES_MAX - SCTK_COMMON_DATA_TYPE_COUNT )
+#define _MPC_DT_MAP_TO_DERIVED( a ) ( a - SCTK_USER_DATA_TYPES_MAX - MPC_LOWCOMM_TYPE_COMMON_LIMIT )
 /** \brief Takes a local derived offset and translates it to a local offset */
-#define _MPC_DT_MAP_FROM_DERIVED( a ) ( a + SCTK_USER_DATA_TYPES_MAX + SCTK_COMMON_DATA_TYPE_COUNT )
+#define _MPC_DT_MAP_FROM_DERIVED( a ) ( a + SCTK_USER_DATA_TYPES_MAX + MPC_LOWCOMM_TYPE_COMMON_LIMIT )
 
 /************************************************************************/
 /* Datatype  Array                                                      */

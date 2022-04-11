@@ -384,7 +384,6 @@ typedef int( MPC_Type_delete_attr_function )( mpc_lowcomm_datatype_t datatype,
         void *extra_state );
 
 int mpc_mpi_cl_type_is_contiguous(mpc_lowcomm_datatype_t type);
-int mpc_mpi_cl_type_is_common(mpc_lowcomm_datatype_t type);
 
 /********************
  * THREAD MIGRATION *

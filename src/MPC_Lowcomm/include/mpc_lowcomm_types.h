@@ -19,18 +19,27 @@
 /* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef SCTK_TYPES_H
-#define SCTK_TYPES_H
-/************************** HEADERS **************************/
+#ifndef MPC_LOWCOMM_TYPES_H_
+#define MPC_LOWCOMM_TYPES_H_
 #include <stdlib.h>
 
 #include <mpc_lowcomm_communicator.h>
 
-/************************** TYPES **************************/
-/** define a data-type **/
+/*************
+ * DATATYPES *
+ *************/
+
 typedef int mpc_lowcomm_datatype_t;
+void mpc_lowcomm_register_type_is_common( int (*type_ptr)(mpc_lowcomm_datatype_t) );
+
+
+/****************
+ * MESSAGE INFO *
+ ****************/
+
 /** Message count **/
 typedef int mpc_lowcomm_msg_count_t;
+
 /** A message header to be put in the request **/
 typedef struct
 {
@@ -42,6 +51,11 @@ typedef struct
 	mpc_lowcomm_communicator_id_t communicator_id;
 	size_t msg_size;
 } mpc_lowcomm_request_header_t;
+
+/**********
+ * STATUS *
+ **********/
+
 /** Status Definition **/
 typedef struct
 {
@@ -55,6 +69,9 @@ typedef struct
 #define MPC_LOWCOMM_STATUS_NULL NULL
 #define MPC_LOWCOMM_STATUS_INIT {MPC_ANY_SOURCE,MPC_ANY_TAG,MPC_LOWCOMM_SUCCESS,0,0}
 
+/************
+ * REQUESTS *
+ ************/
 
 /** Generalized requests functions **/
 typedef int sctk_Grequest_query_function( void *extra_state, mpc_lowcomm_status_t *status );
@@ -67,8 +84,7 @@ typedef int sctk_Grequest_wait_fn( int count, void **array_of_states, double tim
 typedef int sctk_Request_class;
 
 /** Request definition **/
-typedef struct mpc_lowcomm_request_t mpc_lowcomm_request_t;
-struct mpc_lowcomm_request_t
+typedef struct mpc_lowcomm_request_s
 {
 	mpc_lowcomm_communicator_t comm;
 	volatile int completion_flag;
@@ -103,13 +119,16 @@ struct mpc_lowcomm_request_t
 	/* This is a pointer to the registered memory region
 	 * in order to unpin when request completes */
 	void *ptr_to_pin_ctx;
-        int (*request_completion_fn)(mpc_lowcomm_request_t *);
-};
+    int (*request_completion_fn)(struct mpc_lowcomm_request_s *);
+}mpc_lowcomm_request_t;
 
-mpc_lowcomm_request_t* mpc_lowcomm_request_null(void);
+struct mpc_lowcomm_request_s * mpc_lowcomm_request_null(void);
 #define MPC_REQUEST_NULL (*mpc_lowcomm_request_null())
 
-/** Reduction Operations **/
+/*********************
+ * REDUCE OPERATIONS *
+ *********************/
+
 typedef void ( *sctk_Op_f ) ( const void *, void *, size_t, mpc_lowcomm_datatype_t );
 typedef void ( sctk_Op_User_function ) ( void *, void *, int *, mpc_lowcomm_datatype_t * );
 
@@ -121,7 +140,10 @@ typedef struct
 
 #define SCTK_OP_INIT {NULL,NULL}
 
-/** RDMA windows */
+/************
+ * RDMA OPS *
+ ************/
+
 typedef int mpc_lowcomm_rdma_window_t;
 
 typedef enum
@@ -164,12 +186,6 @@ typedef enum
 } RDMA_type;
 
 size_t RDMA_type_size( RDMA_type type );
-
-/*******************
- * DataTypes        *
- *******************/
-
-void mpc_lowcomm_register_type_is_common( int (*type_ptr)(mpc_lowcomm_datatype_t) );
 
 /*********
  * ERROR *
@@ -231,4 +247,4 @@ typedef enum sctk_ft_state_e
 #define MPC_ALLGATHER_TAG -11
 
 
-#endif /* SCTK_TYPES_H */
+#endif /* MPC_LOWCOMM_TYPES_H_ */

@@ -559,7 +559,7 @@ static int mpi_check_op_type_func_MPI_MAXLOC(MPI_Datatype datatype)
 static int mpi_check_op_type(MPI_Op op, MPI_Datatype datatype)
 {
 #if 1
-	if( (op <= MPI_MAXLOC) && (_mpc_dt_is_common(datatype) ) )
+	if( (op <= MPI_MAXLOC) && (mpc_lowcomm_datatype_is_common(datatype) ) )
 	{
 		switch(op)
 		{
@@ -2281,7 +2281,7 @@ static inline MPI_Datatype *__get_typemask(MPI_Datatype datatype, int *type_mask
 
 			*type_mask_count = 1;
 
-			if(_mpc_dt_is_common(contiguous_user_types->datatype) )
+			if(mpc_lowcomm_datatype_is_common(contiguous_user_types->datatype) )
 			{
 				*static_type = contiguous_user_types->datatype;
 				return static_type;
@@ -12729,7 +12729,7 @@ TODO("VALIDATE");
 		for(i = 0; i < count; i++)
 		{
 			MPI_Aint cur_type_extent = 0;
-			if(!_mpc_dt_is_common(old_types[i]) )
+			if(!mpc_lowcomm_datatype_is_common(old_types[i]) )
 			{
 				types_are_all_common = 0;
 				break;
@@ -13135,7 +13135,7 @@ int PMPI_Type_free(MPI_Datatype *datatype)
 
 	mpi_check_type(*datatype, MPI_COMM_WORLD);
 
-	if(_mpc_dt_is_common(*datatype) )
+	if(mpc_lowcomm_datatype_is_common(*datatype) )
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "");
 	}
@@ -13788,7 +13788,7 @@ int PMPI_Pack_external_size(const char *datarep, int incount, MPI_Datatype datat
 			contiguous_user_types = _mpc_cl_per_mpi_process_ctx_contiguous_datatype_ts_get(task_specific, datatype);
 
 			/* For contiguous it is count times the external extent */
-			if(_mpc_dt_is_common(contiguous_user_types->datatype) )
+			if(mpc_lowcomm_datatype_is_common(contiguous_user_types->datatype) )
 			{
 				*size = MPC_Extern32_common_type_size(contiguous_user_types->datatype) * contiguous_user_types->count * incount;
 			}

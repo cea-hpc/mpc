@@ -304,7 +304,7 @@ static inline void BASIC_convert(int type_byte_size, char *src, char *dest)
  */
 static inline size_t MPC_Extern32_common_type_size( mpc_lowcomm_datatype_t common_type )
 {
-	if( !_mpc_dt_is_common( common_type ) )
+	if( !mpc_lowcomm_datatype_is_common( common_type ) )
 	{
 		mpc_common_debug_fatal( "MPC_Extern32_common_type_size only handle common types");
 	}
@@ -383,7 +383,7 @@ static inline size_t MPC_Extern32_common_type_size( mpc_lowcomm_datatype_t commo
  */
 static inline int MPC_Unsigned_type( mpc_lowcomm_datatype_t common_type )
 {
-	if( !_mpc_dt_is_common( common_type ) )
+	if( !mpc_lowcomm_datatype_is_common( common_type ) )
 	{
 		mpc_common_debug_fatal( "MPC_Extern32_common_type_size only handle common types");
 	}

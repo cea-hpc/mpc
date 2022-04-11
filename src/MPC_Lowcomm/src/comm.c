@@ -116,42 +116,31 @@ static inline void __mpc_comm_request_init(mpc_lowcomm_request_t *request,
 	}\
 	while(0)
 
-static int (*mpc_lowcomm_type_is_common)(mpc_lowcomm_datatype_t datatype) = NULL;
-
-void mpc_lowcomm_register_type_is_common( int (*type_ptr)(mpc_lowcomm_datatype_t) )
-{
-	assume(type_ptr != NULL);
-	mpc_lowcomm_type_is_common = type_ptr;
-}
-
 int mpc_lowcomm_check_type_compat(mpc_lowcomm_datatype_t src, mpc_lowcomm_datatype_t dest)
 {
-	//mpc_common_debug_error("COMPAT %d %d", src, dest);
 
-	if(mpc_lowcomm_type_is_common != NULL)
+
+	if(src != dest)
 	{
-		TODO("THIS WILL BE FIXED WHEN DT will be at the right place");
-		if(src != dest)
+		if( (src != MPC_DATATYPE_IGNORE) && (dest != MPC_DATATYPE_IGNORE))
 		{
-			if( (src != MPC_DATATYPE_IGNORE) && (dest != MPC_DATATYPE_IGNORE))
+			/* See page 33 of 3.0 PACKED and BYTE are exceptions */
+			if((src != MPC_LOWCOMM_PACKED) && (dest != MPC_LOWCOMM_PACKED))
 			{
-				/* See page 33 of 3.0 PACKED and BYTE are exceptions */
-				if((src != MPC_LOWCOMM_PACKED) && (dest != MPC_LOWCOMM_PACKED))
+				if((src != MPC_LOWCOMM_BYTE) && (dest != MPC_LOWCOMM_BYTE))
 				{
-					if((src != MPC_LOWCOMM_BYTE) && (dest != MPC_LOWCOMM_BYTE))
+					if(mpc_lowcomm_datatype_is_common(src) &&
+						mpc_lowcomm_datatype_is_common(dest) )
 					{
-						if((mpc_lowcomm_type_is_common)(src) &&
-						   (mpc_lowcomm_type_is_common)(dest) )
-						{
 
-							return MPC_LOWCOMM_ERR_TYPE;
-						}
+						return MPC_LOWCOMM_ERR_TYPE;
 					}
 				}
 			}
 		}
-
 	}
+
+
 
 	return MPC_LOWCOMM_SUCCESS;
 }

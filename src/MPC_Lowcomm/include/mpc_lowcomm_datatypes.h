@@ -96,4 +96,16 @@ char* mpc_lowcomm_datatype_common_get_name(mpc_lowcomm_datatype_t datatype);
 
 int mpc_lowcomm_datatype_common_set_name(mpc_lowcomm_datatype_t datatype, char *name);
 
+
+static inline int mpc_lowcomm_datatype_is_common(mpc_lowcomm_datatype_t datatype)
+{
+    if( (0 <= datatype) &&  (datatype < MPC_LOWCOMM_TYPE_COMMON_LIMIT) )
+    {
+        return 1;
+    }
+
+    return 0;
+}
+
+
 #endif
