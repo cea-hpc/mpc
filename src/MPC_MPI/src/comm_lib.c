@@ -1247,10 +1247,12 @@ int _mpc_cl_type_dup(mpc_lowcomm_datatype_t old_type, mpc_lowcomm_datatype_t *ne
 int _mpc_cl_type_get_name(mpc_lowcomm_datatype_t datatype, char *name, int *resultlen)
 {
 	
-	char *retname = _mpc_dt_name_get(datatype);
-
+	char *retname = NULL;
+	
 	if( mpc_lowcomm_datatype_is_common(datatype) ){
 		retname = mpc_lowcomm_datatype_common_get_name(datatype);
+	} else {
+	    retname = _mpc_dt_name_get(datatype);
 	}
 
 
