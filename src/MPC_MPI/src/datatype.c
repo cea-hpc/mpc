@@ -651,59 +651,6 @@ static inline void __mpc_composed_common_types_init()
 	assert( _mpc_dt_is_common( datatype ) ); \
 	__mpc_common_dt_set_name( datatype, #datatype );
 
-
-/** \brief Initilalize common datatype sizes
- */
-// static inline void __mpc_common_types_init(void)
-// {
-// 	SCTK_INIT_TYPE_SIZE( MPC_CHAR, char );
-// 	SCTK_INIT_TYPE_SIZE( MPC_LOGICAL, int );
-// 	SCTK_INIT_TYPE_SIZE( MPC_BYTE, unsigned char );
-// 	SCTK_INIT_TYPE_SIZE( MPC_SHORT, short );
-// 	SCTK_INIT_TYPE_SIZE( MPC_INT, int );
-// 	SCTK_INIT_TYPE_SIZE( MPC_LONG, long );
-// 	SCTK_INIT_TYPE_SIZE( MPC_FLOAT, float );
-// 	SCTK_INIT_TYPE_SIZE( MPC_DOUBLE, double );
-// 	SCTK_INIT_TYPE_SIZE( MPC_UNSIGNED_CHAR, unsigned char );
-// 	SCTK_INIT_TYPE_SIZE( MPC_UNSIGNED_SHORT, unsigned short );
-// 	SCTK_INIT_TYPE_SIZE( MPC_UNSIGNED, unsigned int );
-// 	SCTK_INIT_TYPE_SIZE( MPC_UNSIGNED_LONG, unsigned long );
-// 	SCTK_INIT_TYPE_SIZE( MPC_LONG_DOUBLE, long double );
-// 	SCTK_INIT_TYPE_SIZE( MPC_LONG_LONG, long long );
-// 	SCTK_INIT_TYPE_SIZE( MPC_UNSIGNED_LONG_LONG, unsigned long long );
-// 	SCTK_INIT_TYPE_SIZE( MPC_INTEGER1, int8_t );
-// 	SCTK_INIT_TYPE_SIZE( MPC_INTEGER2, int16_t );
-// 	SCTK_INIT_TYPE_SIZE( MPC_INTEGER4, int32_t );
-// 	SCTK_INIT_TYPE_SIZE( MPC_INTEGER8, int64_t );
-// 	SCTK_INIT_TYPE_SIZE( MPC_INTEGER16, int64_t[2] );
-// 	SCTK_INIT_TYPE_SIZE( MPC_REAL4, float );
-// 	SCTK_INIT_TYPE_SIZE( MPC_REAL8, double );
-// 	SCTK_INIT_TYPE_SIZE( MPC_REAL16, long double );
-// 	SCTK_INIT_TYPE_SIZE( MPC_SIGNED_CHAR, char );
-// 	SCTK_INIT_TYPE_SIZE( MPC_INT8_T, int8_t );
-// 	SCTK_INIT_TYPE_SIZE( MPC_UINT8_T, uint8_t );
-// 	SCTK_INIT_TYPE_SIZE( MPC_INT16_T, int16_t );
-// 	SCTK_INIT_TYPE_SIZE( MPC_UINT16_T, uint16_t );
-// 	SCTK_INIT_TYPE_SIZE( MPC_INT32_T, int32_t );
-// 	SCTK_INIT_TYPE_SIZE( MPC_UINT32_T, uint32_t );
-// 	SCTK_INIT_TYPE_SIZE( MPC_INT64_T, int64_t );
-// 	SCTK_INIT_TYPE_SIZE( MPC_UINT64_T, uint64_t );
-// 	SCTK_INIT_TYPE_SIZE( MPC_WCHAR, sctk_wchar_t );
-// 	SCTK_INIT_TYPE_SIZE( MPC_AINT, size_t );
-// 	SCTK_INIT_TYPE_SIZE( MPC_OFFSET, size_t );
-// 	SCTK_INIT_TYPE_SIZE( MPC_COUNT, size_t );
-// 	SCTK_INIT_TYPE_SIZE( MPC_LONG_LONG_INT, long long int );
-// 	SCTK_INIT_TYPE_SIZE( MPC_C_BOOL, char );
-// 	SCTK_INIT_TYPE_SIZE( MPC_CHARACTER, char );
-// 	SCTK_INIT_TYPE_SIZE( MPC_INTEGER, int );
-// 	SCTK_INIT_TYPE_SIZE( MPC_REAL, float );
-// 	SCTK_INIT_TYPE_SIZE( MPC_DOUBLE_PRECISION, double );
-
-// 	/* Special cases */
-// 	__sctk_common_type_sizes[MPC_PACKED] = 0;
-// 	__mpc_common_dt_set_name( MPC_PACKED, "MPI_PACKED" );
-// }
-
 void _mpc_dt_common_display( mpc_lowcomm_datatype_t datatype )
 {
 	if ( !_mpc_dt_is_common( datatype ) )

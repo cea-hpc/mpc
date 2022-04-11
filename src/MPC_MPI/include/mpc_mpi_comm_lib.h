@@ -281,11 +281,6 @@ typedef int MPC_Message;
 #define MPC_UB ( (mpc_lowcomm_datatype_t) -2 )
 #define MPC_LB ( (mpc_lowcomm_datatype_t) -3 )
 
-/* These are in lowcomm other to move soon
-#define MPC_PACKED 0
-#define MPC_BYTE 1
-*/
-
 // #define MPC_SHORT 2
 // #define MPC_INT 3
 // #define MPC_LONG 4
