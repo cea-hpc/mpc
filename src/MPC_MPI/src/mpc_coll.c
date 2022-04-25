@@ -3014,21 +3014,217 @@ int ___collectives_allreduce_distance_doubling(const void *sendbuf, void* recvbu
 
 /**
   \brief Execute or schedule a reduce using the vector halving distance doubling algorithm
-    Or count the number of operations and rounds for the schedule
-  \param sendbuf Adress of the buffer used to send data during the allreduce
-  \param recvbuf Adress of the buffer used to recv data during the allreduce
+    Or count the number of operations and rounds for the schedule.
+    This implementation is based on vector-halving distance-doubling
+    Rabenseifner's algorithm and assumes that the operator is associative. 
+    Details and examples can be found at https://www.hlrs.de/mpi/myreduce.html.
+
+  \param sendbuf Address of the buffer used to send data during the allreduce
+  \param recvbuf Address of the buffer used to recv data during the allreduce
   \param count Number of elements in the buffers
   \param datatype Type of the data elements in the buffers
-  \param op Operator to use in the reduction operation
+  \param op Operator to use in the reduction operation. This operator must be associative.
   \param comm Target communicator
   \param coll_type Type of the communication
-  \param schedule Adress of the schedule
-  \param info Adress on the information structure about the schedule
+  \param schedule Address of the schedule
+  \param info Address on the information structure about the schedule
   \return error code
+  \see Rolf Rabenseifner: A new optimized MPI reduce algorithm.
+       High-Performance Computing-Center, University of Stuttgart, Nov. 1997,
+       https://www.hlrs.de/mpi/myreduce.html
   */
-int ___collectives_allreduce_vector_halving_distance_doubling(__UNUSED__ const void *sendbuf, __UNUSED__ void* recvbuf, __UNUSED__ int count, __UNUSED__ MPI_Datatype datatype, __UNUSED__ MPI_Op op, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+int ___collectives_allreduce_vector_halving_distance_doubling(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+  int rank, size;
+  MPI_Aint ext;
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+  PMPI_Type_extent(datatype, &ext);
 
-  not_implemented();
+#define OLDRANK(new) ((new) < r ? (new)*2 : (new)+r)
+
+  void* tmpbuf = NULL;
+
+  sctk_Op mpc_op;
+  sctk_op_t *mpi_op;
+
+  switch(coll_type) {
+    case MPC_COLL_TYPE_BLOCKING:
+      tmpbuf = sctk_malloc(2 * ext * count);
+      mpi_op = sctk_convert_to_mpc_op(op);
+      mpc_op = mpi_op->op;
+      break;
+
+    case MPC_COLL_TYPE_NONBLOCKING:
+    case MPC_COLL_TYPE_PERSISTENT:
+      tmpbuf = info->tmpbuf + info->tmpbuf_pos;
+      info->tmpbuf_pos += 2 * ext * count;
+      break;
+
+    case MPC_COLL_TYPE_COUNT:
+      info->tmpbuf_size += 2 * ext * count;
+      break;
+  }
+
+  void *tmp_recvbuf, *tmp_sendbuf, *swap;
+  tmp_recvbuf = tmpbuf;
+  tmp_sendbuf = tmpbuf + ext * count;
+  ___collectives_copy_type(sendbuf == MPI_IN_PLACE ? recvbuf : sendbuf,
+                           count, datatype, tmp_sendbuf, count, datatype,
+                           comm, coll_type, schedule, info);
+
+  /* Step 1 */
+  int maxr = ___collectives_floored_log2(size);
+  int r = size - (1 << maxr);
+
+  /* Step 2 */
+  if(rank < 2 * r) {
+    if((rank & 1) == 0) {
+      // Even processes reduce the first-half buffer
+      // and collect the receive the reduced second-half buffer from the odd process rank + 1
+      int peer = rank + 1;
+      ___collectives_send_type(tmp_sendbuf + (count / 2) * ext, count - count / 2, datatype, peer,
+                               MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_recv_type(tmp_recvbuf, count / 2, datatype, peer,
+                               MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_barrier_type(coll_type, schedule, info);
+
+      ___collectives_op_type(NULL, tmp_sendbuf, tmp_recvbuf, count / 2, datatype, op, mpc_op, coll_type, schedule, info);
+
+      ___collectives_recv_type(tmp_recvbuf + (count / 2) * ext, count - count / 2,
+                               datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_barrier_type(coll_type, schedule, info);
+      
+      pointer_swap(tmp_sendbuf, tmp_recvbuf, swap);
+    } else {
+      // Elimination: odd processes only reduce the second-half buffer
+      // and send it to even process rank - 1
+      int peer = rank - 1;
+
+      ___collectives_recv_type(tmp_recvbuf + (count / 2) * ext, count - count / 2, datatype, peer,
+                               MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(tmp_sendbuf, count / 2, datatype, peer,
+                               MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+      ___collectives_barrier_type(coll_type, schedule, info);
+
+      ___collectives_op_type(NULL,
+                             tmp_recvbuf + (count / 2) * ext,
+                             tmp_sendbuf + (count / 2) * ext,
+                             count - count / 2, datatype, op, mpc_op, coll_type, schedule, info);
+      
+      ___collectives_send_type(tmp_sendbuf + (count / 2) * ext, count - count / 2,
+                               datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+      }
+  }
+
+  /* Step 3+4 */
+  int vrank;
+  // Only use 2^maxr processes, i.e. even processes and remaining processes such that rank >= 2*r 
+  if((rank >= 2*r) || ((rank % 2 == 0) && (rank < 2*r))) {
+    vrank = (rank < 2*r ? rank/2 : rank-r);
+  } else {
+    vrank = -1;
+  }
+
+  if(vrank >= 0) {
+    /* Step 5 */
+    int x_start, x_count, i;
+    x_start = 0;
+    x_count = count;
+
+    // There are at most 2^(8*sizeof(int)) MPI processes,
+    // therefore buffer halving requires at most 8*sizeof(int) iterations
+#define INT_BIT (CHAR_BIT * sizeof(int))
+    int start_even[INT_BIT], start_odd[INT_BIT], count_even[INT_BIT], count_odd[INT_BIT];
+#undef INT_BIT
+
+    for(i = 0; i < maxr; i++) { /* Buffer halving */
+      start_even[i] = x_start;
+      count_even[i] = x_count / 2;
+      start_odd[i] = x_start + count_even[i];
+      count_odd[i] = x_count - count_even[i];
+
+      int peer = OLDRANK(vrank ^ (1 << i));
+
+      if((vrank & (1 << i)) == 0) { /* Even */
+        x_start = start_even[i];
+        x_count = count_even[i];
+
+        ___collectives_send_type(tmp_sendbuf + start_odd[i] * ext, count_odd[i],
+                                  datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+        ___collectives_recv_type(tmp_recvbuf + x_start * ext, x_count,
+                                  datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+        ___collectives_barrier_type(coll_type, schedule, info);
+
+        ___collectives_op_type(NULL,
+                               tmp_sendbuf + x_start * ext,
+                               tmp_recvbuf + x_start * ext,
+                               x_count, datatype, op, mpc_op, coll_type, schedule, info);
+
+        pointer_swap(tmp_sendbuf, tmp_recvbuf, swap);
+      } else { /* Odd */
+        x_start = start_odd[i];
+        x_count = count_odd[i];
+
+        ___collectives_recv_type(tmp_recvbuf + x_start * ext, x_count,
+                                  datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+        ___collectives_send_type(tmp_sendbuf + start_even[i] * ext, count_even[i],
+                                datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+        ___collectives_barrier_type(coll_type, schedule, info);
+        
+        ___collectives_op_type(NULL,
+                               tmp_recvbuf + x_start * ext,
+                               tmp_sendbuf + x_start * ext,
+                               x_count, datatype, op, mpc_op, coll_type, schedule, info);
+      }
+    }
+
+    ___collectives_copy_type(tmp_sendbuf, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
+
+
+    /* ALLGATHER */
+    /* Step 6 */
+
+    for(i = maxr - 1; i >= 0; i--) { /* Buffer doubling */
+      int peer = OLDRANK(vrank ^ (1 << i));
+
+      if((vrank & (1 << i)) == 0) {  /* Even */
+        ___collectives_send_type(recvbuf + start_even[i] * ext, count_even[i],
+                                  datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+        ___collectives_recv_type(recvbuf + start_odd[i] * ext, count_odd[i],
+                                  datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+        ___collectives_barrier_type(coll_type, schedule, info);
+      } else { /* Odd */
+        ___collectives_recv_type(recvbuf + start_even[i] * ext, count_even[i],
+                                  datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+        ___collectives_send_type(recvbuf + start_odd[i] * ext, count_odd[i],
+                                  datatype, peer, MPC_ALLREDUCE_TAG, comm, coll_type, schedule, info);
+        ___collectives_barrier_type(coll_type, schedule, info);
+      }
+    }
+  } /* End of if(vrank >= 0) */
+
+#undef OLDRANK
+
+  /* Step 7 */
+  if(rank < 2*r) { /* Propagate results to the 2^maxr-size unused processes */
+    int peer;
+
+    if((rank & 1) == 0) { /* Even */
+      peer = rank + 1;
+      ___collectives_send_type(recvbuf, count, datatype, peer, MPC_ALLREDUCE_TAG,
+                               comm, coll_type, schedule, info);
+    } else { /* Odd */
+      peer = rank - 1;
+      ___collectives_recv_type(recvbuf, count, datatype, peer, MPC_ALLREDUCE_TAG,
+                               comm, coll_type, schedule, info);
+    }
+
+    ___collectives_barrier_type(coll_type, schedule, info);
+  }
+
+  if(coll_type == MPC_COLL_TYPE_BLOCKING) {
+    sctk_free(tmpbuf);
+  }
   
   return MPI_SUCCESS;
 }
