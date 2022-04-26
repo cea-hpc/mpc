@@ -107,6 +107,8 @@ static inline void __omp_conf_set_default(void)
 	__omp_conf.OMP_THREAD_LIMIT=64;
 	__omp_conf.OMP_DYNAMIC=0;
 
+    __omp_conf.bindings = 0;
+
     /* Tasks */
     __omp_conf.task_sequential                  = 0;
     __omp_conf.maximum_tasks                    = 10000000;
@@ -119,10 +121,17 @@ static inline void __omp_conf_set_default(void)
     __omp_conf.task_depth_threshold             = 4;
     __omp_conf.task_use_fiber                   = 1;
     __omp_conf.task_trace                       = 0;
+    __omp_conf.task_trace_auto                  = 0;
+    __omp_conf.task_trace_dir[0]                = '\0';
+    __omp_conf.task_cond_wait_enabled           = 0;
+    __omp_conf.task_cond_wait_nhyperactive      = 4;
     __omp_conf.task_yield_mode                  = MPC_OMP_TASK_YIELD_MODE_NOOP;
+    __omp_conf.task_direct_successor_enabled    = 1;
+    __omp_conf.task_list_policy                 = MPC_OMP_TASK_LIST_POLICY_LIFO;
+    __omp_conf.task_dependency_default_hash     = 0;
     __omp_conf.task_priority_policy             = MPC_OMP_TASK_PRIORITY_POLICY_ZERO;
     __omp_conf.task_priority_propagation_policy = MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_NOOP;
-    __omp_conf.task_list_policy                 = MPC_OMP_TASK_LIST_POLICY_LIFO;
+    __omp_conf.task_priority_propagation_synchronousity = MPC_OMP_TASK_PRIORITY_PROPAGATION_SYNCHRONOUS;
 
     /* task steal */
     __omp_conf.task_steal_last_stolen   = 0;
@@ -149,6 +158,7 @@ static inline void __omp_conf_init(void)
             PARAM("waitpolicy", &__omp_conf.OMP_WAIT_POLICY , MPC_CONF_INT, "Behavior of threads while waiting OMP_WAIT_POLICY"),
             PARAM("maxthreads", &__omp_conf.OMP_THREAD_LIMIT , MPC_CONF_INT, "Max number of threads OMP_THREAD_LIMIT"),
             PARAM("dynamic", &__omp_conf.OMP_DYNAMIC , MPC_CONF_INT, "Allow dynamic adjustment of the thread number OMP_DYNAMIC"),
+            PARAM("bindings", &__omp_conf.bindings , MPC_CONF_INT, "Print OpenMP thread binding on physical cores"),
             NULL
     );
 
@@ -164,14 +174,20 @@ static inline void __omp_conf_init(void)
             PARAM("depththreshold",             &__omp_conf.task_depth_threshold,               MPC_CONF_INT,   "Maximum task depth before it is run undeferedly on parent's fiber"),
             PARAM("fiber",                      &__omp_conf.task_use_fiber,                     MPC_CONF_BOOL,  "Enable task fiber"),
             PARAM("trace",                      &__omp_conf.task_trace,                         MPC_CONF_BOOL,  "Enable task tracing"),
+            PARAM("traceauto",                  &__omp_conf.task_trace_auto,                    MPC_CONF_BOOL,  "Enable automatic task tracing"),
+            PARAM("tracedir",                   &__omp_conf.task_trace_dir,                     MPC_CONF_STRING,"Task trace destination directory"),
+            PARAM("condwaitenabled",            &__omp_conf.task_cond_wait_enabled,             MPC_CONF_BOOL,  "Enable the thread conditional sleeping while there is no ready tasks"),
+            PARAM("condwaitnhyperactive",       &__omp_conf.task_cond_wait_nhyperactive,        MPC_CONF_INT,   "Number of hyperactive threads (= threads that won't sleep even if there is no ready tasks)"),
+            PARAM("directsuccessor",            &__omp_conf.task_direct_successor_enabled,      MPC_CONF_INT,   "Enable thread direct successor list"),
+            PARAM("listpolicy",                 &__omp_conf.task_list_policy,                   MPC_CONF_INT,   "Task list policy"),
+            PARAM("dependencyhash",             &__omp_conf.task_dependency_default_hash,       MPC_CONF_INT,   "Task dependency default hash function"),
             PARAM("prioritypolicy",             &__omp_conf.task_priority_policy,               MPC_CONF_INT,   "Task priority policy"),
             PARAM("propagationpolicy",          &__omp_conf.task_priority_propagation_policy,   MPC_CONF_INT,   "Task priority propagation policy"),
-            PARAM("listpolicy",                 &__omp_conf.task_list_policy,                   MPC_CONF_INT,   "Task list policy"),
-            // TODO("yieldmode -> replace with a string and parse it");
-            PARAM("yieldmode",           &__omp_conf.task_yield_mode,           MPC_CONF_INT,       "Task yielding policy"),
-            PARAM("larcenymode",         &__omp_conf.task_larceny_mode_str,     MPC_CONF_STRING,    "Task stealing policy"),
-            PARAM("steallaststolen",     &__omp_conf.task_steal_last_stolen,    MPC_CONF_BOOL,      "Try to steal to same list than last successful stealing"),
-            PARAM("steallastthief",      &__omp_conf.task_steal_last_thief,     MPC_CONF_BOOL,      "Try to steal to the last thread that stole a task to current thread"),
+            PARAM("propagationsynchronousity",  &__omp_conf.task_priority_propagation_synchronousity,   MPC_CONF_INT,   "Task priority propagation synchronousity"),
+            PARAM("yieldmode",                  &__omp_conf.task_yield_mode,                    MPC_CONF_INT,    "Task yielding policy"),
+            PARAM("larcenymode",                &__omp_conf.task_larceny_mode_str,              MPC_CONF_STRING, "Task stealing policy"),
+            PARAM("steallaststolen",            &__omp_conf.task_steal_last_stolen,             MPC_CONF_BOOL,   "Try to steal to same list than last successful stealing"),
+            PARAM("steallastthief",             &__omp_conf.task_steal_last_thief,              MPC_CONF_BOOL,   "Try to steal to the last thread that stole a task to current thread"),
             NULL
     );
 
@@ -189,8 +205,6 @@ static inline void __omp_conf_init(void)
 	mpc_conf_root_config_append("mpcframework", omp, "MPC OpenMP Configuration");
 }
 
-
-
 void mpc_openmp_registration() __attribute__( (constructor) );
 
 void mpc_openmp_registration()
@@ -198,7 +212,6 @@ void mpc_openmp_registration()
 	MPC_INIT_CALL_ONLY_ONCE
 
 	mpc_common_init_callback_register("Config Sources", "MPC_OMP Init", __omp_conf_init, 32);
-
 }
 
 /*****************
@@ -854,14 +867,17 @@ static inline void __read_env_variables()
         mpc_common_debug_log("\t\tnew tasks depth=%d",      __omp_conf.pqueue_new_depth);
         mpc_common_debug_log("\t\tuntied tasks depth=%d",   __omp_conf.pqueue_untied_depth);
         mpc_common_debug_log("\t\tlaceny mode=%d",          __omp_conf.task_larceny_mode);
-        mpc_common_debug_log("\t\tdepth threshold=%d",      __omp_conf.task_depth_threshold);
         mpc_common_debug_log("\t\tsteal last stolen=%d",    __omp_conf.task_steal_last_stolen);
         mpc_common_debug_log("\t\tsteal last thief=%d",     __omp_conf.task_steal_last_thief);
+        mpc_common_debug_log("\t\tdirect succesor=%d",      __omp_conf.task_direct_successor_enabled);
         mpc_common_debug_log("\t\tyield mode=%d",           __omp_conf.task_yield_mode);
         mpc_common_debug_log("\t\tpriority policy=%d",      __omp_conf.task_priority_policy);
         mpc_common_debug_log("\t\tpropagation policy=%d",   __omp_conf.task_priority_propagation_policy);
+        mpc_common_debug_log("\t\tpropagation synchronousity=%d", __omp_conf.task_priority_propagation_synchronousity);
         mpc_common_debug_log("\t\ttask list policy=%s",     __omp_conf.task_list_policy == MPC_OMP_TASK_LIST_POLICY_LIFO ? "lifo" : "fifo");
-        mpc_common_debug_log("\t\ttrace=%d",                __omp_conf.task_trace);
+        mpc_common_debug_log("\t\ttrace=%d (%s)",           __omp_conf.task_trace, __omp_conf.task_trace_auto ? "auto" : "manual");
+        mpc_common_debug_log("\t\tthread tasks cond. wait = %s (nhyperactive=%d)", \
+                                                            __omp_conf.task_cond_wait_enabled ? "enabled" : "disabled", __omp_conf.task_cond_wait_nhyperactive);
         mpc_common_debug_log("\n");
 
         mpc_common_debug_log("\tTasks fiber");
@@ -1263,7 +1279,7 @@ void _mpc_omp_in_order_scheduler( mpc_omp_thread_t *thread )
 
 //////////////TARGET/////////////////
 
-void __omp_conf_init_target(void) 
+void __omp_conf_init_target(void)
 {
 	__omp_conf_init();
 }

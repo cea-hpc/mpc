@@ -60,8 +60,9 @@ mpc_omp_callback(
 
     mpc_common_spinlock_lock(lock);
     {
-        callback->_next = infos->callbacks[callback->when];
+        callback->next = infos->callbacks[callback->when];
         infos->callbacks[callback->when] = callback;
+        ++infos->length[callback->when];
     }
     mpc_common_spinlock_unlock(lock);
 }
@@ -113,20 +114,22 @@ _mpc_omp_callback_run(mpc_omp_callback_when_t when)
             {
                 if (prev)
                 {
-                    prev->_next = callback->_next;
+                    prev->next = callback->next;
                 }
                 else
                 {
-                    infos->callbacks[when] = callback->_next;
+                    infos->callbacks[when] = callback->next;
                 }
-                mpc_omp_callback_t * next = callback->_next;
+                --infos->length[callback->when];
+
+                mpc_omp_callback_t * next = callback->next;
                 mpc_omp_free(callback);
                 callback = next;
             }
             else
             {
                 prev = callback;
-                callback = callback->_next;
+                callback = callback->next;
             }
 
             /* process next callback for this event */

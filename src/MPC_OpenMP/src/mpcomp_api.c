@@ -41,6 +41,7 @@
 #include "mpcomp_task.h"
 #include "mpcomp_openmp_tls.h"
 #include <stdbool.h>
+#include <limits.h>
 #include "mpcompt_control_tool.h"
 #include "mpcompt_frame.h"
 void omp_set_num_threads(int num_threads) {
@@ -431,6 +432,21 @@ mpc_omp_in_explicit_task(void)
 
 TODO("Support for OpenMP standard event handle : add an hashtable of `key=omp_event_handle_t` and `value=mpc_omp_event_handle_t *`");
 
+void
+_mpc_omp_event_handle_ref(mpc_omp_event_handle_t * handle)
+{
+    OPA_incr_int(&(handle->ref));
+}
+
+void
+_mpc_omp_event_handle_unref(mpc_omp_event_handle_t * handle)
+{
+    if (OPA_fetch_and_decr_int(&(handle->ref)) == 1)
+    {
+        free(handle);
+    }
+}
+
 /**
  * Fulfill the MPC event handle
  * Warning: this does not respect the standard
@@ -439,22 +455,30 @@ TODO("Support for OpenMP standard event handle : add an hashtable of `key=omp_ev
 void
 mpc_omp_fulfill_event(mpc_omp_event_handle_t * handle)
 {
-    if (handle->type & MPC_OMP_EVENT_TASK_BLOCK) mpc_omp_task_unblock(handle);
-    else not_implemented();
+    switch (handle->type)
+    {
+        case (MPC_OMP_EVENT_TASK_BLOCK):
+        {
+            _mpc_omp_task_unblock((mpc_omp_event_handle_block_t *)handle);
+            break ;
+        }
+
+        default:
+        {
+            not_implemented();
+            break ;
+        }
+    }
 }
 
 /**
  * Initialize an MPC event handle
- * @param handle - the event handle
  * @param type - event type
+ * @return handle_ptr - the event handle
  */
 void
-mpc_omp_event_handle_init(mpc_omp_event_handle_t * handle, mpc_omp_event_t type)
+mpc_omp_event_handle_init(mpc_omp_event_handle_t ** handle_ptr, mpc_omp_event_t type)
 {
-    OPA_store_int(&(handle->status), MPC_OMP_EVENT_HANDLE_STATUS_INIT);
-    mpc_common_spinlock_init(&(handle->lock), 0);
-    handle->type = type;
-
     switch (type)
     {
         case (MPC_OMP_EVENT_TASK_BLOCK):
@@ -465,7 +489,16 @@ mpc_omp_event_handle_init(mpc_omp_event_handle_t * handle, mpc_omp_event_t type)
             mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
             assert(task);
 
-            handle->attr = (void *) task;
+            mpc_omp_event_handle_block_t * handle = (mpc_omp_event_handle_block_t *) malloc(sizeof(mpc_omp_event_handle_block_t));
+            assert(handle);
+
+            handle->task = (void *) task;
+            handle->cancel = task->taskgroup ? &(task->taskgroup->cancelled) : NULL;
+            OPA_store_int(&(handle->cancelled), 0);
+            OPA_store_int(&(handle->status), MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_INIT);
+            mpc_common_spinlock_init(&(handle->lock), 0);
+
+            (*handle_ptr) = (mpc_omp_event_handle_t *) handle;
             break ;
         }
 
@@ -475,6 +508,10 @@ mpc_omp_event_handle_init(mpc_omp_event_handle_t * handle, mpc_omp_event_t type)
             break ;
         }
     }
+
+    (*handle_ptr)->type = type;
+    OPA_store_int(&((*handle_ptr)->ref), 0);
+    _mpc_omp_event_handle_ref(*handle_ptr);
 }
 
 /** # pragma omp task label("potrf") */
@@ -500,8 +537,104 @@ void
 mpc_omp_task_dependencies(mpc_omp_task_dependency_t * dependencies, unsigned int n)
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+    assert(thread);
     thread->task_infos.incoming.dependencies = dependencies;
     thread->task_infos.incoming.ndependencies_type = n;
+}
+
+/** Reset the 'in' and the 'inoutset' list of a given data dependency,
+ * as if an empty task with an 'out' dependency on 'addr' was inserted */
+void
+mpc_omp_task_dependency_reset(void * addr)
+{
+    mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
+    assert(thread);
+
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
+    unsigned hashv;
+    HASH_VALUE(&addr, sizeof(void *), hashv);
+
+    mpc_omp_task_dep_htable_entry_t * entry;
+    HASH_FIND_BYHASHVALUE(hh, task->dep_node.hmap, &addr, sizeof(void *), hashv, entry);
+
+    if (entry)
+    {
+        entry->ins = NULL;
+        entry->inoutset = NULL;
+    }
+}
+
+/* mark a task as a send-task */
+void
+mpc_omp_task_is_send(void)
+{
+    _mpc_omp_task_profile_register_current(INT_MAX);
+}
+
+/** HASHING FUNCTIONS */
+uintptr_t
+mpc_omp_task_dependency_hash_gomp(void * addr)
+{
+    uintptr_t v = (uintptr_t) addr;
+    v ^= v >> (sizeof (uintptr_t) / 2 * CHAR_BIT);
+    return v;
+}
+
+uintptr_t
+mpc_omp_task_dependency_hash_jenkins(void * addr)
+{
+    uintptr_t hashv;
+    HASH_JEN(&addr, sizeof(void *), hashv);
+    return hashv;
+}
+
+uintptr_t
+mpc_omp_task_dependency_hash_kmp(void * addr)
+{
+    uintptr_t v = (uintptr_t) addr;
+    return (v >> 6) ^ (v >> 2);
+}
+
+uintptr_t
+mpc_omp_task_dependency_hash_nanos6(void * addr)
+{
+    return ((uintptr_t)addr) >> 3;
+}
+
+void
+mpc_omp_task_dependencies_hash_func(uintptr_t (*hash_deps)(void *))
+{
+    if (!hash_deps)
+    {
+        switch (mpc_omp_conf_get()->task_dependency_default_hash)
+        {
+            case (0):   hash_deps = mpc_omp_task_dependency_hash_jenkins;   break;
+            case (1):   hash_deps = mpc_omp_task_dependency_hash_gomp;      break;
+            case (2):   hash_deps = mpc_omp_task_dependency_hash_kmp;       break;
+            case (3):   hash_deps = mpc_omp_task_dependency_hash_nanos6;    break;
+            default:    hash_deps = mpc_omp_task_dependency_hash_jenkins;   break;
+        }
+    }
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+    assert(thread);
+    thread->task_infos.hash_deps = hash_deps;
+}
+
+double
+mpc_omp_task_dependencies_buckets_occupation(void)
+{
+    mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
+    assert(thread);
+
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
+    double avg;
+    HASH_BKT_OCCUPATIONS(hh, task->dep_node.hmap, avg);
+
+    return avg;
 }
 
 //////////////TARGET/////////////////
@@ -525,4 +658,4 @@ int omp_is_initial_device() {
   return 1;
 }
 
-/////////////////////////////////////
+

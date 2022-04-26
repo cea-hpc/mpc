@@ -35,7 +35,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __MPC_OMP_TASK_H__ 
+#ifndef __MPC_OMP_TASK_H__
 # define __MPC_OMP_TASK_H__
 
 # include "mpcomp_types.h"
@@ -358,34 +358,35 @@ void _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint
  *************/
 
 /* Functions prototypes */
-void _mpc_omp_task_taskgroup_start( void );
-void _mpc_omp_task_taskgroup_end( void );
+void _mpc_omp_task_taskgroup_start(void);
+void _mpc_omp_task_taskgroup_end(void);
+void _mpc_omp_task_taskgroup_cancel(void);
 
 /* Inline functions */
 static inline void
-_mpc_omp_taskgroup_add_task( mpc_omp_task_t *new_task )
+_mpc_omp_taskgroup_add_task(mpc_omp_task_t * new_task)
 {
-    mpc_omp_task_t *current_task;
-    mpc_omp_thread_t *omp_thread_tls;
-    mpc_omp_task_taskgroup_t *taskgroup;
-    assert( mpc_omp_tls );
-    omp_thread_tls = ( mpc_omp_thread_t * ) mpc_omp_tls;
-    current_task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK( omp_thread_tls );
-    taskgroup = current_task->taskgroup;
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
 
-    if ( taskgroup )
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
+    mpc_omp_task_taskgroup_t * taskgroup = task->taskgroup;
+
+    if (taskgroup)
     {
         new_task->taskgroup = taskgroup;
-        OPA_incr_int( &( taskgroup->children_num ) );
+        OPA_incr_int(&(taskgroup->children_num));
     }
 }
 
 static inline void
-mpc_omp_taskgroup_del_task( mpc_omp_task_t *task )
+mpc_omp_taskgroup_del_task(mpc_omp_task_t *task)
 {
-    if ( task->taskgroup )
+    if (task->taskgroup)
     {
-        OPA_decr_int( &( task->taskgroup->children_num ) );
+        OPA_decr_int(&(task->taskgroup->children_num));
     }
 }
 
@@ -424,13 +425,12 @@ _mpc_task_loop_compute_loop_value(
 unsigned long
 _mpc_omp_task_loop_compute_num_iters(long start, long end, long step);
 
-/* Task callbacks */
-void _mpc_omp_callback_run(mpc_omp_callback_when_t when);
-
-/* extra clauses for mpc-omp tasks */
-# define MPC_OMP_NO_CLAUSE          (0 << 0)
+/* TODO : refractor this prototype, move them to another more appropriate file */
 # define MPC_OMP_CLAUSE_USE_FIBER   (1 << 0)
-
-void mpc_omp_task_unblock(mpc_omp_event_handle_t * event);
+void _mpc_omp_callback_run(mpc_omp_callback_when_t when);
+void _mpc_omp_task_unblock(mpc_omp_event_handle_block_t * handle);
+void _mpc_omp_event_handle_ref(mpc_omp_event_handle_t * handle);
+void _mpc_omp_event_handle_unref(mpc_omp_event_handle_t * handle);
+void _mpc_omp_task_profile_register_current(int priority);
 
 #endif /* __MPC_OMP_TASK_H__ */

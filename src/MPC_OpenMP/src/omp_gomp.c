@@ -383,11 +383,26 @@ bool mpc_omp_GOMP_cancellation_point( __UNUSED__ int which )
 	return false;
 }
 
-bool mpc_omp_GOMP_cancel( __UNUSED__ int which, __UNUSED__ bool do_cancel )
+bool mpc_omp_GOMP_cancel(int which, __UNUSED__ bool do_cancel )
 {
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-	not_implemented();
-	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
+    if (!do_cancel) return mpc_omp_GOMP_cancellation_point(which);
+
+	switch (which)
+    {
+        case (GOMP_CANCEL_TASKGROUP):
+            {
+                _mpc_omp_task_taskgroup_cancel();
+                break ;
+            }
+
+        default:
+            {
+                not_implemented();
+                break ;
+            }
+    }
+    mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 	return false;
 }
 
@@ -2084,6 +2099,8 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
 
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tBegin", __func__ );
 
+    double t0 = omp_get_wtime();
+
     /* convert GOMP flags to MPC-OpenMP task properties */
     mpc_omp_task_property_t properties = ___gomp_convert_flags(if_clause, flags);
 
@@ -2100,12 +2117,27 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
     _mpc_omp_task_init(task, fn, data_storage, size, properties);
 
     /* set dependencies (and compute priorities) */
+    double t1 = omp_get_wtime();
     _mpc_omp_task_deps(task, depend, priority);
+    double t2 = omp_get_wtime();
 
     /* process the task (differ or run it) */
     _mpc_omp_task_process(task);
 
     _mpc_omp_task_deinit(task);
+
+    double tf = omp_get_wtime();
+    double t_deps  = t2 - t1;
+    double t_total = tf - t0;
+
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_instance_t * instance = (mpc_omp_instance_t *) thread->instance;
+    assert(instance);
+
+    instance->t_deps += t_deps;
+    instance->t_total += t_total;
 
     mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
 }
@@ -2213,6 +2245,13 @@ void mpc_omp_GOMP_taskloop( void (*fn)(void *), void *data,
         const size_t size = _mpc_omp_task_align_single_malloc(sizeof(mpc_omp_task_t) + 2 * sizeof(long) + arg_size, arg_align);
         mpc_omp_task_property_t properties = ___gomp_convert_flags(1, flags);
 
+        /* extra parameters given to the mpc thread for this task */
+        mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+# if MPC_OMP_TASK_COMPILE_TRACE
+        char * label = thread->task_infos.incoming.label;
+# endif /* MPC_OMP_TASK_COMPILE_TRACE */
+        int extra_clauses = thread->task_infos.incoming.extra_clauses;
+
         /* task instantiations */
         for (i = 0; i < num_tasks; i++)
         {
@@ -2228,7 +2267,9 @@ void mpc_omp_GOMP_taskloop( void (*fn)(void *), void *data,
             }
             data_storage[0] = start;
             data_storage[1] = start + taskstep;
-            _mpc_omp_task_init(task, fn, data, size, properties);
+            thread->task_infos.incoming.label = label;
+            thread->task_infos.incoming.extra_clauses = extra_clauses;
+            _mpc_omp_task_init(task, fn, data_storage, size, properties);
             _mpc_omp_task_deps(task, NULL, priority);
             _mpc_omp_task_process(task);
             _mpc_omp_task_deinit(task);
@@ -2236,6 +2277,8 @@ void mpc_omp_GOMP_taskloop( void (*fn)(void *), void *data,
             start += taskstep;
             taskstep -= (i == extra_chunk) ? step : 0;
         }
+        thread->task_infos.incoming.label = NULL;
+        thread->task_infos.incoming.extra_clauses = 0;
 
         if (!(flags & GOMP_TASK_FLAG_NOGROUP))
         {

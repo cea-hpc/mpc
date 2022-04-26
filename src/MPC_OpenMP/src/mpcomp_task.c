@@ -880,12 +880,15 @@ __task_pqueue_push(mpc_omp_task_pqueue_t * pqueue, mpc_omp_task_t * task)
     OPA_incr_int(&(pqueue->nb_elements));
     __instance_incr_ready_tasks();
 
-# if MPC_OMP_TASK_COND_WAIT
-    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
-    assert(thread);
-    pthread_cond_t * cond = &(thread->instance->task_infos.work_cond);
-    pthread_cond_signal(cond);
-# endif /* MPC_OMP_TASK_COND_WAIT */
+# if MPC_OMP_BARRIER_COMPILE_COND_WAIT
+    if (MPC_OMP_TASK_BARRIER_COND_WAIT_ENABLED)
+    {
+        mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+        assert(thread);
+        pthread_cond_t * cond = &(thread->instance->task_infos.work_cond);
+        pthread_cond_signal(cond);
+    }
+# endif /* MPC_OMP_BARRIER_COMPILE_COND_WAIT */
 }
 
 /*********************
@@ -894,12 +897,6 @@ __task_pqueue_push(mpc_omp_task_pqueue_t * pqueue, mpc_omp_task_t * task)
 
 # define MPC_OMP_TASK_LOCK(task)     mpc_common_spinlock_lock(&(task->lock))
 # define MPC_OMP_TASK_UNLOCK(task)   mpc_common_spinlock_unlock(&(task->lock))
-
-static inline uint32_t
-__task_dep_hash(uintptr_t addr)
-{
-    return addr;
-}
 
 /* increase task reference counter by 1 */
 static inline void
@@ -1054,12 +1051,18 @@ __task_precedence_constraints(mpc_omp_task_t * predecessor, mpc_omp_task_t * suc
             {
                 if (!__task_in_list(predecessor->dep_node.successors, successor))
                 {
-                    predecessor->dep_node.successors = __task_list_elt_new(predecessor->dep_node.successors, successor);
                     OPA_incr_int(&(predecessor->dep_node.nsuccessors));
-
-                    successor->dep_node.predecessors = __task_list_elt_new(successor->dep_node.predecessors, predecessor);
                     OPA_incr_int(&(successor->dep_node.npredecessors));
                     OPA_incr_int(&(successor->dep_node.ref_predecessors));
+
+                    predecessor->dep_node.successors = __task_list_elt_new(predecessor->dep_node.successors, successor);
+                    // if the priority should be propagated to predecessors
+                    // -> link through predecessor's list
+                    if (mpc_omp_conf_get()->task_priority_propagation_policy
+                        != MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_NOOP)
+                    {
+                        successor->dep_node.predecessors = __task_list_elt_new(successor->dep_node.predecessors, predecessor);
+                    }
                 }
 
                 if (predecessor->dep_node.top_level + 1 > successor->dep_node.top_level)
@@ -1081,7 +1084,6 @@ __task_dep_list_append(
     assert(task);
     assert(entry);
 
-    // mpc_omp_task_dep_list_elt_t * dep = (mpc_omp_task_dep_list_elt_t *) mpc_omp_alloc(sizeof(mpc_omp_task_dep_list_elt_t));
     mpc_omp_task_dep_list_elt_t * dep = task->dep_node.dep_list + task->dep_node.dep_list_size;
     assert(dep);
 
@@ -1097,17 +1099,28 @@ __task_dep_list_append(
     return dep;
 }
 
-/** Note : only 1 thread may run this function for a given `task->parent` */
-static void
-__task_process_mpc_dep(
-        mpc_omp_task_t * task,
-        void * addr,
-        mpc_omp_task_dep_type_t type)
+static mpc_omp_task_dep_htable_entry_t *
+__task_process_mpc_dep_entry(mpc_omp_task_t * task, void * addr)
 {
-    /* Retrieve entry for the given address, or generate a new one.
-     * Also performon redundancy check */
+    double t0 = omp_get_wtime();
+
+    unsigned hashv;
+    HASH_VALUE(&addr, sizeof(void *), hashv);
+
     mpc_omp_task_dep_htable_entry_t * entry;
-    HASH_FIND_PTR(task->parent->dep_node.hmap, &addr, entry);
+    HASH_FIND_BYHASHVALUE(hh, task->parent->dep_node.hmap, &addr, sizeof(void *), hashv, entry);
+
+    double tf = omp_get_wtime();
+    double t_hash = tf - t0;
+
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_instance_t * instance = thread->instance;
+    assert(instance);
+    instance->t_hash += t_hash;
+    ++instance->ndeps;
+
     if (entry == NULL)
     {
         entry = (mpc_omp_task_dep_htable_entry_t *) mpc_omp_alloc(sizeof(mpc_omp_task_dep_htable_entry_t));
@@ -1118,106 +1131,120 @@ __task_process_mpc_dep(
         entry->inoutset = NULL;
         entry->task_uid = 0;
         mpc_common_spinlock_init(&(entry->lock), 0);
-        HASH_ADD_PTR(task->parent->dep_node.hmap, addr, entry);
+        HASH_ADD_KEYPTR_BYHASHVALUE(hh, task->parent->dep_node.hmap, &(entry->addr), sizeof(void *), hashv, entry);
     }
+
+    return entry;
+}
+
+/** Note : only 1 thread may run this function for a given `task->parent` */
+static void
+__task_process_mpc_dep(
+        mpc_omp_task_t * task,
+        void * addr,
+        mpc_omp_task_dep_type_t type)
+{
+    /* Retrieve entry for the given address, or generate a new one.
+     * Also performon redundancy check */
+    mpc_omp_task_dep_htable_entry_t * entry = __task_process_mpc_dep_entry(task, addr);
+    assert(entry);
+
+    mpc_common_spinlock_lock(&(entry->lock));
 
     /* redundancy check */
     if (entry->task_uid != task->uid)
     {
         entry->task_uid = task->uid;
-        mpc_common_spinlock_lock(&(entry->lock));
+        /* case 1.1 - the generated task is dependant of previous 'in' */
+        if (    type == MPC_OMP_TASK_DEP_OUT ||
+                type == MPC_OMP_TASK_DEP_INOUT ||
+                type == MPC_OMP_TASK_DEP_INOUTSET ||
+                type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
         {
-            /* case 1.1 - the generated task is dependant of previous 'in' */
-            if (    type == MPC_OMP_TASK_DEP_OUT ||
-                    type == MPC_OMP_TASK_DEP_INOUT ||
-                    type == MPC_OMP_TASK_DEP_INOUTSET ||
-                    type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
+            mpc_omp_task_dep_list_elt_t * in = entry->ins;
+            while (in)
             {
-                mpc_omp_task_dep_list_elt_t * in = entry->ins;
-                while (in)
-                {
-                    __task_precedence_constraints(in->task, task);
-                    in = in->next;
-                }
-            }
-
-            /* case 1.2 - the generated task is dependant of previous 'out' and 'inout' */
-            if (    type == MPC_OMP_TASK_DEP_IN ||
-                    type == MPC_OMP_TASK_DEP_OUT ||
-                    type == MPC_OMP_TASK_DEP_INOUT ||
-                    type == MPC_OMP_TASK_DEP_INOUTSET ||
-                    type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
-            {
-                if (entry->out)
-                {
-                    assert(entry->out->next == NULL);
-                    assert(entry->out->prev == NULL);
-                    __task_precedence_constraints(entry->out->task, task);
-                }
-            }
-
-            /* case 1.3 - the generated task is dependant of previous 'inoutset' */
-            if (    type == MPC_OMP_TASK_DEP_IN ||
-                    type == MPC_OMP_TASK_DEP_OUT ||
-                    type == MPC_OMP_TASK_DEP_INOUT ||
-                    type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
-            {
-                mpc_omp_task_dep_list_elt_t * inoutset = entry->inoutset;
-                while (inoutset)
-                {
-                    __task_precedence_constraints(inoutset->task, task);
-                    inoutset = inoutset->next;
-                }
-            }
-
-            /* case 1.4 - the generated task is dependant of previous 'mutexinoutset' */
-# if 0
-            if (    type == MPC_OMP_TASK_DEP_IN ||
-                    type == MPC_OMP_TASK_DEP_OUT ||
-                    type == MPC_OMP_TASK_DEP_INOUT ||
-                    type == MPC_OMP_TASK_DEP_INOUTSET)
-            {
-                not_implemented();
-            }
-# endif
-
-            /************************************************************/
-            /* finally, clean-up and save dependencies for future tasks */
-            /************************************************************/
-
-            /* case 2.1 - if generating dependency is an 'in'
-             *  - add it to the list of 'ins'
-             */
-            if (type == MPC_OMP_TASK_DEP_IN)
-            {
-                entry->ins = __task_dep_list_append(task, entry, entry->ins);
-            }
-
-            /* case 2.2 - if generating dependency is 'out' or 'inout'
-             *  - delete siblings 'out' - it is now dependant of generating task
-             *  - delete siblings 'ins' - they are all dependant of generating task
-             *  - delete siblings 'inoutset' - they are all dependant of generating task
-             */
-            else if (type == MPC_OMP_TASK_DEP_OUT || type == MPC_OMP_TASK_DEP_INOUT)
-            {
-                entry->ins = NULL;
-                entry->inoutset = NULL;
-                entry->out = __task_dep_list_append(task, entry, NULL);
-            }
-
-            /* case 2.3 - if generating dependency is 'inoutset' */
-            else if (type == MPC_OMP_TASK_DEP_INOUTSET)
-            {
-                entry->inoutset = __task_dep_list_append(task, entry, entry->inoutset);
-            }
-
-            else if (type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
-            {
-                not_implemented();
+                __task_precedence_constraints(in->task, task);
+                in = in->next;
             }
         }
-        mpc_common_spinlock_unlock(&(entry->lock));
+
+        /* case 1.2 - the generated task is dependant of previous 'out' and 'inout' */
+        if (    type == MPC_OMP_TASK_DEP_IN ||
+                type == MPC_OMP_TASK_DEP_OUT ||
+                type == MPC_OMP_TASK_DEP_INOUT ||
+                type == MPC_OMP_TASK_DEP_INOUTSET ||
+                type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
+        {
+            if (entry->out)
+            {
+                assert(entry->out->next == NULL);
+                assert(entry->out->prev == NULL);
+                __task_precedence_constraints(entry->out->task, task);
+            }
+        }
+
+        /* case 1.3 - the generated task is dependant of previous 'inoutset' */
+        if (    type == MPC_OMP_TASK_DEP_IN ||
+                type == MPC_OMP_TASK_DEP_OUT ||
+                type == MPC_OMP_TASK_DEP_INOUT ||
+                type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
+        {
+            mpc_omp_task_dep_list_elt_t * inoutset = entry->inoutset;
+            while (inoutset)
+            {
+                __task_precedence_constraints(inoutset->task, task);
+                inoutset = inoutset->next;
+            }
+        }
+
+#if 0
+        /* case 1.4 - the generated task is dependant of previous 'mutexinoutset' */
+        if (    type == MPC_OMP_TASK_DEP_IN ||
+                type == MPC_OMP_TASK_DEP_OUT ||
+                type == MPC_OMP_TASK_DEP_INOUT ||
+                type == MPC_OMP_TASK_DEP_INOUTSET)
+        {
+            not_implemented();
+        }
+#endif
+
+        /************************************************************/
+        /* finally, clean-up and save dependencies for future tasks */
+        /************************************************************/
+
+        /* case 2.1 - if generating dependency is an 'in'
+         *  - add it to the list of 'ins'
+         */
+        if (type == MPC_OMP_TASK_DEP_IN)
+        {
+            entry->ins = __task_dep_list_append(task, entry, entry->ins);
+        }
+
+        /* case 2.2 - if generating dependency is 'out' or 'inout'
+         *  - delete siblings 'out' - it is now dependant of generating task
+         *  - delete siblings 'ins' - they are all dependant of generating task
+         *  - delete siblings 'inoutset' - they are all dependant of generating task
+         */
+        else if (type == MPC_OMP_TASK_DEP_OUT || type == MPC_OMP_TASK_DEP_INOUT)
+        {
+            entry->ins = NULL;
+            entry->inoutset = NULL;
+            entry->out = __task_dep_list_append(task, entry, NULL);
+        }
+
+        /* case 2.3 - if generating dependency is 'inoutset' */
+        else if (type == MPC_OMP_TASK_DEP_INOUTSET)
+        {
+            entry->inoutset = __task_dep_list_append(task, entry, entry->inoutset);
+        }
+
+        else if (type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
+        {
+            not_implemented();
+        }
     }
+    mpc_common_spinlock_unlock(&(entry->lock));
 }
 
 /**
@@ -1253,10 +1280,10 @@ __task_process_deps(mpc_omp_task_t * task, void ** depend)
     uintptr_t mpc_ndeps = 0;
     uintptr_t i, j;
     for (i = 0 ; i < ndependencies_type ; ++i) mpc_ndeps += dependencies[i].addrs_size;
+    if (mpc_ndeps == 0 && omp_ndeps_tot == 0) return ;
 
     /* total number of dependencies */
     uintptr_t ndeps = omp_ndeps_tot + mpc_ndeps;
-    assert(ndeps > 0);
 
     /* We may allocate useless dep_list_elt_t when there is redundancy.
      * 1) count unique element
@@ -1264,15 +1291,16 @@ __task_process_deps(mpc_omp_task_t * task, void ** depend)
      * For now, we may allocate too much memory in redundancy cases
      */
     task->dep_node.dep_list = (mpc_omp_task_dep_list_elt_t *) malloc(sizeof(mpc_omp_task_dep_list_elt_t) * ndeps);
-    assert(task->dep_node.dep_list);
+    task->dep_node.dep_list_size = 0;
 
-     /* Ensure that dependencies are processed in the following order
-     * So that we have correct behaviour on redundancy
-     * 1) 'OUT' or 'INOUT'
-     * 2) 'MUTEX_INOUTSET'
-     * 3) 'INOUTSET'
-     * 4) 'IN'
-     */
+     /**
+      * Ensure that dependencies are processed in the following order
+      * So that we have correct behaviour on redundancy
+      * 1) 'OUT' or 'INOUT'
+      * 2) 'MUTEX_INOUTSET'
+      * 3) 'INOUTSET'
+      * 4) 'IN'
+      */
 
     /* openmp 'out' dependencies */
     for (i = 0 ; i < omp_ndeps_out ; ++i)   __task_process_mpc_dep(task, depend[2 + i], MPC_OMP_TASK_DEP_OUT);
@@ -1316,49 +1344,49 @@ __task_finalize_deps_list(mpc_omp_task_t * task)
 {
     assert(task->parent);
 
-    unsigned int i;
-    for (i = 0 ; i < task->dep_node.dep_list_size ; ++i)
+//    mpc_common_spinlock_lock(&(task->parent->dep_node.hmap_lock));
     {
-        mpc_omp_task_dep_list_elt_t * elt = task->dep_node.dep_list + i;
-        mpc_omp_task_dep_htable_entry_t * entry = elt->entry;
-        assert(entry);
-
-        mpc_common_spinlock_lock(&(entry->lock));
+        unsigned int i;
+        for (i = 0 ; i < task->dep_node.dep_list_size ; ++i)
         {
-            mpc_omp_task_dep_list_elt_t * next = elt->task_next;
+            mpc_omp_task_dep_list_elt_t * elt = task->dep_node.dep_list + i;
+            mpc_omp_task_dep_htable_entry_t * entry = elt->entry;
+            assert(entry);
 
-            /* pop this task dependency element for the parent htable lists */
-            if (entry->out == elt)
+            mpc_common_spinlock_lock(&(entry->lock));
             {
-                assert(elt->next == NULL);
-                assert(elt->prev == NULL);
-                entry->out = NULL;
-            }
-            else if (entry->ins == elt)
-            {
-                assert(elt->prev == NULL);
-                entry->ins = entry->ins->next;
-                if (entry->ins) entry->ins->prev = NULL;
-            }
-            else if (entry->inoutset == elt)
-            {
-                assert(elt->prev == NULL);
-                entry->inoutset = entry->inoutset->next;
-                if (entry->inoutset) entry->inoutset->prev = NULL;
-            }
-            else
-            {
-                if (elt->prev) elt->prev->next = elt->next;
-                if (elt->next) elt->next->prev = elt->prev;
-            }
+                /* pop this task dependency element for the parent htable lists */
+                if (entry->out == elt)
+                {
+                    assert(elt->next == NULL);
+                    assert(elt->prev == NULL);
+                    entry->out = NULL;
+                }
+                else if (entry->ins == elt)
+                {
+                    assert(elt->prev == NULL);
+                    entry->ins = entry->ins->next;
+                    if (entry->ins) entry->ins->prev = NULL;
+                }
+                else if (entry->inoutset == elt)
+                {
+                    assert(elt->prev == NULL);
+                    entry->inoutset = entry->inoutset->next;
+                    if (entry->inoutset) entry->inoutset->prev = NULL;
+                }
+                else
+                {
+                    if (elt->prev) elt->prev->next = elt->next;
+                    if (elt->next) elt->next->prev = elt->prev;
+                }
 
-            // TODO : maybe delete the hmap entry if it is now empty ?
-
-            elt = next;
+                // TODO : maybe delete the hmap entry if it is now empty ?
+            }
+            mpc_common_spinlock_unlock(&(entry->lock));
         }
-        mpc_common_spinlock_unlock(&(entry->lock));
+        free(task->dep_node.dep_list);
     }
-    free(task->dep_node.dep_list);
+//    mpc_common_spinlock_unlock(&(task->parent->dep_node.hmap_lock));
 }
 /** Given task completed -> fulfill its successors dependencies */
 static void
@@ -1390,10 +1418,8 @@ __task_finalize_deps(mpc_omp_task_t * task)
         /* if successor's dependencies are fullfilled, process it */
         if (OPA_fetch_and_decr_int(&(succ->task->dep_node.ref_predecessors)) == 1)
         {
-            if (OPA_load_int(&(succ->task->dep_node.status)) == MPC_OMP_TASK_STATUS_NOT_READY)
-            {
-                _mpc_omp_task_process(succ->task);
-            }
+            succ->task->statuses.direct_successor = true;
+            _mpc_omp_task_process(succ->task);
         }
 
         /* process next successor */
@@ -1410,7 +1436,7 @@ __task_finalize_deps(mpc_omp_task_t * task)
 static void
 __task_finalize(mpc_omp_task_t * task)
 {
-    assert(task->statuses.completed);
+    assert(task->statuses.completed || task->statuses.cancelled);
 
     mpc_omp_thread_t * thread = __thread_task_coherency(NULL);
     assert(thread);
@@ -1447,6 +1473,8 @@ __task_delete(mpc_omp_task_t * task)
     MPC_OMP_TASK_TRACE_DELETE(task);
 
 # if MPC_OMP_TASK_USE_RECYCLERS
+    TODO(   "instead of recycling to current thread recycler, we may want to recycle "
+            "into the producer thread recycler, particularly in mono-producer");
     mpc_common_nrecycler_recycle(&(thread->task_infos.task_recycler), task, task->size);
 # else
     mpc_omp_free(task);
@@ -1454,6 +1482,215 @@ __task_delete(mpc_omp_task_t * task)
 
     /* decrement number of existing tasks */
     OPA_decr_int(&(thread->instance->task_infos.ntasks_allocated));
+}
+
+/** TASK PRIORITIES AND PROFILES */
+
+/** Return 1 if given task profile alraedy was registered */
+static int
+__task_profile_exists(mpc_omp_task_t * task)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_task_profile_t * profile = (mpc_omp_task_profile_t *) OPA_load_ptr(&(thread->instance->task_infos.profiles.head));
+    while (profile)
+    {
+        /** TODO : this matching function is optimized for apps with:
+         *  - mono productor
+         *  - no task recursion
+         *  - complete graph discovery before running a match (so that we have the correct number of successors)
+         */
+        if (task->size == profile->size &&
+            (task->property & MPC_OMP_TASK_PROP_PROFILE_MASK) == (profile->property & MPC_OMP_TASK_PROP_PROFILE_MASK) &&
+            OPA_load_int(&(task->dep_node.npredecessors)) == profile->npredecessors &&
+            OPA_load_int(&(task->dep_node.nsuccessors)) == profile->nsuccessors &&
+            task->parent->uid == profile->parent_uid)
+        {
+            return 1;
+        }
+        profile = profile->next;
+    }
+    return 0;
+}
+
+void _mpc_omp_task_profile_register_current(int priority)
+{
+    /* no need to register the profile if the policy is not set to asynchronous priority propagation */
+    if (mpc_omp_conf_get()->task_priority_propagation_synchronousity != MPC_OMP_TASK_PRIORITY_PROPAGATION_ASYNCHRONOUS)
+    {
+        return ;
+    }
+
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
+    if (__task_profile_exists(task))
+    {
+        return ;
+    }
+
+    mpc_common_spinlock_lock(&(thread->instance->task_infos.profiles.spinlock));
+    {
+        mpc_omp_task_profile_t * profile = (mpc_omp_task_profile_t *) mpc_omp_alloc(sizeof(mpc_omp_task_profile_t));
+        assert(profile);
+
+        profile->size           = task->size;
+        profile->property       = task->property;
+        profile->npredecessors  = OPA_load_int(&(task->dep_node.npredecessors));
+        profile->nsuccessors    = OPA_load_int(&(task->dep_node.nsuccessors));
+        profile->priority       = priority;
+        profile->next           = (mpc_omp_task_profile_t *) OPA_load_ptr(&(thread->instance->task_infos.profiles.head));
+        profile->parent_uid     = task->parent->uid;
+        OPA_store_ptr(&(thread->instance->task_infos.profiles.head), profile);
+        OPA_fetch_and_incr_int(&(thread->instance->task_infos.profiles.n));
+    }
+    mpc_common_spinlock_unlock(&(thread->instance->task_infos.profiles.spinlock));
+}
+
+
+static inline void
+__task_profile_priority_compute(mpc_omp_task_t * task)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_instance_t * instance = thread->instance;
+    assert(instance);
+
+    int profile_version = OPA_load_int(&(instance->task_infos.profiles.n));
+    if (task->dep_node.profile_version == profile_version) return;
+    task->dep_node.profile_version = profile_version;
+
+    int priority = __task_profile_exists(task) ? INT_MAX : 0;
+    if (task->priority < priority)
+    {
+        task->priority = priority;
+    }
+}
+
+static void
+__task_profile_propagate(void)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_instance_t * instance = thread->instance;
+    assert(instance);
+
+    // TAKE LOCK: only 1 thread may propagate at once
+    if (mpc_common_spinlock_trylock(&(instance->task_infos.propagation.lock)) == 0)
+    {
+        int version = OPA_fetch_and_incr_int(&(instance->task_infos.propagation.version));
+
+        // list to find leaves
+        mpc_omp_task_list_t * down = &(instance->task_infos.propagation.down);
+
+        // list to propagate priorities up
+        mpc_omp_task_list_t * up = &(instance->task_infos.propagation.up);
+
+        // list of blocked tasks
+        mpc_omp_task_list_t * blocked_tasks = &(thread->instance->task_infos.blocked_tasks);
+
+        assert(blocked_tasks->type == MPC_OMP_TASK_LIST_TYPE_SCHEDULER);
+        assert(down->type == MPC_OMP_TASK_LIST_TYPE_UP_DOWN);
+        assert(up->type == MPC_OMP_TASK_LIST_TYPE_UP_DOWN);
+
+        assert(__task_list_is_empty(down));
+        assert(__task_list_is_empty(up));
+
+        // RETRIEVE BLOCKED TASKS
+        mpc_common_spinlock_lock(&(blocked_tasks->lock));
+        {
+            mpc_omp_task_t * task = blocked_tasks->head;
+            while (task)
+            {
+                assert(OPA_load_int(&(task->ref_counter)) > 0);
+                task->propagation_version = version;
+                __task_ref(task);
+                __task_list_push_to_tail(down, task);
+                task = task->next[MPC_OMP_TASK_LIST_TYPE_SCHEDULER];
+            }
+        }
+        mpc_common_spinlock_unlock(&(blocked_tasks->lock));
+
+        // FIND LEAVES
+        while (!__task_list_is_empty(down))
+        {
+            mpc_omp_task_t * task = __task_list_pop_from_head(down);
+            assert(OPA_load_int(&(task->ref_counter)) > 0);
+            MPC_OMP_TASK_LOCK(task);
+            {
+                if (task->dep_node.successors)
+                {
+                    mpc_omp_task_list_elt_t * elt = task->dep_node.successors;
+                    while (elt)
+                    {
+                        mpc_omp_task_t * successor = elt->task;
+                        if (successor->propagation_version < version)
+                        {
+                            successor->propagation_version = version;
+                            __task_ref(successor);
+                            __task_list_push_to_tail(down, successor);
+                        }
+                        elt = elt->next;
+                    }
+                }
+                else
+                {
+                    __task_ref(task);
+                    __task_list_push_to_tail(up, task);
+                }
+            }
+            MPC_OMP_TASK_UNLOCK(task);
+            __task_unref(task);
+
+            // PROPAGATE UP FROM LEAVES
+            while (!__task_list_is_empty(up))
+            {
+                mpc_omp_task_t * task = __task_list_pop_from_head(up);
+
+                /* check if the task is not already queued */
+                if (OPA_load_int(&(task->dep_node.status)) < MPC_OMP_TASK_STATUS_READY)
+                {
+                    MPC_OMP_TASK_LOCK(task);
+                    {
+                        if (OPA_load_int(&(task->dep_node.status)) < MPC_OMP_TASK_STATUS_READY)
+                        {
+                            __task_profile_priority_compute(task);
+                            if (task->dep_node.predecessors)
+                            {
+                                assert(task->dep_node.predecessors);
+                                mpc_omp_task_list_elt_t * elt = task->dep_node.predecessors;
+                                while (elt)
+                                {
+                                    mpc_omp_task_t * predecessor = elt->task;
+
+                                    // TODO : handle propagation policy here also
+
+                                    if (predecessor->priority < task->priority - 1)
+                                    {
+                                        predecessor->priority = task->priority - 1;
+                                        __task_ref(predecessor);
+                                        __task_list_push_to_head(up, predecessor);
+                                    }
+                                    elt = elt->next;
+                                }
+                            }
+                        }
+                    }
+                    MPC_OMP_TASK_UNLOCK(task);
+                }
+                __task_unref(task);
+            }
+        }
+
+        // RELEASE LOCK
+        mpc_common_spinlock_unlock(&(instance->task_infos.propagation.lock));
+    }
 }
 
 static void
@@ -1466,7 +1703,8 @@ __task_priority_propagate_on_predecessors(mpc_omp_task_t * task)
             if (OPA_load_int(&(task->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED)
             {
                 /* if the task is not in queue, propagate the priority */
-                switch (mpc_omp_conf_get()->task_priority_policy)
+                const struct mpc_omp_conf_s * config = mpc_omp_conf_get();
+                switch (config->task_priority_propagation_policy)
                 {
                     case (MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_NOOP):
                     {
@@ -1530,18 +1768,18 @@ __task_priority_compute(mpc_omp_task_t * task)
             break ;
         }
 
-        case (MPC_OMP_TASK_PRIORITY_POLICY_COPY):
-        {
-            task->priority = task->omp_priority_hint;
-            break ;
-        }
-
         case (MPC_OMP_TASK_PRIORITY_POLICY_CONVERT):
         {
             if (task->omp_priority_hint)
             {
                 task->priority = INT_MAX;
             }
+            break ;
+        }
+
+        case (MPC_OMP_TASK_PRIORITY_POLICY_COPY):
+        {
+            task->priority = task->omp_priority_hint;
             break ;
         }
 
@@ -1557,6 +1795,81 @@ __task_priority_compute(mpc_omp_task_t * task)
         __task_priority_propagate_on_predecessors(task);
     }
 }
+
+#ifdef WIP
+
+/** Condition to stop computing priorities */
+static inline int
+_mpc_omp_task_compute_priorities_exit_condition(mpc_omp_instance_t * instance, mpc_omp_thread_t * thread)
+{
+    return (instance->task_infos.ntasks_ready > 0);
+}
+
+/* TODO : WIP
+ * Propagate priorities asynchronously.
+ * This routine should be called during idle periods.
+ */
+void _mpc_omp_task_compute_priorities(void)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_instance_t * instance = thread->instance;
+    assert(instance);
+
+    mpc_omp_task_list * leaves = &(thread->task_infos.leaves);
+
+    /*  PHASE 1      - Update leaves for this thread */
+    /*  PHASE 1.1   - Clean up remains of previous call */
+    for (mpc_omp_task_t * leaf : leaves)
+    {
+        /* if this previous leaf became ready, or now has successors, remove it from the list */
+        if (leaf->ready || leaf->successor)
+        {
+            leaves.pop(leaf);
+        }
+    }
+
+    /*  PHASE 1.2   - Find new leaves */
+    for (mpc_omp_task_t * root : roots)
+    {
+        down.push(successor);
+    }
+    while (!down.is_empty())
+    {
+        mpc_omp_task_t * task = down.pop();
+        if (task->successor)
+        {
+            for (mpc_omp_task_t * successor : task->successor)
+            {
+                down.push(successor);
+            }
+        }
+        else
+        {
+            leaves.push(task);
+        }
+    }
+
+    // TODO : phase 1.2, do it in breadth first search in the TDG,
+    // so that leaves are sorted by their depth
+
+    /*  PHASE 2 - From leaves, go up to roots and set priorities */
+    for (mpc_omp_task_t * leaf : leaves)
+    {
+        mpc_omp_task_t * task = leaf;
+        while (task)
+        {
+            for (mpc_omp_task_t * predecessor : task->predecessor)
+            {
+                stack.push(predecessor);
+            }
+            set_priority(task);
+            task = stack.pop();
+        }
+    }
+}
+#endif /* WIP */
 
 static inline int
 ___task_mvp_pqueue_init( struct mpc_omp_node_s* parent, struct mpc_omp_mvp_s* child, const mpc_omp_task_pqueue_type_t type  )
@@ -2190,7 +2503,7 @@ __task_larceny(mpc_omp_task_pqueue_type_t type)
     const int larcenyMode = MPC_OMP_TASK_TEAM_GET_TASK_LARCENY_MODE(team);
     const int isMonoVictim = (larcenyMode == MPC_OMP_TASK_LARCENY_MODE_RANDOM || larcenyMode == MPC_OMP_TASK_LARCENY_MODE_PRODUCER);
 
-    /* Retrieve informations about task lists */
+    /* Retrieve information about task lists */
     int pqueueDepth = MPC_OMP_TASK_TEAM_GET_PQUEUE_DEPTH(team, type);
     int nbTaskPqueues = (!pqueueDepth) ? 1 : thread->instance->tree_nb_nodes_per_depth[pqueueDepth];
 
@@ -2211,12 +2524,9 @@ __task_larceny(mpc_omp_task_pqueue_type_t type)
         /* Try to steal inside the last stolen list */
         if(mpc_omp_conf_get()->task_steal_last_stolen)
         {
-            if ((pqueue = MPC_OMP_TASK_MVP_GET_LAST_STOLEN_TASK_PQUEUE(mvp, type)))
+            if ((pqueue = MPC_OMP_TASK_MVP_GET_LAST_STOLEN_TASK_PQUEUE(mvp, type)) != NULL)
             {
-                if ((task = __task_pqueue_pop(pqueue)) != NULL)
-                {
-                    return task;
-                }
+                if ((task = __task_pqueue_pop(pqueue)) != NULL) return task;
             }
         }
 
@@ -2225,13 +2535,10 @@ __task_larceny(mpc_omp_task_pqueue_type_t type)
         if(mpc_omp_conf_get()->task_steal_last_thief)
         {
             if (mvp->task_infos.last_thief != -1
-                && (pqueue = __rank_get_task_pqueue(mvp->task_infos.last_thief, type)) != NULL)
+                    && (pqueue = __rank_get_task_pqueue(mvp->task_infos.last_thief, type)) != NULL)
             {
                 victim = mvp->task_infos.last_thief;
-                if ((task = __task_pqueue_pop(pqueue)) != NULL)
-                {
-                    return task;
-                }
+                if ((task = __task_pqueue_pop(pqueue)) != NULL) return task;
                 mvp->task_infos.last_thief = -1;
             }
         }
@@ -2243,17 +2550,10 @@ __task_larceny(mpc_omp_task_pqueue_type_t type)
         for (j = 1; j < nbVictims + 1; j++)
         {
             victim = __task_get_victim(rank, j, type);
-            if(victim != rank)
+            if (victim != rank)
             {
                 pqueue = __rank_get_task_pqueue(victim, type);
-                if(pqueue)
-                {
-                    task = __task_pqueue_pop(pqueue);
-                }
-                if(task)
-                {
-                    return task;
-                }
+                if ((task = __task_pqueue_pop(pqueue)) != NULL) return task;
             }
         }
     }
@@ -2397,6 +2697,7 @@ _mpc_omp_task_team_info_init(struct mpc_omp_team_s * team, int depth)
 
     /* Ensure tasks lists depths are correct */
     MPC_OMP_TASK_TEAM_SET_PQUEUE_DEPTH(team, MPC_OMP_PQUEUE_TYPE_TIED, depth - 1);
+    MPC_OMP_TASK_TEAM_SET_PQUEUE_DEPTH(team, MPC_OMP_PQUEUE_TYPE_SUCCESSOR, depth - 1);
 
     const int x = mpc_omp_conf_get()->pqueue_untied_depth;
     const int pqueue_untied_depth = (x < depth) ? x : depth - 1;
@@ -2487,12 +2788,29 @@ _mpc_omp_task_wait(void)
  * Get the next task to run on this thread, and pop it from the thread list
  * If no task are found, a task is stolen from another thread
  * If no tasks could be stolen, NULL is returned, meaning there is no task to run.
+ *
+ * Tasks are scheduled in this order :
+ *  - tied tasks that paused, and are now ready to resume
+ *  - untied tasks that paused, and are now ready to resume, from current thread topological queue
+ *  - direct successor tasks (if enabled)
+ *  - tasks that never run, from current thread 'NEW' topological queue
+ *  - untied tasks that paused, and are now ready to resume, from another thread topological queue
+ *  - tasks that never run, from another thread 'NEW' topological queue
+ *  - direct successor tasks of other threads (if enabled)
+ *
+ *
+ *  TODO : this function can likely be optimized
+ *
  * \param the thread
  * \return the task
  */
 static inline mpc_omp_task_t *
 __task_schedule_next(mpc_omp_thread_t * thread)
 {
+    /* fast non-blocking emptiness check */
+    if (OPA_load_int(&(thread->instance->task_infos.ntasks_ready)) == 0) return NULL;
+
+    /* find a task */
     mpc_omp_task_t * task;
 
     /* current thread tied tasks */
@@ -2501,6 +2819,10 @@ __task_schedule_next(mpc_omp_thread_t * thread)
 
     /* current thread untied tasks */
     task = __thread_task_pop_type(thread, MPC_OMP_PQUEUE_TYPE_UNTIED);
+    if (task) return task;
+
+    /* current thread new tasks */
+    task = __thread_task_pop_type(thread, MPC_OMP_PQUEUE_TYPE_SUCCESSOR);
     if (task) return task;
 
     /* current thread new tasks */
@@ -2513,6 +2835,10 @@ __task_schedule_next(mpc_omp_thread_t * thread)
 
     /* other thread new tasks */
     task = __task_larceny(MPC_OMP_PQUEUE_TYPE_NEW);
+    if (task) return task;
+
+    /* other thread new tasks, but direct successors */
+    task = __task_larceny(MPC_OMP_PQUEUE_TYPE_SUCCESSOR);
     if (task) return task;
 
     return NULL;
@@ -2706,6 +3032,16 @@ __task_run_with_fiber(mpc_omp_task_t * task)
 void
 __task_run(mpc_omp_task_t * task)
 {
+    /* check if this task was cancelled */
+    if (task->taskgroup
+            && OPA_load_int(&(task->taskgroup->cancelled))
+            && task->taskgroup->last_task_uid < task->uid)
+    {
+        task->statuses.cancelled = true;
+        __task_finalize(task);
+        return ;
+    }
+
 # if MPC_OMP_TASK_COMPILE_FIBER
     if (MPC_OMP_TASK_FIBER_ENABLED && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_HAS_FIBER))
     {
@@ -2740,11 +3076,14 @@ _mpc_omp_task_schedule(void)
         __task_run(task);
         return 1;
     }
-    else
+
+    /* Famine detected */
+    if (mpc_omp_conf_get()->task_priority_propagation_synchronousity == MPC_OMP_TASK_PRIORITY_PROPAGATION_ASYNCHRONOUS)
     {
-        /* Famine detected */
-        return 0;
+        __task_profile_propagate();
     }
+
+    return 0;
 }
 
 # if MPC_OMP_TASK_COMPILE_FIBER
@@ -2781,36 +3120,38 @@ __thread_requeue_task(mpc_omp_task_t * task)
  * Note that while only a single thread may block a task at a time,
  * multiple threads may unblock the same task concurrently */
 void
-mpc_omp_task_unblock(mpc_omp_event_handle_t * event)
+_mpc_omp_task_unblock(mpc_omp_event_handle_block_t * handle)
 {
-    assert(event);
-    assert(event->type & MPC_OMP_EVENT_TASK_BLOCK);
+    assert(handle);
+    assert(handle->parent.type == MPC_OMP_EVENT_TASK_BLOCK);
 
     mpc_omp_thread_t * thread = __thread_task_coherency(NULL);
     assert(thread);
 
-    mpc_omp_task_t * task = (mpc_omp_task_t *) event->attr;
+    mpc_omp_task_t * task = (mpc_omp_task_t *) handle->task;
     assert(task);
+
+    _mpc_omp_event_handle_ref((mpc_omp_event_handle_t *) handle);  /* mpc_omp_task_unblock */
 
     /* if the task unblocked before blocking, there is nothing to do */
     if (OPA_cas_int(
-                &(event->status),
-                MPC_OMP_EVENT_HANDLE_STATUS_INIT,
-                MPC_OMP_EVENT_HANDLE_STATUS_UNBLOCKED) == MPC_OMP_EVENT_HANDLE_STATUS_INIT)
+                &(handle->status),
+                MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_INIT,
+                MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_UNBLOCKED) == MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_INIT)
     {
         /* nothing to do, task unblocked before blocking */
     }
     else
     {
         assert(
-            OPA_load_int(&(event->status)) == MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED ||
-            OPA_load_int(&(event->status)) == MPC_OMP_EVENT_HANDLE_STATUS_UNBLOCKED
+            OPA_load_int(&(handle->status)) == MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_BLOCKED ||
+            OPA_load_int(&(handle->status)) == MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_UNBLOCKED
         );
 
         if (OPA_cas_int(
-                    &(event->status),
-                    MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED,
-                    MPC_OMP_EVENT_HANDLE_STATUS_UNBLOCKED) == MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED)
+                    &(handle->status),
+                    MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_BLOCKED,
+                    MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_UNBLOCKED) == MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_BLOCKED)
         {
             /* remove the task from the blocked list */
             mpc_omp_task_list_t * list = &(thread->instance->task_infos.blocked_tasks);
@@ -2828,16 +3169,18 @@ mpc_omp_task_unblock(mpc_omp_event_handle_t * event)
 # if MPC_OMP_TASK_COMPILE_FIBER
             if (MPC_OMP_TASK_FIBER_ENABLED && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_HAS_FIBER))
             {
-                mpc_common_spinlock_lock(&(event->lock));
+                int requeue = 0;
+                mpc_common_spinlock_lock(&(handle->lock));
                 {
                     task->statuses.unblocked = true;
                     if (task->statuses.blocked)
                     {
                         task->statuses.blocked = false;
-                        __thread_requeue_task(task);
+                        requeue = 1;
                     }
                 }
-                mpc_common_spinlock_unlock(&(event->lock));
+                mpc_common_spinlock_unlock(&(handle->lock));
+                if (requeue) __thread_requeue_task(task);
             }
             /* otherwise, it will be resumed by its suspending thread once ready */
             else
@@ -2851,23 +3194,24 @@ mpc_omp_task_unblock(mpc_omp_event_handle_t * event)
             /* nothing to do, the task is already being unblocked by another thread */
         }
     }
+    _mpc_omp_event_handle_unref((mpc_omp_event_handle_t *) handle);    /* mpc_omp_task_unblock */
 }
 
 /* Warning: a task may unblock before it was actually suspended
  * Note that only the executing thread may block the task,
  * so only 1 thread may block the same task at a time */
 void
-mpc_omp_task_block(mpc_omp_event_handle_t * event)
+mpc_omp_task_block(mpc_omp_event_handle_block_t * handle)
 {
-    assert(event);
+    assert(handle);
+    assert(handle->parent.type == MPC_OMP_EVENT_TASK_BLOCK);
 
     /* if the task did not unblock */
     if (OPA_cas_int(
-        &(event->status),
-        MPC_OMP_EVENT_HANDLE_STATUS_INIT,
-        MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED) == MPC_OMP_EVENT_HANDLE_STATUS_INIT)
+        &(handle->status),
+        MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_INIT,
+        MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_BLOCKED) == MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_INIT)
     {
-
         mpc_omp_thread_t * thread = __thread_task_coherency(NULL);
         assert(thread);
 
@@ -2878,7 +3222,7 @@ mpc_omp_task_block(mpc_omp_event_handle_t * event)
         mpc_omp_task_list_t * list = &(thread->instance->task_infos.blocked_tasks);
         mpc_common_spinlock_lock(&(list->lock));
         {
-            if (OPA_load_int(&(event->status)) == MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED)
+            if (OPA_load_int(&(handle->status)) == MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_BLOCKED)
             {
                 task->statuses.in_blocked_list = true;
                 __task_list_push_to_head(list, task);
@@ -2890,17 +3234,20 @@ mpc_omp_task_block(mpc_omp_event_handle_t * event)
 # if MPC_OMP_TASK_COMPILE_FIBER
         if (MPC_OMP_TASK_FIBER_ENABLED && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_HAS_FIBER))
         {
-            mpc_common_spinlock_lock(&(event->lock));
+            if (OPA_load_int(&(handle->status)) == MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_BLOCKED)
             {
-                if (OPA_load_int(&(event->status)) == MPC_OMP_EVENT_HANDLE_STATUS_BLOCKED)
+                mpc_common_spinlock_lock(&(handle->lock));
                 {
-                    thread->task_infos.spinlock_to_unlock = &(event->lock);
-                    task->statuses.blocking = true;
-                    __taskyield_return();
-                }
-                else
-                {
-                    mpc_common_spinlock_unlock(&(event->lock));
+                    if (OPA_load_int(&(handle->status)) == MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_BLOCKED)
+                    {
+                        thread->task_infos.spinlock_to_unlock = &(handle->lock);
+                        task->statuses.blocking = true;
+                        __taskyield_return();
+                    }
+                    else
+                    {
+                        mpc_common_spinlock_unlock(&(handle->lock));
+                    }
                 }
             }
         }
@@ -2914,6 +3261,7 @@ mpc_omp_task_block(mpc_omp_event_handle_t * event)
             }
         }
     }
+    _mpc_omp_event_handle_unref((mpc_omp_event_handle_t *) handle); /* mpc_omp_event_handle_init */
 }
 
 static void
@@ -3111,6 +3459,7 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
     {
         /* parse dependencies */
         task->dep_node.hmap = NULL;
+//        mpc_common_spinlock_init(&(task->dep_node.hmap_lock), 0);
         mpc_common_spinlock_init(&(task->lock), 0);
         task->dep_node.successors = NULL;
         OPA_store_int(&(task->dep_node.nsuccessors), 0);
@@ -3121,15 +3470,15 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
         task->dep_node.dep_list = NULL;
         task->dep_node.dep_list_size = 0;
 
-        /* status 'MPC_OMP_TASK_STATUS_INITIALIZING' means this task cannot be queued by its predecessors completion event */
-        OPA_store_int(&(task->dep_node.status), MPC_OMP_TASK_STATUS_INITIALIZING);
+        /* protect task from being scheduled before all of its dependencies are processed */
+        OPA_incr_int(&(task->dep_node.ref_predecessors));
 
         /* link task with predecessors, and register dependencies to the hmap */
         __task_process_deps(task, depend);
 
         /* now this task can be queued */
         assert(!task->statuses.started);
-        OPA_store_int(&(task->dep_node.status), MPC_OMP_TASK_STATUS_NOT_READY);
+        OPA_decr_int(&(task->dep_node.ref_predecessors));
     }
 
     /* compute priority */
@@ -3184,7 +3533,9 @@ _mpc_omp_task_process(mpc_omp_task_t * task)
     if (became_ready)
     {
         /* if the task is undeferred, or we reached thresholds */
-        if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_UNDEFERRED) || __task_reached_thresholds(task) || mpc_omp_conf_get()->task_sequential)
+        if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_UNDEFERRED)
+            || __task_reached_thresholds(task)
+            || mpc_omp_conf_get()->task_sequential)
         {
             /* run it */
             __task_run(task);
@@ -3193,7 +3544,8 @@ _mpc_omp_task_process(mpc_omp_task_t * task)
         else
         {
             /* else, differ it */
-            mpc_omp_task_pqueue_t * pqueue = __thread_get_task_pqueue(thread, MPC_OMP_PQUEUE_TYPE_NEW);
+            int type = mpc_omp_conf_get()->task_direct_successor_enabled && task->statuses.direct_successor ? MPC_OMP_PQUEUE_TYPE_SUCCESSOR : MPC_OMP_PQUEUE_TYPE_NEW;
+            mpc_omp_task_pqueue_t * pqueue = __thread_get_task_pqueue(thread, type);
             __task_pqueue_push(pqueue, task);
         }
     }
@@ -3230,47 +3582,80 @@ _mpc_omp_task_taskgroup_start( void )
     mpc_omp_init();
 
     mpc_omp_thread_t * thread = ( mpc_omp_thread_t * ) mpc_omp_tls;
-    assert( thread );
+    assert(thread);
 
-    mpc_omp_task_t * current_task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK( thread );
-    assert( current_task );
-
-    mpc_omp_task_taskgroup_t * new_taskgroup = ( mpc_omp_task_taskgroup_t * ) mpc_omp_alloc( sizeof( mpc_omp_task_taskgroup_t ) );
-    assert( new_taskgroup );
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK( thread );
+    assert(task);
 
     /* Init new task group and store it in current task */
-    memset( new_taskgroup, 0, sizeof( mpc_omp_task_taskgroup_t ) );
-    new_taskgroup->prev = current_task->taskgroup;
-    current_task->taskgroup = new_taskgroup;
+    mpc_omp_task_taskgroup_t * new_taskgroup = (mpc_omp_task_taskgroup_t *) mpc_omp_alloc(sizeof(mpc_omp_task_taskgroup_t));
+    assert(new_taskgroup);
+
+    OPA_store_int(&(new_taskgroup->children_num), 0);
+    OPA_store_int(&(new_taskgroup->cancelled), 0);
+    new_taskgroup->prev = task->taskgroup;
+
+    task->taskgroup = new_taskgroup;
 }
 
 void
-_mpc_omp_task_taskgroup_end( void )
+_mpc_omp_task_taskgroup_end(void)
 {
-    mpc_omp_task_t *current_task = NULL;        /* Current task execute     */
-    mpc_omp_thread_t *thread = NULL; /* thread private data      */
-    mpc_omp_task_taskgroup_t *taskgroup = NULL; /* new_taskgroup allocated  */
-    thread = ( mpc_omp_thread_t * ) mpc_omp_tls;
-    assert( thread );
-    current_task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK( thread );
-    assert( current_task );
-    taskgroup = current_task->taskgroup;
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
 
-    if ( !taskgroup )
-    {
-        return;
-    }
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
 
-    while ( OPA_load_int( &( taskgroup->children_num ) ) )
+    mpc_omp_task_taskgroup_t * taskgroup = task->taskgroup;
+    if (!taskgroup) return ;
+
+    while (OPA_load_int(&(taskgroup->children_num)))
     {
         _mpc_omp_task_schedule();
-        _mpc_omp_task_wait();
     }
 
-    current_task->taskgroup = taskgroup->prev;
-    mpc_omp_free( taskgroup );
+    task->taskgroup = taskgroup->prev;
+    mpc_omp_free(taskgroup);
 }
 
+static inline void
+__taskgroup_cancel(mpc_omp_task_taskgroup_t * taskgroup, int last_task_uid)
+{
+    assert(taskgroup);
+    taskgroup->last_task_uid = last_task_uid;
+    OPA_cas_int(&(taskgroup->cancelled), 0, 1);
+}
+
+void
+_mpc_omp_task_taskgroup_cancel(void)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
+    mpc_omp_task_taskgroup_t * taskgroup = task->taskgroup;
+    if (!taskgroup) return ;
+
+    __taskgroup_cancel(taskgroup, INT_MAX);
+}
+
+void
+mpc_omp_task_taskgroup_cancel_next(void)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
+    mpc_omp_task_taskgroup_t * taskgroup = task->taskgroup;
+    if (!taskgroup) return ;
+
+    __taskgroup_cancel(taskgroup, task->uid);
+}
 
 /************
  * TASKLOOP *
@@ -3430,11 +3815,27 @@ __thread_task_init_recyclers(mpc_omp_thread_t * thread)
 void
 _mpc_omp_task_tree_init(mpc_omp_thread_t * thread)
 {
+    thread->hash_collision = 0;
+    thread->hash_resize = 0;
+    if (mpc_omp_conf_get()->task_trace_auto) mpc_omp_task_trace_begin();
     memset(&(thread->task_infos.incoming), 0, sizeof(thread->task_infos.incoming));
+    mpc_omp_task_dependencies_hash_func(NULL);
 # if MPC_OMP_TASK_USE_RECYCLERS
     __thread_task_init_recyclers(thread);
 # endif
     __thread_task_init_initial(thread);
+    if (mpc_omp_conf_get()->bindings)
+    {
+        mpc_common_spinlock_lock(&(thread->instance->debug_lock));
+        {
+            printf("OpenMP Thread %ld\n", thread->rank);
+            printf("    sched_getcpu() = %d\n", sched_getcpu());
+            printf("    mpc_thread_get_pu() = %d\n", mpc_thread_get_pu());
+            printf("    mpc_topology_get_numa_node_from_cpu() = %d\n", mpc_topology_get_numa_node_from_cpu(mpc_thread_get_pu()));
+            fflush(stdout);
+        }
+        mpc_common_spinlock_unlock(&(thread->instance->debug_lock));
+    }
 }
 
 static void
@@ -3468,11 +3869,15 @@ __thread_task_deinit_recyclers(mpc_omp_thread_t * thread)
 void
 _mpc_omp_task_tree_deinit(mpc_omp_thread_t * thread)
 {
+    //mpc_omp_instance_t * instance = (mpc_omp_instance_t *) thread->instance;
+    //printf("t_total=%lf, t_deps=%lf, t_hash=%lf, collision=%d, resize=%d, ndeps=%lu\n", instance->t_total, instance->t_deps, instance->t_hash, thread->hash_collision, thread->hash_resize, instance->ndeps);
+
     assert(thread);
     __thread_task_deinit_initial(thread);
 # if MPC_OMP_TASK_USE_RECYCLERS
     __thread_task_deinit_recyclers(thread);
 # endif /* MPC_OMP_TASK_USE_RECYCLER */
+    if (mpc_omp_conf_get()->task_trace_auto) mpc_omp_task_trace_end();
     // this may not be true since every threads are deinitialized concurrently
     // assert(OPA_load_int(&(thread->instance->task_infos.ntasks)) == 0);
     // assert(OPA_load_int(&(thread->instance->task_infos.ntasks_ready)) == 0);

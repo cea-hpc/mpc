@@ -53,6 +53,16 @@ typedef enum    gomp_task_dep_type_e
   GOMP_OMP_TASK_DEP_COUNT           = 6
 }               gomp_task_dep_type_t;
 
+typedef enum    gomp_cancel_kind_e
+{
+    GOMP_CANCEL_PARALLEL    = 1,
+    GOMP_CANCEL_LOOP        = 2,
+    GOMP_CANCEL_FOR         = GOMP_CANCEL_LOOP,
+    GOMP_CANCEL_DO          = GOMP_CANCEL_LOOP,
+    GOMP_CANCEL_SECTIONS    = 4,
+    GOMP_CANCEL_TASKGROUP   = 8
+}               gomp_cancel_kind_t;
+
 /** depobj */
 typedef struct  gomp_omp_depend_t
 {
