@@ -2629,6 +2629,25 @@ kmpc_thunk_t *__kmpc_task_buffer( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 
 /***********
  * TASKING *
  ***********/
+
+/* finish the creation of a task after a 'task_alloc' call */
+static inline kmp_int32
+__kmp_task_process(mpc_omp_task_t * task, void ** depend)
+{
+    kmp_task_t * kmp_task = (kmp_task_t *) (task + 1);
+    int priority = (int) kmp_task->data1.priority;
+
+    /* register dependencies and priority */
+    _mpc_omp_task_deps(task, depend, priority);
+
+    kmp_int32 r = (kmp_int32) _mpc_omp_task_process(task);
+
+    _mpc_omp_task_deinit(task);
+
+    return r;
+}
+
+
 kmp_int32
 __kmpc_omp_task(__UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid, kmp_task_t * icc_task)
 {
@@ -2636,13 +2655,11 @@ __kmpc_omp_task(__UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid, kmp_task
     _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
-	mpc_omp_task_t * task = (mpc_omp_task_t *) ((char *)icc_task - sizeof(mpc_omp_task_t));
-
-#if OMPT_SUPPORT
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
-    _mpc_omp_ompt_callback_task_create(task, __mpc_omp_ompt_get_task_flags(thread, task), 0);
-#endif /* OMPT_SUPPORT */
-	return (kmp_int32) _mpc_omp_task_process(task);
+    assert(thread);
+
+	mpc_omp_task_t * task = (mpc_omp_task_t *) ((char *)icc_task - sizeof(mpc_omp_task_t));
+    return __kmp_task_process(task, NULL);
 }
 
 void
@@ -2662,15 +2679,46 @@ ___convert_flags(kmp_tasking_flags_t * flags)
     if (flags->priority_specified)  mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_PRIORITY);
     if (flags->task_serial)         mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_UNDEFERRED);
 
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_task_t * current_task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(current_task);
+
     /* MPC_OMP_TASK_PROP_FINAL and MPC_OMP_TASK_PROP_INCLUDED */
-    if (mpc_omp_task_property_isset(properties, MPC_OMP_TASK_PROP_FINAL))
+    if (current_task && mpc_omp_task_property_isset(current_task->property, MPC_OMP_TASK_PROP_FINAL))
     {
         mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_INCLUDED);
         mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_FINAL);
         mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_UNDEFERRED);
     }
+    /* MPC_OMP_TASK_PROP_UNDEFERRED */
+    else if (!omp_in_parallel())
+    {
+        mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_UNDEFERRED);
+    }
+
+    /* mpc specific dependencies */
+    if (thread->task_infos.incoming.dependencies && thread->task_infos.incoming.ndependencies_type)
+    {
+        mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_DEPEND);
+    }
 
     return properties;
+}
+
+static
+size_t round_up_to_val(size_t size, size_t val)
+{
+    if (size & (val - 1))
+    {
+        size &= ~(val - 1);
+        if (size <= KMP_SIZE_T_MAX - val)
+        {
+            size += val;
+        }
+    }
+    return size;
 }
 
 kmp_task_t *__kmpc_omp_task_alloc( __UNUSED__ ident_t *loc_ref, __UNUSED__  kmp_int32 gtid,
@@ -2686,18 +2734,19 @@ kmp_task_t *__kmpc_omp_task_alloc( __UNUSED__ ident_t *loc_ref, __UNUSED__  kmp_
     mpc_omp_thread_t * thread = ( mpc_omp_thread_t * )mpc_omp_tls;
     assert(thread);
 
-    /* mpc_omp_task_t + kmp_task_t + shared variables) */
-    const size_t size = sizeof(mpc_omp_task_t) + sizeof_kmp_task_t + sizeof_shareds;
-
     /* mpc_omp_task_t */
     kmp_tasking_flags_t * kmp_task_flags = (kmp_tasking_flags_t *) &flags;
     mpc_omp_task_property_t properties = ___convert_flags(kmp_task_flags);
-    mpc_omp_task_t * task = _mpc_omp_task_allocate(size);
+
+    /* mpc_omp_task_t + kmp_task_t + shared variables) */
+    size_t shareds_offset = round_up_to_val(sizeof(mpc_omp_task_t) + sizeof_kmp_task_t, sizeof(void *));
+    const size_t size = shareds_offset + sizeof_shareds;
+	mpc_omp_task_t * task = _mpc_omp_task_allocate(size);
     assert(task);
 
     /* kmp_task_t / shared variables*/
     kmp_task_t * kmp_task = (kmp_task_t *)(task + 1);
-    kmp_task->shareds = (sizeof_shareds > 0) ? (void *)(kmp_task + 1) : NULL;
+    kmp_task->shareds = (sizeof_shareds > 0) ? ((char *)task) + shareds_offset : NULL;
     kmp_task->routine = task_entry;
     kmp_task->part_id = 0;
 
@@ -2707,7 +2756,7 @@ kmp_task_t *__kmpc_omp_task_alloc( __UNUSED__ ident_t *loc_ref, __UNUSED__  kmp_
     /* ? */
     thread->task_infos.sizeof_kmp_task_t = sizeof_kmp_task_t;
 
-    /* to handle if0 with deps */
+    /* to handle if0 with deps (Romain : ???) */
     MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread)->last_task_alloc = task;
 
     return kmp_task;
@@ -2891,22 +2940,12 @@ kmp_int32 __kmpc_omp_task_with_deps( __UNUSED__ ident_t * loc_ref, __UNUSED__ km
     /* the mpcomp task */
     mpc_omp_task_t * task = (mpc_omp_task_t *) ((char *)kmp_task - sizeof(mpc_omp_task_t));
 
-    /* the user-given priority */
-    int priority = (int) kmp_task->data1.priority;
-
     /* convert llvm dependencies format to gomp */
     void ** depend = (void **)mpc_omp_alloc(sizeof(uintptr_t) * ((int)(ndeps + ndeps_noalias) + 2));
     __intel_translate_taskdep_to_gomp(ndeps, dep_list, ndeps_noalias, noalias_dep_list, depend);
     mpc_omp_task_set_property(&task->property, MPC_OMP_TASK_PROP_DEPEND);
 
-    /* register dependencies and priority */
-    _mpc_omp_task_deps(task, depend, priority);
-
-	kmp_int32 r = (kmp_int32) _mpc_omp_task_process(task);
-
-    _mpc_omp_task_deinit(task);
-
-    return r;
+    return __kmp_task_process(task, depend);
 }
 
 void __kmpc_omp_wait_deps( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid, kmp_int32 ndeps,
