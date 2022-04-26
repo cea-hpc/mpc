@@ -1144,6 +1144,9 @@ __task_process_mpc_dep(
         void * addr,
         mpc_omp_task_dep_type_t type)
 {
+    assert(type > MPC_OMP_TASK_DEP_NONE);
+    assert(type < MPC_OMP_TASK_DEP_COUNT);
+
     /* Retrieve entry for the given address, or generate a new one.
      * Also performon redundancy check */
     mpc_omp_task_dep_htable_entry_t * entry = __task_process_mpc_dep_entry(task, addr);
