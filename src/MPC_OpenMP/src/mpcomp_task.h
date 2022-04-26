@@ -392,6 +392,7 @@ mpc_omp_taskgroup_del_task(mpc_omp_task_t *task)
 
 /* tasks */
 void mpc_omp_task_process(mpc_omp_task_t * task);
+void _mpc_omp_task_finalize(mpc_omp_task_t * task);
 
 mpc_omp_task_t * __mpc_omp_task_init(
     mpc_omp_task_t * task,

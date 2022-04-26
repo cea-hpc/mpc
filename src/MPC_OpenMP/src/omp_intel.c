@@ -362,7 +362,7 @@ void __kmpc_end_serialized_parallel( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int
 
     //mpc_omp_free(t);
     mpc_omp_tls = t_prev;
-    
+
     _mpc_omp_internal_end_parallel_region( t_prev->children_instance );
 
 	mpc_common_nodebug( "%s: leaving (%d)...", __func__, global_tid );
@@ -2692,8 +2692,10 @@ kmp_task_t *__kmpc_omp_task_alloc( __UNUSED__ ident_t *loc_ref, __UNUSED__  kmp_
     /* mpc_omp_task_t */
     kmp_tasking_flags_t * kmp_task_flags = (kmp_tasking_flags_t *) &flags;
     mpc_omp_task_property_t properties = ___convert_flags(kmp_task_flags);
+
     /* if not in a parallel region then serial execution */
-	if (thread->info.func == NULL) {
+	if (thread->info.func == NULL)
+    {
 		mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_UNDEFERRED);
 	}
 	mpc_omp_task_t * task = _mpc_omp_task_allocate(size);
@@ -2772,7 +2774,8 @@ __kmpc_omp_task_complete_if0(
 	mpc_omp_task_t * task = (mpc_omp_task_t *) ((char *)kmp_task - sizeof(mpc_omp_task_t));
     assert(task);
 
-    /* TODO : unref / delete the task */
+    task->statuses.completed = true;
+    _mpc_omp_task_finalize(task);
 
 	MPC_OMP_TASK_THREAD_SET_CURRENT_TASK(thread, task->parent);
 	thread->info.icvs = task->prev_icvs;

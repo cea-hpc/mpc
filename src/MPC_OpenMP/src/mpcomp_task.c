@@ -1433,8 +1433,8 @@ __task_finalize_deps(mpc_omp_task_t * task)
 
 
 /** called whenever a task completed it execution */
-static void
-__task_finalize(mpc_omp_task_t * task)
+void
+_mpc_omp_task_finalize(mpc_omp_task_t * task)
 {
     assert(task->statuses.completed || task->statuses.cancelled);
 
@@ -2910,7 +2910,7 @@ __task_run_as_function(mpc_omp_task_t * task)
     ___thread_bind_task(thread, curr, &(curr->icvs));
 
     /* delete the task */
-    __task_finalize(task);
+    _mpc_omp_task_finalize(task);
 }
 
 # if MPC_OMP_TASK_COMPILE_FIBER
@@ -2995,7 +2995,7 @@ __task_run_with_fiber(mpc_omp_task_t * task)
 
     if (task->statuses.completed)
     {
-        __task_finalize(task);
+        _mpc_omp_task_finalize(task);
     }
     else
     {
@@ -3038,7 +3038,7 @@ __task_run(mpc_omp_task_t * task)
             && task->taskgroup->last_task_uid < task->uid)
     {
         task->statuses.cancelled = true;
-        __task_finalize(task);
+        _mpc_omp_task_finalize(task);
         return ;
     }
 
@@ -3407,8 +3407,8 @@ _mpc_omp_task_init(
     /* reference the task */
     _mpc_omp_taskgroup_add_task(task);
     __task_ref_parallel_region();
-    __task_ref_parent_task(task->parent); /* __task_finalize */
-    __task_ref(task); /* __task_finalize */
+    __task_ref_parent_task(task->parent); /* _mpc_omp_task_finalize */
+    __task_ref(task); /* _mpc_omp_task_finalize */
 
     /* extra parameters given to the mpc thread for this task */
 # if MPC_OMP_TASK_COMPILE_TRACE
