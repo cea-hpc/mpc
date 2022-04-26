@@ -1506,4 +1506,15 @@ extern __thread void *mpc_omp_tls;
 extern mpc_omp_global_icv_t mpcomp_global_icvs;
 // extern mpc_omp_alloc_list_t mpcomp_global_allocators;
 
+//////////////TARGET/////////////////
+
+typedef enum {
+  tgt_disabled = 0,
+  tgt_default = 1,
+  tgt_mandatory = 2
+} kmp_target_offload_kind_t;
+extern kmp_target_offload_kind_t __kmp_target_offload;
+
+/////////////////////////////////////
+
 #endif /* __MPC_OMP_TYPES_H__ */
