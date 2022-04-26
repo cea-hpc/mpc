@@ -1473,6 +1473,8 @@ __task_delete(mpc_omp_task_t * task)
     MPC_OMP_TASK_TRACE_DELETE(task);
 
 # if MPC_OMP_TASK_USE_RECYCLERS
+    TODO(   "instead of recycling to current thread recycler, we may want to recycle "
+            "into the producer thread recycler, particularly in mono-producer");
     mpc_common_nrecycler_recycle(&(thread->task_infos.task_recycler), task, task->size);
 # else
     mpc_omp_free(task);
