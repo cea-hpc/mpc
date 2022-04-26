@@ -621,3 +621,18 @@ mpc_omp_task_dependencies_hash_func(uintptr_t (*hash_deps)(void *))
     assert(thread);
     thread->task_infos.hash_deps = hash_deps;
 }
+
+double
+mpc_omp_task_dependencies_buckets_occupation(void)
+{
+    mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
+    assert(thread);
+
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
+    double avg;
+    HASH_BKT_OCCUPATIONS(hh, task->dep_node.hmap, avg);
+
+    return avg;
+}

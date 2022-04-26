@@ -1119,6 +1119,7 @@ __task_process_mpc_dep_entry(mpc_omp_task_t * task, void * addr)
     mpc_omp_instance_t * instance = thread->instance;
     assert(instance);
     instance->t_hash += t_hash;
+    ++instance->ndeps;
 
     if (entry == NULL)
     {
@@ -3866,8 +3867,8 @@ __thread_task_deinit_recyclers(mpc_omp_thread_t * thread)
 void
 _mpc_omp_task_tree_deinit(mpc_omp_thread_t * thread)
 {
-    mpc_omp_instance_t * instance = (mpc_omp_instance_t *) thread->instance;
-    printf("t_total=%lf, t_deps=%lf, t_hash=%lf, collision=%d, resize=%d\n", instance->t_total, instance->t_deps, instance->t_hash, thread->hash_collision, thread->hash_resize);
+    //mpc_omp_instance_t * instance = (mpc_omp_instance_t *) thread->instance;
+    //printf("t_total=%lf, t_deps=%lf, t_hash=%lf, collision=%d, resize=%d, ndeps=%lu\n", instance->t_total, instance->t_deps, instance->t_hash, thread->hash_collision, thread->hash_resize, instance->ndeps);
 
     assert(thread);
     __thread_task_deinit_initial(thread);
