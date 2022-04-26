@@ -1399,14 +1399,14 @@ int mpc_topology_has_nvdimm()
 
 void mpc_topology_destroy( void )
 {
+	__mpc_module_topology_loaded = 0;
+
 	_mpc_topology_render_render();
 	//_mpc_topology_device_release();
 
 	hwloc_topology_destroy( __mpc_module_topology );
 
 	hwloc_topology_destroy( __mpc_module_topology_global );
-
-	__mpc_module_topology_loaded = 0;
 }
 
 void mpc_topology_get_pu_neighborhood( int cpuid, unsigned int nb_cpus, int *neighborhood )
