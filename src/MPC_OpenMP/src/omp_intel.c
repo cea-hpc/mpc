@@ -2757,10 +2757,11 @@ __kmpc_omp_task_complete_if0(
 	mpc_omp_task_t * task = (mpc_omp_task_t *) ((char *)kmp_task - sizeof(mpc_omp_task_t));
     assert(task);
 
-    /* TODO : unref / delete the task */
-
 	MPC_OMP_TASK_THREAD_SET_CURRENT_TASK(thread, task->parent);
 	thread->info.icvs = task->prev_icvs;
+
+    task->statuses.completed = true;
+    _mpc_omp_task_finalize(task);
 }
 
 kmp_int32 __kmpc_omp_task_parts( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid,
