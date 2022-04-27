@@ -2149,8 +2149,13 @@ void mpc_omp_GOMP_taskwait( void )
 #endif /* OMPT_SUPPORT */
 
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tBegin", __func__ );
-	_mpc_omp_task_wait();
+	_mpc_omp_task_wait(NULL, 0);
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
+}
+
+void mpc_omp_GOMP_taskwait_depend(void ** depend)
+{
+    _mpc_omp_task_wait(depend, 0);
 }
 
 void mpc_omp_GOMP_taskyield( void )

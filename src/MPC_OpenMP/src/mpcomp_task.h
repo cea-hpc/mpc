@@ -304,7 +304,7 @@ void _mpc_omp_task_root_info_init( struct mpc_omp_node_s *root );
 
 int _mpc_omp_task_schedule(void);
 
-void _mpc_omp_task_wait( void );
+void _mpc_omp_task_wait(void ** depend, int nowait);
 
 /*******************
  * TREE ARRAY TASK *

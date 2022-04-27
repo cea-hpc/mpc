@@ -166,3 +166,6 @@ GOMP_ABI_FUNC(mpc_omp_GOMP_loop_ull_nonmonotonic_guided_start, GOMP_loop_ull_non
 GOMP_ABI_FUNC(mpc_omp_GOMP_loop_ull_nonmonotonic_guided_next, GOMP_loop_ull_nonmonotonic_guided_next, "GOMP_4.5");
 GOMP_ABI_FUNC(mpc_omp_GOMP_parallel_loop_nonmonotonic_dynamic, GOMP_parallel_loop_nonmonotonic_dynamic, "GOMP_4.5");
 GOMP_ABI_FUNC(mpc_omp_GOMP_parallel_loop_nonmonotonic_guided, GOMP_parallel_loop_nonmonotonic_guided, "GOMP_4.5");
+
+// All GOMP_5.0 symbols
+GOMP_ABI_FUNC(mpc_omp_GOMP_taskwait_depend, GOMP_taskwait_depend, "GOMP_5.0")
