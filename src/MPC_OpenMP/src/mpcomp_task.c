@@ -2759,31 +2759,64 @@ int mpc_omp_task_parse_larceny_mode(char * mode)
  ******************/
 
 /**
- * Perform a taskwait construct.
- *
- * Can be the entry point for a compiler.
- *
- * > The taskwait region includes an implicit task scheduling point in the current task
- * > region. The current task region is suspended at the task scheduling point until all child
- * > tasks that it generated before the taskwait region complete execution.
- */
+ * The taskwait construct specifies a wait on the completion of child tasks of the current task.
+ * If no depend clause is present on the taskwait construct, the current task region is suspended
+ * at an implicit task scheduling point associated with the construct. The current task region remains
+ * suspended until all child tasks that it generated before the taskwait region complete execution.
+ * If one or more depend clauses are present on the taskwait construct and the nowait clause is
+ * not also present, the behavior is as if these clauses were applied to a task construct with an empty
+ * associated structured block that generates a mergeable and included task. Thus, the current task
+ * region is suspended until the predecessor tasks of this task complete execution.
+ * If one or more depend clauses are present on the taskwait construct and the nowait clause is
+ * also present, the behavior is as if these clauses were applied to a task construct with an empty
+ * associated structured block that generates a task for which execution may be deferred. Thus, all
+ * predecessor tasks of this task must complete execution before any subsequently generated task that
+ * depends on this task starts its execution
+*/
 void
-_mpc_omp_task_wait(void)
+_mpc_omp_task_wait(void ** depend, int nowait)
 {
+    /* # pragma omp taskwait nowait */
+    /* this use case is not specified in the standard. Assume NO-OP */
+    if (!depend && nowait) return ;
+
     mpc_omp_init();
 
-    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
-    assert(thread);
-    assert(thread->info.num_threads > 0);
-
-    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
-    assert(task);
-
-    /* Look for a children tasks list */
-    while (OPA_load_int(&(task->children_count)))
+    /* if depend clause is present, insert empty task into the tree */
+    if (depend)
     {
-        /* Schedule any other task */
-        _mpc_omp_task_schedule();
+        mpc_omp_task_property_t properties = MPC_OMP_TASK_PROP_UNDEFERRED | MPC_OMP_TASK_PROP_DEPEND;
+        const int priority = 0;
+        const size_t size = sizeof(mpc_omp_task_t);
+        mpc_omp_task_t * task = _mpc_omp_task_allocate(size);
+        _mpc_omp_task_init(task, NULL, NULL, size, properties);
+        _mpc_omp_task_deps(task, depend, priority);
+        _mpc_omp_task_process(task);
+
+        /* if the nowait clause is missing, wait for the completion
+         * of the empty task predecessors */
+        if (!nowait)
+        {
+          	while (OPA_load_int(&(task->dep_node.ref_predecessors)))
+            {
+                _mpc_omp_task_schedule();
+            }
+        }
+        _mpc_omp_task_deinit(task);
+    }
+    /* otherwise, wait for implicit task children to finish */
+    else
+    {
+        mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+        assert(thread);
+
+        mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+        assert(task);
+
+        while (OPA_load_int(&(task->children_count)))
+        {
+            _mpc_omp_task_schedule();
+        }
     }
 }
 
@@ -2905,7 +2938,7 @@ __task_run_as_function(mpc_omp_task_t * task)
     __task_run_coherency_check_pre(task);
     task->statuses.started = true;
     MPC_OMP_TASK_TRACE_SCHEDULE(task);
-    task->func(task->data);
+    if (task->func) task->func(task->data);
     task->statuses.completed = true;
     __task_run_coherency_check_post(task);
     MPC_OMP_TASK_TRACE_SCHEDULE(task);
@@ -3462,7 +3495,6 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
     {
         /* parse dependencies */
         task->dep_node.hmap = NULL;
-//        mpc_common_spinlock_init(&(task->dep_node.hmap_lock), 0);
         mpc_common_spinlock_init(&(task->lock), 0);
         task->dep_node.successors = NULL;
         OPA_store_int(&(task->dep_node.nsuccessors), 0);

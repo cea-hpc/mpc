@@ -2855,7 +2855,7 @@ kmp_int32 __kmpc_omp_taskwait( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32
     _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
-	_mpc_omp_task_wait();
+	_mpc_omp_task_wait(NULL, 0);
 	return ( kmp_int32 )0;
 }
 
@@ -2972,34 +2972,11 @@ void __kmpc_omp_wait_deps( __UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gti
     _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
-    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
-    assert(thread);
-
-    mpc_omp_task_t * current_task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
-    assert(current_task);
-
-    mpc_omp_task_t * task = current_task->last_task_alloc;
-    assert(task);
-
     void ** depend = (void**)sctk_malloc(sizeof(uintptr_t) * ((int)(ndeps + ndeps_noalias)+2));
     __intel_translate_taskdep_to_gomp(ndeps, dep_list, ndeps_noalias, noalias_dep_list, depend);
 
-	/* allocate empty task */
-	mpc_omp_task_t * empty = _mpc_omp_task_allocate(sizeof(mpc_omp_task_t));
-
-    /* init empty task */
-    _mpc_omp_task_init(empty, NULL, NULL, sizeof(mpc_omp_task_t), current_task->property);
-
-    /* set dependencies (and compute priorities) */
-    _mpc_omp_task_deps(empty, depend, current_task->priority);
-
-	while (OPA_load_int(&(empty->dep_node.ref_predecessors)))
-    {
-        /* Schedule any other task */
-        _mpc_omp_task_schedule();
-    }
-
-    /* next call should be __kmpc_omp_task_begin_if0 to execute undeferred if0 task */
+    int nowait = 0;
+    _mpc_omp_task_wait(depend, nowait);
 }
 
 void __kmp_release_deps( __UNUSED__ kmp_int32 gtid, __UNUSED__ kmp_taskdata_t *task )

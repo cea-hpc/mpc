@@ -401,6 +401,7 @@ void mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
                        void **depend, int priority);
 
 void mpc_omp_GOMP_taskwait( void );
+void mpc_omp_GOMP_taskwait_depend( void ** depend);
 
 void mpc_omp_GOMP_taskyield( void );
 
