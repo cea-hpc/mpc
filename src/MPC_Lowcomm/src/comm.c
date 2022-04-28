@@ -69,34 +69,11 @@ static inline void _mpc_comm_dest_key_init(mpc_comm_dest_key_t *key, mpc_lowcomm
 	key->comm_id = comm;
 }
 
-typedef struct
-{
-	mpc_common_spinlock_t            lock;
-	mpc_lowcomm_msg_list_t *list;
-} mpc_comm_ptp_list_incomming_t;
-
-typedef struct
-{
-	volatile mpc_lowcomm_msg_list_t *list;
-} mpc_comm_ptp_list_pending_t;
-
-typedef struct
-{
-	mpc_common_spinlock_t         pending_lock;
-	char                          pad[256];
-	/* Messages are posted to the 'incoming' lists before being merged to the pending list. */
-	mpc_comm_ptp_list_incomming_t incomming_send;
-	mpc_comm_ptp_list_incomming_t incomming_recv;
-	/* Messages in the 'pending' lists are waiting to be matched */
-    mpc_comm_ptp_list_pending_t   pending_send;
-	mpc_comm_ptp_list_pending_t   pending_recv;
-} mpc_comm_ptp_message_lists_t;
-
 typedef struct mpc_comm_ptp_s
 {
 	mpc_comm_dest_key_t          key;
 
-	mpc_comm_ptp_message_lists_t lists;
+	mpc_lowcomm_ptp_message_lists_t lists;
 
 
 	UT_hash_handle               hh;
@@ -238,7 +215,7 @@ int mpc_lowcomm_commit_status_from_request(mpc_lowcomm_request_t *request,
  * Initialize the 'incoming' list.
  */
 
-static inline void __mpc_comm_ptp_list_incoming_init(mpc_comm_ptp_list_incomming_t *list)
+static inline void __mpc_comm_ptp_list_incoming_init(mpc_lowcomm_ptp_list_incomming_t *list)
 {
 	list->list = NULL;
 	mpc_common_spinlock_init(&list->lock, 0);
@@ -247,7 +224,7 @@ static inline void __mpc_comm_ptp_list_incoming_init(mpc_comm_ptp_list_incomming
 /*
  * Initialize the 'pending' list
  */
-static inline void __mpc_comm_ptp_list_pending_init(mpc_comm_ptp_list_pending_t *list)
+static inline void __mpc_comm_ptp_list_pending_init(mpc_lowcomm_ptp_list_pending_t *list)
 {
 	list->list = NULL;
 }
@@ -255,7 +232,7 @@ static inline void __mpc_comm_ptp_list_pending_init(mpc_comm_ptp_list_pending_t 
 /*
  * Initialize a PTP the 'incoming' and 'pending' message lists.
  */
-static inline void __mpc_comm_ptp_message_list_init(mpc_comm_ptp_message_lists_t *lists)
+static inline void __mpc_comm_ptp_message_list_init(mpc_lowcomm_ptp_message_lists_t *lists)
 {
 	__mpc_comm_ptp_list_incoming_init(&(lists->incomming_send) );
 	__mpc_comm_ptp_list_incoming_init(&(lists->incomming_recv) );
@@ -267,7 +244,7 @@ static inline void __mpc_comm_ptp_message_list_init(mpc_comm_ptp_message_lists_t
 /*
  * Merge 'incoming' send and receive lists to 'pending' send and receive lists
  */
-static inline void __mpc_comm_ptp_message_list_merge_pending(mpc_comm_ptp_message_lists_t *lists)
+static inline void __mpc_comm_ptp_message_list_merge_pending(mpc_lowcomm_ptp_message_lists_t *lists)
 {
     int flush = 0;
 
@@ -301,17 +278,17 @@ static inline void __mpc_comm_ptp_message_list_merge_pending(mpc_comm_ptp_messag
     }
 }
 
-static inline void __mpc_comm_ptp_message_list_lock_pending(mpc_comm_ptp_message_lists_t *lists)
+static inline void __mpc_comm_ptp_message_list_lock_pending(mpc_lowcomm_ptp_message_lists_t *lists)
 {
 	mpc_common_spinlock_lock_yield(&(lists->pending_lock) );
 }
 
-static inline int __mpc_comm_ptp_message_list_trylock_pending(mpc_comm_ptp_message_lists_t *lists)
+static inline int __mpc_comm_ptp_message_list_trylock_pending(mpc_lowcomm_ptp_message_lists_t *lists)
 {
 	return mpc_common_spinlock_trylock(&(lists->pending_lock) );
 }
 
-static inline void __mpc_comm_ptp_message_list_unlock_pending(mpc_comm_ptp_message_lists_t *lists)
+static inline void __mpc_comm_ptp_message_list_unlock_pending(mpc_lowcomm_ptp_message_lists_t *lists)
 {
 	mpc_common_spinlock_unlock(&(lists->pending_lock) );
 }
@@ -377,6 +354,39 @@ static inline struct mpc_comm_ptp_s *__mpc_comm_ptp_array_get(mpc_lowcomm_commun
 	_mpc_comm_dest_key_init(&key, comm->id, rank);
 	return __mpc_comm_ptp_array_get_key(&key);
 }
+
+int _mpc_lowcomm_comm_get_lists(int rank, mpc_lowcomm_ptp_message_lists_t **lists, int *list_count)
+{
+	int i;
+	int ret_cnt = 0;
+
+	for(i = 0 ; (i < SCTK_PARALLEL_COMM_QUEUES_NUMBER)  && (i < *list_count);i++)
+	{
+		mpc_comm_dest_key_t key;
+		key.comm_id = i;
+		key.rank = rank;
+
+		struct mpc_comm_ptp_s * ptp = __mpc_comm_ptp_array_get_key(&key);
+
+		if(ptp)
+		{
+			(lists)[ret_cnt] = &ptp->lists;
+			ret_cnt++;
+		} 
+	}
+
+	*list_count = ret_cnt;
+
+
+
+	if( mpc_common_get_local_process_count() <= *list_count)
+	{
+		return MPC_LOWCOMM_ERR_TRUNCATE;
+	}
+
+	return MPC_LOWCOMM_SUCCESS;
+}
+
 
 struct mpc_comm_ptp_s *_mpc_comm_ptp_array_get(mpc_lowcomm_communicator_t comm, int rank)
 {
@@ -1968,7 +1978,7 @@ int sctk_m_probe_matching_get()
 
 __thread volatile int already_processsing_a_control_message = 0;
 
-static inline mpc_lowcomm_msg_list_t *__mpc_comm_pending_msg_list_search_matching(mpc_comm_ptp_list_pending_t *pending_list,
+static inline mpc_lowcomm_msg_list_t *__mpc_comm_pending_msg_list_search_matching(mpc_lowcomm_ptp_list_pending_t *pending_list,
                                                                                   mpc_lowcomm_ptp_message_t * msg)
 {
 	mpc_lowcomm_ptp_message_header_t *header = &(msg->body.header);

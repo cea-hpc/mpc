@@ -771,6 +771,21 @@ do {                                                                            
   }                                                                              \
 } while (0)
 
+/* return average bucket occupations */
+#define HASH_BKT_OCCUPATIONS(hh, head, avg)                         \
+do {                                                                \
+    size_t total = 0;                                               \
+    int b;                                                          \
+    int nbkt = 0;                                                   \
+    for (b = 0 ; b < (head)->hh.tbl->num_buckets ; ++b)             \
+    {                                                               \
+        UT_hash_bucket * bkt = (head)->hh.tbl->buckets + b;         \
+        total += bkt->count;                                        \
+        nbkt += (bkt->count > 0);                                   \
+    }                                                               \
+    avg = total / (double)nbkt;                                     \
+} while (0)
+
 /* add an item to a bucket  */
 #define HASH_ADD_TO_BKT(head,hh,addhh,oomed)                                     \
 do {                                                                             \

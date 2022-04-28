@@ -1247,6 +1247,7 @@ typedef struct mpc_omp_thread_s
     /* Common tool instance infos */
     mpc_omp_ompt_tool_instance_t* tool_instance;
 #endif /* OMPT_SUPPORT */
+    /* DEBUGING */
     size_t hash_collision;
     size_t hash_resize;
 }       mpc_omp_thread_t;
@@ -1306,6 +1307,7 @@ typedef struct mpc_omp_instance_s
 
     /* DEBUGING */
     double t_hash;
+    size_t ndeps;
     double t_deps;
     double t_total;
 } mpc_omp_instance_t;

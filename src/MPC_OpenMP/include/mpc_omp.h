@@ -246,6 +246,9 @@ extern "C" {
     uintptr_t mpc_omp_task_dependency_hash_kmp      (void * addr);
     uintptr_t mpc_omp_task_dependency_hash_nanos6   (void * addr);
 
+    /* return hashmap bucket occupation */
+    double mpc_omp_task_dependencies_buckets_occupation(void);
+
 #ifdef __cplusplus
 }
 #endif

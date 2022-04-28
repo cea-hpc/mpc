@@ -622,6 +622,21 @@ mpc_omp_task_dependencies_hash_func(uintptr_t (*hash_deps)(void *))
     thread->task_infos.hash_deps = hash_deps;
 }
 
+double
+mpc_omp_task_dependencies_buckets_occupation(void)
+{
+    mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
+    assert(thread);
+
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
+    double avg;
+    HASH_BKT_OCCUPATIONS(hh, task->dep_node.hmap, avg);
+
+    return avg;
+}
+
 //////////////TARGET/////////////////
 
 kmp_target_offload_kind_t __kmp_target_offload = tgt_default;
@@ -642,5 +657,3 @@ int omp_get_default_device() {
 int omp_is_initial_device() {
   return 1;
 }
-
-/////////////////////////////////////

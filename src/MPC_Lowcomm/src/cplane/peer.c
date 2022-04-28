@@ -21,7 +21,7 @@ int _mpc_lowcomm_peer_teardown()
 	{
 		_mpc_lowcomm_peer_free(peer);
 	}
-	MPC_HT_ITER_END
+	MPC_HT_ITER_END(&__peer_ht)
 
 	mpc_common_hashtable_release(&__peer_ht);
 

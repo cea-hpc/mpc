@@ -1279,9 +1279,7 @@ void _mpc_omp_in_order_scheduler( mpc_omp_thread_t *thread )
 
 //////////////TARGET/////////////////
 
-void __omp_conf_init_target(void) 
+void __omp_conf_init_target(void)
 {
 	__omp_conf_init();
 }
-
-/////////////////////////////////////

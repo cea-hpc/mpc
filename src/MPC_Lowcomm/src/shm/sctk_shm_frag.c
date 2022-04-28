@@ -308,7 +308,7 @@ sctk_network_frag_msg_shm_idle(int max_try)
     	MPC_HT_ITER( &(sctk_shm_sending_frag_hastable_ptr[i]), infos )
     	   if (!sctk_network_frag_msg_next_send(infos) && cur_try++ < max_try)
               break;
-    	MPC_HT_ITER_END
+    	MPC_HT_ITER_END(&(sctk_shm_sending_frag_hastable_ptr[i]))
     }
 
     mpc_common_spinlock_unlock(&sctk_shm_sending_frag_hastable_lock);

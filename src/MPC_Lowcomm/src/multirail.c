@@ -836,7 +836,7 @@ static inline void __route_to_process(mpc_lowcomm_peer_uid_t destination, mpc_lo
 			}
 		}
 	}
-	MPC_HT_ITER_END
+	MPC_HT_ITER_END(&table->destination_table)
 
 	mpc_common_spinlock_read_unlock(&table->table_lock);
 
@@ -1153,7 +1153,7 @@ void _mpc_lowcomm_multirail_table_release()
 	{
 		_mpc_lowcomm_multirail_table_entry_free(entry);
 	}
-	MPC_HT_ITER_END
+	MPC_HT_ITER_END(&table->destination_table)
 
 	mpc_common_hashtable_release(&table->destination_table);
 }
@@ -1169,7 +1169,7 @@ void _mpc_lowcomm_multirail_table_prune(void)
 	{
 		_mpc_lowcomm_multirail_table_entry_prune(entry);
 	}
-	MPC_HT_ITER_END
+	MPC_HT_ITER_END(&table->destination_table)
 
 	mpc_common_spinlock_write_unlock(&table->table_lock);
 }

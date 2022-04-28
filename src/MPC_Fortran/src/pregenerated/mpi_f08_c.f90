@@ -107,8 +107,26 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_Win_post_c
 
-! MPI_Session_create_errhandler NOT IMPLEMENTED in MPC
 
+function MPI_Session_create_errhandler_c( errhfn,&
+errh,&
+ierror)&
+bind(C, name="mpi_session_create_errhandler_") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+! MPI_Session_errhandler_function*
+type(c_ptr), value , intent(in) :: errhfn     !MPI_Session_errhandler_function* errhfn
+! MPI_Errhandler*
+integer(c_int), intent(out) :: errh     !MPI_Errhandler* errh
+! int
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Session_create_errhandler_c
 
 
 function MPI_Win_get_errhandler_c( win,&
@@ -338,8 +356,29 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_Error_class_c
 
-! MPI_Session_get_num_psets NOT IMPLEMENTED in MPC
 
+function MPI_Session_get_num_psets_c( session,&
+info,&
+npset_names,&
+ierror)&
+bind(C, name="mpi_session_get_num_psets_") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+! MPI_Session
+integer(c_int), intent(in) :: session     !MPI_Session session
+! MPI_Info
+integer(c_int), intent(in) :: info     !MPI_Info info
+! int*
+integer(c_int), intent(out) :: npset_names     !int* npset_names
+! int
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Session_get_num_psets_c
 
 
 function MPI_Free_mem_c( base,&
@@ -509,8 +548,30 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_Intercomm_create_c
 
-! MPI_Group_from_session_pset NOT IMPLEMENTED in MPC
 
+function MPI_Group_from_session_pset_c( session,&
+pset_name,&
+newgroup,&
+ierror, pset_name_len)&
+bind(C, name="mpi_group_from_session_pset_") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+! MPI_Session
+integer(c_int), intent(in) :: session     !MPI_Session session
+! char*
+type(C_PTR), intent(in) :: pset_name     !char* pset_name
+! MPI_Group*
+integer(c_int), intent(out) :: newgroup     !MPI_Group* newgroup
+! int
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int), value :: pset_name_len ! pset_name lenght
+
+end function MPI_Group_from_session_pset_c
 
 ! MPI_File_iread_at NOT IMPLEMENTED in MPC
 
@@ -720,8 +781,26 @@ integer(c_int), value :: type_name_len ! type_name lenght
 
 end function MPI_Type_get_name_c
 
-! MPI_Session_get_info NOT IMPLEMENTED in MPC
 
+function MPI_Session_get_info_c( session,&
+infoused,&
+ierror)&
+bind(C, name="mpi_session_get_info_") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+! MPI_Session
+integer(c_int), intent(in) :: session     !MPI_Session session
+! MPI_Info*
+integer(c_int), intent(out) :: infoused     !MPI_Info* infoused
+! int
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Session_get_info_c
 
 
 function MPI_Type_commit_c( type,&
@@ -741,8 +820,26 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_Type_commit_c
 
-! MPI_Session_set_errhandler NOT IMPLEMENTED in MPC
 
+function MPI_Session_set_errhandler_c( session,&
+errh,&
+ierror)&
+bind(C, name="mpi_session_set_errhandler_") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+! MPI_Session
+integer(c_int), intent(in) :: session     !MPI_Session session
+! MPI_Errhandler
+integer(c_int), intent(in) :: errh     !MPI_Errhandler errh
+! int
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Session_set_errhandler_c
 
 
 function MPI_Type_create_f90_integer_c( r,&
@@ -1699,8 +1796,26 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_Abort_c
 
-! MPI_Session_call_errhandler NOT IMPLEMENTED in MPC
 
+function MPI_Session_call_errhandler_c( session,&
+errorcode,&
+ierror)&
+bind(C, name="mpi_session_call_errhandler_") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+! MPI_Session
+integer(c_int), intent(in) :: session     !MPI_Session session
+! int
+integer(c_int), intent(in) :: errorcode     !int errorcode
+! int
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Session_call_errhandler_c
 
 
 function MPI_Grequest_complete_c( request,&
@@ -2332,8 +2447,26 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_Wait_c
 
-! MPI_Session_get_errhandler NOT IMPLEMENTED in MPC
 
+function MPI_Session_get_errhandler_c( session,&
+errh,&
+ierror)&
+bind(C, name="mpi_session_get_errhandler_") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+! MPI_Session
+integer(c_int), intent(in) :: session     !MPI_Session session
+! MPI_Errhandler*
+integer(c_int), intent(out) :: errh     !MPI_Errhandler* errh
+! int
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Session_get_errhandler_c
 
 ! MPI_File_write_all NOT IMPLEMENTED in MPC
 
@@ -2440,8 +2573,30 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_Comm_create_errhandler_c
 
-! MPI_Session_get_pset_info NOT IMPLEMENTED in MPC
 
+function MPI_Session_get_pset_info_c( session,&
+pset_name,&
+info,&
+ierror, pset_name_len)&
+bind(C, name="mpi_session_get_pset_info_") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+! MPI_Session
+integer(c_int), intent(in) :: session     !MPI_Session session
+! char*
+type(C_PTR), intent(in) :: pset_name     !char* pset_name
+! MPI_Info*
+integer(c_int), intent(out) :: info     !MPI_Info* info
+! int
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int), value :: pset_name_len ! pset_name lenght
+
+end function MPI_Session_get_pset_info_c
 
 
 function MPI_Comm_connect_c( port_name,&
@@ -3057,8 +3212,23 @@ integer(c_int), value :: string_len ! string lenght
 
 end function MPI_Add_error_string_c
 
-! MPI_Session_finalize NOT IMPLEMENTED in MPC
 
+function MPI_Session_finalize_c( session,&
+ierror)&
+bind(C, name="mpi_session_finalize_") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+! MPI_Session*
+integer(c_int), intent(inout) :: session     !MPI_Session* session
+! int
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Session_finalize_c
 
 
 function MPI_Ssend_init_c( buf,&
@@ -3401,8 +3571,36 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_Comm_test_inter_c
 
-! MPI_Comm_create_from_group NOT IMPLEMENTED in MPC
 
+function MPI_Comm_create_from_group_c( group,&
+stringtag,&
+info,&
+errh,&
+newcomm,&
+ierror, stringtag_len)&
+bind(C, name="mpi_comm_create_from_group_") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+! MPI_Group
+integer(c_int), intent(in) :: group     !MPI_Group group
+! char*
+type(C_PTR), intent(in) :: stringtag     !char* stringtag
+! MPI_Info
+integer(c_int), intent(in) :: info     !MPI_Info info
+! MPI_Errhandler
+integer(c_int), intent(in) :: errh     !MPI_Errhandler errh
+! MPI_Comm*
+integer(c_int), intent(out) :: newcomm     !MPI_Comm* newcomm
+! int
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int), value :: stringtag_len ! stringtag lenght
+
+end function MPI_Comm_create_from_group_c
 
 
 function MPI_Intercomm_merge_c( intercomm,&
@@ -6176,8 +6374,36 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_Comm_rank_c
 
-! MPI_Session_get_nth_pset NOT IMPLEMENTED in MPC
 
+function MPI_Session_get_nth_pset_c( session,&
+info,&
+n,&
+pset_len,&
+pset_name,&
+ierror, pset_name_len)&
+bind(C, name="mpi_session_get_nth_pset_") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+! MPI_Session
+integer(c_int), intent(in) :: session     !MPI_Session session
+! MPI_Info
+integer(c_int), intent(in) :: info     !MPI_Info info
+! int
+integer(c_int), intent(in) :: n     !int n
+! int*
+integer(c_int), intent(inout) :: pset_len     !int* pset_len
+! char*
+type(C_PTR), intent(inout) :: pset_name     !char* pset_name
+! int
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int), value :: pset_name_len ! pset_name lenght
+
+end function MPI_Session_get_nth_pset_c
 
 
 function MPI_Cancel_c( request,&
@@ -6218,8 +6444,29 @@ integer(c_int) :: ret ! dummy
 
 end function MPI_Win_fence_c
 
-! MPI_Session_init NOT IMPLEMENTED in MPC
 
+function MPI_Session_init_c( info,&
+errh,&
+session,&
+ierror)&
+bind(C, name="mpi_session_init_") result(ret)
+
+use, intrinsic :: iso_c_binding
+use :: mpi_f08_constants
+use :: mpi_f08_ctypes
+implicit none
+
+! MPI_Info
+integer(c_int), intent(in) :: info     !MPI_Info info
+! MPI_Errhandler
+integer(c_int), intent(in) :: errh     !MPI_Errhandler errh
+! MPI_Session*
+integer(c_int), intent(out) :: session     !MPI_Session* session
+! int
+integer(c_int) :: ierror     !int ierror
+integer(c_int) :: ret ! dummy
+
+end function MPI_Session_init_c
 
 
 function MPI_Errhandler_free_c( errhandler,&

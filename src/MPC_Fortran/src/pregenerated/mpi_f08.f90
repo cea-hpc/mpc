@@ -51,6 +51,11 @@ module procedure MPI_Win_post_f08
 end interface
 
 
+interface MPI_Session_create_errhandler
+module procedure MPI_Session_create_errhandler_f08
+end interface
+
+
 interface MPI_Win_get_errhandler
 module procedure MPI_Win_get_errhandler_f08
 end interface
@@ -91,6 +96,11 @@ module procedure MPI_Error_class_f08
 end interface
 
 
+interface MPI_Session_get_num_psets
+module procedure MPI_Session_get_num_psets_f08
+end interface
+
+
 interface MPI_Free_mem
 module procedure MPI_Free_mem_f08
 end interface
@@ -123,6 +133,11 @@ end interface
 
 interface MPI_Intercomm_create
 module procedure MPI_Intercomm_create_f08
+end interface
+
+
+interface MPI_Group_from_session_pset
+module procedure MPI_Group_from_session_pset_f08
 end interface
 
 
@@ -161,8 +176,18 @@ module procedure MPI_Type_get_name_f08
 end interface
 
 
+interface MPI_Session_get_info
+module procedure MPI_Session_get_info_f08
+end interface
+
+
 interface MPI_Type_commit
 module procedure MPI_Type_commit_f08
+end interface
+
+
+interface MPI_Session_set_errhandler
+module procedure MPI_Session_set_errhandler_f08
 end interface
 
 
@@ -326,6 +351,11 @@ module procedure MPI_Abort_f08
 end interface
 
 
+interface MPI_Session_call_errhandler
+module procedure MPI_Session_call_errhandler_f08
+end interface
+
+
 interface MPI_Grequest_complete
 module procedure MPI_Grequest_complete_f08
 end interface
@@ -431,6 +461,11 @@ module procedure MPI_Wait_f08
 end interface
 
 
+interface MPI_Session_get_errhandler
+module procedure MPI_Session_get_errhandler_f08
+end interface
+
+
 interface MPI_Irsend
 module procedure MPI_Irsend_f08
 end interface
@@ -448,6 +483,11 @@ end interface
 
 interface MPI_Comm_create_errhandler
 module procedure MPI_Comm_create_errhandler_f08
+end interface
+
+
+interface MPI_Session_get_pset_info
+module procedure MPI_Session_get_pset_info_f08
 end interface
 
 
@@ -561,6 +601,11 @@ module procedure MPI_Add_error_string_f08
 end interface
 
 
+interface MPI_Session_finalize
+module procedure MPI_Session_finalize_f08
+end interface
+
+
 interface MPI_Ssend_init
 module procedure MPI_Ssend_init_f08
 end interface
@@ -618,6 +663,11 @@ end interface
 
 interface MPI_Comm_test_inter
 module procedure MPI_Comm_test_inter_f08
+end interface
+
+
+interface MPI_Comm_create_from_group
+module procedure MPI_Comm_create_from_group_f08
 end interface
 
 
@@ -1111,6 +1161,11 @@ module procedure MPI_Comm_rank_f08
 end interface
 
 
+interface MPI_Session_get_nth_pset
+module procedure MPI_Session_get_nth_pset_f08
+end interface
+
+
 interface MPI_Cancel
 module procedure MPI_Cancel_f08
 end interface
@@ -1118,6 +1173,11 @@ end interface
 
 interface MPI_Win_fence
 module procedure MPI_Win_fence_f08
+end interface
+
+
+interface MPI_Session_init
+module procedure MPI_Session_init_f08
 end interface
 
 
@@ -1144,6 +1204,7 @@ end interface
 private :: MPI_Start_f08
 private :: MPI_Imrecv_f08
 private :: MPI_Win_post_f08
+private :: MPI_Session_create_errhandler_f08
 private :: MPI_Win_get_errhandler_f08
 private :: MPI_Sendrecv_f08
 private :: MPI_Scan_f08
@@ -1152,6 +1213,7 @@ private :: MPI_Attr_delete_f08
 private :: MPI_Comm_get_attr_f08
 private :: MPI_Type_delete_attr_f08
 private :: MPI_Error_class_f08
+private :: MPI_Session_get_num_psets_f08
 private :: MPI_Free_mem_f08
 private :: MPI_Info_dup_f08
 private :: MPI_Type_lb_f08
@@ -1159,6 +1221,7 @@ private :: MPI_Cart_get_f08
 private :: MPI_Add_error_class_f08
 private :: MPI_Buffer_detach_f08
 private :: MPI_Intercomm_create_f08
+private :: MPI_Group_from_session_pset_f08
 private :: MPI_Allreduce_f08
 private :: MPI_Comm_create_keyval_f08
 private :: MPI_Ibsend_f08
@@ -1166,7 +1229,9 @@ private :: MPI_Comm_remote_size_f08
 private :: MPI_Type_contiguous_f08
 private :: MPI_Send_init_f08
 private :: MPI_Type_get_name_f08
+private :: MPI_Session_get_info_f08
 private :: MPI_Type_commit_f08
+private :: MPI_Session_set_errhandler_f08
 private :: MPI_Type_create_f90_integer_f08
 private :: MPI_Testany_f08
 private :: MPI_Type_extent_f08
@@ -1199,6 +1264,7 @@ private :: MPI_Cart_coords_f08
 private :: MPI_Issend_f08
 private :: MPI_Rsend_f08
 private :: MPI_Abort_f08
+private :: MPI_Session_call_errhandler_f08
 private :: MPI_Grequest_complete_f08
 private :: MPI_Pack_f08
 private :: MPI_Win_set_attr_f08
@@ -1220,10 +1286,12 @@ private :: MPI_Win_get_name_f08
 private :: MPI_Type_create_f90_real_f08
 private :: MPI_Win_create_keyval_f08
 private :: MPI_Wait_f08
+private :: MPI_Session_get_errhandler_f08
 private :: MPI_Irsend_f08
 private :: MPI_Get_version_f08
 private :: MPI_File_call_errhandler_f08
 private :: MPI_Comm_create_errhandler_f08
+private :: MPI_Session_get_pset_info_f08
 private :: MPI_Comm_connect_f08
 private :: MPI_Group_compare_f08
 private :: MPI_Address_f08
@@ -1246,6 +1314,7 @@ private :: MPI_Comm_set_attr_f08
 private :: MPI_Comm_free_keyval_f08
 private :: MPI_Op_create_f08
 private :: MPI_Add_error_string_f08
+private :: MPI_Session_finalize_f08
 private :: MPI_Ssend_init_f08
 private :: MPI_Rsend_init_f08
 private :: MPI_Info_free_f08
@@ -1258,6 +1327,7 @@ private :: MPI_Errhandler_get_f08
 private :: MPI_Pack_size_f08
 private :: MPI_Comm_call_errhandler_f08
 private :: MPI_Comm_test_inter_f08
+private :: MPI_Comm_create_from_group_f08
 private :: MPI_Intercomm_merge_f08
 private :: MPI_Win_complete_f08
 private :: MPI_Pack_external_f08
@@ -1356,8 +1426,10 @@ private :: MPI_Group_free_f08
 private :: MPI_Type_create_keyval_f08
 private :: MPI_Graphdims_get_f08
 private :: MPI_Comm_rank_f08
+private :: MPI_Session_get_nth_pset_f08
 private :: MPI_Cancel_f08
 private :: MPI_Win_fence_f08
+private :: MPI_Session_init_f08
 private :: MPI_Errhandler_free_f08
 private :: MPI_Win_test_f08
 private :: MPI_Type_match_size_f08
@@ -1497,8 +1569,43 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Win_post_f08
 
-! MPI_Session_create_errhandler NOT IMPLEMENTED in MPC
 
+subroutine MPI_Session_create_errhandler_f08( errhfn,&
+errh,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Session_errhandler_function), intent(in) :: errhfn
+type(MPI_Errhandler), intent(out) :: errh
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Session_errhandler_function*
+type(c_ptr) :: errhfn_c     !MPI_Session_errhandler_function* errhfn
+! MPI_Errhandler*
+integer(c_int) :: errh_c     !MPI_Errhandler* errh
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+errhfn_c = errhfn%val
+
+ret = MPI_Session_create_errhandler_c(errhfn_c,&
+errh_c,&
+ierror_c)
+
+errh%val = errh_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Session_create_errhandler_f08
 
 
 subroutine MPI_Win_get_errhandler_f08( win,&
@@ -1900,8 +2007,49 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Error_class_f08
 
-! MPI_Session_get_num_psets NOT IMPLEMENTED in MPC
 
+subroutine MPI_Session_get_num_psets_f08( session,&
+info,&
+npset_names,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Session), intent(in) :: session
+type(MPI_Info), intent(in) :: info
+integer, intent(out) :: npset_names
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Session
+integer(c_int) :: session_c     !MPI_Session session
+! MPI_Info
+integer(c_int) :: info_c     !MPI_Info info
+! int*
+integer(c_int) :: npset_names_c     !int* npset_names
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+session_c = session%val
+info_c = info%val
+
+ret = MPI_Session_get_num_psets_c(session_c,&
+info_c,&
+npset_names_c,&
+ierror_c)
+
+npset_names = npset_names_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Session_get_num_psets_f08
 
 
 subroutine MPI_Free_mem_f08( base,&
@@ -2206,8 +2354,52 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Intercomm_create_f08
 
-! MPI_Group_from_session_pset NOT IMPLEMENTED in MPC
 
+subroutine MPI_Group_from_session_pset_f08( session,&
+pset_name,&
+newgroup,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Session), intent(in) :: session
+character(len=*), target, intent(in) :: pset_name
+integer(c_int) :: pset_name_len
+type(MPI_Group), intent(out) :: newgroup
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Session
+integer(c_int) :: session_c     !MPI_Session session
+! char*
+type(C_PTR) :: pset_name_c     !char* pset_name
+! MPI_Group*
+integer(c_int) :: newgroup_c     !MPI_Group* newgroup
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+session_c = session%val
+pset_name_c = c_loc(pset_name)
+pset_name_len = LEN(pset_name)
+
+ret = MPI_Group_from_session_pset_c(session_c,&
+pset_name_c,&
+newgroup_c,&
+ierror_c,&
+pset_name_len)
+
+newgroup%val = newgroup_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Group_from_session_pset_f08
 
 ! MPI_File_iread_at NOT IMPLEMENTED in MPC
 
@@ -2578,8 +2770,43 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Type_get_name_f08
 
-! MPI_Session_get_info NOT IMPLEMENTED in MPC
 
+subroutine MPI_Session_get_info_f08( session,&
+infoused,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Session), intent(in) :: session
+type(MPI_Info), intent(out) :: infoused
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Session
+integer(c_int) :: session_c     !MPI_Session session
+! MPI_Info*
+integer(c_int) :: infoused_c     !MPI_Info* infoused
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+session_c = session%val
+
+ret = MPI_Session_get_info_c(session_c,&
+infoused_c,&
+ierror_c)
+
+infoused%val = infoused_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Session_get_info_f08
 
 
 subroutine MPI_Type_commit_f08( type,&
@@ -2614,8 +2841,43 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Type_commit_f08
 
-! MPI_Session_set_errhandler NOT IMPLEMENTED in MPC
 
+subroutine MPI_Session_set_errhandler_f08( session,&
+errh,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Session), intent(in) :: session
+type(MPI_Errhandler), intent(in) :: errh
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Session
+integer(c_int) :: session_c     !MPI_Session session
+! MPI_Errhandler
+integer(c_int) :: errh_c     !MPI_Errhandler errh
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+session_c = session%val
+errh_c = errh%val
+
+ret = MPI_Session_set_errhandler_c(session_c,&
+errh_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Session_set_errhandler_f08
 
 
 subroutine MPI_Type_create_f90_integer_f08( r,&
@@ -4233,8 +4495,43 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Abort_f08
 
-! MPI_Session_call_errhandler NOT IMPLEMENTED in MPC
 
+subroutine MPI_Session_call_errhandler_f08( session,&
+errorcode,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Session), intent(in) :: session
+integer, intent(in) :: errorcode
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Session
+integer(c_int) :: session_c     !MPI_Session session
+! int
+integer(c_int) :: errorcode_c     !int errorcode
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+session_c = session%val
+errorcode_c = errorcode
+
+ret = MPI_Session_call_errhandler_c(session_c,&
+errorcode_c,&
+ierror_c)
+
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Session_call_errhandler_f08
 
 
 subroutine MPI_Grequest_complete_f08( request,&
@@ -5189,8 +5486,43 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Wait_f08
 
-! MPI_Session_get_errhandler NOT IMPLEMENTED in MPC
 
+subroutine MPI_Session_get_errhandler_f08( session,&
+errh,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Session), intent(in) :: session
+type(MPI_Errhandler), intent(out) :: errh
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Session
+integer(c_int) :: session_c     !MPI_Session session
+! MPI_Errhandler*
+integer(c_int) :: errh_c     !MPI_Errhandler* errh
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+session_c = session%val
+
+ret = MPI_Session_get_errhandler_c(session_c,&
+errh_c,&
+ierror_c)
+
+errh%val = errh_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Session_get_errhandler_f08
 
 ! MPI_File_write_all NOT IMPLEMENTED in MPC
 
@@ -5380,8 +5712,52 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Comm_create_errhandler_f08
 
-! MPI_Session_get_pset_info NOT IMPLEMENTED in MPC
 
+subroutine MPI_Session_get_pset_info_f08( session,&
+pset_name,&
+info,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Session), intent(in) :: session
+character(len=*), target, intent(in) :: pset_name
+integer(c_int) :: pset_name_len
+type(MPI_Info), intent(out) :: info
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Session
+integer(c_int) :: session_c     !MPI_Session session
+! char*
+type(C_PTR) :: pset_name_c     !char* pset_name
+! MPI_Info*
+integer(c_int) :: info_c     !MPI_Info* info
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+session_c = session%val
+pset_name_c = c_loc(pset_name)
+pset_name_len = LEN(pset_name)
+
+ret = MPI_Session_get_pset_info_c(session_c,&
+pset_name_c,&
+info_c,&
+ierror_c,&
+pset_name_len)
+
+info%val = info_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Session_get_pset_info_f08
 
 
 subroutine MPI_Comm_connect_f08( port_name,&
@@ -6381,8 +6757,38 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Add_error_string_f08
 
-! MPI_Session_finalize NOT IMPLEMENTED in MPC
 
+subroutine MPI_Session_finalize_f08( session,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Session), intent(inout) :: session
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Session*
+integer(c_int) :: session_c     !MPI_Session* session
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+session_c = session%val
+
+ret = MPI_Session_finalize_c(session_c,&
+ierror_c)
+
+session%val = session_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Session_finalize_f08
 
 
 subroutine MPI_Ssend_init_f08( buf,&
@@ -6947,8 +7353,64 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Comm_test_inter_f08
 
-! MPI_Comm_create_from_group NOT IMPLEMENTED in MPC
 
+subroutine MPI_Comm_create_from_group_f08( group,&
+stringtag,&
+info,&
+errh,&
+newcomm,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Group), intent(in) :: group
+character(len=*), target, intent(in) :: stringtag
+integer(c_int) :: stringtag_len
+type(MPI_Info), intent(in) :: info
+type(MPI_Errhandler), intent(in) :: errh
+type(MPI_Comm), intent(out) :: newcomm
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Group
+integer(c_int) :: group_c     !MPI_Group group
+! char*
+type(C_PTR) :: stringtag_c     !char* stringtag
+! MPI_Info
+integer(c_int) :: info_c     !MPI_Info info
+! MPI_Errhandler
+integer(c_int) :: errh_c     !MPI_Errhandler errh
+! MPI_Comm*
+integer(c_int) :: newcomm_c     !MPI_Comm* newcomm
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+group_c = group%val
+stringtag_c = c_loc(stringtag)
+stringtag_len = LEN(stringtag)
+info_c = info%val
+errh_c = errh%val
+
+ret = MPI_Comm_create_from_group_c(group_c,&
+stringtag_c,&
+info_c,&
+errh_c,&
+newcomm_c,&
+ierror_c,&
+stringtag_len)
+
+newcomm%val = newcomm_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Comm_create_from_group_f08
 
 
 subroutine MPI_Intercomm_merge_f08( intercomm,&
@@ -11790,8 +12252,66 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Comm_rank_f08
 
-! MPI_Session_get_nth_pset NOT IMPLEMENTED in MPC
 
+subroutine MPI_Session_get_nth_pset_f08( session,&
+info,&
+n,&
+pset_len,&
+pset_name,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Session), intent(in) :: session
+type(MPI_Info), intent(in) :: info
+integer, intent(in) :: n
+integer, intent(inout) :: pset_len
+character(len=*), target, intent(inout) :: pset_name
+integer(c_int) :: pset_name_len
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Session
+integer(c_int) :: session_c     !MPI_Session session
+! MPI_Info
+integer(c_int) :: info_c     !MPI_Info info
+! int
+integer(c_int) :: n_c     !int n
+! int*
+integer(c_int) :: pset_len_c     !int* pset_len
+! char*
+type(C_PTR) :: pset_name_c     !char* pset_name
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+session_c = session%val
+info_c = info%val
+n_c = n
+pset_len_c = pset_len
+pset_name_c = c_loc(pset_name)
+pset_name_len = LEN(pset_name)
+
+ret = MPI_Session_get_nth_pset_c(session_c,&
+info_c,&
+n_c,&
+pset_len_c,&
+pset_name_c,&
+ierror_c,&
+pset_name_len)
+
+pset_len = pset_len_c
+!FAIL no conversion to char for pset_name
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Session_get_nth_pset_f08
 
 
 subroutine MPI_Cancel_f08( request,&
@@ -11864,8 +12384,49 @@ if( present(ierror)) ierror = ierror_c
 
 end subroutine MPI_Win_fence_f08
 
-! MPI_Session_init NOT IMPLEMENTED in MPC
 
+subroutine MPI_Session_init_f08( info,&
+errh,&
+session,&
+ierror)
+
+use :: mpi_f08_ctypes
+use :: mpi_f08_types
+use :: mpi_f08_c
+
+implicit none
+
+type(MPI_Info), intent(in) :: info
+type(MPI_Errhandler), intent(in) :: errh
+type(MPI_Session), intent(out) :: session
+integer, optional, intent(out) :: ierror
+
+
+! MPI_Info
+integer(c_int) :: info_c     !MPI_Info info
+! MPI_Errhandler
+integer(c_int) :: errh_c     !MPI_Errhandler errh
+! MPI_Session*
+integer(c_int) :: session_c     !MPI_Session* session
+! int
+integer(c_int) :: ierror_c     !int ierror
+integer(c_int) :: ret ! dummy
+integer(c_int) ::  n_ ! for array expansion
+integer(c_int) ::  r_ ! for comm array expansion
+
+info_c = info%val
+errh_c = errh%val
+
+ret = MPI_Session_init_c(info_c,&
+errh_c,&
+session_c,&
+ierror_c)
+
+session%val = session_c
+
+if( present(ierror)) ierror = ierror_c
+
+end subroutine MPI_Session_init_f08
 
 
 subroutine MPI_Errhandler_free_f08( errhandler,&

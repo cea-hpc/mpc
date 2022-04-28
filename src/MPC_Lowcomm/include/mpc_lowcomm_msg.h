@@ -274,6 +274,39 @@ typedef volatile struct mpc_lowcomm_msg_list_s
 	volatile struct mpc_lowcomm_msg_list_s *prev, *next;
 } mpc_lowcomm_msg_list_t;
 
+typedef struct
+{
+	mpc_common_spinlock_t            lock;
+	mpc_lowcomm_msg_list_t *list;
+} mpc_lowcomm_ptp_list_incomming_t;
+
+typedef struct
+{
+	volatile mpc_lowcomm_msg_list_t *list;
+} mpc_lowcomm_ptp_list_pending_t;
+
+typedef struct
+{
+	mpc_common_spinlock_t         pending_lock;
+	char                          pad[256];
+	/* Messages are posted to the 'incoming' lists before being merged to the pending list. */
+	mpc_lowcomm_ptp_list_incomming_t incomming_send;
+	mpc_lowcomm_ptp_list_incomming_t incomming_recv;
+	/* Messages in the 'pending' lists are waiting to be matched */
+    mpc_lowcomm_ptp_list_pending_t   pending_send;
+	mpc_lowcomm_ptp_list_pending_t   pending_recv;
+} mpc_lowcomm_ptp_message_lists_t;
+
+/**
+ * @brief Get Message Lists for a given MPI process
+ * 
+ * @param rank rank to query for (in CW)
+ * @param lists output array to hold list (number of local processes)
+ * @param list_count IN max number of processes OUT actual number of processes
+ * @return int MPC_LOWCOMM_SUCCESS if all OK MPC_LOWCOMM_ERR_TRUNCATE if array was too small
+ */
+int _mpc_lowcomm_comm_get_lists(int rank, mpc_lowcomm_ptp_message_lists_t **lists, int *list_count);
+
 /************************************************************************/
 /* Message Content                                                      */
 /************************************************************************/

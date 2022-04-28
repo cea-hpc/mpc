@@ -1119,6 +1119,7 @@ __task_process_mpc_dep_entry(mpc_omp_task_t * task, void * addr)
     mpc_omp_instance_t * instance = thread->instance;
     assert(instance);
     instance->t_hash += t_hash;
+    ++instance->ndeps;
 
     if (entry == NULL)
     {
@@ -1143,6 +1144,9 @@ __task_process_mpc_dep(
         void * addr,
         mpc_omp_task_dep_type_t type)
 {
+    assert(type > MPC_OMP_TASK_DEP_NONE);
+    assert(type < MPC_OMP_TASK_DEP_COUNT);
+
     /* Retrieve entry for the given address, or generate a new one.
      * Also performon redundancy check */
     mpc_omp_task_dep_htable_entry_t * entry = __task_process_mpc_dep_entry(task, addr);
@@ -1432,8 +1436,8 @@ __task_finalize_deps(mpc_omp_task_t * task)
 
 
 /** called whenever a task completed it execution */
-static void
-__task_finalize(mpc_omp_task_t * task)
+void
+_mpc_omp_task_finalize(mpc_omp_task_t * task)
 {
     assert(task->statuses.completed || task->statuses.cancelled);
 
@@ -2909,7 +2913,7 @@ __task_run_as_function(mpc_omp_task_t * task)
     ___thread_bind_task(thread, curr, &(curr->icvs));
 
     /* delete the task */
-    __task_finalize(task);
+    _mpc_omp_task_finalize(task);
 }
 
 # if MPC_OMP_TASK_COMPILE_FIBER
@@ -2994,7 +2998,7 @@ __task_run_with_fiber(mpc_omp_task_t * task)
 
     if (task->statuses.completed)
     {
-        __task_finalize(task);
+        _mpc_omp_task_finalize(task);
     }
     else
     {
@@ -3037,7 +3041,7 @@ __task_run(mpc_omp_task_t * task)
             && task->taskgroup->last_task_uid < task->uid)
     {
         task->statuses.cancelled = true;
-        __task_finalize(task);
+        _mpc_omp_task_finalize(task);
         return ;
     }
 
@@ -3406,8 +3410,8 @@ _mpc_omp_task_init(
     /* reference the task */
     _mpc_omp_taskgroup_add_task(task);
     __task_ref_parallel_region();
-    __task_ref_parent_task(task->parent); /* __task_finalize */
-    __task_ref(task); /* __task_finalize */
+    __task_ref_parent_task(task->parent); /* _mpc_omp_task_finalize */
+    __task_ref(task); /* _mpc_omp_task_finalize */
 
     /* extra parameters given to the mpc thread for this task */
 # if MPC_OMP_TASK_COMPILE_TRACE
@@ -3869,8 +3873,7 @@ void
 _mpc_omp_task_tree_deinit(mpc_omp_thread_t * thread)
 {
     //mpc_omp_instance_t * instance = (mpc_omp_instance_t *) thread->instance;
-    //assert(instance);
-    //printf("t_total=%lf, t_deps=%lf, t_hash=%lf\n", instance->t_total, instance->t_deps, instance->t_hash);
+    //printf("t_total=%lf, t_deps=%lf, t_hash=%lf, collision=%d, resize=%d, ndeps=%lu\n", instance->t_total, instance->t_deps, instance->t_hash, thread->hash_collision, thread->hash_resize, instance->ndeps);
 
     assert(thread);
     __thread_task_deinit_initial(thread);

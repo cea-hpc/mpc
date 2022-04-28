@@ -89,7 +89,7 @@ void mpc_lowcomm_rdma_window_release_ht()
 
 	sctk_free(win);
 
-	MPC_HT_ITER_END
+	MPC_HT_ITER_END(&___window_hash_table)
 
 	mpc_common_hashtable_release(&___window_hash_table);
 }
