@@ -27,7 +27,11 @@ AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Config/include/ -I$(abs_top_srcdir)/s
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Topology/include/ -I$(abs_top_srcdir)/src/MPC_Lowcomm/include/
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Launch/include/ -I$(abs_top_builddir)/src/include/
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/
-AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_MPI/src/ -I$(abs_top_srcdir)/src/MPC_MPI/include/
+
+if MPC_MPI_ENABLED
+AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_MPI/src/ -I$(abs_top_srcdir)/src/MPC_MPI/include/  -I$(abs_top_builddir)/src/MPC_IO/include/
+endif
+
 
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_OpenMP/include/ $(VMEM_CFLAGS) $(OPA_CFLAGS)
 

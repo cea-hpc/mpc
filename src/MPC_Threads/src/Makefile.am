@@ -32,7 +32,7 @@ endif
 
 if MPC_MPI_ENABLED
         AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_MPI/include/ -I$(abs_top_srcdir)/src/MPC_MPI/src/
-        AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Lowcomm/include/
+        AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Lowcomm/include/  -I$(abs_top_builddir)/src/MPC_IO/include/
 endif
 
 if MPC_OPENMP_ENABLED
