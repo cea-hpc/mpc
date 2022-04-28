@@ -3600,7 +3600,10 @@ static void __initialize_drivers()
 {
 	_mpc_lowcomm_monitor_setup();
 
-	sctk_net_init_driver(mpc_common_get_flags()->network_driver_name);
+	if(mpc_common_get_process_count() > 1)
+	{
+		sctk_net_init_driver(mpc_common_get_flags()->network_driver_name);
+	}
 
 	__init_request_null();
 
