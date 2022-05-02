@@ -204,8 +204,10 @@ static inline int __mpc_pmi_get_process_rank( int *rank )
 	uint32_t usize;
 	*size = -1;
 	pmix_status_t rc = __pmix_get_attribute(0, PMIX_JOB_SIZE, PMIX_UINT32, &usize);
-	PMI_CHECK_RC( rc, "__pmix_get_attribute" );
-	*size = usize;
+    if (rc != PMI_SUCCESS)
+    {
+        *size = usize;
+    }
 	PMI_RETURN( rc );
 #else
 	int rc;
@@ -391,6 +393,7 @@ static inline void __set_ctx_to_serial(struct mpc_pmi_context *ctx)
 	ctx->node_rank = 0;
 	ctx->node_count = 1;
 	ctx->local_process_count = 1;
+	ctx->process_count = 1;
 
 	/* Now proceed to add a single node to process layout */
 	struct mpc_launch_pmi_process_layout *tmp = ( struct mpc_launch_pmi_process_layout * ) sctk_malloc(	sizeof( struct mpc_launch_pmi_process_layout ) );
@@ -728,6 +731,9 @@ int mpc_launch_pmi_init()
 	/* In this case PMI_Init instructed to skip init */
 	if(unreachable)
 	{
+        mpc_common_set_process_rank( pmi_context.process_rank );
+        mpc_common_set_process_count( pmi_context.process_count );
+        mpc_common_get_flags()->process_number = pmi_context.process_count;
 		PMI_RETURN( rc );
 	}
 
