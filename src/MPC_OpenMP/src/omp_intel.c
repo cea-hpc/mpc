@@ -2659,6 +2659,21 @@ __kmpc_omp_task(__UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid, kmp_task
     assert(thread);
 
 	mpc_omp_task_t * task = (mpc_omp_task_t *) ((char *)icc_task - sizeof(mpc_omp_task_t));
+
+    /* LLVM has a weird behavior where it calls both
+     *  '__kmpc_omp_task' and '__kmpc_omp_task_with_deps'
+     * if a task is untied and has dependences.
+     * In such case, the task was already processed in the
+     * previous call to '__kmpc_omp_task_with_deps'
+     *
+     * Note that LLVM does not even support untied tasks, since
+     * tasks cannot migrate from threads. W.T.F ?
+     */
+    if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_UNTIED)
+        && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_DEPEND))
+    {
+        return 0;
+    }
     return __kmp_task_process(task, NULL);
 }
 
