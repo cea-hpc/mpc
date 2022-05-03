@@ -2647,9 +2647,15 @@ __kmp_task_process(mpc_omp_task_t * task, void ** depend)
     return r;
 }
 
+static void
+__kmp_omp_task_wrapper(void * kmp_task_ptr)
+{
+    kmp_task_t * kmp_task = (kmp_task_t *) kmp_task_ptr;
+    kmp_task->routine(0, kmp_task);
+}
 
 kmp_int32
-__kmpc_omp_task(__UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid, kmp_task_t * icc_task)
+__kmpc_omp_task(__UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid, kmp_task_t * kmp_task)
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
@@ -2658,8 +2664,7 @@ __kmpc_omp_task(__UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid, kmp_task
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
     assert(thread);
 
-	mpc_omp_task_t * task = (mpc_omp_task_t *) ((char *)icc_task - sizeof(mpc_omp_task_t));
-    return __kmp_task_process(task, NULL);
+	mpc_omp_task_t * task = (mpc_omp_task_t *) ((char *)kmp_task - sizeof(mpc_omp_task_t));
 
     /* LLVM has a weird behavior where it calls both
      *  '__kmpc_omp_task' and '__kmpc_omp_task_with_deps'
@@ -2673,16 +2678,10 @@ __kmpc_omp_task(__UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid, kmp_task
     if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_UNTIED)
             && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_DEPEND))
     {
-        return 0;
+        __kmp_omp_task_wrapper(kmp_task);
+        return 1;
     }
     return __kmp_task_process(task, NULL);
-}
-
-void
-__kmp_omp_task_wrapper(void * kmp_task_ptr)
-{
-    kmp_task_t * kmp_task = (kmp_task_t *) kmp_task_ptr;
-    kmp_task->routine(0, kmp_task);
 }
 
 static mpc_omp_task_property_t

@@ -363,7 +363,6 @@ struct kmp_taskdata   /* aligned during dynamic allocation       */
 typedef struct kmp_taskdata kmp_taskdata_t;
 
 kmp_int32 __kmpc_omp_task( ident_t *, kmp_int32, kmp_task_t * );
-void __kmp_omp_task_wrapper( void * );
 kmp_task_t *__kmpc_omp_task_alloc( ident_t *, kmp_int32, kmp_int32, size_t,
                                    size_t, kmp_routine_entry_t );
 void __kmpc_omp_task_begin_if0( ident_t *, kmp_int32, kmp_task_t * );
