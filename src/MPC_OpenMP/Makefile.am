@@ -25,6 +25,9 @@ mpc_headerdir=$(pkgincludedir)
 mpc_header_HEADERS= ./include/omp_abi.h                 \
                     ./include/mpc_omp_abi.h             \
 					./include/mpc_omp.h                 \
+					./include/mpc_omp_interop_cuda.h    \
+					./include/mpc_omp_interop_mpi.h     \
+					./include/mpc_omp.h                 \
                     ./include/mpc_omp_task_property.h   \
                     ./include/mpc_omp_task_trace.h      \
                     ./include/mpc_omp_task_label.h      \
