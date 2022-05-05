@@ -116,11 +116,12 @@ static inline void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_
 	SCTK_MSG_DEST_TASK_SET       ( net_msg ,  mpc_common_get_process_rank());
 	SCTK_MSG_COMMUNICATOR_ID_SET ( net_msg ,  comm_id);
 	SCTK_MSG_TAG_SET             ( net_msg ,  match.data.tag);
-	SCTK_MSG_NUMBER_SET          ( net_msg ,  match.data.uid);
+	SCTK_MSG_NUMBER_SET          ( net_msg ,  ((sctk_ptl_imm_data_t)ev.hdr_data).std.msg_seq_nb);
 	SCTK_MSG_MATCH_SET           ( net_msg ,  0);
 	SCTK_MSG_SPECIFIC_CLASS_SET  ( net_msg ,  match.data.type);
 	SCTK_MSG_SIZE_SET            ( net_msg ,  ev.mlength);
 	SCTK_MSG_COMPLETION_FLAG_SET ( net_msg ,  NULL);
+	SCTK_MSG_USE_MESSAGE_NUMBERING_SET(net_msg, 1);
 
 
 	/* save the Portals context in the tail

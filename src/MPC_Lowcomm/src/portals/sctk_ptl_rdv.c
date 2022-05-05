@@ -223,6 +223,7 @@ static inline void sctk_ptl_rdv_reply_message(sctk_rail_info_t* rail, sctk_ptl_e
 	SCTK_MSG_MATCH_SET           ( net_msg ,  0);
 	SCTK_MSG_SIZE_SET            ( net_msg ,  ev.mlength);
 	SCTK_MSG_COMPLETION_FLAG_SET ( net_msg ,  NULL);
+	SCTK_MSG_USE_MESSAGE_NUMBERING_SET(net_msg, 1);
 
 	/* save the Portals context in the tail
 	 * Whatever the origin, the user_ptr here is the one attached to the PRIORITY one

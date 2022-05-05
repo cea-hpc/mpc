@@ -62,6 +62,8 @@ static inline void sctk_ptl_cm_recv_message(sctk_rail_info_t* rail, sctk_ptl_eve
 	mpc_lowcomm_ptp_message_t* net_msg = sctk_malloc(sizeof(mpc_lowcomm_ptp_message_t));
 	sctk_ptl_matchbits_t match         = (sctk_ptl_matchbits_t) ev.match_bits;
 	sctk_ptl_imm_data_t hdr ;
+	sctk_ptl_local_data_t* ptr         = (sctk_ptl_local_data_t*) ev.user_ptr;
+
 
 	/* sanity checks */
 	assert(rail);
@@ -77,11 +79,12 @@ static inline void sctk_ptl_cm_recv_message(sctk_rail_info_t* rail, sctk_ptl_eve
 	SCTK_MSG_DEST_TASK_SET       ( net_msg ,  -1);
 	SCTK_MSG_COMMUNICATOR_ID_SET ( net_msg ,  0);
 	SCTK_MSG_TAG_SET             ( net_msg ,  match.data.tag);
-	SCTK_MSG_NUMBER_SET          ( net_msg ,  match.data.uid);
+	SCTK_MSG_NUMBER_SET          ( net_msg ,  ptr->msg_seq_nb);
 	SCTK_MSG_SPECIFIC_CLASS_SET  ( net_msg ,  match.data.type);
 	SCTK_MSG_MATCH_SET           ( net_msg ,  0);
 	SCTK_MSG_SIZE_SET            ( net_msg ,  ev.mlength);
 	SCTK_MSG_COMPLETION_FLAG_SET ( net_msg ,  NULL);
+	SCTK_MSG_USE_MESSAGE_NUMBERING_SET(net_msg, 1);
 
 	/* de-serialise hdr_data */
 	hdr                                       = (sctk_ptl_imm_data_t)ev.hdr_data;
