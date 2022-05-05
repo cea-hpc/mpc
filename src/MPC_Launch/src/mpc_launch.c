@@ -634,7 +634,6 @@ static void __unpack_arguments()
 			}
 
 			__parse_argument(token);
-			mpc_common_debug_info("mpcrun argument %d: %s", j, token);
 		}
 	}
 }

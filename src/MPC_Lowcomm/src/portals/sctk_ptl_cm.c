@@ -84,7 +84,6 @@ static inline void sctk_ptl_cm_recv_message(sctk_rail_info_t* rail, sctk_ptl_eve
 	SCTK_MSG_MATCH_SET           ( net_msg ,  0);
 	SCTK_MSG_SIZE_SET            ( net_msg ,  ev.mlength);
 	SCTK_MSG_COMPLETION_FLAG_SET ( net_msg ,  NULL);
-	SCTK_MSG_USE_MESSAGE_NUMBERING_SET(net_msg, 1);
 
 	/* de-serialise hdr_data */
 	hdr                                       = (sctk_ptl_imm_data_t)ev.hdr_data;
