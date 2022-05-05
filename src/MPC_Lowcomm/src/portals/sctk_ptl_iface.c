@@ -291,6 +291,7 @@ mpc_lowcomm_communicator_id_t sctk_ptl_pte_idx_to_comm_id(sctk_ptl_rail_info_t* 
 	return *ret;
 }
 
+
 /**
  * Dynamically create a new Portals entry.
  * \param[in] srail the Portals rail
@@ -331,7 +332,42 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, ptl_p
 	__pte_idx_register(srail, pte->idx, key);
 
 	srail->nb_entries++;
+	mpc_common_debug_error("CREATING comm %d", srail->nb_entries);
+
 }
+
+static inline void __pte_release(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
+{
+	if(sctk_ptl_offcoll_enabled(srail))
+		sctk_ptl_offcoll_pte_fini(srail, pte);
+	
+	sctk_ptl_chk(PtlEQFree(
+		pte->eq       /* the EQ handler */
+	));
+
+	sctk_ptl_chk(PtlPTFree(
+		srail->iface,     /* the NI handler */
+		pte->idx      /* the PTE to destroy */
+	));	
+
+	srail->nb_entries--;
+}
+
+void sctk_ptl_pte_release(sctk_ptl_rail_info_t* srail, ptl_pt_index_t requested_index)
+{
+	sctk_ptl_pte_t* cur = mpc_common_hashtable_get(&srail->pt_table, requested_index);
+
+	if(!cur)
+	{
+		return;
+	}
+
+	mpc_common_hashtable_delete(&srail->pt_table, requested_index);
+
+	/* Remove the PTE */
+	__pte_release(srail, cur);
+}
+
 
 
 /**
@@ -348,26 +384,17 @@ void sctk_ptl_software_fini(sctk_ptl_rail_info_t* srail)
 	void* base_ptr = NULL;
 
 	/* don't want to hang the NIC */
-	return;
+	//return;
 
 	for(i = 0; i < table_dims; i++)
 	{
 		sctk_ptl_pte_t* cur = mpc_common_hashtable_get(&srail->pt_table, i);
 
-		if(sctk_ptl_offcoll_enabled(srail))
-			sctk_ptl_offcoll_pte_fini(srail, cur);
-		
+
 		if(i==0)
 			base_ptr = cur;
 
-		sctk_ptl_chk(PtlEQFree(
-			cur->eq       /* the EQ handler */
-		));
-
-		sctk_ptl_chk(PtlPTFree(
-			srail->iface,     /* the NI handler */
-			cur->idx      /* the PTE to destroy */
-		));
+		__pte_release(srail, cur);
 	}
 
 	sctk_ptl_chk(PtlEQFree(

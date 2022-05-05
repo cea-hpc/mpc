@@ -94,6 +94,7 @@ void sctk_ptl_software_fini(sctk_ptl_rail_info_t*);
 
 /* Portals table management */
 void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, ptl_pt_index_t requested_index, size_t key);
+void sctk_ptl_pte_release(sctk_ptl_rail_info_t* srail, ptl_pt_index_t requested_index);
 mpc_lowcomm_communicator_id_t sctk_ptl_pte_idx_to_comm_id(sctk_ptl_rail_info_t* srail, ptl_pt_index_t idx);
 
 /* ME management */

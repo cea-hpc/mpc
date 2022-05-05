@@ -515,6 +515,24 @@ void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, mpc_lowcomm_communicato
 	}
 }
 
+
+/**
+ * Notify the driver that a communicator has been deleted.
+ * Will trigger the creation of new Portals entry.
+ * \param[in] srail the Portals rail
+ * \param[in] com_idx the communicator ID
+ * \param[in] comm_size the number of processes in that communicator
+ */
+void sctk_ptl_comm_delete(sctk_ptl_rail_info_t* srail, mpc_lowcomm_communicator_id_t comm_idx, size_t comm_size)
+{
+	UNUSED(comm_size);
+	if(SCTK_PTL_PTE_EXIST(srail->pt_table, comm_idx))
+	{
+		sctk_ptl_pte_release(srail, comm_idx);
+	}
+}
+
+
 /**
  * @brief probe a message described by its header.
  * 

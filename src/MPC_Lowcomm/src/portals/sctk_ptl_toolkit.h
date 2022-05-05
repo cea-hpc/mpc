@@ -37,6 +37,7 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, size_t threshold);
 void sctk_ptl_free_memory(void* msg);
 void sctk_ptl_message_copy(mpc_lowcomm_ptp_message_content_to_copy_t);
 void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, mpc_lowcomm_communicator_id_t comm_idx, size_t comm_size);
+void sctk_ptl_comm_delete(sctk_ptl_rail_info_t* srail, mpc_lowcomm_communicator_id_t comm_idx, size_t comm_size);
 void sctk_ptl_init_interface(sctk_rail_info_t* rail);
 void sctk_ptl_fini_interface(sctk_rail_info_t* rail);
 

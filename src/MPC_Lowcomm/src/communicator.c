@@ -979,6 +979,8 @@ static inline void __communicator_id_release(mpc_lowcomm_communicator_t comm)
 	uint64_t key = comm->id;
 	uint64_t linear_key = comm->linear_comm_id;
 
+	_mpc_lowcomm_multirail_notify_delete_comm(comm->id, mpc_lowcomm_communicator_size(comm));
+
 	mpc_common_hashtable_delete(&__id_factory.id_table, key);
 	mpc_common_hashtable_delete(&__id_factory.int_id_table, linear_key);
 	mpc_common_hashtable_delete(&__id_factory.comm_table, (uint64_t)comm);
@@ -1242,11 +1244,12 @@ int mpc_lowcomm_communicator_free(mpc_lowcomm_communicator_t *pcomm)
 
 	int current_refc = OPA_fetch_and_incr_int(&comm->free_count);
 
-	//mpc_common_debug_warning("%d / %d", OPA_load_int(&comm->free_count), local_task_count);
+	mpc_common_nodebug("%d / %d", current_refc, local_task_count);
 
-	if( current_refc == local_task_count)
+	if( (current_refc + 1) == local_task_count)
 	{
 		int refcount = _mpc_lowcomm_communicator_relax(comm);
+
 
 		if(refcount == 1)
 		{

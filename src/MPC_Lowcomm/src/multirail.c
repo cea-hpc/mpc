@@ -1125,6 +1125,23 @@ void _mpc_lowcomm_multirail_notify_new_comm(mpc_lowcomm_communicator_id_t comm_i
 	}
 }
 
+void _mpc_lowcomm_multirail_notify_delete_comm(mpc_lowcomm_communicator_id_t comm_idx, size_t size)
+{
+	int count = sctk_rail_count();
+	int i;
+
+	for(i = 0; i < count; i++)
+	{
+		sctk_rail_info_t *rail = sctk_rail_get_by_id(i);
+
+		if(rail->notify_del_comm)
+		{
+			rail->notify_del_comm(rail, comm_idx, size);
+		}
+	}
+}
+
+
 /************************************************************************/
 /* _mpc_lowcomm_multirail_table                                     */
 /************************************************************************/
