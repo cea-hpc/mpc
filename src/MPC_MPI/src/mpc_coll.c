@@ -7632,39 +7632,49 @@ int ___collectives_alltoall_switch(const void *sendbuf, int sendcount, MPI_Datat
 /**
   \brief Execute or schedule a Alltoall using the cluster algorithm
     Or count the number of operations and rounds for the schedule
-  \param sendbuf Adress of the buffer used to send data during the Alltoall
+  \param sendbuf Address of the buffer used to send data during the Alltoall
   \param sendcount Number of elements in the send buffer
   \param sendtype Type of the data elements in the send buffer
-  \param recvbuf Adress of the buffer used to send data during the Alltoall
+  \param recvbuf Address of the buffer used to send data during the Alltoall
   \param recvcount Number of elements in the recv buffer
   \param recvtype Type of the data elements in the recv buffer
   \param comm Target communicator
   \param coll_type Type of the communication
-  \param schedule Adress of the schedule
-  \param info Adress on the information structure about the schedule
+  \param schedule Address of the schedule
+  \param info Address on the information structure about the schedule
   \return error code
   */
 int ___collectives_alltoall_cluster(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int rank, size;
-  MPI_Aint sendext, recvext;
+  MPI_Aint tmp_sendext, recvext;
+
+  void *tmp_sendbuf = sendbuf;
+  MPI_Datatype tmp_sendtype = sendtype;
+  int tmp_sendcount = sendcount;
+
+  if(sendbuf == MPI_IN_PLACE) {
+    tmp_sendtype = recvtype;
+    tmp_sendcount = recvcount;
+  }
+
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
-  PMPI_Type_extent(sendtype, &sendext);
+  PMPI_Type_extent(tmp_sendtype, &tmp_sendext);
   PMPI_Type_extent(recvtype, &recvext);
-
-  void *tmpbuf = NULL;
   
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
-      not_implemented();
-      return MPI_SUCCESS;
+      if(sendbuf == MPI_IN_PLACE) {
+        tmp_sendbuf = sctk_malloc(recvext * recvcount * size);
+      }
+      break;
 
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
       if(sendbuf == MPI_IN_PLACE) {
-        tmpbuf = info->tmpbuf + info->tmpbuf_pos;
-        info->tmpbuf_pos += recvext * sendcount * size; 
+        tmp_sendbuf = info->tmpbuf + info->tmpbuf_pos;
+        info->tmpbuf_pos += recvext * recvcount * size;
       }
       break;
 
@@ -7672,38 +7682,35 @@ int ___collectives_alltoall_cluster(const void *sendbuf, int sendcount, MPI_Data
       info->comm_count += 2 * (size - 1) + 1;
 
       if(sendbuf == MPI_IN_PLACE) {
-        info->tmpbuf_size += recvext * sendcount * size;
+        info->tmpbuf_size += recvext * recvcount * size;
       }
       return MPI_SUCCESS;
   }
 
   if(sendbuf == MPI_IN_PLACE) {
     // Copy data to avoid erasing it by receiving other's data
-    ___collectives_copy_type(recvbuf, recvcount * size, recvtype, tmpbuf, recvcount * size, recvtype, comm, coll_type, schedule, info);
-    int i;
-    // For each rank, send and recv the data needed
-    for(i = 0; i < size; i++) {
-      if(i == rank) {
-        continue;
-      }
-      ___collectives_send_type(tmpbuf  + i * recvcount * recvext, recvcount, recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
-      ___collectives_recv_type(recvbuf + i * recvcount * recvext, recvcount, recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
-    }
-
+    ___collectives_copy_type(recvbuf, recvcount * size, recvtype, tmp_sendbuf, recvcount * size, recvtype, comm, coll_type, schedule, info);
   } else {
-    // For each rank, send and recv the data needed
-    int i;
-    for(i = 0; i < size; i++) {
-      if(i == rank) {
-        continue;
-      }
-
-      ___collectives_send_type(sendbuf + i * sendcount * sendext, sendcount, sendtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
-      ___collectives_recv_type(recvbuf + i * recvcount * recvext, recvcount, recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
-    }
     // Copy our own data in the recvbuf
-    ___collectives_copy_type(sendbuf + rank * sendcount * sendext, sendcount, sendtype, recvbuf + rank * recvcount * recvext, recvcount, recvtype, comm, coll_type, schedule, info);
+    ___collectives_copy_type(sendbuf + rank * sendcount * tmp_sendext, sendcount, sendtype, recvbuf + rank * recvcount * recvext, recvcount, recvtype, comm, coll_type, schedule, info);
+  }
 
+  int i;
+  // For each rank, send and recv the data needed
+  for(i = 0; i < size; i++) {
+    if(rank == i) {
+      continue;
+    } else if (rank < i) {
+    ___collectives_send_type(tmp_sendbuf  + i * tmp_sendcount * tmp_sendext, tmp_sendcount, tmp_sendtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+    ___collectives_recv_type(recvbuf + i * recvcount * recvext, recvcount, recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+    } else {
+      ___collectives_recv_type(recvbuf + i * recvcount * recvext, recvcount, recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(tmp_sendbuf  + i * tmp_sendcount * tmp_sendext, tmp_sendcount, tmp_sendtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+    }
+  }
+
+  if (coll_type == MPC_COLL_TYPE_BLOCKING && sendbuf == MPI_IN_PLACE) {
+    sctk_free(tmp_sendbuf);
   }
 
   return MPI_SUCCESS;
