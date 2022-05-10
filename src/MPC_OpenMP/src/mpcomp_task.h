@@ -428,6 +428,7 @@ _mpc_omp_task_loop_compute_num_iters(long start, long end, long step);
 
 /* TODO : refractor this prototype, move them to another more appropriate file */
 # define MPC_OMP_CLAUSE_USE_FIBER   (1 << 0)
+# define MPC_OMP_CLAUSE_UNTIED      (1 << 1)
 void _mpc_omp_callback_run(mpc_omp_callback_when_t when);
 void _mpc_omp_task_unblock(mpc_omp_event_handle_block_t * handle);
 void _mpc_omp_event_handle_ref(mpc_omp_event_handle_t * handle);

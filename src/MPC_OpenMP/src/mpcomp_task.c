@@ -3457,8 +3457,12 @@ _mpc_omp_task_init(
     if (thread->task_infos.incoming.extra_clauses & MPC_OMP_CLAUSE_USE_FIBER)
     {
         mpc_omp_task_set_property(&(task->property), MPC_OMP_TASK_PROP_HAS_FIBER);
-        thread->task_infos.incoming.extra_clauses = 0;
     }
+    if (thread->task_infos.incoming.extra_clauses & MPC_OMP_CLAUSE_UNTIED)
+    {
+        mpc_omp_task_set_property(&(task->property), MPC_OMP_TASK_PROP_UNTIED);
+    }
+    thread->task_infos.incoming.extra_clauses = 0;
 
     return task;
 }
@@ -3489,7 +3493,7 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
     assert(thread);
 
     /* set priority hint */
-    task->omp_priority_hint = priority_hint;
+    task->omp_priority_hint = priority_hint > thread->task_infos.incoming.priority ? priority_hint : thread->task_infos.incoming.priority;
 
     if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_DEPEND))
     {

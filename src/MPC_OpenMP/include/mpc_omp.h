@@ -163,11 +163,17 @@ extern "C" {
     /** Maximum length of a task label */
     # define MPC_OMP_TASK_LABEL_MAX_LENGTH 64
 
+    /** # pragma omp task priority(p) */
+    void mpc_omp_task_priority(int p);
+
     /** # pragma omp task label("potrf") */
     void mpc_omp_task_label(char * label);
 
     /** # pragma omp task fiber */
     void mpc_omp_task_fiber(void);
+
+    /** # pragma omp task untied */
+    void mpc_omp_task_untied(void);
 
     /* tasks dependencies */
     typedef enum    mpc_omp_task_dep_type_e

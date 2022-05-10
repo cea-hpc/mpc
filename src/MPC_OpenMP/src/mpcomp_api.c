@@ -514,12 +514,20 @@ mpc_omp_event_handle_init(mpc_omp_event_handle_t ** handle_ptr, mpc_omp_event_t 
     _mpc_omp_event_handle_ref(*handle_ptr);
 }
 
+/** # pragma omp task priority(p) */
+void
+mpc_omp_task_priority(int p)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+    thread->task_infos.incoming.priority = p;
+}
+
 /** # pragma omp task label("potrf") */
 void
 mpc_omp_task_label(char * label)
 {
-    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
 # if MPC_OMP_TASK_COMPILE_TRACE
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     thread->task_infos.incoming.label = label;
 # endif /* MPC_OMP_TASK_COMPILE_TRACE */
 }
@@ -530,6 +538,14 @@ mpc_omp_task_fiber(void)
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     thread->task_infos.incoming.extra_clauses |= MPC_OMP_CLAUSE_USE_FIBER;
+}
+
+/** # pragma omp task untied */
+void
+mpc_omp_task_untied(void)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+    thread->task_infos.incoming.extra_clauses |= MPC_OMP_CLAUSE_UNTIED;
 }
 
 /** explicit dependency constructor */
