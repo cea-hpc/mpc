@@ -5006,7 +5006,7 @@ int ___collectives_gather_topo(const void *sendbuf, int sendcount, MPI_Datatype 
         counts[0] = info->hardware_info_ptr->childs_data_count[i][0] * tmp_sendcount;
         int j;
         for(j = 1; j < size_master; j++) {
-          displs[j] = displs[j-1] + info->hardware_info_ptr->childs_data_count[i][j-1] * sendcount * sendext;
+          displs[j] = displs[j-1] + info->hardware_info_ptr->childs_data_count[i][j-1] * tmp_sendcount * sendext;
           counts[j] = info->hardware_info_ptr->childs_data_count[i][j] * tmp_sendcount;
         }
 
