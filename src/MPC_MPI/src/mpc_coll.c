@@ -3910,15 +3910,15 @@ int ___collectives_scatter_topo(const void *sendbuf, int sendcount, MPI_Datatype
 
     for(end = 1; end < size; end++) {
       if(info->hardware_info_ptr->swap_array[end] != info->hardware_info_ptr->swap_array[end - 1] + 1) {
-        ___collectives_copy_type(sendbuf + start * sendcount * sendext                                        , sendcount * (end - start)     , sendtype, 
-                    tmpbuf + info->hardware_info_ptr->swap_array[start] * tmp_recvcount * recvext, tmp_recvcount * (end - start) , tmp_recvtype,
+        ___collectives_copy_type(sendbuf + info->hardware_info_ptr->swap_array[start] * sendcount * sendext, sendcount * (end - start), sendtype,
+                    tmpbuf + start * tmp_recvcount * recvext, tmp_recvcount * (end - start) , tmp_recvtype,
                     comm, coll_type, schedule, info);
         start = end;
       }
     }
 
-    ___collectives_copy_type(sendbuf + start * sendcount * sendext                                        , sendcount * (end - start)     , sendtype, 
-                tmpbuf + info->hardware_info_ptr->swap_array[start] * tmp_recvcount * recvext, tmp_recvcount * (end - start) , tmp_recvtype,
+    ___collectives_copy_type(sendbuf + info->hardware_info_ptr->swap_array[start] * sendcount * sendext   , sendcount * (end - start), sendtype,
+                tmpbuf + start * tmp_recvcount * recvext, tmp_recvcount * (end - start) , tmp_recvtype,
                 comm, coll_type, schedule, info);
   }
 
