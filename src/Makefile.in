@@ -92,8 +92,8 @@ host_triplet = @host@
 @MPC_OPENMP_ENABLED_TRUE@am__append_2 = MPC_OpenMP
 @MPC_LOWCOMM_ENABLED_TRUE@am__append_3 = MPC_Lowcomm
 @MPC_MPI_ENABLED_TRUE@am__append_4 = MPC_MPI
-@MPC_FORTRAN_ENABLED_TRUE@am__append_5 = MPC_Fortran
-@MPC_MPIIO_ENABLED_TRUE@am__append_6 = MPC_IO
+@MPC_MPIIO_ENABLED_TRUE@am__append_5 = MPC_IO
+@MPC_FORTRAN_ENABLED_TRUE@am__append_6 = MPC_Fortran
 bin_PROGRAMS = mpc_print_config$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -203,8 +203,8 @@ am__define_uniq_tagged_files = \
 ETAGS = etags
 CTAGS = ctags
 DIST_SUBDIRS = MPC_Doc MPC_Arch MPC_Common MPC_Config MPC_Topology \
-	MPC_Launch MPC_Threads MPC_OpenMP MPC_Lowcomm MPC_MPI \
-	MPC_Fortran MPC_IO lib bin
+	MPC_Launch MPC_Threads MPC_OpenMP MPC_Lowcomm MPC_MPI MPC_IO \
+	MPC_Fortran lib bin
 am__DIST_COMMON = $(srcdir)/Makefile.in $(top_srcdir)/config/depcomp
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 am__relativize = \
