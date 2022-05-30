@@ -45,7 +45,7 @@ __cuda_stream_progress(cuda_stream_progress_info_t * infos)
 /* task blocking */
 
 static inline CUresult
-__mpc_omp_task_block(CUstream hStream)
+__task_block(CUstream hStream)
 {
     /* test before blocking */
     CUresult r = cuStreamQuery(hStream);
@@ -76,12 +76,12 @@ __mpc_omp_task_block(CUstream hStream)
  * and perform task switches until the stream is completed
  */
 CUresult
-cuxStreamSynchronize(CUstream hStream)
+mpc_cuStreamSynchronize(CUstream hStream)
 {
     if (mpc_omp_in_explicit_task())
     {
         // TODO : trace cuda target
-        return __mpc_omp_task_block(hStream);
+        return __task_block(hStream);
     }
     return cuStreamSynchronize(hStream);
 }
