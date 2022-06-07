@@ -687,13 +687,13 @@ mpc_hardware_split_info_t* mpc_lowcomm_topo_comm_get(mpc_lowcomm_communicator_t 
   
   if(index != -1) {
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
-    mpc_common_debug_log("GET | TASK %d | ROOT %d -> INDEX %d | ADR %p\n", task_rank, root, index, comm->topo_comms[task_rank].hw_infos[index]);
+    mpc_common_debug_log("GET | TASK %d | ROOT %d -> INDEX %d | ADR %p", task_rank, root, index, comm->topo_comms[task_rank].hw_infos[index]);
 #endif
     return comm->topo_comms[task_rank].hw_infos[index];
   }
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
-  mpc_common_debug_log("GET | TASK %d | ROOT %d -> NULL | ADR %p\n", task_rank, root, NULL);
+  mpc_common_debug_log("GET | TASK %d | ROOT %d -> NULL | ADR %p", task_rank, root, NULL);
 #endif
   return NULL;
 }
@@ -705,7 +705,7 @@ void mpc_lowcomm_topo_comm_set(mpc_lowcomm_communicator_t comm, int root, mpc_ha
 
   if(index != -1) {
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
-    mpc_common_debug_log("SET | TASK %d | UPDATE | ROOT %d -> INDEX %d | ADR %p\n", task_rank, root, index, hw_info);
+    mpc_common_debug_log("SET | TASK %d | UPDATE | ROOT %d -> INDEX %d | ADR %p", task_rank, root, index, hw_info);
 #endif
     comm->topo_comms[task_rank].hw_infos[index] = hw_info;
     return;
@@ -726,7 +726,7 @@ void mpc_lowcomm_topo_comm_set(mpc_lowcomm_communicator_t comm, int root, mpc_ha
   }
 
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
-  mpc_common_debug_log("SET | TASK %d | ROOT %d -> INDEX %d | ADR %p\n", task_rank, root, index, hw_info);
+  mpc_common_debug_log("SET | TASK %d | ROOT %d -> INDEX %d | ADR %p", task_rank, root, index, hw_info);
 #endif
   comm->topo_comms[task_rank].roots[index] = root;
   comm->topo_comms[task_rank].hw_infos[index] = hw_info;
