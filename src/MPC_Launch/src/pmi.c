@@ -205,7 +205,7 @@ static inline int __mpc_pmi_get_process_rank( int *rank )
 	*size = -1;
 	pmix_status_t rc = __pmix_get_attribute(0, PMIX_JOB_SIZE, PMIX_UINT32, &usize);
 
-	if(rc != PMI_SUCCESS)
+	if(rc == PMI_SUCCESS)
 	{
 		*size = usize;
 	}
