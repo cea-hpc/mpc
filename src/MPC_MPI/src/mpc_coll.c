@@ -288,6 +288,7 @@ int ___collectives_alltoall_switch(const void *sendbuf, int sendcount, MPI_Datat
 int ___collectives_alltoall_cluster(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 int ___collectives_alltoall_bruck(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 int ___collectives_alltoall_pairwise(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
+int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info);
 
 
 int PMPI_Ialltoallv (const void *sendbuf, const int *sendcounts, const int *sdispls, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request);
@@ -865,7 +866,7 @@ static inline int ___collectives_copy_type(const void *src, int srccount, MPI_Da
     _mpc_cl_comm_rank(comm, &rank);
     int global_rank = -1;
     _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
-    mpc_common_debug_log("%sCOPY | % 4d (% 4d) : %p -> %p", __debug_indentation, rank, global_rank, src, tgt);
+    mpc_common_debug_log("%sCOPY | % 4d (% 4d) : %p (COUNT %d) -> %p (COUNT %d)", __debug_indentation, rank, global_rank, src, srccount, tgt, tgtcount);
   }
 #endif
 
@@ -952,14 +953,12 @@ static inline int ___collectives_create_master_hardware_comm_unguided(int vrank,
 
   int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
   int highest_level = deepest_level+1;
+  //int highest_level = 0;
 
   int rank, size, tmp_rank, tmp_size;
   _mpc_cl_comm_rank(hwcomm[0], &rank);
   _mpc_cl_comm_size(hwcomm[0], &size);
 
-  if(rank == 0) {
-    highest_level = 0;
-  }
 
   int i;
   for(i = 0; i < deepest_level; i++) {
@@ -968,13 +967,24 @@ static inline int ___collectives_create_master_hardware_comm_unguided(int vrank,
     int color;
     if(rank_comm == 0) {
       color = 0;
-      highest_level = i+1;
     } else {
       color = MPI_UNDEFINED;
     }
 
 
     PMPI_Comm_split(hwcomm[i], color, vrank, &rootcomm[i]);
+
+    if(color == 0) {
+      highest_level = deepest_level - i;
+      //highest_level = i;
+      _mpc_cl_comm_rank(rootcomm[i], &tmp_rank);
+      if(tmp_rank == 0) {
+        highest_level--;
+        //highest_level++;
+      }
+    } else {
+      break;
+    }
 
 #ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
     if(color == 0) {
@@ -984,6 +994,8 @@ static inline int ___collectives_create_master_hardware_comm_unguided(int vrank,
     }
 #endif
   }
+
+  info->hardware_info_ptr->highest_local_hardware_level = highest_level;
 
   return res;
 }
@@ -1044,7 +1056,6 @@ static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info 
          data_count = 0;
          for(j = 0; j < size_master; j++) {
            data_count += info->hardware_info_ptr->childs_data_count[i][j];
-           //mpc_common_nodebug("RANK %d | CHILD DATA COUNT [%d] [%d] = %d\n", rank, i, j, info->hardware_info_ptr->childs_data_count[i][j]);
          }
 
 #ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
@@ -1090,28 +1101,31 @@ static inline int ___collectives_create_swap_array(MPI_Comm comm, int root, Sche
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
 
-  if(rank == root) {
+  //if(rank == root) {
     info->hardware_info_ptr->swap_array = sctk_malloc(sizeof(int) * size);
     int i;
     for(i = 0; i < size; i++) {
       info->hardware_info_ptr->swap_array[i] = i;
     }
-  }
+  //}
 
   int tmp_swap_array[size];
+  int tmp_reverse_swap_array[size];
 
-  ___collectives_gather_topo(&rank, 1, MPI_INT, tmp_swap_array, 1, MPI_INT, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, info);
+  //___collectives_gather_topo(&rank, 1, MPI_INT, tmp_swap_array, 1, MPI_INT, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, info);
+  ___collectives_allgather_topo(&rank, 1, MPI_INT, tmp_swap_array, 1, MPI_INT, comm, MPC_COLL_TYPE_BLOCKING, NULL, info);
 
   for(int i = 0; i < size; i++) {
     if(tmp_swap_array[i] == rank) {
       info->hardware_info_ptr->topo_rank = i;
-      break;
     }
+
+    tmp_reverse_swap_array[tmp_swap_array[i]] = i;
   }
 
-  if(rank == root) {
+  //if(rank == root) {
     memcpy(info->hardware_info_ptr->swap_array, tmp_swap_array, size * sizeof(int));
-  }
+  //}
 
 #ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
   __debug_indentation[strlen(__debug_indentation) - 1] = '\0';
@@ -7575,13 +7589,22 @@ static inline int ___collectives_alltoall_init(const void *sendbuf, int sendcoun
   */
 int _mpc_mpi_collectives_alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm) {
 
-  MPI_Request req;
-  MPI_Status status;
+  // MPI_Request req;
+  // MPI_Status status;
 
-  MPI_Ialltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, &req);
-  MPI_Wait(&req, &status);
+  // MPI_Ialltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, &req);
+  // MPI_Wait(&req, &status);
 
-  return status.MPI_ERROR;
+  // return status.MPI_ERROR;
+
+  Sched_info info;
+  ___collectives_sched_info_init(&info);
+
+  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
+    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
+
+  return _mpc_mpi_config()->coll_algorithm_intracomm.alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
 
@@ -7616,13 +7639,15 @@ int ___collectives_alltoall_switch(const void *sendbuf, int sendcount, MPI_Datat
   enum {
     NBC_ALLTOALL_CLUSTER,
     NBC_ALLTOALL_BRUCK,
-    NBC_ALLTOALL_PAIRWISE
+    NBC_ALLTOALL_PAIRWISE,
+    NBC_ALLTOALL_TOPO
   } alg;
 
   int size;
   _mpc_cl_comm_size(comm, &size);
   
-  alg = NBC_ALLTOALL_CLUSTER;
+  //alg = NBC_ALLTOALL_CLUSTER;
+  alg = NBC_ALLTOALL_TOPO;
 
   int res;
 
@@ -7635,6 +7660,9 @@ int ___collectives_alltoall_switch(const void *sendbuf, int sendcount, MPI_Datat
       break;
     case NBC_ALLTOALL_PAIRWISE:
       res = ___collectives_alltoall_pairwise(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+      break;
+    case NBC_ALLTOALL_TOPO:
+      res = ___collectives_alltoall_topo(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
       break;
   }
 
@@ -7868,6 +7896,27 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
     tmp_sendbuf = recvbuf + rank * sendext * tmp_sendcount;
   }
 
+
+
+
+
+  int root = 0;
+  if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
+    /* choose max topological level on which to do hardware split */
+    /*TODO choose level wisely */
+    int max_level = TOPO_MAX_LEVEL;
+
+    ___collectives_topo_comm_init(comm, root, max_level, info);
+  }
+
+  if(!(info->hardware_info_ptr->childs_data_count)) {
+    ___collectives_create_childs_counts(comm, info);
+    ___collectives_create_swap_array(comm, root, info);
+  }
+
+
+
+
   int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
   int highest_level = info->hardware_info_ptr->highest_local_hardware_level;
 
@@ -7878,32 +7927,152 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   int tmpbuf_count = 0;
   int keepbuf_count = 0;
 
-  //if(highest_level == 0) {
-  if(highest_level < deepest_level) {
+  // //if(highest_level == 0) {
+  // if(highest_level < deepest_level - 1) {
+  //   int highest_level_size;
+  //   _mpc_cl_comm_size(info->hardware_info_ptr->rootcomm[highest_level], &highest_level_size);
+
+  //   for(int i = 0; i < highest_level_size; i++) {
+  //     int tmp = info->hardware_info_ptr->childs_data_count[0][i];
+  //     //tmpbuf_count += tmp*size - tmp*tmp;
+  //     //tmpbuf_count += tmp * (size - 1) - tmp * (tmp - 1);
+  //     // tmp * ((size - 1) - (tmp - 1))
+  //     // tmp * (size - 1 - tmp + 1)
+  //     // tmp * (size - tmp)
+  //     tmpbuf_count += tmp * (size - tmp);
+  //   }
+  //   tmpbuf_count <<= 1;
+  // //} else if(highest_level == deepest_level +/* - ? */ 1) {
+  // } else if(highest_level == deepest_level - 1) {
+  //   tmpbuf_count = size;
+  // } else {
+  //   int highest_level_size = info->hardware_info_ptr->send_data_count[highest_level_size - 1];
+  //   //tmpbuf_count = highest_level_size * size - highest_level_size * highest_level_size;
+  //   //tmpbuf_count = highest_level_size * (size - 1) - highest_level_size * (highest_level_size - 1);
+  //   keepbuf_count = (highest_level_size - 1) * (highest_level_size - 1);
+  //   tmpbuf_count = highest_level_size * (size - highest_level_size) + keepbuf_count;
+
+  //   tmpbuf_count <<= 1;
+  // }
+
+
+  mpc_common_debug_log ("%d HIGHEST LEVEL: %d, DEEPEST LEVEL: %d", 
+      rank, highest_level, deepest_level);
+
+  // TODO to correct ...
+  // if(highest_level == 0) {
+  //   int highest_level_size;
+  //   _mpc_cl_comm_size(info->hardware_info_ptr->rootcomm[highest_level], &highest_level_size);
+
+  //   for(int i = 0; i < highest_level_size; i++) {
+  //     int tmp = info->hardware_info_ptr->childs_data_count[0][i];
+  //     tmpbuf_count += tmp * (size - tmp);
+  //   }
+  //   tmpbuf_count <<= 1;
+  // } else if(highest_level == deepest_level + 1) {
+  //   tmpbuf_count = size;
+  // } else {
+  //   int highest_level_size = info->hardware_info_ptr->send_data_count[highest_level - 1];
+  //   //TODO could be lower
+  //   keepbuf_count = (highest_level_size - 1) * (highest_level_size - 1);
+  //   tmpbuf_count = highest_level_size * (size - highest_level_size) + keepbuf_count;
+  //   tmpbuf_count <<= 1;
+  // }
+
+
+  // TODO to correct ...
+  // if(highest_level > 1) {
+  //   int highest_level_size;
+  //   _mpc_cl_comm_size(info->hardware_info_ptr->rootcomm[highest_level], &highest_level_size);
+
+  //   for(int i = 0; i < highest_level_size; i++) {
+  //     int tmp = info->hardware_info_ptr->childs_data_count[0][i];
+  //     tmpbuf_count += tmp * (size - tmp);
+  //   }
+  //   tmpbuf_count <<= 1;
+  // } else if(highest_level == 0) {
+  //   tmpbuf_count = size;
+  // } else {
+  //   int highest_level_size = info->hardware_info_ptr->send_data_count[highest_level - 1];
+  //   //TODO could be lower
+  //   keepbuf_count = (highest_level_size - 1) * (highest_level_size - 1);
+  //   tmpbuf_count = highest_level_size * (size - highest_level_size) + keepbuf_count;
+  //   tmpbuf_count <<= 1;
+  // }
+
+  /*switch(highest_level) {
+    case deepest_level + 1:
+      {
+        tmpbuf_count = size;
+        break;
+      }
+    case deepest_level:
+      {
+        int highest_level_size = info->hardware_info_ptr->send_data_count[highest_level - 1];
+
+        keepbuf_count = (highest_level_size - 1) * (highest_level_size - 1);
+        tmpbuf_count = (size - 1) * highest_level_size;
+
+        tmpbuf_count <<= 1;
+        break;
+      }
+    default:
+      {
+        int highest_level_size;
+        _mpc_cl_comm_size(info->hardware_info_ptr->rootcomm[highest_level], &highest_level_size);
+
+        for(int i = 0; i < highest_level_size; i++) {
+          //int tmp = info->hardware_info_ptr->childs_data_count[0][i];
+          int tmp = info->hardware_info_ptr->childs_data_count[deepest_level - highest_level][i];
+          tmpbuf_count += tmp * (size - tmp);
+        }
+
+        for(int i = highest_level; i < deepest_level; i++) {
+          int tmp_size = _mpc_cl_comm_size(info->hardware_info_ptr->rootcomm[i], &tmp_size);
+          for(int j = 0; j < tmp_size; j++) {
+            int tmp = info->hardware_info_ptr->childs_data_count[deepest_level - i][j];
+            keepbuf_size += tmp * (tmp_size - tmp);
+          }
+        }
+
+        tmpbuf_count = (tmpbuf_count + keepbuf_count) << 1;
+      }
+  }*/
+
+  if(highest_level == deepest_level + 1) {
+    tmpbuf_count = size;
+  } else if(highest_level == deepest_level) {
+    int highest_level_size = info->hardware_info_ptr->send_data_count[highest_level - 1];
+
+    keepbuf_count = (highest_level_size - 1) * (highest_level_size - 1) * 2;
+    tmpbuf_count = (size - 1) * highest_level_size;
+
+    tmpbuf_count = (tmpbuf_count + keepbuf_count) << 1;
+  } else {
     int highest_level_size;
     _mpc_cl_comm_size(info->hardware_info_ptr->rootcomm[highest_level], &highest_level_size);
 
     for(int i = 0; i < highest_level_size; i++) {
-      int tmp = info->hardware_info_ptr->childs_data_count[0][i];
-      //tmpbuf_count += tmp*size - tmp*tmp;
-      //tmpbuf_count += tmp * (size - 1) - tmp * (tmp - 1);
-      // tmp * ((size - 1) - (tmp - 1))
-      // tmp * (size - 1 - tmp + 1)
-      // tmp * (size - tmp)
+      int tmp = info->hardware_info_ptr->childs_data_count[deepest_level - highest_level - 1][i];
       tmpbuf_count += tmp * (size - tmp);
     }
-    tmpbuf_count <<= 1;
-  } else if(highest_level == deepest_level +/* - ? */ 1) {
-    tmpbuf_count = size;
-  } else {
-    int highest_level_size = info->hardware_info_ptr->send_data_count[highest_level_size - 1];
-    //tmpbuf_count = highest_level_size * size - highest_level_size * highest_level_size;
-    //tmpbuf_count = highest_level_size * (size - 1) - highest_level_size * (highest_level_size - 1);
-    keepbuf_count = (highest_level_size - 1) * (highest_level_size - 1);
-    tmpbuf_count = highest_level_size * (size - highest_level_size) + keepbuf_count;
 
-    tmpbuf_count <<= 1;
+    for(int i = highest_level; i < deepest_level; i++) {
+      int tmp_size = _mpc_cl_comm_size(info->hardware_info_ptr->rootcomm[i], &tmp_size);
+      for(int j = 0; j < tmp_size; j++) {
+        int tmp = info->hardware_info_ptr->childs_data_count[deepest_level - i - 1][j];
+        keepbuf_count += tmp * (tmp_size - tmp);
+      }
+    }
+    int deepest_level_size = info->hardware_info_ptr->send_data_count[deepest_level - 1];
+    keepbuf_count += (deepest_level_size - 1) * (deepest_level_size - 1) * 2;
+
+    tmpbuf_count = (tmpbuf_count + keepbuf_count) << 1;
   }
+
+
+  mpc_common_debug_log ("%d BUF COUNT: %d, KEEP COUNT: %d", 
+      rank, tmpbuf_count, keepbuf_count);
 
 
   switch(coll_type) {
@@ -7932,21 +8101,9 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   }
 
 
-  int root = 0;
 
 
-  if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
-    /* choose max topological level on which to do hardware split */
-    /*TODO choose level wisely */
-    int max_level = TOPO_MAX_LEVEL;
-
-    ___collectives_topo_comm_init(comm, root, max_level, info);
-  }
-
-  if(!(info->hardware_info_ptr->childs_data_count)) {
-    ___collectives_create_childs_counts(comm, info);
-    ___collectives_create_swap_array(comm, root, info);
-  }
+  
 
 
 
@@ -7973,7 +8130,12 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   //       comm, coll_type, schedule, info);
   // //}
 
+  //TODO: to correct, we need to REVERSE swap
   int start = 0, end;
+
+  if(rank == start) {
+    start++;
+  }
 
   for(end = start + 1; end < size; end++) {
     if(info->hardware_info_ptr->swap_array[end] != info->hardware_info_ptr->swap_array[end - 1] + 1 || end == rank) {
@@ -7984,6 +8146,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
       if(end == rank) {
         end++;
       }
+
       start = end;
     }
   }
@@ -7995,6 +8158,43 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   ___collectives_copy_type(tmp_sendbuf + start * tmp_sendcount * sendext, tmp_sendcount * (end - start), tmp_sendtype, 
       tmpbuf + info->hardware_info_ptr->swap_array[start] * recvcount * recvext, recvcount * (end - start), recvtype,
       comm, coll_type, schedule, info);
+
+
+
+
+
+
+
+
+  if(MPC_COLL_TYPE_COUNT != coll_type) {
+    char print_data[2048];
+    print_data[0] = '\0';
+    int *data = (int*) tmpbuf;
+
+    for(int i = 0; i < size - 1; i++) {
+      if(i != 0) {
+        sprintf(&(print_data[strlen(print_data)]), ", ");
+      }
+      sprintf(&(print_data[strlen(print_data)]), "[");
+
+      for(int j = 0; j < tmp_sendcount / 3; j++) {
+        if(j != 0) {
+          sprintf(&(print_data[strlen(print_data)]), ", ");
+        }
+
+        sprintf(&(print_data[strlen(print_data)]), "%d-%d_%d",
+            data[i * tmp_sendcount * 3 + j * 3 + 0],
+            data[i * tmp_sendcount * 3 + j * 3 + 1],
+            data[i * tmp_sendcount * 3 + j * 3 + 2]);
+      }
+
+      sprintf(&(print_data[strlen(print_data)]), "]");
+    }
+    mpc_common_debug_log ("%d SWAP DATA: %s", rank, print_data);
+  }
+
+
+
 
 
 
