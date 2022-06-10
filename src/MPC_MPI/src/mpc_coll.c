@@ -1101,33 +1101,44 @@ static inline int ___collectives_create_swap_array(MPI_Comm comm, int root, Sche
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
 
-  //if(rank == root) {
-    info->hardware_info_ptr->swap_array = sctk_malloc(sizeof(int) * size);
-    int i;
-    for(i = 0; i < size; i++) {
-      info->hardware_info_ptr->swap_array[i] = i;
-    }
-  //}
-
   int tmp_swap_array[size];
-  int tmp_reverse_swap_array[size];
 
-  //___collectives_gather_topo(&rank, 1, MPI_INT, tmp_swap_array, 1, MPI_INT, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, info);
-  ___collectives_allgather_topo(&rank, 1, MPI_INT, tmp_swap_array, 1, MPI_INT, comm, MPC_COLL_TYPE_BLOCKING, NULL, info);
+  int *swap_array = (info->hardware_info_ptr->swap_array = sctk_malloc(sizeof(int) * size));
+  int *reverse_swap_array = (info->hardware_info_ptr->reverse_swap_array = sctk_malloc(sizeof(int) * size));
 
   for(int i = 0; i < size; i++) {
-    if(tmp_swap_array[i] == rank) {
-      info->hardware_info_ptr->topo_rank = i;
-    }
-
-    tmp_reverse_swap_array[tmp_swap_array[i]] = i;
+    swap_array[i] = i;
   }
 
-  //if(rank == root) {
-    memcpy(info->hardware_info_ptr->swap_array, tmp_swap_array, size * sizeof(int));
-  //}
+  ___collectives_allgather_topo(&rank, 1, MPI_INT, tmp_swap_array, 1, MPI_INT, comm, MPC_COLL_TYPE_BLOCKING, NULL, info);
+
+  memcpy(swap_array, tmp_swap_array, size * sizeof(int));
+
+  for(int i = 0; i < size; i++) {
+    if(swap_array[i] == rank) {
+      info->hardware_info_ptr->topo_rank = i;
+    }
+    reverse_swap_array[swap_array[i]] = i;
+  }
+
+
 
 #ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  char dbg_str[1024];
+  
+  sprintf(dbg_str, "RANK %d | SWAP ARRAY = [%d", rank, info->hardware_info_ptr->swap_array[0]);
+  for(int j = 1; j < size; j++) {
+    sprintf(&(dbg_str[strlen(dbg_str)]), ", %d", info->hardware_info_ptr->swap_array[j]);
+  }
+
+  sprintf(&(dbg_str[strlen(dbg_str)]), "]\n%s         REVERSE SWAP ARRAY = [%d", __debug_indentation, info->hardware_info_ptr->reverse_swap_array[0]);
+  for(int j = 1; j < size; j++) {
+    sprintf(&(dbg_str[strlen(dbg_str)]), ", %d", info->hardware_info_ptr->reverse_swap_array[j]);
+  }
+
+  mpc_common_debug_log("%s%s]", __debug_indentation, dbg_str);
+
+
   __debug_indentation[strlen(__debug_indentation) - 1] = '\0';
 #endif
 
@@ -1167,6 +1178,7 @@ static inline int ___collectives_topo_comm_init(MPI_Comm comm, int root, int max
 
   info->hardware_info_ptr->topo_rank = -1;
   info->hardware_info_ptr->swap_array = NULL;
+  info->hardware_info_ptr->reverse_swap_array = NULL;
 
   /* Create hardware communicators using unguided topological split and max split level */
   ___collectives_create_hardware_comm_unguided(comm, vrank, max_level, info);
@@ -8138,9 +8150,10 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   }
 
   for(end = start + 1; end < size; end++) {
-    if(info->hardware_info_ptr->swap_array[end] != info->hardware_info_ptr->swap_array[end - 1] + 1 || end == rank) {
+    if(info->hardware_info_ptr->reverse_swap_array[end] != info->hardware_info_ptr->reverse_swap_array[end - 1] + 1 || end == rank) {
+      mpc_common_debug_log ("START %d, END %d", start, end);
       ___collectives_copy_type(tmp_sendbuf + start * tmp_sendcount * sendext, tmp_sendcount * (end - start), tmp_sendtype, 
-          tmpbuf + info->hardware_info_ptr->swap_array[start] * recvcount * recvext, recvcount * (end - start), recvtype,
+          tmpbuf + (info->hardware_info_ptr->reverse_swap_array[start] - (end > rank)) * recvcount * recvext, recvcount * (end - start), recvtype,
           comm, coll_type, schedule, info);
 
       if(end == rank) {
@@ -8155,8 +8168,9 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
     end--;
   }
 
+  mpc_common_debug_log ("START %d, END %d", start, end);
   ___collectives_copy_type(tmp_sendbuf + start * tmp_sendcount * sendext, tmp_sendcount * (end - start), tmp_sendtype, 
-      tmpbuf + info->hardware_info_ptr->swap_array[start] * recvcount * recvext, recvcount * (end - start), recvtype,
+      tmpbuf + (info->hardware_info_ptr->reverse_swap_array[start] - (end > rank)) * recvcount * recvext, recvcount * (end - start), recvtype,
       comm, coll_type, schedule, info);
 
 
@@ -8183,9 +8197,9 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
         }
 
         sprintf(&(print_data[strlen(print_data)]), "%d-%d_%d",
-            data[i * tmp_sendcount * 3 + j * 3 + 0],
-            data[i * tmp_sendcount * 3 + j * 3 + 1],
-            data[i * tmp_sendcount * 3 + j * 3 + 2]);
+            data[i * tmp_sendcount + j * 3 + 0],
+            data[i * tmp_sendcount + j * 3 + 1],
+            data[i * tmp_sendcount + j * 3 + 2]);
       }
 
       sprintf(&(print_data[strlen(print_data)]), "]");

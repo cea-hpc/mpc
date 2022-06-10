@@ -670,6 +670,7 @@ typedef struct mpc_hardware_split_info_s
 
   int topo_rank;
   int *swap_array; /* Reordering array used to link mpi ranks with the topology. */
+  int *reverse_swap_array; /* Reverse reordering array used to link mpi ranks with the topology. */
 
 }mpc_hardware_split_info_t;
 
