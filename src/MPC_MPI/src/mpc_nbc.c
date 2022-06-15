@@ -63,6 +63,7 @@ static inline int NBC_Start_round_persistent(NBC_Handle *handle);
 inline int NBC_Init_handle(NBC_Handle *handle, MPI_Comm comm, int tag);
 static inline int NBC_Type_intrinsic(MPI_Datatype type);
 static inline int NBC_Copy(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm);
+static inline int NBC_Move(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm);
 /*static inline NBC_Comminfo* NBC_Init_comm(MPI_Comm comm, int keyval);*/
 /*static inline int NBC_Create_fortran_handle(int *fhandle, NBC_Handle **handle);*/
 static inline int NBC_Free(NBC_Handle* handle);
@@ -9141,6 +9142,7 @@ static inline int __NBC_Start_round_persistent( NBC_Handle *handle, int depth )
           break;
         case OP:
         case COPY:
+        case MOVE:
         case UNPACK:
           break;
         default:
@@ -9330,6 +9332,33 @@ static inline int __NBC_Start_round_persistent( NBC_Handle *handle, int depth )
           goto error;
         }
         break;
+      case MOVE:
+        copyargs = (NBC_Args *) ( typeptr + 1 );
+
+        /* get buffers */
+        if ( copyargs->tmpsrc )
+          buf1 = (char *) handle->tmpbuf + (long) copyargs->src;
+        else
+          buf1 = copyargs->src;
+
+        if( copyargs->comm == MPI_COMM_NULL )
+          comm = handle->comm;
+        else
+          comm = copyargs->comm;
+
+        if ( copyargs->tmptgt )
+          buf2 = (char *) handle->tmpbuf + (long) copyargs->tgt;
+        else
+          buf2 = copyargs->tgt;
+
+        res = NBC_Move( buf1, copyargs->srccount, copyargs->srctype, buf2, copyargs->tgtcount, copyargs->tgttype, comm );
+        if ( res != NBC_OK )
+        {
+          printf( "NBC_Copy() failed (code: %i)\n", res );
+          ret = res;
+          goto error;
+        }
+        break;
       case UNPACK:
         unpackargs = (NBC_Args *) ( typeptr + 1 );
 
@@ -9454,6 +9483,7 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
         break;
       case OP:
       case COPY:
+      case MOVE:
       case UNPACK:
         break;
       default:
@@ -9602,6 +9632,32 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
           comm = copyargs->comm;
 
 				res = NBC_Copy( buf1, copyargs->srccount, copyargs->srctype, buf2, copyargs->tgtcount, copyargs->tgttype, comm );
+				if ( res != NBC_OK )
+				{
+					printf( "NBC_Copy() failed (code: %i)\n", res );
+					ret = res;
+					goto error;
+				}
+				break;
+      case MOVE:
+				copyargs = (NBC_Args *) ( typeptr + 1 );
+
+				/* get buffers */
+				if ( copyargs->tmpsrc )
+					buf1 = (char *) handle->tmpbuf + (long) copyargs->src;
+				else
+					buf1 = copyargs->src;
+				if ( copyargs->tmptgt )
+					buf2 = (char *) handle->tmpbuf + (long) copyargs->tgt;
+				else
+					buf2 = copyargs->tgt;
+
+        if( copyargs->comm == MPI_COMM_NULL )
+          comm = handle->mycomm;
+        else 
+          comm = copyargs->comm;
+
+				res = NBC_Move( buf1, copyargs->srccount, copyargs->srctype, buf2, copyargs->tgtcount, copyargs->tgttype, comm );
 				if ( res != NBC_OK )
 				{
 					printf( "NBC_Copy() failed (code: %i)\n", res );

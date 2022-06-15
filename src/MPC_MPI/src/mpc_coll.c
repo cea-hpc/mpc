@@ -359,12 +359,14 @@ static inline int ___collectives_sched_barrier(NBC_Schedule *schedule, Sched_inf
 static inline int ___collectives_sched_commit(NBC_Schedule *schedule, Sched_info *info);
 static inline int ___collectives_sched_op(void *res_buf, void* left_op_buf, void* right_op_buf, int count, MPI_Datatype datatype, MPI_Op op, NBC_Schedule *schedule, Sched_info *info);
 static inline int ___collectives_sched_copy(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, NBC_Schedule *schedule, Sched_info *info);
+static inline int ___collectives_sched_move(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, NBC_Schedule *schedule, Sched_info *info);
 
 static inline int ___collectives_send_type(const void *buffer, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info);
 static inline int ___collectives_recv_type(void *buffer, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info);
 static inline int ___collectives_barrier_type(MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info);
 static inline int ___collectives_op_type( __UNUSED__ void *res_buf, const void* left_op_buf, void* right_op_buf, int count, MPI_Datatype datatype, MPI_Op op, sctk_Op mpc_op, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info);
 static inline int ___collectives_copy_type(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info);
+static inline int ___collectives_move_type(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info);
 
 static inline int ___collectives_create_hardware_comm_unguided(MPI_Comm comm, int vrank, int max_level, Sched_info *info);
 static inline int ___collectives_create_master_hardware_comm_unguided(int vrank, int level, Sched_info *info);
@@ -662,6 +664,44 @@ static inline int ___collectives_sched_copy(const void *src, int srccount, MPI_D
   return MPI_SUCCESS;
 }
 
+/**
+  \brief Add a Move in the schedule
+  \param src Adress of the source buffer used in the move
+  \param srccount Number of element in the source buffer
+  \param srctype Type of the data elements in the source buffer
+  \param tgt Adress of the destination buffer used in the move
+  \param tgtcount Number of element in the destination buffer
+  \param tgttype Type of the data elements in the destination buffer
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return Error code
+  */
+static inline int ___collectives_sched_move(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, NBC_Schedule *schedule, Sched_info *info) {
+
+  NBC_Args *copy_args;
+
+  /* adjust the function type */
+  *(NBC_Fn_type *)((char *)*schedule + info->pos) = MOVE;
+
+  /* store the passed arguments */
+  copy_args = (NBC_Args *)((char *)*schedule + info->pos + sizeof(NBC_Fn_type));
+  copy_args->src = src;
+  copy_args->tmpsrc = 0;
+  copy_args->srccount = srccount;
+  copy_args->srctype = srctype;
+  copy_args->tgt = tgt;
+  copy_args->tmptgt = 0;
+  copy_args->tgtcount = tgtcount;
+  copy_args->tgttype = tgttype;
+
+  /* move pos forward */
+  info->pos += COMM_SCHED_SIZE;
+
+  info->round_comm_count += 1;
+
+  return MPI_SUCCESS;
+}
+
 
 
 /**
@@ -877,6 +917,49 @@ static inline int ___collectives_copy_type(const void *src, int srccount, MPI_Da
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
       ___collectives_sched_copy(src, srccount, srctype, tgt, tgtcount, tgttype, schedule, info);
+      break;
+    case MPC_COLL_TYPE_COUNT:
+      info->comm_count += 1;
+      break;
+  }
+  return res;
+}
+
+/**
+  \brief Switch between blocking, non-blocking and persitent Move
+    Or increase the number of operation of the schedule in the Sched_info struct
+  \param src Adress of the source buffer used in the move
+  \param srccount Number of element in the source buffer
+  \param srctype Type of the data elements in the source buffer
+  \param tgt Adress of the destination buffer used in the move
+  \param tgtcount Number of element in the destination buffer
+  \param tgttype Type of the data elements in the destination buffer
+  \param comm Target communicator
+  \param coll_type Type of the communication used for the switch
+  \param schedule Adress of the schedule
+  \param info Adress on the information structure about the schedule
+  \return Error code
+  */
+static inline int ___collectives_move_type(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule *schedule, Sched_info *info) {
+  int res = MPI_SUCCESS;
+
+#ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
+  if(coll_type != MPC_COLL_TYPE_COUNT) {
+    int rank = -1;
+    _mpc_cl_comm_rank(comm, &rank);
+    int global_rank = -1;
+    _mpc_cl_comm_rank(MPI_COMM_WORLD, &global_rank);
+    mpc_common_debug_log("%sMOVE | % 4d (% 4d) : %p (COUNT %d) -> %p (COUNT %d)", __debug_indentation, rank, global_rank, src, srccount, tgt, tgtcount);
+  }
+#endif
+
+  switch(coll_type) {
+    case MPC_COLL_TYPE_BLOCKING:
+      NBC_Move(src, srccount, srctype, tgt, tgtcount, tgttype, comm);
+      break;
+    case MPC_COLL_TYPE_NONBLOCKING:
+    case MPC_COLL_TYPE_PERSISTENT:
+      ___collectives_sched_move(src, srccount, srctype, tgt, tgtcount, tgttype, schedule, info);
       break;
     case MPC_COLL_TYPE_COUNT:
       info->comm_count += 1;
@@ -8452,7 +8535,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
 
 
           // part to send
-          ___collectives_copy_type(keep_data_end, move_data_count * recvcount, recvtype, 
+          ___collectives_move_type(keep_data_end, move_data_count * recvcount, recvtype, 
               keep_data_start, move_data_count * recvcount, recvtype,
               comm, coll_type, schedule, info);
 
