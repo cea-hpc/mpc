@@ -8689,7 +8689,8 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
 
           void *packet_start = tmpbuf + current_count * recvcount * recvext;
           //void *packet_dest = tmpbuf_other + (rank_master + topo_rank - packet_count + displs[l + offset]) * recvcount * recvext;
-          void *packet_dest = tmpbuf_other + (topo_rank - packet_count + displs[l + offset]) * recvcount * recvext;
+          //void *packet_dest = tmpbuf_other + (topo_rank + k * packet_count - packet_count * (l < j) + displs[l + offset]) * recvcount * recvext;
+          void *packet_dest = tmpbuf_other + (topo_rank + packet_count * (k - !offset) + displs[l + offset]) * recvcount * recvext;
 
           mpc_common_debug_log ("j:%d, k:%d, l:%d, offset:%d, packet_count:%d, topo rank:%d, displ:%d", j, k, l, offset, info->hardware_info_ptr->childs_data_count[0][l + offset], topo_rank, displs[l + offset]);
 
