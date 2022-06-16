@@ -8711,9 +8711,9 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
       topo_rank += info->hardware_info_ptr->childs_data_count[0][j];
     }
 
-    mpc_common_debug_log ("%p    %p", tmpbuf, tmpbuf_other);
+    //mpc_common_debug_log ("%p    %p", tmpbuf, tmpbuf_other);
     pointer_swap(tmpbuf, tmpbuf_other, swap);
-    mpc_common_debug_log ("%p    %p", tmpbuf, tmpbuf_other);
+    //mpc_common_debug_log ("%p    %p", tmpbuf, tmpbuf_other);
 
 
 
@@ -8769,10 +8769,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
 
   // SCATTERV PART 
   // on fait le scatter du tmpbuf vers tmpbuf_other, puis on reorder vers tmpbuf
-  void *scatterv_buf = NULL;
   for(i = 0; i < deepest_level; i++) {
-    scatterv_buf = tmpbuf;
-
     int rank_split;
     _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &rank_split);
 
@@ -8791,13 +8788,10 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
           displs[j] = displs[j-1] + info->hardware_info_ptr->childs_data_count[i][j-1] * (size - info->hardware_info_ptr->childs_data_count[i][j-1]) * recvcount * recvext;
           counts[j] = info->hardware_info_ptr->childs_data_count[i][j] * (size - info->hardware_info_ptr->childs_data_count[i][j]) * recvcount;
         }
-
-        scatterv_buf = MPI_IN_PLACE;
       }
 
-      // TODO: to fix, buffers are wrong
       res = _mpc_mpi_config()->coll_algorithm_intracomm.scatterv(tmpbuf, counts, displs, recvtype, 
-          scatterv_buf, info->hardware_info_ptr->send_data_count[i] * (size - info->hardware_info_ptr->send_data_count[i]) * recvcount, recvtype, 
+          tmpbuf_other, info->hardware_info_ptr->send_data_count[i] * (size - info->hardware_info_ptr->send_data_count[i]) * recvcount, recvtype, 
           0, master_comm, coll_type, schedule, info);
 
       ___collectives_barrier_type(coll_type, schedule, info);
@@ -8814,7 +8808,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
       if(MPC_COLL_TYPE_COUNT != coll_type) {
         char print_data[2048];
         print_data[0] = '\0';
-        int *data = (int*) tmpbuf;
+        int *data = (int*) tmpbuf_other;
 
         int j;
         for(j = 0; j < (size - info->hardware_info_ptr->send_data_count[i]) * info->hardware_info_ptr->send_data_count[i] * recvcount / 3; j++) {
@@ -8861,9 +8855,6 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
         displs[j] = displs[j-1] + info->hardware_info_ptr->childs_data_count[i + 1][j] * (size - info->hardware_info_ptr->childs_data_count[i + 1][j]);
       }
 
-
-      memset(tmpbuf_other, 0, (displs[size_next_master-1] + info->hardware_info_ptr->childs_data_count[i + 1][size_next_master-1] * (size - info->hardware_info_ptr->childs_data_count[i + 1][size_next_master-1])) * recvcount * recvext);
-
       // Reorder for data received from scatter
       int current_count = 0;
       for(j = 0; j < size - info->hardware_info_ptr->send_data_count[i]; j++) {
@@ -8877,9 +8868,9 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
           //int packet_count = info->hardware_info_ptr->childs_data_count[i/* + 1 */][k];
           int packet_count = info->hardware_info_ptr->childs_data_count[i + 1][k];
 
-          void *packet_start = tmpbuf + current_count * recvcount * recvext;
+          void *packet_start = tmpbuf_other + current_count * recvcount * recvext;
           //void *packet_dest = tmpbuf_other + (j + k + offset * (info->hardware_info_ptr->send_data_count[i] - packet_count) + displs[k]) * recvcount * recvext;
-          void *packet_dest = tmpbuf_other + (j + offset * (info->hardware_info_ptr->send_data_count[i] - packet_count) + displs[k]) * recvcount * recvext;
+          void *packet_dest = tmpbuf + (j + offset * (info->hardware_info_ptr->send_data_count[i] - packet_count) + displs[k]) * recvcount * recvext;
 
 
           mpc_common_debug_log ("j:%d, k:%d, offset:%d, packet_count:%d, displ:%d, send_count:%d", j, k, offset, info->hardware_info_ptr->childs_data_count[i+1][k], displs[k], info->hardware_info_ptr->send_data_count[i]);
@@ -8925,7 +8916,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
       if(MPC_COLL_TYPE_COUNT != coll_type) {
         char print_data[2048];
         print_data[0] = '\0';
-        int *data = (int*) tmpbuf_other;
+        int *data = (int*) tmpbuf;
 
         int j;
         for(j = 0; j < (displs[size_hwcomm-1] + info->hardware_info_ptr->childs_data_count[i + 1][size_hwcomm-1] * (size - info->hardware_info_ptr->childs_data_count[i + 1][size_hwcomm-1])) * recvcount / 3; j++) {
@@ -8974,7 +8965,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
             void *packet_start = keep_data_buf_other + (total_keep_data_count - current_count - packet_count) * recvcount * recvext;
             //void *packet_dest = tmpbuf_other + (j + k + offset + info->hardware_info_ptr->topo_rank * packet_count + displs[k]) * recvcount * recvext;
             //void *packet_dest = tmpbuf_other + (topo_rank - packet_count * offset + info->hardware_info_ptr->topo_rank * packet_count + displs[k]) * recvcount * recvext;
-            void *packet_dest = tmpbuf_other + (topo_rank - packet_count * !offset + info->hardware_info_ptr->topo_rank * packet_count + displs[l + offset]) * recvcount * recvext;
+            void *packet_dest = tmpbuf + (topo_rank - packet_count * !offset + info->hardware_info_ptr->topo_rank * packet_count + displs[l + offset]) * recvcount * recvext;
           
             mpc_common_debug_log ("j:%d, k:%d, l:%d, offset:%d, packet_count:%d, displ:%d, topo_rank:%d, topo_rank2:%d, current_count:%d", j, k, l, offset, info->hardware_info_ptr->childs_data_count[i + 1][k], displs[l+offset], info->hardware_info_ptr->topo_rank, topo_rank, current_count);
 
@@ -9000,7 +8991,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
       if(MPC_COLL_TYPE_COUNT != coll_type) {
         char print_data[2048];
         print_data[0] = '\0';
-        int *data = (int*) tmpbuf_other;
+        int *data = (int*) tmpbuf;
 
         int j;
         for(j = 0; j < (displs[size_hwcomm-1] + info->hardware_info_ptr->childs_data_count[i + 1][size_hwcomm-1] * (size - info->hardware_info_ptr->childs_data_count[i + 1][size_hwcomm-1])) * recvcount / 3; j++) {
@@ -9028,13 +9019,14 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   }
 
   // res = _mpc_mpi_config()->coll_algorithm_intracomm.scatter(scatter_buf, (size - 1) * recvcount, recvtype, tmpbuf, (size - 1) * recvcount, recvtype, 0, hardware_comm, coll_type, schedule, info);
+  // TODO maybe stop using IN_PLACE ?
   res = _mpc_mpi_config()->coll_algorithm_intracomm.scatter(tmpbuf, (size - 1) * recvcount, recvtype, scatter_buf, (size - 1) * recvcount, recvtype, 0, hardware_comm, coll_type, schedule, info);
 
 
   if(MPC_COLL_TYPE_COUNT != coll_type) {
     char print_data[2048];
     print_data[0] = '\0';
-    int *data = (int*) tmpbuf_other;
+    int *data = (int*) tmpbuf;
 
     int j;
     for(j = 0; j < (size - 1) * recvcount / 3; j++) {
@@ -9082,9 +9074,18 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
 
   for(int i = 0; i < size - 1; i++) {
     ___collectives_copy_type(tmpbuf + i * recvcount * recvext, recvcount, recvtype, 
-        recvbuf + info->hardware_info_ptr->swap_array[i + (i >= rank)] * recvcount * recvext, recvcount, recvtype,
+        //recvbuf + info->hardware_info_ptr->swap_array[i + (i >= rank)] * recvcount * recvext, recvcount, recvtype,
+        recvbuf + info->hardware_info_ptr->swap_array[i + (i >= info->hardware_info_ptr->swap_array[rank])] * recvcount * recvext, recvcount, recvtype,
         comm, coll_type, schedule, info);
   }
+
+  if(sendbuf != MPI_IN_PLACE) {
+    ___collectives_copy_type(sendbuf + rank * recvcount * recvext, recvcount, recvtype, 
+        recvbuf + rank * recvcount * recvext, recvcount, recvtype,
+        comm, coll_type, schedule, info);
+  }
+
+  
 
   info->flag = initial_flag; 
   
