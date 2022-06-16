@@ -8241,38 +8241,38 @@ int ___collectives_alltoallv_pairwise(const void *sendbuf, const int *sendcounts
 
   // Example:
   //
-  // P0 [00,00,00,02,02,01,03,03]        P0 [0,0,0,0,0]
-  // P1 [12,11,11,13,13,10]              P1 [1,1,1,1,1]
-  // P2 [21,22]                    =>    P2 [2,2,2,2,2]
-  // P3 [33,32,31,30]                    P3 [3,3,3,3,3]
+  // P0 [00,00,00,02,02,01,03,03]      P0 [00,00,00,10,30]
+  // P1 [12,11,11,13,13,10]            P1 [01,11,11,21,31]
+  // P2 [21,22]                    =>  P2 [02,02,12,22,32]
+  // P3 [33,32,31,30]                  P3 [03,03,13,13,33]
   //
-  // Then, if we choose a "natural" order aka sorted by process, the counts/disps will be:
+  // Thus the counts/disps will be:
   //
   // P0:
   //   sendcounts = [3,1,2,2]
   //   recvcounts = [3,1,0,1]
-  //   sdipls     = [0,5,3,6]
+  //   sdispls    = [0,5,3,6]
   //   rdispls    = [0,3,0,4]
   //
   // P1:
   //   sendcounts = [1,2,1,2]
   //   recvcounts = [1,2,1,1]
-  //   sdipls     = [5,1,0,3]
+  //   sdispls    = [5,1,0,3]
   //   rdispls    = [0,1,3,4]
   //
   // P2:
   //   sendcounts = [0,1,1,0]
   //   recvcounts = [2,1,1,1]
-  //   sdipls     = [0,0,1,0]
+  //   sdispls    = [0,0,1,0]
   //   rdispls    = [0,2,3,4]
   // 
   // P3:
   //   sendcounts = [1,1,1,1]
   //   recvcounts = [2,2,0,1]
-  //   sdipls     = [3,2,1,0]
+  //   sdispls    = [3,2,1,0]
   //   rdispls    = [0,2,4,0]
   //
-  // We observe that the rdispls are the cumulative sum of the recvcounts
+  // We also observe that the rdispls are the cumulative sum of the recvcounts
 
   int rank, size;
   MPI_Aint sendext, recvext;
@@ -8317,6 +8317,8 @@ int ___collectives_alltoallv_pairwise(const void *sendbuf, const int *sendcounts
   int distance;
 
   if(sendbuf == MPI_IN_PLACE) {
+    // All send-related args are ignored
+
     // Copy data to avoid erasing it by receiving other's data
     // Same remarks on recvcount as tmpbuf_pos increment
     ___collectives_copy_type(recvbuf, recvcount, recvtype, tmpbuf, recvcount, recvtype, comm, coll_type, schedule, info);
@@ -8769,11 +8771,11 @@ int ___collectives_alltoallw_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ co
     Or count the number of operations and rounds for the schedule
   \param sendbuf Adress of the pointer to the buffer used to send data
   \param sendcounts Array (of length group size) containing the number of elements send to each process
-  \param sdispls Array (of length group size) specifying at entry i the the displacement relative to sendbuf from which to take the sent data for process i
+  \param sdispls Array (of length group size) specifying at entry i the the displacement in bytes (relative to sendbuf) from which to take the sent data for process i
   \param sendtypes Array (of length group size) specifying at entry i the type of the data elements to send to process i
   \param recvbuf Adress of the pointer to the buffer used to receive data
   \param recvcounts Array (of length group size) containing the number of elements received from each process
-  \param rdispls Array (of length group size) specifying at entry i the the displacement relative to recvbuf at which to place the received data from process i
+  \param rdispls Array (of length group size) specifying at entry i the the displacement in bytes (relative to recvbuf) at which to place the received data from process i
   \param recvtypes Array (of length group size) specifying at entry i the type of the data elements to receive from process i
   \param comm Target communicator
   \param coll_type Type of the communication
@@ -8781,9 +8783,96 @@ int ___collectives_alltoallw_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ co
   \param info Adress on the information structure about the schedule
   \return error code
   */
-int ___collectives_alltoallw_pairwise(__UNUSED__ const void *sendbuf, __UNUSED__ const int *sendcounts, __UNUSED__ const int *sdispls, __UNUSED__ const MPI_Datatype *sendtypes, __UNUSED__ void *recvbuf, __UNUSED__ const int *recvcounts, __UNUSED__ const int *rdispls, __UNUSED__ const MPI_Datatype *recvtypes, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+int ___collectives_alltoallw_pairwise(const void *sendbuf, const int *sendcounts, const int *sdispls, const MPI_Datatype *sendtypes, void *recvbuf, const int *recvcounts, const int *rdispls, const MPI_Datatype *recvtypes, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-  not_implemented();
+  // WARNING /!\ Unlike in alltoall and alltoallv, displacements should here be in BYTES, not in NB OF ELEMENTS, so nothing will change with the associated MR
+
+  int rank, size;
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+
+  // Since it's alltoallW, we need an array of extents
+  MPI_Aint* sendexts = (MPI_Aint*)sctk_malloc(size * sizeof(MPI_Aint));
+  MPI_Aint* recvexts = (MPI_Aint*)sctk_malloc(size * sizeof(MPI_Aint));;
+
+
+  for(int i = 0; i < size; i++) {
+    PMPI_Type_extent(sendtypes[i], &(sendexts[i]));
+    PMPI_Type_extent(recvtypes[i], &(recvexts[i]));
+  }
+  
+  // We somehow need to account for the different extents of all the different datatypes
+  // The solution found here is to just get the total amount of bytes.
+  // No "totalcount" is stored, because the various datatypes and their various extents make it meaningless in alltoallw
+  int totalext = 0;
+  for(int i = 0; i < size; i++) {
+    totalext += recvcounts[i] * recvexts[i];
+  }
+
+  // Buffer is of size totalext bytes
+  void *tmpbuf = sctk_malloc(totalext);
+
+  switch(coll_type) {
+    case MPC_COLL_TYPE_BLOCKING:
+      break;
+
+    case MPC_COLL_TYPE_NONBLOCKING:
+    case MPC_COLL_TYPE_PERSISTENT:
+      if(sendbuf == MPI_IN_PLACE) {
+        tmpbuf = info->tmpbuf + info->tmpbuf_pos;
+        info->tmpbuf_pos += totalext;
+      }
+      break;
+
+    case MPC_COLL_TYPE_COUNT:
+      info->comm_count += 2 * (size - 1) + 1;
+
+      if(sendbuf == MPI_IN_PLACE) {
+        info->tmpbuf_size += totalext;
+      }
+      return MPI_SUCCESS;
+  }
+
+  int distance;
+  if(sendbuf == MPI_IN_PLACE) {
+    // All send-related args are ignored
+
+    // Copy data to avoid erasing it by receiving other's data. As we can only use the total extent in bytes of the data, and since MPI_CHAR is 1 byte, we copy totalext MPI_CHARs to cover all the data regardless of all datatypes
+    ___collectives_copy_type(recvbuf, totalext, MPI_CHAR, tmpbuf, totalext, MPI_CHAR, comm, coll_type, schedule, info);
+
+    for(distance = 1; distance < size; distance++) {
+      int src  = (rank - distance + size) % size;
+      int dest = (rank + distance)        % size;
+      
+      if ((rank / distance) % 2 == 0) {
+        ___collectives_send_type(tmpbuf  + rdispls[dest], recvcounts[dest], recvtypes[dest], dest, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+        ___collectives_recv_type(recvbuf + rdispls[src],  recvcounts[src],  recvtypes[src],  src,  MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      } else {
+        ___collectives_recv_type(recvbuf + rdispls[src],  recvcounts[src],  recvtypes[src],  src,  MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+        ___collectives_send_type(tmpbuf  + rdispls[dest], recvcounts[dest], recvtypes[dest], dest, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      }
+    }
+
+    // No need to copy our own data from sendbuf to recvbuf
+    // MPI_IN_PLACE tells us they're the same buffer so the data is already where we need it to be
+
+  } else {
+    for(distance = 1; distance < size; distance++) {
+      int src  = (rank - distance + size) % size;
+      int dest = (rank + distance)        % size;
+
+      if ((rank / distance) % 2 == 0) {
+        ___collectives_send_type(sendbuf + sdispls[dest], sendcounts[dest], sendtypes[dest], dest, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+        ___collectives_recv_type(recvbuf + rdispls[src],  recvcounts[src],  recvtypes[src],  src,  MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      } else {
+        ___collectives_recv_type(recvbuf + rdispls[src],  recvcounts[src],  recvtypes[src],  src,  MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+        ___collectives_send_type(sendbuf + sdispls[dest], sendcounts[dest], sendtypes[dest], dest, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      }
+    }
+
+    ___collectives_copy_type(sendbuf + sdispls[rank], sendcounts[rank], sendtypes[rank], recvbuf + rdispls[rank], recvcounts[rank], recvtypes[rank], comm, coll_type, schedule, info);
+
+  }
 
   return MPI_SUCCESS;
 }
