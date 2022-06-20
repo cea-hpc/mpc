@@ -9248,13 +9248,25 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
 
   //We start by computing the buffer size we'll need.
   if(highest_level == deepest_level + 1) {
+    // if you're not in any master comm
+    // we'll only need a buffer for the first & last data reorder
     tmpbuf_count = size;
   } else if(highest_level == deepest_level) {
+    // if you're the rank 0 of the deepest topological level & not in any-other master comm
     int highest_level_size = info->hardware_info_ptr->send_data_count[highest_level - 1];
 
-    keepbuf_count = (highest_level_size - 1) * (highest_level_size - 1) * 2;
+    // Amount of data to store during the gather:
+    // each rank need to send data to the other rank in the same comm: 
+    //  level_size * (level_size-1)
+    // rank 2 will need to store data 25 & 52
+    // TODO: keepbuf_count = (highest_level_size - 1) * (highest_level_size - 1) * 2;
+    keepbuf_count = highest_level_size * (highest_level_size - 1);
+
+    // Amount of data needed for send & recv during gather & scatter:
+    // each rank need to send data to all other rank, but it doesn't send it's own data 
     tmpbuf_count = (size - 1) * highest_level_size;
 
+    // Multiply by 2 because we need 2 buffer to be able to reorganize data from one to the other
     tmpbuf_count = (tmpbuf_count + keepbuf_count) << 1;
   } else {
     int highest_level_size;
@@ -9282,6 +9294,8 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   // mpc_common_debug_log ("%d BUF COUNT: %d, KEEP COUNT: %d", 
   //     rank, tmpbuf_count, keepbuf_count);
 
+  // The buffer will looks like this:
+  // | tmpbuf | keep_data_buf | tmpbuf_other | keep_data_buf_other |
 
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
@@ -9309,7 +9323,8 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   }
 
 
-  // SWAP PART
+  // STEP 1 & 2: remove own data & data swap
+  // each consecutive data is copied in one go
   int start = 0, end;
 
   if(rank == start) {
@@ -9369,8 +9384,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   // }
 
 
-  // GATHERV PART
-  /* last level topology gather */
+  // STEP 3: last level gather
   MPI_Comm hardware_comm = info->hardware_info_ptr->hwcomm[deepest_level];
 
   int hardware_comm_rank, hardware_comm_size;
@@ -9755,14 +9769,15 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
         int k;
         for(k = 0; k < info->hardware_info_ptr->childs_data_count[i + 1][j]; k++) {
           int l;
-          for(l = 0; l < size_next_master - 1; l++) {
+          //for(l = 0; l < size_next_master - 1; l++) {
+          for(l = size_next_master - 2; l >= 0; l--) {
             int offset = (l >= j)?1:0;
             int packet_count = info->hardware_info_ptr->childs_data_count[i + 1][k];
 
             void *packet_start = keep_data_buf_other + (total_keep_data_count - current_count - packet_count) * recvcount * recvext;
             void *packet_dest = tmpbuf + (topo_rank - packet_count * !offset + info->hardware_info_ptr->topo_rank * packet_count + displs[l + offset]) * recvcount * recvext;
           
-            //mpc_common_debug_log ("j:%d, k:%d, l:%d, offset:%d, packet_count:%d, displ:%d, topo_rank:%d, topo_rank2:%d, current_count:%d", j, k, l, offset, info->hardware_info_ptr->childs_data_count[i + 1][k], displs[l+offset], info->hardware_info_ptr->topo_rank, topo_rank, current_count);
+            //mpc_common_debug_log ("j:%d, k:%d, l:%d, offset:%d, packet_count:%d, displ:%d, topo_rank:%d, topo_rank2:%d, current_count:%d, src offset: %d, dst offset: %d", j, k, l, offset, info->hardware_info_ptr->childs_data_count[i + 1][k], displs[l + offset], info->hardware_info_ptr->topo_rank, topo_rank, current_count, total_keep_data_count - current_count - packet_count, topo_rank - packet_count * !offset + info->hardware_info_ptr->topo_rank * packet_count + displs[l + offset]);
 
             ___collectives_copy_type(packet_start, packet_count * recvcount, recvtype, 
                 packet_dest, packet_count * recvcount, recvtype,
@@ -9833,37 +9848,30 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
 
   //TODO: do better, doesnt work with IN_PLACE
   //swap data + insert own data (if no in_place)
-  // start = 0;
+  start = 0;
 
-  // for(end = start + 1; end < size - 1; end++) {
-  //   if(info->hardware_info_ptr->reverse_swap_array[end] != info->hardware_info_ptr->reverse_swap_array[end - 1] + 1 || end == rank) {
-  //     mpc_common_debug_log ("START %d, END %d", start, end);
-  //     ___collectives_copy_type(tmp_sendbuf + start * tmp_sendcount * sendext, tmp_sendcount * (end - start), tmp_sendtype, 
-  //         tmpbuf + (info->hardware_info_ptr->reverse_swap_array[start] - (end > rank)) * recvcount * recvext, recvcount * (end - start), recvtype,
-  //         comm, coll_type, schedule, info);
+  for(end = start + 1; end < size - 1; end++) {
+    if(info->hardware_info_ptr->swap_array[end] != info->hardware_info_ptr->swap_array[end - 1] + 1 || end == info->hardware_info_ptr->reverse_swap_array[rank]) {
+      mpc_common_debug_log ("START %d, END %d, SWAP INDEX: %d, SWAP: %d", start, end, start + (start >= info->hardware_info_ptr->reverse_swap_array[rank]), info->hardware_info_ptr->swap_array[start + (start >= info->hardware_info_ptr->reverse_swap_array[rank])]);
+      ___collectives_copy_type(tmpbuf + start * tmp_sendcount * sendext, tmp_sendcount * (end - start), tmp_sendtype, 
+          recvbuf + info->hardware_info_ptr->swap_array[start + (start >= info->hardware_info_ptr->reverse_swap_array[rank])] * recvcount * recvext, recvcount * (end - start), recvtype,
+          comm, coll_type, schedule, info);
 
-  //     if(end == rank) {
-  //       end++;
-  //     }
-
-  //     start = end;
-  //   }
-  // }
-
-  // if(rank == size - 1) {
-  //   end--;
-  // }
-
-  // mpc_common_debug_log ("START %d, END %d", start, end);
-  // ___collectives_copy_type(tmp_sendbuf + start * tmp_sendcount * sendext, tmp_sendcount * (end - start), tmp_sendtype, 
-  //     tmpbuf + (info->hardware_info_ptr->reverse_swap_array[start] - (end > rank)) * recvcount * recvext, recvcount * (end - start), recvtype,
-  //     comm, coll_type, schedule, info);
-
-  for(int i = 0; i < size - 1; i++) {
-    ___collectives_copy_type(tmpbuf + i * recvcount * recvext, recvcount, recvtype, 
-        recvbuf + info->hardware_info_ptr->swap_array[i + (i >= info->hardware_info_ptr->swap_array[rank])] * recvcount * recvext, recvcount, recvtype,
-        comm, coll_type, schedule, info);
+      start = end;
+    }
   }
+
+  mpc_common_debug_log ("START %d, END %d, SWAP INDEX: %d, SWAP: %d", start, end, start + (start >= info->hardware_info_ptr->reverse_swap_array[rank]), info->hardware_info_ptr->swap_array[start + (start >= info->hardware_info_ptr->reverse_swap_array[rank])]);
+  ___collectives_copy_type(tmpbuf + start * tmp_sendcount * sendext, tmp_sendcount * (end - start), tmp_sendtype, 
+      recvbuf + info->hardware_info_ptr->swap_array[start + (start >= info->hardware_info_ptr->reverse_swap_array[rank])] * recvcount * recvext, recvcount * (end - start), recvtype,
+      comm, coll_type, schedule, info);
+
+  //TODO to fix
+  // for(int i = 0; i < size - 1; i++) {
+  //   ___collectives_copy_type(tmpbuf + i * recvcount * recvext, recvcount, recvtype, 
+  //       recvbuf + info->hardware_info_ptr->swap_array[i + (i >= info->hardware_info_ptr->swap_array[rank])] * recvcount * recvext, recvcount, recvtype,
+  //       comm, coll_type, schedule, info);
+  // }
 
   if(sendbuf != MPI_IN_PLACE) {
     ___collectives_copy_type(sendbuf + rank * recvcount * recvext, recvcount, recvtype, 
