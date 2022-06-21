@@ -3951,7 +3951,7 @@ int ___collectives_scatter_topo(const void *sendbuf, int sendcount, MPI_Datatype
         counts[0] = info->hardware_info_ptr->childs_data_count[i][0] * recvcount;
         int j;
         for(j = 1; j < size_master; j++) {
-          displs[j] = displs[j-1] + info->hardware_info_ptr->childs_data_count[i][j-1] * recvcount * recvext;
+          displs[j] = displs[j-1] + counts[j-1];
           counts[j] = info->hardware_info_ptr->childs_data_count[i][j] * recvcount;
         }
 
@@ -4296,6 +4296,9 @@ int ___collectives_scatterv_linear(const void *sendbuf, const int *sendcounts, c
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
 
+  MPI_Aint sendext;
+  PMPI_Type_extent(sendtype, &sendext);
+
   int res = MPI_SUCCESS;
 
   switch(coll_type) {
@@ -4329,14 +4332,14 @@ int ___collectives_scatterv_linear(const void *sendbuf, const int *sendcounts, c
         continue;
       }
 
-      res = ___collectives_send_type(sendbuf + displs[i], sendcounts[i], sendtype, i, MPC_SCATTER_TAG, comm, coll_type, schedule, info);
+      res = ___collectives_send_type(sendbuf + displs[i] * sendext, sendcounts[i], sendtype, i, MPC_SCATTER_TAG, comm, coll_type, schedule, info);
       if(res != MPI_SUCCESS) {
         return res;
       }
     }
 
     if(recvbuf != MPI_IN_PLACE) {
-      ___collectives_copy_type(sendbuf + displs[rank], sendcounts[rank], sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
+      ___collectives_copy_type(sendbuf + displs[rank] * sendext, sendcounts[rank], sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
     }
   }
 
@@ -5006,7 +5009,7 @@ int ___collectives_gather_topo(const void *sendbuf, int sendcount, MPI_Datatype 
         counts[0] = info->hardware_info_ptr->childs_data_count[i][0] * tmp_sendcount;
         int j;
         for(j = 1; j < size_master; j++) {
-          displs[j] = displs[j-1] + info->hardware_info_ptr->childs_data_count[i][j-1] * tmp_sendcount * sendext;
+          displs[j] = displs[j-1] + counts[j-1];
           counts[j] = info->hardware_info_ptr->childs_data_count[i][j] * tmp_sendcount;
         }
 
@@ -5378,7 +5381,7 @@ int ___collectives_gatherv_linear(const void *sendbuf, int sendcount, MPI_Dataty
 
   if(size == 1) {
     if(sendbuf != MPI_IN_PLACE) {
-      ___collectives_copy_type(sendbuf, sendcount, sendtype, recvbuf + displs[0], recvcounts[0], recvtype, comm, coll_type, schedule, info);
+      ___collectives_copy_type(sendbuf, sendcount, sendtype, recvbuf + displs[0] * ext, recvcounts[0], recvtype, comm, coll_type, schedule, info);
     }
     return MPI_SUCCESS;
   }
@@ -5397,14 +5400,14 @@ int ___collectives_gatherv_linear(const void *sendbuf, int sendcount, MPI_Dataty
         continue;
       }
 
-      res = ___collectives_recv_type(recvbuf + displs[i], recvcounts[i], recvtype, i, MPC_GATHER_TAG, comm, coll_type, schedule, info);
+      res = ___collectives_recv_type(recvbuf + displs[i] * ext, recvcounts[i], recvtype, i, MPC_GATHER_TAG, comm, coll_type, schedule, info);
       if(res != MPI_SUCCESS) {
         return res;
       }
     }
 
     if(sendbuf != MPI_IN_PLACE) {
-      ___collectives_copy_type(sendbuf, sendcount, sendtype, recvbuf + displs[rank], recvcounts[rank], recvtype, comm, coll_type, schedule, info);
+      ___collectives_copy_type(sendbuf, sendcount, sendtype, recvbuf + displs[rank] * ext, recvcounts[rank], recvtype, comm, coll_type, schedule, info);
     }
   }
 
@@ -6242,7 +6245,7 @@ int ___collectives_reduce_scatter_reduce_scatterv(const void *sendbuf, void* rec
     displs[0] = 0;
     int i;
     for(i = 1; i < size; i++) {
-      displs[i] = displs[i-1] + recvcounts[i-1] * ext;
+      displs[i] = displs[i-1] + recvcounts[i-1];
     }
   }
 
@@ -7268,7 +7271,10 @@ int ___collectives_allgatherv_gatherv_broadcast(const void *sendbuf, int sendcou
   if(sendbuf == MPI_IN_PLACE && rank != 0) {
     tmp_sendtype = recvtype;
 
-    tmp_sendbuf = recvbuf + displs[rank];
+    MPI_Aint sendext;
+    PMPI_Type_extent(tmp_sendtype, &sendext);
+
+    tmp_sendbuf = recvbuf + displs[rank] * sendext;
     tmp_sendcount = recvcounts[rank];
   }
   
@@ -8075,7 +8081,7 @@ int ___collectives_alltoallv_cluster(const void *sendbuf, const int *sendcounts,
   int rsize = 0;
   int i;
   for(i = 0; i < size; i++) {
-    int size = rdispls[i] + recvcounts[i] * recvext;
+    int size = (rdispls[i] + recvcounts[i]) * recvext;
     rsize = (size > rsize) ? (size) : (rsize) ;
   }
   
@@ -8112,8 +8118,8 @@ int ___collectives_alltoallv_cluster(const void *sendbuf, const int *sendcounts,
         continue;
       }
 
-      ___collectives_send_type(tmpbuf  + rdispls[i], recvcounts[i], recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
-      ___collectives_recv_type(recvbuf + rdispls[i], recvcounts[i], recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(tmpbuf  + rdispls[i] * recvext, recvcounts[i], recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      ___collectives_recv_type(recvbuf + rdispls[i] * recvext, recvcounts[i], recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
     }
 
   } else {
@@ -8124,11 +8130,11 @@ int ___collectives_alltoallv_cluster(const void *sendbuf, const int *sendcounts,
         continue;
       }
 
-      ___collectives_send_type(sendbuf + sdispls[i], sendcounts[i], sendtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
-      ___collectives_recv_type(recvbuf + rdispls[i], recvcounts[i], recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(sendbuf + sdispls[i] * sendext, sendcounts[i], sendtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      ___collectives_recv_type(recvbuf + rdispls[i] * recvext, recvcounts[i], recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
     }
     // Copy our own data in the recvbuf
-    ___collectives_copy_type(sendbuf + sdispls[rank], sendcounts[rank], sendtype, recvbuf + rdispls[rank], recvcounts[rank], recvtype, comm, coll_type, schedule, info);
+    ___collectives_copy_type(sendbuf + sdispls[rank] * sendext, sendcounts[rank], sendtype, recvbuf + rdispls[rank] * recvext, recvcounts[rank], recvtype, comm, coll_type, schedule, info);
 
   }
 
