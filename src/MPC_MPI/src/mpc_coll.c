@@ -9260,7 +9260,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
     // each rank need to send data to the other rank in the same comm: 
     //  level_size * (level_size-1)
     // rank 2 will need to store data 25 & 52
-    // TODO: keepbuf_count = (highest_level_size - 1) * (highest_level_size - 1) * 2;
+    // TODO: verify keepbuf_count = (highest_level_size - 1) * (highest_level_size - 1) * 2;
     keepbuf_count = highest_level_size * (highest_level_size - 1);
 
     // Amount of data needed for send & recv during gather & scatter:
@@ -9339,6 +9339,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
           tmpbuf + (info->hardware_info_ptr->reverse_swap_array[start] - (info->hardware_info_ptr->reverse_swap_array[start] > info->hardware_info_ptr->reverse_swap_array[rank])) * recvcount * recvext, recvcount * (end - start), recvtype,
           comm, coll_type, schedule, info);
 
+      // We skip our own data
       if(end == rank) {
         end++;
       }
@@ -9445,7 +9446,6 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   int total_move_data_count = 0;
   int total_count = hardware_comm_size * (size - 1);
 
-  int prev_total_keep_data_count = 0;
   int total_keep_data_count = 0;
 
   int i;
@@ -9455,12 +9455,15 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
     int hardware_comm_rank;
     _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &hardware_comm_rank);
     
+    // STEP 4: data removal
+    // We remove data from the previous gather
     if(hardware_comm_rank == 0) {
 
       {
         int size_master, rank_master;
         MPI_Comm master_comm;
         
+        // get the current level size
         if(i == deepest_level - 1) {
           master_comm = info->hardware_info_ptr->hwcomm[i + 1];
         } else {
@@ -9468,11 +9471,23 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
         }
         _mpc_cl_comm_size(master_comm, &size_master);
 
+        // Here the data is organized as follow:
+        // send data block 1-1, keep data block 1, send data block 1-2, ... , send data block n-1, keep data block n, send data block n-2
+        // With n the number of rank bellow the current topological level
+        // After this step, we want the following 2 buffer:
+        // send data: send data block 1-1, send data block 1-2, ... , send data block n-1, send data block n-2
+        // keep data: keep data block 1, keep data block n
+
         // TODO: move less data
         // from: s1 k1 k2 s2 s3 k3 k4 s4 =(move 5)> s1 s2 s3 k3 k4 s4       =(move 1)> s1 s2 s3 s4
         // to  : s1 k1 k2 s2 s3 k3 k4 s4 =(move 2)> s1 s2 s3       k3 k4 s4 =(move 1)> s1 s2 s3 s4
-        prev_total_keep_data_count = total_keep_data_count;
+
+        //TODO: to fix, we want to loop through the number of rank bellow the current level, not the through the master comm
+        //TODO: to redo, we need a double for:
+        // loop master size
+        //   loop child_data_count
         int j, current_count = 0, current_displ = 0;
+        // We loop through each group of send data & keep data block
         for(j = 0; j < size_master; j++) {
           int keep_data_count = size_master - info->hardware_info_ptr->childs_data_count[i + 1][j];
           void *keep_data_start = tmpbuf + displs[j] - current_displ + info->hardware_info_ptr->topo_rank * recvcount * recvext;
@@ -9538,6 +9553,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
         // }
       }
 
+      // STEP 3: with gatherv
       MPI_Comm master_comm = info->hardware_info_ptr->rootcomm[i];
 
       int size_master, rank_master;
@@ -9571,6 +9587,50 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
       }
     }
   }
+
+  // STEP 6: Highest level data reorder
+  // In the exemple:
+  // rank 1 data: [13, 10, 14, 12, 15, 31, 32, 35, 01, 02, 05, 41, 42, 45, 21, 23, 20, 24, 51, 53, 50, 54]
+  // We use 3 nested loop to go through this array:
+  //   current master comm size (j):
+  //     [13, 10, 14, 12, 15 | 31, 32, 35, 01, 02, 05, 41, 42, 45 | 21, 23, 20, 24, 51, 53, 50, 54]
+  //   number of ranks under each branch of the current topological level (k):
+  //     [13, 10, 14, 12, 15 | 31, 32, 35 || 01, 02, 05 || 41, 42, 45 | 21, 23, 20, 24 || 51, 53, 50, 54]
+  //   current master comm size minus 1 (we dont send data to ourselves) (l):
+  //     [13, 10, 14 ||| 12, 15 | 31 ||| 32, 35 || 01 ||| 02, 05 || 41 ||| 42, 45 | 21 ||| 23, 20, 24 || 51 ||| 53, 50, 54]
+  //
+  // These nested loop allow to minimse the number of copy to be done:
+  //  __________  ______  __  ______  __  ______  __  ______  __  __________  __  __________
+  // [13, 10, 14, 12, 15, 31, 32, 35, 01, 02, 05, 41, 42, 45, 21, 23, 20, 24, 51, 53, 50, 54]
+  // here 12 copies instead of 22 if done element by element
+  // We can clearly see for each data block, the source rank stays the same, destination ranks stay in the same topological branch
+
+  // To correctly reorder the data, we must now figure out how to get the source & destination pointer and the data size.
+
+  // We can represent where each pack should go in order to get the basic feeling:
+  //            __________  ______  __  ______  __  ______  __  ______  __  __________  __  __________
+  //           [13, 10, 14, 12, 15, 31, 32, 35, 01, 02, 05, 41, 42, 45, 21, 23, 20, 24, 51, 53, 50, 54]
+  //            |           |       |   |       |   |       |   |       |   |           |   |         
+  // 0 (+0)  :  |           |       0   |       1   |       2   |       3   |           4   |         
+  // 1 (+5)  :  0           |           |           |           |           1               2         
+  // 2 (+14) :              0           1           2           3                                     
+  // On the left we have the destination rank in the master communicator
+  //   in the exemple rank 0 (master comm) is rank 1 (main comm), 1 is 3 & 2 is 2
+  // On each line are the packet order
+  // I added the displacement near the destination rank
+  //   it represent the number of data packet written before in the destination buffer
+  // It's more visible on the result:
+  //   [31, 01, 41, 21, 51, 13, 10, 14, 23, 20, 24, 53, 50, 54, 12, 15, 32, 35, 02, 05, 42, 45]
+  //    <----------------> (+5)
+  //    <----------------------------------------------------> (+14)
+  
+  // Each data block size is easy to get:
+  //   We send data to rank 3: how many rank bellow 3 in the topology at the current level ?
+  //   Here it's 3
+  // Data source pointer is also easy, we accumulate the data block size we already written, it's our start
+  // Data destination pointer is less trivial
+  //   We start by using the displacement mentionned above (which is pre-computed)
+  //   The only other information we need is how many previous rank already wrote data for this destination.
 
 
   if(highest_level == 0) {
@@ -9613,10 +9673,9 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
       topo_rank += info->hardware_info_ptr->childs_data_count[0][j];
     }
 
-
-    //mpc_common_debug_log ("%p    %p", tmpbuf, tmpbuf_other);
+    // For simplicity (maybe), we want to keep tmpbuf as the primary temporary buffer
+    // As data are in tmp_buf other, we swap the two pointer
     pointer_swap(tmpbuf, tmpbuf_other, swap);
-    //mpc_common_debug_log ("%p    %p", tmpbuf, tmpbuf_other);
 
 
     // if(MPC_COLL_TYPE_COUNT != coll_type) {
@@ -9650,9 +9709,10 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
 
   }
 
-  // SCATTERV PART 
   // on fait le scatter du tmpbuf vers tmpbuf_other, puis on reorder vers tmpbuf
   for(i = 0; i < deepest_level; i++) {
+
+    // STEP 7: Scatterv 
     int rank_split;
     _mpc_cl_comm_rank(info->hardware_info_ptr->hwcomm[i + 1], &rank_split);
 
@@ -9701,6 +9761,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
       // }
 
 
+      // STEP 8: data reorder
       //reorder data + insert data
       int j;
       int size_hwcomm, size_next_master;
@@ -9762,6 +9823,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
 
       // mpc_common_debug_log ("buf:%p, prev_total_keep_data_count:%d, total_keep_data_count:%d", keep_data_buf_other, prev_total_keep_data_count, total_keep_data_count);
 
+      // STEP 8: data insertion
       // TODO: a reorder of this data could be done sooner to ease this step
       // insertion & reorder from data kept during gather phase
       int topo_rank = info->hardware_info_ptr->send_data_count[i] - 1;
@@ -9815,6 +9877,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
     }
   }
 
+  // STEP 7: Scatter
   /* last level topology binomial scatter */
   void *scatter_buf = tmpbuf;
 
@@ -9847,6 +9910,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   // }
 
 
+  // STEP 10: data insertion & data swap
   //TODO: do better, doesnt work with IN_PLACE
   //swap data + insert own data (if no in_place)
   start = 0;
