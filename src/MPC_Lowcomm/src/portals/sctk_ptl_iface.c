@@ -43,7 +43,6 @@ void sctk_ptl_print_structure(__UNUSED__ sctk_ptl_rail_info_t* srail)
 {
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
 	sctk_ptl_limits_t l = srail->max_limits;
-#endif
 	mpc_common_debug(
 	"\n======== PORTALS STRUCTURE ========\n"
 	"\n"
@@ -111,7 +110,8 @@ void sctk_ptl_print_structure(__UNUSED__ sctk_ptl_rail_info_t* srail)
 	(SCTK_PTL_IS_OFFLOAD_COLL(srail->offload_support) ? "True" : "False"),
 	(SCTK_PTL_IS_OFFLOAD_OD(srail->offload_support) ? "True" : "False")
 	);
-	
+	#endif
+
 }
 
 /**
@@ -148,6 +148,7 @@ static inline void __sctk_ptl_set_limits(sctk_ptl_limits_t* l)
 sctk_ptl_rail_info_t sctk_ptl_hardware_init()
 {
 	sctk_ptl_rail_info_t res;
+	memset(&res, 0, sizeof(sctk_ptl_rail_info_t));
 	sctk_ptl_limits_t l;
 
 	/* pre-actions */
@@ -332,7 +333,7 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, ptl_p
 	__pte_idx_register(srail, pte->idx, key);
 
 	srail->nb_entries++;
-	mpc_common_debug_error("CREATING comm %d", srail->nb_entries);
+	//mpc_common_debug_error("CREATING comm %d", srail->nb_entries);
 
 }
 
