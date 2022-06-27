@@ -101,6 +101,12 @@ static void _mpc_lowcomm_portals_notify_perform(__UNUSED__ mpc_lowcomm_peer_uid_
 	__ptl_poll(rail, 3);
 }
 
+static void _mpc_lowcomm_portals_notify_any_source (int polling_task_id, int blocking, sctk_rail_info_t* rail)
+{
+	__ptl_poll(rail, 2);
+}
+
+
 
 static void _mpc_lowcomm_portals_notify_probe (sctk_rail_info_t* rail, mpc_lowcomm_ptp_message_header_t* hdr, int *status)
 {
@@ -271,7 +277,7 @@ void sctk_network_init_ptl (sctk_rail_info_t *rail)
 	rail->notify_matching_message   = NULL;
 	rail->notify_perform_message    = _mpc_lowcomm_portals_notify_perform;
 	rail->notify_idle_message       = _mpc_lowcomm_portals_notify_idle;
-	rail->notify_any_source_message = NULL;
+	rail->notify_any_source_message = _mpc_lowcomm_portals_notify_any_source;
 	rail->notify_new_comm           = _mpc_lowcomm_portals_notify_newcomm;
 	rail->notify_del_comm           = _mpc_lowcomm_portals_notify_delcomm;
 	rail->send_message_from_network = sctk_send_message_from_network_ptl;

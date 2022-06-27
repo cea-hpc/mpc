@@ -206,6 +206,7 @@ void sctk_ptl_eager_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_en
 	request->type          = SCTK_PTL_TYPE_STD;
 	request->prot          = SCTK_PTL_PROT_EAGER;
 	request->msg_seq_nb    = SCTK_MSG_NUMBER(msg);
+	request->match         = match;
 	hdr.std.msg_seq_nb     = SCTK_MSG_NUMBER(msg);
 	hdr.std.putsz          = 0; /* this set the protocol in imm_data for receiver optimizations */
 	msg->tail.ptl.user_ptr = request;
@@ -281,7 +282,7 @@ void sctk_ptl_eager_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_ptl_rail_in
 	msg->tail.ptl.user_ptr = user_ptr;
 	sctk_ptl_me_register(srail, user_ptr, pte);
 	
-	mpc_common_debug("PORTALS: NOTIFY-RECV-EAGER from %d (idx=%llu, match=%s, ign=%llu start=%p, sz=%llu)", SCTK_MSG_SRC_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), start, size);
+	mpc_common_debug("PORTALS: NOTIFY-RECV-EAGER from %d (idx=%llu, match=%s, ign=%s start=%p, sz=%llu)", SCTK_MSG_SRC_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), start, size);
 }
 
 /**

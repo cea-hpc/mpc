@@ -306,7 +306,7 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, size_t threshold)
 		{
 			user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
 			assert(user_ptr != NULL);
-			mpc_common_debug_info("PORTALS: MDS EVENT '%s' from %s, type=%s, prot=%s",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot));
+			mpc_common_debug_info("PORTALS: MDS EVENT '%s' from %s, type=%s, prot=%s, match=%s",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot),  __sctk_ptl_match_str(malloc(32), 32, user_ptr->match.raw));
 			/* we only care about Portals-sucess events */
 			if(ev.ni_fail_type != PTL_NI_OK)
 			{
