@@ -9491,32 +9491,76 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
         //TODO: to redo, we need a double for:
         // loop master size
         //   loop child_data_count
-        int j, current_count = 0, current_displ = 0;
+
+
+
+        // int j, current_count = 0, current_displ = 0;
+        // // We loop through each group of send data & keep data block
+        // for(j = 0; j < size_master; j++) {
+        //   int keep_data_count = size_master - info->hardware_info_ptr->childs_data_count[i + 1][j];
+        //   void *keep_data_start = tmpbuf + displs[j] - current_displ + info->hardware_info_ptr->topo_rank * recvcount * recvext;
+        //   void *keep_data_end = keep_data_start + keep_data_count * recvcount * recvext;
+
+        //   int move_data_count = total_count - current_count - info->hardware_info_ptr->topo_rank - keep_data_count;
+
+        //   //part to keep
+        //   ___collectives_copy_type(keep_data_start, keep_data_count * recvcount, recvtype, 
+        //       keep_data_buf_other + total_keep_data_count * recvcount * recvext, keep_data_count * recvcount, recvtype,
+        //       comm, coll_type, schedule, info);
+
+
+        //   // part to send
+        //   ___collectives_move_type(keep_data_end, move_data_count * recvcount, recvtype, 
+        //       keep_data_start, move_data_count * recvcount, recvtype,
+        //       comm, coll_type, schedule, info);
+
+        //   current_count += counts[j] / recvcount;
+        //   current_displ += keep_data_count * recvcount * recvext;
+        //   total_move_data_count += move_data_count;
+
+        //   total_keep_data_count += keep_data_count;
+        // }
+
+        int j, k, current_count = 0, current_displ = 0;
         // We loop through each group of send data & keep data block
         for(j = 0; j < size_master; j++) {
-          int keep_data_count = size_master - info->hardware_info_ptr->childs_data_count[i + 1][j];
-          void *keep_data_start = tmpbuf + displs[j] - current_displ + info->hardware_info_ptr->topo_rank * recvcount * recvext;
-          void *keep_data_end = keep_data_start + keep_data_count * recvcount * recvext;
+          int packet_count = size - info->hardware_info_ptr->childs_data_count[i + 1][j];
+          for(k = 0; k < info->hardware_info_ptr->childs_data_count[i + 1][j]; k++) {
+            int keep_data_count = size_master - info->hardware_info_ptr->childs_data_count[i + 1][j];
 
-          int move_data_count = total_count - current_count - info->hardware_info_ptr->topo_rank - keep_data_count;
+            //void *keep_data_start = tmpbuf + displs[j] - current_displ + info->hardware_info_ptr->topo_rank * recvcount * recvext;
+            void *keep_data_start = tmpbuf + displs[j] + k * packet_count + info->hardware_info_ptr->topo_rank * recvcount * recvext;
+            void *keep_data_end = keep_data_start + keep_data_count * recvcount * recvext;
 
-          //part to keep
-          ___collectives_copy_type(keep_data_start, keep_data_count * recvcount, recvtype, 
-              keep_data_buf_other + total_keep_data_count * recvcount * recvext, keep_data_count * recvcount, recvtype,
-              comm, coll_type, schedule, info);
+            //int move_data_count = total_count - current_count - info->hardware_info_ptr->topo_rank - keep_data_count;
+            int move_data_count;
+            if(j == size_master - 1 && k == info->hardware_info_ptr->childs_data_count[i + 1][j] - 1) {
+              move_data_count = packet_count - keep_data_count - info->hardware_info_ptr->topo_rank;
+            } else {
+              move_data_count = packet_count - keep_data_count;
+            }
+
+            //part to keep
+            ___collectives_copy_type(keep_data_start, keep_data_count * recvcount, recvtype, 
+                keep_data_buf_other + total_keep_data_count * recvcount * recvext, keep_data_count * recvcount, recvtype,
+                comm, coll_type, schedule, info);
 
 
-          // part to send
-          ___collectives_move_type(keep_data_end, move_data_count * recvcount, recvtype, 
-              keep_data_start, move_data_count * recvcount, recvtype,
-              comm, coll_type, schedule, info);
+            // part to send
+            ___collectives_move_type(keep_data_end, move_data_count * recvcount, recvtype, 
+                keep_data_start - current_displ, move_data_count * recvcount, recvtype,
+                comm, coll_type, schedule, info);
 
-          current_count += counts[j] / recvcount;
-          current_displ += keep_data_count * recvcount * recvext;
-          total_move_data_count += move_data_count;
-
-          total_keep_data_count += keep_data_count;
+            //current_count += counts[j] / recvcount;
+            current_displ += keep_data_count * recvcount * recvext;
+            //total_move_data_count += move_data_count;
+            total_keep_data_count += keep_data_count;
+          }
         }
+
+
+
+
 
         // if(MPC_COLL_TYPE_COUNT != coll_type) {
         //   char print_data[131072];
