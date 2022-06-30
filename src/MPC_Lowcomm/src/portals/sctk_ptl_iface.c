@@ -32,6 +32,8 @@
 #include "mpc_common_datastructure.h"
 #include "sctk_ptl_offcoll.h"
 #include "sctk_low_level_comm.h"
+#include "mpc_common_rank.h"
+#include "mpc_launch_pmi.h"
 
 static OPA_int_t nb_mds = OPA_INT_T_INITIALIZER(0);
 
@@ -147,6 +149,30 @@ static inline void __sctk_ptl_set_limits(sctk_ptl_limits_t* l)
  */
 sctk_ptl_rail_info_t sctk_ptl_hardware_init()
 {
+
+	/* BXI specific We first need to make sure we do not exhaust command queues on the BXI
+	   by settign a few internal variables for CQs sharing */
+	int local_proc_count = mpc_common_get_local_process_count();
+
+	if(local_proc_count >= 62)
+	{
+		int cqmaxpid = (local_proc_count / 62) + 1;
+		if(cqmaxpid > 8)
+		{
+			cqmaxpid = 8;
+		}
+		char val[16];
+		snprintf(val, 16, "%d", cqmaxpid);
+		/* Set not overwriting */
+		setenv("PORTALS4_CQ_MAXPIDS", val, 0);
+
+		uint64_t job_id = 1111;
+		mpc_launch_pmi_get_job_id(&job_id);
+		snprintf(val, 16, "%lu", job_id);
+
+		setenv("PORTALS4_CQ_GROUP", val, 0);
+	}
+
 	sctk_ptl_rail_info_t res;
 	memset(&res, 0, sizeof(sctk_ptl_rail_info_t));
 	sctk_ptl_limits_t l;

@@ -906,7 +906,8 @@ int mpc_launch_pmi_get_job_id( uint64_t *id )
 
 	return MPC_LAUNCH_PMI_SUCCESS;
 #elif defined(MPC_USE_PMIX)
-	not_implemented();
+	*id =  mpc_common_hash_string(pmi_context.pmix_proc.nspace);
+	return MPC_LAUNCH_PMI_SUCCESS;
 #elif defined( MPC_USE_PMI1 )
 	char *env = NULL;
 	env = getenv( "SLURM_JOB_ID" );
