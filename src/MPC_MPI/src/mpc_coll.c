@@ -10034,8 +10034,8 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
       // STEP 8: data insertion
       // TODO: a reorder of this data could be done sooner to ease this step
       // insertion & reorder from data kept during gather phase
-      //int topo_rank = info->hardware_info_ptr->send_data_count[i] - 1;
-      int topo_rank = info->hardware_info_ptr->send_data_count[i];
+      int topo_rank = info->hardware_info_ptr->send_data_count[i] - 1;
+      //int topo_rank = info->hardware_info_ptr->send_data_count[i];
       current_count = 0;
       for(j = size_next_master-1; j >= 0; j--) {
         int k;
@@ -10045,14 +10045,17 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
           //for(l = 0; l < size_next_master - 1; l++) {
           for(l = size_next_master - 2; l >= 0; l--) {
             int offset = (l >= j)?1:0;
-            int packet_count = info->hardware_info_ptr->childs_data_count[i + 1][k];
+            //int packet_count = info->hardware_info_ptr->childs_data_count[i + 1][k];
+            int packet_count = info->hardware_info_ptr->childs_data_count[i + 1][l + offset];
 
             void *packet_start = keep_data_buf_other + (total_keep_data_count - current_count - packet_count) * recvcount * recvext;
+
             //int tmp = topo_rank - packet_count * !offset + info->hardware_info_ptr->topo_rank * packet_count;
-            int tmp = topo_rank - packet_count + k * packet_count - packet_count * !offset + info->hardware_info_ptr->topo_rank * packet_count;
+            //int tmp = topo_rank - packet_count + k * packet_count - packet_count * !offset + info->hardware_info_ptr->topo_rank * packet_count;
+            int tmp = (info->hardware_info_ptr->topo_rank + topo_rank - !offset * packet_count) * packet_count;
             void *packet_dest = tmpbuf + (tmp + displs[l + offset]) * recvcount * recvext;
           
-            mpc_common_debug_log ("j:%d, k:%d, l:%d, offset:%d, packet_count:%d, displ:%d, topo_rank:%d, topo_rank2:%d, current_count:%d, src offset: %d, dst offset: %d", j, k, l, offset, info->hardware_info_ptr->childs_data_count[i + 1][k], displs[l + offset], info->hardware_info_ptr->topo_rank, topo_rank, current_count, total_keep_data_count - current_count - packet_count, tmp + displs[l + offset]);
+            mpc_common_debug_log ("j:%d, k:%d, l:%d, offset:%d, packet_count:%d, displ:%d, topo_rank:%d, topo_rank2:%d, current_count:%d, src offset: %d, dst offset: %d", j, k, l, offset, packet_count, displs[l + offset], info->hardware_info_ptr->topo_rank, topo_rank, current_count, total_keep_data_count - current_count - packet_count, tmp + displs[l + offset]);
 
             ___collectives_copy_type(packet_start, packet_count * recvcount, recvtype, 
                 packet_dest, packet_count * recvcount, recvtype,
@@ -10060,8 +10063,9 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
 
             current_count += packet_count;
           }
+          topo_rank--;
         }
-        topo_rank -= info->hardware_info_ptr->childs_data_count[i + 1][j];
+        //topo_rank -= info->hardware_info_ptr->childs_data_count[i + 1][j];
       }
 
       total_keep_data_count -= current_count;
