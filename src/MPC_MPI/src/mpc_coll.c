@@ -8939,9 +8939,10 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   start = 0;
 
   for(end = start + 1; end < size - 1; end++) {
-    if(info->hardware_info_ptr->swap_array[end] != info->hardware_info_ptr->swap_array[end - 1] + 1 || end == info->hardware_info_ptr->reverse_swap_array[rank]) {
+    int offset = (start >= info->hardware_info_ptr->reverse_swap_array[rank]);
+    if(info->hardware_info_ptr->swap_array[end + offset] != info->hardware_info_ptr->swap_array[end - 1 + offset] + 1 || end == info->hardware_info_ptr->reverse_swap_array[rank]) {
       ___collectives_copy_type(tmpbuf + start * tmp_sendcount * sendext, tmp_sendcount * (end - start), tmp_sendtype, 
-          recvbuf + info->hardware_info_ptr->swap_array[start + (start >= info->hardware_info_ptr->reverse_swap_array[rank])] * recvcount * recvext, recvcount * (end - start), recvtype,
+          recvbuf + info->hardware_info_ptr->swap_array[start + offset] * recvcount * recvext, recvcount * (end - start), recvtype,
           comm, coll_type, schedule, info);
 
       start = end;
