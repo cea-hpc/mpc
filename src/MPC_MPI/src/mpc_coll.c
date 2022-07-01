@@ -42,13 +42,13 @@
 //    add reduce_scatter(_block)_Allgather(v) algorithm, may be faster than reduce then scatter
 
 #define ALLOW_TOPO_COMM 1
-#define TOPO_MAX_LEVEL 3
+#define TOPO_MAX_LEVEL 1
 
 /**
  * @brief This enables debugging in the MPC_COLL file
  *
  */
-#define MPC_COLL_ENABLE_DEBUG
+//#define MPC_COLL_ENABLE_DEBUG
 
 #if defined(MPC_COLL_ENABLE_DEBUG) && defined(MPC_ENABLE_DEBUG_MESSAGES)
 /* Make sure this is not un-noticed */
@@ -8330,7 +8330,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   displs[0] = 0;
   counts[0] = (size - 1) * recvcount;
   for(int i = 1; i < hardware_comm_size; i++) {
-    displs[i] = displs[i - 1] + counts[i - 1] * recvext; 
+    displs[i] = displs[i - 1] + counts[i - 1]; 
     counts[i] = (size - 1) * recvcount;
   }
 
@@ -8380,7 +8380,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
           for(k = 0; k < info->hardware_info_ptr->childs_data_count[i + 1][j]; k++) {
             int keep_data_count = info->hardware_info_ptr->send_data_count[i] - info->hardware_info_ptr->childs_data_count[i + 1][j];
 
-            void *keep_data_start = tmpbuf + displs[j] + (k * packet_count + info->hardware_info_ptr->topo_rank) * recvcount * recvext;
+            void *keep_data_start = tmpbuf + displs[j] * recvext + (k * packet_count + info->hardware_info_ptr->topo_rank) * recvcount * recvext;
             void *keep_data_end = keep_data_start + keep_data_count * recvcount * recvext;
 
             int move_data_count;
@@ -8470,7 +8470,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
 
         int j;
         for(j = 1; j < size_master; j++) {
-          displs[j] = displs[j-1] + counts[j-1] * recvext;
+          displs[j] = displs[j-1] + counts[j-1];
           counts[j] = info->hardware_info_ptr->childs_data_count[i][j] * (size - info->hardware_info_ptr->childs_data_count[i][j]) * recvcount;
           total_count += counts[j];
         }
@@ -8681,7 +8681,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
         counts[0] = info->hardware_info_ptr->childs_data_count[i][0] * (size - info->hardware_info_ptr->childs_data_count[i][0]) * recvcount;
         int j;
         for(j = 1; j < size_master; j++) {
-          displs[j] = displs[j-1] + info->hardware_info_ptr->childs_data_count[i][j-1] * (size - info->hardware_info_ptr->childs_data_count[i][j-1]) * recvcount * recvext;
+          displs[j] = displs[j-1] + counts[j-1];
           counts[j] = info->hardware_info_ptr->childs_data_count[i][j] * (size - info->hardware_info_ptr->childs_data_count[i][j]) * recvcount;
         }
       }
