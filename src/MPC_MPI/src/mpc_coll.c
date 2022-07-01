@@ -3871,7 +3871,9 @@ int ___collectives_scatter_binomial(const void *sendbuf, int sendcount, MPI_Data
   MPI_Aint sendext, recvext;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
-  PMPI_Type_extent(sendtype, &sendext);
+  if(rank == root) {
+    PMPI_Type_extent(sendtype, &sendext);
+  }
   PMPI_Type_extent(tmp_recvtype, &recvext);
 
   int maxr, vrank, peer, peer_vrank;
@@ -8290,6 +8292,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   } else {
     res = _mpc_mpi_config()->coll_algorithm_intracomm.gather(tmpbuf, (size - 1) * recvcount, recvtype, NULL, 0, MPI_DATATYPE_NULL, 0, hardware_comm, coll_type, schedule, info);
   }
+  ___collectives_barrier_type(coll_type, schedule, info);
 
 
 #ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
@@ -8905,6 +8908,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
 
   // TODO maybe stop using IN_PLACE ?
   res = _mpc_mpi_config()->coll_algorithm_intracomm.scatter(tmpbuf, (size - 1) * recvcount, recvtype, scatter_buf, (size - 1) * recvcount, recvtype, 0, hardware_comm, coll_type, schedule, info);
+  ___collectives_barrier_type(coll_type, schedule, info);
 
 
 #ifdef MPC_COLL_EXTRA_DEBUG_ENABLED
