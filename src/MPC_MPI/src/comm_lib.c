@@ -2663,6 +2663,7 @@ int _mpc_cl_recv(void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_
 		status = &__status;
 	}
 
+	status->MPC_ERROR  = MPC_LOWCOMM_SUCCESS;
 
 	if(source == MPC_PROC_NULL)
 	{
@@ -2670,7 +2671,6 @@ int _mpc_cl_recv(void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_datatype_
 		{
 			status->MPC_SOURCE = MPC_PROC_NULL;
 			status->MPC_TAG    = MPC_ANY_TAG;
-			status->MPC_ERROR  = MPC_LOWCOMM_SUCCESS;
 			status->size       = 0;
 		}
 
