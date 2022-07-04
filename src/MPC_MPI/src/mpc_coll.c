@@ -1827,7 +1827,6 @@ int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatype datatype, in
   int shallowest_level = 0;
 
   res = __INTERNAL__collectives_bcast_topo_depth(buffer, count, datatype, root, comm, coll_type, schedule, info, shallowest_level);
-
 	  if (res != MPI_SUCCESS)
 	  {
 		  mpc_common_debug_error("Bcast topo: Intracomm bcast failed on level %d", k);
@@ -2419,6 +2418,8 @@ int ___collectives_reduce_topo(const void *sendbuf, void* recvbuf, int count, MP
   _mpc_cl_comm_rank(comm, &rank);
   MPI_Type_extent(datatype, &ext);
 
+  int initial_flag = info->flag;
+  info->flag &= ~SCHED_INFO_TOPO_COMM_ALLOWED;
 
   void *tmpbuf = NULL;
 
@@ -2459,6 +2460,7 @@ int ___collectives_reduce_topo(const void *sendbuf, void* recvbuf, int count, MP
       // because this is caused by user configuration.
       mpc_common_debug_warning("Topological %s called, but topological communicators couldn't be fetched or created.\nFall back to non-topological algorithm", "reduce");
       int res = ___collectives_reduce_switch(sendbuf, recvbuf, count, datatype, op, root, comm, coll_type, schedule, info);
+      info->flag = initial_flag;
       return res;
     }
 
@@ -2489,6 +2491,8 @@ int ___collectives_reduce_topo(const void *sendbuf, void* recvbuf, int count, MP
 
     ___collectives_copy_type(tmpbuf + (size-1) * count * ext, count, datatype, recvbuf, count, datatype, comm, coll_type, schedule, info);
   }
+
+  info->flag = initial_flag;
 
   if(coll_type == MPC_COLL_TYPE_BLOCKING && rank == root) {
     sctk_free(tmpbuf);
@@ -2555,7 +2559,6 @@ int ___collectives_reduce_topo_commute(const void *sendbuf, void* recvbuf, int c
 
     ___collectives_topo_comm_init(comm, root, max_level, info);
   }
-
 
   int deepest_level = info->hardware_info_ptr->deepest_hardware_level;
 
@@ -7463,15 +7466,15 @@ int ___collectives_allgather_topo_gather_broadcast(const void *sendbuf, int send
   */
 int ___collectives_allgather_topo_gather_allgather_broadcast(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
-  int initial_flag = info->flag;
-  info->flag &= ~SCHED_INFO_TOPO_COMM_ALLOWED;
-
   int rank, size, res = MPI_SUCCESS;
   MPI_Aint sendext, recvext;
   _mpc_cl_comm_size(comm, &size);
   _mpc_cl_comm_rank(comm, &rank);
 
-  void *tmp_sendbuf = sendbuf;
+  int initial_flag = info->flag;
+  info->flag &= ~SCHED_INFO_TOPO_COMM_ALLOWED;
+
+  void *tmp_sendbuf = (void*) sendbuf;
   MPI_Datatype tmp_sendtype = sendtype;
   int tmp_sendcount = sendcount;
 
