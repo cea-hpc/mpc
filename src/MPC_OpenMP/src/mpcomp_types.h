@@ -606,6 +606,25 @@ typedef struct  mpc_omp_task_profile_s
     int parent_uid;
 }               mpc_omp_task_profile_t;
 
+/* persistent task region infos */
+typedef struct  mpc_omp_task_persistent_infos_s
+{
+    /* != 0 if within a persistent task region */
+    int active;
+
+    /* number of tasks in this persistent region */
+    int ntasks;
+
+    /* previous iteration number of tasks, for coherency checking */
+    int ntasks_prev;
+
+    /* persistent iteration count */
+    int iterations;
+
+    /* the persistent tasks (array of size 'ntasks') */
+    struct mpc_omp_task_s ** tasks;
+}               mpc_omp_task_persistent_infos_t;
+
 /* critical tasks infos */
 typedef struct  mpc_omp_task_profile_info_s
 {
@@ -765,6 +784,9 @@ typedef struct  mpc_omp_task_s
 
     /* task priorities propagation version */
     int propagation_version;
+
+    /* children persistent information */
+    mpc_omp_task_persistent_infos_t persistent_infos;
 
 }               mpc_omp_task_t;
 

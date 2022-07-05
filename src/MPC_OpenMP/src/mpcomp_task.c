@@ -3464,6 +3464,11 @@ _mpc_omp_task_init(
     }
     thread->task_infos.incoming.extra_clauses = 0;
 
+    if (mpc_omp_task_in_persistent_region())
+    {
+        mpc_omp_task_set_property(&(task->property), MPC_OMP_TASK_PROP_PERSISTENT);
+    }
+
     return task;
 }
 

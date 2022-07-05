@@ -255,6 +255,12 @@ extern "C" {
     /* return hashmap bucket occupation */
     double mpc_omp_task_dependencies_buckets_occupation(void);
 
+    /* Persistent region */
+    void mpc_omp_task_persistent_region_begin(void);
+    void mpc_omp_task_persistent_region_end(void);
+    int mpc_omp_task_in_persistent_region(void);
+    void mpc_omp_task_persistent_region_iteration(void);
+
 #ifdef __cplusplus
 }
 #endif

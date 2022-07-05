@@ -653,6 +653,75 @@ mpc_omp_task_dependencies_buckets_occupation(void)
     return avg;
 }
 
+/* PERSISTENT TASKS */
+/* Retrive persistent task graph informations */
+mpc_omp_task_persistent_infos_t *
+mpc_omp_get_persistent_infos(void)
+{
+    mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
+    assert(thread);
+
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
+    return &(task->persistent_infos);
+}
+
+/* Called at the beginning of a persistent task loop */
+void
+mpc_omp_task_persistent_region_begin(void)
+{
+    mpc_omp_task_persistent_infos_t * infos = mpc_omp_get_persistent_infos();
+    (void) infos;
+
+    infos->active       = 1;
+    infos->iterations   = 0;
+    infos->ntasks       = 0;
+    infos->ntasks_prev  = 0;
+    printf("persistent region begins\n");
+}
+
+/* Called at the end of a persistent task loop */
+void
+mpc_omp_task_persistent_region_end(void)
+{
+    mpc_omp_task_persistent_infos_t * infos = mpc_omp_get_persistent_infos();
+    free(infos->tasks);
+    printf("persistent region ends\n");
+}
+
+/* Return true if the thread is within a persistent task region */
+inline int
+mpc_omp_task_in_persistent_region(void)
+{
+    return mpc_omp_get_persistent_infos()->active;
+}
+
+/* Called on each persistent task loops iterations */
+void
+mpc_omp_task_persistent_region_iteration(void)
+{
+    mpc_omp_task_persistent_infos_t * infos = mpc_omp_get_persistent_infos();
+
+    /* After the 1st iteration, generate the array of persistent tasks */
+    if (infos->iterations == 1)
+    {
+        infos->tasks = (mpc_omp_task_t **) malloc(sizeof(mpc_omp_task_t *) * infos->ntasks);
+        assert(infos->tasks);
+    }
+    /* Then, the number of tasks must remain constant */
+    else if (infos->iterations > 1)
+    {
+        assert(infos->ntasks == infos->ntasks_prev);
+    }
+
+    printf("persistent region ntasks=%d, iterations=%d\n", infos->ntasks, infos->iterations);
+    infos->ntasks_prev  = infos->ntasks;
+    infos->ntasks       = 0;
+
+    ++infos->iterations;
+}
+
 //////////////TARGET/////////////////
 
 kmp_target_offload_kind_t __kmp_target_offload = tgt_default;

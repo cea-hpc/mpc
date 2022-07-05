@@ -48,6 +48,7 @@
 # define MPC_OMP_TASK_PROP_NOGROUP       (1 << 14)
 # define MPC_OMP_TASK_PROP_HAS_FIBER     (1 << 15) /* if the task has it own fiber */
 # define MPC_OMP_TASK_PROP_CREATED       (1 << 16) /* if the task is fully created */
+# define MPC_OMP_TASK_PROP_PERSISTENT    (1 << 17) /* if the task is persistent */
 
 /* the properties to consider when comparing to a task profile */
 # define MPC_OMP_TASK_PROP_PROFILE_MASK \
