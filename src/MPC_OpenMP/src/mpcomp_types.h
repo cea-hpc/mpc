@@ -91,7 +91,7 @@
 #endif
 
 /* RECYCLER */
-# define MPC_OMP_TASK_USE_RECYCLERS     1
+# define MPC_OMP_TASK_USE_RECYCLERS     0
 # if MPC_OMP_TASK_USE_RECYCLERS
 #  define MPC_OMP_TASK_ALLOCATOR        mpc_omp_alloc
 #  define MPC_OMP_TASK_DEALLOCATOR      mpc_omp_free
@@ -606,8 +606,8 @@ typedef struct  mpc_omp_task_profile_s
     int parent_uid;
 }               mpc_omp_task_profile_t;
 
-/* persistent task region infos */
-typedef struct  mpc_omp_task_persistent_infos_s
+/* persistent region infos */
+typedef struct  mpc_omp_task_persistent_region_s
 {
     /* != 0 if within a persistent task region */
     int active;
@@ -615,14 +615,25 @@ typedef struct  mpc_omp_task_persistent_infos_s
     /* number of tasks in this persistent region */
     int ntasks;
 
-    /* previous iteration number of tasks, for coherency checking */
-    int ntasks_prev;
+    /* number of task references, for the implicit taskwait */
+    OPA_int_t task_ref;
+
+    /* next task to be generated */
+    int next_task;
 
     /* persistent iteration count */
     int iterations;
 
     /* the persistent tasks (array of size 'ntasks') */
     struct mpc_omp_task_s ** tasks;
+}               mpc_omp_persistent_region_t;
+
+/* persistent task infos */
+typedef struct  mpc_omp_task_persistent_infos_s
+{
+    /* current version if this persistent task.
+     * The version is set after copying private data as the persistent region iteration */
+    OPA_int_t version;
 }               mpc_omp_task_persistent_infos_t;
 
 /* critical tasks infos */
@@ -662,10 +673,10 @@ typedef struct  mpc_omp_task_dep_node_s
 
     /* lists */
     struct mpc_omp_task_list_elt_s * successors;
-    OPA_int_t nsuccessors;
+    int nsuccessors;
 
     struct mpc_omp_task_list_elt_s * predecessors;
-    OPA_int_t npredecessors;
+    int npredecessors;
 
     /* depth in the data dependency graph */
     int depth;
@@ -690,6 +701,9 @@ typedef struct  mpc_omp_task_dep_node_s
 
     /* profile version, to know if the profile matching should be performed */
     int profile_version;
+
+    /* dep node lock for scheduling */
+    mpc_common_spinlock_t lock;
 
 }               mpc_omp_task_dep_node_t;
 
@@ -744,9 +758,6 @@ typedef struct  mpc_omp_task_s
     /* task dependencies infos */
     mpc_omp_task_dep_node_t dep_node;
 
-    /* task lock to update critical informations */
-    mpc_common_spinlock_t lock;
-
     /* task reference counter to release memory appropriately */
     OPA_int_t ref_counter;
 
@@ -785,7 +796,10 @@ typedef struct  mpc_omp_task_s
     /* task priorities propagation version */
     int propagation_version;
 
-    /* children persistent information */
+    /* child persistent region */
+    mpc_omp_persistent_region_t persistent_region;
+
+    /* persistent informations for this task */
     mpc_omp_task_persistent_infos_t persistent_infos;
 
 }               mpc_omp_task_t;

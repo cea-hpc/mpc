@@ -435,4 +435,19 @@ void _mpc_omp_event_handle_ref(mpc_omp_event_handle_t * handle);
 void _mpc_omp_event_handle_unref(mpc_omp_event_handle_t * handle);
 void _mpc_omp_task_profile_register_current(int priority);
 
+/** Persistent tasks functions
+ *
+ * Multiple points to modify :
+ *  - on task creation
+ *      - only recopy private variables and reset task flags
+ *      - keep 1 more reference
+ *  - on task completion
+ *      - don
+ *  - on persistent region exit
+ *      - taskwait and delete every tasks
+ */
+mpc_omp_persistent_region_t * mpc_omp_get_persistent_region(void);
+mpc_omp_task_t * mpc_omp_get_persistent_task(void);
+void _mpc_omp_task_reinit(mpc_omp_task_t * task);
+
 #endif /* __MPC_OMP_TASK_H__ */

@@ -2099,59 +2099,62 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
 
 	mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tBegin", __func__ );
 
-
-    // TODO
-    // If we are regenerating a persistent task, then
-    //  - (1) wait for previous task iteration to complete
-
-    //  /* wait for the previous iteration of this task to complete */
-    //  while (TODO)
-    //  {
-    //      _mpc_omp_task_schedule();
-    //  }
-
-    double t_deps = 0.0;
-    double t_total = 0.0;
-
-    /* non-persistent tasks, or 1st time a persistent is built */
-    double t0 = omp_get_wtime();
-
-    mpc_omp_task_t * task = _mpc_omp_task_allocate(size);
-    /* convert GOMP flags to MPC-OpenMP task properties */
-    mpc_omp_task_property_t properties = ___gomp_convert_flags(if_clause, flags);
-
-    /* compute task size, data alignement, and allocate the task */
-    if (arg_align == 0) arg_align = sizeof(void *);
-    const size_t size = _mpc_omp_task_align_single_malloc(sizeof(mpc_omp_task_t) + arg_size, arg_align);
-
-    /* retrieve task data storage (for shared variables) */
-    void * data_storage = (void *) (task + 1);
-    __task_data_copy(cpyfn, data_storage, data, arg_size);
-
-    /* set task fields */
-    _mpc_omp_task_init(task, fn, data_storage, size, properties);
-
-    /* set dependencies (and compute priorities) */
-    double t1 = omp_get_wtime();
-    _mpc_omp_task_deps(task, depend, priority);
-    double t2 = omp_get_wtime();
-
-    /* process the task (differ or run it) */
-    _mpc_omp_task_process(task);
-
-    _mpc_omp_task_deinit(task);
-
-    double tf = omp_get_wtime();
-    t_deps  = t2 - t1;
-    t_total = tf - t0;
-
-    /* update time counters */
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
     assert(thread);
 
     mpc_omp_instance_t * instance = (mpc_omp_instance_t *) thread->instance;
     assert(instance);
-    instance->t_deps += t_deps;
+
+    if (arg_align == 0) arg_align = sizeof(void *);
+
+    double t0 = omp_get_wtime();
+
+    mpc_omp_task_t * task;
+
+    mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
+    if (region->active && region->iterations > 1)
+    {
+        task = mpc_omp_get_persistent_task();
+
+        void * data_storage = (void *) (task + 1);
+        __task_data_copy(cpyfn, data_storage, data, arg_size);
+        _mpc_omp_task_reinit(task);
+    }
+    else
+    {
+        /* compute task size, data alignement, and allocate the task */
+        const size_t size = _mpc_omp_task_align_single_malloc(sizeof(mpc_omp_task_t) + arg_size, arg_align);
+
+        task = _mpc_omp_task_allocate(size);
+
+        /* convert GOMP flags to MPC-OpenMP task properties */
+        mpc_omp_task_property_t properties = ___gomp_convert_flags(if_clause, flags);
+
+        /* retrieve task data storage (for shared variables) */
+        void * data_storage = (void *) (task + 1);
+        __task_data_copy(cpyfn, data_storage, data, arg_size);
+
+        /* set task fields */
+        _mpc_omp_task_init(task, fn, data_storage, size, properties);
+
+        /* set dependencies (and compute priorities) */
+        double t1 = omp_get_wtime();
+        _mpc_omp_task_deps(task, depend, priority);
+        double t2 = omp_get_wtime();
+        double t_deps  = t2 - t1;
+        instance->t_deps += t_deps;
+    }
+
+    /* process the task (differ or run it) */
+    _mpc_omp_task_process(task);
+
+    if (!mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT))
+    {
+        _mpc_omp_task_deinit(task);
+    }
+
+    double tf = omp_get_wtime();
+    double t_total = tf - t0;
     instance->t_total += t_total;
 
     mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );

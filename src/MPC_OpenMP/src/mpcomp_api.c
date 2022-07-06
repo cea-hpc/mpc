@@ -654,72 +654,65 @@ mpc_omp_task_dependencies_buckets_occupation(void)
 }
 
 /* PERSISTENT TASKS */
-/* Retrive persistent task graph informations */
-mpc_omp_task_persistent_infos_t *
-mpc_omp_get_persistent_infos(void)
+
+static inline void
+___persistent_region_taskwait(mpc_omp_persistent_region_t * region)
 {
-    mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
-    assert(thread);
-
-    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
-    assert(task);
-
-    return &(task->persistent_infos);
+    while (OPA_load_int(&(region->task_ref)) > 0) _mpc_omp_task_schedule();
 }
 
 /* Called at the beginning of a persistent task loop */
 void
-mpc_omp_task_persistent_region_begin(void)
+mpc_omp_persistent_region_begin(void)
 {
-    mpc_omp_task_persistent_infos_t * infos = mpc_omp_get_persistent_infos();
+    mpc_omp_persistent_region_t * infos = mpc_omp_get_persistent_region();
     (void) infos;
 
     infos->active       = 1;
     infos->iterations   = 0;
     infos->ntasks       = 0;
-    infos->ntasks_prev  = 0;
-    printf("persistent region begins\n");
-}
-
-/* Called at the end of a persistent task loop */
-void
-mpc_omp_task_persistent_region_end(void)
-{
-    mpc_omp_task_persistent_infos_t * infos = mpc_omp_get_persistent_infos();
-    free(infos->tasks);
-    printf("persistent region ends\n");
-}
-
-/* Return true if the thread is within a persistent task region */
-inline int
-mpc_omp_task_in_persistent_region(void)
-{
-    return mpc_omp_get_persistent_infos()->active;
+    infos->next_task    = 0;
+    OPA_store_int(&(infos->task_ref), 0);
 }
 
 /* Called on each persistent task loops iterations */
 void
-mpc_omp_task_persistent_region_iteration(void)
+mpc_omp_persistent_region_iteration(void)
 {
-    mpc_omp_task_persistent_infos_t * infos = mpc_omp_get_persistent_infos();
+    mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
+    assert(region->active);
 
-    /* After the 1st iteration, generate the array of persistent tasks */
-    if (infos->iterations == 1)
+    /* wait for the previous iteration to complete */
+    ___persistent_region_taskwait(region);
+
+    /* The number of tasks must remain constant */
+    if (region->iterations > 1)
     {
-        infos->tasks = (mpc_omp_task_t **) malloc(sizeof(mpc_omp_task_t *) * infos->ntasks);
-        assert(infos->tasks);
-    }
-    /* Then, the number of tasks must remain constant */
-    else if (infos->iterations > 1)
-    {
-        assert(infos->ntasks == infos->ntasks_prev);
+        assert(region->ntasks == region->next_task);
     }
 
-    printf("persistent region ntasks=%d, iterations=%d\n", infos->ntasks, infos->iterations);
-    infos->ntasks_prev  = infos->ntasks;
-    infos->ntasks       = 0;
+    region->next_task = 0;
+    ++region->iterations;
+}
 
-    ++infos->iterations;
+/* Called at the end of a persistent task loop */
+void
+mpc_omp_persistent_region_end(void)
+{
+    mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
+    assert(region->active);
+
+    ___persistent_region_taskwait(region);
+    for (int i = 0 ; i < region->ntasks ; ++i) _mpc_omp_task_deinit(region->tasks[i]);
+
+    free(region->tasks);
+}
+
+/* Return true if the thread is within a persistent task region */
+inline int
+mpc_omp_in_persistent_region(void)
+{
+    return mpc_omp_get_persistent_region()->active;
 }
 
 //////////////TARGET/////////////////
