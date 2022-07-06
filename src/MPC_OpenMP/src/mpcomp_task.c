@@ -941,7 +941,7 @@ __task_ref_persistent_region(mpc_omp_task_t * task)
 static inline void
 __task_unref_persistent_region(mpc_omp_task_t * task)
 {
-    assert(OPA_fetch_and_decr_int(&(task->persistent_region.task_ref)) > 0);
+    OPA_decr_int(&(task->persistent_region.task_ref));
 }
 
 static void
@@ -1045,23 +1045,28 @@ __task_in_list(mpc_omp_task_list_elt_t * list, mpc_omp_task_t * task)
 static inline void
 __task_precedence_constraints(mpc_omp_task_t * predecessor, mpc_omp_task_t * successor)
 {
-    // TODO : revoir ça dans le cas de persistentes
-
     /* the 2 tasks must be siblings */
     assert(predecessor->parent == successor->parent);
     assert(predecessor->depth == successor->depth);
 
-    if (OPA_load_int(&(predecessor->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED)
+    /* always generate arcs for persistent tasks */
+
+    if (OPA_load_int(&(predecessor->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED
+        || mpc_omp_task_property_isset(successor->property, MPC_OMP_TASK_PROP_PERSISTENT))
     {
         mpc_common_spinlock_lock(&(predecessor->dep_node.lock));
         {
-            if (OPA_load_int(&(predecessor->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED)
+            if (OPA_load_int(&(predecessor->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED
+                || mpc_omp_task_property_isset(successor->property, MPC_OMP_TASK_PROP_PERSISTENT))
             {
                 if (!__task_in_list(predecessor->dep_node.successors, successor))
                 {
                     ++predecessor->dep_node.nsuccessors;
                     ++successor->dep_node.npredecessors;
-                    OPA_incr_int(&(successor->dep_node.ref_predecessors));
+                    if (OPA_load_int(&(predecessor->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED)
+                    {
+                        OPA_incr_int(&(successor->dep_node.ref_predecessors));
+                    }
 
                     predecessor->dep_node.successors = __task_list_elt_new(predecessor->dep_node.successors, successor);
                     // if the priority should be propagated to predecessors
@@ -1339,9 +1344,10 @@ __task_delete_dependencies_hmap(mpc_omp_task_t * task)
         mpc_omp_task_dep_htable_entry_t * entry, * tmp;
         HASH_ITER(hh, task->dep_node.hmap, entry, tmp)
         {
-            assert(!entry->out);
-            assert(!entry->ins);
-            assert(!entry->inoutset);
+            // these assertions are no longer true when dealing with persistent tasks
+            //assert(!entry->out);
+            //assert(!entry->ins);
+            //assert(!entry->inoutset);
             HASH_DEL(task->dep_node.hmap, entry);
             mpc_omp_free(entry);
         }
@@ -1354,9 +1360,9 @@ static void
 __task_finalize_deps_list(mpc_omp_task_t * task)
 {
     assert(task->parent);
-
-    if (task->dep_node.dep_list_size)
+    if (task->dep_node.dep_list)
     {
+        assert(task->dep_node.dep_list_size);
         unsigned int i;
         for (i = 0 ; i < task->dep_node.dep_list_size ; ++i)
         {
@@ -1396,9 +1402,10 @@ __task_finalize_deps_list(mpc_omp_task_t * task)
             mpc_common_spinlock_unlock(&(entry->lock));
         }
         free(task->dep_node.dep_list);
-        task->dep_node.dep_list_size = 0;
+        task->dep_node.dep_list = NULL;
     }
 }
+
 /** Given task completed -> fulfill its successors dependencies */
 static void
 __task_finalize_deps(mpc_omp_task_t * task)
@@ -1417,9 +1424,12 @@ __task_finalize_deps(mpc_omp_task_t * task)
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
     assert(thread);
 
-    /* delete task dependencies */
-    /* TODO : can this be moved up before the lock for the 'FINALIZED' status ? */
-    __task_finalize_deps_list(task);
+    /* the task is completed, remove its dependencies from the parent hmap
+     * If the task is persistant, we still wanna generate arcs so keep infos */
+    if (!mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT))
+    {
+        __task_finalize_deps_list(task);
+    }
 
     /* Resolve successor's data dependency */
     mpc_omp_task_list_elt_t * succ = task->dep_node.successors;
@@ -1470,12 +1480,13 @@ _mpc_omp_task_finalize(mpc_omp_task_t * task)
     __task_unref_parallel_region();
     __task_finalize_deps(task);
 
-    __task_unref(task);                         /* _mpc_omp_task_init */
-    __task_unref_parent_task(task->parent);     /* _mpc_omp_task_init */
+    mpc_omp_task_t * parent = task->parent;
     if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT))
     {
-        __task_unref_persistent_region(task->parent);
+         __task_unref_persistent_region(parent);
     }
+    __task_unref(task);                 /* _mpc_omp_task_init */
+    __task_unref_parent_task(parent);   /* _mpc_omp_task_init */
 }
 
 /* task deletion function, when it is no longer referenced anywhere */
@@ -1495,6 +1506,13 @@ __task_delete(mpc_omp_task_t * task)
      /* Release successors */
      __task_list_delete(task->dep_node.successors);
      task->dep_node.successors = NULL;
+
+    /* Release predecessors if they weren't already */
+     __task_list_delete(task->dep_node.predecessors);
+     task->dep_node.predecessors = NULL;
+
+    /* If the task deplist wasn't released (persistent tasks), release it now */
+    free(task->dep_node.dep_list);
 
     TODO("What about persistent tracing ? They only got deleted once...");
     MPC_OMP_TASK_TRACE_DELETE(task);
@@ -3475,6 +3493,7 @@ _mpc_omp_task_reinit(mpc_omp_task_t * task)
     if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_DEPEND))
     {
         OPA_store_int(&(task->dep_node.status), MPC_OMP_TASK_STATUS_NOT_READY);
+        // TODO : combien de prédecesseurs avant de me schedule ?
         OPA_add_int(&(task->dep_node.ref_predecessors), task->dep_node.npredecessors);
     }
     OPA_incr_int(&(task->persistent_infos.version));

@@ -655,24 +655,28 @@ mpc_omp_task_dependencies_buckets_occupation(void)
 
 /* PERSISTENT TASKS */
 
-static inline void
+//static inline
+void
 ___persistent_region_taskwait(mpc_omp_persistent_region_t * region)
 {
     while (OPA_load_int(&(region->task_ref)) > 0) _mpc_omp_task_schedule();
+    assert(OPA_load_int(&(region->task_ref)) == 0);
 }
 
 /* Called at the beginning of a persistent task loop */
 void
 mpc_omp_persistent_region_begin(void)
 {
-    mpc_omp_persistent_region_t * infos = mpc_omp_get_persistent_region();
-    (void) infos;
+    // TODO : this shouldn't be necessary, but convenient for now
+    // to handle dependencies between persistent and non-persistent
+    _mpc_omp_task_wait(NULL, 0);
 
-    infos->active       = 1;
-    infos->iterations   = 0;
-    infos->ntasks       = 0;
-    infos->next_task    = 0;
-    OPA_store_int(&(infos->task_ref), 0);
+    mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
+    region->active      = 1;
+    region->iterations  = 0;
+    region->ntasks      = 0;
+    region->next_task   = 0;
+    OPA_store_int(&(region->task_ref), 0);
 }
 
 /* Called on each persistent task loops iterations */
@@ -686,11 +690,7 @@ mpc_omp_persistent_region_iteration(void)
     ___persistent_region_taskwait(region);
 
     /* The number of tasks must remain constant */
-    if (region->iterations > 1)
-    {
-        assert(region->ntasks == region->next_task);
-    }
-
+    assert(region->iterations == 1 || region->ntasks == region->next_task);
     region->next_task = 0;
     ++region->iterations;
 }
