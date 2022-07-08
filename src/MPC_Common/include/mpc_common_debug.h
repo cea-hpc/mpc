@@ -41,6 +41,7 @@ extern "C"
 #include "mpc_common_types.h"
 #include "mpc_keywords.h"
 
+void mpc_common_debug_init();
 
 /*********
 * ABORT *

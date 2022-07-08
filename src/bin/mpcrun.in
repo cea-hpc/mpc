@@ -909,6 +909,10 @@ else
 	exit 1
 fi
 
+if test -t 2; then
+	IS_STDERR_TTY=1;
+fi
+
 #####################
 # Export All Values #
 #####################
@@ -921,8 +925,8 @@ export MPMD_COMMAND
 export MPMD_PROC_NUM
 export MPMD_LEN
 export LAUNCHED_WITH_MPCRUN=1
+export IS_STDERR_TTY
 test -n "$GDB_LIBTHREAD_DB" && export GDB_LIBTHREAD_DB
-
 #########################################
 # Trap SIGINT to kill all process Group #
 #########################################
