@@ -663,9 +663,9 @@ ___persistent_region_taskwait(mpc_omp_persistent_region_t * region)
     assert(OPA_load_int(&(region->task_ref)) == 0);
 }
 
-/* Called at the beginning of a persistent task loop */
-void
-mpc_omp_persistent_region_begin(void)
+/* Called at the beginning of a persistent task loop, providing initial task buffer capacity */
+inline void
+mpc_omp_persistent_region_begin_with_capacity(int capacity)
 {
     // TODO : this shouldn't be necessary, but convenient for now
     // to handle dependencies between persistent and non-persistent
@@ -676,7 +676,18 @@ mpc_omp_persistent_region_begin(void)
     region->iterations  = 0;
     region->ntasks      = 0;
     region->next_task   = 0;
+    region->capacity    = capacity;
+    region->tasks       = (mpc_omp_task_t **) malloc(sizeof(mpc_omp_task_t *) * capacity);
+    assert(region->tasks);
     OPA_store_int(&(region->task_ref), 0);
+
+}
+
+/* Called at the beginning of a persistent task loop */
+void
+mpc_omp_persistent_region_begin(void)
+{
+    mpc_omp_persistent_region_begin_with_capacity(16);
 }
 
 /* Called on each persistent task loops iterations */
@@ -686,6 +697,8 @@ mpc_omp_persistent_region_iteration(void)
     mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
     assert(region->active);
 
+    // TODO : this shouldn't be necessary, but conveinent for now
+    // to avoid handling dependencies between iterations
     /* wait for the previous iteration to complete */
     ___persistent_region_taskwait(region);
 
@@ -703,7 +716,10 @@ mpc_omp_persistent_region_end(void)
     assert(region->active);
 
     ___persistent_region_taskwait(region);
-    for (int i = 0 ; i < region->ntasks ; ++i) _mpc_omp_task_deinit(region->tasks[i]);
+    for (int i = 0 ; i < region->ntasks ; ++i)
+    {
+        _mpc_omp_task_deinit(region->tasks[i]);
+    }
 
     free(region->tasks);
 }

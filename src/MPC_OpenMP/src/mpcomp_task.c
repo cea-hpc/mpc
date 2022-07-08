@@ -1454,8 +1454,8 @@ __task_finalize_deps(mpc_omp_task_t * task)
         succ = succ->next;
     }
 
-    /* If the task is non-persistent, it is now completed and we no longer need
-     * to access its predecessors */
+    /* If the task is persistent, keep arcs for future iterations
+     * Else, it is now completed and we no longer need to access its predecessors */
     if (!mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT))
     {
         __task_list_delete(task->dep_node.predecessors);
@@ -1476,43 +1476,43 @@ _mpc_omp_task_finalize(mpc_omp_task_t * task)
 # if MPC_OMP_TASK_COMPILE_FIBER
     __task_delete_fiber(task);
 # endif /* MPC_OMP_TASK_COMPILE_FIBER */
-    mpc_omp_taskgroup_del_task(task);
-    __task_unref_parallel_region();
+
+    /* reference the task */
     __task_finalize_deps(task);
 
     mpc_omp_task_t * parent = task->parent;
-    if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT))
+    if (!mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT))
     {
-         __task_unref_persistent_region(parent);
+        mpc_omp_taskgroup_del_task(task);
+        __task_unref_parallel_region();
+        __task_unref(task);                 /* _mpc_omp_task_init */
+        __task_unref_parent_task(parent);   /* _mpc_omp_task_init */
     }
-    __task_unref(task);                 /* _mpc_omp_task_init */
-    __task_unref_parent_task(parent);   /* _mpc_omp_task_init */
+    else
+    {
+        __task_unref_persistent_region(parent);
+    }
 }
 
 /* task deletion function, when it is no longer referenced anywhere */
 void
 __task_delete(mpc_omp_task_t * task)
 {
-//  printf("deleting task %s\n", task->label);
+//    printf("deleting task %s\n", task->label);
     assert(OPA_load_int(&(task->children_count)) == 0);
     assert(OPA_load_int(&(task->ref_counter)) == 0);
 
     mpc_omp_thread_t * thread = __thread_task_coherency(NULL);
     assert(thread);
 
+    /* Release predecessors if they weren't already (persistent) */
+     __task_list_delete(task->dep_node.predecessors);
+
     /* release dependency hmap */
     __task_delete_dependencies_hmap(task);
 
      /* Release successors */
      __task_list_delete(task->dep_node.successors);
-     task->dep_node.successors = NULL;
-
-    /* Release predecessors if they weren't already */
-     __task_list_delete(task->dep_node.predecessors);
-     task->dep_node.predecessors = NULL;
-
-    /* If the task deplist wasn't released (persistent tasks), release it now */
-    free(task->dep_node.dep_list);
 
     TODO("What about persistent tracing ? They only got deleted once...");
     MPC_OMP_TASK_TRACE_DELETE(task);
@@ -3393,6 +3393,7 @@ _mpc_omp_task_yield(void)
 mpc_omp_task_t *
 _mpc_omp_task_allocate(size_t size)
 {
+//    printf("allocating task\n");
     /* Intialize the OpenMP environnement (if needed) */
     mpc_omp_init();
 
@@ -3473,10 +3474,6 @@ _mpc_omp_task_reinit(mpc_omp_task_t * task)
     memset(&(task->statuses), 0, sizeof(mpc_omp_task_statuses_t));
 
     /* reference the task */
-    _mpc_omp_taskgroup_add_task(task);
-    __task_ref_parallel_region();
-    __task_ref_parent_task(task->parent);   /* _mpc_omp_task_finalize */
-    __task_ref(task);                       /* _mpc_omp_task_finalize */
     __task_ref_persistent_region(task->parent);
 
 # if MPC_OMP_TASK_COMPILE_TRACE
@@ -3494,6 +3491,11 @@ _mpc_omp_task_reinit(mpc_omp_task_t * task)
     {
         OPA_store_int(&(task->dep_node.status), MPC_OMP_TASK_STATUS_NOT_READY);
         // TODO : combien de prédecesseurs avant de me schedule ?
+        // pour le moment, on a les hypothèses
+        //  - pas de dépendances inter-iterations (car on a un 'taskwait' par itération)
+        //  - pas de dépendances entre non-persistentes et persistentes
+        // Donc n'a que des dépendances intra-iterations entre presistentes,
+        // 'npredecessors' combien une valeur constante entre itérations
         OPA_add_int(&(task->dep_node.ref_predecessors), task->dep_node.npredecessors);
     }
     OPA_incr_int(&(task->persistent_infos.version));
@@ -3568,10 +3570,13 @@ _mpc_omp_task_init(
         OPA_store_int(&(task->persistent_infos.version), 1);
         mpc_omp_task_set_property(&(task->property), MPC_OMP_TASK_PROP_PERSISTENT);
 
-        // TODO : realloc in a smarter way
-        region->tasks = (mpc_omp_task_t **) realloc(region->tasks, sizeof(mpc_omp_task_t *) * (region->ntasks + 1));
-        region->tasks[region->ntasks] = task;
-        ++region->ntasks;
+        /* array list storing current iteration tasks */
+        if (region->ntasks == region->capacity)
+        {
+            region->capacity = 2 * region->capacity;
+            region->tasks = (mpc_omp_task_t **) realloc(region->tasks, sizeof(mpc_omp_task_t *) * region->capacity);
+        }
+        region->tasks[region->ntasks++] = task;
     }
 
     return task;
@@ -3585,7 +3590,18 @@ _mpc_omp_task_init(
 inline void
 _mpc_omp_task_deinit(mpc_omp_task_t * task)
 {
-    __task_unref(task);
+    if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT))
+    {
+        /* Release parent hmap dependencies entries */
+         __task_finalize_deps_list(task);
+
+        /* unreference the task, see 'finalize' */
+        mpc_omp_taskgroup_del_task(task);
+        __task_unref_parallel_region();
+        __task_unref(task);                     /* _mpc_omp_task_init */
+        __task_unref_parent_task(task->parent); /* _mpc_omp_task_init */
+    }
+    __task_unref(task); /* _mpc_omp_task_init_attributes */
 }
 
 TODO("refactor this call to avoid LLVM > GOMP depend array conversion");

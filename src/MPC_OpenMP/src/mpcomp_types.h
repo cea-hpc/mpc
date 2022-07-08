@@ -626,6 +626,9 @@ typedef struct  mpc_omp_task_persistent_region_s
 
     /* the persistent tasks (array of size 'ntasks') */
     struct mpc_omp_task_s ** tasks;
+
+    /* capacity of the 'tasks' array */
+    int capacity;
 }               mpc_omp_persistent_region_t;
 
 /* persistent task infos */
