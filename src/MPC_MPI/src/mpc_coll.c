@@ -1532,6 +1532,10 @@ int ___collectives_bcast_switch(void *buffer, int count, MPI_Datatype datatype, 
   }
 #endif
 
+  if(count == 0) {
+    return MPI_SUCCESS;
+  }
+
   enum {
     NBC_BCAST_LINEAR,
     NBC_BCAST_BINOMIAL,
@@ -2052,6 +2056,10 @@ int ___collectives_reduce_switch(const void *sendbuf, void* recvbuf, int count, 
     strncat(__debug_indentation,"\t", DBG_INDENT_LEN - 1);
   }
 #endif
+
+  if(count == 0) {
+    return MPI_SUCCESS;
+  }
 
   enum {
     NBC_REDUCE_LINEAR,
@@ -2778,6 +2786,10 @@ int ___collectives_allreduce_switch(const void *sendbuf, void* recvbuf, int coun
   }
 #endif
 
+  if(count == 0) {
+    return MPI_SUCCESS;
+  }
+
   enum {
     NBC_ALLREDUCE_REDUCE_BROADCAST,
     NBC_ALLREDUCE_DISTANCE_DOUBLING,
@@ -3040,7 +3052,7 @@ int ___collectives_allreduce_vector_halving_distance_doubling(const void *sendbu
   _mpc_cl_comm_rank(comm, &rank);
   PMPI_Type_extent(datatype, &ext);
 
-#define OLDRANK(new) ((new) < r ? (new)*2 : (new)+r)
+#define OLDRANK(new, r) ((new) < r ? (new)*2 : (new)+r)
 
   void* tmpbuf = NULL;
 
@@ -3143,7 +3155,7 @@ int ___collectives_allreduce_vector_halving_distance_doubling(const void *sendbu
       start_odd[i] = x_start + count_even[i];
       count_odd[i] = x_count - count_even[i];
 
-      int peer = OLDRANK(vrank ^ (1 << i));
+      int peer = OLDRANK(vrank ^ (1 << i), r);
 
       if((vrank & (1 << i)) == 0) { /* Even */
         x_start = start_even[i];
@@ -3185,7 +3197,7 @@ int ___collectives_allreduce_vector_halving_distance_doubling(const void *sendbu
     /* Step 6 */
 
     for(i = maxr - 1; i >= 0; i--) { /* Buffer doubling */
-      int peer = OLDRANK(vrank ^ (1 << i));
+      int peer = OLDRANK(vrank ^ (1 << i), r);
 
       if((vrank & (1 << i)) == 0) {  /* Even */
         ___collectives_send_type(recvbuf + start_even[i] * ext, count_even[i],
@@ -3874,6 +3886,10 @@ int ___collectives_scatter_switch(const void *sendbuf, int sendcount, MPI_Dataty
     strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
+
+  if(sendcount == 0) {
+    return MPI_SUCCESS;
+  }
 
   enum {
     NBC_SCATTER_LINEAR,
@@ -4940,6 +4956,10 @@ int ___collectives_gather_switch(const void *sendbuf, int sendcount, MPI_Datatyp
   }
 #endif
 
+  if(sendcount == 0) {
+    return MPI_SUCCESS;
+  }
+
   enum {
     NBC_GATHER_LINEAR,
     NBC_GATHER_BINOMIAL,
@@ -5964,6 +5984,10 @@ int ___collectives_reduce_scatter_block_switch(const void *sendbuf, void* recvbu
   }
 #endif
 
+  if(count == 0) {
+    return MPI_SUCCESS;
+  }
+
   enum {
     NBC_REDUCE_SCATTER_BLOCK_REDUCE_SCATTER,
     NBC_REDUCE_SCATTER_BLOCK_DISTANCE_DOUBLING, // difficile a mettre en place
@@ -6861,6 +6885,10 @@ int ___collectives_allgather_switch(const void *sendbuf, int sendcount, MPI_Data
   }
 #endif
 
+  if(sendcount == 0) {
+    return MPI_SUCCESS;
+  }
+
   enum {
     NBC_ALLGATHER_GATHER_BROADCAST,
     NBC_ALLGATHER_DISTANCE_DOUBLING,
@@ -6877,10 +6905,10 @@ int ___collectives_allgather_switch(const void *sendbuf, int sendcount, MPI_Data
     topo = 1;
   }
 
+  //TODO: refine with new bruck allgorithm
   if(topo) {
     alg = NBC_ALLGATHER_TOPO;
   } else {
-    //alg = NBC_ALLGATHER_DISTANCE_DOUBLING;
     if(size <= 2 || (size <= 16 && tmp_count * ext >= 2 << 15)) {
       alg = NBC_ALLGATHER_RING;
     } else if(size >= 16 && size <= 32 && tmp_count * ext <= 2 << 10) {
@@ -7106,24 +7134,96 @@ int ___collectives_allgather_distance_doubling(const void *sendbuf, int sendcoun
   return MPI_SUCCESS;
 }
 
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
 /**
   \brief Execute or schedule a Allgather using the bruck algorithm
     Or count the number of operations and rounds for the schedule
-  \param sendbuf Adress of the buffer used to send data during the Allgather
+  \param sendbuf Address of the buffer used to send data during the Allgather
   \param sendcount Number of elements in the send buffer
   \param sendtype Type of the data elements in the send buffer
-  \param recvbuf Adress of the buffer used to send data during the Allgather
+  \param recvbuf Address of the buffer used to send data during the Allgather
   \param recvcount Number of elements in the recv buffer
   \param recvtype Type of the data elements in the recv buffer
   \param comm Target communicator
   \param coll_type Type of the communication
-  \param schedule Adress of the schedule
-  \param info Adress on the information structure about the schedule
+  \param schedule Address of the schedule
+  \param info Address on the information structure about the schedule
   \return error code
   */
-int ___collectives_allgather_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ int recvcount, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+int ___collectives_allgather_bruck(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
+  int rank, size;
+  MPI_Aint recvext;
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+  PMPI_Type_extent(recvtype, &recvext);
 
-  not_implemented();
+  int nports = _mpc_mpi_config()->coll_opts.nports;
+  int d = ceil(log(size) / log(nports+1));
+
+  // TODO: use atomic spreading if necessary
+
+  if(sendbuf != MPI_IN_PLACE) {
+    ___collectives_copy_type(sendbuf, sendcount, sendtype, recvbuf + rank * recvcount * recvext, recvcount, recvtype, comm, coll_type, schedule, info);
+  }
+
+  int distance, step;
+  int base_distance = 1;
+
+
+
+
+  for(step = 0; step < d; step++, base_distance *= nports+1) { // TODO: ignore step d-1 with atomic spreading
+    for(int i = 1; i <= nports; i++) {
+      distance = i * base_distance;
+      if(distance >= size) {
+        break;
+      }
+
+      int send_peer = (rank + distance       ) % size;
+      int recv_peer = (rank - distance + size) % size;
+
+      int data_count = MIN(base_distance,size - distance);
+
+      int send_peer_start = (rank      - (data_count - 1) + size) % size;
+      int recv_peer_start = (recv_peer - (data_count - 1) + size) % size;
+
+      void * send_buf_start = recvbuf + send_peer_start * recvext * recvcount;
+      void * recv_buf_start = recvbuf + recv_peer_start * recvext * recvcount;
+
+      int dsend = size - send_peer_start < data_count;
+      int drecv = size - recv_peer_start < data_count;
+
+#define ALLGATHER_BRUCK_SEND() \
+  do {                                                                                                                                                        \
+    ___collectives_send_type(send_buf_start, (MIN(data_count, size - send_peer_start)) * recvcount, recvtype, send_peer, 0, comm, coll_type, schedule, info); \
+    if(dsend) {                                                                                                                                               \
+      ___collectives_send_type(recvbuf, (data_count - (size - send_peer_start)) * recvcount, recvtype, send_peer, 1, comm, coll_type, schedule, info);        \
+    }                                                                                                                                                         \
+  } while(0)
+
+#define ALLGATHER_BRUCK_RECV() \
+  do {                                                                                                                                                        \
+    ___collectives_recv_type(recv_buf_start, (MIN(data_count, size - recv_peer_start)) * recvcount, recvtype, recv_peer, 0, comm, coll_type, schedule, info); \
+    if(drecv) {                                                                                                                                               \
+      ___collectives_recv_type(recvbuf, (data_count - (size - recv_peer_start)) * recvcount, recvtype, recv_peer, 1, comm, coll_type, schedule, info);        \
+    }                                                                                                                                                         \
+  } while(0)
+
+      if(recv_peer > rank) {
+        ALLGATHER_BRUCK_SEND();
+        ALLGATHER_BRUCK_RECV();
+      } else {
+        ALLGATHER_BRUCK_RECV();
+        ALLGATHER_BRUCK_SEND();
+      }
+
+#undef ALLGATHER_BRUCK_SEND
+#undef ALLGATHER_BRUCK_RECV
+
+    }
+
+    ___collectives_barrier_type(coll_type, schedule, info);
+  }
 
   return MPI_SUCCESS;
 }
@@ -7856,6 +7956,10 @@ int ___collectives_alltoall_switch(const void *sendbuf, int sendcount, MPI_Datat
     strncat(__debug_indentation, "\t", DBG_INDENT_LEN - 1);
   }
 #endif
+
+  if(sendcount == 0) {
+    return MPI_SUCCESS;
+  }
 
   enum {
     NBC_ALLTOALL_CLUSTER,
@@ -10514,6 +10618,10 @@ int ___collectives_scan_switch (const void *sendbuf, void *recvbuf, int count, M
   }
 #endif
 
+  if(count == 0) {
+    return MPI_SUCCESS;
+  }
+
   enum {
     NBC_SCAN_LINEAR,
     NBC_SCAN_ALLGATHER
@@ -10908,6 +11016,10 @@ int ___collectives_exscan_switch (const void *sendbuf, void *recvbuf, int count,
     mpc_common_debug_log("%sEXSCAN | %d / %d (%d)", __debug_indentation, rank, size, global_rank);
   }
 #endif
+
+  if(count == 0) {
+    return MPI_SUCCESS;
+  }
 
   enum {
     NBC_EXSCAN_LINEAR,
