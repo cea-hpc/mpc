@@ -274,7 +274,10 @@ struct _mpc_mpi_config_coll_opts
 
     /* TOPO */
     struct _mpc_mpi_config_topo_coll_opts topo;
+    /* Multiport Collective Algorithms */
+    int nports;
 };
+
 
 /************************************
  * GENERAL MPI MODULE CONFIGURATION *

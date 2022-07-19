@@ -117,6 +117,9 @@ static inline void __coll_param_defaults( void )
   opts->topo.max_level = 1;
   
   opts->topo.allgather = 0;
+
+  /* MULTIPORT COLLECTIVE ALGORITHMS */
+  opts->nports = 2;
   opts->topo.allgatherv = 0;
   opts->topo.allreduce = 0;
   opts->topo.alltoall = 0;
@@ -655,6 +658,8 @@ mpc_conf_config_type_t *__init_coll_config( void )
 																	"Intercommunicator collectives configuration" ),
 															PARAM( "intracomm", intracomm, MPC_CONF_TYPE,
 																	"Intracommunicator collectives configuration" ),
+															PARAM( "nports", &opts->nports, MPC_CONF_INT,
+																	"Number of ports in multiport collective algorithms" ),
 															NULL );
 	return ret;
 }
