@@ -8289,10 +8289,11 @@ int ___collectives_alltoallv_pairwise(const void *sendbuf, const int *sendcounts
   }
 
   // Buffer is of size recvcount and stores elements of size smaller or equal to recvext
-  void *tmpbuf = sctk_malloc(recvcount * recvext);
+  void *tmpbuf;
 
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
+      tmpbuf = sctk_malloc(recvcount * recvext);
       break;
 
     // tmpbuf_pos increment not multiplied by size because recvcount is a sum that already takes size into account
@@ -8358,7 +8359,10 @@ int ___collectives_alltoallv_pairwise(const void *sendbuf, const int *sendcounts
     // Copy our own data in the recvbuf, corresponds to distance = 0 (src = dest = rank)
     // Works in alltoallv the same way it does in the alltoall algorithm, since it only actually does stuff if sendcounts[rank] != 0
     ___collectives_copy_type(sendbuf + sdispls[rank] * sendext, sendcounts[rank], sendtype, recvbuf + rdispls[rank] * recvext, recvcounts[rank], recvtype, comm, coll_type, schedule, info);
+  }
 
+  if(coll_type == MPC_COLL_TYPE_BLOCKING) {
+    sctk_free(tmpbuf);
   }
 
   return MPI_SUCCESS;
@@ -8810,10 +8814,11 @@ int ___collectives_alltoallw_pairwise(const void *sendbuf, const int *sendcounts
   }
 
   // Buffer is of size totalext bytes
-  void *tmpbuf = sctk_malloc(totalext);
+  void *tmpbuf;
 
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
+      tmpbuf = sctk_malloc(totalext);
       break;
 
     case MPC_COLL_TYPE_NONBLOCKING:
@@ -8872,6 +8877,10 @@ int ___collectives_alltoallw_pairwise(const void *sendbuf, const int *sendcounts
 
     ___collectives_copy_type(sendbuf + sdispls[rank], sendcounts[rank], sendtypes[rank], recvbuf + rdispls[rank], recvcounts[rank], recvtypes[rank], comm, coll_type, schedule, info);
 
+  }
+
+  if(coll_type == MPC_COLL_TYPE_BLOCKING) {
+    sctk_free(tmpbuf);
   }
 
   return MPI_SUCCESS;
