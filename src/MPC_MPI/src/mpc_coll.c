@@ -2166,9 +2166,10 @@ int ___collectives_reduce_binomial(const void *sendbuf, void* recvbuf, int count
   }
   int i;
   for(i = 0; i < maxr; i++) {
-    VRANK2RANK(peer, vrank ^ (1 << i), vroot);
+    int vpeer = vrank ^ (1 << i);
+    VRANK2RANK(peer, vpeer, vroot);
     
-    if(peer < rank) {
+    if(vpeer < vrank) {
       // send reduce data to rank-2^i
       ___collectives_send_type(tmp_sendbuf, count, datatype, peer, MPC_REDUCE_TAG, comm, coll_type, schedule, info);
       break;
