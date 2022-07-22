@@ -1319,7 +1319,28 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 		}
 	}
 
-	if(current_rank_belongs)
+	int at_least_one_local_rank_belongs = 0;
+	int i;
+
+	unsigned int g_size = mpc_lowcomm_group_size(group);
+
+	for( i = 0 ; i < g_size; i++)
+	{
+		mpc_lowcomm_peer_uid_t tuid = mpc_lowcomm_group_process_uid_for_rank(group, i);
+
+		
+		if(tuid == mpc_lowcomm_monitor_get_uid())
+		{
+
+			if(mpc_lowcomm_group_includes(group, mpc_lowcomm_group_world_rank(group, i), mpc_lowcomm_monitor_get_uid() ) )
+			{
+					at_least_one_local_rank_belongs = 1;
+					ret = MPC_COMM_NULL;
+			}
+		}
+	}
+
+	if(at_least_one_local_rank_belongs)
 	{
 
 		//mpc_common_debug_error("LOCAL LEAD %d MY RANK %d", comm_local_lead, my_rank);
