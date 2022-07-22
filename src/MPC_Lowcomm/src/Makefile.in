@@ -88,12 +88,14 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@MPC_THREAD_ENABLED_TRUE@am__append_1 = -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/
-@MPC_MPI_ENABLED_TRUE@am__append_2 = -I$(abs_top_srcdir)/src/MPC_MPI/include/
+@MPC_BUILD_OPENPA_TRUE@am__append_1 = -I$(abs_top_srcdir)/contrib/openpa/src -I$(abs_top_builddir)/contrib/openpa/src
+@MPC_BUILD_OPENPA_FALSE@am__append_2 = $(OPA_CFLAGS) 
+@MPC_THREAD_ENABLED_TRUE@am__append_3 = -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/
+@MPC_MPI_ENABLED_TRUE@am__append_4 = -I$(abs_top_srcdir)/src/MPC_MPI/include/
 
 # IB driver #
-@INFINIBAND_DRIVER_ENABLED_TRUE@am__append_3 = -I$(abs_srcdir)/ib/
-@INFINIBAND_DRIVER_ENABLED_TRUE@am__append_4 = ./ib/async.c \
+@INFINIBAND_DRIVER_ENABLED_TRUE@am__append_5 = -I$(abs_srcdir)/ib/
+@INFINIBAND_DRIVER_ENABLED_TRUE@am__append_6 = ./ib/async.c \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/buffered.c ./ib/ib.c \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/cm.c ./ib/ibconfig.c \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/cp.c ./ib/ibdevice.c \
@@ -105,10 +107,10 @@ host_triplet = @host@
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibufs_rdma.c
 
 # PTL driver #
-@PORTALS4_DRIVER_ENABLED_TRUE@am__append_5 = -I$(abs_srcdir)/portals/
+@PORTALS4_DRIVER_ENABLED_TRUE@am__append_7 = -I$(abs_srcdir)/portals/
 
 # PTL-AM driver #
-@PORTALS4_DRIVER_ENABLED_TRUE@am__append_6 = ./portals/sctk_portals.c \
+@PORTALS4_DRIVER_ENABLED_TRUE@am__append_8 = ./portals/sctk_portals.c \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals/sctk_ptl_cm.c \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals/sctk_ptl_eager.c \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals/sctk_ptl_iface.c \
@@ -120,10 +122,10 @@ host_triplet = @host@
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals_am/sctk_ptl_am_toolkit.c \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals_am/sctk_ptl_am_arpc_api.c \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals_am/arpc_weak.c
-@OFI_DRIVER_ENABLED_TRUE@am__append_7 = -I$(abs_srcdir)/ofi/
-@OFI_DRIVER_ENABLED_TRUE@am__append_8 = ./ofi/ofi.c ./ofi/ofi_msg.c ./ofi/ofi_rdma.c ./ofi/ofi_toolkit.c
-@MPC_HAVE_AM_TRUE@am__append_9 = am.c
-@MPC_HAVE_AM_TRUE@am__append_10 = $(FFI_LIBS)
+@OFI_DRIVER_ENABLED_TRUE@am__append_9 = -I$(abs_srcdir)/ofi/
+@OFI_DRIVER_ENABLED_TRUE@am__append_10 = ./ofi/ofi.c ./ofi/ofi_msg.c ./ofi/ofi_rdma.c ./ofi/ofi_toolkit.c
+@MPC_HAVE_AM_TRUE@am__append_11 = am.c
+@MPC_HAVE_AM_TRUE@am__append_12 = $(FFI_LIBS)
 subdir = src/MPC_Lowcomm/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_gcc_builtin.m4 \
@@ -583,6 +585,7 @@ pythondir = @pythondir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
+subdirs = @subdirs@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
@@ -627,7 +630,8 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	-I$(abs_srcdir)/shm/ \
 	-I$(abs_top_srcdir)/src/MPC_Lowcomm/src/cplane/ \
 	$(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_5) $(am__append_7)
+	$(am__append_4) $(am__append_5) $(am__append_7) \
+	$(am__append_9)
 lib_LTLIBRARIES = libmpclowcomm.la
 
 # low-level communication #
@@ -645,15 +649,15 @@ libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c ft.c group.c \
 	./shm/sctk_shm.c ./shm/sctk_shm_eager.c \
 	./shm/sctk_shm_raw_queues.c ./shm/sctk_shm_cma.c \
 	./shm/sctk_shm_frag.c ./shm/sctk_shm_qemu.c \
-	./shm/sctk_shm_raw_queues_internals.c $(am__append_4) \
-	$(am__append_6) $(am__append_8) ./cplane/auth.c \
+	./shm/sctk_shm_raw_queues_internals.c $(am__append_6) \
+	$(am__append_8) $(am__append_10) ./cplane/auth.c \
 	./cplane/peer.c ./cplane/proto.c ./cplane/port.c \
 	./cplane/monitor.c ./cplane/set.c ./cplane/uid.c \
-	./cplane/name.c $(am__append_9)
+	./cplane/name.c $(am__append_11)
 
 # library dependency #
 libmpclowcomm_la_LIBADD = $(ALLOC_LIBS) \
-	../../MPC_Launch/src/libmpclaunch.la -lm -lrt $(am__append_10)
+	../../MPC_Launch/src/libmpclaunch.la -lm -lrt $(am__append_12)
 all: all-am
 
 .SUFFIXES:

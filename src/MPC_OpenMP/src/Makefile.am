@@ -41,6 +41,12 @@ tools_inc = -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/src/ \
 
 AM_CPPFLAGS += $(tools_inc)
 
+if MPC_BUILD_OPENPA
+AM_CPPFLAGS += -I$(abs_top_srcdir)/contrib/openpa/src -I$(abs_top_builddir)/contrib/openpa/src
+else
+AM_CPPFLAGS+=$(OPA_CFLAGS) 
+endif
+
 lib_LTLIBRARIES = libmpcomp.la
 
 libmpcomp_la_SOURCES = mpcomp_api.c mpcomp_core.c mpcomp_fortran.c mpcomp_loop.c

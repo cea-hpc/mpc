@@ -31,6 +31,12 @@ if MPC_THREAD_ENABLED
         AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/
 endif
 
+if MPC_BUILD_OPENPA
+AM_CPPFLAGS += -I$(abs_top_srcdir)/contrib/openpa/src -I$(abs_top_builddir)/contrib/openpa/src
+else
+AM_CPPFLAGS+=$(OPA_CFLAGS) 
+endif
+
 if INFINIBAND_DRIVER_ENABLED
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/ib/
 endif

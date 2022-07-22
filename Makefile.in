@@ -501,6 +501,7 @@ pythondir = @pythondir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
+subdirs = @subdirs@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
@@ -531,7 +532,7 @@ top_srcdir = @top_srcdir@
 #                                                                      #
 ########################################################################
 ACLOCAL_AMFLAGS = -I config/m4
-SUBDIRS = src pkgconfig cmake
+SUBDIRS = contrib src pkgconfig cmake
 all: mpc_config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 

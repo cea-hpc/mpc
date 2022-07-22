@@ -88,9 +88,11 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@MPC_THREAD_ENABLED_TRUE@am__append_1 = -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/
-@HYDRA_LAUNCHER_ENABLED_TRUE@am__append_2 = -I$(abs_srcdir)/hydra_client
-@HYDRA_LAUNCHER_ENABLED_TRUE@am__append_3 = ./hydra_client/safestr2.c  ./hydra_client/simple_pmi.c  ./hydra_client/simple_pmiutil.c
+@MPC_BUILD_OPENPA_TRUE@am__append_1 = -I$(abs_top_srcdir)/contrib/openpa/src -I$(abs_top_builddir)/contrib/openpa/src
+@MPC_BUILD_OPENPA_FALSE@am__append_2 = $(OPA_CFLAGS) 
+@MPC_THREAD_ENABLED_TRUE@am__append_3 = -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/
+@HYDRA_LAUNCHER_ENABLED_TRUE@am__append_4 = -I$(abs_srcdir)/hydra_client
+@HYDRA_LAUNCHER_ENABLED_TRUE@am__append_5 = ./hydra_client/safestr2.c  ./hydra_client/simple_pmi.c  ./hydra_client/simple_pmiutil.c
 subdir = src/MPC_Launch/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_gcc_builtin.m4 \
@@ -489,6 +491,7 @@ pythondir = @pythondir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
+subdirs = @subdirs@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
@@ -528,11 +531,11 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Config/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Config/src/generated/ \
 	-I$(abs_top_builddir)/src/include/ $(am__append_1) \
-	$(am__append_2)
+	$(am__append_2) $(am__append_3) $(am__append_4)
 mpc_headerdir = $(pkgincludedir)
 lib_LTLIBRARIES = libmpclaunch.la
 libmpclaunch_la_SOURCES = main.c libc_main.c mpc_launch.c pmi.c shm.c \
-	$(am__append_3)
+	$(am__append_5)
 libmpclaunch_la_LIBADD = ../../MPC_Topology/src/libmpctopology.la -ldl -lrt $(PMIX_LIBS) $(PMI_LIBS)
 all: all-am
 

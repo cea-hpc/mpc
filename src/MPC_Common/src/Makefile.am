@@ -22,7 +22,13 @@
 #                                                                      #
 ########################################################################
 AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ -I$(abs_top_srcdir)/src/include/ -I$(abs_top_builddir)/src/MPC_Arch/include/ -I$(abs_top_builddir)/src/MPC_Common/include/ -I$(abs_top_srcdir)/src/MPC_Config/include/
-AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Arch/include/ -I$(abs_top_builddir)/src/include/ $(OPA_CFLAGS) $(UNW_CFLAGS)
+AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Arch/include/ -I$(abs_top_builddir)/src/include/ $(UNW_CFLAGS)
+
+if MPC_BUILD_OPENPA
+AM_CPPFLAGS += -I$(abs_top_srcdir)/contrib/openpa/src -I$(abs_top_builddir)/contrib/openpa/src
+else
+AM_CPPFLAGS+=$(OPA_CFLAGS) 
+endif
 
 if MPC_THREAD_ENABLED
         AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/
@@ -48,4 +54,10 @@ libmpccommon_la_SOURCES += ./profiler/sctk_profile_render_tex.c ./profiler/sctk_
 libmpccommon_la_SOURCES += ./profiler/sctk_profile_render_xml.c
 endif
 
-libmpccommon_la_LIBADD = $(abs_top_builddir)/src/MPC_Arch/src/libmpcarch.la $(OPA_LIBS) $(ALLOC_LIBS) $(UNW_LIBS)
+libmpccommon_la_LIBADD = $(abs_top_builddir)/src/MPC_Arch/src/libmpcarch.la $(ALLOC_LIBS) $(UNW_LIBS)
+
+if MPC_BUILD_OPENPA
+libmpccommon_la_LIBADD += $(abs_top_builddir)/contrib/openpa/src/libopa.la
+else
+libmpccommon_la_LIBADD += $(OPA_LIBS) 
+endif

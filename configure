@@ -633,6 +633,7 @@ ac_includes_default="\
 #endif"
 
 ac_header_list=
+enable_option_checking=no
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
@@ -802,6 +803,8 @@ HYDRA_LAUNCHER_ENABLED_TRUE
 MPC_HAS_SRUN_SUPPORT_FALSE
 MPC_HAS_SRUN_SUPPORT_TRUE
 SRUN_IN_PATH
+MPC_BUILD_HYDRA_FALSE
+MPC_BUILD_HYDRA_TRUE
 MPIEXEC_HYDRA
 PRUN
 PRTERUN
@@ -834,6 +837,9 @@ MPC_ALLOCATOR_PRELOAD
 MPC_ALLOCATOR
 ALLOC_LIBS
 ALLOC_CFLAGS
+MPC_BUILD_OPENPA_FALSE
+MPC_BUILD_OPENPA_TRUE
+subdirs
 OPA_LIBS
 OPA_CFLAGS
 PKG_CONFIG_LIBDIR
@@ -1020,6 +1026,7 @@ with_hwloc_libs
 with_openpa
 with_openpa_inc
 with_openpa_libs
+enable_rpmbuild
 enable_mpcalloc
 with_mpcalloc
 with_mpcalloc_inc
@@ -1131,7 +1138,8 @@ CUDART_CFLAGS
 CUDART_LIBS
 EXTLS_CFLAGS
 EXTLS_LIBS'
-
+ac_subdirs_all='contrib/openpa
+contrib/hydra'
 
 # Initialize some variables set by options.
 ac_init_help=
@@ -1763,6 +1771,7 @@ Optional Features:
   --disable-dependency-tracking
                           speeds up one-time build
   --disable-libtool-lock  avoid locking (might break parallel builds)
+  --enable-rpmbuild       outputs rpm archive
   --enable-mpcalloc       If the MPC allocator is to be used
   --enable-am             Compile MPC active messages
   --enable-profiler       Compile MPC with Internal Profiling Support
@@ -24592,17 +24601,37 @@ $as_echo "$as_me: !! openpa is explicitly deactivated" >&6;}
                 whole_prefix=""
 
 
-                if test "x$mpc_dep_found" = "xno"
-                then
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: consider using --with-openpa=PREFIX" >&5
-$as_echo "$as_me: WARNING: consider using --with-openpa=PREFIX" >&2;}
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: consider using --with-openpa-libs=LIBS" >&5
-$as_echo "$as_me: WARNING: consider using --with-openpa-libs=LIBS" >&2;}
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: consider using --with-openpa-include=INCS" >&5
-$as_echo "$as_me: WARNING: consider using --with-openpa-include=INCS" >&2;}
-                        as_fn_error $? "Failed to locate required dependency openpa" "$LINENO" 5
-                fi
+# Check whether --enable-rpmbuild was given.
+if test "${enable_rpmbuild+set}" = set; then :
+  enableval=$enable_rpmbuild; build_rpm_archive=yes
+else
+  build_rpm_archive=no
+fi
 
+
+build_openpa=no
+if test "x$mpc_dep_found" = "xno"; then
+	build_openpa=yes
+	if test "x$build_rpm_archive" = "xyes"
+        then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: Openpa not found, will build my own internal Openpa" >&5
+$as_echo "$as_me: Openpa not found, will build my own internal Openpa" >&6;}
+
+
+subdirs="$subdirs contrib/openpa"
+
+	else
+		as_fn_error $? "Could not locate openpa 'opa_config.h'." "$LINENO" 5
+	fi
+fi
+
+ if test "x$build_openpa" = "xyes"; then
+  MPC_BUILD_OPENPA_TRUE=
+  MPC_BUILD_OPENPA_FALSE='#'
+else
+  MPC_BUILD_OPENPA_TRUE='#'
+  MPC_BUILD_OPENPA_FALSE=
+fi
 
 
 #
@@ -26572,6 +26601,7 @@ ensure_only_one_launcher
 
 MPC_LAUNCHER_PROGRAM="none"
 
+build_hydra=no
 if test "x$mpc_pmi1_enabled" != "xno"; then
         MPC_LAUNCHER="PMI1"
 
@@ -27231,8 +27261,19 @@ fi
 
         if test "x$MPIEXEC_HYDRA" = "xno"
         then
-                as_fn_error $? "Could not locate Hydra wrapper 'mpiexec.hydra' in PATH. Please reconsider using this launcher." "$LINENO" 5
+		if test "x$build_rpm_archive" = "xyes"
+		then
+			MPIEXEC_HYDRA=${prefix}/bin/mpiexec.hydra
+			build_hydra=yes
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: Hydra not found, will build my own internal Hydra" >&5
+$as_echo "$as_me: Hydra not found, will build my own internal Hydra" >&6;}
+			subdirs="$subdirs contrib/hydra"
+
+		else
+			as_fn_error $? "Could not locate Hydra wrapper 'mpiexec.hydra' in PATH. Please reconsider using this launcher." "$LINENO" 5
+		fi
         fi
+
         # Here we look for hydra only if hydra has not been disabled
         MPC_LAUNCHER="HYDRA"
 
@@ -27266,6 +27307,15 @@ $as_echo "#define MPC_USE_HYDRA 1" >>confdefs.h
 else
         as_fn_error $? "No launcher was selected use either --with-slurm, --with-hydra or --with-pmix" "$LINENO" 5
 fi
+
+ if test "x$build_hydra" = "xyes"; then
+  MPC_BUILD_HYDRA_TRUE=
+  MPC_BUILD_HYDRA_FALSE='#'
+else
+  MPC_BUILD_HYDRA_TRUE='#'
+  MPC_BUILD_HYDRA_FALSE=
+fi
+
 
 # For the srun launcher we want srun and one of the PMI compiled in
 
@@ -33009,7 +33059,6 @@ if test "x${mpc_debug}" = "xyes"; then
         CFLAGS+=" $MPC_DEBUG_FLAGS"
 fi
 
-
 ####################################
 ###### FINALIZATION & SUMMARY ###### {sec:finalize}
 ####################################
@@ -33219,7 +33268,7 @@ PKG_INCDIR="${prefix}/include/${PACKAGE_TARNAME}/"
 ac_config_headers="$ac_config_headers mpc_config.h"
 
 
-ac_config_files="$ac_config_files Makefile src/MPC_Arch/include/mpc_arch.h src/Makefile src/lib/Makefile src/MPC_Doc/Makefile src/MPC_Arch/Makefile src/MPC_Arch/src/Makefile src/MPC_Common/Makefile src/MPC_Common/src/Makefile src/MPC_Common/include/mpc_common_types.h src/MPC_Common/include/mpc_common_spinlock.h src/MPC_Common/include/mpc_keywords.h src/MPC_Config/Makefile src/MPC_Config/src/Makefile src/MPC_Config/conf/Makefile src/MPC_Launch/Makefile src/MPC_Launch/src/Makefile src/MPC_Lowcomm/Makefile src/MPC_Lowcomm/src/Makefile src/MPC_MPI/Makefile src/MPC_MPI/src/Makefile src/MPC_OpenMP/src/Makefile src/MPC_OpenMP/Makefile src/MPC_Topology/Makefile src/MPC_Topology/src/Makefile src/MPC_Threads/Makefile src/MPC_Threads/src/Makefile src/MPC_IO/Makefile src/MPC_IO/src/Makefile src/MPC_IO/include/mpio.h src/MPC_IO/src/romio/Makefile src/MPC_Fortran/Makefile src/MPC_Fortran/src/Makefile src/include/mpc_threads_config.h src/include/mpc.h src/bin/Makefile src/bin/mpc_build_env.sh src/bin/mpc_cflags src/bin/mpc_ldflags src/bin/mpcrun src/bin/mpcvars.sh src/bin/mpc_status pkgconfig/Makefile pkgconfig/libmpclowcomm.pc pkgconfig/libmpcthread.pc pkgconfig/libmpcmpi.pc cmake/Makefile"
+ac_config_files="$ac_config_files Makefile src/MPC_Arch/include/mpc_arch.h src/Makefile src/lib/Makefile src/MPC_Doc/Makefile src/MPC_Arch/Makefile src/MPC_Arch/src/Makefile src/MPC_Common/Makefile src/MPC_Common/src/Makefile src/MPC_Common/include/mpc_common_types.h src/MPC_Common/include/mpc_common_spinlock.h src/MPC_Common/include/mpc_keywords.h src/MPC_Config/Makefile src/MPC_Config/src/Makefile src/MPC_Config/conf/Makefile src/MPC_Launch/Makefile src/MPC_Launch/src/Makefile src/MPC_Lowcomm/Makefile src/MPC_Lowcomm/src/Makefile src/MPC_MPI/Makefile src/MPC_MPI/src/Makefile src/MPC_OpenMP/src/Makefile src/MPC_OpenMP/Makefile src/MPC_Topology/Makefile src/MPC_Topology/src/Makefile src/MPC_Threads/Makefile src/MPC_Threads/src/Makefile src/MPC_IO/Makefile src/MPC_IO/src/Makefile src/MPC_IO/include/mpio.h src/MPC_IO/src/romio/Makefile src/MPC_Fortran/Makefile src/MPC_Fortran/src/Makefile src/include/mpc_threads_config.h src/include/mpc.h src/bin/Makefile src/bin/mpc_build_env.sh src/bin/mpc_cflags src/bin/mpc_ldflags src/bin/mpcrun src/bin/mpcvars.sh src/bin/mpc_status pkgconfig/Makefile pkgconfig/libmpclowcomm.pc pkgconfig/libmpcthread.pc pkgconfig/libmpcmpi.pc contrib/Makefile cmake/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -33378,6 +33427,10 @@ if test -z "${CAN_USE_PANDOC_TRUE}" && test -z "${CAN_USE_PANDOC_FALSE}"; then
   as_fn_error $? "conditional \"CAN_USE_PANDOC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${MPC_BUILD_OPENPA_TRUE}" && test -z "${MPC_BUILD_OPENPA_FALSE}"; then
+  as_fn_error $? "conditional \"MPC_BUILD_OPENPA\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${MPC_HAVE_AM_TRUE}" && test -z "${MPC_HAVE_AM_FALSE}"; then
   as_fn_error $? "conditional \"MPC_HAVE_AM\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -33392,6 +33445,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${PORTALS4_DRIVER_ENABLED_TRUE}" && test -z "${PORTALS4_DRIVER_ENABLED_FALSE}"; then
   as_fn_error $? "conditional \"PORTALS4_DRIVER_ENABLED\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MPC_BUILD_HYDRA_TRUE}" && test -z "${MPC_BUILD_HYDRA_FALSE}"; then
+  as_fn_error $? "conditional \"MPC_BUILD_HYDRA\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MPC_HAS_SRUN_SUPPORT_TRUE}" && test -z "${MPC_HAS_SRUN_SUPPORT_FALSE}"; then
@@ -34696,6 +34753,7 @@ do
     "pkgconfig/libmpclowcomm.pc") CONFIG_FILES="$CONFIG_FILES pkgconfig/libmpclowcomm.pc" ;;
     "pkgconfig/libmpcthread.pc") CONFIG_FILES="$CONFIG_FILES pkgconfig/libmpcthread.pc" ;;
     "pkgconfig/libmpcmpi.pc") CONFIG_FILES="$CONFIG_FILES pkgconfig/libmpcmpi.pc" ;;
+    "contrib/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/Makefile" ;;
     "cmake/Makefile") CONFIG_FILES="$CONFIG_FILES cmake/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
@@ -36279,6 +36337,151 @@ if test "$no_create" != yes; then
   # Use ||, not &&, to avoid exiting from the if with $? = 1, which
   # would make configure fail if this is the last instruction.
   $ac_cs_success || as_fn_exit 1
+fi
+
+#
+# CONFIG_SUBDIRS section.
+#
+if test "$no_recursion" != yes; then
+
+  # Remove --cache-file, --srcdir, and --disable-option-checking arguments
+  # so they do not pile up.
+  ac_sub_configure_args=
+  ac_prev=
+  eval "set x $ac_configure_args"
+  shift
+  for ac_arg
+  do
+    if test -n "$ac_prev"; then
+      ac_prev=
+      continue
+    fi
+    case $ac_arg in
+    -cache-file | --cache-file | --cache-fil | --cache-fi \
+    | --cache-f | --cache- | --cache | --cach | --cac | --ca | --c)
+      ac_prev=cache_file ;;
+    -cache-file=* | --cache-file=* | --cache-fil=* | --cache-fi=* \
+    | --cache-f=* | --cache-=* | --cache=* | --cach=* | --cac=* | --ca=* \
+    | --c=*)
+      ;;
+    --config-cache | -C)
+      ;;
+    -srcdir | --srcdir | --srcdi | --srcd | --src | --sr)
+      ac_prev=srcdir ;;
+    -srcdir=* | --srcdir=* | --srcdi=* | --srcd=* | --src=* | --sr=*)
+      ;;
+    -prefix | --prefix | --prefi | --pref | --pre | --pr | --p)
+      ac_prev=prefix ;;
+    -prefix=* | --prefix=* | --prefi=* | --pref=* | --pre=* | --pr=* | --p=*)
+      ;;
+    --disable-option-checking)
+      ;;
+    *)
+      case $ac_arg in
+      *\'*) ac_arg=`$as_echo "$ac_arg" | sed "s/'/'\\\\\\\\''/g"` ;;
+      esac
+      as_fn_append ac_sub_configure_args " '$ac_arg'" ;;
+    esac
+  done
+
+  # Always prepend --prefix to ensure using the same prefix
+  # in subdir configurations.
+  ac_arg="--prefix=$prefix"
+  case $ac_arg in
+  *\'*) ac_arg=`$as_echo "$ac_arg" | sed "s/'/'\\\\\\\\''/g"` ;;
+  esac
+  ac_sub_configure_args="'$ac_arg' $ac_sub_configure_args"
+
+  # Pass --silent
+  if test "$silent" = yes; then
+    ac_sub_configure_args="--silent $ac_sub_configure_args"
+  fi
+
+  # Always prepend --disable-option-checking to silence warnings, since
+  # different subdirs can have different --enable and --with options.
+  ac_sub_configure_args="--disable-option-checking $ac_sub_configure_args"
+
+  ac_popdir=`pwd`
+  for ac_dir in : $subdirs; do test "x$ac_dir" = x: && continue
+
+    # Do not complain, so a configure script can configure whichever
+    # parts of a large source tree are present.
+    test -d "$srcdir/$ac_dir" || continue
+
+    ac_msg="=== configuring in $ac_dir (`pwd`/$ac_dir)"
+    $as_echo "$as_me:${as_lineno-$LINENO}: $ac_msg" >&5
+    $as_echo "$ac_msg" >&6
+    as_dir="$ac_dir"; as_fn_mkdir_p
+    ac_builddir=.
+
+case "$ac_dir" in
+.) ac_dir_suffix= ac_top_builddir_sub=. ac_top_build_prefix= ;;
+*)
+  ac_dir_suffix=/`$as_echo "$ac_dir" | sed 's|^\.[\\/]||'`
+  # A ".." for each directory in $ac_dir_suffix.
+  ac_top_builddir_sub=`$as_echo "$ac_dir_suffix" | sed 's|/[^\\/]*|/..|g;s|/||'`
+  case $ac_top_builddir_sub in
+  "") ac_top_builddir_sub=. ac_top_build_prefix= ;;
+  *)  ac_top_build_prefix=$ac_top_builddir_sub/ ;;
+  esac ;;
+esac
+ac_abs_top_builddir=$ac_pwd
+ac_abs_builddir=$ac_pwd$ac_dir_suffix
+# for backward compatibility:
+ac_top_builddir=$ac_top_build_prefix
+
+case $srcdir in
+  .)  # We are building in place.
+    ac_srcdir=.
+    ac_top_srcdir=$ac_top_builddir_sub
+    ac_abs_top_srcdir=$ac_pwd ;;
+  [\\/]* | ?:[\\/]* )  # Absolute name.
+    ac_srcdir=$srcdir$ac_dir_suffix;
+    ac_top_srcdir=$srcdir
+    ac_abs_top_srcdir=$srcdir ;;
+  *) # Relative name.
+    ac_srcdir=$ac_top_build_prefix$srcdir$ac_dir_suffix
+    ac_top_srcdir=$ac_top_build_prefix$srcdir
+    ac_abs_top_srcdir=$ac_pwd/$srcdir ;;
+esac
+ac_abs_srcdir=$ac_abs_top_srcdir$ac_dir_suffix
+
+
+    cd "$ac_dir"
+
+    # Check for guested configure; otherwise get Cygnus style configure.
+    if test -f "$ac_srcdir/configure.gnu"; then
+      ac_sub_configure=$ac_srcdir/configure.gnu
+    elif test -f "$ac_srcdir/configure"; then
+      ac_sub_configure=$ac_srcdir/configure
+    elif test -f "$ac_srcdir/configure.in"; then
+      # This should be Cygnus configure.
+      ac_sub_configure=$ac_aux_dir/configure
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: no configuration information is in $ac_dir" >&5
+$as_echo "$as_me: WARNING: no configuration information is in $ac_dir" >&2;}
+      ac_sub_configure=
+    fi
+
+    # The recursion is here.
+    if test -n "$ac_sub_configure"; then
+      # Make the cache file name correct relative to the subdirectory.
+      case $cache_file in
+      [\\/]* | ?:[\\/]* ) ac_sub_cache_file=$cache_file ;;
+      *) # Relative name.
+	ac_sub_cache_file=$ac_top_build_prefix$cache_file ;;
+      esac
+
+      { $as_echo "$as_me:${as_lineno-$LINENO}: running $SHELL $ac_sub_configure $ac_sub_configure_args --cache-file=$ac_sub_cache_file --srcdir=$ac_srcdir" >&5
+$as_echo "$as_me: running $SHELL $ac_sub_configure $ac_sub_configure_args --cache-file=$ac_sub_cache_file --srcdir=$ac_srcdir" >&6;}
+      # The eval makes quoting arguments work.
+      eval "\$SHELL \"\$ac_sub_configure\" $ac_sub_configure_args \
+	   --cache-file=\"\$ac_sub_cache_file\" --srcdir=\"\$ac_srcdir\"" ||
+	as_fn_error $? "$ac_sub_configure failed for $ac_dir" "$LINENO" 5
+    fi
+
+    cd "$ac_popdir"
+  done
 fi
 if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unrecognized options: $ac_unrecognized_opts" >&5

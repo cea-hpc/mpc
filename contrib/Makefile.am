@@ -21,10 +21,13 @@
 #   - JAEGER Julien julien.jaeger@cea.fr                               #
 #                                                                      #
 ########################################################################
-ACLOCAL_AMFLAGS=-I config/m4
-SUBDIRS=contrib src pkgconfig cmake
 
-#
-# Override autoconf for maintainer mode
-#
-AUTOCONF = ${SHELL} ${abs_builddir}/src/bin/mpc_build_env.sh ${srcdir}/autogen.sh
+SUBDIRS=
+
+if MPC_BUILD_OPENPA
+SUBDIRS+= openpa
+endif
+
+if MPC_BUILD_HYDRA
+SUBDIRS+= hydra
+endif

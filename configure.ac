@@ -953,8 +953,26 @@ MPC_DETECT_DEPENDENCY([hwloc.h],[hwloc], [hwloc_topology_init], [HWLOC], [> 2.0.
 MPC_REQUIRED_DEPENDENCY([hwloc], [$mpc_dep_found])
 
 MPC_DETECT_DEPENDENCY([opa_config.h],[openpa], [OPA_Queue_init], [OPA], [], [], [opa])
-MPC_REQUIRED_DEPENDENCY([openpa], [$mpc_dep_found])
 
+AC_ARG_ENABLE([rpmbuild],
+[AS_HELP_STRING([--enable-rpmbuild],
+	       [outputs rpm archive])],
+[build_rpm_archive=yes],
+[build_rpm_archive=no])
+
+build_openpa=no
+if test "x$mpc_dep_found" = "xno"; then
+	build_openpa=yes
+	if test "x$build_rpm_archive" = "xyes"
+        then
+		AC_MSG_NOTICE([Openpa not found, will build my own internal Openpa])
+		AC_CONFIG_SUBDIRS([contrib/openpa])
+	else
+		AC_MSG_ERROR([Could not locate openpa 'opa_config.h'.])
+	fi
+fi
+
+AM_CONDITIONAL([MPC_BUILD_OPENPA], [test "x$build_openpa" = "xyes"])
 
 #
 # Detect MPC Allocator
@@ -1205,6 +1223,7 @@ ensure_only_one_launcher
 
 MPC_LAUNCHER_PROGRAM="none"
 
+build_hydra=no
 if test "x$mpc_pmi1_enabled" != "xno"; then
         MPC_LAUNCHER="PMI1"
 
@@ -1243,8 +1262,17 @@ elif test "x$mpc_hydra_enabled" != "xno"; then
         AC_PATH_PROG([MPIEXEC_HYDRA], [mpiexec.hydra], [no])
         if test "x$MPIEXEC_HYDRA" = "xno"
         then
-                AC_MSG_ERROR([Could not locate Hydra wrapper 'mpiexec.hydra' in PATH. Please reconsider using this launcher.])
+		if test "x$build_rpm_archive" = "xyes"
+		then
+			MPIEXEC_HYDRA=${prefix}/bin/mpiexec.hydra
+			build_hydra=yes
+			AC_MSG_NOTICE([Hydra not found, will build my own internal Hydra])
+			AC_CONFIG_SUBDIRS([contrib/hydra])
+		else
+			AC_MSG_ERROR([Could not locate Hydra wrapper 'mpiexec.hydra' in PATH. Please reconsider using this launcher.])
+		fi
         fi
+
         # Here we look for hydra only if hydra has not been disabled
         MPC_LAUNCHER="HYDRA"
 
@@ -1261,6 +1289,8 @@ elif test "x$mpc_hydra_enabled" != "xno"; then
 else
         AC_MSG_ERROR([No launcher was selected use either --with-slurm, --with-hydra or --with-pmix])
 fi
+
+AM_CONDITIONAL([MPC_BUILD_HYDRA], [test "x$build_hydra" = "xyes"])
 
 # For the srun launcher we want srun and one of the PMI compiled in
 
@@ -3058,7 +3088,6 @@ if test "x${mpc_debug}" = "xyes"; then
         CFLAGS+=" $MPC_DEBUG_FLAGS"
 fi
 
-
 ####################################
 ###### FINALIZATION & SUMMARY ###### {sec:finalize}
 ####################################
@@ -3307,6 +3336,7 @@ AC_OUTPUT([Makefile
            pkgconfig/libmpclowcomm.pc
            pkgconfig/libmpcthread.pc
            pkgconfig/libmpcmpi.pc
+	   contrib/Makefile
            cmake/Makefile])
 
 

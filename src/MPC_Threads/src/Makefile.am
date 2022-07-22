@@ -26,6 +26,12 @@ AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Arch/include/ -I$(abs_top_srcdir)/src
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Config/include/ -I$(abs_top_srcdir)/src/MPC_Config/src/generated/
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Topology/include/ -I$(abs_top_builddir)/src/include/
 
+if MPC_BUILD_OPENPA
+AM_CPPFLAGS += -I$(abs_top_srcdir)/contrib/openpa/src -I$(abs_top_builddir)/contrib/openpa/src
+else
+AM_CPPFLAGS+=$(OPA_CFLAGS) 
+endif
+
 if MPC_LOWCOMM_ENABLED
         AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/ -I$(abs_top_srcdir)/src/MPC_Lowcomm/include/
 endif

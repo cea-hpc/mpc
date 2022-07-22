@@ -88,9 +88,11 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@MPC_THREAD_ENABLED_TRUE@am__append_1 = -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/
-@MPC_PROFILER_ENABLED_TRUE@am__append_2 = -I$(abs_top_srcdir)/src/MPC_MPI/src/profiler/
-@MPC_PROFILER_ENABLED_TRUE@am__append_3 = ./profiler/sctk_internal_profiler.c \
+@MPC_BUILD_OPENPA_TRUE@am__append_1 = -I$(abs_top_srcdir)/contrib/openpa/src -I$(abs_top_builddir)/contrib/openpa/src
+@MPC_BUILD_OPENPA_FALSE@am__append_2 = $(OPA_CFLAGS) 
+@MPC_THREAD_ENABLED_TRUE@am__append_3 = -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/
+@MPC_PROFILER_ENABLED_TRUE@am__append_4 = -I$(abs_top_srcdir)/src/MPC_MPI/src/profiler/
+@MPC_PROFILER_ENABLED_TRUE@am__append_5 = ./profiler/sctk_internal_profiler.c \
 @MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_performance_tree.c \
 @MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_profile_meta.c \
 @MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_profiler_array.c \
@@ -99,6 +101,8 @@ host_triplet = @host@
 @MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_profile_render_tex.c \
 @MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_profile_render_text.c \
 @MPC_PROFILER_ENABLED_TRUE@	./profiler/sctk_profile_render_xml.c
+@MPC_BUILD_OPENPA_TRUE@am__append_6 = $(abs_top_builddir)/contrib/openpa/src/libopa.la
+@MPC_BUILD_OPENPA_FALSE@am__append_7 = $(OPA_LIBS) 
 subdir = src/MPC_Common/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_gcc_builtin.m4 \
@@ -121,10 +125,11 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 LTLIBRARIES = $(noinst_LTLIBRARIES)
 am__DEPENDENCIES_1 =
+@MPC_BUILD_OPENPA_FALSE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
 libmpccommon_la_DEPENDENCIES =  \
 	$(abs_top_builddir)/src/MPC_Arch/src/libmpcarch.la \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) $(am__append_6) \
+	$(am__DEPENDENCIES_2)
 am__libmpccommon_la_SOURCES_DIST = aio.c bit_array.c fifo.c \
 	hashtable.c io_helper.c rank.c debug.c sctk_no_alloc.c \
 	sctk_pm_json.c flags.c debugger.c elf_32.c elf_64.c spinlock.c \
@@ -486,6 +491,7 @@ pythondir = @pythondir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
+subdirs = @subdirs@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
@@ -521,15 +527,18 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	-I$(abs_top_builddir)/src/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Config/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Arch/include/ \
-	-I$(abs_top_builddir)/src/include/ $(OPA_CFLAGS) $(UNW_CFLAGS) \
-	$(am__append_1) $(am__append_2)
+	-I$(abs_top_builddir)/src/include/ $(UNW_CFLAGS) \
+	$(am__append_1) $(am__append_2) $(am__append_3) \
+	$(am__append_4)
 noinst_LTLIBRARIES = libmpccommon.la
 CLEANFILES = elf_64.c
 libmpccommon_la_SOURCES = aio.c bit_array.c fifo.c hashtable.c \
 	io_helper.c rank.c debug.c sctk_no_alloc.c sctk_pm_json.c \
 	flags.c debugger.c elf_32.c elf_64.c spinlock.c base64.c \
-	recycler.c $(am__append_3)
-libmpccommon_la_LIBADD = $(abs_top_builddir)/src/MPC_Arch/src/libmpcarch.la $(OPA_LIBS) $(ALLOC_LIBS) $(UNW_LIBS)
+	recycler.c $(am__append_5)
+libmpccommon_la_LIBADD =  \
+	$(abs_top_builddir)/src/MPC_Arch/src/libmpcarch.la \
+	$(ALLOC_LIBS) $(UNW_LIBS) $(am__append_6) $(am__append_7)
 all: all-am
 
 .SUFFIXES:

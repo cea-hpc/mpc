@@ -88,19 +88,21 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@MPC_LOWCOMM_ENABLED_TRUE@am__append_1 = -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/ -I$(abs_top_srcdir)/src/MPC_Lowcomm/include/
-@MPC_MPI_ENABLED_TRUE@am__append_2 = -I$(abs_top_srcdir)/src/MPC_MPI/include/ \
+@MPC_BUILD_OPENPA_TRUE@am__append_1 = -I$(abs_top_srcdir)/contrib/openpa/src -I$(abs_top_builddir)/contrib/openpa/src
+@MPC_BUILD_OPENPA_FALSE@am__append_2 = $(OPA_CFLAGS) 
+@MPC_LOWCOMM_ENABLED_TRUE@am__append_3 = -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/ -I$(abs_top_srcdir)/src/MPC_Lowcomm/include/
+@MPC_MPI_ENABLED_TRUE@am__append_4 = -I$(abs_top_srcdir)/src/MPC_MPI/include/ \
 @MPC_MPI_ENABLED_TRUE@	-I$(abs_top_srcdir)/src/MPC_MPI/src/ \
 @MPC_MPI_ENABLED_TRUE@	-I$(abs_top_srcdir)/src/MPC_Lowcomm/include/ \
 @MPC_MPI_ENABLED_TRUE@	-I$(abs_top_builddir)/src/MPC_IO/include/
-@MPC_OPENMP_ENABLED_TRUE@am__append_3 = -I$(abs_top_srcdir)/src/MPC_OpenMP/include/ \
+@MPC_OPENMP_ENABLED_TRUE@am__append_5 = -I$(abs_top_srcdir)/src/MPC_OpenMP/include/ \
 @MPC_OPENMP_ENABLED_TRUE@                       -I$(abs_top_srcdir)/src/MPC_OpenMP/src/ \
 @MPC_OPENMP_ENABLED_TRUE@                       -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/src/ \
 @MPC_OPENMP_ENABLED_TRUE@                       -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/callback \
 @MPC_OPENMP_ENABLED_TRUE@                       -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/trace
 
-@MPC_CUDA_ENABLED_TRUE@am__append_4 = ./accelerator/cuda.c ./accelerator/cuda_wrap.c
-@MPC_CUDA_ENABLED_TRUE@am__append_5 = libmpc_cuda_addon.la
+@MPC_CUDA_ENABLED_TRUE@am__append_6 = ./accelerator/cuda.c ./accelerator/cuda_wrap.c
+@MPC_CUDA_ENABLED_TRUE@am__append_7 = libmpc_cuda_addon.la
 subdir = src/MPC_Threads/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_gcc_builtin.m4 \
@@ -509,6 +511,7 @@ pythondir = @pythondir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
+subdirs = @subdirs@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
@@ -548,13 +551,14 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Config/src/generated/ \
 	-I$(abs_top_srcdir)/src/MPC_Topology/include/ \
 	-I$(abs_top_builddir)/src/include/ $(am__append_1) \
-	$(am__append_2) $(am__append_3)
-lib_LTLIBRARIES = libmpcthread.la $(am__append_5)
+	$(am__append_2) $(am__append_3) $(am__append_4) \
+	$(am__append_5)
+lib_LTLIBRARIES = libmpcthread.la $(am__append_7)
 libmpcthread_la_SOURCES = sctk_context.c futex.c thread_ptr.c thread.c \
 	tls.c kthread.c microthread.c romio_ctx.c pthread_engine.c \
 	ng_engine.c ng_engine_scheduler.c ethread_engine.c \
 	ethread_mxn_engine.c ethread_posix.c accelerator.c \
-	mpi_omp_interop.c $(am__append_4)
+	mpi_omp_interop.c $(am__append_6)
 @MPC_CUDA_ENABLED_TRUE@libmpc_cuda_addon_la_SOURCES = ./accelerator/cuda_lib/cuda_lib.c
 @MPC_CUDA_ENABLED_TRUE@libmpc_cuda_addon_la_LIBADD = -lcuda
 libmpcthread_la_LIBADD = ../../MPC_Launch/src/libmpclaunch.la  -lpthread

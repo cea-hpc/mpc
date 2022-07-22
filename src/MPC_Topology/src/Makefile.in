@@ -88,7 +88,9 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@MPC_THREAD_ENABLED_TRUE@am__append_1 = -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/
+@MPC_BUILD_OPENPA_TRUE@am__append_1 = -I$(abs_top_srcdir)/contrib/openpa/src -I$(abs_top_builddir)/contrib/openpa/src
+@MPC_BUILD_OPENPA_FALSE@am__append_2 = $(OPA_CFLAGS) 
+@MPC_THREAD_ENABLED_TRUE@am__append_3 = -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/
 subdir = src/MPC_Topology/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_gcc_builtin.m4 \
@@ -452,6 +454,7 @@ pythondir = @pythondir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
+subdirs = @subdirs@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
@@ -489,7 +492,7 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Config/include/ \
 	-I$(abs_top_srcdir)/src/include/ \
 	-I$(abs_top_builddir)/src/include/ $(HWLOC_CFLAGS) \
-	$(am__append_1)
+	$(am__append_1) $(am__append_2) $(am__append_3)
 mpc_headerdir = $(pkgincludedir)
 noinst_LTLIBRARIES = libmpctopology.la
 libmpctopology_la_SOURCES = topology.c  topology_device.c  topology_render.c

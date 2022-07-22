@@ -28,6 +28,12 @@ AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Lowcomm/include/ -I$(abs_top_srcdir)/
 AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Launch/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/ -I$(abs_top_builddir)/src/MPC_Common/include/
 AM_CPPFLAGS += -I$(abs_top_builddir)/src/MPC_IO/include/ -I$(abs_top_srcdir)/src/MPC_Config/include/
 
+if MPC_BUILD_OPENPA
+AM_CPPFLAGS += -I$(abs_top_srcdir)/contrib/openpa/src -I$(abs_top_builddir)/contrib/openpa/src
+else
+AM_CPPFLAGS+=$(OPA_CFLAGS) 
+endif
+
 if MPC_FORTRAN_ENABLED
      AM_CPPFLAGS += -I$(abs_top_srcdir)/src/MPC_Fortran/include/
 endif
