@@ -8132,16 +8132,20 @@ int ___collectives_alltoallv_cluster(const void *sendbuf, const int *sendcounts,
   void *tmpbuf = NULL;
 
   int rsize = 0;
+  int recvcount = 0;
+
   int i;
   for(i = 0; i < size; i++) {
     int size = (rdispls[i] + recvcounts[i]) * recvext;
     rsize = (size > rsize) ? (size) : (rsize) ;
+
+    recvcount += recvcounts[i];
   }
   
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
-      not_implemented();
-      return MPI_SUCCESS;
+      tmpbuf = sctk_malloc(recvcount * recvext);
+      break;
 
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
@@ -8189,6 +8193,10 @@ int ___collectives_alltoallv_cluster(const void *sendbuf, const int *sendcounts,
     // Copy our own data in the recvbuf
     ___collectives_copy_type(sendbuf + sdispls[rank] * sendext, sendcounts[rank], sendtype, recvbuf + rdispls[rank] * recvext, recvcounts[rank], recvtype, comm, coll_type, schedule, info);
 
+  }
+
+  if(coll_type == MPC_COLL_TYPE_BLOCKING) {
+    sctk_free(tmpbuf);
   }
 
   return MPI_SUCCESS;
@@ -8683,17 +8691,22 @@ int ___collectives_alltoallw_cluster(const void *sendbuf, const int *sendcounts,
   void *tmpbuf = NULL;
 
   int rsize = 0;
+  int totalext = 0;
+
   int i;
-  for(i = 0; i < size; i++) {
+  for(i = 0; i < size; i++)
+  {
     PMPI_Type_extent(recvtypes[i], &ext);
     int size = rdispls[i] + recvcounts[i] * ext;
     rsize = (size > rsize) ? (size) : (rsize);
+
+    totalext += recvcounts[i] * ext;
   }
   
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
-      not_implemented();
-      return MPI_SUCCESS;
+      tmpbuf = sctk_malloc(totalext);
+      break;
 
     case MPC_COLL_TYPE_NONBLOCKING:
     case MPC_COLL_TYPE_PERSISTENT:
@@ -8741,6 +8754,10 @@ int ___collectives_alltoallw_cluster(const void *sendbuf, const int *sendcounts,
     // Copy our own data in the recvbuf
     ___collectives_copy_type(sendbuf + sdispls[rank], sendcounts[rank], sendtypes[rank], recvbuf + rdispls[rank], recvcounts[rank], recvtypes[rank], comm, coll_type, schedule, info);
 
+  }
+
+  if(coll_type == MPC_COLL_TYPE_BLOCKING) {
+    sctk_free(tmpbuf);
   }
 
   return MPI_SUCCESS;
