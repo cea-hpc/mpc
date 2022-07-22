@@ -113,8 +113,6 @@ typedef struct  mpc_omp_task_trace_record_s
     mpc_omp_task_trace_record_type_t type;
 }               mpc_omp_task_trace_record_t;
 
-// TODO("optimize records : for instance, label should only be present on CREATE event");
-
 typedef struct  mpc_omp_task_trace_record_schedule_s
 {
     /* inheritance */
@@ -122,6 +120,9 @@ typedef struct  mpc_omp_task_trace_record_schedule_s
 
     /* the task uid */
     int uid;
+
+    /* task persistent uid */
+    int persistent_uid;
 
     /* the task->priority attribute */
     int priority;
@@ -131,6 +132,9 @@ typedef struct  mpc_omp_task_trace_record_schedule_s
 
     /* number of predecessors */
     int npredecessors;
+
+    /* number of uncompleted predecessors */
+    int ref_predecessors;
 
     /* number of tasks that were scheduled before this one */
     int schedule_id;

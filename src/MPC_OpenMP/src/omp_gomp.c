@@ -2107,7 +2107,7 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
 
     if (arg_align == 0) arg_align = sizeof(void *);
 
-    double t0 = omp_get_wtime();
+    //double t0 = omp_get_wtime();
 
     mpc_omp_task_t * task;
 
@@ -2140,11 +2140,11 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
         _mpc_omp_task_init(task, fn, data_storage, size, properties);
 
         /* set dependencies (and compute priorities) */
-        double t1 = omp_get_wtime();
+        //double t1 = omp_get_wtime();
         _mpc_omp_task_deps(task, depend, priority);
-        double t2 = omp_get_wtime();
-        double t_deps  = t2 - t1;
-        instance->t_deps += t_deps;
+        //double t2 = omp_get_wtime();
+        //double t_deps  = t2 - t1;
+        //instance->t_deps += t_deps;
     }
 
     /* process the task (differ or run it) */
@@ -2155,9 +2155,9 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
         _mpc_omp_task_deinit(task);
     }
 
-    double tf = omp_get_wtime();
-    double t_total = tf - t0;
-    instance->t_total += t_total;
+    //double tf = omp_get_wtime();
+    //double t_total = tf - t0;
+    //instance->t_total += t_total;
 
     mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
 }

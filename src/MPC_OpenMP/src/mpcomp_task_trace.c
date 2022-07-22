@@ -211,12 +211,14 @@ static inline void
 __task_trace(mpc_omp_task_t * task, mpc_omp_task_trace_node_t * node)
 {
     mpc_omp_task_trace_record_schedule_t * record = (mpc_omp_task_trace_record_schedule_t *) __node_record(node);
-    record->uid             = task->uid;
-    record->priority        = task->priority;
-    record->properties      = task->property;
-    record->npredecessors   = OPA_load_int(&(task->dep_node.npredecessors));
-    record->schedule_id     = task->schedule_id;
-    record->statuses        = task->statuses;
+    record->uid                 = task->uid;
+    record->persistent_uid      = task->persistent_uid;
+    record->priority            = task->priority;
+    record->properties          = task->property;
+    record->npredecessors       = task->dep_node.npredecessors;
+    record->ref_predecessors    = OPA_load_int(&(task->dep_node.ref_predecessors));
+    record->schedule_id         = task->schedule_id;
+    record->statuses            = task->statuses;
 }
 
 void
@@ -431,6 +433,7 @@ mpc_omp_task_trace_begin(void)
     mpc_omp_task_trace_record_type_t type;
     for (type = 0 ; type < MPC_OMP_TASK_TRACE_TYPE_COUNT ; type++)
     {
+        //printf("sizeof(type=%d) = %lu\n", type, __record_sizeof(type));
         mpc_common_recycler_init(
                 &(infos->recyclers[type]),
                 mpc_omp_alloc, mpc_omp_free,

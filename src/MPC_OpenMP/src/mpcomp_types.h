@@ -606,6 +606,20 @@ typedef struct  mpc_omp_task_profile_s
     int parent_uid;
 }               mpc_omp_task_profile_t;
 
+/* persistent task slot */
+typedef struct  mpc_omp_task_persistent_slot_s
+{
+    /* the task (if NULL, then the slot may be recycled) */
+    mpc_omp_task_t * task;
+
+    /* the next non-null slot index */
+    int next_set;
+
+    /* the next free slot */
+    int next_free;
+
+}               mpc_omp_task_persistent_slot_t;
+
 /* persistent region infos */
 typedef struct  mpc_omp_task_persistent_region_s
 {
@@ -624,8 +638,8 @@ typedef struct  mpc_omp_task_persistent_region_s
     /* persistent iteration count */
     int iterations;
 
-    /* the persistent tasks (array of size 'ntasks') */
-    struct mpc_omp_task_s ** tasks;
+    /* the persistent tasks */
+    mpc_omp_task_persistent_slot_t * tasks;
 
     /* capacity of the 'tasks' array */
     int capacity;
@@ -710,6 +724,8 @@ typedef struct  mpc_omp_task_dep_node_s
 
 }               mpc_omp_task_dep_node_t;
 
+struct mpc_omp_task_thread_infos_s;
+
 /** OpenMP task data structure */
 typedef struct  mpc_omp_task_s
 {
@@ -784,6 +800,9 @@ typedef struct  mpc_omp_task_s
     /* task uid (= number of task previously created) */
     int uid;
 
+    /* task original uid in case of persistent */
+    int persistent_uid;
+
     /* the task list */
     struct mpc_omp_task_pqueue_s * pqueue;
 
@@ -805,6 +824,10 @@ typedef struct  mpc_omp_task_s
     /* persistent informations for this task */
     mpc_omp_task_persistent_infos_t persistent_infos;
 
+# if MPC_OMP_TASK_USE_RECYCLERS
+    /* infos of the thread that created this task */
+    struct mpc_omp_task_thread_infos_s * origin;
+# endif /* MPC_OMP_TASK_USE_RECYCLERS */
 }               mpc_omp_task_t;
 
 /** RB tree for task priorities */
@@ -890,6 +913,7 @@ typedef struct  mpc_omp_task_thread_infos_s
 
 # if MPC_OMP_TASK_USE_RECYCLERS
     mpc_common_nrecycler_t task_recycler;   /* Recycler for mpc_omp_task_t and its data */
+    mpc_common_spinlock_t task_recycler_lock;
 #  if MPC_OMP_TASK_COMPILE_FIBER
     mpc_common_recycler_t  fiber_recycler;  /* Recycler for mpc_omp_task_fiber_t */
 #  endif /* MPC_OMP_TASK_COMPILE_FIBER */
@@ -1048,7 +1072,7 @@ typedef struct mpc_omp_alloc_list_s
   int nb_init_allocators;
   int last_index;
   mpc_omp_recycl_alloc_info_t recycling_info;
-	mpc_common_spinlock_t lock;
+  mpc_common_spinlock_t lock;
 } mpc_omp_alloc_list_t;
 
 /********************

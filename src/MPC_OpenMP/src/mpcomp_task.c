@@ -996,7 +996,8 @@ __task_delete_fiber(mpc_omp_task_t * task)
         if (thread->task_infos.fiber)
         {
 # if MPC_OMP_TASK_USE_RECYCLERS
-            mpc_common_recycler_recycle (&(thread->task_infos.fiber_recycler), task->fiber);
+            // TODO : on which thread do we want to recycle this fiber ?
+            mpc_common_recycler_recycle(&(thread->task_infos.fiber_recycler), task->fiber);
 # else
             mpc_omp_free(task->fiber);
 # endif /* MPC_OMP_TASK_USE_RECYCLERS */
@@ -1052,12 +1053,14 @@ __task_precedence_constraints(mpc_omp_task_t * predecessor, mpc_omp_task_t * suc
     /* always generate arcs for persistent tasks */
 
     if (OPA_load_int(&(predecessor->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED
-        || mpc_omp_task_property_isset(successor->property, MPC_OMP_TASK_PROP_PERSISTENT))
+        ||  (    mpc_omp_task_property_isset(predecessor->property, MPC_OMP_TASK_PROP_PERSISTENT)
+            &&  (mpc_omp_task_property_isset(successor->property, MPC_OMP_TASK_PROP_PERSISTENT))))
     {
         mpc_common_spinlock_lock(&(predecessor->dep_node.lock));
         {
             if (OPA_load_int(&(predecessor->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED
-                || mpc_omp_task_property_isset(successor->property, MPC_OMP_TASK_PROP_PERSISTENT))
+                ||  (    mpc_omp_task_property_isset(predecessor->property, MPC_OMP_TASK_PROP_PERSISTENT)
+                    &&  (mpc_omp_task_property_isset(successor->property, MPC_OMP_TASK_PROP_PERSISTENT))))
             {
                 if (!__task_in_list(predecessor->dep_node.successors, successor))
                 {
@@ -1066,6 +1069,11 @@ __task_precedence_constraints(mpc_omp_task_t * predecessor, mpc_omp_task_t * suc
                     if (OPA_load_int(&(predecessor->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED)
                     {
                         OPA_incr_int(&(successor->dep_node.ref_predecessors));
+                    }
+                    // TODO : this else is a trick for the post-processing ... is it mandatory ?
+                    else
+                    {
+                        MPC_OMP_TASK_TRACE_DEPENDENCY(predecessor, successor);
                     }
 
                     predecessor->dep_node.successors = __task_list_elt_new(predecessor->dep_node.successors, successor);
@@ -1514,13 +1522,15 @@ __task_delete(mpc_omp_task_t * task)
      /* Release successors */
      __task_list_delete(task->dep_node.successors);
 
-    TODO("What about persistent tracing ? They only got deleted once...");
+    TODO("What about persistent tracing ? Right now, they only got deleted once...");
     MPC_OMP_TASK_TRACE_DELETE(task);
 
 # if MPC_OMP_TASK_USE_RECYCLERS
-    TODO(   "instead of recycling to current thread recycler, we may want to recycle "
-            "into the producer thread recycler, particularly in mono-producer");
-    mpc_common_nrecycler_recycle(&(thread->task_infos.task_recycler), task, task->size);
+    mpc_common_spinlock_lock(&(task->origin->task_recycler_lock));
+    {
+        mpc_common_nrecycler_recycle(&(task->origin->task_recycler), task, task->size);
+    }
+    mpc_common_spinlock_unlock(&(task->origin->task_recycler_lock));
 # else
     mpc_omp_free(task);
 # endif /* MPC_OMP_TASK_USE_RECYCLERS */
@@ -2849,11 +2859,13 @@ _mpc_omp_task_wait(void ** depend, int nowait)
     /* otherwise, wait for implicit task children to finish */
     else
     {
+        mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
         mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
         mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
         assert(task);
 
-        while (OPA_load_int(&(task->children_count)))
+        OPA_int_t * task_counter = region->active ? &(region->task_ref) : &(task->children_count);
+        while (OPA_load_int(task_counter))
         {
             _mpc_omp_task_schedule();
         }
@@ -3405,7 +3417,13 @@ _mpc_omp_task_allocate(size_t size)
     OPA_incr_int(&(thread->instance->task_infos.ntasks_allocated));
 
 # if MPC_OMP_TASK_USE_RECYCLERS
-    mpc_omp_task_t * task = mpc_common_nrecycler_alloc(&(thread->task_infos.task_recycler), size);
+    mpc_omp_task_t * task;
+    mpc_common_spinlock_lock(&(thread->task_infos.task_recycler_lock));
+    {
+        task = mpc_common_nrecycler_alloc(&(thread->task_infos.task_recycler), size);
+    }
+    mpc_common_spinlock_unlock(&(thread->task_infos.task_recycler_lock));
+    task->origin = &(thread->task_infos);
 # else
     mpc_omp_task_t * task = mpc_omp_alloc(size);
 # endif
@@ -3469,13 +3487,16 @@ _mpc_omp_task_reinit(mpc_omp_task_t * task)
 {
     assert(task);
 
+    /* update task uid */
     mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
+    task->persistent_uid = task->uid;
     task->uid = OPA_fetch_and_incr_int(&(thread->instance->task_infos.next_task_uid));
     memset(&(task->statuses), 0, sizeof(mpc_omp_task_statuses_t));
 
     /* reference the task */
     __task_ref_persistent_region(task->parent);
 
+# if 0 /* do not recopy label */
 # if MPC_OMP_TASK_COMPILE_TRACE
     if (thread->task_infos.incoming.label)
     {
@@ -3483,6 +3504,7 @@ _mpc_omp_task_reinit(mpc_omp_task_t * task)
         thread->task_infos.incoming.label = NULL;
     }
 # endif /* MPC_OMP_TASK_COMPILE_TRACE */
+# endif
 
     mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
     assert(region->active);
@@ -3503,16 +3525,6 @@ _mpc_omp_task_reinit(mpc_omp_task_t * task)
 
     /* trace task creation */
     MPC_OMP_TASK_TRACE_CREATE(task);
-}
-
-/* Return the next persistent task to be generated */
-mpc_omp_task_t *
-mpc_omp_get_persistent_task(void)
-{
-     mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
-     assert(region->active);
-     assert(region->next_task < region->ntasks);
-     return region->tasks[region->next_task++];
 }
 
 /**
@@ -3629,13 +3641,12 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
         task->dep_node.nsuccessors = 0;
         task->dep_node.predecessors = NULL;
         task->dep_node.npredecessors = 0;
-        OPA_store_int(&(task->dep_node.ref_predecessors), 0);
+
+        /* protect task from being scheduled before all of its dependencies are processed */
+        OPA_store_int(&(task->dep_node.ref_predecessors), 1);
         task->dep_node.top_level = 0;
         task->dep_node.dep_list = NULL;
         task->dep_node.dep_list_size = 0;
-
-        /* protect task from being scheduled before all of its dependencies are processed */
-        OPA_incr_int(&(task->dep_node.ref_predecessors));
 
         /* link task with predecessors, and register dependencies to the hmap */
         __task_process_deps(task, depend);
@@ -3984,6 +3995,7 @@ _mpc_omp_task_tree_init(mpc_omp_thread_t * thread)
     mpc_omp_task_dependencies_hash_func(NULL);
 # if MPC_OMP_TASK_USE_RECYCLERS
     __thread_task_init_recyclers(thread);
+    mpc_common_spinlock_init(&(thread->task_infos.task_recycler_lock), 0);
 # endif
     __thread_task_init_initial(thread);
     if (mpc_omp_conf_get()->bindings)
@@ -4043,4 +4055,121 @@ _mpc_omp_task_tree_deinit(mpc_omp_thread_t * thread)
     // this may not be true since every threads are deinitialized concurrently
     // assert(OPA_load_int(&(thread->instance->task_infos.ntasks)) == 0);
     // assert(OPA_load_int(&(thread->instance->task_infos.ntasks_ready)) == 0);
+}
+
+/**************************/
+/* PERSISTENT TASK REGION */
+/**************************/
+
+/* Return the next persistent task to be generated */
+mpc_omp_task_t *
+mpc_omp_get_persistent_task(void)
+{
+    mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
+    assert(region->active);
+    return (mpc_omp_task_t *) mpc_common_indirect_array_iterator_next(&(region->tasks_it));
+}
+
+/* Called at the beginning of a persistent task loop, providing initial task buffer capacity */
+inline void
+mpc_omp_persistent_region_begin_with_capacity(int capacity)
+{
+    // TODO : this shouldn't be necessary, but convenient for now
+    // to handle dependencies between persistent and non-persistent
+    _mpc_omp_task_wait(NULL, 0);
+
+    mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
+    region->active      = 1;
+    region->iterations  = 0;
+    region->ntasks      = 0;
+    region->next_task   = 0;
+    region->capacity    = capacity;
+    mpc_common_indirect_array_init(&(region->tasks), sizeof(mpc_omp_task_t *), capacity);
+    OPA_store_int(&(region->task_ref), 0);
+}
+
+/* Called at the beginning of a persistent task loop */
+void
+mpc_omp_persistent_region_begin(void)
+{
+    // TODO : implement 'no-delete' and 'no-add' flags
+    mpc_omp_persistent_region_begin_with_capacity(16);
+}
+
+/* Called on each persistent task loops iterations */
+void
+mpc_omp_persistent_region_iterate(void)
+{
+    mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
+    assert(region->active);
+
+    // TODO : this shouldn't be necessary, but conveinent for now
+    // to avoid handling dependencies between iterations
+    // and multiple task version on the fly
+    /* wait for the previous iteration to complete */
+    _mpc_omp_task_wait(NULL, 0);
+
+    /* if running iterations > 1, then previous iterator must have completed */
+    assert(region->iterations == 1 || mpc_common_indirect_array_iterator_finished(&(region->it)));
+
+    mpc_common_indirect_array_iterator_reset(&(region->it));
+    ++region->iterations;
+}
+
+/* Called at the end of a persistent task loop */
+void
+mpc_omp_persistent_region_end(void)
+{
+    mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
+    assert(region->active);
+
+    _mpc_omp_task_wait(NULL, 0);
+
+    // TODO : delete every remaining tasks
+# if 0
+    int i = 0;
+    while (i < region->ntasks)
+    {
+        mpc_omp_task_persistent_slot_t * slot = region->tasks + region->next_task;
+        mpc_omp_task_t * task = slot->task;
+        if (task)
+        {
+            _mpc_omp_task_deinit(task);
+            ++i;
+        }
+        else
+        {
+            i = slot->next;
+        }
+    }
+    free(region->tasks);
+# endif
+    mpc_common_indirect_array_delete(&(region->tasks));
+    region->active = 0;
+}
+
+/* Return true if the thread is within a persistent task region */
+inline int
+mpc_omp_persistent_region_is_active(void)
+{
+    mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
+    return region->active;
+}
+
+void
+mpc_omp_persistent_region_push(void)
+{
+    not_implemented();
+}
+
+void
+mpc_omp_persistent_region_pop(void)
+{
+    mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
+
+    /* cannot delete tasks on the 1st iteration or outside a persistent region */
+    if (!region->active || region->iterations == 0) return ;
+
+    mpc_omp_task_t * task = (mpc_omp_task_t *) mpc_common_indirect_array_iterator_pop(&(region->tasks_it));
+    /* TODO : delete the task
 }

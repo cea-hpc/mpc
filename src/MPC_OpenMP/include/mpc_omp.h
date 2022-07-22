@@ -261,6 +261,7 @@ extern "C" {
     void mpc_omp_persistent_region_end(void);
     int mpc_omp_in_persistent_region(void);
     void mpc_omp_persistent_region_iteration(void);
+    void mpc_omp_persistent_region_delete(void);
 
 #ifdef __cplusplus
 }
