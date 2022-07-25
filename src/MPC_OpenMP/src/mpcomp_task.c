@@ -4145,10 +4145,10 @@ mpc_omp_persistent_region_pop(void)
     /* cannot delete tasks on the 1st iteration or outside a persistent region */
     if (!region->active) return ;
 
-    mpc_omp_task_t * task = (mpc_omp_task_t *) mpc_common_indirect_array_iterator_pop(&(region->tasks_it));
-    if (task)
+    mpc_omp_task_t ** task_ptr = (mpc_omp_task_t **) mpc_common_indirect_array_iterator_pop(&(region->tasks_it));
+    if (task_ptr)
     {
-        _mpc_omp_task_deinit(task);
+        _mpc_omp_task_deinit(*task_ptr);
     }
     /* TODO : delete the task */
 }
