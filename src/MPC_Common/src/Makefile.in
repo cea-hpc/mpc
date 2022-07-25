@@ -128,7 +128,8 @@ libmpccommon_la_DEPENDENCIES =  \
 am__libmpccommon_la_SOURCES_DIST = aio.c bit_array.c fifo.c \
 	hashtable.c io_helper.c rank.c debug.c sctk_no_alloc.c \
 	sctk_pm_json.c flags.c debugger.c elf_32.c elf_64.c spinlock.c \
-	base64.c recycler.c ./profiler/sctk_internal_profiler.c \
+	base64.c recycler.c indirect_array.c	\
+	./profiler/sctk_internal_profiler.c \
 	./profiler/sctk_performance_tree.c \
 	./profiler/sctk_profile_meta.c \
 	./profiler/sctk_profiler_array.c \
@@ -528,7 +529,7 @@ CLEANFILES = elf_64.c
 libmpccommon_la_SOURCES = aio.c bit_array.c fifo.c hashtable.c \
 	io_helper.c rank.c debug.c sctk_no_alloc.c sctk_pm_json.c \
 	flags.c debugger.c elf_32.c elf_64.c spinlock.c base64.c \
-	recycler.c $(am__append_3)
+	recycler.c indirect_array.c $(am__append_3)
 libmpccommon_la_LIBADD = $(abs_top_builddir)/src/MPC_Arch/src/libmpcarch.la $(OPA_LIBS) $(ALLOC_LIBS) $(UNW_LIBS)
 all: all-am
 

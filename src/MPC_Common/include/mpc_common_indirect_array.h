@@ -30,6 +30,10 @@
 # ifndef __MPC_COMMON_INDIRECT_ARRAY_H__
 #  define __MPC_COMMON_INDIRECT_ARRAY_H__
 
+#  include <assert.h>
+#  include <stdlib.h>
+#  include <string.h>
+
 typedef struct  mpc_common_indirect_array_slot_s
 {
     /* next slot in the 'slots' array (which is free or taken depending on context) */
@@ -63,9 +67,13 @@ typedef struct  mpc_common_indirect_array_iterator_s
     /* next element of this iterator in the 'slots' array */
     size_t next;
 
-    /* last slot returned */
-    size_t last;
+    /* previous element of this iterator */
+    size_t prev;
+
 }               mpc_common_indirect_array_iterator_t;
+
+/* Return '1' if the iterator iterated over every elements of the array */
+int mpc_common_indirect_array_iterator_finished(mpc_common_indirect_array_iterator_t * it);
 
 /* Reset the given iterator */
 void mpc_common_indirect_array_iterator_reset(mpc_common_indirect_array_iterator_t * it);
@@ -74,7 +82,7 @@ void mpc_common_indirect_array_iterator_reset(mpc_common_indirect_array_iterator
 void mpc_common_indirect_array_iterator_init(mpc_common_indirect_array_t * array, mpc_common_indirect_array_iterator_t * it);
 
 /* Add an element where the iterator is pointing to in the array */
-void mpc_common_indirect_array_iterator_push(mpc_common_indirect_array_iterator_t * it);
+void mpc_common_indirect_array_iterator_push(mpc_common_indirect_array_iterator_t * it, void * object);
 
 /* Remove and return the element where the iterator is pointing at */
 void * mpc_common_indirect_array_iterator_pop(mpc_common_indirect_array_iterator_t * it);
@@ -89,6 +97,6 @@ void mpc_common_indirect_array_init(mpc_common_indirect_array_t * array, size_t 
 void mpc_common_indirect_array_deinit(mpc_common_indirect_array_t * array);
 
 /* Add an element to the indirect array */
-void * mpc_common_indirect_array_add(mpc_common_indirect_array_t * array);
+void * mpc_common_indirect_array_add(mpc_common_indirect_array_t * array, void * object);
 
 # endif /* __MPC_COMMON_INDIRECT_ARRAY_H__ */

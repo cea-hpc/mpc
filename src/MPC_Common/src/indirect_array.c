@@ -27,42 +27,10 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-typedef struct  mpc_common_indirect_array_slot_s
-{
-    /* next slot in the 'slots' array (which is free or taken depending on context) */
-    size_t next;
-}               mpc_common_indirect_array_slot_t;
+# include "mpc_common_indirect_array.h"
+# include "mpc_common_debug.h"
 
-typedef struct  mpc_common_indirect_array_s
-{
-    /* size of the 'slots' array */
-    size_t capacity;
-
-    /* size of objects within the array */
-    size_t unitsize;
-
-    /* first null element in the array */
-    size_t first_null;
-
-    /* first non-null element in the array */
-    size_t first_non_null;
-
-    /* slots of size 'mpc_common_indirect_array_slot_t' + 'unitsize' times 'capacity' */
-    char * slots;
-
-}               mpc_common_indirect_array_t;
-
-typedef struct  mpc_common_indirect_array_iterator_s
-{
-    /* the array of this iterator */
-    mpc_common_indirect_array_t * array;
-
-    /* next element of this iterator in the 'slots' array */
-    size_t next;
-
-    /* last slot returned */
-    size_t last;
-}               mpc_common_indirect_array_iterator_t;
+#  define EMPTY ((size_t) -1)
 
 /* Return a slot from the array */
 static inline mpc_common_indirect_array_slot_t *
@@ -70,7 +38,7 @@ __indirect_array_get_slot(
     mpc_common_indirect_array_t * array,
     size_t slot)
 {
-    return ((char *) array->slots) + (sizeof(mpc_common_indirect_array_slot_t) + unitsize) * slot;
+    return (mpc_common_indirect_array_slot_t *) (((char *) array->slots) + (sizeof(mpc_common_indirect_array_slot_t) + array->unitsize) * slot);
 }
 
 /* Return the object attached to a slot */
@@ -79,69 +47,6 @@ __indirect_array_get_slot_object(
     mpc_common_indirect_array_slot_t * slot)
 {
     return (void *) (slot + 1);
-}
-
-/* Reset the given iterator */
-void
-mpc_common_indirect_array_iterator_reset(
-    mpc_common_indirect_array_iterator_t * it)
-{
-    it->next = it->array->first;
-    it->last = (size_t) -1;
-}
-
-/* Initialize an iterator over the array */
-void
-mpc_common_indirect_array_iterator_init(
-    mpc_common_indirect_array_t * array,
-    mpc_common_indirect_array_iterator_t * it)
-{
-    it->array = array;
-    mpc_common_indirect_array_iterator_reset(it);
-}
-
-/* Add an element where the iterator is pointing to in the array */
-void
-mpc_common_indirect_array_iterator_push(
-    mpc_common_indirect_array_iterator_t * it)
-{
-    not_implemented();
-}
-
-/* Remove and return the element where the iterator is pointing at */
-void *
-mpc_common_indirect_array_iterator_pop(
-    mpc_common_indirect_array_iterator_t * it)
-{
-    /* relink the nodes
-     * 'next' is now free and link with the free list within the array
-     * 'last->next' should now link with old 'next->next' which points to a non-null object */
-
-    mpc_common_indirect_array_slot_t * last = __indirect_array_get_slot(it->array, it->last);
-    mpc_common_indirect_array_slot_t * next = __indirect_array_get_slot(it->array, it->next);
-
-    /* 'last->next' should now link with 'next->next' which points to a non-null object */
-    last->next = next->next;
-
-    /* 'next' is now free : insert it in the 'free nodes' list */
-    next->next                  = it->array->first_non_null;
-    it->array->first_non_null   = it->next;
-
-    /* iterator should now point to the next non-null element  */
-    it->next = last->next;
-
-    return __indirect_array_get_slot_object(next);
-}
-
-/* Return the element where the iterator is pointing at */
-void *
-mpc_common_indirect_array_iterator_next(
-    mpc_common_indirect_array_iterator_t * it)
-{
-    mpc_common_indirect_array_slot_t * slot = __indirect_array_get_slot(it->array, it->next);
-    it->last = it->next;
-    it->next = slot->next;
-    return __indirect_array_get_slot_object(slot);
 }
 
 static void
@@ -154,6 +59,129 @@ __indirect_array_init_slots(
         mpc_common_indirect_array_slot_t * slot = __indirect_array_get_slot(array, i);
         slot->next = i + 1;
     }
+}
+
+/* resize array if full */
+static inline void
+__indirect_array_ensure_capacity(
+    mpc_common_indirect_array_t * array)
+{
+    if (array->first_null == array->capacity)
+    {
+        array->capacity = 2 * array->capacity;
+        array->slots    = (char *) realloc(array->slots, (sizeof(mpc_common_indirect_array_slot_t) + array->unitsize) * array->capacity);
+        __indirect_array_init_slots(array, array->capacity / 2);
+    }
+}
+
+/* Return 1 if the iterator iterated over the entire array */
+int
+mpc_common_indirect_array_iterator_finished(
+    mpc_common_indirect_array_iterator_t * it)
+{
+    return it->next == EMPTY;
+}
+
+/* Reset the given iterator */
+void
+mpc_common_indirect_array_iterator_reset(
+    mpc_common_indirect_array_iterator_t * it)
+{
+    it->next = it->array->first_non_null;
+    it->prev = EMPTY;
+}
+
+/* Initialize an iterator over the array */
+void
+mpc_common_indirect_array_iterator_init(
+    mpc_common_indirect_array_t * array,
+    mpc_common_indirect_array_iterator_t * it)
+{
+    it->array = array;
+    mpc_common_indirect_array_iterator_reset(it);
+}
+
+/* Add an element between the previous and next object pointed by the iterator */
+void
+mpc_common_indirect_array_iterator_push(
+    mpc_common_indirect_array_iterator_t * it,
+    void * object)
+{
+    mpc_common_indirect_array_t * array = it->array;
+    __indirect_array_ensure_capacity(array);
+
+    size_t prev_idx = it->prev;
+    mpc_common_indirect_array_slot_t * prev = (prev_idx == EMPTY) ? NULL : __indirect_array_get_slot(array, prev_idx);
+
+    size_t current_idx = it->next;
+    //mpc_common_indirect_array_slot_t * current = (current_idx == EMPTY) ? NULL : __indirect_array_get_slot(array, current_idx);
+
+    size_t insert_idx = array->first_null;
+    mpc_common_indirect_array_slot_t * insert = __indirect_array_get_slot(array, insert_idx);
+    array->first_null = insert->next;
+
+    if (array->first_non_null == EMPTY)
+    {
+        assert(prev == NULL);
+        array->first_non_null = insert_idx;
+    }
+
+    if (prev) prev->next = insert_idx;
+    insert->next = current_idx;
+    it->prev = insert_idx;
+
+    void * object_storage = __indirect_array_get_slot_object(insert);
+    memcpy(object_storage, object, array->unitsize);
+}
+
+/* Remove and return the element where the iterator is pointing at */
+void *
+mpc_common_indirect_array_iterator_pop(
+    mpc_common_indirect_array_iterator_t * it)
+{
+    if (it->next == EMPTY) return NULL;
+
+    mpc_common_indirect_array_t * array = it->array;
+
+    size_t prev_idx = it->prev;
+    mpc_common_indirect_array_slot_t * prev = (prev_idx == (size_t) EMPTY) ? NULL : __indirect_array_get_slot(array, prev_idx);
+
+    size_t current_idx = it->next;
+    mpc_common_indirect_array_slot_t * current = __indirect_array_get_slot(array, current_idx);
+
+    size_t next_idx = current->next;
+    //mpc_common_indirect_array_slot_t * next = __indirect_array_get_slot(array, next_idx);
+
+    /* relink non-null */
+    it->next = next_idx;
+    if (prev)
+    {
+        prev->next = next_idx;
+    }
+    else
+    {
+        assert(array->first_non_null == current_idx);
+        array->first_non_null = next_idx;
+    }
+
+
+    /* relink null */
+    current->next = array->first_null;
+    array->first_null = current_idx;
+
+    return __indirect_array_get_slot_object(current);
+}
+
+/* Return the element where the iterator is pointing at */
+void *
+mpc_common_indirect_array_iterator_next(
+    mpc_common_indirect_array_iterator_t * it)
+{
+    if (mpc_common_indirect_array_iterator_finished(it)) return NULL;
+    mpc_common_indirect_array_slot_t * slot = __indirect_array_get_slot(it->array, it->next);
+    it->prev = it->next;
+    it->next = slot->next;
+    return __indirect_array_get_slot_object(slot);
 }
 
 /* Initialize an indirect array */
@@ -169,10 +197,9 @@ mpc_common_indirect_array_init(
     // TODO : may want to pad the allocation for cache alignements
     array->capacity         = capacity;
     array->unitsize         = unitsize;
-    array->next             = 0;
     array->first_null       = 0;
-    array->first_non_null   = (size_t) -1;
-    array->slots    = (char *) malloc((sizeof(mpc_common_indirect_array_slot_t) + unitsize) * capacity);
+    array->first_non_null   = EMPTY;
+    array->slots            = (char *) malloc((sizeof(mpc_common_indirect_array_slot_t) + unitsize) * capacity);
     __indirect_array_init_slots(array, 0);
 }
 
@@ -187,26 +214,13 @@ mpc_common_indirect_array_deinit(
 /* Add an element to the indirect array */
 void *
 mpc_common_indirect_array_add(
-    mpc_common_indirect_array_t * array)
+    mpc_common_indirect_array_t * array,
+    void * object)
 {
-    size_t idx = array->next;
-    if (idx == array->capacity)
-    {
-        array->capacity = 2 * array->capacity;
-        array->slots    = (char *) realloc(array->slots, (sizeof(mpc_common_indirect_array_slot_t) + unitsize) * array->capacity);
-        __indirect_array_init_slots(array, array->capacity / 2);
-    }
-
-    mpc_common_indirect_array_slot_t * slot = __indirect_array_get_slot(idx);
-
-    /* adding 1st non null element in the array */
-    if (array->first_non_null == (size_t) -1)
-    {
-        array->first_non_null = idx;
-    }
-
-    /* adjust next null element */
-    array->first_null = slot->next;
-
-    return __indirect_array_get_slot_object(slot);
+    (void)object;
+    (void)array;
+    not_implemented();
+    return NULL;
 }
+
+# undef EMPTY

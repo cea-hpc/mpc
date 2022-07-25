@@ -54,6 +54,7 @@
 #include "mpcompt_frame_types.h"
 
 #include "mpc_common_recycler.h"
+#include "mpc_common_indirect_array.h"
 #include "mpc_omp_task_trace.h"
 
 #define MPC_OMP_USE_INTEL_ABI 1
@@ -606,43 +607,21 @@ typedef struct  mpc_omp_task_profile_s
     int parent_uid;
 }               mpc_omp_task_profile_t;
 
-/* persistent task slot */
-typedef struct  mpc_omp_task_persistent_slot_s
-{
-    /* the task (if NULL, then the slot may be recycled) */
-    mpc_omp_task_t * task;
-
-    /* the next non-null slot index */
-    int next_set;
-
-    /* the next free slot */
-    int next_free;
-
-}               mpc_omp_task_persistent_slot_t;
-
 /* persistent region infos */
 typedef struct  mpc_omp_task_persistent_region_s
 {
     /* != 0 if within a persistent task region */
     int active;
 
-    /* number of tasks in this persistent region */
-    int ntasks;
-
     /* number of task references, for the implicit taskwait */
     OPA_int_t task_ref;
 
-    /* next task to be generated */
-    int next_task;
-
-    /* persistent iteration count */
-    int iterations;
-
     /* the persistent tasks */
-    mpc_omp_task_persistent_slot_t * tasks;
+    mpc_common_indirect_array_t tasks;
 
-    /* capacity of the 'tasks' array */
-    int capacity;
+    /* the persistent tasks iterator */
+    mpc_common_indirect_array_iterator_t tasks_it;
+
 }               mpc_omp_persistent_region_t;
 
 /* persistent task infos */

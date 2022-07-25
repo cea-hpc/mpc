@@ -2107,15 +2107,11 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
 
     if (arg_align == 0) arg_align = sizeof(void *);
 
-    //double t0 = omp_get_wtime();
-
     mpc_omp_task_t * task;
 
     mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
-    if (region->active && region->iterations > 1)
+    if (region->active && (task = mpc_omp_get_persistent_task()))
     {
-        task = mpc_omp_get_persistent_task();
-
         // TODO : 'data' of size 'arg_size' contains both shared and private variables
         // we may want to recopy only private variables, but we have no clue for it
         void * data_storage = (void *) (task + 1);
@@ -2139,12 +2135,11 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
         /* set task fields */
         _mpc_omp_task_init(task, fn, data_storage, size, properties);
 
+        /* if within a persistent region, we are running the 1st iteration : gotta store tasks */
+        if (region->active) mpc_omp_persistent_region_push(task);
+
         /* set dependencies (and compute priorities) */
-        //double t1 = omp_get_wtime();
         _mpc_omp_task_deps(task, depend, priority);
-        //double t2 = omp_get_wtime();
-        //double t_deps  = t2 - t1;
-        //instance->t_deps += t_deps;
     }
 
     /* process the task (differ or run it) */
@@ -2154,10 +2149,6 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
     {
         _mpc_omp_task_deinit(task);
     }
-
-    //double tf = omp_get_wtime();
-    //double t_total = tf - t0;
-    //instance->t_total += t_total;
 
     mpc_common_nodebug( "[Redirect mpc_omp_GOMP]%s:\tEnd", __func__ );
 }

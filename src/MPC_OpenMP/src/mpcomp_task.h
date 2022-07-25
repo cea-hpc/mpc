@@ -449,5 +449,6 @@ void _mpc_omp_task_profile_register_current(int priority);
 mpc_omp_persistent_region_t * mpc_omp_get_persistent_region(void);
 mpc_omp_task_t * mpc_omp_get_persistent_task(void);
 void _mpc_omp_task_reinit(mpc_omp_task_t * task);
+void mpc_omp_persistent_region_push(mpc_omp_task_t * task);
 
 #endif /* __MPC_OMP_TASK_H__ */
