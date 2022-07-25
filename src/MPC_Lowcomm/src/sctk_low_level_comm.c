@@ -24,7 +24,6 @@
 #include <mpc_launch_pmi.h>
 #include <string.h>
 #include "sctk_checksum.h"
-#include "sctk_control_messages.h"
 #include <mpc_launch.h>
 
 #include <mpc_common_rank.h>
@@ -292,8 +291,6 @@ void sctk_net_init_driver(char *name)
 	/* Initialize multi-rail engine */
 	_mpc_lowcomm_multirail_table_init();
 
-	/* Init Polling for control messages */
-	sctk_control_message_init();
 
 
 	/* Retrieve default network from config */

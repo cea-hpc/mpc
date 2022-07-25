@@ -62,6 +62,16 @@ static inline int _mpc_MPI_allocmem_is_in_pool(void *ptr) {
   return 0;
 }
 
+static inline size_t _mpc_MPI_allocmem_relative_addr(void *in_pool_addr)
+{
+  return in_pool_addr - _mpc_MPI_mem_pool.pool;
+}
+
+static inline void * _mpc_MPI_allocmem_abs_addr(size_t relative_addr)
+{
+  return (char *)_mpc_MPI_mem_pool.pool + relative_addr;
+}
+
 void mpc_MPI_accumulate_op_lock_init_shared();
 void mpc_MPI_accumulate_op_lock_init();
 void mpc_MPI_accumulate_op_lock();

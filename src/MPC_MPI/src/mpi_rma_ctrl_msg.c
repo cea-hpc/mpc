@@ -25,7 +25,6 @@
 #include "datatype.h"
 #include "mpc_mpi_internal.h"
 #include "comm_lib.h"
-#include "sctk_control_messages.h"
 #include <string.h>
 
 #include "mpi_alloc_mem.h"
@@ -95,9 +94,6 @@ void mpc_MPI_Win_handle_win_flush(void *data ) {
       mpc_MPI_Win_request_array_test(&desc->source.requests);
       mpc_MPI_Win_request_array_test(&desc->target.requests);
 
-      if (20 < cnt) {
-        sctk_control_message_process_local(mpc_common_get_task_rank());
-      }
     }
     incoming_rma =
         OPA_load_int(&low_win->incoming_emulated_rma[source_cw_rank]);

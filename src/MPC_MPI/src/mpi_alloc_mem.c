@@ -230,6 +230,8 @@ static inline void __setup_pool(MPI_Comm per_node_comm)
 
 		_mpc_MPI_mem_pool._pool = mpc_launch_shm_map(to_map_size, MPC_LAUNCH_SHM_USE_MPI, &params);
 
+		mpc_common_debug_error("Pool @ %p", _mpc_MPI_mem_pool._pool);
+
 		assume(_mpc_MPI_mem_pool._pool != NULL);
 
 #if !defined(MPC_IN_PROCESS_MODE)
@@ -548,24 +550,34 @@ void mpc_MPI_accumulate_op_lock_init(MPI_Comm per_node_comm)
 	PMPI_Comm_size(per_node_comm, &my_node_size);
 	void *p = NULL;
 
+	int is_shared = 0;
+
 	if(!my_node_level_rank)
 	{
-		p = mpc_MPI_allocmem_pool_alloc(sizeof(mpc_common_spinlock_t) );
-		OPA_store_int(p, 0);
+		p = mpc_MPI_allocmem_pool_alloc_check(sizeof(mpc_common_spinlock_t), &is_shared );
+		p = _mpc_MPI_allocmem_relative_addr(p);
+		//mpc_common_spinlock_init(p, 0);
 	}
 
-	mpc_lowcomm_bcast(&p, sizeof(MPI_Aint), 0, per_node_comm);
-	__accululate_master_lock = ( mpc_common_spinlock_t * )p;
+
+	mpc_lowcomm_bcast(&p, sizeof(void *), 0, per_node_comm);
+
+
+	__accululate_master_lock = ( mpc_common_spinlock_t * )_mpc_MPI_allocmem_abs_addr(p);
+
 }
 
 void mpc_MPI_accumulate_op_lock()
 {
+	//mpc_common_debug_error("LOCK");
+
 	assert(__accululate_master_lock != NULL);
 	mpc_common_spinlock_lock_yield(__accululate_master_lock);
 }
 
 void mpc_MPI_accumulate_op_unlock()
 {
+	//mpc_common_debug_error("UNLOCK");
 	assert(__accululate_master_lock != NULL);
 	mpc_common_spinlock_unlock(__accululate_master_lock);
 }

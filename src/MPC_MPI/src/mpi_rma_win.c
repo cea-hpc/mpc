@@ -22,7 +22,6 @@
 
 #include "mpi_rma_win.h"
 #include "mpi_rma_ctrl_msg.h"
-#include "sctk_control_messages.h"
 #include <mpc_launch_shm.h>
 
 #include "mpi_alloc_mem.h"

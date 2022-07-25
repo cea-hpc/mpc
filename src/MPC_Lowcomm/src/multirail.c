@@ -76,17 +76,10 @@ static inline int __gate_msgtype(__UNUSED__ sctk_rail_info_t *rail, mpc_lowcomm_
 	int tag = SCTK_MSG_TAG(message);
 
 	mpc_lowcomm_ptp_message_class_t class =
-		(SCTK_MSG_HEADER(message) )->message_type.type;
+		(SCTK_MSG_HEADER(message) )->message_type;
 
 	/* It is a emulated RMA and it is not allowed */
 	if( (class == MPC_LOWCOMM_RDMA_MESSAGE) && !conf->emulated_rma)
-	{
-		return 0;
-	}
-
-	/* It is a task level control  message and it is not allowed */
-	if( ( (class == MPC_LOWCOMM_CONTROL_MESSAGE_TASK) || (tag == 16008) ) &&
-	    !conf->task)
 	{
 		return 0;
 	}
@@ -1046,7 +1039,6 @@ void _mpc_lowcomm_multirail_notify_probe(mpc_lowcomm_ptp_message_header_t *hdr, 
 
 void _mpc_lowcomm_multirail_notify_idle()
 {
-	sctk_control_message_process_all();
 	/* Fault Tolerance mechanism cannot allow any driver to be modified during a pending checkpoint.
 	 * This is our way to maintain consistency for data to be saved.
 	 */

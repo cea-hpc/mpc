@@ -29,7 +29,7 @@
 #include "endpoint.h"
 #include <sctk_net_tools.h>
 #include <mpc_common_spinlock.h>
-#include <sctk_control_messages.h>
+
 #include <mpc_common_datastructure.h>
 #include <mpc_common_rank.h>
 #include <mpc_launch_pmi.h>

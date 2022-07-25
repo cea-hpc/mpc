@@ -53,7 +53,6 @@ static inline int _mpc_comm_ptp_message_is_for_process( mpc_lowcomm_ptp_message_
 		case MPC_LOWCOMM_BARRIER_MESSAGE:
 		case MPC_LOWCOMM_BROADCAST_MESSAGE:
 		case MPC_LOWCOMM_ALLREDUCE_MESSAGE:
-		case MPC_LOWCOMM_CONTROL_MESSAGE_TASK:
 		case MPC_LOWCOMM_CONTROL_MESSAGE_FENCE:
 		case MPC_LOWCOMM_RDMA_WINDOW_MESSAGES: /* Note that the RDMA win message
                                            is not process specific to force
@@ -69,8 +68,6 @@ static inline int _mpc_comm_ptp_message_is_for_process( mpc_lowcomm_ptp_message_
 		case MPC_LOWCOMM_BROADCAST_OFFLOAD_MESSAGE:
 		case MPC_LOWCOMM_REDUCE_OFFLOAD_MESSAGE:
 		case MPC_LOWCOMM_ALLREDUCE_OFFLOAD_MESSAGE:
-		case MPC_LOWCOMM_CONTROL_MESSAGE_RAIL:
-		case MPC_LOWCOMM_CONTROL_MESSAGE_PROCESS:
 		case MPC_LOWCOMM_MESSAGE_UNIVERSE:
 			return 1;
 
@@ -108,10 +105,6 @@ static inline int _mpc_comm_ptp_message_is_for_control( mpc_lowcomm_ptp_message_
 		case MPC_LOWCOMM_MESSAGE_UNIVERSE:
 			return 0;
 
-		case MPC_LOWCOMM_CONTROL_MESSAGE_TASK:
-		case MPC_LOWCOMM_CONTROL_MESSAGE_RAIL:
-		case MPC_LOWCOMM_CONTROL_MESSAGE_PROCESS:
-			return 1;
 
 		case MPC_LOWCOMM_MESSAGE_CLASS_COUNT:
 			return 0;
@@ -223,33 +216,14 @@ static inline void _mpc_comm_ptp_message_set_copy_and_free( mpc_lowcomm_ptp_mess
 #define SCTK_MSG_MATCH( msg ) OPA_load_int( &msg->tail.matching_id )
 #define SCTK_MSG_MATCH_SET( msg, match ) OPA_store_int( &msg->tail.matching_id, match )
 
-#define SCTK_MSG_SPECIFIC_CLASS( msg ) msg->body.header.message_type.type
+#define SCTK_MSG_SPECIFIC_CLASS( msg ) msg->body.header.message_type
 #define SCTK_MSG_SPECIFIC_CLASS_SET( msg, specific_tag )   \
 	do                                                     \
 	{                                                      \
-		msg->body.header.message_type.type = specific_tag; \
+		msg->body.header.message_type = specific_tag; \
 	} while ( 0 )
 
-#define SCTK_MSG_SPECIFIC_CLASS_SUBTYPE( msg ) msg->body.header.message_type.subtype
-#define SCTK_MSG_SPECIFIC_CLASS_SET_SUBTYPE( msg, sub_type ) \
-	do                                                       \
-	{                                                        \
-		msg->body.header.message_type.subtype = sub_type;    \
-	} while ( 0 )
 
-#define SCTK_MSG_SPECIFIC_CLASS_PARAM( msg ) msg->body.header.message_type.param
-#define SCTK_MSG_SPECIFIC_CLASS_SET_PARAM( msg, param ) \
-	do                                                  \
-	{                                                   \
-		msg->body.header.message_type.param = param;    \
-	} while ( 0 )
-
-#define SCTK_MSG_SPECIFIC_CLASS_RAILID( msg ) msg->body.header.message_type.rail_id
-#define SCTK_MSG_SPECIFIC_CLASS_SET_RAILID( msg, raildid ) \
-	do                                                     \
-	{                                                      \
-		msg->body.header.message_type.rail_id = raildid;   \
-	} while ( 0 )
 
 #define SCTK_MSG_HEADER( msg ) &msg->body.header
 
@@ -289,7 +263,7 @@ void _mpc_comm_ptp_message_reinit_comm(mpc_lowcomm_ptp_message_t *msg);
 /** Message for a process with ordering and a tag */
 static inline int sctk_is_process_specific_message( mpc_lowcomm_ptp_message_header_t *header )
 {
-	mpc_lowcomm_ptp_message_class_t class = header->message_type.type;
+	mpc_lowcomm_ptp_message_class_t class = header->message_type;
 	return _mpc_comm_ptp_message_is_for_process( class );
 }
 
@@ -297,7 +271,7 @@ static inline int sctk_is_process_specific_message( mpc_lowcomm_ptp_message_head
 /** Message for a process with ordering and a tag */
 static inline int _mpc_lowcomm_message_is_for_universe( mpc_lowcomm_ptp_message_header_t *header )
 {
-	return (header->message_type.type == MPC_LOWCOMM_MESSAGE_UNIVERSE);
+	return (header->message_type == MPC_LOWCOMM_MESSAGE_UNIVERSE);
 }
 
 

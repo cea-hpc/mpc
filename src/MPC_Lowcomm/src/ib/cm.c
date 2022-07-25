@@ -42,7 +42,6 @@
 #include "ibtoolkit.h"
 
 #include "mpc_lowcomm_msg.h"
-#include "sctk_control_messages.h"
 #include "sctk_rail.h"
 
 /*-----------------------------------------------------------
@@ -592,7 +591,8 @@ _mpc_lowcomm_endpoint_t *_mpc_lowcomm_ib_cm_on_demand_request(int dest, sctk_rai
 typedef enum
 {
 	_IB_MONITOR_OD,
-	_IB_MONITOR_RTS
+	_IB_MONITOR_RTS,
+	_IB_MONITOR_RDMA
 }__ib_monitor_action_t;
 
 
@@ -605,6 +605,9 @@ static char * __monitor_get_rail_name(char * data, int len, sctk_rail_info_t *ra
 		break;
 		case _IB_MONITOR_RTS:
     		snprintf(data, len, "IB-RTS-%d", rail->rail_number);
+		break;
+		case _IB_MONITOR_RDMA:
+    		snprintf(data, len, "IB-RDMA-%d", rail->rail_number);
 		break;
 	}
     return data;
@@ -677,9 +680,9 @@ static inline int __ib_monitor_on_demand(mpc_lowcomm_peer_uid_t from,
 }
 
 static inline int __ib_monitor_rts(mpc_lowcomm_peer_uid_t from,
-								   char *data,
-								   char * return_data,
-								   int return_data_len,
+								   __UNUSED__ char *data,
+								   __UNUSED__ char * return_data,
+								   __UNUSED__ int return_data_len,
 								   void *ctx)
 {
     mpc_common_nodebug("IB MONITOR RTS from %lu", from);
@@ -822,6 +825,12 @@ void _mpc_lowcomm_ib_cm_monitor_register_callbacks(sctk_rail_info_t * rail)
   mpc_lowcomm_monitor_register_on_demand_callback(__monitor_get_rail_name(cb_name, 128, rail, _IB_MONITOR_RTS),
                                                   __ib_monitor_rts,
                                                   (void*)rail);
+
+  mpc_lowcomm_monitor_register_on_demand_callback(__monitor_get_rail_name(cb_name, 128, rail, _IB_MONITOR_RDMA),
+                                                  _mpc_lowcomm_ib_cm_control_message_handler,
+                                                  (void*)rail);
+
+
 }
 
 /*-----------------------------------------------------------
@@ -829,6 +838,30 @@ void _mpc_lowcomm_ib_cm_monitor_register_callbacks(sctk_rail_info_t * rail)
 *  Messages are sent using raw data (not like ring where messages are converted into
 *  string).
 *----------------------------------------------------------*/
+
+static inline void __send_on_demand_rdma(sctk_rail_info_t *rail, mpc_lowcomm_peer_uid_t dest, _mpc_lowcomm_ib_cm_rdma_control_message_t * cm)
+{
+	mpc_lowcomm_monitor_retcode_t rc = 0;
+	char cb_name[128];
+
+	mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_ondemand( dest,
+                                                            	__monitor_get_rail_name(cb_name, 128, rail, _IB_MONITOR_RDMA),
+                                                        		(char*)cm,
+																sizeof(_mpc_lowcomm_ib_cm_rdma_control_message_t),
+                                                            	&rc);
+
+
+	if(rc != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
+	{
+		mpc_lowcomm_monitor_retcode_print(rc, "IB RDMA CPLANE error");
+		return;
+	}
+
+	mpc_lowcomm_monitor_response_free(resp);
+
+}
+
+
 
 /* Function which returns if a remote can be connected using RDMA */
 int _mpc_lowcomm_ib_cm_on_demand_rdma_check_request(__UNUSED__ sctk_rail_info_t *rail, struct _mpc_lowcomm_ib_qp_s *remote)
@@ -875,21 +908,24 @@ int _mpc_lowcomm_ib_cm_on_demand_rdma_request(sctk_rail_info_t *rail, struct _mp
 	{
 		/* Can connect to RDMA */
 
-		_mpc_lowcomm_ib_cm_rdma_connection_t send_keys;
+		_mpc_lowcomm_ib_cm_rdma_control_message_t control_message;
+
 		mpc_common_nodebug("Can connect to remote %d", remote->rank);
 
-		send_keys.connected = 1;
+		control_message.conn.connected = 1;
 
 		/* We fill the request and we save how many slots are requested as well
 		 * as the size of each slot */
-		remote->od_request.nb         = send_keys.nb = entry_nb;
-		remote->od_request.size_ibufs = send_keys.size = entry_size;
+		remote->od_request.nb         = control_message.conn.nb = entry_nb;
+		remote->od_request.size_ibufs = control_message.conn.size = entry_size;
 
 		_mpc_lowcomm_ib_debug("[%d] OD QP RDMA connexion requested to %d (size:%d nb:%d rdma_connections:%d rdma_cancel:%d)",
-		              rail->rail_number, remote->rank, send_keys.size, send_keys.nb, device->eager_rdma_connections, remote->rdma.cancel_nb);
+		              rail->rail_number, remote->rank, control_message.conn.size, control_message.conn.nb, device->eager_rdma_connections, remote->rdma.cancel_nb);
 
-		send_keys.rail_id = rail->rail_number;
-		sctk_control_messages_send_rail(remote->rank, CM_OD_RDMA_REQ_TAG, 0, &send_keys, sizeof(_mpc_lowcomm_ib_cm_rdma_connection_t), rail->rail_number);
+		control_message.conn.rail_id = rail->rail_number;
+
+		control_message.action = CM_OD_RDMA_REQ_TAG;
+		__send_on_demand_rdma(rail, remote->rank, &control_message);
 	}
 	else
 	{
@@ -903,7 +939,7 @@ int _mpc_lowcomm_ib_cm_on_demand_rdma_request(sctk_rail_info_t *rail, struct _mp
 	return 1;
 }
 
-static inline void _mpc_lowcomm_ib_cm_on_demand_rdma_done_recv(sctk_rail_info_t *rail, void *done, int src)
+static inline void _mpc_lowcomm_ib_cm_on_demand_rdma_done_recv(sctk_rail_info_t *rail, void *done, mpc_lowcomm_peer_uid_t src)
 {
 	_mpc_lowcomm_ib_cm_rdma_connection_t *recv_keys = ( _mpc_lowcomm_ib_cm_rdma_connection_t * )done;
 
@@ -923,10 +959,11 @@ static inline void _mpc_lowcomm_ib_cm_on_demand_rdma_done_recv(sctk_rail_info_t 
 	__set_endpoint_ready_to_receive(rail, endpoint, CONNECTION);
 }
 
-static inline void _mpc_lowcomm_ib_cm_on_demand_rdma_recv_ack(sctk_rail_info_t *rail, void *ack, int src)
+static inline void _mpc_lowcomm_ib_cm_on_demand_rdma_recv_ack(sctk_rail_info_t *rail, void *ack, mpc_lowcomm_peer_uid_t src)
 {
 	_mpc_lowcomm_ib_rail_info_t *         rail_ib_targ = &rail->network.ib;
-	_mpc_lowcomm_ib_cm_rdma_connection_t  send_keys;
+	_mpc_lowcomm_ib_cm_rdma_control_message_t control_message;
+
 	_mpc_lowcomm_ib_cm_rdma_connection_t *recv_keys = ( _mpc_lowcomm_ib_cm_rdma_connection_t * )ack;
 
 	/* get the route to process */
@@ -952,12 +989,13 @@ static inline void _mpc_lowcomm_ib_cm_on_demand_rdma_recv_ack(sctk_rail_info_t *
 		/* Update the RDMA regions */
 		_mpc_lowcomm_ib_ibuf_rdma_update_remote_addr(remote, recv_keys, REGION_RECV);
 		/* Fill the keys */
-		_mpc_lowcomm_ib_ibuf_rdma_fill_remote_addr(remote, &send_keys, REGION_SEND);
-		send_keys.rail_id = *( ( int * )ack);
+		_mpc_lowcomm_ib_ibuf_rdma_fill_remote_addr(remote, &control_message.conn, REGION_SEND);
+		control_message.conn.rail_id = *( ( int * )ack);
 
 		/* Send the message */
-		send_keys.connected = 1;
-		sctk_control_messages_send_rail(src, CM_OD_RDMA_DONE_TAG, 0, &send_keys, sizeof(_mpc_lowcomm_ib_cm_rdma_connection_t), rail->rail_number);
+		control_message.conn.connected = 1;
+		control_message.action = CM_OD_RDMA_DONE_TAG;
+		__send_on_demand_rdma(rail, src, &control_message);
 
 		__set_endpoint_ready_to_send(rail, endpoint, CONNECTION);
 	}
@@ -977,12 +1015,12 @@ static inline void _mpc_lowcomm_ib_cm_on_demand_rdma_recv_ack(sctk_rail_info_t *
  * - Address of the send region
  * - Address of the recv region
  */
-static inline void _mpc_lowcomm_ib_cm_on_demand_rdma_recv_request(sctk_rail_info_t *rail, void *request, int src)
+static inline void _mpc_lowcomm_ib_cm_on_demand_rdma_recv_request(sctk_rail_info_t *rail, void *request, mpc_lowcomm_peer_uid_t src)
 {
 	_mpc_lowcomm_ib_rail_info_t *        rail_ib_targ = &rail->network.ib;
-	_mpc_lowcomm_ib_cm_rdma_connection_t send_keys;
+	_mpc_lowcomm_ib_cm_rdma_control_message_t control_message;
 
-	memset(&send_keys, 0, sizeof(_mpc_lowcomm_ib_cm_rdma_connection_t) );
+	memset(&control_message.conn, 0, sizeof(_mpc_lowcomm_ib_cm_rdma_connection_t) );
 
 	/* get the route to process */
 	_mpc_lowcomm_endpoint_t *endpoint = sctk_rail_get_any_route_to_process(rail, src);
@@ -1015,7 +1053,7 @@ static inline void _mpc_lowcomm_ib_cm_on_demand_rdma_recv_request(sctk_rail_info
 		/* Can connect to RDMA */
 
 		/* We can change to RTR because we are RDMA connectable */
-		send_keys.connected = 1;
+		control_message.conn.connected = 1;
 
 		/* We firstly allocate the main structure. 'ibuf_rdma_pool_init'
 		 * implicitely does not allocate memory if already created */
@@ -1026,24 +1064,25 @@ static inline void _mpc_lowcomm_ib_cm_on_demand_rdma_recv_request(sctk_rail_info
 		                                      MPC_LOWCOMM_IB_RDMA_CHANNEL | MPC_LOWCOMM_IB_RECV_CHANNEL, recv_keys->nb, recv_keys->size);
 
 		/* Fill the keys */
-		_mpc_lowcomm_ib_ibuf_rdma_fill_remote_addr(remote, &send_keys, REGION_RECV);
+		_mpc_lowcomm_ib_ibuf_rdma_fill_remote_addr(remote, &control_message.conn, REGION_RECV);
 	}
 	else
 	{
 		/* Cannot connect to RDMA */
 		mpc_common_nodebug("Cannot connect to remote %d", remote->rank);
 
-		send_keys.connected = 0;
-		send_keys.size      = 0;
-		send_keys.nb        = 0;
-		send_keys.rail_id   = *( ( int * )request);
+		control_message.conn.connected = 0;
+		control_message.conn.size      = 0;
+		control_message.conn.nb        = 0;
+		control_message.conn.rail_id   = *( ( int * )request);
 	}
 
 	/* Send ACK */
 	_mpc_lowcomm_ib_debug("[%d] OD QP ack to process %d (%p:%u)", rail->rail_number, src,
-	              send_keys.addr, send_keys.rkey);
+	              control_message.conn.addr, control_message.conn.rkey);
 
-	sctk_control_messages_send_rail(src, CM_OD_RDMA_ACK_TAG, 0, &send_keys, sizeof(_mpc_lowcomm_ib_cm_rdma_connection_t), rail->rail_number);
+	control_message.action = CM_OD_RDMA_ACK_TAG;
+	__send_on_demand_rdma(rail, src, &control_message);
 }
 
 /*-----------------------------------------------------------
@@ -1066,18 +1105,20 @@ int _mpc_lowcomm_ib_cm_resizing_rdma_request(sctk_rail_info_t *rail, struct _mpc
 	/* Assume there is no more pending messages */
 	ib_assume(OPA_load_int(&remote->rdma.pool->busy_nb[REGION_SEND]) == 0);
 
-	_mpc_lowcomm_ib_cm_rdma_connection_t send_keys;
+	_mpc_lowcomm_ib_cm_rdma_control_message_t control_message;
 
-	send_keys.connected = 1;
-	send_keys.nb        = entry_nb;
-	send_keys.size      = entry_size;
-	send_keys.rail_id   = rail->rail_number;
+	control_message.conn.connected = 1;
+	control_message.conn.nb        = entry_nb;
+	control_message.conn.size      = entry_size;
+	control_message.conn.rail_id   = rail->rail_number;
 
 	_mpc_lowcomm_ib_nodebug("[%d] Sending RDMA RESIZING request to %d (size:%d nb:%d resizing_nb:%d)",
-	                rail->rail_number, remote->rank, send_keys.size, send_keys.nb,
+	                rail->rail_number, remote->rank, control_message.conn.size, control_message.conn.nb,
 	                remote->rdma.resizing_nb);
 
-	sctk_control_messages_send_rail(remote->rank, CM_RESIZING_RDMA_REQ_TAG, 0, &send_keys, sizeof(_mpc_lowcomm_ib_cm_rdma_connection_t), rail->rail_number);
+	control_message.action = CM_RESIZING_RDMA_REQ_TAG;
+
+	__send_on_demand_rdma(rail, remote->rank, &control_message);
 
 	return 1;
 }
@@ -1090,14 +1131,21 @@ void _mpc_lowcomm_ib_cm_resizing_rdma_ack(sctk_rail_info_t *rail, struct _mpc_lo
 	/* Assume there is no more pending messages */
 	ib_assume(OPA_load_int(&remote->rdma.pool->busy_nb[REGION_RECV]) == 0);
 
-	_mpc_lowcomm_ib_nodebug("[%d] Sending RDMA RESIZING ACK to %d (addr:%p - rkey:%u)",
-	                rail->rail_number, remote->rank, send_keys->addr, send_keys->rkey);
+	_mpc_lowcomm_ib_cm_rdma_control_message_t control_message;
+
 
 	send_keys->rail_id = rail->rail_number;
-	sctk_control_messages_send_rail(remote->rank, CM_RESIZING_RDMA_ACK_TAG, 0, send_keys, sizeof(_mpc_lowcomm_ib_cm_rdma_connection_t), rail->rail_number);
+
+	memcpy(&control_message.conn, send_keys, sizeof(_mpc_lowcomm_ib_cm_rdma_connection_t));
+
+	_mpc_lowcomm_ib_nodebug("[%d] Sending RDMA RESIZING ACK to %d (addr:%p - rkey:%u)",
+	                rail->rail_number, remote->rank, control_message.conn.addr, control_message.conn.rkey);
+
+	control_message.action = CM_RESIZING_RDMA_ACK_TAG;
+	__send_on_demand_rdma(rail, remote->rank, &control_message);
 }
 
-static inline void _mpc_lowcomm_ib_cm_resizing_rdma_done_recv(sctk_rail_info_t *rail, void *done, int src)
+static inline void _mpc_lowcomm_ib_cm_resizing_rdma_done_recv(sctk_rail_info_t *rail, void *done, mpc_lowcomm_peer_uid_t src)
 {
 	_mpc_lowcomm_ib_cm_rdma_connection_t *recv_keys = ( _mpc_lowcomm_ib_cm_rdma_connection_t * )done;
 
@@ -1119,7 +1167,7 @@ static inline void _mpc_lowcomm_ib_cm_resizing_rdma_done_recv(sctk_rail_info_t *
 	__set_endpoint_ready_to_receive(rail, endpoint, RESIZING);
 }
 
-static inline void _mpc_lowcomm_ib_cm_resizing_rdma_ack_recv(sctk_rail_info_t *rail, void *ack, int src)
+static inline void _mpc_lowcomm_ib_cm_resizing_rdma_ack_recv(sctk_rail_info_t *rail, void *ack, mpc_lowcomm_peer_uid_t src)
 {
 	_mpc_lowcomm_ib_rail_info_t *         rail_ib_targ = &rail->network.ib;
 	_mpc_lowcomm_ib_cm_rdma_connection_t *recv_keys    = ( _mpc_lowcomm_ib_cm_rdma_connection_t * )ack;
@@ -1152,7 +1200,11 @@ static inline void _mpc_lowcomm_ib_cm_resizing_rdma_ack_recv(sctk_rail_info_t *r
 	send_keys->rail_id   = rail_ib_targ->rail->rail_number;
 	_mpc_lowcomm_ib_ibuf_rdma_fill_remote_addr(remote, send_keys, REGION_SEND);
 
-	sctk_control_messages_send_rail(src, CM_RESIZING_RDMA_DONE_TAG, 0, send_keys, sizeof(_mpc_lowcomm_ib_cm_rdma_connection_t), rail->rail_number);
+	_mpc_lowcomm_ib_cm_rdma_control_message_t control_message;
+	memcpy(&control_message.conn, send_keys, sizeof(_mpc_lowcomm_ib_cm_rdma_connection_t));
+	control_message.action = CM_RESIZING_RDMA_DONE_TAG;
+
+	__send_on_demand_rdma(rail, src, &control_message);
 
 	__set_endpoint_ready_to_send(rail, endpoint, RESIZING);
 }
@@ -1165,7 +1217,7 @@ static inline void _mpc_lowcomm_ib_cm_resizing_rdma_ack_recv(sctk_rail_info_t *r
  * - Address of the send region
  * - Address of the recv region
  */
-static inline int _mpc_lowcomm_ib_cm_resizing_rdma_recv_request(sctk_rail_info_t *rail, void *request, int src)
+static inline int _mpc_lowcomm_ib_cm_resizing_rdma_recv_request(sctk_rail_info_t *rail, void *request, mpc_lowcomm_peer_uid_t src)
 {
 	_mpc_lowcomm_ib_rail_info_t *        rail_ib_targ = &rail->network.ib;
 	_mpc_lowcomm_ib_cm_rdma_connection_t send_keys;
@@ -1198,9 +1250,14 @@ static inline int _mpc_lowcomm_ib_cm_resizing_rdma_recv_request(sctk_rail_info_t
 *  Handler of OD connexions
 *----------------------------------------------------------*/
 
-void _mpc_lowcomm_ib_cm_control_message_handler(struct sctk_rail_info_s *rail, int process_src, __UNUSED__ int source_rank, char subtype, __UNUSED__ char param, void *payload, __UNUSED__ size_t size)
+int _mpc_lowcomm_ib_cm_control_message_handler(mpc_lowcomm_peer_uid_t process_src, char *data,  __UNUSED__ char *return_data,  __UNUSED__ int return_data_len,  void *ctx)
 {
-	switch(subtype)
+
+	_mpc_lowcomm_ib_cm_rdma_control_message_t * cm = (_mpc_lowcomm_ib_cm_rdma_control_message_t*)data;
+
+	sctk_rail_info_t * rail = (sctk_rail_info_t*)ctx;
+
+	switch(cm->action)
 	{
 		/* QP connection */
 		case CM_OD_REQ_TAG:
@@ -1220,28 +1277,28 @@ void _mpc_lowcomm_ib_cm_control_message_handler(struct sctk_rail_info_s *rail, i
 
 		/* RDMA connection */
 		case CM_OD_RDMA_REQ_TAG:
-			_mpc_lowcomm_ib_cm_on_demand_rdma_recv_request(rail, payload, process_src);
+			_mpc_lowcomm_ib_cm_on_demand_rdma_recv_request(rail, data, process_src);
 			break;
 
 		case CM_OD_RDMA_ACK_TAG:
-			_mpc_lowcomm_ib_cm_on_demand_rdma_recv_ack(rail, payload, process_src);
+			_mpc_lowcomm_ib_cm_on_demand_rdma_recv_ack(rail, data, process_src);
 			break;
 
 		case CM_OD_RDMA_DONE_TAG:
-			_mpc_lowcomm_ib_cm_on_demand_rdma_done_recv(rail, payload, process_src);
+			_mpc_lowcomm_ib_cm_on_demand_rdma_done_recv(rail, data, process_src);
 			break;
 
 		/* RDMA resizing */
 		case CM_RESIZING_RDMA_REQ_TAG:
-			_mpc_lowcomm_ib_cm_resizing_rdma_recv_request(rail, payload, process_src);
+			_mpc_lowcomm_ib_cm_resizing_rdma_recv_request(rail, data, process_src);
 			break;
 
 		case CM_RESIZING_RDMA_ACK_TAG:
-			_mpc_lowcomm_ib_cm_resizing_rdma_ack_recv(rail, payload, process_src);
+			_mpc_lowcomm_ib_cm_resizing_rdma_ack_recv(rail, data, process_src);
 			break;
 
 		case CM_RESIZING_RDMA_DONE_TAG:
-			_mpc_lowcomm_ib_cm_resizing_rdma_done_recv(rail, payload, process_src);
+			_mpc_lowcomm_ib_cm_resizing_rdma_done_recv(rail, data, process_src);
 			break;
 
 		default:
@@ -1249,4 +1306,8 @@ void _mpc_lowcomm_ib_cm_control_message_handler(struct sctk_rail_info_s *rail, i
 			not_reachable();
 			break;
 	}
+
+	return 0;
 }
+
+

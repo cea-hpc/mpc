@@ -33,7 +33,6 @@
 #include <mpc_common_asm.h>
 #include <sctk_checksum.h>
 #include <reorder.h>
-#include <sctk_control_messages.h>
 #include <sctk_rail.h>
 #include <mpc_launch.h>
 #include <sctk_window.h>
@@ -1966,8 +1965,6 @@ int sctk_m_probe_matching_get()
 	return OPA_load_int(&m_probe_id);
 }
 
-__thread volatile int already_processsing_a_control_message = 0;
-
 static inline mpc_lowcomm_msg_list_t *__mpc_comm_pending_msg_list_search_matching(mpc_lowcomm_ptp_list_pending_t *pending_list,
                                                                                   mpc_lowcomm_ptp_message_t * msg)
 {
@@ -1984,19 +1981,6 @@ static inline mpc_lowcomm_msg_list_t *__mpc_comm_pending_msg_list_search_matchin
 		assert(ptr_found->msg != NULL);
 		header_found = &(ptr_found->msg->body.header);
 
-		/* Control Message Handling */
-		if(header_found->message_type.type == MPC_LOWCOMM_CONTROL_MESSAGE_TASK)
-		{
-			if(!already_processsing_a_control_message)
-			{
-				DL_DELETE(pending_list->list, ptr_found);
-				/* Here we have a pending control message in the list we must take it out in order to avoid deadlocks */
-				already_processsing_a_control_message = 1;
-				sctk_control_messages_perform(ptr_found->msg, 0);
-				already_processsing_a_control_message = 0;
-			}
-		}
-
 		/* Match the communicator, the tag, the source and the specific message tag */
 #if 0
 		mpc_common_debug("MATCH COMM [%d-%d] STASK [%d-%d] SPROC [%d-%d] TAG [%d-%d] TYPE [%s-%s]",
@@ -2008,20 +1992,20 @@ static inline mpc_lowcomm_msg_list_t *__mpc_comm_pending_msg_list_search_matchin
 						 header_found->source,
 		                 header->message_tag,
 						 header_found->message_tag,
-						 mpc_lowcomm_ptp_message_class_name[(int)header->message_type.type],
-						 mpc_lowcomm_ptp_message_class_name[(int)header_found->message_type.type]);
+						 mpc_lowcomm_ptp_message_class_name[(int)header->message_type],
+						 mpc_lowcomm_ptp_message_class_name[(int)header_found->message_type]);
 #endif
 
 		if(  /* Match Communicator */
 		        (header->communicator_id == header_found->communicator_id) &&
 		     /* Match message type */
-		        (header->message_type.type == header_found->message_type.type) &&
+		        (header->message_type == header_found->message_type) &&
 		     /* Match source Process */
 		        ( (header->source == header_found->source) || (mpc_lowcomm_peer_get_rank(header->source) == MPC_ANY_SOURCE) ) &&
 		     /* Match source task appart for process specific messages which are not matched at task level */
 		        ( (header->source_task == header_found->source_task) ||
 		          (header->source_task == MPC_ANY_SOURCE) ||
-		          _mpc_comm_ptp_message_is_for_process(header->message_type.type) ) &&
+		          _mpc_comm_ptp_message_is_for_process(header->message_type) ) &&
 		        /* Match Message Tag while making sure that tags less than 0 are ignored (used for intercomm) */
 		        ( (header->message_tag == header_found->message_tag) ||
 		          ( (header->message_tag == MPC_ANY_TAG) && (header_found->message_tag >= 0) ) ) )
@@ -2064,7 +2048,7 @@ static inline mpc_lowcomm_msg_list_t *__mpc_comm_pending_msg_list_search_matchin
 		}
 
 		/* Check for canceled send messages*/
-		if(header_found->message_type.type == MPC_LOWCOMM_CANCELLED_SEND)
+		if(header_found->message_type == MPC_LOWCOMM_CANCELLED_SEND)
 		{
 			/* Message found. We delete it  */
 			DL_DELETE(pending_list->list, ptr_found);
@@ -2093,7 +2077,7 @@ static inline int __mpc_comm_ptp_probe(mpc_comm_ptp_t *pair,
 		        OPA_load_int(&tail_send->matching_id);
 
 		if(  /* Ignore Process Specific */
-		        (_mpc_comm_ptp_message_is_for_process(header->message_type.type) == 0) &&
+		        (_mpc_comm_ptp_message_is_for_process(header->message_type) == 0) &&
 		     /* Has either no or the same matching ID */
 		        ( (send_message_matching_id == -1) ||
 		          (send_message_matching_id == OPA_load_int(&tail_send->matching_id) ) ) &&
@@ -2101,7 +2085,7 @@ static inline int __mpc_comm_ptp_probe(mpc_comm_ptp_t *pair,
 		        ( (header->communicator_id == header_send->communicator_id) ||
 		          (header->communicator_id == MPC_ANY_COMM) ) &&
 		        /* Match message-type */
-		        (header->message_type.type == header_send->message_type.type) &&
+		        (header->message_type == header_send->message_type) &&
 
 		        /* Match source task (note that we ignore source process
 		         * here as probe only come from the MPI layer == Only tasks */
@@ -2541,7 +2525,8 @@ void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_r
 		/* Message is for local process call the handler (such message are never pending)
 		 *     no need to perform a matching with a receive. However, the order is guaranteed
 		 *         by the reorder prior to calling this function */
-		sctk_control_messages_incoming(msg);
+
+
 		/* Done */
 		return;
 	}
@@ -2700,7 +2685,7 @@ __mpc_comm_probe_source_tag_class_func(int destination, int source, int tag,
 	msg->destination_task  = world_destination;
 	msg->message_tag       = tag;
 	msg->communicator_id   = comm->id;
-	msg->message_type.type = class;
+	msg->message_type = class;
 
 	_mpc_lowcomm_multirail_notify_probe(msg, status);
 
@@ -3597,7 +3582,7 @@ static void __initialize_drivers()
 
 	__init_request_null();
 
- 	mpc_lowcomm_rdma_window_init_ht();
+ 	mpc_lowcomm_rdma_window_do_init();
 
 	_mpc_lowcomm_communicator_init();
 }
@@ -3605,7 +3590,7 @@ static void __initialize_drivers()
 static void __finalize_driver()
 {
 	_mpc_lowcomm_monitor_teardown();
-	mpc_lowcomm_rdma_window_release_ht();
+	mpc_lowcomm_rdma_window_do_release();
 	_mpc_lowcomm_communicator_release();
 }
 
