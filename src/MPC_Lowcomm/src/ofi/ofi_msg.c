@@ -614,7 +614,8 @@ void mpc_lowcomm_ofi_msg_on_demand_handler( struct sctk_rail_info_s *rail, mpc_l
 
 	mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_ondemand(dest_process,
 																	   __ofi_rail_name(rail, rail_name, 32),
-																	   "",
+																	   NULL,
+																	   0,
 																	   &ret);
 
 	if(ret != MPC_LOWCOMM_MONITOR_RET_SUCCESS)

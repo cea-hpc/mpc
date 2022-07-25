@@ -422,7 +422,8 @@ static inline sctk_ptl_id_t __map_id_monitor(sctk_rail_info_t* rail, mpc_lowcomm
 
 	mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_ondemand(dest,
 																		__ptl_get_rail_callback_name(rail, rail_name, 32),
-																		"",
+																		NULL,
+																		0,
 																		&ret);
 
 	if(ret != MPC_LOWCOMM_MONITOR_RET_SUCCESS)

@@ -228,7 +228,7 @@ static void * __worker_loop(void *pwork)
 			}
 			else
 			{
-			//_mpc_lowcomm_monitor_wrap_print(work->data, "PROCESSING");
+				//_mpc_lowcomm_monitor_wrap_print(work->data, "PROCESSING");
 				__handle_query(work->client, work->data);
 				__monitor_work_context_free(work);
 			}
@@ -1833,11 +1833,11 @@ int mpc_lowcomm_monitor_peer_exists(mpc_lowcomm_peer_uid_t peer)
  * COMMON WRAP GENERATION *
  **************************/
 
-
-static inline _mpc_lowcomm_peer_t * __gen_wrap_for_peer(mpc_lowcomm_peer_uid_t dest,
-													    mpc_lowcomm_monitor_command_t cmd,
-														int is_response,
-														_mpc_lowcomm_monitor_wrap_t **outcmd)
+static inline _mpc_lowcomm_peer_t * __gen_wrap_for_peer_sized(mpc_lowcomm_peer_uid_t dest,
+															  mpc_lowcomm_monitor_command_t cmd,
+															  size_t extra_payload_size,
+															  int is_response,
+															  _mpc_lowcomm_monitor_wrap_t **outcmd)
 {
 	_mpc_lowcomm_peer_t *rpeer = _mpc_lowcomm_peer_get(dest);
 
@@ -1855,9 +1855,18 @@ static inline _mpc_lowcomm_peer_t * __gen_wrap_for_peer(mpc_lowcomm_peer_uid_t d
 											dest,
 											__monitor.process_uid,
 											response_index,
-											sizeof(mpc_lowcomm_monitor_args_t));
+											sizeof(mpc_lowcomm_monitor_args_t) + extra_payload_size);
 
 	return rpeer;
+}
+
+
+static inline _mpc_lowcomm_peer_t * __gen_wrap_for_peer(mpc_lowcomm_peer_uid_t dest,
+													    mpc_lowcomm_monitor_command_t cmd,
+														int is_response,
+														_mpc_lowcomm_monitor_wrap_t **outcmd)
+{
+	return __gen_wrap_for_peer_sized( dest, cmd, 0, is_response, outcmd);
 }
 
 
@@ -2282,12 +2291,13 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_comm_info(mpc_l
  **********************/
 
 static inline _mpc_lowcomm_monitor_wrap_t * __generate_ondemand_cmd(mpc_lowcomm_peer_uid_t dest,
-									   char *target,
-									   char * data,
-									   int is_response)
+																	char *target,
+																	char * data,
+																	size_t data_size,
+																	int is_response)
 {
 	_mpc_lowcomm_monitor_wrap_t * cmd = NULL;
-	_mpc_lowcomm_peer_t * rpeer = __gen_wrap_for_peer(dest, MPC_LOWCOMM_MONITOR_ON_DEMAND, is_response, &cmd);
+	_mpc_lowcomm_peer_t * rpeer = __gen_wrap_for_peer_sized(dest, MPC_LOWCOMM_MONITOR_ON_DEMAND, data_size, is_response, &cmd);
 
 	if(!rpeer)
 	{
@@ -2296,7 +2306,11 @@ static inline _mpc_lowcomm_monitor_wrap_t * __generate_ondemand_cmd(mpc_lowcomm_
 	}
 
 	snprintf(cmd->content->on_demand.target, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, target);
-	snprintf(cmd->content->on_demand.data, MPC_LOWCOMM_ONDEMAND_DATA_LEN, data);
+	
+	if(data != NULL)
+	{
+		memcpy(cmd->content->on_demand.data, data, data_size);
+	}
 
 	return cmd;
 }
@@ -2305,11 +2319,12 @@ static inline _mpc_lowcomm_monitor_wrap_t * __generate_ondemand_cmd(mpc_lowcomm_
 mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_ondemand(mpc_lowcomm_peer_uid_t dest,
 															char *target,
 															char *data,
+															size_t data_size,
 															mpc_lowcomm_monitor_retcode_t *ret)
 {
 	assume( mpc_lowcomm_peer_get_set(dest) != 0);
 
-	_mpc_lowcomm_monitor_wrap_t * cmd = __generate_ondemand_cmd(dest, target, data, 0);
+	_mpc_lowcomm_monitor_wrap_t * cmd = __generate_ondemand_cmd(dest, target, data, data_size, 0);
 
 #ifdef MONITOR_DEBUG
 	mpc_common_debug_error("Sending OD on CPLANE for net %s for %s (IDX: %llu)", target, mpc_lowcomm_peer_format(dest), cmd->match_key);
@@ -2345,7 +2360,7 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_process_ondemand(mpc_l
 	void * ctx = NULL;
 	mpc_lowcomm_on_demand_callback_t cb = mpc_lowcomm_monitor_get_on_demand_callback(ondemand->on_demand.target, &ctx);
 
-	_mpc_lowcomm_monitor_wrap_t *resp = __generate_ondemand_cmd(dest, ondemand->on_demand.target, "", 1);
+	_mpc_lowcomm_monitor_wrap_t *resp = __generate_ondemand_cmd(dest, ondemand->on_demand.target, NULL, MPC_LOWCOMM_ONDEMAND_DATA_LEN, 1);
 	resp->match_key = response_index;
 
 	if(!cb)

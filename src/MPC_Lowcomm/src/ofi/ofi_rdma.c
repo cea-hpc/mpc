@@ -493,7 +493,8 @@ void mpc_lowcomm_ofi_rdma_on_demand_handler( sctk_rail_info_t *rail, mpc_lowcomm
 
 	mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_ondemand(dest_process,
 																	   __ofi_rdma_rail_name(rail, rail_name, 32),
-																	   "",
+																	   NULL,
+																	   0,
 																	   &ret);
 
 	if(ret != MPC_LOWCOMM_MONITOR_RET_SUCCESS)

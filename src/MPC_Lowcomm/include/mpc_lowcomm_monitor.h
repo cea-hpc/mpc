@@ -395,8 +395,8 @@ typedef union
 	struct
 	{
 		char                          target[MPC_LOWCOMM_ONDEMAND_TARGET_LEN]; /**< Target callback name */
-		char                          data[MPC_LOWCOMM_ONDEMAND_DATA_LEN];     /**< Sent / Returned string data */
 		mpc_lowcomm_monitor_retcode_t retcode;                                 /**< Remote retcode */
+		char                          data[0];     /**< Sent / Returned string data */
 	}on_demand;
 
 	/**
@@ -596,6 +596,7 @@ int mpc_lowcomm_monitor_unregister_on_demand_callback(char *target);
 mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_ondemand(mpc_lowcomm_peer_uid_t dest,
                                                             char *target,
                                                             char *data,
+															size_t data_size,
                                                             mpc_lowcomm_monitor_retcode_t *ret);
 
 

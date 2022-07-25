@@ -359,6 +359,7 @@ void tcp_on_demand_connection_handler(sctk_rail_info_t *rail, mpc_lowcomm_peer_u
 	mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_ondemand(dest_process,
 																	   __gen_rail_target_name(rail, my_net_name, 128),
 																	   rail->network.tcp.connection_infos,
+																	   512,
 																	   &ret);
 
 	if(!resp)

@@ -596,7 +596,7 @@ typedef enum
 }__ib_monitor_action_t;
 
 
-char * __monitor_get_rail_name(char * data, int len, sctk_rail_info_t *rail, __ib_monitor_action_t action)
+static char * __monitor_get_rail_name(char * data, int len, sctk_rail_info_t *rail, __ib_monitor_action_t action)
 {
 	switch(action)
 	{
@@ -746,6 +746,7 @@ _mpc_lowcomm_endpoint_t * _mpc_lowcomm_ib_cm_on_demand_request_monitor(sctk_rail
 		mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_ondemand(dest,
 																		   __monitor_get_rail_name(monitor_code, 128, rail, _IB_MONITOR_OD),
 																		   local_qp_infos,
+																		   128,
 																		   &mon_retcode);
 
 		if(mon_retcode != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
@@ -794,7 +795,8 @@ _mpc_lowcomm_endpoint_t * _mpc_lowcomm_ib_cm_on_demand_request_monitor(sctk_rail
 		mpc_lowcomm_monitor_response_free(
 			mpc_lowcomm_monitor_ondemand(dest,
 										__monitor_get_rail_name(monitor_code, 128, rail, _IB_MONITOR_RTS),
-										"I'm Ready Set Yourself RTS",
+										NULL,
+										0,
 										&mon_retcode)
 		);
 
