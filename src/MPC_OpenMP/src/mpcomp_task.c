@@ -888,6 +888,34 @@ __task_pqueue_push(mpc_omp_task_pqueue_t * pqueue, mpc_omp_task_t * task)
 # endif /* MPC_OMP_BARRIER_COMPILE_COND_WAIT */
 }
 
+/** TASKGROUP */
+void
+_mpc_omp_taskgroup_add_task(mpc_omp_task_t * new_task)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
+    mpc_omp_task_taskgroup_t * taskgroup = task->taskgroup;
+
+    if (taskgroup)
+    {
+        new_task->taskgroup = taskgroup;
+        OPA_incr_int(&(taskgroup->children_num));
+    }
+}
+
+void
+mpc_omp_taskgroup_del_task(mpc_omp_task_t * task)
+{
+    if (task->taskgroup)
+    {
+        OPA_decr_int(&(task->taskgroup->children_num));
+    }
+}
+
 /*********************
  * TASK DEPENDENCIES *
  *********************/

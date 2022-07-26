@@ -362,33 +362,8 @@ void _mpc_omp_task_taskgroup_start(void);
 void _mpc_omp_task_taskgroup_end(void);
 void _mpc_omp_task_taskgroup_cancel(void);
 
-/* Inline functions */
-static inline void
-_mpc_omp_taskgroup_add_task(mpc_omp_task_t * new_task)
-{
-    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
-    assert(thread);
-
-    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
-    assert(task);
-
-    mpc_omp_task_taskgroup_t * taskgroup = task->taskgroup;
-
-    if (taskgroup)
-    {
-        new_task->taskgroup = taskgroup;
-        OPA_incr_int(&(taskgroup->children_num));
-    }
-}
-
-static inline void
-mpc_omp_taskgroup_del_task(mpc_omp_task_t *task)
-{
-    if (task->taskgroup)
-    {
-        OPA_decr_int(&(task->taskgroup->children_num));
-    }
-}
+void _mpc_omp_taskgroup_add_task(mpc_omp_task_t * new_task);
+void mpc_omp_taskgroup_del_task(mpc_omp_task_t * task);
 
 /* tasks */
 void mpc_omp_task_process(mpc_omp_task_t * task);
