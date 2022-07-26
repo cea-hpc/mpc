@@ -232,10 +232,6 @@ typedef union sctk_ptl_matchbits_t
 typedef struct sctk_ptl_cm_data_s
 {
 	char type;    /**< CM type, redudant w/ matching value */
-	char subtype; /**< CM subtype */
-	char param;   /**< CM param */
-	char rail_id; /**< referent rail ID */
-	char pad[4];  /**< aligment */
 } sctk_ptl_cm_data_t;
 
 /**
