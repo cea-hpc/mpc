@@ -1070,7 +1070,8 @@ __task_precedence_constraints(mpc_omp_task_t * predecessor, mpc_omp_task_t * suc
                     {
                         OPA_incr_int(&(successor->dep_node.ref_predecessors));
                     }
-                    // TODO : this else is a trick for the post-processing ... is it mandatory ?
+                    // TODO : this is a trick for the post-processing in case
+                    // of a persistent task, is it mandatory ?
                     else
                     {
                         MPC_OMP_TASK_TRACE_DEPENDENCY(predecessor, successor);
@@ -1449,13 +1450,23 @@ __task_finalize_deps(mpc_omp_task_t * task)
          * private variable had been copied by the producer thread. Else,
          * we cannot process it yet. */
 
-        /* if successor's dependencies are fullfilled, process it */
+        /* if successor's dependencies are fullfilled,
+         * and it is the right version of the persistent,
+         * process it */
         if (OPA_fetch_and_decr_int(&(succ->task->dep_node.ref_predecessors)) == 1 &&
             (!mpc_omp_task_property_isset(succ->task->property, MPC_OMP_TASK_PROP_PERSISTENT) ||
             OPA_load_int(&(task->persistent_infos.version)) == OPA_load_int(&(succ->task->persistent_infos.version))))
         {
-            succ->task->statuses.direct_successor = true;
-            _mpc_omp_task_process(succ->task);
+            if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT) && task->persistent_infos.zombit)
+            {
+                printf("not processing %s\n", task->label);
+                // TODO : destroy 'task'
+            }
+            else
+            {
+                succ->task->statuses.direct_successor = true;
+                _mpc_omp_task_process(succ->task);
+            }
         }
 
         /* process next successor */
@@ -3593,6 +3604,14 @@ _mpc_omp_task_deinit(mpc_omp_task_t * task)
         __task_unref_parallel_region();
         __task_unref(task);                     /* _mpc_omp_task_init */
         __task_unref_parent_task(task->parent); /* _mpc_omp_task_init */
+
+        /* unreference successors */
+        mpc_omp_task_list_elt_t * succ = task->dep_node.successors;
+        while (succ)
+        {
+            --succ->task->dep_node.npredecessors;
+            succ = succ->next;
+        }
     }
     __task_unref(task); /* _mpc_omp_task_init_attributes */
 }
@@ -4133,6 +4152,7 @@ mpc_omp_persistent_region_push(mpc_omp_task_t * task)
     assert(region->active);
     __task_ref_persistent_region(task->parent); /* _mpc_omp_task_finalize */
     OPA_store_int(&(task->persistent_infos.version), 1);
+    task->persistent_infos.zombit = 0;
     mpc_omp_task_set_property(&(task->property), MPC_OMP_TASK_PROP_PERSISTENT);
     mpc_common_indirect_array_iterator_push(&(region->tasks_it), &task);
 }
@@ -4145,10 +4165,15 @@ mpc_omp_persistent_region_pop(void)
     /* cannot delete tasks on the 1st iteration or outside a persistent region */
     if (!region->active) return ;
 
+    /* retrieve the task and zombify it */
     mpc_omp_task_t ** task_ptr = (mpc_omp_task_t **) mpc_common_indirect_array_iterator_pop(&(region->tasks_it));
     if (task_ptr)
     {
-        _mpc_omp_task_deinit(*task_ptr);
+        mpc_omp_task_t * task = *task_ptr;
+        assert(task);
+        task->persistent_infos.zombit = 1;
+        _mpc_omp_task_deinit(task); /* task_reinit */
     }
-    /* TODO : delete the task */
+
+    // TODO : mark this task as 'zombie' and destroy it when processing predecessors
 }

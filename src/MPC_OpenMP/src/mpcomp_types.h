@@ -630,6 +630,9 @@ typedef struct  mpc_omp_task_persistent_infos_s
     /* current version if this persistent task.
      * The version is set after copying private data as the persistent region iteration */
     OPA_int_t version;
+
+    /* Zom-bit - '1' if the task has be deleted from it persistent region */
+    int zombit : 1;
 }               mpc_omp_task_persistent_infos_t;
 
 /* critical tasks infos */
