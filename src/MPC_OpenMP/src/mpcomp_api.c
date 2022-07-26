@@ -529,6 +529,7 @@ mpc_omp_task_label(char * label)
 # if MPC_OMP_TASK_COMPILE_TRACE
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     thread->task_infos.incoming.label = label;
+//    printf("%s\n", label);
 # endif /* MPC_OMP_TASK_COMPILE_TRACE */
 }
 

@@ -1492,16 +1492,16 @@ _mpc_omp_task_finalize(mpc_omp_task_t * task)
     mpc_omp_thread_t * thread = __thread_task_coherency(NULL);
     assert(thread);
 
-# if MPC_OMP_TASK_COMPILE_FIBER
-    __task_delete_fiber(task);
-# endif /* MPC_OMP_TASK_COMPILE_FIBER */
-
     /* reference the task */
     __task_finalize_deps(task);
 
     mpc_omp_task_t * parent = task->parent;
     if (!mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT))
     {
+# if MPC_OMP_TASK_COMPILE_FIBER
+        __task_delete_fiber(task);
+# endif /* MPC_OMP_TASK_COMPILE_FIBER */
+
         mpc_omp_taskgroup_del_task(task);
         __task_unref_parallel_region();
         __task_unref(task);                 /* _mpc_omp_task_init */
@@ -3596,6 +3596,10 @@ _mpc_omp_task_deinit(mpc_omp_task_t * task)
 {
     if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT))
     {
+# if MPC_OMP_TASK_COMPILE_FIBER
+        __task_delete_fiber(task);
+# endif /* MPC_OMP_TASK_COMPILE_FIBER */
+
         /* Release parent hmap dependencies entries */
          __task_finalize_deps_list(task);
 
