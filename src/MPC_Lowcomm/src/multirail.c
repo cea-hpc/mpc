@@ -563,7 +563,8 @@ static inline _mpc_lowcomm_endpoint_t *__elect_endpoint(mpc_lowcomm_ptp_message_
 	return cur->endpoint;
 }
 
-mpc_common_spinlock_t on_demand_connection_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
+#define ON_DEMMAND_CONN_LOCK_COUNT 32
+static mpc_common_spinlock_t on_demand_connection_lock[ON_DEMMAND_CONN_LOCK_COUNT];
 
 /* Per VP pending on-demand connection list */
 static __thread sctk_pending_on_demand_t *__pending_on_demand = NULL;
@@ -619,7 +620,7 @@ static inline void __pending_on_demand_process()
 		/* No endpoint ? then its worth locking */
 		if(!previous_endpoint)
 		{
-			mpc_common_spinlock_lock(&on_demand_connection_lock);
+			mpc_common_spinlock_lock(&on_demand_connection_lock[pod->dest % ON_DEMMAND_CONN_LOCK_COUNT]);
 
 			/* Check again to avoid RC */
 			previous_endpoint = sctk_rail_get_any_route_to_process(pod->rail, pod->dest);
@@ -630,7 +631,7 @@ static inline void __pending_on_demand_process()
 				(pod->rail->connect_on_demand)(pod->rail, pod->dest);
 			}
 
-			mpc_common_spinlock_unlock(&on_demand_connection_lock);
+			mpc_common_spinlock_unlock(&on_demand_connection_lock[pod->dest % ON_DEMMAND_CONN_LOCK_COUNT]);
 		}
 
 		sctk_pending_on_demand_t *to_free = pod;
@@ -735,11 +736,12 @@ static inline void __on_demand_connection(mpc_lowcomm_ptp_message_t *msg)
 		mpc_common_debug_fatal("No route to host == Make sure you have at least one on-demand rail able to satify any type of message");
 	}
 
+	mpc_lowcomm_peer_uid_t dest_process = SCTK_MSG_DEST_PROCESS_UID(msg);
+
 	/* Enter the critical section to guanrantee the uniqueness of the
 	 * newly created rail by first checking if it is not already present */
-	mpc_common_spinlock_lock(&on_demand_connection_lock);
+	mpc_common_spinlock_lock(&on_demand_connection_lock[dest_process % ON_DEMMAND_CONN_LOCK_COUNT]);
 
-	mpc_lowcomm_peer_uid_t dest_process = SCTK_MSG_DEST_PROCESS_UID(msg);
 
 	/* First retry to acquire a route for on-demand
 	 * in order to avoid double connections */
@@ -760,7 +762,7 @@ static inline void __on_demand_connection(mpc_lowcomm_ptp_message_t *msg)
 		(elected_rail->connect_on_demand)(elected_rail, dest_process);
 	}
 
-	mpc_common_spinlock_unlock(&on_demand_connection_lock);
+	mpc_common_spinlock_unlock(&on_demand_connection_lock[dest_process % ON_DEMMAND_CONN_LOCK_COUNT]);
 }
 
 /************************************************************************/
@@ -1146,6 +1148,13 @@ void _mpc_lowcomm_multirail_table_init()
 	mpc_common_hashtable_init(&table->destination_table, 1024);
 	mpc_common_rwlock_t lckinit = MPC_COMMON_SPIN_RWLOCK_INITIALIZER;
 	table->table_lock = lckinit;
+
+	int i;
+
+	for(i = 0 ; i < ON_DEMMAND_CONN_LOCK_COUNT ; i++)
+	{
+		mpc_common_spinlock_init(&on_demand_connection_lock[i], 0);
+	}
 }
 
 void _mpc_lowcomm_multirail_table_release()
