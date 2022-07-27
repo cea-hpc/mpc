@@ -17,7 +17,7 @@
 
 _mpc_lowcomm_datatype_ctx_t mpc_lowcomm_datatypes_list[MPC_LOWCOMM_TYPE_COMMON_LIMIT];
 
-int mpc_lowcomm_datatype_init_common(){
+int _mpc_lowcomm_datatype_init_common(){
 	mpc_lowcomm_datatype_init( MPC_LOWCOMM_CHAR );
 	mpc_lowcomm_datatype_init( MPC_LOWCOMM_LOGICAL );
 	mpc_lowcomm_datatype_init( MPC_LOWCOMM_BYTE );

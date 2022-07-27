@@ -22,11 +22,11 @@
 /* ######################################################################## */
 //#include "sctk_alloc.h"
 
-#include "mpi_alloc_mem.h"
+#include "mpc_common_debug.h"
 #include "nbc.h"
 #include "sctk_alloc.h"
 #include "mpc_lowcomm.h"
-#include "mpc_common_debug.h"
+
 #include "errh.h"
 #include <mpc_lowcomm_msg.h>
 #include "mpc_common_spinlock.h"
@@ -144,7 +144,7 @@ typedef struct mpc_mpi_data_s{
 /************************************************************************/
 
 typedef enum
-{ 
+{
 	MPC_MPI_PERSISTENT_BCAST_INIT,
 	MPC_MPI_PERSISTENT_GATHER_INIT,
 	MPC_MPI_PERSISTENT_ALLGATHER_INIT,
@@ -198,7 +198,7 @@ typedef struct MPI_Persistant_s
 
 typedef struct MPI_internal_request_s
 {
-	mpc_common_spinlock_t lock; /**< Lock protecting the data-structure */	
+	mpc_common_spinlock_t lock; /**< Lock protecting the data-structure */
 
 	mpc_lowcomm_request_t req;	/**< Request to be stored */
 	int used; 	/**< Is the request slot in use */
@@ -227,8 +227,8 @@ typedef struct MPI_internal_request_s
 
 } MPI_internal_request_t;
 
-/** \brief MPI_Request managment structure 
- * 
+/** \brief MPI_Request managment structure
+ *
  * 	In order to simplify the fortran interface it is preferable
  *  to store requests as integers. However we need to be able
  *  retrieve data associated with it (the \ref MPC_Request)
@@ -236,10 +236,10 @@ typedef struct MPI_internal_request_s
  *  and the actual request (MPC_Request). Moreover,
  *  this structure tries to recycle requests in order to avoid
  *  reallocating them each time.
- * 
+ *
  *  To do so \ref MPI_internal_request_s are in a chained list,
  *  allowing their storage in both free_list and auto_free_list
- * 
+ *
  * */
  typedef struct MPI_request_struct_s
 {

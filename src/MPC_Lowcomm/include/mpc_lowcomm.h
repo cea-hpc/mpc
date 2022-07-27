@@ -224,11 +224,11 @@ int mpc_lowcomm_wait(mpc_lowcomm_request_t *request, mpc_lowcomm_status_t *statu
 
 /**
  * @brief Test and progress a request for completion
- * 
+ *
  * @param request Request to be tested
  * @param completed 1 if the request did complete/was cancelled 0 if not
  * @param status status to be filled (only valid if completed can be NULL)
- * 
+ *
  */
 int mpc_lowcomm_test(mpc_lowcomm_request_t * request, int * completed, mpc_lowcomm_status_t *status);
 
@@ -294,7 +294,7 @@ int mpc_lowcomm_sendrecv(void *sendbuf, size_t size, int dest, int tag, void *re
 
 /**
  * @brief Probe for a given message as both a given source and destination (advanced thread-based use)
- * 
+ *
  * @param world_source Source IN COMM WORLD
  * @param world_destination Destination IN COMM WORLD
  * @param tag message tag
@@ -308,7 +308,7 @@ int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destinat
 
 /**
  * @brief Non-blocking probe for a message to local rank
- * 
+ *
  * @param source message source (in comm)
  * @param tag message tag
  * @param comm message communicator
@@ -320,7 +320,7 @@ int mpc_lowcomm_iprobe(int source, int tag, mpc_lowcomm_communicator_t comm, int
 
 /**
  * @brief Blocking probe for a message to local rank
- * 
+ *
  * @param source message source (in comm)
  * @param tag message tag
  * @param comm message communicator
@@ -386,6 +386,21 @@ void mpc_lowcomm_terminaison_barrier(void);
 void mpc_lowcomm_request_wait_all_msgs(const int task, const mpc_lowcomm_communicator_t com);
 
 /***************************
+* MEMORY POOL              *
+***************************/
+
+void *mpc_lowcomm_allocmem_pool_alloc(size_t size);
+void *mpc_lowcomm_allocmem_pool_alloc_check(size_t size, int * is_shared);
+int mpc_lowcomm_allocmem_pool_free(void *ptr);
+int mpc_lowcomm_allocmem_pool_free_size(void *ptr, ssize_t known_size);
+int mpc_lowcomm_allocmem_is_in_pool(void *ptr);
+size_t mpc_lowcomm_allocmem_relative_addr(void *in_pool_addr);
+void * mpc_lowcomm_allocmem_abs_addr(size_t relative_addr);
+void mpc_lowcomm_accumulate_op_lock();
+void mpc_lowcomm_accumulate_op_unlock();
+
+
+/***************************
 * MPC LOWCOMM TRAMPOLINES *
 ***************************/
 
@@ -395,13 +410,6 @@ void mpc_lowcomm_request_wait_all_msgs(const int task, const mpc_lowcomm_communi
  * @param trampoline MPC_MPI polling function
  */
 void mpc_lowcomm_egreq_poll_set_trampoline(void (*trampoline)(void) );
-
-/**
- * @brief Trampoline function for MPC_MPI to check for allocmem boundaries
- *
- * @param trampoline pointer to trampoline function
- */
-void mpc_lowcomm_rdma_allocmem_is_in_pool_set_trampoline(int (*trampoline)(void *) );
 
 /**
  * @brief Set a flag to enable MPI window progress

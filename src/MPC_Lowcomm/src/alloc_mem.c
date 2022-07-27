@@ -20,9 +20,9 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "mpi_alloc_mem.h"
+#include "alloc_mem.h"
 
-#include "mpi_conf.h"
+#include "lowcomm_config.h"
 
 #include <mpc_common_rank.h>
 
@@ -31,7 +31,6 @@
 #include "mpc_lowcomm.h"
 #include <mpc_common_helper.h>
 #include <mpc_common_rank.h>
-#include "mpc_mpi.h"
 #include <mpc_common_debug.h>
 #include <mpc_common_flags.h>
 #include <mpc_launch_shm.h>
@@ -44,7 +43,7 @@
 
 #include "string.h"
 
-struct mpc_MPI_allocmem_pool _mpc_MPI_mem_pool;
+struct mpc_lowcomm_allocmem_pool __mpc_lowcomm_memory_pool;
 
 static int _pool_init_done  = 0;
 static int _pool_only_local = 0;
@@ -52,7 +51,7 @@ static mpc_common_spinlock_t _pool_init_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 static size_t _forced_pool_size = 0;
 
-void mpc_MPI_allocmem_adapt(char *exename)
+static void __pool_size_adapt(char *exename)
 {
 	if(!exename)
 	{
@@ -64,7 +63,7 @@ void mpc_MPI_allocmem_adapt(char *exename)
 		return;
 	}
 
-	struct _mpc_mpi_config_mem_pool *mempool_conf = &(_mpc_mpi_config()->mempool);
+	struct _mpc_lowcomm_config_mem_pool *mempool_conf = &(_mpc_lowcomm_conf_get()->memorypool);
 
 
 	int is_linear = mempool_conf->force_process_linear;
@@ -87,42 +86,41 @@ void mpc_MPI_allocmem_adapt(char *exename)
 	}
 }
 
-size_t mpc_MPI_allocmem_get_pool_size()
+static size_t __get_pool_size()
 {
 	if(_forced_pool_size != 0)
 	{
 		return _forced_pool_size;
 	}
 
-	return _mpc_mpi_config()->mempool.size;
+	return _mpc_lowcomm_conf_get()->memorypool.size;
 }
 
 static inline int __barrier(void *pcomm)
 {
-	MPI_Comm comm = (MPI_Comm)pcomm;
+	mpc_lowcomm_communicator_t comm = (mpc_lowcomm_communicator_t)pcomm;
 
-	PMPI_Barrier(comm);
+	mpc_lowcomm_barrier(comm);
 	return 0;
 }
 
 static inline int __rank(void *pcomm)
 {
-	MPI_Comm comm = (MPI_Comm)pcomm;
+	mpc_lowcomm_communicator_t comm = (mpc_lowcomm_communicator_t)pcomm;
 	int      ret;
 
-	PMPI_Comm_rank(comm, &ret);
-	return ret;
+	return mpc_lowcomm_communicator_rank(comm);
 }
 
 static inline int __bcast(void *buff, size_t len, void *pcomm)
 {
-	MPI_Comm comm = (MPI_Comm)pcomm;
+	mpc_lowcomm_communicator_t comm = (mpc_lowcomm_communicator_t)pcomm;
 
-	PMPI_Bcast(buff, len, MPI_BYTE, 0, comm);
+	mpc_lowcomm_bcast(buff, len, 0, comm);
 	return 0;
 }
 
-void alloc_workshare(MPI_Comm comm)
+void alloc_workshare(mpc_lowcomm_communicator_t comm)
 {
 	int            nb_tasks = mpc_common_get_local_task_count();
 	mpc_workshare *workshare, *tmp;
@@ -133,7 +131,8 @@ void alloc_workshare(MPI_Comm comm)
 		tmp  = sctk_malloc(sizeof(mpc_workshare) * nb_tasks);
 		addr = tmp;
 	}
-	PMPI_Bcast(&addr, 1, MPI_UNSIGNED_LONG, 0, comm);
+
+	mpc_lowcomm_bcast(&addr, sizeof(void *), 0, comm);
 
 	workshare = (mpc_workshare *)addr;
 #ifdef MPC_Threads
@@ -164,9 +163,62 @@ void alloc_workshare(MPI_Comm comm)
 }
 
 
-static inline void __setup_pool(MPI_Comm per_node_comm)
+/* This is the accumulate pool protection */
+
+static mpc_common_spinlock_t *__accululate_master_lock = NULL;
+static mpc_common_spinlock_t  __static_lock_for_acc    = MPC_COMMON_SPINLOCK_INITIALIZER;
+
+static void __accumulate_op_lock_init_shared()
 {
-	size_t pool_size = mpc_MPI_allocmem_get_pool_size();
+	__accululate_master_lock = &__static_lock_for_acc;
+}
+
+static void __accumulate_op_lock_init(mpc_lowcomm_communicator_t per_node_comm)
+{
+	int my_node_level_rank, my_node_size;
+
+	my_node_level_rank = mpc_lowcomm_communicator_rank(per_node_comm);
+	my_node_size = mpc_lowcomm_communicator_size(per_node_comm);
+
+	void *p = NULL;
+	size_t rel_addr = 0;
+
+	int is_shared = 0;
+
+	if(!my_node_level_rank)
+	{
+		p = mpc_lowcomm_allocmem_pool_alloc_check(sizeof(mpc_common_spinlock_t), &is_shared );
+		rel_addr = mpc_lowcomm_allocmem_relative_addr(p);
+		mpc_common_spinlock_init(p, 0);
+	}
+
+
+	mpc_lowcomm_bcast(&p, sizeof(void *), 0, per_node_comm);
+
+
+	__accululate_master_lock = ( mpc_common_spinlock_t * )mpc_lowcomm_allocmem_abs_addr(rel_addr);
+
+}
+
+void mpc_lowcomm_accumulate_op_lock()
+{
+	//mpc_common_debug_error("LOCK");
+
+	assert(__accululate_master_lock != NULL);
+	mpc_common_spinlock_lock_yield(__accululate_master_lock);
+}
+
+void mpc_lowcomm_accumulate_op_unlock()
+{
+	//mpc_common_debug_error("UNLOCK");
+	assert(__accululate_master_lock != NULL);
+	mpc_common_spinlock_unlock(__accululate_master_lock);
+}
+
+
+static inline void __setup_pool(mpc_lowcomm_communicator_t per_node_comm)
+{
+	size_t pool_size = __get_pool_size();
 
 	/* Compute pool size */
 	size_t inner_size = pool_size;
@@ -175,8 +227,7 @@ static inline void __setup_pool(MPI_Comm per_node_comm)
 	/* Book space for the spinlock */
 	inner_size += sizeof(OPA_int_t);
 
-	int cw_rank;
-	PMPI_Comm_rank(MPI_COMM_WORLD, &cw_rank);
+	int cw_rank = mpc_lowcomm_communicator_rank(MPC_COMM_WORLD);
 
 	/* disabling shm allocator for C/R (temp) */
 	if(mpc_common_get_flags()->checkpoint_enabled)
@@ -187,10 +238,10 @@ static inline void __setup_pool(MPI_Comm per_node_comm)
 		}
 
 
-		_mpc_mpi_config()->mempool.enabled = 0;
+		_mpc_lowcomm_conf_get()->memorypool.enabled = 0;
 	}
 
-	int alloc_mem_enabled = _mpc_mpi_config()->mempool.enabled;
+	int alloc_mem_enabled = _mpc_lowcomm_conf_get()->memorypool.enabled;
 
 	if( alloc_mem_enabled == 0 )
 	{
@@ -198,7 +249,7 @@ static inline void __setup_pool(MPI_Comm per_node_comm)
 		return;
 	}
 
-	MPI_Comm process_master_comm;
+	mpc_lowcomm_communicator_t process_master_comm;
 	int      is_master = 0;
 
 #if defined(MPC_IN_PROCESS_MODE)
@@ -212,14 +263,15 @@ static inline void __setup_pool(MPI_Comm per_node_comm)
 		is_master = 1;
 	}
 
-	PMPI_Comm_split(per_node_comm, is_master, cw_rank, &process_master_comm);
+	process_master_comm = mpc_lowcomm_communicator_split(per_node_comm, is_master, cw_rank);
+
 #endif
 
 	if(is_master)
 	{
 		size_t to_map_size = ( (inner_size / SCTK_PAGE_SIZE) + 1) *
 								SCTK_PAGE_SIZE;
-		_mpc_MPI_mem_pool.mapped_size = to_map_size;
+		__mpc_lowcomm_memory_pool.mapped_size = to_map_size;
 
 		mpc_launch_shm_exchange_params_t params;
 
@@ -228,43 +280,41 @@ static inline void __setup_pool(MPI_Comm per_node_comm)
 		params.mpi.rank    = __rank;
 		params.mpi.pcomm   = process_master_comm;
 
-		_mpc_MPI_mem_pool._pool = mpc_launch_shm_map(to_map_size, MPC_LAUNCH_SHM_USE_MPI, &params);
+		__mpc_lowcomm_memory_pool._pool = mpc_launch_shm_map(to_map_size, MPC_LAUNCH_SHM_USE_MPI, &params);
 
-		mpc_common_debug_error("Pool @ %p", _mpc_MPI_mem_pool._pool);
-
-		assume(_mpc_MPI_mem_pool._pool != NULL);
+		assume(__mpc_lowcomm_memory_pool._pool != NULL);
 
 #if !defined(MPC_IN_PROCESS_MODE)
-		PMPI_Comm_free(&process_master_comm);
+		mpc_lowcomm_communicator_free(&process_master_comm);
 #endif
 		/* Keep pointer to the allocated pool  */
-		void *bit_array_page = _mpc_MPI_mem_pool._pool;
+		void *bit_array_page = __mpc_lowcomm_memory_pool._pool;
 		/* After we have a lock */
-		_mpc_MPI_mem_pool.lock =
+		__mpc_lowcomm_memory_pool.lock =
 			bit_array_page + SCTK_PAGE_SIZE;
 		/* And to finish the actual memory pool */
-		_mpc_MPI_mem_pool.pool =
-			_mpc_MPI_mem_pool.lock + 1;
+		__mpc_lowcomm_memory_pool.pool =
+			__mpc_lowcomm_memory_pool.lock + 1;
 		mpc_common_nodebug("BASE %p LOCK %p POOL %p", bit_array_page,
-						_mpc_MPI_mem_pool.lock,
-						_mpc_MPI_mem_pool.pool);
-		_mpc_MPI_mem_pool.size      = pool_size;
-		_mpc_MPI_mem_pool.size_left = pool_size;
-		OPA_store_int(_mpc_MPI_mem_pool.lock, 0);
-		mpc_common_bit_array_init_buff(&_mpc_MPI_mem_pool.mask,
+						__mpc_lowcomm_memory_pool.lock,
+						__mpc_lowcomm_memory_pool.pool);
+		__mpc_lowcomm_memory_pool.size      = pool_size;
+		__mpc_lowcomm_memory_pool.size_left = pool_size;
+		OPA_store_int(__mpc_lowcomm_memory_pool.lock, 0);
+		mpc_common_bit_array_init_buff(&__mpc_lowcomm_memory_pool.mask,
 									SCTK_PAGE_SIZE * 8, bit_array_page,
 									SCTK_PAGE_SIZE);
-		_mpc_MPI_mem_pool.space_per_bit =
+		__mpc_lowcomm_memory_pool.space_per_bit =
 			(pool_size / (SCTK_PAGE_SIZE * 8) );
-		mpc_common_hashtable_init(&_mpc_MPI_mem_pool.size_ht, 32);
+		mpc_common_hashtable_init(&__mpc_lowcomm_memory_pool.size_ht, 32);
 	}
 }
 
 
-int mpc_MPI_allocmem_pool_init()
+int mpc_lowcomm_allocmem_pool_init()
 {
 	/* Check for particular programs */
-	mpc_MPI_allocmem_adapt(mpc_common_get_flags()->exename);
+	__pool_size_adapt(mpc_common_get_flags()->exename);
 
 	/* Make sure only one process does the internal
 	pool init in the shared memory segment */
@@ -278,24 +328,19 @@ int mpc_MPI_allocmem_pool_init()
 
 	mpc_common_spinlock_unlock(&_pool_init_lock);
 
-	int cw_rank;
-	PMPI_Comm_rank(MPI_COMM_WORLD, &cw_rank);
+	int cw_rank = mpc_lowcomm_communicator_rank(MPC_COMM_WORLD);
 
 	/* First build a comm for each node */
-	MPI_Comm per_node_comm;
-	PMPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, cw_rank,
-							MPI_INFO_NULL, &per_node_comm);
+	mpc_lowcomm_communicator_t per_node_comm = mpc_lowcomm_communicator_split(MPC_COMM_WORLD, mpc_common_get_node_rank(), cw_rank);
 
-	int my_node_size;
-	PMPI_Comm_size(per_node_comm, &my_node_size);
+	int my_node_size = mpc_lowcomm_communicator_size(per_node_comm);
 
 
 	/* Allocate Workshare */
-	MPI_Comm per_process_comm;
 	int      split_ws = mpc_common_get_process_rank();
-	PMPI_Comm_split(MPI_COMM_WORLD, split_ws, cw_rank, &per_process_comm);
+	mpc_lowcomm_communicator_t per_process_comm = mpc_lowcomm_communicator_split(per_node_comm, split_ws, cw_rank);
 	alloc_workshare(per_process_comm);
-	PMPI_Comm_free(&per_process_comm);
+	mpc_lowcomm_communicator_free(&per_process_comm);
 
 
 	/* Are all the tasks in the same process ? */
@@ -304,7 +349,7 @@ int mpc_MPI_allocmem_pool_init()
 		/* Memory pool is only local */
 		_pool_only_local = 1;
 		/* Set accumulate lock in shared */
-		mpc_MPI_accumulate_op_lock_init_shared();
+		__accumulate_op_lock_init_shared();
 		return 0;
 	}
 	else
@@ -313,16 +358,16 @@ int mpc_MPI_allocmem_pool_init()
 
 		mpc_lowcomm_barrier(per_node_comm);
 
-		mpc_MPI_accumulate_op_lock_init(per_node_comm);
+		__accumulate_op_lock_init(per_node_comm);
 
 	}
 
-	PMPI_Comm_free(&per_node_comm);
-	
+	mpc_lowcomm_communicator_free(&per_node_comm);
+
 	return 0;
 }
 
-int mpc_MPI_allocmem_pool_release()
+int mpc_lowcomm_allocmem_pool_release()
 {
 
 	/* Are all the tasks in the same process ? */
@@ -343,37 +388,37 @@ int mpc_MPI_allocmem_pool_release()
 
 	mpc_common_spinlock_unlock(&_pool_init_lock);
 
-	mpc_launch_shm_unmap(_mpc_MPI_mem_pool._pool,
-							_mpc_MPI_mem_pool.mapped_size);
+	mpc_launch_shm_unmap(__mpc_lowcomm_memory_pool._pool,
+							__mpc_lowcomm_memory_pool.mapped_size);
 
 	if(is_master)
 	{
-		mpc_common_hashtable_release(&_mpc_MPI_mem_pool.size_ht);
+		mpc_common_hashtable_release(&__mpc_lowcomm_memory_pool.size_ht);
 		/* All the rest is static */
-		memset(&_mpc_MPI_mem_pool, 0,
-		       sizeof(struct mpc_MPI_allocmem_pool) );
+		memset(&__mpc_lowcomm_memory_pool, 0,
+		       sizeof(struct mpc_lowcomm_allocmem_pool) );
 	}
 
 	return 0;
 }
 
-static inline void mpc_MPI_allocmem_pool_lock()
+static inline void mpc_lowcomm_allocmem_pool_lock()
 {
-	assert(_mpc_MPI_mem_pool.lock);
+	assert(__mpc_lowcomm_memory_pool.lock);
 
-	while(OPA_cas_int(_mpc_MPI_mem_pool.lock, 0, 1) )
+	while(OPA_cas_int(__mpc_lowcomm_memory_pool.lock, 0, 1) )
 	{
 		mpc_thread_yield();
 	}
 }
 
-static inline void mpc_MPI_allocmem_pool_unlock()
+static inline void mpc_lowcomm_allocmem_pool_unlock()
 {
-	assert(_mpc_MPI_mem_pool.lock);
-	OPA_store_int(_mpc_MPI_mem_pool.lock, 0);
+	assert(__mpc_lowcomm_memory_pool.lock);
+	OPA_store_int(__mpc_lowcomm_memory_pool.lock, 0);
 }
 
-void *mpc_MPI_allocmem_pool_alloc_check(size_t size, int *is_shared)
+void *mpc_lowcomm_allocmem_pool_alloc_check(size_t size, int *is_shared)
 {
 	*is_shared = 0;
 
@@ -385,19 +430,19 @@ void *mpc_MPI_allocmem_pool_alloc_check(size_t size, int *is_shared)
 	}
 
 	/* We are sure that it does not fit */
-	if( (_mpc_MPI_mem_pool.size < size) )
+	if( (__mpc_lowcomm_memory_pool.size < size) )
 	{
 		return sctk_malloc(size);
 	}
 
-	mpc_MPI_allocmem_pool_lock();
+	mpc_lowcomm_allocmem_pool_lock();
 	size_t number_of_bits =
 		1 +
-		(size + (size % _mpc_MPI_mem_pool.space_per_bit) ) /
-		_mpc_MPI_mem_pool.space_per_bit;
+		(size + (size % __mpc_lowcomm_memory_pool.space_per_bit) ) /
+		__mpc_lowcomm_memory_pool.space_per_bit;
 	/* Now try to find this number of contiguous free bits */
 	size_t i, j;
-	struct mpc_common_bit_array *ba = &_mpc_MPI_mem_pool.mask;
+	struct mpc_common_bit_array *ba = &__mpc_lowcomm_memory_pool.mask;
 
 	for(i = 0; i < ba->real_size; i++)
 	{
@@ -442,13 +487,13 @@ void *mpc_MPI_allocmem_pool_alloc_check(size_t size, int *is_shared)
 				}
 
 				/* Compute address */
-				void *addr = _mpc_MPI_mem_pool.pool +
-				             (i * _mpc_MPI_mem_pool.space_per_bit);
+				void *addr = __mpc_lowcomm_memory_pool.pool +
+				             (i * __mpc_lowcomm_memory_pool.space_per_bit);
 				/* Store bit size for free for address */
-				mpc_common_hashtable_set(&_mpc_MPI_mem_pool.size_ht, ( uint64_t )addr,
+				mpc_common_hashtable_set(&__mpc_lowcomm_memory_pool.size_ht, ( uint64_t )addr,
 				                         ( void * )number_of_bits);
 				mpc_common_nodebug("ALLOC %ld", number_of_bits);
-				mpc_MPI_allocmem_pool_unlock();
+				mpc_lowcomm_allocmem_pool_unlock();
 				*is_shared = 1;
 				/* Proudly return the address */
 				return addr;
@@ -462,19 +507,19 @@ void *mpc_MPI_allocmem_pool_alloc_check(size_t size, int *is_shared)
 		//}
 	}
 
-	mpc_MPI_allocmem_pool_unlock();
+	mpc_lowcomm_allocmem_pool_unlock();
 	/* We failed */
 	return sctk_malloc(size);
 }
 
-void *mpc_MPI_allocmem_pool_alloc(size_t size)
+void *mpc_lowcomm_allocmem_pool_alloc(size_t size)
 {
 	int dummy_shared;
 
-	return mpc_MPI_allocmem_pool_alloc_check(size, &dummy_shared);
+	return mpc_lowcomm_allocmem_pool_alloc_check(size, &dummy_shared);
 }
 
-int mpc_MPI_allocmem_pool_free_size(void *ptr, ssize_t known_size)
+int mpc_lowcomm_allocmem_pool_free_size(void *ptr, ssize_t known_size)
 {
 	/* Are all the tasks in the same process ? */
 	if(_pool_only_local)
@@ -483,12 +528,12 @@ int mpc_MPI_allocmem_pool_free_size(void *ptr, ssize_t known_size)
 		return 0;
 	}
 
-	mpc_MPI_allocmem_pool_lock();
+	mpc_lowcomm_allocmem_pool_lock();
 	void *size_in_ptr = NULL;
 
 	if(known_size < 0)
 	{
-		size_in_ptr = mpc_common_hashtable_get(&_mpc_MPI_mem_pool.size_ht, ( uint64_t )ptr);
+		size_in_ptr = mpc_common_hashtable_get(&__mpc_lowcomm_memory_pool.size_ht, ( uint64_t )ptr);
 	}
 	else
 	{
@@ -499,22 +544,22 @@ int mpc_MPI_allocmem_pool_free_size(void *ptr, ssize_t known_size)
 	{
 		size_t size = ( size_t )size_in_ptr;
 		/* Compute bit_offset */
-		size_t off = (ptr - _mpc_MPI_mem_pool.pool) /
-		             _mpc_MPI_mem_pool.space_per_bit;
+		size_t off = (ptr - __mpc_lowcomm_memory_pool.pool) /
+		             __mpc_lowcomm_memory_pool.space_per_bit;
 		size_t number_of_bits = size;
 		size_t i;
 
 		for(i = off; i < (off + number_of_bits); i++)
 		{
-			mpc_common_bit_array_set(&_mpc_MPI_mem_pool.mask, i, 0);
+			mpc_common_bit_array_set(&__mpc_lowcomm_memory_pool.mask, i, 0);
 		}
 
-		mpc_common_hashtable_delete(&_mpc_MPI_mem_pool.size_ht, ( uint64_t )ptr);
-		mpc_MPI_allocmem_pool_unlock();
+		mpc_common_hashtable_delete(&__mpc_lowcomm_memory_pool.size_ht, ( uint64_t )ptr);
+		mpc_lowcomm_allocmem_pool_unlock();
 	}
 	else
 	{
-		mpc_MPI_allocmem_pool_unlock();
+		mpc_lowcomm_allocmem_pool_unlock();
 		/* If we are here the pointer was allocated */
 		sctk_free(ptr);
 	}
@@ -522,62 +567,27 @@ int mpc_MPI_allocmem_pool_free_size(void *ptr, ssize_t known_size)
 	return 0;
 }
 
-int mpc_MPI_allocmem_pool_free(void *ptr)
+int mpc_lowcomm_allocmem_pool_free(void *ptr)
 {
-	return mpc_MPI_allocmem_pool_free_size(ptr, -1);
+	return mpc_lowcomm_allocmem_pool_free_size(ptr, -1);
 }
 
-int mpc_MPI_allocmem_is_in_pool(void *ptr)
-{
-	return _mpc_MPI_allocmem_is_in_pool(ptr);
+
+int mpc_lowcomm_allocmem_is_in_pool(void *ptr) {
+  struct mpc_lowcomm_allocmem_pool *p = &__mpc_lowcomm_memory_pool;
+  if ((p->pool <= ptr) && (ptr < (p->pool + p->size))) {
+    return 1;
+  }
+
+  return 0;
 }
 
-/* This is the accumulate pool protection */
-
-static mpc_common_spinlock_t *__accululate_master_lock = NULL;
-static mpc_common_spinlock_t  __static_lock_for_acc    = MPC_COMMON_SPINLOCK_INITIALIZER;
-
-void mpc_MPI_accumulate_op_lock_init_shared()
+size_t mpc_lowcomm_allocmem_relative_addr(void *in_pool_addr)
 {
-	__accululate_master_lock = &__static_lock_for_acc;
+  return in_pool_addr - __mpc_lowcomm_memory_pool.pool;
 }
 
-void mpc_MPI_accumulate_op_lock_init(MPI_Comm per_node_comm)
+void * mpc_lowcomm_allocmem_abs_addr(size_t relative_addr)
 {
-	int my_node_level_rank, my_node_size;
-
-	PMPI_Comm_rank(per_node_comm, &my_node_level_rank);
-	PMPI_Comm_size(per_node_comm, &my_node_size);
-	void *p = NULL;
-
-	int is_shared = 0;
-
-	if(!my_node_level_rank)
-	{
-		p = mpc_MPI_allocmem_pool_alloc_check(sizeof(mpc_common_spinlock_t), &is_shared );
-		p = _mpc_MPI_allocmem_relative_addr(p);
-		//mpc_common_spinlock_init(p, 0);
-	}
-
-
-	mpc_lowcomm_bcast(&p, sizeof(void *), 0, per_node_comm);
-
-
-	__accululate_master_lock = ( mpc_common_spinlock_t * )_mpc_MPI_allocmem_abs_addr(p);
-
-}
-
-void mpc_MPI_accumulate_op_lock()
-{
-	//mpc_common_debug_error("LOCK");
-
-	assert(__accululate_master_lock != NULL);
-	mpc_common_spinlock_lock_yield(__accululate_master_lock);
-}
-
-void mpc_MPI_accumulate_op_unlock()
-{
-	//mpc_common_debug_error("UNLOCK");
-	assert(__accululate_master_lock != NULL);
-	mpc_common_spinlock_unlock(__accululate_master_lock);
+  return (char *)__mpc_lowcomm_memory_pool.pool + relative_addr;
 }

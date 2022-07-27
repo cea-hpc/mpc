@@ -28,29 +28,11 @@
 #include <mpc_common_spinlock.h>
 #include <mpc_common_types.h>
 
+#include "alloc_mem.h"
+
 #include <group.h>
 #include <communicator.h>
 
-/*********************************************
-* TRAMPOLINE FUNCTION FOR MPI ALLOCMEM POOL *
-*********************************************/
-
-static int (*___is_in_allocmem_pool_trampoline)(void *ptr) = NULL;
-
-void mpc_lowcomm_rdma_allocmem_is_in_pool_set_trampoline(int (*trampoline)(void *ptr) )
-{
-	___is_in_allocmem_pool_trampoline = trampoline;
-}
-
-static inline int mpc_lowcomm_rdma_allocmem_is_in_pool(void *ptr)
-{
-	if(___is_in_allocmem_pool_trampoline)
-	{
-		return (___is_in_allocmem_pool_trampoline)(ptr);
-	}
-
-	return 0;
-}
 
 /************************************************************************/
 /* Window Numbering and translation                                     */
@@ -359,7 +341,7 @@ mpc_lowcomm_rdma_window_t mpc_lowcomm_rdma_window_init(void *addr, size_t size, 
 	win->access_mode = SCTK_WIN_ACCESS_AUTO;
 
 
-	int ptr_in_mempool = mpc_lowcomm_rdma_allocmem_is_in_pool(addr);
+	int ptr_in_mempool = mpc_lowcomm_allocmem_is_in_pool(addr);
 
 	int * all_ptr_in_mempool = sctk_malloc(sizeof(int) * comm_size);
 
@@ -800,7 +782,7 @@ static inline void __mpc_lowcomm_rdma_window_RDMA_write(mpc_lowcomm_rdma_window_
 	int my_rank = mpc_common_get_task_rank();
 
 	if( (my_rank == win->owner) ||                      /* Same rank */
-	    (mpc_lowcomm_rdma_allocmem_is_in_pool(win->start_addr) ) ||
+	    (mpc_lowcomm_allocmem_is_in_pool(win->start_addr) ) ||
 	    (win->access_mode == SCTK_WIN_ACCESS_DIRECT) || /* Forced direct mode */
 	    (!mpc_lowcomm_is_remote_rank(win->owner) ) /* Same process */)
 	{
@@ -980,7 +962,7 @@ void __mpc_lowcomm_rdma_window_RDMA_read(mpc_lowcomm_rdma_window_t win_id, sctk_
 	int my_rank = mpc_common_get_task_rank();
 
 	if( (my_rank == win->owner) || /* Same rank */
-	    (mpc_lowcomm_rdma_allocmem_is_in_pool(win->start_addr) ) ||
+	    (mpc_lowcomm_allocmem_is_in_pool(win->start_addr) ) ||
 	    (win->access_mode ==
 	     SCTK_WIN_ACCESS_DIRECT) || /* Forced direct mode */
 	    (!mpc_lowcomm_is_remote_rank(win->owner) ) /* Same process */)
@@ -1005,7 +987,7 @@ void __mpc_lowcomm_rdma_window_RDMA_read(mpc_lowcomm_rdma_window_t win_id, sctk_
 		mpc_lowcomm_irecv_class(win->comm_rank, dest_addr, size,
 		                        TAG_RDMA_READ, win->communicator,
 		                        MPC_LOWCOMM_RDMA_WINDOW_MESSAGES, req);
-		
+
 		__send_on_demand_notification(mpc_lowcomm_group_process_rank_from_world(win->owner),
 						"Window Emulated Read",
 						(void *)&erma,
@@ -1597,7 +1579,7 @@ static inline void __mpc_lowcomm_rdma_window_RDMA_fetch_and_op(
 	int my_rank = mpc_common_get_task_rank();
 
 	if( (my_rank == win->owner) || /* Same rank */
-	    (mpc_lowcomm_rdma_allocmem_is_in_pool(win->start_addr) ) ||
+	    (mpc_lowcomm_allocmem_is_in_pool(win->start_addr) ) ||
 	    (win->access_mode == SCTK_WIN_ACCESS_DIRECT) ||
 	    (!mpc_lowcomm_is_remote_rank(win->owner) ) /* Same process */)
 	{
@@ -1887,7 +1869,7 @@ void __mpc_lowcomm_rdma_window_RDMA_CAS(mpc_lowcomm_rdma_window_t remote_win_id,
 	int my_rank = mpc_common_get_task_rank();
 
 	if( (my_rank == win->owner) || /* Same rank */
-	    (mpc_lowcomm_rdma_allocmem_is_in_pool(win->start_addr) ) ||
+	    (mpc_lowcomm_allocmem_is_in_pool(win->start_addr) ) ||
 	    (win->access_mode == SCTK_WIN_ACCESS_DIRECT) ||
 	    (!mpc_lowcomm_is_remote_rank(win->owner) ) /* Same process */)
 	{
@@ -1973,7 +1955,7 @@ void mpc_lowcomm_rdma_window_RDMA_fence(mpc_lowcomm_rdma_window_t win_id, mpc_lo
 	int my_rank = mpc_common_get_task_rank();
 
 	if( (my_rank == win->owner) ||
-	    (mpc_lowcomm_rdma_allocmem_is_in_pool(win->start_addr) ) ||
+	    (mpc_lowcomm_allocmem_is_in_pool(win->start_addr) ) ||
 	    (win->access_mode == SCTK_WIN_ACCESS_DIRECT) ||
 	    (!mpc_lowcomm_is_remote_rank(win->owner) ) )
 	{

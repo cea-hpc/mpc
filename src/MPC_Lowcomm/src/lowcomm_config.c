@@ -208,10 +208,10 @@ static inline mpc_conf_config_type_t *__init_driver_shm(struct _mpc_lowcomm_conf
 {
 	driver->type = SCTK_RTCFG_net_driver_shm;
 
-	/* 
+	/*
 	Set defaults
 	*/
-	
+
 	struct _mpc_lowcomm_config_struct_net_driver_shm *shm = &driver->value.shm;
 
 	/* Buffered */
@@ -290,10 +290,10 @@ static inline mpc_conf_config_type_t *__init_driver_tcp(struct _mpc_lowcomm_conf
 {
 	driver->type = SCTK_RTCFG_net_driver_tcp;
 
-	/* 
+	/*
 	Set defaults
 	*/
-	
+
 	struct _mpc_lowcomm_config_struct_net_driver_tcp *tcp = &driver->value.tcp;
 
 	/*
@@ -314,10 +314,10 @@ static inline mpc_conf_config_type_t *__init_driver_portals(struct _mpc_lowcomm_
 {
 	driver->type = SCTK_RTCFG_net_driver_portals;
 
-	/* 
+	/*
 	Set defaults
 	*/
-	
+
 	struct _mpc_lowcomm_config_struct_net_driver_portals *portals = &driver->value.portals;
 
 	portals->eager_limit = 8192;
@@ -354,10 +354,10 @@ static inline mpc_conf_config_type_t *__init_driver_ib(struct _mpc_lowcomm_confi
 {
 	driver->type = SCTK_RTCFG_net_driver_infiniband;
 
-	/* 
+	/*
 	Set defaults
 	*/
-	
+
 	struct _mpc_lowcomm_config_struct_net_driver_infiniband *ib = &driver->value.infiniband;
 
 	/* Debug */
@@ -446,7 +446,7 @@ static inline mpc_conf_config_type_t *__init_driver_ib(struct _mpc_lowcomm_confi
 															PARAM("minsize", &ib->rdma_min_size, MPC_CONF_LONG_INT, "Defines the minimum size for the Eager RDMA buffers."),
 															PARAM("maxsize", &ib->rdma_max_size, MPC_CONF_LONG_INT, "Defines the maximun size for the Eager RDMA buffers."),
 															PARAM("mincount", &ib->rdma_min_nb, MPC_CONF_INT, "Defines the minimum number of Eager RDMA buffers."),
-															PARAM("maxcount", &ib->rdma_max_nb, MPC_CONF_INT, "Defines the maximum number of Eager RDMA buffers."),	
+															PARAM("maxcount", &ib->rdma_max_nb, MPC_CONF_INT, "Defines the maximum number of Eager RDMA buffers."),
 															NULL);
 
 	mpc_conf_config_type_t *rdma_resized = mpc_conf_config_type_init("rdmaresized",
@@ -454,7 +454,7 @@ static inline mpc_conf_config_type_t *__init_driver_ib(struct _mpc_lowcomm_confi
 															PARAM("minsize", &ib->rdma_resizing_min_size, MPC_CONF_LONG_INT, "Defines the minimum size for the Eager RDMA buffers."),
 															PARAM("maxsize", &ib->rdma_resizing_max_size, MPC_CONF_LONG_INT, "Defines the maximun size for the Eager RDMA buffers."),
 															PARAM("mincount", &ib->rdma_resizing_min_nb, MPC_CONF_INT, "Defines the minimum number of Eager RDMA buffers."),
-															PARAM("maxcount", &ib->rdma_resizing_max_nb, MPC_CONF_INT, "Defines the maximum number of Eager RDMA buffers."),	
+															PARAM("maxcount", &ib->rdma_resizing_max_nb, MPC_CONF_INT, "Defines the maximum number of Eager RDMA buffers."),
 															NULL);
 
 	mpc_conf_config_type_t *ibuf = mpc_conf_config_type_init("ibuf",
@@ -502,10 +502,10 @@ static inline mpc_conf_config_type_t *__init_driver_ofi(struct _mpc_lowcomm_conf
 {
 	driver->type = SCTK_RTCFG_net_driver_ofi;
 
-	/* 
+	/*
 	Set defaults
 	*/
-	
+
 	struct _mpc_lowcomm_config_struct_net_driver_ofi *ofi = &driver->value.ofi;
 
 	snprintf(ofi->slink, MPC_CONF_STRING_SIZE, "connected");
@@ -526,13 +526,13 @@ static inline mpc_conf_config_type_t *__init_driver_ofi(struct _mpc_lowcomm_conf
 
 	__driver_ofi_unfold(driver);
 
-	return ret;	
+	return ret;
 }
 #endif
 
 /**
  * @brief This updates string values to enum values
- * 
+ *
  * @param driver driver to update
  */
 static inline void __mpc_lowcomm_driver_conf_unfold_values(struct _mpc_lowcomm_config_struct_net_driver *driver)
@@ -599,7 +599,7 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_default_driver(c
 
 	mpc_conf_config_type_t *ret = mpc_conf_config_type_init(config_name,
 															PARAM(driver->name, driver, MPC_CONF_TYPE, "Driver configuration"),
-	                                                        NULL);	
+	                                                        NULL);
 
 	__append_new_driver_to_unfolded(new_conf);
 
@@ -634,7 +634,7 @@ static inline mpc_conf_config_type_t * ___mpc_lowcomm_driver_instanciate_from_de
 	}
 
 	mpc_conf_config_type_t *default_config = __mpc_lowcomm_driver_conf_default_driver(config->name, driver_dest->name);
-   
+
     return mpc_conf_config_type_elem_update(default_config, config, 16);
 }
 
@@ -661,7 +661,7 @@ void ___mpc_lowcomm_driver_conf_validate()
 			all_configs->elems[i]->addr = new_config;
 			/* Reget new conf */
 			unfold = _mpc_lowcomm_conf_driver_unfolded_get(config->name);
-			
+
 			if(!unfold)
 			{
 				continue;
@@ -702,7 +702,7 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_init()
 #if defined(MPC_USE_OFI)
 	                                                        PARAM("oficonfigmpi", ofi, MPC_CONF_TYPE, "Default configuration for the OFI Driver"),
 #endif
-	                                                        NULL);	
+	                                                        NULL);
 
 	return ret;
 }
@@ -819,7 +819,7 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
 	                                                         PARAM("rdma", &ret->rdma, MPC_CONF_BOOL, "Can this rail provide RDMA capabilities"),
 	                                                         PARAM("config", ret->config, MPC_CONF_STRING, "Name of the rail configuration to be used for this rail"),
 	                                                         PARAM("gates", gates, MPC_CONF_TYPE, "Gates to check before taking this rail"),
-	                                                         NULL);  
+	                                                         NULL);
 
 
     __append_new_rail_to_unfolded(ret);
@@ -856,7 +856,7 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_rail_conf_init()
 #ifdef MPC_USE_OFI
                                                              PARAM("ofimpi", ofi_mpi, MPC_CONF_TYPE, "A rail with OFI"),
 #endif
-	                                                         NULL);  
+	                                                         NULL);
 
     return rails;
 }
@@ -892,7 +892,7 @@ static inline mpc_conf_config_type_t * ___mpc_lowcomm_rail_instanciate_from_defa
 
     /* Here we override with what was already present in the config */
     mpc_conf_config_type_t * current_rail = mpc_conf_config_type_elem_get_inner(elem);
-   
+
     return mpc_conf_config_type_elem_update(default_rail, current_rail, 1);
 }
 
@@ -1012,7 +1012,7 @@ static inline int ___parse_rail_gate(struct _mpc_lowcomm_config_struct_net_gate 
 
 		cur_unfolded_gate->type = MPC_CONF_RAIL_GATE_MSGTYPE;
 
-		cur_unfolded_gate->value.msgtype.process = __gate_get_bool(gate, "process", 
+		cur_unfolded_gate->value.msgtype.process = __gate_get_bool(gate, "process",
 																	   "Process Specific Messages can use this rail");
 		cur_unfolded_gate->value.msgtype.task = __gate_get_bool(gate, "task",
 																	"Task specific messages can use this rail");
@@ -1026,7 +1026,7 @@ static inline int ___parse_rail_gate(struct _mpc_lowcomm_config_struct_net_gate 
 		mpc_conf_config_type_elem_set_doc(tgate, "A gate filtering message types using a custom function");
 
 		cur_unfolded_gate->type = MPC_CONF_RAIL_GATE_USER;
-		
+
 		mpc_conf_config_type_elem_t *fname = mpc_conf_config_type_get(gate, "funcname");
 
 		if(!fname)
@@ -1068,7 +1068,7 @@ static inline void __mpc_lowcomm_rail_unfold_gates(struct _mpc_lowcomm_config_st
 		if(___parse_rail_gate(cur_unfolded_gate, gate) == 0)
 		{
 			/* Gate  is ok continue */
-			unfolded_rail->gates_size++;	
+			unfolded_rail->gates_size++;
 		}
 		else
 		{
@@ -1119,7 +1119,7 @@ static inline void ___mpc_lowcomm_rail_conf_validate(void)
 		{
 			struct _mpc_lowcomm_config_struct_net_rail *unfolded_rail = _mpc_lowcomm_conf_rail_unfolded_get(rail->name);
 			mpc_conf_config_type_t *gates_type = mpc_conf_config_type_elem_get_inner(gates);
-			
+
 			__mpc_lowcomm_rail_unfold_gates(unfolded_rail, gates_type);
 		}
 		else
@@ -1482,7 +1482,7 @@ static inline mpc_conf_config_type_t * __init_workshare_conf(void)
   /******* WS STEAL MODE *********/
   if ((tmp = getenv("WS_STEAL_MODE")) != NULL) {
     int ws_steal_mode = strtol(tmp, NULL, 10);
-    if (isdigit(tmp[0]) && ws_steal_mode >= 0 && 
+    if (isdigit(tmp[0]) && ws_steal_mode >= 0 &&
         ws_steal_mode < WS_STEAL_MODE_COUNT) {
       ws->steal_mode = ws_steal_mode;
     }
@@ -1520,11 +1520,11 @@ static inline mpc_conf_config_type_t * __init_workshare_conf(void)
   if ((tmp = getenv("WS_ENABLE_STEALING")) != NULL) {
     if(strcmp(tmp, "1") == 0 || strcmp(tmp, "TRUE") == 0 || strcmp(tmp, "true") == 0)
     {
-      ws->enable_stealing = 1; 
+      ws->enable_stealing = 1;
     }
     else
     {
-      ws->enable_stealing = 0; 
+      ws->enable_stealing = 0;
     }
 
   }
@@ -1542,6 +1542,46 @@ static inline mpc_conf_config_type_t * __init_workshare_conf(void)
 	return ret;
 }
 
+
+/************
+ * MEM POOL *
+ ************/
+
+static inline void __mem_pool_defaults( void )
+{
+	struct _mpc_lowcomm_config_mem_pool *mpool = &__lowcomm_conf.memorypool;
+
+	mpool->enabled = 1;
+	mpool->size = 1024 * 1024;
+	mpool->autodetect = 1;
+	mpool->force_process_linear = 0;
+	mpool->per_proc_size = 1024 * 1024;
+}
+
+mpc_conf_config_type_t *__init_mem_pool_config( void )
+{
+	  struct _mpc_lowcomm_config_mem_pool *mpool = &__lowcomm_conf.memorypool;
+
+	mpc_conf_config_type_t *conf = mpc_conf_config_type_init( "memorypool",
+															PARAM( "enabled", &mpool->enabled, MPC_CONF_BOOL,
+																	"Enable the MPI_Alloc_mem shared memory pool" ),
+															PARAM( "size", &mpool->size, MPC_CONF_LONG_INT,
+																	"Size of the MPI_Alloc_mem pool" ),
+															PARAM( "autodetect", &mpool->autodetect, MPC_CONF_BOOL,
+																	"Allow the MPI_Alloc_mem pool to grow linear for some apps" ),
+															PARAM( "forcelinear", &mpool->force_process_linear, MPC_CONF_BOOL,
+																	"Force the size to be a quantum per local process" ),
+															PARAM( "pointers", &mpool->per_proc_size, MPC_CONF_LONG_INT,
+																	"Quantum to allocate to each process when linear forced" ),
+															NULL );
+
+	return conf;
+}
+
+/************
+Init and Release
+**************/
+
 static void __lowcomm_conf_default(void)
 {
 #ifdef SCTK_USE_CHECKSUM
@@ -1550,6 +1590,7 @@ static void __lowcomm_conf_default(void)
 #ifdef MPC_USE_INFINIBAND
 	__init_infiniband_global_conf();
 #endif
+	__mem_pool_defaults();
 }
 
 void _mpc_lowcomm_config_register(void)
@@ -1559,6 +1600,7 @@ void _mpc_lowcomm_config_register(void)
 	mpc_conf_config_type_t *coll     = __mpc_lowcomm_coll_conf_init();
 	mpc_conf_config_type_t *networks = __mpc_lowcomm_network_conf_init();
 	mpc_conf_config_type_t *workshare = __init_workshare_conf();
+	mpc_conf_config_type_t *mempool = __init_mem_pool_config();
 
 
 	mpc_conf_config_type_t *lowcomm = mpc_conf_config_type_init("lowcomm",
@@ -1570,8 +1612,9 @@ void _mpc_lowcomm_config_register(void)
 #endif
 	                                                            PARAM("coll", coll, MPC_CONF_TYPE, "Lowcomm collective configuration"),
 	                                                            PARAM("networking", networks, MPC_CONF_TYPE, "Lowcomm Networking configuration"),
-
-																															PARAM("workshare", workshare, MPC_CONF_TYPE, "Workshare configuration"),
+																PARAM( "memorypool", mempool, MPC_CONF_TYPE,
+																		"Shared-memory pool configuration" ),
+																PARAM("workshare", workshare, MPC_CONF_TYPE, "Workshare configuration"),
 	                                                            NULL);
 
 	mpc_conf_root_config_append("mpcframework", lowcomm, "MPC Lowcomm Configuration");
@@ -1581,5 +1624,5 @@ void _mpc_lowcomm_config_validate(void)
 {
 	__mpc_lowcomm_coll_conf_validate();
 	__mpc_lowcomm_network_conf_validate();
-    
+
 }

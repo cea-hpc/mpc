@@ -44,7 +44,7 @@ lib_LTLIBRARIES = libmpclowcomm.la
 # low-level communication #
 libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c ft.c group.c communicator.c shm_coll.c lowcomm_config.c
 libmpclowcomm_la_SOURCES += sctk_low_level_comm.c multirail.c sctk_net_tools.c sctk_net_topology.c lowcomm_thread.c mqd.c datatypes_common.c
-libmpclowcomm_la_SOURCES += sctk_rail.c reorder.c endpoint.c sctk_topological_polling.c sctk_topological_rail.c sctk_window.c workshare.c pset.c handle_ctx.c
+libmpclowcomm_la_SOURCES += sctk_rail.c reorder.c endpoint.c sctk_topological_polling.c sctk_topological_rail.c sctk_window.c workshare.c pset.c handle_ctx.c alloc_mem.c
 
 # TCP driver #
 libmpclowcomm_la_SOURCES += ./tcp/tcp.c ./tcp/tcp_toolkit.c
@@ -91,4 +91,3 @@ if MPC_HAVE_AM
  libmpclowcomm_la_SOURCES += am.c
  libmpclowcomm_la_LIBADD += $(FFI_LIBS)
 endif
-

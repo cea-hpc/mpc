@@ -20,16 +20,19 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef MPI_ALLOC_MEM_H
-#define MPI_ALLOC_MEM_H
+#ifndef ALLOC_MEM_H
+#define ALLOC_MEM_H
+
+#include <mpc_lowcomm.h>
 
 #include "mpc_common_asm.h"
 #include "mpc_common_datastructure.h"
 #include "mpc_common_datastructure.h"
 #include "mpc_common_spinlock.h"
+
 #include <stdlib.h>
 
-struct mpc_MPI_allocmem_pool {
+struct mpc_lowcomm_allocmem_pool {
   void *_pool;
   void *pool;
   size_t size;
@@ -41,40 +44,14 @@ struct mpc_MPI_allocmem_pool {
   struct mpc_common_hashtable size_ht;
 };
 
-extern struct mpc_MPI_allocmem_pool _mpc_MPI_mem_pool;
+extern struct mpc_lowcomm_allocmem_pool __mpc_lowcomm_memory_pool;
 
-int mpc_MPI_allocmem_pool_init();
-int mpc_MPI_allocmem_pool_release();
+int mpc_lowcomm_allocmem_pool_init();
+int mpc_lowcomm_allocmem_pool_release();
 
-void *mpc_MPI_allocmem_pool_alloc(size_t size);
-void *mpc_MPI_allocmem_pool_alloc_check(size_t size, int * is_shared);
-int mpc_MPI_allocmem_pool_free(void *ptr);
-int mpc_MPI_allocmem_pool_free_size(void *ptr, ssize_t known_size);
+void mpc_lowcomm_accumulate_op_lock_init_shared();
+void mpc_lowcomm_accumulate_op_lock_init();
+void mpc_lowcomm_accumulate_op_lock();
+void mpc_lowcomm_accumulate_op_unlock();
 
-int mpc_MPI_allocmem_is_in_pool(void *ptr);
-
-static inline int _mpc_MPI_allocmem_is_in_pool(void *ptr) {
-  struct mpc_MPI_allocmem_pool *p = &_mpc_MPI_mem_pool;
-  if ((p->pool <= ptr) && (ptr < (p->pool + p->size))) {
-    return 1;
-  }
-
-  return 0;
-}
-
-static inline size_t _mpc_MPI_allocmem_relative_addr(void *in_pool_addr)
-{
-  return in_pool_addr - _mpc_MPI_mem_pool.pool;
-}
-
-static inline void * _mpc_MPI_allocmem_abs_addr(size_t relative_addr)
-{
-  return (char *)_mpc_MPI_mem_pool.pool + relative_addr;
-}
-
-void mpc_MPI_accumulate_op_lock_init_shared();
-void mpc_MPI_accumulate_op_lock_init();
-void mpc_MPI_accumulate_op_lock();
-void mpc_MPI_accumulate_op_unlock();
-
-#endif /* MPI_ALLOC_MEM_H */
+#endif /* ALLOC_MEM_H */

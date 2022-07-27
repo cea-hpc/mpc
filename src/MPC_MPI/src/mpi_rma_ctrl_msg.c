@@ -22,12 +22,12 @@
 
 #include "mpi_rma_ctrl_msg.h"
 
+
 #include "datatype.h"
 #include "mpc_mpi_internal.h"
 #include "comm_lib.h"
 #include <string.h>
 
-#include "mpi_alloc_mem.h"
 #include "mpi_rma_win.h"
 
 /************************************************************************/
@@ -302,7 +302,7 @@ void mpc_MPI_Win_handle_non_contiguous_accumulate_send(void *data,
       (char *)low_win->start_addr + low_win->disp_unit * target_disp;
   int pos = 0;
 
-  mpc_MPI_accumulate_op_lock();
+  mpc_lowcomm_accumulate_op_lock();
 
   PMPI_Pack(start_addr, target_count, target_type, local_pack_data,
                         local_pack_size, &pos, desc->comm);
@@ -327,7 +327,7 @@ void mpc_MPI_Win_handle_non_contiguous_accumulate_send(void *data,
   PMPI_Unpack(local_pack_data, local_pack_size, &pos, start_addr,
                           target_count, target_type, desc->comm);
 
-  mpc_MPI_accumulate_op_unlock();
+  mpc_lowcomm_accumulate_op_unlock();
 
   sctk_free(pack_data);
   sctk_free(local_pack_data);

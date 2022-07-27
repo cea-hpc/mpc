@@ -47,7 +47,7 @@ struct _mpc_mpi_config_coll_array
     int (*allgatherv)(const void *, int, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm);
 
     char alltoall_name[MPC_CONF_STRING_SIZE];
-    int (*alltoall)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm); 
+    int (*alltoall)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm);
 
     char alltoallv_name[MPC_CONF_STRING_SIZE];
     int (*alltoallv)(const void *, const int *, const int *, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm);
@@ -102,7 +102,7 @@ struct _mpc_mpi_config_coll_algorithm_array
     int (*allgatherv)(const void *, int, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm, int, void *, void *);
 
     char alltoall_name[MPC_CONF_STRING_SIZE];
-    int (*alltoall)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm, int, void *, void *); 
+    int (*alltoall)(const void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm, int, void *, void *);
 
     char alltoallv_name[MPC_CONF_STRING_SIZE];
     int (*alltoallv)(const void *, const int *, const int *, MPI_Datatype, void *, const int *, const int *, MPI_Datatype, MPI_Comm, int, void *, void *);
@@ -216,7 +216,7 @@ struct _mpc_mpi_config_coll_opts
     int bcast_intra_for_trsh;
 
     /* SHM */
-    
+
     /* Reduce */
     int reduce_pipelined_blocks;
     long int reduce_pipelined_tresh;
@@ -229,20 +229,7 @@ struct _mpc_mpi_config_coll_opts
     int topo_creation_allow_persistent;
     int topo_creation_allow_non_blocking;
     int topo_creation_allow_blocking;
-    
-};
 
-/***************
- * MEMORY POOL *
- ***************/
-
-struct _mpc_mpi_config_mem_pool
-{
-    int enabled;
-    long int size;
-    int autodetect;
-    int force_process_linear;
-    long int per_proc_size;
 };
 
 /************************************
@@ -260,10 +247,8 @@ struct _mpc_mpi_config
     struct _mpc_mpi_config_coll_array coll_intracomm_shm;
     struct _mpc_mpi_config_coll_array coll_intracomm_shared_node;
     struct _mpc_mpi_config_coll_array coll_intracomm;
-    
-    struct _mpc_mpi_config_coll_algorithm_array coll_algorithm_intracomm;
 
-    struct _mpc_mpi_config_mem_pool mempool;
+    struct _mpc_mpi_config_coll_algorithm_array coll_algorithm_intracomm;
 };
 
 struct _mpc_mpi_config * _mpc_mpi_config(void);

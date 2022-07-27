@@ -42,8 +42,11 @@
 #include <mpc_common_flags.h>
 #include <mpc_topology.h>
 
+#include "alloc_mem.h"
+
 #include "communicator.h"
-#include <mpc_lowcomm_datatypes.h>
+#include "datatypes_common.h"
+
 #ifdef MPC_USE_INFINIBAND
 #include <ibdevice.h>
 #endif
@@ -361,7 +364,7 @@ int _mpc_lowcomm_comm_get_lists(int rank, mpc_lowcomm_ptp_message_lists_t **list
 		{
 			(lists)[ret_cnt] = &ptp->lists;
 			ret_cnt++;
-		} 
+		}
 	}
 
 	*list_count = ret_cnt;
@@ -726,7 +729,7 @@ void _mpc_comm_ptp_message_commit_request(mpc_lowcomm_ptp_message_t *send,
 		/* Make sure to do the communicator translation here
 		 * as messages are sent with their comm_world rank this is required
 		 * when matching ANY_SOURCE messages in order to fill accordingly
-		 * the MPI_Status object from the request data 
+		 * the MPI_Status object from the request data
 		 * therefore we translate the rank as seen from the source (for intercomm)
 		 * for intracomm as there is a single group it is not important */
 		if(0 <= SCTK_MSG_SRC_TASK(send))
@@ -1574,6 +1577,8 @@ void mpc_lowcomm_init_per_task(int rank)
 	__mpc_comm_ptp_task_init();
 	__mpc_comm_buffered_ptp_init();
 
+	_mpc_lowcomm_datatype_init_common();
+
 	for(comm_id = 0; comm_id < SCTK_PARALLEL_COMM_QUEUES_NUMBER; comm_id++)
 	{
 		mpc_comm_ptp_t *tmp = sctk_malloc(sizeof(mpc_comm_ptp_t) );
@@ -1586,10 +1591,15 @@ void mpc_lowcomm_init_per_task(int rank)
 		/* And insert them */
 		__mpc_comm_ptp_array_insert(tmp);
 	}
+
+
+	mpc_lowcomm_allocmem_pool_init();
 }
 
 void mpc_lowcomm_release_per_task(int task_rank)
 {
+	mpc_lowcomm_allocmem_pool_release();
+
 	sctk_net_finalize_task_level(task_rank, mpc_topology_get_current_cpu() );
 }
 
@@ -2496,7 +2506,7 @@ void mpc_lowcomm_ptp_msg_progress(struct mpc_lowcomm_ptp_msg_progress_s *wait)
 void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_receiver_end)
 {
 	assert(mpc_common_get_process_rank() >= 0);
-	assert( 
+	assert(
 		/* Does not overflow */
 		(mpc_common_get_process_count() >= SCTK_MSG_DEST_PROCESS(msg)) ||
 		/* Is different process set */

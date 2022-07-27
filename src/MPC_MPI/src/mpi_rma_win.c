@@ -24,7 +24,6 @@
 #include "mpi_rma_ctrl_msg.h"
 #include <mpc_launch_shm.h>
 
-#include "mpi_alloc_mem.h"
 #include "mpi_rma_epoch.h"
 #include "mpc_lowcomm.h"
 #include "mpc_lowcomm_rdma.h"
@@ -498,7 +497,7 @@ int mpc_MPI_Win_allocate(MPI_Aint size, int disp_unit, MPI_Info info,
     /* Here we opt for an allocated win
      * as all ranks were not on the same node
      * but still try to allocate shared*/
-    void *new_win_segment = mpc_MPI_allocmem_pool_alloc(size);
+    void *new_win_segment = mpc_lowcomm_allocmem_pool_alloc(size);
 
     if (!new_win_segment) {
       perror("malloc");
@@ -533,7 +532,7 @@ static inline int __rank(void *pcomm)
 static inline int __bcast(void *buff, size_t len, void *pcomm)
 {
 	MPI_Comm comm = (MPI_Comm)pcomm;
-	
+
 	PMPI_Bcast(buff,len, MPI_BYTE, 0, comm);
 	return 0;
 }
@@ -710,7 +709,7 @@ int mpc_MPI_Win_free(MPI_Win *win) {
     break;
 
   case MPC_MPI_WIN_STORAGE_MEMALLOC:
-    mpc_MPI_allocmem_pool_free(low_win->start_addr);
+    mpc_lowcomm_allocmem_pool_free(low_win->start_addr);
     break;
 
   case MPC_MPI_WIN_STORAGE_SHARED: {
