@@ -20,6 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include "multirail.h"
+#include "mpc_common_datastructure.h"
 
 #ifdef MPC_USE_DMTCP
 #include "sctk_ft_iface.h"

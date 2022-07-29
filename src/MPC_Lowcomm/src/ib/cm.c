@@ -1309,5 +1309,3 @@ int _mpc_lowcomm_ib_cm_control_message_handler(mpc_lowcomm_peer_uid_t process_sr
 
 	return 0;
 }
-
-

@@ -733,15 +733,15 @@ void _mpc_comm_ptp_message_commit_request(mpc_lowcomm_ptp_message_t *send,
 		 * therefore we translate the rank as seen from the source (for intercomm)
 		 * for intracomm as there is a single group it is not important */
 		if(0 <= SCTK_MSG_SRC_TASK(send))
-        {
-            recv->tail.request->header.source_task = mpc_lowcomm_communicator_rank_of_as(SCTK_MSG_COMMUNICATOR(send), SCTK_MSG_SRC_TASK(send),  SCTK_MSG_SRC_TASK(send), SCTK_MSG_SRC_PROCESS_UID(send) );
-		    //assume(recv->tail.request->header.source_task  != MPC_PROC_NULL);
-        }
-        else
-        {
-            /* This is a ctrl msg do not attemp to resolve */
-            recv->tail.request->header.source_task = SCTK_MSG_SRC_TASK(send);
-        }
+		{
+			recv->tail.request->header.source_task = mpc_lowcomm_communicator_rank_of_as(SCTK_MSG_COMMUNICATOR(send), SCTK_MSG_SRC_TASK(send),  SCTK_MSG_SRC_TASK(send), SCTK_MSG_SRC_PROCESS_UID(send) );
+			//assume(recv->tail.request->header.source_task  != MPC_PROC_NULL);
+		}
+		else
+		{
+			/* This is a ctrl msg do not attemp to resolve */
+			recv->tail.request->header.source_task = SCTK_MSG_SRC_TASK(send);
+		}
 
 		recv->tail.request->header.source      = SCTK_MSG_SRC_PROCESS_UID(send);
 		recv->tail.request->header.message_tag = SCTK_MSG_TAG(send);
