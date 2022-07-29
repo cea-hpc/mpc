@@ -106,8 +106,8 @@ static inline void mpc_common_debug(const char *fmt, ...)
 	#endif
 #endif
 
-#define mpc_common_tracepoint(FMT) mpc_common_debug_log("%s:%d [%s] : "FMT, __FILE__, __LINE__, __FUNCTION__);
-#define mpc_common_tracepoint_fmt(FMT, ...) mpc_common_debug_log("%s:%d [%s] : "FMT, __FILE__, __LINE__, __FUNCTION__, __VA_ARGS__);
+#define mpc_common_tracepoint(FMT) mpc_common_debug("%s:%d [%s] : "FMT, __FILE__, __LINE__, __FUNCTION__);
+#define mpc_common_tracepoint_fmt(FMT, ...) mpc_common_debug("%s:%d [%s] : "FMT, __FILE__, __LINE__, __FUNCTION__, __VA_ARGS__);
 
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)
 #define mpc_common_nodebug(fmt, ...)    (void)(0)
