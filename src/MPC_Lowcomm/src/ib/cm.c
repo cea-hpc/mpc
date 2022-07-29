@@ -815,6 +815,9 @@ _mpc_lowcomm_endpoint_t * _mpc_lowcomm_ib_cm_on_demand_request_monitor(sctk_rail
     return endpoint;
 }
 
+static int __cm_control_message_handler(mpc_lowcomm_peer_uid_t process_src, char *data,  __UNUSED__ char *return_data,  __UNUSED__ int return_data_len,  void *ctx);
+
+
 void _mpc_lowcomm_ib_cm_monitor_register_callbacks(sctk_rail_info_t * rail)
 {
   char cb_name[128];
@@ -827,7 +830,7 @@ void _mpc_lowcomm_ib_cm_monitor_register_callbacks(sctk_rail_info_t * rail)
                                                   (void*)rail);
 
   mpc_lowcomm_monitor_register_on_demand_callback(__monitor_get_rail_name(cb_name, 128, rail, _IB_MONITOR_RDMA),
-                                                  _mpc_lowcomm_ib_cm_control_message_handler,
+                                                  __cm_control_message_handler,
                                                   (void*)rail);
 
 
@@ -1246,11 +1249,12 @@ static inline int _mpc_lowcomm_ib_cm_resizing_rdma_recv_request(sctk_rail_info_t
 	return 0;
 }
 
+
 /*-----------------------------------------------------------
 *  Handler of OD connexions
 *----------------------------------------------------------*/
 
-int _mpc_lowcomm_ib_cm_control_message_handler(mpc_lowcomm_peer_uid_t process_src, char *data,  __UNUSED__ char *return_data,  __UNUSED__ int return_data_len,  void *ctx)
+static int __cm_control_message_handler(mpc_lowcomm_peer_uid_t process_src, char *data,  __UNUSED__ char *return_data,  __UNUSED__ int return_data_len,  void *ctx)
 {
 
 	_mpc_lowcomm_ib_cm_rdma_control_message_t * cm = (_mpc_lowcomm_ib_cm_rdma_control_message_t*)data;

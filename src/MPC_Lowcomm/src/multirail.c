@@ -1215,6 +1215,44 @@ _mpc_lowcomm_multirail_table_entry_t *_mpc_lowcomm_multirail_table_acquire_route
 	return dest_entry;
 }
 
+
+mpc_lowcomm_peer_uid_t _mpc_lowcomm_multirail_table_get_closest_peer(mpc_lowcomm_peer_uid_t dest,
+													int (*distance_fn)(mpc_lowcomm_peer_uid_t dest, 
+																 mpc_lowcomm_peer_uid_t candidate),
+													int * minimal_distance)
+{
+	struct _mpc_lowcomm_multirail_table * table      = _mpc_lowcomm_multirail_table_get();
+
+	mpc_lowcomm_peer_uid_t ret = 0;
+	int cur_distance = -1;
+
+	_mpc_lowcomm_multirail_table_entry_t *dest_entry = NULL;
+
+	MPC_HT_ITER(&table->destination_table, dest_entry)
+	{
+		int distance = (distance_fn)(dest, dest_entry->destination);
+
+		if(distance == 0)
+		{
+			/* Exact match */
+			ret = dest_entry->destination;
+			*minimal_distance = 0;
+			MPC_HT_ITER_BREAK(&table->destination_table);
+		}
+
+		if( (cur_distance < 0) || (distance < cur_distance))
+		{
+			*minimal_distance = distance;
+			ret = dest_entry->destination;
+		}
+
+	}
+	MPC_HT_ITER_END(&table->destination_table)
+
+	return ret;
+}
+
+
 void _mpc_lowcomm_multirail_table_relax_routes(_mpc_lowcomm_multirail_table_entry_t *entry)
 {
 	if(!entry)

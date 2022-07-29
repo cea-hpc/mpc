@@ -204,28 +204,6 @@ static void sctk_network_connect_on_demand_ptl ( struct sctk_rail_info_s * rail 
 	sctk_ptl_add_route(dest, id, rail, _MPC_LOWCOMM_ENDPOINT_DYNAMIC, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
 }
 
-/**
- * Handle incoming messages, flagged as control_messages.
- * Portals does not need (for now) to handle rail-specific control-messages.
- * \param[in] rail the rail owner
- * \param[in] source_process the process that requested the CM
- * \param[in] source_rank the task requesting the CM (can be -1 if not a MPI task)
- * \param[in] subtype type of CM
- * \param[in] param
- * \param[in] data the payload embedded w/ the CM
- * \param[in] size datatype's size
- */
-static void sctk_network_cm_handler_ptl( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data, size_t size )
-{
-	UNUSED(rail);
-	UNUSED(source_process);
-	UNUSED(source_rank);
-	UNUSED(subtype);
-	UNUSED(param);
-	UNUSED(data);
-	UNUSED(size);
-	not_implemented();
-}
 
 /**
  * Nothing to do here for Portals.
@@ -300,7 +278,6 @@ void sctk_network_init_ptl (sctk_rail_info_t *rail)
 	rail->connect_to              = sctk_network_connect_to_ptl;
 	rail->connect_from            = sctk_network_connect_from_ptl;
 	rail->connect_on_demand       = sctk_network_connect_on_demand_ptl;
-	rail->control_message_handler = sctk_network_cm_handler_ptl;
 
 	sctk_ptl_init_interface( rail );
 

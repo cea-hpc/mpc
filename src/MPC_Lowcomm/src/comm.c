@@ -270,6 +270,8 @@ static inline void __mpc_comm_ptp_message_list_merge_pending(mpc_lowcomm_ptp_mes
     }
 }
 
+
+
 static inline void __mpc_comm_ptp_message_list_lock_pending(mpc_lowcomm_ptp_message_lists_t *lists)
 {
 	mpc_common_spinlock_lock_yield(&(lists->pending_lock) );
@@ -2047,6 +2049,7 @@ static inline mpc_lowcomm_msg_list_t *__mpc_comm_pending_msg_list_search_matchin
 					{
 						msg->tail.request->status_error = err;
 					}
+
 				}
 			}
 

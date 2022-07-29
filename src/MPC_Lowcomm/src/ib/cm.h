@@ -135,8 +135,6 @@ void _mpc_lowcomm_ib_cm_connect_from ( int from, int to, sctk_rail_info_t *rail 
 /* On-demand connexions */
 int _mpc_lowcomm_ib_cm_on_demand_recv_check ( mpc_lowcomm_ptp_message_body_t *msg );
  
-int _mpc_lowcomm_ib_cm_control_message_handler(mpc_lowcomm_peer_uid_t process_src, char *data,  char *return_data,  int return_data_len,  void *ctx);
-
 _mpc_lowcomm_endpoint_t *_mpc_lowcomm_ib_cm_on_demand_request ( int dest, sctk_rail_info_t *rail );
 
 _mpc_lowcomm_endpoint_t * _mpc_lowcomm_ib_cm_on_demand_request_monitor(sctk_rail_info_t *rail, mpc_lowcomm_peer_uid_t dest);

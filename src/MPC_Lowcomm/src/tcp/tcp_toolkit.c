@@ -465,7 +465,6 @@ void sctk_network_init_tcp_all(sctk_rail_info_t *rail, char *interface,
 	/* Fill in common rail info */
 	rail->connect_from            = NULL;
 	rail->connect_to              = NULL;
-	rail->control_message_handler = NULL;
 
 	rail->network.tcp.interface = interface;
 	rail->network.tcp.tcp_thread_loop        = tcp_thread_loop;

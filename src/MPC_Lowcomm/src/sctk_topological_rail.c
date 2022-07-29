@@ -576,7 +576,6 @@ void sctk_network_init_topological(sctk_rail_info_t *rail)
 	rail->notify_probe_message      = NULL;
 	rail->notify_any_source_message = NULL;
 	rail->send_message_from_network = NULL;
-	rail->control_message_handler   = NULL;
 	rail->connect_to        = NULL;
 	rail->connect_from      = NULL;
 	rail->rail_pin_region   = sctk_topological_rail_pin_region;
