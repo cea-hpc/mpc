@@ -10,6 +10,7 @@ stages:
   - Breaking tests
   - Configurations
   - Finalization
+  - Release
 
 # Add clone variables for concurent PIPELINES
 variables:
@@ -352,3 +353,11 @@ Centos 7:
   only:
     variables:
       - $MPC_CI_MODE == "multibuild"
+
+release:
+  stage: Release
+  when: manual
+  script: utils/prepare_release.sh --destination=release/ --distribution=fedora:latest
+  artifacts:
+    paths:
+      - release/x86_64
