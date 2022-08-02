@@ -1352,7 +1352,7 @@ void mpc_topology_init()
 	__mpc_module_topology_loaded = 1;
 }
 
-int _mpc_topology_get_latency_effectors(char * input, int ** effectors_depth, long ** factors) {
+int _mpc_topology_get_effectors(char * input, int ** effectors_depth, long ** factors) {
   int size = 0;
   *effectors_depth = NULL;
   *factors = NULL;
@@ -1393,34 +1393,19 @@ int _mpc_topology_get_latency_effectors(char * input, int ** effectors_depth, lo
 }
 
 void mpc_topology_init_sleep_factors(int * tab_cpuid, int size) {
-  // int latency_size = 3;
-  // int bandwidth_size = 3;
-
-  // char latency_effector[][30] = {"HWLOC_OBJ_UP", "HWLOC_OBJ_L3", "HWLOC_OBJ_L2"};
-  // char bandwidth_effector[][30] = {"HWLOC_OBJ_UP", "HWLOC_OBJ_L3", "HWLOC_OBJ_L2"};
-
-  // int latency_factors[]   = {10, 100, 1000};
-  // int bandwidth_factors[] = {1000, 100, 10};
-
 
   int * latency_effectors_depth;
   long * latency_factors;
-  int latency_size = _mpc_topology_get_latency_effectors(__mpc_topo_config.latency_factors, &latency_effectors_depth, &latency_factors);
+  int latency_size = _mpc_topology_get_effectors(__mpc_topo_config.latency_factors, &latency_effectors_depth, &latency_factors);
 
   int * bandwidth_effectors_depth;
   long * bandwidth_factors;
-  int bandwidth_size = _mpc_topology_get_latency_effectors(__mpc_topo_config.bandwidth_factors, &bandwidth_effectors_depth, &bandwidth_factors);
+  int bandwidth_size = _mpc_topology_get_effectors(__mpc_topo_config.bandwidth_factors, &bandwidth_effectors_depth, &bandwidth_factors);
 
 
 
   hwloc_topology_t global_topology = mpc_topology_global_get();
   int swap;
-
-  // hwloc_obj_type_t latency_objs[latency_size];
-  // int latency_effector_depths[latency_size];
-  // for(int i = 0; i < latency_size; i++) {
-  //   hwloc_type_sscanf_as_depth(latency_effector[i], &(latency_objs[i]), global_topology, &(latency_effector_depths[i]));
-  // }
 
   int latency_hashtable[latency_size];
   for(int i = 0; i < latency_size; i++) {
@@ -1440,12 +1425,6 @@ void mpc_topology_init_sleep_factors(int * tab_cpuid, int size) {
       }
     }
   }
-
-  // hwloc_obj_type_t bandwidth_objs[bandwidth_size];
-  // int bandwidth_effector_depths[bandwidth_size];
-  // for(int i = 0; i < bandwidth_size; i++) {
-  //   hwloc_type_sscanf_as_depth(bandwidth_effector[i], &(bandwidth_objs[i]), global_topology, &(bandwidth_effector_depths[i]));
-  // }
 
   int bandwidth_hashtable[bandwidth_size];
   for(int i = 0; i < bandwidth_size; i++) {

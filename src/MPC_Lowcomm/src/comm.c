@@ -2501,78 +2501,6 @@ void mpc_lowcomm_ptp_msg_progress(struct mpc_lowcomm_ptp_msg_progress_s *wait)
 /* Send messages                                                    */
 /********************************************************************/
 
-void topology_simulation_sleep(mpc_lowcomm_ptp_message_t *msg) {
-
-  mpc_lowcomm_communicator_t comm = SCTK_MSG_COMMUNICATOR(msg);
-
-  int src_local = SCTK_MSG_SRC_TASK(msg);
-  int dst_local = SCTK_MSG_DEST_TASK(msg);
-
-  int src = mpc_lowcomm_communicator_world_rank_of(comm, src_local),
-      dst = mpc_lowcomm_communicator_world_rank_of(comm, dst_local),
-      size = SCTK_MSG_SIZE(msg);
-
-  hwloc_topology_t topology = mpc_topology_get();
-
-  struct hwloc_distances_s * latency_matrix;
-  struct hwloc_distances_s * bandwidth_matrix;
-
-  unsigned int nr1 = 2, nr2 = 2;
-  hwloc_distances_get(topology, &nr1, &latency_matrix  , HWLOC_DISTANCES_KIND_MEANS_LATENCY  , 0);
-  hwloc_distances_get(topology, &nr2, &bandwidth_matrix, HWLOC_DISTANCES_KIND_MEANS_BANDWIDTH, 0);
-
-  if(!nr1 || !nr2) {
-    return;
-  }
-
-  unsigned long latency = latency_matrix->values[src + dst * latency_matrix->nbobjs];
-  unsigned long bandwidth = bandwidth_matrix->values[src + dst * bandwidth_matrix->nbobjs];
-
-  usleep(latency + size / bandwidth);
-
-
-  hwloc_distances_release(topology, latency_matrix  );
-  hwloc_distances_release(topology, bandwidth_matrix);
-}
-
-void topology_simulation_sleep2(int src_local, int dst_local, int size, mpc_lowcomm_communicator_t comm) {
-
-  int src = mpc_lowcomm_communicator_world_rank_of(comm, src_local),
-      dst = mpc_lowcomm_communicator_world_rank_of(comm, dst_local);
-
-  hwloc_topology_t topology = mpc_topology_global_get();
-
-  struct hwloc_distances_s * latency_matrix;
-  struct hwloc_distances_s * bandwidth_matrix;
-
-  unsigned int nr1 = 1, nr2 = 1;
-  float sleep_time = 0;
-
-  if(mpc_topology_is_latency_factors()) {
-    hwloc_distances_get(topology, &nr1, &latency_matrix  , HWLOC_DISTANCES_KIND_FROM_USER | HWLOC_DISTANCES_KIND_MEANS_LATENCY  , 0);
-    if(nr1) {
-      unsigned long latency = latency_matrix->values[src + dst * latency_matrix->nbobjs];
-      hwloc_distances_release(topology, latency_matrix  );
-
-      sleep_time += latency;
-    }
-  }
-
-  if(mpc_topology_is_bandwidth_factors()) {
-    hwloc_distances_get(topology, &nr2, &bandwidth_matrix, HWLOC_DISTANCES_KIND_FROM_USER | HWLOC_DISTANCES_KIND_MEANS_BANDWIDTH, 0);
-    if(nr2) {
-      unsigned long bandwidth = bandwidth_matrix->values[src + dst * bandwidth_matrix->nbobjs];
-      hwloc_distances_release(topology, bandwidth_matrix);
-
-      if(bandwidth)
-        sleep_time += size / bandwidth;
-    }
-  }
-
-  if(sleep_time)
-    usleep(sleep_time);
-}
-
 /*
  * Function called when sending a message. The message can be forwarded to
  * another process
@@ -2581,7 +2509,6 @@ void topology_simulation_sleep2(int src_local, int dst_local, int size, mpc_lowc
  * */
 void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_receiver_end)
 {
-  //topology_simulation_sleep(msg);
 
 	assert(mpc_common_get_process_rank() >= 0);
 	assert(
@@ -2924,8 +2851,6 @@ static inline int __mpc_lowcomm_isend_class_src(int src, int dest, const void *d
 		return MPC_LOWCOMM_SUCCESS;
 	}
 
-
-  //topology_simulation_sleep2(src, dest, size, comm);
 
 	mpc_lowcomm_ptp_message_t *msg =
 	        mpc_lowcomm_ptp_message_header_create(MPC_LOWCOMM_MESSAGE_CONTIGUOUS);

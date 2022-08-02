@@ -843,7 +843,7 @@ static inline void __route_to_process(mpc_lowcomm_peer_uid_t destination, mpc_lo
 	}
 }
 
-void topology_simulation_sleep3(int src, int dst, int size) {
+void topology_simulation_sleep(int src, int dst, int size) {
 
   hwloc_topology_t topology = mpc_topology_global_get();
 
@@ -935,7 +935,8 @@ void _mpc_lowcomm_multirail_send_message(mpc_lowcomm_ptp_message_t *msg)
 			/* Prepare reordering */
 			_mpc_lowcomm_reorder_msg_register(msg);
 
-      topology_simulation_sleep3(
+      /* Sleep if needed */
+      topology_simulation_sleep(
           mpc_lowcomm_peer_get_rank(mpc_lowcomm_monitor_get_uid()), 
           mpc_lowcomm_peer_get_rank(endpoint->dest), 
           SCTK_MSG_SIZE(msg));
