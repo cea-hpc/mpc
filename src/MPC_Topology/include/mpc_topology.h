@@ -78,6 +78,7 @@ extern "C" {
 /** @brief Initialize the topology module
 */
 void mpc_topology_init(void);
+void mpc_topology_init_sleep_factors(int*,int);
 
 /** @brief Destroy the topology module
 */
@@ -280,6 +281,9 @@ int mpc_topology_get_mcdram_node();
  * @return int non zero if NVDIMMs are found
  */
 int mpc_topology_has_nvdimm();
+
+int mpc_topology_is_latency_factors();
+int mpc_topology_is_bandwidth_factors();
 /***************************************
  * MPC TOPOLOGY HARDWARE TOPOLOGY SPLIT*
  ***************************************/

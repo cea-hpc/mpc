@@ -61,6 +61,8 @@ struct mpc_topology_config
 {
 	char hwloc_xml[MPC_CONF_STRING_SIZE];
 	char pin_proc_list[MPC_CONF_STRING_SIZE];
+  char latency_factors[MPC_CONF_STRING_SIZE];
+  char bandwidth_factors[MPC_CONF_STRING_SIZE];
 };
 
 
@@ -71,6 +73,8 @@ void __init_topology_config(void)
 	mpc_conf_config_type_t *topo_conf = mpc_conf_config_type_init("topology",
 																  PARAM("xml", __mpc_topo_config.hwloc_xml ,MPC_CONF_STRING, "HWLOC XML to be used to load machine topology"),
 																  PARAM("bindings", __mpc_topo_config.pin_proc_list ,MPC_CONF_STRING, "List of cores to pin to ex: 1,3-4, only if one proc per node"),
+																  PARAM("latencies", __mpc_topo_config.latency_factors ,MPC_CONF_STRING, "List of pair of hwloc_type & sleep factors for latency to apply on topology, ex: HWLOC_OBJ_L3,100,HWLOC_OBJ_CORE,1"),
+																  PARAM("bandwidths", __mpc_topo_config.bandwidth_factors ,MPC_CONF_STRING, "List of pair of hwloc_type & sleep factors for bandwidth to apply on topology, ex: HWLOC_OBJ_L3,100,HWLOC_OBJ_CORE,1"),
 																  NULL);
 
 
@@ -1303,10 +1307,14 @@ void mpc_topology_init()
 		{
 			fprintf(stderr, "USE XML file %s\n", __mpc_topo_config.hwloc_xml);
 
-			if(hwloc_topology_set_xml(__mpc_module_topology, __mpc_topo_config.hwloc_xml) < 0)
+			if(hwloc_topology_set_xml(__mpc_module_topology, __mpc_topo_config.hwloc_xml) < 0 ||
+         hwloc_topology_set_xml(__mpc_module_topology_global, __mpc_topo_config.hwloc_xml) < 0)
 			{
 				bad_parameter("MPC_TOPOLOGY_XML could not load HWLOC topology from %s", __mpc_topo_config.hwloc_xml);
 			}
+
+      hwloc_topology_set_flags(__mpc_module_topology       , HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM | hwloc_topology_get_flags(__mpc_module_topology));
+      hwloc_topology_set_flags(__mpc_module_topology_global, HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM | hwloc_topology_get_flags(__mpc_module_topology_global));
 		}
 	}
 
@@ -1342,6 +1350,182 @@ void mpc_topology_init()
 #endif
 
 	__mpc_module_topology_loaded = 1;
+}
+
+int _mpc_topology_get_latency_effectors(char * input, int ** effectors_depth, long ** factors) {
+  int size = 0;
+  *effectors_depth = NULL;
+  *factors = NULL;
+
+  if(input == NULL || strlen(input) == 0) {
+    return size;
+  }
+
+  for(unsigned long i = 0; i < strlen(input); i++) {
+    size += (input[i] == ',');
+  }
+  if(!(size & 1)) {
+    bad_parameter("Wrong number of parametter for latency/bandwidth sleep factors. Need to be pair of hwloc_type & long (type1,long1,type2,long2,...):\n\t%s\n", input);
+  }
+  size = (size + 1) / 2;
+
+  hwloc_topology_t global_topology = mpc_topology_global_get();
+  *effectors_depth = malloc(size * sizeof(int));
+  *factors = malloc(size * sizeof(long));
+
+  int current;
+  char *str, *token, *saveptr, *endptr;
+  for(str = input, current = 0; (token = strtok_r(str, ",", &saveptr)) != NULL; str = NULL, current++) {
+    int ret = hwloc_type_sscanf_as_depth(token, NULL, global_topology, &((*effectors_depth)[current]));
+    if(ret == HWLOC_TYPE_DEPTH_UNKNOWN || ret == HWLOC_TYPE_DEPTH_MULTIPLE) {
+      bad_parameter("Unknown type for current topology in latency/bandwidth sleep factors: %s\n", token);
+    }
+
+    token = strtok_r(NULL, ",", &saveptr);
+    long val = strtol(token, &endptr, 10);
+    if((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN)) || (errno != 0 && val == 0)) {
+      bad_parameter("Failed to convert token to long in latency/bandwidth sleep factors: %s\n", token);
+    }
+    (*factors)[current] = val;
+  }
+
+  return size;
+}
+
+void mpc_topology_init_sleep_factors(int * tab_cpuid, int size) {
+  // int latency_size = 3;
+  // int bandwidth_size = 3;
+
+  // char latency_effector[][30] = {"HWLOC_OBJ_UP", "HWLOC_OBJ_L3", "HWLOC_OBJ_L2"};
+  // char bandwidth_effector[][30] = {"HWLOC_OBJ_UP", "HWLOC_OBJ_L3", "HWLOC_OBJ_L2"};
+
+  // int latency_factors[]   = {10, 100, 1000};
+  // int bandwidth_factors[] = {1000, 100, 10};
+
+
+  int * latency_effectors_depth;
+  long * latency_factors;
+  int latency_size = _mpc_topology_get_latency_effectors(__mpc_topo_config.latency_factors, &latency_effectors_depth, &latency_factors);
+
+  int * bandwidth_effectors_depth;
+  long * bandwidth_factors;
+  int bandwidth_size = _mpc_topology_get_latency_effectors(__mpc_topo_config.bandwidth_factors, &bandwidth_effectors_depth, &bandwidth_factors);
+
+
+
+  hwloc_topology_t global_topology = mpc_topology_global_get();
+  int swap;
+
+  // hwloc_obj_type_t latency_objs[latency_size];
+  // int latency_effector_depths[latency_size];
+  // for(int i = 0; i < latency_size; i++) {
+  //   hwloc_type_sscanf_as_depth(latency_effector[i], &(latency_objs[i]), global_topology, &(latency_effector_depths[i]));
+  // }
+
+  int latency_hashtable[latency_size];
+  for(int i = 0; i < latency_size; i++) {
+    latency_hashtable[i] = i;
+  }
+
+  for(int i = 0; i < latency_size; i++) {
+    for(int j = 0; j < latency_size - 1; j++) {
+      if(latency_effectors_depth[j] > latency_effectors_depth[j+1]) {
+        swap = latency_effectors_depth[j];
+        latency_effectors_depth[j] = latency_effectors_depth[j+1];
+        latency_effectors_depth[j+1] = swap;
+
+        swap = latency_hashtable[j];
+        latency_hashtable[j] = latency_hashtable[j+1];
+        latency_hashtable[j+1] = swap;
+      }
+    }
+  }
+
+  // hwloc_obj_type_t bandwidth_objs[bandwidth_size];
+  // int bandwidth_effector_depths[bandwidth_size];
+  // for(int i = 0; i < bandwidth_size; i++) {
+  //   hwloc_type_sscanf_as_depth(bandwidth_effector[i], &(bandwidth_objs[i]), global_topology, &(bandwidth_effector_depths[i]));
+  // }
+
+  int bandwidth_hashtable[bandwidth_size];
+  for(int i = 0; i < bandwidth_size; i++) {
+    bandwidth_hashtable[i] = i;
+  }
+
+  for(int i = 0; i < bandwidth_size; i++) {
+    for(int j = 0; j < bandwidth_size - 1; j++) {
+      if(bandwidth_effectors_depth[j] < bandwidth_effectors_depth[j+1]) {
+        swap = bandwidth_effectors_depth[j];
+        bandwidth_effectors_depth[j] = bandwidth_effectors_depth[j+1];
+        bandwidth_effectors_depth[j+1] = swap;
+
+        swap = bandwidth_hashtable[j];
+        bandwidth_hashtable[j] = bandwidth_hashtable[j+1];
+        bandwidth_hashtable[j+1] = swap;
+      }
+    }
+  }
+
+
+
+  hwloc_uint64_t * latency_matrix   = sctk_malloc(size * size * sizeof(hwloc_uint64_t));
+  hwloc_uint64_t * bandwidth_matrix = sctk_malloc(size * size * sizeof(hwloc_uint64_t));
+  
+  for(int i = 0; i < size; i++) {
+    hwloc_obj_t obj = hwloc_get_obj_by_type(global_topology, HWLOC_OBJ_PU, tab_cpuid[i * 2]);
+    
+    latency_matrix[i * size + i] = 0;
+    bandwidth_matrix[i * size + i] = 0;
+    for(int j = i+1; j < size; j++) {
+      hwloc_obj_t obj2 = hwloc_get_obj_by_type(global_topology, HWLOC_OBJ_PU, tab_cpuid[j * 2]);
+      int ancestor_depth = hwloc_get_common_ancestor_obj(global_topology, obj, obj2)->depth;
+
+      latency_matrix[i * size + j] = 0;
+      for(int k = 0; k < latency_size; k++) {
+        if(ancestor_depth >= latency_effectors_depth[k]) {
+          latency_matrix[i * size + j] = latency_factors[latency_hashtable[k]];
+          break;
+        }
+      }
+
+      bandwidth_matrix[i * size + j] = 0;
+      for(int k = 0; k < bandwidth_size; k++) {
+        if(ancestor_depth >= bandwidth_effectors_depth[k]) {
+          bandwidth_matrix[i * size + j] = bandwidth_factors[latency_hashtable[k]];
+          break;
+        }
+      }
+    }
+  }
+
+
+  hwloc_obj_t objs[size];
+  for(int i = 0; i < size; i++) {
+    objs[i] = hwloc_get_obj_by_type(global_topology, HWLOC_OBJ_PU, tab_cpuid[i * 2]);
+  }
+
+
+  if(latency_size)
+    hwloc_distances_add(global_topology, size, objs, latency_matrix, HWLOC_DISTANCES_KIND_FROM_USER | HWLOC_DISTANCES_KIND_MEANS_LATENCY, 0);
+  if(bandwidth_size)
+    hwloc_distances_add(global_topology, size, objs, bandwidth_matrix, HWLOC_DISTANCES_KIND_FROM_USER | HWLOC_DISTANCES_KIND_MEANS_BANDWIDTH, 0);
+
+
+  sctk_free(latency_matrix);
+  sctk_free(bandwidth_matrix);
+
+  sctk_free(latency_effectors_depth);
+  sctk_free(latency_factors);
+  sctk_free(bandwidth_effectors_depth);
+  sctk_free(bandwidth_factors);
+}
+
+int mpc_topology_is_latency_factors() {
+  return strlen(__mpc_topo_config.latency_factors) > 0;
+}
+
+int mpc_topology_is_bandwidth_factors() {
+  return strlen(__mpc_topo_config.bandwidth_factors) > 0;
 }
 
 #if (HWLOC_API_VERSION >= 0x00020000)

@@ -9080,6 +9080,21 @@ static int SCTK__MPI_Attr_communicator_dup(MPI_Comm prev, MPI_Comm newcomm)
 
 static void __sctk_init_mpi_topo()
 {
+  int cpu_this = mpc_topology_get_global_current_cpu();
+
+  /* send to root cpu id and node rank */
+  int rank, size;
+  _mpc_cl_comm_rank(MPI_COMM_WORLD, &rank);
+  _mpc_cl_comm_size(MPI_COMM_WORLD, &size);
+
+  int *tab_cpuid = ( int* )sctk_malloc(2 * size * sizeof(int));
+  tab_cpuid[rank * 2] = cpu_this;
+  tab_cpuid[rank * 2 + 1] = mpc_common_get_node_rank();
+  mpc_lowcomm_allgather(MPI_IN_PLACE, tab_cpuid, 2*sizeof(int), MPC_COMM_WORLD);
+
+  mpc_topology_init_sleep_factors(tab_cpuid, size);
+  
+  sctk_free(tab_cpuid);
 }
 
 static int SCTK__MPI_Comm_communicator_dup(MPI_Comm comm, MPI_Comm newcomm)
@@ -16502,7 +16517,6 @@ int mpc_mpi_initialize(void)
 	__sctk_init_mpc_request();
 	__buffer_init();
 	__sctk_init_mpi_errors();
-	__sctk_init_mpi_topo();
 	__sctk_init_mpi_op();
 	fortran_check_binds_resolve();
 	__sctk_init_mpc_halo();
@@ -16548,7 +16562,9 @@ int mpc_mpi_initialize(void)
 
 	mpc_common_spinlock_unlock(&(task_specific->per_communicator_lock) );
 
-  	_mpc_mpi_coll_allow_topological_comm();
+  __sctk_init_mpi_topo();
+  mpc_MPI_allocmem_pool_init();
+  _mpc_mpi_coll_allow_topological_comm();
 
 	MPI_ERROR_SUCCESS();
 }

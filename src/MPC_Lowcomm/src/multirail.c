@@ -21,6 +21,7 @@
 /* ######################################################################## */
 #include "multirail.h"
 #include "mpc_common_datastructure.h"
+#include "mpc_topology.h"
 
 #ifdef MPC_USE_DMTCP
 #include "sctk_ft_iface.h"
@@ -842,6 +843,40 @@ static inline void __route_to_process(mpc_lowcomm_peer_uid_t destination, mpc_lo
 	}
 }
 
+void topology_simulation_sleep3(int src, int dst, int size) {
+
+  hwloc_topology_t topology = mpc_topology_global_get();
+
+  struct hwloc_distances_s * latency_matrix;
+  struct hwloc_distances_s * bandwidth_matrix;
+
+  unsigned int nr1 = 1, nr2 = 1;
+  float sleep_time = 0;
+
+  if(mpc_topology_is_latency_factors()) {
+    hwloc_distances_get(topology, &nr1, &latency_matrix  , HWLOC_DISTANCES_KIND_FROM_USER | HWLOC_DISTANCES_KIND_MEANS_LATENCY  , 0);
+    if(nr1) {
+      unsigned long latency = latency_matrix->values[src + dst * latency_matrix->nbobjs];
+      hwloc_distances_release(topology, latency_matrix  );
+
+      sleep_time += latency;
+    }
+  }
+
+  if(mpc_topology_is_bandwidth_factors()) {
+    hwloc_distances_get(topology, &nr2, &bandwidth_matrix, HWLOC_DISTANCES_KIND_FROM_USER | HWLOC_DISTANCES_KIND_MEANS_BANDWIDTH, 0);
+    if(nr2) {
+      unsigned long bandwidth = bandwidth_matrix->values[src + dst * bandwidth_matrix->nbobjs];
+      hwloc_distances_release(topology, bandwidth_matrix);
+
+      if(bandwidth)
+        sleep_time += size / bandwidth;
+    }
+  }
+
+  if(sleep_time)
+    usleep(sleep_time);
+}
 
 /**
  * Main entry point in low_level_comm for sending a message.
@@ -899,6 +934,11 @@ void _mpc_lowcomm_multirail_send_message(mpc_lowcomm_ptp_message_t *msg)
 
 			/* Prepare reordering */
 			_mpc_lowcomm_reorder_msg_register(msg);
+
+      topology_simulation_sleep3(
+          mpc_lowcomm_peer_get_rank(mpc_lowcomm_monitor_get_uid()), 
+          mpc_lowcomm_peer_get_rank(endpoint->dest), 
+          SCTK_MSG_SIZE(msg));
 
 			/* Send the message */
 			(target_rail->send_message_endpoint)(msg, endpoint);
