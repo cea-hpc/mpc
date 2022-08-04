@@ -12,7 +12,7 @@ safe_exec()
         echo -e "$1 failed, try $0 --clean"
     fi
 }
-move_to_directory(){
+move_to_contrib(){
     cd "$SCRIPTPATH/../contrib" || exit
     if ! test -f ../installmpc 
     then
@@ -21,34 +21,7 @@ move_to_directory(){
     fi
 }
 
-build_rpm()
-{
-    move_to_directory
-    safe_exec ../installmpc --download
-    safe_exec tar xzf hydra*.gz
-    safe_exec tar xzf openpa*.gz
-    safe_exec rm -rf ./*.tar.gz hydra/ openpa/
-    safe_exec mv hydra* hydra
-    safe_exec mv openpa* openpa
-    safe_exec cd ..
-    safe_exec rm -f $PWD/release/rpmbuild/SOURCES/mpcframework.tar.gz
-    tar --transform="flags=r;s|mpc|mpcframework-$VERSION|" -czf /tmp/mpcframework.tar.gz ../mpc
-    mv /tmp/mpcframework.tar.gz $PWD/release/rpmbuild/SOURCES/
-    safe_exec cd release
-	safe_exec docker build -t mpc_release_$DISTRIB --rm  .
-}
-
-extract_rpm()
-{
-    safe_exec docker run --rm -v $TARGET:/host mpc_release_image:mpc cp -r /root/rpmbuild/RPMS/x86_64/ /host
-}
-
 init_env(){
-CXX="g++"
-CFORTRAN="gfortran"
-HWLOC_DEVEL="hwloc-devel"
-
-
 # we fail to configure the installation on rockylinux 8 
 # because hwloc-devel package doesn't seem to be present on the corresponding yum repositories
 
@@ -57,9 +30,62 @@ HWLOC_DEVEL="hwloc-devel"
 #     CFORTRAN="gcc-gfortran"
 #     HWLOC_DEVEL="hwloc-libs"
 # fi
+    CXX="g++"
+    CFORTRAN="gfortran"
+    HWLOC_DEVEL="hwloc-devel"
 }
 
-build_dockerfile(){
+########### DEB packages ############### 
+
+build_dockerfile_deb(){
+cat << EOF > release/Dockerfile
+FROM $DISTRIB
+COPY debbuild /root/debbuild
+COPY build_deb.sh /root/build_deb.sh
+COPY control /root/control
+RUN apt update
+RUN apt install -y util-linux cmake patch make gcc $CXX $CFORTRAN pkg-config wget git hwloc libhwloc-dev python3 dpkg-dev
+RUN sh /root/build_deb.sh
+EOF
+}
+
+build_control()
+{
+cat << EOF > release/control
+Package: mpcframework
+Version: $VERSION
+Maintainer: CEA/Paratools
+Architecture: all
+Description: MPI runtime for exascale
+Depends: cmake, make, gcc, $CXX, $CFORTRAN, wget, hwloc, libhwloc-dev
+EOF
+}
+
+build_deb()
+{
+    move_to_contrib
+    safe_exec ../installmpc --download
+    safe_exec tar xzf hydra*.gz
+    safe_exec tar xzf openpa*.gz
+    safe_exec rm -rf ./*.tar.gz hydra/ openpa/
+    safe_exec mv hydra* hydra
+    safe_exec mv openpa* openpa
+    safe_exec cd ..
+    tar --transform="flags=r;s|mpc|mpcframework-$VERSION|" -czf /tmp/mpcframework.tar.gz ../mpc
+    mv /tmp/mpcframework.tar.gz $PWD/release/debbuild
+    safe_exec cd release
+	safe_exec docker build -t mpc_release_$DISTRIB --rm  .
+
+}
+
+extract_deb()
+{
+    safe_exec docker run --rm -v $TARGET:/host mpc_release_$DISTRIB cp /root/installmpc.deb /host/mpcframework-"$VERSION"-"$DISTRIB".deb
+}
+
+########### RPM packages ###############
+
+build_dockerfile_rpm(){
 cat << EOF > release/Dockerfile
 FROM $DISTRIB
 COPY rpmbuild /root/rpmbuild
@@ -69,7 +95,7 @@ RUN sh /root/build_rpm.sh
 EOF
 }
 
-build_spec(){
+build_spec_rpm(){
 cat << EOF > release/rpmbuild/SPECS/mpc.spec
 Name:           mpcframework
 Version:        $VERSION
@@ -121,6 +147,28 @@ make install -j
 - 
 
 EOF
+}
+
+build_rpm()
+{
+    move_to_contrib
+    safe_exec ../installmpc --download
+    safe_exec tar xzf hydra*.gz
+    safe_exec tar xzf openpa*.gz
+    safe_exec rm -rf ./*.tar.gz hydra/ openpa/
+    safe_exec mv hydra* hydra
+    safe_exec mv openpa* openpa
+    safe_exec cd ..
+    safe_exec rm -f $PWD/release/rpmbuild/SOURCES/mpcframework.tar.gz
+    tar --transform="flags=r;s|mpc|mpcframework-$VERSION|" -czf /tmp/mpcframework.tar.gz ../mpc
+    mv /tmp/mpcframework.tar.gz $PWD/release/rpmbuild/SOURCES/
+    safe_exec cd release
+	safe_exec docker build -t mpc_release_$DISTRIB --rm  .
+}
+
+extract_rpm()
+{
+    safe_exec docker run --rm -v $TARGET:/host mpc_release_$DISTRIB cp -r /root/rpmbuild/RPMS/x86_64/ /host
 }
 
 clean(){
@@ -178,6 +226,12 @@ do
             clean
             exit 0;
             ;;
+        deb)
+            BUILD_DEB_ARCHIVE=yes
+            ;;
+        rpm)
+            BUILD_RPM_ARCHIVE=yes
+            ;;
 		*)
 			echo "Invalid argument '$arg', please check your command line or get help with --help." 1>&2
 			exit 1
@@ -204,11 +258,23 @@ if test ! -d "$TARGET" ; then
 fi
 
 init_env
-build_dockerfile
-build_spec
 
-if test -z "$EXTRACT_ONLY" ; then
-    build_rpm
+if ! test -z "$BUILD_RPM_ARCHIVE"; then
+    build_dockerfile_rpm
+    build_spec_rpm
+
+    if test -z "$EXTRACT_ONLY" ; then
+        build_rpm
+    fi
+    extract_rpm
 fi
 
-extract_rpm
+if ! test -z "$BUILD_DEB_ARCHIVE"; then
+    build_dockerfile_deb
+    build_control
+
+    if test -z "$EXTRACT_ONLY" ; then
+        build_deb
+    fi
+    extract_deb
+fi
