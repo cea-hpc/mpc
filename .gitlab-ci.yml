@@ -360,4 +360,4 @@ release:
   script: utils/prepare_release.sh rpm --distribution=fedora:latest
   artifacts:
     paths:
-      - release/x86_64
+      - release/pkgs/x86_64
