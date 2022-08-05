@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -e -x
 SCRIPTPATH=$(dirname "$(readlink -f "$0")")
 
 ##################### FUNCTION ###################
@@ -97,6 +97,7 @@ EOF
 }
 
 build_spec_rpm(){
+mkdir -p release/rpmbuild/SPECS
 cat << EOF > release/rpmbuild/SPECS/mpc.spec
 Name:           mpcframework
 Version:        $VERSION
@@ -162,6 +163,7 @@ build_rpm()
     safe_exec cd ..
     safe_exec rm -f $PWD/release/rpmbuild/SOURCES/mpcframework.tar.gz
     tar --transform="flags=r;s|mpc|mpcframework-$VERSION|" -czf /tmp/mpcframework.tar.gz ../mpc
+    mkdir -p $PWD/release/rpmbuild/SOURCES/
     mv /tmp/mpcframework.tar.gz $PWD/release/rpmbuild/SOURCES/
     safe_exec cd release
 	safe_exec docker build -t mpc_release_$DISTRIB --rm  .
