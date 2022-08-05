@@ -1591,9 +1591,6 @@ void mpc_lowcomm_init_per_task(int rank)
 		/* And insert them */
 		__mpc_comm_ptp_array_insert(tmp);
 	}
-
-
-	mpc_lowcomm_allocmem_pool_init();
 }
 
 void mpc_lowcomm_release_per_task(int task_rank)
@@ -3559,6 +3556,8 @@ static void __lowcomm_init_per_task()
 		mpc_lowcomm_terminaison_barrier();
 
 		_mpc_lowcomm_pset_bootstrap();
+	
+		mpc_lowcomm_allocmem_pool_init();
 	}
 }
 
