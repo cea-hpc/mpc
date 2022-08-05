@@ -357,7 +357,7 @@ Centos 7:
 release:
   stage: Release
   when: manual
-  script: utils/prepare_release.sh rpm --target=release/ --distribution=fedora:latest
+  script: utils/prepare_release.sh rpm --distribution=fedora:latest
   artifacts:
     paths:
       - release/x86_64
