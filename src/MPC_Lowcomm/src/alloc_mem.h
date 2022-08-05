@@ -39,7 +39,7 @@ struct mpc_lowcomm_allocmem_pool {
   size_t size_left;
   size_t mapped_size;
   size_t space_per_bit;
-  OPA_int_t *lock;
+  mpc_common_spinlock_t *lock;
   struct mpc_common_bit_array mask;
   struct mpc_common_hashtable size_ht;
 };
