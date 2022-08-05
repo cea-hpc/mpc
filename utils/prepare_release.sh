@@ -44,6 +44,7 @@ COPY debbuild /root/debbuild
 COPY build_deb.sh /root/build_deb.sh
 COPY control /root/control
 RUN apt update
+RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install tzdata
 RUN apt install -y util-linux cmake patch make gcc $CXX $CFORTRAN pkg-config wget git hwloc libhwloc-dev python3 dpkg-dev
 RUN sh /root/build_deb.sh
 EOF
