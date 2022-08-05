@@ -77,7 +77,6 @@ build_deb()
     mv /tmp/mpcframework.tar.gz $PWD/release/debbuild/mpcframework.tar.gz
     safe_exec cd release
 	safe_exec docker build -t mpc_release_$DISTRIB --rm  .
-
 }
 
 extract_deb()
@@ -194,11 +193,12 @@ This script works for commit a1da0c933be6f07de058b949420cf4070c786c60.
 For any previous version please use utils/gen_archive.sh.
 
 
-Usage: $0 [--distribution=X] [--target=X] 
+Usage: $0 [--distribution=X] [--target=X] deb|rpm
 
 Arguments :
-    --distribution=X    Specify distribution (image available in docker).
-    --target=X          Specify destination for rpm package.
+    deb|rpm             Build deb or rpm package (must specify corresponding distribution)
+    --distribution=X    Specify distribution (image available in docker). Set to fedora:latest by default
+    --target=X          Specify destination for rpm package. Set to release/pkgs by default
 
 Options :
     --extract-only      Look for active image of specified distribution and retreives rpm package.
@@ -255,10 +255,8 @@ fi
 if test -z "$TARGET" ; then
     echo "setting target to default ...... (release/)"
     TARGET=$SCRIPTPATH/../release/pkgs/
-fi
-if test ! -d "$TARGET" ; then
-    echo "Target must be a directory (is currently $TARGET)"
-    exit 1
+else 
+    mkdir -p $TARGET || (echo "Target must not exist or must already be a directory (is currently $TARGET)"; exit 1)
 fi
 
 init_env

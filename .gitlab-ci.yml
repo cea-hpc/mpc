@@ -357,7 +357,7 @@ Centos 7:
 release:
   stage: Release
   when: manual
-  script: utils/prepare_release.sh rpm --distribution=fedora:latest
+  script: utils/release_all.sh $CI_PROJECT_DIR/$CI_PIPELINE_ID
   artifacts:
     paths:
-      - release/pkgs/x86_64
+      - $CI_PROJECT_DIR/$CI_PIPELINE_ID
