@@ -775,7 +775,7 @@ do {                                                                            
 #define HASH_BKT_OCCUPATIONS(hh, head, avg)                         \
 do {                                                                \
     size_t total = 0;                                               \
-    int b;                                                          \
+    unsigned int b;                                                 \
     int nbkt = 0;                                                   \
     for (b = 0 ; b < (head)->hh.tbl->num_buckets ; ++b)             \
     {                                                               \

@@ -1306,8 +1306,6 @@ typedef struct  mpc_omp_instance_callback_infos_s
     /* callback lock per event */
     mpc_common_spinlock_t locks[MPC_OMP_CALLBACK_MAX];
 
-    /* number of callbacks per event */
-    int length[MPC_OMP_CALLBACK_MAX];
 }               mpc_omp_instance_callback_infos_t;
 
 /* Instance of OpenMP runtime */

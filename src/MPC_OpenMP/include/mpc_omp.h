@@ -97,8 +97,9 @@ extern "C" {
         OPA_int_t       cancelled;      /* point to 1 if the handle was cancelled already */
     }               mpc_omp_event_handle_block_t;
 
-    /* initialize an event handler */
+    /* (de)initialize an event handler */
     void mpc_omp_event_handle_init(mpc_omp_event_handle_t ** handle, mpc_omp_event_t type);
+    void mpc_omp_event_handle_deinit(mpc_omp_event_handle_t * handle);
 
     /* fulfill an mpc-omp event handler */
     void mpc_omp_fulfill_event(mpc_omp_event_handle_t * handle);

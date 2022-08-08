@@ -514,6 +514,16 @@ mpc_omp_event_handle_init(mpc_omp_event_handle_t ** handle_ptr, mpc_omp_event_t 
     _mpc_omp_event_handle_ref(*handle_ptr);
 }
 
+/**
+ * Deinitialize an MPC event handle
+ * @return handle - the event handle
+ */
+void
+mpc_omp_event_handle_deinit(mpc_omp_event_handle_t * handle)
+{
+    _mpc_omp_event_handle_unref(handle);
+}
+
 /** # pragma omp task priority(p) */
 void
 mpc_omp_task_priority(int p)

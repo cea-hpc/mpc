@@ -457,10 +457,8 @@ __task_pqueue_transplant(
 static void
 __task_pqueue_dump_node(mpc_omp_task_pqueue_node_t * node, FILE * f)
 {
-    if (!node)
-    {
-        return ;
-    }
+    if (!node) return ;
+
     char * color = (node->color == 'R') ? "#ff0000" : "#000000";
     fprintf(f, "    N%p[fontcolor=\"#ffffff\", label=\"%d\", style=filled, fillcolor=\"%s\"] ;\n", node, node->priority, color);
     __task_pqueue_dump_node(node->left, f);
@@ -726,7 +724,9 @@ __task_pqueue_delete_fixup(
     }
 }
 
-/** O(log2(n)) down there */
+/**
+ * TODO : O(log2(n)) down there could be O(1) by keeping track of the right-most node
+ */
 static mpc_omp_task_t *
 __task_pqueue_pop_top_priority(mpc_omp_task_pqueue_t * tree)
 {
@@ -3258,7 +3258,8 @@ _mpc_omp_task_unblock(mpc_omp_event_handle_block_t * handle)
     mpc_omp_task_t * task = (mpc_omp_task_t *) handle->task;
     assert(task);
 
-    _mpc_omp_event_handle_ref((mpc_omp_event_handle_t *) handle);  /* mpc_omp_task_unblock */
+    __task_ref(task);                                               /* mpc_omp_task_unblock */
+    _mpc_omp_event_handle_ref((mpc_omp_event_handle_t *) handle);   /* mpc_omp_task_unblock */
 
     /* if the task unblocked before blocking, there is nothing to do */
     if (OPA_cas_int(
@@ -3275,6 +3276,7 @@ _mpc_omp_task_unblock(mpc_omp_event_handle_block_t * handle)
             OPA_load_int(&(handle->status)) == MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_UNBLOCKED
         );
 
+        /* if the task is blocking / has blocked */
         if (OPA_cas_int(
                     &(handle->status),
                     MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_BLOCKED,
@@ -3292,7 +3294,7 @@ _mpc_omp_task_unblock(mpc_omp_event_handle_block_t * handle)
             }
             mpc_common_spinlock_unlock(&(list->lock));
 
-            /* if the task has a fiber, check for requeue */
+            /* if the task has a fiber, check if we should requeue */
 # if MPC_OMP_TASK_COMPILE_FIBER
             if (MPC_OMP_TASK_FIBER_ENABLED && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_HAS_FIBER))
             {
@@ -3321,7 +3323,8 @@ _mpc_omp_task_unblock(mpc_omp_event_handle_block_t * handle)
             /* nothing to do, the task is already being unblocked by another thread */
         }
     }
-    _mpc_omp_event_handle_unref((mpc_omp_event_handle_t *) handle);    /* mpc_omp_task_unblock */
+    _mpc_omp_event_handle_unref((mpc_omp_event_handle_t *) handle); /* mpc_omp_task_unblock */
+    __task_unref(task);                                             /* mpc_omp_task_unblock */
 }
 
 /* Warning: a task may unblock before it was actually suspended
@@ -3388,7 +3391,6 @@ mpc_omp_task_block(mpc_omp_event_handle_block_t * handle)
             }
         }
     }
-    _mpc_omp_event_handle_unref((mpc_omp_event_handle_t *) handle); /* mpc_omp_event_handle_init */
 }
 
 static void
