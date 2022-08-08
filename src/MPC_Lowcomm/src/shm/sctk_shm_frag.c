@@ -1,5 +1,6 @@
 #include "sctk_shm_frag.h"
 #include "mpc_common_debug.h"
+#include "mpc_common_spinlock.h"
 #include "sctk_net_tools.h"
 
 #include <mpc_common_rank.h>
@@ -92,12 +93,8 @@ static sctk_shm_proc_frag_info_t * __add_frag_msg(int dest)
 	/* Prevent polling thread activity */
 	frag_infos = sctk_malloc(sizeof(sctk_shm_proc_frag_info_t) );
 
-	mpc_common_spinlock_init(&frag_infos->is_ready, 0);
-
-	mpc_common_spinlock_lock(&(frag_infos->is_ready) );
-
 	/* Try to get an empty key in hastable */
-	mpc_common_spinlock_lock(&sctk_shm_sending_frag_hastable_lock);
+	mpc_common_spinlock_lock_yield(&sctk_shm_sending_frag_hastable_lock);
 	do
 	{
 		__current_message_id  = (__current_message_id + 1) % SCTK_SHM_MAX_FRAG_MSG_PER_PROCESS;
@@ -114,11 +111,6 @@ static sctk_shm_proc_frag_info_t * __add_frag_msg(int dest)
 	{
 		sctk_free(frag_infos);
 		frag_infos = NULL;
-	}
-	else
-	{
-		__add_fragment_in_ht(frag_infos->msg_frag_key, dest, frag_infos, SCTK_SHM_SENDER_HT);
-		__number_of_pending_msgs++;
 	}
 
 	mpc_common_spinlock_unlock(&sctk_shm_sending_frag_hastable_lock);
@@ -158,8 +150,6 @@ static sctk_shm_proc_frag_info_t * __prepare_recv_msg(int key, int remote, mpc_l
 	const size_t msg_size = SCTK_MSG_SIZE(msg);
 
 	frag_infos = (sctk_shm_proc_frag_info_t *)sctk_malloc(sizeof(sctk_shm_proc_frag_info_t) );
-	mpc_common_spinlock_init(&frag_infos->is_ready, 0);
-	mpc_common_spinlock_lock(&(frag_infos->is_ready) );
 
 	frag_infos->size_total      = msg_size;
 	frag_infos->size_copied     = 0;
@@ -202,7 +192,8 @@ static sctk_shm_proc_frag_info_t * __first_send(mpc_lowcomm_ptp_message_t *msg, 
 
 	if(frag_infos)
 	{
-		mpc_common_spinlock_unlock(&(frag_infos->is_ready) );
+		__add_fragment_in_ht(frag_infos->msg_frag_key, cell->dest, frag_infos, SCTK_SHM_SENDER_HT);
+		__number_of_pending_msgs++;
 	}
 	else
 	{
@@ -241,11 +232,6 @@ static int __send_next_fragment(sctk_shm_proc_frag_info_t *frag_infos, int * to_
 
    *to_remove = 0;
 
-	if(mpc_common_spinlock_trylock(&(frag_infos->is_ready) ) )
-	{
-		return 0;
-	}
-
 	is_control_msg = 0;
 	msg_key        = frag_infos->msg_frag_key;
 	msg_dest       = frag_infos->remote_mpi_rank;
@@ -262,7 +248,6 @@ static int __send_next_fragment(sctk_shm_proc_frag_info_t *frag_infos, int * to_
 
 	if(!cell)
 	{
-		mpc_common_spinlock_unlock(&(frag_infos->is_ready) );
 		return 0;
 	}
 
@@ -291,11 +276,6 @@ static int __send_next_fragment(sctk_shm_proc_frag_info_t *frag_infos, int * to_
 		sctk_free(frag_infos);
 		mpc_lowcomm_ptp_message_complete_and_free(msg);
 		frag_infos = NULL;
-	}
-
-	if(frag_infos)
-	{
-		mpc_common_spinlock_unlock(&(frag_infos->is_ready) );
 	}
 
 	return 1;

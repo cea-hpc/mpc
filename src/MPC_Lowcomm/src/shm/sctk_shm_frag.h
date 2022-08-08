@@ -18,7 +18,6 @@ typedef struct
     int remote_mpi_rank;
     mpc_lowcomm_ptp_message_t* header;
     char *payload_ptr;
-    mpc_common_spinlock_t is_ready;
 }sctk_shm_proc_frag_info_t;
 
 typedef struct
