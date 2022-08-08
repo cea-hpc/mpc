@@ -319,6 +319,7 @@ static inline void __setup_pool(mpc_lowcomm_communicator_t per_node_comm)
 		mpc_common_bit_array_init_buff(&__mpc_lowcomm_memory_pool.mask,
 		                               SCTK_PAGE_SIZE * 8, bit_array,
 		                               SCTK_PAGE_SIZE);
+
 		__mpc_lowcomm_memory_pool.space_per_bit = (pool_size / (SCTK_PAGE_SIZE * 8) );
 		mpc_common_debug_error("Got %d bytes per bit", __mpc_lowcomm_memory_pool.space_per_bit);
 		mpc_common_hashtable_init(&__mpc_lowcomm_memory_pool.size_ht, 32);
@@ -374,13 +375,16 @@ int mpc_lowcomm_allocmem_pool_init()
 		mpc_lowcomm_barrier(per_node_comm);
 
 		__accumulate_op_lock_init(per_node_comm);
+
+		if(_mpc_lowcomm_conf_get()->memorypool.enabled)
+		{
+			int * canary = (int *)__mpc_lowcomm_memory_pool._pool;
+			assume(*canary == 1377);
+		}
 	}
 
 	mpc_lowcomm_communicator_free(&per_node_comm);
 
-	int * canary = (int *)__mpc_lowcomm_memory_pool._pool;
-
-	assume(*canary == 1377);
 
 	return 0;
 }
@@ -430,6 +434,7 @@ static inline void mpc_lowcomm_allocmem_pool_unlock()
 {
 	assert(__mpc_lowcomm_memory_pool.lock);
 	mpc_common_spinlock_unlock(__mpc_lowcomm_memory_pool.lock);
+
 }
 
 void *mpc_lowcomm_allocmem_pool_alloc_check(size_t size, int *is_shared)
@@ -439,25 +444,23 @@ void *mpc_lowcomm_allocmem_pool_alloc_check(size_t size, int *is_shared)
 	/* Are all the tasks in the same process ? */
 	if(_pool_only_local)
 	{
-		mpc_common_debug_error("MALLOC");
 		*is_shared = 1;
 		return sctk_malloc(size);
 	}
 
 	/* We are sure that it does not fit */
 	if( (__mpc_lowcomm_memory_pool.size < size) )
-	{		mpc_common_debug_error("MALLOC");
-
+	{
 		return sctk_malloc(size);
 	}
 
 	mpc_lowcomm_allocmem_pool_lock();
-		mpc_common_debug_error("DO POOL");
 
 	size_t number_of_bits = 1 +	(size + (size % __mpc_lowcomm_memory_pool.space_per_bit) ) / __mpc_lowcomm_memory_pool.space_per_bit;
 	/* Now try to find this number of contiguous free bits */
 	size_t i, j;
 	struct mpc_common_bit_array *ba = &__mpc_lowcomm_memory_pool.mask;
+
 
 	for(i = 0; i < ba->real_size; i++)
 	{
@@ -501,9 +504,14 @@ void *mpc_lowcomm_allocmem_pool_alloc_check(size_t size, int *is_shared)
 					mpc_common_bit_array_set(ba, k, 1);
 				}
 
+
 				/* Compute address */
 				void *addr = __mpc_lowcomm_memory_pool.pool +
 				             (i * __mpc_lowcomm_memory_pool.space_per_bit);
+				
+				//mpc_common_debug_error("ALLOC %ld from block %d to %d (start %p end %p)", size, i, i + number_of_bits, addr, addr + size);
+
+
 				/* Store bit size for free for address */
 				mpc_common_hashtable_set(&__mpc_lowcomm_memory_pool.size_ht, ( uint64_t )addr,
 				                         ( void * )number_of_bits);

@@ -14697,8 +14697,8 @@ static inline int __split_at_level(MPI_Comm comm, int key, const char * level)
 {
 	/* Fill the INFO */
 	MPI_Info split_val;
-	MPI_Info_create(&split_val);
-	MPI_Info_set(split_val, "mpi_hw_subdomain_type", level);
+	PMPI_Info_create(&split_val);
+	PMPI_Info_set(split_val, "mpi_hw_subdomain_type", level);
 
 	int guided_shared_memory = 1;
 
@@ -14706,7 +14706,7 @@ static inline int __split_at_level(MPI_Comm comm, int key, const char * level)
 
 	assume(guided_shared_memory == 0);
 
-	MPI_Info_free(&split_val);
+	PMPI_Info_free(&split_val);
 
 	return ret;
 }

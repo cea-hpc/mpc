@@ -24,6 +24,7 @@
 #ifndef MPC_COMMON_INCLUDE_MPC_COMMON_DATASTRUCTURE_H_
 #define MPC_COMMON_INCLUDE_MPC_COMMON_DATASTRUCTURE_H_
 
+#include "mpc_common_debug.h"
 #include <mpc_common_types.h>
 #include <mpc_common_spinlock.h>
 
@@ -147,19 +148,23 @@ static inline void mpc_common_bit_array_set( struct mpc_common_bit_array *ba,
 
 	if ( ba->real_size <= key )
 	{
-		// printf(" SET Out of bound (%ld)\n", key);
+		//mpc_common_debug_error(" SET Out of bound (%ld)\n", key);
 		return;
 	}
 
 	uint64_t extern_offset = key >> 3;
-	uint8_t local_offset = (uint8_t)(key - extern_offset) * 8;
+	uint8_t local_offset = ((uint8_t)(key - extern_offset * 8));
 
 	uint8_t *target = &ba->array[extern_offset];
+
+	//mpc_common_debug_error("BTARGET %p is %u === V %d @ %ld (%d, %d)", target, *target, value, key, extern_offset, local_offset);
+
 
 	if ( value )
 		*target |= get_set_bit_mask[local_offset];
 	else
 		*target &= unset_bit_mask[local_offset];
+
 }
 
 /**
@@ -180,7 +185,10 @@ static inline uint8_t mpc_common_bit_array_get( struct mpc_common_bit_array *ba,
 	}
 
 	uint64_t extern_offset = key >> 3;
-	uint8_t local_offset = (uint8_t)(key - extern_offset) * 8;
+	uint8_t local_offset = ((uint8_t)(key - extern_offset * 8));
+
+	//mpc_common_debug_error("%p %ld (%d, %d) is %u V %d",  &ba->array[extern_offset], key, extern_offset, local_offset,  ba->array[extern_offset],  ( ba->array[extern_offset] & get_set_bit_mask[local_offset] ) >>  local_offset);
+
 
 	return ( ba->array[extern_offset] & get_set_bit_mask[local_offset] ) >>
 		   local_offset;

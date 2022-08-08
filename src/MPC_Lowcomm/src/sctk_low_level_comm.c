@@ -20,9 +20,12 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include <mpc_config.h>
+#include <mpc_lowcomm.h>
 #include <sctk_low_level_comm.h>
 #include <mpc_launch_pmi.h>
 #include <string.h>
+#include "alloc_mem.h"
+#include "mpc_common_debug.h"
 #include "sctk_checksum.h"
 #include <mpc_launch.h>
 
@@ -268,6 +271,14 @@ static size_t __mpc_memory_allocation_hook(size_t size_origin)
 
 void __mpc_memory_free_hook(void *ptr, size_t size)
 {
+	//mpc_common_debug_error("FREE %p size %ld", ptr, size);
+
+	if(mpc_lowcomm_allocmem_is_in_pool(ptr))
+	{
+		//mpc_common_debug_error("FREE pool");
+		mpc_lowcomm_allocmem_pool_free_size(ptr, size);
+	}
+
 	#ifdef MPC_USE_INFINIBAND
 	if(sctk_network_is_ib_used() )
 	{

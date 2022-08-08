@@ -104,8 +104,6 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
     return MPI_ERR_ARG;
   }
       
-      mpc_common_debug_error("HERE %d", __LINE__);
-
   int target_win = mpc_MPI_win_get_remote_win(desc, target_rank, 0);
 
   if (can_write_rma && can_read_rma) {
@@ -116,7 +114,6 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
         low_remote_win->start_addr + target_disp * desc->win_disp;
 
     if (mpc_MPI_win_can_write_directly(desc, target_addr, target_rank)) {
-          mpc_common_debug_error("HERE %d", __LINE__);
 
       memcpy(origin_addr, target_addr, remote_size);
     } else {
@@ -124,13 +121,11 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
       /* Pick a Request */
       mpc_lowcomm_request_t *request =
           mpc_MPI_Win_request_array_pick(&desc->source.requests);
-      mpc_common_debug_error("HERE %d", __LINE__);
 
       if (ref_request) {
         request->pointer_to_source_request = ref_request;
         ref_request->pointer_to_shadow_request = request;
       }
-      mpc_common_debug_error("HERE %d", __LINE__);
 
       mpc_lowcomm_rdma_window_RDMA_read(target_win, origin_addr, remote_size, target_disp,
                             request);

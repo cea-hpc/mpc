@@ -22,6 +22,7 @@
 
 #include "sctk_window.h"
 #include "comm.h"
+#include "mpc_lowcomm.h"
 #include "uthash.h"
 #include <sctk_alloc.h>
 #include <mpc_common_asm.h>
@@ -82,7 +83,6 @@ int __win_ewrite_cb(mpc_lowcomm_peer_uid_t from, char *data, char *return_data, 
 
 int __win_eread_cb(mpc_lowcomm_peer_uid_t from, char *data, char *return_data, int return_data_len, void *ctx)
 {
-	mpc_common_debug_error("GET");
 	struct mpc_lowcomm_rdma_window_emulated_RDMA * erma = (struct mpc_lowcomm_rdma_window_emulated_RDMA *)data;
 	mpc_lowcomm_rdma_window_RDMA_emulated_read_ctrl_msg_handler(erma);
 
@@ -691,13 +691,14 @@ void mpc_lowcomm_rdma_window_RDMA_emulated_write_ctrl_msg_handler(
 	                             erma->size, TAG_RDMA_WRITE, win->communicator,
 	                             MPC_LOWCOMM_RDMA_WINDOW_MESSAGES, &req[0]);
 
+	mpc_lowcomm_wait(&req[0], MPC_LOWCOMM_STATUS_NULL);
 
-	int dummy;
-	mpc_lowcomm_isend_class_src(
-		win->comm_rank, erma->source_rank,
-		&dummy, sizeof(int), TAG_RDMA_WRITE_ACK, win->communicator,
-		MPC_LOWCOMM_RDMA_WINDOW_MESSAGES, &req[1]);
-	mpc_lowcomm_waitall(2, req, MPC_LOWCOMM_STATUS_NULL);
+	//int dummy;
+	//mpc_lowcomm_isend_class_src(
+	//	win->comm_rank, erma->source_rank,
+	//	&dummy, sizeof(int), TAG_RDMA_WRITE_ACK, win->communicator,
+	//	MPC_LOWCOMM_RDMA_WINDOW_MESSAGES, &req[1]);
+	//mpc_lowcomm_wait(&req[1], MPC_LOWCOMM_STATUS_NULL);
 
 	OPA_incr_int(&win->incoming_emulated_rma[erma->source_rank]);
 
@@ -815,15 +816,15 @@ static inline void __mpc_lowcomm_rdma_window_RDMA_write(mpc_lowcomm_rdma_window_
 
 		__MPC_MPI_notify_src_ctx(win->id);
 
-		mpc_lowcomm_request_t response_req;
-		int dummy;
-		mpc_lowcomm_irecv_class(
-			win->comm_rank,
-			&dummy, sizeof(int), TAG_RDMA_WRITE_ACK, win->communicator,
-			MPC_LOWCOMM_RDMA_WINDOW_MESSAGES, &response_req);
+		//mpc_lowcomm_request_t response_req;
+		//int dummy;
+		//mpc_lowcomm_irecv_class(
+		//	win->comm_rank,
+		//	&dummy, sizeof(int), TAG_RDMA_WRITE_ACK, win->communicator,
+		//	MPC_LOWCOMM_RDMA_WINDOW_MESSAGES, &response_req);
 
 		mpc_lowcomm_request_wait(&data_req);
-		mpc_lowcomm_request_wait(&response_req);
+		//mpc_lowcomm_request_wait(&response_req);
 
 
 		OPA_incr_int(&win->outgoing_emulated_rma);
@@ -950,8 +951,6 @@ void __mpc_lowcomm_rdma_window_RDMA_read(mpc_lowcomm_rdma_window_t win_id, sctk_
 
 	mpc_lowcomm_request_init(req, win->communicator, REQUEST_RDMA);
 
-      mpc_common_debug_error("HERE %d", __LINE__);
-
 	if(!win)
 	{
 		mpc_common_debug_fatal("No such window ID %d", win_id);
@@ -967,7 +966,6 @@ void __mpc_lowcomm_rdma_window_RDMA_read(mpc_lowcomm_rdma_window_t win_id, sctk_
 	     SCTK_WIN_ACCESS_DIRECT) || /* Forced direct mode */
 	    (!mpc_lowcomm_is_remote_rank(win->owner) ) /* Same process */)
 	{
-      mpc_common_debug_error("HERE %d", __LINE__);
 		/* Shared Memory */
 		mpc_lowcomm_rdma_window_RDMA_read_local(win, dest_addr, size, src_offset);
 		mpc_lowcomm_rdma_window_complete_request(req);
@@ -976,8 +974,6 @@ void __mpc_lowcomm_rdma_window_RDMA_read(mpc_lowcomm_rdma_window_t win_id, sctk_
 	else if( (win->is_emulated) ||
 	         (win->access_mode == SCTK_WIN_ACCESS_EMULATED) )
 	{
-
-      mpc_common_debug_error("HERE %d", __LINE__);
 
 		/* Emulated write using control messages */
 		struct mpc_lowcomm_rdma_window_emulated_RDMA erma;
@@ -995,7 +991,6 @@ void __mpc_lowcomm_rdma_window_RDMA_read(mpc_lowcomm_rdma_window_t win_id, sctk_
 	}
 	else
 	{
-      mpc_common_debug_error("HERE %d", __LINE__);
 
 		mpc_lowcomm_rdma_window_RDMA_read_net(win, dest_pin, dest_addr, size, src_offset,
 		                                      req);
