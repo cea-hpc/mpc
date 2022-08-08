@@ -8,6 +8,7 @@
 #include <utlist.h>
 #include <mpc_launch_shm.h>
 
+#include "multirail.h"
 #include "sctk_shm_raw_queues_internals.h"
 
 
@@ -24,33 +25,7 @@
 #include <mpc_lowcomm_monitor.h>
 
 
-static unsigned int sctk_shm_send_max_try = 4;
-
-
-static void __add_to_pending_msg(mpc_lowcomm_ptp_message_t *msg,
-                                 sctk_rail_info_t *rail,
-                                 int sctk_shm_dest,
-                                 int with_lock)
-{
-	sctk_shm_msg_list_t * tmp             = sctk_malloc(sizeof(sctk_shm_msg_list_t) );
-	sctk_shm_rail_info_t *shm_driver_info = &rail->network.shm;
-
-	tmp->msg           = msg;
-	tmp->sctk_shm_dest = sctk_shm_dest;
-
-	if(with_lock)
-	{
-		mpc_common_spinlock_lock(&shm_driver_info->pending_lock);
-	}
-
-	DL_APPEND(shm_driver_info->pending_msg_list, tmp);
-	shm_driver_info->pending_msg_num++;
-
-	if(with_lock)
-	{
-		mpc_common_spinlock_unlock(&shm_driver_info->pending_lock);
-	}
-}
+static inline void __shm_poll(sctk_rail_info_t *rail);
 
 static int __send_message_dest(mpc_lowcomm_ptp_message_t *msg,
                                sctk_rail_info_t *rail,
@@ -58,7 +33,6 @@ static int __send_message_dest(mpc_lowcomm_ptp_message_t *msg,
                                int with_lock)
 {
 	sctk_shm_cell_t *cell = NULL;
-	unsigned int     sctk_shm_send_cur_try = 0;
 	int is_message_control = 0;
 	sctk_shm_rail_info_t *shm_driver_info = &rail->network.shm;
 
@@ -68,16 +42,16 @@ static int __send_message_dest(mpc_lowcomm_ptp_message_t *msg,
 		is_message_control = 1;
 	}
 
-	while(!cell && sctk_shm_send_cur_try++ < sctk_shm_send_max_try)
+	while(!cell)
 	{
 		cell = sctk_shm_get_cell(sctk_shm_dest, is_message_control);
+
+		if(!cell)
+		{
+			__shm_poll(rail);
+		}
 	}
 
-	if(!cell)
-	{
-		__add_to_pending_msg(msg, rail, sctk_shm_dest, with_lock);
-		return 1;
-	}
 
 	cell->dest = sctk_shm_dest;
 	cell->src  = SCTK_MSG_SRC_PROCESS(msg);
@@ -97,59 +71,9 @@ static int __send_message_dest(mpc_lowcomm_ptp_message_t *msg,
 		return 0;
 	}
 
-	sctk_shm_release_cell(cell);
-	__add_to_pending_msg(msg, rail, sctk_shm_dest, with_lock);
+	mpc_common_debug_fatal("Failed to send SHM message");
 
 	return 1;
-}
-
-static void __send_msg_from_pending_list(sctk_rail_info_t *rail)
-{
-	sctk_shm_msg_list_t * elt             = NULL;
-	sctk_shm_msg_list_t * tmp             = NULL;
-	sctk_shm_rail_info_t *shm_driver_info = &rail->network.shm;
-
-	if(!shm_driver_info->pending_msg_num)
-	{
-		return;
-	}
-
-	if(mpc_common_spinlock_trylock(&shm_driver_info->pending_lock) )
-	{
-		return;
-	}
-
-
-	DL_FOREACH_SAFE(shm_driver_info->pending_msg_list, elt, tmp)
-	{
-		DL_DELETE(shm_driver_info->pending_msg_list, elt);
-		if(elt)
-		{
-			if(__send_message_dest(elt->msg, rail, elt->sctk_shm_dest, 0) )
-			{
-				/* If we are here the element
-				 * was back pushed to the pending list */
-
-				/* mpc_lowcomm_ptp_message_t *msg = elt->msg;
-				* mpc_common_debug(
-				*  "!%d!  [ %d -> %d ] [ %d -> %d ] (CLASS "
-				*  "%s(%d) SPE %d SIZE %d TAG %d)",
-				*  mpc_common_get_process_rank(), SCTK_MSG_SRC_PROCESS(msg),
-				*  SCTK_MSG_DEST_PROCESS(msg), SCTK_MSG_SRC_TASK(msg),
-				*  SCTK_MSG_DEST_TASK(msg),
-				*  mpc_lowcomm_ptp_message_class_name[(int)SCTK_MSG_SPECIFIC_CLASS(msg)],
-				*  SCTK_MSG_SPECIFIC_CLASS(msg),
-				*  _mpc_comm_ptp_message_is_for_process(
-				*      SCTK_MSG_SPECIFIC_CLASS(msg)),
-				*  SCTK_MSG_SIZE(msg), SCTK_MSG_TAG(msg)); */
-
-				sctk_free( (void *)elt);
-				shm_driver_info->pending_msg_num--;
-			}
-		}
-	}
-
-	mpc_common_spinlock_unlock(&shm_driver_info->pending_lock);
 }
 
 static void _mpc_lowcomm_shm_send_message(mpc_lowcomm_ptp_message_t *msg,
@@ -184,7 +108,6 @@ static inline void __shm_poll(sctk_rail_info_t *rail)
 	{
 		return;
 	}
-
 
 	while(1)
 	{
@@ -235,7 +158,6 @@ static inline void __shm_poll(sctk_rail_info_t *rail)
 	if(!cell)
 	{
 		sctk_network_frag_msg_shm_idle(1);
-		__send_msg_from_pending_list(rail);
 	}
 
 	mpc_common_spinlock_unlock(&shm_driver_info->polling_lock);
@@ -376,11 +298,8 @@ void sctk_network_init_shm(sctk_rail_info_t *rail)
 	/* Init driver info */
 
 	shm_driver_info->driver_initialized = 0;
-	shm_driver_info->pending_msg_num    = 0;
 	shm_driver_info->regions_infos = NULL;
 	mpc_common_spinlock_init(&shm_driver_info->polling_lock, 0);
-	mpc_common_spinlock_init(&shm_driver_info->pending_lock, 0);
-	shm_driver_info->pending_msg_list = NULL;
 	/* Base init done */
 
 	sctk_rail_init_route(rail, "none", NULL);
