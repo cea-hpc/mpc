@@ -259,6 +259,12 @@ _mpc_lowcomm_shm_notify_anysource(__UNUSED__ int polling_task_id, __UNUSED__ int
 	__shm_poll(rail);
 }
 
+static void _mpc_lowcomm_shm_notify_recv( mpc_lowcomm_ptp_message_t * msg , struct sctk_rail_info_s * rail )
+{
+	__shm_poll(rail);
+}
+
+
 /********************************************************************/
 /* SHM Init                                                         */
 /********************************************************************/
@@ -358,6 +364,7 @@ void sctk_network_init_shm(sctk_rail_info_t *rail)
 	rail->notify_perform_message    = _mpc_lowcomm_shm_notify_perform;
 	rail->notify_idle_message       = _mpc_lowcomm_shm_notify_idle;
 	rail->send_message_from_network = sctk_send_message_from_network_shm;
+	rail->notify_recv_message = _mpc_lowcomm_shm_notify_recv;
 
 	rail->network_name    = "SHM";
 	rail->driver_finalize = sctk_network_finalize_shm;
