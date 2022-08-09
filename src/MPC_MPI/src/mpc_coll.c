@@ -8153,8 +8153,8 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   void *keep_data_buf = NULL;
   void *swap = NULL;
   void *tmpbuf_alloc = NULL;
-  int tmpbuf_count = 0;
-  int keepbuf_count = 0;
+  unsigned long tmpbuf_count = 0;
+  unsigned long keepbuf_count = 0;
 
   mpc_common_nodebug ("%d HIGHEST LEVEL: %d, DEEPEST LEVEL: %d", 
       rank, highest_level, deepest_level);
@@ -8184,7 +8184,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
       }
 
       int j;
-      int tmp = 0;
+      unsigned long tmp = 0;
       for(j = 0; j < size_master; j++) {
         tmp += info->hardware_info_ptr->childs_data_count[i][j] * (size - info->hardware_info_ptr->childs_data_count[i][j]);
       }
@@ -8204,7 +8204,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
 
   tmpbuf_count = tmpbuf_count + keepbuf_count;
 
-  mpc_common_nodebug ("%d BUF COUNT: %d, KEEP COUNT: %d", 
+  mpc_common_nodebug ("%d BUF COUNT: %lu, KEEP COUNT: %lu", 
       rank, tmpbuf_count, keepbuf_count);
 
   // The buffer will looks like this:
