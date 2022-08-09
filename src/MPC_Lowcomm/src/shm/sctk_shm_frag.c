@@ -12,14 +12,14 @@
 
 #include <sctk_alloc.h>
 
-static volatile int __number_of_pending_msgs  = 0;
+static volatile int __number_of_pending_msgs = 0;
 
-static mpc_common_spinlock_t        sctk_shm_sending_frag_hastable_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t sctk_shm_sending_frag_hastable_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 //static mpc_common_spinlock_t        sctk_shm_recving_frag_hastable_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
-static struct mpc_common_hashtable *sctk_shm_sending_frag_hastable_ptr  = NULL;
-static struct mpc_common_hashtable *sctk_shm_recving_frag_hastable_ptr  = NULL;
+static struct mpc_common_hashtable *sctk_shm_sending_frag_hastable_ptr = NULL;
+static struct mpc_common_hashtable *sctk_shm_recving_frag_hastable_ptr = NULL;
 
-static sctk_shm_proc_frag_info_t * __get_fragment_in_ht(int key, int table_id, sctk_shm_table_t table_type)
+static sctk_shm_proc_frag_info_t *__get_fragment_in_ht(int key, int table_id, sctk_shm_table_t table_type)
 {
 	void *tmp;
 
@@ -83,9 +83,9 @@ static void __rdv_cpy(mpc_lowcomm_ptp_message_content_to_copy_t *tmp)
 	sctk_net_message_copy(tmp);
 }
 
-static sctk_shm_proc_frag_info_t * __add_frag_msg(int dest)
+static sctk_shm_proc_frag_info_t *__add_frag_msg(int dest)
 {
-   static volatile int __current_message_id = 0;
+	static volatile int __current_message_id = 0;
 
 	int try = 0;
 	sctk_shm_proc_frag_info_t *frag_infos = NULL;
@@ -97,7 +97,7 @@ static sctk_shm_proc_frag_info_t * __add_frag_msg(int dest)
 	mpc_common_spinlock_lock_yield(&sctk_shm_sending_frag_hastable_lock);
 	do
 	{
-		__current_message_id  = (__current_message_id + 1) % SCTK_SHM_MAX_FRAG_MSG_PER_PROCESS;
+		__current_message_id     = (__current_message_id + 1) % SCTK_SHM_MAX_FRAG_MSG_PER_PROCESS;
 		frag_infos->msg_frag_key = __current_message_id;
 
 		if(try > SCTK_SHM_MAX_FRAG_MSG_PER_PROCESS)
@@ -117,7 +117,7 @@ static sctk_shm_proc_frag_info_t * __add_frag_msg(int dest)
 	return frag_infos;
 }
 
-static sctk_shm_proc_frag_info_t * __prepare_first_fragment_send_msg(int remote, mpc_lowcomm_ptp_message_t *msg)
+static sctk_shm_proc_frag_info_t *__prepare_first_fragment_send_msg(int remote, mpc_lowcomm_ptp_message_t *msg)
 {
 	sctk_shm_proc_frag_info_t *frag_infos = NULL;
 
@@ -133,7 +133,7 @@ static sctk_shm_proc_frag_info_t * __prepare_first_fragment_send_msg(int remote,
 	frag_infos->remote_mpi_rank = remote;
 	frag_infos->local_mpi_rank  = mpc_common_get_local_process_rank();
 	frag_infos->header          = msg;
-	frag_infos->payload_ptr             = (void *)msg->tail.message.contiguous.addr;
+	frag_infos->payload_ptr     = (void *)msg->tail.message.contiguous.addr;
 
 	if(msg->tail.message_type != MPC_LOWCOMM_MESSAGE_CONTIGUOUS)
 	{
@@ -144,7 +144,7 @@ static sctk_shm_proc_frag_info_t * __prepare_first_fragment_send_msg(int remote,
 	return frag_infos;
 }
 
-static sctk_shm_proc_frag_info_t * __prepare_recv_msg(int key, int remote, mpc_lowcomm_ptp_message_t *msg)
+static sctk_shm_proc_frag_info_t *__prepare_recv_msg(int key, int remote, mpc_lowcomm_ptp_message_t *msg)
 {
 	sctk_shm_proc_frag_info_t *frag_infos = NULL;
 	const size_t msg_size = SCTK_MSG_SIZE(msg);
@@ -168,7 +168,7 @@ static sctk_shm_proc_frag_info_t * __prepare_recv_msg(int key, int remote, mpc_l
 	return frag_infos;
 }
 
-static sctk_shm_proc_frag_info_t * __first_send(mpc_lowcomm_ptp_message_t *msg, sctk_shm_cell_t *cell)
+static sctk_shm_proc_frag_info_t *__first_send(mpc_lowcomm_ptp_message_t *msg, sctk_shm_cell_t *cell)
 {
 	sctk_shm_proc_frag_info_t *frag_infos = NULL;
 
@@ -202,7 +202,7 @@ static sctk_shm_proc_frag_info_t * __first_send(mpc_lowcomm_ptp_message_t *msg, 
 	return frag_infos;
 }
 
-static sctk_shm_proc_frag_info_t * __first_recv(mpc_lowcomm_ptp_message_t *msg, sctk_shm_cell_t *cell)
+static sctk_shm_proc_frag_info_t *__first_recv(mpc_lowcomm_ptp_message_t *msg, sctk_shm_cell_t *cell)
 {
 	int msg_key, msg_src;
 	sctk_shm_proc_frag_info_t *frag_infos = NULL;
@@ -212,7 +212,7 @@ static sctk_shm_proc_frag_info_t * __first_recv(mpc_lowcomm_ptp_message_t *msg, 
 
 	frag_infos = __prepare_recv_msg(msg_key, msg_src, msg);
 	memcpy(frag_infos->header, cell->data, sizeof(mpc_lowcomm_ptp_message_body_t) );
-	mpc_common_nodebug("[KEY:%d-%ld]\t\tRECV FIRST PART MSG", msg_key, SCTK_MSG_SIZE(msg));
+	mpc_common_nodebug("[KEY:%d-%ld]\t\tRECV FIRST PART MSG", msg_key, SCTK_MSG_SIZE(msg) );
 
 	/* reset tail */
 	msg = frag_infos->header;
@@ -223,14 +223,14 @@ static sctk_shm_proc_frag_info_t * __first_recv(mpc_lowcomm_ptp_message_t *msg, 
 	return frag_infos;
 }
 
-static int __send_next_fragment(sctk_shm_proc_frag_info_t *frag_infos, int * to_remove)
+static int __send_next_fragment(sctk_shm_proc_frag_info_t *frag_infos, int *to_remove)
 {
 	int                        msg_key, msg_dest, is_control_msg;
 	size_t                     size = 0;
 	sctk_shm_cell_t *          cell = NULL;
 	mpc_lowcomm_ptp_message_t *msg  = NULL;
 
-   *to_remove = 0;
+	*to_remove = 0;
 
 	is_control_msg = 0;
 	msg_key        = frag_infos->msg_frag_key;
@@ -269,7 +269,7 @@ static int __send_next_fragment(sctk_shm_proc_frag_info_t *frag_infos, int * to_
 
 	if(frag_infos->size_total == frag_infos->size_copied)
 	{
-      *to_remove = 1;
+		*to_remove = 1;
 
 		mpc_common_nodebug("[KEY:%d] SEND END PART MSG", msg_key);
 		msg = frag_infos->header;
@@ -281,19 +281,12 @@ static int __send_next_fragment(sctk_shm_proc_frag_info_t *frag_infos, int * to_
 	return 1;
 }
 
-
-struct _to_remove
-{
-   int key;
-   int dest;
-};
-
-#define MAX_FRAG_REMOVE 8
+#define MAX_FRAG_REMOVE 16
 
 void sctk_network_frag_msg_shm_idle(int max_try)
 {
 	sctk_shm_proc_frag_info_t *infos = NULL;
-	int i, cur_try;
+	int i;
 
 	if(!__number_of_pending_msgs)
 	{
@@ -307,42 +300,41 @@ void sctk_network_frag_msg_shm_idle(int max_try)
 
 	for(i = 0; i < mpc_common_get_local_process_count(); i++)
 	{
-      int to_remove = 0;
+		int to_remove = 0;
 
-      struct _to_remove remove_list[MAX_FRAG_REMOVE] = {0};
-      int remove_count = 0;
+		sctk_shm_proc_frag_info_t * remove_list[MAX_FRAG_REMOVE] = { 0 };
+		int remove_count = 0;
 
 
 
 		MPC_HT_ITER(&(sctk_shm_sending_frag_hastable_ptr[i]), infos)
 
 
-		if(!__send_next_fragment(infos, &to_remove))
+		if(!__send_next_fragment(infos, &to_remove) )
 		{
-			MPC_HT_ITER_BREAK(&(sctk_shm_sending_frag_hastable_ptr[i]));
+			MPC_HT_ITER_BREAK(&(sctk_shm_sending_frag_hastable_ptr[i]) );
 		}
 
-      if(to_remove)
-      {
-         remove_list[remove_count].key = infos->msg_frag_key;
-         remove_list[remove_count].dest = infos->remote_mpi_rank;
-         remove_count++;
+		if(to_remove)
+		{
+			remove_list[remove_count] = infos;
+			remove_count++;
 
-         if(remove_count == MAX_FRAG_REMOVE)
-         {
-         	MPC_HT_ITER_BREAK(&(sctk_shm_sending_frag_hastable_ptr[i]));
-         }
-      }
+			if(remove_count == MAX_FRAG_REMOVE)
+			{
+				MPC_HT_ITER_BREAK(&(sctk_shm_sending_frag_hastable_ptr[i]) );
+			}
+		}
 
-      MPC_HT_ITER_END(&(sctk_shm_sending_frag_hastable_ptr[i]) )
+		MPC_HT_ITER_END(&(sctk_shm_sending_frag_hastable_ptr[i]) )
 
-      int j;
+		int j;
 
-      for(j = 0 ; j < remove_count; j++)
-      {
-     		__del_fragment_in_ht(remove_list[j].key, remove_list[j].dest, SCTK_SHM_SENDER_HT);
-		   __number_of_pending_msgs--;
-      }
+		for(j = 0; j < remove_count; j++)
+		{
+			__del_fragment_in_ht(remove_list[j]->msg_frag_key, remove_list[j]->remote_mpi_rank, SCTK_SHM_SENDER_HT);
+			__number_of_pending_msgs--;
+		}
 	}
 
 	mpc_common_spinlock_unlock(&sctk_shm_sending_frag_hastable_lock);
@@ -360,7 +352,7 @@ int sctk_network_frag_msg_shm_send(mpc_lowcomm_ptp_message_t *msg, sctk_shm_cell
 	return 1;
 }
 
-mpc_lowcomm_ptp_message_t * sctk_network_frag_msg_shm_recv(sctk_shm_cell_t *cell)
+mpc_lowcomm_ptp_message_t *sctk_network_frag_msg_shm_recv(sctk_shm_cell_t *cell)
 {
 	int msg_key, msg_src;
 	sctk_shm_proc_frag_info_t *frag_infos = NULL;

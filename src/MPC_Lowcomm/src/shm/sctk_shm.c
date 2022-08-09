@@ -5,6 +5,7 @@
 #include <sctk_alloc.h>
 #include <mpc_launch_shm.h>
 #include <mpc_common_rank.h>
+#include <string.h>
 #include <utlist.h>
 #include <mpc_launch_shm.h>
 
@@ -104,16 +105,24 @@ static inline void __shm_poll(sctk_rail_info_t *rail)
 		return;
 	}
 
+	if(shm_driver_info->in_poll)
+	{
+		return;
+	}
+
 	if(mpc_common_spinlock_trylock(&shm_driver_info->polling_lock) )
 	{
 		return;
 	}
+
+	shm_driver_info->in_poll = 1;
 
 	while(1)
 	{
 		cell = sctk_shm_recv_cell();
 		if(!cell)
 		{
+			sctk_network_frag_msg_shm_idle(1);
 			break;
 		}
 
@@ -155,12 +164,11 @@ static inline void __shm_poll(sctk_rail_info_t *rail)
 		}
 	}
 
-	if(!cell)
-	{
-		sctk_network_frag_msg_shm_idle(1);
-	}
-
 	mpc_common_spinlock_unlock(&shm_driver_info->polling_lock);
+
+
+	shm_driver_info->in_poll = 0;
+
 }
 
 static void _mpc_lowcomm_shm_notify_idle(sctk_rail_info_t *rail)
@@ -220,6 +228,8 @@ static void sctk_shm_init_raw_queue(size_t size, int cells_num, int rank)
 
 	shm_base = mpc_launch_shm_map(size, MPC_LAUNCH_SHM_USE_PMI, NULL);
 
+	memset(shm_base, 0, size);
+
 	sctk_shm_add_region_infos(shm_base, size, cells_num, rank);
 
 	if(mpc_common_get_local_process_rank() == rank)
@@ -238,9 +248,7 @@ void sctk_shm_check_raw_queue(int local_process_number)
 
 	for(i = 0; i < local_process_number; i++)
 	{
-		assume_m(sctk_shm_isempty_process_queue(SCTK_SHM_CELLS_QUEUE_SEND, i), "Queue must be empty")
 		assume_m(sctk_shm_isempty_process_queue(SCTK_SHM_CELLS_QUEUE_RECV, i), "Queue must be empty")
-		assume_m(sctk_shm_isempty_process_queue(SCTK_SHM_CELLS_QUEUE_CMPL, i), "Queue must be empty")
 		assume_m(!sctk_shm_isempty_process_queue(SCTK_SHM_CELLS_QUEUE_FREE, i), "Queue must be full")
 	}
 }
@@ -300,12 +308,14 @@ void sctk_network_init_shm(sctk_rail_info_t *rail)
 	shm_driver_info->driver_initialized = 0;
 	shm_driver_info->regions_infos = NULL;
 	mpc_common_spinlock_init(&shm_driver_info->polling_lock, 0);
+	shm_driver_info->in_poll = 0;
 	/* Base init done */
 
 	sctk_rail_init_route(rail, "none", NULL);
 
 	sctk_shmem_cells_num = rail->runtime_config_driver_config->driver.value.shm.cells_num;
 	sctk_shmem_size      = sctk_shm_get_region_size(sctk_shmem_cells_num);
+
 	sctk_shmem_size      = mpc_common_roundup_powerof2(sctk_shmem_size);
 
 	local_process_rank   = mpc_common_get_local_process_rank();

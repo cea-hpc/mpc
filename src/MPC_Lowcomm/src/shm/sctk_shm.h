@@ -28,6 +28,7 @@ typedef struct
 	int			 cma_enabled;
 	volatile int driver_initialized;
 	mpc_common_spinlock_t polling_lock;
+	volatile int in_poll;
 	void                *regions_infos;
 } sctk_shm_rail_info_t;
 

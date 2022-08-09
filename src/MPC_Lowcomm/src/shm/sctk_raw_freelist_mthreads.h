@@ -2,6 +2,7 @@
 #define __SCTK_RAW_FREELIST_MTHREADS_H__
 
 #include "sctk_raw_freelist_queue.h"
+#include "sctk_shm_raw_queues_archdefs.h"
 #include "sctk_shm_raw_queues_internals.h"
 
 static inline sctk_shm_item_t *
@@ -10,12 +11,24 @@ sctk_shm_dequeue_mt(sctk_shm_list_t *queue, char *src_base_addr)
     volatile sctk_shm_item_t *abs_item;
     sctk_shm_item_t *head;
 
+    if(!queue->head)
+    {
+        return NULL;
+    }
+
+    cpu_relax();
+
+    if(!queue->head)
+    {
+        return NULL;
+    }
+
     if(mpc_common_spinlock_trylock(&(queue->lock)))
     {
         return NULL;
     }
 
-    head = queue->head;
+    head = (sctk_shm_item_t *)queue->head;
 
     if(!head)
     {
@@ -23,7 +36,7 @@ sctk_shm_dequeue_mt(sctk_shm_list_t *queue, char *src_base_addr)
         return NULL;
     }
 
-    abs_item = sctk_shm_rel_to_abs(src_base_addr,queue->head);
+    abs_item = sctk_shm_rel_to_abs(src_base_addr,head);
 
     if(abs_item->next)
     {

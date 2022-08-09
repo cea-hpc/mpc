@@ -18,9 +18,7 @@ struct sctk_shm_region_infos_s
     char* all_shm_base;
     char* max_addr;
     mpc_common_spinlock_t global_lock;
-    sctk_shm_list_t *send_queue; 
     sctk_shm_list_t *recv_queue;
-    sctk_shm_list_t *cmpl_queue;
     sctk_shm_list_t *free_queue;
     sctk_shm_list_t *ctrl_queue;
     char *sctk_shm_asymm_addr;
