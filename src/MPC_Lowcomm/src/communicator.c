@@ -774,7 +774,8 @@ static inline void ___free_topo_comm(mpc_lowcomm_communicator_t comm) {
   for(i = 0; i < task_count; i++) {
     int j = 0;
     while(comm->topo_comms[i].roots[j] != -1) {
-      ___free_hardware_info(comm->topo_comms[i].hw_infos[i]);
+      ___free_hardware_info(comm->topo_comms[i].hw_infos[j]);
+      j++;
     }
 
     sctk_free(comm->topo_comms[i].roots);
