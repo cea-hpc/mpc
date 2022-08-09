@@ -35,6 +35,7 @@
 #include <mpc_common_debug.h>
 #include <mpc_common_flags.h>
 #include <mpc_launch_shm.h>
+#include <stdint.h>
 
 
 #ifdef MPC_Threads
@@ -68,15 +69,6 @@ static void __pool_size_adapt(char *exename)
 
 
 	int is_linear = mempool_conf->force_process_linear;
-
-	if(mempool_conf->autodetect)
-	{
-		if(!strstr(exename, "IMB") )
-		{
-			/* Force linear */
-			is_linear = 1;
-		}
-	}
 
 	if(is_linear)
 	{
@@ -280,11 +272,11 @@ static inline void __setup_pool(mpc_lowcomm_communicator_t per_node_comm)
 		params.mpi.rank    = __rank;
 		params.mpi.pcomm   = process_master_comm;
 
-		mpc_common_debug_warning("POOL is %ld large", to_map_size);
+		//mpc_common_debug_warning("POOL is %ld large", to_map_size);
 
 		__mpc_lowcomm_memory_pool._pool = mpc_launch_shm_map(to_map_size, MPC_LAUNCH_SHM_USE_MPI, &params);
 
-		mpc_common_debug_error("POOL @ %p", __mpc_lowcomm_memory_pool._pool);
+		//mpc_common_debug_error("POOL @ %p", __mpc_lowcomm_memory_pool._pool);
 
 		assume(__mpc_lowcomm_memory_pool._pool != NULL);
 
@@ -321,7 +313,6 @@ static inline void __setup_pool(mpc_lowcomm_communicator_t per_node_comm)
 		                               SCTK_PAGE_SIZE);
 
 		__mpc_lowcomm_memory_pool.space_per_bit = (pool_size / (SCTK_PAGE_SIZE * 8) );
-		mpc_common_debug_error("Got %d bytes per bit", __mpc_lowcomm_memory_pool.space_per_bit);
 		mpc_common_hashtable_init(&__mpc_lowcomm_memory_pool.size_ht, 32);
 	}
 }
@@ -449,14 +440,15 @@ void *mpc_lowcomm_allocmem_pool_alloc_check(size_t size, int *is_shared)
 	}
 
 	/* We are sure that it does not fit */
-	if( (__mpc_lowcomm_memory_pool.size < size) )
+	if( (__mpc_lowcomm_memory_pool.size_left < size) )
 	{
 		return sctk_malloc(size);
 	}
 
 	mpc_lowcomm_allocmem_pool_lock();
 
-	size_t number_of_bits = 1 +	(size + (size % __mpc_lowcomm_memory_pool.space_per_bit) ) / __mpc_lowcomm_memory_pool.space_per_bit;
+	uint64_t number_of_bits = 1 + (size + (size % __mpc_lowcomm_memory_pool.space_per_bit) ) / __mpc_lowcomm_memory_pool.space_per_bit;
+
 	/* Now try to find this number of contiguous free bits */
 	size_t i, j;
 	struct mpc_common_bit_array *ba = &__mpc_lowcomm_memory_pool.mask;
@@ -470,7 +462,7 @@ void *mpc_lowcomm_allocmem_pool_alloc_check(size_t size, int *is_shared)
 			continue;
 		}
 
-		unsigned long long end_of_seg_off = i + number_of_bits;
+		uint64_t end_of_seg_off = i + number_of_bits;
 
 		if(ba->real_size <= end_of_seg_off)
 		{
@@ -484,11 +476,13 @@ void *mpc_lowcomm_allocmem_pool_alloc_check(size_t size, int *is_shared)
 			/* Last bit is free it is a good candidate */
 
 			/* Now scan the whole segment */
-			for(j = i; (j < (i + number_of_bits) ); j++)
+			for(j = i; j <= end_of_seg_off ; j++)
 			{
 				if(mpc_common_bit_array_get(ba, j) )
 				{
 					found_taken_bit = 1;
+					/* No need to rescan the same area */
+					i = j+1;
 					break;
 				}
 			}
@@ -499,39 +493,35 @@ void *mpc_lowcomm_allocmem_pool_alloc_check(size_t size, int *is_shared)
 				/* Book the bits */
 				size_t k;
 
-				for(k = i; k < (i + number_of_bits); k++)
+				for(k = i; k <= end_of_seg_off; k++)
 				{
 					mpc_common_bit_array_set(ba, k, 1);
 				}
 
 
 				/* Compute address */
-				void *addr = __mpc_lowcomm_memory_pool.pool +
-				             (i * __mpc_lowcomm_memory_pool.space_per_bit);
-				
-				//mpc_common_debug_error("ALLOC %ld from block %d to %d (start %p end %p)", size, i, i + number_of_bits, addr, addr + size);
+				void *addr = __mpc_lowcomm_memory_pool.pool + (i * __mpc_lowcomm_memory_pool.space_per_bit);
+				__mpc_lowcomm_memory_pool.size_left -= number_of_bits * __mpc_lowcomm_memory_pool.space_per_bit;
+				mpc_common_nodebug("Alloc %p [%d to %d]", addr, i, end_of_seg_off);
 
 
 				/* Store bit size for free for address */
 				mpc_common_hashtable_set(&__mpc_lowcomm_memory_pool.size_ht, ( uint64_t )addr,
 				                         ( void * )number_of_bits);
-				mpc_common_nodebug("ALLOC %ld", number_of_bits);
+
 				mpc_lowcomm_allocmem_pool_unlock();
 				*is_shared = 1;
 				/* Proudly return the address */
 				return addr;
 			}
 		}
-
-		// else
-		//{
-		//	/* Last bit is taken skip to next */
-		//	i = end_of_seg_off + 1;
-		//}
 	}
 
 	mpc_lowcomm_allocmem_pool_unlock();
 	/* We failed */
+
+	mpc_common_debug_error("Fallback for %ld", size);
+
 	return sctk_malloc(size);
 }
 
@@ -539,7 +529,9 @@ void *mpc_lowcomm_allocmem_pool_alloc(size_t size)
 {
 	int dummy_shared;
 
-	return mpc_lowcomm_allocmem_pool_alloc_check(size, &dummy_shared);
+	void * ret = mpc_lowcomm_allocmem_pool_alloc_check(size, &dummy_shared);
+
+	return ret;
 }
 
 int mpc_lowcomm_allocmem_pool_free_size(void *ptr, ssize_t known_size)
@@ -554,6 +546,8 @@ int mpc_lowcomm_allocmem_pool_free_size(void *ptr, ssize_t known_size)
 	mpc_lowcomm_allocmem_pool_lock();
 	void *size_in_ptr = NULL;
 
+
+
 	if(known_size < 0)
 	{
 		size_in_ptr = mpc_common_hashtable_get(&__mpc_lowcomm_memory_pool.size_ht, ( uint64_t )ptr);
@@ -565,18 +559,22 @@ int mpc_lowcomm_allocmem_pool_free_size(void *ptr, ssize_t known_size)
 
 	if(size_in_ptr != NULL)
 	{
-		size_t size = ( size_t )size_in_ptr;
 		/* Compute bit_offset */
 		size_t off = (ptr - __mpc_lowcomm_memory_pool.pool) /
 		             __mpc_lowcomm_memory_pool.space_per_bit;
-		size_t number_of_bits = size;
+		size_t number_of_bits = (size_t)size_in_ptr;
 		size_t i;
 
-		for(i = off; i < (off + number_of_bits); i++)
+
+		mpc_common_nodebug("Free %p [%d to %d]", ptr, off, (off + number_of_bits));
+
+
+		for(i = off; i <= (off + number_of_bits); i++)
 		{
 			mpc_common_bit_array_set(&__mpc_lowcomm_memory_pool.mask, i, 0);
 		}
 
+		__mpc_lowcomm_memory_pool.size_left += number_of_bits * __mpc_lowcomm_memory_pool.space_per_bit;
 		mpc_common_hashtable_delete(&__mpc_lowcomm_memory_pool.size_ht, ( uint64_t )ptr);
 		mpc_lowcomm_allocmem_pool_unlock();
 	}
