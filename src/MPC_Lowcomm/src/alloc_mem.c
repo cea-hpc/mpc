@@ -520,8 +520,6 @@ void *mpc_lowcomm_allocmem_pool_alloc_check(size_t size, int *is_shared)
 	mpc_lowcomm_allocmem_pool_unlock();
 	/* We failed */
 
-	mpc_common_debug_error("Fallback for %ld", size);
-
 	return sctk_malloc(size);
 }
 
