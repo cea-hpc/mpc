@@ -242,7 +242,7 @@ static inline mpc_conf_config_type_t *__init_driver_shm(struct _mpc_lowcomm_conf
 
 	/* Size parameters */
 	shm->shmem_size = 1024;
-	shm->cells_num  = 2048;
+	shm->cells_num  = 8192;
 
 	/*
 	  Create the config object
