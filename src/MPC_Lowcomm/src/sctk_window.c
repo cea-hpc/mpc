@@ -744,10 +744,12 @@ static inline void mpc_lowcomm_rdma_window_RDMA_write_net(struct mpc_lowcomm_rdm
 
 	mpc_common_nodebug("RDMA WRITE NET");
 
+	int comm_rank = mpc_lowcomm_communicator_rank_of(win->communicator, mpc_common_get_task_rank() );
+
 	mpc_lowcomm_ptp_message_t *msg =
 		mpc_lowcomm_ptp_message_header_create(MPC_LOWCOMM_MESSAGE_CONTIGUOUS);
 	mpc_lowcomm_ptp_message_header_init(
-		msg, -8, win->communicator, mpc_lowcomm_communicator_rank_of(win->communicator, mpc_common_get_task_rank() ),
+		msg, -8, win->communicator, mpc_lowcomm_communicator_uid(win->communicator, comm_rank) ,
 		win->comm_rank, req, size, MPC_LOWCOMM_RDMA_MESSAGE, MPC_DATATYPE_IGNORE, REQUEST_RDMA);
 
 	/* Pin local segment */
@@ -925,11 +927,13 @@ void mpc_lowcomm_rdma_window_RDMA_read_net(struct mpc_lowcomm_rdma_window *win, 
 		mpc_common_debug_fatal("Error RDMA read operation overflows the window");
 	}
 
+	int comm_rank = mpc_lowcomm_communicator_rank_of(win->communicator, mpc_common_get_task_rank() );
+
 	mpc_lowcomm_ptp_message_t *msg =
 		mpc_lowcomm_ptp_message_header_create(MPC_LOWCOMM_MESSAGE_CONTIGUOUS);
 
 	mpc_lowcomm_ptp_message_header_init(
-		msg, -8, win->communicator, mpc_lowcomm_communicator_rank_of(win->communicator, mpc_common_get_task_rank() ),
+		msg, -8, win->communicator, mpc_lowcomm_communicator_uid(win->communicator, comm_rank),
 		win->comm_rank, req, size, MPC_LOWCOMM_RDMA_MESSAGE, MPC_DATATYPE_IGNORE, REQUEST_RDMA);
 
 	/* Pin local segment */
@@ -1514,11 +1518,13 @@ static inline void mpc_lowcomm_rdma_window_RDMA_fetch_and_op_net(
 		mpc_common_debug_fatal("Error RDMA fetch and op operation overflows the window");
 	}
 
+	int comm_rank = mpc_lowcomm_communicator_rank_of(win->communicator, mpc_common_get_task_rank() );
+
 	mpc_lowcomm_ptp_message_t *msg =
 		mpc_lowcomm_ptp_message_header_create(MPC_LOWCOMM_MESSAGE_CONTIGUOUS);
 
 	mpc_lowcomm_ptp_message_header_init(msg, -8, win->communicator,
-	                                    mpc_lowcomm_communicator_rank_of(win->communicator, mpc_common_get_task_rank() ),
+	                                    mpc_lowcomm_communicator_uid(win->communicator, comm_rank),
 	                                    win->comm_rank, req, RDMA_type_size(type),
 	                                    MPC_LOWCOMM_RDMA_MESSAGE, MPC_DATATYPE_IGNORE, REQUEST_RDMA);
 
@@ -1808,11 +1814,13 @@ void mpc_lowcomm_rdma_window_RDMA_CAS_net(mpc_lowcomm_rdma_window_t remote_win_i
 		mpc_common_debug_fatal("Error RDMA CAS operation overflows the window");
 	}
 
+	int comm_rank = mpc_lowcomm_communicator_rank_of(win->communicator, mpc_common_get_task_rank() );
+
 	mpc_lowcomm_ptp_message_t *msg =
 		mpc_lowcomm_ptp_message_header_create(MPC_LOWCOMM_MESSAGE_CONTIGUOUS);
 
 	mpc_lowcomm_ptp_message_header_init(msg, -8, win->communicator,
-	                                    mpc_lowcomm_communicator_rank_of(win->communicator, win->owner),
+	                                    mpc_lowcomm_communicator_uid(win->communicator, comm_rank),
 	                                    win->comm_rank, req, RDMA_type_size(type),
 	                                    MPC_LOWCOMM_RDMA_MESSAGE, MPC_DATATYPE_IGNORE, REQUEST_RDMA);
 
