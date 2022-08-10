@@ -364,10 +364,11 @@ typedef enum    mpc_omp_task_list_type_e
 
 typedef enum    mpcomp_task_dep_task_status_e
 {
-    MPC_OMP_TASK_STATUS_NOT_READY       = 0,
-    MPC_OMP_TASK_STATUS_READY           = 1,
-    MPC_OMP_TASK_STATUS_FINALIZED       = 2,
-    MPC_OMP_TASK_STATUS_COUNT           = 3
+    MPC_OMP_TASK_STATUS_NOT_READY               = 0,
+    MPC_OMP_TASK_STATUS_READY                   = 1,
+    MPC_OMP_TASK_STATUS_FINALIZED_PERSISTENT    = 2,
+    MPC_OMP_TASK_STATUS_FINALIZED               = 3,
+    MPC_OMP_TASK_STATUS_COUNT                   = 4
 }               mpcomp_task_dep_task_status_t;
 
 /**********************
@@ -631,6 +632,9 @@ typedef struct  mpc_omp_task_persistent_infos_s
      * The version is set after copying private data as the persistent region iteration */
     OPA_int_t version;
 
+    /* original task uid */
+    int uid;
+
     /* Zom-bit - '1' if the task has be deleted from it persistent region */
     int zombit : 1;
 }               mpc_omp_task_persistent_infos_t;
@@ -781,9 +785,6 @@ typedef struct  mpc_omp_task_s
 
     /* task uid (= number of task previously created) */
     int uid;
-
-    /* task original uid in case of persistent */
-    int persistent_uid;
 
     /* the task list */
     struct mpc_omp_task_pqueue_s * pqueue;

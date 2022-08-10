@@ -212,7 +212,7 @@ __task_trace(mpc_omp_task_t * task, mpc_omp_task_trace_node_t * node)
 {
     mpc_omp_task_trace_record_schedule_t * record = (mpc_omp_task_trace_record_schedule_t *) __node_record(node);
     record->uid                 = task->uid;
-    record->persistent_uid      = task->persistent_uid;
+    record->persistent_uid      = task->persistent_infos.uid;
     record->priority            = task->priority;
     record->properties          = task->property;
     record->npredecessors       = task->dep_node.npredecessors;

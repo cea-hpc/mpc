@@ -1082,49 +1082,49 @@ __task_precedence_constraints(mpc_omp_task_t * predecessor, mpc_omp_task_t * suc
     assert(predecessor->depth == successor->depth);
 
     /* always generate arcs for persistent tasks */
-
-    if (OPA_load_int(&(predecessor->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED
-        ||  (    mpc_omp_task_property_isset(predecessor->property, MPC_OMP_TASK_PROP_PERSISTENT)
-            &&  (mpc_omp_task_property_isset(successor->property, MPC_OMP_TASK_PROP_PERSISTENT))))
+    if (!__task_in_list(predecessor->dep_node.successors, successor))
     {
-        mpc_common_spinlock_lock(&(predecessor->dep_node.lock));
+        if (OPA_load_int(&(predecessor->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED)
         {
-            if (OPA_load_int(&(predecessor->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED
-                ||  (    mpc_omp_task_property_isset(predecessor->property, MPC_OMP_TASK_PROP_PERSISTENT)
-                    &&  (mpc_omp_task_property_isset(successor->property, MPC_OMP_TASK_PROP_PERSISTENT))))
+            mpc_common_spinlock_lock(&(predecessor->dep_node.lock));
             {
-                if (!__task_in_list(predecessor->dep_node.successors, successor))
+                if (OPA_load_int(&(predecessor->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED)
                 {
                     ++predecessor->dep_node.nsuccessors;
                     ++successor->dep_node.npredecessors;
-                    if (OPA_load_int(&(predecessor->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED)
+
+                    if (OPA_load_int(&(predecessor->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED_PERSISTENT)
                     {
                         OPA_incr_int(&(successor->dep_node.ref_predecessors));
                     }
-                    // TODO : this is a trick for the post-processing in case
-                    // of a persistent task, is it mandatory to track dependencies ?
                     else
                     {
+                        // little tracing trick : in case of persistent tasks,
+                        // if the predecessor already completed, the dependency wouldn't be
+                        // tracked in the 'finalize_deps' function -> so we track it here instead
                         MPC_OMP_TASK_TRACE_DEPENDENCY(predecessor, successor);
                     }
 
+                    // add the successor to the predecessor' successors list
                     predecessor->dep_node.successors = __task_list_elt_new(predecessor->dep_node.successors, successor);
-                    // if the priority should be propagated to predecessors
-                    // -> link through predecessor's list
+
+                    // add the predecessor to the successor' predecessors list
+                    // in case we need it in priority propagation
                     if (mpc_omp_conf_get()->task_priority_propagation_policy
                         != MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_NOOP)
                     {
                         successor->dep_node.predecessors = __task_list_elt_new(successor->dep_node.predecessors, predecessor);
                     }
-                }
 
-                if (predecessor->dep_node.top_level + 1 > successor->dep_node.top_level)
-                {
-                    successor->dep_node.top_level = predecessor->dep_node.top_level + 1;
+                    // update top level
+                    if (predecessor->dep_node.top_level + 1 > successor->dep_node.top_level)
+                    {
+                        successor->dep_node.top_level = predecessor->dep_node.top_level + 1;
+                    }
                 }
             }
+            mpc_common_spinlock_unlock(&(predecessor->dep_node.lock));
         }
-        mpc_common_spinlock_unlock(&(predecessor->dep_node.lock));
     }
 }
 
@@ -1455,61 +1455,79 @@ __task_finalize_deps(mpc_omp_task_t * task)
     /* if the task has no dependencies, there is no successors to release, return now */
     if (!mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_DEPEND)) return ;
 
-    mpc_common_spinlock_lock(&(task->dep_node.lock));
-    {
-        OPA_store_int(&(task->dep_node.status), MPC_OMP_TASK_STATUS_FINALIZED);
-    }
-    mpc_common_spinlock_unlock(&(task->dep_node.lock));
-
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
     assert(thread);
 
-    /* the task is completed, remove its dependencies from the parent hmap
-     * If the task is persistant, we still wanna generate arcs so keep infos */
+    /* if the task is non-persistent */
     if (!mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT))
     {
-        __task_finalize_deps_list(task);
-    }
-
-    /* Resolve successor's data dependency */
-    mpc_omp_task_list_elt_t * succ = task->dep_node.successors;
-    while (succ)
-    {
-        MPC_OMP_TASK_TRACE_DEPENDENCY(task, succ->task);
-
-        /* in case of a persistent region, ensure that the successor task
-         * private variable had been copied by the producer thread. Else,
-         * we cannot process it yet. */
-
-        /* if successor's dependencies are fullfilled,
-         * and it is the right version of the persistent,
-         * process it */
-        if (OPA_fetch_and_decr_int(&(succ->task->dep_node.ref_predecessors)) == 1 &&
-            (!mpc_omp_task_property_isset(succ->task->property, MPC_OMP_TASK_PROP_PERSISTENT) ||
-            OPA_load_int(&(task->persistent_infos.version)) == OPA_load_int(&(succ->task->persistent_infos.version))))
+        mpc_common_spinlock_lock(&(task->dep_node.lock));
         {
-            if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT) && task->persistent_infos.zombit)
-            {
-                printf("not processing %s\n", task->label);
-                // TODO : destroy 'task'
-            }
-            else
+            OPA_store_int(&(task->dep_node.status), MPC_OMP_TASK_STATUS_FINALIZED);
+        }
+        mpc_common_spinlock_unlock(&(task->dep_node.lock));
+
+        // the task is completed : remove its dependencies from the parent hmap
+        __task_finalize_deps_list(task);
+
+        /* Resolve successor's data dependency */
+        mpc_omp_task_list_elt_t * succ = task->dep_node.successors;
+        while (succ)
+        {
+            MPC_OMP_TASK_TRACE_DEPENDENCY(task, succ->task);
+
+            /* if successor' dependencies are fullfilled, process it */
+            if (OPA_fetch_and_decr_int(&(succ->task->dep_node.ref_predecessors)) == 1)
             {
                 succ->task->statuses.direct_successor = true;
                 _mpc_omp_task_process(succ->task);
             }
+
+            /* process next successor */
+            succ = succ->next;
         }
 
-        /* process next successor */
-        succ = succ->next;
-    }
-
-    /* If the task is persistent, keep arcs for future iterations
-     * Else, it is now completed and we no longer need to access its predecessors */
-    if (!mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT))
-    {
+        // we no longer need to access the task predecessors
         __task_list_delete(task->dep_node.predecessors);
         task->dep_node.predecessors = NULL;
+    }
+    /* else, if the task is persistent */
+    else
+    {
+        // TODO : I found no better solution than this big lock on the successor list
+        // I am still wondering is this can be optimized through atomic operations instead
+        mpc_common_spinlock_lock(&(task->dep_node.lock));
+        {
+            /* Resolve successor's data dependency */
+            mpc_omp_task_list_elt_t * succ = task->dep_node.successors;
+            while (succ)
+            {
+                MPC_OMP_TASK_TRACE_DEPENDENCY(task, succ->task);
+
+                /* in case of a persistent region, ensure that the successor task
+                 * private variable had been copied by the producer thread. Else,
+                 * we cannot process it yet. This is the goal of the 'version' check */
+                if (OPA_fetch_and_decr_int(&(succ->task->dep_node.ref_predecessors)) == 1 &&
+                        OPA_load_int(&(task->persistent_infos.version)) == OPA_load_int(&(succ->task->persistent_infos.version)))
+                {
+                    if (task->persistent_infos.zombit)
+                    {
+                        // TODO : destroy 'task'
+                        printf("not processing %s\n", task->label);
+                    }
+                    else
+                    {
+                        succ->task->statuses.direct_successor = true;
+                        _mpc_omp_task_process(succ->task);
+                    }
+                }
+
+                /* process next successor */
+                succ = succ->next;
+            }
+            OPA_store_int(&(task->dep_node.status), MPC_OMP_TASK_STATUS_FINALIZED_PERSISTENT);
+        }
+        mpc_common_spinlock_unlock(&(task->dep_node.lock));
     }
 }
 
@@ -2985,6 +3003,9 @@ ___thread_bind_task(
     task->thread = thread;
 }
 
+// PISTE 1 : checker version
+// PISTE 2 : checker 'npredecessors' vaut bien le bon nombre
+
 static inline void
 __task_run_coherency_check_pre(mpc_omp_task_t * task)
 {
@@ -3228,16 +3249,7 @@ __taskyield_return(void)
 static inline void
 __thread_requeue_task(mpc_omp_task_t * task)
 {
-    mpc_omp_task_pqueue_type_t type;
-    if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_UNTIED))
-    {
-        type = MPC_OMP_PQUEUE_TYPE_UNTIED;
-    }
-    else
-    {
-        type = MPC_OMP_PQUEUE_TYPE_TIED;
-    }
-
+    mpc_omp_task_pqueue_type_t type = mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_UNTIED) ? MPC_OMP_PQUEUE_TYPE_UNTIED : MPC_OMP_PQUEUE_TYPE_TIED;
     mpc_omp_task_pqueue_t * pqueue = __thread_get_task_pqueue(task->thread, type);
     assert(pqueue);
     __task_pqueue_push(pqueue, task);
@@ -3530,10 +3542,6 @@ _mpc_omp_task_reinit(mpc_omp_task_t * task)
 
     /* update task uid */
     mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
-    if (OPA_load_int(&(task->persistent_infos.version)) == 0)
-    {
-        task->persistent_uid = task->uid;
-    }
     task->uid = OPA_fetch_and_incr_int(&(thread->instance->task_infos.next_task_uid));
     memset(&(task->statuses), 0, sizeof(mpc_omp_task_statuses_t));
 
@@ -3552,6 +3560,7 @@ _mpc_omp_task_reinit(mpc_omp_task_t * task)
         // 'npredecessors' combien une valeur constante entre itérations
         OPA_add_int(&(task->dep_node.ref_predecessors), task->dep_node.npredecessors);
     }
+    assert(OPA_load_int(&(task->dep_node.ref_predecessors)) >= 0);
 
     /* increasing the task version means the task may be reschedule whenever it is ready after this point */
     OPA_incr_int(&(task->persistent_infos.version));
@@ -3611,7 +3620,7 @@ _mpc_omp_task_init(
     return task;
 }
 
-inline void
+void
 _mpc_omp_task_deinit_persistent(mpc_omp_task_t * task)
 {
     assert(mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT));
@@ -4176,8 +4185,9 @@ mpc_omp_persistent_region_push(mpc_omp_task_t * task)
     mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
     assert(region->active);
     __task_ref_persistent_region(task->parent); /* _mpc_omp_task_finalize */
-    OPA_store_int(&(task->persistent_infos.version), 1);
+    OPA_store_int(&(task->persistent_infos.version), 0);
     task->persistent_infos.zombit = 0;
+    task->persistent_infos.uid = task->uid;
     mpc_omp_task_set_property(&(task->property), MPC_OMP_TASK_PROP_PERSISTENT);
     mpc_common_indirect_array_iterator_push(&(region->tasks_it), &task);
 }
