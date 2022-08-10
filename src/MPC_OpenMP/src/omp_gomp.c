@@ -2122,7 +2122,6 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
     {
         /* compute task size, data alignement, and allocate the task */
         const size_t size = _mpc_omp_task_align_single_malloc(sizeof(mpc_omp_task_t) + arg_size, arg_align);
-
         task = _mpc_omp_task_allocate(size);
 
         /* convert GOMP flags to MPC-OpenMP task properties */
@@ -2144,7 +2143,6 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
 
     /* process the task (differ or run it) */
     _mpc_omp_task_process(task);
-
     if (!mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT))
     {
         _mpc_omp_task_deinit(task);

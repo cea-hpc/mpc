@@ -151,7 +151,7 @@ am__dirstamp = $(am__leading_dot)dirstamp
 am_libmpccommon_la_OBJECTS = aio.lo bit_array.lo fifo.lo hashtable.lo \
 	io_helper.lo rank.lo debug.lo sctk_no_alloc.lo sctk_pm_json.lo \
 	flags.lo debugger.lo elf_32.lo elf_64.lo spinlock.lo base64.lo \
-	recycler.lo $(am__objects_1)
+	recycler.lo indirect_array.lo $(am__objects_1)
 libmpccommon_la_OBJECTS = $(am_libmpccommon_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
