@@ -8440,9 +8440,8 @@ int __mpc_cl_egreq_progress_poll_id(int id);
 
 void *NBC_Pthread_func( __UNUSED__ void *ptr )
 {
-
-
-  mpc_threads_generic_kind_mask_self(KIND_MASK_PROGRESS_THREAD);
+    fprintf(stderr,"CREATE\n");
+//mpc_threads_generic_kind_mask_self(KIND_MASK_PROGRESS_THREAD);
 
   int basic_prio = _mpc_mpi_config()->nbc.thread_basic_prio;
 
@@ -8465,7 +8464,7 @@ void *NBC_Pthread_func( __UNUSED__ void *ptr )
 
   while(1)
   {
-  
+    //fprintf(stderr,"ROUND\n");
     int cpt = 1;
     int size = 10;
 
@@ -8478,13 +8477,13 @@ void *NBC_Pthread_func( __UNUSED__ void *ptr )
       requests_handles = (NBC_Handle **)sctk_malloc(sizeof(NBC_Handle *) * size);
 
 
-      if(req==MPI_REQUEST_NULL) PMPI_Irecv(&tmp_recv, 1, MPI_INT, 0, 0, MPI_COMM_SELF, &req);
-      requests[0]=req;
+      //if(req==MPI_REQUEST_NULL){ PMPI_Irecv(&tmp_recv, 1, MPI_INT, 0, 0, MPI_COMM_SELF, &req); MPI_Wait(&req,MPI_STATUS_IGNORE); }
+      //requests[0]=req;
 
       /* re-compile list of requests */
 
       lock = &(task_specific->mpc_mpi_data->list_handles_lock);
-
+      mpc_thread_sem_wait(&(task_specific->mpc_mpi_data->pending_req));
       struct sctk_list_elem *iter, *elem_tmp;
 
       NBC_Handle *tmp_handle;
@@ -8531,32 +8530,34 @@ void *NBC_Pthread_func( __UNUSED__ void *ptr )
 
       mpc_thread_mutex_unlock(lock);
 
-
-    int retidx = 0;
+    int retidx = 0 , res;
     NBC_DEBUG(10, "waiting for %i elements\n", cpt);
-    int res = PMPI_Waitany(cpt, requests, &retidx, MPI_STATUS_IGNORE);
+    //if(cpt > 1)
+      res = PMPI_Waitany(cpt, requests, &retidx, MPI_STATUS_IGNORE);
     NBC_DEBUG(10, "elements %d is finished", retidx);
     if(res != MPI_SUCCESS)
     { printf("Error %i in MPI_Waitany()\n", res); }
-    if(0 != retidx)
-    { // 0 is the fake request ...
+   // if(0 != retidx)
+   // { // 0 is the fake request ...
       /* mark request as finished */
       requests_handles[retidx]->req_array[requests_locations[retidx]] = MPI_REQUEST_NULL;
       /* progress request (finished?) */
       NBC_Progress(requests_handles[retidx]);
-    }
-    else
-    {
-      req = MPI_REQUEST_NULL;
-    }
+   // }
+   // else
+  //  {
+  //    req = MPI_REQUEST_NULL;
+  //  }
 
 	sctk_free(requests);
 	sctk_free(requests_locations);
 	sctk_free(requests_handles);
 	if(task_specific->mpc_mpi_data->nbc_initialized_per_task == -1)
     {
+    //fprintf(stderr,"EXIT\n");
 		mpc_thread_exit(0);
 	}
+    //fprintf(stderr,"YIELD\n");
         mpc_thread_yield();
   }
 }
@@ -9839,13 +9840,13 @@ inline int NBC_Start( NBC_Handle *handle, NBC_Schedule *schedule )
 			&( task_specific->mpc_mpi_data->nbc_initialized_per_task ), 1, NULL,
 			NULL );
 		/* wake progress thread up */
-    _mpc_cl_send(&tmp_send, 1, MPI_INT, 0, 0, MPI_COMM_SELF);
-
+   // _mpc_cl_send(&tmp_send, 1, MPI_INT, 0, 0, MPI_COMM_SELF);
 		mpc_thread_mutex_lock( lock );
 
 		DL_APPEND( task_specific->mpc_mpi_data->NBC_Pthread_handles, elem_tmp );
 		task_specific->mpc_mpi_data->NBC_Pthread_nb++;
 		mpc_thread_mutex_unlock( lock );
+    mpc_thread_sem_post(&( task_specific->mpc_mpi_data->pending_req));
 
 		mpc_threads_generic_scheduler_increase_prio();
 

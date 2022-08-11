@@ -130,6 +130,7 @@ typedef struct mpc_mpi_data_s{
                             // NBC_Pthread_handles
         struct sctk_list_elem *NBC_Pthread_handles;
         mpc_thread_mutex_t list_handles_lock;
+        mpc_thread_sem_t pending_req;
         mpc_thread_t NBC_Pthread;
 
         /****** NBC_INITIALIZE ******/

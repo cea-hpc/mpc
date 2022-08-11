@@ -38,7 +38,6 @@
 
 #include "mpc_mpi_halo.h"
 
-
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
 #include "mpc_mpi_weak.h"
 #endif
@@ -940,7 +939,7 @@ __sctk_convert_mpc_request_internal(MPI_Request *req,
 	assume(tmp->rank == *req);
 
 	/* Is this request in used */
-	assume(tmp->used);
+//	assume(tmp->used);
 
 	/* Return the MPI_internal_request_t * */
 	return tmp;
@@ -16519,6 +16518,7 @@ int mpc_mpi_initialize(void)
 		task_specific->mpc_mpi_data->nbc_initialized_per_task = 0;
 		mpc_thread_mutex_init(
 			&(task_specific->mpc_mpi_data->nbc_initializer_lock), NULL);
+    sem_init(&(task_specific->mpc_mpi_data->pending_req), 0, 0);
 	}
 
 	mpc_common_spinlock_lock(&(task_specific->per_communicator_lock) );
