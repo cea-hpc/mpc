@@ -1552,9 +1552,10 @@ static inline void __mem_pool_defaults( void )
 	struct _mpc_lowcomm_config_mem_pool *mpool = &__lowcomm_conf.memorypool;
 
 	mpool->enabled = 1;
-	mpool->size = 1024 * 1024 * 12;
+	mpool->size = 1024 * 1024 * 20;
+	mpool->autodetect = 1;
 	mpool->force_process_linear = 1;
-	mpool->per_proc_size = 1024 * 1024 * 12;
+	mpool->per_proc_size = 1024 * 1024 * 20;
 }
 
 mpc_conf_config_type_t *__init_mem_pool_config( void )
@@ -1562,15 +1563,17 @@ mpc_conf_config_type_t *__init_mem_pool_config( void )
 	  struct _mpc_lowcomm_config_mem_pool *mpool = &__lowcomm_conf.memorypool;
 
 	mpc_conf_config_type_t *conf = mpc_conf_config_type_init( "memorypool",
-															PARAM( "enabled", &mpool->enabled, MPC_CONF_BOOL,
-																	"Enable the MPI_Alloc_mem shared memory pool" ),
-															PARAM( "size", &mpool->size, MPC_CONF_LONG_INT,
-																	"Size of the MPI_Alloc_mem pool (when NOT linear)" ),
-															PARAM( "forcelinear", &mpool->force_process_linear, MPC_CONF_BOOL,
-																	"Force the size to be a quantum per local process" ),
-															PARAM( "pointers", &mpool->per_proc_size, MPC_CONF_LONG_INT,
-																	"Quantum to allocate to each process when linear forced" ),
-															NULL );
+								PARAM( "enabled", &mpool->enabled, MPC_CONF_BOOL,
+										"Enable the MPI_Alloc_mem shared memory pool" ),
+								PARAM( "size", &mpool->size, MPC_CONF_LONG_INT,
+										"Size of the MPI_Alloc_mem pool" ),
+								PARAM( "autodetect", &mpool->autodetect, MPC_CONF_BOOL,
+										"Allow the MPI_Alloc_mem pool to grow linear for some apps" ),
+								PARAM( "forcelinear", &mpool->force_process_linear, MPC_CONF_BOOL,
+										"Force the size to be a quantum per local process" ),
+								PARAM( "quantum", &mpool->per_proc_size, MPC_CONF_LONG_INT,
+										"Quantum to allocate to each process when linear forced" ),
+								NULL );
 
 	return conf;
 }
