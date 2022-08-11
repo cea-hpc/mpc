@@ -65,10 +65,19 @@ static void __pool_size_adapt(char *exename)
 		return;
 	}
 
+
 	struct _mpc_lowcomm_config_mem_pool *mempool_conf = &(_mpc_lowcomm_conf_get()->memorypool);
 
-
 	int is_linear = mempool_conf->force_process_linear;
+
+
+	if(mempool_conf->autodetect)
+	{
+		if(strstr(exename, "IMB"))
+		{
+			is_linear = 1;
+		}
+	}
 
 	if(is_linear)
 	{
