@@ -22,6 +22,7 @@
 
 #include "sctk_window.h"
 #include "comm.h"
+#include "mpc_common_debug.h"
 #include "mpc_lowcomm.h"
 #include "uthash.h"
 #include <sctk_alloc.h>
