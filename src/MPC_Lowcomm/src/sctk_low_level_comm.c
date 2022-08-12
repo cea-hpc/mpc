@@ -139,7 +139,7 @@ static inline int __unfold_rails(mpc_conf_config_type_t *cli_option)
 							memcpy(&subrails[i], rail, sizeof(struct _mpc_lowcomm_config_struct_net_rail) );
 
 							/* Update device name with matching device */
-							snprintf(subrails[i].device, MPC_CONF_STRING_SIZE, matching_device[i]->name);
+							snprintf(subrails[i].device, MPC_CONF_STRING_SIZE, "%s", matching_device[i]->name);
 
 							/* Make sure that the topological rail has the highest priority
 							* this is important during the on-demand election process

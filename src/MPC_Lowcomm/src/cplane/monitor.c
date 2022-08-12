@@ -316,13 +316,13 @@ void mpc_lowcomm_monitor_retcode_print(mpc_lowcomm_monitor_retcode_t code, const
 
 static char *__server_key_name(char *buf, int size, int process_rank)
 {
-	snprintf(buf, size, "cplane_monitor_server_%d", process_rank);
+	snprintf(buf, size, "cplane_monitor_server_%d", "%s", process_rank);
 	return buf;
 }
 
 static char *__server_uid_name(char *buf, int size)
 {
-	snprintf(buf, size, "cplane_monitor_uid");
+	snprintf(buf, size, "%s", "cplane_monitor_uid");
 	return buf;
 }
 
@@ -441,7 +441,7 @@ static inline int __register_process_set(void)
 		{
 			/* They all should be PMI reachable */
 			__server_key_name(server_key, 128, i);
-			snprintf(uri, 155, "pmi://%s", server_key);
+			snprintf(uri, 155, "%s", "pmi://%s", server_key);
 		}
 		_mpc_lowcomm_peer_register(pid,
 									0,
@@ -501,7 +501,7 @@ int _mpc_lowcomm_monitor_setup()
 		/* Now compute set ID for this comm */
 		__monitor.monitor_gid = _mpc_lowcomm_uid_new(__monitor.monitor_uri);
 
-		snprintf(data, 32, "%u", __monitor.monitor_gid);
+		snprintf(data, 32, "%u", "%s", __monitor.monitor_gid);
 
 		if(mpc_launch_pmi_is_initialized() )
 		{
@@ -2139,7 +2139,7 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_naming_info(mpc
 		case MPC_LOWCOMM_MONITOR_NAMING_PUT:
 			if( _mpc_lowcomm_monitor_name_publish(content->naming.name, content->naming.port_name, content->naming.hosting_peer))
 			{
-				snprintf(resp->content->naming.name, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, "Name already present");
+				snprintf(resp->content->naming.name, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, "%s", "Name already present");
 				error = MPC_LOWCOMM_MONITOR_RET_DUPLICATE_KEY;
 			}
 		break;
@@ -2155,7 +2155,7 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_naming_info(mpc
 			}
 			else
 			{
-				snprintf(resp->content->naming.name, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, "No such name");
+				snprintf(resp->content->naming.name, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, "%s", "No such name");
 				error = MPC_LOWCOMM_MONITOR_RET_ERROR;
 			}
 
@@ -2164,7 +2164,7 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_return_naming_info(mpc
 		case MPC_LOWCOMM_MONITOR_NAMING_DEL:
 			if(_mpc_lowcomm_monitor_name_unpublish(content->naming.name))
 			{
-				snprintf(resp->content->naming.name, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, "No such name");
+				snprintf(resp->content->naming.name, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, "%s", "No such name");
 				error = MPC_LOWCOMM_MONITOR_RET_ERROR;
 			}
 		break;

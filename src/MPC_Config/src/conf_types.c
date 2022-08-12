@@ -282,7 +282,7 @@ int __mpc_conf_type_parse_from_string(mpc_conf_type_t type, void *dest, char *fr
 
 		case MPC_CONF_FUNC:
 		case MPC_CONF_STRING:
-			snprintf(dest, MPC_CONF_STRING_SIZE, (char *)from);
+			snprintf(dest, MPC_CONF_STRING_SIZE, "%s", (char *)from);
 			return 0;
 		case MPC_CONF_TYPE:
 		case MPC_CONF_TYPE_NONE:

@@ -261,7 +261,7 @@ static inline int __parse_arg_eq(char *arg,
 		char *__value_flag = ___extract_argument_string_value(arg, passed_arg); \
 		if(__value_flag)                                                        \
 		{                                                                       \
-			snprintf(mpc_common_get_flags()->flag, array_size ,__value_flag);         \
+			snprintf(mpc_common_get_flags()->flag, array_size ,"%s", __value_flag);         \
 			return;                                                         \
 		}  \
 	} while (0);

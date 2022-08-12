@@ -352,7 +352,7 @@ int PMPI_Session_get_nth_pset(MPI_Session session, MPI_Info info, int n, int *ps
 
 	if(*pset_len)
 	{
-		snprintf(pset_name, *pset_len + 1, pset->name);
+		snprintf(pset_name, *pset_len + 1, "%s", pset->name);
 	}
 
 	*pset_len = strlen(pset->name);
@@ -383,7 +383,7 @@ int PMPI_Session_get_pset_info(MPI_Session session, const char *pset_name, MPI_I
 	char sname[128];
 
 	snprintf(smpi_size, 64, "%d", mpc_lowcomm_group_size(pset->group));
-	snprintf(sname, 128, pset->name);
+	snprintf(sname, 128, "%s", pset->name);
 
 	PMPI_Info_set(*info, "mpi_size", smpi_size);
 	PMPI_Info_set(*info, "name", sname);

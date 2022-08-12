@@ -52,7 +52,7 @@ _mpc_lowcomm_peer_t *_mpc_lowcomm_peer_register(mpc_lowcomm_peer_uid_t uid, uint
 	new->infos.uid = uid;
 	new->is_local = is_local;
 	new->infos.local_task_count = local_task_count;
-	snprintf(new->infos.uri, MPC_LOWCOMM_PEER_URI_SIZE, uri);
+	snprintf(new->infos.uri, MPC_LOWCOMM_PEER_URI_SIZE, "%s", uri);
 
 	mpc_common_hashtable_set(&__peer_ht, uid, new);
 

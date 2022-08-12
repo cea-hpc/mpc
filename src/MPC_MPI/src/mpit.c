@@ -377,7 +377,7 @@ int PMPI_T_enum_get_info(MPI_T_enum enumtype, int *num, char *name, int *name_le
     }
 
     *num = mpc_conf_config_type_count(etype);
-    snprintf(name, *name_len, etype->name);
+    snprintf(name, *name_len, "%s", etype->name);
     *name_len = strlen(name);
 
     return MPI_SUCCESS;
@@ -412,7 +412,7 @@ int PMPI_T_enum_get_item(MPI_T_enum enumtype, int index, int *value, char *name,
         }
 
         *value = mpc_conf_type_elem_get_as_int(elem);
-        snprintf(name, *name_len, elem->name);
+        snprintf(name, *name_len, "%s", elem->name);
         *name_len = strlen(name);
 
     }
@@ -541,11 +541,11 @@ int PMPI_T_category_get_info(int cat_index,
 
     _mpc_mpi_mpit_cat_t * cat = __mpit.categories[cat_index];
 
-    snprintf(name, *name_len, cat->name);
+    snprintf(name, *name_len, "%s", cat->name);
     *name_len = strlen(cat->name);
 
     assume(cat->elem != NULL);
-    snprintf(desc, *desc_len, cat->elem->doc);
+    snprintf(desc, *desc_len, "%s", cat->elem->doc);
     *desc_len = strlen(cat->elem->doc);
 
     /* Now fill counters */
@@ -653,7 +653,7 @@ int PMPI_T_cvar_get_info(int cvar_index, char *name, int *name_len, int *verbosi
 
     _mpc_mpi_mpit_var_t * var = __mpit.cvars[cvar_index];
 
-    snprintf(name, *name_len, var->elem_node->name);
+    snprintf(name, *name_len, "%s", var->elem_node->name);
     *name_len = strlen(var->elem_node->name);
 
     /* Not supported yet */
@@ -665,7 +665,7 @@ int PMPI_T_cvar_get_info(int cvar_index, char *name, int *name_len, int *verbosi
     *enumtype = NULL;
 
 
-    snprintf(desc, *desc_len, var->elem_node->doc);
+    snprintf(desc, *desc_len, "%s", var->elem_node->doc);
     *desc_len = strlen(var->elem_node->doc);
 
     /* Not supported */
@@ -825,7 +825,7 @@ int PMPI_T_pvar_get_info(int pvar_index,
 
     _mpc_mpi_mpit_var_t * var = __mpit.pvars[pvar_index];
 
-    snprintf(name, *name_len, var->elem_node->name);
+    snprintf(name, *name_len, "%s", var->elem_node->name);
     *name_len = strlen(var->elem_node->name);
 
     /* Not supported yet */
@@ -839,7 +839,7 @@ int PMPI_T_pvar_get_info(int pvar_index,
     /* Not supported yet (needs choices inside the config) */
     *enumtype = NULL;
 
-    snprintf(desc, *desc_len, var->elem_node->doc);
+    snprintf(desc, *desc_len, "%s", var->elem_node->doc);
     *desc_len = strlen(var->elem_node->doc);
 
     /* Not supported */

@@ -54,7 +54,7 @@ static void __mpc_lowcomm_coll_conf_set_default(void)
 	__coll_conf.checksum = 0;
 #endif
 
-	snprintf(__coll_conf.algorithm, MPC_CONF_STRING_SIZE, "noalloc");
+	snprintf(__coll_conf.algorithm, MPC_CONF_STRING_SIZE, "%s", "noalloc");
 	__coll_conf.mpc_lowcomm_coll_init_hook = NULL;
 
 	/* Barrier */
@@ -366,7 +366,7 @@ static inline mpc_conf_config_type_t *__init_driver_ib(struct _mpc_lowcomm_confi
 	ib->async_thread = 0;
 
 	/* Networking params */
-	snprintf(ib->pkey, MPC_CONF_STRING_SIZE, "undefined");
+	snprintf(ib->pkey, MPC_CONF_STRING_SIZE, "%s", "undefined");
 	ib->adm_port = 1;
 
 	/*
@@ -508,12 +508,12 @@ static inline mpc_conf_config_type_t *__init_driver_ofi(struct _mpc_lowcomm_conf
 
 	struct _mpc_lowcomm_config_struct_net_driver_ofi *ofi = &driver->value.ofi;
 
-	snprintf(ofi->slink, MPC_CONF_STRING_SIZE, "connected");
-	snprintf(ofi->sprogress, MPC_CONF_STRING_SIZE, "auto");
-	snprintf(ofi->sep_type, MPC_CONF_STRING_SIZE, "unspecified");
-	snprintf(ofi->sav_type, MPC_CONF_STRING_SIZE, "unspecified");
-	snprintf(ofi->srm_type, MPC_CONF_STRING_SIZE, "unspecified");
-	snprintf(ofi->provider, MPC_CONF_STRING_SIZE, "tcp");
+	snprintf(ofi->slink, MPC_CONF_STRING_SIZE, "%s", "connected");
+	snprintf(ofi->sprogress, MPC_CONF_STRING_SIZE, "%s", "auto");
+	snprintf(ofi->sep_type, MPC_CONF_STRING_SIZE, "%s", "unspecified");
+	snprintf(ofi->sav_type, MPC_CONF_STRING_SIZE, "%s", "unspecified");
+	snprintf(ofi->srm_type, MPC_CONF_STRING_SIZE, "%s", "unspecified");
+	snprintf(ofi->provider, MPC_CONF_STRING_SIZE, "%s", "tcp");
 
 	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("ofi",
 															PARAM("link", ofi->slink, MPC_CONF_STRING, "Link protocol (connected, connectionless)."),
@@ -557,7 +557,7 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_default_driver(c
 
 	memset(new_conf, 0, sizeof(struct _mpc_lowcomm_config_struct_net_driver_config));
 
-	snprintf(new_conf->name, MPC_CONF_STRING_SIZE, config_name);
+	snprintf(new_conf->name, MPC_CONF_STRING_SIZE, "%s", config_name);
 
 	mpc_conf_config_type_t *driver = NULL;
 
@@ -790,17 +790,17 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
     memset(ret, 0, sizeof(struct _mpc_lowcomm_config_struct_net_rail));
 
     /* For unfolded retrieval */
-    snprintf(ret->name, MPC_CONF_STRING_SIZE, name);
+    snprintf(ret->name, MPC_CONF_STRING_SIZE, "%s", name);
     ret->priority = priority;
-    snprintf(ret->device, MPC_CONF_STRING_SIZE, device);
-    snprintf(ret->any_source_polling.srange, MPC_CONF_STRING_SIZE, idle_poll_range);
+    snprintf(ret->device, MPC_CONF_STRING_SIZE, "%s", device);
+    snprintf(ret->any_source_polling.srange, MPC_CONF_STRING_SIZE, "%s", idle_poll_range);
     ret->any_source_polling.range = sctk_rail_convert_polling_set_from_string(idle_poll_range);
-    snprintf(ret->any_source_polling.strigger, MPC_CONF_STRING_SIZE, idle_poll_trigger);
+    snprintf(ret->any_source_polling.strigger, MPC_CONF_STRING_SIZE, "%s", idle_poll_trigger);
     ret->any_source_polling.trigger = sctk_rail_convert_polling_set_from_string(idle_poll_trigger);
-    snprintf(ret->topology, MPC_CONF_STRING_SIZE, topology);
+    snprintf(ret->topology, MPC_CONF_STRING_SIZE, "%s", topology);
     ret->ondemand = ondemand;
     ret->rdma = rdma;
-    snprintf(ret->config, MPC_CONF_STRING_SIZE, config);
+    snprintf(ret->config, MPC_CONF_STRING_SIZE, "%s", config);
 
     mpc_conf_config_type_t *gates = mpc_conf_config_type_init("gates", NULL);
 
@@ -1161,7 +1161,7 @@ static mpc_conf_config_type_t *___mpc_lowcomm_cli_conf_option_init(char *name, c
 	char *ar1 = malloc(sizeof(char)*MPC_CONF_STRING_SIZE);
 
 	assume(ar1);
-	snprintf(ar1, MPC_CONF_STRING_SIZE, rail1);
+	snprintf(ar1, MPC_CONF_STRING_SIZE, "%s", rail1);
 
 	mpc_conf_config_type_t *rails = NULL;
 
@@ -1169,7 +1169,7 @@ static mpc_conf_config_type_t *___mpc_lowcomm_cli_conf_option_init(char *name, c
 	{
 		char *ar2 = malloc(sizeof(char)*MPC_CONF_STRING_SIZE);
 		assume(ar2);
-		snprintf(ar2, MPC_CONF_STRING_SIZE, rail2);
+		snprintf(ar2, MPC_CONF_STRING_SIZE, "%s", rail2);
 
 		rails = mpc_conf_config_type_init(name,
 		                                  PARAM("first", ar1, MPC_CONF_STRING, "First rail to pick"),
@@ -1223,11 +1223,11 @@ static mpc_conf_config_type_t *__mpc_lowcomm_cli_conf_init(void)
 static inline void _mpc_lowcomm_net_config_default(void)
 {
 #ifdef MPC_USE_PORTALS
-	snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "portals4");
+	snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "%s", "portals4");
 #elif defined(MPC_USE_INFINIBAND)
-	snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "ib");
+	snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "%s", "ib");
 #else
-	snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "tcp");
+	snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "%s", "tcp");
 #endif
 }
 

@@ -67,13 +67,13 @@ mpc_conf_config_type_t *mpc_conf_config_loader_paths(char *conf_name,
 	}
 
 	char * asystem_prefix = malloc(sizeof(char) * MPC_CONF_STRING_SIZE);
-	snprintf(asystem_prefix, MPC_CONF_STRING_SIZE, system_prefix);
+	snprintf(asystem_prefix, MPC_CONF_STRING_SIZE, "%s", system_prefix);
 
 	char * auser_prefix = malloc(sizeof(char) * MPC_CONF_STRING_SIZE);
-	snprintf(auser_prefix, MPC_CONF_STRING_SIZE, user_prefix);
+	snprintf(auser_prefix, MPC_CONF_STRING_SIZE, "%s", user_prefix);
 
 	char * acan_create = malloc(sizeof(char) * MPC_CONF_STRING_SIZE);
-	snprintf(acan_create, MPC_CONF_STRING_SIZE, can_create);
+	snprintf(acan_create, MPC_CONF_STRING_SIZE, "%s", can_create);
 
 
 	char * amanual_prefix = malloc(sizeof(char) * MPC_CONF_STRING_SIZE);
@@ -627,7 +627,7 @@ int mpc_conf_config_load(char *conf_name)
 	{
 		/* We do a set as MPC_USER_CONFIG would not override automagically */
 		char mconf[MPC_CONF_STRING_SIZE];
-		snprintf(mconf, MPC_CONF_STRING_SIZE, manual_conf);
+		snprintf(mconf, MPC_CONF_STRING_SIZE, "%s", manual_conf);
 		mpc_conf_config_type_elem_set(emanual, MPC_CONF_STRING, mconf);
 
 		/* Now try to load the manual config / prefix */

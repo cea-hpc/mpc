@@ -890,7 +890,7 @@ int mpc_launch_pmi_get_job_id( uint64_t *id )
 
 	char _tmp[512];
 	char * tmp = _tmp;
-	snprintf(tmp, 512, pmi_context.kvsname);
+	snprintf(tmp, 512, "%s", pmi_context.kvsname);
 	char * last_ = strrchr(tmp, '_');
 	if(last_)
 	{
