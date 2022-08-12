@@ -179,6 +179,7 @@ clean(){
 	safe_exec docker volume rm -f mpc_release_volume
 	safe_exec docker image rm -f "$(docker image ls mpc_release_image -q)"
     safe_exec rm -rf contrib/openpa* contrib/hydra* release/dockerfile release/rpmbuild/SOURCES/*
+    safe_exec rm -rf release/debbuild/*
 }
 
 help()
