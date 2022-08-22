@@ -72,6 +72,12 @@ _mpc_omp_task_trace_begun(void)
     return mpc_omp_tls && mpc_omp_conf_get()->task_trace && __get_infos()->begun;
 }
 
+int
+_mpc_omp_task_trace_enabled(mpc_omp_task_trace_record_type_t type)
+{
+    return mpc_omp_tls && mpc_omp_conf_get()->task_trace && __get_infos()->begun && (mpc_omp_conf_get()->task_trace_mask & (1 << type));
+}
+
 static inline mpc_omp_task_trace_record_t *
 __node_record(mpc_omp_task_trace_node_t * node)
 {
@@ -111,8 +117,8 @@ __node_insert(mpc_omp_task_trace_node_t * node)
 
 }
 
-static inline size_t
-__record_sizeof(mpc_omp_task_trace_record_type_t type)
+size_t
+mpc_omp_task_trace_record_sizeof(int type)
 {
     switch (type)
     {
@@ -163,8 +169,7 @@ __record_sizeof(mpc_omp_task_trace_record_type_t type)
 
         default:
         {
-            printf("invalid record : type=%d\n", type);
-            assert(0);
+            assert("invalid record" == NULL);
             return 0;
         }
     }
@@ -175,7 +180,7 @@ __record_flush(
         mpc_omp_task_trace_writer_t * writer,
         mpc_omp_task_trace_record_t * record)
 {
-    write(writer->fd, record, __record_sizeof(record->type));
+    write(writer->fd, record, mpc_omp_task_trace_record_sizeof(record->type));
 }
 
 void
@@ -433,11 +438,11 @@ mpc_omp_task_trace_begin(void)
     mpc_omp_task_trace_record_type_t type;
     for (type = 0 ; type < MPC_OMP_TASK_TRACE_TYPE_COUNT ; type++)
     {
-        //printf("sizeof(type=%d) = %lu\n", type, __record_sizeof(type));
+        //printf("sizeof(type=%d) = %lu\n", type, mpc_omp_task_trace_record_sizeof(type));
         mpc_common_recycler_init(
                 &(infos->recyclers[type]),
                 mpc_omp_alloc, mpc_omp_free,
-                sizeof(mpc_omp_task_trace_node_t) + __record_sizeof(type),
+                sizeof(mpc_omp_task_trace_node_t) + mpc_omp_task_trace_record_sizeof(type),
                 MPC_OMP_TASK_TRACE_RECYCLER_CAPACITY);
     }
 

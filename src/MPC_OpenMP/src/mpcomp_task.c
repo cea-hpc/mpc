@@ -1684,6 +1684,7 @@ __task_profile_priority_compute(mpc_omp_task_t * task)
     }
 }
 
+// TODO : check this has no race condition
 static void
 __task_profile_propagate(void)
 {

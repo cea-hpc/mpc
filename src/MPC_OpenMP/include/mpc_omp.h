@@ -233,6 +233,7 @@ extern "C" {
     /* task trace calls */
     void mpc_omp_task_trace_begin(void);
     void mpc_omp_task_trace_end(void);
+    size_t mpc_omp_task_trace_record_sizeof(int type);
 
     /* return true if the thread is currently within an omp task */
     int mpc_omp_in_explicit_task(void);
