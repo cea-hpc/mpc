@@ -35,6 +35,105 @@ init_env(){
     HWLOC_DEVEL="hwloc-devel"
 }
 
+
+########### ARCH packages ##############
+
+build_dockerfile_arch(){
+cat << EOF > release/Dockerfile
+FROM $DISTRIB
+RUN useradd archuser
+RUN usermod -g root archuser
+RUN pacman -Sy --noconfirm --needed base-devel python3 cmake gcc-fortran wget hwloc
+COPY archbuild /root/
+COPY build_arch.sh /root/
+RUN chown archuser /root /root/PKGBUILD /root/build_arch.sh /root/mpcframework-$VERSION.tar.gz
+USER archuser
+RUN sh /root/build_arch.sh
+EOF
+}
+
+build_pkgbuild()
+{
+cat << EOF > release/archbuild/PKGBUILD
+# Maintainer: Paratools SAS
+pkgname=mpcframework
+pkgver=$VERSION
+pkgrel=1
+epoch=1
+pkgdesc="mpi runtime for exascale"
+arch=("x86_64")
+url="https://gitlab.paratools.com/cea/mpc"
+license=('GPL')
+groups=(mpcframework)
+depends=("python3" "cmake" "make" "gcc" "gcc-fortran" "wget" "hwloc")
+makedepends=()
+checkdepends=()
+optdepends=()
+provides=()
+conflicts=()
+replaces=()
+backup=()
+options=()
+install="install-mpc"
+changelog="changelog"
+source=(\$pkgname-\$pkgver.tar.gz)
+noextract=()
+md5sums=() #generate with 'makepkg -g'
+
+prepare() {
+	cd "\$srcdir/\$pkgname-\$pkgver/contrib"
+	../installmpc --download
+	tar xzf hydra*.gz
+	tar xzf openpa*.gz
+	rm -rf ./*.tar.gz hydra/ openpa/
+	mv hydra* hydra
+	mv openpa* openpa
+	cd "\$srcdir/\$pkgname-\$pkgver"
+	mkdir -p BUILD	
+}
+
+build() {
+	cd "\$srcdir/\$pkgname-\$pkgver"
+	cd BUILD
+	export DESTDIR=\$pkgdir
+	../configure --prefix=/usr/local --enable-rpmbuild
+	make
+}
+
+check() {
+	echo ""
+}
+
+package() {
+	cd "\$srcdir/\$pkgname-\$pkgver/BUILD"
+	 DESTDIR="\$pkgdir/" make -j install
+	mv \$pkgdir/usr/local/share/man \$pkgdir/usr/local/man
+}
+EOF
+}
+
+build_arch()
+{
+    move_to_contrib
+    safe_exec ../installmpc --download
+    safe_exec tar xzf hydra*.gz
+    safe_exec tar xzf openpa*.gz
+    safe_exec rm -rf ./*.tar.gz hydra/ openpa/
+    safe_exec mv hydra* hydra
+    safe_exec mv openpa* openpa
+    safe_exec cd ..
+    tar --transform="flags=r;s|mpc|mpcframework-$VERSION|" -czf /tmp/mpcframework.tar.gz ../mpc
+    mkdir -p $PWD/release/archbuild/
+    mv /tmp/mpcframework.tar.gz $PWD/release/archbuild/mpcframework-$VERSION.tar.gz
+    safe_exec cd release
+	safe_exec docker build -t mpc_release_$DISTRIB --rm  .
+}
+
+extract_arch()
+{
+    safe_exec docker run --user root --rm -v $TARGET:/host mpc_release_$DISTRIB cp /root/pkg/mpcframework-1:$VERSION-1-x86_64.pkg.tar.zst /host/mpcframework-"$VERSION"-"$DISTRIB".tar.zst
+}
+
 ########### DEB packages ############### 
 
 build_dockerfile_deb(){
@@ -180,6 +279,7 @@ clean(){
 	safe_exec docker image rm -f "$(docker image ls mpc_release_image -q)"
     safe_exec rm -rf contrib/openpa* contrib/hydra* release/dockerfile release/rpmbuild/SOURCES/*
     safe_exec rm -rf release/debbuild/*
+    safe_exec rm -rf release/archbuild/*
 }
 
 help()
@@ -237,6 +337,9 @@ do
         rpm)
             BUILD_RPM_ARCHIVE=yes
             ;;
+        arch)
+            BUILD_ARCH_ARCHIVE=yes
+            ;;
 		*)
 			echo "Invalid argument '$arg', please check your command line or get help with --help." 1>&2
 			exit 1
@@ -280,4 +383,14 @@ if ! test -z "$BUILD_DEB_ARCHIVE"; then
         build_deb
     fi
     extract_deb
+fi
+
+if ! test -z "$BUILD_ARCH_ARCHIVE"; then
+    build_pkgbuild
+    build_dockerfile_arch
+
+    if test -z "$EXTRACT_ONLY" ; then
+        build_arch
+    fi
+    extract_arch
 fi
