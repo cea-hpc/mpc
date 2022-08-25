@@ -316,7 +316,7 @@ void mpc_lowcomm_monitor_retcode_print(mpc_lowcomm_monitor_retcode_t code, const
 
 static char *__server_key_name(char *buf, int size, int process_rank)
 {
-	snprintf(buf, size, "cplane_monitor_server_%d", "%s", process_rank);
+	snprintf(buf, size, "cplane_monitor_server_%d", process_rank);
 	return buf;
 }
 
@@ -441,7 +441,7 @@ static inline int __register_process_set(void)
 		{
 			/* They all should be PMI reachable */
 			__server_key_name(server_key, 128, i);
-			snprintf(uri, 155, "%s", "pmi://%s", server_key);
+			snprintf(uri, 155, "pmi://%s", server_key);
 		}
 		_mpc_lowcomm_peer_register(pid,
 									0,
@@ -501,7 +501,7 @@ int _mpc_lowcomm_monitor_setup()
 		/* Now compute set ID for this comm */
 		__monitor.monitor_gid = _mpc_lowcomm_uid_new(__monitor.monitor_uri);
 
-		snprintf(data, 32, "%u", "%s", __monitor.monitor_gid);
+		snprintf(data, 32, "%u", __monitor.monitor_gid);
 
 		if(mpc_launch_pmi_is_initialized() )
 		{
