@@ -2146,6 +2146,12 @@ int PMPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm);
 int MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info, MPI_Comm *newcomm);
 int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info, MPI_Comm *newcomm);
 
+/**
+ * @brief TODO
+ */
+int MPI_Comm_Version_cancel(MPI_Comm comm);
+int MPI_Comm_Version_new(MPI_Comm comm);
+
 /*MPIX_Get_hwsubdomain_types*/
 
 /**

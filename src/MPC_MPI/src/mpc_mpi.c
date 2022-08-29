@@ -14834,6 +14834,23 @@ int PMPI_Comm_remote_size(MPI_Comm comm, int *size)
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
+int PMPI_Comm_Version_cancel(MPI_Comm comm)
+{
+	mpc_common_nodebug("Enter Comm_Version_cancel comm %d", comm);
+	mpi_check_comm(comm);
+    mpc_lowcomm_communicator_version_cancel(comm);
+	int res = MPI_SUCCESS;
+	MPI_HANDLE_RETURN_VAL(res, comm);
+}
+
+int PMPI_Comm_Version_new(MPI_Comm comm)
+{
+	mpc_common_nodebug("Enter Comm_Version_new comm %d", comm);
+	mpi_check_comm(comm);
+    mpc_lowcomm_communicator_version_new(comm);
+	int res = MPI_SUCCESS;
+	MPI_HANDLE_RETURN_VAL(res, comm);
+}
 
 int PMPI_Intercomm_merge(MPI_Comm intercomm, int high, MPI_Comm *newintracomm)
 {
@@ -19121,6 +19138,7 @@ int PMPI_Alltoallw(const void *sendbuf, const int *sendcnts, const int *sdispls,
 	{
 		return res;
 	}
+
 	//res = PMPI_Comm_remote_size(comm, &rsize);
 	//if(res != MPI_SUCCESS)
 	//{

@@ -2102,8 +2102,10 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
     assert(thread);
 
-    mpc_omp_instance_t * instance = (mpc_omp_instance_t *) thread->instance;
-    assert(instance);
+    /* if current taskgroup has been cancelled, no need to create the task */
+    mpc_omp_task_t * current = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(current);
+    if (current->taskgroup && OPA_load_int(&(current->taskgroup->cancelled))) return ;
 
     if (arg_align == 0) arg_align = sizeof(void *);
 

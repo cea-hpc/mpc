@@ -3849,21 +3849,6 @@ _mpc_omp_task_taskgroup_cancel(void)
     __taskgroup_cancel(taskgroup);
 }
 
-void
-mpc_omp_task_taskgroup_cancel_next(void)
-{
-    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
-    assert(thread);
-
-    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
-    assert(task);
-
-    mpc_omp_task_taskgroup_t * taskgroup = task->taskgroup;
-    if (!taskgroup) return ;
-
-    __taskgroup_cancel(taskgroup);
-}
-
 /************
  * TASKLOOP *
  ************/
@@ -4154,8 +4139,17 @@ mpc_omp_persistent_region_end(void)
 
     _mpc_omp_task_wait(NULL, 0);
 
-    // TODO : delete every remaining tasks
-    assert(mpc_common_indirect_array_iterator_finished(&(region->tasks_it)));
+    /* whether we have processed every persistent tasks,
+     * whether the taskgroup had been cancelled */
+    mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
+    mpc_omp_task_t * current = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(
+        mpc_common_indirect_array_iterator_finished(&(region->tasks_it))
+            ||
+        (current->taskgroup && OPA_load_int(&(current->taskgroup->cancelled)))
+    );
+
+    /* Delete every remaining tasks */
     mpc_common_indirect_array_iterator_reset(&(region->tasks_it));
     while (!mpc_common_indirect_array_iterator_finished(&(region->tasks_it)))
     {

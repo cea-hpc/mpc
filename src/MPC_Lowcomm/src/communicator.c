@@ -2660,3 +2660,15 @@ int mpc_lowcomm_communicator_create_group(mpc_lowcomm_communicator_t comm, mpc_l
 
 	return MPC_LOWCOMM_SUCCESS;
 }
+
+void
+mpc_lowcomm_communicator_version_cancel(mpc_lowcomm_internal_communicator_t * comm)
+{
+    OPA_store_int(&(comm->cancelled), 1);
+}
+
+void
+mpc_lowcomm_communicator_version_new(mpc_lowcomm_internal_communicator_t * comm)
+{
+    OPA_fetch_and_incr_int(&(comm->version));
+}
