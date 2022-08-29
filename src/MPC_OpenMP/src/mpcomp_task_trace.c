@@ -93,7 +93,7 @@ __node_new(mpc_omp_task_trace_record_type_t type)
 
     mpc_omp_task_trace_record_t * record = __node_record(node);
     record->type = type;
-    record->time = omp_get_wtime() * 1000000.0;
+    record->time = omp_get_wtime();
     return node;
 }
 
@@ -122,6 +122,12 @@ mpc_omp_task_trace_record_sizeof(int type)
 {
     switch (type)
     {
+        case (MPC_OMP_TASK_TRACE_TYPE_BEGIN):
+        case (MPC_OMP_TASK_TRACE_TYPE_END):
+        {
+            return sizeof(mpc_omp_task_trace_record_t);
+        }
+
         case (MPC_OMP_TASK_TRACE_TYPE_DEPENDENCY):
         {
             return sizeof(mpc_omp_task_trace_record_dependency_t);
@@ -183,19 +189,31 @@ __record_flush(
     write(writer->fd, record, mpc_omp_task_trace_record_sizeof(record->type));
 }
 
+# define MPC_OMP_TASK_TRACE_FLUSH_BUFFER_SIZE 8192
+
 void
 _mpc_omp_task_trace_flush(void)
 {
+    char buffer[MPC_OMP_TASK_TRACE_FLUSH_BUFFER_SIZE];
     mpc_omp_thread_task_trace_infos_t * infos = __get_infos();
+    size_t nbytes = 0;
     while (infos->head)
     {
         mpc_omp_task_trace_node_t * node = infos->head;
         mpc_omp_task_trace_node_t * next = infos->head->next;
         mpc_omp_task_trace_record_t * record = __node_record(node);
-        __record_flush(&(infos->writer), record);
+        size_t size = mpc_omp_task_trace_record_sizeof(record->type);
+        if (nbytes + size >= MPC_OMP_TASK_TRACE_FLUSH_BUFFER_SIZE)
+        {
+            write(infos->writer.fd, buffer, nbytes);
+            nbytes = 0;
+        }
+        memcpy(buffer + nbytes, record, size);
+        nbytes += size;
         mpc_common_recycler_recycle(&(infos->recyclers[record->type]), node);
         infos->head = next;
     }
+    if (nbytes) write(infos->writer.fd, buffer, nbytes);
     infos->tail = NULL;
 }
 
@@ -410,10 +428,14 @@ static inline int
 __task_trace_create_file(void)
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+
+    char hostname[128];
+    gethostname(hostname, sizeof(hostname));
+
     char filepath[1024];
     char * tracedir = mpc_omp_conf_get()->task_trace_dir;
 
-    sprintf(filepath, "%s/%d-%ld-%d.dat", tracedir, __getpid(), thread->rank, thread->task_infos.tracer.id++);
+    sprintf(filepath, "%s/%s-%d-%ld-%d.dat", tracedir, hostname, __getpid(), thread->rank, thread->task_infos.tracer.id++);
     thread->task_infos.tracer.writer.fd = open(filepath, O_WRONLY | O_TRUNC | O_CREAT, 0644);
     assert(thread->task_infos.tracer.writer.fd >= 0);
 
@@ -451,6 +473,7 @@ mpc_omp_task_trace_begin(void)
     {
         infos->begun = 1;
     }
+    __node_insert(__node_new(MPC_OMP_TASK_TRACE_TYPE_BEGIN));
 }
 
 void
@@ -458,6 +481,7 @@ mpc_omp_task_trace_end(void)
 {
     if (!mpc_omp_conf_get()->task_trace) return ;
 
+    __node_insert(__node_new(MPC_OMP_TASK_TRACE_TYPE_END));
     _mpc_omp_task_trace_flush();
 
     mpc_omp_thread_task_trace_infos_t * infos = __get_infos();

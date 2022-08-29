@@ -1100,8 +1100,9 @@ __task_precedence_constraints(mpc_omp_task_t * predecessor, mpc_omp_task_t * suc
                     else
                     {
                         // little tracing trick : in case of persistent tasks,
-                        // if the predecessor already completed, the dependency wouldn't be
-                        // tracked in the 'finalize_deps' function -> so we track it here instead
+                        // on the first task creation and if the predecessor already completed,
+                        // the dependency wouldn't be tracked in the 'finalize_deps' function
+                        // -> so we track it here instead
                         MPC_OMP_TASK_TRACE_DEPENDENCY(predecessor, successor);
                     }
 
@@ -3182,9 +3183,7 @@ void
 __task_run(mpc_omp_task_t * task)
 {
     /* check if this task was cancelled */
-    if (task->taskgroup
-            && OPA_load_int(&(task->taskgroup->cancelled))
-            && task->taskgroup->last_task_uid < task->uid)
+    if (task->taskgroup && OPA_load_int(&(task->taskgroup->cancelled)))
     {
         task->statuses.cancelled = true;
         _mpc_omp_task_finalize(task);
@@ -3829,10 +3828,9 @@ _mpc_omp_task_taskgroup_end(void)
 }
 
 static inline void
-__taskgroup_cancel(mpc_omp_task_taskgroup_t * taskgroup, int last_task_uid)
+__taskgroup_cancel(mpc_omp_task_taskgroup_t * taskgroup)
 {
     assert(taskgroup);
-    taskgroup->last_task_uid = last_task_uid;
     OPA_cas_int(&(taskgroup->cancelled), 0, 1);
 }
 
@@ -3848,7 +3846,7 @@ _mpc_omp_task_taskgroup_cancel(void)
     mpc_omp_task_taskgroup_t * taskgroup = task->taskgroup;
     if (!taskgroup) return ;
 
-    __taskgroup_cancel(taskgroup, INT_MAX);
+    __taskgroup_cancel(taskgroup);
 }
 
 void
@@ -3863,7 +3861,7 @@ mpc_omp_task_taskgroup_cancel_next(void)
     mpc_omp_task_taskgroup_t * taskgroup = task->taskgroup;
     if (!taskgroup) return ;
 
-    __taskgroup_cancel(taskgroup, task->uid);
+    __taskgroup_cancel(taskgroup);
 }
 
 /************

@@ -482,7 +482,6 @@ typedef struct  mpc_omp_task_taskgroup_s
 	struct mpc_omp_task_taskgroup_s * prev;
 	OPA_int_t children_num;
     OPA_int_t cancelled;
-    int last_task_uid;
 }               mpc_omp_task_taskgroup_t;
 
 #ifdef MPC_OMP_USE_MCS_LOCK
