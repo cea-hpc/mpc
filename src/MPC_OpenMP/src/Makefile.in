@@ -88,6 +88,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@MPC_MPI_ENABLED_TRUE@am__append_1 = -I$(abs_top_srcdir)/src/MPC_MPI/src/ -I$(abs_top_srcdir)/src/MPC_MPI/include/  -I$(abs_top_builddir)/src/MPC_IO/include/
 subdir = src/MPC_OpenMP/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_gcc_builtin.m4 \
@@ -549,9 +550,7 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Launch/include/ \
 	-I$(abs_top_builddir)/src/include/ \
 	-I$(abs_top_srcdir)/src/MPC_Threads/src/ \
-	-I$(abs_top_srcdir)/src/MPC_Threads/include/ \
-	-I$(abs_top_srcdir)/src/MPC_MPI/src/ \
-	-I$(abs_top_srcdir)/src/MPC_MPI/include/ \
+	-I$(abs_top_srcdir)/src/MPC_Threads/include/ $(am__append_1) \
 	-I$(abs_top_srcdir)/src/MPC_OpenMP/include/ $(VMEM_CFLAGS) \
 	$(OPA_CFLAGS) $(tools_inc)
 tools_inc = -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/src/ \

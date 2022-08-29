@@ -853,7 +853,7 @@ static inline mpc_lowcomm_internal_communicator_t *__init_communicator_with_id(m
 		ret->process_span = _mpc_lowcomm_group_process_count(group);
 
 		/* SET SHM Collective context if needed */
-		if(ret->process_span == 1)
+		if(ret->process_span == 1 && (mpc_lowcomm_group_size(group) > 1))
 		{
 			ret->shm_coll = sctk_comm_coll_init(group->size);
 		}
@@ -978,6 +978,8 @@ static inline void __communicator_id_release(mpc_lowcomm_communicator_t comm)
 {
 	uint64_t key = comm->id;
 	uint64_t linear_key = comm->linear_comm_id;
+
+	_mpc_lowcomm_multirail_notify_delete_comm(comm->id, mpc_lowcomm_communicator_size(comm));
 
 	mpc_common_hashtable_delete(&__id_factory.id_table, key);
 	mpc_common_hashtable_delete(&__id_factory.int_id_table, linear_key);
@@ -1242,11 +1244,12 @@ int mpc_lowcomm_communicator_free(mpc_lowcomm_communicator_t *pcomm)
 
 	int current_refc = OPA_fetch_and_incr_int(&comm->free_count);
 
-	//mpc_common_debug_warning("%d / %d", OPA_load_int(&comm->free_count), local_task_count);
+	mpc_common_nodebug("%d / %d", current_refc, local_task_count);
 
-	if( current_refc == local_task_count)
+	if( (current_refc + 1) == local_task_count)
 	{
 		int refcount = _mpc_lowcomm_communicator_relax(comm);
+
 
 		if(refcount == 1)
 		{
@@ -1288,6 +1291,8 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 	int comm_local_lead    = mpc_lowcomm_communicator_local_lead(comm);
 	int my_rank            = mpc_lowcomm_communicator_rank(comm);
 
+	int current_rank_belongs = 1;
+
 	if(group == NULL)
 	{
         if(!is_comm_self)
@@ -1301,57 +1306,67 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 	{
 		/* Intracomm */
 		assume(!left_comm && !right_comm);
-	}
 
-	//mpc_common_debug_error("LOCAL LEAD %d MY RANK %d", comm_local_lead, my_rank);
-
-	if(comm_local_lead == my_rank)
-	{
-		/* I am a local lead in my comm I take the lock 
-		   to see if the new communicator is known */
-		mpc_common_spinlock_lock_yield(&lock);
-	
-		ret = mpc_lowcomm_get_communicator_from_id(new_id);
-
-		/* It is not known so I do create it I'm sure I'm the only
-		  as I hold the creation lock */
-		if(ret == MPC_COMM_NULL)
+		if(check_if_current_rank_belongs)
 		{
-			/* We can then directly create a new group using the current group */
-			ret = __init_communicator_with_id(new_id, group, is_comm_self, left_comm, right_comm, -1);
-			/* Make sure that dups of comm self behave as comm self */
-
-			/* If parent has a ctx pointer make sure to propagate */
-			if(comm->extra_ctx_ptr)
+			/* If the process is not in the group we do return MPI_COMM_NULL */
+			if(!mpc_lowcomm_group_includes(group, mpc_lowcomm_get_rank(), mpc_lowcomm_monitor_get_uid() ) )
 			{
-				ret->extra_ctx_ptr = comm->extra_ctx_ptr;
+				current_rank_belongs = 0;
+				ret = MPC_COMM_NULL;
 			}
 		}
+	}
 
-		mpc_common_spinlock_unlock(&lock);
+	if(current_rank_belongs)
+	{
+
+		//mpc_common_debug_error("LOCAL LEAD %d MY RANK %d", comm_local_lead, my_rank);
+
+		if(comm_local_lead == my_rank)
+		{
+			/* I am a local lead in my comm I take the lock 
+			to see if the new communicator is known */
+			mpc_common_spinlock_lock_yield(&lock);
+		
+			ret = mpc_lowcomm_get_communicator_from_id(new_id);
+
+			/* It is not known so I do create it I'm sure I'm the only
+			as I hold the creation lock */
+			if(ret == MPC_COMM_NULL)
+			{
+				/* We can then directly create a new group using the current group */
+				ret = __init_communicator_with_id(new_id, group, is_comm_self, left_comm, right_comm, -1);
+				/* Make sure that dups of comm self behave as comm self */
+
+				/* If parent has a ctx pointer make sure to propagate */
+				if(comm->extra_ctx_ptr)
+				{
+					ret->extra_ctx_ptr = comm->extra_ctx_ptr;
+				}
+			}
+
+			mpc_common_spinlock_unlock(&lock);
+		}
+
 	}
 
 	/* Do a barrier when done to ensure new comm is posted */
 	mpc_lowcomm_barrier(comm);
 
-	if(comm_local_lead != my_rank)
+	if(current_rank_belongs)
 	{
-		ret = mpc_lowcomm_get_communicator_from_id(new_id);
-		assume(ret != NULL);
-		assume(ret->id == new_id);
+		if(comm_local_lead != my_rank)
+		{
+			ret = mpc_lowcomm_get_communicator_from_id(new_id);
+			assume(ret != NULL);
+			assume(ret->id == new_id);
+		}
 	}
 
 	/* Do a barrier when done to ensure dup do not interleave */
 	mpc_lowcomm_barrier(comm);
 
-	if(ret->group && check_if_current_rank_belongs)
-	{
-		/* If the process is not in the group we do return MPI_COMM_NULL */
-		if(!mpc_lowcomm_group_includes(ret->group, mpc_lowcomm_get_rank(), mpc_lowcomm_monitor_get_uid() ) )
-		{
-			ret = MPC_COMM_NULL;
-		}
-	}
 
 	return ret;
 }

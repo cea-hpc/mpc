@@ -3,6 +3,6 @@ hwloc                     2.2.0
 openpa                    1.0.4
 hydra                     3.2
 mpcalloc                  0.2
-mpc-compiler-additions    0.7.0
+mpc-compiler-additions    0.8.0
 mpc-dmtcp                 2.5.0
 gdb                       7.7

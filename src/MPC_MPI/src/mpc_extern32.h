@@ -304,7 +304,7 @@ static inline void BASIC_convert(int type_byte_size, char *src, char *dest)
  */
 static inline size_t MPC_Extern32_common_type_size( mpc_lowcomm_datatype_t common_type )
 {
-	if( !_mpc_dt_is_common( common_type ) )
+	if( !mpc_lowcomm_datatype_is_common( common_type ) )
 	{
 		mpc_common_debug_fatal( "MPC_Extern32_common_type_size only handle common types");
 	}
@@ -315,56 +315,56 @@ static inline size_t MPC_Extern32_common_type_size( mpc_lowcomm_datatype_t commo
 	
 	switch( common_type )
 	{
-		case MPC_PACKED:
-		case MPC_BYTE:
-		case MPC_CHAR:
-		case MPC_UNSIGNED_CHAR:
-		case MPC_SIGNED_CHAR:
-		case MPC_C_BOOL:
-		case MPC_INT8_T:
-		case MPC_UINT8_T:
-		case MPC_CHARACTER:
-		case MPC_INTEGER1:
+		case MPC_LOWCOMM_PACKED:
+		case MPC_LOWCOMM_BYTE:
+		case MPC_LOWCOMM_CHAR:
+		case MPC_LOWCOMM_UNSIGNED_CHAR:
+		case MPC_LOWCOMM_SIGNED_CHAR:
+		case MPC_LOWCOMM_C_BOOL:
+		case MPC_LOWCOMM_INT8_T:
+		case MPC_LOWCOMM_UINT8_T:
+		case MPC_LOWCOMM_CHARACTER:
+		case MPC_LOWCOMM_INTEGER1:
 			return 1;
 
-		case MPC_WCHAR:
-		case MPC_SHORT:
-		case MPC_UNSIGNED_SHORT:
-		case MPC_INT16_T:
-		case MPC_UINT16_T:
-		case MPC_INTEGER2:
+		case MPC_LOWCOMM_WCHAR:
+		case MPC_LOWCOMM_SHORT:
+		case MPC_LOWCOMM_UNSIGNED_SHORT:
+		case MPC_LOWCOMM_INT16_T:
+		case MPC_LOWCOMM_UINT16_T:
+		case MPC_LOWCOMM_INTEGER2:
 			return 2;
-		case MPC_INT:
-		case MPC_INTEGER:
-		case MPC_LOGICAL:
-		case MPC_UNSIGNED:
-		case MPC_LONG:
-		case MPC_UNSIGNED_LONG:
-		case MPC_FLOAT:
-		case MPC_INT32_T:
-		case MPC_UINT32_T:
-		case MPC_REAL:
-		case MPC_INTEGER4:
-		case MPC_REAL4:
+		case MPC_LOWCOMM_INT:
+		case MPC_LOWCOMM_INTEGER:
+		case MPC_LOWCOMM_LOGICAL:
+		case MPC_LOWCOMM_UNSIGNED:
+		case MPC_LOWCOMM_LONG:
+		case MPC_LOWCOMM_UNSIGNED_LONG:
+		case MPC_LOWCOMM_FLOAT:
+		case MPC_LOWCOMM_INT32_T:
+		case MPC_LOWCOMM_UINT32_T:
+		case MPC_LOWCOMM_REAL:
+		case MPC_LOWCOMM_INTEGER4:
+		case MPC_LOWCOMM_REAL4:
 			return 4;
-		case MPC_LONG_LONG_INT:
-		case MPC_UNSIGNED_LONG_LONG_INT:
-		case MPC_DOUBLE:
-		case MPC_DOUBLE_PRECISION:
-		case MPC_INT64_T:
-		case MPC_UINT64_T:
-		case MPC_AINT:
-		case MPC_COUNT:
-		case MPC_OFFSET:
+		case MPC_LOWCOMM_LONG_LONG_INT:
+		case MPC_LOWCOMM_UNSIGNED_LONG_LONG_INT:
+		case MPC_LOWCOMM_DOUBLE:
+		case MPC_LOWCOMM_DOUBLE_PRECISION:
+		case MPC_LOWCOMM_INT64_T:
+		case MPC_LOWCOMM_UINT64_T:
+		case MPC_LOWCOMM_AINT:
+		case MPC_LOWCOMM_COUNT:
+		case MPC_LOWCOMM_OFFSET:
 		case MPC_C_COMPLEX:
 		case MPC_C_FLOAT_COMPLEX:
-		case MPC_INTEGER8:
-		case MPC_REAL8:
+		case MPC_LOWCOMM_INTEGER8:
+		case MPC_LOWCOMM_REAL8:
 			return 8;
-		case MPC_LONG_DOUBLE:
+		case MPC_LOWCOMM_LONG_DOUBLE:
 		case MPC_C_DOUBLE_COMPLEX:
-		case MPC_INTEGER16:
-		case MPC_REAL16:
+		case MPC_LOWCOMM_INTEGER16:
+		case MPC_LOWCOMM_REAL16:
 			return 16;
 		case MPC_C_LONG_DOUBLE_COMPLEX:
 			return 32;
@@ -383,7 +383,7 @@ static inline size_t MPC_Extern32_common_type_size( mpc_lowcomm_datatype_t commo
  */
 static inline int MPC_Unsigned_type( mpc_lowcomm_datatype_t common_type )
 {
-	if( !_mpc_dt_is_common( common_type ) )
+	if( !mpc_lowcomm_datatype_is_common( common_type ) )
 	{
 		mpc_common_debug_fatal( "MPC_Extern32_common_type_size only handle common types");
 	}
@@ -394,15 +394,15 @@ static inline int MPC_Unsigned_type( mpc_lowcomm_datatype_t common_type )
 	
 	switch( common_type )
 	{
-		case MPC_UNSIGNED_CHAR:
-		case MPC_UINT8_T:
-		case MPC_UNSIGNED_SHORT:
-		case MPC_UINT16_T:
-		case MPC_UNSIGNED:
-		case MPC_UNSIGNED_LONG:
-		case MPC_UINT32_T:
-		case MPC_UNSIGNED_LONG_LONG_INT:
-		case MPC_UINT64_T:
+		case MPC_LOWCOMM_UNSIGNED_CHAR:
+		case MPC_LOWCOMM_UINT8_T:
+		case MPC_LOWCOMM_UNSIGNED_SHORT:
+		case MPC_LOWCOMM_UINT16_T:
+		case MPC_LOWCOMM_UNSIGNED:
+		case MPC_LOWCOMM_UNSIGNED_LONG:
+		case MPC_LOWCOMM_UINT32_T:
+		case MPC_LOWCOMM_UNSIGNED_LONG_LONG_INT:
+		case MPC_LOWCOMM_UINT64_T:
 			return 1;
 		break;
 		default:

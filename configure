@@ -23943,13 +23943,14 @@ ALL_LIBS_CONFIGURATION=""
 # $3 : LDFLAGS
 add_to_lib_configuration()
 {
+
+        LIBS_LIST_WITH_PATHS="${LIBS_LIST_WITH_PATHS}\n# $libname"
+        LIBS_LIST_WITH_PATHS="${LIBS_LIST_WITH_PATHS} $(for((i=0;$i<21-$(echo -n $libname | wc -m);i++));do printf "%s" ".";done;)"
+        LIBS_LIST_WITH_PATHS="${LIBS_LIST_WITH_PATHS} $XXCFLAGS $XXLIB"
         TO_ADD=""
 
         if test -n "$2"; then
-                TO_ADD="CFLAGS: $2\n"
-        fi
-        if test -n "$3"; then
-                TO_ADD="${TO_ADD}LDFLAGS: $3"
+                TO_ADD="# $1 FLAGS $(for((i=0;$i<21-7-$(echo -n $libname | wc -m);i++));do printf "%s" ".";done;) $2 $3"
         fi
 
 
@@ -23959,11 +23960,7 @@ if test -n "${TO_ADD}"; then
 ALL_LIBS_CONFIGURATION=$(
 cat << EOF
 $ALL_LIBS_CONFIGURATION
-
-=== $1 ==================
 ${TO_ADD}
-=========================
-
 EOF
 )
 
@@ -23971,7 +23968,7 @@ fi
 
 }
 
-
+LIBS_LIST_WITH_PATHS=""
 
 #
 # $1 header_name (ex. hwloc.h)
@@ -24176,6 +24173,7 @@ fi
 
 
 
+
                         #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
                         # First try with PKG config
@@ -24317,6 +24315,7 @@ rm -f core conftest.err conftest.$ac_objext \
                                 fi
                         fi
 
+
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking hwloc cflags" >&5
 $as_echo_n "checking hwloc cflags... " >&6; }
                         XXCFLAGS=$(eval echo \${HWLOC_CFLAGS})
@@ -24328,6 +24327,8 @@ $as_echo_n "checking hwloc ldflags... " >&6; }
                         XXLIB=$(eval echo \${HWLOC_LIBS})
                         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
 $as_echo "$XXLIB" >&6; }
+
+                        echo $LIBS_WITH_PATH
 
                         add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
@@ -24418,6 +24419,7 @@ fi
                         then
                                 inc_prefix="$whole_prefix/include/"
                         fi
+
 
 
 
@@ -24563,6 +24565,7 @@ rm -f core conftest.err conftest.$ac_objext \
                                 fi
                         fi
 
+
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking openpa cflags" >&5
 $as_echo_n "checking openpa cflags... " >&6; }
                         XXCFLAGS=$(eval echo \${OPA_CFLAGS})
@@ -24574,6 +24577,8 @@ $as_echo_n "checking openpa ldflags... " >&6; }
                         XXLIB=$(eval echo \${OPA_LIBS})
                         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
 $as_echo "$XXLIB" >&6; }
+
+                        echo $LIBS_WITH_PATH
 
                         add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
@@ -24684,6 +24689,7 @@ fi
                         then
                                 inc_prefix="$whole_prefix/include/"
                         fi
+
 
 
 
@@ -24829,6 +24835,7 @@ rm -f core conftest.err conftest.$ac_objext \
                                 fi
                         fi
 
+
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking mpcalloc cflags" >&5
 $as_echo_n "checking mpcalloc cflags... " >&6; }
                         XXCFLAGS=$(eval echo \${ALLOC_CFLAGS})
@@ -24840,6 +24847,8 @@ $as_echo_n "checking mpcalloc ldflags... " >&6; }
                         XXLIB=$(eval echo \${ALLOC_LIBS})
                         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
 $as_echo "$XXLIB" >&6; }
+
+                        echo $LIBS_WITH_PATH
 
                         add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
@@ -24959,6 +24968,7 @@ fi
                         then
                                 inc_prefix="$whole_prefix/include/"
                         fi
+
 
 
 
@@ -25104,6 +25114,7 @@ rm -f core conftest.err conftest.$ac_objext \
                                 fi
                         fi
 
+
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking libffi cflags" >&5
 $as_echo_n "checking libffi cflags... " >&6; }
                         XXCFLAGS=$(eval echo \${FFI_CFLAGS})
@@ -25115,6 +25126,8 @@ $as_echo_n "checking libffi ldflags... " >&6; }
                         XXLIB=$(eval echo \${FFI_LIBS})
                         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
 $as_echo "$XXLIB" >&6; }
+
+                        echo $LIBS_WITH_PATH
 
                         add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
@@ -25235,6 +25248,7 @@ fi
                         then
                                 inc_prefix="$whole_prefix/include/"
                         fi
+
 
 
 
@@ -25380,6 +25394,7 @@ rm -f core conftest.err conftest.$ac_objext \
                                 fi
                         fi
 
+
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking libvmem cflags" >&5
 $as_echo_n "checking libvmem cflags... " >&6; }
                         XXCFLAGS=$(eval echo \${VMEM_CFLAGS})
@@ -25391,6 +25406,8 @@ $as_echo_n "checking libvmem ldflags... " >&6; }
                         XXLIB=$(eval echo \${VMEM_LIBS})
                         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
 $as_echo "$XXLIB" >&6; }
+
+                        echo $LIBS_WITH_PATH
 
                         add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
@@ -25487,6 +25504,7 @@ fi
                         then
                                 inc_prefix="$whole_prefix/include/"
                         fi
+
 
 
 
@@ -25632,6 +25650,7 @@ rm -f core conftest.err conftest.$ac_objext \
                                 fi
                         fi
 
+
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking libunwind cflags" >&5
 $as_echo_n "checking libunwind cflags... " >&6; }
                         XXCFLAGS=$(eval echo \${UNW_CFLAGS})
@@ -25643,6 +25662,8 @@ $as_echo_n "checking libunwind ldflags... " >&6; }
                         XXLIB=$(eval echo \${UNW_LIBS})
                         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
 $as_echo "$XXLIB" >&6; }
+
+                        echo $LIBS_WITH_PATH
 
                         add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
@@ -25747,6 +25768,7 @@ fi
                         then
                                 inc_prefix="$whole_prefix/include/"
                         fi
+
 
 
 
@@ -25892,6 +25914,7 @@ rm -f core conftest.err conftest.$ac_objext \
                                 fi
                         fi
 
+
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking ibverbs cflags" >&5
 $as_echo_n "checking ibverbs cflags... " >&6; }
                         XXCFLAGS=$(eval echo \${IBV_CFLAGS})
@@ -25903,6 +25926,8 @@ $as_echo_n "checking ibverbs ldflags... " >&6; }
                         XXLIB=$(eval echo \${IBV_LIBS})
                         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
 $as_echo "$XXLIB" >&6; }
+
+                        echo $LIBS_WITH_PATH
 
                         add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
@@ -26003,6 +26028,7 @@ fi
                         then
                                 inc_prefix="$whole_prefix/include/"
                         fi
+
 
 
 
@@ -26148,6 +26174,7 @@ rm -f core conftest.err conftest.$ac_objext \
                                 fi
                         fi
 
+
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking libfabric cflags" >&5
 $as_echo_n "checking libfabric cflags... " >&6; }
                         XXCFLAGS=$(eval echo \${OFI_CFLAGS})
@@ -26159,6 +26186,8 @@ $as_echo_n "checking libfabric ldflags... " >&6; }
                         XXLIB=$(eval echo \${OFI_LIBS})
                         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
 $as_echo "$XXLIB" >&6; }
+
+                        echo $LIBS_WITH_PATH
 
                         add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
@@ -26261,6 +26290,7 @@ fi
                         then
                                 inc_prefix="$whole_prefix/include/"
                         fi
+
 
 
 
@@ -26406,6 +26436,7 @@ rm -f core conftest.err conftest.$ac_objext \
                                 fi
                         fi
 
+
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking portals cflags" >&5
 $as_echo_n "checking portals cflags... " >&6; }
                         XXCFLAGS=$(eval echo \${PORTALS_CFLAGS})
@@ -26417,6 +26448,8 @@ $as_echo_n "checking portals ldflags... " >&6; }
                         XXLIB=$(eval echo \${PORTALS_LIBS})
                         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
 $as_echo "$XXLIB" >&6; }
+
+                        echo $LIBS_WITH_PATH
 
                         add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
@@ -26611,6 +26644,7 @@ fi
 
 
 
+
                         #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
                         # First try with PKG config
@@ -26752,6 +26786,7 @@ rm -f core conftest.err conftest.$ac_objext \
                                 fi
                         fi
 
+
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking pmi cflags" >&5
 $as_echo_n "checking pmi cflags... " >&6; }
                         XXCFLAGS=$(eval echo \${PMI_CFLAGS})
@@ -26763,6 +26798,8 @@ $as_echo_n "checking pmi ldflags... " >&6; }
                         XXLIB=$(eval echo \${PMI_LIBS})
                         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
 $as_echo "$XXLIB" >&6; }
+
+                        echo $LIBS_WITH_PATH
 
                         add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
@@ -26857,6 +26894,7 @@ fi
                         then
                                 inc_prefix="$whole_prefix/include/"
                         fi
+
 
 
 
@@ -27002,6 +27040,7 @@ rm -f core conftest.err conftest.$ac_objext \
                                 fi
                         fi
 
+
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking pmix cflags" >&5
 $as_echo_n "checking pmix cflags... " >&6; }
                         XXCFLAGS=$(eval echo \${PMIX_CFLAGS})
@@ -27013,6 +27052,8 @@ $as_echo_n "checking pmix ldflags... " >&6; }
                         XXLIB=$(eval echo \${PMIX_LIBS})
                         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
 $as_echo "$XXLIB" >&6; }
+
+                        echo $LIBS_WITH_PATH
 
                         add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
@@ -27417,6 +27458,7 @@ fi
 
 
 
+
                         #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
                         # First try with PKG config
@@ -27558,6 +27600,7 @@ rm -f core conftest.err conftest.$ac_objext \
                                 fi
                         fi
 
+
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking cuda cflags" >&5
 $as_echo_n "checking cuda cflags... " >&6; }
                         XXCFLAGS=$(eval echo \${CUDA_CFLAGS})
@@ -27569,6 +27612,8 @@ $as_echo_n "checking cuda ldflags... " >&6; }
                         XXLIB=$(eval echo \${CUDA_LIBS})
                         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
 $as_echo "$XXLIB" >&6; }
+
+                        echo $LIBS_WITH_PATH
 
                         add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
@@ -27660,6 +27705,7 @@ fi
                         then
                                 inc_prefix="$whole_prefix/include/"
                         fi
+
 
 
 
@@ -27805,6 +27851,7 @@ rm -f core conftest.err conftest.$ac_objext \
                                 fi
                         fi
 
+
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking cudart cflags" >&5
 $as_echo_n "checking cudart cflags... " >&6; }
                         XXCFLAGS=$(eval echo \${CUDART_CFLAGS})
@@ -27816,6 +27863,8 @@ $as_echo_n "checking cudart ldflags... " >&6; }
                         XXLIB=$(eval echo \${CUDART_LIBS})
                         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
 $as_echo "$XXLIB" >&6; }
+
+                        echo $LIBS_WITH_PATH
 
                         add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
@@ -32470,6 +32519,7 @@ fi
 
 
 
+
                         #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
 
                         # First try with PKG config
@@ -32611,6 +32661,7 @@ rm -f core conftest.err conftest.$ac_objext \
                                 fi
                         fi
 
+
                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking autopriv cflags" >&5
 $as_echo_n "checking autopriv cflags... " >&6; }
                         XXCFLAGS=$(eval echo \${EXTLS_CFLAGS})
@@ -32622,6 +32673,8 @@ $as_echo_n "checking autopriv ldflags... " >&6; }
                         XXLIB=$(eval echo \${EXTLS_LIBS})
                         { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
 $as_echo "$XXLIB" >&6; }
+
+                        echo $LIBS_WITH_PATH
 
                         add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
@@ -33137,6 +33190,9 @@ MPC_CONFIG_RESULT="\
 # libvmem.............. $mpc_libvmem\n\
 # libffi............... $HAVE_LIB_FFI\n\
 # DMTPC c/r............ $MPC_HAVE_DMTCP\n\
+#\n\
+### LIBS ###\n\
+# ${ALL_LIBS_CONFIGURATION}
 #\n\
 ### DEBUGGING ###\n\
 #\n\

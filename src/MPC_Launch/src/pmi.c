@@ -204,7 +204,6 @@ static inline int __mpc_pmi_get_process_rank( int *rank )
 	uint32_t usize;
 	*size = -1;
 	pmix_status_t rc = __pmix_get_attribute(0, PMIX_JOB_SIZE, PMIX_UINT32, &usize);
-//    PMI_CHECK_RC(rc, "__pmix_get_attribute");
     if (rc == PMI_SUCCESS)
     {
         *size = usize;
@@ -732,9 +731,9 @@ int mpc_launch_pmi_init()
 	/* In this case PMI_Init instructed to skip init */
 	if(unreachable)
 	{
-        mpc_common_set_process_rank( pmi_context.process_rank );
-        mpc_common_set_process_count( pmi_context.process_count );
-        mpc_common_get_flags()->process_number = pmi_context.process_count;
+		mpc_common_set_process_rank( pmi_context.process_rank );
+		mpc_common_set_process_count( pmi_context.process_count );
+		mpc_common_get_flags()->process_number = pmi_context.process_count;
 		PMI_RETURN( rc );
 	}
 
@@ -904,7 +903,8 @@ int mpc_launch_pmi_get_job_id( uint64_t *id )
 
 	return MPC_LAUNCH_PMI_SUCCESS;
 #elif defined(MPC_USE_PMIX)
-	not_implemented();
+	*id =  mpc_common_hash_string(pmi_context.pmix_proc.nspace);
+	return MPC_LAUNCH_PMI_SUCCESS;
 #elif defined( MPC_USE_PMI1 )
 	char *env = NULL;
 	env = getenv( "SLURM_JOB_ID" );

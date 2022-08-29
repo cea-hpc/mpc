@@ -2786,6 +2786,39 @@ int mpc_lowcomm_monitor_set_peers(mpc_lowcomm_monitor_set_t pset, mpc_lowcomm_mo
  * SYNCHRONOUS CONNECTIVITY DUMP *
  *********************************/
 
+
+void mpc_lowcomm_monitor_synchronous_radix_dump(void)
+{
+	/* We need the network */
+	int rank = mpc_common_get_task_rank();
+	assume(0 <= rank);
+
+	int size = mpc_common_get_task_count();
+
+
+			mpc_lowcomm_peer_uid_t me = mpc_lowcomm_monitor_get_uid();
+			pthread_mutex_lock(&__monitor.client_lock);
+
+			_mpc_lowcomm_client_ctx_t *ctx = NULL;
+
+			int cnt = 0;
+
+			MPC_HT_ITER(&__monitor.client_contexts, ctx)
+			{
+				if(ctx)
+				{
+					cnt++;
+				}
+			}
+			MPC_HT_ITER_END(&__monitor.client_contexts)
+
+			pthread_mutex_unlock(&__monitor.client_lock);
+
+
+			printf("%llu %d\n", me, cnt);
+}
+
+
 void mpc_lowcomm_monitor_synchronous_connectivity_dump(void)
 {
 	/* We need the network */

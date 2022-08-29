@@ -463,7 +463,6 @@ static void __topology_device_init( hwloc_topology_t topology, mpc_topology_devi
 
 
 #if (HWLOC_API_VERSION > 0x00020000)
-        mpc_common_debug("HERE %d (C %d IO %d MIS %d) ==> %d", __LINE__, obj->arity, obj->io_arity, obj->misc_arity, io_dev_offset);
 	if ( 0 <= io_dev_offset )
 	{
         hwloc_obj_t io = __get_nth_io_child(obj, io_dev_offset);

@@ -234,6 +234,8 @@ static inline int ___eq_poll(sctk_rail_info_t* rail, sctk_ptl_pte_t *cur_pte)
 }
 
 
+static mpc_common_spinlock_t __poll_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
+
 
 /**
  * Routine called periodically to notify upper-layer from incoming messages.
@@ -252,38 +254,51 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold)
 	threshold = (size > threshold) ? size : threshold;
 	assert(threshold > 0);
 
-	for( i = 0 ; i < srail->pt_table.table_size; i++)
+	static volatile int polling = 0;
+
+
+	if(!polling)
 	{
-		if(threshold <= number_of_polled_eqs)
-		{
-			break;
-		}
 
-		if( mpc_common_spinlock_read_trylock(&srail->pt_table.rwlocks[i]) != 0 )
-		{
-			continue;
-		}
+		if( mpc_common_spinlock_trylock(&__poll_lock) )
+			return;
+		
+		polling = 1;
 
-		if(!srail->pt_table.cells[i].use_flag)
+		for( i = 0 ; i < srail->pt_table.table_size; i++)
 		{
-			mpc_common_spinlock_read_unlock(&srail->pt_table.rwlocks[i]);
-			continue;
-		}
-
-		struct _mpc_ht_cell *ht_cell = &srail->pt_table.cells[i];
-
-		while (ht_cell)
-		{
-			if(ht_cell->data)
+			if(threshold <= number_of_polled_eqs)
 			{
-				number_of_polled_eqs += ___eq_poll(rail, (sctk_ptl_pte_t *)ht_cell->data);
+				break;
 			}
 
-			ht_cell = ht_cell->next;
+
+
+			if(!srail->pt_table.cells[i].use_flag)
+			{
+				continue;
+			}
+
+			struct _mpc_ht_cell *ht_cell = &srail->pt_table.cells[i];
+
+			while (ht_cell)
+			{
+				if(ht_cell->data)
+				{
+					number_of_polled_eqs += ___eq_poll(rail, (sctk_ptl_pte_t *)ht_cell->data);
+				}
+
+				ht_cell = ht_cell->next;
+			}
+
 		}
 
-		mpc_common_spinlock_read_unlock(&srail->pt_table.rwlocks[i]);
+		mpc_common_spinlock_unlock(&__poll_lock);
+		polling = 0;
+
+
 	}
+
 }
 
 /**
@@ -306,7 +321,7 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, size_t threshold)
 		{
 			user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
 			assert(user_ptr != NULL);
-			mpc_common_debug_info("PORTALS: MDS EVENT '%s' from %s, type=%s, prot=%s",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot));
+			mpc_common_debug_info("PORTALS: MDS EVENT '%s' from %s, type=%s, prot=%s, match=%s",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot),  __sctk_ptl_match_str(malloc(32), 32, user_ptr->match.raw));
 			/* we only care about Portals-sucess events */
 			if(ev.ni_fail_type != PTL_NI_OK)
 			{
@@ -511,9 +526,31 @@ void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, mpc_lowcomm_communicato
 	if(!SCTK_PTL_PTE_EXIST(srail->pt_table, comm_idx))
 	{
 		sctk_ptl_pte_t* new_entry = sctk_malloc(sizeof(sctk_ptl_pte_t));
+		mpc_common_spinlock_lock(&__poll_lock);
 		sctk_ptl_pte_create(srail, new_entry, PTL_PT_ANY, comm_idx + SCTK_PTL_PTE_HIDDEN);
+		mpc_common_spinlock_unlock(&__poll_lock);
 	}
 }
+
+
+/**
+ * Notify the driver that a communicator has been deleted.
+ * Will trigger the creation of new Portals entry.
+ * \param[in] srail the Portals rail
+ * \param[in] com_idx the communicator ID
+ * \param[in] comm_size the number of processes in that communicator
+ */
+void sctk_ptl_comm_delete(sctk_ptl_rail_info_t* srail, mpc_lowcomm_communicator_id_t comm_idx, size_t comm_size)
+{
+	UNUSED(comm_size);
+	if(SCTK_PTL_PTE_EXIST(srail->pt_table, comm_idx))
+	{
+		mpc_common_spinlock_lock(&__poll_lock);
+		sctk_ptl_pte_release(srail, comm_idx);
+		mpc_common_spinlock_unlock(&__poll_lock);
+	}
+}
+
 
 /**
  * @brief probe a message described by its header.

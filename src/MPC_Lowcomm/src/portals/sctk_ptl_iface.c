@@ -32,6 +32,8 @@
 #include "mpc_common_datastructure.h"
 #include "sctk_ptl_offcoll.h"
 #include "sctk_low_level_comm.h"
+#include "mpc_common_rank.h"
+#include "mpc_launch_pmi.h"
 
 static OPA_int_t nb_mds = OPA_INT_T_INITIALIZER(0);
 
@@ -43,7 +45,6 @@ void sctk_ptl_print_structure(__UNUSED__ sctk_ptl_rail_info_t* srail)
 {
 #ifdef MPC_ENABLE_DEBUG_MESSAGES
 	sctk_ptl_limits_t l = srail->max_limits;
-#endif
 	mpc_common_debug(
 	"\n======== PORTALS STRUCTURE ========\n"
 	"\n"
@@ -111,7 +112,8 @@ void sctk_ptl_print_structure(__UNUSED__ sctk_ptl_rail_info_t* srail)
 	(SCTK_PTL_IS_OFFLOAD_COLL(srail->offload_support) ? "True" : "False"),
 	(SCTK_PTL_IS_OFFLOAD_OD(srail->offload_support) ? "True" : "False")
 	);
-	
+	#endif
+
 }
 
 /**
@@ -147,7 +149,32 @@ static inline void __sctk_ptl_set_limits(sctk_ptl_limits_t* l)
  */
 sctk_ptl_rail_info_t sctk_ptl_hardware_init()
 {
+
+	/* BXI specific We first need to make sure we do not exhaust command queues on the BXI
+	   by settign a few internal variables for CQs sharing */
+	int local_proc_count = mpc_common_get_local_process_count();
+
+	if(local_proc_count >= 62)
+	{
+		int cqmaxpid = (local_proc_count / 62) + 1;
+		if(cqmaxpid > 8)
+		{
+			cqmaxpid = 8;
+		}
+		char val[16];
+		snprintf(val, 16, "%d", cqmaxpid);
+		/* Set not overwriting */
+		setenv("PORTALS4_CQ_MAXPIDS", val, 0);
+
+		uint64_t job_id = 1111;
+		mpc_launch_pmi_get_job_id(&job_id);
+		snprintf(val, 16, "%lu", job_id);
+
+		setenv("PORTALS4_CQ_GROUP", val, 0);
+	}
+
 	sctk_ptl_rail_info_t res;
+	memset(&res, 0, sizeof(sctk_ptl_rail_info_t));
 	sctk_ptl_limits_t l;
 
 	/* pre-actions */
@@ -291,6 +318,7 @@ mpc_lowcomm_communicator_id_t sctk_ptl_pte_idx_to_comm_id(sctk_ptl_rail_info_t* 
 	return *ret;
 }
 
+
 /**
  * Dynamically create a new Portals entry.
  * \param[in] srail the Portals rail
@@ -331,7 +359,42 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, ptl_p
 	__pte_idx_register(srail, pte->idx, key);
 
 	srail->nb_entries++;
+	//mpc_common_debug_error("CREATING comm %d", srail->nb_entries);
+
 }
+
+static inline void __pte_release(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
+{
+	if(sctk_ptl_offcoll_enabled(srail))
+		sctk_ptl_offcoll_pte_fini(srail, pte);
+	
+	sctk_ptl_chk(PtlEQFree(
+		pte->eq       /* the EQ handler */
+	));
+
+	sctk_ptl_chk(PtlPTFree(
+		srail->iface,     /* the NI handler */
+		pte->idx      /* the PTE to destroy */
+	));	
+
+	srail->nb_entries--;
+}
+
+void sctk_ptl_pte_release(sctk_ptl_rail_info_t* srail, ptl_pt_index_t requested_index)
+{
+	sctk_ptl_pte_t* cur = mpc_common_hashtable_get(&srail->pt_table, requested_index);
+
+	if(!cur)
+	{
+		return;
+	}
+
+	mpc_common_hashtable_delete(&srail->pt_table, requested_index);
+
+	/* Remove the PTE */
+	__pte_release(srail, cur);
+}
+
 
 
 /**
@@ -348,26 +411,17 @@ void sctk_ptl_software_fini(sctk_ptl_rail_info_t* srail)
 	void* base_ptr = NULL;
 
 	/* don't want to hang the NIC */
-	return;
+	//return;
 
 	for(i = 0; i < table_dims; i++)
 	{
 		sctk_ptl_pte_t* cur = mpc_common_hashtable_get(&srail->pt_table, i);
 
-		if(sctk_ptl_offcoll_enabled(srail))
-			sctk_ptl_offcoll_pte_fini(srail, cur);
-		
+
 		if(i==0)
 			base_ptr = cur;
 
-		sctk_ptl_chk(PtlEQFree(
-			cur->eq       /* the EQ handler */
-		));
-
-		sctk_ptl_chk(PtlPTFree(
-			srail->iface,     /* the NI handler */
-			cur->idx      /* the PTE to destroy */
-		));
+		__pte_release(srail, cur);
 	}
 
 	sctk_ptl_chk(PtlEQFree(

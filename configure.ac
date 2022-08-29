@@ -762,13 +762,14 @@ ALL_LIBS_CONFIGURATION=""
 # $3 : LDFLAGS
 add_to_lib_configuration()
 {
+
+        LIBS_LIST_WITH_PATHS="${LIBS_LIST_WITH_PATHS}\n# $libname"
+        LIBS_LIST_WITH_PATHS="${LIBS_LIST_WITH_PATHS} $(for((i=0;$i<21-$(echo -n $libname | wc -m);i++));do printf "%s" ".";done;)"
+        LIBS_LIST_WITH_PATHS="${LIBS_LIST_WITH_PATHS} $XXCFLAGS $XXLIB"
         TO_ADD=""
 
         if test -n "$2"; then
-                TO_ADD="CFLAGS: $2\n"
-        fi
-        if test -n "$3"; then
-                TO_ADD="${TO_ADD}LDFLAGS: $3"
+                TO_ADD="# $1 FLAGS $(for((i=0;$i<21-7-$(echo -n $libname | wc -m);i++));do printf "%s" ".";done;) $2 $3"
         fi
 
 
@@ -778,11 +779,7 @@ if test -n "${TO_ADD}"; then
 ALL_LIBS_CONFIGURATION=$(
 cat << EOF
 $ALL_LIBS_CONFIGURATION
-
-=== $1 ==================
 ${TO_ADD}
-=========================
-
 EOF
 )
 
@@ -790,7 +787,7 @@ fi
 
 }
 
-
+LIBS_LIST_WITH_PATHS=""
 
 #
 # $1 header_name (ex. hwloc.h)
@@ -858,6 +855,7 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                                 inc_prefix="$whole_prefix/include/"
                         fi
 
+
                         AC_SUBST([$4_CFLAGS])
                         AC_SUBST([$4_LIBS])
 
@@ -917,6 +915,7 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                                 fi
                         fi
 
+                        
                         AC_MSG_CHECKING([$2 cflags])
                         XXCFLAGS=$(eval echo \${$4_CFLAGS})
                         AC_MSG_RESULT([$XXCFLAGS])
@@ -924,6 +923,8 @@ AC_DEFUN([MPC_DETECT_DEPENDENCY],
                         AC_MSG_CHECKING([$2 ldflags])
                         XXLIB=$(eval echo \${$4_LIBS})
                         AC_MSG_RESULT([$XXLIB])
+
+                        echo $LIBS_WITH_PATH
 
                         add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
 
@@ -3234,6 +3235,9 @@ MPC_CONFIG_RESULT="\
 # libvmem.............. $mpc_libvmem\n\
 # libffi............... $HAVE_LIB_FFI\n\
 # DMTPC c/r............ $MPC_HAVE_DMTCP\n\
+#\n\
+### LIBS ###\n\
+# ${ALL_LIBS_CONFIGURATION}
 #\n\
 ### DEBUGGING ###\n\
 #\n\

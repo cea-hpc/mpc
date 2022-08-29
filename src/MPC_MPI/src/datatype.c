@@ -42,9 +42,6 @@
 #define MPC_TYPE_COUNT ( SCTK_COMMON_DATA_TYPE_COUNT + 2 * SCTK_USER_DATA_TYPES_MAX )
 
 
-/** Common datatypes sizes are initialized in \ref __mpc_common_types_init */
-size_t *__sctk_common_type_sizes;
-
 static const char *const type_combiner_names[MPC_COMBINER_COUNT__] =
 	{
 		"MPC_COMBINER_UNKNOWN",
@@ -97,10 +94,7 @@ void _mpc_dt_init()
 	if ( !__mpc_dt_initialized )
 	{
 		__mpc_dt_initialized = 1;
-		__sctk_common_type_sizes =
-			sctk_malloc( sizeof( size_t ) * SCTK_COMMON_DATA_TYPE_COUNT );
-		assume( __sctk_common_type_sizes != NULL );
-		__mpc_common_types_init();
+		mpc_lowcomm_datatype_init_common();	
 	}
 
 	mpc_common_spinlock_unlock(&init_lock);
@@ -127,7 +121,6 @@ void _mpc_dt_release()
 	__mpc_dt_initialized = 0;
 
 	__mpc_dt_name_clear();
-	sctk_free( __sctk_common_type_sizes );
 
 	mpc_common_spinlock_unlock(&clear_lock);
 
@@ -513,7 +506,7 @@ static inline void __mpc_composed_common_types_init()
 	/* MPC_FLOAT_INT (SCTK_DERIVED_DATATYPE_BASE */
 	mpc_float_int foo_0;
 	disp = ( (char *) &foo_0.b - (char *) &foo_0.a );
-	___mpc_init_composed_common_type( MPC_FLOAT_INT, disp, MPC_FLOAT, MPC_INT, sizeof( mpc_float_int ) );
+	___mpc_init_composed_common_type( MPC_FLOAT_INT, disp, MPC_LOWCOMM_FLOAT, MPC_LOWCOMM_INT, sizeof( mpc_float_int ) );
 	__mpc_common_dt_set_name( MPC_FLOAT_INT, "MPI_FLOAT_INT" );
 	tmp = MPC_FLOAT_INT;
 	_mpc_cl_type_commit( &tmp );
@@ -521,7 +514,7 @@ static inline void __mpc_composed_common_types_init()
 	/* MPC_LONG_INT (SCTK_DERIVED_DATATYPE_BASE + 1 */
 	mpc_long_int foo_1;
 	disp = ( (char *) &foo_1.b - (char *) &foo_1.a );
-	___mpc_init_composed_common_type( MPC_LONG_INT, disp, MPC_LONG, MPC_INT,
+	___mpc_init_composed_common_type( MPC_LONG_INT, disp, MPC_LOWCOMM_LONG, MPC_LOWCOMM_INT,
 									  sizeof( mpc_long_int ) );
 	__mpc_common_dt_set_name( MPC_LONG_INT, "MPI_LONG_INT" );
 	tmp = MPC_LONG_INT;
@@ -530,8 +523,8 @@ static inline void __mpc_composed_common_types_init()
 	/* MPC_DOUBLE_INT  (SCTK_DERIVED_DATATYPE_BASE + 2 */
 	mpc_double_int foo_2;
 	disp = ( (char *) &foo_2.b - (char *) &foo_2.a );
-	___mpc_init_composed_common_type( MPC_DOUBLE_INT, disp, MPC_DOUBLE,
-									  MPC_INT, sizeof( mpc_double_int ) );
+	___mpc_init_composed_common_type( MPC_DOUBLE_INT, disp, MPC_LOWCOMM_DOUBLE,
+									  MPC_LOWCOMM_INT, sizeof( mpc_double_int ) );
 	__mpc_common_dt_set_name( MPC_DOUBLE_INT, "MPI_DOUBLE_INT" );
 	tmp = MPC_DOUBLE_INT;
 	_mpc_cl_type_commit( &tmp );
@@ -539,7 +532,7 @@ static inline void __mpc_composed_common_types_init()
 	/* MPC_SHORT_INT  (SCTK_DERIVED_DATATYPE_BASE + 3 */
 	mpc_short_int foo_3;
 	disp = ( (char *) &foo_3.b - (char *) &foo_3.a );
-	___mpc_init_composed_common_type( MPC_SHORT_INT, disp, MPC_SHORT, MPC_INT,
+	___mpc_init_composed_common_type( MPC_SHORT_INT, disp, MPC_LOWCOMM_SHORT, MPC_LOWCOMM_INT,
 									  sizeof( mpc_short_int ) );
 	__mpc_common_dt_set_name( MPC_SHORT_INT, "MPI_SHORT_INT" );
 	tmp = MPC_SHORT_INT;
@@ -548,7 +541,7 @@ static inline void __mpc_composed_common_types_init()
 	/* MPC_2INT  (SCTK_DERIVED_DATATYPE_BASE + 4 */
 	mpc_int_int foo_4;
 	disp = ( (char *) &foo_4.b - (char *) &foo_4.a );
-	___mpc_init_composed_common_type( MPC_2INT, disp, MPC_INT, MPC_INT,
+	___mpc_init_composed_common_type( MPC_2INT, disp, MPC_LOWCOMM_INT, MPC_LOWCOMM_INT,
 									  sizeof( mpc_int_int ) );
 	__mpc_common_dt_set_name( MPC_2INT, "MPI_2INT" );
 	tmp = MPC_2INT;
@@ -557,21 +550,21 @@ static inline void __mpc_composed_common_types_init()
 	/* MPC_2FLOAT  (SCTK_DERIVED_DATATYPE_BASE + 5 */
 	mpc_float_float foo_5;
 	disp = ( (char *) &foo_5.b - (char *) &foo_5.a );
-	___mpc_init_composed_common_type( MPC_2FLOAT, disp, MPC_FLOAT, MPC_FLOAT,
+	___mpc_init_composed_common_type( MPC_2FLOAT, disp, MPC_LOWCOMM_FLOAT, MPC_LOWCOMM_FLOAT,
 									  sizeof( mpc_float_float ) );
 	__mpc_common_dt_set_name( MPC_2FLOAT, "MPI_2FLOAT" );
 	tmp = MPC_2FLOAT;
 	_mpc_cl_type_commit( &tmp );
 
 	/* MPC_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 6 */
-	___mpc_init_composed_common_type( MPC_COMPLEX, disp, MPC_FLOAT, MPC_FLOAT,
+	___mpc_init_composed_common_type( MPC_COMPLEX, disp, MPC_LOWCOMM_FLOAT, MPC_LOWCOMM_FLOAT,
 									  sizeof( mpc_float_float ) );
 	__mpc_common_dt_set_name( MPC_COMPLEX, "MPI_COMPLEX" );
 	tmp = MPC_COMPLEX;
 	_mpc_cl_type_commit( &tmp );
 
 	/* MPC_COMPLEX8  (SCTK_DERIVED_DATATYPE_BASE + 10 */
-	___mpc_init_composed_common_type( MPC_COMPLEX8, disp, MPC_FLOAT, MPC_FLOAT,
+	___mpc_init_composed_common_type( MPC_COMPLEX8, disp, MPC_LOWCOMM_FLOAT, MPC_LOWCOMM_FLOAT,
 									  sizeof( mpc_float_float ) );
 	__mpc_common_dt_set_name( MPC_COMPLEX8, "MPI_COMPLEX8" );
 	tmp = MPC_COMPLEX8;
@@ -580,23 +573,23 @@ static inline void __mpc_composed_common_types_init()
 	/* MPC_2DOUBLE_PRECISION  (SCTK_DERIVED_DATATYPE_BASE + 7 */
 	mpc_double_double foo_6;
 	disp = ( (char *) &foo_6.b - (char *) &foo_6.a );
-	___mpc_init_composed_common_type( MPC_2DOUBLE_PRECISION, disp, MPC_DOUBLE,
-									  MPC_DOUBLE, sizeof( mpc_double_double ) );
+	___mpc_init_composed_common_type( MPC_2DOUBLE_PRECISION, disp, MPC_LOWCOMM_DOUBLE,
+									  MPC_LOWCOMM_DOUBLE, sizeof( mpc_double_double ) );
 	__mpc_common_dt_set_name( MPC_2DOUBLE_PRECISION,
 							  "MPI_2DOUBLE_PRECISION" );
 	tmp = MPC_2DOUBLE_PRECISION;
 	_mpc_cl_type_commit( &tmp );
 
 	/* MPC_COMPLEX16  (SCTK_DERIVED_DATATYPE_BASE + 11 */
-	___mpc_init_composed_common_type( MPC_COMPLEX16, disp, MPC_DOUBLE,
-									  MPC_DOUBLE, sizeof( mpc_double_double ) );
+	___mpc_init_composed_common_type( MPC_COMPLEX16, disp, MPC_LOWCOMM_DOUBLE,
+									  MPC_LOWCOMM_DOUBLE, sizeof( mpc_double_double ) );
 	__mpc_common_dt_set_name( MPC_COMPLEX16, "MPI_COMPLEX16" );
 	tmp = MPC_COMPLEX16;
 	_mpc_cl_type_commit( &tmp );
 
 	/* MPC_DOUBLE_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 12 */
-	___mpc_init_composed_common_type( MPC_DOUBLE_COMPLEX, disp, MPC_DOUBLE,
-									  MPC_DOUBLE, sizeof( mpc_double_double ) );
+	___mpc_init_composed_common_type( MPC_DOUBLE_COMPLEX, disp, MPC_LOWCOMM_DOUBLE,
+									  MPC_LOWCOMM_DOUBLE, sizeof( mpc_double_double ) );
 	__mpc_common_dt_set_name( MPC_DOUBLE_COMPLEX,
 							  "MPI_DOUBLE_COMPLEX" );
 	tmp = MPC_DOUBLE_COMPLEX;
@@ -606,7 +599,7 @@ static inline void __mpc_composed_common_types_init()
 	mpc_long_double_int foo_7;
 	disp = ( (char *) &foo_7.b - (char *) &foo_7.a );
 	___mpc_init_composed_common_type( MPC_LONG_DOUBLE_INT, disp,
-									  MPC_LONG_DOUBLE, MPC_INT,
+									  MPC_LOWCOMM_LONG_DOUBLE, MPC_LOWCOMM_INT,
 									  sizeof( mpc_long_double_int ) );
 	__mpc_common_dt_set_name( MPC_LONG_DOUBLE_INT,
 							  "MPI_LONG_DOUBLE_INT" );
@@ -616,8 +609,8 @@ static inline void __mpc_composed_common_types_init()
 	/* MPC_2INTEGER  (SCTK_DERIVED_DATATYPE_BASE + 13 */
 	mpc_integer_integer foo_13;
 	disp = ( (char *) &foo_13.b - (char *) &foo_13.a );
-	___mpc_init_composed_common_type( MPC_2INTEGER, disp, MPC_INTEGER,
-									  MPC_INTEGER,
+	___mpc_init_composed_common_type( MPC_2INTEGER, disp, MPC_LOWCOMM_INTEGER,
+									  MPC_LOWCOMM_INTEGER,
 									  sizeof( mpc_integer_integer ) );
 	__mpc_common_dt_set_name( MPC_2INTEGER, "MPI_2INTEGER" );
 	tmp = MPC_2INTEGER;
@@ -626,7 +619,7 @@ static inline void __mpc_composed_common_types_init()
 	/* MPC_2REAL  (SCTK_DERIVED_DATATYPE_BASE + 14 */
 	mpc_real_real foo_14;
 	disp = ( (char *) &foo_14.b - (char *) &foo_14.a );
-	___mpc_init_composed_common_type( MPC_2REAL, disp, MPC_REAL, MPC_REAL,
+	___mpc_init_composed_common_type( MPC_2REAL, disp, MPC_LOWCOMM_REAL, MPC_LOWCOMM_REAL,
 									  sizeof( mpc_real_real ) );
 	__mpc_common_dt_set_name( MPC_2REAL, "MPI_2REAL" );
 	tmp = MPC_2REAL;
@@ -635,86 +628,12 @@ static inline void __mpc_composed_common_types_init()
 	/* MPC_COMPLEX32  (SCTK_DERIVED_DATATYPE_BASE + 12 */
 	mpc_longdouble_longdouble foo_9;
 	disp = ( (char *) &foo_9.b - (char *) &foo_9.a );
-	___mpc_init_composed_common_type( MPC_COMPLEX32, disp, MPC_LONG_DOUBLE,
-									  MPC_LONG_DOUBLE,
+	___mpc_init_composed_common_type( MPC_COMPLEX32, disp, MPC_LOWCOMM_LONG_DOUBLE,
+									  MPC_LOWCOMM_LONG_DOUBLE,
 									  sizeof( mpc_longdouble_longdouble ) );
 	__mpc_common_dt_set_name( MPC_COMPLEX32, "MPI_COMPLEX32" );
 	tmp = MPC_COMPLEX32;
 	_mpc_cl_type_commit( &tmp );
-}
-
-#define tostring( a ) #a
-#define SCTK_INIT_TYPE_SIZE( datatype, t )              \
-	__sctk_common_type_sizes[datatype] = sizeof( t );   \
-	assert( datatype >= 0 );                       \
-	assert( _mpc_dt_is_common( datatype ) ); \
-	__mpc_common_dt_set_name( datatype, #datatype );
-
-
-/** \brief Initilalize common datatype sizes
- */
-static inline void __mpc_common_types_init(void)
-{
-	SCTK_INIT_TYPE_SIZE( MPC_CHAR, char );
-	SCTK_INIT_TYPE_SIZE( MPC_LOGICAL, int );
-	SCTK_INIT_TYPE_SIZE( MPC_BYTE, unsigned char );
-	SCTK_INIT_TYPE_SIZE( MPC_SHORT, short );
-	SCTK_INIT_TYPE_SIZE( MPC_INT, int );
-	SCTK_INIT_TYPE_SIZE( MPC_LONG, long );
-	SCTK_INIT_TYPE_SIZE( MPC_FLOAT, float );
-	SCTK_INIT_TYPE_SIZE( MPC_DOUBLE, double );
-	SCTK_INIT_TYPE_SIZE( MPC_UNSIGNED_CHAR, unsigned char );
-	SCTK_INIT_TYPE_SIZE( MPC_UNSIGNED_SHORT, unsigned short );
-	SCTK_INIT_TYPE_SIZE( MPC_UNSIGNED, unsigned int );
-	SCTK_INIT_TYPE_SIZE( MPC_UNSIGNED_LONG, unsigned long );
-	SCTK_INIT_TYPE_SIZE( MPC_LONG_DOUBLE, long double );
-	SCTK_INIT_TYPE_SIZE( MPC_LONG_LONG, long long );
-	SCTK_INIT_TYPE_SIZE( MPC_UNSIGNED_LONG_LONG, unsigned long long );
-	SCTK_INIT_TYPE_SIZE( MPC_INTEGER1, int8_t );
-	SCTK_INIT_TYPE_SIZE( MPC_INTEGER2, int16_t );
-	SCTK_INIT_TYPE_SIZE( MPC_INTEGER4, int32_t );
-	SCTK_INIT_TYPE_SIZE( MPC_INTEGER8, int64_t );
-	SCTK_INIT_TYPE_SIZE( MPC_INTEGER16, int64_t[2] );
-	SCTK_INIT_TYPE_SIZE( MPC_REAL4, float );
-	SCTK_INIT_TYPE_SIZE( MPC_REAL8, double );
-	SCTK_INIT_TYPE_SIZE( MPC_REAL16, long double );
-	SCTK_INIT_TYPE_SIZE( MPC_SIGNED_CHAR, char );
-	SCTK_INIT_TYPE_SIZE( MPC_INT8_T, int8_t );
-	SCTK_INIT_TYPE_SIZE( MPC_UINT8_T, uint8_t );
-	SCTK_INIT_TYPE_SIZE( MPC_INT16_T, int16_t );
-	SCTK_INIT_TYPE_SIZE( MPC_UINT16_T, uint16_t );
-	SCTK_INIT_TYPE_SIZE( MPC_INT32_T, int32_t );
-	SCTK_INIT_TYPE_SIZE( MPC_UINT32_T, uint32_t );
-	SCTK_INIT_TYPE_SIZE( MPC_INT64_T, int64_t );
-	SCTK_INIT_TYPE_SIZE( MPC_UINT64_T, uint64_t );
-	SCTK_INIT_TYPE_SIZE( MPC_WCHAR, sctk_wchar_t );
-	SCTK_INIT_TYPE_SIZE( MPC_AINT, size_t );
-	SCTK_INIT_TYPE_SIZE( MPC_OFFSET, size_t );
-	SCTK_INIT_TYPE_SIZE( MPC_COUNT, size_t );
-	SCTK_INIT_TYPE_SIZE( MPC_LONG_LONG_INT, long long int );
-	SCTK_INIT_TYPE_SIZE( MPC_C_BOOL, char );
-	SCTK_INIT_TYPE_SIZE( MPC_CHARACTER, char );
-	SCTK_INIT_TYPE_SIZE( MPC_INTEGER, int );
-	SCTK_INIT_TYPE_SIZE( MPC_REAL, float );
-	SCTK_INIT_TYPE_SIZE( MPC_DOUBLE_PRECISION, double );
-
-	/* Special cases */
-	__sctk_common_type_sizes[MPC_PACKED] = 0;
-	__mpc_common_dt_set_name( MPC_PACKED, "MPI_PACKED" );
-}
-
-void _mpc_dt_common_display( mpc_lowcomm_datatype_t datatype )
-{
-	if ( !_mpc_dt_is_common( datatype ) )
-	{
-		mpc_common_debug_error( "Unknown datatype provided to %s\n", __FUNCTION__ );
-		abort();
-	}
-
-	mpc_common_debug_error( "=============COMMON=================" );
-	mpc_common_debug_error( "NAME %s", _mpc_dt_name_get( datatype ) );
-	mpc_common_debug_error( "SIZE %ld", __sctk_common_type_sizes[datatype] );
-	mpc_common_debug_error( "====================================" );
 }
 
 /************************************************************************/
@@ -942,7 +861,7 @@ int _mpc_dt_derived_release( _mpc_dt_derived_t *type )
 				_mpc_cl_type_is_allocated( i, &not_released_yet );
 
 				if ( to_free[i] && not_released_yet &&
-					 !_mpc_dt_is_common( i ) &&
+					 !mpc_lowcomm_datatype_is_common( i ) &&
 					 !_mpc_dt_is_boundary( i ) )
 				{
 					mpc_lowcomm_datatype_t tmp = i;
@@ -1211,7 +1130,7 @@ void _mpc_dt_storage_release( struct _mpc_dt_storage * da )
 		int to_release = 0;
 		to_release = _mpc_dt_storage_type_can_be_released(da, i);
 
-		if( to_release && !_mpc_dt_is_common(i) && !_mpc_dt_is_struct(i))
+		if( to_release && !mpc_lowcomm_datatype_is_common(i) && !_mpc_dt_is_struct(i))
 		{
                   mpc_common_debug("Freeing unfreed datatype [%d] did you call "
                              "MPI_Type_free on all your MPI_Datatypes ?",
@@ -1398,6 +1317,14 @@ int _mpc_dt_name_set( mpc_lowcomm_datatype_t datatype, const char *name )
 {
 	/* First locate a previous cell */
 	mpc_common_spinlock_lock( &datatype_names_lock );
+
+	int ret = mpc_lowcomm_datatype_common_set_name(datatype, name);
+
+	if(ret = MPC_LOWCOMM_SUCCESS){
+		mpc_common_spinlock_unlock( &datatype_names_lock );
+		return ret;
+	}
+
 	struct __mpc_dt_name_cell *cell = __mpc_dt_get_name_cell( datatype );
 
 	if ( cell )

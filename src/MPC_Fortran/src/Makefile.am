@@ -63,7 +63,11 @@ libmpcfortran_la_SOURCES += mpi_module.f90
 # F77 Iface
 libmpcfortran_la_SOURCES += mpc_fortran.c mpc_fortran_helpers.c
 # OMP
-libmpcfortran_la_SOURCES += omp.f90 
+libmpcfortran_la_SOURCES += omp.f90
+
+if MPC_MPIIO_ENABLED
+libmpcfortran_la_LIBADD = $(abs_top_builddir)/src/MPC_IO/src/libmpcio.la
+endif
 
 if MPC_HAVE_AUTOPRIV
 # Generate a privatized library note that
@@ -96,6 +100,10 @@ libmpcfortran_priv_la_SOURCES += omp_priv.f90
 
 libmpcfortran_priv_la_CFLAGS = -fmpc-privatize $(AM_CPPFLAGS)
 libmpcfortran_priv_la_FCFLAGS = -fmpc-privatize $(AM_FCFLAGS)
+
+if MPC_MPIIO_ENABLED
+libmpcfortran_priv_la_LIBADD = $(abs_top_builddir)/src/MPC_IO/src/libmpcio.la
+endif
 
 endif
 

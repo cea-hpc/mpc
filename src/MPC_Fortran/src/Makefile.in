@@ -144,7 +144,7 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)" \
 	"$(DESTDIR)$(mpc_fort_headerdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libmpcfortran_la_LIBADD =
+@MPC_MPIIO_ENABLED_TRUE@libmpcfortran_la_DEPENDENCIES = $(abs_top_builddir)/src/MPC_IO/src/libmpcio.la
 am_libmpcfortran_la_OBJECTS = mpi08_module.lo mpi_module.lo \
 	mpc_fortran.lo mpc_fortran_helpers.lo omp.lo
 libmpcfortran_la_OBJECTS = $(am_libmpcfortran_la_OBJECTS)
@@ -152,7 +152,7 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-libmpcfortran_priv_la_LIBADD =
+@MPC_HAVE_AUTOPRIV_TRUE@@MPC_MPIIO_ENABLED_TRUE@libmpcfortran_priv_la_DEPENDENCIES = $(abs_top_builddir)/src/MPC_IO/src/libmpcio.la
 am__libmpcfortran_priv_la_SOURCES_DIST = mpi08_module_priv.f90 \
 	mpi_module_priv.f90 mpc_fortran.c mpc_fortran_helpers.c \
 	omp_priv.f90
@@ -544,6 +544,7 @@ lib_LTLIBRARIES = libmpcfortran.la $(am__append_1)
 # OMP
 libmpcfortran_la_SOURCES = mpi08_module.f90 mpi_module.f90 \
 	mpc_fortran.c mpc_fortran_helpers.c omp.f90
+@MPC_MPIIO_ENABLED_TRUE@libmpcfortran_la_LIBADD = $(abs_top_builddir)/src/MPC_IO/src/libmpcio.la
 
 # F08 Iface
 # F77 Iface
@@ -553,6 +554,7 @@ libmpcfortran_la_SOURCES = mpi08_module.f90 mpi_module.f90 \
 @MPC_HAVE_AUTOPRIV_TRUE@	mpc_fortran_helpers.c omp_priv.f90
 @MPC_HAVE_AUTOPRIV_TRUE@libmpcfortran_priv_la_CFLAGS = -fmpc-privatize $(AM_CPPFLAGS)
 @MPC_HAVE_AUTOPRIV_TRUE@libmpcfortran_priv_la_FCFLAGS = -fmpc-privatize $(AM_FCFLAGS)
+@MPC_HAVE_AUTOPRIV_TRUE@@MPC_MPIIO_ENABLED_TRUE@libmpcfortran_priv_la_LIBADD = $(abs_top_builddir)/src/MPC_IO/src/libmpcio.la
 
 #
 # Install Fortran modules

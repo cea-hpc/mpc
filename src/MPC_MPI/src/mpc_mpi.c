@@ -559,7 +559,7 @@ static int mpi_check_op_type_func_MPI_MAXLOC(MPI_Datatype datatype)
 static int mpi_check_op_type(MPI_Op op, MPI_Datatype datatype)
 {
 #if 1
-	if( (op <= MPI_MAXLOC) && (_mpc_dt_is_common(datatype) ) )
+	if( (op <= MPI_MAXLOC) && (mpc_lowcomm_datatype_is_common(datatype) ) )
 	{
 		switch(op)
 		{
@@ -1370,7 +1370,7 @@ static int __Isend_test_req(const void *buf, int count, MPI_Datatype datatype,
 				derived_datatype.opt_ends   = &(tmp[derived_datatype.opt_count]);
 			}
 
-			res = mpc_mpi_cl_add_pack_absolute(buf, derived_datatype.opt_count, derived_datatype.opt_begins, derived_datatype.opt_ends, MPC_CHAR, __sctk_convert_mpc_request(request, requests) );
+			res = mpc_mpi_cl_add_pack_absolute(buf, derived_datatype.opt_count, derived_datatype.opt_begins, derived_datatype.opt_ends, MPC_LOWCOMM_CHAR, __sctk_convert_mpc_request(request, requests) );
 
 			if(res != MPI_SUCCESS)
 			{
@@ -1467,7 +1467,7 @@ static int __Irecv_test_req(void *buf, int count, MPI_Datatype datatype,
 			}
 
 			res =
-				mpc_mpi_cl_add_pack_absolute(buf, derived_datatype.opt_count, derived_datatype.opt_begins, derived_datatype.opt_ends, MPC_CHAR, __sctk_convert_mpc_request(request, requests) );
+				mpc_mpi_cl_add_pack_absolute(buf, derived_datatype.opt_count, derived_datatype.opt_begins, derived_datatype.opt_ends, MPC_LOWCOMM_CHAR, __sctk_convert_mpc_request(request, requests) );
 			if(res != MPI_SUCCESS)
 			{
 				return res;
@@ -2281,7 +2281,7 @@ static inline MPI_Datatype *__get_typemask(MPI_Datatype datatype, int *type_mask
 
 			*type_mask_count = 1;
 
-			if(_mpc_dt_is_common(contiguous_user_types->datatype) )
+			if(mpc_lowcomm_datatype_is_common(contiguous_user_types->datatype) )
 			{
 				*static_type = contiguous_user_types->datatype;
 				return static_type;
@@ -6560,50 +6560,50 @@ sctk_op_t *sctk_convert_to_mpc_op(MPI_Op op)
 #define COMPAT_DATA_TYPE(op, func)                                              \
 	if(op == func){                                                         \
 		switch(datatype){                                               \
-			ADD_FUNC_HANDLER(func, MPC_SIGNED_CHAR, op);            \
-			ADD_FUNC_HANDLER(func, MPC_CHAR, op);                   \
-			ADD_FUNC_HANDLER(func, MPC_CHARACTER, op);              \
-			ADD_FUNC_HANDLER(func, MPC_BYTE, op);                   \
-			ADD_FUNC_HANDLER(func, MPC_SHORT, op);                  \
-			ADD_FUNC_HANDLER(func, MPC_INT, op);                    \
-			ADD_FUNC_HANDLER(func, MPC_INTEGER, op);                \
-			ADD_FUNC_HANDLER(func, MPC_LONG, op);                   \
-			ADD_FUNC_HANDLER(func, MPC_FLOAT, op);                  \
-			ADD_FUNC_HANDLER(func, MPC_INTEGER1, op);               \
-			ADD_FUNC_HANDLER(func, MPC_INTEGER2, op);               \
-			ADD_FUNC_HANDLER(func, MPC_INTEGER4, op);               \
-			ADD_FUNC_HANDLER(func, MPC_INTEGER8, op);               \
-			ADD_FUNC_HANDLER(func, MPC_REAL, op);                   \
-			ADD_FUNC_HANDLER(func, MPC_REAL4, op);                  \
-			ADD_FUNC_HANDLER(func, MPC_REAL8, op);                  \
-			ADD_FUNC_HANDLER(func, MPC_REAL16, op);                 \
-			ADD_FUNC_HANDLER(func, MPC_DOUBLE, op);                 \
-			ADD_FUNC_HANDLER(func, MPC_DOUBLE_PRECISION, op);       \
-			ADD_FUNC_HANDLER(func, MPC_UNSIGNED_CHAR, op);          \
-			ADD_FUNC_HANDLER(func, MPC_UNSIGNED_SHORT, op);         \
-			ADD_FUNC_HANDLER(func, MPC_UNSIGNED, op);               \
-			ADD_FUNC_HANDLER(func, MPC_UNSIGNED_LONG, op);          \
-			ADD_FUNC_HANDLER(func, MPC_UNSIGNED_LONG_LONG, op);     \
-			ADD_FUNC_HANDLER(func, MPC_LONG_LONG_INT, op);          \
-			ADD_FUNC_HANDLER(func, MPC_LONG_DOUBLE, op);            \
-			ADD_FUNC_HANDLER(func, MPC_LONG_LONG, op);              \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_SIGNED_CHAR, op);            \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_CHAR, op);                   \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_CHARACTER, op);              \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_BYTE, op);                   \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_SHORT, op);                  \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT, op);                    \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER, op);                \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG, op);                   \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_FLOAT, op);                  \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER1, op);               \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER2, op);               \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER4, op);               \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER8, op);               \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_REAL, op);                   \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_REAL4, op);                  \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_REAL8, op);                  \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_REAL16, op);                 \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_DOUBLE, op);                 \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_DOUBLE_PRECISION, op);       \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_CHAR, op);          \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_SHORT, op);         \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED, op);               \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_LONG, op);          \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_LONG_LONG, op);     \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG_LONG_INT, op);          \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG_DOUBLE, op);            \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG_LONG, op);              \
 			ADD_FUNC_HANDLER(func, MPC_DOUBLE_COMPLEX, op);         \
 			ADD_FUNC_HANDLER(func, MPC_COMPLEX, op);                \
 			ADD_FUNC_HANDLER(func, MPC_COMPLEX8, op);               \
 			ADD_FUNC_HANDLER(func, MPC_COMPLEX16, op);              \
 			ADD_FUNC_HANDLER(func, MPC_COMPLEX32, op);              \
-			ADD_FUNC_HANDLER(func, MPC_UNSIGNED_LONG_LONG_INT, op); \
-			ADD_FUNC_HANDLER(func, MPC_UINT8_T, op);                \
-			ADD_FUNC_HANDLER(func, MPC_UINT16_T, op);               \
-			ADD_FUNC_HANDLER(func, MPC_UINT32_T, op);               \
-			ADD_FUNC_HANDLER(func, MPC_UINT64_T, op);               \
-			ADD_FUNC_HANDLER(func, MPC_INT8_T, op);                 \
-			ADD_FUNC_HANDLER(func, MPC_INT16_T, op);                \
-			ADD_FUNC_HANDLER(func, MPC_INT32_T, op);                \
-			ADD_FUNC_HANDLER(func, MPC_INT64_T, op);                \
-			ADD_FUNC_HANDLER(func, MPC_COUNT, op);                  \
-			ADD_FUNC_HANDLER(func, MPC_AINT, op);                   \
-			ADD_FUNC_HANDLER(func, MPC_OFFSET, op);                 \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_LONG_LONG_INT, op); \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT8_T, op);                \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT16_T, op);               \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT32_T, op);               \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT64_T, op);               \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT8_T, op);                 \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT16_T, op);                \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT32_T, op);                \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT64_T, op);                \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_COUNT, op);                  \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_AINT, op);                   \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_OFFSET, op);                 \
 			default:                                                \
 				not_reachable();                                \
 		}                                                               \
@@ -6612,35 +6612,35 @@ sctk_op_t *sctk_convert_to_mpc_op(MPI_Op op)
 #define COMPAT_DATA_TYPE2(op, func)                                     \
 	if(op == func){                                                 \
 		switch(datatype){                                       \
-			ADD_FUNC_HANDLER(func, MPC_SIGNED_CHAR, op);    \
-			ADD_FUNC_HANDLER(func, MPC_CHAR, op);           \
-			ADD_FUNC_HANDLER(func, MPC_BYTE, op);           \
-			ADD_FUNC_HANDLER(func, MPC_SHORT, op);          \
-			ADD_FUNC_HANDLER(func, MPC_INT, op);            \
-			ADD_FUNC_HANDLER(func, MPC_INTEGER, op);        \
-			ADD_FUNC_HANDLER(func, MPC_INTEGER1, op);       \
-			ADD_FUNC_HANDLER(func, MPC_INTEGER2, op);       \
-			ADD_FUNC_HANDLER(func, MPC_INTEGER4, op);       \
-			ADD_FUNC_HANDLER(func, MPC_INTEGER8, op);       \
-			ADD_FUNC_HANDLER(func, MPC_LONG, op);           \
-			ADD_FUNC_HANDLER(func, MPC_LONG_LONG, op);      \
-			ADD_FUNC_HANDLER(func, MPC_UNSIGNED_CHAR, op);  \
-			ADD_FUNC_HANDLER(func, MPC_UNSIGNED_SHORT, op); \
-			ADD_FUNC_HANDLER(func, MPC_UNSIGNED, op);       \
-			ADD_FUNC_HANDLER(func, MPC_UNSIGNED_LONG, op);  \
-			ADD_FUNC_HANDLER(func, MPC_LOGICAL, op);        \
-			ADD_FUNC_HANDLER(func, MPC_UINT8_T, op);        \
-			ADD_FUNC_HANDLER(func, MPC_UINT16_T, op);       \
-			ADD_FUNC_HANDLER(func, MPC_UINT32_T, op);       \
-			ADD_FUNC_HANDLER(func, MPC_UINT64_T, op);       \
-			ADD_FUNC_HANDLER(func, MPC_INT8_T, op);         \
-			ADD_FUNC_HANDLER(func, MPC_INT16_T, op);        \
-			ADD_FUNC_HANDLER(func, MPC_INT32_T, op);        \
-			ADD_FUNC_HANDLER(func, MPC_INT64_T, op);        \
-			ADD_FUNC_HANDLER(func, MPC_COUNT, op);          \
-			ADD_FUNC_HANDLER(func, MPC_AINT, op);           \
-			ADD_FUNC_HANDLER(func, MPC_OFFSET, op);         \
-			ADD_FUNC_HANDLER(func, MPC_C_BOOL, op);         \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_SIGNED_CHAR, op);    \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_CHAR, op);           \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_BYTE, op);           \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_SHORT, op);          \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT, op);            \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER, op);        \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER1, op);       \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER2, op);       \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER4, op);       \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER8, op);       \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG, op);           \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG_LONG, op);      \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_CHAR, op);  \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_SHORT, op); \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED, op);       \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_LONG, op);  \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LOGICAL, op);        \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT8_T, op);        \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT16_T, op);       \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT32_T, op);       \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT64_T, op);       \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT8_T, op);         \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT16_T, op);        \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT32_T, op);        \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT64_T, op);        \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_COUNT, op);          \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_AINT, op);           \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_OFFSET, op);         \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_C_BOOL, op);         \
 			default:                                        \
 				not_reachable();                        \
 		}                                                       \
@@ -9712,7 +9712,7 @@ int PMPI_Send_internal(const void *buf, int count, MPI_Datatype datatype, int de
 	res = mpc_mpi_cl_open_pack(&request);
 	MPI_HANDLE_ERROR(res, comm, "Failed opening MPI pack");
 
-	res = mpc_mpi_cl_add_pack_absolute(buf, derived_datatype.count, derived_datatype.begins, derived_datatype.ends, MPC_CHAR, &request);
+	res = mpc_mpi_cl_add_pack_absolute(buf, derived_datatype.count, derived_datatype.begins, derived_datatype.ends, MPC_LOWCOMM_CHAR, &request);
 	MPI_HANDLE_ERROR(res, comm, "Failled adding to pack");
 
 	res = mpc_mpi_cl_isend_pack(dest, tag, comm, &request);
@@ -9821,7 +9821,7 @@ int PMPI_Recv_internal(void *buf, int count, MPI_Datatype datatype, int source, 
 	res = mpc_mpi_cl_add_pack_absolute(
 		buf, derived_datatype.count,
 		derived_datatype.begins, derived_datatype.ends,
-		MPC_CHAR, &request);
+		MPC_LOWCOMM_CHAR, &request);
 	MPI_HANDLE_ERROR(res, comm, "Failled adding to pack");
 
 	res = mpc_mpi_cl_irecv_pack(source, tag, comm, &request);
@@ -12729,7 +12729,7 @@ TODO("VALIDATE");
 		for(i = 0; i < count; i++)
 		{
 			MPI_Aint cur_type_extent = 0;
-			if(!_mpc_dt_is_common(old_types[i]) )
+			if(!mpc_lowcomm_datatype_is_common(old_types[i]) )
 			{
 				types_are_all_common = 0;
 				break;
@@ -13135,7 +13135,7 @@ int PMPI_Type_free(MPI_Datatype *datatype)
 
 	mpi_check_type(*datatype, MPI_COMM_WORLD);
 
-	if(_mpc_dt_is_common(*datatype) )
+	if(mpc_lowcomm_datatype_is_common(*datatype) )
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "");
 	}
@@ -13788,7 +13788,7 @@ int PMPI_Pack_external_size(const char *datarep, int incount, MPI_Datatype datat
 			contiguous_user_types = _mpc_cl_per_mpi_process_ctx_contiguous_datatype_ts_get(task_specific, datatype);
 
 			/* For contiguous it is count times the external extent */
-			if(_mpc_dt_is_common(contiguous_user_types->datatype) )
+			if(mpc_lowcomm_datatype_is_common(contiguous_user_types->datatype) )
 			{
 				*size = MPC_Extern32_common_type_size(contiguous_user_types->datatype) * contiguous_user_types->count * incount;
 			}
@@ -15174,6 +15174,7 @@ int PMPI_Attr_delete(MPI_Comm comm, int keyval)
 				mpc_common_spinlock_unlock(&(tmp->lock) );
 				if(mpc_common_get_flags()->is_fortran)
 				{
+#ifdef MPC_FORTRAN
 					void (*fort_delete)(int *pcomm, int *keyval, void *attr, void *state, int * ierr);
 
 					fort_delete = (void (*)(int *, int *, void *, void *, int * ))tmp->attrs_fn[keyval].delete_fn;
@@ -15185,7 +15186,10 @@ int PMPI_Attr_delete(MPI_Comm comm, int keyval)
 										tmp_per_comm->key_vals[keyval].attr,
 										tmp->attrs_fn[keyval].extra_state,
 										&res);
-				}
+#else
+                    not_reachable();
+#endif
+                }
 				else
 				{
 					res = tmp->attrs_fn[keyval].delete_fn(comm, keyval + MPI_MAX_KEY_DEFINED,

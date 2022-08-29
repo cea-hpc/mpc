@@ -313,9 +313,10 @@ int mpc_MPI_allocmem_pool_init()
 
 		mpc_MPI_accumulate_op_lock_init(per_node_comm);
 
-		PMPI_Comm_free(&per_node_comm);
 	}
 
+	PMPI_Comm_free(&per_node_comm);
+	
 	return 0;
 }
 

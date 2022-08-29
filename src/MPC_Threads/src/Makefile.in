@@ -91,7 +91,8 @@ host_triplet = @host@
 @MPC_LOWCOMM_ENABLED_TRUE@am__append_1 = -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/ -I$(abs_top_srcdir)/src/MPC_Lowcomm/include/
 @MPC_MPI_ENABLED_TRUE@am__append_2 = -I$(abs_top_srcdir)/src/MPC_MPI/include/ \
 @MPC_MPI_ENABLED_TRUE@	-I$(abs_top_srcdir)/src/MPC_MPI/src/ \
-@MPC_MPI_ENABLED_TRUE@	-I$(abs_top_srcdir)/src/MPC_Lowcomm/include/
+@MPC_MPI_ENABLED_TRUE@	-I$(abs_top_srcdir)/src/MPC_Lowcomm/include/ \
+@MPC_MPI_ENABLED_TRUE@	-I$(abs_top_builddir)/src/MPC_IO/include/
 @MPC_OPENMP_ENABLED_TRUE@am__append_3 = -I$(abs_top_srcdir)/src/MPC_OpenMP/include/ \
 @MPC_OPENMP_ENABLED_TRUE@                       -I$(abs_top_srcdir)/src/MPC_OpenMP/src/ \
 @MPC_OPENMP_ENABLED_TRUE@                       -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/src/ \

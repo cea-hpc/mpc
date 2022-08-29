@@ -29,6 +29,7 @@
 #include <mpc_launch.h>
 #include <mpc_keywords.h>
 #include <mpc_common_flags.h>
+#include <mpc_common.h>
 
 #if defined(WINDOWS_SYS)
 #include <pthread.h>
@@ -169,6 +170,16 @@ static void __libgfortran_close()
 		/* init function for the modified libgfortran */
 		__search_and_call_symbol("_gfortran_ap_close_units");
 	}
+}
+
+void _mpc_common_debug_init() __attribute__( (constructor) );
+
+void _mpc_common_debug_init()
+{
+    MPC_INIT_CALL_ONLY_ONCE
+
+    mpc_common_init_callback_register("Config Sources", "MPC Lowcomm Config Registration", mpc_common_debug_init, 128);
+
 }
 
 void mpc_main_init() __attribute__( (constructor) );

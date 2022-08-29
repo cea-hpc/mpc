@@ -49,15 +49,15 @@ static void FLOAT_convert(int type_byte_size, char *src, char *dest) {
 
 static inline int sctk_is_float_datatype( mpc_lowcomm_datatype_t type)
 {
-    return ((type == MPC_FLOAT) || 
-	    (type == MPC_DOUBLE) ||
-            (type == MPC_LONG_DOUBLE) ||
-            (type == MPC_DOUBLE_PRECISION) ||
+    return ((type == MPC_LOWCOMM_FLOAT) || 
+	    (type == MPC_LOWCOMM_DOUBLE) ||
+            (type == MPC_LOWCOMM_LONG_DOUBLE) ||
+            (type == MPC_LOWCOMM_DOUBLE_PRECISION) ||
             (type == MPC_COMPLEX) ||
             (type == MPC_DOUBLE_COMPLEX) ||
-            (type == MPC_REAL4) ||
-            (type == MPC_REAL8) || 
-            (type == MPC_REAL16));
+            (type == MPC_LOWCOMM_REAL4) ||
+            (type == MPC_LOWCOMM_REAL8) || 
+            (type == MPC_LOWCOMM_REAL16));
 }
 
 
@@ -402,13 +402,13 @@ void sctk_integer_convert_width( void * in, size_t in_size, int unsgn, void * ou
 
 static inline void MPC_Extern32_encode( mpc_lowcomm_datatype_t type, char * in, char * out )
 {
-	if( !_mpc_dt_is_common(type) )
+	if( !mpc_lowcomm_datatype_is_common(type) )
 	{
 		mpc_common_debug_fatal("Cannot convert a non-common data-type");
 	}
 	
 	/* Prepare for width Conversion */
-	size_t type_size = _mpc_dt_common_get_size( type );
+	size_t type_size = mpc_lowcomm_datatype_common_get_size( type );
 	size_t type_extern_size = MPC_Extern32_common_type_size( type );
 	
 	if( type_size != type_extern_size )
@@ -448,7 +448,7 @@ static inline void MPC_Extern32_encode( mpc_lowcomm_datatype_t type, char * in, 
 static inline void MPC_Extern32_decode( mpc_lowcomm_datatype_t type, char * in, char * out )
 {
 	
-	size_t type_size = _mpc_dt_common_get_size( type );
+	size_t type_size = mpc_lowcomm_datatype_common_get_size( type );
 	size_t type_extern_size = MPC_Extern32_common_type_size( type );
 
 	/* Apply indianess conversion and store in OUT */
@@ -514,7 +514,7 @@ void MPC_Extern32_convert( mpc_lowcomm_datatype_t * typevector ,
 		}
 		
 		/* Move in the input */
-		current_offset += _mpc_dt_common_get_size( current_type );
+		current_offset += mpc_lowcomm_datatype_common_get_size( current_type );
 		current_entry = native_buff + current_offset;
 		
 		/* Move in the output */

@@ -41,6 +41,7 @@ extern "C"
 #include "mpc_common_types.h"
 #include "mpc_keywords.h"
 
+void mpc_common_debug_init();
 
 /*********
 * ABORT *
@@ -52,7 +53,7 @@ void mpc_common_debug_abort(void) __attribute__( (__noreturn__) );
  * **/
 #define mpc_common_debug_fatal(...)                                                 \
 	{                                                                           \
-		mpc_common_debug_error("Fatal error at %s!%d", __FILE__, __LINE__); \
+		mpc_common_debug_error("Fatal error at %s:%d", __FILE__, __LINE__); \
 		mpc_common_debug_error(__VA_ARGS__);                                \
 		mpc_common_debug_abort();                                           \
 	}

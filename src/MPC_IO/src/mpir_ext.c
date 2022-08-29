@@ -248,7 +248,7 @@ int MPCX_Type_flatten(MPI_Datatype datatype, MPI_Aint **blocklen,
     assume(*indices != NULL);
 
     (*indices)[0] = 0;
-    (*blocklen)[0] = _mpc_dt_common_get_size(datatype);
+    (*blocklen)[0] = mpc_lowcomm_datatype_common_get_size(datatype);
     break;
   case MPC_DATATYPES_CONTIGUOUS:
     contiguous_type = _mpc_cl_per_mpi_process_ctx_contiguous_datatype_ts_get(task_specific, datatype);

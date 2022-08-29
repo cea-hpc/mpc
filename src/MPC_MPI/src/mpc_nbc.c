@@ -9186,7 +9186,7 @@ static inline int __NBC_Start_round_persistent( NBC_Handle *handle, int depth )
     {
       if( handle->actual_req_count <= handle->req_count )
       {
-        if(!handle->actual_req_count)
+        if(!handle->actual_req_count || req_cpt > 10)
         {
           handle->actual_req_count = handle->req_count;
         }
@@ -9499,14 +9499,13 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
   {
     if( handle->actual_req_count <= handle->req_count )
     {
-      if(!handle->actual_req_count)
+      if(!handle->actual_req_count || req_cpt > 10)
       {
         handle->actual_req_count = handle->req_count;
       }
       else
       {
         handle->actual_req_count += 10;
-        
       }
 
       handle->req_array = (MPI_Request *)sctk_realloc(handle->req_array, ( handle->actual_req_count ) * sizeof( MPI_Request ) );

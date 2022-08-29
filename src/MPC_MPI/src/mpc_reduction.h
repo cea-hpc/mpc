@@ -56,23 +56,23 @@ void mpc_no_exec (const void *in, void *inout, size_t size, mpc_lowcomm_datatype
 
 #define MPC_PROTOTYPES(name)						\
 void MPC_##name##_func(const void* in ,void*inout ,size_t size ,mpc_lowcomm_datatype_t datatype); \
-MPC_DEFINED_FUNCS(MPC_CHAR, char,name);				\
-MPC_DEFINED_FUNCS(MPC_SIGNED_CHAR, char,name);             \
-MPC_DEFINED_FUNCS(MPC_CHARACTER, char,name);				\
-MPC_DEFINED_FUNCS(MPC_BYTE, unsigned char,name);			\
-MPC_DEFINED_FUNCS(MPC_SHORT, short,name);				\
-MPC_DEFINED_FUNCS(MPC_INT, int,name);				\
-MPC_DEFINED_FUNCS(MPC_INTEGER, int,name);				\
-MPC_DEFINED_FUNCS(MPC_LONG, long,name);				\
-MPC_DEFINED_FUNCS(MPC_LONG_LONG, mpc_long_long,name);				\
-MPC_DEFINED_FUNCS(MPC_FLOAT, float,name);				\
-MPC_DEFINED_FUNCS(MPC_DOUBLE, double,name);				\
-MPC_DEFINED_FUNCS(MPC_DOUBLE_PRECISION, double,name);				\
-MPC_DEFINED_FUNCS(MPC_UNSIGNED_CHAR, unsigned char,name);		\
-MPC_DEFINED_FUNCS(MPC_UNSIGNED_SHORT, unsigned short,name);		\
-MPC_DEFINED_FUNCS(MPC_UNSIGNED, unsigned int,name);			\
-MPC_DEFINED_FUNCS(MPC_UNSIGNED_LONG, unsigned long,name);		\
-MPC_DEFINED_FUNCS(MPC_LONG_DOUBLE, long double,name);		\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_CHAR, char,name);				\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_SIGNED_CHAR, char,name);             \
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_CHARACTER, char,name);				\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_BYTE, unsigned char,name);			\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_SHORT, short,name);				\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_INT, int,name);				\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_INTEGER, int,name);				\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_LONG, long,name);				\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_LONG_LONG, mpc_long_long,name);				\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_FLOAT, float,name);				\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_DOUBLE, double,name);				\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_DOUBLE_PRECISION, double,name);				\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_UNSIGNED_CHAR, unsigned char,name);		\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_UNSIGNED_SHORT, unsigned short,name);		\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_UNSIGNED, unsigned int,name);			\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_UNSIGNED_LONG, unsigned long,name);		\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_LONG_DOUBLE, long double,name);		\
 MPC_DEFINED_FUNCS(MPC_FLOAT_INT,mpc_float_int ,name);		\
 MPC_DEFINED_FUNCS(MPC_LONG_INT,mpc_long_int ,name);			\
 MPC_DEFINED_FUNCS(MPC_DOUBLE_INT,mpc_double_int ,name);		\
@@ -86,32 +86,32 @@ MPC_DEFINED_FUNCS(MPC_COMPLEX8,mpc_float_float ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_COMPLEX16,mpc_double_double ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_DOUBLE_COMPLEX,mpc_double_double ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_COMPLEX32,mpc_longdouble_longdouble ,name)	;		\
-MPC_DEFINED_FUNCS(MPC_UNSIGNED_LONG_LONG_INT,mpc_unsigned_long_long_int ,name)	;		\
-MPC_DEFINED_FUNCS(MPC_UNSIGNED_LONG_LONG,mpc_unsigned_long_long_int ,name)	;		\
-MPC_DEFINED_FUNCS(MPC_LONG_LONG_INT, mpc_long_long_int ,name)	;		\
-MPC_DEFINED_FUNCS(MPC_LOGICAL, int,name);				\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_UNSIGNED_LONG_LONG_INT,mpc_unsigned_long_long_int ,name)	;		\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_UNSIGNED_LONG_LONG,mpc_unsigned_long_long_int ,name)	;		\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_LONG_LONG_INT, mpc_long_long_int ,name)	;		\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_LOGICAL, int,name);				\
 MPC_DEFINED_FUNCS(MPC_2DOUBLE_PRECISION,mpc_double_double ,name);	\
-MPC_DEFINED_FUNCS(MPC_REAL,float,name);                                \
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_REAL,float,name);                                \
 MPC_DEFINED_FUNCS(MPC_2REAL,mpc_real_real,name);                                \
-MPC_DEFINED_FUNCS(MPC_REAL4,float,name);				\
-MPC_DEFINED_FUNCS(MPC_REAL8,double,name);				\
-MPC_DEFINED_FUNCS(MPC_REAL16,long double,name);			\
-MPC_DEFINED_FUNCS(MPC_INTEGER1,int8_t,name);			\
-MPC_DEFINED_FUNCS(MPC_INTEGER2,int16_t,name);			\
-MPC_DEFINED_FUNCS(MPC_INTEGER4,int32_t,name);			\
-MPC_DEFINED_FUNCS(MPC_INTEGER8,int64_t,name);			\
-MPC_DEFINED_FUNCS(MPC_UINT8_T, uint8_t,name);   \
-MPC_DEFINED_FUNCS(MPC_UINT16_T, uint16_t,name);   \
-MPC_DEFINED_FUNCS(MPC_UINT32_T, uint32_t,name);   \
-MPC_DEFINED_FUNCS(MPC_UINT64_T, uint64_t,name);   \
-MPC_DEFINED_FUNCS(MPC_INT8_T, int8_t,name);   \
-MPC_DEFINED_FUNCS(MPC_INT16_T, int16_t,name);   \
-MPC_DEFINED_FUNCS(MPC_INT32_T, int32_t,name);   \
-MPC_DEFINED_FUNCS(MPC_INT64_T, int64_t,name);   \
-MPC_DEFINED_FUNCS(MPC_COUNT, size_t, name);       \
-MPC_DEFINED_FUNCS(MPC_AINT, size_t, name);         \
-MPC_DEFINED_FUNCS(MPC_OFFSET, size_t, name);       \
-MPC_DEFINED_FUNCS(MPC_C_BOOL, char, name)
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_REAL4,float,name);				\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_REAL8,double,name);				\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_REAL16,long double,name);			\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_INTEGER1,int8_t,name);			\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_INTEGER2,int16_t,name);			\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_INTEGER4,int32_t,name);			\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_INTEGER8,int64_t,name);			\
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_UINT8_T, uint8_t,name);   \
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_UINT16_T, uint16_t,name);   \
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_UINT32_T, uint32_t,name);   \
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_UINT64_T, uint64_t,name);   \
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_INT8_T, int8_t,name);   \
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_INT16_T, int16_t,name);   \
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_INT32_T, int32_t,name);   \
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_INT64_T, int64_t,name);   \
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_COUNT, size_t, name);       \
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_AINT, size_t, name);         \
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_OFFSET, size_t, name);       \
+MPC_DEFINED_FUNCS(MPC_LOWCOMM_C_BOOL, char, name)
 
 MPC_PROTOTYPES (MIN);
 MPC_PROTOTYPES (MAX);

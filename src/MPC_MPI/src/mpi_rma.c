@@ -43,14 +43,14 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
   int can_write_rma = 0;
 
   /* Do the optimized RMA only if target datatype is contiguous */
-  if (_mpc_dt_is_common(target_datatype) ||
+  if (mpc_lowcomm_datatype_is_common(target_datatype) ||
       _mpc_dt_is_contiguous(target_datatype) ||
       _mpc_dt_is_struct(target_datatype)) {
     can_read_rma = 1;
   }
 
   /* Can the RMA directly target the local buffer (ie contig) ? */
-  if (_mpc_dt_is_common(origin_datatype) ||
+  if (mpc_lowcomm_datatype_is_common(origin_datatype) ||
       _mpc_dt_is_contiguous(origin_datatype) ||
       _mpc_dt_is_struct(origin_datatype)) {
     can_write_rma = 1;
@@ -271,14 +271,14 @@ static inline int mpc_MPI_Put_RMA(struct mpc_MPI_Win *desc,
     return MPI_SUCCESS;
 
   /* Do the optimized RMA only if target datatype is contiguous */
-  if (_mpc_dt_is_common(target_datatype) ||
+  if (mpc_lowcomm_datatype_is_common(target_datatype) ||
       _mpc_dt_is_contiguous(target_datatype) ||
       _mpc_dt_is_struct(target_datatype)) {
     can_write_rma = 1;
   }
 
   /* Can the RMA directly target the local buffer (ie contig) ? */
-  if (_mpc_dt_is_common(origin_datatype) ||
+  if (mpc_lowcomm_datatype_is_common(origin_datatype) ||
       _mpc_dt_is_contiguous(origin_datatype) ||
       _mpc_dt_is_struct(origin_datatype)) {
     can_read_rma = 1;
@@ -500,14 +500,14 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
 
 
   /* Do the optimized RMA only if target datatype is contiguous */
-  if (_mpc_dt_is_common(target_datatype) ||
+  if (mpc_lowcomm_datatype_is_common(target_datatype) ||
       _mpc_dt_is_contiguous(target_datatype) ||
       _mpc_dt_is_struct(target_datatype)) {
     can_write_rma = 1;
   }
 
   /* Can the RMA directly target the local buffer (ie contig) ? */
-  if (_mpc_dt_is_common(origin_datatype) ||
+  if (mpc_lowcomm_datatype_is_common(origin_datatype) ||
       _mpc_dt_is_contiguous(origin_datatype) ||
       _mpc_dt_is_struct(origin_datatype)) {
     can_read_rma = 1;
@@ -582,13 +582,13 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
 
   MPI_Datatype inner_type = -1;
 
-  if (_mpc_dt_is_common(target_datatype)) {
+  if (mpc_lowcomm_datatype_is_common(target_datatype)) {
     inner_type = target_datatype;
   } else {
     inner_type = _mpc_cl_type_get_inner(target_datatype);
   }
 
-  if (!_mpc_dt_is_common(inner_type) &&
+  if (!mpc_lowcomm_datatype_is_common(inner_type) &&
       !_mpc_dt_is_struct(inner_type)) {
     mpc_common_debug_warning("MPI_Accumulate : cannot accumulate a derived datatype which "
                  "is not made of a single predefined type");
@@ -920,9 +920,9 @@ static inline int mpc_MPI_Get_accumulate_RMA(
   }
 
   /* Check if we can use the optimized case (fallback to FOP) */
-  if (_mpc_dt_is_common(origin_datatype) &&
-      _mpc_dt_is_common(result_datatype) &&
-      _mpc_dt_is_common(target_datatype)) {
+  if (mpc_lowcomm_datatype_is_common(origin_datatype) &&
+      mpc_lowcomm_datatype_is_common(result_datatype) &&
+      mpc_lowcomm_datatype_is_common(target_datatype)) {
     if ((origin_datatype == result_datatype) &&
         (origin_datatype == target_datatype)) {
       RDMA_op rmaop = mpc_RMA_convert_op(op);

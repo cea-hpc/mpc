@@ -281,53 +281,6 @@ typedef int MPC_Message;
 #define MPC_UB ( (mpc_lowcomm_datatype_t) -2 )
 #define MPC_LB ( (mpc_lowcomm_datatype_t) -3 )
 
-/* These are in lowcomm other to move soon
-#define MPC_PACKED 0
-#define MPC_BYTE 1
-*/
-
-#define MPC_SHORT 2
-#define MPC_INT 3
-#define MPC_LONG 4
-#define MPC_FLOAT 5
-#define MPC_DOUBLE 6
-#define MPC_UNSIGNED_CHAR 7
-#define MPC_UNSIGNED_SHORT 8
-#define MPC_UNSIGNED 9
-#define MPC_UNSIGNED_LONG 10
-#define MPC_LONG_DOUBLE 11
-#define MPC_LONG_LONG 12
-#define MPC_CHAR 13
-#define MPC_LOGICAL 22
-#define MPC_INTEGER1 24
-#define MPC_INTEGER2 25
-#define MPC_INTEGER4 26
-#define MPC_INTEGER8 27
-#define MPC_REAL4 28
-#define MPC_REAL8 29
-#define MPC_REAL16 30
-#define MPC_SIGNED_CHAR 31
-#define MPC_UNSIGNED_LONG_LONG 33
-#define MPC_INT8_T 34
-#define MPC_UINT8_T 35
-#define MPC_INT16_T 36
-#define MPC_UINT16_T 37
-#define MPC_INT32_T 38
-#define MPC_UINT32_T 39
-#define MPC_INT64_T 40
-#define MPC_UINT64_T 41
-#define MPC_WCHAR 45
-#define MPC_INTEGER16 46
-#define MPC_AINT 49
-#define MPC_OFFSET 50
-#define MPC_COUNT 51
-#define MPC_LONG_LONG_INT 52
-#define MPC_C_BOOL 53
-#define MPC_CHARACTER 54
-#define MPC_INTEGER 55
-#define MPC_REAL 56
-#define MPC_DOUBLE_PRECISION 57
-#define MPC_UNSIGNED_LONG_LONG_INT 58
 
 /* for comm_split method */
 #define MPC_COMM_TYPE_SHARED 1
@@ -431,7 +384,6 @@ typedef int( MPC_Type_delete_attr_function )( mpc_lowcomm_datatype_t datatype,
         void *extra_state );
 
 int mpc_mpi_cl_type_is_contiguous(mpc_lowcomm_datatype_t type);
-int mpc_mpi_cl_type_is_common(mpc_lowcomm_datatype_t type);
 
 /********************
  * THREAD MIGRATION *

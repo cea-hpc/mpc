@@ -47,6 +47,17 @@
 #define SMALL_BUFFER_SIZE ( 4 * 1024 )
 #define DEBUG_INFO_SIZE ( 64 )
 
+int __is_stderr_tty;
+
+static inline int mpc_common_debug_is_stderr_tty(){
+	return __is_stderr_tty;
+}
+void mpc_common_debug_init(){
+	if(getenv("IS_STDERR_TTY"))
+		__is_stderr_tty = 1;
+	else 
+		__is_stderr_tty = 0;
+}
 
 /**********************************************************************/
 /*Threads support                                                     */
@@ -55,13 +66,22 @@
 static inline char *__debug_print_info( char *buffer )
 {
 #ifdef MPC_ENABLE_SHELL_COLORS
-		snprintf( buffer,
-		          DEBUG_INFO_SIZE,
-		          MPC_COLOR_GREEN( [ )
-		                            MPC_COLOR_RED(R%4d)
-		                            MPC_COLOR_BLUE( P%4dN%4d)
-		                            MPC_COLOR_GREEN( ] ),
-		          mpc_common_get_task_rank(), mpc_common_get_process_rank(), mpc_common_get_node_rank() );
+		if(mpc_common_debug_is_stderr_tty() && mpc_common_get_flags()->colors){
+			snprintf( buffer,
+					DEBUG_INFO_SIZE,
+					MPC_COLOR_GREEN( [ )
+										MPC_COLOR_RED(R%4d)
+										MPC_COLOR_BLUE( P%4dN%4d)
+										MPC_COLOR_GREEN( ] ),
+					mpc_common_get_task_rank(), mpc_common_get_process_rank(), mpc_common_get_node_rank() );
+		}
+		else{
+			snprintf( buffer,
+					DEBUG_INFO_SIZE,
+					"[R%4dP%4dN%4d]",
+					mpc_common_get_task_rank(), mpc_common_get_process_rank(), mpc_common_get_node_rank() );
+
+		}
 #else
 		snprintf( buffer,
 		          DEBUG_INFO_SIZE,
@@ -71,6 +91,7 @@ static inline char *__debug_print_info( char *buffer )
 
 	return buffer;
 }
+
 
 /**********************************************************************/
 /*Abort                                                               */
@@ -130,7 +151,12 @@ void mpc_common_debug_log( const char *fmt, ... )
         va_start( ap, fmt );
 
 #ifdef MPC_ENABLE_SHELL_COLORS
-        mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE, ""MPC_COLOR_GREEN_BOLD( %s )"\n", fmt );
+
+		if(mpc_common_debug_is_stderr_tty() && mpc_common_get_flags()->colors)
+        	mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE, ""MPC_COLOR_GREEN_BOLD( %s )"\n", fmt );
+        else mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
+                                        "%s\n",
+                                        fmt );
 
 #else
         mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
@@ -156,11 +182,19 @@ void mpc_common_debug_info( const char *fmt, ... )
 
 #ifdef MPC_ENABLE_SHELL_COLORS
 		char info_message[SMALL_BUFFER_SIZE];
-		mpc_common_io_noalloc_snprintf( info_message, SMALL_BUFFER_SIZE, MPC_COLOR_VIOLET_BOLD( "%s" ), fmt );
-		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
+		if(mpc_common_debug_is_stderr_tty() && mpc_common_get_flags()->colors){
+			mpc_common_io_noalloc_snprintf( info_message, SMALL_BUFFER_SIZE, MPC_COLOR_VIOLET_BOLD( "%s" ), fmt );
+			mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
+											"%s INFO %s\n",
+											__debug_print_info( debug_info ),
+											info_message );
+		}
+		else {
+			mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
 		                                "%s INFO %s\n",
 		                                __debug_print_info( debug_info ),
-		                                info_message );
+		                                fmt );
+		}
 #else
 		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
 		                                "%s INFO %s\n",
@@ -191,11 +225,17 @@ void mpc_common_debug( const char *fmt, ... )
 
 #ifdef MPC_ENABLE_SHELL_COLORS
 		char debug_message[SMALL_BUFFER_SIZE];
-		mpc_common_io_noalloc_snprintf( debug_message, SMALL_BUFFER_SIZE, MPC_COLOR_CYAN_BOLD( "%s" ), fmt );
-		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
+		if(mpc_common_debug_is_stderr_tty() && mpc_common_get_flags()->colors){
+			mpc_common_io_noalloc_snprintf( debug_message, SMALL_BUFFER_SIZE, MPC_COLOR_CYAN_BOLD( "%s" ), fmt );
+			mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
+											"%s DEBUG %s\n",
+											__debug_print_info( debug_info ),
+											debug_message );
+		}
+		else mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
 		                                "%s DEBUG %s\n",
 		                                __debug_print_info( debug_info ),
-		                                debug_message );
+		                                fmt );
 #else
 		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
 		                                "%s DEBUG %s\n",
@@ -218,11 +258,17 @@ void mpc_common_debug_error( const char *fmt, ... )
 
 #ifdef MPC_ENABLE_SHELL_COLORS
 		char error_message[SMALL_BUFFER_SIZE];
-		mpc_common_io_noalloc_snprintf( error_message, SMALL_BUFFER_SIZE, MPC_COLOR_RED_BOLD( "%s" ), fmt );
-		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
+		if(mpc_common_debug_is_stderr_tty() && mpc_common_get_flags()->colors){
+			mpc_common_io_noalloc_snprintf( error_message, SMALL_BUFFER_SIZE, MPC_COLOR_RED_BOLD( "%s" ), fmt );
+			mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
 		                                "%s ERROR %s\n",
 		                                __debug_print_info( debug_info ),
 		                                error_message );
+		}
+		else mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
+		                                "%s ERROR %s\n",
+		                                __debug_print_info( debug_info ),
+		                                fmt );
 #else
 		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
 		                                "%s ERROR %s\n",
@@ -288,11 +334,17 @@ void mpc_common_debug_warning( const char *fmt, ... )
 
 #ifdef MPC_ENABLE_SHELL_COLORS
 		char warning_message[SMALL_BUFFER_SIZE];
-		mpc_common_io_noalloc_snprintf( warning_message, SMALL_BUFFER_SIZE, MPC_COLOR_YELLOW_BOLD( "%s" ), fmt );
-		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
-		                                "%s WARNING %s\n",
-		                                __debug_print_info( debug_info ),
-		                                warning_message );
+		if(mpc_common_debug_is_stderr_tty() && mpc_common_get_flags()->colors){
+			mpc_common_io_noalloc_snprintf( warning_message, SMALL_BUFFER_SIZE, MPC_COLOR_YELLOW_BOLD( "%s" ), fmt );
+			mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
+											"%s WARNING %s\n",
+											__debug_print_info( debug_info ),
+											warning_message );
+		}
+		else mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
+											"%s WARNING %s\n",
+											__debug_print_info( debug_info ),
+											fmt );
 #else
 		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
 		                                "%s WARNING %s\n",
@@ -312,10 +364,18 @@ void mpc_common_debug_abort_log( FILE *stream, const int line,
 	char buff[SMALL_BUFFER_SIZE];
 
 #ifdef MPC_ENABLE_SHELL_COLORS
-	mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
+	if(mpc_common_debug_is_stderr_tty() && mpc_common_get_flags()->colors)
+		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
 					"%s:%d (%s):\n"
 					"-------------------------------------\n"
 					MPC_COLOR_RED_BOLD("%s")"\n"
+					"-------------------------------------\n"
+					"\n", file, line, func?func:"??",
+					fmt );
+	else mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
+					"%s:%d (%s):\n"
+					"-------------------------------------\n"
+					"%s\n"
 					"-------------------------------------\n"
 					"\n", file, line, func?func:"??",
 					fmt );

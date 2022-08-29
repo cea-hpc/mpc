@@ -145,8 +145,15 @@ MPC_COMMAND_WRAPPER="eval"
 
 
 PRIV_FLAG_ALREADY_SET=""
-# By default priv is enabled in mpc_cc
+# By default priv is enabled in mpc_cc if the compiler supports it
 DO_PRIV="yes"
+
+compiler_is_privatizing "$1"
+
+if test "x${RES}" = "xno"; then
+	DO_PRIV="no"
+fi
+
 mpc_enable_priv()
 {
 	if test -n "$PRIV_FLAG_ALREADY_SET"; then
@@ -154,7 +161,7 @@ mpc_enable_priv()
 	fi
 
 	compiler_is_privatizing "$1"
-	
+
 	if test "x${RES}" = "xyes"; then
 		append_to "CFLAGS" "-fmpc-privatize"
 	fi

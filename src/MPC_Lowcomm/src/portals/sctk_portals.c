@@ -101,6 +101,12 @@ static void _mpc_lowcomm_portals_notify_perform(__UNUSED__ mpc_lowcomm_peer_uid_
 	__ptl_poll(rail, 3);
 }
 
+static void _mpc_lowcomm_portals_notify_any_source (int polling_task_id, int blocking, sctk_rail_info_t* rail)
+{
+	__ptl_poll(rail, 2);
+}
+
+
 
 static void _mpc_lowcomm_portals_notify_probe (sctk_rail_info_t* rail, mpc_lowcomm_ptp_message_header_t* hdr, int *status)
 {
@@ -109,7 +115,7 @@ static void _mpc_lowcomm_portals_notify_probe (sctk_rail_info_t* rail, mpc_lowco
 
 /**
  * Notify the driver a new MPI communicator has been created.
- * Becasue Portals driver has been split according to MPI_Comm semantics, each 
+ * Becasue Portals driver has been split according to MPI_Comm semantics, each
  * new communicator creation has to trigger a new PT entry creation.
  * \param[in] rail the Portals rail
  * \param[in] comm_idx the communicator ID
@@ -119,6 +125,20 @@ static void _mpc_lowcomm_portals_notify_newcomm(sctk_rail_info_t* rail, mpc_lowc
 {
 	sctk_ptl_comm_register(&rail->network.ptl, comm_idx, comm_size);
 }
+
+/**
+ * Notify the driver a new MPI communicator has been created.
+ * Becasue Portals driver has been split according to MPI_Comm semantics, each
+ * new communicator creation has to trigger a new PT entry creation.
+ * \param[in] rail the Portals rail
+ * \param[in] comm_idx the communicator ID
+ * \param[in] comm_size number of processes in this comm
+ */
+static void _mpc_lowcomm_portals_notify_delcomm(sctk_rail_info_t* rail, mpc_lowcomm_communicator_id_t comm_idx, size_t comm_size)
+{
+	sctk_ptl_comm_delete(&rail->network.ptl, comm_idx, comm_size);
+}
+
 
 /**
  * @brief Routine called just before a message is forwarded to higher layer (sctk_inter_thread_comm)
@@ -257,8 +277,9 @@ void sctk_network_init_ptl (sctk_rail_info_t *rail)
 	rail->notify_matching_message   = NULL;
 	rail->notify_perform_message    = _mpc_lowcomm_portals_notify_perform;
 	rail->notify_idle_message       = _mpc_lowcomm_portals_notify_idle;
-	rail->notify_any_source_message = NULL;
+	rail->notify_any_source_message = _mpc_lowcomm_portals_notify_any_source;
 	rail->notify_new_comm           = _mpc_lowcomm_portals_notify_newcomm;
+	rail->notify_del_comm           = _mpc_lowcomm_portals_notify_delcomm;
 	rail->send_message_from_network = sctk_send_message_from_network_ptl;
 	rail->notify_probe_message      = _mpc_lowcomm_portals_notify_probe;
 

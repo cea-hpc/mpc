@@ -116,11 +116,12 @@ static inline void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_
 	SCTK_MSG_DEST_TASK_SET       ( net_msg ,  mpc_common_get_process_rank());
 	SCTK_MSG_COMMUNICATOR_ID_SET ( net_msg ,  comm_id);
 	SCTK_MSG_TAG_SET             ( net_msg ,  match.data.tag);
-	SCTK_MSG_NUMBER_SET          ( net_msg ,  match.data.uid);
+	SCTK_MSG_NUMBER_SET          ( net_msg ,  ((sctk_ptl_imm_data_t)ev.hdr_data).std.msg_seq_nb);
 	SCTK_MSG_MATCH_SET           ( net_msg ,  0);
 	SCTK_MSG_SPECIFIC_CLASS_SET  ( net_msg ,  match.data.type);
 	SCTK_MSG_SIZE_SET            ( net_msg ,  ev.mlength);
 	SCTK_MSG_COMPLETION_FLAG_SET ( net_msg ,  NULL);
+	SCTK_MSG_USE_MESSAGE_NUMBERING_SET(net_msg, 1);
 
 
 	/* save the Portals context in the tail
@@ -205,6 +206,7 @@ void sctk_ptl_eager_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_en
 	request->type          = SCTK_PTL_TYPE_STD;
 	request->prot          = SCTK_PTL_PROT_EAGER;
 	request->msg_seq_nb    = SCTK_MSG_NUMBER(msg);
+	request->match         = match;
 	hdr.std.msg_seq_nb     = SCTK_MSG_NUMBER(msg);
 	hdr.std.putsz          = 0; /* this set the protocol in imm_data for receiver optimizations */
 	msg->tail.ptl.user_ptr = request;
@@ -280,7 +282,7 @@ void sctk_ptl_eager_notify_recv(mpc_lowcomm_ptp_message_t* msg, sctk_ptl_rail_in
 	msg->tail.ptl.user_ptr = user_ptr;
 	sctk_ptl_me_register(srail, user_ptr, pte);
 	
-	mpc_common_debug("PORTALS: NOTIFY-RECV-EAGER from %d (idx=%llu, match=%s, ign=%llu start=%p, sz=%llu)", SCTK_MSG_SRC_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), start, size);
+	mpc_common_debug("PORTALS: NOTIFY-RECV-EAGER from %d (idx=%llu, match=%s, ign=%s start=%p, sz=%llu)", SCTK_MSG_SRC_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), start, size);
 }
 
 /**

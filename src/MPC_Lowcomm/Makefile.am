@@ -22,7 +22,7 @@
 #                                                                      #
 ########################################################################
 mpc_headerdir=$(pkgincludedir)
-mpc_header_HEADERS= ./include/mpc_lowcomm.h  ./include/mpc_lowcomm_rdma.h ./include/mpc_lowcomm_communicator.h ./include/mpc_lowcomm_group.h ./include/mpc_lowcomm_types.h ./include/mpc_lowcomm_arpc.h ./include/mpc_lowcomm_monitor.h ./include/mpc_lowcomm_handle_ctx.h ./include/mpc_lowcomm_mqd.h 
+mpc_header_HEADERS= ./include/mpc_lowcomm.h  ./include/mpc_lowcomm_rdma.h ./include/mpc_lowcomm_communicator.h ./include/mpc_lowcomm_group.h ./include/mpc_lowcomm_types.h ./include/mpc_lowcomm_arpc.h ./include/mpc_lowcomm_monitor.h ./include/mpc_lowcomm_handle_ctx.h ./include/mpc_lowcomm_mqd.h ./include/mpc_lowcomm_datatypes.h
 
 if MPC_HAVE_AM
   mpc_header_HEADERS+= ./include/mpc_lowcomm_am.h
