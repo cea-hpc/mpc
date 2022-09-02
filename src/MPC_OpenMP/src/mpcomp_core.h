@@ -131,6 +131,7 @@ typedef struct  mpc_omp_conf_s
     int task_trace;
     int task_trace_auto;
     int task_trace_mask;
+    int task_trace_recycler_capacity;
     char task_trace_dir[MPC_CONF_STRING_SIZE];
 
     /* openmp thread condition wait, when there is no ready tasks */

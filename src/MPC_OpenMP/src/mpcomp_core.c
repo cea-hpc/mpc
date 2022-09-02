@@ -124,6 +124,7 @@ static inline void __omp_conf_set_default(void)
     __omp_conf.task_trace_auto                  = 0;
     __omp_conf.task_trace_mask                  = ~((int)0);
     __omp_conf.task_trace_dir[0]                = '\0';
+    __omp_conf.task_trace_recycler_capacity     = 131072;
     __omp_conf.task_cond_wait_enabled           = 0;
     __omp_conf.task_cond_wait_nhyperactive      = 4;
     __omp_conf.task_yield_mode                  = MPC_OMP_TASK_YIELD_MODE_NOOP;
@@ -178,6 +179,7 @@ static inline void __omp_conf_init(void)
             PARAM("traceauto",                          &__omp_conf.task_trace_auto,                            MPC_CONF_BOOL,  "Enable automatic task tracing"),
             PARAM("tracemask",                          &__omp_conf.task_trace_mask,                            MPC_CONF_INT,  "Define events to be traced"),
             PARAM("tracedir",                           &__omp_conf.task_trace_dir,                             MPC_CONF_STRING,"Task trace destination directory"),
+            PARAM("tracerecyclercapacity",              &__omp_conf.task_trace_recycler_capacity,                             MPC_CONF_STRING,"Task trace records recycler initial capacity - this is the number of records pre-allocated"),
             PARAM("condwaitenabled",                    &__omp_conf.task_cond_wait_enabled,                     MPC_CONF_BOOL,  "Enable the thread conditional sleeping while there is no ready tasks"),
             PARAM("condwaitnhyperactive",               &__omp_conf.task_cond_wait_nhyperactive,                MPC_CONF_INT,   "Number of hyperactive threads (= threads that won't sleep even if there is no ready tasks)"),
             PARAM("directsuccessor",                    &__omp_conf.task_direct_successor_enabled,              MPC_CONF_INT,   "Enable thread direct successor list"),
@@ -877,8 +879,9 @@ static inline void __read_env_variables()
         mpc_common_debug_log("\t\tpropagation policy=%d",   __omp_conf.task_priority_propagation_policy);
         mpc_common_debug_log("\t\tpropagation synchronousity=%d", __omp_conf.task_priority_propagation_synchronousity);
         mpc_common_debug_log("\t\ttask list policy=%s",     __omp_conf.task_list_policy == MPC_OMP_TASK_LIST_POLICY_LIFO ? "lifo" : "fifo");
-        mpc_common_debug_log("\t\ttrace=%d (%s)",           __omp_conf.task_trace, __omp_conf.task_trace_auto ? "auto" : "manual");
-        mpc_common_debug_log("\t\ttrace mask=%d",           __omp_conf.task_trace_mask);
+        mpc_common_debug_log("\t\ttrace=%d (%s)",                       __omp_conf.task_trace, __omp_conf.task_trace_auto ? "auto" : "manual");
+        mpc_common_debug_log("\t\ttrace mask=%d",                       __omp_conf.task_trace_mask);
+        mpc_common_debug_log("\t\ttrace record recycler capacity=%d",   __omp_conf.task_trace_recycler_capacity);
         mpc_common_debug_log("\t\tthread tasks cond. wait = %s (nhyperactive=%d)", \
                                                             __omp_conf.task_cond_wait_enabled ? "enabled" : "disabled", __omp_conf.task_cond_wait_nhyperactive);
         mpc_common_debug_log("\n");

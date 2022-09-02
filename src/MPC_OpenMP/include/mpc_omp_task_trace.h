@@ -76,7 +76,7 @@ typedef enum    mpc_omp_task_trace_record_type_e
 # define MPC_OMP_TASK_TRACE_FILE_VERSION    1
 # define MPC_OMP_TASK_TRACE_FILE_MAGIC      (0x6B736174) /* 't' 'a' 's' 'k' */
 
-# define MPC_OMP_TASK_TRACE_RECYCLER_CAPACITY   131072
+# define MPC_OMP_TASK_TRACE_RECYCLER_CAPACITY mpc_omp_conf_get()->task_trace_recycler_capacity
 
 /**
  *  *  A trace writer (1 per thread)
