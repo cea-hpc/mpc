@@ -1586,18 +1586,23 @@ __task_delete(mpc_omp_task_t * task)
     MPC_OMP_TASK_TRACE_DELETE(task);
 
 # if MPC_OMP_TASK_USE_RECYCLERS
-    mpc_common_spinlock_lock(&(task->origin->task_recycler_lock));
+    if (task->producer)
     {
-        mpc_common_nrecycler_recycle(&(task->origin->task_recycler), task, task->size);
+        mpc_common_spinlock_lock(&(task->producer->task_recycler_lock));
+        {
+            mpc_common_nrecycler_recycle(&(task->producer->task_recycler), task, task->size);
+        }
+        mpc_common_spinlock_unlock(&(task->producer->task_recycler_lock));
     }
-    mpc_common_spinlock_unlock(&(task->origin->task_recycler_lock));
+    else
 # else
-    mpc_omp_free(task);
+    {
+        mpc_omp_free(task);
+    }
 # endif /* MPC_OMP_TASK_USE_RECYCLERS */
 
     /* decrement number of existing tasks */
     OPA_decr_int(&(thread->instance->task_infos.ntasks_allocated));
-//    printf("deleting task %s\n", task->label);
 }
 
 /** TASK PRIORITIES AND PROFILES */
@@ -3467,7 +3472,6 @@ _mpc_omp_task_allocate(size_t size)
 
     /* increment number of existing tasks */
     OPA_incr_int(&(thread->instance->task_infos.ntasks_allocated));
-//    printf("creating task\n");
 
 # if MPC_OMP_TASK_USE_RECYCLERS
     mpc_omp_task_t * task;
@@ -3476,7 +3480,7 @@ _mpc_omp_task_allocate(size_t size)
         task = mpc_common_nrecycler_alloc(&(thread->task_infos.task_recycler), size);
     }
     mpc_common_spinlock_unlock(&(thread->task_infos.task_recycler_lock));
-    task->origin = &(thread->task_infos);
+    task->producer = &(thread->task_infos);
 # else
     mpc_omp_task_t * task = mpc_omp_alloc(size);
 # endif

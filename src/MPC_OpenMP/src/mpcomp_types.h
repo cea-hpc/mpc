@@ -808,7 +808,7 @@ typedef struct  mpc_omp_task_s
 
 # if MPC_OMP_TASK_USE_RECYCLERS
     /* infos of the thread that created this task */
-    struct mpc_omp_task_thread_infos_s * origin;
+    struct mpc_omp_task_thread_infos_s * producer;
 # endif /* MPC_OMP_TASK_USE_RECYCLERS */
 }               mpc_omp_task_t;
 
