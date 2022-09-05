@@ -166,7 +166,7 @@ am__objects_1 = tools/src/mpcompt_entryPoints.lo \
 	tools/callback/mpcompt_task.lo \
 	tools/callback/mpcompt_thread.lo \
 	tools/callback/mpcompt_workShare.lo
-am_libmpcomp_la_OBJECTS = mpcomp_api.lo mpcomp_core.lo \
+am_libmpcomp_la_OBJECTS = mpcomp_api.lo mpcomp_api_task_scheduling.lo mpcomp_core.lo \
 	mpcomp_fortran.lo mpcomp_loop.lo mpcomp_parallel_region.lo \
 	mpcomp_places_env.lo mpcomp_spinning_core.lo mpcomp_sync.lo \
 	mpcomp_task.lo mpcomp_tree.lo mpcomp_alloc.lo omp_gomp.lo \
@@ -558,7 +558,7 @@ tools_inc = -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/src/ \
             -I$(abs_top_srcdir)/src/MPC_OpenMP/src/tools/trace/
 
 lib_LTLIBRARIES = libmpcomp.la libiomp5.la libgomp.la
-libmpcomp_la_SOURCES = mpcomp_api.c mpcomp_core.c mpcomp_fortran.c \
+libmpcomp_la_SOURCES = mpcomp_api.c mpcomp_api_task_scheduling.c mpcomp_core.c mpcomp_fortran.c \
 	mpcomp_loop.c mpcomp_parallel_region.c mpcomp_places_env.c \
 	mpcomp_spinning_core.c mpcomp_sync.c mpcomp_task.c \
 	mpcomp_tree.c mpcomp_alloc.c omp_gomp.c omp_intel_atomics.c \
@@ -718,6 +718,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpcomp_alloc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpcomp_api.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpcomp_api_task_scheduling.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpcomp_callback.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpcomp_core.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpcomp_fortran.Plo@am__quote@

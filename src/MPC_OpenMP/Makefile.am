@@ -31,6 +31,7 @@ mpc_header_HEADERS= ./include/omp_abi.h                 \
                     ./include/mpc_omp_task_property.h   \
                     ./include/mpc_omp_task_trace.h      \
                     ./include/mpc_omp_task_label.h      \
+                    ./include/mpc_omp_task_scheduling.h \
 					./include/omp.h                     \
                     ./include/ompt.h                    \
                     ./include/omp-tools.h               \
