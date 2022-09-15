@@ -3610,6 +3610,8 @@ _mpc_omp_task_init(
         strncpy(task->label, thread->task_infos.incoming.label, MPC_OMP_TASK_LABEL_MAX_LENGTH);
         thread->task_infos.incoming.label = NULL;
     }
+    task->color = thread->task_infos.incoming.color;
+    thread->task_infos.incoming.color = 0;
 # endif /* MPC_OMP_TASK_COMPILE_TRACE */
     if (thread->task_infos.incoming.extra_clauses & MPC_OMP_CLAUSE_USE_FIBER)
     {

@@ -313,13 +313,13 @@ double omp_get_wtime(void) {
   struct timeval tp;
 
   gettimeofday (&tp, NULL);
-  res = tp.tv_sec + tp.tv_usec * 0.000001;
+  res = tp.tv_sec + tp.tv_usec * 1e-6;
 
   mpc_common_nodebug("%s Wtime = %f", __func__, res);
   return res;
 }
 
-double omp_get_wtick(void) { return (double)10e-6; }
+double omp_get_wtick(void) { return (double)1e-6; }
 
 /**
  * The omp_get_thread_limit routine returns the maximum number of OpenMP
@@ -539,7 +539,16 @@ mpc_omp_task_label(char * label)
 # if MPC_OMP_TASK_COMPILE_TRACE
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     thread->task_infos.incoming.label = label;
-//    printf("%s\n", label);
+# endif /* MPC_OMP_TASK_COMPILE_TRACE */
+}
+
+/** # pragma omp task color(c) */
+void
+mpc_omp_task_color(int c)
+{
+# if MPC_OMP_TASK_COMPILE_TRACE
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+    thread->task_infos.incoming.color = c;
 # endif /* MPC_OMP_TASK_COMPILE_TRACE */
 }
 

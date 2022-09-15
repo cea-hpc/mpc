@@ -91,9 +91,12 @@ __node_new(mpc_omp_task_trace_record_type_t type)
     mpc_omp_task_trace_node_t * node = (mpc_omp_task_trace_node_t *) mpc_common_recycler_alloc(&(infos->recyclers[type]));
     assert(node);
 
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+
     mpc_omp_task_trace_record_t * record = __node_record(node);
     record->type = type;
-    record->time = omp_get_wtime();
+    record->time = (uint64_t)(tp.tv_sec * 1000000) + (uint64_t) tp.tv_usec;
     return node;
 }
 
@@ -261,6 +264,7 @@ _mpc_omp_task_trace_create(mpc_omp_task_t * task)
     __task_trace(task, node);
     mpc_omp_task_trace_record_create_t * record = (mpc_omp_task_trace_record_create_t *) __node_record(node);
     strncpy(record->label, task->label ? task->label : "(null)", MPC_OMP_TASK_LABEL_MAX_LENGTH);
+    record->color = task->color;
     record->parent_uid = task->parent ? task->parent->uid : -1;
     record->omp_priority = task->omp_priority_hint;
     __node_insert(node);

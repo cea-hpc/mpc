@@ -778,6 +778,9 @@ typedef struct  mpc_omp_task_s
     /* the task name (+1 for the null char.) */
     char label[MPC_OMP_TASK_LABEL_MAX_LENGTH + 1];
 
+    /* the task color */
+    int color;
+
     /* task schedule id (= number of task previously scheduled) */
     int schedule_id;
 # endif
@@ -905,6 +908,7 @@ typedef struct  mpc_omp_task_thread_infos_s
     struct
     {
         char * label;
+        int color;
         int extra_clauses;
         mpc_omp_task_dependency_t * dependencies;
         unsigned int ndependencies_type;

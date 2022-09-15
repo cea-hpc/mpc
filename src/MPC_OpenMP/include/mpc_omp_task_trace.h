@@ -111,7 +111,7 @@ typedef struct  mpc_omp_task_trace_file_header_s
 typedef struct  mpc_omp_task_trace_record_s
 {
     /* event time */
-    double time;
+    uint64_t time;
 
     /* the record type */
     mpc_omp_task_trace_record_type_t type;
@@ -155,6 +155,9 @@ typedef struct  mpc_omp_task_trace_record_create_s
 
     /* the task label */
     char label[MPC_OMP_TASK_LABEL_MAX_LENGTH];
+
+    /* the task color id */
+    int color;
 
     /* control parent task */
     int parent_uid;

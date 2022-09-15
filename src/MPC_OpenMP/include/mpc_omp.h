@@ -167,8 +167,11 @@ extern "C" {
     /** # pragma omp task priority(p) */
     void mpc_omp_task_priority(int p);
 
-    /** # pragma omp task label("potrf") */
+    /** # pragma omp task label("potrf(%d)", i) */
     void mpc_omp_task_label(char * label);
+
+    /** # pragma omp task color(c) */
+    void mpc_omp_task_color(int c);
 
     /** # pragma omp task fiber */
     void mpc_omp_task_fiber(void);

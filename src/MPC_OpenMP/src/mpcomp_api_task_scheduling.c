@@ -9,6 +9,8 @@
 # include <sys/types.h>
 # include <unistd.h>
 
+# if 0
+
 /***************** FILE FUNCTIONS ***********************/
 static inline int
 mkdir_if_not_exists(char * path)
@@ -182,3 +184,5 @@ mpc_omp_task_scheduling_close(mpc_omp_task_scheduling_t * scheduling)
         close(file->fd);
     }
 }
+
+# endif
