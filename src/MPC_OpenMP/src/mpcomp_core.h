@@ -127,6 +127,9 @@ typedef struct  mpc_omp_conf_s
     /* if the tasks should be run sequentially by their producer thread */
     int task_sequential;
 
+    /* if the tasks body function shall be skipped (for dry run) */
+    int task_dry_run;
+
     /* task tracing */
     int task_trace;
     int task_trace_auto;

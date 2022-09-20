@@ -673,6 +673,12 @@ mpc_omp_task_dependencies_buckets_occupation(void)
     return avg;
 }
 
+void
+mpc_omp_task_dry_run(int value)
+{
+    mpc_omp_conf_get()->task_dry_run = value;
+}
+
 //////////////TARGET/////////////////
 
 kmp_target_offload_kind_t __kmp_target_offload = tgt_default;

@@ -119,6 +119,7 @@ static inline void __omp_conf_set_default(void)
     __omp_conf.task_fiber_stack_size            = 32768;
     __omp_conf.task_fiber_recycler_capacity     = 256;
     __omp_conf.task_depth_threshold             = 4;
+    __omp_conf.task_dry_run                     = 0;
     __omp_conf.task_use_fiber                   = 1;
     __omp_conf.task_trace                       = 0;
     __omp_conf.task_trace_auto                  = 0;
@@ -179,7 +180,7 @@ static inline void __omp_conf_init(void)
             PARAM("traceauto",                          &__omp_conf.task_trace_auto,                            MPC_CONF_BOOL,  "Enable automatic task tracing"),
             PARAM("tracemask",                          &__omp_conf.task_trace_mask,                            MPC_CONF_INT,  "Define events to be traced"),
             PARAM("tracedir",                           &__omp_conf.task_trace_dir,                             MPC_CONF_STRING,"Task trace destination directory"),
-            PARAM("tracerecyclercapacity",              &__omp_conf.task_trace_recycler_capacity,                             MPC_CONF_STRING,"Task trace records recycler initial capacity - this is the number of records pre-allocated"),
+            PARAM("tracerecyclercapacity",              &__omp_conf.task_trace_recycler_capacity,                             MPC_CONF_INT, "Task trace records recycler initial capacity - this is the number of records pre-allocated"),
             PARAM("condwaitenabled",                    &__omp_conf.task_cond_wait_enabled,                     MPC_CONF_BOOL,  "Enable the thread conditional sleeping while there is no ready tasks"),
             PARAM("condwaitnhyperactive",               &__omp_conf.task_cond_wait_nhyperactive,                MPC_CONF_INT,   "Number of hyperactive threads (= threads that won't sleep even if there is no ready tasks)"),
             PARAM("directsuccessor",                    &__omp_conf.task_direct_successor_enabled,              MPC_CONF_INT,   "Enable thread direct successor list"),

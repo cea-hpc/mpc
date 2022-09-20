@@ -2102,6 +2102,9 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
     assert(thread);
 
+    /* if we are skipping the task body, no function shall be called on task schedule */
+    if (mpc_omp_conf_get()->task_dry_run) fn = NULL;
+
     /* if current taskgroup has been cancelled, no need to create the task */
     mpc_omp_task_t * current = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
     assert(current);

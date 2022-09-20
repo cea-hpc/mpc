@@ -3081,7 +3081,7 @@ __task_start_routine(__UNUSED__ void * unused)
 
     __task_run_coherency_check_pre(task);
     task->statuses.started = true;
-    task->func(task->data);
+    if (task->func) task->func(task->data);
     assert(task->statuses.completed == false);
     task->statuses.completed = true;
     __task_run_coherency_check_post(task);
@@ -3499,13 +3499,13 @@ _mpc_omp_task_init_attributes(
     /* Intialize the OpenMP environnement (if needed) */
     mpc_omp_init();
 
-    /* Retrieve the information (microthread structure and current region) */
-    mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
-    assert(thread->instance);
-
     /* Reset all task infos to NULL */
     assert(task);
     memset(task, 0, sizeof(mpc_omp_task_t));
+
+    /* Retrieve the information (microthread structure and current region) */
+    mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
+    assert(thread->instance);
 
     /* Set non null task infos field */
     task->func = func;
@@ -3590,20 +3590,25 @@ _mpc_omp_task_init(
     size_t size,
     mpc_omp_task_property_t properties)
 {
-    /* set attributes */
-    _mpc_omp_task_init_attributes(task, func, data, size, properties);
-
     /* Retrieve the information (microthread structure and current region) */
     mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
     assert(thread->instance);
 
-    /* reference the task */
-    _mpc_omp_taskgroup_add_task(task);
-    __task_ref_parallel_region();
-    __task_ref_parent_task(task->parent);   /* _mpc_omp_task_finalize */
-    __task_ref(task);                       /* _mpc_omp_task_finalize or _mpc_omp_task_deinit_persistent */
-
     /* extra parameters given to the mpc thread for this task */
+    if (thread->task_infos.incoming.extra_clauses & MPC_OMP_CLAUSE_USE_FIBER)
+    {
+        mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_HAS_FIBER);
+    }
+    if (thread->task_infos.incoming.extra_clauses & MPC_OMP_CLAUSE_UNTIED)
+    {
+        mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_UNTIED);
+    }
+    thread->task_infos.incoming.extra_clauses = 0;
+
+    /* set attributes */
+    _mpc_omp_task_init_attributes(task, func, data, size, properties);
+
+    /* extra parameters given to the mpc thread for this task  */
 # if MPC_OMP_TASK_COMPILE_TRACE
     if (thread->task_infos.incoming.label)
     {
@@ -3613,15 +3618,12 @@ _mpc_omp_task_init(
     task->color = thread->task_infos.incoming.color;
     thread->task_infos.incoming.color = 0;
 # endif /* MPC_OMP_TASK_COMPILE_TRACE */
-    if (thread->task_infos.incoming.extra_clauses & MPC_OMP_CLAUSE_USE_FIBER)
-    {
-        mpc_omp_task_set_property(&(task->property), MPC_OMP_TASK_PROP_HAS_FIBER);
-    }
-    if (thread->task_infos.incoming.extra_clauses & MPC_OMP_CLAUSE_UNTIED)
-    {
-        mpc_omp_task_set_property(&(task->property), MPC_OMP_TASK_PROP_UNTIED);
-    }
-    thread->task_infos.incoming.extra_clauses = 0;
+
+    /* reference the task */
+    _mpc_omp_taskgroup_add_task(task);
+    __task_ref_parallel_region();
+    __task_ref_parent_task(task->parent);   /* _mpc_omp_task_finalize */
+    __task_ref(task);                       /* _mpc_omp_task_finalize or _mpc_omp_task_deinit_persistent */
 
     return task;
 }
