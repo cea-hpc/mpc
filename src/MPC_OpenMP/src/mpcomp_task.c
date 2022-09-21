@@ -1495,8 +1495,7 @@ __task_finalize_deps(mpc_omp_task_t * task)
     /* else, if the task is persistent */
     else
     {
-        // TODO : I found no better solution than this big lock on the successor list
-        // I am still wondering is this can be optimized through atomic operations instead
+        // TODO : can we make the successor list lock-free ?
         mpc_common_spinlock_lock(&(task->dep_node.lock));
         {
             /* Resolve successor's data dependency */
@@ -1515,6 +1514,7 @@ __task_finalize_deps(mpc_omp_task_t * task)
                     {
                         // TODO : destroy 'task'
                         printf("not processing %s\n", task->label);
+                        not_implemented();
                     }
                     else
                     {
@@ -1582,7 +1582,6 @@ __task_delete(mpc_omp_task_t * task)
      /* Release successors */
      __task_list_delete(task->dep_node.successors);
 
-    TODO("What about persistent tracing ? Right now, they only got deleted once...");
     MPC_OMP_TASK_TRACE_DELETE(task);
 
 # if MPC_OMP_TASK_USE_RECYCLERS
@@ -1683,6 +1682,7 @@ __task_profile_priority_compute(mpc_omp_task_t * task)
     if (task->dep_node.profile_version == profile_version) return;
     task->dep_node.profile_version = profile_version;
 
+    // TODO : which priority to set on profile matching ?
     int priority = __task_profile_exists(task) ? INT_MAX : 0;
     if (task->priority < priority)
     {
@@ -1692,13 +1692,15 @@ __task_profile_priority_compute(mpc_omp_task_t * task)
 
 // TODO : check this has no race condition
 static void
-__task_profile_propagate(void)
+__task_priority_propagation_asynchronous(void)
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
     assert(thread);
 
     mpc_omp_instance_t * instance = thread->instance;
     assert(instance);
+
+    const int policy = mpc_omp_conf_get()->task_priority_propagation_policy;
 
     // TAKE LOCK: only 1 thread may propagate at once
     if (mpc_common_spinlock_trylock(&(instance->task_infos.propagation.lock)) == 0)
@@ -1787,12 +1789,32 @@ __task_profile_propagate(void)
                                 while (elt)
                                 {
                                     mpc_omp_task_t * predecessor = elt->task;
-
-                                    // TODO : handle propagation policy here also
-
-                                    if (predecessor->priority < task->priority - 1)
+                                    int priority;
+                                    switch (policy)
                                     {
-                                        predecessor->priority = task->priority - 1;
+                                        case (MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_DECR):
+                                        {
+                                            priority = task->priority - 1;
+                                            break ;
+                                        }
+
+                                        case (MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_EQUAL):
+                                        {
+                                            priority = task->priority;
+                                            break ;
+                                        }
+
+                                        case (MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_NOOP):
+                                        default:
+                                        {
+                                            assert("This should not happen" && 0);
+                                            break ;
+                                        }
+                                    }
+
+                                    if (predecessor->priority < priority)
+                                    {
+                                        predecessor->priority = priority;
                                         __task_ref(predecessor);
                                         __task_list_push_to_head(up, predecessor);
                                     }
@@ -1914,81 +1936,6 @@ __task_priority_compute(mpc_omp_task_t * task)
         __task_priority_propagate_on_predecessors(task);
     }
 }
-
-#ifdef WIP
-
-/** Condition to stop computing priorities */
-static inline int
-_mpc_omp_task_compute_priorities_exit_condition(mpc_omp_instance_t * instance, mpc_omp_thread_t * thread)
-{
-    return (instance->task_infos.ntasks_ready > 0);
-}
-
-/* TODO : WIP
- * Propagate priorities asynchronously.
- * This routine should be called during idle periods.
- */
-void _mpc_omp_task_compute_priorities(void)
-{
-    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
-    assert(thread);
-
-    mpc_omp_instance_t * instance = thread->instance;
-    assert(instance);
-
-    mpc_omp_task_list * leaves = &(thread->task_infos.leaves);
-
-    /*  PHASE 1      - Update leaves for this thread */
-    /*  PHASE 1.1   - Clean up remains of previous call */
-    for (mpc_omp_task_t * leaf : leaves)
-    {
-        /* if this previous leaf became ready, or now has successors, remove it from the list */
-        if (leaf->ready || leaf->successor)
-        {
-            leaves.pop(leaf);
-        }
-    }
-
-    /*  PHASE 1.2   - Find new leaves */
-    for (mpc_omp_task_t * root : roots)
-    {
-        down.push(successor);
-    }
-    while (!down.is_empty())
-    {
-        mpc_omp_task_t * task = down.pop();
-        if (task->successor)
-        {
-            for (mpc_omp_task_t * successor : task->successor)
-            {
-                down.push(successor);
-            }
-        }
-        else
-        {
-            leaves.push(task);
-        }
-    }
-
-    // TODO : phase 1.2, do it in breadth first search in the TDG,
-    // so that leaves are sorted by their depth
-
-    /*  PHASE 2 - From leaves, go up to roots and set priorities */
-    for (mpc_omp_task_t * leaf : leaves)
-    {
-        mpc_omp_task_t * task = leaf;
-        while (task)
-        {
-            for (mpc_omp_task_t * predecessor : task->predecessor)
-            {
-                stack.push(predecessor);
-            }
-            set_priority(task);
-            task = stack.pop();
-        }
-    }
-}
-#endif /* WIP */
 
 static inline int
 ___task_mvp_pqueue_init( struct mpc_omp_node_s* parent, struct mpc_omp_mvp_s* child, const mpc_omp_task_pqueue_type_t type  )
@@ -3233,7 +3180,7 @@ _mpc_omp_task_schedule(void)
     /* Famine detected */
     if (mpc_omp_conf_get()->task_priority_propagation_synchronousity == MPC_OMP_TASK_PRIORITY_PROPAGATION_ASYNCHRONOUS)
     {
-        __task_profile_propagate();
+        __task_priority_propagation_asynchronous();
     }
 
     return 0;

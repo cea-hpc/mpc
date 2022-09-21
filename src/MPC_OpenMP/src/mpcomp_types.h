@@ -269,10 +269,10 @@ typedef enum    mpc_omp_task_priority_propagation_policy_e
 
 typedef enum    mpc_omp_task_priority_propagation_synchronousity_e
 {
-    /* if priorities should be propagated synchronously, on task creation */
+    /* 0) if priorities should be propagated synchronously, on task creation */
     MPC_OMP_TASK_PRIORITY_PROPAGATION_SYNCHRONOUS,
 
-    /* if priorities should be propagated asynchronously, during idle time */
+    /* 1) if priorities should be propagated asynchronously, during idle time */
     MPC_OMP_TASK_PRIORITY_PROPAGATION_ASYNCHRONOUS
 }               mpc_omp_task_priority_propagation_synchronousity_t;
 

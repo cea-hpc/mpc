@@ -267,6 +267,7 @@ _mpc_omp_task_trace_create(mpc_omp_task_t * task)
     record->color = task->color;
     record->parent_uid = task->parent ? task->parent->uid : -1;
     record->omp_priority = task->omp_priority_hint;
+    record->priority = task->priority;
     __node_insert(node);
 }
 
