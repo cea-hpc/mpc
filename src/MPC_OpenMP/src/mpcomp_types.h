@@ -907,11 +907,11 @@ typedef struct  mpc_omp_task_thread_infos_s
     /* extra data for incoming task */
     struct
     {
+        mpc_omp_task_dependency_t * dependencies;
+        unsigned int ndependencies_type;
         char * label;
         int color;
         int extra_clauses;
-        mpc_omp_task_dependency_t * dependencies;
-        unsigned int ndependencies_type;
         int priority;
     } incoming;
 

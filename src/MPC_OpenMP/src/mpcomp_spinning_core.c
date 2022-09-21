@@ -712,7 +712,9 @@ mpc_omp_instance_t *_mpc_omp_tree_array_instance_init( mpc_omp_thread_t *thread,
 #endif /* OMPT_SUPPORT */
 
     /* instance initialization */
-    instance->task_infos.blocked_tasks.type = MPC_OMP_TASK_LIST_TYPE_SCHEDULER;
+    instance->task_infos.blocked_tasks.type     = MPC_OMP_TASK_LIST_TYPE_SCHEDULER;
+    instance->task_infos.propagation.up.type     = MPC_OMP_TASK_LIST_TYPE_UP_DOWN;
+    instance->task_infos.propagation.down.type  = MPC_OMP_TASK_LIST_TYPE_UP_DOWN;
 # if MPC_OMP_BARRIER_COMPILE_COND_WAIT
     if (MPC_OMP_TASK_BARRIER_COND_WAIT_ENABLED)
     {

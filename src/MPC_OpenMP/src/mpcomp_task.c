@@ -1319,8 +1319,6 @@ __task_process_deps(mpc_omp_task_t * task, void ** depend)
     /* mpc specific dependencies */
     mpc_omp_task_dependency_t * dependencies = thread->task_infos.incoming.dependencies;
     uintptr_t ndependencies_type = thread->task_infos.incoming.ndependencies_type;
-    thread->task_infos.incoming.dependencies = NULL;
-    thread->task_infos.incoming.ndependencies_type = 0;
 
     /* if no dependencies, return */
     if (dependencies == NULL)
@@ -1328,6 +1326,9 @@ __task_process_deps(mpc_omp_task_t * task, void ** depend)
         if (depend == NULL)     return ;
         if (depend[0] == NULL)  return;
     }
+
+    thread->task_infos.incoming.dependencies = NULL;
+    thread->task_infos.incoming.ndependencies_type = 0;
 
     /* compiler dependencies */
     uintptr_t omp_ndeps_tot = depend ? (uintptr_t) depend[0] : 0;
@@ -1713,36 +1714,42 @@ __task_priority_propagation_asynchronous(void)
         // list to propagate priorities up
         mpc_omp_task_list_t * up = &(instance->task_infos.propagation.up);
 
-        // list of blocked tasks
-        mpc_omp_task_list_t * blocked_tasks = &(thread->instance->task_infos.blocked_tasks);
-
-        assert(blocked_tasks->type == MPC_OMP_TASK_LIST_TYPE_SCHEDULER);
-        assert(down->type == MPC_OMP_TASK_LIST_TYPE_UP_DOWN);
-        assert(up->type == MPC_OMP_TASK_LIST_TYPE_UP_DOWN);
-
-        assert(__task_list_is_empty(down));
-        assert(__task_list_is_empty(up));
-
-        // RETRIEVE BLOCKED TASKS
-        mpc_common_spinlock_lock(&(blocked_tasks->lock));
+        // RETRIEVE TASKS BLOCKED
         {
-            mpc_omp_task_t * task = blocked_tasks->head;
-            while (task)
+            // list of blocked tasks
+            mpc_omp_task_list_t * blocked_tasks = &(thread->instance->task_infos.blocked_tasks);
+
+            assert(blocked_tasks->type == MPC_OMP_TASK_LIST_TYPE_SCHEDULER);
+            assert(down->type == MPC_OMP_TASK_LIST_TYPE_UP_DOWN);
+            assert(up->type == MPC_OMP_TASK_LIST_TYPE_UP_DOWN);
+
+            assert(__task_list_is_empty(down));
+            assert(__task_list_is_empty(up));
+
+            mpc_common_spinlock_lock(&(blocked_tasks->lock));
             {
-                assert(OPA_load_int(&(task->ref_counter)) > 0);
-                task->propagation_version = version;
-                __task_ref(task);
-                __task_list_push_to_tail(down, task);
-                task = task->next[MPC_OMP_TASK_LIST_TYPE_SCHEDULER];
+                mpc_omp_task_t * task = blocked_tasks->head;
+                while (task)
+                {
+                    assert(OPA_load_int(&(task->ref_counter)) > 0);
+                    task->propagation_version = version;
+                    __task_ref(task);
+                    __task_list_push_to_tail(down, task);
+                    task = task->next[MPC_OMP_TASK_LIST_TYPE_SCHEDULER];
+                }
             }
+            mpc_common_spinlock_unlock(&(blocked_tasks->lock));
         }
-        mpc_common_spinlock_unlock(&(blocked_tasks->lock));
+
+        // RETRIEVE NOT READY TASKS (successors of currently running tasks)
+        {
+            // TODO
+        }
 
         // FIND LEAVES
         while (!__task_list_is_empty(down))
         {
             mpc_omp_task_t * task = __task_list_pop_from_head(down);
-            assert(OPA_load_int(&(task->ref_counter)) > 0);
             mpc_common_spinlock_lock(&(task->dep_node.lock));
             {
                 if (task->dep_node.successors)
@@ -3470,6 +3477,24 @@ _mpc_omp_task_init_attributes(
 #if MPC_USE_SISTER_LIST
     task->children_lock = SCTK_SPINLOCK_INITIALIZER;
 #endif
+
+    /* extra parameters given to the mpc thread for this task */
+    if (thread->task_infos.incoming.extra_clauses & MPC_OMP_CLAUSE_USE_FIBER)
+        mpc_omp_task_set_property(&task->property, MPC_OMP_TASK_PROP_HAS_FIBER);
+    if (thread->task_infos.incoming.extra_clauses & MPC_OMP_CLAUSE_UNTIED)
+        mpc_omp_task_set_property(&task->property, MPC_OMP_TASK_PROP_UNTIED);
+    thread->task_infos.incoming.extra_clauses = 0;
+
+    /* extra parameters given to the mpc thread for this task  */
+# if MPC_OMP_TASK_COMPILE_TRACE
+    if (thread->task_infos.incoming.label)
+    {
+        strncpy(task->label, thread->task_infos.incoming.label, MPC_OMP_TASK_LABEL_MAX_LENGTH);
+        thread->task_infos.incoming.label = NULL;
+    }
+    task->color = thread->task_infos.incoming.color;
+    thread->task_infos.incoming.color = 0;
+# endif /* MPC_OMP_TASK_COMPILE_TRACE */
 }
 
 /* PERSISTENT TASKS */
@@ -3485,6 +3510,7 @@ mpc_omp_get_persistent_region(void)
     return &(task->persistent_region);
 }
 
+// TODO : define properly what is reinitialized or not (dependencies, label, color, ...)
 /* Reinitialize an openmp persistent task */
 void
 _mpc_omp_task_reinit(mpc_omp_task_t * task)
@@ -3499,6 +3525,9 @@ _mpc_omp_task_reinit(mpc_omp_task_t * task)
     mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
     assert(region->active);
     __task_ref_persistent_region(task->parent);
+
+    task->color = thread->task_infos.incoming.color;
+    thread->task_infos.incoming.color = 0;
 
     if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_DEPEND))
     {
@@ -3541,30 +3570,8 @@ _mpc_omp_task_init(
     mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
     assert(thread->instance);
 
-    /* extra parameters given to the mpc thread for this task */
-    if (thread->task_infos.incoming.extra_clauses & MPC_OMP_CLAUSE_USE_FIBER)
-    {
-        mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_HAS_FIBER);
-    }
-    if (thread->task_infos.incoming.extra_clauses & MPC_OMP_CLAUSE_UNTIED)
-    {
-        mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_UNTIED);
-    }
-    thread->task_infos.incoming.extra_clauses = 0;
-
     /* set attributes */
     _mpc_omp_task_init_attributes(task, func, data, size, properties);
-
-    /* extra parameters given to the mpc thread for this task  */
-# if MPC_OMP_TASK_COMPILE_TRACE
-    if (thread->task_infos.incoming.label)
-    {
-        strncpy(task->label, thread->task_infos.incoming.label, MPC_OMP_TASK_LABEL_MAX_LENGTH);
-        thread->task_infos.incoming.label = NULL;
-    }
-    task->color = thread->task_infos.incoming.color;
-    thread->task_infos.incoming.color = 0;
-# endif /* MPC_OMP_TASK_COMPILE_TRACE */
 
     /* reference the task */
     _mpc_omp_taskgroup_add_task(task);
@@ -3620,6 +3627,7 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
 
     /* set priority hint */
     task->omp_priority_hint = priority_hint > thread->task_infos.incoming.priority ? priority_hint : thread->task_infos.incoming.priority;
+    thread->task_infos.incoming.priority = 0;
 
     if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_DEPEND))
     {
