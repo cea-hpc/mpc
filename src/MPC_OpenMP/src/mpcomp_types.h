@@ -1171,6 +1171,13 @@ typedef struct mpc_omp_team_s
 
 } mpc_omp_team_t;
 
+typedef struct  mpc_omp_thread_callback_infos_s
+{
+    /* callbacks per events */
+    mpc_omp_callback_t * callbacks[MPC_OMP_CALLBACK_MAX];
+
+}               mpc_omp_thread_callback_infos_t;
+
 /** OpenMP thread struct
  * An OpenMP thread is attached to a MVP,
  * one thread per nested level */
@@ -1300,12 +1307,15 @@ typedef struct mpc_omp_thread_s
     /* DEBUGING */
     size_t hash_collision;
     size_t hash_resize;
+
+    /* per-thread callback */
+    mpc_omp_thread_callback_infos_t callback_infos;
 }       mpc_omp_thread_t;
 
 typedef struct  mpc_omp_instance_callback_infos_s
 {
     /* callbacks per events */
-    mpc_omp_callback_t * callbacks[MPC_OMP_CALLBACK_MAX];
+    mpc_omp_thread_callback_infos_t master;
 
     /* callback lock per event */
     mpc_common_spinlock_t locks[MPC_OMP_CALLBACK_MAX];

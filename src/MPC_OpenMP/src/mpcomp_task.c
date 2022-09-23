@@ -3167,7 +3167,8 @@ __task_run(mpc_omp_task_t * task)
 int
 _mpc_omp_task_schedule(void)
 {
-    _mpc_omp_callback_run(MPC_OMP_CALLBACK_TASK_SCHEDULE_BEFORE);
+    _mpc_omp_callback_run(MPC_OMP_CALLBACK_SCOPE_INSTANCE,  MPC_OMP_CALLBACK_TASK_SCHEDULE_BEFORE);
+    _mpc_omp_callback_run(MPC_OMP_CALLBACK_SCOPE_THREAD,    MPC_OMP_CALLBACK_TASK_SCHEDULE_BEFORE);
 
     /* get current thread */
     mpc_omp_thread_t * thread = __thread_task_coherency(NULL);

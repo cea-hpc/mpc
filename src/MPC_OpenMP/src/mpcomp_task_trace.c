@@ -26,9 +26,21 @@
 /* # - Romain Pereira <romain.pereira@cea.fr>                             # */
 /* #                                                                      # */
 /* ######################################################################## */
-# include "mpcomp_types.h"
+
+# if 0
+# define _GNU_SOURCE
+# include <link.h>
+# endif
+
+# include "mpcomp_types.h" /* defines MPC_OMP_TASK_COMPILE_TRACE */
 
 # if MPC_OMP_TASK_COMPILE_TRACE
+
+# include <fcntl.h>
+# include <sys/stat.h>
+# include <sys/time.h>
+# include <sys/types.h>
+
 
 # include "mpc_config.h"
 # if MPC_MPI
@@ -37,10 +49,6 @@
 
 # include "mpcomp_core.h"
 # include "mpcomp_task.h"
-
-# include <sys/types.h>
-# include <sys/stat.h>
-# include <fcntl.h>
 
 static int
 __getpid(void)
@@ -67,15 +75,9 @@ __get_infos(void)
 }
 
 int
-_mpc_omp_task_trace_begun(void)
-{
-    return mpc_omp_tls && mpc_omp_conf_get()->task_trace && __get_infos()->begun;
-}
-
-int
 _mpc_omp_task_trace_enabled(mpc_omp_task_trace_record_type_t type)
 {
-    return mpc_omp_tls && mpc_omp_conf_get()->task_trace && __get_infos()->begun && (mpc_omp_conf_get()->task_trace_mask & (1 << type));
+    return mpc_omp_task_trace_begun() && (mpc_omp_conf_get()->task_trace_mask & (1 << type));
 }
 
 static inline mpc_omp_task_trace_record_t *
@@ -453,10 +455,99 @@ __task_trace_create_file(void)
     return 0;
 }
 
+/**
+ * Check dynamic symbols loaded on the fly. This callback is called once per shared library loaded
+ * https://stackoverflow.com/questions/15779185/how-to-list-on-the-fly-all-the-functions-symbols-available-in-c-code-on-a-linux
+ *
+ * man dl_iterate_phdr
+ */
+#if 0
+static int
+__check_dynamic_symbols(struct dl_phdr_info * info, size_t size, void * data)
+{
+    printf("Name: \"%s\" (%d segments)\n", info->dlpi_name, info->dlpi_phnum);
+
+    /* Iterate over all headers of the current shared lib */
+    for (ElfW(Half) header_index = 0; header_index < info->dlpi_phnum; header_index++)
+    {
+        switch (info->dlpi_phdr[header_index].p_type)
+        {
+            case (PT_DYNAMIC):
+            {
+                /* Get a pointer to the first entry of the dynamic section.
+                 * It's address is the shared lib's address + the virtual address */
+                ElfW(Dyn) * dyn = (ElfW(Dyn) *)(info->dlpi_addr + info->dlpi_phdr[header_index].p_vaddr);
+
+                char * strtab       = NULL;
+                ElfW(Sym) * symtab  = NULL;
+                ElfW(Word) * hash   = NULL;
+
+                while (dyn->d_tag != DT_NULL)
+                {
+                    switch (dyn->d_tag)
+                    {
+                        case (DT_HASH):
+                        {
+                            hash = (ElfW(Word) *) dyn->d_un.d_ptr;
+                            break ;
+                        }
+                        case (DT_STRTAB):
+                        {
+                            strtab = (char*) dyn->d_un.d_ptr;
+                            break ;
+                        }
+                        case (DT_SYMTAB):
+                        {
+                            symtab = (ElfW(Sym) *) dyn->d_un.d_ptr;
+                            break ;
+                        }
+
+                        case (DT_NULL):
+                        default:
+                        {
+                            break ;
+                        }
+                    }
+                    ++dyn;
+                }
+
+                if (hash && strtab && symtab)
+                {
+                    /* Iterate over the symbol table */
+                    ElfW(Word) sym_cnt = hash[1];
+                    for (ElfW(Word) sym_index = 0; sym_index < sym_cnt; sym_index++)
+                    {
+                        /* get the name of the i-th symbol.
+                         * This is located at the address of st_name
+                         * relative to the beginning of the string table. */
+                        char * sym_name = &strtab[symtab[sym_index].st_name];
+                        puts(sym_name);
+                    }
+                }
+                break ;
+            }
+
+            default:
+            {
+                break ;
+            }
+        }
+    }
+    return 0;
+}
+#endif
+
+int
+mpc_omp_task_trace_begun(void)
+{
+    if (!mpc_omp_tls) return 0;
+    return mpc_omp_conf_get()->task_trace && __get_infos()->begun;
+}
+
 void
 mpc_omp_task_trace_begin(void)
 {
-    if (!mpc_omp_conf_get()->task_trace) return ;
+    if (!mpc_omp_conf_get()->task_trace)    return ;
 
     mpc_omp_thread_task_trace_infos_t * infos = __get_infos();
     assert(infos->head == NULL);
@@ -479,12 +570,20 @@ mpc_omp_task_trace_begin(void)
         infos->begun = 1;
     }
     __node_insert(__node_new(MPC_OMP_TASK_TRACE_TYPE_BEGIN));
+# if 0
+    dl_iterate_phdr(__check_dynamic_symbols, NULL);
+# endif
+    _mpc_omp_callback_run(MPC_OMP_CALLBACK_SCOPE_INSTANCE,  MPC_OMP_CALLBACK_TASK_TRACE_BEGIN);
+    _mpc_omp_callback_run(MPC_OMP_CALLBACK_SCOPE_THREAD,    MPC_OMP_CALLBACK_TASK_TRACE_BEGIN);
 }
 
 void
 mpc_omp_task_trace_end(void)
 {
-    if (!mpc_omp_conf_get()->task_trace) return ;
+    if (!mpc_omp_conf_get()->task_trace)    return ;
+
+    _mpc_omp_callback_run(MPC_OMP_CALLBACK_SCOPE_INSTANCE,  MPC_OMP_CALLBACK_TASK_TRACE_END);
+    _mpc_omp_callback_run(MPC_OMP_CALLBACK_SCOPE_THREAD,    MPC_OMP_CALLBACK_TASK_TRACE_END);
 
     __node_insert(__node_new(MPC_OMP_TASK_TRACE_TYPE_END));
     _mpc_omp_task_trace_flush();

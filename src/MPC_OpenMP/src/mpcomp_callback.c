@@ -38,14 +38,32 @@ void
 mpc_omp_callback(
     int (* func)(void * data),
     void * data,
+    mpc_omp_callback_scope_t scope,
     mpc_omp_callback_when_t when,
     mpc_omp_callback_repeat_t repeat)
 {
+    mpc_omp_init();
+
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
     assert(thread);
 
-    mpc_omp_instance_t * instance = thread->instance;
-    assert(instance);
+    mpc_omp_thread_callback_infos_t * master;
+    mpc_common_spinlock_t * lock;
+
+    if (scope == MPC_OMP_CALLBACK_SCOPE_INSTANCE)
+    {
+        mpc_omp_instance_t * instance = thread->instance;
+        assert(instance);
+
+        master = &(instance->callback_infos.master);
+        lock = &(instance->callback_infos.locks[when]);
+    }
+    else
+    {
+        assert(scope == MPC_OMP_CALLBACK_SCOPE_THREAD);
+        master = &(thread->callback_infos);
+        lock = NULL;
+    }
 
     mpc_omp_callback_t * callback = (mpc_omp_callback_t *) malloc(sizeof(mpc_omp_callback_t));
     assert(callback);
@@ -55,15 +73,12 @@ mpc_omp_callback(
     callback->when      = when;
     callback->repeat    = repeat;
 
-    mpc_omp_instance_callback_infos_t * infos = &(instance->callback_infos);
-    mpc_common_spinlock_t * lock = &(infos->locks[callback->when]);
+    if (lock) mpc_common_spinlock_lock(lock);
 
-    mpc_common_spinlock_lock(lock);
-    {
-        callback->next = infos->callbacks[callback->when];
-        infos->callbacks[callback->when] = callback;
-    }
-    mpc_common_spinlock_unlock(lock);
+     callback->next = master->callbacks[callback->when];
+     master->callbacks[callback->when] = callback;
+
+    if (lock) mpc_common_spinlock_unlock(lock);
 }
 
 /**
@@ -71,22 +86,33 @@ mpc_omp_callback(
  * @param when - the event
  */
 void
-_mpc_omp_callback_run(mpc_omp_callback_when_t when)
+_mpc_omp_callback_run(mpc_omp_callback_scope_t scope, mpc_omp_callback_when_t when)
 {
-    mpc_omp_thread_t     * thread    = (mpc_omp_thread_t *) mpc_omp_tls;
+    mpc_omp_thread_t  * thread = (mpc_omp_thread_t *) mpc_omp_tls;
     assert(thread);
 
-    mpc_omp_instance_t   * instance  = thread->instance;
-    assert(instance);
+    mpc_omp_thread_callback_infos_t * master;
+    mpc_common_spinlock_t * lock;
 
-    mpc_omp_instance_callback_infos_t * infos = &(instance->callback_infos);
+    if (scope == MPC_OMP_CALLBACK_SCOPE_INSTANCE)
+    {
+        mpc_omp_instance_t * instance = thread->instance;
+        assert(instance);
 
-    mpc_common_spinlock_t * lock = &(infos->locks[when]);
+        master = &(instance->callback_infos.master);
+        lock = &(instance->callback_infos.locks[when]);
+    }
+    else
+    {
+        assert(scope == MPC_OMP_CALLBACK_SCOPE_THREAD);
+        master = &(thread->callback_infos);
+        lock = NULL;
+    }
 
-    if (mpc_common_spinlock_trylock(lock) == 0)
+    if (lock == NULL || mpc_common_spinlock_trylock(lock) == 0)
     {
         mpc_omp_callback_t * prev  = NULL;
-        mpc_omp_callback_t * callback = infos->callbacks[when];
+        mpc_omp_callback_t * callback = master->callbacks[when];
         while (callback)
         {
             /* if the callback should be popped out of the list */
@@ -112,7 +138,7 @@ _mpc_omp_callback_run(mpc_omp_callback_when_t when)
             if (pop)
             {
                 if (prev)   prev->next = callback->next;
-                else        infos->callbacks[when] = callback->next;
+                else        master->callbacks[when] = callback->next;
 
                 mpc_omp_callback_t * next = callback->next;
                 mpc_omp_free(callback);
@@ -126,6 +152,6 @@ _mpc_omp_callback_run(mpc_omp_callback_when_t when)
 
             /* process next callback for this event */
         }
-        mpc_common_spinlock_unlock(lock);
+        if (lock) mpc_common_spinlock_unlock(lock);
     }
 }

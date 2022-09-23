@@ -123,9 +123,24 @@ extern "C" {
         /* when there is no more ready tasks */
         MPC_OMP_CALLBACK_TASK_SCHEDULER_FAMINE,
 
+        /* when a thread begin or ends tracing */
+        MPC_OMP_CALLBACK_TASK_TRACE_BEGIN,
+        MPC_OMP_CALLBACK_TASK_TRACE_END,
+
         /* max number */
         MPC_OMP_CALLBACK_MAX
     }               mpc_omp_callback_when_t;
+
+    typedef enum    mpc_omp_callback_scope_s
+    {
+        /* callbacks is thread-related (registerd and called for each threads) */
+        MPC_OMP_CALLBACK_SCOPE_THREAD,
+
+        /* callback is instance-related (registered and called once per instance) */
+        MPC_OMP_CALLBACK_SCOPE_INSTANCE,
+
+        MPC_OMP_CALLBACK_SCOPE_MAX,
+    }               mpc_omp_callback_scope_t;
 
     typedef enum    mpc_omp_callback_repeat_t
     {
@@ -145,9 +160,11 @@ extern "C" {
     }               mpc_omp_callback_t;
 
     /**
-     * `pragma omp callback [when(indicator)] [repeat(when)]`
+     * `pragma omp callback [when(indicator)] [repeat(when)] [scope(thread,team,instance)]`
      *
      *  A **callback** region defines a routine that is executed by the runtime.
+     *
+     *  The **scope** clause defines the level on which the callback is bound.
      *
      *  The **when** clause defines when the region should be executed (see `mpc_omp_callback_when`)
      *  Default value is `MPC_OMP_CALLBACK_SCHEDULER_FAMINE`.
@@ -159,7 +176,12 @@ extern "C" {
      *
      *  Default value is `repeat(1)`
      */
-    void mpc_omp_callback(int (* func)(void * data), void * data, mpc_omp_callback_when_t when, mpc_omp_callback_repeat_t repeat);
+    void mpc_omp_callback(
+        int (* func)(void * data),
+        void * data,
+        mpc_omp_callback_scope_t scope,
+        mpc_omp_callback_when_t when,
+        mpc_omp_callback_repeat_t repeat);
 
     /** Maximum length of a task label */
     # define MPC_OMP_TASK_LABEL_MAX_LENGTH 64
@@ -236,6 +258,7 @@ extern "C" {
     /* task trace calls */
     void mpc_omp_task_trace_begin(void);
     void mpc_omp_task_trace_end(void);
+    int mpc_omp_task_trace_begun(void);
     size_t mpc_omp_task_trace_record_sizeof(int type);
 
     /* return true if the thread is currently within an omp task */
