@@ -1,4 +1,45 @@
 #!/bin/sh
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - PERACHE Marc marc.perache@cea.fr                                 #
+#   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
+#                                                                      #
+########################################################################
+
+# Common variables
+SCRIPT=$(readlink -f "$0")
+SCRIPTPATH=$(dirname "$SCRIPT")
+
+#Extract compiler configuration and flags
+# - MPC_INSTALL_PREFIX
+# - MPC_SHARE_DIR
+# - CC
+# - CFLAGS
+eval $("${SCRIPTPATH}/mpc_cflags" --sh -p -s -cc -f)
+
+COMPILER="$CC"
+LDFLAGS=$("${MPC_INSTALL_PREFIX}/bin/mpc_ldflags")
+
+# Source Common function library
+
+# shellcheck source=/dev/null
+. "${MPC_SHARE_DIR}/mpc_compiler_common.sh"
 
 # This is the MPI class compiler proxy
 # to the MPC one, just passes the arguments
@@ -7,10 +48,12 @@
 # you can export MPI_PRIV to do it from here
 # or just use their mpc_* counterpart
 
-MPI_PRIV_ARG="-fnompc-privatize"
+MPI_PRIV_ARG=""
 
-if test -n "$MPI_PRIV"; then
-	MPI_PRIV_ARG=""
+compiler_is_privatizing "mpc_cxx"
+
+if test "x${RES}" = "xyes" -a -n "$MPI_PRIV"; then
+	MPI_PRIV_ARG="-fmpc-privatize"
 fi
 
 # Now invoke the compiler
