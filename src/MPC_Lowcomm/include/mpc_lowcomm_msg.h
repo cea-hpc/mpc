@@ -19,6 +19,10 @@
 #include "ofi/ofi_types.h"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /************************************************************************/
 /* mpc_lowcomm_request_t		                                                    */
 /************************************************************************/
@@ -541,5 +545,9 @@ void sctk_m_probe_matching_set(int value);
 void sctk_m_probe_matching_reset();
 int sctk_m_probe_matching_get();
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MPC_MESSAGE_PASSING_INCLUDE_COMM_H_ */

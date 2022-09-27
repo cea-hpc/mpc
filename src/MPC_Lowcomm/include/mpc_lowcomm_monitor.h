@@ -32,6 +32,10 @@
 #include <stdlib.h>
 #include <mpc_common_types.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /***************
 * ERROR CODES *
 ***************/
@@ -640,5 +644,9 @@ mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_naming(mpc_lowcomm_peer_uid_t
                                                           const char *name,
                                                           const char *port_name,
                                                           mpc_lowcomm_monitor_retcode_t *ret);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MPC_LOWCOMM_MONITOR_H_ */

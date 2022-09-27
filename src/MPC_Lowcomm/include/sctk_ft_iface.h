@@ -26,6 +26,10 @@
 
 #include "sctk_ft_types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* See src/ft.c for Documentation */
 
 int sctk_ft_init();
@@ -50,5 +54,9 @@ int sctk_ft_enable();
 
 int sctk_ft_no_suspend_start();
 void sctk_ft_no_suspend_end();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ifndef __FT_IFACE_H */

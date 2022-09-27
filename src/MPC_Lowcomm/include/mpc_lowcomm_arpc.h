@@ -24,6 +24,10 @@
 #ifndef MPC_ARPC_H
 #define MPC_ARPC_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct sctk_arpc_context_s;
 struct sctk_ptl_am_msg_s;
 
@@ -35,4 +39,9 @@ int mpc_arpc_recv_call_ptl(struct sctk_arpc_context_s* ctx, const void* input, s
 
 int mpc_arpc_polling_request_ptl(struct sctk_arpc_context_s* ctx);
 int mpc_arpc_free_response_ptl(void* resp_addr);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

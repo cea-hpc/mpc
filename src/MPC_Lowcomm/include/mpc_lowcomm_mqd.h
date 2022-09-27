@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Name of the library hosting MQD
  *        (for MPC it is self-hosted)
@@ -225,5 +229,9 @@ void mqsx_dump_comms(mqs_process * proc);
 
 int mqsx_dump_communicators_json(mqs_process * proc, FILE *out);
 int mqsx_dump_comms_json(mqs_process * proc, FILE *out);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MPC_LOWCOMM_MQD */

@@ -25,6 +25,10 @@
 
 #include "mpc_lowcomm_types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** This is the MPC low-level RDMA interface defining both windows
  * and operations on remote memory areas this interface has been
  * designed to be a support for an MPI one-sided layer hence
@@ -323,5 +327,9 @@ void mpc_lowcomm_rdma_window_RDMA_CAS( mpc_lowcomm_rdma_window_t remote_win_id, 
  * @arg req A request to wait the RMA with @ref mpc_lowcomm_rdma_window_RDMA_wait
  */
 void mpc_lowcomm_rdma_window_RDMA_CAS_win( mpc_lowcomm_rdma_window_t remote_win_id, size_t remote_offset,  mpc_lowcomm_rdma_window_t local_win_id, size_t res_offset, void * comp, void * new_data, RDMA_type type, mpc_lowcomm_request_t  * req );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SCTK_RDMA_H */

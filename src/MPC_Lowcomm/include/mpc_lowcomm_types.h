@@ -25,6 +25,10 @@
 
 #include <mpc_lowcomm_communicator.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*************
  * DATATYPES *
  *************/
@@ -246,5 +250,9 @@ typedef enum sctk_ft_state_e
 #define MPC_BARRIER_TAG -10
 #define MPC_ALLGATHER_TAG -11
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MPC_LOWCOMM_TYPES_H_ */
