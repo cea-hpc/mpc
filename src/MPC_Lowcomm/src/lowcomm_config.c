@@ -8,6 +8,7 @@
 
 //FIXME: enable verbosity when only lowcomm module is loaded
 #include <mpc_common_flags.h>
+#include <limits.h>
 
 #include "coll.h"
 
