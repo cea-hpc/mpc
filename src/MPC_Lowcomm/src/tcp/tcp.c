@@ -30,6 +30,7 @@
 
 #include <dirent.h>
 #include <lcr/lcr_component.h>
+#include <limits.h>
 
 #include "sctk_rail.h"
 
