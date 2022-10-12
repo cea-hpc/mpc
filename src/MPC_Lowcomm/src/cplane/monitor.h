@@ -61,6 +61,7 @@ typedef struct _mpc_lowcomm_client_ctx_s
 {
 	uint64_t                       uid;
 	int                            client_fd;
+	int                            duplicate; /* simultaneous conn ? */
 	time_t                         last_used;
 	pthread_mutex_t                write_lock;
 	struct _mpc_lowcomm_monitor_s *monitor;
@@ -82,8 +83,7 @@ _mpc_lowcomm_client_ctx_t *_mpc_lowcomm_monitor_client_known(struct _mpc_lowcomm
 int _mpc_lowcomm_monitor_client_add(struct _mpc_lowcomm_monitor_s *monitor,
                                     _mpc_lowcomm_client_ctx_t *client);
 
-int _mpc_lowcomm_monitor_client_remove(struct _mpc_lowcomm_monitor_s *monitor,
-                                       mpc_lowcomm_peer_uid_t uid);
+int _mpc_lowcomm_monitor_client_remove(_mpc_lowcomm_client_ctx_t *ctx);
 
 typedef enum
 {

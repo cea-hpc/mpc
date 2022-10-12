@@ -31,6 +31,20 @@ extern "C"
 #include <mpc_common_helper.h>
 #include "lowcomm_types_internal.h"
 
+/* \brief TCP header
+ *
+ */
+typedef struct lcr_tcp_am_hdr {
+	uint8_t am_id;
+	size_t length;
+} lcr_tcp_am_hdr_t;
+
+typedef struct lcr_tcp_am_zcopy_hdr {
+	lcr_tcp_am_hdr_t base;
+	int iovcnt;
+	struct iovec iov[0];
+} lcr_tcp_am_zcopy_hdr_t;
+
 /** \brief ROUTE level data structure for TCP
 *
 *   This structure is stored in each \ref _mpc_lowcomm_endpoint_s structure
@@ -55,6 +69,16 @@ typedef struct
 	char connection_infos[MPC_COMMON_MAX_STRING_SIZE];              /**< Connection info for this listening socket */
 	size_t connection_infos_size;                        /**< Length of the connection_info field */
 	void * ( *tcp_thread_loop ) ( struct _mpc_lowcomm_endpoint_s * ); /**< Function to call when registering a route (RDMA/MULTIRAIL/TCP) */
+
+	/* Config */
+	int bcopy_buf_size;
+	int zcopy_buf_size;
+
+	/* Buffered protocol */
+	size_t bcopy_thresh;
+
+	/* Zero copy protocol */
+	int max_iov;
 } _mpc_lowcomm_tcp_rail_info_t;
 
 

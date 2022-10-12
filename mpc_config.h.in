@@ -844,6 +844,9 @@
 /* Default launcher configured for MPC */
 #undef MPC_LAUNCHER
 
+/* Protocol support is enabled */
+#undef MPC_LOWCOMM_PROTOCOL
+
 /* MPC_Lowcomm module was enabled */
 #undef MPC_Lowcomm
 

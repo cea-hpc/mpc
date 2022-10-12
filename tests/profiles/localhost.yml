@@ -1,0 +1,102 @@
+compiler:
+  commands: {cc: mpc_cc, cxx: mpc_cxx, f77: mpc_f77, f90: /path/to/f90, fc: /path/to/fc}
+  package_manager:
+    module: []
+    spack: []
+  variants:
+    cuda: {args: ''}
+    openmp: {args: -fopenmp}
+    strict: {args: -Werror -Wall -Wextra}
+    tbb: {args: -ltbb -ltbbmalloc -ldl}
+criterion:
+  iterators:
+    n_core:
+      subtitle: n
+      values: [2]
+    n_node:
+      subtitle: N
+      values: [2]
+    n_proc:
+      subtitle: p
+      values: [2]
+    portalsrails:
+      subtitle: PTL
+      values: [0, 1]
+    strp_len:
+      subtitle: SL
+      values: [8192]
+    strp_size:
+      subtitle: SS
+      values: [32768]
+    tcprails:
+      subtitle: TCP
+      values: [0, 1]
+group:
+  GRPMPI:
+    run:
+      iterate:
+        n_omp: {values: null}
+  GRPOMP:
+    run:
+      iterate:
+        n_mpi: {values: null}
+        n_node: {values: null}
+  GRPSERIAL:
+    run:
+      iterate:
+        n_core: {values: null}
+        n_mpi: {values: null}
+        n_node: {values: null}
+        n_omp: {values: null}
+machine:
+  concurrent_run: 1
+  default_partition: knl
+  job_manager:
+    allocate: {args: '', program: echo, wrapper: ''}
+    maxtime: 1500
+    mintime: 1000
+    run: {args: '', program: echo, wrapper: ''}
+  name: localhost
+  nodes: 1
+  partitions:
+  - cores_per_node: 68
+    job_manager: {mintime: 10}
+    name: knl
+    nodes: 4
+runtime:
+  args: -vv -c=1 --net=lcp -m=pthread
+  iterators:
+    n_core: {numeric: true, option: -n=, position: after}
+    n_node: {numeric: true, option: -N=, position: after}
+    n_proc: {numeric: true, option: -p=, position: after}
+    portalsrails: {numeric: false, option: MPCFRAMEWORK_LOWCOMM_PROTOCOL_LCRLIST_PORTALSMPI_COUNT=,
+      type: environment}
+    strp_len: {numeric: true, option: MPCFRAMEWORK_LOWCOMM_PROTOCOL_STRIPELEN=, type: environment}
+    strp_size: {numeric: true, option: MPCFRAMEWORK_LOWCOMM_PROTOCOL_STRIPINGSIZE=,
+      type: environment}
+    tcprails: {numeric: false, option: MPCFRAMEWORK_LOWCOMM_PROTOCOL_LCRLIST_TCPMPI_COUNT=,
+      type: environment}
+  package_manager:
+    module: []
+    spack: []
+  plugin: !!binary |
+    YVcxd2IzSjBJRzFoZEdnS1puSnZiU0J3WTNaekxuQnNkV2RwYm5NZ2FXMXdiM0owSUZCc2RXZHBi
+    Z29LWTJ4aGMzTWdUVkJKS0ZCc2RXZHBiaWs2Q2lBZ0lDQnpkR1Z3SUQwZ1VHeDFaMmx1TGxOMFpY
+    QXVWRVZUVkY5RlZrRk1DaUFnSUNBS0lDQWdJR1JsWmlCeWRXNG9jMlZzWml3Z0ttRnlaM01zSUNv
+    cWEzZGhjbWR6S1RvS0lDQWdJQ01nZEdocGN5QmthV04wSUcxaGNITWdhMlY1Y3lBb2FYUWdibUZ0
+    WlNrZ2QybDBhQ0IyWVd4MVpYTWdLR2wwSUhaaGJIVmxLUW9nSUNBZ0l5QnlaWFIxY201eklGUnlk
+    V1VnYVdZZ2RHaGxJR052YldKcGJtRjBhVzl1SUhOb2IzVnNaQ0JpWlNCMWMyVmtDaUFnSUNBZ0lD
+    QWdZMjl0WWlBOUlHdDNZWEpuYzFzblkyOXRZbWx1WVhScGIyNG5YUW9nSUNBZ0lDQWdJSEJ2Y25S
+    aGJITnlZV2xzSUQwZ1kyOXRZaTVuWlhRb0ozQnZjblJoYkhOeVlXbHNjeWNzSUU1dmJtVXBDaUFn
+    SUNBZ0lDQWdkR053Y21GcGJDQTlJR052YldJdVoyVjBLQ2QwWTNCeVlXbHNjeWNzSUU1dmJtVXBD
+    aUFnSUNBZ0lDQWdibDl3Y205aklEMGdZMjl0WWk1blpYUW9KMjVmY0hKdll5Y3NJRTV2Ym1VcENp
+    QWdJQ0FnSUNBZ2JsOXViMlJsSUQwZ1kyOXRZaTVuWlhRb0oyNWZibTlrWlNjc0lFNXZibVVwQ2lB
+    Z0lDQWdJQ0FnYmw5amIzSmxJRDBnWTI5dFlpNW5aWFFvSjI1ZlkyOXlaU2NzSUU1dmJtVXBDZ29n
+    SUNBZ0lDQWdJR2xtSUNodVgzQnliMk1nUFQwZ2JsOXViMlJsS1NCaGJtUWdLRzVmYm05a1pTQTlQ
+    U0J1WDJOdmNtVXBJR0Z1WkNBb2NHOXlkR0ZzYzNKaGFXd2dJVDBnTUNCdmNpQjBZM0J5WVdsc0lD
+    RTlJREFwSURvS0lDQWdJQ0FnSUNBZ0lDQWdjbVYwZFhKdUlGUnlkV1VLSUNBZ0lDQWdJQ0JsYkhO
+    bE9nb2dJQ0FnSUNBZ0lDQWdJQ0J5WlhSMWNtNGdSbUZzYzJVSw==
+  program: mpcrun
+validate:
+  expect_exit: 0
+  time: {kill_after: 5}

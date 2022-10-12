@@ -6,6 +6,9 @@
 #include <dlfcn.h>
 #include <ctype.h>
 
+//FIXME: enable verbosity when only lowcomm module is loaded
+#include <mpc_common_flags.h>
+
 #include "coll.h"
 
 #include <sctk_alloc.h>
@@ -296,11 +299,14 @@ static inline mpc_conf_config_type_t *__init_driver_tcp(struct _mpc_lowcomm_conf
 
 	struct _mpc_lowcomm_config_struct_net_driver_tcp *tcp = &driver->value.tcp;
 
+        tcp->max_msg_size = INT_MAX;
+
 	/*
 	  Create the config object
 	*/
 
 	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("tcp",
+                                                                PARAM("maxmsgsize", &tcp->max_msg_size, MPC_CONF_INT, "Maximum message size (in B)"),
 	                                                        NULL);
 
 	return ret;
@@ -775,6 +781,8 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
 	char *topology,
 	int ondemand,
 	int rdma,
+        int offload,
+        int max_ifaces,
 	char *config)
 {
     struct _mpc_lowcomm_config_struct_net_rail * ret = sctk_malloc(sizeof(struct _mpc_lowcomm_config_struct_net_rail));
@@ -800,7 +808,9 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
     snprintf(ret->topology, MPC_CONF_STRING_SIZE, "%s", topology);
     ret->ondemand = ondemand;
     ret->rdma = rdma;
-    snprintf(ret->config, MPC_CONF_STRING_SIZE, "%s", config);
+    ret->offload = offload;
+    ret->max_ifaces = max_ifaces;
+    snprintf(ret->config, MPC_CONF_STRING_SIZE, config);
 
     mpc_conf_config_type_t *gates = mpc_conf_config_type_init("gates", NULL);
 
@@ -817,6 +827,8 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
 	                                                         PARAM("topology", ret->topology, MPC_CONF_STRING, "Topology to be bootstrapped on this network"),
 	                                                         PARAM("ondemand", &ret->ondemand, MPC_CONF_BOOL, "Are on-demmand connections allowed on this network"),
 	                                                         PARAM("rdma", &ret->rdma, MPC_CONF_BOOL, "Can this rail provide RDMA capabilities"),
+	                                                         PARAM("offload", &ret->offload, MPC_CONF_BOOL, "Can this rail provide tag offload capabilities"),
+	                                                         PARAM("maxifaces", &ret->max_ifaces, MPC_CONF_INT, "Maximum number of rails instances that can be used for multirail"),
 	                                                         PARAM("config", ret->config, MPC_CONF_STRING, "Name of the rail configuration to be used for this rail"),
 	                                                         PARAM("gates", gates, MPC_CONF_TYPE, "Gates to check before taking this rail"),
 	                                                         NULL);
@@ -832,16 +844,16 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_rail_conf_init()
 	__mpc_lowcomm_rail_conf_default();
 
     /* Here we instanciate default rails */
-    mpc_conf_config_type_t *shm_mpi = __new_rail_conf_instance("shmmpi", 99, "default", "machine", "socket", "fully", 0, 0, "shmconfigmpi");
-    mpc_conf_config_type_t *tcp_mpi = __new_rail_conf_instance("tcpmpi", 9, "default", "machine", "socket", "ring", 1, 0, "tcpconfigmpi");
+    mpc_conf_config_type_t *shm_mpi = __new_rail_conf_instance("shmmpi", 99, "default", "machine", "socket", "fully", 0, 0, 0, 0, "shmconfigmpi");
+    mpc_conf_config_type_t *tcp_mpi = __new_rail_conf_instance("tcpmpi", 9, "default", "machine", "socket", "ring", 1, 0, 0, 1, "tcpconfigmpi");
 #ifdef MPC_USE_PORTALS
-    mpc_conf_config_type_t *portals_mpi = __new_rail_conf_instance("portalsmpi", 6, "default", "machine", "socket", "ring", 1, 1, "portalsconfigmpi");
+    mpc_conf_config_type_t *portals_mpi = __new_rail_conf_instance("portalsmpi", 6, "default", "machine", "socket", "ring", 1, 1, 1, 1, "portalsconfigmpi");
 #endif
 #ifdef MPC_USE_INFINIBAND
-    mpc_conf_config_type_t *ib_mpi = __new_rail_conf_instance("ibmpi", 1, "!mlx.*", "machine", "socket", "ring", 1, 1, "ibconfigmpi");
+    mpc_conf_config_type_t *ib_mpi = __new_rail_conf_instance("ibmpi", 1, "!mlx.*", "machine", "socket", "ring", 1, 1, 0, 0, "ibconfigmpi");
 #endif
 #ifdef MPC_USE_OFI
-    mpc_conf_config_type_t *ofi_mpi = __new_rail_conf_instance("ofimpi", 1, "default", "machine", "socket", "ring", 1, 1, "oficonfigmpi");
+    mpc_conf_config_type_t *ofi_mpi = __new_rail_conf_instance("ofimpi", 1, "default", "machine", "socket", "ring", 1, 1, 0, 0, "oficonfigmpi");
 #endif
 
   	mpc_conf_config_type_t *rails = mpc_conf_config_type_init("rails",
@@ -871,6 +883,8 @@ mpc_conf_config_type_t * ___new_default_rail(char * name)
                                     "ring",
                                     1,
                                     0,
+                                    0,
+                                    1,
                                     "tcpconfigmpi");
 }
 
@@ -1361,6 +1375,37 @@ static inline mpc_conf_config_type_t * __init_infiniband_global_conf(void)
 }
 #endif
 
+static struct _mpc_lowcomm_config_struct_protocol __protocol_conf;
+
+static struct _mpc_lowcomm_config_struct_protocol *__mpc_lowcomm_proto_conf_init()
+{
+	memset(&__protocol_conf, 0, sizeof(struct _mpc_lowcomm_config_struct_protocol));
+	return &__protocol_conf;
+}
+
+struct _mpc_lowcomm_config_struct_protocol *_mpc_lowcomm_config_proto_get(void)
+{
+	return &__protocol_conf;
+}
+
+static inline mpc_conf_config_type_t *__mpc_lowcomm_protocol_conf_init(void)
+{
+	struct _mpc_lowcomm_config_struct_protocol *proto = __mpc_lowcomm_proto_conf_init();
+
+        proto->multirail_enabled = 1;
+        snprintf(proto->transports, MPC_CONF_STRING_SIZE, "tcp");
+        snprintf(proto->devices, MPC_CONF_STRING_SIZE, "any");
+
+	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("protocol",
+			PARAM("verbosity", &mpc_common_get_flags()->verbosity, MPC_CONF_INT, "Debug level message (1-3)"),
+			PARAM("multirailenabled", &proto->multirail_enabled, MPC_CONF_INT, "Is multirail enabled ?"),
+			PARAM("transports", proto->transports, MPC_CONF_STRING, "Coma separated list of supported transports (tcp, ptl, all)"),
+			PARAM("devices", proto->devices, MPC_CONF_STRING, "Coma separated list of devices to use (eth0, ptl0, any)"),
+			NULL);
+
+	return ret;
+}
+
 static inline mpc_conf_config_type_t * __init_workshare_conf(void)
 {
 	struct _mpc_lowcomm_workshare_config *ws = &__lowcomm_conf.workshare;
@@ -1599,25 +1644,25 @@ void _mpc_lowcomm_config_register(void)
 
 	mpc_conf_config_type_t *coll     = __mpc_lowcomm_coll_conf_init();
 	mpc_conf_config_type_t *networks = __mpc_lowcomm_network_conf_init();
+	mpc_conf_config_type_t *protocol = __mpc_lowcomm_protocol_conf_init();
 	mpc_conf_config_type_t *workshare = __init_workshare_conf();
 	mpc_conf_config_type_t *mempool = __init_mem_pool_config();
 
 
-	mpc_conf_config_type_t *lowcomm = mpc_conf_config_type_init("lowcomm",
+        mpc_conf_config_type_t *lowcomm = mpc_conf_config_type_init("lowcomm",
 #ifdef SCTK_USE_CHECKSUM
-	                                                            PARAM("checksum", &__lowcomm_conf.checksum, MPC_CONF_BOOL, "Enable buffer checksum for P2P messages"),
+                                                                    PARAM("checksum", &__lowcomm_conf.checksum, MPC_CONF_BOOL, "Enable buffer checksum for P2P messages"),
 #endif
 #ifdef MPC_USE_INFINIBAND
-	                                                            PARAM("ibmmu", __init_infiniband_global_conf(), MPC_CONF_TYPE, "Infiniband global Memory Management Unit (MMU) configuration."),
+                                                                    PARAM("ibmmu", __init_infiniband_global_conf(), MPC_CONF_TYPE, "Infiniband global Memory Management Unit (MMU) configuration."),
 #endif
-	                                                            PARAM("coll", coll, MPC_CONF_TYPE, "Lowcomm collective configuration"),
-	                                                            PARAM("networking", networks, MPC_CONF_TYPE, "Lowcomm Networking configuration"),
-																PARAM( "memorypool", mempool, MPC_CONF_TYPE,
-																		"Shared-memory pool configuration" ),
-																PARAM("workshare", workshare, MPC_CONF_TYPE, "Workshare configuration"),
-	                                                            NULL);
+                                                                    PARAM("coll", coll, MPC_CONF_TYPE, "Lowcomm collective configuration"),
+                                                                    PARAM("protocol", protocol, MPC_CONF_TYPE, "Lowcomm protocol configuration"),
+                                                                    PARAM("networking", networks, MPC_CONF_TYPE, "Lowcomm Networking configuration"),
+                                                                    PARAM("workshare", workshare, MPC_CONF_TYPE, "Workshare configuration"),
+                                                                    NULL);
 
-	mpc_conf_root_config_append("mpcframework", lowcomm, "MPC Lowcomm Configuration");
+        mpc_conf_root_config_append("mpcframework", lowcomm, "MPC Lowcomm Configuration");
 }
 
 void _mpc_lowcomm_config_validate(void)

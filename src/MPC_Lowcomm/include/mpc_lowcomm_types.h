@@ -235,6 +235,7 @@ typedef enum sctk_ft_state_e
 /** SUCCESS and ERROR **/
 #define MPC_LOWCOMM_SUCCESS 0
 #define MPC_LOWCOMM_ERROR 1
+#define MPC_LOWCOMM_INPROGRESS 2
 
 /** Wildcards **/
 #define MPC_ANY_TAG -1

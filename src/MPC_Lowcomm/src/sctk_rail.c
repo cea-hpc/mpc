@@ -54,7 +54,77 @@ void sctk_rail_allocate ( int count )
 	__rails.rail_number = count;
 }
 
+int lcr_rail_init(lcr_rail_config_t *rail_config,
+                  lcr_driver_config_t *driver_config,
+                  sctk_rail_info_t **rail_p)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+	sctk_rail_info_t * rail;
 
+        rail = sctk_malloc(sizeof(sctk_rail_info_t));
+        if (rail == NULL) {
+                mpc_common_debug_error("LCR: could not allocate rail");
+                rc = MPC_LOWCOMM_ERROR;
+                goto err;
+        }
+        memset(rail, 0, sizeof(sctk_rail_info_t));
+
+	/* Load Config */
+	rail->runtime_config_rail = rail_config;
+	rail->runtime_config_driver_config = driver_config;
+
+	/* Init Empty route table */
+	rail->route_table = _mpc_lowcomm_endpoint_table_new();
+
+	/* Load and save Rail Device (NULL if not found) */
+	rail->rail_device = mpc_topology_device_get_from_handle(rail_config->device);
+
+        if(!rail->rail_device ) {
+                if(strcmp(rail_config->device, "default") && 
+                   rail_config->device[0] != '!' ) {
+                        mpc_common_debug_error("No such device %s", 
+                                               rail_config->device );
+                        rc = MPC_LOWCOMM_ERROR;
+                        goto err;
+                }
+        }
+
+	/* Initialize Polling */
+	int target_core = 0;
+
+	/* If the device is known load polling topology */
+	if(rail->rail_device) {
+		target_core = rail->rail_device->root_core;
+	} else {
+		/* Otherwise just consider that the work is done on "0"*/
+		target_core = 0;
+	}
+
+	/* Load Polling Config */
+	struct _mpc_lowcomm_config_struct_topological_polling * any_source = 
+                &rail_config->any_source_polling;
+
+	/* Set any source Polling */
+        sctk_topological_polling_tree_init(&rail->any_source_polling_tree,
+                                           any_source->trigger,
+                                           any_source->range,
+                                           target_core );
+
+	/* Checkout is RDMA */
+	int is_rdma = rail_config->rdma;
+	rail->is_rdma = is_rdma;
+
+	/* Retrieve priority */
+	rail->priority = rail_config->priority;
+
+        *rail_p = rail;
+
+        return rc;
+err:
+        sctk_free(rail);
+
+        return rc;
+}
 
 static inline sctk_rail_info_t * sctk_rail_register_with_parent( struct _mpc_lowcomm_config_struct_net_rail *runtime_config_rail,
                                          struct _mpc_lowcomm_config_struct_net_driver_config *runtime_config_driver_config,
@@ -589,6 +659,29 @@ void sctk_rail_dump_routes()
 }
 
 /************************************************************************/
+/* Handlers                                                             */
+/************************************************************************/
+int lcr_iface_set_am_handler(sctk_rail_info_t *rail, uint8_t id,
+		lcr_am_callback_t cb, void *arg, uint64_t flags)
+{
+	int rc;
+	if (id >= LCR_AM_ID_MAX) {
+		mpc_common_debug_error("LCP: active message out of range: \
+				       id=%d, id max=%d.", id, LCR_AM_ID_MAX);
+		rc = MPC_LOWCOMM_ERROR;
+		goto err;
+	}
+	
+	rail->am[id].cb = cb;
+	rail->am[id].arg = arg;
+	rail->am[id].flags = flags;
+
+	rc = MPC_LOWCOMM_SUCCESS;
+err:	
+	return rc;
+}
+
+/************************************************************************/
 /* Rail Pin CTX                                                         */
 /************************************************************************/
 
@@ -727,14 +820,18 @@ void sctk_rail_add_static_route (sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_t
 		_mpc_lowcomm_endpoint_table_add_static_route ( rail->route_table, tmp );
 		/* Add in parent rail without pushing in multirail */
 		_mpc_lowcomm_endpoint_table_add_static_route ( rail->parent_rail->route_table, tmp);
+#ifndef MPC_LOWCOMM_PROTOCOL
 		/* Push in multirail */
 		_mpc_lowcomm_multirail_table_push_endpoint( tmp );
+#endif
 	}
 	else
 	{
 		/* NO PARENT : Just add the route and register in multirail */
 		_mpc_lowcomm_endpoint_table_add_static_route ( rail->route_table, tmp);
+#ifndef MPC_LOWCOMM_PROTOCOL
 		_mpc_lowcomm_multirail_table_push_endpoint(tmp);
+#endif
 	}
 }
 
@@ -754,14 +851,20 @@ void sctk_rail_add_dynamic_route ( sctk_rail_info_t *rail, _mpc_lowcomm_endpoint
 		_mpc_lowcomm_endpoint_table_add_dynamic_route (  rail->route_table, tmp);
 		/* Add in parent rail without pushing in multirail */
 		_mpc_lowcomm_endpoint_table_add_dynamic_route ( rail->parent_rail->route_table, tmp);
+#ifndef MPC_LOWCOMM_PROTOCOL
+                //NOTE: multirail replaced by lcp so tables not instanciated
 		/* Push in multirail */
 		_mpc_lowcomm_multirail_table_push_endpoint( tmp );
+#endif
 	}
 	else
 	{
 		/* NO PARENT : Just add the route and register in multirail */
 		_mpc_lowcomm_endpoint_table_add_dynamic_route (  rail->route_table, tmp);
+#ifndef MPC_LOWCOMM_PROTOCOL
+                //NOTE: multirail replaced by lcp so tables not instanciated
 		_mpc_lowcomm_multirail_table_push_endpoint(tmp);
+#endif
 	}
 
 }

@@ -55,6 +55,9 @@ typedef uint64_t mpc_lowcomm_communicator_id_t;
 /** This is the ID of COMM self */
 #define MPC_LOWCOMM_COMM_SELF_NUMERIC_ID     2
 
+/* Expose communicator init needed for unit test */
+void _mpc_lowcomm_communicator_init(void);
+void _mpc_lowcomm_communicator_release(void);
 /**
  * @brief Get COMM_WORLD identifier
  * 

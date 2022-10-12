@@ -147,7 +147,7 @@ static inline void __sctk_ptl_set_limits(sctk_ptl_limits_t* l)
  * Create the link between our program and the real driver.
  * \return the Portals rail object
  */
-sctk_ptl_rail_info_t sctk_ptl_hardware_init()
+sctk_ptl_rail_info_t sctk_ptl_hardware_init(sctk_ptl_interface_t iface)
 {
 
 	/* BXI specific We first need to make sure we do not exhaust command queues on the BXI
@@ -194,7 +194,7 @@ sctk_ptl_rail_info_t sctk_ptl_hardware_init()
 
 	/* init one physical interface */
 	sctk_ptl_chk(PtlNIInit(
-		PTL_IFACE_DEFAULT,                 /* Type of interface */
+		iface,                             /* Type of interface */
 		PTL_NI_MATCHING | PTL_NI_PHYSICAL, /* physical NI, w/ matching enabled */
 		PTL_PID_ANY,                       /* Let Portals decide process's PID */
 		&l,                                /* desired Portals boundaries */
@@ -236,13 +236,17 @@ void sctk_ptl_hardware_fini(sctk_ptl_rail_info_t* srail)
 void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims)
 {
 	size_t i;
-	size_t eager_size = srail->eager_limit;
+	//size_t eager_size = srail->eager_limit;
 
 	sctk_ptl_pte_t * table = NULL;
 	srail->nb_entries = 0;
-	comm_dims += SCTK_PTL_PTE_HIDDEN;
+	//FIXME: dont understand why comm_dim should be added ? 
+	//       A new portals porte is created upon communicator creation
+	//       anyway.
+	comm_dims = SCTK_PTL_PTE_HIDDEN;
 
 	table = sctk_malloc(sizeof(sctk_ptl_pte_t) * comm_dims); /* one CM, one recovery, one RDMA */
+	memset(table, 0, comm_dims * sizeof(sctk_ptl_pte_t));
 	
 	mpc_common_hashtable_init(&srail->pt_table, (comm_dims < 64) ? 64 : comm_dims);
 	mpc_common_hashtable_init(&srail->reverse_pt_table, (comm_dims < 64) ? 64 : comm_dims);
@@ -277,12 +281,15 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims)
 	 * This is the only situation where ME-PUT w/ IGNORE_ALL should be
 	 * pushed into the priority list !
 	 */
-	sctk_ptl_me_feed(srail, table + SCTK_PTL_PTE_CM, eager_size, SCTK_PTL_ME_OVERFLOW_NB, SCTK_PTL_PRIORITY_LIST, SCTK_PTL_TYPE_CM, SCTK_PTL_PROT_NONE);
+	//NOTE: this leaked it is already allocated in previous loop 
+	//sctk_ptl_me_feed(srail, table + SCTK_PTL_PTE_CM, eager_size, SCTK_PTL_ME_OVERFLOW_NB, SCTK_PTL_PRIORITY_LIST, SCTK_PTL_TYPE_CM, SCTK_PTL_PROT_NONE);
 
-	for (i = SCTK_PTL_PTE_HIDDEN; i < comm_dims; ++i)
-	{
-		sctk_ptl_pte_create(srail, table + i, i, i);
-	}
+	//NOTE: initially allocated to avoid dynamical porte allocation
+	//	but notify_new_comm called each time new comm created.
+	//for (i = SCTK_PTL_PTE_HIDDEN; i < comm_dims; ++i)
+	//{
+	//	sctk_ptl_pte_create(srail, &table[i], i, i);
+	//}
 
 	/* create the global EQ, shared by pending MDs */
 	sctk_ptl_chk(PtlEQAlloc(
@@ -298,6 +305,9 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims)
 	if(sctk_ptl_offcoll_enabled(srail))
 		sctk_ptl_offcoll_init(srail);
 
+	//FIXME: nb_entries was not set but used in fini function which
+	//       segfaulted
+	srail->nb_entries = comm_dims;
 
 	sctk_ptl_print_structure(srail);
 }
@@ -659,6 +669,33 @@ sctk_ptl_local_data_t* sctk_ptl_md_create_with_cnt(sctk_ptl_rail_info_t* srail, 
 
 	return user;
 }
+
+#ifdef MPC_LOWCOMM_PROTOCOL
+/**
+ * Register the MD inside Portals architecture.
+ * \param[in] md the MD to register
+ * \return a pointer to the MD handler
+ */
+int lcr_ptl_md_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t* user)
+{
+	assert(user && srail);
+	int max = srail->max_limits.max_mds;
+
+	if (OPA_fetch_and_incr_int(&nb_mds) >= max)
+	{
+		OPA_decr_int(&nb_mds);
+		return MPC_LOWCOMM_INPROGRESS;
+	}
+
+	sctk_ptl_chk(PtlMDBind(
+		srail->iface,     /* the NI handler */
+		&user->slot.md,   /* the MD to bind with memory region */
+		&user->slot_h.mdh /* out: the MD handler */
+	));
+	
+	return MPC_LOWCOMM_SUCCESS;
+}
+#endif
 
 /**
  * Register the MD inside Portals architecture.

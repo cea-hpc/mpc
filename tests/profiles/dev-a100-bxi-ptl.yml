@@ -1,0 +1,95 @@
+compiler:
+  commands: {cc: mpc_cc, cxx: mpc_cxx, f77: mpc_f77, f90: /path/to/f90, fc: /path/to/fc}
+  package_manager:
+    module: []
+    spack: []
+  variants:
+    cuda: {args: ''}
+    openmp: {args: -fopenmp}
+    strict: {args: -Werror -Wall -Wextra}
+    tbb: {args: -ltbb -ltbbmalloc -ldl}
+criterion:
+  iterators:
+    n_core:
+      subtitle: n
+      values: [2]
+    n_mpi:
+      subtitle: p
+      values: [2]
+    n_node:
+      subtitle: N
+      values: [2]
+group:
+  GRPMPI:
+    run:
+      iterate:
+        n_omp: {values: null}
+  GRPOMP:
+    run:
+      iterate:
+        n_mpi: {values: null}
+        n_node: {values: null}
+  GRPSERIAL:
+    run:
+      iterate:
+        n_core: {values: null}
+        n_mpi: {values: null}
+        n_node: {values: null}
+        n_omp: {values: null}
+machine:
+  concurrent_run: 1
+  default_partition: a100-bxi
+  job_manager:
+    allocate: {args: '', program: echo, wrapper: ''}
+    maxtime: 1500
+    mintime: 1000
+    run: {args: '', program: echo, wrapper: ''}
+  name: inti-amd
+  nodes: 1
+  partitions:
+  - cores_per_node: 256
+    job_manager: {mintime: 10}
+    name: a100-bxi
+    nodes: 4
+runtime:
+  args: -c=1 -m=pthread --net=portals4 --opt='-p a100-bxi -A ocre@gpu'
+  iterators:
+    n_core:
+      aliases: {ib: openib, ptl: portals, shmem: sm, tcp: tcp}
+      numeric: true
+      option: -n=
+      position: after
+    n_mpi:
+      aliases: {ib: openib, ptl: portals, shmem: sm, tcp: tcp}
+      numeric: true
+      option: -p=
+      position: after
+    n_node:
+      aliases: {ib: openib, ptl: portals, shmem: sm, tcp: tcp}
+      numeric: true
+      option: -N=
+      position: after
+  package_manager:
+    module: []
+    spack: []
+  plugin: !!binary |
+    YVcxd2IzSjBJRzFoZEdnS1puSnZiU0J3WTNaekxuQnNkV2RwYm5NZ2FXMXdiM0owSUZCc2RXZHBi
+    Z29LWTJ4aGMzTWdUVkJKS0ZCc2RXZHBiaWs2Q2lBZ0lDQnpkR1Z3SUQwZ1VHeDFaMmx1TGxOMFpY
+    QXVWRVZUVkY5RlZrRk1DZ29nSUNBZ1pHVm1JSEoxYmloelpXeG1MQ0FxWVhKbmN5d2dLaXByZDJG
+    eVozTXBPZ29nSUNBZ0lDQWdJQ01nZEdocGN5QmthV04wSUcxaGNITWdhMlY1Y3lBb2FYUWdibUZ0
+    WlNrZ2QybDBhQ0IyWVd4MVpYTWdLR2wwSUhaaGJIVmxLUW9nSUNBZ0lDQWdJQ01nY21WMGRYSnVj
+    eUJVY25WbElHbG1JSFJvWlNCamIyMWlhVzVoZEdsdmJpQnphRzkxYkdRZ1ltVWdkWE5sWkFvZ0lD
+    QWdJQ0FnSUdOdmJXSWdQU0JyZDJGeVozTmJKMk52YldKcGJtRjBhVzl1SjEwS0lDQWdJQ0FnSUNC
+    dVgzQjBiQ0E5SUdOdmJXSXVaMlYwS0NkdVgzQjBiQ2NzSUU1dmJtVXBDaUFnSUNBZ0lDQWdibDkw
+    WTNBZ1BTQmpiMjFpTG1kbGRDZ25ibDkwWTNBbkxDQk9iMjVsS1FvZ0lDQWdJQ0FnSUc1ZmJYQnBJ
+    RDBnWTI5dFlpNW5aWFFvSjI1ZmJYQnBKeXdnVG05dVpTa0tJQ0FnSUNBZ0lDQnVYMjV2WkdVZ1BT
+    QmpiMjFpTG1kbGRDZ25ibDl1YjJSbEp5d2dUbTl1WlNrS0lDQWdJQ0FnSUNCdVgyTnZjbVVnUFNC
+    amIyMWlMbWRsZENnbmJsOWpiM0psSnl3Z1RtOXVaU2tLQ2lBZ0lDQWdJQ0FnYVdZZ0tHNWZiWEJw
+    SUQwOUlHNWZibTlrWlNrZ1lXNWtJQ2h1WDI1dlpHVWdQVDBnYmw5amIzSmxLU0JoYm1RZ0tHNWZj
+    SFJzSUNFOUlEQWdiM0lnYmw5MFkzQWdJVDBnTUNrZ09nb2dJQ0FnSUNBZ0lDQWdJQ0J5WlhSMWNt
+    NGdWSEoxWlFvZ0lDQWdJQ0FnSUdWc2MyVTZDaUFnSUNBZ0lDQWdJQ0FnSUhKbGRIVnliaUJHWVd4
+    elpRbz0=
+  program: mpcrun
+validate:
+  expect_exit: 0
+  time: {kill_after: 5}

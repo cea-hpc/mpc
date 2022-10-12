@@ -1,0 +1,21 @@
+#!/bin/sh 
+
+pcvs_src_current="$pcvs_src/$1"
+pcvs_build_current="$pcvs_testbuild/$1"
+
+# copy unit test 
+cp -r $pcvs_src_current/*.c $pcvs_build_current || exit 1
+
+# copy Makefile
+cp $pcvs_src_current/Makefile $pcvs_build_current || exit 1
+
+# copy compile script
+cp $pcvs_src_current/lcp_compile.sh $pcvs_build_current || exit 1
+
+# copy compute environment 
+cp $pcvs_src_current/lcp_compute_env.sh $pcvs_build_current || exit 1
+# set appropriate env 
+sed -i "s/@SLURMPARTITION@/$pcvs_machine_default_partition/g" $pcvs_build_current/lcp_compute_env.sh || exit 1
+
+# replace partition name and publish
+sed "s/@SLURMPARTITION@/$pcvs_machine_default_partition/g" $pcvs_src_current/pcvs.yml.common

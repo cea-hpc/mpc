@@ -1,0 +1,107 @@
+compiler:
+  commands: {cc: mpcrun_tmp -N=1 -n=1 -p=1 -c=1 --opt='-p a100-bxi -A ocre@gpu' mpc_cc,
+    cxx: mpc_cxx, f77: mpc_f77, f90: /path/to/f90, fc: /path/to/fc}
+  package_manager:
+    module: []
+    spack: [openpa@1.0.4 arch=linux-rhel8-zen3]
+  variants:
+    cuda: {args: ''}
+    openmp: {args: -fopenmp}
+    strict: {args: -Werror -Wall -Wextra}
+    tbb: {args: -ltbb -ltbbmalloc -ldl}
+criterion:
+  iterators:
+    n_core:
+      subtitle: n
+      values: [2]
+    n_node:
+      subtitle: N
+      values: [2]
+    n_proc:
+      subtitle: p
+      values: [2]
+    n_ptl:
+      subtitle: ptl
+      values: [0, 1, 2, 3, 4]
+    n_tcp:
+      subtitle: tcp
+      values: [0, 1]
+group:
+  GRPMPI:
+    run:
+      iterate:
+        n_omp: {values: null}
+  GRPOMP:
+    run:
+      iterate:
+        n_mpi: {values: null}
+        n_node: {values: null}
+  GRPSERIAL:
+    run:
+      iterate:
+        n_core: {values: null}
+        n_mpi: {values: null}
+        n_node: {values: null}
+        n_omp: {values: null}
+machine:
+  concurrent_run: 1
+  default_partition: a100-bxi
+  job_manager:
+    allocate: {args: '', program: echo, wrapper: ''}
+    maxtime: 1500
+    mintime: 1000
+    run: {args: '', program: echo, wrapper: ''}
+  name: inti-amd
+  nodes: 1
+  partitions:
+  - cores_per_node: 256
+    job_manager: {mintime: 10}
+    name: a100-bxi
+    nodes: 2
+runtime:
+  args: -c=1 -m=pthread --net=lcp --opt='-p a100-bxi -A ocre@gpu'
+  iterators:
+    n_core:
+      aliases: {ib: openib, ptl: portals, shmem: sm, tcp: tcp}
+      numeric: true
+      option: -n=
+      position: after
+    n_node:
+      aliases: {ib: openib, ptl: portals, shmem: sm, tcp: tcp}
+      numeric: true
+      option: -N=
+      position: after
+    n_proc:
+      aliases: {ib: openib, ptl: portals, shmem: sm, tcp: tcp}
+      numeric: true
+      option: -p=
+      position: after
+    n_ptl: {numeric: false, option: MPCFRAMEWORK_LOWCOMM_PROTOCOL_LCRLIST_PORTALSMPI_COUNT=,
+      type: environment}
+    n_tcp: {numeric: false, option: MPCFRAMEWORK_LOWCOMM_PROTOCOL_LCRLIST_TCPMPI_COUNT=,
+      type: environment}
+  package_manager:
+    module: []
+    spack: []
+  plugin: !!binary |
+    YVcxd2IzSjBJRzFoZEdnS1puSnZiU0J3WTNaekxuQnNkV2RwYm5NZ2FXMXdiM0owSUZCc2RXZHBi
+    Z29LWTJ4aGMzTWdUVkJKS0ZCc2RXZHBiaWs2Q2lBZ0lDQnpkR1Z3SUQwZ1VHeDFaMmx1TGxOMFpY
+    QXVWRVZUVkY5RlZrRk1DZ29nSUNBZ1pHVm1JSEoxYmloelpXeG1MQ0FxWVhKbmN5d2dLaXByZDJG
+    eVozTXBPZ29nSUNBZ0lDQWdJQ01nZEdocGN5QmthV04wSUcxaGNITWdhMlY1Y3lBb2FYUWdibUZ0
+    WlNrZ2QybDBhQ0IyWVd4MVpYTWdLR2wwSUhaaGJIVmxLUW9nSUNBZ0lDQWdJQ01nY21WMGRYSnVj
+    eUJVY25WbElHbG1JSFJvWlNCamIyMWlhVzVoZEdsdmJpQnphRzkxYkdRZ1ltVWdkWE5sWkFvZ0lD
+    QWdJQ0FnSUdOdmJXSWdQU0JyZDJGeVozTmJKMk52YldKcGJtRjBhVzl1SjEwS0lDQWdJQ0FnSUNC
+    d2IzSjBZV3h6Y21GcGJDQTlJR052YldJdVoyVjBLQ2R3YjNKMFlXeHpjbUZwYkhNbkxDQk9iMjVs
+    S1FvZ0lDQWdJQ0FnSUhSamNISmhhV3dnUFNCamIyMWlMbWRsZENnbmRHTndjbUZwYkhNbkxDQk9i
+    MjVsS1FvZ0lDQWdJQ0FnSUc1ZmNISnZZeUE5SUdOdmJXSXVaMlYwS0NkdVgzQnliMk1uTENCT2Iy
+    NWxLUW9nSUNBZ0lDQWdJRzVmYm05a1pTQTlJR052YldJdVoyVjBLQ2R1WDI1dlpHVW5MQ0JPYjI1
+    bEtRb2dJQ0FnSUNBZ0lHNWZZMjl5WlNBOUlHTnZiV0l1WjJWMEtDZHVYMk52Y21VbkxDQk9iMjVs
+    S1FvS0lDQWdJQ0FnSUNCcFppQW9ibDl3Y205aklEMDlJRzVmYm05a1pTa2dZVzVrSUNodVgyNXZa
+    R1VnUFQwZ2JsOWpiM0psS1NCaGJtUWdLSEJ2Y25SaGJITnlZV2xzSUNFOUlEQWdiM0lnZEdOd2Nt
+    RnBiQ0FoUFNBd0tTQTZDaUFnSUNBZ0lDQWdJQ0FnSUhKbGRIVnliaUJVY25WbENpQWdJQ0FnSUNB
+    Z1pXeHpaVG9LSUNBZ0lDQWdJQ0FnSUNBZ2NtVjBkWEp1SUVaaGJITmxDZz09
+  program: MPCFRAMEWORK_LOWCOMM_NETWORKING_CONFIGS_PORTALSCONFIGMPI_PORTALS_MAXIFACE=4
+    mpcrun_tmp
+validate:
+  expect_exit: 0
+  time: {kill_after: 5}

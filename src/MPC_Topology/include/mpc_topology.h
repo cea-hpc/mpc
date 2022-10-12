@@ -163,6 +163,8 @@ int mpc_topology_get_pu_count(void);
 */
 int mpc_topology_get_current_cpu(void);
 
+//NOTE: publishing this for sctk_topological_polling
+int mpc_topology_is_loaded(void);
 /** @brief Return the current global core_id
 */
 int mpc_topology_get_global_current_cpu(void);

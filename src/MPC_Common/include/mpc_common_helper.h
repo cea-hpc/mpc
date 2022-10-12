@@ -207,6 +207,7 @@ ssize_t mpc_common_io_safe_read( int fd, void *buf, size_t count );
  * @param count Size of buffer to write.
 */
 ssize_t mpc_common_io_safe_write( int fd, const void *buf, size_t count );
+ssize_t mpc_common_iovec_safe_write(int fd, struct iovec *iov, size_t iovcnt, size_t length);
 
 
 /*********************

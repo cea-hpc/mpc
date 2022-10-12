@@ -58,6 +58,15 @@ typedef enum
  */
 void mpc_lowcomm_monitor_retcode_print(mpc_lowcomm_monitor_retcode_t code, const char *ctx);
 
+/********************
+* Monitor Init/Fini *
+********************/
+
+
+/* Monitor needed for needed for unit testing */
+int _mpc_lowcomm_monitor_setup();
+int _mpc_lowcomm_monitor_teardown();
+
 /*******************
 * ID MANIPULATION *
 *******************/

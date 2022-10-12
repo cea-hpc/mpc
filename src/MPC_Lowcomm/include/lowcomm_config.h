@@ -260,6 +260,7 @@ struct _mpc_lowcomm_config_struct_net_driver_portals
 /**TCP-based driver**/
 struct _mpc_lowcomm_config_struct_net_driver_tcp
 {
+        size_t max_msg_size;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -347,7 +348,7 @@ struct _mpc_lowcomm_config_struct_net_driver_config
 	/**Define the related driver to use and its configuration.**/
 	struct _mpc_lowcomm_config_struct_net_driver driver;
 };
-
+typedef struct _mpc_lowcomm_config_struct_net_driver_config lcr_driver_config_t;
 
 /**********************
 * RAIL CONFIGURATION *
@@ -489,8 +490,32 @@ struct _mpc_lowcomm_config_struct_net_rail
 	struct _mpc_lowcomm_config_struct_net_rail *          subrails;
 	/** Number of elements in subrails array. **/
 	int                                                   subrails_size;
+	/** Max number of rail instance. **/
+        int                                                   max_ifaces;
+	/** Define if rail has tag offloading capabilities. **/
+        int                                                   offload;
+};
+typedef struct _mpc_lowcomm_config_struct_net_rail lcr_rail_config_t;
+
+/******************************** STRUCTURE *********************************/
+/**Base structure to contain the protocol configuration**/
+#define MPC_CONF_MAX_LCR 5
+struct _mpc_lowcomm_config_struct_net_lcr
+{
+	char name[MPC_CONF_STRING_SIZE]; /* CLI name needed to get its config */
+	int count; /* Number of rails for this CLI */
 };
 
+struct _mpc_lowcomm_config_struct_protocol
+{
+	/**Is multirail enabled**/
+	int  multirail_enabled;
+	/**Comma separated list of transport to use (default: tcp).**/
+	char transports[MPC_CONF_STRING_SIZE];
+	/**Comma separated list of devices to use (default: eth0, ptl0).**/
+	char devices[MPC_CONF_STRING_SIZE];
+};
+typedef struct _mpc_lowcomm_config_struct_protocol lcr_protocol_config_t;
 
 /******************************** STRUCTURE *********************************/
 /**Base structure to contain the network configuration**/
@@ -545,6 +570,7 @@ struct _mpc_lowcomm_workshare_config
 };
 
 
+struct _mpc_lowcomm_config_struct_protocol *_mpc_lowcomm_config_proto_get(void);
 
 struct _mpc_lowcomm_config_struct_networks *_mpc_lowcomm_config_net_get(void);
 

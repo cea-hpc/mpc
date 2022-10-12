@@ -122,6 +122,10 @@ int init_done = 0;
 
 void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * tree,  rail_topological_polling_level_t trigger, rail_topological_polling_level_t range, int root_pu )
 {
+	//NOTE:  Condition avoid segfault in mpc_topology_get_pu_count when
+	//       topology not loaded.
+	if (!mpc_topology_is_loaded()) 
+		return;
 	int number_of_vp = mpc_topology_get_pu_count();
 	assume( number_of_vp != 0 );
 	tree->cell_count = number_of_vp;

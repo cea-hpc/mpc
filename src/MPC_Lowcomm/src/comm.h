@@ -49,6 +49,12 @@ static inline int _mpc_comm_ptp_message_is_for_process( mpc_lowcomm_ptp_message_
 		case MPC_LOWCOMM_CANCELLED_SEND:
 		case MPC_LOWCOMM_CANCELLED_RECV:
 		case MPC_LOWCOMM_P2P_MESSAGE:
+		case MPC_LOWCOMM_RDV_MESSAGE:
+		case MPC_LOWCOMM_RDV_TM_MESSAGE:
+		case MPC_LOWCOMM_ACK_MESSAGE:
+		case MPC_LOWCOMM_ACK_TM_MESSAGE:
+		case MPC_LOWCOMM_FRAG_MESSAGE:
+		case MPC_LOWCOMM_FRAG_TM_MESSAGE:
 		case MPC_LOWCOMM_RDMA_MESSAGE:
 		case MPC_LOWCOMM_BARRIER_MESSAGE:
 		case MPC_LOWCOMM_BROADCAST_MESSAGE:
@@ -73,6 +79,8 @@ static inline int _mpc_comm_ptp_message_is_for_process( mpc_lowcomm_ptp_message_
 
 		case MPC_LOWCOMM_MESSAGE_CLASS_COUNT:
 			return 0;
+		case MPC_LOWCOMM_MSG_LAST:
+			return 0;
 	}
 
 	return 0;
@@ -88,6 +96,12 @@ static inline int _mpc_comm_ptp_message_is_for_control( mpc_lowcomm_ptp_message_
 		case MPC_LOWCOMM_CANCELLED_SEND:
 		case MPC_LOWCOMM_CANCELLED_RECV:
 		case MPC_LOWCOMM_P2P_MESSAGE:
+		case MPC_LOWCOMM_RDV_MESSAGE:
+		case MPC_LOWCOMM_RDV_TM_MESSAGE:
+		case MPC_LOWCOMM_ACK_MESSAGE:
+		case MPC_LOWCOMM_ACK_TM_MESSAGE:
+		case MPC_LOWCOMM_FRAG_MESSAGE:
+		case MPC_LOWCOMM_FRAG_TM_MESSAGE:
 		case MPC_LOWCOMM_RDMA_MESSAGE:
 		case MPC_LOWCOMM_BARRIER_MESSAGE:
 		case MPC_LOWCOMM_BROADCAST_MESSAGE:
@@ -107,6 +121,8 @@ static inline int _mpc_comm_ptp_message_is_for_control( mpc_lowcomm_ptp_message_
 
 
 		case MPC_LOWCOMM_MESSAGE_CLASS_COUNT:
+			return 0;
+		case MPC_LOWCOMM_MSG_LAST:
 			return 0;
 	}
 

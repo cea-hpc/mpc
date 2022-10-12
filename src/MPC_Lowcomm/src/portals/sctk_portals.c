@@ -29,6 +29,10 @@
 #include "sctk_ptl_rdma.h"
 #include "endpoint.h"
 
+#include "lcr_ptl.h"
+#include <lcr/lcr_component.h>
+#include <dirent.h>
+
 #include <mpc_common_types.h>
 #include <mpc_common_rank.h>
 
@@ -70,7 +74,7 @@ static void _mpc_lowcomm_portals_notify_receive ( mpc_lowcomm_ptp_message_t *msg
  * @param rail the rail to poll
  * @param cnt the number of events to poll
  */
-static inline void __ptl_poll(sctk_rail_info_t* rail, int cnt)
+static inline void __ptl_poll(sctk_rail_info_t* rail, __UNUSED__ int cnt)
 {
 	sctk_ptl_eqs_poll( rail, 5 );
 	sctk_ptl_mds_poll( rail, 5 );
@@ -101,7 +105,9 @@ static void _mpc_lowcomm_portals_notify_perform(__UNUSED__ mpc_lowcomm_peer_uid_
 	__ptl_poll(rail, 3);
 }
 
-static void _mpc_lowcomm_portals_notify_any_source (int polling_task_id, int blocking, sctk_rail_info_t* rail)
+static void _mpc_lowcomm_portals_notify_any_source (__UNUSED__ int polling_task_id, 
+                                                    __UNUSED__ int blocking, 
+                                                    sctk_rail_info_t* rail)
 {
 	__ptl_poll(rail, 2);
 }
@@ -284,3 +290,134 @@ void sctk_network_init_ptl (sctk_rail_info_t *rail)
 	rail_is_ready = 1;
 	mpc_common_debug("rank %d mapped to Portals ID (nid/pid): %llu/%llu", mpc_common_get_process_rank(), rail->network.ptl.id.phys.nid, rail->network.ptl.id.phys.pid);
 }
+
+int lcr_ptl_get_attr(sctk_rail_info_t *rail,
+                     lcr_rail_attr_t *attr)
+{
+        attr->cap.tag.max_bcopy  = 0; /* Either eager or rndv, data is sent 
+                                        in zcopy */
+        attr->cap.tag.max_zcopy  = rail->network.ptl.eager_limit;
+
+        attr->cap.rndv.max_put_zcopy = rail->network.ptl.max_mr;
+        attr->cap.rndv.max_get_zcopy = rail->network.ptl.max_mr;
+
+        return MPC_LOWCOMM_SUCCESS;
+}
+
+int lcr_ptl_query_devices(__UNUSED__ lcr_component_t *component,
+                          lcr_device_t **devices_p,
+                          unsigned int *num_devices_p)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+        static const char *bxi_dir = "/sys/class/bxi";
+        lcr_device_t *devices;
+        int is_up;
+        int num_devices;
+        struct dirent *entry;
+        DIR *dir;
+
+        devices = NULL;
+        num_devices = 0;
+
+        /* First, try simulator */
+        char *ptl_iface_name; 
+        if ((ptl_iface_name = getenv("PTL_FACE_NAME")) != NULL) {
+                devices = sctk_malloc(sizeof(lcr_device_t));
+                strcpy(devices[0].name, ptl_iface_name);
+                num_devices = 1;
+                goto out;
+        }
+
+        /* Then, check if bxi are available in with sysfs */
+        dir = opendir(bxi_dir);
+        if (dir == NULL) {
+                mpc_common_debug_warning("PTL: could not find any ptl device.");
+                goto out;
+        }
+
+        for (;;) {
+                errno = 0;
+                entry = readdir(dir);
+                if (entry == NULL) {
+                        if (errno != 0) {
+                                mpc_common_debug_error("PTL: bxi directory exists "
+                                                       "but no entry found.");
+                                rc = MPC_LOWCOMM_ERROR;
+                                goto close_dir;
+                        }
+                        break;
+                }
+
+                /* avoid reading entry like . and .. */
+                if (entry->d_type != DT_LNK) {
+                        continue;
+                }
+
+                is_up = 1;
+                //TODO: check if interface is up with bixnic -i <iface> info
+                //      LINK_STATUS
+                if (!is_up) {
+                        continue;
+                }
+
+                devices = sctk_realloc(devices, sizeof(*devices) * (num_devices + 1));
+                if (devices == NULL) {
+                        mpc_common_debug_error("PTL: could not allocate devices");
+                        rc = MPC_LOWCOMM_ERROR;
+                        goto close_dir;
+                }
+                
+                //FIXME: interface name should always be of the form:
+                //       ptl<id> with id, 0 < id < 9 
+                strcpy(devices[num_devices].name, entry->d_name);
+                ++num_devices;
+        }
+
+
+close_dir:
+        closedir(dir);
+
+out:
+        *devices_p = devices;
+        *num_devices_p = num_devices;
+
+        return rc;
+}
+
+int lcr_ptl_iface_open(lcr_rail_config_t *rail_config, 
+                       lcr_driver_config_t *driver_config,
+                       sctk_rail_info_t **iface_p)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+        sctk_rail_info_t *iface;
+
+        lcr_rail_init(rail_config, driver_config, &iface);
+        if (iface == NULL) {
+                mpc_common_debug_error("LCR: could not allocate tcp rail");
+                rc = MPC_LOWCOMM_ERROR;
+                goto err;
+        }
+
+        sctk_network_init_ptl(iface);
+
+        /* Add new API call */
+        iface->send_tag_bcopy = lcr_ptl_send_tag_bcopy;
+        iface->send_tag_zcopy = lcr_ptl_send_tag_zcopy;
+        iface->recv_tag_zcopy = lcr_ptl_recv_tag_zcopy;
+
+        *iface_p = iface;
+err:
+       return rc; 
+}
+
+lcr_component_t ptl_component = {
+        .name = { "ptl" },
+        .rail_name = { "portalsmpi" },
+        .query_devices = lcr_ptl_query_devices,
+        .iface_open = lcr_ptl_iface_open,
+        .devices = NULL,
+        .num_devices = 0,
+        .flags = 0,
+        .next = NULL
+};
+LCR_COMPONENT_REGISTER(&ptl_component)

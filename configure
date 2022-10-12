@@ -812,6 +812,8 @@ PMIX_LIBS
 PMIX_CFLAGS
 PMI_LIBS
 PMI_CFLAGS
+LCP_ENABLED_FALSE
+LCP_ENABLED_TRUE
 PORTALS4_DRIVER_ENABLED_FALSE
 PORTALS4_DRIVER_ENABLED_TRUE
 PORTALS_LIBS
@@ -1050,6 +1052,7 @@ with_libfabric_libs
 with_portals
 with_portals_inc
 with_portals_libs
+with_lcp
 with_hydra
 with_slurm
 with_pmi1
@@ -1835,6 +1838,7 @@ Optional Packages:
   --with-portals          Provide prefix for portals
   --with-portals-inc      Provide include path for portals
   --with-portals-libs     Provide library path for portals
+  --with-lcp              Compile MPC with LowComm Protocol (LCP) feature
   --with-hydra            Compile MPC with hydra support (requires an external
                           hydra launcher)
   --with-slurm            Rely on SLURM-based PMI1 same as --with-pmi1
@@ -26511,6 +26515,34 @@ fi
 
 
 #
+# Detect LowComm Protocol
+#
+
+mpc_lcp_enabled="no"
+
+
+# Check whether --with-lcp was given.
+if test "${with_lcp+set}" = set; then :
+  withval=$with_lcp; mpc_lcp_enabled=$withval
+else
+  mpc_lcp_enabled=yes
+fi
+
+if test "x$mpc_lcp_enabled" = "xyes"; then
+
+$as_echo "#define MPC_LOWCOMM_PROTOCOL 1" >>confdefs.h
+
+fi
+ if test "x$mpc_lcp_enabled" = "xyes"; then
+  LCP_ENABLED_TRUE=
+  LCP_ENABLED_FALSE='#'
+else
+  LCP_ENABLED_TRUE='#'
+  LCP_ENABLED_FALSE=
+fi
+
+
+#
 # Configure MPC Launch
 #
 
@@ -33447,8 +33479,8 @@ if test -z "${PORTALS4_DRIVER_ENABLED_TRUE}" && test -z "${PORTALS4_DRIVER_ENABL
   as_fn_error $? "conditional \"PORTALS4_DRIVER_ENABLED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${MPC_BUILD_HYDRA_TRUE}" && test -z "${MPC_BUILD_HYDRA_FALSE}"; then
-  as_fn_error $? "conditional \"MPC_BUILD_HYDRA\" was never defined.
+if test -z "${LCP_ENABLED_TRUE}" && test -z "${LCP_ENABLED_FALSE}"; then
+  as_fn_error $? "conditional \"LCP_ENABLED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MPC_HAS_SRUN_SUPPORT_TRUE}" && test -z "${MPC_HAS_SRUN_SUPPORT_FALSE}"; then

@@ -184,6 +184,43 @@ ssize_t mpc_common_io_safe_write( int fd, const void *buf, size_t count )
 	return res;
 }
 
+ssize_t mpc_common_iovec_safe_write(int fd, 
+				    struct iovec *iov, 
+				    size_t iovcnt, 
+				    size_t length)
+{
+	/* vars */
+	ssize_t sent = 0, cur_sent;
+
+	/* loop until read all */
+	do {
+		struct msghdr msg = {
+			.msg_iov = iov,
+			.msg_iovlen = iovcnt
+		};
+		cur_sent = sendmsg(fd, &msg, MSG_NOSIGNAL);
+
+		if (cur_sent < 0) {
+			/* on interuption continue to re-read */
+			if (errno == EINTR) {
+				continue;
+			} else if (errno == EBADF) /* possibly closed socket */ {
+				mpc_common_nodebug( "Socket %d not valid anymore !", fd );
+				sent = -1;
+				break;
+			} else {
+				mpc_common_debug( "WRITE %p %lu/%lu FAIL\n", iov, sent, length);
+				perror( "mpc_common_io_safe_write" );
+				sent = -1;
+				break;
+			}
+		}
+		sent += cur_sent;
+	} while ((size_t)sent < length);
+
+	return sent;
+}
+
 /**********************************************************************/
 /*No alloc IO                                                         */
 /**********************************************************************/

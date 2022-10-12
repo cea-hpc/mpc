@@ -76,6 +76,9 @@ AM_CPPFLAGS += -I$(abs_srcdir)/portals/
 libmpclowcomm_la_SOURCES += ./portals/sctk_portals.c ./portals/sctk_ptl_cm.c ./portals/sctk_ptl_eager.c
 libmpclowcomm_la_SOURCES += ./portals/sctk_ptl_iface.c ./portals/sctk_ptl_offcoll.c ./portals/sctk_ptl_rdma.c
 libmpclowcomm_la_SOURCES += ./portals/sctk_ptl_rdv.c ./portals/sctk_ptl_toolkit.c
+if LCP_ENABLED
+libmpclowcomm_la_SOURCES += ./portals/lcr_ptl.c
+endif
 
 # PTL-AM driver #
 libmpclowcomm_la_SOURCES += ./portals_am/sctk_ptl_am_iface.c  ./portals_am/sctk_ptl_am_toolkit.c ./portals_am/sctk_ptl_am_arpc_api.c ./portals_am/arpc_weak.c
@@ -84,6 +87,14 @@ endif
 if OFI_DRIVER_ENABLED
 AM_CPPFLAGS += -I$(abs_srcdir)/ofi/
 libmpclowcomm_la_SOURCES +=./ofi/ofi.c ./ofi/ofi_msg.c ./ofi/ofi_rdma.c ./ofi/ofi_toolkit.c
+endif
+
+if LCP_ENABLED
+AM_CPPFLAGS += -I$(abs_src_dir)/lcp/
+libmpclowcomm_la_SOURCES += ./lcp/lcp_context.c ./lcp/lcp_ep.c ./lcp/lcp_pending.c ./lcp/lcp_progress.c ./lcp/lcp_recv.c ./lcp/lcp_send.c ./lcp/lcp_tag_lists.c ./lcp/lcp_tag_matching.c ./lcp/lcp_proto_am.c ./lcp/lcp_proto_tag.c ./lcp/lcp_request.c ./lcp/lcp_common.c ./lcp/lcp_proto_rndv.c ./lcp/lcp_tag_offload.c
+
+AM_CPPFLAGS += -I$(abs_src_dir)/lcr/
+libmpclowcomm_la_SOURCES += ./lcr/lcr_component.c
 endif
 
 libmpclowcomm_la_SOURCES += ./cplane/auth.c ./cplane/peer.c  ./cplane/proto.c ./cplane/port.c

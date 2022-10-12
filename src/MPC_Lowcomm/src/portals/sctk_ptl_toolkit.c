@@ -40,21 +40,21 @@
 #include <mpc_common_rank.h>
 #include <mpc_lowcomm_monitor.h>
 
-/** global shortcut, where each cell maps to the portals process object */
-static struct mpc_common_hashtable __ranks_ids_map;
-
-static inline void __ranks_ids_map_set(mpc_lowcomm_peer_uid_t dest, sctk_ptl_id_t id)
+//NOTE: with multiple nics, __ranks_ids_map cannot be global.
+static inline void __ranks_ids_map_set(struct mpc_common_hashtable *ranks_ids_map, 
+                                       mpc_lowcomm_peer_uid_t dest, sctk_ptl_id_t id)
 {
 	/* We prefer to do this to ensure we have no storage size problem
 	   as our hashtable is a pointer storage only */
 	sctk_ptl_id_t * new = sctk_malloc(sizeof(sctk_ptl_id_t));
 	*new = id;
-	mpc_common_hashtable_set(&__ranks_ids_map, dest, new);
+	mpc_common_hashtable_set(ranks_ids_map, dest, new);
 }
 
-static inline sctk_ptl_id_t __ranks_ids_map_get(mpc_lowcomm_peer_uid_t dest)
+static inline sctk_ptl_id_t __ranks_ids_map_get(struct mpc_common_hashtable *ranks_ids_map,
+                                                mpc_lowcomm_peer_uid_t dest)
 {
-	sctk_ptl_id_t * ret = mpc_common_hashtable_get(&__ranks_ids_map, dest);
+	sctk_ptl_id_t * ret = mpc_common_hashtable_get(ranks_ids_map, dest);
 
 	if(!ret)
 	{
@@ -74,6 +74,7 @@ static inline sctk_ptl_id_t __ranks_ids_map_get(mpc_lowcomm_peer_uid_t dest)
 void sctk_ptl_add_route(mpc_lowcomm_peer_uid_t dest, sctk_ptl_id_t id, sctk_rail_info_t* rail, _mpc_lowcomm_endpoint_type_t origin, _mpc_lowcomm_endpoint_state_t state)
 {
 	_mpc_lowcomm_endpoint_t * route;
+	sctk_ptl_rail_info_t* srail = &rail->network.ptl;
 
 	route = sctk_malloc(sizeof(_mpc_lowcomm_endpoint_t));
 	assert(route);
@@ -82,7 +83,7 @@ void sctk_ptl_add_route(mpc_lowcomm_peer_uid_t dest, sctk_ptl_id_t id, sctk_rail
 	_mpc_lowcomm_endpoint_set_state(route, state);
 
 	route->data.ptl.dest = id;
-	__ranks_ids_map_set(dest, id);
+	__ranks_ids_map_set(&srail->ranks_ids_map, dest, id);
 
 	if(origin == _MPC_LOWCOMM_ENDPOINT_STATIC)
 	{
@@ -149,6 +150,46 @@ void sctk_ptl_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_endpoint
 	}
 }
 
+int lcr_ptl_handle_eq_ev(sctk_rail_info_t *rail, 
+			 sctk_ptl_event_t *ev)
+{
+	int rc = MPC_LOWCOMM_SUCCESS;
+	sctk_ptl_imm_data_t imm = (sctk_ptl_imm_data_t)ev->hdr_data;
+	sctk_ptl_local_data_t *user_ptr  = ev->user_ptr;
+	lcr_tag_context_t *ctx = (lcr_tag_context_t *)user_ptr->msg;
+	uint8_t am_id = (uint8_t)imm.raw;
+	unsigned flags = 0;
+	lcr_am_handler_t handler;
+
+	switch (ev->type) {
+	case PTL_EVENT_PUT_OVERFLOW:
+	case PTL_EVENT_GET_OVERFLOW:
+		flags |= LCR_IFACE_TM_OVERFLOW;
+		break;
+	case PTL_EVENT_PUT:
+	case PTL_EVENT_GET:
+		flags |= LCR_IFACE_TM_NOVERFLOW;
+		break;
+	default:
+		flags |= LCR_IFACE_TM_ERROR;
+		mpc_common_debug_error("LCP: ptl event type not supported: %d.", ev->type);
+		break;
+	}
+
+	ctx->tag = (lcr_tag_t)ev->match_bits;
+	ctx->imm = ev->hdr_data;
+
+	handler = rail->am[am_id];
+	rc = handler.cb(ctx, ev->start, ev->mlength, flags);
+	if (rc != MPC_LOWCOMM_SUCCESS) {
+		mpc_common_debug_error("LCP: ptl handler id %d failed.", am_id);
+	}
+
+	sctk_free(user_ptr);
+
+	return rc;
+}
+
 static inline int ___eq_poll(sctk_rail_info_t* rail, sctk_ptl_pte_t *cur_pte)
 {
 	int did_poll = 0;
@@ -175,7 +216,7 @@ static inline int ___eq_poll(sctk_rail_info_t* rail, sctk_ptl_pte_t *cur_pte)
 			if(found)
 			{
 				/* when the RDV protocol is used, the initial PUT contains the total message size. The overflow event contains the imm_data of this PUT */
-				user_ptr->probe.size = (((sctk_ptl_imm_data_t)ev.hdr_data).std.putsz) ? *((size_t*)ev.start) : ev.mlength;
+				user_ptr->probe.size = ev.mlength;
 				user_ptr->probe.rank = ((sctk_ptl_matchbits_t)ev.match_bits).data.rank;
 				user_ptr->probe.tag  = ((sctk_ptl_matchbits_t)ev.match_bits).data.tag;
 			}
@@ -201,6 +242,9 @@ static inline int ___eq_poll(sctk_rail_info_t* rail, sctk_ptl_pte_t *cur_pte)
 		switch((int)user_ptr->type) /* normal message */
 		{
 			case SCTK_PTL_TYPE_STD:
+#ifdef MPC_LOWCOMM_PROTOCOL
+				lcr_ptl_handle_eq_ev(rail, &ev);
+#else
 				switch((int)user_ptr->prot)
 				{
 					case SCTK_PTL_PROT_EAGER:
@@ -211,6 +255,7 @@ static inline int ___eq_poll(sctk_rail_info_t* rail, sctk_ptl_pte_t *cur_pte)
 						/*not_reachable();*/
 						break;
 				}
+#endif
 				break;
 			case SCTK_PTL_TYPE_PROBE:
 				break;
@@ -301,6 +346,34 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold)
 
 }
 
+void lcr_ptl_handle_md_ev(sctk_ptl_event_t *ev)
+{
+	sctk_ptl_local_data_t* user_ptr = (sctk_ptl_local_data_t*)ev->user_ptr;
+	lcr_tag_context_t *ctx = (lcr_tag_context_t *)user_ptr->msg;
+
+	switch(ev->type)
+	{
+		case PTL_EVENT_ACK:  /* the Put() reached the remote process */
+			//TODO: free start if it was bcopy
+			
+			/* complete callback */
+			ctx->comp.sent = ev->mlength;
+			ctx->comp.comp_cb(&ctx->comp);
+
+			//TODO: add md struct to tag_context
+			sctk_ptl_md_release(user_ptr);
+			break;
+
+		case PTL_EVENT_REPLY: /* the Get() downloaded the data from the remote process */
+		case PTL_EVENT_SEND:  /* a local request left the local process */
+			not_reachable();
+			break;
+		default:
+			mpc_common_debug_fatal("Unrecognized MD event: %d", ev->type);
+			break;
+	}
+}
+
 /**
  * Make locally-initiated request progress.
  * Here, only MD-specific events are processed.
@@ -342,6 +415,9 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, size_t threshold)
 					 * As we know that 
 					 */
 					assert(user_ptr->prot != SCTK_PTL_PROT_NONE);
+#ifdef MPC_LOWCOMM_PROTOCOL
+					lcr_ptl_handle_md_ev(&ev);
+#else
 					switch((int)user_ptr->prot)
 					{
 						case SCTK_PTL_PROT_EAGER:
@@ -351,6 +427,7 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, size_t threshold)
 						default:
 							not_reachable();
 					}
+#endif
 					break;
 				case SCTK_PTL_TYPE_OFFCOLL:
 					assert(user_ptr->prot != SCTK_PTL_PROT_NONE);
@@ -455,7 +532,9 @@ static inline sctk_ptl_id_t __map_id_monitor(sctk_rail_info_t* rail, mpc_lowcomm
  */
 sctk_ptl_id_t sctk_ptl_map_id(sctk_rail_info_t* rail, mpc_lowcomm_peer_uid_t dest)
 {
-	if(SCTK_PTL_IS_ANY_PROCESS( __ranks_ids_map_get(dest) ))
+	sctk_ptl_rail_info_t* srail    = &rail->network.ptl;
+
+	if(SCTK_PTL_IS_ANY_PROCESS( __ranks_ids_map_get(&srail->ranks_ids_map, dest) ))
 	{
 		sctk_ptl_id_t out_id = SCTK_PTL_ANY_PROCESS;
 
@@ -473,10 +552,10 @@ sctk_ptl_id_t sctk_ptl_map_id(sctk_rail_info_t* rail, mpc_lowcomm_peer_uid_t des
 			out_id = __map_id_monitor(rail, dest);
 		}
 
-		__ranks_ids_map_set(dest, out_id);
+		__ranks_ids_map_set(&srail->ranks_ids_map, dest, out_id);
 	}
 
-	sctk_ptl_id_t ret = __ranks_ids_map_get(dest);
+	sctk_ptl_id_t ret = __ranks_ids_map_get(&srail->ranks_ids_map, dest);
 	assert(!SCTK_PTL_IS_ANY_PROCESS(ret));
 	return ret;
 }
@@ -528,6 +607,7 @@ void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, mpc_lowcomm_communicato
 	{
 		sctk_ptl_pte_t* new_entry = sctk_malloc(sizeof(sctk_ptl_pte_t));
 		mpc_common_spinlock_lock(&__poll_lock);
+		memset(new_entry, 0, sizeof(sctk_ptl_pte_t));
 		sctk_ptl_pte_create(srail, new_entry, PTL_PT_ANY, comm_idx + SCTK_PTL_PTE_HIDDEN);
 		mpc_common_spinlock_unlock(&__poll_lock);
 	}
@@ -572,7 +652,7 @@ int sctk_ptl_pending_me_probe(sctk_rail_info_t* rail, mpc_lowcomm_ptp_message_he
 	mpc_common_nodebug("PROBE: c%ld r%d t%d", hdr->communicator_id, rank, tag);
 	
 	sctk_ptl_rail_info_t* prail = &rail->network.ptl;
-	sctk_ptl_pte_t* pte = mpc_common_hashtable_get(&prail->pt_table, (int)((hdr->communicator_id + SCTK_PTL_PTE_HIDDEN_NB) % prail->nb_entries));
+	sctk_ptl_pte_t* pte = mpc_common_hashtable_get(&prail->pt_table, (int)(hdr->communicator_id + SCTK_PTL_PTE_HIDDEN_NB));
 	sctk_ptl_matchbits_t match, ign;
 
 	/* build a temporary ME to match caller criteria */
@@ -653,7 +733,9 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 	}
 
 	/* init low-level driver */
-	rail->network.ptl                 = sctk_ptl_hardware_init();
+        sctk_ptl_interface_t iface        = (rail->runtime_config_rail->max_ifaces == 1) ?
+                PTL_IFACE_DEFAULT : (unsigned)atoi(rail->runtime_config_rail->device);
+	rail->network.ptl                 = sctk_ptl_hardware_init(iface);
 	rail->network.ptl.eager_limit     = eager_limit;
 	rail->network.ptl.cutoff          = cut;
 	rail->network.ptl.max_mr          = rail->network.ptl.max_limits.max_msg_size;
@@ -662,7 +744,7 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 	sctk_ptl_software_init( &rail->network.ptl, min_comms);
 	assert(eager_limit == rail->network.ptl.eager_limit);
 
-	mpc_common_hashtable_init(&__ranks_ids_map, mpc_common_get_process_count());
+	mpc_common_hashtable_init(&rail->network.ptl.ranks_ids_map, mpc_common_get_process_count());
 
 	sctk_ptl_rail_info_t* srail = &rail->network.ptl;
 	/* serialize the id_t to a string, compliant with string  handling */
@@ -692,6 +774,8 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
  */
 void sctk_ptl_fini_interface(sctk_rail_info_t* rail)
 {
-	UNUSED(rail);
-	mpc_common_hashtable_release(&__ranks_ids_map);
+	sctk_ptl_rail_info_t* srail    = &rail->network.ptl;
+	mpc_common_debug_info("PORTALS: FINI");
+	sctk_ptl_software_fini(srail);
+	sctk_ptl_hardware_fini();
 }

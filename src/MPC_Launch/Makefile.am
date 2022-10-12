@@ -21,4 +21,7 @@
 #   - JAEGER Julien julien.jaeger@cea.fr                               #
 #                                                                      #
 ########################################################################
+mpc_headerdir=$(pkgincludedir)
+mpc_header_HEADERS= ./include/mpc_launch_pmi.h
+
 SUBDIRS=src

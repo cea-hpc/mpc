@@ -1147,6 +1147,22 @@ AM_CONDITIONAL([PORTALS4_DRIVER_ENABLED], [test "x$portals4_enabled" = "xyes"])
 AC_SUBST([MPC_NETWORK_LIST])
 
 #
+# Detect LowComm Protocol 
+#
+
+mpc_lcp_enabled="no"
+
+AC_ARG_WITH([lcp],
+	    [AS_HELP_STRING([--with-lcp],
+			    [Compile MPC with LowComm Protocol (LCP) feature])],
+			    [mpc_lcp_enabled=$withval],
+			    [mpc_lcp_enabled=yes])
+if test "x$mpc_lcp_enabled" = "xyes"; then
+        AC_DEFINE([MPC_LOWCOMM_PROTOCOL], [1], [Protocol support is enabled])
+fi
+AM_CONDITIONAL([LCP_ENABLED], [test "x$mpc_lcp_enabled" = "xyes"])
+
+#
 # Configure MPC Launch
 #
 

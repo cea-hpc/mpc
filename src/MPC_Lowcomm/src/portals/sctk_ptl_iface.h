@@ -119,6 +119,9 @@ size_t sctk_ptl_ct_get(sctk_ptl_cnth_t cth);
 sctk_ptl_local_data_t* sctk_ptl_md_create(sctk_ptl_rail_info_t* srail, void*, size_t, int);
 sctk_ptl_local_data_t* sctk_ptl_md_create_with_cnt(sctk_ptl_rail_info_t* srail, void* start, size_t length, int flags);
 void sctk_ptl_md_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t*);
+#ifdef MPC_LOWCOMM_PROTOCOL
+int lcr_ptl_md_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t*);
+#endif
 void sctk_ptl_md_release(sctk_ptl_local_data_t*);
 
 /* Request management */

@@ -1651,6 +1651,11 @@ int mpc_topology_get_current_cpu()
 	}
 }
 
+//NOTE: used by sctk_topological_polling
+int mpc_topology_is_loaded() {
+	return __mpc_module_topology_loaded;
+}
+
 int mpc_topology_get_global_current_cpu()
 {
     return _mpc_topology_get_global_current_cpu(__mpc_module_topology_global);

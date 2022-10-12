@@ -63,6 +63,13 @@ typedef enum
 	MPC_LOWCOMM_RDMA_WINDOW_MESSAGES,  /**< These messages are used to exchange window  informations */
 	MPC_LOWCOMM_CONTROL_MESSAGE_FENCE, /**< This message is sent to create a fence on control messages */
 
+	MPC_LOWCOMM_RDV_MESSAGE,
+	MPC_LOWCOMM_RDV_TM_MESSAGE,
+	MPC_LOWCOMM_ACK_MESSAGE,
+	MPC_LOWCOMM_ACK_TM_MESSAGE,
+	MPC_LOWCOMM_FRAG_MESSAGE,
+	MPC_LOWCOMM_FRAG_TM_MESSAGE,
+
 	MPC_LOWCOMM_BARRIER_MESSAGE,
 	MPC_LOWCOMM_BROADCAST_MESSAGE,
 	MPC_LOWCOMM_ALLREDUCE_MESSAGE,
@@ -81,7 +88,9 @@ typedef enum
 
 	MPC_LOWCOMM_MESSAGE_UNIVERSE,         /**< This message is for a given UID */
 
-	MPC_LOWCOMM_MESSAGE_CLASS_COUNT       /**< This value allows to track the  number of control message types */
+	MPC_LOWCOMM_MESSAGE_CLASS_COUNT,      /**< This value allows to track the  number of control message types */
+	MPC_LOWCOMM_MSG_LAST
+
 } mpc_lowcomm_ptp_message_class_t;
 
 static const char *const mpc_lowcomm_ptp_message_class_name[MPC_LOWCOMM_MESSAGE_CLASS_COUNT] =
@@ -94,6 +103,13 @@ static const char *const mpc_lowcomm_ptp_message_class_name[MPC_LOWCOMM_MESSAGE_
 	"MPC_LOWCOMM_RDMA_MESSAGE",
 	"MPC_LOWCOMM_RDMA_WINDOW_MESSAGES",
 	"MPC_LOWCOMM_CONTROL_MESSAGE_FENCE",
+
+	"MPC_LOWCOMM_RDV_MESSAGE",
+	"MPC_LOWCOMM_RDV_TM_MESSAGE",
+	"MPC_LOWCOMM_ACK_MESSAGE",
+	"MPC_LOWCOMM_ACK_TM_MESSAGE",
+	"MPC_LOWCOMM_FRAG_MESSAGE",
+	"MPC_LOWCOMM_FRAG_TM_MESSAGE",
 
 	"MPC_LOWCOMM_BARRIER_MESSAGE",
 	"MPC_LOWCOMM_BROADCAST_MESSAGE",

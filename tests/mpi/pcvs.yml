@@ -1,0 +1,50 @@
+send_rdv_multiple:
+  build:
+    cflags: -g -O0
+    files: ./send_rdv_multiple.c
+    sources: {binary: send_rdv_multiple}
+  run:
+    program: @SRCPATH@/script.sh @BUILDPATH@/send_rdv_multiple
+    iterate: 
+      n_core:
+        values: [2, 4]
+      n_node:
+        values: [2, 4]
+      n_proc:
+        values: [2, 4]
+      strp_len: 
+        values: [8192]
+      strp_size:
+        values: [32768]
+send_rdv_sym:
+  build:
+    cflags: -g -O0
+    files: ./send_rdv_sym.c
+    sources: {binary: send_rdv_sym}
+  run:
+    program: @SRCPATH@/script.sh @BUILDPATH@/send_rdv_sym
+    iterate: 
+      n_core:
+        values: [2]
+      n_proc: 
+        values: [2]
+      n_node: 
+        values: [2]
+send_rdv_unsym:
+  build:
+    cflags: -g -O0
+    files: ./send_rdv_unsym.c
+    sources: {binary: send_rdv_unsym}
+  run:
+    program: @SRCPATH@/script.sh @BUILDPATH@/send_rdv_unsym
+    iterate: 
+      n_core:
+        values: [2]
+      n_proc: 
+        values: [2]
+      n_node: 
+        values: [2]
+      strp_len:
+        values: [8192]
+      strp_size:
+        values: [65536]

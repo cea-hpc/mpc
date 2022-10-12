@@ -187,6 +187,7 @@ typedef enum {
 /* typedefs */
 #define sctk_ptl_nih_t ptl_handle_ni_t    /**< NIC handler */
 #define sctk_ptl_limits_t ptl_ni_limits_t /**< Portals NIC limits */
+#define sctk_ptl_interface_t ptl_interface_t  /**< Portals interface number for hardware init */
 /** default number of chunks when RDV protocol wants to split big messages */
 #define SCTK_PTL_MAX_RDV_BLOCKS 4
 
@@ -407,6 +408,7 @@ typedef struct sctk_ptl_rail_info_s
 	sctk_ptl_nih_t iface;                   /**< Interface handler for the device */
 	sctk_ptl_id_t id;                       /**< Local id identifying this rail */
 	sctk_ptl_eq_t mds_eq;                   /**< EQ for all MDs emited from this NI */
+	struct mpc_common_hashtable ranks_ids_map; /**< each cell maps to the portals process object */
 	struct mpc_common_hashtable pt_table;         /**< The COMM => PT hash table */
 	struct mpc_common_hashtable reverse_pt_table; /**< The PT => COMM hash table */
 	size_t cutoff;                          /**< cutoff for large RDV messages */

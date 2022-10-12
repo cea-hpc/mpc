@@ -31,6 +31,8 @@
 
 #include "lowcomm_types_internal.h"
 
+#include "lcr/lcr_iface.h"
+
 #include "endpoint.h"
 
 #include "lowcomm_config.h"
@@ -122,9 +124,72 @@ void sctk_rail_pin_ctx_init( sctk_rail_pin_ctx_t * ctx, void * addr, size_t size
 void sctk_rail_pin_ctx_release( sctk_rail_pin_ctx_t * ctx );
 
 /************************************************************************/
+/* Protocol                                                             */
+/************************************************************************/
+#define LCR_BIT(i) (1ul << (i))
+
+enum {
+	LCR_IFACE_TM_OVERFLOW  = LCR_BIT(0),
+	LCR_IFACE_TM_NOVERFLOW = LCR_BIT(1),
+	LCR_IFACE_TM_ERROR     = LCR_BIT(2)
+};
+
+/* Active message handler table entry */
+typedef struct lcr_am_handler {
+	lcr_am_callback_t cb;
+	void *arg;
+	uint64_t flags;
+} lcr_am_handler_t;
+
+int lcr_iface_set_am_handler(sctk_rail_info_t *iface, uint8_t id,
+			     lcr_am_callback_t cb, void *arg, 
+			     uint64_t flags);
+
+typedef struct lcr_completion {
+	size_t sent;
+	lcr_completion_callback_t comp_cb;
+} lcr_completion_t;
+
+/* tag offloading context */
+typedef struct lcr_tag_context {
+	void *arg;             //NOTE: contains lcp_context_h handle
+                               //      to access matching lists
+	void *req;             //NOTE: contains lcp_request_t
+	uint64_t comm_id;      //NOTE: needed by portals to get porte
+	uint64_t imm;
+	lcr_tag_t tag;         //NOTE: needed by LCP to get msg_id and
+                               //      find corresponding request
+	lcr_completion_t comp; //NOTE: needed by send when portals ack 
+                               //      is received to complete the request.
+} lcr_tag_context_t;
+
+/************************************************************************/
 /* Rail                                                                 */
 /************************************************************************/
 #define SCTK_RAIL_TYPE(r) (r->runtime_config_driver_config->driver.type) 
+
+#define LCR_IFACE_IS_TM(iface) ((iface)->runtime_config_rail->offload)
+struct lcr_rail_attr {
+        struct {
+                struct {
+                        size_t max_bcopy;
+                        size_t max_zcopy;
+                } am;
+
+                struct {
+                        size_t max_bcopy;
+                        size_t max_zcopy;
+                } tag;
+
+                struct {
+                        size_t max_put_zcopy;
+                        size_t max_get_zcopy;
+                } rndv;
+
+                uint64_t flags;
+        } cap;
+};
+
 /** This structure gathers all informations linked to a network rail
  *
  *  All rails informations are stored in the sctk_route file
@@ -139,6 +204,7 @@ struct sctk_rail_info_s
 	char *network_name; /**< Name of this rail */
 	mpc_topology_device_t * rail_device; /**< Device associated with the rail */
 	sctk_rail_state_t state; /**< is this rail usable ? */
+	lcr_am_handler_t am[LCR_AM_ID_MAX];
 
 	struct sctk_rail_info_s * parent_rail; /**< This is used for rail hierarchies
 	                                            (note that parent initializes it for the child) */
@@ -164,6 +230,14 @@ struct sctk_rail_info_s
 	struct sctk_topological_polling_tree any_source_polling_tree;
 
 	/* HOOKS */
+	/* Endpoint API */
+	lcr_send_am_bcopy_func_t send_am_bcopy;
+	lcr_send_am_zcopy_func_t send_am_zcopy;
+	lcr_send_tag_bcopy_func_t send_tag_bcopy;
+	lcr_send_tag_zcopy_func_t send_tag_zcopy;
+	lcr_recv_tag_zcopy_func_t recv_tag_zcopy;
+	/* Interface API */
+        lcr_iface_get_attr_func_t iface_get_attr;
 
 	/* Task Init and release */
 	void ( *finalize_task ) ( struct sctk_rail_info_s *, int taskid, int rank);
@@ -240,6 +314,10 @@ struct sctk_rail_info_s
 	void ( *route_init ) ( sctk_rail_info_t * );
 	void (*driver_finalize)(sctk_rail_info_t*);
 };
+
+int lcr_rail_init(lcr_rail_config_t *rail_config,
+                  lcr_driver_config_t *driver_config,
+                  struct sctk_rail_info_s **rail_p);
 
 /* Rail  Array                                                          */
 

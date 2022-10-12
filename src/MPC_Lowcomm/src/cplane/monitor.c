@@ -617,6 +617,7 @@ _mpc_lowcomm_client_ctx_t *_mpc_lowcomm_client_ctx_new(uint64_t uid, int fd, str
 
 	ret->uid       = uid;
 	ret->client_fd = fd;
+	ret->duplicate = 0; // does this conn result from simultaneous conn ?
 	ret->monitor = monitor;
 	time(&ret->last_used);
 	pthread_mutex_init(&ret->write_lock, NULL);
@@ -700,11 +701,12 @@ _mpc_lowcomm_client_ctx_t *__accept_incoming(struct _mpc_lowcomm_monitor_s *moni
 	/* Set UID is non-zero if we receive 0 we skip the
 	 * already connected set check as we have a temporary
 	 * client */
+	pthread_mutex_lock(&monitor->connect_accept_lock);
 	if(uid)
 	{
 		/* Now make sure this UID is not already known */
-		if(_mpc_lowcomm_monitor_client_known(monitor, uid) != NULL)
-		{
+		_mpc_lowcomm_client_ctx_t *ctx = _mpc_lowcomm_monitor_client_known(monitor, uid);
+		if( ctx != NULL) {
 			/* Now the process with the highest UID aborts the connection
 			   this is how we advocate when doing synchronous cross-connections */
 
@@ -720,6 +722,8 @@ _mpc_lowcomm_client_ctx_t *__accept_incoming(struct _mpc_lowcomm_monitor_s *moni
 				close(new_fd);
 				mpc_common_spinlock_unlock(&monitor->connect_accept_lock);
 				return NULL;
+			} else {
+				ctx->duplicate = 1;
 			}
 		}
 	}
@@ -846,7 +850,7 @@ static void *__per_client_loop(void *pctx)
 			mpc_common_nodebug("Client %lu left", ctx->uid);
 			if(__monitor_running)
 			{
-				_mpc_lowcomm_monitor_client_remove(ctx->monitor, ctx->uid);
+				_mpc_lowcomm_monitor_client_remove(ctx);
 			}
 			break;
 		}
@@ -1151,6 +1155,10 @@ int _mpc_lowcomm_monitor_client_add(struct _mpc_lowcomm_monitor_s *monitor,
                                     _mpc_lowcomm_client_ctx_t *client)
 {
 	pthread_mutex_lock(&monitor->client_lock);
+#ifdef MONITOR_DEBUG
+	mpc_common_debug("MON: adding client uid=%llu, client count=%d, monitor=%p", 
+			 client->uid, monitor->client_count, monitor);
+#endif
 	mpc_common_hashtable_set(&monitor->client_contexts, client->uid, client);
 	pthread_mutex_unlock(&monitor->client_lock);
 
@@ -1159,20 +1167,15 @@ int _mpc_lowcomm_monitor_client_add(struct _mpc_lowcomm_monitor_s *monitor,
 	return 0;
 }
 
-int _mpc_lowcomm_monitor_client_remove(struct _mpc_lowcomm_monitor_s *monitor,
-                                       uint64_t uid)
+//FIXME: changed signature to avoid FIXME in monitor.c::accept_incoming()
+int _mpc_lowcomm_monitor_client_remove(_mpc_lowcomm_client_ctx_t *ctx)
 {
+	struct _mpc_lowcomm_monitor_s *monitor = ctx->monitor;
 	pthread_mutex_lock(&monitor->client_lock);
-	/* Is the peer already connected ? */
-	_mpc_lowcomm_client_ctx_t *ctx = mpc_common_hashtable_get(&monitor->client_contexts, uid);
 
-	if(!ctx)
-	{
-		pthread_mutex_unlock(&monitor->client_lock);
-		return -1;
+	if (!ctx->duplicate) {
+		mpc_common_hashtable_delete(&monitor->client_contexts, ctx->uid);
 	}
-
-	mpc_common_hashtable_delete(&monitor->client_contexts, uid);
 	_mpc_lowcomm_client_ctx_release(&ctx);
 	monitor->client_count--;
 
@@ -1546,6 +1549,9 @@ _mpc_lowcomm_client_ctx_t *_mpc_lowcomm_monitor_get_client(struct _mpc_lowcomm_m
                                                            _mpc_lowcomm_monitor_get_client_policy_t policy,
                                                            mpc_lowcomm_monitor_retcode_t *retcode)
 {
+	//FIXME: connect_accept_lock prevent a race between _mpc_lowcomm_monitor_get_client
+	//       and accept_incoming.
+	pthread_mutex_lock(&monitor->connect_accept_lock);
 	/* Is the peer already connected ? */
 	_mpc_lowcomm_client_ctx_t *ctx = _mpc_lowcomm_monitor_client_known(monitor, client_uid);
 
@@ -1553,20 +1559,27 @@ _mpc_lowcomm_client_ctx_t *_mpc_lowcomm_monitor_get_client(struct _mpc_lowcomm_m
 	{
 		/* In all cases if we are already connected: do direct */
 		*retcode = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
+		pthread_mutex_unlock(&monitor->connect_accept_lock);
 		return ctx;
 	}
 
 	if(policy == _MPC_LOWCOMM_MONITOR_GET_CLIENT_DIRECT)
 	{
 		/* We were requested to direct connect */
-		return __get_client(monitor, client_uid, retcode);
+		ctx = __get_client(monitor, client_uid, retcode);
+		pthread_mutex_unlock(&monitor->connect_accept_lock);
+		return ctx;
 	}
 	else if(policy == _MPC_LOWCOMM_MONITOR_GET_CLIENT_CAN_ROUTE)
 	{
+		//FIXME: recursive call to _mpc_lowcomm_monitor_get_client
+		//       __route_client creates deadlock on connect_accept_lock
+		pthread_mutex_unlock(&monitor->connect_accept_lock);
 		/* Peer is not directly connected we then attempt to rely on routing */
 		return __route_client(monitor, client_uid, retcode);
 	}
 
+	pthread_mutex_unlock(&monitor->connect_accept_lock);
 	not_reachable();
 
 	return NULL;

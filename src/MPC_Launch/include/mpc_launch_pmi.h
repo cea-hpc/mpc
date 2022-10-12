@@ -28,7 +28,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <uthash.h>
-#include <mpc_config.h>
+//#include <mpc_config.h> //NOTE: apparently not needed.
 #include <mpc_common_types.h>
 
 #ifdef __cplusplus

@@ -51,6 +51,8 @@
 #include <ibdevice.h>
 #endif
 
+#include <lcp.h>
+
 #include "mpc_lowcomm_workshare.h"
 #include "lowcomm_config.h"
 #include "monitor.h"
@@ -722,6 +724,15 @@ void mpc_lowcomm_ptp_message_complete_and_free(mpc_lowcomm_ptp_message_t *msg)
 	}
 
 	( free_memory )(msg);
+}
+
+int mpc_lowcomm_request_complete(mpc_lowcomm_request_t *request)
+{
+	request->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+	if (request->msg) {
+		request->msg->tail.free_memory(request->msg);
+	}
+	return 0;
 }
 
 void _mpc_comm_ptp_message_commit_request(mpc_lowcomm_ptp_message_t *send,
@@ -2266,6 +2277,10 @@ void mpc_lowcomm_ptp_msg_wait_init(struct mpc_lowcomm_ptp_msg_progress_s *wait,
 	}
 }
 
+
+#ifdef MPC_LOWCOMM_PROTOCOL
+static lcp_context_h lcp_ctx_loc = NULL;
+#endif
 /*
  *  Function called when the message to receive is already completed
  */
@@ -2282,7 +2297,11 @@ static inline void __mpc_comm_ptp_msg_done(struct mpc_lowcomm_ptp_msg_progress_s
 	 * we might overflow the number of send buffers waiting to be released */
 	if(request->header.source_task == MPC_ANY_SOURCE)
 	{
+#ifdef MPC_LOWCOMM_PROTOCOL
+		lcp_progress(lcp_ctx_loc);
+#else
 		_mpc_lowcomm_multirail_notify_anysource(request->header.source_task, 0);
+#endif
 	}
 #if 0
     else if (request->request_type == REQUEST_SEND && !recv_ptp) {
@@ -2318,10 +2337,14 @@ static void __mpc_comm_perform_msg_wfv(void *a)
 	__mpc_comm_ptp_msg_wait(_wait);
 
 	if( ( volatile int )_wait->request->completion_flag != MPC_LOWCOMM_MESSAGE_DONE)
-  {
+	{
+#ifdef MPC_LOWCOMM_PROTOCOL
+		lcp_progress(lcp_ctx_loc);
+#else
 		_mpc_lowcomm_multirail_notify_idle();
-    MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
-  }
+#endif
+		MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+	}
 }
 
 void mpc_lowcomm_perform_idle(volatile int *data, int value,
@@ -2466,12 +2489,20 @@ static inline void __mpc_comm_ptp_msg_wait(struct mpc_lowcomm_ptp_msg_progress_s
 		if(request->header.source_task == MPC_ANY_SOURCE)
 		{
 			/* We try to poll for finding a message with a MPC_ANY_SOURCE source */
+#ifdef MPC_LOWCOMM_PROTOCOL
+			lcp_progress(lcp_ctx_loc);
+#else
 			_mpc_lowcomm_multirail_notify_anysource(polling_task_id, blocking);
+#endif
 		}
 		else if( (!recv_ptp) || (!send_ptp) )
 		{
 			/* We poll the network only if we need it (empty queues) */
+#ifdef MPC_LOWCOMM_PROTOCOL
+			lcp_progress(lcp_ctx_loc);
+#else
 			_mpc_lowcomm_multirail_notify_perform(remote_process, source_task_id, polling_task_id, blocking);
+#endif
 		}
 
 
@@ -2529,7 +2560,34 @@ void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_r
 	if(SCTK_MSG_DEST_PROCESS_UID(msg) != mpc_lowcomm_monitor_get_uid() )
 	{
 		/* We forward the message */
+#ifdef MPC_LOWCOMM_PROTOCOL
+		int rc;
+		mpc_lowcomm_peer_uid_t uid = SCTK_MSG_DEST_PROCESS_UID(msg);
+		lcp_ep_h ep;
+
+		lcp_ep_get(lcp_ctx_loc, uid, &ep);
+		if (ep == NULL) {
+			rc = lcp_ep_create(lcp_ctx_loc, &ep, uid, 0);
+			if (rc != MPC_LOWCOMM_SUCCESS) {
+				mpc_common_debug_fatal("Could not create endpoint for %lu.",
+						uid);
+			}
+		}
+
+		/* Set sequence number before sending */
+		//_mpc_lowcomm_reorder_msg_register(msg);
+
+		msg->tail.request->request_completion_fn = 
+			mpc_lowcomm_request_complete;
+		rc = lcp_send(ep, msg->tail.request, msg->tail.message.contiguous.addr, 
+			      SCTK_MSG_NUMBER(msg));
+		if (rc != MPC_LOWCOMM_SUCCESS) {
+			mpc_common_debug_fatal("Could not send message %lu.", uid);
+		}
+		return;
+#else	
 		_mpc_lowcomm_multirail_send_message(msg);
+#endif
 		return;
 	}
 
@@ -2648,7 +2706,15 @@ void _mpc_comm_ptp_message_recv_check(mpc_lowcomm_ptp_message_t *msg,
 	{
 		/* This receive expects a message from a remote process */
 		msg->tail.remote_source = 1;
+#ifdef MPC_LOWCOMM_PROTOCOL
+		msg->tail.request->request_completion_fn = 
+			mpc_lowcomm_request_complete;
+		lcp_recv(lcp_ctx_loc, msg->tail.request, 
+			 msg->tail.message.contiguous.addr);
+		return;
+#else 
 		_mpc_lowcomm_multirail_notify_receive(msg);
+#endif
 	}
 	else
 	{
@@ -2725,12 +2791,20 @@ __mpc_comm_probe_source_tag_class_func(int destination, int source, int tag,
 		if(src_ptp == NULL)
 		{
 			int src_process = mpc_lowcomm_group_process_rank_from_world(world_source);
+#ifdef MPC_LOWCOMM_PROTOCOL
+			lcp_progress(lcp_ctx_loc);
+#else
 			_mpc_lowcomm_multirail_notify_perform(src_process, world_source, world_destination, 0);
+#endif
 		}
 	}
 	else
 	{
+#ifdef MPC_LOWCOMM_PROTOCOL
+		lcp_progress(lcp_ctx_loc);
+#else
 		_mpc_lowcomm_multirail_notify_anysource(world_destination, 0);
+#endif
 	}
 
 	assert(dest_ptp != NULL);
@@ -3074,7 +3148,11 @@ int mpc_lowcomm_test(mpc_lowcomm_request_t * request, int * completed, mpc_lowco
 	}
 	else
 	{
+#ifdef MPC_LOWCOMM_PROTOCOL
+		lcp_progress(lcp_ctx_loc);		
+#else
 		_mpc_lowcomm_multirail_notify_idle();
+#endif
 	}
 
 
@@ -3591,12 +3669,20 @@ static void __lowcomm_release_per_task()
 
 static void __initialize_drivers()
 {
+	int rc;
 	_mpc_lowcomm_monitor_setup();
 
-	if(mpc_common_get_process_count() > 1)
-	{
-		sctk_net_init_driver(mpc_common_get_flags()->network_driver_name);
+#ifdef MPC_LOWCOMM_PROTOCOL
+	rc = lcp_context_create(&lcp_ctx_loc, 0 /* empty flag */);
+	if (rc != MPC_LOWCOMM_SUCCESS) {
+		mpc_common_debug_abort();
 	}
+#else
+        if(mpc_common_get_process_count() > 1)
+        {
+                sctk_net_init_driver(mpc_common_get_flags()->network_driver_name);
+        }
+#endif
 
 	__init_request_null();
 
@@ -3607,7 +3693,10 @@ static void __initialize_drivers()
 
 static void __finalize_driver()
 {
-	mpc_lowcomm_rdma_window_do_release();
+#ifdef MPC_LOWCOMM_PROTOCOL
+	lcp_context_fini(lcp_ctx_loc);
+#endif
+	mpc_lowcomm_rdma_window_release_ht();
 	_mpc_lowcomm_communicator_release();
 	_mpc_lowcomm_monitor_teardown();
 }

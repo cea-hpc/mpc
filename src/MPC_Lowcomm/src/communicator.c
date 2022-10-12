@@ -42,6 +42,10 @@
 #include <sctk_low_level_comm.h>
 #include <mpc_lowcomm.h>
 
+#ifdef MPC_LOWCOMM_PROTOCOL
+#include <lcp.h>
+#endif
+
 #ifdef MPC_Threads
 #include <mpc_thread.h>
 #endif
@@ -973,7 +977,15 @@ static inline void __communicator_id_register(mpc_lowcomm_communicator_t comm, i
 
 
 	/* Notify communicator creation to lowcomm drivers */
+#ifdef MPC_LOWCOMM_PROTOCOL
+	lcp_context_h ctx = lcp_context_get();
+	//TODO: hack for portals. To be changed.
+	if (!lcp_context_has_comm(ctx, comm->id)) {
+		lcp_context_add_comm(ctx, comm->id);
+	}
+#else
 	_mpc_lowcomm_multirail_notify_new_comm(comm->id, mpc_lowcomm_communicator_size(comm));
+#endif
 }
 
 static inline void __communicator_id_release(mpc_lowcomm_communicator_t comm)
