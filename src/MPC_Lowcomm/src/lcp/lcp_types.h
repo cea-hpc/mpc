@@ -2,7 +2,6 @@
 #define LCP_TYPES_H
 
 #include <stdint.h>
-#include <bitmap.h>
 
 /* Chanel */
 #define LCP_MAX_CHANNELS 6

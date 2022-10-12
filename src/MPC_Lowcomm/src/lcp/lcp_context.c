@@ -2,7 +2,6 @@
 
 #include <string.h>
 #include <stdio.h>
-#include <bitmap.h>
 
 #include "sctk_alloc.h"
 #include <lcr/lcr_component.h>

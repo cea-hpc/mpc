@@ -59,19 +59,19 @@ int lcp_ep_init_config(lcp_context_h ctx, lcp_ep_h ep)
                 iface->iface_get_attr(iface, &attr);
                 if (if_desc.iface_config->offload) {
                         ep->ep_config.max_bcopy = LCP_MIN(ep->ep_config.max_bcopy,
-                                                      attr.cap.tag.max_bcopy);
+                                                          attr.cap.tag.max_bcopy);
                         ep->ep_config.max_zcopy = LCP_MIN(ep->ep_config.max_zcopy,
-                                                      attr.cap.tag.max_zcopy);
+                                                          attr.cap.tag.max_zcopy);
                 } else {
                         ep->ep_config.max_bcopy = LCP_MIN(ep->ep_config.max_bcopy,
-                                                      attr.cap.am.max_bcopy);
+                                                          attr.cap.am.max_bcopy);
                         ep->ep_config.max_zcopy = LCP_MIN(ep->ep_config.max_zcopy,
-                                                      attr.cap.am.max_zcopy);
+                                                          attr.cap.am.max_zcopy);
                 }
                 ep->ep_config.rndv.max_get_zcopy = LCP_MIN(ep->ep_config.rndv.max_get_zcopy,
-                                                       attr.cap.rndv.max_get_zcopy);
+                                                           attr.cap.rndv.max_get_zcopy);
                 ep->ep_config.rndv.max_put_zcopy = LCP_MIN(ep->ep_config.rndv.max_put_zcopy,
-                                                       attr.cap.rndv.max_put_zcopy);
+                                                           attr.cap.rndv.max_put_zcopy);
 
 	}
 

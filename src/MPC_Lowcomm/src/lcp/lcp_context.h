@@ -3,7 +3,6 @@
 
 #include "sctk_rail.h" /* defines lcr_am_callback_t */
 #include "lowcomm_config.h"
-#include <bitmap.h>
 
 #include "lcp_ep.h"
 #include "lcp_pending.h"
