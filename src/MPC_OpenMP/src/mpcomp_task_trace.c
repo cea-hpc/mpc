@@ -153,11 +153,6 @@ mpc_omp_task_trace_record_sizeof(int type)
             return sizeof(mpc_omp_task_trace_record_delete_t);
         }
 
-        case (MPC_OMP_TASK_TRACE_TYPE_CALLBACK):
-        {
-            return sizeof(mpc_omp_task_trace_record_callback_t);
-        }
-
         case (MPC_OMP_TASK_TRACE_TYPE_SEND):
         {
             return sizeof(mpc_omp_task_trace_record_send_t);
@@ -176,6 +171,16 @@ mpc_omp_task_trace_record_sizeof(int type)
         case (MPC_OMP_TASK_TRACE_TYPE_RANK):
         {
             return sizeof(mpc_omp_task_trace_record_rank_t);
+        }
+
+        case (MPC_OMP_TASK_TRACE_TYPE_BLOCKED):
+        {
+            return sizeof(mpc_omp_task_trace_record_blocked_t);
+        }
+
+        case (MPC_OMP_TASK_TRACE_TYPE_UNBLOCKED):
+        {
+            return sizeof(mpc_omp_task_trace_record_unblocked_t);
         }
 
         default:
@@ -197,7 +202,7 @@ __record_flush(
 # define MPC_OMP_TASK_TRACE_FLUSH_BUFFER_SIZE 8192
 
 void
-_mpc_omp_task_trace_flush(void)
+mpc_omp_task_trace_flush(void)
 {
     char buffer[MPC_OMP_TASK_TRACE_FLUSH_BUFFER_SIZE];
     mpc_omp_thread_task_trace_infos_t * infos = __get_infos();
@@ -290,19 +295,6 @@ _mpc_omp_task_trace_delete(mpc_omp_task_t * task)
 }
 
 void
-_mpc_omp_task_trace_callback(int when, int status)
-{
-    mpc_omp_task_trace_node_t * node = __node_new(MPC_OMP_TASK_TRACE_TYPE_CALLBACK);
-    assert(node);
-
-    mpc_omp_task_trace_record_callback_t * record = (mpc_omp_task_trace_record_callback_t *) __node_record(node);
-    record->when    = when;
-    record->status  = status;
-
-    __node_insert(node);
-}
-
-void
 _mpc_omp_task_trace_send(int count, int datatype, int dst, int tag, int comm)
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
@@ -385,6 +377,32 @@ _mpc_omp_task_trace_rank(int comm, int rank)
     mpc_omp_task_trace_record_rank_t * record = (mpc_omp_task_trace_record_rank_t *) __node_record(node);
     record->comm = comm;
     record->rank = rank;
+
+    __node_insert(node);
+}
+
+void
+_mpc_omp_task_trace_blocked(mpc_omp_task_t * task)
+{
+    mpc_omp_task_trace_node_t * node = __node_new(MPC_OMP_TASK_TRACE_TYPE_BLOCKED);
+    assert(node);
+
+    mpc_omp_task_trace_record_blocked_t * record = (mpc_omp_task_trace_record_blocked_t *) __node_record(node);
+    assert(record);
+    record->uid = task->uid;
+
+    __node_insert(node);
+}
+
+void
+_mpc_omp_task_trace_unblocked(mpc_omp_task_t * task)
+{
+    mpc_omp_task_trace_node_t * node = __node_new(MPC_OMP_TASK_TRACE_TYPE_UNBLOCKED);
+    assert(node);
+
+    mpc_omp_task_trace_record_unblocked_t * record = (mpc_omp_task_trace_record_unblocked_t *) __node_record(node);
+    assert(record);
+    record->uid = task->uid;
 
     __node_insert(node);
 }
@@ -569,7 +587,7 @@ mpc_omp_task_trace_begin(void)
     {
         infos->begun = 1;
     }
-    __node_insert(__node_new(MPC_OMP_TASK_TRACE_TYPE_BEGIN));
+    //__node_insert(__node_new(MPC_OMP_TASK_TRACE_TYPE_BEGIN));
 # if 0
     dl_iterate_phdr(__check_dynamic_symbols, NULL);
 # endif
@@ -585,8 +603,8 @@ mpc_omp_task_trace_end(void)
     _mpc_omp_callback_run(MPC_OMP_CALLBACK_SCOPE_INSTANCE,  MPC_OMP_CALLBACK_TASK_TRACE_END);
     _mpc_omp_callback_run(MPC_OMP_CALLBACK_SCOPE_THREAD,    MPC_OMP_CALLBACK_TASK_TRACE_END);
 
-    __node_insert(__node_new(MPC_OMP_TASK_TRACE_TYPE_END));
-    _mpc_omp_task_trace_flush();
+    //__node_insert(__node_new(MPC_OMP_TASK_TRACE_TYPE_END));
+    mpc_omp_task_trace_flush();
 
     mpc_omp_thread_task_trace_infos_t * infos = __get_infos();
     close(infos->writer.fd);

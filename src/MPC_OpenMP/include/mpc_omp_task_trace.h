@@ -53,11 +53,12 @@ typedef enum    mpc_omp_task_trace_record_type_e
     MPC_OMP_TASK_TRACE_TYPE_SCHEDULE,       // 4
     MPC_OMP_TASK_TRACE_TYPE_CREATE,         // 8
     MPC_OMP_TASK_TRACE_TYPE_DELETE,         // 16
-    MPC_OMP_TASK_TRACE_TYPE_CALLBACK,       // 32
-    MPC_OMP_TASK_TRACE_TYPE_SEND,           // 64
-    MPC_OMP_TASK_TRACE_TYPE_RECV,           // 128
-    MPC_OMP_TASK_TRACE_TYPE_ALLREDUCE,      // 256
-    MPC_OMP_TASK_TRACE_TYPE_RANK,           // 512
+    MPC_OMP_TASK_TRACE_TYPE_SEND,           // 32
+    MPC_OMP_TASK_TRACE_TYPE_RECV,           // 64
+    MPC_OMP_TASK_TRACE_TYPE_ALLREDUCE,      // 128
+    MPC_OMP_TASK_TRACE_TYPE_RANK,           // 256
+    MPC_OMP_TASK_TRACE_TYPE_BLOCKED,        // 512
+    MPC_OMP_TASK_TRACE_TYPE_UNBLOCKED,      // 1024
     MPC_OMP_TASK_TRACE_TYPE_COUNT
 }               mpc_omp_task_trace_record_type_t;
 
@@ -65,13 +66,14 @@ typedef enum    mpc_omp_task_trace_record_type_e
 
 #  define MPC_OMP_TASK_TRACE_DEPENDENCY(out, in)                if (MPC_OMP_TASK_SHOULD_TRACE(DEPENDENCY))  _mpc_omp_task_trace_dependency(out, in)
 #  define MPC_OMP_TASK_TRACE_SCHEDULE(task)                     if (MPC_OMP_TASK_SHOULD_TRACE(SCHEDULE))    _mpc_omp_task_trace_schedule(task)
-#  define MPC_OMP_TASK_TRACE_CREATE(task)                       if (MPC_OMP_TASK_SHOULD_TRACE(CREATE))      _mpc_omp_task_trace_create(task)
+#  define MPC_OMP_TASK_TRACE_CREATE(task)                       if (MPC_OMP_TASK_SHOULD_TRACE(CREATE)) _mpc_omp_task_trace_create(task)
 #  define MPC_OMP_TASK_TRACE_DELETE(task)                       if (MPC_OMP_TASK_SHOULD_TRACE(DELETE))      _mpc_omp_task_trace_delete(task)
-#  define MPC_OMP_TASK_TRACE_CALLBACK(when, status)             if (MPC_OMP_TASK_SHOULD_TRACE(CALLBACK))    _mpc_omp_task_trace_async(when, status)
-#  define MPC_OMP_TASK_TRACE_SEND(count, dtype, dst, tag, comm) if (MPC_OMP_TASK_SHOULD_TRACE(SEND))        _mpc_omp_task_trace_send(count, dtype, dst, tag, comm)
-#  define MPC_OMP_TASK_TRACE_RECV(count, dtype, src, tag, comm) if (MPC_OMP_TASK_SHOULD_TRACE(RECV))        _mpc_omp_task_trace_recv(count, dtype, src, tag, comm)
+#  define MPC_OMP_TASK_TRACE_SEND(count, dtype, dst, tag, comm) if (MPC_OMP_TASK_SHOULD_TRACE(SEND)) _mpc_omp_task_trace_send(count, dtype, dst, tag, comm)
+#  define MPC_OMP_TASK_TRACE_RECV(count, dtype, src, tag, comm) if (MPC_OMP_TASK_SHOULD_TRACE(RECV)) _mpc_omp_task_trace_recv(count, dtype, src, tag, comm)
 #  define MPC_OMP_TASK_TRACE_ALLREDUCE(count, dtype, op, comm)  if (MPC_OMP_TASK_SHOULD_TRACE(ALLREDUCE))   _mpc_omp_task_trace_allreduce(count, dtype, op, comm)
-#  define MPC_OMP_TASK_TRACE_RANK(comm, rank)                   if (MPC_OMP_TASK_SHOULD_TRACE(RANK))        _mpc_omp_task_trace_rank(comm, rank)
+#  define MPC_OMP_TASK_TRACE_RANK(comm, rank)                   if (MPC_OMP_TASK_SHOULD_TRACE(RANK)) _mpc_omp_task_trace_rank(comm, rank)
+#  define MPC_OMP_TASK_TRACE_BLOCKED(task)                      if (MPC_OMP_TASK_SHOULD_TRACE(BLOCKED)) _mpc_omp_task_trace_blocked(task)
+#  define MPC_OMP_TASK_TRACE_UNBLOCKED(task)                    if (MPC_OMP_TASK_SHOULD_TRACE(UNBLOCKED)) _mpc_omp_task_trace_unblocked(task)
 
 # define MPC_OMP_TASK_TRACE_FILE_VERSION    1
 # define MPC_OMP_TASK_TRACE_FILE_MAGIC      (0x6B736174) /* 't' 'a' 's' 'k' */
@@ -201,27 +203,6 @@ typedef struct  mpc_omp_task_trace_record_dependency_s
     int in_uid;
 }               mpc_omp_task_trace_record_dependency_t;
 
-typedef struct  mpc_omp_task_trace_record_famine_overlap_s
-{
-    /* inheritance */
-    mpc_omp_task_trace_record_t parent;
-
-    /* 0 on start, 1 on finish */
-    int status;
-}               mpc_omp_task_trace_record_famine_overlap_t;
-
-typedef struct  mpc_omp_task_trace_record_callback_s
-{
-    /* inheritance */
-    mpc_omp_task_trace_record_t parent;
-
-    /* 0 on start, 1 on finish */
-    int status;
-
-    /* when the call occured */
-    int when;
-}               mpc_omp_task_trace_record_callback_t;
-
 typedef struct  mpc_omp_task_trace_record_send_s
 {
     /* inheritance */
@@ -280,6 +261,18 @@ typedef struct  mpc_omp_task_trace_record_rank_s
     int rank;
 }               mpc_omp_task_trace_record_rank_t;
 
+typedef struct  mpc_omp_task_trace_record_blocked_s
+{
+    /* inheritance */
+    mpc_omp_task_trace_record_t parent;
+
+    /* the task uid */
+    int uid;
+
+}               mpc_omp_task_trace_record_blocked_t;
+
+typedef mpc_omp_task_trace_record_blocked_t mpc_omp_task_trace_record_unblocked_t;
+
 /**
  *  A record node
  */
@@ -324,12 +317,12 @@ extern "C" {
     /**
      *  Flush the thread events to the file descriptor
      */
-    void _mpc_omp_task_trace_flush(void);
+    void mpc_omp_task_trace_flush(void);
 
     /**
      *  Return true if between a 'begin' and 'end' trace section
      */
-    int _mpc_omp_task_trace_begun(void);
+    int mpc_omp_task_trace_begun(void);
 
     /**
      * Return true if the given event must be traced by the runtime
@@ -343,11 +336,12 @@ extern "C" {
     void _mpc_omp_task_trace_schedule(struct mpc_omp_task_s * task);
     void _mpc_omp_task_trace_create(struct mpc_omp_task_s * task);
     void _mpc_omp_task_trace_delete(struct mpc_omp_task_s * task);
-    void _mpc_omp_task_trace_callback(int when, int status);
     void _mpc_omp_task_trace_send(int count, int datatype, int dst, int tag, int comm);
     void _mpc_omp_task_trace_recv(int count, int datatype, int src, int tag, int comm);
     void _mpc_omp_task_trace_allreduce(int count, int datatype, int op, int comm);
     void _mpc_omp_task_trace_rank(int comm, int rank);
+    void _mpc_omp_task_trace_blocked(struct mpc_omp_task_s * task);
+    void _mpc_omp_task_trace_unblocked(struct mpc_omp_task_s * task);
 
 #ifdef __cplusplus
 }
@@ -358,11 +352,12 @@ extern "C" {
 #  define MPC_OMP_TASK_TRACE_SCHEDULE(...)
 #  define MPC_OMP_TASK_TRACE_CREATE(...)
 #  define MPC_OMP_TASK_TRACE_DELETE(...)
-#  define MPC_OMP_TASK_TRACE_CALLBACK(...)
 #  define MPC_OMP_TASK_TRACE_SEND(...)
 #  define MPC_OMP_TASK_TRACE_RECV(...)
 #  define MPC_OMP_TASK_TRACE_ALLREDUCE(...)
 #  define MPC_OMP_TASK_TRACE_RANK(...)
+#  define MPC_OMP_TASK_TRACE_BLOCKED(...)
+#  define MPC_OMP_TASK_TRACE_UNBLOCKED(...)
 # endif /* MPC_OMP_TASK_COMPILE_TRACE */
 
 # endif /* __MPC_OMP_TASK_TRACE_H__ */

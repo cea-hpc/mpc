@@ -3230,6 +3230,7 @@ _mpc_omp_task_unblock(mpc_omp_event_handle_block_t * handle)
     mpc_omp_task_t * task = (mpc_omp_task_t *) handle->task;
     assert(task);
 
+    MPC_OMP_TASK_TRACE_UNBLOCKED(task);
     __task_ref(task);                                               /* mpc_omp_task_unblock */
     _mpc_omp_event_handle_ref((mpc_omp_event_handle_t *) handle);   /* mpc_omp_task_unblock */
 
@@ -3308,18 +3309,20 @@ mpc_omp_task_block(mpc_omp_event_handle_block_t * handle)
     assert(handle);
     assert(handle->parent.type == MPC_OMP_EVENT_TASK_BLOCK);
 
+    mpc_omp_thread_t * thread = __thread_task_coherency(NULL);
+    assert(thread);
+
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
+    MPC_OMP_TASK_TRACE_BLOCKED(task);
+
     /* if the task did not unblock */
     if (OPA_cas_int(
         &(handle->status),
         MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_INIT,
         MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_BLOCKED) == MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_INIT)
     {
-        mpc_omp_thread_t * thread = __thread_task_coherency(NULL);
-        assert(thread);
-
-        mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
-        assert(task);
-
         /* add the task to the blocked list */
         mpc_omp_task_list_t * list = &(thread->instance->task_infos.blocked_tasks);
         mpc_common_spinlock_lock(&(list->lock));
@@ -4083,6 +4086,9 @@ mpc_omp_persistent_region_iterate(void)
     // TODO : this shouldn't be necessary, but conveinent for now
     // to avoid handling dependencies between iterations
     // and multiple task version on the fly
+    // Maybe it is even more interesting to have this barrier instead
+    // of multiple persistent task versions... to be evaluated
+
     /* wait for the previous iteration to complete */
     _mpc_omp_task_wait(NULL, 0);
 
