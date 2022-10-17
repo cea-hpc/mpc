@@ -1070,7 +1070,7 @@ __task_in_list(mpc_omp_task_list_elt_t * list, mpc_omp_task_t * task)
 #endif
     /* the sequential construction of the graph implies
      * that if 'task' is present in the list, it must be the last
-     * inserted element */
+     * inserted element + the list is LIFO */
     return (list && list->task == task);
 }
 
@@ -1081,7 +1081,6 @@ __task_precedence_constraints(mpc_omp_task_t * predecessor, mpc_omp_task_t * suc
     assert(predecessor->parent == successor->parent);
     assert(predecessor->depth == successor->depth);
 
-    /* always generate arcs for persistent tasks */
     if (!__task_in_list(predecessor->dep_node.successors, successor))
     {
         if (OPA_load_int(&(predecessor->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED)
@@ -1248,10 +1247,73 @@ __task_process_mpc_dep(
                 type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
         {
             mpc_omp_task_dep_list_elt_t * inoutset = entry->inoutset;
-            while (inoutset)
+
+            /* buggy tentative of automatic 'inoutset' prunning by inserting an empty task */
+            /* use 'mpc_omp_task_dependencies_reset' or 'inout' type in user codes for now,
+             * which is more optimized */
+# if 0
+            /* if the inserted task is of type 'IN' then insert an 'INOUT' task in between
+             * to cut transitive edges (c.f concurrent write Athapascan, F. Galilée) */
+            if (type == MPC_OMP_TASK_DEP_IN && inoutset)
             {
-                __task_precedence_constraints(inoutset->task, task);
-                inoutset = inoutset->next;
+                mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
+                mpc_omp_task_t * inout;
+                if (region->active && (inout = mpc_omp_get_persistent_task()))
+                {
+                    _mpc_omp_task_reinit(task);
+                }
+                else
+                {
+                    /* TODO : this could be optimized by decoupling 'dep_node' and 'tasks' */
+                    mpc_omp_task_property_t properties = MPC_OMP_TASK_PROP_DEPEND;
+                    const size_t size = sizeof(mpc_omp_task_t);
+                    inout = _mpc_omp_task_allocate(size);
+                    _mpc_omp_task_init(inout, NULL, NULL, size, properties);
+                    if (region->active) mpc_omp_persistent_region_push(inout);
+
+                    inout->dep_node.hmap = NULL;
+                    mpc_common_spinlock_init(&(inout->dep_node.lock), 0);
+                    inout->dep_node.successors = NULL;
+                    inout->dep_node.nsuccessors = 0;
+                    inout->dep_node.predecessors = NULL;
+                    inout->dep_node.npredecessors = 0;
+
+                    OPA_store_int(&(inout->dep_node.ref_predecessors), 1);
+                    inout->dep_node.top_level = 0;
+                    inout->dep_node.dep_list = (mpc_omp_task_dep_list_elt_t *) malloc(sizeof(mpc_omp_task_dep_list_elt_t) * 1);
+                    inout->dep_node.dep_list_size = 0;
+
+                    OPA_store_int(&(inout->dep_node.ref_predecessors), 1);
+
+                    while (inoutset)
+                    {
+                        __task_precedence_constraints(inoutset->task, inout);
+                        inoutset = inoutset->next;
+                    }
+                    __task_precedence_constraints(inout, task);
+
+                    OPA_decr_int(&(inout->dep_node.ref_predecessors));
+                    MPC_OMP_TASK_TRACE_CREATE(inout);
+
+                    entry->inoutset = NULL;
+                    entry->out      = __task_dep_list_append(inout, entry, NULL);
+                }
+
+                _mpc_omp_task_process(inout);
+
+                if (!mpc_omp_task_property_isset(inout->property, MPC_OMP_TASK_PROP_PERSISTENT))
+                {
+                    _mpc_omp_task_deinit(inout);
+                }
+            }
+            else
+# endif
+            {
+                while (inoutset)
+                {
+                    __task_precedence_constraints(inoutset->task, task);
+                    inoutset = inoutset->next;
+                }
             }
         }
 

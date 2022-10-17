@@ -667,6 +667,8 @@ typedef struct  mpc_omp_task_priority_propagation_context_s
     OPA_int_t version;
 }               mpc_omp_task_priority_propagation_context_t;
 
+/* TODO : we should dissociate the notions of 'dep_node' from 'tasks' - so we can
+ * insert empty nodes in the TDG for synchronizations purposes without embedding and empty task */
 typedef struct  mpc_omp_task_dep_node_s
 {
     /* hash table for child tasks dependencies */
