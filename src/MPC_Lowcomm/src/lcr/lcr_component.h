@@ -33,7 +33,8 @@ typedef struct lcr_component {
         int (*query_devices)(struct lcr_component *component, 
                              lcr_device_t **device_list, 
                              unsigned int *num_devices);
-        int (*iface_open)(lcr_rail_config_t *rail_config, 
+        int (*iface_open)(char *device_name, int id,
+			  lcr_rail_config_t *rail_config, 
                           lcr_driver_config_t *driver_config,
                           sctk_rail_info_t **iface_p);
 } lcr_component_t;

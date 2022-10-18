@@ -13,8 +13,8 @@
  */
 
 #define LCP_TM_SEQN_MASK 0x800000000000fffful 
-#define LCP_TM_SRC_MASK 0x800000ffffff0000ul
-#define LCP_TM_TAG_MASK 0x7fffff0000000000ul
+#define LCP_TM_TAG_MASK 0x800000ffffff0000ul
+#define LCP_TM_SRC_MASK 0x7fffff0000000000ul
 
 /* lcp_tag_t: for matched request
  *

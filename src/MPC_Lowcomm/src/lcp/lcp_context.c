@@ -85,9 +85,10 @@ static int lcp_context_open_interfaces(lcp_context_h ctx)
 
 	for (i=0; i<ctx->num_resources; i++) {
                 rsc = &ctx->resources[i];
-                rc = rsc->component->iface_open(rsc->iface_config,
-                                          rsc->driver_config,
-                                          &rsc->iface);
+                rc = rsc->component->iface_open(rsc->name, i,
+				                rsc->iface_config,
+                                                rsc->driver_config,
+                                                &rsc->iface);
 		if (rsc->iface == NULL) {
 			goto err;
 		}
@@ -340,18 +341,15 @@ static inline void lcp_context_resource_init(lcp_rsc_desc_t *resource_p,
                 .component = component
         };
         strcpy(resource.name, device->name);
-        
-        /* Set interface device name */
-        strcpy(iface_config->device, device->name);
 
         *resource_p = resource;
 }
 
 void lcp_context_select_component(lcp_context_h ctx,
-                                               lcr_component_h *components,
-                                               int num_components,
-                                               int *cmpt_index_p,
-                                               int *max_ifaces_p)
+                                  lcr_component_h *components,
+                                  int num_components,
+                                  int *cmpt_index_p,
+                                  int *max_ifaces_p)
 {
         int i, j;
         int max_ifaces = -1;
@@ -382,18 +380,6 @@ void lcp_context_select_component(lcp_context_h ctx,
                                                 config->max_ifaces : 1;
                                 }
                         }
-
-                        if (max_ifaces < ctx->config.num_selected_devices) {
-                                mpc_common_debug_warning("LCP: cannot specify more than %d for "
-                                                         "component %s. Reset %d to %d",
-                                                         max_ifaces, cmpt->name, 
-                                                         ctx->config.num_selected_devices,
-                                                         max_ifaces);
-                                ctx->config.num_selected_devices = max_ifaces;
-                        }
-
-                        /* Number of ifaces correspond to number of user-defined devices */
-                        max_ifaces = ctx->config.num_selected_devices;
                 }
         }
 

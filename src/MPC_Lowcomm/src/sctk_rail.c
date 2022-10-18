@@ -82,10 +82,8 @@ int lcr_rail_init(lcr_rail_config_t *rail_config,
         if(!rail->rail_device ) {
                 if(strcmp(rail_config->device, "default") && 
                    rail_config->device[0] != '!' ) {
-                        mpc_common_debug_error("No such device %s", 
+                        mpc_common_debug_error("Device not found with hwloc %s", 
                                                rail_config->device );
-                        rc = MPC_LOWCOMM_ERROR;
-                        goto err;
                 }
         }
 

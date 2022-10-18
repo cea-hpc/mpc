@@ -17,6 +17,8 @@ static inline int lcp_send_start_frag(lcp_ep_h ep, lcp_request_t *req)
 			      req->send.tag.dest_tsk, req->msg_id);
 
         req->state.status = MPC_LOWCOMM_LCP_RPUT_SYNC;
+	req->flags        |= LCP_REQUEST_SEND_FRAG;
+
 	/* register req request inside table */
 	if (lcp_pending_create(ep->ctx->pend_send_req, req, 
 				     req->msg_id) == NULL) {

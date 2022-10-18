@@ -106,8 +106,8 @@ int lcr_ptl_send_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
                                  size);
 		return MPC_LOWCOMM_INPROGRESS;
 	}
-	mpc_common_debug("LCR PTL: send zcopy to %d (iface=%llu, remote=%llu, idx=%d, sz=%llu)", 
-			 ep->dest, srail->iface, remote, pte->idx, size);
+	mpc_common_debug_info("LCR PTL: send zcopy to %d (iface=%llu, remote=%llu, idx=%d, sz=%llu)", 
+			      ep->dest, srail->iface, remote, pte->idx, size);
 	sctk_ptl_emit_put(request, size, remote, pte, match, 0, 0, hdr.raw, request);
 
 	return MPC_LOWCOMM_SUCCESS;
@@ -147,7 +147,7 @@ int lcr_ptl_recv_tag_zcopy(sctk_rail_info_t *rail,
 	user_ptr->type = SCTK_PTL_TYPE_STD;
 	sctk_ptl_me_register(srail, user_ptr, pte);
 
-	mpc_common_debug("LCR PTL: post recv zcopy to %p (iface=%llu, idx=%d, "
-			"sz=%llu, buf=%p)", rail, srail->iface, pte->idx, size, start);
+	mpc_common_debug_info("LCR PTL: post recv zcopy to %p (iface=%llu, idx=%d, "
+			      "sz=%llu, buf=%p)", rail, srail->iface, pte->idx, size, start);
 	return MPC_LOWCOMM_SUCCESS;
 }

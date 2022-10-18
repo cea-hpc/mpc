@@ -243,7 +243,7 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims)
 	//FIXME: dont understand why comm_dim should be added ? 
 	//       A new portals porte is created upon communicator creation
 	//       anyway.
-	comm_dims = SCTK_PTL_PTE_HIDDEN;
+	comm_dims = SCTK_PTL_PTE_HIDDEN + comm_dims;
 
 	table = sctk_malloc(sizeof(sctk_ptl_pte_t) * comm_dims); /* one CM, one recovery, one RDMA */
 	memset(table, 0, comm_dims * sizeof(sctk_ptl_pte_t));
@@ -431,7 +431,8 @@ void sctk_ptl_software_fini(sctk_ptl_rail_info_t* srail)
 		if(i==0)
 			base_ptr = cur;
 
-		__pte_release(srail, cur);
+		if (cur)
+			__pte_release(srail, cur);
 	}
 
 	sctk_ptl_chk(PtlEQFree(

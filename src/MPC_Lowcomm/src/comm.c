@@ -2579,8 +2579,7 @@ void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_r
 
 		msg->tail.request->request_completion_fn = 
 			mpc_lowcomm_request_complete;
-		rc = lcp_send(ep, msg->tail.request, msg->tail.message.contiguous.addr, 
-			      SCTK_MSG_NUMBER(msg));
+		rc = lcp_send(ep, msg->tail.request, msg->tail.message.contiguous.addr, 0);
 		if (rc != MPC_LOWCOMM_SUCCESS) {
 			mpc_common_debug_fatal("Could not send message %lu.", uid);
 		}

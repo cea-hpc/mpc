@@ -5,6 +5,7 @@
 #include "lcp_context.h"
 #include "lcp_common.h"
 
+#include <limits.h>
 #include "uthash.h"
 
 int lcp_ep_create_base(lcp_context_h ctx, lcp_ep_h *ep_p)
@@ -45,6 +46,11 @@ int lcp_ep_init_config(lcp_context_h ctx, lcp_ep_h ep)
 {
 	int i;
 	int max_prio = 0, prio_idx = 0;
+
+	ep->ep_config.max_bcopy          = SIZE_MAX;
+	ep->ep_config.max_zcopy          = SIZE_MAX;
+	ep->ep_config.rndv.max_put_zcopy = SIZE_MAX;
+	ep->ep_config.rndv.max_get_zcopy = SIZE_MAX;
 
 	for (i=0; i<ctx->num_resources; i++) {	
 		lcp_rsc_desc_t if_desc  = ctx->resources[i];

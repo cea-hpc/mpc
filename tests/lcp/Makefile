@@ -1,6 +1,7 @@
 CC=gcc
 CFLAGS=`pkg-config --cflags libmpclowcomm`
 CFLAGS+=`pkg-config --cflags openpa`
+CFLAGS+=-g
 LIBS=`pkg-config --libs libmpclowcomm`
 LIBS+=-lmpcconfig
 

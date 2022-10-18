@@ -195,7 +195,7 @@ int lcp_recv_do_zcopy_multi(lcp_ep_h ep, lcp_request_t *rreq)
 				goto err;
 			}
 		}
-		mpc_common_debug("LCP: recv frag n=%d, src=%d, dest=%d, msg_id=%llu, offset=%d, "
+		mpc_common_debug_info("LCP: recv frag n=%d, src=%d, dest=%d, msg_id=%llu, offset=%d, "
 				 "len=%d", ifrag, rreq->recv.tag.src_tsk, rreq->recv.tag.dest_tsk,
 				 rreq->msg_id, offset, length);
 

@@ -368,7 +368,7 @@ int lcr_ptl_query_devices(__UNUSED__ lcr_component_t *component,
                 }
                 
                 //FIXME: interface name should always be of the form:
-                //       ptl<id> with id, 0 < id < 9 
+                //       bxi<id> with id, 0 < id < 9 
                 strcpy(devices[num_devices].name, entry->d_name);
                 ++num_devices;
         }
@@ -384,12 +384,13 @@ out:
         return rc;
 }
 
-int lcr_ptl_iface_open(lcr_rail_config_t *rail_config, 
-                       lcr_driver_config_t *driver_config,
-                       sctk_rail_info_t **iface_p)
+int lcr_ptl_iface_open(char *device_name, int id,
+		       lcr_rail_config_t *rail_config, 
+		       lcr_driver_config_t *driver_config,
+		       sctk_rail_info_t **iface_p)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-        sctk_rail_info_t *iface;
+        sctk_rail_info_t *iface = NULL;
 
         lcr_rail_init(rail_config, driver_config, &iface);
         if (iface == NULL) {
@@ -398,12 +399,16 @@ int lcr_ptl_iface_open(lcr_rail_config_t *rail_config,
                 goto err;
         }
 
+	strcpy(iface->device_name, device_name);
+	iface->rail_number = id; /* used as tag for pmi registration */
+
         sctk_network_init_ptl(iface);
 
         /* Add new API call */
         iface->send_tag_bcopy = lcr_ptl_send_tag_bcopy;
         iface->send_tag_zcopy = lcr_ptl_send_tag_zcopy;
         iface->recv_tag_zcopy = lcr_ptl_recv_tag_zcopy;
+	iface->iface_get_attr = lcr_ptl_get_attr;
 
         *iface_p = iface;
 err:

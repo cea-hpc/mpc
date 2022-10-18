@@ -39,6 +39,9 @@ ssize_t lcp_send_do_tag_offload_bcopy(lcp_request_t *req, uint64_t imm,
 	req->send.t_ctx.req = req;
 	req->send.t_ctx.comm_id = req->send.tag.comm_id;
 
+	mpc_common_debug_info("LCP: post send tag bcopy req=%p, src=%d, dest=%d, size=%d, matching=[%d:%d:%d]", 
+			      req, req->send.tag.src, req->send.tag.dest, req->send.length, tag.t_tag.tag, 
+			      tag.t_tag.src, tag.t_tag.seqn);
 	payload = lcr_ep->rail->send_tag_bcopy(lcr_ep, tag, imm, pack, 
 					       req, 0, &(req->send.t_ctx));
 
@@ -70,6 +73,9 @@ int lcp_send_do_ack_offload_post(lcp_request_t *req,
 	req->send.t_ctx.req = req;
 	req->send.t_ctx.comm_id = req->send.tag.comm_id;
 
+	mpc_common_debug_info("LCP: post send ack bcopy req=%p, src=%d, dest=%d, size=%d, matching=[%d:%d]", 
+			      req, req->send.tag.src, req->send.tag.dest, req->send.length, tag.t_frag.f_id, 
+			      tag.t_frag.m_id);
 	payload = lcr_ep->rail->send_tag_bcopy(lcr_ep, tag, imm.raw, pack,
 					       req, 0, &(req->send.t_ctx));
 	if (payload >= 0) {
@@ -106,6 +112,9 @@ int lcp_send_do_frag_offload_post(lcp_request_t *req, size_t offset,
 	req->send.t_ctx.req = req;
 	req->send.t_ctx.comm_id = req->send.tag.comm_id;
 
+	mpc_common_debug_info("LCP: post send frag zcopy req=%p, src=%d, dest=%d, size=%d, matching=[%llu, %d]", 
+			      req, req->send.tag.src, req->send.tag.dest, length, tag.t_frag.f_id, 
+			      tag.t_frag.m_id);
 	rc = lcr_ep->rail->send_tag_zcopy(lcr_ep, tag, imm.raw, &iov, 1, 0, 
 					  &(req->send.t_ctx));
 
@@ -142,8 +151,9 @@ int lcp_send_do_tag_offload_post(lcp_ep_h ep, lcp_request_t *req)
 
 	req->flags |= LCP_REQUEST_OFFLOADED;
 
-	mpc_common_debug_info("LCP: post send tag zcopy req=%p, src=%d, dest=%d, size=%d", 
-			      req, req->send.tag.src, req->send.tag.dest, req->send.length);
+	mpc_common_debug_info("LCP: post send tag zcopy req=%p, src=%d, dest=%d, size=%d, matching=[%d:%d:%d]", 
+			      req, req->send.tag.src, req->send.tag.dest, req->send.length, tag.t_tag.tag, 
+			      tag.t_tag.src, tag.t_tag.seqn);
 	return lcr_ep->rail->send_tag_zcopy(lcr_ep, tag, imm.raw, &iov, 1, 
 					  0, &(req->send.t_ctx));
 }
@@ -168,6 +178,9 @@ int lcp_recv_frag_offload_post(lcp_request_t *req, sctk_rail_info_t *iface,
 	req->recv.t_ctx.comm_id = req->recv.tag.comm_id;
 	req->recv.t_ctx.tag = tag;
 
+	mpc_common_debug_info("LCP: post recv frag zcopy req=%p, src=%d, dest=%d, size=%d, matching=[%llu, %d]", 
+			      req, req->recv.tag.src, req->recv.tag.dest, length, tag.t_frag.f_id, 
+			      tag.t_frag.m_id);
 	rc = iface->recv_tag_zcopy(iface, tag, ign_tag, &iov, 1, 
 				   &(req->recv.t_ctx));
 
@@ -198,8 +211,10 @@ int lcp_recv_tag_offload_post(lcp_request_t *req, sctk_rail_info_t *iface)
 	req->recv.t_ctx.req = req;
 	req->recv.t_ctx.comm_id = req->recv.tag.comm_id;
 
-	mpc_common_debug_info("LCP: post recv tag zcopy req=%p, src=%d, dest=%d, size=%d", 
-			      req, req->recv.tag.src, req->recv.tag.dest, req->recv.length);
+	mpc_common_debug_info("LCP: post recv tag zcopy req=%p, src=%d, dest=%d, size=%d, matching=[%d:%d:%d], "
+			      "ignore=[%d:%d:%d]", req, req->send.tag.src, req->send.tag.dest, req->send.length, 
+			      tag.t_tag.tag, tag.t_tag.src, tag.t_tag.seqn, ign_tag.t_tag.tag, ign_tag.t_tag.src,
+			      ign_tag.t_tag.seqn);
 	return iface->recv_tag_zcopy(iface, tag, ign_tag, &iov, 1, 
 				     &(req->recv.t_ctx));
 }
@@ -221,6 +236,9 @@ int lcp_recv_ack_offload_post(lcp_request_t *req, sctk_rail_info_t *iface)
 	req->tm.t_ctx.req = req;
 	req->tm.t_ctx.comm_id = req->tm.comm_id;
 
+	mpc_common_debug_info("LCP: post recv ack zcopy req=%p, src=%d, dest=%d, size=%d, matching=[%d:%d]", 
+			      req, req->send.tag.src, req->send.tag.dest, req->send.length, tag.t_frag.f_id, 
+			      tag.t_frag.m_id);
 	return iface->recv_tag_zcopy(iface, tag, ign_tag, &iov, 1, 
 				     &(req->tm.t_ctx));
 }

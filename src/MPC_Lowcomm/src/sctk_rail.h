@@ -229,7 +229,7 @@ struct sctk_rail_info_s
 	/* Polling mechanism */
 	struct sctk_topological_polling_tree any_source_polling_tree;
 
-	/* HOOKS */
+	char device_name[LCR_DEVICE_NAME_MAX];
 	/* Endpoint API */
 	lcr_send_am_bcopy_func_t send_am_bcopy;
 	lcr_send_am_zcopy_func_t send_am_zcopy;

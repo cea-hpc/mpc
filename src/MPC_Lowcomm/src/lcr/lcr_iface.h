@@ -21,7 +21,6 @@ typedef int (*lcr_send_am_zcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
 					unsigned flags, 
 					lcr_completion_t *comp);
 
-//FIXME
 typedef ssize_t (*lcr_send_tag_bcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
 					     lcr_tag_t tag,
 					     uint64_t imm,

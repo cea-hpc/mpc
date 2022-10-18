@@ -514,16 +514,13 @@ err:
         return rc;
 }
 
-int lcr_tcp_iface_open(lcr_rail_config_t *rail_config, 
+int lcr_tcp_iface_open(char *device_name, int id,
+		       lcr_rail_config_t *rail_config, 
                        lcr_driver_config_t *driver_config,
                        sctk_rail_info_t **iface_p)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         sctk_rail_info_t *iface = NULL;
-
-        //TODO: no support for user specified interface
-        //      resetting to default.
-        strcpy(rail_config->device, "default");
 
         lcr_rail_init(rail_config, driver_config, &iface);
         if (iface == NULL) {
@@ -531,6 +528,10 @@ int lcr_tcp_iface_open(lcr_rail_config_t *rail_config,
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
+        //TODO: no support for user specified interface
+        //      resetting to default.
+        strcpy(iface->device_name, "default");
+	iface->rail_number = id;
 
         rc = lcr_tcp_init_iface(iface);
 

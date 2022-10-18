@@ -1,7 +1,8 @@
 #!/bin/bash
 #set -x
 function print_help(){
-	echo "Utility to run unit test in log/gdb/valgrind/callgrind configuration."
+	echo "Utility to build clean test environment and run unit test in {log/gdb/valgrind/callgrind} configuration."
+	echo "  --build: import scripts and set test environment;"
 	echo "  -n/--nodes [n]: number of nodes;"
 	echo "  -t/--run-type {0,1,2,3}: 0=log, 1=gdb, 2=valgrind, 3=callgrind;"
 	echo "  -c/--config [file]: path to config path;"
@@ -19,6 +20,9 @@ VERBOSE=""
 PROGRAMARGS=""
 while [[ $# -gt 0 ]]; do
   case $1 in
+    --build)
+      break
+      ;;
     -n|--nodes)
       NODES="$2"
       shift # past argument

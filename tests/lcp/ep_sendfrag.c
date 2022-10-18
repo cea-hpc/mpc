@@ -27,6 +27,7 @@ int main(int argc, char** argv) {
 	mpc_lowcomm_peer_uid_t src_uid, dest_uid, my_uid;
 
 	if (argc != 2) {
+		printf("error: one argument needed, [size]");
 		return 1;
 	}
 	size_t size = atoi(argv[1]);

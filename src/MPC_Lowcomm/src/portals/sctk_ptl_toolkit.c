@@ -204,8 +204,9 @@ static inline int ___eq_poll(sctk_rail_info_t* rail, sctk_ptl_pte_t *cur_pte)
 	if(ret == PTL_OK)
 	{
 		did_poll = 1;
+		lcr_tag_t tag = (lcr_tag_t)ev.match_bits;
 
-		mpc_common_debug_info("PORTALS: EQS EVENT '%s' idx=%d, from %s, type=%s, prot=%s, match=%s,  sz=%llu, user=%p, start=%p", sctk_ptl_event_decode(ev), ev.pt_index, SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot), __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), ev.mlength, ev.user_ptr, ev.start);
+		mpc_common_debug_info("PORTALS: EQS EVENT '%s' iface=%llu, idx=%d, from %s, type=%s, prot=%s, match=[%d,%d,%d], sz=%llu, user=%p, start=%p", sctk_ptl_event_decode(ev), srail->iface, ev.pt_index, SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot), tag.t_tag.src, tag.t_tag.tag, tag.t_tag.seqn , ev.mlength, ev.user_ptr, ev.start);
 
 		/* if the event is related to a probe request */
 		if(ev.type == PTL_EVENT_SEARCH)
@@ -394,7 +395,7 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, size_t threshold)
 		{
 			user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
 			assert(user_ptr != NULL);
-			mpc_common_debug_info("PORTALS: MDS EVENT '%s' from %s, type=%s, prot=%s, match=%s",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot),  __sctk_ptl_match_str(malloc(32), 32, user_ptr->match.raw));
+			mpc_common_debug_info("PORTALS: MDS EVENT '%s' iface=%llu, from %s, type=%s, prot=%s, match=%s",sctk_ptl_event_decode(ev), srail->iface, SCTK_PTL_STR_LIST(ev.ptl_list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot),  __sctk_ptl_match_str(malloc(32), 32, user_ptr->match.raw));
 			/* we only care about Portals-sucess events */
 			if(ev.ni_fail_type != PTL_NI_OK)
 			{
@@ -534,7 +535,7 @@ sctk_ptl_id_t sctk_ptl_map_id(sctk_rail_info_t* rail, mpc_lowcomm_peer_uid_t des
 {
 	sctk_ptl_rail_info_t* srail    = &rail->network.ptl;
 
-	if(SCTK_PTL_IS_ANY_PROCESS( __ranks_ids_map_get(&srail->ranks_ids_map, dest) ))
+	if(SCTK_PTL_IS_ANY_PROCESS(__ranks_ids_map_get(&srail->ranks_ids_map, dest) ))
 	{
 		sctk_ptl_id_t out_id = SCTK_PTL_ANY_PROCESS;
 
@@ -734,7 +735,7 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 
 	/* init low-level driver */
         sctk_ptl_interface_t iface        = (rail->runtime_config_rail->max_ifaces == 1) ?
-                PTL_IFACE_DEFAULT : (unsigned)atoi(rail->runtime_config_rail->device);
+                PTL_IFACE_DEFAULT : rail->rail_number; //FIXME: revise atoi
 	rail->network.ptl                 = sctk_ptl_hardware_init(iface);
 	rail->network.ptl.eager_limit     = eager_limit;
 	rail->network.ptl.cutoff          = cut;
