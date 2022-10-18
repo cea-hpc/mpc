@@ -387,30 +387,35 @@ sctk_centralized_thread_generic_wake_on_task_lock(_mpc_threads_ng_engine_schedul
 /* MULTIPLE_QUEUES SCHEDULER           */
 /***************************************/
 
+//The size of this struct must be exactly the size of one page that is 4096 bytes
 typedef struct
 {
-	mpc_common_spinlock_t                    sctk_multiple_queues_sched_list_lock;
-	/*Mettre un pointeur directement sur le thread de progression des NBC */
-	_mpc_threads_ng_engine_scheduler_t *        sctk_multiple_queues_sched_NBC_Pthread_sched;
+	mpc_common_spinlock_t                       sctk_multiple_queues_sched_list_lock;
+	_mpc_threads_ng_engine_scheduler_t *        sctk_multiple_queues_sched_NBC_Pthread_sched; //NBC progress thread hook
 	_mpc_threads_ng_engine_scheduler_generic_t *sctk_multiple_queues_sched_list;
-/* TODO Optimize to have data locality*/
-	char                                     pad[4096];
+	char pad[4096 - sizeof(mpc_common_spinlock_t)
+                - sizeof(_mpc_threads_ng_engine_scheduler_t *)
+                - sizeof(_mpc_threads_ng_engine_scheduler_generic_t *)
+          ];
 } sctk_multiple_queues_sched_list_t;
 #define SCTK_MULTIPLE_QUEUES_SCHED_LIST_INIT \
 	{ MPC_COMMON_SPINLOCK_INITIALIZER, NULL, NULL, .pad = { 0 } }
 
 static sctk_multiple_queues_sched_list_t *sctk_multiple_queues_sched_lists = NULL;
 
+//The size of this struct must be exactly the size of one page that is 4096 bytes
 typedef struct
 {
 	// list of task which are able to be poll by the polling mpc thread
 	_mpc_threads_ng_engine_task_t *sctk_multiple_queues_task_list;
-	mpc_common_spinlock_t       sctk_multiple_queues_task_list_lock;
-	int                         task_nb; // number of task in sctk_multiple_queues_task_list
-	/*Mettre un pointeur directement sur le thread de polling mpc*/
-	_mpc_threads_ng_engine_scheduler_t
-	*                           sctk_multiple_queues_task_polling_thread_sched;
-	char                        pad[4096];
+	mpc_common_spinlock_t          sctk_multiple_queues_task_list_lock;
+	int                            task_nb; // number of task in sctk_multiple_queues_task_list
+	_mpc_threads_ng_engine_scheduler_t *sctk_multiple_queues_task_polling_thread_sched; //polling thread hook
+	char pad[4096 - sizeof(_mpc_threads_ng_engine_task_t *)
+                - sizeof(mpc_common_spinlock_t)
+                - sizeof(int)
+                - sizeof(_mpc_threads_ng_engine_scheduler_t *)
+          ];
 }sctk_multiple_queues_task_list_t;
 #define SCTK_MULTIPLE_QUEUES_TASK_LIST_INIT \
 	{ NULL, MPC_COMMON_SPINLOCK_INITIALIZER, 0, NULL, .pad = { 0 } }
@@ -2832,7 +2837,7 @@ void _mpc_threads_ng_engine_scheduler_init(char *thread_type, char *scheduler_ty
 
 		for(i = 0; i < vp_number; i++)
 		{
-			sctk_multiple_queues_sched_list_t init = SCTK_MULTIPLE_QUEUES_SCHED_LIST_INIT;
+			sctk_multiple_queues_sched_list_t init = SCTK_MULTIPLE_QUEUES_SCHED_LIST_INIT; //TODO This initialization should be done in parallel to ensure data locality
 			sctk_multiple_queues_sched_lists[i]    = init;
 		}
 
@@ -2840,7 +2845,7 @@ void _mpc_threads_ng_engine_scheduler_init(char *thread_type, char *scheduler_ty
 
 		for(i = 0; i < vp_number; i++)
 		{
-			sctk_multiple_queues_task_list_t init  = SCTK_MULTIPLE_QUEUES_TASK_LIST_INIT;
+			sctk_multiple_queues_task_list_t init  = SCTK_MULTIPLE_QUEUES_TASK_LIST_INIT; //TODO This initialization should be done in parallel to ensure data locality
 			sctk_multiple_queues_task_lists[i]     = init;
 		}
 		//////////////////////////////////////////////
@@ -2883,7 +2888,7 @@ void _mpc_threads_ng_engine_scheduler_init(char *thread_type, char *scheduler_ty
 
 		for(i = 0; i < vp_number; i++)
 		{
-			sctk_multiple_queues_sched_list_t init = SCTK_MULTIPLE_QUEUES_SCHED_LIST_INIT;
+			sctk_multiple_queues_sched_list_t init = SCTK_MULTIPLE_QUEUES_SCHED_LIST_INIT; //TODO This initialization should be done in parallel to ensure data locality
 			sctk_multiple_queues_sched_lists[i]    = init;
 		}
 
@@ -2891,7 +2896,7 @@ void _mpc_threads_ng_engine_scheduler_init(char *thread_type, char *scheduler_ty
 
 		for(i = 0; i < vp_number; i++)
 		{
-			sctk_multiple_queues_task_list_t init = SCTK_MULTIPLE_QUEUES_TASK_LIST_INIT;
+			sctk_multiple_queues_task_list_t init = SCTK_MULTIPLE_QUEUES_TASK_LIST_INIT; //TODO This initialization should be done in parallel to ensure data locality
 			sctk_multiple_queues_task_lists[i]    = init;
 		}
 
