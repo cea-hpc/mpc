@@ -19,7 +19,12 @@ void lcp_request_complete_rndv(lcr_completion_t *comp)
 	lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
 					      send.t_ctx.comp);
 
-        req->state.status = MPC_LOWCOMM_LCP_RPUT_SYNC;
+	//NOTE: completion may be called after ack is received 
+	//      overriding thus MPC_LOWCOMM_LCP_RPUT_FRAG state.
+	//      Thus it blocks the rendez-vous in SYNC state and 
+	//      deadlock.
+	//      Therefore, there is nothing to be done here.
+        //req->state.status = MPC_LOWCOMM_LCP_RPUT_SYNC;
 }
 
 void lcp_request_complete_ack(lcr_completion_t *comp)
@@ -408,8 +413,8 @@ static int lcp_rndv_ack_tag_offload_handler(void *arg, void *data,
 
         assert(size == 0 && data == NULL);
 
-	mpc_common_debug_info("LCP: recv tag offload ack header msg_id=%llu",
-                              req->msg_id);
+	mpc_common_debug_info("LCP: recv tag offload ack header req=%p, msg_id=%llu",
+                              req, req->msg_id);
 
 	/* Update request state */
 	req->state.status = MPC_LOWCOMM_LCP_RPUT_FRAG;
