@@ -476,52 +476,13 @@ static _mpc_threads_ng_engine_scheduler_t *sctk_multiple_queues_get_from_list()
 	core = core_id;
 	assert(core >= 0);
 
-	char hostname[128];
-	gethostname(hostname, 128);
-
-	FILE *fd = fopen(hostname, "a");
-
+	// check if the list exists and if it contains threads
 	if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list != NULL)
-	{
-		_mpc_threads_ng_engine_scheduler_generic_t *res;
-		_mpc_threads_ng_engine_scheduler_generic_t *res_tmp;
-
-		mpc_common_spinlock_lock(&(sctk_multiple_queues_sched_lists[core]
-		                           .sctk_multiple_queues_sched_list_lock) );
-		res =
-		        sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
-		if(res != NULL)
-		{
-			DL_FOREACH_SAFE(sctk_multiple_queues_sched_lists[core]
-			                .sctk_multiple_queues_sched_list,
-			                res, res_tmp)
-			{
-				fprintf(fd, "hostname=%s core=%d res->sched=%p,scope=%d user_stack=%p "
-				            "stack=%p bind_to %d polling %d kind %d priority %d \n",
-				        hostname, core, res->sched, res->sched->th->attr.scope,
-				        res->sched->th->attr.user_stack, res->sched->th->attr.stack,
-				        res->sched->th->attr.bind_to, res->sched->th->attr.polling,
-				        res->sched->th->attr.kind.mask,
-				        res->sched->th->attr.kind.priority);
-			}
-			fprintf(fd, "\n\n\n");
-		}
-		mpc_common_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core]
-		                             .sctk_multiple_queues_sched_list_lock) );
-	}
-
-	fclose(fd);
-	// endhmt
-
-	// est ce que la liste existe et si ya un thread a prendre dedans
-	if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list !=
-	   NULL)
 	{
 		_mpc_threads_ng_engine_scheduler_generic_t *res;
 		mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
 		                         .sctk_multiple_queues_sched_list_lock);
-		res =
-		        sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
+		res = sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
 		if(res != NULL)
 		{
 			DL_DELETE(sctk_multiple_queues_sched_lists[core]
@@ -661,14 +622,12 @@ sctk_multiple_queues_with_priority_dynamic_get_from_list()
 #endif
 
 	// check if the list exists and if it contains threads
-	if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list !=
-	   NULL)
+	if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list != NULL)
 	{
 		_mpc_threads_ng_engine_scheduler_generic_t *res;
 		mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
 		                         .sctk_multiple_queues_sched_list_lock);
-		res =
-		        sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
+		res = sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
 		if(res != NULL)
 		{
 			DL_DELETE(sctk_multiple_queues_sched_lists[core]
@@ -756,50 +715,7 @@ sctk_multiple_queues_with_priority_default_get_from_list()
 	core = core_id;
 	assert(core >= 0);
 
-	// //hmt
-	// int i;
-	// char hostname[128];
-	// gethostname(hostname,128);
-
-	// FILE* fd=fopen(hostname ,"a");
-
-	// if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list
-	// != NULL){
-	//     _mpc_threads_ng_engine_scheduler_generic_t* res;
-	//     _mpc_threads_ng_engine_scheduler_generic_t* res_tmp;
-
-	//     mpc_common_spinlock_lock(
-	//     &(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
-	//     res =
-	//     sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
-	//     if(res != NULL){
-	//         DL_FOREACH_SAFE(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,
-	//                 res,res_tmp){
-	//             fprintf(fd,"hostname=%s core=%d res->sched=%p,scope=%d
-	//             user_stack=%p stack=%p bind_to %d polling %d kind %d priority
-	//             %d \n",
-	//                     hostname,
-	//                     core,
-	//                     res->sched,
-	//                     res->sched->th->attr.scope,
-	//                     res->sched->th->attr.user_stack,
-	//                     res->sched->th->attr.stack,
-	//                     res->sched->th->attr.bind_to,
-	//                     res->sched->th->attr.polling,
-	//                     res->sched->th->attr.kind.mask,
-	//                     res->sched->th->attr.kind.priority);
-
-	//         }
-	//         fprintf(fd,"\n\n\n");
-	//     }
-	//     mpc_common_spinlock_unlock(
-	//     &(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
-	// }
-
-	// fclose(fd);
-	// //endhmt
-
-	// est ce que la liste existe et si ya un thread a prendre dedans
+	// check if the list exists and if it contains threads
 	if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list !=
 	   NULL)
 	{
@@ -905,8 +821,7 @@ sctk_multiple_queues_with_priority_omp_get_from_list()
 		                         .sctk_multiple_queues_sched_list_lock);
 
 		// look for omp threads to schedule them in priority
-		res =
-		        sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
+		res = sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
 		if(res != NULL)
 		{
 			// look for a thread OMP to schedule in priority
@@ -932,8 +847,7 @@ sctk_multiple_queues_with_priority_omp_get_from_list()
 		}
 
 		// if we dont have omp threads, do the default algorithm
-		res =
-		        sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
+		res = sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
 		if(res != NULL)
 		{
 			DL_DELETE(sctk_multiple_queues_sched_lists[core]
@@ -1031,8 +945,7 @@ sctk_multiple_queues_with_priority_nofamine_get_from_list()
 		mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
 		                         .sctk_multiple_queues_sched_list_lock);
 		// look for omp threads to schedule them in priority
-		res =
-		        sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
+		res = sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
 		ret = res;
 		if(res != NULL)
 		{
@@ -1337,7 +1250,6 @@ static void sctk_multiple_queues_with_priority_dyn_sorted_list_concat_to_list(
 	                           .sctk_multiple_queues_sched_list_lock);
 }
 
-#if 0
 // get_from_list with priority_dyn_sorted_list
 static _mpc_threads_ng_engine_scheduler_t *
 sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list()
@@ -1446,7 +1358,6 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list()
 		return NULL;
 	}
 }
-#endif
 
 // get_from_list with priority_dyn_sorted_list old
 static _mpc_threads_ng_engine_scheduler_t *
@@ -1546,42 +1457,21 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list_old()
 }
 
 ////////////////////////////////////////
-// Function pointers : allow choice of multifile schedulers
+// Function pointers : allow choice of multiple_queues schedulers
 //
 
-//#define MULTIFILE_DYNAMIC
-#define MULTIFILE_DEFAULT
-///#define MULTIFILE_OMP
-//#define MULTIFILE_NOFAMINE
-//#define MULTIFILE_DYN_SORTED_LIST
+#define MULTIPLE_QUEUES_DEFAULT
+//#define MULTIPLE_QUEUES_DYNAMIC
+///#define MULTIPLE_QUEUES_OMP
+//#define MULTIPLE_QUEUES_NOFAMINE
+//#define MULTIPLE_QUEUES_DYN_SORTED_LIST
 
-#ifdef MULTIFILE_DYNAMIC
+#ifdef MULTIPLE_QUEUES_DEFAULT
 void (*_mpc_threads_ng_engine_scheduler_increase_prio_ptr)() = NULL;
 void (*_mpc_threads_ng_engine_scheduler_decrease_prio_ptr)() = NULL;
 void (*_mpc_threads_ng_engine_scheduler_sched_init_ptr)() = NULL;
-void (*_mpc_threads_ng_engine_scheduler_task_decrease_prio_ptr)(
-        int core) = NULL;
-// add_to_list
-static void (*sctk_multiple_queues_with_priority_add_to_list)(
-        _mpc_threads_ng_engine_scheduler_t *sched) =
-        sctk_multiple_queues_with_priority_dynamic_add_to_list;
-// concat_to_list
-static void (*sctk_multiple_queues_with_priority_concat_to_list)(
-        _mpc_threads_ng_engine_scheduler_t *sched,
-        _mpc_threads_ng_engine_scheduler_generic_t *s_list) =
-        sctk_multiple_queues_with_priority_dynamic_concat_to_list;
-// get_from_list
-static _mpc_threads_ng_engine_scheduler_t *(
-*sctk_multiple_queues_with_priority_get_from_list)() =
-        sctk_multiple_queues_with_priority_dynamic_get_from_list;
-#endif
-
-#ifdef MULTIFILE_DEFAULT
-void (*_mpc_threads_ng_engine_scheduler_increase_prio_ptr)() = NULL;
-void (*_mpc_threads_ng_engine_scheduler_decrease_prio_ptr)() = NULL;
-void (*_mpc_threads_ng_engine_scheduler_sched_init_ptr)() = NULL;
-void (*_mpc_threads_ng_engine_scheduler_task_decrease_prio_ptr)(
-        int core) = NULL;
+void (*_mpc_threads_ng_engine_scheduler_task_decrease_prio_ptr)( int core) = NULL;
+void (*_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr)( int bind_to) = NULL;
 // add_to_list
 static void (*sctk_multiple_queues_with_priority_add_to_list)(
         _mpc_threads_ng_engine_scheduler_t *sched) =
@@ -1596,15 +1486,36 @@ static _mpc_threads_ng_engine_scheduler_t *(
 *sctk_multiple_queues_with_priority_get_from_list)() =
         sctk_multiple_queues_with_priority_default_get_from_list;
 
-void (*_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr)( int bind_to) = NULL;
 #endif
 
-#ifdef MULTIFILE_OMP
+#ifdef MULTIPLE_QUEUES_DYNAMIC
 void (*_mpc_threads_ng_engine_scheduler_increase_prio_ptr)() = NULL;
 void (*_mpc_threads_ng_engine_scheduler_decrease_prio_ptr)() = NULL;
 void (*_mpc_threads_ng_engine_scheduler_sched_init_ptr)() = NULL;
-void (*_mpc_threads_ng_engine_scheduler_task_decrease_prio_ptr)(
-        int core) = NULL;
+void (*_mpc_threads_ng_engine_scheduler_task_decrease_prio_ptr)( int core) = NULL;
+void (*_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr)( int bind_to) = NULL;
+// add_to_list
+static void (*sctk_multiple_queues_with_priority_add_to_list)(
+        _mpc_threads_ng_engine_scheduler_t *sched) =
+        sctk_multiple_queues_with_priority_dynamic_add_to_list;
+// concat_to_list
+static void (*sctk_multiple_queues_with_priority_concat_to_list)(
+        _mpc_threads_ng_engine_scheduler_t *sched,
+        _mpc_threads_ng_engine_scheduler_generic_t *s_list) =
+        sctk_multiple_queues_with_priority_dynamic_concat_to_list;
+// get_from_list
+static _mpc_threads_ng_engine_scheduler_t *(
+        *sctk_multiple_queues_with_priority_get_from_list)() =
+        sctk_multiple_queues_with_priority_dynamic_get_from_list;
+#endif
+
+
+#ifdef MULTIPLE_QUEUES_OMP
+void (*_mpc_threads_ng_engine_scheduler_increase_prio_ptr)() = NULL;
+void (*_mpc_threads_ng_engine_scheduler_decrease_prio_ptr)() = NULL;
+void (*_mpc_threads_ng_engine_scheduler_sched_init_ptr)() = NULL;
+void (*_mpc_threads_ng_engine_scheduler_task_decrease_prio_ptr)( int core) = NULL;
+void (*_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr)( int bind_to) = NULL;
 // add_to_list
 static void (*sctk_multiple_queues_with_priority_add_to_list)(
         _mpc_threads_ng_engine_scheduler_t *sched) =
@@ -1616,16 +1527,15 @@ static void (*sctk_multiple_queues_with_priority_concat_to_list)(
         sctk_multiple_queues_with_priority_omp_concat_to_list;
 // get_from_list
 static _mpc_threads_ng_engine_scheduler_t *(
-*sctk_multiple_queues_with_priority_get_from_list)() =
+        *sctk_multiple_queues_with_priority_get_from_list)() =
         sctk_multiple_queues_with_priority_omp_get_from_list;
 #endif
 
-#ifdef MULTIFILE_NOFAMINE
+#ifdef MULTIPLE_QUEUES_NOFAMINE
 void (*_mpc_threads_ng_engine_scheduler_increase_prio_ptr)() = NULL;
 void (*_mpc_threads_ng_engine_scheduler_decrease_prio_ptr)() = NULL;
 void (*_mpc_threads_ng_engine_scheduler_sched_init_ptr)() = NULL;
 void (*_mpc_threads_ng_engine_scheduler_task_decrease_prio_ptr)( int core) = NULL;
-
 void (*_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr)( int bind_to) = NULL;
 
 // add_to_list
@@ -1643,7 +1553,7 @@ static _mpc_threads_ng_engine_scheduler_t *(
         sctk_multiple_queues_with_priority_nofamine_get_from_list;
 #endif
 
-#ifdef MULTIFILE_DYN_SORTED_LIST
+#ifdef MULTIPLE_QUEUES_DYN_SORTED_LIST
 void (*_mpc_threads_ng_engine_scheduler_sched_init_ptr)() =
         sctk_multiple_queues_with_priority_dyn_sorted_list_sched_NBC_Pthread_sched_init;
 
@@ -1653,12 +1563,10 @@ void (*_mpc_threads_ng_engine_scheduler_increase_prio_ptr)() =
 void (*_mpc_threads_ng_engine_scheduler_decrease_prio_ptr)() =
         sctk_multiple_queues_with_priority_dyn_sorted_list_sched_NBC_Pthread_sched_decrease_priority;
 
-void (*_mpc_threads_ng_engine_scheduler_task_decrease_prio_ptr)(
-        int core) =
+void (*_mpc_threads_ng_engine_scheduler_task_decrease_prio_ptr)( int core) =
         sctk_multiple_queues_priority_dyn_sorted_list_task_polling_thread_sched_decrease_priority;
 
-void (*_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr)(
-        int bind_to) =
+void (*_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr)( int bind_to) =
         sctk_multiple_queues_priority_dyn_sorted_list_task_polling_thread_sched_increase_priority;
 
 // add_to_list
@@ -1672,7 +1580,7 @@ static void (*sctk_multiple_queues_with_priority_concat_to_list)(
         sctk_multiple_queues_with_priority_dyn_sorted_list_concat_to_list;
 // get_from_list
 static _mpc_threads_ng_engine_scheduler_t *(
-*sctk_multiple_queues_with_priority_get_from_list)() =
+        *sctk_multiple_queues_with_priority_get_from_list)() =
         // sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list;
         sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list_old;
 #endif
@@ -2139,20 +2047,7 @@ static void sctk_generic_sched_yield_intern(
 		goto quick_swap;
 	}
 
-	////hmt TODO //attention quand sched->th->attr.bind_to vaut -1
-	// if(sctk_multiple_queues_sched_lists[sched->th->attr.bind_to].sctk_multiple_queues_sched_list
-	// != NULL){
-	//    sched->th->attr.current_priority = 10;
-
-	//    _mpc_threads_ng_engine_scheduler_generic_t* res;
-	//    res =
-	//    sctk_multiple_queues_sched_lists[sched->th->attr.bind_to].sctk_multiple_queues_sched_list;
-	//    res->sched->th->attr.current_priority = 10;
-	//}
-	////endhmt
-
-	// Register the current thread for a futur insertion into the ready thread
-	// list
+	// Register the current thread for a futur insertion into the ready thread list
 	if(vp_data.sctk_generic_delegated_add)
 	{
 #ifdef SCTK_DEBUG_SCHEDULER
@@ -2166,17 +2061,14 @@ static void sctk_generic_sched_yield_intern(
 			strcat(hostname2, current_vp);
 
 			FILE *fd = fopen(hostname2, "a");
-			fprintf(fd,
-			        "if(vp_data.sctk_generic_delegated_add) 1 add_to_list %p %p\n",
+			fprintf(fd, "if(vp_data.sctk_generic_delegated_add) 1 add_to_list %p %p\n",
 			        sched, vp_data.sctk_generic_delegated_add);
 			fflush(fd);
 			fclose(fd);
 		}
 #endif
 
-		sctk_generic_add_to_list(
-		        vp_data.sctk_generic_delegated_add,
-		        vp_data.sctk_generic_delegated_add->generic.is_idle_mode);
+		sctk_generic_add_to_list( vp_data.sctk_generic_delegated_add, vp_data.sctk_generic_delegated_add->generic.is_idle_mode);
 		vp_data.sctk_generic_delegated_add = NULL;
 	}
 
@@ -2252,22 +2144,6 @@ retry:
 
 quick_swap:
 
-	//#ifdef SCTK_DEBUG_SCHEDULER
-	//{
-	//    char hostname[128];
-	//    char hostname2[128];
-	//    char current_vp[5];
-	//    gethostname(hostname,128);
-	//    strncpy(hostname2,hostname,128);
-	//    sprintf(current_vp,"_%03d",mpc_topology_get_current_cpu ());
-	//    strcat(hostname2,current_vp);
-
-	//    FILE* fd=fopen(hostname2,"a");
-	//    fprintf(fd,"label quick_swap next=%p sched=%p\n\n",next, sched);
-	//    fflush(fd);
-	//    fclose(fd);
-	//}
-	//#endif
 	if(next != sched)
 	{
 		if(next != NULL)
@@ -2281,8 +2157,7 @@ quick_swap:
 			if(sched->th->attr.timestamp_base != -1)
 			{
 				sched->th->attr.timestamp_end    = mpc_arch_get_timestamp_gettimeofday();
-				sched->th->attr.timestamp_count +=
-				        sched->th->attr.timestamp_end - sched->th->attr.timestamp_begin;
+				sched->th->attr.timestamp_count  += sched->th->attr.timestamp_end - sched->th->attr.timestamp_begin;
 
 #ifdef SCTK_DEBUG_SCHEDULER
 				char hostname[128];
@@ -2378,22 +2253,6 @@ quick_swap:
 
 			sctk_cpu_relax();
 
-			//#ifdef SCTK_DEBUG_SCHEDULER
-			//{
-			//    char hostname[128];
-			//    char hostname2[128];
-			//    char current_vp[5];
-			//    gethostname(hostname,128);
-			//    strncpy(hostname2,hostname,128);
-			//    sprintf(current_vp,"_%03d",mpc_topology_get_current_cpu ());
-			//    strcat(hostname2,current_vp);
-
-			//    FILE* fd=fopen(hostname2,"a");
-			//    fprintf(fd,"before retry sched=%p\n", sched);
-			//    fflush(fd);
-			//    fclose(fd);
-			//}
-			//#endif
 			goto retry;
 		}
 	}
