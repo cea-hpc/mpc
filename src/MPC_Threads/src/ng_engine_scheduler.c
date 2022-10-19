@@ -553,7 +553,6 @@ static _mpc_threads_ng_engine_scheduler_t *sctk_multiple_queues_get_from_list()
 // concat_to_list
 // get_from_list
 //
-#if 0
 // add_to_list
 static void sctk_multiple_queues_with_priority_dynamic_add_to_list(
         _mpc_threads_ng_engine_scheduler_t *sched)
@@ -1074,7 +1073,6 @@ sctk_multiple_queues_with_priority_nofamine_get_from_list()
 		return NULL;
 	}
 }
-#endif
 ////////////////////////////////////////
 // generic/multiple_queues_with_priority_dyn_sorted_list
 //
@@ -1162,8 +1160,7 @@ void sctk_multiple_queues_with_priority_dyn_sorted_list_sched_NBC_Pthread_sched_
 }
 
 // increase priority of the mpc polling threads
-void sctk_multiple_queues_priority_dyn_sorted_list_task_polling_thread_sched_increase_priority(
-        int bind_to)
+void sctk_multiple_queues_priority_dyn_sorted_list_task_polling_thread_sched_increase_priority( int bind_to)
 {
 	if(sctk_multiple_queues_task_lists[bind_to]
 	   .sctk_multiple_queues_task_polling_thread_sched != NULL)
@@ -1598,6 +1595,8 @@ static void (*sctk_multiple_queues_with_priority_concat_to_list)(
 static _mpc_threads_ng_engine_scheduler_t *(
 *sctk_multiple_queues_with_priority_get_from_list)() =
         sctk_multiple_queues_with_priority_default_get_from_list;
+
+void (*_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr)( int bind_to) = NULL;
 #endif
 
 #ifdef MULTIFILE_OMP
@@ -1625,11 +1624,9 @@ static _mpc_threads_ng_engine_scheduler_t *(
 void (*_mpc_threads_ng_engine_scheduler_increase_prio_ptr)() = NULL;
 void (*_mpc_threads_ng_engine_scheduler_decrease_prio_ptr)() = NULL;
 void (*_mpc_threads_ng_engine_scheduler_sched_init_ptr)() = NULL;
-void (*_mpc_threads_ng_engine_scheduler_task_decrease_prio_ptr)(
-        int core) = NULL;
+void (*_mpc_threads_ng_engine_scheduler_task_decrease_prio_ptr)( int core) = NULL;
 
-void (*_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr)(
-        int bind_to) = NULL;
+void (*_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr)( int bind_to) = NULL;
 
 // add_to_list
 static void (*sctk_multiple_queues_with_priority_add_to_list)(
@@ -2041,15 +2038,12 @@ static void sctk_generic_add_task(_mpc_threads_ng_engine_task_t *task)
 		sctk_generic_add_task_to_proceed(task);
 		// hmt
 		// increment task_nb
-		sctk_multiple_queues_task_lists[task->sched->th->attr.bind_to].task_nb +=
-		        delegated_task_nb;
+		sctk_multiple_queues_task_lists[task->sched->th->attr.bind_to].task_nb += delegated_task_nb;
 		delegated_task_nb = 0;
 		// we increment the polling thread priority when we add a task on the list
-		if(_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr !=
-		   NULL)
+		if(_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr != NULL)
 		{
-			_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr(
-			        task->sched->th->attr.bind_to);
+			_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr( task->sched->th->attr.bind_to);
 		}
 		// endhmt
 	}
@@ -2194,18 +2188,14 @@ static void sctk_generic_sched_yield_intern(
 		// Register a polling task for futur execution
 		if(vp_data.sctk_generic_delegated_task_list != NULL)
 		{
-			sctk_generic_add_task_to_proceed(
-			        vp_data.sctk_generic_delegated_task_list);
+			sctk_generic_add_task_to_proceed( vp_data.sctk_generic_delegated_task_list);
 			// hmt
-			sctk_multiple_queues_task_lists[sched->th->attr.bind_to].task_nb +=
-			        delegated_task_nb;
+			sctk_multiple_queues_task_lists[sched->th->attr.bind_to].task_nb += delegated_task_nb;
 			delegated_task_nb = 0;
 			// we increment the polling thread priority when we add a task on the list
-			if(_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr !=
-			   NULL)
+			if(_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr != NULL)
 			{
-				_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr(
-				        sched->th->attr.bind_to);
+				_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr( sched->th->attr.bind_to);
 			}
 			// endhmt
 			vp_data.sctk_generic_delegated_task_list = NULL;
@@ -2354,18 +2344,15 @@ quick_swap:
 			if(vp_data.sctk_generic_delegated_task_list != NULL)
 			{
 				sched->generic.is_idle_mode = 1;
-				sctk_generic_add_task_to_proceed(
-				        vp_data.sctk_generic_delegated_task_list);
+				sctk_generic_add_task_to_proceed( vp_data.sctk_generic_delegated_task_list);
 				// hmt
 				sctk_multiple_queues_task_lists[sched->th->attr.bind_to].task_nb += delegated_task_nb;
 				delegated_task_nb = 0;
 				// we increment the polling thread priority when we add a task on the
 				// list
-				if(_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr !=
-				   NULL)
+				if(_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr != NULL)
 				{
-					_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr(
-					        sched->th->attr.bind_to);
+					_mpc_threads_ng_engine_scheduler_task_increase_prio_ptr( sched->th->attr.bind_to);
 				}
 				// endhmt
 				vp_data.sctk_generic_delegated_task_list = NULL;
