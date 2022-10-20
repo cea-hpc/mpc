@@ -190,6 +190,11 @@ static inline void lcp_request_init_recv(lcp_request_t *req,
         req->tm.comm_id         = request->header.communicator_id;
 }
 
+static inline int lcp_request_send(lcp_request_t *req)
+{
+	return req->send.func(req);
+}
+
 int lcp_request_create(lcp_request_t **req_p);
 void lcp_request_update_state(lcp_request_t *req, size_t length);
 int lcp_request_complete(lcp_request_t *req);

@@ -11,36 +11,22 @@
 int lcp_send_start(lcp_ep_h ep, lcp_request_t *req)
 {
 	int rc = MPC_LOWCOMM_SUCCESS;
-	_mpc_lowcomm_endpoint_t *lcr_ep;
+	_mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[ep->priority_chnl];
 
 	if (req->send.length < ep->ep_config.max_bcopy) {
-		lcr_ep  = ep->lct_eps[ep->priority_chnl];
 		if (LCR_IFACE_IS_TM(lcr_ep->rail)) {
-			rc = lcp_send_tag_eager_tag_bcopy(req);
+			req->send.func = lcp_send_tag_eager_tag_bcopy;
 		} else {
-			rc = lcp_send_am_eager_tag_bcopy(req);
+			req->send.func = lcp_send_am_eager_tag_bcopy;
 		}
 	} else if (req->send.length < ep->ep_config.max_zcopy) {
-		lcr_ep  = ep->lct_eps[ep->priority_chnl];
 		if (LCR_IFACE_IS_TM(lcr_ep->rail)) {
-			rc = lcp_send_tag_eager_tag_zcopy(req);
+			req->send.func = lcp_send_tag_eager_tag_zcopy;
 		} else {
-			rc = lcp_send_am_eager_tag_zcopy(req);
+			req->send.func = lcp_send_am_eager_tag_zcopy;
 		}
 	} else {
 		rc = lcp_send_rndv_start(req);
-	}
-
-		
-	if (rc == MPC_LOWCOMM_NO_RESOURCE) {
-	 	req->state.status = MPC_LOWCOMM_LCP_PEND;
-		req->flags |= LCP_REQUEST_SEND_CTRL; /* to delete ctrl msg upon completion */
-		if (lcp_pending_create(ep->ctx->pend_send_req, req, 
-					     req->msg_id) == NULL) {
-			rc = MPC_LOWCOMM_ERROR;
-		}
-		mpc_common_debug("LCP: pending req dest=%d, msg_id=%llu", 
-				 req->send.tag.dest, req->msg_id);
 	}
 
 	return rc;
@@ -75,6 +61,23 @@ int lcp_send(lcp_ep_h ep, mpc_lowcomm_request_t *request,
 	}
 
         rc = lcp_send_start(ep, req);
+	if (rc != MPC_LOWCOMM_SUCCESS) {
+		mpc_common_debug_error("LCP: could not prepare send request.");
+		return MPC_LOWCOMM_ERROR;
+	}
+
+	rc = lcp_request_send(req);
+
+	if (rc == MPC_LOWCOMM_NO_RESOURCE) {
+	 	req->state.status = MPC_LOWCOMM_LCP_PEND;
+		req->flags |= LCP_REQUEST_SEND_CTRL; /* to delete ctrl msg upon completion */
+		if (lcp_pending_create(ep->ctx->pend_send_req, req, 
+					     req->msg_id) == NULL) {
+			rc = MPC_LOWCOMM_ERROR;
+		}
+		mpc_common_debug("LCP: pending req dest=%d, msg_id=%llu", 
+				 req->send.tag.dest, req->msg_id);
+	}
 
 	return rc;
 }

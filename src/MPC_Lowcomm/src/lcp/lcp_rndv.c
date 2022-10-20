@@ -235,13 +235,9 @@ int lcp_send_rndv_start(lcp_request_t *req)
 
 
 	if (LCR_IFACE_IS_TM(ep->lct_eps[cc]->rail)) {
-                rc = lcp_send_tag_eager_rndv_bcopy(req);
+                req->send.func = lcp_send_tag_eager_rndv_bcopy;
 	} else {
-		rc = lcp_send_am_eager_rndv_bcopy(req);
-	}
-	if (rc != MPC_LOWCOMM_SUCCESS) {
-		mpc_common_debug_error("LCP: could not send rndv req=%p, "
-				"msg_id=%llu.", req, req->msg_id);
+		req->send.func = lcp_send_am_eager_rndv_bcopy;
 	}
 
 	if (LCR_IFACE_IS_TM(ep->lct_eps[cc]->rail)) {
@@ -445,6 +441,9 @@ static int lcp_ack_am_tag_handler(void *arg, void *data,
 		goto err;
 	}
 
+	/* Set send function that will be called in lcp_progress */
+	req->send.func    = lcp_send_am_zcopy_multi;
+
 	/* Update request state */
 	req->state.status = MPC_LOWCOMM_LCP_RPUT_FRAG;
 err:
@@ -452,8 +451,8 @@ err:
 }
 
 static int lcp_ack_tag_handler(void *arg, void *data,
-					    size_t size, 
-					    __UNUSED__ unsigned flags)
+		size_t size, 
+		__UNUSED__ unsigned flags)
 {
 	int rc = MPC_LOWCOMM_SUCCESS;
 	lcr_tag_context_t *t_ctx = arg;
@@ -464,6 +463,8 @@ static int lcp_ack_tag_handler(void *arg, void *data,
 	mpc_common_debug_info("LCP: recv tag offload ack header req=%p, msg_id=%llu",
                               req, req->msg_id);
 
+	/* Set send function that will be called in lcp_progress */
+	req->send.func    = lcp_send_tag_zcopy_multi;
 	/* Update request state */
 	req->state.status = MPC_LOWCOMM_LCP_RPUT_FRAG;
 
