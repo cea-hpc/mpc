@@ -80,7 +80,7 @@ static inline int lcp_context_set_am_handler(lcp_context_h ctx,
 
 static int lcp_context_open_interfaces(lcp_context_h ctx)
 {
-	int rc, i, prio = 0;
+	int rc, i;
         lcp_rsc_desc_t *rsc;
 
 	for (i=0; i<ctx->num_resources; i++) {
@@ -91,17 +91,6 @@ static int lcp_context_open_interfaces(lcp_context_h ctx)
                                                 &rsc->iface);
 		if (rsc->iface == NULL) {
 			goto err;
-		}
-
-		//FIXME: should be set in config init
-		if (prio < rsc->priority) {
-			prio = rsc->priority;
-			ctx->priority_rail = i;
-			if (LCR_IFACE_IS_TM(rsc->iface)) {
-				ctx->tm.num_tm_iface++;
-				//FIXME: is this useful ??
-				ctx->tm.iface = rsc->iface;
-			}
 		}
 
 		rc = lcp_context_set_am_handler(ctx, rsc->iface);

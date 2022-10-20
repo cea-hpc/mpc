@@ -1,10 +1,10 @@
-#include "sctk_alloc.h"
-
 #include "lcp_context.h"
 #include "lcp_request.h"
 #include "lcp_header.h"
-#include "lcp_proto.h"
-#include "lcp_tag_offload.h" 
+#include "lcp_prototypes.h"
+#include "lcp_rndv.h"
+
+#include "sctk_alloc.h"
 
 int lcp_recv(lcp_context_h ctx, mpc_lowcomm_request_t *request,
 	     void *buffer)
@@ -27,7 +27,7 @@ int lcp_recv(lcp_context_h ctx, mpc_lowcomm_request_t *request,
 	iface = ctx->resources[ctx->priority_rail].iface;
 	if (LCR_IFACE_IS_TM(iface)) {
 		req->flags |= LCP_REQUEST_OFFLOADED;
-		rc = lcp_recv_tag_offload_post(req, iface);
+		rc = lcp_recv_tag_zcopy(req, iface);
 
 		LCP_CONTEXT_UNLOCK(ctx);
 
@@ -57,8 +57,10 @@ int lcp_recv(lcp_context_h ctx, mpc_lowcomm_request_t *request,
 	} else if (match->flags & LCP_RECV_CONTAINER_UNEXP_TAG) {
 		mpc_common_debug("LCP: matched tag unexp req=%p, flags=%x", req, 
 				 match->flags);
-		rc = lcp_tag_matched(req, (lcp_tag_hdr_t *)(match + 1), 
-				     match->length);
+		/* copy data to receiver buffer and complete request */
+		memcpy(req->recv.buffer, (void *)((lcp_tag_hdr_t *)(match + 1) + 1), 
+				match->length - sizeof(lcp_tag_hdr_t));
+		lcp_request_complete(req);
 	} else {
 		mpc_common_debug_error("LCP: unkown match flag=%x.", match->flags);
 		rc = MPC_LOWCOMM_ERROR;

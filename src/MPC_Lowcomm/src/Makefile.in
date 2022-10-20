@@ -130,11 +130,9 @@ host_triplet = @host@
 @LCP_ENABLED_TRUE@	./lcp/lcp_pending.c ./lcp/lcp_progress.c \
 @LCP_ENABLED_TRUE@	./lcp/lcp_recv.c ./lcp/lcp_send.c \
 @LCP_ENABLED_TRUE@	./lcp/lcp_tag_lists.c \
-@LCP_ENABLED_TRUE@	./lcp/lcp_tag_matching.c \
-@LCP_ENABLED_TRUE@	./lcp/lcp_proto_am.c ./lcp/lcp_proto_tag.c \
+@LCP_ENABLED_TRUE@	./lcp/lcp_tag_matching.c ./lcp/lcp_tag.c \
 @LCP_ENABLED_TRUE@	./lcp/lcp_request.c ./lcp/lcp_common.c \
-@LCP_ENABLED_TRUE@	./lcp/lcp_proto_rndv.c \
-@LCP_ENABLED_TRUE@	./lcp/lcp_tag_offload.c \
+@LCP_ENABLED_TRUE@	./lcp/lcp_rndv.c ./lcp/lcp_tag_offload.c \
 @LCP_ENABLED_TRUE@	./lcr/lcr_component.c
 @MPC_HAVE_AM_TRUE@am__append_13 = am.c
 @MPC_HAVE_AM_TRUE@am__append_14 = $(FFI_LIBS)
@@ -217,9 +215,8 @@ am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c sctk_checksum.c ft.c \
 	./ofi/ofi_toolkit.c ./lcp/lcp_context.c ./lcp/lcp_ep.c \
 	./lcp/lcp_pending.c ./lcp/lcp_progress.c ./lcp/lcp_recv.c \
 	./lcp/lcp_send.c ./lcp/lcp_tag_lists.c \
-	./lcp/lcp_tag_matching.c ./lcp/lcp_proto_am.c \
-	./lcp/lcp_proto_tag.c ./lcp/lcp_request.c ./lcp/lcp_common.c \
-	./lcp/lcp_proto_rndv.c ./lcp/lcp_tag_offload.c \
+	./lcp/lcp_tag_matching.c ./lcp/lcp_tag.c ./lcp/lcp_request.c \
+	./lcp/lcp_common.c ./lcp/lcp_rndv.c ./lcp/lcp_tag_offload.c \
 	./lcr/lcr_component.c ./cplane/auth.c ./cplane/peer.c \
 	./cplane/proto.c ./cplane/port.c ./cplane/monitor.c \
 	./cplane/set.c ./cplane/uid.c ./cplane/name.c am.c
@@ -257,11 +254,9 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @LCP_ENABLED_TRUE@	./lcp/lcp_pending.lo ./lcp/lcp_progress.lo \
 @LCP_ENABLED_TRUE@	./lcp/lcp_recv.lo ./lcp/lcp_send.lo \
 @LCP_ENABLED_TRUE@	./lcp/lcp_tag_lists.lo \
-@LCP_ENABLED_TRUE@	./lcp/lcp_tag_matching.lo \
-@LCP_ENABLED_TRUE@	./lcp/lcp_proto_am.lo ./lcp/lcp_proto_tag.lo \
+@LCP_ENABLED_TRUE@	./lcp/lcp_tag_matching.lo ./lcp/lcp_tag.lo \
 @LCP_ENABLED_TRUE@	./lcp/lcp_request.lo ./lcp/lcp_common.lo \
-@LCP_ENABLED_TRUE@	./lcp/lcp_proto_rndv.lo \
-@LCP_ENABLED_TRUE@	./lcp/lcp_tag_offload.lo \
+@LCP_ENABLED_TRUE@	./lcp/lcp_rndv.lo ./lcp/lcp_tag_offload.lo \
 @LCP_ENABLED_TRUE@	./lcr/lcr_component.lo
 @MPC_HAVE_AM_TRUE@am__objects_7 = am.lo
 am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo \
@@ -876,15 +871,11 @@ lcp/$(DEPDIR)/$(am__dirstamp):
 	lcp/$(DEPDIR)/$(am__dirstamp)
 ./lcp/lcp_tag_matching.lo: lcp/$(am__dirstamp) \
 	lcp/$(DEPDIR)/$(am__dirstamp)
-./lcp/lcp_proto_am.lo: lcp/$(am__dirstamp) \
-	lcp/$(DEPDIR)/$(am__dirstamp)
-./lcp/lcp_proto_tag.lo: lcp/$(am__dirstamp) \
-	lcp/$(DEPDIR)/$(am__dirstamp)
+./lcp/lcp_tag.lo: lcp/$(am__dirstamp) lcp/$(DEPDIR)/$(am__dirstamp)
 ./lcp/lcp_request.lo: lcp/$(am__dirstamp) \
 	lcp/$(DEPDIR)/$(am__dirstamp)
 ./lcp/lcp_common.lo: lcp/$(am__dirstamp) lcp/$(DEPDIR)/$(am__dirstamp)
-./lcp/lcp_proto_rndv.lo: lcp/$(am__dirstamp) \
-	lcp/$(DEPDIR)/$(am__dirstamp)
+./lcp/lcp_rndv.lo: lcp/$(am__dirstamp) lcp/$(DEPDIR)/$(am__dirstamp)
 ./lcp/lcp_tag_offload.lo: lcp/$(am__dirstamp) \
 	lcp/$(DEPDIR)/$(am__dirstamp)
 lcr/$(am__dirstamp):
@@ -1001,12 +992,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_ep.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_pending.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_progress.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_proto_am.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_proto_rndv.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_proto_tag.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_recv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_request.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_rndv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_send.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_tag.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_tag_lists.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_tag_matching.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_tag_offload.Plo@am__quote@

@@ -47,13 +47,13 @@ ssize_t lcr_ptl_send_tag_bcopy(_mpc_lowcomm_endpoint_t *ep,
 
 	/* emit the request */
 	rc = lcr_ptl_md_register(srail, request);
-	if (rc == MPC_LOWCOMM_INPROGRESS) {
-		mpc_common_debug("LCR PTL: bcopy in progress to %d (iface=%llu, "
+	if (rc == MPC_LOWCOMM_NO_RESOURCE) {
+		mpc_common_debug("LCR PTL: bcopy no resource to %d (iface=%llu, "
                                  "remote=%llu, idx=%d, sz=%llu)", ep->dest, srail->iface, 
                                  remote, pte->idx, size);
-		return MPC_LOWCOMM_INPROGRESS;
+		return MPC_LOWCOMM_NO_RESOURCE;
 	}
-	mpc_common_debug("LCR PTL: send bcopy to %d (iface=%llu, remote=%llu, idx=%d, sz=%llu)", 
+	mpc_common_debug_info("LCR PTL: send bcopy to %d (iface=%llu, remote=%llu, idx=%d, sz=%llu)", 
 			 ep->dest, srail->iface, remote, pte->idx, size);
 	sctk_ptl_emit_put(request, size, remote, pte, match, 0, 0, hdr.raw, request);
 
@@ -100,11 +100,11 @@ int lcr_ptl_send_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
 	/* emit the request */
 	rc = lcr_ptl_md_register(srail, request);
-	if (rc == MPC_LOWCOMM_INPROGRESS) {
+	if (rc == MPC_LOWCOMM_NO_RESOURCE) {
 		mpc_common_debug("LCR PTL: zcopy in progress to %d (iface=%llu, remote=%llu, "
                                  "idx=%d, sz=%llu)", ep->dest, srail->iface, remote,  pte->idx, 
                                  size);
-		return MPC_LOWCOMM_INPROGRESS;
+		return MPC_LOWCOMM_NO_RESOURCE;
 	}
 	mpc_common_debug_info("LCR PTL: send zcopy to %d (iface=%llu, remote=%llu, idx=%d, sz=%llu)", 
 			      ep->dest, srail->iface, remote, pte->idx, size);

@@ -685,7 +685,7 @@ int lcr_ptl_md_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t* user
 	if (OPA_fetch_and_incr_int(&nb_mds) >= max)
 	{
 		OPA_decr_int(&nb_mds);
-		return MPC_LOWCOMM_INPROGRESS;
+		return MPC_LOWCOMM_NO_RESOURCE;
 	}
 
 	sctk_ptl_chk(PtlMDBind(

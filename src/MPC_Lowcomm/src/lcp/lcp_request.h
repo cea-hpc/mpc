@@ -36,12 +36,14 @@ typedef enum {
 } lcp_request_status;
 
 /* Store data for unexpected messages
- * Data is stored after (lcp_unexp_cntr + 1)
+ * Data is stored after (at lcp_unexp_cntr + 1)
  */
 struct lcp_unexp_ctnr {
 	size_t length;
 	unsigned flags;
 };
+
+typedef int (*lcp_send_func_t)(lcp_request_t *req);
 
 struct lcp_request {
 	uint64_t flags;
@@ -72,6 +74,7 @@ struct lcp_request {
 				} am;
 			};
 
+			lcp_send_func_t func;
 		} send;
 
 		struct {
@@ -103,7 +106,6 @@ struct lcp_request {
                 uint64_t comm_id;
                 lcp_context_h ctx;
                 lcr_tag_context_t t_ctx;
-                sctk_rail_info_t *iface;
         } tm;
 
 	struct {
@@ -184,8 +186,8 @@ static inline void lcp_request_init_recv(lcp_request_t *req,
         req->recv.length        = length;
         req->request            = request; 
 
-	req->msg_id = msg_id;
-        req->tm.comm_id = request->header.communicator_id;
+	req->msg_id             = msg_id;
+        req->tm.comm_id         = request->header.communicator_id;
 }
 
 int lcp_request_create(lcp_request_t **req_p);

@@ -10,7 +10,7 @@ typedef struct lcp_base_hdr {
 
 typedef struct lcp_am_hdr {
 	lcp_base_hdr_t base;
-	uint8_t am_id;
+	uint8_t am_id; //FIXME: not needed ?
 } lcp_am_hdr_t;
 
 typedef struct lcp_tag_hdr {

@@ -39,7 +39,7 @@ void lcp_frag_copy_frag(lcp_request_t *req, void *data,
 			intptr_t offset, size_t size);
 
 /*******************************************************
- * Accessors and mutators control messages
+ * Accessors and mutators pending requests
  ******************************************************/
 lcp_pending_entry_t *lcp_pending_create(lcp_pending_table_t *table,
                                         lcp_request_t *req,

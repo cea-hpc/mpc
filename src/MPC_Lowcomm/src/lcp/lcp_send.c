@@ -3,57 +3,36 @@
 #include "lcp_request.h"
 #include "lcp_pending.h"
 #include "lcp_header.h"
-#include "lcp_proto.h"
+#include "lcp_rndv.h"
+#include "lcp_prototypes.h"
 
 #include "sctk_alloc.h"
 
-static inline int lcp_send_start_frag(lcp_ep_h ep, lcp_request_t *req)
-{
-	int rc;
-
-	mpc_common_debug_info("LCP: send rndv req=%p, comm_id=%lu, tag=%d, "
-			      "src=%d, dest=%d, msg_id=%d.", req, req->send.tag.comm_id, 
-			      req->send.tag.tag, req->send.tag.src_tsk, 
-			      req->send.tag.dest_tsk, req->msg_id);
-
-        req->state.status = MPC_LOWCOMM_LCP_RPUT_SYNC;
-	req->flags        |= LCP_REQUEST_SEND_FRAG;
-
-	/* register req request inside table */
-	if (lcp_pending_create(ep->ctx->pend_send_req, req, 
-				     req->msg_id) == NULL) {
-		rc = MPC_LOWCOMM_ERROR;
-		goto err;
-	}
-
-	rc = lcp_proto_send_do_rndv(req);
-	if (rc != MPC_LOWCOMM_SUCCESS) {
-		mpc_common_debug_error("LCP: could not start rndv.");
-		goto err;
-	}
-
-	rc = lcp_proto_recv_do_ack(req, ep->lct_eps[ep->priority_chnl]->rail);
-	if (rc != MPC_LOWCOMM_SUCCESS) {
-		mpc_common_debug_error("LCP: could not post ack.");
-	}
-
-err:
-	return rc;
-}
-
-static inline int lcp_send_start_single(lcp_ep_h ep, lcp_request_t *req)
+int lcp_send_start(lcp_ep_h ep, lcp_request_t *req)
 {
 	int rc = MPC_LOWCOMM_SUCCESS;
 	_mpc_lowcomm_endpoint_t *lcr_ep;
 
-	lcr_ep  = ep->lct_eps[ep->priority_chnl];
-	if (LCR_IFACE_IS_TM(lcr_ep->rail)) {
-		rc = lcp_send_do_tag_offload_post(ep, req);
+	if (req->send.length < ep->ep_config.max_bcopy) {
+		lcr_ep  = ep->lct_eps[ep->priority_chnl];
+		if (LCR_IFACE_IS_TM(lcr_ep->rail)) {
+			rc = lcp_send_tag_eager_tag_bcopy(req);
+		} else {
+			rc = lcp_send_am_eager_tag_bcopy(req);
+		}
+	} else if (req->send.length < ep->ep_config.max_zcopy) {
+		lcr_ep  = ep->lct_eps[ep->priority_chnl];
+		if (LCR_IFACE_IS_TM(lcr_ep->rail)) {
+			rc = lcp_send_tag_eager_tag_zcopy(req);
+		} else {
+			rc = lcp_send_am_eager_tag_zcopy(req);
+		}
 	} else {
-		rc = lcp_send_do_tag(ep, 0, req);
+		rc = lcp_send_rndv_start(req);
 	}
 
-	if (rc == MPC_LOWCOMM_INPROGRESS) {
+		
+	if (rc == MPC_LOWCOMM_NO_RESOURCE) {
 	 	req->state.status = MPC_LOWCOMM_LCP_PEND;
 		req->flags |= LCP_REQUEST_SEND_CTRL; /* to delete ctrl msg upon completion */
 		if (lcp_pending_create(ep->ctx->pend_send_req, req, 
@@ -65,19 +44,6 @@ static inline int lcp_send_start_single(lcp_ep_h ep, lcp_request_t *req)
 	}
 
 	return rc;
-}
-
-int lcp_send_start(lcp_ep_h ep, lcp_request_t *req) {
-        int rc;
-	struct lcp_ep_config ep_config = ep->ep_config;
-
-	if (req->send.length < ep_config.rndv_threshold) {
-		rc = lcp_send_start_single(ep, req); 
-        } else {
-		rc = lcp_send_start_frag(ep, req);
-        }
-
-        return rc;
 }
 
 int lcp_send(lcp_ep_h ep, mpc_lowcomm_request_t *request, 

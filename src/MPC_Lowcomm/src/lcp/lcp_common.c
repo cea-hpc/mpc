@@ -6,8 +6,6 @@
 
 #include "lcp_common.h"
 
-#include "mpc_common_debug.h"
-
 static uint64_t large_primes[] = {
 	14476643271716824181ull, 12086978239110065677ull,
 	15386586898367453843ull, 17958312454893560653ull,
@@ -29,7 +27,6 @@ void rand_seed_init(void) {
 	rand_seed = large_primes[0] * tv.tv_sec  + 
 		    large_primes[1] * tv.tv_usec +
 		    large_primes[2] * syscall(SYS_gettid);
-	mpc_common_debug_info("LCP: random seed=%d.", rand_seed);
 }
 
 uint64_t lcp_rand_uint64(void) {

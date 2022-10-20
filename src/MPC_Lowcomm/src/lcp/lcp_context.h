@@ -7,7 +7,6 @@
 #include "lcp_ep.h"
 #include "lcp_pending.h"
 #include "lcp_tag_matching.h"
-#include "lcp_tag_offload.h"
 
 #include "uthash.h"
 
@@ -81,8 +80,6 @@ struct lcp_context {
 	lcp_comm_ctx_t *comm_ht;	
 
 	mpc_common_spinlock_t ctx_lock; /* Context lock */
-
-	lcp_tm_t tm;
 
 	int num_eps; /* number of endpoints created */
 	lcp_ep_ctx_t *ep_ht; /* Hash table of created endpoint */

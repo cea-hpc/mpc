@@ -59,6 +59,7 @@ typedef enum
 	MPC_LOWCOMM_CANCELLED_RECV,
 
 	MPC_LOWCOMM_P2P_MESSAGE,
+	MPC_LOWCOMM_P2P_TM_MESSAGE,
 	MPC_LOWCOMM_RDMA_MESSAGE,
 	MPC_LOWCOMM_RDMA_WINDOW_MESSAGES,  /**< These messages are used to exchange window  informations */
 	MPC_LOWCOMM_CONTROL_MESSAGE_FENCE, /**< This message is sent to create a fence on control messages */
@@ -100,6 +101,7 @@ static const char *const mpc_lowcomm_ptp_message_class_name[MPC_LOWCOMM_MESSAGE_
 	"MPC_LOWCOMM_CANCELLED_RECV",
 
 	"MPC_LOWCOMM_P2P_MESSAGE",
+	"MPC_LOWCOMM_P2P_TM_MESSAGE",
 	"MPC_LOWCOMM_RDMA_MESSAGE",
 	"MPC_LOWCOMM_RDMA_WINDOW_MESSAGES",
 	"MPC_LOWCOMM_CONTROL_MESSAGE_FENCE",
