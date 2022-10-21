@@ -47,12 +47,12 @@ typedef int (*lcp_send_func_t)(lcp_request_t *req);
 
 struct lcp_request {
 	uint64_t flags;
+	lcp_context_h ctx; //NOTE: needed by lcp_request_complete
 	union {
 		struct {
 			lcp_ep_h ep;
 			size_t length; /* Total length, in bytes */
 			void *buffer;
-                        lcp_context_h ctx;       //NOTE: needed by lcp_request_complete
 			lcr_tag_context_t t_ctx;
 			lcp_chnl_idx_t cc;
 
@@ -82,7 +82,6 @@ struct lcp_request {
                         size_t send_length;
 			lcp_chnl_idx_t cc;
 			void *buffer;
-                        lcp_context_h ctx;       //NOTE: needed by lcp_request_complete
 			lcr_tag_context_t t_ctx;
 
 			struct {
@@ -101,12 +100,6 @@ struct lcp_request {
 	mpc_lowcomm_request_t *request; /* Upper layer request */
 	int64_t msg_number;
 	uint64_t msg_id;
-
-        struct {
-                uint64_t comm_id;
-                lcp_context_h ctx;
-                lcr_tag_context_t t_ctx;
-        } tm;
 
 	struct {
 		lcp_request_status status;
@@ -133,7 +126,6 @@ static inline void lcp_request_init_send(lcp_request_t *req, lcp_ep_h ep,
         req->send.buffer        = buffer;
 	req->send.ep            = ep;
 	req->send.cc            = ep->priority_chnl;
-	req->send.ctx           = ep->ctx; 
 
         req->state.remaining    = request->header.msg_size; 
         req->state.offset       = 0; 
@@ -142,7 +134,7 @@ static inline void lcp_request_init_send(lcp_request_t *req, lcp_ep_h ep,
         req->request            = request;
 	req->msg_id             = msg_id;
 	req->msg_number         = seqn;
-        req->tm.comm_id         = request->header.communicator_id;
+        req->ctx                = ep->ctx;
 };
 
 static inline void lcp_request_init_ack(lcp_request_t *ack_req, lcp_ep_h ep, 
@@ -178,7 +170,6 @@ static inline void lcp_request_init_recv(lcp_request_t *req,
         req->recv.tag.tag       = request->header.message_tag;
         req->recv.tag.comm_id   = request->header.communicator_id;
         req->recv.length        = request->header.msg_size; 
-        req->recv.ctx           = ctx;
         req->state.remaining    = request->header.msg_size; 
         req->state.offset       = 0; 
         req->state.f_id         = 0; 
@@ -187,7 +178,7 @@ static inline void lcp_request_init_recv(lcp_request_t *req,
         req->request            = request; 
 
 	req->msg_id             = msg_id;
-        req->tm.comm_id         = request->header.communicator_id;
+        req->ctx                = ctx;
 }
 
 static inline int lcp_request_send(lcp_request_t *req)

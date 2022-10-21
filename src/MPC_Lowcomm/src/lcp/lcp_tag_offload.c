@@ -251,7 +251,7 @@ int lcp_recv_tag_zcopy(lcp_request_t *rreq, sctk_rail_info_t *iface)
 		.iov_len  = rreq->recv.length
 	};
 
-	rreq->recv.t_ctx.arg = rreq->recv.ctx;
+	rreq->recv.t_ctx.arg = rreq->ctx; //FIXME: ctx also in rreq so not needed
 	rreq->recv.t_ctx.req = rreq;
 	rreq->recv.t_ctx.comm_id = rreq->recv.tag.comm_id;
 
@@ -285,7 +285,7 @@ static inline int lcp_recv_tag_frag_zcopy(lcp_request_t *rreq,
 		.iov_len  = length 
 	};
 
-	rreq->recv.t_ctx.arg = rreq->recv.ctx;
+	rreq->recv.t_ctx.arg = rreq->ctx;
 	rreq->recv.t_ctx.req = rreq;
 	rreq->recv.t_ctx.comm_id = rreq->recv.tag.comm_id;
 	rreq->recv.t_ctx.tag = tag;

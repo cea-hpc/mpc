@@ -323,13 +323,15 @@ err:
 /* Recv                                           */
 /* ============================================== */
 
+//NOTE: counter-intuitively, we use the context of a send request here
+//      even though we post a recv request.
 int lcp_recv_tag_ack(lcp_context_h ctx, 
-		lcp_request_t *req, 
+		lcp_request_t *sreq, 
 		sctk_rail_info_t *iface)
 {
 	lcr_tag_t tag = { .t_frag = {
 		.f_id = 0,
-		.m_id = req->msg_id }
+		.m_id = sreq->msg_id }
 	};
 	lcr_tag_t ign_tag = { .t = 0 };
 
@@ -338,16 +340,16 @@ int lcp_recv_tag_ack(lcp_context_h ctx,
                 .iov_len  = 0
 	};
 
-	req->tm.t_ctx.arg = ctx;
-	req->tm.t_ctx.req = req;
-	req->tm.t_ctx.comm_id = req->tm.comm_id;
+	sreq->send.t_ctx.arg = ctx;
+	sreq->send.t_ctx.req = sreq;
+	sreq->send.t_ctx.comm_id = sreq->send.tag.comm_id;
 
 	return lcp_recv_do_tag_zcopy(iface,
 			tag,
 			ign_tag,
 			&iov,
 			1,
-			&(req->tm.t_ctx));
+			&(sreq->send.t_ctx));
 }
 
 /* ============================================== */

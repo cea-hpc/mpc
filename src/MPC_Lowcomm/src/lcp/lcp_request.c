@@ -71,10 +71,10 @@ int lcp_request_complete(lcp_request_t *req)
 
 	if (req->flags & (LCP_REQUEST_SEND_FRAG |
 			  LCP_REQUEST_SEND_CTRL)) {
-                lcp_pending_delete(req->send.ctx->pend_send_req,
+                lcp_pending_delete(req->ctx->pend_send_req,
                                    req->msg_id);
 	} else if (req->flags & LCP_REQUEST_RECV_FRAG) {
-                lcp_pending_delete(req->recv.ctx->pend_recv_req,
+                lcp_pending_delete(req->ctx->pend_recv_req,
                                    req->msg_id);
 	} 
 
