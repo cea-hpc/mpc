@@ -14,18 +14,21 @@ int lcp_send_start(lcp_ep_h ep, lcp_request_t *req)
 	_mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[ep->priority_chnl];
 
 	if (req->send.length < ep->ep_config.max_bcopy) {
+		lcp_request_init_tag_send(req);
 		if (LCR_IFACE_IS_TM(lcr_ep->rail)) {
 			req->send.func = lcp_send_tag_eager_tag_bcopy;
 		} else {
 			req->send.func = lcp_send_am_eager_tag_bcopy;
 		}
 	} else if (req->send.length < ep->ep_config.max_zcopy) {
+		lcp_request_init_tag_send(req);
 		if (LCR_IFACE_IS_TM(lcr_ep->rail)) {
 			req->send.func = lcp_send_tag_eager_tag_zcopy;
 		} else {
 			req->send.func = lcp_send_am_eager_tag_zcopy;
 		}
 	} else {
+		lcp_request_init_rndv_send(req);
 		rc = lcp_send_rndv_start(req);
 	}
 
@@ -45,7 +48,8 @@ int lcp_send(lcp_ep_h ep, mpc_lowcomm_request_t *request,
 		mpc_common_debug_error("LCP: could not create request.");
 		return MPC_LOWCOMM_ERROR;
 	}
-	lcp_request_init_send(req, ep, request, buffer, seqn, msg_id);
+	LCP_REQUEST_INIT_SEND(req, ep->ctx, request, request->header.msg_size, 
+			ep, buffer, seqn, msg_id);
         req->flags |= LCP_REQUEST_MPI_COMPLETE;
 
 	if (ep->state == LCP_EP_FLAG_CONNECTING) {

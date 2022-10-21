@@ -72,6 +72,16 @@ struct lcp_request {
 					uint8_t  am_id;
 					uint64_t dest;
 				} am;
+
+				struct {
+					uint64_t comm_id;
+					uint64_t src;
+					uint64_t dest;
+					int      tag;
+
+					int n_mpins;
+					lcr_mpin_t *mpins;
+				} rndv;
 			};
 
 			lcp_send_func_t func;
@@ -111,30 +121,39 @@ struct lcp_request {
 	} state;
 };
 
-static inline void lcp_request_init_send(lcp_request_t *req, lcp_ep_h ep,
-					 mpc_lowcomm_request_t *request,
-					 void *buffer, int64_t seqn, 
-					 uint64_t msg_id)
+#define LCP_REQUEST_INIT_SEND(_req, _ctx, _mpi_req, _length, _ep, _buf, _seqn, _msg_id) \
+{ \
+	(_req)->request     = _mpi_req; \
+	(_req)->msg_id      = _msg_id;  \
+	(_req)->msg_number  = _seqn;    \
+	(_req)->ctx         = _ctx;     \
+	\
+	(_req)->send.buffer = _buf;     \
+	(_req)->send.ep     = _ep;      \
+	(_req)->send.cc     = (_ep)->priority_chnl; \
+	(_req)->send.length = _length;  \
+	\
+	(_req)->state.remaining = _length; \
+	(_req)->state.offset    = 0; \
+	(_req)->state.f_id      = 0; \
+}
+
+static inline void lcp_request_init_tag_send(lcp_request_t *req)
 {
-        req->send.tag.dest      = request->header.destination;
-        req->send.tag.dest_tsk  = request->header.destination_task; 
-        req->send.tag.src       = request->header.source; 
-        req->send.tag.src_tsk   = request->header.source_task;	
-        req->send.tag.tag       = request->header.message_tag;
-        req->send.tag.comm_id   = request->header.communicator_id; 
-        req->send.length        = request->header.msg_size; 
-        req->send.buffer        = buffer;
-	req->send.ep            = ep;
-	req->send.cc            = ep->priority_chnl;
+        req->send.tag.dest      = req->request->header.destination;
+        req->send.tag.dest_tsk  = req->request->header.destination_task; 
+        req->send.tag.src       = req->request->header.source; 
+        req->send.tag.src_tsk   = req->request->header.source_task;	
+        req->send.tag.tag       = req->request->header.message_tag;
+        req->send.tag.comm_id   = req->request->header.communicator_id; 
+};
 
-        req->state.remaining    = request->header.msg_size; 
-        req->state.offset       = 0; 
-        req->state.f_id         = 0; 
-
-        req->request            = request;
-	req->msg_id             = msg_id;
-	req->msg_number         = seqn;
-        req->ctx                = ep->ctx;
+static inline void lcp_request_init_rndv_send(lcp_request_t *req)
+{
+        req->send.rndv.dest      = req->request->header.destination;
+        req->send.rndv.src       = req->request->header.source; 
+        req->send.rndv.tag       = req->request->header.message_tag;
+        req->send.rndv.comm_id   = req->request->header.communicator_id; 
 };
 
 static inline void lcp_request_init_ack(lcp_request_t *ack_req, lcp_ep_h ep, 

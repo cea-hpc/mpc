@@ -103,6 +103,7 @@ struct sctk_rail_pin_ctx_list
 	sctk_rail_pin_ctx_internal_t pin;
 	int rail_id;
 };
+typedef struct sctk_rail_pin_ctx_list lcr_mpin_t;
 
 #define SCTK_PIN_LIST_SIZE 4
 

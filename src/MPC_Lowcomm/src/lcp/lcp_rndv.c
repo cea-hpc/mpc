@@ -16,15 +16,13 @@ static size_t lcp_proto_rndv_pack(void *dest, void *data)
 	lcp_rndv_hdr_t *hdr = dest;
 	lcp_request_t *req = data;
 
-	hdr->base.base.comm_id = req->send.tag.comm_id;
-	hdr->base.dest         = req->send.tag.dest;
-	hdr->base.dest_tsk     = req->send.tag.dest_tsk;
-	hdr->base.src          = req->send.tag.src;
-	hdr->base.src_tsk      = req->send.tag.src_tsk;
-	hdr->base.tag          = req->send.tag.tag;
+	hdr->base.base.comm_id = req->send.rndv.comm_id;
+	hdr->base.dest         = req->send.rndv.dest;
+	hdr->base.src          = req->send.rndv.src;
+	hdr->base.tag          = req->send.rndv.tag;
 	hdr->base.seqn         = req->msg_number;
 	
-	hdr->dest       = req->send.tag.dest;
+	hdr->dest       = req->send.rndv.dest;
 	hdr->msg_id     = req->msg_id;
 	hdr->total_size = req->send.length;
 
@@ -43,6 +41,34 @@ static size_t lcp_proto_ack_pack(void *dest, void *data)
 	hdr->msg_id     = req->msg_id;
 
 	return sizeof(*hdr);
+}
+
+static size_t lcp_proto_rndv_get_pack(void *dest, void *data)
+{
+	int i;
+	void *p;
+	lcp_rndv_hdr_t *hdr = dest;
+	lcp_request_t *req = data;
+
+	hdr->base.base.comm_id = req->send.rndv.comm_id;
+	hdr->base.dest         = req->send.rndv.dest;
+	hdr->base.src          = req->send.rndv.src;
+	hdr->base.tag          = req->send.rndv.tag;
+	hdr->base.seqn         = req->msg_number;
+	
+	hdr->dest       = req->send.rndv.dest;
+	hdr->msg_id     = req->msg_id;
+	hdr->total_size = req->send.length;
+
+	/* copy memory descriptors of all mpins*/
+	p = (void *)(hdr + 1);
+	for (i=0; i<req->send.rndv.n_mpins; i++) {
+		memcpy(p, (void *)(&req->send.rndv.mpins[i]),
+			sizeof(lcr_mpin_t));
+		p += sizeof(lcr_mpin_t);
+	}
+
+	return sizeof(*hdr) + req->send.rndv.n_mpins * sizeof(lcr_mpin_t);
 }
 
 /* ============================================== */
@@ -83,7 +109,8 @@ void lcp_request_complete_ack(lcr_completion_t *comp)
 
 int lcp_send_am_eager_rndv_bcopy(lcp_request_t *req)
 {
-	int rc;
+	int rc = MPC_LOWCOMM_SUCCESS;
+	ssize_t payload;
 	lcp_ep_h ep = req->send.ep;
 	_mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[ep->priority_chnl];
 
@@ -92,11 +119,34 @@ int lcp_send_am_eager_rndv_bcopy(lcp_request_t *req)
 	};
 	req->send.t_ctx.comp = cp;
 
-	rc = lcp_send_do_am_bcopy(lcr_ep, 
+	payload = lcp_send_do_am_bcopy(lcr_ep, 
 			MPC_LOWCOMM_RDV_MESSAGE, 
 			lcp_proto_rndv_pack, req);
-	//FIXME: handle error
-	if ( 0) {
+	if (payload < 0) {
+		mpc_common_debug_error("LCP: error packing bcopy.");
+		rc = MPC_LOWCOMM_ERROR;
+	}
+
+	return rc;
+}
+
+int lcp_send_tag_eager_rndv_get_bcopy(lcp_request_t *req)
+{
+	int rc = MPC_LOWCOMM_SUCCESS;
+	ssize_t payload;
+
+	lcp_ep_h ep = req->send.ep;
+	_mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[ep->priority_chnl];
+
+	lcr_completion_t cp = {
+		.comp_cb = lcp_request_complete_rndv 
+	};
+	req->send.t_ctx.comp = cp;
+
+	payload = lcp_send_do_am_bcopy(lcr_ep, 
+			MPC_LOWCOMM_RDV_GET_MESSAGE, 
+			lcp_proto_rndv_get_pack, req);
+	if (payload < 0) {
 		mpc_common_debug_error("LCP: error packing bcopy.");
 		rc = MPC_LOWCOMM_ERROR;
 	}
@@ -112,8 +162,8 @@ int lcp_send_tag_eager_rndv_bcopy(lcp_request_t *req)
 	_mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[ep->priority_chnl];
 
 	lcr_tag_t tag = { .t_tag = {
-		.src = req->send.tag.src,
-		.tag = req->send.tag.tag,
+		.src = req->send.rndv.src,
+		.tag = req->send.rndv.tag,
 		.seqn = req->msg_number }
 	};
 	lcp_tm_imm_t imm = { .hdr = {
@@ -126,7 +176,7 @@ int lcp_send_tag_eager_rndv_bcopy(lcp_request_t *req)
 
 	req->send.t_ctx.arg     = ep->ctx;
 	req->send.t_ctx.req     = req;
-	req->send.t_ctx.comm_id = req->send.tag.comm_id;
+	req->send.t_ctx.comm_id = req->send.rndv.comm_id;
 	req->send.t_ctx.comp    = cp;
 
 	req->flags |= LCP_REQUEST_OFFLOADED;
@@ -219,9 +269,9 @@ int lcp_send_rndv_start(lcp_request_t *req)
 	lcp_chnl_idx_t cc = req->send.cc;
 
 	mpc_common_debug_info("LCP: send rndv req=%p, comm_id=%lu, tag=%d, "
-			      "src=%d, dest=%d, msg_id=%d.", req, req->send.tag.comm_id, 
-			      req->send.tag.tag, req->send.tag.src_tsk, 
-			      req->send.tag.dest_tsk, req->msg_id);
+			      "src=%d, dest=%d, msg_id=%d.", req, req->send.rndv.comm_id, 
+			      req->send.rndv.tag, req->send.rndv.src, 
+			      req->send.rndv.dest, req->msg_id);
 
         req->state.status = MPC_LOWCOMM_LCP_RPUT_SYNC;
 	req->flags        |= LCP_REQUEST_SEND_FRAG;
@@ -233,9 +283,14 @@ int lcp_send_rndv_start(lcp_request_t *req)
 		goto err;
 	}
 
-
 	if (LCR_IFACE_IS_TM(ep->lct_eps[cc]->rail)) {
-                req->send.func = lcp_send_tag_eager_rndv_bcopy;
+		if (ep->ep_config.rndv.max_get_zcopy > 0) {
+			req->send.func = lcp_send_tag_eager_rndv_get_bcopy;
+		} else if (ep->ep_config.rndv.max_put_zcopy > 0) {
+			req->send.func = lcp_send_tag_eager_rndv_put_bcopy;
+		} else {
+			req->send.func = lcp_send_tag_eager_rndv_bcopy;
+		}
 	} else {
 		req->send.func = lcp_send_am_eager_rndv_bcopy;
 	}
@@ -342,7 +397,7 @@ int lcp_recv_tag_ack(lcp_context_h ctx,
 
 	sreq->send.t_ctx.arg = ctx;
 	sreq->send.t_ctx.req = sreq;
-	sreq->send.t_ctx.comm_id = sreq->send.tag.comm_id;
+	sreq->send.t_ctx.comm_id = sreq->send.rndv.comm_id;
 
 	return lcp_recv_do_tag_zcopy(iface,
 			tag,
@@ -399,6 +454,27 @@ int lcp_rndv_am_tag_handler(void *arg, void *data,
 }
 
 static int lcp_rndv_tag_handler(void *arg, void *data, size_t length,
+		__UNUSED__ unsigned flags)
+{
+	int rc = MPC_LOWCOMM_SUCCESS;
+	lcr_tag_context_t *t_ctx = arg;
+	lcp_context_h ctx = t_ctx->arg;
+	lcp_rndv_hdr_t *hdr = data;
+	lcp_request_t *req  = t_ctx->req;
+
+	/* No payload in rndv message for now */
+	assert(length == sizeof(lcp_rndv_hdr_t));
+
+	mpc_common_debug_info("LCP: recv rndv offload header src=%d, dest=%d, msg_id=%llu",
+			      hdr->base.src_tsk, hdr->base.dest_tsk, hdr->msg_id);
+
+
+	rc = lcp_rndv_matched(ctx, req, hdr);
+
+	return rc;
+}
+
+static int lcp_rndv_get_tag_handler(void *arg, void *data, size_t length,
 		__UNUSED__ unsigned flags)
 {
 	int rc = MPC_LOWCOMM_SUCCESS;

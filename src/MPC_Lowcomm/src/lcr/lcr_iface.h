@@ -44,6 +44,8 @@ typedef int (*lcr_recv_tag_zcopy_func_t)(sctk_rail_info_t *rail,
 					 size_t iovcnt,
 					 lcr_tag_context_t *ctx);
 
+typedef int 
+
 // Interface functions
 typedef int (*lcr_iface_get_attr_func_t)(sctk_rail_info_t *rail,
                                          lcr_rail_attr_t *attr);

@@ -13,6 +13,7 @@ typedef struct lcp_am_hdr {
 	uint8_t am_id; //FIXME: not needed ?
 } lcp_am_hdr_t;
 
+//FIXME: see if src_tsk and dest_tsk needed
 typedef struct lcp_tag_hdr {
 	lcp_base_hdr_t base;
 	uint64_t       src;
