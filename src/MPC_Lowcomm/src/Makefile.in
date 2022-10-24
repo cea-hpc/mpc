@@ -133,6 +133,7 @@ host_triplet = @host@
 @LCP_ENABLED_TRUE@	./lcp/lcp_tag_matching.c ./lcp/lcp_tag.c \
 @LCP_ENABLED_TRUE@	./lcp/lcp_request.c ./lcp/lcp_common.c \
 @LCP_ENABLED_TRUE@	./lcp/lcp_rndv.c ./lcp/lcp_tag_offload.c \
+@LCP_ENABLED_TRUE@	./lcp/lcp_rndv_rma.c ./lcp/lcp_mem.c \
 @LCP_ENABLED_TRUE@	./lcr/lcr_component.c
 @MPC_HAVE_AM_TRUE@am__append_13 = am.c
 @MPC_HAVE_AM_TRUE@am__append_14 = $(FFI_LIBS)
@@ -217,9 +218,10 @@ am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c sctk_checksum.c ft.c \
 	./lcp/lcp_send.c ./lcp/lcp_tag_lists.c \
 	./lcp/lcp_tag_matching.c ./lcp/lcp_tag.c ./lcp/lcp_request.c \
 	./lcp/lcp_common.c ./lcp/lcp_rndv.c ./lcp/lcp_tag_offload.c \
-	./lcr/lcr_component.c ./cplane/auth.c ./cplane/peer.c \
-	./cplane/proto.c ./cplane/port.c ./cplane/monitor.c \
-	./cplane/set.c ./cplane/uid.c ./cplane/name.c am.c
+	./lcp/lcp_rndv_rma.c ./lcp/lcp_mem.c ./lcr/lcr_component.c \
+	./cplane/auth.c ./cplane/peer.c ./cplane/proto.c \
+	./cplane/port.c ./cplane/monitor.c ./cplane/set.c \
+	./cplane/uid.c ./cplane/name.c am.c
 am__dirstamp = $(am__leading_dot)dirstamp
 @INFINIBAND_DRIVER_ENABLED_TRUE@am__objects_1 = ./ib/async.lo \
 @INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/buffered.lo ./ib/ib.lo \
@@ -257,6 +259,7 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @LCP_ENABLED_TRUE@	./lcp/lcp_tag_matching.lo ./lcp/lcp_tag.lo \
 @LCP_ENABLED_TRUE@	./lcp/lcp_request.lo ./lcp/lcp_common.lo \
 @LCP_ENABLED_TRUE@	./lcp/lcp_rndv.lo ./lcp/lcp_tag_offload.lo \
+@LCP_ENABLED_TRUE@	./lcp/lcp_rndv_rma.lo ./lcp/lcp_mem.lo \
 @LCP_ENABLED_TRUE@	./lcr/lcr_component.lo
 @MPC_HAVE_AM_TRUE@am__objects_7 = am.lo
 am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo \
@@ -878,6 +881,9 @@ lcp/$(DEPDIR)/$(am__dirstamp):
 ./lcp/lcp_rndv.lo: lcp/$(am__dirstamp) lcp/$(DEPDIR)/$(am__dirstamp)
 ./lcp/lcp_tag_offload.lo: lcp/$(am__dirstamp) \
 	lcp/$(DEPDIR)/$(am__dirstamp)
+./lcp/lcp_rndv_rma.lo: lcp/$(am__dirstamp) \
+	lcp/$(DEPDIR)/$(am__dirstamp)
+./lcp/lcp_mem.lo: lcp/$(am__dirstamp) lcp/$(DEPDIR)/$(am__dirstamp)
 lcr/$(am__dirstamp):
 	@$(MKDIR_P) ./lcr
 	@: > lcr/$(am__dirstamp)
@@ -990,11 +996,13 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_common.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_context.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_ep.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_mem.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_pending.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_progress.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_recv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_request.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_rndv.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_rndv_rma.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_send.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_tag.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_tag_lists.Plo@am__quote@

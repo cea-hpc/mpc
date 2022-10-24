@@ -420,6 +420,11 @@ static int lcp_context_add_resources(lcp_context_h ctx,
 
         lcp_context_select_component(ctx, components, num_components, 
                                      &cmpt_idx, &max_ifaces);
+        if (max_ifaces == 0) {
+                mpc_common_debug_error("LCP: could not find any interface");
+                rc = MPC_LOWCOMM_ERROR;
+                goto err;
+        }
 
         /* Allocate resources */
         ctx->resources = sctk_malloc(max_ifaces * sizeof(*ctx->resources));
@@ -461,6 +466,7 @@ out_free_devices:
                 sctk_free(components[j]->devices);
         }
 
+err:
         return rc;
 }
 

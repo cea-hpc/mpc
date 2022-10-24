@@ -60,4 +60,6 @@ void sctk_ptl_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_c
 void sctk_ptl_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list );
 void sctk_ptl_rdma_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev);
 void sctk_ptl_rdma_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev);
+void lcr_ptl_handle_rdma_ev_md(sctk_rail_info_t *rail, sctk_ptl_event_t *ev);
+void lcr_ptl_handle_rdma_ev_me(sctk_rail_info_t *rail, sctk_ptl_event_t *ev);
 #endif /* ifndef __SCTK_PTL_RDMA_H_ */

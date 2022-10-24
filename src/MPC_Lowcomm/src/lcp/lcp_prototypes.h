@@ -63,6 +63,9 @@ int lcp_recv_tag_zcopy(lcp_request_t *req, sctk_rail_info_t *iface);
 int lcp_send_tag_zcopy_multi(lcp_request_t *req);
 int lcp_recv_tag_zcopy_multi(lcp_ep_h ep, lcp_request_t *rreq);
 
+int lcp_send_get_zcopy_multi(lcp_request_t *get_req);
+int lcp_send_put_zcopy_multi(lcp_request_t *req);
+
 static inline int lcp_send_do_am_bcopy(_mpc_lowcomm_endpoint_t *lcr_ep, 
 		uint8_t am_id, 
 		lcr_pack_callback_t pack,
@@ -114,4 +117,39 @@ static inline int lcp_recv_do_tag_zcopy(sctk_rail_info_t *iface,
 	return iface->recv_tag_zcopy(iface, tag, ign_tag, iov, iovcnt, 
 				     tag_ctx);
 }
+
+static inline int lcp_get_zcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
+                  uint64_t local_addr,
+                  uint64_t remote_addr,
+                  lcr_memp_t local_key,
+                  lcr_memp_t remote_key,
+                  size_t size,
+                  lcr_completion_t *comp) 
+{
+        return lcr_ep->rail->send_get(lcr_ep,
+                                      local_addr,
+                                      remote_addr,
+                                      local_key,
+                                      remote_key,
+                                      size,
+                                      comp);
+}
+
+static inline int lcp_put_zcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
+                                uint64_t local_addr,
+                                uint64_t remote_addr,
+                                lcr_memp_t local_key,
+                                lcr_memp_t remote_key,
+                                size_t size,
+                                lcr_completion_t *comp) 
+{
+        return lcr_ep->rail->send_put(lcr_ep,
+                                      local_addr,
+                                      remote_addr,
+                                      local_key,
+                                      remote_key,
+                                      size,
+                                      comp);
+}
+
 #endif

@@ -29,6 +29,7 @@ typedef struct lcp_rndv_hdr {
 	uint64_t msg_id;
 	uint64_t dest;
 	size_t total_size;
+        uint64_t remote_addr;
 } lcp_rndv_hdr_t;
 
 typedef struct lcp_rndv_ack_hdr {
@@ -36,6 +37,7 @@ typedef struct lcp_rndv_ack_hdr {
 	uint64_t msg_id;
 	uint64_t src;
 	uint64_t dest;
+        uint64_t remote_addr;
 } lcp_rndv_ack_hdr_t;
 
 typedef struct lcp_frag_hdr {

@@ -25,12 +25,19 @@ int main(int argc, char** argv) {
 	lcp_ep_h ep;
 	mpc_lowcomm_set_uid_t suid;
 	mpc_lowcomm_peer_uid_t src_uid, dest_uid, my_uid;
+	int check = 1;
 
 	if (argc != 2) {
 		printf("error: one argument needed, [size]");
 		return 1;
 	}
 	size_t size = atoi(argv[1]);
+
+	/* uid must be set before initializing data */
+	int *data = malloc(size * sizeof(int));
+	memset(data, 0, size * sizeof(int));
+	int *data_check = malloc(size * sizeof(int));
+	memset(data_check, 0, size * sizeof(int));
 
 	/* load default config */
 	mpc_conf_root_config_init("mpcframework");
@@ -74,11 +81,6 @@ int main(int argc, char** argv) {
 	src_uid = mpc_lowcomm_monitor_uid_of(suid, 0);
 	dest_uid = mpc_lowcomm_monitor_uid_of(suid, 1);
 
-	/* uid must be set before initializing data */
-	int *data = malloc(size * sizeof(int));
-	memset(data, 0, size * sizeof(int));
-	int *data_check = malloc(size * sizeof(int));
-	memset(data_check, 0, size * sizeof(int));
 	/* init data */
 	srand(0);
 	for (i=0; i<size; i++) {
@@ -131,7 +133,6 @@ int main(int argc, char** argv) {
 		lcp_progress(ctx);
 	}
 
-	int check = 1;
         if (req.truncated) {
                 printf("WARNING: truncated\n");
                 goto no_check;

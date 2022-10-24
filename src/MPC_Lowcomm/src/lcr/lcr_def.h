@@ -5,13 +5,14 @@
 #include <stddef.h>
 
 //FIXME: to be changed
-#define LCR_AM_ID_MAX 32
+#define LCR_AM_ID_MAX 64
 #define LCR_COMPONENT_NAME_MAX 16
 #define LCR_DEVICE_NAME_MAX 16
 #define LCR_DEVICE_MAX 64
 
 typedef struct _mpc_lowcomm_endpoint_s _mpc_lowcomm_endpoint_t;
 typedef struct sctk_rail_info_s        sctk_rail_info_t;
+typedef struct sctk_rail_pin_ctx_list  lcr_memp_t;
 typedef struct lcr_tag_context         lcr_tag_context_t;
 typedef struct lcr_completion          lcr_completion_t;
 typedef struct lcr_rail_attr           lcr_rail_attr_t;

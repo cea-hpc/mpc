@@ -13,12 +13,15 @@
 
 enum {
 	LCP_REQUEST_SEND_TAG           = LCP_BIT(0),
-	LCP_REQUEST_SEND_FRAG          = LCP_BIT(1),
-	LCP_REQUEST_RECV_FRAG          = LCP_BIT(2),
-	LCP_REQUEST_SEND_CTRL          = LCP_BIT(3),
-	LCP_REQUEST_RECV_TRUNC         = LCP_BIT(4),
-        LCP_REQUEST_MPI_COMPLETE       = LCP_BIT(5),
-        LCP_REQUEST_OFFLOADED          = LCP_BIT(6)
+	LCP_REQUEST_RNDV_TAG           = LCP_BIT(1),
+	LCP_REQUEST_RNDV_GET_TAG       = LCP_BIT(2),
+	LCP_REQUEST_RNDV_PUT_TAG       = LCP_BIT(3),
+	LCP_REQUEST_SEND_FRAG          = LCP_BIT(4),
+	LCP_REQUEST_RECV_FRAG          = LCP_BIT(5),
+	LCP_REQUEST_SEND_CTRL          = LCP_BIT(6),
+	LCP_REQUEST_RECV_TRUNC         = LCP_BIT(7),
+        LCP_REQUEST_MPI_COMPLETE       = LCP_BIT(8),
+        LCP_REQUEST_OFFLOADED          = LCP_BIT(9)
 };
 
 enum {
@@ -78,9 +81,10 @@ struct lcp_request {
 					uint64_t src;
 					uint64_t dest;
 					int      tag;
-
-					int n_mpins;
-					lcr_mpin_t *mpins;
+                                        int      seqn;
+                                        uint64_t remote_addr;
+                                        lcp_mem_h lmem; /* local */
+                                        lcp_mem_h rmem; /* remote */
 				} rndv;
 			};
 
@@ -110,6 +114,7 @@ struct lcp_request {
 	mpc_lowcomm_request_t *request; /* Upper layer request */
 	int64_t msg_number;
 	uint64_t msg_id;
+        struct lcp_request *super;
 
 	struct {
 		lcp_request_status status;
@@ -155,6 +160,31 @@ static inline void lcp_request_init_rndv_send(lcp_request_t *req)
         req->send.rndv.tag       = req->request->header.message_tag;
         req->send.rndv.comm_id   = req->request->header.communicator_id; 
 };
+
+static inline void lcp_request_init_get(lcp_request_t *get_req, lcp_ep_h ep,
+                                        void *buffer,
+                                        uint64_t comm_id, uint64_t dest,
+                                        int seqn, uint64_t msg_id, size_t length,
+                                        uint64_t remote_addr)
+{
+        get_req->send.rndv.comm_id     = comm_id;
+        get_req->send.rndv.dest        = dest;
+        get_req->send.rndv.seqn        = seqn; //FIXME: redundant with msg_number
+        get_req->send.rndv.remote_addr = remote_addr; //FIXME: redundant with msg_number
+        get_req->send.ep               = ep;
+        get_req->send.cc               = ep->priority_chnl;
+        get_req->send.buffer           = buffer;
+        get_req->send.length           = length;
+
+        get_req->msg_id                = msg_id;
+
+        get_req->state.remaining       = length;
+        get_req->state.offset          = 0; 
+        get_req->state.f_id            = 0; 
+
+	get_req->msg_id                = msg_id;
+	get_req->msg_number            = seqn;
+}
 
 static inline void lcp_request_init_ack(lcp_request_t *ack_req, lcp_ep_h ep, 
                                         uint64_t comm_id, uint64_t dest, 

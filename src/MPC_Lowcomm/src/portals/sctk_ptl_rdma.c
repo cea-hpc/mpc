@@ -515,6 +515,7 @@ void sctk_ptl_rdma_read(sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg,
 	msg->tail.ptl.user_ptr = NULL; /* NULL in RDMA ctx means: 'no extra allocated data' */
 	msg->tail.ptl.copy     = 0;
 
+
 	sctk_ptl_emit_get(
 		local_key->pin.ptl.md_data, /* the base MD */
 		size,                       /* request size */
@@ -592,7 +593,7 @@ void sctk_ptl_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_c
 	list->pin.ptl.start   = addr;
 	list->pin.ptl.match   = match;
 
-	mpc_common_nodebug("REGISTER RDMA %p->%p (match=%s) '%llu'", addr, addr + size,  __sctk_ptl_match_str(sctk_malloc(32), 32, match.raw), *(unsigned long long int*)addr);
+	mpc_common_debug_info("REGISTER RDMA %p->%p (match=%s) '%llu', origin=%llu", addr, addr + size,  __sctk_ptl_match_str(sctk_malloc(32), 32, match.raw), *(unsigned long long int*)addr, list->pin.ptl.origin);
 }
 
 /**
@@ -611,6 +612,45 @@ void sctk_ptl_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin
 	sctk_ptl_md_release(list->pin.ptl.md_data);
 	sctk_ptl_me_release(list->pin.ptl.me_data);
 	mpc_common_nodebug("RELEASE RDMA %p->%p %s", list->pin.ptl.me_data->slot.me.start, list->pin.ptl.me_data->slot.me.start + list->pin.ptl.me_data->slot.me.length, __sctk_ptl_match_str(sctk_malloc(32), 32, list->pin.ptl.me_data->slot.me.match_bits));
+}
+
+void lcr_ptl_handle_rdma_ev_me(sctk_rail_info_t *rail, sctk_ptl_event_t *ev)
+{
+        sctk_ptl_local_data_t *user_ptr = ev->user_ptr;
+        lcr_completion_t *comp           = user_ptr->msg;
+
+	UNUSED(rail);
+        switch(ev->type)
+        {
+        case PTL_EVENT_PUT:                   /* a Put() reached the local process */
+        case PTL_EVENT_GET:                   /* a Get() reached the local process */
+                if (comp != NULL) {
+                        comp->sent = ev->mlength;
+                        comp->comp_cb(comp);
+                }
+                break;
+
+        case PTL_EVENT_ATOMIC:                /* an Atomic() reached the local process */
+        case PTL_EVENT_FETCH_ATOMIC:          /* a FetchAtomic() reached the local process */
+                break;
+
+        case PTL_EVENT_PUT_OVERFLOW:          /* a previous received PUT matched a just appended ME */
+        case PTL_EVENT_GET_OVERFLOW:          /* a previous received GET matched a just appended ME */
+        case PTL_EVENT_FETCH_ATOMIC_OVERFLOW: /* a previously received FETCH-ATOMIC matched a just appended one */
+        case PTL_EVENT_ATOMIC_OVERFLOW:       /* a previously received ATOMIC matched a just appended one */
+        case PTL_EVENT_PT_DISABLED:           /* ERROR: The local PTE is disabled (FLOW_CTRL) */
+        case PTL_EVENT_SEARCH:                /* a PtlMESearch completed */
+                /* probably nothing to do here */
+        case PTL_EVENT_LINK:                  /* MISC: A new ME has been linked, (maybe not useful) */
+        case PTL_EVENT_AUTO_UNLINK:           /* an USE_ONCE ME has been automatically unlinked */
+        case PTL_EVENT_AUTO_FREE:             /* an USE_ONCE ME can be now reused */
+                not_reachable();              /* have been disabled */
+                break;
+        default:
+                mpc_common_debug_fatal("Portals ME event not recognized: %d", ev->type);
+                break;
+        }
+
 }
 
 /**
@@ -648,6 +688,27 @@ void sctk_ptl_rdma_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			break;
 	}
 
+}
+
+void lcr_ptl_handle_rdma_ev_md(sctk_rail_info_t *rail, sctk_ptl_event_t *ev)
+{
+	UNUSED(rail);
+        sctk_ptl_local_data_t *user_ptr = ev->user_ptr;
+        lcr_completion_t *comp           = user_ptr->msg;
+
+        switch (ev->type) {
+        case PTL_EVENT_SEND:   /* not supported */
+                mpc_common_debug_fatal("Unrecognized MD event: %d", ev->type);
+                break;
+        case PTL_EVENT_REPLY:  /* read  */
+        case PTL_EVENT_ACK:    /* write */
+                comp->sent = ev->mlength;
+                comp->comp_cb(comp);
+                break;
+        default:
+                mpc_common_debug_fatal("Unrecognized MD event: %d", ev->type);
+                break;
+        }
 }
 
 /**

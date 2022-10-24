@@ -294,12 +294,14 @@ void sctk_network_init_ptl (sctk_rail_info_t *rail)
 int lcr_ptl_get_attr(sctk_rail_info_t *rail,
                      lcr_rail_attr_t *attr)
 {
-        attr->cap.tag.max_bcopy  = 0; /* Either eager or rndv, data is sent 
+        attr->iface.cap.tag.max_bcopy  = 0; /* Either eager or rndv, data is sent 
                                         in zcopy */
-        attr->cap.tag.max_zcopy  = rail->network.ptl.eager_limit;
+        attr->iface.cap.tag.max_zcopy  = rail->network.ptl.eager_limit;
 
-        attr->cap.rndv.max_put_zcopy = rail->network.ptl.max_mr;
-        attr->cap.rndv.max_get_zcopy = rail->network.ptl.max_mr;
+        attr->iface.cap.rndv.max_put_zcopy = rail->network.ptl.max_mr;
+        attr->iface.cap.rndv.max_get_zcopy = rail->network.ptl.max_mr;
+
+        attr->mem.cap.max_reg = SIZE_MAX;
 
         return MPC_LOWCOMM_SUCCESS;
 }
@@ -320,8 +322,8 @@ int lcr_ptl_query_devices(__UNUSED__ lcr_component_t *component,
         num_devices = 0;
 
         /* First, try simulator */
-        char *ptl_iface_name; 
-        if ((ptl_iface_name = getenv("PTL_FACE_NAME")) != NULL) {
+        const char *ptl_iface_name; 
+        if ((ptl_iface_name = getenv("PTL_IFACE_NAME")) != NULL) {
                 devices = sctk_malloc(sizeof(lcr_device_t));
                 strcpy(devices[0].name, ptl_iface_name);
                 num_devices = 1;
@@ -407,6 +409,8 @@ int lcr_ptl_iface_open(char *device_name, int id,
         /* Add new API call */
         iface->send_tag_bcopy = lcr_ptl_send_tag_bcopy;
         iface->send_tag_zcopy = lcr_ptl_send_tag_zcopy;
+        iface->send_put       = lcr_ptl_send_put;
+        iface->send_get       = lcr_ptl_send_get;
         iface->recv_tag_zcopy = lcr_ptl_recv_tag_zcopy;
 	iface->iface_get_attr = lcr_ptl_get_attr;
 

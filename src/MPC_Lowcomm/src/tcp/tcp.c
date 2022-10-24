@@ -396,16 +396,16 @@ int lcr_tcp_get_attr(sctk_rail_info_t *rail,
 {
         struct _mpc_lowcomm_config_struct_net_driver_tcp tcp_driver =
                 rail->runtime_config_driver_config->driver.value.tcp;
-       attr->cap.am.max_bcopy = 0; /* TCP socket are blocking, hence 
+       attr->iface.cap.am.max_bcopy = 0; /* TCP socket are blocking, hence 
                                       no need for buffered copy. 
                                       TODO: check MPI_BSend */
-       attr->cap.am.max_zcopy = tcp_driver.max_msg_size; 
+       attr->iface.cap.am.max_zcopy = tcp_driver.max_msg_size; 
 
-       attr->cap.tag.max_bcopy = 0; /* No tag-matching capabilities */
-       attr->cap.tag.max_zcopy = 0; /* No tag-matching capabilities */
+       attr->iface.cap.tag.max_bcopy = 0; /* No tag-matching capabilities */
+       attr->iface.cap.tag.max_zcopy = 0; /* No tag-matching capabilities */
 
-       attr->cap.rndv.max_put_zcopy = tcp_driver.max_msg_size;
-       attr->cap.rndv.max_get_zcopy = tcp_driver.max_msg_size;
+       attr->iface.cap.rndv.max_put_zcopy = tcp_driver.max_msg_size;
+       attr->iface.cap.rndv.max_get_zcopy = tcp_driver.max_msg_size;
        
        return MPC_LOWCOMM_SUCCESS;
 }
@@ -521,6 +521,7 @@ int lcr_tcp_iface_open(char *device_name, int id,
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         sctk_rail_info_t *iface = NULL;
+        UNUSED(device_name);
 
         lcr_rail_init(rail_config, driver_config, &iface);
         if (iface == NULL) {

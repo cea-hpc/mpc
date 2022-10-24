@@ -161,20 +161,20 @@ int lcr_ptl_handle_eq_ev(sctk_rail_info_t *rail,
 	unsigned flags = 0;
 	lcr_am_handler_t handler;
 
-	switch (ev->type) {
-	case PTL_EVENT_PUT_OVERFLOW:
-	case PTL_EVENT_GET_OVERFLOW:
-		flags |= LCR_IFACE_TM_OVERFLOW;
-		break;
-	case PTL_EVENT_PUT:
-	case PTL_EVENT_GET:
-		flags |= LCR_IFACE_TM_NOVERFLOW;
-		break;
-	default:
-		flags |= LCR_IFACE_TM_ERROR;
-		mpc_common_debug_error("LCP: ptl event type not supported: %d.", ev->type);
-		break;
-	}
+        switch (ev->type) {
+        case PTL_EVENT_PUT_OVERFLOW:
+        case PTL_EVENT_GET_OVERFLOW:
+                flags |= LCR_IFACE_TM_OVERFLOW;
+                break;
+        case PTL_EVENT_PUT:
+        case PTL_EVENT_GET:
+                flags |= LCR_IFACE_TM_NOVERFLOW;
+                break;
+        default:
+                flags |= LCR_IFACE_TM_ERROR;
+                mpc_common_debug_error("LCP: ptl event type not supported: %d.", ev->type);
+                break;
+        }
 
 	ctx->tag = (lcr_tag_t)ev->match_bits;
 	ctx->imm = ev->hdr_data;
@@ -206,7 +206,9 @@ static inline int ___eq_poll(sctk_rail_info_t* rail, sctk_ptl_pte_t *cur_pte)
 		did_poll = 1;
 		lcr_tag_t tag = (lcr_tag_t)ev.match_bits;
 
-		mpc_common_debug_info("PORTALS: EQS EVENT '%s' iface=%llu, idx=%d, from %s, type=%s, prot=%s, match=[%d,%d,%d], sz=%llu, user=%p, start=%p", sctk_ptl_event_decode(ev), srail->iface, ev.pt_index, SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot), tag.t_tag.src, tag.t_tag.tag, tag.t_tag.seqn , ev.mlength, ev.user_ptr, ev.start);
+		mpc_common_debug_info("PORTALS: EQS EVENT '%s' iface=%llu, idx=%d, sz=%llu, user=%p, start=%p", sctk_ptl_event_decode(ev), srail->iface, ev.pt_index, ev.mlength, ev.user_ptr, ev.start);
+                //mpc_common_debug_info("from %s, type=%s, prot=%s, match=[%d,%d,%d]", SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot), tag.t_tag.src, tag.t_tag.tag, tag.t_tag.seqn);
+
 
 		/* if the event is related to a probe request */
 		if(ev.type == PTL_EVENT_SEARCH)
@@ -264,7 +266,11 @@ static inline int ___eq_poll(sctk_rail_info_t* rail, sctk_ptl_pte_t *cur_pte)
 				sctk_ptl_offcoll_event_me(rail, ev);
 				break;
 			case SCTK_PTL_TYPE_RDMA:
+#ifdef MPC_LOWCOMM_PROTOCOL
 				sctk_ptl_rdma_event_me(rail, ev);
+#else
+                                lcr_ptl_handle_rdma_ev_me(rail, &ev);
+#endif
 				break;
 			case SCTK_PTL_TYPE_CM:
 				sctk_ptl_cm_event_me(rail, ev);
@@ -395,7 +401,7 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, size_t threshold)
 		{
 			user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
 			assert(user_ptr != NULL);
-			mpc_common_debug_info("PORTALS: MDS EVENT '%s' iface=%llu, from %s, type=%s, prot=%s, match=%s",sctk_ptl_event_decode(ev), srail->iface, SCTK_PTL_STR_LIST(ev.ptl_list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot),  __sctk_ptl_match_str(malloc(32), 32, user_ptr->match.raw));
+			//mpc_common_debug_info("PORTALS: MDS EVENT '%s' iface=%llu, from %s, type=%s, prot=%s, match=%s",sctk_ptl_event_decode(ev), srail->iface, SCTK_PTL_STR_LIST(ev.ptl_list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot),  __sctk_ptl_match_str(malloc(32), 32, user_ptr->match.raw));
 			/* we only care about Portals-sucess events */
 			if(ev.ni_fail_type != PTL_NI_OK)
 			{
@@ -435,7 +441,11 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, size_t threshold)
 					sctk_ptl_offcoll_event_md(rail, ev);
 					break;
 				case SCTK_PTL_TYPE_RDMA:
+#ifdef MPC_LOWCOMM_PROTOCOL
+                                        lcr_ptl_handle_rdma_ev_md(rail, &ev);
+#else
 					sctk_ptl_rdma_event_md(rail, ev);
+#endif
 					break;
 				case SCTK_PTL_TYPE_CM:
 					sctk_ptl_cm_event_md(rail, ev);

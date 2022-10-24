@@ -183,7 +183,7 @@ int lcp_send_am_zcopy_multi(lcp_request_t *req)
 		lcr_ep = ep->lct_eps[ep->current_chnl];
                 lcr_ep->rail->iface_get_attr(lcr_ep->rail, &attr);
 
-                frag_length = attr.cap.rndv.max_put_zcopy;
+                frag_length = attr.iface.cap.rndv.max_put_zcopy;
 
 		length = remaining < frag_length ? remaining : frag_length;
 

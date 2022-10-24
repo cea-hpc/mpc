@@ -93,7 +93,7 @@ if LCP_ENABLED
 AM_CPPFLAGS += -I$(abs_src_dir)/lcp/
 AM_CPPFLAGS += -I$(abs_src_dir)/lcr/
 libmpclowcomm_la_SOURCES += ./lcp/lcp_context.c ./lcp/lcp_ep.c ./lcp/lcp_pending.c ./lcp/lcp_progress.c ./lcp/lcp_recv.c ./lcp/lcp_send.c ./lcp/lcp_tag_lists.c 
-libmpclowcomm_la_SOURCES += ./lcp/lcp_tag_matching.c ./lcp/lcp_tag.c ./lcp/lcp_request.c ./lcp/lcp_common.c ./lcp/lcp_rndv.c ./lcp/lcp_tag_offload.c
+libmpclowcomm_la_SOURCES += ./lcp/lcp_tag_matching.c ./lcp/lcp_tag.c ./lcp/lcp_request.c ./lcp/lcp_common.c ./lcp/lcp_rndv.c ./lcp/lcp_tag_offload.c ./lcp/lcp_rndv_rma.c ./lcp/lcp_mem.c
 
 libmpclowcomm_la_SOURCES += ./lcr/lcr_component.c
 endif

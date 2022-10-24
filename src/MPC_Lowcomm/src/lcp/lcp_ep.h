@@ -53,14 +53,4 @@ int lcp_context_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p,
 			  uint64_t uid, unsigned flags);
 int lcp_ep_progress_conn(lcp_context_h ctx, lcp_ep_h ep);
 
-
-static inline void lcp_ep_update_flags(lcp_ep_h ep, uint16_t flags_add,
-		uint16_t flags_remove) 
-{
-	lcp_ep_flags_t ep_flags_add = (lcp_ep_flags_t)flags_add;
-	lcp_ep_flags_t ep_flags_remove = (lcp_ep_flags_t)flags_remove;
-
-	ep->flags = (ep->flags | ep_flags_add) & ~ep_flags_remove;
-}
-
 #endif

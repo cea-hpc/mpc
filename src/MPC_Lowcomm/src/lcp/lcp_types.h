@@ -8,7 +8,4 @@
 #define LCP_NULL_CHANNEL ((lcp_chnl_idx_t)-1)
 typedef uint8_t lcp_chnl_idx_t; /* Communication channel index */
 
-/* Forward declaration */
-typedef struct lcp_request lcp_request_t;
-
 #endif
