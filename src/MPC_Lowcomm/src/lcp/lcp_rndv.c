@@ -45,12 +45,14 @@ static size_t lcp_proto_ack_pack(void *dest, void *data)
 	return sizeof(*hdr);
 }
 
-static size_t lcp_proto_rndv_get_pack(void *dest, void *data)
+static size_t lcp_proto_rndv_rma_pack(void *dest, void *data)
 {
 	int i;
 	void *p;
+	int memp_packed_size;
 	lcp_rndv_hdr_t *hdr = dest;
 	lcp_request_t *req = data;
+	sctk_rail_info_t *iface;
 
 	hdr->base.base.comm_id = req->send.rndv.comm_id;
 	hdr->base.dest         = req->send.rndv.dest;
@@ -65,49 +67,24 @@ static size_t lcp_proto_rndv_get_pack(void *dest, void *data)
 
 	/* copy memory descriptors of all memory pins */
 	p = (void *)(hdr + 1);
+	memp_packed_size = 0;
 	for (i=0; i<req->send.rndv.lmem->num_ifaces; i++) {
-		memcpy(p, (void *)(req->send.rndv.lmem->mems[i].memp),
-			sizeof(lcr_memp_t));
-		p += sizeof(lcr_memp_t);
+		iface = req->send.ep->lct_eps[i]->rail;
+		memp_packed_size = iface->iface_pack_memp(iface, req->send.rndv.lmem->mems[i].memp, p);
+		p += memp_packed_size; 
 	}
 
-	return sizeof(*hdr) + req->send.rndv.lmem->num_ifaces * sizeof(lcr_memp_t);
+	return sizeof(*hdr) + memp_packed_size;
 }
 
-static size_t lcp_proto_rndv_put_pack(void *dest, void *data)
-{
-	int i;
-	void *p;
-	lcp_rndv_hdr_t *hdr = dest;
-	lcp_request_t *req = data;
-
-	hdr->base.base.comm_id = req->send.rndv.comm_id;
-	hdr->base.dest         = req->send.rndv.dest;
-	hdr->base.src          = req->send.rndv.src;
-	hdr->base.tag          = req->send.rndv.tag;
-	hdr->base.seqn         = req->msg_number;
-	
-	hdr->dest        = req->send.rndv.dest;
-	hdr->msg_id      = req->msg_id;
-	hdr->total_size  = req->send.length;
-        hdr->remote_addr = 0;
-
-	/* copy memory descriptors of all mpins*/
-	p = (void *)(hdr + 1);
-	for (i=0; i<req->send.rndv.lmem->num_ifaces; i++) {
-		memcpy(p, (void *)(&req->send.rndv.lmem->mems[i].memp),
-			sizeof(lcr_memp_t));
-		p += sizeof(lcr_memp_t);
-	}
-
-	return sizeof(*hdr) + req->send.rndv.lmem->num_ifaces * sizeof(lcr_memp_t);
-}
-
-int lcp_request_unpack_mem_pins(lcp_mem_h *mem_p, lcr_memp_t *mems, size_t length, int num_mems)
+int lcp_request_unpack_mem_pins(lcp_context_h ctx, lcp_mem_h *mem_p, void *hdr)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         int i;
         lcp_mem_h mem;
+	sctk_rail_info_t *iface;
+	int memp_unpacked_size;
+	void *p;
 
         mem = sctk_malloc(sizeof(struct lcp_mem));
         if (mem == NULL) {
@@ -116,24 +93,29 @@ int lcp_request_unpack_mem_pins(lcp_mem_h *mem_p, lcr_memp_t *mems, size_t lengt
                 goto err;
         }
 
-        mem->num_ifaces = num_mems;
-        mem->length     = length;
-        mem->mems       = sctk_malloc(num_mems * sizeof(struct lcp_memp));
+        mem->num_ifaces = ctx->num_resources;
+        mem->mems       = sctk_malloc(mem->num_ifaces * sizeof(struct lcp_memp));
         if (mem->mems == NULL) {
                 mpc_common_debug_error("LCP: could not allocated mem when unpacking");
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
 
-        for (i=0; i<num_mems; i++) {
-                mem->mems[i].memp = sctk_malloc(sizeof(lcr_memp_t));
-                if (mem->mems[i].memp == NULL) {
-                        mpc_common_debug_error("LCP: could not allocated mem pin when unpacking");
-                        rc = MPC_LOWCOMM_ERROR;
-                        goto err;
-                }
-                memcpy(mem->mems[i].memp, &mems[i], sizeof(lcr_memp_t));
-        }
+	memp_unpacked_size = 0;
+	p = hdr;
+	for (i=0; i<ctx->num_resources; i++) {
+		iface = ctx->resources[i].iface;
+		mem->mems[i].memp = sctk_malloc(sizeof(lcr_memp_t));
+		if (mem->mems[i].memp == NULL) {
+			mpc_common_debug_error("LCP: could not allocate mem pin");
+			rc = MPC_LOWCOMM_ERROR;
+			goto err;
+		}
+
+		memp_unpacked_size = iface->iface_unpack_memp(iface,
+				mem->mems[i].memp, p);
+		p += memp_unpacked_size;
+	}
 
         *mem_p = mem;
 err:
@@ -298,7 +280,7 @@ int lcp_send_tag_eager_rndv_get_bcopy(lcp_request_t *req)
 	payload = lcp_send_do_tag_bcopy(lcr_ep, 
 			tag, 
 			imm.raw, 
-			lcp_proto_rndv_get_pack, 
+			lcp_proto_rndv_rma_pack, 
 			req, 
 			&(req->send.t_ctx));
 
@@ -339,7 +321,7 @@ int lcp_send_tag_eager_rndv_put_bcopy(lcp_request_t *req)
 	payload = lcp_send_do_tag_bcopy(lcr_ep, 
 			tag, 
 			imm.raw, 
-			lcp_proto_rndv_put_pack, 
+			lcp_proto_rndv_rma_pack, 
 			req, 
 			&(req->send.t_ctx));
 
@@ -517,7 +499,7 @@ int lcp_rndv_matched(lcp_context_h ctx,
 		lcp_request_t *rreq,
 		lcp_rndv_hdr_t *hdr) 
 {
-	int rc;
+	int rc, i;
 	lcp_ep_ctx_t *ctx_ep;
 	lcp_ep_h ep;
 	lcp_request_t *ack_req;
@@ -569,9 +551,8 @@ int lcp_rndv_matched(lcp_context_h ctx,
                         goto err;
                 }
                 //FIXME: verify if same number of iface
-                lcp_request_unpack_mem_pins(&(get_req->send.rndv.rmem), 
-                                            (lcr_memp_t *)(hdr + 1), hdr->total_size,
-                                            get_req->send.rndv.lmem->num_ifaces);
+                lcp_request_unpack_mem_pins(ep->ctx, &(get_req->send.rndv.rmem), 
+                                            hdr + 1);
 
                 get_req->send.func = lcp_send_get_zcopy_multi;
                 if (lcp_pending_create(ctx->pend_send_req, get_req, 
@@ -782,6 +763,7 @@ static int lcp_ack_tag_handler(void *arg, void *data,
 		__UNUSED__ unsigned flags)
 {
 	int rc = MPC_LOWCOMM_SUCCESS;
+	int i;
 	lcr_tag_context_t *t_ctx = arg;
 	lcp_rndv_ack_hdr_t *hdr = data;
 	lcp_request_t *req = t_ctx->req;
@@ -793,10 +775,8 @@ static int lcp_ack_tag_handler(void *arg, void *data,
 
 	/* Set send function that will be called in lcp_progress */
         if (req->flags & LCP_REQUEST_RNDV_PUT_TAG) {
-                req->send.rndv.remote_addr = hdr->remote_addr;
-                lcp_request_unpack_mem_pins(&req->send.rndv.rmem,
-                                            (lcr_memp_t *)(hdr + 1), req->send.length,
-                                            req->send.rndv.lmem->num_ifaces);
+                lcp_request_unpack_mem_pins(req->send.ep->ctx, &(req->send.rndv.rmem), 
+                                            hdr + 1);
                 lcr_completion_t cb = {
                         .comp_cb = lcp_request_complete_ack_put
                 };

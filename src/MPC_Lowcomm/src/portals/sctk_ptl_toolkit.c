@@ -749,7 +749,9 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 	rail->network.ptl                 = sctk_ptl_hardware_init(iface);
 	rail->network.ptl.eager_limit     = eager_limit;
 	rail->network.ptl.cutoff          = cut;
-	rail->network.ptl.max_mr          = rail->network.ptl.max_limits.max_msg_size;
+	rail->network.ptl.max_mr          = rail->runtime_config_driver_config->driver.value.portals.max_msg_size < rail->network.ptl.max_limits.max_msg_size ?
+		rail->runtime_config_driver_config->driver.value.portals.max_msg_size : rail->network.ptl.max_limits.max_msg_size;
+
 	rail->network.ptl.offload_support = offloading;
 	
 	sctk_ptl_software_init( &rail->network.ptl, min_comms);

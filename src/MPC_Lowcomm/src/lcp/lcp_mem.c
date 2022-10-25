@@ -40,7 +40,7 @@ int lcp_mem_register(lcp_context_h ctx, lcp_mem_h *mem_p, void *buffer, size_t l
         assert(max_req > length);
 
 
-        max_used_ifaces = LCP_MAX(ctx->num_resources, (int)(length/max_msg_size));
+        max_used_ifaces = LCP_MIN(ctx->num_resources, (int)(length/max_msg_size));
         mem->num_ifaces = max_used_ifaces; 
         mem->mems = sctk_malloc(mem->num_ifaces * sizeof(struct lcp_memp));
         if (mem->mems == NULL) {

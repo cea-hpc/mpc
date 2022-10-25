@@ -250,6 +250,8 @@ struct sctk_rail_info_s
 	lcr_recv_tag_zcopy_func_t recv_tag_zcopy;
 	/* Interface API */
         lcr_iface_get_attr_func_t iface_get_attr;
+	lcr_iface_pack_memp_func_t iface_pack_memp;
+	lcr_iface_unpack_memp_func_t iface_unpack_memp;
 
 	/* Task Init and release */
 	void ( *finalize_task ) ( struct sctk_rail_info_s *, int taskid, int rank);

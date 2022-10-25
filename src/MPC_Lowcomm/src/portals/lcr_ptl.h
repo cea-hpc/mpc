@@ -42,4 +42,10 @@ int lcr_ptl_send_get(_mpc_lowcomm_endpoint_t *ep,
                      lcr_memp_t remote_key,
                      size_t size,
                      lcr_completion_t *comp);
+
+int lcr_ptl_pack_memp(sctk_rail_info_t *rail,
+		lcr_memp_t *memp, void *dest);
+
+int lcr_ptl_unpack_memp(sctk_rail_info_t *rail,
+		lcr_memp_t *memp, void *dest);
 #endif

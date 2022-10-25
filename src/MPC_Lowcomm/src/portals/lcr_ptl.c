@@ -237,3 +237,30 @@ int lcr_ptl_send_get(_mpc_lowcomm_endpoint_t *ep,
                 return MPC_LOWCOMM_SUCCESS;
         }
 }
+
+//FIXME: add const dest
+int lcr_ptl_pack_memp(sctk_rail_info_t *rail,
+		lcr_memp_t *memp, void *dest)
+{
+	void *p = dest;	
+
+	*(uint64_t *)p = (uint64_t)memp->pin.ptl.start; p += sizeof(uint64_t);
+	*(sctk_ptl_matchbits_t *)p = (sctk_ptl_matchbits_t)memp->pin.ptl.match; p += sizeof(sctk_ptl_matchbits_t);
+	*(sctk_ptl_id_t *)p = (sctk_ptl_id_t)memp->pin.ptl.origin;
+
+	return sizeof(uint64_t) + sizeof(sctk_ptl_matchbits_t) + sizeof(sctk_ptl_id_t);
+}
+
+//FIXME: add const dest
+int lcr_ptl_unpack_memp(sctk_rail_info_t *rail,
+		lcr_memp_t *memp, void *dest)
+{
+	void *p = dest;	
+
+	/* deserialize data */
+	memp->pin.ptl.start = *(uint64_t *)p; p += sizeof(uint64_t);
+	memp->pin.ptl.match = *(sctk_ptl_matchbits_t *)p; p += sizeof(sctk_ptl_matchbits_t);
+	memp->pin.ptl.origin = *(sctk_ptl_id_t *)p;
+
+	return sizeof(uint64_t) + sizeof(sctk_ptl_matchbits_t) + sizeof(sctk_ptl_id_t);
+}

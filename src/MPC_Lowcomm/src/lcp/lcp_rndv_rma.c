@@ -60,7 +60,7 @@ static inline void lcp_send_get_compute_remote_addr(lcp_request_t *req,
         *local_addr  = local_base  + offset;
         *remote_addr = remote_base + offset;
 
-        if ((size_t)(local_addr - memp.base_addr + frag_size) > memp.len) {
+        if ((size_t)(*local_addr - memp.base_addr) + frag_size > memp.len) {
                 *length = memp.len % frag_size;
         } else {
                 *length = frag_size;
