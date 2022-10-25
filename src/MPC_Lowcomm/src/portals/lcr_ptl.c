@@ -193,8 +193,8 @@ int lcr_ptl_send_put(_mpc_lowcomm_endpoint_t *ep,
 }
 
 int lcr_ptl_send_get(_mpc_lowcomm_endpoint_t *ep,
-                     uint64_t local_addr,
-                     uint64_t remote_addr,
+                     uint64_t src_addr,
+                     uint64_t dest_addr,
                      lcr_memp_t local_key,
                      lcr_memp_t remote_key,
                      size_t size,
@@ -211,15 +211,17 @@ int lcr_ptl_send_get(_mpc_lowcomm_endpoint_t *ep,
 	
         rdma_pte = mpc_common_hashtable_get(&srail->pt_table, SCTK_PTL_PTE_RDMA);
 	/* compute offsets, READ --> src = remote, dest = local */
-	remote_off = (void *)local_addr   - remote_start;
-        local_off  = (void *)remote_addr  - local_start;
+	local_off   = (void *)dest_addr   - local_start;
+        remote_off  = (void *)src_addr    - remote_start;
 
         /* set the completion object to be called in md_poll */
         local_key.pin.ptl.md_data->msg = comp; 
 
-        mpc_common_debug_info("PTL: remote key. match=%s, origin=%llu, addr=%llu", 
+        mpc_common_debug_info("PTL: remote key. match=%s, remote=%llu, origin=%llu, addr=%p, "
+			"remote off=%llu, local off=%llu", 
                               __sctk_ptl_match_str(sctk_malloc(32), 32, remote_key.pin.ptl.match.raw),
-                              remote_key.pin.ptl.origin, remote_key.pin.ptl.start);
+                              remote, remote_key.pin.ptl.origin, remote_key.pin.ptl.start,
+			      remote_off, local_off);
 
         rc = sctk_ptl_emit_get(local_key.pin.ptl.md_data, /* The base MD */
                                size,                      /* request size */

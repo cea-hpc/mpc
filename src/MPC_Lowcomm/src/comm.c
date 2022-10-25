@@ -3674,7 +3674,7 @@ static void __initialize_drivers()
 #ifdef MPC_LOWCOMM_PROTOCOL
 	rc = lcp_context_create(&lcp_ctx_loc, 0 /* empty flag */);
 	if (rc != MPC_LOWCOMM_SUCCESS) {
-		mpc_common_debug_abort();
+		mpc_common_debug_fatal("LCP: context creation failed");
 	}
 #else
         if(mpc_common_get_process_count() > 1)

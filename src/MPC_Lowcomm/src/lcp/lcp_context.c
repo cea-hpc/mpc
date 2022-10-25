@@ -1,4 +1,5 @@
 #include "lcp_context.h"
+#include "lcp_common.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -348,29 +349,29 @@ void lcp_context_select_component(lcp_context_h ctx,
         lcr_rail_config_t *config;
 
         /* Multi component is not supported */
-        max_ifaces = 0; max_prio = 0;
-        for (i=0; i<(int)num_components; i++) {
-                cmpt = components[i];
-                config = _mpc_lowcomm_conf_rail_unfolded_get(cmpt->rail_name);
-                if (!ctx->config.user_defined) {
-                        /* Get max ifaces from highest priority rail */
-                        if (max_prio < config->priority && cmpt->num_devices > 0) {
-                                max_ifaces = ctx->config.multirail_enabled ? 
-                                        config->max_ifaces : 1;
-                                max_prio   = config->priority;
-                                cmpt_idx   = i;
-                        }
-                } else {
-                        for (j=0; j<(int)ctx->config.num_selected_components; j++) {
-                                if (!strcmp(cmpt->name, ctx->config.selected_components[j]) &&
-                                    cmpt->num_devices > 0) {
-                                        cmpt_idx   = i;
-                                        max_ifaces = ctx->config.multirail_enabled ? 
-                                                config->max_ifaces : 1;
-                                }
-                        }
-                }
-        }
+	max_ifaces = 0; max_prio = 0;
+	for (i=0; i<(int)num_components; i++) {
+		cmpt = components[i];
+		config = _mpc_lowcomm_conf_rail_unfolded_get(cmpt->rail_name);
+		if (!ctx->config.user_defined) {
+			/* Get max ifaces from highest priority rail */
+			if (max_prio < config->priority && cmpt->num_devices > 0) {
+				max_ifaces = ctx->config.multirail_enabled ? 
+					config->max_ifaces : 1;
+				max_prio   = config->priority;
+				cmpt_idx   = i;
+			}
+		} else {
+			for (j=0; j<(int)ctx->config.num_selected_components; j++) {
+				if (!strcmp(cmpt->name, ctx->config.selected_components[j]) &&
+						cmpt->num_devices > 0) {
+					cmpt_idx   = i;
+					max_ifaces = ctx->config.multirail_enabled ?
+						LCP_MIN(config->max_ifaces, (int)cmpt->num_devices) : 1;
+				}
+			}
+		}
+	}
 
         *max_ifaces_p = max_ifaces;
         *cmpt_index_p = cmpt_idx;
@@ -420,11 +421,13 @@ static int lcp_context_add_resources(lcp_context_h ctx,
 
         lcp_context_select_component(ctx, components, num_components, 
                                      &cmpt_idx, &max_ifaces);
-        if (max_ifaces == 0) {
-                mpc_common_debug_error("LCP: could not find any interface");
-                rc = MPC_LOWCOMM_ERROR;
-                goto err;
-        }
+	//FIXME: mpc_print_config cannot abort otherwise mpcrun also abort and
+	//       nothing is launched
+        //if (max_ifaces == 0) {
+        //        mpc_common_debug_error("LCP: could not find any interface");
+        //        rc = MPC_LOWCOMM_ERROR;
+        //        goto err;
+        //}
 
         /* Allocate resources */
         ctx->resources = sctk_malloc(max_ifaces * sizeof(*ctx->resources));

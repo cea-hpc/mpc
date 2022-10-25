@@ -101,8 +101,8 @@ int lcp_send_get_zcopy_multi(lcp_request_t *req)
                 rc = lcp_send_get_zcopy(req, 
                                         lcr_ep, 
                                         ep->current_chnl, 
-                                        local_addr, 
                                         remote_addr, 
+                                        local_addr, 
                                         length);
 		if (rc == MPC_LOWCOMM_NO_RESOURCE) {
 			/* Save progress */
