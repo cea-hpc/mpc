@@ -135,6 +135,10 @@ static inline void __omp_conf_set_default(void)
     __omp_conf.task_priority_policy             = MPC_OMP_TASK_PRIORITY_POLICY_ZERO;
     __omp_conf.task_priority_propagation_policy = MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_NOOP;
     __omp_conf.task_priority_propagation_synchronousity = MPC_OMP_TASK_PRIORITY_PROPAGATION_SYNCHRONOUS;
+#if MPC_OMP_TASK_TRACE_USE_PAPI
+    __omp_conf.task_trace_use_papi              = 0;
+    strcpy(__omp_conf.task_trace_papi_events, "PAPI_TOT_INS,PAPI_TOT_CYC");
+#endif /* MPC_OMP_TASK_TRACE_USE_PAPI */
 
     /* task steal */
     __omp_conf.task_steal_last_stolen   = 0;
@@ -178,9 +182,11 @@ static inline void __omp_conf_init(void)
             PARAM("fiber",                              &__omp_conf.task_use_fiber,                             MPC_CONF_BOOL,  "Enable task fiber"),
             PARAM("trace",                              &__omp_conf.task_trace,                                 MPC_CONF_BOOL,  "Enable task tracing"),
             PARAM("traceauto",                          &__omp_conf.task_trace_auto,                            MPC_CONF_BOOL,  "Enable automatic task tracing"),
-            PARAM("tracemask",                          &__omp_conf.task_trace_mask,                            MPC_CONF_INT,  "Define events to be traced"),
+            PARAM("tracemask",                          &__omp_conf.task_trace_mask,                            MPC_CONF_INT,   "Define events to be traced"),
             PARAM("tracedir",                           &__omp_conf.task_trace_dir,                             MPC_CONF_STRING,"Task trace destination directory"),
-            PARAM("tracerecyclercapacity",              &__omp_conf.task_trace_recycler_capacity,                             MPC_CONF_INT, "Task trace records recycler initial capacity - this is the number of records pre-allocated"),
+            PARAM("tracerecyclercapacity",              &__omp_conf.task_trace_recycler_capacity,               MPC_CONF_INT,   "Task trace records recycler initial capacity - this is the number of records pre-allocated"),
+            PARAM("traceusepapi",                       &__omp_conf.task_trace_use_papi,                        MPC_CONF_INT,   "Enable PAPI hw events tracing per tasks"),
+            PARAM("tracepapievents",                    &__omp_conf.task_trace_papi_events,                     MPC_CONF_STRING, "List of PAPI events to trace comma-delimited"),
             PARAM("condwaitenabled",                    &__omp_conf.task_cond_wait_enabled,                     MPC_CONF_BOOL,  "Enable the thread conditional sleeping while there is no ready tasks"),
             PARAM("condwaitnhyperactive",               &__omp_conf.task_cond_wait_nhyperactive,                MPC_CONF_INT,   "Number of hyperactive threads (= threads that won't sleep even if there is no ready tasks)"),
             PARAM("directsuccessor",                    &__omp_conf.task_direct_successor_enabled,              MPC_CONF_INT,   "Enable thread direct successor list"),

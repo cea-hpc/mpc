@@ -32,6 +32,16 @@
 /* enable trace compiling */
 # define MPC_OMP_TASK_COMPILE_TRACE 1
 
+/* enable PAPI tracing per tasks */
+# define MPC_OMP_TASK_TRACE_USE_PAPI 1
+# if MPC_OMP_TASK_TRACE_USE_PAPI
+#  define PAPI_LOG(...) do {                                                \
+                            printf("[PAPI] [%d] ", omp_get_thread_num());   \
+                            printf(__VA_ARGS__);                            \
+                            printf("\n");                                   \
+                        } while (0)
+# endif
+
 #if MPC_OMP_TASK_COMPILE_TRACE
 # define MPC_OMP_TASK_FIBER_ENABLED mpc_omp_conf_get()->task_use_fiber
 # define MPC_OMP_TASK_TRACE_ENABLED mpc_omp_conf_get()->task_trace
@@ -119,7 +129,34 @@ typedef struct  mpc_omp_task_trace_record_s
     mpc_omp_task_trace_record_type_t type;
 }               mpc_omp_task_trace_record_t;
 
+# define MPC_OMP_TASK_TRACE_MAX_HW_COUNTERS (4)
+
 typedef struct  mpc_omp_task_trace_record_schedule_s
+{
+    /* inheritance */
+    mpc_omp_task_trace_record_t parent;
+
+    /* the task uid */
+    int uid;
+
+    /* the task internal priority */
+    int priority;
+
+    /* the task properties */
+    int properties;
+
+    /* number of tasks that were scheduled before this one */
+    int schedule_id;
+
+    /* the task statuses */
+    mpc_omp_task_statuses_t statuses;
+
+    /* the task hardware counters (4 maximum) */
+    long long hwcounters[MPC_OMP_TASK_TRACE_MAX_HW_COUNTERS];
+
+}               mpc_omp_task_trace_record_schedule_t;
+
+typedef struct  mpc_omp_task_trace_record_create_s
 {
     /* inheritance */
     mpc_omp_task_trace_record_t parent;
@@ -130,9 +167,6 @@ typedef struct  mpc_omp_task_trace_record_schedule_s
     /* task persistent uid */
     int persistent_uid;
 
-    /* the task internal priority */
-    int priority;
-
     /* the task properties */
     int properties;
 
@@ -142,18 +176,8 @@ typedef struct  mpc_omp_task_trace_record_schedule_s
     /* number of uncompleted predecessors */
     int ref_predecessors;
 
-    /* number of tasks that were scheduled before this one */
-    int schedule_id;
-
     /* the task statuses */
     mpc_omp_task_statuses_t statuses;
-
-}               mpc_omp_task_trace_record_schedule_t;
-
-typedef struct  mpc_omp_task_trace_record_create_s
-{
-    /* inheritance */
-    mpc_omp_task_trace_record_schedule_t parent;
 
     /* the task label */
     char label[MPC_OMP_TASK_LABEL_MAX_LENGTH];
@@ -166,9 +190,6 @@ typedef struct  mpc_omp_task_trace_record_create_s
 
     /* openmp constructor priority */
     int omp_priority;
-
-    /* the internal priority */
-    int priority;
 
 }               mpc_omp_task_trace_record_create_t;
 
@@ -308,6 +329,15 @@ typedef struct  mpc_omp_thread_task_trace_infos_s
 
     /* id of the current traced code section */
     int id;
+
+# if MPC_OMP_TASK_TRACE_USE_PAPI
+    /* the papi event set */
+    int papi_eventset;
+
+    /* number of event traced */
+    int papi_nevents;
+
+# endif /* MPC_OMP_TASK_TRACE_USE_PAPI */
 }               mpc_omp_thread_task_trace_infos_t;
 
 #ifdef __cplusplus

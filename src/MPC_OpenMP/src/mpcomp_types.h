@@ -944,6 +944,10 @@ typedef struct  mpc_omp_task_instance_infos_s
 
 # if MPC_OMP_TASK_COMPILE_TRACE
     OPA_int_t next_schedule_id;
+# if MPC_OMP_TASK_TRACE_USE_PAPI
+    /* 0 if non-initialized, 1 if initializing, 2 if initialized */
+    OPA_int_t papi_initialized;
+# endif
 # endif /* MPCOMP_TASK_COMPILE_TRACE */
 
     OPA_int_t next_task_uid;

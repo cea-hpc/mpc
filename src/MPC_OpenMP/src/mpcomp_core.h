@@ -159,6 +159,11 @@ typedef struct  mpc_omp_conf_s
     char task_larceny_mode_str[MPC_CONF_STRING_SIZE];
     mpc_omp_task_larceny_mode_t task_larceny_mode;
 
+#if MPC_OMP_TASK_TRACE_USE_PAPI
+    int task_trace_use_papi;
+    char task_trace_papi_events[MPC_CONF_STRING_SIZE];
+#endif /* MPC_OMP_TASK_TRACE_USE_PAPI */
+
 	/* Tools */
 	char omp_tool[MPC_CONF_STRING_SIZE];
 	char omp_tool_libraries[MPC_CONF_STRING_SIZE];

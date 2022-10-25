@@ -36,6 +36,10 @@
 
 # if MPC_OMP_TASK_COMPILE_TRACE
 
+# if MPC_OMP_TASK_TRACE_USE_PAPI
+#  include <papi.h>
+# endif /* MPC_OMP_TASK_TRACE_USE_PAPI */
+
 # include <fcntl.h>
 # include <sys/stat.h>
 # include <sys/time.h>
@@ -240,26 +244,27 @@ _mpc_omp_task_trace_dependency(mpc_omp_task_t * out, mpc_omp_task_t * in)
     __node_insert(node);
 }
 
-static inline void
-__task_trace(mpc_omp_task_t * task, mpc_omp_task_trace_node_t * node)
-{
-    mpc_omp_task_trace_record_schedule_t * record = (mpc_omp_task_trace_record_schedule_t *) __node_record(node);
-    record->uid                 = task->uid;
-    record->persistent_uid      = task->persistent_infos.uid;
-    record->priority            = task->priority;
-    record->properties          = task->property;
-    record->npredecessors       = task->dep_node.npredecessors;
-    record->ref_predecessors    = OPA_load_int(&(task->dep_node.ref_predecessors));
-    record->schedule_id         = task->schedule_id;
-    record->statuses            = task->statuses;
-}
-
 void
 _mpc_omp_task_trace_schedule(mpc_omp_task_t * task)
 {
     mpc_omp_task_trace_node_t * node = __node_new(MPC_OMP_TASK_TRACE_TYPE_SCHEDULE);
     assert(node);
-    __task_trace(task, node);
+
+    mpc_omp_task_trace_record_schedule_t * record = (mpc_omp_task_trace_record_schedule_t *) __node_record(node);
+    record->uid         = task->uid;
+    record->priority    = task->priority;
+    record->properties  = task->property;
+    record->schedule_id = task->schedule_id;
+    record->statuses    = task->statuses;
+
+#if MPC_OMP_TASK_TRACE_USE_PAPI
+    if (mpc_omp_conf_get()->task_trace_use_papi)
+    {
+        mpc_omp_thread_task_trace_infos_t * infos = __get_infos();
+        PAPI_read(infos->papi_eventset, record->hwcounters);
+        //PAPI_LOG("ctr[0] = %lld ; ctr[1] = %lld\n", record->hwcounters[0], record->hwcounters[1]);
+    }
+#endif /* MPC_OMP_TASK_TRACE_USE_PAPI */
     __node_insert(node);
 }
 
@@ -268,13 +273,18 @@ _mpc_omp_task_trace_create(mpc_omp_task_t * task)
 {
     mpc_omp_task_trace_node_t * node = __node_new(MPC_OMP_TASK_TRACE_TYPE_CREATE);
     assert(node);
-    __task_trace(task, node);
+
     mpc_omp_task_trace_record_create_t * record = (mpc_omp_task_trace_record_create_t *) __node_record(node);
+    record->uid                 = task->uid;
+    record->persistent_uid      = task->persistent_infos.uid;
+    record->properties          = task->property;
+    record->npredecessors       = task->dep_node.npredecessors;
+    record->ref_predecessors    = OPA_load_int(&(task->dep_node.ref_predecessors));
+    record->statuses            = task->statuses;
     strncpy(record->label, task->label ? task->label : "(null)", MPC_OMP_TASK_LABEL_MAX_LENGTH);
-    record->color = task->color;
-    record->parent_uid = task->parent ? task->parent->uid : -1;
-    record->omp_priority = task->omp_priority_hint;
-    record->priority = task->priority;
+    record->color               = task->color;
+    record->parent_uid          = task->parent ? task->parent->uid : -1;
+    record->omp_priority        = task->omp_priority_hint;
     __node_insert(node);
 }
 
@@ -593,6 +603,99 @@ mpc_omp_task_trace_begin(void)
 # endif
     _mpc_omp_callback_run(MPC_OMP_CALLBACK_SCOPE_INSTANCE,  MPC_OMP_CALLBACK_TASK_TRACE_BEGIN);
     _mpc_omp_callback_run(MPC_OMP_CALLBACK_SCOPE_THREAD,    MPC_OMP_CALLBACK_TASK_TRACE_BEGIN);
+
+#if MPC_OMP_TASK_TRACE_USE_PAPI
+
+    struct mpc_omp_conf_s * conf = mpc_omp_conf_get();
+
+    if (conf->task_trace_use_papi)
+    {
+        /* initialize papi library */
+        mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+        assert(thread);
+
+        mpc_omp_instance_t * instance = (mpc_omp_instance_t *) thread->instance;
+        assert(instance);
+
+        int retval;
+
+        int dump = 0;
+
+        if (OPA_cas_int(&(instance->task_infos.papi_initialized), 0, 1) == 0)
+        {
+            dump = 1;
+            retval = PAPI_library_init(PAPI_VER_CURRENT);
+            if (retval != PAPI_VER_CURRENT) {
+                PAPI_LOG("Error initializing PAPI! %s", PAPI_strerror(retval));
+            } else {
+                PAPI_LOG("Initialized library");
+            }
+
+            retval = PAPI_thread_init((long unsigned int (*)())omp_get_thread_num);
+            if (retval != PAPI_VER_CURRENT) {
+                PAPI_LOG("Error initializing PAPI threads! %s", PAPI_strerror(retval));
+            } else {
+                PAPI_LOG("Initialized threads");
+            }
+            OPA_store_int(&(instance->task_infos.papi_initialized), 2);
+        }
+        else
+        {
+            while (OPA_load_int(&(instance->task_infos.papi_initialized)) != 2);
+        }
+
+        retval = PAPI_register_thread();
+        if (retval != PAPI_OK)
+            PAPI_LOG("Error registering thread ! %s", PAPI_strerror(retval));
+
+        infos->papi_eventset = PAPI_NULL;
+
+        retval = PAPI_create_eventset(&(infos->papi_eventset));
+        if (retval != PAPI_OK)
+            PAPI_LOG("Error creating eventset! %s", PAPI_strerror(retval));
+
+        /* parse env. variable */
+        infos->papi_nevents = 0;
+        char buffer[MPC_CONF_STRING_SIZE];
+        strcpy(buffer, conf->task_trace_papi_events);
+        char * s = (char *) buffer;
+        char * saveptr;
+        char * event;
+        while ((event = strtok_r(s, ",", &saveptr)) != NULL)
+        {
+            s = NULL;
+            if (++infos->papi_nevents > MPC_OMP_TASK_TRACE_MAX_HW_COUNTERS)
+            {
+                if (dump) PAPI_LOG("Specified more than %d events... skipping\n", MPC_OMP_TASK_TRACE_MAX_HW_COUNTERS);
+                break ;
+            }
+            retval = PAPI_add_named_event(infos->papi_eventset, event);
+            if (retval != PAPI_OK) {
+                PAPI_LOG("Error adding %s: %s", event, PAPI_strerror(retval));
+            } else {
+                if (dump) PAPI_LOG("Added %s", event);
+            }
+        }
+
+        retval = PAPI_start(infos->papi_eventset);
+        if (retval != PAPI_OK)
+            PAPI_LOG("Error starting eventset: %s", PAPI_strerror(retval));
+        PAPI_reset(infos->papi_eventset);
+
+        assert(OPA_load_int(&(instance->task_infos.papi_initialized)) == 2);
+
+        //if (dump)
+        //{
+        //    PAPI_LOG("Maximum number of counters is %d - requested for %d", PAPI_num_hwctrs(), infos->papi_nevents);
+
+        //    for (int i = 0 ; i < MPC_OMP_TASK_TRACE_TYPE_COUNT ; ++i)
+        //    {
+        //        printf("sizeof(%d) == %lu\n", i, mpc_omp_task_trace_record_sizeof(i));
+        //    }
+        //}
+    }
+
+#endif /* MPC_OMP_TASK_TRACE_USE_PAPI */
 }
 
 void
@@ -615,6 +718,20 @@ mpc_omp_task_trace_end(void)
         mpc_common_recycler_deinit(&(infos->recyclers[type]));
     }
     infos->begun = 0;
+
+#if MPC_OMP_TASK_TRACE_USE_PAPI
+    if (mpc_omp_conf_get()->task_trace_use_papi)
+    {
+        long long counters[infos->papi_nevents];
+        int retval = PAPI_stop(infos->papi_eventset, counters);
+        if (retval != PAPI_OK)
+        {
+            PAPI_LOG("Error stopping PAPI : %s\n", PAPI_strerror(retval));
+        }
+        PAPI_cleanup_eventset(infos->papi_eventset);
+        PAPI_destroy_eventset(&(infos->papi_eventset));
+    }
+#endif /* MPC_OMP_TASK_TRACE_USE_PAPI */
 }
 
 #endif /* MPC_OMP_TASK_COMPILE_TRACE */

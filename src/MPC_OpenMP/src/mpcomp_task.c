@@ -1248,63 +1248,12 @@ __task_process_mpc_dep(
         {
             mpc_omp_task_dep_list_elt_t * inoutset = entry->inoutset;
 
-            /* buggy tentative of automatic 'inoutset' prunning by inserting an empty task */
-            /* use 'mpc_omp_task_dependencies_reset' or 'inout' type in user codes for now,
-             * which is more optimized */
 # if 0
             /* if the inserted task is of type 'IN' then insert an 'INOUT' task in between
              * to cut transitive edges (c.f concurrent write Athapascan, F. Galilée) */
             if (type == MPC_OMP_TASK_DEP_IN && inoutset)
             {
-                mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
-                mpc_omp_task_t * inout;
-                if (region->active && (inout = mpc_omp_get_persistent_task()))
-                {
-                    _mpc_omp_task_reinit(task);
-                }
-                else
-                {
-                    /* TODO : this could be optimized by decoupling 'dep_node' and 'tasks' */
-                    mpc_omp_task_property_t properties = MPC_OMP_TASK_PROP_DEPEND;
-                    const size_t size = sizeof(mpc_omp_task_t);
-                    inout = _mpc_omp_task_allocate(size);
-                    _mpc_omp_task_init(inout, NULL, NULL, size, properties);
-                    if (region->active) mpc_omp_persistent_region_push(inout);
-
-                    inout->dep_node.hmap = NULL;
-                    mpc_common_spinlock_init(&(inout->dep_node.lock), 0);
-                    inout->dep_node.successors = NULL;
-                    inout->dep_node.nsuccessors = 0;
-                    inout->dep_node.predecessors = NULL;
-                    inout->dep_node.npredecessors = 0;
-
-                    OPA_store_int(&(inout->dep_node.ref_predecessors), 1);
-                    inout->dep_node.top_level = 0;
-                    inout->dep_node.dep_list = (mpc_omp_task_dep_list_elt_t *) malloc(sizeof(mpc_omp_task_dep_list_elt_t) * 1);
-                    inout->dep_node.dep_list_size = 0;
-
-                    OPA_store_int(&(inout->dep_node.ref_predecessors), 1);
-
-                    while (inoutset)
-                    {
-                        __task_precedence_constraints(inoutset->task, inout);
-                        inoutset = inoutset->next;
-                    }
-                    __task_precedence_constraints(inout, task);
-
-                    OPA_decr_int(&(inout->dep_node.ref_predecessors));
-                    MPC_OMP_TASK_TRACE_CREATE(inout);
-
-                    entry->inoutset = NULL;
-                    entry->out      = __task_dep_list_append(inout, entry, NULL);
-                }
-
-                _mpc_omp_task_process(inout);
-
-                if (!mpc_omp_task_property_isset(inout->property, MPC_OMP_TASK_PROP_PERSISTENT))
-                {
-                    _mpc_omp_task_deinit(inout);
-                }
+                // TODO : insert 1 empty task 'inout' tasks to prune 'inoutset' arcs
             }
             else
 # endif
@@ -1543,7 +1492,7 @@ __task_finalize_deps(mpc_omp_task_t * task)
             /* if successor' dependencies are fullfilled, process it */
             if (OPA_fetch_and_decr_int(&(succ->task->dep_node.ref_predecessors)) == 1)
             {
-                succ->task->statuses.direct_successor = true;
+                succ->task->statuses.direct_successor = 1;
                 _mpc_omp_task_process(succ->task);
             }
 
@@ -1581,7 +1530,7 @@ __task_finalize_deps(mpc_omp_task_t * task)
                     }
                     else
                     {
-                        succ->task->statuses.direct_successor = true;
+                        succ->task->statuses.direct_successor = 1;
                         _mpc_omp_task_process(succ->task);
                     }
                 }
@@ -3037,11 +2986,11 @@ __task_run_coherency_check_pre(mpc_omp_task_t * task)
     assert(OPA_load_int(&(task->dep_node.ref_predecessors)) == 0);
     assert(OPA_load_int(&(task->ref_counter)) > 0);
 
-    assert(task->statuses.started           == false);
-    assert(task->statuses.completed         == false);
-    assert(task->statuses.blocking          == false);
-    assert(task->statuses.blocked           == false);
-    assert(task->statuses.in_blocked_list   == false);
+    assert(!task->statuses.started        );
+    assert(!task->statuses.completed      );
+    assert(!task->statuses.blocking       );
+    assert(!task->statuses.blocked        );
+    assert(!task->statuses.in_blocked_list);
 }
 
 static inline void
@@ -3052,10 +3001,10 @@ __task_run_coherency_check_post(mpc_omp_task_t * task)
     assert(OPA_load_int(&(task->dep_node.ref_predecessors)) == 0);
     assert(OPA_load_int(&(task->ref_counter)) > 0);
 
-    assert(task->statuses.started           == true);
-    assert(task->statuses.completed         == true);
-    assert(task->statuses.blocking          == false);
-    assert(task->statuses.blocked           == false);
+    assert( task->statuses.started  );
+    assert( task->statuses.completed);
+    assert(!task->statuses.blocking );
+    assert(!task->statuses.blocked  );
 }
 
 /**
@@ -3071,10 +3020,10 @@ __task_run_as_function(mpc_omp_task_t * task)
     ___thread_bind_task(thread, task, &(task->icvs));
 
     __task_run_coherency_check_pre(task);
-    task->statuses.started = true;
+    task->statuses.started = 1;
     MPC_OMP_TASK_TRACE_SCHEDULE(task);
     if (task->func) task->func(task->data);
-    task->statuses.completed = true;
+    task->statuses.completed = 1;
     __task_run_coherency_check_post(task);
     MPC_OMP_TASK_TRACE_SCHEDULE(task);
 
@@ -3096,10 +3045,10 @@ __task_start_routine(__UNUSED__ void * unused)
     mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
 
     __task_run_coherency_check_pre(task);
-    task->statuses.started = true;
+    task->statuses.started = 1;
     if (task->func) task->func(task->data);
-    assert(task->statuses.completed == false);
-    task->statuses.completed = true;
+    assert(!task->statuses.completed);
+    task->statuses.completed = 1;
     __task_run_coherency_check_post(task);
 
     sctk_setcontext_no_tls(task->fiber->exit);
@@ -3175,8 +3124,8 @@ __task_run_with_fiber(mpc_omp_task_t * task)
         if (task->statuses.blocking)
         {
             assert(thread->task_infos.spinlock_to_unlock);
-            task->statuses.blocked = true;
-            task->statuses.blocking = false;
+            task->statuses.blocked = 1;
+            task->statuses.blocking = 0;
             mpc_common_spinlock_unlock(thread->task_infos.spinlock_to_unlock);
             thread->task_infos.spinlock_to_unlock = NULL;
         }
@@ -3206,7 +3155,7 @@ __task_run(mpc_omp_task_t * task)
     /* check if this task was cancelled */
     if (task->taskgroup && OPA_load_int(&(task->taskgroup->cancelled)))
     {
-        task->statuses.cancelled = true;
+        task->statuses.cancelled = 1;
         _mpc_omp_task_finalize(task);
         return ;
     }
@@ -3324,7 +3273,7 @@ _mpc_omp_task_unblock(mpc_omp_event_handle_block_t * handle)
                 if (task->statuses.in_blocked_list)
                 {
                     __task_list_remove(list, task);
-                    task->statuses.in_blocked_list = false;
+                    task->statuses.in_blocked_list = 0;
                 }
             }
             mpc_common_spinlock_unlock(&(list->lock));
@@ -3336,10 +3285,10 @@ _mpc_omp_task_unblock(mpc_omp_event_handle_block_t * handle)
                 int requeue = 0;
                 mpc_common_spinlock_lock(&(handle->lock));
                 {
-                    task->statuses.unblocked = true;
+                    task->statuses.unblocked = 1;
                     if (task->statuses.blocked)
                     {
-                        task->statuses.blocked = false;
+                        task->statuses.blocked = 0;
                         requeue = 1;
                     }
                 }
@@ -3391,7 +3340,7 @@ mpc_omp_task_block(mpc_omp_event_handle_block_t * handle)
         {
             if (OPA_load_int(&(handle->status)) == MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_BLOCKED)
             {
-                task->statuses.in_blocked_list = true;
+                task->statuses.in_blocked_list = 1;
                 __task_list_push_to_head(list, task);
             }
         }
@@ -3408,7 +3357,7 @@ mpc_omp_task_block(mpc_omp_event_handle_block_t * handle)
                     if (OPA_load_int(&(handle->status)) == MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_BLOCKED)
                     {
                         thread->task_infos.spinlock_to_unlock = &(handle->lock);
-                        task->statuses.blocking = true;
+                        task->statuses.blocking = 1;
                         __taskyield_return();
                     }
                     else
