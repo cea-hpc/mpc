@@ -11,6 +11,7 @@ int lcp_mem_register(lcp_context_h ctx, lcp_mem_h *mem_p, void *buffer, size_t l
         size_t max_req = SIZE_MAX;
         size_t max_msg_size = SIZE_MAX;
         int max_used_ifaces = 0;
+	int num_msg;
         sctk_rail_info_t *iface = NULL;
         void *p = buffer;
         size_t reg_size;
@@ -39,9 +40,11 @@ int lcp_mem_register(lcp_context_h ctx, lcp_mem_h *mem_p, void *buffer, size_t l
         }
         assert(max_req > length);
 
-
-        max_used_ifaces = LCP_MIN(ctx->num_resources, (int)(length/max_msg_size));
+	/* compute number of interface to use for registration based on msg length */
+	num_msg = length % max_msg_size > 0 ? length / max_msg_size + 1 : length / max_msg_size;
+        max_used_ifaces = LCP_MIN(ctx->num_resources, num_msg);
         mem->num_ifaces = max_used_ifaces; 
+
         mem->mems = sctk_malloc(mem->num_ifaces * sizeof(struct lcp_memp));
         if (mem->mems == NULL) {
                 mpc_common_debug_error("LCP: could not allocate memory pins");
@@ -49,7 +52,7 @@ int lcp_mem_register(lcp_context_h ctx, lcp_mem_h *mem_p, void *buffer, size_t l
                 goto err;
         }
         
-        /* Pin the memory and create to memory handles */
+        /* Pin the memory and create memory handles */
         reg_size = length/max_used_ifaces + length % max_used_ifaces;
         for (i=0; i< max_used_ifaces; i++) {
                 iface = ctx->resources[i].iface;
