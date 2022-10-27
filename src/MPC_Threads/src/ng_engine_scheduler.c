@@ -42,7 +42,6 @@
 
 #include <sctk_alloc.h>
 
-//#define SCTK_DEBUG_SCHEDULER
 
 static void (*_mpc_threads_ng_engine_sched_idle_start)(void);
 
@@ -572,54 +571,6 @@ sctk_multiple_queues_with_priority_dynamic_get_from_list()
 	_mpc_threads_ng_engine_scheduler_t *sched;
 	sched = &(_mpc_threads_ng_engine_self()->sched);
 
-#ifdef SCTK_DEBUG_SCHEDULER
-	{
-		char hostname[128];
-		char hostname2[128];
-		char current_vp[5];
-		gethostname(hostname, 128);
-		strncpy(hostname2, hostname, 128);
-		sprintf(current_vp, "_%03d", mpc_topology_get_current_cpu() );
-		strcat(hostname2, current_vp);
-
-		FILE *fd = fopen(hostname2, "a");
-		fprintf(fd, "current %p[%2d-%2d|%2d,%2d]\nlist[", sched,
-		        sched->th->attr.kind.mask, sched->status,
-		        sched->th->attr.current_priority, sched->th->attr.basic_priority);
-
-		mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
-		                         .sctk_multiple_queues_sched_list_lock);
-
-		if(sctk_multiple_queues_sched_lists[core]
-		   .sctk_multiple_queues_sched_list != NULL)
-		{
-			_mpc_threads_ng_engine_scheduler_generic_t *res;
-			res = sctk_multiple_queues_sched_lists[core]
-			      .sctk_multiple_queues_sched_list;
-			DL_FOREACH(sctk_multiple_queues_sched_lists[core]
-			           .sctk_multiple_queues_sched_list,
-			           res)
-			{
-				fprintf(fd, "%p[%2d-%2d|%2d,%2d] ", res->sched,
-				        res->sched->th->attr.kind.mask, sched->status,
-				        res->sched->th->attr.current_priority,
-				        res->sched->th->attr.basic_priority);
-			}
-			fprintf(fd, "] task_nb=%d\n",
-			        sctk_multiple_queues_task_lists[core].task_nb);
-		}
-		else
-		{
-			fprintf(fd, "null ] task_nb=%d\n",
-			        sctk_multiple_queues_task_lists[core].task_nb);
-		}
-		mpc_common_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
-		                           .sctk_multiple_queues_sched_list_lock);
-
-		fflush(fd);
-		fclose(fd);
-	}
-#endif
 
 	// check if the list exists and if it contains threads
 	if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list != NULL)
@@ -1094,32 +1045,6 @@ void sctk_multiple_queues_priority_dyn_sorted_list_task_polling_thread_sched_inc
 		                           .sctk_multiple_queues_sched_list_lock);
 
 
-#ifdef SCTK_DEBUG_SCHEDULER
-		{
-			_mpc_threads_ng_engine_scheduler_t *sched;
-			sched = &(_mpc_threads_ng_engine_self()->sched);
-			char hostname[128];
-			char hostname2[128];
-			char current_vp[5];
-			gethostname(hostname, 128);
-			strncpy(hostname2, hostname, 128);
-			sprintf(current_vp, "_%03d", mpc_topology_get_current_cpu() );
-			strcat(hostname2, current_vp);
-
-			FILE *fd = fopen(hostname2, "a");
-			fprintf(fd, "multiple_queues_task add SCHED=%p %d %d\n\n", sched,
-			        sctk_multiple_queues_task_lists[bind_to].task_nb,
-			        sctk_multiple_queues_task_lists[bind_to]
-			        .sctk_multiple_queues_task_polling_thread_sched->th->attr
-			        .basic_priority);
-
-			// fprintf(fd,"add task SCHED=%p %d\n\n",
-			//        sched,
-			//        sctk_multiple_queues_task_lists[bind_to].task_nb);
-			fflush(fd);
-			fclose(fd);
-		}
-#endif
 	}
 }
 
@@ -1140,28 +1065,6 @@ void sctk_multiple_queues_priority_dyn_sorted_list_task_polling_thread_sched_dec
 		.sctk_multiple_queues_task_polling_thread_sched->th->attr
 		.basic_priority -= _mpc_thread_config_get()->scheduler_polling_step_prio;
 
-#ifdef SCTK_DEBUG_SCHEDULER
-		{
-			_mpc_threads_ng_engine_scheduler_t *sched;
-			sched = &(_mpc_threads_ng_engine_self()->sched);
-			char hostname[128];
-			char hostname2[128];
-			char current_vp[5];
-			gethostname(hostname, 128);
-			strncpy(hostname2, hostname, 128);
-			sprintf(current_vp, "_%03d", mpc_topology_get_current_cpu() );
-			strcat(hostname2, current_vp);
-
-			FILE *fd = fopen(hostname2, "a");
-			fprintf(fd, "multiple_queues_task poll SCHED=%p %d %d\n\n", sched,
-			        sctk_multiple_queues_task_lists[core].task_nb,
-			        sctk_multiple_queues_task_lists[core]
-			        .sctk_multiple_queues_task_polling_thread_sched->th->attr
-			        .basic_priority);
-			fflush(fd);
-			fclose(fd);
-		}
-#endif
 	}
 }
 
@@ -1262,54 +1165,6 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list()
 	_mpc_threads_ng_engine_scheduler_t *sched;
 	sched = &(_mpc_threads_ng_engine_self()->sched);
 
-#ifdef SCTK_DEBUG_SCHEDULER
-	{
-		char hostname[128];
-		char hostname2[128];
-		char current_vp[5];
-		gethostname(hostname, 128);
-		strncpy(hostname2, hostname, 128);
-		sprintf(current_vp, "_%03d", mpc_topology_get_current_cpu() );
-		strcat(hostname2, current_vp);
-
-		FILE *fd = fopen(hostname2, "a");
-		fprintf(fd, "current %p[%2d-%2d|%2d,%2d] list[", sched,
-		        sched->th->attr.kind.mask, sched->status,
-		        sched->th->attr.current_priority, sched->th->attr.basic_priority);
-
-		mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
-		                         .sctk_multiple_queues_sched_list_lock);
-
-		if(sctk_multiple_queues_sched_lists[core]
-		   .sctk_multiple_queues_sched_list != NULL)
-		{
-			_mpc_threads_ng_engine_scheduler_generic_t *res;
-			res = sctk_multiple_queues_sched_lists[core]
-			      .sctk_multiple_queues_sched_list;
-			DL_FOREACH(sctk_multiple_queues_sched_lists[core]
-			           .sctk_multiple_queues_sched_list,
-			           res)
-			{
-				fprintf(fd, "%p[%2d-%2d|%2d,%2d] ", res->sched,
-				        res->sched->th->attr.kind.mask, sched->status,
-				        res->sched->th->attr.current_priority,
-				        res->sched->th->attr.basic_priority);
-			}
-			fprintf(fd, "] task_nb=%d\n",
-			        sctk_multiple_queues_task_lists[core].task_nb);
-		}
-		else
-		{
-			fprintf(fd, "null ] task_nb=%d\n",
-			        sctk_multiple_queues_task_lists[core].task_nb);
-		}
-		mpc_common_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
-		                           .sctk_multiple_queues_sched_list_lock);
-
-		fflush(fd);
-		fclose(fd);
-	}
-#endif
 
 	// check if the list exists and if it contains threads
 	if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list !=
@@ -1370,56 +1225,6 @@ sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list_old()
 
 
 
-#ifdef SCTK_DEBUG_SCHEDULER
-	{
-		_mpc_threads_ng_engine_scheduler_t *sched;
-		sched = &(_mpc_threads_ng_engine_self()->sched);
-		char hostname[128];
-		char hostname2[128];
-		char current_vp[5];
-		gethostname(hostname, 128);
-		strncpy(hostname2, hostname, 128);
-		sprintf(current_vp, "_%03d", mpc_topology_get_current_cpu() );
-		strcat(hostname2, current_vp);
-
-		FILE *fd = fopen(hostname2, "a");
-		fprintf(fd, "current %p[%2d-%2d|%2d,%2d]\nlist[", sched,
-		        sched->th->attr.kind.mask, sched->status,
-		        sched->th->attr.current_priority, sched->th->attr.basic_priority);
-
-		mpc_common_spinlock_lock(&sctk_multiple_queues_sched_lists[core]
-		                         .sctk_multiple_queues_sched_list_lock);
-
-		if(sctk_multiple_queues_sched_lists[core]
-		   .sctk_multiple_queues_sched_list != NULL)
-		{
-			_mpc_threads_ng_engine_scheduler_generic_t *res;
-			res = sctk_multiple_queues_sched_lists[core]
-			      .sctk_multiple_queues_sched_list;
-			DL_FOREACH(sctk_multiple_queues_sched_lists[core]
-			           .sctk_multiple_queues_sched_list,
-			           res)
-			{
-				fprintf(fd, "%p[%2d-%2d|%2d,%2d] ", res->sched,
-				        res->sched->th->attr.kind.mask, sched->status,
-				        res->sched->th->attr.current_priority,
-				        res->sched->th->attr.basic_priority);
-			}
-			fprintf(fd, "] task_nb=%d\n",
-			        sctk_multiple_queues_task_lists[core].task_nb);
-		}
-		else
-		{
-			fprintf(fd, "null ] task_nb=%d\n",
-			        sctk_multiple_queues_task_lists[core].task_nb);
-		}
-		mpc_common_spinlock_unlock(&sctk_multiple_queues_sched_lists[core]
-		                           .sctk_multiple_queues_sched_list_lock);
-
-		fflush(fd);
-		fclose(fd);
-	}
-#endif
 
 	// check if the list exists and if it contains threads
 	if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list !=
@@ -1655,44 +1460,6 @@ static void sctk_multiple_queues_add_task_to_proceed(_mpc_threads_ng_engine_task
 
 	mpc_common_spinlock_lock(&sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list_lock);
 	DL_APPEND(sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list, task);
-	// we already do the increment of task_nb line 1321 after we call
-	// sctk_multiple_queues_add_task_to_proceed
-	////hmt
-	// sctk_multiple_queues_task_lists[core].task_nb+=vp_data.delegated_task_nb;
-	// vp_data.delegated_task_nb=0;
-
-	// hmt
-	// increment task_nb
-	//
-	// sctk_multiple_queues_task_lists[task->sched->th->attr.bind_to].task_nb+=vp_data.delegated_task_nb;
-	// vp_data.delegated_task_nb=0;
-	// //we increment the polling thread priority when we add a task on the list
-
-	// _mpc_threads_ng_engine_scheduler_t* sched;
-	// sched = &(_mpc_threads_ng_engine_self()->sched);
-
-	// #ifdef SCTK_DEBUG_SCHEDULER
-	// {
-	//     char hostname[128];
-	//     char hostname2[128];
-	//     char current_vp[5];
-	//     gethostname(hostname,128);
-	//     strncpy(hostname2,hostname,128);
-	//     sprintf(current_vp,"_%03d",mpc_topology_get_current_cpu ());
-	//     strcat(hostname2,current_vp);
-
-	//     FILE* fd=fopen(hostname2,"a");
-	//     fprintf(fd,"add task SCHED=%p %d\n\n",
-	//             sched,
-	//             sctk_multiple_queues_task_lists[sched->th->attr.bind_to].task_nb);
-	//     fflush(fd);
-	//     fclose(fd);
-	// }
-	// #endif
-
-	// //endhmt
-
-	////endhmt
 	mpc_common_spinlock_unlock(&sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list_lock);
 }
 
@@ -2004,36 +1771,6 @@ static void sctk_generic_sched_yield_intern(
                      sctk_per_vp_data_t *vp),
         _mpc_threads_ng_engine_scheduler_t *(*get_from_list)() )
 {
-#ifdef SCTK_DEBUG_SCHEDULER
-	{
-		char hostname[128];
-		char hostname2[128];
-		char current_vp[5];
-		gethostname(hostname, 128);
-		strncpy(hostname2, hostname, 128);
-		sprintf(current_vp, "_%03d", mpc_topology_get_current_cpu() );
-		strcat(hostname2, current_vp);
-
-		FILE *fd = fopen(hostname2, "a");
-		fprintf(fd, "\nsctk_generic_sched_yield_intern %p[%2d-%2d|%2d,%2d] --> %p "
-		            "%p hook_mpc_polling %p hook_NBC %p\n",
-		        sched, sched->th->attr.kind.mask, sched->status,
-		        sched->th->attr.current_priority, sched->th->attr.basic_priority,
-		        sched->generic.sched, sched->th,
-		        sctk_multiple_queues_task_lists[sched->th->attr.bind_to]
-		        .sctk_multiple_queues_task_polling_thread_sched
-		        ? sctk_multiple_queues_task_lists[sched->th->attr.bind_to]
-		        .sctk_multiple_queues_task_polling_thread_sched
-			: NULL,
-		        sctk_multiple_queues_sched_lists[sched->th->attr.bind_to]
-		        .sctk_multiple_queues_sched_NBC_Pthread_sched
-		        ? sctk_multiple_queues_sched_lists[sched->th->attr.bind_to]
-		        .sctk_multiple_queues_sched_NBC_Pthread_sched
-			: NULL);
-		fflush(fd);
-		fclose(fd);
-	}
-#endif
 
 	// next thread to schedule
 	_mpc_threads_ng_engine_scheduler_t *next;
@@ -2050,23 +1787,6 @@ static void sctk_generic_sched_yield_intern(
 	// Register the current thread for a futur insertion into the ready thread list
 	if(vp_data.sctk_generic_delegated_add)
 	{
-#ifdef SCTK_DEBUG_SCHEDULER
-		{
-			char hostname[128];
-			char hostname2[128];
-			char current_vp[5];
-			gethostname(hostname, 128);
-			strncpy(hostname2, hostname, 128);
-			sprintf(current_vp, "_%03d", mpc_topology_get_current_cpu() );
-			strcat(hostname2, current_vp);
-
-			FILE *fd = fopen(hostname2, "a");
-			fprintf(fd, "if(vp_data.sctk_generic_delegated_add) 1 add_to_list %p %p\n",
-			        sched, vp_data.sctk_generic_delegated_add);
-			fflush(fd);
-			fclose(fd);
-		}
-#endif
 
 		sctk_generic_add_to_list( vp_data.sctk_generic_delegated_add, vp_data.sctk_generic_delegated_add->generic.is_idle_mode);
 		vp_data.sctk_generic_delegated_add = NULL;
@@ -2120,24 +1840,6 @@ retry:
 
 	if( (next == NULL) && (sched->status == _mpc_threads_ng_engine_running) )
 	{
-#ifdef SCTK_DEBUG_SCHEDULER
-		{
-			char hostname[128];
-			char hostname2[128];
-			char current_vp[5];
-			gethostname(hostname, 128);
-			strncpy(hostname2, hostname, 128);
-			sprintf(current_vp, "_%03d", mpc_topology_get_current_cpu() );
-			strcat(hostname2, current_vp);
-
-			FILE *fd = fopen(hostname2, "a");
-			fprintf(fd, "if((next == NULL) && (sched->status == "
-			            "_mpc_threads_ng_engine_running)) %p\n\n",
-			        sched);
-			fflush(fd);
-			fclose(fd);
-		}
-#endif
 		vp_data.sctk_generic_delegated_add = NULL;
 		next = sched;
 	}
@@ -2159,34 +1861,6 @@ quick_swap:
 				sched->th->attr.timestamp_end    = mpc_arch_get_timestamp_gettimeofday();
 				sched->th->attr.timestamp_count  += sched->th->attr.timestamp_end - sched->th->attr.timestamp_begin;
 
-#ifdef SCTK_DEBUG_SCHEDULER
-				char hostname[128];
-				char hostname2[128];
-				char current_vp[5];
-				gethostname(hostname, 128);
-				strncpy(hostname2, hostname, 128);
-				sprintf(current_vp, "_%03d", mpc_topology_get_current_cpu() );
-				strcat(hostname2, current_vp);
-
-				FILE *fd = fopen(hostname2, "a");
-				mpc_common_debug_log_file(fd, "%p[%2d-%2d|%2d,%2d] to %p[%2d-%2d|%2d,%2d] t=[%f "
-				                              "count(%f)]\n",
-				                          sched, sched->th->attr.kind.mask, sched->status,
-				                          sched->th->attr.current_priority,
-				                          sched->th->attr.basic_priority,
-
-				                          next, next->th->attr.kind.mask, sched->status,
-				                          next->th->attr.current_priority, next->th->attr.basic_priority,
-
-				                          // sched->th->attr.timestamp_base,
-				                          // sched->th->attr.timestamp_begin,
-				                          // sched->th->attr.timestamp_end,
-				                          sched->th->attr.timestamp_end - sched->th->attr.timestamp_begin,
-				                          sched->th->attr.timestamp_count);
-				fflush(fd);
-				fclose(fd);
-// endhmt
-#endif                          // SCTK_DEBUG_SCHEDULER
 			}
 			// endtimers
 
@@ -2272,13 +1946,6 @@ quick_swap:
 				{
 					mpc_common_nodebug("ADD FROM delegated spinlock %p", vp_data.sched_idle);
 
-#ifdef SCTK_DEBUG_SCHEDULER
-					// hmt
-					printf("if(vp_data.sched_idle->status == "
-					       "_mpc_threads_ng_engine_running) add_to_list\n");
-					fflush(stdout);
-// endhmt
-#endif
 					sctk_generic_add_to_list(vp_data.sched_idle,
 					                         vp_data.sched_idle->generic.is_idle_mode);
 				}
@@ -2347,24 +2014,6 @@ quick_swap:
 
 	if(vp_data.sctk_generic_delegated_add)
 	{
-#ifdef SCTK_DEBUG_SCHEDULER
-		{
-			char hostname[128];
-			char hostname2[128];
-			char current_vp[5];
-			gethostname(hostname, 128);
-			strncpy(hostname2, hostname, 128);
-			sprintf(current_vp, "_%03d", mpc_topology_get_current_cpu() );
-			strcat(hostname2, current_vp);
-
-			FILE *fd = fopen(hostname2, "a");
-			fprintf(fd,
-			        "if(vp_data.sctk_generic_delegated_add) 2 add_to_list %p %p\n\n",
-			        sched, vp_data.sctk_generic_delegated_add);
-			fflush(fd);
-			fclose(fd);
-		}
-#endif
 
 		sctk_generic_add_to_list(
 		        vp_data.sctk_generic_delegated_add,
