@@ -481,6 +481,9 @@ mpc_omp_barrier(void)
     mpc_omp_team_t * team = thread->instance->team;
     mpc_omp_parallel_region_t * region = &(team->info);
     int num_threads = team->info.num_threads;
+		if(num_threads == 0) // we are not in a parallel region
+			return;
+
     if (num_threads == 1)
     {
         while (OPA_load_int(&(region->task_ref))) _mpc_omp_task_schedule();
