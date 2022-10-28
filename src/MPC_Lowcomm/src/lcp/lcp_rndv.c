@@ -88,7 +88,7 @@ int lcp_request_unpack_mem_pins(lcp_context_h ctx, lcp_mem_h *mem_p, void *hdr)
 
         mem = sctk_malloc(sizeof(struct lcp_mem));
         if (mem == NULL) {
-                mpc_common_debug_error("LCP: could not allocated mem when unpacking");
+                mpc_common_debug_error("LCP: could not allocate mem when unpacking");
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
@@ -96,7 +96,7 @@ int lcp_request_unpack_mem_pins(lcp_context_h ctx, lcp_mem_h *mem_p, void *hdr)
         mem->num_ifaces = ctx->num_resources;
         mem->mems       = sctk_malloc(mem->num_ifaces * sizeof(struct lcp_memp));
         if (mem->mems == NULL) {
-                mpc_common_debug_error("LCP: could not allocated mem when unpacking");
+                mpc_common_debug_error("LCP: could not allocate mem pins when unpacking");
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }

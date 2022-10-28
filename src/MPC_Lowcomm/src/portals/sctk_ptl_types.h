@@ -413,6 +413,8 @@ typedef struct sctk_ptl_rail_info_s
 	struct mpc_common_hashtable reverse_pt_table; /**< The PT => COMM hash table */
 	size_t cutoff;                          /**< cutoff for large RDV messages */
 	size_t max_mr;                          /**< Max size of a memory region (MD | ME ) */
+	size_t max_put;                          /**< Max size of a put */
+	size_t max_get;                          /**< Max size of a get */
 	size_t eager_limit;                     /**< the max size for an eager msg */
 	size_t nb_entries;                      /**< current number of PT entries dedicated to comms */
 	size_t connection_infos_size;           /**< Size of the above string */

@@ -252,8 +252,12 @@ struct _mpc_lowcomm_config_struct_net_driver_portals
 	int                                             min_comms;
 	/**Above this value, RDV messages will be split in multiple GET requests**/
 	size_t                                          block_cut;
-	/**Set max registerable size (default: SIZE_MAX)**/
+	/**Set max registerable size (default: INT_MAX)**/
 	int                                             max_msg_size;
+	/**Enable put protocol**/
+	int                                             enable_put;
+	/**Enable get protocol**/
+	int                                             enable_get;
 	/**List of available optimizations taking advantage of triggered Ops**/
 	struct _mpc_lowcomm_config_struct_offload_ops_t offloading;
 };

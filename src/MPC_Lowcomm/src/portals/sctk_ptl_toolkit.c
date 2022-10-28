@@ -717,6 +717,7 @@ int sctk_ptl_pending_me_probe(sctk_rail_info_t* rail, mpc_lowcomm_ptp_message_he
  */
 void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 {
+	struct _mpc_lowcomm_config_struct_net_driver_portals ptl_driver_config;
 	/* Register on-demand callback for rail */
 	__register_monitor_callback(rail);
 
@@ -749,8 +750,14 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 	rail->network.ptl                 = sctk_ptl_hardware_init(iface);
 	rail->network.ptl.eager_limit     = eager_limit;
 	rail->network.ptl.cutoff          = cut;
-	rail->network.ptl.max_mr          = rail->runtime_config_driver_config->driver.value.portals.max_msg_size < rail->network.ptl.max_limits.max_msg_size ?
-		rail->runtime_config_driver_config->driver.value.portals.max_msg_size : rail->network.ptl.max_limits.max_msg_size;
+
+	ptl_driver_config = rail->runtime_config_driver_config->driver.value.portals;
+	rail->network.ptl.max_mr          = ptl_driver_config.max_msg_size < rail->network.ptl.max_limits.max_msg_size ?
+		ptl_driver_config.max_msg_size : rail->network.ptl.max_limits.max_msg_size;
+	rail->network.ptl.max_put         = ptl_driver_config.enable_put ?
+		rail->network.ptl.max_limits.max_msg_size : 0;
+	rail->network.ptl.max_get         = ptl_driver_config.enable_get ?
+		rail->network.ptl.max_limits.max_msg_size : 0;
 
 	rail->network.ptl.offload_support = offloading;
 	

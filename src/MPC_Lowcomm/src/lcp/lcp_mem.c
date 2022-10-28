@@ -35,10 +35,13 @@ int lcp_mem_register(lcp_context_h ctx, lcp_mem_h *mem_p, void *buffer, size_t l
                
                 iface->iface_get_attr(iface, &attr);
 
+		//FIXME: load-balancing logic should be done outside lcp_mem
                 max_req = LCP_MIN(max_req, attr.mem.cap.max_reg);
-                max_msg_size = LCP_MIN(max_msg_size, attr.iface.cap.rndv.max_put_zcopy);
+                max_msg_size = LCP_MIN(max_msg_size, 
+				LCP_MAX(attr.iface.cap.rndv.max_put_zcopy,
+					attr.iface.cap.rndv.max_get_zcopy));
         }
-        assert(max_req > length);
+        assert(max_req > length); //FIXME: should be max_req * ctx->num_resources
 
 	/* compute number of interface to use for registration based on msg length */
 	num_msg = length % max_msg_size > 0 ? length / max_msg_size + 1 : length / max_msg_size;
