@@ -7388,23 +7388,13 @@ int PMPI_Ialltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, vo
   {
     MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
   }
-  if(csize == 1)
-  {
-    res = PMPI_Alltoall (sendbuf, sendcount, sendtype, recvbuf,
-        recvcount, recvtype, comm);
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
-  }
-  else
-  {
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->is_nbc = 1;
-    tmp->nbc_handle.is_persistent = 0;
-    res = ___collectives_ialltoall (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, &(tmp->nbc_handle));
-  }
-  MPI_HANDLE_RETURN_VAL (res, comm);
+
+	MPI_internal_request_t *tmp;
+	tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+	tmp->is_nbc = 1;
+	tmp->nbc_handle.is_persistent = 0;
+	res = ___collectives_ialltoall (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, &(tmp->nbc_handle));
+	MPI_HANDLE_RETURN_VAL (res, comm);
 }
 
 /**
@@ -7861,23 +7851,13 @@ int PMPI_Ialltoallv(const void *sendbuf, const int *sendcounts, const int *sdisp
     MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
   }
 
-  if(csize == 1)
-  {
-    res = PMPI_Alltoallv (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm);
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
-  }
-  else
-  {
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->is_nbc = 1;
-    tmp->nbc_handle.is_persistent = 0;
+	MPI_internal_request_t *tmp;
+	tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+	tmp->is_nbc = 1;
+	tmp->nbc_handle.is_persistent = 0;
 
-    res = ___collectives_ialltoallv (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, &(tmp->nbc_handle));
-  }
-  MPI_HANDLE_RETURN_VAL (res, comm);
+	res = ___collectives_ialltoallv (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, &(tmp->nbc_handle));
+	MPI_HANDLE_RETURN_VAL (res, comm);
 }
 
 /**
@@ -8297,23 +8277,13 @@ int PMPI_Ialltoallw(const void *sendbuf, const int *sendcounts, const int *sdisp
     MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
   }
 
-  if(csize == 1)
-  {
-    res = PMPI_Alltoallw (sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm);
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
-  }
-  else
-  {
-    MPI_internal_request_t *tmp;
-    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
-    tmp->is_nbc = 1;
-    tmp->nbc_handle.is_persistent = 0;
+	MPI_internal_request_t *tmp;
+	tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+	tmp->is_nbc = 1;
+	tmp->nbc_handle.is_persistent = 0;
 
-    res = ___collectives_ialltoallw (sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, &(tmp->nbc_handle));
-  }
-  MPI_HANDLE_RETURN_VAL (res, comm);
+	res = ___collectives_ialltoallw (sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, &(tmp->nbc_handle));
+	MPI_HANDLE_RETURN_VAL (res, comm);
 }
 
 /**
