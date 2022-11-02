@@ -184,6 +184,7 @@ struct lcr_rail_attr {
                         } tag;
 
                         struct {
+                                size_t max_send_zcopy;
                                 size_t max_put_zcopy;
                                 size_t max_get_zcopy;
                         } rndv;

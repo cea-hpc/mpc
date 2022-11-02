@@ -765,7 +765,6 @@ int lcp_rndv_matched(lcp_context_h ctx,
                 }
 
                 /* Send ack */
-                rreq->flags             |= LCP_REQUEST_RECV_FRAG;
                 rc = lcp_request_create(&ack_req);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         goto err;

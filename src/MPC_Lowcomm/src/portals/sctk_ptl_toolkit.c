@@ -750,6 +750,7 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 	rail->network.ptl.eager_limit     = eager_limit;
 	rail->network.ptl.cutoff          = cut;
 
+        //FIXME: instead, use a protocol config to choose which protocol to use.
 	ptl_driver_config = rail->runtime_config_driver_config->driver.value.portals;
 	rail->network.ptl.max_mr          = ptl_driver_config.max_msg_size < (int)rail->network.ptl.max_limits.max_msg_size ?
 		(unsigned long int)ptl_driver_config.max_msg_size : rail->network.ptl.max_limits.max_msg_size;
