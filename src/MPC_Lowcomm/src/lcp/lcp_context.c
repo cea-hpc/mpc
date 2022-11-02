@@ -469,7 +469,6 @@ out_free_devices:
                 sctk_free(components[j]->devices);
         }
 
-err:
         return rc;
 }
 

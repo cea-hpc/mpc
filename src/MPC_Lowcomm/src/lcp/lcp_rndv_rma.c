@@ -20,7 +20,7 @@ static inline int lcp_send_get_zcopy(lcp_request_t *req,
                            *req->send.rndv.lmem->mems[cc].memp,
                            *req->send.rndv.rmem->mems[cc].memp,
                            length,
-                           &req->state.comp);
+                           &(req->state.comp));
         return rc;
 }
 
@@ -39,7 +39,7 @@ static inline int lcp_send_put_zcopy(lcp_request_t *req,
                            *req->send.rndv.lmem->mems[cc].memp,
                            *req->send.rndv.rmem->mems[cc].memp,
                            length,
-                           &req->state.comp);
+                           &(req->state.comp));
         return rc;
 }
 
@@ -157,9 +157,9 @@ int lcp_send_put_zcopy_multi(lcp_request_t *req)
                                                  &remote_addr, &length);
 
 		mpc_common_debug("LCP: send frag n=%d, src=%d, dest=%d, msg_id=%llu, remaining=%llu, "
-				 "len=%d", f_id, req->send.tag.src_tsk, 
-				 req->send.tag.dest_tsk, req->msg_id, remaining, length,
-				 remaining);
+				 "len=%d, remote_addr=%p, local_addr=%p", f_id, req->send.tag.src_tsk, 
+				 req->send.tag.dest_tsk, req->msg_id, remaining,
+				 length, remote_addr, local_addr);
 
                 rc = lcp_send_put_zcopy(req, 
                                         lcr_ep, 

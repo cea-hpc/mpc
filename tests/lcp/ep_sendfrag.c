@@ -140,7 +140,7 @@ int main(int argc, char** argv) {
 
 	/* receiver perform data check */
 	if (mpc_lowcomm_peer_get_rank(my_uid) == 1) {	
-		for (i=0; i<size; i++) {
+		for (i=0; i<(int)size; i++) {
 			if (data[i] != data_check[i]) {
                                 printf("%d\n", i);
 				check = 0;

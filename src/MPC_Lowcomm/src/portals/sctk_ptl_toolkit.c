@@ -204,7 +204,6 @@ static inline int ___eq_poll(sctk_rail_info_t* rail, sctk_ptl_pte_t *cur_pte)
 	if(ret == PTL_OK)
 	{
 		did_poll = 1;
-		lcr_tag_t tag = (lcr_tag_t)ev.match_bits;
 
 		mpc_common_debug_info("PORTALS: EQS EVENT '%s' iface=%llu, idx=%d, sz=%llu, user=%p, start=%p", sctk_ptl_event_decode(ev), srail->iface, ev.pt_index, ev.mlength, ev.user_ptr, ev.start);
                 //mpc_common_debug_info("from %s, type=%s, prot=%s, match=[%d,%d,%d]", SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot), tag.t_tag.src, tag.t_tag.tag, tag.t_tag.seqn);
@@ -746,14 +745,14 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 
 	/* init low-level driver */
         sctk_ptl_interface_t iface        = (rail->runtime_config_rail->max_ifaces == 1) ?
-                PTL_IFACE_DEFAULT : rail->rail_number; //FIXME: revise atoi
+                PTL_IFACE_DEFAULT : (unsigned int)rail->rail_number; //FIXME: revise atoi
 	rail->network.ptl                 = sctk_ptl_hardware_init(iface);
 	rail->network.ptl.eager_limit     = eager_limit;
 	rail->network.ptl.cutoff          = cut;
 
 	ptl_driver_config = rail->runtime_config_driver_config->driver.value.portals;
-	rail->network.ptl.max_mr          = ptl_driver_config.max_msg_size < rail->network.ptl.max_limits.max_msg_size ?
-		ptl_driver_config.max_msg_size : rail->network.ptl.max_limits.max_msg_size;
+	rail->network.ptl.max_mr          = ptl_driver_config.max_msg_size < (int)rail->network.ptl.max_limits.max_msg_size ?
+		(unsigned long int)ptl_driver_config.max_msg_size : rail->network.ptl.max_limits.max_msg_size;
 	rail->network.ptl.max_put         = ptl_driver_config.enable_put ?
 		rail->network.ptl.max_limits.max_msg_size : 0;
 	rail->network.ptl.max_get         = ptl_driver_config.enable_get ?

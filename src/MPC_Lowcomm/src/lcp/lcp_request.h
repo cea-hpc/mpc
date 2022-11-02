@@ -19,9 +19,10 @@ enum {
 	LCP_REQUEST_SEND_FRAG          = LCP_BIT(4),
 	LCP_REQUEST_RECV_FRAG          = LCP_BIT(5),
 	LCP_REQUEST_SEND_CTRL          = LCP_BIT(6),
-	LCP_REQUEST_RECV_TRUNC         = LCP_BIT(7),
-        LCP_REQUEST_MPI_COMPLETE       = LCP_BIT(8),
-        LCP_REQUEST_OFFLOADED          = LCP_BIT(9)
+	LCP_REQUEST_RECV_TRUNC         = LCP_BIT(7), /* flags if request is truncated */
+        LCP_REQUEST_MPI_COMPLETE       = LCP_BIT(8), /* call MPI level completion callback, 
+                                                        see ucp_request_complete */
+        LCP_REQUEST_OFFLOADED          = LCP_BIT(9) //FIXME: not useful.
 };
 
 enum {
@@ -123,6 +124,7 @@ struct lcp_request {
 		int f_id;
 		lcp_chnl_idx_t cur;
 		lcr_completion_t comp;
+                lcp_mem_h lmem; /* for put protocol */
 	} state;
 };
 
@@ -190,7 +192,7 @@ static inline void lcp_request_init_ack(lcp_request_t *ack_req, lcp_ep_h ep,
                                         uint64_t comm_id, uint64_t dest, 
                                         int seqn, uint64_t msg_id)
 {
-        ack_req->send.am.am_id      = MPC_LOWCOMM_ACK_MESSAGE;
+        ack_req->send.am.am_id      = MPC_LOWCOMM_ACK_RDV_MESSAGE;
         ack_req->send.am.comm_id    = comm_id;
         ack_req->send.am.dest       = dest;
         ack_req->send.ep            = ep;
