@@ -2221,7 +2221,6 @@ void mpc_omp_GOMP_taskloop( void (*fn)(void *), void *data,
     mpc_omp_init();
 
     (void)cpyfn;
-
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
     _mpc_omp_ompt_frame_set_no_reentrant();

@@ -1155,24 +1155,17 @@ __task_dep_list_append(
 static mpc_omp_task_dep_htable_entry_t *
 __task_process_mpc_dep_entry(mpc_omp_task_t * task, void * addr)
 {
-    double t0 = omp_get_wtime();
-
     unsigned hashv;
     HASH_VALUE(&addr, sizeof(void *), hashv);
 
     mpc_omp_task_dep_htable_entry_t * entry;
     HASH_FIND_BYHASHVALUE(hh, task->parent->dep_node.hmap, &addr, sizeof(void *), hashv, entry);
 
-    double tf = omp_get_wtime();
-    double t_hash = tf - t0;
-
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
     assert(thread);
 
     mpc_omp_instance_t * instance = thread->instance;
     assert(instance);
-    instance->t_hash += t_hash;
-    ++instance->ndeps;
 
     if (entry == NULL)
     {
@@ -4039,9 +4032,6 @@ __thread_task_deinit_recyclers(mpc_omp_thread_t * thread)
 void
 _mpc_omp_task_tree_deinit(mpc_omp_thread_t * thread)
 {
-    //mpc_omp_instance_t * instance = (mpc_omp_instance_t *) thread->instance;
-    //printf("t_total=%lf, t_deps=%lf, t_hash=%lf, collision=%d, resize=%d, ndeps=%lu\n", instance->t_total, instance->t_deps, instance->t_hash, thread->hash_collision, thread->hash_resize, instance->ndeps);
-
     assert(thread);
     __thread_task_deinit_initial(thread);
 # if MPC_OMP_TASK_USE_RECYCLERS

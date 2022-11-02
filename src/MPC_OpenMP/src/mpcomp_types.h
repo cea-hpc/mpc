@@ -1369,11 +1369,6 @@ typedef struct mpc_omp_instance_s
     /* mutex to dump thread debugging informations */
     mpc_common_spinlock_t debug_lock;
 
-    /* DEBUGING */
-    double t_hash;
-    size_t ndeps;
-    double t_deps;
-    double t_total;
 } mpc_omp_instance_t;
 
 typedef union mpc_omp_node_or_leaf_u

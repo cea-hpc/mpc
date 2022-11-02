@@ -619,8 +619,8 @@ mpc_omp_task_trace_begin(void)
 
         int retval;
 
+        /* ensure only 1 thread initialize papi library, and spinlock the others meanwhile */
         int dump = 0;
-
         if (OPA_cas_int(&(instance->task_infos.papi_initialized), 0, 1) == 0)
         {
             dump = 1;

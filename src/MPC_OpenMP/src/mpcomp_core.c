@@ -137,7 +137,7 @@ static inline void __omp_conf_set_default(void)
     __omp_conf.task_priority_propagation_synchronousity = MPC_OMP_TASK_PRIORITY_PROPAGATION_SYNCHRONOUS;
 #if MPC_OMP_TASK_TRACE_USE_PAPI
     __omp_conf.task_trace_use_papi              = 0;
-    strcpy(__omp_conf.task_trace_papi_events, "PAPI_TOT_INS,PAPI_TOT_CYC");
+    strcpy(__omp_conf.task_trace_papi_events, "PAPI_TOT_INS,PAPI_TOT_CYC,CYCLE_ACTIVITY:STALLS_TOTAL");
 #endif /* MPC_OMP_TASK_TRACE_USE_PAPI */
 
     /* task steal */
