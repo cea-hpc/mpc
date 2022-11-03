@@ -36,6 +36,7 @@
 #include <mpc_common_flags.h>
 #include <mpc_launch_shm.h>
 #include <stdint.h>
+#include "mpc_lowcomm_workshare.h"
 
 
 #ifdef MPC_Threads
