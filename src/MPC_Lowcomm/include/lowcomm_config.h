@@ -254,10 +254,6 @@ struct _mpc_lowcomm_config_struct_net_driver_portals
 	size_t                                          block_cut;
 	/**Set max registerable size (default: INT_MAX)**/
 	int                                             max_msg_size;
-	/**Enable put protocol**/
-	int                                             enable_put;
-	/**Enable get protocol**/
-	int                                             enable_get;
 	/**List of available optimizations taking advantage of triggered Ops**/
 	struct _mpc_lowcomm_config_struct_offload_ops_t offloading;
 };
@@ -514,12 +510,14 @@ struct _mpc_lowcomm_config_struct_net_lcr
 
 struct _mpc_lowcomm_config_struct_protocol
 {
-	/**Is multirail enabled**/
+	/**Is multirail enabled (default: true)**/
 	int  multirail_enabled;
 	/**Comma separated list of transport to use (default: tcp).**/
 	char transports[MPC_CONF_STRING_SIZE];
 	/**Comma separated list of devices to use (default: eth0, ptl0).**/
 	char devices[MPC_CONF_STRING_SIZE];
+	/**Type of rendez-vous to use (default: mode get).**/
+	int rndv_mode;
 };
 typedef struct _mpc_lowcomm_config_struct_protocol lcr_protocol_config_t;
 

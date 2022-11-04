@@ -332,9 +332,7 @@ static inline mpc_conf_config_type_t *__init_driver_portals(struct _mpc_lowcomm_
 	portals->block_cut = 2147483648;
 	portals->offloading.collectives = 0;
 	portals->offloading.ondemand = 0;
-	portals->max_msg_size = INT_MAX;
-	portals->enable_put = 0;
-	portals->enable_get = 1;
+	portals->max_msg_size = 2147483648;
 
 	/*
 	  Create the config object
@@ -349,8 +347,6 @@ static inline mpc_conf_config_type_t *__init_driver_portals(struct _mpc_lowcomm_
 	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("portals",
 															PARAM("eagerlimit", &portals->eager_limit, MPC_CONF_LONG_INT, "Max size of messages allowed to use the eager protocol."),
 															PARAM("maxmsgsize", &portals->max_msg_size, MPC_CONF_INT, "Max size of messages allowed to be sent."),
-															PARAM("enableput", &portals->enable_put, MPC_CONF_INT, "Enable put protocol."),
-															PARAM("enableget", &portals->enable_get, MPC_CONF_INT, "Enable get protocol."),
 															PARAM("mincomm", &portals->min_comms, MPC_CONF_INT, "Min number of communicators (help to avoid dynamic PT entry allocation)"),
 															PARAM("blockcut", &portals->block_cut, MPC_CONF_LONG_INT, "Above this value, RDV messages will be split in multiple GET requests"),
 															PARAM("offload", offload, MPC_CONF_TYPE, "List of available optimizations taking advantage of triggered Ops"),
@@ -1399,12 +1395,14 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_protocol_conf_init(void)
 {
 	struct _mpc_lowcomm_config_struct_protocol *proto = __mpc_lowcomm_proto_conf_init();
 
-        proto->multirail_enabled = 1;
+        proto->multirail_enabled = 1; /* default multirail enabled */
+	proto->rndv_mode         = 1; /* default rndv get */
         snprintf(proto->transports, MPC_CONF_STRING_SIZE, "tcp");
         snprintf(proto->devices, MPC_CONF_STRING_SIZE, "any");
 
 	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("protocol",
 			PARAM("verbosity", &mpc_common_get_flags()->verbosity, MPC_CONF_INT, "Debug level message (1-3)"),
+			PARAM("rndvmode", &proto->rndv_mode, MPC_CONF_INT, "Type of rendez-vous to use (default: mode get)"),
 			PARAM("multirailenabled", &proto->multirail_enabled, MPC_CONF_INT, "Is multirail enabled ?"),
 			PARAM("transports", proto->transports, MPC_CONF_STRING, "Coma separated list of supported transports (tcp, ptl, all)"),
 			PARAM("devices", proto->devices, MPC_CONF_STRING, "Coma separated list of devices to use (eth0, ptl0, any)"),

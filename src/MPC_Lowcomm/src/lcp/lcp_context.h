@@ -7,6 +7,7 @@
 #include "lcp_ep.h"
 #include "lcp_pending.h"
 #include "lcp_tag_matching.h"
+#include "lcp_types.h"
 
 #include "uthash.h"
 
@@ -58,6 +59,7 @@ typedef struct lcp_context_config {
         char **selected_components;
         int num_selected_devices;
         char **selected_devices;
+	lcp_rndv_mode_t rndv_mode;
 } lcp_context_config_t;
 
 struct lcp_context {

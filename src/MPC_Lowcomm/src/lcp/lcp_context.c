@@ -194,6 +194,7 @@ static int lcp_context_config_init(lcp_context_h ctx,
         int i, j;
         /* Check for multirail */
         ctx->config.multirail_enabled = config->multirail_enabled;
+	ctx->config.rndv_mode         = (lcp_rndv_mode_t)config->rndv_mode;
 
         /* Get selected transports */
         rc = lcp_context_config_parse_list(config->transports,

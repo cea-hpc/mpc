@@ -754,10 +754,8 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 	ptl_driver_config = rail->runtime_config_driver_config->driver.value.portals;
 	rail->network.ptl.max_mr          = ptl_driver_config.max_msg_size < (int)rail->network.ptl.max_limits.max_msg_size ?
 		(unsigned long int)ptl_driver_config.max_msg_size : rail->network.ptl.max_limits.max_msg_size;
-	rail->network.ptl.max_put         = ptl_driver_config.enable_put ?
-		rail->network.ptl.max_limits.max_msg_size : 0;
-	rail->network.ptl.max_get         = ptl_driver_config.enable_get ?
-		rail->network.ptl.max_limits.max_msg_size : 0;
+	rail->network.ptl.max_put         = rail->network.ptl.max_mr;
+	rail->network.ptl.max_get         = rail->network.ptl.max_mr;
 
 	rail->network.ptl.offload_support = offloading;
 	

@@ -27,7 +27,7 @@ void lcp_ep_get(lcp_context_h ctx,
 /* Send/Receive */
 int lcp_send(lcp_ep_h ep, 
              mpc_lowcomm_request_t *request, 
-	     void *buffer, 
+	     const void *buffer, 
              uint64_t seqn);
 int lcp_recv(lcp_context_h ctx, 
              mpc_lowcomm_request_t *request,

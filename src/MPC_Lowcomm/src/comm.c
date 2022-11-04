@@ -726,14 +726,6 @@ void mpc_lowcomm_ptp_message_complete_and_free(mpc_lowcomm_ptp_message_t *msg)
 	( free_memory )(msg);
 }
 
-int mpc_lowcomm_request_complete(mpc_lowcomm_request_t *request)
-{
-	request->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
-	if (request->msg) {
-		request->msg->tail.free_memory(request->msg);
-	}
-	return 0;
-}
 
 void _mpc_comm_ptp_message_commit_request(mpc_lowcomm_ptp_message_t *send,
                                           mpc_lowcomm_ptp_message_t *recv)
@@ -2532,6 +2524,15 @@ void mpc_lowcomm_ptp_msg_progress(struct mpc_lowcomm_ptp_msg_progress_s *wait)
 /* Send messages                                                    */
 /********************************************************************/
 
+int mpc_lowcomm_request_complete(mpc_lowcomm_request_t *request)
+{
+	request->completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
+	if (request->msg) {
+		request->msg->tail.free_memory(request->msg);
+	}
+	return 0;
+}
+
 /*
  * Function called when sending a message. The message can be forwarded to
  * another process
@@ -2789,10 +2790,10 @@ __mpc_comm_probe_source_tag_class_func(int destination, int source, int tag,
 
 		if(src_ptp == NULL)
 		{
-			int src_process = mpc_lowcomm_group_process_rank_from_world(world_source);
 #ifdef MPC_LOWCOMM_PROTOCOL
 			lcp_progress(lcp_ctx_loc);
 #else
+			int src_process = mpc_lowcomm_group_process_rank_from_world(world_source);
 			_mpc_lowcomm_multirail_notify_perform(src_process, world_source, world_destination, 0);
 #endif
 		}
@@ -3056,6 +3057,19 @@ int mpc_lowcomm_get_process_rank()
  * MESSAGES *
  ************/
 
+
+#define LOWCOMM_REQUEST_SEND_INIT(_req, _comm, _dest, _tag, _size) \
+        __mpc_comm_request_init(_req, _comm, REQUEST_SEND); \
+        _req->header.source = mpc_lowcomm_communicator_uid(_comm, mpc_lowcomm_communicator_rank_of(_comm, mpc_common_get_task_rank())); \
+        _req->header.destination        = mpc_lowcomm_communicator_uid(_comm, _dest); \
+        _req->header.message_tag        = _tag; \
+        _req->header.msg_size           = _size; \
+        _req->completion_flag           = MPC_LOWCOMM_MESSAGE_PENDING; \
+	_req->is_null                   = 0; \
+	_req->status_error              = MPC_LOWCOMM_SUCCESS; \
+	_req->ptr_to_pin_ctx            = NULL; \
+        _req->request_completion_fn     = mpc_lowcomm_request_complete
+
 static mpc_lowcomm_request_t __request_null;
 
 static inline void __init_request_null()
@@ -3071,13 +3085,48 @@ mpc_lowcomm_request_t* mpc_lowcomm_request_null(void)
 int mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
                        mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req)
 {
+#ifdef MPC_LOWCOMM_PROTOCOL
+        int rc;
+        lcp_ep_h ep;
+        LOWCOMM_REQUEST_SEND_INIT(req, comm, dest, tag, size);
+
+        lcp_ep_get(lcp_ctx_loc, req->header.destination, &ep);
+        if (ep == NULL) {
+                rc = lcp_ep_create(lcp_ctx_loc, &ep, req->header.destination, 0);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        mpc_common_debug_fatal("Could not create endpoint for %lu.",
+                                               req->header.source);
+                }
+        }
+        /* fill up request */
+        return lcp_send(ep, req, data, 0);
+#else
 	return mpc_lowcomm_isend_class(dest, data, size, tag, comm, MPC_LOWCOMM_P2P_MESSAGE, req);
+#endif
 }
+
+#define LOWCOMM_REQUEST_RECV_INIT(_req, _comm, _src, _tag, _size) \
+        __mpc_comm_request_init(_req, _comm, REQUEST_RECV); \
+        _req->header.destination = mpc_lowcomm_communicator_uid(_comm, mpc_lowcomm_communicator_rank_of(_comm, mpc_common_get_task_rank())); \
+        _req->header.source             = mpc_lowcomm_communicator_uid(_comm, _src); \
+        _req->header.message_tag        = _tag; \
+        _req->header.msg_size           = _size; \
+        _req->completion_flag           = MPC_LOWCOMM_MESSAGE_PENDING; \
+	_req->is_null                   = 0; \
+	_req->status_error              = MPC_LOWCOMM_SUCCESS; \
+	_req->ptr_to_pin_ctx            = NULL; \
+        _req->request_completion_fn     = mpc_lowcomm_request_complete
 
 int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
                        mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req)
 {
+#ifdef MPC_LOWCOMM_PROTOCOL
+        LOWCOMM_REQUEST_RECV_INIT(req, comm, src, tag, size);
+
+        return lcp_recv(lcp_ctx_loc, req, data);
+#else
 	return mpc_lowcomm_irecv_class(src, data, size, tag, comm, MPC_LOWCOMM_P2P_MESSAGE, req);
+#endif
 }
 
 int mpc_lowcomm_sendrecv(void *sendbuf, size_t size, int dest, int tag, void *recvbuf,

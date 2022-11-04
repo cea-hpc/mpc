@@ -20,7 +20,7 @@ int lcp_send_start(lcp_ep_h ep, lcp_request_t *req)
 		} else {
 			req->send.func = lcp_send_am_eager_tag_bcopy;
 		}
-	} else if (req->send.length < ep->ep_config.max_zcopy) {
+	} else if (req->send.length <= ep->ep_config.max_zcopy) {
 		lcp_request_init_tag_send(req);
 		if (LCR_IFACE_IS_TM(lcr_ep->rail)) {
 			req->send.func = lcp_send_tag_eager_tag_zcopy;
@@ -36,7 +36,7 @@ int lcp_send_start(lcp_ep_h ep, lcp_request_t *req)
 }
 
 int lcp_send(lcp_ep_h ep, mpc_lowcomm_request_t *request, 
-	     void *buffer, uint64_t seqn)
+	     const void *buffer, uint64_t seqn)
 {
 	int rc;
 	lcp_request_t *req;
