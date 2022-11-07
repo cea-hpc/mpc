@@ -1452,6 +1452,46 @@ __task_finalize_deps_list(mpc_omp_task_t * task)
     }
 }
 
+/* An instance of the given persistent task completed -> reinitialized next instance */
+static inline void
+__task_finalize_persistent(mpc_omp_task_t * task)
+{
+    assert(mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT));
+
+    // WIP : barrier-free implementation of persistent taskgraph
+    // inter-iterations dependencies may cause issue => need to track root/leaf and generate arcs (?)
+#if 0
+    // Reinit the task if a new version is ready
+    mpc_omp_task_persistent_instance_t * tinstance = NULL;
+    mpc_common_spinlock_lock(&(task->persistent_infos.reinit));
+    {
+        if (task->persistent_infos.next_instance)
+        {
+            tinstance = task->persistent_infos.next_instance;
+
+            if (task->persistent_infos.next_instance == task->persistent_infos.last_instance)
+            {
+                task->persistent_infos.last_instance = NULL;
+            }
+            task->persistent_infos.next_instance = task->persistent_infos.next_instance->next;
+        }
+        else
+        {
+            task->persistent_infos.lacked_instance = 1;
+        }
+    }
+    mpc_common_spinlock_unlock(&(task->persistent_infos.reinit));
+
+    if (tinstance)
+    {
+        task->data = (void *) (tinstance + 1);
+        free(tinstance);
+        _mpc_omp_task_reinit(task);
+        _mpc_omp_task_process(task);
+    }
+#endif
+}
+
 /** Given task completed -> fulfill its successors dependencies */
 static void
 __task_finalize_deps(mpc_omp_task_t * task)
@@ -1500,7 +1540,7 @@ __task_finalize_deps(mpc_omp_task_t * task)
     /* else, if the task is persistent */
     else
     {
-        // TODO : can we make the successor list lock-free ?
+        // This lock protect concurrent accesses when appending successor after than task completion
         mpc_common_spinlock_lock(&(task->dep_node.lock));
         {
             /* Resolve successor's data dependency */
@@ -1564,6 +1604,7 @@ _mpc_omp_task_finalize(mpc_omp_task_t * task)
     }
     else
     {
+        __task_finalize_persistent(task);
         __task_unref_persistent_region(task->parent);
     }
 }
@@ -2886,6 +2927,7 @@ _mpc_omp_task_wait(void ** depend, int nowait)
         mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
         assert(task);
 
+        /* if within a persistent region, wait for instance to complete */
         OPA_int_t * task_counter = region->active ? &(region->task_ref) : &(task->children_count);
         while (OPA_load_int(task_counter))
         {
@@ -4150,10 +4192,17 @@ mpc_omp_persistent_region_push(mpc_omp_task_t * task)
     assert(region->active);
     __task_ref_persistent_region(task->parent); /* _mpc_omp_task_finalize */
     OPA_store_int(&(task->persistent_infos.version), 0);
+    task->persistent_infos.original_uid = task->uid;
     task->persistent_infos.zombit = 0;
-    task->persistent_infos.uid = task->uid;
     mpc_omp_task_set_property(&(task->property), MPC_OMP_TASK_PROP_PERSISTENT);
     mpc_common_indirect_array_iterator_push(&(region->tasks_it), &task);
+
+    // WIP : barrier-free implementation of persistent taskgraph
+    // inter-iterations dependencies may cause issue => need to track root/leaf and generate arcs (?)
+#if 0
+    mpc_common_spinlock_init(&(task->persistent_infos.reinit), 0);
+    task->persistent_infos.lacked_instance = 0;
+#endif
 }
 
 void

@@ -244,6 +244,18 @@ _mpc_omp_task_trace_dependency(mpc_omp_task_t * out, mpc_omp_task_t * in)
     __node_insert(node);
 }
 
+static inline int
+__task_statuses_to_int(mpc_omp_task_statuses_t statuses)
+{
+    int bitset = 0;
+    bool * bits = (bool *) &statuses;
+    for (unsigned int i = 0 ; i < sizeof(mpc_omp_task_statuses_t) ; ++i)
+    {
+        if (bits[i]) bitset |= (1 << i);
+    }
+    return bitset;
+}
+
 void
 _mpc_omp_task_trace_schedule(mpc_omp_task_t * task)
 {
@@ -255,7 +267,7 @@ _mpc_omp_task_trace_schedule(mpc_omp_task_t * task)
     record->priority    = task->priority;
     record->properties  = task->property;
     record->schedule_id = task->schedule_id;
-    record->statuses    = task->statuses;
+    record->statuses    = __task_statuses_to_int(task->statuses);
 
 #if MPC_OMP_TASK_TRACE_USE_PAPI
     if (mpc_omp_conf_get()->task_trace_use_papi)
@@ -276,11 +288,11 @@ _mpc_omp_task_trace_create(mpc_omp_task_t * task)
 
     mpc_omp_task_trace_record_create_t * record = (mpc_omp_task_trace_record_create_t *) __node_record(node);
     record->uid                 = task->uid;
-    record->persistent_uid      = task->persistent_infos.uid;
+    record->persistent_uid      = task->persistent_infos.original_uid;
     record->properties          = task->property;
     record->npredecessors       = task->dep_node.npredecessors;
     record->ref_predecessors    = OPA_load_int(&(task->dep_node.ref_predecessors));
-    record->statuses            = task->statuses;
+    record->statuses            = __task_statuses_to_int(task->statuses);
     strncpy(record->label, task->label ? task->label : "(null)", MPC_OMP_TASK_LABEL_MAX_LENGTH);
     record->color               = task->color;
     record->parent_uid          = task->parent ? task->parent->uid : -1;
@@ -299,7 +311,7 @@ _mpc_omp_task_trace_delete(mpc_omp_task_t * task)
     record->uid             = task->uid;
     record->priority        = task->priority;
     record->properties      = task->property;
-    record->statuses        = task->statuses;
+    record->statuses        = __task_statuses_to_int(task->statuses);
 
     __node_insert(node);
 }
@@ -597,7 +609,6 @@ mpc_omp_task_trace_begin(void)
     {
         infos->begun = 1;
     }
-    //__node_insert(__node_new(MPC_OMP_TASK_TRACE_TYPE_BEGIN));
 # if 0
     dl_iterate_phdr(__check_dynamic_symbols, NULL);
 # endif
@@ -696,6 +707,7 @@ mpc_omp_task_trace_begin(void)
     }
 
 #endif /* MPC_OMP_TASK_TRACE_USE_PAPI */
+    __node_insert(__node_new(MPC_OMP_TASK_TRACE_TYPE_BEGIN));
 }
 
 void
@@ -706,7 +718,7 @@ mpc_omp_task_trace_end(void)
     _mpc_omp_callback_run(MPC_OMP_CALLBACK_SCOPE_INSTANCE,  MPC_OMP_CALLBACK_TASK_TRACE_END);
     _mpc_omp_callback_run(MPC_OMP_CALLBACK_SCOPE_THREAD,    MPC_OMP_CALLBACK_TASK_TRACE_END);
 
-    //__node_insert(__node_new(MPC_OMP_TASK_TRACE_TYPE_END));
+    __node_insert(__node_new(MPC_OMP_TASK_TRACE_TYPE_END));
     mpc_omp_task_trace_flush();
 
     mpc_omp_thread_task_trace_infos_t * infos = __get_infos();

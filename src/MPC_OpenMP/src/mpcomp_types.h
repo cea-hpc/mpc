@@ -624,6 +624,13 @@ typedef struct  mpc_omp_task_persistent_region_s
 
 }               mpc_omp_persistent_region_t;
 
+/* persistent task instance infos */
+typedef struct  mpc_omp_task_persistent_instance_infos_s
+{
+    /* the next instance */
+    struct mpc_omp_task_persistent_instance_infos_s * next;
+}               mpc_omp_task_persistent_instance_t;
+
 /* persistent task infos */
 typedef struct  mpc_omp_task_persistent_infos_s
 {
@@ -632,10 +639,25 @@ typedef struct  mpc_omp_task_persistent_infos_s
     OPA_int_t version;
 
     /* original task uid */
-    int uid;
+    int original_uid;
 
     /* Zom-bit - '1' if the task has be deleted from it persistent region */
-    int zombit : 1;
+    int zombit;
+
+    // WIP : barrier-free implementation of persistent taskgraph
+    // inter-iterations dependencies may cause issue => need to track root/leaf and generate arcs (?)
+#if 0
+    /* the reinstanciation lock */
+    mpc_common_spinlock_t reinit;
+
+    /* 1 if the task completed but was lacking a new instance */
+    volatile int lacked_instance;
+
+    /* persistent task instances infos */
+    mpc_omp_task_persistent_instance_t * next_instance;
+    mpc_omp_task_persistent_instance_t * last_instance;
+#endif
+
 }               mpc_omp_task_persistent_infos_t;
 
 /* critical tasks infos */

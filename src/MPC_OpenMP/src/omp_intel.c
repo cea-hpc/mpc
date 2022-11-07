@@ -2840,7 +2840,7 @@ __kmpc_omp_task_complete_if0(
 	MPC_OMP_TASK_THREAD_SET_CURRENT_TASK(thread, task->parent);
 	thread->info.icvs = task->prev_icvs;
 
-    task->statuses.completed = true;
+    task->statuses.completed = 1;
     _mpc_omp_task_finalize(task);
 }
 

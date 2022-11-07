@@ -149,7 +149,7 @@ typedef struct  mpc_omp_task_trace_record_schedule_s
     int schedule_id;
 
     /* the task statuses */
-    mpc_omp_task_statuses_t statuses;
+    int statuses;
 
     /* the task hardware counters (4 maximum) */
     long long hwcounters[MPC_OMP_TASK_TRACE_MAX_HW_COUNTERS];
@@ -177,7 +177,7 @@ typedef struct  mpc_omp_task_trace_record_create_s
     int ref_predecessors;
 
     /* the task statuses */
-    mpc_omp_task_statuses_t statuses;
+    int statuses;
 
     /* the task label */
     char label[MPC_OMP_TASK_LABEL_MAX_LENGTH];
@@ -208,7 +208,7 @@ typedef struct  mpc_omp_task_trace_record_delete_s
     int properties;
 
     /* the task statuses */
-    mpc_omp_task_statuses_t statuses;
+    int statuses;
 
 }               mpc_omp_task_trace_record_delete_t;
 
