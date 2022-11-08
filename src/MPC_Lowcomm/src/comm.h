@@ -52,6 +52,7 @@ static inline int _mpc_comm_ptp_message_is_for_process( mpc_lowcomm_ptp_message_
 		case MPC_LOWCOMM_P2P_TM_MESSAGE:
 		case MPC_LOWCOMM_RDV_MESSAGE:
 		case MPC_LOWCOMM_RDV_TM_MESSAGE:
+		case MPC_LOWCOMM_RSEND_TM_MESSAGE:
 		case MPC_LOWCOMM_RPUT_TM_MESSAGE:
 		case MPC_LOWCOMM_RGET_TM_MESSAGE:
 		case MPC_LOWCOMM_ACK_RDV_MESSAGE:
@@ -104,6 +105,7 @@ static inline int _mpc_comm_ptp_message_is_for_control( mpc_lowcomm_ptp_message_
 		case MPC_LOWCOMM_P2P_TM_MESSAGE:
 		case MPC_LOWCOMM_RDV_MESSAGE:
 		case MPC_LOWCOMM_RDV_TM_MESSAGE:
+		case MPC_LOWCOMM_RSEND_TM_MESSAGE:
 		case MPC_LOWCOMM_RPUT_TM_MESSAGE:
 		case MPC_LOWCOMM_RGET_TM_MESSAGE:
 		case MPC_LOWCOMM_ACK_RDV_MESSAGE:

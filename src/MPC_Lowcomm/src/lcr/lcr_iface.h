@@ -37,6 +37,14 @@ typedef int (*lcr_send_tag_zcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
 					 unsigned flags,
 					 lcr_tag_context_t *ctx);
 
+typedef int (*lcr_send_tag_rndv_zcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
+                                              lcr_tag_t tag,
+                                              uint64_t imm,
+                                              const struct iovec *iov,
+                                              size_t iovcnt,
+                                              unsigned flags,
+                                              lcr_tag_context_t *ctx);
+
 typedef int (*lcr_recv_tag_zcopy_func_t)(sctk_rail_info_t *rail,
 					 lcr_tag_t tag,
 					 lcr_tag_t ign_tag,
@@ -65,9 +73,11 @@ typedef int (*lcr_iface_get_attr_func_t)(sctk_rail_info_t *rail,
                                          lcr_rail_attr_t *attr);
 
 typedef int (*lcr_iface_pack_memp_func_t)(sctk_rail_info_t *rail,
-		lcr_memp_t *memp, void *dest);
+                                          lcr_memp_t *memp, 
+                                          void *dest);
 
 typedef int (*lcr_iface_unpack_memp_func_t)(sctk_rail_info_t *rail,
-		lcr_memp_t *memp, void *dest);
+                                            lcr_memp_t *memp, 
+                                            void *dest);
 
 #endif

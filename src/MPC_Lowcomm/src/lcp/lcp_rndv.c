@@ -538,6 +538,26 @@ int lcp_send_tag_eager_ack_bcopy(lcp_request_t *req, uint8_t am_id)
 int lcp_recv_tag_ack(lcp_context_h ctx, lcp_request_t *req, sctk_rail_info_t *iface);
 int lcp_recv_put_ack(lcp_context_h ctx, lcp_request_t *req, sctk_rail_info_t *iface);
 int lcp_recv_put_fin(lcp_context_h ctx, lcp_request_t *rreq, sctk_rail_info_t *iface);
+
+int lcp_send_rsend_start(lcp_request_t *req)
+{
+        uint64_t imm;
+        LCP_TM_SET_HDR_DATA(imm, MPC_LOWCOMM_RSEND_TM_MESSAGE, req->send.length);
+
+        lcr_tag_t tag = { .t_tag = {
+                .src = req->send.rndv.src,
+                .tag = req->send.rndv.tag,
+                .seqn = req->send.rndv.seqn
+        }};
+
+        struct iovec iov[2];
+        iov[1].iov_base = req->send.buffer;
+        iov[1].iov_len  = req->send.length;
+
+
+
+}
+
 int lcp_send_rndv_start(lcp_request_t *req) 
 {
 	int rc = MPC_LOWCOMM_SUCCESS;
@@ -549,9 +569,23 @@ int lcp_send_rndv_start(lcp_request_t *req)
 			      req->send.rndv.tag, req->send.rndv.src, 
 			      req->send.rndv.dest, req->msg_id);
 
-        req->state.status = MPC_LOWCOMM_LCP_RPUT_SYNC;
-
 	if (LCR_IFACE_IS_TM(ep->lct_eps[cc]->rail)) {
+                lcr_rail_attr_t attr; 
+                ep->lct_eps[cc]->rail->iface_get_attr(ep->lct_eps[cc]->rail, &attr);
+
+                switch(ep->ctx->config.rndv_mode) {
+                case LCP_RNDV_SEND:
+                        rc = lcp_send_rsend_start(req);
+                        break;
+                case LCP_RNDV_GET:
+                        rc = lcp_send_rget_start(req);
+                        break;
+                case LCP_RNDV_PUT:
+                        rc = lcp_send_rput_start(req);
+                        break;
+                default:
+                        mpc_common_debug_fatal("LCP: unknown protocol");
+                } else if (ep->ctx->config.rndv_mode == LCP_RNDV_GET) 
                 if (ep->ctx->config.rndv_mode == LCP_RNDV_GET) {
                         rc = lcp_mem_register(ep->ctx, &req->state.lmem,
                                               req->send.buffer, 

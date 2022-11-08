@@ -113,6 +113,89 @@ int lcr_ptl_send_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
 	return MPC_LOWCOMM_SUCCESS;
 }
 
+int lcr_ptl_send_tag_rndv_zcopy(_mpc_lowcomm_endpoint_t *ep,
+                                lcr_tag_t tag,
+                                uint64_t imm,
+                                const struct iovec *iov,
+                                size_t iovcnt,
+                                __UNUSED__ unsigned cflags,
+                                lcr_tag_context_t *ctx)
+{
+	int rc;
+	sctk_ptl_local_data_t* md_request = NULL;
+	sctk_ptl_local_data_t* me_request = NULL;
+	sctk_ptl_rail_info_t* srail       = &ep->rail->network.ptl;
+	int md_flags, me_flags            = 0;
+	sctk_ptl_matchbits_t match        = SCTK_PTL_MATCH_INIT;
+	sctk_ptl_pte_t* pte, *rdma_pte    = NULL;
+	sctk_ptl_id_t remote              = SCTK_PTL_ANY_PROCESS;
+	_mpc_lowcomm_endpoint_info_portals_t* infos   = &ep->data.ptl;
+	sctk_ptl_imm_data_t hdr;
+	
+        assert(iovcnt == 2);
+
+	/* prepare the Put() MD */
+	md_flags               = SCTK_PTL_MD_PUT_FLAGS;
+	match.raw              = tag.t;
+	hdr.raw                = imm;
+	pte                    = SCTK_PTL_PTE_ENTRY(srail->pt_table, ctx->comm_id);
+	remote                 = infos->dest;
+	md_request             = sctk_ptl_md_create(srail, NULL, 0, flags);
+
+	assert(md_request);
+	assert(pte);
+
+	/* emit the request */
+	rc = lcr_ptl_md_register(srail, request);
+	if (rc == MPC_LOWCOMM_NO_RESOURCE) {
+		mpc_common_debug("LCR PTL: zcopy in progress to %d (iface=%llu, remote=%llu, "
+                                 "idx=%d, sz=%llu)", ep->dest, srail->iface, remote,  pte->idx, 
+                                 size);
+		return MPC_LOWCOMM_NO_RESOURCE;
+	}
+
+	/* prepare the Get() ME */
+	match.raw = tag.t;
+	ign.raw = { 0 };
+
+	/* complete the ME data, this ME will be appended to the PRIORITY_LIST */
+        rdma_pte   = mpc_common_hashtable_get(&srail->pt_table, SCTK_PTL_PTE_RDMA);
+	me_flags   = SCTK_PTL_ME_GET_FLAGS | SCTK_PTL_ONCE;
+	me_request = sctk_ptl_me_create(iov[1].iov_base, iov[1].iov_len, remote, match, ign, me_flags); 
+
+	assert(user_ptr);
+	assert(pte);
+
+	user_ptr->msg  = ctx;
+	user_ptr->list = SCTK_PTL_PRIORITY_LIST;
+        sctk_ptl_chk(PtlMEAppend(
+		srail->iface,
+		rdma_pte->idx,
+		&user_ptr->slot.me,
+		user_ptr->list,
+		ctx,
+		&user_ptr->slot_h.meh
+	));
+
+	sctk_ptl_me_register(srail, user_ptr, pte);
+	mpc_common_debug_info("LCR PTL: send zcopy to %d (iface=%llu, remote=%llu, idx=%d, sz=%llu)", 
+			      ep->dest, srail->iface, remote, pte->idx, size);
+	sctk_ptl_chk(PtlPut(
+		user->slot_h.mdh,
+		0, /* local offset */
+		iov[0].iov_len,
+		PTL_ACK_REQ,
+		remote,
+		pte->idx,
+		match.raw,
+		0, /* remote offset */
+		ctx,
+                hdr.raw	
+	));
+
+	return MPC_LOWCOMM_SUCCESS;
+}
+
 int lcr_ptl_recv_tag_zcopy(sctk_rail_info_t *rail,
 			   lcr_tag_t tag, lcr_tag_t ign_tag,
 			   const struct iovec *iov, 

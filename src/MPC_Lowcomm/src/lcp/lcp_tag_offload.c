@@ -243,7 +243,7 @@ int lcp_recv_tag_zcopy(lcp_request_t *rreq, sctk_rail_info_t *iface)
 		.seqn = rreq->msg_number }
 	};
 	lcr_tag_t ign_tag = {.t = LCP_TM_SEQN_MASK };
-	ign_tag.t |= (int)rreq->recv.tag.src == MPC_ANY_SOURCE ? LCP_TM_SRC_MASK : 0;
+	ign_tag.t |= (int)rreq->recv.tag.src == MPC_ANY_SOURCE ? LCP_TM_SRC_MASK : 0; //FIXME: is this correct ??
 	ign_tag.t |= rreq->recv.tag.tag == MPC_ANY_TAG ? LCP_TM_TAG_MASK : 0;
 
 	struct iovec iov = {

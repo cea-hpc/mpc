@@ -246,6 +246,7 @@ struct sctk_rail_info_s
 	lcr_send_am_zcopy_func_t send_am_zcopy;
 	lcr_send_tag_bcopy_func_t send_tag_bcopy;
 	lcr_send_tag_zcopy_func_t send_tag_zcopy;
+	lcr_send_tag_rndv_zcopy_func_t send_tag_rndv_zcopy;
         lcr_send_put_func_t send_put;
         lcr_send_get_funt_t send_get;
 	lcr_recv_tag_zcopy_func_t recv_tag_zcopy;

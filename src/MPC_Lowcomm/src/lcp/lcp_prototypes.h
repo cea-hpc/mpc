@@ -37,10 +37,15 @@
 
 /* immediate data
  *
- * 64                                    12        0
- * <------------------------------------><--------->
- *               seqn                       prot
+ * 64    56                                          0
+ * <-----><------------------------------------------>
+ *   op                  size 
  */ 
+#define LCP_TM_SET_HDR_DATA(_hdr, _op, _length) \
+        _hdr |= (_op & 0xFFULL); \
+        _hdr  = (_hdr << 56); \
+        _hdr |= (_length & 0xFFFFFFFFFFFFFFULL);
+
 typedef union {
 	uint64_t raw;
 	struct {
