@@ -5,6 +5,7 @@
 #include "lcp_types.h"
 
 #include "sctk_rail.h"
+#include "opa_primitives.h"
 
 typedef uint16_t lcp_ep_flags_t;
 
@@ -44,6 +45,7 @@ typedef struct lcp_ep {
 	lcp_context_h ctx; /* Back reference to context */
 
 	uint64_t uid; /* Remote peer uid */
+        OPA_int_t seqn;
 
 	int num_chnls; /* Number of channels */
 	_mpc_lowcomm_endpoint_t **lct_eps;

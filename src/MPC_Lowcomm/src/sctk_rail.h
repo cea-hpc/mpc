@@ -153,8 +153,7 @@ typedef struct lcr_completion {
 
 /* tag offloading context */
 typedef struct lcr_tag_context {
-	void *arg;             //NOTE: contains lcp_context_h handle
-                               //      to access matching lists
+        void *start;           //NOTE: buffer returned by tm interface
 	void *req;             //NOTE: contains lcp_request_t
 	uint64_t comm_id;      //NOTE: needed by portals to get porte
 	uint64_t imm;

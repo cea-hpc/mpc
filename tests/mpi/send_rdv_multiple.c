@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
 			printf("Process %d send %d to others\n", process_Rank, size);
 		} else {
 			MPI_Recv(array_to_recv, size, MPI_INT, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-			printf("Process %d recved %d to others÷\n", process_Rank, size);
+			printf("Process %d recved %d to others\n", process_Rank, size);
 		}
 	}
 

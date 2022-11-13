@@ -12,7 +12,10 @@ struct lcp_mem {
         lcr_memp_t *mems; /* table of memp pointers */
 };
 
+int lcp_mem_create(lcp_context_h ctx, lcp_mem_h *mem_p);
 int lcp_mem_register(lcp_context_h ctx, lcp_mem_h *mem_p, void *buffer, size_t length);
 int lcp_mem_deregister(lcp_context_h ctx, lcp_mem_h mem);
+size_t lcp_mem_pack(lcp_context_h ctx, void *dest, lcp_mem_h mem);
+size_t lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h mem, void *src);
 
 #endif

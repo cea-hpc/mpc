@@ -4,6 +4,7 @@
 #include "lcp_header.h"
 #include "lcp_request.h"
 #include "lcp_context.h"
+#include "lcp_rndv.h"
 
 #include "sctk_alloc.h"
 #include "sctk_net_tools.h"
@@ -95,7 +96,6 @@ static inline int lcp_send_tag_eager_frag_zcopy(lcp_request_t *req,
 	};
 
 	req->send.t_ctx.comp = cp;
-	req->send.t_ctx.arg = ep->ctx;
 	req->send.t_ctx.req = req;
 	req->send.t_ctx.comm_id = req->send.tag.comm_id;
 
@@ -177,7 +177,6 @@ int lcp_send_tag_eager_tag_bcopy(lcp_request_t *req)
 		.seqn = req->msg_number }
 	};
 
-	req->send.t_ctx.arg = ep->ctx;
 	req->send.t_ctx.req = req;
 	req->send.t_ctx.comm_id = req->send.tag.comm_id;
 
@@ -200,23 +199,19 @@ int lcp_send_tag_eager_tag_zcopy(lcp_request_t *req)
 		.comp_cb = lcp_request_complete_tag_offload,
 	};
 
-	lcr_tag_t tag = { .t_tag = {
-		.src = req->send.tag.src,
-		.tag = req->send.tag.tag,
-		.seqn = req->msg_number }
-	};
+	lcr_tag_t tag = { 0 };
+        LCP_TM_SET_MATCHBITS(tag.t, req->send.tag.src, 
+                             req->send.tag.tag, 
+                             req->msg_number);
 
 	struct iovec iov = {
 		.iov_base = req->send.buffer,
 		.iov_len  = req->send.length
 	};
 
-	lcp_tm_imm_t imm = { .hdr = {
-		.prot = MPC_LOWCOMM_P2P_TM_MESSAGE,
-		.seqn = req->msg_number }
-	};
+        uint64_t imm = 0;
+        LCP_TM_SET_HDR_DATA(imm, MPC_LOWCOMM_P2P_TM_MESSAGE, req->send.length);
 
-	req->send.t_ctx.arg = req->send.ep->ctx;
 	req->send.t_ctx.req = req;
 	req->send.t_ctx.comm_id = req->send.tag.comm_id;
 	req->send.t_ctx.comp = cp;
@@ -226,7 +221,7 @@ int lcp_send_tag_eager_tag_zcopy(lcp_request_t *req)
 	mpc_common_debug_info("LCP: post send tag zcopy req=%p, src=%d, dest=%d, size=%d, matching=[%d:%d:%d]", 
 			      req, req->send.tag.src, req->send.tag.dest, req->send.length, tag.t_tag.tag, 
 			      tag.t_tag.src, tag.t_tag.seqn);
-	return lcp_send_do_tag_zcopy(lcr_ep, tag, imm.raw, &iov, 1, &(req->send.t_ctx));
+	return lcp_send_do_tag_zcopy(lcr_ep, tag, imm, &iov, 1, &(req->send.t_ctx));
 
 }
 
@@ -235,13 +230,55 @@ int lcp_send_tag_eager_tag_zcopy(lcp_request_t *req)
 /* Recv                                           */
 /* ============================================== */
 
+void lcp_recv_tag_callback(lcr_completion_t *comp) 
+{
+        int op;
+	lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
+					      recv.t_ctx.comp);
+
+        op                    = LCP_TM_GET_HDR_OP(req->recv.t_ctx.imm);
+        req->recv.send_length = LCP_TM_GET_HDR_LENGTH(req->recv.t_ctx.imm); 
+
+	mpc_lowcomm_communicator_t comm = 
+                mpc_lowcomm_get_communicator_from_id(req->recv.tag.comm_id);
+	req->recv.tag.src = 
+                mpc_lowcomm_communicator_uid(comm, LCP_TM_GET_SRC(req->recv.t_ctx.tag.t));
+        req->msg_number = LCP_TM_GET_SEQN(req->recv.t_ctx.tag.t);
+
+        switch(op) {
+        case MPC_LOWCOMM_P2P_TM_MESSAGE:
+                if (req->recv.length < comp->sent) {
+                        req->flags |= LCP_REQUEST_RECV_TRUNC;
+                        lcp_request_complete(req);
+                } else {
+                        if (req->recv.buffer != req->recv.t_ctx.start) {
+                                memcpy(req->recv.buffer, req->recv.t_ctx.start, comp->sent);
+                        }
+                        lcp_request_complete(req);
+                }
+                break;
+        case MPC_LOWCOMM_RSEND_TM_MESSAGE:
+                lcp_recv_rsend(req, (void *)&req->recv.t_ctx.tag.t);
+                break;
+        case MPC_LOWCOMM_RGET_TM_MESSAGE:
+                lcp_recv_rget(req, req->recv.t_ctx.start);
+                break;
+        case MPC_LOWCOMM_RPUT_TM_MESSAGE:
+                lcp_recv_rput(req, NULL);
+                break;
+        default:
+                mpc_common_debug_error("LCP: unknown recv protocol.");
+                break;
+        }
+
+        return;
+}
+
 int lcp_recv_tag_zcopy(lcp_request_t *rreq, sctk_rail_info_t *iface)
 {
-	lcr_tag_t tag = { .t_tag = { 
-		.tag = rreq->recv.tag.tag,
-		.src = rreq->recv.tag.src,
-		.seqn = rreq->msg_number }
-	};
+	lcr_tag_t tag = { 0 };
+        LCP_TM_SET_MATCHBITS(tag.t, rreq->recv.tag.src, rreq->recv.tag.tag, 0);
+
 	lcr_tag_t ign_tag = {.t = LCP_TM_SEQN_MASK };
 	ign_tag.t |= (int)rreq->recv.tag.src == MPC_ANY_SOURCE ? LCP_TM_SRC_MASK : 0; //FIXME: is this correct ??
 	ign_tag.t |= rreq->recv.tag.tag == MPC_ANY_TAG ? LCP_TM_TAG_MASK : 0;
@@ -251,9 +288,9 @@ int lcp_recv_tag_zcopy(lcp_request_t *rreq, sctk_rail_info_t *iface)
 		.iov_len  = rreq->recv.length
 	};
 
-	rreq->recv.t_ctx.arg = rreq->ctx; //FIXME: ctx also in rreq so not needed
-	rreq->recv.t_ctx.req = rreq;
-	rreq->recv.t_ctx.comm_id = rreq->recv.tag.comm_id;
+	rreq->recv.t_ctx.req          = rreq;
+	rreq->recv.t_ctx.comm_id      = rreq->recv.tag.comm_id;
+        rreq->recv.t_ctx.comp.comp_cb = lcp_recv_tag_callback;
 
 	mpc_common_debug_info("LCP: post recv tag zcopy req=%p, src=%d, dest=%d, size=%d, matching=[%d:%d:%d], "
 			      "ignore=[%d:%d:%d]", rreq, rreq->send.tag.src, rreq->send.tag.dest, rreq->send.length, 
@@ -285,7 +322,6 @@ static inline int lcp_recv_tag_frag_zcopy(lcp_request_t *rreq,
 		.iov_len  = length 
 	};
 
-	rreq->recv.t_ctx.arg = rreq->ctx;
 	rreq->recv.t_ctx.req = rreq;
 	rreq->recv.t_ctx.comm_id = rreq->recv.tag.comm_id;
 	rreq->recv.t_ctx.tag = tag;
@@ -375,8 +411,8 @@ static int lcp_tag_frag_handler(void *arg,
 {
 	int rc;
 	lcr_tag_context_t *t_ctx = arg;
-	lcp_context_h ctx = t_ctx->arg;
 	lcp_request_t *req = t_ctx->req;
+	lcp_context_h ctx = req->ctx;
 
 	LCP_CONTEXT_LOCK(ctx);
 	lcp_request_update_state(req, length); 

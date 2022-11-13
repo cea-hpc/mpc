@@ -78,14 +78,14 @@ struct lcp_request {
 				} am;
 
 				struct {
-					uint64_t comm_id;
-					uint64_t src;
-					uint64_t dest;
-					int      tag;
-                                        int      seqn;
-                                        uint64_t remote_addr;
+					uint64_t  comm_id;
+					uint64_t  src;
+					uint64_t  dest;
+					int       tag;
+                                        int       seqn;
+                                        uint64_t  remote_addr;
                                         lcp_mem_h lmem; /* local */
-                                        lcp_mem_h rmem; /* remote */
+                                        int       ack;
 				} rndv;
 			};
 
@@ -161,6 +161,7 @@ static inline void lcp_request_init_rndv_send(lcp_request_t *req)
         req->send.rndv.src       = req->request->header.source; 
         req->send.rndv.tag       = req->request->header.message_tag;
         req->send.rndv.comm_id   = req->request->header.communicator_id; 
+        req->send.rndv.seqn      = req->msg_number;
 };
 
 static inline void lcp_request_init_get(lcp_request_t *get_req, lcp_ep_h ep,

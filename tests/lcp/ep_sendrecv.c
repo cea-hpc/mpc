@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
 	/* send/recv */
 	if (mpc_lowcomm_peer_get_rank(my_uid) == 0) {
 		data1 = 42;
-		rc = lcp_send(ep, &req1, &data1, 0);
+		rc = lcp_send(ep, &req1, &data1);
 		if (rc != 0) {
 			printf("ERROR: send\n");
 		}

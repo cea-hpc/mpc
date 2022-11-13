@@ -569,7 +569,11 @@ void sctk_ptl_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_c
 	md_flags   = SCTK_PTL_MD_PUT_FLAGS | SCTK_PTL_MD_GET_FLAGS;
 	md_request = sctk_ptl_md_create(srail, addr, size, md_flags);
 	md_request->type = SCTK_PTL_TYPE_RDMA;
+#ifdef MPC_LOWCOMM_PROTOCOL
+        lcr_ptl_md_register(srail, md_request);
+#else
 	sctk_ptl_md_register(srail, md_request);
+#endif
 
 	/* configure the ME */
 	me_flags       = SCTK_PTL_ME_PUT_FLAGS | SCTK_PTL_ME_GET_FLAGS;
@@ -593,7 +597,7 @@ void sctk_ptl_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_c
 	list->pin.ptl.start   = addr;
 	list->pin.ptl.match   = match;
 
-	mpc_common_debug_info("REGISTER RDMA %p->%p (match=%s) '%llu', origin=%llu", addr, addr + size,  __sctk_ptl_match_str(sctk_malloc(32), 32, match.raw), *(unsigned long long int*)addr, list->pin.ptl.origin);
+	mpc_common_debug_info("REGISTER RDMA %p->%p (match=%s) '%llu', origin=%llu, pte idx=%d, size=%llu", addr, addr + size,  __sctk_ptl_match_str(sctk_malloc(32), 32, match.raw), (unsigned long long int)addr, list->pin.ptl.origin, rdma_pte->idx, size);
 }
 
 /**
@@ -611,7 +615,7 @@ void sctk_ptl_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin
 	assert(list);
 	sctk_ptl_md_release(list->pin.ptl.md_data);
 	sctk_ptl_me_release(list->pin.ptl.me_data);
-	mpc_common_nodebug("RELEASE RDMA %p->%p %s", list->pin.ptl.me_data->slot.me.start, list->pin.ptl.me_data->slot.me.start + list->pin.ptl.me_data->slot.me.length, __sctk_ptl_match_str(sctk_malloc(32), 32, list->pin.ptl.me_data->slot.me.match_bits));
+	mpc_common_debug_info("RELEASE RDMA %p->%p %s", list->pin.ptl.me_data->slot.me.start, list->pin.ptl.me_data->slot.me.start + list->pin.ptl.me_data->slot.me.length, __sctk_ptl_match_str(sctk_malloc(32), 32, list->pin.ptl.me_data->slot.me.match_bits));
 }
 
 void lcr_ptl_handle_rdma_ev_me(sctk_rail_info_t *rail, sctk_ptl_event_t *ev)

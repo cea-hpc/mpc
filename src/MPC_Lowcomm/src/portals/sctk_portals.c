@@ -410,6 +410,7 @@ int lcr_ptl_iface_open(char *device_name, int id,
         /* Add new API call */
         iface->send_tag_bcopy = lcr_ptl_send_tag_bcopy;
         iface->send_tag_zcopy = lcr_ptl_send_tag_zcopy;
+        iface->send_tag_rndv_zcopy = lcr_ptl_send_tag_rndv_zcopy;
         iface->send_put       = lcr_ptl_send_put;
         iface->send_get       = lcr_ptl_send_get;
         iface->recv_tag_zcopy = lcr_ptl_recv_tag_zcopy;

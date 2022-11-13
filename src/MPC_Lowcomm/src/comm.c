@@ -2580,7 +2580,7 @@ void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_r
 
 		msg->tail.request->request_completion_fn = 
 			mpc_lowcomm_request_complete;
-		rc = lcp_send(ep, msg->tail.request, msg->tail.message.contiguous.addr, 0);
+		rc = lcp_send(ep, msg->tail.request, msg->tail.message.contiguous.addr);
 		if (rc != MPC_LOWCOMM_SUCCESS) {
 			mpc_common_debug_fatal("Could not send message %lu.", uid);
 		}
@@ -3099,7 +3099,7 @@ int mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
                 }
         }
         /* fill up request */
-        return lcp_send(ep, req, data, 0);
+        return lcp_send(ep, req, data);
 #else
 	return mpc_lowcomm_isend_class(dest, data, size, tag, comm, MPC_LOWCOMM_P2P_MESSAGE, req);
 #endif

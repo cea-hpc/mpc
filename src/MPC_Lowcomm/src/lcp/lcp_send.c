@@ -6,6 +6,7 @@
 #include "lcp_rndv.h"
 #include "lcp_prototypes.h"
 
+#include "opa_primitives.h"
 #include "sctk_alloc.h"
 
 int lcp_send_start(lcp_ep_h ep, lcp_request_t *req)
@@ -36,7 +37,7 @@ int lcp_send_start(lcp_ep_h ep, lcp_request_t *req)
 }
 
 int lcp_send(lcp_ep_h ep, mpc_lowcomm_request_t *request, 
-	     const void *buffer, uint64_t seqn)
+	     const void *buffer)
 {
 	int rc;
 	lcp_request_t *req;
@@ -49,7 +50,7 @@ int lcp_send(lcp_ep_h ep, mpc_lowcomm_request_t *request,
 		return MPC_LOWCOMM_ERROR;
 	}
 	LCP_REQUEST_INIT_SEND(req, ep->ctx, request, request->header.msg_size, 
-			ep, buffer, seqn, msg_id);
+			ep, (void *)buffer, OPA_fetch_and_incr_int(&ep->seqn), msg_id);
         req->flags |= LCP_REQUEST_MPI_COMPLETE;
 
 	if (ep->state == LCP_EP_FLAG_CONNECTING) {

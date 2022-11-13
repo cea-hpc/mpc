@@ -21,6 +21,14 @@ int lcr_ptl_send_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
 			   unsigned cflags,
 			   lcr_tag_context_t *ctx);
 
+int lcr_ptl_send_tag_rndv_zcopy(_mpc_lowcomm_endpoint_t *ep,
+                                lcr_tag_t tag,
+                                uint64_t imm,
+                                const struct iovec *iov,
+                                size_t iovcnt,
+                                unsigned cflags,
+                                lcr_tag_context_t *ctx);
+
 int lcr_ptl_recv_tag_zcopy(sctk_rail_info_t *rail,
 			   lcr_tag_t tag, lcr_tag_t ign_tag,
 			   const struct iovec *iov, 
@@ -30,16 +38,16 @@ int lcr_ptl_recv_tag_zcopy(sctk_rail_info_t *rail,
 int lcr_ptl_send_put(_mpc_lowcomm_endpoint_t *ep,
                      uint64_t local_addr,
                      uint64_t remote_addr,
-                     lcr_memp_t local_key,
-                     lcr_memp_t remote_key,
+                     lcr_memp_t *local_key,
+                     lcr_memp_t *remote_key,
                      size_t size,
                      lcr_completion_t *comp);
 
 int lcr_ptl_send_get(_mpc_lowcomm_endpoint_t *ep,
                      uint64_t local_addr,
                      uint64_t remote_addr,
-                     lcr_memp_t local_key,
-                     lcr_memp_t remote_key,
+                     lcr_memp_t *local_key,
+                     lcr_memp_t *remote_key,
                      size_t size,
                      lcr_completion_t *comp);
 

@@ -154,36 +154,28 @@ int lcr_ptl_handle_eq_ev(sctk_rail_info_t *rail,
 			 sctk_ptl_event_t *ev)
 {
 	int rc = MPC_LOWCOMM_SUCCESS;
-	sctk_ptl_imm_data_t imm = (sctk_ptl_imm_data_t)ev->hdr_data;
 	sctk_ptl_local_data_t *user_ptr  = ev->user_ptr;
 	lcr_tag_context_t *ctx = (lcr_tag_context_t *)user_ptr->msg;
-	uint8_t am_id = (uint8_t)imm.raw;
-	unsigned flags = 0;
-	lcr_am_handler_t handler;
 
         switch (ev->type) {
         case PTL_EVENT_PUT_OVERFLOW:
         case PTL_EVENT_GET_OVERFLOW:
-                flags |= LCR_IFACE_TM_OVERFLOW;
-                break;
         case PTL_EVENT_PUT:
         case PTL_EVENT_GET:
-                flags |= LCR_IFACE_TM_NOVERFLOW;
                 break;
         default:
-                flags |= LCR_IFACE_TM_ERROR;
                 mpc_common_debug_error("LCP: ptl event type not supported: %d.", ev->type);
                 break;
         }
 
-	ctx->tag = (lcr_tag_t)ev->match_bits;
-	ctx->imm = ev->hdr_data;
+        /* set up context */
+	ctx->tag       = (lcr_tag_t)ev->match_bits;
+	ctx->imm       = ev->hdr_data;
+        ctx->start     = ev->start;
+        ctx->comp.sent = ev->mlength;
 
-	handler = rail->am[am_id];
-	rc = handler.cb(ctx, ev->start, ev->mlength, flags);
-	if (rc != MPC_LOWCOMM_SUCCESS) {
-		mpc_common_debug_error("LCP: ptl handler id %d failed.", am_id);
-	}
+        /* callback */
+        ctx->comp.comp_cb(&ctx->comp);
 
 	sctk_free(user_ptr);
 
@@ -205,8 +197,7 @@ static inline int ___eq_poll(sctk_rail_info_t* rail, sctk_ptl_pte_t *cur_pte)
 	{
 		did_poll = 1;
 
-		mpc_common_debug_info("PORTALS: EQS EVENT '%s' iface=%llu, idx=%d, sz=%llu, user=%p, start=%p", sctk_ptl_event_decode(ev), srail->iface, ev.pt_index, ev.mlength, ev.user_ptr, ev.start);
-                //mpc_common_debug_info("from %s, type=%s, prot=%s, match=[%d,%d,%d]", SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot), tag.t_tag.src, tag.t_tag.tag, tag.t_tag.seqn);
+		mpc_common_debug_info("PORTALS: EQS EVENT '%s' idx=%d, from %s, type=%s, prot=%s, match=%s,  sz=%llu, user=%p, start=%p", sctk_ptl_event_decode(ev), ev.pt_index, SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot), __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), ev.mlength, ev.user_ptr, ev.start);
 
 
 		/* if the event is related to a probe request */
@@ -371,6 +362,10 @@ void lcr_ptl_handle_md_ev(sctk_ptl_event_t *ev)
 			break;
 
 		case PTL_EVENT_REPLY: /* the Get() downloaded the data from the remote process */
+			/* complete callback */
+			ctx->comp.sent = ev->mlength;
+			ctx->comp.comp_cb(&ctx->comp);
+                        break;
 		case PTL_EVENT_SEND:  /* a local request left the local process */
 			not_reachable();
 			break;
@@ -400,7 +395,7 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, size_t threshold)
 		{
 			user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
 			assert(user_ptr != NULL);
-			//mpc_common_debug_info("PORTALS: MDS EVENT '%s' iface=%llu, from %s, type=%s, prot=%s, match=%s",sctk_ptl_event_decode(ev), srail->iface, SCTK_PTL_STR_LIST(ev.ptl_list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot),  __sctk_ptl_match_str(malloc(32), 32, user_ptr->match.raw));
+			mpc_common_debug_info("PORTALS: MDS EVENT '%s' iface=%llu, from %s, type=%s, prot=%s, match=%s, user_ptr=%p",sctk_ptl_event_decode(ev), srail->iface, SCTK_PTL_STR_LIST(ev.ptl_list), SCTK_PTL_STR_TYPE(user_ptr->type), SCTK_PTL_STR_PROT(user_ptr->prot),  __sctk_ptl_match_str(malloc(32), 32, user_ptr->match.raw), user_ptr);
 			/* we only care about Portals-sucess events */
 			if(ev.ni_fail_type != PTL_NI_OK)
 			{

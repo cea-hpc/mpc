@@ -3,12 +3,42 @@
 #include "lcp_context.h"
 #include <sctk_alloc.h>
 
-int lcp_mem_register(lcp_context_h ctx, lcp_mem_h *mem_p, void *buffer, size_t length)
+size_t lcp_mem_pack(lcp_context_h ctx, void *dest, lcp_mem_h mem)
+{
+        int i;
+        size_t packed_size = 0;
+        sctk_rail_info_t *iface = NULL;
+        void *p = dest;
+
+        for (i=0; i<mem->num_ifaces; i++) {
+                iface = ctx->resources[i].iface;
+                packed_size += iface->iface_pack_memp(iface, &mem->mems[i], p);
+                p += packed_size;
+        }
+
+        return packed_size;
+}
+
+size_t lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h mem, void *src)
+{
+        int i;
+        size_t unpacked_size = 0;
+        sctk_rail_info_t *iface = NULL;
+        void *p = src;
+
+        for (i=0; i<mem->num_ifaces; i++) {
+                iface = ctx->resources[i].iface;
+                unpacked_size += iface->iface_unpack_memp(iface, &mem->mems[i], p);
+                p += unpacked_size;
+        }
+
+        return unpacked_size;
+}
+
+int lcp_mem_create(lcp_context_h ctx, lcp_mem_h *mem_p)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-        int i;
         lcp_mem_h mem;
-        sctk_rail_info_t *iface = NULL;
 
         mem = sctk_malloc(sizeof(struct lcp_mem));
         if (mem == NULL) {
@@ -17,9 +47,6 @@ int lcp_mem_register(lcp_context_h ctx, lcp_mem_h *mem_p, void *buffer, size_t l
                 goto err;
         }
 
-        mem->length     = length;
-        mem->base_addr  = (uint64_t)buffer;
-
         mem->num_ifaces = ctx->num_resources;
         mem->mems = sctk_malloc(mem->num_ifaces * sizeof(lcr_memp_t));
         if (mem->mems == NULL) {
@@ -27,6 +54,26 @@ int lcp_mem_register(lcp_context_h ctx, lcp_mem_h *mem_p, void *buffer, size_t l
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
+
+        *mem_p = mem;
+err:
+        return rc;
+}
+
+int lcp_mem_register(lcp_context_h ctx, lcp_mem_h *mem_p, void *buffer, size_t length)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+        int i;
+        lcp_mem_h mem;
+        sctk_rail_info_t *iface = NULL;
+
+        rc = lcp_mem_create(ctx, &mem);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
+
+        mem->length     = length;
+        mem->base_addr  = (uint64_t)buffer;
         
         /* Pin the memory and create memory handles */
         for (i=0; i<mem->num_ifaces; i++) {

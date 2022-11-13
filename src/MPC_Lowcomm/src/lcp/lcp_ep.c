@@ -196,8 +196,9 @@ int lcp_context_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p,
 		goto err;
 	}
 
-	ep->uid = uid;
-	ep->ctx = ctx;
+	ep->uid  = uid;
+	ep->ctx  = ctx;
+        OPA_store_int(&ep->seqn, 0);
 
 	/* Init endpoint config */
 	lcp_ep_init_config(ctx, ep);

@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
 		memset(data1, 0, size);
 		/* wait to force early recv */
 		usleep(10);
-		rc = lcp_send(ep, &req1, &data1, 0);
+		rc = lcp_send(ep, &req1, &data1);
 		if (rc != 0) {
 			printf("ERROR: send\n");
 		}
