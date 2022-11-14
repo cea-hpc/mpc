@@ -317,7 +317,7 @@ _mpc_omp_task_trace_delete(mpc_omp_task_t * task)
 }
 
 void
-_mpc_omp_task_trace_send(int count, int datatype, int dst, int tag, int comm)
+_mpc_omp_task_trace_send(int count, int datatype, int dst, int tag, int comm, int completed)
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     assert(thread);
@@ -335,12 +335,13 @@ _mpc_omp_task_trace_send(int count, int datatype, int dst, int tag, int comm)
     record->dst = dst;
     record->tag = tag;
     record->comm = comm;
+    record->completed = completed;
 
     __node_insert(node);
 }
 
 void
-_mpc_omp_task_trace_recv(int count, int datatype, int src, int tag, int comm)
+_mpc_omp_task_trace_recv(int count, int datatype, int src, int tag, int comm, int completed)
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     assert(thread);
@@ -358,12 +359,13 @@ _mpc_omp_task_trace_recv(int count, int datatype, int src, int tag, int comm)
     record->src = src;
     record->tag = tag;
     record->comm = comm;
+    record->completed = completed;
 
     __node_insert(node);
 }
 
 void
-_mpc_omp_task_trace_allreduce(int count, int datatype, int op, int comm)
+_mpc_omp_task_trace_allreduce(int count, int datatype, int op, int comm, int completed)
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     assert(thread);
@@ -380,6 +382,7 @@ _mpc_omp_task_trace_allreduce(int count, int datatype, int op, int comm)
     record->datatype = datatype;
     record->op = op;
     record->comm = comm;
+    record->completed = completed;
 
     __node_insert(node);
 }
