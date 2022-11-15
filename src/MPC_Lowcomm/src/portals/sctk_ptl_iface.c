@@ -224,6 +224,66 @@ void sctk_ptl_hardware_fini(sctk_ptl_rail_info_t* srail)
 	PtlFini();
 }
 
+void lcr_ptl_software_init(sctk_ptl_rail_info_t *srail, size_t comm_dims)
+{
+        int i;
+        sctk_ptl_md_t md; 
+	sctk_ptl_pte_t * table = NULL;
+	srail->nb_entries = 0;
+
+	comm_dims = SCTK_PTL_PTE_HIDDEN + comm_dims;
+        /* create the EQ */
+        sctk_ptl_chk(PtlEQAlloc(srail->iface,         /* the NI handler */
+                                SCTK_PTL_EQ_PTE_SIZE, /* the number of slots in the EQ */
+                                &srail->mes_eq        /* the returned handler */
+                               ));
+
+	table = sctk_malloc(sizeof(sctk_ptl_pte_t) * comm_dims); /* one CM, one recovery, one RDMA */
+	memset(table, 0, comm_dims * sizeof(sctk_ptl_pte_t));
+	
+	mpc_common_hashtable_init(&srail->pt_table, (comm_dims < 64) ? 64 : comm_dims);
+	mpc_common_hashtable_init(&srail->reverse_pt_table, (comm_dims < 64) ? 64 : comm_dims);
+
+	for (i = 0; i < SCTK_PTL_PTE_HIDDEN; i++)
+	{
+		/* register the PT */
+		sctk_ptl_chk(PtlPTAlloc(
+			srail->iface,       /* the NI handler */
+			SCTK_PTL_PTE_FLAGS, /* PT entry specific flags */
+			srail->mes_eq,      /* the EQ for this entry */
+			i,                  /* the desired index value */
+			&table[i].idx       /* the effective index value */
+		));
+
+                mpc_common_hashtable_set(&srail->pt_table, i, &table[i]);
+	}
+
+        md.start     = 0;
+        md.length    = PTL_SIZE_MAX;
+        md.options   = 0;
+        md.ct_handle = PTL_CT_NONE;
+        md.eq_handle = srail->mes_eq;
+
+	sctk_ptl_chk(PtlMDBind(
+		srail->iface,     /* the NI handler */
+		&md,              /* the MD to bind with memory region */
+		&srail->mdh       /* out: the MD handler */
+	));
+	
+	OPA_store_int(&srail->rdma_cpt, 0);
+	if(srail->max_mr > srail->max_limits.max_msg_size)
+		srail->max_mr = srail->max_limits.max_msg_size;
+	
+	if(sctk_ptl_offcoll_enabled(srail))
+		sctk_ptl_offcoll_init(srail);
+
+	//FIXME: nb_entries was not set but used in fini function which
+	//       segfaulted
+	srail->nb_entries = comm_dims;
+
+	sctk_ptl_print_structure(srail);
+}
+
 /**
  * Map the Portals structure in user-space to be ready for communication.
  *
@@ -240,9 +300,6 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims)
 
 	sctk_ptl_pte_t * table = NULL;
 	srail->nb_entries = 0;
-	//FIXME: dont understand why comm_dim should be added ? 
-	//       A new portals porte is created upon communicator creation
-	//       anyway.
 	comm_dims = SCTK_PTL_PTE_HIDDEN + comm_dims;
 
 	table = sctk_malloc(sizeof(sctk_ptl_pte_t) * comm_dims); /* one CM, one recovery, one RDMA */
@@ -340,6 +397,16 @@ mpc_lowcomm_communicator_id_t sctk_ptl_pte_idx_to_comm_id(sctk_ptl_rail_info_t* 
 void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, ptl_pt_index_t requested_index, size_t key)
 {
 	size_t eager_size = srail->eager_limit;
+#ifdef MPC_LOWCOMM_PROTOCOL
+	/* register the PT */
+	sctk_ptl_chk(PtlPTAlloc(
+		srail->iface,       /* the NI handler */
+		SCTK_PTL_PTE_FLAGS, /* PT entry specific flags */
+		srail->mes_eq,        /* the EQ for this entry */
+		requested_index,  /* the desired index value */
+		&pte->idx       /* the effective index value */
+	));
+#else 
 	/* create the EQ for this PT */
 	sctk_ptl_chk(PtlEQAlloc(
 		srail->iface,         /* the NI handler */
@@ -355,6 +422,7 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, ptl_p
 		requested_index,  /* the desired index value */
 		&pte->idx       /* the effective index value */
 	));
+#endif
 
 	if(sctk_ptl_offcoll_enabled(srail))
 	{
@@ -380,9 +448,11 @@ static inline void __pte_release(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pt
 	if(sctk_ptl_offcoll_enabled(srail))
 		sctk_ptl_offcoll_pte_fini(srail, pte);
 	
+#ifndef MPC_LOWCOMM_PROTOCOL
 	sctk_ptl_chk(PtlEQFree(
 		pte->eq       /* the EQ handler */
 	));
+#endif
 
 	sctk_ptl_chk(PtlPTFree(
 		srail->iface,     /* the NI handler */

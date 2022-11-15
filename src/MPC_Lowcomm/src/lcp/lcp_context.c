@@ -590,6 +590,10 @@ int lcp_context_fini(lcp_context_h ctx)
 		sctk_free(iface);
 	}
 	sctk_free(ctx->resources);
+
+        /* config release */
+        sctk_free(ctx->config.selected_components);
+
 	sctk_free(ctx);
 
 	return MPC_LOWCOMM_SUCCESS;

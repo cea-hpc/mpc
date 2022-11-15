@@ -330,3 +330,41 @@ int lcr_ptl_unpack_memp(sctk_rail_info_t *rail,
 
         return sizeof(sctk_ptl_matchbits_t);
 }
+
+int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
+{
+	int did_poll = 0;
+	int ret;
+	sctk_ptl_event_t ev;
+	sctk_ptl_rail_info_t* srail = &rail->network.ptl;
+        lcr_tag_context_t *tag_ctx;
+
+	ret = PtlEQGet(srail->mes_eq, &ev);
+	sctk_ptl_chk(ret);
+
+	tag_ctx = (lcr_tag_context_t *)ev.user_ptr;
+
+        if (ret == PTL_OK) {
+		mpc_common_debug_info("PORTALS: EQS EVENT '%s' idx=%d, match=%s,  sz=%llu, "
+                                      "user=%p, start=%p", sctk_ptl_event_decode(ev), ev.pt_index, 
+                                      __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), 
+                                      ev.mlength, ev.user_ptr, ev.start);
+
+                switch (ev.type) {
+                case PTL_EVENT_SEND:
+			not_reachable();
+			break;
+                case PTL_EVENT_REPLY:
+                case PTL_EVENT_ACK:
+			tag_ctx->comp.sent = ev.mlength;
+			tag_ctx->comp.comp_cb(&tag_ctx->comp);
+                case PTL_EVENT_PUT_OVERFLOW:
+                case PTL_EVENT_GET_OVERFLOW:
+
+			sctk_ptl_me_feed(srail, ev,  srail->eager_limit, 1, SCTK_PTL_OVERFLOW_LIST, SCTK_PTL_TYPE_STD, SCTK_PTL_PROT_NONE);
+			break;
+
+
+
+
+}

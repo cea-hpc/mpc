@@ -91,6 +91,9 @@ void sctk_ptl_hardware_fini();
 /* Software-related init */
 void sctk_ptl_software_init(sctk_ptl_rail_info_t*, size_t);
 void sctk_ptl_software_fini(sctk_ptl_rail_info_t*);
+#ifdef MPC_LOWCOMM_PROTOCOL
+int lcr_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims);
+#endif
 
 /* Portals table management */
 void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, ptl_pt_index_t requested_index, size_t key);

@@ -71,6 +71,7 @@ typedef int (*lcr_send_get_funt_t)(_mpc_lowcomm_endpoint_t *ep,
 // Interface functions
 typedef int (*lcr_iface_get_attr_func_t)(sctk_rail_info_t *rail,
                                          lcr_rail_attr_t *attr);
+typedef int (*lcr_iface_progress_func_t)(sctk_rail_info_t *rail);
 
 typedef int (*lcr_iface_pack_memp_func_t)(sctk_rail_info_t *rail,
                                           lcr_memp_t *memp, 

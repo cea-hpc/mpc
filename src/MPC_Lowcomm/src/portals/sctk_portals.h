@@ -32,6 +32,7 @@ extern "C"
 #include <mpc_common_helper.h>
 #include <mpc_lowcomm_types.h>
 #include "sctk_ptl_types.h"
+#include "lcr/lcr_component.h"
 
 struct sctk_rail_info_s;
 void sctk_network_init_ptl ( struct sctk_rail_info_s *rail);

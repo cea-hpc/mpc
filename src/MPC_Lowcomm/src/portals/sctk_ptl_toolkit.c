@@ -754,7 +754,11 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 
 	rail->network.ptl.offload_support = offloading;
 	
+#ifdef MPC_LOWCOMM_PROTOCOL
+        lcr_ptl_software_init(&rail->network.ptl, min_comms);
+#else
 	sctk_ptl_software_init( &rail->network.ptl, min_comms);
+#endif
 	assert(eager_limit == rail->network.ptl.eager_limit);
 
 	mpc_common_hashtable_init(&rail->network.ptl.ranks_ids_map, mpc_common_get_process_count());

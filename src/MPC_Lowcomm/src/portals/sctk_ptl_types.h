@@ -408,6 +408,8 @@ typedef struct sctk_ptl_rail_info_s
 	sctk_ptl_nih_t iface;                   /**< Interface handler for the device */
 	sctk_ptl_id_t id;                       /**< Local id identifying this rail */
 	sctk_ptl_eq_t mds_eq;                   /**< EQ for all MDs emited from this NI */
+        sctk_ptl_mdh_t mdh;
+	sctk_ptl_eq_t mes_eq;                   /**< EQ for all MEs received on this NI */
 	struct mpc_common_hashtable ranks_ids_map; /**< each cell maps to the portals process object */
 	struct mpc_common_hashtable pt_table;         /**< The COMM => PT hash table */
 	struct mpc_common_hashtable reverse_pt_table; /**< The PT => COMM hash table */
