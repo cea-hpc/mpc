@@ -675,11 +675,13 @@ err:
         return rc;
 }
 
+
 int lcp_recv_rget(lcp_request_t *req, void *hdr)
 {
-        int rc, f_id;
+        int rc, f_id, i;
         size_t remaining, offset;
         size_t frag_length, length;
+        size_t *per_ep_length;
         lcp_mem_h rmem; 
         lcp_ep_h ep;
 	lcp_ep_ctx_t *ctx_ep;
@@ -722,17 +724,24 @@ int lcp_recv_rget(lcp_request_t *req, void *hdr)
         req->state.remaining = remaining = req->recv.send_length;
         f_id                 = 0;
         offset               = 0;
+
+        per_ep_length        = sctk_malloc(ep->num_chnls * sizeof(size_t));
+        for (i=0; i<ep->num_chnls; i++) {
+                per_ep_length[i] = (size_t)req->recv.send_length / ep->num_chnls;
+        }
+        per_ep_length[0] += req->recv.send_length % ep->num_chnls;
+
 	while (remaining > 0) {
 		lcr_ep = ep->lct_eps[ep->current_chnl];
                 lcr_ep->rail->iface_get_attr(lcr_ep->rail, &attr);
 
                 frag_length = attr.iface.cap.rndv.max_get_zcopy;
-		length = remaining < frag_length ? remaining : frag_length;
+		length = per_ep_length[ep->current_chnl] < frag_length ? 
+                        per_ep_length[ep->current_chnl] : frag_length;
 
-		mpc_common_debug("LCP: send frag n=%d, src=%d, dest=%d, msg_id=%llu, remaining=%llu, "
-				 "len=%d", f_id, req->send.tag.src_tsk, 
-				 req->send.tag.dest_tsk, req->msg_id, remaining, length,
-				 remaining);
+		mpc_common_debug("LCP: send frag n=%d, src=%d, dest=%d, msg_id=%llu, remaining=%llu", 
+                                 f_id, req->send.tag.src_tsk, req->send.tag.dest_tsk, req->msg_id, 
+                                 remaining, length);
 
                 rc = lcp_send_do_get_zcopy(lcr_ep,
                                            offset, 
@@ -742,11 +751,14 @@ int lcp_recv_rget(lcp_request_t *req, void *hdr)
                                            length,
                                            &(req->recv.t_ctx.comp));
 
-                offset    += length; remaining -= length;
+                per_ep_length[ep->current_chnl] -= length;
+                offset    += length; remaining  -= length;
 
 		ep->current_chnl = (ep->current_chnl + 1) % ep->num_chnls;
 		f_id++;
         }
+
+        sctk_free(per_ep_length);
 err:
         return rc;
 }

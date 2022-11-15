@@ -12,8 +12,9 @@ size_t lcp_mem_pack(lcp_context_h ctx, void *dest, lcp_mem_h mem)
 
         for (i=0; i<mem->num_ifaces; i++) {
                 iface = ctx->resources[i].iface;
-                packed_size += iface->iface_pack_memp(iface, &mem->mems[i], p);
-                p += packed_size;
+                packed_size += iface->iface_pack_memp(iface, 
+                                                      &mem->mems[i], 
+                                                      p + packed_size);
         }
 
         return packed_size;
@@ -28,8 +29,9 @@ size_t lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h mem, void *src)
 
         for (i=0; i<mem->num_ifaces; i++) {
                 iface = ctx->resources[i].iface;
-                unpacked_size += iface->iface_unpack_memp(iface, &mem->mems[i], p);
-                p += unpacked_size;
+                unpacked_size += iface->iface_unpack_memp(iface, 
+                                                          &mem->mems[i], 
+                                                          p + unpacked_size);
         }
 
         return unpacked_size;
