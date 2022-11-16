@@ -344,6 +344,8 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
 
                         /* call completion callback */
 			tag_ctx->comp.comp_cb(&tag_ctx->comp);
+
+			sctk_free(user_ptr);
 			break;
                 case PTL_EVENT_PUT:
                 case PTL_EVENT_GET:
