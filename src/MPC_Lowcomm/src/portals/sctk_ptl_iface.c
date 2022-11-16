@@ -224,11 +224,13 @@ void sctk_ptl_hardware_fini(sctk_ptl_rail_info_t* srail)
 	PtlFini();
 }
 
-void lcr_ptl_software_init(sctk_ptl_rail_info_t *srail, size_t comm_dims)
+#ifdef MPC_LOWCOMM_PROTOCOL
+int lcr_ptl_software_init(sctk_ptl_rail_info_t *srail, size_t comm_dims)
 {
         int i;
-        sctk_ptl_md_t md; 
+        int md_flags;
 	sctk_ptl_pte_t * table = NULL;
+	sctk_ptl_local_data_t *md_request;
 	srail->nb_entries = 0;
 
 	comm_dims = SCTK_PTL_PTE_HIDDEN + comm_dims;
@@ -251,24 +253,24 @@ void lcr_ptl_software_init(sctk_ptl_rail_info_t *srail, size_t comm_dims)
 			srail->iface,       /* the NI handler */
 			SCTK_PTL_PTE_FLAGS, /* PT entry specific flags */
 			srail->mes_eq,      /* the EQ for this entry */
-			i,                  /* the desired index value */
+			PTL_PT_ANY,         /* the desired index value */
 			&table[i].idx       /* the effective index value */
 		));
 
-                mpc_common_hashtable_set(&srail->pt_table, i, &table[i]);
+	        mpc_common_hashtable_set(&srail->pt_table, table[i].idx, &table[i]);
+                lcr_ptl_pte_idx_register(srail, table[i].idx, table[i].idx);
 	}
 
-        md.start     = 0;
-        md.length    = PTL_SIZE_MAX;
-        md.options   = 0;
-        md.ct_handle = PTL_CT_NONE;
-        md.eq_handle = srail->mes_eq;
+	md_flags   = PTL_MD_EVENT_SEND_DISABLE;
+	md_request = sctk_ptl_md_create(srail, 0, PTL_SIZE_MAX, md_flags);
+        md_request->slot.md.eq_handle = srail->mes_eq;
 
 	sctk_ptl_chk(PtlMDBind(
-		srail->iface,     /* the NI handler */
-		&md,              /* the MD to bind with memory region */
-		&srail->mdh       /* out: the MD handler */
-	));
+		srail->iface,           /* the NI handler */
+		&md_request->slot.md,   /* the MD to bind with memory region */
+		&md_request->slot_h.mdh /* out: the MD handler */
+	)); 
+        srail->md_req = md_request;
 	
 	OPA_store_int(&srail->rdma_cpt, 0);
 	if(srail->max_mr > srail->max_limits.max_msg_size)
@@ -282,7 +284,10 @@ void lcr_ptl_software_init(sctk_ptl_rail_info_t *srail, size_t comm_dims)
 	srail->nb_entries = comm_dims;
 
 	sctk_ptl_print_structure(srail);
+
+        return MPC_LOWCOMM_SUCCESS;
 }
+#endif
 
 /**
  * Map the Portals structure in user-space to be ready for communication.
@@ -371,6 +376,16 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims)
 	sctk_ptl_print_structure(srail);
 }
 
+#ifdef MPC_LOWCOMM_PROTOCOL
+void lcr_ptl_pte_idx_register(sctk_ptl_rail_info_t* srail, ptl_pt_index_t idx, mpc_lowcomm_communicator_id_t comm_id)
+{
+	mpc_lowcomm_communicator_id_t * new = sctk_malloc(sizeof(mpc_lowcomm_communicator_id_t));
+	*new = comm_id;
+	mpc_common_nodebug("REVERSE REG %d maps to %llu", idx, *new );
+	mpc_common_hashtable_set(&srail->reverse_pt_table, idx, new);
+}
+#endif
+
 static inline void __pte_idx_register(sctk_ptl_rail_info_t* srail, ptl_pt_index_t idx, mpc_lowcomm_communicator_id_t comm_id)
 {
 	mpc_lowcomm_communicator_id_t * new = sctk_malloc(sizeof(mpc_lowcomm_communicator_id_t));
@@ -386,6 +401,16 @@ mpc_lowcomm_communicator_id_t sctk_ptl_pte_idx_to_comm_id(sctk_ptl_rail_info_t* 
 	assume(ret != NULL);
 	return *ret;
 }
+
+#ifdef MPC_LOWCOMM_PROTOCOL
+sctk_ptl_pte_t *lcr_ptl_pte_idx_to_pte(sctk_ptl_rail_info_t *srail,
+                                      ptl_pt_index_t idx)
+{
+        mpc_lowcomm_communicator_id_t comm_id = 
+                sctk_ptl_pte_idx_to_comm_id(srail, idx);
+        return (sctk_ptl_pte_t *)mpc_common_hashtable_get(&srail->pt_table, comm_id);
+}
+#endif
 
 
 /**
@@ -436,7 +461,11 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, ptl_p
 
 	mpc_common_nodebug("REG %llu maps to %d", key, pte->idx );
 
+#ifdef MPC_LOWCOMM_PROTOCOL
+        lcr_ptl_pte_idx_register(srail, pte->idx, key);
+#else
 	__pte_idx_register(srail, pte->idx, key);
+#endif
 
 	srail->nb_entries++;
 	//mpc_common_debug_error("CREATING comm %d", srail->nb_entries);
@@ -507,9 +536,13 @@ void sctk_ptl_software_fini(sctk_ptl_rail_info_t* srail)
 			__pte_release(srail, cur);
 	}
 
+#ifndef MPC_LOWCOMM_PROTOCOL
 	sctk_ptl_chk(PtlEQFree(
 		srail->mds_eq             /* the EQ handler */
 	));
+#else
+	sctk_ptl_md_release(srail->md_req);
+#endif
 
 	/* write 'NULL' to be sure */
 	sctk_free(base_ptr);
@@ -846,7 +879,12 @@ void sctk_ptl_me_feed(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t m
 				SCTK_PTL_ANY_PROCESS, /* targetable by any process */
 				SCTK_PTL_MATCH_INIT, /* we don't care the match_bits */ 
 				SCTK_PTL_IGN_ALL, /* triggers all requestss */
+#ifdef MPC_LOWCOMM_PROTOCOL
+				((list == SCTK_PTL_PRIORITY_LIST) ? 0 : PTL_ME_EVENT_COMM_DISABLE) 
+                                | SCTK_PTL_ONCE | SCTK_PTL_ME_PUT_FLAGS
+#else
 				((list == SCTK_PTL_PRIORITY_LIST) ? SCTK_PTL_ME_PUT_FLAGS : SCTK_PTL_ME_OVERFLOW_FLAGS) | SCTK_PTL_ONCE
+#endif
 		);
 		user->msg = NULL;
 		user->list = list;

@@ -13,9 +13,7 @@ int lcp_progress(lcp_context_h ctx)
 
 	for (i=0; i<ctx->num_resources; i++) {
 		sctk_rail_info_t *iface = ctx->resources[i].iface;
-		if (iface->notify_idle_message) {
-			iface->notify_idle_message(iface);
-		}
+                iface->iface_progress(iface);
 	}
 
 	lcp_pending_entry_t *entry_e, *entry_tmp;

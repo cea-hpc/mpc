@@ -550,8 +550,12 @@ void sctk_ptl_rdma_read(sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg,
 void sctk_ptl_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list, void * addr, size_t size )
 {
 	sctk_ptl_rail_info_t* srail    = &rail->network.ptl;
-	sctk_ptl_local_data_t *md_request, *me_request;
-	int md_flags, me_flags;
+#ifndef MPC_LOWCOMM_PROTOCOL
+	sctk_ptl_local_data_t *md_request;
+	int md_flags;
+#endif
+	sctk_ptl_local_data_t *me_request;
+	int me_flags;
 	sctk_ptl_matchbits_t match, ign;
 	sctk_ptl_pte_t *pte;
 	sctk_ptl_id_t remote;
@@ -559,6 +563,7 @@ void sctk_ptl_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_c
 	if(rdma_pte==NULL)
 		rdma_pte = mpc_common_hashtable_get(&srail->pt_table, SCTK_PTL_PTE_RDMA);
 
+#ifndef MPC_LOWCOMM_PROTOCOL
 	md_request = me_request = NULL;
 	match      = ign        = SCTK_PTL_MATCH_INIT;
 	md_flags   = me_flags   = 0;
@@ -569,14 +574,17 @@ void sctk_ptl_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_c
 	md_flags   = SCTK_PTL_MD_PUT_FLAGS | SCTK_PTL_MD_GET_FLAGS;
 	md_request = sctk_ptl_md_create(srail, addr, size, md_flags);
 	md_request->type = SCTK_PTL_TYPE_RDMA;
-#ifdef MPC_LOWCOMM_PROTOCOL
-        lcr_ptl_md_register(srail, md_request);
-#else
 	sctk_ptl_md_register(srail, md_request);
 #endif
 
 	/* configure the ME */
+#ifdef MPC_LOWCOMM_PROTOCOL
+	me_flags       = SCTK_PTL_ME_PUT_FLAGS | SCTK_PTL_ME_GET_FLAGS  |
+                PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE |
+                PTL_ME_EVENT_COMM_DISABLE;
+#else
 	me_flags       = SCTK_PTL_ME_PUT_FLAGS | SCTK_PTL_ME_GET_FLAGS;
+#endif
 	match.data.tag = OPA_fetch_and_incr_int(&rail->network.ptl.rdma_cpt);
 	ign.data.tag   = SCTK_PTL_MATCH_TAG;
 	ign.data.rank  = SCTK_PTL_IGN_RANK;
@@ -592,7 +600,11 @@ void sctk_ptl_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_c
 	 */
 	list->rail_id         = rail->rail_number;
 	list->pin.ptl.me_data = me_request;
+#ifdef MPC_LOWCOMM_PROTOCOL
+	list->pin.ptl.md_data = srail->md_req;
+#else
 	list->pin.ptl.md_data = md_request;
+#endif
 	list->pin.ptl.origin  = srail->id;
 	list->pin.ptl.start   = addr;
 	list->pin.ptl.match   = match;
@@ -613,7 +625,9 @@ void sctk_ptl_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin
 {
 	UNUSED(rail);
 	assert(list);
+#ifndef MPC_LOWCOMM_PROTOCOL
 	sctk_ptl_md_release(list->pin.ptl.md_data);
+#endif
 	sctk_ptl_me_release(list->pin.ptl.me_data);
 	mpc_common_debug_info("RELEASE RDMA %p->%p %s", list->pin.ptl.me_data->slot.me.start, list->pin.ptl.me_data->slot.me.start + list->pin.ptl.me_data->slot.me.length, __sctk_ptl_match_str(sctk_malloc(32), 32, list->pin.ptl.me_data->slot.me.match_bits));
 }

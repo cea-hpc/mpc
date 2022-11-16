@@ -415,6 +415,7 @@ int lcr_ptl_iface_open(char *device_name, int id,
         iface->send_get       = lcr_ptl_send_get;
         iface->recv_tag_zcopy = lcr_ptl_recv_tag_zcopy;
 	iface->iface_get_attr = lcr_ptl_get_attr;
+        iface->iface_progress = lcr_ptl_iface_progress;
 	iface->iface_pack_memp = lcr_ptl_pack_memp;
 	iface->iface_unpack_memp = lcr_ptl_unpack_memp;
 

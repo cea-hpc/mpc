@@ -161,6 +161,7 @@ typedef struct lcr_tag_context {
                                //      find corresponding request
 	lcr_completion_t comp; //NOTE: needed by send when portals ack 
                                //      is received to complete the request.
+        unsigned flags;
 } lcr_tag_context_t;
 
 /************************************************************************/

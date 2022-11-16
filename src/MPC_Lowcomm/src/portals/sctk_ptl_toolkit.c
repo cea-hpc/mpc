@@ -613,7 +613,11 @@ void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, mpc_lowcomm_communicato
 		sctk_ptl_pte_t* new_entry = sctk_malloc(sizeof(sctk_ptl_pte_t));
 		mpc_common_spinlock_lock(&__poll_lock);
 		memset(new_entry, 0, sizeof(sctk_ptl_pte_t));
+#ifdef MPC_LOWCOMM_PROTOCOL
+		sctk_ptl_pte_create(srail, new_entry, PTL_PT_ANY, comm_idx);
+#else
 		sctk_ptl_pte_create(srail, new_entry, PTL_PT_ANY, comm_idx + SCTK_PTL_PTE_HIDDEN);
+#endif
 		mpc_common_spinlock_unlock(&__poll_lock);
 	}
 }

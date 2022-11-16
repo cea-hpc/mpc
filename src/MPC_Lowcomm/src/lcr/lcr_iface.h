@@ -58,7 +58,7 @@ typedef int (*lcr_send_put_func_t)(_mpc_lowcomm_endpoint_t *ep,
                                    lcr_memp_t *local_key,
                                    lcr_memp_t *remote_key,
                                    size_t size,
-                                   lcr_completion_t *comp);
+                                   lcr_tag_context_t *ctx);
 
 typedef int (*lcr_send_get_funt_t)(_mpc_lowcomm_endpoint_t *ep,
                                    uint64_t local_addr,
@@ -66,7 +66,7 @@ typedef int (*lcr_send_get_funt_t)(_mpc_lowcomm_endpoint_t *ep,
                                    lcr_memp_t *local_key,
                                    lcr_memp_t *remote_key,
                                    size_t size,
-                                   lcr_completion_t *comp);
+                                   lcr_tag_context_t *ctx);
 
 // Interface functions
 typedef int (*lcr_iface_get_attr_func_t)(sctk_rail_info_t *rail,

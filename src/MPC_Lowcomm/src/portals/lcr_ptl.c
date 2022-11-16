@@ -12,12 +12,9 @@ ssize_t lcr_ptl_send_tag_bcopy(_mpc_lowcomm_endpoint_t *ep,
                                __UNUSED__ unsigned cflags,
                                lcr_tag_context_t *ctx)
 {
-        int rc;
-        sctk_ptl_local_data_t* request = NULL;
         sctk_ptl_rail_info_t* srail    = &ep->rail->network.ptl;
         void* start                    = NULL;
         size_t size                    = 0;
-        int flags                      = 0;
         sctk_ptl_matchbits_t match     = SCTK_PTL_MATCH_INIT;
         sctk_ptl_pte_t* pte            = NULL;
         sctk_ptl_id_t remote           = SCTK_PTL_ANY_PROCESS;
@@ -31,31 +28,26 @@ ssize_t lcr_ptl_send_tag_bcopy(_mpc_lowcomm_endpoint_t *ep,
         assert(size <= srail->eager_limit);
 
         /* prepare the Put() MD */
-        flags                  = SCTK_PTL_MD_PUT_FLAGS;
         match.raw              = tag.t;
         hdr.raw                = imm;
-        pte                    = SCTK_PTL_PTE_ENTRY(srail->pt_table, ctx->comm_id);
+        pte                    = mpc_common_hashtable_get(&srail->pt_table, ctx->comm_id);
         remote                 = infos->dest;
-        request                = sctk_ptl_md_create(srail, start, size, flags);
 
-        assert(request);
         assert(pte);
 
-        /* double-linking */
-        request->msg           = ctx;
-        request->type          = SCTK_PTL_TYPE_STD;
-
-        /* emit the request */
-        rc = lcr_ptl_md_register(srail, request);
-        if (rc == MPC_LOWCOMM_NO_RESOURCE) {
-                mpc_common_debug("LCR PTL: bcopy no resource to %d (iface=%llu, "
-                                 "remote=%llu, idx=%d, sz=%llu)", ep->dest, srail->iface, 
-                                 remote, pte->idx, size);
-                return MPC_LOWCOMM_NO_RESOURCE;
-        }
-        mpc_common_debug_info("LCR PTL: send bcopy to %d (iface=%llu, match=%s, remote=%llu, idx=%d, sz=%llu)", 
+        mpc_common_debug_info("lcr ptl: send bcopy to %d (iface=%llu, match=%s, remote=%llu, idx=%d, sz=%llu)", 
                               ep->dest, srail->iface, __sctk_ptl_match_str(malloc(32), 32, tag.t), remote, pte->idx, size);
-        sctk_ptl_emit_put(request, size, remote, pte, match, 0, 0, hdr.raw, request);
+        sctk_ptl_chk(PtlPut(srail->md_req->slot_h.mdh,
+                            (ptl_size_t) start, /* local offset */
+                            size,
+                            PTL_ACK_REQ,
+                            remote,
+                            pte->idx,
+                            match.raw,
+                            0, /* remote offset */
+                            ctx,
+                            hdr.raw	
+                           ));
 
         return size;
 }
@@ -68,12 +60,8 @@ int lcr_ptl_send_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            __UNUSED__ unsigned cflags,
                            lcr_tag_context_t *ctx)
 {
-        int rc;
-        sctk_ptl_local_data_t* request = NULL;
         sctk_ptl_rail_info_t* srail    = &ep->rail->network.ptl;
-        void* start                    = iov->iov_base;
         size_t size                    = iov->iov_len;
-        int flags                      = 0;
         sctk_ptl_matchbits_t match     = SCTK_PTL_MATCH_INIT;
         sctk_ptl_pte_t* pte            = NULL;
         sctk_ptl_id_t remote           = SCTK_PTL_ANY_PROCESS;
@@ -84,32 +72,27 @@ int lcr_ptl_send_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
         assert(iovcnt == 1);
 
         /* prepare the Put() MD */
-        flags                  = SCTK_PTL_MD_PUT_FLAGS;
         match.raw              = tag.t;
         hdr.raw                = imm;
-        pte                    = SCTK_PTL_PTE_ENTRY(srail->pt_table, ctx->comm_id);
+        pte                    = mpc_common_hashtable_get(&srail->pt_table, ctx->comm_id);
         remote                 = infos->dest;
-        request                = sctk_ptl_md_create(srail, start, size, flags);
 
-        assert(request);
         assert(pte);
 
-        /* double-linking */
-        request->msg           = ctx;
-        request->type          = SCTK_PTL_TYPE_STD;
-
-        /* emit the request */
-        rc = lcr_ptl_md_register(srail, request);
-        if (rc == MPC_LOWCOMM_NO_RESOURCE) {
-                mpc_common_debug("LCR PTL: zcopy in progress to %d (iface=%llu, remote=%llu, "
-                                 "idx=%d, sz=%llu)", ep->dest, srail->iface, remote,  pte->idx, 
-                                 size);
-                return MPC_LOWCOMM_NO_RESOURCE;
-        }
         mpc_common_debug_info("LCR PTL: send zcopy to %d (iface=%llu, match=%s, remote=%llu, idx=%d, sz=%llu, user_ptr=%p)", 
                               ep->dest, srail->iface, __sctk_ptl_match_str(malloc(32), 32, tag.t), remote, pte->idx, size, 
-                              request);
-        sctk_ptl_emit_put(request, size, remote, pte, match, 0, 0, hdr.raw, request);
+                              ctx);
+        sctk_ptl_chk(PtlPut(srail->md_req->slot_h.mdh,
+                            (ptl_size_t) iov[0].iov_base, /* local offset */
+                            iov[0].iov_len,
+                            PTL_ACK_REQ,
+                            remote,
+                            pte->idx,
+                            match.raw,
+                            0, /* remote offset */
+                            ctx,
+                            hdr.raw	
+                           ));
 
         return MPC_LOWCOMM_SUCCESS;
 }
@@ -122,41 +105,20 @@ int lcr_ptl_send_tag_rndv_zcopy(_mpc_lowcomm_endpoint_t *ep,
                                 __UNUSED__ unsigned cflags,
                                 lcr_tag_context_t *ctx)
 {
-        int rc;
-        sctk_ptl_local_data_t* md_request = NULL;
         sctk_ptl_local_data_t* me_request = NULL;
         sctk_ptl_rail_info_t* srail       = &ep->rail->network.ptl;
-        int md_flags, me_flags            = 0;
+        int me_flags                      = 0;
         sctk_ptl_matchbits_t match        = SCTK_PTL_MATCH_INIT;
         sctk_ptl_matchbits_t ign          = SCTK_PTL_MATCH_INIT;
         sctk_ptl_pte_t* pte, *rdma_pte    = NULL;
         sctk_ptl_id_t remote              = SCTK_PTL_ANY_PROCESS;
         _mpc_lowcomm_endpoint_info_portals_t* infos   = &ep->data.ptl;
-        sctk_ptl_imm_data_t hdr;
 
         assert(iovcnt == 2);
 
-        /* prepare the Put() MD */
-        md_flags               = SCTK_PTL_MD_PUT_FLAGS;
         match.raw              = tag.t;
-        hdr.raw                = imm;
-        pte                    = SCTK_PTL_PTE_ENTRY(srail->pt_table, ctx->comm_id);
+        pte                    = mpc_common_hashtable_get(&srail->pt_table, ctx->comm_id);
         remote                 = infos->dest;
-        md_request             = sctk_ptl_md_create(srail, NULL, 0, md_flags);
-
-        assert(md_request);
-        assert(pte);
-
-        /* emit the request */
-        md_request->msg = ctx;
-        md_request->type = SCTK_PTL_TYPE_STD;
-        rc = lcr_ptl_md_register(srail, md_request);
-        if (rc == MPC_LOWCOMM_NO_RESOURCE) {
-                mpc_common_debug("LCR PTL: zcopy in progress to %d (iface=%llu, remote=%llu, "
-                                 "idx=%d, sz=%llu)", ep->dest, srail->iface, remote,  pte->idx, 
-                                 iov[1].iov_len);
-                return MPC_LOWCOMM_NO_RESOURCE;
-        }
 
         /* complete the ME data, this ME will be appended to the PRIORITY_LIST */
         rdma_pte   = mpc_common_hashtable_get(&srail->pt_table, SCTK_PTL_PTE_RDMA);
@@ -185,16 +147,16 @@ int lcr_ptl_send_tag_rndv_zcopy(_mpc_lowcomm_endpoint_t *ep,
         mpc_common_debug_info("LCR PTL: send zcopy to %d (iface=%llu, remote=%llu, idx=%d, sz=%llu "
                               "match=%s)", ep->dest, srail->iface, remote, pte->idx, iov[0].iov_len,
                               __sctk_ptl_match_str(sctk_malloc(32), 32, match.raw));
-        sctk_ptl_chk(PtlPut(md_request->slot_h.mdh,
+        sctk_ptl_chk(PtlPut(srail->md_req->slot_h.mdh,
                             0, /* local offset */
-                            iov[0].iov_len,
+                            0,
                             PTL_ACK_REQ,
                             remote,
                             pte->idx,
                             match.raw,
                             0, /* remote offset */
-                            md_request,
-                            hdr.raw	
+                            ctx,
+                            imm	
                            ));
 
         return MPC_LOWCOMM_SUCCESS;
@@ -222,7 +184,7 @@ int lcr_ptl_recv_tag_zcopy(sctk_rail_info_t *rail,
 
         /* complete the ME data, this ME will be appended to the PRIORITY_LIST */
         size     = iov[0].iov_len;
-        pte      = SCTK_PTL_PTE_ENTRY(srail->pt_table, ctx->comm_id);
+        pte      = mpc_common_hashtable_get(&srail->pt_table, ctx->comm_id);
         flags    = SCTK_PTL_ME_PUT_FLAGS | SCTK_PTL_ONCE;
         user_ptr = sctk_ptl_me_create(start, size, remote, match, ign, flags); 
 
@@ -240,12 +202,12 @@ int lcr_ptl_recv_tag_zcopy(sctk_rail_info_t *rail,
 }
 
 int lcr_ptl_send_put(_mpc_lowcomm_endpoint_t *ep,
-                     uint64_t local_off,
-                     uint64_t remote_off,
+                     uint64_t local_offset,
+                     uint64_t remote_offset,
                      lcr_memp_t *local_key,
                      lcr_memp_t *remote_key,
                      size_t size,
-                     lcr_completion_t *comp) 
+                     lcr_tag_context_t *ctx) 
 {
         _mpc_lowcomm_endpoint_info_portals_t* infos   = &ep->data.ptl;
         sctk_ptl_rail_info_t* srail    = &ep->rail->network.ptl;
@@ -254,28 +216,33 @@ int lcr_ptl_send_put(_mpc_lowcomm_endpoint_t *ep,
 
         rdma_pte = mpc_common_hashtable_get(&srail->pt_table, SCTK_PTL_PTE_RDMA);
 
-        local_key->pin.ptl.md_data->msg = comp; 
+        mpc_common_debug_info("PTL: remote key. match=%s, remote=%llu, "
+                              "remote off=%llu, local off=%llu, pte idx=%d, local addr=%p", 
+                              __sctk_ptl_match_str(sctk_malloc(32), 32, remote_key->pin.ptl.match.raw),
+                              remote, local_offset, remote_offset, rdma_pte->idx, local_key->pin.ptl.start);
 
-        sctk_ptl_emit_put(local_key->pin.ptl.md_data, /* The base MD */
-                          size,                      /* request size */
-                          remote,                    /* target process */
-                          rdma_pte,                  /* Portals entry */
-                          remote_key->pin.ptl.match,  /* match bits */
-                          local_off, remote_off,     /* offsets */
-                          0,                         /* Number of bytes sent */
-                          local_key->pin.ptl.md_data 
-                         );
+        sctk_ptl_chk(PtlPut(srail->md_req->slot_h.mdh,
+                            (ptl_size_t)local_key->pin.ptl.start + local_offset, /* local offset */
+                            size,
+                            PTL_ACK_REQ,
+                            remote,
+                            rdma_pte->idx,
+                            remote_key->pin.ptl.match.raw,
+                            remote_offset, /* remote offset */
+                            ctx,
+                            0
+                           ));
 
         return MPC_LOWCOMM_SUCCESS;
 }
 
 int lcr_ptl_send_get(_mpc_lowcomm_endpoint_t *ep,
-                     uint64_t src_off,
-                     uint64_t dest_off,
+                     uint64_t local_offset,
+                     uint64_t remote_offset,
                      lcr_memp_t *local_key,
                      lcr_memp_t *remote_key,
                      size_t size,
-                     lcr_completion_t *comp) 
+                     lcr_tag_context_t *ctx) 
 {
         _mpc_lowcomm_endpoint_info_portals_t* infos   = &ep->data.ptl;
         sctk_ptl_rail_info_t* srail    = &ep->rail->network.ptl;
@@ -284,22 +251,20 @@ int lcr_ptl_send_get(_mpc_lowcomm_endpoint_t *ep,
 
         rdma_pte = mpc_common_hashtable_get(&srail->pt_table, SCTK_PTL_PTE_RDMA);
 
-        /* set the completion object to be called in md_poll */
-        local_key->pin.ptl.md_data->msg = comp; 
-
         mpc_common_debug_info("PTL: remote key. match=%s, remote=%llu, "
                               "remote off=%llu, local off=%llu, pte idx=%d, local addr=%p", 
                               __sctk_ptl_match_str(sctk_malloc(32), 32, remote_key->pin.ptl.match.raw),
-                              remote, src_off, dest_off, rdma_pte->idx, local_key->pin.ptl.start);
-
-        sctk_ptl_emit_get(local_key->pin.ptl.md_data, /* The base MD */
-                          size,                      /* request size */
-                          remote,                    /* target process */
-                          rdma_pte,                  /* Portals entry */
-                          remote_key->pin.ptl.match,  /* match bits */
-                          src_off, dest_off,         /* offsets */
-                          local_key->pin.ptl.md_data  
-                         );
+                              remote, local_offset, remote_offset, rdma_pte->idx, local_key->pin.ptl.start);
+	sctk_ptl_chk(PtlGet(
+		srail->md_req->slot_h.mdh,
+		(ptl_size_t)local_key->pin.ptl.start + local_offset,
+		size,
+		remote,
+		rdma_pte->idx,
+		remote_key->pin.ptl.match.raw,
+		remote_offset,
+	        ctx	
+	));
 
         return MPC_LOWCOMM_SUCCESS;
 }
@@ -337,18 +302,19 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
 	int ret;
 	sctk_ptl_event_t ev;
 	sctk_ptl_rail_info_t* srail = &rail->network.ptl;
+        sctk_ptl_local_data_t *user_ptr;
         lcr_tag_context_t *tag_ctx;
+        sctk_ptl_pte_t *pte;
 
 	ret = PtlEQGet(srail->mes_eq, &ev);
 	sctk_ptl_chk(ret);
-
-	tag_ctx = (lcr_tag_context_t *)ev.user_ptr;
 
         if (ret == PTL_OK) {
 		mpc_common_debug_info("PORTALS: EQS EVENT '%s' idx=%d, match=%s,  sz=%llu, "
                                       "user=%p, start=%p", sctk_ptl_event_decode(ev), ev.pt_index, 
                                       __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), 
                                       ev.mlength, ev.user_ptr, ev.start);
+                did_poll = 1;
 
                 switch (ev.type) {
                 case PTL_EVENT_SEND:
@@ -356,15 +322,63 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
 			break;
                 case PTL_EVENT_REPLY:
                 case PTL_EVENT_ACK:
+                        tag_ctx  = (lcr_tag_context_t *)ev.user_ptr;
 			tag_ctx->comp.sent = ev.mlength;
 			tag_ctx->comp.comp_cb(&tag_ctx->comp);
+                        break;
                 case PTL_EVENT_PUT_OVERFLOW:
                 case PTL_EVENT_GET_OVERFLOW:
+                        pte = lcr_ptl_pte_idx_to_pte(srail, ev.pt_index);
+			sctk_ptl_me_feed(srail, pte, srail->eager_limit, 1, 
+                                         SCTK_PTL_OVERFLOW_LIST, 
+                                         SCTK_PTL_TYPE_STD, 
+                                         SCTK_PTL_PROT_NONE);
+                        /* set up context */
+                        user_ptr           = (sctk_ptl_local_data_t *)ev.user_ptr;
+                        tag_ctx            = (lcr_tag_context_t *)user_ptr->msg;
+                        tag_ctx->tag       = (lcr_tag_t)ev.match_bits;
+                        tag_ctx->imm       = ev.hdr_data;
+                        tag_ctx->start     = ev.start;
+                        tag_ctx->comp.sent = ev.mlength;
+                        tag_ctx->flags    |= LCR_IFACE_TM_OVERFLOW;
 
-			sctk_ptl_me_feed(srail, ev,  srail->eager_limit, 1, SCTK_PTL_OVERFLOW_LIST, SCTK_PTL_TYPE_STD, SCTK_PTL_PROT_NONE);
+                        /* call completion callback */
+			tag_ctx->comp.comp_cb(&tag_ctx->comp);
 			break;
+                case PTL_EVENT_PUT:
+                case PTL_EVENT_GET:
+                        user_ptr = (sctk_ptl_local_data_t *)ev.user_ptr;
+                        tag_ctx  = (lcr_tag_context_t *)user_ptr->msg;
+                        assert(tag_ctx);
+                        /* set up context */
+                        tag_ctx->tag       = (lcr_tag_t)ev.match_bits;
+                        tag_ctx->imm       = ev.hdr_data;
+                        tag_ctx->start     = ev.start;
+                        tag_ctx->comp.sent = ev.mlength;
+                        tag_ctx->flags    |= LCR_IFACE_TM_NOVERFLOW;
 
+                        /* callback */
+                        tag_ctx->comp.comp_cb(&tag_ctx->comp);
 
+                        sctk_free(user_ptr);
+                        break;
+                case PTL_EVENT_ATOMIC:                /* an Atomic() reached the local process */
+                case PTL_EVENT_FETCH_ATOMIC:          /* a FetchAtomic() reached the local process */
+                        break;
+                case PTL_EVENT_FETCH_ATOMIC_OVERFLOW: /* a previously received FETCH-ATOMIC matched a just appended one */
+                case PTL_EVENT_ATOMIC_OVERFLOW:       /* a previously received ATOMIC matched a just appended one */
+                case PTL_EVENT_PT_DISABLED:           /* ERROR: The local PTE is disabled (FLOW_CTRL) */
+                case PTL_EVENT_SEARCH:                /* a PtlMESearch completed */
+                        /* probably nothing to do here */
+                case PTL_EVENT_LINK:                  /* MISC: A new ME has been linked, (maybe not useful) */
+                case PTL_EVENT_AUTO_UNLINK:           /* an USE_ONCE ME has been automatically unlinked */
+                case PTL_EVENT_AUTO_FREE:             /* an USE_ONCE ME can be now reused */
+                        not_reachable();              /* have been disabled */
+                        break;
+                default:
+                        break;
+                }
+        }
 
-
+        return did_poll;
 }

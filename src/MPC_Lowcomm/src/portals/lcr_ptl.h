@@ -41,7 +41,7 @@ int lcr_ptl_send_put(_mpc_lowcomm_endpoint_t *ep,
                      lcr_memp_t *local_key,
                      lcr_memp_t *remote_key,
                      size_t size,
-                     lcr_completion_t *comp);
+                     lcr_tag_context_t *ctx);
 
 int lcr_ptl_send_get(_mpc_lowcomm_endpoint_t *ep,
                      uint64_t local_addr,
@@ -49,10 +49,12 @@ int lcr_ptl_send_get(_mpc_lowcomm_endpoint_t *ep,
                      lcr_memp_t *local_key,
                      lcr_memp_t *remote_key,
                      size_t size,
-                     lcr_completion_t *comp);
+                     lcr_tag_context_t *ctx);
 
 int lcr_ptl_pack_memp(sctk_rail_info_t *rail,
 		lcr_memp_t *memp, void *dest);
+
+int lcr_ptl_iface_progress(sctk_rail_info_t *rail);
 
 int lcr_ptl_unpack_memp(sctk_rail_info_t *rail,
 		lcr_memp_t *memp, void *dest);

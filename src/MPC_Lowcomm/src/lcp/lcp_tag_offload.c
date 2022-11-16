@@ -251,7 +251,7 @@ void lcp_recv_tag_callback(lcr_completion_t *comp)
                         req->flags |= LCP_REQUEST_RECV_TRUNC;
                         lcp_request_complete(req);
                 } else {
-                        if (req->recv.buffer != req->recv.t_ctx.start) {
+                        if (req->recv.t_ctx.flags & LCR_IFACE_TM_OVERFLOW) {
                                 memcpy(req->recv.buffer, req->recv.t_ctx.start, comp->sent);
                         }
                         lcp_request_complete(req);

@@ -234,7 +234,7 @@ void lcp_request_rput_ack_callback(lcr_completion_t *comp)
                                            &(super->send.rndv.lmem->mems[ep->current_chnl]),
                                            &(rmem->mems[ep->current_chnl]),
                                            length,
-                                           &(super->send.t_ctx.comp));
+                                           &(super->send.t_ctx));
 
                 offset    += length; remaining -= length;
 
@@ -669,7 +669,7 @@ int lcp_recv_rsend(lcp_request_t *req, void *hdr)
                                    &req->state.lmem->mems[ep->priority_chnl],
                                    &rmem->mems[ep->priority_chnl],
                                    req->recv.send_length,
-                                   &(req->recv.t_ctx.comp));
+                                   &(req->recv.t_ctx));
 
 err:
         return rc;
@@ -749,7 +749,7 @@ int lcp_recv_rget(lcp_request_t *req, void *hdr)
                                            &(req->state.lmem->mems[ep->current_chnl]),
                                            &(rmem->mems[ep->current_chnl]),
                                            length,
-                                           &(req->recv.t_ctx.comp));
+                                           &(req->recv.t_ctx));
 
                 per_ep_length[ep->current_chnl] -= length;
                 offset    += length; remaining  -= length;

@@ -96,6 +96,10 @@ int lcr_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims);
 #endif
 
 /* Portals table management */
+#ifdef MPC_LOWCOMM_PROTOCOL
+void lcr_ptl_pte_idx_register(sctk_ptl_rail_info_t* srail, ptl_pt_index_t idx, mpc_lowcomm_communicator_id_t comm_id);
+sctk_ptl_pte_t *lcr_ptl_pte_idx_to_pte(sctk_ptl_rail_info_t *srail, ptl_pt_index_t idx);
+#endif
 void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, ptl_pt_index_t requested_index, size_t key);
 void sctk_ptl_pte_release(sctk_ptl_rail_info_t* srail, ptl_pt_index_t requested_index);
 mpc_lowcomm_communicator_id_t sctk_ptl_pte_idx_to_comm_id(sctk_ptl_rail_info_t* srail, ptl_pt_index_t idx);
