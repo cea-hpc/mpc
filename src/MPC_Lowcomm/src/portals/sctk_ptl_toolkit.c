@@ -798,5 +798,5 @@ void sctk_ptl_fini_interface(sctk_rail_info_t* rail)
 	sctk_ptl_rail_info_t* srail    = &rail->network.ptl;
 	mpc_common_debug_info("PORTALS: FINI");
 	sctk_ptl_software_fini(srail);
-	sctk_ptl_hardware_fini();
+	sctk_ptl_hardware_fini(srail);
 }

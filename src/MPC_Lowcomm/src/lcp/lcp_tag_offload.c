@@ -40,12 +40,6 @@ void lcp_request_complete_tag_offload(lcr_completion_t *comp)
 	lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
 					      send.t_ctx.comp);
 
-        if (req->send.length > comp->sent) {
-                //FIXME: set truncated request ?
-                mpc_common_debug_error("LCP: send truncated for msg_id=%llu, "
-                                      "expected length=%d, received=%d", req->msg_id,
-                                     req->send.length, comp->sent);
-        } 
 	lcp_request_complete(req);
 }
 
@@ -249,13 +243,13 @@ void lcp_recv_tag_callback(lcr_completion_t *comp)
         case MPC_LOWCOMM_P2P_TM_MESSAGE:
                 if (req->recv.length < comp->sent) {
                         req->flags |= LCP_REQUEST_RECV_TRUNC;
-                        lcp_request_complete(req);
                 } else {
                         if (req->recv.t_ctx.flags & LCR_IFACE_TM_OVERFLOW) {
-                                memcpy(req->recv.buffer, req->recv.t_ctx.start, comp->sent);
+                                memcpy(req->recv.buffer, req->recv.t_ctx.start, 
+                                       req->recv.send_length);
                         }
-                        lcp_request_complete(req);
                 }
+                lcp_request_complete(req);
                 break;
         case MPC_LOWCOMM_RSEND_TM_MESSAGE:
                 lcp_recv_rsend(req, (void *)&req->recv.t_ctx.tag.t);
