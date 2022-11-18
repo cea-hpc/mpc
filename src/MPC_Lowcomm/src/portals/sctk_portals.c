@@ -301,8 +301,9 @@ int lcr_ptl_get_attr(sctk_rail_info_t *rail,
         attr->iface.cap.rndv.max_send_zcopy = rail->network.ptl.max_mr;
         attr->iface.cap.rndv.max_put_zcopy  = rail->network.ptl.max_put;
         attr->iface.cap.rndv.max_get_zcopy  = rail->network.ptl.max_get;
+        attr->iface.cap.rndv.min_frag_size  = rail->network.ptl.min_frag_size;
 
-        attr->mem.cap.max_reg = SIZE_MAX;
+        attr->mem.cap.max_reg = PTL_SIZE_MAX;
 
         return MPC_LOWCOMM_SUCCESS;
 }

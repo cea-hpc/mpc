@@ -187,6 +187,7 @@ struct lcr_rail_attr {
                                 size_t max_send_zcopy;
                                 size_t max_put_zcopy;
                                 size_t max_get_zcopy;
+                                size_t min_frag_size;
                         } rndv;
 
                         uint64_t flags;

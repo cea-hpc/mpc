@@ -3,7 +3,7 @@
 #include "lcp_context.h"
 #include <sctk_alloc.h>
 
-size_t lcp_mem_pack(lcp_context_h ctx, void *dest, lcp_mem_h mem)
+size_t lcp_mem_pack(lcp_context_h ctx, void *dest, lcp_mem_h mem, bmap_t memp_map)
 {
         int i;
         size_t packed_size = 0;
@@ -11,16 +11,18 @@ size_t lcp_mem_pack(lcp_context_h ctx, void *dest, lcp_mem_h mem)
         void *p = dest;
 
         for (i=0; i<mem->num_ifaces; i++) {
-                iface = ctx->resources[i].iface;
-                packed_size += iface->iface_pack_memp(iface, 
-                                                      &mem->mems[i], 
-                                                      p + packed_size);
+                if (MPC_BITMAP_GET(memp_map, i)) {
+                        iface = ctx->resources[i].iface;
+                        packed_size += iface->iface_pack_memp(iface, 
+                                                              &mem->mems[i], 
+                                                              p + packed_size);
+                }
         }
 
         return packed_size;
 }
 
-size_t lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h mem, void *src)
+size_t lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h mem, void *src, bmap_t memp_map)
 {
         int i;
         size_t unpacked_size = 0;
@@ -28,10 +30,12 @@ size_t lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h mem, void *src)
         void *p = src;
 
         for (i=0; i<mem->num_ifaces; i++) {
-                iface = ctx->resources[i].iface;
-                unpacked_size += iface->iface_unpack_memp(iface, 
-                                                          &mem->mems[i], 
-                                                          p + unpacked_size);
+                if (MPC_BITMAP_GET(memp_map, i)) {
+                        iface = ctx->resources[i].iface;
+                        unpacked_size += iface->iface_unpack_memp(iface, 
+                                                                  &mem->mems[i], 
+                                                                  p + unpacked_size);
+                }
         }
 
         return unpacked_size;
@@ -62,7 +66,14 @@ err:
         return rc;
 }
 
-int lcp_mem_register(lcp_context_h ctx, lcp_mem_h *mem_p, void *buffer, size_t length)
+//FIXME: what append if a memory could not get registered ? Miss error handling:
+//       if a subset could not be registered, perform the communication on the 
+//       successful memory pins ?
+int lcp_mem_register(lcp_context_h ctx, 
+                     lcp_mem_h *mem_p, 
+                     void *buffer, 
+                     size_t length,
+                     bmap_t memp_map)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         int i;
@@ -79,8 +90,10 @@ int lcp_mem_register(lcp_context_h ctx, lcp_mem_h *mem_p, void *buffer, size_t l
         
         /* Pin the memory and create memory handles */
         for (i=0; i<mem->num_ifaces; i++) {
-                iface = ctx->resources[i].iface;
-                iface->rail_pin_region(iface, &mem->mems[i], buffer, length);
+                if (MPC_BITMAP_GET(memp_map, i)) {
+                    iface = ctx->resources[i].iface;
+                    iface->rail_pin_region(iface, &mem->mems[i], buffer, length);
+                }
         }
 
         *mem_p = mem;
@@ -88,15 +101,17 @@ err:
         return rc;
 }
 
-int lcp_mem_deregister(lcp_context_h ctx, lcp_mem_h mem)
+int lcp_mem_deregister(lcp_context_h ctx, lcp_mem_h mem, bmap_t memp_map)
 {
         int i;
         int rc = MPC_LOWCOMM_SUCCESS;
         sctk_rail_info_t *iface = NULL;
 
         for (i=0; i<mem->num_ifaces; i++) {
-                iface = ctx->resources[i].iface;
-                iface->rail_unpin_region(iface, &mem->mems[i]);
+                if (MPC_BITMAP_GET(memp_map, i)) {
+                        iface = ctx->resources[i].iface;
+                        iface->rail_unpin_region(iface, &mem->mems[i]);
+                }
         }
 
         sctk_free(mem->mems);

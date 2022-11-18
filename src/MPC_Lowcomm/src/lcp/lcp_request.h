@@ -10,6 +10,7 @@
 #include "sctk_rail.h" 
 
 #include <sctk_alloc.h>
+#include "bitmap.h"
 
 enum {
 	LCP_REQUEST_SEND_TAG           = LCP_BIT(0),
@@ -108,7 +109,6 @@ struct lcp_request {
 				int tag;
 				int dt;
 			} tag;
-			
 		} recv;
 	};
 
@@ -119,6 +119,7 @@ struct lcp_request {
 
 	struct {
 		lcp_request_status status;
+                bmap_t memp_map;
 		size_t remaining;
 		size_t offset;
 		int f_id;

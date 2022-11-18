@@ -333,6 +333,7 @@ static inline mpc_conf_config_type_t *__init_driver_portals(struct _mpc_lowcomm_
 	portals->offloading.collectives = 0;
 	portals->offloading.ondemand = 0;
 	portals->max_msg_size = 2147483648;
+        portals->min_frag_size = 8388608;
 
 	/*
 	  Create the config object
@@ -347,6 +348,7 @@ static inline mpc_conf_config_type_t *__init_driver_portals(struct _mpc_lowcomm_
 	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("portals",
 															PARAM("eagerlimit", &portals->eager_limit, MPC_CONF_LONG_INT, "Max size of messages allowed to use the eager protocol."),
 															PARAM("maxmsgsize", &portals->max_msg_size, MPC_CONF_INT, "Max size of messages allowed to be sent."),
+															PARAM("minfragsize", &portals->min_frag_size, MPC_CONF_LONG_INT, "Min size of fragments sent with multirail."),
 															PARAM("mincomm", &portals->min_comms, MPC_CONF_INT, "Min number of communicators (help to avoid dynamic PT entry allocation)"),
 															PARAM("blockcut", &portals->block_cut, MPC_CONF_LONG_INT, "Above this value, RDV messages will be split in multiple GET requests"),
 															PARAM("offload", offload, MPC_CONF_TYPE, "List of available optimizations taking advantage of triggered Ops"),

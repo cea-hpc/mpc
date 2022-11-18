@@ -719,12 +719,13 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 	/* Register on-demand callback for rail */
 	__register_monitor_callback(rail);
 
-	size_t cut, eager_limit, min_comms, offloading;
+	size_t cut, eager_limit, min_comms, offloading, min_frag_size;
 
 	/* get back the Portals config */
 	cut         = rail->runtime_config_driver_config->driver.value.portals.block_cut;
 	eager_limit = rail->runtime_config_driver_config->driver.value.portals.eager_limit;
 	min_comms   = rail->runtime_config_driver_config->driver.value.portals.min_comms;
+	min_frag_size = rail->runtime_config_driver_config->driver.value.portals.min_frag_size;
 	offloading  = SCTK_PTL_OFFLOAD_NONE_FLAG;
 	
 	/* avoid truncating size_t payload in RDV protocols */
@@ -755,6 +756,7 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 		(unsigned long int)ptl_driver_config.max_msg_size : rail->network.ptl.max_limits.max_msg_size;
 	rail->network.ptl.max_put         = rail->network.ptl.max_mr;
 	rail->network.ptl.max_get         = rail->network.ptl.max_mr;
+	rail->network.ptl.min_frag_size   = min_frag_size;
 
 	rail->network.ptl.offload_support = offloading;
 	

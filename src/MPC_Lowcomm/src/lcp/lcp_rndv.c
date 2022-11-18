@@ -151,7 +151,9 @@ void lcp_request_complete_rput(lcr_completion_t *comp)
 
         req->state.remaining -= comp->sent;
         if (req->state.remaining == 0) {
-                lcp_mem_deregister(req->send.ep->ctx, req->send.rndv.lmem);
+                lcp_mem_deregister(req->send.ep->ctx, 
+                                   req->send.rndv.lmem, 
+                                   req->state.memp_map);
 
                 lcp_ep_h ep;
                 struct iovec iov_fin[1];
@@ -202,7 +204,10 @@ void lcp_request_rput_ack_callback(lcr_completion_t *comp)
 
         //NOTE: we use here pointer from tag interface, could be either from
         //      overflow or priority.
-        rc = lcp_mem_unpack(super->ctx, rmem, ack_req->recv.t_ctx.start);
+        rc = lcp_mem_unpack(super->ctx, 
+                            rmem, 
+                            ack_req->recv.t_ctx.start,
+                            super->state.memp_map);
         if (rc < 0) {
                 goto err;
         }
@@ -248,30 +253,44 @@ err:
 
 void lcp_request_rput_callback(lcr_completion_t *comp)
 {
-        int rc;
+        int rc, i;
         lcp_request_t *ack;
+        lcr_rail_attr_t attr;
         lcp_ep_h ep;
         struct iovec iov_ack[1];
         lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
                                               send.t_ctx.comp);
         lcr_memp_t fake_mem[req->ctx->num_resources];
 
+        ep = req->send.ep;
+        /* build registration bitmap */
+        //NOTE: we suppose rail attribute are identical for each rails
+        ep->lct_eps[ep->priority_chnl]->rail->iface_get_attr(ep->lct_eps[ep->priority_chnl]->rail,
+                                                             &attr);
+        i = 0;
+        while (req->send.length > i * attr.iface.cap.rndv.min_frag_size) {
+                MPC_BITMAP_SET(req->state.memp_map, i);
+                i++;
+        }
+
         rc = lcp_mem_register(req->ctx, 
                               &(req->send.rndv.lmem), 
                               req->send.buffer, 
-                              req->send.length);
+                              req->send.length,
+                              req->state.memp_map);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
-
-        ep = req->send.ep;
 
         lcp_request_create(&ack);
         if (ack == NULL) {
                 goto err;
         }
         ack->super = req;
-        ack->recv.length = lcp_mem_pack(req->ctx, (void *)fake_mem, req->send.rndv.lmem);
+        ack->recv.length = lcp_mem_pack(req->ctx, 
+                                        (void *)fake_mem, 
+                                        req->send.rndv.lmem,
+                                        req->state.memp_map);
         ack->recv.buffer = sctk_malloc(ack->recv.length);
 
         lcr_tag_t tag = { 0 };
@@ -328,6 +347,9 @@ int lcp_send_rsend_start(lcp_request_t *req)
         req->send.t_ctx.comm_id      = req->send.rndv.comm_id;
         req->send.t_ctx.comp.comp_cb = lcp_request_complete_rsend;
 
+        /* Only priority iface should be registered */
+        MPC_BITMAP_SET(req->state.memp_map, ep->priority_chnl);
+
         rc = lcp_send_do_tag_rndv_zcopy(ep->lct_eps[ep->priority_chnl],
                                         tag,
                                         imm,
@@ -343,19 +365,27 @@ void lcp_request_complete_srget(lcr_completion_t *comp)
 					      send.t_ctx.comp);
 
         if (req->send.rndv.ack) {
-                lcp_mem_deregister(req->ctx, req->send.rndv.lmem);
+                lcp_mem_deregister(req->ctx, 
+                                   req->send.rndv.lmem,
+                                   req->state.memp_map);
                 lcp_request_complete(req);
         } else {
                 req->send.rndv.ack = 1;
         }
 }
 
+//FIXME: bitmap construction suppose memory could be registered on both side and
+//       identically. When packing, we should add the interface index to know to
+//       which interface belong the matching tag. What happens when only
+//       interface 1 and 3 were able to register ? How can the receiver find out
+//       which interface to use ?
 int lcp_send_rget_start(lcp_request_t *req)
 {
-        int rc;
+        int rc, i;
         lcp_ep_h ep = req->send.ep;
         uint64_t imm = 0;
         struct iovec iov_send[1], iov_fin[1];
+        lcr_rail_attr_t attr;
         lcr_memp_t fake_mem[req->ctx->num_resources];
 
         LCP_TM_SET_HDR_DATA(imm, MPC_LOWCOMM_RGET_TM_MESSAGE, req->send.length);
@@ -366,16 +396,32 @@ int lcp_send_rget_start(lcp_request_t *req)
                              req->send.rndv.tag, 
                              req->msg_number);
 
+        /* build registration bitmap */
+        //NOTE: we suppose rail attribute are identical for each rails
+        ep->lct_eps[ep->priority_chnl]->rail->iface_get_attr(ep->lct_eps[ep->priority_chnl]->rail,
+                                                             &attr);
+        i = 0;
+        //FIXME: ep should not have a state (eg current_channel) since it can be
+        //       shared between requests. set cc to request state.
+        while (req->send.length > i * attr.iface.cap.rndv.min_frag_size) {
+                MPC_BITMAP_SET(req->state.memp_map, i);
+                i++;
+        }
+
         rc = lcp_mem_register(req->send.ep->ctx, 
                               &(req->send.rndv.lmem), 
                               req->send.buffer, 
-                              req->send.length);
+                              req->send.length,
+                              req->state.memp_map);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
 
         iov_send[0].iov_base = sctk_malloc(sizeof(fake_mem));
-        iov_send[0].iov_len  = lcp_mem_pack(req->send.ep->ctx, iov_send[0].iov_base, req->send.rndv.lmem);
+        iov_send[0].iov_len  = lcp_mem_pack(req->send.ep->ctx, 
+                                            iov_send[0].iov_base, 
+                                            req->send.rndv.lmem,
+                                            req->state.memp_map);
 
         lcr_tag_t ign_tag = {
                 .t = 0
@@ -547,7 +593,7 @@ void lcp_request_complete_rrsend(lcr_completion_t *comp)
 	lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
 					      recv.t_ctx.comp);
 
-        lcp_mem_deregister(req->ctx, req->state.lmem);
+        lcp_mem_deregister(req->ctx, req->state.lmem, req->state.memp_map);
 
         lcp_request_complete(req);
 }
@@ -568,7 +614,9 @@ void lcp_request_complete_rrget(lcr_completion_t *comp)
 
         req->state.remaining -= comp->sent;
         if (req->state.remaining == 0) {
-                lcp_mem_deregister(req->ctx, req->state.lmem);
+                lcp_mem_deregister(req->ctx, 
+                                   req->state.lmem,
+                                   req->state.memp_map);
 
                 lcp_ep_h ep;
                 lcp_ep_ctx_t *ctx_ep;
@@ -602,7 +650,7 @@ void lcp_request_complete_rrput(lcr_completion_t *comp)
 	lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
 					      recv.t_ctx.comp);
 
-        lcp_mem_deregister(req->ctx, req->state.lmem);
+        lcp_mem_deregister(req->ctx, req->state.lmem, req->state.memp_map);
 
         lcp_request_complete(req);
 }
@@ -643,13 +691,13 @@ int lcp_recv_rsend(lcp_request_t *req, void *hdr)
 		ep = ctx_ep->ep;
 	}
 
-
         /* first create and unpack remote key */
         rc = lcp_mem_create(req->ctx, &rmem);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
-        rc = lcp_mem_unpack(req->ctx, rmem, hdr);
+        MPC_BITMAP_SET(req->state.memp_map, ep->priority_chnl);
+        rc = lcp_mem_unpack(req->ctx, rmem, hdr, req->state.memp_map);
         if (rc < 0) {
                 goto err;
         }
@@ -657,7 +705,8 @@ int lcp_recv_rsend(lcp_request_t *req, void *hdr)
         rc = lcp_mem_register(req->ctx, 
                               &(req->state.lmem), 
                               req->recv.buffer, 
-                              req->recv.send_length);
+                              req->recv.send_length,
+                              req->state.memp_map);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
@@ -706,7 +755,14 @@ int lcp_recv_rget(lcp_request_t *req, void *hdr)
                 goto err;
         }
 
-        rc = lcp_mem_unpack(req->ctx, rmem, hdr);
+        ep->lct_eps[ep->priority_chnl]->rail->iface_get_attr(ep->lct_eps[ep->priority_chnl]->rail,
+                                                             &attr);
+        i = 0;
+        while (req->recv.send_length > i * attr.iface.cap.rndv.min_frag_size) {
+                MPC_BITMAP_SET(req->state.memp_map, i);
+                i++;
+        }
+        rc = lcp_mem_unpack(req->ctx, rmem, hdr, req->state.memp_map);
         if (rc < 0) {
                 goto err;
         }
@@ -714,7 +770,8 @@ int lcp_recv_rget(lcp_request_t *req, void *hdr)
         rc = lcp_mem_register(req->ctx, 
                               &(req->state.lmem), 
                               req->recv.buffer, 
-                              req->recv.send_length);
+                              req->recv.send_length,
+                              req->state.memp_map);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
@@ -765,9 +822,10 @@ err:
 
 int lcp_recv_rput(lcp_request_t *req)
 {
-        int rc;
+        int rc, i;
         lcp_ep_h ep;
 	lcp_ep_ctx_t *ctx_ep;
+        lcr_rail_attr_t attr;
         lcp_request_t *ack;
         struct iovec iov_ack[1];
         struct iovec iov_fin[1];
@@ -784,10 +842,18 @@ int lcp_recv_rput(lcp_request_t *req)
 		ep = ctx_ep->ep;
 	}
 
+        ep->lct_eps[ep->priority_chnl]->rail->iface_get_attr(ep->lct_eps[ep->priority_chnl]->rail,
+                                                             &attr);
+        i = 0;
+        while (req->recv.send_length > i * attr.iface.cap.rndv.min_frag_size) {
+                MPC_BITMAP_SET(req->state.memp_map, i);
+                i++;
+        }
         rc = lcp_mem_register(req->ctx, 
                               &(req->state.lmem), 
                               req->recv.buffer, 
-                              req->recv.send_length);
+                              req->recv.send_length,
+                              req->state.memp_map);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
@@ -798,7 +864,10 @@ int lcp_recv_rput(lcp_request_t *req)
         }
         ack->super = req;
         ack->send.buffer = sctk_malloc(sizeof(max_mem));
-        ack->send.length = lcp_mem_pack(ep->ctx, ack->send.buffer, req->state.lmem);
+        ack->send.length = lcp_mem_pack(ep->ctx, 
+                                        ack->send.buffer, 
+                                        req->state.lmem,
+                                        req->state.memp_map);
         ack->msg_number  = req->msg_number;
 
         iov_ack[0].iov_base = ack->send.buffer;
