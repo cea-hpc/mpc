@@ -151,10 +151,6 @@ void lcp_request_complete_rput(lcr_completion_t *comp)
 
         req->state.remaining -= comp->sent;
         if (req->state.remaining == 0) {
-                lcp_mem_deregister(req->send.ep->ctx, 
-                                   req->send.rndv.lmem, 
-                                   req->state.memp_map);
-
                 lcp_ep_h ep;
                 struct iovec iov_fin[1];
 
@@ -183,10 +179,11 @@ void lcp_request_complete_rput(lcr_completion_t *comp)
 
 void lcp_request_rput_ack_callback(lcr_completion_t *comp)
 {
-        int rc, f_id;
+        int rc, f_id, i, num_used_ifaces;
         size_t remaining, offset;
         size_t frag_length, length;
-        lcp_mem_h rmem; 
+        size_t *per_ep_length;
+        lcp_mem_h rmem = NULL; 
         lcp_ep_h ep;
         lcr_rail_attr_t attr;
 	_mpc_lowcomm_endpoint_t *lcr_ep;
@@ -195,12 +192,13 @@ void lcp_request_rput_ack_callback(lcr_completion_t *comp)
                                                   recv.t_ctx.comp);
 
         lcp_request_t *super = ack_req->super;
-
+        
         /* first create and unpack remote key */
         rc = lcp_mem_create(super->ctx, &rmem);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
+        rmem->num_ifaces = num_used_ifaces = super->send.rndv.lmem->num_ifaces;
 
         //NOTE: we use here pointer from tag interface, could be either from
         //      overflow or priority.
@@ -214,6 +212,12 @@ void lcp_request_rput_ack_callback(lcr_completion_t *comp)
         sctk_free(ack_req->recv.buffer);
         lcp_request_complete(ack_req);
 
+        per_ep_length        = sctk_malloc(num_used_ifaces * sizeof(size_t));
+        for (i=0; i<num_used_ifaces; i++) {
+                per_ep_length[i] = (size_t)super->send.length / num_used_ifaces;
+        }
+        per_ep_length[0] += super->send.length % num_used_ifaces;
+
         ep = super->send.ep;
 
         super->send.t_ctx.comp.comp_cb = lcp_request_complete_rput;
@@ -222,30 +226,34 @@ void lcp_request_rput_ack_callback(lcr_completion_t *comp)
         f_id        = 0;
         offset      = 0;
 	while (remaining > 0) {
-		lcr_ep = ep->lct_eps[ep->current_chnl];
+		lcr_ep = ep->lct_eps[super->state.cc];
                 lcr_ep->rail->iface_get_attr(lcr_ep->rail, &attr);
 
                 frag_length = attr.iface.cap.rndv.max_get_zcopy;
-		length = remaining < frag_length ? remaining : frag_length;
+		length = per_ep_length[super->state.cc] < frag_length ? 
+                        per_ep_length[super->state.cc] : frag_length;
 
 		mpc_common_debug("LCP: send frag n=%d, src=%d, dest=%d, msg_id=%llu, remaining=%llu, "
-				 "len=%d", f_id, super->send.tag.src_tsk, 
-				 super->send.tag.dest_tsk, super->msg_id, remaining, length,
+				 "len=%d", f_id, super->send.tag.src, 
+				 super->send.tag.dest, super->msg_id, remaining, length,
 				 remaining);
 
                 rc = lcp_send_do_put_zcopy(lcr_ep,
+                                           (uint64_t)super->send.buffer + offset, 
                                            offset, 
-                                           offset, 
-                                           &(super->send.rndv.lmem->mems[ep->current_chnl]),
-                                           &(rmem->mems[ep->current_chnl]),
+                                           &(super->send.rndv.lmem->mems[super->state.cc]),
+                                           &(rmem->mems[super->state.cc]),
                                            length,
                                            &(super->send.t_ctx));
 
                 offset    += length; remaining -= length;
 
-		ep->current_chnl = (ep->current_chnl + 1) % ep->num_chnls;
+		super->state.cc = (super->state.cc + 1) % num_used_ifaces;
 		f_id++;
         }
+
+        lcp_mem_delete(rmem);
+        lcp_mem_delete(super->send.rndv.lmem);
 err:
         return;
 
@@ -253,7 +261,7 @@ err:
 
 void lcp_request_rput_callback(lcr_completion_t *comp)
 {
-        int rc, i;
+        int rc, num_used_ifaces;
         lcp_request_t *ack;
         lcr_rail_attr_t attr;
         lcp_ep_h ep;
@@ -265,28 +273,27 @@ void lcp_request_rput_callback(lcr_completion_t *comp)
         ep = req->send.ep;
         /* build registration bitmap */
         //NOTE: we suppose rail attribute are identical for each rails
-        ep->lct_eps[ep->priority_chnl]->rail->iface_get_attr(ep->lct_eps[ep->priority_chnl]->rail,
-                                                             &attr);
-        i = 0;
-        while (req->send.length > i * attr.iface.cap.rndv.min_frag_size) {
-                MPC_BITMAP_SET(req->state.memp_map, i);
-                i++;
-        }
-
-        rc = lcp_mem_register(req->ctx, 
-                              &(req->send.rndv.lmem), 
-                              req->send.buffer, 
-                              req->send.length,
-                              req->state.memp_map);
+        rc = lcp_mem_create(req->ctx, &req->send.rndv.lmem);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
+
+        ep->lct_eps[ep->priority_chnl]->rail->iface_get_attr(ep->lct_eps[ep->priority_chnl]->rail,
+                                                             &attr);
+        num_used_ifaces = 0;
+        while ( (req->send.length > num_used_ifaces * attr.iface.cap.rndv.min_frag_size) &&
+                (num_used_ifaces < ep->num_chnls)) {
+                MPC_BITMAP_SET(req->state.memp_map, num_used_ifaces);
+                num_used_ifaces++;
+        }
+        req->send.rndv.lmem->num_ifaces = num_used_ifaces;
 
         lcp_request_create(&ack);
         if (ack == NULL) {
                 goto err;
         }
         ack->super = req;
+
         ack->recv.length = lcp_mem_pack(req->ctx, 
                                         (void *)fake_mem, 
                                         req->send.rndv.lmem,
@@ -593,16 +600,6 @@ void lcp_request_complete_rrsend(lcr_completion_t *comp)
 	lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
 					      recv.t_ctx.comp);
 
-        lcp_mem_deregister(req->ctx, req->state.lmem, req->state.memp_map);
-
-        lcp_request_complete(req);
-}
-
-void lcp_request_complete_rget_final(lcr_completion_t *comp)
-{
-	lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
-					      recv.t_ctx.comp);
-
         lcp_request_complete(req);
 }
 
@@ -614,10 +611,6 @@ void lcp_request_complete_rrget(lcr_completion_t *comp)
 
         req->state.remaining -= comp->sent;
         if (req->state.remaining == 0) {
-                lcp_mem_deregister(req->ctx, 
-                                   req->state.lmem,
-                                   req->state.memp_map);
-
                 lcp_ep_h ep;
                 lcp_ep_ctx_t *ctx_ep;
                 struct iovec iov_fin[1];
@@ -629,7 +622,7 @@ void lcp_request_complete_rrget(lcr_completion_t *comp)
                 assert(ctx_ep);
 
                 ep = ctx_ep->ep;
-                req->recv.t_ctx.comp.comp_cb = lcp_request_complete_rget_final; //FIXME: should we also complete fin ?
+                req->recv.t_ctx.comp.comp_cb = lcp_request_complete_rrsend; 
 
                 rc = lcp_send_do_tag_zcopy(ep->lct_eps[ep->priority_chnl],
                                            req->recv.t_ctx.tag,
@@ -675,7 +668,7 @@ void lcp_request_complete_srack(lcr_completion_t *comp)
 int lcp_recv_rsend(lcp_request_t *req, void *hdr)
 {
         int rc;
-        lcp_mem_h rmem; 
+        lcp_mem_h rmem, lmem = NULL; 
         lcp_ep_h ep;
 	lcp_ep_ctx_t *ctx_ep;
 
@@ -691,35 +684,34 @@ int lcp_recv_rsend(lcp_request_t *req, void *hdr)
 		ep = ctx_ep->ep;
 	}
 
+        rc = lcp_mem_create(req->ctx, &lmem);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
+
         /* first create and unpack remote key */
         rc = lcp_mem_create(req->ctx, &rmem);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
+        rmem->num_ifaces = 1;
         MPC_BITMAP_SET(req->state.memp_map, ep->priority_chnl);
         rc = lcp_mem_unpack(req->ctx, rmem, hdr, req->state.memp_map);
         if (rc < 0) {
                 goto err;
         }
 
-        rc = lcp_mem_register(req->ctx, 
-                              &(req->state.lmem), 
-                              req->recv.buffer, 
-                              req->recv.send_length,
-                              req->state.memp_map);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
-                goto err;
-        }
-
         req->recv.t_ctx.comp.comp_cb = lcp_request_complete_rrsend;
-        rc = lcp_send_do_get_zcopy(ep->lct_eps[ep->priority_chnl],
+        rc = lcp_send_do_get_zcopy(ep->lct_eps[req->state.cc],
+                                   (uint64_t)req->recv.buffer,
                                    0,
-                                   0,
-                                   &req->state.lmem->mems[ep->priority_chnl],
-                                   &rmem->mems[ep->priority_chnl],
+                                   &lmem->mems[req->state.cc],
+                                   &rmem->mems[req->state.cc],
                                    req->recv.send_length,
                                    &(req->recv.t_ctx));
 
+        lcp_mem_delete(rmem);
+        lcp_mem_delete(lmem);
 err:
         return rc;
 }
@@ -727,11 +719,11 @@ err:
 
 int lcp_recv_rget(lcp_request_t *req, void *hdr)
 {
-        int rc, f_id, i;
+        int rc, f_id, i, num_used_ifaces;
         size_t remaining, offset;
         size_t frag_length, length;
         size_t *per_ep_length;
-        lcp_mem_h rmem; 
+        lcp_mem_h rmem, lmem = NULL; 
         lcp_ep_h ep;
 	lcp_ep_ctx_t *ctx_ep;
         lcr_rail_attr_t attr;
@@ -749,6 +741,11 @@ int lcp_recv_rget(lcp_request_t *req, void *hdr)
 		ep = ctx_ep->ep;
 	}
 
+        rc = lcp_mem_create(req->ctx, &lmem);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
+
         /* first create and unpack remote key */
         rc = lcp_mem_create(req->ctx, &rmem);
         if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -757,22 +754,17 @@ int lcp_recv_rget(lcp_request_t *req, void *hdr)
 
         ep->lct_eps[ep->priority_chnl]->rail->iface_get_attr(ep->lct_eps[ep->priority_chnl]->rail,
                                                              &attr);
-        i = 0;
-        while (req->recv.send_length > i * attr.iface.cap.rndv.min_frag_size) {
-                MPC_BITMAP_SET(req->state.memp_map, i);
-                i++;
+        num_used_ifaces = 0;
+        while ((req->recv.send_length > num_used_ifaces * attr.iface.cap.rndv.min_frag_size) &&
+               (num_used_ifaces < ep->num_chnls)) {
+                MPC_BITMAP_SET(req->state.memp_map, num_used_ifaces);
+                num_used_ifaces++;
         }
+        rmem->num_ifaces = num_used_ifaces; //FIXME: seems ugly, recover num iface properly
+                                            //       still dont know how
+        //FIXME: what should happen if unpacking returned 0 size?
         rc = lcp_mem_unpack(req->ctx, rmem, hdr, req->state.memp_map);
         if (rc < 0) {
-                goto err;
-        }
-
-        rc = lcp_mem_register(req->ctx, 
-                              &(req->state.lmem), 
-                              req->recv.buffer, 
-                              req->recv.send_length,
-                              req->state.memp_map);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
 
@@ -782,40 +774,42 @@ int lcp_recv_rget(lcp_request_t *req, void *hdr)
         f_id                 = 0;
         offset               = 0;
 
-        per_ep_length        = sctk_malloc(ep->num_chnls * sizeof(size_t));
-        for (i=0; i<ep->num_chnls; i++) {
-                per_ep_length[i] = (size_t)req->recv.send_length / ep->num_chnls;
+        per_ep_length        = sctk_malloc(num_used_ifaces * sizeof(size_t));
+        for (i=0; i<num_used_ifaces; i++) {
+                per_ep_length[i] = (size_t)req->recv.send_length / num_used_ifaces;
         }
-        per_ep_length[0] += req->recv.send_length % ep->num_chnls;
+        per_ep_length[0] += req->recv.send_length % num_used_ifaces;
 
 	while (remaining > 0) {
-		lcr_ep = ep->lct_eps[ep->current_chnl];
+		lcr_ep = ep->lct_eps[req->state.cc];
                 lcr_ep->rail->iface_get_attr(lcr_ep->rail, &attr);
 
                 frag_length = attr.iface.cap.rndv.max_get_zcopy;
-		length = per_ep_length[ep->current_chnl] < frag_length ? 
-                        per_ep_length[ep->current_chnl] : frag_length;
+		length = per_ep_length[req->state.cc] < frag_length ? 
+                        per_ep_length[req->state.cc] : frag_length;
 
 		mpc_common_debug("LCP: send frag n=%d, src=%d, dest=%d, msg_id=%llu, remaining=%llu", 
-                                 f_id, req->send.tag.src_tsk, req->send.tag.dest_tsk, req->msg_id, 
+                                 f_id, req->send.tag.src, req->send.tag.dest, req->msg_id, 
                                  remaining, length);
 
                 rc = lcp_send_do_get_zcopy(lcr_ep,
+                                           (uint64_t)req->recv.buffer + offset, 
                                            offset, 
-                                           offset, 
-                                           &(req->state.lmem->mems[ep->current_chnl]),
-                                           &(rmem->mems[ep->current_chnl]),
+                                           &(lmem->mems[req->state.cc]),
+                                           &(rmem->mems[req->state.cc]),
                                            length,
                                            &(req->recv.t_ctx));
 
-                per_ep_length[ep->current_chnl] -= length;
+                per_ep_length[req->state.cc] -= length;
                 offset    += length; remaining  -= length;
 
-		ep->current_chnl = (ep->current_chnl + 1) % ep->num_chnls;
+		req->state.cc = (req->state.cc + 1) % num_used_ifaces;
 		f_id++;
         }
 
         sctk_free(per_ep_length);
+        lcp_mem_delete(rmem);
+        lcp_mem_delete(lmem);
 err:
         return rc;
 }
@@ -928,7 +922,7 @@ int lcp_rndv_am_tag_handler(void *arg, void *data,
 	LCP_CONTEXT_LOCK(ctx);
 
 	mpc_common_debug_info("LCP: recv rndv header src=%d, dest=%d, msg_id=%llu",
-			      hdr->base.src_tsk, hdr->base.dest_tsk, hdr->msg_id);
+			      hdr->base.src, hdr->base.dest, hdr->msg_id);
 
 	req = lcp_match_prq(ctx->prq_table, 
 			    hdr->base.base.comm_id, 

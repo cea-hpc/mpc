@@ -18,9 +18,7 @@ static size_t lcp_send_tag_pack(void *dest, void *data)
 	
 	hdr->base.comm_id = req->send.tag.comm_id;
 	hdr->dest         = req->send.tag.dest;
-	hdr->dest_tsk     = req->send.tag.dest_tsk;
 	hdr->src          = req->send.tag.src;
-	hdr->src_tsk      = req->send.tag.src_tsk;
 	hdr->tag          = req->send.tag.tag;
 	hdr->seqn         = req->msg_number; 
 
@@ -66,7 +64,7 @@ int lcp_send_am_eager_tag_bcopy(lcp_request_t *req)
 	int rc = MPC_LOWCOMM_SUCCESS;
 	ssize_t payload;
 	lcp_ep_h ep = req->send.ep;
-	_mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[ep->current_chnl];
+	_mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[req->state.cc];
 
 	mpc_common_debug_info("LCP: send am eager tag bcopy src=%d, dest=%d, length=%d",
 			      req->send.tag.src, req->send.tag.dest, req->send.length);
@@ -89,16 +87,14 @@ int lcp_send_am_eager_tag_zcopy(lcp_request_t *req)
 	int rc;
 	struct iovec iov[1];
 	lcp_ep_h ep = req->send.ep;
-	_mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[ep->current_chnl];
+	_mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[req->state.cc];
 	
 	lcp_tag_hdr_t hdr = {
 		.base = {
 			.comm_id = req->send.tag.comm_id, 
 		},
 		.dest = req->send.tag.dest,
-		.dest_tsk = req->send.tag.dest_tsk,
 		.src = req->send.tag.src,
-		.src_tsk = req->send.tag.src_tsk,
 		.tag = req->send.tag.tag,
 		.seqn = req->msg_number
 	};
@@ -135,7 +131,7 @@ static inline int lcp_send_am_frag_zcopy(lcp_request_t *req,
 	lcp_ep_h ep = req->send.ep;
 	_mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[cc];
 
-	lcr_ep = ep->lct_eps[ep->current_chnl];
+	lcr_ep = ep->lct_eps[req->state.cc];
 	lcp_frag_hdr_t hdr = {
 		.base = {
 			.base = {
@@ -177,10 +173,9 @@ int lcp_send_am_zcopy_multi(lcp_request_t *req)
 	size_t offset    = req->state.offset;
 	size_t remaining = req->send.length - offset;
 	int f_id         = req->state.f_id;
-	ep->current_chnl = req->state.cur;
 
 	while (remaining > 0) {
-		lcr_ep = ep->lct_eps[ep->current_chnl];
+		lcr_ep = ep->lct_eps[req->state.cc];
                 lcr_ep->rail->iface_get_attr(lcr_ep->rail, &attr);
 
                 frag_length = attr.iface.cap.rndv.max_put_zcopy;
@@ -188,19 +183,18 @@ int lcp_send_am_zcopy_multi(lcp_request_t *req)
 		length = remaining < frag_length ? remaining : frag_length;
 
 		mpc_common_debug("LCP: send frag n=%d, src=%d, dest=%d, msg_id=%llu, offset=%d, "
-				 "len=%d, remaining=%d", f_id, req->send.tag.src_tsk, 
-				 req->send.tag.dest_tsk, req->msg_id, offset, length,
+				 "len=%d, remaining=%d", f_id, req->send.tag.src, 
+				 req->send.tag.dest, req->msg_id, offset, length,
 				 remaining);
 
-		rc = lcp_send_am_frag_zcopy(req, ep->current_chnl, offset, length);
+		rc = lcp_send_am_frag_zcopy(req, req->state.cc, offset, length);
 		if (rc == MPC_LOWCOMM_NO_RESOURCE) {
 			/* Save progress */
 			req->state.offset    = offset;
-			req->state.cur       = ep->current_chnl;
 			req->state.f_id      = f_id;
 			mpc_common_debug_info("LCP: fragmentation stalled, frag=%d, req=%p, msg_id=%llu, "
 					"remaining=%d, offset=%d, ep=%d", f_id, req, req->msg_id, 
-					remaining, offset, ep->current_chnl);
+					remaining, offset, req->state.cc);
 			return rc;
 		} else if (rc == MPC_LOWCOMM_ERROR) {
 			mpc_common_debug_error("LCP: could not send fragment %d, req=%p, "
@@ -211,7 +205,8 @@ int lcp_send_am_zcopy_multi(lcp_request_t *req)
 		offset += length;
 		remaining -= length;
 
-		ep->current_chnl = (ep->current_chnl + 1) % ep->num_chnls;
+                //FIXME: replace by num used interface.
+		req->state.cc = (req->state.cc + 1) % ep->num_chnls;
 		f_id++;
 	}
 
@@ -240,7 +235,7 @@ static int lcp_am_tag_handler(void *arg, void *data,
 
 	LCP_CONTEXT_LOCK(ctx);
 	mpc_common_debug_info("LCP: recv tag header src=%d, dest=%d",
-			      hdr->src_tsk, hdr->dest_tsk);
+			      hdr->src, hdr->dest);
 
 	req = (lcp_request_t *)lcp_match_prq(ctx->prq_table, 
 					     hdr->base.comm_id, 

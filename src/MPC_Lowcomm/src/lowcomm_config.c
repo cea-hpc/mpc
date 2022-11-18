@@ -333,7 +333,7 @@ static inline mpc_conf_config_type_t *__init_driver_portals(struct _mpc_lowcomm_
 	portals->offloading.collectives = 0;
 	portals->offloading.ondemand = 0;
 	portals->max_msg_size = 2147483648;
-        portals->min_frag_size = 8388608;
+        portals->min_frag_size = 524288; // octets
 
 	/*
 	  Create the config object

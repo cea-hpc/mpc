@@ -10,6 +10,8 @@ size_t lcp_mem_pack(lcp_context_h ctx, void *dest, lcp_mem_h mem, bmap_t memp_ma
         sctk_rail_info_t *iface = NULL;
         void *p = dest;
 
+
+        //FIXME: if looping over num_iface, no need for BITMAP
         for (i=0; i<mem->num_ifaces; i++) {
                 if (MPC_BITMAP_GET(memp_map, i)) {
                         iface = ctx->resources[i].iface;
@@ -53,17 +55,25 @@ int lcp_mem_create(lcp_context_h ctx, lcp_mem_h *mem_p)
                 goto err;
         }
 
-        mem->num_ifaces = ctx->num_resources;
-        mem->mems = sctk_malloc(mem->num_ifaces * sizeof(lcr_memp_t));
+        mem->mems       = sctk_malloc(ctx->num_resources * sizeof(lcr_memp_t));
+        mem->num_ifaces = 0;
         if (mem->mems == NULL) {
                 mpc_common_debug_error("LCP: could not allocate memory pins");
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
+        memset(mem->mems, 0, ctx->num_resources * sizeof(lcr_memp_t));
 
         *mem_p = mem;
 err:
         return rc;
+}
+
+void lcp_mem_delete(lcp_mem_h mem)
+{
+        sctk_free(mem->mems);
+        sctk_free(mem);
+        mem = NULL;
 }
 
 //FIXME: what append if a memory could not get registered ? Miss error handling:
@@ -89,10 +99,11 @@ int lcp_mem_register(lcp_context_h ctx,
         mem->base_addr  = (uint64_t)buffer;
         
         /* Pin the memory and create memory handles */
-        for (i=0; i<mem->num_ifaces; i++) {
+        for (i=0; i<ctx->num_resources; i++) {
                 if (MPC_BITMAP_GET(memp_map, i)) {
                     iface = ctx->resources[i].iface;
                     iface->rail_pin_region(iface, &mem->mems[i], buffer, length);
+                    mem->num_ifaces++;
                 }
         }
 
@@ -107,7 +118,7 @@ int lcp_mem_deregister(lcp_context_h ctx, lcp_mem_h mem, bmap_t memp_map)
         int rc = MPC_LOWCOMM_SUCCESS;
         sctk_rail_info_t *iface = NULL;
 
-        for (i=0; i<mem->num_ifaces; i++) {
+        for (i=0; i<ctx->num_resources; i++) {
                 if (MPC_BITMAP_GET(memp_map, i)) {
                         iface = ctx->resources[i].iface;
                         iface->rail_unpin_region(iface, &mem->mems[i]);

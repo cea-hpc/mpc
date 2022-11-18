@@ -15,6 +15,7 @@ struct lcp_mem {
 };
 
 int lcp_mem_create(lcp_context_h ctx, lcp_mem_h *mem_p);
+void lcp_mem_delete(lcp_mem_h mem);
 int lcp_mem_register(lcp_context_h ctx, lcp_mem_h *mem_p, 
                      void *buffer, size_t length, bmap_t memp_map);
 int lcp_mem_deregister(lcp_context_h ctx, lcp_mem_h mem, bmap_t memp_map);

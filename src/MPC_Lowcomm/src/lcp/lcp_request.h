@@ -59,15 +59,12 @@ struct lcp_request {
 			size_t length; /* Total length, in bytes */
 			void *buffer;
 			lcr_tag_context_t t_ctx;
-			lcp_chnl_idx_t cc;
 
 			union {
 				struct {
 					uint64_t comm_id;
 					uint64_t src;
-					int32_t src_tsk;
 					uint64_t dest;
-					int32_t dest_tsk;
 					int tag;
 					int dt;
 				} tag;
@@ -83,7 +80,6 @@ struct lcp_request {
 					uint64_t  src;
 					uint64_t  dest;
 					int       tag;
-                                        int       seqn;
                                         uint64_t  remote_addr;
                                         lcp_mem_h lmem; /* local */
                                         int       ack;
@@ -96,16 +92,13 @@ struct lcp_request {
 		struct {
 			size_t length;
                         size_t send_length;
-			lcp_chnl_idx_t cc;
 			void *buffer;
 			lcr_tag_context_t t_ctx;
 
 			struct {
 				uint64_t comm_id;
 				uint64_t src;
-				int32_t src_tsk;
 				uint64_t dest;
-				int32_t dest_tsk;
 				int tag;
 				int dt;
 			} tag;
@@ -113,19 +106,19 @@ struct lcp_request {
 	};
 
 	mpc_lowcomm_request_t *request; /* Upper layer request */
-	int64_t msg_number;
-	uint64_t msg_id;
-        struct lcp_request *super;
+	int64_t                msg_number;
+	uint64_t               msg_id;
+        struct lcp_request    *super;
 
 	struct {
 		lcp_request_status status;
-                bmap_t memp_map;
-		size_t remaining;
-		size_t offset;
-		int f_id;
-		lcp_chnl_idx_t cur;
-		lcr_completion_t comp;
-                lcp_mem_h lmem; /* for put protocol */
+                bmap_t             memp_map;
+		size_t             remaining;
+		size_t             offset;
+		int                f_id;
+		lcp_chnl_idx_t     cc;
+		lcr_completion_t   comp;
+                lcp_mem_h          lmem; 
 	} state;
 };
 
@@ -138,9 +131,9 @@ struct lcp_request {
 	\
 	(_req)->send.buffer = _buf;     \
 	(_req)->send.ep     = _ep;      \
-	(_req)->send.cc     = (_ep)->priority_chnl; \
 	(_req)->send.length = _length;  \
 	\
+	(_req)->state.cc        = (_ep)->priority_chnl; \
 	(_req)->state.remaining = _length; \
 	(_req)->state.offset    = 0; \
 	(_req)->state.f_id      = 0; \
@@ -149,9 +142,7 @@ struct lcp_request {
 static inline void lcp_request_init_tag_send(lcp_request_t *req)
 {
         req->send.tag.dest      = req->request->header.destination;
-        req->send.tag.dest_tsk  = req->request->header.destination_task; 
         req->send.tag.src       = req->request->header.source; 
-        req->send.tag.src_tsk   = req->request->header.source_task;	
         req->send.tag.tag       = req->request->header.message_tag;
         req->send.tag.comm_id   = req->request->header.communicator_id; 
 };
@@ -162,21 +153,17 @@ static inline void lcp_request_init_rndv_send(lcp_request_t *req)
         req->send.rndv.src       = req->request->header.source; 
         req->send.rndv.tag       = req->request->header.message_tag;
         req->send.rndv.comm_id   = req->request->header.communicator_id; 
-        req->send.rndv.seqn      = req->msg_number;
 };
 
 static inline void lcp_request_init_get(lcp_request_t *get_req, lcp_ep_h ep,
-                                        void *buffer,
-                                        uint64_t comm_id, uint64_t dest,
-                                        int seqn, uint64_t msg_id, size_t length,
+                                        void *buffer, uint64_t comm_id, uint64_t dest,
+                                        int64_t seqn, uint64_t msg_id, size_t length,
                                         uint64_t remote_addr)
 {
         get_req->send.rndv.comm_id     = comm_id;
         get_req->send.rndv.dest        = dest;
-        get_req->send.rndv.seqn        = seqn; //FIXME: redundant with msg_number
         get_req->send.rndv.remote_addr = remote_addr; //FIXME: redundant with msg_number
         get_req->send.ep               = ep;
-        get_req->send.cc               = ep->priority_chnl;
         get_req->send.buffer           = buffer;
         get_req->send.length           = length;
 
@@ -185,6 +172,7 @@ static inline void lcp_request_init_get(lcp_request_t *get_req, lcp_ep_h ep,
         get_req->state.remaining       = length;
         get_req->state.offset          = 0; 
         get_req->state.f_id            = 0; 
+        get_req->state.cc              = ep->priority_chnl;
 
 	get_req->msg_id                = msg_id;
 	get_req->msg_number            = seqn;
@@ -198,13 +186,13 @@ static inline void lcp_request_init_ack(lcp_request_t *ack_req, lcp_ep_h ep,
         ack_req->send.am.comm_id    = comm_id;
         ack_req->send.am.dest       = dest;
         ack_req->send.ep            = ep;
-        ack_req->send.cc            = ep->priority_chnl;
 
         ack_req->msg_id             = msg_id;
 
         ack_req->state.remaining    = sizeof(lcp_rndv_ack_hdr_t);
         ack_req->state.offset       = 0; 
         ack_req->state.f_id         = 0; 
+        ack_req->state.cc           = ep->priority_chnl;
 
 	ack_req->msg_id             = msg_id;
 	ack_req->msg_number         = seqn;
@@ -217,9 +205,7 @@ static inline void lcp_request_init_recv(lcp_request_t *req,
 					uint64_t msg_id)
 {
         req->recv.tag.dest      = request->header.destination;
-        req->recv.tag.dest_tsk  = request->header.destination_task;
         req->recv.tag.src       = request->header.source;     
-        req->recv.tag.src_tsk   = request->header.source_task;
         req->recv.tag.tag       = request->header.message_tag;
         req->recv.tag.comm_id   = request->header.communicator_id;
         req->recv.length        = request->header.msg_size; 

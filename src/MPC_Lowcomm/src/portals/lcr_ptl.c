@@ -254,7 +254,7 @@ int lcr_ptl_send_get(_mpc_lowcomm_endpoint_t *ep,
         mpc_common_debug_info("PTL: remote key. match=%s, remote=%llu, "
                               "remote off=%llu, local off=%llu, pte idx=%d, local addr=%p", 
                               __sctk_ptl_match_str(sctk_malloc(32), 32, remote_key->pin.ptl.match.raw),
-                              remote, local_offset, remote_offset, rdma_pte->idx, local_key->pin.ptl.start);
+                              remote, local_offset, remote_offset, rdma_pte->idx, local_offset);
 	sctk_ptl_chk(PtlGet(
 		srail->md_req->slot_h.mdh,
 		(ptl_size_t)local_key->pin.ptl.start + local_offset,

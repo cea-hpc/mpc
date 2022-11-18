@@ -37,7 +37,6 @@ typedef struct lcp_ep {
 	lcp_ep_config_t ep_config;
 
 	lcp_chnl_idx_t priority_chnl;
-	lcp_chnl_idx_t current_chnl; /* scheduling channel */
 
 	lcp_ep_flags_t flags;
 	int state;
