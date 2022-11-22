@@ -112,17 +112,14 @@ static int lcp_context_init_structures(lcp_context_h ctx)
 	/* Init endpoint and fragmentation structures */
 	mpc_common_spinlock_init(&(ctx->ctx_lock), 0);
 
-	ctx->pend_send_req = sctk_malloc(sizeof(lcp_pending_table_t));
-	ctx->pend_recv_req = sctk_malloc(sizeof(lcp_pending_table_t));
-	if (ctx->pend_send_req == NULL || ctx->pend_recv_req == NULL) {
+	ctx->pend = sctk_malloc(sizeof(lcp_pending_table_t));
+	if (ctx->pend == NULL) {
 		mpc_common_debug_error("LCP: Could not allocate pending tables.");
 		rc = MPC_LOWCOMM_ERROR;
 		goto err;
 	}
-	memset(ctx->pend_send_req, 0, sizeof(lcp_pending_table_t));
-	memset(ctx->pend_recv_req, 0, sizeof(lcp_pending_table_t));
-	mpc_common_spinlock_init(&ctx->pend_send_req->table_lock, 0);
-	mpc_common_spinlock_init(&ctx->pend_recv_req->table_lock, 0);
+	memset(ctx->pend, 0, sizeof(lcp_pending_table_t));
+	mpc_common_spinlock_init(&ctx->pend->table_lock, 0);
 
 	ctx->umq_table = sctk_malloc(sizeof(lcp_umq_match_table_t));
 	ctx->prq_table = sctk_malloc(sizeof(lcp_prq_match_table_t));
@@ -140,7 +137,7 @@ static int lcp_context_init_structures(lcp_context_h ctx)
 
         return rc;
 out_free_pending_tables:
-        sctk_free(ctx->pend_recv_req); sctk_free(ctx->pend_send_req);
+        sctk_free(ctx->pend); 
 err:
 	return rc;
 }
@@ -554,10 +551,8 @@ err:
 int lcp_context_fini(lcp_context_h ctx)
 {
 	int i;
-        lcp_pending_fini(ctx->pend_send_req,
-                         ctx->pend_recv_req);
-	sctk_free(ctx->pend_send_req);
-	sctk_free(ctx->pend_recv_req);
+        lcp_pending_fini(ctx);
+	sctk_free(ctx->pend);
 	lcp_fini_matching_engine(ctx->umq_table,
 				 ctx->prq_table);
 	sctk_free(ctx->umq_table);

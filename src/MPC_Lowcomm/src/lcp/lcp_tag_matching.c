@@ -86,7 +86,7 @@ void lcp_append_prq(lcp_prq_match_table_t *prq, lcp_request_t *req,
 	lcp_prq_append(entry->pr_queue, req, tag, src);
 	mpc_common_debug("LCP: prq added req=%p, msg_n=%lu, "
 			 "comm_id=%llu, tag=%d, src=%llu, msg=%p.", 
-			 req, req->msg_number, comm, tag, src, 
+			 req, req->seqn, comm, tag, src, 
 			 req->request);
 	mpc_common_spinlock_unlock(&(entry->pr_queue->lock));
 }

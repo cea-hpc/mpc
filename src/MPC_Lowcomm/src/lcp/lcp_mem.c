@@ -10,9 +10,7 @@ size_t lcp_mem_pack(lcp_context_h ctx, void *dest, lcp_mem_h mem, bmap_t memp_ma
         sctk_rail_info_t *iface = NULL;
         void *p = dest;
 
-
-        //FIXME: if looping over num_iface, no need for BITMAP
-        for (i=0; i<mem->num_ifaces; i++) {
+        for (i=0; i<ctx->num_resources; i++) {
                 if (MPC_BITMAP_GET(memp_map, i)) {
                         iface = ctx->resources[i].iface;
                         packed_size += iface->iface_pack_memp(iface, 
@@ -31,7 +29,7 @@ size_t lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h mem, void *src, bmap_t memp_m
         sctk_rail_info_t *iface = NULL;
         void *p = src;
 
-        for (i=0; i<mem->num_ifaces; i++) {
+        for (i=0; i<ctx->num_resources; i++) {
                 if (MPC_BITMAP_GET(memp_map, i)) {
                         iface = ctx->resources[i].iface;
                         unpacked_size += iface->iface_unpack_memp(iface, 

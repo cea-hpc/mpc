@@ -20,7 +20,7 @@ static size_t lcp_send_tag_pack(void *dest, void *data)
 	hdr->dest         = req->send.tag.dest;
 	hdr->src          = req->send.tag.src;
 	hdr->tag          = req->send.tag.tag;
-	hdr->seqn         = req->msg_number; 
+	hdr->seqn         = req->seqn; 
 
 	memcpy((void *)(hdr + 1), req->send.buffer, req->send.length);
 
@@ -48,7 +48,6 @@ void lcp_frag_complete(lcr_completion_t *comp)
 	mpc_common_debug("LCP: req=%p, remaining=%d, frag len=%lu.", 
 			req, req->state.remaining, comp->sent);
 	if (req->state.remaining == 0) {
-		req->state.status = MPC_LOWCOMM_LCP_DONE;
 		lcp_request_complete(req);
 	}
 }
@@ -96,7 +95,7 @@ int lcp_send_am_eager_tag_zcopy(lcp_request_t *req)
 		.dest = req->send.tag.dest,
 		.src = req->send.tag.src,
 		.tag = req->send.tag.tag,
-		.seqn = req->msg_number
+		.seqn = req->seqn
 	};
 
 	lcr_completion_t cp = {
@@ -210,8 +209,6 @@ int lcp_send_am_zcopy_multi(lcp_request_t *req)
 		f_id++;
 	}
 
-        req->state.status = MPC_LOWCOMM_LCP_DONE;
-
 	return rc;
 }
 
@@ -271,11 +268,9 @@ static int lcp_am_frag_handler(void *arg, void *data,
 	int rc;
 	lcp_context_h ctx = arg;
 	lcp_frag_hdr_t *hdr = data;
-	int hdr_len = sizeof(lcp_frag_hdr_t);
 	lcp_request_t *req;
 
-        req = lcp_pending_get_request(ctx->pend_recv_req,
-                                      hdr->msg_id);
+        req = lcp_pending_get_request(ctx, hdr->msg_id);
 	if (req == NULL) {
 		mpc_common_debug_error("LCP: could not find lcp request. "
 				       "uuid=%lu, seqn:%lu", 
@@ -292,12 +287,13 @@ static int lcp_am_frag_handler(void *arg, void *data,
 	//FIXME: do we actually need this lock:
 	//       - probably yes but only to update request state (btw, could not 
 	//       find any locks in handlers in UCX codebase)
-	lcp_request_update_state(req, length - hdr_len);
+	req->state.remaining -= length - sizeof(*hdr);
+	req->state.offset    += length - sizeof(*hdr);
 	LCP_CONTEXT_UNLOCK(ctx);
 
 	memcpy(req->recv.buffer + hdr->offset, hdr + 1, length - sizeof(*hdr));
 
-	if (req->state.status == MPC_LOWCOMM_LCP_DONE) {
+	if (req->state.remaining == 0) {
 		lcp_request_complete(req);
 	}
 

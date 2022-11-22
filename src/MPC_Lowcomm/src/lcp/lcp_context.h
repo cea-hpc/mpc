@@ -86,8 +86,7 @@ struct lcp_context {
 	int num_eps; /* number of endpoints created */
 	lcp_ep_ctx_t *ep_ht; /* Hash table of created endpoint */
 
-	lcp_pending_table_t *pend_send_req; /* LCP send requests */
-	lcp_pending_table_t *pend_recv_req; /* LCP recv requests */
+	lcp_pending_table_t *pend; /* LCP send requests */
 
 	lcp_prq_match_table_t *prq_table; /* Posted Receive Queue */
 	lcp_umq_match_table_t *umq_table; /* Unexpected Message Queue */
