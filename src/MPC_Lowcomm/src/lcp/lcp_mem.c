@@ -22,7 +22,10 @@ size_t lcp_mem_pack(lcp_context_h ctx, void *dest, lcp_mem_h mem, bmap_t memp_ma
         return packed_size;
 }
 
-size_t lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h mem, void *src, bmap_t memp_map)
+size_t lcp_mem_unpack(lcp_context_h ctx, 
+                      lcp_mem_h mem, 
+                      void *src, 
+                      bmap_t memp_map)
 {
         int i;
         size_t unpacked_size = 0;
@@ -35,6 +38,7 @@ size_t lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h mem, void *src, bmap_t memp_m
                         unpacked_size += iface->iface_unpack_memp(iface, 
                                                                   &mem->mems[i], 
                                                                   p + unpacked_size);
+                        mem->num_ifaces++;
                 }
         }
 

@@ -39,7 +39,7 @@ typedef int (*lcp_send_func_t)(lcp_request_t *req);
 
 struct lcp_request {
 	uint64_t flags;
-	lcp_context_h ctx; //NOTE: needed by lcp_request_complete
+	lcp_context_h ctx; 
 	union {
 		struct {
 			lcp_ep_h ep;
@@ -67,9 +67,7 @@ struct lcp_request {
 					uint64_t  src;
 					uint64_t  dest;
 					int       tag;
-                                        uint64_t  remote_addr;
-                                        lcp_mem_h lmem; /* local */
-                                        int       ack;
+                                        uint64_t  remote_addr; /* not needed now */
 				} rndv;
 			};
 
@@ -105,6 +103,7 @@ struct lcp_request {
 		int                f_id;
 		lcp_chnl_idx_t     cc;
 		lcr_completion_t   comp;
+                uint8_t            comp_stg;
                 lcp_mem_h          lmem; 
 	} state;
 };
@@ -194,8 +193,10 @@ static inline int lcp_request_send(lcp_request_t *req)
 {
         int rc;
         switch((rc = req->send.func(req))) {
+        case MPC_LOWCOMM_SUCCESS:
+                break;
         case MPC_LOWCOMM_NO_RESOURCE:
-                if (lcp_pending_create(req->send.ep->ctx, req, 
+                if (lcp_pending_create(req->ctx, req, 
                                        req->msg_id) == NULL) {
                         rc = MPC_LOWCOMM_ERROR;
                 }

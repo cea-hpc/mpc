@@ -202,9 +202,8 @@ int lcr_ptl_recv_tag_zcopy(sctk_rail_info_t *rail,
 }
 
 int lcr_ptl_send_put(_mpc_lowcomm_endpoint_t *ep,
-                     uint64_t local_offset,
+                     uint64_t local_addr,
                      uint64_t remote_offset,
-                     lcr_memp_t *local_key,
                      lcr_memp_t *remote_key,
                      size_t size,
                      lcr_tag_context_t *ctx) 
@@ -217,12 +216,12 @@ int lcr_ptl_send_put(_mpc_lowcomm_endpoint_t *ep,
         rdma_pte = mpc_common_hashtable_get(&srail->pt_table, SCTK_PTL_PTE_RDMA);
 
         mpc_common_debug_info("PTL: remote key. match=%s, remote=%llu, "
-                              "remote off=%llu, local off=%llu, pte idx=%d, local addr=%p", 
+                              "remote off=%llu, pte idx=%d, local addr=%p", 
                               __sctk_ptl_match_str(sctk_malloc(32), 32, remote_key->pin.ptl.match.raw),
-                              remote, local_offset, remote_offset, rdma_pte->idx, local_key->pin.ptl.start);
+                              remote, remote_offset, rdma_pte->idx, local_addr);
 
         sctk_ptl_chk(PtlPut(srail->md_req->slot_h.mdh,
-                            (ptl_size_t)local_key->pin.ptl.start + local_offset, /* local offset */
+                            local_addr, /* local offset */
                             size,
                             PTL_ACK_REQ,
                             remote,
@@ -237,9 +236,8 @@ int lcr_ptl_send_put(_mpc_lowcomm_endpoint_t *ep,
 }
 
 int lcr_ptl_send_get(_mpc_lowcomm_endpoint_t *ep,
-                     uint64_t local_offset,
+                     uint64_t local_addr,
                      uint64_t remote_offset,
-                     lcr_memp_t *local_key,
                      lcr_memp_t *remote_key,
                      size_t size,
                      lcr_tag_context_t *ctx) 
@@ -252,12 +250,12 @@ int lcr_ptl_send_get(_mpc_lowcomm_endpoint_t *ep,
         rdma_pte = mpc_common_hashtable_get(&srail->pt_table, SCTK_PTL_PTE_RDMA);
 
         mpc_common_debug_info("PTL: remote key. match=%s, remote=%llu, "
-                              "remote off=%llu, local off=%llu, pte idx=%d, local addr=%p", 
+                              "remote off=%llu, pte idx=%d, local addr=%p", 
                               __sctk_ptl_match_str(sctk_malloc(32), 32, remote_key->pin.ptl.match.raw),
-                              remote, local_offset, remote_offset, rdma_pte->idx, local_offset);
+                              remote, remote_offset, rdma_pte->idx, local_addr);
 	sctk_ptl_chk(PtlGet(
 		srail->md_req->slot_h.mdh,
-		(ptl_size_t)local_key->pin.ptl.start + local_offset,
+		local_addr,
 		size,
 		remote,
 		rdma_pte->idx,
