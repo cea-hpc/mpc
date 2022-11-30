@@ -756,7 +756,8 @@ static inline void ___free_hardware_info(mpc_hardware_split_info_t *hw_info) {
     __comm_free(hw_info->hwcomm[i+1]);
     __comm_free(hw_info->rootcomm[i]);
 
-    sctk_free(hw_info->childs_data_count[i]);
+    if(hw_info->childs_data_count != NULL)
+      sctk_free(hw_info->childs_data_count[i]);
   }
     
   sctk_free(hw_info->hwcomm);
@@ -773,7 +774,7 @@ static inline void ___free_topo_comm(mpc_lowcomm_communicator_t comm) {
   int i;
   for(i = 0; i < task_count; i++) {
     int j = 0;
-    while(comm->topo_comms[i].roots[j] != -1) {
+    while(comm->topo_comms[i].roots[j] != -1 && j < comm->topo_comms[i].size) {
       ___free_hardware_info(comm->topo_comms[i].hw_infos[j]);
       j++;
     }
