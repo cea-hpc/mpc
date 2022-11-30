@@ -7775,6 +7775,18 @@ int ___collectives_alltoall_cluster(const void *sendbuf, int sendcount, MPI_Data
   return MPI_SUCCESS;
 }
 
+
+#define INDEX2VINDEX(index, vindex, rank, size) \
+  do { \
+    vindex = ((index) - (rank) + (size)) % (size); \
+  } while(0)
+
+
+#define VINDEX2INDEX(index, vindex, rank, size) \
+  do { \
+    index = ((vindex) == (rank)) ? 0 : (((rank) - (vindex) + (size)) % (size)); \
+  } while(0)
+
 /**
   \brief Execute or schedule a Alltoall using the bruck algorithm
     Or count the number of operations and rounds for the schedule
@@ -7790,12 +7802,97 @@ int ___collectives_alltoall_cluster(const void *sendbuf, int sendcount, MPI_Data
   \param info Adress on the information structure about the schedule
   \return error code
   */
-int ___collectives_alltoall_bruck(__UNUSED__ const void *sendbuf, __UNUSED__ int sendcount, __UNUSED__ MPI_Datatype sendtype, __UNUSED__ void *recvbuf, __UNUSED__ int recvcount, __UNUSED__ MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm, __UNUSED__ MPC_COLL_TYPE coll_type, __UNUSED__ NBC_Schedule * schedule, __UNUSED__ Sched_info *info) {
+int ___collectives_alltoall_bruck( const void *sendbuf,  int sendcount,  MPI_Datatype sendtype,  void *recvbuf,  int recvcount,  MPI_Datatype recvtype,  MPI_Comm comm,  MPC_COLL_TYPE coll_type,  NBC_Schedule * schedule,  Sched_info *info) {
 
-  not_implemented();
+  int rank, size;
+  MPI_Aint tmp_sendext, recvext;
+
+  void *tmp_sendbuf = sendbuf;
+  MPI_Datatype tmp_sendtype = sendtype;
+  int tmp_sendcount = sendcount;
+
+  if(sendbuf == MPI_IN_PLACE) {
+    tmp_sendbuf = recvbuf;
+    tmp_sendtype = recvtype;
+    tmp_sendcount = recvcount;
+  }
+
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+  PMPI_Type_extent(tmp_sendtype, &tmp_sendext);
+  PMPI_Type_extent(recvtype, &recvext);
+
+  void * tmp_buf1 = NULL, 
+       * tmp_buf2 = NULL;
+        
+  int sizelog = ___collectives_ceiled_log2(size);
+
+  switch(coll_type) {
+    case MPC_COLL_TYPE_BLOCKING:
+      tmp_buf1 = sctk_malloc(recvcount * size * recvext);
+      tmp_buf2 = sctk_malloc(recvcount * size * recvext);
+      break;
+    case MPC_COLL_TYPE_NONBLOCKING:
+    case MPC_COLL_TYPE_PERSISTENT:
+      tmp_buf1 = info->tmpbuf + info->tmpbuf_pos;
+      tmp_buf2 = info->tmpbuf + info->tmpbuf_pos + recvcount * size * recvext;
+      info->tmpbuf_pos += recvext * recvcount * size * 2;
+      break;
+    case MPC_COLL_TYPE_COUNT:
+      info->tmpbuf_size += recvext * recvcount * size * 2;
+      break;
+  }
+
+
+  ___collectives_copy_type(
+      tmp_sendbuf + rank * tmp_sendcount * tmp_sendext, (size - rank) * tmp_sendcount, tmp_sendtype, 
+      tmp_buf1                                        , (size - rank) * recvcount    , recvtype, 
+      comm, coll_type, schedule, info);
+
+  ___collectives_copy_type(
+      tmp_sendbuf                                     , rank * tmp_sendcount         , tmp_sendtype,
+      tmp_buf1 + (size - rank) * recvcount * recvext  , rank * recvcount             , recvtype,
+      comm, coll_type, schedule, info);
+
+  for(int i = 0; i < sizelog; i++) {
+    if(rank < (rank + (1 << i)) % size) {
+      ___collectives_send_type(tmp_buf1, size * recvcount, recvtype, (rank + (1 << i)       ) % size, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      ___collectives_recv_type(tmp_buf2, size * recvcount, recvtype, (rank - (1 << i) + size) % size, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+    } else {
+      ___collectives_recv_type(tmp_buf2, size * recvcount, recvtype, (rank - (1 << i) + size) % size, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(tmp_buf1, size * recvcount, recvtype, (rank + (1 << i)       ) % size, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+    }
+
+    ___collectives_barrier_type(coll_type, schedule, info);
+
+    for(int j = 0; j < size; j++) {
+      if(j & (1 << i))
+        ___collectives_copy_type(
+            tmp_buf2 + j * recvcount * recvext, recvcount, recvtype,
+            tmp_buf1 + j * recvcount * recvext, recvcount, recvtype,
+            comm, coll_type, schedule, info);
+    }
+  }
+
+  int index;
+  for(int j = 0; j < size; j++) {
+    VINDEX2INDEX(index, j, rank, size);
+    ___collectives_copy_type(
+        tmp_buf1 + j * recvcount * recvext, recvcount, recvtype,
+        recvbuf + index * recvcount * recvext, recvcount, recvtype,
+        comm, coll_type, schedule, info);
+  }
+
+  if (coll_type == MPC_COLL_TYPE_BLOCKING) {
+    sctk_free(tmp_buf1);
+    sctk_free(tmp_buf2);
+  }
 
   return MPI_SUCCESS;
 }
+
+#undef INDEX2VINDEX
+#undef VINDEX2INDEX
 
 /**
   \brief Execute or schedule a Alltoall using the pairwise algorithm
