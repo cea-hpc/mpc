@@ -229,7 +229,8 @@ struct _mpc_mpi_config_coll_opts
     int topo_creation_allow_persistent;
     int topo_creation_allow_non_blocking;
     int topo_creation_allow_blocking;
-
+    int topo_max_level;
+    
 };
 
 /************************************

@@ -351,7 +351,7 @@ static inline int ___collectives_fill_rmb(int a, int index);
 static inline unsigned int ___collectives_floored_log2(unsigned int a);
 static inline unsigned int ___collectives_ceiled_log2(unsigned int a);
 
-static inline void ___collectives_sched_info_init(Sched_info *info);
+static inline void ___collectives_sched_info_init(Sched_info *info, MPC_COLL_TYPE coll_type);
 static inline int ___collectives_sched_alloc_init(NBC_Handle *handle, NBC_Schedule *schedule, Sched_info *info);
 static inline int ___collectives_sched_send(const void *buffer, int count, MPI_Datatype datatype, int dest, MPI_Comm comm, NBC_Schedule *schedule, Sched_info *info);
 static inline int ___collectives_sched_recv(void *buffer, int count, MPI_Datatype datatype, int source, MPI_Comm comm, NBC_Schedule *schedule, Sched_info *info);
@@ -374,6 +374,7 @@ static inline int ___collectives_create_childs_counts(MPI_Comm comm, Sched_info 
 static inline int ___collectives_create_swap_array(MPI_Comm comm, int root, Sched_info *info);
 static inline int ___collectives_topo_comm_init(MPI_Comm comm, int root, int max_level, Sched_info *info);
 
+static inline int __Get_topo_comm_allowed(MPC_COLL_TYPE coll_type);
 
 /**
   \brief Find the index of the first bit set to 1 in an integer
@@ -428,7 +429,7 @@ static inline unsigned int ___collectives_ceiled_log2(unsigned int a) {
   \brief Initialise the Sched_info struct with default values
   \param info The adress of the Sched_info struct to initialise
   */
-static inline void ___collectives_sched_info_init(Sched_info *info) {
+static inline void ___collectives_sched_info_init(Sched_info *info, MPC_COLL_TYPE coll_type) {
   info->pos = 2 * sizeof(int);
 
   info->round_start_pos = sizeof(int);
@@ -442,6 +443,9 @@ static inline void ___collectives_sched_info_init(Sched_info *info) {
   info->tmpbuf_pos = 0;
 
   info->flag = SCHED_INFO_TOPO_COMM_ALLOWED;
+  if(__Get_topo_comm_allowed(coll_type)) {
+    info->flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+  }
   
   info->hardware_info_ptr = NULL;
 }
@@ -1368,11 +1372,7 @@ static inline int ___collectives_ibcast( void *buffer, int count, MPI_Datatype d
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_NONBLOCKING)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
@@ -1460,11 +1460,7 @@ static inline int ___collectives_bcast_init(void *buffer, int count, MPI_Datatyp
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_PERSISTENT)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT);
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
   handle->tmpbuf = NULL;
@@ -1503,12 +1499,7 @@ static inline int ___collectives_bcast_init(void *buffer, int count, MPI_Datatyp
 int _mpc_mpi_collectives_bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm) {
 
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
-
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_BLOCKING);
   return _mpc_mpi_config()->coll_algorithm_intracomm.bcast(buffer, count, datatype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info); 
 }
 
@@ -1789,7 +1780,7 @@ int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatype datatype, in
 
     /* choose max topological level on which to do hardware split */
     /*TODO choose level wisely */
-    int max_level = TOPO_MAX_LEVEL;
+    int max_level = _mpc_mpi_config()->coll_opts.topo_max_level;
 
     ___collectives_topo_comm_init(comm, root, max_level, info);
   }
@@ -1895,11 +1886,8 @@ static inline int ___collectives_ireduce(const void *sendbuf, void* recvbuf, int
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING);
 
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_NONBLOCKING)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
   res = NBC_Init_handle(handle, comm, MPC_IREDUCE_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
@@ -1991,14 +1979,8 @@ static inline int ___collectives_reduce_init(const void *sendbuf, void* recvbuf,
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-#if ALLOW_TOPO_COMM == 1
-  info.flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
-#endif
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT);
 
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_PERSISTENT)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
   res = NBC_Init_handle(handle, comm, MPC_IREDUCE_TAG);
 
   handle->tmpbuf = NULL;
@@ -2039,12 +2021,7 @@ static inline int ___collectives_reduce_init(const void *sendbuf, void* recvbuf,
 int _mpc_mpi_collectives_reduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm) {
 
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
-
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_BLOCKING);
   return _mpc_mpi_config()->coll_algorithm_intracomm.reduce(sendbuf, recvbuf, count, datatype, op, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
@@ -2441,7 +2418,7 @@ int ___collectives_reduce_topo(const void *sendbuf, void* recvbuf, int count, MP
   if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
     /* choose max topological level on which to do hardware split */
     /*TODO choose level wisely */
-    int max_level = TOPO_MAX_LEVEL;
+    int max_level = _mpc_mpi_config()->coll_opts.topo_max_level;
 
     ___collectives_topo_comm_init(comm, root, max_level, info);
   }
@@ -2517,7 +2494,7 @@ int ___collectives_reduce_topo_commute(const void *sendbuf, void* recvbuf, int c
   if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
     /* choose max topological level on which to do hardware split */
     /*TODO choose level wisely */
-    int max_level = TOPO_MAX_LEVEL;
+    int max_level = _mpc_mpi_config()->coll_opts.topo_max_level;
 
     ___collectives_topo_comm_init(comm, root, max_level, info);
   }
@@ -2623,11 +2600,8 @@ static inline int ___collectives_iallreduce(const void *sendbuf, void* recvbuf, 
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING);
 
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_NONBLOCKING)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
   res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
@@ -2713,14 +2687,8 @@ static inline int ___collectives_allreduce_init(const void *sendbuf, void* recvb
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-#if ALLOW_TOPO_COMM == 1
-  info.flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
-#endif
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT);
 
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_PERSISTENT)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
   res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
 
   handle->tmpbuf = NULL;
@@ -2760,12 +2728,7 @@ static inline int ___collectives_allreduce_init(const void *sendbuf, void* recvb
 int _mpc_mpi_collectives_allreduce(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
 
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
-
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_BLOCKING);
   return _mpc_mpi_config()->coll_algorithm_intracomm.allreduce(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
@@ -3524,11 +3487,8 @@ static inline int ___collectives_iscatter(const void *sendbuf, int sendcount, MP
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING);
 
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_NONBLOCKING)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
@@ -3623,14 +3583,7 @@ static inline int ___collectives_scatter_init(const void *sendbuf, int sendcount
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-#if ALLOW_TOPO_COMM == 1
-  info.flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
-#endif
-
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_PERSISTENT)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT);
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
   handle->tmpbuf = NULL;
@@ -3672,12 +3625,7 @@ static inline int ___collectives_scatter_init(const void *sendbuf, int sendcount
 int _mpc_mpi_collectives_scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm) {
 
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
-
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_BLOCKING);
   return _mpc_mpi_config()->coll_algorithm_intracomm.scatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info); 
 }
 
@@ -4003,6 +3951,9 @@ int ___collectives_scatter_topo(const void *sendbuf, int sendcount, MPI_Datatype
   int rank, size, res = MPI_SUCCESS;
   MPI_Aint sendext, recvext;
 
+  _mpc_cl_comm_size(comm, &size);
+  _mpc_cl_comm_rank(comm, &rank);
+
   MPI_Datatype tmp_recvtype = recvtype;
   int tmp_recvcount = recvcount;
 
@@ -4010,10 +3961,9 @@ int ___collectives_scatter_topo(const void *sendbuf, int sendcount, MPI_Datatype
     tmp_recvtype  = sendtype;
     tmp_recvcount = sendcount;
   }
-
-  _mpc_cl_comm_size(comm, &size);
-  _mpc_cl_comm_rank(comm, &rank);
-  PMPI_Type_extent(sendtype, &sendext);
+  
+  if(rank == root)
+    PMPI_Type_extent(sendtype, &sendext);
   PMPI_Type_extent(tmp_recvtype, &recvext);
 
   void *tmpbuf = NULL;
@@ -4038,7 +3988,7 @@ int ___collectives_scatter_topo(const void *sendbuf, int sendcount, MPI_Datatype
   if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
     /* choose max topological level on which to do hardware split */
     /*TODO choose level wisely */
-    int max_level = TOPO_MAX_LEVEL;
+    int max_level = _mpc_mpi_config()->coll_opts.topo_max_level;
 
     ___collectives_topo_comm_init(comm, root, max_level, info);
   }
@@ -4207,7 +4157,7 @@ static inline int ___collectives_iscatterv(const void *sendbuf, const int *sendc
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
@@ -4316,7 +4266,7 @@ static inline int ___collectives_scatterv_init(const void *sendbuf, const int *s
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
@@ -4360,12 +4310,7 @@ static inline int ___collectives_scatterv_init(const void *sendbuf, const int *s
 int _mpc_mpi_collectives_scatterv(const void *sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm) {
 
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
-
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_BLOCKING);
   return _mpc_mpi_config()->coll_algorithm_intracomm.scatterv(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info); 
 }
 
@@ -4597,11 +4542,7 @@ static inline int ___collectives_igather(const void *sendbuf, int sendcount, MPI
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_NONBLOCKING)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING);
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
@@ -4701,14 +4642,7 @@ static inline int ___collectives_gather_init(const void *sendbuf, int sendcount,
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-#if ALLOW_TOPO_COMM == 1
-  info.flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
-#endif
-
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_PERSISTENT)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT);
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
   handle->tmpbuf = NULL;
@@ -4748,12 +4682,7 @@ static inline int ___collectives_gather_init(const void *sendbuf, int sendcount,
 int _mpc_mpi_collectives_gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm) {
 
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
-
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_BLOCKING);
   return _mpc_mpi_config()->coll_algorithm_intracomm.gather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
@@ -5120,7 +5049,7 @@ int ___collectives_gather_topo(const void *sendbuf, int sendcount, MPI_Datatype 
   if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
     /* choose max topological level on which to do hardware split */
     /*TODO choose level wisely */
-    int max_level = TOPO_MAX_LEVEL;
+    int max_level = _mpc_mpi_config()->coll_opts.topo_max_level;
 
     ___collectives_topo_comm_init(comm, root, max_level, info);
   }
@@ -5275,7 +5204,7 @@ static inline int ___collectives_igatherv(const void *sendbuf, int sendcount, MP
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
@@ -5381,7 +5310,7 @@ static inline int ___collectives_gatherv_init(const void *sendbuf, int sendcount
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
@@ -5425,12 +5354,7 @@ static inline int ___collectives_gatherv_init(const void *sendbuf, int sendcount
 int _mpc_mpi_collectives_gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm) {
 
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
-
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_BLOCKING);
   return _mpc_mpi_config()->coll_algorithm_intracomm.gatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
@@ -5657,7 +5581,7 @@ static inline int ___collectives_ireduce_scatter_block (const void *sendbuf, voi
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING);
 
   res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
   handle->tmpbuf = NULL;
@@ -5744,8 +5668,7 @@ static inline int ___collectives_reduce_scatter_block_init(const void *sendbuf, 
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT);
   res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
 
   handle->tmpbuf = NULL;
@@ -5785,12 +5708,7 @@ static inline int ___collectives_reduce_scatter_block_init(const void *sendbuf, 
 int _mpc_mpi_collectives_reduce_scatter_block(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
 
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
-
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_BLOCKING);
   return _mpc_mpi_config()->coll_algorithm_intracomm.reduce_scatter_block(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
@@ -6131,7 +6049,7 @@ static inline int ___collectives_ireduce_scatter (const void *sendbuf, void* rec
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING);
 
   res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
   handle->tmpbuf = NULL;
@@ -6225,8 +6143,7 @@ static inline int ___collectives_reduce_scatter_init(const void *sendbuf, void* 
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT);
   res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
 
   handle->tmpbuf = NULL;
@@ -6266,12 +6183,7 @@ static inline int ___collectives_reduce_scatter_init(const void *sendbuf, void* 
 int _mpc_mpi_collectives_reduce_scatter(const void *sendbuf, void* recvbuf, const int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
 
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
-
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_BLOCKING);
   return _mpc_mpi_config()->coll_algorithm_intracomm.reduce_scatter(sendbuf, recvbuf, recvcounts, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
@@ -6552,11 +6464,7 @@ static inline int ___collectives_iallgather(const void *sendbuf, int sendcount, 
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_NONBLOCKING)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING);
   res = NBC_Init_handle(handle, comm, MPC_IALLGATHER_TAG);
   handle->tmpbuf = NULL;
   schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
@@ -6651,14 +6559,7 @@ static inline int ___collectives_allgather_init(const void *sendbuf, int sendcou
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-#if ALLOW_TOPO_COMM == 1
-  info.flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
-#endif
-
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_PERSISTENT)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT);
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
   handle->tmpbuf = NULL;
@@ -6699,12 +6600,7 @@ static inline int ___collectives_allgather_init(const void *sendbuf, int sendcou
 int _mpc_mpi_collectives_allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm) {
 
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
-
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_BLOCKING);
   return _mpc_mpi_config()->coll_algorithm_intracomm.allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
@@ -7168,7 +7064,7 @@ static inline int ___collectives_iallgatherv(const void *sendbuf, int sendcount,
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING);
 
   res = NBC_Init_handle(handle, comm, MPC_IALLGATHER_TAG);
   handle->tmpbuf = NULL;
@@ -7276,7 +7172,7 @@ static inline int ___collectives_allgatherv_init(const void *sendbuf, int sendco
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
@@ -7319,12 +7215,7 @@ static inline int ___collectives_allgatherv_init(const void *sendbuf, int sendco
 int _mpc_mpi_collectives_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype, MPI_Comm comm) {
 
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
-
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_BLOCKING);
   return _mpc_mpi_config()->coll_algorithm_intracomm.allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
@@ -7568,7 +7459,7 @@ static inline int ___collectives_ialltoall(const void *sendbuf, int sendcount, M
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
@@ -7662,7 +7553,7 @@ static inline int ___collectives_alltoall_init(const void *sendbuf, int sendcoun
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
@@ -7712,12 +7603,7 @@ int _mpc_mpi_collectives_alltoall(const void *sendbuf, int sendcount, MPI_Dataty
   // return status.MPI_ERROR;
 
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
-
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_BLOCKING);
   return _mpc_mpi_config()->coll_algorithm_intracomm.alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
@@ -7874,8 +7760,8 @@ int ___collectives_alltoall_cluster(const void *sendbuf, int sendcount, MPI_Data
     if(rank == i) {
       continue;
     } else if (rank < i) {
-    ___collectives_send_type(tmp_sendbuf  + i * tmp_sendcount * tmp_sendext, tmp_sendcount, tmp_sendtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
-    ___collectives_recv_type(recvbuf + i * recvcount * recvext, recvcount, recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      ___collectives_send_type(tmp_sendbuf  + i * tmp_sendcount * tmp_sendext, tmp_sendcount, tmp_sendtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
+      ___collectives_recv_type(recvbuf + i * recvcount * recvext, recvcount, recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
     } else {
       ___collectives_recv_type(recvbuf + i * recvcount * recvext, recvcount, recvtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
       ___collectives_send_type(tmp_sendbuf  + i * tmp_sendcount * tmp_sendext, tmp_sendcount, tmp_sendtype, i, MPC_ALLTOALL_TAG, comm, coll_type, schedule, info);
@@ -8123,7 +8009,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   // We fetch the topological communicators if we can, if not we create them
   int root = 0;
   if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
-    if(info->flag & SCHED_INFO_TOPO_COMM_CREATION_ALLOWED) {
+    if(!(info->flag & SCHED_INFO_TOPO_COMM_CREATION_ALLOWED)) {
       // For some reason, we ended up here
       // We cannot create topological communicators and they aren't already created
       // Fallback on non-topological algorithms
@@ -8135,7 +8021,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
     }
     /* choose max topological level on which to do hardware split */
     /*TODO choose level wisely */
-    int max_level = TOPO_MAX_LEVEL;
+    int max_level = _mpc_mpi_config()->coll_opts.topo_max_level;
 
     ___collectives_topo_comm_init(comm, root, max_level, info);
   }
@@ -9056,7 +8942,7 @@ static inline int ___collectives_ialltoallv(const void *sendbuf, const int *send
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
@@ -9164,7 +9050,7 @@ static inline int ___collectives_alltoallv_init(const void *sendbuf, const int *
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
@@ -9616,7 +9502,7 @@ static inline int ___collectives_ialltoallw(const void *sendbuf, const int *send
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
@@ -9725,7 +9611,7 @@ static inline int ___collectives_alltoallw_init(const void *sendbuf, const int *
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
@@ -10148,7 +10034,7 @@ static inline int ___collectives_iscan (const void *sendbuf, void *recvbuf, int 
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
@@ -10239,7 +10125,7 @@ static inline int ___collectives_scan_init (const void *sendbuf, void *recvbuf, 
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
@@ -10280,12 +10166,7 @@ static inline int ___collectives_scan_init (const void *sendbuf, void *recvbuf, 
 int _mpc_mpi_collectives_scan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
 
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
-
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_BLOCKING);
   return _mpc_mpi_config()->coll_algorithm_intracomm.scan(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
@@ -10549,7 +10430,7 @@ static inline int ___collectives_iexscan (const void *sendbuf, void *recvbuf, in
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
@@ -10640,7 +10521,7 @@ static inline int ___collectives_exscan_init (const void *sendbuf, void *recvbuf
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
@@ -10681,12 +10562,7 @@ static inline int ___collectives_exscan_init (const void *sendbuf, void *recvbuf
 int _mpc_mpi_collectives_exscan (const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
 
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
-
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_BLOCKING);
   return _mpc_mpi_config()->coll_algorithm_intracomm.exscan(sendbuf, recvbuf, count, datatype, op, comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
@@ -10947,7 +10823,7 @@ static inline int ___collectives_ibarrier (MPI_Comm comm, NBC_Handle *handle) {
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_NONBLOCKING);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
   handle->tmpbuf = NULL;
@@ -11020,7 +10896,7 @@ static inline int ___collectives_barrier_init (MPI_Comm comm, NBC_Handle* handle
   int res;
   NBC_Schedule *schedule;
   Sched_info info;
-  ___collectives_sched_info_init(&info);
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_PERSISTENT);
 
   res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
 
@@ -11056,12 +10932,7 @@ static inline int ___collectives_barrier_init (MPI_Comm comm, NBC_Handle* handle
 int _mpc_mpi_collectives_barrier (MPI_Comm comm) {
 
   Sched_info info;
-  ___collectives_sched_info_init(&info);
-
-  if(__Get_topo_comm_allowed(MPC_COLL_TYPE_BLOCKING)) {
-    info.flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
-  }
-
+  ___collectives_sched_info_init(&info, MPC_COLL_TYPE_BLOCKING);
   return _mpc_mpi_config()->coll_algorithm_intracomm.barrier(comm, MPC_COLL_TYPE_BLOCKING, NULL, &info);
 }
 
