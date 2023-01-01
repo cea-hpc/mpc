@@ -35,79 +35,72 @@ static inline int build_memory_registration_bitmap(size_t length,
 /* Packing                                        */
 /* ============================================== */
 
-static size_t lcp_proto_rndv_pack(void *dest, void *data)
+static size_t lcp_rts_rget_pack(void *dest, void *data)
+{
+        lcp_rndv_hdr_t *hdr = dest;
+        lcp_request_t *req = data;
+        void *rkey_buf;
+        int packed_size;
+
+        hdr->base.comm = req->send.tag.comm_id;
+        hdr->base.src  = req->send.rndv.src;
+        hdr->base.tag  = req->send.rndv.tag;
+        hdr->base.seqn = req->seqn;
+
+        hdr->msg_id    = req->msg_id;
+        hdr->size      = req->send.length;
+
+        rkey_buf = hdr + 1;
+        packed_size = lcp_mem_pack(req->ctx, rkey_buf, 
+                                   req->state.lmem,
+                                   req->state.memp_map);
+        return sizeof(*hdr) + packed_size;
+}
+
+static size_t lcp_rts_rput_pack(void *dest, void *data)
 {
         lcp_rndv_hdr_t *hdr = dest;
         lcp_request_t *req = data;
 
-        hdr->base.base.comm_id = req->send.rndv.comm_id;
-        hdr->base.dest         = req->send.rndv.dest;
-        hdr->base.src          = req->send.rndv.src;
-        hdr->base.tag          = req->send.rndv.tag;
-        hdr->base.seqn         = req->seqn;
+        hdr->base.comm = req->send.tag.comm_id;
+        hdr->base.src  = req->send.rndv.src;
+        hdr->base.tag  = req->send.rndv.tag;
+        hdr->base.seqn = req->seqn;
 
-        hdr->dest        = req->send.rndv.dest;
-        hdr->msg_id      = req->msg_id;
-        hdr->total_size  = req->send.length;
-        hdr->remote_addr = 0; //FIXME: check how to differenciate with rndv put
+        hdr->msg_id    = req->msg_id;
+        hdr->size      = req->send.length;
 
         return sizeof(*hdr);
 }
 
-static size_t lcp_proto_ack_pack(void *dest, void *data)
+static size_t lcp_rndv_fin_pack(void *dest, void *data)
 {
         lcp_rndv_ack_hdr_t *hdr = dest;
         lcp_request_t *req = data;
 
-        hdr->base.base.comm_id = req->send.am.comm_id;
-        hdr->base.am_id = req->send.am.am_id;
-
-        hdr->dest        = req->send.am.dest;
-        hdr->msg_id      = req->msg_id;
+        hdr->msg_id = req->msg_id;
+        hdr->src    = req->send.am.src;
 
         return sizeof(*hdr);
 }
 
-/* ============================================== */
-/* Send                                           */
-/* ============================================== */
-
-int lcp_send_am_eager_rndv_bcopy(lcp_request_t *req)
+static size_t lcp_rtr_rput_pack(void *dest, void *data)
 {
-        int rc = MPC_LOWCOMM_SUCCESS;
-        ssize_t payload;
-        lcp_ep_h ep = req->send.ep;
-        _mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[ep->priority_chnl];
+        lcp_rndv_ack_hdr_t *hdr = dest;
+        lcp_request_t *req = data;
+        lcp_request_t *super = req->super;
+        int packed_size;
+        void *rkey_ptr;
 
-        payload = lcp_send_do_am_bcopy(lcr_ep, MPC_LOWCOMM_RDV_MESSAGE, 
-                                       lcp_proto_rndv_pack, req);
-        if (payload < 0) {
-                mpc_common_debug_error("LCP: error packing bcopy.");
-                rc = MPC_LOWCOMM_ERROR;
-        }
+        hdr->msg_id = super->msg_id;
+        hdr->src    = super->send.am.src;
 
-        return rc;
-}
+        rkey_ptr = hdr + 1;
+        packed_size = lcp_mem_pack(super->ctx, rkey_ptr, 
+                                   super->state.lmem, 
+                                   super->state.memp_map);
 
-int lcp_send_am_eager_ack_bcopy(lcp_request_t *req)
-{
-        int rc = MPC_LOWCOMM_SUCCESS;
-        int payload;
-        lcp_ep_h ep = req->send.ep;
-        _mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[ep->priority_chnl];
-
-        payload = lcp_send_do_am_bcopy(lcr_ep,
-                                       MPC_LOWCOMM_ACK_RDV_MESSAGE,
-                                       lcp_proto_ack_pack, req);
-        if (payload == MPC_LOWCOMM_NO_RESOURCE) {
-                mpc_common_debug_error("LCP: no resource available.");
-                rc = MPC_LOWCOMM_NO_RESOURCE;
-        } else if ((unsigned long)payload < sizeof(lcp_rndv_ack_hdr_t)) {
-                mpc_common_debug_error("LCP: could not pack all data.");
-                rc = MPC_LOWCOMM_ERROR;
-        } 
-
-        return rc;
+        return sizeof(*hdr) + packed_size;
 }
 
 /* ============================================== */
@@ -126,40 +119,16 @@ void lcp_request_complete_rsend(lcr_completion_t *comp)
         } 
 }
 
-/* Recv ack callback from rendez-vous put protocol. Upon reception, extract
- * memory registration contexts sent by target and start running put on those
- * contexts */ 
-void lcp_request_rput_ack_callback(lcr_completion_t *comp)
+int lcp_send_rput_common(lcp_request_t *super, lcp_mem_h rmem)
 {
-        int rc, i, num_used_ifaces;
+        int rc = MPC_LOWCOMM_SUCCESS;
+        int i, num_used_ifaces;
         size_t remaining, offset;
         size_t frag_length, length;
         size_t *per_ep_length;
-        lcp_mem_h rmem = NULL; 
         lcp_ep_h ep;
         lcr_rail_attr_t attr;
         _mpc_lowcomm_endpoint_t *lcr_ep;
-
-        lcp_request_t *ack_req = mpc_container_of(comp, lcp_request_t, 
-                                                  recv.t_ctx.comp);
-
-        lcp_request_t *super = ack_req->super;
-
-        /* first create and unpack remote key */
-        rc = lcp_mem_create(super->ctx, &rmem);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
-                goto err;
-        }
-
-        rc = lcp_mem_unpack(super->ctx, 
-                            rmem, 
-                            ack_req->recv.t_ctx.start,
-                            super->state.memp_map);
-        if (rc < 0) {
-                goto err;
-        }
-        sctk_free(ack_req->recv.buffer);
-        lcp_request_complete(ack_req);
 
         /* Set the length to be sent on each interface. The minimum size that
          * can be sent on a interface is defined by min_frag_size */
@@ -198,10 +167,67 @@ void lcp_request_rput_ack_callback(lcr_completion_t *comp)
                 super->state.cc = (super->state.cc + 1) % num_used_ifaces;
         }
 
+        return rc;
+}
+
+/* Recv ack callback from rendez-vous put protocol. Upon reception, extract
+ * memory registration contexts sent by target and start running put on those
+ * contexts */ 
+void lcp_request_rput_ack_callback(lcr_completion_t *comp)
+{
+        int rc;
+        lcp_mem_h rmem = NULL; 
+
+        lcp_request_t *ack_req = mpc_container_of(comp, lcp_request_t, 
+                                                  recv.t_ctx.comp);
+
+        lcp_request_t *super = ack_req->super;
+
+        /* first create and unpack remote key */
+        rc = lcp_mem_create(super->ctx, &rmem);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
+
+        rc = lcp_mem_unpack(super->ctx, 
+                            rmem, 
+                            ack_req->recv.t_ctx.start,
+                            super->state.memp_map);
+        if (rc < 0) {
+                goto err;
+        }
+        sctk_free(ack_req->recv.buffer);
+        lcp_request_complete(ack_req);
+
+        rc = lcp_send_rput_common(super, rmem);
+
         lcp_mem_delete(rmem);
 err:
         return;
 
+}
+
+void lcp_request_complete_am_rput(lcr_completion_t *comp)
+{
+        int payload;
+        lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
+                                              send.t_ctx.comp);
+
+        lcp_ep_h ep = req->send.ep;
+
+        req->state.remaining -= comp->sent;
+        if (req->state.remaining == 0) {
+
+                payload = lcp_send_do_am_bcopy(ep->lct_eps[ep->priority_chnl],
+                                               MPC_LOWCOMM_RFIN_MESSAGE,
+                                               lcp_rndv_fin_pack,
+                                               req);
+                if (payload < 0) {
+                        mpc_common_debug_error("LCP: error sending fin message");
+                }
+
+                lcp_request_complete(req);
+        }
 }
 
 /* Rendez-vous put callback for completion */
@@ -245,6 +271,38 @@ void lcp_request_complete_rput(lcr_completion_t *comp)
         }
         return;
 }
+
+/* ============================================== */
+/* Memory registration                            */
+/* ============================================== */
+
+int lcp_rndv_reg_send_buffer(lcp_request_t *req)
+{
+        int rc;
+        lcp_ep_h ep = req->send.ep;
+        sctk_rail_info_t *rail = ep->lct_eps[ep->priority_chnl]->rail;
+        lcr_rail_attr_t attr;
+
+        /* build registration bitmap */
+        rail->iface_get_attr(rail, &attr);
+        build_memory_registration_bitmap(req->send.length, 
+                                         attr.iface.cap.rndv.min_frag_size,
+                                         req->ctx->num_resources,
+                                         &req->state.memp_map);
+
+        /* Register and pack memory pin context that will be sent to remote */
+        rc = lcp_mem_register(req->send.ep->ctx, 
+                              &(req->state.lmem), 
+                              req->send.buffer, 
+                              req->send.length,
+                              req->state.memp_map);
+
+        return rc;
+}
+
+/* ============================================== */
+/* Protocol starts                                */
+/* ============================================== */
 
 int lcp_send_rsend_start(lcp_request_t *req)
 {
@@ -305,12 +363,10 @@ void lcp_request_complete_srget(lcr_completion_t *comp)
 //       which interface to use ?
 int lcp_send_rget_start(lcp_request_t *req)
 {
-        int rc, num_used_ifaces;
+        int rc;
         lcp_ep_h ep = req->send.ep;
         uint64_t imm = 0;
         struct iovec iov_send[1], iov_fin[1];
-        sctk_rail_info_t *rail = ep->lct_eps[ep->priority_chnl]->rail;
-        lcr_rail_attr_t attr;
 
         /* Set immediate and tag for matching */
         LCP_TM_SET_HDR_DATA(imm, MPC_LOWCOMM_RGET_TM_MESSAGE, 
@@ -326,24 +382,7 @@ int lcp_send_rget_start(lcp_request_t *req)
                 .t = 0
         };
 
-        /* build registration bitmap */
-        rail->iface_get_attr(rail, &attr);
-        num_used_ifaces = build_memory_registration_bitmap(req->send.length, 
-                                                           attr.iface.cap.rndv.min_frag_size,
-                                                           req->ctx->num_resources,
-                                                           &req->state.memp_map);
-
-        /* Register and pack memory pin context that will be sent to remote */
-        rc = lcp_mem_register(req->send.ep->ctx, 
-                              &(req->state.lmem), 
-                              req->send.buffer, 
-                              req->send.length,
-                              req->state.memp_map);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
-                goto err;
-        }
-
-        iov_send[0].iov_base = sctk_malloc(num_used_ifaces * sizeof(lcr_memp_t));
+        iov_send[0].iov_base = sctk_malloc(req->state.lmem->num_ifaces*sizeof(lcr_memp_t));
         iov_send[0].iov_len  = lcp_mem_pack(req->send.ep->ctx, 
                                             iov_send[0].iov_base, 
                                             req->state.lmem,
@@ -468,6 +507,51 @@ err:
         return rc;
 }
 
+int lcp_send_am_rts_start(lcp_request_t *req)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+        int payload_size;
+        lcp_ep_h ep = req->send.ep;
+        lcp_chnl_idx_t cc = ep->priority_chnl;
+
+        if (lcp_pending_create(req->ctx, req, req->msg_id) == NULL) {
+                mpc_common_debug_error("LCP: could not add pending message");
+                rc = MPC_LOWCOMM_ERROR;
+                goto err;
+        }
+
+        switch (ep->ctx->config.rndv_mode) {
+        case LCP_RNDV_GET:
+                rc = lcp_rndv_reg_send_buffer(req);
+                payload_size = lcp_send_do_am_bcopy(ep->lct_eps[cc], 
+                                                    MPC_LOWCOMM_RGET_MESSAGE,
+                                                    lcp_rts_rget_pack, req);
+                if (payload_size < 0) {
+                        rc = MPC_LOWCOMM_ERROR;
+                }
+                break;
+        case LCP_RNDV_PUT:
+                req->send.t_ctx.comp.comp_cb = lcp_request_complete_am_rput;
+                payload_size = lcp_send_do_am_bcopy(ep->lct_eps[cc], 
+                                                    MPC_LOWCOMM_RPUT_MESSAGE,
+                                                    lcp_rts_rput_pack, req);
+                if (payload_size < 0) {
+                        rc = MPC_LOWCOMM_ERROR;
+                }
+                break;
+        case LCP_RNDV_SEND:
+                not_reachable();
+                break;
+        default:
+                mpc_common_debug_error("LCP: unknown rndv type");
+                rc = MPC_LOWCOMM_ERROR;
+                break;
+        }
+
+err:
+        return rc;
+}
+
 int lcp_send_rndv_start(lcp_request_t *req) 
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -488,42 +572,39 @@ int lcp_send_rndv_start(lcp_request_t *req)
                         req->send.func = lcp_send_rsend_start;
                         break;
                 case LCP_RNDV_GET:
+                        rc = lcp_rndv_reg_send_buffer(req);
                         req->send.func = lcp_send_rget_start;
                         break;
                 case LCP_RNDV_PUT:
+                        rc = lcp_rndv_reg_send_buffer(req);
                         req->send.func = lcp_send_rput_start;
                         break;
                 default:
                         mpc_common_debug_fatal("LCP: unknown protocol");
                 } 	
         } else {
-                req->flags    &= LCP_REQUEST_RNDV_TAG;
-                req->send.func = lcp_send_am_eager_rndv_bcopy;
-
-                if (lcp_pending_create(ep->ctx, req, 
-                                       req->msg_id) == NULL) {
-                        rc = MPC_LOWCOMM_ERROR;
-                        goto err;
-                }
+                req->send.func = lcp_send_am_rts_start;
         }
 
-err:
         return rc;
 }
 
+int lcp_recv_rget(lcp_request_t *req, void *hdr);
+int lcp_recv_rput(lcp_request_t *req);
+
 int lcp_rndv_matched(lcp_context_h ctx, 
                      lcp_request_t *rreq,
-                     lcp_rndv_hdr_t *hdr) 
+                     lcp_rndv_hdr_t *hdr,
+                     lcp_rndv_mode_t rndv_mode) 
 {
         int rc;
         lcp_ep_ctx_t *ctx_ep;
         lcp_ep_h ep;
-        lcp_request_t *ack_req;
 
         /* Init all protocol data */
         rreq->msg_id            = hdr->msg_id;
-        rreq->recv.send_length  = hdr->total_size; 
-        rreq->state.remaining   = hdr->total_size;
+        rreq->recv.send_length  = hdr->size; 
+        rreq->state.remaining   = hdr->size;
         rreq->state.offset      = 0;
         rreq->seqn              = hdr->base.seqn;
 
@@ -539,22 +620,19 @@ int lcp_rndv_matched(lcp_context_h ctx,
                 ep = ctx_ep->ep;
         }
 
-        if (rreq->flags & LCP_REQUEST_RNDV_TAG) {
-                /* Send ack */
-                rc = lcp_request_create(&ack_req);
-                if (rc != MPC_LOWCOMM_SUCCESS) {
-                        goto err;
-                }
-                lcp_request_init_ack(ack_req, ep, 
-                                     hdr->base.base.comm_id, 
-                                     hdr->base.dest,
-                                     hdr->base.seqn,
-                                     hdr->msg_id);
-
-                mpc_common_debug("LCP: send ack comm_id=%llu, dest=%d, msg_id=%llu",
-                                 ack_req->send.am.comm_id, ack_req->send.am.dest, 
-                                 ack_req->msg_id);
-                rc = lcp_send_am_eager_ack_bcopy(ack_req);
+        switch (rndv_mode) {
+        case LCP_RNDV_SEND:
+                break;
+        case LCP_RNDV_PUT:
+                rc = lcp_recv_rput(rreq);
+                break;
+        case LCP_RNDV_GET:
+                rc = lcp_recv_rget(rreq, hdr + 1);
+                break;
+        default:
+                mpc_common_debug_error("LCP: unknown protocol in recv");
+                rc = MPC_LOWCOMM_ERROR;
+                break;
         }
 
 err:
@@ -595,12 +673,20 @@ void lcp_request_complete_recv_rget(lcr_completion_t *comp)
                         ep = ctx_ep->ep;
                         req->state.comp_stg = 1;
 
-                        rc = lcp_send_do_tag_zcopy(ep->lct_eps[ep->priority_chnl],
-                                                   req->recv.t_ctx.tag,
-                                                   0,
-                                                   iov_fin,
-                                                   1,
-                                                   &(req->recv.t_ctx));
+                        if (LCR_IFACE_IS_TM(ep->lct_eps[ep->priority_chnl]->rail)) {
+                                rc = lcp_send_do_tag_zcopy(ep->lct_eps[ep->priority_chnl],
+                                                           req->recv.t_ctx.tag,
+                                                           0,
+                                                           iov_fin,
+                                                           1,
+                                                           &(req->recv.t_ctx));
+                        } else {
+                                lcp_send_do_am_bcopy(ep->lct_eps[ep->priority_chnl],
+                                                     MPC_LOWCOMM_RFIN_MESSAGE,
+                                                     lcp_rndv_fin_pack,
+                                                     req);
+                        }
+
                         if (rc != MPC_LOWCOMM_SUCCESS) {
                                 goto err;
                         }
@@ -750,7 +836,7 @@ int lcp_recv_rget(lcp_request_t *req, void *hdr)
                                            &(req->recv.t_ctx));
 
                 per_ep_length[req->state.cc] -= length;
-                offset    += length; remaining  -= length;
+                offset += length; remaining  -= length;
 
                 req->state.cc = (req->state.cc + 1) % num_used_ifaces;
                 f_id++;
@@ -764,7 +850,7 @@ err:
 
 int lcp_recv_rput(lcp_request_t *req)
 {
-        int rc, num_used_ifaces;
+        int rc, payload, num_used_ifaces;
         lcp_ep_h ep;
         lcp_ep_ctx_t *ctx_ep;
         sctk_rail_info_t *rail;
@@ -774,6 +860,7 @@ int lcp_recv_rput(lcp_request_t *req)
         struct iovec iov_fin[1];
 
         /* Get endpoint */
+        //FIXME: redundant in am handler
         HASH_FIND(hh, req->ctx->ep_ht, &req->recv.tag.src, sizeof(uint64_t), ctx_ep);
         if (ctx_ep == NULL) {
                 rc = lcp_ep_create(req->ctx, &ep, req->recv.tag.src, 0);
@@ -810,46 +897,67 @@ int lcp_recv_rput(lcp_request_t *req)
         }
         ack->super = req;
 
-        /* Packed length is inferior or equal to the size of a memory context
-         * times the number of context to be sent */
-        ack->send.buffer = sctk_malloc(num_used_ifaces * sizeof(lcr_memp_t));
-        ack->send.length = lcp_mem_pack(ep->ctx, 
-                                        ack->send.buffer, 
-                                        req->state.lmem,
-                                        req->state.memp_map);
+        if (LCR_IFACE_IS_TM(ep->lct_eps[ep->priority_chnl]->rail)) {
+                /* Packed length is inferior or equal to the size of a memory context
+                 * times the number of context to be sent */
+                ack->send.buffer = sctk_malloc(num_used_ifaces * sizeof(lcr_memp_t));
+                ack->send.length = lcp_mem_pack(ep->ctx, 
+                                                ack->send.buffer, 
+                                                req->state.lmem,
+                                                req->state.memp_map);
 
-        iov_ack[0].iov_base = ack->send.buffer;
-        iov_ack[0].iov_len  = ack->send.length;
+                iov_ack[0].iov_base = ack->send.buffer;
+                iov_ack[0].iov_len  = ack->send.length;
+                ack->send.t_ctx.comm_id      = req->recv.tag.comm_id;
+                ack->send.t_ctx.req          = ack;
+                ack->send.t_ctx.comp.comp_cb = lcp_request_complete_srack; 
+                rc = lcp_send_do_tag_zcopy(ep->lct_eps[ep->priority_chnl],
+                                           req->recv.t_ctx.tag,
+                                           0,
+                                           iov_ack,
+                                           1,
+                                           &(ack->send.t_ctx));
 
-        ack->send.t_ctx.comm_id      = req->recv.tag.comm_id;
-        ack->send.t_ctx.req          = ack;
-        ack->send.t_ctx.comp.comp_cb = lcp_request_complete_srack; 
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        goto err;
+                }
 
-        rc = lcp_send_do_tag_zcopy(ep->lct_eps[ep->priority_chnl],
-                                   req->recv.t_ctx.tag,
-                                   0,
-                                   iov_ack,
-                                   1,
-                                   &(ack->send.t_ctx));
+                lcr_tag_t ign_tag = {
+                        .t = 0
+                };
 
-        lcr_tag_t ign_tag = {
-                .t = 0
-        };
+                iov_fin[0].iov_base = NULL;
+                iov_fin[0].iov_len = 0; 
 
-        iov_fin[0].iov_base = NULL;
-        iov_fin[0].iov_len = 0; 
+                req->recv.t_ctx.comp.comp_cb = lcp_request_complete_recv_rput;
 
-        req->recv.t_ctx.comp.comp_cb = lcp_request_complete_recv_rput;
-
-        rc = lcp_recv_do_tag_zcopy(ep->lct_eps[ep->priority_chnl]->rail,
-                                   req->recv.t_ctx.tag,
-                                   ign_tag,
-                                   iov_fin,
-                                   1,
-                                   &(req->recv.t_ctx));
-        if (rc != MPC_LOWCOMM_SUCCESS) {
-                goto err;
+                rc = lcp_recv_do_tag_zcopy(ep->lct_eps[ep->priority_chnl]->rail,
+                                           req->recv.t_ctx.tag,
+                                           ign_tag,
+                                           iov_fin,
+                                           1,
+                                           &(req->recv.t_ctx));
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        goto err;
+                }
+        } else {
+                if (lcp_pending_create(req->ctx, req, req->msg_id) == NULL) {
+                        mpc_common_debug_error("LCP: could not add pending message");
+                        rc = MPC_LOWCOMM_ERROR;
+                        goto err;
+                }
+                payload = lcp_send_do_am_bcopy(ep->lct_eps[ep->priority_chnl],
+                                               MPC_LOWCOMM_ACK_RDV_MESSAGE,
+                                               lcp_rtr_rput_pack,
+                                               ack);
+                if (payload < 0) {
+                        mpc_common_debug_error("LCP: error sending ack rdv message");
+                        rc = MPC_LOWCOMM_ERROR;
+                        goto err;
+                }
+                rc = MPC_LOWCOMM_SUCCESS;
         }
+
 err:
         return rc;
 }
@@ -860,7 +968,7 @@ err:
 
 //NOTE: flags could be used to avoid duplicating functions for
 //      AM and TAG
-int lcp_rndv_am_tag_handler(void *arg, void *data,
+int lcp_rndv_am_rput_handler(void *arg, void *data,
                             size_t length, 
                             __UNUSED__ unsigned flags)
 {
@@ -875,27 +983,25 @@ int lcp_rndv_am_tag_handler(void *arg, void *data,
 
         LCP_CONTEXT_LOCK(ctx);
 
-        mpc_common_debug_info("LCP: recv rndv header src=%d, dest=%d, msg_id=%llu",
-                              hdr->base.src, hdr->base.dest, hdr->msg_id);
+        mpc_common_debug_info("LCP: recv rndv header src=%d, msg_id=%llu",
+                              hdr->base.src, hdr->msg_id);
 
-        req = lcp_match_prq(ctx->prq_table, 
-                            hdr->base.base.comm_id, 
+        req = lcp_match_prq(ctx->prq_table, hdr->base.comm, 
                             hdr->base.tag, hdr->base.src);
         if (req != NULL) {
                 mpc_common_debug_info("LCP: matched rndv exp handler req=%p, comm_id=%lu, " 
                                       "tag=%d, src=%lu.", req, req->recv.tag.comm_id, 
                                       req->recv.tag.tag, req->recv.tag.src);
                 LCP_CONTEXT_UNLOCK(ctx); //NOTE: unlock context to enable endpoint creation.
-                rc = lcp_rndv_matched(ctx, req, hdr);
+                rc = lcp_rndv_matched(ctx, req, hdr, LCP_RNDV_PUT);
         } else {
                 lcp_request_init_unexp_ctnr(&ctnr, hdr, length, 
-                                            LCP_RECV_CONTAINER_UNEXP_RNDV);
-                lcp_append_umq(ctx->umq_table, (void *)ctnr, hdr->base.base.comm_id, 
+                                            LCP_RECV_CONTAINER_UNEXP_RPUT);
+                lcp_append_umq(ctx->umq_table, (void *)ctnr, hdr->base.comm, 
                                hdr->base.tag, hdr->base.src);
                 LCP_CONTEXT_UNLOCK(ctx);
                 rc = MPC_LOWCOMM_SUCCESS;
         }
-
 
         return rc;
 }
@@ -907,28 +1013,102 @@ static int lcp_ack_am_tag_handler(void *arg, void *data,
         int rc = MPC_LOWCOMM_SUCCESS;
         lcp_context_h ctx = arg;
         lcp_rndv_ack_hdr_t *hdr = data;
+        lcp_mem_h rmem = NULL;
         lcp_request_t *req;
 
-        mpc_common_debug_info("LCP: recv tag ack header comm_id=%llu, src=%d, dest=%d, "
-                              "msg_id=%llu.", hdr->base.base.comm_id, hdr->src, hdr->dest, 
-                              hdr->msg_id);
+        mpc_common_debug_info("LCP: recv tag ack header src=%d, "
+                              "msg_id=%llu.", hdr->src, hdr->msg_id);
 
         /* Retrieve request */
         req = lcp_pending_get_request(ctx, hdr->msg_id);
         if (req == NULL) {
-                mpc_common_debug_error("LCP: could not find ctrl msg: comm id=%llu, "
-                                       "msg id=%llu, src=%d, dest=%d.", 
-                                       hdr->base.base.comm_id, hdr->msg_id,
-                                       hdr->src, hdr->dest);
+                mpc_common_debug_error("LCP: could not find ctrl msg: "
+                                       "msg id=%llu.", hdr->msg_id);
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
 
-        /* Set send function that will be called in lcp_progress */
-        req->send.func    = lcp_send_am_zcopy_multi;
+        /* first create and unpack remote key */
+        rc = lcp_mem_create(req->ctx, &rmem);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
+
+        rc = lcp_mem_unpack(req->ctx, 
+                            rmem, 
+                            hdr + 1,
+                            req->state.memp_map);
+        if (rc < 0) {
+                goto err;
+        }
+
+        rc = lcp_send_rput_common(req, rmem);
+
+err:
+        return rc;
+}
+
+static int lcp_rndv_am_rget_handler(void *arg, void *data,
+                                    size_t length, 
+                                  __UNUSED__ unsigned flags)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+        lcp_context_h ctx = arg;
+        lcp_rndv_hdr_t *hdr = data;
+        lcp_request_t *req;
+        lcp_unexp_ctnr_t *ctnr;
+
+        LCP_CONTEXT_LOCK(ctx);
+
+        mpc_common_debug_info("LCP: recv rndv header src=%d, msg_id=%llu",
+                              hdr->base.src, hdr->msg_id);
+
+        req = lcp_match_prq(ctx->prq_table, hdr->base.comm, 
+                            hdr->base.tag, hdr->base.src);
+        if (req != NULL) {
+                mpc_common_debug_info("LCP: matched rndv exp handler req=%p, comm_id=%lu, " 
+                                      "tag=%d, src=%lu.", req, req->recv.tag.comm_id, 
+                                      req->recv.tag.tag, req->recv.tag.src);
+                LCP_CONTEXT_UNLOCK(ctx); //NOTE: unlock context to enable endpoint creation.
+                rc = lcp_rndv_matched(ctx, req, hdr, LCP_RNDV_GET);
+        } else {
+                lcp_request_init_unexp_ctnr(&ctnr, hdr, length, 
+                                            LCP_RECV_CONTAINER_UNEXP_RGET);
+                lcp_append_umq(ctx->umq_table, (void *)ctnr, hdr->base.comm, 
+                               hdr->base.tag, hdr->base.src);
+                LCP_CONTEXT_UNLOCK(ctx);
+                rc = MPC_LOWCOMM_SUCCESS;
+        }
+
+        return rc;
+}
+
+static int lcp_rndv_am_fin_handler(void *arg, void *data,
+                                   __UNUSED__ size_t length, 
+                                   __UNUSED__ unsigned flags)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+        lcp_context_h ctx = arg;
+        lcp_rndv_ack_hdr_t *hdr = data;
+        lcp_request_t *req;
+
+        /* Retrieve request */
+        req = lcp_pending_get_request(ctx, hdr->msg_id);
+        if (req == NULL) {
+                mpc_common_debug_error("LCP: could not find ctrl msg: "
+                                       "msg id=%llu.", hdr->msg_id);
+                rc = MPC_LOWCOMM_ERROR;
+                goto err;
+        }
+
+        lcp_mem_deregister(req->ctx, req->state.lmem, req->state.memp_map);
+        lcp_request_complete(req);
+
 err:
         return rc;
 }
 
 LCP_DEFINE_AM(MPC_LOWCOMM_ACK_RDV_MESSAGE, lcp_ack_am_tag_handler, 0);
-LCP_DEFINE_AM(MPC_LOWCOMM_RDV_MESSAGE, lcp_rndv_am_tag_handler, 0);
+LCP_DEFINE_AM(MPC_LOWCOMM_RGET_MESSAGE, lcp_rndv_am_rget_handler, 0);
+LCP_DEFINE_AM(MPC_LOWCOMM_RPUT_MESSAGE, lcp_rndv_am_rput_handler, 0);
+LCP_DEFINE_AM(MPC_LOWCOMM_RFIN_MESSAGE, lcp_rndv_am_fin_handler, 0);

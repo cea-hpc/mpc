@@ -77,7 +77,7 @@ libmpclowcomm_la_SOURCES += ./portals/sctk_portals.c ./portals/sctk_ptl_cm.c ./p
 libmpclowcomm_la_SOURCES += ./portals/sctk_ptl_iface.c ./portals/sctk_ptl_offcoll.c ./portals/sctk_ptl_rdma.c
 libmpclowcomm_la_SOURCES += ./portals/sctk_ptl_rdv.c ./portals/sctk_ptl_toolkit.c
 if LCP_ENABLED
-libmpclowcomm_la_SOURCES += ./portals/lcr_ptl.c
+libmpclowcomm_la_SOURCES += ./portals/lcr_ptl.c ./portals/lcr_ptl_recv.c ./portals/lcr_ptl_iface.c
 endif
 
 # PTL-AM driver #

@@ -32,6 +32,10 @@
 #include "mpc_common_helper.h"
 #include "mpc_common_asm.h"
 
+#include "lcr/lcr_def.h"
+
+#include <utlist.h>
+
 /** Helper to find the struct base address, based on the address on a given member */
 #ifndef container_of
 #define container_of(ptr, type, member) ({ \
@@ -135,6 +139,8 @@ typedef enum {
 	SCTK_PTL_PTE_HIDDEN,
 	SCTK_PTL_PTE_HIDDEN_NB = SCTK_PTL_PTE_HIDDEN
 } sctk_ptl_pte_id_t;
+#define LCR_PTL_PTE_IDX_EAGER  3
+#define LCR_PTL_PTE_IDX_RNDV   4 
 /** Translate the communicator ID to the PT entry object */
 #define SCTK_PTL_PTE_ENTRY(table, comm) (mpc_common_hashtable_get(&table, (comm)+SCTK_PTL_PTE_HIDDEN))
 /** Check if a given comm already has corresponding PT entry */
@@ -195,6 +201,12 @@ typedef enum {
 #define SCTK_PTL_MAX_RANKS (( size_t)(~ (( uint16_t)0)))
 #define SCTK_PTL_MAX_UIDS  (( size_t)(~ (( uint8_t)0)))
 #define SCTK_PTL_MAX_TYPES (( size_t)(~ (( uint8_t)0)))
+
+enum {
+        PTL_MODE_NO_MATCH = 0,
+        PTL_MODE_MATCH
+};
+
 /**
  * How the match_bits is divided to store essential information to 
  * match MPI msg.
@@ -398,6 +410,38 @@ typedef struct sctk_ptl_pte_s
 	struct sctk_ptl_offcoll_tree_node_s node[SCTK_PTL_OFFCOLL_NB]; /**< what is necessary to optimise collectives for this entry */
 } sctk_ptl_pte_t;
 
+typedef enum {
+        LCR_PTL_COMP_BCOPY,
+        LCR_PTL_COMP_ZCOPY,
+        LCR_PTL_COMP_PUT
+} lcr_ptl_comp_type_t;
+
+typedef struct lcr_ptl_send_comp {
+        lcr_ptl_comp_type_t type;
+        sctk_ptl_mdh_t iov_mdh;
+        lcr_completion_t *comp;
+        lcr_tag_context_t *tag_ctx;
+        void *bcopy_buf;
+} lcr_ptl_send_comp_t;
+
+typedef struct lcr_ptl_recv_block lcr_ptl_recv_block_t;
+
+typedef struct lcr_ptl_block_list {
+        lcr_ptl_recv_block_t *block;
+        struct lcr_ptl_block_list *prev, *next;
+} lcr_ptl_block_list_t;
+
+typedef struct lcr_ptl_info_s {
+        sctk_ptl_local_data_t *md_req;
+        int max_iovecs;
+	sctk_ptl_eq_t me_eq;                   /**< EQ for all MEs received on this NI */
+        sctk_ptl_pte_id_t eager_pt_idx;
+        sctk_ptl_pte_id_t rndv_pt_idx;
+        ptl_handle_me_t meh_rndv;
+        int num_eager_blocks;                   /**< number of eager block */
+        size_t eager_block_size;                /**< size of recv block for eager */
+        lcr_ptl_block_list_t *block_list;
+} lcr_ptl_info_t;
 
 /**
  * Portals-specific information specializing a rail.
@@ -408,12 +452,12 @@ typedef struct sctk_ptl_rail_info_s
 	sctk_ptl_nih_t iface;                   /**< Interface handler for the device */
 	sctk_ptl_id_t id;                       /**< Local id identifying this rail */
 	sctk_ptl_eq_t mds_eq;                   /**< EQ for all MDs emited from this NI */
-        sctk_ptl_local_data_t *md_req;
-	sctk_ptl_eq_t mes_eq;                   /**< EQ for all MEs received on this NI */
 	struct mpc_common_hashtable ranks_ids_map; /**< each cell maps to the portals process object */
 	struct mpc_common_hashtable pt_table;         /**< The COMM => PT hash table */
 	struct mpc_common_hashtable reverse_pt_table; /**< The PT => COMM hash table */
 	size_t cutoff;                          /**< cutoff for large RDV messages */
+        lcr_ptl_info_t ptl_info;
+        int match_mode;                         /**< matching or no matching */
 	size_t max_mr;                          /**< Max size of a memory region (MD | ME ) */
 	size_t max_put;                          /**< Max size of a put */
 	size_t max_get;                          /**< Max size of a get */

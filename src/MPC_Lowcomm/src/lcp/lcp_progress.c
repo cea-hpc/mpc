@@ -16,13 +16,15 @@ int lcp_progress(lcp_context_h ctx)
                 iface->iface_progress(iface);
 	}
 
-	lcp_pending_entry_t *entry_e, *entry_tmp;
-        HASH_ITER(hh, ctx->pend->table, entry_e, entry_tmp) {
+        //FIXME: no request progress needed for am or tag apparently but
+        //       this is to be confirmed.
+	//lcp_pending_entry_t *entry_e, *entry_tmp;
+        //HASH_ITER(hh, ctx->pend->table, entry_e, entry_tmp) {
 
-                lcp_request_t *req = entry_e->req;
-                rc = lcp_request_send(req);
-                break;
-        }
+        //        lcp_request_t *req = entry_e->req;
+        //        rc = lcp_request_send(req);
+        //        break;
+        //}
 
 	return rc;
 }

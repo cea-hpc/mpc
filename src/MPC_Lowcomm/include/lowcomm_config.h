@@ -252,6 +252,12 @@ struct _mpc_lowcomm_config_struct_net_driver_portals
 	int                                             min_comms;
 	/**Above this value, RDV messages will be split in multiple GET requests**/
 	size_t                                          block_cut;
+	/**Size of eager blocks **/
+	size_t                                          eager_block_size;
+	/**Number of eager blocks **/
+	int                                             num_eager_blocks;
+	/**Max iovec**/
+	int                                             max_iovecs;
 	/**Set max registerable size (default: INT_MAX)**/
 	size_t                                          max_msg_size;
 	/**Set min fragment size when using multirail(default: INT_MAX)**/

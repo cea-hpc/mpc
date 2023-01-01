@@ -5,6 +5,21 @@
 
 #include "sctk_rail.h"
 
+ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
+                              uint8_t id,
+                              lcr_pack_callback_t pack,
+                              void *arg,
+                              unsigned flags);
+
+int lcr_ptl_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
+                          uint8_t id,
+                          const void *header,
+                          unsigned header_length,
+                          const struct iovec *iov,
+                          size_t iovcnt,
+                          unsigned flags,
+                          lcr_completion_t *comp);
+
 ssize_t lcr_ptl_send_tag_bcopy(_mpc_lowcomm_endpoint_t *ep,
                                lcr_tag_t tag,
                                uint64_t imm,
@@ -42,6 +57,13 @@ int lcr_ptl_send_put(_mpc_lowcomm_endpoint_t *ep,
                      size_t size,
                      lcr_tag_context_t *ctx);
 
+int lcr_ptl_send_mput(_mpc_lowcomm_endpoint_t *ep,
+                      uint64_t local_addr,
+                      uint64_t remote_offset,
+                      lcr_memp_t *remote_key,
+                      size_t size,
+                      lcr_tag_context_t *ctx);
+
 int lcr_ptl_send_get(_mpc_lowcomm_endpoint_t *ep,
                      uint64_t local_addr,
                      uint64_t remote_offset,
@@ -49,11 +71,29 @@ int lcr_ptl_send_get(_mpc_lowcomm_endpoint_t *ep,
                      size_t size,
                      lcr_tag_context_t *ctx);
 
-int lcr_ptl_pack_memp(sctk_rail_info_t *rail,
-                      lcr_memp_t *memp, void *dest);
+int lcr_ptl_send_mget(_mpc_lowcomm_endpoint_t *ep,
+                      uint64_t local_addr,
+                      uint64_t remote_offset,
+                      lcr_memp_t *remote_key,
+                      size_t size,
+                      lcr_tag_context_t *ctx);
 
+void lcr_ptl_mem_register(struct sctk_rail_info_s *rail, 
+                         struct sctk_rail_pin_ctx_list *list, 
+                         void * addr, size_t size);
+void lcr_ptl_mem_unregister(struct sctk_rail_info_s *rail, 
+                            struct sctk_rail_pin_ctx_list *list);
+int lcr_ptl_pack_rkey(sctk_rail_info_t *rail,
+                      lcr_memp_t *memp, void *dest);
+int lcr_ptl_pack_mrkey(sctk_rail_info_t *rail,
+                       lcr_memp_t *memp, void *dest);
+
+int lcr_ptl_unpack_rkey(sctk_rail_info_t *rail,
+                        lcr_memp_t *memp, void *dest);
+int lcr_ptl_unpack_mrkey(sctk_rail_info_t *rail,
+                         lcr_memp_t *memp, void *dest);
+
+int lcr_ptl_iface_mprogress(sctk_rail_info_t *rail);
 int lcr_ptl_iface_progress(sctk_rail_info_t *rail);
 
-int lcr_ptl_unpack_memp(sctk_rail_info_t *rail,
-                        lcr_memp_t *memp, void *dest);
 #endif

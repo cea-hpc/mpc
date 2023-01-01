@@ -14,27 +14,21 @@ typedef struct lcp_am_hdr {
 } lcp_am_hdr_t;
 
 typedef struct lcp_tag_hdr {
-	lcp_base_hdr_t base;
-	uint64_t       src;
-	uint64_t       dest;
-	int            tag;
-	int64_t        seqn;
+	uint64_t comm;
+	uint64_t src;
+	int      tag;
+	int64_t  seqn;
 } lcp_tag_hdr_t;
 
 typedef struct lcp_rndv_hdr {
 	lcp_tag_hdr_t base;
-	uint64_t msg_id;
-	uint64_t dest;
-	size_t total_size;
-        uint64_t remote_addr;
+	uint64_t      msg_id;
+	size_t        size;
 } lcp_rndv_hdr_t;
 
 typedef struct lcp_rndv_ack_hdr {
-	lcp_am_hdr_t base;
 	uint64_t msg_id;
 	uint64_t src;
-	uint64_t dest;
-        uint64_t remote_addr;
 } lcp_rndv_ack_hdr_t;
 
 typedef struct lcp_frag_hdr {

@@ -93,6 +93,9 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t*, size_t);
 void sctk_ptl_software_fini(sctk_ptl_rail_info_t*);
 #ifdef MPC_LOWCOMM_PROTOCOL
 int lcr_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims);
+int lcr_ptl_software_minit(sctk_ptl_rail_info_t* srail, size_t comm_dims);
+void lcr_ptl_software_fini(sctk_ptl_rail_info_t* srail);
+void lcr_ptl_software_mfini(sctk_ptl_rail_info_t* srail);
 #endif
 
 /* Portals table management */

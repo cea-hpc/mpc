@@ -22,8 +22,9 @@ enum {
 };
 
 enum {
-	LCP_RECV_CONTAINER_UNEXP_RNDV = LCP_BIT(0),
-	LCP_RECV_CONTAINER_UNEXP_TAG  = LCP_BIT(1)
+	LCP_RECV_CONTAINER_UNEXP_RGET = LCP_BIT(0),
+	LCP_RECV_CONTAINER_UNEXP_RPUT = LCP_BIT(1),
+	LCP_RECV_CONTAINER_UNEXP_TAG  = LCP_BIT(2)
 };
 
 /* Store data for unexpected am messages
@@ -59,7 +60,7 @@ struct lcp_request {
 				struct {
 					uint64_t comm_id;
 					uint8_t  am_id;
-					uint64_t dest;
+					uint64_t src;
 				} am;
 
 				struct {
@@ -169,12 +170,12 @@ static inline void lcp_request_init_rndv_send(lcp_request_t *req)
 };
 
 static inline void lcp_request_init_ack(lcp_request_t *ack_req, lcp_ep_h ep, 
-                                        uint64_t comm_id, uint64_t dest, 
+                                        uint64_t comm_id, uint64_t src,
                                         int seqn, uint64_t msg_id)
 {
         ack_req->send.am.am_id      = MPC_LOWCOMM_ACK_RDV_MESSAGE;
         ack_req->send.am.comm_id    = comm_id;
-        ack_req->send.am.dest       = dest;
+        ack_req->send.am.src        = src;
         ack_req->send.ep            = ep;
 
         ack_req->msg_id             = msg_id;

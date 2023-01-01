@@ -176,11 +176,13 @@ struct lcr_rail_attr {
                         struct {
                                 size_t max_bcopy;
                                 size_t max_zcopy;
+                                size_t max_iovecs;
                         } am;
 
                         struct {
                                 size_t max_bcopy;
                                 size_t max_zcopy;
+                                size_t max_iovecs;
                         } tag;
 
                         struct {

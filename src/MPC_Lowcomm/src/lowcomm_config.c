@@ -327,11 +327,14 @@ static inline mpc_conf_config_type_t *__init_driver_portals(struct _mpc_lowcomm_
 
 	struct _mpc_lowcomm_config_struct_net_driver_portals *portals = &driver->value.portals;
 
-	portals->eager_limit = 8192;
+	portals->eager_limit = 1024;
 	portals->min_comms = 1;
 	portals->block_cut = 2147483648;
 	portals->offloading.collectives = 0;
 	portals->offloading.ondemand = 0;
+        portals->max_iovecs = 8;
+        portals->num_eager_blocks = 4;
+        portals->eager_block_size = 4*8192;
 	portals->max_msg_size = 2147483648;
         portals->min_frag_size = 524288; // octets
 
@@ -345,14 +348,17 @@ static inline mpc_conf_config_type_t *__init_driver_portals(struct _mpc_lowcomm_
 	                                                        NULL);
 
 
-	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("portals",
-															PARAM("eagerlimit", &portals->eager_limit, MPC_CONF_LONG_INT, "Max size of messages allowed to use the eager protocol."),
-															PARAM("maxmsgsize", &portals->max_msg_size, MPC_CONF_INT, "Max size of messages allowed to be sent."),
-															PARAM("minfragsize", &portals->min_frag_size, MPC_CONF_LONG_INT, "Min size of fragments sent with multirail."),
-															PARAM("mincomm", &portals->min_comms, MPC_CONF_INT, "Min number of communicators (help to avoid dynamic PT entry allocation)"),
-															PARAM("blockcut", &portals->block_cut, MPC_CONF_LONG_INT, "Above this value, RDV messages will be split in multiple GET requests"),
-															PARAM("offload", offload, MPC_CONF_TYPE, "List of available optimizations taking advantage of triggered Ops"),
-	                                                        NULL);
+        mpc_conf_config_type_t *ret = 
+                mpc_conf_config_type_init("portals",
+                                          PARAM("eagerlimit", &portals->eager_limit, MPC_CONF_LONG_INT, "Max size of messages allowed to use the eager protocol."),
+                                          PARAM("maxmsgsize", &portals->max_msg_size, MPC_CONF_INT, "Max size of messages allowed to be sent."),
+                                          PARAM("minfragsize", &portals->min_frag_size, MPC_CONF_LONG_INT, "Min size of fragments sent with multirail."),
+                                          PARAM("eagerblocksize", &portals->eager_block_size, MPC_CONF_INT, "Size of eager block."),
+                                          PARAM("numeagerblocks", &portals->num_eager_blocks, MPC_CONF_INT, "Number of eager blocks."),
+                                          PARAM("mincomm", &portals->min_comms, MPC_CONF_INT, "Min number of communicators (help to avoid dynamic PT entry allocation)"),
+                                          PARAM("blockcut", &portals->block_cut, MPC_CONF_LONG_INT, "Above this value, RDV messages will be split in multiple GET requests"),
+                                          PARAM("offload", offload, MPC_CONF_TYPE, "List of available optimizations taking advantage of triggered Ops"),
+                                          NULL);
 
 	return ret;
 }

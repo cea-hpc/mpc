@@ -18,11 +18,10 @@ static size_t lcp_send_tag_tag_pack(void *dest, void *data)
         lcp_tag_hdr_t *hdr = dest;
         lcp_request_t *req = data;
 
-        hdr->base.comm_id = req->send.tag.comm_id;
-        hdr->dest         = req->send.tag.dest;
-        hdr->src          = req->send.tag.src;
-        hdr->tag          = req->send.tag.tag;
-        hdr->seqn         = req->seqn; 
+        hdr->comm = req->send.tag.comm_id;
+        hdr->src  = req->send.tag.src;
+        hdr->tag  = req->send.tag.tag;
+        hdr->seqn = req->seqn; 
 
         memcpy((void *)(hdr + 1), req->send.buffer, req->send.length);
 

@@ -1,3 +1,5 @@
+#include "alloca.h"
+
 #include "lcp_ep.h"
 #include "lcp_header.h"
 #include "lcp_request.h"
@@ -16,11 +18,10 @@ static size_t lcp_send_tag_pack(void *dest, void *data)
 	lcp_tag_hdr_t *hdr = dest;
 	lcp_request_t *req = data;
 	
-	hdr->base.comm_id = req->send.tag.comm_id;
-	hdr->dest         = req->send.tag.dest;
-	hdr->src          = req->send.tag.src;
-	hdr->tag          = req->send.tag.tag;
-	hdr->seqn         = req->seqn; 
+	hdr->comm = req->send.tag.comm_id;
+	hdr->src  = req->send.tag.src;
+	hdr->tag  = req->send.tag.tag;
+	hdr->seqn = req->seqn; 
 
 	memcpy((void *)(hdr + 1), req->send.buffer, req->send.length);
 
@@ -84,17 +85,16 @@ int lcp_send_am_eager_tag_zcopy(lcp_request_t *req)
 {
 	
 	int rc;
-	struct iovec iov[1];
-	lcp_ep_h ep = req->send.ep;
+        size_t iovcnt     = 0;
+	lcp_ep_h ep       = req->send.ep;
+        size_t max_iovec  = ep->ep_config.max_iovecs;
+	struct iovec *iov = alloca(max_iovec*sizeof(struct iovec));
 	_mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[req->state.cc];
 	
 	lcp_tag_hdr_t hdr = {
-		.base = {
-			.comm_id = req->send.tag.comm_id, 
-		},
-		.dest = req->send.tag.dest,
-		.src = req->send.tag.src,
-		.tag = req->send.tag.tag,
+		.comm = req->send.tag.comm_id, 
+		.src  = req->send.tag.src,
+		.tag  = req->send.tag.tag,
 		.seqn = req->seqn
 	};
 
@@ -105,6 +105,7 @@ int lcp_send_am_eager_tag_zcopy(lcp_request_t *req)
 
 	iov[0].iov_base = req->send.buffer;
 	iov[0].iov_len  = req->send.length;
+        iovcnt++;
 
 	mpc_common_debug_info("LCP: send am eager tag zcopy src=%d, dest=%d, length=%d",
 			      req->send.tag.src, req->send.tag.dest, req->send.length);
@@ -231,11 +232,11 @@ static int lcp_am_tag_handler(void *arg, void *data,
 	lcp_tag_hdr_t *hdr = data;
 
 	LCP_CONTEXT_LOCK(ctx);
-	mpc_common_debug_info("LCP: recv tag header src=%d, dest=%d",
-			      hdr->src, hdr->dest);
+	mpc_common_debug_info("LCP: recv tag header src=%d",
+			      hdr->src);
 
 	req = (lcp_request_t *)lcp_match_prq(ctx->prq_table, 
-					     hdr->base.comm_id, 
+					     hdr->comm, 
 					     hdr->tag,
 					     hdr->src);
 	if (req == NULL) {
@@ -245,7 +246,7 @@ static int lcp_am_tag_handler(void *arg, void *data,
 			goto err;
 		}
 		lcp_append_umq(ctx->umq_table, (void *)ctnr, 
-			       hdr->base.comm_id,
+			       hdr->comm,
 			       hdr->tag,
 			       hdr->src);
 

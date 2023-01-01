@@ -153,6 +153,7 @@ void sctk_ptl_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_endpoint
 int lcr_ptl_handle_eq_ev(sctk_rail_info_t *rail, 
 			 sctk_ptl_event_t *ev)
 {
+        UNUSED(rail);
 	int rc = MPC_LOWCOMM_SUCCESS;
 	sctk_ptl_local_data_t *user_ptr  = ev->user_ptr;
 	lcr_tag_context_t *ctx = (lcr_tag_context_t *)user_ptr->msg;
@@ -719,13 +720,17 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 	/* Register on-demand callback for rail */
 	__register_monitor_callback(rail);
 
-	size_t cut, eager_limit, min_comms, offloading, min_frag_size;
+	size_t cut, eager_limit, min_comms, offloading, min_frag_size, eager_block_size;
+        int max_iovecs, num_eager_blocks;
 
 	/* get back the Portals config */
 	cut         = rail->runtime_config_driver_config->driver.value.portals.block_cut;
 	eager_limit = rail->runtime_config_driver_config->driver.value.portals.eager_limit;
 	min_comms   = rail->runtime_config_driver_config->driver.value.portals.min_comms;
 	min_frag_size = rail->runtime_config_driver_config->driver.value.portals.min_frag_size;
+	max_iovecs = rail->runtime_config_driver_config->driver.value.portals.max_iovecs;
+	num_eager_blocks = rail->runtime_config_driver_config->driver.value.portals.num_eager_blocks;
+	eager_block_size = rail->runtime_config_driver_config->driver.value.portals.eager_block_size;
 	offloading  = SCTK_PTL_OFFLOAD_NONE_FLAG;
 	
 	/* avoid truncating size_t payload in RDV protocols */
@@ -745,15 +750,19 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 
 	/* init low-level driver */
         sctk_ptl_interface_t iface        = (rail->runtime_config_rail->max_ifaces == 1) ?
-                PTL_IFACE_DEFAULT : (unsigned int)rail->rail_number; //FIXME: revise atoi
+                PTL_IFACE_DEFAULT : (unsigned int)rail->rail_number; 
 	rail->network.ptl                 = sctk_ptl_hardware_init(iface);
 	rail->network.ptl.eager_limit     = eager_limit;
 	rail->network.ptl.cutoff          = cut;
+        rail->network.ptl.ptl_info.max_iovecs = max_iovecs;
+        rail->network.ptl.ptl_info.num_eager_blocks = num_eager_blocks;
+        rail->network.ptl.ptl_info.eager_block_size = eager_block_size;
 
-        //FIXME: instead, use a protocol config to choose which protocol to use.
 	ptl_driver_config = rail->runtime_config_driver_config->driver.value.portals;
-	rail->network.ptl.max_mr          = ptl_driver_config.max_msg_size < (int)rail->network.ptl.max_limits.max_msg_size ?
-		(unsigned long int)ptl_driver_config.max_msg_size : rail->network.ptl.max_limits.max_msg_size;
+	rail->network.ptl.max_mr          = ptl_driver_config.max_msg_size < 
+                rail->network.ptl.max_limits.max_msg_size ?
+		(unsigned long int)ptl_driver_config.max_msg_size : 
+                rail->network.ptl.max_limits.max_msg_size;
 	rail->network.ptl.max_put         = rail->network.ptl.max_mr;
 	rail->network.ptl.max_get         = rail->network.ptl.max_mr;
 	rail->network.ptl.min_frag_size   = min_frag_size;
@@ -761,7 +770,13 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 	rail->network.ptl.offload_support = offloading;
 	
 #ifdef MPC_LOWCOMM_PROTOCOL
-        lcr_ptl_software_init(&rail->network.ptl, min_comms);
+        if (rail->network.ptl.match_mode == PTL_MODE_NO_MATCH) {
+                rail->runtime_config_rail->offload = 0;
+                lcr_ptl_software_init(&rail->network.ptl, min_comms);
+        } else {
+                rail->runtime_config_rail->offload = 1;
+                lcr_ptl_software_minit(&rail->network.ptl, min_comms);
+        }
 #else
 	sctk_ptl_software_init( &rail->network.ptl, min_comms);
 #endif

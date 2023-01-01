@@ -601,7 +601,7 @@ void sctk_ptl_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_c
 	list->rail_id         = rail->rail_number;
 	list->pin.ptl.me_data = me_request;
 #ifdef MPC_LOWCOMM_PROTOCOL
-	list->pin.ptl.md_data = srail->md_req;
+	list->pin.ptl.md_data = srail->ptl_info.md_req;
 #else
 	list->pin.ptl.md_data = md_request;
 #endif

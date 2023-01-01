@@ -50,10 +50,16 @@ int lcp_recv(lcp_context_h ctx, mpc_lowcomm_request_t *request,
 
 	//NOTE: unlock context to enable endpoint creation in rndv_matched
 	LCP_CONTEXT_UNLOCK(ctx);
-	if (match->flags & LCP_RECV_CONTAINER_UNEXP_RNDV) {
+	if (match->flags & LCP_RECV_CONTAINER_UNEXP_RPUT) {
 		mpc_common_debug_info("LCP: matched rndv unexp req=%p, flags=%x", 
 				      match, match->flags);
-		rc = lcp_rndv_matched(ctx, req, (lcp_rndv_hdr_t *)(match + 1));
+		rc = lcp_rndv_matched(ctx, req, (lcp_rndv_hdr_t *)(match + 1),
+                                      LCP_RNDV_PUT);
+        } else if (match->flags & LCP_RECV_CONTAINER_UNEXP_RGET) {
+		mpc_common_debug_info("LCP: matched rndv unexp req=%p, flags=%x", 
+				      match, match->flags);
+		rc = lcp_rndv_matched(ctx, req, (lcp_rndv_hdr_t *)(match + 1),
+                                      LCP_RNDV_GET);
 	} else if (match->flags & LCP_RECV_CONTAINER_UNEXP_TAG) {
 		mpc_common_debug("LCP: matched tag unexp req=%p, flags=%x", req, 
 				 match->flags);
