@@ -90,6 +90,8 @@ int main(int argc, char** argv) {
 		.request_completion_fn = lowcomm_request_complete
 	};                          
 
+	mpc_launch_pmi_barrier();
+
 	/* send/recv */
 	if (mpc_lowcomm_peer_get_rank(my_uid) == 0) {
 		data1 = 42;
@@ -99,7 +101,8 @@ int main(int argc, char** argv) {
 		}
 	} else {
 		/* wait to force early send */
-		usleep(10);
+                usleep(100);
+		lcp_progress(ctx);
 		rc = lcp_recv(ctx, &req1, &data1);
 		if (rc != 0) {
 			printf("ERROR: recv\n");

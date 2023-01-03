@@ -277,9 +277,11 @@ int lcp_recv_tag_zcopy(lcp_request_t *rreq, sctk_rail_info_t *iface)
         rreq->recv.t_ctx.comm_id      = rreq->recv.tag.comm_id;
         rreq->recv.t_ctx.comp.comp_cb = lcp_recv_tag_callback;
 
-        mpc_common_debug_info("LCP: post recv tag zcopy req=%p, src=%d, dest=%d, size=%d, matching=[%d:%d:%d], "
-                              "ignore=[%d:%d:%d]", rreq, rreq->send.tag.src, rreq->send.tag.dest, rreq->send.length, 
-                              tag.t_tag.tag, tag.t_tag.src, tag.t_tag.seqn, ign_tag.t_tag.tag, ign_tag.t_tag.src,
+        mpc_common_debug_info("LCP: post recv tag zcopy req=%p, src=%d, dest=%d, "
+                              "size=%d, matching=[%d:%d:%d], ignore=[%d:%d:%d]", 
+                              rreq, rreq->send.tag.src, rreq->send.tag.dest, 
+                              rreq->send.length, tag.t_tag.tag, tag.t_tag.src, 
+                              tag.t_tag.seqn, ign_tag.t_tag.tag, ign_tag.t_tag.src,
                               ign_tag.t_tag.seqn);
         return lcp_recv_do_tag_zcopy(iface,
                                      tag,

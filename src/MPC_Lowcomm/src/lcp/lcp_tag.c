@@ -109,13 +109,13 @@ int lcp_send_am_eager_tag_zcopy(lcp_request_t *req)
 
 	mpc_common_debug_info("LCP: send am eager tag zcopy src=%d, dest=%d, length=%d",
 			      req->send.tag.src, req->send.tag.dest, req->send.length);
-	rc = lcp_send_do_am_zcopy(lcr_ep, 
-			MPC_LOWCOMM_P2P_MESSAGE, 
-			&hdr, 
-			sizeof(lcp_tag_hdr_t),
-			iov,
-			1, 
-			&(req->state.comp));
+        rc = lcp_send_do_am_zcopy(lcr_ep, 
+                                  MPC_LOWCOMM_P2P_MESSAGE, 
+                                  &hdr, 
+                                  sizeof(lcp_tag_hdr_t),
+                                  iov,
+                                  1, 
+                                  &(req->state.comp));
 
 	return rc;
 }

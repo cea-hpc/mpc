@@ -81,7 +81,7 @@ int lcr_ptl_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
         sctk_ptl_matchbits_t match     = SCTK_PTL_MATCH_INIT;
         sctk_ptl_id_t remote           = SCTK_PTL_ANY_PROCESS;
         _mpc_lowcomm_endpoint_info_portals_t* infos   = &ep->data.ptl;
-        ptl_iovec_t *ptl_iovec         = alloca((iovcnt + 1)
+        ptl_iovec_t *ptl_iovec         = sctk_malloc((iovcnt + 1)
                                                 * sizeof(ptl_iovec_t));
 	ptl_md_t iov_md;
         lcr_ptl_send_comp_t *ptl_comp;
@@ -123,7 +123,12 @@ int lcr_ptl_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
 	)); 
 
         ptl_comp->comp = comp;
+        ptl_comp->iov  = ptl_iovec;
         ptl_comp->type = LCR_PTL_COMP_ZCOPY;
+
+        mpc_common_debug_info("lcr ptl: send am zcopy to %d (iface=%llu, "
+                              "remote=%llu, sz=%llu, pte=%d)", ep->dest, srail->iface, 
+                              remote, size, srail->ptl_info.eager_pt_idx);
         sctk_ptl_chk(PtlPut(ptl_comp->iov_mdh,
                             0,
                             size,

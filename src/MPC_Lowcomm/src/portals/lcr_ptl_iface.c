@@ -74,6 +74,7 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                                         ptl_comp->comp->sent = ev.mlength;
                                         ptl_comp->comp->comp_cb(ptl_comp->comp);
                                         sctk_ptl_chk(PtlMDRelease(ptl_comp->iov_mdh));
+                                        sctk_free(ptl_comp->iov);
                                         break;
                                 case LCR_PTL_COMP_PUT:
                                         ptl_comp->tag_ctx->comp.sent = ev.mlength;

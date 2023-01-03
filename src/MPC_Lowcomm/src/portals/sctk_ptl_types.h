@@ -419,6 +419,7 @@ typedef enum {
 typedef struct lcr_ptl_send_comp {
         lcr_ptl_comp_type_t type;
         sctk_ptl_mdh_t iov_mdh;
+        ptl_iovec_t *iov;
         lcr_completion_t *comp;
         lcr_tag_context_t *tag_ctx;
         void *bcopy_buf;
