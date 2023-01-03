@@ -43,11 +43,13 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
 
                 if (ret == PTL_OK) {
                         mpc_common_debug_info("PORTALS: EQS EVENT '%s' idx=%d, "
-                                              "sz=%llu, user=%p, start=%p", 
+                                              "sz=%llu, user=%p, start=%p, "
+                                              "remote_offset=%p", 
                                               sctk_ptl_event_decode(ev), ev.pt_index, 
                                               //__sctk_ptl_match_str(malloc(32), 32, 
                                               //                     ev.match_bits), 
-                                              ev.mlength, ev.user_ptr, ev.start);
+                                              ev.mlength, ev.user_ptr, ev.start,
+                                              ev.remote_offset);
                         did_poll = 1;
 
                         switch (ev.type) {

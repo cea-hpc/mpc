@@ -561,9 +561,11 @@ int lcp_send_rndv_start(lcp_request_t *req)
         lcp_chnl_idx_t cc = ep->priority_chnl;
 
         mpc_common_debug_info("LCP: send rndv req=%p, comm_id=%lu, tag=%d, "
-                              "src=%d, dest=%d, msg_id=%d.", req, req->send.rndv.comm_id, 
+                              "src=%d, dest=%d, msg_id=%d, buf=%p.", req, 
+                              req->send.rndv.comm_id, 
                               req->send.rndv.tag, req->send.rndv.src, 
-                              req->send.rndv.dest, req->msg_id);
+                              req->send.rndv.dest, req->msg_id,
+                              req->send.buffer);
 
         if (LCR_IFACE_IS_TM(ep->lct_eps[cc]->rail)) {
                 lcr_rail_attr_t attr; 

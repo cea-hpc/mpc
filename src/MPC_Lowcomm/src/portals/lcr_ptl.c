@@ -422,7 +422,7 @@ int lcr_ptl_send_put(_mpc_lowcomm_endpoint_t *ep,
                             remote,
                             srail->ptl_info.rndv_pt_idx,
                             rdv_match.raw,
-                            (uint64_t)remote_key->pin.ptl.start, /* remote offset */
+                            (uint64_t)remote_key->pin.ptl.start + remote_offset,
                             ptl_comp,
                             0
                            ));
@@ -502,7 +502,7 @@ int lcr_ptl_send_get(_mpc_lowcomm_endpoint_t *ep,
                             remote,
                             srail->ptl_info.rndv_pt_idx,
                             rdv_match.raw,
-                            (uint64_t)remote_key->pin.ptl.start,
+                            (uint64_t)remote_key->pin.ptl.start + remote_offset,
                             ptl_comp	
                            ));
 
