@@ -446,6 +446,7 @@ int lcr_ptl_send_mget(_mpc_lowcomm_endpoint_t *ep,
                               __sctk_ptl_match_str(sctk_malloc(32), 32, 
                                                    remote_key->pin.ptl.match.raw),
                               remote, remote_offset, rdma_pte->idx, local_addr);
+
         sctk_ptl_chk(PtlGet(srail->ptl_info.md_req->slot_h.mdh,
                             local_addr,
                             size,
@@ -466,10 +467,12 @@ int lcr_ptl_send_get(_mpc_lowcomm_endpoint_t *ep,
                      size_t size,
                      lcr_tag_context_t *ctx) 
 {
+        int rc;
         _mpc_lowcomm_endpoint_info_portals_t* infos   = &ep->data.ptl;
         sctk_ptl_rail_info_t* srail    = &ep->rail->network.ptl;
         sctk_ptl_id_t remote = infos->dest;
         sctk_ptl_matchbits_t rdv_match = SCTK_PTL_MATCH_INIT;
+        lcr_ptl_send_comp_t *ptl_comp;
 
         mpc_common_debug_info("PTL: remote key. match=%s, remote=%llu, "
                               "remote off=%llu, pte idx=%d, local addr=%p, "
@@ -478,6 +481,16 @@ int lcr_ptl_send_get(_mpc_lowcomm_endpoint_t *ep,
                                                    remote_key->pin.ptl.match.raw),
                               remote, remote_offset, srail->ptl_info.rndv_pt_idx, 
                               local_addr, remote_key->pin.ptl.start);
+
+        ptl_comp = sctk_malloc(sizeof(lcr_ptl_send_comp_t));
+        if (ptl_comp == NULL) {
+                mpc_common_debug_error("LCR PTL: could not allocate bcopy comp");
+                rc = MPC_LOWCOMM_ERROR;
+                goto err;
+        }
+        memset(ptl_comp, 0, sizeof(lcr_ptl_send_comp_t));
+        ptl_comp->tag_ctx = ctx;
+
         sctk_ptl_chk(PtlGet(srail->ptl_info.md_req->slot_h.mdh,
                             local_addr,
                             size,
@@ -485,10 +498,12 @@ int lcr_ptl_send_get(_mpc_lowcomm_endpoint_t *ep,
                             srail->ptl_info.rndv_pt_idx,
                             rdv_match.raw,
                             (uint64_t)remote_key->pin.ptl.start,
-                            ctx	
+                            ptl_comp	
                            ));
 
-        return MPC_LOWCOMM_SUCCESS;
+        rc = MPC_LOWCOMM_SUCCESS;
+err:
+        return rc;
 }
 
 void lcr_ptl_mem_register(struct sctk_rail_info_s *rail, 

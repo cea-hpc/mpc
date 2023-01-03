@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
 		usleep(10);
 		lcp_progress(ctx);
 		if (mpc_lowcomm_peer_get_rank(my_uid) == 1) {
-			printf("recv1=%d\n", data1);
+			//printf("recv1=%d\n", data1);
 		}
 	}
 

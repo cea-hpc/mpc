@@ -531,6 +531,9 @@ int lcp_send_am_rts_start(lcp_request_t *req)
                 }
                 break;
         case LCP_RNDV_PUT:
+                //NOTE: memory registration for put not necessary for portals.
+                //      however, needed probably for other rma transports.
+                rc = lcp_rndv_reg_send_buffer(req);
                 req->send.t_ctx.comp.comp_cb = lcp_request_complete_am_rput;
                 payload_size = lcp_send_do_am_bcopy(ep->lct_eps[cc], 
                                                     MPC_LOWCOMM_RPUT_MESSAGE,
@@ -540,11 +543,10 @@ int lcp_send_am_rts_start(lcp_request_t *req)
                 }
                 break;
         case LCP_RNDV_SEND:
-                not_reachable();
+                mpc_common_debug_fatal("LCP: send rndv not available for am");
                 break;
         default:
-                mpc_common_debug_error("LCP: unknown rndv type");
-                rc = MPC_LOWCOMM_ERROR;
+                mpc_common_debug_fatal("LCP: unknown protocol");
                 break;
         }
 
@@ -653,7 +655,7 @@ void lcp_request_complete_recv_rsend(lcr_completion_t *comp)
 
 void lcp_request_complete_recv_rget(lcr_completion_t *comp)
 {
-        int rc;
+        int rc, payload_size;
         lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
                                               recv.t_ctx.comp);
 
@@ -662,18 +664,18 @@ void lcp_request_complete_recv_rget(lcr_completion_t *comp)
                 if (req->state.remaining == 0) {
                         lcp_ep_h ep;
                         lcp_ep_ctx_t *ctx_ep;
-                        struct iovec iov_fin[1];
-
-                        iov_fin[0].iov_base = NULL;
-                        iov_fin[0].iov_len = 0; 
-                        /* Get LCP endpoint if exists */
+                        /* Get LCP endpoint */
                         HASH_FIND(hh, req->ctx->ep_ht, &req->recv.tag.src, sizeof(uint64_t), ctx_ep);
                         assert(ctx_ep);
 
                         ep = ctx_ep->ep;
-                        req->state.comp_stg = 1;
 
                         if (LCR_IFACE_IS_TM(ep->lct_eps[ep->priority_chnl]->rail)) {
+                                struct iovec iov_fin[1];
+                                
+                                req->state.comp_stg = 1;
+                                iov_fin[0].iov_base = NULL;
+                                iov_fin[0].iov_len = 0; 
                                 rc = lcp_send_do_tag_zcopy(ep->lct_eps[ep->priority_chnl],
                                                            req->recv.t_ctx.tag,
                                                            0,
@@ -681,10 +683,16 @@ void lcp_request_complete_recv_rget(lcr_completion_t *comp)
                                                            1,
                                                            &(req->recv.t_ctx));
                         } else {
-                                lcp_send_do_am_bcopy(ep->lct_eps[ep->priority_chnl],
-                                                     MPC_LOWCOMM_RFIN_MESSAGE,
-                                                     lcp_rndv_fin_pack,
+                                payload_size = lcp_send_do_am_bcopy(ep->lct_eps[ep->priority_chnl],
+                                                                    MPC_LOWCOMM_RFIN_MESSAGE,
+                                                                    lcp_rndv_fin_pack,
                                                      req);
+                                if (payload_size < 1) {
+                                        rc = MPC_LOWCOMM_ERROR;
+                                        goto err;
+                                }
+
+                                lcp_request_complete(req);
                         }
 
                         if (rc != MPC_LOWCOMM_SUCCESS) {

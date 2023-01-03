@@ -57,7 +57,7 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                         case PTL_EVENT_REPLY:
                                 ptl_comp = (lcr_ptl_send_comp_t *)ev.user_ptr;
                                 assert(ptl_comp);
-                                ptl_comp->comp->sent = ev.mlength;
+                                ptl_comp->tag_ctx->comp.sent = ev.mlength;
                                 ptl_comp->tag_ctx->
                                         comp.comp_cb(&ptl_comp->tag_ctx->comp);
                                 sctk_free(ptl_comp);
@@ -90,8 +90,6 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                                 break;
                         case PTL_EVENT_PUT_OVERFLOW:
                         case PTL_EVENT_GET_OVERFLOW:
-                                goto done;
-                                break;
                         case PTL_EVENT_PUT:
                                 am_id = (uint8_t)ev.hdr_data;
                                 lcr_ptl_invoke_am(rail, am_id, ev.mlength, 
