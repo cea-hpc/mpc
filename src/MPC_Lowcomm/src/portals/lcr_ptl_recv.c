@@ -16,7 +16,7 @@ int lcr_ptl_recv_block_init(sctk_ptl_rail_info_t *srail, lcr_ptl_recv_block_t **
                 goto err;
         }
 
-        block->size  = 4 * srail->ptl_info.eager_block_size;        
+        block->size  = 4 * srail->ptl_info.eager_block_size;
         block->rail  = srail;
         block->start = sctk_malloc(block->size);
         if (block->start == NULL) {
@@ -51,6 +51,7 @@ int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block)
                 .min_free    = block->rail->ptl_info.eager_block_size,
                 .options     = PTL_ME_OP_PUT | 
                         PTL_ME_MANAGE_LOCAL | 
+                        PTL_ME_MAY_ALIGN |
                         PTL_ME_EVENT_LINK_DISABLE,
                 .uid         = PTL_UID_ANY,
                 .start       = block->start,
@@ -65,7 +66,7 @@ int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block)
                                  &block->meh /* out: the ME handler */
                                 ));
 
-        mpc_common_debug("LCR_PTL: activate block");
+        mpc_common_debug("LCR_PTL: activate block. start=%p", block->start);
 
         return MPC_LOWCOMM_SUCCESS;
 }

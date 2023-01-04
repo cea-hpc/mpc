@@ -91,12 +91,11 @@ int lcp_send_am_eager_tag_zcopy(lcp_request_t *req)
 	struct iovec *iov = alloca(max_iovec*sizeof(struct iovec));
 	_mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[req->state.cc];
 	
-	lcp_tag_hdr_t hdr = {
-		.comm = req->send.tag.comm_id, 
-		.src  = req->send.tag.src,
-		.tag  = req->send.tag.tag,
-		.seqn = req->seqn
-	};
+	lcp_tag_hdr_t *hdr = sctk_malloc(sizeof(lcp_tag_hdr_t));
+        hdr->comm = req->send.tag.comm_id;
+        hdr->src  = req->send.tag.src;
+        hdr->tag  = req->send.tag.tag;
+        hdr->seqn = req->seqn;
 
 	lcr_completion_t cp = {
 		.comp_cb = lcp_tag_complete,
@@ -111,10 +110,10 @@ int lcp_send_am_eager_tag_zcopy(lcp_request_t *req)
 			      req->send.tag.src, req->send.tag.dest, req->send.length);
         rc = lcp_send_do_am_zcopy(lcr_ep, 
                                   MPC_LOWCOMM_P2P_MESSAGE, 
-                                  &hdr, 
+                                  hdr, 
                                   sizeof(lcp_tag_hdr_t),
                                   iov,
-                                  1, 
+                                  iovcnt, 
                                   &(req->state.comp));
 
 	return rc;
@@ -232,8 +231,8 @@ static int lcp_am_tag_handler(void *arg, void *data,
 	lcp_tag_hdr_t *hdr = data;
 
 	LCP_CONTEXT_LOCK(ctx);
-	mpc_common_debug_info("LCP: recv tag header src=%d",
-			      hdr->src);
+	mpc_common_debug_info("LCP: recv tag header src=%d, length=%d",
+			      hdr->src, length);
 
 	req = (lcp_request_t *)lcp_match_prq(ctx->prq_table, 
 					     hdr->comm, 

@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
 	mpc_lowcomm_set_uid_t suid;
 	mpc_lowcomm_peer_uid_t src_uid, dest_uid, my_uid;
 
-	int data1;
+	char data1;
 
 	/* load default config */
 	mpc_conf_root_config_init("mpcframework");
@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
 			.msg_size = sizeof(data1),
 			.source = src_uid,
 			.source_task = (int)src_uid,
-			.message_tag = 0,
+			.message_tag = 1111,
 		},
 		.completion_flag = 0,
 		.request_completion_fn = lowcomm_request_complete
@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
 
 	/* send/recv */
 	if (mpc_lowcomm_peer_get_rank(my_uid) == 0) {
-		data1 = 42;
+		data1 = 'c';
 		rc = lcp_send(ep, &req1, &data1);
 		if (rc != 0) {
 			printf("ERROR: send\n");
