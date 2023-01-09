@@ -78,6 +78,8 @@ int lcp_send_am_eager_tag_bcopy(lcp_request_t *req)
 		rc = MPC_LOWCOMM_ERROR;
 	}
 
+        lcp_request_complete(req);
+
 	return rc;
 }
 

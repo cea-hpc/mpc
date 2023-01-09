@@ -26,7 +26,7 @@ int lcp_send_start(lcp_ep_h ep, lcp_request_t *req)
                 if (LCR_IFACE_IS_TM(lcr_ep->rail)) {
                         req->send.func = lcp_send_tag_eager_tag_zcopy;
                 } else {
-                        req->send.func = lcp_send_am_eager_tag_zcopy;
+                        req->send.func = lcp_send_am_eager_tag_bcopy;
                 }
         } else {
                 lcp_request_init_rndv_send(req);

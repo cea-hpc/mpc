@@ -75,7 +75,6 @@ int lcr_ptl_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
                           lcr_completion_t *comp)
 {
         int i, rc = MPC_LOWCOMM_SUCCESS;
-        size_t ptl_iovcnt = 0;
         UNUSED(flags);
         sctk_ptl_rail_info_t* srail    = &ep->rail->network.ptl;
         size_t size                    = 0;
