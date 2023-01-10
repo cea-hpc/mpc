@@ -807,6 +807,38 @@ download_all_missing_deps()
 	echo "DEP_LIST=${DEP_LIST}"
 }
 
+
+
+#
+# Find a package prefix from env
+#    $1 Package name
+#    $2 Package version
+#    $3 Package manual prefix
+#
+#    Return PACK_PREFIX (set to "" if not resolved)
+#
+find_package_prefix()
+{
+	PACK_PREFIX=""
+
+	if test -d "$3"; then
+		PACK_PREFIX="$3"
+		return
+	fi
+
+	# Do not forget to trim as spack has 2 spaces in its separator
+	SPACKFIND=$(spack find -p ${1}@${2} | grep "${1}@${2}" | cut -d " " -f 2- | awk '{$1=$1};1' 2> /dev/null || true)
+
+	if test "x$?" != "x0"; then
+		return
+	fi
+
+	if test -d "$SPACKFIND"; then
+		PACK_PREFIX="$SPACKFIND"
+	fi
+}
+
+
 #
 # Build a configure based package
 #
@@ -869,7 +901,7 @@ build_configure_based_package()
 	PKG_SOURCE_DIR=${PROJECT_BUILD_DIR}/dep-${package}-${version}/
 
 	if test ! -d "$PKG_SOURCE_DIR"; then
-		pkg_dir="$SCRIPTPATH/deps/$package/"
+		pkg_dir="$SCRIPTPATH/config/deps/$package"
 
 		locate_tarball "$package" "$version"
 
@@ -901,13 +933,15 @@ build_configure_based_package()
 
 		if test -f "$PACKAGE_PATCH"; then
 			checking "Patching $package $version"
-
 			show_run_cmd "cd $PKG_SOURCE_DIR"
 			cd "$PKG_SOURCE_DIR"
 
 			show_run_cmd "patch -p 1 < $PACKAGE_PATCH"
 			patch -p 1 < "$PACKAGE_PATCH" > /dev/null
 			check_retcode "$?" "Failed to patch $package $version"
+
+			info "PATCH: ${PACKAGE_PATCH}"
+
 
 			show_run_cmd "cd $PROJECT_BUILD_DIR"
 			cd "${PROJECT_BUILD_DIR}"
@@ -968,6 +1002,22 @@ build_configure_based_package()
 	touch "${DEP_FLAG}"
 }
 
+# Check if a prefix exists and then insert it in env if it does
+# Args:
+#    - $1 prefix
+#
+# Return: 0 if prefix found (for use in if)
+#
+check_and_then_load_prefix()
+{
+	candidate_prefix="$1"
+	if test -d "$candidate_prefix"; then
+		load_prefix "$candidate_prefix"
+		return 0
+	fi
+	return 1
+}
+
 # Deploy an MPC dependency using various methods (spack or not)
 # Args:
 # - $1: package name
@@ -1001,8 +1051,7 @@ find_in_prefix_or_use_spack_internal()
 
 	DEP_FOUND="no"
 
-	if test -d "$candidate_prefix"; then
-		load_prefix "$candidate_prefix"
+	if check_and_then_load_prefix "$candidate_prefix"; then
 		# Assume dep found
 		DEP_FOUND="yes"
 	fi
@@ -1545,10 +1594,19 @@ if test "x${DEP_FOUND}" = "xno"; then
 	build_configure_based_package "hwloc" "$(package_version "hwloc")" "$HWLOC_BUILD_PARAMETERS"
 fi
 
-find_in_prefix_or_use_spack "hydra" "$(package_version "hydra")" "${HYDRA_PREFIX}"
+# We cannot use spack as the spack package uses an internal hwloc of previous version
+info "Hydra must be built and patched localy for HWLOC 2+ support (no spack support)"
+if check_and_then_load_prefix "$HYDRA_PREFIX"; then
+	# Make sure hydra seems to be in the path
+	assert_cmd "mpiexec.hydra"
+else
+	# Here we need to build hydra and we try to target our own HWLOC
+	find_package_prefix "hwloc" "$(package_version "hwloc")" "${HWLOC_PREFIX}"
 
-if test "x${DEP_FOUND}" = "xno"; then
-	# Could not use spack now installing manually
+	if test -n "${PACK_PREFIX}"; then
+		HYDRA_BUILD_PARAMETERS="--with-hwloc-prefix=${PACK_PREFIX} ${HYDRA_BUILD_PARAMETERS}"
+	fi
+
 	build_configure_based_package "hydra" "$(package_version "hydra")" "$HYDRA_BUILD_PARAMETERS"
 fi
 

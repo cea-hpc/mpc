@@ -1,0 +1,16 @@
+diff --git a/tools/topo/hwloc/topo_hwloc.c b/tools/topo/hwloc/topo_hwloc.c
+index 987e52a..3362230 100644
+--- a/tools/topo/hwloc/topo_hwloc.c
++++ b/tools/topo/hwloc/topo_hwloc.c
+@@ -428,9 +428,11 @@ HYD_status HYDT_topo_hwloc_init(const char *binding, const char *mapping, const
+     else if (!strncmp(membind, "interleave:", strlen("interleave:"))) {
+         HYDT_topo_hwloc_info.membind = HWLOC_MEMBIND_INTERLEAVE;
+     }
++#if HWLOC_API_VERSION < 0x20000
+     else if (!strncmp(membind, "replicate:", strlen("replicate:"))) {
+         HYDT_topo_hwloc_info.membind = HWLOC_MEMBIND_REPLICATE;
+     }
++#endif
+     else {
+         HYDU_ERR_SETANDJUMP(status, HYD_INTERNAL_ERROR,
+                             "unrecognized membind policy \"%s\"\n", membind);
