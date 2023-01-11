@@ -16,9 +16,11 @@ int lcr_ptl_recv_block_init(sctk_ptl_rail_info_t *srail, lcr_ptl_recv_block_t **
                 goto err;
         }
 
-        block->size  = 4 * srail->ptl_info.eager_block_size;
-        block->rail  = srail;
-        block->start = sctk_malloc(block->size);
+        block->size      = 4 * srail->ptl_info.eager_block_size;
+        block->rail      = srail;
+        block->start     = sctk_malloc(block->size);
+        block->comp.type = LCR_PTL_COMP_BLOCK;
+
         if (block->start == NULL) {
                 mpc_common_debug_error("LCR PTL: could not allocate eager block");
                 rc = MPC_LOWCOMM_ERROR;
@@ -32,7 +34,7 @@ err:
         return rc;
 }
 
-int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block)
+int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block, sctk_ptl_pte_id_t pte, sctk_ptl_list_t list)
 {
         ptl_me_t me;
         sctk_ptl_rail_info_t *srail = block->rail;
@@ -58,22 +60,23 @@ int lcr_ptl_recv_block_activate(lcr_ptl_recv_block_t *block)
                 .length      = block->size
         };
 
-        sctk_ptl_chk(PtlMEAppend(srail->iface,         /* the NI handler */
-                                 srail->ptl_info.eager_pt_idx,             /* the targeted PT entry */
-                                 &me,   /* the ME to register in the table */
-                                 SCTK_PTL_PRIORITY_LIST,       /* in which list the ME has to be appended */
-                                 block,             /* usr_ptr: forwarded when polling the event */
-                                 &block->meh /* out: the ME handler */
+        sctk_ptl_chk(PtlMEAppend(srail->iface,
+                                 pte,
+                                 &me,
+                                 list,
+                                 &block->comp,
+                                 &block->meh
                                 ));
 
-        mpc_common_debug("LCR_PTL: activate block. start=%p", block->start);
+        mpc_common_debug("LCR_PTL: activate block. start=%p, ptl_comp=%p, block=%p", 
+                         block->start, &block->comp, block);
 
         return MPC_LOWCOMM_SUCCESS;
 }
 
-int lcr_ptl_recv_block_enable(sctk_ptl_rail_info_t *srail)
+int lcr_ptl_recv_block_enable(sctk_ptl_rail_info_t *srail, sctk_ptl_pte_id_t pte, sctk_ptl_list_t list)
 {
-        int rc, i;
+        int rc = MPC_LOWCOMM_SUCCESS, i;
 
         for (i=0; i< srail->ptl_info.num_eager_blocks; i++) {
                 lcr_ptl_recv_block_t *block = NULL;
@@ -87,15 +90,28 @@ int lcr_ptl_recv_block_enable(sctk_ptl_rail_info_t *srail)
                 if (el == NULL) {
                         mpc_common_debug_error("LCR PTL: could not allocate list elem");
                         rc = MPC_LOWCOMM_ERROR;
-                        return rc;
+                        goto err;
                 }
                 el->block = block;
-                DL_APPEND(srail->ptl_info.block_list, el);
+                switch(list) {
+                case SCTK_PTL_PRIORITY_LIST:
+                        DL_APPEND(srail->ptl_info.am_block_list, el);
+                        break;
+                case SCTK_PTL_OVERFLOW_LIST:
+                        DL_APPEND(srail->ptl_info.tag_block_list, el);
+                        break;
+                default:
+                        mpc_common_debug_error("LCR PTL: unknown list");
+                        rc = MPC_LOWCOMM_ERROR;
+                        goto err;
+                        break;
+                }
                
-                rc = lcr_ptl_recv_block_activate(block);
+                rc = lcr_ptl_recv_block_activate(block, pte, list);
         }
 
-        return MPC_LOWCOMM_SUCCESS;
+err:
+        return rc;
 }
 
 void lcr_ptl_recv_block_free(lcr_ptl_recv_block_t *block)
@@ -107,13 +123,13 @@ void lcr_ptl_recv_block_free(lcr_ptl_recv_block_t *block)
         sctk_free(block);
 }
 
-int lcr_ptl_recv_block_disable(sctk_ptl_rail_info_t *srail)
+int lcr_ptl_recv_block_disable(lcr_ptl_block_list_t *list)
 {
         lcr_ptl_block_list_t *elem = NULL, *tmp = NULL;
 
-        DL_FOREACH_SAFE(srail->ptl_info.block_list, elem, tmp) {
+        DL_FOREACH_SAFE(list, elem, tmp) {
                lcr_ptl_recv_block_free(elem->block);
-               DL_DELETE(srail->ptl_info.block_list, elem);
+               DL_DELETE(list, elem);
                sctk_free(elem);
         }
 

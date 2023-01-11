@@ -525,7 +525,9 @@ struct _mpc_lowcomm_config_struct_protocol
 	/**Comma separated list of devices to use (default: eth0, ptl0).**/
 	char devices[MPC_CONF_STRING_SIZE];
 	/**Type of rendez-vous to use (default: mode get).**/
-	int rndv_mode;
+	int  rndv_mode;
+	/**Force offload if possible (ie offload interface available)**/
+        int  offload;
 };
 typedef struct _mpc_lowcomm_config_struct_protocol lcr_protocol_config_t;
 

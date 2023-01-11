@@ -716,6 +716,7 @@ int sctk_ptl_pending_me_probe(sctk_rail_info_t* rail, mpc_lowcomm_ptp_message_he
  */
 void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 {
+        int rc = MPC_LOWCOMM_SUCCESS;
 	struct _mpc_lowcomm_config_struct_net_driver_portals ptl_driver_config;
 	/* Register on-demand callback for rail */
 	__register_monitor_callback(rail);
@@ -770,12 +771,9 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 	rail->network.ptl.offload_support = offloading;
 	
 #ifdef MPC_LOWCOMM_PROTOCOL
-        if (rail->network.ptl.match_mode == PTL_MODE_NO_MATCH) {
-                rail->runtime_config_rail->offload = 0;
-                lcr_ptl_software_init(&rail->network.ptl, min_comms);
-        } else {
-                rail->runtime_config_rail->offload = 1;
-                lcr_ptl_software_minit(&rail->network.ptl, min_comms);
+        rc = lcr_ptl_software_init(&rail->network.ptl, min_comms);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                mpc_common_debug_fatal("LCR PTL: could not init software iface.");
         }
 #else
 	sctk_ptl_software_init( &rail->network.ptl, min_comms);
@@ -814,6 +812,10 @@ void sctk_ptl_fini_interface(sctk_rail_info_t* rail)
 {
 	sctk_ptl_rail_info_t* srail    = &rail->network.ptl;
 	mpc_common_debug_info("PORTALS: FINI");
+#ifdef MPC_LOWCOMM_PROTOCOL
+        lcr_ptl_software_fini(srail);
+#else
 	sctk_ptl_software_fini(srail);
+#endif
 	sctk_ptl_hardware_fini(srail);
 }

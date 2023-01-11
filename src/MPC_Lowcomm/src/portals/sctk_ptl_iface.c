@@ -362,7 +362,7 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, ptl_p
 	sctk_ptl_chk(PtlPTAlloc(
 		srail->iface,       /* the NI handler */
 		SCTK_PTL_PTE_FLAGS, /* PT entry specific flags */
-		srail->ptl_info.me_eq,        /* the EQ for this entry */
+		srail->ptl_info.eqh,        /* the EQ for this entry */
 		requested_index,  /* the desired index value */
 		&pte->idx       /* the effective index value */
 	));
@@ -452,18 +452,9 @@ void sctk_ptl_pte_release(sctk_ptl_rail_info_t* srail, ptl_pt_index_t requested_
 void sctk_ptl_software_fini(sctk_ptl_rail_info_t* srail)
 {
 	int table_dims = srail->nb_entries;
-	assert(table_dims > 0);
 	int i;
 	void* base_ptr = NULL;
-
-#ifdef MPC_LOWCOMM_PROTOCOL
-        if (srail->match_mode == PTL_MODE_NO_MATCH) {
-                lcr_ptl_software_fini(srail);
-        } else {
-                lcr_ptl_software_mfini(srail);
-        }
-        return;
-#endif
+	assert(table_dims > 0);
 
 	/* don't want to hang the NIC */
 	//return;

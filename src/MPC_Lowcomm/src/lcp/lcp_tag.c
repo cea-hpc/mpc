@@ -89,27 +89,29 @@ int lcp_send_am_eager_tag_zcopy(lcp_request_t *req)
 	int rc;
         size_t iovcnt     = 0;
 	lcp_ep_h ep       = req->send.ep;
-        size_t max_iovec  = ep->ep_config.max_iovecs;
+        size_t max_iovec  = ep->ep_config.am.max_iovecs;
 	struct iovec *iov = alloca(max_iovec*sizeof(struct iovec));
 	_mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[req->state.cc];
 	
+        //FIXME: hdr never freed, how should it be initialized?
 	lcp_tag_hdr_t *hdr = sctk_malloc(sizeof(lcp_tag_hdr_t));
         hdr->comm = req->send.tag.comm_id;
         hdr->src  = req->send.tag.src;
         hdr->tag  = req->send.tag.tag;
         hdr->seqn = req->seqn;
 
-	lcr_completion_t cp = {
-		.comp_cb = lcp_tag_complete,
-	};
-	req->state.comp = cp;
+	req->state.comp = (lcr_completion_t) {
+                .comp_cb = lcp_tag_complete
+        };
 
 	iov[0].iov_base = req->send.buffer;
 	iov[0].iov_len  = req->send.length;
         iovcnt++;
 
-	mpc_common_debug_info("LCP: send am eager tag zcopy src=%d, dest=%d, length=%d",
-			      req->send.tag.src, req->send.tag.dest, req->send.length);
+	mpc_common_debug_info("LCP: send am eager tag zcopy comm=%d, src=%d, "
+                              "tag=%d, length=%d", req->send.tag.comm_id, 
+                              req->send.tag.src, req->send.tag.tag, 
+                              req->send.length);
         rc = lcp_send_do_am_zcopy(lcr_ep, 
                                   MPC_LOWCOMM_P2P_MESSAGE, 
                                   hdr, 
@@ -121,6 +123,7 @@ int lcp_send_am_eager_tag_zcopy(lcp_request_t *req)
 	return rc;
 }
 
+//FIXME: dead code?
 static inline int lcp_send_am_frag_zcopy(lcp_request_t *req, 
 		lcp_chnl_idx_t cc, 
 		size_t offset, 
@@ -135,9 +138,6 @@ static inline int lcp_send_am_frag_zcopy(lcp_request_t *req,
 	lcr_ep = ep->lct_eps[req->state.cc];
 	lcp_frag_hdr_t hdr = {
 		.base = {
-			.base = {
-				.comm_id = req->send.tag.comm_id,
-			},
 			.am_id = (uint8_t)MPC_LOWCOMM_FRAG_MESSAGE,
 		},
 		.dest = req->send.tag.dest,
@@ -162,6 +162,7 @@ static inline int lcp_send_am_frag_zcopy(lcp_request_t *req,
 	return rc;
 }
 
+//FIXME: dead code?
 int lcp_send_am_zcopy_multi(lcp_request_t *req)
 {
 	int rc = MPC_LOWCOMM_SUCCESS;
@@ -258,11 +259,18 @@ static int lcp_am_tag_handler(void *arg, void *data,
 		
 	/* copy data to receiver buffer and complete request */
 	memcpy(req->recv.buffer, (void *)(hdr + 1), length - sizeof(*hdr));
+
+        /* set recv info for caller */
+        req->recv.recv_info->length = length - sizeof(*hdr);
+        req->recv.recv_info->src    = hdr->src;
+        req->recv.recv_info->tag    = hdr->tag;
+
 	lcp_request_complete(req);
 err:
 	return rc;
 }
 
+//FIXME: dead code?
 static int lcp_am_frag_handler(void *arg, void *data, 
 			  size_t length,
 			  __UNUSED__ unsigned flags)
@@ -276,7 +284,7 @@ static int lcp_am_frag_handler(void *arg, void *data,
 	if (req == NULL) {
 		mpc_common_debug_error("LCP: could not find lcp request. "
 				       "uuid=%lu, seqn:%lu", 
-				       hdr->base.base.comm_id,
+				       hdr->base.am_id,
 				       hdr->msg_id);
 		rc = MPC_LOWCOMM_ERROR;
 		goto err;
@@ -306,4 +314,3 @@ err:
 
 
 LCP_DEFINE_AM(MPC_LOWCOMM_P2P_MESSAGE, lcp_am_tag_handler, 0);
-LCP_DEFINE_AM(MPC_LOWCOMM_FRAG_MESSAGE, lcp_am_frag_handler, 0);

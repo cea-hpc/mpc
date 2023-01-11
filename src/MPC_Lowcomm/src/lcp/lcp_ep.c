@@ -47,10 +47,15 @@ int lcp_ep_init_config(lcp_context_h ctx, lcp_ep_h ep)
 	int i;
 	int max_prio = 0, prio_idx = 0;
 
-	ep->ep_config.max_bcopy          = SIZE_MAX;
-	ep->ep_config.max_zcopy          = SIZE_MAX;
+	ep->ep_config.am.max_bcopy       = SIZE_MAX;
+	ep->ep_config.am.max_zcopy       = SIZE_MAX;
+        ep->ep_config.am.max_iovecs      = SIZE_MAX;
+	ep->ep_config.tag.max_bcopy      = SIZE_MAX;
+	ep->ep_config.tag.max_zcopy      = SIZE_MAX;
+        ep->ep_config.tag.max_iovecs     = SIZE_MAX;
 	ep->ep_config.rndv.max_put_zcopy = SIZE_MAX;
 	ep->ep_config.rndv.max_get_zcopy = SIZE_MAX;
+        ep->ep_config.offload            = 0;
 
 	for (i=0; i<ctx->num_resources; i++) {	
 		lcp_rsc_desc_t if_desc  = ctx->resources[i];
@@ -63,21 +68,21 @@ int lcp_ep_init_config(lcp_context_h ctx, lcp_ep_h ep)
 		}
                 
                 iface->iface_get_attr(iface, &attr);
-                if (if_desc.iface_config->offload) {
-                        ep->ep_config.max_bcopy = LCP_MIN(ep->ep_config.max_bcopy,
-                                                          attr.iface.cap.tag.max_bcopy);
-                        ep->ep_config.max_zcopy = LCP_MIN(ep->ep_config.max_zcopy,
-                                                          attr.iface.cap.tag.max_zcopy);
-                        ep->ep_config.max_iovecs = LCP_MIN(ep->ep_config.max_iovecs,
-                                                           attr.iface.cap.tag.max_iovecs);
-                } else {
-                        ep->ep_config.max_bcopy = LCP_MIN(ep->ep_config.max_bcopy,
-                                                          attr.iface.cap.am.max_bcopy);
-                        ep->ep_config.max_zcopy = LCP_MIN(ep->ep_config.max_zcopy,
-                                                          attr.iface.cap.am.max_zcopy);
-                        ep->ep_config.max_iovecs = LCP_MIN(ep->ep_config.max_iovecs,
-                                                           attr.iface.cap.am.max_iovecs);
+                if (iface->runtime_config_rail->offload) {
+                        ep->ep_config.offload = 1;
+                        ep->ep_config.tag.max_bcopy = LCP_MIN(ep->ep_config.tag.max_bcopy,
+                                                              attr.iface.cap.tag.max_bcopy);
+                        ep->ep_config.tag.max_zcopy = LCP_MIN(ep->ep_config.tag.max_zcopy,
+                                                              attr.iface.cap.tag.max_zcopy);
+                        ep->ep_config.tag.max_iovecs = LCP_MIN(ep->ep_config.tag.max_iovecs,
+                                                               attr.iface.cap.tag.max_iovecs);
                 }
+                ep->ep_config.am.max_bcopy = LCP_MIN(ep->ep_config.am.max_bcopy,
+                                                  attr.iface.cap.am.max_bcopy);
+                ep->ep_config.am.max_zcopy = LCP_MIN(ep->ep_config.am.max_zcopy,
+                                                  attr.iface.cap.am.max_zcopy);
+                ep->ep_config.am.max_iovecs = LCP_MIN(ep->ep_config.am.max_iovecs,
+                                                   attr.iface.cap.am.max_iovecs);
                 ep->ep_config.rndv.max_get_zcopy = LCP_MIN(ep->ep_config.rndv.max_get_zcopy,
                                                            attr.iface.cap.rndv.max_get_zcopy);
                 ep->ep_config.rndv.max_put_zcopy = LCP_MIN(ep->ep_config.rndv.max_put_zcopy,
@@ -85,7 +90,8 @@ int lcp_ep_init_config(lcp_context_h ctx, lcp_ep_h ep)
 
 	}
 
-        ep->ep_config.rndv_threshold = ep->ep_config.max_zcopy;
+        //FIXME: should it be two distinct threshold? One for tag, one for am?
+        ep->ep_config.rndv_threshold = ep->ep_config.am.max_zcopy;
 
 	ep->priority_chnl = prio_idx; 
 

@@ -547,6 +547,7 @@ void sctk_ptl_rdma_read(sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg,
  * \param[in] addr the start address
  * \param[in] size the region length
  */
+//FIXME: remove PROTOCOL code.
 void sctk_ptl_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list, void * addr, size_t size )
 {
 	sctk_ptl_rail_info_t* srail    = &rail->network.ptl;
@@ -601,7 +602,7 @@ void sctk_ptl_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_c
 	list->rail_id         = rail->rail_number;
 	list->pin.ptl.me_data = me_request;
 #ifdef MPC_LOWCOMM_PROTOCOL
-	list->pin.ptl.md_data = srail->ptl_info.md_req;
+	list->pin.ptl.md_data->slot_h.mdh = srail->ptl_info.mdh;
 #else
 	list->pin.ptl.md_data = md_request;
 #endif

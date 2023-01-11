@@ -22,7 +22,7 @@ typedef struct lcr_component          *lcr_component_h;
 
 typedef union {
 	struct {
-		uint64_t seqn:16;
+		uint64_t comm:16;
 		uint64_t tag:24;
 		uint64_t src:24;
 	} t_tag;

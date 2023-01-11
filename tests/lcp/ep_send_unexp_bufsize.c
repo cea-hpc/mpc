@@ -102,13 +102,18 @@ int main(int argc, char** argv) {
 		memset(data1, 0, size);
 		/* wait to force early recv */
 		usleep(10);
-		rc = lcp_send(ep, &req1, &data1);
+                lcp_request_param_t param = { 0 };
+		rc = lcp_tag_send_nb(ep, &data1, size, &req1, &param);
 		if (rc != 0) {
 			printf("ERROR: send\n");
 		}
 	} else {
-		data1 = malloc(8192 * sizeof(int));
-		rc = lcp_recv(ctx, &req1, &data1);
+		size = 4096 * sizeof(int);
+		data1 = malloc(size);
+                lcp_request_param_t param = { 
+                        .recv_info = &req1.recv_info 
+                };
+		rc = lcp_tag_recv_nb(ctx, &data1, size, &req1, &param);
 		if (rc != 0) {
 			printf("ERROR: recv\n");
 		}

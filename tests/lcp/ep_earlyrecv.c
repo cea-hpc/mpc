@@ -95,12 +95,16 @@ int main(int argc, char** argv) {
 		data1 = 42;
 		/* wait to force early recv */
 		usleep(10);
-		rc = lcp_send(ep, &req1, &data1);
+                lcp_request_param_t param = { 0 };
+		rc = lcp_tag_send_nb(ep, &data1, sizeof(data1), &req1, &param);
 		if (rc != 0) {
 			printf("ERROR: send\n");
 		}
 	} else {
-		rc = lcp_recv(ctx, &req1, &data1);
+                lcp_request_param_t param = { 
+                        .recv_info = &req1.recv_info 
+                };
+		rc = lcp_tag_recv_nb(ctx, &data1, sizeof(data1), &req1, &param);
 		if (rc != 0) {
 			printf("ERROR: recv\n");
 		}

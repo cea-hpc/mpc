@@ -80,6 +80,7 @@ struct lcp_request {
                         size_t send_length;
 			void *buffer;
 			lcr_tag_context_t t_ctx;
+                        lcp_tag_recv_info_t *recv_info;
 
 			struct {
 				uint64_t comm_id;
@@ -93,7 +94,7 @@ struct lcp_request {
 
         //NOTE: break LCP modularity
 	mpc_lowcomm_request_t *request; /* Upper layer request */
-	int64_t                seqn;    /* Sequence number */
+	int16_t                seqn;    /* Sequence number */
 	uint64_t               msg_id;  /* Unique message identifier */
         struct lcp_request    *super;
 
@@ -153,12 +154,13 @@ static inline void lcp_request_init_tag_send(lcp_request_t *req)
         req->send.tag.comm_id   = req->request->header.communicator_id; 
 };
 
-static inline void lcp_request_init_tag_recv(lcp_request_t *req)
+static inline void lcp_request_init_tag_recv(lcp_request_t *req, lcp_tag_recv_info_t *info)
 {
         req->recv.tag.dest      = req->request->header.destination;
         req->recv.tag.src       = req->request->header.source; 
         req->recv.tag.tag       = req->request->header.message_tag;
         req->recv.tag.comm_id   = req->request->header.communicator_id;
+        req->recv.recv_info     = info;
 }
 
 static inline void lcp_request_init_rndv_send(lcp_request_t *req)

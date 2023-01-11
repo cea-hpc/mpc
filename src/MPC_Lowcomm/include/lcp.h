@@ -4,7 +4,6 @@
 #include "lcp_def.h"
 #include "lcp_common.h"
 
-#include <mpc_lowcomm_types.h>
 #include <mpc_common_types.h>
 
 /* Context */
@@ -24,13 +23,30 @@ void lcp_ep_get(lcp_context_h ctx,
                 uint64_t uid, 
 		lcp_ep_h *ep);
 
+typedef struct lcp_tag_recv_info {
+        size_t length;
+        int32_t tag;
+        int32_t src;
+} lcp_tag_recv_info_t;
+
+enum {
+        LCP_REQUEST_TRY_OFFLOAD = LCP_BIT(0)
+};
+
+typedef struct {
+        uint32_t flags;
+        lcp_tag_recv_info_t *recv_info;
+        lcp_mem_h memh;
+} lcp_request_param_t;
+
 /* Send/Receive */
-int lcp_send(lcp_ep_h ep, 
-             mpc_lowcomm_request_t *request, 
-	     const void *buffer);
-int lcp_recv(lcp_context_h ctx, 
-             mpc_lowcomm_request_t *request,
-	     void *buffer);
+int lcp_tag_send_nb(lcp_ep_h ep, const void *buffer,
+                    size_t count, mpc_lowcomm_request_t *request, 
+                    const lcp_request_param_t *param);
+
+int lcp_tag_recv_nb(lcp_context_h ctx, void *buffer, size_t count, 
+                    mpc_lowcomm_request_t *request,
+                    lcp_request_param_t *param);
 
 /* Progress */
 int lcp_progress(lcp_context_h ctx);

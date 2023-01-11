@@ -28,6 +28,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include <lcp.h>
 
 /*************
  * DATATYPES *
@@ -122,8 +123,9 @@ typedef struct mpc_lowcomm_request_s
 	void *pointer_to_shadow_request;
 	/* This is a pointer to the registered memory region
 	 * in order to unpin when request completes */
+        lcp_tag_recv_info_t recv_info;
 	void *ptr_to_pin_ctx;
-    int (*request_completion_fn)(struct mpc_lowcomm_request_s *);
+        int (*request_completion_fn)(struct mpc_lowcomm_request_s *);
 }mpc_lowcomm_request_t;
 
 struct mpc_lowcomm_request_s * mpc_lowcomm_request_null(void);

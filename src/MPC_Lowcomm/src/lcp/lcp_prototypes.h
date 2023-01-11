@@ -12,26 +12,26 @@
  *
  * 64                                              0
  * <-----------------><-----------------><--------->
- *       src (24)             tag (24)     seqn (16) 
+ *       src (24)             tag (24)     comm (16)
  */
 
-#define LCP_TM_SEQN_MASK 0x800000000000ffffull
+#define LCP_TM_COMM_MASK 0x800000000000ffffull
 #define LCP_TM_TAG_MASK  0x800000ffffff0000ull
 #define LCP_TM_SRC_MASK  0x7fffff0000000000ull
 
-#define LCP_TM_SET_MATCHBITS(_matchbits, _src, _tag, _seqn) \
+#define LCP_TM_SET_MATCHBITS(_matchbits, _src, _tag, _comm) \
         _matchbits |= (_src & 0xffffffull); \
         _matchbits  = (_matchbits << 24); \
         _matchbits |= (_tag & 0xffffffull); \
         _matchbits  = (_matchbits << 16); \
-        _matchbits |= (_seqn & 0xffffull);
+        _matchbits |= (_comm & 0xffffull);
 
 #define LCP_TM_GET_SRC(_matchbits) \
         ((int)((_matchbits & LCP_TM_SRC_MASK) >> 40))
 #define LCP_TM_GET_TAG(_matchbits) \
         ((int)((_matchbits & LCP_TM_TAG_MASK) >> 16))
-#define LCP_TM_GET_SEQN(_matchbits) \
-        ((int)(_matchbits & LCP_TM_SEQN_MASK))
+#define LCP_TM_GET_COMM(_matchbits) \
+        ((uint16_t)(_matchbits & LCP_TM_COMM_MASK))
 
 /* lcp_tag_t: for matched request
  *
@@ -43,31 +43,28 @@
 #define LCP_TM_FRAG_MID_MASK 0x7ffffffffffff000ul
 
 /* immediate data
- *
- * 64    56                                          0
- * <-----><------------------------------------------>
- *   op                  size 
+ 
+ * 64    56                                16        0
+ * <-----><--------------------------------><-------->
+ *   op                  size                  seqn 
  */ 
 #define LCP_TM_HDR_OP_MASK     0x7f00000000000000ull
-#define LCP_TM_HDR_LENGTH_MASK 0x80ffffffffffffffull
+#define LCP_TM_HDR_LENGTH_MASK 0x80ffffffffff0000ull
+#define LCP_TM_HDR_SEQN_MASK   0x800000000000ffffull
 
-#define LCP_TM_SET_HDR_DATA(_hdr, _op, _length) \
+#define LCP_TM_SET_HDR_DATA(_hdr, _op, _length, _seqn) \
         _hdr |= (_op & 0xffull); \
-        _hdr  = (_hdr << 56); \
-        _hdr |= (_length & 0x00ffffffffffffffull);
+        _hdr  = (_hdr << 40); \
+        _hdr |= (_length & 0x000000ffffffffffull); \
+        _hdr  = (_hdr << 16); \
+        _hdr |= (_seqn & 0x000000000000ffffull);
 
 #define LCP_TM_GET_HDR_OP(_hdr) \
-        ((int)((_hdr & LCP_TM_HDR_OP_MASK) >> 56))
+        ((uint8_t)((_hdr & LCP_TM_HDR_OP_MASK) >> 56))
 #define LCP_TM_GET_HDR_LENGTH(_hdr) \
-        ((size_t)(_hdr & LCP_TM_HDR_LENGTH_MASK))
-
-typedef union {
-        uint64_t raw;
-        struct {
-                uint64_t prot:12;
-                uint64_t seqn:52;
-        } hdr;
-} lcp_tm_imm_t;
+        ((size_t)((_hdr & LCP_TM_HDR_LENGTH_MASK) >> 16))
+#define LCP_TM_GET_HDR_SEQN(_hdr) \
+        ((size_t)(_hdr & LCP_TM_HDR_SEQN_MASK))
 
 int lcp_send_am_eager_tag_bcopy(lcp_request_t *req);
 int lcp_send_am_eager_tag_zcopy(lcp_request_t *req);

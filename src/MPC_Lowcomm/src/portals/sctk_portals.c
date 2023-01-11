@@ -129,12 +129,8 @@ static void _mpc_lowcomm_portals_notify_probe (sctk_rail_info_t* rail, mpc_lowco
  */
 static void _mpc_lowcomm_portals_notify_newcomm(sctk_rail_info_t* rail, mpc_lowcomm_communicator_id_t comm_idx, size_t comm_size)
 {
-#ifdef MPC_LOWCOMM_PROTOCOL
-        if (rail->network.ptl.match_mode == PTL_MODE_MATCH) {
-#endif
-                sctk_ptl_comm_register(&rail->network.ptl, comm_idx, comm_size);
-#ifdef MPC_LOWCOMM_PROTOCOL
-        }
+#ifndef MPC_LOWCOMM_PROTOCOL
+        sctk_ptl_comm_register(&rail->network.ptl, comm_idx, comm_size);
 #endif
 }
 
@@ -148,12 +144,8 @@ static void _mpc_lowcomm_portals_notify_newcomm(sctk_rail_info_t* rail, mpc_lowc
  */
 static void _mpc_lowcomm_portals_notify_delcomm(sctk_rail_info_t* rail, mpc_lowcomm_communicator_id_t comm_idx, size_t comm_size)
 {
-#ifdef MPC_LOWCOMM_PROTOCOL
-        if (rail->network.ptl.match_mode == PTL_MODE_MATCH) {
-#endif
-                sctk_ptl_comm_delete(&rail->network.ptl, comm_idx, comm_size);
-#ifdef MPC_LOWCOMM_PROTOCOL
-        }
+#ifndef MPC_LOWCOMM_PROTOCOL
+        sctk_ptl_comm_delete(&rail->network.ptl, comm_idx, comm_size);
 #endif
 }
 
@@ -428,36 +420,23 @@ int lcr_ptl_iface_open(char *device_name, int id,
         /* Add new API call */
 	iface->iface_get_attr = lcr_ptl_get_attr;
 
-        switch (iface->network.ptl.match_mode) {
-        case PTL_MODE_NO_MATCH: 
-                iface->send_am_bcopy       = lcr_ptl_send_am_bcopy;
-                iface->send_am_zcopy       = lcr_ptl_send_am_zcopy;
-                iface->send_put            = lcr_ptl_send_put;
-                iface->send_get            = lcr_ptl_send_get;
-                iface->iface_progress      = lcr_ptl_iface_progress;
-                iface->iface_pack_memp     = lcr_ptl_pack_rkey;
-                iface->iface_unpack_memp   = lcr_ptl_unpack_rkey;
-                iface->rail_pin_region     = lcr_ptl_mem_register;
-                iface->rail_unpin_region   = lcr_ptl_mem_unregister;
-                break;
-        case PTL_MODE_MATCH:
-                iface->send_tag_bcopy      = lcr_ptl_send_tag_bcopy;
-                iface->send_tag_zcopy      = lcr_ptl_send_tag_zcopy;
-                iface->send_tag_rndv_zcopy = lcr_ptl_send_tag_rndv_zcopy;
-                iface->send_put            = lcr_ptl_send_mput;
-                iface->send_get            = lcr_ptl_send_mget;
-                iface->recv_tag_zcopy      = lcr_ptl_recv_tag_zcopy;
-                iface->iface_progress      = lcr_ptl_iface_mprogress;
-                iface->iface_pack_memp     = lcr_ptl_pack_mrkey;
-                iface->iface_unpack_memp   = lcr_ptl_unpack_mrkey;
-                break;
-        default:
-                mpc_common_debug_error("LCR PTL: wrong match mode %d", 
-                                       iface->network.ptl.match_mode);
-                rc = MPC_LOWCOMM_ERROR;
-                goto err;
-                break;
-        }
+        /* Active message calls */
+        iface->send_am_bcopy       = lcr_ptl_send_am_bcopy;
+        iface->send_am_zcopy       = lcr_ptl_send_am_zcopy;
+        /* Tag calls */
+        iface->send_tag_bcopy      = lcr_ptl_send_tag_bcopy;
+        iface->send_tag_zcopy      = lcr_ptl_send_tag_zcopy;
+        iface->send_tag_rndv_zcopy = lcr_ptl_send_tag_rndv_zcopy;
+        iface->recv_tag_zcopy      = lcr_ptl_recv_tag_zcopy;
+        /* RMA calls */
+        iface->send_put            = lcr_ptl_send_put;
+        iface->send_get            = lcr_ptl_send_get;
+        iface->iface_pack_memp     = lcr_ptl_pack_rkey;
+        iface->iface_unpack_memp   = lcr_ptl_unpack_rkey;
+        iface->rail_pin_region     = lcr_ptl_mem_register;
+        iface->rail_unpin_region   = lcr_ptl_mem_unregister;
+        /* Interface progess */
+        iface->iface_progress      = lcr_ptl_iface_progress;
 
         *iface_p = iface;
 err:

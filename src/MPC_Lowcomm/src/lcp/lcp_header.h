@@ -4,20 +4,15 @@
 #include <stdint.h>
 #include <stddef.h>
 
-typedef struct lcp_base_hdr {
-	uint64_t comm_id;
-} lcp_base_hdr_t;
-
 typedef struct lcp_am_hdr {
-	lcp_base_hdr_t base;
 	uint8_t am_id; //FIXME: not needed ?
 } lcp_am_hdr_t;
 
 typedef struct lcp_tag_hdr {
-	uint64_t comm;
-	uint64_t src;
-	int      tag;
-	int64_t  seqn;
+	int16_t comm;
+	int32_t src;
+	int32_t tag;
+	int16_t seqn;
 } lcp_tag_hdr_t;
 
 typedef struct lcp_rndv_hdr {
@@ -28,7 +23,7 @@ typedef struct lcp_rndv_hdr {
 
 typedef struct lcp_rndv_ack_hdr {
 	uint64_t msg_id;
-	uint64_t src;
+	int32_t  src;
 } lcp_rndv_ack_hdr_t;
 
 typedef struct lcp_frag_hdr {

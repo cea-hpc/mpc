@@ -976,14 +976,8 @@ static inline void __communicator_id_register(mpc_lowcomm_communicator_t comm, i
 	mpc_common_bit_array_set(&__id_factory.comm_bit_array, (uint64_t)comm, 1);
 
 
+#ifndef MPC_LOWCOMM_PROTOCOL
 	/* Notify communicator creation to lowcomm drivers */
-#ifdef MPC_LOWCOMM_PROTOCOL
-	lcp_context_h ctx = lcp_context_get();
-	//TODO: hack for portals. To be changed.
-	if (!lcp_context_has_comm(ctx, comm->id)) {
-		lcp_context_add_comm(ctx, comm->id);
-	}
-#else
 	_mpc_lowcomm_multirail_notify_new_comm(comm->id, mpc_lowcomm_communicator_size(comm));
 #endif
 }

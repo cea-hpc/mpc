@@ -95,15 +95,19 @@ int main(int argc, char** argv) {
 	/* send/recv */
 	if (mpc_lowcomm_peer_get_rank(my_uid) == 0) {
 		data1 = 'c';
-		rc = lcp_send(ep, &req1, &data1);
+                lcp_request_param_t param = { 0 };
+		rc = lcp_tag_send_nb(ep, &data1, sizeof(data1), &req1, &param);
 		if (rc != 0) {
 			printf("ERROR: send\n");
 		}
 	} else {
 		/* wait to force early send */
-                usleep(100);
+                usleep(1000);
 		lcp_progress(ctx);
-		rc = lcp_recv(ctx, &req1, &data1);
+                lcp_request_param_t param = { 
+                        .recv_info = &req1.recv_info 
+                };
+		rc = lcp_tag_recv_nb(ctx, &data1, sizeof(data1), &req1, &param);
 		if (rc != 0) {
 			printf("ERROR: recv\n");
 		}

@@ -256,7 +256,7 @@ void lcp_request_complete_rput(lcr_completion_t *comp)
                         LCP_TM_SET_MATCHBITS(tag.t, 
                                              req->send.rndv.src, 
                                              req->send.rndv.tag, 
-                                             req->seqn);
+                                             req->send.rndv.comm_id);
 
                         lcp_send_do_tag_zcopy(ep->lct_eps[ep->priority_chnl],
                                               tag,
@@ -309,14 +309,24 @@ int lcp_send_rsend_start(lcp_request_t *req)
         int rc;
         lcp_ep_h ep = req->send.ep;
 
+        mpc_common_debug_info("LCP: send rndv send req=%p, comm_id=%lu, tag=%d, "
+                              "src=%d, dest=%d, msg_id=%d, buf=%p.", req, 
+                              req->send.rndv.comm_id, 
+                              req->send.rndv.tag, req->send.rndv.src, 
+                              req->send.rndv.dest, req->msg_id,
+                              req->send.buffer);
+
+
         uint64_t imm = 0;
-        LCP_TM_SET_HDR_DATA(imm, MPC_LOWCOMM_RSEND_TM_MESSAGE, req->send.length);
+        LCP_TM_SET_HDR_DATA(imm, MPC_LOWCOMM_RSEND_TM_MESSAGE, 
+                            req->send.length,
+                            req->seqn);
 
         lcr_tag_t tag = { 0 };
         LCP_TM_SET_MATCHBITS(tag.t, 
                              req->send.rndv.src, 
                              req->send.rndv.tag, 
-                             req->seqn);
+                             req->send.rndv.comm_id);
 
         struct iovec iov[2];
         iov[0].iov_base = NULL;
@@ -325,7 +335,6 @@ int lcp_send_rsend_start(lcp_request_t *req)
         iov[1].iov_len  = req->send.length;
 
         req->send.t_ctx.req          = req;
-        req->send.t_ctx.comm_id      = req->send.rndv.comm_id;
         req->send.t_ctx.comp.comp_cb = lcp_request_complete_rsend;
 
         /* Only priority iface should be registered */
@@ -367,16 +376,24 @@ int lcp_send_rget_start(lcp_request_t *req)
         lcp_ep_h ep = req->send.ep;
         uint64_t imm = 0;
         struct iovec iov_send[1], iov_fin[1];
+        size_t iovcnt = 0;
+
+        mpc_common_debug_info("LCP: send rndv get req=%p, comm_id=%lu, tag=%d, "
+                              "src=%d, dest=%d, msg_id=%d, buf=%p.", req, 
+                              req->send.rndv.comm_id, 
+                              req->send.rndv.tag, req->send.rndv.src, 
+                              req->send.rndv.dest, req->msg_id,
+                              req->send.buffer);
 
         /* Set immediate and tag for matching */
         LCP_TM_SET_HDR_DATA(imm, MPC_LOWCOMM_RGET_TM_MESSAGE, 
-                            req->send.length);
+                            req->send.length, req->seqn);
 
         lcr_tag_t tag = { 0 };
         LCP_TM_SET_MATCHBITS(tag.t, 
                              req->send.rndv.src, 
                              req->send.rndv.tag, 
-                             req->seqn);
+                             req->send.rndv.comm_id);
 
         lcr_tag_t ign_tag = {
                 .t = 0
@@ -389,11 +406,11 @@ int lcp_send_rget_start(lcp_request_t *req)
                                             req->state.memp_map);
 
         /* Post FIN before sending RGET */
-        iov_fin[0].iov_base = NULL;
-        iov_fin[0].iov_len = 0; 
+        iov_fin[0].iov_base = &req->msg_id;
+        iov_fin[0].iov_len  = sizeof(req->msg_id); 
+        iovcnt++;
 
         req->send.t_ctx.req          = req;
-        req->send.t_ctx.comm_id      = req->send.rndv.comm_id;
         req->send.t_ctx.comp.comp_cb = lcp_request_complete_srget;
         req->state.comp_stg          = 0;
 
@@ -401,7 +418,7 @@ int lcp_send_rget_start(lcp_request_t *req)
                                    tag,
                                    ign_tag,
                                    iov_fin,
-                                   1,
+                                   iovcnt,
                                    &(req->send.t_ctx));
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
@@ -431,11 +448,18 @@ int lcp_send_rput_start(lcp_request_t *req)
         int num_used_ifaces;
         lcp_request_t *ack;
 
+        mpc_common_debug_info("LCP: send rndv put req=%p, comm_id=%lu, tag=%d, "
+                              "src=%d, dest=%d, msg_id=%d, buf=%p.", req, 
+                              req->send.rndv.comm_id, 
+                              req->send.rndv.tag, req->send.rndv.src, 
+                              req->send.rndv.dest, req->msg_id,
+                              req->send.buffer);
+
         lcr_tag_t tag = { 0 };
         LCP_TM_SET_MATCHBITS(tag.t, 
                              req->send.rndv.src, 
                              req->send.rndv.tag, 
-                             req->seqn);
+                             req->send.rndv.comm_id);
 
         /* Start with registration bitmap context build */
         rail->iface_get_attr(rail, &attr);
@@ -463,7 +487,6 @@ int lcp_send_rput_start(lcp_request_t *req)
         iov_ack[0].iov_base = ack->recv.buffer;
         iov_ack[0].iov_len  = ack->recv.length;
 
-        ack->recv.t_ctx.comm_id      = req->send.rndv.comm_id;
         ack->recv.t_ctx.req          = ack;
         ack->recv.t_ctx.comp.comp_cb = lcp_request_rput_ack_callback;
 
@@ -481,7 +504,7 @@ int lcp_send_rput_start(lcp_request_t *req)
         /* Inside immediate data (header), set RPUT protocol and length of
          * request */
         LCP_TM_SET_HDR_DATA(imm, MPC_LOWCOMM_RPUT_TM_MESSAGE, 
-                            req->send.length);
+                            req->send.length, req->seqn);
 
         /* No data to be sent for RPUT */
         iov_send[0].iov_base = NULL;
@@ -490,7 +513,6 @@ int lcp_send_rput_start(lcp_request_t *req)
         req->send.t_ctx.req          = req;
         req->state.comp_stg          = 0;
         req->send.t_ctx.comp.comp_cb = lcp_request_complete_rput;
-        req->send.t_ctx.comm_id      = req->send.rndv.comm_id;
 
         /* Finally, send message rendez-vous request */
         rc = lcp_send_do_tag_zcopy(ep->lct_eps[ep->priority_chnl],
@@ -554,20 +576,16 @@ err:
         return rc;
 }
 
-int lcp_send_rndv_start(lcp_request_t *req) 
+int lcp_send_rndv_start(lcp_request_t *req, const lcp_request_param_t *param)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         lcp_ep_h ep = req->send.ep;
         lcp_chnl_idx_t cc = ep->priority_chnl;
 
-        mpc_common_debug_info("LCP: send rndv req=%p, comm_id=%lu, tag=%d, "
-                              "src=%d, dest=%d, msg_id=%d, buf=%p.", req, 
-                              req->send.rndv.comm_id, 
-                              req->send.rndv.tag, req->send.rndv.src, 
-                              req->send.rndv.dest, req->msg_id,
-                              req->send.buffer);
-
-        if (LCR_IFACE_IS_TM(ep->lct_eps[cc]->rail)) {
+        //TODO: condition already done by calling function. To be 
+        //      removed
+        if (ep->ep_config.offload && (ep->ctx->config.offload ||
+            (param->flags & LCP_REQUEST_TRY_OFFLOAD))) {
                 lcr_rail_attr_t attr; 
                 ep->lct_eps[cc]->rail->iface_get_attr(ep->lct_eps[cc]->rail, &attr);
 
@@ -585,6 +603,7 @@ int lcp_send_rndv_start(lcp_request_t *req)
                         break;
                 default:
                         mpc_common_debug_fatal("LCP: unknown protocol");
+                        break;
                 } 	
         } else {
                 req->send.func = lcp_send_am_rts_start;
@@ -918,7 +937,6 @@ int lcp_recv_rput(lcp_request_t *req)
 
                 iov_ack[0].iov_base = ack->send.buffer;
                 iov_ack[0].iov_len  = ack->send.length;
-                ack->send.t_ctx.comm_id      = req->recv.tag.comm_id;
                 ack->send.t_ctx.req          = ack;
                 ack->send.t_ctx.comp.comp_cb = lcp_request_complete_srack; 
                 rc = lcp_send_do_tag_zcopy(ep->lct_eps[ep->priority_chnl],

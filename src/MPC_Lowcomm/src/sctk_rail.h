@@ -155,7 +155,6 @@ typedef struct lcr_completion {
 typedef struct lcr_tag_context {
         void *start;           //NOTE: buffer returned by tm interface
 	void *req;             //NOTE: contains lcp_request_t
-	uint64_t comm_id;      //NOTE: needed by portals to get porte
 	uint64_t imm;
 	lcr_tag_t tag;         //NOTE: needed by LCP to get msg_id and
                                //      find corresponding request

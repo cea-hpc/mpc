@@ -60,6 +60,7 @@ typedef struct lcp_context_config {
         int num_selected_devices;
         char **selected_devices;
 	lcp_rndv_mode_t rndv_mode;
+        int offload;
 } lcp_context_config_t;
 
 struct lcp_context {

@@ -21,9 +21,18 @@ typedef struct lcp_ep_rndv_config {
 } lcp_ep_rndv_config_t;
 
 typedef struct lcp_ep_config {
-        size_t max_bcopy;
-        size_t max_zcopy;
-        size_t max_iovecs;
+        struct {
+                size_t max_bcopy;
+                size_t max_zcopy;
+                size_t max_iovecs;
+        } am;
+
+        struct {
+                size_t max_bcopy;
+                size_t max_zcopy;
+                size_t max_iovecs;
+        } tag;
+        int offload;
 
         struct {
                 size_t max_put_zcopy;

@@ -116,12 +116,16 @@ int main(int argc, char** argv) {
 
 	/* send/recv */
 	if (mpc_lowcomm_peer_get_rank(my_uid) == 0) {
-		rc = lcp_send(ep, &req, (void *)data);
+                lcp_request_param_t param = { 0 };
+		rc = lcp_tag_send_nb(ep, (void *)data, size*sizeof(int), &req, &param);
 		if (rc != 0) {
 			printf("ERROR: send\n");
 		}
 	} else {
-		rc = lcp_recv(ctx, &req, (void *)data);
+                lcp_request_param_t param = { 
+                        .recv_info = &req.recv_info 
+                };
+		rc = lcp_tag_recv_nb(ctx, (void *)data, size*sizeof(int), &req, &param);
 		if (rc != 0) {
 			printf("ERROR: recv\n");
 		}

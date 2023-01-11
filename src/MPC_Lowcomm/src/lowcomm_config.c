@@ -1405,12 +1405,14 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_protocol_conf_init(void)
 
         proto->multirail_enabled = 1; /* default multirail enabled */
 	proto->rndv_mode         = 1; /* default rndv get */
+	proto->offload           = 0; /* default no offload */
         snprintf(proto->transports, MPC_CONF_STRING_SIZE, "tcp");
         snprintf(proto->devices, MPC_CONF_STRING_SIZE, "any");
 
 	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("protocol",
 			PARAM("verbosity", &mpc_common_get_flags()->verbosity, MPC_CONF_INT, "Debug level message (1-3)"),
 			PARAM("rndvmode", &proto->rndv_mode, MPC_CONF_INT, "Type of rendez-vous to use (default: mode get)"),
+			PARAM("offload", &proto->offload, MPC_CONF_INT, "Force offload if possible (ie offload interface available)"),
 			PARAM("multirailenabled", &proto->multirail_enabled, MPC_CONF_INT, "Is multirail enabled ?"),
 			PARAM("transports", proto->transports, MPC_CONF_STRING, "Coma separated list of supported transports (tcp, ptl, all)"),
 			PARAM("devices", proto->devices, MPC_CONF_STRING, "Coma separated list of devices to use (eth0, ptl0, any)"),

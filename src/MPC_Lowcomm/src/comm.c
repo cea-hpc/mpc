@@ -2580,7 +2580,12 @@ void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_r
 
 		msg->tail.request->request_completion_fn = 
 			mpc_lowcomm_request_complete;
-		rc = lcp_send(ep, msg->tail.request, msg->tail.message.contiguous.addr);
+                lcp_request_param_t param = {
+                        .flags = LCP_REQUEST_TRY_OFFLOAD,
+                };
+		rc = lcp_tag_send_nb(ep, msg->tail.message.contiguous.addr,
+                                     msg->body.header.msg_size, msg->tail.request,
+                                     &param);
 		if (rc != MPC_LOWCOMM_SUCCESS) {
 			mpc_common_debug_fatal("Could not send message %lu.", uid);
 		}
@@ -2709,9 +2714,13 @@ void _mpc_comm_ptp_message_recv_check(mpc_lowcomm_ptp_message_t *msg,
 #ifdef MPC_LOWCOMM_PROTOCOL
 		msg->tail.request->request_completion_fn = 
 			mpc_lowcomm_request_complete;
-		lcp_recv(lcp_ctx_loc, msg->tail.request, 
-			 msg->tail.message.contiguous.addr);
-		return;
+                lcp_request_param_t param = {
+                        .flags = LCP_REQUEST_TRY_OFFLOAD,
+                        .recv_info = &msg->tail.request->recv_info,
+                };
+                lcp_tag_recv_nb(lcp_ctx_loc, msg->tail.message.contiguous.addr, 
+                                msg->body.header.msg_size, msg->tail.request, &param);
+                return;
 #else 
 		_mpc_lowcomm_multirail_notify_receive(msg);
 #endif
@@ -3099,7 +3108,10 @@ int mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
                 }
         }
         /* fill up request */
-        return lcp_send(ep, req, data);
+        lcp_request_param_t param = {
+                .flags = LCP_REQUEST_TRY_OFFLOAD,
+        };
+        return lcp_tag_send_nb(ep, data, size, req, &param);
 #else
 	return mpc_lowcomm_isend_class(dest, data, size, tag, comm, MPC_LOWCOMM_P2P_MESSAGE, req);
 #endif
@@ -3123,7 +3135,11 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
 #ifdef MPC_LOWCOMM_PROTOCOL
         LOWCOMM_REQUEST_RECV_INIT(req, comm, src, tag, size);
 
-        return lcp_recv(lcp_ctx_loc, req, data);
+        lcp_request_param_t param = {
+                .flags = LCP_REQUEST_TRY_OFFLOAD,
+                .recv_info = &req->recv_info,
+        };
+        return lcp_tag_recv_nb(lcp_ctx_loc, data, size, req, &param);
 #else
 	return mpc_lowcomm_irecv_class(src, data, size, tag, comm, MPC_LOWCOMM_P2P_MESSAGE, req);
 #endif
