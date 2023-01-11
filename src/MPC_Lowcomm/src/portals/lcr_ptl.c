@@ -270,7 +270,7 @@ int lcr_ptl_send_tag_rndv_zcopy(_mpc_lowcomm_endpoint_t *ep,
         sctk_ptl_id_t remote              = SCTK_PTL_ANY_PROCESS;
         _mpc_lowcomm_endpoint_info_portals_t* infos   = &ep->data.ptl;
 
-        not_implemented();
+        mpc_common_debug_fatal("LCR PTL: rndv zcopy not implemented");
         return 0;
         assert(iovcnt == 2);
 

@@ -29,6 +29,7 @@ int lcp_tag_recv_nb(lcp_context_h ctx, void *buffer, size_t count,
 	iface = ctx->resources[ctx->priority_rail].iface;
 	if (LCR_IFACE_IS_TM(iface) && (ctx->config.offload ||
             (param->flags & LCP_REQUEST_TRY_OFFLOAD))) {
+                req->state.offloaded = 1;
 		rc = lcp_recv_tag_zcopy(req, iface);
 
 		LCP_CONTEXT_UNLOCK(ctx);
@@ -36,6 +37,7 @@ int lcp_tag_recv_nb(lcp_context_h ctx, void *buffer, size_t count,
 		return rc;
 	}
 
+        req->state.offloaded = 0;
 	match = lcp_match_umq(ctx->umq_table,
 			      (int16_t)req->recv.tag.comm_id,
 			      (int32_t)req->recv.tag.tag,

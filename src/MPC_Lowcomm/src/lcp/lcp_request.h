@@ -107,6 +107,7 @@ struct lcp_request {
 		lcr_completion_t   comp;
                 uint8_t            comp_stg;
                 lcp_mem_h          lmem; 
+                int                offloaded;
 	} state;
 };
 

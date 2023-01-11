@@ -222,7 +222,7 @@ void lcp_recv_tag_callback(lcr_completion_t *comp)
         req->recv.send_length = LCP_TM_GET_HDR_LENGTH(req->recv.t_ctx.imm); 
         req->seqn             = LCP_TM_GET_HDR_SEQN(req->recv.t_ctx.imm);
 
-        comm = mpc_lowcomm_get_communicator_from_linear_id(req->recv.tag.comm_id);
+        comm = mpc_lowcomm_get_communicator_from_linear_id(LCP_TM_GET_COMM(req->recv.t_ctx.tag.t));
         req->recv.tag.src = 
                 mpc_lowcomm_communicator_uid(comm, 
                                              LCP_TM_GET_SRC(req->recv.t_ctx.tag.t));
@@ -287,8 +287,8 @@ int lcp_recv_tag_zcopy(lcp_request_t *rreq, sctk_rail_info_t *iface)
 
         mpc_common_debug_info("LCP: post recv tag zcopy req=%p, src=%d, dest=%d, "
                               "size=%d, matching=[%d:%d:%d], ignore=[%d:%d:%d]", 
-                              rreq, rreq->send.tag.src, rreq->send.tag.dest, 
-                              rreq->send.length, tag.t_tag.tag, tag.t_tag.src, 
+                              rreq, rreq->recv.tag.src, rreq->recv.tag.dest, 
+                              rreq->recv.length, tag.t_tag.tag, tag.t_tag.src, 
                               tag.t_tag.comm, ign_tag.t_tag.tag, ign_tag.t_tag.src,
                               ign_tag.t_tag.comm);
         return lcp_recv_do_tag_zcopy(iface,
