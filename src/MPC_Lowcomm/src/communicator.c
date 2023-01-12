@@ -1294,14 +1294,19 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 
 	int current_rank_belongs = 1;
 
+
+	int at_least_one_local_rank_belongs = 0;
+
 	if(group == NULL)
 	{
-        if(!is_comm_self)
-        {
-		    /* Intercomm or comm self */
-		    assume(left_comm && right_comm);
-            assume(left_comm != right_comm);
-        }
+			if(!is_comm_self)
+			{
+				/* Intercomm or comm self */
+				assume(left_comm && right_comm);
+				assume(left_comm != right_comm);
+			}
+			/* No need to check group membership as there is no group*/
+			at_least_one_local_rank_belongs = 1;
 	}
 	else
 	{
@@ -1317,27 +1322,28 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 				ret = MPC_COMM_NULL;
 			}
 		}
-	}
 
-	int at_least_one_local_rank_belongs = 0;
-	int i;
+		/* Now proceed to check group membership */
+		int i;
 
-	unsigned int g_size = mpc_lowcomm_group_size(group);
+		unsigned int g_size = mpc_lowcomm_group_size(group);
 
-	for( i = 0 ; i < g_size; i++)
-	{
-		mpc_lowcomm_peer_uid_t tuid = mpc_lowcomm_group_process_uid_for_rank(group, i);
-
-		
-		if(tuid == mpc_lowcomm_monitor_get_uid())
+		for( i = 0 ; i < g_size; i++)
 		{
+			mpc_lowcomm_peer_uid_t tuid = mpc_lowcomm_group_process_uid_for_rank(group, i);
 
-			if(mpc_lowcomm_group_includes(group, mpc_lowcomm_group_world_rank(group, i), mpc_lowcomm_monitor_get_uid() ) )
+
+			if(tuid == mpc_lowcomm_monitor_get_uid())
 			{
-					at_least_one_local_rank_belongs = 1;
-					ret = MPC_COMM_NULL;
+
+				if(mpc_lowcomm_group_includes(group, mpc_lowcomm_group_world_rank(group, i), mpc_lowcomm_monitor_get_uid() ) )
+				{
+						at_least_one_local_rank_belongs = 1;
+						ret = MPC_COMM_NULL;
+				}
 			}
 		}
+
 	}
 
 	if(at_least_one_local_rank_belongs)
@@ -1350,7 +1356,7 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 			/* I am a local lead in my comm I take the lock 
 			to see if the new communicator is known */
 			mpc_common_spinlock_lock_yield(&lock);
-		
+
 			ret = mpc_lowcomm_get_communicator_from_id(new_id);
 
 			/* It is not known so I do create it I'm sure I'm the only
