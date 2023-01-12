@@ -214,19 +214,31 @@ int lcp_send_tag_eager_tag_zcopy(lcp_request_t *req)
 void lcp_recv_tag_callback(lcr_completion_t *comp) 
 {
         uint8_t op;
+        uint64_t comm_id;
+        uint64_t gid;
+        int32_t src;
         mpc_lowcomm_communicator_t comm;
+        lcr_tag_t tag;
         lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
                                               recv.t_ctx.comp);
 
         op                    = LCP_TM_GET_HDR_OP(req->recv.t_ctx.imm);
         req->recv.send_length = LCP_TM_GET_HDR_LENGTH(req->recv.t_ctx.imm); 
         req->seqn             = LCP_TM_GET_HDR_SEQN(req->recv.t_ctx.imm);
+        tag                   = req->recv.t_ctx.tag;
+        src                   = LCP_TM_GET_SRC(tag.t);
 
-        comm = mpc_lowcomm_get_communicator_from_linear_id(LCP_TM_GET_COMM(req->recv.t_ctx.tag.t));
-        req->recv.tag.src = 
-                mpc_lowcomm_communicator_uid(comm, 
-                                             LCP_TM_GET_SRC(req->recv.t_ctx.tag.t));
-        req->recv.tag.tag = LCP_TM_GET_TAG(req->recv.t_ctx.tag.t);
+        gid = mpc_lowcomm_monitor_get_gid();
+        comm_id = LCP_TM_GET_COMM(tag.t);
+        comm_id |= gid << 32;
+
+        mpc_common_debug_info("LCP: tag callback req=%p, src=%d, size=%d, matching=[%d:%d:%d], "
+                              "comm id=%llu", req, src, req->recv.send_length, tag.t_tag.tag, 
+                              tag.t_tag.src, tag.t_tag.comm, comm_id);
+
+        comm = mpc_lowcomm_get_communicator_from_id(comm_id);
+        req->recv.tag.src = mpc_lowcomm_communicator_uid(comm, src);
+        req->recv.tag.tag = LCP_TM_GET_TAG(tag.t);
 
         switch(op) {
         case MPC_LOWCOMM_P2P_TM_MESSAGE:
