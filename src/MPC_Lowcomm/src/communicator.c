@@ -915,7 +915,7 @@ static inline void __communicator_id_factory_init(void)
 	int process_count = mpc_common_get_process_count();
 
 	/* We have the whole range except two */
-	uint16_t global_dynamic = ( ( (uint16_t)-1) - COMM_ID_TO_SKIP);
+	int16_t global_dynamic = ( ( (int16_t)-1) - COMM_ID_TO_SKIP);
 
 	/* Ensure it can be divided evenly */
 	if(global_dynamic % process_count)

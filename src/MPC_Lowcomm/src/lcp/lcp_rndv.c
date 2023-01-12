@@ -635,15 +635,20 @@ int lcp_rndv_matched(lcp_context_h ctx,
                      lcp_rndv_hdr_t *hdr,
                      lcp_rndv_mode_t rndv_mode) 
 {
-        int rc;
+        int rc; 
+        uint64_t gid, comm_id, src;
         mpc_lowcomm_communicator_t comm;
         lcp_ep_ctx_t *ctx_ep;
         lcp_ep_h ep;
 
+        gid = mpc_lowcomm_monitor_get_gid();
+        comm_id = hdr->base.comm;
+        comm_id |= gid << 32;
+
         /* Init all protocol data */
-        comm = mpc_lowcomm_get_communicator_from_linear_id(hdr->base.comm);
-        rreq->recv.tag.src      = 
-                mpc_lowcomm_communicator_uid(comm, LCP_TM_GET_SRC(hdr->base.src));
+        comm = mpc_lowcomm_get_communicator_from_id(comm_id);
+        src  = mpc_lowcomm_communicator_uid(comm, hdr->base.src);
+        rreq->recv.tag.src      = src;
         rreq->recv.tag.tag      = hdr->base.tag;
         rreq->msg_id            = hdr->msg_id;
         rreq->recv.send_length  = hdr->size; 
@@ -1115,8 +1120,8 @@ static int lcp_rndv_am_rget_handler(void *arg, void *data,
         req = lcp_match_prq(ctx->prq_table, hdr->base.comm, 
                             hdr->base.tag, hdr->base.src);
         if (req != NULL) {
-                mpc_common_debug_info("LCP: matched rndv exp handler req=%p, comm_id=%lu, " 
-                                      "tag=%d, src=%lu.", req, req->recv.tag.comm_id, 
+                mpc_common_debug_info("LCP: matched rndv exp handler req=%p, comm_id=%llu, " 
+                                      "tag=%d, src=%llu.", req, req->recv.tag.comm_id, 
                                       req->recv.tag.tag, req->recv.tag.src);
                 LCP_CONTEXT_UNLOCK(ctx); //NOTE: unlock context to enable endpoint creation.
                 rc = lcp_rndv_matched(ctx, req, hdr, LCP_RNDV_GET);

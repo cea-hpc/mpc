@@ -9,10 +9,10 @@ typedef struct lcp_am_hdr {
 } lcp_am_hdr_t;
 
 typedef struct lcp_tag_hdr {
-	int16_t comm;
 	int32_t src;
 	int32_t tag;
 	int16_t seqn;
+	int16_t comm;
 } lcp_tag_hdr_t;
 
 typedef struct lcp_rndv_hdr {

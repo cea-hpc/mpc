@@ -2580,9 +2580,7 @@ void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_r
 
 		msg->tail.request->request_completion_fn = 
 			mpc_lowcomm_request_complete;
-                lcp_request_param_t param = {
-                        .flags = LCP_REQUEST_TRY_OFFLOAD,
-                };
+                lcp_request_param_t param = { 0 };
 		rc = lcp_tag_send_nb(ep, msg->tail.message.contiguous.addr,
                                      msg->body.header.msg_size, msg->tail.request,
                                      &param);
@@ -2715,7 +2713,6 @@ void _mpc_comm_ptp_message_recv_check(mpc_lowcomm_ptp_message_t *msg,
 		msg->tail.request->request_completion_fn = 
 			mpc_lowcomm_request_complete;
                 lcp_request_param_t param = {
-                        .flags = LCP_REQUEST_TRY_OFFLOAD,
                         .recv_info = &msg->tail.request->recv_info,
                 };
                 lcp_tag_recv_nb(lcp_ctx_loc, msg->tail.message.contiguous.addr, 
@@ -3109,7 +3106,6 @@ int mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
         }
         /* fill up request */
         lcp_request_param_t param = {
-                .flags = LCP_REQUEST_TRY_OFFLOAD,
         };
         return lcp_tag_send_nb(ep, data, size, req, &param);
 #else
@@ -3136,7 +3132,6 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
         LOWCOMM_REQUEST_RECV_INIT(req, comm, src, tag, size);
 
         lcp_request_param_t param = {
-                .flags = LCP_REQUEST_TRY_OFFLOAD,
                 .recv_info = &req->recv_info,
         };
         return lcp_tag_recv_nb(lcp_ctx_loc, data, size, req, &param);
