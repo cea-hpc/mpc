@@ -1346,7 +1346,7 @@ static inline mpc_lowcomm_communicator_t __new_communicator(mpc_lowcomm_communic
 
 	}
 
-	if(at_least_one_local_rank_belongs)
+	if(at_least_one_local_rank_belongs || !check_if_current_rank_belongs)
 	{
 
 		//mpc_common_debug_error("LOCAL LEAD %d MY RANK %d", comm_local_lead, my_rank);
