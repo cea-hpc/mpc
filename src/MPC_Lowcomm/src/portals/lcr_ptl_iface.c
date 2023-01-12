@@ -50,8 +50,6 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                                               "sz=%llu, user=%p, start=%p, "
                                               "remote_offset=%p", 
                                               sctk_ptl_event_decode(ev), ev.pt_index, 
-                                              //__sctk_ptl_match_str(malloc(32), 32, 
-                                              //                     ev.match_bits), 
                                               ev.mlength, ev.user_ptr, ev.start,
                                               ev.remote_offset);
                         did_poll = 1;
@@ -149,6 +147,9 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                                 lcr_ptl_recv_block_activate(block, ev.pt_index, list);
                                 goto done;
                                 break;
+                        case PTL_EVENT_AUTO_FREE:
+                                goto done;
+                                break;
                         case PTL_EVENT_ATOMIC:                /* an Atomic() reached the local process */
                         case PTL_EVENT_FETCH_ATOMIC:          /* a FetchAtomic() reached the local process */
                                 goto done;
@@ -159,7 +160,6 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                         case PTL_EVENT_SEARCH:                /* a PtlMESearch completed */
                                 /* probably nothing to do here */
                         case PTL_EVENT_LINK:                  /* MISC: A new ME has been linked, (maybe not useful) */
-                        case PTL_EVENT_AUTO_FREE:             /* an USE_ONCE ME can be now reused */
                                 not_reachable();              /* have been disabled */
                                 break;
                         default:

@@ -274,6 +274,10 @@ void lcp_recv_tag_callback(lcr_completion_t *comp)
         return;
 }
 
+//FIXME: according to MPI Standard, tag must be positive. However, MPC uses
+//       negative for some collectives. For such p2p, there is no need for the
+//       receiver to get back the tag, so no problem.
+//       Some safeguard should be used to forbid tag > 2^23-1.
 int lcp_recv_tag_zcopy(lcp_request_t *rreq, sctk_rail_info_t *iface)
 {
         lcr_tag_t tag = { 0 };
@@ -285,7 +289,7 @@ int lcp_recv_tag_zcopy(lcp_request_t *rreq, sctk_rail_info_t *iface)
         if ((int)rreq->recv.tag.src == MPC_ANY_SOURCE) {
                 ign_tag.t |= LCP_TM_SRC_MASK;
         }
-        if ((int)rreq->recv.tag.src == MPC_ANY_TAG) {
+        if ((int)rreq->recv.tag.tag == MPC_ANY_TAG) {
                 ign_tag.t |= LCP_TM_TAG_MASK;
         }
 
