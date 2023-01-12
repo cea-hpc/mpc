@@ -38,6 +38,7 @@
 
 #include "mpc_mpi_halo.h"
 
+
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
 #include "mpc_mpi_weak.h"
 #endif
