@@ -8440,14 +8440,6 @@ int __mpc_cl_egreq_progress_poll_id(int id);
 
 void *NBC_Pthread_func( __UNUSED__ void *ptr )
 {
-    fprintf(stderr,"CREATE\n");
-//mpc_threads_generic_kind_mask_self(KIND_MASK_PROGRESS_THREAD);
-
-  int basic_prio = _mpc_mpi_config()->nbc.thread_basic_prio;
-
-  mpc_threads_generic_kind_current_priority(basic_prio);
-  mpc_threads_generic_kind_basic_priority(basic_prio);
-  mpc_threads_generic_kind_priority(basic_prio);
 
   MPI_Request req=MPI_REQUEST_NULL;
   int tmp_recv;
@@ -8460,11 +8452,9 @@ void *NBC_Pthread_func( __UNUSED__ void *ptr )
 
   task_specific->mpc_mpi_data->nbc_initialized_per_task = 1;
 
-  mpc_threads_generic_scheduler_sched_init();
 
   while(1)
   {
-    //fprintf(stderr,"ROUND\n");
     int cpt = 1;
     int size = 10;
 
@@ -8475,10 +8465,6 @@ void *NBC_Pthread_func( __UNUSED__ void *ptr )
       requests = (MPI_Request *)sctk_malloc(sizeof(MPI_Request) * size);
       requests_locations = (int *)sctk_malloc(sizeof(int) * size);
       requests_handles = (NBC_Handle **)sctk_malloc(sizeof(NBC_Handle *) * size);
-
-
-      //if(req==MPI_REQUEST_NULL){ PMPI_Irecv(&tmp_recv, 1, MPI_INT, 0, 0, MPI_COMM_SELF, &req); MPI_Wait(&req,MPI_STATUS_IGNORE); }
-      //requests[0]=req;
 
       /* re-compile list of requests */
 
@@ -8532,32 +8518,20 @@ void *NBC_Pthread_func( __UNUSED__ void *ptr )
 
     int retidx = 0 , res;
     NBC_DEBUG(10, "waiting for %i elements\n", cpt);
-    //if(cpt > 1)
       res = PMPI_Waitany(cpt, requests, &retidx, MPI_STATUS_IGNORE);
     NBC_DEBUG(10, "elements %d is finished", retidx);
     if(res != MPI_SUCCESS)
     { printf("Error %i in MPI_Waitany()\n", res); }
-   // if(0 != retidx)
-   // { // 0 is the fake request ...
-      /* mark request as finished */
       requests_handles[retidx]->req_array[requests_locations[retidx]] = MPI_REQUEST_NULL;
-      /* progress request (finished?) */
       NBC_Progress(requests_handles[retidx]);
-   // }
-   // else
-  //  {
-  //    req = MPI_REQUEST_NULL;
-  //  }
 
 	sctk_free(requests);
 	sctk_free(requests_locations);
 	sctk_free(requests_handles);
 	if(task_specific->mpc_mpi_data->nbc_initialized_per_task == -1)
     {
-    //fprintf(stderr,"EXIT\n");
 		mpc_thread_exit(0);
 	}
-    //fprintf(stderr,"YIELD\n");
         mpc_thread_yield();
   }
 }
@@ -8956,8 +8930,6 @@ static inline int NBC_Free(NBC_Handle* handle)
         FILE *fd = fopen(hostname2, "a");
         fprintf(fd, "NBC_DELETE %p %d\n", elem_tmp,
                 task_specific->mpc_mpi_data->NBC_Pthread_nb);
-        // printf("NBC_DELETE\n");
-        // fflush(stdout);
         fflush(fd);
         fclose(fd);
       }
