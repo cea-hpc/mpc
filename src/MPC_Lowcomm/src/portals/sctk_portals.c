@@ -299,8 +299,8 @@ int lcr_ptl_get_attr(sctk_rail_info_t *rail,
                      lcr_rail_attr_t *attr)
 {
         /* only zcopy is used for now */
-        attr->iface.cap.am.max_bcopy   = 0;
-        attr->iface.cap.am.max_zcopy  = rail->network.ptl.eager_limit;
+        attr->iface.cap.am.max_bcopy  = rail->network.ptl.eager_limit;
+        attr->iface.cap.am.max_zcopy  = 0;
         attr->iface.cap.am.max_iovecs = rail->network.ptl.ptl_info.max_iovecs;
 
         attr->iface.cap.tag.max_bcopy  = 0;

@@ -6,6 +6,7 @@
 #include <sctk_alloc.h>
 #include <alloca.h>
 
+//FIXME: add safeguard for msg size
 ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
                               uint8_t id,
                               lcr_pack_callback_t pack,
@@ -29,8 +30,6 @@ ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
         }
         size = pack(start, arg);
         remote = infos->dest;
-
-        assert(size <= srail->eager_limit);
 
         ptl_comp = sctk_malloc(sizeof(lcr_ptl_send_comp_t));
         if (ptl_comp == NULL) {

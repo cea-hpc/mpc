@@ -68,10 +68,10 @@ int lcp_send_am_eager_tag_bcopy(lcp_request_t *req)
 
 	mpc_common_debug_info("LCP: send am eager tag bcopy src=%d, dest=%d, length=%d",
 			      req->send.tag.src, req->send.tag.dest, req->send.length);
-	payload = lcp_send_do_am_bcopy(lcr_ep, 
-			MPC_LOWCOMM_P2P_MESSAGE, 
-			lcp_send_tag_pack, 
-			req);
+        payload = lcp_send_do_am_bcopy(lcr_ep, 
+                                       MPC_LOWCOMM_P2P_MESSAGE, 
+                                       lcp_send_tag_pack, 
+                                       req);
 	//FIXME: handle error
 	if (payload < 0) {
 		mpc_common_debug_error("LCP: error packing bcopy.");

@@ -14,11 +14,12 @@ int lcp_send_start(lcp_ep_h ep, lcp_request_t *req,
                    const lcp_request_param_t *param)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
+        size_t size;
 
         if (ep->ep_config.offload && (ep->ctx->config.offload ||
             (param->flags & LCP_REQUEST_TRY_OFFLOAD))) {
                 req->state.offloaded = 1;
-                if (req->send.length < ep->ep_config.tag.max_bcopy) {
+                if (req->send.length <= ep->ep_config.tag.max_bcopy) {
                         lcp_request_init_tag_send(req);
                         req->send.func = lcp_send_tag_eager_tag_bcopy;
                 } else if (req->send.length <= ep->ep_config.tag.max_zcopy) {
@@ -30,10 +31,11 @@ int lcp_send_start(lcp_ep_h ep, lcp_request_t *req,
                 }
         } else {
                 req->state.offloaded = 0;
-                if (req->send.length < ep->ep_config.am.max_bcopy) {
+                size = req->send.length + sizeof(lcp_tag_hdr_t);
+                if (size <= ep->ep_config.am.max_bcopy) {
                         lcp_request_init_tag_send(req);
                         req->send.func = lcp_send_am_eager_tag_bcopy;
-                } else if (req->send.length <= ep->ep_config.am.max_zcopy) {
+                } else if (size <= ep->ep_config.am.max_zcopy) {
                         lcp_request_init_tag_send(req);
                         req->send.func = lcp_send_am_eager_tag_zcopy;
                 } else {
