@@ -1,0 +1,128 @@
+compiler:
+  commands: {cc: mpc_cc, cxx: mpc_cxx, f77: mpc_f77, f90: /path/to/f90, fc: /path/to/fc}
+  package_manager:
+    module: []
+    spack: [openpa@1.0.4 arch=linux-rhel8-zen3]
+  variants:
+    cuda: {args: ''}
+    openmp: {args: -fopenmp}
+    strict: {args: -Werror -Wall -Wextra}
+    tbb: {args: -ltbb -ltbbmalloc -ldl}
+criterion:
+  iterators:
+    n_core:
+      subtitle: n
+      values: [2]
+    n_mpi:
+      subtitle: p
+      values: [2]
+    n_node:
+      subtitle: N
+      values: [2]
+    n_ptl:
+      subtitle: n_ptl
+      values: [1]
+    protocol:
+      subtitle: lcp_
+      values: [0,1,2,3]
+    offload:
+      subtitle: offload_
+      values: [0]
+    transport:
+      subtitle: lcr_
+      values: [ptl]
+group:
+  GRPMPI:
+    run:
+      iterate:
+        n_omp: {values: null}
+  GRPOMP:
+    run:
+      iterate:
+        n_mpi: {values: null}
+        n_node: {values: null}
+  GRPSERIAL:
+    run:
+      iterate:
+        n_core: {values: null}
+        n_mpi: {values: null}
+        n_node: {values: null}
+        n_omp: {values: null}
+machine:
+  concurrent_run: 1
+  default_partition: a100-bxi
+  job_manager:
+    allocate: {args: '', program: echo, wrapper: ''}
+    maxtime: 1500
+    mintime: 1000
+    run: {args: '', program: echo, wrapper: ''}
+  name: inti-amd
+  nodes: 1
+  partitions:
+  - cores_per_node: 256
+    job_manager: {mintime: 10}
+    name: a100-bxi
+    nodes: 4
+runtime:
+  args: -c=1 -m=pthread --net=lcp --opt='-p rome-bxi --mem-per-cpu 16384'
+  iterators:
+    n_core:
+      aliases: {ib: openib, ptl: portals, shmem: sm, tcp: tcp}
+      numeric: true
+      option: -n=
+      position: after
+    n_mpi:
+      aliases: {ib: openib, ptl: portals, shmem: sm, tcp: tcp}
+      numeric: true
+      option: -p=
+      position: after
+    n_node:
+      aliases: {ib: openib, ptl: portals, shmem: sm, tcp: tcp}
+      numeric: true
+      option: -N=
+      position: after
+    n_ptl: {numeric: false, option: MPCFRAMEWORK_LOWCOMM_NETWORKING_RAILS_PORTALSMPI_MAXIFACES=,
+      type: environment}
+    protocol: {numeric: false, option: MPCFRAMEWORK_LOWCOMM_PROTOCOL_RNDVMODE=,
+      type: environment}
+    transport: {numeric: false, option: MPCFRAMEWORK_LOWCOMM_PROTOCOL_TRANSPORTS=,
+      type: environment}
+    offload: {numeric: false, option: MPCFRAMEWORK_LOWCOMM_PROTOCOL_OFFLOAD=,
+      type: environment}
+  package_manager:
+    module: []
+    spack: []
+  plugin: !!binary |
+    YVcxd2IzSjBJRzFoZEdnS1puSnZiU0J3WTNaekxuQnNkV2RwYm5NZ2FXMXdiM0owSUZCc2RXZHBi
+    Z29LWTJ4aGMzTWdUVkJKS0ZCc2RXZHBiaWs2Q2lBZ0lDQnpkR1Z3SUQwZ1VHeDFaMmx1TGxOMFpY
+    QXVWRVZUVkY5RlZrRk1DZ29nSUNBZ1pHVm1JSEoxYmloelpXeG1MQ0FxWVhKbmN5d2dLaXByZDJG
+    eVozTXBPZ29nSUNBZ0lDQWdJQ01nZEdocGN5QmthV04wSUcxaGNITWdhMlY1Y3lBb2FYUWdibUZ0
+    WlNrZ2QybDBhQ0IyWVd4MVpYTWdLR2wwSUhaaGJIVmxLUW9nSUNBZ0lDQWdJQ01nY21WMGRYSnVj
+    eUJVY25WbElHbG1JSFJvWlNCamIyMWlhVzVoZEdsdmJpQnphRzkxYkdRZ1ltVWdkWE5sWkFvZ0lD
+    QWdJQ0FnSUdOdmJXSWdQU0JyZDJGeVozTmJKMk52YldKcGJtRjBhVzl1SjEwS0lDQWdJQ0FnSUNC
+    dVgzQjBiQ0E5SUdOdmJXSXVaMlYwS0NkdVgzQjBiQ2NzSUU1dmJtVXBDaUFnSUNBZ0lDQWdjSFYw
+    SUQwZ1kyOXRZaTVuWlhRb0ozQjBiRjl3ZFhRbkxDQk9iMjVsS1FvZ0lDQWdJQ0FnSUdkbGRDQTlJ
+    R052YldJdVoyVjBLQ2R3ZEd4ZloyVjBKeXdnVG05dVpTa0tJQ0FnSUNBZ0lDQnVYMjF3YVNBOUlH
+    TnZiV0l1WjJWMEtDZHVYMjF3YVNjc0lFNXZibVVwQ2lBZ0lDQWdJQ0FnYmw5dWIyUmxJRDBnWTI5
+    dFlpNW5aWFFvSjI1ZmJtOWtaU2NzSUU1dmJtVXBDaUFnSUNBZ0lDQWdibDlqYjNKbElEMGdZMjl0
+    WWk1blpYUW9KMjVmWTI5eVpTY3NJRTV2Ym1VcENpQWdJQ0FnSUNBZ2RISmhibk53YjNKMElEMGdZ
+    Mjl0WWk1blpYUW9KM1J5WVc1emNHOXlkQ2NzSUU1dmJtVXBDZ29nSUNBZ0lDQWdJR2xtSUhSeVlX
+    NXpjRzl5ZENBOVBTQWlkR053SWpvS0lDQWdJQ0FnSUNBZ0lDQWdhV1lnYmw5d2RHd2dJVDBnTUNC
+    dmNpQndkWFFnSVQwZ01DQnZjaUJuWlhRZ0lUMGdNRG9LSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJSEps
+    ZEhWeWJpQkdZV3h6WlFvZ0lDQWdJQ0FnSUNBZ0lDQmxiSE5sT2dvZ0lDQWdJQ0FnSUNBZ0lDQWdJ
+    Q0FnYVdZZ0tHNWZiWEJwSUQwOUlHNWZibTlrWlNrZ1lXNWtJQ2h1WDI1dlpHVWdQVDBnYmw5amIz
+    SmxLVG9LSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNCeVpYUjFjbTRnVkhKMVpRb2dJQ0FnSUNB
+    Z0lDQWdJQ0FnSUNBZ1pXeHpaVG9LSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ2NtVjBkWEp1
+    SUVaaGJITmxDaUFnSUNBZ0lDQWdhV1lnZEhKaGJuTndiM0owSUQwOUlDSndkR3dpT2dvZ0lDQWdJ
+    Q0FnSUNBZ0lDQnBaaUJ1WDNCMGJDQTlQU0F3T2dvZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnY21WMGRY
+    SnVJRVpoYkhObENpQWdJQ0FnSUNBZ0lDQWdJR1ZzYzJVNkNpQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNC
+    cFppQndkWFFnWVc1a0lHZGxkRG9LSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNCeVpYUjFjbTRn
+    Um1Gc2MyVUtJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lHVnNjMlU2Q2lBZ0lDQWdJQ0FnSUNBZ0lDQWdJ
+    Q0FnSUNBZ2FXWWdLRzVmYlhCcElEMDlJRzVmYm05a1pTa2dZVzVrSUNodVgyNXZaR1VnUFQwZ2Js
+    OWpiM0psS1RvS0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnY21WMGRYSnVJRlJ5ZFdV
+    S0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQmxiSE5sT2dvZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0Fn
+    SUNBZ0lDQWdJQ0J5WlhSMWNtNGdSbUZzYzJVSw==
+  program: mpcrun
+validate:
+  expect_exit: 0
+  time: {kill_after: 5}
