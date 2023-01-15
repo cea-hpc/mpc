@@ -55,6 +55,8 @@ int lcp_ep_init_config(lcp_context_h ctx, lcp_ep_h ep)
         ep->ep_config.tag.max_iovecs     = SIZE_MAX;
 	ep->ep_config.rndv.max_put_zcopy = SIZE_MAX;
 	ep->ep_config.rndv.max_get_zcopy = SIZE_MAX;
+	ep->ep_config.rma.max_put_bcopy  = SIZE_MAX;
+	ep->ep_config.rma.max_put_zcopy  = SIZE_MAX;
         ep->ep_config.offload            = 0;
 
 	for (i=0; i<ctx->num_resources; i++) {	
@@ -88,6 +90,12 @@ int lcp_ep_init_config(lcp_context_h ctx, lcp_ep_h ep)
                 ep->ep_config.rndv.max_put_zcopy = LCP_MIN(ep->ep_config.rndv.max_put_zcopy,
                                                            attr.iface.cap.rndv.max_put_zcopy);
 
+                if (iface->runtime_config_rail->rdma) {
+                        ep->ep_config.rma.max_put_bcopy = LCP_MIN(ep->ep_config.rma.max_put_bcopy,
+                                                                  attr.iface.cap.rma.max_put_bcopy);
+                        ep->ep_config.rma.max_put_bcopy = LCP_MIN(ep->ep_config.rma.max_put_zcopy,
+                                                                  attr.iface.cap.rma.max_put_zcopy);
+                }
 	}
 
         //FIXME: should it be two distinct threshold? One for tag, one for am?

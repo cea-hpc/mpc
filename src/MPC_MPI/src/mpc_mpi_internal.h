@@ -170,6 +170,40 @@ typedef enum
 	MPC_MPI_PERSISTENT_BARRIER_INIT
 } MPI_Persistant_op_t;
 
+typedef struct prtd_map {
+        uint32_t pstart;
+        uint32_t pend;
+} prtd_map_t;
+
+typedef struct {
+	void *buf;
+	int count;
+	MPI_Datatype datatype;
+	int dest_source;
+	int tag;
+	MPI_Comm comm;
+
+	mpc_lowcomm_request_t tag_req;
+	mpc_lowcomm_request_t rkey_req;
+
+        int partitions;
+        lcp_memp_h rkey_prt;
+        lcp_memp_h rkey_cflags;
+
+        union {
+                struct {
+                        lcp_memp_h rkey_prt;
+                        lcp_memp_h rkey_cflags;
+                } send;
+
+                struct {
+                       int send_partitions;
+                       prtd_map_t *map;
+                       short *cflags;
+                } recv;
+        };
+} mpi_partitioned_t;
+
 typedef struct MPI_Persistant_s
 {
 	void *buf;
@@ -208,9 +242,11 @@ typedef struct MPI_internal_request_s
 
 	/* Persitant */
 	MPI_Persistant_t persistant;
+        mpi_partitioned_t partitioned;
 	int freeable;
 	int is_active;
 	int is_persistent;
+	int is_partitioned;
 	int is_intermediate_nbc_persistent;
 
 	/*Datatypes */

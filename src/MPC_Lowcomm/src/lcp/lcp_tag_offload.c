@@ -261,7 +261,7 @@ void lcp_recv_tag_callback(lcr_completion_t *comp)
                 lcp_recv_rsend(req, (void *)&req->recv.t_ctx.tag.t);
                 break;
         case MPC_LOWCOMM_RGET_TM_MESSAGE:
-                lcp_recv_rget(req, req->recv.t_ctx.start);
+                lcp_recv_rget(req, req->recv.t_ctx.start, comp->sent);
                 break;
         case MPC_LOWCOMM_RPUT_TM_MESSAGE:
                 lcp_recv_rput(req, NULL);

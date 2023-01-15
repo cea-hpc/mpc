@@ -40,6 +40,7 @@ void lcp_tag_complete(lcr_completion_t *comp) {
 	lcp_request_complete(req);
 }
 
+//FIXME: dead code?
 void lcp_frag_complete(lcr_completion_t *comp)
 {
 	lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
@@ -52,7 +53,6 @@ void lcp_frag_complete(lcr_completion_t *comp)
 		lcp_request_complete(req);
 	}
 }
-	
 
 /* ============================================== */
 /* Send                                           */

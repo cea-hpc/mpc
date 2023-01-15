@@ -146,12 +146,19 @@ static inline int lcp_send_do_get_zcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
                                         size_t size,
                                         lcr_tag_context_t *ctx) 
 {
-        return lcr_ep->rail->send_get(lcr_ep,
-                                      local_addr,
-                                      remote_addr,
-                                      remote_key,
-                                      size,
-                                      ctx);
+        return lcr_ep->rail->send_get_zcopy(lcr_ep, local_addr,
+                                            remote_addr, remote_key,
+                                            size, ctx);
+}
+
+static inline int lcp_send_do_put_bcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
+                                        lcr_pack_callback_t pack,
+                                        void *arg,
+                                        uint64_t remote_addr,
+                                        lcr_memp_t *remote_key)
+{
+        return lcr_ep->rail->send_put_bcopy(lcr_ep, pack, arg, 
+                                            remote_addr, remote_key);
 }
 
 static inline int lcp_send_do_put_zcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
@@ -161,12 +168,9 @@ static inline int lcp_send_do_put_zcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
                                         size_t size,
                                         lcr_tag_context_t *ctx) 
 {
-        return lcr_ep->rail->send_put(lcr_ep,
-                                      local_addr,
-                                      remote_addr,
-                                      remote_key,
-                                      size,
-                                      ctx);
+        return lcr_ep->rail->send_put_zcopy(lcr_ep, local_addr,
+                                            remote_addr, remote_key,
+                                            size, ctx);
 }
 
 #endif

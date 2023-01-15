@@ -298,7 +298,6 @@ void sctk_network_init_ptl (sctk_rail_info_t *rail)
 int lcr_ptl_get_attr(sctk_rail_info_t *rail,
                      lcr_rail_attr_t *attr)
 {
-        /* only zcopy is used for now */
         attr->iface.cap.am.max_bcopy  = rail->network.ptl.eager_limit;
         attr->iface.cap.am.max_zcopy  = 0;
         attr->iface.cap.am.max_iovecs = rail->network.ptl.ptl_info.max_iovecs;
@@ -311,6 +310,10 @@ int lcr_ptl_get_attr(sctk_rail_info_t *rail,
         attr->iface.cap.rndv.max_put_zcopy  = rail->network.ptl.max_put;
         attr->iface.cap.rndv.max_get_zcopy  = rail->network.ptl.max_get;
         attr->iface.cap.rndv.min_frag_size  = rail->network.ptl.min_frag_size;
+
+        attr->iface.cap.rma.max_put_bcopy   = rail->network.ptl.eager_limit;
+        attr->iface.cap.rma.max_put_zcopy   = rail->network.ptl.max_put;
+        attr->iface.cap.rma.min_frag_size   = rail->network.ptl.min_frag_size;
 
         attr->mem.cap.max_reg = PTL_SIZE_MAX;
 

@@ -11440,6 +11440,11 @@ int PMPI_Start(MPI_Request *request)
     return MPI_SUCCESS;
   }
 
+  if (req->is_partitioned) {
+          res = mpi_pstart(req);
+          MPI_HANDLE_RETURN_VAL(res, comm);
+  }
+
   NBC_Handle* handle = NULL;
 
   switch(req->persistant.op)

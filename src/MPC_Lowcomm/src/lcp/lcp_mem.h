@@ -12,14 +12,10 @@ struct lcp_mem {
         size_t length;
         int num_ifaces;
         lcr_memp_t *mems; /* table of memp pointers */
+        bmap_t bm;
 };
 
 int lcp_mem_create(lcp_context_h ctx, lcp_mem_h *mem_p);
 void lcp_mem_delete(lcp_mem_h mem);
-int lcp_mem_register(lcp_context_h ctx, lcp_mem_h *mem_p, 
-                     void *buffer, size_t length, bmap_t memp_map);
-int lcp_mem_deregister(lcp_context_h ctx, lcp_mem_h mem, bmap_t memp_map);
-size_t lcp_mem_pack(lcp_context_h ctx, void *dest, lcp_mem_h mem, bmap_t memp_map);
-size_t lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h mem, void *src, bmap_t memp_map);
 
 #endif

@@ -111,6 +111,11 @@ int mpc_lowcomm_request_cancel(mpc_lowcomm_request_t *request);
  * @param request_type request type
  */
 void mpc_lowcomm_request_init(mpc_lowcomm_request_t *request, mpc_lowcomm_communicator_t comm, int request_type);
+void mpc_lowcomm_request_init_struct(mpc_lowcomm_request_t *request, 
+                                     mpc_lowcomm_communicator_t comm, 
+                                     int request_type, int src, int dest,
+                                     int tag);
+
 
 /*********************
  * UNIVERSE MESSAGES *

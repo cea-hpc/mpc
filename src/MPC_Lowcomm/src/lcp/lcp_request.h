@@ -17,8 +17,9 @@ enum {
 	LCP_REQUEST_RNDV_TAG            = LCP_BIT(0),
 	LCP_REQUEST_DELETE_FROM_PENDING = LCP_BIT(1),
 	LCP_REQUEST_RECV_TRUNC          = LCP_BIT(2), /* flags if request is truncated */
-        LCP_REQUEST_MPI_COMPLETE        = LCP_BIT(3)  /* call MPI level completion callback, 
+        LCP_REQUEST_MPI_COMPLETE        = LCP_BIT(3), /* call MPI level completion callback, 
                                                          see ucp_request_complete */
+        LCP_REQUEST_RMA_COMPLETE        = LCP_BIT(4) /* call RMA level completion callback */
 };
 
 enum {
@@ -47,6 +48,7 @@ struct lcp_request {
 			size_t length; /* Total length, in bytes */
 			void *buffer;
 			lcr_tag_context_t t_ctx;
+                        lcp_complete_callback_func_t cb;
 
 			union {
 				struct {
@@ -70,6 +72,11 @@ struct lcp_request {
 					int       tag;
                                         uint64_t  remote_addr; /* not needed now */
 				} rndv;
+
+                                struct {
+                                        uint64_t remote_addr;
+                                        lcp_mem_h rkey;
+                                } rma;
 			};
 
 			lcp_send_func_t func;
@@ -126,8 +133,6 @@ struct lcp_request {
 	(_req)->state.remaining = _length; \
 	(_req)->state.offset    = 0; \
 	(_req)->state.f_id      = 0; \
-        \
-        (_req)->flags          |= LCP_REQUEST_MPI_COMPLETE; \
 }
 
 #define LCP_REQUEST_INIT_RECV(_req, _ctx, _mpi_req, _length, _buf) \
@@ -143,8 +148,6 @@ struct lcp_request {
 	(_req)->state.remaining = _length; \
 	(_req)->state.offset    = 0; \
 	(_req)->state.f_id      = 0; \
-        \
-        (_req)->flags          |= LCP_REQUEST_MPI_COMPLETE; \
 }
 
 static inline void lcp_request_init_tag_send(lcp_request_t *req)
@@ -154,6 +157,7 @@ static inline void lcp_request_init_tag_send(lcp_request_t *req)
         req->send.tag.tag       = req->request->header.message_tag;
         req->send.tag.comm_id   = req->request->header.communicator_id; 
 };
+
 
 static inline void lcp_request_init_tag_recv(lcp_request_t *req, lcp_tag_recv_info_t *info)
 {
@@ -170,6 +174,16 @@ static inline void lcp_request_init_rndv_send(lcp_request_t *req)
         req->send.rndv.src       = req->request->header.source; 
         req->send.rndv.tag       = req->request->header.message_tag;
         req->send.rndv.comm_id   = req->request->header.communicator_id; 
+};
+
+static inline void lcp_request_init_rma_put(lcp_request_t *req, 
+                                            uint64_t remote_addr,
+                                            lcp_mem_h rkey,
+                                            lcp_complete_callback_func_t cb)
+{
+        req->send.rma.remote_addr = remote_addr;
+        req->send.rma.rkey        = rkey; 
+        req->send.cb              = cb;
 };
 
 static inline void lcp_request_init_ack(lcp_request_t *ack_req, lcp_ep_h ep, 

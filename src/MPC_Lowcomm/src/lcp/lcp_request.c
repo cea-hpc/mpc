@@ -58,6 +58,10 @@ int lcp_request_complete(lcp_request_t *req)
 		req->request->request_completion_fn(req->request);
 	}
 
+        if (req->flags & LCP_REQUEST_RMA_COMPLETE) {
+                req->send.cb(req->request);
+        }
+
 	if (req->flags & LCP_REQUEST_DELETE_FROM_PENDING) {
                 lcp_pending_delete(req->ctx,
                                    req->msg_id);

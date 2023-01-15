@@ -52,19 +52,32 @@ typedef int (*lcr_recv_tag_zcopy_func_t)(sctk_rail_info_t *rail,
 					 size_t iovcnt,
 					 lcr_tag_context_t *ctx);
 
-typedef int (*lcr_send_put_func_t)(_mpc_lowcomm_endpoint_t *ep,
-                                   uint64_t local_addr,
-                                   uint64_t remote_addr,
-                                   lcr_memp_t *remote_key,
-                                   size_t size,
-                                   lcr_tag_context_t *ctx);
+typedef int (*lcr_send_put_bcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
+                                         lcr_pack_callback_t pack,
+                                         void *arg,
+                                         uint64_t remote_addr,
+                                         lcr_memp_t *remote_key);
 
-typedef int (*lcr_send_get_funt_t)(_mpc_lowcomm_endpoint_t *ep,
-                                   uint64_t local_addr,
-                                   uint64_t remote_addr,
-                                   lcr_memp_t *remote_key,
-                                   size_t size,
-                                   lcr_tag_context_t *ctx);
+typedef int (*lcr_send_put_zcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
+                                         uint64_t local_addr,
+                                         uint64_t remote_addr,
+                                         lcr_memp_t *remote_key,
+                                         size_t size,
+                                         lcr_tag_context_t *ctx);
+
+typedef int (*lcr_send_get_bcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
+                                         lcr_unpack_callback_t unpack,
+                                         void *arg, size_t size,
+                                         uint64_t remote_addr,
+                                         lcr_memp_t *remote_key,
+                                         lcr_tag_context_t *ctx);
+
+typedef int (*lcr_send_get_zcopy_func_t)(_mpc_lowcomm_endpoint_t *ep,
+                                         uint64_t local_addr,
+                                         uint64_t remote_addr,
+                                         lcr_memp_t *remote_key,
+                                         size_t size,
+                                         lcr_tag_context_t *ctx);
 
 // Interface functions
 typedef int (*lcr_iface_get_attr_func_t)(sctk_rail_info_t *rail,

@@ -375,12 +375,68 @@ err:
         return rc;
 }
 
-int lcr_ptl_send_put(_mpc_lowcomm_endpoint_t *ep,
-                     uint64_t local_addr,
-                     uint64_t remote_offset,
-                     lcr_memp_t *remote_key,
-                     size_t size,
-                     lcr_tag_context_t *ctx) 
+int lcr_ptl_send_put_bcopy(_mpc_lowcomm_endpoint_t *ep,
+                           lcr_pack_callback_t pack,
+                           void *arg,
+                           uint64_t remote_addr,
+                           lcr_memp_t *remote_key)
+{
+        sctk_ptl_rail_info_t* srail    = &ep->rail->network.ptl;
+        void* start                    = NULL;
+        size_t size                    = 0;
+        sctk_ptl_matchbits_t match     = SCTK_PTL_MATCH_INIT;
+        sctk_ptl_id_t remote           = SCTK_PTL_ANY_PROCESS;
+        _mpc_lowcomm_endpoint_info_portals_t* infos   = &ep->data.ptl;
+        lcr_ptl_send_comp_t *ptl_comp;
+
+        start = sctk_malloc(srail->eager_limit);
+        if (start == NULL) {
+                mpc_common_debug_error("LCR PTL: could not allocate bcopy buffer");
+                size = -1;
+                goto err;
+        }
+        size = pack(start, arg);
+        remote = infos->dest;
+
+        ptl_comp = sctk_malloc(sizeof(lcr_ptl_send_comp_t));
+        if (ptl_comp == NULL) {
+                mpc_common_debug_error("LCR PTL: could not allocate bcopy comp");
+                size = -1;
+                goto err;
+        }
+        memset(ptl_comp, 0, sizeof(lcr_ptl_send_comp_t));
+        ptl_comp->type = LCR_PTL_COMP_AM_BCOPY; //FIXME: assign proper type even though
+                                                //       behabior is same as AM
+        ptl_comp->bcopy_buf = start;
+
+        mpc_common_debug_info("lcr ptl: send am bcopy to %d (iface=%llu, "
+                              "remote=%llu, sz=%llu, pte=%d)", ep->dest, srail->iface, 
+                              remote, size, srail->ptl_info.am_pte);
+
+        //FIXME: there are questions around the completion of bcopy requests.
+        //       With Portals, how should a request be completed?
+        sctk_ptl_chk(PtlPut(srail->ptl_info.mdh,
+                            (ptl_size_t) start, /* local offset */
+                            size,
+                            PTL_ACK_REQ,
+                            remote,
+                            srail->ptl_info.rma_pte,
+                            match.raw,
+                            (uint64_t)remote_key->pin.ptl.start + remote_addr,
+                            ptl_comp, 
+                            0
+                           ));
+
+err:
+        return size;
+}
+
+int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
+                           uint64_t local_addr,
+                           uint64_t remote_offset,
+                           lcr_memp_t *remote_key,
+                           size_t size,
+                           lcr_tag_context_t *ctx) 
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         _mpc_lowcomm_endpoint_info_portals_t* infos   = &ep->data.ptl;
@@ -422,12 +478,12 @@ err:
         return rc;
 }
 
-int lcr_ptl_send_get(_mpc_lowcomm_endpoint_t *ep,
-                     uint64_t local_addr,
-                     uint64_t remote_offset,
-                     lcr_memp_t *remote_key,
-                     size_t size,
-                     lcr_tag_context_t *ctx) 
+int lcr_ptl_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
+                           uint64_t local_addr,
+                           uint64_t remote_offset,
+                           lcr_memp_t *remote_key,
+                           size_t size,
+                           lcr_tag_context_t *ctx) 
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         _mpc_lowcomm_endpoint_info_portals_t* infos   = &ep->data.ptl;

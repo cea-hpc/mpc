@@ -23,6 +23,7 @@ int lcp_tag_recv_nb(lcp_context_h ctx, void *buffer, size_t count,
 		mpc_common_debug_error("LCP: could not create request.");
 		return MPC_LOWCOMM_ERROR;
 	}
+        req->flags |= LCP_REQUEST_MPI_COMPLETE;
         LCP_REQUEST_INIT_RECV(req, ctx, request, count, buffer);
 	lcp_request_init_tag_recv(req, param->recv_info);
 

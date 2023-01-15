@@ -39,6 +39,11 @@ typedef struct lcp_ep_config {
                 size_t max_get_zcopy;
         } rndv;
 
+        struct {
+                size_t max_put_bcopy;
+                size_t max_put_zcopy;
+        } rma;
+
         size_t rndv_threshold;
 
 } lcp_ep_config_t;

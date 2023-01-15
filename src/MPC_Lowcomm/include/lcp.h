@@ -48,6 +48,18 @@ int lcp_tag_recv_nb(lcp_context_h ctx, void *buffer, size_t count,
                     mpc_lowcomm_request_t *request,
                     lcp_request_param_t *param);
 
+/* Put/Get */
+int lcp_put_nb(lcp_ep_h ep, const void *buffer, size_t length,
+               uint64_t remote_addr, lcp_mem_h rkey,
+               lcp_complete_callback_func_t cb); 
+
+/* Memory registration */
+int lcp_mem_register(lcp_context_h ctx, lcp_mem_h *mem_p, void *buffer, 
+                     size_t length);
+int lcp_mem_deregister(lcp_context_h ctx, lcp_mem_h mem);
+size_t lcp_mem_pack(lcp_context_h ctx, void *dest, lcp_mem_h mem);
+size_t lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h mem, void *src, size_t size);
+
 /* Progress */
 int lcp_progress(lcp_context_h ctx);
 

@@ -191,6 +191,12 @@ struct lcr_rail_attr {
                                 size_t min_frag_size;
                         } rndv;
 
+                        struct {
+                                size_t max_put_bcopy;
+                                size_t max_put_zcopy;
+                                size_t min_frag_size;
+                        } rma;
+
                         uint64_t flags;
                 } cap;
         } iface;
@@ -249,8 +255,10 @@ struct sctk_rail_info_s
 	lcr_send_tag_bcopy_func_t send_tag_bcopy;
 	lcr_send_tag_zcopy_func_t send_tag_zcopy;
 	lcr_send_tag_rndv_zcopy_func_t send_tag_rndv_zcopy;
-        lcr_send_put_func_t send_put;
-        lcr_send_get_funt_t send_get;
+        lcr_send_put_bcopy_func_t send_put_bcopy;
+        lcr_send_put_zcopy_func_t send_put_zcopy;
+        lcr_send_get_bcopy_func_t send_get_bcopy;
+        lcr_send_get_zcopy_func_t send_get_zcopy;
 	lcr_recv_tag_zcopy_func_t recv_tag_zcopy;
 	/* Interface API */
         lcr_iface_get_attr_func_t iface_get_attr;
