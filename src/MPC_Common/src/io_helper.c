@@ -391,6 +391,8 @@ char * mpc_common_helper_command_line_pretty(int json, char * buff, int len)
 
 	int cnt = 0;
 
+	int buffer_limit = 0;
+
 	while(cmd[cnt])
 	{
 		char tmp[512];
@@ -402,8 +404,11 @@ char * mpc_common_helper_command_line_pretty(int json, char * buff, int len)
 			sep = (cnt>0)?(", "):("");
 		}
 
+		buffer_limit += strlen(buff);
+		if(buffer_limit >= len) break; // if cmd lind arguments len exceeds the buffer len then stop writing. This is not bad since this truncated line will be shown on the helper.
+
 		snprintf(tmp, 512, "%s%s", sep, cmd[cnt]);
-		strncat(buff, tmp, len);
+		strncat(buff, tmp, len - strlen(buff) - 1);
 		cnt++;
 	}
 
