@@ -293,7 +293,7 @@ _mpc_omp_task_trace_create(mpc_omp_task_t * task)
     record->npredecessors       = task->dep_node.npredecessors;
     record->ref_predecessors    = OPA_load_int(&(task->dep_node.ref_predecessors));
     record->statuses            = __task_statuses_to_int(task->statuses);
-    strncpy(record->label, task->label ? task->label : "(null)", MPC_OMP_TASK_LABEL_MAX_LENGTH);
+    strncpy(record->label, *task->label ? task->label : "(null)", MPC_OMP_TASK_LABEL_MAX_LENGTH);
     record->color               = task->color;
     record->parent_uid          = task->parent ? task->parent->uid : -1;
     record->omp_priority        = task->omp_priority_hint;

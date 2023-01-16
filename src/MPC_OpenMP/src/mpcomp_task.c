@@ -224,14 +224,8 @@ __task_list_pop_from_head(mpc_omp_task_list_t * list)
     int t = list->type;
     mpc_omp_task_t * task = list->head;
     list->head = task->next[t];
-    if (list->head)
-    {
-        list->head->prev[t] = NULL;
-    }
-    if (task->next[t] == NULL)
-    {
-        list->tail = NULL;
-    }
+    if (list->head)             list->head->prev[t] = NULL;
+    if (task->next[t] == NULL)  list->tail = NULL;
     OPA_decr_int(&(list->nb_elements));
     return task;
 }
@@ -249,14 +243,8 @@ __task_list_pop_from_tail(mpc_omp_task_list_t * list)
     int t = list->type;
     mpc_omp_task_t * task = list->tail;
     list->tail = task->prev[t];
-    if (list->tail)
-    {
-        list->tail->next[t] = NULL;
-    }
-    if (task->prev[t] == NULL)
-    {
-        list->head = NULL;
-    }
+    if (list->tail)             list->tail->next[t] = NULL;
+    if (task->prev[t] == NULL)  list->head = NULL;
     OPA_decr_int(&(list->nb_elements));
     return task;
 }
@@ -272,502 +260,14 @@ __task_list_pop(mpc_omp_task_list_t * list)
  * PRIORITY QUEUE (rb-tree)
  *************************/
 
-static inline void
-__task_pqueue_coherency_check_colors(
-    mpc_omp_task_pqueue_t * tree,
-    mpc_omp_task_pqueue_node_t * node)
-{
-    if (node)
-    {
-        /* root node has no parent, every other nodes have */
-        assert(node == tree->root || node->parent);
-
-        /* node is either red or black */
-        assert(node->color == 'B' || node->color == 'R');
-
-        /* If a node is red, then both its children are black. */
-        assert(!node->parent || !(node->color == 'R' && node->parent->color == 'R'));
-
-        __task_pqueue_coherency_check_colors(tree, node->left);
-        __task_pqueue_coherency_check_colors(tree, node->right);
-    }
-}
-
-static int
-__task_pqueue_coherency_check_paths(mpc_omp_task_pqueue_node_t * node)
-{
-    if (node == NULL)
-    {
-        return 1;
-    }
-
-    int left_height = __task_pqueue_coherency_check_paths(node->left);
-    if (left_height == 0)
-    {
-        return 0;
-    }
-
-    int right_height = __task_pqueue_coherency_check_paths(node->right);
-    if (right_height == 0)
-    {
-        return right_height;
-    }
-
-    if (left_height != right_height)
-    {
-        return 0;
-    }
-    else
-    {
-        return left_height + (node->color == 'B') ? 1 : 0;
-    }
-}
-
-static void
-__task_pqueue_coherency_check(mpc_omp_task_pqueue_t * tree)
-{
-    /* 1. The root of the tree is always black */
-    assert(!tree->root || tree->root->color == 'B');
-
-    if (tree->root)
-    {
-        /* 2. If a node is red, then both its children are black */
-        __task_pqueue_coherency_check_colors(tree, tree->root);
-
-        /* 3. Every path from a node to any of its descendant NULL nodes
-         * has the same number of black nodes */
-        assert(__task_pqueue_coherency_check_paths(tree->root));
-    }
-}
-
 static mpc_omp_task_pqueue_t *
 __task_pqueue_new(void)
 {
-    mpc_omp_task_pqueue_t * tree = (mpc_omp_task_pqueue_t *) mpc_omp_alloc(sizeof(mpc_omp_task_pqueue_t));
-    assert(tree);
-    memset(tree, 0, sizeof(mpc_omp_task_pqueue_t));
-    return tree;
-}
-
-static mpc_omp_task_pqueue_node_t *
-__task_pqueue_node_new(
-    mpc_omp_task_pqueue_node_t * parent,
-    char color,
-    size_t priority)
-{
-    mpc_omp_task_pqueue_node_t * node = (mpc_omp_task_pqueue_node_t *) mpc_omp_alloc(sizeof(mpc_omp_task_pqueue_node_t));
-    assert(node);
-
-    node->parent        = parent;
-    node->priority      = priority;
-    node->color         = color;
-    node->left          = NULL;
-    node->right         = NULL;
-
-    memset(&(node->tasks), 0, sizeof(mpc_omp_task_list_t));
-    node->tasks.type    = MPC_OMP_TASK_LIST_TYPE_SCHEDULER;
-
-    return node;
-}
-
-static void
-__task_pqueue_rotate_right(
-        mpc_omp_task_pqueue_t * tree,
-        mpc_omp_task_pqueue_node_t * x)
-{
-    mpc_omp_task_pqueue_node_t * y = x->left;
-    x->left = y->right;
-    if (y->right)
-    {
-        y->right->parent = x;
-    }
-    y->parent = x->parent;
-    if (x->parent == NULL)
-    {
-        tree->root = y;
-    }
-    else if (x == x->parent->right)
-    {
-        x->parent->right = y;
-    }
-    else
-    {
-        x->parent->left = y;
-    }
-    y->right = x;
-    x->parent = y;
-}
-
-static void
-__task_pqueue_rotate_left(
-        mpc_omp_task_pqueue_t * tree,
-        mpc_omp_task_pqueue_node_t * x)
-{
-    mpc_omp_task_pqueue_node_t * y = x->right;
-    x->right = y->left;
-    if (y->left)
-    {
-        y->left->parent = x;
-    }
-    y->parent = x->parent;
-    if (x->parent == NULL)
-    {
-        tree->root = y;
-    }
-    else if (x == x->parent->left)
-    {
-        x->parent->left = y;
-    }
-    else
-    {
-        x->parent->right = y;
-    }
-    y->left = x;
-    x->parent = y;
-}
-
-static inline void
-__task_pqueue_transplant(
-        mpc_omp_task_pqueue_t * tree,
-        mpc_omp_task_pqueue_node_t * u,
-        mpc_omp_task_pqueue_node_t * v)
-{
-    if (u->parent == NULL)
-    {
-        tree->root = v;
-    }
-    else
-    {
-        if (u == u->parent->left)
-        {
-            u->parent->left = v;
-        }
-        else
-        {
-            u->parent->right = v;
-        }
-    }
-    if (v)
-    {
-        v->parent = u->parent;
-    }
-}
-
-/** Dump pqueue tree in .dot format */
-static void
-__task_pqueue_dump_node(mpc_omp_task_pqueue_node_t * node, FILE * f)
-{
-    if (!node) return ;
-
-    char * color = (node->color == 'R') ? "#ff0000" : "#000000";
-    fprintf(f, "    N%p[fontcolor=\"#ffffff\", label=\"%d\", style=filled, fillcolor=\"%s\"] ;\n", node, node->priority, color);
-    __task_pqueue_dump_node(node->left, f);
-    __task_pqueue_dump_node(node->right, f);
-}
-
-static void
-__task_pqueue_dump_edge(mpc_omp_task_pqueue_node_t * node, FILE * f)
-{
-    if (!node)
-    {
-        return ;
-    }
-    if (node->left)
-    {
-        fprintf(f, "    N%p->N%p ; \n", node, node->left);
-        __task_pqueue_dump_edge(node->left, f);
-    }
-    if (node->right)
-    {
-        fprintf(f, "    N%p->N%p ; \n", node, node->right);
-        __task_pqueue_dump_edge(node->right, f);
-    }
-}
-
-/**
- * Example usage:
- *  _mpc_task_pqueue_dump(tree, "after-delete");
- */
-void
-_mpc_task_pqueue_dump(mpc_omp_task_pqueue_t * tree, char * label)
-{
-    char filepath[256];
-    sprintf(filepath, "%lf-%p-%s-tree.dot", omp_get_wtime(), tree, label);
-    FILE * f = fopen(filepath, "w");
-
-    fprintf(f, "digraph g%d {\n", OPA_load_int(&(tree->nb_elements)));
-    __task_pqueue_dump_node(tree->root, f);
-    __task_pqueue_dump_edge(tree->root, f);
-    fprintf(f, "}\n");
-
-    fclose(f);
-}
-
-/**
- * Fixup the rb tree after 'node' was inserted inside 'tree'
- * https://en.wikipedia.org/wiki/Red-black_tree
- * https://www.youtube.com/watch?v=qA02XWRTBdw
- */
-static void
-__task_pqueue_insert_fixup(
-        mpc_omp_task_pqueue_t * tree,
-        mpc_omp_task_pqueue_node_t * node)
-{
-    while (node->parent->color == 'R')
-    {
-        if (node->parent == node->parent->parent->right)
-        {
-            /* uncle */
-            mpc_omp_task_pqueue_node_t * u = node->parent->parent->left;
-            if (u && u->color == 'R')
-            {
-                /* case 3.1 */
-                u->color = 'B';
-                node->parent->color = 'B';
-                node->parent->parent->color = 'R';
-                node = node->parent->parent;
-            }
-            else
-            {
-                if (node == node->parent->left)
-                {
-                    /* case 3.2.2 */
-                    node = node->parent;
-                    __task_pqueue_rotate_right(tree, node);
-                }
-                /* case 3.2.1 */
-                node->parent->color = 'B';
-                node->parent->parent->color = 'R';
-                __task_pqueue_rotate_left(tree, node->parent->parent);
-            }
-        }
-        else
-        {
-            /* uncle */
-            mpc_omp_task_pqueue_node_t * u = node->parent->parent->right;
-
-            if (u && u->color == 'R')
-            {
-                /* case 3.1 */
-                u->color = 'B';
-                node->parent->color = 'B';
-                node->parent->parent->color = 'R';
-                node = node->parent->parent;
-            }
-            else
-            {
-                if (node == node->parent->right)
-                {
-                    /* case 3.2.2 */
-                    node = node->parent;
-                    __task_pqueue_rotate_left(tree, node);
-                }
-                /* case 3.2.1 */
-                node->parent->color = 'B';
-                node->parent->parent->color = 'R';
-                __task_pqueue_rotate_right(tree, node->parent->parent);
-            }
-        }
-        if (node == tree->root)
-        {
-            break;
-        }
-    }
-    tree->root->color = 'B';
-}
-
-/**
- * Return the pqueue tree node of the given priority
- */
-static mpc_omp_task_pqueue_node_t *
-__task_pqueue_insert(mpc_omp_task_pqueue_t * tree, int priority)
-{
-    /* Get current OpenMP thread */
-    mpc_omp_task_pqueue_node_t * node;
-
-    if (tree->root == NULL)
-    {
-        node = __task_pqueue_node_new(NULL, 'B', priority);
-        tree->root = node;
-        return node;
-    }
-
-    mpc_omp_task_pqueue_node_t * n = tree->root;
-    while (1)
-    {
-        if (priority == n->priority)
-        {
-            return n;
-        }
-        else if (priority < n->priority)
-        {
-            if (n->left)
-            {
-                n = n->left;
-            }
-            else
-            {
-                node = __task_pqueue_node_new(n, 'R', priority);
-                n->left = node;
-                break ;
-            }
-        }
-        else
-        {
-            if (n->right)
-            {
-                n = n->right;
-            }
-            else
-            {
-                node = __task_pqueue_node_new(n, 'R', priority);
-                n->right = node;
-                break ;
-            }
-        }
-    }
-
-    __task_pqueue_insert_fixup(tree, node);
-    __task_pqueue_coherency_check(tree);
-    return node;
-}
-
-static void
-__task_pqueue_delete_fixup(
-    mpc_omp_task_pqueue_t * tree,
-    mpc_omp_task_pqueue_node_t * x)
-{
-    while (x && x != tree->root && x->color == 'B')
-    {
-        assert(x->parent);
-        if (x == x->parent->left)
-        {
-            /* case 1 */
-            mpc_omp_task_pqueue_node_t * w = x->parent->right;
-            if (w->color == 'R')
-            {
-                w->color = 'B';
-                x->parent->color = 'R';
-                __task_pqueue_rotate_left(tree, x->parent);
-                w = x->parent->right;
-            }
-
-            /* case 2 */
-            if ((!w->left || w->left->color == 'B')
-                && (!w->right || w->right->color == 'B'))
-            {
-                w->color = 'R';
-                x = x->parent;
-            }
-            else
-            {
-                /* case 3 */
-                if (!w->right || w->right->color == 'B')
-                {
-                    w->left->color = 'B';
-                    w->color = 'R';
-                    __task_pqueue_rotate_right(tree, w);
-                    w = x->parent->right;
-                }
-
-                /* case 4 */
-                w->color = x->parent->color;
-                x->parent->color = 'B';
-                w->right->color = 'B';
-                __task_pqueue_rotate_left(tree, x->parent);
-                x = tree->root;
-            }
-        }
-        /* same as above with 'right' and 'left' exchanged */
-        else
-        {
-            /* case 1 */
-            mpc_omp_task_pqueue_node_t * w = x->parent->left;
-            if (w->color == 'R')
-            {
-                w->color = 'B';
-                x->parent->color = 'R';
-                __task_pqueue_rotate_right(tree, x->parent);
-                w = x->parent->left;
-            }
-
-            /* case 2 */
-            if ((!w->left || w->left->color == 'B')
-                && (!w->right || w->right->color == 'B'))
-            {
-                w->color = 'R';
-                x = x->parent;
-            }
-            else
-            {
-                /* case 3 */
-                if (!w->left || w->left->color == 'B')
-                {
-                    w->right->color = 'B';
-                    w->color = 'R';
-                    __task_pqueue_rotate_left(tree, w);
-                    w = x->parent->left;
-                }
-
-                /* case 4 */
-                w->color = x->parent->color;
-                x->parent->color = 'B';
-                w->left->color = 'B';
-                __task_pqueue_rotate_right(tree, x->parent);
-                x = tree->root;
-            }
-        }
-    }
-    if (x)
-    {
-        x->color = 'B';
-    }
-}
-
-/**
- * TODO : O(log2(n)) down there could be O(1) by keeping track of the right-most node
- */
-static mpc_omp_task_t *
-__task_pqueue_pop_top_priority(mpc_omp_task_pqueue_t * tree)
-{
-    assert(tree->root);
-
-    /* get rightmost task list */
-    mpc_omp_task_pqueue_node_t * z = tree->root;
-    while (z->right)
-    {
-        z = z->right;
-    }
-
-    /* pop a task from the list (FIFO) */
-    mpc_omp_task_list_t * list = &(z->tasks);
-    mpc_omp_task_t * task = __task_list_pop(list);
-    assert(task);
-
-    /* if the list is now empty, pop it from the tree */
-    if (OPA_load_int(&(list->nb_elements)) == 0)
-    {
-        mpc_omp_task_pqueue_node_t * x;
-
-        if (z->left == NULL)
-        {
-            x = z->right;
-            __task_pqueue_transplant(tree, z, z->right);
-        }
-        else
-        {
-            x = z->left;
-            __task_pqueue_transplant(tree, z, z->left);
-        }
-
-        if (z->color == 'B')
-        {
-            __task_pqueue_delete_fixup(tree, x);
-        }
-
-        mpc_omp_free(z);
-    }
-    return task;
+    mpc_omp_task_pqueue_t * pqueue = (mpc_omp_task_pqueue_t *) mpc_omp_alloc(sizeof(mpc_omp_task_pqueue_t));
+    assert(pqueue);
+    memset(pqueue, 0, sizeof(mpc_omp_task_pqueue_t));
+    RBTREE_INITIALIZE(pqueue->tree, mpc_omp_task_t, rbh);
+    return pqueue;
 }
 
 static mpc_omp_task_t *
@@ -780,7 +280,25 @@ __task_pqueue_pop(mpc_omp_task_pqueue_t * pqueue)
         {
             if (OPA_load_int(&(pqueue->nb_elements)))
             {
-                task = __task_pqueue_pop_top_priority(pqueue);
+                switch (mpc_omp_conf_get()->task_list_policy)
+                {
+                    case (MPC_OMP_TASK_LIST_POLICY_FIFO):
+                    {
+                        RBTREE_POP_MAX_FIFO((&pqueue->tree), task);
+                        break ;
+                    }
+                    case (MPC_OMP_TASK_LIST_POLICY_LIFO):
+                    {
+                        RBTREE_POP_MAX_LIFO((&pqueue->tree), task);
+                        break ;
+                    }
+                    default:
+                    {
+                        fprintf(stderr, "Invalid task list policy\n");
+                        not_implemented();
+                        break ;
+                    }
+                }
                 assert(task);
                 assert(task->pqueue == pqueue);
                 task->pqueue = NULL;
@@ -850,27 +368,8 @@ __task_pqueue_push(mpc_omp_task_pqueue_t * pqueue, mpc_omp_task_t * task)
 
     mpc_common_spinlock_lock(&(pqueue->lock));
     {
-        mpc_omp_task_pqueue_node_t * node = __task_pqueue_insert(pqueue, task->priority);
+        RBTREE_INSERT(&(pqueue->tree), task, rbh, task->priority);
         task->pqueue = pqueue;
-        switch (mpc_omp_conf_get()->task_list_policy)
-        {
-            case (MPC_OMP_TASK_LIST_POLICY_FIFO):
-            {
-                __task_list_push_to_head(&(node->tasks), task);
-                break ;
-            }
-            case (MPC_OMP_TASK_LIST_POLICY_LIFO):
-            {
-                __task_list_push_to_tail(&(node->tasks), task);
-                break ;
-            }
-            default:
-            {
-                fprintf(stderr, "Invalid task list policy\n");
-                not_implemented();
-                break ;
-            }
-        }
     }
     mpc_common_spinlock_unlock(&(pqueue->lock));
 
@@ -2965,20 +2464,20 @@ __task_schedule_next(mpc_omp_thread_t * thread)
     /* find a task */
     mpc_omp_task_t * task;
 
-    /* current thread tied tasks */
-    task = __thread_task_pop_type(thread, MPC_OMP_PQUEUE_TYPE_TIED);
-    if (task) return task;
-
-    /* current thread untied tasks */
-    task = __thread_task_pop_type(thread, MPC_OMP_PQUEUE_TYPE_UNTIED);
-    if (task) return task;
-
     /* current thread new tasks */
     task = __thread_task_pop_type(thread, MPC_OMP_PQUEUE_TYPE_SUCCESSOR);
     if (task) return task;
 
     /* current thread new tasks */
     task = __thread_task_pop_type(thread, MPC_OMP_PQUEUE_TYPE_NEW);
+    if (task) return task;
+
+    /* current thread tied tasks */
+    task = __thread_task_pop_type(thread, MPC_OMP_PQUEUE_TYPE_TIED);
+    if (task) return task;
+
+    /* current thread untied tasks */
+    task = __thread_task_pop_type(thread, MPC_OMP_PQUEUE_TYPE_UNTIED);
     if (task) return task;
 
     /* other thread untied tasks */
