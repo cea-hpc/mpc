@@ -50,48 +50,36 @@ int lcr_ptl_recv_tag_zcopy(sctk_rail_info_t *rail,
                            size_t iovcnt, /* only one iov supported */
                            lcr_tag_context_t *ctx); 
 
-int lcr_ptl_send_put(_mpc_lowcomm_endpoint_t *ep,
-                     uint64_t local_addr,
-                     uint64_t remote_offset,
-                     lcr_memp_t *remote_key,
-                     size_t size,
-                     lcr_tag_context_t *ctx);
+int lcr_ptl_send_put_bcopy(_mpc_lowcomm_endpoint_t *ep,
+                           lcr_pack_callback_t pack,
+                           void *arg,
+                           uint64_t remote_addr,
+                           lcr_memp_t *remote_key);
 
-int lcr_ptl_send_mput(_mpc_lowcomm_endpoint_t *ep,
-                      uint64_t local_addr,
-                      uint64_t remote_offset,
-                      lcr_memp_t *remote_key,
-                      size_t size,
-                      lcr_tag_context_t *ctx);
+int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
+                           uint64_t local_addr,
+                           uint64_t remote_offset,
+                           lcr_memp_t *remote_key,
+                           size_t size,
+                           lcr_tag_context_t *ctx);
 
-int lcr_ptl_send_get(_mpc_lowcomm_endpoint_t *ep,
-                     uint64_t local_addr,
-                     uint64_t remote_offset,
-                     lcr_memp_t *remote_key,
-                     size_t size,
-                     lcr_tag_context_t *ctx);
-
-int lcr_ptl_send_mget(_mpc_lowcomm_endpoint_t *ep,
-                      uint64_t local_addr,
-                      uint64_t remote_offset,
-                      lcr_memp_t *remote_key,
-                      size_t size,
-                      lcr_tag_context_t *ctx);
+int lcr_ptl_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
+                           uint64_t local_addr,
+                           uint64_t remote_offset,
+                           lcr_memp_t *remote_key,
+                           size_t size,
+                           lcr_tag_context_t *ctx);
 
 void lcr_ptl_mem_register(struct sctk_rail_info_s *rail, 
-                         struct sctk_rail_pin_ctx_list *list, 
-                         void * addr, size_t size);
+                          struct sctk_rail_pin_ctx_list *list, 
+                          void * addr, size_t size);
 void lcr_ptl_mem_unregister(struct sctk_rail_info_s *rail, 
                             struct sctk_rail_pin_ctx_list *list);
 int lcr_ptl_pack_rkey(sctk_rail_info_t *rail,
                       lcr_memp_t *memp, void *dest);
-int lcr_ptl_pack_mrkey(sctk_rail_info_t *rail,
-                       lcr_memp_t *memp, void *dest);
 
 int lcr_ptl_unpack_rkey(sctk_rail_info_t *rail,
                         lcr_memp_t *memp, void *dest);
-int lcr_ptl_unpack_mrkey(sctk_rail_info_t *rail,
-                         lcr_memp_t *memp, void *dest);
 
 int lcr_ptl_iface_mprogress(sctk_rail_info_t *rail);
 int lcr_ptl_iface_progress(sctk_rail_info_t *rail);

@@ -101,6 +101,7 @@ struct lcp_request {
 
         //NOTE: break LCP modularity
 	mpc_lowcomm_request_t *request; /* Upper layer request */
+        void                  *user_data;
 	int16_t                seqn;    /* Sequence number */
 	uint64_t               msg_id;  /* Unique message identifier */
         struct lcp_request    *super;
@@ -179,11 +180,12 @@ static inline void lcp_request_init_rndv_send(lcp_request_t *req)
 static inline void lcp_request_init_rma_put(lcp_request_t *req, 
                                             uint64_t remote_addr,
                                             lcp_mem_h rkey,
-                                            lcp_complete_callback_func_t cb)
+                                            lcp_request_param_t *param)
 {
         req->send.rma.remote_addr = remote_addr;
         req->send.rma.rkey        = rkey; 
-        req->send.cb              = cb;
+        req->send.cb              = param->cb;
+        req->request              = param->request;
 };
 
 static inline void lcp_request_init_ack(lcp_request_t *ack_req, lcp_ep_h ep, 
@@ -205,7 +207,6 @@ static inline void lcp_request_init_ack(lcp_request_t *ack_req, lcp_ep_h ep,
 	ack_req->msg_id             = msg_id;
 	ack_req->seqn               = seqn;
 }
-
 
 static inline int lcp_request_send(lcp_request_t *req)
 {
@@ -231,7 +232,6 @@ static inline int lcp_request_send(lcp_request_t *req)
 
 int lcp_request_create(lcp_request_t **req_p);
 int lcp_request_complete(lcp_request_t *req);
-
 int lcp_request_init_unexp_ctnr(lcp_unexp_ctnr_t **ctnr_p, void *data, 
 				size_t length, unsigned flags);
 

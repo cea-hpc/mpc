@@ -6,12 +6,15 @@
 #include "lcp_request.h"
 #include "lcp_mem.h"
 
+
 #include "sctk_alloc.h"
 
 size_t lcp_rma_put_pack(void *dest, void *arg) {
         lcp_request_t *req = (lcp_request_t *)arg;
 
         memcpy(dest, req->send.buffer, req->send.length);
+
+        return req->send.length;
 }
 
 static inline int build_rma_memory_registration_bitmap(size_t length, 
@@ -51,8 +54,7 @@ int lcp_rma_reg_send_buffer(lcp_request_t *req)
         rc = lcp_mem_register(req->send.ep->ctx, 
                               &(req->state.lmem), 
                               req->send.buffer, 
-                              req->send.length,
-                              req->state.memp_map);
+                              req->send.length);
 
         return rc;
 }
@@ -151,7 +153,6 @@ int lcp_rma_put_zcopy(lcp_request_t *req)
 int lcp_rma_put_start(lcp_ep_h ep, lcp_request_t *req) 
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-        size_t size;
 
         if (req->send.length <= ep->ep_config.rma.max_put_bcopy) {
                 req->send.func = lcp_rma_put_bcopy;
@@ -170,10 +171,12 @@ err:
 
 int lcp_put_nb(lcp_ep_h ep, const void *buffer, size_t length,
                uint64_t remote_addr, lcp_mem_h rkey,
-               lcp_complete_callback_func_t cb) 
+               lcp_request_param_t *param) 
 {
         int rc;
         lcp_request_t *req;
+
+        assert(param->flags & LCP_REQUEST_USER_REQUEST);
 
         uint64_t msg_id = lcp_rand_uint64();
 
@@ -184,7 +187,7 @@ int lcp_put_nb(lcp_ep_h ep, const void *buffer, size_t length,
         req->flags |= LCP_REQUEST_RMA_COMPLETE;
         LCP_REQUEST_INIT_SEND(req, ep->ctx, NULL, length, ep, (void *)buffer, 
                               0 /* no ordering for rma */, msg_id);
-        lcp_request_init_rma_put(req, remote_addr, rkey, cb);
+        lcp_request_init_rma_put(req, remote_addr, rkey, param);
 
         rc = lcp_rma_put_start(ep, req);
         if (rc != MPC_LOWCOMM_SUCCESS) {

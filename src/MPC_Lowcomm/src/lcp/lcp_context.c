@@ -143,8 +143,8 @@ err:
 }
 
 int lcp_context_config_parse_list(const char *cfg_list,
-                                                 char ***list_p,
-                                                 int *length_p)
+                                  char ***list_p,
+                                  int *length_p)
 {
         int length = 0, i = 0;
         char *token;

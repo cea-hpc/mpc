@@ -915,7 +915,7 @@ static inline void __communicator_id_factory_init(void)
 	int process_count = mpc_common_get_process_count();
 
 	/* We have the whole range except two */
-	int16_t global_dynamic = ( ( (int16_t)-1) - COMM_ID_TO_SKIP);
+	uint16_t global_dynamic = ( ( (uint16_t)-1) - COMM_ID_TO_SKIP);
 
 	/* Ensure it can be divided evenly */
 	if(global_dynamic % process_count)
@@ -967,6 +967,8 @@ static inline void __communicator_id_register(mpc_lowcomm_communicator_t comm, i
 	assume(0 < comm->linear_comm_id);
 	uint64_t linear_key = comm->linear_comm_id;
 
+        mpc_common_debug_info("COMM: register key=%llu, int key=%d, linear key=%llu", key, key, linear_key);
+
 
 	/* It is forbidden to add an existing comm */
 	assume(mpc_common_hashtable_get(&__id_factory.id_table, key) == NULL);
@@ -987,7 +989,11 @@ static inline void __communicator_id_release(mpc_lowcomm_communicator_t comm)
 	uint64_t key = comm->id;
 	uint64_t linear_key = comm->linear_comm_id;
 
+        mpc_common_debug_info("COMM: release key=%llu, int key=%d, linear key=%llu", key, key, linear_key);
+
+#ifndef MPC_LOWCOMM_PROTOCOL
 	_mpc_lowcomm_multirail_notify_delete_comm(comm->id, mpc_lowcomm_communicator_size(comm));
+#endif
 
 	mpc_common_hashtable_delete(&__id_factory.id_table, key);
 	mpc_common_hashtable_delete(&__id_factory.int_id_table, linear_key);

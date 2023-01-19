@@ -315,7 +315,8 @@ int lcr_ptl_get_attr(sctk_rail_info_t *rail,
         attr->iface.cap.rma.max_put_zcopy   = rail->network.ptl.max_put;
         attr->iface.cap.rma.min_frag_size   = rail->network.ptl.min_frag_size;
 
-        attr->mem.cap.max_reg = PTL_SIZE_MAX;
+        attr->mem.cap.max_reg      = PTL_SIZE_MAX;
+        attr->mem.size_packed_mkey = sizeof(uint64_t); //FIXME: to be generalized 
 
         return MPC_LOWCOMM_SUCCESS;
 }
@@ -432,8 +433,9 @@ int lcr_ptl_iface_open(char *device_name, int id,
         iface->send_tag_rndv_zcopy = lcr_ptl_send_tag_rndv_zcopy;
         iface->recv_tag_zcopy      = lcr_ptl_recv_tag_zcopy;
         /* RMA calls */
-        iface->send_put            = lcr_ptl_send_put;
-        iface->send_get            = lcr_ptl_send_get;
+        iface->send_put_bcopy      = lcr_ptl_send_put_bcopy;
+        iface->send_put_zcopy      = lcr_ptl_send_put_zcopy;
+        iface->send_get_zcopy      = lcr_ptl_send_get_zcopy;
         iface->iface_pack_memp     = lcr_ptl_pack_rkey;
         iface->iface_unpack_memp   = lcr_ptl_unpack_rkey;
         iface->rail_pin_region     = lcr_ptl_mem_register;

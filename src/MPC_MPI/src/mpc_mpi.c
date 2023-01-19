@@ -65,6 +65,8 @@
 #include "mpc_launch_pmi.h"
 #include "mpc_thread_mpi_omp_interop.h"
 
+#include "mpi_partitioned.h"
+
 /*******************
 * FORTRAN SUPPORT *
 *******************/
@@ -11373,6 +11375,20 @@ int PMPI_Rsend_init(const void *buf, int count, MPI_Datatype datatype, int dest,
 	return MPI_SUCCESS;
 }
 
+int PMPI_Psend_init(const void *buf, int partitions, int count, 
+                    MPI_Datatype datatype, int dest, int tag, 
+                    MPI_Comm comm, MPI_Info info, MPI_Request *request)
+{
+	MPI_internal_request_t *req;
+        UNUSED(info);
+
+	req = __sctk_new_mpc_request_internal(request, 
+                                              __sctk_internal_get_MPC_requests());
+
+        return mpi_psend_init(buf, partitions, count, datatype, dest, tag,
+                              comm, req); 
+}
+
 int PMPI_Recv_init(void *buf, int count, MPI_Datatype datatype, int source,
                    int tag, MPI_Comm comm, MPI_Request *request)
 {
@@ -11408,6 +11424,20 @@ int PMPI_Recv_init(void *buf, int count, MPI_Datatype datatype, int source,
 	req->persistant.op          = MPC_MPI_PERSISTENT_RECV_INIT;
 
 	return MPI_SUCCESS;
+}
+
+int PMPI_Precv_init(void *buf, int partitions, int count, 
+                    MPI_Datatype datatype, int source, int tag, 
+                    MPI_Comm comm, MPI_Info info, MPI_Request *request)
+{
+	MPI_internal_request_t *req;
+        UNUSED(info);
+
+	req = __sctk_new_mpc_request_internal(request, 
+                                              __sctk_internal_get_MPC_requests() );
+
+        return mpi_precv_init(buf, partitions, count, datatype, source,
+                              tag, comm, req);
 }
 
 int PMPI_Start(MPI_Request *request)
@@ -11727,6 +11757,46 @@ int PMPI_Startall(int count, MPI_Request array_of_requests[])
 			break;
 		}
 	}
+
+	MPI_HANDLE_RETURN_VAL(res, comm);
+}
+
+int PMPI_Pready(int partition, MPI_Request request) 
+{
+        MPI_Comm comm = MPI_COMM_WORLD;
+        int res       = MPI_ERR_INTERN;
+
+        if (request == MPI_REQUEST_NULL){
+                MPI_ERROR_REPORT(comm, MPI_ERR_REQUEST, "");
+        }
+
+        MPI_internal_request_t *req;
+        MPI_request_struct_t *requests;
+
+        requests = __sctk_internal_get_MPC_requests();
+        req      = __sctk_convert_mpc_request_internal(&request, requests);
+
+        res = mpi_pready(partition, req);
+        
+	MPI_HANDLE_RETURN_VAL(res, comm);
+}
+
+int PMPI_Parrived(MPI_Request request, int partition, int *flags)
+{
+        MPI_Comm comm = MPI_COMM_WORLD;
+        int res       = MPI_ERR_INTERN;
+
+        if (request == MPI_REQUEST_NULL){
+                MPI_ERROR_REPORT(comm, MPI_ERR_REQUEST, "");
+        }
+
+        MPI_internal_request_t *req;
+        MPI_request_struct_t *requests;
+
+        requests = __sctk_internal_get_MPC_requests();
+        req      = __sctk_convert_mpc_request_internal(&request, requests);
+
+        res = mpi_parrived(partition, req, flags);
 
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }

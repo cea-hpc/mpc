@@ -54,9 +54,13 @@
 #pragma weak MPI_Bsend_init = PMPI_Bsend_init
 #pragma weak MPI_Ssend_init = PMPI_Ssend_init
 #pragma weak MPI_Rsend_init = PMPI_Rsend_init
+#pragma weak MPI_Psend_init = PMPI_Psend_init
 #pragma weak MPI_Recv_init = PMPI_Recv_init
+#pragma weak MPI_Precv_init = PMPI_Precv_init
 #pragma weak MPI_Start = PMPI_Start
 #pragma weak MPI_Startall = PMPI_Startall
+#pragma weak MPI_Pready = PMPI_Pready
+#pragma weak MPI_Parrived = PMPI_Parrived
 // PROFILER MPI_SENDRECV MPI Sendrecv
 #pragma weak MPI_Sendrecv = PMPI_Sendrecv
 #pragma weak MPI_Sendrecv_replace = PMPI_Sendrecv_replace

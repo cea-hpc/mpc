@@ -17,5 +17,6 @@ struct lcp_mem {
 
 int lcp_mem_create(lcp_context_h ctx, lcp_mem_h *mem_p);
 void lcp_mem_delete(lcp_mem_h mem);
+size_t lcp_mem_rkey_pack(lcp_context_h ctx, lcp_mem_h mem, void *dest);
 
 #endif

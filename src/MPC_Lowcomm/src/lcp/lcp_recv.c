@@ -40,12 +40,12 @@ int lcp_tag_recv_nb(lcp_context_h ctx, void *buffer, size_t count,
 
         req->state.offloaded = 0;
 	match = lcp_match_umq(ctx->umq_table,
-			      (int16_t)req->recv.tag.comm_id,
+			      (uint16_t)req->recv.tag.comm_id,
 			      (int32_t)req->recv.tag.tag,
 			      (int32_t)req->recv.tag.src);
 	if (match == NULL) {
 		lcp_append_prq(ctx->prq_table, req,
-			       (int16_t)req->recv.tag.comm_id,
+			       (uint16_t)req->recv.tag.comm_id,
 			       (int32_t)req->recv.tag.tag,
 			       (int32_t)req->recv.tag.src);
 
@@ -59,12 +59,12 @@ int lcp_tag_recv_nb(lcp_context_h ctx, void *buffer, size_t count,
 		mpc_common_debug_info("LCP: matched rndv unexp req=%p, flags=%x", 
 				      match, match->flags);
 		rc = lcp_rndv_matched(ctx, req, (lcp_rndv_hdr_t *)(match + 1),
-                                      LCP_RNDV_PUT);
+                                      LCP_RNDV_PUT, match->length - sizeof(lcp_rndv_hdr_t));
         } else if (match->flags & LCP_RECV_CONTAINER_UNEXP_RGET) {
 		mpc_common_debug_info("LCP: matched rndv unexp req=%p, flags=%x", 
 				      match, match->flags);
 		rc = lcp_rndv_matched(ctx, req, (lcp_rndv_hdr_t *)(match + 1),
-                                      LCP_RNDV_GET);
+                                      LCP_RNDV_GET, match->length - sizeof(lcp_rndv_hdr_t));
 	} else if (match->flags & LCP_RECV_CONTAINER_UNEXP_TAG) {
 		mpc_common_debug("LCP: matched tag unexp req=%p, flags=%x", req, 
 				 match->flags);

@@ -1425,6 +1425,28 @@ int PMPI_Bsend(const void *buf, int count, MPI_Datatype datatype, int dest, int 
 int MPI_Bsend_init(const void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Request *request);
 int PMPI_Bsend_init(const void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Request *request);
 
+/*MPI_Psend_init*/
+
+/**
+ * @brief MPI function MPI_Bsend_init
+ *
+ * @param buf initial address of send buffer
+ * @param partitions number of partitions 
+ * @param count number of elements sent
+ * @param datatype type of each element
+ * @param dest rank of destination
+ * @param tag message tag
+ * @param comm
+ * @param request
+ *
+ * @return int MPI_SUCCESS on success other MPI_* error code otherwise
+ */
+int MPI_Psend_init(const void *buf, int partitions, int count, 
+                   MPI_Datatype datatype, int dest, int tag, 
+                   MPI_Comm comm, MPI_Info info, MPI_Request *request);
+int PMPI_Psend_init(const void *buf, int partitions, int count, 
+                    MPI_Datatype datatype, int dest, int tag, 
+                    MPI_Comm comm, MPI_Info info, MPI_Request *request);
 
 /*MPI_Buffer_attach*/
 
@@ -4363,6 +4385,29 @@ int PMPI_Recv(void *buf, int count, MPI_Datatype datatype, int source, int tag, 
 int MPI_Recv_init(void *buf, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Request *request);
 int PMPI_Recv_init(void *buf, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Request *request);
 
+/*MPI_Precv_init*/
+
+/**
+ * @brief MPI function MPI_Recv_init
+ *
+ * @param buf initial address of receive buffer
+ * @param partitions number of partitions 
+ * @param count number of elements received
+ * @param datatype type of each element
+ * @param source rank of source or MPI_ANY_SOURCE
+ * @param tag message tag or MPI_ANY_TAG
+ * @param comm
+ * @param request
+ *
+ * @return int MPI_SUCCESS on success other MPI_* error code otherwise
+ */
+
+int MPI_Precv_init(void *buf, int partitions, int count, 
+                   MPI_Datatype datatype, int source, int tag, 
+                   MPI_Comm comm, MPI_Info info, MPI_Request *request);
+int PMPI_Precv_init(void *buf, int partitions, int count, 
+                    MPI_Datatype datatype, int source, int tag, 
+                    MPI_Comm comm, MPI_Info info, MPI_Request *request);
 
 /*MPI_Reduce*/
 
@@ -4915,6 +4960,34 @@ int PMPI_Start(MPI_Request *request);
 int MPI_Startall(int count, MPI_Request array_of_requests[]);
 int PMPI_Startall(int count, MPI_Request array_of_requests[]);
 
+/*MPI_Pready*/
+
+/**
+ * @brief MPI function MPI_Pready
+ *
+ * @param partition 
+ * @param request
+ *
+ * @return int MPI_SUCCESS on success other MPI_* error code otherwise
+ */
+
+int MPI_Pready(int partition, MPI_Request request);
+int PMPI_Pready(int partition, MPI_Request request);
+
+/*MPI_Parrived*/
+
+/**
+ * @brief MPI function MPI_Parrived
+ *
+ * @param partition 
+ * @param request
+ * @param flag 
+ *
+ * @return int MPI_SUCCESS on success other MPI_* error code otherwise
+ */
+
+int MPI_Parrived(int partition, MPI_Request request, int *flag);
+int PMPI_Parrived(int partition, MPI_Request request, int *flag);
 
 /*MPI_Status_set_cancelled*/
 

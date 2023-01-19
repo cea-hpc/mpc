@@ -43,6 +43,8 @@
 #include <uthash.h>
 #include <utlist.h>
 
+#include "lcp.h"
+
 TODO("Expose this header cleanly");
 #include <shm_coll.h>
 
@@ -171,35 +173,45 @@ typedef enum
 } MPI_Persistant_op_t;
 
 typedef struct prtd_map {
-        uint32_t pstart;
-        uint32_t pend;
+        uint32_t p_id_start;
+        uint32_t p_id_end;
 } prtd_map_t;
 
 typedef struct {
-	void *buf;
-	int count;
+	void        *buf;
+	int          count;
 	MPI_Datatype datatype;
-	int dest_source;
-	int tag;
-	MPI_Comm comm;
+	int          dest_source;
+	int          tag;
+	MPI_Comm     comm;
 
 	mpc_lowcomm_request_t tag_req;
 	mpc_lowcomm_request_t rkey_req;
+	mpc_lowcomm_request_t fin_req;
 
-        int partitions;
-        lcp_memp_h rkey_prt;
-        lcp_memp_h rkey_cflags;
+        int       partitions;
+        int       length;
+        lcp_mem_h rkey_prtd;
+        size_t    rkey_prtd_pkg_size; 
+        lcp_mem_h rkey_cflags;
+        size_t    rkey_cflags_pkg_size; 
+        OPA_int_t counter;
+        int       complete;
+        int       fin;
 
         union {
                 struct {
-                        lcp_memp_h rkey_prt;
-                        lcp_memp_h rkey_cflags;
+                        void *rkeys_buf;
+                        size_t rkeys_size;
+                        int *send_cflags;
                 } send;
 
                 struct {
-                       int send_partitions;
+                       int         send_partitions;
                        prtd_map_t *map;
-                       short *cflags;
+                       int        *cflags_buf;
+                       void       *rkeys_buf;
+                       size_t      rkeys_buf_size;
                 } recv;
         };
 } mpi_partitioned_t;

@@ -102,7 +102,7 @@ static inline void __mpc_comm_request_init(mpc_lowcomm_request_t *request,
 		request->header.source_task      = MPC_PROC_NULL;
 		request->header.destination_task = MPC_PROC_NULL;
 		request->header.message_tag      = MPC_ANY_TAG;
-		request->header.communicator_id = _mpc_lowcomm_communicator_id(comm);
+		request->header.communicator_id  = _mpc_lowcomm_communicator_id(comm);
 
 		request->request_type        = request_type;
 	}
@@ -2870,6 +2870,8 @@ void mpc_lowcomm_request_init_struct(mpc_lowcomm_request_t *request,
                                      int request_type, int src, int dest,
                                      int tag, lcp_complete_callback_func_t cb)
 {
+        __mpc_comm_request_init(request, comm, request_type);
+
         int is_intercomm = mpc_lowcomm_communicator_is_intercomm(comm);
 
         mpc_lowcomm_peer_uid_t src_uid = 0;
@@ -2880,7 +2882,7 @@ void mpc_lowcomm_request_init_struct(mpc_lowcomm_request_t *request,
         /* Fill in Source and Dest Process Informations (convert from task) */
 
         /* SOURCE */
-        if (isrc != MPC_ANY_SOURCE) {
+        if (src != MPC_ANY_SOURCE) {
                 if (is_intercomm) {
                         if(request_type == REQUEST_RECV) {
                                 /* If this is a RECV make sure the translation is done on the source according to remote */
@@ -2923,8 +2925,11 @@ void mpc_lowcomm_request_init_struct(mpc_lowcomm_request_t *request,
         request->header.source_task      = src_task;
         request->header.message_tag      = tag;
         request->header.communicator_id  = comm->id;
+        request->is_null                 = 0;
 
         request->request_completion_fn   = cb;
+        request->completion_flag         = MPC_LOWCOMM_MESSAGE_PENDING;
+        request->ptr_to_pin_ctx          = NULL;
 }
 #endif
 
@@ -3125,7 +3130,7 @@ int mpc_lowcomm_get_process_rank()
  * MESSAGES *
  ************/
 
-#define LOWCOMM_REQUEST_SEND_INIT(_req, _comm, _dest, _tag, _size, _comp_cb) \
+#define LOWCOMM_REQUEST_SEND_INIT(_req, _comm, _dest, _tag, _size) \
         __mpc_comm_request_init(_req, _comm, REQUEST_SEND); \
         _req->header.source = mpc_lowcomm_communicator_uid(_comm, mpc_lowcomm_communicator_rank_of(_comm, mpc_common_get_task_rank())); \
         _req->header.destination        = mpc_lowcomm_communicator_uid(_comm, _dest); \

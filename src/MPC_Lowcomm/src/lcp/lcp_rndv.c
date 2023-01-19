@@ -33,8 +33,8 @@ static size_t lcp_rts_rget_pack(void *dest, void *data)
         hdr->size      = req->send.length;
 
         rkey_buf = hdr + 1;
-        packed_size = lcp_mem_pack(req->ctx, rkey_buf, 
-                                   req->state.lmem);
+        packed_size = lcp_mem_rkey_pack(req->ctx, req->state.lmem,
+                                        rkey_buf);
         return sizeof(*hdr) + packed_size;
 }
 
@@ -77,8 +77,8 @@ static size_t lcp_rtr_rput_pack(void *dest, void *data)
         hdr->src    = super->send.am.src;
 
         rkey_ptr = hdr + 1;
-        packed_size = lcp_mem_pack(super->ctx, rkey_ptr, 
-                                   super->state.lmem);
+        packed_size = lcp_mem_rkey_pack(super->ctx, super->state.lmem, 
+                                        rkey_ptr);
 
         return sizeof(*hdr) + packed_size;
 }
@@ -124,6 +124,10 @@ int lcp_send_rput_common(lcp_request_t *super, lcp_mem_h rmem)
         offset      = 0;
         ep          = super->send.ep;
 
+        //FIXME: communication channel selection is not correct since rmem is
+        //       built following its bitmap. As long as memory keys are built on
+        //       the order of the resources table, it ok.
+        //       Ideally, the implementation should avoid this. 
         while (remaining > 0) {
                 lcr_ep = ep->lct_eps[super->state.cc];
                 lcr_ep->rail->iface_get_attr(lcr_ep->rail, &attr);
@@ -144,6 +148,7 @@ int lcp_send_rput_common(lcp_request_t *super, lcp_mem_h rmem)
                 offset    += length; remaining -= length;
                 per_ep_length[super->state.cc] -= length;
 
+                //FIXME: could be erroneous, see above
                 super->state.cc = (super->state.cc + 1) % num_used_ifaces;
         }
 
@@ -163,15 +168,9 @@ void lcp_request_rput_ack_callback(lcr_completion_t *comp)
 
         lcp_request_t *super = ack_req->super;
 
-        /* first create and unpack remote key */
-        rc = lcp_mem_create(super->ctx, &rmem);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
-                goto err;
-        }
-
-        rc = lcp_mem_unpack(super->ctx, 
-                            rmem, 
-                            ack_req->recv.t_ctx.start);
+        rc = lcp_mem_unpack(super->ctx, &rmem, 
+                            ack_req->recv.t_ctx.start,
+                            comp->sent);
         if (rc < 0) {
                 goto err;
         }
@@ -258,7 +257,6 @@ void lcp_request_complete_rput(lcr_completion_t *comp)
 int lcp_rndv_reg_send_buffer(lcp_request_t *req)
 {
         int rc;
-        lcp_ep_h ep = req->send.ep;
 
         /* Register and pack memory pin context that will be sent to remote */
         rc = lcp_mem_register(req->send.ep->ctx, 
@@ -367,10 +365,12 @@ int lcp_send_rget_start(lcp_request_t *req)
                 .t = 0
         };
 
-        iov_send[0].iov_base = sctk_malloc(req->state.lmem->num_ifaces*sizeof(lcr_memp_t));
-        iov_send[0].iov_len  = lcp_mem_pack(req->send.ep->ctx, 
-                                            iov_send[0].iov_base, 
-                                            req->state.lmem);
+        int packed_max_size = sizeof(req->state.lmem->bm) + 
+                req->state.lmem->num_ifaces * sizeof(lcr_memp_t);
+        iov_send[0].iov_base = sctk_malloc(packed_max_size);
+        iov_send[0].iov_len  = lcp_mem_rkey_pack(req->send.ep->ctx, 
+                                                 req->state.lmem,
+                                                 iov_send[0].iov_base);
 
         /* Post FIN before sending RGET */
         iov_fin[0].iov_base = &req->msg_id;
@@ -409,7 +409,6 @@ int lcp_send_rput_start(lcp_request_t *req)
         uint64_t imm = 0;
         struct iovec iov_send[1];
         struct iovec iov_ack[1];
-        int num_used_ifaces;
         lcp_request_t *ack;
         lcp_ep_h ep = req->send.ep;
 
@@ -437,7 +436,7 @@ int lcp_send_rput_start(lcp_request_t *req)
 
         /* Size of the remote memory pin contexts will be no longer than
          * the number of interface used times the size of a context */ 
-        ack->recv.length = num_used_ifaces * sizeof(lcr_memp_t); 
+        ack->recv.length = req->ctx->num_resources * sizeof(lcr_memp_t); 
         ack->recv.buffer = sctk_malloc(ack->recv.length);
 
         lcr_tag_t ign_tag = {
@@ -587,12 +586,13 @@ int lcp_send_rndv_start(lcp_request_t *req, const lcp_request_param_t *param)
         return rc;
 }
 
-int lcp_recv_rget(lcp_request_t *req, void *hdr);
+int lcp_recv_rget(lcp_request_t *req, void *hdr, size_t length);
 int lcp_recv_rput(lcp_request_t *req);
 
 int lcp_rndv_matched(lcp_context_h ctx, 
                      lcp_request_t *rreq,
                      lcp_rndv_hdr_t *hdr,
+                     size_t length,
                      lcp_rndv_mode_t rndv_mode) 
 {
         int rc; 
@@ -635,7 +635,7 @@ int lcp_rndv_matched(lcp_context_h ctx,
                 rc = lcp_recv_rput(rreq);
                 break;
         case LCP_RNDV_GET:
-                rc = lcp_recv_rget(rreq, hdr + 1);
+                rc = lcp_recv_rget(rreq, hdr + 1, length);
                 break;
         default:
                 mpc_common_debug_error("LCP: unknown protocol in recv");
@@ -661,7 +661,7 @@ void lcp_request_complete_recv_rsend(lcr_completion_t *comp)
 
 void lcp_request_complete_recv_rget(lcr_completion_t *comp)
 {
-        int rc, payload_size;
+        int rc = MPC_LOWCOMM_SUCCESS, payload_size;
         lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
                                               recv.t_ctx.comp);
 
@@ -734,7 +734,7 @@ void lcp_request_complete_srack(lcr_completion_t *comp)
 /* ============================================== */
 /* Recv                                           */
 /* ============================================== */
-int lcp_recv_rsend(lcp_request_t *req, void *hdr)
+int lcp_recv_rsend(lcp_request_t *req, void *hdr, size_t length)
 {
         int rc;
         lcp_mem_h rmem = NULL; 
@@ -753,13 +753,7 @@ int lcp_recv_rsend(lcp_request_t *req, void *hdr)
                 ep = ctx_ep->ep;
         }
 
-        /* first create and unpack remote key */
-        rc = lcp_mem_create(req->ctx, &rmem);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
-                goto err;
-        }
-        MPC_BITMAP_SET(req->state.memp_map, ep->priority_chnl);
-        rc = lcp_mem_unpack(req->ctx, rmem, hdr);
+        rc = lcp_mem_unpack(req->ctx, &rmem, hdr, length);
         if (rc < 0) {
                 goto err;
         }
@@ -779,7 +773,7 @@ err:
 
 int lcp_recv_rget(lcp_request_t *req, void *hdr, size_t hdr_length)
 {
-        int rc, f_id, i, num_used_ifaces;
+        int rc, f_id, i;
         size_t remaining, offset;
         size_t frag_length, length;
         size_t *per_ep_length;
@@ -787,8 +781,10 @@ int lcp_recv_rget(lcp_request_t *req, void *hdr, size_t hdr_length)
         lcp_ep_h ep;
         lcp_ep_ctx_t *ctx_ep;
         lcr_rail_attr_t attr;
-        sctk_rail_info_t *rail;
         _mpc_lowcomm_endpoint_t *lcr_ep;
+
+        mpc_common_debug_info("LCP: recv offload rput src=%d, tag=%d",
+                              req->recv.tag.src, req->recv.tag.tag);
 
         /* Get LCP endpoint if exists */
         HASH_FIND(hh, req->ctx->ep_ht, &req->recv.tag.src, sizeof(uint64_t), ctx_ep);
@@ -802,23 +798,17 @@ int lcp_recv_rget(lcp_request_t *req, void *hdr, size_t hdr_length)
                 ep = ctx_ep->ep;
         }
 
-        /* Create and unpack remote key */
-        rc = lcp_mem_create(req->ctx, &rmem);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
-                goto err;
-        }
-
-        rc = lcp_mem_unpack(req->ctx, rmem, hdr, hdr_length);
+        rc = lcp_mem_unpack(req->ctx, &rmem, hdr, hdr_length);
         if (rc < 0) {
                 goto err;
         }
 
         /* Compute length per endpoints that will be get */
-        per_ep_length        = sctk_malloc(num_used_ifaces * sizeof(size_t));
-        for (i=0; i<num_used_ifaces; i++) {
-                per_ep_length[i] = (size_t)req->recv.send_length / num_used_ifaces;
+        per_ep_length        = sctk_malloc(rmem->num_ifaces * sizeof(size_t));
+        for (i=0; i<rmem->num_ifaces; i++) {
+                per_ep_length[i] = (size_t)req->recv.send_length / rmem->num_ifaces;
         }
-        per_ep_length[0] += req->recv.send_length % num_used_ifaces;
+        per_ep_length[0] += req->recv.send_length % rmem->num_ifaces;
 
         req->state.comp_stg = 0;
         req->recv.t_ctx.comp.comp_cb = lcp_request_complete_recv_rget;
@@ -844,7 +834,7 @@ int lcp_recv_rget(lcp_request_t *req, void *hdr, size_t hdr_length)
                 per_ep_length[req->state.cc] -= length;
                 offset += length; remaining  -= length;
 
-                req->state.cc = (req->state.cc + 1) % num_used_ifaces;
+                req->state.cc = (req->state.cc + 1) % rmem->num_ifaces;
                 f_id++;
         }
 
@@ -856,13 +846,16 @@ err:
 
 int lcp_recv_rput(lcp_request_t *req)
 {
-        int rc, payload, num_used_ifaces;
+        int rc, payload;
         lcp_ep_h ep;
         lcp_ep_ctx_t *ctx_ep;
         lcp_request_t *ack;
         struct iovec iov_ack[1];
         struct iovec iov_fin[1];
 
+
+        mpc_common_debug_info("LCP: recv offload rput src=%d, tag=%d",
+                              req->recv.tag.src, req->recv.tag.tag);
         /* Get endpoint */
         //FIXME: redundant in am handler
         HASH_FIND(hh, req->ctx->ep_ht, &req->recv.tag.src, sizeof(uint64_t), ctx_ep);
@@ -895,10 +888,13 @@ int lcp_recv_rput(lcp_request_t *req)
         if (req->state.offloaded) {
                 /* Packed length is inferior or equal to the size of a memory context
                  * times the number of context to be sent */
-                ack->send.buffer = sctk_malloc(num_used_ifaces * sizeof(lcr_memp_t));
-                ack->send.length = lcp_mem_pack(ep->ctx, 
-                                                ack->send.buffer, 
-                                                req->state.lmem);
+                //FIXME: add somewhere a max size for packed memory handle
+                int packed_max_size = sizeof(req->state.lmem->bm) + 
+                        req->state.lmem->num_ifaces * sizeof(lcr_memp_t);
+                ack->send.buffer = sctk_malloc(packed_max_size);
+                ack->send.length = lcp_mem_rkey_pack(ep->ctx, 
+                                                     req->state.lmem,
+                                                     ack->send.buffer);
 
                 iov_ack[0].iov_base = ack->send.buffer;
                 iov_ack[0].iov_len  = ack->send.length;
@@ -986,7 +982,7 @@ int lcp_rndv_am_rput_handler(void *arg, void *data,
                                       "tag=%d, src=%lu.", req, req->recv.tag.comm_id, 
                                       req->recv.tag.tag, req->recv.tag.src);
                 LCP_CONTEXT_UNLOCK(ctx); //NOTE: unlock context to enable endpoint creation.
-                rc = lcp_rndv_matched(ctx, req, hdr, LCP_RNDV_PUT);
+                rc = lcp_rndv_matched(ctx, req, hdr, length - sizeof(*hdr), LCP_RNDV_PUT);
         } else {
                 lcp_request_init_unexp_ctnr(&ctnr, hdr, length, 
                                             LCP_RECV_CONTAINER_UNEXP_RPUT);
@@ -1021,13 +1017,7 @@ static int lcp_ack_am_tag_handler(void *arg, void *data,
                 goto err;
         }
 
-        /* first create and unpack remote key */
-        rc = lcp_mem_create(req->ctx, &rmem);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
-                goto err;
-        }
-
-        rc = lcp_mem_unpack(req->ctx, rmem,  hdr + 1, 
+        rc = lcp_mem_unpack(req->ctx, &rmem,  hdr + 1, 
                             size - sizeof(lcp_rndv_ack_hdr_t));
         if (rc < 0) {
                 goto err;
@@ -1061,7 +1051,8 @@ static int lcp_rndv_am_rget_handler(void *arg, void *data,
                                       "tag=%d, src=%llu.", req, req->recv.tag.comm_id, 
                                       req->recv.tag.tag, req->recv.tag.src);
                 LCP_CONTEXT_UNLOCK(ctx); //NOTE: unlock context to enable endpoint creation.
-                rc = lcp_rndv_matched(ctx, req, hdr, LCP_RNDV_GET);
+                rc = lcp_rndv_matched(ctx, req, hdr, length - sizeof(lcp_rndv_hdr_t), 
+                                      LCP_RNDV_GET);
         } else {
                 lcp_request_init_unexp_ctnr(&ctnr, hdr, length, 
                                             LCP_RECV_CONTAINER_UNEXP_RGET);

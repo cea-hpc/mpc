@@ -12,7 +12,7 @@ typedef struct lcp_tag_hdr {
 	int32_t src;
 	int32_t tag;
 	int16_t seqn;
-	int16_t comm;
+	uint16_t comm;
 } lcp_tag_hdr_t;
 
 typedef struct lcp_rndv_hdr {

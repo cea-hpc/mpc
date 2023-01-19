@@ -89,13 +89,12 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @MPC_THREAD_ENABLED_TRUE@am__append_1 = -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/
-@MPC_BUILD_OPENPA_TRUE@am__append_2 = -I$(abs_top_srcdir)/contrib/openpa/src -I$(abs_top_builddir)/contrib/openpa/src
-@MPC_BUILD_OPENPA_FALSE@am__append_3 = $(OPA_CFLAGS) 
-@INFINIBAND_DRIVER_ENABLED_TRUE@am__append_4 = -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/ib/
-@PORTALS4_DRIVER_ENABLED_TRUE@am__append_5 = -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/portals/
-@OFI_DRIVER_ENABLED_TRUE@am__append_6 = -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/ofi/
-@MPC_OPENMP_ENABLED_TRUE@am__append_7 = -I$(abs_top_srcdir)/src/MPC_OpenMP/include/
-@MPC_FORTRAN_ENABLED_TRUE@am__append_8 = fortran.c
+@INFINIBAND_DRIVER_ENABLED_TRUE@am__append_2 = -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/ib/
+@PORTALS4_DRIVER_ENABLED_TRUE@am__append_3 = -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/portals/
+@OFI_DRIVER_ENABLED_TRUE@am__append_4 = -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/ofi/
+@MPC_OPENMP_ENABLED_TRUE@am__append_5 = -I$(abs_top_srcdir)/src/MPC_OpenMP/include/
+@LCP_ENABLED_TRUE@am__append_6 = ./mpi_partitioned.c
+@MPC_FORTRAN_ENABLED_TRUE@am__append_7 = fortran.c
 subdir = src/MPC_MPI/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_gcc_builtin.m4 \
@@ -623,12 +622,21 @@ clean-libLTLIBRARIES:
 	  echo rm -f $${locs}; \
 	  rm -f $${locs}; \
 	}
+./$(am__dirstamp):
+	@$(MKDIR_P) .
+	@: > ./$(am__dirstamp)
+$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) ./$(DEPDIR)
+	@: > $(DEPDIR)/$(am__dirstamp)
+./mpi_partitioned.lo: ./$(am__dirstamp) $(DEPDIR)/$(am__dirstamp)
 
 libmpcmpi.la: $(libmpcmpi_la_OBJECTS) $(libmpcmpi_la_DEPENDENCIES) $(EXTRA_libmpcmpi_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) -rpath $(libdir) $(libmpcmpi_la_OBJECTS) $(libmpcmpi_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f ./*.$(OBJEXT)
+	-rm -f ./*.lo
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -651,6 +659,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_nbc_progress_thread_binding.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpc_reduction.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpi_conf.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpi_partitioned.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpi_rma.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpi_rma_ctrl_msg.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpi_rma_epoch.Plo@am__quote@
@@ -803,6 +812,8 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f ./$(am__dirstamp)
+	-test -z "$(DEPDIR)/$(am__dirstamp)" || rm -f $(DEPDIR)/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"

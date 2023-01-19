@@ -12,10 +12,6 @@ send_rdv_multiple:
         values: [2, 4]
       n_proc:
         values: [2, 4]
-      strp_len: 
-        values: [8192]
-      strp_size:
-        values: [32768]
 send_rdv_sym:
   build:
     cflags: -g -O0
@@ -44,7 +40,17 @@ send_rdv_unsym:
         values: [2]
       n_node: 
         values: [2]
-      strp_len:
-        values: [8192]
-      strp_size:
-        values: [65536]
+partitioned:
+  build:
+    cflags: -g -O0
+    files: ./partitioned.c
+    sources: {binary: partitioned}
+  run:
+    program: @SRCPATH@/script.sh @BUILDPATH@/partitioned
+    iterate: 
+      n_core:
+        values: [2]
+      n_proc: 
+        values: [2]
+      n_node: 
+        values: [2]

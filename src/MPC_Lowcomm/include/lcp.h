@@ -30,12 +30,16 @@ typedef struct lcp_tag_recv_info {
 } lcp_tag_recv_info_t;
 
 enum {
-        LCP_REQUEST_TRY_OFFLOAD = LCP_BIT(0)
+        LCP_REQUEST_TRY_OFFLOAD   = LCP_BIT(0),
+        LCP_REQUEST_USER_DATA     = LCP_BIT(1),
+        LCP_REQUEST_USER_REQUEST  = LCP_BIT(2)
 };
 
 typedef struct {
         uint32_t flags;
         lcp_tag_recv_info_t *recv_info;
+        lcp_complete_callback_func_t cb;
+        mpc_lowcomm_request_t *request;
         lcp_mem_h memh;
 } lcp_request_param_t;
 
@@ -51,14 +55,17 @@ int lcp_tag_recv_nb(lcp_context_h ctx, void *buffer, size_t count,
 /* Put/Get */
 int lcp_put_nb(lcp_ep_h ep, const void *buffer, size_t length,
                uint64_t remote_addr, lcp_mem_h rkey,
-               lcp_complete_callback_func_t cb); 
+               lcp_request_param_t *param); 
 
 /* Memory registration */
 int lcp_mem_register(lcp_context_h ctx, lcp_mem_h *mem_p, void *buffer, 
                      size_t length);
 int lcp_mem_deregister(lcp_context_h ctx, lcp_mem_h mem);
-size_t lcp_mem_pack(lcp_context_h ctx, void *dest, lcp_mem_h mem);
-size_t lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h mem, void *src, size_t size);
+int lcp_mem_pack(lcp_context_h ctx, lcp_mem_h mem, 
+                    void **rkey_buf_p, size_t *rkey_len);
+int lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h *mem_p, 
+                   void *src, size_t size);
+void lcp_mem_release_rkey_buf(void *rkey_buffer);
 
 /* Progress */
 int lcp_progress(lcp_context_h ctx);
