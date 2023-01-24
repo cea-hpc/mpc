@@ -74,11 +74,6 @@
 #include "uthash.h"
 #endif /* HASH_FUNCTION */
 
-/* the binary tree are used to sort tasks by priority */
-#define UTRBTREE_PRIORITY_TYPE_T            double
-#define UTRBTREE_PRIORITY_TYPE_MODIFIER_T   "%lf"
-#include "utrbtree.h"
-
 /*******************
  * OMP DEFINITIONS *
  *******************/
@@ -817,11 +812,8 @@ typedef struct  mpc_omp_task_s
     /* task uid (= number of task previously created) */
     int uid;
 
-    /* the task pqueue */
+    /* the task list */
     struct mpc_omp_task_pqueue_s * pqueue;
-
-    /* the task pqueue node */
-    UT_rbtree_node rbh;
 
 #if OMPT_SUPPORT
     /* Task data and type */
@@ -847,6 +839,28 @@ typedef struct  mpc_omp_task_s
 # endif /* MPC_OMP_TASK_USE_RECYCLERS */
 }               mpc_omp_task_t;
 
+/** RB tree for task priorities */
+typedef struct  mpc_omp_task_pqueue_node_s
+{
+    /* parent node */
+    struct mpc_omp_task_pqueue_node_s * parent;
+
+    /* left node (left->priority < this->priority) */
+    struct mpc_omp_task_pqueue_node_s * left;
+
+    /* right node (right->priority > this->priority) */
+    struct mpc_omp_task_pqueue_node_s * right;
+
+    /* priority for this node */
+    int priority;
+
+    /* tasks for this priority */
+    mpc_omp_task_list_t tasks;
+
+    /* 'R' or 'B' */
+    char color;
+}               mpc_omp_task_pqueue_node_t;
+
 /**
  * Priority queue with :
  *  - Insertion : O(log2(n))
@@ -857,8 +871,8 @@ typedef struct  mpc_omp_task_s
  */
 typedef struct  mpc_omp_task_pqueue_s
 {
-    /* the rbtree */
-    UT_rbtree tree;
+    /* the tree head */
+    mpc_omp_task_pqueue_node_t * root;
 
     /* the tree lock */
     mpc_common_spinlock_t lock;
