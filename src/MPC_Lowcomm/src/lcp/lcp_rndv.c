@@ -493,7 +493,7 @@ int lcp_send_am_rts_start(lcp_request_t *req)
         int rc = MPC_LOWCOMM_SUCCESS;
         int payload_size;
         lcp_ep_h ep = req->send.ep;
-        lcp_chnl_idx_t cc = ep->priority_chnl;
+        lcp_chnl_idx_t cc = req->state.cc;
 
         if (lcp_pending_create(req->ctx, req, req->msg_id) == NULL) {
                 mpc_common_debug_error("LCP: could not add pending message");
@@ -783,7 +783,7 @@ int lcp_recv_rget(lcp_request_t *req, void *hdr, size_t hdr_length)
         lcr_rail_attr_t attr;
         _mpc_lowcomm_endpoint_t *lcr_ep;
 
-        mpc_common_debug_info("LCP: recv offload rput src=%d, tag=%d",
+        mpc_common_debug_info("LCP: recv offload rget src=%d, tag=%d",
                               req->recv.tag.src, req->recv.tag.tag);
 
         /* Get LCP endpoint if exists */

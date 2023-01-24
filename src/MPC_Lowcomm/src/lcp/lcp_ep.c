@@ -102,6 +102,7 @@ int lcp_ep_init_config(lcp_context_h ctx, lcp_ep_h ep)
         ep->ep_config.rndv_threshold = ep->ep_config.am.max_zcopy;
 
 	ep->priority_chnl = prio_idx; 
+	ep->rr_cc         = prio_idx; 
 
 	return MPC_LOWCOMM_SUCCESS;
 }

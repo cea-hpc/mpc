@@ -30,6 +30,7 @@ int lcp_tag_recv_nb(lcp_context_h ctx, void *buffer, size_t count,
 	iface = ctx->resources[ctx->priority_rail].iface;
 	if (LCR_IFACE_IS_TM(iface) && (ctx->config.offload ||
             (param->flags & LCP_REQUEST_TRY_OFFLOAD))) {
+
                 req->state.offloaded = 1;
 		rc = lcp_recv_tag_zcopy(req, iface);
 
@@ -37,6 +38,9 @@ int lcp_tag_recv_nb(lcp_context_h ctx, void *buffer, size_t count,
 
 		return rc;
 	}
+
+        mpc_common_debug("LCP: post recv am src=%d, length=%d",
+                         req->recv.tag.src, count);
 
         req->state.offloaded = 0;
 	match = lcp_match_umq(ctx->umq_table,
@@ -59,12 +63,13 @@ int lcp_tag_recv_nb(lcp_context_h ctx, void *buffer, size_t count,
 		mpc_common_debug_info("LCP: matched rndv unexp req=%p, flags=%x", 
 				      match, match->flags);
 		rc = lcp_rndv_matched(ctx, req, (lcp_rndv_hdr_t *)(match + 1),
-                                      LCP_RNDV_PUT, match->length - sizeof(lcp_rndv_hdr_t));
+                                      match->length - sizeof(lcp_rndv_hdr_t), LCP_RNDV_PUT);
         } else if (match->flags & LCP_RECV_CONTAINER_UNEXP_RGET) {
 		mpc_common_debug_info("LCP: matched rndv unexp req=%p, flags=%x", 
 				      match, match->flags);
 		rc = lcp_rndv_matched(ctx, req, (lcp_rndv_hdr_t *)(match + 1),
-                                      LCP_RNDV_GET, match->length - sizeof(lcp_rndv_hdr_t));
+                                      match->length - sizeof(lcp_rndv_hdr_t),
+                                      LCP_RNDV_GET);
 	} else if (match->flags & LCP_RECV_CONTAINER_UNEXP_TAG) {
 		mpc_common_debug("LCP: matched tag unexp req=%p, flags=%x", req, 
 				 match->flags);

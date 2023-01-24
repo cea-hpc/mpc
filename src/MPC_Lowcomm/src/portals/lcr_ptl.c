@@ -181,7 +181,7 @@ ssize_t lcr_ptl_send_tag_bcopy(_mpc_lowcomm_endpoint_t *ep,
         mpc_common_debug_info("lcr ptl: send tag bcopy to %d (iface=%llu, match=%s, "
                               "remote=%llu, idx=%d, sz=%llu)", ep->dest, srail->iface, 
                               __sctk_ptl_match_str(malloc(32), 32, tag.t), 
-                              remote, pte->idx, size);
+                              remote, srail->ptl_info.tag_pte, size);
         sctk_ptl_chk(PtlPut(srail->ptl_info.mdh,
                             (ptl_size_t) start, /* local offset */
                             size,

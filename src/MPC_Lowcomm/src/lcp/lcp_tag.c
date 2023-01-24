@@ -234,14 +234,14 @@ static int lcp_am_tag_handler(void *arg, void *data,
 	lcp_tag_hdr_t *hdr = data;
 
 	LCP_CONTEXT_LOCK(ctx);
-	mpc_common_debug_info("LCP: recv tag header src=%d, length=%d",
-			      hdr->src, length);
 
 	req = (lcp_request_t *)lcp_match_prq(ctx->prq_table, 
 					     hdr->comm, 
 					     hdr->tag,
 					     hdr->src);
 	if (req == NULL) {
+                mpc_common_debug("LCP: recv unexp tag src=%d, length=%d",
+                                 hdr->src, length);
 		rc = lcp_request_init_unexp_ctnr(&ctnr, hdr, length, 
 						 LCP_RECV_CONTAINER_UNEXP_TAG);
 		if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -257,6 +257,8 @@ static int lcp_am_tag_handler(void *arg, void *data,
 	}
 	LCP_CONTEXT_UNLOCK(ctx);
 		
+        mpc_common_debug("LCP: recv exp tag src=%d, length=%d",
+                         hdr->src, length);
 	/* copy data to receiver buffer and complete request */
 	memcpy(req->recv.buffer, (void *)(hdr + 1), length - sizeof(*hdr));
 

@@ -149,6 +149,7 @@ int lcp_send_tag_zcopy_multi(lcp_request_t *req)
 
 int lcp_send_tag_eager_tag_bcopy(lcp_request_t *req)
 {
+        int rc = MPC_LOWCOMM_SUCCESS;
         ssize_t payload;
         lcp_ep_h ep = req->send.ep;
         _mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[req->state.cc];
@@ -172,7 +173,11 @@ int lcp_send_tag_eager_tag_bcopy(lcp_request_t *req)
                                         req, 
                                         &(req->send.t_ctx));
 
-        return payload;
+	if (payload < 0) {
+		mpc_common_debug_error("LCP: error packing bcopy.");
+		rc = MPC_LOWCOMM_ERROR;
+	}
+        return rc;
 }
 
 int lcp_send_tag_eager_tag_zcopy(lcp_request_t *req)
