@@ -35,7 +35,7 @@ enum {
         LCP_REQUEST_USER_REQUEST  = LCP_BIT(2)
 };
 
-typedef struct {
+typedef struct lcp_request_param {
         uint32_t flags;
         lcp_tag_recv_info_t *recv_info;
         lcp_complete_callback_func_t cb;

@@ -61,6 +61,7 @@ static inline int _mpc_comm_ptp_message_is_for_process( mpc_lowcomm_ptp_message_
 		case MPC_LOWCOMM_ACK_RDV_TM_MESSAGE:
 		case MPC_LOWCOMM_ACK_RPUT_TM_MESSAGE:
                 case MPC_LOWCOMM_RFIN_TM_MESSAGE:
+                case MPC_LOWCOMM_RTR_TM_MESSAGE:
                 case MPC_LOWCOMM_RFIN_MESSAGE:
 		case MPC_LOWCOMM_FRAG_MESSAGE:
 		case MPC_LOWCOMM_FRAG_TM_MESSAGE:
@@ -117,6 +118,7 @@ static inline int _mpc_comm_ptp_message_is_for_control( mpc_lowcomm_ptp_message_
 		case MPC_LOWCOMM_ACK_RDV_TM_MESSAGE:
 		case MPC_LOWCOMM_ACK_RPUT_TM_MESSAGE:
                 case MPC_LOWCOMM_RFIN_TM_MESSAGE:
+                case MPC_LOWCOMM_RTR_TM_MESSAGE:
                 case MPC_LOWCOMM_RFIN_MESSAGE:
 		case MPC_LOWCOMM_FRAG_MESSAGE:
 		case MPC_LOWCOMM_FRAG_TM_MESSAGE:

@@ -61,10 +61,13 @@ int lcp_request_complete(lcp_request_t *req)
         if (req->flags & LCP_REQUEST_RMA_COMPLETE) {
                 req->send.cb(req->request);
         }
+        
+        if (req->flags & LCP_REQUEST_OFFLOADED_RNDV) {
+                lcp_pending_delete(req->ctx->match_ht, req->msg_id);
+        }
 
 	if (req->flags & LCP_REQUEST_DELETE_FROM_PENDING) {
-                lcp_pending_delete(req->ctx,
-                                   req->msg_id);
+                lcp_pending_delete(req->ctx->pend, req->msg_id);
 	} 
 
 	sctk_free(req);

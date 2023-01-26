@@ -31,12 +31,11 @@
 #include "lcp_context.h"
 #include "lcp_request.h"
 
-lcp_pending_entry_t *lcp_pending_create(lcp_context_h ctx,
+lcp_pending_entry_t *lcp_pending_create(lcp_pending_table_t *table,
                                         lcp_request_t *req,
                                         uint64_t msg_key)
 {
         lcp_pending_entry_t *entry;
-        lcp_pending_table_t *table = ctx->pend;
 
         mpc_common_spinlock_lock(&(table->table_lock));
 
@@ -52,8 +51,6 @@ lcp_pending_entry_t *lcp_pending_create(lcp_context_h ctx,
 
                 entry->msg_key = msg_key;
                 entry->req = req;
-                /* delete from pending list on completion */
-                req->flags |= LCP_REQUEST_DELETE_FROM_PENDING; 
 
                 HASH_ADD(hh, table->table, msg_key, sizeof(uint64_t), entry);	
                 mpc_common_debug("LCP: add pending req=%p, msg_id=%llu.", req, msg_key);
@@ -67,11 +64,10 @@ lcp_pending_entry_t *lcp_pending_create(lcp_context_h ctx,
 }
 
 //TODO: add return call
-void lcp_pending_delete(lcp_context_h ctx, 
+void lcp_pending_delete(lcp_pending_table_t *table, 
                         uint64_t msg_key)
 {
         lcp_pending_entry_t *entry;
-        lcp_pending_table_t *table = ctx->pend;
 
         HASH_FIND(hh, table->table, &msg_key, sizeof(uint64_t), entry);
         if (entry == NULL) {
@@ -86,11 +82,10 @@ void lcp_pending_delete(lcp_context_h ctx,
         mpc_common_spinlock_unlock(&(table->table_lock));
 }
 
-lcp_request_t *lcp_pending_get_request(lcp_context_h ctx,
+lcp_request_t *lcp_pending_get_request(lcp_pending_table_t *table,
                                        uint64_t msg_key)
 {
         lcp_pending_entry_t *entry;
-        lcp_pending_table_t *table = ctx->pend;
 
         HASH_FIND(hh, table->table, &msg_key, sizeof(uint64_t), entry);
         if (entry == NULL) 

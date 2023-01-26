@@ -6,7 +6,6 @@
 #include "lcp_request.h"
 #include "lcp_mem.h"
 
-
 #include "sctk_alloc.h"
 
 size_t lcp_rma_put_pack(void *dest, void *arg) {
@@ -48,7 +47,7 @@ int lcp_rma_reg_send_buffer(lcp_request_t *req)
         build_rma_memory_registration_bitmap(req->send.length, 
                                              attr.iface.cap.rma.min_frag_size,
                                              req->ctx->num_resources,
-                                             &req->state.memp_map);
+                                             &req->state.mem_map);
 
         /* Register and pack memory pin context that will be sent to remote */
         rc = lcp_mem_register(req->send.ep->ctx, 
@@ -120,7 +119,7 @@ int lcp_rma_put_zcopy(lcp_request_t *req)
         offset      = 0;
         ep          = req->send.ep;
 
-        req->send.t_ctx.comp.comp_cb = lcp_rma_request_complete_put;
+        req->state.comp.comp_cb = lcp_rma_request_complete_put;
 
         while (remaining > 0) {
                 lcr_ep = ep->lct_eps[req->state.cc];
@@ -137,7 +136,7 @@ int lcp_rma_put_zcopy(lcp_request_t *req)
                                            offset,
                                            &(req->send.rma.rkey->mems[req->state.cc]),
                                            length,
-                                           &(req->send.t_ctx));
+                                           &(req->state.comp));
 
                 offset  += length; remaining -= length;
                 per_ep_length[req->state.cc] -= length;

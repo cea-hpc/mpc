@@ -41,7 +41,6 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
         unsigned flags = 0;
 
         while (1) {
-
                 ret = PtlEQGet(srail->ptl_info.eqh, &ev);
                 sctk_ptl_chk(ret);
 
@@ -61,9 +60,8 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                         case PTL_EVENT_REPLY:
                                 ptl_comp = (lcr_ptl_send_comp_t *)ev.user_ptr;
                                 assert(ptl_comp);
-                                ptl_comp->tag_ctx->comp.sent = ev.mlength;
-                                ptl_comp->tag_ctx->
-                                        comp.comp_cb(&ptl_comp->tag_ctx->comp);
+                                ptl_comp->comp->sent = ev.mlength;
+                                ptl_comp->comp->comp_cb(ptl_comp->comp);
                                 sctk_free(ptl_comp);
                                 goto done;
                                 break;
@@ -71,6 +69,7 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                                 ptl_comp = (lcr_ptl_send_comp_t *)ev.user_ptr;
                                 assert(ptl_comp);
                                 switch (ptl_comp->type) {
+                                case LCR_PTL_COMP_TAG_BCOPY:
                                 case LCR_PTL_COMP_AM_BCOPY:
                                         sctk_free(ptl_comp->bcopy_buf);
                                         break;
@@ -81,13 +80,9 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                                         sctk_free(ptl_comp->iov);
                                         break;
                                 case LCR_PTL_COMP_TAG_ZCOPY:
-                                        ptl_comp->tag_ctx->comp.sent = ev.mlength;
-                                        ptl_comp->tag_ctx->comp.comp_cb(&ptl_comp->tag_ctx->comp);
-                                        break;
                                 case LCR_PTL_COMP_RMA_PUT:
-                                        ptl_comp->tag_ctx->comp.sent = ev.mlength;
-                                        ptl_comp->tag_ctx->
-                                                comp.comp_cb(&ptl_comp->tag_ctx->comp);
+                                        ptl_comp->comp->sent = ev.mlength;
+                                        ptl_comp->comp->comp_cb(ptl_comp->comp);
                                         break;
                                 default:
                                         mpc_common_debug_error("LCR PTL: unknown "
@@ -98,7 +93,6 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                                 goto done;
                                 break;
                         case PTL_EVENT_PUT_OVERFLOW:
-                        case PTL_EVENT_GET_OVERFLOW:
                                 flags = LCR_IFACE_TM_OVERFLOW;
                         case PTL_EVENT_PUT:
                                 switch (ev.pt_index) {
@@ -136,8 +130,15 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                                         break;
                                 }
                                 break;
+                        case PTL_EVENT_GET_OVERFLOW:
+                                mpc_common_debug_info("LCR PTL: got get overflow, not "
+                                                      "possible!");
+                                break;
                         case PTL_EVENT_GET:
-                                goto done;
+                                ptl_comp = (lcr_ptl_send_comp_t *)ev.user_ptr;
+                                assert(ptl_comp);
+                                ptl_comp->tag_ctx->comp.sent = ev.mlength;
+                                ptl_comp->tag_ctx->comp.comp_cb(&ptl_comp->tag_ctx->comp);
                                 break;
                         case PTL_EVENT_AUTO_UNLINK:
                                 ptl_comp = (lcr_ptl_send_comp_t *)ev.user_ptr;

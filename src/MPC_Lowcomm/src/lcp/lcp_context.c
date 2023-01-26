@@ -112,6 +112,17 @@ static int lcp_context_init_structures(lcp_context_h ctx)
 	/* Init endpoint and fragmentation structures */
 	mpc_common_spinlock_init(&(ctx->ctx_lock), 0);
 
+        /* Init pending active message request table */
+	ctx->match_ht = sctk_malloc(sizeof(lcp_pending_table_t));
+	if (ctx->match_ht == NULL) {
+		mpc_common_debug_error("LCP: Could not allocate pending tables.");
+		rc = MPC_LOWCOMM_ERROR;
+		goto err;
+	}
+	memset(ctx->match_ht, 0, sizeof(lcp_pending_table_t));
+	mpc_common_spinlock_init(&ctx->match_ht->table_lock, 0);
+
+        /* Init pending active message request table */
 	ctx->pend = sctk_malloc(sizeof(lcp_pending_table_t));
 	if (ctx->pend == NULL) {
 		mpc_common_debug_error("LCP: Could not allocate pending tables.");
@@ -488,6 +499,9 @@ int lcp_context_create(lcp_context_h *ctx_p, __UNUSED__ unsigned flags)
 
 	/* init random seed to generate unique msg_id */
 	rand_seed_init();
+
+        /* init match uid when using match request */
+        OPA_store_int(&ctx->muid, 0);
 
         /* Get all available components */
         rc = lcr_query_components(&components, &num_components);

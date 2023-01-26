@@ -35,6 +35,7 @@
 #include "lcr/lcr_def.h"
 
 #include <utlist.h>
+#include <uthash.h>
 
 /** Helper to find the struct base address, based on the address on a given member */
 #ifndef container_of
@@ -440,6 +441,13 @@ typedef struct lcr_ptl_block_list {
         struct lcr_ptl_block_list *prev, *next;
 } lcr_ptl_block_list_t;
 
+typedef struct lcr_ptl_persistant_post {
+        UT_hash_handle hh;
+
+        uint64_t tag_key;
+        ptl_handle_me_t meh;
+} lcr_ptl_persistant_post_t;
+
 typedef struct lcr_ptl_info_s {
         ptl_handle_md_t mdh;
         int max_iovecs;
@@ -452,6 +460,7 @@ typedef struct lcr_ptl_info_s {
         size_t eager_block_size;                /**< size of recv block for eager */
         lcr_ptl_block_list_t *tag_block_list;
         lcr_ptl_block_list_t *am_block_list;
+        lcr_ptl_persistant_post_t *persistant_ht;
 } lcr_ptl_info_t;
 
 /**

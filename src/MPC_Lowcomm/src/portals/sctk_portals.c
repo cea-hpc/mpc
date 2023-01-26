@@ -430,12 +430,13 @@ int lcr_ptl_iface_open(char *device_name, int id,
         /* Tag calls */
         iface->send_tag_bcopy      = lcr_ptl_send_tag_bcopy;
         iface->send_tag_zcopy      = lcr_ptl_send_tag_zcopy;
-        iface->send_tag_rndv_zcopy = lcr_ptl_send_tag_rndv_zcopy;
-        iface->recv_tag_zcopy      = lcr_ptl_recv_tag_zcopy;
+        iface->post_tag_zcopy      = lcr_ptl_post_tag_zcopy;
+        iface->unpost_tag_zcopy    = lcr_ptl_unpost_tag_zcopy;
         /* RMA calls */
-        iface->send_put_bcopy      = lcr_ptl_send_put_bcopy;
-        iface->send_put_zcopy      = lcr_ptl_send_put_zcopy;
-        iface->send_get_zcopy      = lcr_ptl_send_get_zcopy;
+        iface->put_bcopy           = lcr_ptl_send_put_bcopy;
+        iface->put_zcopy           = lcr_ptl_send_put_zcopy;
+        iface->get_zcopy           = lcr_ptl_send_get_zcopy;
+        iface->get_tag_zcopy       = lcr_ptl_get_tag_zcopy;
         iface->iface_pack_memp     = lcr_ptl_pack_rkey;
         iface->iface_unpack_memp   = lcr_ptl_unpack_rkey;
         iface->rail_pin_region     = lcr_ptl_mem_register;

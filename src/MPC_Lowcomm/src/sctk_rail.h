@@ -130,9 +130,10 @@ void sctk_rail_pin_ctx_release( sctk_rail_pin_ctx_t * ctx );
 #define LCR_BIT(i) (1ul << (i))
 
 enum {
-	LCR_IFACE_TM_OVERFLOW  = LCR_BIT(0),
-	LCR_IFACE_TM_NOVERFLOW = LCR_BIT(1),
-	LCR_IFACE_TM_ERROR     = LCR_BIT(2)
+	LCR_IFACE_TM_OVERFLOW       = LCR_BIT(0),
+	LCR_IFACE_TM_NOVERFLOW      = LCR_BIT(1),
+	LCR_IFACE_TM_PERSISTANT_MEM = LCR_BIT(2),
+	LCR_IFACE_TM_ERROR          = LCR_BIT(3)
 };
 
 /* Active message handler table entry */
@@ -256,12 +257,13 @@ struct sctk_rail_info_s
 	lcr_send_am_zcopy_func_t send_am_zcopy;
 	lcr_send_tag_bcopy_func_t send_tag_bcopy;
 	lcr_send_tag_zcopy_func_t send_tag_zcopy;
-	lcr_send_tag_rndv_zcopy_func_t send_tag_rndv_zcopy;
-        lcr_send_put_bcopy_func_t send_put_bcopy;
-        lcr_send_put_zcopy_func_t send_put_zcopy;
-        lcr_send_get_bcopy_func_t send_get_bcopy;
-        lcr_send_get_zcopy_func_t send_get_zcopy;
-	lcr_recv_tag_zcopy_func_t recv_tag_zcopy;
+        lcr_put_bcopy_func_t put_bcopy;
+        lcr_put_zcopy_func_t put_zcopy;
+        lcr_get_bcopy_func_t get_bcopy;
+        lcr_get_zcopy_func_t get_zcopy;
+        lcr_get_tag_zcopy_func_t get_tag_zcopy;
+	lcr_post_tag_zcopy_func_t post_tag_zcopy;
+	lcr_unpost_tag_zcopy_func_t unpost_tag_zcopy;
 	/* Interface API */
         lcr_iface_get_attr_func_t iface_get_attr;
         lcr_iface_progress_func_t iface_progress;

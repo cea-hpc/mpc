@@ -62,12 +62,12 @@ int lcp_tag_recv_nb(lcp_context_h ctx, void *buffer, size_t count,
 	if (match->flags & LCP_RECV_CONTAINER_UNEXP_RPUT) {
 		mpc_common_debug_info("LCP: matched rndv unexp req=%p, flags=%x", 
 				      match, match->flags);
-		rc = lcp_rndv_matched(ctx, req, (lcp_rndv_hdr_t *)(match + 1),
+		rc = lcp_rndv_matched(req, (lcp_rndv_hdr_t *)(match + 1),
                                       match->length - sizeof(lcp_rndv_hdr_t), LCP_RNDV_PUT);
         } else if (match->flags & LCP_RECV_CONTAINER_UNEXP_RGET) {
 		mpc_common_debug_info("LCP: matched rndv unexp req=%p, flags=%x", 
 				      match, match->flags);
-		rc = lcp_rndv_matched(ctx, req, (lcp_rndv_hdr_t *)(match + 1),
+		rc = lcp_rndv_matched(req, (lcp_rndv_hdr_t *)(match + 1),
                                       match->length - sizeof(lcp_rndv_hdr_t),
                                       LCP_RNDV_GET);
 	} else if (match->flags & LCP_RECV_CONTAINER_UNEXP_TAG) {

@@ -7,7 +7,7 @@
 //       - NICs are statically linked (one to one relationship)
 //       - add the mem bitmap when sending the rkey to identify to which
 //       interface the rkey belongs to.
-
+//FIXME: this function is also needed for rget 
 static inline void build_memory_registration_bitmap(size_t length, 
                                                     size_t min_frag_size, 
                                                     int max_iface,
@@ -198,6 +198,78 @@ int lcp_mem_register(lcp_context_h ctx,
         }
 
         *mem_p = mem;
+err:
+        return rc;
+}
+
+int lcp_mem_post(lcp_context_h ctx, 
+                 lcp_mem_h *mem_p, 
+                 void *buffer, 
+                 size_t length,
+                 lcr_tag_t tag,
+                 unsigned flags, 
+                 lcr_tag_context_t *tag_ctx)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+        int i;
+        lcp_mem_h mem;
+        lcr_rail_attr_t attr;
+        lcr_tag_t ign = { 0 };
+        size_t iovcnt = 0;
+        struct iovec iov[1];
+        sctk_rail_info_t *iface = ctx->resources[ctx->priority_rail].iface;
+
+        rc = lcp_mem_create(ctx, &mem);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
+
+        mem->length     = length;
+        mem->base_addr  = (uint64_t)buffer;
+
+        iov[0].iov_base = buffer;
+        iov[0].iov_len  = length;
+        iovcnt++;
+
+        iface->iface_get_attr(iface, &attr);
+        build_memory_registration_bitmap(length,
+                                         attr.iface.cap.rndv.min_frag_size,
+                                         ctx->num_resources,
+                                         &mem->bm);
+        
+        /* Pin the memory and create memory handles */
+        for (i=0; i<ctx->num_resources; i++) {
+                if (MPC_BITMAP_GET(mem->bm, i)) {
+                    iface = ctx->resources[i].iface;
+                    iface->post_tag_zcopy(iface, tag, ign, iov, 
+                                          iovcnt, flags, tag_ctx);
+                    mem->num_ifaces++;
+                }
+        }
+
+        *mem_p = mem;
+err:
+        return rc;
+}
+
+int lcp_mem_unpost(lcp_context_h ctx, lcp_mem_h mem, lcr_tag_t tag) 
+{
+        int i;
+        int rc = MPC_LOWCOMM_SUCCESS;
+        sctk_rail_info_t *iface = NULL;
+
+        for (i=0; i<ctx->num_resources; i++) {
+                if (MPC_BITMAP_GET(mem->bm, i)) {
+                        iface = ctx->resources[i].iface;
+                        rc = iface->unpost_tag_zcopy(iface, tag);
+                        if (rc != MPC_LOWCOMM_SUCCESS) {
+                               goto err;
+                        } 
+                }
+        }
+
+        lcp_mem_delete(mem);
+
 err:
         return rc;
 }

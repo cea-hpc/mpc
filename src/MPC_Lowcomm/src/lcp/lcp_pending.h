@@ -31,13 +31,13 @@ void lcp_pending_fini(lcp_context_h ctx);
 /*******************************************************
  * Accessors and mutators pending requests
  ******************************************************/
-lcp_pending_entry_t *lcp_pending_create(lcp_context_h ctx,
+lcp_pending_entry_t *lcp_pending_create(lcp_pending_table_t *table,
                                         lcp_request_t *req,
                                         uint64_t msg_key);
 
-void lcp_pending_delete(lcp_context_h ctx,
+void lcp_pending_delete(lcp_pending_table_t *table,
                         uint64_t msg_key);
 
-lcp_request_t *lcp_pending_get_request(lcp_context_h ctx,
+lcp_request_t *lcp_pending_get_request(lcp_pending_table_t *table,
                                        uint64_t msg_key);
 #endif 

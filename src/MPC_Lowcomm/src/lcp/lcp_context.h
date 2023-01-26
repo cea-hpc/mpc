@@ -10,6 +10,7 @@
 #include "lcp_types.h"
 
 #include "uthash.h"
+#include "opa_primitives.h"
 
 #define LCP_CONTEXT_LOCK(_ctx) \
 	mpc_common_spinlock_lock(&((_ctx)->ctx_lock))
@@ -35,12 +36,19 @@ typedef struct lpc_comm_ctx {
 	mpc_lowcomm_communicator_id_t comm_key;
 } lcp_comm_ctx_t;
 
-typedef struct lpc_ep_ctx {
+typedef struct lcp_ep_ctx {
 	UT_hash_handle hh;
 
 	mpc_lowcomm_peer_uid_t ep_key;
 	lcp_ep_h ep;
 } lcp_ep_ctx_t;
+
+typedef struct lcp_match_ctx {
+	UT_hash_handle hh;
+
+	int muid_key;
+	lcp_request_t *req;
+} lcp_match_ctx_t;
 
 typedef struct lcp_rsc_desc {
 	char name[MPC_CONF_STRING_SIZE];
@@ -69,6 +77,9 @@ struct lcp_context {
         lcp_context_config_t config;
 
 	unsigned flags;
+        
+        OPA_int_t muid; /* matching unique identifier */
+	lcp_pending_table_t *match_ht; /* ht of matching request */
         
         lcr_component_h *cmpts; /* available component handles */
         unsigned num_cmpts; /* number of components */

@@ -25,8 +25,7 @@ ssize_t lcr_ptl_send_tag_bcopy(_mpc_lowcomm_endpoint_t *ep,
                                uint64_t imm,
                                lcr_pack_callback_t pack,
                                void *arg,
-                               unsigned cflags,
-                               lcr_tag_context_t *ctx);
+                               unsigned cflags);
 
 int lcr_ptl_send_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            lcr_tag_t tag,
@@ -34,21 +33,17 @@ int lcr_ptl_send_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            const struct iovec *iov,
                            size_t iovcnt,
                            unsigned cflags,
-                           lcr_tag_context_t *ctx);
+                           lcr_completion_t *ctx);
 
-int lcr_ptl_send_tag_rndv_zcopy(_mpc_lowcomm_endpoint_t *ep,
-                                lcr_tag_t tag,
-                                uint64_t imm,
-                                const struct iovec *iov,
-                                size_t iovcnt,
-                                unsigned cflags,
-                                lcr_tag_context_t *ctx);
-
-int lcr_ptl_recv_tag_zcopy(sctk_rail_info_t *rail,
+int lcr_ptl_post_tag_zcopy(sctk_rail_info_t *rail,
                            lcr_tag_t tag, lcr_tag_t ign_tag,
                            const struct iovec *iov, 
                            size_t iovcnt, /* only one iov supported */
+                           unsigned flags,
                            lcr_tag_context_t *ctx); 
+
+int lcr_ptl_unpost_tag_zcopy(sctk_rail_info_t *rail,
+                             lcr_tag_t tag);
 
 int lcr_ptl_send_put_bcopy(_mpc_lowcomm_endpoint_t *ep,
                            lcr_pack_callback_t pack,
@@ -61,14 +56,21 @@ int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t remote_offset,
                            lcr_memp_t *remote_key,
                            size_t size,
-                           lcr_tag_context_t *ctx);
+                           lcr_completion_t *ctx);
 
 int lcr_ptl_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t local_addr,
                            uint64_t remote_offset,
                            lcr_memp_t *remote_key,
                            size_t size,
-                           lcr_tag_context_t *ctx);
+                           lcr_completion_t *ctx);
+
+int lcr_ptl_get_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
+                          lcr_tag_t tag,
+                          uint64_t local_offset,
+                          uint64_t remote_offset,
+                          size_t size,
+                          lcr_completion_t *ctx);
 
 void lcr_ptl_mem_register(struct sctk_rail_info_s *rail, 
                           struct sctk_rail_pin_ctx_list *list, 

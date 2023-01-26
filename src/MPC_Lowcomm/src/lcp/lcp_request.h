@@ -5,6 +5,7 @@
 
 #include "lcp.h"
 #include "lcp_ep.h"
+#include "lcp_context.h"
 #include "lcp_header.h" 
 #include "lcp_pending.h"
 
@@ -19,7 +20,10 @@ enum {
 	LCP_REQUEST_RECV_TRUNC          = LCP_BIT(2), /* flags if request is truncated */
         LCP_REQUEST_MPI_COMPLETE        = LCP_BIT(3), /* call MPI level completion callback, 
                                                          see ucp_request_complete */
-        LCP_REQUEST_RMA_COMPLETE        = LCP_BIT(4) /* call RMA level completion callback */
+        LCP_REQUEST_RMA_COMPLETE        = LCP_BIT(4),
+        LCP_REQUEST_OFFLOADED_RNDV      = LCP_BIT(5),
+        LCP_REQUEST_RECV                = LCP_BIT(6),
+        LCP_REQUEST_SEND                = LCP_BIT(7)
 };
 
 enum {
@@ -96,6 +100,7 @@ struct lcp_request {
 				int tag;
 				int dt;
 			} tag;
+
 		} recv;
 	};
 
@@ -105,16 +110,20 @@ struct lcp_request {
 	int16_t                seqn;    /* Sequence number */
 	uint64_t               msg_id;  /* Unique message identifier */
         struct lcp_request    *super;
+        
+        struct {
+                lcr_tag_t imm;
+        } tm;
 
 	struct {
-                bmap_t             memp_map;
+                bmap_t             mem_map;
 		size_t             remaining;
 		size_t             offset;
-		int                f_id;
 		lcp_chnl_idx_t     cc;
 		lcr_completion_t   comp;
                 uint8_t            comp_stg;
                 lcp_mem_h          lmem; 
+                lcp_mem_h          rmem; 
                 int                offloaded;
 	} state;
 };
@@ -133,7 +142,6 @@ struct lcp_request {
 	(_req)->state.cc        = (_ep)->priority_chnl; \
 	(_req)->state.remaining = _length; \
 	(_req)->state.offset    = 0; \
-	(_req)->state.f_id      = 0; \
 }
 
 #define LCP_REQUEST_INIT_RECV(_req, _ctx, _mpi_req, _length, _buf) \
@@ -148,7 +156,6 @@ struct lcp_request {
 	\
 	(_req)->state.remaining = _length; \
 	(_req)->state.offset    = 0; \
-	(_req)->state.f_id      = 0; \
 }
 
 static inline void lcp_request_init_tag_send(lcp_request_t *req)
@@ -201,7 +208,6 @@ static inline void lcp_request_init_ack(lcp_request_t *ack_req, lcp_ep_h ep,
 
         ack_req->state.remaining    = sizeof(lcp_rndv_ack_hdr_t);
         ack_req->state.offset       = 0; 
-        ack_req->state.f_id         = 0; 
         ack_req->state.cc           = ep->priority_chnl;
 
 	ack_req->msg_id             = msg_id;
@@ -215,7 +221,7 @@ static inline int lcp_request_send(lcp_request_t *req)
         case MPC_LOWCOMM_SUCCESS:
                 break;
         case MPC_LOWCOMM_NO_RESOURCE:
-                if (lcp_pending_create(req->ctx, req, 
+                if (lcp_pending_create(req->ctx->pend, req, 
                                        req->msg_id) == NULL) {
                         rc = MPC_LOWCOMM_ERROR;
                 }

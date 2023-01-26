@@ -18,5 +18,13 @@ struct lcp_mem {
 int lcp_mem_create(lcp_context_h ctx, lcp_mem_h *mem_p);
 void lcp_mem_delete(lcp_mem_h mem);
 size_t lcp_mem_rkey_pack(lcp_context_h ctx, lcp_mem_h mem, void *dest);
+int lcp_mem_post(lcp_context_h ctx, 
+                 lcp_mem_h *mem_p, 
+                 void *buffer, 
+                 size_t length,
+                 lcr_tag_t tag,
+                 unsigned flags, 
+                 lcr_tag_context_t *tag_ctx);
+int lcp_mem_unpost(lcp_context_h ctx, lcp_mem_h mem, lcr_tag_t tag);
 
 #endif

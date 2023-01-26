@@ -1,12 +1,15 @@
 #ifndef LCP_RNDV_H
 #define LCP_RNDV_H
 
-#include "lcp_request.h"
-#include "lcp_header.h"
-#include "lcp_context.h"
+#include "lcp_def.h"
+#include "lcp_types.h"
 
-int lcp_send_rndv_start(lcp_request_t *req, const lcp_request_param_t *param);
-int lcp_rndv_matched(lcp_context_h ctx, lcp_request_t *req, 
+#include "lcp_header.h"
+
+
+int lcp_send_rput_common(lcp_request_t *super, lcp_mem_h rmem);
+int lcp_send_rndv_am_start(lcp_request_t *req);
+int lcp_rndv_matched(lcp_request_t *req, 
                      lcp_rndv_hdr_t *hdr, size_t length,
                      lcp_rndv_mode_t rndv_mode);
 int lcp_recv_rsend(lcp_request_t *req, void *hdr);

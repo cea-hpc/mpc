@@ -5,6 +5,7 @@
 
 #include <sctk_alloc.h>
 #include <alloca.h>
+#include <uthash.h>
 
 //FIXME: add safeguard for msg size
 ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
@@ -148,13 +149,11 @@ ssize_t lcr_ptl_send_tag_bcopy(_mpc_lowcomm_endpoint_t *ep,
                                uint64_t imm,
                                lcr_pack_callback_t pack,
                                void *arg,
-                               __UNUSED__ unsigned cflags,
-                               lcr_tag_context_t *ctx)
+                               __UNUSED__ unsigned cflags)
 {
         sctk_ptl_rail_info_t* srail    = &ep->rail->network.ptl;
         void* start                    = NULL;
         size_t size                    = 0;
-        sctk_ptl_pte_t* pte            = NULL;
         sctk_ptl_id_t remote           = SCTK_PTL_ANY_PROCESS;
         _mpc_lowcomm_endpoint_info_portals_t* infos   = &ep->data.ptl;
         lcr_ptl_send_comp_t *ptl_comp;
@@ -164,7 +163,7 @@ ssize_t lcr_ptl_send_tag_bcopy(_mpc_lowcomm_endpoint_t *ep,
 
         assert(size <= srail->eager_limit);
 
-        remote                 = infos->dest;
+        remote = infos->dest;
 
         ptl_comp = sctk_malloc(sizeof(lcr_ptl_send_comp_t));
         if (ptl_comp == NULL) {
@@ -175,7 +174,6 @@ ssize_t lcr_ptl_send_tag_bcopy(_mpc_lowcomm_endpoint_t *ep,
         memset(ptl_comp, 0, sizeof(lcr_ptl_send_comp_t));
 
         ptl_comp->type      = LCR_PTL_COMP_TAG_BCOPY;
-        ptl_comp->tag_ctx   = ctx;
         ptl_comp->bcopy_buf = start;
 
         mpc_common_debug_info("lcr ptl: send tag bcopy to %d (iface=%llu, match=%s, "
@@ -204,7 +202,7 @@ int lcr_ptl_send_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            const struct iovec *iov,
                            size_t iovcnt,
                            __UNUSED__ unsigned cflags,
-                           lcr_tag_context_t *ctx)
+                           lcr_completion_t *comp)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         sctk_ptl_rail_info_t* srail    = &ep->rail->network.ptl;
@@ -228,13 +226,13 @@ int lcr_ptl_send_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
         memset(ptl_comp, 0, sizeof(lcr_ptl_send_comp_t));
 
         ptl_comp->type      = LCR_PTL_COMP_TAG_ZCOPY;
-        ptl_comp->tag_ctx   = ctx;
+        ptl_comp->comp      = comp;
 
         mpc_common_debug_info("LCR PTL: send tag zcopy to %d (iface=%llu, match=%s, "
                               "remote=%llu, idx=%d, sz=%llu, user_ptr=%p)", 
                               ep->dest, srail->iface, 
                               __sctk_ptl_match_str(malloc(32), 32, tag.t), 
-                              remote, srail->ptl_info.tag_pte, size, ctx);
+                              remote, srail->ptl_info.tag_pte, size, ptl_comp);
         sctk_ptl_chk(PtlPut(srail->ptl_info.mdh,
                             (ptl_size_t) iov[0].iov_base, /* local offset */
                             iov[0].iov_len,
@@ -251,83 +249,19 @@ err:
         return rc;
 }
 
-//FIXME: where should the me be posted ? 
-int lcr_ptl_send_tag_rndv_zcopy(_mpc_lowcomm_endpoint_t *ep,
-                                lcr_tag_t tag,
-                                uint64_t imm,
-                                const struct iovec *iov,
-                                size_t iovcnt,
-                                __UNUSED__ unsigned cflags,
-                                lcr_tag_context_t *ctx)
-{
-        sctk_ptl_local_data_t* me_request = NULL;
-        sctk_ptl_rail_info_t* srail       = &ep->rail->network.ptl;
-        int me_flags                      = 0;
-        sctk_ptl_matchbits_t match        = SCTK_PTL_MATCH_INIT;
-        sctk_ptl_matchbits_t ign          = SCTK_PTL_MATCH_INIT;
-        sctk_ptl_pte_t*rdma_pte    = NULL;
-        sctk_ptl_id_t remote              = SCTK_PTL_ANY_PROCESS;
-        _mpc_lowcomm_endpoint_info_portals_t* infos   = &ep->data.ptl;
-
-        mpc_common_debug_fatal("LCR PTL: rndv zcopy not implemented");
-        return 0;
-        assert(iovcnt == 2);
-
-        match.raw              = tag.t;
-        remote                 = infos->dest;
-
-        /* complete the ME data, this ME will be appended to the PRIORITY_LIST */
-        rdma_pte   = mpc_common_hashtable_get(&srail->pt_table, SCTK_PTL_PTE_RDMA);
-        me_flags   = SCTK_PTL_ME_GET_FLAGS | SCTK_PTL_ONCE;
-        me_request = sctk_ptl_me_create(iov[1].iov_base, iov[1].iov_len, remote, match, ign, me_flags); 
-
-        assert(me_request);
-
-        me_request->msg  = ctx;
-        me_request->list = SCTK_PTL_PRIORITY_LIST;
-        me_request->type = SCTK_PTL_TYPE_STD;
-
-        mpc_common_debug_info("LCR PTL: post recv rndv zcopy (iface=%llu, idx=%d, "
-                              "sz=%llu, buf=%p, match=%s)", srail->iface, rdma_pte->idx, 
-                              iov[1].iov_len, iov[1].iov_base,
-                              __sctk_ptl_match_str(sctk_malloc(32), 32, match.raw));
-        sctk_ptl_chk(PtlMEAppend(srail->iface,
-                                 rdma_pte->idx,
-                                 &me_request->slot.me,
-                                 me_request->list,
-                                 me_request,
-                                 &me_request->slot_h.meh
-                                ));
-
-        mpc_common_debug_info("LCR PTL: send zcopy to %d (iface=%llu, remote=%llu, "
-                              "idx=%d, sz=%llu match=%s)", ep->dest, srail->iface, 
-                              remote, rdma_pte->idx, iov[0].iov_len,
-                              __sctk_ptl_match_str(sctk_malloc(32), 32, match.raw));
-
-        sctk_ptl_chk(PtlPut(srail->ptl_info.mdh,
-                            0, /* local offset */
-                            0,
-                            PTL_ACK_REQ,
-                            remote,
-                            rdma_pte->idx,
-                            match.raw,
-                            0, /* remote offset */
-                            ctx,
-                            imm	
-                           ));
-
-        return MPC_LOWCOMM_SUCCESS;
-}
-
-int lcr_ptl_recv_tag_zcopy(sctk_rail_info_t *rail,
+int lcr_ptl_post_tag_zcopy(sctk_rail_info_t *rail,
                            lcr_tag_t tag, lcr_tag_t ign_tag,
                            const struct iovec *iov, 
                            __UNUSED__ size_t iovcnt, /* only one iov supported */
+                           unsigned flags,
                            lcr_tag_context_t *ctx) 
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         ptl_me_t me;
         ptl_handle_me_t meh;
+        unsigned int persistant = flags & LCR_IFACE_TM_PERSISTANT_MEM ? 
+                0 : SCTK_PTL_ONCE;
+        lcr_ptl_persistant_post_t *persistant_post;
         sctk_ptl_rail_info_t* srail     = &rail->network.ptl;
         lcr_ptl_send_comp_t *ptl_comp;
 
@@ -342,9 +276,8 @@ int lcr_ptl_recv_tag_zcopy(sctk_rail_info_t *rail,
                         .start = iov[0].iov_base,
                         .uid = PTL_UID_ANY,
                         .options = SCTK_PTL_ME_PUT_FLAGS    | 
-                                SCTK_PTL_ONCE               |
-                                PTL_ME_EVENT_LINK_DISABLE   | 
-                                PTL_ME_EVENT_UNLINK_DISABLE
+                                SCTK_PTL_ME_GET_FLAGS       |
+                                persistant           
         };
 
         ptl_comp = sctk_malloc(sizeof(lcr_ptl_send_comp_t));
@@ -367,11 +300,45 @@ int lcr_ptl_recv_tag_zcopy(sctk_rail_info_t *rail,
 		&meh
 	));
 
+        if (flags & LCR_IFACE_TM_PERSISTANT_MEM) {
+                persistant_post = sctk_malloc(sizeof(lcr_ptl_persistant_post_t));
+                if (persistant_post == NULL) {
+                        mpc_common_debug_error("LCR PTL: could not allocate "
+                                               "persistant post");
+                        rc = MPC_LOWCOMM_ERROR;
+                        goto err;
+                }
+                persistant_post->tag_key = tag.t;
+                persistant_post->meh = meh;
+                HASH_ADD(hh, srail->ptl_info.persistant_ht, tag_key, sizeof(uint64_t),
+                         persistant_post);
+        }
+
         mpc_common_debug_info("LCR PTL: post recv zcopy to %p (iface=%llu, idx=%d, "
                               "sz=%llu, buf=%p)", rail, srail->iface, 
                               srail->ptl_info.tag_pte, iov[0].iov_len, 
                               iov[0].iov_base);
 err:
+        return rc;
+}
+
+int lcr_ptl_unpost_tag_zcopy(sctk_rail_info_t *rail, lcr_tag_t tag)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+        lcr_ptl_persistant_post_t *persistant_post;
+        sctk_ptl_rail_info_t* srail     = &rail->network.ptl;
+
+        HASH_FIND(hh, srail->ptl_info.persistant_ht, &tag.t, sizeof(uint64_t),
+                  persistant_post);
+        if (persistant_post == NULL) {
+                mpc_common_debug_error("LCR PTL: could not find posted "
+                                       "element with tag: %llu", tag.t);
+                rc = MPC_LOWCOMM_ERROR;
+                return rc;
+        }
+
+        sctk_ptl_chk(PtlMEUnlink(persistant_post->meh));
+
         return rc;
 }
 
@@ -436,14 +403,14 @@ int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t remote_offset,
                            lcr_memp_t *remote_key,
                            size_t size,
-                           lcr_tag_context_t *ctx) 
+                           lcr_completion_t *comp) 
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-        _mpc_lowcomm_endpoint_info_portals_t* infos   = &ep->data.ptl;
+        _mpc_lowcomm_endpoint_info_portals_t* infos = &ep->data.ptl;
         sctk_ptl_rail_info_t* srail    = &ep->rail->network.ptl;
-        sctk_ptl_id_t remote = infos->dest;
+        sctk_ptl_id_t remote           = infos->dest;
         sctk_ptl_matchbits_t rdv_match = SCTK_PTL_MATCH_INIT;
-        lcr_ptl_send_comp_t *ptl_comp;
+        lcr_ptl_send_comp_t *ptl_comp  = NULL;
 
         mpc_common_debug_info("PTL: remote key. match=%s, remote=%llu, "
                               "remote off=%llu, pte idx=%d, local addr=%p, "
@@ -461,18 +428,13 @@ int lcr_ptl_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
         }
         memset(ptl_comp, 0, sizeof(lcr_ptl_send_comp_t));
         ptl_comp->type = LCR_PTL_COMP_RMA_PUT;
-        ptl_comp->tag_ctx = ctx;
+        ptl_comp->comp = comp;
 
-        sctk_ptl_chk(PtlPut(srail->ptl_info.mdh,
-                            local_addr, 
-                            size,
-                            PTL_ACK_REQ,
-                            remote,
-                            srail->ptl_info.rma_pte,
-                            rdv_match.raw,
+        sctk_ptl_chk(PtlPut(srail->ptl_info.mdh, local_addr, 
+                            size, PTL_ACK_REQ, remote,
+                            srail->ptl_info.rma_pte, rdv_match.raw,
                             (uint64_t)remote_key->pin.ptl.start + remote_offset,
-                            ptl_comp,
-                            0
+                            ptl_comp, 0
                            ));
 err:
         return rc;
@@ -483,14 +445,14 @@ int lcr_ptl_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t remote_offset,
                            lcr_memp_t *remote_key,
                            size_t size,
-                           lcr_tag_context_t *ctx) 
+                           lcr_completion_t *comp) 
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-        _mpc_lowcomm_endpoint_info_portals_t* infos   = &ep->data.ptl;
+        _mpc_lowcomm_endpoint_info_portals_t* infos = &ep->data.ptl;
         sctk_ptl_rail_info_t* srail    = &ep->rail->network.ptl;
-        sctk_ptl_id_t remote = infos->dest;
+        sctk_ptl_id_t remote           = infos->dest;
         sctk_ptl_matchbits_t rdv_match = SCTK_PTL_MATCH_INIT;
-        lcr_ptl_send_comp_t *ptl_comp;
+        lcr_ptl_send_comp_t *ptl_comp  = NULL;
 
         mpc_common_debug_info("PTL: remote key. match=%s, remote=%llu, "
                               "remote off=%llu, pte idx=%d, local addr=%p, "
@@ -507,7 +469,7 @@ int lcr_ptl_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
                 goto err;
         }
         memset(ptl_comp, 0, sizeof(lcr_ptl_send_comp_t));
-        ptl_comp->tag_ctx = ctx;
+        ptl_comp->comp = comp;
 
         sctk_ptl_chk(PtlGet(srail->ptl_info.mdh,
                             local_addr,
@@ -518,9 +480,51 @@ int lcr_ptl_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
                             (uint64_t)remote_key->pin.ptl.start + remote_offset,
                             ptl_comp	
                            ));
+err:
+        return rc;
+}
+
+int lcr_ptl_get_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
+                          lcr_tag_t tag,
+                          uint64_t local_offset,
+                          uint64_t remote_offset,
+                          size_t size,
+                          lcr_completion_t *comp)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+        _mpc_lowcomm_endpoint_info_portals_t* infos = &ep->data.ptl;
+        sctk_ptl_rail_info_t* srail   = &ep->rail->network.ptl;
+        sctk_ptl_id_t remote          = infos->dest;
+        lcr_ptl_send_comp_t *ptl_comp = NULL;
+
+        mpc_common_debug_info("PTL: get tag remote key. match=[%d:%d:%d], "
+                              "remote=%llu, remote off=%llu, pte idx=%d, "
+                              "local addr=%p", tag.t_rget.op, tag.t_rget.length, 
+                              tag.t_rget.id, remote, remote_offset, 
+                              srail->ptl_info.tag_pte, local_offset);
+
+        ptl_comp = sctk_malloc(sizeof(lcr_ptl_send_comp_t));
+        if (ptl_comp == NULL) {
+                mpc_common_debug_error("LCR PTL: could not allocate bcopy comp");
+                rc = MPC_LOWCOMM_ERROR;
+                goto err;
+        }
+        memset(ptl_comp, 0, sizeof(lcr_ptl_send_comp_t));
+        ptl_comp->comp = comp;
+
+        sctk_ptl_chk(PtlGet(srail->ptl_info.mdh,
+                            local_offset,
+                            size,
+                            remote,
+                            srail->ptl_info.tag_pte,
+                            tag.t,
+                            remote_offset,
+                            ptl_comp	
+                           ));
 
 err:
         return rc;
+
 }
 
 void lcr_ptl_mem_register(struct sctk_rail_info_s *rail, 
@@ -559,8 +563,7 @@ int lcr_ptl_unpack_rkey(sctk_rail_info_t *rail,
         void *p = dest;	
 
         /* deserialize data */
-        //FIXME: warning generated by following line, start is void * while
-        //       uint64_t 
+        //FIXME: warning
         memp->pin.ptl.start = *(uint64_t *)p;
 
         return sizeof(uint64_t);

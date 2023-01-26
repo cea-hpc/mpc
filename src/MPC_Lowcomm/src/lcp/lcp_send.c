@@ -27,7 +27,7 @@ int lcp_send_start(lcp_ep_h ep, lcp_request_t *req,
                         req->send.func = lcp_send_tag_eager_tag_zcopy;
                 } else {
                         lcp_request_init_rndv_send(req);
-                        rc = lcp_send_rndv_start(req, param);
+                        rc = lcp_send_rndv_offload_start(req);
                 }
         } else {
                 req->state.cc = (ep->rr_cc = ep->rr_cc + 1) % ep->num_chnls;
@@ -41,7 +41,7 @@ int lcp_send_start(lcp_ep_h ep, lcp_request_t *req,
                         req->send.func = lcp_send_am_eager_tag_zcopy;
                 } else {
                         lcp_request_init_rndv_send(req);
-                        rc = lcp_send_rndv_start(req, param);
+                        rc = lcp_send_rndv_am_start(req);
                 }
         }
 
