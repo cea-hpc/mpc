@@ -324,7 +324,8 @@ int lcp_rndv_matched(lcp_request_t *rreq,
                 rreq->state.comp = (lcr_completion_t) {
                         .comp_cb = lcp_request_complete_am_rget
                 };
-                rc = lcp_mem_unpack(rreq->ctx, &rreq->state.rmem, hdr, length);
+                rc = lcp_mem_unpack(rreq->ctx, &rreq->state.rmem, 
+                                    hdr + 1, length);
                 if (rc < 0) {
                         goto err;
                 }
@@ -382,7 +383,7 @@ int lcp_recv_am_rget(lcp_request_t *req)
         size_t remaining, offset;
         size_t frag_length, length;
         size_t *per_ep_length;
-        lcp_mem_h rmem = NULL; 
+        lcp_mem_h rmem = req->state.rmem; 
         lcp_ep_h ep;
         lcp_ep_ctx_t *ctx_ep;
         lcr_rail_attr_t attr;
