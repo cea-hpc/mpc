@@ -1460,36 +1460,6 @@ __task_finalize_persistent(mpc_omp_task_t * task)
 
     // WIP : barrier-free implementation of persistent taskgraph
     // inter-iterations dependencies may cause issue => need to track root/leaf and generate arcs (?)
-#if 0
-    // Reinit the task if a new version is ready
-    mpc_omp_task_persistent_instance_t * tinstance = NULL;
-    mpc_common_spinlock_lock(&(task->persistent_infos.reinit));
-    {
-        if (task->persistent_infos.next_instance)
-        {
-            tinstance = task->persistent_infos.next_instance;
-
-            if (task->persistent_infos.next_instance == task->persistent_infos.last_instance)
-            {
-                task->persistent_infos.last_instance = NULL;
-            }
-            task->persistent_infos.next_instance = task->persistent_infos.next_instance->next;
-        }
-        else
-        {
-            task->persistent_infos.lacked_instance = 1;
-        }
-    }
-    mpc_common_spinlock_unlock(&(task->persistent_infos.reinit));
-
-    if (tinstance)
-    {
-        task->data = (void *) (tinstance + 1);
-        free(tinstance);
-        _mpc_omp_task_reinit(task);
-        _mpc_omp_task_process(task);
-    }
-#endif
 }
 
 /** Given task completed -> fulfill its successors dependencies */
@@ -4196,13 +4166,6 @@ mpc_omp_persistent_region_push(mpc_omp_task_t * task)
     task->persistent_infos.zombit = 0;
     mpc_omp_task_set_property(&(task->property), MPC_OMP_TASK_PROP_PERSISTENT);
     mpc_common_indirect_array_iterator_push(&(region->tasks_it), &task);
-
-    // WIP : barrier-free implementation of persistent taskgraph
-    // inter-iterations dependencies may cause issue => need to track root/leaf and generate arcs (?)
-#if 0
-    mpc_common_spinlock_init(&(task->persistent_infos.reinit), 0);
-    task->persistent_infos.lacked_instance = 0;
-#endif
 }
 
 void

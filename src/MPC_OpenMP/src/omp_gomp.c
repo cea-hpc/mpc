@@ -2122,46 +2122,6 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
         void * data_storage = (void *) (task + 1);
         __task_data_copy(cpyfn, data_storage, data, arg_size);
         _mpc_omp_task_reinit(task);
-
-        // WIP : barrier-free implementation of persistent taskgraph
-        // inter-iterations dependencies may cause issue => need to track root/leaf and generate arcs (?)
-#if 0
-        // TODO : can we remove the amount of work within the lock here ?
-        mpc_common_spinlock_lock(&(task->persistent_infos.reinit));
-        {
-            /* if the previous instance already completed but lacked a new instance,
-             * then we copy the data and process the task here */
-            if (task->persistent_infos.lacked_instance)
-            {
-                /* reinit task */
-                void * data_storage = (void *) (task + 1);
-                __task_data_copy(cpyfn, data_storage, data, arg_size);
-                _mpc_omp_task_reinit(task);
-
-                /* process the task (differ or run it) */
-                _mpc_omp_task_process(task);
-            }
-            /* else, the copy and the processing will be done on completion on the
-             * previous instance by the consumer */
-            else
-            {
-                mpc_omp_task_persistent_instance_t * tinstance = (mpc_omp_task_persistent_instance_t *) malloc(sizeof(mpc_omp_task_persistent_instance_t) + arg_size);
-                assert(tinstance);
-                tinstance->next = NULL;
-
-                void * data_storage = (void *) (tinstance + 1);
-                __task_data_copy(cpyfn, data_storage, data, arg_size);
-
-                task->persistent_infos.last_instance->next = tinstance;
-                task->persistent_infos.last_instance       = tinstance;
-                if (task->persistent_infos.next_instance == NULL)
-                {
-                    task->persistent_infos.next_instance = tinstance;
-                }
-            }
-        }
-        mpc_common_spinlock_unlock(&(task->persistent_infos.reinit));
-#endif
     }
     else
     {
