@@ -68,7 +68,7 @@ int lcp_tag_send_nb(lcp_ep_h ep, const void *buffer, size_t count,
                               msg_id);
 
         if (ep->state == LCP_EP_FLAG_CONNECTING) {
-                if (lcp_pending_create(ep->ctx, req, 
+                if (lcp_pending_create(ep->ctx->pend, req, 
                                        req->msg_id) == NULL) {
                         rc = MPC_LOWCOMM_ERROR;
                 }

@@ -387,6 +387,7 @@ int mpi_pstart(MPI_internal_request_t *req)
         switch (req->req.request_type) {
         case REQUEST_SEND:
                 lcp_ep_get(ctx, prtd->tag_req.header.destination, &ep);
+                param = (lcp_request_param_t) { 0 };
                 rc = lcp_tag_send_nb(ep, &req->partitioned.partitions, 
                                      sizeof(int), &prtd->tag_req, 
                                      &param);
