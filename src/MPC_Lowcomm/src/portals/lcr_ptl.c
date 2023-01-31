@@ -456,11 +456,11 @@ int lcr_ptl_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
         mpc_common_debug_info("PTL: remote key. match=%s, remote=%llu, "
                               "remote off=%llu, pte idx=%d, local addr=%p, "
-                              "remote addr=%p", 
+                              "remote addr=%p, iface=%d", 
                               __sctk_ptl_match_str(sctk_malloc(32), 32, 
                                                    remote_key->pin.ptl.match.raw),
                               remote, remote_offset, srail->ptl_info.rma_pte, 
-                              local_addr, remote_key->pin.ptl.start);
+                              local_addr, remote_key->pin.ptl.start, srail->iface);
 
         ptl_comp = sctk_malloc(sizeof(lcr_ptl_send_comp_t));
         if (ptl_comp == NULL) {

@@ -113,6 +113,7 @@ struct lcp_request {
         
         struct {
                 lcr_tag_t imm;
+                int mid;
         } tm;
 
 	struct {

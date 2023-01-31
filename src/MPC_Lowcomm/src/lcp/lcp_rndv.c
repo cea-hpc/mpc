@@ -12,6 +12,7 @@
 static inline void build_memory_bitmap(size_t length, 
                                        size_t min_frag_size, 
                                        int max_iface,
+                                       int start_idx,
                                        bmap_t *bmap_p)
 {
         bmap_t bmap = MPC_BITMAP_INIT;
@@ -19,7 +20,8 @@ static inline void build_memory_bitmap(size_t length,
 
         while ((length > num_used_ifaces * min_frag_size) &&
                (num_used_ifaces < max_iface)) {
-                MPC_BITMAP_SET(bmap, num_used_ifaces);
+                MPC_BITMAP_SET(bmap, start_idx);
+                start_idx = (start_idx + 1) % max_iface;
                 num_used_ifaces++;
         }
 
@@ -64,7 +66,9 @@ static size_t lcp_rts_rput_pack(void *dest, void *data)
         hdr->msg_id    = req->msg_id;
         hdr->size      = req->send.length;
 
-        return sizeof(*hdr);
+        memcpy(hdr + 1, &req->state.lmem->bm, sizeof(bmap_t));
+
+        return sizeof(*hdr) + sizeof(bmap_t);
 }
 
 static size_t lcp_rndv_fin_pack(void *dest, void *data)
@@ -103,7 +107,7 @@ static size_t lcp_rtr_rput_pack(void *dest, void *data)
 int lcp_send_rput_common(lcp_request_t *super, lcp_mem_h rmem)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-        int i, num_used_ifaces;
+        int i, last_iface = 0, num_used_ifaces = 0;
         size_t remaining, offset;
         size_t frag_length, length;
         size_t *per_ep_length;
@@ -111,25 +115,35 @@ int lcp_send_rput_common(lcp_request_t *super, lcp_mem_h rmem)
         lcr_rail_attr_t attr;
         _mpc_lowcomm_endpoint_t *lcr_ep;
 
+        /* Count number of iface to use */
+        for (i=0; i<super->ctx->num_resources; i++) {
+                if (MPC_BITMAP_GET(rmem->bm, i)) {
+                        num_used_ifaces++;
+                }
+        }
         /* Set the length to be sent on each interface. The minimum size that
          * can be sent on a interface is defined by min_frag_size */
-        num_used_ifaces = rmem->num_ifaces;
-        per_ep_length   = sctk_malloc(num_used_ifaces * sizeof(size_t));
-        for (i=0; i<num_used_ifaces; i++) {
-                per_ep_length[i] = (size_t)super->send.length / num_used_ifaces;
+        per_ep_length = sctk_malloc(super->ctx->num_resources * sizeof(size_t));
+        for (i=0; i<super->ctx->num_resources; i++) {
+                if (MPC_BITMAP_GET(rmem->bm, i)) {
+                        per_ep_length[i] = (size_t)super->send.length / 
+                                num_used_ifaces;
+                        last_iface = i;
+                }
         }
-        per_ep_length[0] += super->send.length % num_used_ifaces;
+        per_ep_length[last_iface] += super->send.length % num_used_ifaces;
 
         super->state.comp_stg = 1;
         remaining   = super->send.length;
         offset      = 0;
         ep          = super->send.ep;
 
-        //FIXME: communication channel selection is not correct since rmem is
-        //       built following its bitmap. As long as memory keys are built on
-        //       the order of the resources table, it ok.
-        //       Ideally, the implementation should avoid this. 
         while (remaining > 0) {
+                if (!MPC_BITMAP_GET(rmem->bm, super->state.cc)) {
+                        super->state.cc = (super->state.cc + 1) % 
+                                super->ctx->num_resources;
+                        continue;
+                }
                 lcr_ep = ep->lct_eps[super->state.cc];
                 lcr_ep->rail->iface_get_attr(lcr_ep->rail, &attr);
 
@@ -149,8 +163,8 @@ int lcp_send_rput_common(lcp_request_t *super, lcp_mem_h rmem)
                 offset    += length; remaining -= length;
                 per_ep_length[super->state.cc] -= length;
 
-                //FIXME: could be erroneous, see above
-                super->state.cc = (super->state.cc + 1) % num_used_ifaces;
+                super->state.cc = (super->state.cc + 1) % 
+                        super->ctx->num_resources;
         }
 
         return rc;
@@ -186,8 +200,10 @@ int lcp_send_am_rget_start(lcp_request_t *req)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         int payload_size;
+        lcr_rail_attr_t attr;
         lcp_ep_h ep = req->send.ep;
         lcp_chnl_idx_t cc = req->state.cc;
+        sctk_rail_info_t *iface = ep->lct_eps[cc]->rail;
 
         mpc_common_debug_info("LCP: send rndv get am req=%p, comm_id=%lu, tag=%d, "
                               "src=%d, dest=%d, msg_id=%d, buf=%p.", req, 
@@ -196,17 +212,24 @@ int lcp_send_am_rget_start(lcp_request_t *req)
                               req->send.rndv.dest, req->msg_id,
                               req->send.buffer);
 
+        /* memory registration */
+        lcp_mem_create(req->ctx, &(req->state.lmem));
+
+        iface->iface_get_attr(iface, &attr);
+        build_memory_bitmap(req->send.length, attr.iface.cap.rndv.min_frag_size,
+                            req->ctx->num_resources, cc, &(req->state.lmem->bm));
+
         /* Register and pack memory pin context that will be sent to remote */
-        rc = lcp_mem_register(req->send.ep->ctx, 
-                              &(req->state.lmem), 
-                              req->send.buffer, 
-                              req->send.length);
+        //FIXME: having the bitmap in the request state seems not useful. Could
+        //       be only in the lcp_mem_h
+        rc = lcp_mem_reg_from_map(req->send.ep->ctx, 
+                                  req->state.lmem,
+                                  req->state.lmem->bm,
+                                  req->send.buffer, 
+                                  req->send.length);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
-
-        //NOTE: no completion function for am rget since request is completed
-        //      with fin handler.
 
         payload_size = lcp_send_do_am_bcopy(ep->lct_eps[cc], 
                                             MPC_LOWCOMM_RGET_MESSAGE,
@@ -216,6 +239,8 @@ int lcp_send_am_rget_start(lcp_request_t *req)
         }
 
         /* Do not complete request right now */
+        //NOTE: no completion function for am rget since request is completed
+        //      with fin handler.
 err:
         return rc;
 }
@@ -224,8 +249,10 @@ int lcp_send_am_rput_start(lcp_request_t *req)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         int payload_size;
+        lcr_rail_attr_t attr;
         lcp_ep_h ep = req->send.ep;
         lcp_chnl_idx_t cc = req->state.cc;
+        sctk_rail_info_t *iface = ep->lct_eps[cc]->rail;
 
         mpc_common_debug_info("LCP: send rndv put am req=%p, comm_id=%lu, tag=%d, "
                               "src=%d, dest=%d, msg_id=%d, buf=%p.", req, 
@@ -237,8 +264,23 @@ int lcp_send_am_rput_start(lcp_request_t *req)
         /* Register and pack memory pin context that will be sent to remote */
         //NOTE: memory registration for put not necessary for portals.
         //      however, needed probably for other rma transports.
-        rc = lcp_mem_register(req->send.ep->ctx, &(req->state.lmem), 
-                              req->send.buffer, req->send.length);
+        //      Sender is responsible to choose which communication channel will
+        //      be used. So the memory bitmap is packed and sent.
+        /* memory registration */
+        lcp_mem_create(req->ctx, &(req->state.lmem));
+
+        iface->iface_get_attr(iface, &attr);
+        build_memory_bitmap(req->send.length, attr.iface.cap.rndv.min_frag_size,
+                            req->ctx->num_resources, cc, &(req->state.lmem->bm));
+
+        /* Register and pack memory pin context that will be sent to remote */
+        //FIXME: having the bitmap in the request state seems not useful. Could
+        //       be only in the lcp_mem_h
+        rc = lcp_mem_reg_from_map(req->send.ep->ctx, 
+                                  req->state.lmem,
+                                  req->state.lmem->bm,
+                                  req->send.buffer, 
+                                  req->send.length);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
@@ -318,6 +360,7 @@ int lcp_rndv_matched(lcp_request_t *rreq,
 
         switch (rndv_mode) {
         case LCP_RNDV_PUT:
+                rreq->state.mem_map = *(bmap_t *)(hdr + 1);
                 rc = lcp_recv_am_rput(rreq);
                 break;
         case LCP_RNDV_GET:
@@ -379,7 +422,7 @@ err:
 /* ============================================== */
 int lcp_recv_am_rget(lcp_request_t *req)
 {
-        int rc, f_id, i;
+        int rc, i, last_iface = 0, num_used_ifaces = 0;
         size_t remaining, offset;
         size_t frag_length, length;
         size_t *per_ep_length;
@@ -405,19 +448,34 @@ int lcp_recv_am_rget(lcp_request_t *req)
                 ep = ctx_ep->ep;
         }
 
-        /* Compute length per endpoints that will be get */
-        per_ep_length = sctk_malloc(rmem->num_ifaces * sizeof(size_t));
-        for (i=0; i<rmem->num_ifaces; i++) {
-                per_ep_length[i] = (size_t)req->recv.send_length / rmem->num_ifaces;
+        /* Count number of iface to use */
+        for (i=0; i<req->ctx->num_resources; i++) {
+                if (MPC_BITMAP_GET(rmem->bm, i)) {
+                        num_used_ifaces++;
+                }
         }
-        per_ep_length[0] += req->recv.send_length % rmem->num_ifaces;
+        /* Set the length to be sent on each interface. The minimum size that
+         * can be sent on a interface is defined by min_frag_size */
+        per_ep_length = sctk_malloc(req->ctx->num_resources * sizeof(size_t));
+        for (i=0; i<req->ctx->num_resources; i++) {
+                if (MPC_BITMAP_GET(rmem->bm, i)) {
+                        per_ep_length[i] = (size_t)req->recv.send_length / 
+                                num_used_ifaces;
+                        last_iface = i;
+                }
+        }
+        per_ep_length[last_iface] += req->send.length % num_used_ifaces;
 
         req->state.comp_stg = 0;
         req->state.remaining = remaining = req->recv.send_length;
-        f_id                 = 0;
         offset               = 0;
 
         while (remaining > 0) {
+                if (!MPC_BITMAP_GET(rmem->bm, req->state.cc)) {
+                        req->state.cc = (req->state.cc + 1) % 
+                                req->ctx->num_resources;
+                        continue;
+                }
                 lcr_ep = ep->lct_eps[req->state.cc];
                 lcr_ep->rail->iface_get_attr(lcr_ep->rail, &attr);
 
@@ -435,8 +493,7 @@ int lcp_recv_am_rget(lcp_request_t *req)
                 per_ep_length[req->state.cc] -= length;
                 offset += length; remaining  -= length;
 
-                req->state.cc = (req->state.cc + 1) % rmem->num_ifaces;
-                f_id++;
+                req->state.cc = (req->state.cc + 1) % req->ctx->num_resources;
         }
 
         sctk_free(per_ep_length);
@@ -468,10 +525,18 @@ int lcp_recv_am_rput(lcp_request_t *req)
         }
 
         /* Register memory on which the put will be done */
-        rc = lcp_mem_register(req->ctx, 
-                              &(req->state.lmem), 
-                              req->recv.buffer, 
-                              req->recv.send_length);
+        lcp_mem_create(req->ctx, &(req->state.lmem));
+        //FIXME: remote bitmap is sent as payload in rndv put message. It is
+        //       unpacked and saved by caller.
+        req->state.lmem->bm  = req->state.mem_map;
+
+        /* Register and pack memory pin context that will be sent to remote */
+        //FIXME: revise how the memory is registered by sender and receiver...
+        rc = lcp_mem_reg_from_map(req->send.ep->ctx, 
+                                  req->state.lmem,
+                                  req->state.lmem->bm,
+                                  req->send.buffer, 
+                                  req->send.length);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }

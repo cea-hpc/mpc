@@ -10,6 +10,19 @@
 #include "sctk_alloc.h"
 #include "sctk_net_tools.h"
 
+#define LCP_OFFLOAD_MUID_SRC_MASK 0xffffffff00000000ull
+#define LCP_OFFLOAD_MUID_MID_MASK 0x00000000ffffffffull
+
+#define LCP_OFFLOAD_SET_MUID(_msg_id, _src, _mid) \
+        _msg_id |= (_src & 0xffffffffull); \
+        _msg_id  = (_msg_id << 32);        \
+        _msg_id |= (_mid & 0xffffffffull);
+
+#define LCP_OFFLOAD_GET_MUID_SRC(_muid) \
+        ((int)((_hdr & LCP_OFFLOAD_MUID_SRC_MASK) >> 32))
+#define LCP_OFFLOAD_GET_MUID_MID(_muid) \
+        ((int)((_hdr & LCP_OFFLOAD_GET_MUID_MID)))
+
 enum {
         LCP_PROTOCOL_EAGER = 0,
         LCP_PROTOCOL_RGET,
@@ -43,7 +56,7 @@ static size_t lcp_rndv_fin_pack(void *dest, void *data)
         lcp_request_t *req = data;
 
         hdr->msg_id = req->msg_id;
-        hdr->src    = req->send.am.src;
+        hdr->src    = req->send.tag.src;
 
         return sizeof(*hdr);
 }
@@ -135,18 +148,17 @@ int lcp_send_rget_offload_start(lcp_request_t *req)
         int rc;
         lcp_ep_h ep = req->send.ep;
         bmap_t bitmap = { 0 };
-        struct iovec iov_send[1];
         lcr_rail_attr_t attr;
         //FIXME: change priority_chnl to tag_chnl
         sctk_rail_info_t *rail = ep->lct_eps[ep->priority_chnl]->rail;
-        size_t iovcnt = 0;
 
         rail->iface_get_attr(rail, &attr);
         build_memory_bitmap(req->send.length, attr.iface.cap.rndv.min_frag_size,
                             req->ctx->num_resources, &bitmap);
         /* Set immediate and tag for matching */
+        //FIXME: we only use the first 16bits of req->msg_id!!
         LCP_TM_SET_HDR_DATA(req->tm.imm.t, 0, LCP_PROTOCOL_RGET, bitmap.bits[0], //FIXME: change getter
-                            req->send.length, req->msg_id);
+                            req->send.length, req->tm.mid);
 
         lcr_tag_t tag = { 0 };
         LCP_TM_SET_MATCHBITS(tag.t, 
@@ -155,10 +167,10 @@ int lcp_send_rget_offload_start(lcp_request_t *req)
                              req->send.rndv.comm_id);
 
         mpc_common_debug_info("LCP: send rndv get off req=%p, comm_id=%lu, "
-                              "tag=%d, src=%d, dest=%d, muid=%d, buf=%p.", req, 
+                              "tag=%d, src=%d, dest=%d, mid=%d, buf=%p.", req, 
                               req->send.rndv.comm_id, 
                               req->send.rndv.tag, req->send.rndv.src, 
-                              req->send.rndv.dest, req->msg_id, 
+                              req->send.rndv.dest, req->tm.mid, 
                               req->send.buffer);
 
         req->send.t_ctx.req          = req;
@@ -170,11 +182,7 @@ int lcp_send_rget_offload_start(lcp_request_t *req)
                           req->send.length, (lcr_tag_t)req->tm.imm, mem_flags, 
                           &(req->send.t_ctx));
 
-        /* Post FIN before sending RGET */
         //TODO: add rts data in case message is unexpected
-        iov_send[0].iov_base = NULL;
-        iov_send[0].iov_len  = 0; 
-        iovcnt++;
 
         /* Finally, post send RGET */
         rc = lcp_send_do_tag_bcopy(ep->lct_eps[ep->priority_chnl],
@@ -213,9 +221,7 @@ void lcp_request_complete_rput_offload(lcr_completion_t *comp)
 int lcp_send_rput_offload_start(lcp_request_t *req)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-        size_t iovcnt = 0;
         uint64_t imm  = 0;
-        struct iovec iov_send[1];
         bmap_t bitmap;
         lcp_ep_h ep = req->send.ep;
         lcr_rail_attr_t attr;
@@ -242,8 +248,11 @@ int lcp_send_rput_offload_start(lcp_request_t *req)
         /* Inside immediate data (header), set RPUT protocol and length of
          * request */
         LCP_TM_SET_HDR_DATA(imm, 0, LCP_PROTOCOL_RPUT, bitmap.bits[0], //FIXME: change getter
-                            req->send.length, req->msg_id);
+                            req->send.length, req->tm.mid);
 
+        /* reset msg id */
+        req->msg_id = 0;
+        LCP_OFFLOAD_SET_MUID(req->msg_id, req->send.tag.dest, req->tm.mid);
         /* Add request to match list for later rtr */
         if (lcp_pending_create(req->ctx->match_ht, req, req->msg_id) == NULL) {
                 mpc_common_debug_error("LCP OFFLOAD: could not add pending "
@@ -254,9 +263,6 @@ int lcp_send_rput_offload_start(lcp_request_t *req)
         req->flags |= LCP_REQUEST_OFFLOADED_RNDV;
 
         /* No data to be sent for RPUT */
-        iov_send[0].iov_base = NULL;
-        iov_send[0].iov_len  = 0;
-        iovcnt++;
 
         req->state.comp.comp_cb = lcp_request_complete_rput_offload;
 
@@ -274,14 +280,12 @@ err:
 
 int lcp_send_rndv_offload_start(lcp_request_t *req)
 {
-        int muid;
         lcp_ep_h ep = req->send.ep;
 
         req->state.offloaded = 1;
         
-        /* Increment offload id and overwrite msg id */
-        muid = OPA_fetch_and_incr_int(&req->ctx->muid);
-        req->msg_id = muid;
+        /* Increment offload id */
+        req->tm.mid = OPA_fetch_and_incr_int(&req->ctx->muid);
 
         switch(ep->ctx->config.rndv_mode) {
         case LCP_RNDV_GET:
@@ -382,7 +386,8 @@ void lcp_recv_tag_callback(lcr_completion_t *comp)
 
         op                    = LCP_TM_GET_HDR_OP(imm);
         req->recv.send_length = LCP_TM_GET_HDR_LENGTH(imm); 
-        req->msg_id           = LCP_TM_GET_HDR_UID(imm);
+        req->tm.mid           = LCP_TM_GET_HDR_UID(imm);
+        req->tm.imm           = (lcr_tag_t)imm;
 
         src                   = LCP_TM_GET_SRC(tag.t);
 
@@ -535,7 +540,7 @@ int lcp_recv_tag_rget(lcp_request_t *req)
                         per_ep_length[req->state.cc] : frag_length;
 
                 rc = lcp_send_do_get_tag_zcopy(lcr_ep, 
-                                               (lcr_tag_t)req->recv.t_ctx.imm,
+                                               req->tm.imm,
                                                (uint64_t)req->recv.buffer+offset, 
                                                offset, length,
                                                &(req->state.comp));
@@ -574,6 +579,7 @@ int lcp_recv_tag_rput(lcp_request_t *req)
                 ep = ctx_ep->ep;
         }
 
+        LCP_OFFLOAD_SET_MUID(req->msg_id, req->recv.tag.src, req->tm.mid);
         /* Add request to match list for later rtr */
         if (lcp_pending_create(req->ctx->match_ht, req, req->msg_id) == NULL) {
                 mpc_common_debug_error("LCP OFFLOAD: could not add pending "
@@ -629,13 +635,14 @@ static int lcp_rndv_tag_rtr_handler(void *arg, void *data,
         lcp_context_h ctx = arg;
         lcp_rndv_ack_hdr_t *hdr = data;
         lcp_mem_h rmem = NULL;
-        int muid = (int)hdr->msg_id;
+        uint64_t muid = 0;
         lcp_request_t *req;
 
         mpc_common_debug_info("LCP: recv tag ack off header src=%d, "
-                              "msg_id=%llu.", hdr->src, muid);
+                              "msg_id=%llu.", hdr->src, hdr->msg_id);
 
         /* Retrieve request */
+        LCP_OFFLOAD_SET_MUID(muid, hdr->src, hdr->msg_id);
         if ((req = lcp_pending_get_request(ctx->match_ht, muid)) == NULL) {
                 mpc_common_debug_error("LCP OFFLOAD: could not find request");
                 rc = MPC_LOWCOMM_ERROR;
@@ -661,13 +668,14 @@ static int lcp_rndv_tag_fin_handler(void *arg, void *data,
         int rc = MPC_LOWCOMM_SUCCESS;
         lcp_context_h ctx = arg;
         lcp_rndv_ack_hdr_t *hdr = data;
-        int muid = (int)hdr->msg_id;
+        uint64_t muid = 0;
         lcp_request_t *req;
 
         mpc_common_debug_info("LCP: recv rfin header src=%d, msg_id=%llu",
                               hdr->src, hdr->msg_id);
 
         /* Retrieve request */
+        LCP_OFFLOAD_SET_MUID(muid, hdr->src, hdr->msg_id);
         if ((req = lcp_pending_get_request(ctx->match_ht, muid)) == NULL) {
                 mpc_common_debug_error("LCP OFFLOAD: could not find request");
                 rc = MPC_LOWCOMM_ERROR;

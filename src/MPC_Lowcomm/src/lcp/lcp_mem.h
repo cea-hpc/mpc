@@ -25,6 +25,11 @@ int lcp_mem_post(lcp_context_h ctx,
                  lcr_tag_t tag,
                  unsigned flags, 
                  lcr_tag_context_t *tag_ctx);
+int lcp_mem_reg_from_map(lcp_context_h ctx,
+                         lcp_mem_h mem,
+                         bmap_t mem_map,
+                         void *buffer,
+                         size_t length);
 int lcp_mem_unpost(lcp_context_h ctx, lcp_mem_h mem, lcr_tag_t tag);
 
 #endif

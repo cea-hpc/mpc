@@ -160,6 +160,28 @@ void lcp_mem_delete(lcp_mem_h mem)
         mem = NULL;
 }
 
+int lcp_mem_reg_from_map(lcp_context_h ctx,
+                         lcp_mem_h mem,
+                         bmap_t mem_map,
+                         void *buffer,
+                         size_t length)
+{
+        int i;
+        sctk_rail_info_t *iface = ctx->resources[ctx->priority_rail].iface;
+
+        /* Pin the memory and create memory handles */
+        for (i=0; i<ctx->num_resources; i++) {
+                if (MPC_BITMAP_GET(mem_map, i)) {
+                    iface = ctx->resources[i].iface;
+                    iface->rail_pin_region(iface, &mem->mems[i], buffer, length);
+                    mem->num_ifaces++;
+                }
+        }
+
+        //FIXME: no error to be returned because rail_pin_region is void.
+        return MPC_LOWCOMM_SUCCESS;
+}
+
 //FIXME: what append if a memory could not get registered ? Miss error handling:
 //       if a subset could not be registered, perform the communication on the 
 //       successful memory pins ?
@@ -169,7 +191,6 @@ int lcp_mem_register(lcp_context_h ctx,
                      size_t length)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
-        int i;
         lcp_mem_h mem;
         lcr_rail_attr_t attr;
         sctk_rail_info_t *iface = ctx->resources[ctx->priority_rail].iface;
@@ -187,14 +208,9 @@ int lcp_mem_register(lcp_context_h ctx,
                                          attr.iface.cap.rndv.min_frag_size,
                                          ctx->num_resources,
                                          &mem->bm);
-        
-        /* Pin the memory and create memory handles */
-        for (i=0; i<ctx->num_resources; i++) {
-                if (MPC_BITMAP_GET(mem->bm, i)) {
-                    iface = ctx->resources[i].iface;
-                    iface->rail_pin_region(iface, &mem->mems[i], buffer, length);
-                    mem->num_ifaces++;
-                }
+        rc = lcp_mem_reg_from_map(ctx, mem, mem->bm, buffer, length); 
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
         }
 
         *mem_p = mem;

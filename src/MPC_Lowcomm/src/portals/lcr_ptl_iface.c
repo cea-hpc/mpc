@@ -47,10 +47,10 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                 if (ret == PTL_OK) {
                         mpc_common_debug_info("PORTALS: EQS EVENT '%s' idx=%d, "
                                               "sz=%llu, user=%p, start=%p, "
-                                              "remote_offset=%p", 
+                                              "remote_offset=%p, iface=%d", 
                                               sctk_ptl_event_decode(ev), ev.pt_index, 
                                               ev.mlength, ev.user_ptr, ev.start,
-                                              ev.remote_offset);
+                                              ev.remote_offset, srail->iface);
                         did_poll = 1;
 
                         switch (ev.type) {
