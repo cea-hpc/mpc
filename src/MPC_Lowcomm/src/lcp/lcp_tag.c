@@ -14,6 +14,13 @@
 /* Packing                                        */
 /* ============================================== */
 
+/**
+ * @brief Pack a message into a header
+ * 
+ * @param dest header
+ * @param data data to pack
+ * @return size_t size of packed data
+ */
 static size_t lcp_send_tag_pack(void *dest, void *data)
 {
 	lcp_tag_hdr_t *hdr = dest;
@@ -37,6 +44,11 @@ static size_t lcp_send_tag_pack(void *dest, void *data)
 /* Completion                                     */
 /* ============================================== */
 
+/**
+ * @brief Complete a request by its tag
+ * 
+ * @param comp completion
+ */
 void lcp_tag_complete(lcr_completion_t *comp) {
 
 	lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
@@ -49,6 +61,12 @@ void lcp_tag_complete(lcr_completion_t *comp) {
 /* Send                                           */
 /* ============================================== */
 
+/**
+ * @brief Callback for buffered copy in tagged active message eager
+ * 
+ * @param req request
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_send_am_eager_tag_bcopy(lcp_request_t *req) 
 {
 	
@@ -76,6 +94,12 @@ int lcp_send_am_eager_tag_bcopy(lcp_request_t *req)
 	return rc;
 }
 
+/**
+ * @brief Callback for zero copy in tagged active message eager
+ * 
+ * @param req request
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_send_am_eager_tag_zcopy(lcp_request_t *req) 
 {
 	
@@ -131,7 +155,15 @@ err:
 /* ============================================== */
 /* Handlers                                       */
 /* ============================================== */
-
+/**
+ * @brief Handler for receiving an active tag message
+ * 
+ * @param arg context
+ * @param data header
+ * @param length length of the data
+ * @param flags flag of the message
+ * @return int 
+ */
 static int lcp_am_tag_handler(void *arg, void *data,
                               size_t length, 
                               __UNUSED__ unsigned flags)

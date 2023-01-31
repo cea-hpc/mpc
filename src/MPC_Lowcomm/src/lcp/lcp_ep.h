@@ -16,10 +16,18 @@ enum {
 	LCP_EP_FLAG_CLOSED 
 };
 
+/**
+ * @brief configuration of rendez-vous for a given endpoint (specifies fragmentation threshold)
+ * 
+ */
 typedef struct lcp_ep_rndv_config {
 	size_t frag_thresh;
 } lcp_ep_rndv_config_t;
 
+/**
+ * @brief configuration of endpoint
+ * 
+ */
 typedef struct lcp_ep_config {
         struct {
                 size_t max_bcopy;

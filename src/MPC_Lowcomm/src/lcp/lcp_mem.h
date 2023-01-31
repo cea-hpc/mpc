@@ -7,6 +7,10 @@
  
 #include "bitmap.h"
 
+/**
+ * @brief memory object
+ * 
+ */
 struct lcp_mem {
         uint64_t base_addr;
         size_t length;

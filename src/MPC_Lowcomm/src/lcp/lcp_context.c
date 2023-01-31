@@ -19,10 +19,21 @@ lcp_context_h context = NULL;
 
 lcp_am_handler_t lcp_am_handlers[MPC_LOWCOMM_MSG_LAST] = {{NULL, 0}};
 
+/**
+ * @brief Get context.
+ * 
+ * @return lcp_context_h context of lcp
+ */
 lcp_context_h lcp_context_get() {
 	return context;
 }
-
+/**
+ * @brief Return true if context ctx has a communicator
+ * 
+ * @param ctx context to check
+ * @param comm_key key of the communicator
+ * @return int MPI_SUCCESS in case of success
+ */
 int lcp_context_has_comm(lcp_context_h ctx, uint64_t comm_key)
 {
 	lcp_comm_ctx_t *elem = NULL;
@@ -32,6 +43,13 @@ int lcp_context_has_comm(lcp_context_h ctx, uint64_t comm_key)
 }
 
 //NOTE: hack to add comm to portals tables
+/**
+ * @brief add communicator to context
+ * 
+ * @param ctx context to add
+ * @param comm_key key of the communicator
+ * @return int MPI_SUCCESS in case of success
+ */
 int lcp_context_add_comm(lcp_context_h ctx, uint64_t comm_key)
 {
 	int rc;
@@ -61,6 +79,13 @@ err:
 	return rc;
 }
 
+/**
+ * @brief set the handler of an active message with context ctx as argument
+ * 
+ * @param ctx context as input to handler
+ * @param iface rail to add the handler to
+ * @return int MPI_SUCCESS in case of success
+ */
 static inline int lcp_context_set_am_handler(lcp_context_h ctx, 
                                              sctk_rail_info_t *iface)
 {
@@ -81,6 +106,12 @@ static inline int lcp_context_set_am_handler(lcp_context_h ctx,
 	return rc;
 }
 
+/**
+ * @brief Open all resources from a context.
+ * 
+ * @param ctx context to open
+ * @return int MPI_SUCCESS in case of success
+ */
 static int lcp_context_open_interfaces(lcp_context_h ctx)
 {
 	int rc, i;
@@ -106,7 +137,12 @@ err:
 	return rc;
 }
 
-
+/**
+ * @brief Alloc and initialize structures in context
+ * 
+ * @param ctx context to initialize
+ * @return int MPI_SUCCESS in case of success
+ */
 static int lcp_context_init_structures(lcp_context_h ctx)
 {
         int rc;
@@ -216,6 +252,15 @@ static int lcp_context_config_parse_list(const char *cfg_list,
         return MPC_LOWCOMM_SUCCESS;
 }
 
+/**
+ * @brief Initialize a configuration in a context.
+ * 
+ * @param ctx context to initialize
+ * @param components components to initialize in the configuration
+ * @param num_components number of components to initialize
+ * @param config configuration to initialize in the context
+ * @return int MPI_SUCCESS In case of success
+ */
 static int lcp_context_config_init(lcp_context_h ctx, 
                                    lcr_component_h *components,
                                    unsigned num_components,
@@ -317,6 +362,14 @@ err:
         return rc;
 }
 
+/**
+ * @brief Get the resources of a component.
+ * 
+ * @param component component to get the resources from
+ * @param devices_p resources (out)
+ * @param num_devices_p number of resources
+ * @return int MPI_SUCCESS in case of success
+ */
 static int lcp_context_query_component_devices(lcr_component_h component,
                                                lcr_device_t **devices_p,
                                                unsigned *num_devices_p)
@@ -347,6 +400,13 @@ err:
         return rc;
 }
 
+/**
+ * @brief Initialize resources with components and device name
+ * 
+ * @param resource_p resource to initialize
+ * @param component components used to fill the resources
+ * @param device used for resource name
+ */
 static inline void lcp_context_resource_init(lcp_rsc_desc_t *resource_p,
                                              lcr_component_h component,
                                              lcr_device_t *device)
@@ -427,7 +487,13 @@ static void lcp_context_select_components(lcp_context_h ctx,
                               max_ifaces);
 }
 
-
+/**
+ * @brief Return true if device is in config.
+ * 
+ * @param ctx context containing selected devices
+ * @param device device to check
+ * @return int MPI_SUCCESS in case of success
+ */
 static inline int lcp_context_resource_in_config(lcp_context_h ctx,
                                                  lcr_device_t *device)
 {
@@ -444,6 +510,14 @@ static inline int lcp_context_resource_in_config(lcp_context_h ctx,
         return 0;
 }
 
+/**
+ * @brief Add resources / devices to a context.
+ * 
+ * @param ctx context to add the resources to
+ * @param components resources to add to the context
+ * @param num_components number of resources to add
+ * @return int MPI_SUCCESS in case of success
+ */
 static int lcp_context_add_resources(lcp_context_h ctx, 
                                      lcr_component_h *components,
                                      unsigned num_components)
@@ -529,6 +603,7 @@ out_free_devices:
         return rc;
 }
 
+<<<<<<< HEAD
 void lcp_context_task_get(lcp_context_h ctx, int tid, lcp_task_h *task_p)
 {
         lcp_task_entry_t *item;
@@ -542,6 +617,16 @@ void lcp_context_task_get(lcp_context_h ctx, int tid, lcp_task_h *task_p)
 }
 
 int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
+=======
+/**
+ * @brief Allocate and initialize a context.
+ * 
+ * @param ctx_p address of the context to be created
+ * @param flags unused
+ * @return int MPI_SUCCESS in case of success
+ */
+int lcp_context_create(lcp_context_h *ctx_p, __UNUSED__ unsigned flags)
+>>>>>>> c397275d2 (LCP: Initial documentation for lcp module)
 {
 	int rc, i;
 	lcp_context_h ctx;	
@@ -634,6 +719,12 @@ err:
 	return rc;
 }
 
+/**
+ * @brief Release a context.
+ * 
+ * @param ctx context to free
+ * @return int MPI_SUCCESS in case of success
+ */
 int lcp_context_fini(lcp_context_h ctx)
 {
 	int i;

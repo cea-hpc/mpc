@@ -165,14 +165,14 @@ typedef struct lcr_completion {
 
 /* tag offloading context */
 typedef struct lcr_tag_context {
-        void *start;           //NOTE: buffer returned by tm interface
-	void *req;             //NOTE: contains lcp_request_t
+    void *start;			// NOTE: buffer returned by tm interface
+	void *req;				// NOTE: contains lcp_request_t
 	uint64_t imm;
-	lcr_tag_t tag;         //NOTE: needed by LCP to get msg_id and
-                               //      find corresponding request
-	lcr_completion_t comp; //NOTE: needed by send when portals ack 
-                               //      is received to complete the request.
-        unsigned flags;
+	lcr_tag_t tag;			// NOTE: needed by LCP to get msg_id and
+							// find corresponding request
+	lcr_completion_t comp;	// NOTE: needed by send when portals ack 
+							// is received to complete the request.
+	unsigned flags;
 } lcr_tag_context_t;
 
 /************************************************************************/

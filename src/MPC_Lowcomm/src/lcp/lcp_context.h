@@ -17,6 +17,10 @@
 #define LCP_CONTEXT_UNLOCK(_ctx) \
 	mpc_common_spinlock_unlock(&((_ctx)->ctx_lock))
 
+/**
+ * @brief handler holding a callback and a flag
+ * 
+ */
 typedef struct lcp_am_handler {
 	lcr_am_callback_t cb;
 	uint64_t flags;
@@ -30,12 +34,20 @@ typedef struct lcp_am_handler {
 
 extern lcp_am_handler_t lcp_am_handlers[];
 
+/**
+ * @brief communicator
+ * 
+ */
 typedef struct lpc_comm_ctx {
 	UT_hash_handle hh;
 
 	mpc_lowcomm_communicator_id_t comm_key;
 } lcp_comm_ctx_t;
 
+/**
+ * @brief endpoint
+ * 
+ */
 typedef struct lcp_ep_ctx {
 	UT_hash_handle hh;
 
@@ -71,6 +83,10 @@ typedef struct lcp_rsc_desc {
         lcr_component_h component;
 } lcp_rsc_desc_t;
 
+/**
+ * @brief context configuration
+ * 
+ */
 typedef struct lcp_context_config {
         int multirail_enabled;
         int multirail_heterogeneous_enabled;
@@ -83,6 +99,10 @@ typedef struct lcp_context_config {
         int offload;
 } lcp_context_config_t;
 
+/**
+ * @brief context (configuration, devices, resources, queues)
+ * 
+ */
 struct lcp_context {
 	int priority_rail;
 

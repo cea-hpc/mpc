@@ -8,6 +8,10 @@ typedef struct lcp_am_hdr {
 	uint8_t am_id; //FIXME: not needed ?
 } lcp_am_hdr_t;
 
+/**
+ * @brief tag matched message header
+ * 
+ */
 typedef struct lcp_tag_hdr {
 	int32_t  src_tid;  /* source task identifier         */
 	int32_t  dest_tid; /* destination process identifier */
@@ -16,6 +20,10 @@ typedef struct lcp_tag_hdr {
 	uint16_t comm;     /* communicator identifier        */
 } lcp_tag_hdr_t;
 
+/**
+ * @brief rendez-vous message header
+ * 
+ */
 typedef struct lcp_rndv_hdr {
 	lcp_tag_hdr_t base;
 	int32_t       src_pid; /* source process identifier   */
@@ -23,11 +31,19 @@ typedef struct lcp_rndv_hdr {
 	size_t        size;    /* message size                */
 } lcp_rndv_hdr_t;
 
+/**
+ * @brief acknowledgement message header
+ * 
+ */
 typedef struct lcp_rndv_ack_hdr {
 	uint64_t msg_id;
 	int32_t  src;
 } lcp_rndv_ack_hdr_t;
 
+/**
+ * @brief fragmented message header
+ * 
+ */
 typedef struct lcp_frag_hdr {
 	lcp_am_hdr_t base;
 	uint64_t msg_id;

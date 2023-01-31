@@ -7,6 +7,12 @@
 
 #include <uthash.h>
 
+/**
+ * @brief progress in the pending request list
+ * 
+ * @param ctx 
+ * @return int 
+ */
 int lcp_progress(lcp_context_h ctx)
 {
 	int i, rc = MPC_LOWCOMM_SUCCESS;

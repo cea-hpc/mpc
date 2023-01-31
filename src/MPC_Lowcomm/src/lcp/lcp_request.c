@@ -5,6 +5,12 @@
 
 #include <sctk_alloc.h>
 
+/**
+ * @brief Create a request.
+ * 
+ * @param req_p pointer to the request to be created
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_request_create(lcp_request_t **req_p)
 {
 	lcp_request_t *req;
@@ -20,6 +26,15 @@ int lcp_request_create(lcp_request_t **req_p)
 	return MPC_LOWCOMM_SUCCESS;
 }
 
+/**
+ * @brief Store data from unexpected message.
+ * 
+ * @param ctnr_p message data (out)
+ * @param data message data (in)
+ * @param length length of message
+ * @param flags flag of the message
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_request_init_unexp_ctnr(lcp_unexp_ctnr_t **ctnr_p, void *data, 
 				size_t length, unsigned flags)
 {
@@ -42,6 +57,12 @@ int lcp_request_init_unexp_ctnr(lcp_unexp_ctnr_t **ctnr_p, void *data,
 	return MPC_LOWCOMM_SUCCESS;
 }
 
+/**
+ * @brief Set a request as completed
+ * 
+ * @param req request to be marked as completed
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_request_complete(lcp_request_t *req)
 {
 	mpc_common_debug("LCP: complete req=%p, comm_id=%llu, msg_id=%llu, "

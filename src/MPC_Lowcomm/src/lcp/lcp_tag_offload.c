@@ -31,6 +31,14 @@ enum {
 };
 
 //FIXME: function also needed in lcp_mem.c
+/**
+ * @brief build a memory bitmap
+ * 
+ * @param length length of bitmap
+ * @param min_frag_size minimum fragment size
+ * @param max_iface maximum number of interfaces
+ * @param bmap_p output bitmap
+ */
 static inline void build_memory_bitmap(size_t length, 
                                        size_t min_frag_size, 
                                        int max_iface,
@@ -51,6 +59,14 @@ static inline void build_memory_bitmap(size_t length,
 /* ============================================== */
 /* Packing                                        */
 /* ============================================== */
+
+/**
+ * @brief Pack a rendes-vous finalization.
+ * 
+ * @param dest destination header
+ * @param data source request
+ * @return size_t size of packed data
+ */
 static size_t lcp_rndv_fin_pack(void *dest, void *data)
 {
         lcp_rndv_ack_hdr_t *hdr = dest;
@@ -64,6 +80,13 @@ static size_t lcp_rndv_fin_pack(void *dest, void *data)
 //NOTE: for offload rndv algorithm, everything is sent through the matching bit
 //      and the immediate data so there is nothing to pack.
 //TODO: add send_tag_short() API call 
+/**
+ * @brief Does nothing in case there is nothing to pack due to data being sent through matching bit
+ * 
+ * @param dest destination header (unused)
+ * @param data source request (unused)
+ * @return size_t size of packed data (0)
+ */
 static size_t lcp_rts_offload_pack(void *dest, void *data) 
 {
         UNUSED(dest);
@@ -71,6 +94,13 @@ static size_t lcp_rts_offload_pack(void *dest, void *data)
         return 0;
 }
 
+/**
+ * @brief Pack data for rput (same as lcp_rtr_rput_pack)
+ * 
+ * @param dest destination header
+ * @param data source request
+ * @return size_t size of packed data
+ */
 static size_t lcp_rtr_rput_offload_pack(void *dest, void *data)
 {
         lcp_rndv_ack_hdr_t *hdr = dest;
@@ -88,6 +118,13 @@ static size_t lcp_rtr_rput_offload_pack(void *dest, void *data)
         return sizeof(*hdr) + packed_size;
 }
 
+/**
+ * @brief // TODO ?
+ * 
+ * @param dest destination header
+ * @param data source request
+ * @return size_t size of packed data
+ */
 static size_t lcp_send_tag_tag_pack(void *dest, void *data)
 {
         lcp_request_t *req = data;
@@ -101,6 +138,11 @@ static size_t lcp_send_tag_tag_pack(void *dest, void *data)
 /* Completion                                     */
 /* ============================================== */
 
+/**
+ * @brief Complete a tag request.
+ * 
+ * @param comp completion
+ */
 void lcp_request_complete_tag_offload(lcr_completion_t *comp)
 {
         lcp_request_t *req = mpc_container_of(comp, lcp_request_t, state.comp);
@@ -111,6 +153,12 @@ void lcp_request_complete_tag_offload(lcr_completion_t *comp)
 /* ============================================== */
 /* Rendez-vous                                    */
 /* ============================================== */
+
+/**
+ * @brief Complete a rget receive request
+ * 
+ * @param comp completion
+ */
 void lcp_request_complete_recv_rget_offload(lcr_completion_t *comp)
 {
         lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
@@ -123,6 +171,11 @@ void lcp_request_complete_recv_rget_offload(lcr_completion_t *comp)
         }
 }
 
+/**
+ * @brief Complete a rget send request
+ * 
+ * @param comp completion
+ */
 void lcp_request_complete_send_rget_offload(lcr_completion_t *comp)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -142,6 +195,12 @@ void lcp_request_complete_send_rget_offload(lcr_completion_t *comp)
         }
 }
 
+/**
+ * @brief Start a rget rendez-vous.
+ * 
+ * @param req rendez-vous request
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_send_rget_offload_start(lcp_request_t *req)
 {
         int rc;
@@ -197,6 +256,11 @@ int lcp_send_rget_offload_start(lcp_request_t *req)
 }
 
 /* Rendez-vous put callback for completion */
+/**
+ * @brief Complete a rput request.
+ * 
+ * @param comp completion
+ */
 void lcp_request_complete_rput_offload(lcr_completion_t *comp)
 {
         lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
@@ -222,6 +286,12 @@ void lcp_request_complete_rput_offload(lcr_completion_t *comp)
         return;
 }
 
+/**
+ * @brief Start a rput rendez-vous
+ * 
+ * @param req request
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_send_rput_offload_start(lcp_request_t *req)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -282,6 +352,12 @@ err:
 
 }
 
+/**
+ * @brief Start a rendez-vous send.
+ * 
+ * @param req request
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_send_rndv_offload_start(lcp_request_t *req)
 {
         lcp_ep_h ep = req->send.ep;
@@ -326,6 +402,12 @@ int lcp_send_rndv_offload_start(lcp_request_t *req)
 /* Send                                           */
 /* ============================================== */
 
+/**
+ * @brief Send a tag eager message using buffer copy
+ * 
+ * @param req request
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_send_tag_eager_tag_bcopy(lcp_request_t *req)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -358,6 +440,12 @@ err:
         return rc;
 }
 
+/**
+ * @brief Send a tag eager message using zero copy
+ * 
+ * @param req request
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_send_tag_eager_tag_zcopy(lcp_request_t *req)
 {
         lcp_ep_h ep = req->send.ep;
@@ -395,6 +483,11 @@ int lcp_send_tag_eager_tag_zcopy(lcp_request_t *req)
 int lcp_recv_tag_rget(lcp_request_t *req);
 int lcp_recv_tag_rput(lcp_request_t *req);
 
+/**
+ * @brief Callback for receiving and completing a tag message
+ * 
+ * @param comp completion
+ */
 void lcp_recv_tag_callback(lcr_completion_t *comp) 
 {
         uint8_t op;
@@ -492,6 +585,13 @@ void lcp_recv_tag_probe_callback(lcr_completion_t *comp)
 //       negative for some collectives (so is OMPI). For such p2p, there is no need for the
 //       receiver to get back the tag, so no problem.
 //       Some safeguard should be used to forbid tag > 2^23-1.
+/**
+ * @brief Receive a tag message using zero copy.
+ * 
+ * @param rreq received request
+ * @param iface interface to do the copy through
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_recv_tag_zcopy(lcp_request_t *rreq, sctk_rail_info_t *iface)
 {
         size_t iovcnt = 0;
@@ -644,6 +744,12 @@ err:
         return rc;
 }
 
+/**
+ * @brief Receive a tag rput message and copy the message
+ * 
+ * @param req request
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_recv_tag_rput(lcp_request_t *req)
 {
         int rc, payload;
@@ -716,6 +822,16 @@ err:
 /* ============================================== */
 /* Handlers                                       */
 /* ============================================== */
+
+/**
+ * @brief Callback for retreiving a tag message request.
+ * 
+ * @param arg lcp context
+ * @param data rendez-vous header
+ * @param length length of header
+ * @param flags flags of message
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 static int lcp_rndv_tag_rtr_handler(void *arg, void *data,
                                     size_t length, 
                                     __UNUSED__ unsigned flags)
@@ -750,6 +866,15 @@ err:
         return rc;
 }
 
+/**
+ * @brief Callback for receiving a rendez-vous finalization message
+ * 
+ * @param arg lcp context
+ * @param data message header
+ * @param length header length
+ * @param flags message flags
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 static int lcp_rndv_tag_fin_handler(void *arg, void *data,
                                     __UNUSED__ size_t length, 
                                     __UNUSED__ unsigned flags)

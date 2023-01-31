@@ -11,6 +11,15 @@
 #include "sctk_net_tools.h"
 
 //FIXME: function also needed in lcp_mem.c
+/**
+ * @brief Build a memory bitmap.
+ * 
+ * @param length length of bitmap
+ * @param min_frag_size minimum fragment size
+ * @param max_iface maximum number of interfaces
+ * @param start_idx starting index
+ * @param bmap_p output bitmap
+ */
 static inline void build_memory_bitmap(size_t length, 
                                        size_t min_frag_size, 
                                        int max_iface,
@@ -34,6 +43,13 @@ static inline void build_memory_bitmap(size_t length,
 /* Packing                                        */
 /* ============================================== */
 
+/**
+ * @brief Pack data for rget.
+ * 
+ * @param dest destination header
+ * @param data request to pack
+ * @return size_t size of packed data
+ */
 static size_t lcp_rts_rget_pack(void *dest, void *data)
 {
         lcp_rndv_hdr_t *hdr = dest;
@@ -57,6 +73,13 @@ static size_t lcp_rts_rget_pack(void *dest, void *data)
         return sizeof(*hdr) + packed_size;
 }
 
+/**
+ * @brief Pack data for rput
+ * 
+ * @param dest destination header
+ * @param data request to pack
+ * @return size_t size of packed data
+ */
 static size_t lcp_rts_rput_pack(void *dest, void *data)
 {
         lcp_rndv_hdr_t *hdr = dest;
@@ -77,6 +100,13 @@ static size_t lcp_rts_rput_pack(void *dest, void *data)
         return sizeof(*hdr) + sizeof(bmap_t);
 }
 
+/**
+ * @brief Pacl data for rendez-vous finalization message
+ * 
+ * @param dest destination header
+ * @param data request to pack
+ * @return size_t size of packed data
+ */
 static size_t lcp_rndv_fin_pack(void *dest, void *data)
 {
         lcp_rndv_ack_hdr_t *hdr = dest;
@@ -87,6 +117,13 @@ static size_t lcp_rndv_fin_pack(void *dest, void *data)
         return sizeof(*hdr);
 }
 
+/**
+ * @brief Pack data for rput.
+ * 
+ * @param dest destination header
+ * @param data request to pack
+ * @return size_t size of packed data
+ */
 static size_t lcp_rtr_rput_pack(void *dest, void *data)
 {
         lcp_rndv_ack_hdr_t *hdr = dest;
@@ -108,6 +145,13 @@ static size_t lcp_rtr_rput_pack(void *dest, void *data)
 /* Rendez-vous send completion callback           */
 /* ============================================== */
 
+/**
+ * @brief Send a rput request.
+ * 
+ * @param super request to send
+ * @param rmem // TODO ?
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_send_rput_common(lcp_request_t *super, lcp_mem_h rmem)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -176,6 +220,11 @@ int lcp_send_rput_common(lcp_request_t *super, lcp_mem_h rmem)
         return rc;
 }
 
+/**
+ * @brief Complete a rput active message
+ * 
+ * @param comp completion
+ */
 void lcp_request_complete_am_rput(lcr_completion_t *comp)
 {
         int payload;
@@ -202,6 +251,13 @@ void lcp_request_complete_am_rput(lcr_completion_t *comp)
 /* ============================================== */
 /* Protocol starts                                */
 /* ============================================== */
+
+/**
+ * @brief Start an rget protocol with active message
+ * 
+ * @param req request
+ * @return int MPC_LOWCOMM_SUCCESS In case of success
+ */
 int lcp_send_am_rget_start(lcp_request_t *req)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -253,6 +309,12 @@ err:
         return rc;
 }
 
+/**
+ * @brief Start a rput protocol with active messages
+ * 
+ * @param req request
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_send_am_rput_start(lcp_request_t *req)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -313,6 +375,12 @@ err:
         return rc;
 }
 
+/**
+ * @brief Start a rendez-vous depending on rendez-vous mode
+ * 
+ * @param req request
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_send_rndv_am_start(lcp_request_t *req)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -364,6 +432,15 @@ void lcp_request_complete_am_rget(lcr_completion_t *comp);
 int lcp_recv_am_rput(lcp_request_t *req);
 int lcp_recv_am_rget(lcp_request_t *req);
 
+/**
+ * @brief Respond to a rendez-vous start message
+ * 
+ * @param rreq received request
+ * @param hdr rendez-vous header
+ * @param length length of header
+ * @param rndv_mode rendez-vous mode (rget, rput)
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_rndv_matched(lcp_request_t *rreq,
                      lcp_rndv_hdr_t *hdr,
                      size_t length,
@@ -425,6 +502,12 @@ err:
 /* ============================================== */
 /* Rendez-vous recv completion callback           */
 /* ============================================== */
+
+/**
+ * @brief Complete a rget rendez-vous
+ * 
+ * @param comp completion
+ */
 void lcp_request_complete_am_rget(lcr_completion_t *comp)
 {
         int payload_size;
@@ -466,6 +549,13 @@ err:
 /* ============================================== */
 /* Recv                                           */
 /* ============================================== */
+
+/**
+ * @brief Receive a rget message.
+ * 
+ * @param req message request
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_recv_am_rget(lcp_request_t *req)
 {
         int rc, i, last_iface = 0, num_used_ifaces = 0;
@@ -554,6 +644,12 @@ err:
         return rc;
 }
 
+/**
+ * @brief Receive a rput request.
+ * 
+ * @param req message request
+ * @return int MPC_LOWCOMM_SUCCESS
+ */
 int lcp_recv_am_rput(lcp_request_t *req)
 {
         int rc, payload;
@@ -635,6 +731,16 @@ err:
 
 //NOTE: flags could be used to avoid duplicating functions for
 //      AM and TAG
+
+/**
+ * @brief Callback for rput procedure.
+ * 
+ * @param arg lcp context
+ * @param data rendez-vous header
+ * @param length length of header
+ * @param flags message flags
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_rndv_am_rput_handler(void *arg, void *data,
                             size_t length, unsigned flags)
 {
@@ -680,6 +786,15 @@ err:
         return rc;
 }
 
+/**
+ * @brief callback for acknowledgement message 
+ * 
+ * @param arg context
+ * @param data header
+ * @param size size of header
+ * @param flags unused
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 static int lcp_ack_am_tag_handler(void *arg, void *data,
                                   size_t size, 
                                   __UNUSED__ unsigned flags)
@@ -717,6 +832,15 @@ err:
         return rc;
 }
 
+/**
+ * @brief Callback for rget procedure
+ * 
+ * @param arg lcp context
+ * @param data rendez-vous header
+ * @param length length of header
+ * @param flags message flags
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 static int lcp_rndv_am_rget_handler(void *arg, void *data,
                                     size_t length, 
                                     unsigned flags)
@@ -763,6 +887,15 @@ err:
         return rc;
 }
 
+/**
+ * @brief Callback for rendez-vous finalization.
+ * 
+ * @param arg lcp context
+ * @param data rendez-vous header
+ * @param length header length
+ * @param flags message flags
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 static int lcp_rndv_am_fin_handler(void *arg, void *data,
                                    __UNUSED__ size_t length, 
                                    __UNUSED__ unsigned flags)
@@ -802,6 +935,9 @@ err:
         return rc;
 }
 
+/**
+ * rendez-vous callbacks registering 
+ */
 LCP_DEFINE_AM(MPC_LOWCOMM_ACK_RDV_MESSAGE, lcp_ack_am_tag_handler, 0);
 LCP_DEFINE_AM(MPC_LOWCOMM_RGET_MESSAGE, lcp_rndv_am_rget_handler, 0);
 LCP_DEFINE_AM(MPC_LOWCOMM_RPUT_MESSAGE, lcp_rndv_am_rput_handler, 0);

@@ -76,6 +76,13 @@ err:
 	return rc;
 }
 
+/**
+ * @brief Initialize an endpoint.
+ * 
+ * @param ctx context to retreive the resources
+ * @param ep endpoint to initialize
+ * @return int MPI_SUCCESS in case of success
+ */
 int lcp_ep_init_config(lcp_context_h ctx, lcp_ep_h ep)
 {
 	int i;
@@ -147,6 +154,13 @@ int lcp_ep_init_config(lcp_context_h ctx, lcp_ep_h ep)
 	return MPC_LOWCOMM_SUCCESS;
 }
 
+/**
+ * @brief Add an endpoint in a context
+ * 
+ * @param ctx context to add the endpoint to
+ * @param ep endpoint to be added 
+ * @return int MPI_SUCCESS in case of success
+ */
 int lcp_ep_insert(lcp_context_h ctx, lcp_ep_h ep)
 {
 	int rc;
@@ -172,6 +186,15 @@ err:
 	return rc;
 }
 
+/**
+ * @brief Initialize the routes of an endpoint. 
+ * If a route is found, destination endpoint is set to `LCP_EP_FLAG_CONNECTED`.
+ * If no route is found, destination endpoint is set to `LCP_EP_FLAG_CONNECTING`.
+ * 
+ * @param ctx context to get the devices from
+ * @param ep endpoint to fill
+ * @return int MPI_SUCCESS in case of success
+ */
 int lcp_ep_init_channels(lcp_context_h ctx, lcp_ep_h ep)
 {
 	int rc, i;
@@ -225,6 +248,13 @@ int lcp_ep_init_channels(lcp_context_h ctx, lcp_ep_h ep)
 	return rc;
 }
 
+/**
+ * @brief update the progress of routes (like lcp_ep_init_channels but without initializing the endpoint)
+ * 
+ * @param ctx context to get the devices from
+ * @param ep endpoint to fill
+ * @return int MPI_SUCCESS in case of success
+ */
 int lcp_ep_progress_conn(lcp_context_h ctx, lcp_ep_h ep)
 {
 	int i;
@@ -262,6 +292,15 @@ int lcp_ep_progress_conn(lcp_context_h ctx, lcp_ep_h ep)
 	}
 }
 
+/**
+ * @brief Allocate an endpoint (with `lcp_ep_create_base`) using a context
+ * 
+ * @param ctx context used to initialize the endpoint
+ * @param ep_p address of the endpoint to be created
+ * @param uid id of the endpoint
+ * @param flags unused
+ * @return int MPI_SUCCESS in case of success
+ */
 int lcp_context_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p, 
                           uint64_t uid, __UNUSED__ unsigned flags)
 {
@@ -305,7 +344,15 @@ err:
 	return rc;
 }
 
-
+/**
+ * @brief Allocate an endpoint (with `lcp_context_ep_create`) and add it to the context table
+ * 
+ * @param ctx context used to initialize the endpoint
+ * @param ep_p address of the endpoint to be created
+ * @param uid id of the endpoint
+ * @param flags flag passed to lcp_context_ep_create 
+ * @return int 
+ */
 int lcp_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p, 
 		  mpc_lowcomm_peer_uid_t uid, unsigned flags)
 {
@@ -373,6 +420,15 @@ void lcp_ep_get(lcp_context_h ctx, mpc_lowcomm_peer_uid_t uid, lcp_ep_h *ep_p)
 	}
 }
 
+/**
+ * @brief connect an endpoint (unused)
+ * 
+ * @param arg context
+ * @param data destination endpoint 
+ * @param length unused
+ * @param flags unused
+ * @return __UNUSED__ static int
+ */
 __UNUSED__ static int lcp_ep_connection_handler(void *arg, void *data,
 				     __UNUSED__ size_t length, 
 				     __UNUSED__ unsigned flags)

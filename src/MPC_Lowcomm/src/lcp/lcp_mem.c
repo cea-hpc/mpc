@@ -24,7 +24,14 @@ static inline void build_memory_registration_bitmap(size_t length,
 
         *bmap_p = bmap;
 }
-
+/**
+ * @brief Pack data as rkey buffer.
+ * 
+ * @param ctx lcp context
+ * @param mem data to pack
+ * @param dest packed rkey buffer
+ * @return size_t length of output buffer
+ */
 size_t lcp_mem_rkey_pack(lcp_context_h ctx, lcp_mem_h mem, void *dest)
 {
         int i;
@@ -47,6 +54,15 @@ size_t lcp_mem_rkey_pack(lcp_context_h ctx, lcp_mem_h mem, void *dest)
         return packed_size;
 }
 
+/**
+ * @brief Pack data as rkey and return buffer size.
+ * 
+ * @param ctx lcp context
+ * @param mem memory to pack
+ * @param rkey_buf_p output rkey buffer
+ * @param rkey_len output rkey buffer length
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_mem_pack(lcp_context_h ctx, lcp_mem_h mem, 
                  void **rkey_buf_p, size_t *rkey_len)
 {
@@ -76,11 +92,25 @@ int lcp_mem_pack(lcp_context_h ctx, lcp_mem_h mem,
         return MPC_LOWCOMM_SUCCESS;
 }
 
+/**
+ * @brief Release an rkey buffer.
+ * 
+ * @param rkey_buffer buffer to release
+ */
 void lcp_mem_release_rkey_buf(void *rkey_buffer)
 {
         sctk_free(rkey_buffer);
 }
 
+/**
+ * @brief Unpack an rkey buffer
+ * 
+ * @param ctx lcp context
+ * @param mem_p unpacked memory output buffer
+ * @param src data to unpack
+ * @param size output size of unpacked data
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h *mem_p, 
                    void *src, size_t size)
 {
@@ -127,6 +157,13 @@ err:
         return rc;
 }
 
+/**
+ * @brief Allocate memory domain and pins.
+ * 
+ * @param ctx context
+ * @param mem_p memory to alloc
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_mem_create(lcp_context_h ctx, lcp_mem_h *mem_p)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -153,6 +190,11 @@ err:
         return rc;
 }
 
+/**
+ * @brief Free memory.
+ * 
+ * @param mem memory to be freed
+ */
 void lcp_mem_delete(lcp_mem_h mem)
 {
         sctk_free(mem->mems);
@@ -185,6 +227,16 @@ int lcp_mem_reg_from_map(lcp_context_h ctx,
 //FIXME: what append if a memory could not get registered ? Miss error handling:
 //       if a subset could not be registered, perform the communication on the 
 //       successful memory pins ?
+/**
+ * @brief Register memory.
+ * 
+ * @param ctx context
+ * @param mem_p memory object to register (out)
+ * @param buffer data to store
+ * @param length length of the data
+ * @param memp_map 
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_mem_register(lcp_context_h ctx, 
                      lcp_mem_h *mem_p, 
                      void *buffer, 
@@ -218,6 +270,18 @@ err:
         return rc;
 }
 
+/**
+ * @brief Post a buffer
+ * 
+ * @param ctx lcp context
+ * @param mem_p memory pointer
+ * @param buffer buffer to post
+ * @param length length of buffer
+ * @param tag tag of post
+ * @param flags flag of post
+ * @param tag_ctx tag context
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_mem_post(lcp_context_h ctx, 
                  lcp_mem_h *mem_p, 
                  void *buffer, 
@@ -290,6 +354,13 @@ err:
         return rc;
 }
 
+/**
+ * @brief deregister memory from the register (unpin and free)
+ * 
+ * @param ctx lcp context
+ * @param mem memory to unpin
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_mem_deregister(lcp_context_h ctx, lcp_mem_h mem)
 {
         int i;

@@ -31,6 +31,14 @@
 #include "lcp_context.h"
 #include "lcp_request.h"
 
+/**
+ * @brief Create a pending request.
+ * 
+ * @param table table to register the request into
+ * @param req request to register
+ * @param msg_key key of message
+ * @return lcp_pending_entry_t* resulting pending entry
+ */
 lcp_pending_entry_t *lcp_pending_create(lcp_pending_table_t *table,
                                         lcp_request_t *req,
                                         uint64_t msg_key)
@@ -64,6 +72,12 @@ lcp_pending_entry_t *lcp_pending_create(lcp_pending_table_t *table,
 }
 
 //TODO: add return call
+/**
+ * @brief Delete a pending request.
+ * 
+ * @param table table to delete the request from
+ * @param msg_key key of the deleted message
+ */
 void lcp_pending_delete(lcp_pending_table_t *table, 
                         uint64_t msg_key)
 {
@@ -98,11 +112,21 @@ lcp_request_t *lcp_pending_get_request(lcp_pending_table_t *table,
 /*******************************************************
  * Data manager initiator 
  ******************************************************/
+
+/**
+ * @brief Init pending list.
+ * 
+ */
 void lcp_pending_init()
 {
         /* And rdv list */
 }
 
+/**
+ * @brief Terminate pending list.
+ * 
+ * @param ctx lcp context
+ */
 void lcp_pending_fini(lcp_context_h ctx)
 {
         /* Control table */

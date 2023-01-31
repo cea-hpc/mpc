@@ -9,6 +9,13 @@
 
 #include "sctk_alloc.h"
 
+/**
+ * @brief Copy buffer from argument request to destination
+ * 
+ * @param dest destination buffer
+ * @param arg input request buffer
+ * @return size_t size of copy
+ */
 size_t lcp_rma_put_pack(void *dest, void *arg) {
         lcp_request_t *req = (lcp_request_t *)arg;
 
@@ -17,6 +24,15 @@ size_t lcp_rma_put_pack(void *dest, void *arg) {
         return req->send.length;
 }
 
+/**
+ * @brief Build a memory registration bitmap.
+ * 
+ * @param length max size of bitmap in bytes
+ * @param min_frag_size minimum fragment size in bytes
+ * @param max_iface max number of interfaces
+ * @param bmap_p output bitmap
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 static inline int build_rma_memory_registration_bitmap(size_t length, 
                                                        size_t min_frag_size, 
                                                        int max_iface,
@@ -36,6 +52,12 @@ static inline int build_rma_memory_registration_bitmap(size_t length,
         return num_used_ifaces;
 }
 
+/**
+ * @brief Register a buffer
+ * 
+ * @param req request containing the buffer to register
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_rma_reg_send_buffer(lcp_request_t *req)
 {
         int rc;
@@ -59,6 +81,11 @@ int lcp_rma_reg_send_buffer(lcp_request_t *req)
         return rc;
 }
 
+/**
+ * @brief Complete a request.
+ * 
+ * @param comp completion
+ */
 void lcp_rma_request_complete_put(lcr_completion_t *comp)
 {
         lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
@@ -70,6 +97,12 @@ void lcp_rma_request_complete_put(lcr_completion_t *comp)
         } 
 }
 
+/**
+ * @brief Put a buffer copy request.
+ * 
+ * @param req request to put
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_rma_put_bcopy(lcp_request_t *req)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -96,6 +129,12 @@ int lcp_rma_put_bcopy(lcp_request_t *req)
 }
 
 //FIXME: code very similar with lcp_send_rput_common
+/**
+ * @brief Put a zero copy 
+ * 
+ * @param req request to put
+ * @return int MPC_LOWCOMM_SUCCESS in case of succes
+ */
 int lcp_rma_put_zcopy(lcp_request_t *req)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
@@ -150,6 +189,13 @@ int lcp_rma_put_zcopy(lcp_request_t *req)
         return rc;
 }
 
+/**
+ * @brief Register a send buffer and start a send
+ * 
+ * @param ep endpoint
+ * @param req request
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
 int lcp_rma_put_start(lcp_ep_h ep, lcp_request_t *req) 
 {
         int rc = MPC_LOWCOMM_SUCCESS;

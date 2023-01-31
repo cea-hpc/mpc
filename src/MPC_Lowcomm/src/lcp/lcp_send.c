@@ -10,6 +10,17 @@
 #include "sctk_alloc.h"
 
 //FIXME: static inline ?
+/**
+ * @brief Switch between protocols. Available protocols are : 
+ * - buffered copy
+ * - zero copy
+ * - rendez-vous
+ * 
+ * @param ep endpoint to send the message
+ * @param req request used to send the message
+ * @param param request parameter used for offload flag
+ * @return int MPI_SUCCESS in case of success
+ */
 int lcp_send_start(lcp_ep_h ep, lcp_request_t *req,
                    const lcp_request_param_t *param)
 {
