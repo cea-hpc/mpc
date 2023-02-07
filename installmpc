@@ -1595,19 +1595,22 @@ if test "x${DEP_FOUND}" = "xno"; then
 fi
 
 # We cannot use spack as the spack package uses an internal hwloc of previous version
-info "Hydra must be built and patched localy for HWLOC 2+ support (no spack support)"
 if check_and_then_load_prefix "$HYDRA_PREFIX"; then
 	# Make sure hydra seems to be in the path
 	assert_cmd "mpiexec.hydra"
 else
-	# Here we need to build hydra and we try to target our own HWLOC
-	find_package_prefix "hwloc" "$(package_version "hwloc")" "${HWLOC_PREFIX}"
 
-	if test -n "${PACK_PREFIX}"; then
-		HYDRA_BUILD_PARAMETERS="--with-hwloc-prefix=${PACK_PREFIX} ${HYDRA_BUILD_PARAMETERS}"
+	if test "x$HYDRA_PREFIX" != "xdisabled"; then
+		info "Hydra must be built and patched localy for HWLOC 2+ support (no spack support)"
+		# Here we need to build hydra and we try to target our own HWLOC
+		find_package_prefix "hwloc" "$(package_version "hwloc")" "${HWLOC_PREFIX}"
+
+		if test -n "${PACK_PREFIX}"; then
+			HYDRA_BUILD_PARAMETERS="--with-hwloc-prefix=${PACK_PREFIX} ${HYDRA_BUILD_PARAMETERS}"
+		fi
+
+		build_configure_based_package "hydra" "$(package_version "hydra")" "$HYDRA_BUILD_PARAMETERS"
 	fi
-
-	build_configure_based_package "hydra" "$(package_version "hydra")" "$HYDRA_BUILD_PARAMETERS"
 fi
 
 
