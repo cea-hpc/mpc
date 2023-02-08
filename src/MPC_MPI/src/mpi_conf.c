@@ -396,6 +396,9 @@ void _mpc_mpi_config_coll_array_resolve( struct _mpc_mpi_config_coll_array *coll
 	__load_coll_function( family, coll->allreduce_name, &coll->allreduce );
 	__load_coll_function( family, coll->reduce_scatter_name, &coll->reduce_scatter );
 	__load_coll_function( family, coll->reduce_scatter_block_name, &coll->reduce_scatter_block );
+	__load_coll_function( family, coll->exscan_name, &coll->exscan );
+	__load_coll_function( family, coll->scan_name, &coll->scan );
+
 }
 
 void _mpc_mpi_config_coll_algorithm_array_resolve( struct _mpc_mpi_config_coll_algorithm_array *coll, char *family )
@@ -415,6 +418,8 @@ void _mpc_mpi_config_coll_algorithm_array_resolve( struct _mpc_mpi_config_coll_a
 	__load_coll_function( family, coll->allreduce_name, &coll->allreduce );
 	__load_coll_function( family, coll->reduce_scatter_name, &coll->reduce_scatter );
 	__load_coll_function( family, coll->reduce_scatter_block_name, &coll->reduce_scatter_block );
+	__load_coll_function( family, coll->exscan_name, &coll->exscan );
+	__load_coll_function( family, coll->scan_name, &coll->scan );
 }
 
 static inline void __coll_check( void )
