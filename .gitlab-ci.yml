@@ -105,7 +105,7 @@ MPC Default Configuration:
   variables:
     GL_LOCAL_BUILD_DIR: ${GL_BUILD_DIR}
     GL_LOCAL_INSTALL_DIR: ${GL_INSTALL_DIR}
-    GL_INSTALL_OPTS: --with-slurm --mpc-option="--enable-debug"
+    GL_INSTALL_OPTS: --mpc-option="--enable-debug" --with-pmi1
   script:
     - *configuration_commands
 
