@@ -1092,7 +1092,8 @@ __task_precedence_constraints(mpc_omp_task_t * predecessor, mpc_omp_task_t * suc
                     ++predecessor->dep_node.nsuccessors;
                     ++successor->dep_node.npredecessors;
 
-                    if (OPA_load_int(&(predecessor->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED_PERSISTENT)
+                    if (OPA_load_int(&(predecessor->dep_node.status)) < MPC_OMP_TASK_STATUS_FINALIZED_PERSISTENT
+                        && OPA_load_int(&(predecessor->persistent_infos.n_completion)) == OPA_load_int(&(successor->persistent_infos.n_completion)))
                     {
                         OPA_incr_int(&(successor->dep_node.ref_predecessors));
                     }
@@ -1205,16 +1206,52 @@ __task_process_mpc_dep(
     {
         entry->task_uid = task->uid;
         /* case 1.1 - the generated task is dependant of previous 'in' */
-        if (    type == MPC_OMP_TASK_DEP_OUT ||
-                type == MPC_OMP_TASK_DEP_INOUT ||
-                type == MPC_OMP_TASK_DEP_INOUTSET ||
-                type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
+        if (entry->ins &&
+                (type == MPC_OMP_TASK_DEP_OUT ||
+                 type == MPC_OMP_TASK_DEP_INOUT ||
+                 type == MPC_OMP_TASK_DEP_INOUTSET ||
+                 type == MPC_OMP_TASK_DEP_MUTEXINOUTSET))
         {
-            mpc_omp_task_dep_list_elt_t * in = entry->ins;
-            while (in)
+            if (type == MPC_OMP_TASK_DEP_INOUTSET)
             {
-                __task_precedence_constraints(in->task, task);
-                in = in->next;
+                /**
+                 * in:            O O O
+                 *                 \|/
+                 * out:             X
+                 *                 / \
+                 * inoutset:      O   O
+                 */
+               const size_t size = sizeof(mpc_omp_task_t);
+                mpc_omp_task_property_t properties = MPC_OMP_TASK_PROP_UNDEFERRED | MPC_OMP_TASK_PROP_DEPEND | MPC_OMP_TASK_PROP_CONTROL_FLOW;
+                mpc_omp_task_t * pit = _mpc_omp_task_allocate(size);
+                _mpc_omp_task_init(pit, NULL, NULL, size, properties);
+                memset(&(pit->dep_node), 0, sizeof(mpc_omp_task_dep_node_t));
+                pit->dep_node.dep_list = (mpc_omp_task_dep_list_elt_t *) malloc(sizeof(mpc_omp_task_dep_list_elt_t));
+                pit->dep_node.dep_list_size = 0;
+
+                mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
+                if (region->active) mpc_omp_persistent_region_push(pit);
+
+                entry->out = __task_dep_list_append(pit, entry, NULL);
+                while (entry->ins)
+                {
+                    __task_precedence_constraints(entry->ins->task, pit);
+                    entry->ins = entry->ins->next;
+                }
+                __task_precedence_constraints(pit, task);
+                MPC_OMP_TASK_TRACE_CREATE(pit);
+
+                if (!region->active) _mpc_omp_task_deinit(pit);
+
+            }
+            else
+            {
+                mpc_omp_task_dep_list_elt_t * in = entry->ins;
+                while (in)
+                {
+                    __task_precedence_constraints(in->task, task);
+                    in = in->next;
+                }
             }
         }
 
@@ -1234,23 +1271,50 @@ __task_process_mpc_dep(
         }
 
         /* case 1.3 - the generated task is dependant of previous 'inoutset' */
-        if (    type == MPC_OMP_TASK_DEP_IN ||
-                type == MPC_OMP_TASK_DEP_OUT ||
-                type == MPC_OMP_TASK_DEP_INOUT ||
-                type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
+        if (entry->inoutset &&
+                (type == MPC_OMP_TASK_DEP_IN ||
+                 type == MPC_OMP_TASK_DEP_OUT ||
+                 type == MPC_OMP_TASK_DEP_INOUT ||
+                 type == MPC_OMP_TASK_DEP_MUTEXINOUTSET))
         {
-            mpc_omp_task_dep_list_elt_t * inoutset = entry->inoutset;
+            /**
+             * inoutset:        O O O
+             *                   \|/
+             * out:      X
+             *                   / \
+             * in:              O   O
+             */
 
-# if 0
-            /* if the inserted task is of type 'IN' then insert an 'INOUT' task in between
-             * to cut transitive edges (c.f concurrent write Athapascan, F. Galilée) */
-            if (type == MPC_OMP_TASK_DEP_IN && inoutset)
+            /* if the inserted task is of type 'IN' then insert an 'INOUT'
+             * empty task in between to reduce O(n.m) to O(n+m) edges */
+            if (type == MPC_OMP_TASK_DEP_IN)
             {
-                // TODO : insert 1 empty task 'inout' tasks to prune 'inoutset' arcs
+                const size_t size = sizeof(mpc_omp_task_t);
+                mpc_omp_task_property_t properties = MPC_OMP_TASK_PROP_UNDEFERRED | MPC_OMP_TASK_PROP_DEPEND | MPC_OMP_TASK_PROP_CONTROL_FLOW;
+                mpc_omp_task_t * pit = _mpc_omp_task_allocate(size);
+                _mpc_omp_task_init(pit, NULL, NULL, size, properties);
+                memset(&(pit->dep_node), 0, sizeof(mpc_omp_task_dep_node_t));
+                pit->dep_node.dep_list = (mpc_omp_task_dep_list_elt_t *) malloc(sizeof(mpc_omp_task_dep_list_elt_t));
+                pit->dep_node.dep_list_size = 0;
+
+                mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
+                if (region->active) mpc_omp_persistent_region_push(pit);
+
+                entry->out = __task_dep_list_append(pit, entry, NULL);
+                while (entry->inoutset)
+                {
+                    __task_precedence_constraints(entry->inoutset->task, pit);
+                    entry->inoutset = entry->inoutset->next;
+                }
+                __task_precedence_constraints(pit, task);
+                MPC_OMP_TASK_TRACE_CREATE(pit);
+
+                if (!region->active) _mpc_omp_task_deinit(pit);
             }
+            /* else, out <=> inout '<=>' mutexinoutset */
             else
-# endif
             {
+                mpc_omp_task_dep_list_elt_t * inoutset = entry->inoutset;
                 while (inoutset)
                 {
                     __task_precedence_constraints(inoutset->task, task);
@@ -1300,10 +1364,12 @@ __task_process_mpc_dep(
             entry->inoutset = __task_dep_list_append(task, entry, entry->inoutset);
         }
 
+# if 0
         else if (type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
         {
             not_implemented();
         }
+# endif
     }
     mpc_common_spinlock_unlock(&(entry->lock));
 }
@@ -1447,7 +1513,7 @@ __task_finalize_deps_list(mpc_omp_task_t * task)
             }
             mpc_common_spinlock_unlock(&(entry->lock));
         }
-        free(task->dep_node.dep_list);
+        free(task->dep_node.dep_list);  /* TODO : this could be allocated as part of the task removing 1 allocation and 1 free */
         task->dep_node.dep_list = NULL;
     }
 }
@@ -1457,9 +1523,31 @@ static inline void
 __task_finalize_persistent(mpc_omp_task_t * task)
 {
     assert(mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT));
+    assert(OPA_load_int(&(task->dep_node.status)) == MPC_OMP_TASK_STATUS_FINALIZED_PERSISTENT);
 
-    // WIP : barrier-free implementation of persistent taskgraph
-    // inter-iterations dependencies may cause issue => need to track root/leaf and generate arcs (?)
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+
+    task->uid = OPA_fetch_and_incr_int(&(thread->instance->task_infos.next_task_uid));
+    memset(&(task->statuses), 0, sizeof(mpc_omp_task_statuses_t));
+
+    assert(OPA_load_int(&(task->dep_node.ref_predecessors)) == 0);
+
+    mpc_common_spinlock_lock(&(task->dep_node.lock));
+    {
+        if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_DEPEND))
+        {
+            OPA_store_int(&(task->dep_node.status), MPC_OMP_TASK_STATUS_NOT_READY);
+            OPA_add_int(&(task->dep_node.ref_predecessors), task->dep_node.npredecessors);
+        }
+        OPA_incr_int(&(task->persistent_infos.n_completion));
+    }
+    mpc_common_spinlock_unlock(&(task->dep_node.lock));
+
+    assert(OPA_load_int(&(task->dep_node.ref_predecessors)) >= 0);
+
+    /* trace task creation */
+    MPC_OMP_TASK_TRACE_CREATE(task);
 }
 
 /** Given task completed -> fulfill its successors dependencies */
@@ -1521,9 +1609,8 @@ __task_finalize_deps(mpc_omp_task_t * task)
 
                 /* in case of a persistent region, ensure that the successor task
                  * private variable had been copied by the producer thread. Else,
-                 * we cannot process it yet. This is the goal of the 'version' check */
-                if (OPA_fetch_and_decr_int(&(succ->task->dep_node.ref_predecessors)) == 1 &&
-                        OPA_load_int(&(task->persistent_infos.version)) == OPA_load_int(&(succ->task->persistent_infos.version)))
+                 * we cannot process it yet. ref_predecessors can be < 0 in such case */
+                if (OPA_fetch_and_decr_int(&(succ->task->dep_node.ref_predecessors)) == 1)
                 {
                     if (task->persistent_infos.zombit)
                     {
@@ -1574,8 +1661,8 @@ _mpc_omp_task_finalize(mpc_omp_task_t * task)
     }
     else
     {
-        __task_finalize_persistent(task);
         __task_unref_persistent_region(task->parent);
+        __task_finalize_persistent(task);
     }
 }
 
@@ -2892,17 +2979,23 @@ _mpc_omp_task_wait(void ** depend, int nowait)
     /* otherwise, wait for implicit task children to finish */
     else
     {
-        mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
         mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
         mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
         assert(task);
 
-        /* if within a persistent region, wait for instance to complete */
-        OPA_int_t * task_counter = region->active ? &(region->task_ref) : &(task->children_count);
-        while (OPA_load_int(task_counter))
-        {
-            _mpc_omp_task_schedule();
-        }
+        while (OPA_load_int(&(task->children_count))) _mpc_omp_task_schedule();
+    }
+}
+
+static void
+__task_persistent_region_wait(void)
+{
+    mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
+    assert(region->active);
+    if (region)
+    {
+        while (OPA_load_int(&(region->task_ref))) _mpc_omp_task_schedule();
+        OPA_store_int(&(region->task_ref), region->n_tasks);
     }
 }
 
@@ -2979,9 +3072,6 @@ ___thread_bind_task(
     MPC_OMP_TASK_THREAD_SET_CURRENT_TASK(thread, task);
     task->thread = thread;
 }
-
-// PISTE 1 : checker version
-// PISTE 2 : checker 'npredecessors' vaut bien le bon nombre
 
 static inline void
 __task_run_coherency_check_pre(mpc_omp_task_t * task)
@@ -3530,45 +3620,6 @@ mpc_omp_get_persistent_region(void)
     return &(task->persistent_region);
 }
 
-// TODO : define properly what is reinitialized or not (dependencies, label, color, ...)
-/* Reinitialize an openmp persistent task */
-void
-_mpc_omp_task_reinit(mpc_omp_task_t * task)
-{
-    assert(task);
-
-    /* update task uid */
-    mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
-    task->uid = OPA_fetch_and_incr_int(&(thread->instance->task_infos.next_task_uid));
-    memset(&(task->statuses), 0, sizeof(mpc_omp_task_statuses_t));
-
-    mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
-    assert(region->active);
-    __task_ref_persistent_region(task->parent);
-
-    task->color = thread->task_infos.incoming.color;
-    thread->task_infos.incoming.color = 0;
-
-    if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_DEPEND))
-    {
-        OPA_store_int(&(task->dep_node.status), MPC_OMP_TASK_STATUS_NOT_READY);
-        // TODO : combien de prédecesseurs avant de me schedule ?
-        // pour le moment, on a les hypothèses
-        //  - pas de dépendances inter-iterations (car on a un 'taskwait' par itération)
-        //  - pas de dépendances entre non-persistentes et persistentes (car on a un taskwait au 'begin' d'une region persistente)
-        // Donc n'a que des dépendances intra-iterations entre presistentes,
-        // 'npredecessors' combien une valeur constante entre itérations
-        OPA_add_int(&(task->dep_node.ref_predecessors), task->dep_node.npredecessors);
-    }
-    assert(OPA_load_int(&(task->dep_node.ref_predecessors)) >= 0);
-
-    /* increasing the task version means the task may be reschedule whenever it is ready after this point */
-    OPA_incr_int(&(task->persistent_infos.version));
-
-    /* trace task creation */
-    MPC_OMP_TASK_TRACE_CREATE(task);
-}
-
 /**
  * Initialize an openmp task
  *
@@ -4065,7 +4116,10 @@ mpc_omp_get_persistent_task(void)
 {
     mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
     assert(region->active);
-    mpc_omp_task_t ** task_ptr = (mpc_omp_task_t **) mpc_common_indirect_array_iterator_next(&(region->tasks_it));
+    mpc_omp_task_t ** task_ptr;
+    do {
+        task_ptr = (mpc_omp_task_t **) mpc_common_indirect_array_iterator_next(&(region->tasks_it));
+    } while (task_ptr && mpc_omp_task_property_isset((*task_ptr)->property, MPC_OMP_TASK_PROP_CONTROL_FLOW));
     return task_ptr ? (*task_ptr) : NULL;
 }
 
@@ -4082,6 +4136,7 @@ mpc_omp_persistent_region_begin_with_capacity(int capacity)
     mpc_common_indirect_array_init(&(region->tasks), sizeof(mpc_omp_task_t *), capacity);
     mpc_common_indirect_array_iterator_init(&(region->tasks), &(region->tasks_it));
     OPA_store_int(&(region->task_ref), 0);
+    region->n_tasks = 0;
 }
 
 /* Called at the beginning of a persistent task loop */
@@ -4090,6 +4145,23 @@ mpc_omp_persistent_region_begin(void)
 {
     // TODO : implement 'no-delete' and 'no-add' flags
     mpc_omp_persistent_region_begin_with_capacity(16);
+}
+
+static inline void
+__task_persistent_region_iterator_coherency_check(void)
+{
+# if 0
+    mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
+    assert(region->active);
+
+    while (!mpc_common_indirect_array_iterator_finished(&(region->tasks_it)))
+    {
+        mpc_omp_task_t ** task_ptr = (mpc_omp_task_t **) mpc_common_indirect_array_iterator_next(&(region->tasks_it));
+        assert(task_ptr && *task_ptr);
+        assert(mpc_omp_task_property_isset((*task_ptr)->property, MPC_OMP_TASK_PROP_CONTROL_FLOW));
+    }
+    assert(mpc_common_indirect_array_iterator_finished(&(region->tasks_it)));
+# endif
 }
 
 /* Called on each persistent task loops iterations */
@@ -4103,13 +4175,14 @@ mpc_omp_persistent_region_iterate(void)
     // of multiple persistent task versions... to be evaluated
 
     /* wait for the previous iteration to complete */
-    _mpc_omp_task_wait(NULL, 0);
+    __task_persistent_region_wait();
 
     mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
     assert(region->active);
 
     /* if running iterations > 1, then previous iterator must have completed */
-    assert(mpc_common_indirect_array_iterator_finished(&(region->tasks_it)));
+    /* this is a coherency check */
+    __task_persistent_region_iterator_coherency_check();
     mpc_common_indirect_array_iterator_reset(&(region->tasks_it));
 }
 
@@ -4120,12 +4193,14 @@ mpc_omp_persistent_region_end(void)
     mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
     assert(region->active);
 
-    _mpc_omp_task_wait(NULL, 0);
+    __task_persistent_region_wait();
 
     /* whether we have processed every persistent tasks,
      * whether the taskgroup had been cancelled */
     mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
     mpc_omp_task_t * current = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+
+    __task_persistent_region_iterator_coherency_check();
     assert(
         mpc_common_indirect_array_iterator_finished(&(region->tasks_it))
             ||
@@ -4161,11 +4236,12 @@ mpc_omp_persistent_region_push(mpc_omp_task_t * task)
     mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
     assert(region->active);
     __task_ref_persistent_region(task->parent); /* _mpc_omp_task_finalize */
-    OPA_store_int(&(task->persistent_infos.version), 0);
     task->persistent_infos.original_uid = task->uid;
     task->persistent_infos.zombit = 0;
+    OPA_store_int(&(task->persistent_infos.n_completion), 0);
     mpc_omp_task_set_property(&(task->property), MPC_OMP_TASK_PROP_PERSISTENT);
     mpc_common_indirect_array_iterator_push(&(region->tasks_it), &task);
+    ++region->n_tasks;
 }
 
 void
@@ -4176,6 +4252,7 @@ mpc_omp_persistent_region_pop(void)
     /* cannot delete tasks on the 1st iteration or outside a persistent region */
     if (!region->active) return ;
 
+    // TODO : likely iterate here to avoid poping a control flow task
     /* retrieve the task and zombify it */
     mpc_omp_task_t ** task_ptr = (mpc_omp_task_t **) mpc_common_indirect_array_iterator_pop(&(region->tasks_it));
     if (task_ptr)
@@ -4183,8 +4260,7 @@ mpc_omp_persistent_region_pop(void)
         mpc_omp_task_t * task = *task_ptr;
         assert(task);
         task->persistent_infos.zombit = 1;
-        _mpc_omp_task_deinit_persistent(task); /* task_reinit */
+        _mpc_omp_task_deinit_persistent(task);
+        --region->n_tasks;
     }
-
-    // TODO : mark this task as 'zombie' and destroy it when processing predecessors
 }

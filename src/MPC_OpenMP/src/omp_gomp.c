@@ -2121,7 +2121,6 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
         // we may want to recopy only private variables, but we have no clue for it
         void * data_storage = (void *) (task + 1);
         __task_data_copy(cpyfn, data_storage, data, arg_size);
-        _mpc_omp_task_reinit(task);
     }
     else
     {

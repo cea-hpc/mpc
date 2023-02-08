@@ -622,6 +622,9 @@ typedef struct  mpc_omp_task_persistent_region_s
     /* the persistent tasks iterator */
     mpc_common_indirect_array_iterator_t tasks_it;
 
+    /* number of tasks currently existing in this region */
+    int n_tasks;
+
 }               mpc_omp_persistent_region_t;
 
 /* persistent task instance infos */
@@ -634,9 +637,8 @@ typedef struct  mpc_omp_task_persistent_instance_infos_s
 /* persistent task infos */
 typedef struct  mpc_omp_task_persistent_infos_s
 {
-    /* current version if this persistent task.
-     * The version is set after copying private data as the persistent region iteration */
-    OPA_int_t version;
+    /* number of time this task completed */
+    OPA_int_t n_completion;
 
     /* original task uid */
     int original_uid;
