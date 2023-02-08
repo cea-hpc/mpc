@@ -672,8 +672,10 @@ _mpc_lowcomm_client_ctx_t *__accept_incoming(struct _mpc_lowcomm_monitor_s *moni
 		return NULL;
 	}
 
-    int flag = 1;
-    setsockopt(new_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
+	pthread_mutex_lock(&monitor->connect_accept_lock);
+
+	int flag = 1;
+	setsockopt(new_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
 
 	/* First of all read UID from socket */
 	uint64_t uid = 0;
@@ -681,6 +683,7 @@ _mpc_lowcomm_client_ctx_t *__accept_incoming(struct _mpc_lowcomm_monitor_s *moni
 	int ret = mpc_common_io_safe_read(new_fd, &uid, sizeof(uint64_t) );
 	if(ret == 0)
 	{
+		pthread_mutex_unlock(&monitor->connect_accept_lock);
 		close(new_fd);
 		return NULL;
 	}
@@ -727,8 +730,11 @@ _mpc_lowcomm_client_ctx_t *__accept_incoming(struct _mpc_lowcomm_monitor_s *moni
 		char meb[128];
 		mpc_common_debug_error("%s UID %s now connected", mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), meb, 128), mpc_lowcomm_peer_format(uid));
 #endif
+		pthread_mutex_unlock(&monitor->connect_accept_lock);
 		return new;
 	}
+
+	pthread_mutex_unlock(&monitor->connect_accept_lock);
 
 	return NULL;
 }
