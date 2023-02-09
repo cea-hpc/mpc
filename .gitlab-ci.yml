@@ -155,7 +155,7 @@ MPC Debug Messages:
   variables:
     GL_LOCAL_BUILD_DIR: ${GL_BUILD_DIR}_debug
     GL_LOCAL_INSTALL_DIR: ${GL_INSTALL_DIR}_debug
-    GL_INSTALL_OPTS: --disable-mpc-autopriv --mpc-option="--enable-debug-messages --enable-debug"
+    GL_INSTALL_OPTS: --disable-mpc-autopriv --enable-debug --mpc-option="--enable-debug-messages"
   script:
     - *configuration_commands
 
