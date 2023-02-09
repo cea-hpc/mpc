@@ -46,8 +46,6 @@ ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
                               "remote=%llu, sz=%llu, pte=%d)", ep->dest, srail->iface, 
                               remote, size, srail->ptl_info.am_pte);
 
-        //FIXME: there are questions around the completion of bcopy requests.
-        //       With Portals, how should a request be completed?
         sctk_ptl_chk(PtlPut(srail->ptl_info.mdh,
                             (ptl_size_t) start, /* local offset */
                             size,
@@ -176,9 +174,9 @@ ssize_t lcr_ptl_send_tag_bcopy(_mpc_lowcomm_endpoint_t *ep,
         ptl_comp->type      = LCR_PTL_COMP_TAG_BCOPY;
         ptl_comp->bcopy_buf = start;
 
-        mpc_common_debug_info("lcr ptl: send tag bcopy to %d (iface=%llu, match=%s, "
+        mpc_common_debug_info("lcr ptl: send tag bcopy to %d (iface=%llu, match=[%d,%d,%d], "
                               "remote=%llu, idx=%d, sz=%llu)", ep->dest, srail->iface, 
-                              __sctk_ptl_match_str(malloc(32), 32, tag.t), 
+                              tag.t_tag.tag, tag.t_tag.src, tag.t_tag.comm, 
                               remote, srail->ptl_info.tag_pte, size);
         sctk_ptl_chk(PtlPut(srail->ptl_info.mdh,
                             (ptl_size_t) start, /* local offset */
@@ -228,10 +226,10 @@ int lcr_ptl_send_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
         ptl_comp->type      = LCR_PTL_COMP_TAG_ZCOPY;
         ptl_comp->comp      = comp;
 
-        mpc_common_debug_info("LCR PTL: send tag zcopy to %d (iface=%llu, match=%s, "
+        mpc_common_debug_info("LCR PTL: send tag zcopy to %d (iface=%llu, match=[%d,%d,%d], "
                               "remote=%llu, idx=%d, sz=%llu, user_ptr=%p)", 
                               ep->dest, srail->iface, 
-                              __sctk_ptl_match_str(malloc(32), 32, tag.t), 
+                              tag.t_tag.tag, tag.t_tag.src, tag.t_tag.comm, 
                               remote, srail->ptl_info.tag_pte, size, ptl_comp);
         sctk_ptl_chk(PtlPut(srail->ptl_info.mdh,
                             (ptl_size_t) iov[0].iov_base, /* local offset */

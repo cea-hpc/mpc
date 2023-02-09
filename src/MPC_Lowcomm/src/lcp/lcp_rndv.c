@@ -532,11 +532,11 @@ int lcp_recv_am_rput(lcp_request_t *req)
 
         /* Register and pack memory pin context that will be sent to remote */
         //FIXME: revise how the memory is registered by sender and receiver...
-        rc = lcp_mem_reg_from_map(req->send.ep->ctx, 
+        rc = lcp_mem_reg_from_map(req->ctx, 
                                   req->state.lmem,
                                   req->state.lmem->bm,
-                                  req->send.buffer, 
-                                  req->send.length);
+                                  req->recv.buffer, 
+                                  req->recv.send_length);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
@@ -587,9 +587,6 @@ int lcp_rndv_am_rput_handler(void *arg, void *data,
         lcp_rndv_hdr_t *hdr = data;
         lcp_request_t *req;
         lcp_unexp_ctnr_t *ctnr;
-
-        /* No payload in rndv message for now */
-        assert(length == sizeof(lcp_rndv_hdr_t));
 
         LCP_CONTEXT_LOCK(ctx);
 

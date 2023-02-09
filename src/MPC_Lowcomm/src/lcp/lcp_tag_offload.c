@@ -330,7 +330,11 @@ int lcp_send_tag_eager_tag_bcopy(lcp_request_t *req)
 	if (payload < 0) {
 		mpc_common_debug_error("LCP: error packing bcopy.");
 		rc = MPC_LOWCOMM_ERROR;
+                goto err;
 	}
+        
+        lcp_request_complete(req);
+err:
         return rc;
 }
 
