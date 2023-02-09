@@ -47,6 +47,7 @@
 #include <mpc_common_helper.h>
 #include <mpc_lowcomm.h>
 
+#include "mpc_common_spinlock.h"
 #include "multirail.h"
 
 #include "communicator.h"
@@ -151,7 +152,7 @@ static inline __monitor_work_context_t * __monitor_work_context_new(_mpc_lowcomm
 	return ret;
 }
 
-static inline __monitor_work_context_t * __monitor_work_context_new_callback(mpc_lowcomm_monitor_worker_callback_t *callback, void * ctx)
+static inline __monitor_work_context_t * __monitor_work_context_new_callback(mpc_lowcomm_monitor_worker_callback_t callback, void * ctx)
 {
 	__monitor_work_context_t * ret = sctk_malloc(sizeof(__monitor_work_context_t));
 
@@ -434,7 +435,7 @@ static inline int __register_process_set(void)
 
 		if(i == my_proc_rank)
 		{
-			snprintf(uri, 155, __monitor.monitor_uri);
+			snprintf(uri, 155, "%s", __monitor.monitor_uri);
 		}
 		else
 		{
@@ -545,8 +546,9 @@ int _mpc_lowcomm_monitor_setup()
 	return 0;
 }
 
-static inline int __remove_uid(_mpc_lowcomm_set_t *set, void *arg)
+static inline int __remove_uid(mpc_lowcomm_monitor_set_t pset, void *arg)
 {
+	_mpc_lowcomm_set_t *set = (_mpc_lowcomm_set_t*)pset;
 
 	/* Only the lead process proceeds to clear */
 	if(set->is_lead)
@@ -672,7 +674,7 @@ _mpc_lowcomm_client_ctx_t *__accept_incoming(struct _mpc_lowcomm_monitor_s *moni
 		return NULL;
 	}
 
-	pthread_mutex_lock(&monitor->connect_accept_lock);
+	mpc_common_spinlock_lock_yield(&monitor->connect_accept_lock);
 
 	int flag = 1;
 	setsockopt(new_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
@@ -683,7 +685,7 @@ _mpc_lowcomm_client_ctx_t *__accept_incoming(struct _mpc_lowcomm_monitor_s *moni
 	int ret = mpc_common_io_safe_read(new_fd, &uid, sizeof(uint64_t) );
 	if(ret == 0)
 	{
-		pthread_mutex_unlock(&monitor->connect_accept_lock);
+		mpc_common_spinlock_unlock(&monitor->connect_accept_lock);
 		close(new_fd);
 		return NULL;
 	}
@@ -716,27 +718,20 @@ _mpc_lowcomm_client_ctx_t *__accept_incoming(struct _mpc_lowcomm_monitor_s *moni
 				already_present = 1;
 				shutdown(new_fd, SHUT_RDWR);
 				close(new_fd);
-				pthread_mutex_unlock(&monitor->connect_accept_lock);
+				mpc_common_spinlock_unlock(&monitor->connect_accept_lock);
 				return NULL;
 			}
 		}
 	}
 
-	if(!already_present)
-	{
-		_mpc_lowcomm_client_ctx_t *new = _mpc_lowcomm_client_ctx_new(uid, new_fd, monitor);
-		_mpc_lowcomm_monitor_client_add(monitor, new);
+	_mpc_lowcomm_client_ctx_t *new = _mpc_lowcomm_client_ctx_new(uid, new_fd, monitor);
+	_mpc_lowcomm_monitor_client_add(monitor, new);
 #ifdef MONITOR_DEBUG
-		char meb[128];
-		mpc_common_debug_error("%s UID %s now connected", mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), meb, 128), mpc_lowcomm_peer_format(uid));
+	char meb[128];
+	mpc_common_debug_error("%s UID %s now connected", mpc_lowcomm_peer_format_r(mpc_lowcomm_monitor_get_uid(), meb, 128), mpc_lowcomm_peer_format(uid));
 #endif
-		pthread_mutex_unlock(&monitor->connect_accept_lock);
-		return new;
-	}
-
-	pthread_mutex_unlock(&monitor->connect_accept_lock);
-
-	return NULL;
+	mpc_common_spinlock_unlock(&monitor->connect_accept_lock);
+	return new;
 }
 
 static inline int __handle_query(_mpc_lowcomm_client_ctx_t *ctx, _mpc_lowcomm_monitor_wrap_t *data)
@@ -1088,7 +1083,7 @@ mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_init(struct _mpc_lowcomm_moni
 
 	/* Prepare client list */
 	pthread_mutex_init(&monitor->client_lock, NULL);
-	pthread_mutex_init(&monitor->connect_accept_lock, NULL);
+	mpc_common_spinlock_init(&monitor->connect_accept_lock, 0);
 	monitor->client_count = 0;
 	mpc_common_hashtable_init(&monitor->client_contexts, MPC_LOWCOMM_MONITOR_MAX_CLIENTS);
 
@@ -1137,7 +1132,6 @@ mpc_lowcomm_monitor_retcode_t _mpc_lowcomm_monitor_release(struct _mpc_lowcomm_m
 
 	mpc_common_hashtable_release(&monitor->client_contexts);
 	pthread_mutex_destroy(&monitor->client_lock);
-	pthread_mutex_destroy(&monitor->connect_accept_lock);
 
 	return 0;
 }
@@ -1204,7 +1198,7 @@ static inline _mpc_lowcomm_client_ctx_t *___connect_client(struct _mpc_lowcomm_m
 
 
 	char localuri[MPC_LOWCOMM_PEER_URI_SIZE];
-	snprintf(localuri, MPC_LOWCOMM_PEER_URI_SIZE, uri);
+	snprintf(localuri, MPC_LOWCOMM_PEER_URI_SIZE, "%s", uri);
 
 	mpc_common_debug("(%u, %u) connecting to (%u, %u)", mpc_lowcomm_peer_get_set(monitor->process_uid),
 	                         mpc_lowcomm_peer_get_rank(monitor->process_uid), mpc_lowcomm_peer_get_set(uid), mpc_lowcomm_peer_get_rank(uid) );
@@ -1366,7 +1360,7 @@ static inline _mpc_lowcomm_client_ctx_t *__connect_client(struct _mpc_lowcomm_mo
                                                           uint64_t uid,
                                                           mpc_lowcomm_monitor_retcode_t *retcode)
 {
-	pthread_mutex_lock(&monitor->connect_accept_lock);
+	mpc_common_spinlock_lock_yield(&monitor->connect_accept_lock);
 
 	_mpc_lowcomm_client_ctx_t * ret = _mpc_lowcomm_monitor_client_known(monitor, uid);
 
@@ -1375,7 +1369,7 @@ static inline _mpc_lowcomm_client_ctx_t *__connect_client(struct _mpc_lowcomm_mo
 		ret =___connect_client(monitor, uri, uid, retcode);
 	}
 
-	pthread_mutex_unlock(&monitor->connect_accept_lock);
+	mpc_common_spinlock_unlock(&monitor->connect_accept_lock);
 
 	return ret;
 }
@@ -1403,7 +1397,7 @@ static inline _mpc_lowcomm_client_ctx_t *__get_client(struct _mpc_lowcomm_monito
 		}
 
 		mpc_common_debug("Resolved %s to %s", peer->infos.uri, value);
-		snprintf(peer->infos.uri, MPC_LOWCOMM_PEER_URI_SIZE, value);
+		snprintf(peer->infos.uri, MPC_LOWCOMM_PEER_URI_SIZE, "%s", value);
 	}
 
 
@@ -1932,7 +1926,7 @@ static inline _mpc_lowcomm_monitor_wrap_t *__generate_set_decription(mpc_lowcomm
 	else
 	{
 		cmd->content->set_info.retcode = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
-		snprintf(cmd->content->set_info.name, MPC_LOWCOMM_SET_NAME_LEN, set->name);
+		snprintf(cmd->content->set_info.name, MPC_LOWCOMM_SET_NAME_LEN, "%s", set->name);
 		cmd->content->set_info.total_task_count = set->total_task_count;
 
 		uint64_t i;
@@ -2315,7 +2309,7 @@ static inline _mpc_lowcomm_monitor_wrap_t * __generate_ondemand_cmd(mpc_lowcomm_
 		cmd->content->on_demand.retcode = MPC_LOWCOMM_MONITOR_RET_INVALID_UID;
 	}
 
-	snprintf(cmd->content->on_demand.target, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, target);
+	snprintf(cmd->content->on_demand.target, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, "%s", target);
 	
 	if(data != NULL)
 	{
@@ -2667,7 +2661,7 @@ int mpc_lowcomm_monitor_register_on_demand_callback(char *target,
 	struct __on_demand_callback * new = sctk_malloc(sizeof(struct __on_demand_callback ));
 	assume(new != NULL);
 
-	snprintf(new->target, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, target);
+	snprintf(new->target, MPC_LOWCOMM_ONDEMAND_TARGET_LEN, "%s", target);
 	new->callback = callback;
 	new->ctx = ctx;
 
@@ -2840,7 +2834,7 @@ void mpc_lowcomm_monitor_synchronous_radix_dump(void)
 			pthread_mutex_unlock(&__monitor.client_lock);
 
 
-			printf("%llu %d\n", me, cnt);
+			printf("%lu %d\n", me, cnt);
 }
 
 

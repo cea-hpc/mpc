@@ -92,7 +92,7 @@ _mpc_lowcomm_set_t *_mpc_lowcomm_set_init(mpc_lowcomm_set_uid_t gid,
 	new->local_peer = local_peer;
 
 	new->gid = gid;
-	snprintf(new->name, MPC_LOWCOMM_SET_NAME_LEN, name);
+	snprintf(new->name, MPC_LOWCOMM_SET_NAME_LEN, "%s", name);
 
 	uint64_t i;
 	new->total_task_count = 0;
@@ -210,7 +210,7 @@ _mpc_lowcomm_set_t *_mpc_lowcomm_set_get(mpc_lowcomm_set_uid_t gid)
 	return (_mpc_lowcomm_set_t *)mpc_common_hashtable_get(&__set_ht, gid);
 }
 
-int _mpc_lowcomm_set_iterate(int (*set_cb)(_mpc_lowcomm_set_t *set, void *arg), void *arg)
+int _mpc_lowcomm_set_iterate(int (*set_cb)(mpc_lowcomm_monitor_set_t set, void *arg), void *arg)
 {
 	_mpc_lowcomm_set_t *set = NULL;
 

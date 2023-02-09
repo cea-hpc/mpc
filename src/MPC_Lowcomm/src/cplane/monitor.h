@@ -14,6 +14,7 @@
 #include <mpc_common_asm.h>
 
 #include "lowcomm_thread.h"
+#include "mpc_common_spinlock.h"
 #include "set.h"
 #include "proto.h"
 
@@ -39,7 +40,7 @@ struct _mpc_lowcomm_monitor_s
 	struct mpc_common_hashtable  client_contexts;
 	uint32_t                     client_count;
 
-	pthread_mutex_t              connect_accept_lock;
+	mpc_common_spinlock_t        connect_accept_lock;
 
 	/* This is the server information */
 	_mpc_lowcomm_kernel_thread_t server_thread;

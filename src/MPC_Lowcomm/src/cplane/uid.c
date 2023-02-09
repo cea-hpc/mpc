@@ -39,7 +39,7 @@ void __set_descriptor_fill(struct _mpc_lowcomm_uid_descriptor_s *sd, char *uri, 
 
 	sd->cookie  = rand();
 	sd->set_uid = set_uid;
-	snprintf(sd->leader_uri, MPC_LOWCOMM_PEER_URI_SIZE, uri);
+	snprintf(sd->leader_uri, MPC_LOWCOMM_PEER_URI_SIZE, "%s", uri);
 }
 
 int _mpc_lowcomm_uid_descriptor_save(struct _mpc_lowcomm_uid_descriptor_s *sd, char *path)
