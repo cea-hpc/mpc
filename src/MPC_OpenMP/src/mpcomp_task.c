@@ -2935,14 +2935,6 @@ __task_schedule_next(mpc_omp_thread_t * thread)
     /* find a task */
     mpc_omp_task_t * task;
 
-    /* current thread tied tasks */
-    task = __thread_task_pop_type(thread, MPC_OMP_PQUEUE_TYPE_TIED);
-    if (task) return task;
-
-    /* current thread untied tasks */
-    task = __thread_task_pop_type(thread, MPC_OMP_PQUEUE_TYPE_UNTIED);
-    if (task) return task;
-
     /* current thread new tasks */
     task = __thread_task_pop_type(thread, MPC_OMP_PQUEUE_TYPE_SUCCESSOR);
     if (task) return task;
@@ -2951,16 +2943,24 @@ __task_schedule_next(mpc_omp_thread_t * thread)
     task = __thread_task_pop_type(thread, MPC_OMP_PQUEUE_TYPE_NEW);
     if (task) return task;
 
-    /* other thread untied tasks */
-    task = __task_larceny(MPC_OMP_PQUEUE_TYPE_UNTIED);
-    if (task) return task;
-
     /* other thread new tasks */
     task = __task_larceny(MPC_OMP_PQUEUE_TYPE_NEW);
     if (task) return task;
 
     /* other thread new tasks, but direct successors */
     task = __task_larceny(MPC_OMP_PQUEUE_TYPE_SUCCESSOR);
+    if (task) return task;
+
+    /* current thread tied tasks */
+    task = __thread_task_pop_type(thread, MPC_OMP_PQUEUE_TYPE_TIED);
+    if (task) return task;
+
+    /* current thread untied tasks */
+    task = __thread_task_pop_type(thread, MPC_OMP_PQUEUE_TYPE_UNTIED);
+    if (task) return task;
+
+    /* other thread untied tasks */
+    task = __task_larceny(MPC_OMP_PQUEUE_TYPE_UNTIED);
     if (task) return task;
 
     return NULL;
@@ -3087,6 +3087,15 @@ __thread_generate_new_task_fiber(mpc_omp_thread_t * thread)
     return fiber;
 }
 
+static inline void
+__thread_requeue_task(mpc_omp_task_t * task)
+{
+    mpc_omp_task_pqueue_type_t type = mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_UNTIED) ? MPC_OMP_PQUEUE_TYPE_UNTIED : MPC_OMP_PQUEUE_TYPE_TIED;
+    mpc_omp_task_pqueue_t * pqueue = __thread_get_task_pqueue(task->thread, type);
+    assert(pqueue);
+    __task_pqueue_push(pqueue, task);
+}
+
 /**
  * Start or resume a task by the current thread, using the task context.
  * Current task context is then restored before this function returns
@@ -3136,12 +3145,11 @@ __task_run_with_fiber(mpc_omp_task_t * task)
         }
         else
         {
-            /** TODO :
+            /**
              * The task yielded but was not blocked.
-             * We may want to defer it into `tied` or `untied` priority queues
-             * For now, this is an error
+             * We defer it into `tied` or `untied` priority queues
              */
-            not_implemented();
+            __thread_requeue_task(task);
         }
     }
 
@@ -3164,6 +3172,8 @@ __task_run(mpc_omp_task_t * task)
         _mpc_omp_task_finalize(task);
         return ;
     }
+
+    task->t_start = omp_get_wtime();
 
 # if MPC_OMP_TASK_COMPILE_FIBER
     if (MPC_OMP_TASK_FIBER_ENABLED && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_HAS_FIBER))
@@ -3221,15 +3231,6 @@ __taskyield_return(void)
     sctk_swapcontext_no_tls(&(curr->fiber->current), curr->fiber->exit);
 }
 # endif /* MPC_OMP_TASK_COMPILE_FIBER */
-
-static inline void
-__thread_requeue_task(mpc_omp_task_t * task)
-{
-    mpc_omp_task_pqueue_type_t type = mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_UNTIED) ? MPC_OMP_PQUEUE_TYPE_UNTIED : MPC_OMP_PQUEUE_TYPE_TIED;
-    mpc_omp_task_pqueue_t * pqueue = __thread_get_task_pqueue(task->thread, type);
-    assert(pqueue);
-    __task_pqueue_push(pqueue, task);
-}
 
 /* Warning : a task may unblock before blocking
  * Note that while only a single thread may block a task at a time,
@@ -3390,6 +3391,36 @@ __taskyield_stack(void)
     _mpc_omp_task_schedule();
 }
 
+static void
+__taskyield_fair(void)
+{
+    mpc_omp_thread_t * thread = __thread_task_coherency(NULL);
+    assert(thread);
+
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
+    double dt = omp_get_wtime() - task->t_start;
+    double min_sched_time = mpc_omp_conf_get()->task_yield_fair_min_time;
+    if (dt >= min_sched_time)
+    {
+        task->t_elapsed += dt;
+        task->priority = INT_MAX - task->t_elapsed / min_sched_time;
+
+# if MPC_OMP_TASK_COMPILE_FIBER
+        if (MPC_OMP_TASK_FIBER_ENABLED && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_HAS_FIBER))
+        {
+            __taskyield_return();
+        }
+        /* otherwise, busy-loop until unblock */
+        else
+# endif /* MPC_OMP_TASK_COMPILE_FIBER */
+        {
+            not_implemented();
+        }
+    }
+}
+
 /**
  * Taskyield construct.
  *
@@ -3420,6 +3451,12 @@ _mpc_omp_task_yield(void)
         {
             fprintf(stderr, "Circular task-yield is not supported, please use 'mpc_omp_task_block()'\n");
             not_implemented();
+            break ;
+        }
+
+        case (MPC_OMP_TASK_YIELD_MODE_FAIR):
+        {
+            __taskyield_fair();
             break ;
         }
 

@@ -186,9 +186,10 @@ typedef enum    mpc_omp_combined_mode_e
 
 typedef enum    mpc_omp_task_yield_mode_e
 {
-    MPC_OMP_TASK_YIELD_MODE_NOOP,
-    MPC_OMP_TASK_YIELD_MODE_STACK,
-    MPC_OMP_TASK_YIELD_MODE_CIRCULAR,
+    MPC_OMP_TASK_YIELD_MODE_NOOP        = 0,
+    MPC_OMP_TASK_YIELD_MODE_STACK       = 1,
+    MPC_OMP_TASK_YIELD_MODE_CIRCULAR    = 2,
+    MPC_OMP_TASK_YIELD_MODE_FAIR        = 3,
     MPC_OMP_TASK_YIELD_MODE_COUNT
 }               mpc_omp_task_yield_mode_t;
 
@@ -814,6 +815,12 @@ typedef struct  mpc_omp_task_s
 
     /* the task list */
     struct mpc_omp_task_pqueue_s * pqueue;
+
+    /* time the task run so far */
+    double t_elapsed;
+
+    /* time the task started */
+    double t_start;
 
 #if OMPT_SUPPORT
     /* Task data and type */
