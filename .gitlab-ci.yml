@@ -96,7 +96,7 @@ Resource Relinquishing:
 .conf_run_cmds: &configuration_commands
   - rm -rf ${GL_LOCAL_BUILD_DIR} ${GL_LOCAL_INSTALL_DIR}
   - mkdir ${GL_LOCAL_BUILD_DIR}; cd ${GL_LOCAL_BUILD_DIR}
-  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=${GL_LOCAL_INSTALL_DIR} ${GL_INSTALL_OPTS}
+  - ${CI_PROJECT_DIR}/installmpc -vv --prefix=${GL_LOCAL_INSTALL_DIR} ${GL_INSTALL_OPTS}
 
 
 MPC Default Configuration:
@@ -108,6 +108,19 @@ MPC Default Configuration:
     GL_INSTALL_OPTS: --mpc-option="--enable-debug" --with-pmi1
   script:
     - *configuration_commands
+
+
+MPC Process Mode (no Spack):
+  <<: *run_by_main
+  stage: Configurations
+  variables:
+    GL_LOCAL_BUILD_DIR: ${GL_BUILD_DIR}_nopriv
+    GL_LOCAL_INSTALL_DIR: ${GL_INSTALL_DIR}_nopriv
+    GL_INSTALL_OPTS: --disable-spack --disable-mpc-autopriv
+  script:
+    - *configuration_commands
+
+
 
 MPC Process Mode:
   <<: *run_by_main
