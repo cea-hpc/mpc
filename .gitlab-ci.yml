@@ -259,11 +259,18 @@ MPI IMB-MPI 2017:
     - *pcvs_prepare
     - ${PCVS_COMMAND} $HOME/repo/mpc_ci/MPI/IMB_2017/check-mpi/
 
+MPI NBC:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Benchmarks
+  script:
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/MPI/NBC/
+
 MPI IMB-NBC 2017:
   <<: *run_by_main
   <<: *uses_slurm
   stage: Benchmarks
-  allow_failure: true
   script:
     - *pcvs_prepare
     - ${PCVS_COMMAND} $HOME/repo/mpc_ci/MPI/IMB_2017/check-nbc/
@@ -293,7 +300,6 @@ NAS-MZ MPI:
   <<: *run_by_main
   <<: *uses_slurm
   stage: Applications
-  allow_failure: true
   script:
     - *pcvs_prepare
     - ${PCVS_COMMAND} $HOME/repo/mpc_ci/hybrid/NAS/MZ-MPI/
@@ -302,7 +308,6 @@ NAS-MZ OMP:
   <<: *run_by_main
   <<: *uses_slurm
   stage: Applications
-  allow_failure: true
   script:
     - *pcvs_prepare
     - ${PCVS_COMMAND} $HOME/repo/mpc_ci/hybrid/NAS/MZ-OMP/
