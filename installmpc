@@ -397,27 +397,32 @@ propagate_build_env()
 #
 SPECIFY_SPACK_ARCH="yes"
 ENABLE_GENERIC_SPACK_BUILD="no"
+FORCE_SPACK_ARCH=""
 build_package_name()
 {
 	SPACK_ARCH=""
 
-	GENERIC_FLAG=""
+	if test -n "$FORCE_SPACK_ARCH"; then
+		SPACK_ARCH=" arch=$FORCE_SPACK_ARCH"
+	else
+		GENERIC_FLAG=""
 
-	if test "x${ENABLE_GENERIC_SPACK_BUILD}" = "xyes"; then
-		GENERIC_FLAG=" -g "
-	fi
-
-	if test "x${SPECIFY_SPACK_ARCH}" = "xyes"; then
-
-		set +e
-		spack arch $GENERIC_FLAG > /dev/null 2>&1
-
-		if test "x$?" = "x0"; then
-			SPACK_ARCH=" arch=$(spack arch $GENERIC_FLAG)"
+		if test "x${ENABLE_GENERIC_SPACK_BUILD}" = "xyes"; then
+			GENERIC_FLAG=" -g "
 		fi
 
-		set -e
+		if test "x${SPECIFY_SPACK_ARCH}" = "xyes"; then
 
+			set +e
+			spack arch $GENERIC_FLAG > /dev/null 2>&1
+
+			if test "x$?" = "x0"; then
+				SPACK_ARCH=" arch=$(spack arch $GENERIC_FLAG)"
+			fi
+
+			set -e
+
+		fi
 	fi
 
 	VARIANT=""
@@ -486,8 +491,6 @@ check_if_spack_package_is_overriden()
 
 					set -e
 			fi
-
-		
 		fi
 	done
 }
@@ -1187,7 +1190,8 @@ You may track issued commands using the "-v" flag.
   --enable-spack-arch                     : add architecture specifiers to spack descriptors (default)
   --disable-spack-arch                    : do not pass architecture specifiers to spack descriptors
   --disable-generic-spack-build           : do not build generic spack packages (portable on target) (default)
-  --enable-generic-spack-build            : build portable for target 
+  --enable-generic-spack-build            : build portable for target
+  --force-spack-arch=*                    : overrides architecture flag (passes it to packages for example x86_64_v2)
 
 # Options to transmit to subpackages (only if not using SPACK)
   --mpc-comp=*                            : Add options to mpc-compiler-additions' configure
@@ -1495,6 +1499,9 @@ do
 			;;
 		--disable-generic-spack-build)
 			ENABLE_GENERIC_SPACK_BUILD="no"
+			;;
+		--force-spack-arch=*)
+			extractParamValue 'FORCE_SPACK_ARCH' 'force-spack-arch' "$arg"
 			;;
 		--disable-build)
 			BUILD_IS_DISABLED="yes"

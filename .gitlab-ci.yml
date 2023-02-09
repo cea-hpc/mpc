@@ -96,7 +96,7 @@ Resource Relinquishing:
 .conf_run_cmds: &configuration_commands
   - rm -rf ${GL_LOCAL_BUILD_DIR} ${GL_LOCAL_INSTALL_DIR}
   - mkdir ${GL_LOCAL_BUILD_DIR}; cd ${GL_LOCAL_BUILD_DIR}
-  - ${CI_PROJECT_DIR}/installmpc -vv --prefix=${GL_LOCAL_INSTALL_DIR} ${GL_INSTALL_OPTS}
+  - ${CI_PROJECT_DIR}/installmpc -vv --force-spack-arch=x86_64_v2 --prefix=${GL_LOCAL_INSTALL_DIR} ${GL_INSTALL_OPTS}
 
 
 MPC Default Configuration:
