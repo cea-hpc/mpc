@@ -13,7 +13,9 @@ int lcp_progress(lcp_context_h ctx)
 
 	for (i=0; i<ctx->num_resources; i++) {
 		sctk_rail_info_t *iface = ctx->resources[i].iface;
-                iface->iface_progress(iface);
+                if (iface->iface_progress != NULL) {
+                        iface->iface_progress(iface);
+                }
 	}
 
         //FIXME: no request progress needed for am or tag apparently but

@@ -396,18 +396,19 @@ int lcr_tcp_get_attr(sctk_rail_info_t *rail,
 {
         struct _mpc_lowcomm_config_struct_net_driver_tcp tcp_driver =
                 rail->runtime_config_driver_config->driver.value.tcp;
-       attr->iface.cap.am.max_bcopy = 0; /* TCP socket are blocking, hence 
-                                      no need for buffered copy. 
-                                      TODO: check MPI_BSend */
-       attr->iface.cap.am.max_zcopy = tcp_driver.max_msg_size; 
+        attr->iface.cap.am.max_iovecs = 6; //FIXME: arbitrary value...
+        attr->iface.cap.am.max_bcopy = 0; /* TCP socket are blocking, hence 
+                                             no need for buffered copy. 
+                                             TODO: check MPI_BSend */
+        attr->iface.cap.am.max_zcopy = tcp_driver.max_msg_size; 
 
-       attr->iface.cap.tag.max_bcopy = 0; /* No tag-matching capabilities */
-       attr->iface.cap.tag.max_zcopy = 0; /* No tag-matching capabilities */
+        attr->iface.cap.tag.max_bcopy = 0; /* No tag-matching capabilities */
+        attr->iface.cap.tag.max_zcopy = 0; /* No tag-matching capabilities */
 
-       attr->iface.cap.rndv.max_put_zcopy = tcp_driver.max_msg_size;
-       attr->iface.cap.rndv.max_get_zcopy = tcp_driver.max_msg_size;
-       
-       return MPC_LOWCOMM_SUCCESS;
+        attr->iface.cap.rndv.max_put_zcopy = tcp_driver.max_msg_size;
+        attr->iface.cap.rndv.max_get_zcopy = tcp_driver.max_msg_size;
+
+        return MPC_LOWCOMM_SUCCESS;
 }
 
 int lcr_tcp_init_iface(sctk_rail_info_t *rail)
@@ -455,7 +456,6 @@ int lcr_tcp_query_devices(__UNUSED__ lcr_component_t *component,
         int rc = MPC_LOWCOMM_SUCCESS;
         static const char *net_dir = "/sys/class/net";
         lcr_device_t *devices;
-        int is_up;
         int num_devices;
         struct dirent *entry;
         DIR *dir;
@@ -484,13 +484,6 @@ int lcr_tcp_query_devices(__UNUSED__ lcr_component_t *component,
 
                 /* avoid reading entry like . and .. */
                 if (entry->d_type != DT_LNK) {
-                        continue;
-                }
-
-                is_up = 1;
-                //TODO: check if interface is up with bixnic -i <iface> info
-                //      LINK_STATUS
-                if (!is_up) {
                         continue;
                 }
 
