@@ -178,7 +178,7 @@ MPC Slurm:
   variables:
     GL_LOCAL_BUILD_DIR: ${GL_BUILD_DIR}_slurm
     GL_LOCAL_INSTALL_DIR: ${GL_INSTALL_DIR}_slurm
-    GL_INSTALL_OPTS: --disable-mpc-autopriv --mpc-option="--with-slurm"
+    GL_INSTALL_OPTS: --disable-mpc-autopriv --with-slurm
   script:
     - *configuration_commands
 
@@ -188,7 +188,7 @@ MPC PMIx:
   variables:
     GL_LOCAL_BUILD_DIR: ${GL_BUILD_DIR}_pmix
     GL_LOCAL_INSTALL_DIR: ${GL_INSTALL_DIR}_pmix
-    GL_INSTALL_OPTS: --disable-mpc-autopriv --mpc-option="--with-pmix"
+    GL_INSTALL_OPTS: --disable-mpc-autopriv --with-pmix
   script:
     - *configuration_commands
 
