@@ -114,7 +114,7 @@ MPC Process Mode (no Spack):
   <<: *run_by_main
   stage: Configurations
   variables:
-    GL_LOCAL_BUILD_DIR: ${GL_BUILD_DIR}_nopriv
+    GL_LOCAL_BUILD_DIR: ${GL_BUILD_DIR}_nopriv_no_spack
     GL_LOCAL_INSTALL_DIR: ${GL_INSTALL_DIR}_nopriv
     GL_INSTALL_OPTS: --disable-spack --disable-mpc-autopriv
   script:
