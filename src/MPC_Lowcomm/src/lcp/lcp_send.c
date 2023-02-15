@@ -6,6 +6,7 @@
 #include "lcp_rndv.h"
 #include "lcp_prototypes.h"
 
+#include "mpc_lowcomm_types.h"
 #include "opa_primitives.h"
 #include "sctk_alloc.h"
 

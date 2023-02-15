@@ -603,7 +603,6 @@ out_free_devices:
         return rc;
 }
 
-<<<<<<< HEAD
 void lcp_context_task_get(lcp_context_h ctx, int tid, lcp_task_h *task_p)
 {
         lcp_task_entry_t *item;
@@ -617,16 +616,6 @@ void lcp_context_task_get(lcp_context_h ctx, int tid, lcp_task_h *task_p)
 }
 
 int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
-=======
-/**
- * @brief Allocate and initialize a context.
- * 
- * @param ctx_p address of the context to be created
- * @param flags unused
- * @return int MPI_SUCCESS in case of success
- */
-int lcp_context_create(lcp_context_h *ctx_p, __UNUSED__ unsigned flags)
->>>>>>> c397275d2 (LCP: Initial documentation for lcp module)
 {
 	int rc, i;
 	lcp_context_h ctx;	

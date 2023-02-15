@@ -47,6 +47,8 @@
 #include "communicator.h"
 #include "datatypes_common.h"
 
+#include "mpc_lowcomm_types.h"
+#include <mpc_lowcomm_datatypes.h>
 #ifdef MPC_USE_INFINIBAND
 #include <ibdevice.h>
 #endif
@@ -3424,8 +3426,8 @@ mpc_lowcomm_request_t* mpc_lowcomm_request_null(void)
 	return &__request_null;
 }
 
-int mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
-                       mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req)
+int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
+                       mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req, mpc_lowcomm_protocol_t protocol)
 {
 #ifdef MPC_LOWCOMM_PROTOCOL
         int rc, src;
@@ -3461,6 +3463,16 @@ int mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
 #else
 	return mpc_lowcomm_isend_class(dest, data, size, tag, comm, MPC_LOWCOMM_P2P_MESSAGE, req);
 #endif
+}
+
+int mpc_lowcomm_issend(int dest, const void *data, size_t size, int tag,
+						mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req){					
+	return _mpc_lowcomm_isend(dest, data, size, tag, comm, req, MPC_LOWCOMM_PROTOCOL_RDV);
+}
+
+int mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
+                		mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req){
+	return _mpc_lowcomm_isend(dest, data, size, tag, comm, req, MPC_LOWCOMM_PROTOCOL_ANY);
 }
 
 int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,

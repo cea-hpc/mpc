@@ -257,6 +257,33 @@ int mpc_lowcomm_waitall(int count, mpc_lowcomm_request_t *requests, mpc_lowcomm_
  */
 int mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req);
 
+/**
+ * @brief wrapper for sending a rendez-vous message. The "i" is here for consistency with mpc_lowcomm_isend, even though the message is synchronous.
+ * 
+ * @param dest Destination rank
+ * @param data Data to be sent
+ * @param size Size if the data to be received
+ * @param tag Message tag
+ * @param comm Communicator of the message
+ * @param req Returned request to be waited with @ref mpc_lowcomm_wait
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
+int mpc_lowcomm_issend(int dest, const void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req);
+
+/**
+ * @brief wrapped isend function. Send an "asynchronous" message (that is synchronous if it comes from `mpc_lowcomm_issend`).
+ * 
+ * @param dest Destination rank
+ * @param data Data to be sent
+ * @param size Size if the data to be received
+ * @param tag Message tag
+ * @param comm Communicator of the message
+ * @param req Returned request to be waited with @ref mpc_lowcomm_wait
+ * @param protocol protocol to be forced into the lower layers. Only MPC_LOWCOMM_RDV is forced yet.
+ * @return int MPC_LOWCOMM_SUCCESS in case of success
+ */
+int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req, mpc_lowcomm_protocol_t protocol);
+
 /** Receive an asynchornous message
  * @param src Source rank
  * @param buffer Buffer where to store the data
