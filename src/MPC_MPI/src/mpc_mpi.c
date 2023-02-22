@@ -34,6 +34,8 @@
 #include <mpc_common_debug.h>
 #include <mpc_common_rank.h>
 
+#include "alloc_mem.h"
+
 #include "mpi_conf.h"
 
 #include "mpc_mpi_halo.h"
@@ -16563,7 +16565,7 @@ int mpc_mpi_initialize(void)
 	mpc_common_spinlock_unlock(&(task_specific->per_communicator_lock) );
 
   __sctk_init_mpi_topo();
-  mpc_MPI_allocmem_pool_init();
+  mpc_lowcomm_allocmem_pool_init();
   _mpc_mpi_coll_allow_topological_comm();
 
 	MPI_ERROR_SUCCESS();
