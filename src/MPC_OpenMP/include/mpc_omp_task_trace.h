@@ -170,12 +170,6 @@ typedef struct  mpc_omp_task_trace_record_create_s
     /* the task properties */
     int properties;
 
-    /* number of predecessors */
-    int npredecessors;
-
-    /* number of uncompleted predecessors */
-    int ref_predecessors;
-
     /* the task statuses */
     int statuses;
 
