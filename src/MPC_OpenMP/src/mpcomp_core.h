@@ -144,6 +144,10 @@ typedef struct  mpc_omp_conf_s
     /* taskyield */
     mpc_omp_task_yield_mode_t task_yield_mode;
 
+    /* when using the 'fair' scheduler, minimum
+     * time in s. before switching to another task */
+    double task_yield_fair_min_time;
+
     /* task default hashing function */
     int task_dependency_default_hash;
 

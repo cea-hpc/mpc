@@ -129,6 +129,7 @@ static inline void __omp_conf_set_default(void)
     __omp_conf.task_cond_wait_enabled           = 0;
     __omp_conf.task_cond_wait_nhyperactive      = 4;
     __omp_conf.task_yield_mode                  = MPC_OMP_TASK_YIELD_MODE_NOOP;
+    __omp_conf.task_yield_fair_min_time         = 1e-6;
     __omp_conf.task_direct_successor_enabled    = 1;
     __omp_conf.task_list_policy                 = MPC_OMP_TASK_LIST_POLICY_LIFO;
     __omp_conf.task_dependency_default_hash     = 0;
@@ -196,6 +197,7 @@ static inline void __omp_conf_init(void)
             PARAM("prioritypropagationpolicy",          &__omp_conf.task_priority_propagation_policy,           MPC_CONF_INT,   "Task priority propagation policy"),
             PARAM("prioritypropagationsynchronousity",  &__omp_conf.task_priority_propagation_synchronousity,   MPC_CONF_INT,   "Task priority propagation synchronousity"),
             PARAM("yieldmode",                          &__omp_conf.task_yield_mode,                            MPC_CONF_INT,    "Task yielding policy"),
+            PARAM("yieldfairmintime",                   &__omp_conf.task_yield_fair_min_time,                   MPC_CONF_DOUBLE, "Task minimum execution time before task-switching under the 'fair' yield policy"),
             PARAM("larcenymode",                        &__omp_conf.task_larceny_mode_str,                      MPC_CONF_STRING, "Task stealing policy"),
             PARAM("steallaststolen",                    &__omp_conf.task_steal_last_stolen,                     MPC_CONF_BOOL,   "Try to steal to same list than last successful stealing"),
             PARAM("steallastthief",                     &__omp_conf.task_steal_last_thief,                      MPC_CONF_BOOL,   "Try to steal to the last thread that stole a task to current thread"),
@@ -874,23 +876,24 @@ static inline void __read_env_variables()
         mpc_common_debug_log("--------------------------------------------------");
         mpc_common_debug_log("MPC OpenMP version %d.%d (Intel and Patched GCC compatibility)", MPC_OMP_VERSION_MAJOR, MPC_OMP_VERSION_MINOR );
         mpc_common_debug_log("\tOpenMP 3 Tasking on:\n");
-        mpc_common_debug_log("\t\tmaximum tasks=%d",        __omp_conf.maximum_tasks);
-        mpc_common_debug_log("\t\tnew tasks depth=%d",      __omp_conf.pqueue_new_depth);
-        mpc_common_debug_log("\t\tuntied tasks depth=%d",   __omp_conf.pqueue_untied_depth);
-        mpc_common_debug_log("\t\tlaceny mode=%d",          __omp_conf.task_larceny_mode);
-        mpc_common_debug_log("\t\tsteal last stolen=%d",    __omp_conf.task_steal_last_stolen);
-        mpc_common_debug_log("\t\tsteal last thief=%d",     __omp_conf.task_steal_last_thief);
-        mpc_common_debug_log("\t\tdirect succesor=%d",      __omp_conf.task_direct_successor_enabled);
-        mpc_common_debug_log("\t\tyield mode=%d",           __omp_conf.task_yield_mode);
-        mpc_common_debug_log("\t\tpriority policy=%d",      __omp_conf.task_priority_policy);
-        mpc_common_debug_log("\t\tpropagation policy=%d",   __omp_conf.task_priority_propagation_policy);
+        mpc_common_debug_log("\t\tmaximum tasks=%d",            __omp_conf.maximum_tasks);
+        mpc_common_debug_log("\t\tnew tasks depth=%d",          __omp_conf.pqueue_new_depth);
+        mpc_common_debug_log("\t\tuntied tasks depth=%d",       __omp_conf.pqueue_untied_depth);
+        mpc_common_debug_log("\t\tlaceny mode=%d",              __omp_conf.task_larceny_mode);
+        mpc_common_debug_log("\t\tsteal last stolen=%d",        __omp_conf.task_steal_last_stolen);
+        mpc_common_debug_log("\t\tsteal last thief=%d",         __omp_conf.task_steal_last_thief);
+        mpc_common_debug_log("\t\tdirect succesor=%d",          __omp_conf.task_direct_successor_enabled);
+        mpc_common_debug_log("\t\tyield mode=%d",               __omp_conf.task_yield_mode);
+        mpc_common_debug_log("\t\tyield fair min time (s.)=%lf",__omp_conf.task_yield_fair_min_time);
+        mpc_common_debug_log("\t\tpriority policy=%d",          __omp_conf.task_priority_policy);
+        mpc_common_debug_log("\t\tpropagation policy=%d",       __omp_conf.task_priority_propagation_policy);
         mpc_common_debug_log("\t\tpropagation synchronousity=%d", __omp_conf.task_priority_propagation_synchronousity);
         mpc_common_debug_log("\t\ttask list policy=%s",     __omp_conf.task_list_policy == MPC_OMP_TASK_LIST_POLICY_LIFO ? "lifo" : "fifo");
         mpc_common_debug_log("\t\ttrace=%d (%s)",                       __omp_conf.task_trace, __omp_conf.task_trace_auto ? "auto" : "manual");
         mpc_common_debug_log("\t\ttrace mask=%d",                       __omp_conf.task_trace_mask);
         mpc_common_debug_log("\t\ttrace record recycler capacity=%d",   __omp_conf.task_trace_recycler_capacity);
         mpc_common_debug_log("\t\tthread tasks cond. wait = %s (nhyperactive=%d)", \
-                                                            __omp_conf.task_cond_wait_enabled ? "enabled" : "disabled", __omp_conf.task_cond_wait_nhyperactive);
+                                __omp_conf.task_cond_wait_enabled ? "enabled" : "disabled", __omp_conf.task_cond_wait_nhyperactive);
         mpc_common_debug_log("\n");
 
         mpc_common_debug_log("\tTasks fiber");

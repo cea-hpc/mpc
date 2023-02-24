@@ -1,8 +1,7 @@
 #ifndef MPC_OMP_INTEROP_CUDA_H
 # define MPC_OMP_INTEROP_CUDA_H
 
-# include "mpc_omp.h"
-# include "mpc_omp_task_trace.h"
+# include <mpc_omp.h>
 
 typedef struct  cuda_stream_progress_info_s
 {
@@ -53,21 +52,30 @@ __task_block(CUstream hStream)
 
     /* stream is blocking, suspend the task */
 
-    /* create a task-blocking handler */
+    /* progress function parameters */
     cuda_stream_progress_info_t infos;
     infos.hStream = hStream;
-    mpc_omp_event_handle_init((mpc_omp_event_handle_t**) &(infos.handle), MPC_OMP_EVENT_TASK_BLOCK);
+
+    /* create a task-blocking handler */
+    mpc_omp_event_handle_init(
+        (mpc_omp_event_handle_t**) &(infos.handle),
+        MPC_OMP_EVENT_TASK_BLOCK);
 
     /* register the progression callback */
     mpc_omp_callback(
         (int (*)(void *)) __cuda_stream_progress,
         &infos,
+        MPC_OMP_CALLBACK_SCOPE_INSTANCE,
         MPC_OMP_CALLBACK_TASK_SCHEDULE_BEFORE,
         MPC_OMP_CALLBACK_REPEAT_RETURN
     );
 
     /* block current task until the associated event is fulfilled */
     mpc_omp_task_block(infos.handle);
+
+    /* deinit the handle */
+    mpc_omp_event_handle_deinit((mpc_omp_event_handle_t *) infos.handle);
+
     return infos.r;
 }
 
@@ -76,11 +84,10 @@ __task_block(CUstream hStream)
  * and perform task switches until the stream is completed
  */
 CUresult
-mpc_cuStreamSynchronize(CUstream hStream)
+cuxStreamSynchronize(CUstream hStream)
 {
     if (mpc_omp_in_explicit_task())
     {
-        // TODO : trace cuda target
         return __task_block(hStream);
     }
     return cuStreamSynchronize(hStream);
