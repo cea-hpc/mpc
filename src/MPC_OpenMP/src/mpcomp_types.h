@@ -641,6 +641,9 @@ typedef struct  mpc_omp_task_persistent_infos_s
     /* number of time this task completed */
     OPA_int_t n_completion;
 
+    /* number of time this task was initialized */
+    OPA_int_t version;
+
     /* original task uid */
     int original_uid;
 

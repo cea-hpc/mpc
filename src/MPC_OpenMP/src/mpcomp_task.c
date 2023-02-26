@@ -1316,8 +1316,8 @@ __task_process_mpc_dep(
                 if ((type == MPC_OMP_TASK_DEP_OUT || type == MPC_OMP_TASK_DEP_INOUT) && (entry->ins || entry->inoutset))
                 {
                     // nothing to do, the task already depends
-                    // from previous 'ins' or 'inoutset' that depend
-                    // on the previous 'out'
+                    // from previous 'ins' or 'inoutsets' that depend on the
+                    // previous 'out'
                 }
                 else
                 {
@@ -1560,6 +1560,12 @@ __task_finalize_persistent(mpc_omp_task_t * task)
 
     /* trace task creation */
     MPC_OMP_TASK_TRACE_CREATE(task);
+
+    /* control flow task are not rediscovered */
+    if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_CONTROL_FLOW))
+    {
+        _mpc_omp_task_persistent_reinit(task);
+    }
 }
 
 /** Given task completed -> fulfill its successors dependencies */
@@ -1622,7 +1628,8 @@ __task_finalize_deps(mpc_omp_task_t * task)
                 /* in case of a persistent region, ensure that the successor task
                  * private variable had been copied by the producer thread. Else,
                  * we cannot process it yet. ref_predecessors can be < 0 in such case */
-                if (OPA_fetch_and_decr_int(&(succ->task->dep_node.ref_predecessors)) == 1)
+                if (OPA_fetch_and_decr_int(&(succ->task->dep_node.ref_predecessors)) == 1
+                    && OPA_load_int(&(task->persistent_infos.version)) == OPA_load_int(&(succ->task->persistent_infos.version)))
                 {
                     if (task->persistent_infos.zombit)
                     {
@@ -3016,6 +3023,12 @@ __task_persistent_region_wait(void)
     OPA_store_int(&(region->task_ref), region->n_tasks);
 }
 
+void
+_mpc_omp_task_persistent_reinit(mpc_omp_task_t * task)
+{
+    OPA_incr_int(&(task->persistent_infos.version));
+}
+
 /**
  * Get the next task to run on this thread, and pop it from the thread list
  * If no task are found, a task is stolen from another thread
@@ -4204,11 +4217,7 @@ mpc_omp_persistent_region_begin(void)
 static inline void
 __task_persistent_region_iterator_coherency_check(void)
 {
-    /* this coherency check is slightly heavy in some situations, disabling it for now */
 # if 0
-    /* if running iterations > 1, then previous iterator must have completed */
-    /* this is a coherency check */
-
     mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
     assert(region->active);
 
@@ -4238,6 +4247,8 @@ mpc_omp_persistent_region_iterate(void)
     mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
     assert(region->active);
 
+    /* if running iterations > 1, then previous iterator must have completed */
+    /* this is a coherency check */
     __task_persistent_region_iterator_coherency_check();
     mpc_common_indirect_array_iterator_reset(&(region->tasks_it));
 }
@@ -4294,6 +4305,7 @@ mpc_omp_persistent_region_push(mpc_omp_task_t * task)
     __task_ref_persistent_region(task->parent); /* _mpc_omp_task_finalize */
     task->persistent_infos.original_uid = task->uid;
     task->persistent_infos.zombit = 0;
+    OPA_store_int(&(task->persistent_infos.version), 0);
     OPA_store_int(&(task->persistent_infos.n_completion), 0);
     mpc_omp_task_set_property(&(task->property), MPC_OMP_TASK_PROP_PERSISTENT);
     mpc_common_indirect_array_iterator_push(&(region->tasks_it), &task);
