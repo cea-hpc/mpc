@@ -2118,7 +2118,7 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
     if (region->active && (task = mpc_omp_get_persistent_task()))
     {
         // TODO : 'data' of size 'arg_size' contains both shared and private variables
-        // we may want to recopy only private variables, but we have no clue for it
+        // we want to recopy only private variables, but compiler gives no infos on it
         void * data_storage = (void *) (task + 1);
         __task_data_copy(cpyfn, data_storage, data, arg_size);
     }

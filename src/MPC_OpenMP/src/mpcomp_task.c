@@ -1313,10 +1313,11 @@ __task_process_mpc_dep(
         {
             if (entry->out)
             {
-                if ((type == MPC_OMP_TASK_DEP_OUT || type == MPC_OMP_TASK_DEP_INOUT) && entry->ins)
+                if ((type == MPC_OMP_TASK_DEP_OUT || type == MPC_OMP_TASK_DEP_INOUT) && (entry->ins || entry->inoutset))
                 {
                     // nothing to do, the task already depends
-                    // from previous 'ins' that depend on the previous 'out'
+                    // from previous 'ins' or 'inoutset' that depend
+                    // on the previous 'out'
                 }
                 else
                 {
@@ -3002,12 +3003,17 @@ static void
 __task_persistent_region_wait(void)
 {
     mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
+    assert(region);
     assert(region->active);
-    if (region)
+
+    /* wait for all persistent task completion */
+    while (OPA_load_int(&(region->task_ref)))
     {
-        while (OPA_load_int(&(region->task_ref))) _mpc_omp_task_schedule();
-        OPA_store_int(&(region->task_ref), region->n_tasks);
+        _mpc_omp_task_schedule();
     }
+
+    /* prepare next barrier */
+    OPA_store_int(&(region->task_ref), region->n_tasks);
 }
 
 /**
@@ -4198,7 +4204,11 @@ mpc_omp_persistent_region_begin(void)
 static inline void
 __task_persistent_region_iterator_coherency_check(void)
 {
+    /* this coherency check is slightly heavy in some situations, disabling it for now */
 # if 0
+    /* if running iterations > 1, then previous iterator must have completed */
+    /* this is a coherency check */
+
     mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
     assert(region->active);
 
@@ -4228,8 +4238,6 @@ mpc_omp_persistent_region_iterate(void)
     mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
     assert(region->active);
 
-    /* if running iterations > 1, then previous iterator must have completed */
-    /* this is a coherency check */
     __task_persistent_region_iterator_coherency_check();
     mpc_common_indirect_array_iterator_reset(&(region->tasks_it));
 }
