@@ -1191,6 +1191,11 @@ __task_process_mpc_dep(
     mpc_omp_task_dep_htable_entry_t * entry = __task_process_mpc_dep_entry(task, addr);
     assert(entry);
 
+    mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
+    assert(region);
+
+    mpc_omp_task_t * pit = NULL;
+
     mpc_common_spinlock_lock(&(entry->lock));
 
     /* redundancy check */
@@ -1204,7 +1209,6 @@ __task_process_mpc_dep(
                  type == MPC_OMP_TASK_DEP_INOUTSET ||
                  type == MPC_OMP_TASK_DEP_MUTEXINOUTSET))
         {
-#if 0
             if (type == MPC_OMP_TASK_DEP_INOUTSET)
             {
                 /**
@@ -1215,12 +1219,12 @@ __task_process_mpc_dep(
                  * inoutset:      O   O
                  */
 
-                // TODO : we always had an extra node... this is not necessary
+                // TODO : we always add an extra node... this is not necessary
                 // and sould be optimized on the specific case where there is
                 // only one 'inoutset' task
-               const size_t size = sizeof(mpc_omp_task_t);
-                mpc_omp_task_property_t properties = MPC_OMP_TASK_PROP_UNDEFERRED | MPC_OMP_TASK_PROP_DEPEND | MPC_OMP_TASK_PROP_CONTROL_FLOW;
-                mpc_omp_task_t * pit = _mpc_omp_task_allocate(size);
+                const size_t size = sizeof(mpc_omp_task_t);
+                mpc_omp_task_property_t properties = MPC_OMP_TASK_PROP_DEPEND | MPC_OMP_TASK_PROP_CONTROL_FLOW;
+                pit = _mpc_omp_task_allocate(size);
                 _mpc_omp_task_init(pit, NULL, NULL, size, properties);
                 memset(&(pit->dep_node), 0, sizeof(mpc_omp_task_dep_node_t));
                 pit->dep_node.dep_list = (mpc_omp_task_dep_list_elt_t *) malloc(sizeof(mpc_omp_task_dep_list_elt_t));
@@ -1236,19 +1240,66 @@ __task_process_mpc_dep(
                     __task_precedence_constraints(entry->ins->task, pit);
                     entry->ins = entry->ins->next;
                 }
-                __task_precedence_constraints(pit, task);
-
-                if (!region->active) _mpc_omp_task_deinit(pit);
-
             }
             else
-#endif
             {
                 mpc_omp_task_dep_list_elt_t * in = entry->ins;
                 while (in)
                 {
                     __task_precedence_constraints(in->task, task);
                     in = in->next;
+                }
+            }
+        }
+
+        /* case 1.2 - the generated task is dependant of previous 'inoutset' */
+        if (entry->inoutset &&
+                (type == MPC_OMP_TASK_DEP_IN ||
+                 type == MPC_OMP_TASK_DEP_OUT ||
+                 type == MPC_OMP_TASK_DEP_INOUT ||
+                 type == MPC_OMP_TASK_DEP_MUTEXINOUTSET))
+        {
+            /**
+             * inoutset:        O O O
+             *                   \|/
+             * out:               X
+             *                   / \
+             * in:              O   O
+             */
+            // TODO : we always add an extra node... this is not necessary
+            // and sould be optimized on the specific case where there is
+            // only one 'in' task
+
+            /* if the inserted task is of type 'IN' then insert an 'INOUT'
+             * empty task in between to reduce O(n.m) to O(n+m) edges */
+            if (type == MPC_OMP_TASK_DEP_IN)
+            {
+                const size_t size = sizeof(mpc_omp_task_t);
+                mpc_omp_task_property_t properties = MPC_OMP_TASK_PROP_DEPEND | MPC_OMP_TASK_PROP_CONTROL_FLOW;
+                pit = _mpc_omp_task_allocate(size);
+                _mpc_omp_task_init(pit, NULL, NULL, size, properties);
+                memset(&(pit->dep_node), 0, sizeof(mpc_omp_task_dep_node_t));
+                pit->dep_node.dep_list = (mpc_omp_task_dep_list_elt_t *) malloc(sizeof(mpc_omp_task_dep_list_elt_t));
+                pit->dep_node.dep_list_size = 0;
+                MPC_OMP_TASK_TRACE_CREATE(pit);
+
+                if (region->active) mpc_omp_persistent_region_push(pit);
+
+                entry->out = __task_dep_list_append(pit, entry, NULL);
+                while (entry->inoutset)
+                {
+                    __task_precedence_constraints(entry->inoutset->task, pit);
+                    entry->inoutset = entry->inoutset->next;
+                }
+            }
+            /* else, out <=> inout '<=>' mutexinoutset */
+            else
+            {
+                mpc_omp_task_dep_list_elt_t * inoutset = entry->inoutset;
+                while (inoutset)
+                {
+                    __task_precedence_constraints(inoutset->task, task);
+                    inoutset = inoutset->next;
                 }
             }
         }
@@ -1262,67 +1313,16 @@ __task_process_mpc_dep(
         {
             if (entry->out)
             {
-                assert(entry->out->next == NULL);
-                assert(entry->out->prev == NULL);
-                __task_precedence_constraints(entry->out->task, task);
-            }
-        }
-
-        /* case 1.2 - the generated task is dependant of previous 'inoutset' */
-        if (entry->inoutset &&
-                (type == MPC_OMP_TASK_DEP_IN ||
-                 type == MPC_OMP_TASK_DEP_OUT ||
-                 type == MPC_OMP_TASK_DEP_INOUT ||
-                 type == MPC_OMP_TASK_DEP_MUTEXINOUTSET))
-        {
-#if 0
-            /**
-             * inoutset:        O O O
-             *                   \|/
-             * out:               X
-             *                   / \
-             * in:              O   O
-             */
-
-            // TODO : we always had an extra node... this is not necessary
-            // and sould be optimized on the specific case where there is
-            // only one 'in' task
-
-            /* if the inserted task is of type 'IN' then insert an 'INOUT'
-             * empty task in between to reduce O(n.m) to O(n+m) edges */
-            if (type == MPC_OMP_TASK_DEP_IN)
-            {
-                const size_t size = sizeof(mpc_omp_task_t);
-                mpc_omp_task_property_t properties = MPC_OMP_TASK_PROP_UNDEFERRED | MPC_OMP_TASK_PROP_DEPEND | MPC_OMP_TASK_PROP_CONTROL_FLOW;
-                mpc_omp_task_t * pit = _mpc_omp_task_allocate(size);
-                _mpc_omp_task_init(pit, NULL, NULL, size, properties);
-                memset(&(pit->dep_node), 0, sizeof(mpc_omp_task_dep_node_t));
-                pit->dep_node.dep_list = (mpc_omp_task_dep_list_elt_t *) malloc(sizeof(mpc_omp_task_dep_list_elt_t));
-                pit->dep_node.dep_list_size = 0;
-                MPC_OMP_TASK_TRACE_CREATE(pit);
-
-                mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
-                if (region->active) mpc_omp_persistent_region_push(pit);
-
-                entry->out = __task_dep_list_append(pit, entry, NULL);
-                while (entry->inoutset)
+                if ((type == MPC_OMP_TASK_DEP_OUT || type == MPC_OMP_TASK_DEP_INOUT) && entry->ins)
                 {
-                    __task_precedence_constraints(entry->inoutset->task, pit);
-                    entry->inoutset = entry->inoutset->next;
+                    // nothing to do, the task already depends
+                    // from previous 'ins' that depend on the previous 'out'
                 }
-                __task_precedence_constraints(pit, task);
-
-                if (!region->active) _mpc_omp_task_deinit(pit);
-            }
-            /* else, out <=> inout '<=>' mutexinoutset */
-            else
-#endif
-            {
-                mpc_omp_task_dep_list_elt_t * inoutset = entry->inoutset;
-                while (inoutset)
+                else
                 {
-                    __task_precedence_constraints(inoutset->task, task);
-                    inoutset = inoutset->next;
+                    assert(entry->out->next == NULL);
+                    assert(entry->out->prev == NULL);
+                    __task_precedence_constraints(entry->out->task, task);
                 }
             }
         }
@@ -1377,6 +1377,12 @@ __task_process_mpc_dep(
 # endif
     }
     mpc_common_spinlock_unlock(&(entry->lock));
+
+    if (pit)
+    {
+        _mpc_omp_task_process(pit);
+        if (!region->active) _mpc_omp_task_deinit(pit);
+    }
 }
 
 /**
@@ -1529,6 +1535,7 @@ __task_finalize_persistent(mpc_omp_task_t * task)
 {
     assert(mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT));
     assert(OPA_load_int(&(task->dep_node.status)) == MPC_OMP_TASK_STATUS_FINALIZED_PERSISTENT);
+
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
     assert(thread);
 
