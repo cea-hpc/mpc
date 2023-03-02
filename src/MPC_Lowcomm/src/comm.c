@@ -3822,7 +3822,7 @@ static void __finalize_driver()
 #ifdef MPC_LOWCOMM_PROTOCOL
 	lcp_context_fini(lcp_ctx_loc);
 #endif
-	mpc_lowcomm_rdma_window_release_ht();
+	mpc_lowcomm_rdma_window_do_release();
 	_mpc_lowcomm_communicator_release();
 	_mpc_lowcomm_monitor_teardown();
 }

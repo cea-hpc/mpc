@@ -265,23 +265,22 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @LCP_ENABLED_TRUE@	./lcp/lcp_mem.lo ./lcp/lcp_rma.lo \
 @LCP_ENABLED_TRUE@	./lcr/lcr_component.lo
 @MPC_HAVE_AM_TRUE@am__objects_7 = am.lo
-am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo \
-	sctk_control_messages.lo ft.lo group.lo communicator.lo \
-	shm_coll.lo lowcomm_config.lo sctk_low_level_comm.lo \
-	multirail.lo sctk_net_tools.lo sctk_net_topology.lo \
-	lowcomm_thread.lo mqd.lo datatypes_common.lo sctk_rail.lo \
-	reorder.lo endpoint.lo sctk_topological_polling.lo \
-	sctk_topological_rail.lo sctk_window.lo workshare.lo pset.lo \
-	handle_ctx.lo ./tcp/tcp.lo ./tcp/tcp_toolkit.lo \
-	./shm/sctk_shm.lo ./shm/sctk_shm_eager.lo \
-	./shm/sctk_shm_raw_queues.lo ./shm/sctk_shm_cma.lo \
-	./shm/sctk_shm_frag.lo ./shm/sctk_shm_qemu.lo \
-	./shm/sctk_shm_raw_queues_internals.lo $(am__objects_1) \
-	$(am__objects_2) $(am__objects_3) $(am__objects_4) \
-	$(am__objects_5) $(am__objects_6) ./cplane/auth.lo \
-	./cplane/peer.lo ./cplane/proto.lo ./cplane/port.lo \
-	./cplane/monitor.lo ./cplane/set.lo ./cplane/uid.lo \
-	./cplane/name.lo $(am__objects_7)
+am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo ft.lo \
+	group.lo communicator.lo shm_coll.lo lowcomm_config.lo \
+	sctk_low_level_comm.lo multirail.lo sctk_net_tools.lo \
+	sctk_net_topology.lo lowcomm_thread.lo mqd.lo \
+	datatypes_common.lo sctk_rail.lo reorder.lo endpoint.lo \
+	sctk_topological_polling.lo sctk_topological_rail.lo \
+	sctk_window.lo workshare.lo pset.lo handle_ctx.lo alloc_mem.lo \
+	./tcp/tcp.lo ./tcp/tcp_toolkit.lo ./shm/sctk_shm.lo \
+	./shm/sctk_shm_eager.lo ./shm/sctk_shm_raw_queues.lo \
+	./shm/sctk_shm_cma.lo ./shm/sctk_shm_frag.lo \
+	./shm/sctk_shm_qemu.lo ./shm/sctk_shm_raw_queues_internals.lo \
+	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
+	$(am__objects_4) $(am__objects_5) $(am__objects_6) \
+	./cplane/auth.lo ./cplane/peer.lo ./cplane/proto.lo \
+	./cplane/port.lo ./cplane/monitor.lo ./cplane/set.lo \
+	./cplane/uid.lo ./cplane/name.lo $(am__objects_7)
 libmpclowcomm_la_OBJECTS = $(am_libmpclowcomm_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
