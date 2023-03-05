@@ -54,7 +54,8 @@ __indirect_array_init_slots(
     mpc_common_indirect_array_t * array,
     size_t from)
 {
-    for (size_t i = from ; i < array->capacity ; ++i)
+    size_t i;
+    for (i = from ; i < array->capacity ; ++i)
     {
         mpc_common_indirect_array_slot_t * slot = __indirect_array_get_slot(array, i);
         slot->next = i + 1;

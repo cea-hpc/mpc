@@ -249,7 +249,8 @@ __task_statuses_to_int(mpc_omp_task_statuses_t statuses)
 {
     int bitset = 0;
     bool * bits = (bool *) &statuses;
-    for (unsigned int i = 0 ; i < sizeof(mpc_omp_task_statuses_t) ; ++i)
+    unsigned int i;
+    for (i = 0 ; i < sizeof(mpc_omp_task_statuses_t) ; ++i)
     {
         if (bits[i]) bitset |= (1 << i);
     }
