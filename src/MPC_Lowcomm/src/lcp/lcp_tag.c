@@ -95,8 +95,8 @@ int lcp_send_am_eager_tag_zcopy(lcp_request_t *req)
         iovcnt++;
 
 	mpc_common_debug_info("LCP: send am eager tag zcopy comm=%d, src=%d, "
-                              "tag=%d, length=%d", req->send.tag.comm_id, 
-                              req->send.tag.src, req->send.tag.tag, 
+                              "dest=%d, tag=%d, length=%d", req->send.tag.comm_id, 
+                              req->send.tag.src, req->send.tag.dest, req->send.tag.tag, 
                               req->send.length);
         rc = lcp_send_do_am_zcopy(lcr_ep, 
                                   MPC_LOWCOMM_P2P_MESSAGE, 

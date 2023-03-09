@@ -2564,6 +2564,9 @@ void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_r
 #ifdef MPC_LOWCOMM_PROTOCOL
 		int rc;
 		mpc_lowcomm_peer_uid_t uid = SCTK_MSG_DEST_PROCESS_UID(msg);
+                if (SCTK_DATATYPE(msg) == MPC_LOWCOMM_PACKED) {
+                        mpc_common_debug_fatal("LCP: Packed not supported");
+                }
 		lcp_ep_h ep;
 
 		lcp_ep_get(lcp_ctx_loc, uid, &ep);
@@ -2710,6 +2713,9 @@ void _mpc_comm_ptp_message_recv_check(mpc_lowcomm_ptp_message_t *msg,
 		/* This receive expects a message from a remote process */
 		msg->tail.remote_source = 1;
 #ifdef MPC_LOWCOMM_PROTOCOL
+                if (SCTK_DATATYPE(msg) == MPC_LOWCOMM_PACKED) {
+                        mpc_common_debug_fatal("LCP: Packed not supported");
+                }
 		msg->tail.request->request_completion_fn = 
 			mpc_lowcomm_request_complete;
                 lcp_request_param_t param = {
@@ -3130,30 +3136,85 @@ int mpc_lowcomm_get_process_rank()
  * MESSAGES *
  ************/
 
-#define LOWCOMM_REQUEST_SEND_INIT(_req, _comm, _dest, _tag, _size) \
-        __mpc_comm_request_init(_req, _comm, REQUEST_SEND); \
-        _req->header.source = mpc_lowcomm_communicator_uid(_comm, mpc_lowcomm_communicator_rank_of(_comm, mpc_common_get_task_rank())); \
-        _req->header.destination        = mpc_lowcomm_communicator_uid(_comm, _dest); \
-        _req->header.message_tag        = _tag; \
-        _req->header.msg_size           = _size; \
-        _req->completion_flag           = MPC_LOWCOMM_MESSAGE_PENDING; \
-	_req->is_null                   = 0; \
-	_req->status_error              = MPC_LOWCOMM_SUCCESS; \
-	_req->ptr_to_pin_ctx            = NULL; \
-        _req->request_completion_fn     = mpc_lowcomm_request_complete;
+static int mpc_lowcomm_init_request_header(const int tag,
+                                           const mpc_lowcomm_communicator_t comm,
+                                           const int src,
+                                           const int dest,
+                                           const size_t count,
+                                           mpc_lowcomm_datatype_t dt,
+                                           mpc_lowcomm_request_type_t request_type,
+                                           mpc_lowcomm_request_t *req)
+{
+        int is_intercomm = mpc_lowcomm_communicator_is_intercomm(comm);
 
-#define LOWCOMM_REQUEST_RECV_INIT(_req, _comm, _src, _tag, _size) \
-        __mpc_comm_request_init(_req, _comm, REQUEST_RECV); \
-        _req->header.destination = mpc_lowcomm_communicator_uid(_comm, mpc_lowcomm_communicator_rank_of(_comm, mpc_common_get_task_rank())); \
-        _req->header.source             = mpc_lowcomm_communicator_uid(_comm, _src); \
-        _req->header.message_tag        = _tag; \
-        _req->header.msg_size           = _size; \
-        _req->completion_flag           = MPC_LOWCOMM_MESSAGE_PENDING; \
-	_req->is_null                   = 0; \
-	_req->status_error              = MPC_LOWCOMM_SUCCESS; \
-	_req->ptr_to_pin_ctx            = NULL; \
-        _req->request_completion_fn     = mpc_lowcomm_request_complete;
+        mpc_lowcomm_peer_uid_t source_process = 0;
+        mpc_lowcomm_peer_uid_t dest_process = 0;
 
+        int source_task = -1;
+        int dest_task   = -1;
+        /* Fill in Source and Dest Process Informations (convert from task) */
+
+        /* SOURCE */
+        int isource = mpc_lowcomm_peer_get_rank(src);
+
+        if(mpc_lowcomm_peer_get_rank(src) != MPC_ANY_SOURCE) {
+                if( is_intercomm ) {
+                        if(request_type == REQUEST_RECV) {
+                                /* If this is a RECV make sure the translation is done on the source according to remote */
+                                source_task = mpc_lowcomm_communicator_remote_world_rank(comm, isource);
+                                source_process = mpc_lowcomm_communicator_remote_uid(comm, isource);
+                        } else if(request_type == REQUEST_SEND) {
+                                /* If this is a SEND make sure the translation is done on the dest according to remote */
+                                source_task = mpc_lowcomm_communicator_world_rank_of(comm, isource);
+                                source_process = mpc_lowcomm_communicator_uid(comm, isource);
+                        }
+                } else {
+                        source_task = mpc_lowcomm_communicator_world_rank_of(comm, isource);
+                        source_process = mpc_lowcomm_communicator_uid(comm, isource);
+                }
+        } else {
+                source_task = MPC_ANY_SOURCE;
+                source_process = mpc_lowcomm_monitor_local_uid_of(MPC_ANY_SOURCE);
+        }
+
+        /* DEST Handling */
+        int idestination = mpc_lowcomm_peer_get_rank(dest);
+
+        if( is_intercomm ) {
+                if(request_type == REQUEST_RECV) {
+                        /* If this is a RECV make sure the translation is done on the source according to remote */
+                        dest_task   = mpc_lowcomm_communicator_world_rank_of(comm, idestination);
+                        dest_process = mpc_lowcomm_communicator_uid(comm, idestination);
+                } else if(request_type == REQUEST_SEND) {
+                        /* If this is a SEND make sure the translation is done on the dest according to remote */
+                        dest_task   = mpc_lowcomm_communicator_remote_world_rank(comm, idestination);
+                        dest_process = mpc_lowcomm_communicator_remote_uid(comm, idestination);
+                }
+        } else {
+                dest_task = mpc_lowcomm_communicator_world_rank_of(comm, idestination);
+                dest_process = mpc_lowcomm_communicator_uid(comm, idestination);
+        }
+
+        if (request_type == REQUEST_SEND) {
+                __mpc_comm_request_init(req, comm, REQUEST_SEND);
+        } else {
+                __mpc_comm_request_init(req, comm, REQUEST_RECV);
+        }
+
+        req->header.destination      = dest_process;
+        req->header.destination_task = dest_task;
+        req->header.source           = source_process;
+        req->header.source_task      = source_task;
+        req->header.message_tag      = tag;
+        req->header.msg_size         = count;
+        req->completion_flag         = MPC_LOWCOMM_MESSAGE_PENDING; 
+	req->is_null                 = 0;
+	req->status_error            = MPC_LOWCOMM_SUCCESS;
+	req->ptr_to_pin_ctx          = NULL;
+        req->request_completion_fn   = mpc_lowcomm_request_complete;
+
+        return 0;
+}
 
 static mpc_lowcomm_request_t __request_null;
 
@@ -3171,9 +3232,13 @@ int mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
                        mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req)
 {
 #ifdef MPC_LOWCOMM_PROTOCOL
-        int rc;
+        int rc, src;
         lcp_ep_h ep;
-        LOWCOMM_REQUEST_SEND_INIT(req, comm, dest, tag, size);
+        //FIXME: how to handle task rank? Using only get_task_rank for now.
+        src = mpc_lowcomm_communicator_rank_of(comm, mpc_common_get_task_rank());
+        mpc_lowcomm_init_request_header(tag, comm, src, dest, 
+                                        size, MPC_DATATYPE_IGNORE,
+                                        REQUEST_SEND, req);
 
         lcp_ep_get(lcp_ctx_loc, req->header.destination, &ep);
         if (ep == NULL) {
@@ -3196,7 +3261,11 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
                        mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req)
 {
 #ifdef MPC_LOWCOMM_PROTOCOL
-        LOWCOMM_REQUEST_RECV_INIT(req, comm, src, tag, size);
+        int dest;
+        dest = mpc_lowcomm_communicator_rank_of(comm, mpc_common_get_task_rank());
+        mpc_lowcomm_init_request_header(tag, comm, src, dest, 
+                                        size, MPC_DATATYPE_IGNORE,
+                                        REQUEST_RECV, req);
 
         lcp_request_param_t param = {
                 .recv_info = &req->recv_info,
