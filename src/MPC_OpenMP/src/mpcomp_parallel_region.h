@@ -63,11 +63,11 @@ void _mpc_omp_internal_begin_parallel_region( mpc_omp_parallel_region_t *info, c
 void _mpc_omp_internal_end_parallel_region( mpc_omp_instance_t *instance );
 
 static inline void _mpc_omp_parallel_set_specific_infos(
-    mpc_omp_parallel_region_t *info, void *( *func )( void * ), void *data,
-    mpc_omp_local_icv_t icvs, mpc_omp_combined_mode_t type )
+    mpc_omp_parallel_region_t * info, void (* func)(void *), void * data,
+    mpc_omp_local_icv_t icvs, mpc_omp_combined_mode_t type)
 {
-	assert( info );
-	info->func = ( void *( * ) ( void * ) ) func;
+	assert(info);
+	info->func = func;
 	info->shared = data;
 	info->icvs = icvs;
 	info->combined_pragma = type;

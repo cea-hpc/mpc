@@ -1120,7 +1120,7 @@ typedef struct mpc_omp_atomic_int_pad_s
 typedef struct mpc_omp_new_parallel_region_info_s
 {
 	/* MANDATORY INFO */
-	void *( *func )( void * ); /* Function to call by every thread */
+	void ( *func )( void * );  /* Function to call by every thread */
 	void *shared;			   /* Shared variables (for every thread) */
 	long num_threads;		   /* Current number of threads in the team */
 	struct mpc_omp_new_parallel_region_info_s *parent;

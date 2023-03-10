@@ -10059,10 +10059,6 @@ int PMPI_Buffer_detach(void *buffer, int *size)
 int PMPI_Isend_internal(const void *buf, int count, MPI_Datatype datatype, int dest, int tag,
                         MPI_Comm comm, MPI_Request *request)
 {
-# if MPC_ENABLE_INTEROP_MPI_OMP
-    MPC_OMP_TASK_TRACE_SEND(count, (int) datatype, dest, tag, mpc_lowcomm_communicator_id(comm));
-# endif /* MPC_ENABLE_INTEROP_MPI_OMP */
-
 	int res = MPI_ERR_INTERN;
 
 	SCTK__MPI_INIT_REQUEST(request);
@@ -10147,9 +10143,6 @@ int PMPI_Irsend(const void *buf, int count, MPI_Datatype datatype, int dest, int
 int PMPI_Irecv_internal(void *buf, int count, MPI_Datatype datatype, int source,
                int tag, MPI_Comm comm, MPI_Request *request)
 {
-# if MPC_ENABLE_INTEROP_MPI_OMP
-    MPC_OMP_TASK_TRACE_RECV(count, (int)datatype, source, tag, mpc_lowcomm_communicator_id(comm));
-# endif /* MPC_ENABLE_INTEROP_MPI_OMP */
 	int res = MPI_ERR_INTERN;
 
 	SCTK__MPI_INIT_REQUEST(request);
@@ -10192,8 +10185,8 @@ int PMPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source,
 int PMPI_Wait(MPI_Request *request, MPI_Status *status)
 {
 # if MPC_ENABLE_INTEROP_MPI_OMP
-    if (mpc_thread_mpi_omp_wait(1, request, NULL, status)) return 0;
-# endif /* MPC_ENABLE_INTEROP_MPI_OMP */ 
+    if (mpc_thread_mpi_omp_wait(1, request, NULL, status, MPIX_PARTITION_NONE)) return 0;
+# endif /* MPC_ENABLE_INTEROP_MPI_OMP */
 
 	mpc_common_nodebug("entering MPI_Wait request = %d", *request);
 	MPI_Comm comm = MPI_COMM_WORLD;
@@ -10410,7 +10403,7 @@ int PMPI_Waitany(int count,
 	mpc_common_nodebug("entering PMPI_Waitany");
 
 # if MPC_ENABLE_INTEROP_MPI_OMP
-    if (mpc_thread_mpi_omp_wait(count, array_of_requests, index, status)) return 0;
+    if (mpc_thread_mpi_omp_wait(count, array_of_requests, index, status, MPIX_PARTITION_NONE)) return 0;
 # endif /* MPC_ENABLE_INTEROP_MPI_OMP */
 
 	MPI_Comm comm = MPI_COMM_WORLD;
@@ -10645,7 +10638,7 @@ int PMPI_Waitall(int count, MPI_Request array_of_requests[],
 	mpc_common_nodebug("entering PMPI_Waitall");
 
 # if MPC_ENABLE_INTEROP_MPI_OMP
-    if (mpc_thread_mpi_omp_wait(count, array_of_requests, NULL, array_of_statuses)) return 0;
+    if (mpc_thread_mpi_omp_wait(count, array_of_requests, NULL, array_of_statuses, MPIX_PARTITION_NONE)) return 0;
 # endif /* MPC_ENABLE_INTEROP_MPI_OMP */
 
 	MPI_Comm comm = MPI_COMM_WORLD;
@@ -19314,10 +19307,6 @@ int PMPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype data
 int PMPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
                    MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
-# if MPC_ENABLE_INTEROP_MPI_OMP
-    MPC_OMP_TASK_TRACE_ALLREDUCE(count, (int)datatype, (int)op, mpc_lowcomm_communicator_id(comm));
-# endif /* MPC_ENABLE_INTEROP_MPI_OMP */
-
 	int res = MPI_ERR_INTERN;
 
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM

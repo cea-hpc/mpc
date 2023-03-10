@@ -145,8 +145,6 @@ void _mpc_omp_internal_end_parallel_region( __UNUSED__ mpc_omp_instance_t *insta
 #endif /* OMPT_SUPPORT */
 }
 
-typedef void*(*mpc_omp_start_func_t)(void*);
-
 void
 _mpc_omp_start_parallel_region(
         void (*func)(void *),
@@ -160,15 +158,19 @@ _mpc_omp_start_parallel_region(
     _mpc_omp_ompt_frame_set_no_reentrant();
 #endif /* OMPT_SUPPORT */
 
-	mpc_omp_start_func_t start = ( mpc_omp_start_func_t ) func;
-	assert( start );
-
     mpc_omp_thread_t * t = (mpc_omp_thread_t *) mpc_omp_tls;
   	assert(t != NULL);
 
+    /* if nested parallel region, sequentialize its execution */
+    if (t->instance->team->info.func)
+    {
+        func(shared);
+        return ;
+    }
+
     mpc_omp_parallel_region_t info;
   	_mpc_omp_parallel_region_infos_init(&info);
-  	_mpc_omp_parallel_set_specific_infos(&info, start, shared, t->info.icvs, MPC_OMP_COMBINED_NONE);
+  	_mpc_omp_parallel_set_specific_infos(&info, func, shared, t->info.icvs, MPC_OMP_COMBINED_NONE);
 
 	if( !( t->schedule_is_forced ) )
 		 t->schedule_type = MPC_OMP_COMBINED_NONE;
@@ -204,14 +206,11 @@ void _mpc_omp_start_sections_parallel_region(void (*func)(void *), void *shared,
 
   	mpc_omp_init();
 
-	mpc_omp_start_func_t start = ( mpc_omp_start_func_t ) func;
-	assert( start );
-
   	t = (mpc_omp_thread_t *)mpc_omp_tls;
   	assert(t != NULL);
 
   	_mpc_omp_parallel_region_infos_init(&info);
-  	_mpc_omp_parallel_set_specific_infos(&info,start,shared,t->info.icvs,MPC_OMP_COMBINED_SECTION);
+  	_mpc_omp_parallel_set_specific_infos(&info, func, shared, t->info.icvs, MPC_OMP_COMBINED_SECTION);
   	info.nb_sections = nb_sections;
 
 	if( !( t->schedule_is_forced ) )
@@ -239,17 +238,13 @@ void _mpc_omp_start_parallel_dynamic_loop(void (*func)(void *), void *shared,
   	mpc_omp_thread_t *t;
  	mpc_omp_parallel_region_t info;
 
-	mpc_omp_start_func_t start = ( mpc_omp_start_func_t ) func;
-	assert( start );
-
   	mpc_omp_init();
 
   	t = (mpc_omp_thread_t *)mpc_omp_tls;
   	assert(t != NULL);
 
   	_mpc_omp_parallel_region_infos_init(&info);
-  	_mpc_omp_parallel_set_specific_infos(&info,start, shared,
-                                       t->info.icvs, MPC_OMP_COMBINED_DYN_LOOP);
+  	_mpc_omp_parallel_set_specific_infos(&info, func, shared, t->info.icvs, MPC_OMP_COMBINED_DYN_LOOP);
 
     assert( info.combined_pragma == MPC_OMP_COMBINED_DYN_LOOP );
   	_mpc_omp_loop_gen_infos_init(&(info.loop_infos), lb, b, incr, chunk_size);
@@ -276,11 +271,8 @@ void _mpc_omp_start_parallel_static_loop(void (*func)(void *), void *shared,
     _mpc_omp_ompt_frame_set_no_reentrant();
 #endif /* OMPT_SUPPORT */
 
-  mpc_omp_thread_t *t;
-  mpc_omp_parallel_region_t info;
-
-	mpc_omp_start_func_t start = ( mpc_omp_start_func_t ) func;
-	assert( start );
+    mpc_omp_thread_t *t;
+    mpc_omp_parallel_region_t info;
 
   	mpc_omp_init();
 
@@ -288,9 +280,7 @@ void _mpc_omp_start_parallel_static_loop(void (*func)(void *), void *shared,
   	assert(t != NULL);
 
   	_mpc_omp_parallel_region_infos_init(&info);
-  	_mpc_omp_parallel_set_specific_infos(&info, start, shared,
-                                       t->info.icvs,
-                                       MPC_OMP_COMBINED_STATIC_LOOP);
+  	_mpc_omp_parallel_set_specific_infos(&info, func, shared, t->info.icvs, MPC_OMP_COMBINED_STATIC_LOOP);
   	_mpc_omp_loop_gen_infos_init(&(info.loop_infos), lb, b, incr, chunk_size);
 
 	if( !( t->schedule_is_forced ) )
@@ -318,17 +308,13 @@ void _mpc_omp_start_parallel_guided_loop(void (*func)(void *), void *shared,
   mpc_omp_thread_t *t;
  	mpc_omp_parallel_region_t info;
 
-	mpc_omp_start_func_t start = ( mpc_omp_start_func_t ) func;
-	assert( start );
-
   	mpc_omp_init();
 
   	t = (mpc_omp_thread_t *)mpc_omp_tls;
   	assert(t != NULL);
 
   	_mpc_omp_parallel_region_infos_init(&info);
-  	_mpc_omp_parallel_set_specific_infos(&info,start, shared,
-                                       t->info.icvs, MPC_OMP_COMBINED_GUIDED_LOOP);
+  	_mpc_omp_parallel_set_specific_infos(&info, func, shared, t->info.icvs, MPC_OMP_COMBINED_GUIDED_LOOP);
 
     assert( info.combined_pragma == MPC_OMP_COMBINED_GUIDED_LOOP );
   	_mpc_omp_loop_gen_infos_init(&(info.loop_infos), lb, b, incr, chunk_size);
