@@ -176,11 +176,18 @@ int mpc_lowcomm_commit_status_from_request(mpc_lowcomm_request_t *request,
 	}
 	else if(status != MPC_LOWCOMM_STATUS_NULL)
 	{
+#ifdef MPC_LOWCOMM_PROTOCOL
+		status->MPC_SOURCE = request->recv_info.src;
+		status->MPC_TAG    = request->recv_info.tag;
+		status->MPC_ERROR  = request->status_error;
+		status->size = (int)request->recv_info.length;
+#else
 		status->MPC_SOURCE = request->header.source_task;
 		status->MPC_TAG    = request->header.message_tag;
 		status->MPC_ERROR  = request->status_error;
 
 		status->size = (int)request->header.msg_size;
+#endif
 
 		if(request->completion_flag == MPC_LOWCOMM_MESSAGE_CANCELED)
 		{

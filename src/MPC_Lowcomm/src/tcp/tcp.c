@@ -29,79 +29,15 @@
 #include <sctk_alloc.h>
 
 #include <dirent.h>
+#ifdef MPC_LOWCOMM_PROTOCOL
 #include <lcr/lcr_component.h>
+#endif
 
 #include "sctk_rail.h"
 
 /********************************************************************/
 /* Inter Thread Comm Hooks                                          */
 /********************************************************************/
-
-/**
- * Function called by each started polling thread, processing message on the given route.
- * \param[in] tmp the route to progress
- * \return NULL
- */
-static inline int lcr_tcp_invoke_am(sctk_rail_info_t *rail, 
-				    uint8_t am_id,
-				    size_t length,
-				    void *data)
-{
-	int rc = MPC_LOWCOMM_SUCCESS;
-
-	lcr_am_handler_t handler = rail->am[am_id];
-	if (handler.cb == NULL) {
-		mpc_common_debug_fatal("LCP: handler id %d not supported.", am_id);
-	}
-
-	rc = handler.cb(handler.arg, data, length, 0);
-	if (rc != MPC_LOWCOMM_SUCCESS) {
-		mpc_common_debug_error("LCP: handler id %d failed.", am_id);
-	}
-
-	return rc;
-}
-
-static void *lcr_tcp_thread_loop(_mpc_lowcomm_endpoint_t *ep)
-{
-	int fd = ep->data.tcp.fd;
-
-	mpc_common_debug("Rail %d from %d launched", ep->rail->rail_number, ep->dest);
-
-	while(1)
-	{
-		ssize_t recv_length;
-		void *data;
-		lcr_tcp_am_hdr_t hdr;
-
-		recv_length = mpc_common_io_safe_read(fd, (char *)&hdr, sizeof(hdr));
-
-		if (recv_length < 0) {
-			break;
-		} else if (recv_length < (ssize_t)sizeof(hdr)) {
-			break;
-		} else {
-			data = sctk_malloc(hdr.length);
-			mpc_common_debug("LCP: TCP recv on fd=%d", ep->data.tcp.fd);
-			recv_length = mpc_common_io_safe_read(fd, data, hdr.length);
-			if (recv_length <= 0) 
-				break;
-			else if ((size_t)recv_length < hdr.length)
-				break;
-
-			lcr_tcp_invoke_am(ep->rail, hdr.am_id, hdr.length, data);
-			sctk_free(data);
-		}
-
-	}
-
-	shutdown(fd, SHUT_RDWR);
-	close(fd);
-
-	mpc_common_debug("TCP THREAD LEAVING");
-
-	return NULL;
-}
 
 static void *__tcp_thread_loop(_mpc_lowcomm_endpoint_t *tmp)
 {
@@ -216,6 +152,163 @@ static void _mpc_lowcomm_tcp_send_message(mpc_lowcomm_ptp_message_t *msg, _mpc_l
 	mpc_lowcomm_ptp_message_complete_and_free(msg);
 }
 
+
+/**
+ * Handler triggering the send_message_from_network call, before reaching the inter_thread_comm matching process.
+ * \param[in] msg the message received from the network, to be matched w/ a local RECV.
+ */
+static int _mpc_lowcomm_tcp_send_message_from_network(mpc_lowcomm_ptp_message_t *msg)
+{
+	if(_mpc_lowcomm_reorder_msg_check(msg) == _MPC_LOWCOMM_REORDER_NO_NUMBERING)
+	{
+		/* No reordering */
+		_mpc_comm_ptp_message_send_check(msg, 1);
+	}
+
+	return 1;
+}
+
+/********************************************************************/
+/* TCP Init                                                         */
+/********************************************************************/
+
+/**
+ * Procedure to clear the TCP rail.
+ * \param[in,out] rail the rail to close.
+ */
+void _mpc_lowcomm_tcp_finalize(sctk_rail_info_t *rail)
+{
+	_mpc_lowcomm_tcp_rail_info_t *rail_tcp = &rail->network.tcp;
+
+	shutdown(rail_tcp->sockfd, SHUT_RDWR);
+	close(rail_tcp->sockfd);
+	rail_tcp->sockfd = -1;
+	rail_tcp->portno = -1;
+	rail_tcp->connection_infos[0]   = '\0';
+	rail_tcp->connection_infos_size = 0;
+}
+
+/**
+ * Procedure to initialize a new TCP rail.
+ * \param[in] rail the TCP rail
+ */
+void sctk_network_init_tcp(sctk_rail_info_t *rail)
+{
+	/* Register Hooks in rail */
+	rail->send_message_endpoint     = _mpc_lowcomm_tcp_send_message;
+	rail->notify_recv_message       = NULL;
+	rail->notify_matching_message   = NULL;
+	rail->notify_perform_message    = NULL;
+	rail->notify_idle_message       = NULL;
+	rail->notify_any_source_message = NULL;
+	rail->send_message_from_network = _mpc_lowcomm_tcp_send_message_from_network;
+	rail->driver_finalize           = _mpc_lowcomm_tcp_finalize;
+
+	sctk_rail_init_route(rail, rail->runtime_config_rail->topology, tcp_on_demand_connection_handler);
+
+	char * interface = rail->runtime_config_rail->device;
+
+	if(!interface)
+	{
+		interface = "default";
+	}
+
+	/* Handle the IPoIB case */
+    char net_name[1024];
+	snprintf(net_name, 1024, "TCP (%s)", interface);
+    rail->network_name = strdup(net_name);
+
+	/* Actually initialize the network (note TCP kind specific functions) */
+	sctk_network_init_tcp_all(rail, interface, __tcp_thread_loop);
+}
+
+int lcr_tcp_get_attr(sctk_rail_info_t *rail,
+                     lcr_rail_attr_t *attr)
+{
+        struct _mpc_lowcomm_config_struct_net_driver_tcp tcp_driver =
+                rail->runtime_config_driver_config->driver.value.tcp;
+        attr->iface.cap.am.max_iovecs = 6; //FIXME: arbitrary value...
+        attr->iface.cap.am.max_bcopy = 0; /* TCP socket are blocking, hence 
+                                             no need for buffered copy. 
+                                             TODO: check MPI_BSend */
+        attr->iface.cap.am.max_zcopy = tcp_driver.max_msg_size; 
+
+        attr->iface.cap.tag.max_bcopy = 0; /* No tag-matching capabilities */
+        attr->iface.cap.tag.max_zcopy = 0; /* No tag-matching capabilities */
+
+        attr->iface.cap.rndv.max_put_zcopy = tcp_driver.max_msg_size;
+        attr->iface.cap.rndv.max_get_zcopy = tcp_driver.max_msg_size;
+
+        return MPC_LOWCOMM_SUCCESS;
+}
+
+#ifdef MPC_LOWCOMM_PROTOCOL
+/**
+ * Function called by each started polling thread, processing message on the given route.
+ * \param[in] tmp the route to progress
+ * \return NULL
+ */
+static inline int lcr_tcp_invoke_am(sctk_rail_info_t *rail, 
+				    uint8_t am_id,
+				    size_t length,
+				    void *data)
+{
+	int rc = MPC_LOWCOMM_SUCCESS;
+
+	lcr_am_handler_t handler = rail->am[am_id];
+	if (handler.cb == NULL) {
+		mpc_common_debug_fatal("LCP: handler id %d not supported.", am_id);
+	}
+
+	rc = handler.cb(handler.arg, data, length, 0);
+	if (rc != MPC_LOWCOMM_SUCCESS) {
+		mpc_common_debug_error("LCP: handler id %d failed.", am_id);
+	}
+
+	return rc;
+}
+
+static void *lcr_tcp_thread_loop(_mpc_lowcomm_endpoint_t *ep)
+{
+	int fd = ep->data.tcp.fd;
+
+	mpc_common_debug("Rail %d from %d launched", ep->rail->rail_number, ep->dest);
+
+	while(1)
+	{
+		ssize_t recv_length;
+		void *data;
+		lcr_tcp_am_hdr_t hdr;
+
+		recv_length = mpc_common_io_safe_read(fd, (char *)&hdr, sizeof(hdr));
+
+		if (recv_length < 0) {
+			break;
+		} else if (recv_length < (ssize_t)sizeof(hdr)) {
+			break;
+		} else {
+			data = sctk_malloc(hdr.length);
+			mpc_common_debug("LCP: TCP recv on fd=%d", ep->data.tcp.fd);
+			recv_length = mpc_common_io_safe_read(fd, data, hdr.length);
+			if (recv_length <= 0) 
+				break;
+			else if ((size_t)recv_length < hdr.length)
+				break;
+
+			lcr_tcp_invoke_am(ep->rail, hdr.am_id, hdr.length, data);
+			sctk_free(data);
+		}
+
+	}
+
+	shutdown(fd, SHUT_RDWR);
+	close(fd);
+
+	mpc_common_debug("TCP THREAD LEAVING");
+
+	return NULL;
+}
+
 /*
  * Blocking send call with copy, because it is a blocking call we can free
  * the buffer
@@ -322,95 +415,6 @@ err:
 	return rc;	
 }
 
-/**
- * Handler triggering the send_message_from_network call, before reaching the inter_thread_comm matching process.
- * \param[in] msg the message received from the network, to be matched w/ a local RECV.
- */
-static int _mpc_lowcomm_tcp_send_message_from_network(mpc_lowcomm_ptp_message_t *msg)
-{
-	if(_mpc_lowcomm_reorder_msg_check(msg) == _MPC_LOWCOMM_REORDER_NO_NUMBERING)
-	{
-		/* No reordering */
-		_mpc_comm_ptp_message_send_check(msg, 1);
-	}
-
-	return 1;
-}
-
-/********************************************************************/
-/* TCP Init                                                         */
-/********************************************************************/
-
-/**
- * Procedure to clear the TCP rail.
- * \param[in,out] rail the rail to close.
- */
-void _mpc_lowcomm_tcp_finalize(sctk_rail_info_t *rail)
-{
-	_mpc_lowcomm_tcp_rail_info_t *rail_tcp = &rail->network.tcp;
-
-	shutdown(rail_tcp->sockfd, SHUT_RDWR);
-	close(rail_tcp->sockfd);
-	rail_tcp->sockfd = -1;
-	rail_tcp->portno = -1;
-	rail_tcp->connection_infos[0]   = '\0';
-	rail_tcp->connection_infos_size = 0;
-}
-
-/**
- * Procedure to initialize a new TCP rail.
- * \param[in] rail the TCP rail
- */
-void sctk_network_init_tcp(sctk_rail_info_t *rail)
-{
-	/* Register Hooks in rail */
-	rail->send_message_endpoint     = _mpc_lowcomm_tcp_send_message;
-	rail->notify_recv_message       = NULL;
-	rail->notify_matching_message   = NULL;
-	rail->notify_perform_message    = NULL;
-	rail->notify_idle_message       = NULL;
-	rail->notify_any_source_message = NULL;
-	rail->send_message_from_network = _mpc_lowcomm_tcp_send_message_from_network;
-	rail->driver_finalize           = _mpc_lowcomm_tcp_finalize;
-
-	sctk_rail_init_route(rail, rail->runtime_config_rail->topology, tcp_on_demand_connection_handler);
-
-	char * interface = rail->runtime_config_rail->device;
-
-	if(!interface)
-	{
-		interface = "default";
-	}
-
-	/* Handle the IPoIB case */
-    char net_name[1024];
-	snprintf(net_name, 1024, "TCP (%s)", interface);
-    rail->network_name = strdup(net_name);
-
-	/* Actually initialize the network (note TCP kind specific functions) */
-	sctk_network_init_tcp_all(rail, interface, __tcp_thread_loop);
-}
-
-int lcr_tcp_get_attr(sctk_rail_info_t *rail,
-                     lcr_rail_attr_t *attr)
-{
-        struct _mpc_lowcomm_config_struct_net_driver_tcp tcp_driver =
-                rail->runtime_config_driver_config->driver.value.tcp;
-        attr->iface.cap.am.max_iovecs = 6; //FIXME: arbitrary value...
-        attr->iface.cap.am.max_bcopy = 0; /* TCP socket are blocking, hence 
-                                             no need for buffered copy. 
-                                             TODO: check MPI_BSend */
-        attr->iface.cap.am.max_zcopy = tcp_driver.max_msg_size; 
-
-        attr->iface.cap.tag.max_bcopy = 0; /* No tag-matching capabilities */
-        attr->iface.cap.tag.max_zcopy = 0; /* No tag-matching capabilities */
-
-        attr->iface.cap.rndv.max_put_zcopy = tcp_driver.max_msg_size;
-        attr->iface.cap.rndv.max_get_zcopy = tcp_driver.max_msg_size;
-
-        return MPC_LOWCOMM_SUCCESS;
-}
-
 int lcr_tcp_init_iface(sctk_rail_info_t *rail)
 {
         //FIXME: to pass the assert in sctk_network_init_tcp_all
@@ -446,7 +450,6 @@ int lcr_tcp_init_iface(sctk_rail_info_t *rail)
 
         return MPC_LOWCOMM_SUCCESS;
 }
-
 
 int lcr_tcp_query_devices(__UNUSED__ lcr_component_t *component,
                           lcr_device_t **devices_p,
@@ -545,3 +548,4 @@ lcr_component_t tcp_component = {
         .next = NULL
 };
 LCR_COMPONENT_REGISTER(&tcp_component)
+#endif

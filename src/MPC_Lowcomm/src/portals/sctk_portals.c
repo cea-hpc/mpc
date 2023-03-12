@@ -30,7 +30,9 @@
 #include "endpoint.h"
 
 #include "lcr_ptl.h"
+#ifdef MPC_LOWCOMM_PROTOCOL
 #include <lcr/lcr_component.h>
+#endif
 #include <dirent.h>
 
 #include <mpc_common_types.h>

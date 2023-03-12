@@ -11379,6 +11379,7 @@ int PMPI_Psend_init(const void *buf, int partitions, int count,
                     MPI_Datatype datatype, int dest, int tag, 
                     MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
+#ifdef MPC_LOWCOMM_PROTOCOL
 	MPI_internal_request_t *req;
         UNUSED(info);
 
@@ -11387,6 +11388,9 @@ int PMPI_Psend_init(const void *buf, int partitions, int count,
 
         return mpi_psend_init(buf, partitions, count, datatype, dest, tag,
                               comm, req); 
+#else
+	not_implemented(); return MPI_ERR_INTERN;
+#endif
 }
 
 int PMPI_Recv_init(void *buf, int count, MPI_Datatype datatype, int source,
@@ -11430,6 +11434,7 @@ int PMPI_Precv_init(void *buf, int partitions, int count,
                     MPI_Datatype datatype, int source, int tag, 
                     MPI_Comm comm, MPI_Info info, MPI_Request *request)
 {
+#ifdef MPC_LOWCOMM_PROTOCOL
 	MPI_internal_request_t *req;
         UNUSED(info);
 
@@ -11438,6 +11443,9 @@ int PMPI_Precv_init(void *buf, int partitions, int count,
 
         return mpi_precv_init(buf, partitions, count, datatype, source,
                               tag, comm, req);
+#else
+	not_implemented(); return MPI_ERR_INTERN;
+#endif
 }
 
 int PMPI_Start(MPI_Request *request)
@@ -11470,10 +11478,12 @@ int PMPI_Start(MPI_Request *request)
     return MPI_SUCCESS;
   }
 
+#ifdef MPC_LOWCOMM_PROTOCOL
   if (req->is_partitioned) {
           res = mpi_pstart(req);
           MPI_HANDLE_RETURN_VAL(res, comm);
   }
+#endif
 
   NBC_Handle* handle = NULL;
 
@@ -11763,6 +11773,7 @@ int PMPI_Startall(int count, MPI_Request array_of_requests[])
 
 int PMPI_Pready(int partition, MPI_Request request) 
 {
+#ifdef MPC_LOWCOMM_PROTOCOL
         MPI_Comm comm = MPI_COMM_WORLD;
         int res       = MPI_ERR_INTERN;
 
@@ -11779,10 +11790,14 @@ int PMPI_Pready(int partition, MPI_Request request)
         res = mpi_pready(partition, req);
         
 	MPI_HANDLE_RETURN_VAL(res, comm);
+#else
+	not_implemented(); return MPI_ERR_INTERN;
+#endif
 }
 
 int PMPI_Parrived(MPI_Request request, int partition, int *flags)
 {
+#ifdef MPC_LOWCOMM_PROTOCOL
         MPI_Comm comm = MPI_COMM_WORLD;
         int res       = MPI_ERR_INTERN;
 
@@ -11799,6 +11814,9 @@ int PMPI_Parrived(MPI_Request request, int partition, int *flags)
         res = mpi_parrived(partition, req, flags);
 
 	MPI_HANDLE_RETURN_VAL(res, comm);
+#else
+	not_implemented(); return MPI_ERR_INTERN;
+#endif
 }
 
 int PMPI_Sendrecv_internal(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
@@ -16741,7 +16759,16 @@ int PMPI_Finalize(void)
 {
 	int res = MPI_ERR_INTERN;
 
+#ifdef MPC_LOWCOMM_PROTOCOL
+        //NOTE: deadlock when barrier message match an ANY_SOURCE, ANY_TAG.
+        //      This was prevented in legacy since matching also uses
+        //      message_type.
+        //      See, matmat_mpi from mpc_ci (MPI/simple/fortran) which
+        //      reproduces this behavior.
+	mpc_launch_pmi_barrier();
+#else
 	PMPI_Barrier(MPI_COMM_WORLD);
+#endif
 
 #ifdef MPC_Profiler
 	mpc_common_init_callback_register("MPC Profile reduce",
