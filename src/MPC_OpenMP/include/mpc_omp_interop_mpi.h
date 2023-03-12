@@ -75,7 +75,10 @@ __request_testpartition(mpix_progress_info_t * infos)
     assert(infos->partition != MPIX_PARTITION_NONE);
 
     int completed;
+#if 0
     MPI_Parrived(*infos->req, infos->partition, &completed);
+# endif
+    not_implemented();
     return completed;
 }
 

@@ -507,7 +507,7 @@ __prepare_omp_task_tree_init( const int num_mvps, const int *cpus_order )
 	return restrictedTopology;
 }
 
-static void
+void
 __init_task_tree( const int num_mvps, int *shape, const int *cpus_order )
 {
 	int i, top_level, place_depth = 0, place_size;
@@ -1089,8 +1089,7 @@ void mpc_omp_init( void )
 			case MPC_OMP_MODE_SIMPLE_MIXED:
 				/* Compute the number of cores for this task */
 				mpc_thread_get_task_placement_and_count( task_rank, &nb_mvps );
-				mpc_common_nodebug( "[%d] %s: SIMPLE_MIXED -> #mvps = %d", task_rank, __func__,
-				              nb_mvps );
+				mpc_common_nodebug( "[%d] %s: SIMPLE_MIXED -> #mvps = %d", task_rank, __func__, nb_mvps);
 
 				/* Consider the env variable if between 1 and the number
 				* of cores for this task */
@@ -1105,9 +1104,9 @@ void mpc_omp_init( void )
 				nb_mvps = 1;
 
 				if ( mpc_common_get_local_task_rank() == 0 )
-                                {
-					nb_mvps = mpc_topology_get_pu_count();
-				}
+                {
+                    nb_mvps = mpc_topology_get_pu_count();
+                }
 
 				break;
 
@@ -1184,7 +1183,9 @@ void mpc_omp_init( void )
 	_mpc_omp_ompt_init();
 #endif /* OMPT_SUPPORT */
 
+    puts("initial thread in!");
     mpc_omp_init_initial_thread( icvs );
+    puts("initial thread out!");
 
 	int places_nb_mvps;
 	int *shape, *cpus_order;
@@ -1194,14 +1195,15 @@ void mpc_omp_init( void )
 	{
 		places_nb_mvps = _mpc_omp_places_get_topo_info( OMP_PLACES_LIST, &shape, &cpus_order );
 		assert( places_nb_mvps <= nb_mvps );
-    nb_mvps = places_nb_mvps;
-	}
+        nb_mvps = places_nb_mvps;
+    }
 	else
 	{
 		shape = NULL;
 		cpus_order = NULL;
 	}
 
+    puts("init task tree!");
 	__init_task_tree( nb_mvps, shape, cpus_order );
 
 	mpc_common_spinlock_unlock( &lock );

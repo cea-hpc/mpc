@@ -3002,7 +3002,10 @@ _mpc_omp_task_wait(void ** depend, int nowait)
         mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
         assert(task);
 
-        while (OPA_load_int(&(task->children_count))) _mpc_omp_task_schedule();
+        while (OPA_load_int(&(task->children_count)))
+        {
+            _mpc_omp_task_schedule();
+        }
     }
 }
 
@@ -4107,9 +4110,10 @@ __thread_task_init_recyclers(mpc_omp_thread_t * thread)
 void
 _mpc_omp_task_tree_init(mpc_omp_thread_t * thread)
 {
+    if (mpc_omp_conf_get()->task_trace_auto) mpc_omp_task_trace_begin();
+
     thread->hash_collision = 0;
     thread->hash_resize = 0;
-    if (mpc_omp_conf_get()->task_trace_auto) mpc_omp_task_trace_begin();
     memset(&(thread->task_infos.incoming), 0, sizeof(thread->task_infos.incoming));
     mpc_omp_task_dependencies_hash_func(NULL);
 # if MPC_OMP_TASK_USE_RECYCLERS
