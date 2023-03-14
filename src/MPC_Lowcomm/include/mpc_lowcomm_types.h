@@ -142,16 +142,6 @@ typedef struct
  * REQUESTS *
  ************/
 
-/************
- * protocol *
- ***********/
- typedef enum{
-	MPC_LOWCOMM_PROTOCOL_ANY,
-	MPC_LOWCOMM_PROTOCOL_EAGER,
-	MPC_LOWCOMM_PROTOCOL_BUFFERED,
-	MPC_LOWCOMM_PROTOCOL_RDV
- } mpc_lowcomm_protocol_t;
-
 /** Generalized requests functions **/
 typedef int sctk_Grequest_query_function( void *extra_state, mpc_lowcomm_status_t *status );
 typedef int sctk_Grequest_cancel_function( void *extra_state, int complete );
@@ -204,7 +194,7 @@ typedef struct mpc_lowcomm_request_s
 	void *ptr_to_pin_ctx;
         int (*request_completion_fn)(struct mpc_lowcomm_request_s *);
 	// force protocol in lowcomm
-	mpc_lowcomm_protocol_t protocol;
+	int synchronized;
 }mpc_lowcomm_request_t;
 
 struct mpc_lowcomm_request_s * mpc_lowcomm_request_null(void);

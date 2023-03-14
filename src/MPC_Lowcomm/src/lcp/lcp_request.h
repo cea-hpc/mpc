@@ -93,7 +93,7 @@ struct lcp_request {
 		} recv;
 	};
 
-        //NOTE: break LCP modularity
+	//NOTE: break LCP modularity
 	mpc_lowcomm_request_t *request; /* Upper layer request */
         lcp_tag_recv_info_t   *info;
         void                  *user_data;

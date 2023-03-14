@@ -2615,7 +2615,7 @@ int _mpc_cl_ssend(const void *buf, mpc_lowcomm_msg_count_t count, mpc_lowcomm_da
 	}
 
 	size_t msg_size = count * __mpc_cl_datatype_get_size(datatype, task_specific);
-	mpc_lowcomm_issend(dest, buf, msg_size, tag, comm, &request);
+	mpc_lowcomm_ssend(dest, buf, msg_size, tag, comm, &request);
 	mpc_lowcomm_request_wait(&request);
 	MPC_ERROR_SUCESS();
 }

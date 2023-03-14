@@ -83,7 +83,7 @@ err:
  * @brief set the handler of an active message with context ctx as argument
  * 
  * @param ctx context as input to handler
- * @param iface rail to add the handler to
+ * @param iface rail to add the handlers to
  * @return int MPI_SUCCESS in case of success
  */
 static inline int lcp_context_set_am_handler(lcp_context_h ctx, 

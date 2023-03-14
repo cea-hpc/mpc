@@ -3427,7 +3427,7 @@ mpc_lowcomm_request_t* mpc_lowcomm_request_null(void)
 }
 
 int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
-                       mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req, mpc_lowcomm_protocol_t protocol)
+                       mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req, int synchronized)
 {
 #ifdef MPC_LOWCOMM_PROTOCOL
         int rc, src;
@@ -3438,6 +3438,7 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
         mpc_lowcomm_init_request_header(tag, comm, src, dest, 
                                         size, MPC_DATATYPE_IGNORE,
                                         REQUEST_SEND, req);
+		req->synchronized = synchronized;
 
         lcp_ep_get(lcp_ctx_loc, req->header.destination, &ep);
         if (ep == NULL) {
@@ -3465,14 +3466,14 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
 #endif
 }
 
-int mpc_lowcomm_issend(int dest, const void *data, size_t size, int tag,
-						mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req){					
-	return _mpc_lowcomm_isend(dest, data, size, tag, comm, req, MPC_LOWCOMM_PROTOCOL_RDV);
+int mpc_lowcomm_ssend(int dest, const void *data, size_t size, int tag,
+						mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req){		
+	return _mpc_lowcomm_isend(dest, data, size, tag, comm, req, 1);
 }
 
 int mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
                 		mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req){
-	return _mpc_lowcomm_isend(dest, data, size, tag, comm, req, MPC_LOWCOMM_PROTOCOL_ANY);
+	return _mpc_lowcomm_isend(dest, data, size, tag, comm, req, 0);
 }
 
 int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,

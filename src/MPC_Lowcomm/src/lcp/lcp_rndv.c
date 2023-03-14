@@ -645,7 +645,7 @@ err:
 }
 
 /**
- * @brief Receive a rput request.
+ * @brief Receive a rput request : receive rndv, send ack, receive write, receive fin.
  * 
  * @param req message request
  * @return int MPC_LOWCOMM_SUCCESS
@@ -700,7 +700,7 @@ int lcp_recv_am_rput(lcp_request_t *req)
                 goto err;
         }
         ack->super = req;
-
+        // initialize ack pending request
         if (lcp_pending_create(req->ctx->pend, req, req->msg_id) == NULL) {
                 mpc_common_debug_error("LCP: could not add pending message");
                 rc = MPC_LOWCOMM_ERROR;
@@ -709,6 +709,7 @@ int lcp_recv_am_rput(lcp_request_t *req)
         /* delete from pending list on completion */
         req->flags |= LCP_REQUEST_DELETE_FROM_PENDING; 
 
+        // send an active message using buffer copy from the endpoint ep
         payload = lcp_send_do_am_bcopy(ep->lct_eps[ep->priority_chnl],
                                        MPC_LOWCOMM_ACK_RDV_MESSAGE,
                                        lcp_rtr_rput_pack,

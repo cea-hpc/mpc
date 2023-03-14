@@ -6,7 +6,9 @@
 #include "lcp_datatype.h"
 #include "lcp_task.h"
 
+#include "mpc_common_debug.h"
 #include "sctk_alloc.h"
+#include "lcp_tag.h"
 
 int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count, 
                     mpc_lowcomm_request_t *request,
@@ -18,21 +20,26 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 	lcp_request_t *req;
         lcp_context_h ctx = task->ctx;
 
+	// create a request to be matched with the received message
 	rc = lcp_request_create(&req);
 	if (rc != MPC_LOWCOMM_SUCCESS) {
 		mpc_common_debug_error("LCP: could not create request.");
-		return MPC_LOWCOMM_ERROR;
+		return  MPC_LOWCOMM_ERROR;
 	}
         req->flags |= LCP_REQUEST_MPI_COMPLETE;
         LCP_REQUEST_INIT_RECV(req, ctx, task, request, param->recv_info,
                               count, buffer, param->datatype);
 	lcp_request_init_tag_recv(req, param->recv_info);
 
+	// get interface for the request to go through
 	iface = ctx->resources[ctx->priority_rail].iface;
+
+	// if we have to try offload
 	if (LCR_IFACE_IS_TM(iface) && (ctx->config.offload ||
             (param->flags & LCP_REQUEST_TRY_OFFLOAD))) {
 
                 req->state.offloaded = 1;
+		// try to receive using zero copy
 		rc = lcp_recv_tag_zcopy(req, iface);
 
 		return rc;
@@ -66,12 +73,14 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 				      match, match->flags);
 		rc = lcp_rndv_matched(req, (lcp_rndv_hdr_t *)(match + 1),
                                       match->length - sizeof(lcp_rndv_hdr_t), LCP_RNDV_PUT);
-        } else if (match->flags & LCP_RECV_CONTAINER_UNEXP_RGET) {
-		mpc_common_debug_info("LCP: matched rndv unexp req=%p, flags=%x", 
-				      match, match->flags);
-		rc = lcp_rndv_matched(req, (lcp_rndv_hdr_t *)(match + 1),
-                                      match->length - sizeof(lcp_rndv_hdr_t),
-                                      LCP_RNDV_GET);
+	// if request is matching an unexpected request and is rget type		
+	} else if (match->flags & LCP_RECV_CONTAINER_UNEXP_RGET) {
+	mpc_common_debug_info("LCP: matched rndv unexp req=%p, flags=%x", 
+				match, match->flags);
+	rc = lcp_rndv_matched(req, (lcp_rndv_hdr_t *)(match + 1),
+				match->length - sizeof(lcp_rndv_hdr_t),
+				LCP_RNDV_GET);
+	// else if request is matching a non-rendez-vous type unexpected request 
 	} else if (match->flags & LCP_RECV_CONTAINER_UNEXP_TAG) {
                 lcp_tag_hdr_t *hdr = (lcp_tag_hdr_t *)(match + 1);
 
@@ -94,8 +103,6 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 		mpc_common_debug_error("LCP: unkown match flag=%x.", match->flags);
 		rc = MPC_LOWCOMM_ERROR;
 	}
-
 	sctk_free(match);
-
 	return rc;
 }

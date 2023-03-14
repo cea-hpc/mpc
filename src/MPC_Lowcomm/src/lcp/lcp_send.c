@@ -1,3 +1,4 @@
+#include "lcp.h"
 #include "lcp_ep.h"
 #include "lcp_context.h"
 #include "lcp_request.h"
@@ -5,7 +6,9 @@
 #include "lcp_header.h"
 #include "lcp_rndv.h"
 #include "lcp_prototypes.h"
+#include "lcp_tag.h"
 
+#include "mpc_common_debug.h"
 #include "mpc_lowcomm_types.h"
 #include "opa_primitives.h"
 #include "sctk_alloc.h"
@@ -41,6 +44,7 @@ int lcp_send_start(lcp_ep_h ep, lcp_request_t *req,
                            (param->datatype & LCP_DATATYPE_CONTIGUOUS)) {
                         req->send.func = lcp_send_tag_eager_tag_zcopy;
                 } else {
+                        req->request->synchronized = 0;
                         rc = lcp_send_rndv_offload_start(req);
                 }
         } else {
@@ -59,6 +63,7 @@ int lcp_send_start(lcp_ep_h ep, lcp_request_t *req,
                            (param->datatype & LCP_DATATYPE_CONTIGUOUS)) {
                         req->send.func = lcp_send_am_eager_tag_zcopy;
                 } else {
+                        req->request->synchronized = 0;
                         rc = lcp_send_rndv_am_start(req);
                 }
         }
@@ -73,11 +78,13 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
                     size_t count, mpc_lowcomm_request_t *request,
                     const lcp_request_param_t *param)
 {
-        int rc;
+        // printf("\nsending with sync %d\n", request->synchronized);
+        int rc, payload;
         lcp_request_t *req;
 
         uint64_t msg_id = OPA_fetch_and_incr_int(&(ep->ctx->msg_id));
 
+        // create the request to send
         rc = lcp_request_create(&req);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 mpc_common_debug_error("LCP: could not create request.");
@@ -92,13 +99,42 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
                               OPA_fetch_and_incr_int(&ep->seqn), msg_id,
                               param->datatype);
 
+        // prepare request depending on its type
         rc = lcp_send_start(ep, req, param);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 mpc_common_debug_error("LCP: could not prepare send request.");
                 return MPC_LOWCOMM_ERROR;
         }
 
+        // send the request
         rc = lcp_request_send(req);
 
+        // if synchronization is requested, wait for ack
+        // if(req->request->synchronized){
+        //         printf("\nsynchronizing with %d\n", req->request->synchronized);
+        //         lcp_request_t *ack;
+        //         lcp_request_create(&ack);
+        //         if (ack == NULL) {
+        //                 mpc_common_debug_error("LCP: could not create request");
+        //         }
+        //         ack->super = req;
+
+        //         if (lcp_pending_create(ep->ctx->pend, req, req->msg_id) == NULL) {
+        //                 mpc_common_debug_error("LCP: could not add pending message");
+        //                 rc = MPC_LOWCOMM_ERROR;
+        //         }
+
+        //         payload = lcp_send_do_am_bcopy(ep->lct_eps[ep->priority_chnl],
+        //                                 MPC_LOWCOMM_ACK_RDV_MESSAGE,
+        //                                 lcp_send_tag_pack,
+        //                                 ack);
+        //         if (payload < 0) {
+        //                 mpc_common_debug_error("LCP: error sending ack rdv message");
+        //                 rc = MPC_LOWCOMM_ERROR;
+        //         }
+        //         rc = MPC_LOWCOMM_SUCCESS;
+
+        //         lcp_request_complete(ack);
+        // }
         return rc;
 }
