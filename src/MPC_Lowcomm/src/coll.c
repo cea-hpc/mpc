@@ -1509,7 +1509,7 @@ static void _mpc_coll_noalloc_barrier(const mpc_lowcomm_communicator_t communica
 					{
 						_mpc_coll_message_recv(
 							communicator, src + (j * (i / barrier_arity) ),
-							myself, 1111, &c, 1, MPC_LOWCOMM_BARRIER_MESSAGE,
+							myself, MPC_BARRIER_TAG, &c, 1, MPC_LOWCOMM_BARRIER_MESSAGE,
 							_mpc_coll_message_table_get_item(&table, OPT_NOALLOC_MAX_ASYNC),
 							0);
 					}
@@ -1525,11 +1525,11 @@ static void _mpc_coll_noalloc_barrier(const mpc_lowcomm_communicator_t communica
 				if(dest >= 0)
 				{
 					_mpc_coll_message_send(
-						communicator, myself, dest, 1111, &c, 1,
+						communicator, myself, dest, MPC_BARRIER_TAG, &c, 1,
 						MPC_LOWCOMM_BARRIER_MESSAGE,
 						_mpc_coll_message_table_get_item(&table, OPT_NOALLOC_MAX_ASYNC), 0);
 					_mpc_coll_message_recv(
-						communicator, dest, myself, 2222, &c, 1,
+						communicator, dest, myself, MPC_BARRIER_TAG, &c, 1,
 						MPC_LOWCOMM_BARRIER_MESSAGE,
 						_mpc_coll_message_table_get_item(&table, OPT_NOALLOC_MAX_ASYNC),
 						0);
@@ -1556,7 +1556,7 @@ static void _mpc_coll_noalloc_barrier(const mpc_lowcomm_communicator_t communica
 				{
 					_mpc_coll_message_send(
 						communicator, myself,
-						dest + (j * (i / barrier_arity) ), 2222, &c, 1,
+						dest + (j * (i / barrier_arity) ), MPC_BARRIER_TAG, &c, 1,
 						MPC_LOWCOMM_BARRIER_MESSAGE,
 						_mpc_coll_message_table_get_item(&table, OPT_NOALLOC_MAX_ASYNC), 0);
 				}

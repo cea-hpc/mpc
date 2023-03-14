@@ -16759,16 +16759,7 @@ int PMPI_Finalize(void)
 {
 	int res = MPI_ERR_INTERN;
 
-#ifdef MPC_LOWCOMM_PROTOCOL
-        //NOTE: deadlock when barrier message match an ANY_SOURCE, ANY_TAG.
-        //      This was prevented in legacy since matching also uses
-        //      message_type.
-        //      See, matmat_mpi from mpc_ci (MPI/simple/fortran) which
-        //      reproduces this behavior.
-	mpc_launch_pmi_barrier();
-#else
 	PMPI_Barrier(MPI_COMM_WORLD);
-#endif
 
 #ifdef MPC_Profiler
 	mpc_common_init_callback_register("MPC Profile reduce",

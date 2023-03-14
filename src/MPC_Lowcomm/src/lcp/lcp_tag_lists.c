@@ -29,7 +29,7 @@ void *lcp_prq_find(lcp_mtch_prq_list_t *list, int tag, uint64_t peer)
 	lcp_mtch_prq_elem_t *elem, *tmp;
 
 	DL_FOREACH_SAFE(list->list, elem, tmp){
-		result = ((elem->tag & elem->tmask) == (tag & elem->tmask)) &&
+		result = ((elem->tag & tag) || (!elem->tmask && tag >= 0)) &&
 			((elem->src & elem->smask) == (peer & elem->smask));
 		if (result) {
 			return elem->value;
@@ -44,7 +44,7 @@ void *lcp_prq_find_dequeue(lcp_mtch_prq_list_t *list, int tag, uint64_t peer)
 	lcp_mtch_prq_elem_t *elem, *tmp;
 
 	DL_FOREACH_SAFE(list->list, elem, tmp){
-		result = ((elem->tag & elem->tmask) == (tag & elem->tmask)) &&
+		result = ((elem->tag == tag) || (!elem->tmask && tag >= 0)) &&
 			((elem->src & elem->smask) == (peer & elem->smask));
 		if (result) {
 			DL_DELETE(list->list, elem);	
@@ -143,12 +143,9 @@ void *lcp_umq_find(lcp_mtch_umq_list_t *list, int tag, uint64_t peer)
 		smask = 0;
 	}
 
-	tag = tag & tmask;
-	peer = peer & smask;
-
 	DL_FOREACH_SAFE(list->list, elem, tmp){
-		result = ((elem->tag & tmask) == tag) &&
-			((elem->src & smask) == peer);
+		result = ((elem->tag == tag) || (!tmask && elem->tag >= 0)) &&
+			((elem->src & smask) == (peer & smask));
 		if (result) {
 			return elem->value;
 		}
@@ -171,12 +168,9 @@ void *lcp_umq_find_dequeue(lcp_mtch_umq_list_t *list, int tag, uint64_t peer)
 		smask = 0;
 	}
 
-	tag = tag & tmask;
-	peer = peer & smask;
-
 	DL_FOREACH_SAFE(list->list, elem, tmp){
-		result = ((elem->tag & tmask) == tag) &&
-			((elem->src & smask) == peer);
+                result = ((elem->tag == tag) || (!tmask && elem->tag >= 0)) &&
+                        ((elem->src & smask) == (peer & smask));
 		if (result) {
 			DL_DELETE(list->list, elem);	
 			list->size--;
