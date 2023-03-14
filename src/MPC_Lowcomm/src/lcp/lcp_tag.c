@@ -21,7 +21,7 @@
  * @param data data to pack
  * @return size_t size of packed data
  */
-static size_t lcp_send_tag_pack(void *dest, void *data)
+size_t lcp_send_tag_pack(void *dest, void *data)
 {
 	lcp_tag_hdr_t *hdr = dest;
 	lcp_request_t *req = data;
@@ -62,7 +62,7 @@ void lcp_tag_complete(lcr_completion_t *comp) {
 /* ============================================== */
 
 /**
- * @brief Callback for buffered copy in tagged active message eager
+ * @brief Tag active message bcopy eager send function
  * 
  * @param req request
  * @return int MPC_LOWCOMM_SUCCESS in case of success
@@ -79,8 +79,13 @@ int lcp_send_am_eager_tag_bcopy(lcp_request_t *req)
                               "dest=%d, length=%d, tag=%d, lcreq=%p.", req->send.tag.comm,
                               req->send.tag.src_tid, req->send.tag.dest_tid, 
                               req->send.length, req->send.tag.tag, req->request);
+	int message_type;
+	if(req->request->synchronized) message_type = MPC_LOWCOMM_P2P_SYNC_MESSAGE;
+	else message_type = MPC_LOWCOMM_P2P_MESSAGE;
+	mpc_common_debug_info("LCP: send am eager tag bcopy src=%d, dest=%d, length=%d",
+			      req->send.tag.src, req->send.tag.dest, req->send.length);
         payload = lcp_send_do_am_bcopy(lcr_ep, 
-                                       MPC_LOWCOMM_P2P_MESSAGE, 
+                                       message_type, 
                                        lcp_send_tag_pack, 
                                        req);
 	//FIXME: handle error
@@ -95,7 +100,7 @@ int lcp_send_am_eager_tag_bcopy(lcp_request_t *req)
 }
 
 /**
- * @brief Callback for zero copy in tagged active message eager
+ * @brief Tag active message zcopy eager send function
  * 
  * @param req request
  * @return int MPC_LOWCOMM_SUCCESS in case of success
@@ -134,15 +139,18 @@ int lcp_send_am_eager_tag_zcopy(lcp_request_t *req)
 
 	mpc_common_debug_info("LCP: send am eager tag zcopy comm=%d, src=%d, "
                               "dest=%d, tag=%d, length=%d", req->send.tag.comm, 
-                              req->send.tag.src_tid, req->send.tag.dest_tid, 
-                              req->send.tag.tag, req->send.length);
-        rc = lcp_send_do_am_zcopy(lcr_ep, 
-                                  MPC_LOWCOMM_P2P_MESSAGE, 
-                                  hdr, 
-                                  sizeof(lcp_tag_hdr_t),
-                                  iov,
-                                  iovcnt, 
-                                  &(req->state.comp));
+                            	req->send.tag.src_tid, req->send.tag.dest_tid, 
+								req->send.tag.tag, req->send.length);
+	int message_type;
+	if(req->request->synchronized) message_type = MPC_LOWCOMM_P2P_SYNC_MESSAGE;
+	else message_type = MPC_LOWCOMM_P2P_MESSAGE;
+	rc = lcp_send_do_am_zcopy(lcr_ep, 
+								message_type, 
+								hdr, 
+								sizeof(lcp_tag_hdr_t),
+								iov,
+								iovcnt, 
+								&(req->state.comp));
 
 err:
 	return rc;
@@ -164,14 +172,14 @@ err:
  * @param flags flag of the message
  * @return int 
  */
-static int lcp_am_tag_handler(void *arg, void *data,
-                              size_t length, 
-                              __UNUSED__ unsigned flags)
+static int _lcp_am_tag_handler(lcp_request_t **request, void *arg, void *data,
+			  size_t length, 
+			  __UNUSED__ unsigned flags)
 {
 	int rc = MPC_LOWCOMM_SUCCESS;
 	lcp_context_h ctx = arg;
-	lcp_request_t *req;
 	lcp_unexp_ctnr_t *ctnr;
+	lcp_request_t *req;
 	lcp_tag_hdr_t *hdr = data;
         lcp_task_h task = NULL;
 
@@ -183,11 +191,15 @@ static int lcp_am_tag_handler(void *arg, void *data,
                 goto err;
         }
 
-        LCP_TASK_LOCK(task);
-	req = (lcp_request_t *)lcp_match_prq(task->prq_table, 
+
+	LCP_TASK_LOCK(task);
+	// try to match it with a posted message
+	*request = (lcp_request_t *)lcp_match_prq(task->prq_table, 
 					     hdr->comm, 
 					     hdr->tag,
 					     hdr->src_tid);
+	// if request is not matched
+	req = *request;
 	if (req == NULL) {
                 mpc_common_debug("LCP: recv unexp tag src=%d, length=%d",
                                  hdr->src_tid, length);
@@ -196,6 +208,7 @@ static int lcp_am_tag_handler(void *arg, void *data,
 		if (rc != MPC_LOWCOMM_SUCCESS) {
 			goto err;
 		}
+		// add the request to the unexpected messages
 		lcp_append_umq(task->umq_table, (void *)ctnr, 
 			       hdr->comm,
 			       hdr->tag,
@@ -223,4 +236,62 @@ err:
 	return rc;
 }
 
+
+int lcp_tag_send_ack(lcp_request_t req){
+
+}
+
+static int lcp_am_tag_handler(void *arg, void *data,
+				size_t length, 
+				__UNUSED__ unsigned flags)
+{
+	int rc;
+	lcp_request_t *req;
+	if(_lcp_am_tag_handler(&req, arg, data, length, flags) == MPC_LOWCOMM_SUCCESS && req)
+		lcp_request_complete(req);
+	return rc;
+}
+
+static int lcp_am_tag_sync_handler(void *arg, void *data,
+				size_t length, 
+				__UNUSED__ unsigned flags){
+	int rc;
+	lcp_request_t *req;
+	rc = _lcp_am_tag_handler(&req, arg, data, length, flags);
+	
+	lcp_tag_hdr_t *hdr = data;
+
+	uint64_t gid, comm_id, src;
+	mpc_lowcomm_communicator_t comm;
+
+	gid = mpc_lowcomm_monitor_get_gid();
+	comm_id = hdr->comm;
+	comm_id |= gid << 32;
+
+	/* Init all protocol data */
+	comm = mpc_lowcomm_get_communicator_from_id(comm_id);
+	src  = mpc_lowcomm_communicator_uid(comm, hdr->src);
+	lcp_ep_ctx_t *ctx_ep;
+	lcp_ep_h new_ep;
+
+	HASH_FIND(hh, req->ctx->ep_ht, &src, sizeof(uint64_t), ctx_ep);
+	if (ctx_ep == NULL) {
+		rc = lcp_ep_create(req->ctx, &new_ep, src, 0);
+		if (rc != MPC_LOWCOMM_SUCCESS) {
+			mpc_common_debug_error("LCP: could not create ep after match.");
+			goto err;
+		}
+	} else {
+		new_ep = ctx_ep->ep;
+	}
+
+	assert(new_ep);
+	printf("ep : %p", new_ep);
+	if(rc == MPC_LOWCOMM_SUCCESS && req)
+		lcp_request_complete(req);
+	err:
+		return rc;
+}
+
 LCP_DEFINE_AM(MPC_LOWCOMM_P2P_MESSAGE, lcp_am_tag_handler, 0);
+LCP_DEFINE_AM(MPC_LOWCOMM_P2P_SYNC_MESSAGE, lcp_am_tag_sync_handler, 0);
