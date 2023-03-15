@@ -173,6 +173,7 @@ int lcp_put_nb(lcp_ep_h ep, const void *buffer, size_t length,
                lcp_request_param_t *param) 
 {
         int rc;
+        UNUSED(length);
         lcp_request_t *req;
 
         assert(param->flags & LCP_REQUEST_USER_REQUEST);
@@ -184,7 +185,7 @@ int lcp_put_nb(lcp_ep_h ep, const void *buffer, size_t length,
                 goto err;
         }
         req->flags |= LCP_REQUEST_RMA_COMPLETE;
-        LCP_REQUEST_INIT_SEND(req, ep->ctx, NULL, length, ep, (void *)buffer, 
+        LCP_REQUEST_INIT_SEND(req, ep->ctx, NULL, NULL, length, ep, (void *)buffer, 
                               0 /* no ordering for rma */, msg_id);
         lcp_request_init_rma_put(req, remote_addr, rkey, param);
 

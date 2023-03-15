@@ -157,9 +157,9 @@ static int lcp_am_tag_handler(void *arg, void *data,
 	memcpy(req->recv.buffer, (void *)(hdr + 1), length - sizeof(*hdr));
 
         /* set recv info for caller */
-        req->recv.recv_info->length = length - sizeof(*hdr);
-        req->recv.recv_info->src    = hdr->src;
-        req->recv.recv_info->tag    = hdr->tag;
+        req->info->length = length - sizeof(*hdr);
+        req->info->src    = hdr->src;
+        req->info->tag    = hdr->tag;
 
 	lcp_request_complete(req);
 err:

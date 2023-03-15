@@ -180,7 +180,7 @@ int mpc_lowcomm_commit_status_from_request(mpc_lowcomm_request_t *request,
 		status->MPC_SOURCE = request->recv_info.src;
 		status->MPC_TAG    = request->recv_info.tag;
 		status->MPC_ERROR  = request->status_error;
-		status->size = (int)request->recv_info.length;
+		status->size       = (int)request->recv_info.length;
 #else
 		status->MPC_SOURCE = request->header.source_task;
 		status->MPC_TAG    = request->header.message_tag;
@@ -2590,7 +2590,9 @@ void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_r
 
 		msg->tail.request->request_completion_fn = 
 			mpc_lowcomm_request_complete;
-                lcp_request_param_t param = { 0 };
+                lcp_request_param_t param = {
+                        .recv_info = &msg->tail.request->recv_info,
+                };
 		rc = lcp_tag_send_nb(ep, msg->tail.message.contiguous.addr,
                                      msg->body.header.msg_size, msg->tail.request,
                                      &param);
@@ -3257,6 +3259,7 @@ int mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
         }
         /* fill up request */
         lcp_request_param_t param = {
+                .recv_info = &req->recv_info,
         };
         return lcp_tag_send_nb(ep, data, size, req, &param);
 #else

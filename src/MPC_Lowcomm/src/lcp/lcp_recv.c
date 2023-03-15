@@ -24,7 +24,7 @@ int lcp_tag_recv_nb(lcp_context_h ctx, void *buffer, size_t count,
 		return MPC_LOWCOMM_ERROR;
 	}
         req->flags |= LCP_REQUEST_MPI_COMPLETE;
-        LCP_REQUEST_INIT_RECV(req, ctx, request, count, buffer);
+        LCP_REQUEST_INIT_RECV(req, ctx, request, param->recv_info, count, buffer);
 	lcp_request_init_tag_recv(req, param->recv_info);
 
 	iface = ctx->resources[ctx->priority_rail].iface;
@@ -80,9 +80,9 @@ int lcp_tag_recv_nb(lcp_context_h ctx, void *buffer, size_t count,
                        match->length - sizeof(lcp_tag_hdr_t));
 
                 /* set recv info for caller */
-                req->recv.recv_info->length = match->length - sizeof(lcp_tag_hdr_t);
-                req->recv.recv_info->src    = hdr->src;
-                req->recv.recv_info->tag    = hdr->tag;
+                req->info->length = match->length - sizeof(lcp_tag_hdr_t);
+                req->info->src    = hdr->src;
+                req->info->tag    = hdr->tag;
 
                 //TODO: free match structure ??
 		lcp_request_complete(req);

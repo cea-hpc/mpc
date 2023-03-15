@@ -421,9 +421,9 @@ void lcp_recv_tag_callback(lcr_completion_t *comp)
                         }
 
                         /* set recv info for caller */
-                        req->recv.recv_info->length = comp->sent;
-                        req->recv.recv_info->src    = req->recv.tag.src;
-                        req->recv.recv_info->tag    = req->recv.tag.tag;
+                        req->info->length = comp->sent;
+                        req->info->src    = req->recv.tag.src;
+                        req->info->tag    = req->recv.tag.tag;
                 }
                 lcp_request_complete(req);
                 break;
@@ -465,10 +465,10 @@ void lcp_recv_tag_probe_callback(lcr_completion_t *comp)
                               tag.t_tag.src, tag.t_tag.comm);
 
         /* Fill out recv info given by user */
-        req->recv.recv_info->tag    = LCP_TM_GET_TAG(tag.t);
-        req->recv.recv_info->src    = LCP_TM_GET_SRC(tag.t);
-        req->recv.recv_info->length = LCP_TM_GET_HDR_LENGTH(imm); 
-        req->recv.recv_info->found  = 1;
+        req->info->tag    = LCP_TM_GET_TAG(tag.t);
+        req->info->src    = LCP_TM_GET_SRC(tag.t);
+        req->info->length = LCP_TM_GET_HDR_LENGTH(imm); 
+        req->info->found  = 1;
 
         return;
 }
@@ -536,7 +536,7 @@ int lcp_recv_tag_probe(sctk_rail_info_t *rail, const int src, const int tag,
         iov[0].iov_base = NULL;
         iov[0].iov_base = 0;
 
-        probe_req.recv.recv_info          = recv_info;
+        probe_req.info                    = recv_info;
         probe_req.recv.t_ctx.req          = &probe_req;
         probe_req.recv.t_ctx.comp.comp_cb = lcp_recv_tag_probe_callback; 
 

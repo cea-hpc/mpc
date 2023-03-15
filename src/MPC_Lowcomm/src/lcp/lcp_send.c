@@ -63,7 +63,7 @@ int lcp_tag_send_nb(lcp_ep_h ep, const void *buffer, size_t count,
                 return MPC_LOWCOMM_ERROR;
         }
         req->flags |= LCP_REQUEST_MPI_COMPLETE;
-        LCP_REQUEST_INIT_SEND(req, ep->ctx, request, count, 
+        LCP_REQUEST_INIT_SEND(req, ep->ctx, request, param->recv_info, count, 
                               ep, (void *)buffer, OPA_fetch_and_incr_int(&ep->seqn), 
                               msg_id);
 

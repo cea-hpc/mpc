@@ -91,7 +91,6 @@ struct lcp_request {
                         size_t send_length;
 			void *buffer;
 			lcr_tag_context_t t_ctx;
-                        lcp_tag_recv_info_t *recv_info;
 
 			struct {
 				uint64_t comm_id;
@@ -106,6 +105,7 @@ struct lcp_request {
 
         //NOTE: break LCP modularity
 	mpc_lowcomm_request_t *request; /* Upper layer request */
+        lcp_tag_recv_info_t   *info;
         void                  *user_data;
 	int16_t                seqn;    /* Sequence number */
 	uint64_t               msg_id;  /* Unique message identifier */
@@ -129,9 +129,10 @@ struct lcp_request {
 	} state;
 };
 
-#define LCP_REQUEST_INIT_SEND(_req, _ctx, _mpi_req, _length, _ep, _buf, _seqn, _msg_id) \
+#define LCP_REQUEST_INIT_SEND(_req, _ctx, _mpi_req, _info, _length, _ep, _buf, _seqn, _msg_id) \
 { \
 	(_req)->request         = _mpi_req; \
+	(_req)->info            = _info;    \
 	(_req)->msg_id          = _msg_id;  \
 	(_req)->seqn            = _seqn;    \
 	(_req)->ctx             = _ctx;     \
@@ -141,13 +142,14 @@ struct lcp_request {
 	(_req)->send.length     = _length;  \
 	\
 	(_req)->state.cc        = (_ep)->priority_chnl; \
-	(_req)->state.remaining = _length; \
-	(_req)->state.offset    = 0; \
+	(_req)->state.remaining = _length;              \
+	(_req)->state.offset    = 0;                    \
 }
 
-#define LCP_REQUEST_INIT_RECV(_req, _ctx, _mpi_req, _length, _buf) \
+#define LCP_REQUEST_INIT_RECV(_req, _ctx, _mpi_req, _info, _length, _buf) \
 { \
 	(_req)->request         = _mpi_req; \
+	(_req)->info            = _info;    \
 	(_req)->msg_id          = 0;        \
 	(_req)->seqn            = 0;        \
 	(_req)->ctx             = _ctx;     \
@@ -156,7 +158,7 @@ struct lcp_request {
 	(_req)->recv.length     = _length;  \
 	\
 	(_req)->state.remaining = _length; \
-	(_req)->state.offset    = 0; \
+	(_req)->state.offset    = 0;       \
 }
 
 static inline void lcp_request_init_tag_send(lcp_request_t *req)
@@ -174,7 +176,7 @@ static inline void lcp_request_init_tag_recv(lcp_request_t *req, lcp_tag_recv_in
         req->recv.tag.src       = req->request->header.source; 
         req->recv.tag.tag       = req->request->header.message_tag;
         req->recv.tag.comm_id   = req->request->header.communicator_id;
-        req->recv.recv_info     = info;
+        req->info               = info;
 }
 
 static inline void lcp_request_init_rndv_send(lcp_request_t *req)
@@ -220,6 +222,9 @@ static inline int lcp_request_send(lcp_request_t *req)
         int rc;
         switch((rc = req->send.func(req))) {
         case MPC_LOWCOMM_SUCCESS:
+                req->info->length = req->send.length;
+                req->info->src    = (int)req->send.tag.src;
+                req->info->tag    = req->send.tag.tag;
                 break;
         case MPC_LOWCOMM_NO_RESOURCE:
                 if (lcp_pending_create(req->ctx->pend, req, 
