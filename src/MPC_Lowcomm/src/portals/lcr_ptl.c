@@ -250,7 +250,7 @@ err:
 int lcr_ptl_post_tag_zcopy(sctk_rail_info_t *rail,
                            lcr_tag_t tag, lcr_tag_t ign_tag,
                            const struct iovec *iov, 
-                           __UNUSED__ size_t iovcnt, /* only one iov supported */
+                           size_t iovcnt, /* only one iov supported */
                            unsigned flags,
                            lcr_tag_context_t *ctx) 
 {
@@ -259,9 +259,12 @@ int lcr_ptl_post_tag_zcopy(sctk_rail_info_t *rail,
         ptl_handle_me_t meh;
         unsigned int persistant = flags & LCR_IFACE_TM_PERSISTANT_MEM ? 
                 0 : SCTK_PTL_ONCE;
+        unsigned int search = flags & LCR_IFACE_TM_SEARCH;
         lcr_ptl_persistant_post_t *persistant_post;
         sctk_ptl_rail_info_t* srail     = &rail->network.ptl;
         lcr_ptl_send_comp_t *ptl_comp;
+
+        assert(iov && iovcnt == 1);
 
         /* complete the ME data, this ME will be appended to the PRIORITY_LIST */
         me = (ptl_me_t) {
@@ -270,8 +273,8 @@ int lcr_ptl_post_tag_zcopy(sctk_rail_info_t *rail,
                         .match_bits  = tag.t,
                         .match_id = SCTK_PTL_ANY_PROCESS,
                         .min_free = 0,
-                        .length = iov[0].iov_len,
-                        .start = iov[0].iov_base,
+                        .length = iov[iovcnt-1].iov_len,
+                        .start = iov[iovcnt-1].iov_base,
                         .uid = PTL_UID_ANY,
                         .options = SCTK_PTL_ME_PUT_FLAGS    | 
                                 SCTK_PTL_ME_GET_FLAGS       |
@@ -286,17 +289,24 @@ int lcr_ptl_post_tag_zcopy(sctk_rail_info_t *rail,
         }
         memset(ptl_comp, 0, sizeof(lcr_ptl_send_comp_t));
 
-        ptl_comp->type    = LCR_PTL_COMP_TAG_ZCOPY;
+        ptl_comp->type    = search ? LCR_PTL_COMP_TAG_SEARCH : LCR_PTL_COMP_TAG_ZCOPY;
         ptl_comp->tag_ctx = ctx;
 
-	sctk_ptl_chk(PtlMEAppend(
-		srail->iface,
-		srail->ptl_info.tag_pte,
-		&me,
-		SCTK_PTL_PRIORITY_LIST,
-		ptl_comp,
-		&meh
-	));
+        if (search) {
+                sctk_ptl_chk(PtlMESearch(srail->iface,
+                                         srail->ptl_info.tag_pte,
+                                         &me,
+                                         PTL_SEARCH_ONLY,
+                                         ptl_comp));
+        } else {
+                sctk_ptl_chk(PtlMEAppend(srail->iface,
+                                         srail->ptl_info.tag_pte,
+                                         &me,
+                                         SCTK_PTL_PRIORITY_LIST,
+                                         ptl_comp,
+                                         &meh
+                                        ));
+        }
 
         if (flags & LCR_IFACE_TM_PERSISTANT_MEM) {
                 persistant_post = sctk_malloc(sizeof(lcr_ptl_persistant_post_t));
@@ -318,6 +328,36 @@ int lcr_ptl_post_tag_zcopy(sctk_rail_info_t *rail,
                               iov[0].iov_base);
 err:
         return rc;
+}
+
+int lcr_ptl_post_tag_search(sctk_rail_info_t *rail, lcr_tag_t tag,
+                            lcr_tag_t ign_tag, void *arg,
+                            lcr_pack_callback_t pack,
+                            unsigned flags)
+{
+        UNUSED(flags);
+        int rc = MPC_LOWCOMM_SUCCESS;
+        ptl_me_t me;
+        ptl_handle_me_t meh;
+        sctk_ptl_rail_info_t* srail     = &rail->network.ptl;
+        lcr_ptl_send_comp_t *ptl_comp;
+
+        /* complete the ME data, this ME will be appended to the PRIORITY_LIST */
+        me = (ptl_me_t) {
+                .ct_handle = PTL_CT_NONE,
+                        .ignore_bits = ign_tag.t,
+                        .match_bits  = tag.t,
+                        .match_id = SCTK_PTL_ANY_PROCESS,
+                        .min_free = 0,
+                        .length = NULL,
+                        .start = NULL,
+                        .uid = PTL_UID_ANY,
+                        .options = SCTK_PTL_ME_PUT_FLAGS    | 
+                                SCTK_PTL_ME_GET_FLAGS       |
+                                SCTK_PTL_ONCE
+        };
+
+
 }
 
 int lcr_ptl_unpost_tag_zcopy(sctk_rail_info_t *rail, lcr_tag_t tag)

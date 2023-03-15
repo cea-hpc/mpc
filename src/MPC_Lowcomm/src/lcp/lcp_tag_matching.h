@@ -47,6 +47,8 @@ void lcp_append_umq(lcp_umq_match_table_t *umq, void *req,
 		    uint64_t comm_id, int tag, uint64_t src);
 void *lcp_match_umq(lcp_umq_match_table_t *umq,
 		    uint64_t comm_id, int tag, uint64_t src);
+void *lcp_search_umq(lcp_umq_match_table_t *umq,
+                     uint64_t comm_id, int tag, uint64_t src);
 
 void lcp_fini_matching_engine(lcp_umq_match_table_t *umq, 
 			      lcp_prq_match_table_t *prq);

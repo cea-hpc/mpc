@@ -54,6 +54,25 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                         did_poll = 1;
 
                         switch (ev.type) {
+                        case PTL_EVENT_SEARCH:
+                                if (ev.ni_fail_type == PTL_NI_NO_MATCH) {
+                                        goto done;
+                                }
+                                ptl_comp = (lcr_ptl_send_comp_t *)ev.user_ptr;
+                                assert(ptl_comp);
+                                tag_ctx            = ptl_comp->tag_ctx;
+                                tag_ctx->tag       = (lcr_tag_t)ev.match_bits;
+                                tag_ctx->imm       = ev.hdr_data;
+                                tag_ctx->start     = NULL;
+                                tag_ctx->comp.sent = ev.mlength;
+                                tag_ctx->flags    |= flags;
+
+                                /* call completion callback */
+                                tag_ctx->comp.comp_cb(&tag_ctx->comp);
+                                sctk_free(ptl_comp);
+                                goto done;
+                                break;
+
                         case PTL_EVENT_SEND:
                                 not_reachable();
                                 break;
@@ -158,8 +177,6 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                         case PTL_EVENT_FETCH_ATOMIC_OVERFLOW: /* a previously received FETCH-ATOMIC matched a just appended one */
                         case PTL_EVENT_ATOMIC_OVERFLOW:       /* a previously received ATOMIC matched a just appended one */
                         case PTL_EVENT_PT_DISABLED:           /* ERROR: The local PTE is disabled (FLOW_CTRL) */
-                        case PTL_EVENT_SEARCH:                /* a PtlMESearch completed */
-                                /* probably nothing to do here */
                         case PTL_EVENT_LINK:                  /* MISC: A new ME has been linked, (maybe not useful) */
                                 not_reachable();              /* have been disabled */
                                 break;

@@ -422,6 +422,7 @@ typedef enum {
         LCR_PTL_COMP_AM_ZCOPY,
         LCR_PTL_COMP_TAG_BCOPY,
         LCR_PTL_COMP_TAG_ZCOPY,
+        LCR_PTL_COMP_TAG_SEARCH,
         LCR_PTL_COMP_RMA_PUT
 } lcr_ptl_comp_type_t;
 

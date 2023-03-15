@@ -129,7 +129,7 @@ host_triplet = @host@
 @LCP_ENABLED_TRUE@am__append_12 = ./lcp/lcp_context.c ./lcp/lcp_ep.c \
 @LCP_ENABLED_TRUE@	./lcp/lcp_pending.c ./lcp/lcp_progress.c \
 @LCP_ENABLED_TRUE@	./lcp/lcp_recv.c ./lcp/lcp_send.c \
-@LCP_ENABLED_TRUE@	./lcp/lcp_tag_lists.c \
+@LCP_ENABLED_TRUE@	./lcp/lcp_tag_lists.c ./lcp/lcp_probe.c \
 @LCP_ENABLED_TRUE@	./lcp/lcp_tag_matching.c ./lcp/lcp_tag.c \
 @LCP_ENABLED_TRUE@	./lcp/lcp_request.c ./lcp/lcp_common.c \
 @LCP_ENABLED_TRUE@	./lcp/lcp_rndv.c ./lcp/lcp_tag_offload.c \
@@ -216,7 +216,7 @@ am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c sctk_checksum.c ft.c \
 	./ofi/ofi.c ./ofi/ofi_msg.c ./ofi/ofi_rdma.c \
 	./ofi/ofi_toolkit.c ./lcp/lcp_context.c ./lcp/lcp_ep.c \
 	./lcp/lcp_pending.c ./lcp/lcp_progress.c ./lcp/lcp_recv.c \
-	./lcp/lcp_send.c ./lcp/lcp_tag_lists.c \
+	./lcp/lcp_send.c ./lcp/lcp_tag_lists.c ./lcp/lcp_probe.c \
 	./lcp/lcp_tag_matching.c ./lcp/lcp_tag.c ./lcp/lcp_request.c \
 	./lcp/lcp_common.c ./lcp/lcp_rndv.c ./lcp/lcp_tag_offload.c \
 	./lcp/lcp_mem.c ./lcp/lcp_rma.c ./lcr/lcr_component.c \
@@ -258,7 +258,7 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @LCP_ENABLED_TRUE@am__objects_6 = ./lcp/lcp_context.lo ./lcp/lcp_ep.lo \
 @LCP_ENABLED_TRUE@	./lcp/lcp_pending.lo ./lcp/lcp_progress.lo \
 @LCP_ENABLED_TRUE@	./lcp/lcp_recv.lo ./lcp/lcp_send.lo \
-@LCP_ENABLED_TRUE@	./lcp/lcp_tag_lists.lo \
+@LCP_ENABLED_TRUE@	./lcp/lcp_tag_lists.lo ./lcp/lcp_probe.lo \
 @LCP_ENABLED_TRUE@	./lcp/lcp_tag_matching.lo ./lcp/lcp_tag.lo \
 @LCP_ENABLED_TRUE@	./lcp/lcp_request.lo ./lcp/lcp_common.lo \
 @LCP_ENABLED_TRUE@	./lcp/lcp_rndv.lo ./lcp/lcp_tag_offload.lo \
@@ -878,6 +878,7 @@ lcp/$(DEPDIR)/$(am__dirstamp):
 ./lcp/lcp_send.lo: lcp/$(am__dirstamp) lcp/$(DEPDIR)/$(am__dirstamp)
 ./lcp/lcp_tag_lists.lo: lcp/$(am__dirstamp) \
 	lcp/$(DEPDIR)/$(am__dirstamp)
+./lcp/lcp_probe.lo: lcp/$(am__dirstamp) lcp/$(DEPDIR)/$(am__dirstamp)
 ./lcp/lcp_tag_matching.lo: lcp/$(am__dirstamp) \
 	lcp/$(DEPDIR)/$(am__dirstamp)
 ./lcp/lcp_tag.lo: lcp/$(am__dirstamp) lcp/$(DEPDIR)/$(am__dirstamp)
@@ -1003,6 +1004,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_ep.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_mem.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_pending.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_probe.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_progress.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_recv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./lcp/$(DEPDIR)/lcp_request.Plo@am__quote@

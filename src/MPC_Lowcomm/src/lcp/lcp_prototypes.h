@@ -75,6 +75,8 @@ int lcp_send_am_eager_tag_zcopy(lcp_request_t *req);
 int lcp_send_tag_eager_tag_bcopy(lcp_request_t *req);
 int lcp_send_tag_eager_tag_zcopy(lcp_request_t *req);
 int lcp_recv_tag_zcopy(lcp_request_t *req, sctk_rail_info_t *iface);
+int lcp_recv_tag_probe(sctk_rail_info_t *rail, const int src, const int tag, 
+                       const uint64_t comm, lcp_tag_recv_info_t *recv_info);
 
 static inline int lcp_send_do_am_bcopy(_mpc_lowcomm_endpoint_t *lcr_ep, 
                                        uint8_t am_id, 
@@ -172,6 +174,11 @@ static inline int lcp_send_do_put_zcopy(_mpc_lowcomm_endpoint_t *lcr_ep,
         return lcr_ep->rail->put_zcopy(lcr_ep, local_addr,
                                        remote_addr, remote_key,
                                        size, comp);
+}
+
+static inline int lcp_iface_do_progress(sctk_rail_info_t *rail)
+{
+        return rail->iface_progress(rail);
 }
 
 #endif

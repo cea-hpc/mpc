@@ -448,8 +448,33 @@ void lcp_recv_tag_callback(lcr_completion_t *comp)
         return;
 }
 
+void lcp_recv_tag_probe_callback(lcr_completion_t *comp)
+{
+        uint64_t imm;
+        int32_t src;
+        lcr_tag_t tag;
+        lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
+                                              recv.t_ctx.comp);
+
+        imm = req->recv.t_ctx.imm;
+        tag = req->recv.t_ctx.tag;
+
+        mpc_common_debug_info("LCP: probe tag callback req=%p, src=%d, size=%d, "
+                              "matching=[%d:%d:%d]", req, src, 
+                              req->recv.send_length, tag.t_tag.tag, 
+                              tag.t_tag.src, tag.t_tag.comm);
+
+        /* Fill out recv info given by user */
+        req->recv.recv_info->tag    = LCP_TM_GET_TAG(tag.t);
+        req->recv.recv_info->src    = LCP_TM_GET_SRC(tag.t);
+        req->recv.recv_info->length = LCP_TM_GET_HDR_LENGTH(imm); 
+        req->recv.recv_info->found  = 1;
+
+        return;
+}
+
 //FIXME: according to MPI Standard, tag must be positive. However, MPC uses
-//       negative for some collectives. For such p2p, there is no need for the
+//       negative for some collectives (so is OMPI). For such p2p, there is no need for the
 //       receiver to get back the tag, so no problem.
 //       Some safeguard should be used to forbid tag > 2^23-1.
 int lcp_recv_tag_zcopy(lcp_request_t *rreq, sctk_rail_info_t *iface)
@@ -488,6 +513,49 @@ int lcp_recv_tag_zcopy(lcp_request_t *rreq, sctk_rail_info_t *iface)
                                      &iov, iovcnt,
                                      flags, &(rreq->recv.t_ctx));
 
+}
+
+int lcp_recv_tag_probe(sctk_rail_info_t *rail, const int src, const int tag, 
+                       const uint64_t comm, lcp_tag_recv_info_t *recv_info) 
+{
+        int rc = MPC_LOWCOMM_SUCCESS; 
+        unsigned flags = 0;
+        lcp_request_t probe_req;
+        struct iovec iov[1]; int iovcnt = 1;
+        lcr_tag_t utag = { 0 };
+        LCP_TM_SET_MATCHBITS(utag.t, src, tag, comm);
+
+        lcr_tag_t ign_tag = {.t = 0 };
+        if (src == MPC_ANY_SOURCE) {
+                ign_tag.t |= LCP_TM_SRC_MASK;
+        }
+        if (tag == MPC_ANY_TAG) {
+                ign_tag.t |= LCP_TM_TAG_MASK;
+        }
+
+        iov[0].iov_base = NULL;
+        iov[0].iov_base = 0;
+
+        probe_req.recv.recv_info          = recv_info;
+        probe_req.recv.t_ctx.req          = &probe_req;
+        probe_req.recv.t_ctx.comp.comp_cb = lcp_recv_tag_probe_callback; 
+
+        flags |= LCR_IFACE_TM_SEARCH;
+
+        /* Post search type ME. Do not make communication progress. */
+        rc = lcp_post_do_tag_zcopy(rail, utag, ign_tag, iov, 
+                                   iovcnt, flags,
+                                   &(probe_req.recv.t_ctx));
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                goto err;
+        }
+        
+        /* Progress communication. Search event will be raise. */
+        //FIXME: no error handling for progress
+        lcp_iface_do_progress(rail);
+
+err:
+        return rc;
 }
 
 int lcp_recv_tag_rget(lcp_request_t *req) 

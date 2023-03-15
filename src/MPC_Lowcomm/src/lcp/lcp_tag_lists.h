@@ -49,6 +49,7 @@ typedef struct
 
 int lcp_umq_cancel(lcp_mtch_umq_list_t *list, void *req);
 int lcp_umq_get_size(lcp_mtch_umq_list_t *list);
+void *lcp_umq_find(lcp_mtch_umq_list_t *list, int tag, uint64_t peer);
 void *lcp_umq_find_dequeue(lcp_mtch_umq_list_t *list, int tag, uint64_t peer);
 void lcp_umq_append(lcp_mtch_umq_list_t *list, void *payload, int tag, uint64_t source);
 lcp_mtch_umq_list_t *lcp_umq_init();

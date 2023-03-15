@@ -27,6 +27,7 @@ typedef struct lcp_tag_recv_info {
         size_t length;
         int32_t tag;
         int32_t src;
+        unsigned found; //only for probing.
 } lcp_tag_recv_info_t;
 
 enum {
@@ -51,6 +52,10 @@ int lcp_tag_send_nb(lcp_ep_h ep, const void *buffer,
 int lcp_tag_recv_nb(lcp_context_h ctx, void *buffer, size_t count, 
                     mpc_lowcomm_request_t *request,
                     lcp_request_param_t *param);
+
+int lcp_tag_probe_nb(lcp_context_h ctx, const uint64_t src, 
+                     const int tag, const uint64_t comm,
+                     lcp_tag_recv_info_t *recv_info);
 
 /* Put/Get */
 int lcp_put_nb(lcp_ep_h ep, const void *buffer, size_t length,

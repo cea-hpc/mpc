@@ -84,6 +84,7 @@ int lcp_tag_recv_nb(lcp_context_h ctx, void *buffer, size_t count,
                 req->recv.recv_info->src    = hdr->src;
                 req->recv.recv_info->tag    = hdr->tag;
 
+                //TODO: free match structure ??
 		lcp_request_complete(req);
 	} else {
 		mpc_common_debug_error("LCP: unkown match flag=%x.", match->flags);

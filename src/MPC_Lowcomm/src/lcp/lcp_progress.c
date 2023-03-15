@@ -20,6 +20,7 @@ int lcp_progress(lcp_context_h ctx)
 
         //FIXME: no request progress needed for am or tag apparently but
         //       this is to be confirmed.
+        //       Pending request will be needed in case of NO_RESOURCE error
 	//lcp_pending_entry_t *entry_e, *entry_tmp;
         //HASH_ITER(hh, ctx->pend->table, entry_e, entry_tmp) {
 

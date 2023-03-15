@@ -133,7 +133,8 @@ enum {
 	LCR_IFACE_TM_OVERFLOW       = LCR_BIT(0),
 	LCR_IFACE_TM_NOVERFLOW      = LCR_BIT(1),
 	LCR_IFACE_TM_PERSISTANT_MEM = LCR_BIT(2),
-	LCR_IFACE_TM_ERROR          = LCR_BIT(3)
+	LCR_IFACE_TM_SEARCH         = LCR_BIT(3),
+	LCR_IFACE_TM_ERROR          = LCR_BIT(4)
 };
 
 /* Active message handler table entry */

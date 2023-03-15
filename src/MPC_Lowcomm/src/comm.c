@@ -3418,6 +3418,32 @@ int mpc_lowcomm_recv(int src, void *buffer, size_t size, int tag, mpc_lowcomm_co
 int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destination, const int tag,
                                 const mpc_lowcomm_communicator_t comm, int *flag, mpc_lowcomm_status_t *status)
 {
+#ifdef MPC_LOWCOMM_PROTOCOL
+        int rc = MPC_LOWCOMM_SUCCESS;
+        lcp_tag_recv_info_t recv_info = { 0 };
+	mpc_lowcomm_status_t status_init = MPC_LOWCOMM_STATUS_INIT;
+	int has_status = 1;
+
+	if(status == MPC_LOWCOMM_STATUS_NULL) {
+		has_status = 0;
+	} else {
+		*status = status_init;
+	}
+
+        rc = lcp_tag_probe_nb(lcp_ctx_loc, world_source, tag, 
+                              comm->id, &recv_info);
+
+	if((*flag = recv_info.found)) {
+		if(has_status) {
+			status->MPC_SOURCE = recv_info.src;
+			status->MPC_TAG    = recv_info.tag;
+			status->size       = recv_info.length;
+			status->MPC_ERROR  = MPC_LOWCOMM_SUCCESS;
+		}
+	}
+
+        return rc;
+#else
 	mpc_lowcomm_ptp_message_header_t msg;
 
 	memset(&msg, 0, sizeof(mpc_lowcomm_ptp_message_header_t) );
@@ -3501,6 +3527,7 @@ int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destinat
 	}
 
 	return MPC_LOWCOMM_SUCCESS;
+#endif
 }
 
 int mpc_lowcomm_iprobe(int source, int tag, mpc_lowcomm_communicator_t comm, int *flag, mpc_lowcomm_status_t *status)
