@@ -1228,6 +1228,7 @@ MPCALLOC_PREFIX=""
 MPC_DMTCP_PREFIX="disabled"
 MPC_GDB_PREFIX='disabled'
 TBB_PREFIX="disabled"
+MPC_COMP_ADD_PREFIX='disabled'
 
 # Empty means mpc-compiler-additions's default
 GCC_VERSION=""
@@ -1653,7 +1654,7 @@ if test "x${DEP_FOUND}" = "xno"; then
 fi
 
 
-find_in_prefix_or_use_spack "mpcalloc" "$(package_version "mpcalloc")" "$MPCALLOC_PREFIX"
+find_in_prefix_or_use_spack "mpcalloc" "$(package_version "mpcalloc")" "$MPCALLOC_PREFIX" "^hwloc@$(package_version 'hwloc')"
 
 if test "x${DEP_FOUND}" = "xno" && test "x$MPCALLOC_PREFIX" != "xdisabled"; then
 	assert_cmd "cmake"
@@ -1716,7 +1717,7 @@ fi
 # Dependencies which can be deactivated
 VERSION="$(package_version "mpc-compiler-additions")"
 
-find_in_prefix_or_use_spack "mpc-compiler-additions" "${VERSION}" "${MPC_COMP_ADD_PREFIX}" "$GCC_VERSION_SPACK"
+find_in_prefix_or_use_spack "mpc-compiler-additions" "${VERSION}" "${MPC_COMP_ADD_PREFIX}" "$GCC_VERSION_SPACK ^hwloc@$(package_version 'hwloc')"
 
 if test "x${DEP_FOUND}" = "xno"; then
 	assert_cmd "gcc"
