@@ -1613,7 +1613,8 @@ find_in_prefix_or_use_spack "hwloc" "$(package_version "hwloc")" "${HWLOC_PREFIX
 
 if test "x${DEP_FOUND}" = "xno"; then
 	# Could not use spack now installing manually
-	build_configure_based_package "hwloc" "$(package_version "hwloc")" "$HWLOC_BUILD_PARAMETERS"
+	# hwloc has bugs on inti when building with rocm at least from hwloc 2.7.0 to 2.9.0. the --without-rocm flag make build crash with
+	build_configure_based_package "hwloc" "$(package_version "hwloc")" "$HWLOC_BUILD_PARAMETERS --without-rocm --disable-opencl"
 fi
 
 # We cannot use spack as the spack package uses an internal hwloc of previous version
@@ -1720,8 +1721,15 @@ find_in_prefix_or_use_spack "mpc-compiler-additions" "${VERSION}" "${MPC_COMP_AD
 if test "x${DEP_FOUND}" = "xno"; then
 	assert_cmd "gcc"
 	assert_cmd "g++"
+
+	find_package_prefix "hwloc" "$(package_version "hwloc")" "${HWLOC_PREFIX}"
+
+	AUTOPRIV_HWLOC_BUILD_PARAMETERS=""
+	if test -n "${PACK_PREFIX}"; then
+		AUTOPRIV_HWLOC_BUILD_PARAMETERS="--with-hwloc=${PACK_PREFIX}"
+	fi
 	# Could not use spack now installing manually
-	build_configure_based_package "mpc-compiler-additions" "${VERSION}" "$MPC_COMP_ADD_BUILD_PARAMETERS $GCC_VERSION_ARG"
+	build_configure_based_package "mpc-compiler-additions" "${VERSION}" "$MPC_COMP_ADD_BUILD_PARAMETERS $GCC_VERSION_ARG $AUTOPRIV_HWLOC_BUILD_PARAMETERS"
 fi
 
 
