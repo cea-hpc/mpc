@@ -3443,7 +3443,12 @@ int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destinat
 			status->size       = recv_info.length;
 			status->MPC_ERROR  = MPC_LOWCOMM_SUCCESS;
 		}
+
+                return rc;
 	}
+
+        /* Progress communications if not found. */
+	lcp_progress(lcp_ctx_loc);
 
         return rc;
 #else
@@ -3870,7 +3875,9 @@ static void __lowcomm_init_per_task()
 
 		mpc_lowcomm_init_per_task(task_rank);
 
-        _mpc_lowcomm_monitor_setup_per_task();
+                //FIXME: set configuration is slowing down the run. 
+                //       Shouldn't it be optional ?
+                //_mpc_lowcomm_monitor_setup_per_task();
 
 		mpc_lowcomm_terminaison_barrier();
 

@@ -550,9 +550,7 @@ int lcp_recv_tag_probe(sctk_rail_info_t *rail, const int src, const int tag,
                 goto err;
         }
         
-        /* Progress communication. Search event will be raise. */
-        //FIXME: no error handling for progress
-        lcp_iface_do_progress(rail);
+        /* Event will be raised with next communication progress. */
 
 err:
         return rc;

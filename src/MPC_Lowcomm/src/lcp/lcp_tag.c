@@ -52,8 +52,9 @@ int lcp_send_am_eager_tag_bcopy(lcp_request_t *req)
 	lcp_ep_h ep = req->send.ep;
 	_mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[req->state.cc];
 
-	mpc_common_debug_info("LCP: send am eager tag bcopy src=%d, dest=%d, length=%d",
-			      req->send.tag.src, req->send.tag.dest, req->send.length);
+	mpc_common_debug_info("LCP: send am eager tag bcopy src=%d, dest=%d, length=%d, "
+			      "tag=%d.", req->send.tag.src, req->send.tag.dest, 
+                              req->send.length, req->send.tag.tag);
         payload = lcp_send_do_am_bcopy(lcr_ep, 
                                        MPC_LOWCOMM_P2P_MESSAGE, 
                                        lcp_send_tag_pack, 
