@@ -1614,7 +1614,7 @@ find_in_prefix_or_use_spack "hwloc" "$(package_version "hwloc")" "${HWLOC_PREFIX
 if test "x${DEP_FOUND}" = "xno"; then
 	# Could not use spack now installing manually
 	# hwloc has bugs on inti when building with rocm at least from hwloc 2.7.0 to 2.9.0. the --without-rocm flag make build crash with
-	build_configure_based_package "hwloc" "$(package_version "hwloc")" "$HWLOC_BUILD_PARAMETERS --without-rocm --disable-opencl"
+	build_configure_based_package "hwloc" "$(package_version "hwloc")" "$HWLOC_BUILD_PARAMETERS --without-rocm --without-cuda --disable-opencl"
 fi
 
 # We cannot use spack as the spack package uses an internal hwloc of previous version
