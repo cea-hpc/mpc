@@ -240,14 +240,14 @@ int lcp_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p,
 		  mpc_lowcomm_peer_uid_t uid, unsigned flags)
 {
 	lcp_ep_h ep = NULL;	
-	int rc;
+	int rc = MPC_LOWCOMM_SUCCESS;
 
-	mpc_common_spinlock_lock(&(ctx->ctx_lock));
+	LCP_CONTEXT_LOCK(ctx);
 	lcp_ep_get(ctx, uid, &ep);
 	if (ep != NULL) {
 		mpc_common_debug_warning("LCP: ep already exists. uid=%llu.", uid);
 		*ep_p = ep;
-		return MPC_LOWCOMM_SUCCESS;
+                goto err_and_unlock;
 	}
 	
 	/* Create and connect endpoint */
@@ -255,17 +255,19 @@ int lcp_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p,
 	if (rc != MPC_LOWCOMM_SUCCESS) {
 		mpc_common_debug_error("LCP: could not create endpoint. "
 				       "uid=%llu.", uid);
-		goto err;
+		goto err_and_unlock;
 	}
 
 	/* Insert endpoint in the context table */
 	rc = lcp_ep_insert(ctx, ep);
 	if (rc != MPC_LOWCOMM_SUCCESS) {
-		goto err;
+		goto err_and_unlock;
 	}
+
 	*ep_p = ep;
-err:
-	mpc_common_spinlock_unlock(&(ctx->ctx_lock));
+
+err_and_unlock:
+	LCP_CONTEXT_UNLOCK(ctx);
 
 	return rc;
 }

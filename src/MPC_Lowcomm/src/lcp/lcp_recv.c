@@ -39,8 +39,8 @@ int lcp_tag_recv_nb(lcp_context_h ctx, void *buffer, size_t count,
 		return rc;
 	}
 
-        mpc_common_debug("LCP: post recv am src=%d, length=%d",
-                         req->recv.tag.src, count);
+        mpc_common_debug_info("LCP: post recv am src=%d, tag=%d, length=%d",
+                              req->recv.tag.src, req->recv.tag.tag, count);
 
         req->state.offloaded = 0;
 	match = lcp_match_umq(ctx->umq_table,
@@ -71,10 +71,11 @@ int lcp_tag_recv_nb(lcp_context_h ctx, void *buffer, size_t count,
                                       match->length - sizeof(lcp_rndv_hdr_t),
                                       LCP_RNDV_GET);
 	} else if (match->flags & LCP_RECV_CONTAINER_UNEXP_TAG) {
-		mpc_common_debug("LCP: matched tag unexp req=%p, flags=%x", req, 
-				 match->flags);
                 lcp_tag_hdr_t *hdr = (lcp_tag_hdr_t *)(match + 1);
 
+                mpc_common_debug("LCP: matched tag unexp req=%p, src=%d, "
+                                 "tag=%d, comm=%d", req, hdr->src, hdr->tag, 
+                                 hdr->comm);
 		/* copy data to receiver buffer and complete request */
                 memcpy(req->recv.buffer, (void *)(hdr + 1), 
                        match->length - sizeof(lcp_tag_hdr_t));

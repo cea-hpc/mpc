@@ -57,8 +57,8 @@ struct lcp_request {
 			union {
 				struct {
 					uint64_t comm_id;
-					uint64_t src;
-					uint64_t dest;
+					uint64_t src; //FIXME: use MPI task ?
+					uint64_t dest; //FIXME: use MPI task ?
 					int tag;
 					int dt; //NOTE: not used yet
 				} tag;
@@ -163,8 +163,8 @@ struct lcp_request {
 
 static inline void lcp_request_init_tag_send(lcp_request_t *req)
 {
-        req->send.tag.dest      = req->request->header.destination;
-        req->send.tag.src       = req->request->header.source; 
+        req->send.tag.dest      = req->request->header.destination_task;
+        req->send.tag.src       = req->request->header.source_task; 
         req->send.tag.tag       = req->request->header.message_tag;
         req->send.tag.comm_id   = req->request->header.communicator_id; 
 };
@@ -172,8 +172,8 @@ static inline void lcp_request_init_tag_send(lcp_request_t *req)
 
 static inline void lcp_request_init_tag_recv(lcp_request_t *req, lcp_tag_recv_info_t *info)
 {
-        req->recv.tag.dest      = req->request->header.destination;
-        req->recv.tag.src       = req->request->header.source; 
+        req->recv.tag.dest      = req->request->header.destination_task;
+        req->recv.tag.src       = req->request->header.source_task; 
         req->recv.tag.tag       = req->request->header.message_tag;
         req->recv.tag.comm_id   = req->request->header.communicator_id;
         req->info               = info;

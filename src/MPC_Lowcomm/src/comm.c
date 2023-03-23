@@ -2580,8 +2580,8 @@ void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_r
 		if (ep == NULL) {
 			rc = lcp_ep_create(lcp_ctx_loc, &ep, uid, 0);
 			if (rc != MPC_LOWCOMM_SUCCESS) {
-				mpc_common_debug_fatal("Could not create endpoint for %lu.",
-						uid);
+				mpc_common_debug_fatal("Could not create endpoint "
+                                                       "for %lu.", uid);
 			}
 		}
 

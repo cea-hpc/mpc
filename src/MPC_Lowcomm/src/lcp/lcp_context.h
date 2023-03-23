@@ -91,6 +91,7 @@ struct lcp_context {
 	lcp_rsc_desc_t *resources; /* opened resources (iface) */
 
 	//FIXME: hack for portals. Needed to add or remove communicator
+        //FIXME: not needed anymore.
 	lcp_comm_ctx_t *comm_ht;	
 
 	mpc_common_spinlock_t ctx_lock; /* Context lock */

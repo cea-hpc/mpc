@@ -288,7 +288,6 @@ static void *lcr_tcp_thread_loop(_mpc_lowcomm_endpoint_t *ep)
 			break;
 		} else {
 			data = sctk_malloc(hdr.length);
-			mpc_common_debug("LCP: TCP recv on fd=%d", ep->data.tcp.fd);
 			recv_length = mpc_common_io_safe_read(fd, data, hdr.length);
 			if (recv_length <= 0) 
 				break;
@@ -396,7 +395,6 @@ static int lcr_tcp_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
 				id, hdr, &payload_length);
 	hdr->base.length = payload_length + hdr_length;
 
-	mpc_common_debug("LCR: tcp payload size=%d, fd=%d.", payload_length, ep->data.tcp.fd);
 	sent = mpc_common_iovec_safe_write(ep->data.tcp.fd, hdr->iov, hdr->iovcnt, 
 					   hdr->base.length + sizeof(lcr_tcp_am_hdr_t));
 	if (sent < 0) {

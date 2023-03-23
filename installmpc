@@ -1228,7 +1228,6 @@ MPCALLOC_PREFIX=""
 MPC_DMTCP_PREFIX="disabled"
 MPC_GDB_PREFIX='disabled'
 TBB_PREFIX="disabled"
-MPC_COMP_ADD_PREFIX='disabled'
 
 # Empty means mpc-compiler-additions's default
 GCC_VERSION=""
