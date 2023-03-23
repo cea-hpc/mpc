@@ -181,7 +181,6 @@ _mpc_lowcomm_endpoint_t *sctk_on_demand_connection_ib(struct sctk_rail_info_s *r
 			if(state != _MPC_LOWCOMM_ENDPOINT_DECONNECTED && state != _MPC_LOWCOMM_ENDPOINT_CONNECTED &&
 			   state != _MPC_LOWCOMM_ENDPOINT_RECONNECTING)
 			{
-				_mpc_lowcomm_multirail_notify_idle();
 				mpc_thread_yield();
 			}
 		} while(state != _MPC_LOWCOMM_ENDPOINT_DECONNECTED && state != _MPC_LOWCOMM_ENDPOINT_CONNECTED && state != _MPC_LOWCOMM_ENDPOINT_RECONNECTING);
@@ -193,7 +192,6 @@ _mpc_lowcomm_endpoint_t *sctk_on_demand_connection_ib(struct sctk_rail_info_s *r
 	/* If route not connected, so we wait for until it is connected */
 	while(_mpc_lowcomm_endpoint_get_state(tmp) != _MPC_LOWCOMM_ENDPOINT_CONNECTED)
 	{
-		_mpc_lowcomm_multirail_notify_idle();
 
 		if(_mpc_lowcomm_endpoint_get_state(tmp) != _MPC_LOWCOMM_ENDPOINT_CONNECTED)
 		{

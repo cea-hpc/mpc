@@ -35,7 +35,6 @@
 
 #include <sctk_alloc.h>
 
-#include "multirail.h"
 
 /************************************************************************/
 /* Rails Storage                                                        */
@@ -97,16 +96,6 @@ int lcr_rail_init(lcr_rail_config_t *rail_config,
 		/* Otherwise just consider that the work is done on "0"*/
 		target_core = 0;
 	}
-
-	/* Load Polling Config */
-	struct _mpc_lowcomm_config_struct_topological_polling * any_source = 
-                &rail_config->any_source_polling;
-
-	/* Set any source Polling */
-        sctk_topological_polling_tree_init(&rail->any_source_polling_tree,
-                                           any_source->trigger,
-                                           any_source->range,
-                                           target_core );
 
 	/* Checkout is RDMA */
 	rail->is_rdma = rail_config->rdma;
@@ -197,15 +186,6 @@ static inline sctk_rail_info_t * sctk_rail_register_with_parent( struct _mpc_low
 		target_core = 0;
 	}
 
-	/* Load Polling Config */
-	struct _mpc_lowcomm_config_struct_topological_polling * any_source = &runtime_config_rail->any_source_polling;
-
-	/* Set any source Polling */
-	sctk_topological_polling_tree_init( &new_rail->any_source_polling_tree,
-				      					any_source->trigger,
-	                                    any_source->range,
-	                                    target_core );
-
 	/* Checkout is RDMA */
 	int is_rdma = runtime_config_rail->rdma;
 	new_rail->is_rdma = is_rdma;
@@ -287,9 +267,6 @@ void sctk_rail_disable(sctk_rail_info_t* rail)
 	        _mpc_lowcomm_endpoint_table_clear(&rail->parent_rail->route_table);
 
 	_mpc_lowcomm_endpoint_table_free(&rail->route_table);
-
-	/* TODO: We have to remove routes from topological rails ! */
-	_mpc_lowcomm_multirail_table_prune();
 }
 
 void sctk_rail_enable(sctk_rail_info_t *rail)
@@ -815,22 +792,15 @@ void sctk_rail_add_static_route (sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_t
 		tmp->subrail_id = rail->subrail_id;
 		/* "Steal" the endpoint from the subrail */
 		tmp->parent_rail = rail->parent_rail;
-		/* Add in local rail without pushing in multirail */
+		/* Add in local rail  */
 		_mpc_lowcomm_endpoint_table_add_static_route ( rail->route_table, tmp );
-		/* Add in parent rail without pushing in multirail */
+		/* Add in parent rail  */
 		_mpc_lowcomm_endpoint_table_add_static_route ( rail->parent_rail->route_table, tmp);
-#ifndef MPC_LOWCOMM_PROTOCOL
-		/* Push in multirail */
-		_mpc_lowcomm_multirail_table_push_endpoint( tmp );
-#endif
 	}
 	else
 	{
-		/* NO PARENT : Just add the route and register in multirail */
+		/* NO PARENT : Just add the route */
 		_mpc_lowcomm_endpoint_table_add_static_route ( rail->route_table, tmp);
-#ifndef MPC_LOWCOMM_PROTOCOL
-		_mpc_lowcomm_multirail_table_push_endpoint(tmp);
-#endif
 	}
 }
 
@@ -846,24 +816,15 @@ void sctk_rail_add_dynamic_route ( sctk_rail_info_t *rail, _mpc_lowcomm_endpoint
 		tmp->subrail_id = rail->subrail_id;
 		/* "Steal" the endpoint from the subrail */
 		tmp->parent_rail = rail->parent_rail;
-		/* Add in local rail without pushing in multirail */
+		/* Add in local rail */
 		_mpc_lowcomm_endpoint_table_add_dynamic_route (  rail->route_table, tmp);
-		/* Add in parent rail without pushing in multirail */
+		/* Add in parent rail */
 		_mpc_lowcomm_endpoint_table_add_dynamic_route ( rail->parent_rail->route_table, tmp);
-#ifndef MPC_LOWCOMM_PROTOCOL
-                //NOTE: multirail replaced by lcp so tables not instanciated
-		/* Push in multirail */
-		_mpc_lowcomm_multirail_table_push_endpoint( tmp );
-#endif
 	}
 	else
 	{
-		/* NO PARENT : Just add the route and register in multirail */
+		/* NO PARENT : Just add the route  */
 		_mpc_lowcomm_endpoint_table_add_dynamic_route (  rail->route_table, tmp);
-#ifndef MPC_LOWCOMM_PROTOCOL
-                //NOTE: multirail replaced by lcp so tables not instanciated
-		_mpc_lowcomm_multirail_table_push_endpoint(tmp);
-#endif
 	}
 
 }
@@ -878,18 +839,15 @@ void sctk_rail_add_dynamic_route_no_lock (  sctk_rail_info_t * rail, _mpc_lowcom
 		tmp->subrail_id = rail->subrail_id;
 		/* "Steal" the endpoint from the subrail */
 		tmp->parent_rail = rail->parent_rail;
-		/* Add in local rail without pushing in multirail */
+		/* Add in local rail */
 		_mpc_lowcomm_endpoint_table_add_dynamic_route_no_lock (  rail->route_table, tmp);
-		/* Add in parent rail without pushing in multirail */
+		/* Add in parent rail */
 		_mpc_lowcomm_endpoint_table_add_dynamic_route_no_lock ( rail->parent_rail->route_table, tmp);
-		/* Push in multirail */
-		_mpc_lowcomm_multirail_table_push_endpoint( tmp );
 	}
 	else
 	{
-		/* NO PARENT : Just add the route and register in multirail */
+		/* NO PARENT : Just add the route  */
 		_mpc_lowcomm_endpoint_table_add_dynamic_route_no_lock (  rail->route_table, tmp);
-		_mpc_lowcomm_multirail_table_push_endpoint(tmp);
 	}
 
 }

@@ -977,11 +977,6 @@ static inline void __communicator_id_register(mpc_lowcomm_communicator_t comm, i
 	mpc_common_hashtable_set(&__id_factory.comm_table, (uint64_t)comm, (void *)comm);
 	mpc_common_bit_array_set(&__id_factory.comm_bit_array, (uint64_t)comm, 1);
 
-
-#ifndef MPC_LOWCOMM_PROTOCOL
-	/* Notify communicator creation to lowcomm drivers */
-	_mpc_lowcomm_multirail_notify_new_comm(comm->id, mpc_lowcomm_communicator_size(comm));
-#endif
 }
 
 static inline void __communicator_id_release(mpc_lowcomm_communicator_t comm)
@@ -989,11 +984,7 @@ static inline void __communicator_id_release(mpc_lowcomm_communicator_t comm)
 	uint64_t key = comm->id;
 	uint64_t linear_key = comm->linear_comm_id;
 
-        mpc_common_debug_info("COMM: release key=%llu, int key=%d, linear key=%llu", key, key, linear_key);
-
-#ifndef MPC_LOWCOMM_PROTOCOL
-	_mpc_lowcomm_multirail_notify_delete_comm(comm->id, mpc_lowcomm_communicator_size(comm));
-#endif
+	mpc_common_debug_info("COMM: release key=%llu, int key=%d, linear key=%llu", key, key, linear_key);
 
 	mpc_common_hashtable_delete(&__id_factory.id_table, key);
 	mpc_common_hashtable_delete(&__id_factory.int_id_table, linear_key);

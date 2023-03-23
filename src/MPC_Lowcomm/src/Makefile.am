@@ -49,8 +49,8 @@ lib_LTLIBRARIES = libmpclowcomm.la
 
 # low-level communication #
 libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c ft.c group.c communicator.c shm_coll.c lowcomm_config.c
-libmpclowcomm_la_SOURCES += sctk_low_level_comm.c multirail.c sctk_net_tools.c sctk_net_topology.c lowcomm_thread.c mqd.c datatypes_common.c
-libmpclowcomm_la_SOURCES += sctk_rail.c reorder.c endpoint.c sctk_topological_polling.c sctk_topological_rail.c sctk_window.c workshare.c pset.c handle_ctx.c alloc_mem.c
+libmpclowcomm_la_SOURCES += sctk_low_level_comm.c sctk_net_tools.c sctk_net_topology.c lowcomm_thread.c mqd.c datatypes_common.c
+libmpclowcomm_la_SOURCES += sctk_rail.c reorder.c endpoint.c sctk_topological_rail.c sctk_window.c workshare.c pset.c handle_ctx.c
 
 # TCP driver #
 libmpclowcomm_la_SOURCES += ./tcp/tcp.c ./tcp/tcp_toolkit.c
@@ -87,11 +87,6 @@ endif
 if OFI_DRIVER_ENABLED
 AM_CPPFLAGS += -I$(abs_srcdir)/ofi/
 libmpclowcomm_la_SOURCES +=./ofi/ofi.c ./ofi/ofi_msg.c ./ofi/ofi_rdma.c ./ofi/ofi_toolkit.c
-endif
-
-if LCP_ENABLED
-libmpclowcomm_la_SOURCES += ./tbsm/tbsm.c
-AM_CPPFLAGS += -I$(abs_src_dir)/tbsm/
 endif
 
 if LCP_ENABLED

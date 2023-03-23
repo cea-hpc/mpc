@@ -2040,8 +2040,7 @@ int mpc_lowcomm_barrier_shm_on_context(struct shared_mem_barrier *barrier_ctx,
 				{
 					if(128 < cnt++)
 					{
-						_mpc_lowcomm_multirail_notify_idle();
-            MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+		            MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 						mpc_thread_yield();
 					}
 				}

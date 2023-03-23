@@ -26,7 +26,6 @@
 #include <mpc_config.h>
 
 #include <mpc_topology_device.h>
-#include "sctk_topological_polling.h"
 #include "mpc_lowcomm_types.h"
 
 #include "lowcomm_types_internal.h"
@@ -257,9 +256,6 @@ struct sctk_rail_info_s
 
 	/* Route table */
 	_mpc_lowcomm_endpoint_table_t * route_table;
-
-	/* Polling mechanism */
-	struct sctk_topological_polling_tree any_source_polling_tree;
 
 	char device_name[LCR_DEVICE_NAME_MAX];
 

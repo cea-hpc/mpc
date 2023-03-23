@@ -20,26 +20,46 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include <mpc_config.h>
+
+
+#include "sctk_low_level_comm.h"
+
+
 #include <mpc_lowcomm.h>
-#include <sctk_low_level_comm.h>
+
+
 #include <mpc_launch_pmi.h>
-#include <string.h>
+
 #include "alloc_mem.h"
+
 #include "mpc_common_debug.h"
+
 #include "sctk_checksum.h"
+
 #include <mpc_launch.h>
+
+#include <mpc_topology_device.h>
 
 #include <mpc_common_rank.h>
 #include <sctk_alloc.h>
+
+#include <string.h>
 
 /*Networks*/
 #ifdef MPC_USE_INFINIBAND
 #include <ibmpi.h>
 #endif
 
+#ifdef MPC_USE_OFI
+#include <ofi.h>
+#endif
+
+#ifdef MPC_USE_PORTALS
+#include <sctk_portals.h>
+#endif
+
 #include <sctk_alloc.h>
 
-#include <multirail.h>
 #ifdef MPC_USE_DMTCP
 #include "sctk_ft_iface.h"
 #endif
@@ -298,9 +318,6 @@ void sctk_net_init_driver(char *name)
 	sctk_net_memory_allocation_hook_register(__mpc_memory_allocation_hook);
 	sctk_net_memory_free_hook_register(__mpc_memory_free_hook);
 #endif
-
-	/* Initialize multi-rail engine */
-	_mpc_lowcomm_multirail_table_init();
 
 
 

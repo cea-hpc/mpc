@@ -1519,19 +1519,12 @@ static inline void ___mpc_thread_ethread_idle_task(void *arg)
 			last_timer        = ___timer_thread_ticks;
 		}
 
-#ifdef MPC_Lowcomm
-/* Idle function is called here to avoid deadlocks.
- * Actually, when calling mpc_thread_yield(), the polling
- * function is not called. */
-    TODO("CHECK CONSEQUENCES OF COMMENT");
-	//_mpc_lowcomm_multirail_notify_idle();
-#endif
 		if(no_work)
-        {
+		{
 			if(!___timer_thread_running)
-            {
-                break;
-            }
+			{
+				break;
+			}
 		}
 	}
 	/** ** **/

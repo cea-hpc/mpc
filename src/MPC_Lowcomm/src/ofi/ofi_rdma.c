@@ -105,8 +105,7 @@ static inline void __mpc_lowcomm_ofi_rdv_message_copy(mpc_lowcomm_ptp_message_co
 	int temp = 0;
 	while(!copy->msg_send->tail.ofi.rdv_complete)   
 	{
-		if(temp++ % 10000 != 0)
-			_mpc_lowcomm_multirail_notify_idle();
+		mpc_thread_yield();
 	}
 
 	switch(copy->msg_recv->tail.message_type)

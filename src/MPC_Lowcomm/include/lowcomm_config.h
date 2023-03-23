@@ -63,20 +63,6 @@ void mpc_lowcomm_coll_init_hook(mpc_lowcomm_communicator_t id);
 * DRIVER CONFIGURATION *
 ************************/
 
-
-/********************************** ENUM ************************************/
-/**Values used for topological polling in the rail configuration**/
-typedef enum
-{
-	RAIL_POLL_NOT_SET = 0,  /**< This is for error handling */
-	RAIL_POLL_NONE,  /**< This is to deactivate polling */
-	RAIL_POLL_PU,  /**< This is for polling at core level */
-	RAIL_POLL_CORE,  /**< This is for polling at core level */
-	RAIL_POLL_SOCKET, /**< Socket level */
-	RAIL_POLL_NUMA, /**< Numa level */
-	RAIL_POLL_MACHINE /**< Machine level */
-}rail_topological_polling_level_t;
-
 /******************************** STRUCTURE *********************************/
 /**Options for MPC Fault-Tolerance module.**/
 struct _mpc_lowcomm_config_struct_ft
@@ -463,20 +449,6 @@ struct _mpc_lowcomm_config_struct_net_gate
 	}                                             value;
 };
 
-/******************************** STRUCTURE *********************************/
-/**Defines a topological polling configuration.**/
-struct _mpc_lowcomm_config_struct_topological_polling
-{
-	/** Polling range as string */
-	char srange[MPC_CONF_STRING_SIZE];
-	/**Define the subset of cores involved in the polling.**/
-	rail_topological_polling_level_t range;
-
-	/** Polling trigger as string */
-	char strigger[MPC_CONF_STRING_SIZE];
-	/**Define the subset of cores involved in the polling.**/
-	rail_topological_polling_level_t trigger;
-};
 
 /******************************** STRUCTURE *********************************/
 /**Define a rail which is a name, a device associate to a driver and a routing topology.**/
@@ -491,8 +463,6 @@ struct _mpc_lowcomm_config_struct_net_rail
 	int                                                   priority;
 	/**Define the name of the device to use in this rail.**/
 	char                                                 device[MPC_CONF_STRING_SIZE];
-	/**Define how the any-source polling is done.**/
-	struct _mpc_lowcomm_config_struct_topological_polling any_source_polling;
 	/**Define the network topology to apply on this rail.**/
 	char                                                  topology[MPC_CONF_STRING_SIZE];
 	/**Define if on-demand connections are allowed on this rail.**/

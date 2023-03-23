@@ -9,7 +9,6 @@
 #include <utlist.h>
 #include <mpc_launch_shm.h>
 
-#include "multirail.h"
 #include "sctk_shm_raw_queues_internals.h"
 
 

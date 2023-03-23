@@ -24,7 +24,6 @@
 
 #include <mpc_common_rank.h>
 #include <mpc_topology.h>
-#include <multirail.h>
 #include <mpc_lowcomm_monitor.h>
 
 #include <sctk_alloc.h>

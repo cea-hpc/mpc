@@ -48,7 +48,6 @@
 #include <mpc_lowcomm.h>
 
 #include "mpc_common_spinlock.h"
-#include "multirail.h"
 
 #include "communicator.h"
 #include "lowcomm_thread.h"

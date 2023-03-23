@@ -536,8 +536,6 @@ void sctk_ptl_ct_wait_thrs(sctk_ptl_cnth_t cth, size_t thrs, sctk_ptl_cnt_t* ev)
 	while(ev->success < thrs && !ev->failure)
 	{
 		sctk_ptl_chk(PtlCTGet(cth, ev));
-		/*if(!(i % 1000))*/
-		_mpc_lowcomm_multirail_notify_idle();
 		i++;
 	}
 #endif
@@ -748,10 +746,7 @@ void sctk_ptl_md_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t* us
 	while(OPA_fetch_and_incr_int(&nb_mds) >= max)
 	{
 		OPA_decr_int(&nb_mds);
-		if((i++)%20000 == 0)
-			_mpc_lowcomm_multirail_notify_idle();
-		else
-			mpc_thread_yield();
+		mpc_thread_yield();
 	}
 
 	sctk_ptl_chk(PtlMDBind(

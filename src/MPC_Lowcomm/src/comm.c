@@ -2347,14 +2347,6 @@ static inline int __mpc_comm_pending_msg_list_search_matching_from_recv(mpc_comm
 		/* Recv has matched a send, remove from list */
 		DL_DELETE(pair->lists.pending_recv.list, ptr_recv);
 
-		/* If the remote source is on a another node, we call the
-		 * notify matching hook in the inter-process layer. We do it
-		 * before copying the message to the receive buffer */
-		if(msg->tail.remote_source)
-		{
-			_mpc_lowcomm_multirail_notify_matching(msg);
-		}
-
 		/*Insert the matching message to the list of messages that needs to be copied.*/
 		return _mpc_comm_ptp_copy_task_insert(ptr_recv, ptr_send, pair);
 	}
@@ -2489,20 +2481,8 @@ static inline void __mpc_comm_ptp_msg_done(struct mpc_lowcomm_ptp_msg_progress_s
 	 * we might overflow the number of send buffers waiting to be released */
 	if(request->header.source_task == MPC_ANY_SOURCE)
 	{
-#ifdef MPC_LOWCOMM_PROTOCOL
 		lcp_progress(lcp_ctx_loc);
-#else
-		_mpc_lowcomm_multirail_notify_anysource(request->header.source_task, 0);
-#endif
 	}
-#if 0
-    else if (request->request_type == REQUEST_SEND && !recv_ptp) {
-		const int remote_process = wait->remote_process;
-		const int source_task_id = wait->source_task_id;
-		/* This call may INCREASE the latency in the send... */
-		_mpc_lowcomm_multirail_notify_perform (remote_process, source_task_id, request->header.source_task, 0);
- 	}
-#endif
 
 	/* Propagate finish to parent request if present */
 	if(request->pointer_to_source_request)
@@ -2530,11 +2510,7 @@ static void __mpc_comm_perform_msg_wfv(void *a)
 
 	if( ( volatile int )_wait->request->completion_flag != MPC_LOWCOMM_MESSAGE_DONE)
 	{
-#ifdef MPC_LOWCOMM_PROTOCOL
 		lcp_progress(lcp_ctx_loc);
-#else
-		_mpc_lowcomm_multirail_notify_idle();
-#endif
 		MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
 	}
 }
@@ -2684,12 +2660,12 @@ static inline void __mpc_comm_ptp_msg_wait(struct mpc_lowcomm_ptp_msg_progress_s
 		if(request->header.source_task == MPC_ANY_SOURCE)
 		{
 			/* We try to poll for finding a message with a MPC_ANY_SOURCE source */
-			_mpc_lowcomm_multirail_notify_anysource(polling_task_id, blocking);
+			lcp_progress(lcp_ctx_loc);
 		}
 		else if( (!recv_ptp) || (!send_ptp) )
 		{
 			/* We poll the network only if we need it (empty queues) */
-			_mpc_lowcomm_multirail_notify_perform(remote_process, source_task_id, polling_task_id, blocking);
+			lcp_progress(lcp_ctx_loc);
 		}
 #endif
 
@@ -2757,7 +2733,6 @@ void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_r
 	if(SCTK_MSG_DEST_PROCESS_UID(msg) != mpc_lowcomm_monitor_get_uid() )
 	{
 		/* We forward the message */
-#ifdef MPC_LOWCOMM_PROTOCOL
 		int rc;
 		mpc_lowcomm_peer_uid_t uid = SCTK_MSG_DEST_PROCESS_UID(msg);
                 if (SCTK_DATATYPE(msg) == MPC_LOWCOMM_PACKED) {
@@ -2788,10 +2763,6 @@ void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_r
 		if (rc != MPC_LOWCOMM_SUCCESS) {
 			mpc_common_debug_fatal("Could not send message %lu.", uid);
 		}
-		return;
-#else	
-		_mpc_lowcomm_multirail_send_message(msg);
-#endif
 		return;
 	}
 
@@ -2978,8 +2949,6 @@ __mpc_comm_probe_source_tag_class_func(int destination, int source, int tag,
 	msg->communicator_id   = comm->id;
 	msg->message_type = class;
 
-	_mpc_lowcomm_multirail_notify_probe(msg, status);
-
 	switch ( *status )
 	{
 		case 0: /* all rails supported probing request AND not found */
@@ -3000,21 +2969,12 @@ __mpc_comm_probe_source_tag_class_func(int destination, int source, int tag,
 
 		if(src_ptp == NULL)
 		{
-#ifdef MPC_LOWCOMM_PROTOCOL
 			lcp_progress(lcp_ctx_loc);
-#else
-			int src_process = mpc_lowcomm_group_process_rank_from_world(world_source);
-			_mpc_lowcomm_multirail_notify_perform(src_process, world_source, world_destination, 0);
-#endif
 		}
 	}
 	else
 	{
-#ifdef MPC_LOWCOMM_PROTOCOL
 		lcp_progress(lcp_ctx_loc);
-#else
-		_mpc_lowcomm_multirail_notify_anysource(world_destination, 0);
-#endif
 	}
 
 	assert(dest_ptp != NULL);
@@ -3571,11 +3531,7 @@ int mpc_lowcomm_test(mpc_lowcomm_request_t * request, int * completed, mpc_lowco
 	}
 	else
 	{
-#ifdef MPC_LOWCOMM_PROTOCOL
-		lcp_progress(lcp_ctx_loc);		
-#else
-		_mpc_lowcomm_multirail_notify_idle();
-#endif
+		lcp_progress(lcp_ctx_loc);
 	}
 
 
