@@ -33,7 +33,7 @@
 
 #include "alloc_mem.h"
 #include "mpc_common_debug.h"
-#include "sctk_checksum.h"
+#include "checksum.h"
 
 
 
@@ -402,7 +402,7 @@ void sctk_net_init_driver(char *name)
 	}
 
 	sctk_rail_commit();
-	sctk_checksum_init();
+	_mpc_lowcomm_checksum_init();
 }
 
 /********************************************************************/

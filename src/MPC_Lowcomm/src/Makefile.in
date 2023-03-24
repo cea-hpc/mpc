@@ -211,7 +211,7 @@ am__DEPENDENCIES_1 =
 @MPC_HAVE_AM_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
 libmpclowcomm_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	../../MPC_Launch/src/libmpclaunch.la $(am__DEPENDENCIES_2)
-am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c sctk_checksum.c ft.c \
+am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c checksum.c ft.c \
 	group.c communicator.c shm_coll.c lowcomm_config.c alloc_mem.c \
 	lowcomm.c sctk_net_tools.c lowcomm_thread.c mqd.c \
 	datatypes_common.c rail.c reorder.c endpoint.c \
@@ -297,6 +297,7 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @OFI_DRIVER_ENABLED_TRUE@am__objects_7 = ./ofi/ofi.lo ./ofi/ofi_msg.lo \
 @OFI_DRIVER_ENABLED_TRUE@	./ofi/ofi_rdma.lo \
 @OFI_DRIVER_ENABLED_TRUE@	./ofi/ofi_toolkit.lo
+<<<<<<< HEAD
 @LCP_ENABLED_TRUE@am__objects_6 = ./tbsm/tbsm.lo ./lcp/lcp_context.lo \
 @LCP_ENABLED_TRUE@	./lcp/lcp_ep.lo ./lcp/lcp_pending.lo \
 @LCP_ENABLED_TRUE@	./lcp/lcp_progress.lo ./lcp/lcp_recv.lo \
@@ -310,6 +311,9 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @LCP_ENABLED_TRUE@	./lcp/lcp_datatype.lo ./lcr/lcr_component.lo
 @MPC_HAVE_AM_TRUE@am__objects_7 = am.lo
 am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo ft.lo \
+=======
+am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo checksum.lo ft.lo \
+>>>>>>> c8ec246e9 (CLEANUP: rename checksum)
 	group.lo communicator.lo shm_coll.lo lowcomm_config.lo \
 	alloc_mem.lo lowcomm.lo sctk_net_tools.lo lowcomm_thread.lo \
 	mqd.lo datatypes_common.lo rail.lo reorder.lo endpoint.lo \
@@ -712,7 +716,7 @@ lib_LTLIBRARIES = libmpclowcomm.la
 # TCP driver #
 
 # SHM driver #
-libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c ft.c group.c \
+libmpclowcomm_la_SOURCES = coll.c comm.c checksum.c ft.c group.c \
 	communicator.c shm_coll.c lowcomm_config.c alloc_mem.c \
 	lowcomm.c sctk_net_tools.c lowcomm_thread.c mqd.c \
 	datatypes_common.c rail.c reorder.c endpoint.c \
@@ -1067,6 +1071,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alloc_mem.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/am.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/checksum.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/coll.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/comm.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/communicator.Plo@am__quote@
@@ -1082,7 +1087,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pset.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rail.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/reorder.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_checksum.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_net_tools.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_topological_rail.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_window.Plo@am__quote@

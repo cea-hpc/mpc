@@ -43,7 +43,7 @@
 //#define MPC_LOWCOMM_IB_MODULE_DEBUG
 #define MPC_LOWCOMM_IB_MODULE_NAME    "RDMA"
 #include "ibtoolkit.h"
-#include "sctk_checksum.h"
+#include "checksum.h"
 
 /*-----------------------------------------------------------
 *  FUNCTIONS

@@ -31,7 +31,7 @@
 #include <utlist.h>
 #include <string.h>
 #include <mpc_common_asm.h>
-#include <sctk_checksum.h>
+#include <checksum.h>
 #include <reorder.h>
 #include "rail.h"
 #include <mpc_launch.h>
@@ -783,7 +783,7 @@ void _mpc_comm_ptp_message_commit_request(mpc_lowcomm_ptp_message_t *send,
 
 #ifdef SCTK_USE_CHECKSUM
 	/* Verify the checksum of the received message */
-	sctk_checksum_verify(send, recv);
+	_mpc_lowcomm_checksum_verify(send, recv);
 #endif
 	/* Complete messages: mark messages as done and mark them as DONE */
 	mpc_lowcomm_ptp_message_complete_and_free(send);

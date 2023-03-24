@@ -30,12 +30,13 @@
 
 #include "comm.h"
 
-unsigned long sctk_checksum_message ( mpc_lowcomm_ptp_message_t *send,
-                                      mpc_lowcomm_ptp_message_t *recv );
-unsigned long sctk_checksum_buffer ( char *body, struct mpc_lowcomm_ptp_message_s *msg );
-unsigned long sctk_checksum_verify ( mpc_lowcomm_ptp_message_t *send, mpc_lowcomm_ptp_message_t *recv );
+unsigned long _mpc_lowcomm_checksum_message(mpc_lowcomm_ptp_message_t *send,
+                                            mpc_lowcomm_ptp_message_t *recv);
+unsigned long _mpc_lowcomm_checksum_buffer(char *body, struct mpc_lowcomm_ptp_message_s *msg);
+unsigned long _mpc_lowcomm_checksum_verify(mpc_lowcomm_ptp_message_t *send, mpc_lowcomm_ptp_message_t *recv);
 
-void sctk_checksum_register ( mpc_lowcomm_ptp_message_t *msg );
-void sctk_checksum_unregister ( mpc_lowcomm_ptp_message_t *msg );
+void _mpc_lowcomm_checksum_register(mpc_lowcomm_ptp_message_t *msg);
+void _mpc_lowcomm_checksum_unregister(mpc_lowcomm_ptp_message_t *msg);
+
 #endif
-void sctk_checksum_init();
+void _mpc_lowcomm_checksum_init();
