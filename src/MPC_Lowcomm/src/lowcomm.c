@@ -38,18 +38,7 @@
 
 
 /*Networks*/
-#ifdef MPC_USE_INFINIBAND
-#include <ibmpi.h>
-#endif
-
-#ifdef MPC_USE_OFI
-#include <ofi.h>
-#endif
-
-#ifdef MPC_USE_PORTALS
-#include <sctk_portals.h>
-#endif
-
+#include "driver.h"
 
 #ifdef MPC_USE_DMTCP
 #include "sctk_ft_iface.h"

@@ -25,7 +25,7 @@
 #include "ofi_rdma_types.h"
 #include <rail.h>
 
-#include <sctk_net_tools.h>
+#include <msg_cpy.h>
 #include <mpc_common_spinlock.h>
 #include <mpc_common_datastructure.h>
 #include <sctk_alloc.h>
@@ -314,7 +314,7 @@ static void _mpc_lowcomm_ofirdma_send_message ( mpc_lowcomm_ptp_message_t *msg, 
 			break;
 		default:
 			addr = sctk_malloc(msg_size);
-			sctk_net_copy_in_buffer(msg, addr);
+			_mpc_lowcomm_msg_cpy_in_buffer(msg, addr);
 			break;
 	}
 
@@ -374,7 +374,7 @@ static inline void __mpc_lowcomm_ofi_progress_recv(sctk_rail_info_t* rail)
 		{				
 			assert(msg);
 			memcpy((char*)msg + sizeof(mpc_lowcomm_ptp_message_t), &req->data.eager.buffer[0], hdr_msg->header.msg_size);
-			copy_fn = sctk_net_message_copy;
+			copy_fn = _mpc_lowcomm_msg_cpy;
 			__mpc_lowcomm_ofi_rdma_post_recv(&rail->network.ofi, req);
 		}
 		else

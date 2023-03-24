@@ -28,7 +28,7 @@
 #include "endpoint.h"
 #include "qp.h"
 
-#include <sctk_net_tools.h>
+#include <msg_cpy.h>
 #include <sctk_alloc.h>
 
 #include "rail.h"
@@ -45,7 +45,7 @@ static inline void *__pack_non_contig_msg(mpc_lowcomm_ptp_message_t *msg,
 	void *buffer = NULL;
 
 	buffer = sctk_malloc(size);
-	sctk_net_copy_in_buffer(msg, buffer);
+	_mpc_lowcomm_msg_cpy_in_buffer(msg, buffer);
 
 	return buffer;
 }
@@ -214,7 +214,7 @@ static void __buffered_copy_msg(mpc_lowcomm_ptp_message_content_to_copy_t *tmp)
 				mpc_common_spinlock_unlock(&entry->lock);
 				/* The message is done. All buffers have been received */
 				mpc_common_nodebug("Message recopied free from copy %d (%p)", entry->status, entry);
-				sctk_net_message_copy_from_buffer(entry->payload, tmp, 1);
+				_mpc_lowcomm_msg_cpy_from_buffer(entry->payload, tmp, 1);
 				sctk_free(entry);
 			}
 			else
@@ -388,7 +388,7 @@ void _mpc_lowcomm_ib_buffered_poll_recv(sctk_rail_info_t *rail, _mpc_lowcomm_ib_
 					mpc_common_spinlock_unlock(&entry->lock);
 					ib_assume(entry->copy_ptr);
 					/* The message is done. All buffers have been received */
-					sctk_net_message_copy_from_buffer(entry->payload, entry->copy_ptr, 1);
+					_mpc_lowcomm_msg_cpy_from_buffer(entry->payload, entry->copy_ptr, 1);
 					mpc_common_nodebug("Message recopied free from done");
 					sctk_free(entry);
 				}

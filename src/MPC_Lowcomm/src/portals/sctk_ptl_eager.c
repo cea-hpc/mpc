@@ -25,7 +25,7 @@
 #include "endpoint.h"
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_eager.h"
-#include "sctk_net_tools.h"
+#include "msg_cpy.h"
 
 #include <mpc_common_rank.h>
 #include <mpc_lowcomm_communicator.h>
@@ -58,7 +58,7 @@ void sctk_ptl_eager_message_copy(mpc_lowcomm_ptp_message_content_to_copy_t* msg)
 	{
 		sctk_ptl_local_data_t* send_data = msg->msg_send->tail.ptl.user_ptr;
 		/* here, we have to copy the message from the network buffer to the user buffer */
-		sctk_net_message_copy_from_buffer(send_data->slot.me.start, msg, 0);
+		_mpc_lowcomm_msg_cpy_from_buffer(send_data->slot.me.start, msg, 0);
 		/*
 		 * If msg reached the OVERFLOW_LIST --> free the request & the temp buffer
 		 * otherwise, the request is the same than the one free'd above
@@ -182,7 +182,7 @@ void sctk_ptl_eager_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_en
 	{
 		/* in that case, the tail save the info, for later frees */
 		start = sctk_malloc(SCTK_MSG_SIZE(msg));
-		sctk_net_copy_in_buffer(msg, start);
+		_mpc_lowcomm_msg_cpy_in_buffer(msg, start);
 		msg->tail.ptl.copy = 1;
 	}
 

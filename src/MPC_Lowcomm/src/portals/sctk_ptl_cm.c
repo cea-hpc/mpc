@@ -26,7 +26,7 @@
 #include "sctk_ptl_cm.h"
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_types.h"
-#include "sctk_net_tools.h"
+#include "msg_cpy.h"
 
 #include <mpc_common_rank.h>
 
@@ -49,7 +49,7 @@ void sctk_ptl_cm_message_copy(mpc_lowcomm_ptp_message_content_to_copy_t* msg)
 	/* dirty line: get back the ME address, where data are located 
 	 * + complete and free the message.
 	 */
-	sctk_net_message_copy_from_buffer(msg->msg_send->tail.ptl.user_ptr->slot.me.start, msg, 1);
+	_mpc_lowcomm_msg_cpy_from_buffer(msg->msg_send->tail.ptl.user_ptr->slot.me.start, msg, 1);
 }
 
 /**

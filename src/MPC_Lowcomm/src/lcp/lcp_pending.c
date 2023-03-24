@@ -23,7 +23,7 @@
 /* ######################################################################## */
 
 #include <mpc_common_debug.h>
-#include "sctk_net_tools.h"
+#include "msg_cpy.h"
 #include <sctk_alloc.h> 
 
 #include "lcp_pending.h"

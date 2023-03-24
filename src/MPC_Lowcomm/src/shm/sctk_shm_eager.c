@@ -1,5 +1,5 @@
 #include "sctk_shm_eager.h"
-#include "sctk_net_tools.h"
+#include "msg_cpy.h"
 
 #include <sctk_alloc.h>
 
@@ -17,7 +17,7 @@ sctk_shm_eager_message_free_nocopy ( void *tmp )
 static void 
 sctk_shm_eager_message_copy_nocopy ( mpc_lowcomm_ptp_message_content_to_copy_t * tmp )
 {
-    sctk_net_message_copy(tmp);
+    _mpc_lowcomm_msg_cpy(tmp);
 }
 
 static mpc_lowcomm_ptp_message_t *
@@ -38,7 +38,7 @@ sctk_shm_eager_message_free_withcopy ( void *tmp )
 static void 
 sctk_shm_eager_message_copy_withcopy ( mpc_lowcomm_ptp_message_content_to_copy_t * tmp )
 {
-    sctk_net_message_copy(tmp);
+    _mpc_lowcomm_msg_cpy(tmp);
 }
 
 static mpc_lowcomm_ptp_message_t *
@@ -100,7 +100,7 @@ sctk_network_eager_msg_shm_send(mpc_lowcomm_ptp_message_t *msg, sctk_shm_cell_t 
     memcpy(cell->data,(char*)msg,sizeof(mpc_lowcomm_ptp_message_body_t));       
 
     if(SCTK_MSG_SIZE(msg) > 0)
-        sctk_net_copy_in_buffer(msg,(char*)cell->data+sizeof(mpc_lowcomm_ptp_message_t)); 
+        _mpc_lowcomm_msg_cpy_in_buffer(msg,(char*)cell->data+sizeof(mpc_lowcomm_ptp_message_t)); 
         
     sctk_shm_send_cell(cell);
     mpc_lowcomm_ptp_message_complete_and_free( msg ); 

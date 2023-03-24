@@ -29,7 +29,7 @@
 #include "ibpolling.h"
 #include "ibufs.h"
 #include "ibmmu.h"
-#include "sctk_net_tools.h"
+#include "msg_cpy.h"
 #include "ibeager.h"
 #include "mpc_common_asm.h"
 #include "utlist.h"

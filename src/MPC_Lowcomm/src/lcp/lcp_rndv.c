@@ -11,7 +11,7 @@
 #include "lcp_request.h"
 
 #include "sctk_alloc.h"
-#include "sctk_net_tools.h"
+#include "msg_cpy.h"
 
 /* ============================================== */
 /* Packing                                        */

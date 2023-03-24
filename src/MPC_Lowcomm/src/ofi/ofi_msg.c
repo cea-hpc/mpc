@@ -27,7 +27,7 @@
 #include <sctk_alloc.h>
 #include <rail.h>
 #include "endpoint.h"
-#include <sctk_net_tools.h>
+#include <msg_cpy.h>
 #include <mpc_common_spinlock.h>
 
 #include <mpc_common_datastructure.h>
@@ -324,7 +324,7 @@ static inline void __mpc_lowcomm_ofi_msg_read_recv_data(sctk_rail_info_t* rail, 
 			SCTK_MSG_COMPLETION_FLAG_SET(msg, NULL);
 			msg->tail.message_type = MPC_LOWCOMM_MESSAGE_NETWORK;
 			_mpc_comm_ptp_message_clear_request(msg);
-			_mpc_comm_ptp_message_set_copy_and_free(msg, sctk_free, sctk_net_message_copy);
+			_mpc_comm_ptp_message_set_copy_and_free(msg, sctk_free, _mpc_lowcomm_msg_cpy);
 			/* By releasing the lock, we will avoid unecessary yield() by {inter,low}_level_comm */
 			mpc_common_spinlock_unlock(&ep_ctx->lock);
 			rail->send_message_from_network(msg);
@@ -516,7 +516,7 @@ static void _mpc_lowcomm_ofi_send_message ( mpc_lowcomm_ptp_message_t *msg, _mpc
 			break;
 		default:
 			addr = sctk_malloc(msg_size);
-			sctk_net_copy_in_buffer(msg, addr);
+			_mpc_lowcomm_msg_cpy_in_buffer(msg, addr);
 			break;
 	}
 	

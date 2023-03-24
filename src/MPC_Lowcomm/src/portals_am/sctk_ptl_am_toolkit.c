@@ -24,7 +24,7 @@
 
 #if defined(MPC_USE_PORTALS) && defined(MPC_Active_Message) && 0
 
-#include "sctk_net_tools.h"
+#include "msg_cpy.h"
 #include "mpc_common_helper.h" /* for MPC_COMMON_MAX_STRING_SIZE */
 #include "sctk_ptl_am_types.h"
 #include "sctk_ptl_am_iface.h"

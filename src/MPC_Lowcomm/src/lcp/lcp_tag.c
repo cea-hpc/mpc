@@ -11,6 +11,7 @@
 #include "lcp_rndv.h"
 
 #include "sctk_alloc.h"
+#include "msg_cpy.h"
 
 /* ============================================== */
 /* Packing                                        */

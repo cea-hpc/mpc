@@ -27,7 +27,7 @@
 #include <utlist.h>
 
 #include "ibeager.h"
-#include "sctk_net_tools.h"
+#include "msg_cpy.h"
 #include "rail.h"
 /*-----------------------------------------------------------
 *  FUNCTIONS
@@ -200,7 +200,7 @@ _mpc_lowcomm_ib_ibuf_t *_mpc_lowcomm_ib_eager_prepare_msg(_mpc_lowcomm_ib_rail_i
 	IBUF_SET_PROTOCOL(ibuf->buffer, MPC_LOWCOMM_IB_EAGER_PROTOCOL);
 
 	/* Copy payload */
-	sctk_net_copy_in_buffer(msg, eager_msg->payload);
+	_mpc_lowcomm_msg_cpy_in_buffer(msg, eager_msg->payload);
 
 	return ibuf;
 }
@@ -247,7 +247,7 @@ static void __eager_recv_msg_no_recopy(mpc_lowcomm_ptp_message_content_to_copy_t
 
 	_mpc_lowcomm_ib_eager_t *eager_msg = (_mpc_lowcomm_ib_eager_t *)ibuf->buffer;
 	void *body = eager_msg->payload;
-	sctk_net_message_copy_from_buffer(body, tmp, 1);
+	_mpc_lowcomm_msg_cpy_from_buffer(body, tmp, 1);
 }
 
 static inline void __eager_recv_free(sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_ib_ibuf_t *ibuf, int recopy)
@@ -255,7 +255,7 @@ static inline void __eager_recv_free(sctk_rail_info_t *rail, mpc_lowcomm_ptp_mes
 	/* Read from recopied buffer */
 	if(recopy)
 	{
-		_mpc_comm_ptp_message_set_copy_and_free(msg, __free_with_recopy, sctk_net_message_copy);
+		_mpc_comm_ptp_message_set_copy_and_free(msg, __free_with_recopy, _mpc_lowcomm_msg_cpy);
 		_mpc_lowcomm_ib_ibuf_release(&rail->network.ib, ibuf, 0);
 		/* Read from network buffer  */
 	}

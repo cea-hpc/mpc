@@ -23,7 +23,7 @@
 /* ######################################################################## */
 
 #include "endpoint.h"
-#include "sctk_net_tools.h"
+#include "msg_cpy.h"
 #include "mpc_common_helper.h" /* for MPC_COMMON_MAX_STRING_SIZE */
 #include "sctk_ptl_types.h"
 #include "sctk_ptl_iface.h"

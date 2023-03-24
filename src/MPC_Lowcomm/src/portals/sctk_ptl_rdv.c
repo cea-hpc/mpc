@@ -25,7 +25,7 @@
 #include "endpoint.h"
 #include "sctk_ptl_rdv.h"
 #include "sctk_ptl_iface.h"
-#include "sctk_net_tools.h"
+#include "msg_cpy.h"
 
 #include <mpc_common_rank.h>
 #include <mpc_lowcomm_datatypes.h>
@@ -60,7 +60,7 @@ void sctk_ptl_rdv_message_copy(mpc_lowcomm_ptp_message_content_to_copy_t* msg)
 	if(msg->msg_recv->tail.ptl.copy)
 	{
 		sctk_ptl_local_data_t* send_data = msg->msg_send->tail.ptl.user_ptr;
-		sctk_net_message_copy_from_buffer(send_data->slot.me.start, msg, 0);
+		_mpc_lowcomm_msg_cpy_from_buffer(send_data->slot.me.start, msg, 0);
 	}
 
 	_mpc_comm_ptp_message_commit_request(msg->msg_send, msg->msg_recv);
@@ -327,7 +327,7 @@ void sctk_ptl_rdv_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_endp
 	{
 		/* in that case, the tail save the info, for later frees */
 		start = sctk_malloc(SCTK_MSG_SIZE(msg));
-		sctk_net_copy_in_buffer(msg, start);
+		_mpc_lowcomm_msg_cpy_in_buffer(msg, start);
 		msg->tail.ptl.copy = 1;
 	}
 	

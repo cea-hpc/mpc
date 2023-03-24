@@ -6,7 +6,7 @@
 #ifdef MPC_USE_CMA
 
 #include <sctk_alloc.h>
-#include "sctk_net_tools.h"
+#include "msg_cpy.h"
 #include "sctk_shm_cma.h"
 
 
@@ -231,7 +231,7 @@ sctk_network_cma_msg_shm_send(mpc_lowcomm_ptp_message_t *msg, sctk_shm_cell_t * 
     shm_iov->msg = msg;
     shm_iov->pid = sctk_shm_process_sys_id;
     
-    tmp = sctk_net_convert_msg_to_iovec(msg, &(shm_iov->iovec_len), SCTK_MSG_SIZE(msg));
+    tmp = _mpc_lowcomm_msg_cpy_to_iovec(msg, &(shm_iov->iovec_len), SCTK_MSG_SIZE(msg));
 
     ptr = (char*) shm_iov + sizeof(sctk_shm_iovec_info_t);
     memcpy(ptr, tmp, shm_iov->iovec_len * sizeof(struct iovec));

@@ -22,7 +22,7 @@
 
 #include "tcp_toolkit.h"
 #include "rail.h"
-#include "sctk_net_tools.h"
+#include "msg_cpy.h"
 
 #include <dirent.h>
 #ifdef MPC_LOWCOMM_PROTOCOL
@@ -106,7 +106,7 @@ static void *__tcp_thread_loop(_mpc_lowcomm_endpoint_t *tmp)
 		}
 
 		_mpc_comm_ptp_message_clear_request(msg);
-		_mpc_comm_ptp_message_set_copy_and_free(msg, sctk_free, sctk_net_message_copy);
+		_mpc_comm_ptp_message_set_copy_and_free(msg, sctk_free, _mpc_lowcomm_msg_cpy);
 
 
 		tmp->rail->send_message_from_network(msg);
@@ -142,7 +142,7 @@ static void _mpc_lowcomm_tcp_send_message(mpc_lowcomm_ptp_message_t *msg, _mpc_l
 
 	mpc_common_io_safe_write(fd, ( char * )msg, sizeof(mpc_lowcomm_ptp_message_body_t) );
 
-	sctk_net_write_in_fd(msg, fd);
+	_mpc_lowcomm_msg_cpy_in_fd(msg, fd);
 	mpc_common_spinlock_unlock(&(endpoint->data.tcp.lock) );
 
 	mpc_common_nodebug("SEND MSG ENDPOINT TCP to %d DONE", endpoint->dest);

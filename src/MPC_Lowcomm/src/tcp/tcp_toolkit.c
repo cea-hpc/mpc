@@ -36,7 +36,7 @@
 #include <netinet/tcp.h>
 #include <netdb.h>
 #include <mpc_common_spinlock.h>
-#include <sctk_net_tools.h>
+#include <msg_cpy.h>
 #include <errno.h>
 #include <mpc_lowcomm_monitor.h>
 #include <mpc_common_rank.h>

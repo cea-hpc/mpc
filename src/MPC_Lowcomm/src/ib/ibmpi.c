@@ -26,7 +26,7 @@
 #include <mpc_common_debug.h>
 #include <ibtoolkit.h>
 #include "endpoint.h"
-#include <sctk_net_tools.h>
+#include <msg_cpy.h>
 #include "ib.h"
 #include <ibufs.h>
 #include <ibufs_rdma.h>

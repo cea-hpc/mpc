@@ -30,7 +30,7 @@
 #include "ibpolling.h"
 #include "ibufs.h"
 #include "ibmmu.h"
-#include "sctk_net_tools.h"
+#include "msg_cpy.h"
 #include "cp.h"
 
 #include <sctk_alloc.h>
@@ -92,7 +92,7 @@ mpc_lowcomm_ptp_message_t *_mpc_lowcomm_ib_rdma_recv_done_remote_imm(__UNUSED__ 
 
 	if(rdma->local.status == MPC_LOWCOMM_IB_RDMA_RECOPY)
 	{
-		sctk_net_message_copy_from_buffer(rdma->local.addr, rdma->copy_ptr,
+		_mpc_lowcomm_msg_cpy_from_buffer(rdma->local.addr, rdma->copy_ptr,
 		                                  0);
 
 		mpc_common_nodebug("FREE: %p", rdma->local.addr);
@@ -133,7 +133,7 @@ static inline mpc_lowcomm_ptp_message_t *__rdma_recv_done_remote(__UNUSED__ sctk
 
 	if(dest_msg_header->tail.ib.rdma.local.status == MPC_LOWCOMM_IB_RDMA_RECOPY)
 	{
-		sctk_net_message_copy_from_buffer(dest_msg_header->tail.ib.rdma.local.addr,
+		_mpc_lowcomm_msg_cpy_from_buffer(dest_msg_header->tail.ib.rdma.local.addr,
 		                                  dest_msg_header->tail.ib.rdma.copy_ptr,
 		                                  0);
 
@@ -543,7 +543,7 @@ void _mpc_lowcomm_ib_rdma_rendezvous_prepare_send_msg(mpc_lowcomm_ptp_message_t 
 		page_size    = getpagesize();
 
 		sctk_posix_memalign( ( void ** )&aligned_addr, page_size, aligned_size);
-		sctk_net_copy_in_buffer(msg, aligned_addr);
+		_mpc_lowcomm_msg_cpy_in_buffer(msg, aligned_addr);
 
 		rdma->local.addr   = aligned_addr;
 		rdma->local.size   = aligned_size;

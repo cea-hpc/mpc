@@ -1,7 +1,7 @@
 #include "sctk_shm_frag.h"
 #include "mpc_common_debug.h"
 #include "mpc_common_spinlock.h"
-#include "sctk_net_tools.h"
+#include "msg_cpy.h"
 
 #include <mpc_common_rank.h>
 
@@ -80,7 +80,7 @@ static void __rdv_free(void *ptr)
 
 static void __rdv_cpy(mpc_lowcomm_ptp_message_content_to_copy_t *tmp)
 {
-	sctk_net_message_copy(tmp);
+	_mpc_lowcomm_msg_cpy(tmp);
 }
 
 static sctk_shm_proc_frag_info_t *__add_frag_msg(int dest)
@@ -138,7 +138,7 @@ static sctk_shm_proc_frag_info_t *__prepare_first_fragment_send_msg(int remote, 
 	if(msg->tail.message_type != MPC_LOWCOMM_MESSAGE_CONTIGUOUS)
 	{
 		frag_infos->payload_ptr = sctk_malloc(SCTK_MSG_SIZE(msg) );
-		sctk_net_copy_in_buffer(msg, frag_infos->payload_ptr);
+		_mpc_lowcomm_msg_cpy_in_buffer(msg, frag_infos->payload_ptr);
 	}
 
 	return frag_infos;

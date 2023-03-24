@@ -23,7 +23,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include <mpc_common_debug.h>
-#include <sctk_net_tools.h>
+#include <msg_cpy.h>
 #include <ib.h>
 #include <mpc_launch_pmi.h>
 #include <unistd.h>
@@ -35,7 +35,7 @@
 #include <mpc_common_asm.h>
 #include <netdb.h>
 #include <mpc_common_spinlock.h>
-#include <sctk_net_tools.h>
+#include <msg_cpy.h>
 #include <ib.h>
 #include <qp.h>
 #include <cp.h>

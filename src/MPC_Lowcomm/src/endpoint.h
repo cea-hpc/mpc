@@ -40,7 +40,7 @@
 #include "lowcomm_types_internal.h"
 
 /* Driver definitions */
-#include "sctk_drivers.h"
+#include "driver.h"
 
 /************************************************************************/
 /* ENDPOINTS                                                            */
