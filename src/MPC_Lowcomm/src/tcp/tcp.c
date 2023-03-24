@@ -439,7 +439,7 @@ int lcr_tcp_init_iface(sctk_rail_info_t *rail)
         /* Init capabilities */
         rail->cap = LCR_IFACE_CAP_REMOTE;
 
-	sctk_rail_init_route(rail, rail->runtime_config_rail->topology, tcp_on_demand_connection_handler);
+	// sctk_rail_init_route(rail, rail->runtime_config_rail->topology, tcp_on_demand_connection_handler);
 
 	char *interface = rail->runtime_config_rail->device;
 

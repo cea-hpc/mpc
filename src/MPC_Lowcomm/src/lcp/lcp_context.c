@@ -8,7 +8,7 @@
 
 #include <sctk_alloc.h>
 #include <lowcomm_config.h>
-#include <sctk_rail.h>
+#include <rail.h>
 
 #include <lcr/lcr_component.h>
 #include "lcp_task.h"

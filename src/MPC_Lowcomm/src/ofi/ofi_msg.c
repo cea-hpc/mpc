@@ -874,6 +874,8 @@ void sctk_network_init_ofi_msg( sctk_rail_info_t *rail )
 	rail->notify_any_source_message = _mpc_lowcomm_ofi_msg_notify_anysource;
 	rail->send_message_from_network = sctk_send_message_from_network_ofi_msg;
 	rail->driver_finalize           = sctk_network_finalize_ofi_msg;
+	rail->on_demand = mpc_lowcomm_ofi_msg_on_demand_handler;
+
 
 	/* RDMA */
 	rail->rail_pin_region        = mpc_lowcomm_ofi_msg_pin_region;
@@ -887,8 +889,6 @@ void sctk_network_init_ofi_msg( sctk_rail_info_t *rail )
 
 	__register_in_monitor(rail);
 
-	/* generic initialization */
-	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, mpc_lowcomm_ofi_msg_on_demand_handler );
 
 	/* prepare the lookup table */
 	ctx_ep_table = sctk_calloc(mpc_common_get_process_count(), sizeof(mpc_lowcomm_ofi_ep_t));

@@ -1,7 +1,7 @@
 #include "lcp_ep.h"
 
 #include "sctk_alloc.h"
-#include "sctk_rail.h"
+#include "rail.h"
 
 #include "lcp_context.h"
 #include "lcp_common.h"

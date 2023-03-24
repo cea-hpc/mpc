@@ -13,7 +13,6 @@
 
 #include "rail.h"
 
-#include <sctk_rail.h>
 #include <sctk_alloc.h>
 
 //FIXME: LCP_REQUEST prefix confusing with those defined in lcp.h

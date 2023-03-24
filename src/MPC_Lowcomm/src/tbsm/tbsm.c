@@ -1,7 +1,6 @@
 #include "tbsm.h"
 
 #include "mpc_common_spinlock.h"
-#include "tbsm_types.h"
 
 #include <rail.h>
 #include <sctk_alloc.h>

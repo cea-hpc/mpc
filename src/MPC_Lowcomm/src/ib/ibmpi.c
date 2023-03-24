@@ -894,10 +894,6 @@ void sctk_network_init_mpi_ib(sctk_rail_info_t *rail)
 		memset( (void *)vps_reset, 0, sizeof(char) * nbvps);
 	}
 
-
-	/* Register topology */
-	sctk_rail_init_route(rail, rail_config->topology, NULL);
-
 	/* Infiniband Init */
 	_mpc_lowcomm_ib_rail_info_t *rail_ib = &rail->network.ib;
 	memset(rail_ib, 0, sizeof(_mpc_lowcomm_ib_rail_info_t) );

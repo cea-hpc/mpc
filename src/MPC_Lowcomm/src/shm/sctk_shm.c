@@ -310,7 +310,6 @@ void sctk_network_init_shm(sctk_rail_info_t *rail)
 	shm_driver_info->in_poll = 0;
 	/* Base init done */
 
-	sctk_rail_init_route(rail, "none", NULL);
 
 	sctk_shmem_cells_num = rail->runtime_config_driver_config->driver.value.shm.cells_num;
 	sctk_shmem_size      = sctk_shm_get_region_size(sctk_shmem_cells_num);

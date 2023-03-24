@@ -230,8 +230,7 @@ void sctk_network_init_ptl (sctk_rail_info_t *rail)
 		mpc_common_debug_warning("This Portals 4 process-based driver is not suited for multi-rail usage.");
 		mpc_common_debug_warning("Please do not consider using more than one rail to avoid memory leaks.");
 	}
-	/* just select the type of init for this rail (ring,full..), nothing more */
-	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, NULL );
+
 	rail->network_name                 = "Portals Process-Based optimization";
 
 	/* Register msg hooks in rail */

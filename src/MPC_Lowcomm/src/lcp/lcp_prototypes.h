@@ -4,7 +4,7 @@
 #include "lcp_def.h"
 #include "lcr/lcr_def.h"
 
-#include <sctk_rail.h>
+#include <rail.h>
 
 static inline int lcp_send_do_am_bcopy(_mpc_lowcomm_endpoint_t *lcr_ep, 
                                        uint8_t am_id, 

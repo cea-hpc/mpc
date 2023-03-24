@@ -1172,44 +1172,44 @@ static inline void _mpc_lowcomm_ib_cm_resizing_rdma_done_recv(sctk_rail_info_t *
 
 static inline void _mpc_lowcomm_ib_cm_resizing_rdma_ack_recv(sctk_rail_info_t *rail, void *ack, mpc_lowcomm_peer_uid_t src)
 {
-	_mpc_lowcomm_ib_rail_info_t *         rail_ib_targ = &rail->network.ib;
-	_mpc_lowcomm_ib_cm_rdma_connection_t *recv_keys    = ( _mpc_lowcomm_ib_cm_rdma_connection_t * )ack;
+	// _mpc_lowcomm_ib_rail_info_t *         rail_ib_targ = &rail->network.ib;
+	// _mpc_lowcomm_ib_cm_rdma_connection_t *recv_keys    = ( _mpc_lowcomm_ib_cm_rdma_connection_t * )ack;
 
-	/* get the route to process */
-	_mpc_lowcomm_endpoint_t *endpoint = sctk_rail_get_any_route_to_process_or_forward(rail, src);
+	// /* get the route to process */
+	// // _mpc_lowcomm_endpoint_t *endpoint = sctk_rail_get_any_route_to_process_or_forward(rail, src);
 
-	ib_assume(endpoint);
-	struct _mpc_lowcomm_ib_qp_s *remote = endpoint->data.ib.remote;
-	ib_assume(remote);
+	// ib_assume(endpoint);
+	// struct _mpc_lowcomm_ib_qp_s *remote = endpoint->data.ib.remote;
+	// ib_assume(remote);
 
-	_mpc_lowcomm_ib_nodebug("[%d] RDMA RESIZING ACK received from process %d (addr:%p rkey:%u)", rail->rail_number, src, recv_keys->addr, recv_keys->rkey);
+	// _mpc_lowcomm_ib_nodebug("[%d] RDMA RESIZING ACK received from process %d (addr:%p rkey:%u)", rail->rail_number, src, recv_keys->addr, recv_keys->rkey);
 
-	/* Update the RDMA regions */
-	/* FIXME: the rail number should be determinated */
-	_mpc_lowcomm_ib_ibuf_rdma_update_remote_addr(remote, recv_keys, REGION_RECV);
+	// /* Update the RDMA regions */
+	// /* FIXME: the rail number should be determinated */
+	// _mpc_lowcomm_ib_ibuf_rdma_update_remote_addr(remote, recv_keys, REGION_RECV);
 
-	/* If the remote peer is connectable */
-	_mpc_lowcomm_ib_cm_rdma_connection_t *send_keys =
-		&remote->rdma.pool->resizing_request.send_keys;
-	/* FIXME: do some cool stuff here */
-	/* Resizing the RDMA buffer */
-	_mpc_lowcomm_ib_ibuf_rdma_region_reinit(rail_ib_targ, remote,
-	                                        &remote->rdma.pool->region[REGION_SEND],
-	                                        MPC_LOWCOMM_IB_RDMA_CHANNEL | MPC_LOWCOMM_IB_SEND_CHANNEL,
-	                                        send_keys->nb, send_keys->size);
+	// /* If the remote peer is connectable */
+	// _mpc_lowcomm_ib_cm_rdma_connection_t *send_keys =
+	// 	&remote->rdma.pool->resizing_request.send_keys;
+	// /* FIXME: do some cool stuff here */
+	// /* Resizing the RDMA buffer */
+	// _mpc_lowcomm_ib_ibuf_rdma_region_reinit(rail_ib_targ, remote,
+	//                                         &remote->rdma.pool->region[REGION_SEND],
+	//                                         MPC_LOWCOMM_IB_RDMA_CHANNEL | MPC_LOWCOMM_IB_SEND_CHANNEL,
+	//                                         send_keys->nb, send_keys->size);
 
-	OPA_incr_int(&remote->rdma.resizing_nb);
-	send_keys->connected = 1;
-	send_keys->rail_id   = rail_ib_targ->rail->rail_number;
-	_mpc_lowcomm_ib_ibuf_rdma_fill_remote_addr(remote, send_keys, REGION_SEND);
+	// OPA_incr_int(&remote->rdma.resizing_nb);
+	// send_keys->connected = 1;
+	// send_keys->rail_id   = rail_ib_targ->rail->rail_number;
+	// _mpc_lowcomm_ib_ibuf_rdma_fill_remote_addr(remote, send_keys, REGION_SEND);
 
-	_mpc_lowcomm_ib_cm_rdma_control_message_t control_message;
-	memcpy(&control_message.conn, send_keys, sizeof(_mpc_lowcomm_ib_cm_rdma_connection_t));
-	control_message.action = CM_RESIZING_RDMA_DONE_TAG;
+	// _mpc_lowcomm_ib_cm_rdma_control_message_t control_message;
+	// memcpy(&control_message.conn, send_keys, sizeof(_mpc_lowcomm_ib_cm_rdma_connection_t));
+	// control_message.action = CM_RESIZING_RDMA_DONE_TAG;
 
-	__send_on_demand_rdma(rail, src, &control_message);
+	// __send_on_demand_rdma(rail, src, &control_message);
 
-	__set_endpoint_ready_to_send(rail, endpoint, RESIZING);
+	// __set_endpoint_ready_to_send(rail, endpoint, RESIZING);
 }
 
 /*
@@ -1222,31 +1222,31 @@ static inline void _mpc_lowcomm_ib_cm_resizing_rdma_ack_recv(sctk_rail_info_t *r
  */
 static inline int _mpc_lowcomm_ib_cm_resizing_rdma_recv_request(sctk_rail_info_t *rail, void *request, mpc_lowcomm_peer_uid_t src)
 {
-	_mpc_lowcomm_ib_rail_info_t *        rail_ib_targ = &rail->network.ib;
-	_mpc_lowcomm_ib_cm_rdma_connection_t send_keys;
+	// _mpc_lowcomm_ib_rail_info_t *        rail_ib_targ = &rail->network.ib;
+	// _mpc_lowcomm_ib_cm_rdma_connection_t send_keys;
 
-	memset(&send_keys, 0, sizeof(_mpc_lowcomm_ib_cm_rdma_connection_t) );
+	// memset(&send_keys, 0, sizeof(_mpc_lowcomm_ib_cm_rdma_connection_t) );
 
-	/* get the route to process */
-	_mpc_lowcomm_endpoint_t *endpoint = sctk_rail_get_any_route_to_process_or_forward(rail, src);
-	ib_assume(endpoint);
-	/* We assume the route is connected */
-	ib_assume(_mpc_lowcomm_endpoint_get_state(endpoint) == _MPC_LOWCOMM_ENDPOINT_CONNECTED);
-	struct _mpc_lowcomm_ib_qp_s *remote = endpoint->data.ib.remote;
-	ib_assume(remote);
+	// /* get the route to process */
+	// // _mpc_lowcomm_endpoint_t *endpoint = sctk_rail_get_any_route_to_process_or_forward(rail, src);
+	// ib_assume(endpoint);
+	// /* We assume the route is connected */
+	// ib_assume(_mpc_lowcomm_endpoint_get_state(endpoint) == _MPC_LOWCOMM_ENDPOINT_CONNECTED);
+	// // struct _mpc_lowcomm_ib_qp_s *remote = endpoint->data.ib.remote;
+	// ib_assume(remote);
 
-	_mpc_lowcomm_ib_cm_rdma_connection_t *recv_keys = ( _mpc_lowcomm_ib_cm_rdma_connection_t * )request;
-	ib_assume(recv_keys->connected == 1);
-	remote->rdma.pool->resizing_request.recv_keys.nb   = recv_keys->nb;
-	remote->rdma.pool->resizing_request.recv_keys.size = recv_keys->size;
+	// _mpc_lowcomm_ib_cm_rdma_connection_t *recv_keys = ( _mpc_lowcomm_ib_cm_rdma_connection_t * )request;
+	// ib_assume(recv_keys->connected == 1);
+	// remote->rdma.pool->resizing_request.recv_keys.nb   = recv_keys->nb;
+	// remote->rdma.pool->resizing_request.recv_keys.size = recv_keys->size;
 
-	_mpc_lowcomm_ib_nodebug("[%d] Receiving RDMA RESIZING request to process %d (connected:%d size:%d nb:%d)",
-	                rail->rail_number, remote->rank, recv_keys->connected, recv_keys->size, recv_keys->nb);
+	// _mpc_lowcomm_ib_nodebug("[%d] Receiving RDMA RESIZING request to process %d (connected:%d size:%d nb:%d)",
+	//                 rail->rail_number, remote->rank, recv_keys->connected, recv_keys->size, recv_keys->nb);
 
-	/* Start flushing */
-	_mpc_lowcomm_ib_ibuf_rdma_flush_recv(rail_ib_targ, remote);
+	// /* Start flushing */
+	// _mpc_lowcomm_ib_ibuf_rdma_flush_recv(rail_ib_targ, remote);
 
-	return 0;
+	// return 0;
 }
 
 
