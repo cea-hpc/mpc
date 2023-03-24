@@ -29,7 +29,7 @@ extern "C"
 #endif
 
 #include "ofi_msg_types.h"
-#include <sctk_rail.h>
+#include <rail.h>
 
 void sctk_network_finalize_ofi_msg(sctk_rail_info_t *rail);
 void sctk_network_init_ofi_msg( sctk_rail_info_t *rail );

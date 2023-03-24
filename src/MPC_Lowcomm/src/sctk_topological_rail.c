@@ -29,7 +29,7 @@
 #include <sctk_alloc.h>
 
 #include "comm.h"
-#include "sctk_rail.h"
+#include "rail.h"
 
 _mpc_lowcomm_endpoint_t *sctk_topological_rail_ellect_endpoint(mpc_lowcomm_peer_uid_t remote, mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint)
 {
@@ -88,7 +88,7 @@ _mpc_lowcomm_endpoint_t *sctk_topological_rail_ellect_endpoint(mpc_lowcomm_peer_
 					 * a list as we cannot create connection while holding
 					 * the route table in read (in the middle of a send )
 					 * this will be done just before leaving the multirail-send function */
-					sctk_pending_on_demand_push(topological_rail, remote);
+					//sctk_pending_on_demand_push(topological_rail, remote);
 				}
 			}
 
@@ -576,8 +576,6 @@ void sctk_network_init_topological(sctk_rail_info_t *rail)
 	rail->notify_probe_message      = NULL;
 	rail->notify_any_source_message = NULL;
 	rail->send_message_from_network = NULL;
-	rail->connect_to        = NULL;
-	rail->connect_from      = NULL;
 	rail->rail_pin_region   = sctk_topological_rail_pin_region;
 	rail->rail_unpin_region = sctk_topological_rail_unpin_region;
 
@@ -593,7 +591,4 @@ void sctk_network_init_topological(sctk_rail_info_t *rail)
 	rail->network_name = "Topological RAIL";
 
 	sctk_network_init_topological_rail_info(rail);
-
-	/* Init Routes (intialize on-demand context) */
-	sctk_rail_init_route(rail, rail->runtime_config_rail->topology, topological_on_demand_connection_handler);
 }

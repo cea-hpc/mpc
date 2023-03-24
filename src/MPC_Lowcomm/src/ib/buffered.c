@@ -31,7 +31,7 @@
 #include <sctk_net_tools.h>
 #include <sctk_alloc.h>
 
-#include "sctk_rail.h"
+#include "rail.h"
 /* XXX: Modifications required:
  * - copy in user buffer if the message has already been posted - DONE
  * - Support of fragmented copy

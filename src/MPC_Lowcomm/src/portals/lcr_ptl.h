@@ -3,7 +3,7 @@
 
 #include <lcr/lcr_def.h>
 
-#include "sctk_rail.h"
+#include "rail.h"
 
 ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
                               uint8_t id,

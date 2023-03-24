@@ -27,8 +27,7 @@
 #include <mpc_common_spinlock.h>
 #include <mpc_common_rank.h>
 
-#include "sctk_rail.h"
-#include "sctk_window.h"
+#include "rail.h"
 
 #include "mpc_thread.h"
 #include "mpc_lowcomm_types.h"

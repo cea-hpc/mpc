@@ -23,7 +23,7 @@
 
 #include "ofi_toolkit.h"
 #include "ofi_headers.h"
-#include <sctk_rail.h>
+#include <rail.h>
 #include <sctk_alloc.h>
 
 #include <mpc_common_rank.h>

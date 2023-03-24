@@ -28,7 +28,7 @@
 
 #include "ibeager.h"
 #include "sctk_net_tools.h"
-#include "sctk_rail.h"
+#include "rail.h"
 /*-----------------------------------------------------------
 *  FUNCTIONS
 *----------------------------------------------------------*/

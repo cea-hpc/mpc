@@ -24,7 +24,7 @@
 #ifndef __MPC_LOWCOMM_OFI_RDMA_H_
 #define __MPC_LOWCOMM_OFI_RDMA_H_
 
-#include <sctk_rail.h>
+#include <rail.h>
 
 #ifdef __cplusplus
 extern "C"

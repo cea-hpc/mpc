@@ -24,10 +24,10 @@
 
 #include <math.h>
 #include <mpc_launch_pmi.h>
-#include <sctk_low_level_comm.h>
 #include <sctk_alloc.h>
 
 #include "communicator.h"
+#include "lowcomm.h"
 
 #ifdef MPC_Threads
 /* This is needed to rewrite pthread primitives

@@ -21,7 +21,6 @@
 /* ######################################################################## */
 
 #include "comm.h"
-#include "sctk_low_level_comm.h"
 #include "mpc_common_debug.h"
 #include "sctk_net_tools.h"
 #include <string.h>

@@ -33,7 +33,7 @@
 #include <stdio.h>
 #include "sctk_ptl_types.h"
 #include "mpc_common_debug.h"
-#include "sctk_rail.h"
+#include "rail.h"
 #include <sctk_alloc.h>
 #include <mpc_lowcomm_types.h>
 

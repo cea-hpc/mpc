@@ -25,7 +25,7 @@
 #include "ofi_toolkit.h"
 
 #include <sctk_alloc.h>
-#include <sctk_rail.h>
+#include <rail.h>
 #include "endpoint.h"
 #include <sctk_net_tools.h>
 #include <mpc_common_spinlock.h>

@@ -1691,8 +1691,6 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_engine_await_response(
 				break;
 			}
 
-			_mpc_lowcomm_multirail_notify_idle();
-
 			usleep(AWAIT_RESPONSE_USLEEP_UNIT);
 			total_time_awaited += AWAIT_RESPONSE_USLEEP_UNIT;
 		}

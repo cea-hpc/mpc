@@ -43,7 +43,7 @@
 #include <ibrdma.h>
 #include <ibeager.h>
 
-#include "sctk_rail.h"
+#include "rail.h"
 #include <ibufs_rdma.h>
 #include <mpc_common_helper.h>
 #include <sctk_alloc.h>

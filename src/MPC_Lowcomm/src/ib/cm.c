@@ -42,7 +42,7 @@
 #include "ibtoolkit.h"
 
 #include "mpc_lowcomm_msg.h"
-#include "sctk_rail.h"
+#include "rail.h"
 
 /*-----------------------------------------------------------
 *  Interface for Infiniband connexions.

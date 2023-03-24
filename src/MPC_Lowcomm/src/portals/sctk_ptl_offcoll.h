@@ -26,7 +26,7 @@
 #define SCTK_PTL_OFFCOLL_H_
 
 #include "sctk_ptl_types.h"
-#include "sctk_rail.h"
+#include "rail.h"
 
 #define SCTK_PTL_ACTIVE_UNLOCK_THRS ((size_t)42)
 #define SCTK_PTL_OFFCOLL_UP (0)

@@ -26,7 +26,6 @@
 #include "mpc_mpi_internal.h"
 #include "comm_lib.h"
 
-#include "sctk_low_level_comm.h"
 #include <string.h>
 
 #include "mpi_rma_ctrl_msg.h"

@@ -45,7 +45,7 @@
 
 
 #include "tcp.h"
-#include "sctk_rail.h"
+#include "rail.h"
 
 #include "lowcomm_thread.h"
 
@@ -91,8 +91,9 @@ static int __connect_to(char *name_init, sctk_rail_info_t *rail)
 		}
 	}
 
-	char * preferred_network = "";
-		preferred_network = "ib";
+	char *preferred_network = "";
+
+	preferred_network = "ib";
 	/* Start Name Resolution */
 
 	mpc_common_nodebug("Try connection to |%s| on port %s type %d", name, portno, AF_INET);
@@ -130,7 +131,7 @@ static int __connect_to(char *name_init, sctk_rail_info_t *rail)
 			int one = 1;
 
 			setsockopt(clientsock_fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one) );
-			
+
 			/* Try to connect */
 			errno = 0;
 
@@ -165,7 +166,7 @@ static int __connect_to(char *name_init, sctk_rail_info_t *rail)
 	/* First step is to write our UID */
 	mpc_lowcomm_peer_uid_t myuid = mpc_lowcomm_monitor_get_uid();
 
-	if( mpc_common_io_safe_write(clientsock_fd, &myuid, sizeof(mpc_lowcomm_peer_uid_t)) < 0)
+	if(mpc_common_io_safe_write(clientsock_fd, &myuid, sizeof(mpc_lowcomm_peer_uid_t) ) < 0)
 	{
 		mpc_common_tracepoint("Failed to write uid");
 	}
@@ -325,21 +326,18 @@ static void __add_route(mpc_lowcomm_peer_uid_t dest_uid, int fd, sctk_rail_info_
 	/* set the route as connected */
 	_mpc_lowcomm_endpoint_set_state(new_route, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
 
-	_mpc_lowcomm_kernel_thread_create(NULL, (void * (*)(void *) )rail->network.tcp.tcp_thread_loop, new_route);
+	_mpc_lowcomm_kernel_thread_create(NULL, (void *(*)(void *) )rail->network.tcp.tcp_thread_loop, new_route);
 }
 
 /********************************************************************/
 /* Route Hooks (Dynamic routes)                                     */
 /********************************************************************/
 
-static inline char * __gen_rail_target_name(sctk_rail_info_t *rail, char * buff, int bufflen)
+static inline char *__gen_rail_target_name(sctk_rail_info_t *rail, char *buff, int bufflen)
 {
 	snprintf(buff, bufflen, "tcp-%d", rail->rail_number);
 	return buff;
 }
-
-
-
 
 /**
  * Handler triggered when low_level_comm want to create dynamically a new route.
@@ -348,7 +346,7 @@ static inline char * __gen_rail_target_name(sctk_rail_info_t *rail, char * buff,
  */
 void tcp_on_demand_connection_handler(sctk_rail_info_t *rail, mpc_lowcomm_peer_uid_t dest_process)
 {
-	_mpc_lowcomm_endpoint_t *rout = sctk_rail_get_any_route_to_process (  rail, dest_process );
+	_mpc_lowcomm_endpoint_t *rout = sctk_rail_get_any_route_to_process(rail, dest_process);
 
 	//__sctk_network_connection_from_tcp(mpc_common_get_process_rank(), dest_process, rail, _MPC_LOWCOMM_ENDPOINT_DYNAMIC);
 	char my_net_name[128];
@@ -356,10 +354,10 @@ void tcp_on_demand_connection_handler(sctk_rail_info_t *rail, mpc_lowcomm_peer_u
 	mpc_lowcomm_monitor_retcode_t ret = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 
 	mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_ondemand(dest_process,
-																	   __gen_rail_target_name(rail, my_net_name, 128),
-																	   rail->network.tcp.connection_infos,
-																	   512,
-																	   &ret);
+	                                                                   __gen_rail_target_name(rail, my_net_name, 128),
+	                                                                   rail->network.tcp.connection_infos,
+	                                                                   512,
+	                                                                   &ret);
 
 	if(!resp)
 	{
@@ -377,12 +375,12 @@ void tcp_on_demand_connection_handler(sctk_rail_info_t *rail, mpc_lowcomm_peer_u
 }
 
 static int __tcp_on_demand_callback(mpc_lowcomm_peer_uid_t from,
-									char *data,
-									char * return_data,
-									int return_data_len,
-									void *prail)
+                                    char *data,
+                                    char *return_data,
+                                    int return_data_len,
+                                    void *prail)
 {
-	sctk_rail_info_t * rail = prail;
+	sctk_rail_info_t *rail = prail;
 
 	mpc_common_debug("TCP on-demand from (%u, %u)", mpc_lowcomm_peer_get_set(from), mpc_lowcomm_peer_get_rank(from) );
 
@@ -402,15 +400,14 @@ static int __tcp_on_demand_callback(mpc_lowcomm_peer_uid_t from,
 	return 0;
 }
 
-
 /********************************************************************/
 /* TCP Ring Init Function                                           */
 /********************************************************************/
 
-void * __accept_loop(void *prail)
+void *__accept_loop(void *prail)
 {
-	sctk_rail_info_t * rail = (sctk_rail_info_t*)prail;
-	_mpc_lowcomm_tcp_rail_info_t *tcp = (_mpc_lowcomm_tcp_rail_info_t*)&rail->network.tcp;
+	sctk_rail_info_t *            rail = (sctk_rail_info_t *)prail;
+	_mpc_lowcomm_tcp_rail_info_t *tcp  = (_mpc_lowcomm_tcp_rail_info_t *)&rail->network.tcp;
 
 	while(1)
 	{
@@ -423,7 +420,7 @@ void * __accept_loop(void *prail)
 
 		/* First thing is to read the corresponding UID */
 		mpc_lowcomm_peer_uid_t remote_uid = 0;
-		int ret = mpc_common_io_safe_read(new_socket, &remote_uid, sizeof(mpc_lowcomm_peer_uid_t));
+		int ret = mpc_common_io_safe_read(new_socket, &remote_uid, sizeof(mpc_lowcomm_peer_uid_t) );
 
 		if( (ret < 0) || (remote_uid == 0) )
 		{
@@ -441,8 +438,6 @@ void * __accept_loop(void *prail)
 	return NULL;
 }
 
-
-
 /**
  * End of TCP rail initialization and create the first topology: the ring.
  * \param[in,out] rail the TCP rail
@@ -451,24 +446,18 @@ void * __accept_loop(void *prail)
  * \param[in] route_init the function registering a new TCP route
  */
 void sctk_network_init_tcp_all(sctk_rail_info_t *rail, char *interface,
-                               void * (*tcp_thread_loop)(_mpc_lowcomm_endpoint_t *) )
+                               void *(*tcp_thread_loop)(_mpc_lowcomm_endpoint_t *) )
 {
-	char right_rank_connection_infos[MPC_COMMON_MAX_STRING_SIZE];
-	int  right_rank;
-	int  right_socket = -1;
-
 	assume(rail->send_message_from_network != NULL);
 
 
 	/* Register our connection handler */
 	char my_net_name[128];
-	mpc_lowcomm_monitor_register_on_demand_callback(__gen_rail_target_name(rail, my_net_name, 128),
-                                                    __tcp_on_demand_callback,
-													(void *)rail);
 
-	/* Fill in common rail info */
-	rail->connect_from            = NULL;
-	rail->connect_to              = NULL;
+	mpc_lowcomm_monitor_register_on_demand_callback(__gen_rail_target_name(rail, my_net_name, 128),
+	                                                __tcp_on_demand_callback,
+	                                                (void *)rail);
+
 
 	rail->network.tcp.interface = interface;
 	rail->network.tcp.tcp_thread_loop        = tcp_thread_loop;
@@ -478,33 +467,33 @@ void sctk_network_init_tcp_all(sctk_rail_info_t *rail, char *interface,
 	__create_listening_socket(rail);
 
 	/* Start accept loop */
-	_mpc_lowcomm_kernel_thread_create( NULL, __accept_loop, (void*)rail);
+	_mpc_lowcomm_kernel_thread_create(NULL, __accept_loop, (void *)rail);
 
 
-    /* As the DNS does not take the load we resolve once
-     * per server instead of once per client as we
-     * do not want to break anything ! */
+	/* As the DNS does not take the load we resolve once
+	 * per server instead of once per client as we
+	 * do not want to break anything ! */
 
-    char hostname[128];
-    gethostname(hostname, 128);
+	char hostname[128];
 
-    char resolved_ip[256];
-  
-    if( mpc_common_resolve_local_ip_for_iface(resolved_ip, 256, interface) < 0 )
-    {
-        /* Only use hostname and hope for the best */
-        snprintf(resolved_ip, 256, "%s", hostname);
-    }
+	gethostname(hostname, 128);
 
-    /* Make sure we do not publish loopback (who knows :-/) */
-    if(!strcmp(resolved_ip, "127.0.0.1"))
-    {
-        snprintf(resolved_ip, 256, "%s", hostname);
-    }
+	char resolved_ip[256];
 
-    snprintf(rail->network.tcp.connection_infos, MPC_COMMON_MAX_STRING_SIZE, "%s:%d", resolved_ip, rail->network.tcp.portno);
+	if(mpc_common_resolve_local_ip_for_iface(resolved_ip, 256, interface) < 0)
+	{
+		/* Only use hostname and hope for the best */
+		snprintf(resolved_ip, 256, "%s", hostname);
+	}
+
+	/* Make sure we do not publish loopback (who knows :-/) */
+	if(!strcmp(resolved_ip, "127.0.0.1") )
+	{
+		snprintf(resolved_ip, 256, "%s", hostname);
+	}
+
+	snprintf(rail->network.tcp.connection_infos, MPC_COMMON_MAX_STRING_SIZE, "%s:%d", resolved_ip, rail->network.tcp.portno);
 	rail->network.tcp.connection_infos_size = strlen(rail->network.tcp.connection_infos) + 1;
 
 	assume(rail->network.tcp.connection_infos_size < MPC_COMMON_MAX_STRING_SIZE);
-
 }

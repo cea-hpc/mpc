@@ -41,7 +41,7 @@
 #define MPC_LOWCOMM_IB_MODULE_NAME "ASYNC"
 #include "ibtoolkit.h"
 
-#include "sctk_rail.h"
+#include "rail.h"
 #include "ib.h"
 #include "async.h"
 #include "qp.h"

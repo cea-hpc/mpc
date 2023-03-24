@@ -27,7 +27,7 @@
 extern "C"
 {
 #endif
-#include <sctk_rail.h>
+#include <rail.h>
 #include <mpc_lowcomm_types.h>
 #include <mpc_common_asm.h>
 #include "ofi_types.h"

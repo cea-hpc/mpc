@@ -33,7 +33,7 @@
 #include "ibtopology.h"
 #include "ibufs_rdma.h"
 #include "utlist.h"
-#include "sctk_rail.h"
+#include "rail.h"
 #include <sctk_alloc.h>
 
 

@@ -23,7 +23,7 @@
 #include <comm.h>
 
 #include <mpc_arch.h>
-#include <sctk_low_level_comm.h>
+#include "lowcomm.h"
 #include <mpc_common_helper.h>
 #include <mpc_common_debug.h>
 #include <mpc_common_spinlock.h>
@@ -33,7 +33,7 @@
 #include <mpc_common_asm.h>
 #include <sctk_checksum.h>
 #include <reorder.h>
-#include <sctk_rail.h>
+#include "rail.h"
 #include <mpc_launch.h>
 #include <sctk_window.h>
 #include <mpc_common_profiler.h>

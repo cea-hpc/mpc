@@ -39,7 +39,7 @@
 
 #include <mpc_common_datastructure.h>
 #include <lowcomm_config.h>
-#include <sctk_low_level_comm.h>
+#include "lowcomm.h"
 #include <mpc_lowcomm.h>
 
 #ifdef MPC_LOWCOMM_PROTOCOL

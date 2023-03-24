@@ -880,6 +880,7 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_rail_conf_init()
 	/* Here we instanciate default rails */
 	mpc_conf_config_type_t *shm_mpi = __new_rail_conf_instance("shmmpi", 99, "default", "fully", 0, 0, 1, 0, 0, "shmconfigmpi");
 	mpc_conf_config_type_t *tcp_mpi = __new_rail_conf_instance("tcpmpi", 9, "default", "ring", 1, 0, 0, 0, 1, "tcpconfigmpi");
+    mpc_conf_config_type_t *tbsm_mpi = __new_rail_conf_instance("tbsmmpi", 99, "default", "ring", 1, 0, 1, 0, 1, "tbsmconfigmpi");
 
 #ifdef MPC_USE_PORTALS
 	mpc_conf_config_type_t *portals_mpi = __new_rail_conf_instance("portalsmpi", 6, "default", "ring", 1, 1, 0, 1, 1, "portalsconfigmpi");

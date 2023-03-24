@@ -20,20 +20,18 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-
-#include <mpc_common_debug.h>
-#include <sctk_net_tools.h>
-#include <tcp_toolkit.h>
-#include <sys/socket.h> /* shutdown() */
-
-#include <sctk_alloc.h>
+#include "tcp_toolkit.h"
+#include "rail.h"
+#include "sctk_net_tools.h"
 
 #include <dirent.h>
 #ifdef MPC_LOWCOMM_PROTOCOL
 #include <lcr/lcr_component.h>
 #endif
+#include <sys/socket.h> /* shutdown() */
 
-#include "sctk_rail.h"
+#include <mpc_common_debug.h>
+#include <sctk_alloc.h>
 
 /********************************************************************/
 /* Inter Thread Comm Hooks                                          */
@@ -203,10 +201,9 @@ void sctk_network_init_tcp(sctk_rail_info_t *rail)
 	rail->notify_any_source_message = NULL;
 	rail->send_message_from_network = _mpc_lowcomm_tcp_send_message_from_network;
 	rail->driver_finalize           = _mpc_lowcomm_tcp_finalize;
+	rail->connect_on_demand         = tcp_on_demand_connection_handler;
 
-	sctk_rail_init_route(rail, rail->runtime_config_rail->topology, tcp_on_demand_connection_handler);
-
-	char * interface = rail->runtime_config_rail->device;
+	char *interface = rail->runtime_config_rail->device;
 
 	if(!interface)
 	{
@@ -214,9 +211,10 @@ void sctk_network_init_tcp(sctk_rail_info_t *rail)
 	}
 
 	/* Handle the IPoIB case */
-    char net_name[1024];
+	char net_name[1024];
+
 	snprintf(net_name, 1024, "TCP (%s)", interface);
-    rail->network_name = strdup(net_name);
+	rail->network_name = strdup(net_name);
 
 	/* Actually initialize the network (note TCP kind specific functions) */
 	sctk_network_init_tcp_all(rail, interface, __tcp_thread_loop);
@@ -225,22 +223,25 @@ void sctk_network_init_tcp(sctk_rail_info_t *rail)
 int lcr_tcp_get_attr(sctk_rail_info_t *rail,
                      lcr_rail_attr_t *attr)
 {
-        struct _mpc_lowcomm_config_struct_net_driver_tcp tcp_driver =
-                rail->runtime_config_driver_config->driver.value.tcp;
-        attr->iface.cap.am.max_iovecs = 6; //FIXME: arbitrary value...
-        attr->iface.cap.am.max_bcopy = 0; /*FIXME: send() return whenever data has been
-                                            copied to kernel buf. So, potentiel benefit 
-                                            compared to zcopy...
-                                            TODO: check MPI_BSend */
-        attr->iface.cap.am.max_zcopy = tcp_driver.max_msg_size; 
+	struct _mpc_lowcomm_config_struct_net_driver_tcp tcp_driver =
+		rail->runtime_config_driver_config->driver.value.tcp;
 
-        attr->iface.cap.tag.max_bcopy = 0; /* No tag-matching capabilities */
-        attr->iface.cap.tag.max_zcopy = 0; /* No tag-matching capabilities */
+	attr->iface.cap.am.max_iovecs = 6; //FIXME: arbitrary value...
+	attr->iface.cap.am.max_bcopy  = 0; /* FIXME: send() return whenever data has been
+										* copied to kernel buf. So, potentiel benefit 
+										* compared to zcopy...
+										* TCP socket are blocking, hence
+	                                    * no need for buffered copy.
+	                                    * TODO: check MPI_BSend */
+	attr->iface.cap.am.max_zcopy  = tcp_driver.max_msg_size;
 
-        attr->iface.cap.rndv.max_put_zcopy = tcp_driver.max_msg_size;
-        attr->iface.cap.rndv.max_get_zcopy = tcp_driver.max_msg_size;
+	attr->iface.cap.tag.max_bcopy = 0; /* No tag-matching capabilities */
+	attr->iface.cap.tag.max_zcopy = 0; /* No tag-matching capabilities */
 
-        return MPC_LOWCOMM_SUCCESS;
+	attr->iface.cap.rndv.max_put_zcopy = tcp_driver.max_msg_size;
+	attr->iface.cap.rndv.max_get_zcopy = tcp_driver.max_msg_size;
+
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 #ifdef MPC_LOWCOMM_PROTOCOL
@@ -420,138 +421,148 @@ err:
 
 int lcr_tcp_init_iface(sctk_rail_info_t *rail)
 {
-        //FIXME: to pass the assert in sctk_network_init_tcp_all
-        rail->send_message_from_network = _mpc_lowcomm_tcp_send_message_from_network;
+	//FIXME: to pass the assert in sctk_network_init_tcp_all
+	rail->send_message_from_network = _mpc_lowcomm_tcp_send_message_from_network;
+	rail->connect_on_demand         = tcp_on_demand_connection_handler;
 
 	/* New API */
 	rail->send_am_bcopy  = lcr_tcp_send_am_bcopy;
 	rail->send_am_zcopy  = lcr_tcp_send_am_zcopy;
-        rail->iface_get_attr = lcr_tcp_get_attr;
+	rail->iface_get_attr = lcr_tcp_get_attr;
 
-        /* init config */
-        rail->network.tcp.max_iov = 8;
-        rail->network.tcp.bcopy_buf_size = 32768; /* 32kb */
-        rail->network.tcp.zcopy_buf_size = sizeof(lcr_tcp_am_zcopy_hdr_t) +
-                rail->network.tcp.max_iov * sizeof(struct iovec);
+	/* init config */
+	rail->network.tcp.max_iov        = 8;
+	rail->network.tcp.bcopy_buf_size = 32768; /* 32kb */
+	rail->network.tcp.zcopy_buf_size = sizeof(lcr_tcp_am_zcopy_hdr_t) +
+	                                   rail->network.tcp.max_iov * sizeof(struct iovec);
 
         /* Init capabilities */
         rail->cap = LCR_IFACE_CAP_REMOTE;
 
 	sctk_rail_init_route(rail, rail->runtime_config_rail->topology, tcp_on_demand_connection_handler);
 
-	char * interface = rail->runtime_config_rail->device;
+	char *interface = rail->runtime_config_rail->device;
 
 	if(!interface)
 	{
 		interface = "default";
 	}
 
-        /* Handle the IPoIB case */
-        char net_name[1024];
-        snprintf(net_name, 1024, "TCP (%s)", interface);
-        rail->network_name = strdup(net_name);
+	/* Handle the IPoIB case */
+	char net_name[1024];
 
-        /* Actually initialize the network (note TCP kind specific functions) */
-        sctk_network_init_tcp_all(rail, interface, lcr_tcp_thread_loop);
+	snprintf(net_name, 1024, "TCP (%s)", interface);
+	rail->network_name = strdup(net_name);
 
-        return MPC_LOWCOMM_SUCCESS;
+	/* Actually initialize the network (note TCP kind specific functions) */
+	sctk_network_init_tcp_all(rail, interface, lcr_tcp_thread_loop);
+
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 int lcr_tcp_query_devices(__UNUSED__ lcr_component_t *component,
                           lcr_device_t **devices_p,
                           unsigned int *num_devices_p)
 {
+	int rc = MPC_LOWCOMM_SUCCESS;
+	static const char *net_dir = "/sys/class/net";
+	lcr_device_t *     devices;
+	int            num_devices;
+	struct dirent *entry;
+	DIR *          dir;
 
-        int rc = MPC_LOWCOMM_SUCCESS;
-        static const char *net_dir = "/sys/class/net";
-        lcr_device_t *devices;
-        int num_devices;
-        struct dirent *entry;
-        DIR *dir;
+	dir = opendir(net_dir);
+	if(dir == NULL)
+	{
+		mpc_common_debug_error("TCP: could not find net directory");
+		rc = MPC_LOWCOMM_ERROR;
+		goto err;
+	}
 
-        dir = opendir(net_dir);
-        if (dir == NULL) {
-                mpc_common_debug_error("TCP: could not find net directory");
-                rc = MPC_LOWCOMM_ERROR;
-                goto err;
-        }
+	devices     = NULL;
+	num_devices = 0;
+	for(;;)
+	{
+		errno = 0;
+		entry = readdir(dir);
+		if(entry == NULL)
+		{
+			if(errno != 0)
+			{
+				mpc_common_debug_error("TCP: net directory exists "
+				                       "but no entry found.");
+				rc = MPC_LOWCOMM_ERROR;
+				goto close_dir;
+			}
+			break;
+		}
 
-        devices = NULL;
-        num_devices = 0;
-        for (;;) {
-                errno = 0;
-                entry = readdir(dir);
-                if (entry == NULL) {
-                        if (errno != 0) {
-                                mpc_common_debug_error("TCP: net directory exists "
-                                                       "but no entry found.");
-                                rc = MPC_LOWCOMM_ERROR;
-                                goto close_dir;
-                        }
-                        break;
-                }
+		/* avoid reading entry like . and .. */
+		if(entry->d_type != DT_LNK)
+		{
+			continue;
+		}
 
-                /* avoid reading entry like . and .. */
-                if (entry->d_type != DT_LNK) {
-                        continue;
-                }
+		devices = sctk_realloc(devices, sizeof(*devices) * (num_devices + 1) );
+		if(devices == NULL)
+		{
+			mpc_common_debug_error("PTL: could not allocate devices");
+			rc = MPC_LOWCOMM_ERROR;
+			goto close_dir;
+		}
 
-                devices = sctk_realloc(devices, sizeof(*devices) * (num_devices + 1));
-                if (devices == NULL) {
-                        mpc_common_debug_error("PTL: could not allocate devices");
-                        rc = MPC_LOWCOMM_ERROR;
-                        goto close_dir;
-                }
-                
-                strcpy(devices[num_devices].name, entry->d_name);
-                ++num_devices;
-        }
+		strcpy(devices[num_devices].name, entry->d_name);
+		++num_devices;
+	}
 
-        *devices_p = devices;
-        *num_devices_p = num_devices;
+	*devices_p     = devices;
+	*num_devices_p = num_devices;
 
 close_dir:
-        closedir(dir);
+	closedir(dir);
 err:
-        return rc;
+	return rc;
 }
 
 int lcr_tcp_iface_open(char *device_name, int id,
-		       lcr_rail_config_t *rail_config, 
+                       lcr_rail_config_t *rail_config,
                        lcr_driver_config_t *driver_config,
                        sctk_rail_info_t **iface_p)
 {
-        int rc = MPC_LOWCOMM_SUCCESS;
-        sctk_rail_info_t *iface = NULL;
-        UNUSED(device_name);
+	int rc = MPC_LOWCOMM_SUCCESS;
+	sctk_rail_info_t *iface = NULL;
 
-        lcr_rail_init(rail_config, driver_config, &iface);
-        if (iface == NULL) {
-                mpc_common_debug_error("LCR: could not allocate tcp rail");
-                rc = MPC_LOWCOMM_ERROR;
-                goto err;
-        }
-        //TODO: no support for user specified interface
-        //      resetting to default.
-        strcpy(iface->device_name, "default");
+	UNUSED(device_name);
+
+	lcr_rail_init(rail_config, driver_config, &iface);
+	if(iface == NULL)
+	{
+		mpc_common_debug_error("LCR: could not allocate tcp rail");
+		rc = MPC_LOWCOMM_ERROR;
+		goto err;
+	}
+	//TODO: no support for user specified interface
+	//      resetting to default.
+	strcpy(iface->device_name, "default");
 	iface->rail_number = id;
 
-        rc = lcr_tcp_init_iface(iface);
+	rc = lcr_tcp_init_iface(iface);
 
-        *iface_p = iface;
+	*iface_p = iface;
 err:
-       return rc; 
+	return rc;
 }
 
-lcr_component_t tcp_component = {
-        .name = { "tcp" },
-        .rail_name = { "tcpmpi" },
-        .query_devices = lcr_tcp_query_devices,
-        .iface_open = lcr_tcp_iface_open,
-        .devices = NULL,
-        .num_devices = 0,
-        .flags = 0,
-        .next = NULL
+lcr_component_t tcp_component =
+{
+	.name          = { "tcp"    },
+	.rail_name     = { "tcpmpi" },
+	.query_devices = lcr_tcp_query_devices,
+	.iface_open    = lcr_tcp_iface_open,
+	.devices       = NULL,
+	.num_devices   = 0,
+	.flags         = 0,
+	.next          = NULL
 };
 LCR_COMPONENT_REGISTER(&tcp_component)
 #endif

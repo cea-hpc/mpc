@@ -33,7 +33,7 @@
 #include "qp.h"
 #include "mpc_launch_pmi.h"
 #include "utlist.h"
-#include "sctk_rail.h"
+#include "rail.h"
 
 /* XXX: Packed structures */
 typedef enum _mpc_lowcomm_ib_rdma_type_e

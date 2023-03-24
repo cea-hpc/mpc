@@ -48,9 +48,37 @@ endif
 lib_LTLIBRARIES = libmpclowcomm.la
 
 # low-level communication #
-libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c ft.c group.c communicator.c shm_coll.c lowcomm_config.c
-libmpclowcomm_la_SOURCES += sctk_low_level_comm.c sctk_net_tools.c sctk_net_topology.c lowcomm_thread.c mqd.c datatypes_common.c
-libmpclowcomm_la_SOURCES += sctk_rail.c reorder.c endpoint.c sctk_topological_rail.c sctk_window.c workshare.c pset.c handle_ctx.c
+libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c ft.c group.c communicator.c shm_coll.c lowcomm_config.c alloc_mem.c
+libmpclowcomm_la_SOURCES += lowcomm.c sctk_net_tools.c lowcomm_thread.c mqd.c datatypes_common.c
+libmpclowcomm_la_SOURCES += rail.c reorder.c endpoint.c sctk_topological_rail.c sctk_window.c workshare.c pset.c handle_ctx.c
+
+libmpclowcomm_la_SOURCES += ./cplane/auth.c ./cplane/peer.c  ./cplane/proto.c ./cplane/port.c
+libmpclowcomm_la_SOURCES += ./cplane/monitor.c  ./cplane/set.c ./cplane/uid.c ./cplane/name.c
+
+# library dependency #
+libmpclowcomm_la_LIBADD =  $(ALLOC_LIBS) ../../MPC_Launch/src/libmpclaunch.la -lm -lrt
+
+#
+# All the components below
+#
+
+# LCP #
+if LCP_ENABLED
+AM_CPPFLAGS += -I$(abs_src_dir)/tbsm/
+AM_CPPFLAGS += -I$(abs_src_dir)/lcp/
+AM_CPPFLAGS += -I$(abs_src_dir)/lcr/
+libmpclowcomm_la_SOURCES += ./tbsm/tbsm.c
+libmpclowcomm_la_SOURCES += ./lcp/lcp_context.c ./lcp/lcp_ep.c ./lcp/lcp_pending.c ./lcp/lcp_progress.c ./lcp/lcp_recv.c ./lcp/lcp_send.c ./lcp/lcp_tag_lists.c ./lcp/lcp_datatype.c ./lcp/lcp_probe.c ./lcp/lcp_eager.c ./lcp/lcp_am.c
+libmpclowcomm_la_SOURCES += ./lcp/lcp_tag_matching.c ./lcp/lcp_tag.c ./lcp/lcp_request.c ./lcp/lcp_common.c ./lcp/lcp_rndv.c ./lcp/lcp_tag_offload.c ./lcp/lcp_mem.c ./lcp/lcp_rma.c ./lcp/lcp_task.c
+libmpclowcomm_la_SOURCES += ./lcr/lcr_component.c
+endif
+
+#AM Extensions #
+if MPC_HAVE_AM
+ # Active message support (ffi)
+ libmpclowcomm_la_SOURCES += am.c
+ libmpclowcomm_la_LIBADD += $(FFI_LIBS)
+endif
 
 # TCP driver #
 libmpclowcomm_la_SOURCES += ./tcp/tcp.c ./tcp/tcp_toolkit.c
@@ -84,28 +112,8 @@ endif
 libmpclowcomm_la_SOURCES += ./portals_am/sctk_ptl_am_iface.c  ./portals_am/sctk_ptl_am_toolkit.c ./portals_am/sctk_ptl_am_arpc_api.c ./portals_am/arpc_weak.c
 endif
 
+# OFI Driver #
 if OFI_DRIVER_ENABLED
 AM_CPPFLAGS += -I$(abs_srcdir)/ofi/
 libmpclowcomm_la_SOURCES +=./ofi/ofi.c ./ofi/ofi_msg.c ./ofi/ofi_rdma.c ./ofi/ofi_toolkit.c
-endif
-
-if LCP_ENABLED
-AM_CPPFLAGS += -I$(abs_src_dir)/lcp/
-AM_CPPFLAGS += -I$(abs_src_dir)/lcr/
-libmpclowcomm_la_SOURCES += ./lcp/lcp_context.c ./lcp/lcp_ep.c ./lcp/lcp_pending.c ./lcp/lcp_progress.c ./lcp/lcp_recv.c ./lcp/lcp_send.c ./lcp/lcp_tag_lists.c ./lcp/lcp_probe.c ./lcp/lcp_task.c ./lcp/lcp_eager.c ./lcp/lcp_am.c
-libmpclowcomm_la_SOURCES += ./lcp/lcp_tag_matching.c ./lcp/lcp_tag.c ./lcp/lcp_request.c ./lcp/lcp_common.c ./lcp/lcp_rndv.c ./lcp/lcp_tag_offload.c ./lcp/lcp_mem.c ./lcp/lcp_rma.c ./lcp/lcp_datatype.c
-
-libmpclowcomm_la_SOURCES += ./lcr/lcr_component.c
-endif
-
-libmpclowcomm_la_SOURCES += ./cplane/auth.c ./cplane/peer.c  ./cplane/proto.c ./cplane/port.c
-libmpclowcomm_la_SOURCES += ./cplane/monitor.c  ./cplane/set.c ./cplane/uid.c ./cplane/name.c
-
-# library dependency #
-libmpclowcomm_la_LIBADD =  $(ALLOC_LIBS) ../../MPC_Launch/src/libmpclaunch.la -lm -lrt
-
-if MPC_HAVE_AM
- # Active message support (ffi)
- libmpclowcomm_la_SOURCES += am.c
- libmpclowcomm_la_LIBADD += $(FFI_LIBS)
 endif

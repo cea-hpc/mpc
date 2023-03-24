@@ -6,7 +6,8 @@
 #include "lcr/lcr_def.h"
 #include "lcp_types.h"
 #include "lcp_pending.h"
-
+#include "lcp_tag_matching.h"
+#include "lcp_types.h"
 #include "uthash.h"
 #include "opa_primitives.h"
 

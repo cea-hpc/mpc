@@ -36,7 +36,7 @@
 #include "ibmpi.h"
 #include "ibrdma.h"
 #include "ibtopology.h"
-#include "sctk_rail.h"
+#include "rail.h"
 
 #include <mpc_topology.h>
 #include <sctk_alloc.h>

@@ -18,7 +18,7 @@
 #include "sctk_shm_raw_queues.h"
 
 
-#include "sctk_rail.h"
+#include "rail.h"
 
 #include "sctk_shm.h"
 

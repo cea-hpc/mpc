@@ -26,7 +26,7 @@ extern "C"
 {
 #endif
 
-#include "sctk_low_level_comm.h"
+#include "lowcomm.h"
 #include "mpc_common_helper.h"
 #include <sys/uio.h>
 

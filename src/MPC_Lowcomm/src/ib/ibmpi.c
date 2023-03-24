@@ -43,7 +43,7 @@
 #include "ibtopology.h"
 #include "cp.h"
 #include "mpc_common_asm.h"
-#include "sctk_rail.h"
+#include "rail.h"
 
 #include <sctk_alloc.h>
 
@@ -748,17 +748,6 @@ static void _mpc_lowcomm_ib_notify_anysource(int polling_task_id, __UNUSED__ int
 	}
 }
 
-static void sctk_network_connection_to_ib(int from, int to, sctk_rail_info_t *rail)
-{
-	_mpc_lowcomm_ib_cm_connect_to(from, to, rail);
-}
-
-static void
-sctk_network_connection_from_ib(int from, int to, sctk_rail_info_t *rail)
-{
-	_mpc_lowcomm_ib_cm_connect_from(from, to, rail);
-}
-
 int sctk_send_message_from_network_mpi_ib(mpc_lowcomm_ptp_message_t *msg)
 {
 	int ret = _mpc_lowcomm_reorder_msg_check(msg);
@@ -969,9 +958,6 @@ void sctk_network_init_mpi_ib(sctk_rail_info_t *rail)
 
 	sctk_network_initialize_leader_task_mpi_ib(rail);
 
-
-	rail->connect_to        = sctk_network_connection_to_ib;
-	rail->connect_from      = sctk_network_connection_from_ib;
 	rail->connect_on_demand = sctk_connect_on_demand_mpi_ib;
 	rail->driver_finalize   = sctk_network_finalize_mpi_ib;
 
@@ -1000,14 +986,6 @@ void sctk_network_init_mpi_ib(sctk_rail_info_t *rail)
 	rail->network_name = network_name;
 
 	rail->send_message_from_network = sctk_send_message_from_network_mpi_ib;
-
-	/* Boostrap the ring only if required */
-	if(rail->requires_bootstrap_ring)
-	{
-		/* Bootstrap a ring on this network */
-		//_mpc_lowcomm_ib_cm_connect_ring(rail);
-	}
-
 
     _mpc_lowcomm_ib_cm_monitor_register_callbacks(rail);
 

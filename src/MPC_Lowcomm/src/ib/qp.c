@@ -39,7 +39,7 @@
 #include <errno.h>
 #include <string.h>
 
-#include "sctk_rail.h"
+#include "rail.h"
 
 /* IB debug macros */
 #if defined MPC_LOWCOMM_IB_MODULE_NAME

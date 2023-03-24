@@ -33,7 +33,7 @@
 #include "ibconfig.h"
 #include "ibufs_rdma.h"
 #include "ibtopology.h"
-#include "sctk_rail.h"
+#include "rail.h"
 
 #include <mpc_thread.h>
 #include <mpc_topology.h>

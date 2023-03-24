@@ -23,7 +23,7 @@
 
 #include "ofi_toolkit.h"
 #include "ofi_rdma_types.h"
-#include <sctk_rail.h>
+#include <rail.h>
 
 #include <sctk_net_tools.h>
 #include <mpc_common_spinlock.h>
@@ -553,8 +553,6 @@ void sctk_network_init_ofi_rdma( sctk_rail_info_t *rail )
 	rail->driver_finalize           = sctk_network_finalize_ofi_rdma;
 
 	__rdma_register_in_monitor(rail);
-
-	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, mpc_lowcomm_ofi_rdma_on_demand_handler );
 
 	struct fi_info* hint = fi_allocinfo();
 

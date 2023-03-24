@@ -5,6 +5,7 @@
 #include "lcp_types.h"
 #include "lcr/lcr_def.h"
 
+#include "rail.h"
 #include "opa_primitives.h"
 
 typedef uint16_t lcp_ep_flags_t;

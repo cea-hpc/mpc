@@ -40,7 +40,7 @@
 #include <mpc_topology.h>
 
 #include "mpc_lowcomm_types.h"
-#include "sctk_low_level_comm.h"
+#include "lowcomm.h"
 
 #include "mpi_rma_epoch.h"
 #include "mpi_rma_ctrl_msg.h"

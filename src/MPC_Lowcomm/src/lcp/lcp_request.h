@@ -8,6 +8,10 @@
 //       endpoint connection.
 #include "lcp_ep.h"
 #include "lcp_context.h"
+#include "lcp_header.h"
+#include "lcp_pending.h"
+
+#include "rail.h"
 
 #include <sctk_rail.h>
 #include <sctk_alloc.h>

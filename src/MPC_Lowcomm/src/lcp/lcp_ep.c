@@ -5,7 +5,9 @@
 
 #include "lcp_context.h"
 #include "lcp_common.h"
+#include "rail.h"
 
+#include <assert.h>
 #include <limits.h>
 #include "uthash.h"
 
@@ -222,6 +224,7 @@ int lcp_ep_init_channels(lcp_context_h ctx, lcp_ep_h ep)
 		lcr_ep = sctk_rail_get_any_route_to_process(if_desc.iface, ep->uid);
 		/* If endpoint does not exist yet, connect on demand */
 		if (lcr_ep == NULL) {
+			assert(if_desc.iface->connect_on_demand!=NULL);
 			if_desc.iface->connect_on_demand(if_desc.iface, ep->uid);
 			/* Get newly created endpoint */
 			lcr_ep = sctk_rail_get_any_route_to_process(if_desc.iface, 

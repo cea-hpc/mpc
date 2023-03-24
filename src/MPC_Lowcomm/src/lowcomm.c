@@ -19,31 +19,23 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include <mpc_config.h>
 
 
-#include "sctk_low_level_comm.h"
+#include "lowcomm.h"
 
-
-#include <mpc_lowcomm.h>
-
-
-#include <mpc_launch_pmi.h>
-
-#include "alloc_mem.h"
-
-#include "mpc_common_debug.h"
-
-#include "sctk_checksum.h"
-
-#include <mpc_launch.h>
-
-#include <mpc_topology_device.h>
 
 #include <mpc_common_rank.h>
+#include <mpc_launch.h>
+#include <mpc_launch_pmi.h>
+#include <mpc_lowcomm.h>
+#include <mpc_topology_device.h>
 #include <sctk_alloc.h>
 
-#include <string.h>
+#include "alloc_mem.h"
+#include "mpc_common_debug.h"
+#include "sctk_checksum.h"
+
+
 
 /*Networks*/
 #ifdef MPC_USE_INFINIBAND
@@ -58,7 +50,6 @@
 #include <sctk_portals.h>
 #endif
 
-#include <sctk_alloc.h>
 
 #ifdef MPC_USE_DMTCP
 #include "sctk_ft_iface.h"
@@ -70,14 +61,6 @@
 /************************************************************************/
 /* Config Helpers                                                       */
 /************************************************************************/
-
-/** \brief Get a pointer to the global network configuration
- *   \return the network config (static struct)
- */
-static inline const struct _mpc_lowcomm_config_struct_networks *sctk_net_get_config()
-{
-	return _mpc_lowcomm_config_net_get();
-}
 
 /** \brief Get a pointer to a driver config
  *   \param name Name of the requested driver config
@@ -97,7 +80,7 @@ static inline int __unfold_rails(mpc_conf_config_type_t *cli_option)
 	/* Now compute the actual total number of rails knowing that
 	 * some rails might contain subrails */
 
-	int k;
+	int k = 0;
 	int total_rail_nb = 0;
 
 	for(k = 0; k < mpc_conf_config_type_count(cli_option); ++k)
@@ -120,7 +103,7 @@ static inline int __unfold_rails(mpc_conf_config_type_t *cli_option)
 		{
 			/* Count subrails */
 			total_rail_nb += rail->subrails_size;
-			snprintf(rail->topology, MPC_CONF_STRING_SIZE, "none");
+			(void)snprintf(rail->topology, MPC_CONF_STRING_SIZE, "none");
 		}
 		else
 		{
@@ -151,7 +134,7 @@ static inline int __unfold_rails(mpc_conf_config_type_t *cli_option)
 						struct _mpc_lowcomm_config_struct_net_rail *subrails =
 							sctk_malloc(sizeof(struct _mpc_lowcomm_config_struct_net_rail) * matching_rails);
 
-						int i;
+						int i = 0;
 
 						for(i = 0; i < matching_rails; i++)
 						{
@@ -159,7 +142,7 @@ static inline int __unfold_rails(mpc_conf_config_type_t *cli_option)
 							memcpy(&subrails[i], rail, sizeof(struct _mpc_lowcomm_config_struct_net_rail) );
 
 							/* Update device name with matching device */
-							snprintf(subrails[i].device, MPC_CONF_STRING_SIZE, "%s", matching_device[i]->name);
+							(void)snprintf(subrails[i].device, MPC_CONF_STRING_SIZE, "%s", matching_device[i]->name);
 
 							/* Make sure that the topological rail has the highest priority
 							* this is important during the on-demand election process
@@ -231,7 +214,7 @@ void sctk_rail_init_driver(sctk_rail_info_t *rail, int driver_type)
 
 void sctk_net_init_task_level(int taskid, int vp)
 {
-	int i;
+	int i = 0;
 
 	for(i = 0; i < sctk_rail_count(); i++)
 	{
@@ -245,7 +228,7 @@ void sctk_net_init_task_level(int taskid, int vp)
 
 void sctk_net_finalize_task_level(int taskid, int vp)
 {
-	int i;
+	int i = 0;
 
 	for(i = 0; i < sctk_rail_count(); i++)
 	{
@@ -261,27 +244,26 @@ void sctk_net_finalize_task_level(int taskid, int vp)
 /* Memory Allocator                                                 */
 /********************************************************************/
 
-#define IB_MEM_THRESHOLD_ALIGNED_SIZE    (256 * 1024) /* RDMA threshold */
-#define IB_MEM_ALIGNMENT                 (4096)       /* Page size */
+#ifdef MPC_Allocator
 
-static inline size_t __mpc_memory_allocation_hook_ib(size_t size)
+static inline size_t __align_allocation_to_ib_and_page(size_t size)
 {
-	if(size > IB_MEM_THRESHOLD_ALIGNED_SIZE)
+	if(size > (256ull * 1024ull)) /* RDMA threshold */
 	{
-		return (size + (IB_MEM_ALIGNMENT - 1) ) & (~(IB_MEM_ALIGNMENT - 1) );
+		/* Page size */
+		return (size + ((4096ull) - 1) ) & (~((4096ull) - 1) );
 	}
 
 	return 0;
 }
 
-#ifdef MPC_Allocator
 
 static size_t __mpc_memory_allocation_hook(size_t size_origin)
 {
 	#ifdef MPC_USE_INFINIBAND
 	if(sctk_network_is_ib_used() )
 	{
-		return __mpc_memory_allocation_hook_ib(size_origin);
+		return __align_allocation_to_ib_and_page(size_origin);
 	}
 	#else
 	UNUSED(size_origin);
@@ -361,7 +343,7 @@ void sctk_net_init_driver(char *name)
 		 * struct mpc_lowcomm_ptp_ctrl_message_header_s */
 	}
 
-	int k;
+	int k = 0;
 
 	for(k = 0; k < mpc_conf_config_type_count(cli_option); k++)
 	{
@@ -369,7 +351,7 @@ void sctk_net_init_driver(char *name)
 		char *rail_name = mpc_conf_type_elem_get_as_string(erail);
 
 		/* For each RAIL */
-		struct _mpc_lowcomm_config_struct_net_rail *rail_config_struct;
+		struct _mpc_lowcomm_config_struct_net_rail *rail_config_struct = NULL;
 #ifndef MPC_USE_INFINIBAND
 		if(strcmp(rail_name, "ib_mpi") == 0)
 		{

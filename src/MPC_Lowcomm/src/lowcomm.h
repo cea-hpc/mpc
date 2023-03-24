@@ -23,7 +23,8 @@
 #define __SCTK_LOW_LEVEL_COMM_H_
 
 #include <comm.h>
-#include <sctk_rail.h>
+
+#include "rail.h"
 
 struct sctk_rail_info_s;
 

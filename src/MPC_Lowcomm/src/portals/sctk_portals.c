@@ -23,7 +23,7 @@
 /* ######################################################################## */
 
 #include <mpc_common_debug.h>
-#include "sctk_rail.h"
+#include "rail.h"
 #include "sctk_ptl_toolkit.h"
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_rdma.h"
@@ -217,33 +217,6 @@ static void sctk_network_connect_on_demand_ptl ( struct sctk_rail_info_s * rail 
 }
 
 
-/**
- * Nothing to do here for Portals.
- * Because we suppose that a connect_to maps with a connect_from during the
- * first topology setup, we only have to support one end (here, connect_from().
- * The other and will respond through control messages
- */
-static void sctk_network_connect_to_ptl( int from, int to, sctk_rail_info_t * rail )
-{
-	/* nothing to do */
-	UNUSED(from);
-	UNUSED(to);
-	UNUSED(rail);
-}
-
-/**
- * Simply create a route to a given destination by using On-demand support.
- * \see sctk_network_connect_on_demand_ptl.
- * \param[in] from the process id initiating the request
- * \param[in] to the targeted process
- * \param[in] rail the forthcoming route owner.
- */
-static void sctk_network_connect_from_ptl( int from, int to, sctk_rail_info_t * rail)
-{
-	UNUSED(from);
-	sctk_network_connect_on_demand_ptl(rail, to);
-}
-
 /************ INIT ****************/
 /**
  * Entry point to initialize a Portals rail.
@@ -287,8 +260,6 @@ void sctk_network_init_ptl (sctk_rail_info_t *rail)
 	rail->driver_finalize         = sctk_network_finalize_ptl;
 	rail->finalize_task           = sctk_network_finalize_task_ptl;
 	rail->initialize_task         = sctk_network_initialize_task_ptl;
-	rail->connect_to              = sctk_network_connect_to_ptl;
-	rail->connect_from            = sctk_network_connect_from_ptl;
 	rail->connect_on_demand       = sctk_network_connect_on_demand_ptl;
 
 	sctk_ptl_init_interface( rail );
