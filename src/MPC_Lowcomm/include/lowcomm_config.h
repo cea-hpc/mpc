@@ -477,10 +477,6 @@ struct _mpc_lowcomm_config_struct_net_rail
 	struct _mpc_lowcomm_config_struct_net_gate            gates[MPC_CONF_MAX_RAIL_GATE];
 	/** Number of elements in gates array. **/
 	int                                                   gates_size;
-	/**Used for topological rail selection**/
-	struct _mpc_lowcomm_config_struct_net_rail *          subrails;
-	/** Number of elements in subrails array. **/
-	int                                                   subrails_size;
 	/** Max number of rail instance. **/
         int                                                   max_ifaces;
 	/** Define if rail has tag offloading capabilities. **/

@@ -84,77 +84,6 @@ static inline int __unfold_rails(mpc_conf_config_type_t *cli_option)
 			bad_parameter("Could not find a rail config named %s", rail);
 		}
 
-		/* Here we have two cases, first the rail device name is a regexp (begins with !)
-		 * or the subrails are already defined with their device manually set  */
-
-		/* Case with preset subrails */
-		if(rail->subrails_size)
-		{
-			/* Count subrails */
-			total_rail_nb += rail->subrails_size;
-			(void)snprintf(rail->topology, MPC_CONF_STRING_SIZE, "none");
-		}
-		else
-		{
-			if(strlen(rail->device) )
-			{
-				if(rail->device[0] == '!')
-				{
-					/* We need to rebuild subrails
-					 * according to devices */
-					int matching_rails = 0;
-
-					/* +1 to skip the ! */
-					mpc_topology_device_t **matching_device = mpc_topology_device_get_from_handle_regexp(rail->device + 1,
-					                                                                                     &matching_rails);
-
-					if(matching_rails == 0)
-					{
-						/* This rail does not have subrails as no device matched */
-						rail->subrails_size = -1;
-						//total_rail_nb++;
-					}
-					else
-					{
-						/* Now we build the subrail array
-						* we duplicate the config of current rail
-						* while just overriding device name with the
-						* one we extracted from the device array */
-						struct _mpc_lowcomm_config_struct_net_rail *subrails =
-							sctk_malloc(sizeof(struct _mpc_lowcomm_config_struct_net_rail) * matching_rails);
-
-						int i = 0;
-
-						for(i = 0; i < matching_rails; i++)
-						{
-							/* Copy Current rail (note that at this point the rail has no subrails ) */
-							memcpy(&subrails[i], rail, sizeof(struct _mpc_lowcomm_config_struct_net_rail) );
-
-							/* Update device name with matching device */
-							(void)snprintf(subrails[i].device, MPC_CONF_STRING_SIZE, "%s", matching_device[i]->name);
-
-							/* Make sure that the topological rail has the highest priority
-							* this is important during the on-demand election process
-							* as we want the topological rail to make this choice */
-							subrails[i].priority = rail->priority - 1;
-
-							/* Make sure that subrails do not have a subrail */
-							subrails[i].subrails_size = 0;
-						}
-
-						sctk_free(matching_device);
-
-						/* Store the new subrail array in the rail */
-						rail->subrails      = subrails;
-						rail->subrails_size = matching_rails;
-
-						/* Increment total rails by matching rails */
-						total_rail_nb += matching_rails;
-					}
-				}
-			}
-		}
-
 		/* Count this rail */
 		total_rail_nb++;
 	}
@@ -182,9 +111,6 @@ void sctk_rail_init_driver(sctk_rail_info_t *rail, int driver_type)
 			sctk_network_init_ofi(rail);
 			break;
 #endif
-		case SCTK_RTCFG_net_driver_topological:
-			sctk_network_init_topological(rail);
-			break;
 
 		case SCTK_RTCFG_net_driver_tcp:
 			sctk_network_init_tcp(rail);
@@ -363,27 +289,13 @@ void sctk_net_init_driver(char *name)
 			mpc_common_debug_abort();
 		}
 
-		/* Handle the case where no matching decice was found and flag as no_device */
-		if( (rail_config_struct->subrails_size == -1) && (mpc_common_get_process_rank() == 0) )
-		{
-			mpc_common_debug_warning("Rail %s expect %s devices but none were found", rail_config_struct->name, rail_config_struct->device);
-			mpc_common_debug_warning("MPC will fallback to TCP, consider changing your default network");
-			rail_name = "tcpmpi";
-			rail_config_struct = _mpc_lowcomm_conf_rail_unfolded_get("tcpmpi");
-			assume(rail_config_struct != NULL);
-		}
-
 		/* For this rail retrieve the config */
 		struct _mpc_lowcomm_config_struct_net_driver_config *driver_config = sctk_get_driver_config_by_name(rail_config_struct->config);
 
 		if(driver_config == NULL)
 		{
 			/* This can only be accepted for topological rails */
-			if(rail_config_struct->subrails_size == 0)
-			{
-				mpc_common_debug_error("Driver with name '%s' not found in config!", rail_config_struct->config);
-				continue;
-			}
+			mpc_common_debug_error("Driver with name '%s' not found in config!", rail_config_struct->config);
 		}
 
 		/* Register and initalize new rail inside the rail array */

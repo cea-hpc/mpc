@@ -660,12 +660,6 @@ void sctk_network_initialize_task_collaborative_ib(sctk_rail_info_t *rail, int r
 		return;
 	}
 
-	/* Skip topological rails */
-	if(0 < rail->subrail_count)
-	{
-		return;
-	}
-
 	/* Register task for topology infos */
 	_mpc_lowcomm_ib_topology_init_task(rail, vp);
 
@@ -680,11 +674,6 @@ void sctk_network_finalize_task_collaborative_ib(sctk_rail_info_t *rail, int tas
 		return;
 	}
 
-	/* Skip topological rails */
-	if(0 < rail->subrail_count)
-	{
-		return;
-	}
 	/* Register task for topology infos */
 	_mpc_lowcomm_ib_topology_free_task(rail);
 

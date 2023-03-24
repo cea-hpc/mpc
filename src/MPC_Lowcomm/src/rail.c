@@ -103,8 +103,6 @@ err:
 
 static inline sctk_rail_info_t *sctk_rail_register_with_parent(struct _mpc_lowcomm_config_struct_net_rail *runtime_config_rail,
                                                                struct _mpc_lowcomm_config_struct_net_driver_config *runtime_config_driver_config,
-                                                               sctk_rail_info_t *parent,
-                                                               int subrail_id,
                                                                int reuse_id)
 {
 	/* Store rail */
@@ -138,12 +136,6 @@ static inline sctk_rail_info_t *sctk_rail_register_with_parent(struct _mpc_lowco
 	new_rail->runtime_config_rail          = runtime_config_rail;
 	new_rail->runtime_config_driver_config = runtime_config_driver_config;
 
-
-	new_rail->subrail_id = subrail_id;
-
-	/* Set parent if present */
-	new_rail->parent_rail = parent;
-
 	/* Init Empty route table */
 	assert(!new_rail->route_table);
 	new_rail->route_table = _mpc_lowcomm_endpoint_table_new();
@@ -159,50 +151,13 @@ static inline sctk_rail_info_t *sctk_rail_register_with_parent(struct _mpc_lowco
 		}
 	}
 
-
 	/* Checkout is RDMA */
 	new_rail->is_rdma = (char)runtime_config_rail->rdma;;
 
 	/* Retrieve priority */
 	new_rail->priority = runtime_config_rail->priority;
 
-	/* Is the rail topological ? meaning does it have subrails ?*/
-	if(runtime_config_rail->subrails_size)
-	{
-		/* Intialize subrail array */
-		new_rail->subrail_count = runtime_config_rail->subrails_size;
-		new_rail->subrails      = sctk_malloc(new_rail->subrail_count * sizeof(struct sctk_rail_info_s *) );
-
-		assume(new_rail->subrails != NULL);
-
-		/* And now register subrails */
-		int i = 0;
-		for(i = 0; i < runtime_config_rail->subrails_size; i++)
-		{
-			struct _mpc_lowcomm_config_struct_net_rail *subrail_rail_conf = &runtime_config_rail->subrails[i];
-			/* Here we have to query in order to handle hierachies with different drivers */
-			struct _mpc_lowcomm_config_struct_net_driver_config *subrail_driver_conf = sctk_get_driver_config_by_name(subrail_rail_conf->config);
-
-			if(!subrail_driver_conf)
-			{
-				mpc_common_debug_fatal("Could not locate driver config for subrail %s", subrail_rail_conf->config);
-			}
-
-			/* Now do the init */
-			sctk_rail_info_t *child_rail = sctk_rail_register_with_parent(subrail_rail_conf, subrail_driver_conf, new_rail, i, -1);
-
-			/* Register the subrail in current rail */
-			new_rail->subrails[i] = child_rail;
-		}
-
-		/* Initialize the parent RAIL now that subrails are started */
-		sctk_rail_init_driver(new_rail, SCTK_RTCFG_net_driver_topological);
-	}
-	else
-	{
-		sctk_rail_init_driver(new_rail, runtime_config_driver_config->driver.type);
-	}
-
+	sctk_rail_init_driver(new_rail, runtime_config_driver_config->driver.type);
 
 	return new_rail;
 }
@@ -210,16 +165,11 @@ static inline sctk_rail_info_t *sctk_rail_register_with_parent(struct _mpc_lowco
 sctk_rail_info_t *sctk_rail_register(struct _mpc_lowcomm_config_struct_net_rail *runtime_config_rail,
                                      struct _mpc_lowcomm_config_struct_net_driver_config *runtime_config_driver_config)
 {
-	return sctk_rail_register_with_parent(runtime_config_rail, runtime_config_driver_config, NULL, -1, -1);
+	return sctk_rail_register_with_parent(runtime_config_rail, runtime_config_driver_config, -1);
 }
 
 void sctk_rail_disable(sctk_rail_info_t *rail)
 {
-	/* we don't disable abstract rails */
-	if(rail->subrail_count)
-	{
-		return;
-	}
 
 	/*TODO: We will have a race condition some day here
 	 */
@@ -235,12 +185,6 @@ void sctk_rail_disable(sctk_rail_info_t *rail)
 	rail->connect_on_demand       = NULL;
 	rail->on_demand               = 0;
 
-
-	if(rail->parent_rail)
-	{
-		_mpc_lowcomm_endpoint_table_clear(&rail->parent_rail->route_table);
-	}
-
 	_mpc_lowcomm_endpoint_table_free(&rail->route_table);
 }
 
@@ -251,8 +195,7 @@ void sctk_rail_enable(sctk_rail_info_t *rail)
 	{
 		return;
 	}
-	assert(!rail->subrail_count); /* should not be a composed rail */
-	sctk_rail_register_with_parent(rail->runtime_config_rail, rail->runtime_config_driver_config, rail->parent_rail, rail->subrail_id, rail->rail_number);
+	sctk_rail_register_with_parent(rail->runtime_config_rail, rail->runtime_config_driver_config, rail->rail_number);
 }
 
 int sctk_rail_count()
@@ -305,20 +248,6 @@ void rdma_rail_ellection()
 		if(!rail->is_rdma)
 		{
 			continue;
-		}
-
-		if(rail->subrail_count)
-		{
-			/* If we are here this rail is topological
-			 * and RDMA enabled, we have to flag all
-			 * the subrails as skipped to guarantee
-			 * the "unicity" of the RDMA rail */
-			int j = 0;
-
-			for(j = 0; j < rail->subrail_count; j++)
-			{
-				rails_to_skip[rail->subrails[j]->rail_number] = 1;
-			}
 		}
 	}
 
@@ -406,19 +335,6 @@ static inline size_t sctk_rail_print_infos(sctk_rail_info_t *rail, char *start, 
 
 	cur_sz += snprintf(start + cur_sz, sz - cur_sz, "%s Rail %d: \"%s\" (Type: %s) (Device: %s) (Priority: %d) %s%s", (rail->state == SCTK_RAIL_ST_ENABLED) ? "+":"-", rail->rail_number, rail->network_name, SCTK_RAIL_TYPE_STR(rail), rail->runtime_config_rail->device, rail->priority, rail->is_rdma?"+rdma":"", rail->on_demand?"+od":"");
 
-	if(rail->subrails)
-	{
-		char *cursor = start + cur_sz;
-
-		for(i = 0; i < rail->subrail_count; ++i)
-		{
-			cur_sz += sctk_rail_print_infos(rail->subrails[i], cursor, sz - cur_sz, depth + 1);
-			assert(cur_sz > 0);
-			assert(sz > cur_sz);
-			cursor = start + cur_sz;
-		}
-	}
-
 	return cur_sz;
 }
 
@@ -433,10 +349,6 @@ size_t sctk_rail_print_topology(char *start, size_t sz)
 	for(i = 0; i < nb_rails; ++i)
 	{
 		rail = sctk_rail_get_by_id(i);
-		if(rail->parent_rail)
-		{
-			continue;               /* printed by parent rail */
-		}
 		cur_sz += sctk_rail_print_infos(rail, cursor, sz - cur_sz, 0);
 		assert(cur_sz > 0);
 		assert(sz > cur_sz);
@@ -535,12 +447,6 @@ void sctk_rail_dump_routes()
 	{
 		sctk_rail_info_t *rail = sctk_rail_get_by_id(i);
 
-		if(rail->parent_rail)
-		{
-			continue;
-		}
-
-
 		(void)snprintf(path, 512, "./%d.%d.%s.dot.tmp", rank, i, rail->network_name);
 
 		FILE *f = fopen(path, "w");
@@ -575,11 +481,6 @@ void sctk_rail_dump_routes()
 		{
 			sctk_rail_info_t *rail = sctk_rail_get_by_id(i);
 			printf("Dumping '%s', priority: %d\n", rail->network_name, rail->priority);
-
-			if(rail->parent_rail)
-			{
-				continue;
-			}
 
 			printf("Merging %s\n", rail->network_name);
 
@@ -664,20 +565,9 @@ void sctk_rail_pin_ctx_init(sctk_rail_pin_ctx_t *ctx, void *addr, size_t size)
 		ctx->list[i].rail_id = -1;
 	}
 
-	if(0 < rdma_rail->subrail_count)
-	{
-		/* Here we have a topological rail we in for several rails */
-		ctx->size = rdma_rail->subrail_count;
 
-		/* Make sure we have enough room as we store these data
-		 * in static to allow easy serialization between windows */
-		assume(ctx->size < SCTK_PIN_LIST_SIZE);
-	}
-	else
-	{
-		/* By default we only pin for a single entry */
-		ctx->size = 1;
-	}
+	/* By default we only pin for a single entry */
+	ctx->size = 1;
 
 	/* Make sure the rail did define pin */
 	assume(rdma_rail->rail_pin_region != NULL);
@@ -704,68 +594,20 @@ void sctk_rail_pin_ctx_release(sctk_rail_pin_ctx_t *ctx)
 
 void sctk_rail_add_static_route(sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_t *tmp)
 {
-	/* Is this rail a subrail ? */
-	if(rail->parent_rail)
-	{
-		/* Save SUBrail id inside the route */
-		assume(0 <= rail->subrail_id);
-		tmp->subrail_id = rail->subrail_id;
-		/* "Steal" the endpoint from the subrail */
-		tmp->parent_rail = rail->parent_rail;
-		/* Add in local rail  */
-		_mpc_lowcomm_endpoint_table_add_static_route(rail->route_table, tmp);
-		/* Add in parent rail  */
-		_mpc_lowcomm_endpoint_table_add_static_route(rail->parent_rail->route_table, tmp);
-	}
-	else
-	{
-		/* NO PARENT : Just add the route */
-		_mpc_lowcomm_endpoint_table_add_static_route(rail->route_table, tmp);
-	}
+	/* NO PARENT : Just add the route */
+	_mpc_lowcomm_endpoint_table_add_static_route(rail->route_table, tmp);
 }
 
 void sctk_rail_add_dynamic_route(sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_t *tmp)
 {
-	/* Is this rail a subrail ? */
-	if(rail->parent_rail)
-	{
-		/* Save SUBrail id inside the route */
-		assume(0 <= rail->subrail_id);
-		tmp->subrail_id = rail->subrail_id;
-		/* "Steal" the endpoint from the subrail */
-		tmp->parent_rail = rail->parent_rail;
-		/* Add in local rail */
-		_mpc_lowcomm_endpoint_table_add_dynamic_route(rail->route_table, tmp);
-		/* Add in parent rail */
-		_mpc_lowcomm_endpoint_table_add_dynamic_route(rail->parent_rail->route_table, tmp);
-	}
-	else
-	{
-		/* NO PARENT : Just add the route  */
-		_mpc_lowcomm_endpoint_table_add_dynamic_route(rail->route_table, tmp);
-	}
+	/* NO PARENT : Just add the route  */
+	_mpc_lowcomm_endpoint_table_add_dynamic_route(rail->route_table, tmp);
 }
 
 void sctk_rail_add_dynamic_route_no_lock(sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_t *tmp)
 {
-	/* Is this rail a subrail ? */
-	if(rail->parent_rail)
-	{
-		/* Save SUBrail id inside the route */
-		assume(0 <= rail->subrail_id);
-		tmp->subrail_id = rail->subrail_id;
-		/* "Steal" the endpoint from the subrail */
-		tmp->parent_rail = rail->parent_rail;
-		/* Add in local rail */
-		_mpc_lowcomm_endpoint_table_add_dynamic_route_no_lock(rail->route_table, tmp);
-		/* Add in parent rail */
-		_mpc_lowcomm_endpoint_table_add_dynamic_route_no_lock(rail->parent_rail->route_table, tmp);
-	}
-	else
-	{
-		/* NO PARENT : Just add the route  */
-		_mpc_lowcomm_endpoint_table_add_dynamic_route_no_lock(rail->route_table, tmp);
-	}
+	/* NO PARENT : Just add the route  */
+	_mpc_lowcomm_endpoint_table_add_dynamic_route_no_lock(rail->route_table, tmp);
 }
 
 /* Get a static route with no routing (can return NULL ) */
@@ -873,11 +715,9 @@ _mpc_lowcomm_endpoint_t *sctk_rail_get_any_route_to_process_or_on_demand(sctk_ra
 			/* Here the new endpoint has been pushed, just recall */
 			return sctk_rail_get_any_route_to_process(rail, dest);
 		}
-		else
-		{
-			mpc_common_debug_error("No route to %ld", dest);
-			mpc_common_debug_abort();
-		}
+
+		mpc_common_debug_error("No route to %ld", dest);
+		mpc_common_debug_abort();
 	}
 
 	return tmp;

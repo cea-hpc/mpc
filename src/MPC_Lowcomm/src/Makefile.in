@@ -214,14 +214,13 @@ libmpclowcomm_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c checksum.c ft.c \
 	group.c communicator.c shm_coll.c lowcomm_config.c alloc_mem.c \
 	lowcomm.c msg_cpy.c lowcomm_thread.c mqd.c datatypes_common.c \
-	rail.c reorder.c endpoint.c sctk_topological_rail.c \
-	sctk_window.c workshare.c pset.c handle_ctx.c ./cplane/auth.c \
-	./cplane/peer.c ./cplane/proto.c ./cplane/port.c \
-	./cplane/monitor.c ./cplane/set.c ./cplane/uid.c \
-	./cplane/name.c ./tbsm/tbsm.c ./lcp/lcp_context.c \
-	./lcp/lcp_ep.c ./lcp/lcp_pending.c ./lcp/lcp_progress.c \
-	./lcp/lcp_recv.c ./lcp/lcp_send.c ./lcp/lcp_tag_lists.c \
-	./lcp/lcp_datatype.c ./lcp/lcp_probe.c \
+	rail.c reorder.c endpoint.c sctk_window.c workshare.c pset.c \
+	handle_ctx.c ./cplane/auth.c ./cplane/peer.c ./cplane/proto.c \
+	./cplane/port.c ./cplane/monitor.c ./cplane/set.c \
+	./cplane/uid.c ./cplane/name.c ./tbsm/tbsm.c \
+	./lcp/lcp_context.c ./lcp/lcp_ep.c ./lcp/lcp_pending.c \
+	./lcp/lcp_progress.c ./lcp/lcp_recv.c ./lcp/lcp_send.c \
+	./lcp/lcp_tag_lists.c ./lcp/lcp_datatype.c ./lcp/lcp_probe.c \
 	./lcp/lcp_tag_matching.c ./lcp/lcp_tag.c ./lcp/lcp_request.c \
 	./lcp/lcp_common.c ./lcp/lcp_rndv.c ./lcp/lcp_tag_offload.c \
 	./lcp/lcp_mem.c ./lcp/lcp_rma.c ./lcp/lcp_task.c \
@@ -317,12 +316,12 @@ am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo checksum.lo ft.lo \
 	group.lo communicator.lo shm_coll.lo lowcomm_config.lo \
 	alloc_mem.lo lowcomm.lo msg_cpy.lo lowcomm_thread.lo mqd.lo \
 	datatypes_common.lo rail.lo reorder.lo endpoint.lo \
-	sctk_topological_rail.lo sctk_window.lo workshare.lo pset.lo \
-	handle_ctx.lo ./cplane/auth.lo ./cplane/peer.lo \
-	./cplane/proto.lo ./cplane/port.lo ./cplane/monitor.lo \
-	./cplane/set.lo ./cplane/uid.lo ./cplane/name.lo \
-	$(am__objects_1) $(am__objects_2) ./tcp/tcp.lo \
-	./tcp/tcp_toolkit.lo ./shm/sctk_shm.lo ./shm/sctk_shm_eager.lo \
+	sctk_window.lo workshare.lo pset.lo handle_ctx.lo \
+	./cplane/auth.lo ./cplane/peer.lo ./cplane/proto.lo \
+	./cplane/port.lo ./cplane/monitor.lo ./cplane/set.lo \
+	./cplane/uid.lo ./cplane/name.lo $(am__objects_1) \
+	$(am__objects_2) ./tcp/tcp.lo ./tcp/tcp_toolkit.lo \
+	./shm/sctk_shm.lo ./shm/sctk_shm_eager.lo \
 	./shm/sctk_shm_raw_queues.lo ./shm/sctk_shm_cma.lo \
 	./shm/sctk_shm_frag.lo ./shm/sctk_shm_qemu.lo \
 	./shm/sctk_shm_raw_queues_internals.lo $(am__objects_3) \
@@ -719,17 +718,16 @@ lib_LTLIBRARIES = libmpclowcomm.la
 libmpclowcomm_la_SOURCES = coll.c comm.c checksum.c ft.c group.c \
 	communicator.c shm_coll.c lowcomm_config.c alloc_mem.c \
 	lowcomm.c msg_cpy.c lowcomm_thread.c mqd.c datatypes_common.c \
-	rail.c reorder.c endpoint.c sctk_topological_rail.c \
-	sctk_window.c workshare.c pset.c handle_ctx.c ./cplane/auth.c \
-	./cplane/peer.c ./cplane/proto.c ./cplane/port.c \
-	./cplane/monitor.c ./cplane/set.c ./cplane/uid.c \
-	./cplane/name.c $(am__append_4) $(am__append_5) ./tcp/tcp.c \
-	./tcp/tcp_toolkit.c ./shm/sctk_shm.c ./shm/sctk_shm_eager.c \
-	./shm/sctk_shm_raw_queues.c ./shm/sctk_shm_cma.c \
-	./shm/sctk_shm_frag.c ./shm/sctk_shm_qemu.c \
-	./shm/sctk_shm_raw_queues_internals.c $(am__append_8) \
-	$(am__append_10) $(am__append_11) $(am__append_12) \
-	$(am__append_14)
+	rail.c reorder.c endpoint.c sctk_window.c workshare.c pset.c \
+	handle_ctx.c ./cplane/auth.c ./cplane/peer.c ./cplane/proto.c \
+	./cplane/port.c ./cplane/monitor.c ./cplane/set.c \
+	./cplane/uid.c ./cplane/name.c $(am__append_4) $(am__append_5) \
+	./tcp/tcp.c ./tcp/tcp_toolkit.c ./shm/sctk_shm.c \
+	./shm/sctk_shm_eager.c ./shm/sctk_shm_raw_queues.c \
+	./shm/sctk_shm_cma.c ./shm/sctk_shm_frag.c \
+	./shm/sctk_shm_qemu.c ./shm/sctk_shm_raw_queues_internals.c \
+	$(am__append_8) $(am__append_10) $(am__append_11) \
+	$(am__append_12) $(am__append_14)
 
 # library dependency #
 libmpclowcomm_la_LIBADD = $(ALLOC_LIBS) \
@@ -1088,7 +1086,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pset.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rail.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/reorder.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_topological_rail.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_window.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/shm_coll.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/workshare.Plo@am__quote@
