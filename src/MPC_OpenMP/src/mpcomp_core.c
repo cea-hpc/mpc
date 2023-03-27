@@ -1183,9 +1183,7 @@ void mpc_omp_init( void )
 	_mpc_omp_ompt_init();
 #endif /* OMPT_SUPPORT */
 
-    puts("initial thread in!");
     mpc_omp_init_initial_thread( icvs );
-    puts("initial thread out!");
 
 	int places_nb_mvps;
 	int *shape, *cpus_order;
@@ -1203,7 +1201,6 @@ void mpc_omp_init( void )
 		cpus_order = NULL;
 	}
 
-    puts("init task tree!");
 	__init_task_tree( nb_mvps, shape, cpus_order );
 
 	mpc_common_spinlock_unlock( &lock );
