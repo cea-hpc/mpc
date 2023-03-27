@@ -75,7 +75,10 @@ __request_testpartition(mpix_progress_info_t * infos)
     assert(infos->partition != MPIX_PARTITION_NONE);
 
     int completed;
+#if 0
     MPI_Parrived(*infos->req, infos->partition, &completed);
+# endif
+    not_implemented();
     return completed;
 }
 
@@ -175,14 +178,14 @@ mpc_thread_mpi_omp_wait(int n, MPI_Request * reqs, int * index, MPI_Status * sta
 }
 
 /* these routines suspend current task until the associated request is completed */
-inline int
+static inline int
 MPIX_Wait(MPI_Request * request, MPI_Status * status)
 {
     if (mpc_thread_mpi_omp_wait(1, request, NULL, status, MPIX_PARTITION_NONE)) return 0;
     return MPI_Wait(request, status);
 }
 
-inline int
+static inline int
 MPIX_Waitall(int n, MPI_Request * requests, MPI_Status * status)
 {
     if (mpc_thread_mpi_omp_wait(n, requests, NULL, status, MPIX_PARTITION_NONE)) return 0;
@@ -190,7 +193,7 @@ MPIX_Waitall(int n, MPI_Request * requests, MPI_Status * status)
 }
 
 /* Wait for a partition of a Partionned Request to arrive */
-inline int
+static inline int
 MPIX_PWait(MPI_Request * request, MPI_Status * status, int partition)
 {
     if (mpc_thread_mpi_omp_wait(1, request, NULL, status, partition)) return 0;

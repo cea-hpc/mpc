@@ -1120,10 +1120,9 @@ typedef struct mpc_omp_atomic_int_pad_s
 typedef struct mpc_omp_new_parallel_region_info_s
 {
 	/* MANDATORY INFO */
-	void *( *func )( void * ); /* Function to call by every thread */
+	void ( *func )( void * );  /* Function to call by every thread */
 	void *shared;			   /* Shared variables (for every thread) */
 	long num_threads;		   /* Current number of threads in the team */
-	struct mpc_omp_new_parallel_region_info_s *parent;
 	struct mpc_omp_node_s *new_root;
 	int single_sections_current_save;
 	mpc_common_spinlock_t update_lock;
@@ -1344,7 +1343,8 @@ typedef struct mpc_omp_thread_s
     /* Common tool instance infos */
     mpc_omp_ompt_tool_instance_t* tool_instance;
 #endif /* OMPT_SUPPORT */
-    /* DEBUGING */
+
+    /* DEBUGING for task discovery */
     size_t hash_collision;
     size_t hash_resize;
 

@@ -186,8 +186,10 @@ static inline void __omp_conf_init(void)
             PARAM("tracemask",                          &__omp_conf.task_trace_mask,                            MPC_CONF_INT,   "Define events to be traced"),
             PARAM("tracedir",                           &__omp_conf.task_trace_dir,                             MPC_CONF_STRING,"Task trace destination directory"),
             PARAM("tracerecyclercapacity",              &__omp_conf.task_trace_recycler_capacity,               MPC_CONF_INT,   "Task trace records recycler initial capacity - this is the number of records pre-allocated"),
+# if MPC_OMP_TASK_TRACE_USE_PAPI
             PARAM("traceusepapi",                       &__omp_conf.task_trace_use_papi,                        MPC_CONF_INT,   "Enable PAPI hw events tracing per tasks"),
             PARAM("tracepapievents",                    &__omp_conf.task_trace_papi_events,                     MPC_CONF_STRING, "List of PAPI events to trace comma-delimited"),
+# endif /* MPC_OMP_TASK_TRACE_USE_PAPI */
             PARAM("condwaitenabled",                    &__omp_conf.task_cond_wait_enabled,                     MPC_CONF_BOOL,  "Enable the thread conditional sleeping while there is no ready tasks"),
             PARAM("condwaitnhyperactive",               &__omp_conf.task_cond_wait_nhyperactive,                MPC_CONF_INT,   "Number of hyperactive threads (= threads that won't sleep even if there is no ready tasks)"),
             PARAM("directsuccessor",                    &__omp_conf.task_direct_successor_enabled,              MPC_CONF_INT,   "Enable thread direct successor list"),
@@ -505,7 +507,7 @@ __prepare_omp_task_tree_init( const int num_mvps, const int *cpus_order )
 	return restrictedTopology;
 }
 
-static void
+void
 __init_task_tree( const int num_mvps, int *shape, const int *cpus_order )
 {
 	int i, top_level, place_depth = 0, place_size;
@@ -1087,8 +1089,7 @@ void mpc_omp_init( void )
 			case MPC_OMP_MODE_SIMPLE_MIXED:
 				/* Compute the number of cores for this task */
 				mpc_thread_get_task_placement_and_count( task_rank, &nb_mvps );
-				mpc_common_nodebug( "[%d] %s: SIMPLE_MIXED -> #mvps = %d", task_rank, __func__,
-				              nb_mvps );
+				mpc_common_nodebug( "[%d] %s: SIMPLE_MIXED -> #mvps = %d", task_rank, __func__, nb_mvps);
 
 				/* Consider the env variable if between 1 and the number
 				* of cores for this task */
@@ -1103,9 +1104,9 @@ void mpc_omp_init( void )
 				nb_mvps = 1;
 
 				if ( mpc_common_get_local_task_rank() == 0 )
-                                {
-					nb_mvps = mpc_topology_get_pu_count();
-				}
+                {
+                    nb_mvps = mpc_topology_get_pu_count();
+                }
 
 				break;
 
@@ -1182,7 +1183,9 @@ void mpc_omp_init( void )
 	_mpc_omp_ompt_init();
 #endif /* OMPT_SUPPORT */
 
+    puts("initial thread in!");
     mpc_omp_init_initial_thread( icvs );
+    puts("initial thread out!");
 
 	int places_nb_mvps;
 	int *shape, *cpus_order;
@@ -1192,14 +1195,15 @@ void mpc_omp_init( void )
 	{
 		places_nb_mvps = _mpc_omp_places_get_topo_info( OMP_PLACES_LIST, &shape, &cpus_order );
 		assert( places_nb_mvps <= nb_mvps );
-    nb_mvps = places_nb_mvps;
-	}
+        nb_mvps = places_nb_mvps;
+    }
 	else
 	{
 		shape = NULL;
 		cpus_order = NULL;
 	}
 
+    puts("init task tree!");
 	__init_task_tree( nb_mvps, shape, cpus_order );
 
 	mpc_common_spinlock_unlock( &lock );

@@ -33,7 +33,7 @@
 # define MPC_OMP_TASK_COMPILE_TRACE 1
 
 /* enable PAPI tracing per tasks */
-# define MPC_OMP_TASK_TRACE_USE_PAPI 1
+# define MPC_OMP_TASK_TRACE_USE_PAPI 0
 # if MPC_OMP_TASK_TRACE_USE_PAPI
 #  define PAPI_LOG(...) do {                                                \
                             printf("[PAPI] [%d] ", omp_get_thread_num());   \
@@ -335,14 +335,12 @@ typedef struct  mpc_omp_thread_task_trace_infos_s
     /* id of the current traced code section */
     int id;
 
-# if MPC_OMP_TASK_TRACE_USE_PAPI
     /* the papi event set */
     int papi_eventset;
 
     /* number of event traced */
     int papi_nevents;
 
-# endif /* MPC_OMP_TASK_TRACE_USE_PAPI */
 }               mpc_omp_thread_task_trace_infos_t;
 
 #ifdef __cplusplus

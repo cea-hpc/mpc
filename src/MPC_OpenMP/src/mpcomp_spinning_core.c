@@ -565,10 +565,10 @@ void __scatter_instance_post_init( mpc_omp_thread_t *thread )
 		OPA_store_int( &( mvp->threads->for_dyn_remain[j].i ), -1 );
 	}
 
-	if ( ! thread->mvp->instance->buffered )
-	{
-		mpc_omp_barrier();
-	}
+	//if ( ! thread->mvp->instance->buffered )
+	//{
+	//	mpc_omp_barrier();
+	//}
 
 #if 0  /* Check victim list for each thread */
 	int  i, total, current, nbList;
@@ -811,12 +811,12 @@ void _mpc_omp_start_openmp_thread(mpc_omp_mvp_t * mvp)
 
     __scatter_instance_post_init(cur_thread);
     _mpc_omp_in_order_scheduler(cur_thread);
+    mpc_omp_barrier();
 
     /* Must be set before barrier for thread safety*/
     volatile int * spin_status = ( mvp->spin_node ) ? &( mvp->spin_node->spin_status ) : &( mvp->spin_status );
     *spin_status = MPC_OMP_MVP_STATE_SLEEP;
 
-    mpc_omp_barrier();
     _mpc_omp_task_tree_deinit(cur_thread);
 
     mpc_omp_tls = (void *) mvp->threads->next;
