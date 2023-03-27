@@ -2637,12 +2637,23 @@ __kmp_task_process(mpc_omp_task_t * task, void ** depend)
     kmp_task_t * kmp_task = (kmp_task_t *) (task + 1);
     int priority = (int) kmp_task->data1.priority;
 
-    /* register dependencies and priority */
-    _mpc_omp_task_deps(task, depend, priority);
+    kmp_int32 r;
 
-    kmp_int32 r = (kmp_int32) _mpc_omp_task_process(task);
-
-    _mpc_omp_task_deinit(task);
+    /* task has already been encountered */
+    if (task->statuses.started)
+    {
+        // 2nd part of the same untied task, not supported
+        not_implemented();
+        r = -1;
+    }
+    /* first task encounter */
+    else
+    {
+        /* register dependencies and priority */
+        _mpc_omp_task_deps(task, depend, priority);
+        r = (kmp_int32) _mpc_omp_task_process(task);
+        _mpc_omp_task_deinit(task);
+    }
 
     return r;
 }
@@ -2671,9 +2682,6 @@ __kmpc_omp_task(__UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid, kmp_task
      * if a task is untied and has dependences.
      * In such case, the task was already processed in the
      * previous call to '__kmpc_omp_task_with_deps'
-     *
-     * Note that LLVM does not even support untied tasks, since
-     * tasks cannot migrate from threads. W.T.F ?
      */
     if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_UNTIED)
             && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_DEPEND))
