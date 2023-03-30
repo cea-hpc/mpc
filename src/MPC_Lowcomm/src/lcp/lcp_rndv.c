@@ -109,7 +109,7 @@ static size_t lcp_rts_rput_pack(void *dest, void *data)
  */
 static size_t lcp_rndv_fin_pack(void *dest, void *data)
 {
-        lcp_rndv_ack_hdr_t *hdr = dest;
+        lcp_ack_hdr_t *hdr = dest;
         lcp_request_t *req = data;
 
         hdr->msg_id = req->msg_id;
@@ -126,7 +126,7 @@ static size_t lcp_rndv_fin_pack(void *dest, void *data)
  */
 static size_t lcp_rtr_rput_pack(void *dest, void *data)
 {
-        lcp_rndv_ack_hdr_t *hdr = dest;
+        lcp_ack_hdr_t *hdr = dest;
         lcp_request_t *req = data;
         lcp_request_t *super = req->super;
         int packed_size;
@@ -435,7 +435,7 @@ int lcp_recv_am_rget(lcp_request_t *req);
 /**
  * @brief Respond to a rendez-vous start message
  * 
- * @param rreq received request
+ * @param rreq return request
  * @param hdr rendez-vous header
  * @param length length of header
  * @param rndv_mode rendez-vous mode (rget, rput)
@@ -700,7 +700,7 @@ int lcp_recv_am_rput(lcp_request_t *req)
                 goto err;
         }
         ack->super = req;
-        // initialize ack pending request
+        // initialize ack pending request. Ack id is request id.
         if (lcp_pending_create(req->ctx->pend, req, req->msg_id) == NULL) {
                 mpc_common_debug_error("LCP: could not add pending message");
                 rc = MPC_LOWCOMM_ERROR;
@@ -802,7 +802,7 @@ static int lcp_ack_am_tag_handler(void *arg, void *data,
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         lcp_context_h ctx = arg;
-        lcp_rndv_ack_hdr_t *hdr = data;
+        lcp_ack_hdr_t *hdr = data;
         lcp_mem_h rmem = NULL;
         lcp_request_t *req;
 
@@ -820,7 +820,7 @@ static int lcp_ack_am_tag_handler(void *arg, void *data,
                               hdr->msg_id);
 
         rc = lcp_mem_unpack(req->ctx, &rmem,  hdr + 1, 
-                            size - sizeof(lcp_rndv_ack_hdr_t));
+                            size - sizeof(lcp_ack_hdr_t));
         if (rc < 0) {
                 goto err;
         }
@@ -903,7 +903,7 @@ static int lcp_rndv_am_fin_handler(void *arg, void *data,
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         lcp_context_h ctx = arg;
-        lcp_rndv_ack_hdr_t *hdr = data;
+        lcp_ack_hdr_t *hdr = data;
         lcp_request_t *req;
 
 

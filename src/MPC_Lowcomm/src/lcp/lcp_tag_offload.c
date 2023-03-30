@@ -69,7 +69,7 @@ static inline void build_memory_bitmap(size_t length,
  */
 static size_t lcp_rndv_fin_pack(void *dest, void *data)
 {
-        lcp_rndv_ack_hdr_t *hdr = dest;
+        lcp_ack_hdr_t *hdr = dest;
         lcp_request_t *req = data;
 
         hdr->msg_id = req->msg_id;
@@ -103,7 +103,7 @@ static size_t lcp_rts_offload_pack(void *dest, void *data)
  */
 static size_t lcp_rtr_rput_offload_pack(void *dest, void *data)
 {
-        lcp_rndv_ack_hdr_t *hdr = dest;
+        lcp_ack_hdr_t *hdr = dest;
         lcp_request_t *req = data;
         lcp_request_t *super = req->super;
         int packed_size;
@@ -838,7 +838,7 @@ static int lcp_rndv_tag_rtr_handler(void *arg, void *data,
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         lcp_context_h ctx = arg;
-        lcp_rndv_ack_hdr_t *hdr = data;
+        lcp_ack_hdr_t *hdr = data;
         lcp_mem_h rmem = NULL;
         uint64_t muid = 0;
         lcp_request_t *req;
@@ -855,7 +855,7 @@ static int lcp_rndv_tag_rtr_handler(void *arg, void *data,
         }
 
         rc = lcp_mem_unpack(req->ctx, &rmem,  hdr + 1, 
-                            length - sizeof(lcp_rndv_ack_hdr_t));
+                            length - sizeof(lcp_ack_hdr_t));
         if (rc < 0) {
                 goto err;
         }
@@ -881,7 +881,7 @@ static int lcp_rndv_tag_fin_handler(void *arg, void *data,
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         lcp_context_h ctx = arg;
-        lcp_rndv_ack_hdr_t *hdr = data;
+        lcp_ack_hdr_t *hdr = data;
         uint64_t muid = 0;
         lcp_request_t *req;
 

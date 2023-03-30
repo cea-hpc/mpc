@@ -36,9 +36,9 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 
 	// if we have to try offload
 	if (LCR_IFACE_IS_TM(iface) && (ctx->config.offload ||
-            (param->flags & LCP_REQUEST_TRY_OFFLOAD))) {
+		(param->flags & LCP_REQUEST_TRY_OFFLOAD))) {
 
-                req->state.offloaded = 1;
+		req->state.offloaded = 1;
 		// try to receive using zero copy
 		rc = lcp_recv_tag_zcopy(req, iface);
 
@@ -81,7 +81,9 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 				match->length - sizeof(lcp_rndv_hdr_t),
 				LCP_RNDV_GET);
 	// else if request is matching a non-rendez-vous type unexpected request 
-	} else if (match->flags & LCP_RECV_CONTAINER_UNEXP_TAG) {
+	} else if (match->flags & LCP_RECV_CONTAINER_UNEXP_TAG) { // this works for flags from 4 to 7 (mask 0..01000)
+		mpc_common_debug("LCP: matched tag unexp req=%p, flags=%x", req, 
+				 match->flags);
                 lcp_tag_hdr_t *hdr = (lcp_tag_hdr_t *)(match + 1);
 
                 mpc_common_debug("LCP: matched tag unexp req=%p, src=%d, "
@@ -96,6 +98,8 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
                 req->info->length = match->length - sizeof(lcp_tag_hdr_t);
                 req->info->src    = hdr->src_tid;
                 req->info->tag    = hdr->tag;
+		if(match->flags == MPC_LOWCOMM_P2P_SYNC_MESSAGE)
+			lcp_tag_send_ack(req, hdr);
 
                 //TODO: free match structure ??
 		lcp_request_complete(req);
@@ -104,5 +108,6 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 		rc = MPC_LOWCOMM_ERROR;
 	}
 	sctk_free(match);
+
 	return rc;
 }

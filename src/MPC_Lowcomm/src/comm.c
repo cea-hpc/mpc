@@ -3467,8 +3467,9 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
 }
 
 int mpc_lowcomm_ssend(int dest, const void *data, size_t size, int tag,
-						mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req){		
+						mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req){
 	return _mpc_lowcomm_isend(dest, data, size, tag, comm, req, 1);
+	
 }
 
 int mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,

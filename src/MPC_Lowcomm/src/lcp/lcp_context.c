@@ -6,6 +6,7 @@
 #include <alloca.h>
 
 #include "sctk_alloc.h"
+#include "mpc_common_flags.h"
 #include <lcr/lcr_component.h>
 #include "lcp_task.h"
 #include <uthash.h>
@@ -202,6 +203,14 @@ static int str_in_list(char **list,
         return 0;
 }
 
+/**
+ * @brief allocates and fill a (context) list by parsing cfg_list string using comma-separated lists
+ * 
+ * @param cfg_list config to be parsed
+ * @param list_p out config list
+ * @param length_p length of the config list
+ * @return int 
+ */
 static int lcp_context_config_parse_list(const char *cfg_list,
                                          char ***list_p,
                                          int *length_p)
@@ -253,7 +262,7 @@ static int lcp_context_config_parse_list(const char *cfg_list,
 }
 
 /**
- * @brief Initialize a configuration in a context.
+ * @brief Initialize lcp context using mpc configuration.
  * 
  * @param ctx context to initialize
  * @param components components to initialize in the configuration
@@ -278,6 +287,12 @@ static int lcp_context_config_init(lcp_context_h ctx,
         rc = lcp_context_config_parse_list(config->transports,
                                            &ctx->config.selected_components,
                                            &ctx->config.num_selected_components);
+        printf("transports are %s, selected transports are %s\ndefault net config according to mpc_conf is %s\n", 
+                config->transports, 
+                ctx->config.selected_components[0],
+                option_name);
+        char *driver_name =  mpc_common_get_flags()->network_driver_name;
+        // printf("network %p passed as argument\n", f);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }

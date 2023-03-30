@@ -381,6 +381,7 @@ int lcp_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p,
 	if (rc != MPC_LOWCOMM_SUCCESS) {
 		goto err_and_unlock;
 	}
+	mpc_common_debug_info("LCP: created ep : %p towards : %lu", ep, uid);
 
 	*ep_p = ep;
 
@@ -418,6 +419,32 @@ void lcp_ep_get(lcp_context_h ctx, mpc_lowcomm_peer_uid_t uid, lcp_ep_h *ep_p)
 	} else {
 		*ep_p = elem->ep;
 	}
+}
+
+/**
+ * @brief Get an endpoint. Create it if it does not exist.
+ * 
+ * @param arg context
+ * @param comm_id id of the target communicator (32 bits written on weak bits of int64)
+ * @param length destination process id
+ * @param ep_p target output endpoint
+ * @param flags unused
+ * @return __UNUSED__ static int
+ */
+int lcp_ep_get_or_create(lcp_context_h ctx, uint64_t comm_id, uint32_t destination, lcp_ep_h *ep_p, unsigned flags){
+
+	uint64_t gid, uid;
+	mpc_lowcomm_communicator_t comm;
+	gid = mpc_lowcomm_monitor_get_gid();
+	comm_id |= gid << 32;
+
+	comm = mpc_lowcomm_get_communicator_from_id(comm_id);
+	uid = mpc_lowcomm_communicator_uid(comm, destination);
+	lcp_ep_get(ctx, uid, ep_p);
+	if(!ep_p){
+		return lcp_ep_create(ctx, ep_p, uid, flags);
+	}
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 /**

@@ -35,10 +35,10 @@ typedef struct lcp_rndv_hdr {
  * @brief acknowledgement message header
  * 
  */
-typedef struct lcp_rndv_ack_hdr {
+typedef struct lcp_ack_hdr {
 	uint64_t msg_id;
 	int32_t  src;
-} lcp_rndv_ack_hdr_t;
+} lcp_ack_hdr_t;
 
 /**
  * @brief fragmented message header

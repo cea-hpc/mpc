@@ -69,13 +69,13 @@ int lcp_request_complete(lcp_request_t *req)
 			 "seqn=%d, lcreq=%p", req, req->send.tag.comm, req->msg_id, 
 			 req->seqn, req->request);
 
-        //FIXME: modifying mpc request here breaks modularity
-        if (req->flags & LCP_REQUEST_RECV_TRUNC)
-                req->request->truncated = 1;
+	//FIXME: modifying mpc request here breaks modularity
+	if (req->flags & LCP_REQUEST_RECV_TRUNC)
+			req->request->truncated = 1;
 
 	if (req->flags & LCP_REQUEST_MPI_COMPLETE) {
 		assert(req->request);
-                //FIXME: calling request completion here breaks modularity
+		//FIXME: calling request completion here breaks modularity
 		req->request->request_completion_fn(req->request);
 	}
 

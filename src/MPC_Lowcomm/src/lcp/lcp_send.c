@@ -78,7 +78,6 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
                     size_t count, mpc_lowcomm_request_t *request,
                     const lcp_request_param_t *param)
 {
-        // printf("\nsending with sync %d\n", request->synchronized);
         int rc, payload;
         lcp_request_t *req;
 
@@ -91,13 +90,29 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
                 return MPC_LOWCOMM_ERROR;
         }
         req->flags |= LCP_REQUEST_MPI_COMPLETE;
+        // initialize request
+        
         //FIXME: sequence number should be task specific. Following works in
         //       process-based but not in thread-based.
         //       Reorder is to be reimplemented.
-        LCP_REQUEST_INIT_SEND(req, ep->ctx, task, request, param->recv_info, 
-                              count, ep, (void *)buffer, 
-                              OPA_fetch_and_incr_int(&ep->seqn), msg_id,
-                              param->datatype);
+        LCP_REQUEST_INIT_SEND(req, ep->ctx, task, request, 
+                                param->recv_info, count, 
+                                ep, (void *)buffer, 
+                                OPA_fetch_and_incr_int(&ep->seqn), 
+                                msg_id, param->datatype);
+        req->msg_id = req->seqn;
+
+        // if the endpoint is not yet connected
+        if (ep->state == LCP_EP_FLAG_CONNECTING) {
+                // set the request to pending
+                if (lcp_pending_create(ep->ctx->pend, req, 
+                                       req->msg_id) == NULL) {
+                        rc = MPC_LOWCOMM_ERROR;
+                }
+                mpc_common_debug("LCP: pending req dest=%d, msg_id=%llu", 
+                                 req->send.tag.dest, msg_id);
+                return rc;
+        }
 
         // prepare request depending on its type
         rc = lcp_send_start(ep, req, param);
@@ -107,34 +122,55 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
         }
 
         // send the request
-        rc = lcp_request_send(req);
-
+        if(!request->synchronized)
+                rc = lcp_request_send(req);
         // if synchronization is requested, wait for ack
-        // if(req->request->synchronized){
-        //         printf("\nsynchronizing with %d\n", req->request->synchronized);
-        //         lcp_request_t *ack;
-        //         lcp_request_create(&ack);
-        //         if (ack == NULL) {
-        //                 mpc_common_debug_error("LCP: could not create request");
-        //         }
-        //         ack->super = req;
+        else{
 
-        //         if (lcp_pending_create(ep->ctx->pend, req, req->msg_id) == NULL) {
-        //                 mpc_common_debug_error("LCP: could not add pending message");
-        //                 rc = MPC_LOWCOMM_ERROR;
-        //         }
+                if (lcp_pending_create(ep->ctx->pend, req, req->msg_id) == NULL) {
+                        mpc_common_debug_error("LCP: could not add pending message");
+                        rc = MPC_LOWCOMM_ERROR;
+                        goto err;
+                }
 
-        //         payload = lcp_send_do_am_bcopy(ep->lct_eps[ep->priority_chnl],
-        //                                 MPC_LOWCOMM_ACK_RDV_MESSAGE,
-        //                                 lcp_send_tag_pack,
-        //                                 ack);
-        //         if (payload < 0) {
-        //                 mpc_common_debug_error("LCP: error sending ack rdv message");
-        //                 rc = MPC_LOWCOMM_ERROR;
-        //         }
-        //         rc = MPC_LOWCOMM_SUCCESS;
+                mpc_common_debug("LCP: successfully added message %lu to pending list", req->msg_id);
+                lcp_request_t *ack;
+                sctk_rail_info_t *iface;
+                lcp_unexp_ctnr_t *match;
+        	LCP_CONTEXT_LOCK(ep->ctx);
 
-        //         lcp_request_complete(ack);
-        // }
-        return rc;
+                void *buffer = NULL;
+                lcp_request_create(&ack);
+                if (ack == NULL) {
+                        mpc_common_debug_error("LCP: could not create ack request");
+                        return MPC_LOWCOMM_ERROR;
+                }
+                LCP_REQUEST_INIT_RECV(ack, ep->ctx, request, 0, buffer);
+                lcp_request_init_tag_recv(ack, param->recv_info);
+                iface = ep->ctx->resources[ep->ctx->priority_rail].iface;
+
+                mpc_common_debug("sending msg id %d", req->msg_id);
+                
+                rc = lcp_request_send(req);
+               req->state.offloaded = 0;
+
+                match = lcp_match_umq(ep->ctx->umq_table,                                (uint16_t)ack->recv.tag.comm_id,
+                                (int32_t)ack->recv.tag.tag,
+                                (int32_t)ack->recv.tag.src);
+                if(!match){
+
+                        // add the request to pendings
+                        lcp_append_prq(ep->ctx->prq_table, req,
+                                (uint16_t)req->recv.tag.comm_id,
+                                (int32_t)req->recv.tag.tag,
+                                (int32_t)req->recv.tag.src);
+                        lcp_progress(ep->ctx);
+
+                        LCP_CONTEXT_UNLOCK(ep->ctx);
+                }
+                
+                lcp_request_complete(ack);
+        }
+        err:
+                return rc;
 }

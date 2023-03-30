@@ -114,9 +114,8 @@ void lcp_append_prq(lcp_prq_match_table_t *prq, lcp_request_t *req,
 	mpc_common_spinlock_lock(&(entry->pr_queue->lock));
 	lcp_prq_append(entry->pr_queue, req, tag, src);
 	mpc_common_debug("LCP: prq added req=%p, msg_n=%lu, "
-			 "comm_id=%llu, tag=%d, src=%llu, msg=%p.", 
-			 req, req->seqn, comm, tag, src, 
-			 req->request);
+			 "comm_id=%llu, tag=%d, src=%llu.", 
+			 req, req->seqn, comm, tag, src);
 	mpc_common_spinlock_unlock(&(entry->pr_queue->lock));
 }
 
@@ -165,6 +164,7 @@ lcp_request_t *lcp_match_prq(lcp_prq_match_table_t *prq,
 	mpc_common_debug("LCP: prq tag matching FOUND=%p, "
 			 "comm_id=%llu, tag=%d, src=%llu.", 
 			 found, comm_id, tag, src);
+	if(found) mpc_common_debug("LCP: matched msg_id=%d, sequence=%d", found->msg_id, found->seqn);
 	mpc_common_spinlock_unlock(&(entry->pr_queue->lock));
 
 	return found;

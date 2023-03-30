@@ -199,7 +199,7 @@ static inline void lcp_request_init_ack(lcp_request_t *ack_req, lcp_ep_h ep,
 
         ack_req->msg_id             = msg_id;
 
-        ack_req->state.remaining    = sizeof(lcp_rndv_ack_hdr_t);
+        ack_req->state.remaining    = sizeof(lcp_ack_hdr_t);
         ack_req->state.offset       = 0; 
         ack_req->state.cc           = ep->priority_chnl;
 
