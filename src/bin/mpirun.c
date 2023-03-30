@@ -2,6 +2,10 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/wait.h>
+#include <errno.h>
+
+
 
 #include <mpc_config.h>
 
@@ -152,8 +156,20 @@ int main(int argc, char **argv)
 	}
 
 	int ret = system(command);
-
 	free(command);
+	
+	/* failed to start the child process */
+	if(ret == -1)
+		return errno;
+	/* failed to spawn the shell within the child process */
+	else if(ret == 127)
+	{
+
+	}
+	else /* sycalls succeds, contains the return code (among others)*/
+	{
+		ret = WEXITSTATUS(ret);
+	}
 
 	return ret;
 }
