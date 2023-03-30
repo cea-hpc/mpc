@@ -2278,7 +2278,8 @@ void mpc_lowcomm_ptp_msg_wait_init(struct mpc_lowcomm_ptp_msg_progress_s *wait,
 
 
 #ifdef MPC_LOWCOMM_PROTOCOL
-static lcp_context_h lcp_ctx_loc = NULL;
+//NOTE: cannot be static since needed in mpi_partitioned.c
+lcp_context_h lcp_ctx_loc = NULL;
 #endif
 /*
  *  Function called when the message to receive is already completed
@@ -2593,7 +2594,7 @@ void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_r
                 lcp_request_param_t param = {
                         .recv_info = &msg->tail.request->recv_info,
                 };
-		rc = lcp_tag_send_nb(ep, msg->tail.message.contiguous.addr,
+		rc = lcp_tag_send_nb(ep, NULL, msg->tail.message.contiguous.addr,
                                      msg->body.header.msg_size, msg->tail.request,
                                      &param);
 		if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -2730,7 +2731,7 @@ void _mpc_comm_ptp_message_recv_check(mpc_lowcomm_ptp_message_t *msg,
                 lcp_request_param_t param = {
                         .recv_info = &msg->tail.request->recv_info,
                 };
-                lcp_tag_recv_nb(lcp_ctx_loc, msg->tail.message.contiguous.addr, 
+                lcp_tag_recv_nb(NULL, msg->tail.message.contiguous.addr, 
                                 msg->body.header.msg_size, msg->tail.request, &param);
                 return;
 #else 
@@ -3242,9 +3243,10 @@ int mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
 {
 #ifdef MPC_LOWCOMM_PROTOCOL
         int rc, src;
-        lcp_ep_h ep;
+        int tid = mpc_common_get_task_rank();
+        lcp_ep_h ep; lcp_task_h task;
         //FIXME: how to handle task rank? Using only get_task_rank for now.
-        src = mpc_lowcomm_communicator_rank_of(comm, mpc_common_get_task_rank());
+        src = mpc_lowcomm_communicator_rank_of(comm, tid);
         mpc_lowcomm_init_request_header(tag, comm, src, dest, 
                                         size, MPC_DATATYPE_IGNORE,
                                         REQUEST_SEND, req);
@@ -3257,11 +3259,17 @@ int mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
                                                req->header.source);
                 }
         }
+
+        lcp_context_task_get(lcp_ctx_loc, tid, &task);
+        if (task == NULL) {
+                mpc_common_debug_fatal("LCP: Could not find task with tid %d.",
+                                       tid);
+        }
         /* fill up request */
         lcp_request_param_t param = {
                 .recv_info = &req->recv_info,
         };
-        return lcp_tag_send_nb(ep, data, size, req, &param);
+        return lcp_tag_send_nb(ep, task, data, size, req, &param);
 #else
 	return mpc_lowcomm_isend_class(dest, data, size, tag, comm, MPC_LOWCOMM_P2P_MESSAGE, req);
 #endif
@@ -3271,16 +3279,25 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
                        mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req)
 {
 #ifdef MPC_LOWCOMM_PROTOCOL
-        int dest;
-        dest = mpc_lowcomm_communicator_rank_of(comm, mpc_common_get_task_rank());
+        int dest, tid = mpc_common_get_task_rank();
+        lcp_task_h task = NULL;
+
+        dest = mpc_lowcomm_communicator_rank_of(comm, tid);
+
         mpc_lowcomm_init_request_header(tag, comm, src, dest, 
                                         size, MPC_DATATYPE_IGNORE,
                                         REQUEST_RECV, req);
 
+
+        lcp_context_task_get(lcp_ctx_loc, tid, &task);
+        if (task == NULL) {
+                mpc_common_debug_fatal("LCP: Could not find task with tid %d.",
+                                       tid);
+        }
         lcp_request_param_t param = {
                 .recv_info = &req->recv_info,
         };
-        return lcp_tag_recv_nb(lcp_ctx_loc, data, size, req, &param);
+        return lcp_tag_recv_nb(task, data, size, req, &param);
 #else
 	return mpc_lowcomm_irecv_class(src, data, size, tag, comm, MPC_LOWCOMM_P2P_MESSAGE, req);
 #endif
@@ -3423,6 +3440,7 @@ int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destinat
 {
 #ifdef MPC_LOWCOMM_PROTOCOL
         int rc = MPC_LOWCOMM_SUCCESS;
+        lcp_task_h task = NULL; int tid = mpc_common_get_task_rank();
         lcp_tag_recv_info_t recv_info = { 0 };
 	mpc_lowcomm_status_t status_init = MPC_LOWCOMM_STATUS_INIT;
 	int has_status = 1;
@@ -3433,7 +3451,13 @@ int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destinat
 		*status = status_init;
 	}
 
-        rc = lcp_tag_probe_nb(lcp_ctx_loc, world_source, tag, 
+        lcp_context_task_get(lcp_ctx_loc, tid, &task);
+        if (task == NULL) {
+                mpc_common_debug_fatal("LCP: Could not find task with tid %d.",
+                                       tid);
+        }
+
+        rc = lcp_tag_probe_nb(task, world_source, tag, 
                               comm->id, &recv_info);
 
 	if((*flag = recv_info.found)) {
@@ -3878,6 +3902,15 @@ static void __lowcomm_init_per_task()
                 //FIXME: set configuration is slowing down the run. 
                 //       Shouldn't it be optional ?
                 //_mpc_lowcomm_monitor_setup_per_task();
+
+#ifdef MPC_LOWCOMM_PROTOCOL
+                lcp_task_h task;
+                int rc = lcp_task_create(lcp_ctx_loc, task_rank, &task);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        mpc_common_debug_fatal("LCP: could not create task "
+                                               "tid=%d", task_rank);
+                }
+#endif
 
 		mpc_lowcomm_terminaison_barrier();
 

@@ -48,7 +48,7 @@ int lcp_send_start(lcp_ep_h ep, lcp_request_t *req,
         return rc;
 }
 
-int lcp_tag_send_nb(lcp_ep_h ep, const void *buffer, size_t count,
+int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, size_t count,
                     mpc_lowcomm_request_t *request,
                     const lcp_request_param_t *param)
 {
@@ -63,13 +63,15 @@ int lcp_tag_send_nb(lcp_ep_h ep, const void *buffer, size_t count,
                 return MPC_LOWCOMM_ERROR;
         }
         req->flags |= LCP_REQUEST_MPI_COMPLETE;
-        LCP_REQUEST_INIT_SEND(req, ep->ctx, request, param->recv_info, count, 
-                              ep, (void *)buffer, OPA_fetch_and_incr_int(&ep->seqn), 
-                              msg_id);
+        LCP_REQUEST_INIT_SEND(req, ep->ctx, task, request, param->recv_info, 
+                              count, ep, (void *)buffer, 
+                              OPA_fetch_and_incr_int(&ep->seqn), msg_id);
 
         if (ep->state == LCP_EP_FLAG_CONNECTING) {
                 if (lcp_pending_create(ep->ctx->pend, req, 
                                        req->msg_id) == NULL) {
+                        mpc_common_debug_error("LCP: could not create pending "
+                                              "send request.");
                         rc = MPC_LOWCOMM_ERROR;
                 }
                 mpc_common_debug("LCP: pending req dest=%d, msg_id=%llu", 

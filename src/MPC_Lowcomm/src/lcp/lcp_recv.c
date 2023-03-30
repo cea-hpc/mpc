@@ -3,10 +3,11 @@
 #include "lcp_header.h"
 #include "lcp_prototypes.h"
 #include "lcp_rndv.h"
+#include "lcp_task.h"
 
 #include "sctk_alloc.h"
 
-int lcp_tag_recv_nb(lcp_context_h ctx, void *buffer, size_t count, 
+int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count, 
                     mpc_lowcomm_request_t *request,
                     lcp_request_param_t *param)
 {
@@ -14,9 +15,7 @@ int lcp_tag_recv_nb(lcp_context_h ctx, void *buffer, size_t count,
 	lcp_unexp_ctnr_t *match;
 	sctk_rail_info_t *iface;
 	lcp_request_t *req;
-
-        //FIXME: could the lock be move and placed before lcp_match_umq ?
-	LCP_CONTEXT_LOCK(ctx);
+        lcp_context_h ctx = task->ctx;
 
 	rc = lcp_request_create(&req);
 	if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -24,7 +23,8 @@ int lcp_tag_recv_nb(lcp_context_h ctx, void *buffer, size_t count,
 		return MPC_LOWCOMM_ERROR;
 	}
         req->flags |= LCP_REQUEST_MPI_COMPLETE;
-        LCP_REQUEST_INIT_RECV(req, ctx, request, param->recv_info, count, buffer);
+        LCP_REQUEST_INIT_RECV(req, ctx, task, request, param->recv_info,
+                              count, buffer);
 	lcp_request_init_tag_recv(req, param->recv_info);
 
 	iface = ctx->resources[ctx->priority_rail].iface;
@@ -34,31 +34,30 @@ int lcp_tag_recv_nb(lcp_context_h ctx, void *buffer, size_t count,
                 req->state.offloaded = 1;
 		rc = lcp_recv_tag_zcopy(req, iface);
 
-		LCP_CONTEXT_UNLOCK(ctx);
-
 		return rc;
 	}
 
         mpc_common_debug_info("LCP: post recv am src=%d, tag=%d, length=%d",
-                              req->recv.tag.src, req->recv.tag.tag, count);
+                              req->recv.tag.src_task, req->recv.tag.tag, count);
 
         req->state.offloaded = 0;
-	match = lcp_match_umq(ctx->umq_table,
-			      (uint16_t)req->recv.tag.comm_id,
-			      (int32_t)req->recv.tag.tag,
-			      (int32_t)req->recv.tag.src);
-	if (match == NULL) {
-		lcp_append_prq(ctx->prq_table, req,
-			       (uint16_t)req->recv.tag.comm_id,
-			       (int32_t)req->recv.tag.tag,
-			       (int32_t)req->recv.tag.src);
 
-		LCP_CONTEXT_UNLOCK(ctx);
+	LCP_TASK_LOCK(task);
+	match = lcp_match_umq(task->umq_table,
+			      (uint16_t)req->recv.tag.comm_id,
+			      req->recv.tag.tag,
+			      req->recv.tag.src_task);
+	if (match == NULL) {
+		lcp_append_prq(task->prq_table, req,
+			       (uint16_t)req->recv.tag.comm_id,
+			       req->recv.tag.tag,
+			       req->recv.tag.src_task);
+
+                LCP_TASK_UNLOCK(task);
 		return MPC_LOWCOMM_SUCCESS;
 	}
 
-	//NOTE: unlock context to enable endpoint creation in rndv_matched
-	LCP_CONTEXT_UNLOCK(ctx);
+	LCP_TASK_UNLOCK(task);
 	if (match->flags & LCP_RECV_CONTAINER_UNEXP_RPUT) {
 		mpc_common_debug_info("LCP: matched rndv unexp req=%p, flags=%x", 
 				      match, match->flags);

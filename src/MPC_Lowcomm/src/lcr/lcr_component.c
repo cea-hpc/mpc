@@ -1,6 +1,7 @@
 #include <lcr/lcr_component.h>
 
 #include <utlist.h>
+#include <mpc_common_debug.h>
 
 #include "sctk_alloc.h"
 

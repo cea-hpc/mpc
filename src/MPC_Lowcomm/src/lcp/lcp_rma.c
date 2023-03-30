@@ -1,6 +1,7 @@
 #include "lcp.h"
 
 #include "lcp_context.h"
+#include "lcp_task.h"
 #include "lcp_def.h"
 #include "lcp_prototypes.h"
 #include "lcp_request.h"
@@ -168,7 +169,7 @@ err:
         return rc;
 }
 
-int lcp_put_nb(lcp_ep_h ep, const void *buffer, size_t length,
+int lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, size_t length,
                uint64_t remote_addr, lcp_mem_h rkey,
                lcp_request_param_t *param) 
 {
@@ -185,7 +186,7 @@ int lcp_put_nb(lcp_ep_h ep, const void *buffer, size_t length,
                 goto err;
         }
         req->flags |= LCP_REQUEST_RMA_COMPLETE;
-        LCP_REQUEST_INIT_SEND(req, ep->ctx, NULL, NULL, length, ep, (void *)buffer, 
+        LCP_REQUEST_INIT_SEND(req, ep->ctx, task, NULL, NULL, length, ep, (void *)buffer, 
                               0 /* no ordering for rma */, msg_id);
         lcp_request_init_rma_put(req, remote_addr, rkey, param);
 

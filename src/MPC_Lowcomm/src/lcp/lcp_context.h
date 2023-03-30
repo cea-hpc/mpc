@@ -50,6 +50,18 @@ typedef struct lcp_match_ctx {
 	lcp_request_t *req;
 } lcp_match_ctx_t;
 
+typedef struct lcp_task_entry {
+	UT_hash_handle hh;
+        
+        int task_key;
+        lcp_task_h task;
+} lcp_task_entry_t;
+
+typedef struct lcp_task_table {
+        mpc_common_spinlock_t lock;
+        lcp_task_entry_t *table;
+} lcp_task_table_t;
+
 typedef struct lcp_rsc_desc {
 	char name[MPC_CONF_STRING_SIZE];
 	sctk_rail_info_t *iface; /* Rail interface */
@@ -101,9 +113,7 @@ struct lcp_context {
 
 	lcp_pending_table_t *pend; /* LCP send requests */
 
-	lcp_prq_match_table_t *prq_table; /* Posted Receive Queue */
-	lcp_umq_match_table_t *umq_table; /* Unexpected Message Queue */
+        lcp_task_table_t *tasks; /* LCP tasks (per thread data) */
 };
-
 
 #endif 

@@ -6,6 +6,7 @@
 
 #include "sctk_alloc.h"
 #include <lcr/lcr_component.h>
+#include "lcp_task.h"
 #include <uthash.h>
 
 //TODO: memset to 0 all allocated structure (especially those containing
@@ -112,10 +113,10 @@ static int lcp_context_init_structures(lcp_context_h ctx)
 	/* Init endpoint and fragmentation structures */
 	mpc_common_spinlock_init(&(ctx->ctx_lock), 0);
 
-        /* Init pending active message request table */
+        /* Init pending matching message request table */
 	ctx->match_ht = sctk_malloc(sizeof(lcp_pending_table_t));
 	if (ctx->match_ht == NULL) {
-		mpc_common_debug_error("LCP: Could not allocate pending tables.");
+		mpc_common_debug_error("LCP: Could not allocate matching pending tables.");
 		rc = MPC_LOWCOMM_ERROR;
 		goto err;
 	}
@@ -125,24 +126,21 @@ static int lcp_context_init_structures(lcp_context_h ctx)
         /* Init pending active message request table */
 	ctx->pend = sctk_malloc(sizeof(lcp_pending_table_t));
 	if (ctx->pend == NULL) {
-		mpc_common_debug_error("LCP: Could not allocate pending tables.");
+		mpc_common_debug_error("LCP: Could not allocate am pending tables.");
 		rc = MPC_LOWCOMM_ERROR;
 		goto err;
 	}
 	memset(ctx->pend, 0, sizeof(lcp_pending_table_t));
 	mpc_common_spinlock_init(&ctx->pend->table_lock, 0);
 
-	ctx->umq_table = sctk_malloc(sizeof(lcp_umq_match_table_t));
-	ctx->prq_table = sctk_malloc(sizeof(lcp_prq_match_table_t));
-	if (ctx->umq_table == NULL || ctx->prq_table == NULL) {
-		mpc_common_debug_error("LCP: Could not allocate pending tables.");
+	ctx->tasks = sctk_malloc(sizeof(lcp_task_table_t));
+	if (ctx->tasks == NULL) {
+		mpc_common_debug_error("LCP: Could not allocate tasks table.");
 		rc = MPC_LOWCOMM_ERROR;
 		goto out_free_pending_tables;
 	}
-	memset(ctx->umq_table, 0, sizeof(lcp_umq_match_table_t));
-	memset(ctx->prq_table, 0, sizeof(lcp_umq_match_table_t));
-	mpc_common_spinlock_init(&ctx->umq_table->lock, 0);
-	mpc_common_spinlock_init(&ctx->prq_table->lock, 0);
+	memset(ctx->tasks, 0, sizeof(lcp_task_table_t));
+	mpc_common_spinlock_init(&ctx->tasks->lock, 0);
 
 	rc = MPC_LOWCOMM_SUCCESS;
 
@@ -153,9 +151,9 @@ err:
 	return rc;
 }
 
-int lcp_context_config_parse_list(const char *cfg_list,
-                                  char ***list_p,
-                                  int *length_p)
+static int lcp_context_config_parse_list(const char *cfg_list,
+                                         char ***list_p,
+                                         int *length_p)
 {
         int length = 0, i = 0;
         char *token;
@@ -345,11 +343,11 @@ static inline void lcp_context_resource_init(lcp_rsc_desc_t *resource_p,
         *resource_p = resource;
 }
 
-void lcp_context_select_component(lcp_context_h ctx,
-                                  lcr_component_h *components,
-                                  int num_components,
-                                  int *cmpt_index_p,
-                                  int *max_ifaces_p)
+static void lcp_context_select_component(lcp_context_h ctx,
+                                         lcr_component_h *components,
+                                         int num_components,
+                                         int *cmpt_index_p,
+                                         int *max_ifaces_p)
 {
         int i, j;
         int max_ifaces = -1;
@@ -482,6 +480,19 @@ out_free_devices:
         return rc;
 }
 
+void lcp_context_task_get(lcp_context_h ctx, int tid, lcp_task_h *task_p)
+{
+        lcp_task_entry_t *item;
+
+	HASH_FIND(hh, ctx->tasks->table, &tid, sizeof(int), item);
+	if (item == NULL) {
+                *task_p = NULL;
+        } else {
+                *task_p = item->task;
+        }
+}
+        
+
 int lcp_context_create(lcp_context_h *ctx_p, __UNUSED__ unsigned flags)
 {
 	int rc, i;
@@ -568,10 +579,13 @@ int lcp_context_fini(lcp_context_h ctx)
 	int i;
         lcp_pending_fini(ctx);
 	sctk_free(ctx->pend);
-	lcp_fini_matching_engine(ctx->umq_table,
-				 ctx->prq_table);
-	sctk_free(ctx->umq_table);
-	sctk_free(ctx->prq_table);
+
+	lcp_task_entry_t *e_task = NULL, *e_task_tmp = NULL;
+	HASH_ITER(hh, ctx->tasks->table, e_task, e_task_tmp) {
+                lcp_task_fini(e_task->task);
+                sctk_free(e_task);
+	}
+        sctk_free(ctx->tasks);
 
 	/* Free allocated comm */
 	lcp_comm_ctx_t *e_comm = NULL, *e_comm_tmp = NULL;

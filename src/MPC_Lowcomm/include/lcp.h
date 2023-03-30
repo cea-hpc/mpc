@@ -9,14 +9,18 @@
 /* Context */
 lcp_context_h lcp_context_get();
 int lcp_context_create(lcp_context_h *ctx_p, unsigned flags);
+void lcp_context_task_get(lcp_context_h ctx, int tid, lcp_task_h *task_p);
 int lcp_context_fini(lcp_context_h ctx);
 //FIXME: hack for portals pte entry
 int lcp_context_has_comm(lcp_context_h ctx, uint64_t comm_key);
 int lcp_context_add_comm(lcp_context_h ctx, uint64_t comm_key);
 
+/* Tasks */
+int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p);
+
 /* Endpoint */
 int lcp_ep_create(lcp_context_h ctx, 
-                  lcp_ep_h *ep, 
+                  lcp_ep_h *ep_p, 
 		  uint64_t uid, 
                   unsigned flags);
 void lcp_ep_get(lcp_context_h ctx, 
@@ -45,21 +49,21 @@ typedef struct lcp_request_param {
 } lcp_request_param_t;
 
 /* Send/Receive */
-int lcp_tag_send_nb(lcp_ep_h ep, const void *buffer,
+int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
                     size_t count, mpc_lowcomm_request_t *request, 
                     const lcp_request_param_t *param);
 
-int lcp_tag_recv_nb(lcp_context_h ctx, void *buffer, size_t count, 
+int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count, 
                     mpc_lowcomm_request_t *request,
                     lcp_request_param_t *param);
 
-int lcp_tag_probe_nb(lcp_context_h ctx, const uint64_t src, 
+int lcp_tag_probe_nb(lcp_task_h task, const int src, 
                      const int tag, const uint64_t comm,
                      lcp_tag_recv_info_t *recv_info);
 
 /* Put/Get */
-int lcp_put_nb(lcp_ep_h ep, const void *buffer, size_t length,
-               uint64_t remote_addr, lcp_mem_h rkey,
+int lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, 
+               size_t length, uint64_t remote_addr, lcp_mem_h rkey,
                lcp_request_param_t *param); 
 
 /* Memory registration */

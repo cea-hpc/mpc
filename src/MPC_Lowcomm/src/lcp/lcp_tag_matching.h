@@ -4,7 +4,7 @@
 #include <uthash.h>
 #include <mpc_common_spinlock.h>
 
-#include "lcp.h"
+#include "lcp_def.h"
 
 #include "lcp_tag_lists.h"
 

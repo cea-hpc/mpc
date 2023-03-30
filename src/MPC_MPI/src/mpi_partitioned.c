@@ -5,6 +5,8 @@
 #include "lcp.h"
 #include "lcp_common.h"
 
+extern lcp_context_h lcp_ctx_loc;
+
 static inline void build_partition_flags_map(const uint64_t buffer,
                                             size_t length,
                                             int recv_partitions, 
@@ -25,7 +27,8 @@ static inline void build_partition_flags_map(const uint64_t buffer,
                                 pstart = 1;
                         }
 
-                        if (r_off + r_size <= s_off + s_size || j == send_partitions-1) {
+                        if (r_off + r_size <= s_off + s_size 
+                            || j == send_partitions-1) {
                                 map[i].p_id_end = j;
                                 j = 0;
                                 pstart = 0;
@@ -43,8 +46,9 @@ int mpi_partitioned_complete_fin(mpc_lowcomm_request_t *req)
 {
         mpi_partitioned_t *prtd = mpc_container_of(req, mpi_partitioned_t,
                                                    fin_req);
-        MPI_internal_request_t *mpi_req = mpc_container_of(prtd, MPI_internal_request_t,
-                                                           partitioned);
+        MPI_internal_request_t *mpi_req = 
+                mpc_container_of(prtd, MPI_internal_request_t,
+                                 partitioned);
 
         prtd->fin_req.completion_flag = MPC_LOWCOMM_MESSAGE_DONE;
         mpi_req->req.completion_flag  = MPC_LOWCOMM_MESSAGE_DONE;
@@ -56,14 +60,23 @@ int mpi_partitioned_complete_tag(mpc_lowcomm_request_t *req)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         lcp_ep_h ep;
-        lcp_context_h ctx = lcp_context_get();
+        lcp_task_h task;
+        lcp_context_h ctx = lcp_ctx_loc;
         size_t cflags_size;
         void *cflags_tmp_buf, *prtd_tmp_buf;
         size_t cflags_tmp_buf_size, prtd_tmp_buf_size;
         mpi_partitioned_t *prtd = mpc_container_of(req, mpi_partitioned_t,
                                                    tag_req);
-        MPI_internal_request_t *mpi_req = mpc_container_of(prtd, MPI_internal_request_t,
-                                                           partitioned);
+        MPI_internal_request_t *mpi_req = 
+                mpc_container_of(prtd, MPI_internal_request_t,
+                                 partitioned);
+ 
+        lcp_context_task_get(ctx, mpc_common_get_task_rank(), &task);
+        if (task == NULL) {
+                mpc_common_debug_fatal("LCP: task %d not fount", 
+                                       mpc_common_get_task_rank());
+                return MPC_LOWCOMM_ERROR;
+        }
 
         switch (req->request_type) {
         case REQUEST_SEND:
@@ -87,7 +100,8 @@ int mpi_partitioned_complete_tag(mpc_lowcomm_request_t *req)
                 rc = lcp_mem_register(ctx, &prtd->rkey_cflags, 
                                       prtd->recv.cflags_buf, cflags_size);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
-                        mpc_common_debug_error("MPI: partitioned request type error");
+                        mpc_common_debug_error("MPI: partitioned request type "
+                                               "error");
                         return rc;
                 }
 
@@ -96,14 +110,16 @@ int mpi_partitioned_complete_tag(mpc_lowcomm_request_t *req)
                 rc = lcp_mem_pack(ctx, prtd->rkey_cflags, &cflags_tmp_buf,
                                   &cflags_tmp_buf_size);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
-                        mpc_common_debug_error("MPI: partitioned request could not pack rkey");
+                        mpc_common_debug_error("MPI: partitioned request could "
+                                               "not pack rkey");
                         return rc;
                 }
 
                 rc = lcp_mem_pack(ctx, prtd->rkey_prtd, &prtd_tmp_buf,
                                   &prtd_tmp_buf_size);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
-                        mpc_common_debug_error("MPI: partitioned request could not pack rkey");
+                        mpc_common_debug_error("MPI: partitioned request could "
+                                               "not pack rkey");
                         return rc;
                 }
                 
@@ -121,10 +137,12 @@ int mpi_partitioned_complete_tag(mpc_lowcomm_request_t *req)
                 /* Send both rkeys to origin process */
                 lcp_request_param_t param_rkeys = { 0 };
                 lcp_ep_get(ctx, prtd->rkey_req.header.destination, &ep);
-                rc = lcp_tag_send_nb(ep, prtd->recv.rkeys_buf, prtd->recv.rkeys_buf_size,
+                rc = lcp_tag_send_nb(ep, task, prtd->recv.rkeys_buf, 
+                                     prtd->recv.rkeys_buf_size,
                                      &prtd->rkey_req, &param_rkeys);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
-                        mpc_common_debug_error("MPI: partitioned request could not send rkey");
+                        mpc_common_debug_error("MPI: partitioned request could "
+                                               "not send rkey");
                         return rc;
                 }
 
@@ -132,7 +150,7 @@ int mpi_partitioned_complete_tag(mpc_lowcomm_request_t *req)
                 lcp_request_param_t param = (lcp_request_param_t) {
                         .recv_info = &mpi_req->req.recv_info,
                 };
-                rc = lcp_tag_recv_nb(ctx, &prtd->fin, sizeof(int), 
+                rc = lcp_tag_recv_nb(task, &prtd->fin, sizeof(int), 
                                      &mpi_req->partitioned.fin_req, 
                                      &param);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -151,7 +169,7 @@ int mpi_partitioned_complete_tag(mpc_lowcomm_request_t *req)
 
 int mpi_partitioned_complete_rkey(mpc_lowcomm_request_t *req) 
 {
-        lcp_context_h ctx = lcp_context_get();
+        lcp_context_h ctx = lcp_ctx_loc;
         size_t rkey_length;
         mpi_partitioned_t *prtd = mpc_container_of(req, mpi_partitioned_t,
                                                    rkey_req);
@@ -184,15 +202,21 @@ int mpi_partitioned_complete_cflags(mpc_lowcomm_request_t *req)
         return 0;
 }
 
-
 int mpi_partitioned_complete_put_partition(mpc_lowcomm_request_t *req) 
 {
         int i, rc = MPC_LOWCOMM_SUCCESS;
         lcp_ep_h ep;
-        lcp_context_h ctx = lcp_context_get();
+        lcp_task_h task;
+        lcp_context_h ctx = lcp_ctx_loc;
         MPI_internal_request_t *mpi_req = mpc_container_of(req, MPI_internal_request_t,
                                                            req);
 
+        lcp_context_task_get(ctx, mpc_common_get_task_rank(), &task);
+        if (task == NULL) {
+                mpc_common_debug_fatal("LCP: task %d not fount", 
+                                       mpc_common_get_task_rank());
+                return MPC_LOWCOMM_ERROR;
+        }
         /* Set remote completion flags to 1. Used by mpi_parrived to know if */
         for (i=0; i<mpi_req->partitioned.partitions; i++) {
                 if (mpi_req->partitioned.send.send_cflags[i] == 1) {
@@ -202,7 +226,7 @@ int mpi_partitioned_complete_put_partition(mpc_lowcomm_request_t *req)
                                 .flags   = LCP_REQUEST_USER_REQUEST
                         };
                         lcp_ep_get(ctx, mpi_req->req.header.destination, &ep);
-                        rc = lcp_put_nb(ep, &mpi_req->partitioned.complete, 
+                        rc = lcp_put_nb(ep, task, &mpi_req->partitioned.complete, 
                                         sizeof(int), i * sizeof(int), 
                                         mpi_req->partitioned.rkey_prtd, 
                                         &param);
@@ -221,7 +245,7 @@ int mpi_partitioned_complete_put_partition(mpc_lowcomm_request_t *req)
                 lcp_request_param_t param = { 0 };
                 mpi_req->partitioned.fin = 1;
                 lcp_ep_get(ctx, mpi_req->req.header.destination, &ep);
-                rc = lcp_tag_send_nb(ep, &mpi_req->partitioned.fin, 
+                rc = lcp_tag_send_nb(ep, task, &mpi_req->partitioned.fin, 
                                      sizeof(int), &mpi_req->partitioned.fin_req, 
                                      &param);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -374,7 +398,8 @@ int mpi_pstart(MPI_internal_request_t *req)
 {
         int rc; 
         lcp_ep_h ep;
-        lcp_context_h ctx = lcp_context_get();
+        lcp_context_h ctx = lcp_ctx_loc;
+        lcp_task_h task;
         mpi_partitioned_t *prtd = &req->partitioned;
         mpc_lowcomm_status_t status;
         lcp_request_param_t param;
@@ -383,12 +408,18 @@ int mpi_pstart(MPI_internal_request_t *req)
 
         //FIXME: 
         req->is_active = 1;
+        lcp_context_task_get(ctx, mpc_common_get_task_rank(), &task);
+        if (task == NULL) {
+                mpc_common_debug_fatal("LCP: task %d not fount", 
+                                       mpc_common_get_task_rank());
+                return MPC_LOWCOMM_ERROR;
+        }
 
         switch (req->req.request_type) {
         case REQUEST_SEND:
                 lcp_ep_get(ctx, prtd->tag_req.header.destination, &ep);
                 param = (lcp_request_param_t) { 0 };
-                rc = lcp_tag_send_nb(ep, &req->partitioned.partitions, 
+                rc = lcp_tag_send_nb(ep, task, &req->partitioned.partitions, 
                                      sizeof(int), &prtd->tag_req, 
                                      &param);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -407,7 +438,7 @@ int mpi_pstart(MPI_internal_request_t *req)
                         .recv_info = &prtd->rkey_req.recv_info,
 
                 };
-                rc = lcp_tag_recv_nb(ctx, prtd->send.rkeys_buf, prtd->send.rkeys_size,
+                rc = lcp_tag_recv_nb(task, prtd->send.rkeys_buf, prtd->send.rkeys_size,
                                      &prtd->rkey_req, &param);
                 
                 mpc_lowcomm_wait(&prtd->rkey_req, &status);
@@ -424,7 +455,7 @@ int mpi_pstart(MPI_internal_request_t *req)
                         .recv_info = &prtd->tag_req.recv_info,
 
                 };
-                rc = lcp_tag_recv_nb(ctx, &prtd->recv.send_partitions,
+                rc = lcp_tag_recv_nb(task, &prtd->recv.send_partitions,
                                      sizeof(int), &prtd->tag_req, &param);
                 break;
         default:
@@ -440,11 +471,19 @@ int mpi_pready(int partition, MPI_internal_request_t *req)
 {
         int rc; 
         lcp_ep_h ep;
-        lcp_context_h ctx = lcp_context_get();
+        lcp_context_h ctx = lcp_ctx_loc;
+        lcp_task_h task;
         mpi_partitioned_t *prtd = &req->partitioned;
         void *local_addr;
         uint64_t remote_offset;
         size_t partition_length;
+
+        lcp_context_task_get(ctx, mpc_common_get_task_rank(), &task);
+        if (task == NULL) {
+                mpc_common_debug_fatal("LCP: task %d not fount", 
+                                       mpc_common_get_task_rank());
+                return MPC_LOWCOMM_ERROR;
+        }
         
         /* Compute local address, remote offset and send length */ 
         remote_offset = partition * prtd->length / prtd->partitions;
@@ -468,7 +507,7 @@ int mpi_pready(int partition, MPI_internal_request_t *req)
                 .flags   = LCP_REQUEST_USER_REQUEST
         };
         lcp_ep_get(ctx, prtd->tag_req.header.destination, &ep);
-        rc = lcp_put_nb(ep, local_addr, partition_length, remote_offset, 
+        rc = lcp_put_nb(ep, task, local_addr, partition_length, remote_offset, 
                         prtd->rkey_prtd, &param);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 mpc_common_debug_error("MPI: partitioned request type error");

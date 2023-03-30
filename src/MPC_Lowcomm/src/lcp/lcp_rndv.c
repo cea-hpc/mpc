@@ -4,6 +4,7 @@
 #include "lcp_prototypes.h"
 #include "lcp_mem.h"
 #include "lcp_context.h"
+#include "lcp_task.h"
 
 #include "sctk_alloc.h"
 #include "sctk_net_tools.h"
@@ -343,6 +344,7 @@ int lcp_rndv_matched(lcp_request_t *rreq,
         uint64_t gid, comm_id, src;
         mpc_lowcomm_communicator_t comm;
 
+        //FIXME: ugly...
         gid = mpc_lowcomm_monitor_get_gid();
         comm_id = hdr->base.comm;
         comm_id |= gid << 32;
@@ -351,6 +353,7 @@ int lcp_rndv_matched(lcp_request_t *rreq,
         comm = mpc_lowcomm_get_communicator_from_id(comm_id);
         src  = mpc_lowcomm_communicator_uid(comm, hdr->base.src);
         rreq->recv.tag.src      = src;
+        rreq->recv.tag.src_task = hdr->base.src;
         rreq->recv.tag.tag      = hdr->base.tag;
         rreq->msg_id            = hdr->msg_id;
         rreq->recv.send_length  = hdr->size; 
@@ -433,7 +436,7 @@ int lcp_recv_am_rget(lcp_request_t *req)
         _mpc_lowcomm_endpoint_t *lcr_ep;
 
         mpc_common_debug_info("LCP: recv offload rget src=%d, tag=%d",
-                              req->recv.tag.src, req->recv.tag.tag);
+                              req->recv.tag.src_task, req->recv.tag.tag);
 
         /* Get LCP endpoint if exists */
         //FIXME: do this twice, one here and one in rndv_matched
@@ -510,7 +513,7 @@ int lcp_recv_am_rput(lcp_request_t *req)
         lcp_request_t *ack;
 
         mpc_common_debug_info("LCP: recv offload rput src=%d, tag=%d",
-                              req->recv.tag.src, req->recv.tag.tag);
+                              req->recv.tag.src_task, req->recv.tag.tag);
         /* Get endpoint */
         //FIXME: redundant in am handler
         HASH_FIND(hh, req->ctx->ep_ht, &req->recv.tag.src, sizeof(uint64_t), ctx_ep);
@@ -587,29 +590,38 @@ int lcp_rndv_am_rput_handler(void *arg, void *data,
         lcp_rndv_hdr_t *hdr = data;
         lcp_request_t *req;
         lcp_unexp_ctnr_t *ctnr;
+        lcp_task_h task = NULL;
 
-        LCP_CONTEXT_LOCK(ctx);
+        lcp_context_task_get(ctx, hdr->base.dest, &task);  
+        if (task == NULL) {
+                mpc_common_debug_error("LCP: could not find task with tid=%d",
+                                       hdr->base.dest);
+                rc = MPC_LOWCOMM_ERROR;
+                goto err;
+        }
 
+        LCP_TASK_LOCK(task);
         mpc_common_debug_info("LCP: recv rput header src=%d, msg_id=%llu",
                               hdr->base.src, hdr->msg_id);
 
-        req = lcp_match_prq(ctx->prq_table, hdr->base.comm, 
+        req = lcp_match_prq(task->prq_table, hdr->base.comm, 
                             hdr->base.tag, hdr->base.src);
         if (req != NULL) {
                 mpc_common_debug_info("LCP: matched rndv exp handler req=%p, comm_id=%lu, " 
                                       "tag=%d, src=%lu.", req, req->recv.tag.comm_id, 
-                                      req->recv.tag.tag, req->recv.tag.src);
-                LCP_CONTEXT_UNLOCK(ctx); //NOTE: unlock context to enable endpoint creation.
+                                      req->recv.tag.tag, req->recv.tag.src_task);
+                LCP_TASK_UNLOCK(task); //NOTE: unlock context to enable endpoint creation.
                 rc = lcp_rndv_matched(req, hdr, length - sizeof(*hdr), LCP_RNDV_PUT);
         } else {
                 lcp_request_init_unexp_ctnr(&ctnr, hdr, length, 
                                             LCP_RECV_CONTAINER_UNEXP_RPUT);
-                lcp_append_umq(ctx->umq_table, (void *)ctnr, hdr->base.comm, 
+                lcp_append_umq(task->umq_table, (void *)ctnr, hdr->base.comm, 
                                hdr->base.tag, hdr->base.src);
-                LCP_CONTEXT_UNLOCK(ctx);
+                LCP_TASK_UNLOCK(task);
                 rc = MPC_LOWCOMM_SUCCESS;
         }
 
+err:
         return rc;
 }
 
@@ -658,30 +670,39 @@ static int lcp_rndv_am_rget_handler(void *arg, void *data,
         lcp_rndv_hdr_t *hdr = data;
         lcp_request_t *req;
         lcp_unexp_ctnr_t *ctnr;
+        lcp_task_h task = NULL;
 
-        LCP_CONTEXT_LOCK(ctx);
+        lcp_context_task_get(ctx, hdr->base.dest, &task);  
+        if (task == NULL) {
+                mpc_common_debug_error("LCP: could not find task with tid=%d",
+                                       hdr->base.dest);
+                rc = MPC_LOWCOMM_ERROR;
+                goto err;
+        }
 
+        LCP_TASK_LOCK(task);
         mpc_common_debug_info("LCP: recv rget header src=%d, msg_id=%llu",
                               hdr->base.src, hdr->msg_id);
 
-        req = lcp_match_prq(ctx->prq_table, hdr->base.comm, 
+        req = lcp_match_prq(task->prq_table, hdr->base.comm, 
                             hdr->base.tag, hdr->base.src);
         if (req != NULL) {
                 mpc_common_debug_info("LCP: matched rndv exp handler req=%p, comm_id=%llu, " 
                                       "tag=%d, src=%llu.", req, req->recv.tag.comm_id, 
-                                      req->recv.tag.tag, req->recv.tag.src);
-                LCP_CONTEXT_UNLOCK(ctx); //NOTE: unlock context to enable endpoint creation.
+                                      req->recv.tag.tag, req->recv.tag.src_task);
+                LCP_TASK_UNLOCK(task); //NOTE: unlock context to enable endpoint creation.
                 rc = lcp_rndv_matched(req, hdr, length - sizeof(lcp_rndv_hdr_t), 
                                       LCP_RNDV_GET);
         } else {
                 lcp_request_init_unexp_ctnr(&ctnr, hdr, length, 
                                             LCP_RECV_CONTAINER_UNEXP_RGET);
-                lcp_append_umq(ctx->umq_table, (void *)ctnr, hdr->base.comm, 
+                lcp_append_umq(task->umq_table, (void *)ctnr, hdr->base.comm, 
                                hdr->base.tag, hdr->base.src);
-                LCP_CONTEXT_UNLOCK(ctx);
+                LCP_TASK_UNLOCK(task);
                 rc = MPC_LOWCOMM_SUCCESS;
         }
 
+err:
         return rc;
 }
 

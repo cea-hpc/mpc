@@ -2488,7 +2488,11 @@ int _mpc_cl_isend(const void *buf, mpc_lowcomm_msg_count_t count,
 
 	size_t d_size   = __mpc_cl_datatype_get_size(datatype, task_specific);
 	size_t msg_size = count * d_size;
+#ifdef MPC_LOWCOMM_PROTOCOL
+        mpc_lowcomm_isend(dest, buf, msg_size, tag, comm, request);
+#else
 	mpc_lowcomm_ptp_message_t *msg = NULL;
+
 
 	/* Here we see if we can get a slot to buffer small message content
 	 * otherwise we simply get a regular message header */
@@ -2529,6 +2533,7 @@ FALLBACK_TO_UNBUFERED_ISEND:
 	}
 
 	mpc_lowcomm_ptp_message_send(msg);
+#endif
 	MPC_ERROR_SUCESS();
 }
 
@@ -2545,13 +2550,17 @@ int _mpc_cl_issend(const void *buf, mpc_lowcomm_msg_count_t count,
 
 	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = _mpc_cl_per_mpi_process_ctx_get();
 	int myself = mpc_lowcomm_communicator_rank_of(comm, task_specific->task_id);
-	mpc_lowcomm_ptp_message_t *msg = mpc_lowcomm_ptp_message_header_create(MPC_LOWCOMM_MESSAGE_CONTIGUOUS);
 	size_t d_size   = __mpc_cl_datatype_get_size(datatype, task_specific);
 	size_t msg_size = count * d_size;
+#ifdef MPC_LOWCOMM_PROTOCOL
+        mpc_lowcomm_isend(dest, buf, msg_size, tag, comm, request);
+#else
+	mpc_lowcomm_ptp_message_t *msg = mpc_lowcomm_ptp_message_header_create(MPC_LOWCOMM_MESSAGE_CONTIGUOUS);
 	mpc_lowcomm_ptp_message_header_init(msg, tag, comm, myself, dest, request, msg_size,
 	                                    MPC_LOWCOMM_P2P_MESSAGE, datatype, REQUEST_SEND);
 	mpc_lowcomm_ptp_message_set_contiguous_addr(msg, buf, msg_size);
 	mpc_lowcomm_ptp_message_send(msg);
+#endif
 	MPC_ERROR_SUCESS();
 }
 
@@ -2580,12 +2589,16 @@ int _mpc_cl_irecv(void *buf, mpc_lowcomm_msg_count_t count,
 	}
 
 	int myself = mpc_lowcomm_communicator_rank_of(comm, task_specific->task_id);
-	mpc_lowcomm_ptp_message_t *msg = mpc_lowcomm_ptp_message_header_create(MPC_LOWCOMM_MESSAGE_CONTIGUOUS);
 	size_t d_size = __mpc_cl_datatype_get_size(datatype, task_specific);
+#ifdef MPC_LOWCOMM_PROTOCOL
+        mpc_lowcomm_irecv(source, buf, count * d_size, tag, comm, request);
+#else
+	mpc_lowcomm_ptp_message_t *msg = mpc_lowcomm_ptp_message_header_create(MPC_LOWCOMM_MESSAGE_CONTIGUOUS);
 	mpc_lowcomm_ptp_message_header_init(msg, tag, comm, source, myself, request,
 	                                    count * d_size, MPC_LOWCOMM_P2P_MESSAGE, datatype, REQUEST_RECV);
 	mpc_lowcomm_ptp_message_set_contiguous_addr(msg, buf, count * d_size);
 	mpc_lowcomm_ptp_message_recv(msg);
+#endif
 	MPC_ERROR_SUCESS();
 }
 
@@ -2619,6 +2632,10 @@ int _mpc_cl_send(const void *buf, mpc_lowcomm_msg_count_t count,
 	}
 
 	size_t msg_size = count * __mpc_cl_datatype_get_size(datatype, task_specific);
+#ifdef MPC_LOWCOMM_PROTOCOL
+        mpc_lowcomm_isend(dest, buf, msg_size, tag, comm, &request);
+        mpc_lowcomm_request_wait(&request);
+#else
 	mpc_lowcomm_ptp_message_t *msg = NULL;
 	mpc_lowcomm_ptp_message_t  header;
 
@@ -2658,6 +2675,7 @@ FALLBACK_TO_BLOCKING_SEND:
 			mpc_lowcomm_ptp_message_send(msg);
 		}
 	}
+#endif
 
 	MPC_ERROR_SUCESS();
 }

@@ -332,7 +332,9 @@ static ssize_t lcr_tcp_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep, uint8_t id,
 	hdr->am_id = id;
 	hdr->length = payload_length = pack(hdr + 1, arg);
 
+	mpc_common_spinlock_lock(&(ep->data.tcp.lock));
 	sent = mpc_common_io_safe_write(ep->data.tcp.fd, hdr, hdr->length + sizeof(*hdr));
+	mpc_common_spinlock_unlock(&(ep->data.tcp.lock));
 	if (sent < 0) {
 		payload_length = -1;
 	}
@@ -395,8 +397,10 @@ static int lcr_tcp_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
 				id, hdr, &payload_length);
 	hdr->base.length = payload_length + hdr_length;
 
+	mpc_common_spinlock_lock(&(ep->data.tcp.lock));
 	sent = mpc_common_iovec_safe_write(ep->data.tcp.fd, hdr->iov, hdr->iovcnt, 
 					   hdr->base.length + sizeof(lcr_tcp_am_hdr_t));
+	mpc_common_spinlock_unlock(&(ep->data.tcp.lock));
 	if (sent < 0) {
 		rc = MPC_LOWCOMM_ERROR;
 		goto clean_buf;
