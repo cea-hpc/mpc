@@ -49,6 +49,7 @@
 # define MPC_OMP_TASK_PROP_HAS_FIBER     (1 << 15) /* if the task has it own fiber */
 # define MPC_OMP_TASK_PROP_PERSISTENT    (1 << 16) /* if the task is persistent */
 # define MPC_OMP_TASK_PROP_CONTROL_FLOW  (1 << 17) /* this is a 'flow control' fake task */
+# define MPC_OMP_TASK_PROP_DETACH        (1 << 18) /* a 'detach' clause is present */
 
 /* the properties to consider when comparing to a task profile */
 # define MPC_OMP_TASK_PROP_PROFILE_MASK \
