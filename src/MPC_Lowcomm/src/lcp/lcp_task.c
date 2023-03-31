@@ -18,12 +18,14 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
         assert(ctx); assert(tid >= 0);
 
         /* Check if tid already in context */
+        mpc_common_spinlock_lock(&(ctx->ctx_lock));
 	HASH_FIND(hh, ctx->tasks->table, &tid, sizeof(int), item);
         if (item != NULL) {
                 mpc_common_debug_warning("LCP: task with tid=%d already "
                                          "created.", tid);
                 goto err;
         }
+        mpc_common_spinlock_unlock(&(ctx->ctx_lock));
 
         task = sctk_malloc(sizeof(struct lcp_task));
         if (task == NULL) {
@@ -68,9 +70,9 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
 
         //FIXME: which lock take ? Context lock or task table lock ?
         //       one of them is redundant.
-        mpc_common_spinlock_lock(&(ctx->tasks->lock));
+        mpc_common_spinlock_lock(&(ctx->ctx_lock));
         HASH_ADD(hh, ctx->tasks->table, task_key, sizeof(int), item);
-        mpc_common_spinlock_unlock(&(ctx->tasks->lock));
+        mpc_common_spinlock_unlock(&(ctx->ctx_lock));
 
         mpc_common_debug_info("LCP: created task tid=%d", tid);
 err:

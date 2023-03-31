@@ -17,6 +17,8 @@ struct lcp_task {
 
         mpc_common_spinlock_t task_lock;
 
+        //FIXME: pointer not needed
+        //FIXME: table lock not needed
 	lcp_prq_match_table_t *prq_table; /* Posted Receive Queue */
 	lcp_umq_match_table_t *umq_table; /* Unexpected Message Queue */
 };
