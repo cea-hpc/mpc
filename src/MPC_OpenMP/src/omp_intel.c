@@ -3465,3 +3465,12 @@ void __kmpc_threadprivate_register_vec( __UNUSED__ ident_t *loc, void *data,
 		*lnk_tn = d_tn;
 	}
 }
+
+omp_event_handle_t __kmpc_task_allow_completion_event(ident_t * loc_ref, int gtid, kmp_task_t * kmp_task)
+{
+    mpc_omp_task_t * task = ((mpc_omp_task_t *) kmp_task) - 1;
+    mpc_omp_task_set_property(&(task->property), MPC_OMP_TASK_PROP_DETACH);
+    omp_event_handle_t hdl = (omp_event_handle_t) &(task->detach_event);
+    mpc_omp_event_handle_init((mpc_omp_event_handle_t **) &hdl, MPC_OMP_EVENT_TASK_DETACH);
+    return hdl;
+}
