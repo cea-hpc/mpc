@@ -6,9 +6,9 @@
 #include "lcp_context.h"
 #include "lcp_prototypes.h"
 #include "lcp_task.h"
+#include "lcp_datatype.h"
 
 #include "sctk_alloc.h"
-#include "sctk_net_tools.h"
 
 /* ============================================== */
 /* Packing                                        */
@@ -18,6 +18,8 @@ static size_t lcp_send_tag_pack(void *dest, void *data)
 {
 	lcp_tag_hdr_t *hdr = dest;
 	lcp_request_t *req = data;
+        void *src = req->datatype == LCP_DATATYPE_CONTIGUOUS ?
+               req->send.buffer : NULL; 
 	
 	hdr->comm = req->send.tag.comm_id;
 	hdr->tag  = req->send.tag.tag;
@@ -25,7 +27,8 @@ static size_t lcp_send_tag_pack(void *dest, void *data)
         hdr->dest = req->send.tag.dest_task;
 	hdr->seqn = req->seqn; 
 
-	memcpy((void *)(hdr + 1), req->send.buffer, req->send.length);
+        lcp_datatype_pack(req->ctx, req, req->datatype,
+                          (void *)(hdr + 1), src, req->send.length);
 
 	return sizeof(*hdr) + req->send.length;
 }
@@ -54,9 +57,10 @@ int lcp_send_am_eager_tag_bcopy(lcp_request_t *req)
 	lcp_ep_h ep = req->send.ep;
 	_mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[req->state.cc];
 
-	mpc_common_debug_info("LCP: send am eager tag bcopy src=%d, dest=%d, length=%d, "
-			      "tag=%d.", req->send.tag.src_task, req->send.tag.dest, 
-                              req->send.length, req->send.tag.tag);
+	mpc_common_debug_info("LCP: send am eager tag bcopy comm=%d, src=%d, "
+                              "dest=%d, length=%d, tag=%d, lcreq=%p.", req->send.tag.comm_id,
+                              req->send.tag.src_task, req->send.tag.dest, 
+                              req->send.length, req->send.tag.tag, req->request);
         payload = lcp_send_do_am_bcopy(lcr_ep, 
                                        MPC_LOWCOMM_P2P_MESSAGE, 
                                        lcp_send_tag_pack, 
@@ -166,7 +170,9 @@ static int lcp_am_tag_handler(void *arg, void *data,
         mpc_common_debug("LCP: recv exp tag src=%d, length=%d",
                          hdr->src, length);
 	/* copy data to receiver buffer and complete request */
-	memcpy(req->recv.buffer, (void *)(hdr + 1), length - sizeof(*hdr));
+        lcp_datatype_unpack(req->ctx, req, req->datatype, 
+                            req->recv.buffer, (void *)(hdr + 1),
+                            length - sizeof(*hdr));
 
         /* set recv info for caller */
         req->info->length = length - sizeof(*hdr);

@@ -3691,9 +3691,14 @@ int mpc_mpi_cl_open_pack(mpc_lowcomm_request_t *request)
 		MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_REQUEST, "");
 	}
 
+#ifdef MPC_LOWCOMM_PROTOCOL
+        memset(&request->header, 0, sizeof(mpc_lowcomm_request_header_t));
+        memset(&request->dt, 0, sizeof(mpc_lowcomm_request_content_t));
+#else
 	mpc_lowcomm_ptp_message_t *msg = mpc_lowcomm_ptp_message_header_create(MPC_LOWCOMM_MESSAGE_PACK_UNDEFINED);
 	mpc_lowcomm_request_set_msg(request, msg);
 	mpc_lowcomm_request_set_size(request);
+#endif
 	SCTK_PROFIL_END(MPC_Open_pack);
 	MPC_ERROR_SUCESS();
 }
@@ -3726,9 +3731,13 @@ int mpc_mpi_cl_add_pack(void *buf, mpc_lowcomm_msg_count_t count,
 	}
 
 	size_t data_size = __mpc_cl_datatype_get_size(datatype, task_specific);
+#ifdef MPC_LOWCOMM_PROTOCOL
+        mpc_lowcomm_request_add_pack(request, buf, count, data_size, begins, ends);
+#else
 	mpc_lowcomm_ptp_message_t *msg = mpc_lowcomm_request_get_msg(request);
 	mpc_lowcomm_ptp_message_add_pack(msg, buf, count, data_size, begins, ends);
 	mpc_lowcomm_request_set_msg(request, msg);
+#endif
 	size_t total = 0;
 
 	int i;
@@ -3739,7 +3748,12 @@ int mpc_mpi_cl_add_pack(void *buf, mpc_lowcomm_msg_count_t count,
 		total += ends[i] - begins[i] + 1;
 	}
 
+#ifdef MPC_LOWCOMM_PROTOCOL
+        //FIXME: use library function instead of acceding field
+        request->header.msg_size += total * data_size;
+#else
 	mpc_lowcomm_request_inc_size(request, total * data_size);
+#endif
 
 	MPC_ERROR_SUCESS();
 }
@@ -3768,9 +3782,13 @@ int mpc_mpi_cl_add_pack_absolute(const void *buf, mpc_lowcomm_msg_count_t count,
 		MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_ARG, "");
 	}
 
+#ifdef MPC_LOWCOMM_PROTOCOL
+        mpc_lowcomm_request_add_pack_absolute(request, buf, count, data_size, begins, ends);
+#else
 	mpc_lowcomm_ptp_message_t *msg = mpc_lowcomm_request_get_msg(request);
 	mpc_lowcomm_ptp_message_add_pack_absolute(msg, buf, count, data_size, begins, ends);
 	mpc_lowcomm_request_set_msg(request, msg);
+#endif
 	size_t total = 0;
 	int    i;
 
@@ -3780,7 +3798,12 @@ int mpc_mpi_cl_add_pack_absolute(const void *buf, mpc_lowcomm_msg_count_t count,
 		total += ends[i] - begins[i] + 1;
 	}
 
+#ifdef MPC_LOWCOMM_PROTOCOL
+        //FIXME: use library function instead of acceding field
+        request->header.msg_size += total * data_size;
+#else
 	mpc_lowcomm_request_inc_size(request, total * data_size);
+#endif
 	MPC_ERROR_SUCESS();
 }
 
@@ -3801,11 +3824,15 @@ int mpc_mpi_cl_isend_pack(int dest, int tag, mpc_lowcomm_communicator_t comm, mp
 		MPC_ERROR_REPORT(comm, MPC_ERR_REQUEST, "");
 	}
 
+#ifdef MPC_LOWCOMM_PROTOCOL
+        mpc_lowcomm_isend(dest, NULL, request->header.msg_size, tag, comm, request);
+#else
 	mpc_lowcomm_ptp_message_t *msg = mpc_lowcomm_request_get_msg(request);
 	mpc_lowcomm_ptp_message_header_init(msg, tag, comm, src, dest, request,
 	                                    mpc_lowcomm_request_get_size(request),
 	                                    MPC_LOWCOMM_P2P_MESSAGE, MPC_LOWCOMM_PACKED, REQUEST_SEND);
 	mpc_lowcomm_ptp_message_send(msg);
+#endif
 	SCTK_PROFIL_END(MPC_Isend_pack);
 	MPC_ERROR_SUCESS();
 }
@@ -3827,11 +3854,15 @@ int mpc_mpi_cl_irecv_pack(int source, int tag, mpc_lowcomm_communicator_t comm, 
 		MPC_ERROR_REPORT(comm, MPC_ERR_REQUEST, "");
 	}
 
+#ifdef MPC_LOWCOMM_PROTOCOL
+        mpc_lowcomm_irecv(source, NULL, request->header.msg_size, tag, comm, request);
+#else
 	mpc_lowcomm_ptp_message_t *msg = mpc_lowcomm_request_get_msg(request);
 	mpc_lowcomm_ptp_message_header_init(msg, tag, comm, source, src, request,
 	                                    mpc_lowcomm_request_get_size(request),
 	                                    MPC_LOWCOMM_P2P_MESSAGE, MPC_LOWCOMM_PACKED, REQUEST_RECV);
 	mpc_lowcomm_ptp_message_recv(msg);
+#endif
 	SCTK_PROFIL_END(MPC_Irecv_pack);
 	MPC_ERROR_SUCESS();
 }

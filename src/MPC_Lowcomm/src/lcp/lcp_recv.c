@@ -3,6 +3,7 @@
 #include "lcp_header.h"
 #include "lcp_prototypes.h"
 #include "lcp_rndv.h"
+#include "lcp_datatype.h"
 #include "lcp_task.h"
 
 #include "sctk_alloc.h"
@@ -24,7 +25,7 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 	}
         req->flags |= LCP_REQUEST_MPI_COMPLETE;
         LCP_REQUEST_INIT_RECV(req, ctx, task, request, param->recv_info,
-                              count, buffer);
+                              count, buffer, param->datatype);
 	lcp_request_init_tag_recv(req, param->recv_info);
 
 	iface = ctx->resources[ctx->priority_rail].iface;
@@ -37,8 +38,9 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 		return rc;
 	}
 
-        mpc_common_debug_info("LCP: post recv am src=%d, tag=%d, length=%d",
-                              req->recv.tag.src_task, req->recv.tag.tag, count);
+        mpc_common_debug_info("LCP: post recv am comm=%d, src=%d, tag=%d, length=%d, lcreq=%p",
+                              req->recv.tag.comm_id, req->recv.tag.src_task, 
+                              req->recv.tag.tag, count, req->request);
 
         req->state.offloaded = 0;
 
@@ -76,8 +78,9 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
                                  "tag=%d, comm=%d", req, hdr->src, hdr->tag, 
                                  hdr->comm);
 		/* copy data to receiver buffer and complete request */
-                memcpy(req->recv.buffer, (void *)(hdr + 1), 
-                       match->length - sizeof(lcp_tag_hdr_t));
+                lcp_datatype_unpack(req->ctx, req, req->datatype, 
+                                    req->recv.buffer, (void *)(hdr + 1),
+                                    match->length - sizeof(lcp_tag_hdr_t));
 
                 /* set recv info for caller */
                 req->info->length = match->length - sizeof(lcp_tag_hdr_t);

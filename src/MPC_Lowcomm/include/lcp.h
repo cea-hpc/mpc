@@ -1,14 +1,29 @@
 #ifndef LCP_H
 #define LCP_H
 
+#include <stdlib.h>
+
 #include "lcp_def.h"
 #include "lcp_common.h"
 
-#include <mpc_common_types.h>
+/* Datatype */
+enum {
+        LCP_CONTEXT_DATATYPE_OPS = LCP_BIT(0)
+};
+
+typedef struct lcp_dt_ops {
+        void (*pack)(void *context, void *buffer);
+        void (*unpack)(void *context, void *buffer); 
+} lcp_dt_ops_t;
 
 /* Context */
+typedef struct lcp_context_param {
+        uint32_t     flags;
+        lcp_dt_ops_t dt_ops;
+} lcp_context_param_t;
+
 lcp_context_h lcp_context_get();
-int lcp_context_create(lcp_context_h *ctx_p, unsigned flags);
+int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param);
 void lcp_context_task_get(lcp_context_h ctx, int tid, lcp_task_h *task_p);
 int lcp_context_fini(lcp_context_h ctx);
 //FIXME: hack for portals pte entry
@@ -40,12 +55,19 @@ enum {
         LCP_REQUEST_USER_REQUEST  = LCP_BIT(2)
 };
 
+enum lcp_dt_type {
+        LCP_DATATYPE_CONTIGUOUS = LCP_BIT(0),
+        LCP_DATATYPE_DERIVED    = LCP_BIT(1),
+        LCP_DATATYPE_UNPACK     = LCP_BIT(2)
+};
+
 typedef struct lcp_request_param {
-        uint32_t flags;
-        lcp_tag_recv_info_t *recv_info;
+        uint32_t                     flags;
+        lcp_tag_recv_info_t         *recv_info;
         lcp_complete_callback_func_t cb;
-        mpc_lowcomm_request_t *request;
-        lcp_mem_h memh;
+        lcp_datatype_t               datatype;
+        mpc_lowcomm_request_t       *request;
+        lcp_mem_h                    memh;
 } lcp_request_param_t;
 
 /* Send/Receive */

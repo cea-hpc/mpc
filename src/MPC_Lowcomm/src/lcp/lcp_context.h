@@ -114,6 +114,8 @@ struct lcp_context {
 	lcp_pending_table_t *pend; /* LCP send requests */
 
         lcp_task_table_t *tasks; /* LCP tasks (per thread data) */
+
+        lcp_dt_ops_t dt_ops; /* pack/unpack functions */
 };
 
 #endif 

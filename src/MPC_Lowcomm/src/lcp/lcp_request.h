@@ -44,9 +44,10 @@ struct lcp_unexp_ctnr {
 typedef int (*lcp_send_func_t)(lcp_request_t *req);
 
 struct lcp_request {
-	uint64_t flags;
-	lcp_context_h ctx; 
-	lcp_task_h    task; 
+	uint64_t       flags;
+	lcp_context_h  ctx; 
+	lcp_task_h     task; 
+        lcp_datatype_t datatype;
 	union {
 		struct {
 			lcp_ep_h ep;
@@ -58,12 +59,11 @@ struct lcp_request {
 			union {
 				struct {
 					uint64_t comm_id;
-					uint64_t src; //FIXME: use MPI task ?
-					uint64_t dest; //FIXME: use MPI task ?
+					uint64_t src;
+					uint64_t dest;
                                         int src_task;
                                         int dest_task;
 					int tag;
-					int dt; //NOTE: not used yet
 				} tag;
 
 				struct {
@@ -104,7 +104,6 @@ struct lcp_request {
                                 int src_task;
                                 int dest_task;
 				int tag;
-				int dt;
 			} tag;
 
 		} recv;
@@ -116,28 +115,29 @@ struct lcp_request {
         void                  *user_data;
 	int16_t                seqn;    /* Sequence number */
 	uint64_t               msg_id;  /* Unique message identifier */
-        struct lcp_request    *super;
+        struct lcp_request    *super;   /* master request */
         
         struct {
                 lcr_tag_t imm;
-                int mid;
+                int mid; /* matching id */
         } tm;
 
 	struct {
-                bmap_t             mem_map;
-		size_t             remaining;
-		size_t             offset;
-		lcp_chnl_idx_t     cc;
-		lcr_completion_t   comp;
-                uint8_t            comp_stg;
-                lcp_mem_h          lmem; 
-                lcp_mem_h          rmem; 
-                int                offloaded;
+                bmap_t           mem_map;
+                size_t           offset;
+                void *           pack_buf;
+                size_t           remaining;
+                lcp_chnl_idx_t   cc;
+                lcr_completion_t comp;
+                uint8_t          comp_stg;
+                lcp_mem_h        lmem; 
+                lcp_mem_h        rmem; 
+                int              offloaded;
 	} state;
 };
 
 #define LCP_REQUEST_INIT_SEND(_req, _ctx, _task, _mpi_req, _info, _length, \
-                              _ep, _buf, _seqn, _msg_id) \
+                              _ep, _buf, _seqn, _msg_id, _dt) \
 { \
 	(_req)->request         = _mpi_req; \
 	(_req)->info            = _info;    \
@@ -145,6 +145,7 @@ struct lcp_request {
 	(_req)->seqn            = _seqn;    \
 	(_req)->ctx             = _ctx;     \
 	(_req)->task            = _task;    \
+	(_req)->datatype        = _dt;      \
 	\
 	(_req)->send.buffer     = _buf;     \
 	(_req)->send.ep         = _ep;      \
@@ -156,7 +157,7 @@ struct lcp_request {
 }
 
 #define LCP_REQUEST_INIT_RECV(_req, _ctx, _task, _mpi_req, _info, _length, \
-                              _buf) \
+                              _buf, _dt) \
 { \
 	(_req)->request         = _mpi_req; \
 	(_req)->info            = _info;    \
@@ -164,6 +165,7 @@ struct lcp_request {
 	(_req)->seqn            = 0;        \
 	(_req)->ctx             = _ctx;     \
 	(_req)->task            = _task;    \
+	(_req)->datatype        = _dt;      \
 	\
 	(_req)->recv.buffer     = _buf;     \
 	(_req)->recv.length     = _length;  \

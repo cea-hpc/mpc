@@ -57,6 +57,70 @@ typedef struct
 	size_t msg_size;
 } mpc_lowcomm_request_header_t;
 
+typedef enum
+{
+	MPC_LOWCOMM_REQUEST_CONTIGUOUS,
+	MPC_LOWCOMM_REQUEST_PACK,
+	MPC_LOWCOMM_REQUEST_PACK_ABSOLUTE,
+	MPC_LOWCOMM_REQUEST_PACK_UNDEFINED,
+	MPC_LOWCOMM_REQUEST_NETWORK
+} mpc_lowcomm_rtype_t;
+
+/** MPC_LOWCOMM_REQUEST_CONTIGUOUS */
+typedef struct
+{
+	size_t size;
+	void * addr;
+} mpc_lowcomm_request_contiguous_t;
+
+/** MPC_LOWCOMM_REQUEST_PACK */
+typedef struct
+{
+	unsigned int   count;
+	unsigned long *begins;
+	unsigned long *ends;
+	void *         addr;
+	size_t         elem_size;
+} mpc_lowcomm_request_pack_std_list_t;
+
+/** MPC_LOWCOMM_REQUEST_PACK_ABSOLUTE */
+typedef struct
+{
+	unsigned int count;
+	long *       begins;
+	long *       ends;
+	const void * addr;
+	size_t       elem_size;
+} mpc_lowcomm_request_pack_absolute_list_t;
+
+/** Content for list of packs */
+typedef union
+{
+	mpc_lowcomm_request_pack_absolute_list_t *absolute;
+	mpc_lowcomm_request_pack_std_list_t *     std;
+} mpc_lowcomm_request_pack_list_t;
+
+typedef struct
+{
+	size_t                              count;
+	size_t                              max_count;
+	mpc_lowcomm_request_pack_list_t list;
+} mpc_lowcomm_request_pack_t;
+
+/** Content single packed request */
+typedef union
+{
+	mpc_lowcomm_request_pack_absolute_list_t absolute;
+	mpc_lowcomm_request_pack_std_list_t      std;
+} mpc_lowcomm_request_pack_default_t;
+
+/** Message Content descriptor */
+typedef union
+{
+	mpc_lowcomm_request_contiguous_t contiguous; /** Contiguous case */
+	mpc_lowcomm_request_pack_t       pack;       /** Packed case */
+} mpc_lowcomm_request_content_t;
+
 /**********
  * STATUS *
  **********/
@@ -124,6 +188,9 @@ typedef struct mpc_lowcomm_request_s
 	/* This is a pointer to the registered memory region
 	 * in order to unpin when request completes */
         lcp_tag_recv_info_t recv_info;
+        mpc_lowcomm_request_pack_t dt;
+        mpc_lowcomm_rtype_t dt_type;
+        int dt_magic;
 	void *ptr_to_pin_ctx;
         int (*request_completion_fn)(struct mpc_lowcomm_request_s *);
 }mpc_lowcomm_request_t;

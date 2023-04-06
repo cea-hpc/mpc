@@ -6,6 +6,7 @@
 #include "lcp_context.h"
 #include "lcp_rndv.h"
 #include "lcp_mem.h"
+#include "lcp_datatype.h"
 
 #include "sctk_alloc.h"
 #include "sctk_net_tools.h"
@@ -177,10 +178,15 @@ int lcp_send_rget_offload_start(lcp_request_t *req)
         req->send.t_ctx.comp.comp_cb = lcp_request_complete_send_rget_offload;
         req->state.comp_stg          = 0;
 
+
+        /* Get source address */
+        void *start = req->datatype & LCP_DATATYPE_CONTIGUOUS ?
+                req->send.buffer : req->state.pack_buf;
+
         unsigned int mem_flags = LCR_IFACE_TM_PERSISTANT_MEM;
-        rc = lcp_mem_post(req->ctx, &req->state.lmem, req->send.buffer,
-                          req->send.length, (lcr_tag_t)req->tm.imm, mem_flags, 
-                          &(req->send.t_ctx));
+        rc = lcp_mem_post(req->ctx, &req->state.lmem, start,
+                          req->send.length, (lcr_tag_t)req->tm.imm, 
+                          mem_flags, &(req->send.t_ctx));
 
         //TODO: add rts data in case message is unexpected
 
@@ -286,6 +292,22 @@ int lcp_send_rndv_offload_start(lcp_request_t *req)
         
         /* Increment offload id */
         req->tm.mid = OPA_fetch_and_incr_int(&req->ctx->muid);
+
+        //FIXME: below piece of code can be factorized with
+        //       lcp_send_rndv_am_start 
+        /* Buffer must be allocated and data packed to make it contiguous
+         * and use zcopy and memory registration. */
+        if (req->datatype & LCP_DATATYPE_DERIVED) {
+                req->state.pack_buf = sctk_malloc(req->send.length);
+                if (req->state.pack_buf == NULL) {
+                        mpc_common_debug_error("LCP: could not allocate pack "
+                                               "buffer");
+                        return MPC_LOWCOMM_ERROR;
+                }
+
+                lcp_datatype_pack(req->ctx, req, req->datatype,
+                                  req->state.pack_buf, NULL, req->send.length);
+        }
 
         switch(ep->ctx->config.rndv_mode) {
         case LCP_RNDV_GET:

@@ -93,8 +93,6 @@ static inline void __mpc_comm_request_init(mpc_lowcomm_request_t *request,
 {
 	if(request != NULL)
 	{
-        memset(request, 0, sizeof(mpc_lowcomm_request_t));
-
 		request->comm = comm;
 		request->completion_flag         = MPC_LOWCOMM_MESSAGE_DONE;
 		request->header.source           = mpc_lowcomm_monitor_local_uid_of(MPC_PROC_NULL);
@@ -105,6 +103,9 @@ static inline void __mpc_comm_request_init(mpc_lowcomm_request_t *request,
 		request->header.communicator_id  = _mpc_lowcomm_communicator_id(comm);
 
 		request->request_type        = request_type;
+                request->pointer_to_shadow_request = NULL;
+                request->pointer_to_source_request = NULL;
+                request->msg                       = NULL;
 	}
 }
 
@@ -1867,6 +1868,195 @@ void __mpc_comm_ptp_message_pack_free(void *tmp)
 	__mpc_comm_free_header(tmp);
 }
 
+#ifdef MPC_LOWCOMM_PROTOCOL
+void mpc_lowcomm_request_pack(void *request, void *buffer)
+{
+        mpc_lowcomm_request_t *req = (mpc_lowcomm_request_t *)request;
+	switch (req->dt_type)
+	{
+		case MPC_LOWCOMM_MESSAGE_PACK:
+		{
+			size_t i;
+			size_t j;
+			size_t size;
+			size = req->header.msg_size;
+
+			if ( size > 0 )
+			{
+				for ( i = 0; i < req->dt.count; i++ )
+					for ( j = 0; j < req->dt.list.std[i].count; j++ )
+					{
+						size = ( req->dt.list.std[i].ends[j] -
+						         req->dt.list.std[i].begins[j] +
+						         1 ) * req->dt.list.std[i].elem_size;
+						memcpy ( buffer, ( ( char * ) ( req->dt.list.std[i].addr ) ) +
+						         req->dt.list.std[i].begins[j] *
+						         req->dt.list.std[i].elem_size, size );
+						buffer += size;
+					}
+			}
+
+			break;
+		}
+
+		case MPC_LOWCOMM_MESSAGE_PACK_ABSOLUTE:
+		{
+			size_t i;
+			size_t j;
+			size_t size;
+			size = req->header.msg_size;
+
+			if ( size > 0 )
+			{
+				for ( i = 0; i < req->dt.count; i++ )
+					for ( j = 0; j < req->dt.list.absolute[i].count; j++ )
+					{
+						size = ( req->dt.list.absolute[i].ends[j] -
+						         req->dt.list.absolute[i].begins[j] +
+						         1 ) * req->dt.list.absolute[i].elem_size;
+						memcpy ( buffer, ( ( char * ) ( req->dt.list.absolute[i].addr ) ) +
+						         req->dt.list.absolute[i].begins[j] *
+						         req->dt.list.absolute[i].elem_size, size );
+						buffer += size;
+					}
+			}
+
+			break;
+		}
+		default:
+			not_reachable();
+        }
+}
+
+void mpc_lowcomm_request_unpack(void *request, void *buffer)
+{
+        size_t i, j;
+        size_t size;
+        mpc_lowcomm_request_t *req = (mpc_lowcomm_request_t *)request;
+        switch (req->dt_type) {
+        case MPC_LOWCOMM_REQUEST_PACK:
+                size = req->header.msg_size;
+                if ( size > 0 ) {
+                        size_t total = 0;
+                        char skip = 0;
+
+                        for (i=0; i < req->dt.count; i++) {
+                                for (j=0; (j<req->dt.list.std[i].count) && !skip; j++)
+                                {
+                                        size = ( req->dt.list.std[i].ends[j] -
+                                                 req->dt.list.std[i].begins[j] +
+                                                 1 ) * req->dt.list.std[i].elem_size;
+
+                                        mpc_common_nodebug("%p - %p \n", req->dt.list.std[i].begins[j], 
+                                                           req->dt.list.std[i].ends[j]); 
+                                        if (total + size > req->header.msg_size)
+                                        {
+                                                skip = 1;
+                                                size = req->header.msg_size - total;
+                                        }
+
+                                        memcpy(((char *)(req->dt.list.std[i].addr)) +
+                                               req->dt.list.std[i].begins[j] *
+                                               req->dt.list.std[i].elem_size, buffer, size);
+                                        buffer += size;
+                                        total += size;
+                                        assume (total <= req->header.msg_size);
+                                }
+                        }
+                }
+                break;
+        case MPC_LOWCOMM_REQUEST_PACK_ABSOLUTE:
+                size = req->header.msg_size;
+                if ( size > 0 ) {
+                        size_t total = 0;
+                        char skip = 0;
+
+                        for (i=0; i < req->dt.count; i++) {
+                                for (j = 0; (j < req->dt.list.absolute[i].count) && !skip; j++) {
+                                        size = ( req->dt.list.absolute[i].ends[j] -
+                                                 req->dt.list.absolute[i].begins[j] +
+                                                 1 ) * req->dt.list.absolute[i].elem_size;
+
+                                        mpc_common_nodebug("%p - %p \n", req->dt.list.std[i].begins[j], 
+                                                           req->dt.list.std[i].ends[j]); 
+                                        if ( total + size > req->header.msg_size )
+                                        {
+                                                skip = 1;
+                                                size = req->header.msg_size - total;
+                                        }
+
+                                        memcpy ( ( ( char * ) ( req->dt.list.absolute[i].addr ) ) +
+                                                 req->dt.list.absolute[i].begins[j] *
+                                                 req->dt.list.absolute[i].elem_size, buffer, size );
+                                        buffer += size;
+                                        total += size;
+                                        assume(total <= req->header.msg_size);
+                                }
+                        }
+                }
+                break;
+        default:
+                not_reachable();
+        }
+}
+
+void mpc_lowcomm_request_add_pack(mpc_lowcomm_request_t *req, void *adr,
+                                  const unsigned int nb_items,
+                                  const size_t elem_size,
+                                  unsigned long *begins,
+                                  unsigned long *ends)
+{
+	size_t step;
+
+        req->dt_type = MPC_LOWCOMM_REQUEST_PACK;
+        req->dt_magic = 0xDDDDDDDD;
+	if(req->dt.count >= req->dt.max_count)
+	{
+		req->dt.max_count += SCTK_PACK_REALLOC_STEP;
+		req->dt.list.std   =
+		        sctk_realloc(req->dt.list.std,
+		                     req->dt.max_count *
+		                     sizeof(mpc_lowcomm_request_pack_std_list_t) );
+	}
+
+	step = req->dt.count;
+	req->dt.list.std[step].count     = nb_items;
+	req->dt.list.std[step].begins    = begins;
+	req->dt.list.std[step].ends      = ends;
+	req->dt.list.std[step].addr      = adr;
+	req->dt.list.std[step].elem_size = elem_size;
+	req->dt.count++;
+}
+
+void mpc_lowcomm_request_add_pack_absolute(mpc_lowcomm_request_t *req,
+                                           const void *adr, const unsigned int nb_items,
+                                           const size_t elem_size,
+                                           long *begins,
+                                           long *ends)
+{
+	size_t step;
+
+        req->dt_type  = MPC_LOWCOMM_REQUEST_PACK_ABSOLUTE;
+        req->dt_magic = 0xDDDDDDDD;
+	if(req->dt.count >= req->dt.max_count)
+	{
+		req->dt.max_count    += SCTK_PACK_REALLOC_STEP;
+		req->dt.list.absolute =
+		        sctk_realloc(req->dt.list.absolute,
+		                     req->dt.max_count *
+		                     sizeof(mpc_lowcomm_request_pack_absolute_list_t) );
+	}
+
+	step = req->dt.count;
+	req->dt.list.absolute[step].count     = nb_items;
+	req->dt.list.absolute[step].begins    = begins;
+	req->dt.list.absolute[step].ends      = ends;
+	req->dt.list.absolute[step].addr      = adr;
+	req->dt.list.absolute[step].elem_size = elem_size;
+	req->dt.count++;
+}
+#endif
+
 void mpc_lowcomm_ptp_message_add_pack(mpc_lowcomm_ptp_message_t *msg, void *adr,
                                       const unsigned int nb_items,
                                       const size_t elem_size,
@@ -3268,6 +3458,8 @@ int mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
         /* fill up request */
         lcp_request_param_t param = {
                 .recv_info = &req->recv_info,
+                .datatype  = req->dt_magic ==  0xDDDDDDDD ? 
+                        LCP_DATATYPE_DERIVED : LCP_DATATYPE_CONTIGUOUS,
         };
         return lcp_tag_send_nb(ep, task, data, size, req, &param);
 #else
@@ -3296,6 +3488,8 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
         }
         lcp_request_param_t param = {
                 .recv_info = &req->recv_info,
+                .datatype  = req->dt_magic == 123456 ? 
+                        LCP_DATATYPE_DERIVED : LCP_DATATYPE_CONTIGUOUS,
         };
         return lcp_tag_recv_nb(task, data, size, req, &param);
 #else
@@ -3439,8 +3633,9 @@ int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destinat
                                 const mpc_lowcomm_communicator_t comm, int *flag, mpc_lowcomm_status_t *status)
 {
 #ifdef MPC_LOWCOMM_PROTOCOL
+        //FIXME: move code to mpc_lowcomm_iprobe
         int rc = MPC_LOWCOMM_SUCCESS;
-        lcp_task_h task = NULL; int tid = mpc_common_get_task_rank();
+        lcp_task_h task = NULL;
         lcp_tag_recv_info_t recv_info = { 0 };
 	mpc_lowcomm_status_t status_init = MPC_LOWCOMM_STATUS_INIT;
 	int has_status = 1;
@@ -3451,10 +3646,10 @@ int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destinat
 		*status = status_init;
 	}
 
-        lcp_context_task_get(lcp_ctx_loc, tid, &task);
+        lcp_context_task_get(lcp_ctx_loc, world_destination, &task);
         if (task == NULL) {
                 mpc_common_debug_fatal("LCP: Could not find task with tid %d.",
-                                       tid);
+                                       world_destination);
         }
 
         rc = lcp_tag_probe_nb(task, world_source, tag, 
@@ -3945,7 +4140,14 @@ static void __initialize_drivers()
 	_mpc_lowcomm_monitor_setup();
 
 #ifdef MPC_LOWCOMM_PROTOCOL
-	rc = lcp_context_create(&lcp_ctx_loc, 0 /* empty flag */);
+        lcp_context_param_t param = {
+                .flags = LCP_CONTEXT_DATATYPE_OPS,
+                .dt_ops = {
+                        .pack   = mpc_lowcomm_request_pack,
+                        .unpack = mpc_lowcomm_request_unpack,
+                }
+        };
+	rc = lcp_context_create(&lcp_ctx_loc, &param);
 	if (rc != MPC_LOWCOMM_SUCCESS) {
 		mpc_common_debug_fatal("LCP: context creation failed");
 	}

@@ -370,6 +370,7 @@ void sctk_get_iovec_in_buffer( mpc_lowcomm_ptp_message_t *msg, struct iovec **io
 	}
 }
 
+
 void sctk_net_copy_in_buffer ( mpc_lowcomm_ptp_message_t *msg,
                                char *buffer )
 {

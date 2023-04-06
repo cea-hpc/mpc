@@ -41,6 +41,9 @@ void sctk_net_copy_msg_from_iovec( mpc_lowcomm_ptp_message_content_to_copy_t *, 
 void sctk_net_copy_in_buffer ( mpc_lowcomm_ptp_message_t *msg,
                                char *buffer );
 
+void mpc_lowcomm_request_pack(void *request, void *buffer);
+void mpc_lowcomm_request_unpack(void *request, void *buffer);
+
 void *sctk_net_if_one_msg_in_buffer ( mpc_lowcomm_ptp_message_t *msg );
 
 size_t sctk_net_determine_message_size ( mpc_lowcomm_ptp_message_t *msg );

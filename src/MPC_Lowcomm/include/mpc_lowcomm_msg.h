@@ -426,6 +426,20 @@ void mpc_lowcomm_ptp_message_header_clear(mpc_lowcomm_ptp_message_t *tmp, mpc_lo
 
 mpc_lowcomm_ptp_message_t *mpc_lowcomm_ptp_message_header_create(mpc_lowcomm_ptp_message_type_t msg_type);
 
+#ifdef MPC_LOWCOMM_PROTOCOL
+void mpc_lowcomm_request_add_pack(mpc_lowcomm_request_t *req, void *adr,
+                                  const unsigned int nb_items,
+                                  const size_t elem_size,
+                                  unsigned long *begins,
+                                  unsigned long *ends);
+
+void mpc_lowcomm_request_add_pack_absolute(mpc_lowcomm_request_t *req,
+                                           const void *adr, const unsigned int nb_items,
+                                           const size_t elem_size,
+                                           long *begins,
+                                           long *ends);
+#endif
+
 void mpc_lowcomm_ptp_message_set_contiguous_addr(mpc_lowcomm_ptp_message_t *restrict msg, const void *restrict addr, const size_t size);
 
 void mpc_lowcomm_ptp_message_add_pack(mpc_lowcomm_ptp_message_t *msg, void *adr, const unsigned int nb_items,

@@ -5,6 +5,7 @@
 #include "lcp_mem.h"
 #include "lcp_context.h"
 #include "lcp_task.h"
+#include "lcp_datatype.h"
 
 #include "sctk_alloc.h"
 #include "sctk_net_tools.h"
@@ -134,6 +135,10 @@ int lcp_send_rput_common(lcp_request_t *super, lcp_mem_h rmem)
         }
         per_ep_length[last_iface] += super->send.length % num_used_ifaces;
 
+        /* Get source address */
+        void *start = super->datatype & LCP_DATATYPE_CONTIGUOUS ?
+                super->send.buffer : super->state.pack_buf;
+
         super->state.comp_stg = 1;
         remaining   = super->send.length;
         offset      = 0;
@@ -155,7 +160,7 @@ int lcp_send_rput_common(lcp_request_t *super, lcp_mem_h rmem)
 
                 //FIXME: error managment => NO_RESOURCE not handled
                 rc = lcp_send_do_put_zcopy(lcr_ep,
-                                           (uint64_t)super->send.buffer + offset,
+                                           (uint64_t)start + offset,
                                            offset,
                                            &(rmem->mems[super->state.cc]),
                                            length,
@@ -220,14 +225,16 @@ int lcp_send_am_rget_start(lcp_request_t *req)
         build_memory_bitmap(req->send.length, attr.iface.cap.rndv.min_frag_size,
                             req->ctx->num_resources, cc, &(req->state.lmem->bm));
 
+        /* Get source address */
+        void *start = req->datatype & LCP_DATATYPE_CONTIGUOUS ?
+                req->send.buffer : req->state.pack_buf;
         /* Register and pack memory pin context that will be sent to remote */
         //FIXME: having the bitmap in the request state seems not useful. Could
         //       be only in the lcp_mem_h
         rc = lcp_mem_reg_from_map(req->send.ep->ctx, 
                                   req->state.lmem,
                                   req->state.lmem->bm,
-                                  req->send.buffer, 
-                                  req->send.length);
+                                  start, req->send.length);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
@@ -274,13 +281,17 @@ int lcp_send_am_rput_start(lcp_request_t *req)
         build_memory_bitmap(req->send.length, attr.iface.cap.rndv.min_frag_size,
                             req->ctx->num_resources, cc, &(req->state.lmem->bm));
 
+        /* Get source address */
+        void *start = req->datatype & LCP_DATATYPE_CONTIGUOUS ?
+                req->send.buffer : req->state.pack_buf;
+
         /* Register and pack memory pin context that will be sent to remote */
         //FIXME: having the bitmap in the request state seems not useful. Could
         //       be only in the lcp_mem_h
         rc = lcp_mem_reg_from_map(req->send.ep->ctx, 
                                   req->state.lmem,
                                   req->state.lmem->bm,
-                                  req->send.buffer, 
+                                  start, 
                                   req->send.length);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
@@ -314,6 +325,24 @@ int lcp_send_rndv_am_start(lcp_request_t *req)
         }
         /* delete from pending list on completion */
         req->flags |= LCP_REQUEST_DELETE_FROM_PENDING; 
+
+
+        //FIXME: below piece of code can be factorized with
+        //       lcp_send_rndv_offload_start 
+        /* Buffer must be allocated and data packed to make it contiguous
+         * and use zcopy and memory registration. */
+        if (req->datatype & LCP_DATATYPE_DERIVED) {
+                req->state.pack_buf = sctk_malloc(req->send.length);
+                if (req->state.pack_buf == NULL) {
+                        mpc_common_debug_error("LCP: could not allocate pack "
+                                               "buffer");
+                        return MPC_LOWCOMM_ERROR;
+                }
+
+                lcp_datatype_pack(req->ctx, req, req->datatype,
+                                  req->state.pack_buf, NULL, 
+                                  req->send.length);
+        }
 
         switch (ep->ctx->config.rndv_mode) {
         case LCP_RNDV_GET:
@@ -361,12 +390,28 @@ int lcp_rndv_matched(lcp_request_t *rreq,
         rreq->state.offset      = 0;
         rreq->seqn              = hdr->base.seqn;
 
+        //FIXME: below piece of code can be factorized with
+        //       lcp_send_rndv_offload_start 
+        /* Buffer must be allocated and data packed to make it contiguous
+         * and use zcopy and memory registration. */
+        if (rreq->datatype & LCP_DATATYPE_DERIVED) {
+                rreq->state.pack_buf = sctk_malloc(rreq->send.length);
+                if (rreq->state.pack_buf == NULL) {
+                        mpc_common_debug_error("LCP: could not allocate pack "
+                                               "buffer");
+                        return MPC_LOWCOMM_ERROR;
+                }
+        }
+
         switch (rndv_mode) {
         case LCP_RNDV_PUT:
+                /* For RPUT, data is unpacked upon receiving fin message */
+                rreq->datatype |= LCP_DATATYPE_UNPACK;
                 rreq->state.mem_map = *(bmap_t *)(hdr + 1);
                 rc = lcp_recv_am_rput(rreq);
                 break;
         case LCP_RNDV_GET:
+                /* For RGET, data is unpacked upon completion */
                 rreq->state.comp = (lcr_completion_t) {
                         .comp_cb = lcp_request_complete_am_rget
                 };
@@ -412,6 +457,12 @@ void lcp_request_complete_am_rget(lcr_completion_t *comp)
                                                     req);
                 if (payload_size < 0) {
                         goto err;
+                }
+
+                if (req->datatype & LCP_DATATYPE_DERIVED) {
+                        lcp_datatype_unpack(req->ctx, req, req->datatype,
+                                            NULL, req->state.pack_buf, 
+                                            req->recv.send_length);
                 }
 
                 lcp_request_complete(req);
@@ -469,6 +520,10 @@ int lcp_recv_am_rget(lcp_request_t *req)
         }
         per_ep_length[last_iface] += req->send.length % num_used_ifaces;
 
+        /* Set starting address */
+        void *start = req->datatype & LCP_DATATYPE_CONTIGUOUS ? 
+                req->recv.buffer : req->state.pack_buf;
+
         req->state.comp_stg = 0;
         req->state.remaining = remaining = req->recv.send_length;
         offset               = 0;
@@ -487,7 +542,7 @@ int lcp_recv_am_rget(lcp_request_t *req)
                         per_ep_length[req->state.cc] : frag_length;
 
                 rc = lcp_send_do_get_zcopy(lcr_ep,
-                                           (uint64_t)req->recv.buffer + offset, 
+                                           (uint64_t)start + offset, 
                                            offset, 
                                            &(rmem->mems[req->state.cc]),
                                            length,
@@ -535,11 +590,13 @@ int lcp_recv_am_rput(lcp_request_t *req)
 
         /* Register and pack memory pin context that will be sent to remote */
         //FIXME: revise how the memory is registered by sender and receiver...
+        /* Set starting address */
+        void *start = req->datatype & LCP_DATATYPE_CONTIGUOUS ? 
+                req->recv.buffer : req->state.pack_buf;
         rc = lcp_mem_reg_from_map(req->ctx, 
                                   req->state.lmem,
                                   req->state.lmem->bm,
-                                  req->recv.buffer, 
-                                  req->recv.send_length);
+                                  start, req->recv.send_length);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
@@ -728,6 +785,17 @@ static int lcp_rndv_am_fin_handler(void *arg, void *data,
         }
 
         lcp_mem_deregister(req->ctx, req->state.lmem);
+
+        if (req->datatype & LCP_DATATYPE_DERIVED) {
+                if (req->datatype & LCP_DATATYPE_UNPACK) {
+                        lcp_datatype_unpack(req->ctx, req, req->datatype,
+                                            NULL, req->state.pack_buf, 
+                                            req->state.lmem->length);
+                }
+                /* Free buffer allocated by rndv */
+                sctk_free(req->state.pack_buf);
+        }
+
         lcp_request_complete(req);
 
 err:

@@ -45,8 +45,8 @@ int lcp_request_init_unexp_ctnr(lcp_unexp_ctnr_t **ctnr_p, void *data,
 int lcp_request_complete(lcp_request_t *req)
 {
 	mpc_common_debug("LCP: complete req=%p, comm_id=%llu, msg_id=%llu, "
-			 "seqn=%d", req, req->send.tag.comm_id, req->msg_id, 
-			 req->seqn);
+			 "seqn=%d, lcreq=%p", req, req->send.tag.comm_id, req->msg_id, 
+			 req->seqn, req->request);
 
         //FIXME: modifying mpc request here breaks modularity
         if (req->flags & LCP_REQUEST_RECV_TRUNC)

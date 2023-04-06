@@ -491,9 +491,8 @@ void lcp_context_task_get(lcp_context_h ctx, int tid, lcp_task_h *task_p)
                 *task_p = item->task;
         }
 }
-        
 
-int lcp_context_create(lcp_context_h *ctx_p, __UNUSED__ unsigned flags)
+int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
 {
 	int rc, i;
 	lcp_context_h ctx;	
@@ -507,6 +506,10 @@ int lcp_context_create(lcp_context_h *ctx_p, __UNUSED__ unsigned flags)
 		goto err;
 	}
 	memset(ctx, 0, sizeof(struct lcp_context));
+
+        if (param->flags & LCP_CONTEXT_DATATYPE_OPS) {
+                ctx->dt_ops = param->dt_ops;
+        }
 
 	/* init random seed to generate unique msg_id */
 	rand_seed_init();
