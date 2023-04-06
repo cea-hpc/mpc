@@ -156,9 +156,9 @@ MPC_ARG_FORCE_CPU_NB=""
 # Make sure MPC allocator is always used   #
 ############################################
 
-if test "x${MPC_ALLOCATOR}" = "xmpcalloc"; then
-    export LD_PRELOAD="@MPC_ALLOCATOR_PRELOAD@:$LD_PRELOAD"
-fi
+#if test "x${MPC_ALLOCATOR}" = "xmpcalloc"; then
+#    export LD_PRELOAD="@MPC_ALLOCATOR_PRELOAD@:$LD_PRELOAD"
+#fi
 
 ###########################################
 # Preload libasan if enabled in configure #

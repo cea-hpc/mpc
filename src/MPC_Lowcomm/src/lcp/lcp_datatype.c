@@ -45,8 +45,6 @@ int lcp_datatype_unpack(lcp_context_h ctx, lcp_request_t *req,
                 return length;
         }
 
-        mpc_common_debug("LCP: unpack size=%d, req=%p", length, req);
-
         switch (datatype) {
         case LCP_DATATYPE_CONTIGUOUS:
                memcpy(dest, src, length); 

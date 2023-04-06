@@ -3458,7 +3458,7 @@ int mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
         /* fill up request */
         lcp_request_param_t param = {
                 .recv_info = &req->recv_info,
-                .datatype  = req->dt_magic ==  0xDDDDDDDD ? 
+                .datatype  = req->dt_magic == 0xDDDDDDDD ? 
                         LCP_DATATYPE_DERIVED : LCP_DATATYPE_CONTIGUOUS,
         };
         return lcp_tag_send_nb(ep, task, data, size, req, &param);
@@ -3488,7 +3488,7 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
         }
         lcp_request_param_t param = {
                 .recv_info = &req->recv_info,
-                .datatype  = req->dt_magic == 123456 ? 
+                .datatype  = req->dt_magic == 0xDDDDDDDD ? 
                         LCP_DATATYPE_DERIVED : LCP_DATATYPE_CONTIGUOUS,
         };
         return lcp_tag_recv_nb(task, data, size, req, &param);
