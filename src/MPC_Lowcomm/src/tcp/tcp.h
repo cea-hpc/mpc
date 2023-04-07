@@ -70,6 +70,7 @@ typedef struct
 	size_t connection_infos_size;                        /**< Length of the connection_info field */
 	void * ( *tcp_thread_loop ) ( struct _mpc_lowcomm_endpoint_s * ); /**< Function to call when registering a route (RDMA/MULTIRAIL/TCP) */
 
+	mpc_common_spinlock_t lock; /**< Add route lock */
 	/* Config */
 	int bcopy_buf_size;
 	int zcopy_buf_size;

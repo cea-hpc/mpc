@@ -395,7 +395,9 @@ static int __tcp_on_demand_callback(mpc_lowcomm_peer_uid_t from,
 		return 1;
 	}
 
+        mpc_common_spinlock_lock(&(rail->network.tcp.lock));
 	__add_route( from, new_socket, rail, _MPC_LOWCOMM_ENDPOINT_DYNAMIC);
+        mpc_common_spinlock_unlock(&(rail->network.tcp.lock));
 
 	return 0;
 }
@@ -431,7 +433,9 @@ void * __accept_loop(void *prail)
 			continue;
 		}
 
+                mpc_common_spinlock_lock(&(rail->network.tcp.lock));
 		__add_route(remote_uid, new_socket, rail,_MPC_LOWCOMM_ENDPOINT_DYNAMIC);
+                mpc_common_spinlock_unlock(&(rail->network.tcp.lock));
 	}
 
 	return NULL;
@@ -468,6 +472,7 @@ void sctk_network_init_tcp_all(sctk_rail_info_t *rail, char *interface,
 
 	rail->network.tcp.interface = interface;
 	rail->network.tcp.tcp_thread_loop        = tcp_thread_loop;
+        mpc_common_spinlock_init(&(rail->network.tcp.lock), 0);
 
 	/* Start listening TCP socket */
 	__create_listening_socket(rail);
