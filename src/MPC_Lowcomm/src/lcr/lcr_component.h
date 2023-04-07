@@ -15,7 +15,10 @@ enum {
 #define LCR_COMPONENT_REGISTER(_component) \
         extern lcr_component_t *lcr_component_list; \
         MPC_STATIC_INIT { \
-               LL_APPEND(lcr_component_list, _component); \
+                static int init_done = 0; \
+                if(init_done) return; \
+                init_done = 1; \
+                LL_APPEND(lcr_component_list, _component); \
         }
 
 typedef struct lcr_device {
