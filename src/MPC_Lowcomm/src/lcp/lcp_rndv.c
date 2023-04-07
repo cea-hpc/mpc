@@ -42,7 +42,8 @@ static size_t lcp_rts_rget_pack(void *dest, void *data)
         int packed_size;
 
         hdr->base.comm = req->send.tag.comm_id;
-        hdr->base.src  = req->send.rndv.src;
+        hdr->base.src  = req->send.rndv.src_task;
+        hdr->base.dest = req->send.rndv.dest_task;
         hdr->base.tag  = req->send.rndv.tag;
         hdr->base.seqn = req->seqn;
 
@@ -61,7 +62,8 @@ static size_t lcp_rts_rput_pack(void *dest, void *data)
         lcp_request_t *req = data;
 
         hdr->base.comm = req->send.tag.comm_id;
-        hdr->base.src  = req->send.rndv.src;
+        hdr->base.src  = req->send.rndv.src_task;
+        hdr->base.dest = req->send.rndv.dest_task;
         hdr->base.tag  = req->send.rndv.tag;
         hdr->base.seqn = req->seqn;
 

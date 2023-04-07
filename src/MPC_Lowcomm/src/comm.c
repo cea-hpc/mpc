@@ -2676,24 +2676,20 @@ static inline void __mpc_comm_ptp_msg_wait(struct mpc_lowcomm_ptp_msg_progress_s
 
 		/* We try to poll for finding a message with a MPC_ANY_SOURCE source
 		 * also in case we are blocked we punctually poll any-source */
+#ifdef MPC_LOWCOMM_PROTOCOL
+                lcp_progress(lcp_ctx_loc);
+#else
 		if(request->header.source_task == MPC_ANY_SOURCE)
 		{
 			/* We try to poll for finding a message with a MPC_ANY_SOURCE source */
-#ifdef MPC_LOWCOMM_PROTOCOL
-			lcp_progress(lcp_ctx_loc);
-#else
 			_mpc_lowcomm_multirail_notify_anysource(polling_task_id, blocking);
-#endif
 		}
 		else if( (!recv_ptp) || (!send_ptp) )
 		{
 			/* We poll the network only if we need it (empty queues) */
-#ifdef MPC_LOWCOMM_PROTOCOL
-			lcp_progress(lcp_ctx_loc);
-#else
 			_mpc_lowcomm_multirail_notify_perform(remote_process, source_task_id, polling_task_id, blocking);
-#endif
 		}
+#endif
 
 
 		if( (request->request_type == REQUEST_SEND) && send_ptp)
