@@ -239,6 +239,22 @@ static inline void lcp_request_init_ack(lcp_request_t *ack_req, lcp_ep_h ep,
 static inline int lcp_request_send(lcp_request_t *req)
 {
         int rc;
+
+        /* First, check endpoint availability */
+        if (req->send.ep->state == LCP_EP_FLAG_CONNECTING) {
+                lcp_ep_progress_conn(req->ctx, req->send.ep);
+                if (req->send.ep->state == LCP_EP_FLAG_CONNECTING) {
+                        if (lcp_pending_create(req->ctx->pend, req, 
+                                               req->msg_id) == NULL) {
+                                rc = MPC_LOWCOMM_ERROR;
+                        }
+                        return MPC_LOWCOMM_SUCCESS;
+                } else if (lcp_pending_get_request(req->ctx->pend, 
+                                                   req->msg_id) != NULL) {
+                        lcp_pending_delete(req->ctx->pend, req->msg_id);
+                }
+        }
+
         switch((rc = req->send.func(req))) {
         case MPC_LOWCOMM_SUCCESS:
                 req->info->length = req->send.length;

@@ -83,19 +83,6 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
                               OPA_fetch_and_incr_int(&ep->seqn), msg_id,
                               param->datatype);
 
-        //FIXME: move this to lcp_request_send and add endpoint progression.
-        if (ep->state == LCP_EP_FLAG_CONNECTING) {
-                if (lcp_pending_create(ep->ctx->pend, req, 
-                                       req->msg_id) == NULL) {
-                        mpc_common_debug_error("LCP: could not create pending "
-                                              "send request.");
-                        rc = MPC_LOWCOMM_ERROR;
-                }
-                mpc_common_debug("LCP: pending req dest=%d, msg_id=%llu", 
-                                 req->send.tag.dest, msg_id);
-                return rc;
-        }
-
         rc = lcp_send_start(ep, req, param);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 mpc_common_debug_error("LCP: could not prepare send request.");
