@@ -6,7 +6,6 @@
 #include <alloca.h>
 
 #include "sctk_alloc.h"
-#include "mpc_common_flags.h"
 #include <lcr/lcr_component.h>
 #include "lcp_task.h"
 #include <uthash.h>
@@ -287,12 +286,7 @@ static int lcp_context_config_init(lcp_context_h ctx,
         rc = lcp_context_config_parse_list(config->transports,
                                            &ctx->config.selected_components,
                                            &ctx->config.num_selected_components);
-        printf("transports are %s, selected transports are %s\ndefault net config according to mpc_conf is %s\n", 
-                config->transports, 
-                ctx->config.selected_components[0],
-                option_name);
-        char *driver_name =  mpc_common_get_flags()->network_driver_name;
-        // printf("network %p passed as argument\n", f);
+
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
@@ -774,3 +768,15 @@ int lcp_context_fini(lcp_context_h ctx)
 	return MPC_LOWCOMM_SUCCESS;
 }
 
+// This is not supposed to exist, please remove asap when occurences are replaced : 
+// - lcp_tag.c in lcp_tag_send_ack()
+uint64_t mpc_lowcomm_communicator_uid_of(uint64_t comm_id, uint32_t destination){
+
+	uint64_t gid, uid;
+	mpc_lowcomm_communicator_t comm;
+	gid = mpc_lowcomm_monitor_get_gid();
+	comm_id |= gid << 32;
+	comm = mpc_lowcomm_get_communicator_from_id(comm_id);
+	uid = mpc_lowcomm_communicator_uid(comm, destination);
+	return uid;
+}

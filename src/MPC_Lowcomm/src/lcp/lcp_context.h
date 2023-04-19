@@ -139,4 +139,6 @@ struct lcp_context {
         lcp_dt_ops_t dt_ops; /* pack/unpack functions */
 };
 
+uint64_t mpc_lowcomm_communicator_uid_of(uint64_t comm_id, uint32_t destination);
+
 #endif 

@@ -700,7 +700,7 @@ int lcp_recv_am_rput(lcp_request_t *req)
                 goto err;
         }
         ack->super = req;
-        // initialize ack pending request. Ack id is request id.
+        // initialize pending request. Ack id is request id.
         if (lcp_pending_create(req->ctx->pend, req, req->msg_id) == NULL) {
                 mpc_common_debug_error("LCP: could not add pending message");
                 rc = MPC_LOWCOMM_ERROR;

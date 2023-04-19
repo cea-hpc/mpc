@@ -84,6 +84,4 @@ int lcp_ep_progress_conn(lcp_context_h ctx, lcp_ep_h ep);
 void lcp_ep_delete(lcp_ep_h ep);
 int lcp_ep_get_next_cc(lcp_ep_h ep);
 
-int lcp_ep_get_or_create(lcp_context_h ctx, uint64_t comm_id, uint32_t destination, lcp_ep_h *ep_p, unsigned flags);
-
 #endif

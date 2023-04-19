@@ -74,6 +74,17 @@ int lcp_send_start(lcp_ep_h ep, lcp_request_t *req,
 //FIXME: It is not clear wether count is the number of element or the length in
 //       bites. For now, the actual length in bites is given taking into account
 //       the datatypes and stuff...
+/**
+ * @brief Send a message.
+ * 
+ * @param ep endpoint to send the message
+ * @param task task
+ * @param buffer message
+ * @param count length of the message
+ * @param request request to send the message
+ * @param param request parameter used for offload flag
+ * @return int MPI_SUCCESS in case of success
+ */
 int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, 
                     size_t count, mpc_lowcomm_request_t *request,
                     const lcp_request_param_t *param)
@@ -90,8 +101,9 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
                 return MPC_LOWCOMM_ERROR;
         }
         req->flags |= LCP_REQUEST_MPI_COMPLETE;
+        OPA_incr_int(&ep->seqn);
+
         // initialize request
-        
         //FIXME: sequence number should be task specific. Following works in
         //       process-based but not in thread-based.
         //       Reorder is to be reimplemented.
@@ -100,7 +112,10 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
                                 ep, (void *)buffer, 
                                 OPA_fetch_and_incr_int(&ep->seqn), 
                                 msg_id, param->datatype);
-        req->msg_id = req->seqn;
+        
+        msg_id = lcp_msg_id(mpc_lowcomm_peer_get_rank((uint16_t)ep->uid),(uint16_t) req->seqn);
+        req->msg_id = msg_id;
+        mpc_common_debug("LCP: msg_id %ld for msg seq %d dest %d", msg_id, req->seqn, mpc_lowcomm_peer_get_rank(ep->uid));
 
         // if the endpoint is not yet connected
         if (ep->state == LCP_EP_FLAG_CONNECTING) {
@@ -114,6 +129,7 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
                 return rc;
         }
 
+
         // prepare request depending on its type
         rc = lcp_send_start(ep, req, param);
         if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -121,56 +137,10 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
                 return MPC_LOWCOMM_ERROR;
         }
 
+        if(request->synchronized)
+                lcp_pending_create(ep->ctx->pend, req, req->msg_id);
         // send the request
-        if(!request->synchronized)
-                rc = lcp_request_send(req);
-        // if synchronization is requested, wait for ack
-        else{
-
-                if (lcp_pending_create(ep->ctx->pend, req, req->msg_id) == NULL) {
-                        mpc_common_debug_error("LCP: could not add pending message");
-                        rc = MPC_LOWCOMM_ERROR;
-                        goto err;
-                }
-
-                mpc_common_debug("LCP: successfully added message %lu to pending list", req->msg_id);
-                lcp_request_t *ack;
-                sctk_rail_info_t *iface;
-                lcp_unexp_ctnr_t *match;
-        	LCP_CONTEXT_LOCK(ep->ctx);
-
-                void *buffer = NULL;
-                lcp_request_create(&ack);
-                if (ack == NULL) {
-                        mpc_common_debug_error("LCP: could not create ack request");
-                        return MPC_LOWCOMM_ERROR;
-                }
-                LCP_REQUEST_INIT_RECV(ack, ep->ctx, request, 0, buffer);
-                lcp_request_init_tag_recv(ack, param->recv_info);
-                iface = ep->ctx->resources[ep->ctx->priority_rail].iface;
-
-                mpc_common_debug("sending msg id %d", req->msg_id);
-                
-                rc = lcp_request_send(req);
-               req->state.offloaded = 0;
-
-                match = lcp_match_umq(ep->ctx->umq_table,                                (uint16_t)ack->recv.tag.comm_id,
-                                (int32_t)ack->recv.tag.tag,
-                                (int32_t)ack->recv.tag.src);
-                if(!match){
-
-                        // add the request to pendings
-                        lcp_append_prq(ep->ctx->prq_table, req,
-                                (uint16_t)req->recv.tag.comm_id,
-                                (int32_t)req->recv.tag.tag,
-                                (int32_t)req->recv.tag.src);
-                        lcp_progress(ep->ctx);
-
-                        LCP_CONTEXT_UNLOCK(ep->ctx);
-                }
-                
-                lcp_request_complete(ack);
-        }
+        rc = lcp_request_send(req);
         err:
                 return rc;
 }

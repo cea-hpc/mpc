@@ -431,15 +431,8 @@ void lcp_ep_get(lcp_context_h ctx, mpc_lowcomm_peer_uid_t uid, lcp_ep_h *ep_p)
  * @param flags unused
  * @return __UNUSED__ static int
  */
-int lcp_ep_get_or_create(lcp_context_h ctx, uint64_t comm_id, uint32_t destination, lcp_ep_h *ep_p, unsigned flags){
+int lcp_ep_get_or_create(lcp_context_h ctx, mpc_lowcomm_peer_uid_t uid, lcp_ep_h *ep_p, unsigned flags){
 
-	uint64_t gid, uid;
-	mpc_lowcomm_communicator_t comm;
-	gid = mpc_lowcomm_monitor_get_gid();
-	comm_id |= gid << 32;
-
-	comm = mpc_lowcomm_get_communicator_from_id(comm_id);
-	uid = mpc_lowcomm_communicator_uid(comm, destination);
 	lcp_ep_get(ctx, uid, ep_p);
 	if(!ep_p){
 		return lcp_ep_create(ctx, ep_p, uid, flags);

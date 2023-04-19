@@ -75,13 +75,13 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
                                       match->length - sizeof(lcp_rndv_hdr_t), LCP_RNDV_PUT);
 	// if request is matching an unexpected request and is rget type		
 	} else if (match->flags & LCP_RECV_CONTAINER_UNEXP_RGET) {
-	mpc_common_debug_info("LCP: matched rndv unexp req=%p, flags=%x", 
-				match, match->flags);
-	rc = lcp_rndv_matched(req, (lcp_rndv_hdr_t *)(match + 1),
-				match->length - sizeof(lcp_rndv_hdr_t),
-				LCP_RNDV_GET);
+		mpc_common_debug_info("LCP: matched rndv unexp req=%p, flags=%x", 
+					match, match->flags);
+		rc = lcp_rndv_matched(req, (lcp_rndv_hdr_t *)(match + 1),
+					match->length - sizeof(lcp_rndv_hdr_t),
+					LCP_RNDV_GET);
 	// else if request is matching a non-rendez-vous type unexpected request 
-	} else if (match->flags & LCP_RECV_CONTAINER_UNEXP_TAG) { // this works for flags from 4 to 7 (mask 0..01000)
+	} else if (match->flags & LCP_RECV_CONTAINER_UNEXP_TAG) {
 		mpc_common_debug("LCP: matched tag unexp req=%p, flags=%x", req, 
 				 match->flags);
                 lcp_tag_hdr_t *hdr = (lcp_tag_hdr_t *)(match + 1);
@@ -98,7 +98,7 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
                 req->info->length = match->length - sizeof(lcp_tag_hdr_t);
                 req->info->src    = hdr->src_tid;
                 req->info->tag    = hdr->tag;
-		if(match->flags == MPC_LOWCOMM_P2P_SYNC_MESSAGE)
+		if(match->flags & LCP_RECV_CONTAINER_UNEXP_TAG_SYNC)
 			lcp_tag_send_ack(req, hdr);
 
                 //TODO: free match structure ??

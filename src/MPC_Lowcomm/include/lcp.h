@@ -45,6 +45,10 @@ void lcp_ep_get(lcp_context_h ctx,
                 uint64_t uid, 
 		lcp_ep_h *ep);
 
+int lcp_ep_get_or_create(lcp_context_h ctx, 
+                uint64_t uid, lcp_ep_h *ep_p, 
+                unsigned flags);
+
 typedef struct lcp_tag_recv_info {
         size_t length;
         int32_t tag;

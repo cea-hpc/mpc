@@ -8,8 +8,19 @@
 #include "lcp_task.h"
 #include "lcp_datatype.h"
 
-#include "mpc_lowcomm_msg.h"
+#include "mpc_common_debug.h"
+#include "mpc_lowcomm_types.h"
 #include "sctk_alloc.h"
+
+
+uint64_t lcp_msg_id(uint16_t rank, uint16_t sequence){
+        uint64_t msg_id;
+
+        msg_id = rank; // dest is int 16
+        msg_id = msg_id << 32;
+        msg_id |= sequence; // hdr->seqn is int 16;
+        return msg_id;
+}
 
 /* ============================================== */
 /* Packing                                        */
@@ -39,6 +50,23 @@ size_t lcp_send_tag_pack(void *dest, void *data)
                           (void *)(hdr + 1), src, req->send.length);
 
 	return sizeof(*hdr) + req->send.length;
+}
+/**
+ * @brief Pack a message into an ack header
+ * 
+ * @param dest header
+ * @param data data to pack
+ * @return size_t size of packed data
+ */
+size_t lcp_send_ack_pack(void *dest, void *data)
+{
+	lcp_ack_hdr_t *hdr = dest;
+	lcp_request_t *req = data;
+	
+	hdr->src  = req->send.tag.src;
+	hdr->msg_id = req->msg_id;
+
+	return sizeof(*hdr);
 }
 
 /* ============================================== */
@@ -170,6 +198,7 @@ int lcp_recv_copy(lcp_request_t *req, lcp_tag_hdr_t *hdr, size_t length){
 	req->recv.recv_info->src    = hdr->src;
 	req->recv.recv_info->tag    = hdr->tag;
 	req->seqn = hdr->seqn;
+	return MPC_LOWCOMM_SUCCESS;
 }
 
 /* ============================================== */
@@ -189,7 +218,7 @@ int lcp_recv_copy(lcp_request_t *req, lcp_tag_hdr_t *hdr, size_t length){
  * @return int 
  */
 static int _lcp_am_tag_handler(lcp_request_t **request, void *arg, void *data,
-			  size_t length, 
+			  size_t length, int msg_flags,
 			  __UNUSED__ unsigned flags)
 {
 	int rc = MPC_LOWCOMM_SUCCESS;
@@ -217,10 +246,10 @@ static int _lcp_am_tag_handler(lcp_request_t **request, void *arg, void *data,
 	// if request is not matched
 	req = *request;
 	if (req == NULL) {
-                mpc_common_debug("LCP: recv unexp tag src=%d, length=%d",
-                                 hdr->src_tid, length);
+                mpc_common_debug("LCP: recv unexp tag src=%d, length=%d, sequence=%d",
+                                 hdr->src_tid, length, hdr->seqn);
 		rc = lcp_request_init_unexp_ctnr(&ctnr, hdr, length, 
-						 LCP_RECV_CONTAINER_UNEXP_TAG);
+						 msg_flags);
 		if (rc != MPC_LOWCOMM_SUCCESS) {
 			goto err;
 		}
@@ -235,8 +264,8 @@ static int _lcp_am_tag_handler(lcp_request_t **request, void *arg, void *data,
 	}
 	LCP_TASK_UNLOCK(task);
 		
-        mpc_common_debug("LCP: recv exp tag src=%d, length=%d",
-                         hdr->src_tid, length);
+        mpc_common_debug("LCP: recv exp tag src=%d, length=%d, sequence=%d",
+                         hdr->src_tid, length, hdr->seqn);
 	/* copy data to receiver buffer and complete request */
         lcp_datatype_unpack(req->ctx, req, req->datatype, 
                             req->recv.buffer, (void *)(hdr + 1),
@@ -255,41 +284,45 @@ err:
 
 int lcp_tag_send_ack(lcp_request_t *parent_request, lcp_tag_hdr_t *hdr){
 
-	int rc = MPC_LOWCOMM_SUCCESS;
 	int payload;
 
 	lcp_request_t *ack_request;
+	lcp_ack_hdr_t ack_hdr;
 
-	uint64_t gid, comm_id, src;
-	mpc_lowcomm_communicator_t comm;
 	unsigned flags;
 
 	lcp_ep_h ep;
 
 	parent_request->msg_id = parent_request->seqn;
 
-	lcp_ep_get_or_create(parent_request->ctx, hdr->comm, hdr->src, &ep, flags);
+	lcp_ep_get_or_create(parent_request->ctx, 
+		mpc_lowcomm_communicator_uid_of(hdr->comm, hdr->src), 
+		&ep, 
+		flags);
 
 	assert(ep);
 
-	mpc_common_debug("LCP: sending ack message");
+	mpc_common_debug("LCP: sending ack message for msg %ld", parent_request->seqn);
 	lcp_request_create(&ack_request);
 	if(ack_request == NULL){
 		mpc_common_debug("LCP: error creating ack request");
 	}
-	
-	LCP_REQUEST_INIT_SEND(ack_request, ep->ctx, parent_request->request, sizeof(parent_request->msg_id), 
-							ep, (void *)&parent_request->msg_id, OPA_fetch_and_incr_int(&ep->seqn), 
+
+	uint64_t ack_key = lcp_msg_id(mpc_lowcomm_peer_get_rank(mpc_lowcomm_monitor_get_uid()), parent_request->seqn);
+
+	LCP_REQUEST_INIT_SEND(ack_request, ep->ctx, parent_request->request, sizeof(ack_hdr), 
+							ep, (void *)&ack_hdr, parent_request->seqn, 
 							parent_request->msg_id);
-	mpc_common_debug("LCP: sending ack for request %d", parent_request->msg_id);
+	mpc_common_debug("LCP: sending ack for request %lu src %d", ack_hdr.msg_id, ack_hdr.src);
 	if (ack_request == NULL) {
 		return MPC_LOWCOMM_ERROR;
 	}
+	ack_request->msg_id = ack_key;
 
 	// send an active message using buffer copy from the endpoint ep
 	payload = lcp_send_do_am_bcopy(ep->lct_eps[ep->priority_chnl],
 									MPC_LOWCOMM_P2P_ACK_MESSAGE,
-									lcp_send_tag_pack,
+									lcp_send_ack_pack,
 									ack_request);
 	if (payload < 0) {
 			mpc_common_debug_error("LCP: error sending ack eager message");
@@ -299,7 +332,6 @@ int lcp_tag_send_ack(lcp_request_t *parent_request, lcp_tag_hdr_t *hdr){
 
 	lcp_request_complete(ack_request);
 
-err:
 	return MPC_LOWCOMM_SUCCESS;
 }
 
@@ -307,9 +339,9 @@ static int lcp_am_tag_handler(void *arg, void *data,
 				size_t length, 
 				__UNUSED__ unsigned flags)
 {
-	int rc;
+	int rc = MPC_LOWCOMM_SUCCESS;
 	lcp_request_t *req;
-	if(_lcp_am_tag_handler(&req, arg, data, length, flags) == MPC_LOWCOMM_SUCCESS && req)
+	if(_lcp_am_tag_handler(&req, arg, data, length, LCP_RECV_CONTAINER_UNEXP_TAG, flags) == MPC_LOWCOMM_SUCCESS && req)
 		lcp_request_complete(req);
 	return rc;
 }
@@ -319,41 +351,34 @@ static int lcp_am_tag_sync_handler(void *arg, void *data,
 				__UNUSED__ unsigned flags){
 	int rc;
 	lcp_request_t *req;
-	rc = _lcp_am_tag_handler(&req, arg, data, length, flags);
+	rc = _lcp_am_tag_handler(&req, arg, data, length, LCP_RECV_CONTAINER_UNEXP_TAG | LCP_RECV_CONTAINER_UNEXP_TAG_SYNC, flags);
 	
 	// From here if req is null it means the received request 
 	// was not matched so it is unexpected and added to the corresponding queue.
 	// That means we have to send the ack when it is matched and continue from now on.
 
-	if(req == NULL && rc == MPC_LOWCOMM_SUCCESS){
-		rc = MPC_LOWCOMM_SUCCESS;
-		goto err;
-	}
+	if(req == NULL && rc == MPC_LOWCOMM_SUCCESS)
+		return rc;
 
-	mpc_common_debug("LCP: received msg id %d", req->msg_id);
 	lcp_tag_hdr_t *hdr = data;
 
-
-	mpc_common_debug("LCP: 2 received msg id %d", req->msg_id);
 	lcp_tag_send_ack(req, hdr);
 	lcp_request_complete(req);
 
-	err:
-		return rc;
+	return rc;
 }
 
 static int lcp_am_tag_ack_handler(void *arg, void *data,
 				size_t length, 
 				__UNUSED__ unsigned flags){
-        int rc = MPC_LOWCOMM_SUCCESS;
+	int rc = MPC_LOWCOMM_SUCCESS;
 	
 	lcp_request_t *req;
 	lcp_context_h ctx = arg;
-	lcp_tag_hdr_t *hdr = (lcp_tag_hdr_t *)data;
-	uint64_t ack_msg_id = *(uint64_t*)(hdr + 1);
-	mpc_common_debug("handling ack for msg id %d", ack_msg_id);
+	lcp_ack_hdr_t *hdr = (lcp_ack_hdr_t *)data;
+	uint64_t ack_msg_id = hdr->msg_id;
 
-	mpc_common_debug_info("LCP: recv ack header src=%d, msg_id=%llu",
+	mpc_common_debug_info("LCP: recv ack header src=%d, msg_id=%lu",
 							hdr->src, ack_msg_id);
 	/* Retrieve request */
 	req = lcp_pending_get_request(ctx->pend, ack_msg_id);

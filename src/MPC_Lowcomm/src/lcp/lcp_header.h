@@ -36,8 +36,8 @@ typedef struct lcp_rndv_hdr {
  * 
  */
 typedef struct lcp_ack_hdr {
-	uint64_t msg_id;
 	int32_t  src;
+	uint64_t msg_id;
 } lcp_ack_hdr_t;
 
 /**
