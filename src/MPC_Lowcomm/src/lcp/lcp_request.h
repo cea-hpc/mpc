@@ -12,7 +12,6 @@
 #include "sctk_rail.h" 
 
 #include <sctk_alloc.h>
-#include "bitmap.h"
 
 enum {
 	LCP_REQUEST_RNDV_TAG            = LCP_BIT(0),
@@ -23,13 +22,16 @@ enum {
         LCP_REQUEST_RMA_COMPLETE        = LCP_BIT(4),
         LCP_REQUEST_OFFLOADED_RNDV      = LCP_BIT(5),
         LCP_REQUEST_RECV                = LCP_BIT(6),
-        LCP_REQUEST_SEND                = LCP_BIT(7)
+        LCP_REQUEST_SEND                = LCP_BIT(7),
+        LCP_REQUEST_NEED_PROGRESS       = LCP_BIT(8),
+        LCP_REQUEST_SM_REQ              = LCP_BIT(9),
 };
 
 enum {
 	LCP_RECV_CONTAINER_UNEXP_RGET = LCP_BIT(0),
 	LCP_RECV_CONTAINER_UNEXP_RPUT = LCP_BIT(1),
-	LCP_RECV_CONTAINER_UNEXP_TAG  = LCP_BIT(2)
+	LCP_RECV_CONTAINER_UNEXP_TAG  = LCP_BIT(2),
+	LCP_RECV_CONTAINER_UNEXP_SM   = LCP_BIT(3),
 };
 
 /* Store data for unexpected am messages
@@ -244,6 +246,8 @@ static inline int lcp_request_send(lcp_request_t *req)
         if (req->send.ep->state == LCP_EP_FLAG_CONNECTING) {
                 lcp_ep_progress_conn(req->ctx, req->send.ep);
                 if (req->send.ep->state == LCP_EP_FLAG_CONNECTING) {
+                        //FIXME: modify request progression managment.
+                        req->flags |= LCP_REQUEST_NEED_PROGRESS;
                         if (lcp_pending_create(req->ctx->pend, req, 
                                                req->msg_id) == NULL) {
                                 rc = MPC_LOWCOMM_ERROR;
@@ -251,6 +255,8 @@ static inline int lcp_request_send(lcp_request_t *req)
                         return MPC_LOWCOMM_SUCCESS;
                 } else if (lcp_pending_get_request(req->ctx->pend, 
                                                    req->msg_id) != NULL) {
+                        //FIXME: modify request progression managment.
+                        req->flags |= ~LCP_REQUEST_NEED_PROGRESS;
                         lcp_pending_delete(req->ctx->pend, req->msg_id);
                 }
         }

@@ -228,9 +228,10 @@ int lcr_tcp_get_attr(sctk_rail_info_t *rail,
         struct _mpc_lowcomm_config_struct_net_driver_tcp tcp_driver =
                 rail->runtime_config_driver_config->driver.value.tcp;
         attr->iface.cap.am.max_iovecs = 6; //FIXME: arbitrary value...
-        attr->iface.cap.am.max_bcopy = 0; /* TCP socket are blocking, hence 
-                                             no need for buffered copy. 
-                                             TODO: check MPI_BSend */
+        attr->iface.cap.am.max_bcopy = 0; /*FIXME: send() return whenever data has been
+                                            copied to kernel buf. So, potentiel benefit 
+                                            compared to zcopy...
+                                            TODO: check MPI_BSend */
         attr->iface.cap.am.max_zcopy = tcp_driver.max_msg_size; 
 
         attr->iface.cap.tag.max_bcopy = 0; /* No tag-matching capabilities */

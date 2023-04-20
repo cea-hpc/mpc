@@ -113,6 +113,7 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                                 break;
                         case PTL_EVENT_PUT_OVERFLOW:
                                 flags = LCR_IFACE_TM_OVERFLOW;
+                                /* fall through */
                         case PTL_EVENT_PUT:
                                 switch (ev.pt_index) {
                                 case LCR_PTL_PTE_IDX_TAG_EAGER:

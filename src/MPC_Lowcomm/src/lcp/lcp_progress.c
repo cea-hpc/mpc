@@ -11,6 +11,7 @@ int lcp_progress(lcp_context_h ctx)
 {
 	int i, rc = MPC_LOWCOMM_SUCCESS;
 
+        LCP_CONTEXT_LOCK(ctx);
 	for (i=0; i<ctx->num_resources; i++) {
 		sctk_rail_info_t *iface = ctx->resources[i].iface;
                 if (iface->iface_progress != NULL) {
@@ -21,8 +22,11 @@ int lcp_progress(lcp_context_h ctx)
 	lcp_pending_entry_t *entry_e, *entry_tmp;
         HASH_ITER(hh, ctx->pend->table, entry_e, entry_tmp) {
                 lcp_request_t *req = entry_e->req;
-                rc = lcp_request_send(req);
+                if (req->flags & LCP_REQUEST_NEED_PROGRESS)
+                        rc = lcp_request_send(req);
+
         }
+        LCP_CONTEXT_UNLOCK(ctx);
 
 	return rc;
 }

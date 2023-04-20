@@ -3454,7 +3454,7 @@ int mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
         /* fill up request */
         lcp_request_param_t param = {
                 .recv_info = &req->recv_info,
-                .datatype  = req->dt_magic == 0xDDDDDDDD ? 
+                .datatype  = req->dt_magic == (int)0xDDDDDDDD ? 
                         LCP_DATATYPE_DERIVED : LCP_DATATYPE_CONTIGUOUS,
         };
         return lcp_tag_send_nb(ep, task, data, size, req, &param);
@@ -3484,7 +3484,7 @@ int mpc_lowcomm_irecv(int src, void *data, size_t size, int tag,
         }
         lcp_request_param_t param = {
                 .recv_info = &req->recv_info,
-                .datatype  = req->dt_magic == 0xDDDDDDDD ? 
+                .datatype  = req->dt_magic == (int)0xDDDDDDDD ? 
                         LCP_DATATYPE_DERIVED : LCP_DATATYPE_CONTIGUOUS,
         };
         return lcp_tag_recv_nb(task, data, size, req, &param);
@@ -4137,11 +4137,13 @@ static void __initialize_drivers()
 
 #ifdef MPC_LOWCOMM_PROTOCOL
         lcp_context_param_t param = {
-                .flags = LCP_CONTEXT_DATATYPE_OPS,
+                .flags = LCP_CONTEXT_DATATYPE_OPS |
+                        LCP_CONTEXT_PROCESS_UID,
                 .dt_ops = {
                         .pack   = mpc_lowcomm_request_pack,
                         .unpack = mpc_lowcomm_request_unpack,
-                }
+                },
+                .process_uid = mpc_lowcomm_monitor_get_uid()
         };
 	rc = lcp_context_create(&lcp_ctx_loc, &param);
 	if (rc != MPC_LOWCOMM_SUCCESS) {

@@ -330,36 +330,6 @@ err:
         return rc;
 }
 
-int lcr_ptl_post_tag_search(sctk_rail_info_t *rail, lcr_tag_t tag,
-                            lcr_tag_t ign_tag, void *arg,
-                            lcr_pack_callback_t pack,
-                            unsigned flags)
-{
-        UNUSED(flags);
-        int rc = MPC_LOWCOMM_SUCCESS;
-        ptl_me_t me;
-        ptl_handle_me_t meh;
-        sctk_ptl_rail_info_t* srail     = &rail->network.ptl;
-        lcr_ptl_send_comp_t *ptl_comp;
-
-        /* complete the ME data, this ME will be appended to the PRIORITY_LIST */
-        me = (ptl_me_t) {
-                .ct_handle = PTL_CT_NONE,
-                        .ignore_bits = ign_tag.t,
-                        .match_bits  = tag.t,
-                        .match_id = SCTK_PTL_ANY_PROCESS,
-                        .min_free = 0,
-                        .length = NULL,
-                        .start = NULL,
-                        .uid = PTL_UID_ANY,
-                        .options = SCTK_PTL_ME_PUT_FLAGS    | 
-                                SCTK_PTL_ME_GET_FLAGS       |
-                                SCTK_PTL_ONCE
-        };
-
-
-}
-
 int lcr_ptl_unpost_tag_zcopy(sctk_rail_info_t *rail, lcr_tag_t tag)
 {
         int rc = MPC_LOWCOMM_SUCCESS;

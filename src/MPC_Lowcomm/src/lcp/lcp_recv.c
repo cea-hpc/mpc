@@ -60,6 +60,10 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 	}
 
 	LCP_TASK_UNLOCK(task);
+
+        if (match->flags & LCP_RECV_CONTAINER_UNEXP_SM) 
+                req->flags |= LCP_REQUEST_SM_REQ;
+
 	if (match->flags & LCP_RECV_CONTAINER_UNEXP_RPUT) {
 		mpc_common_debug_info("LCP: matched rndv unexp req=%p, flags=%x", 
 				      match, match->flags);

@@ -6,11 +6,13 @@
 #include "lcp_def.h"
 #include "lcp_common.h"
 
-/* Datatype */
+/* Context parameter flags */
 enum {
-        LCP_CONTEXT_DATATYPE_OPS = LCP_BIT(0)
+        LCP_CONTEXT_DATATYPE_OPS = LCP_BIT(0),
+        LCP_CONTEXT_PROCESS_UID  = LCP_BIT(1)
 };
 
+/* Datatype */
 typedef struct lcp_dt_ops {
         void (*pack)(void *context, void *buffer);
         void (*unpack)(void *context, void *buffer); 
@@ -19,6 +21,7 @@ typedef struct lcp_dt_ops {
 /* Context */
 typedef struct lcp_context_param {
         uint32_t     flags;
+        uint64_t     process_uid;
         lcp_dt_ops_t dt_ops;
 } lcp_context_param_t;
 

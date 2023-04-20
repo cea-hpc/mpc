@@ -274,6 +274,15 @@ struct _mpc_lowcomm_config_struct_net_driver_tcp
 };
 
 /******************************** STRUCTURE *********************************/
+/**Thread-based Shared Memory (TBSM) driver**/
+struct _mpc_lowcomm_config_struct_net_driver_tbsm
+{
+        size_t eager_limit;
+        size_t max_msg_size;
+        int    bcopy_buf_size;
+};
+
+/******************************** STRUCTURE *********************************/
 /**TCP-Based RDMA implementation**/
 struct _mpc_lowcomm_config_struct_net_driver_tcp_rdma
 {
@@ -345,6 +354,7 @@ struct _mpc_lowcomm_config_struct_net_driver
 		struct _mpc_lowcomm_config_struct_net_driver_ofi ofi;
 #endif
 		struct _mpc_lowcomm_config_struct_net_driver_tcp         tcp;
+		struct _mpc_lowcomm_config_struct_net_driver_tbsm        tbsm;
 		struct _mpc_lowcomm_config_struct_net_driver_shm         shm;
 	}                                               value;
 };
@@ -490,6 +500,8 @@ struct _mpc_lowcomm_config_struct_net_rail
 	int                                                   ondemand;
 	/**Defines if the rail has RDMA enabled.**/
 	int                                                   rdma;
+	/**Defines if the rail can send to self.**/
+	int                                                   self;
 	/**Define the driver config to use for this rail.**/
 	char                                                 config[MPC_CONF_STRING_SIZE];
 	/**List of gates to be applied in this config.**/

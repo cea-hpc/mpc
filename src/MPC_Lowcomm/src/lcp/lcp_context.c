@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <alloca.h>
 
 #include "sctk_alloc.h"
 #include <lcr/lcr_component.h>
@@ -151,15 +152,34 @@ err:
 	return rc;
 }
 
+static int str_in_list(char **list,
+                       int length,
+                       char *str)
+{
+        int i;
+
+        for (i = 0; i < length; i++) {
+                if (!strcmp(list[i], str)) {
+                        return 1;
+                }
+        }
+        return 0;
+}
+
 static int lcp_context_config_parse_list(const char *cfg_list,
                                          char ***list_p,
                                          int *length_p)
 {
         int length = 0, i = 0;
         char *token;
+        char *cfg_list_dup;
         char **list;
 
-        token = strtok((char *)cfg_list, ",");
+        /* Make a copy of config list */
+        cfg_list_dup = sctk_malloc((strlen(cfg_list)+1) * sizeof(char));
+        strcpy(cfg_list_dup, cfg_list);
+
+        token = strtok(cfg_list_dup, ",");
         while (token != NULL) {
                 length++;
                 token = strtok(NULL, ",");
@@ -174,7 +194,10 @@ static int lcp_context_config_parse_list(const char *cfg_list,
                 mpc_common_debug_error("LCP: could not allocate parse list");
                 return MPC_LOWCOMM_ERROR;
         }
-        token = strtok((char *)cfg_list, ",");
+
+        /* Reset duplicate that has been changed with strtok */
+        strcpy(cfg_list_dup, cfg_list);
+        token = strtok(cfg_list_dup, ",");
         while (token != NULL) {
                 if((list[i] = strdup(token)) == NULL) {
                         mpc_common_debug_error("LCP: could not allocate list token");
@@ -188,6 +211,8 @@ static int lcp_context_config_parse_list(const char *cfg_list,
         *list_p   = list;
         *length_p = length;
 
+        sctk_free(cfg_list_dup);
+
         return MPC_LOWCOMM_SUCCESS;
 }
 
@@ -198,10 +223,11 @@ static int lcp_context_config_init(lcp_context_h ctx,
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         int i, j;
+
         /* Check for multirail */
-        ctx->config.multirail_enabled = config->multirail_enabled;
-	ctx->config.rndv_mode         = (lcp_rndv_mode_t)config->rndv_mode;
-        ctx->config.offload           = config->offload;
+        ctx->config.multirail_enabled    = config->multirail_enabled;
+	ctx->config.rndv_mode            = (lcp_rndv_mode_t)config->rndv_mode;
+        ctx->config.offload              = config->offload;
 
         /* Get selected transports */
         rc = lcp_context_config_parse_list(config->transports,
@@ -211,8 +237,8 @@ static int lcp_context_config_init(lcp_context_h ctx,
                 goto err;
         }
 
-        /* Does not support heterogeous multirail */
-        if (ctx->config.num_selected_components > 1) {
+        /* Does not support heterogeous multirail (tsbm always counted) */
+        if (ctx->config.num_selected_components > 2) {
                 mpc_common_debug_error("LCP: heterogeous multirail not supported");
                 rc = MPC_LOWCOMM_ERROR;
                 goto free_component_list;
@@ -255,9 +281,9 @@ static int lcp_context_config_init(lcp_context_h ctx,
                 }
         }
 
-
         /* Does not support multirail with tcp */
-        if (!strcmp(ctx->config.selected_components[0], "tcp") &&
+        if (str_in_list(ctx->config.selected_components,  
+                        ctx->config.num_selected_components, "tcp") &&
             config->multirail_enabled) {
                 mpc_common_debug_warning("LCP: multirail not supported with tcp."
                                          " Disabling it...");
@@ -272,8 +298,9 @@ static int lcp_context_config_init(lcp_context_h ctx,
                 goto free_component_list;
         }
 
-        if (!strcmp(ctx->config.selected_components[0], "tcp") &&
-            ctx->config.num_selected_devices > 1               &&
+        if (str_in_list(ctx->config.selected_components,  
+                        ctx->config.num_selected_components, "tcp") &&
+            ctx->config.num_selected_devices > 1                    &&
             !ctx->config.multirail_enabled) {
                 mpc_common_debug_warning("LCP: cannot use multiple device with tcp."
                                          " Using only iface: %s.", 
@@ -343,52 +370,61 @@ static inline void lcp_context_resource_init(lcp_rsc_desc_t *resource_p,
         *resource_p = resource;
 }
 
-static void lcp_context_select_component(lcp_context_h ctx,
-                                         lcr_component_h *components,
-                                         int num_components,
-                                         int *cmpt_index_p,
-                                         int *max_ifaces_p)
+static void lcp_context_select_components(lcp_context_h ctx,
+                                          lcr_component_h *components,
+                                          int num_components,
+                                          int **cmpt_index_p,
+                                          int *max_ifaces_p)
 {
         int i, j;
-        int max_ifaces = -1;
-        int max_prio;
-        int cmpt_idx = -1;
+        int max_prio, cmpt_cnt;
+        int self_added = 0;
+        int *cmpt_idx;
+        int max_ifaces = 0;
         lcr_component_h cmpt;
         lcr_rail_config_t *config;
 
-        /* Multi component is not supported */
-	max_ifaces = 0; max_prio = 0;
+        /* Multi component is not supported (except with SHM) */
+        cmpt_cnt = 0; max_prio = 0;
+        cmpt_idx = alloca(num_components * sizeof(int));
+        memset(cmpt_idx, -1, num_components * sizeof(int));
 	for (i=0; i<(int)num_components; i++) {
 		cmpt = components[i];
 		config = _mpc_lowcomm_conf_rail_unfolded_get(cmpt->rail_name);
 		if (!ctx->config.user_defined) {
 			/* Get max ifaces from highest priority rail */
-			if (max_prio < config->priority && cmpt->num_devices > 0) {
-				max_ifaces = ctx->config.multirail_enabled ? 
-					config->max_ifaces : 1;
-				max_prio   = config->priority;
-				cmpt_idx   = i;
+			if ((max_prio < config->priority && cmpt->num_devices > 0) ||
+                            (config->self && !self_added)) {
+                                if (config->self) 
+                                        self_added = 1;
+                                max_ifaces += ctx->config.multirail_enabled ? 
+                                        config->max_ifaces : 1;
+				max_prio           = config->priority;
+				cmpt_idx[cmpt_cnt] = i;
+                                cmpt_cnt++;
 			}
 		} else {
 			for (j=0; j<(int)ctx->config.num_selected_components; j++) {
-				if (!strcmp(cmpt->name, ctx->config.selected_components[j]) &&
-						cmpt->num_devices > 0) {
-					cmpt_idx   = i;
-					max_ifaces = ctx->config.multirail_enabled ?
-						LCP_MIN(config->max_ifaces, (int)cmpt->num_devices) : 1;
+				if ((!strcmp(cmpt->name, ctx->config.selected_components[j]) &&
+						cmpt->num_devices > 0)) {
+					cmpt_idx[cmpt_cnt] = i;
+                                        max_ifaces += ctx->config.multirail_enabled ?
+                                                LCP_MIN(config->max_ifaces, (int)cmpt->num_devices) : 1;
+                                        cmpt_cnt++;
 				}
 			}
 		}
 	}
 
         *max_ifaces_p = max_ifaces;
-        *cmpt_index_p = cmpt_idx;
+        memcpy(*cmpt_index_p, cmpt_idx, num_components * sizeof(int));
 
-        if (cmpt_idx >= 0) {
-                mpc_common_debug_info("LCP: component %s was selected with %d max iface", 
-                                      components[cmpt_idx]->name, max_ifaces);
+        for (i = 0; i < cmpt_cnt; i++) {
+                mpc_common_debug_info("LCP: component %s was selected.", 
+                                      components[cmpt_idx[i]]->name);
         }
-
+        mpc_common_debug_info("LCP: total number of interface is %d.", 
+                              max_ifaces);
 }
 
 
@@ -399,7 +435,8 @@ static inline int lcp_context_resource_in_config(lcp_context_h ctx,
 
         for (i=0; i<(int)ctx->config.num_selected_devices; i++) {
                 if (!strcmp(device->name, ctx->config.selected_devices[i]) ||
-                    !strcmp(ctx->config.selected_devices[i], "any")) {
+                    !strcmp(ctx->config.selected_devices[i], "any") || 
+                    !strcmp(ctx->config.selected_devices[i], "tbsm")) {
                         return 1;
                 }
         }
@@ -412,8 +449,9 @@ static int lcp_context_add_resources(lcp_context_h ctx,
                                      unsigned num_components)
 {
 	int rc = MPC_LOWCOMM_SUCCESS;
-        int max_ifaces, cmpt_idx;
-        int i, j, nrsc;
+        int max_ifaces, idx; 
+        int *cmpt_idx;
+        int i, j, nrsc = 0;
         lcr_component_h cmpt;
         lcr_device_t dev;
 
@@ -427,8 +465,10 @@ static int lcp_context_add_resources(lcp_context_h ctx,
                 }
         }
 
-        lcp_context_select_component(ctx, components, num_components, 
-                                     &cmpt_idx, &max_ifaces);
+        cmpt_idx = alloca(num_components * sizeof(int));
+        memset(cmpt_idx, -1, num_components * sizeof(int));
+        lcp_context_select_components(ctx, components, num_components, 
+                                      &cmpt_idx, &max_ifaces);
 	//FIXME: mpc_print_config cannot abort otherwise mpcrun also abort and
 	//       nothing is launched
         //if (max_ifaces == 0) {
@@ -446,26 +486,35 @@ static int lcp_context_add_resources(lcp_context_h ctx,
         }
         ctx->num_resources = max_ifaces;
 
-        cmpt = components[cmpt_idx]; nrsc = 0;
-        for (j=0; j<(int)cmpt->num_devices; j++) {
-                dev = cmpt->devices[j];
-                if (!ctx->config.user_defined && nrsc < max_ifaces) {
-                        lcp_context_resource_init(&ctx->resources[nrsc],
-                                                  cmpt, &dev);
-                        nrsc++;
-                } else if (lcp_context_resource_in_config(ctx, &dev) && 
-                           nrsc < max_ifaces) {
-                        lcp_context_resource_init(&ctx->resources[nrsc],
-                                                  cmpt, &dev);
-                        nrsc++;
+        for (i = 0; i < (int)num_components; i++) {
+                if ((idx = cmpt_idx[i]) < 0) 
+                        continue;
+                cmpt = components[idx]; nrsc = 0;
+                for (j=0; j<(int)cmpt->num_devices; j++) {
+                        dev = cmpt->devices[j];
+                        if (!ctx->config.user_defined && nrsc < max_ifaces) {
+                                lcp_context_resource_init(&ctx->resources[nrsc],
+                                                          cmpt, &dev);
+                                nrsc++;
+                        } else if (lcp_context_resource_in_config(ctx, &dev) && 
+                                   nrsc < max_ifaces) {
+                                lcp_context_resource_init(&ctx->resources[nrsc],
+                                                          cmpt, &dev);
+                                nrsc++;
+                        }
                 }
         }
 
         if (nrsc == 0) {
                 mpc_common_debug_error("LCP: no devices found in list:"); 
-                for (j=0; j<(int)cmpt->num_devices; j++) {
-                        mpc_common_debug_error("LCP:\t %d) %s", j, 
-                                               cmpt->devices[j].name);
+                for (i = 0; i < (int)num_components; i++) {
+                        if ((idx = cmpt_idx[i]) < 0) 
+                                continue;
+                        cmpt = components[idx];
+                        for (j=0; j<(int)cmpt->num_devices; j++) {
+                                mpc_common_debug_error("LCP:\t %d) %s", j, 
+                                                       cmpt->devices[j].name);
+                        }
                 }
                 rc = MPC_LOWCOMM_ERROR;
         }
@@ -511,8 +560,16 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
                 ctx->dt_ops = param->dt_ops;
         }
 
+        if (!(param->flags & LCP_CONTEXT_PROCESS_UID)) {
+                mpc_common_debug_error("LCP: process uid not set");
+                rc = MPC_LOWCOMM_ERROR;
+                goto out_free_ctx;
+        }
+        ctx->process_uid = param->process_uid;
+
 	/* init random seed to generate unique msg_id */
 	rand_seed_init();
+        OPA_store_int(&ctx->msg_id, 0);
 
         /* init match uid when using match request */
         OPA_store_int(&ctx->muid, 0);
@@ -600,11 +657,7 @@ int lcp_context_fini(lcp_context_h ctx)
 	/* Free allocated endpoints */
 	lcp_ep_ctx_t *e_ep = NULL, *e_ep_tmp = NULL; 
 	HASH_ITER(hh, ctx->ep_ht, e_ep, e_ep_tmp) {
-		for (i=0; i<e_ep->ep->num_chnls; i++) {
-			sctk_free(e_ep->ep->lct_eps[i]);
-		}
-		sctk_free(e_ep->ep->lct_eps);
-		sctk_free(e_ep->ep);
+                lcp_ep_delete(e_ep->ep);
 		HASH_DELETE(hh, ctx->ep_ht, e_ep);
 		sctk_free(e_ep);
 	}

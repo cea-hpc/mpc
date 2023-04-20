@@ -90,6 +90,11 @@ libmpclowcomm_la_SOURCES +=./ofi/ofi.c ./ofi/ofi_msg.c ./ofi/ofi_rdma.c ./ofi/of
 endif
 
 if LCP_ENABLED
+libmpclowcomm_la_SOURCES += ./tbsm/tbsm.c
+AM_CPPFLAGS += -I$(abs_src_dir)/tbsm/
+endif
+
+if LCP_ENABLED
 AM_CPPFLAGS += -I$(abs_src_dir)/lcp/
 AM_CPPFLAGS += -I$(abs_src_dir)/lcr/
 libmpclowcomm_la_SOURCES += ./lcp/lcp_context.c ./lcp/lcp_ep.c ./lcp/lcp_pending.c ./lcp/lcp_progress.c ./lcp/lcp_recv.c ./lcp/lcp_send.c ./lcp/lcp_tag_lists.c ./lcp/lcp_probe.c ./lcp/lcp_task.c

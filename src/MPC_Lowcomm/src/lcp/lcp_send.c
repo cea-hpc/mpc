@@ -32,10 +32,10 @@ int lcp_send_start(lcp_ep_h ep, lcp_request_t *req,
                         rc = lcp_send_rndv_offload_start(req);
                 }
         } else {
-                //NOTE: multiplexing might now always be efficient (IO NUMA
+                //NOTE: multiplexing might not always be efficient (IO NUMA
                 //      effects). A specific scheduling policy should be 
                 //      implemented to decide
-                req->state.cc = (ep->rr_cc = ep->rr_cc + 1) % ep->num_chnls;
+                req->state.cc = lcp_ep_get_next_cc(ep);
                 req->state.offloaded = 0;
                 //FIXME: size set in the middle of nowhere...
                 size = req->send.length + sizeof(lcp_tag_hdr_t);
@@ -67,7 +67,7 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
         int rc;
         lcp_request_t *req;
 
-        uint64_t msg_id = lcp_rand_uint64();
+        uint64_t msg_id = OPA_fetch_and_incr_int(&(ep->ctx->msg_id));
 
         rc = lcp_request_create(&req);
         if (rc != MPC_LOWCOMM_SUCCESS) {

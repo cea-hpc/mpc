@@ -48,26 +48,31 @@ typedef struct lcp_ep_config {
 
 } lcp_ep_config_t;
 
-typedef struct lcp_ep {
-	lcp_ep_config_t ep_config;
+struct lcp_ep {
+        lcp_ep_config_t ep_config;
 
-	lcp_chnl_idx_t priority_chnl;
-	lcp_chnl_idx_t rr_cc; /* Round-Robin Communication Chanel */
+        lcp_chnl_idx_t priority_chnl;
+        lcp_chnl_idx_t cc; /* Round-Robin Communication Chanel */
+        lcp_chnl_idx_t next_cc; /* Next cc to be used */
 
-	lcp_ep_flags_t flags;
-	int state;
+        lcp_ep_flags_t flags;
+        int state;
 
-	lcp_context_h ctx; /* Back reference to context */
+        lcp_context_h ctx; /* Back reference to context */
 
-	uint64_t uid; /* Remote peer uid */
+        uint64_t  uid; /* Remote peer uid */
         OPA_int_t seqn;
 
-	int num_chnls; /* Number of channels */
-	_mpc_lowcomm_endpoint_t **lct_eps;
-} lcp_ep_t;
+        int num_chnls; /* Number of channels */
+        _mpc_lowcomm_endpoint_t **lct_eps; //FIXME: rename (lct not ok)
+        bmap_t map; /* Bitmap into endpoint table of used channels */
+};
+
 
 int lcp_context_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p, 
 			  uint64_t uid, unsigned flags);
 int lcp_ep_progress_conn(lcp_context_h ctx, lcp_ep_h ep);
+void lcp_ep_delete(lcp_ep_h ep);
+int lcp_ep_get_next_cc(lcp_ep_h ep);
 
 #endif

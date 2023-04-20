@@ -289,6 +289,43 @@ static inline mpc_conf_config_type_t *__init_driver_shm(struct _mpc_lowcomm_conf
 	return ret;
 }
 
+static inline mpc_conf_config_type_t *__init_driver_tbsm(struct _mpc_lowcomm_config_struct_net_driver *driver)
+{
+	driver->type = SCTK_RTCFG_net_driver_tcp;
+
+	/*
+	Set defaults
+	*/
+
+	struct _mpc_lowcomm_config_struct_net_driver_tbsm *tbsm = &driver->value.tbsm;
+
+        tbsm->eager_limit    = 8192;
+        tbsm->max_msg_size   = INT_MAX;
+        tbsm->bcopy_buf_size = 8192;
+
+	/*
+	  Create the config object
+	*/
+
+	mpc_conf_config_type_t *ret = 
+                mpc_conf_config_type_init("tbsm",
+                                          PARAM("eagerlimit", 
+                                                &tbsm->eager_limit, 
+                                                MPC_CONF_INT, 
+                                                "Eager limit."),
+                                          PARAM("maxmsgsize", 
+                                                &tbsm->max_msg_size, 
+                                                MPC_CONF_LONG_INT, 
+                                                "Max message size."),
+                                          PARAM("bcopybufsize", 
+                                                &tbsm->bcopy_buf_size, 
+                                                MPC_CONF_INT, 
+                                                "Size of buffered copies."),
+                                          NULL);
+
+	return ret;
+}
+
 
 static inline mpc_conf_config_type_t *__init_driver_tcp(struct _mpc_lowcomm_config_struct_net_driver *driver)
 {
@@ -582,6 +619,10 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_default_driver(c
 	{
 		driver = __init_driver_shm(&new_conf->driver);
 	}
+	else if(!strcmp(driver_type, "tbsm"))
+	{
+		driver = __init_driver_tbsm(&new_conf->driver);
+	}
 	else if(!strcmp(driver_type, "tcp"))
 	{
 		driver = __init_driver_tcp(&new_conf->driver);
@@ -694,8 +735,9 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_init()
 {
 	__mpc_lowcomm_driver_conf_default();
 
-	mpc_conf_config_type_t * shm = __mpc_lowcomm_driver_conf_default_driver("shmconfigmpi", "shm");
-	mpc_conf_config_type_t * tcp = __mpc_lowcomm_driver_conf_default_driver("tcpconfigmpi", "tcp");
+	mpc_conf_config_type_t * shm  = __mpc_lowcomm_driver_conf_default_driver("shmconfigmpi", "shm");
+	mpc_conf_config_type_t * tcp  = __mpc_lowcomm_driver_conf_default_driver("tcpconfigmpi", "tcp");
+	mpc_conf_config_type_t * tbsm = __mpc_lowcomm_driver_conf_default_driver("tbsmconfigmpi", "tbsm");
 
 #if defined(MPC_USE_PORTALS)
 	mpc_conf_config_type_t * portals = __mpc_lowcomm_driver_conf_default_driver("portalsconfigmpi", "portals");
@@ -710,6 +752,7 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_init()
 	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("configs",
 	                                                        PARAM("shmconfigmpi", shm, MPC_CONF_TYPE, "Default configuration for the SHM driver"),
 	                                                        PARAM("tcpconfigmpi", tcp, MPC_CONF_TYPE, "Default configuration for the TCP driver"),
+	                                                        PARAM("tbsmconfigmpi", tbsm, MPC_CONF_TYPE, "Default configuration for the TBSM driver"),
 #if defined(MPC_USE_PORTALS)
 	                                                        PARAM("portalsconfigmpi", portals, MPC_CONF_TYPE, "Default configuration for the Portals4 Driver"),
 #endif
@@ -792,6 +835,7 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
 	char *topology,
 	int ondemand,
 	int rdma,
+        int self,
         int offload,
         int max_ifaces,
 	char *config)
@@ -819,6 +863,7 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
     snprintf(ret->topology, MPC_CONF_STRING_SIZE, "%s", topology);
     ret->ondemand = ondemand;
     ret->rdma = rdma;
+    ret->self = self;
     ret->offload = offload;
     ret->max_ifaces = max_ifaces;
     snprintf(ret->config, MPC_CONF_STRING_SIZE, config);
@@ -838,6 +883,7 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
 	                                                         PARAM("topology", ret->topology, MPC_CONF_STRING, "Topology to be bootstrapped on this network"),
 	                                                         PARAM("ondemand", &ret->ondemand, MPC_CONF_BOOL, "Are on-demmand connections allowed on this network"),
 	                                                         PARAM("rdma", &ret->rdma, MPC_CONF_BOOL, "Can this rail provide RDMA capabilities"),
+	                                                         PARAM("sm", &ret->self, MPC_CONF_BOOL, "Can this rail provide SHM capabilities"),
 	                                                         PARAM("offload", &ret->offload, MPC_CONF_BOOL, "Can this rail provide tag offload capabilities"),
 	                                                         PARAM("maxifaces", &ret->max_ifaces, MPC_CONF_INT, "Maximum number of rails instances that can be used for multirail"),
 	                                                         PARAM("config", ret->config, MPC_CONF_STRING, "Name of the rail configuration to be used for this rail"),
@@ -855,21 +901,23 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_rail_conf_init()
 	__mpc_lowcomm_rail_conf_default();
 
     /* Here we instanciate default rails */
-    mpc_conf_config_type_t *shm_mpi = __new_rail_conf_instance("shmmpi", 99, "default", "machine", "socket", "fully", 0, 0, 0, 0, "shmconfigmpi");
-    mpc_conf_config_type_t *tcp_mpi = __new_rail_conf_instance("tcpmpi", 9, "default", "machine", "socket", "ring", 1, 0, 0, 1, "tcpconfigmpi");
+    mpc_conf_config_type_t *shm_mpi = __new_rail_conf_instance("shmmpi", 99, "default", "machine", "socket", "fully", 0, 0, 1, 0, 0, "shmconfigmpi");
+    mpc_conf_config_type_t *tcp_mpi = __new_rail_conf_instance("tcpmpi", 9, "default", "machine", "socket", "ring", 1, 0, 0, 0, 1, "tcpconfigmpi");
+    mpc_conf_config_type_t *tbsm_mpi = __new_rail_conf_instance("tbsmmpi", 99, "default", "machine", "socket", "ring", 1, 0, 1, 0, 1, "tbsmconfigmpi");
 #ifdef MPC_USE_PORTALS
-    mpc_conf_config_type_t *portals_mpi = __new_rail_conf_instance("portalsmpi", 6, "default", "machine", "socket", "ring", 1, 1, 1, 1, "portalsconfigmpi");
+    mpc_conf_config_type_t *portals_mpi = __new_rail_conf_instance("portalsmpi", 6, "default", "machine", "socket", "ring", 1, 1, 0, 1, 1, "portalsconfigmpi");
 #endif
 #ifdef MPC_USE_INFINIBAND
-    mpc_conf_config_type_t *ib_mpi = __new_rail_conf_instance("ibmpi", 1, "!mlx.*", "machine", "socket", "ring", 1, 1, 0, 0, "ibconfigmpi");
+    mpc_conf_config_type_t *ib_mpi = __new_rail_conf_instance("ibmpi", 1, "!mlx.*", "machine", "socket", "ring", 1, 1, 0, 0, 0, "ibconfigmpi");
 #endif
 #ifdef MPC_USE_OFI
-    mpc_conf_config_type_t *ofi_mpi = __new_rail_conf_instance("ofimpi", 1, "default", "machine", "socket", "ring", 1, 1, 0, 0, "oficonfigmpi");
+    mpc_conf_config_type_t *ofi_mpi = __new_rail_conf_instance("ofimpi", 1, "default", "machine", "socket", "ring", 1, 1, 0, 0, 0, "oficonfigmpi");
 #endif
 
   	mpc_conf_config_type_t *rails = mpc_conf_config_type_init("rails",
 	                                                         PARAM("shmmpi", shm_mpi, MPC_CONF_TYPE, "A rail with only SHM"),
                                                              PARAM("tcpmpi", tcp_mpi, MPC_CONF_TYPE, "A rail with TCP and SHM"),
+                                                             PARAM("tbsmmpi", tbsm_mpi, MPC_CONF_TYPE, "A rail with Thread Based SHM"),
 #ifdef MPC_USE_PORTALS
                                                              PARAM("portalsmpi", portals_mpi, MPC_CONF_TYPE, "A rail with Portals 4"),
 #endif
@@ -893,6 +941,7 @@ mpc_conf_config_type_t * ___new_default_rail(char * name)
                                     "socket",
                                     "ring",
                                     1,
+                                    0,
                                     0,
                                     0,
                                     1,
@@ -1403,10 +1452,10 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_protocol_conf_init(void)
 {
 	struct _mpc_lowcomm_config_struct_protocol *proto = __mpc_lowcomm_proto_conf_init();
 
-        proto->multirail_enabled = 1; /* default multirail enabled */
-	proto->rndv_mode         = 1; /* default rndv get */
-	proto->offload           = 0; /* default no offload */
-        snprintf(proto->transports, MPC_CONF_STRING_SIZE, "tcp");
+        proto->multirail_enabled    = 1; /* default multirail enabled */
+	proto->rndv_mode            = 1; /* default rndv get */
+	proto->offload              = 0; /* default no offload */
+        snprintf(proto->transports, MPC_CONF_STRING_SIZE, "tcp,tbsm");
         snprintf(proto->devices, MPC_CONF_STRING_SIZE, "any");
 
 	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("protocol",

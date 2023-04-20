@@ -90,6 +90,8 @@ struct lcp_context {
 
 	unsigned flags;
         
+        OPA_int_t msg_id; /* unique message identifier */
+        
         OPA_int_t muid; /* matching unique identifier */
 	lcp_pending_table_t *match_ht; /* ht of matching request */
         
@@ -110,6 +112,8 @@ struct lcp_context {
 
 	int num_eps; /* number of endpoints created */
 	lcp_ep_ctx_t *ep_ht; /* Hash table of created endpoint */
+
+        uint64_t process_uid; /* process uid used for endpoint creation */
 
 	lcp_pending_table_t *pend; /* LCP send requests */
 

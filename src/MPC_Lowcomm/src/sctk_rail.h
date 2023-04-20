@@ -52,6 +52,7 @@ typedef union
 	_mpc_lowcomm_ib_rail_info_t ib;		/**< IB Rail Info */
 #endif
 	sctk_shm_rail_info_t shm;	/**< SHM Rail Info */
+        _mpc_lowcomm_tbsm_rail_info_t tbsm;
 #ifdef MPC_USE_PORTALS
 	sctk_ptl_rail_info_t ptl; /**< Portals Info */
 #endif
@@ -87,6 +88,7 @@ struct sctk_rail_ib_pin_ctx
 
 typedef union
 {
+        struct mpc_lowcomm_tbsm_rma_ctx sm;
 #ifdef MPC_USE_INFINIBAND
 	struct sctk_rail_ib_pin_ctx ib;
 #endif
@@ -134,7 +136,8 @@ enum {
 	LCR_IFACE_TM_NOVERFLOW      = LCR_BIT(1),
 	LCR_IFACE_TM_PERSISTANT_MEM = LCR_BIT(2),
 	LCR_IFACE_TM_SEARCH         = LCR_BIT(3),
-	LCR_IFACE_TM_ERROR          = LCR_BIT(4)
+	LCR_IFACE_TM_ERROR          = LCR_BIT(4),
+	LCR_IFACE_SM_REQUEST        = LCR_BIT(5),
 };
 
 /* Active message handler table entry */
@@ -240,6 +243,7 @@ struct sctk_rail_info_s
 	                                  case of the "none" topology */
 	char on_demand;	/**< If the rail allows on demand-connexions */
 	char is_rdma;        /**< If the rail supports RDMA operations */
+        int is_self;
 
 	/* Configuration Info */
 	struct _mpc_lowcomm_config_struct_net_rail *runtime_config_rail;  /**< Rail config */

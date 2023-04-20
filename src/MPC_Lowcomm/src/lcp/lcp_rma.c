@@ -181,7 +181,7 @@ int lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, size_t length,
 
         assert(param->flags & LCP_REQUEST_USER_REQUEST);
 
-        uint64_t msg_id = lcp_rand_uint64();
+        uint64_t msg_id = OPA_fetch_and_incr_int(&(ep->ctx->msg_id));
 
         rc = lcp_request_create(&req);
         if (rc != MPC_LOWCOMM_SUCCESS) {

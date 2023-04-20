@@ -109,8 +109,9 @@ int lcr_rail_init(lcr_rail_config_t *rail_config,
                                            target_core );
 
 	/* Checkout is RDMA */
-	int is_rdma = rail_config->rdma;
-	rail->is_rdma = is_rdma;
+	rail->is_rdma = rail_config->rdma;
+	/* Checkout is Shared Memory */
+	rail->is_self = rail_config->self;
 
 	/* Retrieve priority */
 	rail->priority = rail_config->priority;
