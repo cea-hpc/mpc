@@ -66,6 +66,8 @@ size_t lcp_send_ack_pack(void *dest, void *data)
 	hdr->src  = req->send.tag.src;
 	hdr->msg_id = req->msg_id;
 
+	mpc_common_debug("LCP: packing ack seq=%ld", req->msg_id);
+
 	return sizeof(*hdr);
 }
 
@@ -187,20 +189,6 @@ err:
 	return rc;
 }
 
-
-int lcp_recv_copy(lcp_request_t *req, lcp_tag_hdr_t *hdr, size_t length){
-
-	memcpy(req->recv.buffer, (void *)(hdr + 1), 
-			length - sizeof(lcp_tag_hdr_t));
-
-	/* set recv info for caller */
-	req->recv.recv_info->length = length - sizeof(lcp_tag_hdr_t);
-	req->recv.recv_info->src    = hdr->src;
-	req->recv.recv_info->tag    = hdr->tag;
-	req->seqn = hdr->seqn;
-	return MPC_LOWCOMM_SUCCESS;
-}
-
 /* ============================================== */
 /* Recv                                           */
 /* ============================================== */
@@ -275,8 +263,6 @@ static int _lcp_am_tag_handler(lcp_request_t **request, void *arg, void *data,
         req->info->length = length - sizeof(*hdr);
         req->info->src    = hdr->src_tid;
         req->info->tag    = hdr->tag;
-
-	lcp_request_complete(req);
 err:
 	return rc;
 }
@@ -284,6 +270,15 @@ err:
 
 int lcp_tag_send_ack(lcp_request_t *parent_request, lcp_tag_hdr_t *hdr){
 
+	lcp_task_h task;
+
+	lcp_request_param_t param = {
+			.recv_info = &parent_request->request->recv_info,
+			.datatype  = parent_request->request->dt_magic == (int)0xDDDDDDDD ? 
+					LCP_DATATYPE_DERIVED : LCP_DATATYPE_CONTIGUOUS,
+	};
+	int tid = mpc_common_get_task_rank();
+	lcp_context_task_get(parent_request->ctx, tid, &task);
 	int payload;
 
 	lcp_request_t *ack_request;
@@ -295,8 +290,9 @@ int lcp_tag_send_ack(lcp_request_t *parent_request, lcp_tag_hdr_t *hdr){
 
 	parent_request->msg_id = parent_request->seqn;
 
+
 	lcp_ep_get_or_create(parent_request->ctx, 
-		mpc_lowcomm_communicator_uid_of(hdr->comm, hdr->src), 
+		mpc_lowcomm_monitor_local_uid_of(hdr->src), 
 		&ep, 
 		flags);
 
@@ -308,12 +304,13 @@ int lcp_tag_send_ack(lcp_request_t *parent_request, lcp_tag_hdr_t *hdr){
 		mpc_common_debug("LCP: error creating ack request");
 	}
 
-	uint64_t ack_key = lcp_msg_id(mpc_lowcomm_peer_get_rank(mpc_lowcomm_monitor_get_uid()), parent_request->seqn);
+	uint64_t ack_key = lcp_msg_id(mpc_lowcomm_peer_get_rank(mpc_lowcomm_monitor_get_uid()), hdr->seqn);
 
-	LCP_REQUEST_INIT_SEND(ack_request, ep->ctx, parent_request->request, sizeof(ack_hdr), 
-							ep, (void *)&ack_hdr, parent_request->seqn, 
-							parent_request->msg_id);
-	mpc_common_debug("LCP: sending ack for request %lu src %d", ack_hdr.msg_id, ack_hdr.src);
+	LCP_REQUEST_INIT_SEND(ack_request, ep->ctx, task, parent_request->request, 
+							param.recv_info, sizeof(ack_hdr), 
+							ep, (void *)&ack_hdr, 
+							parent_request->seqn, parent_request->msg_id, param.datatype);
+	mpc_common_debug("LCP: sending ack for request %lu, src %d", ack_hdr.msg_id, ack_hdr.src);
 	if (ack_request == NULL) {
 		return MPC_LOWCOMM_ERROR;
 	}
@@ -388,6 +385,7 @@ static int lcp_am_tag_ack_handler(void *arg, void *data,
 			rc = MPC_LOWCOMM_ERROR;
 			goto err;
 	}
+	req->flags |= LCP_REQUEST_DELETE_FROM_PENDING;
 	lcp_request_complete(req);
 err:
         return rc;

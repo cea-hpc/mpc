@@ -770,13 +770,11 @@ int lcp_context_fini(lcp_context_h ctx)
 
 // This is not supposed to exist, please remove asap when occurences are replaced : 
 // - lcp_tag.c in lcp_tag_send_ack()
-uint64_t mpc_lowcomm_communicator_uid_of(uint64_t comm_id, uint32_t destination){
-
+// uint64_t mpc_lowcomm_communicator_uid_of(uint64_t comm_id, uint32_t destination){
+uint64_t mpc_lowcomm_communicator_uid_of(uint64_t comm_id){
 	uint64_t gid, uid;
 	mpc_lowcomm_communicator_t comm;
 	gid = mpc_lowcomm_monitor_get_gid();
 	comm_id |= gid << 32;
-	comm = mpc_lowcomm_get_communicator_from_id(comm_id);
-	uid = mpc_lowcomm_communicator_uid(comm, destination);
-	return uid;
+	return comm_id;
 }

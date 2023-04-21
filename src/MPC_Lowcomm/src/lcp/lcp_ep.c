@@ -434,7 +434,7 @@ void lcp_ep_get(lcp_context_h ctx, mpc_lowcomm_peer_uid_t uid, lcp_ep_h *ep_p)
 int lcp_ep_get_or_create(lcp_context_h ctx, mpc_lowcomm_peer_uid_t uid, lcp_ep_h *ep_p, unsigned flags){
 
 	lcp_ep_get(ctx, uid, ep_p);
-	if(!ep_p){
+	if(!*ep_p){
 		return lcp_ep_create(ctx, ep_p, uid, flags);
 	}
 	return MPC_LOWCOMM_SUCCESS;

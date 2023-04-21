@@ -218,6 +218,12 @@ static inline int lcp_request_send(lcp_request_t *req)
                 if (req->send.ep->state == LCP_EP_FLAG_CONNECTING) {
                         mpc_queue_push(&req->ctx->pending_queue, &req->queue);
                         return MPC_LOWCOMM_SUCCESS;
+                } else if (lcp_pending_get_request(req->ctx->pend, 
+                                                   req->msg_id) != NULL) {
+                        //FIXME: modify request progression managment.
+                        req->flags |= ~LCP_REQUEST_NEED_PROGRESS;
+                        // req->flags &= ~LCP_REQUEST_NEED_PROGRESS;
+                        lcp_pending_delete(req->ctx->pend, req->msg_id);
                 }
         }
 
