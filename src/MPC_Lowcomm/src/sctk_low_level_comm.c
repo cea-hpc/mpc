@@ -20,11 +20,13 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include <mpc_config.h>
+#include <mpc_lowcomm.h>
 #include <sctk_low_level_comm.h>
 #include <mpc_launch_pmi.h>
 #include <string.h>
+#include "alloc_mem.h"
+#include "mpc_common_debug.h"
 #include "sctk_checksum.h"
-#include "sctk_control_messages.h"
 #include <mpc_launch.h>
 
 #include <mpc_common_rank.h>
@@ -269,6 +271,14 @@ static size_t __mpc_memory_allocation_hook(size_t size_origin)
 
 void __mpc_memory_free_hook(void *ptr, size_t size)
 {
+	//mpc_common_debug_error("FREE %p size %ld", ptr, size);
+
+	if(mpc_lowcomm_allocmem_is_in_pool(ptr))
+	{
+		//mpc_common_debug_error("FREE pool");
+		mpc_lowcomm_allocmem_pool_free_size(ptr, size);
+	}
+
 	#ifdef MPC_USE_INFINIBAND
 	if(sctk_network_is_ib_used() )
 	{
@@ -292,8 +302,6 @@ void sctk_net_init_driver(char *name)
 	/* Initialize multi-rail engine */
 	_mpc_lowcomm_multirail_table_init();
 
-	/* Init Polling for control messages */
-	sctk_control_message_init();
 
 
 	/* Retrieve default network from config */
@@ -368,7 +376,7 @@ void sctk_net_init_driver(char *name)
 		}
 
 		/* Handle the case where no matching decice was found and flag as no_device */
-		if(rail_config_struct->subrails_size == -1)
+		if( (rail_config_struct->subrails_size == -1) && (mpc_common_get_process_rank() == 0) )
 		{
 			mpc_common_debug_warning("Rail %s expect %s devices but none were found", rail_config_struct->name, rail_config_struct->device);
 			mpc_common_debug_warning("MPC will fallback to TCP, consider changing your default network");

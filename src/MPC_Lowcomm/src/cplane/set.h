@@ -131,7 +131,7 @@ int _mpc_lowcomm_set_contains(_mpc_lowcomm_set_t * set, mpc_lowcomm_peer_uid_t p
  * @param arg argument to pass to the callback (if callback returns != 0 iteration stops)
  * @return int 0 if all OK
  */
-int _mpc_lowcomm_set_iterate(int (*set_cb)(_mpc_lowcomm_set_t *set, void *arg), void *arg);
+int _mpc_lowcomm_set_iterate(int (*set_cb)(mpc_lowcomm_monitor_set_t set, void *arg), void *arg);
 
 /**
  * @brief Retun a list of process set root UIDs (current is always first)

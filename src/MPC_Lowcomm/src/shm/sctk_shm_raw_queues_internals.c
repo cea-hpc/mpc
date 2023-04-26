@@ -42,13 +42,9 @@ sctk_shm_reset_region_queues(sctk_shm_region_infos_t *shmem, int rank)
     char *abs_ptr_item;
 
     item_asymm_addr = shmem->sctk_shm_asymm_addr;
-    memset((sctk_shm_list_t*) shmem->send_queue, 0, sizeof(sctk_shm_list_t));
     memset((sctk_shm_list_t*) shmem->recv_queue, 0, sizeof(sctk_shm_list_t));
-    memset((sctk_shm_list_t*) shmem->cmpl_queue, 0, sizeof(sctk_shm_list_t));
     memset((sctk_shm_list_t*) shmem->free_queue, 0, sizeof(sctk_shm_list_t));
     memset((sctk_shm_list_t *)shmem->ctrl_queue, 0, sizeof(sctk_shm_list_t));
-    //    memset((sctk_shm_list_t*) shmem->buff_queue, 0,
-    //    sizeof(sctk_shm_list_t));
 
     abs_ptr_item = item_asymm_addr + (size_t) 128;
 
@@ -92,9 +88,7 @@ sctk_shm_set_region_infos(void *shmem_base, size_t shmem_size,int cells_num)
 
     mpc_common_spinlock_init(&shmem->global_lock, 0);
 
-    shmem->send_queue = sctk_shm_get_region_queue_base(shmem_base,SCTK_SHM_CELLS_QUEUE_SEND);
     shmem->recv_queue = sctk_shm_get_region_queue_base(shmem_base,SCTK_SHM_CELLS_QUEUE_RECV);
-    shmem->cmpl_queue = sctk_shm_get_region_queue_base(shmem_base,SCTK_SHM_CELLS_QUEUE_CMPL);
     shmem->free_queue = sctk_shm_get_region_queue_base(shmem_base,SCTK_SHM_CELLS_QUEUE_FREE);
     shmem->ctrl_queue = sctk_shm_get_region_queue_base(shmem_base, SCTK_SHM_CELLS_QUEUE_CTRL);
 

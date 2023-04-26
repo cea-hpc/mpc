@@ -27,10 +27,8 @@ typedef struct
 {
 	int			 cma_enabled;
 	volatile int driver_initialized;
-	unsigned int          pending_msg_num;
 	mpc_common_spinlock_t polling_lock;
-	mpc_common_spinlock_t pending_lock;
-	sctk_shm_msg_list_t *pending_msg_list;
+	volatile int in_poll;
 	void                *regions_infos;
 } sctk_shm_rail_info_t;
 

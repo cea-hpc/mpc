@@ -749,7 +749,7 @@ void _mpc_lowcomm_ib_rdma_write(sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_
 	LOAD_RAIL(rail);
 
 
-	_mpc_lowcomm_endpoint_t *route = sctk_rail_get_any_route_to_process_or_on_demand(rail, SCTK_MSG_DEST_PROCESS(msg) );
+	_mpc_lowcomm_endpoint_t *route = sctk_rail_get_any_route_to_process_or_on_demand(rail, SCTK_MSG_DEST_PROCESS_UID(msg) );
 
 	_mpc_lowcomm_ib_ibuf_t *ibuf = _mpc_lowcomm_ib_ibuf_pick_send_sr(rail_ib);
 	assume(ibuf);
@@ -785,7 +785,7 @@ void _mpc_lowcomm_ib_rdma_read(sctk_rail_info_t *rail, mpc_lowcomm_ptp_message_t
 
 	_mpc_lowcomm_endpoint_t *route =
 		sctk_rail_get_any_route_to_process_or_on_demand(
-			rail, SCTK_MSG_DEST_PROCESS(msg) );
+			rail, SCTK_MSG_DEST_PROCESS_UID(msg) );
 
 	_mpc_lowcomm_ib_ibuf_t *ibuf = _mpc_lowcomm_ib_ibuf_pick_send_sr(rail_ib);
 	assume(ibuf);
@@ -832,7 +832,7 @@ void _mpc_lowcomm_ib_rdma_fetch_and_op(sctk_rail_info_t *rail,
 
 
 	_mpc_lowcomm_endpoint_t *route = sctk_rail_get_any_route_to_process_or_on_demand(
-		rail, SCTK_MSG_DEST_PROCESS(msg) );
+		rail, SCTK_MSG_DEST_PROCESS_UID(msg) );
 
 	_mpc_lowcomm_ib_ibuf_t *ibuf = _mpc_lowcomm_ib_ibuf_pick_send_sr(rail_ib);
 	assume(ibuf);
@@ -881,7 +881,7 @@ void _mpc_lowcomm_ib_rdma_cas(sctk_rail_info_t *rail,
 
 	_mpc_lowcomm_endpoint_t *route =
 		sctk_rail_get_any_route_to_process_or_on_demand(
-			rail, SCTK_MSG_DEST_PROCESS(msg) );
+			rail, SCTK_MSG_DEST_PROCESS_UID(msg) );
 
 	_mpc_lowcomm_ib_ibuf_t *ibuf = _mpc_lowcomm_ib_ibuf_pick_send_sr(rail_ib);
 	assume(ibuf);

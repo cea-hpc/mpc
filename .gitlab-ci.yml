@@ -2,36 +2,51 @@
 # For convenience, implicit stages have been made explicit here...
 stages:
   - Initialization
-  - Configurations
-  - Builds
+  - Regular Installation
   - Basic Testing
   - Regular Testing
   - Benchmarks
   - Applications
   - Breaking tests
+  - Configurations
   - Finalization
 
 # Add clone variables for concurent PIPELINES
 variables:
-  GIT_DEPTH: 10 # No need to clone the whole history
-  GIT_CLONE_PATH: $CI_BUILDS_DIR/$CI_RUNNER_ID/$CI_CONCURRENT_ID/$CI_PROJECT_PATH
+  GL_PIPELINE_PATH: $CI_BUILDS_DIR/GL_$CI_PIPELINE_ID
+  GL_BUILD_DIR: $GL_PIPELINE_PATH/build
+  GL_INSTALL_DIR: $GL_PIPELINE_PATH/install
+  GIT_DEPTH: 1 # No need to clone the whole history
+  GIT_CLONE_PATH: $GL_PIPELINE_PATH/$CI_RUNNER_ID/$CI_CONCURRENT_ID
+  PCVS_COMMAND: pcvs -v run --override --profile mpc --print errors
 
+.pcvs_prepare: &pcvs_prepare
+  - export CI_PCVS_DIR="$GL_PIPELINE_PATH/step_$(echo "$CI_JOB_NAME" | sed -e "s/ /_/g")/"
+  - test -d "${CI_PCVS_DIR}" && rm -rf "${CI_PCVS_DIR}"
+  - mkdir -p "${CI_PCVS_DIR}"
+  - cd "${CI_PCVS_DIR}"
+  - echo "Step run from ${CI_PCVS_DIR}"
+  - source ${GL_INSTALL_DIR}/mpcvars.sh
+  - echo "MPC loaded from ${GL_INSTALL_DIR}/mpcvars.sh"
+
+
+# Template nodes to be inserted to any CI step.
+# This ensure the pipeline will be triggered only for these scenarios.
+# Theses lines should never be modified.
 .run_by_main: &run_by_main
   only:
   - devel
-  - pt_devel
   - merge_requests
   - web
   except:
     variables:
+      # Skip MR tagged as WIP
       - $CI_MERGE_REQUEST_TITLE =~ /^WIP:/
-
-.breaking_tests: &breaking_tests
-  allow_failure: true
 
 .uses_slurm: &uses_slurm
   tags:
     - slurm
+
 
 ############################
 ##### EXTRA ACTIONS ########
@@ -47,8 +62,8 @@ Env Sanitize:
   <<: *run_by_main
   stage: Initialization
   script:
-    - mkdir -p $HOME/GL_$CI_PIPELINE_ID/{build,buildspack,build_workshare,install,install_spack,install_workshare,test}
-    - echo "Environment Intialized !"
+    - test -d $GL_PIPELINE_PATH && rm -rf $GL_PIPELINE_PATH
+    - mkdir -p $GL_PIPELINE_PATH
 
 # post-actions to cleanup the machine after the run
 # The last line may not be necessary as a pipeline start run something like a "git clean" before running
@@ -60,8 +75,8 @@ Artifact Deletion:
   allow_failure: true
   when: on_success
   script:
+    - rm -rf $GL_PIPELINE_PATH
     - $HOME/clean_old_pipelines.sh
-    - rm -rf $HOME/$CI_PIPELINE_ID/
 
 Resource Relinquishing:
   <<: *run_by_main
@@ -78,213 +93,239 @@ Resource Relinquishing:
 ############################
 ####### CONF STAGE  ########
 ############################
+.conf_run_cmds: &configuration_commands
+  - rm -rf ${GL_LOCAL_BUILD_DIR} ${GL_LOCAL_INSTALL_DIR}
+  - mkdir ${GL_LOCAL_BUILD_DIR}; cd ${GL_LOCAL_BUILD_DIR}
+  - ${CI_PROJECT_DIR}/installmpc -vv --force-spack-arch=x86_64_v2 --prefix=${GL_LOCAL_INSTALL_DIR} ${GL_INSTALL_OPTS}
+
+
+MPC Default Configuration:
+  <<: *run_by_main
+  stage: Regular Installation
+  variables:
+    GL_LOCAL_BUILD_DIR: ${GL_BUILD_DIR}
+    GL_LOCAL_INSTALL_DIR: ${GL_INSTALL_DIR}
+    GL_INSTALL_OPTS: --mpc-option="--enable-debug" --with-pmi1
+  script:
+    - *configuration_commands
+
+
+MPC Process Mode (no Spack):
+  <<: *run_by_main
+  stage: Configurations
+  variables:
+    GL_LOCAL_BUILD_DIR: ${GL_BUILD_DIR}_nopriv_no_spack
+    GL_LOCAL_INSTALL_DIR: ${GL_INSTALL_DIR}_nopriv
+    GL_INSTALL_OPTS: --disable-spack --disable-mpc-autopriv
+  script:
+    - *configuration_commands
+
+
 
 MPC Process Mode:
   <<: *run_by_main
   stage: Configurations
+  variables:
+    GL_LOCAL_BUILD_DIR: ${GL_BUILD_DIR}_nopriv
+    GL_LOCAL_INSTALL_DIR: ${GL_INSTALL_DIR}_nopriv
+    GL_INSTALL_OPTS: --disable-mpc-autopriv
   script:
-  - mkdir $HOME/GL_$CI_PIPELINE_ID/build_nopriv/
-  - cd $HOME/GL_$CI_PIPELINE_ID/build_nopriv/
-  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_process_mode --disable-mpc-autopriv
+    - *configuration_commands
 
 MPC Disable Lowcomm:
   <<: *run_by_main
   stage: Configurations
+  variables:
+    GL_LOCAL_BUILD_DIR: ${GL_BUILD_DIR}_nolowcomm
+    GL_LOCAL_INSTALL_DIR: ${GL_INSTALL_DIR}_nolowcomm
+    GL_INSTALL_OPTS: --disable-mpc-autopriv --mpc-option="--disable-lowcomm"
   script:
-  - mkdir $HOME/GL_$CI_PIPELINE_ID/build_no_lowcomm/
-  - cd $HOME/GL_$CI_PIPELINE_ID/build_no_lowcomm/
-  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_nolowcomm --disable-mpc-autopriv --mpc-option="--disable-lowcomm"
-
+    - *configuration_commands
 
 MPC Disable MPI:
   <<: *run_by_main
   stage: Configurations
+  variables:
+    GL_LOCAL_BUILD_DIR: ${GL_BUILD_DIR}_nompi
+    GL_LOCAL_INSTALL_DIR: ${GL_INSTALL_DIR}_nompi
+    GL_INSTALL_OPTS: --disable-mpc-autopriv --mpc-option="--disable-mpi"
   script:
-  - mkdir $HOME/GL_$CI_PIPELINE_ID/build_nompi/
-  - cd $HOME/GL_$CI_PIPELINE_ID/build_nompi/
-  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_nompi --disable-mpc-autopriv --mpc-option="--disable-mpi"
-
+    - *configuration_commands
 
 MPC Disable Threads:
   <<: *run_by_main
   stage: Configurations
+  variables:
+    GL_LOCAL_BUILD_DIR: ${GL_BUILD_DIR}_nothread
+    GL_LOCAL_INSTALL_DIR: ${GL_INSTALL_DIR}_nothread
+    GL_INSTALL_OPTS: --disable-mpc-autopriv --mpc-option="--disable-threads"
   script:
-  - mkdir $HOME/GL_$CI_PIPELINE_ID/build_nothread/
-  - cd $HOME/GL_$CI_PIPELINE_ID/build_nothread/
-  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_nothread --disable-mpc-autopriv --mpc-option="--disable-threads"
+    - *configuration_commands
 
 MPC Debug Messages:
   <<: *run_by_main
   stage: Configurations
+  variables:
+    GL_LOCAL_BUILD_DIR: ${GL_BUILD_DIR}_debug
+    GL_LOCAL_INSTALL_DIR: ${GL_INSTALL_DIR}_debug
+    GL_INSTALL_OPTS: --disable-mpc-autopriv --enable-debug --mpc-option="--enable-debug-messages"
   script:
-  - mkdir $HOME/GL_$CI_PIPELINE_ID/build_debug/
-  - cd $HOME/GL_$CI_PIPELINE_ID/build_debug/
-  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_debug --disable-mpc-autopriv --mpc-option="--enable-debug-messages --enable-debug"
+    - *configuration_commands
 
 MPC Slurm:
   <<: *run_by_main
   stage: Configurations
+  variables:
+    GL_LOCAL_BUILD_DIR: ${GL_BUILD_DIR}_slurm
+    GL_LOCAL_INSTALL_DIR: ${GL_INSTALL_DIR}_slurm
+    GL_INSTALL_OPTS: --disable-mpc-autopriv --with-slurm
   script:
-  - mkdir $HOME/GL_$CI_PIPELINE_ID/build_slurm/
-  - cd $HOME/GL_$CI_PIPELINE_ID/build_slurm/
-  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_slurm --disable-mpc-autopriv --mpc-option="--with-slurm"
+    - *configuration_commands
 
 MPC PMIx:
   <<: *run_by_main
   stage: Configurations
+  variables:
+    GL_LOCAL_BUILD_DIR: ${GL_BUILD_DIR}_pmix
+    GL_LOCAL_INSTALL_DIR: ${GL_INSTALL_DIR}_pmix
+    GL_INSTALL_OPTS: --disable-mpc-autopriv --with-pmix
   script:
-  - mkdir $HOME/GL_$CI_PIPELINE_ID/build_pmix/
-  - cd $HOME/GL_$CI_PIPELINE_ID/build_pmix/
-  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_pmix --disable-mpc-autopriv --mpc-option="--with-pmix"
+    - *configuration_commands
 
 MPC Compilation Workshare:
   <<: *run_by_main
   stage: Configurations
+  variables:
+    GL_LOCAL_BUILD_DIR: ${GL_BUILD_DIR}_workshare
+    GL_LOCAL_INSTALL_DIR: ${GL_INSTALL_DIR}_workshare
+    GL_INSTALL_OPTS: --mpc-option="--enable-debug" --enable-workshare
   allow_failure: true
   script:
-  - cd $HOME/GL_$CI_PIPELINE_ID/build_workshare
-  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install_workshare --mpc-option='--with-pmi1 --enable-debug' --enable-workshare
-
-############################
-####### BUILD STAGE ########
-############################
-
-# MPC should be built (almost) before anything else
-MPC Compilation:
-  <<: *run_by_main
-  stage: Builds
-  script:
-  - cd $HOME/GL_$CI_PIPELINE_ID/build
-  - ${CI_PROJECT_DIR}/installmpc -vv --disable-spack --prefix=$HOME/GL_$CI_PIPELINE_ID/install --with-slurm --mpc-option='--enable-debug'
+    - *configuration_commands
 
 ############################
 ####### TEST STAGE ########
 ############################
 
 # a BASIC one, to stop the pipeline early in case of major issue (not able to compile/run a simple test)
-#Simple run:
-#  <<: *run_by_main
-#  <<: *uses_slurm
-#  stage: Basic Testing
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=simple --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/simple
-#
-## a BASIC one, to stop the pipeline early in case of major issue (not able to compile/run a simple test)
-#Simple run Spack:
-#  <<: *run_by_main
-#  <<: *uses_slurm
-#  stage: Basic Testing
-#  allow_failure: true
-#  dependencies:
-#    - MPC Compilation Spack
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install_spack --select=simple --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/simple
-#
-#Fortran:
-#  <<: *run_by_main
-#  <<: *uses_slurm
-#  stage: Basic Testing
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=fortran/UnitTests --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/fortran
-#
-#      #Types:
-#      #  stage: Basic Testing
-#      #  script:
-#      #    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#      #    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=UnitTests/check_types --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/types
+Simple run:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Basic Testing
+  script:
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/trivial/
+
+
+Privatization:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Basic Testing
+  script:
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/privatization/
+
 #
 ## a regular test, to assess some basic MPC feature
 #
-#Lowcomm:
-#  <<: *run_by_main
-#  <<: *uses_slurm
-#  stage: Regular Testing
-#  allow_failure: true
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=lowcomm --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/lowcomm
-#
-#Privatization:
-#  <<: *run_by_main
-#  <<: *uses_slurm
-#  stage: Regular Testing
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=gcc --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/privatization
-#
-#Message Passing:
-#  <<: *run_by_main
-#  <<: *uses_slurm
-#  stage: Regular Testing
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=MPI/MessagePassing --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/mp
-#
-#OpenMP:
+
+MPI Simple C:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Regular Testing
+  script:
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/MPI/simple/c/
+
+MPI Simple Fortran:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Regular Testing
+  script:
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/MPI/simple/fortran/
+
+#MPI NBC:
 #  <<: *run_by_main
 #  <<: *uses_slurm
 #  stage: Regular Testing
 #  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=OpenMP/BOTS,OpenMP/Simple,OpenMP/EPCC --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/omp
+#    - *pcvs_prepare
+#    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/MPI/NBC/
+
+Lowcomm:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Regular Testing
+  script:
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/lowcomm/
+
 #
-#Fortran 90:
-#  <<: *run_by_main
-#  <<: *uses_slurm
-#  stage: Regular Testing
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=fortran/f90/Examples --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/fortran90
+# Benchmarks
 #
-## a larger test, known to take more time and to stress the runtime a bit more than previous jobs
-#IMB (Check):
-#  <<: *run_by_main
-#  <<: *uses_slurm
-#  stage: Benchmarks
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=MPI/IMB/check --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/imb
+MPI IMB-MPI 2017:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Benchmarks
+  script:
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/MPI/IMB_2017/check-mpi/
+
+MPI NBC:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Benchmarks
+  script:
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/MPI/NBC/
+
+MPI IMB-NBC 2017:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Benchmarks
+  script:
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/MPI/IMB_2017/check-nbc/
+
 #
-#Communicators (ANL):
-#  <<: *run_by_main
-#  <<: *uses_slurm
-#  stage: Benchmarks
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=MPI/Intel_ANL/communicators --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/comms
+# Applications
 #
-#Lulesh:
-#  <<: *run_by_main
-#  <<: *uses_slurm
-#  stage: Applications
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=applications/lulesh --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/lulesh
-#
-#MiniFE:
-#  <<: *run_by_main
-#  <<: *uses_slurm
-#  stage: Applications
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=applications/miniFe --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/minife
-#
-#################################
-## TEsts not supported by MPC ###
-## ##############################
-##
-#tofix-OpenMP:
-#  <<: *run_by_main
-#  <<: *breaking_tests
-#  <<: *uses_slurm
-#  stage: Breaking tests
-#  script:
-#    - cd ${CI_PROJECT_DIR}/MPC_Test_Suite/
-#    - ./mpc_validation -X --color -v --prefix=$HOME/GL_$CI_PIPELINE_ID/install --select=unsupported/OpenMP --test-dir=$HOME/GL_${CI_PIPELINE_ID}/test/tofix-omp
-#
+
+
+Lulesh:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Applications
+  script:
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/corals/lulesh-2.0.3/
+
+miniFe:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Applications
+  script:
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/corals/miniFe/
+
+NAS-MZ MPI:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Applications
+  script:
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/hybrid/NAS/MZ-MPI/
+
+NAS-MZ OMP:
+  <<: *run_by_main
+  <<: *uses_slurm
+  stage: Applications
+  script:
+    - *pcvs_prepare
+    - ${PCVS_COMMAND} $HOME/repo/mpc_ci/hybrid/NAS/MZ-OMP/
+
+
 ###################################
 ####### MANUALLY TRIGGERED ########
 ###################################

@@ -148,7 +148,7 @@ PRIV_FLAG_ALREADY_SET=""
 # By default priv is enabled in mpc_cc if the compiler supports it
 DO_PRIV="yes"
 
-compiler_is_privatizing "$1"
+compiler_is_privatizing "$COMPILER"
 
 if test "x${RES}" = "xno"; then
 	DO_PRIV="no"

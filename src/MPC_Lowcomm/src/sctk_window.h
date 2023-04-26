@@ -178,8 +178,8 @@ static inline void mpc_lowcomm_rdma_window_map_request_init(struct mpc_lowcomm_r
 	mr->win_id      = win_id;
 }
 
-void mpc_lowcomm_rdma_window_init_ht();
-void mpc_lowcomm_rdma_window_release_ht();
+void mpc_lowcomm_rdma_window_do_init();
+void mpc_lowcomm_rdma_window_do_release();
 
 int mpc_lowcomm_rdma_window_build_from_remote(struct mpc_lowcomm_rdma_window *remote_win_data);
 

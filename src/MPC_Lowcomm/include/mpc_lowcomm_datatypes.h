@@ -3,6 +3,9 @@
 
 #include <mpc_lowcomm_types.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* ******************
  * Common datatypes *
@@ -119,5 +122,8 @@ static inline int mpc_lowcomm_datatype_is_common(mpc_lowcomm_datatype_t datatype
     return 0;
 }
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

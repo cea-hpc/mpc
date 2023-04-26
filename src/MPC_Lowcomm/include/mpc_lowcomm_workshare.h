@@ -27,6 +27,10 @@
 #include <mpc_lowcomm.h>
 #include "mpc_common_spinlock.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct mpc_workshare{
   OPA_int_t is_last_iter;
   char* pad[64];
@@ -95,6 +99,10 @@ do { \
    }  while(0)
 #else
 #define MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL_WAIT_FOR_VALUE(data,value,func,arg,rank)    (void)(0)
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* MPC_LOWCOMM_WORKSHARE_H_ */

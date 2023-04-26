@@ -972,8 +972,6 @@ void sctk_network_init_mpi_ib(sctk_rail_info_t *rail)
 	sctk_network_initialize_leader_task_mpi_ib(rail);
 
 
-	rail->control_message_handler = _mpc_lowcomm_ib_cm_control_message_handler;
-
 	rail->connect_to        = sctk_network_connection_to_ib;
 	rail->connect_from      = sctk_network_connection_from_ib;
 	rail->connect_on_demand = sctk_connect_on_demand_mpi_ib;

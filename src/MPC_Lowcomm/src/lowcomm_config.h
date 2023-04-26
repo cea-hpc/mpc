@@ -528,19 +528,19 @@ typedef enum
 
 struct _mpc_lowcomm_workshare_config
 {
-  /** Workshare steal policy **/ 
+  /** Workshare steal policy **/
 	ws_steal_mode steal_mode;
-  /** Stealing from end of the loop or not **/ 
+  /** Stealing from end of the loop or not **/
 	int steal_from_end;
-  /** Schedule (guided, dynamic, static) **/ 
+  /** Schedule (guided, dynamic, static) **/
 	int schedule;
-  /** Steal schedule (guided, dynamic, static) when stealing **/ 
+  /** Steal schedule (guided, dynamic, static) when stealing **/
 	int steal_schedule;
-  /** Chunk size **/ 
+  /** Chunk size **/
 	int chunk_size;
-  /** Chunk size when stealing **/ 
+  /** Chunk size when stealing **/
 	int steal_chunk_size;
-  /** Enable workshare stealing or not **/ 
+  /** Enable workshare stealing or not **/
   int enable_stealing;
 };
 
@@ -567,6 +567,20 @@ mpc_conf_config_type_t *_mpc_lowcomm_conf_conf_rail_get ( char *name );
 struct _mpc_lowcomm_config_struct_net_rail * _mpc_lowcomm_conf_rail_unfolded_get ( char *name );
 
 
+/***************
+ * MEMORY POOL *
+ ***************/
+
+struct _mpc_lowcomm_config_mem_pool
+{
+    int enabled;
+    long int size;
+    int autodetect;
+    int force_process_linear;
+    long int per_proc_size;
+};
+
+
 /************************************
 * GLOBAL CONFIGURATION FOR LOWCOMM *
 ************************************/
@@ -580,6 +594,7 @@ struct _mpc_lowcomm_config
 	struct _mpc_lowcomm_config_struct_ib_global infiniband;
 #endif
 	struct _mpc_lowcomm_workshare_config workshare;
+	struct _mpc_lowcomm_config_mem_pool memorypool;
 };
 
 struct _mpc_lowcomm_config *_mpc_lowcomm_conf_get(void);

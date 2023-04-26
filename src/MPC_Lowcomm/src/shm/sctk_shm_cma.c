@@ -218,7 +218,7 @@ sctk_network_cma_msg_shm_send(mpc_lowcomm_ptp_message_t *msg, sctk_shm_cell_t * 
 
 
     if( msg->tail.message_type != MPC_LOWCOMM_MESSAGE_CONTIGUOUS)
-	return 0;
+	    return 0;
 
     size = sizeof(mpc_lowcomm_ptp_message_t) + sizeof(sctk_shm_iovec_info_t);
     size += sizeof(struct iovec);

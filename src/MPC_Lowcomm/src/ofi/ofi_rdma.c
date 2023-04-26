@@ -493,7 +493,8 @@ void mpc_lowcomm_ofi_rdma_on_demand_handler( sctk_rail_info_t *rail, mpc_lowcomm
 
 	mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_ondemand(dest_process,
 																	   __ofi_rdma_rail_name(rail, rail_name, 32),
-																	   "",
+																	   NULL,
+																	   0,
 																	   &ret);
 
 	if(ret != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
@@ -539,11 +540,6 @@ static inline void __rdma_register_in_monitor(sctk_rail_info_t *rail)
 	mpc_lowcomm_monitor_register_on_demand_callback(rail_name, __ofi_rdma_monitor_callback, rail);
 }
 
-void sctk_network_ofi_rdma_control_message_handler( __UNUSED__ struct sctk_rail_info_s * rail, __UNUSED__ int source_process, __UNUSED__ int source_rank, __UNUSED__ char subtype, __UNUSED__ char param, __UNUSED__ void * data, __UNUSED__ size_t size )
-{
-	/* nothing to do for now... */
-}
-
 void sctk_network_init_ofi_rdma( sctk_rail_info_t *rail )
 {
 	mpc_lowcomm_ofi_rail_info_t* orail = &rail->network.ofi;
@@ -556,7 +552,6 @@ void sctk_network_init_ofi_rdma( sctk_rail_info_t *rail )
 	rail->notify_any_source_message = NULL;
 	rail->send_message_from_network = sctk_send_message_from_network_ofi_rdma;
 	rail->driver_finalize           = sctk_network_finalize_ofi_rdma;
-	rail->control_message_handler   = sctk_network_ofi_rdma_control_message_handler;
 
 	__rdma_register_in_monitor(rail);
 

@@ -25,7 +25,7 @@
 #include "datatype.h"
 #include "mpc_mpi_internal.h"
 #include "comm_lib.h"
-#include "sctk_control_messages.h"
+
 #include "sctk_low_level_comm.h"
 #include <string.h>
 
@@ -1737,8 +1737,6 @@ int mpc_Win_contexes_fence_control(MPI_Win win) {
   while (retry < 65536) {
 
     {
-      sctk_control_message_process_all();
-      sctk_control_message_process_local(mpc_common_get_task_rank());
       _mpc_lowcomm_multirail_notify_idle();
       mpc_thread_yield();
     }
@@ -1772,8 +1770,6 @@ int mpc_MPI_Win_fence(__UNUSED__ int assert, MPI_Win win) {
   mpc_MPI_Win_request_array_fence(&desc->target.requests);
 
   mpc_Win_contexes_fence_control(win);
-
-  sctk_control_message_process_all();
 
   PMPI_Barrier(desc->comm);
   //~ if( !(assert & MPI_MODE_NOPRECEDE) )

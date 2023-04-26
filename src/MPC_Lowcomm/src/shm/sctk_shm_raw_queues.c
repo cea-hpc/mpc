@@ -52,16 +52,9 @@ static sctk_shm_list_t * __get_queue(sctk_shm_region_infos_t *shmem, sctk_shm_li
 
 	switch(type)
 	{
-		case SCTK_SHM_CELLS_QUEUE_SEND:
-			queue = shmem->send_queue;
-			break;
 
 		case SCTK_SHM_CELLS_QUEUE_RECV:
 			queue = shmem->recv_queue;
-			break;
-
-		case SCTK_SHM_CELLS_QUEUE_CMPL:
-			queue = shmem->cmpl_queue;
 			break;
 
 		case SCTK_SHM_CELLS_QUEUE_FREE:

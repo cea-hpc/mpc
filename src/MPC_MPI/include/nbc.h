@@ -165,6 +165,7 @@ typedef enum {
 	RECV,
 	OP,
 	COPY,
+  MOVE,
 	UNPACK
 } NBC_Fn_type;
 
@@ -414,6 +415,36 @@ static inline int NBC_Copy(const void *src, int srccount, MPI_Datatype srctype, 
 		res = MPI_Type_extent(srctype, &ext);
 		if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
 		memcpy(tgt, src, srccount*ext);
+	} else {
+		/* we have to pack and unpack */
+		res = MPI_Pack_size(srccount, srctype, comm, &size);
+		if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Pack_size() (%i)\n", res); return res; }
+		packbuf = malloc(size);
+		if (NULL == packbuf) { printf("Error in malloc()\n"); return res; }
+		pos=0;
+		res = MPI_Pack(src, srccount, srctype, packbuf, size, &pos, comm);
+		if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Pack() (%i)\n", res); return res; }
+		pos=0;
+		res = MPI_Unpack(packbuf, size, &pos, tgt, tgtcount, tgttype, comm);
+		if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Unpack() (%i)\n", res); return res; }
+		free(packbuf);
+	}
+
+	return NBC_OK;
+}
+
+/* let's give a try to inline functions */
+static inline int NBC_Move(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm) {
+	int size, pos, res;
+	MPI_Aint ext;
+	void *packbuf;
+
+	if((srctype == tgttype) && NBC_Type_intrinsic(srctype)) {
+		/* if we have the same types and they are contiguous (intrinsic
+		 * types are contiguous), we can just use a single memcpy */
+		res = MPI_Type_extent(srctype, &ext);
+		if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+		memmove(tgt, src, srccount*ext);
 	} else {
 		/* we have to pack and unpack */
 		res = MPI_Pack_size(srccount, srctype, comm, &size);

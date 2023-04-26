@@ -93,9 +93,9 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@MPC_MPI_ENABLED_TRUE@am__append_1 = mpicc mpicxx
+@MPC_MPI_ENABLED_TRUE@am__append_1 = mpicc mpicxx mpic++
 @MPC_FORTRAN_ENABLED_TRUE@am__append_2 = mpc_f77
-@MPC_FORTRAN_ENABLED_TRUE@@MPC_MPI_ENABLED_TRUE@am__append_3 = mpif77
+@MPC_FORTRAN_ENABLED_TRUE@@MPC_MPI_ENABLED_TRUE@am__append_3 = mpif77 mpif90
 
 #
 # Cuda support

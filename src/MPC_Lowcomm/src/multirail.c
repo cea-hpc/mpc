@@ -20,6 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include "multirail.h"
+#include "mpc_common_datastructure.h"
 
 #ifdef MPC_USE_DMTCP
 #include "sctk_ft_iface.h"
@@ -76,17 +77,10 @@ static inline int __gate_msgtype(__UNUSED__ sctk_rail_info_t *rail, mpc_lowcomm_
 	int tag = SCTK_MSG_TAG(message);
 
 	mpc_lowcomm_ptp_message_class_t class =
-		(SCTK_MSG_HEADER(message) )->message_type.type;
+		(SCTK_MSG_HEADER(message) )->message_type;
 
 	/* It is a emulated RMA and it is not allowed */
 	if( (class == MPC_LOWCOMM_RDMA_MESSAGE) && !conf->emulated_rma)
-	{
-		return 0;
-	}
-
-	/* It is a task level control  message and it is not allowed */
-	if( ( (class == MPC_LOWCOMM_CONTROL_MESSAGE_TASK) || (tag == 16008) ) &&
-	    !conf->task)
 	{
 		return 0;
 	}
@@ -570,7 +564,8 @@ static inline _mpc_lowcomm_endpoint_t *__elect_endpoint(mpc_lowcomm_ptp_message_
 	return cur->endpoint;
 }
 
-mpc_common_spinlock_t on_demand_connection_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
+#define ON_DEMMAND_CONN_LOCK_COUNT 32
+static mpc_common_spinlock_t on_demand_connection_lock[ON_DEMMAND_CONN_LOCK_COUNT];
 
 /* Per VP pending on-demand connection list */
 static __thread sctk_pending_on_demand_t *__pending_on_demand = NULL;
@@ -626,7 +621,7 @@ static inline void __pending_on_demand_process()
 		/* No endpoint ? then its worth locking */
 		if(!previous_endpoint)
 		{
-			mpc_common_spinlock_lock(&on_demand_connection_lock);
+			mpc_common_spinlock_lock(&on_demand_connection_lock[pod->dest % ON_DEMMAND_CONN_LOCK_COUNT]);
 
 			/* Check again to avoid RC */
 			previous_endpoint = sctk_rail_get_any_route_to_process(pod->rail, pod->dest);
@@ -637,7 +632,7 @@ static inline void __pending_on_demand_process()
 				(pod->rail->connect_on_demand)(pod->rail, pod->dest);
 			}
 
-			mpc_common_spinlock_unlock(&on_demand_connection_lock);
+			mpc_common_spinlock_unlock(&on_demand_connection_lock[pod->dest % ON_DEMMAND_CONN_LOCK_COUNT]);
 		}
 
 		sctk_pending_on_demand_t *to_free = pod;
@@ -742,11 +737,12 @@ static inline void __on_demand_connection(mpc_lowcomm_ptp_message_t *msg)
 		mpc_common_debug_fatal("No route to host == Make sure you have at least one on-demand rail able to satify any type of message");
 	}
 
+	mpc_lowcomm_peer_uid_t dest_process = SCTK_MSG_DEST_PROCESS_UID(msg);
+
 	/* Enter the critical section to guanrantee the uniqueness of the
 	 * newly created rail by first checking if it is not already present */
-	mpc_common_spinlock_lock(&on_demand_connection_lock);
+	mpc_common_spinlock_lock(&on_demand_connection_lock[dest_process % ON_DEMMAND_CONN_LOCK_COUNT]);
 
-	mpc_lowcomm_peer_uid_t dest_process = SCTK_MSG_DEST_PROCESS_UID(msg);
 
 	/* First retry to acquire a route for on-demand
 	 * in order to avoid double connections */
@@ -767,7 +763,7 @@ static inline void __on_demand_connection(mpc_lowcomm_ptp_message_t *msg)
 		(elected_rail->connect_on_demand)(elected_rail, dest_process);
 	}
 
-	mpc_common_spinlock_unlock(&on_demand_connection_lock);
+	mpc_common_spinlock_unlock(&on_demand_connection_lock[dest_process % ON_DEMMAND_CONN_LOCK_COUNT]);
 }
 
 /************************************************************************/
@@ -1046,7 +1042,6 @@ void _mpc_lowcomm_multirail_notify_probe(mpc_lowcomm_ptp_message_header_t *hdr, 
 
 void _mpc_lowcomm_multirail_notify_idle()
 {
-	sctk_control_message_process_all();
 	/* Fault Tolerance mechanism cannot allow any driver to be modified during a pending checkpoint.
 	 * This is our way to maintain consistency for data to be saved.
 	 */
@@ -1154,6 +1149,13 @@ void _mpc_lowcomm_multirail_table_init()
 	mpc_common_hashtable_init(&table->destination_table, 1024);
 	mpc_common_rwlock_t lckinit = MPC_COMMON_SPIN_RWLOCK_INITIALIZER;
 	table->table_lock = lckinit;
+
+	int i;
+
+	for(i = 0 ; i < ON_DEMMAND_CONN_LOCK_COUNT ; i++)
+	{
+		mpc_common_spinlock_init(&on_demand_connection_lock[i], 0);
+	}
 }
 
 void _mpc_lowcomm_multirail_table_release()
@@ -1212,6 +1214,44 @@ _mpc_lowcomm_multirail_table_entry_t *_mpc_lowcomm_multirail_table_acquire_route
 
 	return dest_entry;
 }
+
+
+mpc_lowcomm_peer_uid_t _mpc_lowcomm_multirail_table_get_closest_peer(mpc_lowcomm_peer_uid_t dest,
+													int (*distance_fn)(mpc_lowcomm_peer_uid_t dest, 
+																 mpc_lowcomm_peer_uid_t candidate),
+													int * minimal_distance)
+{
+	struct _mpc_lowcomm_multirail_table * table      = _mpc_lowcomm_multirail_table_get();
+
+	mpc_lowcomm_peer_uid_t ret = 0;
+	int cur_distance = -1;
+
+	_mpc_lowcomm_multirail_table_entry_t *dest_entry = NULL;
+
+	MPC_HT_ITER(&table->destination_table, dest_entry)
+	{
+		int distance = (distance_fn)(dest, dest_entry->destination);
+
+		if(distance == 0)
+		{
+			/* Exact match */
+			ret = dest_entry->destination;
+			*minimal_distance = 0;
+			MPC_HT_ITER_BREAK(&table->destination_table);
+		}
+
+		if( (cur_distance < 0) || (distance < cur_distance))
+		{
+			*minimal_distance = distance;
+			ret = dest_entry->destination;
+		}
+
+	}
+	MPC_HT_ITER_END(&table->destination_table)
+
+	return ret;
+}
+
 
 void _mpc_lowcomm_multirail_table_relax_routes(_mpc_lowcomm_multirail_table_entry_t *entry)
 {

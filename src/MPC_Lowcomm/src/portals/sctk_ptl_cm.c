@@ -87,10 +87,7 @@ static inline void sctk_ptl_cm_recv_message(sctk_rail_info_t* rail, sctk_ptl_eve
 
 	/* de-serialise hdr_data */
 	hdr                                       = (sctk_ptl_imm_data_t)ev.hdr_data;
-	net_msg->body.header.message_type.type    = hdr.cm.type;
-	net_msg->body.header.message_type.subtype = hdr.cm.subtype;
-	net_msg->body.header.message_type.param   = hdr.cm.param;
-	net_msg->body.header.message_type.rail_id = hdr.cm.rail_id;
+	net_msg->body.header.message_type    = hdr.cm.type;
 
 	/* save the Portals context in the tail */
 	net_msg->tail.ptl.user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
@@ -148,10 +145,7 @@ void sctk_ptl_cm_send_message(mpc_lowcomm_ptp_message_t* msg, _mpc_lowcomm_endpo
 	request->type = SCTK_PTL_TYPE_CM;
 
 	/* populate immediate data with CM-specific */
-	hdr.cm.type            = msg->body.header.message_type.type;
-	hdr.cm.subtype         = msg->body.header.message_type.subtype;
-	hdr.cm.param           = msg->body.header.message_type.param;
-	hdr.cm.rail_id         = msg->body.header.message_type.rail_id;
+	hdr.cm.type            = msg->body.header.message_type;
 
 	sctk_ptl_md_register(srail, request);
 	sctk_ptl_emit_put(request, size, remote, pte, match, 0, 0, hdr.raw, request);

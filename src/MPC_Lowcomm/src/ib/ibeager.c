@@ -324,7 +324,7 @@ int _mpc_lowcomm_ib_eager_poll_recv(sctk_rail_info_t *rail, _mpc_lowcomm_ib_ibuf
 
 	mpc_lowcomm_ptp_message_t *msg = NULL;
 
-	if(_mpc_comm_ptp_message_is_for_process(msg_ibuf->header.message_type.type) )
+	if(_mpc_comm_ptp_message_is_for_process(msg_ibuf->header.message_type) )
 	{
 		recopy = 1;
 	}

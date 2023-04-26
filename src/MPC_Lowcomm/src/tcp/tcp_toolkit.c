@@ -38,7 +38,6 @@
 #include <mpc_common_spinlock.h>
 #include <sctk_net_tools.h>
 #include <errno.h>
-#include <sctk_control_messages.h>
 #include <mpc_lowcomm_monitor.h>
 #include <mpc_common_rank.h>
 #include <sctk_alloc.h>
@@ -359,6 +358,7 @@ void tcp_on_demand_connection_handler(sctk_rail_info_t *rail, mpc_lowcomm_peer_u
 	mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_ondemand(dest_process,
 																	   __gen_rail_target_name(rail, my_net_name, 128),
 																	   rail->network.tcp.connection_infos,
+																	   512,
 																	   &ret);
 
 	if(!resp)
@@ -465,7 +465,6 @@ void sctk_network_init_tcp_all(sctk_rail_info_t *rail, char *interface,
 	/* Fill in common rail info */
 	rail->connect_from            = NULL;
 	rail->connect_to              = NULL;
-	rail->control_message_handler = NULL;
 
 	rail->network.tcp.interface = interface;
 	rail->network.tcp.tcp_thread_loop        = tcp_thread_loop;

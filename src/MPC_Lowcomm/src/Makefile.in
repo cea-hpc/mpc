@@ -177,14 +177,14 @@ am__DEPENDENCIES_1 =
 @MPC_HAVE_AM_TRUE@am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1)
 libmpclowcomm_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	../../MPC_Launch/src/libmpclaunch.la $(am__DEPENDENCIES_2)
-am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c sctk_checksum.c \
-	sctk_control_messages.c ft.c group.c communicator.c shm_coll.c \
-	lowcomm_config.c sctk_low_level_comm.c multirail.c \
-	sctk_net_tools.c sctk_net_topology.c lowcomm_thread.c mqd.c \
-	datatypes_common.c sctk_rail.c reorder.c endpoint.c \
-	sctk_topological_polling.c sctk_topological_rail.c \
-	sctk_window.c workshare.c pset.c handle_ctx.c ./tcp/tcp.c \
-	./tcp/tcp_toolkit.c ./shm/sctk_shm.c ./shm/sctk_shm_eager.c \
+am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c sctk_checksum.c ft.c \
+	group.c communicator.c shm_coll.c lowcomm_config.c \
+	sctk_low_level_comm.c multirail.c sctk_net_tools.c \
+	sctk_net_topology.c lowcomm_thread.c mqd.c datatypes_common.c \
+	sctk_rail.c reorder.c endpoint.c sctk_topological_polling.c \
+	sctk_topological_rail.c sctk_window.c workshare.c pset.c \
+	handle_ctx.c alloc_mem.c ./tcp/tcp.c ./tcp/tcp_toolkit.c \
+	./shm/sctk_shm.c ./shm/sctk_shm_eager.c \
 	./shm/sctk_shm_raw_queues.c ./shm/sctk_shm_cma.c \
 	./shm/sctk_shm_frag.c ./shm/sctk_shm_qemu.c \
 	./shm/sctk_shm_raw_queues_internals.c ./ib/async.c \
@@ -233,22 +233,21 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @OFI_DRIVER_ENABLED_TRUE@	./ofi/ofi_rdma.lo \
 @OFI_DRIVER_ENABLED_TRUE@	./ofi/ofi_toolkit.lo
 @MPC_HAVE_AM_TRUE@am__objects_4 = am.lo
-am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo \
-	sctk_control_messages.lo ft.lo group.lo communicator.lo \
-	shm_coll.lo lowcomm_config.lo sctk_low_level_comm.lo \
-	multirail.lo sctk_net_tools.lo sctk_net_topology.lo \
-	lowcomm_thread.lo mqd.lo datatypes_common.lo sctk_rail.lo \
-	reorder.lo endpoint.lo sctk_topological_polling.lo \
-	sctk_topological_rail.lo sctk_window.lo workshare.lo pset.lo \
-	handle_ctx.lo ./tcp/tcp.lo ./tcp/tcp_toolkit.lo \
-	./shm/sctk_shm.lo ./shm/sctk_shm_eager.lo \
-	./shm/sctk_shm_raw_queues.lo ./shm/sctk_shm_cma.lo \
-	./shm/sctk_shm_frag.lo ./shm/sctk_shm_qemu.lo \
-	./shm/sctk_shm_raw_queues_internals.lo $(am__objects_1) \
-	$(am__objects_2) $(am__objects_3) ./cplane/auth.lo \
-	./cplane/peer.lo ./cplane/proto.lo ./cplane/port.lo \
-	./cplane/monitor.lo ./cplane/set.lo ./cplane/uid.lo \
-	./cplane/name.lo $(am__objects_4)
+am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo ft.lo \
+	group.lo communicator.lo shm_coll.lo lowcomm_config.lo \
+	sctk_low_level_comm.lo multirail.lo sctk_net_tools.lo \
+	sctk_net_topology.lo lowcomm_thread.lo mqd.lo \
+	datatypes_common.lo sctk_rail.lo reorder.lo endpoint.lo \
+	sctk_topological_polling.lo sctk_topological_rail.lo \
+	sctk_window.lo workshare.lo pset.lo handle_ctx.lo alloc_mem.lo \
+	./tcp/tcp.lo ./tcp/tcp_toolkit.lo ./shm/sctk_shm.lo \
+	./shm/sctk_shm_eager.lo ./shm/sctk_shm_raw_queues.lo \
+	./shm/sctk_shm_cma.lo ./shm/sctk_shm_frag.lo \
+	./shm/sctk_shm_qemu.lo ./shm/sctk_shm_raw_queues_internals.lo \
+	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
+	./cplane/auth.lo ./cplane/peer.lo ./cplane/proto.lo \
+	./cplane/port.lo ./cplane/monitor.lo ./cplane/set.lo \
+	./cplane/uid.lo ./cplane/name.lo $(am__objects_4)
 libmpclowcomm_la_OBJECTS = $(am_libmpclowcomm_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -636,14 +635,14 @@ lib_LTLIBRARIES = libmpclowcomm.la
 # TCP driver #
 
 # SHM driver #
-libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c \
-	sctk_control_messages.c ft.c group.c communicator.c shm_coll.c \
-	lowcomm_config.c sctk_low_level_comm.c multirail.c \
-	sctk_net_tools.c sctk_net_topology.c lowcomm_thread.c mqd.c \
-	datatypes_common.c sctk_rail.c reorder.c endpoint.c \
-	sctk_topological_polling.c sctk_topological_rail.c \
-	sctk_window.c workshare.c pset.c handle_ctx.c ./tcp/tcp.c \
-	./tcp/tcp_toolkit.c ./shm/sctk_shm.c ./shm/sctk_shm_eager.c \
+libmpclowcomm_la_SOURCES = coll.c comm.c sctk_checksum.c ft.c group.c \
+	communicator.c shm_coll.c lowcomm_config.c \
+	sctk_low_level_comm.c multirail.c sctk_net_tools.c \
+	sctk_net_topology.c lowcomm_thread.c mqd.c datatypes_common.c \
+	sctk_rail.c reorder.c endpoint.c sctk_topological_polling.c \
+	sctk_topological_rail.c sctk_window.c workshare.c pset.c \
+	handle_ctx.c alloc_mem.c ./tcp/tcp.c ./tcp/tcp_toolkit.c \
+	./shm/sctk_shm.c ./shm/sctk_shm_eager.c \
 	./shm/sctk_shm_raw_queues.c ./shm/sctk_shm_cma.c \
 	./shm/sctk_shm_frag.c ./shm/sctk_shm_qemu.c \
 	./shm/sctk_shm_raw_queues_internals.c $(am__append_4) \
@@ -867,6 +866,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alloc_mem.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/am.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/coll.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/comm.Plo@am__quote@
@@ -883,7 +883,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pset.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/reorder.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_checksum.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_control_messages.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_low_level_comm.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_net_tools.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_net_topology.Plo@am__quote@

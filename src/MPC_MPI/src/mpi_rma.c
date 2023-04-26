@@ -24,7 +24,6 @@
 #include "datatype.h"
 #include "mpc_mpi_internal.h"
 #include "comm_lib.h"
-#include "sctk_control_messages.h"
 #include <string.h>
 #include "mpc_lowcomm_rdma.h"
 #include "mpi_rma_ctrl_msg.h"
@@ -104,7 +103,7 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
   if (local_size < remote_size) {
     return MPI_ERR_ARG;
   }
-
+      
   int target_win = mpc_MPI_win_get_remote_win(desc, target_rank, 0);
 
   if (can_write_rma && can_read_rma) {
@@ -545,7 +544,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
     return MPI_ERR_ARG;
   }
 
-  mpc_MPI_accumulate_op_lock();
+  mpc_lowcomm_accumulate_op_lock();
   int target_win = mpc_MPI_win_get_remote_win(desc, target_rank, 1);
 
   /* Do we need to pack the local data-type ? */
@@ -555,7 +554,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
 
     if (PMPI_Pack_size(origin_count, origin_datatype, desc->comm, &pack_size) !=
         MPI_SUCCESS) {
-      mpc_MPI_accumulate_op_unlock();
+      mpc_lowcomm_accumulate_op_unlock();
       return MPI_ERR_INTERN;
     }
 
@@ -565,7 +564,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
     pos = 0;
     if (MPI_Pack(origin_addr, origin_count, origin_datatype, tmp_buff,
                  pack_size, &pos, desc->comm) != MPI_SUCCESS) {
-      mpc_MPI_accumulate_op_unlock();
+      mpc_lowcomm_accumulate_op_unlock();
       return MPI_ERR_INTERN;
     }
 
@@ -592,7 +591,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
       !_mpc_dt_is_struct(inner_type)) {
     mpc_common_debug_warning("MPI_Accumulate : cannot accumulate a derived datatype which "
                  "is not made of a single predefined type");
-    mpc_MPI_accumulate_op_unlock();
+    mpc_lowcomm_accumulate_op_unlock();
     return MPI_ERR_ARG;
   }
 
@@ -623,7 +622,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
        * target is not contiguous we need to pack it */
       if (PMPI_Pack_size(target_count, target_datatype, desc->comm,
                          &target_pack_size) != MPI_SUCCESS) {
-        mpc_MPI_accumulate_op_unlock();
+        mpc_lowcomm_accumulate_op_unlock();
         return MPI_ERR_INTERN;
       }
 
@@ -634,7 +633,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
       pos = 0;
       if (MPI_Pack(start_addr, target_count, target_datatype, tmp_target_buff,
                    target_pack_size, &pos, desc->comm) != MPI_SUCCESS) {
-        mpc_MPI_accumulate_op_unlock();
+        mpc_lowcomm_accumulate_op_unlock();
         return MPI_ERR_INTERN;
       }
 
@@ -730,7 +729,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
     }
   }
 
-  mpc_MPI_accumulate_op_unlock();
+  mpc_lowcomm_accumulate_op_unlock();
 
   return MPI_SUCCESS;
 }

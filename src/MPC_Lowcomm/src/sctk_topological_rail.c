@@ -29,6 +29,7 @@
 
 #include <sctk_alloc.h>
 
+#include "comm.h"
 #include "sctk_rail.h"
 
 _mpc_lowcomm_endpoint_t *sctk_topological_rail_ellect_endpoint(mpc_lowcomm_peer_uid_t remote, mpc_lowcomm_ptp_message_t *msg, _mpc_lowcomm_endpoint_t *endpoint)
@@ -359,16 +360,16 @@ void sctk_topological_rail_rdma_write(
 	struct sctk_rail_pin_ctx_list *remote_key, size_t size)
 {
 	_mpc_lowcomm_endpoint_t *topo_endpoint =
-		sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS(msg) );
+		sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS_UID(msg) );
 
 	if(!topo_endpoint)
 	{
-		topological_on_demand_connection_handler(rail, SCTK_MSG_DEST_PROCESS(msg) );
+		topological_on_demand_connection_handler(rail, SCTK_MSG_DEST_PROCESS_UID(msg) );
 	}
 	else
 	{
 		topo_endpoint = sctk_topological_rail_ellect_endpoint(
-			SCTK_MSG_DEST_PROCESS(msg), msg, topo_endpoint);
+			SCTK_MSG_DEST_PROCESS_UID(msg), msg, topo_endpoint);
 	}
 
 	/* By default use rail 0 */
@@ -398,16 +399,16 @@ void sctk_topological_rail_rdma_read(sctk_rail_info_t *rail, mpc_lowcomm_ptp_mes
                                      size_t size)
 {
 	_mpc_lowcomm_endpoint_t *topo_endpoint =
-		sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS(msg) );
+		sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS_UID(msg) );
 
 	if(!topo_endpoint)
 	{
-		topological_on_demand_connection_handler(rail, SCTK_MSG_DEST_PROCESS(msg) );
+		topological_on_demand_connection_handler(rail, SCTK_MSG_DEST_PROCESS_UID(msg) );
 	}
 	else
 	{
 		topo_endpoint = sctk_topological_rail_ellect_endpoint(
-			SCTK_MSG_DEST_PROCESS(msg), msg, topo_endpoint);
+			SCTK_MSG_DEST_PROCESS_UID(msg), msg, topo_endpoint);
 	}
 
 	/* By default use rail 0 */
@@ -442,16 +443,16 @@ void sctk_topological_rail_rdma_fetch_and_op(sctk_rail_info_t *rail,
                                              RDMA_type type)
 {
 	_mpc_lowcomm_endpoint_t *topo_endpoint =
-		sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS(msg) );
+		sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS_UID(msg) );
 
 	if(!topo_endpoint)
 	{
-		topological_on_demand_connection_handler(rail, SCTK_MSG_DEST_PROCESS(msg) );
+		topological_on_demand_connection_handler(rail, SCTK_MSG_DEST_PROCESS_UID(msg) );
 	}
 	else
 	{
 		topo_endpoint = sctk_topological_rail_ellect_endpoint(
-			SCTK_MSG_DEST_PROCESS(msg), msg, topo_endpoint);
+			SCTK_MSG_DEST_PROCESS_UID(msg), msg, topo_endpoint);
 	}
 
 	/* By default use rail 0 */
@@ -486,16 +487,16 @@ void sctk_topological_rail_cas(sctk_rail_info_t *rail,
                                RDMA_type type)
 {
 	_mpc_lowcomm_endpoint_t *topo_endpoint =
-		sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS(msg) );
+		sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS_UID(msg) );
 
 	if(!topo_endpoint)
 	{
-		topological_on_demand_connection_handler(rail, SCTK_MSG_DEST_PROCESS(msg) );
+		topological_on_demand_connection_handler(rail, SCTK_MSG_DEST_PROCESS_UID(msg) );
 	}
 	else
 	{
 		topo_endpoint = sctk_topological_rail_ellect_endpoint(
-			SCTK_MSG_DEST_PROCESS(msg), msg, topo_endpoint);
+			SCTK_MSG_DEST_PROCESS_UID(msg), msg, topo_endpoint);
 	}
 
 	/* By default use rail 0 */
@@ -576,7 +577,6 @@ void sctk_network_init_topological(sctk_rail_info_t *rail)
 	rail->notify_probe_message      = NULL;
 	rail->notify_any_source_message = NULL;
 	rail->send_message_from_network = NULL;
-	rail->control_message_handler   = NULL;
 	rail->connect_to        = NULL;
 	rail->connect_from      = NULL;
 	rail->rail_pin_region   = sctk_topological_rail_pin_region;

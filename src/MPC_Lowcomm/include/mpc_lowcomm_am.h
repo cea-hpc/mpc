@@ -3,6 +3,10 @@
 
 #include <mpc_lowcomm.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /************************
  * DATATYPE DEFINITIONS *
  ************************/
@@ -109,5 +113,8 @@ int mpc_lowcomm_am(mpc_lowcomm_am_ctx_t ctx,
                    char *fname,
                    int dest);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MPC_LOWCOMM_AM */

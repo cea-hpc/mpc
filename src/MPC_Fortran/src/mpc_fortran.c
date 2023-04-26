@@ -3,6 +3,7 @@
 #include <mpc_config.h>
 #include <sctk_alloc.h>
 #include <mpc_keywords.h>
+#include <signal.h>
 #include "mpc_fortran_helpers.h"
 
 #ifdef MPC_MPIIO_ENABLED

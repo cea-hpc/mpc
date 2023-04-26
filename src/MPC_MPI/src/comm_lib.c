@@ -41,7 +41,6 @@
 
 #include "sctk_low_level_comm.h"
 
-#include "mpi_alloc_mem.h"
 #include "mpi_rma_epoch.h"
 #include "mpi_rma_ctrl_msg.h"
 
@@ -1246,9 +1245,9 @@ int _mpc_cl_type_dup(mpc_lowcomm_datatype_t old_type, mpc_lowcomm_datatype_t *ne
 
 int _mpc_cl_type_get_name(mpc_lowcomm_datatype_t datatype, char *name, int *resultlen)
 {
-	
+
 	char *retname = NULL;
-	
+
 	if( mpc_lowcomm_datatype_is_common(datatype) ){
 		retname = mpc_lowcomm_datatype_common_get_name(datatype);
 	} else {
@@ -2989,7 +2988,7 @@ int _mpc_cl_waitallp(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *parra
     }
     else
     {
-      MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();            
+      MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
     }
 
 		direct_pass_count--;
@@ -3468,7 +3467,7 @@ void _mpc_cl_return_error(mpc_lowcomm_communicator_t *comm, int *error, char * m
 #if !defined(NDEBUG)
 		snprintf(extra_info, 1024, " at %s:%d", file, line );
 #endif
-	
+
 		mpc_common_debug_error("%s : %s [%s] on comm %d%s",function, message, str, mpc_lowcomm_communicator_id(*comm), extra_info);
 	}
 }
@@ -4141,7 +4140,6 @@ static void __set_thread_trampoline()
 static void __set_lowcomm_trampoline()
 {
 	mpc_lowcomm_egreq_poll_set_trampoline(mpc_mpi_cl_egreq_progress_poll);
-	mpc_lowcomm_rdma_allocmem_is_in_pool_set_trampoline(mpc_MPI_allocmem_is_in_pool);
 	mpc_lowcomm_set_request_completion_trampoline(mpc_MPI_notify_request_counter);
 	mpc_lowcomm_rdma_MPC_MPI_notify_src_ctx_set_trampoline(mpc_MPI_Win_notify_src_ctx_counter);
 	mpc_lowcomm_rdma_MPC_MPI_notify_dest_ctx_set_trampoline(mpc_MPI_Win_notify_dest_ctx_counter);

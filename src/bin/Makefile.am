@@ -5,14 +5,14 @@
 bin_SCRIPTS = mpc_cc mpc_cxx mpc_cflags mpc_ldflags
 
 if MPC_MPI_ENABLED
-  bin_SCRIPTS += mpicc mpicxx
+  bin_SCRIPTS += mpicc mpicxx mpic++
 endif
 
 if MPC_FORTRAN_ENABLED
   bin_SCRIPTS += mpc_f77
 
 if MPC_MPI_ENABLED
-    bin_SCRIPTS += mpif77
+    bin_SCRIPTS += mpif77 mpif90
 endif
 
 endif

@@ -113,6 +113,7 @@ static inline void __coll_param_defaults( void )
   opts->topo_creation_allow_persistent = 0;
   opts->topo_creation_allow_non_blocking = 0;
   opts->topo_creation_allow_blocking = 0;
+  opts->topo_max_level = 1;
 }
 
 /* Coll array */
@@ -396,6 +397,9 @@ void _mpc_mpi_config_coll_array_resolve( struct _mpc_mpi_config_coll_array *coll
 	__load_coll_function( family, coll->allreduce_name, &coll->allreduce );
 	__load_coll_function( family, coll->reduce_scatter_name, &coll->reduce_scatter );
 	__load_coll_function( family, coll->reduce_scatter_block_name, &coll->reduce_scatter_block );
+	__load_coll_function( family, coll->exscan_name, &coll->exscan );
+	__load_coll_function( family, coll->scan_name, &coll->scan );
+
 }
 
 void _mpc_mpi_config_coll_algorithm_array_resolve( struct _mpc_mpi_config_coll_algorithm_array *coll, char *family )
@@ -415,6 +419,8 @@ void _mpc_mpi_config_coll_algorithm_array_resolve( struct _mpc_mpi_config_coll_a
 	__load_coll_function( family, coll->allreduce_name, &coll->allreduce );
 	__load_coll_function( family, coll->reduce_scatter_name, &coll->reduce_scatter );
 	__load_coll_function( family, coll->reduce_scatter_block_name, &coll->reduce_scatter_block );
+	__load_coll_function( family, coll->exscan_name, &coll->exscan );
+	__load_coll_function( family, coll->scan_name, &coll->scan );
 }
 
 static inline void __coll_check( void )
@@ -473,6 +479,8 @@ mpc_conf_config_type_t *__init_coll_config( void )
 																	"Allow the creation of topological communicators inside non blocking collectives" ),
                               PARAM( "topoblocking", &opts->topo_creation_allow_blocking, MPC_CONF_BOOL,
 																	"Allow the creation of topological communicators inside blocking collectives" ),
+															PARAM( "topomaxlevel", &opts->topo_max_level, MPC_CONF_INT,
+																	"Maximum number of topological level for topological collectives" ),
 															PARAM( "nocommute", &opts->force_nocommute, MPC_CONF_BOOL,
 																	"Force the use of deterministic algorithms" ),
 															PARAM( "barrierfortresh", &opts->barrier_intra_for_trsh, MPC_CONF_INT,
@@ -482,13 +490,13 @@ mpc_conf_config_type_t *__init_coll_config( void )
 															PARAM( "reducecounttresh", &opts->reduce_intra_count_trsh, MPC_CONF_INT,
 																	"Maximum number of elements for using a trivial for in the Reduce" ),
 															PARAM( "bcastfortresh", &opts->bcast_intra_for_trsh, MPC_CONF_INT,
-																	"Maximum number of process for using a trivial for in the Bcast" ),	
+																	"Maximum number of process for using a trivial for in the Bcast" ),
 															PARAM( "pointers", _mpc_mpi_config_coll_array_conf(&__mpc_mpi_config.coll_intracomm), MPC_CONF_TYPE,
 																	"Function pointers for intracomm collectives" ),
                               PARAM("algorithmpointers", _mpc_mpi_config_coll_algorithm_array_conf(&__mpc_mpi_config.coll_algorithm_intracomm), MPC_CONF_TYPE,
                                   "Function pointers for intracomm collectives algorithms" ),
 															NULL );
-	
+
 	mpc_conf_config_type_t *ret = mpc_conf_config_type_init( "coll",
 															PARAM( "shm", shm, MPC_CONF_TYPE,
 																	"Shared-Memory (SHM) collectives configuration" ),
@@ -501,44 +509,6 @@ mpc_conf_config_type_t *__init_coll_config( void )
 															NULL );
 	return ret;
 }
-
-/************
- * MEM POOL *
- ************/
-
-static inline void __mem_pool_defaults( void )
-{
-	struct _mpc_mpi_config_mem_pool *mpool = &__mpc_mpi_config.mempool;
-
-	mpool->enabled = 1;
-	mpool->size = 1024 * 1024;
-	mpool->autodetect = 1;
-	mpool->force_process_linear = 0;
-	mpool->per_proc_size = 1024 * 1024;
-}
-
-mpc_conf_config_type_t *__init_mem_pool_config( void )
-{
-	/* Note the _mpc_mpi_config_coll_opts is split accross
-	   collective types for readability */
-	struct _mpc_mpi_config_mem_pool *mpool = &__mpc_mpi_config.mempool;
-
-	mpc_conf_config_type_t *conf = mpc_conf_config_type_init( "memorypool",
-															PARAM( "enabled", &mpool->enabled, MPC_CONF_BOOL,
-																	"Enable the MPI_Alloc_mem shared memory pool" ),
-															PARAM( "size", &mpool->size, MPC_CONF_LONG_INT,
-																	"Size of the MPI_Alloc_mem pool" ),
-															PARAM( "autodetect", &mpool->autodetect, MPC_CONF_BOOL,
-																	"Allow the MPI_Alloc_mem pool to grow linear for some apps" ),
-															PARAM( "forcelinear", &mpool->force_process_linear, MPC_CONF_BOOL,
-																	"Force the size to be a quantum per local process" ),
-															PARAM( "pointers", &mpool->per_proc_size, MPC_CONF_LONG_INT,
-																	"Quantum to allocate to each process when linear forced" ),
-															NULL );
-
-	return conf;
-}
-
 
 /*********************
  * GLOBAL PARAMETERS *
@@ -555,7 +525,6 @@ static inline void __config_defaults( void )
 	__nbc_defaults();
 	__mpc_mpi_config.message_buffering = 1;
 	__coll_defaults();
-	__mem_pool_defaults();
 }
 
 void _mpc_mpi_config_init( void )
@@ -569,8 +538,6 @@ void _mpc_mpi_config_init( void )
 																	"Configuration for Non-Blocking Collectives (NBC)" ),
 															PARAM( "coll", __init_coll_config(), MPC_CONF_TYPE,
 																	"Collective Communication Configuration" ),
-															PARAM( "memorypool", __init_mem_pool_config(), MPC_CONF_TYPE,
-																	"Shared-memory pool configuration" ),
 															 NULL );
 
 	mpc_conf_root_config_append( "mpcframework", mpi, "MPC MPI Configuration" );

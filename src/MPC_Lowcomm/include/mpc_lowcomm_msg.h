@@ -19,6 +19,10 @@
 #include "ofi/ofi_types.h"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /************************************************************************/
 /* mpc_lowcomm_request_t		                                                    */
 /************************************************************************/
@@ -73,9 +77,7 @@ typedef enum
 	MPC_LOWCOMM_ALLREDUCE_OFFLOAD_MESSAGE,
 
 	MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL, /**< This message is to be used inside a rail logic */
-	MPC_LOWCOMM_CONTROL_MESSAGE_RAIL,     /**< This message goes to a rail */
-	MPC_LOWCOMM_CONTROL_MESSAGE_PROCESS,  /**< This message goes to a process (\ref sctk_control_message_process_level) */
-	MPC_LOWCOMM_CONTROL_MESSAGE_TASK,     /**< This message goes to a task */
+
 
 	MPC_LOWCOMM_MESSAGE_UNIVERSE,         /**< This message is for a given UID */
 
@@ -107,9 +109,7 @@ static const char *const mpc_lowcomm_ptp_message_class_name[MPC_LOWCOMM_MESSAGE_
 	"MPC_LOWCOMM_ALLREDUCE_OFFLOAD_MESSAGE",
 
 	"MPC_LOWCOMM_CONTROL_MESSAGE_INTERNAL",
-	"MPC_LOWCOMM_CONTROL_MESSAGE_RAIL",
-	"MPC_LOWCOMM_CONTROL_MESSAGE_PROCESS",
-	"MPC_LOWCOMM_CONTROL_MESSAGE_TASK",
+
 
 	"MPC_LOWCOMM_MESSAGE_UNIVERSE"
 };
@@ -122,21 +122,6 @@ int mpc_lowcomm_isend_class_src(int src, int dest, const void *data, size_t size
 int mpc_lowcomm_irecv_class_dest(int src, int dest, void *buffer, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req);
 int mpc_lowcomm_isend_class(int dest, const void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req);
 int mpc_lowcomm_irecv_class(int src, void *data, size_t size, int tag, mpc_lowcomm_communicator_t comm, mpc_lowcomm_ptp_message_class_t class, mpc_lowcomm_request_t *req);
-
-/************************************************************************/
-/* Control Messages Header                                              */
-/************************************************************************/
-
-/** This is the content of a control message */
-struct mpc_lowcomm_ptp_ctrl_message_header_s
-{
-	char type;    /**< Type of the message determining the action */
-	char subtype; /**< Subtype of the message (can be freely set -- usually to do a switch) */
-	char param;   /**< Parameter value (depending on type and subtypes)
-	               *                             for rails it is used to store rail number */
-	char rail_id; /**< The id of the rail sending the message (set during multirail selection \ref _mpc_lowcomm_multirail_send_message)
-	               *                             it allows RAIL level messages to be routed accordingly */
-};
 
 /************************************************************************/
 /* mpc_lowcomm_ptp_message_header_t                                         */
@@ -152,15 +137,17 @@ typedef struct mpc_lowcomm_ptp_message_header_s
 	int                                          source_task;           /**< Source Task id */
 	int                                          destination_task;      /**< Destination Task ID */
 	/* Context */
+	char									     message_type;          /**< Message type */
+
 	int                                          message_tag;           /**< Message TAG */
 	mpc_lowcomm_communicator_id_t                communicator_id;       /**< Message communicator */
-	struct mpc_lowcomm_ptp_ctrl_message_header_s message_type;          /**< Control Message Infos */
 	/* Content */
 	mpc_lowcomm_datatype_t                       datatype;              /**< Caried data-type (for matching check) */
 	size_t                                       msg_size;              /**< Message size */
 	/* Ordering */
 	int                                          message_number;        /**< Message order (for reorder) */
 	char                                         use_message_numbering; /**< Should this message be reordered */
+
 } mpc_lowcomm_ptp_message_header_t;
 
 void mpc_lowcomm_message_probe_any_tag(int destination, int source, const mpc_lowcomm_communicator_t comm, int *status, mpc_lowcomm_ptp_message_header_t *msg);
@@ -558,5 +545,9 @@ void sctk_m_probe_matching_set(int value);
 void sctk_m_probe_matching_reset();
 int sctk_m_probe_matching_get();
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MPC_MESSAGE_PASSING_INCLUDE_COMM_H_ */

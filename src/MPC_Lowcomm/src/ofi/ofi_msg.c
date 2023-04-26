@@ -29,7 +29,7 @@
 #include "endpoint.h"
 #include <sctk_net_tools.h>
 #include <mpc_common_spinlock.h>
-#include <sctk_control_messages.h>
+
 #include <mpc_common_datastructure.h>
 #include <mpc_common_rank.h>
 #include <mpc_launch_pmi.h>
@@ -614,7 +614,8 @@ void mpc_lowcomm_ofi_msg_on_demand_handler( struct sctk_rail_info_s *rail, mpc_l
 
 	mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_ondemand(dest_process,
 																	   __ofi_rail_name(rail, rail_name, 32),
-																	   "",
+																	   NULL,
+																	   0,
 																	   &ret);
 
 	if(ret != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
@@ -847,15 +848,7 @@ void mpc_lowcomm_ofi_msg_unpin_region( struct sctk_rail_info_s * rail, struct sc
 	MPC_LOWCOMM_OFI_CHECK_RC(fi_close(&list->pin.ofi.mr->fid));
 }
 
-/**
- * @brief Dealing with control-messages for the current rail.
- * 
- * Not useful for now, as on-demand is handled through PMI.
- */
-void sctk_network_ofi_control_message_handler( __UNUSED__ struct sctk_rail_info_s * rail, __UNUSED__ int source_process, __UNUSED__ int source_rank, __UNUSED__ char subtype, __UNUSED__ char param, __UNUSED__ void * data, __UNUSED__ size_t size )
-{
-	/* nothing to do for now... */
-}
+
 
 static void _mpc_lowcomm_ofi_msg_notify_anysource ( int polling_task_id, int blocking, sctk_rail_info_t *rail )
 {
@@ -881,7 +874,6 @@ void sctk_network_init_ofi_msg( sctk_rail_info_t *rail )
 	rail->notify_any_source_message = _mpc_lowcomm_ofi_msg_notify_anysource;
 	rail->send_message_from_network = sctk_send_message_from_network_ofi_msg;
 	rail->driver_finalize           = sctk_network_finalize_ofi_msg;
-	rail->control_message_handler   = sctk_network_ofi_control_message_handler;
 
 	/* RDMA */
 	rail->rail_pin_region        = mpc_lowcomm_ofi_msg_pin_region;

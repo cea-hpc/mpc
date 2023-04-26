@@ -63,6 +63,7 @@ static inline int NBC_Start_round_persistent(NBC_Handle *handle);
 inline int NBC_Init_handle(NBC_Handle *handle, MPI_Comm comm, int tag);
 static inline int NBC_Type_intrinsic(MPI_Datatype type);
 static inline int NBC_Copy(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm);
+static inline int NBC_Move(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm);
 /*static inline NBC_Comminfo* NBC_Init_comm(MPI_Comm comm, int keyval);*/
 /*static inline int NBC_Create_fortran_handle(int *fhandle, NBC_Handle **handle);*/
 static inline int NBC_Free(NBC_Handle* handle);
@@ -8441,15 +8442,6 @@ int __mpc_cl_egreq_progress_poll_id(int id);
 void *NBC_Pthread_func( __UNUSED__ void *ptr )
 {
 
-
-  mpc_threads_generic_kind_mask_self(KIND_MASK_PROGRESS_THREAD);
-
-  int basic_prio = _mpc_mpi_config()->nbc.thread_basic_prio;
-
-  mpc_threads_generic_kind_current_priority(basic_prio);
-  mpc_threads_generic_kind_basic_priority(basic_prio);
-  mpc_threads_generic_kind_priority(basic_prio);
-
   MPI_Request req=MPI_REQUEST_NULL;
   int tmp_recv;
 
@@ -8461,11 +8453,9 @@ void *NBC_Pthread_func( __UNUSED__ void *ptr )
 
   task_specific->mpc_mpi_data->nbc_initialized_per_task = 1;
 
-  mpc_threads_generic_scheduler_sched_init();
 
   while(1)
   {
-  
     int cpt = 1;
     int size = 10;
 
@@ -8477,14 +8467,10 @@ void *NBC_Pthread_func( __UNUSED__ void *ptr )
       requests_locations = (int *)sctk_malloc(sizeof(int) * size);
       requests_handles = (NBC_Handle **)sctk_malloc(sizeof(NBC_Handle *) * size);
 
-
-      if(req==MPI_REQUEST_NULL) PMPI_Irecv(&tmp_recv, 1, MPI_INT, 0, 0, MPI_COMM_SELF, &req);
-      requests[0]=req;
-
       /* re-compile list of requests */
 
       lock = &(task_specific->mpc_mpi_data->list_handles_lock);
-
+      mpc_thread_sem_wait(&(task_specific->mpc_mpi_data->pending_req));
       struct sctk_list_elem *iter, *elem_tmp;
 
       NBC_Handle *tmp_handle;
@@ -8531,24 +8517,14 @@ void *NBC_Pthread_func( __UNUSED__ void *ptr )
 
       mpc_thread_mutex_unlock(lock);
 
-
-    int retidx = 0;
+    int retidx = 0 , res;
     NBC_DEBUG(10, "waiting for %i elements\n", cpt);
-    int res = PMPI_Waitany(cpt, requests, &retidx, MPI_STATUS_IGNORE);
+      res = PMPI_Waitany(cpt, requests, &retidx, MPI_STATUS_IGNORE);
     NBC_DEBUG(10, "elements %d is finished", retidx);
     if(res != MPI_SUCCESS)
     { printf("Error %i in MPI_Waitany()\n", res); }
-    if(0 != retidx)
-    { // 0 is the fake request ...
-      /* mark request as finished */
       requests_handles[retidx]->req_array[requests_locations[retidx]] = MPI_REQUEST_NULL;
-      /* progress request (finished?) */
       NBC_Progress(requests_handles[retidx]);
-    }
-    else
-    {
-      req = MPI_REQUEST_NULL;
-    }
 
 	sctk_free(requests);
 	sctk_free(requests_locations);
@@ -8955,8 +8931,6 @@ static inline int NBC_Free(NBC_Handle* handle)
         FILE *fd = fopen(hostname2, "a");
         fprintf(fd, "NBC_DELETE %p %d\n", elem_tmp,
                 task_specific->mpc_mpi_data->NBC_Pthread_nb);
-        // printf("NBC_DELETE\n");
-        // fflush(stdout);
         fflush(fd);
         fclose(fd);
       }
@@ -9168,6 +9142,7 @@ static inline int __NBC_Start_round_persistent( NBC_Handle *handle, int depth )
           break;
         case OP:
         case COPY:
+        case MOVE:
         case UNPACK:
           break;
         default:
@@ -9357,6 +9332,33 @@ static inline int __NBC_Start_round_persistent( NBC_Handle *handle, int depth )
           goto error;
         }
         break;
+      case MOVE:
+        copyargs = (NBC_Args *) ( typeptr + 1 );
+
+        /* get buffers */
+        if ( copyargs->tmpsrc )
+          buf1 = (char *) handle->tmpbuf + (long) copyargs->src;
+        else
+          buf1 = copyargs->src;
+
+        if( copyargs->comm == MPI_COMM_NULL )
+          comm = handle->comm;
+        else
+          comm = copyargs->comm;
+
+        if ( copyargs->tmptgt )
+          buf2 = (char *) handle->tmpbuf + (long) copyargs->tgt;
+        else
+          buf2 = copyargs->tgt;
+
+        res = NBC_Move( buf1, copyargs->srccount, copyargs->srctype, buf2, copyargs->tgtcount, copyargs->tgttype, comm );
+        if ( res != NBC_OK )
+        {
+          printf( "NBC_Copy() failed (code: %i)\n", res );
+          ret = res;
+          goto error;
+        }
+        break;
       case UNPACK:
         unpackargs = (NBC_Args *) ( typeptr + 1 );
 
@@ -9481,6 +9483,7 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
         break;
       case OP:
       case COPY:
+      case MOVE:
       case UNPACK:
         break;
       default:
@@ -9629,6 +9632,32 @@ static inline int __NBC_Start_round( NBC_Handle *handle, int depth )
           comm = copyargs->comm;
 
 				res = NBC_Copy( buf1, copyargs->srccount, copyargs->srctype, buf2, copyargs->tgtcount, copyargs->tgttype, comm );
+				if ( res != NBC_OK )
+				{
+					printf( "NBC_Copy() failed (code: %i)\n", res );
+					ret = res;
+					goto error;
+				}
+				break;
+      case MOVE:
+				copyargs = (NBC_Args *) ( typeptr + 1 );
+
+				/* get buffers */
+				if ( copyargs->tmpsrc )
+					buf1 = (char *) handle->tmpbuf + (long) copyargs->src;
+				else
+					buf1 = copyargs->src;
+				if ( copyargs->tmptgt )
+					buf2 = (char *) handle->tmpbuf + (long) copyargs->tgt;
+				else
+					buf2 = copyargs->tgt;
+
+        if( copyargs->comm == MPI_COMM_NULL )
+          comm = handle->mycomm;
+        else 
+          comm = copyargs->comm;
+
+				res = NBC_Move( buf1, copyargs->srccount, copyargs->srctype, buf2, copyargs->tgtcount, copyargs->tgttype, comm );
 				if ( res != NBC_OK )
 				{
 					printf( "NBC_Copy() failed (code: %i)\n", res );
@@ -9839,13 +9868,13 @@ inline int NBC_Start( NBC_Handle *handle, NBC_Schedule *schedule )
 			&( task_specific->mpc_mpi_data->nbc_initialized_per_task ), 1, NULL,
 			NULL );
 		/* wake progress thread up */
-    _mpc_cl_send(&tmp_send, 1, MPI_INT, 0, 0, MPI_COMM_SELF);
-
+   // _mpc_cl_send(&tmp_send, 1, MPI_INT, 0, 0, MPI_COMM_SELF);
 		mpc_thread_mutex_lock( lock );
 
 		DL_APPEND( task_specific->mpc_mpi_data->NBC_Pthread_handles, elem_tmp );
 		task_specific->mpc_mpi_data->NBC_Pthread_nb++;
 		mpc_thread_mutex_unlock( lock );
+    mpc_thread_sem_post(&( task_specific->mpc_mpi_data->pending_req));
 
 		mpc_threads_generic_scheduler_increase_prio();
 

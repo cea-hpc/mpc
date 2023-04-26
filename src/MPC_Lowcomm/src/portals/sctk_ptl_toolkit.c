@@ -422,7 +422,8 @@ static inline sctk_ptl_id_t __map_id_monitor(sctk_rail_info_t* rail, mpc_lowcomm
 
 	mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_ondemand(dest,
 																		__ptl_get_rail_callback_name(rail, rail_name, 32),
-																		"",
+																		NULL,
+																		0,
 																		&ret);
 
 	if(ret != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
@@ -590,7 +591,7 @@ int sctk_ptl_pending_me_probe(sctk_rail_info_t* rail, mpc_lowcomm_ptp_message_he
 	{
 		.rank = (rank == MPC_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK,
 		.tag = (tag == MPC_ANY_TAG) ? SCTK_PTL_IGN_TAG : SCTK_PTL_MATCH_TAG,
-		.type = hdr->message_type.type,
+		.type = hdr->message_type,
 		.uid = SCTK_PTL_IGN_UID
 	};
 	

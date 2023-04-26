@@ -94,7 +94,6 @@ void _mpc_dt_init()
 	if ( !__mpc_dt_initialized )
 	{
 		__mpc_dt_initialized = 1;
-		mpc_lowcomm_datatype_init_common();	
 	}
 
 	mpc_common_spinlock_unlock(&init_lock);
@@ -2021,7 +2020,7 @@ struct _mpc_dt_layout *_mpc_dt_get_layout( struct _mpc_dt_footprint *ctx, size_t
 			}
 			break;
 		case MPC_COMBINER_STRUCT:
-			/* We have to handle the case of structs where each element can have a size 
+			/* We have to handle the case of structs where each element can have a size
 			   and also empty blocklength for indexed types */
 			count = ctx->array_of_integers[0];
 

@@ -24,7 +24,6 @@
 #define MPI_RMA_WINDOW_H
 
 #include "mpc_mpi.h"
-#include "mpi_alloc_mem.h"
 #include "mpi_rma_epoch.h"
 #include "mpc_common_asm.h"
 #include "mpc_common_datastructure.h"
@@ -151,7 +150,7 @@ static inline int mpc_MPI_win_can_write_directly(struct mpc_MPI_Win *desc,
   }
 
   /* In in the shared pool */
-  if (_mpc_MPI_allocmem_is_in_pool(ptr)) {
+  if (mpc_lowcomm_allocmem_is_in_pool(ptr)) {
     return 1;
   }
 

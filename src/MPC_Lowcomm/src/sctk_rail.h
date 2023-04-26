@@ -185,8 +185,6 @@ struct sctk_rail_info_s
 	int ( *send_message_from_network ) ( mpc_lowcomm_ptp_message_t * );
 	void ( *connect_on_demand ) ( struct sctk_rail_info_s * rail , mpc_lowcomm_peer_uid_t dest );
 
-	void (*control_message_handler)( struct sctk_rail_info_s * rail, mpc_lowcomm_peer_uid_t source_process, int source_rank, char subtype, char param, void * data, size_t size );
-
 	/* RDMA Ops */
 
 	int (*rdma_fetch_and_op_gate)( sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type );

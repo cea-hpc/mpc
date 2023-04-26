@@ -60,4 +60,7 @@ typedef struct{
 #define MPC_LOWCOMM_CXX_BOOL_TYPE void
 #define MPC_LOWCOMM_PACKED_TYPE void
 
+
+int _mpc_lowcomm_datatype_init_common();
+
 #endif

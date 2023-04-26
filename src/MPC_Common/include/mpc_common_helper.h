@@ -231,7 +231,8 @@ void mpc_common_helper_ignore_sigpipe();
 /****************
  * MEMORY STATS *
  ****************/
-
+#define MPC_COMMON_PAGE_SIZE (sysconf(_SC_PAGESIZE))
+#define SCTK_PAGE_SIZE MPC_COMMON_PAGE_SIZE
 size_t mpc_common_helper_memory_in_use( void );
 
 /*****************

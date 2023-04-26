@@ -186,7 +186,7 @@ static inline int __mpc_pmi_get_process_rank( int *rank )
 {
 #if defined(MPC_USE_PMIX)
 	*rank = pmi_context.pmix_proc.rank;
-	return MPC_LAUNCH_PMI_SUCCESS; 
+	return MPC_LAUNCH_PMI_SUCCESS;
 #else
 	int rc;
 	// Get the rank of the current process
@@ -485,17 +485,17 @@ static inline int _pmi_initialize(struct mpc_pmi_context *ctx, int * unreachable
 
 	#endif
 
-	/* There should be no error but PMIX could be surprising */ 
+	/* There should be no error but PMIX could be surprising */
 
 	rc = __mpc_pmi_get_process_rank( &ctx->process_rank );
-	
+
 	if(rc != PMI_SUCCESS )
 	{
 		goto PMI_INIT_SERIAL;
 	}
-	
+
 	rc = __mpc_pmi_get_process_count( &ctx->process_count );
-	
+
 	if(rc != PMI_SUCCESS )
 	{
 		goto PMI_INIT_SERIAL;
@@ -1045,7 +1045,8 @@ int mpc_launch_pmi_get_univ_size(int* univsize){
 }
 
 
-int mpc_launch_pmi_get_app_rank(int* appname){
+int mpc_launch_pmi_get_app_rank(int* appname)
+{
 	#if defined(MPC_USE_PMIX)
 		pmix_status_t ret;
 		pmix_value_t* val;

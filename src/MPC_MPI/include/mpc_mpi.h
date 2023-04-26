@@ -57,8 +57,8 @@ extern "C"
 #define MPI_LOCK_SHARED     235
 
 /* Other constants */
-#define MPI_UNWEIGHTED ((void *) 2)
-#define MPI_WEIGHTS_EMPTY ((void *) 3)
+#define MPI_UNWEIGHTED ((int *) 2)
+#define MPI_WEIGHTS_EMPTY ((int *) 3)
 
 /************************************************************************/
 /* MPI_* to MPC_* converters                                            */

@@ -396,21 +396,33 @@ propagate_build_env()
 # -$3 : variant
 #
 SPECIFY_SPACK_ARCH="yes"
+ENABLE_GENERIC_SPACK_BUILD="no"
+FORCE_SPACK_ARCH=""
 build_package_name()
 {
 	SPACK_ARCH=""
 
-	if test "x${SPECIFY_SPACK_ARCH}" = "xyes"; then
+	if test -n "$FORCE_SPACK_ARCH"; then
+		SPACK_ARCH=" arch=$FORCE_SPACK_ARCH"
+	else
+		GENERIC_FLAG=""
 
-		set +e
-		spack arch > /dev/null 2>&1
-
-		if test "x$?" = "x0"; then
-			SPACK_ARCH=" arch=$(spack arch)"
+		if test "x${ENABLE_GENERIC_SPACK_BUILD}" = "xyes"; then
+			GENERIC_FLAG=" -g "
 		fi
 
-		set -e
+		if test "x${SPECIFY_SPACK_ARCH}" = "xyes"; then
 
+			set +e
+			spack arch $GENERIC_FLAG > /dev/null 2>&1
+
+			if test "x$?" = "x0"; then
+				SPACK_ARCH=" arch=$(spack arch $GENERIC_FLAG)"
+			fi
+
+			set -e
+
+		fi
 	fi
 
 	VARIANT=""
@@ -479,8 +491,6 @@ check_if_spack_package_is_overriden()
 
 					set -e
 			fi
-
-		
 		fi
 	done
 }
@@ -807,6 +817,38 @@ download_all_missing_deps()
 	echo "DEP_LIST=${DEP_LIST}"
 }
 
+
+
+#
+# Find a package prefix from env
+#    $1 Package name
+#    $2 Package version
+#    $3 Package manual prefix
+#
+#    Return PACK_PREFIX (set to "" if not resolved)
+#
+find_package_prefix()
+{
+	PACK_PREFIX=""
+
+	if test -d "$3"; then
+		PACK_PREFIX="$3"
+		return
+	fi
+
+	# Do not forget to trim as spack has 2 spaces in its separator
+	SPACKFIND=$(spack find -p ${1}@${2} | grep "${1}@${2}" | cut -d " " -f 2- | awk '{$1=$1};1' 2> /dev/null || true)
+
+	if test "x$?" != "x0"; then
+		return
+	fi
+
+	if test -d "$SPACKFIND"; then
+		PACK_PREFIX="$SPACKFIND"
+	fi
+}
+
+
 #
 # Build a configure based package
 #
@@ -869,7 +911,7 @@ build_configure_based_package()
 	PKG_SOURCE_DIR=${PROJECT_BUILD_DIR}/dep-${package}-${version}/
 
 	if test ! -d "$PKG_SOURCE_DIR"; then
-		pkg_dir="$SCRIPTPATH/deps/$package/"
+		pkg_dir="$SCRIPTPATH/config/deps/$package"
 
 		locate_tarball "$package" "$version"
 
@@ -901,13 +943,15 @@ build_configure_based_package()
 
 		if test -f "$PACKAGE_PATCH"; then
 			checking "Patching $package $version"
-
 			show_run_cmd "cd $PKG_SOURCE_DIR"
 			cd "$PKG_SOURCE_DIR"
 
 			show_run_cmd "patch -p 1 < $PACKAGE_PATCH"
 			patch -p 1 < "$PACKAGE_PATCH" > /dev/null
 			check_retcode "$?" "Failed to patch $package $version"
+
+			info "PATCH: ${PACKAGE_PATCH}"
+
 
 			show_run_cmd "cd $PROJECT_BUILD_DIR"
 			cd "${PROJECT_BUILD_DIR}"
@@ -968,6 +1012,22 @@ build_configure_based_package()
 	touch "${DEP_FLAG}"
 }
 
+# Check if a prefix exists and then insert it in env if it does
+# Args:
+#    - $1 prefix
+#
+# Return: 0 if prefix found (for use in if)
+#
+check_and_then_load_prefix()
+{
+	candidate_prefix="$1"
+	if test -d "$candidate_prefix"; then
+		load_prefix "$candidate_prefix"
+		return 0
+	fi
+	return 1
+}
+
 # Deploy an MPC dependency using various methods (spack or not)
 # Args:
 # - $1: package name
@@ -1001,8 +1061,7 @@ find_in_prefix_or_use_spack_internal()
 
 	DEP_FOUND="no"
 
-	if test -d "$candidate_prefix"; then
-		load_prefix "$candidate_prefix"
+	if check_and_then_load_prefix "$candidate_prefix"; then
 		# Assume dep found
 		DEP_FOUND="yes"
 	fi
@@ -1130,6 +1189,9 @@ You may track issued commands using the "-v" flag.
                                             openpa:/ffefdkk,mpc-compiler-additions:mpc-compiler-additions@2.0.0, ...
   --enable-spack-arch                     : add architecture specifiers to spack descriptors (default)
   --disable-spack-arch                    : do not pass architecture specifiers to spack descriptors
+  --disable-generic-spack-build           : do not build generic spack packages (portable on target) (default)
+  --enable-generic-spack-build            : build portable for target
+  --force-spack-arch=*                    : overrides architecture flag (passes it to packages for example x86_64_v2)
 
 # Options to transmit to subpackages (only if not using SPACK)
   --mpc-comp=*                            : Add options to mpc-compiler-additions' configure
@@ -1432,6 +1494,15 @@ do
 		--disable-spack-arch)
 			SPECIFY_SPACK_ARCH="no"
 			;;
+		--enable-generic-spack-build)
+			ENABLE_GENERIC_SPACK_BUILD="yes"
+			;;
+		--disable-generic-spack-build)
+			ENABLE_GENERIC_SPACK_BUILD="no"
+			;;
+		--force-spack-arch=*)
+			extractParamValue 'FORCE_SPACK_ARCH' 'force-spack-arch' "$arg"
+			;;
 		--disable-build)
 			BUILD_IS_DISABLED="yes"
 			;;
@@ -1542,14 +1613,27 @@ find_in_prefix_or_use_spack "hwloc" "$(package_version "hwloc")" "${HWLOC_PREFIX
 
 if test "x${DEP_FOUND}" = "xno"; then
 	# Could not use spack now installing manually
-	build_configure_based_package "hwloc" "$(package_version "hwloc")" "$HWLOC_BUILD_PARAMETERS"
+	# hwloc has bugs on inti when building with rocm at least from hwloc 2.7.0 to 2.9.0. the --without-rocm flag make build crash with
+	build_configure_based_package "hwloc" "$(package_version "hwloc")" "$HWLOC_BUILD_PARAMETERS --without-rocm --without-cuda --disable-opencl"
 fi
 
-find_in_prefix_or_use_spack "hydra" "$(package_version "hydra")" "${HYDRA_PREFIX}"
+# We cannot use spack as the spack package uses an internal hwloc of previous version
+if check_and_then_load_prefix "$HYDRA_PREFIX"; then
+	# Make sure hydra seems to be in the path
+	assert_cmd "mpiexec.hydra"
+else
 
-if test "x${DEP_FOUND}" = "xno"; then
-	# Could not use spack now installing manually
-	build_configure_based_package "hydra" "$(package_version "hydra")" "$HYDRA_BUILD_PARAMETERS"
+	if test "x$HYDRA_PREFIX" != "xdisabled"; then
+		info "Hydra must be built and patched localy for HWLOC 2+ support (no spack support)"
+		# Here we need to build hydra and we try to target our own HWLOC
+		find_package_prefix "hwloc" "$(package_version "hwloc")" "${HWLOC_PREFIX}"
+
+		if test -n "${PACK_PREFIX}"; then
+			HYDRA_BUILD_PARAMETERS="--with-hwloc-prefix=${PACK_PREFIX} ${HYDRA_BUILD_PARAMETERS}"
+		fi
+
+		build_configure_based_package "hydra" "$(package_version "hydra")" "$HYDRA_BUILD_PARAMETERS"
+	fi
 fi
 
 
@@ -1571,7 +1655,7 @@ fi
 
 find_in_prefix_or_use_spack "mpcalloc" "$(package_version "mpcalloc")" "$MPCALLOC_PREFIX"
 
-if test "x${DEP_FOUND}" = "xno"; then
+if test "x${DEP_FOUND}" = "xno" && test "x$MPCALLOC_PREFIX" != "xdisabled"; then
 	assert_cmd "cmake"
 	# Could not use spack now installing manually
 	build_configure_based_package "mpcalloc" "$(package_version "mpcalloc")" "$MPCALLOC_BUILD_PARAMETERS"
@@ -1637,8 +1721,15 @@ find_in_prefix_or_use_spack "mpc-compiler-additions" "${VERSION}" "${MPC_COMP_AD
 if test "x${DEP_FOUND}" = "xno"; then
 	assert_cmd "gcc"
 	assert_cmd "g++"
+
+	find_package_prefix "hwloc" "$(package_version "hwloc")" "${HWLOC_PREFIX}"
+
+	AUTOPRIV_HWLOC_BUILD_PARAMETERS=""
+	if test -n "${PACK_PREFIX}"; then
+		AUTOPRIV_HWLOC_BUILD_PARAMETERS="--with-hwloc=${PACK_PREFIX}"
+	fi
 	# Could not use spack now installing manually
-	build_configure_based_package "mpc-compiler-additions" "${VERSION}" "$MPC_COMP_ADD_BUILD_PARAMETERS $GCC_VERSION_ARG"
+	build_configure_based_package "mpc-compiler-additions" "${VERSION}" "$MPC_COMP_ADD_BUILD_PARAMETERS $GCC_VERSION_ARG $AUTOPRIV_HWLOC_BUILD_PARAMETERS"
 fi
 
 
