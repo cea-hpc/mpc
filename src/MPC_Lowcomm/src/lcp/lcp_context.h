@@ -1,6 +1,7 @@
 #ifndef LCP_CONTEXT_H
 #define LCP_CONTEXT_H
 
+#include "lcp_header.h"
 #include "sctk_rail.h" /* defines lcr_am_callback_t */
 #include "lowcomm_config.h"
 
@@ -139,6 +140,6 @@ struct lcp_context {
         lcp_dt_ops_t dt_ops; /* pack/unpack functions */
 };
 
-uint64_t mpc_lowcomm_communicator_uid_of(uint64_t comm_id);
+uint64_t mpc_lowcomm_tag_get_endpoint_address(lcp_tag_hdr_t *hdr);
 
 #endif 

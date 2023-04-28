@@ -292,7 +292,7 @@ int lcp_tag_send_ack(lcp_request_t *parent_request, lcp_tag_hdr_t *hdr){
 
 
 	lcp_ep_get_or_create(parent_request->ctx, 
-		mpc_lowcomm_monitor_local_uid_of(hdr->src), 
+		mpc_lowcomm_tag_get_endpoint_address(hdr), 
 		&ep, 
 		flags);
 
