@@ -40,6 +40,9 @@
 # define GOMP_TASK_FLAG_GRAINSIZE   (1 << 9)
 # define GOMP_TASK_FLAG_IF          (1 << 10)
 # define GOMP_TASK_FLAG_NOGROUP     (1 << 11)
+# define GOMP_TASK_FLAG_REDUCTION	(1 << 12)
+# define GOMP_TASK_FLAG_DETACH		(1 << 13)
+# define GOMP_TASK_FLAG_STRICT		(1 << 14)
 
 /* tasks dependencies flags */
 typedef enum    gomp_task_dep_type_e

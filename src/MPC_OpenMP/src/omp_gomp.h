@@ -398,7 +398,7 @@ void mpc_omp_GOMP_atomic_end( void );
 void mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
                        void ( *cpyfn )( void *, void * ), long arg_size,
                        long arg_align, bool if_clause, unsigned flags,
-                       void **depend, int priority);
+                       void **depend, int priority, void * detach);
 
 void mpc_omp_GOMP_taskwait( void );
 void mpc_omp_GOMP_taskwait_depend( void ** depend);

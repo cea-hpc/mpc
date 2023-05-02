@@ -2034,6 +2034,7 @@ ___gomp_convert_flags(bool if_clause, int flags)
     __CONVERT_ONE_BIT(GOMP_TASK_FLAG_GRAINSIZE, MPC_OMP_TASK_PROP_GRAINSIZE);
     __CONVERT_ONE_BIT(GOMP_TASK_FLAG_IF,        MPC_OMP_TASK_PROP_IF);
     __CONVERT_ONE_BIT(GOMP_TASK_FLAG_NOGROUP,   MPC_OMP_TASK_PROP_NOGROUP);
+    __CONVERT_ONE_BIT(GOMP_TASK_FLAG_DETACH,    MPC_OMP_TASK_PROP_DETACH);
 # undef  __CONVERT_ONE_BIT
 
     /* MPC_OMP_TASK_PROP_FINAL and MPC_OMP_TASK_PROP_INCLUDED */
@@ -2091,7 +2092,7 @@ void
 mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
                        void ( *cpyfn )( void *, void * ), long arg_size,
                        long arg_align, bool if_clause, unsigned flags,
-                       void **depend, int priority)
+                       void **depend, int priority, void * detach)
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
@@ -2138,6 +2139,14 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
 
         /* set task fields */
         _mpc_omp_task_init(task, fn, data_storage, size, properties);
+
+        /* save task to event handler */
+        if (mpc_omp_task_property_isset(properties, MPC_OMP_TASK_PROP_DETACH))
+        {
+            /* Constraints: A program that calls this routine on an event that was already fulfilled is non-conforming. */
+            *((void **) detach) = (void *) &(task->detach_event);
+            mpc_omp_event_handle_init((mpc_omp_event_handle_t **) detach, MPC_OMP_EVENT_TASK_DETACH);
+        }
 
         /* if within a persistent region, we are running the 1st iteration : gotta store tasks */
         if (region->active) mpc_omp_persistent_region_push(task);

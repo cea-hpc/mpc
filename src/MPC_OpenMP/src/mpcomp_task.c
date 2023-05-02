@@ -1580,6 +1580,14 @@ __task_finalize_deps(mpc_omp_task_t * task)
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
     assert(thread);
 
+    /* if task has a detach clause */
+    if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_DETACH))
+    {
+        /* TODO: if the task is untied and has a fiber, we should context switch here */
+        while (OPA_load_int(&(task->detach_event.counter)) == 1)
+            _mpc_omp_task_schedule();
+    }
+
     /* if the task is non-persistent */
     if (!mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT))
     {

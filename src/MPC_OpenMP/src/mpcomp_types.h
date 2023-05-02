@@ -849,6 +849,9 @@ typedef struct  mpc_omp_task_s
     /* infos of the thread that created this task */
     struct mpc_omp_task_thread_infos_s * producer;
 # endif /* MPC_OMP_TASK_USE_RECYCLERS */
+
+    /* detach event */
+    mpc_omp_event_handle_detach_t detach_event;
 }               mpc_omp_task_t;
 
 /** RB tree for task priorities */

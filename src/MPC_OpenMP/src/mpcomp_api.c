@@ -463,12 +463,24 @@ mpc_omp_fulfill_event(mpc_omp_event_handle_t * handle)
             break ;
         }
 
+        case (MPC_OMP_EVENT_TASK_DETACH):
+        {
+            OPA_decr_int(&(((mpc_omp_event_handle_detach_t *) handle)->counter));
+            break ;
+        }
+
         default:
         {
             not_implemented();
             break ;
         }
     }
+}
+
+void
+omp_fulfill_event(omp_event_handle_t event)
+{
+    mpc_omp_fulfill_event((mpc_omp_event_handle_t *) event);
 }
 
 /**
@@ -479,16 +491,16 @@ mpc_omp_fulfill_event(mpc_omp_event_handle_t * handle)
 void
 mpc_omp_event_handle_init(mpc_omp_event_handle_t ** handle_ptr, mpc_omp_event_t type)
 {
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
     switch (type)
     {
         case (MPC_OMP_EVENT_TASK_BLOCK):
         {
-            mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
-            assert(thread);
-
-            mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
-            assert(task);
-
             mpc_omp_event_handle_block_t * handle = (mpc_omp_event_handle_block_t *) malloc(sizeof(mpc_omp_event_handle_block_t));
             assert(handle);
 
@@ -499,6 +511,14 @@ mpc_omp_event_handle_init(mpc_omp_event_handle_t ** handle_ptr, mpc_omp_event_t 
             mpc_common_spinlock_init(&(handle->lock), 0);
 
             (*handle_ptr) = (mpc_omp_event_handle_t *) handle;
+            break ;
+        }
+
+        case (MPC_OMP_EVENT_TASK_DETACH):
+        {
+            assert(*handle_ptr);
+            mpc_omp_event_handle_detach_t * hdl = (mpc_omp_event_handle_detach_t *) (*handle_ptr);
+            OPA_store_int(&(hdl->counter), 1);
             break ;
         }
 

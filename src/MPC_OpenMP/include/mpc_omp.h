@@ -60,15 +60,10 @@ extern "C" {
     typedef enum    mpc_omp_event_e
     {
         MPC_OMP_EVENT_TASK_BLOCK,
+        MPC_OMP_EVENT_TASK_DETACH,
         MPC_OMP_EVENT_MAX
     }               mpc_omp_event_t;
 
-    /**
-     * OpenMP specificates that :
-     * > The type omp_event_handle_t, which must be an implementation-defined enum type
-     *
-     * This has limitations, and so we define an MPC-specific event type for internal events
-     */
     typedef struct  mpc_omp_event_handle_s
     {
         mpc_omp_event_t type;   /* the event type */
@@ -96,6 +91,15 @@ extern "C" {
         OPA_int_t       * cancel;       /* point to 1 if the handle should be cancelled */
         OPA_int_t       cancelled;      /* point to 1 if the handle was cancelled already */
     }               mpc_omp_event_handle_block_t;
+
+    /**
+     * Event handler for task block/unblock
+     */
+    typedef struct   mpc_omp_event_handle_detach_s
+    {
+        mpc_omp_event_handle_t parent;  /* C inheritance */
+        OPA_int_t counter;              /* point to task detach counter */
+    }               mpc_omp_event_handle_detach_t;
 
     /* (de)initialize an event handler */
     void mpc_omp_event_handle_init(mpc_omp_event_handle_t ** handle, mpc_omp_event_t type);
