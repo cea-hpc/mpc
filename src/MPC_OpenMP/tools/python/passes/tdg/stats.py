@@ -1,5 +1,7 @@
 import json
 
+# TODO: rename 'stats' -> 'metrics' + implémenté degrees min/med/avg/max des noeuds
+
 from .. import ipass
 
 class TDGStatsPass(ipass.Pass):

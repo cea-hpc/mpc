@@ -10,10 +10,10 @@ from .. import ipass
 CONFIG = {
     'gradient': True,
     'label': True,
-    'priority': False, #True,
-    'omp_priority': False, #True,
-    'critical': True, # TODO
-    'time': not True, # TODO
+    'priority': not True,
+    'omp_priority': not True,
+    'critical': True,
+    'time': not True,
 }
 
 class TDGDotPass(ipass.Pass):

@@ -59,9 +59,9 @@ class AccumulatePAPIPass(papi_pass.PAPIPass):
 
     def on_task_started(self, env):
         # if there is multiple tasks stacking on a thread,
-        # then couters may be counted twice.
+        # then couters will be counted twice.
         # TODO : handle this in this function :-)
-        # assert(len(env['bound'][env['record'].tid]) == 1)
+        assert(len(env['bound'][env['record'].tid]) == 1)
         pass
 
     def on_task_completed(self, env):

@@ -8,6 +8,8 @@ import getopt
 import sys
 import difflib
 
+# TODO: le systeme de dépendances a été implémenté, il reste maintenant à implémenter les dépendances dans chaque pass (c.f TimeBreakdownPass et TimeWorkloadPass qui sont implémentés)
+
 from passes.cte.google_cte              import GoogleCtePass
 
 from passes.communication.duration      import CommunicationDurationPass

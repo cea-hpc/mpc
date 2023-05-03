@@ -5,6 +5,7 @@ from . import catapult
 from . import utils
 from .. import ipass
 
+# TODO: réimplementé les comms. MPI
 
 CONFIG = {
     'color': not True,

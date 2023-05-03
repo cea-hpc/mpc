@@ -84,7 +84,6 @@ def records_fix(records):
             assert(record.in_uid in records_create)
             assert(record.out_uid in records_create)
             records_create[record.in_uid].npredecessors += 1
-        # TODO: maybe also sort by record type
         records[pid] = sorted(records[pid], key=lambda r: r.time)
     progress.deinit()
 
@@ -92,7 +91,7 @@ def parse_traces(traces, show_progress, inspectors):
 
     progress.switch(show_progress)
 
-    # parse records (TODO : maybe this can be optimized)
+    # parse records (TODO : this can be optimized, currently, conversion from trace files to CPython objects takes ages)
     records = traces_to_records(traces)
     records_fix(records)
 
@@ -142,7 +141,6 @@ def parse_traces(traces, show_progress, inspectors):
         # per-task schedules (x2, contains start, pause, resume, complete)
         schedules = {}
 
-        # TODO : maybe remove one of the 2 lists for memory consumptions
         # successors[uid] => [uid1, uid2, ..., uidn] : successors of 'uid'
         successors = {}
 
