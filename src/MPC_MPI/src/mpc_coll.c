@@ -20,7 +20,6 @@
 /* #   - PEPIN Thibaut thibaut.pepin@cea.fr                               # */
 /* #                                                                      # */
 /* ######################################################################## */
-
 #include <mpc_mpi_internal.h>
 #include <mpi_conf.h>
 #include <mpc_coll_weak.h>
@@ -34,7 +33,6 @@
 #define MAX_HARDWARE_LEVEL 8
 
 #define SCHED_INFO_TOPO_COMM_ALLOWED 1
-#define SCHED_INFO_TOPO_COMM_CREATION_ALLOWED 2
 
 //  TODO:
 //    error hanfling
@@ -442,9 +440,9 @@ static inline void ___collectives_sched_info_init(Sched_info *info, MPC_COLL_TYP
   info->tmpbuf_size = 0;
   info->tmpbuf_pos = 0;
 
-  info->flag = SCHED_INFO_TOPO_COMM_ALLOWED;
+  info->flag = 0;
   if(__Get_topo_comm_allowed(coll_type)) {
-    info->flag |= SCHED_INFO_TOPO_COMM_CREATION_ALLOWED;
+    info->flag |= SCHED_INFO_TOPO_COMM_ALLOWED;
   }
   
   info->hardware_info_ptr = NULL;
@@ -1297,11 +1295,11 @@ static inline int ___collectives_topo_comm_init(MPI_Comm comm, int root, int max
 static inline int __Get_topo_comm_allowed(MPC_COLL_TYPE coll_type) {
   switch(coll_type) {
     case MPC_COLL_TYPE_BLOCKING:
-      return _mpc_mpi_config()->coll_opts.topo_creation_allow_blocking;
+      return _mpc_mpi_config()->coll_opts.topo_blocking;
     case MPC_COLL_TYPE_NONBLOCKING: 
-      return _mpc_mpi_config()->coll_opts.topo_creation_allow_non_blocking;
+      return _mpc_mpi_config()->coll_opts.topo_non_blocking;
     case MPC_COLL_TYPE_PERSISTENT: 
-      return _mpc_mpi_config()->coll_opts.topo_creation_allow_persistent;
+      return _mpc_mpi_config()->coll_opts.topo_persistent;
     default:
       // error
       return -1;
@@ -1543,12 +1541,9 @@ int ___collectives_bcast_switch(void *buffer, int count, MPI_Datatype datatype, 
   int topo = 0;
   // Check if we are on a topological comm
   if(__global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
-    // Get the topological communicators
+    // Get topological communicators, or NULL if not created already
     info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root);
-    // If we could'nt get them, check if we can create them
-    if(info->hardware_info_ptr != NULL || (info->flag & SCHED_INFO_TOPO_COMM_CREATION_ALLOWED)) {
-      topo = 1;
-    }
+    topo = 1;
   }
 
   if(topo) {
@@ -1751,7 +1746,7 @@ int ___collectives_bcast_scatter_allgather(__UNUSED__ void *buffer, __UNUSED__ i
 int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int initial_flag = info->flag;
-  info->flag &=(!SCHED_INFO_TOPO_COMM_ALLOWED); 
+  info->flag &= ~SCHED_INFO_TOPO_COMM_ALLOWED; 
 
   int rank, size, res = MPI_SUCCESS;
   _mpc_cl_comm_size(comm, &size);
@@ -2067,14 +2062,12 @@ int ___collectives_reduce_switch(const void *sendbuf, void* recvbuf, int count, 
 
 
   int topo = 0;
+
   // Check if we are on a topological comm
   if(__global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
-    // Get the topological communicators
+    // Get topological communicators, or NULL if not created already
     info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root);
-    // If we could'nt get them, check if we can create them
-    if(info->hardware_info_ptr != NULL || (info->flag & SCHED_INFO_TOPO_COMM_CREATION_ALLOWED)) {
-      topo = 1;
-    }
+    topo = 1;
   }
   
   if(topo) {
@@ -2469,7 +2462,7 @@ int ___collectives_reduce_topo(const void *sendbuf, void* recvbuf, int count, MP
 int ___collectives_reduce_topo_commute(const void *sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
   
   int initial_flag = info->flag;
-  info->flag &=(!SCHED_INFO_TOPO_COMM_ALLOWED); 
+  info->flag &= ~SCHED_INFO_TOPO_COMM_ALLOWED; 
 
   int rank, size, res = MPI_SUCCESS;
   MPI_Aint ext;
@@ -2775,12 +2768,9 @@ int ___collectives_allreduce_switch(const void *sendbuf, void* recvbuf, int coun
   int topo = 0;
   // Check if we are on a topological comm
   if(__global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
-    // Get the topological communicators
+    // Get topological communicators, or NULL if not created already
     info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, 0);
-    // If we could'nt get them, check if we can create them
-    if(info->hardware_info_ptr != NULL || (info->flag & SCHED_INFO_TOPO_COMM_CREATION_ALLOWED)) {
-      topo = 1;
-    }
+    topo = 1;
   }
 
   if(topo) {
@@ -3676,12 +3666,9 @@ int ___collectives_scatter_switch(const void *sendbuf, int sendcount, MPI_Dataty
   int topo = 0;
   // Check if we are on a topological comm
   if(__global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
-    // Get the topological communicators
+    // Get topological communicators, or NULL if not created already
     info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root);
-    // If we could'nt get them, check if we can create them
-    if(info->hardware_info_ptr != NULL || (info->flag & SCHED_INFO_TOPO_COMM_CREATION_ALLOWED)) {
-      topo = 1;
-    }
+    topo = 1;
   }
 
   if(topo) {
@@ -3946,7 +3933,7 @@ int ___collectives_scatter_binomial(const void *sendbuf, int sendcount, MPI_Data
 int ___collectives_scatter_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
   
   int initial_flag = info->flag;
-  info->flag &=(!SCHED_INFO_TOPO_COMM_ALLOWED); 
+  info->flag &= ~SCHED_INFO_TOPO_COMM_ALLOWED; 
  
   int rank, size, res = MPI_SUCCESS;
   MPI_Aint sendext, recvext;
@@ -4733,12 +4720,9 @@ int ___collectives_gather_switch(const void *sendbuf, int sendcount, MPI_Datatyp
   int topo = 0;
   // Check if we are on a topological comm
   if(__global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
-    // Get the topological communicators
+    // Get topological communicators, or NULL if not created already
     info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root);
-    // If we could'nt get them, check if we can create them
-    if(info->hardware_info_ptr != NULL || (info->flag & SCHED_INFO_TOPO_COMM_CREATION_ALLOWED)) {
-      topo = 1;
-    }
+    topo = 1;
   }
 
   if(topo) {
@@ -5004,7 +4988,7 @@ int ___collectives_gather_binomial(const void *sendbuf, int sendcount, MPI_Datat
 int ___collectives_gather_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int initial_flag = info->flag;
-  info->flag &=(!SCHED_INFO_TOPO_COMM_ALLOWED); 
+  info->flag &= ~SCHED_INFO_TOPO_COMM_ALLOWED; 
 
   int rank, size, res = MPI_SUCCESS;
   MPI_Aint sendext, recvext;
@@ -6648,12 +6632,9 @@ int ___collectives_allgather_switch(const void *sendbuf, int sendcount, MPI_Data
   int topo = 0;
   // Check if we are on a topological comm
   if(__global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
-    // Get the topological communicators
+    // Get topological communicators, or NULL if not created already
     info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, 0);
-    // If we could'nt get them, check if we can create them
-    if(info->hardware_info_ptr != NULL || (info->flag & SCHED_INFO_TOPO_COMM_CREATION_ALLOWED)) {
-      topo = 1;
-    }
+    topo = 1;
   }
 
   if(topo) {
@@ -7649,12 +7630,9 @@ int ___collectives_alltoall_switch(const void *sendbuf, int sendcount, MPI_Datat
   int topo = 0;
   // Check if we are on a topological comm
   if(__global_topo_allow && info->flag & SCHED_INFO_TOPO_COMM_ALLOWED) {
-    // Get the topological communicators
+    // Get topological communicators, or NULL if not created already
     info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, 0);
-    // If we could'nt get them, check if we can create them
-    if(info->hardware_info_ptr != NULL || (info->flag & SCHED_INFO_TOPO_COMM_CREATION_ALLOWED)) {
-      topo = 1;
-    }
+    topo = 1;
   }
 
   // TODO choose correctly ?
@@ -8077,7 +8055,7 @@ int ___collectives_alltoall_pairwise(const void *sendbuf, int sendcount, MPI_Dat
 int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPC_COLL_TYPE coll_type, NBC_Schedule * schedule, Sched_info *info) {
 
   int initial_flag = info->flag;
-  info->flag &= (~SCHED_INFO_TOPO_COMM_ALLOWED); 
+  info->flag &= ~SCHED_INFO_TOPO_COMM_ALLOWED;
 
   int rank, size, res;
   MPI_Aint sendext, recvext;
@@ -8106,7 +8084,7 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   // We fetch the topological communicators if we can, if not we create them
   int root = 0;
   if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
-    if(!(info->flag & SCHED_INFO_TOPO_COMM_CREATION_ALLOWED)) {
+    if(!(info->flag & SCHED_INFO_TOPO_COMM_ALLOWED)) {
       // For some reason, we ended up here
       // We cannot create topological communicators and they aren't already created
       // Fallback on non-topological algorithms

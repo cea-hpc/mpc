@@ -110,9 +110,9 @@ static inline void __coll_param_defaults( void )
 	opts->bcast_interleave = 16;
 
   /* TOPO */
-  opts->topo_creation_allow_persistent = 0;
-  opts->topo_creation_allow_non_blocking = 0;
-  opts->topo_creation_allow_blocking = 0;
+  opts->topo_persistent = 0;
+  opts->topo_non_blocking = 0;
+  opts->topo_blocking = 0;
   opts->topo_max_level = 1;
 }
 
@@ -473,12 +473,12 @@ mpc_conf_config_type_t *__init_coll_config( void )
 															NULL );
 
 	mpc_conf_config_type_t *intracomm = mpc_conf_config_type_init( "intracomm",
-                              PARAM( "topopersistent", &opts->topo_creation_allow_persistent, MPC_CONF_BOOL,
-																	"Allow the creation of topological communicators inside persistent collectives" ),
-                              PARAM( "toponbc", &opts->topo_creation_allow_non_blocking, MPC_CONF_BOOL,
-																	"Allow the creation of topological communicators inside non blocking collectives" ),
-                              PARAM( "topoblocking", &opts->topo_creation_allow_blocking, MPC_CONF_BOOL,
-																	"Allow the creation of topological communicators inside blocking collectives" ),
+                              PARAM( "topopersistent", &opts->topo_persistent, MPC_CONF_BOOL,
+																	"Use topological algorithms for all persistent collective operations" ),
+                              PARAM( "toponbc", &opts->topo_non_blocking, MPC_CONF_BOOL,
+																	"Use topological algorithms for all non-blocking collective operations" ),
+                              PARAM( "topoblocking", &opts->topo_blocking, MPC_CONF_BOOL,
+																	"Use topological algorithms for all blocking collective operations" ),
 															PARAM( "topomaxlevel", &opts->topo_max_level, MPC_CONF_INT,
 																	"Maximum number of topological level for topological collectives" ),
 															PARAM( "nocommute", &opts->force_nocommute, MPC_CONF_BOOL,
