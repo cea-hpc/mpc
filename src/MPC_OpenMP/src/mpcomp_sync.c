@@ -505,9 +505,7 @@ mpc_omp_barrier(ompt_sync_region_t kind)
         if (OPA_fetch_and_incr_int(&(team->threads_in_barrier)) == num_threads - 1)
         {
             while (OPA_load_int(&(region->task_ref))) _mpc_omp_task_schedule();
-#if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_sync_region_wait(kind, ompt_scope_end);
-#endif /* OMPT_SUPPORT */
+
             OPA_store_int(&(team->threads_in_barrier), 0);
             ++team->barrier_version;
 
@@ -522,6 +520,10 @@ mpc_omp_barrier(ompt_sync_region_t kind)
             pthread_mutex_unlock(mutex);
 # endif /* MPC_OMP_TASK_COND_WAIT */
         }
+
+#if OMPT_SUPPORT
+    _mpc_omp_ompt_callback_sync_region_wait(kind, ompt_scope_end);
+#endif /* OMPT_SUPPORT */
 
         /* work steal */
         while (team->barrier_version == old_version)
