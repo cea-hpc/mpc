@@ -9,6 +9,7 @@
 #include "lcp_datatype.h"
 
 #include "mpc_common_debug.h"
+#include "mpc_lowcomm_msg.h"
 #include "mpc_lowcomm_types.h"
 #include "sctk_alloc.h"
 
@@ -110,15 +111,17 @@ int lcp_send_am_eager_tag_bcopy(lcp_request_t *req)
                               "dest=%d, length=%d, tag=%d, lcreq=%p.", req->send.tag.comm,
                               req->send.tag.src_tid, req->send.tag.dest_tid, 
                               req->send.length, req->send.tag.tag, req->request);
-	int message_type;
-	if(req->request->synchronized) message_type = MPC_LOWCOMM_P2P_SYNC_MESSAGE;
-	else message_type = MPC_LOWCOMM_P2P_MESSAGE;
+	if(!req->message_type){
+		req->message_type = MPC_LOWCOMM_P2P_MESSAGE;
+	}
+	if(!req->send.pack_function)
+		req->send.pack_function = lcp_send_tag_pack;
 
 	mpc_common_debug_info("LCP: send am eager tag bcopy src=%d, dest=%d, length=%d msg_id=%d",
 			      req->send.tag.src, req->send.tag.dest, req->send.length, req->msg_id);
         payload = lcp_send_do_am_bcopy(lcr_ep, 
-                                       message_type, 
-                                       lcp_send_tag_pack, 
+                                       req->message_type, 
+                                       req->send.pack_function, 
                                        req);
 	//FIXME: handle error
 	if (payload < 0) {
@@ -314,18 +317,19 @@ int lcp_tag_send_ack(lcp_request_t *parent_request, lcp_tag_hdr_t *hdr){
 	if (ack_request == NULL) {
 		return MPC_LOWCOMM_ERROR;
 	}
+	ack_request->message_type = MPC_LOWCOMM_P2P_ACK_MESSAGE;
 	ack_request->msg_id = ack_key;
 
 	// send an active message using buffer copy from the endpoint ep
-	payload = lcp_send_do_am_bcopy(ep->lct_eps[ep->priority_chnl],
-									MPC_LOWCOMM_P2P_ACK_MESSAGE,
-									lcp_send_ack_pack,
-									ack_request);
-	if (payload < 0) {
-			mpc_common_debug_error("LCP: error sending ack eager message");
-			return MPC_LOWCOMM_ERROR;
-	}
+
+	ack_request->send.func = lcp_send_am_eager_tag_bcopy;
+	ack_request->send.pack_function = lcp_send_ack_pack;
+
+	lcp_request_send(ack_request);
+
 	mpc_common_debug("LCP: successfully sent ack message");
+
+	int rc;
 
 	lcp_request_complete(ack_request);
 

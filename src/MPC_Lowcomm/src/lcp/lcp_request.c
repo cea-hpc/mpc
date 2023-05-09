@@ -2,9 +2,11 @@
 #include "lcp_ep.h"
 #include "lcp_pending.h"
 #include "lcp_context.h"
+#include "mpc_common_debug.h"
 
 #include <sctk_alloc.h>
 
+// int my_debug = 1;
 /**
  * @brief Create a request.
  * 
@@ -14,7 +16,7 @@
 int lcp_request_create(lcp_request_t **req_p)
 {
 	lcp_request_t *req;
-	req = sctk_malloc(sizeof(lcp_request_t));
+	req = (lcp_request_t *)sctk_malloc(sizeof(lcp_request_t));
 	if (req == NULL) {
 		mpc_common_debug_error("LCP: could not allocate recv request.");
 		return MPC_LOWCOMM_ERROR;
@@ -79,13 +81,13 @@ int lcp_request_complete(lcp_request_t *req)
 		req->request->request_completion_fn(req->request);
 	}
 
-        if (req->flags & LCP_REQUEST_RMA_COMPLETE) {
-                req->send.cb(req->request);
-        }
-        
-        if (req->flags & LCP_REQUEST_OFFLOADED_RNDV) {
-                lcp_pending_delete(req->ctx->match_ht, req->msg_id);
-        }
+	if (req->flags & LCP_REQUEST_RMA_COMPLETE) {
+			req->send.cb(req->request);
+	}
+	
+	if (req->flags & LCP_REQUEST_OFFLOADED_RNDV) {
+			lcp_pending_delete(req->ctx->match_ht, req->msg_id);
+	}
 
 	if (req->flags & LCP_REQUEST_DELETE_FROM_PENDING) {
                 lcp_pending_delete(req->ctx->pend, req->msg_id);

@@ -26,11 +26,11 @@ enum {
 };
 
 enum {
-	LCP_RECV_CONTAINER_UNEXP_RGET = LCP_BIT(0),
-	LCP_RECV_CONTAINER_UNEXP_RPUT = LCP_BIT(1),
-	LCP_RECV_CONTAINER_UNEXP_TAG  = LCP_BIT(2),
-	LCP_RECV_CONTAINER_UNEXP_SM   = LCP_BIT(3),
-	LCP_RECV_CONTAINER_UNEXP_TAG_SYNC  = LCP_BIT(4)
+	LCP_RECV_CONTAINER_UNEXP_RGET           = LCP_BIT(0),
+	LCP_RECV_CONTAINER_UNEXP_RPUT           = LCP_BIT(1),
+	LCP_RECV_CONTAINER_UNEXP_TAG            = LCP_BIT(2),
+	LCP_RECV_CONTAINER_UNEXP_SM             = LCP_BIT(3),
+	LCP_RECV_CONTAINER_UNEXP_TAG_SYNC       = LCP_BIT(4)
 };
 
 /* Store data for unexpected am messages
@@ -49,6 +49,7 @@ struct lcp_request {
 	lcp_context_h  ctx; 
 	lcp_task_h     task; 
         lcp_datatype_t datatype;
+        mpc_lowcomm_ptp_message_class_t message_type;
 	union {
 		struct {
 			lcp_ep_h ep;
@@ -56,6 +57,7 @@ struct lcp_request {
 			void *buffer;
 			lcr_tag_context_t t_ctx;
                         lcp_complete_callback_func_t cb;
+                        size_t (*pack_function)(void *dest, void *data);
 
 			union {
 				struct {

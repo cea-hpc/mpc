@@ -9,6 +9,7 @@
 #include "lcp_tag.h"
 
 #include "mpc_common_debug.h"
+#include "mpc_lowcomm_msg.h"
 #include "mpc_lowcomm_types.h"
 #include "opa_primitives.h"
 #include "sctk_alloc.h"
@@ -137,8 +138,10 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
                 return MPC_LOWCOMM_ERROR;
         }
 
-        if(request->synchronized)
+        if(request->synchronized){
+                req->message_type = MPC_LOWCOMM_P2P_SYNC_MESSAGE;
                 lcp_pending_create(ep->ctx->pend, req, req->msg_id);
+        }
         // send the request
         rc = lcp_request_send(req);
         err:

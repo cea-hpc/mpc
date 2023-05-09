@@ -54,7 +54,7 @@ static const char *const mpc_lowcomm_request_type_name[REQUEST_TYPE_COUNT] =
 /** This defines the type of a message */
 typedef enum
 {
-	MPC_LOWCOMM_CLASS_NONE,
+	MPC_LOWCOMM_CLASS_NONE = 1,
 	MPC_LOWCOMM_CANCELLED_SEND,
 	MPC_LOWCOMM_CANCELLED_RECV,
 

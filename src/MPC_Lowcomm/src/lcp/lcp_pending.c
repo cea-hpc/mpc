@@ -48,7 +48,8 @@ lcp_pending_entry_t *lcp_pending_create(lcp_pending_table_t *table,
         mpc_common_spinlock_lock(&(table->table_lock));
 
         HASH_FIND(hh, table->table, &msg_key, sizeof(uint64_t), entry);
-
+	if(req->send.ep == NULL)
+		MPC_CRASH();
         if (entry == NULL) {
                 entry = sctk_malloc(sizeof(lcp_pending_entry_t));
                 if (entry == NULL) {
