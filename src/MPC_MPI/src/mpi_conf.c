@@ -110,10 +110,29 @@ static inline void __coll_param_defaults( void )
 	opts->bcast_interleave = 16;
 
   /* TOPO */
-  opts->topo_persistent = 0;
-  opts->topo_non_blocking = 0;
-  opts->topo_blocking = 0;
-  opts->topo_max_level = 1;
+
+  opts->topo.persistent = 0;
+  opts->topo.non_blocking = 0;
+  opts->topo.blocking = 0;
+  opts->topo.max_level = 1;
+  
+  opts->topo.allgather = 0;
+  opts->topo.allgatherv = 0;
+  opts->topo.allreduce = 0;
+  opts->topo.alltoall = 0;
+  opts->topo.alltoallv = 0;
+  opts->topo.alltoallw = 0;
+  opts->topo.barrier = 0;
+  opts->topo.bcast = 0;
+  opts->topo.exscan = 0;
+  opts->topo.gather = 0;
+  opts->topo.gatherv = 0;
+  opts->topo.scan = 0;
+  opts->topo.scatter = 0;
+  opts->topo.scatterv = 0;
+  opts->topo.reduce = 0;
+  opts->topo.reduce_scatter = 0;
+  opts->topo.reduce_scatter_block = 0;
 }
 
 /* Coll array */
@@ -235,6 +254,75 @@ mpc_conf_config_type_t *_mpc_mpi_config_coll_algorithm_array_conf( struct _mpc_m
 																	  "Reduce scatter block function pointer" ),
 															   NULL );
 
+	return ret;
+}
+
+/* Topological collective algorithms array */
+
+mpc_conf_config_type_t *_mpc_mpi_config_topo_array_conf( struct _mpc_mpi_config_topo_coll_opts *opts )
+{
+                              
+	mpc_conf_config_type_t *ret = mpc_conf_config_type_init( "topo",
+                                 PARAM( "persistent", &opts->persistent, MPC_CONF_BOOL,
+                                    "Use topological algorithms for all persistent collective operations" ),
+                                 PARAM( "nbc", &opts->non_blocking, MPC_CONF_BOOL,
+                                    "Use topological algorithms for all non-blocking collective operations" ),
+                                 PARAM( "blocking", &opts->blocking, MPC_CONF_BOOL,
+                                    "Use topological algorithms for all blocking collective operations" ),
+                                 PARAM( "maxlevel", &opts->max_level, MPC_CONF_INT,
+                                    "Maximum number of topological levels for topological collectives" ),
+															   PARAM( "allgather", &opts->allgather,
+																	  MPC_CONF_BOOL,
+																	  "Use topological algorithms for allgather operations" ),
+															   PARAM( "allgatherv", &opts->allgatherv,
+																	  MPC_CONF_BOOL,
+																	  "Use topological algorithms for allgatherv operations" ),
+															   PARAM( "allreduce", &opts->allreduce,
+																	  MPC_CONF_BOOL,
+																	  "Use topological algorithms for allreduce operations" ),
+															   PARAM( "alltoall", &opts->alltoall,
+																	  MPC_CONF_BOOL,
+																	  "Use topological algorithms for alltoall operations" ),
+															   PARAM( "alltoallv", &opts->alltoallv,
+																	  MPC_CONF_BOOL,
+																	  "Use topological algorithms for alltoallv operations" ),
+															   PARAM( "alltoallw", &opts->alltoallw,
+																	  MPC_CONF_BOOL,
+																	  "Use topological algorithms for alltoallw operations" ),
+															   PARAM( "barrier", &opts->barrier,
+																	  MPC_CONF_BOOL,
+																	  "Use topological algorithms for barrier operations" ),
+															   PARAM( "bcast", &opts->bcast,
+																	  MPC_CONF_BOOL,
+																	  "Use topological algorithms for bcast operations" ),
+															   PARAM( "exscan", &opts->exscan,
+																	  MPC_CONF_BOOL,
+																	  "Use topological algorithms for exscan operations" ),
+															   PARAM( "gather", &opts->gather,
+																	  MPC_CONF_BOOL,
+																	  "Use topological algorithms for gather operations" ),
+															   PARAM( "gatherv", &opts->gatherv,
+																	  MPC_CONF_BOOL,
+																	  "Use topological algorithms for gatherv operations" ),
+															   PARAM( "scan", &opts->scan,
+																	  MPC_CONF_BOOL,
+																	  "Use topological algorithms for scan operations" ),
+															   PARAM( "scatter", &opts->scatter,
+																	  MPC_CONF_BOOL,
+																	  "Use topological algorithms for scatter operations" ),
+															   PARAM( "scatterv", &opts->scatterv,
+																	  MPC_CONF_BOOL,
+																	  "Use topological algorithms for scatterv operations" ),
+															   PARAM( "reduce", &opts->reduce,
+																	  MPC_CONF_BOOL,
+																	  "Use topological algorithms for reduce operations" ),
+															   PARAM( "reducescatter", &opts->reduce_scatter,
+																	  MPC_CONF_BOOL,
+																	  "Use topological algorithms for reduce-scatter operations" ),
+															   PARAM( "reducescatterblock", &opts->reduce_scatter_block,
+																	  MPC_CONF_BOOL,
+																	  "Use topological algorithms for reduce-scatter-block operations" ),
+															   NULL );
 	return ret;
 }
 
@@ -473,14 +561,8 @@ mpc_conf_config_type_t *__init_coll_config( void )
 															NULL );
 
 	mpc_conf_config_type_t *intracomm = mpc_conf_config_type_init( "intracomm",
-                              PARAM( "topopersistent", &opts->topo_persistent, MPC_CONF_BOOL,
-																	"Use topological algorithms for all persistent collective operations" ),
-                              PARAM( "toponbc", &opts->topo_non_blocking, MPC_CONF_BOOL,
-																	"Use topological algorithms for all non-blocking collective operations" ),
-                              PARAM( "topoblocking", &opts->topo_blocking, MPC_CONF_BOOL,
-																	"Use topological algorithms for all blocking collective operations" ),
-															PARAM( "topomaxlevel", &opts->topo_max_level, MPC_CONF_INT,
-																	"Maximum number of topological level for topological collectives" ),
+                              PARAM( "topo", _mpc_mpi_config_topo_array_conf(&opts->topo), MPC_CONF_TYPE,
+																	"Topological algorithm configuration" ),
 															PARAM( "nocommute", &opts->force_nocommute, MPC_CONF_BOOL,
 																	"Force the use of deterministic algorithms" ),
 															PARAM( "barrierfortresh", &opts->barrier_intra_for_trsh, MPC_CONF_INT,

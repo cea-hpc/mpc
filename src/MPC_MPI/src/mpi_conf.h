@@ -195,6 +195,46 @@ static inline void _mpc_mpi_config_coll_route(MPI_Comm comm,
                                                             assume(pointer != NULL);\
                                                             }while(0)
 
+/**********************************
+ * TOPOLOGICAL COLLECTIVE OPTIONS *
+ **********************************/
+
+struct _mpc_mpi_config_topo_coll_opts
+{
+    int max_level;
+
+    /* 
+     * Use topological algorithms for all persistent / non-blocking /
+     * blocking operations
+     */
+    int persistent;
+    int non_blocking;
+    int blocking;
+
+    /* 
+     * Use topological algorithms for a given collective operation.
+     * A topological algorithm is called if either the operation type (blocking,
+     * non-blocking...) OR the collective operation (bcast, reduce...) are non-zero.
+     */
+    int barrier;
+    int bcast;
+    int allgather;
+    int allgatherv;
+    int alltoall;
+    int alltoallv;
+    int alltoallw;
+    int gather;
+    int gatherv;
+    int scatter;
+    int scatterv;
+    int reduce;
+    int allreduce;
+    int reduce_scatter;
+    int reduce_scatter_block;
+    int scan;
+    int exscan;
+};
+
 
 /**********************
  * COLLECTIVE OPTIONS *
@@ -226,11 +266,7 @@ struct _mpc_mpi_config_coll_opts
     int bcast_interleave;
 
     /* TOPO */
-    int topo_persistent;
-    int topo_non_blocking;
-    int topo_blocking;
-    int topo_max_level;
-    
+    struct _mpc_mpi_config_topo_coll_opts topo;
 };
 
 /************************************
