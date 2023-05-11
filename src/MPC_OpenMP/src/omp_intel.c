@@ -525,11 +525,21 @@ void __kmpc_end_critical( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_t
 kmp_int32 __kmpc_single( __UNUSED__ ident_t *loc, __UNUSED__  kmp_int32 global_tid )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
+   _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
-	mpc_common_nodebug( "[REDIRECT KMP]: %s -> _mpcomp_do_single", __func__ );
-	return ( kmp_int32 )mpc_omp_do_single();
+  mpc_common_nodebug( "[REDIRECT KMP]: %s -> _mpcomp_do_single", __func__ );
+  int retval = mpc_omp_do_single();
+#if OMPT_SUPPORT
+  if(retval == 1)
+    _mpc_omp_ompt_callback_work( ompt_work_single_executor, ompt_scope_begin, 1 );
+  else
+  {
+    _mpc_omp_ompt_callback_work( ompt_work_single_other, ompt_scope_begin, 1 );
+    _mpc_omp_ompt_callback_work( ompt_work_single_other, ompt_scope_end, 0 );
+  }
+#endif /* OMPT_SUPPORT */
+  return ( kmp_int32 ) retval;
 }
 
 void __kmpc_end_single( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid )

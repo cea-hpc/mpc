@@ -276,10 +276,7 @@ void mpc_omp_named_critical_end( void **l )
 
 int mpc_omp_do_single(void) 
 {
-#if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_GOMP );
-#endif /* OMPT_SUPPORT */
-
+	/* For GOMP we don't have any end single so we can't do an OMPT callback */
 	int retval = 0;
   	mpc_omp_team_t *team ;	/* Info on the team */
 
@@ -332,12 +329,6 @@ int mpc_omp_do_single(void)
 			}
   		}
 	}
-
-#if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_work( (retval) ? ompt_work_single_executor : ompt_work_single_other,
-                             ompt_scope_begin,
-                             1 );
-#endif /* OMPT_SUPPORT */
 
 	/* 0 means not execute */
  	return retval ;
