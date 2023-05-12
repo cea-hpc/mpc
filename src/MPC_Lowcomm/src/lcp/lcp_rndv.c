@@ -930,8 +930,10 @@ static int lcp_rndv_am_fin_handler(void *arg, void *data,
                 sctk_free(req->state.pack_buf);
         }
 
+	LCP_CONTEXT_LOCK(ctx);
         lcp_request_complete(req);
 
+	LCP_CONTEXT_UNLOCK(ctx);
 err:
         return rc;
 }

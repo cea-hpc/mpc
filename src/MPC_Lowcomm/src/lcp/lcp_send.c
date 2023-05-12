@@ -90,10 +90,8 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
                     size_t count, mpc_lowcomm_request_t *request,
                     const lcp_request_param_t *param)
 {
-        int rc, payload;
+        int rc;
         lcp_request_t *req;
-
-        uint64_t msg_id = OPA_fetch_and_incr_int(&(ep->ctx->msg_id));
 
         // create the request to send
         rc = lcp_request_create(&req);
@@ -102,7 +100,8 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
                 return MPC_LOWCOMM_ERROR;
         }
         req->flags |= LCP_REQUEST_MPI_COMPLETE;
-        OPA_incr_int(&ep->seqn);
+        OPA_load_int(&ep->seqn);
+        uint64_t msg_id = OPA_fetch_and_incr_int(&ep->seqn);
 
         // initialize request
         //FIXME: sequence number should be task specific. Following works in
@@ -111,10 +110,8 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
         LCP_REQUEST_INIT_SEND(req, ep->ctx, task, request, 
                                 param->recv_info, count, 
                                 ep, (void *)buffer, 
-                                OPA_fetch_and_incr_int(&ep->seqn), 
-                                msg_id, param->datatype);
+                                msg_id, msg_id, param->datatype);
         
-        msg_id = lcp_msg_id(mpc_lowcomm_peer_get_rank((uint16_t)ep->uid),(uint16_t) req->seqn);
         req->msg_id = msg_id;
         mpc_common_debug("LCP: msg_id %ld for msg seq %d dest %d", msg_id, req->seqn, mpc_lowcomm_peer_get_rank(ep->uid));
 
@@ -144,6 +141,5 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
         }
         // send the request
         rc = lcp_request_send(req);
-        err:
-                return rc;
+        return rc;
 }

@@ -58,7 +58,7 @@ struct lcp_request {
 			lcr_tag_context_t t_ctx;
                         lcp_complete_callback_func_t cb;
                         size_t (*pack_function)(void *dest, void *data);
-
+                        uint64_t ack_msg_key;
 			union {
 				struct {
 					uint16_t comm;

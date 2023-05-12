@@ -3,6 +3,7 @@
 #include "lcp_pending.h"
 #include "lcp_context.h"
 #include "mpc_common_debug.h"
+#include "mpc_common_spinlock.h"
 
 #include <sctk_alloc.h>
 
@@ -67,6 +68,8 @@ int lcp_request_init_unexp_ctnr(lcp_unexp_ctnr_t **ctnr_p, void *data,
  */
 int lcp_request_complete(lcp_request_t *req)
 {
+	static mpc_common_spinlock_t lock = MPC_COMMON_SPINLOCK_INITIALIZER;
+	mpc_common_spinlock_lock_yield(&lock);
 	mpc_common_debug("LCP: complete req=%p, comm_id=%llu, msg_id=%llu, "
 			 "seqn=%d, lcreq=%p", req, req->send.tag.comm, req->msg_id, 
 			 req->seqn, req->request);
@@ -93,6 +96,8 @@ int lcp_request_complete(lcp_request_t *req)
                 lcp_pending_delete(req->ctx->pend, req->msg_id);
 	} 
 
+	mpc_common_spinlock_unlock(&lock);
 	sctk_free(req);
+
 	return MPC_LOWCOMM_SUCCESS;
 }

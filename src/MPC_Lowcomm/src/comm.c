@@ -3440,14 +3440,15 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
                                         REQUEST_SEND, req);
 		req->synchronized = synchronized;
 
-        lcp_ep_get(lcp_ctx_loc, req->header.destination, &ep);
-        if (ep == NULL) {
-                rc = lcp_ep_create(lcp_ctx_loc, &ep, req->header.destination, 0);
-                if (rc != MPC_LOWCOMM_SUCCESS) {
-                        mpc_common_debug_fatal("Could not create endpoint for %lu.",
-                                               req->header.source);
-                }
-        }
+        // lcp_ep_get(lcp_ctx_loc, req->header.destination, &ep);
+        // if (ep == NULL) {
+        //         rc = lcp_ep_create(lcp_ctx_loc, &ep, req->header.destination, 0);
+        //         if (rc != MPC_LOWCOMM_SUCCESS) {
+        //                 mpc_common_debug_fatal("Could not create endpoint for %lu.",
+        //                                        req->header.source);
+        //         }
+        // }
+		lcp_ep_get_or_create(lcp_ctx_loc, req->header.destination, &ep, 0);
 
         lcp_context_task_get(lcp_ctx_loc, tid, &task);
         if (task == NULL) {

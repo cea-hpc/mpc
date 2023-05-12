@@ -1,5 +1,6 @@
 #include "tbsm.h"
 
+#include "mpc_common_spinlock.h"
 #include "tbsm_types.h"
 
 #include <sctk_rail.h>
@@ -180,28 +181,28 @@ int lcr_tbsm_iface_progress(sctk_rail_info_t *rail)
 	lcr_tbsm_iface_info_t *tbsm_info = rail->network.tbsm.info;
 
         /* Pop first element */
-        mpc_common_spinlock_lock(&(tbsm_info->list->lock));
-        /* Fast path if list is empty */
-        if (!tbsm_info->list->size) {
-                mpc_common_spinlock_unlock(&(tbsm_info->list->lock));
-                return MPC_LOWCOMM_SUCCESS;
+        if(mpc_common_spinlock_trylock(&(tbsm_info->list->lock)) == 0){
+                /* Fast path if list is empty */
+                if (!tbsm_info->list->size) {
+                        mpc_common_spinlock_unlock(&(tbsm_info->list->lock));
+                        return MPC_LOWCOMM_SUCCESS;
+                }
+
+                pkg = tbsm_info->list->list;
+                assert(pkg);
+                DL_DELETE(tbsm_info->list->list, pkg);
+                
+                /* Decrement list size */
+                tbsm_info->list->size--;                        
+
+                mpc_common_spinlock_unlock(&(tbsm_info->list->lock)); // lock can be freed earlier for eager messages
+                lcr_tbsm_invoke_am(rail, pkg->am_id, pkg->size, pkg->buf);
+                
+                //NOTE: pkg must be a bcopy, so free buffer. This would have to change
+                //      if zcopy is implemented.
+                sctk_free(pkg->buf);
+                sctk_free(pkg);
         }
-
-        pkg = tbsm_info->list->list;
-        assert(pkg);
-        DL_DELETE(tbsm_info->list->list, pkg);
-        
-        /* Decrement list size */
-        tbsm_info->list->size--;
-        mpc_common_debug("TBSM: size list %d", tbsm_info->list->size);
-        mpc_common_spinlock_unlock(&(tbsm_info->list->lock));
-
-        lcr_tbsm_invoke_am(rail, pkg->am_id, pkg->size, pkg->buf);
-        
-        //NOTE: pkg must be a bcopy, so free buffer. This would have to change
-        //      if zcopy is implemented.
-        sctk_free(pkg->buf);
-        sctk_free(pkg);
 
         return rc;
 }

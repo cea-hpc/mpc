@@ -14,7 +14,7 @@
 #include "opa_primitives.h"
 
 #define LCP_CONTEXT_LOCK(_ctx) \
-	mpc_common_spinlock_lock(&((_ctx)->ctx_lock))
+	mpc_common_spinlock_lock_yield(&((_ctx)->ctx_lock))
 #define LCP_CONTEXT_UNLOCK(_ctx) \
 	mpc_common_spinlock_unlock(&((_ctx)->ctx_lock))
 

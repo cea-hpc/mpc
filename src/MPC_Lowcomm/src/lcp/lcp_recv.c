@@ -82,9 +82,12 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 					LCP_RNDV_GET);
 	// else if request is matching a non-rendez-vous type unexpected request 
 	} else if (match->flags & LCP_RECV_CONTAINER_UNEXP_TAG) {
-		mpc_common_debug("LCP: matched tag unexp req=%p, flags=%x", req, 
-				 match->flags);
                 lcp_tag_hdr_t *hdr = (lcp_tag_hdr_t *)(match + 1);
+				mpc_common_debug("LCP: matched tag unexp req=%p, flags=%x, req, src=%d, tag=%d, comm=%d",
+						match->flags,
+						hdr->src,
+						hdr->tag,
+						hdr->comm);
 
                 mpc_common_debug("LCP: matched tag unexp req=%p, src=%d, "
                                  "tag=%d, comm=%d", req, hdr->src_tid, hdr->tag, 
@@ -98,6 +101,7 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
                 req->info->length = match->length - sizeof(lcp_tag_hdr_t);
                 req->info->src    = hdr->src_tid;
                 req->info->tag    = hdr->tag;
+				req->seqn = hdr->seqn;
 		if(match->flags & LCP_RECV_CONTAINER_UNEXP_TAG_SYNC)
 			lcp_tag_send_ack(req, hdr);
 
