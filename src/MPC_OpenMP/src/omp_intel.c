@@ -404,7 +404,7 @@ void __kmpc_push_num_threads( __UNUSED__ ident_t *loc, __UNUSED__  kmp_int32 glo
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t __UNUSED__ *t;
-	mpc_common_debug_warning( "%s: pushing %d thread(s)", __func__, num_threads );
+	//mpc_common_debug_warning( "%s: pushing %d thread(s)", __func__, num_threads );
 	/* Handle orphaned directive (initialize OpenMP environment) */
 	mpc_omp_init();
 	/* Grab the thread info */
@@ -1207,10 +1207,6 @@ kmp_int32 __kmpc_reduce( __UNUSED__ ident_t *loc, kmp_int32 global_tid, kmp_int3
 	t = ( mpc_omp_thread_t * )mpc_omp_tls;
 	assert( t != NULL );
 
-#if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_sync_region( ompt_sync_region_reduction, ompt_scope_begin );
-#endif /* OMPT_SUPPORT */
-
 	/* get reduction method */
 	packed_reduction_method = __kmp_determine_reduction_method( loc, global_tid,
                                                                 num_vars, reduce_size,
@@ -1276,8 +1272,8 @@ void __kmpc_end_reduce( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid
 	else if ( packed_reduction_method == tree_reduce_block )
 	{
 #if OMPT_SUPPORT                                                 
-    _mpc_omp_ompt_callback_sync_region(ompt_sync_region_reduction, ompt_scope_begin);             
-    _mpc_omp_ompt_callback_sync_region_wait(ompt_sync_region_reduction, ompt_scope_begin);        
+    _mpc_omp_ompt_callback_sync_region(ompt_sync_region_reduction, ompt_scope_begin);
+    _mpc_omp_ompt_callback_sync_region_wait(ompt_sync_region_reduction, ompt_scope_begin);
 #endif /* OMPT_SUPPORT */                                                   
                                                                             
 		/* For tree reduction algorithm when thread 0 enter __kmpc_end_reduce reduction value is already shared among all threads */
@@ -1302,10 +1298,6 @@ void __kmpc_end_reduce( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid
 #endif /* OMPT_SUPPORT */  
         t->reduction_method = reduction_method_not_defined;
 	}
-
-//#if OMPT_SUPPORT
-    //_mpc_omp_ompt_callback_sync_region( ompt_sync_region_reduction, ompt_scope_end );
-//#endif /* OMPT_SUPPORT */
 }
 
 /**********

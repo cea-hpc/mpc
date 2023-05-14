@@ -34,7 +34,7 @@ _mpc_omp_ompt_callback_sync_region ( ompt_sync_region_t kind,
                               parallel_data, task_data, ret_addr );
 
             callback( kind, endpoint, endpoint == ompt_scope_end
-                                      && kind == ompt_sync_region_barrier_implicit ?
+                                      && kind == ompt_sync_region_barrier_implicit_parallel ?
                                       NULL : parallel_data, task_data, ret_addr );
         }
     }
@@ -69,7 +69,9 @@ _mpc_omp_ompt_callback_sync_region_wait ( ompt_sync_region_t kind,
                               __func__, callback, (int) kind, (int) endpoint,
                               parallel_data, task_data, ret_addr );
 
-            callback( kind, endpoint, parallel_data, task_data, ret_addr );
+            callback( kind, endpoint, endpoint == ompt_scope_end
+                                      && kind == ompt_sync_region_barrier_implicit_parallel ?
+                                      NULL : parallel_data, task_data, ret_addr );
         }
     }
 }
