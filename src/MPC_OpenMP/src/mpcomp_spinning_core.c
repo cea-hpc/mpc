@@ -741,6 +741,7 @@ mpc_omp_thread_t *__mvp_wakeup( mpc_omp_mvp_t *mvp )
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     new_thread->frame_infos.outter_caller =
         mvp->instance->team->frame_infos.outter_caller;
+    new_thread->frame_infos.ompt_return_addr = mvp->instance->team->frame_infos.ompt_return_addr;
 #endif /* OMPT_SUPPORT */
 
 	/* Set thread rank */
