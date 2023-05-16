@@ -434,6 +434,9 @@ int lcr_tcp_init_iface(sctk_rail_info_t *rail)
         rail->network.tcp.zcopy_buf_size = sizeof(lcr_tcp_am_zcopy_hdr_t) +
                 rail->network.tcp.max_iov * sizeof(struct iovec);
 
+        /* Init capabilities */
+        rail->cap = LCR_IFACE_CAP_REMOTE;
+
 	sctk_rail_init_route(rail, rail->runtime_config_rail->topology, tcp_on_demand_connection_handler);
 
 	char * interface = rail->runtime_config_rail->device;

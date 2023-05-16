@@ -16,19 +16,19 @@ int lcp_send_start(lcp_ep_h ep, lcp_request_t *req,
         int rc = MPC_LOWCOMM_SUCCESS;
         size_t size;
 
+        /* Init protocol data in request */
+        lcp_request_init_tag_send(req);
+
         if (ep->ep_config.offload && (ep->ctx->config.offload ||
             (param->flags & LCP_REQUEST_TRY_OFFLOAD))) {
                 size = req->send.length;
                 req->state.offloaded = 1;
                 if (size <= ep->ep_config.tag.max_bcopy) {
-                        lcp_request_init_tag_send(req);
                         req->send.func = lcp_send_tag_eager_tag_bcopy;
                 } else if ((size <= ep->ep_config.tag.max_zcopy) &&
                            (param->datatype & LCP_DATATYPE_CONTIGUOUS)) {
-                        lcp_request_init_tag_send(req);
                         req->send.func = lcp_send_tag_eager_tag_zcopy;
                 } else {
-                        lcp_request_init_rndv_send(req);
                         rc = lcp_send_rndv_offload_start(req);
                 }
         } else {
@@ -42,14 +42,11 @@ int lcp_send_start(lcp_ep_h ep, lcp_request_t *req,
                 if (size <= ep->ep_config.am.max_bcopy || 
                     ((req->send.length <= ep->ep_config.tag.max_zcopy) &&
                      param->datatype & LCP_DATATYPE_DERIVED)) {
-                        lcp_request_init_tag_send(req);
                         req->send.func = lcp_send_am_eager_tag_bcopy;
                 } else if ((size <= ep->ep_config.am.max_zcopy) &&
                            (param->datatype & LCP_DATATYPE_CONTIGUOUS)) {
-                        lcp_request_init_tag_send(req);
                         req->send.func = lcp_send_am_eager_tag_zcopy;
                 } else {
-                        lcp_request_init_rndv_send(req);
                         rc = lcp_send_rndv_am_start(req);
                 }
         }

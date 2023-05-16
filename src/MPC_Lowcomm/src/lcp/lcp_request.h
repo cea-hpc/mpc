@@ -60,29 +60,13 @@ struct lcp_request {
 
 			union {
 				struct {
-					uint64_t comm_id;
-					uint64_t src;
-					uint64_t dest;
-                                        int src_task;
-                                        int dest_task;
-					int tag;
+					uint16_t comm;
+					int32_t  src_pid;
+					int32_t  dest_pid;
+                                        int32_t  src_tid;
+                                        int32_t  dest_tid;
+					int32_t  tag;
 				} tag;
-
-				struct {
-					uint64_t comm_id;
-					uint8_t  am_id;
-					uint64_t src;
-				} am;
-
-				struct {
-					uint64_t  comm_id;
-					uint64_t  src;
-					uint64_t  dest;
-                                        int src_task;
-                                        int dest_task;
-					int       tag;
-                                        uint64_t  remote_addr; /* not needed now */
-				} rndv;
 
                                 struct {
                                         uint64_t remote_addr;
@@ -99,14 +83,14 @@ struct lcp_request {
 			void *buffer;
 			lcr_tag_context_t t_ctx;
 
-			struct {
-				uint64_t comm_id;
-				uint64_t src;
-				uint64_t dest;
-                                int src_task;
-                                int dest_task;
-				int tag;
-			} tag;
+                        struct {
+                                uint16_t comm;
+                                int32_t  src_pid;
+                                int32_t  dest_pid;
+                                int32_t  src_tid;
+                                int32_t  dest_tid;
+                                int32_t  tag;
+                        } tag;
 
 		} recv;
 	};
@@ -178,35 +162,25 @@ struct lcp_request {
 
 static inline void lcp_request_init_tag_send(lcp_request_t *req)
 {
-        req->send.tag.src_task  = req->request->header.source_task;
-        req->send.tag.dest_task = req->request->header.destination_task;
-        req->send.tag.dest      = req->request->header.destination;
-        req->send.tag.src       = req->request->header.source; 
-        req->send.tag.tag       = req->request->header.message_tag;
-        req->send.tag.comm_id   = req->request->header.communicator_id; 
+        req->send.tag.src_tid  = req->request->header.source_task;
+        req->send.tag.dest_tid = req->request->header.destination_task;
+        req->send.tag.dest_pid = req->request->header.destination;
+        req->send.tag.src_pid  = req->request->header.source; 
+        req->send.tag.tag      = req->request->header.message_tag;
+        req->send.tag.comm     = req->request->header.communicator_id; 
 };
 
 
 static inline void lcp_request_init_tag_recv(lcp_request_t *req, lcp_tag_recv_info_t *info)
 {
-        req->recv.tag.src_task  = req->request->header.source_task;
-        req->recv.tag.dest_task = req->request->header.destination_task;
-        req->recv.tag.dest      = req->request->header.destination;
-        req->recv.tag.src       = req->request->header.source; 
-        req->recv.tag.tag       = req->request->header.message_tag;
-        req->recv.tag.comm_id   = req->request->header.communicator_id;
-        req->info               = info;
+        req->recv.tag.src_tid  = req->request->header.source_task;
+        req->recv.tag.dest_tid = req->request->header.destination_task;
+        req->recv.tag.dest_pid = req->request->header.destination;
+        req->recv.tag.src_pid  = req->request->header.source; 
+        req->recv.tag.tag      = req->request->header.message_tag;
+        req->recv.tag.comm     = req->request->header.communicator_id;
+        req->info              = info;
 }
-
-static inline void lcp_request_init_rndv_send(lcp_request_t *req)
-{
-        req->send.rndv.src_task  = req->request->header.source_task;
-        req->send.rndv.dest_task = req->request->header.destination_task;
-        req->send.rndv.dest      = req->request->header.destination;
-        req->send.rndv.src       = req->request->header.source; 
-        req->send.rndv.tag       = req->request->header.message_tag;
-        req->send.rndv.comm_id   = req->request->header.communicator_id; 
-};
 
 static inline void lcp_request_init_rma_put(lcp_request_t *req, 
                                             uint64_t remote_addr,
@@ -220,12 +194,8 @@ static inline void lcp_request_init_rma_put(lcp_request_t *req,
 };
 
 static inline void lcp_request_init_ack(lcp_request_t *ack_req, lcp_ep_h ep, 
-                                        uint64_t comm_id, uint64_t src,
                                         int seqn, uint64_t msg_id)
 {
-        ack_req->send.am.am_id      = MPC_LOWCOMM_ACK_RDV_MESSAGE;
-        ack_req->send.am.comm_id    = comm_id;
-        ack_req->send.am.src        = src;
         ack_req->send.ep            = ep;
 
         ack_req->msg_id             = msg_id;
@@ -264,7 +234,7 @@ static inline int lcp_request_send(lcp_request_t *req)
         switch((rc = req->send.func(req))) {
         case MPC_LOWCOMM_SUCCESS:
                 req->info->length = req->send.length;
-                req->info->src    = req->send.tag.src_task;
+                req->info->src    = req->send.tag.src_tid;
                 req->info->tag    = req->send.tag.tag;
                 break;
         case MPC_LOWCOMM_NO_RESOURCE:

@@ -140,6 +140,13 @@ enum {
 	LCR_IFACE_SM_REQUEST        = LCR_BIT(5),
 };
 
+enum {
+        LCR_IFACE_CAP_RMA     = LCR_BIT(0),
+        LCR_IFACE_CAP_SELF    = LCR_BIT(1),
+        LCR_IFACE_CAP_REMOTE  = LCR_BIT(2),
+        LCR_IFACE_CAP_OFFLOAD = LCR_BIT(3),
+};
+
 /* Active message handler table entry */
 typedef struct lcr_am_handler {
 	lcr_am_callback_t cb;
@@ -256,6 +263,9 @@ struct sctk_rail_info_s
 	struct sctk_topological_polling_tree any_source_polling_tree;
 
 	char device_name[LCR_DEVICE_NAME_MAX];
+
+        /* rail capabilities */
+        unsigned cap;
 
 	/* Endpoint API */
 	lcr_send_am_bcopy_func_t send_am_bcopy;

@@ -57,7 +57,6 @@ static size_t lcp_rndv_fin_pack(void *dest, void *data)
         lcp_request_t *req = data;
 
         hdr->msg_id = req->msg_id;
-        hdr->src    = req->send.tag.src_task;
 
         return sizeof(*hdr);
 }
@@ -81,7 +80,6 @@ static size_t lcp_rtr_rput_offload_pack(void *dest, void *data)
         void *rkey_ptr;
 
         hdr->msg_id = super->msg_id;
-        hdr->src    = super->send.am.src;
 
         rkey_ptr = hdr + 1;
         packed_size = lcp_mem_rkey_pack(super->ctx, super->state.lmem, 
@@ -163,15 +161,15 @@ int lcp_send_rget_offload_start(lcp_request_t *req)
 
         lcr_tag_t tag = { 0 };
         LCP_TM_SET_MATCHBITS(tag.t, 
-                             req->send.rndv.src, 
-                             req->send.rndv.tag, 
-                             req->send.rndv.comm_id);
+                             req->send.tag.src_tid, 
+                             req->send.tag.tag, 
+                             req->send.tag.comm);
 
         mpc_common_debug_info("LCP: send rndv get off req=%p, comm_id=%lu, "
                               "tag=%d, src=%d, dest=%d, mid=%d, buf=%p.", req, 
-                              req->send.rndv.comm_id, 
-                              req->send.rndv.tag, req->send.rndv.src, 
-                              req->send.rndv.dest, req->tm.mid, 
+                              req->send.tag.comm, 
+                              req->send.tag.tag, req->send.tag.src_tid, 
+                              req->send.tag.dest_tid, req->tm.mid, 
                               req->send.buffer);
 
         req->send.t_ctx.req          = req;
@@ -236,9 +234,9 @@ int lcp_send_rput_offload_start(lcp_request_t *req)
 
         mpc_common_debug_info("LCP: send rndv put off req=%p, comm_id=%lu, "
                               "tag=%d, src=%d, dest=%d, msg_id=%d, buf=%p.", 
-                              req, req->send.rndv.comm_id, 
-                              req->send.rndv.tag, req->send.rndv.src, 
-                              req->send.rndv.dest, req->msg_id,
+                              req, req->send.tag.comm, 
+                              req->send.tag.tag, req->send.tag.src_tid, 
+                              req->send.tag.dest_tid, req->msg_id,
                               req->send.buffer);
 
         rail->iface_get_attr(rail, &attr);
@@ -247,9 +245,9 @@ int lcp_send_rput_offload_start(lcp_request_t *req)
 
         lcr_tag_t tag = { 0 };
         LCP_TM_SET_MATCHBITS(tag.t, 
-                             req->send.rndv.src, 
-                             req->send.rndv.tag, 
-                             req->send.rndv.comm_id);
+                             req->send.tag.src_tid, 
+                             req->send.tag.tag, 
+                             req->send.tag.comm);
 
         /* Inside immediate data (header), set RPUT protocol and length of
          * request */
@@ -258,7 +256,7 @@ int lcp_send_rput_offload_start(lcp_request_t *req)
 
         /* reset msg id */
         req->msg_id = 0;
-        LCP_OFFLOAD_SET_MUID(req->msg_id, req->send.tag.dest, req->tm.mid);
+        LCP_OFFLOAD_SET_MUID(req->msg_id, req->send.tag.dest_tid, req->tm.mid);
         /* Add request to match list for later rtr */
         if (lcp_pending_create(req->ctx->match_ht, req, req->msg_id) == NULL) {
                 mpc_common_debug_error("LCP OFFLOAD: could not add pending "
@@ -337,8 +335,8 @@ int lcp_send_tag_eager_tag_bcopy(lcp_request_t *req)
 
         lcr_tag_t tag = {.t_tag = {
                 .tag = req->send.tag.tag,
-                .src = req->send.tag.src_task,
-                .comm = req->send.tag.comm_id }
+                .src = req->send.tag.src_tid,
+                .comm = req->send.tag.comm }
         };
 
         uint64_t imm = 0;
@@ -366,9 +364,9 @@ int lcp_send_tag_eager_tag_zcopy(lcp_request_t *req)
         _mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[req->state.cc];
 
         lcr_tag_t tag = { 0 };
-        LCP_TM_SET_MATCHBITS(tag.t, req->send.tag.src_task, 
+        LCP_TM_SET_MATCHBITS(tag.t, req->send.tag.src_tid, 
                              req->send.tag.tag, 
-                             req->send.tag.comm_id);
+                             req->send.tag.comm);
 
         struct iovec iov = {
                 .iov_base = req->send.buffer,
@@ -383,8 +381,8 @@ int lcp_send_tag_eager_tag_zcopy(lcp_request_t *req)
 
         mpc_common_debug_info("LCP: post send tag zcopy req=%p, src=%d, dest=%d, "
                               "size=%d, matching=[%d:%d:%d]", req, 
-                              req->send.tag.src_task, 
-                              req->send.tag.dest, req->send.length, tag.t_tag.tag, 
+                              req->send.tag.src_tid, 
+                              req->send.tag.dest_tid, req->send.length, tag.t_tag.tag, 
                               tag.t_tag.src, tag.t_tag.comm);
         return lcp_send_do_tag_zcopy(lcr_ep, tag, imm, &iov, 1, &(req->state.comp));
 }
@@ -400,9 +398,8 @@ int lcp_recv_tag_rput(lcp_request_t *req);
 void lcp_recv_tag_callback(lcr_completion_t *comp) 
 {
         uint8_t op;
-        uint64_t comm_id, gid, imm;
+        uint64_t imm;
         int32_t src;
-        mpc_lowcomm_communicator_t comm;
         lcr_tag_t tag;
         lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
                                               recv.t_ctx.comp);
@@ -418,19 +415,13 @@ void lcp_recv_tag_callback(lcr_completion_t *comp)
 
         src                   = LCP_TM_GET_SRC(tag.t);
 
-        //FIXME: bad way to get back comm id
-        gid = mpc_lowcomm_monitor_get_gid();
-        comm_id = LCP_TM_GET_COMM(tag.t);
-        comm_id |= gid << 32;
-
         mpc_common_debug_info("LCP: tag callback req=%p, src=%d, size=%d, "
                               "matching=[%d:%d:%d], comm id=%llu", req, src, 
                               req->recv.send_length, tag.t_tag.tag, 
-                              tag.t_tag.src, tag.t_tag.comm, comm_id);
+                              tag.t_tag.src, tag.t_tag.comm, req->recv.tag.comm);
 
-        comm = mpc_lowcomm_get_communicator_from_id(comm_id);
-        req->recv.tag.src_task = src;
-        req->recv.tag.src = mpc_lowcomm_communicator_uid(comm, src);
+        //NOTE: matching can only be used in process based, so that pid == tid
+        req->recv.tag.src_tid = req->recv.tag.src_pid = src;
         req->recv.tag.tag = LCP_TM_GET_TAG(tag.t);
 
         switch(op) {
@@ -446,7 +437,7 @@ void lcp_recv_tag_callback(lcr_completion_t *comp)
 
                         /* set recv info for caller */
                         req->info->length = comp->sent;
-                        req->info->src    = req->recv.tag.src_task;
+                        req->info->src    = req->recv.tag.src_tid;
                         req->info->tag    = req->recv.tag.tag;
                 }
                 lcp_request_complete(req);
@@ -490,7 +481,7 @@ void lcp_recv_tag_probe_callback(lcr_completion_t *comp)
         req->info->found  = 1;
 
         mpc_common_debug_info("LCP: probe tag callback req=%p, src=%d, size=%d, "
-                              "matching=[%d:%d:%d]", req, req->recv.tag.src_task, 
+                              "matching=[%d:%d:%d]", req, req->recv.tag.src_tid, 
                               req->recv.send_length, tag.t_tag.tag, 
                               tag.t_tag.src, tag.t_tag.comm);
 
@@ -506,12 +497,12 @@ int lcp_recv_tag_zcopy(lcp_request_t *rreq, sctk_rail_info_t *iface)
         size_t iovcnt = 0;
         unsigned int flags = 0;
         lcr_tag_t tag = { 0 };
-        LCP_TM_SET_MATCHBITS(tag.t, rreq->recv.tag.src_task, 
+        LCP_TM_SET_MATCHBITS(tag.t, rreq->recv.tag.src_tid, 
                              rreq->recv.tag.tag, 
-                             rreq->recv.tag.comm_id);
+                             rreq->recv.tag.comm);
 
         lcr_tag_t ign_tag = {.t = 0 };
-        if (rreq->recv.tag.src_task == MPC_ANY_SOURCE) {
+        if (rreq->recv.tag.src_tid == MPC_ANY_SOURCE) {
                 ign_tag.t |= LCP_TM_SRC_MASK;
         }
         if ((int)rreq->recv.tag.tag == MPC_ANY_TAG) {
@@ -529,7 +520,7 @@ int lcp_recv_tag_zcopy(lcp_request_t *rreq, sctk_rail_info_t *iface)
 
         mpc_common_debug_info("LCP: post recv tag zcopy req=%p, src=%d, dest=%d, "
                               "size=%d, matching=[%d:%d:%d], ignore=[%d:%d:%d]", 
-                              rreq, rreq->recv.tag.src_task, rreq->recv.tag.dest_task, 
+                              rreq, rreq->recv.tag.src_tid, rreq->recv.tag.dest_tid, 
                               rreq->recv.length, tag.t_tag.tag, tag.t_tag.src, 
                               tag.t_tag.comm, ign_tag.t_tag.tag, ign_tag.t_tag.src,
                               ign_tag.t_tag.comm);
@@ -592,12 +583,14 @@ int lcp_recv_tag_rget(lcp_request_t *req)
         _mpc_lowcomm_endpoint_t *lcr_ep;
 
         mpc_common_debug_info("LCP: recv offload rget src=%d, tag=%d",
-                              req->recv.tag.src_task, req->recv.tag.tag);
+                              req->recv.tag.src_tid, req->recv.tag.tag);
 
         /* Get LCP endpoint if exists */
-        HASH_FIND(hh, req->ctx->ep_ht, &req->recv.tag.src, sizeof(uint64_t), ctx_ep);
+        uint64_t puid = lcp_get_process_uid(req->ctx->process_uid,
+                                            req->recv.tag.src_pid);
+        HASH_FIND(hh, req->ctx->ep_ht, &puid, sizeof(uint64_t), ctx_ep);
         if (ctx_ep == NULL) {
-                rc = lcp_ep_create(req->ctx, &ep, req->recv.tag.src, 0);
+                rc = lcp_ep_create(req->ctx, &ep, puid, 0);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         mpc_common_debug_error("LCP: could not create ep after match.");
                         goto err;
@@ -659,12 +652,14 @@ int lcp_recv_tag_rput(lcp_request_t *req)
         lcp_request_t *ack;
 
         mpc_common_debug_info("LCP: recv offload rput src=%d, tag=%d",
-                              req->recv.tag.src_task, req->recv.tag.tag);
+                              req->recv.tag.src_tid, req->recv.tag.tag);
         /* Get endpoint */
         //FIXME: redundant in am handler
-        HASH_FIND(hh, req->ctx->ep_ht, &req->recv.tag.src, sizeof(uint64_t), ctx_ep);
+        uint64_t puid = lcp_get_process_uid(req->ctx->process_uid,
+                                            req->recv.tag.src_pid);
+        HASH_FIND(hh, req->ctx->ep_ht, &puid, sizeof(uint64_t), ctx_ep);
         if (ctx_ep == NULL) {
-                rc = lcp_ep_create(req->ctx, &ep, req->recv.tag.src, 0);
+                rc = lcp_ep_create(req->ctx, &ep, puid, 0);
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         mpc_common_debug_error("LCP: could not create ep after match.");
                         goto err;
@@ -673,7 +668,7 @@ int lcp_recv_tag_rput(lcp_request_t *req)
                 ep = ctx_ep->ep;
         }
 
-        LCP_OFFLOAD_SET_MUID(req->msg_id, req->recv.tag.src_task, req->tm.mid);
+        LCP_OFFLOAD_SET_MUID(req->msg_id, req->recv.tag.src_tid, req->tm.mid);
         /* Add request to match list for later rtr */
         if (lcp_pending_create(req->ctx->match_ht, req, req->msg_id) == NULL) {
                 mpc_common_debug_error("LCP OFFLOAD: could not add pending "

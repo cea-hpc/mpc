@@ -426,6 +426,11 @@ int lcr_ptl_iface_open(char *device_name, int id,
         /* Add new API call */
 	iface->iface_get_attr = lcr_ptl_get_attr;
 
+        /* Init capabilities */
+        iface->cap = LCR_IFACE_CAP_RMA | 
+                LCR_IFACE_CAP_SELF     |
+                LCR_IFACE_CAP_REMOTE;
+
         /* Active message calls */
         iface->send_am_bcopy       = lcr_ptl_send_am_bcopy;
         iface->send_am_zcopy       = lcr_ptl_send_am_zcopy;

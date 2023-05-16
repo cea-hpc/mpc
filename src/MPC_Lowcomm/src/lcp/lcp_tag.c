@@ -21,11 +21,11 @@ static size_t lcp_send_tag_pack(void *dest, void *data)
         void *src = req->datatype == LCP_DATATYPE_CONTIGUOUS ?
                req->send.buffer : NULL; 
 	
-	hdr->comm = req->send.tag.comm_id;
-	hdr->tag  = req->send.tag.tag;
-	hdr->src  = req->send.tag.src_task;
-        hdr->dest = req->send.tag.dest_task;
-	hdr->seqn = req->seqn; 
+	hdr->comm     = req->send.tag.comm;
+	hdr->tag      = req->send.tag.tag;
+	hdr->src_tid  = req->send.tag.src_tid;
+        hdr->dest_tid = req->send.tag.dest_tid;
+	hdr->seqn     = req->seqn; 
 
         lcp_datatype_pack(req->ctx, req, req->datatype,
                           (void *)(hdr + 1), src, req->send.length);
@@ -58,8 +58,8 @@ int lcp_send_am_eager_tag_bcopy(lcp_request_t *req)
 	_mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[req->state.cc];
 
 	mpc_common_debug_info("LCP: send am eager tag bcopy comm=%d, src=%d, "
-                              "dest=%d, length=%d, tag=%d, lcreq=%p.", req->send.tag.comm_id,
-                              req->send.tag.src_task, req->send.tag.dest, 
+                              "dest=%d, length=%d, tag=%d, lcreq=%p.", req->send.tag.comm,
+                              req->send.tag.src_tid, req->send.tag.dest_tid, 
                               req->send.length, req->send.tag.tag, req->request);
         payload = lcp_send_do_am_bcopy(lcr_ep, 
                                        MPC_LOWCOMM_P2P_MESSAGE, 
@@ -88,11 +88,17 @@ int lcp_send_am_eager_tag_zcopy(lcp_request_t *req)
 	
         //FIXME: hdr never freed, how should it be initialized?
 	lcp_tag_hdr_t *hdr = sctk_malloc(sizeof(lcp_tag_hdr_t));
-        hdr->comm = req->send.tag.comm_id;
-        hdr->src  = req->send.tag.src_task;
-        hdr->dest = req->send.tag.dest_task;
-        hdr->tag  = req->send.tag.tag;
-        hdr->seqn = req->seqn;
+        if (hdr == NULL) {
+                mpc_common_debug_error("LCP: could not allocate tag header.");
+                rc = MPC_LOWCOMM_ERROR;
+                goto err;
+        }
+
+        hdr->comm     = req->send.tag.comm;
+        hdr->src_tid  = req->send.tag.src_tid;
+        hdr->dest_tid = req->send.tag.dest_tid;
+        hdr->tag      = req->send.tag.tag;
+        hdr->seqn     = req->seqn;
 
 	req->state.comp = (lcr_completion_t) {
                 .comp_cb = lcp_tag_complete
@@ -103,8 +109,8 @@ int lcp_send_am_eager_tag_zcopy(lcp_request_t *req)
         iovcnt++;
 
 	mpc_common_debug_info("LCP: send am eager tag zcopy comm=%d, src=%d, "
-                              "dest=%d, tag=%d, length=%d", req->send.tag.comm_id, 
-                              req->send.tag.src_task, req->send.tag.dest_task, 
+                              "dest=%d, tag=%d, length=%d", req->send.tag.comm, 
+                              req->send.tag.src_tid, req->send.tag.dest_tid, 
                               req->send.tag.tag, req->send.length);
         rc = lcp_send_do_am_zcopy(lcr_ep, 
                                   MPC_LOWCOMM_P2P_MESSAGE, 
@@ -114,6 +120,7 @@ int lcp_send_am_eager_tag_zcopy(lcp_request_t *req)
                                   iovcnt, 
                                   &(req->state.comp));
 
+err:
 	return rc;
 }
 
@@ -136,10 +143,10 @@ static int lcp_am_tag_handler(void *arg, void *data,
 	lcp_tag_hdr_t *hdr = data;
         lcp_task_h task = NULL;
 
-        lcp_context_task_get(ctx, hdr->dest, &task);  
+        lcp_context_task_get(ctx, hdr->dest_tid, &task);  
         if (task == NULL) {
                 mpc_common_debug_error("LCP: could not find task with tid=%d",
-                                       hdr->dest);
+                                       hdr->dest_tid);
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
@@ -148,10 +155,10 @@ static int lcp_am_tag_handler(void *arg, void *data,
 	req = (lcp_request_t *)lcp_match_prq(task->prq_table, 
 					     hdr->comm, 
 					     hdr->tag,
-					     hdr->src);
+					     hdr->src_tid);
 	if (req == NULL) {
                 mpc_common_debug("LCP: recv unexp tag src=%d, length=%d",
-                                 hdr->src, length);
+                                 hdr->src_tid, length);
 		rc = lcp_request_init_unexp_ctnr(&ctnr, hdr, length, 
 						 LCP_RECV_CONTAINER_UNEXP_TAG);
 		if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -160,7 +167,7 @@ static int lcp_am_tag_handler(void *arg, void *data,
 		lcp_append_umq(task->umq_table, (void *)ctnr, 
 			       hdr->comm,
 			       hdr->tag,
-			       hdr->src);
+			       hdr->src_tid);
 
 		LCP_TASK_UNLOCK(task);
 		return MPC_LOWCOMM_SUCCESS;
@@ -168,7 +175,7 @@ static int lcp_am_tag_handler(void *arg, void *data,
 	LCP_TASK_UNLOCK(task);
 		
         mpc_common_debug("LCP: recv exp tag src=%d, length=%d",
-                         hdr->src, length);
+                         hdr->src_tid, length);
 	/* copy data to receiver buffer and complete request */
         lcp_datatype_unpack(req->ctx, req, req->datatype, 
                             req->recv.buffer, (void *)(hdr + 1),
@@ -176,7 +183,7 @@ static int lcp_am_tag_handler(void *arg, void *data,
 
         /* set recv info for caller */
         req->info->length = length - sizeof(*hdr);
-        req->info->src    = hdr->src;
+        req->info->src    = hdr->src_tid;
         req->info->tag    = hdr->tag;
 
 	lcp_request_complete(req);

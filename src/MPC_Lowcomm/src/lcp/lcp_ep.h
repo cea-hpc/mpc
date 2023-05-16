@@ -65,7 +65,8 @@ struct lcp_ep {
 
         int num_chnls; /* Number of channels */
         _mpc_lowcomm_endpoint_t **lct_eps; //FIXME: rename (lct not ok)
-        bmap_t map; /* Bitmap into endpoint table of used channels */
+        bmap_t avail_map; /* Bitmap of usable transport endpoints */
+        bmap_t conn_map;  /* Bitmap of connected transport endpoints */
 };
 
 

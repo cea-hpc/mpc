@@ -254,6 +254,9 @@ int lcr_tbsm_iface_init(sctk_rail_info_t *iface)
         memset(tbsm_iface->info->list, 0, sizeof(lcr_tbsm_pkg_list_t));
         mpc_common_spinlock_init(&(tbsm_iface->info->list->lock), 0);
 
+        /* Init capabilities */
+        iface->cap = LCR_IFACE_CAP_SELF | LCR_IFACE_CAP_RMA;
+
         tbsm_iface->bcopy_buf_size = tbsm_info.bcopy_buf_size;
         tbsm_iface->eager_limit    = tbsm_info.eager_limit;
         tbsm_iface->max_msg_size   = tbsm_info.max_msg_size;

@@ -30,13 +30,13 @@ int lcp_tag_probe_nb(lcp_task_h task, const int src,
                         
                         recv_info->tag    = hdr->tag;
                         recv_info->length = match->length - sizeof(lcp_tag_hdr_t);
-                        recv_info->src    = hdr->src;
+                        recv_info->src    = hdr->src_tid;
 
                 } else if (match->flags & (LCP_RECV_CONTAINER_UNEXP_RPUT | 
                                            LCP_RECV_CONTAINER_UNEXP_RGET)) {
                         lcp_rndv_hdr_t *hdr = (lcp_rndv_hdr_t *)(match + 1);
 
-                        recv_info->src    = hdr->base.src;
+                        recv_info->src    = hdr->base.src_tid;
                         recv_info->tag    = hdr->base.tag;
                         recv_info->length = hdr->size;
                 }

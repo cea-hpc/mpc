@@ -9,17 +9,18 @@ typedef struct lcp_am_hdr {
 } lcp_am_hdr_t;
 
 typedef struct lcp_tag_hdr {
-	int32_t src;
-	int32_t dest;
-	int32_t tag;
-	int16_t seqn;
-	uint16_t comm;
+	int32_t  src_tid;  /* source task identifier         */
+	int32_t  dest_tid; /* destination process identifier */
+	int32_t  tag;      /* tag                            */
+	int16_t  seqn;     /* message sequence number        */
+	uint16_t comm;     /* communicator identifier        */
 } lcp_tag_hdr_t;
 
 typedef struct lcp_rndv_hdr {
 	lcp_tag_hdr_t base;
-	uint64_t      msg_id;
-	size_t        size;
+	int32_t       src_pid; /* source process identifier   */
+	uint64_t      msg_id;  /* message unique identifier   */
+	size_t        size;    /* message size                */
 } lcp_rndv_hdr_t;
 
 typedef struct lcp_rndv_ack_hdr {

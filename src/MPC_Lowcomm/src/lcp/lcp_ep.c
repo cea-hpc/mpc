@@ -10,21 +10,8 @@
 
 static int lcp_ep_check_if_valid(lcp_ep_h ep) 
 {
-        int is_valid;
-
         /* Endpoint must have at least one transport interface */
-        is_valid = (uint64_t)ep->map.bits != 0;
-
-        /* Endpoint must have a single channel if local comm */
-        if (ep->uid == ep->ctx->process_uid) {
-                is_valid = is_valid && (ep->num_chnls == 1);
-                if (!is_valid) {
-                        mpc_common_debug_warning("LCP: ep is self but no SM "
-                                                 "transport found. Check TBSM.");
-                }
-        }
-
-        return is_valid;
+        return !mpc_bitmap_is_zero(ep->conn_map);
 }
 
 //FIXME: Cannot be used by TAG offload data path since multiplexing not allowed.
@@ -41,7 +28,7 @@ int lcp_ep_get_next_cc(lcp_ep_h ep)
         if (ep->num_chnls > 1 && ep->ctx->config.multirail_enabled) {
                 cc_idx = ep->cc + 1;
                 for (i = 0; i < ep->ctx->num_resources; i++) {
-                        if (MPC_BITMAP_GET(ep->map, cc_idx)) {
+                        if (MPC_BITMAP_GET(ep->conn_map, cc_idx)) {
                                 ep->next_cc = cc_idx;
                                 break;
                         }
@@ -77,8 +64,8 @@ int lcp_ep_create_base(lcp_context_h ctx, lcp_ep_h *ep_p)
 	}
 	memset(ep->lct_eps, 0, ctx->num_resources * sizeof(_mpc_lowcomm_endpoint_t *));
 
-        /* Init channel endpoint bitmap */
-        ep->map = ep_map;
+        /* Init channel transport endpoint bitmaps */
+        ep->avail_map = ep->conn_map = ep_map;
 	
 	*ep_p   = ep;
 
@@ -108,7 +95,7 @@ int lcp_ep_init_config(lcp_context_h ctx, lcp_ep_h ep)
 
 	for (i=0; i<ctx->num_resources; i++) {	
                 /* Only append config of used endpoint interfaces */
-                if (!MPC_BITMAP_GET(ep->map, i)) 
+                if (!MPC_BITMAP_GET(ep->avail_map, i)) 
                         continue;
 
 		lcp_rsc_desc_t if_desc  = ctx->resources[i];
@@ -130,6 +117,9 @@ int lcp_ep_init_config(lcp_context_h ctx, lcp_ep_h ep)
                         ep->ep_config.tag.max_iovecs = LCP_MIN(ep->ep_config.tag.max_iovecs,
                                                                attr.iface.cap.tag.max_iovecs);
                 }
+                //FIXME: if shared + portals for example, eager and rndv frag
+                //       will be limited by portals capabilities. Is this the
+                //       correct behavior ?
                 ep->ep_config.am.max_bcopy = LCP_MIN(ep->ep_config.am.max_bcopy,
                                                   attr.iface.cap.am.max_bcopy);
                 ep->ep_config.am.max_zcopy = LCP_MIN(ep->ep_config.am.max_zcopy,
@@ -152,9 +142,6 @@ int lcp_ep_init_config(lcp_context_h ctx, lcp_ep_h ep)
         //FIXME: should it be two distinct threshold? One for tag, one for am?
         ep->ep_config.rndv_threshold = ep->ep_config.am.max_zcopy;
 
-        //FIXME: priority chnl is used only for offload channels, for am channel
-        //       cc and next_cc are used to support multiplexing.
-        //       Could be simplified probably.
 	ep->priority_chnl = ep->cc = ep->next_cc = prio_idx; 
 
 	return MPC_LOWCOMM_SUCCESS;
@@ -188,7 +175,6 @@ err:
 int lcp_ep_init_channels(lcp_context_h ctx, lcp_ep_h ep)
 {
 	int rc, i;
-	int connected = 0;
         int is_self = (ep->uid == ctx->process_uid);
 
 	//NOTE: by default all resources are used except if communications are
@@ -197,10 +183,12 @@ int lcp_ep_init_channels(lcp_context_h ctx, lcp_ep_h ep)
 		_mpc_lowcomm_endpoint_t *lcr_ep;
 		lcp_rsc_desc_t if_desc = ctx->resources[i];
 
-                /* Use shared mem exclusively only when self */
-                if ((is_self && !if_desc.iface->is_self) ||
-                    (!is_self && if_desc.iface->is_self))
+                if ((is_self && !(if_desc.iface->cap & LCR_IFACE_CAP_SELF)) ||
+                    (!is_self && !(if_desc.iface->cap & LCR_IFACE_CAP_REMOTE)))
                         continue;
+
+                /* Resource can be used for communication. */
+                MPC_BITMAP_SET(ep->avail_map, i);
 
 		/* Check transport endpoint availability */
 		lcr_ep = sctk_rail_get_any_route_to_process(if_desc.iface, ep->uid);
@@ -217,15 +205,15 @@ int lcp_ep_init_channels(lcp_context_h ctx, lcp_ep_h ep)
 
 		/* Add endpoint to list and set bitmap entry */
 		ep->lct_eps[i] = lcr_ep;
-                MPC_BITMAP_SET(ep->map, i);
                 ep->num_chnls++;
 
-                //FIXME: means that only one transport need be connected for the
-                //       protocol endpoint to be connected.
-                connected = 1;
+                /* Transport endpoint is connected */
+                MPC_BITMAP_SET(ep->conn_map, i);
 	}
 
-	if (!connected) {
+        /* Protocol endpoint connected only if all interfaces connected */
+        int equal = MPC_BITMAP_AND(ep->conn_map, ep->avail_map);
+	if (!equal) {
 		ep->state = LCP_EP_FLAG_CONNECTING;
 	} else {
 		ep->state = LCP_EP_FLAG_CONNECTED;
@@ -240,29 +228,36 @@ int lcp_ep_init_channels(lcp_context_h ctx, lcp_ep_h ep)
 int lcp_ep_progress_conn(lcp_context_h ctx, lcp_ep_h ep)
 {
 	int i;
-	int connecting = 0;
 
 	for (i=0; i<ctx->num_resources; i++) {
 		_mpc_lowcomm_endpoint_t *lcr_ep;
 		lcp_rsc_desc_t if_desc = ctx->resources[i];
+
+                /* If transport endpoint already connected, continue */
+                if (MPC_BITMAP_GET(ep->conn_map, i)) 
+                        continue;
 
 		lcr_ep = ep->lct_eps[i];
 		if (lcr_ep == NULL) {
 			/* Check transport endpoint availability */
 			lcr_ep = sctk_rail_get_any_route_to_process(if_desc.iface, ep->uid);
 			if (lcr_ep == NULL) {
-				connecting = 1;
 				continue;
 			}
 			ep->lct_eps[i] = lcr_ep;
 		} 
+
+                /* Transport endpoint is connected */
+                MPC_BITMAP_SET(ep->conn_map, i);
 	}
 
-	if (connecting) {
-		ep->state =  LCP_EP_FLAG_CONNECTING;
+        /* Protocol endpoint connected only if all interfaces connected */
+        int equal = MPC_BITMAP_AND(ep->conn_map, ep->avail_map);
+	if (!equal) {
+		ep->state = LCP_EP_FLAG_CONNECTING;
 		return 0;
 	} else {
-		ep->state =  LCP_EP_FLAG_CONNECTED;
+		ep->state = LCP_EP_FLAG_CONNECTED;
 		return 1;
 	}
 }
@@ -354,7 +349,7 @@ void lcp_ep_delete(lcp_ep_h ep)
         int i;
 
         for (i=0; i<ep->num_chnls; i++) {
-                if (!MPC_BITMAP_GET(ep->map, i))
+                if (!MPC_BITMAP_GET(ep->conn_map, i))
                         continue;
                 sctk_free(ep->lct_eps[i]);
         }
