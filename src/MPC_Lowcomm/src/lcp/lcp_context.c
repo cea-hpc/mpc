@@ -13,79 +13,9 @@
 //TODO: memset to 0 all allocated structure (especially those containing
 //      pointers). Creates non-null valid dummy pointers that can segfault 
 //      later on.
-//TODO: global variable to support notify new comm.
-//	 try to enforce stateless architecture.
-lcp_context_h context = NULL;
 
 lcp_am_handler_t lcp_am_handlers[MPC_LOWCOMM_MSG_LAST] = {{NULL, 0}};
 
-/**
- * @brief Get context.
- * 
- * @return lcp_context_h context of lcp
- */
-lcp_context_h lcp_context_get() {
-	return context;
-}
-/**
- * @brief Return true if context ctx has a communicator
- * 
- * @param ctx context to check
- * @param comm_key key of the communicator
- * @return int MPI_SUCCESS in case of success
- */
-int lcp_context_has_comm(lcp_context_h ctx, uint64_t comm_key)
-{
-	lcp_comm_ctx_t *elem = NULL;
-
-	HASH_FIND(hh, ctx->ep_ht, &comm_key, sizeof(mpc_lowcomm_communicator_id_t), elem);
-	return elem ? 1 : 0;
-}
-
-//NOTE: hack to add comm to portals tables
-/**
- * @brief add communicator to context
- * 
- * @param ctx context to add
- * @param comm_key key of the communicator
- * @return int MPI_SUCCESS in case of success
- */
-int lcp_context_add_comm(lcp_context_h ctx, uint64_t comm_key)
-{
-	int rc;
-	int i;
-
-	lcp_comm_ctx_t *elem = sctk_malloc(sizeof(lcp_comm_ctx_t));
-	if (elem == NULL) {
-		mpc_common_debug_error("LCP: Could not allocate comm entry.");
-		rc = MPC_LOWCOMM_ERROR;
-		goto err;
-	}
-	HASH_ADD(hh, ctx->ep_ht, comm_key, sizeof(mpc_lowcomm_communicator_id_t), elem);
-
-	mpc_lowcomm_communicator_t comm = 
-		mpc_lowcomm_get_communicator_from_id(comm_key);
-	size_t comm_size = 
-		mpc_lowcomm_communicator_size(comm);
-
-	for (i=0; i<ctx->num_resources; i++) {
-		sctk_rail_info_t *rail = ctx->resources[i].iface;
-		if (rail->notify_new_comm)
-			rail->notify_new_comm(rail, comm_key, comm_size);
-	}
-
-	rc = MPC_LOWCOMM_SUCCESS;
-err:
-	return rc;
-}
-
-/**
- * @brief set the handler of an active message with context ctx as argument
- * 
- * @param ctx context as input to handler
- * @param iface rail to add the handlers to
- * @return int MPI_SUCCESS in case of success
- */
 static inline int lcp_context_set_am_handler(lcp_context_h ctx, 
                                              sctk_rail_info_t *iface)
 {
@@ -689,7 +619,6 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
         }
 
 	*ctx_p = ctx;
-	context = ctx; //TODO: global variable for accessibility in communicator.c
                        
         lcr_free_components(components, num_components, 1);
 
@@ -735,13 +664,6 @@ int lcp_context_fini(lcp_context_h ctx)
                 sctk_free(e_task);
 	}
         sctk_free(ctx->tasks);
-
-	/* Free allocated comm */
-	lcp_comm_ctx_t *e_comm = NULL, *e_comm_tmp = NULL;
-	HASH_ITER(hh, ctx->ep_ht, e_comm, e_comm_tmp) {
-		HASH_DELETE(hh, ctx->ep_ht, e_comm);
-		sctk_free(e_comm);
-	}
 
 	/* Free allocated endpoints */
 	lcp_ep_ctx_t *e_ep = NULL, *e_ep_tmp = NULL; 

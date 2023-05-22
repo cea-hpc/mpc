@@ -234,8 +234,10 @@ int lcp_ep_init_channels(lcp_context_h ctx, lcp_ep_h ep)
                 MPC_BITMAP_SET(ep->conn_map, i);
 	}
 
-        /* Protocol endpoint connected only if all interfaces connected */
-        int equal = MPC_BITMAP_AND(ep->conn_map, ep->avail_map);
+        /* Protocol endpoint connected only if there are available interfaces
+         * and all are connected */
+        int equal = !mpc_bitmap_is_zero(ep->avail_map) && 
+                MPC_BITMAP_AND(ep->conn_map, ep->avail_map);
 	if (!equal) {
 		ep->state = LCP_EP_FLAG_CONNECTING;
 	} else {
