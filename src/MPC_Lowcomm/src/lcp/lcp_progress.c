@@ -11,7 +11,6 @@ int lcp_progress(lcp_context_h ctx)
 {
 	int i, rc = MPC_LOWCOMM_SUCCESS;
 
-        LCP_CONTEXT_LOCK(ctx);
 	for (i=0; i<ctx->num_resources; i++) {
 		sctk_rail_info_t *iface = ctx->resources[i].iface;
                 if (iface->iface_progress != NULL) {
@@ -19,14 +18,20 @@ int lcp_progress(lcp_context_h ctx)
                 }
 	}
 
-	lcp_pending_entry_t *entry_e, *entry_tmp;
-        HASH_ITER(hh, ctx->pend->table, entry_e, entry_tmp) {
-                lcp_request_t *req = entry_e->req;
-                if (req->flags & LCP_REQUEST_NEED_PROGRESS)
-                        rc = lcp_request_send(req);
+        /* Loop to try sending requests within the pending queue only once. */
+        size_t nb_pending = mpc_queue_length(&ctx->pending_queue); 
+        while (nb_pending > 0) {
+                LCP_CONTEXT_LOCK(ctx);
+                /* One request is pulled from pending queue. */
+                lcp_request_t *req = mpc_queue_pull_elem(&ctx->pending_queue,
+                                                         lcp_request_t, queue);
+                LCP_CONTEXT_UNLOCK(ctx);
 
+                /* Send request which will be pushed back in pending queue if 
+                 * it could not be sent */
+                lcp_request_send(req);
+
+                nb_pending--; 
         }
-        LCP_CONTEXT_UNLOCK(ctx);
-
 	return rc;
 }

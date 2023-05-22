@@ -23,8 +23,6 @@ enum {
         LCP_REQUEST_OFFLOADED_RNDV      = LCP_BIT(5),
         LCP_REQUEST_RECV                = LCP_BIT(6),
         LCP_REQUEST_SEND                = LCP_BIT(7),
-        LCP_REQUEST_NEED_PROGRESS       = LCP_BIT(8),
-        LCP_REQUEST_SM_REQ              = LCP_BIT(9),
 };
 
 enum {
@@ -102,6 +100,7 @@ struct lcp_request {
 	int16_t                seqn;    /* Sequence number */
 	uint64_t               msg_id;  /* Unique message identifier */
         struct lcp_request    *super;   /* master request */
+        mpc_queue_elem_t       queue;   /* element in pending queue */
         
         struct {
                 lcr_tag_t imm;
@@ -216,18 +215,8 @@ static inline int lcp_request_send(lcp_request_t *req)
         if (req->send.ep->state == LCP_EP_FLAG_CONNECTING) {
                 lcp_ep_progress_conn(req->ctx, req->send.ep);
                 if (req->send.ep->state == LCP_EP_FLAG_CONNECTING) {
-                        //FIXME: modify request progression managment.
-                        req->flags |= LCP_REQUEST_NEED_PROGRESS;
-                        if (lcp_pending_create(req->ctx->pend, req, 
-                                               req->msg_id) == NULL) {
-                                rc = MPC_LOWCOMM_ERROR;
-                        }
+                        mpc_queue_push(&req->ctx->pending_queue, &req->queue);
                         return MPC_LOWCOMM_SUCCESS;
-                } else if (lcp_pending_get_request(req->ctx->pend, 
-                                                   req->msg_id) != NULL) {
-                        //FIXME: modify request progression managment.
-                        req->flags |= ~LCP_REQUEST_NEED_PROGRESS;
-                        lcp_pending_delete(req->ctx->pend, req->msg_id);
                 }
         }
 
@@ -238,10 +227,7 @@ static inline int lcp_request_send(lcp_request_t *req)
                 req->info->tag    = req->send.tag.tag;
                 break;
         case MPC_LOWCOMM_NO_RESOURCE:
-                if (lcp_pending_create(req->ctx->pend, req, 
-                                       req->msg_id) == NULL) {
-                        rc = MPC_LOWCOMM_ERROR;
-                }
+                mpc_queue_push(&req->ctx->pending_queue, &req->queue);
                 break;
         case MPC_LOWCOMM_ERROR:
                 mpc_common_debug_error("LCP: could not send request.");

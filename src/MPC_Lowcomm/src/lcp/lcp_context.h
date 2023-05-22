@@ -104,10 +104,6 @@ struct lcp_context {
 	int num_resources; /* number of resources (iface) */
 	lcp_rsc_desc_t *resources; /* opened resources (iface) */
 
-	//FIXME: hack for portals. Needed to add or remove communicator
-        //FIXME: not needed anymore.
-	lcp_comm_ctx_t *comm_ht;	
-
 	mpc_common_spinlock_t ctx_lock; /* Context lock */
 
 	int num_eps; /* number of endpoints created */
@@ -115,6 +111,7 @@ struct lcp_context {
 
         uint64_t process_uid; /* process uid used for endpoint creation */
 
+        mpc_queue_head_t pending_queue;
 	lcp_pending_table_t *pend; /* LCP send requests */
 
         lcp_task_table_t *tasks; /* LCP tasks (per thread data) */

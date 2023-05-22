@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "bitmap.h"
+#include "queue.h"
 
 /* Chanel */
 #define LCP_MAX_CHANNELS 6

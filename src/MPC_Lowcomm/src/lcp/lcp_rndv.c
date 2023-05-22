@@ -747,14 +747,10 @@ static int lcp_rndv_am_rget_handler(void *arg, void *data,
                                       "tag=%d, src=%llu.", req, req->recv.tag.comm, 
                                       req->recv.tag.tag, req->recv.tag.src_tid);
                 LCP_TASK_UNLOCK(task); //NOTE: unlock context to enable endpoint creation.
-                if (flags & LCR_IFACE_SM_REQUEST) 
-                        req->flags |= LCP_REQUEST_SM_REQ;
                 rc = lcp_rndv_matched(req, hdr, length - sizeof(lcp_rndv_hdr_t), 
                                       LCP_RNDV_GET);
         } else {
                 unsigned ctnr_flags = LCP_RECV_CONTAINER_UNEXP_RGET;
-                ctnr_flags |= (flags & LCR_IFACE_SM_REQUEST) ? 
-                        LCP_RECV_CONTAINER_UNEXP_SM : 0;
 
                 lcp_request_init_unexp_ctnr(&ctnr, hdr, length, ctnr_flags);
                 lcp_append_umq(task->umq_table, (void *)ctnr, hdr->base.comm, 
