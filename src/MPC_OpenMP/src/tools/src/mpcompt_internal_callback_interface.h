@@ -47,12 +47,7 @@ __mpc_omp_ompt_get_callback( mpc_omp_thread_t* thread,
 
     /* Get event callback */
     if( callbacks ) {
-        mpc_common_rwlock_t *lck = &thread->tool_instance->lock;
-        mpc_common_spinlock_read_lock( lck );
-
         callback = callbacks[event];
-
-        mpc_common_spinlock_read_unlock( lck );
     }
 
     return callback;

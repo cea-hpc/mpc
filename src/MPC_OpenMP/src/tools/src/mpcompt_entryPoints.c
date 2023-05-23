@@ -73,9 +73,6 @@ ompt_set_callback ( ompt_callbacks_t event,
         /* Allocate callback array if needed */
         if( !tool_instance->callbacks )
         {
-            mpc_common_rwlock_t ini_lk = MPC_COMMON_SPIN_RWLOCK_INITIALIZER;
-            tool_instance->lock = ini_lk;
-
             tool_instance->callbacks =
                 (ompt_callback_t*) sctk_malloc( cb_array_len * sizeof( ompt_callback_t ));
             assert( tool_instance->callbacks );
@@ -83,12 +80,8 @@ ompt_set_callback ( ompt_callbacks_t event,
         }
 
         /* Set callback */
-        mpc_common_rwlock_t *lck = &tool_instance->lock;
-        mpc_common_spinlock_write_lock( lck );
 
         tool_instance->callbacks[event] = callback;
-
-        mpc_common_spinlock_write_unlock( lck );
     }
 
     return status;
@@ -112,12 +105,8 @@ ompt_get_callback ( ompt_callbacks_t event,
         && (int) status <= (int) ompt_set_always
         && tool_instance->callbacks ) {
         /* Get callback */
-        mpc_common_rwlock_t *lck = &tool_instance->lock;
-        mpc_common_spinlock_read_lock( lck );
 
         *callback = tool_instance->callbacks[event];
-
-        mpc_common_spinlock_read_unlock( lck );
 
         if( *callback )
             ret = 1;
