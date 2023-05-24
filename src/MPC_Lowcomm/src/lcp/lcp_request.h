@@ -27,11 +27,10 @@ enum {
 };
 
 enum {
-	LCP_RECV_CONTAINER_UNEXP_RGET           = LCP_BIT(0),
-	LCP_RECV_CONTAINER_UNEXP_RPUT           = LCP_BIT(1),
-	LCP_RECV_CONTAINER_UNEXP_TAG            = LCP_BIT(2),
-	LCP_RECV_CONTAINER_UNEXP_SM             = LCP_BIT(3),
-	LCP_RECV_CONTAINER_UNEXP_TAG_SYNC       = LCP_BIT(4)
+	LCP_RECV_CONTAINER_UNEXP_TAG_SYNC       = LCP_BIT(4),
+	LCP_RECV_CONTAINER_UNEXP_RGET = LCP_BIT(0),
+	LCP_RECV_CONTAINER_UNEXP_RPUT = LCP_BIT(1),
+	LCP_RECV_CONTAINER_UNEXP_TAG  = LCP_BIT(2),
 };
 
 /* Store data for unexpected am messages
@@ -112,13 +111,11 @@ struct lcp_request {
         } tm;
 
 	struct {
-                bmap_t           mem_map;
                 size_t           offset;
                 void *           pack_buf;
                 size_t           remaining;
                 lcp_chnl_idx_t   cc;
                 lcr_completion_t comp;
-                uint8_t          comp_stg;
                 lcp_mem_h        lmem; 
                 lcp_mem_h        rmem; 
                 int              offloaded;

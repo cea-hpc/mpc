@@ -24,6 +24,7 @@ static inline void build_memory_registration_bitmap(size_t length,
 
         *bmap_p = bmap;
 }
+
 /**
  * @brief Pack data as rkey buffer.
  * 
@@ -32,6 +33,10 @@ static inline void build_memory_registration_bitmap(size_t length,
  * @param dest packed rkey buffer
  * @return size_t length of output buffer
  */
+//FIXME: A memory range described by lcp_mem_h is unique (same address, same
+//       length. As a consequence, transport memory key will be identical for
+//       homogenous tranports, so no need to pack it for all rail in case of
+//       multirail.
 size_t lcp_mem_rkey_pack(lcp_context_h ctx, lcp_mem_h mem, void *dest)
 {
         int i;

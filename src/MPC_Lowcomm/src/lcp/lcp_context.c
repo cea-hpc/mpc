@@ -357,16 +357,12 @@ static inline void lcp_context_resource_init(lcp_rsc_desc_t *resource_p,
                 _mpc_lowcomm_conf_driver_unfolded_get(iface_config->config);
 
         /* Init resource */
-        lcp_rsc_desc_t resource = {
-                .iface_config  = iface_config,
-                .driver_config = driver_config,
-                .priority = iface_config->priority,
-                .iface = NULL,
-                .component = component
-        };
-        strcpy(resource.name, device->name);
-
-        *resource_p = resource;
+        resource_p->iface_config  = iface_config;
+        resource_p->driver_config = driver_config;
+        resource_p->iface         = NULL;
+        resource_p->priority      = iface_config->priority;
+        resource_p->component     = component;
+        strcpy(resource_p->name, device->name);
 }
 
 static void lcp_context_select_components(lcp_context_h ctx,
@@ -499,10 +495,11 @@ static int lcp_context_add_resources(lcp_context_h ctx,
         }
         ctx->num_resources = max_ifaces;
 
+        nrsc = 0;
         for (i = 0; i < (int)num_components; i++) {
                 if ((idx = cmpt_idx[i]) < 0) 
                         continue;
-                cmpt = components[idx]; nrsc = 0;
+                cmpt = components[idx];
                 for (j=0; j<(int)cmpt->num_devices; j++) {
                         dev = cmpt->devices[j];
                         if (!ctx->config.user_defined && nrsc < max_ifaces) {

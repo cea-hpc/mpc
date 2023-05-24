@@ -233,7 +233,6 @@ int lcp_send_rget_offload_start(lcp_request_t *req)
 
         req->send.t_ctx.req          = req;
         req->send.t_ctx.comp.comp_cb = lcp_request_complete_send_rget_offload;
-        req->state.comp_stg          = 0;
 
 
         /* Get source address */
@@ -542,7 +541,7 @@ void lcp_recv_tag_callback(lcr_completion_t *comp)
                 req->state.comp.comp_cb = lcp_request_complete_recv_rget_offload;
                 req->state.remaining = req->recv.send_length;
                 req->state.offset = 0;
-                req->state.mem_map.bits[0] = LCP_TM_GET_HDR_BITMAP(imm);
+                //req->state.mem_map.bits[0] = LCP_TM_GET_HDR_BITMAP(imm);
                 lcp_recv_tag_rget(req);
                 break;
         case LCP_PROTOCOL_RPUT:
@@ -705,8 +704,9 @@ int lcp_recv_tag_rget(lcp_request_t *req)
 
         //FIXME: wrong load balance in case of NO_RESOURCE during fragmentation
         /* Compute number of interfaces used */
+        //TODO: review the bitmap transfert.
         for (i=0; i<req->ctx->num_resources; i++) {
-                if (MPC_BITMAP_GET(req->state.mem_map, i)) {
+                if (MPC_BITMAP_GET(ep->conn_map, i)) {
                         num_used_ifaces++;
                 }
         }

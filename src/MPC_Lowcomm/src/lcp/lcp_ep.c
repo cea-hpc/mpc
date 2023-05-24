@@ -34,8 +34,6 @@ int lcp_ep_get_next_cc(lcp_ep_h ep)
                         }
                         cc_idx = (cc_idx + 1) % ep->ctx->num_resources;
                 }
-        } else {
-                ep->next_cc = ep->cc;
         }
         
         return ep->cc;
@@ -195,6 +193,9 @@ err:
  * @param ep endpoint to fill
  * @return int MPI_SUCCESS in case of success
  */
+//TODO: force homogeneity of transport for one endpoint. Select transport with
+//      highest priority, then build transport endpoints for all allocated
+//      devices.
 int lcp_ep_init_channels(lcp_context_h ctx, lcp_ep_h ep)
 {
 	int rc, i;

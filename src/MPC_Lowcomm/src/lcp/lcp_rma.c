@@ -67,10 +67,11 @@ int lcp_rma_reg_send_buffer(lcp_request_t *req)
 
         /* build registration bitmap */
         rail->iface_get_attr(rail, &attr);
+        //FIXME: fix bitmap...
         build_rma_memory_registration_bitmap(req->send.length, 
                                              attr.iface.cap.rma.min_frag_size,
                                              req->ctx->num_resources,
-                                             &req->state.mem_map);
+                                             &ep->conn_map);
 
         /* Register and pack memory pin context that will be sent to remote */
         rc = lcp_mem_register(req->send.ep->ctx, 
@@ -145,6 +146,8 @@ int lcp_rma_put_zcopy(lcp_request_t *req)
         lcp_ep_h ep;
         lcr_rail_attr_t attr;
         _mpc_lowcomm_endpoint_t *lcr_ep;
+
+        not_implemented();
 
         /* Set the length to be sent on each interface. The minimum size that
          * can be sent on a interface is defined by min_frag_size */
