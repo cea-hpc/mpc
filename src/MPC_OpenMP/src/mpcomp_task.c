@@ -1911,13 +1911,14 @@ __task_priority_propagation_asynchronous(void)
             while (!__task_list_is_empty(up))
             {
                 mpc_omp_task_t * task = __task_list_pop_from_head(up);
+                int is_persistent = mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT);
 
                 /* check if the task is not already queued */
-                if (OPA_load_int(&(task->dep_node.status)) < MPC_OMP_TASK_STATUS_READY)
+                if (OPA_load_int(&(task->dep_node.status)) < MPC_OMP_TASK_STATUS_READY || is_persistent)
                 {
                     mpc_common_spinlock_lock(&(task->dep_node.lock));
                     {
-                        if (OPA_load_int(&(task->dep_node.status)) < MPC_OMP_TASK_STATUS_READY)
+                        if (OPA_load_int(&(task->dep_node.status)) < MPC_OMP_TASK_STATUS_READY || is_persistent)
                         {
                             __task_profile_priority_compute(task);
                             if (task->dep_node.predecessors)
@@ -4131,7 +4132,7 @@ _mpc_omp_task_tree_init(mpc_omp_thread_t * thread)
     mpc_common_spinlock_init(&(thread->task_infos.task_recycler_lock), 0);
 # endif
     __thread_task_init_initial(thread);
-    printf("task size: %lu\n", sizeof(mpc_omp_task_t));
+    //printf("task size: %lu\n", sizeof(mpc_omp_task_t));
     if (mpc_omp_conf_get()->bindings)
     {
         mpc_common_spinlock_lock(&(thread->instance->debug_lock));

@@ -729,7 +729,7 @@ mpc_omp_instance_t *_mpc_omp_tree_array_instance_init( mpc_omp_thread_t *thread,
 
 mpc_omp_thread_t *__mvp_wakeup( mpc_omp_mvp_t *mvp )
 {
-//    usleep(1); /* dirty quick fix */
+    usleep(10); /* dirty quick fix */
 	mpc_omp_thread_t *new_thread;
 	assert( mvp );
 

@@ -363,6 +363,8 @@ typedef enum    mpc_omp_task_list_type_e
     MPC_OMP_TASK_LIST_TYPE_COUNT        = 2
 }               mpc_omp_task_list_type_t;
 
+/* TODO: check Romain PhD thesis with task transition state, and implements
+ * every states. It could help for runtime debugging purposes */
 typedef enum    mpcomp_task_dep_task_status_e
 {
     MPC_OMP_TASK_STATUS_NOT_READY               = 0,
