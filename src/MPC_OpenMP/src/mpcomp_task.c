@@ -1227,11 +1227,11 @@ __task_process_mpc_dep(
                 pit = _mpc_omp_task_allocate(size);
                 _mpc_omp_task_init(pit, NULL, NULL, size, properties);
                 memset(&(pit->dep_node), 0, sizeof(mpc_omp_task_dep_node_t));
+                OPA_store_int(&(pit->dep_node.ref_predecessors), 1);
                 pit->dep_node.dep_list = (mpc_omp_task_dep_list_elt_t *) malloc(sizeof(mpc_omp_task_dep_list_elt_t));
                 pit->dep_node.dep_list_size = 0;
                 MPC_OMP_TASK_TRACE_CREATE(pit);
 
-                mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
                 if (region->active) mpc_omp_persistent_region_push(pit);
 
                 entry->out = __task_dep_list_append(pit, entry, NULL);
@@ -1281,6 +1281,7 @@ __task_process_mpc_dep(
                 memset(&(pit->dep_node), 0, sizeof(mpc_omp_task_dep_node_t));
                 pit->dep_node.dep_list = (mpc_omp_task_dep_list_elt_t *) malloc(sizeof(mpc_omp_task_dep_list_elt_t));
                 pit->dep_node.dep_list_size = 0;
+                OPA_store_int(&(pit->dep_node.ref_predecessors), 1);
                 MPC_OMP_TASK_TRACE_CREATE(pit);
 
                 if (region->active) mpc_omp_persistent_region_push(pit);
@@ -1381,6 +1382,7 @@ __task_process_mpc_dep(
 
     if (pit)
     {
+        OPA_decr_int(&(pit->dep_node.ref_predecessors));
         _mpc_omp_task_process(pit);
         if (!region->active) _mpc_omp_task_deinit(pit);
     }
@@ -1561,7 +1563,7 @@ __task_finalize_persistent(mpc_omp_task_t * task)
     /* trace task creation */
     MPC_OMP_TASK_TRACE_CREATE(task);
 
-    /* control flow task are not rediscovered */
+    /* control flow task are not rediscovered, so reinitialize them here */
     if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_CONTROL_FLOW))
     {
         _mpc_omp_task_persistent_reinit(task);
@@ -4129,6 +4131,7 @@ _mpc_omp_task_tree_init(mpc_omp_thread_t * thread)
     mpc_common_spinlock_init(&(thread->task_infos.task_recycler_lock), 0);
 # endif
     __thread_task_init_initial(thread);
+    printf("task size: %lu\n", sizeof(mpc_omp_task_t));
     if (mpc_omp_conf_get()->bindings)
     {
         mpc_common_spinlock_lock(&(thread->instance->debug_lock));
