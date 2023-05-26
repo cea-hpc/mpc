@@ -7,6 +7,7 @@
 #include "lcp_rndv.h"
 #include "lcp_mem.h"
 #include "lcp_datatype.h"
+#include "lcp_pending.h"
 
 #include "sctk_alloc.h"
 #include "sctk_net_tools.h"
@@ -208,7 +209,7 @@ int lcp_send_rget_offload_start(lcp_request_t *req)
         bmap_t bitmap = { 0 };
         lcr_rail_attr_t attr;
         //FIXME: change priority_chnl to tag_chnl
-        sctk_rail_info_t *rail = ep->lct_eps[ep->priority_chnl]->rail;
+        sctk_rail_info_t *rail = ep->lct_eps[ep->tag_chnl]->rail;
 
         rail->iface_get_attr(rail, &attr);
         build_memory_bitmap(req->send.length, attr.iface.cap.rndv.min_frag_size,
@@ -298,8 +299,7 @@ int lcp_send_rput_offload_start(lcp_request_t *req)
         bmap_t bitmap;
         lcp_ep_h ep = req->send.ep;
         lcr_rail_attr_t attr;
-        //FIXME: change priority_chnl to tag_chnl
-        sctk_rail_info_t *rail = ep->lct_eps[ep->priority_chnl]->rail;
+        sctk_rail_info_t *rail = ep->lct_eps[ep->tag_chnl]->rail;
 
         mpc_common_debug_info("LCP: send rndv put off req=%p, comm_id=%lu, "
                               "tag=%d, src=%d, dest=%d, msg_id=%d, buf=%p.", 
@@ -340,7 +340,7 @@ int lcp_send_rput_offload_start(lcp_request_t *req)
         req->state.comp.comp_cb = lcp_request_complete_rput_offload;
 
         /* Finally, send message rendez-vous request */
-        rc = lcp_send_do_tag_bcopy(ep->lct_eps[ep->priority_chnl],
+        rc = lcp_send_do_tag_bcopy(ep->lct_eps[ep->tag_chnl],
                                    tag, imm, lcp_rts_offload_pack, req);
 
         if (rc != MPC_LOWCOMM_SUCCESS) {
@@ -412,7 +412,7 @@ int lcp_send_tag_eager_tag_bcopy(lcp_request_t *req)
         int rc = MPC_LOWCOMM_SUCCESS;
         ssize_t payload;
         lcp_ep_h ep = req->send.ep;
-        _mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[req->state.cc];
+        _mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[ep->tag_chnl];
 
         lcr_tag_t tag = {.t_tag = {
                 .tag = req->send.tag.tag,
@@ -448,7 +448,7 @@ err:
 int lcp_send_tag_eager_tag_zcopy(lcp_request_t *req)
 {
         lcp_ep_h ep = req->send.ep;
-        _mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[req->state.cc];
+        _mpc_lowcomm_endpoint_t *lcr_ep = ep->lct_eps[ep->tag_chnl];
 
         lcr_tag_t tag = { 0 };
         LCP_TM_SET_MATCHBITS(tag.t, req->send.tag.src_tid, 
@@ -677,6 +677,7 @@ int lcp_recv_tag_rget(lcp_request_t *req)
         size_t frag_length, length;
         size_t *per_ep_length;
         lcp_ep_h ep;
+        lcp_chnl_idx_t cc;
         lcp_ep_ctx_t *ctx_ep;
         lcr_rail_attr_t attr;
         _mpc_lowcomm_endpoint_t *lcr_ep;
@@ -718,13 +719,23 @@ int lcp_recv_tag_rget(lcp_request_t *req)
         }
         per_ep_length[0] += remaining % num_used_ifaces;
 
+        cc = lcp_ep_get_next_cc(ep);
+
+        ep->lct_eps[cc]->rail->iface_get_attr(ep->lct_eps[cc]->rail, &attr);
+        frag_length = req->ctx->config.rndv_mode == LCP_RNDV_GET ?
+                attr.iface.cap.rndv.max_get_zcopy :
+                attr.iface.cap.rndv.max_put_zcopy;
+
         while (remaining > 0) {
-                lcr_ep = ep->lct_eps[req->state.cc];
+                if (!MPC_BITMAP_GET(ep->conn_map, cc)) {
+                        continue;
+                }
+                lcr_ep = ep->lct_eps[cc];
                 lcr_ep->rail->iface_get_attr(lcr_ep->rail, &attr);
 
                 frag_length = attr.iface.cap.rndv.max_get_zcopy;
-                length = per_ep_length[req->state.cc] < frag_length ? 
-                        per_ep_length[req->state.cc] : frag_length;
+                length = per_ep_length[cc] < frag_length ? 
+                        per_ep_length[cc] : frag_length;
 
                 rc = lcp_send_do_get_tag_zcopy(lcr_ep, 
                                                req->tm.imm,
@@ -734,9 +745,9 @@ int lcp_recv_tag_rget(lcp_request_t *req)
 
                 offset    += length; 
                 remaining -= length;
-                per_ep_length[req->state.cc] -= length;
+                per_ep_length[cc] -= length;
 
-                req->state.cc = (req->state.cc + 1) % num_used_ifaces;
+                cc = lcp_ep_get_next_cc(ep);
         }
 
         sctk_free(per_ep_length);
@@ -860,7 +871,7 @@ static int lcp_rndv_tag_rtr_handler(void *arg, void *data,
                 goto err;
         }
 
-        rc = lcp_send_rput_common(req, rmem);
+        not_implemented();
 
 err:
         return rc;

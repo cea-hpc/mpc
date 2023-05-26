@@ -2,6 +2,7 @@
 
 #include "lcp_context.h"
 #include <sctk_alloc.h>
+#include <sctk_rail.h>
 
 //FIXME: Needs to clarify the management of remote memory keys and interfaces:
 //       - NICs are statically linked (one to one relationship)

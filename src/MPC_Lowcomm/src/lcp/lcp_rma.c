@@ -143,6 +143,7 @@ int lcp_rma_put_zcopy(lcp_request_t *req)
         size_t remaining, offset;
         size_t frag_length, length;
         size_t *per_ep_length;
+        lcp_chnl_idx_t cc;
         lcp_ep_h ep;
         lcr_rail_attr_t attr;
         _mpc_lowcomm_endpoint_t *lcr_ep;
@@ -164,27 +165,28 @@ int lcp_rma_put_zcopy(lcp_request_t *req)
 
         req->state.comp.comp_cb = lcp_rma_request_complete_put;
 
+        cc = lcp_ep_get_next_cc(ep);
         while (remaining > 0) {
-                lcr_ep = ep->lct_eps[req->state.cc];
+                lcr_ep = ep->lct_eps[cc];
                 lcr_ep->rail->iface_get_attr(lcr_ep->rail, &attr);
 
                 /* length is min(max_frag_size, per_ep_length) */
                 frag_length = attr.iface.cap.rma.max_put_zcopy;
-                length = per_ep_length[req->state.cc] < frag_length ? 
-                        per_ep_length[req->state.cc] : frag_length;
+                length = per_ep_length[cc] < frag_length ? 
+                        per_ep_length[cc] : frag_length;
 
                 //FIXME: error managment => NO_RESOURCE not handled
                 rc = lcp_send_do_put_zcopy(lcr_ep,
                                            (uint64_t)req->send.buffer + offset,
                                            offset,
-                                           &(req->send.rma.rkey->mems[req->state.cc]),
+                                           &(req->send.rma.rkey->mems[cc]),
                                            length,
                                            &(req->state.comp));
 
                 offset  += length; remaining -= length;
-                per_ep_length[req->state.cc] -= length;
+                per_ep_length[cc] -= length;
 
-                req->state.cc = (req->state.cc + 1) % num_used_ifaces;
+                cc = (cc + 1) % num_used_ifaces;
         }
 
         sctk_free(per_ep_length);
@@ -237,7 +239,7 @@ int lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, size_t length,
                 goto err;
         }
         req->flags |= LCP_REQUEST_RMA_COMPLETE;
-        LCP_REQUEST_INIT_SEND(req, ep->ctx, task, NULL, NULL, length, ep, (void *)buffer, 
+        LCP_REQUEST_INIT_RMA_SEND(req, ep->ctx, task, NULL, NULL, length, ep, (void *)buffer, 
                               0 /* no ordering for rma */, msg_id, param->datatype);
         lcp_request_init_rma_put(req, remote_addr, rkey, param);
 

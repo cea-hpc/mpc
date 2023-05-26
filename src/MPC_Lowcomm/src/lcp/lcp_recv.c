@@ -1,7 +1,8 @@
 #include "lcp_context.h"
 #include "lcp_request.h"
 #include "lcp_header.h"
-#include "lcp_prototypes.h"
+#include "lcp_tag.h"
+#include "lcp_tag_offload.h"
 #include "lcp_rndv.h"
 #include "lcp_datatype.h"
 #include "lcp_task.h"
@@ -27,9 +28,8 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 		return  MPC_LOWCOMM_ERROR;
 	}
         req->flags |= LCP_REQUEST_MPI_COMPLETE;
-        LCP_REQUEST_INIT_RECV(req, ctx, task, request, param->recv_info,
+        LCP_REQUEST_INIT_TAG_RECV(req, ctx, task, request, param->recv_info,
                               count, buffer, param->datatype);
-	lcp_request_init_tag_recv(req, param->recv_info);
 
 	// get interface for the request to go through
 	iface = ctx->resources[ctx->priority_rail].iface;
@@ -68,20 +68,13 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 
 	LCP_TASK_UNLOCK(task);
 
-	if (match->flags & LCP_RECV_CONTAINER_UNEXP_RPUT) {
+	if (match->flags & LCP_RECV_CONTAINER_UNEXP_RNDV_TAG) {
 		mpc_common_debug_info("LCP: matched rndv unexp req=%p, flags=%x", 
 				      match, match->flags);
-		rc = lcp_rndv_matched(req, (lcp_rndv_hdr_t *)(match + 1),
-                                      match->length - sizeof(lcp_rndv_hdr_t), LCP_RNDV_PUT);
-	// if request is matching an unexpected request and is rget type		
-	} else if (match->flags & LCP_RECV_CONTAINER_UNEXP_RGET) {
-		mpc_common_debug_info("LCP: matched rndv unexp req=%p, flags=%x", 
-					match, match->flags);
-		rc = lcp_rndv_matched(req, (lcp_rndv_hdr_t *)(match + 1),
-					match->length - sizeof(lcp_rndv_hdr_t),
-					LCP_RNDV_GET);
-	// else if request is matching a non-rendez-vous type unexpected request 
-	} else if (match->flags & LCP_RECV_CONTAINER_UNEXP_TAG) {
+                rc = lcp_rndv_process_rts(req, (lcp_rndv_hdr_t *)(match + 1),
+                                          match->length - sizeof(lcp_rndv_hdr_t));
+
+	} else if (match->flags & LCP_RECV_CONTAINER_UNEXP_EAGER_TAG) {
                 lcp_tag_hdr_t *hdr = (lcp_tag_hdr_t *)(match + 1);
 				mpc_common_debug("LCP: matched tag unexp req=%p, flags=%x, req, src=%d, tag=%d, comm=%d",
 						match->flags,
@@ -101,8 +94,10 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
                 req->info->length = match->length - sizeof(lcp_tag_hdr_t);
                 req->info->src    = hdr->src_tid;
                 req->info->tag    = hdr->tag;
-				req->seqn = hdr->seqn;
-		if(match->flags & LCP_RECV_CONTAINER_UNEXP_TAG_SYNC)
+                req->seqn         = hdr->seqn;
+
+                /* If synchronization was asked, send ack message */
+		if(match->flags & LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC)
 			lcp_tag_send_ack(req, hdr);
 
                 //TODO: free match structure ??

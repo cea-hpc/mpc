@@ -4,15 +4,9 @@
 #include "lcp_def.h"
 #include "lcp_types.h"
 
-#include "lcp_header.h"
+size_t lcp_rndv_rts_pack(lcp_request_t *req, void *dest);
+int lcp_send_rndv_start(lcp_request_t *req);
+int lcp_rndv_reg_send_buffer(lcp_request_t *req);
+int lcp_rndv_process_rts(lcp_request_t *req, void *data, size_t length);
 
-
-int lcp_send_rput_common(lcp_request_t *super, lcp_mem_h rmem);
-int lcp_send_rndv_am_start(lcp_request_t *req);
-int lcp_rndv_matched(lcp_request_t *req, 
-                     lcp_rndv_hdr_t *hdr, size_t length,
-                     lcp_rndv_mode_t rndv_mode);
-int lcp_recv_rsend(lcp_request_t *req, void *hdr);
-int lcp_recv_rget(lcp_request_t *req, void *hdr, size_t hdr_length);
-int lcp_recv_rput(lcp_request_t *req, void *hdr);
 #endif

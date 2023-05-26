@@ -1,14 +1,10 @@
 #ifndef LCP_CONTEXT_H
 #define LCP_CONTEXT_H
 
-#include "lcp_header.h"
-#include "sctk_rail.h" /* defines lcr_am_callback_t */
-#include "lowcomm_config.h"
-
-#include "lcp_ep.h"
-#include "lcp_pending.h"
-#include "lcp_tag_matching.h"
+#include "lcp_def.h"
+#include "lcr/lcr_def.h"
 #include "lcp_types.h"
+#include "lcp_pending.h"
 
 #include "uthash.h"
 #include "opa_primitives.h"
@@ -36,23 +32,13 @@ typedef struct lcp_am_handler {
 extern lcp_am_handler_t lcp_am_handlers[];
 
 /**
- * @brief communicator
- * 
- */
-typedef struct lpc_comm_ctx {
-	UT_hash_handle hh;
-
-	mpc_lowcomm_communicator_id_t comm_key;
-} lcp_comm_ctx_t;
-
-/**
  * @brief endpoint
  * 
  */
 typedef struct lcp_ep_ctx {
 	UT_hash_handle hh;
 
-	mpc_lowcomm_peer_uid_t ep_key;
+	uint64_t ep_key;
 	lcp_ep_h ep;
 } lcp_ep_ctx_t;
 
@@ -76,7 +62,7 @@ typedef struct lcp_task_table {
 } lcp_task_table_t;
 
 typedef struct lcp_rsc_desc {
-	char name[MPC_CONF_STRING_SIZE];
+	char name[LCP_CONF_STRING_SIZE];
 	sctk_rail_info_t *iface; /* Rail interface */
 	int priority;
 	lcr_rail_config_t *iface_config;

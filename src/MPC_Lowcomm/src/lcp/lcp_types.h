@@ -4,6 +4,13 @@
 #include <stdint.h>
 #include "bitmap.h"
 #include "queue.h"
+#include <sys/uio.h>
+
+//FIXME: used to get MPC_LOWCOMM_ERROR. Define new LCP errors to remove it.
+#include <mpc_lowcomm_types.h>
+
+/* Config */
+#define LCP_CONF_STRING_SIZE 512
 
 /* Chanel */
 #define LCP_MAX_CHANNELS 6

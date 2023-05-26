@@ -65,7 +65,6 @@ enum {
 enum lcp_dt_type {
         LCP_DATATYPE_CONTIGUOUS = LCP_BIT(0),
         LCP_DATATYPE_DERIVED    = LCP_BIT(1),
-        LCP_DATATYPE_UNPACK     = LCP_BIT(2)
 };
 
 typedef struct lcp_request_param {

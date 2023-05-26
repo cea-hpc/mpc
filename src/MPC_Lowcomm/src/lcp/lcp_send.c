@@ -3,16 +3,15 @@
 #include "lcp_context.h"
 #include "lcp_request.h"
 #include "lcp_pending.h"
+//FIXME: remove header here since header should only be used in lcp_tag.c
 #include "lcp_header.h"
-#include "lcp_rndv.h"
-#include "lcp_prototypes.h"
 #include "lcp_tag.h"
+#include "lcp_tag_offload.h"
 
 #include "mpc_common_debug.h"
 #include "mpc_lowcomm_msg.h"
 #include "mpc_lowcomm_types.h"
 #include "opa_primitives.h"
-#include "sctk_alloc.h"
 
 //FIXME: static inline ?
 /**
@@ -32,9 +31,6 @@ int lcp_send_start(lcp_ep_h ep, lcp_request_t *req,
         int rc = MPC_LOWCOMM_SUCCESS;
         size_t size;
 
-        /* Init protocol data in request */
-        lcp_request_init_tag_send(req);
-
         if (ep->ep_config.offload && (ep->ctx->config.offload ||
             (param->flags & LCP_REQUEST_TRY_OFFLOAD))) {
                 size = req->send.length;
@@ -52,20 +48,19 @@ int lcp_send_start(lcp_ep_h ep, lcp_request_t *req,
                 //NOTE: multiplexing might not always be efficient (IO NUMA
                 //      effects). A specific scheduling policy should be 
                 //      implemented to decide
-                req->state.cc = lcp_ep_get_next_cc(ep);
                 req->state.offloaded = 0;
                 //FIXME: size set in the middle of nowhere...
                 size = req->send.length + sizeof(lcp_tag_hdr_t);
                 if (size <= ep->ep_config.am.max_bcopy || 
                     ((req->send.length <= ep->ep_config.tag.max_zcopy) &&
                      param->datatype & LCP_DATATYPE_DERIVED)) {
-                        req->send.func = lcp_send_am_eager_tag_bcopy;
+                        req->send.func = lcp_send_eager_tag_bcopy;
                 } else if ((size <= ep->ep_config.am.max_zcopy) &&
                            (param->datatype & LCP_DATATYPE_CONTIGUOUS)) {
-                        req->send.func = lcp_send_am_eager_tag_zcopy;
+                        req->send.func = lcp_send_eager_tag_zcopy;
                 } else {
                         req->request->synchronized = 0;
-                        rc = lcp_send_rndv_am_start(req);
+                        rc = lcp_send_rndv_tag_start(req);
                 }
         }
 
@@ -107,13 +102,10 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
         //FIXME: sequence number should be task specific. Following works in
         //       process-based but not in thread-based.
         //       Reorder is to be reimplemented.
-        LCP_REQUEST_INIT_SEND(req, ep->ctx, task, request, 
-                                param->recv_info, count, 
-                                ep, (void *)buffer, 
-                                msg_id, msg_id, param->datatype);
-        
-        req->msg_id = msg_id;
-        mpc_common_debug("LCP: msg_id %ld for msg seq %d dest %d", msg_id, req->seqn, mpc_lowcomm_peer_get_rank(ep->uid));
+        LCP_REQUEST_INIT_TAG_SEND(req, ep->ctx, task, request, param->recv_info, 
+                                  count, ep, (void *)buffer, 
+                                  OPA_fetch_and_incr_int(&ep->seqn), msg_id,
+                                  param->datatype);
 
         // if the endpoint is not yet connected
         if (ep->state == LCP_EP_FLAG_CONNECTING) {

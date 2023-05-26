@@ -364,14 +364,14 @@ static inline mpc_conf_config_type_t *__init_driver_portals(struct _mpc_lowcomm_
 
 	struct _mpc_lowcomm_config_struct_net_driver_portals *portals = &driver->value.portals;
 
-	portals->eager_limit = 16384;
+	portals->eager_limit = 8192;
 	portals->min_comms = 1;
 	portals->block_cut = 2147483648;
 	portals->offloading.collectives = 0;
 	portals->offloading.ondemand = 0;
         portals->max_iovecs = 8;
         portals->num_eager_blocks = 32;
-        portals->eager_block_size = 4*16384;
+        portals->eager_block_size = 8*8192;
 	portals->max_msg_size = 2147483648;
         portals->min_frag_size = 524288; // octets
 

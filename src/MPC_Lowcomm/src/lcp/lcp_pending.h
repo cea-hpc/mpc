@@ -1,10 +1,11 @@
 #ifndef LCP_PENDING_H 
 #define LCP_PENDING_H 
 
-#include "lcp_def.h"
-
 #include <uthash.h>
 #include <mpc_common_spinlock.h>
+
+/* forward reference */
+typedef struct lcp_request lcp_request_t;
 
 /*******************************************************
  * Data structures - Control message
@@ -25,8 +26,7 @@ typedef struct
 /*******************************************************
  * Data manager initiator and destructor
  ******************************************************/
-void lcp_pending_init();
-void lcp_pending_fini(lcp_context_h ctx);
+void lcp_pending_fini(lcp_pending_table_t *table);
 
 /*******************************************************
  * Accessors and mutators pending requests

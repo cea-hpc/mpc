@@ -1,6 +1,7 @@
 #include "lcp_ep.h"
 
 #include "sctk_alloc.h"
+#include "sctk_rail.h"
 
 #include "lcp_context.h"
 #include "lcp_common.h"
@@ -148,6 +149,9 @@ int lcp_ep_init_config(lcp_context_h ctx, lcp_ep_h ep)
         ep->ep_config.rndv_threshold = ep->ep_config.am.max_zcopy;
 
 	ep->priority_chnl = ep->cc = ep->next_cc = prio_idx; 
+        if (ep->ep_config.offload) {
+                ep->tag_chnl = prio_idx;
+        }
 
 	return MPC_LOWCOMM_SUCCESS;
 }

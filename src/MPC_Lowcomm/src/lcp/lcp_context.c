@@ -1,11 +1,16 @@
 #include "lcp_context.h"
 #include "lcp_common.h"
+#include "lcp_ep.h"
 
 #include <string.h>
 #include <stdio.h>
 #include <alloca.h>
 
-#include "sctk_alloc.h"
+#include <sctk_alloc.h>
+#include <mpc_lowcomm_types.h>
+#include <lowcomm_config.h>
+#include <sctk_rail.h>
+
 #include <lcr/lcr_component.h>
 #include "lcp_task.h"
 #include <uthash.h>
@@ -652,7 +657,7 @@ err:
 int lcp_context_fini(lcp_context_h ctx)
 {
 	int i;
-        lcp_pending_fini(ctx);
+        lcp_pending_fini(ctx->pend);
 	sctk_free(ctx->pend);
 
 	lcp_task_entry_t *e_task = NULL, *e_task_tmp = NULL;
@@ -685,20 +690,4 @@ int lcp_context_fini(lcp_context_h ctx)
 	sctk_free(ctx);
 
 	return MPC_LOWCOMM_SUCCESS;
-}
-
-// This is not supposed to exist, please remove asap when occurences are replaced : 
-// - lcp_tag.c in lcp_tag_send_ack()
-uint64_t mpc_lowcomm_tag_get_endpoint_address(lcp_tag_hdr_t *hdr){
-
-        uint64_t gid, comm_id, src;
-        gid = mpc_lowcomm_monitor_get_gid();
-        comm_id = hdr->comm;
-        comm_id |= gid << 32;
-        mpc_lowcomm_communicator_t comm;
-
-        /* Init all protocol data */
-        comm = mpc_lowcomm_get_communicator_from_id(comm_id);
-        src  = mpc_lowcomm_communicator_uid(comm, hdr->src_tid);
-        return src;
 }

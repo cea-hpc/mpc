@@ -3,8 +3,10 @@
 #include "lcp_context.h"
 #include "lcp_task.h"
 #include "lcp_tag_matching.h"
+#include "lcp_tag_offload.h"
 #include "lcp_prototypes.h"
 #include "lcp_request.h"
+#include "lcp_header.h"
 
 int lcp_tag_probe_nb(lcp_task_h task, const int src, 
                      const int tag, const uint64_t comm,
@@ -25,15 +27,14 @@ int lcp_tag_probe_nb(lcp_task_h task, const int src,
         LCP_TASK_LOCK(task);
         match = lcp_search_umq(task->umq_table, (uint16_t)comm, tag, src);
         if (match != NULL) {
-                if (match->flags & LCP_RECV_CONTAINER_UNEXP_TAG) {
+                if (match->flags & LCP_RECV_CONTAINER_UNEXP_EAGER_TAG) {
                         lcp_tag_hdr_t *hdr = (lcp_tag_hdr_t *)(match + 1);
                         
                         recv_info->tag    = hdr->tag;
                         recv_info->length = match->length - sizeof(lcp_tag_hdr_t);
                         recv_info->src    = hdr->src_tid;
 
-                } else if (match->flags & (LCP_RECV_CONTAINER_UNEXP_RPUT | 
-                                           LCP_RECV_CONTAINER_UNEXP_RGET)) {
+                } else if (match->flags & LCP_RECV_CONTAINER_UNEXP_RNDV_TAG) {
                         lcp_rndv_hdr_t *hdr = (lcp_rndv_hdr_t *)(match + 1);
 
                         recv_info->src    = hdr->base.src_tid;

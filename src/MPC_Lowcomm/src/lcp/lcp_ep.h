@@ -3,8 +3,8 @@
 
 #include "lcp.h"
 #include "lcp_types.h"
+#include "lcr/lcr_def.h"
 
-#include "sctk_rail.h"
 #include "opa_primitives.h"
 
 typedef uint16_t lcp_ep_flags_t;
@@ -60,6 +60,7 @@ struct lcp_ep {
         lcp_ep_config_t ep_config;
 
         lcp_chnl_idx_t priority_chnl;
+        lcp_chnl_idx_t tag_chnl;
         lcp_chnl_idx_t cc; /* Round-Robin Communication Chanel */
         lcp_chnl_idx_t next_cc; /* Next cc to be used */
 

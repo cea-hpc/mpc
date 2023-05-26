@@ -67,17 +67,6 @@
 #define LCP_TM_GET_HDR_UID(_hdr) \
         ((size_t)(_hdr & LCP_TM_HDR_UID_MASK))
 
-int lcp_send_rndv_offload_start(lcp_request_t *req);
-
-int lcp_send_am_eager_tag_bcopy(lcp_request_t *req);
-int lcp_send_am_eager_tag_zcopy(lcp_request_t *req);
-
-int lcp_send_tag_eager_tag_bcopy(lcp_request_t *req);
-int lcp_send_tag_eager_tag_zcopy(lcp_request_t *req);
-int lcp_recv_tag_zcopy(lcp_request_t *req, sctk_rail_info_t *iface);
-int lcp_recv_tag_probe(sctk_rail_info_t *rail, const int src, const int tag, 
-                       const uint64_t comm, lcp_tag_recv_info_t *recv_info);
-
 static inline int lcp_send_do_am_bcopy(_mpc_lowcomm_endpoint_t *lcr_ep, 
                                        uint8_t am_id, 
                                        lcr_pack_callback_t pack,

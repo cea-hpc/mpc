@@ -4,13 +4,12 @@
 #include "lcp_types.h"
 
 #include "lcp.h"
+//FIXME: try to remove this dependency. Currently needed to make progress on
+//       endpoint connection.
 #include "lcp_ep.h"
 #include "lcp_context.h"
-#include "lcp_header.h" 
-#include "lcp_pending.h"
 
-#include "sctk_rail.h" 
-
+#include <sctk_rail.h>
 #include <sctk_alloc.h>
 
 enum {
@@ -27,10 +26,9 @@ enum {
 };
 
 enum {
-	LCP_RECV_CONTAINER_UNEXP_TAG_SYNC       = LCP_BIT(4),
-	LCP_RECV_CONTAINER_UNEXP_RGET = LCP_BIT(0),
-	LCP_RECV_CONTAINER_UNEXP_RPUT = LCP_BIT(1),
-	LCP_RECV_CONTAINER_UNEXP_TAG  = LCP_BIT(2),
+	LCP_RECV_CONTAINER_UNEXP_RNDV_TAG       = LCP_BIT(0),
+	LCP_RECV_CONTAINER_UNEXP_EAGER_TAG      = LCP_BIT(1),
+	LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC = LCP_BIT(2),
 };
 
 /* Store data for unexpected am messages
@@ -70,11 +68,17 @@ struct lcp_request {
 				} tag;
 
                                 struct {
+                                        uint64_t  addr;
+                                        lcp_mem_h rkey;
+                                } rndv;
+
+                                struct {
                                         uint64_t remote_addr;
                                         lcp_mem_h rkey;
                                 } rma;
 			};
 
+                        int rndv_proto;
 			lcp_send_func_t func;
 		} send;
 
@@ -111,75 +115,81 @@ struct lcp_request {
         } tm;
 
 	struct {
-                size_t           offset;
                 void *           pack_buf;
+                size_t           offset;
                 size_t           remaining;
-                lcp_chnl_idx_t   cc;
                 lcr_completion_t comp;
                 lcp_mem_h        lmem; 
-                lcp_mem_h        rmem; 
                 int              offloaded;
 	} state;
 };
 
-#define LCP_REQUEST_INIT_SEND(_req, _ctx, _task, _mpi_req, _info, _length, \
-                              _ep, _buf, _seqn, _msg_id, _dt) \
+#define LCP_REQUEST_INIT_TAG_SEND(_req, _ctx, _task, _mpi_req, _info, _length, \
+                                  _ep, _buf, _seqn, _msg_id, _dt) \
 { \
-	(_req)->request         = _mpi_req; \
-	(_req)->info            = _info;    \
-	(_req)->msg_id          = _msg_id;  \
-	(_req)->seqn            = _seqn;    \
-	(_req)->ctx             = _ctx;     \
-	(_req)->task            = _task;    \
-	(_req)->datatype        = _dt;      \
+	(_req)->request           = _mpi_req;                                \
+        (_req)->send.tag.src_tid  = (_mpi_req)->header.source_task;          \
+        (_req)->send.tag.dest_tid = (_mpi_req)->header.destination_task;     \
+        (_req)->send.tag.dest_pid = (_mpi_req)->header.destination;          \
+        (_req)->send.tag.src_pid  = (_mpi_req)->header.source;               \
+        (_req)->send.tag.tag      = (_mpi_req)->header.message_tag;          \
+        (_req)->send.tag.comm     = (_mpi_req)->header.communicator_id;      \
+	(_req)->info              = _info;                                   \
+	(_req)->msg_id            = _msg_id;                                 \
+	(_req)->seqn              = _seqn;                                   \
+	(_req)->ctx               = _ctx;                                    \
+	(_req)->task              = _task;                                   \
+	(_req)->datatype          = _dt;                                     \
 	\
-	(_req)->send.buffer     = _buf;     \
-	(_req)->send.ep         = _ep;      \
-	(_req)->send.length     = _length;  \
+	(_req)->send.buffer       = _buf;                                    \
+	(_req)->send.ep           = _ep;                                     \
+	(_req)->send.length       = _length;                                 \
 	\
-	(_req)->state.cc        = (_ep)->priority_chnl; \
-	(_req)->state.remaining = _length;              \
-	(_req)->state.offset    = 0;                    \
+	(_req)->state.remaining   = _length;                                 \
+	(_req)->state.offset      = 0;                                       \
 }
 
-#define LCP_REQUEST_INIT_RECV(_req, _ctx, _task, _mpi_req, _info, _length, \
+#define LCP_REQUEST_INIT_RMA_SEND(_req, _ctx, _task, _mpi_req, _info, _length, \
+                                  _ep, _buf, _seqn, _msg_id, _dt) \
+{ \
+	(_req)->request           = _mpi_req;                                \
+	(_req)->info              = _info;                                   \
+	(_req)->msg_id            = _msg_id;                                 \
+	(_req)->seqn              = _seqn;                                   \
+	(_req)->ctx               = _ctx;                                    \
+	(_req)->task              = _task;                                   \
+	(_req)->datatype          = _dt;                                     \
+	\
+	(_req)->send.buffer       = _buf;                                    \
+	(_req)->send.ep           = _ep;                                     \
+	(_req)->send.length       = _length;                                 \
+	\
+	(_req)->state.remaining   = _length;                                 \
+	(_req)->state.offset      = 0;                                       \
+}
+
+#define LCP_REQUEST_INIT_TAG_RECV(_req, _ctx, _task, _mpi_req, _info, _length, \
                               _buf, _dt) \
 { \
-	(_req)->request         = _mpi_req; \
-	(_req)->info            = _info;    \
-	(_req)->msg_id          = 0;        \
-	(_req)->seqn            = 0;        \
-	(_req)->ctx             = _ctx;     \
-	(_req)->task            = _task;    \
-	(_req)->datatype        = _dt;      \
+	(_req)->request           = _mpi_req;                                \
+        (_req)->recv.tag.src_tid  = (_mpi_req)->header.source_task;          \
+        (_req)->recv.tag.dest_tid = (_mpi_req)->header.destination_task;     \
+        (_req)->recv.tag.dest_pid = (_mpi_req)->header.destination;          \
+        (_req)->recv.tag.src_pid  = (_mpi_req)->header.source;               \
+        (_req)->recv.tag.tag      = (_mpi_req)->header.message_tag;          \
+        (_req)->recv.tag.comm     = (_mpi_req)->header.communicator_id;      \
+	(_req)->info              = _info;                                   \
+	(_req)->msg_id            = 0;                                       \
+	(_req)->seqn              = 0;                                       \
+	(_req)->ctx               = _ctx;                                    \
+	(_req)->task              = _task;                                   \
+	(_req)->datatype          = _dt;                                     \
 	\
-	(_req)->recv.buffer     = _buf;     \
-	(_req)->recv.length     = _length;  \
+	(_req)->recv.buffer       = _buf;                                    \
+	(_req)->recv.length       = _length;                                 \
 	\
-	(_req)->state.remaining = _length;  \
-	(_req)->state.offset    = 0;        \
-}
-
-static inline void lcp_request_init_tag_send(lcp_request_t *req)
-{
-        req->send.tag.src_tid  = req->request->header.source_task;
-        req->send.tag.dest_tid = req->request->header.destination_task;
-        req->send.tag.dest_pid = req->request->header.destination;
-        req->send.tag.src_pid  = req->request->header.source; 
-        req->send.tag.tag      = req->request->header.message_tag;
-        req->send.tag.comm     = req->request->header.communicator_id; 
-};
-
-
-static inline void lcp_request_init_tag_recv(lcp_request_t *req, lcp_tag_recv_info_t *info)
-{
-        req->recv.tag.src_tid  = req->request->header.source_task;
-        req->recv.tag.dest_tid = req->request->header.destination_task;
-        req->recv.tag.dest_pid = req->request->header.destination;
-        req->recv.tag.src_pid  = req->request->header.source; 
-        req->recv.tag.tag      = req->request->header.message_tag;
-        req->recv.tag.comm     = req->request->header.communicator_id;
-        req->info              = info;
+	(_req)->state.remaining   = _length;                                 \
+	(_req)->state.offset      = 0;                                       \
 }
 
 static inline void lcp_request_init_rma_put(lcp_request_t *req, 
@@ -192,21 +202,6 @@ static inline void lcp_request_init_rma_put(lcp_request_t *req,
         req->send.cb              = param->cb;
         req->request              = param->request;
 };
-
-static inline void lcp_request_init_ack(lcp_request_t *ack_req, lcp_ep_h ep, 
-                                        int seqn, uint64_t msg_id)
-{
-        ack_req->send.ep            = ep;
-
-        ack_req->msg_id             = msg_id;
-
-        ack_req->state.remaining    = sizeof(lcp_ack_hdr_t);
-        ack_req->state.offset       = 0; 
-        ack_req->state.cc           = ep->priority_chnl;
-
-	ack_req->msg_id             = msg_id;
-	ack_req->seqn               = seqn;
-}
 
 static inline int lcp_request_send(lcp_request_t *req)
 {
@@ -229,9 +224,6 @@ static inline int lcp_request_send(lcp_request_t *req)
 
         switch((rc = req->send.func(req))) {
         case MPC_LOWCOMM_SUCCESS:
-                req->info->length = req->send.length;
-                req->info->src    = req->send.tag.src_tid;
-                req->info->tag    = req->send.tag.tag;
                 break;
         case MPC_LOWCOMM_NO_RESOURCE:
                 mpc_queue_push(&req->ctx->pending_queue, &req->queue);

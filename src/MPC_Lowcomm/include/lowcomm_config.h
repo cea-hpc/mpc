@@ -368,7 +368,6 @@ struct _mpc_lowcomm_config_struct_net_driver_config
 	/**Define the related driver to use and its configuration.**/
 	struct _mpc_lowcomm_config_struct_net_driver driver;
 };
-typedef struct _mpc_lowcomm_config_struct_net_driver_config lcr_driver_config_t;
 
 /**********************
 * RAIL CONFIGURATION *
@@ -517,7 +516,6 @@ struct _mpc_lowcomm_config_struct_net_rail
 	/** Define if rail has tag offloading capabilities. **/
         int                                                   offload;
 };
-typedef struct _mpc_lowcomm_config_struct_net_rail lcr_rail_config_t;
 
 /******************************** STRUCTURE *********************************/
 /**Base structure to contain the protocol configuration**/

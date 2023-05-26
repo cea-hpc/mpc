@@ -132,13 +132,10 @@ void lcp_pending_init()
  * 
  * @param ctx lcp context
  */
-void lcp_pending_fini(lcp_context_h ctx)
+void lcp_pending_fini(lcp_pending_table_t *table)
 {
-        /* Control table */
-        lcp_pending_table_t *table = ctx->pend;
         /* Matching list */
         lcp_pending_entry_t *entry, *e_tmp;
-
         /* Delete control send table */
         if (HASH_COUNT(table->table) > 0) {
                 HASH_ITER(hh, table->table, entry, e_tmp) {
