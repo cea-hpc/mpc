@@ -2657,7 +2657,7 @@ __kmp_task_process(mpc_omp_task_t * task, void ** depend)
     return r;
 }
 
-static void
+void
 __kmp_omp_task_wrapper(void * kmp_task_ptr)
 {
     kmp_task_t * kmp_task = (kmp_task_t *) kmp_task_ptr;

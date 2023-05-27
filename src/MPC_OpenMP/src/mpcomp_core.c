@@ -220,6 +220,8 @@ static inline void __omp_conf_init(void)
 	mpc_conf_root_config_append("mpcframework", omp, "MPC OpenMP Configuration");
 }
 
+
+
 void mpc_openmp_registration() __attribute__( (constructor) );
 
 void mpc_openmp_registration()
@@ -227,6 +229,7 @@ void mpc_openmp_registration()
 	MPC_INIT_CALL_ONLY_ONCE
 
 	mpc_common_init_callback_register("Config Sources", "MPC_OMP Init", __omp_conf_init, 32);
+
 }
 
 /*****************
@@ -507,7 +510,7 @@ __prepare_omp_task_tree_init( const int num_mvps, const int *cpus_order )
 	return restrictedTopology;
 }
 
-void
+static void
 __init_task_tree( const int num_mvps, int *shape, const int *cpus_order )
 {
 	int i, top_level, place_depth = 0, place_size;
@@ -898,6 +901,7 @@ static inline void __read_env_variables()
                                 __omp_conf.task_cond_wait_enabled ? "enabled" : "disabled", __omp_conf.task_cond_wait_nhyperactive);
         mpc_common_debug_log("\n");
 
+
         mpc_common_debug_log("\tTasks fiber");
 # if MPC_OMP_TASK_COMPILE_FIBER
         mpc_common_debug_log("\t\tCompiled=yes");
@@ -1089,7 +1093,8 @@ void mpc_omp_init( void )
 			case MPC_OMP_MODE_SIMPLE_MIXED:
 				/* Compute the number of cores for this task */
 				mpc_thread_get_task_placement_and_count( task_rank, &nb_mvps );
-				mpc_common_nodebug( "[%d] %s: SIMPLE_MIXED -> #mvps = %d", task_rank, __func__, nb_mvps);
+				mpc_common_nodebug( "[%d] %s: SIMPLE_MIXED -> #mvps = %d", task_rank, __func__,
+				              nb_mvps );
 
 				/* Consider the env variable if between 1 and the number
 				* of cores for this task */
@@ -1104,9 +1109,9 @@ void mpc_omp_init( void )
 				nb_mvps = 1;
 
 				if ( mpc_common_get_local_task_rank() == 0 )
-                {
-                    nb_mvps = mpc_topology_get_pu_count();
-                }
+                                {
+					nb_mvps = mpc_topology_get_pu_count();
+				}
 
 				break;
 
@@ -1193,8 +1198,8 @@ void mpc_omp_init( void )
 	{
 		places_nb_mvps = _mpc_omp_places_get_topo_info( OMP_PLACES_LIST, &shape, &cpus_order );
 		assert( places_nb_mvps <= nb_mvps );
-        nb_mvps = places_nb_mvps;
-    }
+    nb_mvps = places_nb_mvps;
+	}
 	else
 	{
 		shape = NULL;
@@ -1292,11 +1297,4 @@ void _mpc_omp_in_order_scheduler( mpc_omp_thread_t *thread )
     /* Restore previous frame infos */
     _mpc_omp_ompt_frame_set_infos( &prev_frame_infos );
 #endif /* OMPT_SUPPORT */
-}
-
-//////////////TARGET/////////////////
-
-void __omp_conf_init_target(void)
-{
-	__omp_conf_init();
 }

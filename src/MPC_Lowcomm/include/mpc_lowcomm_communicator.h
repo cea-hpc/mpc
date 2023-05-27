@@ -692,10 +692,6 @@ mpc_hardware_split_info_t* mpc_lowcomm_topo_comm_get(mpc_lowcomm_communicator_t 
  */
 void mpc_lowcomm_topo_comm_set(mpc_lowcomm_communicator_t comm, int root, mpc_hardware_split_info_t *hw_info);
 
-/** Cancellation on communicators */
-void mpc_lowcomm_communicator_version_cancel(mpc_lowcomm_communicator_t comm);
-void mpc_lowcomm_communicator_version_new(mpc_lowcomm_communicator_t comm);
-
 #ifdef __cplusplus
 }
 #endif

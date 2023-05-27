@@ -119,8 +119,6 @@
 #pragma weak MPI_Comm_free = PMPI_Comm_free
 #pragma weak MPI_Comm_test_inter = PMPI_Comm_test_inter
 #pragma weak MPI_Comm_remote_size = PMPI_Comm_remote_size
-#pragma weak MPI_Comm_Version_cancel = PMPI_Comm_Version_cancel
-#pragma weak MPI_Comm_Version_new = PMPI_Comm_Version_new
 #pragma weak MPI_Intercomm_create = PMPI_Intercomm_create
 #pragma weak MPI_Intercomm_merge = PMPI_Intercomm_merge
 // PROFILER MPI_KEYS MPI keys operations

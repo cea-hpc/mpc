@@ -77,15 +77,10 @@ typedef struct mpc_lowcomm_internal_communicator_s
 
 	/* Topological comm */
 	mpc_lowcomm_topo_comms *topo_comms;  /**< Topological communicators. */
-
+  
 	/* Extra context (sessions) */
 	mpc_lowcomm_handle_ctx_t extra_ctx_ptr;
-
-    /* version for communicators cancellation */
-    OPA_int_t cancelled;
-    OPA_int_t version;
-
-} mpc_lowcomm_internal_communicator_t;
+}mpc_lowcomm_internal_communicator_t;
 
 /*********************************
 * COMMUNICATOR INIT AND RELEASE *

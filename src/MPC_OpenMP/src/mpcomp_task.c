@@ -1454,7 +1454,7 @@ __task_delete_dependencies_hmap(mpc_omp_task_t * task)
 
 /* remove the task dependencies from the parent hmap */
 static void
-__task_finalize_deps_list(mpc_omp_task_t * task)
+__task_deps_list_delete(mpc_omp_task_t * task)
 {
     assert(task->parent);
     if (task->dep_node.dep_list)
@@ -1532,7 +1532,8 @@ _mpc_omp_task_finalize(mpc_omp_task_t * task)
         }
         mpc_common_spinlock_unlock(&(task->state_lock));
 
-        __task_finalize_deps_list(task);
+        __task_unref_parallel_region();
+        __task_deps_list_delete(task);
 
         /* Resolve successor's data dependency */
         mpc_omp_task_list_elt_t * succ = task->dep_node.successors;
@@ -1565,9 +1566,8 @@ _mpc_omp_task_finalize(mpc_omp_task_t * task)
 
         // dereference parent
         mpc_omp_taskgroup_del_task(task);
-        __task_unref_parallel_region();
-        __task_unref(task);                     /* _mpc_omp_task_init */
         __task_unref_parent_task(task->parent); /* _mpc_omp_task_init */
+        __task_unref(task);                     /* _mpc_omp_task_init */
 
     }
     /* else, if the task is persistent */
@@ -3661,7 +3661,7 @@ _mpc_omp_task_deinit_persistent(mpc_omp_task_t * task)
     assert(mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT));
 
     /* Release parent hmap dependencies entries */
-    __task_finalize_deps_list(task);
+    __task_deps_list_delete(task);
 
     /* unreference the task, see 'finalize' */
     mpc_omp_taskgroup_del_task(task);

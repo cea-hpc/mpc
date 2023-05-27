@@ -565,10 +565,10 @@ void __scatter_instance_post_init( mpc_omp_thread_t *thread )
 		OPA_store_int( &( mvp->threads->for_dyn_remain[j].i ), -1 );
 	}
 
-	//if ( ! thread->mvp->instance->buffered )
-	//{
-	//	mpc_omp_barrier();
-	//}
+	if ( ! thread->mvp->instance->buffered )
+	{
+		mpc_omp_barrier();
+	}
 
 #if 0  /* Check victim list for each thread */
 	int  i, total, current, nbList;
@@ -713,7 +713,7 @@ mpc_omp_instance_t *_mpc_omp_tree_array_instance_init( mpc_omp_thread_t *thread,
 
     /* instance initialization */
     instance->task_infos.blocked_tasks.type     = MPC_OMP_TASK_LIST_TYPE_SCHEDULER;
-    instance->task_infos.propagation.up.type     = MPC_OMP_TASK_LIST_TYPE_UP_DOWN;
+    instance->task_infos.propagation.up.type    = MPC_OMP_TASK_LIST_TYPE_UP_DOWN;
     instance->task_infos.propagation.down.type  = MPC_OMP_TASK_LIST_TYPE_UP_DOWN;
 # if MPC_OMP_BARRIER_COMPILE_COND_WAIT
     if (MPC_OMP_TASK_BARRIER_COND_WAIT_ENABLED)
@@ -722,17 +722,13 @@ mpc_omp_instance_t *_mpc_omp_tree_array_instance_init( mpc_omp_thread_t *thread,
         pthread_cond_init(&instance->task_infos.work_cond, NULL);
         instance->task_infos.work_cond_nthreads = 0;
     }
-# endif /* MPC_OMP_TASK_COND_WAIT */
+# endif /* MPC_OMP_BARRIER_COMPILE_COND_WAIT */
 
 	return instance;
 }
 
 mpc_omp_thread_t *__mvp_wakeup( mpc_omp_mvp_t *mvp )
 {
-    /* this usleep here seems to fix a sporadic crash on runtime start-up
-     * TODO: remove this dirty fix and find out what's going on */
-    usleep(10);
-
 	mpc_omp_thread_t *new_thread;
 	assert( mvp );
 

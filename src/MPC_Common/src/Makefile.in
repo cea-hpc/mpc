@@ -128,8 +128,7 @@ libmpccommon_la_DEPENDENCIES =  \
 am__libmpccommon_la_SOURCES_DIST = aio.c bit_array.c fifo.c \
 	hashtable.c io_helper.c rank.c debug.c sctk_no_alloc.c \
 	sctk_pm_json.c flags.c debugger.c elf_32.c elf_64.c spinlock.c \
-	base64.c recycler.c indirect_array.c	\
-	./profiler/sctk_internal_profiler.c \
+	base64.c recycler.c indirect_array.c ./profiler/sctk_internal_profiler.c \
 	./profiler/sctk_performance_tree.c \
 	./profiler/sctk_profile_meta.c \
 	./profiler/sctk_profiler_array.c \
@@ -624,6 +623,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/io_helper.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rank.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/recycler.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/indirect_array.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_no_alloc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sctk_pm_json.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/spinlock.Plo@am__quote@

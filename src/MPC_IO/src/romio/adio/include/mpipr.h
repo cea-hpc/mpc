@@ -90,10 +90,6 @@
 #define MPI_Comm_split PMPI_Comm_split
 #undef MPI_Comm_test_inter
 #define MPI_Comm_test_inter PMPI_Comm_test_inter
-#undef MPI_Comm_Version_cancel
-#define MPI_Comm_Version_cancel PMPI_Comm_Version_cancel
-#undef MPI_Comm_Version_new
-#define MPI_Comm_Version_new PMPI_Comm_Version_new
 #undef MPI_Dims_create
 #define MPI_Dims_create PMPI_Dims_create
 #undef MPI_Errhandler_create

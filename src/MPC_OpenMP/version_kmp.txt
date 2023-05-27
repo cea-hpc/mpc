@@ -1,5 +1,2 @@
 VERSION {
 };
-
-VERS1.0 {
-};

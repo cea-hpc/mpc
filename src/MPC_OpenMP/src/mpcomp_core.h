@@ -168,13 +168,14 @@ typedef struct  mpc_omp_conf_s
     char task_trace_papi_events[MPC_CONF_STRING_SIZE];
 #endif /* MPC_OMP_TASK_TRACE_USE_PAPI */
 
-	/* Tools */
-	char omp_tool[MPC_CONF_STRING_SIZE];
-	char omp_tool_libraries[MPC_CONF_STRING_SIZE];
-
+    /* Tools */
+    char omp_tool[MPC_CONF_STRING_SIZE];
+    char omp_tool_libraries[MPC_CONF_STRING_SIZE];
 }               mpc_omp_conf_t;
 
+
 struct mpc_omp_conf_s * mpc_omp_conf_get(void);
+
 
 /*******************************
  * INITIALIZATION AND FINALIZE *
@@ -185,11 +186,5 @@ void mpc_omp_exit(void);
 void _mpc_omp_instance_init(mpc_omp_instance_t *, int, mpc_omp_team_t *);
 void _mpc_omp_in_order_scheduler(mpc_omp_thread_t *);
 void _mpc_omp_flush(void);
-
-//////////////TARGET/////////////////
-
-void __omp_conf_init_target(void);
-
-/////////////////////////////////////
 
 #endif /* __MPC_OMP_CORE_H__ */

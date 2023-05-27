@@ -204,10 +204,12 @@ static inline int __mpc_pmi_get_process_rank( int *rank )
 	uint32_t usize;
 	*size = -1;
 	pmix_status_t rc = __pmix_get_attribute(0, PMIX_JOB_SIZE, PMIX_UINT32, &usize);
-    if (rc == PMI_SUCCESS)
-    {
-        *size = usize;
-    }
+
+	if(rc == PMI_SUCCESS)
+	{
+		*size = usize;
+	}
+
 	PMI_RETURN( rc );
 #else
 	int rc;
@@ -734,6 +736,7 @@ int mpc_launch_pmi_init()
 		mpc_common_set_process_rank( pmi_context.process_rank );
 		mpc_common_set_process_count( pmi_context.process_count );
 		mpc_common_get_flags()->process_number = pmi_context.process_count;
+
 		PMI_RETURN( rc );
 	}
 
