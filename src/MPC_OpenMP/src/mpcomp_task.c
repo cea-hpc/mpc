@@ -3123,6 +3123,9 @@ __thread_generate_new_task_fiber(mpc_omp_thread_t * thread)
 static inline void
 __thread_requeue_task(mpc_omp_task_t * task)
 {
+    assert(TASK_STATE(task) == MPC_OMP_TASK_STATE_SUSPENDED);
+    TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_QUEUED);
+
     mpc_omp_task_pqueue_type_t type = mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_UNTIED) ? MPC_OMP_PQUEUE_TYPE_UNTIED : MPC_OMP_PQUEUE_TYPE_TIED;
     mpc_omp_task_pqueue_t * pqueue = __thread_get_task_pqueue(task->thread, type);
     assert(pqueue);
@@ -3165,6 +3168,8 @@ __task_schedule_with_fiber(mpc_omp_task_t * task)
     }
     else
     {
+        assert(TASK_STATE(task) == MPC_OMP_TASK_STATE_SUSPENDED);
+
         /* The task yielded and blocked, unlock it associated event spinlock
          * see `mpc_omp_task_block()` */
         if (task->flags.blocking)
