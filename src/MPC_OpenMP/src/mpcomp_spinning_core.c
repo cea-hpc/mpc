@@ -729,7 +729,10 @@ mpc_omp_instance_t *_mpc_omp_tree_array_instance_init( mpc_omp_thread_t *thread,
 
 mpc_omp_thread_t *__mvp_wakeup( mpc_omp_mvp_t *mvp )
 {
-    usleep(10); /* dirty quick fix */
+    /* this usleep here seems to fix a sporadic crash on runtime start-up
+     * TODO: remove this dirty fix and find out what's going on */
+    usleep(10);
+
 	mpc_omp_thread_t *new_thread;
 	assert( mvp );
 

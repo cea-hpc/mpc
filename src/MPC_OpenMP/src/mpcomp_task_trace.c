@@ -245,12 +245,12 @@ _mpc_omp_task_trace_dependency(mpc_omp_task_t * out, mpc_omp_task_t * in)
 }
 
 static inline int
-__task_statuses_to_int(mpc_omp_task_statuses_t statuses)
+__task_flags_to_int(mpc_omp_task_flags_t flags)
 {
     int bitset = 0;
-    bool * bits = (bool *) &statuses;
+    bool * bits = (bool *) &flags;
     unsigned int i;
-    for (i = 0 ; i < sizeof(mpc_omp_task_statuses_t) ; ++i)
+    for (i = 0 ; i < sizeof(mpc_omp_task_flags_t) ; ++i)
     {
         if (bits[i]) bitset |= (1 << i);
     }
@@ -268,7 +268,7 @@ _mpc_omp_task_trace_schedule(mpc_omp_task_t * task)
     record->priority    = task->priority;
     record->properties  = task->property;
     record->schedule_id = task->schedule_id;
-    record->statuses    = __task_statuses_to_int(task->statuses);
+    record->flags    = __task_flags_to_int(task->flags);
 
 #if MPC_OMP_TASK_TRACE_USE_PAPI
     if (mpc_omp_conf_get()->task_trace_use_papi)
@@ -291,7 +291,7 @@ _mpc_omp_task_trace_create(mpc_omp_task_t * task)
     record->uid                 = task->uid;
     record->persistent_uid      = task->persistent_infos.original_uid;
     record->properties          = task->property;
-    record->statuses            = __task_statuses_to_int(task->statuses);
+    record->flags            = __task_flags_to_int(task->flags);
     strncpy(record->label, task->label ? task->label : "(null)", MPC_OMP_TASK_LABEL_MAX_LENGTH);
     record->color               = task->color;
     record->parent_uid          = task->parent ? task->parent->uid : -1;
@@ -307,10 +307,10 @@ _mpc_omp_task_trace_delete(mpc_omp_task_t * task)
 
     mpc_omp_task_trace_record_delete_t * record = (mpc_omp_task_trace_record_delete_t *) __node_record(node);
 
-    record->uid             = task->uid;
-    record->priority        = task->priority;
-    record->properties      = task->property;
-    record->statuses        = __task_statuses_to_int(task->statuses);
+    record->uid         = task->uid;
+    record->priority    = task->priority;
+    record->properties  = task->property;
+    record->flags       = __task_flags_to_int(task->flags);
 
     __node_insert(node);
 }

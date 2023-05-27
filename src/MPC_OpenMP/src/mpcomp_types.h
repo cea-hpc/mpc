@@ -365,14 +365,19 @@ typedef enum    mpc_omp_task_list_type_e
 
 /* TODO: check Romain PhD thesis with task transition state, and implements
  * every states. It could help for runtime debugging purposes */
-typedef enum    mpcomp_task_dep_task_status_e
+typedef enum    mpc_omp_task_state_e
 {
-    MPC_OMP_TASK_STATUS_NOT_READY               = 0,
-    MPC_OMP_TASK_STATUS_READY                   = 1,
-    MPC_OMP_TASK_STATUS_FINALIZED_PERSISTENT    = 2,
-    MPC_OMP_TASK_STATUS_FINALIZED               = 3,
-    MPC_OMP_TASK_STATUS_COUNT                   = 4
-}               mpcomp_task_dep_task_status_t;
+    MPC_OMP_TASK_STATE_UNITIALIZED          = 0,
+    MPC_OMP_TASK_STATE_NOT_QUEUABLE         = 1,
+    MPC_OMP_TASK_STATE_QUEUABLE             = 2,
+    MPC_OMP_TASK_STATE_QUEUED               = 3,
+    MPC_OMP_TASK_STATE_SCHEDULED            = 4,
+    MPC_OMP_TASK_STATE_SUSPENDED            = 5,
+    MPC_OMP_TASK_STATE_EXECUTED             = 6,
+    MPC_OMP_TASK_STATE_DETACHED             = 7,
+    MPC_OMP_TASK_STATE_FINALIZED_PERSISTENT = 8,
+    MPC_OMP_TASK_STATE_FINALIZED            = 9,
+}               mpc_omp_task_state_t;
 
 /**********************
  * OMPT STATUS        *
@@ -640,9 +645,6 @@ typedef struct  mpc_omp_task_persistent_instance_infos_s
 /* persistent task infos */
 typedef struct  mpc_omp_task_persistent_infos_s
 {
-    /* number of time this task completed */
-    OPA_int_t n_completion;
-
     /* number of time this task was initialized */
     OPA_int_t version;
 
@@ -721,9 +723,6 @@ typedef struct  mpc_omp_task_dep_node_s
     /* maximum path length to reach a root, in the dependency tree */
     int top_level;
 
-    /* status */
-    OPA_int_t status;
-
     /* entries in the parent hash map for dependencies */
     mpc_omp_task_dep_list_elt_t * dep_list;
     unsigned int dep_list_size;
@@ -735,10 +734,6 @@ typedef struct  mpc_omp_task_dep_node_s
 
     /* profile version, to know if the profile matching should be performed */
     int profile_version;
-
-    /* dep node lock for scheduling */
-    mpc_common_spinlock_t lock;
-
 }               mpc_omp_task_dep_node_t;
 
 struct mpc_omp_task_thread_infos_s;
@@ -758,8 +753,11 @@ typedef struct  mpc_omp_task_s
     /* total size of the task (sizeof(mpcomp_task_t) + data_size) */
     unsigned int size;
 
-    /* task statuses */
-    mpc_omp_task_statuses_t statuses;
+    /* (transition system instance) state */
+    OPA_int_t state;
+
+    /* dep node lock for scheduling */
+    mpc_common_spinlock_t state_lock;
 
     /* number of existing child for this task */
     OPA_int_t children_count;
@@ -820,9 +818,6 @@ typedef struct  mpc_omp_task_s
     /* task uid (= number of task previously created) */
     int uid;
 
-    /* the task list */
-    struct mpc_omp_task_pqueue_s * pqueue;
-
     /* time the task run so far */
     double t_elapsed;
 
@@ -854,6 +849,9 @@ typedef struct  mpc_omp_task_s
 
     /* detach event */
     mpc_omp_event_handle_detach_t detach_event;
+
+    /* task flags (can have concurrency, as opposed to task properties) */
+    mpc_omp_task_flags_t flags;
 }               mpc_omp_task_t;
 
 /** RB tree for task priorities */

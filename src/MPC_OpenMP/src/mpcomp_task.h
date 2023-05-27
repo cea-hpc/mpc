@@ -287,6 +287,10 @@ _mpc_omp_task_align_single_malloc( long size, long arg_align )
     return size;
 }
 
+# define TASK_STATE_TRANSITION(TASK, TO) OPA_store_int(&(TASK->state), TO)
+# define TASK_STATE_TRANSITION_ATOMIC(TASK, FROM, TO) (OPA_cas_int(&(TASK->state), FROM, TO) == FROM)
+# define TASK_STATE(task) OPA_load_int(&(task->state))
+
 int _mpc_omp_task_process(mpc_omp_task_t * task);
 
 void _mpc_omp_task_initgroup_start( void );
@@ -424,7 +428,7 @@ void _mpc_omp_task_profile_register_current(int priority);
  */
 mpc_omp_persistent_region_t * mpc_omp_get_persistent_region(void);
 mpc_omp_task_t * mpc_omp_get_persistent_task(void);
-void _mpc_omp_task_persistent_reinit(mpc_omp_task_t * task);
+void _mpc_omp_task_reinit_persistent(mpc_omp_task_t * task);
 void mpc_omp_persistent_region_push(mpc_omp_task_t * task);
 
 #endif /* __MPC_OMP_TASK_H__ */

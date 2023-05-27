@@ -2122,7 +2122,7 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
         // we want to recopy only private variables, but compiler gives no infos on it
         void * data_storage = (void *) (task + 1);
         __task_data_copy(cpyfn, data_storage, data, arg_size);
-        _mpc_omp_task_persistent_reinit(task);
+        _mpc_omp_task_reinit_persistent(task);
     }
     else
     {

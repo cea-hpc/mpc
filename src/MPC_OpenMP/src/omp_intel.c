@@ -2639,10 +2639,9 @@ __kmp_task_process(mpc_omp_task_t * task, void ** depend)
 
     kmp_int32 r;
 
-    /* task has already been encountered */
-    if (task->statuses.started)
+    /* untied task was suspended*/
+    if (TASK_STATE(task) == MPC_OMP_TASK_STATE_SUSPENDED)
     {
-        // 2nd part of the same untied task, not supported
         not_implemented();
         r = -1;
     }
@@ -2848,7 +2847,7 @@ __kmpc_omp_task_complete_if0(
 	MPC_OMP_TASK_THREAD_SET_CURRENT_TASK(thread, task->parent);
 	thread->info.icvs = task->prev_icvs;
 
-    task->statuses.completed = 1;
+    TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_EXECUTED);
     _mpc_omp_task_finalize(task);
 }
 

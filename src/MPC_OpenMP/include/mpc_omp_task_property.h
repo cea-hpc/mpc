@@ -31,25 +31,25 @@
 # define __MPC_OMP_TASK_PROPERTY_H__
 
 /* MPC_OMP bit flags */
-# define MPC_OMP_TASK_PROP_UNDEFERRED    (1 << 0)
-# define MPC_OMP_TASK_PROP_UNTIED        (1 << 1)  /* if the task is untied */
-# define MPC_OMP_TASK_PROP_EXPLICIT      (1 << 2)
-# define MPC_OMP_TASK_PROP_IMPLICIT      (1 << 3)
-# define MPC_OMP_TASK_PROP_INITIAL       (1 << 4)
-# define MPC_OMP_TASK_PROP_INCLUDED      (1 << 5)
-# define MPC_OMP_TASK_PROP_FINAL         (1 << 6)  /* if the task is final */
-# define MPC_OMP_TASK_PROP_MERGED        (1 << 7)
-# define MPC_OMP_TASK_PROP_MERGEABLE     (1 << 8)
-# define MPC_OMP_TASK_PROP_DEPEND        (1 << 9)
-# define MPC_OMP_TASK_PROP_PRIORITY      (1 << 10)
-# define MPC_OMP_TASK_PROP_UP            (1 << 11)
-# define MPC_OMP_TASK_PROP_GRAINSIZE     (1 << 12)
-# define MPC_OMP_TASK_PROP_IF            (1 << 13)
-# define MPC_OMP_TASK_PROP_NOGROUP       (1 << 14)
-# define MPC_OMP_TASK_PROP_HAS_FIBER     (1 << 15) /* if the task has it own fiber */
-# define MPC_OMP_TASK_PROP_PERSISTENT    (1 << 16) /* if the task is persistent */
-# define MPC_OMP_TASK_PROP_CONTROL_FLOW  (1 << 17) /* this is a 'flow control' fake task */
-# define MPC_OMP_TASK_PROP_DETACH        (1 << 18) /* a 'detach' clause is present */
+# define MPC_OMP_TASK_PROP_UNDEFERRED       (1 << 0)
+# define MPC_OMP_TASK_PROP_UNTIED           (1 << 1)  /* if the task is untied */
+# define MPC_OMP_TASK_PROP_EXPLICIT         (1 << 2)
+# define MPC_OMP_TASK_PROP_IMPLICIT         (1 << 3)
+# define MPC_OMP_TASK_PROP_INITIAL          (1 << 4)
+# define MPC_OMP_TASK_PROP_INCLUDED         (1 << 5)
+# define MPC_OMP_TASK_PROP_FINAL            (1 << 6)  /* if the task is final */
+# define MPC_OMP_TASK_PROP_MERGED           (1 << 7)
+# define MPC_OMP_TASK_PROP_MERGEABLE        (1 << 8)
+# define MPC_OMP_TASK_PROP_DEPEND           (1 << 9)
+# define MPC_OMP_TASK_PROP_PRIORITY         (1 << 10)
+# define MPC_OMP_TASK_PROP_UP               (1 << 11)
+# define MPC_OMP_TASK_PROP_GRAINSIZE        (1 << 12)
+# define MPC_OMP_TASK_PROP_IF               (1 << 13)
+# define MPC_OMP_TASK_PROP_NOGROUP          (1 << 14)
+# define MPC_OMP_TASK_PROP_HAS_FIBER        (1 << 15) /* if the task has it own fiber */
+# define MPC_OMP_TASK_PROP_PERSISTENT       (1 << 16) /* if the task is persistent */
+# define MPC_OMP_TASK_PROP_CONTROL_FLOW     (1 << 17) /* this is a 'flow control' fake task */
+# define MPC_OMP_TASK_PROP_DETACH           (1 << 18) /* a 'detach' clause is present */
 
 /* the properties to consider when comparing to a task profile */
 # define MPC_OMP_TASK_PROP_PROFILE_MASK \
@@ -65,20 +65,18 @@
 
 # include <stdbool.h>
 
-/** the task statuses */
+/** the task flags */
 /* TODO : using volatile bitfields cause deadlocks on MPI applications
  * (REALLY likely because the flags are not correctly read/written by the runtime) */
-typedef struct  mpc_omp_task_statuses_s
+typedef struct  mpc_omp_task_flags_s
 {
-    volatile bool started         ;    /* if the task started */
-    volatile bool completed       ;    /* if the task completed */
     volatile bool blocking        ;    /* if the task is blocking (still running but will be blocked) */
     volatile bool blocked         ;    /* if the task is blocked (suspended) */
     volatile bool unblocked       ;    /* if the task was unblocked */
     volatile bool in_blocked_list ;    /* if the task is in a blocked list */
     volatile bool cancelled       ;    /* if the taskgroup was cancelled */
-    volatile bool direct_successor;    /* if the task is in a 'SUCCESSOR' ready task list */
-}               mpc_omp_task_statuses_t;
+    volatile bool successor       ;    /* if the task is in a 'SUCCESSOR' ready task list */
+}               mpc_omp_task_flags_t;
 
 /** Property of an OpenMP task */
 typedef unsigned int mpc_omp_task_property_t;
