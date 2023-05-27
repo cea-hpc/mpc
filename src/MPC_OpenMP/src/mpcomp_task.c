@@ -1195,12 +1195,9 @@ __task_process_mpc_dep(
                 pit = _mpc_omp_task_allocate(size);
                 _mpc_omp_task_init(pit, NULL, NULL, size, properties);
                 memset(&(pit->dep_node), 0, sizeof(mpc_omp_task_dep_node_t));
-                OPA_store_int(&(pit->dep_node.ref_predecessors), 1);
                 pit->dep_node.dep_list = (mpc_omp_task_dep_list_elt_t *) malloc(sizeof(mpc_omp_task_dep_list_elt_t));
                 pit->dep_node.dep_list_size = 0;
                 MPC_OMP_TASK_TRACE_CREATE(pit);
-
-                if (region->active) mpc_omp_persistent_region_push(pit);
 
                 entry->out = __task_dep_list_append(pit, entry, NULL);
                 while (entry->ins)
@@ -1249,7 +1246,6 @@ __task_process_mpc_dep(
                 memset(&(pit->dep_node), 0, sizeof(mpc_omp_task_dep_node_t));
                 pit->dep_node.dep_list = (mpc_omp_task_dep_list_elt_t *) malloc(sizeof(mpc_omp_task_dep_list_elt_t));
                 pit->dep_node.dep_list_size = 0;
-                OPA_store_int(&(pit->dep_node.ref_predecessors), 1);
                 MPC_OMP_TASK_TRACE_CREATE(pit);
 
                 if (region->active) mpc_omp_persistent_region_push(pit);
@@ -1350,7 +1346,7 @@ __task_process_mpc_dep(
 
     if (pit)
     {
-        OPA_decr_int(&(pit->dep_node.ref_predecessors));
+        if (region->active) mpc_omp_persistent_region_push(pit);
         assert(TASK_STATE(pit) == MPC_OMP_TASK_STATE_NOT_QUEUABLE);
         TASK_STATE_TRANSITION(pit, MPC_OMP_TASK_STATE_QUEUABLE);
         _mpc_omp_task_process(pit);
@@ -3702,22 +3698,10 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
     /* trace task creation */
     MPC_OMP_TASK_TRACE_CREATE(task);
 
+    /* link task with predecessors, and register dependencies to the hmap */
     if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_DEPEND))
-    {
-        /* parse dependencies */
-        task->dep_node.hmap = NULL;
-        task->dep_node.successors = NULL;
-        task->dep_node.nsuccessors = 0;
-        task->dep_node.predecessors = NULL;
-        task->dep_node.npredecessors = 0;
-        task->dep_node.top_level = 0;
-        task->dep_node.dep_list = NULL;
-        task->dep_node.dep_list_size = 0;
-        OPA_store_int(&(task->dep_node.ref_predecessors), 0);
-
-        /* link task with predecessors, and register dependencies to the hmap */
         __task_process_deps(task, depend);
-    }
+
     assert(TASK_STATE(task) == MPC_OMP_TASK_STATE_NOT_QUEUABLE);
     TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_QUEUABLE);
 
