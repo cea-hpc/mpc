@@ -63,19 +63,17 @@
      MPC_OMP_TASK_PROP_PRIORITY      |  \
      MPC_OMP_TASK_PROP_IF)
 
-# include <stdbool.h>
-
 /** the task flags */
 /* TODO : using volatile bitfields cause deadlocks on MPI applications
- * (REALLY likely because the flags are not correctly read/written by the runtime) */
+ * (REALLY likely because the flags are not read/written atomically by the runtime) */
 typedef struct  mpc_omp_task_flags_s
 {
-    volatile bool blocking        ;    /* if the task is blocking (still running but will be blocked) */
-    volatile bool blocked         ;    /* if the task is blocked (suspended) */
-    volatile bool unblocked       ;    /* if the task was unblocked */
-    volatile bool in_blocked_list ;    /* if the task is in a blocked list */
-    volatile bool cancelled       ;    /* if the taskgroup was cancelled */
-    volatile bool successor       ;    /* if the task is in a 'SUCCESSOR' ready task list */
+    volatile char blocking        ;    /* if the task is blocking (still running but will be blocked) */
+    volatile char blocked         ;    /* if the task is blocked (suspended) */
+    volatile char unblocked       ;    /* if the task was unblocked */
+    volatile char in_blocked_list ;    /* if the task is in a blocked list */
+    volatile char cancelled       ;    /* if the taskgroup was cancelled */
+    volatile char successor       ;    /* if the task is in a 'SUCCESSOR' ready task list */
 }               mpc_omp_task_flags_t;
 
 /** Property of an OpenMP task */

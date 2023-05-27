@@ -707,7 +707,7 @@ int __kmpc_get_target_offload(void) {
   //if (!__kmp_init_serial) {
   //  __kmp_serial_initialize();
   //}
-  // __omp_conf_init_target();
+  __omp_conf_init();
 
   return __kmp_target_offload;
 }

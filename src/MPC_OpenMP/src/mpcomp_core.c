@@ -149,7 +149,7 @@ static inline void __omp_conf_set_default(void)
 }
 
 
-static inline void __omp_conf_init(void)
+void __omp_conf_init(void)
 {
 	__omp_conf_set_default();
 
