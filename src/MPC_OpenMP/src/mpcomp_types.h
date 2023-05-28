@@ -375,8 +375,8 @@ typedef enum    mpc_omp_task_state_e
     MPC_OMP_TASK_STATE_SUSPENDED            = 5,
     MPC_OMP_TASK_STATE_EXECUTED             = 6,
     MPC_OMP_TASK_STATE_DETACHED             = 7,
-    MPC_OMP_TASK_STATE_FINALIZED_PERSISTENT = 8,
-    MPC_OMP_TASK_STATE_FINALIZED            = 9,
+    MPC_OMP_TASK_STATE_RESOLVED             = 8,
+    MPC_OMP_TASK_STATE_DEINITIALIZED        = 9,
 }               mpc_omp_task_state_t;
 
 /**********************
@@ -707,12 +707,24 @@ typedef struct  mpc_omp_task_dep_node_s
     mpc_omp_task_dep_htable_entry_t * hmap;
     mpc_common_spinlock_t hmap_lock;
 
-    /* lists */
+    /* successor tasks */
     struct mpc_omp_task_list_elt_s * successors;
     int nsuccessors;
 
+    /* predecessor tasks */
     struct mpc_omp_task_list_elt_s * predecessors;
     int npredecessors;
+
+    /* Concurrency on the 'successor' list:
+     *  - on the first iteration of the persistent region,
+     *    'task' can be finalizing (here) while some if its successors
+     *    have not been discovered yet.  On next iterations, the graph is fully
+     *    unrolled and every successors are known with no concurrency
+     */
+
+    /* persistent successor that were created after the persistent task completed */
+    struct mpc_omp_task_list_elt_s * persistent_successors_missed;
+    int npersistent_successors_missed;
 
     /* depth in the data dependency graph */
     int depth;
