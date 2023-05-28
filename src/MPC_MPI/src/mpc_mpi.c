@@ -61,7 +61,6 @@
 
 #include "mpc_lowcomm_workshare.h"
 #include "mpc_launch_pmi.h"
-#include "mpc_thread_mpi_omp_interop.h"
 
 /*******************
 * FORTRAN SUPPORT *

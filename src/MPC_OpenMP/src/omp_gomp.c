@@ -2056,6 +2056,12 @@ ___gomp_convert_flags(bool if_clause, int flags)
         mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_DEPEND);
     }
 
+    mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
+    if (region->active)
+    {
+        mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_PERSISTENT);
+    }
+
     return properties;
 }
 
@@ -2147,9 +2153,6 @@ mpc_omp_GOMP_task( void ( *fn )( void * ), void *data,
             *((void **) detach) = (void *) &(task->detach_event);
             mpc_omp_event_handle_init((mpc_omp_event_handle_t **) detach, MPC_OMP_EVENT_TASK_DETACH);
         }
-
-        /* if within a persistent region, we are running the 1st iteration : gotta store tasks */
-        if (region->active) mpc_omp_persistent_region_push(task);
 
         /* set dependencies (and compute priorities) */
         _mpc_omp_task_deps(task, depend, priority);

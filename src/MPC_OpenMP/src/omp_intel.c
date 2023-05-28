@@ -2645,13 +2645,15 @@ __kmp_task_process(mpc_omp_task_t * task, void ** depend)
         not_implemented();
         r = -1;
     }
-    /* first task encounter */
     else
     {
-        /* register dependencies and priority */
-        _mpc_omp_task_deps(task, depend, priority);
+        // if non-persistent or first time encoutering
+        if (!mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT) ||
+            TASK_STATE(task) == MPC_OMP_TASK_STATE_NOT_QUEUABLE)
+            _mpc_omp_task_deps(task, depend, priority);
         r = (kmp_int32) _mpc_omp_task_process(task);
-        _mpc_omp_task_deinit(task);
+        if (!mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT))
+            _mpc_omp_task_deinit(task);
     }
 
     return r;
@@ -2676,7 +2678,7 @@ __kmpc_omp_task(__UNUSED__ ident_t *loc_ref, __UNUSED__ kmp_int32 gtid, kmp_task
 
 	mpc_omp_task_t * task = (mpc_omp_task_t *) ((char *)kmp_task - sizeof(mpc_omp_task_t));
 
-    /* LLVM has a weird behavior where it calls both
+    /* LLVM calls both
      *  '__kmpc_omp_task' and '__kmpc_omp_task_with_deps'
      * if a task is untied and has dependences.
      * In such case, the task was already processed in the
@@ -2726,6 +2728,11 @@ ___convert_flags(kmp_tasking_flags_t * flags)
         mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_DEPEND);
     }
 
+    mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
+    if (region->active)
+    {
+        mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_PERSISTENT);
+    }
     return properties;
 }
 
@@ -2756,36 +2763,52 @@ kmp_task_t *__kmpc_omp_task_alloc( __UNUSED__ ident_t *loc_ref, __UNUSED__  kmp_
     mpc_omp_thread_t * thread = ( mpc_omp_thread_t * )mpc_omp_tls;
     assert(thread);
 
-    /* mpc_omp_task_t */
-    kmp_tasking_flags_t * kmp_task_flags = (kmp_tasking_flags_t *) &flags;
-    mpc_omp_task_property_t properties = ___convert_flags(kmp_task_flags);
-
-    /* if not in a parallel region then serial execution */
-	if (thread->info.func == NULL) {
-		mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_UNDEFERRED);
-	}
-
-    /* mpc_omp_task_t + kmp_task_t + shared variables) */
     size_t shareds_offset = round_up_to_val(sizeof(mpc_omp_task_t) + sizeof_kmp_task_t, sizeof(void *));
-    const size_t size = shareds_offset + sizeof_shareds;
-	mpc_omp_task_t * task = _mpc_omp_task_allocate(size);
-    assert(task);
+    mpc_omp_persistent_region_t * region = mpc_omp_get_persistent_region();
+    mpc_omp_task_t * task;
+    kmp_task_t * kmp_task;
+    if (region->active && (task = mpc_omp_get_persistent_task()))
+    {
+        // TODO : 'data' of size 'arg_size' contains both shared and private variables
+        // we want to recopy only private variables, but compiler gives no infos on it
+        kmp_task = (kmp_task_t *)(task + 1);
+        kmp_task->shareds = (sizeof_shareds > 0) ? ((char *)task) + shareds_offset : NULL;
+        kmp_task->routine = task_entry;
+        kmp_task->part_id = 0;
 
-    /* kmp_task_t / shared variables*/
-    kmp_task_t * kmp_task = (kmp_task_t *)(task + 1);
-    kmp_task->shareds = (sizeof_shareds > 0) ? ((char *)task) + shareds_offset : NULL;
-    kmp_task->routine = task_entry;
-    kmp_task->part_id = 0;
+        _mpc_omp_task_reinit_persistent(task);
+    }
+    else
+    {
+        /* mpc_omp_task_t */
+        kmp_tasking_flags_t * kmp_task_flags = (kmp_tasking_flags_t *) &flags;
+        mpc_omp_task_property_t properties = ___convert_flags(kmp_task_flags);
 
-    /* Create new task */
-    _mpc_omp_task_init(task, __kmp_omp_task_wrapper, kmp_task, size, properties);
+        /* if not in a parallel region then serial execution */
+        if (thread->info.func == NULL) {
+            mpc_omp_task_set_property(&properties, MPC_OMP_TASK_PROP_UNDEFERRED);
+        }
 
-    /* ? */
-    thread->task_infos.sizeof_kmp_task_t = sizeof_kmp_task_t;
+        /* mpc_omp_task_t + kmp_task_t + shared variables) */
+        const size_t size = shareds_offset + sizeof_shareds;
+        task = _mpc_omp_task_allocate(size);
+        assert(task);
 
-    /* to handle if0 with deps (Romain : ???) */
-    MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread)->last_task_alloc = task;
+        /* kmp_task_t / shared variables*/
+        kmp_task = (kmp_task_t *)(task + 1);
+        kmp_task->shareds = (sizeof_shareds > 0) ? ((char *)task) + shareds_offset : NULL;
+        kmp_task->routine = task_entry;
+        kmp_task->part_id = 0;
 
+        /* Create new task */
+        _mpc_omp_task_init(task, __kmp_omp_task_wrapper, kmp_task, size, properties);
+
+        /* ? */
+        thread->task_infos.sizeof_kmp_task_t = sizeof_kmp_task_t;
+
+        /* to handle if0 with deps (Romain : ???) */
+        MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread)->last_task_alloc = task;
+    }
     return kmp_task;
 }
 

@@ -1191,10 +1191,12 @@ __task_process_mpc_dep(
                 // and sould be optimized on the specific case where there is
                 // only one 'inoutset' task
                 const size_t size = sizeof(mpc_omp_task_t);
-                mpc_omp_task_property_t properties = MPC_OMP_TASK_PROP_DEPEND | MPC_OMP_TASK_PROP_CONTROL_FLOW;
                 pit = _mpc_omp_task_allocate(size);
+
+                mpc_omp_task_property_t properties = MPC_OMP_TASK_PROP_DEPEND | MPC_OMP_TASK_PROP_CONTROL_FLOW;
+                if (region->active) properties |= MPC_OMP_TASK_PROP_PERSISTENT;
                 _mpc_omp_task_init(pit, NULL, NULL, size, properties);
-                memset(&(pit->dep_node), 0, sizeof(mpc_omp_task_dep_node_t));
+
                 pit->dep_node.dep_list = (mpc_omp_task_dep_list_elt_t *) malloc(sizeof(mpc_omp_task_dep_list_elt_t));
                 pit->dep_node.dep_list_size = 0;
                 MPC_OMP_TASK_TRACE_CREATE(pit);
@@ -1240,10 +1242,11 @@ __task_process_mpc_dep(
             if (type == MPC_OMP_TASK_DEP_IN)
             {
                 const size_t size = sizeof(mpc_omp_task_t);
-                mpc_omp_task_property_t properties = MPC_OMP_TASK_PROP_DEPEND | MPC_OMP_TASK_PROP_CONTROL_FLOW;
                 pit = _mpc_omp_task_allocate(size);
+
+                mpc_omp_task_property_t properties = MPC_OMP_TASK_PROP_DEPEND | MPC_OMP_TASK_PROP_CONTROL_FLOW;
+                if (region->active) properties |= MPC_OMP_TASK_PROP_PERSISTENT;
                 _mpc_omp_task_init(pit, NULL, NULL, size, properties);
-                memset(&(pit->dep_node), 0, sizeof(mpc_omp_task_dep_node_t));
                 pit->dep_node.dep_list = (mpc_omp_task_dep_list_elt_t *) malloc(sizeof(mpc_omp_task_dep_list_elt_t));
                 pit->dep_node.dep_list_size = 0;
                 MPC_OMP_TASK_TRACE_CREATE(pit);
@@ -1344,7 +1347,7 @@ __task_process_mpc_dep(
 
     if (pit)
     {
-        if (region->active) mpc_omp_persistent_region_push(pit);
+        strcpy(pit->label, "control");
         assert(TASK_STATE(pit) == MPC_OMP_TASK_STATE_NOT_QUEUABLE);
         TASK_STATE_TRANSITION(pit, MPC_OMP_TASK_STATE_QUEUABLE);
         _mpc_omp_task_process(pit);
@@ -3644,6 +3647,10 @@ _mpc_omp_task_init(
     assert(TASK_STATE(task) == MPC_OMP_TASK_STATE_UNITIALIZED);
     TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_NOT_QUEUABLE);
 
+    if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT))
+    {
+        mpc_omp_persistent_region_push(task);
+    }
     return task;
 }
 
@@ -4209,7 +4216,6 @@ mpc_omp_persistent_region_push(mpc_omp_task_t * task)
     task->persistent_infos.original_uid = task->uid;
     task->persistent_infos.zombit = 0;
     OPA_store_int(&(task->persistent_infos.version), 0);
-    mpc_omp_task_set_property(&(task->property), MPC_OMP_TASK_PROP_PERSISTENT);
     mpc_common_indirect_array_iterator_push(&(region->tasks_it), &task);
     ++region->n_tasks;
 }
