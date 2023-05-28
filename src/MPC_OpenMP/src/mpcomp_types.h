@@ -54,7 +54,6 @@
 #include "mpcompt_frame_types.h"
 
 #include "mpc_common_recycler.h"
-#include "mpc_common_indirect_array.h"
 #include "mpc_omp_task_trace.h"
 
 #define MPC_OMP_USE_INTEL_ABI 1
@@ -624,14 +623,17 @@ typedef struct  mpc_omp_task_persistent_region_s
     /* number of task references, for the implicit taskwait */
     OPA_int_t task_ref;
 
-    /* the persistent tasks */
-    mpc_common_indirect_array_t tasks;
-
-    /* the persistent tasks iterator */
-    mpc_common_indirect_array_iterator_t tasks_it;
-
     /* number of tasks currently existing in this region */
     int n_tasks;
+
+    /* first persistent task */
+    struct mpc_omp_task_s * head;
+
+    /* current persistent task */
+    struct mpc_omp_task_s * current;
+
+    /* previous persistent task */
+    struct mpc_omp_task_s * prev;
 
 }               mpc_omp_persistent_region_t;
 
@@ -645,28 +647,14 @@ typedef struct  mpc_omp_task_persistent_instance_infos_s
 /* persistent task infos */
 typedef struct  mpc_omp_task_persistent_infos_s
 {
-    /* number of time this task was initialized */
-    OPA_int_t version;
-
     /* original task uid */
     int original_uid;
 
     /* Zom-bit - '1' if the task has be deleted from it persistent region */
     int zombit;
 
-    // WIP : barrier-free implementation of persistent taskgraph
-    // inter-iterations dependencies may cause issue => need to track root/leaf and generate arcs (?)
-#if 0
-    /* the reinstanciation lock */
-    mpc_common_spinlock_t reinit;
-
-    /* 1 if the task completed but was lacking a new instance */
-    volatile int lacked_instance;
-
-    /* persistent task instances infos */
-    mpc_omp_task_persistent_instance_t * next_instance;
-    mpc_omp_task_persistent_instance_t * last_instance;
-#endif
+    /* next persistent task discovered (relative to the parent scope) */
+    struct mpc_omp_task_s * next;
 
 }               mpc_omp_task_persistent_infos_t;
 

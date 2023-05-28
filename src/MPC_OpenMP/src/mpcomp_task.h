@@ -72,6 +72,9 @@
         thread->task_infos.current_task = ptr;             \
     } while ( 0 )
 
+# define MPC_OMP_TASK_THREAD_GET_CURRENT_TASKGROUP( thread ) \
+    thread->task_infos.current_task->taskgroup
+
 /*** INSTANCE ACCESSORS MACROS ***/
 
 #define MPC_OMP_TASK_INSTANCE_SET_ARRAY_TREE_TOTAL_SIZE( instance, num ) \
