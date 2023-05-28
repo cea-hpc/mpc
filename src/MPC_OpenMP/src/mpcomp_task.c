@@ -1248,8 +1248,6 @@ __task_process_mpc_dep(
                 pit->dep_node.dep_list_size = 0;
                 MPC_OMP_TASK_TRACE_CREATE(pit);
 
-                if (region->active) mpc_omp_persistent_region_push(pit);
-
                 entry->out = __task_dep_list_append(pit, entry, NULL);
                 while (entry->inoutset)
                 {
