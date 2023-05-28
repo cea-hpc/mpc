@@ -373,9 +373,10 @@ typedef enum    mpc_omp_task_state_e
     MPC_OMP_TASK_STATE_SCHEDULED            = 4,
     MPC_OMP_TASK_STATE_SUSPENDED            = 5,
     MPC_OMP_TASK_STATE_EXECUTED             = 6,
-    MPC_OMP_TASK_STATE_DETACHED             = 7,
-    MPC_OMP_TASK_STATE_RESOLVED             = 8,
-    MPC_OMP_TASK_STATE_DEINITIALIZED        = 9,
+    MPC_OMP_TASK_STATE_RESOLVING            = 7,
+    MPC_OMP_TASK_STATE_DETACHED             = 8,
+    MPC_OMP_TASK_STATE_RESOLVED             = 9,
+    MPC_OMP_TASK_STATE_DEINITIALIZED        = 10,
 }               mpc_omp_task_state_t;
 
 /**********************
@@ -534,9 +535,10 @@ typedef struct mpc_omp_task_dep_list_elt_s
 
 typedef struct  mpc_omp_task_fiber_s
 {
-    sctk_mctx_t initial;    /**< the initial context of this task (for recycling 'makecontext' calls) */
-    sctk_mctx_t current;    /**< the current context of this task */
-    sctk_mctx_t * exit;     /**< the context to return when this task is paused or finished */
+    sctk_mctx_t initial;    /* the initial context of this task (for recycling 'makecontext' calls) */
+    sctk_mctx_t current;    /* the current context of this task */
+    sctk_mctx_t * exit;     /* the context to return when this task is paused or finished */
+    char started;           /* evaluates true if 'current' is != 'initial' */
 }               mpc_omp_task_fiber_t;
 #endif
 
