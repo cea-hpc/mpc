@@ -913,11 +913,11 @@ __task_unref(mpc_omp_task_t * task)
 }
 
 static inline void
-__task_ref_parent_task(mpc_omp_task_t * task)
+__task_ref_parent_task(mpc_omp_task_t * parent)
 {
-    assert(task->parent);
-    OPA_incr_int(&(task->parent->children_count));
-    __task_ref(task->parent);
+    assert(parent);
+    OPA_incr_int(&(parent->children_count));
+    __task_ref(parent);
 }
 
 static void
@@ -1081,6 +1081,7 @@ __task_precedence_constraints(mpc_omp_task_t * predecessor, mpc_omp_task_t * suc
                 //   the predecessor has executed but is persistent
                 else
                 {
+                    assert(is_persistent);
                     ++predecessor->dep_node.npersistent_successors_missed;
                     predecessor->dep_node.persistent_successors_missed = __task_list_elt_new(predecessor->dep_node.persistent_successors_missed, successor);
                 }
@@ -1532,7 +1533,6 @@ __task_finalize_persistent(mpc_omp_task_t * task)
     task->uid = OPA_fetch_and_incr_int(&(thread->instance->task_infos.next_task_uid));
     OPA_store_int(&(task->dep_node.ref_predecessors), task->dep_node.npredecessors);
     MPC_OMP_TASK_TRACE_CREATE(task);
-    memset(&(task->flags), 0, sizeof(mpc_omp_task_flags_t));
 
     // dereference persistent region
     __task_unref_persistent_region(task->parent);
@@ -1542,18 +1542,19 @@ static void
 __task_finalize_non_persistent(mpc_omp_task_t * task)
 {
     /* Since 'task' is completed, no longer need to access it predecessors */
-    __task_list_delete(task->dep_node.predecessors);
     __task_deps_list_delete(task);
+    __task_list_delete(task->dep_node.predecessors);
 
 // we no longer need the task fiber
 # if MPC_OMP_TASK_COMPILE_FIBER
     __task_delete_fiber(task);
 # endif /* MPC_OMP_TASK_COMPILE_FIBER */
 
-    // dereference
+    mpc_omp_task_t * parent = task->parent;
+    __task_unref(task);                 /* _mpc_omp_task_init */
+    __task_unref_parent_task(parent);   /* _mpc_omp_task_init */
+
     mpc_omp_taskgroup_del_task(task);
-    __task_unref_parent_task(task->parent); /* _mpc_omp_task_init */
-    __task_unref(task);                     /* _mpc_omp_task_init */
     __task_unref_parallel_region();
 }
 
@@ -1562,14 +1563,6 @@ __task_finalize_non_persistent(mpc_omp_task_t * task)
 void
 _mpc_omp_task_finalize(mpc_omp_task_t * task)
 {
-    // the task executed, now is time to resolve its dependencies
-    assert(TASK_STATE(task) == MPC_OMP_TASK_STATE_EXECUTED);
-    mpc_common_spinlock_lock(&(task->state_lock));
-    {
-        TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_RESOLVING);
-    }
-    mpc_common_spinlock_unlock(&(task->state_lock));
-
     /* if task has a detach clause */
     if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_DETACH))
     {
@@ -1579,7 +1572,13 @@ _mpc_omp_task_finalize(mpc_omp_task_t * task)
             _mpc_omp_task_schedule();
     }
 
-    int is_persistent = mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT);
+    // the task executed, now is time to resolve its dependencies
+    assert(TASK_STATE(task) == MPC_OMP_TASK_STATE_EXECUTED);
+    mpc_common_spinlock_lock(&(task->state_lock));
+    {
+        TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_RESOLVING);
+    }
+    mpc_common_spinlock_unlock(&(task->state_lock));
 
     // resolve dependencies
     mpc_omp_task_list_elt_t * succ = task->dep_node.successors;
@@ -1607,6 +1606,7 @@ _mpc_omp_task_finalize(mpc_omp_task_t * task)
     TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_RESOLVED);
 
     // transition to 'resolved' state
+    int is_persistent = mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT);
     if (is_persistent)
         __task_finalize_persistent(task);
     else
@@ -3651,8 +3651,8 @@ _mpc_omp_task_init(
     /* reference the task */
     _mpc_omp_taskgroup_add_task(task);
     __task_ref_parallel_region();
-    __task_ref_parent_task(task);       /* _mpc_omp_task_finalize */
-    __task_ref(task);                   /* _mpc_omp_task_finalize or _mpc_omp_task_deinit_persistent */
+    __task_ref_parent_task(task->parent);   /* _mpc_omp_task_finalize */
+    __task_ref(task);                       /* _mpc_omp_task_finalize or _mpc_omp_task_deinit_persistent */
 
     assert(TASK_STATE(task) == MPC_OMP_TASK_STATE_UNITIALIZED);
     TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_NOT_QUEUABLE);
@@ -3679,6 +3679,7 @@ _mpc_omp_task_reinit_persistent(mpc_omp_task_t * task)
         task->dep_node.persistent_successors_missed = NULL;
         task->dep_node.npersistent_successors_missed = 0;
     }
+    memset(&(task->flags), 0, sizeof(mpc_omp_task_flags_t));
     TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_QUEUABLE);
 }
 
@@ -3691,11 +3692,13 @@ _mpc_omp_task_deinit_persistent(mpc_omp_task_t * task)
     __task_deps_list_delete(task);
 
     /* unreference the task, see 'finalize' */
-    mpc_omp_taskgroup_del_task(task);
-    __task_unref_parallel_region();
-    __task_unref_parent_task(task->parent); /* _mpc_omp_task_init */
+    mpc_omp_task_t * parent = task->parent;
     __task_unref(task);                     /* _mpc_omp_task_init_attributes */
     __task_unref(task);                     /* _mpc_omp_task_init */
+    __task_unref_parent_task(parent);       /* _mpc_omp_task_init */
+
+    mpc_omp_taskgroup_del_task(task);
+    __task_unref_parallel_region();
 }
 
 /**
