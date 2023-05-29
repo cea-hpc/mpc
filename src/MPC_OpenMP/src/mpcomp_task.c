@@ -4292,6 +4292,7 @@ _mpc_omp_event_handle_deinit_task_block(mpc_omp_event_handle_block_t * handle)
     if (OPA_fetch_and_decr_int(&(handle->ref)) == 1)
     {
         __task_unref((mpc_omp_task_t*) handle->task);
+        free(handle);
     }
 }
 
@@ -4306,5 +4307,7 @@ _mpc_omp_event_handle_init_detach(mpc_omp_event_handle_detach_t ** handle_ptr)
 void
 _mpc_omp_event_handle_deinit_detach(mpc_omp_event_handle_detach_t * handle)
 {
+    // this should never be called
+    assert(0);
     (void) handle;
 }
