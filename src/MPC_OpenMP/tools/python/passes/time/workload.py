@@ -42,9 +42,10 @@ class TimeWorkloadPass(ipass.Pass):
 
     def on_task_completed(self, env):
         uid = env['record'].uid
-        schedules = env['schedules']
-        assert(len(schedules[uid]) % 2 == 0)
-        env['workload'][uid] = sum(schedules[uid][i+1].time - schedules[uid][i].time for i in range(0, len(schedules[uid]), 2))
+        task = env['tasks'][uid]
+        schedules = task['schedules']
+        assert(len(schedules) % 2 == 0)
+        task['workload'] = sum(schedules[i+1].time - schedules[i].time for i in range(0, len(schedules), 2))
 
     def on_task_blocked(self, env):
         pass

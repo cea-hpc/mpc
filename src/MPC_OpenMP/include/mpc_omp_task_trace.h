@@ -151,6 +151,9 @@ typedef struct  mpc_omp_task_trace_record_schedule_s
     /* the task flags */
     int flags;
 
+    /* the task state */
+    int state;
+
     /* the task hardware counters (4 maximum) */
     long long hwcounters[MPC_OMP_TASK_TRACE_MAX_HW_COUNTERS];
 

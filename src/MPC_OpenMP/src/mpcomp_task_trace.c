@@ -248,7 +248,7 @@ static inline int
 __task_flags_to_int(mpc_omp_task_flags_t flags)
 {
     int bitset = 0;
-    bool * bits = (bool *) &flags;
+    char * bits = (char *) &flags;
     unsigned int i;
     for (i = 0 ; i < sizeof(mpc_omp_task_flags_t) ; ++i)
     {
@@ -268,8 +268,8 @@ _mpc_omp_task_trace_schedule(mpc_omp_task_t * task)
     record->priority    = task->priority;
     record->properties  = task->property;
     record->schedule_id = task->schedule_id;
-    record->flags    = __task_flags_to_int(task->flags);
-
+    record->flags       = __task_flags_to_int(task->flags);
+    record->state       = TASK_STATE(task);
 #if MPC_OMP_TASK_TRACE_USE_PAPI
     if (mpc_omp_conf_get()->task_trace_use_papi)
     {
@@ -307,7 +307,7 @@ _mpc_omp_task_trace_delete(mpc_omp_task_t * task)
 
     mpc_omp_task_trace_record_delete_t * record = (mpc_omp_task_trace_record_delete_t *) __node_record(node);
 
-    record->uid         = task->uid;
+    record->uid         = task->persistent_infos.original_uid;
     record->priority    = task->priority;
     record->properties  = task->property;
     record->flags       = __task_flags_to_int(task->flags);
@@ -598,7 +598,7 @@ mpc_omp_task_trace_begin(void)
     mpc_omp_task_trace_record_type_t type;
     for (type = 0 ; type < MPC_OMP_TASK_TRACE_TYPE_COUNT ; type++)
     {
-        //printf("sizeof(type=%d) = %lu\n", type, mpc_omp_task_trace_record_sizeof(type));
+        // printf("sizeof(type=%d) = %lu\n", type, mpc_omp_task_trace_record_sizeof(type));
         mpc_common_recycler_init(
                 &(infos->recyclers[type]),
                 mpc_omp_alloc, mpc_omp_free,

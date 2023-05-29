@@ -66,7 +66,8 @@ class AccumulatePAPIPass(papi_pass.PAPIPass):
 
     def on_task_completed(self, env):
         uid = env['record'].uid
-        schedules = env['schedules'][uid]
+        task = env['tasks'][uid]
+        schedules = task['schedules']
         assert(len(schedules) % 2 == 0)
         lst = []
         for i in range(MAX_CTRS):

@@ -1522,23 +1522,17 @@ __task_deps_list_delete(mpc_omp_task_t * task)
 static void
 __task_finalize_persistent(mpc_omp_task_t * task)
 {
-// reinitialize the persistent task here (TODO: check every fields)
+    // dereference persistent region
+    __task_unref_persistent_region(task->parent);
 
+    // reset task  instance
+    memset(&(task->flags), 0, sizeof(mpc_omp_task_flags_t));
+    OPA_store_int(&(task->dep_node.ref_predecessors), task->dep_node.npredecessors);
 # if MPC_OMP_TASK_COMPILE_FIBER
     if (task->fiber) task->fiber->swap_count = 0;
 # endif /* MPC_OMP_TASK_COMPILE_FIBER */
-
     mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
-    assert(thread);
-    assert(thread->instance);
-
-    // TODO: maybe other fields have to be reset here
     task->uid = OPA_fetch_and_incr_int(&(thread->instance->task_infos.next_task_uid));
-    OPA_store_int(&(task->dep_node.ref_predecessors), task->dep_node.npredecessors);
-    MPC_OMP_TASK_TRACE_CREATE(task);
-
-    // dereference persistent region
-    __task_unref_persistent_region(task->parent);
 }
 
 static void
@@ -3674,7 +3668,9 @@ _mpc_omp_task_reinit_persistent(mpc_omp_task_t * task)
         task->dep_node.persistent_successors_missed = NULL;
         task->dep_node.npersistent_successors_missed = 0;
     }
-    memset(&(task->flags), 0, sizeof(mpc_omp_task_flags_t));
+
+    MPC_OMP_TASK_TRACE_CREATE(task);
+    assert(TASK_STATE(task) == MPC_OMP_TASK_STATE_RESOLVED);
     TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_QUEUABLE);
 }
 

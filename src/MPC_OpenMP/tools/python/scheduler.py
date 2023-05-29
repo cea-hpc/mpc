@@ -23,17 +23,17 @@ BYTE_ORDER    = 'little' # or 'big' (endianess)
 MPC_OMP_TASK_LABEL_MAX_LENGTH = 64
 
 # record sizes from C's sizeof()
-RECORD_GENERIC_SIZE         = 16
-RECORD_DEPENDENCY_SIZE      = 24
-RECORD_SCHEDULE_SIZE        = 72
-RECORD_CREATE_SIZE          = 112
-RECORD_DELETE_SIZE          = 32
-RECORD_SEND_SIZE            = 48
-RECORD_RECV_SIZE            = 48
-RECORD_ALLREDUCE_SIZE       = 40
-RECORD_RANK_SIZE            = 24
-RECORD_BLOCKED_SIZE         = 24
-RECORD_UNBLOCKED_SIZE       = 24
+RECORD_GENERIC_SIZE         = 16    # 0, 1
+RECORD_DEPENDENCY_SIZE      = 24    # 2
+RECORD_SCHEDULE_SIZE        = 72    # 3
+RECORD_CREATE_SIZE          = 112   # 4
+RECORD_DELETE_SIZE          = 32    # 5
+RECORD_SEND_SIZE            = 48    # 6
+RECORD_RECV_SIZE            = 48    # 7
+RECORD_ALLREDUCE_SIZE       = 40    # 8
+RECORD_RANK_SIZE            = 24    # 9
+RECORD_BLOCKED_SIZE         = 24    # 10
+RECORD_UNBLOCKED_SIZE       = 24    # 11
 
 MPC_OMP_TASK_TRACE_TYPE_BEGIN           = 0
 MPC_OMP_TASK_TRACE_TYPE_END             = 1
@@ -68,24 +68,71 @@ ON_TASK_RECV        = 'on_task_recv'
 ON_TASK_ALLREDUCE   = 'on_task_allreduce'
 
 """ compute the number of predecessors of each tasks """
-def records_fix(records):
-    print("Fixing records timing...")
+def compute_predecessors(records):
+    print("Computing tasks predecessors/successors relationship...")
+
+    def ensure_task(tasks, uid):
+        if uid not in tasks:
+            tasks[uid] = {
+                'create': None,
+                'created': 0,
+                'delete': None,
+                'schedules':    [],
+                'successors':   [],
+                'predecessors': [],
+                'sends':        [],
+                'recvs':        [],
+                'allreduces':   [],
+                'ref_predecessors': 0,
+                'npredecessors': 0
+            }
+
+    def record_order(record):
+        orders = {
+            RecordRank:        -1,
+            RecordIgnore:       0,
+            RecordCreate:       0,
+            RecordDependency:   1,
+            RecordSchedule:     2,
+            RecordBlocked:      3,
+            RecordUnblocked:    4,
+            RecordSend:         5,
+            RecordRecv:         6,
+            RecordAllreduce:    7,
+            RecordDelete:       8,
+        }
+        schedule_id = 0
+        if hasattr(record, 'schedule_id'):
+            schedule_id = record.schedule_id
+        return (record.time, orders[type(record)], schedule_id)
+
     progress.init(sum(len(records[pid]) for pid in records))
+    tasks_per_pid = {}
+
     for pid in records:
-        records_create = {}
-        records_dependences = []
+        tasks = {}
+        records[pid] = sorted(records[pid], key=record_order)
         for record in records[pid]:
             progress.update()
             if isinstance(record, RecordCreate):
-                records_create[record.uid] = record
+                ensure_task(tasks, record.uid)
+                tasks[record.uid]['create'] = record
+            elif isinstance(record, RecordDelete):
+                ensure_task(tasks, record.uid)
+                tasks[record.uid]['delete'] = record
             elif isinstance(record, RecordDependency):
-                records_dependences.append(record)
-        for record in records_dependences:
-            assert(record.in_uid in records_create)
-            assert(record.out_uid in records_create)
-            records_create[record.in_uid].npredecessors += 1
-        records[pid] = sorted(records[pid], key=lambda r: r.time)
+                ensure_task(tasks, record.in_uid)
+                ensure_task(tasks, record.out_uid)
+                tasks[record.in_uid]['predecessors'].append(record.out_uid)
+                tasks[record.in_uid]['ref_predecessors'] += 1
+                tasks[record.in_uid]['npredecessors'] += 1
+                tasks[record.out_uid]['successors'].append(record.in_uid)
+            elif isinstance(record, RecordSchedule):
+                ensure_task(tasks, record.uid)
+                tasks[record.uid]['schedules'].append(record)
+        tasks_per_pid[pid] = tasks
     progress.deinit()
+    return tasks_per_pid
 
 def parse_traces(traces, show_progress, inspectors):
 
@@ -93,7 +140,7 @@ def parse_traces(traces, show_progress, inspectors):
 
     # parse records (TODO : this can be optimized, currently, conversion from trace files to CPython objects takes ages)
     records = traces_to_records(traces)
-    records_fix(records)
+    tasks_per_pid = compute_predecessors(records)
 
     env = {}
     def inspect(name):
@@ -131,24 +178,12 @@ def parse_traces(traces, show_progress, inspectors):
 
         print("Scheduling process {} of rank {}".format(pid, ptr[pid]))
 
-        # the tasks
-        tasks = {}
+        # all tasks
+        tasks = tasks_per_pid[pid]
 
         # the number of dependences that have been
         # resolved before the 'task create' event was raised
         tasks_dependences_before_create = {}
-
-        # per-task schedules (x2, contains start, pause, resume, complete)
-        schedules = {}
-
-        # successors[uid] => [uid1, uid2, ..., uidn] : successors of 'uid'
-        successors = {}
-
-        # predecessors[uid] => [uid1, uid2, ..., uidn] : predecessors of 'uid'
-        predecessors = {}
-
-        # npredecessors[uid] => n : number of remaining predecessors
-        npredecessors = {}
 
         # tasks ready to be scheduled
         readyqueue = {}
@@ -163,14 +198,10 @@ def parse_traces(traces, show_progress, inspectors):
         env['records']       = records[pid]
         env['tasks']         = tasks
         env['bound']         = bound
-        env['schedules']     = schedules
         env['readyqueue']    = readyqueue
         env['blocked']       = blockedlist
         env['pid']           = pid
         env['rank']          = ptr[pid]
-        env['successors']    = successors
-        env['predecessors']  = predecessors
-        env['npredecessors'] = npredecessors
 
         progress.init(len(records[pid]))
         inspect('on_process_inspection_start')
@@ -179,7 +210,6 @@ def parse_traces(traces, show_progress, inspectors):
         for i in range(len(records[pid])):
             progress.update()
             record = records[pid][i]
-
             events = []
 
             # timing
@@ -188,96 +218,68 @@ def parse_traces(traces, show_progress, inspectors):
 
             # creating a new task
             if isinstance(record, RecordCreate):
-                assert(record.uid not in tasks)
-                tasks[record.uid] = {'create': record, 'delete': None}
-                if record.uid not in npredecessors:
-                    npredecessors[record.uid] = 0
-                    predecessors[record.uid] = {}
-                npredecessors[record.uid] += record.npredecessors
-                properties = utils.record_to_properties_and_statuses(record)
-                if (npredecessors[record.uid] == 0) and ('INITIAL' not in properties):
+                tasks[record.uid]['created'] = 1
+                properties = utils.record_to_properties_and_flags_and_state(record)
+                if (tasks[record.uid]['ref_predecessors'] == 0) and ('INITIAL' not in properties):
                     readyqueue[record.uid] = True
                     events.append(ON_TASK_READY)
                 events.append(ON_TASK_CREATE)
 
             # deleting a task
             elif isinstance(record, RecordDelete):
-                assert(record.uid in tasks)
-                properties = utils.record_to_properties_and_statuses(record)
-
-                # task whether got cancelled or was the last instance of a persistent task that was not reschedule
                 if record.uid in readyqueue:
-                    del readyqueue[record.uid]
-                if record.uid in npredecessors:
-                    del npredecessors[record.uid]
-                tasks[record.uid]['delete'] = record
+                    print(tasks[record.uid])
+                assert(record.uid not in readyqueue)
                 events.append(ON_TASK_DELETE)
 
             # dependency completion
             elif isinstance(record, RecordDependency):
-
-                assert(record.in_uid in tasks)
-                assert(record.out_uid in tasks)
+                events.append(ON_TASK_DEPENDENCY)
                 assert(record.in_uid not in readyqueue)
-
-                if record.in_uid not in npredecessors:
-                    npredecessors[record.in_uid] = 0
-                    predecessors[record.in_uid] = {}
-                npredecessors[record.in_uid] -= 1
-                predecessors[record.in_uid][record.out_uid] = True
-
-                if npredecessors[record.in_uid] == 0:
+                tasks[record.in_uid]['ref_predecessors'] -= 1
+                if tasks[record.in_uid]['ref_predecessors'] == 0 and tasks[record.in_uid]['created']:
                     readyqueue[record.in_uid] = True
                     events.append(ON_TASK_READY)
-
-                # add successors
-                if record.out_uid not in successors:
-                    successors[record.out_uid] = {}
-                successors[record.out_uid][record.in_uid] = True
-                events.append(ON_TASK_DEPENDENCY)
 
             # task scheduling
             elif isinstance(record, RecordSchedule):
 
                 # update various lists depending on the schedule details
-                properties = utils.record_to_properties_and_statuses(record)
+                properties = utils.record_to_properties_and_flags_and_state(record)
                 event = None
 
                 # a task completed
-                if 'COMPLETED' in properties:
+                if 'EXECUTED' in properties:
                     assert(len(bound[record.tid]) > 0)
                     #assert(record.uid == bound[record.tid][-1].uid)
                     del bound[record.tid][-1]
                     events.append(ON_TASK_COMPLETED)
 
-                # a task unblocked and resumed
-                elif 'UNBLOCKED' in properties:
-                    #assert(record.uid in readyqueue)
-                    assert(record.uid not in blockedlist)
-                    if record.uid in readyqueue:
-                        del readyqueue[record.uid]
-                    bound[record.tid].append(record)
-                    events.append(ON_TASK_RESUMED)
+                else:
+                    assert('SCHEDULED' in properties)
 
-                # a task blocked and paused
-                elif 'BLOCKING' in properties:
-                    assert(record.uid == bound[record.tid][-1].uid)
-                    del bound[record.tid][-1]
-                    events.append(ON_TASK_PAUSED)
+                    # a task unblocked and resumed
+                    if 'UNBLOCKED' in properties:
+                        assert(record.uid in readyqueue)
+                        assert(record.uid not in blockedlist)
+                        if record.uid in readyqueue:
+                            del readyqueue[record.uid]
+                        bound[record.tid].append(record)
+                        events.append(ON_TASK_RESUMED)
 
-                # a task started
-                elif 'BLOCKED' not in properties:
-                    assert(record.uid not in npredecessors or npredecessors[record.uid] <= 0)
-                    assert(record.uid not in schedules)
-                    if record.uid in readyqueue:
-                        del readyqueue[record.uid]
-                    bound[record.tid].append(record)
-                    events.append(ON_TASK_STARTED)
+                    # a task blocked and paused
+                    elif 'BLOCKING' in properties:
+                        assert(record.uid == bound[record.tid][-1].uid)
+                        del bound[record.tid][-1]
+                        events.append(ON_TASK_PAUSED)
 
-                # register task scheduling
-                if record.uid not in schedules:
-                    schedules[record.uid] = []
-                schedules[record.uid].append(record)
+                    # a task started
+                    elif 'BLOCKED' not in properties:
+                        task = tasks[record.uid]
+                        if record.uid in readyqueue: # TODO: this is an assert ?
+                            del readyqueue[record.uid]
+                        bound[record.tid].append(record)
+                        events.append(ON_TASK_STARTED)
 
             # mark send tasks
             elif isinstance(record, RecordSend):
@@ -299,10 +301,7 @@ def parse_traces(traces, show_progress, inspectors):
 
             # task block
             elif isinstance(record, RecordBlocked):
-                # TODO : theoritically, a task could block several times, and blocking events
-                # could be recorded/raised out of order... this can raise issues here
-                # but this doesn't happen in current mpi/omp interop.
-
+                # TODO: this assume a task only blocks/unblocks once
                 # task unblocked before blocking
                 if record.uid in readyqueue: # task unblocked before blocking
                     blockedlist[record.uid] = True
@@ -325,10 +324,12 @@ def parse_traces(traces, show_progress, inspectors):
         n_threads += len(bound)
 
         # coherency check - TODO : this is no longer guaranteed with persistent tasks
-        for uid in npredecessors:
-            assert(npredecessors[uid] == 0)
+        for uid in tasks:
+            task = tasks[uid]
+            assert(task['ref_predecessors'] == 0)
+        for k in readyqueue:
+            print(tasks[k])
         assert(len(readyqueue) == 0)
-
         inspect('on_process_inspection_end')
 
     # 'pid' loop ends here
@@ -351,19 +352,6 @@ class Header:
 
     def __str__(self):
         return "Header(magic={}, version={}, pid={}, tid={})".format(self.magic, self.version, self.pid, self.tid)
-
-def ensure_task(tasks, uid):
-    if uid not in tasks:
-        tasks[uid] = {
-            'create': None,
-            'delete': None,
-            'schedules':    [],
-            'successors':   [],
-            'predecessors': [],
-            'sends':        [],
-            'recvs':        [],
-            'allreduces':   []
-        }
 
 # see mpcomp_task_trace.h
 class Record:
@@ -401,9 +389,6 @@ class RecordIgnore(Record):
     def attributes(self):
         return "time={}".format(self.time)
 
-    def store(self, processes, pid):
-        pass
-
     def size(self):
         return RECORD_GENERIC_SIZE
 
@@ -416,13 +401,6 @@ class RecordDependency(Record):
     def attributes(self):
         return "out_uid={}, in_uid={}".format(self.out_uid, self.in_uid)
 
-    def store(self, processes, pid):
-        tasks = processes['by-pids'][pid]['tasks']
-        ensure_task(tasks, self.in_uid)
-        ensure_task(tasks, self.out_uid)
-        tasks[self.in_uid]['predecessors'].append(self.out_uid)
-        tasks[self.out_uid]['successors'].append(self.in_uid)
-
     def size(self):
         return RECORD_DEPENDENCY_SIZE
 
@@ -434,7 +412,8 @@ class RecordSchedule(Record):
         self.priority           = int.from_bytes(buff[4:8],     byteorder=BYTE_ORDER, signed=False)
         self.properties         = int.from_bytes(buff[8:12],    byteorder=BYTE_ORDER, signed=False)
         self.schedule_id        = int.from_bytes(buff[12:16],   byteorder=BYTE_ORDER, signed=False)
-        self.statuses           = int.from_bytes(buff[16:20],   byteorder=BYTE_ORDER, signed=False)
+        self.flags              = int.from_bytes(buff[16:20],   byteorder=BYTE_ORDER, signed=False)
+        self.state              = int.from_bytes(buff[20:24],   byteorder=BYTE_ORDER, signed=False)
         self.hwcounters = []
         self.hwcounters.append(   int.from_bytes(buff[24:32],   byteorder=BYTE_ORDER, signed=False))
         self.hwcounters.append(   int.from_bytes(buff[32:40],   byteorder=BYTE_ORDER, signed=False))
@@ -442,18 +421,13 @@ class RecordSchedule(Record):
         self.hwcounters.append(   int.from_bytes(buff[48:56],   byteorder=BYTE_ORDER, signed=False))
 
     def attributes(self):
-        return "uid={}, priority={}, properties/statuses={}, schedule_id={}, hwcounters={}".format(
+        return "uid={}, priority={}, properties/flags={}, schedule_id={}, hwcounters={}".format(
             self.uid,
             self.priority,
-            utils.record_to_properties_and_statuses(self),
+            utils.record_to_properties_and_flags_and_state(self),
             self.schedule_id,
             self.hwcounters
         )
-
-    def store(self, processes, pid):
-        tasks = processes['by-pids'][pid]['tasks']
-        ensure_task(tasks, self.uid)
-        tasks[self.uid]['schedules'].append(self)
 
     def size(self):
         return RECORD_SCHEDULE_SIZE
@@ -468,9 +442,7 @@ class RecordCreate(Record):
         self.uid                = int.from_bytes(buff[0:4],     byteorder=BYTE_ORDER, signed=False)
         self.persistent_uid     = int.from_bytes(buff[4:8],     byteorder=BYTE_ORDER, signed=False)
         self.properties         = int.from_bytes(buff[8:12],    byteorder=BYTE_ORDER, signed=False)
-        self.statuses           = int.from_bytes(buff[12:16],   byteorder=BYTE_ORDER, signed=False)
-
-        self.npredecessors      = 0
+        self.flags              = int.from_bytes(buff[12:16],   byteorder=BYTE_ORDER, signed=False)
 
         x = 16
         y = MPC_OMP_TASK_LABEL_MAX_LENGTH;
@@ -480,11 +452,10 @@ class RecordCreate(Record):
         self.omp_priority       = int.from_bytes(buff[x+y+8:x+y+12],  byteorder=BYTE_ORDER, signed=False)
 
     def attributes(self):
-        return "uid={}, persistent_uid={}, properties/statuses={}, npredecessors={}, label={}, color={}, parent_uid={}, omp_priority={}, send={}, recv={}, allreduce={}".format(
+        return "uid={}, persistent_uid={}, properties/flags={}, label={}, color={}, parent_uid={}, omp_priority={}, send={}, recv={}, allreduce={}".format(
             self.uid,
             self.persistent_uid,
-            utils.record_to_properties_and_statuses(self),
-            self.npredecessors,
+            utils.record_to_properties_and_flags_and_state(self),
             self.label,
             self.color,
             self.parent_uid,
@@ -492,11 +463,6 @@ class RecordCreate(Record):
             self.send,
             self.recv,
             self.allreduce)
-
-    def store(self, processes, pid):
-        tasks = processes['by-pids'][pid]['tasks']
-        ensure_task(tasks, self.uid)
-        tasks[self.uid]['create'] = self
 
     def size(self):
         return RECORD_CREATE_SIZE
@@ -507,16 +473,11 @@ class RecordDelete(Record):
         self.uid            = int.from_bytes(buff[0:4],     byteorder=BYTE_ORDER, signed=False)
         self.priority       = int.from_bytes(buff[4:8],     byteorder=BYTE_ORDER, signed=False)
         self.properties     = int.from_bytes(buff[8:12],    byteorder=BYTE_ORDER, signed=False)
-        self.statuses       = int.from_bytes(buff[12:16],   byteorder=BYTE_ORDER, signed=False)
+        self.flags          = int.from_bytes(buff[12:16],   byteorder=BYTE_ORDER, signed=False)
 
     def attributes(self):
         return "uid={}, priority={}, properties={}".format(
-            self.uid, self.priority, utils.record_to_properties_and_statuses(self))
-
-    def store(self, processes, pid):
-        tasks = processes['by-pids'][pid]['tasks']
-        ensure_task(tasks, self.uid)
-        tasks[self.uid]['delete'] = self
+            self.uid, self.priority, utils.record_to_properties_and_flags_and_state(self))
 
     def size(self):
         return RECORD_DELETE_SIZE
@@ -535,11 +496,6 @@ class RecordSend(Record):
     def attributes(self):
         return "uid={}, count={}, dtype={}, dst={}, tag={}, comm={}, completed={}".format(self.uid, self.count, self.dtype, self.dst, self.tag, self.comm, self.completed)
 
-    def store(self, processes, pid):
-        tasks = processes['by-pids'][pid]['tasks']
-        assert(self.uid in tasks)
-        tasks[self.uid]['sends'].append(self)
-
     def size(self):
         return RECORD_SEND_SIZE
 
@@ -557,11 +513,6 @@ class RecordRecv(Record):
     def attributes(self):
         return "uid={}, count={}, dtype={}, src={}, tag={}, comm={}, completed={}".format(self.uid, self.count, self.dtype, self.src, self.tag, self.comm, self.completed)
 
-    def store(self, processes, pid):
-        tasks = processes['by-pids'][pid]['tasks']
-        assert(self.uid in tasks)
-        tasks[self.uid]['recvs'].append(self)
-
     def size(self):
         return RECORD_SEND_SIZE
 
@@ -578,11 +529,6 @@ class RecordAllreduce(Record):
     def attributes(self):
         return "uid={}, count={}, dtype={}, op={}, comm={}, completed={}".format(self.uid, self.count, self.dtype, self.op, self.comm, self.completed)
 
-    def store(self, processes, pid):
-        tasks = processes['by-pids'][pid]['tasks']
-        assert(self.uid in tasks)
-        tasks[self.uid]['allreduces'].append(self)
-
     def size(self):
         return RECORD_ALLREDUCE_SIZE
 
@@ -595,20 +541,6 @@ class RecordRank(Record):
     def attributes(self):
         return "comm={}, rank={}".format(self.comm, self.rank)
 
-    def store(self, processes, pid):
-        convert = processes['convert']
-        if "p2c2r" not in convert:
-            convert["p2c2r"] = {}
-            convert["c2r2p"] = {}
-        if pid not in convert["p2c2r"]:
-            convert["p2c2r"][pid] = {}
-        if self.comm not in convert["p2c2r"][pid]:
-            convert["p2c2r"][pid][self.comm] = self.rank
-        if self.comm not in convert["c2r2p"]:
-            convert["c2r2p"][self.comm] = {}
-        if self.rank not in convert["c2r2p"][self.comm]:
-            convert["c2r2p"][self.comm][self.rank] = pid
-
     def size(self):
         return RECORD_RANK_SIZE
 
@@ -620,9 +552,6 @@ class RecordBlocked(Record):
     def attributes(self):
         return "uid={}".format(self.uid)
 
-    def store(self, processes, pid):
-        pass
-
     def size(self):
         return RECORD_BLOCKED_SIZE
 
@@ -633,9 +562,6 @@ class RecordUnblocked(Record):
 
     def attributes(self):
         return "uid={}".format(self.uid)
-
-    def store(self, processes, pid):
-        pass
 
     def size(self):
         return RECORD_UNBLOCKED_SIZE

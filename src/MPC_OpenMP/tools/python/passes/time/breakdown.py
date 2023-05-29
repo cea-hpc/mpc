@@ -72,15 +72,13 @@ class TimeBreakdownPass(ipass.Pass):
                 env['time']['idle'] += dt
 
         env['time']['total']        = 1e-6 * (env['tf'] - env['t0'])
-        env['time']['work']         = 1e-6 * sum(env['workload'][uid] for uid in env['workload'])
+        env['time']['work']         = 1e-6 * sum(env['tasks'][uid]['workload'] for uid in env['tasks'])
         env['time']['non-work']     *= 1e-6
         env['time']['graph_gen']    = 1e-6 * (self.last_task_create - self.first_task_create)
         env['time']['makespan']     = 1e-6 * (self.last_task_schedule.time - self.first_task_schedule.time)
 
         # check, should be also equal to 'total - work'
         out_tasks_check = len(env['bound']) * env['time']['total'] - env['time']['work']
-        assert(abs(1.0 - out_tasks_check / env['time']['non-work']) < 1e-5)
-        assert(len(env['bound']) * env['time']['total'] - env['time']['work'] - env['time']['idle'] - env['time']['overhead'] < 1e-5)
 
         # induce overhead from idle and non-work times
         env['time']['idle']        *= 1e-6
@@ -90,6 +88,9 @@ class TimeBreakdownPass(ipass.Pass):
         for key in env['time']:
             env['time'][key] = round(env['time'][key], 6)
         print(json.dumps(env['time'], indent=4))
+
+        assert(abs(1.0 - out_tasks_check / env['time']['non-work']) < 1e-5)
+        assert(len(env['bound']) * env['time']['total'] - env['time']['work'] - env['time']['idle'] - env['time']['overhead'] < 1e-5)
 
     def on_task_create(self, env):
         self.first_task_create = min(self.first_task_create, env['record'].time)

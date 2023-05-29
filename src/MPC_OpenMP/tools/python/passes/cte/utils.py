@@ -19,11 +19,10 @@ MPC_OMP_TASK_PROP = [
     'HAS_FIBER',
     'PERSISTENT',
     'CONTROL_FLOW',
+    'DETACH',
 ]
 
-MPC_OMP_TASK_STATUSES = [
-    'STARTED',
-    'COMPLETED',
+MPC_OMP_TASK_FLAGS = [
     'BLOCKING',
     'BLOCKED',
     'UNBLOCKED',
@@ -32,7 +31,21 @@ MPC_OMP_TASK_STATUSES = [
     'DIRECT_SUCCESSOR',
 ]
 
-def record_to_properties_and_statuses(record):
+MPC_OMP_TASK_STATE = [
+    'UNITIALIZED',
+    'NOT_QUEUABLE',
+    'QUEUABLE',
+    'QUEUED',
+    'SCHEDULED',
+    'SUSPENDED',
+    'EXECUTED',
+    'RESOLVING',
+    'DETACHED',
+    'RESOLVED',
+    'DEINITIALIZED',
+]
+
+def record_to_properties_and_flags_and_state(record):
     lst = []
 
     # task properties
@@ -40,10 +53,14 @@ def record_to_properties_and_statuses(record):
         if record.properties & (1 << i):
             lst.append(MPC_OMP_TASK_PROP[i])
 
-    # task statuses
-    for i in range(len(MPC_OMP_TASK_STATUSES)):
-        if record.statuses & (1 << i):
-            lst.append(MPC_OMP_TASK_STATUSES[i])
+    # task flags
+    for i in range(len(MPC_OMP_TASK_FLAGS)):
+        if record.flags & (1 << i):
+            lst.append(MPC_OMP_TASK_FLAGS[i])
+
+    # task state
+    if hasattr(record, 'state'):
+        lst.append(MPC_OMP_TASK_STATE[record.state])
 
     return lst
 
