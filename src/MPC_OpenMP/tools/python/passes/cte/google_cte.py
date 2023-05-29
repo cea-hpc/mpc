@@ -8,7 +8,7 @@ from .. import ipass
 # TODO: réimplementé les comms. MPI
 
 CONFIG = {
-    'color': not True,
+    'color': True,
     'schedule': True,
     'create': not True,
     'delete': not True,
@@ -97,7 +97,7 @@ class GoogleCtePass(ipass.Pass):
         create = task['create']
         delete = task['delete']
         event = {
-            'name': create.label,
+            'name': create.label if create is not None else "",
             'cat':  'task-delete',
             'ph':   'X',
             'ts':   delete.time,

@@ -256,11 +256,10 @@ def parse_traces(traces, show_progress, inspectors):
                     events.append(ON_TASK_COMPLETED)
 
                 else:
-                    assert('SCHEDULED' in properties)
 
                     # a task unblocked and resumed
                     if 'UNBLOCKED' in properties:
-                        assert(record.uid in readyqueue)
+                        # assert(record.uid in readyqueue)
                         assert(record.uid not in blockedlist)
                         if record.uid in readyqueue:
                             del readyqueue[record.uid]

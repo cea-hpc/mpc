@@ -263,7 +263,9 @@ typedef enum    mpc_omp_task_priority_propagation_policy_e
      *      - runtime propagate priorities on predecessors
      *      - P(predecessors) = max(P(successors))
      */
-    MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_EQUAL
+    MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_EQUAL,
+
+    MPC_OMP_TASK_PRIORITY_PROPAGATION_POLICY_COUNT
 
 }               mpc_omp_task_priority_propagation_policy_t;
 
@@ -929,6 +931,7 @@ typedef struct  mpc_omp_task_thread_infos_s
 {
     int * larceny_order;
     mpc_omp_task_t * current_task;      /* Currently running task */
+    mpc_common_spinlock_t current_task_spinlock;
     void* opaque;                       /* use mcslock buffered */
 
 # if MPC_OMP_TASK_COMPILE_FIBER
