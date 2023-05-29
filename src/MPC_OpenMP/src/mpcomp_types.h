@@ -77,8 +77,8 @@
  * OMP DEFINITIONS *
  *******************/
 
-# define MPC_OMP_VERSION_MAJOR  3
-# define MPC_OMP_VERSION_MINOR  1
+# define MPC_OMP_VERSION_MAJOR  4
+# define MPC_OMP_VERSION_MINOR  5
 
 /* FIBER */
 #define MPC_OMP_TASK_COMPILE_FIBER 1
@@ -587,7 +587,8 @@ typedef struct  mpc_omp_task_dep_htable_entry_s
 
     /* the last task that had a dependency for this address
      * (used for redundancy check) */
-    int task_uid;
+    int last_out;
+    int last_in;
 
     /* the hmap handle */
     UT_hash_handle hh;
@@ -697,7 +698,6 @@ typedef struct  mpc_omp_task_dep_node_s
 {
     /* hash table for child tasks dependencies */
     mpc_omp_task_dep_htable_entry_t * hmap;
-    mpc_common_spinlock_t hmap_lock;
 
     /* successor tasks */
     struct mpc_omp_task_list_elt_s * successors;

@@ -1132,17 +1132,17 @@ __task_dep_list_append(
 static mpc_omp_task_dep_htable_entry_t *
 __task_process_mpc_dep_entry(mpc_omp_task_t * task, void * addr)
 {
-    unsigned hashv;
-    HASH_VALUE(&addr, sizeof(void *), hashv);
-
-    mpc_omp_task_dep_htable_entry_t * entry;
-    HASH_FIND_BYHASHVALUE(hh, task->parent->dep_node.hmap, &addr, sizeof(void *), hashv, entry);
-
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
     assert(thread);
 
     mpc_omp_instance_t * instance = thread->instance;
     assert(instance);
+
+    unsigned hashv;
+    HASH_VALUE(&addr, sizeof(void *), hashv);
+
+    mpc_omp_task_dep_htable_entry_t * entry;
+    HASH_FIND_BYHASHVALUE(hh, task->parent->dep_node.hmap, &addr, sizeof(void *), hashv, entry);
 
     if (entry == NULL)
     {
@@ -1152,12 +1152,45 @@ __task_process_mpc_dep_entry(mpc_omp_task_t * task, void * addr)
         entry->out      = NULL;
         entry->ins      = NULL;
         entry->inoutset = NULL;
-        entry->task_uid = 0;
+        entry->last_out = 0;
+        entry->last_in  = 0;
         mpc_common_spinlock_init(&(entry->lock), 0);
         HASH_ADD_KEYPTR_BYHASHVALUE(hh, task->parent->dep_node.hmap, &(entry->addr), sizeof(void *), hashv, entry);
     }
 
     return entry;
+}
+
+// Return true if the given dependency of given type was already implicitely
+// treated by a previous dependency
+static inline int
+__task_process_mpc_dep_is_redundant(
+        mpc_omp_task_t * task,
+        mpc_omp_task_dep_type_t type,
+        mpc_omp_task_dep_htable_entry_t * entry)
+{
+    int r = 0;
+    switch (type)
+    {
+        case (MPC_OMP_TASK_DEP_OUT):
+        case (MPC_OMP_TASK_DEP_MUTEXINOUTSET):
+        {
+            r = entry->last_out == task->uid;
+            entry->last_out = task->uid;
+            break ;
+        }
+
+        case (MPC_OMP_TASK_DEP_INOUTSET):
+        case (MPC_OMP_TASK_DEP_IN):
+        {
+            r = (entry->last_out == task->uid) || (entry->last_in == task->uid);
+            entry->last_in = task->uid;
+            break ;
+        }
+        default:
+            assert(0);
+    }
+    return r;
 }
 
 /** Note : only 1 thread may run this function for a given `task->parent` */
@@ -1167,8 +1200,7 @@ __task_process_mpc_dep(
         void * addr,
         mpc_omp_task_dep_type_t type)
 {
-    assert(type > MPC_OMP_TASK_DEP_NONE);
-    assert(type < MPC_OMP_TASK_DEP_COUNT);
+    if (type == MPC_OMP_TASK_DEP_INOUT) type = MPC_OMP_TASK_DEP_OUT;
 
     /* Retrieve entry for the given address, or generate a new one.
      * Also performon redundancy check */
@@ -1183,13 +1215,11 @@ __task_process_mpc_dep(
     mpc_common_spinlock_lock(&(entry->lock));
 
     /* redundancy check */
-    if (entry->task_uid != task->uid)
+    if (!__task_process_mpc_dep_is_redundant(task, type, entry))
     {
-        entry->task_uid = task->uid;
         /* case 1.1 - the generated task is dependant of previous 'in' */
         if (entry->ins &&
                 (type == MPC_OMP_TASK_DEP_OUT ||
-                 type == MPC_OMP_TASK_DEP_INOUT ||
                  type == MPC_OMP_TASK_DEP_INOUTSET ||
                  type == MPC_OMP_TASK_DEP_MUTEXINOUTSET))
         {
@@ -1238,7 +1268,6 @@ __task_process_mpc_dep(
         if (entry->inoutset &&
                 (type == MPC_OMP_TASK_DEP_IN ||
                  type == MPC_OMP_TASK_DEP_OUT ||
-                 type == MPC_OMP_TASK_DEP_INOUT ||
                  type == MPC_OMP_TASK_DEP_MUTEXINOUTSET))
         {
             /**
@@ -1288,13 +1317,12 @@ __task_process_mpc_dep(
         /* case 1.3 - the generated task is dependant of previous 'out' and 'inout' */
         if (    type == MPC_OMP_TASK_DEP_IN ||
                 type == MPC_OMP_TASK_DEP_OUT ||
-                type == MPC_OMP_TASK_DEP_INOUT ||
                 type == MPC_OMP_TASK_DEP_INOUTSET ||
                 type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
         {
             if (entry->out)
             {
-                if ((type == MPC_OMP_TASK_DEP_OUT || type == MPC_OMP_TASK_DEP_INOUT) && (entry->ins || entry->inoutset))
+                if (type == MPC_OMP_TASK_DEP_OUT && (entry->ins || entry->inoutset))
                 {
                     // nothing to do, the task already depends
                     // from previous 'ins' or 'inoutsets' that depend on the
@@ -1314,7 +1342,6 @@ __task_process_mpc_dep(
         /* case 1.4 - the generated task is dependant of previous 'mutexinoutset' */
         if (    type == MPC_OMP_TASK_DEP_IN ||
                 type == MPC_OMP_TASK_DEP_OUT ||
-                type == MPC_OMP_TASK_DEP_INOUT ||
                 type == MPC_OMP_TASK_DEP_INOUTSET)
         {
             not_implemented();
@@ -1338,7 +1365,7 @@ __task_process_mpc_dep(
          *  - delete siblings 'ins' - they are all dependant of generating task
          *  - delete siblings 'inoutset' - they are all dependant of generating task
          */
-        else if (type == MPC_OMP_TASK_DEP_OUT || type == MPC_OMP_TASK_DEP_INOUT)
+        else if (type == MPC_OMP_TASK_DEP_OUT)
         {
             entry->ins = NULL;
             entry->inoutset = NULL;
@@ -1370,6 +1397,14 @@ __task_process_mpc_dep(
     }
 }
 
+static inline int
+__task_dependency_cmp(const void * a, const void * b)
+{
+    const mpc_omp_task_dependency_t * x = (const mpc_omp_task_dependency_t *) a;
+    const mpc_omp_task_dependency_t * y = (const mpc_omp_task_dependency_t *) b;
+    return (int)((int)x->type - (int)y->type);
+}
+
 /**
  * @param task - the task
  * @param depend - gomp formatted 'depend' array
@@ -1379,68 +1414,72 @@ __task_process_deps(mpc_omp_task_t * task, void ** depend)
 {
     assert(task);
 
-    /* retrieve threads */
-    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    unsigned int ndeps_total = depend ? (depend[0] ? depend[0] : depend[1]) : 0;
 
-    /* mpc specific dependencies */
+    mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
     mpc_omp_task_dependency_t * dependencies = thread->task_infos.incoming.dependencies;
-    uintptr_t ndependencies_type = thread->task_infos.incoming.ndependencies_type;
-
-    /* if no dependencies, return */
-    if (dependencies == NULL)
-    {
-        if (depend == NULL)     return ;
-        if (depend[0] == NULL)  return;
-    }
-
+    unsigned int ndependencies = thread->task_infos.incoming.ndependencies_type;
     thread->task_infos.incoming.dependencies = NULL;
     thread->task_infos.incoming.ndependencies_type = 0;
-
-    /* compiler dependencies */
-    uintptr_t omp_ndeps_tot = depend ? (uintptr_t) depend[0] : 0;
-    uintptr_t omp_ndeps_out = depend ? (uintptr_t) depend[1] : 0;
-
-    /* runtime specific dependencies */
-    uintptr_t mpc_ndeps = 0;
-    uintptr_t i, j;
-    for (i = 0 ; i < ndependencies_type ; ++i) mpc_ndeps += dependencies[i].addrs_size;
-    if (mpc_ndeps == 0 && omp_ndeps_tot == 0) return ;
-
-    /* total number of dependencies */
-    uintptr_t ndeps = omp_ndeps_tot + mpc_ndeps;
-
-    /* We may allocate useless dep_list_elt_t when there is redundancy.
-     * 1) count unique element
-     * 2) allocate
-     * For now, we may allocate too much memory in redundancy cases
-     */
-    task->dep_node.dep_list = (mpc_omp_task_dep_list_elt_t *) malloc(sizeof(mpc_omp_task_dep_list_elt_t) * ndeps);
-    task->dep_node.dep_list_size = 0;
-
-     /**
-      * Ensure that dependencies are processed in the following order
-      * So that we have correct behaviour on redundancy
-      * 1) 'OUT' or 'INOUT'
-      * 2) 'MUTEX_INOUTSET'
-      * 3) 'INOUTSET'
-      * 4) 'IN'
-      */
-
-    /* openmp 'out' dependencies */
-    for (i = 0 ; i < omp_ndeps_out ; ++i)   __task_process_mpc_dep(task, depend[2 + i], MPC_OMP_TASK_DEP_OUT);
-
-    /* mpc dependencies */
-    for (i = 0 ; i < ndependencies_type ; ++i)
+    if (dependencies)
     {
-        mpc_omp_task_dependency_t * dependency = dependencies + i;
-        for (j = 0 ; j < dependency->addrs_size ; ++j)
-        {
-            __task_process_mpc_dep(task, dependency->addrs[j], dependency->type);
-        }
+        for (unsigned int i = 0 ; i < ndependencies ; ++i)
+            ndeps_total += dependencies[i].addrs_size;
     }
 
-    /* openmp 'in' dependencies */
-    for (i = omp_ndeps_out ; i < omp_ndeps_tot ; ++i)   __task_process_mpc_dep(task, depend[2 + i], MPC_OMP_TASK_DEP_IN);
+    // allocate hmap entries, maybe redundant memory allocated for no reason here :-(
+    task->dep_node.dep_list = (mpc_omp_task_dep_list_elt_t *) malloc(sizeof(mpc_omp_task_dep_list_elt_t) * ndeps_total);
+    task->dep_node.dep_list_size = 0;
+
+    // passed dependencies through MPC API
+    for (unsigned int i = 0 ; i < ndependencies ; ++i)
+    {
+        mpc_omp_task_dependency_t * dependency = dependencies + i;
+        for (unsigned int j = 0 ; j < dependency->addrs_size ; ++j)
+            __task_process_mpc_dep(task, dependency->addrs[j], dependency->type);
+    }
+
+    // 'depend' ABI array
+    // retro portability, if depend[0] != 0, then only 'in' and 'out'
+    if (depend[0])
+    {
+        uintptr_t ndeps = (uintptr_t) depend[0];
+        uintptr_t nout  = (uintptr_t) depend[1];
+        uintptr_t nin   = (uintptr_t) ndeps - nout;
+
+        for (unsigned int i = 0 ; i < nout ; ++i)
+            __task_process_mpc_dep(task, depend[2 + i], MPC_OMP_TASK_DEP_OUT);
+        for (unsigned int i = 0 ; i < nin ; ++i)
+            __task_process_mpc_dep(task, depend[2 + nout + i], MPC_OMP_TASK_DEP_IN);
+    }
+    else
+    {
+        // 'depend' format is:
+        //  [   0, ndeps, nout, nmtxinoutset, nin,
+        //      out_1, out_2, ..., out_nout
+        //      mtxinoutset_1, mtxinoutset_2, ..., mtxinoutset_nmtxinoutset,
+        //      in1, in2, ..., in_nin,
+        //      depobj_1, depobj_2, ..., depobj_n,
+        //      type_1, addr_1, type_2, addr_2, ..., type_n, addr_n
+        //      NULL
+
+        uintptr_t ndeps         = (uintptr_t) depend[1];
+        uintptr_t nout          = (uintptr_t) depend[2];
+        uintptr_t nmtxinoutset  = (uintptr_t) depend[3];
+        uintptr_t nin           = (uintptr_t) depend[4];
+        uintptr_t ndepobj       = (uintptr_t) ndeps - nout - nmtxinoutset - nin;
+
+        unsigned int i = 5;
+        for ( ; i < 5 + nout ; ++i)
+            __task_process_mpc_dep(task, depend[5 + i], MPC_OMP_TASK_DEP_OUT);
+        for ( ; i < 5 + nout + nmtxinoutset; ++i)
+            __task_process_mpc_dep(task, depend[5 + nout + i], MPC_OMP_TASK_DEP_MUTEXINOUTSET);
+        for ( ; i < 5 + nout + nmtxinoutset + nin; ++i)
+            __task_process_mpc_dep(task, depend[5 + nout + nmtxinoutset + i], MPC_OMP_TASK_DEP_IN);
+        i += ndepobj;
+        for (unsigned int j = 0; j < ndepobj ; ++j)
+            __task_process_mpc_dep(task, depend[i + 2*j+0], (uintptr_t)depend[i + 2*j+1]);
+    }
 }
 
 static void
@@ -3713,8 +3752,7 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
     MPC_OMP_TASK_TRACE_CREATE(task);
 
     /* link task with predecessors, and register dependencies to the hmap */
-    if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_DEPEND))
-        __task_process_deps(task, depend);
+    __task_process_deps(task, depend);
 
     assert(TASK_STATE(task) == MPC_OMP_TASK_STATE_NOT_QUEUABLE);
     TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_QUEUABLE);
