@@ -434,4 +434,10 @@ mpc_omp_task_t * mpc_omp_get_persistent_task(void);
 void _mpc_omp_task_reinit_persistent(mpc_omp_task_t * task);
 void mpc_omp_persistent_region_push(mpc_omp_task_t * task);
 
+void _mpc_omp_event_handle_init_task_block(mpc_omp_event_handle_block_t ** handle_ptr);
+void _mpc_omp_event_handle_deinit_task_block(mpc_omp_event_handle_block_t * handle);
+
+void _mpc_omp_event_handle_init_detach(mpc_omp_event_handle_detach_t ** handle_ptr);
+void _mpc_omp_event_handle_deinit_detach(mpc_omp_event_handle_detach_t * handle);
+
 #endif /* __MPC_OMP_TASK_H__ */

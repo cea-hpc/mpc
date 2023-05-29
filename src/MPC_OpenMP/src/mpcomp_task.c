@@ -64,9 +64,10 @@ static inline int
 __task_reached_thresholds(mpc_omp_task_t * task)
 {
     mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
-    return (task->depth > mpc_omp_conf_get()->task_depth_threshold
+    int r = (task->depth > mpc_omp_conf_get()->task_depth_threshold
            || OPA_load_int(&(thread->instance->task_infos.ntasks_allocated)) >= mpc_omp_conf_get()->maximum_tasks
            || OPA_load_int(&(thread->instance->task_infos.ntasks_ready)) >= mpc_omp_conf_get()->maximum_ready_tasks);
+    return r;
 }
 
 static inline void
@@ -1215,6 +1216,7 @@ __task_process_mpc_dep(
                 pit->dep_node.dep_list_size = 0;
                 MPC_OMP_TASK_TRACE_CREATE(pit);
 
+                OPA_store_int(&(pit->dep_node.ref_predecessors), 1);
                 entry->out = __task_dep_list_append(pit, entry, NULL);
                 while (entry->ins)
                 {
@@ -1265,6 +1267,7 @@ __task_process_mpc_dep(
                 pit->dep_node.dep_list_size = 0;
                 MPC_OMP_TASK_TRACE_CREATE(pit);
 
+                OPA_store_int(&(pit->dep_node.ref_predecessors), 1);
                 entry->out = __task_dep_list_append(pit, entry, NULL);
                 while (entry->inoutset)
                 {
@@ -1364,6 +1367,7 @@ __task_process_mpc_dep(
         strcpy(pit->label, "control");
         assert(TASK_STATE(pit) == MPC_OMP_TASK_STATE_NOT_QUEUABLE);
         TASK_STATE_TRANSITION(pit, MPC_OMP_TASK_STATE_QUEUABLE);
+        OPA_decr_int(&(pit->dep_node.ref_predecessors));
         _mpc_omp_task_process(pit);
         if (!region->active) _mpc_omp_task_deinit(pit);
     }
@@ -1521,8 +1525,7 @@ __task_finalize_persistent(mpc_omp_task_t * task)
 // reinitialize the persistent task here (TODO: check every fields)
 
 # if MPC_OMP_TASK_COMPILE_FIBER
-    __task_delete_fiber(task);
-    task->fiber = NULL;
+    if (task->fiber) task->fiber->swap_count = 0;
 # endif /* MPC_OMP_TASK_COMPILE_FIBER */
 
     mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
@@ -1553,9 +1556,6 @@ __task_finalize_non_persistent(mpc_omp_task_t * task)
     mpc_omp_task_t * parent = task->parent;
     __task_unref(task);                 /* _mpc_omp_task_init */
     __task_unref_parent_task(parent);   /* _mpc_omp_task_init */
-
-    mpc_omp_taskgroup_del_task(task);
-    __task_unref_parallel_region();
 }
 
 /** called whenever a task completed it execution and transition to 'finalize'
@@ -1572,8 +1572,15 @@ _mpc_omp_task_finalize(mpc_omp_task_t * task)
             _mpc_omp_task_schedule();
     }
 
+    int is_persistent = mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT);
+    if (!is_persistent)
+    {
+        mpc_omp_taskgroup_del_task(task);
+        __task_unref_parallel_region();
+    }
+
     // the task executed, now is time to resolve its dependencies
-    assert(TASK_STATE(task) == MPC_OMP_TASK_STATE_EXECUTED);
+    assert(TASK_STATE(task) == MPC_OMP_TASK_STATE_EXECUTED || (TASK_STATE(task) == MPC_OMP_TASK_STATE_SCHEDULED && task->flags.cancelled));
     mpc_common_spinlock_lock(&(task->state_lock));
     {
         TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_RESOLVING);
@@ -1606,7 +1613,6 @@ _mpc_omp_task_finalize(mpc_omp_task_t * task)
     TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_RESOLVED);
 
     // transition to 'resolved' state
-    int is_persistent = mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT);
     if (is_persistent)
         __task_finalize_persistent(task);
     else
@@ -3115,7 +3121,7 @@ __thread_generate_new_task_fiber(mpc_omp_thread_t * thread)
             MPC_OMP_TASK_FIBER_STACK_SIZE
         );
     }
-    fiber->started = 0;
+    fiber->swap_count = 0;
 
     return fiber;
 }
@@ -3154,16 +3160,8 @@ __task_schedule_with_fiber(mpc_omp_task_t * task)
     ___thread_bind_task(thread, task, &(task->icvs));
     task->fiber->exit = &(thread->task_infos.mctx);
 
-    sctk_mctx_t * mctx;
-    if (task->fiber->started)
-    {
-        mctx = &(task->fiber->current);
-    }
-    else
-    {
-        mctx = &(task->fiber->initial);
-        task->fiber->started = 1;
-    }
+    sctk_mctx_t * mctx = task->fiber->swap_count ? &(task->fiber->current) : &(task->fiber->initial);
+    ++task->fiber->swap_count;
 
     MPC_OMP_TASK_TRACE_SCHEDULE(task);
     sctk_swapcontext_no_tls(task->fiber->exit, mctx);
@@ -3300,8 +3298,6 @@ _mpc_omp_task_unblock(mpc_omp_event_handle_block_t * handle)
     assert(task);
 
     MPC_OMP_TASK_TRACE_UNBLOCKED(task);
-    __task_ref(task);                                               /* mpc_omp_task_unblock */
-    _mpc_omp_event_handle_ref((mpc_omp_event_handle_t *) handle);   /* mpc_omp_task_unblock */
 
     /* if the task unblocked before blocking, there is nothing to do */
     if (OPA_cas_int(
@@ -3365,8 +3361,7 @@ _mpc_omp_task_unblock(mpc_omp_event_handle_block_t * handle)
             /* nothing to do, the task is already being unblocked by another thread */
         }
     }
-    _mpc_omp_event_handle_unref((mpc_omp_event_handle_t *) handle); /* mpc_omp_task_unblock */
-    __task_unref(task);                                             /* mpc_omp_task_unblock */
+    _mpc_omp_event_handle_deinit_task_block(handle);
 }
 
 /* Warning: a task may unblock before it was actually suspended
@@ -3692,13 +3687,13 @@ _mpc_omp_task_deinit_persistent(mpc_omp_task_t * task)
     __task_deps_list_delete(task);
 
     /* unreference the task, see 'finalize' */
+    mpc_omp_taskgroup_del_task(task);
+    __task_unref_parallel_region();
+
     mpc_omp_task_t * parent = task->parent;
     __task_unref(task);                     /* _mpc_omp_task_init_attributes */
     __task_unref(task);                     /* _mpc_omp_task_init */
     __task_unref_parent_task(parent);       /* _mpc_omp_task_init */
-
-    mpc_omp_taskgroup_del_task(task);
-    __task_unref_parallel_region();
 }
 
 /**
@@ -3733,8 +3728,10 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
     MPC_OMP_TASK_TRACE_CREATE(task);
 
     /* link task with predecessors, and register dependencies to the hmap */
+    OPA_store_int(&(task->dep_node.ref_predecessors), 1); // this should no longer be needed as the atomic CaS on the task state should protect from race condition. However i faced some deadlocks removing it
     if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_DEPEND))
         __task_process_deps(task, depend);
+    OPA_decr_int(&(task->dep_node.ref_predecessors));
 
     assert(TASK_STATE(task) == MPC_OMP_TASK_STATE_NOT_QUEUABLE);
     TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_QUEUABLE);
@@ -4262,4 +4259,52 @@ mpc_omp_persistent_region_pop(void)
         _mpc_omp_task_deinit_persistent(task);
         --region->n_tasks;
     }
+}
+
+// EVENT HANDLE
+void
+_mpc_omp_event_handle_init_task_block(mpc_omp_event_handle_block_t ** handle_ptr)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
+    mpc_omp_event_handle_block_t * handle = (mpc_omp_event_handle_block_t *) malloc(sizeof(mpc_omp_event_handle_block_t));
+    assert(handle);
+
+    handle->task = (void *) task;
+    handle->cancel = task->taskgroup ? &(task->taskgroup->cancelled) : NULL;
+    OPA_store_int(&(handle->cancelled), 0);
+    OPA_store_int(&(handle->status), MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_INIT);
+    mpc_common_spinlock_init(&(handle->lock), 0);
+
+    OPA_store_int(&(handle->ref), 2);
+    __task_ref(task);
+
+    *(handle_ptr) = handle;
+}
+
+void
+_mpc_omp_event_handle_deinit_task_block(mpc_omp_event_handle_block_t * handle)
+{
+    if (OPA_fetch_and_decr_int(&(handle->ref)) == 1)
+    {
+        __task_unref((mpc_omp_task_t*) handle->task);
+    }
+}
+
+void
+_mpc_omp_event_handle_init_detach(mpc_omp_event_handle_detach_t ** handle_ptr)
+{
+    assert(*handle_ptr);
+    mpc_omp_event_handle_detach_t * hdl = (mpc_omp_event_handle_detach_t *) (*handle_ptr);
+    OPA_store_int(&(hdl->counter), 1);
+}
+
+void
+_mpc_omp_event_handle_deinit_detach(mpc_omp_event_handle_detach_t * handle)
+{
+    (void) handle;
 }

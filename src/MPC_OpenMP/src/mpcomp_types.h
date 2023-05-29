@@ -538,7 +538,7 @@ typedef struct  mpc_omp_task_fiber_s
     sctk_mctx_t initial;    /* the initial context of this task (for recycling 'makecontext' calls) */
     sctk_mctx_t current;    /* the current context of this task */
     sctk_mctx_t * exit;     /* the context to return when this task is paused or finished */
-    char started;           /* evaluates true if 'current' is != 'initial' */
+    int swap_count;         /* number of times this was swapped */
 }               mpc_omp_task_fiber_t;
 #endif
 

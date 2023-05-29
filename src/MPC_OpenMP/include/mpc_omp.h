@@ -67,7 +67,6 @@ extern "C" {
     typedef struct  mpc_omp_event_handle_s
     {
         mpc_omp_event_t type;   /* the event type */
-        OPA_int_t       ref;    /* reference counter */
     }               mpc_omp_event_handle_t;
 
     /* event status */
@@ -85,6 +84,7 @@ extern "C" {
     {
         mpc_omp_event_handle_t parent;  /* C inheritance */
 
+        OPA_int_t       ref;    /* reference counter */
         void            * task;         /* the blocked task */
         OPA_int_t       lock;           /* a spinlock */
         OPA_int_t       status;         /* the handle status */

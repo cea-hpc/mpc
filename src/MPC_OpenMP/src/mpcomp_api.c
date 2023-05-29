@@ -432,21 +432,6 @@ mpc_omp_in_explicit_task(void)
 
 TODO("Support for OpenMP standard event handle : add an hashtable of `key=omp_event_handle_t` and `value=mpc_omp_event_handle_t *`");
 
-void
-_mpc_omp_event_handle_ref(mpc_omp_event_handle_t * handle)
-{
-    OPA_incr_int(&(handle->ref));
-}
-
-void
-_mpc_omp_event_handle_unref(mpc_omp_event_handle_t * handle)
-{
-    if (OPA_fetch_and_decr_int(&(handle->ref)) == 1)
-    {
-        free(handle);
-    }
-}
-
 /**
  * Fulfill the MPC event handle
  * Warning: this does not respect the standard
@@ -491,34 +476,17 @@ omp_fulfill_event(omp_event_handle_t event)
 void
 mpc_omp_event_handle_init(mpc_omp_event_handle_t ** handle_ptr, mpc_omp_event_t type)
 {
-    mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
-    assert(thread);
-
-    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
-    assert(task);
-
     switch (type)
     {
         case (MPC_OMP_EVENT_TASK_BLOCK):
         {
-            mpc_omp_event_handle_block_t * handle = (mpc_omp_event_handle_block_t *) malloc(sizeof(mpc_omp_event_handle_block_t));
-            assert(handle);
-
-            handle->task = (void *) task;
-            handle->cancel = task->taskgroup ? &(task->taskgroup->cancelled) : NULL;
-            OPA_store_int(&(handle->cancelled), 0);
-            OPA_store_int(&(handle->status), MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_INIT);
-            mpc_common_spinlock_init(&(handle->lock), 0);
-
-            (*handle_ptr) = (mpc_omp_event_handle_t *) handle;
+            _mpc_omp_event_handle_init_task_block((mpc_omp_event_handle_block_t **) handle_ptr);
             break ;
         }
 
         case (MPC_OMP_EVENT_TASK_DETACH):
         {
-            assert(*handle_ptr);
-            mpc_omp_event_handle_detach_t * hdl = (mpc_omp_event_handle_detach_t *) (*handle_ptr);
-            OPA_store_int(&(hdl->counter), 1);
+            _mpc_omp_event_handle_init_detach((mpc_omp_event_handle_detach_t **) handle_ptr);
             break ;
         }
 
@@ -528,10 +496,6 @@ mpc_omp_event_handle_init(mpc_omp_event_handle_t ** handle_ptr, mpc_omp_event_t 
             break ;
         }
     }
-
-    (*handle_ptr)->type = type;
-    OPA_store_int(&((*handle_ptr)->ref), 0);
-    _mpc_omp_event_handle_ref(*handle_ptr);
 }
 
 /**
@@ -541,7 +505,26 @@ mpc_omp_event_handle_init(mpc_omp_event_handle_t ** handle_ptr, mpc_omp_event_t 
 void
 mpc_omp_event_handle_deinit(mpc_omp_event_handle_t * handle)
 {
-    _mpc_omp_event_handle_unref(handle);
+    switch (handle->type)
+    {
+        case (MPC_OMP_EVENT_TASK_BLOCK):
+        {
+            _mpc_omp_event_handle_deinit_task_block((mpc_omp_event_handle_block_t *) handle);
+            break ;
+        }
+
+        case (MPC_OMP_EVENT_TASK_DETACH):
+        {
+            _mpc_omp_event_handle_deinit_detach((mpc_omp_event_handle_detach_t *) handle);
+            break ;
+        }
+
+        default:
+        {
+            not_implemented();
+            break ;
+        }
+    }
 }
 
 /** # pragma omp task priority(p) */
