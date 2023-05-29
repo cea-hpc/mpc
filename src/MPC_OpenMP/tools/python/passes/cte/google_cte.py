@@ -59,7 +59,7 @@ class GoogleCtePass(ipass.Pass):
                     'uid': create.uid,
                     'ts': create.time,
                     'omp_priority': create.omp_priority,
-                    'properties': utils.record_to_properties_and_statuses(create)
+                    'properties': utils.record_to_properties_and_flags_and_state(create)
                }
             }
             self.cte['traceEvents'].append(event)
@@ -108,7 +108,7 @@ class GoogleCtePass(ipass.Pass):
                 'uid': delete.uid,
                 'ts': delete.time,
                 'priority': delete.priority,
-                'properties': utils.record_to_properties_and_statuses(delete)
+                'properties': utils.record_to_properties_and_flags_and_state(delete)
            }
         }
         self.cte['traceEvents'].append(event)
@@ -116,7 +116,7 @@ class GoogleCtePass(ipass.Pass):
     # trace a task schedule between the two given records
     def trace_task_schedule(self, env, uid):
         assert(uid in env['tasks'])
-        schedules = env['schedules'][uid]
+        schedules = env['tasks'][uid]['schedules']
         assert(len(schedules) % 2 == 0)
         for i in range(0, len(schedules), 2):
             r1 = schedules[i + 0]
@@ -137,8 +137,8 @@ class GoogleCtePass(ipass.Pass):
                     'ts': r1.time,
                     'created': task.time,
                     'priority': r1.priority,
-                    'properties_begin': utils.record_to_properties_and_statuses(r1),
-                    'properties_end': utils.record_to_properties_and_statuses(r2),
+                    'properties_begin': utils.record_to_properties_and_flags_and_state(r1),
+                    'properties_end': utils.record_to_properties_and_flags_and_state(r2),
                     'color': task.color,
                     'hwcounters_begin': r1.hwcounters,
                     'hwcounters_end': r2.hwcounters,
@@ -157,34 +157,32 @@ class GoogleCtePass(ipass.Pass):
             self.cte['traceEvents'].append(event)
 
     def trace_task_dependences(self, env, succ_uid):
-        if succ_uid in env['predecessors']:
-            schedules = env['schedules']
-            predecessors = env['predecessors'][succ_uid]
-            pid = env['rank']
-            for pred_uid in predecessors:
-                r1 = schedules[pred_uid][-1]
-                r2 = schedules[succ_uid][0] # TODO : this may fail is task with 'uid2' was cancelled
-                identifier = "dependency-{}-{}-{}-{}-{}".format(pid, r1.tid, r2.tid, pred_uid, succ_uid)
-                event = {
-                    'name' : identifier,
-                    'cat': 'dependencies',
-                    'ph': 's',
-                    'ts': r1.time,
-                    'pid': pid,
-                    'tid': r1.tid,
-                    'id': utils.hash_string(identifier)
-                }
-                self.cte['traceEvents'].append(event)
-                event = {
-                    'name' : identifier,
-                    'cat': 'dependencies',
-                    'ph': 't',
-                    'ts': r2.time + 0.000001,
-                    'pid': pid,
-                    'tid': r2.tid,
-                    'id': utils.hash_string(identifier)
-                }
-                self.cte['traceEvents'].append(event)
+        predecessors = env['tasks'][succ_uid]['predecessors']
+        pid = env['rank']
+        for pred_uid in predecessors:
+            r1 = env['tasks'][pred_uid]['schedules'][-1]
+            r2 = env['tasks'][succ_uid]['schedules'][0] # TODO : this may fail is task with 'uid2' was cancelled
+            identifier = "dependency-{}-{}-{}-{}-{}".format(pid, r1.tid, r2.tid, pred_uid, succ_uid)
+            event = {
+                'name' : identifier,
+                'cat': 'dependencies',
+                'ph': 's',
+                'ts': r1.time,
+                'pid': pid,
+                'tid': r1.tid,
+                'id': utils.hash_string(identifier)
+            }
+            self.cte['traceEvents'].append(event)
+            event = {
+                'name' : identifier,
+                'cat': 'dependencies',
+                'ph': 't',
+                'ts': r2.time + 0.000001,
+                'pid': pid,
+                'tid': r2.tid,
+                'id': utils.hash_string(identifier)
+            }
+            self.cte['traceEvents'].append(event)
 
     def on_process_inspection_start(self, env):
         for tid in env['bound']:
@@ -202,12 +200,9 @@ class GoogleCtePass(ipass.Pass):
         for uid in env['tasks']:
             task = env['tasks'][uid]
             self.trace_task_create(env, task)
-            self.trace_task_delete(env, task)
-
-        for uid in env['schedules']:
+            if task['delete']:
+                self.trace_task_delete(env, task)
             self.trace_task_schedule(env, uid)
-
-        for uid in env['predecessors']:
             self.trace_task_dependences(env, uid)
 
     def on_task_create(self, env):
