@@ -527,14 +527,6 @@ mpc_omp_event_handle_deinit(mpc_omp_event_handle_t * handle)
     }
 }
 
-/** # pragma omp task priority(p) */
-void
-mpc_omp_task_priority(int p)
-{
-    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
-    thread->task_infos.incoming.priority = p;
-}
-
 /** # pragma omp task label("potrf") */
 void
 mpc_omp_task_label(char * label)

@@ -1216,7 +1216,6 @@ __task_process_mpc_dep(
                 pit->dep_node.dep_list_size = 0;
                 MPC_OMP_TASK_TRACE_CREATE(pit);
 
-                OPA_store_int(&(pit->dep_node.ref_predecessors), 1);
                 entry->out = __task_dep_list_append(pit, entry, NULL);
                 while (entry->ins)
                 {
@@ -1267,7 +1266,6 @@ __task_process_mpc_dep(
                 pit->dep_node.dep_list_size = 0;
                 MPC_OMP_TASK_TRACE_CREATE(pit);
 
-                OPA_store_int(&(pit->dep_node.ref_predecessors), 1);
                 entry->out = __task_dep_list_append(pit, entry, NULL);
                 while (entry->inoutset)
                 {
@@ -1367,7 +1365,6 @@ __task_process_mpc_dep(
         strcpy(pit->label, "control");
         assert(TASK_STATE(pit) == MPC_OMP_TASK_STATE_NOT_QUEUABLE);
         TASK_STATE_TRANSITION(pit, MPC_OMP_TASK_STATE_QUEUABLE);
-        OPA_decr_int(&(pit->dep_node.ref_predecessors));
         _mpc_omp_task_process(pit);
         if (!region->active) _mpc_omp_task_deinit(pit);
     }
@@ -1526,7 +1523,6 @@ __task_finalize_persistent(mpc_omp_task_t * task)
     __task_unref_persistent_region(task->parent);
 
     // reset task  instance
-    memset(&(task->flags), 0, sizeof(mpc_omp_task_flags_t));
     OPA_store_int(&(task->dep_node.ref_predecessors), task->dep_node.npredecessors);
 # if MPC_OMP_TASK_COMPILE_FIBER
     if (task->fiber) task->fiber->swap_count = 0;
@@ -1568,7 +1564,8 @@ _mpc_omp_task_finalize(mpc_omp_task_t * task)
     }
 
     // the task executed, now is time to resolve its dependencies
-    assert(TASK_STATE(task) == MPC_OMP_TASK_STATE_EXECUTED || (TASK_STATE(task) == MPC_OMP_TASK_STATE_SCHEDULED && task->flags.cancelled));
+    assert(TASK_STATE(task) == MPC_OMP_TASK_STATE_EXECUTED || (TASK_STATE(task) == MPC_OMP_TASK_STATE_SCHEDULED && task->flags.cancelled) || TASK_STATE(task) == MPC_OMP_TASK_STATE_DETACHED);
+
     mpc_common_spinlock_lock(&(task->state_lock));
     {
         TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_RESOLVING);
@@ -3666,6 +3663,8 @@ _mpc_omp_task_reinit_persistent(mpc_omp_task_t * task)
     task->color = thread->task_infos.incoming.color;
     thread->task_infos.incoming.color = 0;
 
+    memset(&(task->flags), 0, sizeof(mpc_omp_task_flags_t));
+
     MPC_OMP_TASK_TRACE_CREATE(task);
     assert(TASK_STATE(task) == MPC_OMP_TASK_STATE_RESOLVED);
     TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_QUEUABLE);
@@ -3710,26 +3709,18 @@ TODO("refactor this call to avoid LLVM > GOMP depend array conversion");
 void
 _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
 {
-    /* retrieve current thread */
-    mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
-
-    /* set priority hint */
-    task->omp_priority_hint = priority_hint > thread->task_infos.incoming.priority ? priority_hint : thread->task_infos.incoming.priority;
-    thread->task_infos.incoming.priority = 0;
-
     /* trace task creation */
     MPC_OMP_TASK_TRACE_CREATE(task);
 
     /* link task with predecessors, and register dependencies to the hmap */
-    OPA_store_int(&(task->dep_node.ref_predecessors), 1); // this should no longer be needed as the atomic CaS on the task state should protect from race condition. However i faced some deadlocks removing it
     if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_DEPEND))
         __task_process_deps(task, depend);
-    OPA_decr_int(&(task->dep_node.ref_predecessors));
 
     assert(TASK_STATE(task) == MPC_OMP_TASK_STATE_NOT_QUEUABLE);
     TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_QUEUABLE);
 
     /* compute priority */
+    task->omp_priority_hint = priority_hint;
     __task_priority_compute(task);
 }
 

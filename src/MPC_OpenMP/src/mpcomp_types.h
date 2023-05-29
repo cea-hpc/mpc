@@ -956,7 +956,6 @@ typedef struct  mpc_omp_task_thread_infos_s
         char * label;
         int color;
         int extra_clauses;
-        int priority;
     } incoming;
 
 # if MPC_OMP_TASK_COMPILE_TRACE

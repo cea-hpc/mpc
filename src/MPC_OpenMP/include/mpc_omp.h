@@ -190,9 +190,6 @@ extern "C" {
     /** Maximum length of a task label */
     # define MPC_OMP_TASK_LABEL_MAX_LENGTH 64
 
-    /** # pragma omp task priority(p) */
-    void mpc_omp_task_priority(int p);
-
     /** # pragma omp task label("potrf(%d)", i) */
     void mpc_omp_task_label(char * label);
 
