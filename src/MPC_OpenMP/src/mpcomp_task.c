@@ -1200,6 +1200,8 @@ __task_process_mpc_dep(
         void * addr,
         mpc_omp_task_dep_type_t type)
 {
+    assert(type >= MPC_OMP_TASK_DEP_IN && type <= MPC_OMP_TASK_DEP_INOUTSET);
+
     if (type == MPC_OMP_TASK_DEP_INOUT) type = MPC_OMP_TASK_DEP_OUT;
 
     /* Retrieve entry for the given address, or generate a new one.
@@ -1397,14 +1399,6 @@ __task_process_mpc_dep(
     }
 }
 
-static inline int
-__task_dependency_cmp(const void * a, const void * b)
-{
-    const mpc_omp_task_dependency_t * x = (const mpc_omp_task_dependency_t *) a;
-    const mpc_omp_task_dependency_t * y = (const mpc_omp_task_dependency_t *) b;
-    return (int)((int)x->type - (int)y->type);
-}
-
 /**
  * @param task - the task
  * @param depend - gomp formatted 'depend' array
@@ -1414,18 +1408,20 @@ __task_process_deps(mpc_omp_task_t * task, void ** depend)
 {
     assert(task);
 
-    unsigned int ndeps_total = depend ? (depend[0] ? depend[0] : depend[1]) : 0;
+    unsigned int ndeps_total = (uintptr_t) (depend ? (depend[0] ? depend[0] : depend[1]) : 0);
 
     mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
     mpc_omp_task_dependency_t * dependencies = thread->task_infos.incoming.dependencies;
     unsigned int ndependencies = thread->task_infos.incoming.ndependencies_type;
     thread->task_infos.incoming.dependencies = NULL;
     thread->task_infos.incoming.ndependencies_type = 0;
+
     if (dependencies)
     {
         for (unsigned int i = 0 ; i < ndependencies ; ++i)
             ndeps_total += dependencies[i].addrs_size;
     }
+    if (ndeps_total == 0) return ;
 
     // allocate hmap entries, maybe redundant memory allocated for no reason here :-(
     task->dep_node.dep_list = (mpc_omp_task_dep_list_elt_t *) malloc(sizeof(mpc_omp_task_dep_list_elt_t) * ndeps_total);
@@ -1441,6 +1437,8 @@ __task_process_deps(mpc_omp_task_t * task, void ** depend)
 
     // 'depend' ABI array
     // retro portability, if depend[0] != 0, then only 'in' and 'out'
+    if (!depend) return ;
+
     if (depend[0])
     {
         uintptr_t ndeps = (uintptr_t) depend[0];
@@ -3615,6 +3613,8 @@ _mpc_omp_task_init_attributes(
         mpc_omp_task_set_property(&task->property, MPC_OMP_TASK_PROP_HAS_FIBER);
     if (thread->task_infos.incoming.extra_clauses & MPC_OMP_CLAUSE_UNTIED)
         mpc_omp_task_set_property(&task->property, MPC_OMP_TASK_PROP_UNTIED);
+    if (thread->task_infos.incoming.dependencies)
+        mpc_omp_task_set_property(&task->property, MPC_OMP_TASK_PROP_DEPEND);
     thread->task_infos.incoming.extra_clauses = 0;
 
     /* extra parameters given to the mpc thread for this task  */
@@ -3752,7 +3752,8 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
     MPC_OMP_TASK_TRACE_CREATE(task);
 
     /* link task with predecessors, and register dependencies to the hmap */
-    __task_process_deps(task, depend);
+    if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_DEPEND))
+        __task_process_deps(task, depend);
 
     assert(TASK_STATE(task) == MPC_OMP_TASK_STATE_NOT_QUEUABLE);
     TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_QUEUABLE);
