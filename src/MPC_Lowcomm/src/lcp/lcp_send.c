@@ -107,31 +107,20 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
                                   OPA_fetch_and_incr_int(&ep->seqn), msg_id,
                                   param->datatype);
 
-        // if the endpoint is not yet connected
-        if (ep->state == LCP_EP_FLAG_CONNECTING) {
-                // set the request to pending
-                if (lcp_pending_create(ep->ctx->pend, req, 
-                                       req->msg_id) == NULL) {
-                        rc = MPC_LOWCOMM_ERROR;
-                }
-                mpc_common_debug("LCP: pending req dest=%d, msg_id=%llu", 
-                                 req->send.tag.dest_tid, msg_id);
-                return rc;
-        }
-
-
-        // prepare request depending on its type
+        /* prepare request depending on its type */
         rc = lcp_send_start(ep, req, param);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 mpc_common_debug_error("LCP: could not prepare send request.");
                 return MPC_LOWCOMM_ERROR;
         }
 
-        if(request->synchronized){
+        if(request->synchronized) {
                 req->message_type = MPC_LOWCOMM_P2P_SYNC_MESSAGE;
                 lcp_pending_create(ep->ctx->pend, req, req->msg_id);
         }
-        // send the request
+
+        /* send the request */
         rc = lcp_request_send(req);
+
         return rc;
 }

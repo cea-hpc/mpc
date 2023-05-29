@@ -1,9 +1,8 @@
 #include "lcp_request.h" 
 #include "lcp_prototypes.h"
 
-int lcp_send_eager_bcopy(lcp_request_t *req, 
+ssize_t lcp_send_eager_bcopy(lcp_request_t *req, 
                          lcr_pack_callback_t pack,
-                         lcr_completion_t *comp,
                          uint8_t am_id) 
 {
         ssize_t payload;
@@ -18,11 +17,7 @@ int lcp_send_eager_bcopy(lcp_request_t *req,
                 return MPC_LOWCOMM_ERROR;
 	}
 
-        /* For bcopy, complete request directly */
-        comp->sent = (size_t)payload;
-        comp->comp_cb(comp);
-
-        return MPC_LOWCOMM_SUCCESS;
+        return payload;
 }
 
 int lcp_send_eager_zcopy(lcp_request_t *req, uint8_t am_id,

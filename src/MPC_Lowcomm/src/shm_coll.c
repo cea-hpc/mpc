@@ -376,7 +376,7 @@ int sctk_comm_coll_release( struct sctk_comm_coll *coll )
 	sctk_shared_mem_a2a_release( &coll->shm_a2a );
 	coll->init_done = 0;
 	
-    free(coll);
+    sctk_free(coll);
     
     return 0;
 }

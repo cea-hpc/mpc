@@ -22,8 +22,11 @@ int lowcomm_request_complete(mpc_lowcomm_request_t *req){
 int main(int argc, char** argv) {
 	int rc, i;
 	lcp_context_h ctx;
+        lcp_context_param_t param;
+        lcp_task_h task;
 	lcp_ep_h ep;
 	mpc_lowcomm_set_uid_t suid;
+        int my_tid, src_tid, dest_tid;
 	mpc_lowcomm_peer_uid_t src_uid, dest_uid, my_uid;
 	int check = 1;
 
@@ -62,8 +65,12 @@ int main(int argc, char** argv) {
 		goto pmi_fini;
 	}
 
+        param = (lcp_context_param_t) {
+                .flags = LCP_CONTEXT_PROCESS_UID,
+                .process_uid = mpc_lowcomm_monitor_get_uid()
+        };
 	/* create communication context */
-	rc = lcp_context_create(&ctx, 0);
+	rc = lcp_context_create(&ctx, &param);
 	if (rc != 0) {
 		printf("ERROR: create context\n");
 		goto monitor_fini;
@@ -77,22 +84,38 @@ int main(int argc, char** argv) {
 
 	/* get uids */
 	suid = mpc_lowcomm_monitor_get_gid();
-	my_uid = mpc_lowcomm_monitor_get_uid();
-	src_uid = mpc_lowcomm_monitor_uid_of(suid, 0);
-	dest_uid = mpc_lowcomm_monitor_uid_of(suid, 1);
+        my_tid = mpc_lowcomm_get_rank();
+
+        if (my_tid == 0) {
+                src_tid  = mpc_lowcomm_get_rank();
+                src_uid  = mpc_lowcomm_monitor_get_uid();
+                dest_tid = 1;
+                dest_uid = mpc_lowcomm_monitor_uid_of(suid, 1);
+        } else {
+                src_tid = 0;
+                src_uid = mpc_lowcomm_monitor_uid_of(suid, 0);
+                dest_uid = mpc_lowcomm_monitor_get_uid();
+                dest_tid  = mpc_lowcomm_get_rank();
+        }
+
+        rc = lcp_task_create(ctx, my_tid, &task);
+        if (rc != MPC_LOWCOMM_SUCCESS) {
+                printf("ERROR: create task");
+                goto monitor_fini;
+        }
 
 	/* init data */
 	srand(0);
 	for (i=0; i<size; i++) {
 		int rnd = rand();
-		if (mpc_lowcomm_peer_get_rank(my_uid) == 0)
+		if (my_tid == 0)
 			data[i] = rnd;
 		else
 			data_check[i] = rnd;
 	}
 
 	/* sender creates endpoint */
-	if (mpc_lowcomm_peer_get_rank(my_uid) == 0) {
+	if (my_tid == 0) {
 		rc = lcp_ep_create(ctx, &ep, dest_uid, 0);
 		if (rc != 0) {
 			printf("ERROR: create ep\n");
@@ -104,10 +127,10 @@ int main(int argc, char** argv) {
 		.header = {
 			.communicator_id = mpc_lowcomm_get_comm_world_id(),
 			.destination = dest_uid,
-			.destination_task = (int)dest_uid,
+			.destination_task = dest_tid,
 			.msg_size = size*sizeof(int),
 			.source = src_uid,
-			.source_task = (int)src_uid,
+			.source_task = src_tid,
 			.message_tag = 0,
 		},
 		.completion_flag = 0,
@@ -115,17 +138,21 @@ int main(int argc, char** argv) {
 	};                          
 
 	/* send/recv */
-	if (mpc_lowcomm_peer_get_rank(my_uid) == 0) {
-                lcp_request_param_t param = { 0 };
-		rc = lcp_tag_send_nb(ep, (void *)data, size*sizeof(int), &req, &param);
+	if (my_tid == 0) {
+                lcp_request_param_t param = {
+                        .datatype  = LCP_DATATYPE_CONTIGUOUS,
+                        .recv_info = &req.recv_info,
+                };
+		rc = lcp_tag_send_nb(ep, task, (void *)data, size*sizeof(int), &req, &param);
 		if (rc != 0) {
 			printf("ERROR: send\n");
 		}
 	} else {
                 lcp_request_param_t param = { 
+                        .datatype  = LCP_DATATYPE_CONTIGUOUS,
                         .recv_info = &req.recv_info 
                 };
-		rc = lcp_tag_recv_nb(ctx, (void *)data, size*sizeof(int), &req, &param);
+		rc = lcp_tag_recv_nb(task, (void *)data, size*sizeof(int), &req, &param);
 		if (rc != 0) {
 			printf("ERROR: recv\n");
 		}
@@ -143,7 +170,7 @@ int main(int argc, char** argv) {
         }
 
 	/* receiver perform data check */
-	if (mpc_lowcomm_peer_get_rank(my_uid) == 1) {	
+	if (my_tid == 1) {	
 		for (i=0; i<(int)size; i++) {
 			if (data[i] != data_check[i]) {
                                 printf("%d\n", i);

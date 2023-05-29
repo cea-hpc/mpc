@@ -44,6 +44,8 @@ mpcrun_warning(){
 _MPC_PRINT_CONFIG_WORKS=""
 
 mpc_print_config_works(){
+	_MPC_PRINT_CONFIG_WORKS="no"
+	return 1
 	if test -z "${_MPC_PRINT_CONFIG_WORKS}"; then
 		mpc_print_config > /dev/null 2>&1
 

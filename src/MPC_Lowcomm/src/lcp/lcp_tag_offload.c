@@ -241,6 +241,7 @@ int lcp_send_rget_offload_start(lcp_request_t *req)
                 req->send.buffer : req->state.pack_buf;
 
         unsigned int mem_flags = LCR_IFACE_TM_PERSISTANT_MEM;
+        //FIXME: used tag with muid and tid
         rc = lcp_mem_post(req->ctx, &req->state.lmem, start,
                           req->send.length, (lcr_tag_t)req->tm.imm, 
                           mem_flags, &(req->send.t_ctx));

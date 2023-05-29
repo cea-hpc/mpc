@@ -1,7 +1,8 @@
 compile_units:
   build:
-    custom:
-      command: "@BUILDPATH@/lcp_compile.sh @SLURMPARTITION@"
+    files: "@BUILDPATH@/Makefile"
+    make:
+      target: "all"
 
 context_init:
   run:
@@ -54,6 +55,18 @@ ep_earlysend:
 ep_earlyrecv:
   run:
     program: @BUILDPATH@/lcp_compute_env.sh @BUILDPATH@/ep_earlyrecv
+    depends_on: ["compile_units"]
+    iterate: 
+      n_core:
+        values: [2]
+      n_node:
+        values: [2]
+      n_proc:
+        values: [2]
+  tag: ["run"]
+ep_sendrecv:
+  run:
+    program: @BUILDPATH@/lcp_compute_env.sh @BUILDPATH@/ep_sendrecv
     depends_on: ["compile_units"]
     iterate: 
       n_core:

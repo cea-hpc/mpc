@@ -178,6 +178,7 @@ static int lcp_context_config_parse_list(const char *cfg_list,
         strcpy(cfg_list_dup, cfg_list);
         token = strtok(cfg_list_dup, ",");
         while (token != NULL) {
+                //FIXME: memory leak with strdup
                 if((list[i] = strdup(token)) == NULL) {
                         mpc_common_debug_error("LCP: could not allocate list token");
                         sctk_free(list);
@@ -571,6 +572,7 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
 	}
 	memset(ctx, 0, sizeof(struct lcp_context));
 
+        //FIXME: test if param is valid
         if (param->flags & LCP_CONTEXT_DATATYPE_OPS) {
                 ctx->dt_ops = param->dt_ops;
         }
@@ -663,6 +665,7 @@ int lcp_context_fini(lcp_context_h ctx)
 	lcp_task_entry_t *e_task = NULL, *e_task_tmp = NULL;
 	HASH_ITER(hh, ctx->tasks->table, e_task, e_task_tmp) {
                 lcp_task_fini(e_task->task);
+		HASH_DELETE(hh, ctx->tasks->table, e_task);
                 sctk_free(e_task);
 	}
         sctk_free(ctx->tasks);

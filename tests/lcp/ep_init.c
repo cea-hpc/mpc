@@ -11,8 +11,10 @@
 int main(int argc, char** argv) {
 	int rc;
 	lcp_context_h ctx;
+        lcp_context_param_t param;
 	lcp_ep_h ep;
 	mpc_lowcomm_set_uid_t suid;
+        int my_tid, src_tid, dest_tid;
 	mpc_lowcomm_peer_uid_t my_uid, dest_uid;
 
 	/* load default config */
@@ -34,9 +36,13 @@ int main(int argc, char** argv) {
 		goto pmi_fini;
 	}
 	suid = mpc_lowcomm_monitor_get_gid();
-	my_uid = mpc_lowcomm_monitor_get_uid();	
+        my_tid = mpc_lowcomm_get_rank();
 
-	rc = lcp_context_create(&ctx, 0);
+        param = (lcp_context_param_t) {
+                .flags = LCP_CONTEXT_PROCESS_UID,
+                .process_uid = mpc_lowcomm_monitor_get_uid()
+        };
+	rc = lcp_context_create(&ctx, &param);
 	if (rc != 0) {
 		printf("ERROR: create context\n");
 		goto monitor_fini;
@@ -46,7 +52,7 @@ int main(int argc, char** argv) {
 	//      of rails.
 	mpc_launch_pmi_barrier();
 
-	if (mpc_lowcomm_peer_get_rank(my_uid) == 0) {
+	if (my_tid == 0) {
 		dest_uid = mpc_lowcomm_monitor_uid_of(suid, 1);
 		rc = lcp_ep_create(ctx, &ep, dest_uid, 0);
 		if (rc != 0) {
