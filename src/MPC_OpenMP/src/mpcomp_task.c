@@ -3788,38 +3788,57 @@ _mpc_omp_task_process(mpc_omp_task_t * task)
     mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
     assert(thread->instance);
 
+    // if (TASK_STATE_TRANSITION_ATOMIC(task, MPC_OMP_TASK_STATE_QUEUABLE, MPC_OMP_TASK_STATE_QUEUED))
+
+    int became_ready = 0;
+# if 0
+    // TODO: find out why a mutex is needed here, shouldn't bellow atomic CaS be sufficient ?
     if (OPA_load_int(&(task->dep_node.ref_predecessors)) == 0)
     {
-        /* if the task just became ready */
         if (TASK_STATE_TRANSITION_ATOMIC(task, MPC_OMP_TASK_STATE_QUEUABLE, MPC_OMP_TASK_STATE_QUEUED))
         {
-            /* if the task is undeferred, or we reached thresholds */
-            if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_UNDEFERRED)
-                    || __task_reached_thresholds(task)
-                    || mpc_omp_conf_get()->task_sequential)
+            became_ready = 1;
+        }
+    }
+# else
+    if (TASK_STATE(task) < MPC_OMP_TASK_STATE_QUEUED)
+    {
+        mpc_common_spinlock_lock(&(task->state_lock));
+        {
+            if (TASK_STATE(task) == MPC_OMP_TASK_STATE_QUEUABLE &&
+                    OPA_load_int(&(task->dep_node.ref_predecessors)) == 0)
             {
-                /* run it */
-                __task_schedule(task);
-                return 1;
+                TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_QUEUED);
+                became_ready = 1;
             }
-            else
-            {
-                /* else, differ it */
-                int type = mpc_omp_conf_get()->task_direct_successor_enabled && task->flags.successor ? MPC_OMP_PQUEUE_TYPE_SUCCESSOR : MPC_OMP_PQUEUE_TYPE_NEW;
-                mpc_omp_task_pqueue_t * pqueue = __thread_get_task_pqueue(thread, type);
-                __task_pqueue_push(pqueue, task);
-                return 0;
-            }
+        }
+        mpc_common_spinlock_unlock(&(task->state_lock));
+    }
+# endif
+
+    /* if the task just became ready */
+    if (became_ready)
+    {
+        /* if the task is undeferred, or we reached thresholds */
+        if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_UNDEFERRED)
+                || __task_reached_thresholds(task)
+                || mpc_omp_conf_get()->task_sequential)
+        {
+            /* run it */
+            __task_schedule(task);
+            return 1;
         }
         else
         {
-            goto task_is_not_ready;
+            /* else, differ it */
+            int type = mpc_omp_conf_get()->task_direct_successor_enabled && task->flags.successor ? MPC_OMP_PQUEUE_TYPE_SUCCESSOR : MPC_OMP_PQUEUE_TYPE_NEW;
+            mpc_omp_task_pqueue_t * pqueue = __thread_get_task_pqueue(thread, type);
+            __task_pqueue_push(pqueue, task);
+            return 0;
         }
     }
     else
     {
-task_is_not_ready:
-
         while (__task_reached_thresholds(task) && TASK_STATE(task) < MPC_OMP_TASK_STATE_EXECUTED)
         {
             _mpc_omp_task_schedule();
