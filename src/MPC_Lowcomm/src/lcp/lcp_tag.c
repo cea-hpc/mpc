@@ -64,7 +64,7 @@ size_t lcp_send_ack_pack(void *dest, void *data)
 	lcp_ack_hdr_t *hdr = dest;
 	lcp_request_t *req = data;
 	
-	hdr->src  = req->send.tag.src;
+	hdr->src  = req->send.tag.src_tid;
 	hdr->msg_id = req->send.ack_msg_key;
 
 	mpc_common_debug("LCP: packing ack seq=%ld", req->send.ack_msg_key);
@@ -118,8 +118,8 @@ int lcp_send_am_eager_tag_bcopy(lcp_request_t *req)
 		req->send.pack_function = lcp_send_tag_pack;
 
 	mpc_common_debug_info("LCP: send am eager tag bcopy comm=%d, src=%d, "
-                              "dest=%d, length=%d, tag=%d, lcreq=%p msg_id=%lu seqn=%d.", req->send.tag.comm_id,
-                              req->send.tag.src_task, req->send.tag.dest, 
+                              "dest=%d, length=%d, tag=%d, lcreq=%p msg_id=%lu seqn=%d.", req->send.tag.comm,
+                              req->send.tag.src_tid, req->send.tag.dest_tid, 
                               req->send.length, req->send.tag.tag, req->request, req->msg_id, req->seqn);
 
 	payload = lcp_send_do_am_bcopy(lcr_ep, 
@@ -176,7 +176,7 @@ int lcp_send_am_eager_tag_zcopy(lcp_request_t *req)
         iovcnt++;
 
 	mpc_common_debug_info("LCP: send am eager tag zcopy comm=%d, src=%d, "
-                              "dest=%d, tag=%d, length=%d", req->send.tag.comm_id, 
+                              "dest=%d, tag=%d, length=%d", req->send.tag.comm, 
                             	req->send.tag.src_tid, req->send.tag.dest_tid, 
 								req->send.tag.tag, req->send.length);
 	int message_type;
@@ -313,6 +313,7 @@ int lcp_tag_send_ack(lcp_request_t *parent_request, lcp_tag_hdr_t *hdr){
 	lcp_request_create(&ack_request);
 	if(ack_request == NULL){
 		mpc_common_debug("LCP: error creating ack request");
+		return MPC_LOWCOMM_ERROR;
 	}
 
 	LCP_REQUEST_INIT_SEND(ack_request, ep->ctx, task, parent_request->request, 
@@ -321,9 +322,7 @@ int lcp_tag_send_ack(lcp_request_t *parent_request, lcp_tag_hdr_t *hdr){
 							msg_id, msg_id, param.datatype);
 	ack_request->send.ack_msg_key = parent_request->seqn;	
 	mpc_common_debug("LCP: sending ack for request %lu, src %d", ack_hdr.msg_id, ack_hdr.src);
-	if (ack_request == NULL) {
-		return MPC_LOWCOMM_ERROR;
-	}
+	
 	ack_request->message_type = MPC_LOWCOMM_P2P_ACK_MESSAGE;
 	uint64_t ack_key = hdr->seqn;
 

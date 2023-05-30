@@ -85,7 +85,7 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
                 lcp_tag_hdr_t *hdr = (lcp_tag_hdr_t *)(match + 1);
 				mpc_common_debug("LCP: matched tag unexp req=%p, flags=%x, req, src=%d, tag=%d, comm=%d",
 						match->flags,
-						hdr->src,
+						hdr->src_tid,
 						hdr->tag,
 						hdr->comm);
 

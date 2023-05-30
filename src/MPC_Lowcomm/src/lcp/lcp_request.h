@@ -23,6 +23,7 @@ enum {
         LCP_REQUEST_OFFLOADED_RNDV      = LCP_BIT(5),
         LCP_REQUEST_RECV                = LCP_BIT(6),
         LCP_REQUEST_SEND                = LCP_BIT(7),
+        LCP_REQUEST_NEED_PROGRESS       = LCP_BIT(8),
 };
 
 enum {

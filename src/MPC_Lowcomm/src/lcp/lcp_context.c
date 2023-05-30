@@ -38,7 +38,7 @@ int lcp_context_has_comm(lcp_context_h ctx, uint64_t comm_key)
 {
 	lcp_comm_ctx_t *elem = NULL;
 
-	HASH_FIND(hh, ctx->comm_ht, &comm_key, sizeof(mpc_lowcomm_communicator_id_t), elem);
+	HASH_FIND(hh, ctx->ep_ht, &comm_key, sizeof(mpc_lowcomm_communicator_id_t), elem);
 	return elem ? 1 : 0;
 }
 
@@ -61,7 +61,7 @@ int lcp_context_add_comm(lcp_context_h ctx, uint64_t comm_key)
 		rc = MPC_LOWCOMM_ERROR;
 		goto err;
 	}
-	HASH_ADD(hh, ctx->comm_ht, comm_key, sizeof(mpc_lowcomm_communicator_id_t), elem);
+	HASH_ADD(hh, ctx->ep_ht, comm_key, sizeof(mpc_lowcomm_communicator_id_t), elem);
 
 	mpc_lowcomm_communicator_t comm = 
 		mpc_lowcomm_get_communicator_from_id(comm_key);
@@ -738,8 +738,8 @@ int lcp_context_fini(lcp_context_h ctx)
 
 	/* Free allocated comm */
 	lcp_comm_ctx_t *e_comm = NULL, *e_comm_tmp = NULL;
-	HASH_ITER(hh, ctx->comm_ht, e_comm, e_comm_tmp) {
-		HASH_DELETE(hh, ctx->comm_ht, e_comm);
+	HASH_ITER(hh, ctx->ep_ht, e_comm, e_comm_tmp) {
+		HASH_DELETE(hh, ctx->ep_ht, e_comm);
 		sctk_free(e_comm);
 	}
 
@@ -780,6 +780,6 @@ uint64_t mpc_lowcomm_tag_get_endpoint_address(lcp_tag_hdr_t *hdr){
 
         /* Init all protocol data */
         comm = mpc_lowcomm_get_communicator_from_id(comm_id);
-        src  = mpc_lowcomm_communicator_uid(comm, hdr->src);
+        src  = mpc_lowcomm_communicator_uid(comm, hdr->src_tid);
         return src;
 }

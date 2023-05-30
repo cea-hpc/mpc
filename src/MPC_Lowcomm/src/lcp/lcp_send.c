@@ -123,7 +123,7 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
                         rc = MPC_LOWCOMM_ERROR;
                 }
                 mpc_common_debug("LCP: pending req dest=%d, msg_id=%llu", 
-                                 req->send.tag.dest, msg_id);
+                                 req->send.tag.dest_tid, msg_id);
                 return rc;
         }
 
