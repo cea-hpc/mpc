@@ -1573,8 +1573,7 @@ __task_finalize_persistent(mpc_omp_task_t * task)
     // dereference persistent region
     __task_unref_persistent_region(task->parent);
 
-    // reset task  instance
-    OPA_store_int(&(task->dep_node.ref_predecessors), task->dep_node.npredecessors);
+    // reset task instance
 # if MPC_OMP_TASK_COMPILE_FIBER
     if (task->fiber) task->fiber->swap_count = 0;
 # endif /* MPC_OMP_TASK_COMPILE_FIBER */
@@ -1636,16 +1635,16 @@ _mpc_omp_task_finalize(mpc_omp_task_t * task)
     {
         MPC_OMP_TASK_TRACE_DEPENDENCY(task, succ->task);
 
+        // persistent control flow are not re-discovered, so initialize them now
+        if (mpc_omp_task_property_isset(succ->task->property, MPC_OMP_TASK_PROP_CONTROL_FLOW)
+                && TASK_STATE(succ->task) == MPC_OMP_TASK_STATE_RESOLVED)
+        {
+            _mpc_omp_task_reinit_persistent(succ->task);
+        }
+
         /* if successor' dependencies are fullfilled, process it */
         if (OPA_fetch_and_decr_int(&(succ->task->dep_node.ref_predecessors)) == 1)
         {
-            // persistent control flow are not re-discovered, so initialize them now
-            if (mpc_omp_task_property_isset(succ->task->property, MPC_OMP_TASK_PROP_CONTROL_FLOW)
-                && TASK_STATE(succ->task) == MPC_OMP_TASK_STATE_RESOLVED)
-            {
-                _mpc_omp_task_reinit_persistent(succ->task);
-            }
-
             task->flags.successor = 1;
             _mpc_omp_task_process(succ->task);
         }
@@ -3717,6 +3716,7 @@ _mpc_omp_task_reinit_persistent(mpc_omp_task_t * task)
     thread->task_infos.incoming.color = 0;
 
     memset(&(task->flags), 0, sizeof(mpc_omp_task_flags_t));
+    OPA_add_int(&(task->dep_node.ref_predecessors), task->dep_node.npredecessors);
 
     MPC_OMP_TASK_TRACE_CREATE(task);
     assert(TASK_STATE(task) == MPC_OMP_TASK_STATE_RESOLVED);
@@ -4229,7 +4229,7 @@ __task_persistent_region_wait(void)
     /* coherency checks */
     mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
     mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
-    assert(region->current == NULL || (task->taskgroup && OPA_load_int(&(task->taskgroup->cancelled))));
+    assert(mpc_omp_get_persistent_task() == NULL || (task->taskgroup && OPA_load_int(&(task->taskgroup->cancelled))));
 }
 
 /* Called on each persistent task loops iterations */

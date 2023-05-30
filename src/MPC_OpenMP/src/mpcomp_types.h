@@ -857,6 +857,7 @@ typedef struct  mpc_omp_task_s
 
     /* task flags (can have concurrency, as opposed to task properties) */
     mpc_omp_task_flags_t flags;
+
 }               mpc_omp_task_t;
 
 /** RB tree for task priorities */
@@ -1358,6 +1359,7 @@ typedef struct mpc_omp_thread_s
 
     /* per-thread callback */
     mpc_omp_thread_callback_infos_t callback_infos;
+
 }       mpc_omp_thread_t;
 
 typedef struct  mpc_omp_instance_callback_infos_s
