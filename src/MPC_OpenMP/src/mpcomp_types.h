@@ -589,6 +589,7 @@ typedef struct  mpc_omp_task_dep_htable_entry_s
      * (used for redundancy check) */
     int last_out;
     int last_in;
+    int last_inoutset;
 
     /* the hmap handle */
     UT_hash_handle hh;

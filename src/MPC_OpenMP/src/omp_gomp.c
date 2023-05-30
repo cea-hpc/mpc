@@ -2083,6 +2083,9 @@ __task_data_copy(void (*cpyfn)(void *, void *), void * data_storage, void * data
     }
 }
 
+// TODO: using depobj, the 'depend' seems different than with the GCC runtime...
+// gotta check whats going on, runtime isn't getting proper dependencies atm
+
 /**
  * See https://github.com/gcc-mirror/gcc/blob/master/libgomp/task.c#L351
  *

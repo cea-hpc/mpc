@@ -1048,6 +1048,7 @@ __task_precedence_constraints(mpc_omp_task_t * predecessor, mpc_omp_task_t * suc
     /* the 2 tasks must be siblings */
     assert(predecessor->parent == successor->parent);
     assert(predecessor->depth == successor->depth);
+    assert(predecessor != successor);
 
     if (__task_in_list(predecessor->dep_node.successors, successor)
         || __task_in_list(predecessor->dep_node.persistent_successors_missed, successor))
@@ -1152,8 +1153,9 @@ __task_process_mpc_dep_entry(mpc_omp_task_t * task, void * addr)
         entry->out      = NULL;
         entry->ins      = NULL;
         entry->inoutset = NULL;
-        entry->last_out = 0;
-        entry->last_in  = 0;
+        entry->last_out         = 0;
+        entry->last_in          = 0;
+        entry->last_inoutset    = 0;
         mpc_common_spinlock_init(&(entry->lock), 0);
         HASH_ADD_KEYPTR_BYHASHVALUE(hh, task->parent->dep_node.hmap, &(entry->addr), sizeof(void *), hashv, entry);
     }
@@ -1173,14 +1175,21 @@ __task_process_mpc_dep_is_redundant(
     switch (type)
     {
         case (MPC_OMP_TASK_DEP_OUT):
+        case (MPC_OMP_TASK_DEP_INOUT):
         case (MPC_OMP_TASK_DEP_MUTEXINOUTSET):
         {
-            r = entry->last_out == task->uid;
+            r = (entry->last_out == task->uid);
             entry->last_out = task->uid;
             break ;
         }
 
         case (MPC_OMP_TASK_DEP_INOUTSET):
+        {
+            r = (entry->last_out == task->uid) || (entry->last_inoutset == task->uid);
+            entry->last_inoutset = task->uid;
+            break ;
+        }
+
         case (MPC_OMP_TASK_DEP_IN):
         {
             r = (entry->last_out == task->uid) || (entry->last_in == task->uid);
@@ -1251,7 +1260,10 @@ __task_process_mpc_dep(
                 entry->out = __task_dep_list_append(pit, entry, NULL);
                 while (entry->ins)
                 {
-                    __task_precedence_constraints(entry->ins->task, pit);
+                    // prevent cyclic deps in case 'task' already had an 'in'
+                    // dep type on the same addr previously
+                    if (entry->ins->task != task)
+                        __task_precedence_constraints(entry->ins->task, pit);
                     entry->ins = entry->ins->next;
                 }
             }
@@ -1367,7 +1379,8 @@ __task_process_mpc_dep(
          *  - delete siblings 'ins' - they are all dependant of generating task
          *  - delete siblings 'inoutset' - they are all dependant of generating task
          */
-        else if (type == MPC_OMP_TASK_DEP_OUT)
+        // TODO: mutexinoutset is implemented as 'out' atm
+        else if (type == MPC_OMP_TASK_DEP_OUT || type == MPC_OMP_TASK_DEP_MUTEXINOUTSET)
         {
             entry->ins = NULL;
             entry->inoutset = NULL;
@@ -1469,14 +1482,15 @@ __task_process_deps(mpc_omp_task_t * task, void ** depend)
 
         unsigned int i = 5;
         for ( ; i < 5 + nout ; ++i)
-            __task_process_mpc_dep(task, depend[5 + i], MPC_OMP_TASK_DEP_OUT);
+            __task_process_mpc_dep(task, depend[i], MPC_OMP_TASK_DEP_OUT);
         for ( ; i < 5 + nout + nmtxinoutset; ++i)
-            __task_process_mpc_dep(task, depend[5 + nout + i], MPC_OMP_TASK_DEP_MUTEXINOUTSET);
+            __task_process_mpc_dep(task, depend[i], MPC_OMP_TASK_DEP_MUTEXINOUTSET);
         for ( ; i < 5 + nout + nmtxinoutset + nin; ++i)
-            __task_process_mpc_dep(task, depend[5 + nout + nmtxinoutset + i], MPC_OMP_TASK_DEP_IN);
+            __task_process_mpc_dep(task, depend[i], MPC_OMP_TASK_DEP_IN);
+
         i += ndepobj;
         for (unsigned int j = 0; j < ndepobj ; ++j)
-            __task_process_mpc_dep(task, depend[i + 2*j+0], (uintptr_t)depend[i + 2*j+1]);
+            __task_process_mpc_dep(task, depend[i+2*j+0], (uintptr_t) depend[i+2*j+1]);
     }
 }
 
@@ -1508,7 +1522,7 @@ __task_deps_list_delete(mpc_omp_task_t * task)
     assert(task->parent);
     if (task->dep_node.dep_list)
     {
-        assert(task->dep_node.dep_list_size);
+        // assert(task->dep_node.dep_list_size);
         unsigned int i;
         for (i = 0 ; i < task->dep_node.dep_list_size ; ++i)
         {
