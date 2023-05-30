@@ -23,7 +23,11 @@ class TimeWorkloadPass(ipass.Pass):
         env['workload'] = {}
 
     def on_process_inspection_end(self, env):
-        pass
+        for uid in env['tasks']:
+            task = env['tasks'][uid]
+            if 'workload' not in task:
+                assert(uid == 0)
+                task['workload'] = 0
 
     def on_task_create(self, env):
         pass
