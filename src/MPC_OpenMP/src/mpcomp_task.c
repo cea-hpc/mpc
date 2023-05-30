@@ -4317,6 +4317,8 @@ _mpc_omp_event_handle_init_task_block(mpc_omp_event_handle_block_t ** handle_ptr
     OPA_store_int(&(handle->status), MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_INIT);
     mpc_common_spinlock_init(&(handle->lock), 0);
 
+    handle->parent.type = MPC_OMP_EVENT_TASK_BLOCK;
+
     OPA_store_int(&(handle->ref), 2);
     __task_ref(task);
 
