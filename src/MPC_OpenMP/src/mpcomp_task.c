@@ -37,7 +37,7 @@
 /* ######################################################################## */
 
 // TODO: this disable assert
-// #define NDEBUG
+#define NDEBUG
 #define _GNU_SOURCE
 #include <stdlib.h>
 
@@ -1635,11 +1635,17 @@ _mpc_omp_task_finalize(mpc_omp_task_t * task)
     {
         MPC_OMP_TASK_TRACE_DEPENDENCY(task, succ->task);
 
+        // TODO: use atomics on state here, no need to lock
         // persistent control flow are not re-discovered, so initialize them now
         if (mpc_omp_task_property_isset(succ->task->property, MPC_OMP_TASK_PROP_CONTROL_FLOW)
                 && TASK_STATE(succ->task) == MPC_OMP_TASK_STATE_RESOLVED)
         {
-            _mpc_omp_task_reinit_persistent(succ->task);
+            mpc_common_spinlock_lock(&(succ->task->state_lock));
+            {
+                if (TASK_STATE(succ->task) == MPC_OMP_TASK_STATE_RESOLVED)
+                    _mpc_omp_task_reinit_persistent(succ->task);
+            }
+            mpc_common_spinlock_unlock(&(succ->task->state_lock));
         }
 
         /* if successor' dependencies are fullfilled, process it */
@@ -1794,7 +1800,6 @@ __task_profile_priority_compute(mpc_omp_task_t * task)
 static void
 __task_priority_propagation_asynchronous(void)
 {
-    assert(0);
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *) mpc_omp_tls;
     assert(thread);
 
