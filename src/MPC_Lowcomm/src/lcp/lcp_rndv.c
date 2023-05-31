@@ -8,6 +8,7 @@
 #include "lcp_datatype.h"
 #include "lcp_header.h"
 #include "lcp_pending.h"
+#include "lcp_request.h"
 
 #include "sctk_alloc.h"
 #include "sctk_net_tools.h"

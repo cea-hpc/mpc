@@ -505,10 +505,9 @@ int lcr_ptl_get_tag_zcopy(_mpc_lowcomm_endpoint_t *ep,
         sctk_ptl_id_t remote          = infos->dest;
         lcr_ptl_send_comp_t *ptl_comp = NULL;
 
-        mpc_common_debug_info("PTL: get tag remote key. match=[%d:%d:%d], "
+        mpc_common_debug_info("PTL: get tag remote key. "
                               "remote=%llu, remote off=%llu, pte idx=%d, "
-                              "local addr=%p", tag.t_rget.op, tag.t_rget.length, 
-                              tag.t_rget.id, remote, remote_offset, 
+                              "local addr=%p", remote, remote_offset, 
                               srail->ptl_info.tag_pte, local_offset);
 
         ptl_comp = sctk_malloc(sizeof(lcr_ptl_send_comp_t));

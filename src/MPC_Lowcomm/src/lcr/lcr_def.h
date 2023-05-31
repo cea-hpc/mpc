@@ -26,15 +26,6 @@ typedef union {
 		uint64_t tag:24;
 		uint64_t src:24;
 	} t_tag;
-	struct {
-		uint64_t op:8;
-		uint64_t length:40;
-		uint64_t id:16;
-	} t_rget;
-	struct {
-		uint64_t op:8;
-		uint64_t id:56;
-	} t_rput;
 	uint64_t t;
 } lcr_tag_t;
 

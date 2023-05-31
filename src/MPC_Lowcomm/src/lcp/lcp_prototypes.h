@@ -1,66 +1,10 @@
-#ifndef LCP_AM_H
-#define LCP_AM_H
+#ifndef LCP_PROTOTYPES_H
+#define LCP_PROTOTYPES_H
 
 #include "lcp_def.h"
-#include "lcp_request.h"
 #include "lcr/lcr_def.h"
 
-/* ============================================== */
-/* Offload utils                                  */
-/* ============================================== */
-/* lcp_tag_t: for matching
- *
- * 64                                              0
- * <-----------------><-----------------><--------->
- *       src (24)             tag (24)     comm (16)
- */
-
-#define LCP_TM_COMM_MASK 0x000000000000ffffull
-#define LCP_TM_TAG_MASK  0x000000ffffff0000ull
-#define LCP_TM_SRC_MASK  0xffffff0000000000ull
-
-#define LCP_TM_SET_MATCHBITS(_matchbits, _src, _tag, _comm) \
-        _matchbits |= (_src & 0xffffffull); \
-        _matchbits  = (_matchbits << 24); \
-        _matchbits |= (_tag & 0xffffffull); \
-        _matchbits  = (_matchbits << 16); \
-        _matchbits |= (_comm & 0xffffull);
-
-#define LCP_TM_GET_SRC(_matchbits) \
-        ((int)((_matchbits & LCP_TM_SRC_MASK) >> 40))
-#define LCP_TM_GET_TAG(_matchbits) \
-        ((int)((_matchbits & LCP_TM_TAG_MASK) >> 16))
-#define LCP_TM_GET_COMM(_matchbits) \
-        ((uint16_t)(_matchbits & LCP_TM_COMM_MASK))
-
-/* immediate data
-
- * 64 63   60   56                          16        0
- * <--><---><---><--------------------------><-------->
- * sync  op  bitmap        size                 uid 
- */ 
-#define LCP_TM_HDR_SYNC_MASK   0x8000000000000000ull
-#define LCP_TM_HDR_OP_MASK     0x7000000000000000ull
-#define LCP_TM_HDR_LENGTH_MASK 0x0ffffffffff00000ull
-#define LCP_TM_HDR_UID_MASK    0x00000000000fffffull
-
-#define LCP_TM_SET_HDR_DATA(_hdr, _sync, _op, _length, _uid) \
-        _hdr |= (_sync ? 0 : 1); \
-        _hdr  = (_hdr << 3); \
-        _hdr |= (_op & 0x7ull); \
-        _hdr  = (_hdr << 40); \
-        _hdr |= (_length & 0x000000ffffffffffull); \
-        _hdr  = (_hdr << 20); \
-        _hdr |= (_uid & 0x00000000000fffffull);
-
-#define LCP_TM_GET_HDR_SYNC(_hdr) \
-        ((int)((_hdr & LCP_TM_HDR_SYNC_MASK) >> 63))
-#define LCP_TM_GET_HDR_OP(_hdr) \
-        ((uint8_t)((_hdr & LCP_TM_HDR_OP_MASK) >> 60))
-#define LCP_TM_GET_HDR_LENGTH(_hdr) \
-        ((size_t)((_hdr & LCP_TM_HDR_LENGTH_MASK) >> 20))
-#define LCP_TM_GET_HDR_UID(_hdr) \
-        ((size_t)(_hdr & LCP_TM_HDR_UID_MASK))
+#include <sctk_rail.h>
 
 static inline int lcp_send_do_am_bcopy(_mpc_lowcomm_endpoint_t *lcr_ep, 
                                        uint8_t am_id, 
