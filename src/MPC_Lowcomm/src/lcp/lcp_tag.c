@@ -38,6 +38,7 @@ uint64_t lcp_msg_id(uint16_t rank, uint16_t sequence){
  */
 static size_t lcp_send_tag_eager_pack(void *dest, void *data)
 {
+        ssize_t packed_length;
 	lcp_tag_hdr_t *hdr = dest;
 	lcp_request_t *req = data;
         void *src = req->datatype == LCP_DATATYPE_CONTIGUOUS ?
@@ -49,10 +50,11 @@ static size_t lcp_send_tag_eager_pack(void *dest, void *data)
         hdr->dest_tid = req->send.tag.dest_tid;
 	hdr->seqn     = req->seqn; 
 
-        lcp_datatype_pack(req->ctx, req, req->datatype,
-                          (void *)(hdr + 1), src, req->send.length);
+        packed_length = lcp_datatype_pack(req->ctx, req, req->datatype,
+                                          (void *)(hdr + 1), src, 
+                                          req->send.length);
 
-	return sizeof(*hdr) + req->send.length;
+	return sizeof(*hdr) + packed_length;
 }
 
 /**
@@ -110,6 +112,7 @@ static void lcp_tag_send_complete(lcr_completion_t *comp) {
 	lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
 					      state.comp);
 
+        //FIXME: should it be the state length actually received ?
         req->info->length = req->send.length;
         req->info->src    = req->send.tag.src_tid;
         req->info->tag    = req->send.tag.tag;
@@ -123,6 +126,7 @@ static void lcp_tag_recv_complete(lcr_completion_t *comp) {
 	lcp_request_t *req = mpc_container_of(comp, lcp_request_t, 
 					      state.comp);
 
+        //FIXME: should it be the state length actually received ?
         req->info->length = req->recv.send_length;
         req->info->src    = req->recv.tag.src_tid;
         req->info->tag    = req->recv.tag.tag;
@@ -271,9 +275,9 @@ int lcp_recv_eager_tag_data(lcp_request_t *req, void *data,
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         lcp_tag_hdr_t *hdr = (lcp_tag_hdr_t *)data;
-        size_t unpacked_len = 0;
+        ssize_t unpacked_len = 0;
 
-        mpc_common_debug("LCP: matched tag unexp req=%p, src=%d, "
+        mpc_common_debug("LCP: recv tag data req=%p, src=%d, "
                          "tag=%d, comm=%d", req, hdr->src_tid, hdr->tag, 
                          hdr->comm);
         /* copy data to receiver buffer and complete request */
@@ -284,11 +288,6 @@ int lcp_recv_eager_tag_data(lcp_request_t *req, void *data,
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
-
-        /* set recv info for caller */
-        req->recv.send_length = length; 
-        req->recv.tag.src_tid = hdr->src_tid;
-        req->recv.tag.tag     = hdr->tag;
 
         lcp_tag_recv_complete(&(req->state.comp));
 err:

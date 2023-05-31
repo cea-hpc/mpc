@@ -206,9 +206,10 @@ err:
 }
 
 /* ============================================== */
-/* Rendez-vous recv completion callback           */
+/* Rendez-vous completion callback                */
 /* ============================================== */
-void lcp_request_complete_rndv(lcr_completion_t *comp)
+
+void lcp_rndv_complete(lcr_completion_t *comp)
 {
         int payload;
         lcp_request_t *rndv_req = mpc_container_of(comp, lcp_request_t, 
@@ -225,16 +226,7 @@ void lcp_request_complete_rndv(lcr_completion_t *comp)
                                                rndv_req);
                 if (payload < 0) {
                         mpc_common_debug_error("LCP: error sending fin message");
-                }
-
-                /* If GET protocol and data is derived, we must unpack it to the
-                 * original buffer */
-                if ((rndv_req->ctx->config.rndv_mode == LCP_RNDV_GET) &&
-                    (rndv_req->datatype & LCP_DATATYPE_DERIVED)) {
-                        lcp_datatype_unpack(rndv_req->ctx, rndv_req, 
-                                            rndv_req->datatype,
-                                            NULL, rndv_req->state.pack_buf, 
-                                            super->recv.send_length);
+                        return;
                 }
 
                 /* Complete super request with specified completion function */
@@ -248,6 +240,7 @@ void lcp_request_complete_rndv(lcr_completion_t *comp)
 /* ============================================== */
 /* Protocol starts                                */
 /* ============================================== */
+
 /**
  * @brief Start an rndv protocol with active message
  * 
@@ -261,6 +254,8 @@ int lcp_send_rndv_start(lcp_request_t *req)
 
         /* If data is derived, buffer must be allocated and data packed to make
          * it contiguous and use zcopy and memory registration. */
+        //FIXME: could be factorized. Code similar for send/recv and
+        //       onload/offload datapaths.
         if (req->datatype & LCP_DATATYPE_DERIVED) {
                 req->state.pack_buf = sctk_malloc(req->send.length);
                 if (req->state.pack_buf == NULL) {
@@ -291,7 +286,7 @@ int lcp_send_rndv_start(lcp_request_t *req)
         rndv_req->state.remaining = req->send.length;
         rndv_req->state.offset    = 0;
         rndv_req->state.comp  = (lcr_completion_t) {
-                .comp_cb = lcp_request_complete_rndv,
+                .comp_cb = lcp_rndv_complete,
         };
 
         if (lcp_pending_create(req->ctx->pend, rndv_req, rndv_req->msg_id) == NULL) {
@@ -309,7 +304,7 @@ err:
 /* ============================================== */
 /* Recv                                           */
 /* ============================================== */
-static int lcp_rndv_process_rtr(lcp_request_t *rndv_req)
+static int lcp_rndv_progress_rtr(lcp_request_t *rndv_req)
 {
         int rc, payload;
         lcp_ep_h ep        = rndv_req->send.ep;
@@ -395,12 +390,12 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
                 }
 
                 /* Set RTR function that will send packed rkey */
-                rndv_req->send.func = lcp_rndv_process_rtr;
+                rndv_req->send.func = lcp_rndv_progress_rtr;
                 break;
         case LCP_RNDV_GET:
                 /* For RGET, data is unpacked upon completion */
                 rndv_req->state.comp = (lcr_completion_t) {
-                        .comp_cb = lcp_request_complete_rndv
+                        .comp_cb = lcp_rndv_complete
                 };
 
                 /* Unpack remote key */
@@ -430,8 +425,9 @@ err:
 /* RTR handler will be run for PUT protocol only */
 static int lcp_rndv_rtr_handler(void *arg, void *data,
                                 size_t size, 
-                                __UNUSED__ unsigned flags)
+                                unsigned flags)
 {
+        UNUSED(flags);
         int rc = MPC_LOWCOMM_SUCCESS;
         lcp_context_h ctx = arg;
         lcp_rndv_ack_hdr_t *hdr = data;
@@ -470,9 +466,11 @@ err:
  * @return int MPC_LOWCOMM_SUCCESS in case of success
  */
 static int lcp_rndv_fin_handler(void *arg, void *data,
-                                __UNUSED__ size_t length, 
-                                __UNUSED__ unsigned flags)
+                                size_t length, 
+                                unsigned flags)
 {
+        UNUSED(length);
+        UNUSED(flags);
         int rc = MPC_LOWCOMM_SUCCESS;
         lcp_context_h ctx = arg;
         lcp_rndv_ack_hdr_t *hdr = data;
@@ -503,7 +501,9 @@ static int lcp_rndv_fin_handler(void *arg, void *data,
          * unregister the memory */
         lcp_mem_deregister(req->ctx, req->state.lmem);
 
-        lcp_request_complete(req);
+        /* Call completion of super request */
+        req->state.comp.comp_cb(&(req->state.comp));
+
         lcp_request_complete(rndv_req);
 
 	LCP_CONTEXT_UNLOCK(ctx);

@@ -25,6 +25,7 @@ int lcp_datatype_pack(lcp_context_h ctx, lcp_request_t *req,
                 break;
         case LCP_DATATYPE_DERIVED:
                 ctx->dt_ops.pack(req->request, dest);
+                //FIXME: verify packed length
                 packed_len = length;
                 break;
         default:
@@ -36,6 +37,9 @@ int lcp_datatype_pack(lcp_context_h ctx, lcp_request_t *req,
         return packed_len;
 }
 
+//FIXME: Ambiguity because for DERIVED, dest argument could have any value set
+//       by the calling function which would not have any impact.
+//       This is not readable...
 int lcp_datatype_unpack(lcp_context_h ctx, lcp_request_t *req, 
                         lcp_datatype_t datatype, void *dest, 
                         const void *src, size_t length)

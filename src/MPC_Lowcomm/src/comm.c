@@ -3666,6 +3666,9 @@ int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destinat
         rc = lcp_tag_probe_nb(task, world_source, tag, 
                               comm->id, &recv_info);
 
+        /* Progress communications to check if event has been raised. */
+	lcp_progress(lcp_ctx_loc);
+
 	if((*flag = recv_info.found)) {
 		if(has_status) {
 			status->MPC_SOURCE = recv_info.src;
@@ -3676,9 +3679,6 @@ int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destinat
 
                 return rc;
 	}
-
-        /* Progress communications if not found. */
-	lcp_progress(lcp_ctx_loc);
 
         return rc;
 #else

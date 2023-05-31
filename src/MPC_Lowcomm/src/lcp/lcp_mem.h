@@ -4,8 +4,6 @@
 #include "lcp_types.h"
 #include "lcr/lcr_def.h"
 #include "lcp_def.h"
- 
-#include "bitmap.h"
 
 /**
  * @brief memory object
@@ -17,6 +15,7 @@ struct lcp_mem {
         int num_ifaces;
         lcr_memp_t *mems; /* table of memp pointers */
         bmap_t bm;
+        unsigned flags;
 };
 
 int lcp_mem_create(lcp_context_h ctx, lcp_mem_h *mem_p);
@@ -29,6 +28,14 @@ int lcp_mem_post(lcp_context_h ctx,
                  lcr_tag_t tag,
                  unsigned flags, 
                  lcr_tag_context_t *tag_ctx);
+int lcp_mem_post_from_map(lcp_context_h ctx, 
+                          lcp_mem_h mem, 
+                          bmap_t bm,
+                          void *buffer, 
+                          size_t length,
+                          lcr_tag_t tag,
+                          unsigned flags, 
+                          lcr_tag_context_t *tag_ctx);
 int lcp_mem_reg_from_map(lcp_context_h ctx,
                          lcp_mem_h mem,
                          bmap_t mem_map,

@@ -35,11 +35,13 @@ int lcp_send_start(lcp_ep_h ep, lcp_request_t *req,
             (param->flags & LCP_REQUEST_TRY_OFFLOAD))) {
                 size = req->send.length;
                 req->state.offloaded = 1;
-                if (size <= ep->ep_config.tag.max_bcopy) {
-                        req->send.func = lcp_send_tag_eager_tag_bcopy;
+                if (size <= ep->ep_config.tag.max_bcopy ||
+                    ((req->send.length <= ep->ep_config.tag.max_zcopy) &&
+                     (param->datatype & LCP_DATATYPE_DERIVED))) {
+                        req->send.func = lcp_send_tag_offload_eager_bcopy;
                 } else if ((size <= ep->ep_config.tag.max_zcopy) &&
                            (param->datatype & LCP_DATATYPE_CONTIGUOUS)) {
-                        req->send.func = lcp_send_tag_eager_tag_zcopy;
+                        req->send.func = lcp_send_tag_offload_eager_zcopy;
                 } else {
                         req->request->synchronized = 0;
                         rc = lcp_send_rndv_offload_start(req);
@@ -50,10 +52,11 @@ int lcp_send_start(lcp_ep_h ep, lcp_request_t *req,
                 //      implemented to decide
                 req->state.offloaded = 0;
                 //FIXME: size set in the middle of nowhere...
+                //FIXME: remove usage of header structure
                 size = req->send.length + sizeof(lcp_tag_hdr_t);
                 if (size <= ep->ep_config.am.max_bcopy || 
                     ((req->send.length <= ep->ep_config.tag.max_zcopy) &&
-                     param->datatype & LCP_DATATYPE_DERIVED)) {
+                     (param->datatype & LCP_DATATYPE_DERIVED))) {
                         req->send.func = lcp_send_eager_tag_bcopy;
                 } else if ((size <= ep->ep_config.am.max_zcopy) &&
                            (param->datatype & LCP_DATATYPE_CONTIGUOUS)) {

@@ -15,9 +15,9 @@
  *       src (24)             tag (24)     comm (16)
  */
 
-#define LCP_TM_COMM_MASK 0x800000000000ffffull
-#define LCP_TM_TAG_MASK  0x800000ffffff0000ull
-#define LCP_TM_SRC_MASK  0x7fffff0000000000ull
+#define LCP_TM_COMM_MASK 0x000000000000ffffull
+#define LCP_TM_TAG_MASK  0x000000ffffff0000ull
+#define LCP_TM_SRC_MASK  0xffffff0000000000ull
 
 #define LCP_TM_SET_MATCHBITS(_matchbits, _src, _tag, _comm) \
         _matchbits |= (_src & 0xffffffull); \
@@ -41,29 +41,24 @@
  */ 
 #define LCP_TM_HDR_SYNC_MASK   0x8000000000000000ull
 #define LCP_TM_HDR_OP_MASK     0x7000000000000000ull
-#define LCP_TM_HDR_BITMAP_MASK 0x0f00000000000000ull
-#define LCP_TM_HDR_LENGTH_MASK 0x00ffffffffff0000ull
-#define LCP_TM_HDR_UID_MASK    0x000000000000ffffull
+#define LCP_TM_HDR_LENGTH_MASK 0x0ffffffffff00000ull
+#define LCP_TM_HDR_UID_MASK    0x00000000000fffffull
 
-#define LCP_TM_SET_HDR_DATA(_hdr, _sync, _op, _bm, _length, _uid) \
+#define LCP_TM_SET_HDR_DATA(_hdr, _sync, _op, _length, _uid) \
         _hdr |= (_sync ? 0 : 1); \
         _hdr  = (_hdr << 3); \
         _hdr |= (_op & 0x7ull); \
-        _hdr  = (_hdr << 4); \
-        _hdr |= (_bm & 0xfull); \
         _hdr  = (_hdr << 40); \
         _hdr |= (_length & 0x000000ffffffffffull); \
-        _hdr  = (_hdr << 16); \
-        _hdr |= (_uid & 0x000000000000ffffull);
+        _hdr  = (_hdr << 20); \
+        _hdr |= (_uid & 0x00000000000fffffull);
 
 #define LCP_TM_GET_HDR_SYNC(_hdr) \
         ((int)((_hdr & LCP_TM_HDR_SYNC_MASK) >> 63))
 #define LCP_TM_GET_HDR_OP(_hdr) \
         ((uint8_t)((_hdr & LCP_TM_HDR_OP_MASK) >> 60))
-#define LCP_TM_GET_HDR_BITMAP(_hdr) \
-        ((uint64_t)((_hdr & LCP_TM_HDR_BITMAP_MASK) >> 56))
 #define LCP_TM_GET_HDR_LENGTH(_hdr) \
-        ((size_t)((_hdr & LCP_TM_HDR_LENGTH_MASK) >> 16))
+        ((size_t)((_hdr & LCP_TM_HDR_LENGTH_MASK) >> 20))
 #define LCP_TM_GET_HDR_UID(_hdr) \
         ((size_t)(_hdr & LCP_TM_HDR_UID_MASK))
 

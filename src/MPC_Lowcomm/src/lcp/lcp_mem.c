@@ -288,6 +288,68 @@ err:
  * @param tag_ctx tag context
  * @return int MPC_LOWCOMM_SUCCESS in case of success
  */
+int lcp_mem_post_from_map(lcp_context_h ctx, 
+                          lcp_mem_h mem, 
+                          bmap_t bm,
+                          void *buffer, 
+                          size_t length,
+                          lcr_tag_t tag,
+                          unsigned flags, 
+                          lcr_tag_context_t *tag_ctx)
+{
+        int rc = MPC_LOWCOMM_SUCCESS;
+        int i = 0, k, nb_posted = 0, nb_ifaces = 0;
+        lcr_rail_attr_t attr;
+        lcr_tag_t ign = { 0 };
+        size_t iovcnt = 0;
+        struct iovec iov[1];
+        sctk_rail_info_t *iface = ctx->resources[ctx->priority_rail].iface;
+
+        //FIXME: check 0 length memory registration
+
+        /* Count the number of interface to use */
+        for (k = 0; k < ctx->num_resources; k++) {
+                if (MPC_BITMAP_GET(bm, i)) {
+                        nb_ifaces++;
+                }
+        }
+
+        mem->length     = length;
+        mem->base_addr  = (uint64_t)buffer;
+        mem->flags      = flags;
+        mem->bm         = bm;
+
+        iov[0].iov_base = buffer;
+        iov[0].iov_len  = length;
+        iovcnt++;
+
+        iface->iface_get_attr(iface, &attr);
+
+        while (length > nb_posted * attr.iface.cap.rndv.max_get_zcopy) {
+                if (!MPC_BITMAP_GET(bm, i)) {
+                        i = (i + 1) % ctx->num_resources;
+                        continue;
+                }
+                iface = ctx->resources[i].iface;
+                rc = iface->post_tag_zcopy(iface, tag, ign, iov, 
+                                           iovcnt, flags, tag_ctx);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        mpc_common_debug_error("LCP MEM: could not post on "
+                                               "interface");
+                        goto err;
+                }
+
+                /* If memory is persistent, only one post per iface. */
+                if ((++nb_posted == nb_ifaces) &&
+                    (flags & LCR_IFACE_TM_PERSISTANT_MEM)) {
+                        break;
+                }
+        }
+
+err:
+        return rc;
+}
+
 int lcp_mem_post(lcp_context_h ctx, 
                  lcp_mem_h *mem_p, 
                  void *buffer, 
@@ -343,6 +405,12 @@ int lcp_mem_unpost(lcp_context_h ctx, lcp_mem_h mem, lcr_tag_t tag)
         int i;
         int rc = MPC_LOWCOMM_SUCCESS;
         sctk_rail_info_t *iface = NULL;
+
+        /* Memory should be unposted only if it has been previously posted as
+         * persistent */
+        if (!(mem->flags & LCR_IFACE_TM_PERSISTANT_MEM)) {
+                return MPC_LOWCOMM_SUCCESS;
+        }
 
         for (i=0; i<ctx->num_resources; i++) {
                 if (MPC_BITMAP_GET(mem->bm, i)) {

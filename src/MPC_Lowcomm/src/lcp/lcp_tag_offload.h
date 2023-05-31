@@ -4,8 +4,8 @@
 #include "lcp_def.h"
 #include "lcr/lcr_def.h"
 
-int lcp_send_tag_eager_tag_bcopy(lcp_request_t *req);
-int lcp_send_tag_eager_tag_zcopy(lcp_request_t *req);
+int lcp_send_tag_offload_eager_bcopy(lcp_request_t *req);
+int lcp_send_tag_offload_eager_zcopy(lcp_request_t *req);
 
 int lcp_send_rndv_offload_start(lcp_request_t *req);
 
