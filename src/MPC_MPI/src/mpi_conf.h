@@ -201,6 +201,13 @@ static inline void _mpc_mpi_config_coll_route(MPI_Comm comm,
 
 struct _mpc_mpi_config_topo_coll_opts
 {
+    /*
+     * Use topological algorithms for all collective operations
+     */
+    char full[MPC_CONF_STRING_SIZE]; ///< Enable/disable topological algorithms globally.
+                                     ///< Ignore other topological configuration entries
+                                     ///< unless full == "auto".
+
     int max_level;
 
     /* 

@@ -262,7 +262,9 @@ mpc_conf_config_type_t *_mpc_mpi_config_coll_algorithm_array_conf( struct _mpc_m
 mpc_conf_config_type_t *_mpc_mpi_config_topo_array_conf( struct _mpc_mpi_config_topo_coll_opts *opts )
 {
                               
-	mpc_conf_config_type_t *ret = mpc_conf_config_type_init( "topo",
+  mpc_conf_config_type_t *ret = mpc_conf_config_type_init( "topo",
+                                 PARAM( "full", &opts->full, MPC_CONF_STRING,
+                                    "Force enable/disable topological algorithms for all collective operations <on|off|true|false|auto>" ),
                                  PARAM( "persistent", &opts->persistent, MPC_CONF_BOOL,
                                     "Use topological algorithms for all persistent collective operations" ),
                                  PARAM( "nbc", &opts->non_blocking, MPC_CONF_BOOL,
@@ -444,6 +446,14 @@ static inline void __coll_intracomm_shared_node_defaults( void )
 	coll->exscan_name[0] = '\0';
 }
 
+static inline void __coll_compatibility_deepsea_defaults( void )
+{
+  struct _mpc_mpi_config_coll_opts *opts = &__mpc_mpi_config.coll_opts;
+  snprintf( opts->topo.full, MPC_CONF_STRING_SIZE, "auto" );
+}
+
+
+
 static inline void __load_coll_function( char *family, char *func_name, int ( **func )() )
 {
 	/* We allow functions not to be present
@@ -511,6 +521,61 @@ void _mpc_mpi_config_coll_algorithm_array_resolve( struct _mpc_mpi_config_coll_a
 	__load_coll_function( family, coll->scan_name, &coll->scan );
 }
 
+static inline void _mpc_mpi_config_coll_override_topo_settings( int max_level, int topo_value )
+{
+  struct _mpc_mpi_config_topo_coll_opts* topo_opts = &__mpc_mpi_config.coll_opts.topo;
+
+  topo_opts->max_level = max_level;
+
+  topo_opts->persistent = topo_value;
+  topo_opts->non_blocking = topo_value;
+  topo_opts->blocking = topo_value;
+  topo_opts->barrier = topo_value;
+  topo_opts->bcast = topo_value;
+  topo_opts->allgather = topo_value;
+  topo_opts->allgatherv = topo_value;
+  topo_opts->alltoall = topo_value;
+  topo_opts->alltoallv = topo_value;
+  topo_opts->alltoallw = topo_value;
+  topo_opts->gather = topo_value;
+  topo_opts->gatherv = topo_value;
+  topo_opts->scatter = topo_value;
+  topo_opts->scatterv = topo_value;
+  topo_opts->reduce = topo_value;
+  topo_opts->allreduce = topo_value;
+  topo_opts->reduce_scatter = topo_value;
+  topo_opts->reduce_scatter_block = topo_value;
+  topo_opts->scan = topo_value;
+  topo_opts->exscan = topo_value;
+}
+
+/**
+ * Handle the mpcframework.mpi.coll.intracomm.topo.full configuration entry.
+ * If toggle is set to ("on", "off", "true", "false"),
+ * all topological configuration entries are overriden.
+ */
+static inline void _mpc_mpi_config_coll_toggle_topo_full( char const* toggle )
+{
+  int toggle_on_max_level = 3; // Topological-level count when toggle is set to "on"
+                               // Define the value of __mpc_mpi_config.coll_opts.topo.max_level
+
+  if (strcmp(toggle, "on") == 0 || strcmp(toggle, "true") == 0) {
+    // Enable all topological algorithms
+    // Override other topological variables
+    _mpc_mpi_config_coll_override_topo_settings(toggle_on_max_level, 1);
+
+  } else if (strcmp(toggle, "off") == 0 || strcmp(toggle, "false") == 0) {
+    // Disable all topological algorithms
+    // Override other topological variables
+    _mpc_mpi_config_coll_override_topo_settings(0, 0);
+  } else {
+    // Auto mode: do not override other topological variables
+    if (strcmp(toggle, "auto") != 0) {
+        bad_parameter("Invalid toggle value '%s' in global topological-algorithm toggle, expected (on, off, true, false, auto)", toggle);
+    }
+  }
+}
+
 static inline void __coll_check( void )
 {
 	_mpc_mpi_config_coll_array_resolve( &__mpc_mpi_config.coll_intercomm, "intercomm" );
@@ -518,6 +583,7 @@ static inline void __coll_check( void )
 	_mpc_mpi_config_coll_algorithm_array_resolve( &__mpc_mpi_config.coll_algorithm_intracomm, "intracomm algorithm" );
 	_mpc_mpi_config_coll_array_resolve( &__mpc_mpi_config.coll_intracomm_shm, "intracomm shm" );
 	_mpc_mpi_config_coll_array_resolve( &__mpc_mpi_config.coll_intracomm_shared_node, "intracomm shared-node" );
+  _mpc_mpi_config_coll_toggle_topo_full( __mpc_mpi_config.coll_opts.topo.full );
 }
 
 static inline void __coll_defaults( void )
@@ -528,6 +594,7 @@ static inline void __coll_defaults( void )
   __coll_algorithm_intracomm_defaults();
 	__coll_intracomm_shm_defaults();
 	__coll_intracomm_shared_node_defaults();
+  __coll_compatibility_deepsea_defaults();
 }
 
 
@@ -592,6 +659,26 @@ mpc_conf_config_type_t *__init_coll_config( void )
 	return ret;
 }
 
+mpc_conf_config_type_t *__init_deepsea_coll_compatibility_config( void ) {
+  struct _mpc_mpi_config_coll_opts *opts = &__mpc_mpi_config.coll_opts;
+
+  mpc_conf_config_type_t *hierarchical_coll = mpc_conf_config_type_init("hierarchy",
+      PARAM("full",
+        &opts->topo.full,
+        MPC_CONF_STRING,
+        "Use topological algorithms for all collective operations <on|off|auto> - Alias of mpcframework.mpi.coll.intracomm.topo.full"),
+      NULL);
+
+  mpc_conf_config_type_t *deepsea_coll_compat = mpc_conf_config_type_init("coll",
+      PARAM("hierarchy",
+        hierarchical_coll,
+        MPC_CONF_TYPE,
+        "Hierarchical-algorithm configuration"),
+      NULL);
+
+  return deepsea_coll_compat;
+}
+
 /*********************
  * GLOBAL PARAMETERS *
  *********************/
@@ -623,4 +710,8 @@ void _mpc_mpi_config_init( void )
 															 NULL );
 
 	mpc_conf_root_config_append( "mpcframework", mpi, "MPC MPI Configuration" );
+
+  mpc_conf_root_config_init("deepsea");
+  mpc_conf_config_type_t *deepsea_coll_compat = __init_deepsea_coll_compatibility_config();
+  mpc_conf_root_config_append("deepsea", deepsea_coll_compat, "Cross-implementation collective-operation configuration");
 }
