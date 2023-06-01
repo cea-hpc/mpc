@@ -1763,17 +1763,16 @@ int ___collectives_bcast_topo(void *buffer, int count, MPI_Datatype datatype, in
   }
 
   if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
-
-    //if(!__Get_topo_comm_allowed(coll_type)) {
-    //  // For some reason, we ended up here
-    //  // We cannot create topological and they aren't already created
-    //  // Fallback on non-topological algorithms
-    //  
-    //  res = _mpc_mpi_config()->coll_algorithm_intracomm.bcast(buffer, count, datatype, root, comm, coll_type, schedule, info);
-    //  info->flag = initial_flag; 
-    //  return res;
-    //}
-
+    if(!(initial_flag & SCHED_INFO_TOPO_COMM_ALLOWED)) {
+      // For some reason, we ended up here.
+      // We cannot create topological communicators and they aren't created already.
+      // Falling back to non-topological algorithms still prints warning
+      // because this is caused by user configuration.
+      mpc_common_debug_warning("Topological %s called, but topological communicators couldn't be fetched or created.\nFall back to non-topological algorithm", "bcast");
+      int res = ___collectives_bcast_switch(buffer, count, datatype, root, comm, coll_type, schedule, info);
+      info->flag = initial_flag;
+      return res;
+    }
 
     /* choose max topological level on which to do hardware split */
     /*TODO choose level wisely */
@@ -2411,6 +2410,16 @@ int ___collectives_reduce_topo(const void *sendbuf, void* recvbuf, int count, MP
   }
 
   if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
+    if(!(info->flag & SCHED_INFO_TOPO_COMM_ALLOWED)) {
+      // For some reason, we ended up here.
+      // We cannot create topological communicators and they aren't created already.
+      // Falling back to non-topological algorithms still prints warning
+      // because this is caused by user configuration.
+      mpc_common_debug_warning("Topological %s called, but topological communicators couldn't be fetched or created.\nFall back to non-topological algorithm", "reduce");
+      int res = ___collectives_reduce_switch(sendbuf, recvbuf, count, datatype, op, root, comm, coll_type, schedule, info);
+      return res;
+    }
+
     /* choose max topological level on which to do hardware split */
     /*TODO choose level wisely */
     int max_level = _mpc_mpi_config()->coll_opts.topo.max_level;
@@ -2487,6 +2496,17 @@ int ___collectives_reduce_topo_commute(const void *sendbuf, void* recvbuf, int c
   }
 
   if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
+    if(!(initial_flag & SCHED_INFO_TOPO_COMM_ALLOWED)) {
+      // For some reason, we ended up here.
+      // We cannot create topological communicators and they aren't created already.
+      // Falling back to non-topological algorithms still prints warning
+      // because this is caused by user configuration.
+      mpc_common_debug_warning("Topological %s called, but topological communicators couldn't be fetched or created.\nFall back to non-topological algorithm", "commutative reduce");
+      int res = ___collectives_reduce_switch(sendbuf, recvbuf, count, datatype, op, root, comm, coll_type, schedule, info);
+      info->flag = initial_flag;
+      return res;
+    }
+
     /* choose max topological level on which to do hardware split */
     /*TODO choose level wisely */
     int max_level = _mpc_mpi_config()->coll_opts.topo.max_level;
@@ -3975,6 +3995,17 @@ int ___collectives_scatter_topo(const void *sendbuf, int sendcount, MPI_Datatype
   }
 
   if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
+    if(!(initial_flag & SCHED_INFO_TOPO_COMM_ALLOWED)) {
+      // For some reason, we ended up here.
+      // We cannot create topological communicators and they aren't created already.
+      // Falling back to non-topological algorithms still prints warning
+      // because this is caused by user configuration.
+      mpc_common_debug_warning("Topological %s called, but topological communicators couldn't be fetched or created.\nFall back to non-topological algorithm", "scatter");
+      int res = ___collectives_scatter_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, coll_type, schedule, info);
+      info->flag = initial_flag;
+      return res;
+    }
+
     /* choose max topological level on which to do hardware split */
     /*TODO choose level wisely */
     int max_level = _mpc_mpi_config()->coll_opts.topo.max_level;
@@ -5033,6 +5064,17 @@ int ___collectives_gather_topo(const void *sendbuf, int sendcount, MPI_Datatype 
   }
 
   if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
+    if(!(initial_flag & SCHED_INFO_TOPO_COMM_ALLOWED)) {
+      // For some reason, we ended up here.
+      // We cannot create topological communicators and they aren't created already.
+      // Falling back to non-topological algorithms still prints warning
+      // because this is caused by user configuration.
+      mpc_common_debug_warning("Topological %s called, but topological communicators couldn't be fetched or created.\nFall back to non-topological algorithm", "gather");
+      int res = ___collectives_gather_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, coll_type, schedule, info);
+      info->flag = initial_flag;
+      return res;
+    }
+
     /* choose max topological level on which to do hardware split */
     /*TODO choose level wisely */
     int max_level = _mpc_mpi_config()->coll_opts.topo.max_level;
@@ -8086,16 +8128,17 @@ int ___collectives_alltoall_topo(const void *sendbuf, int sendcount, MPI_Datatyp
   // We fetch the topological communicators if we can, if not we create them
   int root = 0;
   if(!(info->hardware_info_ptr) && !(info->hardware_info_ptr = mpc_lowcomm_topo_comm_get(comm, root))) {
-    if(!(info->flag & SCHED_INFO_TOPO_COMM_ALLOWED)) {
-      // For some reason, we ended up here
-      // We cannot create topological communicators and they aren't already created
-      // Fallback on non-topological algorithms
-      // still print warning because this is caused by user configuration.
-      mpc_common_debug_warning("Topological alltoall called, but topological communicators couldn't be fetched or created.\nFallback on non topological alltoall");
+    if(!(initial_flag & SCHED_INFO_TOPO_COMM_ALLOWED)) {
+      // For some reason, we ended up here.
+      // We cannot create topological communicators and they aren't created already.
+      // Falling back to non-topological algorithms still prints warning
+      // because this is caused by user configuration.
+      mpc_common_debug_warning("Topological %s called, but topological communicators couldn't be fetched or created.\nFall back to non-topological algorithm", "alltoall");
       int res = ___collectives_alltoall_switch(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, coll_type, schedule, info);
       info->flag = initial_flag;
       return res;
     }
+
     /* choose max topological level on which to do hardware split */
     /*TODO choose level wisely */
     int max_level = _mpc_mpi_config()->coll_opts.topo.max_level;
