@@ -126,6 +126,4 @@ struct lcp_context {
         lcp_dt_ops_t dt_ops; /* pack/unpack functions */
 };
 
-uint64_t mpc_lowcomm_tag_get_endpoint_address(lcp_tag_hdr_t *hdr);
-
 #endif 

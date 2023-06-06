@@ -13,16 +13,14 @@
 #include <sctk_alloc.h>
 
 enum {
-	LCP_REQUEST_RNDV_TAG            = LCP_BIT(0),
 	LCP_REQUEST_DELETE_FROM_PENDING = LCP_BIT(1),
 	LCP_REQUEST_RECV_TRUNC          = LCP_BIT(2), /* flags if request is truncated */
         LCP_REQUEST_MPI_COMPLETE        = LCP_BIT(3), /* call MPI level completion callback, 
                                                          see ucp_request_complete */
         LCP_REQUEST_RMA_COMPLETE        = LCP_BIT(4),
         LCP_REQUEST_OFFLOADED_RNDV      = LCP_BIT(5),
-        LCP_REQUEST_RECV                = LCP_BIT(6),
-        LCP_REQUEST_SEND                = LCP_BIT(7),
-        LCP_REQUEST_NEED_PROGRESS       = LCP_BIT(8),
+        LCP_REQUEST_LOCAL_COMPLETED     = LCP_BIT(6),
+        LCP_REQUEST_REMOTE_COMPLETED    = LCP_BIT(7),
 };
 
 enum {
@@ -43,20 +41,18 @@ struct lcp_unexp_ctnr {
 typedef int (*lcp_send_func_t)(lcp_request_t *req);
 
 struct lcp_request {
-	uint64_t       flags;
-	lcp_context_h  ctx; 
-	lcp_task_h     task; 
+        uint64_t       flags;
+        lcp_context_h  ctx; 
+        lcp_task_h     task; 
         lcp_datatype_t datatype;
-        mpc_lowcomm_ptp_message_class_t message_type;
-	union {
-		struct {
-			lcp_ep_h ep;
-			size_t length; /* Total length, in bytes */
+        int is_sync;
+        union {
+                struct {
+                        lcp_ep_h ep;
+                        size_t length; /* Total length, in bytes */
 			void *buffer;
 			lcr_tag_context_t t_ctx;
                         lcp_complete_callback_func_t cb;
-                        size_t (*pack_function)(void *dest, void *data);
-                        uint64_t ack_msg_key;
 			union {
 				struct {
 					uint16_t comm;
@@ -192,6 +188,12 @@ struct lcp_request {
 	(_req)->state.offset      = 0;                                       \
 }
 
+#define LCP_REQUEST_SET_MSGID(_msg_id, _tid, _seqn) \
+        _msg_id |= (_tid & 0xffffffffull);          \
+        _msg_id  = (_msg_id << 32);                 \
+        _msg_id |= (_seqn & 0xffffffffull);
+
+
 static inline void lcp_request_init_rma_put(lcp_request_t *req, 
                                             uint64_t remote_addr,
                                             lcp_mem_h rkey,
@@ -213,12 +215,6 @@ static inline int lcp_request_send(lcp_request_t *req)
                 if (req->send.ep->state == LCP_EP_FLAG_CONNECTING) {
                         mpc_queue_push(&req->ctx->pending_queue, &req->queue);
                         return MPC_LOWCOMM_SUCCESS;
-                } else if (lcp_pending_get_request(req->ctx->pend, 
-                                                   req->msg_id) != NULL) {
-                        //FIXME: modify request progression managment.
-                        req->flags |= ~LCP_REQUEST_NEED_PROGRESS;
-                        // req->flags &= ~LCP_REQUEST_NEED_PROGRESS;
-                        lcp_pending_delete(req->ctx->pend, req->msg_id);
                 }
         }
 

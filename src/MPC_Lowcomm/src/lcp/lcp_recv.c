@@ -71,13 +71,15 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 	if (match->flags & LCP_RECV_CONTAINER_UNEXP_RNDV_TAG) {
 		mpc_common_debug_info("LCP: matched rndv unexp req=%p, flags=%x", 
 				      match, match->flags);
-                rc = lcp_rndv_process_rts(req, (lcp_rndv_hdr_t *)(match + 1),
+
+                lcp_recv_rndv_tag_data(req, match + 1);
+                rc = lcp_rndv_process_rts(req, match + 1,
                                           match->length - sizeof(lcp_rndv_hdr_t));
 
 	} else if (match->flags & LCP_RECV_CONTAINER_UNEXP_EAGER_TAG) {
                 /* If synchronization was asked, send ack message */
 		if(match->flags & LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC)
-			lcp_tag_send_ack(req);
+			lcp_send_eager_sync_ack(req, match + 1);
 
                 rc = lcp_recv_eager_tag_data(req, match + 1, 
                                              match->length - sizeof(lcp_tag_hdr_t));

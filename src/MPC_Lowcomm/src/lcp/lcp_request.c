@@ -68,35 +68,32 @@ int lcp_request_init_unexp_ctnr(lcp_unexp_ctnr_t **ctnr_p, void *data,
  */
 int lcp_request_complete(lcp_request_t *req)
 {
-	static mpc_common_spinlock_t lock = MPC_COMMON_SPINLOCK_INITIALIZER;
-	mpc_common_spinlock_lock_yield(&lock);
 	mpc_common_debug("LCP: complete req=%p, comm_id=%llu, msg_id=%llu, "
 			 "seqn=%d, lcreq=%p", req, req->send.tag.comm, req->msg_id, 
 			 req->seqn, req->request);
 
-	//FIXME: modifying mpc request here breaks modularity
-	if (req->flags & LCP_REQUEST_RECV_TRUNC)
-			req->request->truncated = 1;
+        //FIXME: modifying mpc request here breaks modularity
+        if (req->flags & LCP_REQUEST_RECV_TRUNC)
+                req->request->truncated = 1;
 
-	if (req->flags & LCP_REQUEST_MPI_COMPLETE) {
-		assert(req->request);
-		//FIXME: calling request completion here breaks modularity
-		req->request->request_completion_fn(req->request);
-	}
+        if (req->flags & LCP_REQUEST_MPI_COMPLETE) {
+                assert(req->request);
+                //FIXME: calling request completion here breaks modularity
+                req->request->request_completion_fn(req->request);
+        }
 
-	if (req->flags & LCP_REQUEST_RMA_COMPLETE) {
-			req->send.cb(req->request);
-	}
-	
-	if (req->flags & LCP_REQUEST_OFFLOADED_RNDV) {
-			lcp_pending_delete(req->ctx->match_ht, req->msg_id);
-	}
+        if (req->flags & LCP_REQUEST_RMA_COMPLETE) {
+                req->send.cb(req->request);
+        }
 
-	if (req->flags & LCP_REQUEST_DELETE_FROM_PENDING) {
+        if (req->flags & LCP_REQUEST_OFFLOADED_RNDV) {
+                lcp_pending_delete(req->ctx->match_ht, req->msg_id);
+        }
+
+        if (req->flags & LCP_REQUEST_DELETE_FROM_PENDING) {
                 lcp_pending_delete(req->ctx->pend, req->msg_id);
-	} 
+        } 
 
-	mpc_common_spinlock_unlock(&lock);
 	sctk_free(req);
 
 	return MPC_LOWCOMM_SUCCESS;

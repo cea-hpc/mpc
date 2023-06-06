@@ -8,9 +8,6 @@
 #include "lcp_tag.h"
 #include "lcp_tag_offload.h"
 
-#include "mpc_common_debug.h"
-#include "mpc_lowcomm_msg.h"
-#include "mpc_lowcomm_types.h"
 #include "opa_primitives.h"
 
 //FIXME: static inline ?
@@ -35,6 +32,11 @@ int lcp_send_start(lcp_ep_h ep, lcp_request_t *req,
             (param->flags & LCP_REQUEST_TRY_OFFLOAD))) {
                 size = req->send.length;
                 req->state.offloaded = 1;
+
+                if (param->flags & LCP_REQUEST_TAG_SYNC) {
+                        not_implemented();
+                }
+
                 if (size <= ep->ep_config.tag.max_bcopy ||
                     ((req->send.length <= ep->ep_config.tag.max_zcopy) &&
                      (param->datatype & LCP_DATATYPE_DERIVED))) {
@@ -47,11 +49,19 @@ int lcp_send_start(lcp_ep_h ep, lcp_request_t *req,
                         rc = lcp_send_rndv_offload_start(req);
                 }
         } else {
+                if (param->flags & LCP_REQUEST_TAG_SYNC) {
+                        req->is_sync = 1;
+                        if (lcp_pending_create(req->ctx->pend, 
+                                               req, 
+                                               req->msg_id) == NULL) {
+                                rc = MPC_LOWCOMM_ERROR;
+                        }
+                        req->flags |= LCP_REQUEST_DELETE_FROM_PENDING; 
+                }
                 //NOTE: multiplexing might not always be efficient (IO NUMA
                 //      effects). A specific scheduling policy should be 
                 //      implemented to decide
                 req->state.offloaded = 0;
-                //FIXME: size set in the middle of nowhere...
                 //FIXME: remove usage of header structure
                 size = req->send.length + sizeof(lcp_tag_hdr_t);
                 if (size <= ep->ep_config.am.max_bcopy || 
@@ -98,8 +108,6 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
                 return MPC_LOWCOMM_ERROR;
         }
         req->flags |= LCP_REQUEST_MPI_COMPLETE;
-        OPA_load_int(&ep->seqn);
-        uint64_t msg_id = OPA_fetch_and_incr_int(&ep->seqn);
 
         // initialize request
         //FIXME: sequence number should be task specific. Following works in
@@ -107,19 +115,17 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
         //       Reorder is to be reimplemented.
         LCP_REQUEST_INIT_TAG_SEND(req, ep->ctx, task, request, param->recv_info, 
                                   count, ep, (void *)buffer, 
-                                  OPA_fetch_and_incr_int(&ep->seqn), msg_id,
+                                  OPA_fetch_and_incr_int(&ep->seqn), 0,
                                   param->datatype);
+
+        /* Set msg id used for sync and rdnv */
+        LCP_REQUEST_SET_MSGID(req->msg_id, req->send.tag.dest_tid, req->seqn);
 
         /* prepare request depending on its type */
         rc = lcp_send_start(ep, req, param);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 mpc_common_debug_error("LCP: could not prepare send request.");
                 return MPC_LOWCOMM_ERROR;
-        }
-
-        if(request->synchronized) {
-                req->message_type = MPC_LOWCOMM_P2P_SYNC_MESSAGE;
-                lcp_pending_create(ep->ctx->pend, req, req->msg_id);
         }
 
         /* send the request */

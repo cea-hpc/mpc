@@ -214,20 +214,29 @@ int lcp_mem_reg_from_map(lcp_context_h ctx,
                          void *buffer,
                          size_t length)
 {
-        int i;
+        int i, rc = MPC_LOWCOMM_SUCCESS;
         sctk_rail_info_t *iface = ctx->resources[ctx->priority_rail].iface;
 
         /* Pin the memory and create memory handles */
         for (i=0; i<ctx->num_resources; i++) {
                 if (MPC_BITMAP_GET(mem_map, i)) {
-                    iface = ctx->resources[i].iface;
-                    iface->rail_pin_region(iface, &mem->mems[i], buffer, length);
-                    mem->num_ifaces++;
+                        iface = ctx->resources[i].iface;
+
+                        if (!(iface->cap & LCR_IFACE_CAP_RMA)) {
+                                mpc_common_debug_error("LCP MEM: iface %s does "
+                                                       "not have RMA capabilities",
+                                                       iface->network_name);
+                                rc = MPC_LOWCOMM_ERROR;
+                                goto err;
+                        }
+
+                        iface->rail_pin_region(iface, &mem->mems[i], buffer, length);
+                        mem->num_ifaces++;
                 }
         }
 
-        //FIXME: no error to be returned because rail_pin_region is void.
-        return MPC_LOWCOMM_SUCCESS;
+err:
+        return rc;
 }
 
 //FIXME: what append if a memory could not get registered ? Miss error handling:
@@ -253,6 +262,7 @@ int lcp_mem_register(lcp_context_h ctx,
         lcr_rail_attr_t attr;
         sctk_rail_info_t *iface = ctx->resources[ctx->priority_rail].iface;
 
+        not_implemented();
         rc = lcp_mem_create(ctx, &mem);
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
@@ -346,56 +356,6 @@ int lcp_mem_post_from_map(lcp_context_h ctx,
                 }
         }
 
-err:
-        return rc;
-}
-
-int lcp_mem_post(lcp_context_h ctx, 
-                 lcp_mem_h *mem_p, 
-                 void *buffer, 
-                 size_t length,
-                 lcr_tag_t tag,
-                 unsigned flags, 
-                 lcr_tag_context_t *tag_ctx)
-{
-        int rc = MPC_LOWCOMM_SUCCESS;
-        int i;
-        lcp_mem_h mem;
-        lcr_rail_attr_t attr;
-        lcr_tag_t ign = { 0 };
-        size_t iovcnt = 0;
-        struct iovec iov[1];
-        sctk_rail_info_t *iface = ctx->resources[ctx->priority_rail].iface;
-
-        rc = lcp_mem_create(ctx, &mem);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
-                goto err;
-        }
-
-        mem->length     = length;
-        mem->base_addr  = (uint64_t)buffer;
-
-        iov[0].iov_base = buffer;
-        iov[0].iov_len  = length;
-        iovcnt++;
-
-        iface->iface_get_attr(iface, &attr);
-        build_memory_registration_bitmap(length,
-                                         attr.iface.cap.rndv.min_frag_size,
-                                         ctx->num_resources,
-                                         &mem->bm);
-        
-        /* Pin the memory and create memory handles */
-        for (i=0; i<ctx->num_resources; i++) {
-                if (MPC_BITMAP_GET(mem->bm, i)) {
-                    iface = ctx->resources[i].iface;
-                    iface->post_tag_zcopy(iface, tag, ign, iov, 
-                                          iovcnt, flags, tag_ctx);
-                    mem->num_ifaces++;
-                }
-        }
-
-        *mem_p = mem;
 err:
         return rc;
 }

@@ -24,14 +24,15 @@
  * @param data request to pack
  * @return size_t size of packed data
  */
+//FIXME: change return type to ssize_t
 static size_t lcp_rndv_rtr_pack(void *dest, void *data)
 {
         size_t packed_size = 0;
-        lcp_rndv_ack_hdr_t *hdr = dest;
+        lcp_ack_hdr_t *hdr = dest;
         lcp_request_t *rndv_req = data;
         lcp_request_t *super    = rndv_req->super;
 
-        hdr->msg_id = super->msg_id;
+        hdr->msg_id = rndv_req->msg_id;
         packed_size = lcp_mem_rkey_pack(super->ctx, 
                                         super->state.lmem,
                                         hdr + 1);
@@ -46,6 +47,7 @@ static size_t lcp_rndv_rtr_pack(void *dest, void *data)
  * @param data request to pack
  * @return size_t size of packed data
  */
+//FIXME: change return type to ssize_t
 size_t lcp_rndv_rts_pack(lcp_request_t *req, void *dest)
 {
         size_t packed_size = 0; 
@@ -60,18 +62,19 @@ size_t lcp_rndv_rts_pack(lcp_request_t *req, void *dest)
 }
 
 /**
- * @brief Pacl data for rendez-vous finalization message
+ * @brief Pack data for rendez-vous finalization message
  * 
  * @param dest destination header
  * @param data request to pack
  * @return size_t size of packed data
  */
+//FIXME: change return type to ssize_t
 static size_t lcp_rndv_fin_pack(void *dest, void *data)
 {
         lcp_ack_hdr_t *hdr = dest;
-        lcp_request_t *req = data;
+        lcp_request_t *rndv_req = data;
 
-        hdr->msg_id = req->msg_id;
+        hdr->msg_id = rndv_req->msg_id;
 
         return sizeof(*hdr);
 }
@@ -279,7 +282,6 @@ int lcp_send_rndv_start(lcp_request_t *req)
         rndv_req->super = req;
 
         rndv_req->ctx             = req->ctx;
-        rndv_req->msg_id          = req->msg_id;
         rndv_req->datatype        = req->datatype;
         rndv_req->send.length     = req->send.length;
         rndv_req->send.buffer     = req->send.buffer;
@@ -290,7 +292,15 @@ int lcp_send_rndv_start(lcp_request_t *req)
                 .comp_cb = lcp_rndv_complete,
         };
 
-        if (lcp_pending_create(req->ctx->pend, rndv_req, rndv_req->msg_id) == NULL) {
+        /* Set message identifiers: 
+         *  - super request: unique key to store locally
+         *  - rndv request: key transmitted to receiver */
+        LCP_REQUEST_SET_MSGID(rndv_req->msg_id, req->send.tag.dest_tid, 
+                              req->seqn);
+        LCP_REQUEST_SET_MSGID(req->msg_id, req->send.tag.dest_tid, 
+                              req->seqn);
+
+        if (lcp_pending_create(req->ctx->pend, rndv_req, req->msg_id) == NULL) {
                 mpc_common_debug_error("LCP: could not add pending message");
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
@@ -330,6 +340,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
 {
         int rc; 
         lcp_request_t *rndv_req;
+        lcp_rndv_hdr_t *hdr = data;
         lcp_ep_ctx_t *ctx_ep;
 
         /* Rendez-vous request used for RTR (PUT) or RMA (GET) */
@@ -340,20 +351,17 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
         rndv_req->super = rreq;
 
         rndv_req->ctx             = rreq->ctx;
-        rndv_req->msg_id          = rreq->msg_id;
         rndv_req->datatype        = rreq->datatype;
         rndv_req->send.buffer     = rreq->recv.buffer;
         rndv_req->state.remaining = rreq->recv.send_length;
         rndv_req->state.offset    = 0;
-
-        /* Append request to request hash table */
-        if (lcp_pending_create(rreq->ctx->pend, rndv_req, rndv_req->msg_id) == NULL) {
-                mpc_common_debug_error("LCP: could not add pending message");
-                rc = MPC_LOWCOMM_ERROR;
-                goto err;
-        }
-        /* delete from pending list on completion */
-        rndv_req->flags |= LCP_REQUEST_DELETE_FROM_PENDING; 
+        /* Set message identifiers: 
+         *  - super request: unique key to store locally
+         *  - rndv request: key transmitted to sender */
+        LCP_REQUEST_SET_MSGID(rndv_req->msg_id, rreq->recv.tag.dest_tid,
+                              rreq->seqn);
+        LCP_REQUEST_SET_MSGID(rreq->msg_id, rreq->recv.tag.src_tid,
+                              rreq->seqn);
 
         /* Buffer must be allocated and data packed to make it contiguous
          * and use zcopy and memory registration. */
@@ -383,6 +391,15 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
 
         switch (rreq->ctx->config.rndv_mode) {
         case LCP_RNDV_PUT:
+                /* Append request to request hash table */
+                if (lcp_pending_create(rreq->ctx->pend, rndv_req, rreq->msg_id) == NULL) {
+                        mpc_common_debug_error("LCP: could not add pending message");
+                        rc = MPC_LOWCOMM_ERROR;
+                        goto err;
+                }
+                /* delete from pending list on completion */
+                rndv_req->flags |= LCP_REQUEST_DELETE_FROM_PENDING; 
+
                 /* Register memory through rndv request since we need the
                  * endpoint connection map stored in the endpoint */ 
                 rc = lcp_rndv_reg_recv_buffer(rndv_req);
@@ -401,7 +418,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
 
                 /* Unpack remote key */
                 rc = lcp_mem_unpack(rreq->ctx, &(rndv_req->send.rndv.rkey), 
-                                    data, length);
+                                    hdr + 1, length);
                 if (rc < 0) {
                         goto err;
                 }
@@ -431,7 +448,7 @@ static int lcp_rndv_rtr_handler(void *arg, void *data,
         UNUSED(flags);
         int rc = MPC_LOWCOMM_SUCCESS;
         lcp_context_h ctx = arg;
-        lcp_rndv_ack_hdr_t *hdr = data;
+        lcp_ack_hdr_t *hdr = data;
         lcp_request_t *rndv_req;
 
         /* Retrieve request */
@@ -444,14 +461,14 @@ static int lcp_rndv_rtr_handler(void *arg, void *data,
         }
 
         rc = lcp_mem_unpack(rndv_req->ctx, &(rndv_req->send.rndv.rkey), hdr + 1, 
-                            size - sizeof(lcp_rndv_ack_hdr_t));
+                            size - sizeof(lcp_ack_hdr_t));
         if (rc < 0) {
                 goto err;
         }
 
         rndv_req->send.func = lcp_rndv_rma_progress;
 
-        lcp_request_send(rndv_req);
+        rc = lcp_request_send(rndv_req);
 
 err:
         return rc;
@@ -474,7 +491,7 @@ static int lcp_rndv_fin_handler(void *arg, void *data,
         UNUSED(flags);
         int rc = MPC_LOWCOMM_SUCCESS;
         lcp_context_h ctx = arg;
-        lcp_rndv_ack_hdr_t *hdr = data;
+        lcp_ack_hdr_t *hdr = data;
         lcp_request_t *rndv_req, *req;
 
         /* Retrieve request */

@@ -371,6 +371,7 @@ static inline void lcp_context_resource_init(lcp_rsc_desc_t *resource_p,
         strcpy(resource_p->name, device->name);
 }
 
+//FIXME: refacto. code too difficult to understand...
 static void lcp_context_select_components(lcp_context_h ctx,
                                           lcr_component_h *components,
                                           int num_components,
@@ -466,8 +467,9 @@ static int lcp_context_add_resources(lcp_context_h ctx,
 	int rc = MPC_LOWCOMM_SUCCESS;
         int max_ifaces, idx; 
         int *cmpt_idx;
-        int i, j, nrsc = 0;
+        int i, j, nrsc = 0, nrsc_per_cmpt;
         lcr_component_h cmpt;
+        lcr_rail_config_t *config;
         lcr_device_t dev;
 
         /* First, query all available devices */
@@ -506,18 +508,23 @@ static int lcp_context_add_resources(lcp_context_h ctx,
                 if ((idx = cmpt_idx[i]) < 0) 
                         continue;
                 cmpt = components[idx];
+		config = _mpc_lowcomm_conf_rail_unfolded_get(cmpt->rail_name);
+                nrsc_per_cmpt = 0;
                 for (j=0; j<(int)cmpt->num_devices; j++) {
                         dev = cmpt->devices[j];
                         if (!ctx->config.user_defined && nrsc < max_ifaces) {
                                 lcp_context_resource_init(&ctx->resources[nrsc],
                                                           cmpt, &dev);
-                                nrsc++;
+                                nrsc++; nrsc_per_cmpt++;
                         } else if (lcp_context_resource_in_config(ctx, &dev) && 
                                    nrsc < max_ifaces) {
                                 lcp_context_resource_init(&ctx->resources[nrsc],
                                                           cmpt, &dev);
-                                nrsc++;
+                                nrsc++; nrsc_per_cmpt++;
                         }
+
+                        if (nrsc_per_cmpt == config->max_ifaces) 
+                                break;
                 }
         }
 

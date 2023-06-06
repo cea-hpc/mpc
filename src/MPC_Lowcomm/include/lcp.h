@@ -59,7 +59,8 @@ typedef struct lcp_tag_recv_info {
 enum {
         LCP_REQUEST_TRY_OFFLOAD   = LCP_BIT(0),
         LCP_REQUEST_USER_DATA     = LCP_BIT(1),
-        LCP_REQUEST_USER_REQUEST  = LCP_BIT(2)
+        LCP_REQUEST_USER_REQUEST  = LCP_BIT(2),
+        LCP_REQUEST_TAG_SYNC      = LCP_BIT(3),
 };
 
 enum lcp_dt_type {
