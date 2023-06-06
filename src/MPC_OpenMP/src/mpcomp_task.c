@@ -37,7 +37,7 @@
 /* ######################################################################## */
 
 // TODO: this disable assert
-#define NDEBUG
+//#define NDEBUG
 #define _GNU_SOURCE
 #include <stdlib.h>
 
@@ -3792,8 +3792,6 @@ _mpc_omp_task_process(mpc_omp_task_t * task)
     /* Retrieve the information (microthread structure and current region) */
     mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
     assert(thread->instance);
-
-    // if (TASK_STATE_TRANSITION_ATOMIC(task, MPC_OMP_TASK_STATE_QUEUABLE, MPC_OMP_TASK_STATE_QUEUED))
 
     int became_ready = 0;
 # if 0
