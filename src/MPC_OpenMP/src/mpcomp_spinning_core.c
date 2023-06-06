@@ -246,7 +246,7 @@ static inline void __instance_tree_array_node_init( struct mpc_omp_node_s *paren
 	meta_node->ptr.node = child;
 	meta_node->type = MPC_OMP_CHILDREN_NODE;
 	child->tree_array_rank = global_rank;
-	child->tree_array_ancestor_path = ( int * ) mpc_omp_alloc( ( vdepth ) * sizeof( int ) );
+	child->tree_array_ancestor_path = ( int * ) mpc_omp_alloc( ( vdepth + 1 ) * sizeof( int ) );
 	assert( child->tree_array_ancestor_path );
 	memset( child->tree_array_ancestor_path, 0, ( vdepth + 1 ) * sizeof( int ) );
 
