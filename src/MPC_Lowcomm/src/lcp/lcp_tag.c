@@ -147,6 +147,12 @@ int lcp_send_eager_tag_bcopy(lcp_request_t *req)
         pack_cb = lcp_send_tag_eager_pack;
         if (req->is_sync) {
                 am_id   = MPC_LOWCOMM_P2P_SYNC_MESSAGE;
+                if (lcp_pending_create(req->ctx->pend, 
+                                       req, 
+                                       req->msg_id) == NULL) {
+                        rc = MPC_LOWCOMM_ERROR;
+                }
+                req->flags |= LCP_REQUEST_DELETE_FROM_PENDING; 
         } else {
 		am_id       = MPC_LOWCOMM_P2P_MESSAGE;
                 req->flags |= LCP_REQUEST_REMOTE_COMPLETED;
@@ -214,7 +220,12 @@ int lcp_send_eager_tag_zcopy(lcp_request_t *req)
 
 	if(req->is_sync) {
                 am_id = MPC_LOWCOMM_P2P_SYNC_MESSAGE;
-                req->flags |= LCP_REQUEST_DELETE_FROM_PENDING;
+                if (lcp_pending_create(req->ctx->pend, 
+                                       req, 
+                                       req->msg_id) == NULL) {
+                        rc = MPC_LOWCOMM_ERROR;
+                }
+                req->flags |= LCP_REQUEST_DELETE_FROM_PENDING; 
         } else {
                 am_id       = MPC_LOWCOMM_P2P_MESSAGE;
                 req->flags |= LCP_REQUEST_REMOTE_COMPLETED;
@@ -360,11 +371,13 @@ void lcp_recv_rndv_tag_data(lcp_request_t *req, void *data)
 {
         lcp_rndv_hdr_t *hdr = (lcp_rndv_hdr_t *)data;
 
-        req->recv.tag.tag = hdr->base.tag;
-        req->recv.tag.src_tid = hdr->base.src_tid;
-        req->seqn = hdr->base.seqn;
-        req->recv.send_length = hdr->size;
-        req->state.comp = (lcr_completion_t) {
+        req->recv.tag.tag      = hdr->base.tag;
+        req->recv.tag.src_tid  = hdr->base.src_tid;
+        req->recv.tag.src_pid  = hdr->src_pid;
+        req->recv.tag.dest_tid = hdr->base.dest_tid;
+        req->seqn              = hdr->base.seqn;
+        req->recv.send_length  = hdr->size;
+        req->state.comp        = (lcr_completion_t) {
                 .comp_cb = lcp_tag_recv_complete,
         };
 }
@@ -520,13 +533,14 @@ static int lcp_rndv_tag_handler(void *arg, void *data,
         }
 
         LCP_TASK_LOCK(task);
+        mpc_common_debug("LCP: task match. tid=%d", hdr->base.dest_tid);
 	req = (lcp_request_t *)lcp_match_prq(task->prq_table, 
 					     hdr->base.comm, 
 					     hdr->base.tag,
 					     hdr->base.src_tid);
 	if (req == NULL) {
-                mpc_common_debug("LCP: recv unexp tag src=%d, length=%d",
-                                 hdr->base.src_tid, length);
+                mpc_common_debug("LCP: recv unexp tag src=%d, comm=%d, tag=%d, length=%d, seqn=%d",
+                                 hdr->base.src_tid, hdr->base.comm, hdr->base.tag, length, hdr->base.seqn);
 		rc = lcp_request_init_unexp_ctnr(&ctnr, hdr, length, 
 						 LCP_RECV_CONTAINER_UNEXP_RNDV_TAG);
 		if (rc != MPC_LOWCOMM_SUCCESS) {

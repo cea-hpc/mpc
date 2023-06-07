@@ -51,12 +51,6 @@ int lcp_send_start(lcp_ep_h ep, lcp_request_t *req,
         } else {
                 if (param->flags & LCP_REQUEST_TAG_SYNC) {
                         req->is_sync = 1;
-                        if (lcp_pending_create(req->ctx->pend, 
-                                               req, 
-                                               req->msg_id) == NULL) {
-                                rc = MPC_LOWCOMM_ERROR;
-                        }
-                        req->flags |= LCP_REQUEST_DELETE_FROM_PENDING; 
                 }
                 //NOTE: multiplexing might not always be efficient (IO NUMA
                 //      effects). A specific scheduling policy should be 

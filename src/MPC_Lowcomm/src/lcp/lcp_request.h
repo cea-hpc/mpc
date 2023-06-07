@@ -189,6 +189,7 @@ struct lcp_request {
 }
 
 #define LCP_REQUEST_SET_MSGID(_msg_id, _tid, _seqn) \
+        _msg_id  = 0;                               \
         _msg_id |= (_tid & 0xffffffffull);          \
         _msg_id  = (_msg_id << 32);                 \
         _msg_id |= (_seqn & 0xffffffffull);

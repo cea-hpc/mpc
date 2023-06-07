@@ -29,7 +29,7 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 	}
         req->flags |= LCP_REQUEST_MPI_COMPLETE;
         LCP_REQUEST_INIT_TAG_RECV(req, ctx, task, request, param->recv_info,
-                              count, buffer, param->datatype);
+                                  count, buffer, param->datatype);
 
 	// get interface for the request to go through
 	iface = ctx->resources[ctx->priority_rail].iface;
@@ -45,9 +45,9 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 		return rc;
 	}
 
-        mpc_common_debug_info("LCP: post recv am comm=%d, src=%d, tag=%d, length=%d, lcreq=%p",
+        mpc_common_debug_info("LCP: post recv am comm=%d, src=%d, tag=%d, length=%d, req=%p",
                               req->recv.tag.comm, req->recv.tag.src_tid, 
-                              req->recv.tag.tag, count, req->request);
+                              req->recv.tag.tag, count, req);
 
         req->state.offloaded = 0;
 
