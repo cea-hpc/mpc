@@ -220,12 +220,12 @@ int lcp_send_eager_tag_zcopy(lcp_request_t *req)
                 req->flags |= LCP_REQUEST_REMOTE_COMPLETED;
         }
 
+        req->flags |= LCP_REQUEST_LOCAL_COMPLETED;
+
         rc = lcp_send_eager_zcopy(req, am_id, 
                                   hdr, sizeof(lcp_tag_hdr_t),
                                   iov, iovcnt, 
                                   &(req->state.comp));
-
-        req->flags |= LCP_REQUEST_LOCAL_COMPLETED;
 err:
 	return rc;
 }
@@ -340,6 +340,7 @@ int lcp_recv_eager_tag_data(lcp_request_t *req, void *data,
         req->recv.tag.src_tid  = hdr->src_tid;
         req->seqn              = hdr->seqn;
         req->recv.tag.tag      = hdr->tag;
+        req->recv.send_length  = length;
 
         /* copy data to receiver buffer and complete request */
         unpacked_len = lcp_datatype_unpack(req->ctx, req, req->datatype, 

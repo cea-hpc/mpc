@@ -137,7 +137,6 @@ enum {
 	LCR_IFACE_TM_PERSISTANT_MEM = LCR_BIT(2),
 	LCR_IFACE_TM_SEARCH         = LCR_BIT(3),
 	LCR_IFACE_TM_ERROR          = LCR_BIT(4),
-	LCR_IFACE_SM_REQUEST        = LCR_BIT(5),
 };
 
 enum {

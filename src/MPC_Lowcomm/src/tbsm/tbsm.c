@@ -139,7 +139,7 @@ static inline int lcr_tbsm_invoke_am(sctk_rail_info_t *rail,
 		mpc_common_debug_fatal("LCP: handler id %d not supported.", am_id);
 	}
 
-	rc = handler.cb(handler.arg, data, length, LCR_IFACE_SM_REQUEST);
+	rc = handler.cb(handler.arg, data, length, 0);
 	if (rc != MPC_LOWCOMM_SUCCESS) {
 		mpc_common_debug_error("LCP: handler id %d failed.", am_id);
 	}
@@ -161,6 +161,7 @@ void lcr_tbsm_connect_on_demand(sctk_rail_info_t *rail, uint64_t uid)
                 ep = sctk_malloc(sizeof(_mpc_lowcomm_endpoint_t));
                 if (ep == NULL) {
                         mpc_common_debug_error("TBSM: could not allocate ep");
+                        mpc_common_spinlock_unlock(&(tbsm_info->list->lock));
                         return;
                 }
                 _mpc_lowcomm_endpoint_init(ep, uid, rail, 
