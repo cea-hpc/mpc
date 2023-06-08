@@ -28,7 +28,7 @@ static inline size_t mpc_queue_length(mpc_queue_head_t *queue) {
 
 static inline int mpc_queue_is_tail(mpc_queue_head_t *queue, 
                                     mpc_queue_elem_t *elem) {
-        return &elem == queue->tail;
+        return &elem->next == queue->tail;
 }
 
 static inline int mpc_queue_is_empty(mpc_queue_head_t *queue) {
@@ -60,7 +60,7 @@ static inline mpc_queue_elem_t *mpc_queue_pull(mpc_queue_head_t *queue) {
         elem = queue->head;
         queue->head = queue->head->next;
         if (mpc_queue_is_tail(queue, elem)) {
-            queue->tail = &queue->head;
+                queue->tail = &queue->head;
         }
 
         return elem;

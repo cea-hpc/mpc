@@ -108,6 +108,8 @@ static inline int _mpc_comm_ptp_message_is_for_control( mpc_lowcomm_ptp_message_
 		case MPC_LOWCOMM_CANCELLED_SEND:
 		case MPC_LOWCOMM_CANCELLED_RECV:
 		case MPC_LOWCOMM_P2P_MESSAGE:
+		case MPC_LOWCOMM_P2P_SYNC_MESSAGE:
+		case MPC_LOWCOMM_P2P_ACK_MESSAGE:
 		case MPC_LOWCOMM_P2P_TM_MESSAGE:
 		case MPC_LOWCOMM_RDV_MESSAGE:
 		case MPC_LOWCOMM_RDV_TM_MESSAGE:

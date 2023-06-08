@@ -1,8 +1,5 @@
 #include "tbsm.h"
 
-#include "mpc_common_spinlock.h"
-#include "tbsm_types.h"
-
 #include <sctk_rail.h>
 #include <sctk_alloc.h>
 
@@ -10,12 +7,18 @@
 
 #include <lcr/lcr_component.h>
 
+typedef struct lcr_tbsm_pkg {
+        uint8_t             am_id; /* active message id */
+        void               *buf;   /* addr of bcopy buf or send buf */
+        size_t              size;
+        mpc_queue_elem_t    elem;
+} lcr_tbsm_pkg_t;
+
 static ssize_t lcr_tbsm_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep, uint8_t id, 
                                       lcr_pack_callback_t pack, void *arg,
                                       __UNUSED__ unsigned flags)
 {
-        sctk_rail_info_t *rail           = ep->rail;
-	lcr_tbsm_iface_info_t *tbsm_info = ep->rail->network.tbsm.info;
+	_mpc_lowcomm_tbsm_rail_info_t *tbsm_info = &(ep->rail->network.tbsm);
 	uint32_t payload_length          = -1;
 
         /* Allocate TBSM package */
@@ -23,28 +26,30 @@ static ssize_t lcr_tbsm_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep, uint8_t id,
         if (tbsm_pkg == NULL) {
                 mpc_common_debug_error("TBSM: could not allocate bcopy tbsm "
                                        "pkg.");
-                payload_length = -1;
                 goto err;
         }
         memset(tbsm_pkg, 0, sizeof(lcr_tbsm_pkg_t));
 
         /* Allocate bcopy buffer */
-        tbsm_pkg->buf = sctk_malloc(rail->network.tbsm.bcopy_buf_size);
+        tbsm_pkg->buf = sctk_malloc(tbsm_info->bcopy_buf_size);
 	if (tbsm_pkg->buf == NULL) {
-	       mpc_common_debug_error("Could not allocate bcopy tbsm buffer.");
-	       payload_length = -1;
+	       mpc_common_debug_error("TBSM: could not allocate bcopy tbsm "
+                                      "buffer.");
 	       goto err;
 	}
-	memset(tbsm_pkg->buf, 0, rail->network.tbsm.bcopy_buf_size);
+	memset(tbsm_pkg->buf, 0, tbsm_info->bcopy_buf_size);
 
 	tbsm_pkg->am_id = id;
         tbsm_pkg->size  = payload_length = pack(tbsm_pkg->buf, arg);
+        if (payload_length < 0) {
+                mpc_common_debug_error("TBSM: could not pack data.");
+                goto err;
+        }
 
         /* Insert package in list */
-        mpc_common_spinlock_lock(&(tbsm_info->list->lock));
-        DL_APPEND(tbsm_info->list->list, tbsm_pkg);
-        tbsm_info->list->size++;
-        mpc_common_spinlock_unlock(&(tbsm_info->list->lock));
+        mpc_common_spinlock_lock(&(tbsm_info->lock));
+        mpc_queue_push(&tbsm_info->queue, &tbsm_pkg->elem);
+        mpc_common_spinlock_unlock(&(tbsm_info->lock));
 err:
         return payload_length;
 }
@@ -149,9 +154,9 @@ static inline int lcr_tbsm_invoke_am(sctk_rail_info_t *rail,
 
 void lcr_tbsm_connect_on_demand(sctk_rail_info_t *rail, uint64_t uid)
 {
-	lcr_tbsm_iface_info_t *tbsm_info = rail->network.tbsm.info;
+	_mpc_lowcomm_tbsm_rail_info_t *tbsm_info = &(rail->network.tbsm);
 
-        mpc_common_spinlock_lock(&(tbsm_info->list->lock));
+        mpc_common_spinlock_lock(&(tbsm_info->lock));
         if (sctk_rail_get_any_route_to_process(rail, uid) == NULL) {
 
                 _mpc_lowcomm_endpoint_t *ep;
@@ -161,7 +166,7 @@ void lcr_tbsm_connect_on_demand(sctk_rail_info_t *rail, uint64_t uid)
                 ep = sctk_malloc(sizeof(_mpc_lowcomm_endpoint_t));
                 if (ep == NULL) {
                         mpc_common_debug_error("TBSM: could not allocate ep");
-                        mpc_common_spinlock_unlock(&(tbsm_info->list->lock));
+                        mpc_common_spinlock_unlock(&(tbsm_info->lock));
                         return;
                 }
                 _mpc_lowcomm_endpoint_init(ep, uid, rail, 
@@ -172,32 +177,32 @@ void lcr_tbsm_connect_on_demand(sctk_rail_info_t *rail, uint64_t uid)
                 /* Make sure the route is flagged connected */
                 _mpc_lowcomm_endpoint_set_state(ep, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
         }
-        mpc_common_spinlock_unlock(&(tbsm_info->list->lock));
+        mpc_common_spinlock_unlock(&(tbsm_info->lock));
 }
 
 int lcr_tbsm_iface_progress(sctk_rail_info_t *rail)
 {
         int rc = MPC_LOWCOMM_SUCCESS;
         lcr_tbsm_pkg_t *pkg = NULL;
-	lcr_tbsm_iface_info_t *tbsm_info = rail->network.tbsm.info;
+	_mpc_lowcomm_tbsm_rail_info_t *tbsm_info = &(rail->network.tbsm);
 
         /* Pop first element */
-        if(mpc_common_spinlock_trylock(&(tbsm_info->list->lock)) == 0){
+        if(mpc_common_spinlock_trylock(&(tbsm_info->lock)) == 0){
+
                 /* Fast path if list is empty */
-                if (!tbsm_info->list->size) {
-                        mpc_common_spinlock_unlock(&(tbsm_info->list->lock));
-                        return MPC_LOWCOMM_SUCCESS;
+                if (mpc_queue_is_empty(&(tbsm_info->queue))) {
+                        mpc_common_spinlock_unlock(&(tbsm_info->lock));
+                        return rc;
                 }
 
-                pkg = tbsm_info->list->list;
+                pkg = mpc_queue_pull_elem(&(tbsm_info->queue), lcr_tbsm_pkg_t, elem);
                 assert(pkg);
-                DL_DELETE(tbsm_info->list->list, pkg);
                 
-                /* Decrement list size */
-                tbsm_info->list->size--;                        
-
-                mpc_common_spinlock_unlock(&(tbsm_info->list->lock)); // lock can be freed earlier for eager messages
-                lcr_tbsm_invoke_am(rail, pkg->am_id, pkg->size, pkg->buf);
+                mpc_common_spinlock_unlock(&(tbsm_info->lock)); // lock can be freed earlier for eager messages
+                rc = lcr_tbsm_invoke_am(rail, pkg->am_id, pkg->size, pkg->buf);
+                if (rc != MPC_LOWCOMM_SUCCESS) {
+                        goto err;
+                }
                 
                 //NOTE: pkg must be a bcopy, so free buffer. This would have to change
                 //      if zcopy is implemented.
@@ -205,6 +210,7 @@ int lcr_tbsm_iface_progress(sctk_rail_info_t *rail)
                 sctk_free(pkg);
         }
 
+err:
         return rc;
 }
 
@@ -239,22 +245,8 @@ int lcr_tbsm_iface_init(sctk_rail_info_t *iface)
         struct _mpc_lowcomm_config_struct_net_driver_tbsm tbsm_info =
                 iface->runtime_config_driver_config->driver.value.tbsm;
          
-        tbsm_iface->info = sctk_malloc(sizeof(lcr_tbsm_iface_info_t));
-        if (tbsm_iface->info == NULL) {
-                mpc_common_debug_error("LCP: could not allocate sm info.");
-                rc = MPC_LOWCOMM_ERROR;
-                goto err;
-        }
-
-        tbsm_iface->info->list = sctk_malloc(sizeof(lcr_tbsm_pkg_list_t));
-        if (tbsm_iface->info->list == NULL) {
-                mpc_common_debug_error("LCP: could not allocate sm pkg list.");
-                rc = MPC_LOWCOMM_ERROR;
-                //FIXME: free tbsm_iface.info.
-                goto err;
-        }
-        memset(tbsm_iface->info->list, 0, sizeof(lcr_tbsm_pkg_list_t));
-        mpc_common_spinlock_init(&(tbsm_iface->info->list->lock), 0);
+        mpc_common_spinlock_init(&(tbsm_iface->lock), 0);
+        mpc_queue_init_head(&(tbsm_iface->queue));
 
         /* Init capabilities */
         iface->cap = LCR_IFACE_CAP_SELF | LCR_IFACE_CAP_RMA;
@@ -277,7 +269,6 @@ int lcr_tbsm_iface_init(sctk_rail_info_t *iface)
         iface->iface_progress    = lcr_tbsm_iface_progress;
         iface->connect_on_demand = lcr_tbsm_connect_on_demand;
 
-err:
         return rc;
 }
 
