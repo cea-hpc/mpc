@@ -8,8 +8,13 @@ import getopt
 import sys
 import difflib
 
-# TODO: le systeme de dépendances a été implémenté, il reste maintenant à implémenter les dépendances dans chaque pass (c.f TimeBreakdownPass et TimeWorkloadPass qui sont implémentés)
-
+"""
+"   To add a new pass, you must
+"       (1) implement the 'ipass' interface in another file
+"       (2) import it in the main file in this file
+"       (3) add it to the 'PASS_CLASSES' list in this file
+"
+"""
 from passes.cte.google_cte              import GoogleCtePass
 
 from passes.communication.duration      import CommunicationDurationPass
@@ -20,6 +25,7 @@ from passes.tdg.dot                     import TDGDotPass
 from passes.tdg.stats                   import TDGStatsPass
 from passes.tdg.critical                import TDGCriticalPass
 from passes.time.breakdown              import TimeBreakdownPass
+from passes.time.grain_per_label        import GrainPerLabelPass
 from passes.time.workload               import TimeWorkloadPass
 
 from passes.papi.accumulate             import AccumulatePAPIPass
@@ -32,6 +38,7 @@ from scheduler import *
 PASS_CLASSES = [
     TimeWorkloadPass,
     TimeBreakdownPass,
+    GrainPerLabelPass,
     AccumulatePAPIPass,
     CacheHitPAPIPass,
     InsCyclePAPIPass,
@@ -89,7 +96,7 @@ def main():
 
     # user config
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:o:pl', ['help', 'input=', 'output=', 'process', 'list='])
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:o:pl:', ['help', 'input=', 'output=', 'process', 'list='])
     except getopt.GetoptError:
         usage()
         sys.exit(1)

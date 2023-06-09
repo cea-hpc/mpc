@@ -33,7 +33,7 @@
 # define MPC_OMP_TASK_COMPILE_TRACE 1
 
 /* enable PAPI tracing per tasks */
-# define MPC_OMP_TASK_TRACE_USE_PAPI 0
+# define MPC_OMP_TASK_TRACE_USE_PAPI 1
 # if MPC_OMP_TASK_TRACE_USE_PAPI
 #  define PAPI_LOG(...) do {                                                \
                             printf("[PAPI] [%d] ", omp_get_thread_num());   \
