@@ -3496,3 +3496,24 @@ omp_event_handle_t __kmpc_task_allow_completion_event(ident_t * loc_ref, int gti
     mpc_omp_event_handle_init((mpc_omp_event_handle_t **) &hdl, MPC_OMP_EVENT_TASK_DETACH);
     return hdl;
 }
+
+void **__kmpc_omp_get_target_async_handle_ptr(kmp_int32 gtid) {
+        // TODO: implement this to interop. with libomptarget
+        return NULL;
+}
+
+bool __kmpc_omp_has_task_team(kmp_int32 gtid) {
+
+        mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+        assert(thread);
+
+        mpc_omp_task_t * current_task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+        assert(current_task);
+
+        if (!current_task)
+        {
+                return 0;
+        }
+
+        return 1;
+}

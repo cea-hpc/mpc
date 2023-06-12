@@ -3319,6 +3319,7 @@ __taskyield_return(void)
     assert(TASK_STATE(task) == MPC_OMP_TASK_STATE_SCHEDULED);
     TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_SUSPENDED);
 
+    assert(task->fiber->exit == &(thread->task_infos.mctx));
     sctk_swapcontext_no_tls(&(task->fiber->current), task->fiber->exit);
 }
 # endif /* MPC_OMP_TASK_COMPILE_FIBER */
