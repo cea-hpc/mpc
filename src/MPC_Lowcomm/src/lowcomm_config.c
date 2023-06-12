@@ -396,141 +396,6 @@ static inline mpc_conf_config_type_t *__init_driver_portals(struct _mpc_lowcomm_
 
 #endif
 
-#ifdef MPC_USE_INFINIBAND
-
-static inline mpc_conf_config_type_t *__init_driver_ib(struct _mpc_lowcomm_config_struct_net_driver *driver)
-{
-	driver->type = SCTK_RTCFG_net_driver_infiniband;
-
-	/* 
-	 * Set defaults
-	 */
-	
-	struct _mpc_lowcomm_config_struct_net_driver_infiniband *ib = &driver->value.infiniband;
-
-	/* Debug */
-	ib->verbose_level = 0;
-	ib->quiet_crash   = 0;
-	ib->async_thread  = 0;
-
-	/* Networking params */
-	snprintf(ib->pkey, MPC_CONF_STRING_SIZE, "%s", "undefined");
-	ib->adm_port = 1;
-
-	/*
-	 * Card settings
-	 */
-
-	/* ibv_qp_init_attr for Infiniband Initialization */
-	ib->qp_tx_depth = 15000;
-	ib->qp_rx_depth = 0;
-	ib->rdma_depth  = 16;
-	ib->max_sg_sq   = 4;
-	ib->max_sg_rq   = 4;
-	ib->max_inline  = 128;
-	/* Completion queues */
-	ib->cq_depth = 40000;
-	/* Srq */
-	ib->srq_credit_thread_limit = 100;
-
-	/*
-	 * IBUF
-	 */
-	ib->init_ibufs       = 1024;
-	ib->size_ibufs_chunk = 100;
-
-	ib->init_recv_ibufs       = 1024;
-	ib->size_recv_ibufs_chunk = 400;
-
-	ib->max_srq_ibufs_posted = 1500;
-	ib->max_rdma_connections = 0;
-
-	/* Ibuf RDMA */
-
-	ib->rdma_min_size = 1024;
-	ib->rdma_max_size = 4 * 1024;
-	ib->rdma_min_nb   = 8;
-	ib->rdma_max_nb   = 32;
-
-	/* Ibuf RDMA resizing */
-	ib->rdma_resizing          = 0;
-	ib->rdma_resizing_min_size = 1024;
-	ib->rdma_resizing_max_size = 4 * 1024;
-	ib->rdma_resizing_min_nb   = 8;
-	ib->rdma_resizing_max_nb   = 32;
-
-
-	/* General */
-	ib->eager_limit    = 4 * 1024;
-	ib->buffered_limit = 48 * 1024;
-
-	/*
-	 * Create the config object
-	 */
-
-	mpc_conf_config_type_t *debug = mpc_conf_config_type_init("debug",
-	                                                          PARAM("verbose", &ib->verbose_level, MPC_CONF_INT, "Defines the verbose level of the Infiniband interface."),
-	                                                          PARAM("quietcrash", &ib->quiet_crash, MPC_CONF_BOOL, "Defines if the Infiniband interface must crash quietly."),
-	                                                          PARAM("asyncthread", &ib->async_thread, MPC_CONF_BOOL, "Asynchronous debug thread should be started at initialization."),
-	                                                          NULL);
-
-	mpc_conf_config_type_t *network = mpc_conf_config_type_init("network",
-	                                                            PARAM("pkey", ib->pkey, MPC_CONF_STRING, "Define the Infiniband Partition KEY (PKEY) for this rail."),
-	                                                            PARAM("port", &ib->adm_port, MPC_CONF_INT, "Defines the port number to use."),
-	                                                            NULL);
-
-	mpc_conf_config_type_t *card = mpc_conf_config_type_init("card",
-	                                                         PARAM("qptxdepth", &ib->qp_tx_depth, MPC_CONF_INT, "Number of entries to allocate in the QP for sending messages. If too low, may cause an QP overrun."),
-	                                                         PARAM("qprxdepth", &ib->qp_rx_depth, MPC_CONF_INT, "Number of entries to allocate in the QP for receiving messages. Must be 0 if using SRQ."),
-	                                                         PARAM("maxrdma", &ib->rdma_depth, MPC_CONF_INT, "Number of RDMA resources on QP (covers both max_dest_rd_atomic and max_rd_atomic)."),
-	                                                         PARAM("maxsgsq", &ib->max_sg_sq, MPC_CONF_INT, "Max pending RDMA operations for send."),
-	                                                         PARAM("maxsgrq", &ib->max_sg_rq, MPC_CONF_INT, "Max pending RDMA operations for recv."),
-	                                                         PARAM("maxinline", &ib->max_inline, MPC_CONF_LONG_INT, "Max size for inlining messages."),
-	                                                         PARAM("cqdepth", &ib->cq_depth, MPC_CONF_INT, "Number of entries to allocate in the CQ. If too low, may cause a CQ overrun."),
-	                                                         PARAM("srqcredit", &ib->srq_credit_thread_limit, MPC_CONF_INT, "Set the SRQ size."),
-	                                                         NULL);
-
-	mpc_conf_config_type_t *rdma = mpc_conf_config_type_init("rdma",
-	                                                         PARAM("minsize", &ib->rdma_min_size, MPC_CONF_LONG_INT, "Defines the minimum size for the Eager RDMA buffers."),
-	                                                         PARAM("maxsize", &ib->rdma_max_size, MPC_CONF_LONG_INT, "Defines the maximun size for the Eager RDMA buffers."),
-	                                                         PARAM("mincount", &ib->rdma_min_nb, MPC_CONF_INT, "Defines the minimum number of Eager RDMA buffers."),
-	                                                         PARAM("maxcount", &ib->rdma_max_nb, MPC_CONF_INT, "Defines the maximum number of Eager RDMA buffers."),
-	                                                         NULL);
-
-	mpc_conf_config_type_t *rdma_resized = mpc_conf_config_type_init("rdmaresized",
-	                                                                 PARAM("enabled", &ib->rdma_resizing, MPC_CONF_BOOL, "Defines if RDMA connections may be resized."),
-	                                                                 PARAM("minsize", &ib->rdma_resizing_min_size, MPC_CONF_LONG_INT, "Defines the minimum size for the Eager RDMA buffers."),
-	                                                                 PARAM("maxsize", &ib->rdma_resizing_max_size, MPC_CONF_LONG_INT, "Defines the maximun size for the Eager RDMA buffers."),
-	                                                                 PARAM("mincount", &ib->rdma_resizing_min_nb, MPC_CONF_INT, "Defines the minimum number of Eager RDMA buffers."),
-	                                                                 PARAM("maxcount", &ib->rdma_resizing_max_nb, MPC_CONF_INT, "Defines the maximum number of Eager RDMA buffers."),
-	                                                                 NULL);
-
-	mpc_conf_config_type_t *ibuf = mpc_conf_config_type_init("ibuf",
-	                                                         PARAM("initcnt", &ib->init_ibufs, MPC_CONF_INT, "Max number of Eager buffers to allocate during the initialization step."),
-	                                                         PARAM("chunk", &ib->size_ibufs_chunk, MPC_CONF_INT, "Number of new buffers allocated when no more buffers are available."),
-	                                                         PARAM("initrecv", &ib->init_recv_ibufs, MPC_CONF_INT, "Defines the number of receive buffers initially allocated. The number is on-the-fly expanded when needed (see init_recv_ibufs_chunk)."),
-	                                                         PARAM("recvchunk", &ib->size_recv_ibufs_chunk, MPC_CONF_INT, "Defines the number of receive buffers allocated on the fly."),
-	                                                         PARAM("maxsrq", &ib->max_srq_ibufs_posted, MPC_CONF_INT, "Max number of Eager buffers which can be posted to the SRQ. This number cannot be higher than the number fixed by the HW."),
-	                                                         PARAM("maxrdma", &ib->max_rdma_connections, MPC_CONF_INT, "Number of RDMA buffers allocated for each neighbor."),
-	                                                         PARAM("rdma", rdma, MPC_CONF_TYPE, "RMDA buffers configuration."),
-	                                                         PARAM("rdmaresized", rdma_resized, MPC_CONF_TYPE, "Resized RMDA buffers configuration."),
-	                                                         NULL);
-
-	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("ib",
-	                                                        PARAM("debug", debug, MPC_CONF_TYPE, "Debug parameters."),
-	                                                        PARAM("network", network, MPC_CONF_TYPE, "Low-level network parameters."),
-	                                                        PARAM("card", card, MPC_CONF_TYPE, "Infiniband card parameters."),
-	                                                        PARAM("ibuf", ibuf, MPC_CONF_TYPE, "Infiniband buffer configuration."),
-	                                                        PARAM("eagerlimit", &ib->eager_limit, MPC_CONF_INT, "Max size of messages allowed to use the eager protocol."),
-	                                                        PARAM("bufferedlimit", &ib->buffered_limit, MPC_CONF_INT, "Max size for using the Buffered protocol (message split into several Eager messages)."),
-
-	                                                        NULL);
-
-	return ret;
-}
-
-#endif
-
 #ifdef MPC_USE_OFI
 
 static inline void __driver_ofi_unfold(struct _mpc_lowcomm_config_struct_net_driver *driver)
@@ -625,12 +490,6 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_default_driver(c
 	else if(!strcmp(driver_type, "ofi") )
 	{
 		driver = __init_driver_ofi(&new_conf->driver);
-	}
-#endif
-#if defined(MPC_USE_INFINIBAND)
-	else if(!strcmp(driver_type, "ib") )
-	{
-		driver = __init_driver_ib(&new_conf->driver);
 	}
 #endif
 #if defined(MPC_USE_PORTALS)
@@ -732,9 +591,6 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_init()
 #if defined(MPC_USE_PORTALS)
 	mpc_conf_config_type_t *portals = __mpc_lowcomm_driver_conf_default_driver("portalsconfigmpi", "portals");
 #endif
-#if defined(MPC_USE_INFINIBAND)
-	mpc_conf_config_type_t *ib = __mpc_lowcomm_driver_conf_default_driver("ibconfigmpi", "ib");
-#endif
 #if defined(MPC_USE_OFI)
 	mpc_conf_config_type_t *ofi = __mpc_lowcomm_driver_conf_default_driver("oficonfigmpi", "ofi");
 #endif
@@ -745,9 +601,6 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_init()
 	                                                        PARAM("tbsmconfigmpi", tbsm, MPC_CONF_TYPE, "Default configuration for the TBSM driver"),
 #if defined(MPC_USE_PORTALS)
 	                                                        PARAM("portalsconfigmpi", portals, MPC_CONF_TYPE, "Default configuration for the Portals4 Driver"),
-#endif
-#if defined(MPC_USE_INFINIBAND)
-	                                                        PARAM("ibconfigmpi", ib, MPC_CONF_TYPE, "Default configuration for the Infiniband Driver"),
 #endif
 #if defined(MPC_USE_OFI)
 	                                                        PARAM("oficonfigmpi", ofi, MPC_CONF_TYPE, "Default configuration for the OFI Driver"),
@@ -885,9 +738,6 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_rail_conf_init()
 #ifdef MPC_USE_PORTALS
 	mpc_conf_config_type_t *portals_mpi = __new_rail_conf_instance("portalsmpi", 6, "default", "ring", 1, 1, 0, 1, 1, "portalsconfigmpi");
 #endif
-#ifdef MPC_USE_INFINIBAND
-	mpc_conf_config_type_t *ib_mpi = __new_rail_conf_instance("ibmpi", 1, "!mlx.*", "ring", 1, 1, 0, 0, 0, "ibconfigmpi");
-#endif
 #ifdef MPC_USE_OFI
 	mpc_conf_config_type_t *ofi_mpi = __new_rail_conf_instance("ofimpi", 1, "default", "ring", 1, 1, 0, 0, 0, "oficonfigmpi");
 #endif
@@ -898,9 +748,6 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_rail_conf_init()
                                                              PARAM("tbsmmpi", tbsm_mpi, MPC_CONF_TYPE, "A rail with Thread Based SHM"),
 #ifdef MPC_USE_PORTALS
 	                                                          PARAM("portalsmpi", portals_mpi, MPC_CONF_TYPE, "A rail with Portals 4"),
-#endif
-#ifdef MPC_USE_INFINIBAND
-	                                                          PARAM("ibmpi", ib_mpi, MPC_CONF_TYPE, "A rail with Infiniband"),
 #endif
 #ifdef MPC_USE_OFI
 	                                                          PARAM("ofimpi", ofi_mpi, MPC_CONF_TYPE, "A rail with OFI"),
@@ -1242,9 +1089,6 @@ static mpc_conf_config_type_t *__mpc_lowcomm_cli_conf_init(void)
 #ifdef MPC_USE_PORTALS
 	                                                           PARAM("portals4", ___mpc_lowcomm_cli_conf_option_init("portals4", "portalsmpi", NULL), MPC_CONF_TYPE, "Combination of Portals and SHM"),
 #endif
-#ifdef MPC_USE_INFINIBAND
-	                                                           PARAM("ib", ___mpc_lowcomm_cli_conf_option_init("ib", "shmmpi", "ibmpi"), MPC_CONF_TYPE, "Combination of Infiniband and SHM"),
-#endif
 #ifdef MPC_USE_OFI
 	                                                           PARAM("ofi", ___mpc_lowcomm_cli_conf_option_init("ofi", "shmmpi", "ofimpi"), MPC_CONF_TYPE, "Combination of OFI and SHM"),
 #endif
@@ -1264,9 +1108,7 @@ static mpc_conf_config_type_t *__mpc_lowcomm_cli_conf_init(void)
 static inline void _mpc_lowcomm_net_config_default(void)
 {
 #ifdef MPC_USE_PORTALS
-	snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "%s", "portals4");
-#elif defined(MPC_USE_INFINIBAND)
-	snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "%s", "ib");
+	snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "portals4");
 #else
 	snprintf(__net_config.cli_default_network, MPC_CONF_STRING_SIZE, "%s", "tcp");
 #endif
@@ -1380,31 +1222,6 @@ struct _mpc_lowcomm_config *_mpc_lowcomm_conf_get(void)
 {
 	return &__lowcomm_conf;
 }
-
-#ifdef MPC_USE_INFINIBAND
-static inline mpc_conf_config_type_t *__init_infiniband_global_conf(void)
-{
-	struct _mpc_lowcomm_config_struct_ib_global *ibg = &__lowcomm_conf.infiniband;
-
-	ibg->mmu_cache_enabled          = 1;
-	ibg->mmu_cache_entry_count      = 1024;
-	ibg->mmu_cache_maximum_size     = 4 * 1024 * 1024 * 1024llu;
-	ibg->mmu_cache_maximum_pin_size = 1024 * 1024 * 1024llu;
-
-
-	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("ibmmu",
-	                                                        PARAM("enabled", &ibg->mmu_cache_enabled, MPC_CONF_BOOL, "Defines if the MMU cache is enabled."),
-	                                                        PARAM("count", &ibg->mmu_cache_entry_count, MPC_CONF_INT, "Number of entries to keep in the cache."),
-	                                                        PARAM("maxsize", &ibg->mmu_cache_maximum_size, MPC_CONF_LONG_INT, "Total size of entries to keep in the cache."),
-	                                                        PARAM("maxpin", &ibg->mmu_cache_maximum_pin_size, MPC_CONF_LONG_INT, "Maximum size of an pinned entry."),
-	                                                        NULL);
-
-	assume(ret != NULL);
-
-	return ret;
-}
-
-#endif
 
 static struct _mpc_lowcomm_config_struct_protocol __protocol_conf;
 
@@ -1673,9 +1490,6 @@ static void __lowcomm_conf_default(void)
 #ifdef SCTK_USE_CHECKSUM
 	__lowcomm_conf.checksum = 0;
 #endif
-#ifdef MPC_USE_INFINIBAND
-	__init_infiniband_global_conf();
-#endif
 }
 
 void _mpc_lowcomm_config_register(void)
@@ -1691,9 +1505,6 @@ void _mpc_lowcomm_config_register(void)
 	mpc_conf_config_type_t *lowcomm = mpc_conf_config_type_init("lowcomm",
 #ifdef SCTK_USE_CHECKSUM
 	                                                            PARAM("checksum", &__lowcomm_conf.checksum, MPC_CONF_BOOL, "Enable buffer checksum for P2P messages"),
-#endif
-#ifdef MPC_USE_INFINIBAND
-	                                                            PARAM("ibmmu", __init_infiniband_global_conf(), MPC_CONF_TYPE, "Infiniband global Memory Management Unit (MMU) configuration."),
 #endif
 	                                                            PARAM("coll", coll, MPC_CONF_TYPE, "Lowcomm collective configuration"),
 	                                                            PARAM("protocol", protocol, MPC_CONF_TYPE, "Lowcomm protocol configuration"),

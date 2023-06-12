@@ -49,9 +49,6 @@
 
 #include "mpc_lowcomm_types.h"
 #include <mpc_lowcomm_datatypes.h>
-#ifdef MPC_USE_INFINIBAND
-#include <ibdevice.h>
-#endif
 
 #include <lcp.h>
 

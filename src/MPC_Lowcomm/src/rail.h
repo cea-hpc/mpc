@@ -47,9 +47,6 @@
 typedef union
 {
 	_mpc_lowcomm_tcp_rail_info_t tcp; /**< TCP Rail Info */
-#ifdef MPC_USE_INFINIBAND
-	_mpc_lowcomm_ib_rail_info_t  ib;  /**< IB Rail Info */
-#endif
 	sctk_shm_rail_info_t         shm; /**< SHM Rail Info */
 	_mpc_lowcomm_tbsm_rail_info_t tbsm;
 
@@ -65,18 +62,6 @@ typedef union
 /* Rail Pin CTX                                                         */
 /************************************************************************/
 
-#ifdef MPC_USE_INFINIBAND
-
-#include "ibmmu.h"
-#include <infiniband/verbs.h>
-
-struct sctk_rail_ib_pin_ctx
-{
-	struct ibv_mr                mr;
-	_mpc_lowcomm_ib_mmu_entry_t *p_entry;
-};
-#endif
-
 #ifdef MPC_USE_PORTALS
 #include "sctk_ptl_types.h"
 #endif
@@ -89,9 +74,6 @@ typedef union
 {
         struct mpc_lowcomm_tbsm_rma_ctx sm;
 
-#ifdef MPC_USE_INFINIBAND
-	struct sctk_rail_ib_pin_ctx    ib;
-#endif
 #ifdef MPC_USE_PORTALS
 	struct sctk_ptl_rdma_ctx       ptl;
 #endif /* MPC_USE_PORTALS */

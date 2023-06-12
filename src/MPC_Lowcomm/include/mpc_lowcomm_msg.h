@@ -7,10 +7,6 @@
 
 #include <mpc_lowcomm_monitor.h>
 
-#ifdef MPC_USE_INFINIBAND
-#include "ib/ib.h"
-#endif
-
 #ifdef MPC_USE_PORTALS
 #include "portals/sctk_portals.h"
 #endif
@@ -397,9 +393,6 @@ typedef struct
 	struct mpc_lowcomm_ptl_tail_s             ptl;
 #endif
 
-#ifdef MPC_USE_INFINIBAND
-	struct mpc_lowcomm_ib_tail_s              ib;
-#endif
 #ifdef MPC_USE_OFI /* all of these should be replaced w/ union */
 	struct mpc_lowcomm_ofi_tail_s ofi;
 #endif

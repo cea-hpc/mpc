@@ -89,12 +89,11 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @MPC_THREAD_ENABLED_TRUE@am__append_1 = -I$(abs_top_srcdir)/src/MPC_Threads/src/ -I$(abs_top_srcdir)/src/MPC_Threads/include/ -I$(abs_top_srcdir)/src/MPC_Topology/include/
-@INFINIBAND_DRIVER_ENABLED_TRUE@am__append_2 = -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/ib/
-@PORTALS4_DRIVER_ENABLED_TRUE@am__append_3 = -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/portals/
-@OFI_DRIVER_ENABLED_TRUE@am__append_4 = -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/ofi/
-@MPC_OPENMP_ENABLED_TRUE@am__append_5 = -I$(abs_top_srcdir)/src/MPC_OpenMP/include/
-@LCP_ENABLED_TRUE@am__append_6 = ./mpi_partitioned.c
-@MPC_FORTRAN_ENABLED_TRUE@am__append_7 = fortran.c
+@PORTALS4_DRIVER_ENABLED_TRUE@am__append_2 = -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/portals/
+@OFI_DRIVER_ENABLED_TRUE@am__append_3 = -I$(abs_top_srcdir)/src/MPC_Lowcomm/src/ofi/
+@MPC_OPENMP_ENABLED_TRUE@am__append_4 = -I$(abs_top_srcdir)/src/MPC_OpenMP/include/
+@LCP_ENABLED_TRUE@am__append_5 = ./mpi_partitioned.c
+@MPC_FORTRAN_ENABLED_TRUE@am__append_6 = fortran.c
 subdir = src/MPC_MPI/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/config/m4/ax_gcc_builtin.m4 \
@@ -295,8 +294,6 @@ HAVE_VISIBILITY = @HAVE_VISIBILITY@
 HAVE_WCHAR_H = @HAVE_WCHAR_H@
 HWLOC_CFLAGS = @HWLOC_CFLAGS@
 HWLOC_LIBS = @HWLOC_LIBS@
-IBV_CFLAGS = @IBV_CFLAGS@
-IBV_LIBS = @IBV_LIBS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -545,7 +542,6 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	-I$(abs_top_srcdir)/src/MPC_MPI/include/ \
 	-I$(abs_top_builddir)/src/include/ $(am__append_1) \
 	$(am__append_2) $(am__append_3) $(am__append_4) \
-	$(am__append_5) $(am__append_6) $(am__append_7) \
 	-I$(abs_top_srcdir)/src/MPC_Lowcomm/src/tcp/ \
 	-I$(abs_top_srcdir)/src/MPC_Lowcomm/src/shm/
 lib_LTLIBRARIES = libmpcmpi.la
@@ -555,7 +551,7 @@ libmpcmpi_la_SOURCES = comm_lib.c egreq_nbc.c mpc_extern32.c \
 	mpi_rma_ctrl_msg.c mpi_conf.c mpc_coll.c session.c errh.c \
 	mgroup.c egreq_classes.c mpc_cs.c mpc_mpi.c \
 	mpc_nbc_progress_thread_binding.c mpi_rma_epoch.c \
-	$(am__append_6) $(am__append_7)
+	$(am__append_5) $(am__append_6)
 libmpcmpi_la_LIBADD = ../../MPC_Lowcomm/src/libmpclowcomm.la -lrt
 all: all-am
 

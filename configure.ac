@@ -1095,23 +1095,6 @@ AC_MSG_RESULT([$mpc_libunwind])
 
 MPC_NETWORK_LIST="tcp shm"
 
-
-
-#
-# Detect libibverbs presence
-#
-
-infiniband_enabled="no"
-
-MPC_DETECT_DEPENDENCY([infiniband/verbs.h], [ibverbs], [ibv_query_qp], [IBV])
-if test "x$mpc_dep_found" = "xyes"; then
-        MPC_NETWORK_LIST="$MPC_NETWORK_LIST verbs"
-        AC_DEFINE([MPC_USE_INFINIBAND], [1], [Infiniband support is enabled])
-        infiniband_enabled="yes"
-fi
-
-AM_CONDITIONAL([INFINIBAND_DRIVER_ENABLED], [test "x$infiniband_enabled" = "xyes"])
-
 #
 # Detect LibFabric
 #

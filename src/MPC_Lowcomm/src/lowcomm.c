@@ -96,11 +96,6 @@ void sctk_rail_init_driver(sctk_rail_info_t *rail, int driver_type)
 	/* Switch on the driver to use */
 	switch(driver_type)
 	{
-#ifdef MPC_USE_INFINIBAND
-		case SCTK_RTCFG_net_driver_infiniband: /* INFINIBAND */
-			sctk_network_init_mpi_ib(rail);
-			break;
-#endif
 #ifdef MPC_USE_PORTALS
 		case SCTK_RTCFG_net_driver_portals: /* PORTALS */
 			sctk_network_init_ptl(rail);
@@ -175,14 +170,7 @@ static inline size_t __align_allocation_to_ib_and_page(size_t size)
 
 static size_t __mpc_memory_allocation_hook(size_t size_origin)
 {
-	#ifdef MPC_USE_INFINIBAND
-	if(sctk_network_is_ib_used() )
-	{
-		return __align_allocation_to_ib_and_page(size_origin);
-	}
-	#else
 	UNUSED(size_origin);
-	#endif
 	return 0;
 }
 
@@ -196,15 +184,8 @@ void __mpc_memory_free_hook(void *ptr, size_t size)
 		mpc_lowcomm_allocmem_pool_free_size(ptr, size);
 	}
 
-	#ifdef MPC_USE_INFINIBAND
-	if(sctk_network_is_ib_used() )
-	{
-		return sctk_network_memory_free_hook_ib(ptr, size);
-	}
-	#else
 	UNUSED(ptr);
 	UNUSED(size);
-	#endif
 }
 
 #endif
@@ -267,13 +248,6 @@ void sctk_net_init_driver(char *name)
 
 		/* For each RAIL */
 		struct _mpc_lowcomm_config_struct_net_rail *rail_config_struct = NULL;
-#ifndef MPC_USE_INFINIBAND
-		if(strcmp(rail_name, "ib_mpi") == 0)
-		{
-			mpc_common_debug_warning("Network support %s not available switching to tcp_mpi", rail_name);
-			rail_name = "tcpmpi";
-		}
-#endif
 #ifndef MPC_USE_PORTALS
 		if(strcmp(rail_name, "portals_mpi") == 0)
 		{

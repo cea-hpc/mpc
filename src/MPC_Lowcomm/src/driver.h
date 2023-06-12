@@ -27,10 +27,6 @@
 /* Networks */
 #include <tcp.h>
 
-#ifdef MPC_USE_INFINIBAND
-#include <ib.h>
-#endif
-
 #ifdef MPC_USE_PORTALS
 #include <sctk_portals.h>
 #endif

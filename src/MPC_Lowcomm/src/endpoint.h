@@ -57,9 +57,6 @@ typedef enum
 typedef union
 {
 	_mpc_lowcomm_endpoint_info_tcp_t     tcp;    /**< TCP route info */
-#ifdef MPC_USE_INFINIBAND
-	_mpc_lowcomm_endpoint_info_ib_t      ib;     /**< IB route info */
-#endif
 	_mpc_lowcomm_endpoint_info_shm_t     shm;
 #ifdef MPC_USE_PORTALS
 	_mpc_lowcomm_endpoint_info_portals_t ptl;    /*< Portals route info */

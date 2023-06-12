@@ -137,87 +137,6 @@ struct _mpc_lowcomm_config_struct_net_driver_ofi
 	char                           provider[MPC_CONF_STRING_SIZE];
 };
 
-
-/******************************** STRUCTURE *********************************/
-/**Declare a fake driver to test the configuration system.**/
-struct _mpc_lowcomm_config_struct_net_driver_infiniband
-{
-	/**Define the pkey value**/
-	char                   pkey[MPC_CONF_STRING_SIZE];
-	/**Defines the port number to use.**/
-	int                    adm_port;
-	/**Defines the verbose level of the Infiniband interface .**/
-	int                    verbose_level;
-	/**Size of the eager buffers (short messages).**/
-	size_t                 eager_limit;
-	/**Max size for using the Buffered protocol (message split into several Eager messages).**/
-	size_t                 buffered_limit;
-	/**Number of entries to allocate in the QP for sending messages. If too low, may cause an QP overrun**/
-	int                    qp_tx_depth;
-	/**Number of entries to allocate in the QP for receiving messages. Must be 0 if using SRQ**/
-	int                    qp_rx_depth;
-	/**Number of entries to allocate in the CQ. If too low, may cause a CQ overrun**/
-	int                    cq_depth;
-	/**Number of RDMA resources on QP (covers both max_dest_rd_atomic and max_rd_atomic)**/
-	int                    rdma_depth;
-	/**Max pending RDMA operations for send**/
-	int                    max_sg_sq;
-	/**Max pending RDMA operations for recv**/
-	int                    max_sg_rq;
-	/**Max size for inlining messages**/
-	size_t                 max_inline;
-	/**Defines if RDMA connections may be resized.**/
-	int                    rdma_resizing;
-	/**Number of RDMA buffers allocated for each neighbor**/
-	int                    max_rdma_connections;
-	/**Max number of Eager buffers to allocate during the initialization step**/
-	int                    init_ibufs;
-	/**Defines the number of receive buffers initially allocated. The number is on-the-fly expanded when needed (see init_recv_ibufs_chunk)**/
-	int                    init_recv_ibufs;
-	/**Max number of Eager buffers which can be posted to the SRQ. This number cannot be higher than the number fixed by the HW**/
-	int                    max_srq_ibufs_posted;
-	/**Min number of free recv Eager buffers before the activation of the asynchronous thread. If this thread is activated too many times, the performance may be decreased.**/
-	int                    srq_credit_thread_limit;
-	/**Number of new buffers allocated when no more buffers are available.**/
-	int                    size_ibufs_chunk;
-	/**Defines if the Infiniband interface must crash quietly.**/
-	int                    quiet_crash;
-	/**Defines if the asynchronous may be started at the MPC initialization.**/
-	int                    async_thread;
-	/**Defines the minimum size for the Eager RDMA buffers**/
-	size_t                 rdma_min_size;
-	/**Defines the maximun size for the Eager RDMA buffers**/
-	size_t                 rdma_max_size;
-	/**Defines the minimum number of Eager RDMA buffers**/
-	int                    rdma_min_nb;
-	/**Defines the maximum number of Eager RDMA buffers**/
-	int                    rdma_max_nb;
-	/**Defines the minimum size for the Eager RDMA buffers (resizing)**/
-	size_t                 rdma_resizing_min_size;
-	/**Defines the maximum size for the Eager RDMA buffers (resizing)**/
-	size_t                 rdma_resizing_max_size;
-	/**Defines the minimum number of Eager RDMA buffers (resizing)**/
-	int                    rdma_resizing_min_nb;
-	/**Defines the maximum number of Eager RDMA buffers (resizing)**/
-	int                    rdma_resizing_max_nb;
-	/**Defines the number of receive buffers allocated on the fly.**/
-	int                    size_recv_ibufs_chunk;
-};
-
-/******************************** STRUCTURE *********************************/
-/**Global Parameters for IB common structs.**/
-struct _mpc_lowcomm_config_struct_ib_global
-{
-	/**Defines if the MMU cache is enabled.**/
-	int    mmu_cache_enabled;
-	/**Number of entries to keep in the cache.**/
-	int    mmu_cache_entry_count;
-	/**Total size of entries to keep in the cache.**/
-	size_t mmu_cache_maximum_size;
-	/**Maximum size of an pinned entry.**/
-	size_t mmu_cache_maximum_pin_size;
-};
-
 /******************************** STRUCTURE *********************************/
 /****/
 struct _mpc_lowcomm_config_struct_offload_ops_t
@@ -315,7 +234,6 @@ struct _mpc_lowcomm_config_struct_net_driver_shm
 enum _mpc_lowcomm_config_struct_net_driver_type
 {
 	SCTK_RTCFG_net_driver_NONE,
-	SCTK_RTCFG_net_driver_infiniband,
 	SCTK_RTCFG_net_driver_portals,
 	SCTK_RTCFG_net_driver_tcp,
 	SCTK_RTCFG_net_driver_shm,
@@ -330,9 +248,6 @@ struct _mpc_lowcomm_config_struct_net_driver
 	enum _mpc_lowcomm_config_struct_net_driver_type type;
 	union
 	{
-#ifdef MPC_USE_INFINIBAND
-		struct _mpc_lowcomm_config_struct_net_driver_infiniband  infiniband;
-#endif
 #ifdef MPC_USE_PORTALS
 		struct _mpc_lowcomm_config_struct_net_driver_portals     portals;
 #endif
@@ -605,9 +520,6 @@ struct _mpc_lowcomm_config
 {
 #ifdef SCTK_USE_CHECKSUM
 	int checksum;
-#endif
-#ifdef MPC_USE_INFINIBAND
-	struct _mpc_lowcomm_config_struct_ib_global infiniband;
 #endif
 	struct _mpc_lowcomm_workshare_config workshare;
 	struct _mpc_lowcomm_config_mem_pool memorypool;

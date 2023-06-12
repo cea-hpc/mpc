@@ -87,17 +87,6 @@ libmpclowcomm_la_SOURCES += ./tcp/tcp.c ./tcp/tcp_toolkit.c
 libmpclowcomm_la_SOURCES += ./shm/sctk_shm.c      ./shm/sctk_shm_eager.c  ./shm/sctk_shm_raw_queues.c
 libmpclowcomm_la_SOURCES += ./shm/sctk_shm_cma.c  ./shm/sctk_shm_frag.c   ./shm/sctk_shm_qemu.c    ./shm/sctk_shm_raw_queues_internals.c
 
-
-# IB driver #
-if INFINIBAND_DRIVER_ENABLED
-AM_CPPFLAGS += -I$(abs_srcdir)/ib/
-libmpclowcomm_la_SOURCES += ./ib/async.c ./ib/buffered.c ./ib/ib.c ./ib/cm.c
-libmpclowcomm_la_SOURCES += ./ib/ibconfig.c ./ib/cp.c ./ib/ibdevice.c ./ib/ibeager.c
-libmpclowcomm_la_SOURCES += ./ib/ibmmu.c ./ib/ibmpi.c ./ib/ibpolling.c
-libmpclowcomm_la_SOURCES += ./ib/qp.c ./ib/ibrdma.c ./ib/ibtoolkit.c ./ib/ibtopology.c
-libmpclowcomm_la_SOURCES += ./ib/ibufs.c ./ib/ibufs_rdma.c
-endif
-
 # PTL driver #
 if PORTALS4_DRIVER_ENABLED
 AM_CPPFLAGS += -I$(abs_srcdir)/portals/

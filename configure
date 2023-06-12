@@ -823,10 +823,6 @@ OFI_DRIVER_ENABLED_FALSE
 OFI_DRIVER_ENABLED_TRUE
 OFI_LIBS
 OFI_CFLAGS
-INFINIBAND_DRIVER_ENABLED_FALSE
-INFINIBAND_DRIVER_ENABLED_TRUE
-IBV_LIBS
-IBV_CFLAGS
 UNW_LIBS
 UNW_CFLAGS
 VMEM_LIBS
@@ -1043,9 +1039,6 @@ with_libvmem_libs
 with_libunwind
 with_libunwind_inc
 with_libunwind_libs
-with_ibverbs
-with_ibverbs_inc
-with_ibverbs_libs
 with_libfabric
 with_libfabric_inc
 with_libfabric_libs
@@ -1125,8 +1118,6 @@ VMEM_CFLAGS
 VMEM_LIBS
 UNW_CFLAGS
 UNW_LIBS
-IBV_CFLAGS
-IBV_LIBS
 OFI_CFLAGS
 OFI_LIBS
 PORTALS_CFLAGS
@@ -1829,9 +1820,6 @@ Optional Packages:
   --with-libunwind        Provide prefix for libunwind
   --with-libunwind-inc    Provide include path for libunwind
   --with-libunwind-libs   Provide library path for libunwind
-  --with-ibverbs          Provide prefix for ibverbs
-  --with-ibverbs-inc      Provide include path for ibverbs
-  --with-ibverbs-libs     Provide library path for ibverbs
   --with-libfabric        Provide prefix for libfabric
   --with-libfabric-inc    Provide include path for libfabric
   --with-libfabric-libs   Provide library path for libfabric
@@ -1901,8 +1889,6 @@ Some influential environment variables:
   VMEM_LIBS   linker flags for VMEM, overriding pkg-config
   UNW_CFLAGS  C compiler flags for UNW, overriding pkg-config
   UNW_LIBS    linker flags for UNW, overriding pkg-config
-  IBV_CFLAGS  C compiler flags for IBV, overriding pkg-config
-  IBV_LIBS    linker flags for IBV, overriding pkg-config
   OFI_CFLAGS  C compiler flags for OFI, overriding pkg-config
   OFI_LIBS    linker flags for OFI, overriding pkg-config
   PORTALS_CFLAGS
@@ -25728,268 +25714,6 @@ $as_echo "$mpc_libunwind" >&6; }
 
 MPC_NETWORK_LIST="tcp shm"
 
-
-
-#
-# Detect libibverbs presence
-#
-
-infiniband_enabled="no"
-
-
-
-
-# Check whether --with-ibverbs was given.
-if test "${with_ibverbs+set}" = set; then :
-  withval=$with_ibverbs; whole_prefix=$withval
-else
-  whole_prefix="/usr/"
-fi
-
-
-                # As spack may export paths inside the env (e.g. CPATH)
-                # pkg-config way deduplicate them however we want to
-                # capture these cflags to be sure we work later on
-                # we then use this variable to inhibit this behavior
-                export PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1
-
-                if test "x${whole_prefix}" != "xno"; then
-                        # This IF is long !!
-                        # >>>>>>>>>>>>>>>>>>>
-                        inc_prefix=""
-
-# Check whether --with-ibverbs-inc was given.
-if test "${with_ibverbs_inc+set}" = set; then :
-  withval=$with_ibverbs_inc; inc_prefix=$withval
-fi
-
-                        lib_prefix=""
-
-# Check whether --with-ibverbs-libs was given.
-if test "${with_ibverbs_libs+set}" = set; then :
-  withval=$with_ibverbs_libs; lib_prefix=$withval
-else
-  lib_prefix=""
-fi
-
-
-                        check_or_infer_prefix_result="no"
-                        header_name=infiniband/verbs.h
-                        libname=ibverbs
-                        alt_libname=
-                        function_name=ibv_query_qp
-                        var_prefix=IBV
-                        version=""
-
-                        if test -z "$lib_prefix"
-                        then
-                                lib_prefix="$whole_prefix/lib"
-                        fi
-
-                        if test -d "${lib_prefix}/pkgconfig"; then
-                                append_to_pkg_config_if_needed "${lib_prefix}/pkgconfig"
-                        fi
-
-                        if test -n "$whole_prefix"
-                        then
-                                if test -d "${whole_prefix}/lib/pkgconfig"; then
-                                        append_to_pkg_config_if_needed "${whole_prefix}/lib/pkgconfig"
-                                fi
-                        fi
-
-                        if test -z "$inc_prefix"
-                        then
-                                inc_prefix="$whole_prefix/include/"
-                        fi
-
-
-
-
-
-                        #echo "PREF : $whole_prefix LIB: $lib_prefix INC: $inc_prefix"
-
-                        # First try with PKG config
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: Locating $libname$version with pkg-config" >&5
-$as_echo "$as_me: Locating $libname$version with pkg-config" >&6;}
-
-pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for IBV" >&5
-$as_echo_n "checking for IBV... " >&6; }
-
-if test -n "$IBV_CFLAGS"; then
-    pkg_cv_IBV_CFLAGS="$IBV_CFLAGS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_IBV_CFLAGS=`$PKG_CONFIG --cflags "$libname $version" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-if test -n "$IBV_LIBS"; then
-    pkg_cv_IBV_LIBS="$IBV_LIBS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"\$libname \$version\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "$libname $version") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_IBV_LIBS=`$PKG_CONFIG --libs "$libname $version" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-
-
-
-if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
-        _pkg_short_errors_supported=yes
-else
-        _pkg_short_errors_supported=no
-fi
-        if test $_pkg_short_errors_supported = yes; then
-	        IBV_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "$libname $version" 2>&1`
-        else
-	        IBV_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "$libname $version" 2>&1`
-        fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$IBV_PKG_ERRORS" >&5
-
-	pkg_found=0
-elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	pkg_found=0
-else
-	IBV_CFLAGS=$pkg_cv_IBV_CFLAGS
-	IBV_LIBS=$pkg_cv_IBV_LIBS
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-	pkg_found=1
-fi
-
-                        if test "x$pkg_found" = "x1"
-                        then
-                                # Make sure lib paths are explicitly known
-
-                                IBV_LIBS=$(extract_pkg_config_lib_prefixes "$libname" "${IBV_LIBS}")
-                                IBV_CFLAGS=$(extract_pkg_config_inc_prefixes "$libname" "${IBV_CFLAGS}")
-
-                                # Ensure PKG config dependencies are also
-                                # injected using RPATH
-                                IBV_LIBS=$(promote_to_rpath ${IBV_LIBS})
-                                { $as_echo "$as_me:${as_lineno-$LINENO}: IBV FLAGS are ${IBV_LIBS}" >&5
-$as_echo "$as_me: IBV FLAGS are ${IBV_LIBS}" >&6;}
-
-                                #Insert flags
-                                CPPFLAGS="${IBV_CFLAGS} $CPPFLAGS"
-                                LDFLAGS="${IBV_LIBS} $LDFLAGS"
-
-
-
-
-                                { $as_echo "$as_me:${as_lineno-$LINENO}: $libname found using pkg-config" >&5
-$as_echo "$as_me: $libname found using pkg-config" >&6;}
-
-                                { $as_echo "$as_me:${as_lineno-$LINENO}: checking Compiling a simple progam with $libname flags" >&5
-$as_echo_n "checking Compiling a simple progam with $libname flags... " >&6; }
-                                # Make sure we still link to crash early
-                                cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main() {return 0;}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-
-                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-else
-
-                                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                                        as_fn_error $? "Cannot link after adding $libname flags." "$LINENO" 5
-
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-
-
-                                check_or_infer_prefix_result="yes"
-                        else
-                                __check_or_infer_prefix_include "$header_name" "$inc_prefix" "$var_prefix"
-
-                                if test -n "${alt_libname}"; then
-                                        libname="${alt_libname}"
-                                fi
-
-                                __check_or_infer_prefix_lib "$libname" "$function_name" "$lib_prefix" "$var_prefix"
-
-                                if test "x$check_or_infer_prefix_include" = "xyes" -a "x$check_or_infer_prefix_lib" = "xyes"
-                                then
-                                        check_or_infer_prefix_result="yes"
-                                else
-                                        check_or_infer_prefix_result="no"
-                                fi
-                        fi
-
-
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking ibverbs cflags" >&5
-$as_echo_n "checking ibverbs cflags... " >&6; }
-                        XXCFLAGS=$(eval echo \${IBV_CFLAGS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXCFLAGS" >&5
-$as_echo "$XXCFLAGS" >&6; }
-
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: checking ibverbs ldflags" >&5
-$as_echo_n "checking ibverbs ldflags... " >&6; }
-                        XXLIB=$(eval echo \${IBV_LIBS})
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $XXLIB" >&5
-$as_echo "$XXLIB" >&6; }
-
-                        echo $LIBS_WITH_PATH
-
-                        add_to_lib_configuration "$libname" "$XXCFLAGS" "$XXLIB"
-
-                        mpc_dep_found=$check_or_infer_prefix_result
-                else
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: !! ibverbs is explicitly deactivated" >&5
-$as_echo "$as_me: !! ibverbs is explicitly deactivated" >&6;}
-                        mpc_dep_found="no"
-                fi
-                # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-                whole_prefix=""
-
-if test "x$mpc_dep_found" = "xyes"; then
-        MPC_NETWORK_LIST="$MPC_NETWORK_LIST verbs"
-
-$as_echo "#define MPC_USE_INFINIBAND 1" >>confdefs.h
-
-        infiniband_enabled="yes"
-fi
-
- if test "x$infiniband_enabled" = "xyes"; then
-  INFINIBAND_DRIVER_ENABLED_TRUE=
-  INFINIBAND_DRIVER_ENABLED_FALSE='#'
-else
-  INFINIBAND_DRIVER_ENABLED_TRUE='#'
-  INFINIBAND_DRIVER_ENABLED_FALSE=
-fi
-
-
 #
 # Detect LibFabric
 #
@@ -33465,10 +33189,6 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MPC_HAVE_AM_TRUE}" && test -z "${MPC_HAVE_AM_FALSE}"; then
   as_fn_error $? "conditional \"MPC_HAVE_AM\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${INFINIBAND_DRIVER_ENABLED_TRUE}" && test -z "${INFINIBAND_DRIVER_ENABLED_FALSE}"; then
-  as_fn_error $? "conditional \"INFINIBAND_DRIVER_ENABLED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${OFI_DRIVER_ENABLED_TRUE}" && test -z "${OFI_DRIVER_ENABLED_FALSE}"; then

@@ -114,23 +114,9 @@ host_triplet = @host@
 @MPC_HAVE_AM_TRUE@am__append_5 = am.c
 @MPC_HAVE_AM_TRUE@am__append_6 = $(FFI_LIBS)
 
-# IB driver #
-@INFINIBAND_DRIVER_ENABLED_TRUE@am__append_7 = -I$(abs_srcdir)/ib/
-@INFINIBAND_DRIVER_ENABLED_TRUE@am__append_8 = ./ib/async.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/buffered.c ./ib/ib.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/cm.c ./ib/ibconfig.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/cp.c ./ib/ibdevice.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibeager.c ./ib/ibmmu.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibmpi.c ./ib/ibpolling.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/qp.c ./ib/ibrdma.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibtoolkit.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibtopology.c ./ib/ibufs.c \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibufs_rdma.c
-
 # PTL driver #
-@PORTALS4_DRIVER_ENABLED_TRUE@am__append_9 = -I$(abs_srcdir)/portals/
-@PORTALS4_DRIVER_ENABLED_TRUE@am__append_10 =  \
-@PORTALS4_DRIVER_ENABLED_TRUE@	./portals/sctk_portals.c \
+@PORTALS4_DRIVER_ENABLED_TRUE@am__append_7 = -I$(abs_srcdir)/portals/
+@PORTALS4_DRIVER_ENABLED_TRUE@am__append_8 = ./portals/sctk_portals.c \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals/sctk_ptl_cm.c \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals/sctk_ptl_eager.c \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals/sctk_ptl_iface.c \
@@ -138,7 +124,7 @@ host_triplet = @host@
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals/sctk_ptl_rdma.c \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals/sctk_ptl_rdv.c \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals/sctk_ptl_toolkit.c
-@LCP_ENABLED_TRUE@@PORTALS4_DRIVER_ENABLED_TRUE@am__append_11 = ./portals/lcr_ptl.c ./portals/lcr_ptl_recv.c ./portals/lcr_ptl_iface.c
+@LCP_ENABLED_TRUE@@PORTALS4_DRIVER_ENABLED_TRUE@am__append_9 = ./portals/lcr_ptl.c ./portals/lcr_ptl_recv.c ./portals/lcr_ptl_iface.c
 
 # PTL-AM driver #
 @PORTALS4_DRIVER_ENABLED_TRUE@am__append_8 = ./portals_am/sctk_ptl_am_iface.c  ./portals_am/sctk_ptl_am_toolkit.c ./portals_am/sctk_ptl_am_arpc_api.c ./portals_am/arpc_weak.c
@@ -229,17 +215,13 @@ am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c checksum.c ft.c \
 	./tcp/tcp_toolkit.c ./shm/sctk_shm.c ./shm/sctk_shm_eager.c \
 	./shm/sctk_shm_raw_queues.c ./shm/sctk_shm_cma.c \
 	./shm/sctk_shm_frag.c ./shm/sctk_shm_qemu.c \
-	./shm/sctk_shm_raw_queues_internals.c ./ib/async.c \
-	./ib/buffered.c ./ib/ib.c ./ib/cm.c ./ib/ibconfig.c ./ib/cp.c \
-	./ib/ibdevice.c ./ib/ibeager.c ./ib/ibmmu.c ./ib/ibmpi.c \
-	./ib/ibpolling.c ./ib/qp.c ./ib/ibrdma.c ./ib/ibtoolkit.c \
-	./ib/ibtopology.c ./ib/ibufs.c ./ib/ibufs_rdma.c \
-	./portals/sctk_portals.c ./portals/sctk_ptl_cm.c \
-	./portals/sctk_ptl_eager.c ./portals/sctk_ptl_iface.c \
-	./portals/sctk_ptl_offcoll.c ./portals/sctk_ptl_rdma.c \
-	./portals/sctk_ptl_rdv.c ./portals/sctk_ptl_toolkit.c \
-	./portals/lcr_ptl.c ./portals/lcr_ptl_recv.c \
-	./portals/lcr_ptl_iface.c ./portals_am/sctk_ptl_am_iface.c \
+	./shm/sctk_shm_raw_queues_internals.c ./portals/sctk_portals.c \
+	./portals/sctk_ptl_cm.c ./portals/sctk_ptl_eager.c \
+	./portals/sctk_ptl_iface.c ./portals/sctk_ptl_offcoll.c \
+	./portals/sctk_ptl_rdma.c ./portals/sctk_ptl_rdv.c \
+	./portals/sctk_ptl_toolkit.c ./portals/lcr_ptl.c \
+	./portals/lcr_ptl_recv.c ./portals/lcr_ptl_iface.c \
+	./portals_am/sctk_ptl_am_iface.c \
 	./portals_am/sctk_ptl_am_toolkit.c \
 	./portals_am/sctk_ptl_am_arpc_api.c ./portals_am/arpc_weak.c \
 	./ofi/ofi.c ./ofi/ofi_msg.c ./ofi/ofi_rdma.c \
@@ -267,19 +249,7 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @LCP_ENABLED_TRUE@	./lcp/lcp_rma.lo ./lcp/lcp_task.lo \
 @LCP_ENABLED_TRUE@	./lcr/lcr_component.lo
 @MPC_HAVE_AM_TRUE@am__objects_2 = am.lo
-@INFINIBAND_DRIVER_ENABLED_TRUE@am__objects_3 = ./ib/async.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/buffered.lo ./ib/ib.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/cm.lo ./ib/ibconfig.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/cp.lo ./ib/ibdevice.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibeager.lo ./ib/ibmmu.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibmpi.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibpolling.lo ./ib/qp.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibrdma.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibtoolkit.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibtopology.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibufs.lo \
-@INFINIBAND_DRIVER_ENABLED_TRUE@	./ib/ibufs_rdma.lo
-@PORTALS4_DRIVER_ENABLED_TRUE@am__objects_4 =  \
+@PORTALS4_DRIVER_ENABLED_TRUE@am__objects_3 =  \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals/sctk_portals.lo \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals/sctk_ptl_cm.lo \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals/sctk_ptl_eager.lo \
@@ -288,17 +258,16 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals/sctk_ptl_rdma.lo \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals/sctk_ptl_rdv.lo \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals/sctk_ptl_toolkit.lo
-@LCP_ENABLED_TRUE@@PORTALS4_DRIVER_ENABLED_TRUE@am__objects_5 = ./portals/lcr_ptl.lo \
+@LCP_ENABLED_TRUE@@PORTALS4_DRIVER_ENABLED_TRUE@am__objects_4 = ./portals/lcr_ptl.lo \
 @LCP_ENABLED_TRUE@@PORTALS4_DRIVER_ENABLED_TRUE@	./portals/lcr_ptl_recv.lo \
 @LCP_ENABLED_TRUE@@PORTALS4_DRIVER_ENABLED_TRUE@	./portals/lcr_ptl_iface.lo
-@PORTALS4_DRIVER_ENABLED_TRUE@am__objects_6 = ./portals_am/sctk_ptl_am_iface.lo \
+@PORTALS4_DRIVER_ENABLED_TRUE@am__objects_5 = ./portals_am/sctk_ptl_am_iface.lo \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals_am/sctk_ptl_am_toolkit.lo \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals_am/sctk_ptl_am_arpc_api.lo \
 @PORTALS4_DRIVER_ENABLED_TRUE@	./portals_am/arpc_weak.lo
-@OFI_DRIVER_ENABLED_TRUE@am__objects_7 = ./ofi/ofi.lo ./ofi/ofi_msg.lo \
+@OFI_DRIVER_ENABLED_TRUE@am__objects_6 = ./ofi/ofi.lo ./ofi/ofi_msg.lo \
 @OFI_DRIVER_ENABLED_TRUE@	./ofi/ofi_rdma.lo \
 @OFI_DRIVER_ENABLED_TRUE@	./ofi/ofi_toolkit.lo
-<<<<<<< HEAD
 @LCP_ENABLED_TRUE@am__objects_6 = ./tbsm/tbsm.lo ./lcp/lcp_context.lo \
 @LCP_ENABLED_TRUE@	./lcp/lcp_ep.lo ./lcp/lcp_pending.lo \
 @LCP_ENABLED_TRUE@	./lcp/lcp_progress.lo ./lcp/lcp_recv.lo \
@@ -312,9 +281,6 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @LCP_ENABLED_TRUE@	./lcp/lcp_datatype.lo ./lcr/lcr_component.lo
 @MPC_HAVE_AM_TRUE@am__objects_7 = am.lo
 am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo ft.lo \
-=======
-am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo checksum.lo ft.lo \
->>>>>>> c8ec246e9 (CLEANUP: rename checksum)
 	group.lo communicator.lo shm_coll.lo lowcomm_config.lo \
 	alloc_mem.lo lowcomm.lo msg_cpy.lo lowcomm_thread.lo mqd.lo \
 	datatypes_common.lo rail.lo reorder.lo endpoint.lo \
@@ -327,8 +293,7 @@ am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo checksum.lo ft.lo \
 	./shm/sctk_shm_raw_queues.lo ./shm/sctk_shm_cma.lo \
 	./shm/sctk_shm_frag.lo ./shm/sctk_shm_qemu.lo \
 	./shm/sctk_shm_raw_queues_internals.lo $(am__objects_3) \
-	$(am__objects_4) $(am__objects_5) $(am__objects_6) \
-	$(am__objects_7)
+	$(am__objects_4) $(am__objects_5) $(am__objects_6)
 libmpclowcomm_la_OBJECTS = $(am_libmpclowcomm_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -462,8 +427,6 @@ HAVE_VISIBILITY = @HAVE_VISIBILITY@
 HAVE_WCHAR_H = @HAVE_WCHAR_H@
 HWLOC_CFLAGS = @HWLOC_CFLAGS@
 HWLOC_LIBS = @HWLOC_LIBS@
-IBV_CFLAGS = @IBV_CFLAGS@
-IBV_LIBS = @IBV_LIBS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -709,7 +672,7 @@ AM_CPPFLAGS = -I$(abs_top_srcdir)/src/MPC_Common/include/ \
 	-I$(abs_srcdir)/shm/ \
 	-I$(abs_top_srcdir)/src/MPC_Lowcomm/src/cplane/ \
 	$(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_7) $(am__append_9) $(am__append_13)
+	$(am__append_7) $(am__append_11)
 lib_LTLIBRARIES = libmpclowcomm.la
 
 # low-level communication #
@@ -728,8 +691,8 @@ libmpclowcomm_la_SOURCES = coll.c comm.c checksum.c ft.c group.c \
 	./shm/sctk_shm_eager.c ./shm/sctk_shm_raw_queues.c \
 	./shm/sctk_shm_cma.c ./shm/sctk_shm_frag.c \
 	./shm/sctk_shm_qemu.c ./shm/sctk_shm_raw_queues_internals.c \
-	$(am__append_8) $(am__append_10) $(am__append_11) \
-	$(am__append_12) $(am__append_14)
+	$(am__append_8) $(am__append_9) $(am__append_10) \
+	$(am__append_12)
 
 # library dependency #
 libmpclowcomm_la_LIBADD = $(ALLOC_LIBS) \
@@ -900,29 +863,6 @@ shm/$(DEPDIR)/$(am__dirstamp):
 	shm/$(DEPDIR)/$(am__dirstamp)
 ./shm/sctk_shm_raw_queues_internals.lo: shm/$(am__dirstamp) \
 	shm/$(DEPDIR)/$(am__dirstamp)
-ib/$(am__dirstamp):
-	@$(MKDIR_P) ./ib
-	@: > ib/$(am__dirstamp)
-ib/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) ./ib/$(DEPDIR)
-	@: > ib/$(DEPDIR)/$(am__dirstamp)
-./ib/async.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/buffered.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/ib.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/cm.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/ibconfig.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/cp.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/ibdevice.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/ibeager.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/ibmmu.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/ibmpi.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/ibpolling.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/qp.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/ibrdma.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/ibtoolkit.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/ibtopology.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/ibufs.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
-./ib/ibufs_rdma.lo: ib/$(am__dirstamp) ib/$(DEPDIR)/$(am__dirstamp)
 portals/$(am__dirstamp):
 	@$(MKDIR_P) ./portals
 	@: > portals/$(am__dirstamp)
@@ -1048,8 +988,6 @@ mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f ./cplane/*.$(OBJEXT)
 	-rm -f ./cplane/*.lo
-	-rm -f ./ib/*.$(OBJEXT)
-	-rm -f ./ib/*.lo
 	-rm -f ./lcp/*.$(OBJEXT)
 	-rm -f ./lcp/*.lo
 	-rm -f ./lcr/*.$(OBJEXT)
@@ -1198,7 +1136,6 @@ mostlyclean-libtool:
 clean-libtool:
 	-rm -rf .libs _libs
 	-rm -rf ./cplane/.libs ./cplane/_libs
-	-rm -rf ./ib/.libs ./ib/_libs
 	-rm -rf ./lcp/.libs ./lcp/_libs
 	-rm -rf ./lcr/.libs ./lcr/_libs
 	-rm -rf ./ofi/.libs ./ofi/_libs
@@ -1325,8 +1262,6 @@ distclean-generic:
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
 	-rm -f cplane/$(DEPDIR)/$(am__dirstamp)
 	-rm -f cplane/$(am__dirstamp)
-	-rm -f ib/$(DEPDIR)/$(am__dirstamp)
-	-rm -f ib/$(am__dirstamp)
 	-rm -f lcp/$(DEPDIR)/$(am__dirstamp)
 	-rm -f lcp/$(am__dirstamp)
 	-rm -f lcr/$(DEPDIR)/$(am__dirstamp)
@@ -1353,7 +1288,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR) ./cplane/$(DEPDIR) ./ib/$(DEPDIR) ./lcp/$(DEPDIR) ./lcr/$(DEPDIR) ./ofi/$(DEPDIR) ./portals/$(DEPDIR) ./portals_am/$(DEPDIR) ./shm/$(DEPDIR) ./tbsm/$(DEPDIR) ./tcp/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) ./cplane/$(DEPDIR) ./lcp/$(DEPDIR) ./lcr/$(DEPDIR) ./ofi/$(DEPDIR) ./portals/$(DEPDIR) ./portals_am/$(DEPDIR) ./shm/$(DEPDIR) ./tbsm/$(DEPDIR) ./tcp/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -1399,7 +1334,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR) ./cplane/$(DEPDIR) ./ib/$(DEPDIR) ./lcp/$(DEPDIR) ./lcr/$(DEPDIR) ./ofi/$(DEPDIR) ./portals/$(DEPDIR) ./portals_am/$(DEPDIR) ./shm/$(DEPDIR) ./tbsm/$(DEPDIR) ./tcp/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) ./cplane/$(DEPDIR) ./lcp/$(DEPDIR) ./lcr/$(DEPDIR) ./ofi/$(DEPDIR) ./portals/$(DEPDIR) ./portals_am/$(DEPDIR) ./shm/$(DEPDIR) ./tbsm/$(DEPDIR) ./tcp/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

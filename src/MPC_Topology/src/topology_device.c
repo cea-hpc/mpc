@@ -35,11 +35,6 @@
 
 #include <sctk_alloc.h>
 
-
-#ifdef MPC_USE_INFINIBAND
-#include <infiniband/verbs.h>
-#endif
-
 /************************************************************************/
 /* ENUM DEFINITION                                                      */
 /************************************************************************/
@@ -514,27 +509,6 @@ static void __topology_device_init( hwloc_topology_t topology, mpc_topology_devi
 	mpc_common_spinlock_init(&dev->res_lock, 0);
 }
 
-#ifdef MPC_USE_INFINIBAND
-/** The purpose of this function is to resolve the device ids of the OFA devices */
-static inline void __topology_device_fill_in_infiniband_info( mpc_topology_device_t *device )
-{
-	int devices_nb;
-	/* Retrieve device list from verbs */
-	struct ibv_device **dev_list = ibv_get_device_list( &devices_nb );
-	int id;
-
-	/* For all the devices */
-	for ( id = 0; id < devices_nb; id++ )
-	{
-		if ( !strcmp( dev_list[id]->name, device->name ) || !strcmp( dev_list[id]->dev_name, device->name ) )
-		{
-			device->device_id = id;
-			break;
-		}
-	}
-}
-#endif
-
 static inline void __topology_device_enrich_topology()
 {
 	int i;
@@ -553,12 +527,6 @@ static inline void __topology_device_enrich_topology()
 	{
 		mpc_topology_device_t *device = &__mpc_topology_device_list[i];
 
-		if ( device->type == MPC_TOPO_DEVICE_NETWORK_OFA )
-		{
-#ifdef MPC_USE_INFINIBAND
-			__topology_device_fill_in_infiniband_info( device );
-#endif
-		}
 
 #if defined( MPC_USE_CUDA )
 
