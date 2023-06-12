@@ -374,4 +374,11 @@ typedef struct mpc_omp_intel_wrapper_s
 
 void mpc_omp_intel_wrapper_func( void * );
 
+/******************
+ * TARGET INTEROP *
+ ******************/
+
+void **__kmpc_omp_get_target_async_handle_ptr(kmp_int32 gtid);
+bool __kmpc_omp_has_task_team(kmp_int32 gtid);
+
 #endif /*OMP_INTEL_H_*/
