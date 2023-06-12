@@ -37,7 +37,7 @@
 /* ######################################################################## */
 
 // TODO: this disable assert
-//#define NDEBUG
+#define NDEBUG
 #define _GNU_SOURCE
 #include <stdlib.h>
 
@@ -1139,6 +1139,7 @@ __task_process_mpc_dep_entry(mpc_omp_task_t * task, void * addr)
     mpc_omp_instance_t * instance = thread->instance;
     assert(instance);
 
+    double t0 = omp_get_wtime();
     unsigned hashv;
     HASH_VALUE(&addr, sizeof(void *), hashv);
 
@@ -1159,6 +1160,8 @@ __task_process_mpc_dep_entry(mpc_omp_task_t * task, void * addr)
         mpc_common_spinlock_init(&(entry->lock), 0);
         HASH_ADD_KEYPTR_BYHASHVALUE(hh, task->parent->dep_node.hmap, &(entry->addr), sizeof(void *), hashv, entry);
     }
+    double tf = omp_get_wtime();
+    thread->t_hash += (tf - t0);
 
     return entry;
 }
@@ -4095,6 +4098,7 @@ _mpc_omp_task_tree_init(mpc_omp_thread_t * thread)
 
     thread->hash_collision = 0;
     thread->hash_resize = 0;
+    thread->t_hash = 0.0;
     memset(&(thread->task_infos.incoming), 0, sizeof(thread->task_infos.incoming));
     mpc_omp_task_dependencies_hash_func(NULL);
 # if MPC_OMP_TASK_USE_RECYCLERS

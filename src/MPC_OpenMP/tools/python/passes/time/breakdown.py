@@ -61,7 +61,6 @@ class TimeBreakdownPass(ipass.Pass):
         self.idle_start = {}            # last when a thread became
 
     def on_process_inspection_end(self, env):
-
         # end of the gantt
         for tid in env['bound']:
             dt = env['tf'] - self.last_active_time(env, tid)

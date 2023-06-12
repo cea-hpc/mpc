@@ -654,6 +654,14 @@ mpc_omp_task_dependencies_hash_func(uintptr_t (*hash_deps)(void *))
 }
 
 double
+mpc_omp_task_dependencies_hash_time(void)
+{
+    mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
+    assert(thread);
+    return thread->task_infos.t_hash;
+}
+
+double
 mpc_omp_task_dependencies_buckets_occupation(void)
 {
     mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();

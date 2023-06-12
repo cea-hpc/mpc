@@ -276,6 +276,9 @@ extern "C" {
     /* set function to hash task dependencies address for current thread */
     void mpc_omp_task_dependencies_hash_func(uintptr_t (*hash_deps)(void *));
 
+    /* retrieve the time current thread spent accessing any task dependency hash table */
+    double mpc_omp_task_dependencies_hash_time(void);
+
     /* various hashing functions */
     uintptr_t mpc_omp_task_dependency_hash_gomp     (void * addr);
     uintptr_t mpc_omp_task_dependency_hash_jenkins  (void * addr);

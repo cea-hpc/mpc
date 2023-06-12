@@ -1356,6 +1356,7 @@ typedef struct mpc_omp_thread_s
     /* DEBUGING for task discovery */
     size_t hash_collision;
     size_t hash_resize;
+    double t_hash;
 
     /* per-thread callback */
     mpc_omp_thread_callback_infos_t callback_infos;
