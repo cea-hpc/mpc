@@ -34,7 +34,7 @@ extern "C" {
 ************************/
 
 /** This defines an unknown integer value */
-#define MPC_UNDEFINED    -1
+#define MPC_UNDEFINED    -32766
 
 struct _mpc_lowcomm_group_s;
 typedef struct _mpc_lowcomm_group_s mpc_lowcomm_group_t;
@@ -108,10 +108,10 @@ int mpc_lowcomm_group_linear_id(mpc_lowcomm_group_t * group);
  */
 typedef enum
 {
-	MPC_GROUP_IDENT,    /**< Identical groups */
-	MPC_GROUP_SIMILAR,  /**< Same ranks but different order */
-	MPC_GROUP_UNEQUAL,   /**< Different groups */
-    MPC_GROUP_CONGRUENT  /**< Groups are congruent */
+	MPC_GROUP_IDENT,     /**< Identical groups */
+    MPC_GROUP_CONGRUENT, /**< Groups are congruent */
+	MPC_GROUP_SIMILAR,   /**< Same ranks but different order */
+	MPC_GROUP_UNEQUAL    /**< Different groups */
 }mpc_lowcomm_group_eq_e;
 
 /**

@@ -40,12 +40,12 @@ extern "C"
  */
 #define MPC_MESSAGE_PASSING_INTERFACE 1
 
-#define MPI_VERSION    3
+#define MPI_VERSION       3
 #define MPI_SUBVERSION    1
 
-#define MPI_CART (-2)
-#define MPI_GRAPH (-3)
-#define MPI_DIST_GRAPH (-4)
+#define MPI_GRAPH      (-200)
+#define MPI_CART       (-201)
+#define MPI_DIST_GRAPH (-202)
 
 /* Results of the compare operations. */
 #define MPI_IDENT     MPC_GROUP_IDENT
@@ -53,8 +53,8 @@ extern "C"
 #define MPI_SIMILAR   MPC_GROUP_SIMILAR
 #define MPI_UNEQUAL   MPC_GROUP_UNEQUAL
 
-#define MPI_LOCK_EXCLUSIVE  234
-#define MPI_LOCK_SHARED     235
+#define MPI_LOCK_EXCLUSIVE  -8 
+#define MPI_LOCK_SHARED     -9 
 
 /* Other constants */
 #define MPI_UNWEIGHTED ((int *) 2)
@@ -69,6 +69,9 @@ extern "C"
 #define MPI_MAX_NAME_STRING MPC_MAX_OBJECT_NAME
 #define MPI_MAX_OBJECT_NAME MPC_MAX_OBJECT_NAME
 #define MPI_MAX_LIBRARY_VERSION_STRING MPC_MAX_LIBRARY_VERSION_STRING
+
+#define MPI_MAX_STRINGTAG_LEN MPC_MAX_STRINGTAG_LEN
+#define MPI_MAX_PSET_NAME_LEN MPC_MAX_PSET_NAME_LEN
 
 /* Status Struct Members */
 #define MPI_SOURCE MPC_SOURCE
@@ -91,7 +94,7 @@ extern "C"
 #define MPI_COMM_SELF MPC_COMM_SELF
 
 /* Error Handling */
-#define MPI_SUCCESS MPC_LOWCOMM_SUCCESS
+#define MPI_SUCCESS MPC_SUCCESS
 
 #define MPI_MAX_ERROR_STRING MPC_MAX_ERROR_STRING
 #define MPI_ERR_BUFFER MPC_ERR_BUFFER
@@ -153,13 +156,20 @@ extern "C"
 #define MPI_ERR_RMA_ATTACH MPC_ERR_RMA_ATTACH
 #define MPI_ERR_RMA_SHARED MPC_ERR_RMA_SHARED
 
+#define MPI_ERR_PROC_ABORTED MPC_ERR_PROC_ABORTED
+#define MPI_ERR_SESSION MPC_ERR_SESSION
+#define MPI_ERR_VALUE_TOO_LARGE MPC_ERR_VALUE_TOO_LARGE
+
 #define MPI_ERR_LASTCODE MPC_ERR_LASTCODE
 #define MPI_NOT_IMPLEMENTED MPC_NOT_IMPLEMENTED
 #define MPIR_ERRORS_THROW_EXCEPTIONS MPCR_ERRORS_THROW_EXCEPTIONS
+
 /* MPI_T Errors */
 #define MPI_T_ERR_MEMORY MPC_T_ERR_MEMORY
-#define MPI_T_ERR_NOT_INITIALIZED MPC_T_ERR_NOT_INITIALIZED
 #define MPI_T_ERR_CANNOT_INIT MPC_T_ERR_CANNOT_INIT
+#define MPI_T_ERR_NOT_ACCESSIBLE MPC_T_ERR_NOT_ACCESSIBLE
+#define MPI_T_ERR_NOT_INITIALIZED MPC_T_ERR_NOT_INITIALIZED
+#define MPI_T_ERR_NOT_SUPPORTED MPC_T_ERR_NOT_SUPPORTED
 #define MPI_T_ERR_INVALID_INDEX MPC_T_ERR_INVALID_INDEX
 #define MPI_T_ERR_INVALID_ITEM MPC_T_ERR_INVALID_ITEM
 #define MPI_T_ERR_INVALID_HANDLE MPC_T_ERR_INVALID_HANDLE
@@ -292,30 +302,30 @@ extern "C"
 
 /* Data-type classes */
 #define MPI_TYPECLASS_INTEGER 1
-#define MPI_TYPECLASS_REAL 2
-#define MPI_TYPECLASS_COMPLEX 3
+#define MPI_TYPECLASS_REAL    2
+#define MPI_TYPECLASS_COMPLEX 0
 
 /* Threading Level */
 #define MPI_THREAD_SINGLE MPC_THREAD_SINGLE
 #define MPI_THREAD_FUNNELED MPC_THREAD_FUNNELED
 #define MPI_THREAD_SERIALIZED MPC_THREAD_SERIALIZED
-#define  MPI_THREAD_MULTIPLE MPC_THREAD_MULTIPLE
+#define MPI_THREAD_MULTIPLE MPC_THREAD_MULTIPLE
 
 /* Basic Ops */
-#define MPI_SUM 0
-#define MPI_MAX 1
-#define MPI_MIN 2
-#define MPI_PROD 3
-#define MPI_LAND 4
-#define MPI_BAND 5
-#define MPI_LOR 6
-#define MPI_BOR 7
-#define MPI_LXOR 8
-#define MPI_BXOR 9
-#define MPI_MINLOC 10
-#define MPI_MAXLOC 11
-#define MPI_REPLACE 13
-#define MPI_NO_OP 14
+#define MPI_SUM             0
+#define MPI_MAX             1
+#define MPI_MIN             2
+#define MPI_PROD            3
+#define MPI_LAND            4
+#define MPI_BAND            5
+#define MPI_LOR             6
+#define MPI_BOR             7
+#define MPI_LXOR            8
+#define MPI_BXOR            9
+#define MPI_MINLOC         10
+#define MPI_MAXLOC         11
+#define MPI_REPLACE        13
+#define MPI_NO_OP          14
 #define MAX_MPI_DEFINED_OP 13
 #define MPI_OP_NULL ((MPI_Op)-1)
 
@@ -327,12 +337,12 @@ extern "C"
 /* MPI_Info definitions */
 /* Matches the one of MPI_INFO_NULL @ mpc_mpi.h:207 */
 #define MPI_INFO_NULL (-1)
-#define MPI_INFO_ENV (0)
+#define MPI_INFO_ENV  (0)
 /* Maximum length for keys and values
 * they are both defined for MPC and MPI variants */
 /*1 MB */
 #define MPI_MAX_INFO_VAL 1024
-#define MPI_MAX_INFO_KEY 255
+#define MPI_MAX_INFO_KEY  255
 
 /* Other Null Handles */
 #define MPI_WIN_NULL ((MPI_Win)-1)
@@ -343,7 +353,7 @@ extern "C"
 #define MPI_FILE_NULL ((void *)0)
 #endif
 
-#define MPI_BSEND_OVERHEAD (2*sizeof(mpi_buffer_overhead_t))
+#define MPI_BSEND_OVERHEAD 128 /* Real value (2*sizeof(mpi_buffer_overhead_t)) */ 
 
 #define MPI_ERRHANDLER_NULL MPC_ERRHANDLER_NULL
 #define MPI_ERRORS_RETURN MPC_ERRORS_RETURN       /* 1234 in Fortran */
@@ -351,42 +361,47 @@ extern "C"
 
 #define MPI_KEYVAL_INVALID MPC_KEYVAL_INVALID
 
-#define MPI_TAG_UB 0
-#define MPI_HOST 1
-#define MPI_IO 2
+/* Environmental Inquiry Keys */
+#define MPI_TAG_UB          0
+#define MPI_IO              1
+#define MPI_HOST            2
 #define MPI_WTIME_IS_GLOBAL 3
-#define MPI_APPNUM 4
-#define MPI_UNIVERSE_SIZE 5
-#define MPI_LASTUSEDCODE 6
-#define MPI_MAX_KEY_DEFINED 7
+/* Predefined Attribute Keys */
+#define MPI_APPNUM           4
+#define MPI_LASTUSEDCODE     5
+#define MPI_UNIVERSE_SIZE    6
+#define MPI_MAX_KEY_DEFINED  7 /* Number of keys defined above */
 
 /* In addition, there are 5 predefined window attributes that are
  *    defined for every window */
-#define MPI_WIN_MODEL 0
-#define MPI_WIN_BASE          1
-#define MPI_WIN_SIZE          2
-#define MPI_WIN_DISP_UNIT     3
-#define MPI_WIN_CREATE_FLAVOR 4
+#define MPI_WIN_BASE           7
+#define MPI_WIN_DISP_UNIT      8
+#define MPI_WIN_SIZE           9
+#define MPI_WIN_CREATE_FLAVOR 10 
+#define MPI_WIN_MODEL         11 
 
 /* Ordering defines */
-#define MPI_DISTRIBUTE_DFLT_DARG 100
-#define MPI_DISTRIBUTE_BLOCK 101
-#define MPI_DISTRIBUTE_CYCLIC 102
-#define MPI_DISTRIBUTE_NONE 1
+#define MPI_DISTRIBUTE_DFLT_DARG  -1 
+#define MPI_DISTRIBUTE_BLOCK     121
+#define MPI_DISTRIBUTE_CYCLIC    122
+#define MPI_DISTRIBUTE_NONE      123
 
-#define MPI_ORDER_C 200
-#define MPI_ORDER_FORTRAN 201
+#define MPI_ORDER_C       4321 
+#define MPI_ORDER_FORTRAN 1234 
 
 /* Halo */
 #define MPI_HALO_NULL (-1)
 
 /* for comm_split method */
 #define MPI_COMM_TYPE_SHARED MPC_COMM_TYPE_SHARED
+#define MPI_COMM_TYPE_HW_UNGUIDED MPC_COMM_TYPE_HW_UNGUIDED
+#define MPI_COMM_TYPE_HW_GUIDED MPC_COMM_TYPE_HW_GUIDED
+#define MPI_COMM_TYPE_RESOURCE_GUIDED MPC_COMM_TYPE_RESOURCE_GUIDED
+
 #define MPI_COMM_TYPE_SOCKET MPC_COMM_TYPE_SOCKET
 #define MPI_COMM_TYPE_NUMA MPC_COMM_TYPE_NUMA
 #define MPI_COMM_TYPE_UNIX_PROCESS MPC_COMM_TYPE_UNIX_PROCESS
 #define MPI_COMM_TYPE_APP MPC_COMM_TYPE_APP
-#define MPI_COMM_TYPE_HW_UNGUIDED MPC_COMM_TYPE_HW_UNGUIDED
 #define MPI_COMM_TYPE_HW_SUBDOMAIN MPC_COMM_TYPE_HW_SUBDOMAIN
 #define MPI_COMM_TYPE_NODE MPC_COMM_TYPE_NODE
 
@@ -395,24 +410,24 @@ extern "C"
 */
 
 /* asserts for one-sided communication */
-#define MPI_MODE_NOCHECK      1
-#define MPI_MODE_NOSTORE      2
-#define MPI_MODE_NOPUT 4
-#define MPI_MODE_NOPRECEDE 8
-#define MPI_MODE_NOSUCCEED 16
+#define MPI_MODE_NOCHECK     (1<<15) 
+#define MPI_MODE_NOPRECEDE   (1<<16) 
+#define MPI_MODE_NOPUT       (1<<17) 
+#define MPI_MODE_NOSTORE     (1<<18) 
+#define MPI_MODE_NOSUCCEED   (1<<19) 
 
 #define MPI_WIN_FLAVOR_CREATE        1
 #define MPI_WIN_FLAVOR_ALLOCATE      2
 #define MPI_WIN_FLAVOR_DYNAMIC       3
 #define MPI_WIN_FLAVOR_SHARED        4
 
-#define MPI_WIN_UNIFIED              0
-#define MPI_WIN_SEPARATE             1
+#define MPI_WIN_SEPARATE            -300 
+#define MPI_WIN_UNIFIED             -301 
 
 /* Others definitions */
-#define MPI_MAX_PORT_NAME      256
-#define MPI_ARGV_NULL (char **)0
-#define MPI_ARGVS_NULL (char ***)0
+#define MPI_MAX_PORT_NAME       1024 
+#define MPI_ARGV_NULL     (char **)0
+#define MPI_ARGVS_NULL   (char ***)0
 #define MPI_ERRCODES_IGNORE (int *)0
 
 /* Error not implemented */
@@ -532,7 +547,7 @@ typedef int (MPI_Datarep_extent_function)(MPI_Datatype datatype, MPI_Aint *, voi
 
 typedef enum {
 
-  MPC_T_VERBOSITY_NONE = 0,
+  MPC_T_VERBOSITY_NONE = -1,
 
   MPI_T_VERBOSITY_USER_BASIC,
   MPI_T_VERBOSITY_USER_DETAIL,
@@ -562,14 +577,15 @@ typedef enum {
   MPI_T_BIND_MPI_REQUEST,
   MPI_T_BIND_MPI_WIN,
   MPI_T_BIND_MPI_MESSAGE,
-  MPI_T_BIND_MPI_INFO
+  MPI_T_BIND_MPI_INFO,
+  MPI_T_BIND_MPI_SESSION
 } MPC_T_binding;
 
 
 /** Performance variables (PVAR) */
 
 typedef enum {
-  MPC_T_PVAR_CLASS_NONE,          /**<< Internal value to catch uninitialized */
+  MPC_T_PVAR_CLASS_NONE = -1,          /**<< Internal value to catch uninitialized */
   MPI_T_PVAR_CLASS_STATE,         /**<< A set of discrete states */
   MPI_T_PVAR_CLASS_LEVEL,         /**<< Utilization of a ressource */
   MPI_T_PVAR_CLASS_SIZE,          /**<< The size of a ressource */
@@ -7036,7 +7052,7 @@ int PMPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler);
  * MPI SESSIONS *
  ****************/
 
-#define MPI_SESSION_NULL NULL
+#define MPI_SESSION_NULL ((MPI_Session) 0) 
 
 typedef struct MPI_ABI_Session* MPI_Session;
 

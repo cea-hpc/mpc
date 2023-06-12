@@ -275,11 +275,8 @@ size_t RDMA_type_size( RDMA_type type );
 
 enum
 {
-	MPC_LOWCOMM_ERR_TRUNCATE, 	/* Message truncated on receive */
-	MPC_LOWCOMM_ERR_TYPE,	/* Invalid datatype argument */
-	MPC_LOWCOMM_ERR_PENDING, /* Pending request */
-
-	MPC_LOWCOMM_ERR_LASTCODE
+	MPC_LOWCOMM_ERR_TYPE =      3,	/* Invalid datatype argument */
+	MPC_LOWCOMM_ERR_TRUNCATE = 15, 	/* Message truncated on receive */
 };
 
 /*******************
@@ -307,7 +304,7 @@ typedef enum sctk_ft_state_e
 /** Not using datatypes */
 #define MPC_DATATYPE_IGNORE ((mpc_lowcomm_datatype_t)-1)
 /** In place collectives **/
-#define MPC_IN_PLACE ((void*)-1)
+#define MPC_IN_PLACE ((void*)1)
 /** PROC_NULL **/
 #define MPC_PROC_NULL -2
 /** SUCCESS and ERROR **/

@@ -23,6 +23,7 @@
 #include <assert.h>
 #include <mpc_lowcomm.h>
 #include <mpc_mpi.h>
+#include <mpio.h>
 
 int is_mpif_only = 0;
 
@@ -61,28 +62,28 @@ int generate_mpi_fortran_constants()
 	printf("[\n");
 
         /* Start of ROMIO */
-        MPI_INTEGER_VAL("MPI_MODE_RDONLY", 2);
-        MPI_INTEGER_VAL("MPI_MODE_RDWR", 8);
-        MPI_INTEGER_VAL("MPI_MODE_WRONLY", 4);
-        MPI_INTEGER_VAL("MPI_MODE_CREATE", 1);
-        MPI_INTEGER_VAL("MPI_MODE_DELETE_ON_CLOSE", 16);
-        MPI_INTEGER_VAL("MPI_MODE_UNIQUE_OPEN", 32);
-        MPI_INTEGER_VAL("MPI_MODE_EXCL", 64);
-        MPI_INTEGER_VAL("MPI_MODE_APPEND", 128);
-        MPI_INTEGER_VAL("MPI_MODE_SEQUENTIAL", 256);
-        MPI_INTEGER_VAL("MPI_FILE_NULL", 0);
-        MPI_INTEGER_VAL("MPI_MAX_DATAREP_STRING", 128);
-        MPI_INTEGER_VAL("MPI_SEEK_SET", 600);
-        MPI_INTEGER_VAL("MPI_SEEK_CUR", 602);
-        MPI_INTEGER_VAL("MPI_SEEK_END", 604);
-        MPI_INTEGER_VAL("MPIO_REQUEST_NULL", 0);
-        MPI_INTEGER_8_VAL("MPI_DISPLACEMENT_CURRENT", -54278278);
+        MPI_INTEGER_VAL("MPI_MODE_RDONLY", MPI_MODE_RDONLY);
+        MPI_INTEGER_VAL("MPI_MODE_RDWR", MPI_MODE_RDWR);
+        MPI_INTEGER_VAL("MPI_MODE_WRONLY", MPI_MODE_WRONLY);
+        MPI_INTEGER_VAL("MPI_MODE_CREATE", MPI_MODE_CREATE);
+        MPI_INTEGER_VAL("MPI_MODE_DELETE_ON_CLOSE", MPI_MODE_DELETE_ON_CLOSE);
+        MPI_INTEGER_VAL("MPI_MODE_UNIQUE_OPEN", MPI_MODE_UNIQUE_OPEN);
+        MPI_INTEGER_VAL("MPI_MODE_EXCL", MPI_MODE_EXCL);
+        MPI_INTEGER_VAL("MPI_MODE_APPEND", MPI_MODE_APPEND);
+        MPI_INTEGER_VAL("MPI_MODE_SEQUENTIAL", MPI_MODE_SEQUENTIAL);
+        MPI_INTEGER_VAL("MPI_FILE_NULL", (intptr_t)(MPI_FILE_NULL));
+        MPI_INTEGER_VAL("MPI_MAX_DATAREP_STRING", MPI_MAX_DATAREP_STRING);
+        MPI_INTEGER_VAL("MPI_SEEK_SET", MPI_SEEK_SET);
+        MPI_INTEGER_VAL("MPI_SEEK_CUR", MPI_SEEK_CUR);
+        MPI_INTEGER_VAL("MPI_SEEK_END", MPI_SEEK_END);
+        MPI_INTEGER_VAL("MPIO_REQUEST_NULL",(intptr_t)(MPIO_REQUEST_NULL));
+        MPI_INTEGER_8_VAL("MPI_DISPLACEMENT_CURRENT", MPI_DISPLACEMENT_CURRENT);
         /* End of ROMIO */
 
         /* Status Indexing */
-        MPI_INTEGER_VAL("MPI_SOURCE", 1);
-        MPI_INTEGER_VAL("MPI_TAG", 2);
-        MPI_INTEGER_VAL("MPI_ERROR", 3);
+        MPI_INTEGER_VAL("MPI_SOURCE", MPI_F_SOURCE + 1);
+        MPI_INTEGER_VAL("MPI_TAG", MPI_F_TAG + 1);
+        MPI_INTEGER_VAL("MPI_ERROR", MPI_F_ERROR + 1);
 
         /* Kinds */
         MPI_INTEGER_VAL("MPI_OFFSET_KIND", 8);
@@ -103,10 +104,10 @@ int generate_mpi_fortran_constants()
         MPI_INTEGER_VAL("MPI_MAX_INFO_VAL", MPI_MAX_INFO_VAL);
         MPI_INTEGER_VAL("MPI_MAX_INFO_KEY", MPI_MAX_INFO_KEY);
         MPI_INTEGER_VAL("MPI_MAX_PROCESSOR_NAME", MPI_MAX_PROCESSOR_NAME);
-        MPI_INTEGER_VAL("MPI_MAX_NAME_STRING", 256);
+        MPI_INTEGER_VAL("MPI_MAX_NAME_STRING", MPI_MAX_NAME_STRING);
         MPI_INTEGER_VAL("MPI_MAX_PORT_NAME", MPI_MAX_PORT_NAME);
         MPI_INTEGER_VAL("MPI_MAX_ERROR_STRING", MPI_MAX_ERROR_STRING);
-        MPI_INTEGER_VAL("MPI_MAX_KEY_DEFINED", 7);
+        MPI_INTEGER_VAL("MPI_MAX_KEY_DEFINED", MPI_MAX_KEY_DEFINED);
 
         /* Combiners */
         MPI_INTEGER_VAL("MPI_COMBINER_UNKNOWN", MPI_COMBINER_UNKNOWN);
@@ -147,9 +148,9 @@ int generate_mpi_fortran_constants()
                      "MPI_Errhandler");
         MPI_TYPE_VAL("MPI_MESSAGE_NULL", MPI_REQUEST_NULL, "MPI_Message");
 
-        MPI_INTEGER_VAL("MPI_PROC_NULL", MPI_PROC_NULL);
-        MPI_INTEGER_VAL("MPI_ARGV_NULL", MPI_ARGV_NULL);
-        MPI_INTEGER_VAL("MPI_ARGVS_NULL", MPI_ARGVS_NULL);
+        MPI_INTEGER_VAL("MPI_PROC_NULL",  (intptr_t)(MPI_PROC_NULL));
+        MPI_INTEGER_VAL("MPI_ARGV_NULL",  (intptr_t)(MPI_ARGV_NULL));
+        MPI_INTEGER_VAL("MPI_ARGVS_NULL", (intptr_t)(MPI_ARGVS_NULL));
 
         /* Undefined */
         MPI_INTEGER_VAL("MPI_UNDEFINED", MPI_UNDEFINED);
@@ -176,8 +177,8 @@ int generate_mpi_fortran_constants()
         MPI_INTEGER_VAL("MPI_ANY_SOURCE", MPI_ANY_SOURCE);
 
         /* Collective Modifiers */
-        MPI_INTEGER_VAL("MPI_ROOT", MPI_ROOT);
-        MPI_INTEGER_VAL("MPI_IN_PLACE", (size_t)MPI_IN_PLACE);
+        MPI_INTEGER_VAL("MPI_ROOT",     (intptr_t)(MPI_ROOT));
+        MPI_INTEGER_VAL("MPI_IN_PLACE", (intptr_t)(MPI_IN_PLACE));
 
         /* Errors */
         MPI_INTEGER_VAL("MPI_SUCCESS", MPI_SUCCESS);
@@ -342,10 +343,10 @@ int generate_mpi_fortran_constants()
         MPI_TYPE_VAL("MPI_REPLACE", MPI_REPLACE, "MPI_Op");
         MPI_TYPE_VAL("MPI_NO_OP", MPI_NO_OP, "MPI_Op");
 
-        MPI_INTEGER_VAL("MPI_BOTTOM", (int)(MPI_BOTTOM));
+        MPI_INTEGER_VAL("MPI_BOTTOM", (intptr_t)(MPI_BOTTOM));
 
-        MPI_INTEGER_VAL("MPI_GROUP_EMPTY", (-1));
-        MPI_INTEGER_VAL("MPI_GROUP_NULL", 0);
+        MPI_INTEGER_VAL("MPI_GROUP_EMPTY", (intptr_t)(-1));
+        MPI_INTEGER_VAL("MPI_GROUP_NULL",  (intptr_t)(0));
 
         MPI_INTEGER_VAL("MPI_KEYVAL_INVALID", MPI_KEYVAL_INVALID);
 
@@ -356,13 +357,12 @@ int generate_mpi_fortran_constants()
         MPI_INTEGER_VAL("MPI_THREAD_MULTIPLE", MPI_THREAD_MULTIPLE);
 
         /*Architecture dependent part */
-        MPI_INTEGER_VAL("MPI_STATUS_SIZE", (int)(sizeof(MPI_Status) / 4));
+        MPI_INTEGER_VAL("MPI_STATUS_SIZE", MPI_F_STATUS_SIZE);
         assert(sizeof(MPI_Status) % 4 == 0);
         MPI_INTEGER_VAL("MPI_REQUEST_SIZE", (int)(sizeof(MPI_Request) / 4));
         assert(sizeof(MPI_Request) % 4 == 0);
-        MPI_INTEGER_VAL("MPI_BSEND_OVERHEAD",
-                        (int)((2 * sizeof(mpi_buffer_overhead_t)) / 4));
-        assert((2 * sizeof(mpi_buffer_overhead_t)) % 4 == 0);
+        MPI_INTEGER_VAL("MPI_BSEND_OVERHEAD", MPI_BSEND_OVERHEAD / 4);
+        assert(MPI_BSEND_OVERHEAD % 4 == 0);
 
         /* Versions */
         MPI_INTEGER_VAL("MPI_VERSION", MPI_VERSION);
@@ -409,7 +409,7 @@ int generate_mpi_fortran_constants()
         MPI_INTEGER_ARRAY_CONV("MPI_STATUS_IGNORE",
                                (int)(sizeof(MPI_Status) / 4));
         MPI_INTEGER_ARRAY_OF_ARRAY_CONV("MPI_STATUSES_IGNORE",
-                                        (int)(sizeof(MPI_Status) / 4));
+                               (int)(sizeof(MPI_Status) / 4));
 
         /* These definitions are only intended to the mpif.h header
          * as the module file handle them directly however they
