@@ -240,15 +240,15 @@ static inline int __session_report_error(MPI_Session session, int error_code, ch
 * INIT AND FINALIZE *
 *********************/
 
-struct mpc_mpi_session_s *__session_new(void)
+mpc_mpi_session_t *__session_new(void)
 {
-	struct mpc_mpi_session_s *ret = sctk_malloc(sizeof(struct mpc_mpi_session_s) );
+	mpc_mpi_session_t *ret = sctk_malloc(sizeof(mpc_mpi_session_t) );
 
-	memset(ret, 0, sizeof(struct mpc_mpi_session_s) );
+	memset(ret, 0, sizeof(mpc_mpi_session_t) );
 	return ret;
 }
 
-void __session_free(struct mpc_mpi_session_s *session)
+void __session_free(mpc_mpi_session_t *session)
 {
 	mpc_lowcomm_handle_ctx_free(&session->handle_ctx);
 	sctk_free(session);

@@ -7036,8 +7036,7 @@ int PMPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler);
 
 #define MPI_SESSION_NULL NULL
 
-struct mpc_mpi_session_s;
-typedef struct mpc_mpi_session_s* MPI_Session;
+typedef struct MPI_ABI_Session* MPI_Session;
 
 typedef void (MPI_Session_errhandler_function)(MPI_Session *session, int *error_code, ...);
 
