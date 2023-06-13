@@ -83,10 +83,6 @@ endif
 # TCP driver #
 libmpclowcomm_la_SOURCES += ./tcp/tcp.c ./tcp/tcp_toolkit.c
 
-# SHM driver #
-libmpclowcomm_la_SOURCES += ./shm/sctk_shm.c      ./shm/sctk_shm_eager.c  ./shm/sctk_shm_raw_queues.c
-libmpclowcomm_la_SOURCES += ./shm/sctk_shm_cma.c  ./shm/sctk_shm_frag.c   ./shm/sctk_shm_qemu.c    ./shm/sctk_shm_raw_queues_internals.c
-
 # PTL driver #
 if PORTALS4_DRIVER_ENABLED
 AM_CPPFLAGS += -I$(abs_srcdir)/portals/

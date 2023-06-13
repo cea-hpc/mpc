@@ -212,10 +212,7 @@ am__libmpclowcomm_la_SOURCES_DIST = coll.c comm.c checksum.c ft.c \
 	./lcp/lcp_request.c ./lcp/lcp_common.c ./lcp/lcp_rndv.c \
 	./lcp/lcp_tag_offload.c ./lcp/lcp_mem.c ./lcp/lcp_rma.c \
 	./lcp/lcp_task.c ./lcr/lcr_component.c am.c ./tcp/tcp.c \
-	./tcp/tcp_toolkit.c ./shm/sctk_shm.c ./shm/sctk_shm_eager.c \
-	./shm/sctk_shm_raw_queues.c ./shm/sctk_shm_cma.c \
-	./shm/sctk_shm_frag.c ./shm/sctk_shm_qemu.c \
-	./shm/sctk_shm_raw_queues_internals.c ./portals/sctk_portals.c \
+	./tcp/tcp_toolkit.c ./portals/sctk_portals.c \
 	./portals/sctk_ptl_cm.c ./portals/sctk_ptl_eager.c \
 	./portals/sctk_ptl_iface.c ./portals/sctk_ptl_offcoll.c \
 	./portals/sctk_ptl_rdma.c ./portals/sctk_ptl_rdv.c \
@@ -289,11 +286,8 @@ am_libmpclowcomm_la_OBJECTS = coll.lo comm.lo sctk_checksum.lo ft.lo \
 	./cplane/port.lo ./cplane/monitor.lo ./cplane/set.lo \
 	./cplane/uid.lo ./cplane/name.lo $(am__objects_1) \
 	$(am__objects_2) ./tcp/tcp.lo ./tcp/tcp_toolkit.lo \
-	./shm/sctk_shm.lo ./shm/sctk_shm_eager.lo \
-	./shm/sctk_shm_raw_queues.lo ./shm/sctk_shm_cma.lo \
-	./shm/sctk_shm_frag.lo ./shm/sctk_shm_qemu.lo \
-	./shm/sctk_shm_raw_queues_internals.lo $(am__objects_3) \
-	$(am__objects_4) $(am__objects_5) $(am__objects_6)
+	$(am__objects_3) $(am__objects_4) $(am__objects_5) \
+	$(am__objects_6)
 libmpclowcomm_la_OBJECTS = $(am_libmpclowcomm_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -678,8 +672,6 @@ lib_LTLIBRARIES = libmpclowcomm.la
 # low-level communication #
 
 # TCP driver #
-
-# SHM driver #
 libmpclowcomm_la_SOURCES = coll.c comm.c checksum.c ft.c group.c \
 	communicator.c shm_coll.c lowcomm_config.c alloc_mem.c \
 	lowcomm.c msg_cpy.c lowcomm_thread.c mqd.c datatypes_common.c \
@@ -687,12 +679,8 @@ libmpclowcomm_la_SOURCES = coll.c comm.c checksum.c ft.c group.c \
 	handle_ctx.c ./cplane/auth.c ./cplane/peer.c ./cplane/proto.c \
 	./cplane/port.c ./cplane/monitor.c ./cplane/set.c \
 	./cplane/uid.c ./cplane/name.c $(am__append_4) $(am__append_5) \
-	./tcp/tcp.c ./tcp/tcp_toolkit.c ./shm/sctk_shm.c \
-	./shm/sctk_shm_eager.c ./shm/sctk_shm_raw_queues.c \
-	./shm/sctk_shm_cma.c ./shm/sctk_shm_frag.c \
-	./shm/sctk_shm_qemu.c ./shm/sctk_shm_raw_queues_internals.c \
-	$(am__append_8) $(am__append_9) $(am__append_10) \
-	$(am__append_12)
+	./tcp/tcp.c ./tcp/tcp_toolkit.c $(am__append_8) \
+	$(am__append_9) $(am__append_10) $(am__append_12)
 
 # library dependency #
 libmpclowcomm_la_LIBADD = $(ALLOC_LIBS) \
@@ -844,25 +832,6 @@ tcp/$(DEPDIR)/$(am__dirstamp):
 ./tcp/tcp.lo: tcp/$(am__dirstamp) tcp/$(DEPDIR)/$(am__dirstamp)
 ./tcp/tcp_toolkit.lo: tcp/$(am__dirstamp) \
 	tcp/$(DEPDIR)/$(am__dirstamp)
-shm/$(am__dirstamp):
-	@$(MKDIR_P) ./shm
-	@: > shm/$(am__dirstamp)
-shm/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) ./shm/$(DEPDIR)
-	@: > shm/$(DEPDIR)/$(am__dirstamp)
-./shm/sctk_shm.lo: shm/$(am__dirstamp) shm/$(DEPDIR)/$(am__dirstamp)
-./shm/sctk_shm_eager.lo: shm/$(am__dirstamp) \
-	shm/$(DEPDIR)/$(am__dirstamp)
-./shm/sctk_shm_raw_queues.lo: shm/$(am__dirstamp) \
-	shm/$(DEPDIR)/$(am__dirstamp)
-./shm/sctk_shm_cma.lo: shm/$(am__dirstamp) \
-	shm/$(DEPDIR)/$(am__dirstamp)
-./shm/sctk_shm_frag.lo: shm/$(am__dirstamp) \
-	shm/$(DEPDIR)/$(am__dirstamp)
-./shm/sctk_shm_qemu.lo: shm/$(am__dirstamp) \
-	shm/$(DEPDIR)/$(am__dirstamp)
-./shm/sctk_shm_raw_queues_internals.lo: shm/$(am__dirstamp) \
-	shm/$(DEPDIR)/$(am__dirstamp)
 portals/$(am__dirstamp):
 	@$(MKDIR_P) ./portals
 	@: > portals/$(am__dirstamp)
@@ -998,8 +967,6 @@ mostlyclean-compile:
 	-rm -f ./portals/*.lo
 	-rm -f ./portals_am/*.$(OBJEXT)
 	-rm -f ./portals_am/*.lo
-	-rm -f ./shm/*.$(OBJEXT)
-	-rm -f ./shm/*.lo
 	-rm -f ./tbsm/*.$(OBJEXT)
 	-rm -f ./tbsm/*.lo
 	-rm -f ./tcp/*.$(OBJEXT)
@@ -1095,13 +1062,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./portals_am/$(DEPDIR)/sctk_ptl_am_arpc_api.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./portals_am/$(DEPDIR)/sctk_ptl_am_iface.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./portals_am/$(DEPDIR)/sctk_ptl_am_toolkit.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./shm/$(DEPDIR)/sctk_shm.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./shm/$(DEPDIR)/sctk_shm_cma.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./shm/$(DEPDIR)/sctk_shm_eager.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./shm/$(DEPDIR)/sctk_shm_frag.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./shm/$(DEPDIR)/sctk_shm_qemu.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./shm/$(DEPDIR)/sctk_shm_raw_queues.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./shm/$(DEPDIR)/sctk_shm_raw_queues_internals.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./tbsm/$(DEPDIR)/tbsm.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./tcp/$(DEPDIR)/tcp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./tcp/$(DEPDIR)/tcp_toolkit.Plo@am__quote@
@@ -1141,7 +1101,6 @@ clean-libtool:
 	-rm -rf ./ofi/.libs ./ofi/_libs
 	-rm -rf ./portals/.libs ./portals/_libs
 	-rm -rf ./portals_am/.libs ./portals_am/_libs
-	-rm -rf ./shm/.libs ./shm/_libs
 	-rm -rf ./tbsm/.libs ./tbsm/_libs
 	-rm -rf ./tcp/.libs ./tcp/_libs
 
@@ -1272,8 +1231,6 @@ distclean-generic:
 	-rm -f portals/$(am__dirstamp)
 	-rm -f portals_am/$(DEPDIR)/$(am__dirstamp)
 	-rm -f portals_am/$(am__dirstamp)
-	-rm -f shm/$(DEPDIR)/$(am__dirstamp)
-	-rm -f shm/$(am__dirstamp)
 	-rm -f tbsm/$(DEPDIR)/$(am__dirstamp)
 	-rm -f tbsm/$(am__dirstamp)
 	-rm -f tcp/$(DEPDIR)/$(am__dirstamp)
@@ -1288,7 +1245,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR) ./cplane/$(DEPDIR) ./lcp/$(DEPDIR) ./lcr/$(DEPDIR) ./ofi/$(DEPDIR) ./portals/$(DEPDIR) ./portals_am/$(DEPDIR) ./shm/$(DEPDIR) ./tbsm/$(DEPDIR) ./tcp/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) ./cplane/$(DEPDIR) ./lcp/$(DEPDIR) ./lcr/$(DEPDIR) ./ofi/$(DEPDIR) ./portals/$(DEPDIR) ./portals_am/$(DEPDIR) ./tbsm/$(DEPDIR) ./tcp/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -1334,7 +1291,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR) ./cplane/$(DEPDIR) ./lcp/$(DEPDIR) ./lcr/$(DEPDIR) ./ofi/$(DEPDIR) ./portals/$(DEPDIR) ./portals_am/$(DEPDIR) ./shm/$(DEPDIR) ./tbsm/$(DEPDIR) ./tcp/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) ./cplane/$(DEPDIR) ./lcp/$(DEPDIR) ./lcr/$(DEPDIR) ./ofi/$(DEPDIR) ./portals/$(DEPDIR) ./portals_am/$(DEPDIR) ./tbsm/$(DEPDIR) ./tcp/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

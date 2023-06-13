@@ -35,7 +35,6 @@
 #include <ofi.h>
 #endif
 
-#include <sctk_shm.h>
 #include <tbsm/tbsm.h>
 
 

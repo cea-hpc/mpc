@@ -47,7 +47,6 @@
 typedef union
 {
 	_mpc_lowcomm_tcp_rail_info_t tcp; /**< TCP Rail Info */
-	sctk_shm_rail_info_t         shm; /**< SHM Rail Info */
 	_mpc_lowcomm_tbsm_rail_info_t tbsm;
 
 #ifdef MPC_USE_PORTALS
