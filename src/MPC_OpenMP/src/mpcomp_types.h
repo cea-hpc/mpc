@@ -375,8 +375,8 @@ typedef enum    mpc_omp_task_state_e
     MPC_OMP_TASK_STATE_SCHEDULED            = 4,
     MPC_OMP_TASK_STATE_SUSPENDED            = 5,
     MPC_OMP_TASK_STATE_EXECUTED             = 6,
-    MPC_OMP_TASK_STATE_RESOLVING            = 7,
-    MPC_OMP_TASK_STATE_DETACHED             = 8,
+    MPC_OMP_TASK_STATE_DETACHED             = 7,
+    MPC_OMP_TASK_STATE_COMPLETED            = 8,
     MPC_OMP_TASK_STATE_RESOLVED             = 9,
     MPC_OMP_TASK_STATE_DEINITIALIZED        = 10,
 }               mpc_omp_task_state_t;
@@ -535,12 +535,15 @@ typedef struct mpc_omp_task_dep_list_elt_s
 /** Task context structure */
 #if MPC_OMP_TASK_COMPILE_FIBER
 
+# define TASK_FIBER_MAGIC_NUMBER 0x0207
+
 typedef struct  mpc_omp_task_fiber_s
 {
     sctk_mctx_t initial;    /* the initial context of this task (for recycling 'makecontext' calls) */
     sctk_mctx_t current;    /* the current context of this task */
     sctk_mctx_t * exit;     /* the context to return when this task is paused or finished */
     int swap_count;         /* number of times this was swapped */
+    int magic;              /* magic number to detect stack overflow */
 }               mpc_omp_task_fiber_t;
 #endif
 
@@ -852,8 +855,11 @@ typedef struct  mpc_omp_task_s
     struct mpc_omp_task_thread_infos_s * producer;
 # endif /* MPC_OMP_TASK_USE_RECYCLERS */
 
-    /* detach event */
+    /* task detach event */
     mpc_omp_event_handle_detach_t detach_event;
+
+    /* taskwait detach event */
+    mpc_omp_event_handle_detach_t taskwait_detach_event;
 
     /* task flags (can have concurrency, as opposed to task properties) */
     mpc_omp_task_flags_t flags;

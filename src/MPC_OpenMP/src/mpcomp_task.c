@@ -1066,15 +1066,15 @@ __task_precedence_constraints(mpc_omp_task_t * predecessor, mpc_omp_task_t * suc
     );
 
     int is_persistent = mpc_omp_task_property_isset(predecessor->property, MPC_OMP_TASK_PROP_PERSISTENT);
-    if (TASK_STATE(predecessor) < MPC_OMP_TASK_STATE_RESOLVING || is_persistent)
+    if (TASK_STATE(predecessor) < MPC_OMP_TASK_STATE_EXECUTED || is_persistent)
     {
         mpc_common_spinlock_lock(&(predecessor->state_lock));
         {
-            if (TASK_STATE(predecessor) < MPC_OMP_TASK_STATE_RESOLVING || is_persistent)
+            if (TASK_STATE(predecessor) < MPC_OMP_TASK_STATE_EXECUTED || is_persistent)
             {
                 // add the successor to the predecessor' successors list
                 //   the predecessor has not executed yet
-                if (TASK_STATE(predecessor) < MPC_OMP_TASK_STATE_RESOLVING)
+                if (TASK_STATE(predecessor) < MPC_OMP_TASK_STATE_EXECUTED)
                 {
                     ++predecessor->dep_node.nsuccessors;
                     OPA_incr_int(&(successor->dep_node.ref_predecessors));
@@ -1619,11 +1619,7 @@ _mpc_omp_task_finalize(mpc_omp_task_t * task)
     // the task executed, now is time to resolve its dependencies
     assert(TASK_STATE(task) == MPC_OMP_TASK_STATE_EXECUTED || (TASK_STATE(task) == MPC_OMP_TASK_STATE_SCHEDULED && task->flags.cancelled) || TASK_STATE(task) == MPC_OMP_TASK_STATE_DETACHED);
 
-    mpc_common_spinlock_lock(&(task->state_lock));
-    {
-        TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_RESOLVING);
-    }
-    mpc_common_spinlock_unlock(&(task->state_lock));
+    TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_COMPLETED);
 
     int is_persistent = mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_PERSISTENT);
     if (!is_persistent)
@@ -3094,7 +3090,11 @@ __task_run_coherency_check_post(mpc_omp_task_t * task)
     assert(task->flags.cancelled        == false);
 
     assert(TASK_STATE(task) == MPC_OMP_TASK_STATE_SCHEDULED);
-    TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_EXECUTED);
+    mpc_common_spinlock_lock(&(task->state_lock));
+    {
+        TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_EXECUTED);
+    }
+    mpc_common_spinlock_unlock(&(task->state_lock));
 }
 
 /**
@@ -3164,7 +3164,7 @@ __thread_generate_new_task_fiber(mpc_omp_thread_t * thread)
         );
     }
     fiber->swap_count = 0;
-
+    fiber->magic = TASK_FIBER_MAGIC_NUMBER;
     return fiber;
 }
 
@@ -3323,6 +3323,12 @@ __taskyield_return(void)
     TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_SUSPENDED);
 
     assert(task->fiber->exit == &(thread->task_infos.mctx));
+    assert(task->fiber->magic == TASK_FIBER_MAGIC_NUMBER);
+    if (task->fiber->magic != TASK_FIBER_MAGIC_NUMBER)
+    {
+        fprintf(stderr, "task fiber stack overflow %d (label=%s) - please increase fiber stack size\n", task->uid, task->label);
+        exit(1);
+    }
     sctk_swapcontext_no_tls(&(task->fiber->current), task->fiber->exit);
 }
 # endif /* MPC_OMP_TASK_COMPILE_FIBER */
@@ -4368,10 +4374,27 @@ _mpc_omp_event_handle_init_detach(mpc_omp_event_handle_detach_t ** handle_ptr)
     assert(*handle_ptr);
     mpc_omp_event_handle_detach_t * hdl = (mpc_omp_event_handle_detach_t *) (*handle_ptr);
     OPA_store_int(&(hdl->counter), 1);
+    hdl->parent.type = MPC_OMP_EVENT_TASK_DETACH;
 }
 
 void
 _mpc_omp_event_handle_deinit_detach(mpc_omp_event_handle_detach_t * handle)
+{
+    // this should never be called
+    assert(0);
+    (void) handle;
+}
+
+void
+_mpc_omp_event_handle_init_continue(mpc_omp_event_handle_detach_t ** handle_ptr)
+{
+    assert(*handle_ptr);
+    mpc_omp_event_handle_detach_t * hdl = (mpc_omp_event_handle_detach_t *) (*handle_ptr);
+    OPA_store_int(&(hdl->counter), 1);
+    hdl->parent.type = MPC_OMP_EVENT_TASK_CONTINUE;
+}
+void
+_mpc_omp_event_handle_deinit_continue(mpc_omp_event_handle_detach_t * handle)
 {
     // this should never be called
     assert(0);

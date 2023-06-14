@@ -134,11 +134,11 @@ do {                                                                            
 #define HASH_INITIAL_NUM_BUCKETS 32U     /* initial number of buckets        */
 #define HASH_INITIAL_NUM_BUCKETS_LOG2 5U /* lg2 of initial number of buckets */
 #define HASH_BKT_CAPACITY_THRESH 10U     /* expand when bucket count reaches */
-#endif
-
+#else
 #define HASH_INITIAL_NUM_BUCKETS        65536U  /* initial number of buckets        */
 #define HASH_INITIAL_NUM_BUCKETS_LOG2   16U     /* lg2 of initial number of buckets */
 #define HASH_BKT_CAPACITY_THRESH        16U     /* expand when bucket count reaches */
+#endif
 
 /* calculate the element whose hash handle address is hhp */
 #define ELMT_FROM_HH(tbl,hhp) ((void*)(((char*)(hhp)) - ((tbl)->hho)))

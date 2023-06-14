@@ -430,7 +430,20 @@ mpc_omp_in_explicit_task(void)
     return 1;
 }
 
-TODO("Support for OpenMP standard event handle : add an hashtable of `key=omp_event_handle_t` and `value=mpc_omp_event_handle_t *`");
+omp_event_handle_t
+omp_task_continuation_event(void)
+{
+    mpc_omp_thread_t *thread = (mpc_omp_thread_t *) mpc_omp_tls;
+    assert(thread);
+
+    mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    assert(task);
+
+    omp_event_handle_t hdl = (omp_event_handle_t) &(task->taskwait_detach_event);
+    mpc_omp_event_handle_init((mpc_omp_event_handle_t **) &hdl, MPC_OMP_EVENT_TASK_CONTINUE);
+
+    return hdl;
+}
 
 /**
  * Fulfill the MPC event handle
@@ -452,6 +465,12 @@ mpc_omp_fulfill_event(mpc_omp_event_handle_t * handle)
         {
             OPA_decr_int(&(((mpc_omp_event_handle_detach_t *) handle)->counter));
             break ;
+        }
+
+        case (MPC_OMP_EVENT_TASK_CONTINUE):
+        {
+            OPA_store_int(&(((mpc_omp_event_handle_detach_t *) handle)->counter), 0);
+            break;
         }
 
         default:
@@ -490,6 +509,12 @@ mpc_omp_event_handle_init(mpc_omp_event_handle_t ** handle_ptr, mpc_omp_event_t 
             break ;
         }
 
+        case (MPC_OMP_EVENT_TASK_CONTINUE):
+        {
+            _mpc_omp_event_handle_init_continue((mpc_omp_event_handle_detach_t **) handle_ptr);
+            break;
+        }
+
         default:
         {
             not_implemented();
@@ -517,6 +542,12 @@ mpc_omp_event_handle_deinit(mpc_omp_event_handle_t * handle)
         {
             _mpc_omp_event_handle_deinit_detach((mpc_omp_event_handle_detach_t *) handle);
             break ;
+        }
+
+        case (MPC_OMP_EVENT_TASK_CONTINUE):
+        {
+            _mpc_omp_event_handle_deinit_continue((mpc_omp_event_handle_detach_t *) handle);
+            break;
         }
 
         default:
@@ -658,7 +689,7 @@ mpc_omp_task_dependencies_hash_time(void)
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
     assert(thread);
-    return thread->task_infos.t_hash;
+    return thread->t_hash;
 }
 
 double

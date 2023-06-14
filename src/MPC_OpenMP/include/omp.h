@@ -91,6 +91,7 @@ extern "C" {
         __omp_event_handle_t_max__ = UINTPTR_MAX
     } omp_event_handle_t;
     void omp_fulfill_event(omp_event_handle_t event);
+    omp_event_handle_t omp_task_continuation_event(void);
 
     /* Lock Functions */
     void omp_init_lock( omp_lock_t *lock );

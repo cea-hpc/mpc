@@ -61,6 +61,7 @@ extern "C" {
     {
         MPC_OMP_EVENT_TASK_BLOCK,
         MPC_OMP_EVENT_TASK_DETACH,
+        MPC_OMP_EVENT_TASK_CONTINUE,
         MPC_OMP_EVENT_MAX
     }               mpc_omp_event_t;
 
@@ -93,7 +94,7 @@ extern "C" {
     }               mpc_omp_event_handle_block_t;
 
     /**
-     * Event handler for task block/unblock
+     * Event handler for task(wait) detach
      */
     typedef struct   mpc_omp_event_handle_detach_s
     {
