@@ -158,7 +158,7 @@ void lcp_mtch_prq_destroy(lcp_mtch_prq_list_t *list)
  * 
  * @param list UMQ
  * @param req reqeuest to delete
- * @return int MPC_LOWCOMM_SUCCESS in case of success
+ * @return int LCP_SUCCESS in case of success
  */
 int lcp_umq_cancel(lcp_mtch_umq_list_t *list, void *req)
 {

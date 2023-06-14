@@ -23,9 +23,9 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 
 	// create a request to be matched with the received message
 	rc = lcp_request_create(&req);
-	if (rc != MPC_LOWCOMM_SUCCESS) {
+	if (rc != LCP_SUCCESS) {
 		mpc_common_debug_error("LCP: could not create request.");
-		return  MPC_LOWCOMM_ERROR;
+		return  LCP_ERROR;
 	}
         req->flags |= LCP_REQUEST_MPI_COMPLETE;
         LCP_REQUEST_INIT_TAG_RECV(req, ctx, task, request, param->recv_info,
@@ -63,7 +63,7 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 			       req->recv.tag.src_tid);
 
                 LCP_TASK_UNLOCK(task);
-		return MPC_LOWCOMM_SUCCESS;
+		return LCP_SUCCESS;
 	}
 
 	LCP_TASK_UNLOCK(task);
@@ -77,20 +77,27 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
                                           match->length - sizeof(lcp_rndv_hdr_t));
 
 	} else if (match->flags & LCP_RECV_CONTAINER_UNEXP_EAGER_TAG) {
+                size_t data_length;
+                void *data_ptr;
                 /* If synchronization was asked, send ack message */
-		if(match->flags & LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC)
+		if(match->flags & LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC) {
 			lcp_send_eager_sync_ack(req, match + 1);
+                        data_ptr    = (lcp_tag_sync_hdr_t *)(match + 1) + 1;
+                        data_length = match->length - sizeof(lcp_tag_sync_hdr_t);
+                } else {
+                        data_ptr    = (lcp_tag_hdr_t *)(match + 1) + 1;
+                        data_length = match->length - sizeof(lcp_tag_hdr_t);
+                }
 
-                rc = lcp_recv_eager_tag_data(req, match + 1, 
-                                             match->length - sizeof(lcp_tag_hdr_t));
+                rc = lcp_recv_eager_tag_data(req, match + 1, data_ptr, data_length);
 
-                if (rc != MPC_LOWCOMM_SUCCESS) {
+                if (rc != LCP_SUCCESS) {
                         mpc_common_debug_error("LCP: could not unpack unexpected "
                                                "data.");
                 }
 	} else {
 		mpc_common_debug_error("LCP: unkown match flag=%x.", match->flags);
-		rc = MPC_LOWCOMM_ERROR;
+		rc = LCP_ERROR;
 	}
 	sctk_free(match);
 

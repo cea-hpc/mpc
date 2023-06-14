@@ -7,7 +7,6 @@
 #include <alloca.h>
 
 #include <sctk_alloc.h>
-#include <mpc_lowcomm_types.h>
 #include <lowcomm_config.h>
 #include <sctk_rail.h>
 
@@ -19,21 +18,25 @@
 //      pointers). Creates non-null valid dummy pointers that can segfault 
 //      later on.
 
-lcp_am_handler_t lcp_am_handlers[MPC_LOWCOMM_MSG_LAST] = {{NULL, 0}};
+lcp_am_handler_t lcp_am_handlers[LCP_AM_ID_LAST] = {{NULL, 0}};
+//FIXME: add context param to decide whether to allocate context statically or
+//       dynamically.
+static int lcp_context_is_initialized = 0;
+static lcp_context_h static_ctx = NULL;
 
 static inline int lcp_context_set_am_handler(lcp_context_h ctx, 
                                              sctk_rail_info_t *iface)
 {
 	int rc, am_id;
 
-	for (am_id=0; am_id<MPC_LOWCOMM_MSG_LAST; am_id++) {
+	for (am_id=0; am_id<LCP_AM_ID_LAST; am_id++) {
 		
 		rc = lcr_iface_set_am_handler(iface, am_id, 
 					      lcp_am_handlers[am_id].cb, 
 					      ctx, 
 					      lcp_am_handlers[am_id].flags);
 
-		if (rc != MPC_LOWCOMM_SUCCESS) {
+		if (rc != LCP_SUCCESS) {
 			break;
 		}
 	}
@@ -63,11 +66,11 @@ static int lcp_context_open_interfaces(lcp_context_h ctx)
 		}
 
 		rc = lcp_context_set_am_handler(ctx, rsc->iface);
-		if (rc != MPC_LOWCOMM_SUCCESS) 
+		if (rc != LCP_SUCCESS) 
 			goto err;
 	}
 	
-	rc = MPC_LOWCOMM_SUCCESS;
+	rc = LCP_SUCCESS;
 err:
 	return rc;
 }
@@ -89,7 +92,7 @@ static int lcp_context_init_structures(lcp_context_h ctx)
 	ctx->match_ht = sctk_malloc(sizeof(lcp_pending_table_t));
 	if (ctx->match_ht == NULL) {
 		mpc_common_debug_error("LCP: Could not allocate matching pending tables.");
-		rc = MPC_LOWCOMM_ERROR;
+		rc = LCP_ERROR;
 		goto err;
 	}
 	memset(ctx->match_ht, 0, sizeof(lcp_pending_table_t));
@@ -99,24 +102,26 @@ static int lcp_context_init_structures(lcp_context_h ctx)
 	ctx->pend = sctk_malloc(sizeof(lcp_pending_table_t));
 	if (ctx->pend == NULL) {
 		mpc_common_debug_error("LCP: Could not allocate am pending tables.");
-		rc = MPC_LOWCOMM_ERROR;
+		rc = LCP_ERROR;
 		goto err;
 	}
 	memset(ctx->pend, 0, sizeof(lcp_pending_table_t));
 	mpc_common_spinlock_init(&ctx->pend->table_lock, 0);
 
+        /* Init hash table of tasks */
 	ctx->tasks = sctk_malloc(sizeof(lcp_task_table_t));
 	if (ctx->tasks == NULL) {
 		mpc_common_debug_error("LCP: Could not allocate tasks table.");
-		rc = MPC_LOWCOMM_ERROR;
+		rc = LCP_ERROR;
 		goto out_free_pending_tables;
 	}
 	memset(ctx->tasks, 0, sizeof(lcp_task_table_t));
 	mpc_common_spinlock_init(&ctx->tasks->lock, 0);
 
-	rc = MPC_LOWCOMM_SUCCESS;
+	rc = LCP_SUCCESS;
 
         return rc;
+
 out_free_pending_tables:
         sctk_free(ctx->pend); 
 err:
@@ -165,13 +170,13 @@ static int lcp_context_config_parse_list(const char *cfg_list,
         }
         
         if (length == 0) {
-                return MPC_LOWCOMM_SUCCESS;
+                return LCP_SUCCESS;
         }
 
         list = sctk_malloc(length * sizeof(char *));
         if (list == NULL) {
                 mpc_common_debug_error("LCP: could not allocate parse list");
-                return MPC_LOWCOMM_ERROR;
+                return LCP_ERROR;
         }
 
         /* Reset duplicate that has been changed with strtok */
@@ -182,7 +187,7 @@ static int lcp_context_config_parse_list(const char *cfg_list,
                 if((list[i] = strdup(token)) == NULL) {
                         mpc_common_debug_error("LCP: could not allocate list token");
                         sctk_free(list);
-                        return MPC_LOWCOMM_ERROR;
+                        return LCP_ERROR;
                 }
                 token = strtok(NULL, ",");
                 i++;
@@ -193,7 +198,7 @@ static int lcp_context_config_parse_list(const char *cfg_list,
 
         sctk_free(cfg_list_dup);
 
-        return MPC_LOWCOMM_SUCCESS;
+        return LCP_SUCCESS;
 }
 
 /**
@@ -210,7 +215,7 @@ static int lcp_context_config_init(lcp_context_h ctx,
                                    unsigned num_components,
                                    lcr_protocol_config_t *config)
 {
-        int rc = MPC_LOWCOMM_SUCCESS;
+        int rc = LCP_SUCCESS;
         int i, j;
 
         /* Check for multirail */
@@ -223,14 +228,14 @@ static int lcp_context_config_init(lcp_context_h ctx,
                                            &ctx->config.selected_components,
                                            &ctx->config.num_selected_components);
 
-        if (rc != MPC_LOWCOMM_SUCCESS) {
+        if (rc != LCP_SUCCESS) {
                 goto err;
         }
 
         /* Does not support heterogeous multirail (tsbm always counted) */
         if (ctx->config.num_selected_components > 2) {
                 mpc_common_debug_error("LCP: heterogeous multirail not supported");
-                rc = MPC_LOWCOMM_ERROR;
+                rc = LCP_ERROR;
                 goto free_component_list;
         }
 
@@ -244,7 +249,7 @@ static int lcp_context_config_init(lcp_context_h ctx,
                 ctx->config.selected_devices     = sctk_malloc(sizeof(char *));
                 if (ctx->config.selected_devices == NULL) {
                         mpc_common_debug_error("LCP: could not allocate device list");
-                        rc = MPC_LOWCOMM_ERROR;
+                        rc = LCP_ERROR;
                         goto free_component_list;
                 }
 
@@ -266,7 +271,7 @@ static int lcp_context_config_init(lcp_context_h ctx,
                 if (!ok) {
                         mpc_common_debug_error("LCP: component %s is not supported.",
                                                ctx->config.selected_components[i]);
-                        rc = MPC_LOWCOMM_ERROR;
+                        rc = LCP_ERROR;
                         goto free_component_list;
                 }
         }
@@ -284,7 +289,7 @@ static int lcp_context_config_init(lcp_context_h ctx,
         rc = lcp_context_config_parse_list(config->devices,
                                            &ctx->config.selected_devices,
                                            &ctx->config.num_selected_devices);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
+        if (rc != LCP_SUCCESS) {
                 goto free_component_list;
         }
 
@@ -325,7 +330,7 @@ static int lcp_context_query_component_devices(lcr_component_h component,
 
         /* Get all available devices */
         rc = component->query_devices(component, &devices, &num_devices);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
+        if (rc != LCP_SUCCESS) {
                 mpc_common_debug("LCP: error querying component: %s",
                                  component->name);
                 goto err;
@@ -339,7 +344,7 @@ static int lcp_context_query_component_devices(lcr_component_h component,
         *num_devices_p = num_devices;
         *devices_p     = devices;
 
-        rc = MPC_LOWCOMM_SUCCESS;
+        rc = LCP_SUCCESS;
 
 err:
         return rc;
@@ -464,7 +469,7 @@ static int lcp_context_add_resources(lcp_context_h ctx,
                                      lcr_component_h *components,
                                      unsigned num_components)
 {
-	int rc = MPC_LOWCOMM_SUCCESS;
+	int rc = LCP_SUCCESS;
         int max_ifaces, idx; 
         int *cmpt_idx;
         int i, j, nrsc = 0, nrsc_per_cmpt;
@@ -477,7 +482,7 @@ static int lcp_context_add_resources(lcp_context_h ctx,
                 rc = lcp_context_query_component_devices(components[i],
                                                          &components[i]->devices,
                                                          &components[i]->num_devices);
-                if (rc != MPC_LOWCOMM_SUCCESS) {
+                if (rc != LCP_SUCCESS) {
                         goto out_free_devices;
                 }
         }
@@ -490,7 +495,7 @@ static int lcp_context_add_resources(lcp_context_h ctx,
 	//       nothing is launched
         //if (max_ifaces == 0) {
         //        mpc_common_debug_error("LCP: could not find any interface");
-        //        rc = MPC_LOWCOMM_ERROR;
+        //        rc = LCP_ERROR;
         //        goto err;
         //}
 
@@ -498,7 +503,7 @@ static int lcp_context_add_resources(lcp_context_h ctx,
         ctx->resources = sctk_malloc(max_ifaces * sizeof(*ctx->resources));
         if (ctx->resources == NULL) {
                 mpc_common_debug_error("LCP: could not allocate resources");
-                rc = MPC_LOWCOMM_ERROR;
+                rc = LCP_ERROR;
                 goto out_free_devices;
         }
         ctx->num_resources = max_ifaces;
@@ -539,7 +544,7 @@ static int lcp_context_add_resources(lcp_context_h ctx,
                                                        cmpt->devices[j].name);
                         }
                 }
-                rc = MPC_LOWCOMM_ERROR;
+                rc = LCP_ERROR;
         }
 
         return rc;
@@ -571,10 +576,16 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
         lcr_component_h *components;
         unsigned num_components;
 
+        //FIXME: should context creation be thread-safe ?
+        if (lcp_context_is_initialized) {
+                *ctx_p = static_ctx;
+                return LCP_SUCCESS;
+        }
+
 	/* Allocate context */
 	ctx = sctk_malloc(sizeof(struct lcp_context));
 	if (ctx == NULL) {
-		rc = MPC_LOWCOMM_ERROR;
+		rc = LCP_ERROR;
 		goto err;
 	}
 	memset(ctx, 0, sizeof(struct lcp_context));
@@ -586,7 +597,7 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
 
         if (!(param->flags & LCP_CONTEXT_PROCESS_UID)) {
                 mpc_common_debug_error("LCP: process uid not set");
-                rc = MPC_LOWCOMM_ERROR;
+                rc = LCP_ERROR;
                 goto out_free_ctx;
         }
         ctx->process_uid = param->process_uid;
@@ -600,7 +611,7 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
 
         /* Get all available components */
         rc = lcr_query_components(&components, &num_components);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
+        if (rc != LCP_SUCCESS) {
                 goto out_free_ctx;
         }
         ctx->num_cmpts = num_components;
@@ -608,32 +619,33 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
         /* Init context config */
         rc = lcp_context_config_init(ctx, components, num_components,
                                      _mpc_lowcomm_config_proto_get());
-	if (rc != MPC_LOWCOMM_SUCCESS) {
+	if (rc != LCP_SUCCESS) {
 		goto out_free_components;
 	}
 
 	/* Init context config with resources */
 	rc = lcp_context_add_resources(ctx, components, num_components);
-	if (rc != MPC_LOWCOMM_SUCCESS) {
+	if (rc != LCP_SUCCESS) {
 		goto out_free_ctx_config;
 	}
 
 	/* Allocate rail interface */
 	rc = lcp_context_open_interfaces(ctx);
-	if (rc != MPC_LOWCOMM_SUCCESS) {
+	if (rc != LCP_SUCCESS) {
 		goto out_free_resources;
 	}
 
         rc = lcp_context_init_structures(ctx);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
+        if (rc != LCP_SUCCESS) {
                 goto out_free_ifaces;
         }
 
-	*ctx_p = ctx;
+	*ctx_p = static_ctx = ctx;
+        lcp_context_is_initialized = 1;
                        
         lcr_free_components(components, num_components, 1);
 
-	return MPC_LOWCOMM_SUCCESS;
+	return LCP_SUCCESS;
 
 out_free_ifaces:
         for (i=0; i<ctx->num_resources; i++) {
@@ -699,5 +711,5 @@ int lcp_context_fini(lcp_context_h ctx)
 
 	sctk_free(ctx);
 
-	return MPC_LOWCOMM_SUCCESS;
+	return LCP_SUCCESS;
 }

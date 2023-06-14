@@ -5,7 +5,10 @@
 #include <stddef.h>
 
 typedef struct lcp_am_hdr {
-	uint8_t am_id; //FIXME: not needed ?
+	uint8_t  am_id;
+        int32_t  dest_tid;
+        uint32_t hdr_size; /* size of user header */
+        uint64_t src_uid;
 } lcp_am_hdr_t;
 
 /**
@@ -21,13 +24,27 @@ typedef struct lcp_tag_hdr {
 } lcp_tag_hdr_t;
 
 /**
+ * @brief tag matched sync message header
+ * 
+ */
+typedef struct lcp_tag_sync_hdr {
+        lcp_tag_hdr_t base;
+        uint64_t msg_id;
+        uint64_t src_uid;
+} lcp_tag_sync_hdr_t;
+
+/**
  * @brief rendez-vous message header
  * 
  */
 typedef struct lcp_rndv_hdr {
-	lcp_tag_hdr_t base;
-	int32_t       src_pid; /* source process identifier   */
-	size_t        size;    /* message size                */
+        union {
+                lcp_tag_hdr_t tag;
+                lcp_am_hdr_t  am; 
+        };
+        uint64_t msg_id;  /* message id   */
+	uint64_t src_uid; /* source uid   */
+	size_t   size;    /* message size */
 } lcp_rndv_hdr_t;
 
 /**

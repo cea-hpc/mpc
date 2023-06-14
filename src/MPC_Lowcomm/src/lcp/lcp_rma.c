@@ -31,7 +31,7 @@ size_t lcp_rma_put_pack(void *dest, void *arg) {
  * @param min_frag_size minimum fragment size in bytes
  * @param max_iface max number of interfaces
  * @param bmap_p output bitmap
- * @return int MPC_LOWCOMM_SUCCESS in case of success
+ * @return int LCP_SUCCESS in case of success
  */
 static inline int build_rma_memory_registration_bitmap(size_t length, 
                                                        size_t min_frag_size, 
@@ -56,7 +56,7 @@ static inline int build_rma_memory_registration_bitmap(size_t length,
  * @brief Register a buffer
  * 
  * @param req request containing the buffer to register
- * @return int MPC_LOWCOMM_SUCCESS in case of success
+ * @return int LCP_SUCCESS in case of success
  */
 int lcp_rma_reg_send_buffer(lcp_request_t *req)
 {
@@ -102,11 +102,11 @@ void lcp_rma_request_complete_put(lcr_completion_t *comp)
  * @brief Put a buffer copy request.
  * 
  * @param req request to put
- * @return int MPC_LOWCOMM_SUCCESS in case of success
+ * @return int LCP_SUCCESS in case of success
  */
 int lcp_rma_put_bcopy(lcp_request_t *req)
 {
-        int rc = MPC_LOWCOMM_SUCCESS;
+        int rc = LCP_SUCCESS;
         int payload_size;
         lcp_ep_h ep = req->send.ep;
         lcp_chnl_idx_t cc = ep->priority_chnl;
@@ -121,7 +121,7 @@ int lcp_rma_put_bcopy(lcp_request_t *req)
 	//FIXME: handle error
 	if (payload_size < 0) {
 		mpc_common_debug_error("LCP: error packing bcopy.");
-		rc = MPC_LOWCOMM_ERROR;
+		rc = LCP_ERROR;
 	}
 
         lcp_request_complete(req);
@@ -134,11 +134,11 @@ int lcp_rma_put_bcopy(lcp_request_t *req)
  * @brief Put a zero copy 
  * 
  * @param req request to put
- * @return int MPC_LOWCOMM_SUCCESS in case of succes
+ * @return int LCP_SUCCESS in case of succes
  */
 int lcp_rma_put_zcopy(lcp_request_t *req)
 {
-        int rc = MPC_LOWCOMM_SUCCESS;
+        int rc = LCP_SUCCESS;
         int i, num_used_ifaces;
         size_t remaining, offset;
         size_t frag_length, length;
@@ -199,17 +199,17 @@ int lcp_rma_put_zcopy(lcp_request_t *req)
  * 
  * @param ep endpoint
  * @param req request
- * @return int MPC_LOWCOMM_SUCCESS in case of success
+ * @return int LCP_SUCCESS in case of success
  */
 int lcp_rma_put_start(lcp_ep_h ep, lcp_request_t *req) 
 {
-        int rc = MPC_LOWCOMM_SUCCESS;
+        int rc = LCP_SUCCESS;
 
         if (req->send.length <= ep->ep_config.rma.max_put_bcopy) {
                 req->send.func = lcp_rma_put_bcopy;
         } else if (req->send.length <= ep->ep_config.rma.max_put_zcopy) {
                 rc = lcp_rma_reg_send_buffer(req);
-                if (rc != MPC_LOWCOMM_SUCCESS) {
+                if (rc != LCP_SUCCESS) {
                         mpc_common_debug_error("LCP RMA: could not register send buffer");
                         goto err;
                 }
@@ -235,7 +235,7 @@ int lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, size_t length,
         uint64_t msg_id = OPA_fetch_and_incr_int(&(ep->ctx->msg_id));
 
         rc = lcp_request_create(&req);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
+        if (rc != LCP_SUCCESS) {
                 goto err;
         }
         req->flags |= LCP_REQUEST_RMA_COMPLETE;
@@ -244,7 +244,7 @@ int lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, size_t length,
         lcp_request_init_rma_put(req, remote_addr, rkey, param);
 
         rc = lcp_rma_put_start(ep, req);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
+        if (rc != LCP_SUCCESS) {
                 goto err;  
         }
 

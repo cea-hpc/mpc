@@ -1,6 +1,7 @@
 #ifndef LCP_CONTEXT_H
 #define LCP_CONTEXT_H
 
+#include "lcp.h"
 #include "lcp_def.h"
 #include "lcr/lcr_def.h"
 #include "lcp_types.h"
@@ -118,7 +119,7 @@ struct lcp_context {
 
         uint64_t process_uid; /* process uid used for endpoint creation */
 
-        mpc_queue_head_t pending_queue;
+        mpc_queue_head_t pending_queue; /* Queue of pending requests to be sent */
 	lcp_pending_table_t *pend; /* LCP send requests */
 
         lcp_task_table_t *tasks; /* LCP tasks (per thread data) */

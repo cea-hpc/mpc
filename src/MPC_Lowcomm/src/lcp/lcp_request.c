@@ -12,7 +12,7 @@
  * @brief Create a request.
  * 
  * @param req_p pointer to the request to be created
- * @return int MPC_LOWCOMM_SUCCESS in case of success
+ * @return int LCP_SUCCESS in case of success
  */
 int lcp_request_create(lcp_request_t **req_p)
 {
@@ -20,13 +20,13 @@ int lcp_request_create(lcp_request_t **req_p)
 	req = (lcp_request_t *)sctk_malloc(sizeof(lcp_request_t));
 	if (req == NULL) {
 		mpc_common_debug_error("LCP: could not allocate recv request.");
-		return MPC_LOWCOMM_ERROR;
+		return LCP_ERROR;
 	}
 	memset(req, 0, sizeof(lcp_request_t));
 
 	*req_p = req;
 
-	return MPC_LOWCOMM_SUCCESS;
+	return LCP_SUCCESS;
 }
 
 /**
@@ -36,7 +36,7 @@ int lcp_request_create(lcp_request_t **req_p)
  * @param data message data (in)
  * @param length length of message
  * @param flags flag of the message
- * @return int MPC_LOWCOMM_SUCCESS in case of success
+ * @return int LCP_SUCCESS in case of success
  */
 int lcp_request_init_unexp_ctnr(lcp_unexp_ctnr_t **ctnr_p, void *data, 
 				size_t length, unsigned flags)
@@ -47,7 +47,7 @@ int lcp_request_init_unexp_ctnr(lcp_unexp_ctnr_t **ctnr_p, void *data,
 	if (ctnr == NULL) {
 		mpc_common_debug_error("LCP: could not allocate recv "
 				       "container.");
-		return MPC_LOWCOMM_ERROR;
+		return LCP_ERROR;
 	}
 
 	ctnr->length = length;
@@ -57,14 +57,14 @@ int lcp_request_init_unexp_ctnr(lcp_unexp_ctnr_t **ctnr_p, void *data,
 	memcpy(ctnr + 1, data, length);
 
 	*ctnr_p = ctnr;
-	return MPC_LOWCOMM_SUCCESS;
+	return LCP_SUCCESS;
 }
 
 /**
  * @brief Set a request as completed
  * 
  * @param req request to be marked as completed
- * @return int MPC_LOWCOMM_SUCCESS in case of success
+ * @return int LCP_SUCCESS in case of success
  */
 int lcp_request_complete(lcp_request_t *req)
 {
@@ -96,5 +96,5 @@ int lcp_request_complete(lcp_request_t *req)
 
 	sctk_free(req);
 
-	return MPC_LOWCOMM_SUCCESS;
+	return LCP_SUCCESS;
 }

@@ -14,7 +14,7 @@ ssize_t lcp_send_eager_bcopy(lcp_request_t *req,
 
 	if (payload < 0) {
 		mpc_common_debug_error("LCP: error packing bcopy.");
-                return MPC_LOWCOMM_ERROR;
+                return LCP_ERROR;
 	}
 
         return payload;

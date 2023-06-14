@@ -9,9 +9,23 @@
 
 #include "uthash.h"
 
+int lcp_am_set_handler_callback(lcp_task_h task, uint8_t am_id,
+                                void *user_arg, lcp_am_callback_t cb,
+                                unsigned flags)
+{
+        lcp_am_user_handler_t *user_handler = &task->am[am_id];
+
+        user_handler->cb       = cb;
+        user_handler->user_arg = user_arg;
+        user_handler->flags    = flags;
+
+        return LCP_SUCCESS;
+}
+
+
 int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
 {
-        int rc = MPC_LOWCOMM_SUCCESS;
+        int rc = LCP_SUCCESS;
         lcp_task_entry_t *item = NULL;
         lcp_task_h task;
 
@@ -21,6 +35,8 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
         mpc_common_spinlock_lock(&(ctx->ctx_lock));
 	HASH_FIND(hh, ctx->tasks->table, &tid, sizeof(int), item);
         if (item != NULL) {
+                *task_p = item->task;
+                mpc_common_spinlock_unlock(&(ctx->ctx_lock));
                 mpc_common_debug_warning("LCP: task with tid=%d already "
                                          "created.", tid);
                 goto err;
@@ -30,7 +46,7 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
         task = sctk_malloc(sizeof(struct lcp_task));
         if (task == NULL) {
                 mpc_common_debug_error("LCP: could not allocate task");
-                rc = MPC_LOWCOMM_ERROR;
+                rc = LCP_ERROR;
                 goto err;
         }
 
@@ -44,7 +60,7 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
         if (task->prq_table == NULL || task->umq_table == NULL) {
                 mpc_common_debug_error("LCP: could not allocate prq "
                                        "or umq table for tid=%d", tid);
-                rc = MPC_LOWCOMM_ERROR;
+                rc = LCP_ERROR;
                 goto err;
         }
         memset(task->prq_table, 0, sizeof(lcp_prq_match_table_t));
@@ -60,10 +76,20 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
         if (item == NULL) {
                 mpc_common_debug_error("LCP: could not allocate "
                                        " task item");
-                rc = MPC_LOWCOMM_ERROR;
+                rc = LCP_ERROR;
                 goto err;
         }
         memset(item, 0, sizeof(lcp_task_entry_t));
+
+        /* Init table of user AM callbacks */
+        task->am = sctk_malloc(LCP_AM_ID_USER_MAX * sizeof(lcp_am_user_handler_t));
+        if (task->am == NULL) {
+                mpc_common_debug_error("LCP CTX: Could not allocated user AM handlers");
+                rc = LCP_ERROR;
+                goto err;
+        }
+        memset(task->am, 0, LCP_AM_ID_USER_MAX * sizeof(lcp_am_user_handler_t));
+
 
         item->task_key = tid;
         item->task = *task_p = task;
@@ -88,5 +114,5 @@ int lcp_task_fini(lcp_task_h task) {
         sctk_free(task);
         task = NULL;
 
-        return MPC_LOWCOMM_SUCCESS;
+        return LCP_SUCCESS;
 }

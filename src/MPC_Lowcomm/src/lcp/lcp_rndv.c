@@ -88,11 +88,11 @@ static size_t lcp_rndv_fin_pack(void *dest, void *data)
  * 
  * @param super request to send
  * @param rmem // TODO ?
- * @return int MPC_LOWCOMM_SUCCESS in case of success
+ * @return int LCP_SUCCESS in case of success
  */
 int lcp_rndv_rma_progress(lcp_request_t *rndv_req)
 {
-        int rc = MPC_LOWCOMM_SUCCESS;
+        int rc = LCP_SUCCESS;
         lcp_chnl_idx_t cc;
         size_t remaining, offset;
         size_t frag_length, length;
@@ -160,11 +160,11 @@ int lcp_rndv_rma_progress(lcp_request_t *rndv_req)
 /* ============================================== */
 int lcp_rndv_reg_send_buffer(lcp_request_t *req)
 {
-        int rc = MPC_LOWCOMM_SUCCESS;
+        int rc = LCP_SUCCESS;
 
         if (req->ctx->config.rndv_mode == LCP_RNDV_GET) {
                 rc = lcp_mem_create(req->ctx, &(req->state.lmem));
-                if (rc != MPC_LOWCOMM_SUCCESS) {
+                if (rc != LCP_SUCCESS) {
                         goto err;
                 }
 
@@ -190,7 +190,7 @@ int lcp_rndv_reg_recv_buffer(lcp_request_t *rndv_req)
         lcp_request_t *req = rndv_req->super;
 
         rc = lcp_mem_create(req->ctx, &(req->state.lmem));
-        if (rc != MPC_LOWCOMM_SUCCESS) {
+        if (rc != LCP_SUCCESS) {
                 goto err;
         }
 
@@ -225,7 +225,7 @@ void lcp_rndv_complete(lcr_completion_t *comp)
                 lcp_request_t *super = rndv_req->super;
 
                 payload = lcp_send_do_am_bcopy(ep->lct_eps[ep->priority_chnl],
-                                               MPC_LOWCOMM_RFIN_MESSAGE,
+                                               LCP_AM_ID_RFIN,
                                                lcp_rndv_fin_pack,
                                                rndv_req);
                 if (payload < 0) {
@@ -249,11 +249,11 @@ void lcp_rndv_complete(lcr_completion_t *comp)
  * @brief Start an rndv protocol with active message
  * 
  * @param req request
- * @return int MPC_LOWCOMM_SUCCESS In case of success
+ * @return int LCP_SUCCESS In case of success
  */
 int lcp_send_rndv_start(lcp_request_t *req)
 {
-        int rc = MPC_LOWCOMM_SUCCESS;
+        int rc = LCP_SUCCESS;
         lcp_request_t *rndv_req;
 
         /* If data is derived, buffer must be allocated and data packed to make
@@ -265,7 +265,7 @@ int lcp_send_rndv_start(lcp_request_t *req)
                 if (req->state.pack_buf == NULL) {
                         mpc_common_debug_error("LCP: could not allocate pack "
                                                "buffer");
-                        rc = MPC_LOWCOMM_ERROR;
+                        rc = LCP_ERROR;
                         goto err;
                 }
 
@@ -276,7 +276,7 @@ int lcp_send_rndv_start(lcp_request_t *req)
 
         /* Create rendez-vous request */
         rc = lcp_request_create(&rndv_req);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
+        if (rc != LCP_SUCCESS) {
                 goto err;
         }
         rndv_req->super = req;
@@ -292,17 +292,12 @@ int lcp_send_rndv_start(lcp_request_t *req)
                 .comp_cb = lcp_rndv_complete,
         };
 
-        /* Set message identifiers: 
-         *  - super request: unique key to store locally
-         *  - rndv request: key transmitted to receiver */
-        LCP_REQUEST_SET_MSGID(rndv_req->msg_id, req->send.tag.dest_tid, 
-                              req->seqn);
-        LCP_REQUEST_SET_MSGID(req->msg_id, req->send.tag.dest_tid, 
-                              req->seqn);
+        /* Set message identifiers */
+        rndv_req->msg_id = req->msg_id; 
 
         if (lcp_pending_create(req->ctx->pend, rndv_req, req->msg_id) == NULL) {
                 mpc_common_debug_error("LCP: could not add pending message");
-                rc = MPC_LOWCOMM_ERROR;
+                rc = LCP_ERROR;
                 goto err;
         }
         /* delete from pending list on completion */
@@ -322,15 +317,15 @@ static int lcp_rndv_progress_rtr(lcp_request_t *rndv_req)
         lcp_chnl_idx_t cc  = lcp_ep_get_next_cc(ep);
 
         payload = lcp_send_do_am_bcopy(ep->lct_eps[cc],
-                                       MPC_LOWCOMM_ACK_RDV_MESSAGE,
+                                       LCP_AM_ID_RTR,
                                        lcp_rndv_rtr_pack,
                                        rndv_req);
         if (payload < 0) {
                 mpc_common_debug_error("LCP: error sending ack rdv message");
-                rc = MPC_LOWCOMM_ERROR;
+                rc = LCP_ERROR;
                 goto err;
         }
-        rc = MPC_LOWCOMM_SUCCESS;
+        rc = LCP_SUCCESS;
 err:
         return rc;
 }
@@ -345,7 +340,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
 
         /* Rendez-vous request used for RTR (PUT) or RMA (GET) */
         rc = lcp_request_create(&rndv_req);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
+        if (rc != LCP_SUCCESS) {
                 goto err;
         }
         rndv_req->super = rreq;
@@ -355,13 +350,9 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
         rndv_req->send.buffer     = rreq->recv.buffer;
         rndv_req->state.remaining = rreq->recv.send_length;
         rndv_req->state.offset    = 0;
-        /* Set message identifiers: 
-         *  - super request: unique key to store locally
-         *  - rndv request: key transmitted to sender */
-        LCP_REQUEST_SET_MSGID(rndv_req->msg_id, rreq->recv.tag.dest_tid,
-                              rreq->seqn);
-        LCP_REQUEST_SET_MSGID(rreq->msg_id, rreq->recv.tag.src_tid,
-                              rreq->seqn);
+
+        /* Set message identifiers from incomming message */
+        rndv_req->msg_id = hdr->msg_id;
 
         /* Buffer must be allocated and data packed to make it contiguous
          * and use zcopy and memory registration. */
@@ -370,19 +361,20 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
                 if (rreq->state.pack_buf == NULL) {
                         mpc_common_debug_error("LCP: could not allocate pack "
                                                "buffer");
-                        return MPC_LOWCOMM_ERROR;
+                        return LCP_ERROR;
                 }
                 rndv_req->state.pack_buf = rreq->state.pack_buf;
         }
 
         /* Get endpoint */
-        uint64_t puid = lcp_get_process_uid(rreq->ctx->process_uid,
-                                            rreq->recv.tag.src_pid);
-        HASH_FIND(hh, rndv_req->ctx->ep_ht, &puid, sizeof(uint64_t), ctx_ep);
+        HASH_FIND(hh, rndv_req->ctx->ep_ht, &hdr->src_uid, 
+                  sizeof(uint64_t), ctx_ep);
         if (ctx_ep == NULL) {
-                rc = lcp_ep_create(rndv_req->ctx, &(rndv_req->send.ep), puid, 0);
-                if (rc != MPC_LOWCOMM_SUCCESS) {
-                        mpc_common_debug_error("LCP: could not create ep after match.");
+                rc = lcp_ep_create(rndv_req->ctx, &(rndv_req->send.ep), 
+                                   hdr->src_uid, 0);
+                if (rc != LCP_SUCCESS) {
+                        mpc_common_debug_error("LCP: could not create ep "
+                                               "after match.");
                         goto err;
                 }
         } else {
@@ -392,9 +384,11 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
         switch (rreq->ctx->config.rndv_mode) {
         case LCP_RNDV_PUT:
                 /* Append request to request hash table */
-                if (lcp_pending_create(rreq->ctx->pend, rndv_req, rreq->msg_id) == NULL) {
-                        mpc_common_debug_error("LCP: could not add pending message");
-                        rc = MPC_LOWCOMM_ERROR;
+                if (lcp_pending_create(rreq->ctx->pend, rndv_req, 
+                                       rreq->msg_id) == NULL) {
+                        mpc_common_debug_error("LCP: could not add pending "
+                                               "message");
+                        rc = LCP_ERROR;
                         goto err;
                 }
                 /* delete from pending list on completion */
@@ -403,7 +397,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
                 /* Register memory through rndv request since we need the
                  * endpoint connection map stored in the endpoint */ 
                 rc = lcp_rndv_reg_recv_buffer(rndv_req);
-                if (rc != MPC_LOWCOMM_SUCCESS) {
+                if (rc != LCP_SUCCESS) {
                         goto err;
                 }
 
@@ -427,7 +421,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
                 break;
         default:
                 mpc_common_debug_fatal("LCP: unknown protocol in recv");
-                rc = MPC_LOWCOMM_ERROR;
+                rc = LCP_ERROR;
                 break;
         }
 
@@ -446,7 +440,7 @@ static int lcp_rndv_rtr_handler(void *arg, void *data,
                                 unsigned flags)
 {
         UNUSED(flags);
-        int rc = MPC_LOWCOMM_SUCCESS;
+        int rc = LCP_SUCCESS;
         lcp_context_h ctx = arg;
         lcp_ack_hdr_t *hdr = data;
         lcp_request_t *rndv_req;
@@ -456,7 +450,7 @@ static int lcp_rndv_rtr_handler(void *arg, void *data,
         if (rndv_req == NULL) {
                 mpc_common_debug_error("LCP: could not find ctrl msg: "
                                        "msg id=%llu.", hdr->msg_id);
-                rc = MPC_LOWCOMM_ERROR;
+                rc = LCP_ERROR;
                 goto err;
         }
 
@@ -481,7 +475,7 @@ err:
  * @param data rendez-vous header
  * @param length header length
  * @param flags message flags
- * @return int MPC_LOWCOMM_SUCCESS in case of success
+ * @return int LCP_SUCCESS in case of success
  */
 static int lcp_rndv_fin_handler(void *arg, void *data,
                                 size_t length, 
@@ -489,7 +483,7 @@ static int lcp_rndv_fin_handler(void *arg, void *data,
 {
         UNUSED(length);
         UNUSED(flags);
-        int rc = MPC_LOWCOMM_SUCCESS;
+        int rc = LCP_SUCCESS;
         lcp_context_h ctx = arg;
         lcp_ack_hdr_t *hdr = data;
         lcp_request_t *rndv_req, *req;
@@ -499,7 +493,7 @@ static int lcp_rndv_fin_handler(void *arg, void *data,
         if (rndv_req == NULL) {
                 mpc_common_debug_error("LCP: could not find ctrl msg: "
                                        "msg id=%llu.", hdr->msg_id);
-                rc = MPC_LOWCOMM_ERROR;
+                rc = LCP_ERROR;
                 goto err;
         }
         req = rndv_req->super;
@@ -529,5 +523,5 @@ err:
         return rc;
 }
 
-LCP_DEFINE_AM(MPC_LOWCOMM_ACK_RDV_MESSAGE, lcp_rndv_rtr_handler, 0);
-LCP_DEFINE_AM(MPC_LOWCOMM_RFIN_MESSAGE, lcp_rndv_fin_handler, 0);
+LCP_DEFINE_AM(LCP_AM_ID_RTR, lcp_rndv_rtr_handler, 0);
+LCP_DEFINE_AM(LCP_AM_ID_RFIN, lcp_rndv_fin_handler, 0);

@@ -22,10 +22,10 @@
  * @param param request parameter used for offload flag
  * @return int MPI_SUCCESS in case of success
  */
-int lcp_send_start(lcp_ep_h ep, lcp_request_t *req,
-                   const lcp_request_param_t *param)
+int lcp_tag_send_start(lcp_ep_h ep, lcp_request_t *req,
+                       const lcp_request_param_t *param)
 {
-        int rc = MPC_LOWCOMM_SUCCESS;
+        int rc = LCP_SUCCESS;
         size_t size;
 
         if (ep->ep_config.offload && (ep->ctx->config.offload ||
@@ -97,9 +97,9 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
 
         // create the request to send
         rc = lcp_request_create(&req);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
+        if (rc != LCP_SUCCESS) {
                 mpc_common_debug_error("LCP: could not create request.");
-                return MPC_LOWCOMM_ERROR;
+                return LCP_ERROR;
         }
         req->flags |= LCP_REQUEST_MPI_COMPLETE;
 
@@ -109,17 +109,14 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
         //       Reorder is to be reimplemented.
         LCP_REQUEST_INIT_TAG_SEND(req, ep->ctx, task, request, param->recv_info, 
                                   count, ep, (void *)buffer, 
-                                  OPA_fetch_and_incr_int(&ep->seqn), 0,
+                                  OPA_fetch_and_incr_int(&ep->seqn), (uint64_t)req,
                                   param->datatype);
 
-        /* Set msg id used for sync and rdnv */
-        LCP_REQUEST_SET_MSGID(req->msg_id, req->send.tag.dest_tid, req->seqn);
-
         /* prepare request depending on its type */
-        rc = lcp_send_start(ep, req, param);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
+        rc = lcp_tag_send_start(ep, req, param);
+        if (rc != LCP_SUCCESS) {
                 mpc_common_debug_error("LCP: could not prepare send request.");
-                return MPC_LOWCOMM_ERROR;
+                return LCP_ERROR;
         }
 
         /* send the request */

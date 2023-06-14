@@ -5,6 +5,7 @@
 
 #define LCP_BIT(i) (1ul << (i))
 
+//FIXME: redefine unicity
 #define MPC_PP_UNIQUE_ID __LINE__
 
 #define __MPC_TOKENPASTE_HELPER(x, y) x ## y

@@ -16,7 +16,7 @@
  */
 int lcp_progress(lcp_context_h ctx)
 {
-	int i, rc = MPC_LOWCOMM_SUCCESS;
+	int i, rc = LCP_SUCCESS;
 
         for (i=0; i<ctx->num_resources; i++) {
                 sctk_rail_info_t *iface = ctx->resources[i].iface;

@@ -67,7 +67,7 @@ size_t lcp_mem_rkey_pack(lcp_context_h ctx, lcp_mem_h mem, void *dest)
  * @param mem memory to pack
  * @param rkey_buf_p output rkey buffer
  * @param rkey_len output rkey buffer length
- * @return int MPC_LOWCOMM_SUCCESS in case of success
+ * @return int LCP_SUCCESS in case of success
  */
 int lcp_mem_pack(lcp_context_h ctx, lcp_mem_h mem, 
                  void **rkey_buf_p, size_t *rkey_len)
@@ -95,7 +95,7 @@ int lcp_mem_pack(lcp_context_h ctx, lcp_mem_h mem,
         *rkey_buf_p = rkey_buf;
         *rkey_len   = packed_size;
 
-        return MPC_LOWCOMM_SUCCESS;
+        return LCP_SUCCESS;
 }
 
 /**
@@ -115,12 +115,12 @@ void lcp_mem_release_rkey_buf(void *rkey_buffer)
  * @param mem_p unpacked memory output buffer
  * @param src data to unpack
  * @param size output size of unpacked data
- * @return int MPC_LOWCOMM_SUCCESS in case of success
+ * @return int LCP_SUCCESS in case of success
  */
 int lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h *mem_p, 
                    void *src, size_t size)
 {
-        int i, rc = MPC_LOWCOMM_SUCCESS;
+        int i, rc = LCP_SUCCESS;
         size_t unpacked_size = 0;
         sctk_rail_info_t *iface = NULL;
         void *p = src;
@@ -129,7 +129,7 @@ int lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h *mem_p,
         mem = sctk_malloc(sizeof(struct lcp_mem));
         if (mem == NULL) {
                 mpc_common_debug_error("LCP: could not allocate memory domain");
-                rc = MPC_LOWCOMM_ERROR;
+                rc = LCP_ERROR;
                 goto err;
         }
 
@@ -137,7 +137,7 @@ int lcp_mem_unpack(lcp_context_h ctx, lcp_mem_h *mem_p,
         mem->num_ifaces = 0;
         if (mem->mems == NULL) {
                 mpc_common_debug_error("LCP: could not allocate memory pins");
-                rc = MPC_LOWCOMM_ERROR;
+                rc = LCP_ERROR;
                 goto err;
         }
         memset(mem->mems, 0, ctx->num_resources * sizeof(lcr_memp_t));
@@ -168,17 +168,17 @@ err:
  * 
  * @param ctx context
  * @param mem_p memory to alloc
- * @return int MPC_LOWCOMM_SUCCESS in case of success
+ * @return int LCP_SUCCESS in case of success
  */
 int lcp_mem_create(lcp_context_h ctx, lcp_mem_h *mem_p)
 {
-        int rc = MPC_LOWCOMM_SUCCESS;
+        int rc = LCP_SUCCESS;
         lcp_mem_h mem;
 
         mem = sctk_malloc(sizeof(struct lcp_mem));
         if (mem == NULL) {
                 mpc_common_debug_error("LCP: could not allocate memory domain");
-                rc = MPC_LOWCOMM_ERROR;
+                rc = LCP_ERROR;
                 goto err;
         }
 
@@ -186,7 +186,7 @@ int lcp_mem_create(lcp_context_h ctx, lcp_mem_h *mem_p)
         mem->num_ifaces = 0;
         if (mem->mems == NULL) {
                 mpc_common_debug_error("LCP: could not allocate memory pins");
-                rc = MPC_LOWCOMM_ERROR;
+                rc = LCP_ERROR;
                 goto err;
         }
         memset(mem->mems, 0, ctx->num_resources * sizeof(lcr_memp_t));
@@ -214,7 +214,7 @@ int lcp_mem_reg_from_map(lcp_context_h ctx,
                          void *buffer,
                          size_t length)
 {
-        int i, rc = MPC_LOWCOMM_SUCCESS;
+        int i, rc = LCP_SUCCESS;
         sctk_rail_info_t *iface = ctx->resources[ctx->priority_rail].iface;
 
         /* Pin the memory and create memory handles */
@@ -226,7 +226,7 @@ int lcp_mem_reg_from_map(lcp_context_h ctx,
                                 mpc_common_debug_error("LCP MEM: iface %s does "
                                                        "not have RMA capabilities",
                                                        iface->network_name);
-                                rc = MPC_LOWCOMM_ERROR;
+                                rc = LCP_ERROR;
                                 goto err;
                         }
 
@@ -250,21 +250,21 @@ err:
  * @param buffer data to store
  * @param length length of the data
  * @param memp_map 
- * @return int MPC_LOWCOMM_SUCCESS in case of success
+ * @return int LCP_SUCCESS in case of success
  */
 int lcp_mem_register(lcp_context_h ctx, 
                      lcp_mem_h *mem_p, 
                      void *buffer, 
                      size_t length)
 {
-        int rc = MPC_LOWCOMM_SUCCESS;
+        int rc = LCP_SUCCESS;
         lcp_mem_h mem;
         lcr_rail_attr_t attr;
         sctk_rail_info_t *iface = ctx->resources[ctx->priority_rail].iface;
 
         not_implemented();
         rc = lcp_mem_create(ctx, &mem);
-        if (rc != MPC_LOWCOMM_SUCCESS) {
+        if (rc != LCP_SUCCESS) {
                 goto err;
         }
 
@@ -277,7 +277,7 @@ int lcp_mem_register(lcp_context_h ctx,
                                          ctx->num_resources,
                                          &mem->bm);
         rc = lcp_mem_reg_from_map(ctx, mem, mem->bm, buffer, length); 
-        if (rc != MPC_LOWCOMM_SUCCESS) {
+        if (rc != LCP_SUCCESS) {
                 goto err;
         }
 
@@ -296,7 +296,7 @@ err:
  * @param tag tag of post
  * @param flags flag of post
  * @param tag_ctx tag context
- * @return int MPC_LOWCOMM_SUCCESS in case of success
+ * @return int LCP_SUCCESS in case of success
  */
 int lcp_mem_post_from_map(lcp_context_h ctx, 
                           lcp_mem_h mem, 
@@ -307,7 +307,7 @@ int lcp_mem_post_from_map(lcp_context_h ctx,
                           unsigned flags, 
                           lcr_tag_context_t *tag_ctx)
 {
-        int rc = MPC_LOWCOMM_SUCCESS;
+        int rc = LCP_SUCCESS;
         int i = 0, k, nb_posted = 0, nb_ifaces = 0;
         lcr_rail_attr_t attr;
         lcr_tag_t ign = { 0 };
@@ -343,7 +343,7 @@ int lcp_mem_post_from_map(lcp_context_h ctx,
                 iface = ctx->resources[i].iface;
                 rc = iface->post_tag_zcopy(iface, tag, ign, iov, 
                                            iovcnt, flags, tag_ctx);
-                if (rc != MPC_LOWCOMM_SUCCESS) {
+                if (rc != LCP_SUCCESS) {
                         mpc_common_debug_error("LCP MEM: could not post on "
                                                "interface");
                         goto err;
@@ -363,20 +363,20 @@ err:
 int lcp_mem_unpost(lcp_context_h ctx, lcp_mem_h mem, lcr_tag_t tag) 
 {
         int i;
-        int rc = MPC_LOWCOMM_SUCCESS;
+        int rc = LCP_SUCCESS;
         sctk_rail_info_t *iface = NULL;
 
         /* Memory should be unposted only if it has been previously posted as
          * persistent */
         if (!(mem->flags & LCR_IFACE_TM_PERSISTANT_MEM)) {
-                return MPC_LOWCOMM_SUCCESS;
+                return LCP_SUCCESS;
         }
 
         for (i=0; i<ctx->num_resources; i++) {
                 if (MPC_BITMAP_GET(mem->bm, i)) {
                         iface = ctx->resources[i].iface;
                         rc = iface->unpost_tag_zcopy(iface, tag);
-                        if (rc != MPC_LOWCOMM_SUCCESS) {
+                        if (rc != LCP_SUCCESS) {
                                goto err;
                         } 
                 }
@@ -393,12 +393,12 @@ err:
  * 
  * @param ctx lcp context
  * @param mem memory to unpin
- * @return int MPC_LOWCOMM_SUCCESS in case of success
+ * @return int LCP_SUCCESS in case of success
  */
 int lcp_mem_deregister(lcp_context_h ctx, lcp_mem_h mem)
 {
         int i;
-        int rc = MPC_LOWCOMM_SUCCESS;
+        int rc = LCP_SUCCESS;
         sctk_rail_info_t *iface = NULL;
 
         for (i=0; i<ctx->num_resources; i++) {

@@ -42,14 +42,14 @@ int lcp_ep_get_next_cc(lcp_ep_h ep)
 
 int lcp_ep_create_base(lcp_context_h ctx, lcp_ep_h *ep_p)
 {
-	int rc        = MPC_LOWCOMM_SUCCESS;
+	int rc        = LCP_SUCCESS;
         bmap_t ep_map = MPC_BITMAP_INIT;
 	lcp_ep_h       ep;
 
 	ep = sctk_malloc(sizeof(struct lcp_ep));
 	if (ep == NULL) {
 		mpc_common_debug_error("LCP: failed to allocate endpoint");
-		rc = MPC_LOWCOMM_ERROR;
+		rc = LCP_ERROR;
 		goto err;
 	}
 	memset(ep, 0, sizeof(struct lcp_ep));
@@ -58,7 +58,7 @@ int lcp_ep_create_base(lcp_context_h ctx, lcp_ep_h *ep_p)
 	ep->lct_eps = sctk_malloc(ctx->num_resources * sizeof(_mpc_lowcomm_endpoint_t *));
 	if (ep->lct_eps == NULL) {
 		mpc_common_debug_error("LCP: could not allocate endpoint rails.");
-		rc = MPC_LOWCOMM_ERROR;
+		rc = LCP_ERROR;
 		goto err_alloc_eps;
 	}
 	memset(ep->lct_eps, 0, ctx->num_resources * sizeof(_mpc_lowcomm_endpoint_t *));
@@ -153,7 +153,7 @@ int lcp_ep_init_config(lcp_context_h ctx, lcp_ep_h ep)
                 ep->tag_chnl = prio_idx;
         }
 
-	return MPC_LOWCOMM_SUCCESS;
+	return LCP_SUCCESS;
 }
 
 /**
@@ -170,7 +170,7 @@ int lcp_ep_insert(lcp_context_h ctx, lcp_ep_h ep)
 	lcp_ep_ctx_t *elem = sctk_malloc(sizeof(lcp_ep_ctx_t));
 	if (elem == NULL) {
 		mpc_common_debug_error("LCP: could not allocate endpoint table entry.");
-		rc = MPC_LOWCOMM_ERROR;
+		rc = LCP_ERROR;
 		goto err;
 	}
 	memset(elem, 0, sizeof(lcp_ep_ctx_t));
@@ -183,7 +183,7 @@ int lcp_ep_insert(lcp_context_h ctx, lcp_ep_h ep)
 	/* Update context */
 	ctx->num_eps++;
 
-	rc = MPC_LOWCOMM_SUCCESS;
+	rc = LCP_SUCCESS;
 err:
 	return rc;
 }
@@ -250,7 +250,7 @@ int lcp_ep_init_channels(lcp_context_h ctx, lcp_ep_h ep)
 	}
 	mpc_common_debug("LCP: ep state=%s.", ep->state ? "CONNECTING" : "CONNECTED");
 
-	rc = MPC_LOWCOMM_SUCCESS;
+	rc = LCP_SUCCESS;
 
 	return rc;
 }
@@ -316,7 +316,7 @@ int lcp_context_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p,
 
 	/* Allocation endpoint */
 	rc = lcp_ep_create_base(ctx, &ep);
-	if (rc != MPC_LOWCOMM_SUCCESS) {
+	if (rc != LCP_SUCCESS) {
 		goto err;
 	}
 
@@ -326,7 +326,7 @@ int lcp_context_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p,
 
 	/* Create all transport endpoints */
 	rc = lcp_ep_init_channels(ctx, ep);
-	if (rc != MPC_LOWCOMM_SUCCESS) {
+	if (rc != LCP_SUCCESS) {
 		goto err_unalloc;
 	}
 
@@ -336,7 +336,7 @@ int lcp_context_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p,
         /* Check if protocol endpoint is valid */ 
         if (!lcp_ep_check_if_valid(ep)) {
                 mpc_common_debug_error("LCP: endpoint not valid.");
-                rc= MPC_LOWCOMM_ERROR;
+                rc= LCP_ERROR;
                 goto err_unalloc;
         }
 	
@@ -364,7 +364,7 @@ int lcp_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p,
 		  mpc_lowcomm_peer_uid_t uid, unsigned flags)
 {
 	lcp_ep_h ep = NULL;	
-	int rc = MPC_LOWCOMM_SUCCESS;
+	int rc = LCP_SUCCESS;
 
 	LCP_CONTEXT_LOCK(ctx);
 	lcp_ep_get(ctx, uid, &ep);
@@ -377,7 +377,7 @@ int lcp_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p,
 	
 	/* Create and connect endpoint */
 	rc = lcp_context_ep_create(ctx, &ep, uid, flags);
-	if (rc != MPC_LOWCOMM_SUCCESS) {
+	if (rc != LCP_SUCCESS) {
 		mpc_common_debug_error("LCP: could not create endpoint. "
 				       "uid=%llu.", uid);
 		goto err_and_unlock;
@@ -385,7 +385,7 @@ int lcp_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p,
 
 	/* Insert endpoint in the context table */
 	rc = lcp_ep_insert(ctx, ep);
-	if (rc != MPC_LOWCOMM_SUCCESS) {
+	if (rc != LCP_SUCCESS) {
 		goto err_and_unlock;
 	}
 	mpc_common_debug_info("LCP: created ep : %p towards : %lu", ep, uid);
@@ -443,7 +443,7 @@ int lcp_ep_get_or_create(lcp_context_h ctx, mpc_lowcomm_peer_uid_t uid, lcp_ep_h
 	if(!*ep_p){
 		return lcp_ep_create(ctx, ep_p, uid, flags);
 	}
-	return MPC_LOWCOMM_SUCCESS;
+	return LCP_SUCCESS;
 }
 
 /**
@@ -470,7 +470,7 @@ __UNUSED__ static int lcp_ep_connection_handler(void *arg, void *data,
 	HASH_FIND(hh, ctx->ep_ht, dest, sizeof(mpc_lowcomm_peer_uid_t), ctx_ep);
 
 	if (ctx_ep != NULL) {
-		rc = MPC_LOWCOMM_SUCCESS;
+		rc = LCP_SUCCESS;
 		goto out;
 	}
 
@@ -478,7 +478,7 @@ __UNUSED__ static int lcp_ep_connection_handler(void *arg, void *data,
 
 	/* Insert endpoint in the context table */
 	rc = lcp_ep_insert(ctx, *ep);
-	if (rc != MPC_LOWCOMM_SUCCESS) {
+	if (rc != LCP_SUCCESS) {
 		goto out;
 	}
 out:

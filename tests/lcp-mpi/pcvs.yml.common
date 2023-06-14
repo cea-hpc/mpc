@@ -1,0 +1,23 @@
+compile_units:
+  build:
+    files: "@BUILDPATH@/Makefile"
+    make:
+      target: "all"
+
+ep_am:
+  run:
+    depends_on: ["compile_units"]
+    program: @BUILDPATH@/lcp_compute_env.sh @BUILDPATH@/ep_am
+    iterate: 
+      n_core:
+        values: [2]
+      n_node:
+        values: [2]
+      n_proc:
+        values: [2]
+      program:
+        msglen:
+          numeric: true
+          type: "argument"
+          values: ["8192"]
+  tag: ["run"]

@@ -4,7 +4,7 @@
 #include "lcp_types.h"
 
 #include "lcp.h"
-//FIXME: try to remove this dependency. Currently needed to make progress on
+//FIXME: try to remove lcp_ep.h. Currently needed to make progress on
 //       endpoint connection.
 #include "lcp_ep.h"
 #include "lcp_context.h"
@@ -12,6 +12,7 @@
 #include <sctk_rail.h>
 #include <sctk_alloc.h>
 
+//FIXME: LCP_REQUEST prefix confusing with those defined in lcp.h
 enum {
 	LCP_REQUEST_DELETE_FROM_PENDING = LCP_BIT(1),
 	LCP_REQUEST_RECV_TRUNC          = LCP_BIT(2), /* flags if request is truncated */
@@ -21,12 +22,14 @@ enum {
         LCP_REQUEST_OFFLOADED_RNDV      = LCP_BIT(5),
         LCP_REQUEST_LOCAL_COMPLETED     = LCP_BIT(6),
         LCP_REQUEST_REMOTE_COMPLETED    = LCP_BIT(7),
+        LCP_REQUEST_USER_COMPLETE       = LCP_BIT(8),
 };
 
 enum {
 	LCP_RECV_CONTAINER_UNEXP_RNDV_TAG       = LCP_BIT(0),
 	LCP_RECV_CONTAINER_UNEXP_EAGER_TAG      = LCP_BIT(1),
 	LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC = LCP_BIT(2),
+	LCP_RECV_CONTAINER_UNEXP_RNDV_AM        = LCP_BIT(3),
 };
 
 /* Store data for unexpected am messages
@@ -56,17 +59,31 @@ struct lcp_request {
 			union {
 				struct {
 					uint16_t comm;
-					int32_t  src_pid;
-					int32_t  dest_pid;
+					uint64_t src_uid;
+					uint64_t dest_uid;
                                         int32_t  src_tid;
                                         int32_t  dest_tid;
 					int32_t  tag;
 				} tag;
 
                                 struct {
+                                        uint8_t  am_id;
+                                        void    *hdr;
+                                        size_t   hdr_size;
+                                        uint64_t src_uid;
+                                        int32_t  dest_tid;
+                                        lcp_am_recv_callback_func_t cb;
+                                        void    *request;
+                                } am;
+
+                                struct {
                                         uint64_t  addr;
                                         lcp_mem_h rkey;
                                 } rndv;
+
+                                struct {
+                                        int32_t src_tid;
+                                } ack;
 
                                 struct {
                                         uint64_t remote_addr;
@@ -84,15 +101,24 @@ struct lcp_request {
 			void *buffer;
 			lcr_tag_context_t t_ctx;
 
-                        struct {
-                                uint16_t comm;
-                                int32_t  src_pid;
-                                int32_t  dest_pid;
-                                int32_t  src_tid;
-                                int32_t  dest_tid;
-                                int32_t  tag;
-                        } tag;
+                        union {
+                                struct {
+                                        uint16_t comm;
+                                        uint64_t src_uid;
+                                        uint64_t dest_uid;
+                                        int32_t  src_tid;
+                                        int32_t  dest_tid;
+                                        int32_t  tag;
+                                } tag;
 
+                                struct {
+                                        uint8_t  am_id;
+                                        uint64_t src_uid;
+                                        lcp_unexp_ctnr_t *ctnr;
+                                        lcp_am_recv_callback_func_t cb;
+                                        void    *request;
+                                } am;
+                        };
 		} recv;
 	};
 
@@ -126,8 +152,8 @@ struct lcp_request {
 	(_req)->request           = _mpi_req;                                \
         (_req)->send.tag.src_tid  = (_mpi_req)->header.source_task;          \
         (_req)->send.tag.dest_tid = (_mpi_req)->header.destination_task;     \
-        (_req)->send.tag.dest_pid = (_mpi_req)->header.destination;          \
-        (_req)->send.tag.src_pid  = (_mpi_req)->header.source;               \
+        (_req)->send.tag.dest_uid = (_mpi_req)->header.destination;          \
+        (_req)->send.tag.src_uid  = (_mpi_req)->header.source;               \
         (_req)->send.tag.tag      = (_mpi_req)->header.message_tag;          \
         (_req)->send.tag.comm     = (_mpi_req)->header.communicator_id;      \
 	(_req)->info              = _info;                                   \
@@ -140,6 +166,68 @@ struct lcp_request {
 	(_req)->send.buffer       = _buf;                                    \
 	(_req)->send.ep           = _ep;                                     \
 	(_req)->send.length       = _length;                                 \
+	\
+	(_req)->state.remaining   = _length;                                 \
+	(_req)->state.offset      = 0;                                       \
+}
+
+#define LCP_REQUEST_INIT_TAG_RECV(_req, _ctx, _task, _mpi_req, _info, _length, \
+                                  _buf, _dt) \
+{ \
+	(_req)->request           = _mpi_req;                                \
+        (_req)->recv.tag.src_tid  = (_mpi_req)->header.source_task;          \
+        (_req)->recv.tag.dest_tid = (_mpi_req)->header.destination_task;     \
+        (_req)->recv.tag.dest_uid = (_mpi_req)->header.destination;          \
+        (_req)->recv.tag.src_uid  = (_mpi_req)->header.source;               \
+        (_req)->recv.tag.tag      = (_mpi_req)->header.message_tag;          \
+        (_req)->recv.tag.comm     = (_mpi_req)->header.communicator_id;      \
+	(_req)->info              = _info;                                   \
+	(_req)->msg_id            = 0;                                       \
+	(_req)->seqn              = 0;                                       \
+	(_req)->ctx               = _ctx;                                    \
+	(_req)->task              = _task;                                   \
+	(_req)->datatype          = _dt;                                     \
+	\
+	(_req)->recv.buffer       = _buf;                                    \
+	(_req)->recv.length       = _length;                                 \
+	\
+	(_req)->state.remaining   = _length;                                 \
+	(_req)->state.offset      = 0;                                       \
+}
+
+#define LCP_REQUEST_INIT_AM_SEND(_req, _ctx, _task, _am_id, _hdr, _hdr_size, \
+                                 _src_uid, _dest_tid, _info, _length, _ep,    \
+                                 _buf, _seqn, _msg_id, _dt)                  \
+{ \
+        (_req)->send.am.am_id     = _am_id;                                  \
+	(_req)->info              = _info;                                   \
+	(_req)->msg_id            = _msg_id;                                 \
+	(_req)->seqn              = _seqn;                                   \
+	(_req)->ctx               = _ctx;                                    \
+	(_req)->task              = _task;                                   \
+	(_req)->datatype          = _dt;                                     \
+	\
+	(_req)->send.buffer       = _buf;                                    \
+	(_req)->send.ep           = _ep;                                     \
+	(_req)->send.length       = _length;                                 \
+	(_req)->send.am.hdr       = _hdr;                                    \
+	(_req)->send.am.hdr_size  = _hdr_size;                               \
+	(_req)->send.am.src_uid   = _src_uid;                                \
+	(_req)->send.am.dest_tid  = _dest_tid;                               \
+	\
+	(_req)->state.remaining   = _length;                                 \
+	(_req)->state.offset      = 0;                                       \
+}
+
+#define LCP_REQUEST_INIT_AM_RECV(_req, _ctx, _task, _info, _length, _buf, _dt) \
+{ \
+	(_req)->info              = _info;                                   \
+	(_req)->ctx               = _ctx;                                    \
+	(_req)->task              = _task;                                   \
+	(_req)->datatype          = _dt;                                     \
+	\
+	(_req)->recv.buffer       = _buf;                                    \
+	(_req)->recv.length       = _length;                                 \
 	\
 	(_req)->state.remaining   = _length;                                 \
 	(_req)->state.offset      = 0;                                       \
@@ -159,30 +247,6 @@ struct lcp_request {
 	(_req)->send.buffer       = _buf;                                    \
 	(_req)->send.ep           = _ep;                                     \
 	(_req)->send.length       = _length;                                 \
-	\
-	(_req)->state.remaining   = _length;                                 \
-	(_req)->state.offset      = 0;                                       \
-}
-
-#define LCP_REQUEST_INIT_TAG_RECV(_req, _ctx, _task, _mpi_req, _info, _length, \
-                              _buf, _dt) \
-{ \
-	(_req)->request           = _mpi_req;                                \
-        (_req)->recv.tag.src_tid  = (_mpi_req)->header.source_task;          \
-        (_req)->recv.tag.dest_tid = (_mpi_req)->header.destination_task;     \
-        (_req)->recv.tag.dest_pid = (_mpi_req)->header.destination;          \
-        (_req)->recv.tag.src_pid  = (_mpi_req)->header.source;               \
-        (_req)->recv.tag.tag      = (_mpi_req)->header.message_tag;          \
-        (_req)->recv.tag.comm     = (_mpi_req)->header.communicator_id;      \
-	(_req)->info              = _info;                                   \
-	(_req)->msg_id            = 0;                                       \
-	(_req)->seqn              = 0;                                       \
-	(_req)->ctx               = _ctx;                                    \
-	(_req)->task              = _task;                                   \
-	(_req)->datatype          = _dt;                                     \
-	\
-	(_req)->recv.buffer       = _buf;                                    \
-	(_req)->recv.length       = _length;                                 \
 	\
 	(_req)->state.remaining   = _length;                                 \
 	(_req)->state.offset      = 0;                                       \
@@ -215,17 +279,17 @@ static inline int lcp_request_send(lcp_request_t *req)
                 lcp_ep_progress_conn(req->ctx, req->send.ep);
                 if (req->send.ep->state == LCP_EP_FLAG_CONNECTING) {
                         mpc_queue_push(&req->ctx->pending_queue, &req->queue);
-                        return MPC_LOWCOMM_SUCCESS;
+                        return LCP_SUCCESS;
                 }
         }
 
         switch((rc = req->send.func(req))) {
-        case MPC_LOWCOMM_SUCCESS:
+        case LCP_SUCCESS:
                 break;
         case MPC_LOWCOMM_NO_RESOURCE:
                 mpc_queue_push(&req->ctx->pending_queue, &req->queue);
                 break;
-        case MPC_LOWCOMM_ERROR:
+        case LCP_ERROR:
                 mpc_common_debug_error("LCP: could not send request.");
                 break;
         default:

@@ -12,7 +12,7 @@ int lcp_tag_probe_nb(lcp_task_h task, const int src,
                      const int tag, const uint64_t comm,
                      lcp_tag_recv_info_t *recv_info)
 {
-        int rc = MPC_LOWCOMM_SUCCESS;
+        int rc = LCP_SUCCESS;
         lcp_context_h ctx = task->ctx;
 	lcp_unexp_ctnr_t *match = NULL;
 	sctk_rail_info_t *iface;
@@ -37,8 +37,8 @@ int lcp_tag_probe_nb(lcp_task_h task, const int src,
                 } else if (match->flags & LCP_RECV_CONTAINER_UNEXP_RNDV_TAG) {
                         lcp_rndv_hdr_t *hdr = (lcp_rndv_hdr_t *)(match + 1);
 
-                        recv_info->src    = hdr->base.src_tid;
-                        recv_info->tag    = hdr->base.tag;
+                        recv_info->src    = hdr->tag.src_tid;
+                        recv_info->tag    = hdr->tag.tag;
                         recv_info->length = hdr->size;
                 }
                 recv_info->found = 1;
