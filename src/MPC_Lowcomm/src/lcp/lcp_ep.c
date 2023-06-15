@@ -418,7 +418,7 @@ void lcp_ep_delete(lcp_ep_h ep)
 
 void lcp_ep_get(lcp_context_h ctx, mpc_lowcomm_peer_uid_t uid, lcp_ep_h *ep_p)
 {
-	lcp_ep_ctx_t *elem;
+	lcp_ep_ctx_t *elem = NULL;
 
 	HASH_FIND(hh, ctx->ep_ht, &uid, sizeof(mpc_lowcomm_peer_uid_t), elem);
 	if (elem == NULL) {
