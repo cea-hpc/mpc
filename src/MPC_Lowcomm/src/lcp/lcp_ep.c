@@ -366,7 +366,6 @@ int lcp_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p,
 	lcp_ep_h ep = NULL;	
 	int rc = LCP_SUCCESS;
 
-	LCP_CONTEXT_LOCK(ctx);
 	lcp_ep_get(ctx, uid, &ep);
 	if (ep != NULL) {
 		mpc_common_debug_warning("LCP: ep already exists. uid=%llu.", 
@@ -374,7 +373,8 @@ int lcp_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p,
 		*ep_p = ep;
                 goto err_and_unlock;
 	}
-	
+
+	LCP_CONTEXT_LOCK(ctx);
 	/* Create and connect endpoint */
 	rc = lcp_context_ep_create(ctx, &ep, uid, flags);
 	if (rc != LCP_SUCCESS) {
