@@ -131,16 +131,44 @@ void __kmpc_flush( __UNUSED__ ident_t *loc, ... )
  * BARRIER *
  * ********/
 
+ompt_sync_region_t __ompt_get_barrier_kind(ident_t *loc)
+{
+	int expl = (loc->flags & KMP_IDENT_BARRIER_EXPL) != 0;
+	int impl = (loc->flags & KMP_IDENT_BARRIER_IMPL) != 0;                           
+	mpc_omp_thread_t __UNUSED__ *t = ( mpc_omp_thread_t * )mpc_omp_tls;
+	if (impl) {                                                                    
+		switch (loc->flags & KMP_IDENT_BARRIER_IMPL_MASK) {                          
+			case KMP_IDENT_BARRIER_IMPL_FOR:                                            
+				mpc_common_nodebug( "Thread %d entering an OMP For Barrier ", t->rank );
+			case KMP_IDENT_BARRIER_IMPL_SECTIONS:                                       
+				mpc_common_nodebug( "Thread %d entering an OMP Sections Barrier ", t->rank );
+			case KMP_IDENT_BARRIER_IMPL_SINGLE: 
+				mpc_common_nodebug( "Thread %d entering an OMP Single Barrier ", t->rank );
+			case KMP_IDENT_BARRIER_IMPL_WORKSHARE: 
+				mpc_common_nodebug( "Thread %d entering an OMP Workshare Barrier ", t->rank );
+				return ompt_sync_region_barrier_implicit_workshare;
+				break;
+			default:
+				return ompt_sync_region_barrier_implicit_parallel;
+		}
+	} else if (expl) {
+		mpc_common_nodebug( "Thread %d entering an OMP Explicit Barrier", t->rank );
+		return ompt_sync_region_barrier_explicit;
+	}      
+	return ompt_sync_region_barrier;
+}
 void __kmpc_barrier( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid )
 {
+ompt_sync_region_t kind; 
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
+    kind = __ompt_get_barrier_kind(loc);
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t __UNUSED__ *t = ( mpc_omp_thread_t * )mpc_omp_tls;
 	assert( t );
 	mpc_common_nodebug( "[%d] %s: entering...", t->rank, __func__ );
-	mpc_omp_barrier(ompt_sync_region_barrier_explicit);
+	mpc_omp_barrier(kind);
 }
 
 kmp_int32 __kmpc_barrier_master( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid )

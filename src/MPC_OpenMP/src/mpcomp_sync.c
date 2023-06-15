@@ -467,9 +467,6 @@ mpc_omp_barrier(ompt_sync_region_t kind)
 
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_wrapper_infos(MPC_OMP_GOMP);
-    //ompt_sync_region_t kind = thread->reduction_method ?
-        //ompt_sync_region_reduction:
-        //ompt_sync_region_barrier;
     _mpc_omp_ompt_callback_sync_region(kind, ompt_scope_begin);
     _mpc_omp_ompt_callback_sync_region_wait(kind, ompt_scope_begin);
 #endif /* OMPT_SUPPORT */
