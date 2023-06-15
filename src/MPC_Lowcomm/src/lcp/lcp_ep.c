@@ -383,7 +383,7 @@ int lcp_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p,
 		goto err_and_unlock;
 	}
 
-	/* Insert endpoint in the context table */
+	/* Insert endpoint in the context table, only once */
 	rc = lcp_ep_insert(ctx, ep);
 	if (rc != LCP_SUCCESS) {
 		goto err_and_unlock;
@@ -420,10 +420,13 @@ void lcp_ep_get(lcp_context_h ctx, mpc_lowcomm_peer_uid_t uid, lcp_ep_h *ep_p)
 {
 	lcp_ep_ctx_t *elem = NULL;
 
+        LCP_CONTEXT_LOCK(ctx);
 	HASH_FIND(hh, ctx->ep_ht, &uid, sizeof(mpc_lowcomm_peer_uid_t), elem);
 	if (elem == NULL) {
+                LCP_CONTEXT_UNLOCK(ctx);
 		*ep_p = NULL;
 	} else {
+                LCP_CONTEXT_UNLOCK(ctx);
 		*ep_p = elem->ep;
 	}
 }
