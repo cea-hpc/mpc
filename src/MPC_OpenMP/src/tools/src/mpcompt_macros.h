@@ -25,7 +25,7 @@
 #define __MPCOMPT_MACROS_H__
 
 /* Enable/Disable OMPT support */
-#define OMPT_SUPPORT 0
+#define OMPT_SUPPORT 1
 
 #if OMPT_SUPPORT
 #include "ompt.h"
