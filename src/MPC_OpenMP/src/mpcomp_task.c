@@ -3443,6 +3443,10 @@ __thread_task_deinit_initial(mpc_omp_thread_t * thread)
     mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
     assert(task);
 
+#ifdef MPC_OMP_USE_MCS_LOCK
+    mpc_omp_free(thread->task_infos.opaque);
+#endif
+
     MPC_OMP_TASK_THREAD_SET_CURRENT_TASK(thread, NULL);
     __task_delete_dependencies_hmap(task);
     _mpc_omp_task_deinit(task);
