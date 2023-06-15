@@ -22,10 +22,15 @@
 #   - JAEGER Julien julien.jaeger@cea.fr                               #
 #                                                                      #
 ########################################################################
+# Path to the configure script
+SCRIPT=$(readlink -f "$0")
+# Directory containing configure
+SCRIPTPATH=$(dirname "$SCRIPT")
+# Where MPC is currently being BUILT
+PROJECT_BUILD_DIR=$(readlink -f "$PWD")
 
-ac_expect="2.69"
-am_expect="1.15"
-lt_expect="2.4.6"
+# Move to script directory first.
+cd $SCRIPTPATH
 
 ret=0
 err()
@@ -68,24 +73,13 @@ test -n "$lt" || err "No 'libtoolize' command in PATH. Please install libtool fi
 test -n "$ptch" || err "No 'patch' command in PATH. Please install patch first."
 
 if test "$ret" = "1"; then
-	spack_tips
 	exit 1
 fi
-
-ac_version=$(extract_version "$ac")
-am_version=$(extract_version "$am")
-lt_version=$(extract_version "$lt")
-
-
-test "$ac_version" = "$ac_expect" || err "Exact version required for Autoconf: $ac_expect (got $ac_version)"
-test "$am_version" = "$am_expect" || err "Exact version required for Automake: $am_expect (got $am_version)"
-test "$lt_version" = "$lt_expect" || err "Exact version required for Libtool: $lt_expect (got $lt_version)"
 
 if test "$ret" = "0"; then
 	$arc -vi
 	ret=$?
 else
-	spack_tips
 	die "Abort configuration due to error(s) above.\n"
 fi
 
@@ -199,3 +193,6 @@ IS_AUTOGEN=$(tail -n 1 "${SCRIPTPATH}/configure"| grep -c "MPC_AUTOGEN_WAS_USED"
 if test "x${IS_AUTOGEN}" = "x0"; then
 	echo "# MPC_AUTOGEN_WAS_USED" >> "${SCRIPTPATH}/configure"
 fi
+
+# Go back to build dir
+cd $PROJECT_BUILD_DIR

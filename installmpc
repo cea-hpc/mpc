@@ -1753,6 +1753,14 @@ fi
 MPC_CONFIGURE_OPTS="--prefix=${PREFIX} $MPCFRAMEWORK_BUILD_PARAMETERS"
 
 #
+# Autogen MPC 
+#
+
+checking "Autogen MPC"
+
+wrap_output "$SCRIPTPATH/autogen.sh" $SCRIPTPATH
+
+#
 # Configure MPC
 #
 
