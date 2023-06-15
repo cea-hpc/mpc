@@ -371,7 +371,7 @@ int lcp_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p,
 		mpc_common_debug_warning("LCP: ep already exists. uid=%llu.", 
                                          uid);
 		*ep_p = ep;
-                goto err_and_unlock;
+                goto ep_exist;
 	}
 
 	LCP_CONTEXT_LOCK(ctx);
@@ -394,7 +394,7 @@ int lcp_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p,
 
 err_and_unlock:
 	LCP_CONTEXT_UNLOCK(ctx);
-
+ep_exist:
 	return rc;
 }
 
