@@ -70,7 +70,7 @@ extern "C"
   void mpc_omp_named_critical_end (void **l);
 
 /** Barrier construct */
-  void mpc_omp_barrier( void );
+  void mpc_omp_barrier( ompt_sync_region_t kind);
 
 /* 
  * SECTIONS/SECTION construct 

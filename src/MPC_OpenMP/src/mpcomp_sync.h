@@ -70,7 +70,7 @@ void _mpc_omp_single_coherency_end_barrier( void );
  * BARRIER *
  ***********/
 
-void mpc_omp_barrier( void );
+void mpc_omp_barrier( ompt_sync_region_t kind );
 
 /************
  * SECTIONS *

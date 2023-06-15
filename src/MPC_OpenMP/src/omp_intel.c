@@ -140,7 +140,7 @@ void __kmpc_barrier( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid )
 	mpc_omp_thread_t __UNUSED__ *t = ( mpc_omp_thread_t * )mpc_omp_tls;
 	assert( t );
 	mpc_common_nodebug( "[%d] %s: entering...", t->rank, __func__ );
-	mpc_omp_barrier();
+	mpc_omp_barrier(ompt_sync_region_barrier_explicit);
 }
 
 kmp_int32 __kmpc_barrier_master( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid )
@@ -338,16 +338,16 @@ void __kmpc_end_serialized_parallel( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int
 	t = ( mpc_omp_thread_t * )mpc_omp_tls;
 	assert( t != NULL );
 
-#if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_sync_region( ompt_sync_region_barrier_implicit, ompt_scope_begin );
-#endif /* OMPT_SUPPORT */
+//#if OMPT_SUPPORT
+    //_mpc_omp_ompt_callback_sync_region( ompt_sync_region_barrier_implicit, ompt_scope_begin );
+//#endif /* OMPT_SUPPORT */
 
-    mpc_omp_barrier();
+    mpc_omp_barrier(ompt_sync_region_barrier_implicit_parallel);
 
-#if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_sync_region( ompt_sync_region_barrier_implicit, ompt_scope_end );
-    _mpc_omp_ompt_callback_implicit_task( ompt_scope_end, 0, 0, ompt_task_implicit );
-#endif /* OMPT_SUPPORT */
+//#if OMPT_SUPPORT
+    //_mpc_omp_ompt_callback_sync_region( ompt_sync_region_barrier_implicit, ompt_scope_end );
+    //_mpc_omp_ompt_callback_implicit_task( ompt_scope_end, 0, 0, ompt_task_implicit );
+//#endif /* OMPT_SUPPORT */
 
 	/* Restore the previous thread info */
     t_prev = t->father;
@@ -1126,7 +1126,7 @@ void __kmpc_end_reduce_nowait( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 glo
 	if ( packed_reduction_method == critical_reduce_block )
 	{
 		mpc_omp_anonymous_critical_end();
-		mpc_omp_barrier(); //Reduce nowait...?
+		mpc_omp_barrier(ompt_sync_region_reduction); //Reduce nowait...?
 	}
 	else if ( packed_reduction_method == empty_reduce_block )
 	{
@@ -1229,14 +1229,19 @@ void __kmpc_end_reduce( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid
 	if ( packed_reduction_method == critical_reduce_block )
 	{
 		mpc_omp_anonymous_critical_end();
-        mpc_omp_barrier();
+        mpc_omp_barrier(ompt_sync_region_reduction);
 	}
 	else if ( packed_reduction_method == atomic_reduce_block )
 	{
-        mpc_omp_barrier();
+        mpc_omp_barrier(ompt_sync_region_reduction);
 	}
 	else if ( packed_reduction_method == tree_reduce_block )
 	{
+#if OMPT_SUPPORT                                                 
+    _mpc_omp_ompt_callback_sync_region(ompt_sync_region_reduction, ompt_scope_begin);             
+    _mpc_omp_ompt_callback_sync_region_wait(ompt_sync_region_reduction, ompt_scope_begin);        
+#endif /* OMPT_SUPPORT */                                                   
+                                                                            
 		/* For tree reduction algorithm when thread 0 enter __kmpc_end_reduce reduction value is already shared among all threads */
 		mpc_omp_mvp_t *mvp = t->mvp;
 		mpc_omp_node_t *c = t->instance->root;
@@ -1253,12 +1258,16 @@ void __kmpc_end_reduce( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid
          *       Therefore, missing events sync region wait begin/end
          *       and sync region end event. */
 
+#if OMPT_SUPPORT                                                 
+    _mpc_omp_ompt_callback_sync_region(ompt_sync_region_reduction, ompt_scope_end);             
+    _mpc_omp_ompt_callback_sync_region_wait(ompt_sync_region_reduction, ompt_scope_end);        
+#endif /* OMPT_SUPPORT */  
         t->reduction_method = reduction_method_not_defined;
 	}
 
-#if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_sync_region( ompt_sync_region_reduction, ompt_scope_end );
-#endif /* OMPT_SUPPORT */
+//#if OMPT_SUPPORT
+    //_mpc_omp_ompt_callback_sync_region( ompt_sync_region_reduction, ompt_scope_end );
+//#endif /* OMPT_SUPPORT */
 }
 
 /**********
@@ -3300,14 +3309,14 @@ void __kmpc_copyprivate( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_ti
 		*data_ptr = cpy_data;
 	}
 
-	mpc_omp_barrier();
+	mpc_omp_barrier(ompt_sync_region_barrier_implementation);
 
 	if ( !didit )
 	{
 		( *cpy_func )( cpy_data, *data_ptr );
 	}
 
-	mpc_omp_barrier();
+	mpc_omp_barrier(ompt_sync_region_barrier_implementation);
 }
 
 void *__kmpc_threadprivate_cached( ident_t *loc, kmp_int32 global_tid,

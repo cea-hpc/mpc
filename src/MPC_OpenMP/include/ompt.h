@@ -143,7 +143,7 @@ typedef enum ompt_set_result_e {
     macro( ompt_callback_mutex_released,              17, ompt_set_sometimes )\
     macro( ompt_callback_dependences,                 18, ompt_set_always )   \
     macro( ompt_callback_task_dependence,             19, ompt_set_never )    \
-    macro( ompt_callback_work,                        20, ompt_set_sometimes )\
+    macro( ompt_callback_work,                        20, ompt_set_always )\
     macro( ompt_callback_master,                      21, ompt_set_sometimes )\
     macro( ompt_callback_target_map,                  22, ompt_set_never )    \
     macro( ompt_callback_sync_region,                 23, ompt_set_always )   \
@@ -241,13 +241,16 @@ typedef enum ompt_scope_endpoint_e
 
 typedef enum ompt_sync_region_e
 {
-    ompt_sync_region_barrier                = 1,
-    ompt_sync_region_barrier_implicit       = 2,
-    ompt_sync_region_barrier_explicit       = 3,
-    ompt_sync_region_barrier_implementation = 4,
-    ompt_sync_region_taskwait               = 5,
-    ompt_sync_region_taskgroup              = 6,
-    ompt_sync_region_reduction              = 7
+    ompt_sync_region_barrier              		  = 1,
+    ompt_sync_region_barrier_implicit       		= 2,
+    ompt_sync_region_barrier_explicit       		= 3,
+    ompt_sync_region_barrier_implementation 		= 4,
+    ompt_sync_region_taskwait              		  = 5,
+    ompt_sync_region_taskgroup              		= 6,
+    ompt_sync_region_reduction             		  = 7,
+		ompt_sync_region_barrier_implicit_workshare = 8,
+		ompt_sync_region_barrier_implicit_parallel  = 9,
+		ompt_sync_region_teams 											= 10
 } ompt_sync_region_t;
 
 typedef enum ompt_cancel_flag_e

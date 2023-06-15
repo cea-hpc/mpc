@@ -373,7 +373,7 @@ void *mpc_omp_do_single_copyprivate_begin( void )
 	team = t->instance->team;
 	assert( team != NULL );
 
-	mpc_omp_barrier();
+	mpc_omp_barrier(ompt_sync_region_barrier_implicit);
 
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_unset_no_reentrant();
@@ -408,7 +408,7 @@ void mpc_omp_do_single_copyprivate_end( void *data )
 
 	team->single_copyprivate_data = data;
 
-	mpc_omp_barrier();
+	mpc_omp_barrier(ompt_sync_region_barrier_implicit);
 
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_unset_no_reentrant();
@@ -455,7 +455,7 @@ void _mpc_omp_single_coherency_end_barrier( void )
     point in the current task region
  */
 void
-mpc_omp_barrier(void)
+mpc_omp_barrier(ompt_sync_region_t kind)
 {
     /* Handle orphaned directive (initialize OpenMP environment) */
     mpc_omp_init();
@@ -467,9 +467,10 @@ mpc_omp_barrier(void)
 
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_wrapper_infos(MPC_OMP_GOMP);
-    ompt_sync_region_t kind = thread->reduction_method ?
-        ompt_sync_region_reduction:
-        ompt_sync_region_barrier;
+    //ompt_sync_region_t kind = thread->reduction_method ?
+        //ompt_sync_region_reduction:
+        //ompt_sync_region_barrier;
+    _mpc_omp_ompt_callback_sync_region(kind, ompt_scope_begin);
     _mpc_omp_ompt_callback_sync_region_wait(kind, ompt_scope_begin);
 #endif /* OMPT_SUPPORT */
 
@@ -487,6 +488,9 @@ mpc_omp_barrier(void)
     if (num_threads == 1)
     {
         while (OPA_load_int(&(region->task_ref))) _mpc_omp_task_schedule();
+#if OMPT_SUPPORT 
+    		_mpc_omp_ompt_callback_sync_region_wait(kind, ompt_scope_end);
+#endif /* OMPT_SUPPORT */
     }
     else
     {
@@ -501,6 +505,9 @@ mpc_omp_barrier(void)
         if (OPA_fetch_and_incr_int(&(team->threads_in_barrier)) == num_threads - 1)
         {
             while (OPA_load_int(&(region->task_ref))) _mpc_omp_task_schedule();
+#if OMPT_SUPPORT
+    _mpc_omp_ompt_callback_sync_region_wait(kind, ompt_scope_end);
+#endif /* OMPT_SUPPORT */
             OPA_store_int(&(team->threads_in_barrier), 0);
             ++team->barrier_version;
 
@@ -564,6 +571,9 @@ mpc_omp_barrier(void)
             OPA_store_int(&(c->barrier), 0);
             c->barrier_done++ ; /* No need to lock I think... */
         }
+#if OMPT_SUPPORT
+    _mpc_omp_ompt_callback_sync_region_wait(kind, ompt_scope_end);
+#endif /* OMPT_SUPPORT */
 
         /* Step 3 - Go down */
         while (c->child_type != MPC_OMP_CHILDREN_LEAF)
@@ -575,10 +585,9 @@ mpc_omp_barrier(void)
     }
 
 #if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_sync_region_wait(kind, ompt_scope_end);
+    _mpc_omp_ompt_callback_sync_region(kind, ompt_scope_end);
 #endif /* OMPT_SUPPORT */
 }
-
 
 /************
  * SECTIONS *
@@ -754,7 +763,7 @@ void mpc_omp_sections_end_nowait(void) {
 void mpc_omp_sections_end(void) 
 { 
 	mpc_omp_sections_end_nowait();
-	mpc_omp_barrier(); 
+	mpc_omp_barrier(ompt_sync_region_barrier_implicit_workshare); 
 }
 
 int _mpc_omp_sections_coherency_exiting_paralel_region(void) { return 0; }

@@ -567,7 +567,7 @@ void __scatter_instance_post_init( mpc_omp_thread_t *thread )
 
 	if ( ! thread->mvp->instance->buffered )
 	{
-		mpc_omp_barrier();
+		mpc_omp_barrier(ompt_sync_region_barrier_implementation);
 	}
 
 #if 0  /* Check victim list for each thread */
@@ -585,7 +585,7 @@ void __scatter_instance_post_init( mpc_omp_thread_t *thread )
 	string_array[total] = '\0';
 	const int node_rank = MPC_OMP_TASK_MVP_GET_TASK_LIST_NODE_RANK( mvp, 0 );
 	fprintf( stderr, "#%d - Me : %d -- Stealing list =%s nbList : %d\n", thread->rank, node_rank, string_array, nbList );
-	mpc_omp_barrier();
+	//mpc_omp_barrier();
 #endif /* Check victim list for each thread */
 	thread->mvp->instance->buffered = 1;
 #if 0
@@ -810,7 +810,7 @@ void _mpc_omp_start_openmp_thread(mpc_omp_mvp_t * mvp)
     volatile int * spin_status = ( mvp->spin_node ) ? &( mvp->spin_node->spin_status ) : &( mvp->spin_status );
     *spin_status = MPC_OMP_MVP_STATE_SLEEP;
 
-    mpc_omp_barrier();
+    mpc_omp_barrier(ompt_sync_region_barrier_implicit_parallel);
     _mpc_omp_task_tree_deinit(cur_thread);
 
     mpc_omp_tls = (void *) mvp->threads->next;
@@ -847,6 +847,7 @@ void mpc_omp_slave_mvp_node( mpc_omp_mvp_t *mvp )
 		while ( mvp->enable )
 		{
 #ifdef MPC_ENABLE_WORKSHARE
+			if(mpc_conf_type_elem_get_as_int(mpc_conf_root_config_get("mpcframework.lowcomm.workshare.enablestealing")))
 			if(mpc_conf_type_elem_get_as_int(mpc_conf_root_config_get("mpcframework.lowcomm.workshare.enablestealing")))
 			  mpc_thread_wait_for_value_and_poll( spin_status, MPC_OMP_MVP_STATE_AWAKE,(void*) mpc_lowcomm_workshare_worker_steal, mvp->root->worker_ws) ;
       else

@@ -83,7 +83,7 @@ void mpc_omp_GOMP_barrier( void )
 #endif /* OMPT_SUPPORT */
 
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tBegin", __func__ );
-	mpc_omp_barrier();
+	mpc_omp_barrier(ompt_sync_region_barrier_explicit);
 	mpc_common_nodebug( "[Redirect GOMP]%s:\tEnd", __func__ );
 
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
@@ -298,7 +298,7 @@ static inline void __gomp_end_parallel_region( void )
     _mpc_omp_ompt_callback_sync_region( ompt_sync_region_barrier_implicit, ompt_scope_begin );
 #endif /* OMPT_SUPPORT */
 
-    mpc_omp_barrier();
+    mpc_omp_barrier(ompt_sync_region_barrier_implicit);
 
 #if OMPT_SUPPORT
     _mpc_omp_ompt_callback_sync_region( ompt_sync_region_barrier_implicit, ompt_scope_end );
