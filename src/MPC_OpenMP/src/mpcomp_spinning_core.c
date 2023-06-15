@@ -301,8 +301,7 @@ static inline mpc_omp_node_t *__scatter_wakeup_intermediate_node( mpc_omp_node_t
 	assert( num_children >= num_vchildren );
 	const int node_first_mvp = node->mvp_first_id;
 	assert( node->children.node );
-	node->reduce_data = ( void ** ) mpc_omp_alloc( node->nb_children * 64 * sizeof( void * ) );
-	node->isArrived = ( int * ) mpc_omp_alloc( node->nb_children * 64 * sizeof( int ) );
+	
 #ifdef MPC_OMP_USE_INTEL_ABI
     struct common_table * th_pri_common;
 #endif
@@ -438,8 +437,7 @@ static inline mpc_omp_mvp_t *__scatter_wakeup_final_mvp( mpc_omp_node_t *node )
 	const int ext_shift = num_children % nthreads;
 	node->barrier_num_threads = node->num_threads;
 	cur_mvp = 0;
-	node->reduce_data = ( void ** ) mpc_omp_alloc( node->nb_children * 64 * sizeof( void * ) );
-	node->isArrived = ( int * ) mpc_omp_alloc( node->nb_children * 64 * sizeof( int ) );
+
 #ifdef MPC_OMP_USE_INTEL_ABI
     struct common_table * th_pri_common;
 #endif
