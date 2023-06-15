@@ -56,11 +56,8 @@ __get_start_tool_result ( unsigned int omp_version,
 
     /* Otherwise, try to find ompt_start_tool routine in one of candidate tools 
      * provided by user OMP_TOOL_LIBRARIES environment variable */
-    const char* tool_libraries_env = NULL;
-    tool_libraries_env = getenv("OMP_TOOL_LIBRARIES") ;
-
-    if( !ret && tool_libraries_env ) {
-        tool_libraries = strdup( tool_libraries_env );
+    tool_libraries = mpcomp_global_icvs.tool_libraries;
+    if( !ret && tool_libraries ) {
         candidate_tool_path = strtok_r( tool_libraries, ":", &save_ptr );
 
         while( !ret && candidate_tool_path ) {
