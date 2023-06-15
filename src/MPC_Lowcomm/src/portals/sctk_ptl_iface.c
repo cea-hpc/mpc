@@ -31,7 +31,7 @@
 #include "sctk_ptl_types.h"
 #include "mpc_common_datastructure.h"
 #include "sctk_ptl_offcoll.h"
-#include "sctk_low_level_comm.h"
+#include "lowcomm.h"
 #include "mpc_common_rank.h"
 #include "mpc_launch_pmi.h"
 
