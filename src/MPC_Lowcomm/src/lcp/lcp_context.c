@@ -24,6 +24,34 @@ lcp_am_handler_t lcp_am_handlers[LCP_AM_ID_LAST] = {{NULL, 0}};
 static int lcp_context_is_initialized = 0;
 static lcp_context_h static_ctx = NULL;
 
+static int lcp_context_check_if_valid(lcp_context_h ctx)
+{
+        int rc = LCP_SUCCESS, i;
+        int has_offload = 0;
+        lcp_rsc_desc_t rsc;
+        lcr_rail_config_t *iface_config;
+        lcr_driver_config_t *driver_config;
+
+        for (i = 0; i<ctx->num_resources; i++) {
+                rsc = ctx->resources[i];
+		iface_config = _mpc_lowcomm_conf_rail_unfolded_get(rsc.component->rail_name);
+
+                if (iface_config->offload) {
+                        has_offload = 1;
+                        break;
+                }
+        }
+
+        if (ctx->num_cmpts > 1 && has_offload) {
+                mpc_common_debug_error("LCP CONTEXT: offload interface not "
+                                       "supported with heterogenous multirail");
+                rc = LCP_ERROR;
+                goto err;
+        } 
+err:
+        return rc;
+}
+
 static inline int lcp_context_set_am_handler(lcp_context_h ctx, 
                                              sctk_rail_info_t *iface)
 {
@@ -362,7 +390,7 @@ static inline void lcp_context_resource_init(lcp_rsc_desc_t *resource_p,
                                              lcr_device_t *device)
 {
         /* Fetch configuration */
-        lcr_rail_config_t * iface_config = 
+        lcr_rail_config_t *iface_config = 
                 _mpc_lowcomm_conf_rail_unfolded_get((char *)component->rail_name);
         lcr_driver_config_t *driver_config =
                 _mpc_lowcomm_conf_driver_unfolded_get(iface_config->config);
@@ -628,6 +656,11 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
 	if (rc != LCP_SUCCESS) {
 		goto out_free_ctx_config;
 	}
+
+        rc = lcp_context_check_if_valid(ctx);
+        if (rc != LCP_SUCCESS) {
+                goto out_free_resources;
+        }
 
 	/* Allocate rail interface */
 	rc = lcp_context_open_interfaces(ctx);
