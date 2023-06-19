@@ -109,7 +109,7 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
         //       Reorder is to be reimplemented.
         LCP_REQUEST_INIT_TAG_SEND(req, ep->ctx, task, request, param->recv_info, 
                                   count, ep, (void *)buffer, 
-                                  OPA_fetch_and_incr_int(&ep->seqn), (uint64_t)req,
+                                  OPA_fetch_and_incr_int(&ep->seqn),
                                   param->datatype);
 
         /* prepare request depending on its type */

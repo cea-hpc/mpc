@@ -74,7 +74,7 @@ static size_t lcp_rndv_fin_pack(void *dest, void *data)
         lcp_ack_hdr_t *hdr = dest;
         lcp_request_t *rndv_req = data;
 
-        hdr->msg_id = rndv_req->msg_id;
+        hdr->msg_id = rndv_req->send.rndv.msg_id;
 
         return sizeof(*hdr);
 }
@@ -293,15 +293,13 @@ int lcp_send_rndv_start(lcp_request_t *req)
         };
 
         /* Set message identifiers */
-        rndv_req->msg_id = req->msg_id; 
+        rndv_req->send.rndv.msg_id = req->msg_id; 
 
         if (lcp_pending_create(req->ctx->pend, rndv_req, req->msg_id) == NULL) {
                 mpc_common_debug_error("LCP: could not add pending message");
                 rc = LCP_ERROR;
                 goto err;
         }
-        /* delete from pending list on completion */
-        rndv_req->flags |= LCP_REQUEST_DELETE_FROM_PENDING; 
 
 err:
         return rc;
@@ -352,7 +350,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
         rndv_req->state.offset    = 0;
 
         /* Set message identifiers from incomming message */
-        rndv_req->msg_id = hdr->msg_id;
+        rndv_req->send.rndv.msg_id = hdr->msg_id;
 
         /* Buffer must be allocated and data packed to make it contiguous
          * and use zcopy and memory registration. */
@@ -383,6 +381,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
 
         switch (rreq->ctx->config.rndv_mode) {
         case LCP_RNDV_PUT:
+                not_implemented();
                 /* Append request to request hash table */
                 if (lcp_pending_create(rreq->ctx->pend, rndv_req, 
                                        rreq->msg_id) == NULL) {
@@ -391,8 +390,6 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
                         rc = LCP_ERROR;
                         goto err;
                 }
-                /* delete from pending list on completion */
-                rndv_req->flags |= LCP_REQUEST_DELETE_FROM_PENDING; 
 
                 /* Register memory through rndv request since we need the
                  * endpoint connection map stored in the endpoint */ 
@@ -513,10 +510,14 @@ static int lcp_rndv_fin_handler(void *arg, void *data,
          * unregister the memory */
         lcp_mem_deregister(req->ctx, req->state.lmem);
 
+        //NOTE: rndv request must be completed before the super request so that
+        //      it is removed from pending table before another task could
+        //      allocate a lcp_request_t at that address.
+        lcp_pending_delete(req->ctx->pend, req->msg_id);
+        lcp_request_complete(rndv_req);
+
         /* Call completion of super request */
         req->state.comp.comp_cb(&(req->state.comp));
-
-        lcp_request_complete(rndv_req);
 
 	LCP_CONTEXT_UNLOCK(ctx);
 err:

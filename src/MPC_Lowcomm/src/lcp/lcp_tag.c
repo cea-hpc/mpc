@@ -172,12 +172,13 @@ int lcp_send_eager_tag_bcopy(lcp_request_t *req)
         if (req->is_sync) {
                 pack_cb = lcp_send_tag_eager_sync_pack;
                 am_id   = LCP_AM_ID_EAGER_TAG_SYNC;
+
+                req->msg_id = (uint64_t)req;
                 if (lcp_pending_create(req->ctx->pend, 
                                        req, 
                                        req->msg_id) == NULL) {
                         rc = LCP_ERROR;
                 }
-                req->flags |= LCP_REQUEST_DELETE_FROM_PENDING; 
         } else {
                 pack_cb     = lcp_send_tag_eager_pack;
 		am_id       = LCP_AM_ID_EAGER_TAG;
@@ -251,13 +252,14 @@ int lcp_send_eager_tag_zcopy(lcp_request_t *req)
                 hdr_sync->msg_id        = req->msg_id;
                 hdr_sync->src_uid       = req->send.tag.src_uid;
 
+                req->msg_id = (uint64_t)req;
+
                 am_id = LCP_AM_ID_EAGER_TAG_SYNC;
                 if (lcp_pending_create(req->ctx->pend, 
                                        req, 
                                        req->msg_id) == NULL) {
                         rc = LCP_ERROR;
                 }
-                req->flags |= LCP_REQUEST_DELETE_FROM_PENDING; 
         } else {
                 lcp_tag_hdr_t *hdr_tag;
                 hdr_size = sizeof(lcp_tag_hdr_t);
@@ -364,6 +366,7 @@ int lcp_send_rndv_tag_start(lcp_request_t *req)
 	req->state.comp = (lcr_completion_t) {
                 .comp_cb = lcp_tag_send_complete
         };
+        req->msg_id = (uint64_t)req;
 
         rc = lcp_send_rndv_start(req);
         if (rc != LCP_SUCCESS) {
@@ -578,6 +581,7 @@ static int lcp_eager_tag_sync_ack_handler(void *arg, void *data,
         /* Set remote flag so that request can be actually completed */
 	req->flags |= LCP_REQUEST_REMOTE_COMPLETED;
 
+        lcp_pending_delete(req->ctx->pend, req->msg_id);
 	lcp_tag_send_complete(&(req->state.comp));
 err:
         return rc;

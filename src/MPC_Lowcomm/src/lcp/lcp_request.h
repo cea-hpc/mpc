@@ -17,15 +17,14 @@
 
 //FIXME: LCP_REQUEST prefix confusing with those defined in lcp.h
 enum {
-	LCP_REQUEST_DELETE_FROM_PENDING = LCP_BIT(1),
-	LCP_REQUEST_RECV_TRUNC          = LCP_BIT(2), /* flags if request is truncated */
-        LCP_REQUEST_MPI_COMPLETE        = LCP_BIT(3), /* call MPI level completion callback, 
+	LCP_REQUEST_RECV_TRUNC          = LCP_BIT(1), /* flags if request is truncated */
+        LCP_REQUEST_MPI_COMPLETE        = LCP_BIT(2), /* call MPI level completion callback, 
                                                          see ucp_request_complete */
-        LCP_REQUEST_RMA_COMPLETE        = LCP_BIT(4),
-        LCP_REQUEST_OFFLOADED_RNDV      = LCP_BIT(5),
-        LCP_REQUEST_LOCAL_COMPLETED     = LCP_BIT(6),
-        LCP_REQUEST_REMOTE_COMPLETED    = LCP_BIT(7),
-        LCP_REQUEST_USER_COMPLETE       = LCP_BIT(8),
+        LCP_REQUEST_RMA_COMPLETE        = LCP_BIT(3),
+        LCP_REQUEST_OFFLOADED_RNDV      = LCP_BIT(4),
+        LCP_REQUEST_LOCAL_COMPLETED     = LCP_BIT(5),
+        LCP_REQUEST_REMOTE_COMPLETED    = LCP_BIT(6),
+        LCP_REQUEST_USER_COMPLETE       = LCP_BIT(7),
 };
 
 enum {
@@ -80,6 +79,7 @@ struct lcp_request {
                                 } am;
 
                                 struct {
+                                        uint64_t  msg_id;
                                         uint64_t  addr;
                                         lcp_mem_h rkey;
                                 } rndv;
@@ -150,7 +150,7 @@ struct lcp_request {
 };
 
 #define LCP_REQUEST_INIT_TAG_SEND(_req, _ctx, _task, _mpi_req, _info, _length, \
-                                  _ep, _buf, _seqn, _msg_id, _dt) \
+                                  _ep, _buf, _seqn, _dt) \
 { \
 	(_req)->request           = _mpi_req;                                \
         (_req)->send.tag.src_tid  = (_mpi_req)->header.source_task;          \
@@ -160,7 +160,6 @@ struct lcp_request {
         (_req)->send.tag.tag      = (_mpi_req)->header.message_tag;          \
         (_req)->send.tag.comm     = (_mpi_req)->header.communicator_id;      \
 	(_req)->info              = _info;                                   \
-	(_req)->msg_id            = _msg_id;                                 \
 	(_req)->seqn              = _seqn;                                   \
 	(_req)->ctx               = _ctx;                                    \
 	(_req)->task              = _task;                                   \

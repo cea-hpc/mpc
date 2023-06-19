@@ -88,6 +88,7 @@ void lcp_pending_delete(lcp_pending_table_t *table,
         mpc_common_spinlock_lock(&(table->table_lock));
         HASH_FIND(hh, table->table, &msg_key, sizeof(uint64_t), entry);
         if (entry == NULL) {
+                //FIXME: should it be fatal ?
                 mpc_common_debug_fatal("LCP: pending request=%llu did not exist",
                                        msg_key);
         }

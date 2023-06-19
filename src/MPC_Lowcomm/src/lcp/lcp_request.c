@@ -90,10 +90,6 @@ int lcp_request_complete(lcp_request_t *req)
                 lcp_pending_delete(req->ctx->match_ht, req->msg_id);
         }
 
-        if (req->flags & LCP_REQUEST_DELETE_FROM_PENDING) {
-                lcp_pending_delete(req->ctx->pend, req->msg_id);
-        } 
-
 	sctk_free(req);
 
 	return LCP_SUCCESS;

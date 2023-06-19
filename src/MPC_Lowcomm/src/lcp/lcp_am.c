@@ -181,7 +181,6 @@ int lcp_send_eager_am_bcopy(lcp_request_t *req)
                                        req->msg_id) == NULL) {
                         rc = LCP_ERROR;
                 }
-                req->flags |= LCP_REQUEST_DELETE_FROM_PENDING; 
         } else {
 		am_id       = LCP_AM_ID_EAGER_AM;
                 req->flags |= LCP_REQUEST_REMOTE_COMPLETED;
@@ -251,7 +250,6 @@ int lcp_send_eager_am_zcopy(lcp_request_t *req)
                                        req->msg_id) == NULL) {
                         rc = LCP_ERROR;
                 }
-                req->flags |= LCP_REQUEST_DELETE_FROM_PENDING; 
         } else {
                 am_id       = LCP_AM_ID_EAGER_AM;
                 req->flags |= LCP_REQUEST_REMOTE_COMPLETED;
