@@ -462,6 +462,7 @@ typedef struct lcr_ptl_info_s {
         lcr_ptl_block_list_t *tag_block_list;
         lcr_ptl_block_list_t *am_block_list;
         lcr_ptl_persistant_post_t *persistant_ht;
+        mpc_common_spinlock_t poll_lock;
 } lcr_ptl_info_t;
 
 /**

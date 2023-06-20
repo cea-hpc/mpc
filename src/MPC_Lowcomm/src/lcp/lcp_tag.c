@@ -164,10 +164,11 @@ int lcp_send_eager_tag_bcopy(lcp_request_t *req)
         ssize_t payload;
 	int rc = LCP_SUCCESS;
 
-	mpc_common_debug_info("LCP: send am eager tag bcopy comm=%d, src=%d, "
-                              "dest=%d, length=%d, tag=%d, lcreq=%p.", req->send.tag.comm,
-                              req->send.tag.src_tid, req->send.tag.dest_tid, 
-                              req->send.length, req->send.tag.tag, req->request);
+        mpc_common_debug_info("LCP: send am eager tag bcopy comm=%d, src=%d, "
+                              "dest=%d, length=%d, tag=%d, seqn=%d, buf=%p.", 
+                              req->send.tag.comm, req->send.tag.src_tid, 
+                              req->send.tag.dest_tid, req->send.length, 
+                              req->send.tag.tag, req->seqn, req->send.buffer);
 
         if (req->is_sync) {
                 pack_cb = lcp_send_tag_eager_sync_pack;
@@ -228,7 +229,7 @@ int lcp_send_eager_tag_zcopy(lcp_request_t *req)
 	iov[0].iov_len  = req->send.length;
         iovcnt++;
 
-	mpc_common_debug_info("LCP: send am eager tag zcopy comm=%d, src=%d, "
+        mpc_common_debug_info("LCP: send am eager tag zcopy comm=%d, src=%d, "
                               "dest=%d, tag=%d, length=%d", req->send.tag.comm, 
                               req->send.tag.src_tid, req->send.tag.dest_tid, 
                               req->send.tag.tag, req->send.length);
@@ -391,9 +392,10 @@ int lcp_recv_eager_tag_data(lcp_request_t *req, void *hdr,
         lcp_tag_hdr_t *eager_hdr = (lcp_tag_hdr_t *)hdr;
         ssize_t unpacked_len = 0;
 
-        mpc_common_debug("LCP: recv tag data req=%p, src=%d, "
-                         "tag=%d, comm=%d", req, eager_hdr->src_tid, 
-                         eager_hdr->tag, eager_hdr->comm);
+        mpc_common_debug_info("LCP: recv tag data req=%p, src=%d, dest=%d, "
+                              "tag=%d, comm=%d, length=%d, seqn=%d", req, 
+                              eager_hdr->src_tid, eager_hdr->dest_tid, eager_hdr->tag, 
+                              eager_hdr->comm, length, eager_hdr->seqn);
 
         /* Set variables for MPI status */
         req->recv.tag.src_tid  = eager_hdr->src_tid;
@@ -470,7 +472,7 @@ static int lcp_eager_tag_sync_handler(void *arg, void *data,
                                              hdr->base.src_tid);
 	/* if request is not matched */
 	if (req == NULL) {
-                mpc_common_debug("LCP: recv unexp tag src=%d, length=%d, sequence=%d",
+                mpc_common_debug("LCP: recv unexp tag sync src=%d, length=%d, sequence=%d",
                                  hdr->base.src_tid, length, hdr->base.seqn);
 		rc = lcp_request_init_unexp_ctnr(&ctnr, hdr, length, 
                                                  LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC |
@@ -502,14 +504,14 @@ err:
 
 
 static int lcp_eager_tag_handler(void *arg, void *data,
-                                      size_t length,
-                                      __UNUSED__ unsigned flags)
+                                 size_t length,
+                                 __UNUSED__ unsigned flags)
 {
-	int rc = LCP_SUCCESS;
-	lcp_context_h ctx = arg;
-	lcp_unexp_ctnr_t *ctnr;
-	lcp_request_t *req;
-	lcp_tag_hdr_t *hdr = data;
+        int rc = LCP_SUCCESS;
+        lcp_context_h ctx = arg;
+        lcp_unexp_ctnr_t *ctnr;
+        lcp_request_t *req;
+        lcp_tag_hdr_t *hdr = data;
         lcp_task_h task = NULL;
 
         lcp_context_task_get(ctx, hdr->dest_tid, &task);  
@@ -529,8 +531,10 @@ static int lcp_eager_tag_handler(void *arg, void *data,
                                              hdr->src_tid);
 	/* if request is not matched */
 	if (req == NULL) {
-                mpc_common_debug("LCP: recv unexp tag src=%d, length=%d, sequence=%d",
-                                 hdr->src_tid, length, hdr->seqn);
+                mpc_common_debug_info("LCP: recv unexp tag src=%d, tag=%d, dest=%d, "
+                                      "length=%d, sequence=%d", hdr->src_tid, 
+                                      hdr->tag, hdr->dest_tid, length - sizeof(lcp_tag_hdr_t), 
+                                      hdr->seqn);
 		rc = lcp_request_init_unexp_ctnr(&ctnr, hdr, length, 
                                                  LCP_RECV_CONTAINER_UNEXP_EAGER_TAG);
 		if (rc != LCP_SUCCESS) {

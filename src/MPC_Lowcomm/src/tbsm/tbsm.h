@@ -14,6 +14,7 @@ typedef struct mpc_lowcomm_tbsm_rma_ctx {
 typedef struct {
         mpc_queue_head_t queue;
         mpc_common_spinlock_t lock; 
+        mpc_common_spinlock_t poll_lock;
         size_t eager_limit;
         size_t bcopy_buf_size;
         size_t max_msg_size;

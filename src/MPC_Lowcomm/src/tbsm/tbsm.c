@@ -199,12 +199,18 @@ int lcr_tbsm_iface_progress(sctk_rail_info_t *rail)
 
                 pkg = mpc_queue_pull_elem(&(tbsm_info->queue), lcr_tbsm_pkg_t, elem);
                 assert(pkg);
+
+                mpc_common_spinlock_unlock(&(tbsm_info->lock));
                 
-                mpc_common_spinlock_unlock(&(tbsm_info->lock)); // lock can be freed earlier for eager messages
+                /* Ensure atomic execution of active message handler to support
+                 * in order matching */
+                mpc_common_spinlock_lock(&(tbsm_info->poll_lock));
                 rc = lcr_tbsm_invoke_am(rail, pkg->am_id, pkg->size, pkg->buf);
+                mpc_common_spinlock_unlock(&(tbsm_info->poll_lock));
                 if (rc != MPC_LOWCOMM_SUCCESS) {
                         goto err;
                 }
+
                 
                 //NOTE: pkg must be a bcopy, so free buffer. This would have to change
                 //      if zcopy is implemented.
@@ -248,6 +254,7 @@ int lcr_tbsm_iface_init(sctk_rail_info_t *iface)
                 iface->runtime_config_driver_config->driver.value.tbsm;
          
         mpc_common_spinlock_init(&(tbsm_iface->lock), 0);
+        mpc_common_spinlock_init(&(tbsm_iface->poll_lock), 0);
         mpc_queue_init_head(&(tbsm_iface->queue));
 
         /* Init capabilities */

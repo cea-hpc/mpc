@@ -42,7 +42,7 @@ static int lcp_context_check_if_valid(lcp_context_h ctx)
                 }
         }
 
-        if (ctx->num_cmpts > 1 && has_offload) {
+        if (ctx->config.offload && ctx->num_cmpts > 1 && has_offload) {
                 mpc_common_debug_error("LCP CONTEXT: offload interface not "
                                        "supported with heterogenous multirail");
                 rc = LCP_ERROR;

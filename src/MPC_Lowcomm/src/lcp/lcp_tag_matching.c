@@ -164,7 +164,6 @@ lcp_request_t *lcp_match_prq(lcp_prq_match_table_t *prq,
 	mpc_common_debug("LCP: prq tag matching FOUND=%p, "
 			 "comm_id=%llu, tag=%d, src=%llu.", 
 			 found, comm_id, tag, src);
-	if(found) mpc_common_debug("LCP: matched msg_id=%d, sequence=%d", found->msg_id, found->seqn);
 	mpc_common_spinlock_unlock(&(entry->pr_queue->lock));
 
 	return found;
@@ -189,8 +188,6 @@ void *lcp_match_umq(lcp_umq_match_table_t *umq,
 	entry = lcp_get_umq_entry(umq, comm_id);
 	mpc_common_spinlock_lock(&(entry->um_queue->lock));
 	found =	lcp_umq_find_dequeue(entry->um_queue, tag, src);
-	// mpc_common_debug("LCP: umq tag matching FOUND=%p, comm_id=%llu, tag=%d, "
-	// 		 "src=%llu.", found, comm_id, tag, src);
 	mpc_common_spinlock_unlock(&(entry->um_queue->lock));
 
 	return found;

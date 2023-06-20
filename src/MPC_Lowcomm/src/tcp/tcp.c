@@ -296,7 +296,10 @@ static void *lcr_tcp_thread_loop(_mpc_lowcomm_endpoint_t *ep)
 			else if ((size_t)recv_length < hdr.length)
 				break;
 
+                        /* Ensure in order with ep lock */
+                        mpc_common_spinlock_lock(&(ep->data.tcp.lock));
 			lcr_tcp_invoke_am(ep->rail, hdr.am_id, hdr.length, data);
+                        mpc_common_spinlock_unlock(&(ep->data.tcp.lock));
 			sctk_free(data);
 		}
 

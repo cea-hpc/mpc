@@ -42,10 +42,6 @@ ssize_t lcr_ptl_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
         ptl_comp->type = LCR_PTL_COMP_AM_BCOPY;
         ptl_comp->bcopy_buf = start;
 
-        mpc_common_debug_info("lcr ptl: send am bcopy to %d (iface=%llu, "
-                              "remote=%llu, sz=%llu, pte=%d)", ep->dest, srail->iface, 
-                              remote, size, srail->ptl_info.am_pte);
-
         sctk_ptl_chk(PtlPut(srail->ptl_info.mdh,
                             (ptl_size_t) start, /* local offset */
                             size,
@@ -123,9 +119,6 @@ int lcr_ptl_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
         ptl_comp->iov  = ptl_iovec;
         ptl_comp->type = LCR_PTL_COMP_AM_ZCOPY;
 
-        mpc_common_debug_info("lcr ptl: send am zcopy to %d (iface=%llu, "
-                              "remote=%llu, sz=%llu, pte=%d)", ep->dest, srail->iface, 
-                              remote, size, srail->ptl_info.am_pte);
         sctk_ptl_chk(PtlPut(ptl_comp->iov_mdh,
                             0,
                             size,

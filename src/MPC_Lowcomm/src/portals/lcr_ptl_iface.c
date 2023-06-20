@@ -41,6 +41,9 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
         unsigned flags = 0;
 
         while (1) {
+
+                mpc_common_spinlock_lock(&srail->ptl_info.poll_lock);
+
                 ret = PtlEQGet(srail->ptl_info.eqh, &ev);
                 sctk_ptl_chk(ret);
 
@@ -56,7 +59,7 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                         switch (ev.type) {
                         case PTL_EVENT_SEARCH:
                                 if (ev.ni_fail_type == PTL_NI_NO_MATCH) {
-                                        goto done;
+                                        goto poll_unlock;
                                 }
                                 ptl_comp = (lcr_ptl_send_comp_t *)ev.user_ptr;
                                 assert(ptl_comp);
@@ -70,7 +73,7 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                                 /* call completion callback */
                                 tag_ctx->comp.comp_cb(&tag_ctx->comp);
                                 sctk_free(ptl_comp);
-                                goto done;
+                                goto poll_unlock;
                                 break;
 
                         case PTL_EVENT_SEND:
@@ -82,7 +85,7 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                                 ptl_comp->comp->sent = ev.mlength;
                                 ptl_comp->comp->comp_cb(ptl_comp->comp);
                                 sctk_free(ptl_comp);
-                                goto done;
+                                goto poll_unlock;
                                 break;
                         case PTL_EVENT_ACK:
                                 ptl_comp = (lcr_ptl_send_comp_t *)ev.user_ptr;
@@ -109,7 +112,7 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                                         break;
                                 }
                                 sctk_free(ptl_comp);
-                                goto done;
+                                goto poll_unlock;
                                 break;
                         case PTL_EVENT_PUT_OVERFLOW:
                                 flags = LCR_IFACE_TM_OVERFLOW;
@@ -137,22 +140,22 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                                                                        " type.");
                                                 break;
                                         }
-                                        goto done;
                                         break;
                                 case LCR_PTL_PTE_IDX_AM_EAGER:
                                         am_id = (uint8_t)ev.hdr_data;
                                         lcr_ptl_invoke_am(rail, am_id, ev.mlength, 
                                                           ev.start);
-                                        goto done;
                                         break;
                                 default:
                                         mpc_common_debug_fatal("LCR PTL: wrong pte");
                                         break;
                                 }
+                                goto poll_unlock;
                                 break;
                         case PTL_EVENT_GET_OVERFLOW:
                                 mpc_common_debug_info("LCR PTL: got get overflow, not "
                                                       "possible!");
+                                goto poll_unlock;
                                 break;
                         case PTL_EVENT_GET:
                                 ptl_comp = (lcr_ptl_send_comp_t *)ev.user_ptr;
@@ -166,14 +169,14 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                                 sctk_ptl_list_t list = ev.pt_index == LCR_PTL_PTE_IDX_TAG_EAGER ? 
                                         SCTK_PTL_OVERFLOW_LIST : SCTK_PTL_PRIORITY_LIST;
                                 lcr_ptl_recv_block_activate(block, ev.pt_index, list);
-                                goto done;
+                                goto poll_unlock;
                                 break;
                         case PTL_EVENT_AUTO_FREE:
-                                goto done;
+                                goto poll_unlock;
                                 break;
                         case PTL_EVENT_ATOMIC:                /* an Atomic() reached the local process */
                         case PTL_EVENT_FETCH_ATOMIC:          /* a FetchAtomic() reached the local process */
-                                goto done;
+                                goto poll_unlock;
                                 break;
                         case PTL_EVENT_FETCH_ATOMIC_OVERFLOW: /* a previously received FETCH-ATOMIC matched a just appended one */
                         case PTL_EVENT_ATOMIC_OVERFLOW:       /* a previously received ATOMIC matched a just appended one */
@@ -185,15 +188,17 @@ int lcr_ptl_iface_progress(sctk_rail_info_t *rail)
                                 break;
                         }
                 } else if (ret == PTL_EQ_EMPTY) {
-                        goto done;
+                        goto poll_unlock;
                         break;
                 } else {
                         mpc_common_debug_error("LCR PTL: error returned from PtlEQPoll");
                         break;
                 }
+poll_unlock:
+                mpc_common_spinlock_unlock(&srail->ptl_info.poll_lock);
+                break;
         }
 
-done:
         return did_poll;
 }
 
@@ -233,6 +238,9 @@ int lcr_ptl_software_init(sctk_ptl_rail_info_t *srail, size_t comm_dims)
 	
 	if(sctk_ptl_offcoll_enabled(srail))
 		sctk_ptl_offcoll_init(srail);
+
+        /* Init poll lock used to ensure in-order message reception */
+        mpc_common_spinlock_init(&srail->ptl_info.poll_lock, 0);
 
         /* register the TAG EAGER PTE */
         sctk_ptl_chk(PtlPTAlloc(srail->iface,
