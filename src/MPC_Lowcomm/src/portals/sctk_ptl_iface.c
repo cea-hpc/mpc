@@ -741,7 +741,6 @@ void sctk_ptl_md_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t* us
 {
 	assert(user && srail);
 	int max = srail->max_limits.max_mds;
-	int i = 0;
 
 	while(OPA_fetch_and_incr_int(&nb_mds) >= max)
 	{

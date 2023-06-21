@@ -245,6 +245,8 @@ int lcp_send_eager_tag_zcopy(lcp_request_t *req)
                         goto err;
                 }
 
+                req->msg_id = (uint64_t)req;
+
                 hdr_sync->base.comm     = req->send.tag.comm;
                 hdr_sync->base.src_tid  = req->send.tag.src_tid;
                 hdr_sync->base.dest_tid = req->send.tag.dest_tid;
@@ -252,8 +254,6 @@ int lcp_send_eager_tag_zcopy(lcp_request_t *req)
                 hdr_sync->base.seqn     = req->seqn;
                 hdr_sync->msg_id        = req->msg_id;
                 hdr_sync->src_uid       = req->send.tag.src_uid;
-
-                req->msg_id = (uint64_t)req;
 
                 am_id = LCP_AM_ID_EAGER_TAG_SYNC;
                 if (lcp_pending_create(req->ctx->pend, 

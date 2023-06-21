@@ -297,9 +297,9 @@ static void *lcr_tcp_thread_loop(_mpc_lowcomm_endpoint_t *ep)
 				break;
 
                         /* Ensure in order with ep lock */
-                        mpc_common_spinlock_lock(&(ep->data.tcp.lock));
+                        mpc_common_spinlock_lock(&(ep->rail->network.tcp.poll_lock));
 			lcr_tcp_invoke_am(ep->rail, hdr.am_id, hdr.length, data);
-                        mpc_common_spinlock_unlock(&(ep->data.tcp.lock));
+                        mpc_common_spinlock_unlock(&(ep->rail->network.tcp.poll_lock));
 			sctk_free(data);
 		}
 
@@ -428,6 +428,7 @@ int lcr_tcp_init_iface(sctk_rail_info_t *rail)
 	rail->send_message_from_network = _mpc_lowcomm_tcp_send_message_from_network;
 	rail->connect_on_demand         = tcp_on_demand_connection_handler;
 
+
 	/* New API */
 	rail->send_am_bcopy  = lcr_tcp_send_am_bcopy;
 	rail->send_am_zcopy  = lcr_tcp_send_am_zcopy;
@@ -441,6 +442,9 @@ int lcr_tcp_init_iface(sctk_rail_info_t *rail)
 
         /* Init capabilities */
         rail->cap = LCR_IFACE_CAP_REMOTE;
+
+        /* Init poll lock */
+	mpc_common_spinlock_init(&(rail->network.tcp.poll_lock), 0);
 
 	// sctk_rail_init_route(rail, rail->runtime_config_rail->topology, tcp_on_demand_connection_handler);
 
