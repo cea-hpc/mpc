@@ -14,6 +14,7 @@ typedef struct lcr_tbsm_pkg {
         void               *buf;   /* addr of bcopy buf or send buf */
         size_t              size;
         mpc_queue_elem_t    elem;
+        uint64_t            seqn;
 } lcr_tbsm_pkg_t;
 
 static ssize_t lcr_tbsm_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep, uint8_t id, 
@@ -50,7 +51,9 @@ static ssize_t lcr_tbsm_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep, uint8_t id,
 
         /* Insert package in list */
         mpc_common_spinlock_lock(&(tbsm_info->tx_lock));
-        mpc_queue_push(&tbsm_info->tx_queue, &tbsm_pkg->elem);
+        tbsm_pkg->seqn = tbsm_info->seqn++;
+        mpc_common_debug("LCR TBSM: pushing package. seqn=%llu", tbsm_pkg->seqn);
+        mpc_queue_push(&tbsm_info->queue, &tbsm_pkg->elem);
         mpc_common_spinlock_unlock(&(tbsm_info->tx_lock));
 err:
         return payload_length;
@@ -187,37 +190,31 @@ int lcr_tbsm_iface_progress(sctk_rail_info_t *rail)
         int rc = MPC_LOWCOMM_SUCCESS;
         lcr_tbsm_pkg_t *pkg = NULL;
         mpc_queue_elem_t *tx_elem;
-	_mpc_lowcomm_tbsm_rail_info_t *tbsm_info = &(rail->network.tbsm);
+        _mpc_lowcomm_tbsm_rail_info_t *tbsm_info = &(rail->network.tbsm);
 
-        /* First, pull from tx queue and push to rx queue */
         mpc_common_spinlock_lock(&(tbsm_info->tx_lock));
 
         /* Fast path if list is empty */
-        if (mpc_queue_is_empty(&(tbsm_info->tx_queue))) {
+        if (mpc_queue_is_empty(&(tbsm_info->queue))) {
                 mpc_common_spinlock_unlock(&(tbsm_info->tx_lock));
-                goto rx_poll;
+                goto err;
         }
 
-        tx_elem = mpc_queue_pull(&(tbsm_info->tx_queue));
-        
-        mpc_queue_push(&(tbsm_info->rx_queue), tx_elem);
+        pkg = mpc_queue_pull_elem(&(tbsm_info->queue), lcr_tbsm_pkg_t, elem);
+
+        mpc_common_debug("LCR TBSM: pulling package. seqn=%llu", pkg->seqn);
         mpc_common_spinlock_unlock(&(tbsm_info->tx_lock));
 
-rx_poll:
-        /* Then, pull from rx queue and call handler */
-        mpc_common_spinlock_lock(&(tbsm_info->rx_lock));
-
-        /* Fast path if list is empty */
-        if (mpc_queue_is_empty(&(tbsm_info->rx_queue))) {
-                mpc_common_spinlock_unlock(&(tbsm_info->rx_lock));
-                return rc;
+        while (pkg->seqn != tbsm_info->expected_seqn) {
+                mpc_thread_yield();
         }
 
-        pkg = mpc_queue_pull_elem(&(tbsm_info->rx_queue), lcr_tbsm_pkg_t, elem);
+        mpc_common_spinlock_lock(&(tbsm_info->poll_lock));
 
         rc = lcr_tbsm_invoke_am(rail, pkg->am_id, pkg->size, pkg->buf);
-
-        mpc_common_spinlock_unlock(&(tbsm_info->rx_lock));
+        
+        tbsm_info->expected_seqn++;
+        mpc_common_spinlock_unlock(&(tbsm_info->poll_lock));
         if (rc != MPC_LOWCOMM_SUCCESS) {
                 goto err;
         }
@@ -262,10 +259,12 @@ int lcr_tbsm_iface_init(sctk_rail_info_t *iface)
         struct _mpc_lowcomm_config_struct_net_driver_tbsm tbsm_info =
                 iface->runtime_config_driver_config->driver.value.tbsm;
          
+        /* Init queuing mecanism */
+        mpc_common_spinlock_init(&(tbsm_iface->poll_lock), 0);
         mpc_common_spinlock_init(&(tbsm_iface->tx_lock), 0);
-        mpc_common_spinlock_init(&(tbsm_iface->rx_lock), 0);
-        mpc_queue_init_head(&(tbsm_iface->tx_queue));
-        mpc_queue_init_head(&(tbsm_iface->rx_queue));
+        mpc_common_spinlock_init(&(tbsm_iface->conn_lock), 0);
+        mpc_queue_init_head(&(tbsm_iface->queue));
+        tbsm_iface->seqn = tbsm_iface->expected_seqn = 0;
 
         /* Init capabilities */
         iface->cap = LCR_IFACE_CAP_SELF | LCR_IFACE_CAP_RMA;

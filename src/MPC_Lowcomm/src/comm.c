@@ -3387,7 +3387,7 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
                        mpc_lowcomm_communicator_t comm, mpc_lowcomm_request_t *req, int synchronized)
 {
 #ifdef MPC_LOWCOMM_PROTOCOL
-        int rc, src;
+        int src;
         int tid = mpc_common_get_task_rank();
         lcp_ep_h ep; lcp_task_h task;
         //FIXME: how to handle task rank? Using only get_task_rank for now.

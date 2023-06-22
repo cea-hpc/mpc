@@ -12,10 +12,11 @@ typedef struct mpc_lowcomm_tbsm_rma_ctx {
 } mpc_lowcomm_tbsm_rma_ctx_t;
 
 typedef struct {
-        mpc_queue_head_t tx_queue;
-        mpc_queue_head_t rx_queue;
+        mpc_queue_head_t queue;
+        uint64_t expected_seqn;
+        uint64_t seqn;
         mpc_common_spinlock_t tx_lock; 
-        mpc_common_spinlock_t rx_lock;
+        mpc_common_spinlock_t poll_lock; 
         mpc_common_spinlock_t conn_lock;
         size_t eager_limit;
         size_t bcopy_buf_size;
