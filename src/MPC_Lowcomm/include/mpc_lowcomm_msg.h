@@ -11,10 +11,6 @@
 #include "portals/sctk_portals.h"
 #endif
 
-#ifdef MPC_USE_OFI
-#include "ofi/ofi_types.h"
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -393,9 +389,6 @@ typedef struct
 	struct mpc_lowcomm_ptl_tail_s             ptl;
 #endif
 
-#ifdef MPC_USE_OFI /* all of these should be replaced w/ union */
-	struct mpc_lowcomm_ofi_tail_s ofi;
-#endif
 	char                                      remote_source;
 } mpc_lowcomm_ptp_message_tail_t;
 

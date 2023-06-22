@@ -101,12 +101,7 @@ void sctk_rail_init_driver(sctk_rail_info_t *rail, int driver_type)
 			sctk_network_init_ptl(rail);
 			break;
 #endif
-#ifdef MPC_USE_OFI
 		case MPC_LOWCOMM_CONFIG_DRIVER_OFI: /* OFI */
-			sctk_network_init_ofi(rail);
-			break;
-#endif
-
 		case MPC_LOWCOMM_CONFIG_DRIVER_TCP:
 			sctk_network_init_tcp(rail);
 			break;

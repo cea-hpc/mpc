@@ -107,36 +107,6 @@ enum _mpc_lowcomm_ofi_progress
 	MPC_LOWCOMM_OFI_PROGRESS_UNSPEC
 };
 
-/********************************** ENUM ************************************/
-/****/
-enum _mpc_lowcomm_ofi_rm_type
-{
-	MPC_LOWCOMM_OFI_RM_ENABLED,
-	MPC_LOWCOMM_OFI_RM_DISABLED,
-	MPC_LOWCOMM_OFI_RM_UNSPEC
-};
-
-struct _mpc_lowcomm_config_struct_net_driver_ofi
-{
-	/****/
-	char                           slink[MPC_CONF_STRING_SIZE];
-	enum _mpc_lowcomm_ofi_mode     link;
-	/****/
-	char                           sprogress[MPC_CONF_STRING_SIZE];
-	enum _mpc_lowcomm_ofi_progress progress;
-	/****/
-	char                           sep_type[MPC_CONF_STRING_SIZE];
-	enum _mpc_lowcomm_ofi_ep_type  ep_type;
-	/****/
-	char                           sav_type[MPC_CONF_STRING_SIZE];
-	enum _mpc_lowcomm_ofi_av_type  av_type;
-	/****/
-	char                           srm_type[MPC_CONF_STRING_SIZE];
-	enum _mpc_lowcomm_ofi_rm_type  rm_type;
-	/****/
-	char                           provider[MPC_CONF_STRING_SIZE];
-};
-
 /******************************** STRUCTURE *********************************/
 /****/
 struct _mpc_lowcomm_config_struct_offload_ops_t
@@ -224,9 +194,6 @@ struct _mpc_lowcomm_config_struct_net_driver
 	{
 #ifdef MPC_USE_PORTALS
 		struct _mpc_lowcomm_config_struct_net_driver_portals     portals;
-#endif
-#ifdef MPC_USE_OFI
-		struct _mpc_lowcomm_config_struct_net_driver_ofi ofi;
 #endif
 		struct _mpc_lowcomm_config_struct_net_driver_tcp         tcp;
 		struct _mpc_lowcomm_config_struct_net_driver_tbsm        tbsm;

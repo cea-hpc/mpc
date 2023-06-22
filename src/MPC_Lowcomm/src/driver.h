@@ -31,10 +31,6 @@
 #include <sctk_portals.h>
 #endif
 
-#ifdef MPC_USE_OFI
-#include <ofi.h>
-#endif
-
 #include <tbsm/tbsm.h>
 
 

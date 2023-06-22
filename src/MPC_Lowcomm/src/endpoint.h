@@ -60,9 +60,6 @@ typedef union
 #ifdef MPC_USE_PORTALS
 	_mpc_lowcomm_endpoint_info_portals_t ptl;    /*< Portals route info */
 #endif
-#ifdef MPC_USE_OFI
-	_mpc_lowcomm_endpoint_info_ofi_t     ofi;   /*< OFI-specific route info */
-#endif
 } _mpc_lowcomm_endpoint_info_t;
 
 /** @brief State of the Route */

@@ -98,7 +98,5 @@ libmpclowcomm_la_SOURCES += ./portals_am/sctk_ptl_am_iface.c  ./portals_am/sctk_
 endif
 
 # OFI Driver #
-if OFI_DRIVER_ENABLED
-AM_CPPFLAGS += -I$(abs_srcdir)/ofi/
-libmpclowcomm_la_SOURCES +=./ofi/ofi.c ./ofi/ofi_msg.c ./ofi/ofi_rdma.c ./ofi/ofi_toolkit.c
-endif
+#if OFI_DRIVER_ENABLED
+#endif

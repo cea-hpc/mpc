@@ -48,12 +48,8 @@ typedef union
 {
 	_mpc_lowcomm_tcp_rail_info_t tcp; /**< TCP Rail Info */
 	_mpc_lowcomm_tbsm_rail_info_t tbsm;
-
 #ifdef MPC_USE_PORTALS
 	sctk_ptl_rail_info_t         ptl; /**< Portals Info */
-#endif
-#ifdef MPC_USE_OFI
-	mpc_lowcomm_ofi_rail_info_t  ofi;         /**< OFI info */
 #endif
 } sctk_rail_info_spec_t;
 
@@ -65,9 +61,6 @@ typedef union
 #include "sctk_ptl_types.h"
 #endif
 
-#ifdef MPC_USE_OFI
-#include "ofi_types.h"
-#endif
 
 typedef union
 {
@@ -76,9 +69,6 @@ typedef union
 #ifdef MPC_USE_PORTALS
 	struct sctk_ptl_rdma_ctx       ptl;
 #endif /* MPC_USE_PORTALS */
-#ifdef MPC_USE_OFI
-	struct mpc_lowcomm_ofi_rma_ctx ofi;
-#endif /* MPC_USE_OFI */
 }sctk_rail_pin_ctx_internal_t;
 
 struct sctk_rail_pin_ctx_list
