@@ -1,4 +1,5 @@
 #include "mpc_ofi_domain.h"
+#include "mpc_common_spinlock.h"
 #include "mpc_ofi_dns.h"
 #include "mpc_ofi_helpers.h"
 
@@ -12,7 +13,6 @@
 #include "rdma/fi_errno.h"
 #include <rdma/fi_endpoint.h>
 
-#include <assert.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,7 +34,7 @@ int mpc_ofi_domain_buffer_init(struct mpc_ofi_domain_buffer_t * buff, struct mpc
    /* Make sure to generate all page faults */
    memset(buff->buffer, 0, buff->size);
 
-   pthread_spin_init(&buff->lock, 0);
+   mpc_common_spinlock_init(&buff->lock, 0);
 
    buff->pending_operations = 0;
    buff->is_posted = 0;
@@ -54,16 +54,16 @@ int mpc_ofi_domain_buffer_init(struct mpc_ofi_domain_buffer_t * buff, struct mpc
 void mpc_ofi_domain_buffer_acquire(struct mpc_ofi_domain_buffer_t * buff)
 {
    assert(buff);
-   pthread_spin_lock(&buff->lock);
+   mpc_common_spinlock_lock(&buff->lock);
    buff->pending_operations++;
-   pthread_spin_unlock(&buff->lock);
+   mpc_common_spinlock_unlock(&buff->lock);
 
 }
 
 int mpc_ofi_domain_buffer_relax(struct mpc_ofi_domain_buffer_t * buff)
 {
    int ret = 0;
-   pthread_spin_lock(&buff->lock);
+   mpc_common_spinlock_lock(&buff->lock);
 
    assert(buff->pending_operations > 0);
    buff->pending_operations--;
@@ -73,7 +73,7 @@ int mpc_ofi_domain_buffer_relax(struct mpc_ofi_domain_buffer_t * buff)
       ret = mpc_ofi_domain_buffer_post(buff);
    }
 
-   pthread_spin_unlock(&buff->lock);
+   mpc_common_spinlock_unlock(&buff->lock);
 
    return ret;
 }
@@ -106,11 +106,11 @@ int mpc_ofi_domain_buffer_post(struct mpc_ofi_domain_buffer_t * buff)
 void mpc_ofi_domain_buffer_set_unposted(struct mpc_ofi_domain_buffer_t * buff)
 {
    assert(buff);
-   pthread_spin_lock(&buff->lock);
+   mpc_common_spinlock_lock(&buff->lock);
 
    buff->is_posted = 0;
 
-   pthread_spin_unlock(&buff->lock);
+   mpc_common_spinlock_unlock(&buff->lock);
 }
 
 
@@ -130,7 +130,7 @@ int mpc_ofi_domain_buffer_manager_init(struct mpc_ofi_domain_buffer_manager_t * 
 
    buffs->pending_repost_count = MPC_OFI_NUM_MULTIRECV_BUFF;
 
-   pthread_spin_init(&buffs->pending_repost_count_lock, 0);
+   mpc_common_spinlock_init(&buffs->pending_repost_count_lock, 0);
 
    int i = 0;
 
@@ -178,7 +178,7 @@ int mpc_ofi_domain_buffer_manager_release(struct mpc_ofi_domain_buffer_manager_t
 
 int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context_t *ctx)
 {
-   pthread_spin_init(&domain->lock, 0);
+   mpc_common_spinlock_init(&domain->lock, 0);
    domain->being_polled = 0;
    domain->ctx = ctx;
 
@@ -370,7 +370,7 @@ static inline int _ofi_domain_cq_process_event(struct mpc_ofi_domain_t * domain,
       return 0;
    }
 
-
+   return 0;
 }
 
 
@@ -447,9 +447,8 @@ static inline int _mpc_ofi_domain_eq_poll(struct mpc_ofi_domain_t * domain)
 {
 	struct fi_eq_entry entry;
 
-	uint32_t event;
-	ssize_t rd;
-
+	uint32_t event = 0;
+	ssize_t rd = 0;
 
    rd = fi_eq_read(domain->eq, &event, &entry, sizeof(entry), 0);
 
@@ -495,7 +494,7 @@ int mpc_ofi_domain_poll(struct mpc_ofi_domain_t * domain, int type)
       return 1;
    }
 
-   if(!type | (type & FI_RECV) )
+   if( (!type) | (type & FI_RECV) )
    {
 
       if( _ofi_domain_cq_poll(domain, domain->rx_cq))
@@ -506,7 +505,7 @@ int mpc_ofi_domain_poll(struct mpc_ofi_domain_t * domain, int type)
       }
    }
 
-   if(!type | (type & FI_SEND) )
+   if( (!type) | (type & FI_SEND) )
    {
 
       if( _ofi_domain_cq_poll(domain, domain->tx_cq))

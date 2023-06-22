@@ -1,10 +1,10 @@
 #ifndef MPC_OFI_DOMAIN
 #define MPC_OFI_DOMAIN
 
-#include <pthread.h>
-
 #include "mpc_ofi_context.h"
 #include "mpc_ofi_request.h"
+
+#include <mpc_common_spinlock.h>
 
 #include <rdma/fi_domain.h>
 #include <rdma/fi_eq.h>
@@ -27,7 +27,7 @@ struct mpc_ofi_domain_t;
 
 struct mpc_ofi_domain_buffer_t
 {
-   pthread_spinlock_t lock;
+   mpc_common_spinlock_t lock;
    uint32_t pending_operations;
    volatile int is_posted;
 
@@ -57,7 +57,7 @@ struct mpc_ofi_domain_buffer_manager_t
    struct mpc_ofi_domain_t * domain;
 
    volatile int pending_repost_count;
-   pthread_spinlock_t pending_repost_count_lock;
+   mpc_common_spinlock_t pending_repost_count_lock;
 
 };
 
@@ -73,7 +73,7 @@ int mpc_ofi_domain_buffer_manager_release(struct mpc_ofi_domain_buffer_manager_t
  **************/
 
 struct mpc_ofi_domain_t{
-   pthread_spinlock_t lock;
+   mpc_common_spinlock_t lock;
    volatile int being_polled;
    /* Pointer to config and fabric */
    struct mpc_ofi_context_t *ctx;

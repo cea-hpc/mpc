@@ -2,6 +2,7 @@
 #define MPC_OFI_REQUEST
 
 #include <mpc_common_spinlock.h>
+#include <mpc_common_debug.h>
 
 /*********************
  * THE REQUEST CACHE *
@@ -23,7 +24,7 @@ struct mpc_ofi_request_t
    int (*comptetion_cb)(void * arg);
 };
 
-static int mpc_ofi_request_test(struct mpc_ofi_request_t*req)
+__UNUSED__ static int mpc_ofi_request_test(struct mpc_ofi_request_t*req)
 {
    return req->done;
 }
@@ -44,7 +45,7 @@ struct mpc_ofi_request_t * mpc_ofi_request_acquire(struct mpc_ofi_request_cache_
                                                            void *arg);
 
 
-static inline int mpc_ofi_request_done(struct mpc_ofi_request_t *request)
+__UNUSED__ static int mpc_ofi_request_done(struct mpc_ofi_request_t *request)
 {
    int ret = 0;
 

@@ -30,13 +30,13 @@ extern "C"
 {
 #endif
 
-#include <unistd.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <mpc_config.h>
-#include <mpc_common_debugger.h>
-#include <mpc_arch.h>
 #include <assert.h>
+#include <mpc_arch.h>
+#include <mpc_common_debugger.h>
+#include <mpc_config.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #include "mpc_common_types.h"
 #include "mpc_keywords.h"

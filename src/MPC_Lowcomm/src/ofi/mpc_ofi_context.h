@@ -2,8 +2,9 @@
 #define MPC_OFI_CONTEXT
 
 /* Public */
-#include <pthread.h>
 #include <stdint.h>
+
+#include <mpc_common_spinlock.h>
 
 /* INTERNAL */
 #include "mpc_ofi_dns.h"
@@ -30,7 +31,7 @@ struct mpc_ofi_domain_t;
 
 struct mpc_ofi_context_t
 {
-   pthread_spinlock_t lock;
+   mpc_common_spinlock_t lock;
 
    /* Topology */
    uint16_t numa_count;

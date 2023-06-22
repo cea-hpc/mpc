@@ -7,7 +7,6 @@
 
 #include <mpc_common_debug.h>
 
-#include <assert.h>
 #include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -33,7 +32,7 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
       ctx->provider = strdup(provider);
    }
 
-   pthread_spin_init(&ctx->lock, 0);
+   mpc_common_spinlock_init(&ctx->lock, 0);
 
    ctx->recv_callback = recv_callback;
 
@@ -147,10 +146,10 @@ int mpc_ofi_context_release(struct mpc_ofi_context_t *ctx)
 static inline struct mpc_ofi_domain_t * __mpc_ofi_context_get_next_domain_rr(struct mpc_ofi_context_t *ctx)
 {
    int target = 0;
-   pthread_spin_lock(&ctx->lock);
+   mpc_common_spinlock_lock(&ctx->lock);
    target = ctx->current_domain;
    ctx->current_domain = (ctx->current_domain + 1)%ctx->domain_count;
-   pthread_spin_unlock(&ctx->lock);
+   mpc_common_spinlock_unlock(&ctx->lock);
 
    return &ctx->domains[target];
 }
@@ -249,6 +248,8 @@ int mpc_ofi_view_wait(struct mpc_ofi_view_t *view,  struct mpc_ofi_request_t *re
          return -1;
       }
    }while(!done);
+
+   return 0;
 }
 
 
