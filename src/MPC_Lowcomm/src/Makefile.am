@@ -100,6 +100,6 @@ endif
 # OFI Driver #
 if OFI_DRIVER_ENABLED
 AM_CPPFLAGS += -I$(abs_srcdir)/ofi/ $(OFI_CFLAGS)
-libmpclowcomm_la_SOURCES += ./ofi/mpc_ofi_request.c ./ofi/mpc_ofi_helpers.c ./ofi/mpc_ofi_dns.c
+libmpclowcomm_la_SOURCES += ./ofi/mpc_ofi_request.c ./ofi/mpc_ofi_helpers.c ./ofi/mpc_ofi_dns.c ./ofi/mpc_ofi_domain.c ./ofi/mpc_ofi_context.c
 libmpclowcomm_la_LIBADD += $(OFI_LIBS)
 endif

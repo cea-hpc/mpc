@@ -229,7 +229,7 @@ static inline void * __mpc_ofi_dns_socket_resolution_server_thread(void *prsvl)
       close(clientsock);
    }
 
-   mpc_common_tracepoint("Server thread leaving");
+   mpc_common_errorpoint("Server thread leaving");
 
    return NULL;
 }
@@ -288,7 +288,7 @@ static inline int __mpc_ofi_dns_socket_resolution_server_start(struct mpc_ofi_dn
 
 	if(listening == 0)
 	{
-      mpc_common_tracepoint("Failed to start socket-based resolution server");
+      mpc_common_errorpoint("Failed to start socket-based resolution server");
 		return -1;
 	}
 
@@ -333,7 +333,7 @@ int mpc_ofi_dns_socket_resolution_init(struct mpc_ofi_dns_socket_resolution_t*rs
       /* I am server */
       if(__mpc_ofi_dns_socket_resolution_server_start(rsvl))
       {
-         mpc_common_tracepoint("Failed to start revolv socket server");
+         mpc_common_errorpoint("Failed to start revolv socket server");
          return -1;
       }
       rsvl->is_master_process = 1;
@@ -346,7 +346,7 @@ int mpc_ofi_dns_socket_resolution_init(struct mpc_ofi_dns_socket_resolution_t*rs
 
       if(!sep)
       {
-         mpc_common_tracepoint("Bad address format in MPC_OFI_SOCKET_MASTER expected addr:port");
+         mpc_common_errorpoint("Bad address format in MPC_OFI_SOCKET_MASTER expected addr:port");
          return -1;
       }
 
@@ -357,7 +357,7 @@ int mpc_ofi_dns_socket_resolution_init(struct mpc_ofi_dns_socket_resolution_t*rs
 
       if(port == 0)
       {
-         mpc_common_tracepoint("Failed to resolve master port");
+         mpc_common_errorpoint("Failed to resolve master port");
          return -1;
       }
 
@@ -428,7 +428,7 @@ static inline int __mpc_ofi_dns_socket_resolution_exec_command(struct mpc_ofi_dn
 
 	if(connected == 0)
 	{
-      mpc_common_tracepoint("Failed to connect to server");
+      mpc_common_errorpoint("Failed to connect to server");
 		return -1;
 	}
 
@@ -467,7 +467,7 @@ int mpc_ofi_dns_socket_resolution_register(void *prsvl,
 
    if(MPC_OFI_ADDRESS_LEN < *len)
    {
-      mpc_common_tracepoint("Address too long");
+      mpc_common_errorpoint("Address too long");
       return -1;
    }
 
@@ -478,14 +478,14 @@ int mpc_ofi_dns_socket_resolution_register(void *prsvl,
 
    if(__mpc_ofi_dns_socket_resolution_exec_command(rsvl, &cmd))
    {
-      mpc_common_tracepoint("Failed to run command");
+      mpc_common_errorpoint("Failed to run command");
       return -1;
    }
 
    /* Extract return vals */
    if(cmd.len == 0)
    {
-      mpc_common_tracepoint("Server side error");
+      mpc_common_errorpoint("Server side error");
       return -1;
    }
 
@@ -509,7 +509,7 @@ int mpc_ofi_dns_socket_resolution_lookup(void* prsvl,
 
    if(MPC_OFI_ADDRESS_LEN < *len)
    {
-      mpc_common_tracepoint("Address too long");
+      mpc_common_errorpoint("Address too long");
       return -1;
    }
 
@@ -520,20 +520,20 @@ int mpc_ofi_dns_socket_resolution_lookup(void* prsvl,
 
    if(__mpc_ofi_dns_socket_resolution_exec_command(rsvl, &cmd))
    {
-      mpc_common_tracepoint("Failed to run command");
+      mpc_common_errorpoint("Failed to run command");
       return -1;
    }
 
    /* Extract return vals */
    if(cmd.len == 0)
    {
-      mpc_common_tracepoint("Server side error");
+      mpc_common_errorpoint("Server side error");
       return -1;
    }
 
    if(*len < cmd.len)
    {
-      mpc_common_tracepoint("Address overflows buffer");
+      mpc_common_errorpoint("Address overflows buffer");
       return -1;
    }
 
@@ -557,7 +557,7 @@ int mpc_ofi_dns_init(struct mpc_ofi_dns_t * dns, mpc_ofi_dns_resolution_t resolu
       {
          if(mpc_ofi_dns_socket_resolution_init(&dns->socket_rsvl, dns))
          {
-            mpc_common_tracepoint("Failed to init Socket based resolver");
+            mpc_common_errorpoint("Failed to init Socket based resolver");
             return -1;
          }
          dns->operation_first_arg = &dns->socket_rsvl;
@@ -568,14 +568,14 @@ int mpc_ofi_dns_init(struct mpc_ofi_dns_t * dns, mpc_ofi_dns_resolution_t resolu
       }
       default:
       {
-         mpc_common_tracepoint("No such resolution type");
+         mpc_common_errorpoint("No such resolution type");
          return -1;
       }
    }
 
    if(mpc_ofi_dns_ht_init(&dns->cache, MPC_OFI_DNS_DEFAULT_HT_SIZE))
    {
-      mpc_common_tracepoint("Failed to initialize cache");
+      mpc_common_errorpoint("Failed to initialize cache");
       return -1;
    }
 
@@ -589,13 +589,13 @@ int mpc_ofi_dns_release(struct mpc_ofi_dns_t * dns)
       {
          if(mpc_ofi_dns_socket_resolution_release(&dns->socket_rsvl))
          {
-            mpc_common_tracepoint("Failed to release based resolver");
+            mpc_common_errorpoint("Failed to release based resolver");
             return -1;
          }
          break;
       }
       default:
-         mpc_common_tracepoint("No such resolution type");
+         mpc_common_errorpoint("No such resolution type");
          return -1;
    }
 
@@ -604,7 +604,7 @@ int mpc_ofi_dns_release(struct mpc_ofi_dns_t * dns)
 
    if(mpc_ofi_dns_ht_release(&dns->cache, mpc_ofi_dns_name_entry_release))
    {
-      mpc_common_tracepoint("Failed to release cache");
+      mpc_common_errorpoint("Failed to release cache");
       return -1;
    }
 
@@ -657,7 +657,7 @@ int mpc_ofi_dns_resolve(struct mpc_ofi_dns_t * dns, uint64_t rank, char * outbuf
       /* Cache HIT */
       if(*outlen < entry->len)
       {
-         mpc_common_tracepoint("Address truncated");
+         mpc_common_errorpoint("Address truncated");
          return -1;
       }
 
@@ -696,7 +696,7 @@ int mpc_ofi_dns_register(struct mpc_ofi_dns_t * dns, uint64_t rank, char * buff,
    {
       if((dns->op_register)(dns->operation_first_arg, rank, buff, &len))
       {
-         mpc_common_tracepoint("Failed to register in resolver");
+         mpc_common_errorpoint("Failed to register in resolver");
          return -1;
       }
    }
@@ -720,7 +720,7 @@ int mpc_ofi_domain_dns_init(struct mpc_ofi_domain_dns_t *ddns,
    /* Create hashtable */
    if(mpc_ofi_dns_ht_init(&ddns->cache, MPC_OFI_DNS_DEFAULT_HT_SIZE) < 0)
    {
-      mpc_common_tracepoint("Failed to create hash-table");
+      mpc_common_errorpoint("Failed to create hash-table");
       return -1;
    }
 
@@ -759,7 +759,7 @@ int mpc_ofi_domain_dns_resolve(struct mpc_ofi_domain_dns_t * dns, uint64_t rank,
       /* We need to insert it */
       if(mpc_ofi_dns_resolve(dns->main_dns, rank, buff, &len))
       {
-         mpc_common_tracepoint("Failed to resolve rank adress in domain from main");
+         mpc_common_errorpoint("Failed to resolve rank adress in domain from main");
          return -1;
       }
 
@@ -769,7 +769,7 @@ int mpc_ofi_domain_dns_resolve(struct mpc_ofi_domain_dns_t * dns, uint64_t rank,
       /* and now save in HT for next lookup */
       if(mpc_ofi_dns_ht_put(&dns->cache, rank, (void*)*addr))
       {
-         mpc_common_tracepoint("Failed to push new address in HT");
+         mpc_common_errorpoint("Failed to push new address in HT");
          return -1;
       }
    }
