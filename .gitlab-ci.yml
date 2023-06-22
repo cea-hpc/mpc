@@ -77,6 +77,7 @@ Artifact Deletion:
   when: on_success
   script:
     - rm -rf $GL_PIPELINE_PATH
+    - spack env deactivate
     - $HOME/clean_old_pipelines.sh
 
 Resource Relinquishing:
@@ -97,6 +98,7 @@ Resource Relinquishing:
 .conf_run_cmds: &configuration_commands
   - rm -rf ${GL_LOCAL_BUILD_DIR} ${GL_LOCAL_INSTALL_DIR}
   - mkdir ${GL_LOCAL_BUILD_DIR}; cd ${GL_LOCAL_BUILD_DIR}
+  - spack env activate mpc
   - ${CI_PROJECT_DIR}/installmpc -vv --force-spack-arch=x86_64_v2 --prefix=${GL_LOCAL_INSTALL_DIR} ${GL_INSTALL_OPTS}
 
 
