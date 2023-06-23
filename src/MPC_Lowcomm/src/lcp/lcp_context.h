@@ -69,7 +69,7 @@ typedef struct lcp_rsc_desc {
 	int priority;
 	lcr_rail_config_t *iface_config;
 	lcr_driver_config_t *driver_config;
-        lcr_component_h component;
+	lcr_component_h component;
 } lcp_rsc_desc_t;
 
 /**
@@ -80,10 +80,6 @@ typedef struct lcp_context_config {
         int multirail_enabled;
         int multirail_heterogeneous_enabled;
         int user_defined;
-        int num_selected_components;
-        char **selected_components;
-        int num_selected_devices;
-        char **selected_devices;
 	lcp_rndv_mode_t rndv_mode;
         int offload;
 } lcp_context_config_t;
@@ -104,7 +100,7 @@ struct lcp_context {
         OPA_int_t muid; /* matching unique identifier */
 	lcp_pending_table_t *match_ht; /* ht of matching request */
         
-        lcr_component_h *cmpts; /* available component handles */
+        struct lcr_component *cmpts; /* available component handles */
         unsigned num_cmpts; /* number of components */
 
         lcr_device_t *devices; /* available device descriptors */

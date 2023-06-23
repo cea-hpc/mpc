@@ -1,12 +1,29 @@
 #include <lcr/lcr_component.h>
 
 #include <utlist.h>
+#include <string.h>
 #include <mpc_common_debug.h>
 
 #include "sctk_alloc.h"
 
 /* Init component list */
 lcr_component_t *lcr_component_list = NULL; 
+
+
+lcr_component_h * lcr_query_component_by_name(const char * name)
+{
+        lcr_component_t * tmp = NULL;
+        LL_FOREACH(lcr_component_list, tmp) {
+                if(!strcmp(name, tmp->name))
+                {
+                        return tmp;
+                }
+        }
+
+        return NULL;
+}
+
+
 
 int lcr_query_components(lcr_component_h **components_p, 
                          unsigned *num_components_p)

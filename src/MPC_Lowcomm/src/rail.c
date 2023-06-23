@@ -78,7 +78,7 @@ int lcr_rail_init(lcr_rail_config_t *rail_config,
 
 	if(!rail->rail_device)
 	{
-		if( (strcmp(rail_config->device, "default") != 0) && rail_config->device[0] != '!')
+		if( (strcmp(rail_config->device, "any") != 0) && rail_config->device[0] != '!')
 		{
 			mpc_common_debug_error("Device not found with hwloc %s",
 			                       rail_config->device);

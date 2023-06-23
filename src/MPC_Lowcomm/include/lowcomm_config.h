@@ -193,52 +193,26 @@ struct _mpc_lowcomm_config_struct_net_driver_tcp_rdma
 {
 };
 
-/******************************** STRUCTURE *********************************/
-/**Inter-Process shared memory communication implementation**/
-struct _mpc_lowcomm_config_struct_net_driver_shm
-{
-	/**Defines priority for the SHM buffered message**/
-	int buffered_priority;
-	/**Defines the min size for the SHM buffered message**/
-	int buffered_min_size;
-	/**Defines the min size for the SHM buffered message**/
-	int buffered_max_size;
-	/**Defines if mode zerocopy should be actived for SHM buffered message**/
-	int buffered_zerocopy;
-	/****/
-	int cma_enable;
-	/**Defines priority for the SHM CMA message**/
-	int cma_priority;
-	/**Defines the min size for the SHM CMA message**/
-	int cma_min_size;
-	/**Defines the min size for the SHM CMA message**/
-	int cma_max_size;
-	/**Defines if mode zerocopy should be actived for SHM CMA message**/
-	int cma_zerocopy;
-	/**Defines priority for the SHM fragmented message**/
-	int frag_priority;
-	/**Defines the min size for the SHM fragmented message**/
-	int frag_min_size;
-	/**Defines the min size for the SHM fragmented message**/
-	int frag_max_size;
-	/**Defines if mode zerocopy should be actived for SHM fragmented message**/
-	int frag_zerocopy;
-	/**Size of shared memory region.**/
-	int shmem_size;
-	/**Size of shared memory region.**/
-	int cells_num;
-};
 
 /********************************** ENUM ************************************/
 /**Define a specific configuration for a network driver to apply in rails.**/
 enum _mpc_lowcomm_config_struct_net_driver_type
 {
-	SCTK_RTCFG_net_driver_NONE,
-	SCTK_RTCFG_net_driver_portals,
-	SCTK_RTCFG_net_driver_tcp,
-	SCTK_RTCFG_net_driver_shm,
-	SCTK_RTCFG_net_driver_ofi,
-	SCTK_RTCFG_net_driver_topological,
+	MPC_LOWCOMM_CONFIG_DRIVER_NONE,
+	MPC_LOWCOMM_CONFIG_DRIVER_PORTALS,
+	MPC_LOWCOMM_CONFIG_DRIVER_TCP,
+	MPC_LOWCOMM_CONFIG_DRIVER_TBSM,
+	MPC_LOWCOMM_CONFIG_DRIVER_OFI,
+	MPC_LOWCOMM_CONFIG_DRIVER_COUNT
+};
+
+static const char * const _mpc_lowcomm_config_struct_net_driver_type_name[MPC_LOWCOMM_CONFIG_DRIVER_COUNT] =
+{
+	"none",
+	"portals",
+	"tcp",
+	"tbsm",
+	"ofi"
 };
 
 /******************************** STRUCTURE *********************************/
@@ -256,7 +230,6 @@ struct _mpc_lowcomm_config_struct_net_driver
 #endif
 		struct _mpc_lowcomm_config_struct_net_driver_tcp         tcp;
 		struct _mpc_lowcomm_config_struct_net_driver_tbsm        tbsm;
-		struct _mpc_lowcomm_config_struct_net_driver_shm         shm;
 	}                                               value;
 };
 
@@ -411,14 +384,10 @@ struct _mpc_lowcomm_config_struct_protocol
 {
 	/**Is multirail enabled (default: true)**/
 	int  multirail_enabled;
-	/**Comma separated list of transport to use (default: tcp).**/
-	char transports[MPC_CONF_STRING_SIZE];
-	/**Comma separated list of devices to use (default: eth0, ptl0).**/
-	char devices[MPC_CONF_STRING_SIZE];
 	/**Type of rendez-vous to use (default: mode get).**/
 	int  rndv_mode;
 	/**Force offload if possible (ie offload interface available)**/
-        int  offload;
+	int  offload;
 };
 typedef struct _mpc_lowcomm_config_struct_protocol lcr_protocol_config_t;
 

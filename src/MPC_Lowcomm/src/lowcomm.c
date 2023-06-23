@@ -97,17 +97,17 @@ void sctk_rail_init_driver(sctk_rail_info_t *rail, int driver_type)
 	switch(driver_type)
 	{
 #ifdef MPC_USE_PORTALS
-		case SCTK_RTCFG_net_driver_portals: /* PORTALS */
+		case MPC_LOWCOMM_CONFIG_DRIVER_PORTALS: /* PORTALS */
 			sctk_network_init_ptl(rail);
 			break;
 #endif
 #ifdef MPC_USE_OFI
-		case SCTK_RTCFG_net_driver_ofi: /* OFI */
+		case MPC_LOWCOMM_CONFIG_DRIVER_OFI: /* OFI */
 			sctk_network_init_ofi(rail);
 			break;
 #endif
 
-		case SCTK_RTCFG_net_driver_tcp:
+		case MPC_LOWCOMM_CONFIG_DRIVER_TCP:
 			sctk_network_init_tcp(rail);
 			break;
 

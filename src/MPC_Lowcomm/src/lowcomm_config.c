@@ -203,90 +203,10 @@ static inline void __append_new_driver_to_unfolded(struct _mpc_lowcomm_config_st
 	__net_config.configs_size++;
 }
 
-static inline mpc_conf_config_type_t *__init_driver_shm(struct _mpc_lowcomm_config_struct_net_driver *driver)
-{
-	driver->type = SCTK_RTCFG_net_driver_shm;
-
-	/* 
-	 * Set defaults
-	 */
-	
-	struct _mpc_lowcomm_config_struct_net_driver_shm *shm = &driver->value.shm;
-
-	/* Buffered */
-
-	shm->buffered_priority = 0;
-	shm->buffered_min_size = 0;
-	shm->buffered_max_size = 4096;
-	shm->buffered_zerocopy = 0;
-
-	/* CMA */
-
-#ifdef MPC_USE_CMA
-	shm->cma_enable = 1;
-#else
-	shm->cma_enable = 0;
-#endif
-	shm->cma_priority = 1;
-	shm->cma_min_size = 4096;
-	shm->cma_max_size = 0;
-	shm->cma_zerocopy = 0;
-
-
-	/* Frag */
-	shm->frag_priority = 2;
-	shm->frag_min_size = 4096;
-	shm->frag_max_size = 0;
-	shm->frag_zerocopy = 0;
-
-	/* Size parameters */
-	shm->shmem_size = 1024;
-	shm->cells_num  = 2048;
-
-	/*
-	 * Create the config object
-	 */
-
-	mpc_conf_config_type_t *buffered = mpc_conf_config_type_init("buffered",
-	                                                             PARAM("priority", &shm->buffered_priority, MPC_CONF_INT, "Defines priority for the SHM buffered message"),
-	                                                             PARAM("minsize", &shm->buffered_min_size, MPC_CONF_INT, "Defines the min size for the SHM buffered message"),
-	                                                             PARAM("maxsize", &shm->buffered_max_size, MPC_CONF_INT, "Defines the max size for the SHM buffered message"),
-	                                                             PARAM("zerocopy", &shm->buffered_zerocopy, MPC_CONF_BOOL, "Defines if mode zerocopy should be actived for SHM buffered message"),
-	                                                             NULL);
-
-	#ifdef MPC_USE_CMA
-	mpc_conf_config_type_t *cma = mpc_conf_config_type_init("cma",
-	                                                        PARAM("enabled", &shm->cma_enable, MPC_CONF_BOOL, "Enable messages through Cross Memory Attach (CMA)"),
-	                                                        PARAM("priority", &shm->cma_priority, MPC_CONF_INT, "Defines priority for the SHM CMA message"),
-	                                                        PARAM("minsize", &shm->cma_min_size, MPC_CONF_INT, "Defines the min size for the SHM CMA message"),
-	                                                        PARAM("maxsize", &shm->cma_max_size, MPC_CONF_INT, "Defines the max size for the SHM CMA message"),
-	                                                        PARAM("zerocopy", &shm->cma_zerocopy, MPC_CONF_BOOL, "Defines if mode zerocopy should be actived for SHM CMA message"),
-	                                                        NULL);
-	#endif
-
-	mpc_conf_config_type_t *frag = mpc_conf_config_type_init("frag",
-	                                                         PARAM("priority", &shm->frag_priority, MPC_CONF_INT, "Defines priority for the SHM frag message"),
-	                                                         PARAM("minsize", &shm->frag_min_size, MPC_CONF_INT, "Defines the min size for the SHM frag message"),
-	                                                         PARAM("maxsize", &shm->frag_max_size, MPC_CONF_INT, "Defines the max size for the SHM frag message"),
-	                                                         PARAM("zerocopy", &shm->frag_zerocopy, MPC_CONF_BOOL, "Defines if mode zerocopy should be actived for SHM frag message"),
-	                                                         NULL);
-
-	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("shm",
-	                                                        PARAM("buffered", buffered, MPC_CONF_TYPE, "Configuration for Buffered Messages"),
-	#ifdef MPC_USE_CMA
-	                                                        PARAM("cma", cma, MPC_CONF_TYPE, "Configuration for CMA Messages"),
-	#endif
-	                                                        PARAM("frag", frag, MPC_CONF_TYPE, "Configuration for fragmented Messages"),
-	                                                        PARAM("size", &shm->shmem_size, MPC_CONF_INT, "Size of the memory region"),
-	                                                        PARAM("cellnum", &shm->cells_num, MPC_CONF_INT, "Number of cells in the memory region"),
-	                                                        NULL);
-
-	return ret;
-}
 
 static inline mpc_conf_config_type_t *__init_driver_tbsm(struct _mpc_lowcomm_config_struct_net_driver *driver)
 {
-	driver->type = SCTK_RTCFG_net_driver_tcp;
+	driver->type = MPC_LOWCOMM_CONFIG_DRIVER_TBSM;
 
 	/*
 	Set defaults
@@ -324,7 +244,7 @@ static inline mpc_conf_config_type_t *__init_driver_tbsm(struct _mpc_lowcomm_con
 
 static inline mpc_conf_config_type_t *__init_driver_tcp(struct _mpc_lowcomm_config_struct_net_driver *driver)
 {
-	driver->type = SCTK_RTCFG_net_driver_tcp;
+	driver->type = MPC_LOWCOMM_CONFIG_DRIVER_TCP;
 
 	/* 
 	 * Set defaults
@@ -350,7 +270,7 @@ static inline mpc_conf_config_type_t *__init_driver_tcp(struct _mpc_lowcomm_conf
 
 static inline mpc_conf_config_type_t *__init_driver_portals(struct _mpc_lowcomm_config_struct_net_driver *driver)
 {
-	driver->type = SCTK_RTCFG_net_driver_portals;
+	driver->type = MPC_LOWCOMM_CONFIG_DRIVER_PORTALS;
 
 	/* 
 	 * Set defaults
@@ -400,7 +320,7 @@ static inline mpc_conf_config_type_t *__init_driver_portals(struct _mpc_lowcomm_
 
 static inline void __driver_ofi_unfold(struct _mpc_lowcomm_config_struct_net_driver *driver)
 {
-	assume(driver->type == SCTK_RTCFG_net_driver_ofi);
+	assume(driver->type == MPC_LOWCOMM_CONFIG_DRIVER_OFI);
 	struct _mpc_lowcomm_config_struct_net_driver_ofi *ofi = &driver->value.ofi;
 
 	ofi->link     = mpc_lowcomm_ofi_decode_mode(ofi->slink);
@@ -412,7 +332,7 @@ static inline void __driver_ofi_unfold(struct _mpc_lowcomm_config_struct_net_dri
 
 static inline mpc_conf_config_type_t *__init_driver_ofi(struct _mpc_lowcomm_config_struct_net_driver *driver)
 {
-	driver->type = SCTK_RTCFG_net_driver_ofi;
+	driver->type = MPC_LOWCOMM_CONFIG_DRIVER_OFI;
 
 	/* 
 	 * Set defaults
@@ -453,7 +373,7 @@ static inline void __mpc_lowcomm_driver_conf_unfold_values(struct _mpc_lowcomm_c
 	switch(driver->type)
 	{
 #ifdef MPC_USE_OFI
-		case SCTK_RTCFG_net_driver_ofi:
+		case MPC_LOWCOMM_CONFIG_DRIVER_OFI:
 			__driver_ofi_unfold(driver);
 			break;
 #endif
@@ -474,11 +394,7 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_default_driver(c
 
 	mpc_conf_config_type_t *driver = NULL;
 
-	if(!strcmp(driver_type, "shm") )
-	{
-		driver = __init_driver_shm(&new_conf->driver);
-	}
-	else if(!strcmp(driver_type, "tbsm"))
+	if(!strcmp(driver_type, "tbsm"))
 	{
 		driver = __init_driver_tbsm(&new_conf->driver);
 	}
@@ -584,7 +500,6 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_init()
 {
 	__mpc_lowcomm_driver_conf_default();
 
-	mpc_conf_config_type_t * shm  = __mpc_lowcomm_driver_conf_default_driver("shmconfigmpi", "shm");
 	mpc_conf_config_type_t * tcp  = __mpc_lowcomm_driver_conf_default_driver("tcpconfigmpi", "tcp");
 	mpc_conf_config_type_t * tbsm = __mpc_lowcomm_driver_conf_default_driver("tbsmconfigmpi", "tbsm");
 
@@ -596,7 +511,6 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_driver_conf_init()
 #endif
 
 	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("configs",
-	                                                        PARAM("shmconfigmpi", shm, MPC_CONF_TYPE, "Default configuration for the SHM driver"),
 	                                                        PARAM("tcpconfigmpi", tcp, MPC_CONF_TYPE, "Default configuration for the TCP driver"),
 	                                                        PARAM("tbsmconfigmpi", tbsm, MPC_CONF_TYPE, "Default configuration for the TBSM driver"),
 #if defined(MPC_USE_PORTALS)
@@ -731,19 +645,17 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_rail_conf_init()
 	__mpc_lowcomm_rail_conf_default();
 
 	/* Here we instanciate default rails */
-	mpc_conf_config_type_t *shm_mpi = __new_rail_conf_instance("shmmpi", 99, "default", "fully", 0, 0, 1, 0, 0, "shmconfigmpi");
-	mpc_conf_config_type_t *tcp_mpi = __new_rail_conf_instance("tcpmpi", 9, "default", "ring", 1, 0, 0, 0, 1, "tcpconfigmpi");
-    mpc_conf_config_type_t *tbsm_mpi = __new_rail_conf_instance("tbsmmpi", 99, "default", "ring", 1, 0, 1, 0, 1, "tbsmconfigmpi");
+	mpc_conf_config_type_t *tcp_mpi = __new_rail_conf_instance("tcpmpi", 9, "any", "ring", 1, 0, 0, 0, 1, "tcpconfigmpi");
+    mpc_conf_config_type_t *tbsm_mpi = __new_rail_conf_instance("tbsmmpi", 99, "any", "ring", 1, 0, 1, 0, 1, "tbsmconfigmpi");
 
 #ifdef MPC_USE_PORTALS
 	mpc_conf_config_type_t *portals_mpi = __new_rail_conf_instance("portalsmpi", 6, "default", "ring", 1, 1, 0, 1, 1, "portalsconfigmpi");
 #endif
 #ifdef MPC_USE_OFI
-	mpc_conf_config_type_t *ofi_mpi = __new_rail_conf_instance("ofimpi", 1, "default", "ring", 1, 1, 0, 0, 0, "oficonfigmpi");
+	mpc_conf_config_type_t *ofi_mpi = __new_rail_conf_instance("ofimpi", 1, "any", "ring", 1, 1, 0, 0, 0, "oficonfigmpi");
 #endif
 
 	mpc_conf_config_type_t *rails = mpc_conf_config_type_init("rails",
-	                                                          PARAM("shmmpi", shm_mpi, MPC_CONF_TYPE, "A rail with only SHM"),
 	                                                          PARAM("tcpmpi", tcp_mpi, MPC_CONF_TYPE, "A rail with TCP and SHM"),
                                                              PARAM("tbsmmpi", tbsm_mpi, MPC_CONF_TYPE, "A rail with Thread Based SHM"),
 #ifdef MPC_USE_PORTALS
@@ -1090,11 +1002,9 @@ static mpc_conf_config_type_t *__mpc_lowcomm_cli_conf_init(void)
 	                                                           PARAM("portals4", ___mpc_lowcomm_cli_conf_option_init("portals4", "portalsmpi", NULL), MPC_CONF_TYPE, "Combination of Portals and SHM"),
 #endif
 #ifdef MPC_USE_OFI
-	                                                           PARAM("ofi", ___mpc_lowcomm_cli_conf_option_init("ofi", "shmmpi", "ofimpi"), MPC_CONF_TYPE, "Combination of OFI and SHM"),
+	                                                           PARAM("ofi", ___mpc_lowcomm_cli_conf_option_init("ofi", "ofimpi", NULL), MPC_CONF_TYPE, "OFI Alone"),
 #endif
-	                                                           PARAM("tcp", ___mpc_lowcomm_cli_conf_option_init("tcp", "shmmpi", "tcpmpi"), MPC_CONF_TYPE, "Combination of TCP and SHM"),
-	                                                           PARAM("shm", ___mpc_lowcomm_cli_conf_option_init("shm", "shmmpi", NULL), MPC_CONF_TYPE, "SHM Only"),
-
+	                                                           PARAM("tcp", ___mpc_lowcomm_cli_conf_option_init("tcp", "tcpmpi", NULL), MPC_CONF_TYPE, "TCP Alone"),
 	                                                           NULL);
 
 	mpc_conf_config_type_t *cli = mpc_conf_config_type_init("cli",
@@ -1240,19 +1150,15 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_protocol_conf_init(void)
 {
 	struct _mpc_lowcomm_config_struct_protocol *proto = __mpc_lowcomm_proto_conf_init();
 
-        proto->multirail_enabled    = 1; /* default multirail enabled */
+	proto->multirail_enabled    = 1; /* default multirail enabled */
 	proto->rndv_mode            = 1; /* default rndv get */
 	proto->offload              = 0; /* default no offload */
-        snprintf(proto->transports, MPC_CONF_STRING_SIZE, "tcp,tbsm");
-        snprintf(proto->devices, MPC_CONF_STRING_SIZE, "any");
 
 	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("protocol",
 	                                                        PARAM("verbosity", &mpc_common_get_flags()->verbosity, MPC_CONF_INT, "Debug level message (1-3)"),
 	                                                        PARAM("rndvmode", &proto->rndv_mode, MPC_CONF_INT, "Type of rendez-vous to use (default: mode get)"),
 	                                                        PARAM("offload", &proto->offload, MPC_CONF_INT, "Force offload if possible (ie offload interface available)"),
 	                                                        PARAM("multirailenabled", &proto->multirail_enabled, MPC_CONF_INT, "Is multirail enabled ?"),
-	                                                        PARAM("transports", proto->transports, MPC_CONF_STRING, "Coma separated list of supported transports (tcp, ptl, all)"),
-	                                                        PARAM("devices", proto->devices, MPC_CONF_STRING, "Coma separated list of devices to use (eth0, ptl0, any)"),
 	                                                        NULL);
 
 	return ret;
