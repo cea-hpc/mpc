@@ -1022,6 +1022,9 @@ static inline int __tree_node_init( mpc_omp_meta_tree_node_t *root, const int *t
 	new_node->stage_rank = __tree_array_global_to_stage( tree_shape, top_level, rank );
 	new_node->local_rank = __tree_array_global_to_local( tree_shape, top_level, rank );
 	new_node->rank = new_node->local_rank;
+	new_node->reduce_data = ( void ** ) mpc_omp_alloc( new_node->nb_children * 64 * sizeof( void * ) );
+	new_node->isArrived = ( int * ) mpc_omp_alloc( new_node->nb_children * 64 * sizeof( int ) );
+
 
 	if ( rank )
 	{

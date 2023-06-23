@@ -427,7 +427,7 @@ void mpc_omp_static_loop_end_nowait()
 void mpc_omp_static_loop_end()
 {
 	mpc_omp_static_loop_end_nowait();
-	mpc_omp_barrier();
+	mpc_omp_barrier(ompt_sync_region_barrier_implicit_workshare);
 }
 
 /****
@@ -761,7 +761,7 @@ void mpc_omp_guided_loop_end_nowait()
 void mpc_omp_guided_loop_end()
 {
 	mpc_omp_guided_loop_end_nowait();
-	mpc_omp_barrier();
+	mpc_omp_barrier(ompt_sync_region_barrier_implicit_workshare);
 }
 
 
@@ -1500,7 +1500,7 @@ void mpc_omp_dynamic_loop_end_nowait( void )
 void mpc_omp_dynamic_loop_end( void )
 {
 	mpc_omp_dynamic_loop_end_nowait();
-	mpc_omp_barrier();
+	mpc_omp_barrier(ompt_sync_region_barrier_implicit_workshare);
 }
 
 int mpc_omp_dynamic_loop_next_ignore_nowait( __UNUSED__ long *from, __UNUSED__ long *to )

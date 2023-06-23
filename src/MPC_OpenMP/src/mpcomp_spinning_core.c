@@ -301,8 +301,7 @@ static inline mpc_omp_node_t *__scatter_wakeup_intermediate_node( mpc_omp_node_t
 	assert( num_children >= num_vchildren );
 	const int node_first_mvp = node->mvp_first_id;
 	assert( node->children.node );
-	node->reduce_data = ( void ** ) mpc_omp_alloc( node->nb_children * 64 * sizeof( void * ) );
-	node->isArrived = ( int * ) mpc_omp_alloc( node->nb_children * 64 * sizeof( int ) );
+	
 #ifdef MPC_OMP_USE_INTEL_ABI
     struct common_table * th_pri_common;
 #endif
@@ -438,8 +437,7 @@ static inline mpc_omp_mvp_t *__scatter_wakeup_final_mvp( mpc_omp_node_t *node )
 	const int ext_shift = num_children % nthreads;
 	node->barrier_num_threads = node->num_threads;
 	cur_mvp = 0;
-	node->reduce_data = ( void ** ) mpc_omp_alloc( node->nb_children * 64 * sizeof( void * ) );
-	node->isArrived = ( int * ) mpc_omp_alloc( node->nb_children * 64 * sizeof( int ) );
+
 #ifdef MPC_OMP_USE_INTEL_ABI
     struct common_table * th_pri_common;
 #endif
@@ -567,7 +565,7 @@ void __scatter_instance_post_init( mpc_omp_thread_t *thread )
 
 	if ( ! thread->mvp->instance->buffered )
 	{
-		mpc_omp_barrier();
+		mpc_omp_barrier(ompt_sync_region_barrier_implementation);
 	}
 
 #if 0  /* Check victim list for each thread */
@@ -585,7 +583,7 @@ void __scatter_instance_post_init( mpc_omp_thread_t *thread )
 	string_array[total] = '\0';
 	const int node_rank = MPC_OMP_TASK_MVP_GET_TASK_LIST_NODE_RANK( mvp, 0 );
 	fprintf( stderr, "#%d - Me : %d -- Stealing list =%s nbList : %d\n", thread->rank, node_rank, string_array, nbList );
-	mpc_omp_barrier();
+	//mpc_omp_barrier();
 #endif /* Check victim list for each thread */
 	thread->mvp->instance->buffered = 1;
 #if 0
@@ -747,6 +745,7 @@ mpc_omp_thread_t *__mvp_wakeup( mpc_omp_mvp_t *mvp )
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     new_thread->frame_infos.outter_caller =
         mvp->instance->team->frame_infos.outter_caller;
+    new_thread->frame_infos.ompt_return_addr = mvp->instance->team->frame_infos.ompt_return_addr;
 #endif /* OMPT_SUPPORT */
 
 	/* Set thread rank */
@@ -811,12 +810,12 @@ void _mpc_omp_start_openmp_thread(mpc_omp_mvp_t * mvp)
 
     __scatter_instance_post_init(cur_thread);
     _mpc_omp_in_order_scheduler(cur_thread);
-    mpc_omp_barrier();
 
     /* Must be set before barrier for thread safety*/
     volatile int * spin_status = ( mvp->spin_node ) ? &( mvp->spin_node->spin_status ) : &( mvp->spin_status );
     *spin_status = MPC_OMP_MVP_STATE_SLEEP;
 
+    mpc_omp_barrier(ompt_sync_region_barrier_implicit_parallel);
     _mpc_omp_task_tree_deinit(cur_thread);
 
     mpc_omp_tls = (void *) mvp->threads->next;
@@ -853,6 +852,7 @@ void mpc_omp_slave_mvp_node( mpc_omp_mvp_t *mvp )
 		while ( mvp->enable )
 		{
 #ifdef MPC_ENABLE_WORKSHARE
+			if(mpc_conf_type_elem_get_as_int(mpc_conf_root_config_get("mpcframework.lowcomm.workshare.enablestealing")))
 			if(mpc_conf_type_elem_get_as_int(mpc_conf_root_config_get("mpcframework.lowcomm.workshare.enablestealing")))
 			  mpc_thread_wait_for_value_and_poll( spin_status, MPC_OMP_MVP_STATE_AWAKE,(void*) mpc_lowcomm_workshare_worker_steal, mvp->root->worker_ws) ;
       else

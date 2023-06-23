@@ -868,9 +868,9 @@ static inline void __read_env_variables()
 //fflush(stderr);
 
     /******* OMP_TOOL_LIBRARIES *********/
-    env = __omp_conf.omp_tool_libraries;
+    env = getenv("OMP_TOOL_LIBRARIES") ;
 
-    if ( strlen( env ) != 0 )
+    if ( env != NULL && strlen(env) )
     {
         OMP_TOOL_LIBRARIES = strdup( env );
     }

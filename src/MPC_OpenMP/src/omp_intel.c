@@ -131,16 +131,44 @@ void __kmpc_flush( __UNUSED__ ident_t *loc, ... )
  * BARRIER *
  * ********/
 
+ompt_sync_region_t __ompt_get_barrier_kind(ident_t *loc)
+{
+	int expl = (loc->flags & KMP_IDENT_BARRIER_EXPL) != 0;
+	int impl = (loc->flags & KMP_IDENT_BARRIER_IMPL) != 0;                           
+	mpc_omp_thread_t __UNUSED__ *t = ( mpc_omp_thread_t * )mpc_omp_tls;
+	if (impl) {                                                                    
+		switch (loc->flags & KMP_IDENT_BARRIER_IMPL_MASK) {                          
+			case KMP_IDENT_BARRIER_IMPL_FOR:                                            
+				mpc_common_nodebug( "Thread %d entering an OMP For Barrier ", t->rank );
+			case KMP_IDENT_BARRIER_IMPL_SECTIONS:                                       
+				mpc_common_nodebug( "Thread %d entering an OMP Sections Barrier ", t->rank );
+			case KMP_IDENT_BARRIER_IMPL_SINGLE: 
+				mpc_common_nodebug( "Thread %d entering an OMP Single Barrier ", t->rank );
+			case KMP_IDENT_BARRIER_IMPL_WORKSHARE: 
+				mpc_common_nodebug( "Thread %d entering an OMP Workshare Barrier ", t->rank );
+				return ompt_sync_region_barrier_implicit_workshare;
+				break;
+			default:
+				return ompt_sync_region_barrier_implicit_parallel;
+		}
+	} else if (expl) {
+		mpc_common_nodebug( "Thread %d entering an OMP Explicit Barrier", t->rank );
+		return ompt_sync_region_barrier_explicit;
+	}      
+	return ompt_sync_region_barrier;
+}
 void __kmpc_barrier( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid )
 {
+ompt_sync_region_t kind; 
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
     _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
+    kind = __ompt_get_barrier_kind(loc);
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t __UNUSED__ *t = ( mpc_omp_thread_t * )mpc_omp_tls;
 	assert( t );
 	mpc_common_nodebug( "[%d] %s: entering...", t->rank, __func__ );
-	mpc_omp_barrier();
+	mpc_omp_barrier(kind);
 }
 
 kmp_int32 __kmpc_barrier_master( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid )
@@ -338,16 +366,16 @@ void __kmpc_end_serialized_parallel( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int
 	t = ( mpc_omp_thread_t * )mpc_omp_tls;
 	assert( t != NULL );
 
-#if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_sync_region( ompt_sync_region_barrier_implicit, ompt_scope_begin );
-#endif /* OMPT_SUPPORT */
+//#if OMPT_SUPPORT
+    //_mpc_omp_ompt_callback_sync_region( ompt_sync_region_barrier_implicit, ompt_scope_begin );
+//#endif /* OMPT_SUPPORT */
 
-    mpc_omp_barrier();
+    mpc_omp_barrier(ompt_sync_region_barrier_implicit_parallel);
 
-#if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_sync_region( ompt_sync_region_barrier_implicit, ompt_scope_end );
-    _mpc_omp_ompt_callback_implicit_task( ompt_scope_end, 0, 0, ompt_task_implicit );
-#endif /* OMPT_SUPPORT */
+//#if OMPT_SUPPORT
+    //_mpc_omp_ompt_callback_sync_region( ompt_sync_region_barrier_implicit, ompt_scope_end );
+    //_mpc_omp_ompt_callback_implicit_task( ompt_scope_end, 0, 0, ompt_task_implicit );
+//#endif /* OMPT_SUPPORT */
 
 	/* Restore the previous thread info */
     t_prev = t->father;
@@ -376,7 +404,7 @@ void __kmpc_push_num_threads( __UNUSED__ ident_t *loc, __UNUSED__  kmp_int32 glo
 #endif /* OMPT_SUPPORT */
 
 	mpc_omp_thread_t __UNUSED__ *t;
-	mpc_common_debug_warning( "%s: pushing %d thread(s)", __func__, num_threads );
+	//mpc_common_debug_warning( "%s: pushing %d thread(s)", __func__, num_threads );
 	/* Handle orphaned directive (initialize OpenMP environment) */
 	mpc_omp_init();
 	/* Grab the thread info */
@@ -497,11 +525,21 @@ void __kmpc_end_critical( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_t
 kmp_int32 __kmpc_single( __UNUSED__ ident_t *loc, __UNUSED__  kmp_int32 global_tid )
 {
 #if OMPT_SUPPORT && MPCOMPT_HAS_FRAME_SUPPORT
-    _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
+   _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
-	mpc_common_nodebug( "[REDIRECT KMP]: %s -> _mpcomp_do_single", __func__ );
-	return ( kmp_int32 )mpc_omp_do_single();
+  mpc_common_nodebug( "[REDIRECT KMP]: %s -> _mpcomp_do_single", __func__ );
+  int retval = mpc_omp_do_single();
+#if OMPT_SUPPORT
+  if(retval == 1)
+    _mpc_omp_ompt_callback_work( ompt_work_single_executor, ompt_scope_begin, 1 );
+  else
+  {
+    _mpc_omp_ompt_callback_work( ompt_work_single_other, ompt_scope_begin, 1 );
+    _mpc_omp_ompt_callback_work( ompt_work_single_other, ompt_scope_end, 0 );
+  }
+#endif /* OMPT_SUPPORT */
+  return ( kmp_int32 ) retval;
 }
 
 void __kmpc_end_single( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid )
@@ -847,7 +885,7 @@ static inline int __intel_tree_reduce_nowait( void *reduce_data, void ( *reduce_
 	new_root = c->instance->root;
 	int local_rank = t->rank % c->barrier_num_threads; /* rank of mvp on the node */
 	int remaining_threads = c->barrier_num_threads; /* number of threads of the node still on reduction */
-	int cache_size = 64;
+	int cacheline_size = 64;
 
 	while ( 1 )
 	{
@@ -859,33 +897,33 @@ static inline int __intel_tree_reduce_nowait( void *reduce_data, void ( *reduce_
 
 				if ( local_rank == remaining_threads - 1 )
 				{
-					c->reduce_data[local_rank * cache_size] = reduce_data;
+					c->reduce_data[local_rank * cacheline_size] = reduce_data;
 				}
 				else if ( local_rank >= remaining_threads )
 				{
-					c->reduce_data[local_rank * cache_size] = reduce_data;
-					c->isArrived[local_rank * cache_size] = 1;
+					c->reduce_data[local_rank * cacheline_size] = reduce_data;
+					c->isArrived[local_rank * cacheline_size] = 1;
 
-					while ( c->isArrived[local_rank * cache_size] != 0 )
+					while ( c->isArrived[local_rank * cacheline_size] != 0 )
 					{
 						/* need to wait for the pair thread doing the reduction operation before exiting function because compiler will delete reduce_data after */
 						mpc_thread_yield();
-						//mpc_thread_yield_wait_for_value( &( c->isArrived[local_rank * cache_size] ), 0 );
+						//mpc_thread_yield_wait_for_value( &( c->isArrived[local_rank * cacheline_size] ), 0 );
 					}
 
 					return 0;
 				}
 				else
 				{
-					while ( c->isArrived[( local_rank + remaining_threads ) * cache_size] != 1 )
+					while ( c->isArrived[( local_rank + remaining_threads ) * cacheline_size] != 1 )
 					{
 						/* waiting for pair thread to arrive */
 						mpc_thread_yield();
-						//mpc_thread_yield_wait_for_value( &( c->isArrived[( local_rank + remaining_threads ) * cache_size] ), 1 );
+						//mpc_thread_yield_wait_for_value( &( c->isArrived[( local_rank + remaining_threads ) * cacheline_size] ), 1 );
 					}
 
-					( *reduce_func )( reduce_data, c->reduce_data[( local_rank + remaining_threads ) * cache_size] ); // result on reduce_data
-					c->isArrived[( local_rank + remaining_threads ) * cache_size] = 0;
+					( *reduce_func )( reduce_data, c->reduce_data[( local_rank + remaining_threads ) * cacheline_size] ); // result on reduce_data
+					c->isArrived[( local_rank + remaining_threads ) * cacheline_size] = 0;
 				}
 			}
 			else
@@ -894,29 +932,29 @@ static inline int __intel_tree_reduce_nowait( void *reduce_data, void ( *reduce_
 
 				if ( local_rank >= remaining_threads )
 				{
-					c->reduce_data[local_rank * cache_size] = reduce_data;
-					c->isArrived[local_rank * cache_size] = 1;
+					c->reduce_data[local_rank * cacheline_size] = reduce_data;
+					c->isArrived[local_rank * cacheline_size] = 1;
 
-					while ( c->isArrived[local_rank * cache_size] != 0 )
+					while ( c->isArrived[local_rank * cacheline_size] != 0 )
 					{
 						/* need to wait for the thread doing the reduction operation before exiting function because compiler will delete reduce_data after */
 						mpc_thread_yield();
-						//mpc_thread_yield_wait_for_value( &( c->isArrived[local_rank * cache_size] ), 0 );
+						//mpc_thread_yield_wait_for_value( &( c->isArrived[local_rank * cacheline_size] ), 0 );
 					}
 
 					return 0;
 				}
 				else
 				{
-					while ( c->isArrived[( local_rank + remaining_threads ) * cache_size] != 1 )
+					while ( c->isArrived[( local_rank + remaining_threads ) * cacheline_size] != 1 )
 					{
 						/* waiting for pair thread to arrive */
 						mpc_thread_yield();
-						//mpc_thread_yield_wait_for_value( &( c->isArrived[( local_rank + remaining_threads ) * cache_size] ), 1 );
+						//mpc_thread_yield_wait_for_value( &( c->isArrived[( local_rank + remaining_threads ) * cacheline_size] ), 1 );
 					}
 
-					( *reduce_func )( reduce_data, c->reduce_data[( local_rank + remaining_threads ) * cache_size] ); // result on reduce_data
-					c->isArrived[( local_rank + remaining_threads ) * cache_size] = 0;
+					( *reduce_func )( reduce_data, c->reduce_data[( local_rank + remaining_threads ) * cacheline_size] ); // result on reduce_data
+					c->isArrived[( local_rank + remaining_threads ) * cacheline_size] = 0;
 				}
 			}
 		}
@@ -952,7 +990,7 @@ static inline int __intel_tree_reduce( void *reduce_data, void ( *reduce_func )(
 	int local_rank = t->rank % c->barrier_num_threads; /* rank of mvp on the node */
 	int remaining_threads = c->barrier_num_threads; /* number of threads of the node still on reduction */
 	long b_done;
-	int cache_size = 64;
+	int cacheline_size = 64;
 
 	while ( 1 )
 	{
@@ -965,13 +1003,13 @@ static inline int __intel_tree_reduce( void *reduce_data, void ( *reduce_func )(
 				if ( local_rank == remaining_threads - 1 )
 				{
 					/* one thread put his contribution and go next step if remaining threads is odd */
-					c->reduce_data[local_rank * cache_size] = reduce_data;
+					c->reduce_data[local_rank * cacheline_size] = reduce_data;
 				}
 				else if ( local_rank >= remaining_threads )
 				{
 					b_done = c->barrier_done;
-					c->reduce_data[local_rank * cache_size] = reduce_data;
-					c->isArrived[local_rank * cache_size] = 1;
+					c->reduce_data[local_rank * cacheline_size] = reduce_data;
+					c->isArrived[local_rank * cacheline_size] = 1;
 
 					while ( b_done == c->barrier_done )
 						/* wait for master thread to end and share the result, this is done when it enters in __kmpc_end_reduce function */
@@ -990,15 +1028,15 @@ static inline int __intel_tree_reduce( void *reduce_data, void ( *reduce_func )(
 				}
 				else
 				{
-					while ( c->isArrived[( local_rank + remaining_threads ) * cache_size] != 1 )
+					while ( c->isArrived[( local_rank + remaining_threads ) * cacheline_size] != 1 )
 					{
 						/* waiting for pair thread to arrive */
 						mpc_thread_yield();
-						//mpc_thread_yield_wait_for_value( &( c->isArrived[( local_rank + remaining_threads ) * cache_size] ), 1 );
+						//mpc_thread_yield_wait_for_value( &( c->isArrived[( local_rank + remaining_threads ) * cacheline_size] ), 1 );
 					}
 
-					( *reduce_func )( reduce_data, c->reduce_data[( local_rank + remaining_threads ) * cache_size] ); // result on reduce_data
-					c->isArrived[( local_rank + remaining_threads ) * cache_size] = 0;
+					( *reduce_func )( reduce_data, c->reduce_data[( local_rank + remaining_threads ) * cacheline_size] ); // result on reduce_data
+					c->isArrived[( local_rank + remaining_threads ) * cacheline_size] = 0;
 				}
 			}
 			else
@@ -1008,8 +1046,8 @@ static inline int __intel_tree_reduce( void *reduce_data, void ( *reduce_func )(
 				if ( local_rank >= remaining_threads )
 				{
 					b_done = c->barrier_done;
-					c->reduce_data[local_rank * cache_size] = reduce_data;
-					c->isArrived[local_rank * cache_size] = 1;
+					c->reduce_data[local_rank * cacheline_size] = reduce_data;
+					c->isArrived[local_rank * cacheline_size] = 1;
 
 					while ( b_done == c->barrier_done )
 						/* wait for master thread to end and share the result, this is done when it enters in __kmpc_end_reduce function */
@@ -1028,15 +1066,15 @@ static inline int __intel_tree_reduce( void *reduce_data, void ( *reduce_func )(
 				}
 				else
 				{
-					while ( c->isArrived[( local_rank + remaining_threads ) * cache_size] != 1 )
+					while ( c->isArrived[( local_rank + remaining_threads ) * cacheline_size] != 1 )
 					{
 						/* waiting for pair thread to arrive */
 						mpc_thread_yield();
-						//mpc_thread_yield_wait_for_value( &( c->isArrived[( local_rank + remaining_threads ) * cache_size] ), 1 );
+						//mpc_thread_yield_wait_for_value( &( c->isArrived[( local_rank + remaining_threads ) * cacheline_size] ), 1 );
 					}
 
-					( *reduce_func )( reduce_data, c->reduce_data[( local_rank + remaining_threads ) * cache_size] ); // result on reduce_data
-					c->isArrived[( local_rank + remaining_threads ) * cache_size] = 0;
+					( *reduce_func )( reduce_data, c->reduce_data[( local_rank + remaining_threads ) * cacheline_size] ); // result on reduce_data
+					c->isArrived[( local_rank + remaining_threads ) * cacheline_size] = 0;
 				}
 			}
 		}
@@ -1079,6 +1117,9 @@ kmp_int32 __kmpc_reduce_nowait( __UNUSED__ ident_t *loc, kmp_int32 global_tid, k
                                                                 lck, t );
 	t->reduction_method = packed_reduction_method;
 
+#if OMPT_SUPPORT
+    _mpc_omp_ompt_callback_sync_region_wait( ompt_sync_region_reduction, ompt_scope_begin );
+#endif /* OMPT_SUPPORT */
 	if ( packed_reduction_method == critical_reduce_block )
 	{
 		mpc_omp_anonymous_critical_begin();
@@ -1093,9 +1134,17 @@ kmp_int32 __kmpc_reduce_nowait( __UNUSED__ ident_t *loc, kmp_int32 global_tid, k
 		retval = 2;
 	}
 	else if ( packed_reduction_method == tree_reduce_block )
-	{
+	{   
 		retval = __intel_tree_reduce_nowait( reduce_data, reduce_func, t );
 		/* retval = 1 for thread with reduction value, 0 for others */
+#if OMPT_SUPPORT
+		if(retval == 0)
+		{
+			_mpc_omp_ompt_callback_sync_region_wait( ompt_sync_region_reduction, ompt_scope_end );
+			_mpc_omp_ompt_callback_sync_region( ompt_sync_region_reduction, ompt_scope_end );
+		}
+#endif /* OMPT_SUPPORT */
+
 	}
 	else
 	{
@@ -1126,7 +1175,6 @@ void __kmpc_end_reduce_nowait( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 glo
 	if ( packed_reduction_method == critical_reduce_block )
 	{
 		mpc_omp_anonymous_critical_end();
-		mpc_omp_barrier(); //Reduce nowait...?
 	}
 	else if ( packed_reduction_method == empty_reduce_block )
 	{
@@ -1147,7 +1195,6 @@ void __kmpc_end_reduce_nowait( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 glo
     t->reduction_method = reduction_method_not_defined;
 
 #if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_sync_region_wait( ompt_sync_region_reduction, ompt_scope_begin );
     _mpc_omp_ompt_callback_sync_region_wait( ompt_sync_region_reduction, ompt_scope_end );
     _mpc_omp_ompt_callback_sync_region( ompt_sync_region_reduction, ompt_scope_end );
 #endif /* OMPT_SUPPORT */
@@ -1162,6 +1209,9 @@ kmp_int32 __kmpc_reduce( __UNUSED__ ident_t *loc, kmp_int32 global_tid, kmp_int3
     _mpc_omp_ompt_frame_get_wrapper_infos( MPC_OMP_INTEL );
 #endif /* OMPT_SUPPORT */
 
+#if OMPT_SUPPORT                                                 
+    _mpc_omp_ompt_callback_sync_region(ompt_sync_region_reduction, ompt_scope_begin);
+#endif /* OMPT_SUPPORT */ 
 	int retval = 0;
 	int packed_reduction_method;
 
@@ -1169,17 +1219,15 @@ kmp_int32 __kmpc_reduce( __UNUSED__ ident_t *loc, kmp_int32 global_tid, kmp_int3
 	t = ( mpc_omp_thread_t * )mpc_omp_tls;
 	assert( t != NULL );
 
-#if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_sync_region( ompt_sync_region_reduction, ompt_scope_begin );
-#endif /* OMPT_SUPPORT */
-
 	/* get reduction method */
 	packed_reduction_method = __kmp_determine_reduction_method( loc, global_tid,
                                                                 num_vars, reduce_size,
                                                                 reduce_data, reduce_func,
                                                                 lck, t );
 	t->reduction_method = packed_reduction_method;
-
+#if OMPT_SUPPORT
+    _mpc_omp_ompt_callback_sync_region_wait( ompt_sync_region_reduction, ompt_scope_begin );
+#endif /* OMPT_SUPPORT */
 	if ( packed_reduction_method == critical_reduce_block )
 	{
 		mpc_omp_anonymous_critical_begin();
@@ -1188,6 +1236,7 @@ kmp_int32 __kmpc_reduce( __UNUSED__ ident_t *loc, kmp_int32 global_tid, kmp_int3
 	else if ( packed_reduction_method == empty_reduce_block )
 	{
 		retval = 1;
+    _mpc_omp_ompt_callback_sync_region(ompt_sync_region_reduction, ompt_scope_begin);
 	}
 	else if ( packed_reduction_method == atomic_reduce_block )
 	{
@@ -1196,6 +1245,14 @@ kmp_int32 __kmpc_reduce( __UNUSED__ ident_t *loc, kmp_int32 global_tid, kmp_int3
 	else if ( packed_reduction_method == tree_reduce_block )
 	{
 		retval = __intel_tree_reduce( reduce_data, reduce_func, t );
+#if OMPT_SUPPORT                                                 
+		if(retval == 0)
+		{
+    	_mpc_omp_ompt_callback_sync_region(ompt_sync_region_reduction, ompt_scope_end);             
+    	_mpc_omp_ompt_callback_sync_region_wait(ompt_sync_region_reduction, ompt_scope_end);        
+		}
+#endif /* OMPT_SUPPORT */  
+
 		/* retval = 1 for thread with reduction value (thread 0), 0 for others. When retval = 0 the thread doesn't enter __kmpc_end_reduce function */
         /* Issue for threads with retval = 0 */
         if(!retval) t->reduction_method = reduction_method_not_defined;
@@ -1229,11 +1286,11 @@ void __kmpc_end_reduce( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid
 	if ( packed_reduction_method == critical_reduce_block )
 	{
 		mpc_omp_anonymous_critical_end();
-        mpc_omp_barrier();
+        mpc_omp_barrier(ompt_sync_region_reduction);
 	}
 	else if ( packed_reduction_method == atomic_reduce_block )
 	{
-        mpc_omp_barrier();
+        mpc_omp_barrier(ompt_sync_region_reduction);
 	}
 	else if ( packed_reduction_method == tree_reduce_block )
 	{
@@ -1253,12 +1310,12 @@ void __kmpc_end_reduce( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_tid
          *       Therefore, missing events sync region wait begin/end
          *       and sync region end event. */
 
+#if OMPT_SUPPORT                                                 
+    _mpc_omp_ompt_callback_sync_region(ompt_sync_region_reduction, ompt_scope_end);             
+    _mpc_omp_ompt_callback_sync_region_wait(ompt_sync_region_reduction, ompt_scope_end);        
+#endif /* OMPT_SUPPORT */  
         t->reduction_method = reduction_method_not_defined;
 	}
-
-#if OMPT_SUPPORT
-    _mpc_omp_ompt_callback_sync_region( ompt_sync_region_reduction, ompt_scope_end );
-#endif /* OMPT_SUPPORT */
 }
 
 /**********
@@ -3391,14 +3448,14 @@ void __kmpc_copyprivate( __UNUSED__ ident_t *loc, __UNUSED__ kmp_int32 global_ti
 		*data_ptr = cpy_data;
 	}
 
-	mpc_omp_barrier();
+	mpc_omp_barrier(ompt_sync_region_barrier_implementation);
 
 	if ( !didit )
 	{
 		( *cpy_func )( cpy_data, *data_ptr );
 	}
 
-	mpc_omp_barrier();
+	mpc_omp_barrier(ompt_sync_region_barrier_implementation);
 }
 
 void *__kmpc_threadprivate_cached( ident_t *loc, kmp_int32 global_tid,
