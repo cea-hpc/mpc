@@ -34,7 +34,7 @@
 
 /* enable PAPI tracing per tasks */
 // TODO: remove this define, and make it an 'installmpc' parameter, something like '--mpc-openmp-papi'
-# define MPC_OMP_TASK_TRACE_USE_PAPI 1
+# define MPC_OMP_TASK_TRACE_USE_PAPI 0
 # if MPC_OMP_TASK_TRACE_USE_PAPI
 #  define PAPI_LOG(...) do {                                                \
                             printf("[PAPI] [%d] ", omp_get_thread_num());   \
