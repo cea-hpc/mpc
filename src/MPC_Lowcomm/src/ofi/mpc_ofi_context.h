@@ -23,7 +23,7 @@ typedef enum
 }mpc_ofi_context_policy_t;
 
 
-typedef int (*mpc_ofi_context_recv_callback_t)(void *buffer, size_t len, struct mpc_ofi_request_t * req);
+typedef int (*mpc_ofi_context_recv_callback_t)(void *buffer, size_t len, struct mpc_ofi_request_t * req, void * callback_arg);
 
 
 /* Opaque declaration of the domain */
@@ -54,13 +54,14 @@ struct mpc_ofi_context_t
 
    /* Central Callback for Recv */
    mpc_ofi_context_recv_callback_t recv_callback;
+   void * callback_arg;
 };
 
 int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
                         uint32_t domain_count,
                         char * provider,
                         mpc_ofi_context_policy_t policy,
-                        mpc_ofi_context_recv_callback_t recv_callback);
+                        mpc_ofi_context_recv_callback_t recv_callback, void * callback_arg);
 
 int mpc_ofi_context_release(struct mpc_ofi_context_t *ctx);
 
@@ -79,7 +80,18 @@ int mpc_ofi_view_init(struct mpc_ofi_view_t *view, struct mpc_ofi_context_t *ctx
 int mpc_ofi_view_release(struct mpc_ofi_view_t *view);
 
 
-int mpc_ofi_view_send(struct mpc_ofi_view_t *view, void * buffer, size_t size, uint64_t dest, struct mpc_ofi_request_t **req);
+int mpc_ofi_view_send(struct mpc_ofi_view_t *view, void * buffer, size_t size, uint64_t dest, struct mpc_ofi_request_t **req,
+                        int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
+                        void *arg_ext);
+
+int mpc_ofi_view_sendv(struct mpc_ofi_view_t *view,
+                        uint64_t dest,
+                        const struct iovec *iov,
+                        size_t iovcnt,
+                        struct mpc_ofi_request_t **req,
+                        int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
+                        void *arg_ext);
+
 
 int mpc_ofi_view_test(struct mpc_ofi_view_t *view,  struct mpc_ofi_request_t *req, int *done);
 

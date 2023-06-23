@@ -457,8 +457,7 @@ static int lcp_eager_tag_sync_handler(void *arg, void *data,
 
         lcp_context_task_get(ctx, hdr->base.dest_tid, &task);  
         if (task == NULL) {
-                mpc_common_debug_error("LCP: could not find task with tid=%d",
-                                       hdr->base.dest_tid);
+                mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d", hdr->base.dest_tid);
                 rc = LCP_ERROR;
                 goto err;
         }
@@ -495,7 +494,7 @@ static int lcp_eager_tag_sync_handler(void *arg, void *data,
         if (rc != LCP_SUCCESS) {
                 goto err;
         }
-		
+
         /* Complete request */
         lcp_recv_eager_tag_data(req, hdr, hdr + 1, length - sizeof(*hdr));
 err:
@@ -516,8 +515,8 @@ static int lcp_eager_tag_handler(void *arg, void *data,
 
         lcp_context_task_get(ctx, hdr->dest_tid, &task);  
         if (task == NULL) {
-                mpc_common_debug_error("LCP: could not find task with tid=%d",
-                                       hdr->dest_tid);
+                mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d", hdr->dest_tid);
+
                 rc = LCP_ERROR;
                 goto err;
         }
@@ -604,8 +603,7 @@ static int lcp_rndv_tag_handler(void *arg, void *data,
 
         lcp_context_task_get(ctx, hdr->tag.dest_tid, &task);  
         if (task == NULL) {
-                mpc_common_debug_error("LCP: could not find task with tid=%d",
-                                       hdr->tag.dest_tid);
+                mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d", hdr->tag.dest_tid);
                 rc = LCP_ERROR;
                 goto err;
         }

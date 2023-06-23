@@ -566,6 +566,11 @@ int mpc_ofi_dns_init(struct mpc_ofi_dns_t * dns, mpc_ofi_dns_resolution_t resolu
          break;
 
       }
+      case MPC_OFI_DNS_RESOLUTION_CPLANE:
+         dns->operation_first_arg = NULL;
+         dns->op_lookup = NULL;
+         dns->op_register = NULL;
+      break;
       default:
       {
          mpc_common_errorpoint("No such resolution type");
@@ -594,6 +599,8 @@ int mpc_ofi_dns_release(struct mpc_ofi_dns_t * dns)
          }
          break;
       }
+      case MPC_OFI_DNS_RESOLUTION_CPLANE:
+         break;
       default:
          mpc_common_errorpoint("No such resolution type");
          return -1;
@@ -681,8 +688,10 @@ int mpc_ofi_dns_register(struct mpc_ofi_dns_t * dns, uint64_t rank, char * buff,
    /* Copy address out of the input buff for persistence */
    struct mpc_ofi_dns_name_entry_t *entry = mpc_ofi_dns_name_entry(buff, len);
 
+#if 0
    (void)fprintf(stderr, "New address for %ld @", rank);
    __dump_addr(buff, len);
+#endif
 
    /* Add to cache */
    if(mpc_ofi_dns_ht_put(&dns->cache, rank, (void *)entry))

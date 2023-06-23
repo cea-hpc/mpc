@@ -51,6 +51,9 @@ typedef union
 #ifdef MPC_USE_PORTALS
 	sctk_ptl_rail_info_t         ptl; /**< Portals Info */
 #endif
+#ifdef MPC_USE_OFI
+	_mpc_lowcomm_ofi_rail_info_t ofi;
+#endif
 } sctk_rail_info_spec_t;
 
 /************************************************************************/

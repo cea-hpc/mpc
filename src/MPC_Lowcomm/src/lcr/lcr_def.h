@@ -7,7 +7,7 @@
 //FIXME: to be changed
 #define LCR_AM_ID_MAX 64
 #define LCR_COMPONENT_NAME_MAX 16
-#define LCR_DEVICE_NAME_MAX 16
+#define LCR_DEVICE_NAME_MAX 64
 #define LCR_DEVICE_MAX 64
 
 typedef struct _mpc_lowcomm_endpoint_s _mpc_lowcomm_endpoint_t;

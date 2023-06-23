@@ -42,7 +42,8 @@ int mpc_ofi_domain_buffer_init(struct mpc_ofi_domain_buffer_t * buff, struct mpc
    MPC_OFI_CHECK_RET(fi_mr_reg(buff->domain->domain,
                               buff->buffer,
                               buff->size,
-                              FI_RECV, 0,
+                              FI_RECV,
+                              0,
                               0,
                               0,
                               &buff->mr,
@@ -284,7 +285,7 @@ int mpc_ofi_domain_release(struct mpc_ofi_domain_t * domain)
    return 0;
 }
 
-static int _ofi_domain_per_req_recv_completion_callback(void * arg)
+static int _ofi_domain_per_req_recv_completion_callback(struct mpc_ofi_request_t *req, void * arg)
 {
    struct mpc_ofi_domain_buffer_t * buff = (struct mpc_ofi_domain_buffer_t *)arg;
    return mpc_ofi_domain_buffer_relax(buff);
@@ -295,13 +296,17 @@ static struct mpc_ofi_request_t * _ofi_domain_poll_for_recv_request(struct mpc_o
 {
       struct mpc_ofi_request_t *req = mpc_ofi_request_acquire(&domain->rcache,
                                                             _ofi_domain_per_req_recv_completion_callback,
-                                                            buff);
+                                                            buff,
+                                                            NULL,
+                                                            NULL);
 
       while(!req)
       {
          req = mpc_ofi_request_acquire(&domain->rcache,
                                       _ofi_domain_per_req_recv_completion_callback,
-                                      buff);
+                                      buff,
+                                      NULL,
+                                      NULL);
          if(req)
          {
             break;
@@ -352,7 +357,7 @@ static inline int _ofi_domain_cq_process_event(struct mpc_ofi_domain_t * domain,
          return -1;
       }
 
-      if((domain->ctx->recv_callback)(addr, size, req))
+      if((domain->ctx->recv_callback)(addr, size, req, domain->ctx->callback_arg))
       {
          mpc_common_errorpoint("Non zero status from global recv handler");
          return -1;
@@ -521,58 +526,169 @@ int mpc_ofi_domain_poll(struct mpc_ofi_domain_t * domain, int type)
    return 0;
 }
 
+
 int mpc_ofi_domain_memory_register(struct mpc_ofi_domain_t * domain,
                                   void *buff,
                                   size_t size,
                                   uint64_t acs,
                                   struct fid_mr **mr)
 {
-   MPC_OFI_CHECK_RET(fi_mr_reg(domain->domain,
+
+   int ret = fi_mr_reg(domain->domain,
                               buff,
                               size,
                               acs, 0,
-                              0xC0DE,
+                              0,
                               0,
                               mr,
-                              NULL));
+                              NULL);
+
+   MPC_OFI_CHECK_RET(ret);
+
    return 0;
 }
 
 int mpc_ofi_domain_memory_unregister(struct fid_mr *mr)
 {
    MPC_OFI_CHECK_RET(fi_close(&mr->fid));
+
    return 0;
 }
 
 
-
-int _mpc_ofi_domain_request_complete(void *pmr)
+static inline int __free_mr(struct fid_mr **mr)
 {
-   struct fid_mr *mr = (struct fid_mr *)pmr;
+   if(!*mr)
+   {
+      return 0;
+   }
 
-   if( mpc_ofi_domain_memory_unregister(mr) )
+   if( mpc_ofi_domain_memory_unregister(*mr) )
    {
       mpc_common_errorpoint("Failed to unregister send buffer");
       return -1;
+   }
+
+   *mr = NULL;
+
+   return 0;
+}
+
+
+int _mpc_ofi_domain_request_complete(struct mpc_ofi_request_t * req, void *dummy)
+{
+   unsigned int i = 0;
+
+   for( i = 0 ; i < req->mr_count; i++)
+   {
+      if( __free_mr(&req->mr[i]) )
+         return -1;
    }
 
    return 0;
 }
 
 
+static struct mpc_ofi_request_t * __acquire_request(struct mpc_ofi_domain_t * domain,
+                                                    int (*comptetion_cb)(struct mpc_ofi_request_t *, void *),
+                                                    void *arg,
+                                                    int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
+                                                    void *arg_ext)
+{
+   struct mpc_ofi_request_t * ret = NULL;
+
+   do
+   {
+      ret = mpc_ofi_request_acquire(&domain->rcache, _mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext );
+
+      if(ret)
+         break;
+
+#if 1
+      if(mpc_ofi_domain_poll(domain, 0))
+      {
+         mpc_common_errorpoint("Error raised when polling for request");
+      }
+#endif
+
+   }while(!ret);
+
+   return ret;
+}
+
 
 int mpc_ofi_domain_send(struct mpc_ofi_domain_t * domain,
                        uint64_t dest,
                        void *buff,
                        size_t size,
-                       struct mpc_ofi_request_t **req)
+                       struct mpc_ofi_request_t **preq,
+                       int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
+                       void *arg_ext)
 {
-   struct fid_mr *mr = NULL;
+   struct mpc_ofi_request_t ** req = preq;
+   struct mpc_ofi_request_t * __req = NULL;
 
-   if( mpc_ofi_domain_memory_register(domain, buff, size, FI_SEND, &mr) )
+   if(!req)
+   {
+      req = &__req;
+   }
+
+   *req = __acquire_request(domain, _mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext);
+
+   if( mpc_ofi_domain_memory_register(domain, buff, size, FI_SEND, &(*req)->mr[0]) )
    {
       mpc_common_errorpoint("Failed to register send buffer");
       return -1;
+   }
+
+   (*req)->mr_count = 0;
+
+   fi_addr_t addr = 0;
+
+   if(mpc_ofi_domain_dns_resolve(&domain->ddns, dest, &addr))
+   {
+      mpc_common_errorpoint("Failed to resolve address");
+      return -1;
+   }
+
+   while(1)
+   {
+      ssize_t ret = fi_send(domain->ep, buff, size, NULL, addr, (void *)*req);
+
+      if(ret == -FI_EAGAIN)
+      {
+         continue;
+      }
+
+      MPC_OFI_CHECK_RET(ret);
+      break;
+   }
+
+   return 0;
+}
+
+int mpc_ofi_domain_sendv(struct mpc_ofi_domain_t * domain,
+                        uint64_t dest,
+                        const struct iovec *iov,
+                        size_t iovcnt,
+                        struct mpc_ofi_request_t **req,
+                        int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
+                        void *arg_ext)
+{
+   assume(iovcnt<MPC_OFI_IOVEC_SIZE);
+
+   *req = __acquire_request(domain, _mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext);
+
+   unsigned int i = 0;
+
+   for(i=0 ; i < iovcnt; i++)
+   {
+      if( mpc_ofi_domain_memory_register(domain, iov[i].iov_base, iov[i].iov_len, FI_SEND, &(*req)->mr[i]) )
+      {
+         mpc_common_errorpoint("Failed to register send buffer");
+         return -1;
+      }
+      (*req)->mr_count++;
    }
 
    fi_addr_t addr = 0;
@@ -583,11 +699,17 @@ int mpc_ofi_domain_send(struct mpc_ofi_domain_t * domain,
       return -1;
    }
 
-   *req = mpc_ofi_request_acquire(&domain->rcache, _mpc_ofi_domain_request_complete, (void*)mr);
+
+   void * descs[MPC_OFI_IOVEC_SIZE];
+
+   for(i = 0 ; i < iovcnt; i++)
+   {
+      descs[i] = fi_mr_desc((*req)->mr[i]);
+   }
 
    while(1)
    {
-      ssize_t ret = fi_send(domain->ep, buff, size, fi_mr_desc(mr), addr, (void *)*req);
+      ssize_t ret = fi_sendv(domain->ep, iov, descs, iovcnt, addr, (void *)*req);
 
       if(ret == -FI_EAGAIN)
       {

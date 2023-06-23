@@ -1,5 +1,6 @@
 #include "mpc_ofi_context.h"
 
+#include "mpc_lowcomm_monitor.h"
 #include "mpc_ofi_dns.h"
 #include "mpc_ofi_domain.h"
 #include "mpc_ofi_helpers.h"
@@ -21,7 +22,8 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
                         uint32_t domain_count,
                         char * provider,
                         mpc_ofi_context_policy_t policy,
-                        mpc_ofi_context_recv_callback_t recv_callback)
+                        mpc_ofi_context_recv_callback_t recv_callback,
+                        void * callback_arg)
 {
    memset(ctx, 0, sizeof(struct mpc_ofi_context_t));
 
@@ -35,6 +37,7 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
    mpc_common_spinlock_init(&ctx->lock, 0);
 
    ctx->recv_callback = recv_callback;
+   ctx->callback_arg = callback_arg;
 
 
    ctx->numa_count = 1;
@@ -48,7 +51,7 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
 
    ctx->ctx_policy = policy;
 
-   if(mpc_ofi_dns_init(&ctx->dns, MPC_OFI_DNS_RESOLUTION_SOCKET))
+   if(mpc_ofi_dns_init(&ctx->dns, MPC_OFI_DNS_RESOLUTION_CPLANE))
    {
       mpc_common_errorpoint("Failed to initialize central DNS");
       return 1;
@@ -56,20 +59,7 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
 
    /* Allocate and set libfabric configuration */
 
-   struct fi_info * hints = fi_allocinfo();
-
-   if(!hints)
-   {
-      mpc_common_errorpoint("Failed to allocate hints");
-      return 1;
-   }
-
-   hints->mode = FI_CONTEXT;
-	hints->caps = FI_MSG | FI_RMA | FI_MULTI_RECV;
-   //hints->ep_attr->type          = FI_EP_RDM;
-	hints->fabric_attr->prov_name = ctx->provider;
-   hints->domain_attr->threading = FI_THREAD_DOMAIN;
-
+   struct fi_info * hints = mpc_ofi_get_requested_hints(provider);
    mpc_ofi_decode_mr_mode(hints->domain_attr->mr_mode);
 
 
@@ -113,7 +103,7 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
       }
    }
 
-  	(void)fprintf(stderr, "Using driver relying on %s(%s) DNS port %s\n", ctx->config->fabric_attr->prov_name, ctx->config->fabric_attr->name, ctx->dns.socket_rsvl.port);
+  	mpc_common_debug_info(stderr, "Using driver relying on %s(%s)\n", ctx->config->fabric_attr->prov_name, ctx->config->fabric_attr->name);
 
    return 0;
 }
@@ -138,6 +128,11 @@ int mpc_ofi_context_release(struct mpc_ofi_context_t *ctx)
    {
       mpc_common_errorpoint("Failed to release central DNS");
       return 1;
+   }
+
+   if(ctx->provider)
+   {
+      free(ctx->provider);
    }
 
    return 0;
@@ -253,9 +248,22 @@ int mpc_ofi_view_wait(struct mpc_ofi_view_t *view,  struct mpc_ofi_request_t *re
 }
 
 
-int mpc_ofi_view_send(struct mpc_ofi_view_t *view, void * buffer, size_t size, uint64_t dest, struct mpc_ofi_request_t **req)
+int mpc_ofi_view_send(struct mpc_ofi_view_t *view, void * buffer, size_t size, uint64_t dest, struct mpc_ofi_request_t **req,
+                        int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
+                        void *arg_ext)
 {
-   return mpc_ofi_domain_send(view->domain, dest, buffer, size, req);
+   return mpc_ofi_domain_send(view->domain, dest, buffer, size, req, comptetion_cb_ext, arg_ext);
+}
+
+int mpc_ofi_view_sendv(struct mpc_ofi_view_t *view,
+                        uint64_t dest,
+                        const struct iovec *iov,
+                        size_t iovcnt,
+                        struct mpc_ofi_request_t **req,
+                        int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
+                        void *arg_ext)
+{
+   return mpc_ofi_domain_sendv(view->domain, dest, iov, iovcnt, req, comptetion_cb_ext, arg_ext);
 }
 
 

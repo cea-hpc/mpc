@@ -30,8 +30,14 @@ int mpc_ofi_decode_mr_mode(uint64_t flags);
 		int __ret = (a);                                                                                 \
 		if(__ret < 0){                                                                                   \
 			(void)fprintf(stderr, "[MPC_OFI]@%s:%d: %s\n%s(%d)\n", __FILE__, __LINE__, #a, fi_strerror(-__ret), __ret); \
-			return -FI_EOTHER;                                                                                \
+			return __ret;                                                                                \
 		}                                                                                                \
 }while(0)
+
+/*********
+ * HINTS *
+ *********/
+
+struct fi_info * mpc_ofi_get_requested_hints(char * provider);
 
 #endif /* MPC_OFI_HELPERS_H */

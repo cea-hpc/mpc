@@ -29,6 +29,7 @@
 #ifndef MPC_LOWCOMM_MONITOR_H_
 #define MPC_LOWCOMM_MONITOR_H_
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <mpc_common_types.h>
 
@@ -350,7 +351,7 @@ typedef enum
 #define MPC_LOWCOMM_MONITOR_KEY_LEN        128
 #define MPC_LOWCOMM_SET_NAME_LEN           256
 #define MPC_LOWCOMM_ONDEMAND_TARGET_LEN    32
-#define MPC_LOWCOMM_ONDEMAND_DATA_LEN      MPC_LOWCOMM_PEER_URI_SIZE
+#define MPC_LOWCOMM_ONDEMAND_DATA_LEN      550
 #define MPC_LOWCOMM_MONITOR_MAX_CLIENTS    32
 
 

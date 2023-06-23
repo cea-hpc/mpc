@@ -38,17 +38,22 @@ int mpc_ofi_request_cache_release(struct mpc_ofi_request_cache_t *cache)
 }
 
 struct mpc_ofi_request_t * mpc_ofi_request_acquire(struct mpc_ofi_request_cache_t *cache,
-                                                           int (*comptetion_cb)(void *),
-                                                           void *arg)
+                                                           int (*comptetion_cb)(struct mpc_ofi_request_t *, void *),
+                                                           void *arg,
+                                                           int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
+                                                           void *arg_ext)
 {
    int i = 0;
 
    for(i = 0 ; i < MPC_OFI_REQUEST_CACHE_SIZE; i++)
    {
-      if(cache->requests[i].free)
+      struct mpc_ofi_request_t * req = &cache->requests[i];
+
+      //mpc_common_debug_warning("%d == %d == %d", i, req->done, req->free);
+
+      if(req->free)
       {
-         struct mpc_ofi_request_t * req = &cache->requests[i];
-         mpc_common_spinlock_lock_yield(&req->lock);
+         mpc_common_spinlock_lock(&req->lock);
 
          if(!req->free)
          {
@@ -60,6 +65,9 @@ struct mpc_ofi_request_t * mpc_ofi_request_acquire(struct mpc_ofi_request_cache_
          req->free = 0;
          req->arg = arg;
          req->comptetion_cb = comptetion_cb;
+         req->comptetion_cb_ext = comptetion_cb_ext;
+         req->arg_ext = arg_ext;
+         req->mr_count = 0;
 
          mpc_common_spinlock_unlock(&req->lock);
 

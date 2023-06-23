@@ -33,5 +33,9 @@
 
 #include <tbsm/tbsm.h>
 
+#ifdef MPC_USE_OFI
+#include <mpc_ofi.h>
+#endif
+
 
 #endif

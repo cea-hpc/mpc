@@ -141,6 +141,13 @@ struct _mpc_lowcomm_config_struct_net_driver_portals
 	struct _mpc_lowcomm_config_struct_offload_ops_t offloading;
 };
 
+
+/** OFI-based driver */
+struct _mpc_lowcomm_config_struct_net_driver_ofi
+{
+	char provider[MPC_CONF_STRING_SIZE];
+};
+
 /******************************** STRUCTURE *********************************/
 /**TCP-based driver**/
 struct _mpc_lowcomm_config_struct_net_driver_tcp
@@ -192,6 +199,9 @@ struct _mpc_lowcomm_config_struct_net_driver
 	enum _mpc_lowcomm_config_struct_net_driver_type type;
 	union
 	{
+#ifdef MPC_USE_OFI
+		struct _mpc_lowcomm_config_struct_net_driver_ofi         ofi;
+#endif
 #ifdef MPC_USE_PORTALS
 		struct _mpc_lowcomm_config_struct_net_driver_portals     portals;
 #endif

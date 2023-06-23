@@ -21,6 +21,7 @@
 #include "lcp_ep.h"
 #include "lcp_task.h"
 #include "lcr/lcr_component.h"
+#include "mpc_common_debug.h"
 #include "lcr/lcr_def.h"
 
 //TODO: memset to 0 all allocated structure (especially those containing
@@ -216,6 +217,7 @@ void lcp_context_task_get(lcp_context_h ctx, int tid, lcp_task_h *task_p)
 	HASH_FIND(hh, ctx->tasks->table, &tid, sizeof(int), item);
 	if (item == NULL) {
                 *task_p = NULL;
+
         } else {
                 *task_p = item->task;
         }

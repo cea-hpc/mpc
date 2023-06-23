@@ -114,7 +114,17 @@ int mpc_ofi_domain_send(struct mpc_ofi_domain_t * domain,
                        uint64_t dest,
                        void *buff,
                        size_t size,
-                       struct mpc_ofi_request_t **req);
+                       struct mpc_ofi_request_t **req,
+                       int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
+                       void *arg_ext);
+
+int mpc_ofi_domain_sendv(struct mpc_ofi_domain_t * domain,
+                        uint64_t dest,
+                        const struct iovec *iov,
+                        size_t iovcnt,
+                        struct mpc_ofi_request_t **req,
+                        int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
+                        void *arg_ext);
 
 
 #endif /* MPC_OFI_DOMAIN */

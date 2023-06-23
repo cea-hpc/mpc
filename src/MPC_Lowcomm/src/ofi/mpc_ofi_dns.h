@@ -112,6 +112,7 @@ int mpc_ofi_dns_socket_resolution_lookup(void* prsvl, uint64_t rank, char *addr,
 typedef enum
 {
    MPC_OFI_DNS_RESOLUTION_SOCKET,
+   MPC_OFI_DNS_RESOLUTION_CPLANE,
    MPC_OFI_DNS_RESOLUTION_COUNT
 }mpc_ofi_dns_resolution_t;
 

@@ -9,6 +9,7 @@
 #include "lcp_eager.h"
 #include "lcp_task.h"
 #include "lcp_rndv.h"
+#include "mpc_common_debug.h"
 
 /* ============================================== */
 /* Packing                                        */
@@ -411,8 +412,7 @@ static int lcp_eager_am_handler(void *arg, void *data,
 
         lcp_context_task_get(ctx, hdr->dest_tid, &task);  
         if (task == NULL) {
-                mpc_common_debug_error("LCP: could not find task with tid=%d",
-                                       hdr->dest_tid);
+                mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d length=%ld", hdr->dest_tid, hdr->hdr_size);
                 rc = LCP_ERROR;
                 goto err;
         }
@@ -481,8 +481,8 @@ static int lcp_rndv_am_handler(void *arg, void *data,
 
         lcp_context_task_get(ctx, hdr->am.dest_tid, &task);  
         if (task == NULL) {
-                mpc_common_debug_error("LCP: could not find task with tid=%d",
-                                       hdr->am.dest_tid);
+                mpc_common_errorpoint_fmt("LCP: could not find task with tid=%d length=%ld", hdr->am.dest_tid, hdr->am.hdr_size);
+
                 rc = LCP_ERROR;
                 goto err;
         }

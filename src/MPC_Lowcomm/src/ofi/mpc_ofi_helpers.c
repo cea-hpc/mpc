@@ -1,7 +1,10 @@
 #include "mpc_ofi_helpers.h"
 
+#include <mpc_common_debug.h>
+
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 int mpc_ofi_decode_mr_mode(uint64_t flags)
@@ -133,3 +136,30 @@ int mpc_ofi_decode_cq_flags(uint64_t flags)
 }
 
 
+struct fi_info * mpc_ofi_get_requested_hints(char * provider)
+{
+	struct fi_info * hints = fi_allocinfo();
+
+   if(!hints)
+   {
+      mpc_common_errorpoint("Failed to allocate hints");
+      return NULL;
+   }
+
+	/* Config handles provider as empty string */
+	if(provider)
+	{
+		if(!strlen(provider))
+		{
+			provider = NULL;
+		}
+	}
+
+   hints->mode = FI_CONTEXT;
+	hints->caps = FI_MSG | FI_RMA | FI_MULTI_RECV;
+   //hints->ep_attr->type          = FI_EP_RDM;
+	hints->fabric_attr->prov_name = provider?strdup(provider):NULL;
+   hints->domain_attr->threading = FI_THREAD_DOMAIN;
+
+	return hints;
+}
