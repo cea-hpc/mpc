@@ -36,9 +36,10 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-// TODO: this disable assert
-#define NDEBUG
+// defining NDEBUG disables assert
+// #define NDEBUG
 #define _GNU_SOURCE
+
 #include <stdlib.h>
 
 #include "mpcomp_task.h"
@@ -983,29 +984,29 @@ __task_list_delete(mpc_omp_task_list_elt_t * list)
     }
 }
 
-# if MPC_OMP_TASK_COMPILE_FIBER
+# if MPC_OMP_TASK_COMPILE_UCONTEXT
 static inline void
-__task_delete_fiber(mpc_omp_task_t * task)
+__task_delete_ucontext(mpc_omp_task_t * task)
 {
-    if (MPC_OMP_TASK_FIBER_ENABLED && task->fiber)
+    if (MPC_OMP_TASK_UCONTEXT_ENABLED && task->ucontext)
     {
         mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
-        if (thread->task_infos.fiber)
+        if (thread->task_infos.ucontext)
         {
 # if MPC_OMP_TASK_USE_RECYCLERS
-            // TODO : on which thread do we want to recycle this fiber ?
-            mpc_common_recycler_recycle(&(thread->task_infos.fiber_recycler), task->fiber);
+            // TODO : on which thread do we want to recycle this ucontext ?
+            mpc_common_recycler_recycle(&(thread->task_infos.ucontext_recycler), task->ucontext);
 # else
-            mpc_omp_free(task->fiber);
+            mpc_omp_free(task->ucontext);
 # endif /* MPC_OMP_TASK_USE_RECYCLERS */
         }
         else
         {
-            thread->task_infos.fiber = task->fiber;
+            thread->task_infos.ucontext = task->ucontext;
         }
     }
 }
-# endif /* MPC_OMP_TASK_COMPILE_FIBER */
+# endif /* MPC_OMP_TASK_COMPILE_UCONTEXT */
 
 /****************
  * HTABLE RELATED
@@ -1407,7 +1408,7 @@ __task_process_mpc_dep(
 
     if (pit)
     {
-        strcpy(pit->label, "control");
+        assert(strcpy(pit->label, "control"));
         assert(TASK_STATE(pit) == MPC_OMP_TASK_STATE_NOT_QUEUABLE);
         TASK_STATE_TRANSITION(pit, MPC_OMP_TASK_STATE_QUEUABLE);
         _mpc_omp_task_process(pit);
@@ -1577,9 +1578,9 @@ __task_finalize_persistent(mpc_omp_task_t * task)
     __task_unref_persistent_region(task->parent);
 
     // reset task instance
-# if MPC_OMP_TASK_COMPILE_FIBER
-    if (task->fiber) task->fiber->swap_count = 0;
-# endif /* MPC_OMP_TASK_COMPILE_FIBER */
+# if MPC_OMP_TASK_COMPILE_UCONTEXT
+    if (task->ucontext) task->ucontext->swap_count = 0;
+# endif /* MPC_OMP_TASK_COMPILE_UCONTEXT */
     mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
     task->uid = OPA_fetch_and_incr_int(&(thread->instance->task_infos.next_task_uid));
 }
@@ -1592,10 +1593,10 @@ __task_finalize_non_persistent(mpc_omp_task_t * task)
     __task_list_delete(task->dep_node.predecessors);
     task->dep_node.predecessors = NULL;
 
-// we no longer need the task fiber
-# if MPC_OMP_TASK_COMPILE_FIBER
-    __task_delete_fiber(task);
-# endif /* MPC_OMP_TASK_COMPILE_FIBER */
+// we no longer need the task ucontext
+# if MPC_OMP_TASK_COMPILE_UCONTEXT
+    __task_delete_ucontext(task);
+# endif /* MPC_OMP_TASK_COMPILE_UCONTEXT */
 
     mpc_omp_task_t * parent = task->parent;
     __task_unref(task);                 /* _mpc_omp_task_init */
@@ -1610,7 +1611,7 @@ _mpc_omp_task_finalize(mpc_omp_task_t * task)
     /* if task has a detach clause */
     if (mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_DETACH))
     {
-        /* TODO: if the task is untied and has a fiber, we should context switch here */
+        /* TODO: if the task is untied and has a ucontext, we should context switch here */
         TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_DETACHED);
         while (OPA_load_int(&(task->detach_event.counter)) == 1)
             _mpc_omp_task_schedule();
@@ -3011,7 +3012,7 @@ _mpc_omp_task_wait(void ** depend, int nowait)
  * \return the task
  */
 static inline mpc_omp_task_t *
-__task_schedule_next(mpc_omp_thread_t * thread)
+__task_run_next(mpc_omp_thread_t * thread)
 {
     /* fast non-blocking emptiness check */
     if (OPA_load_int(&(thread->instance->task_infos.ntasks_ready)) == 0) return NULL;
@@ -3102,7 +3103,7 @@ __task_run_coherency_check_post(mpc_omp_task_t * task)
  * Delete it on completion
  */
 static void
-__task_schedule_as_function(mpc_omp_task_t * task)
+__task_run_as_function(mpc_omp_task_t * task)
 {
     mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
     mpc_omp_task_t * curr = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
@@ -3120,7 +3121,7 @@ __task_schedule_as_function(mpc_omp_task_t * task)
     _mpc_omp_task_finalize(task);
 }
 
-# if MPC_OMP_TASK_COMPILE_FIBER
+# if MPC_OMP_TASK_COMPILE_UCONTEXT
 
 /* Entry point for a task when it is first run under it own context */
 static void
@@ -3136,36 +3137,41 @@ __task_start_routine(__UNUSED__ void * unused)
     if (task->func) task->func(task->data);
     __task_run_coherency_check_post(task);
 
-    sctk_setcontext_no_tls(task->fiber->exit);
+    // TODO: if the current thread is in a 'task schedule loop' we can gain a
+    // context-switch cost here, by switching directly to the next task instead.
+    //
+    // This is the '2.N' context-switch problem in the literature
+
+    sctk_setcontext_no_tls(task->ucontext->exit);
 }
 
-static mpc_omp_task_fiber_t *
-__thread_generate_new_task_fiber(mpc_omp_thread_t * thread)
+static mpc_omp_task_ucontext_t *
+__thread_generate_new_task_ucontext(mpc_omp_thread_t * thread)
 {
-    mpc_omp_task_fiber_t * fiber;
-    if (thread->task_infos.fiber)
+    mpc_omp_task_ucontext_t * ucontext;
+    if (thread->task_infos.ucontext)
     {
-        fiber = thread->task_infos.fiber;
-        thread->task_infos.fiber = NULL;
+        ucontext = thread->task_infos.ucontext;
+        thread->task_infos.ucontext = NULL;
     }
     else
     {
 # if MPC_OMP_TASK_USE_RECYCLERS
-        fiber = (mpc_omp_task_fiber_t *) mpc_common_recycler_alloc(&(thread->task_infos.fiber_recycler));
+        ucontext = (mpc_omp_task_ucontext_t *) mpc_common_recycler_alloc(&(thread->task_infos.ucontext_recycler));
 # else
-        fiber = (mpc_omp_task_fiber_t *) mpc_omp_alloc(sizeof(mpc_omp_task_fiber_t) + MPC_OMP_TASK_FIBER_STACK_SIZE);
+        ucontext = (mpc_omp_task_ucontext_t *) mpc_omp_alloc(sizeof(mpc_omp_task_ucontext_t) + MPC_OMP_TASK_UCONTEXT_STACK_SIZE);
 # endif
         sctk_makecontext_no_tls(
-            &(fiber->initial),
-            fiber,
+            &(ucontext->initial),
+            ucontext,
             (void (*)(void *)) __task_start_routine,
-            (char *)(fiber + 1),
-            MPC_OMP_TASK_FIBER_STACK_SIZE
+            (char *)(ucontext + 1),
+            MPC_OMP_TASK_UCONTEXT_STACK_SIZE
         );
     }
-    fiber->swap_count = 0;
-    fiber->magic = TASK_FIBER_MAGIC_NUMBER;
-    return fiber;
+    ucontext->swap_count = 0;
+    ucontext->magic = TASK_UCONTEXT_MAGIC_NUMBER;
+    return ucontext;
 }
 
 static inline void
@@ -3187,26 +3193,26 @@ __thread_requeue_task(mpc_omp_task_t * task)
  * \param exit The task to return after 'task' ends
  */
 static void
-__task_schedule_with_fiber(mpc_omp_task_t * task)
+__task_run_with_ucontext(mpc_omp_task_t * task)
 {
     mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
     mpc_omp_task_t * curr = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
 
     assert(curr != task);
 
-    if (task->fiber == NULL)
+    if (task->ucontext == NULL)
     {
-        task->fiber = __thread_generate_new_task_fiber(thread);
+        task->ucontext = __thread_generate_new_task_ucontext(thread);
     }
 
     ___thread_bind_task(thread, task, &(task->icvs));
-    task->fiber->exit = &(thread->task_infos.mctx);
+    task->ucontext->exit = &(thread->task_infos.mctx);
 
-    sctk_mctx_t * mctx = task->fiber->swap_count ? &(task->fiber->current) : &(task->fiber->initial);
-    ++task->fiber->swap_count;
+    sctk_mctx_t * mctx = task->ucontext->swap_count ? &(task->ucontext->current) : &(task->ucontext->initial);
+    ++task->ucontext->swap_count;
 
     MPC_OMP_TASK_TRACE_SCHEDULE(task);
-    sctk_swapcontext_no_tls(task->fiber->exit, mctx);
+    sctk_swapcontext_no_tls(task->ucontext->exit, mctx);
     MPC_OMP_TASK_TRACE_SCHEDULE(task);
 
     ___thread_bind_task(thread, curr, &(curr->icvs));
@@ -3244,14 +3250,14 @@ __task_schedule_with_fiber(mpc_omp_task_t * task)
     /* continue what the thread was doing */
 }
 
-# endif /* MPC_OMP_TASK_COMPILE_FIBER */
+# endif /* MPC_OMP_TASK_COMPILE_UCONTEXT */
 
 /**
  * Run the task
  * @param task : the task
  */
 void
-__task_schedule(mpc_omp_task_t * task)
+__task_run(mpc_omp_task_t * task)
 {
     assert(TASK_STATE(task) == MPC_OMP_TASK_STATE_QUEUED);
     TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_SCHEDULED);
@@ -3266,13 +3272,13 @@ __task_schedule(mpc_omp_task_t * task)
 
     task->t_start = omp_get_wtime();
 
-# if MPC_OMP_TASK_COMPILE_FIBER
-    if (MPC_OMP_TASK_FIBER_ENABLED && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_HAS_FIBER))
+# if MPC_OMP_TASK_COMPILE_UCONTEXT
+    if (MPC_OMP_TASK_UCONTEXT_ENABLED && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_HAS_UCONTEXT))
     {
-        return __task_schedule_with_fiber(task);
+        return __task_run_with_ucontext(task);
     }
-# endif /* MPC_OMP_TASK_COMPILE_FIBER */
-    return __task_schedule_as_function(task);
+# endif /* MPC_OMP_TASK_COMPILE_UCONTEXT */
+    return __task_run_as_function(task);
 }
 
 /**
@@ -3289,14 +3295,14 @@ _mpc_omp_task_schedule(void)
 
     /* get current thread */
     mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
-    mpc_omp_task_t * task = __task_schedule_next(thread);
+    mpc_omp_task_t * task = __task_run_next(thread);
 
     if (task)
     {
 # if MPC_OMP_TASK_COMPILE_TRACE
         task->schedule_id = OPA_fetch_and_incr_int(&(thread->instance->task_infos.next_schedule_id));
 # endif
-        __task_schedule(task);
+        __task_run(task);
         return 1;
     }
 
@@ -3309,11 +3315,11 @@ _mpc_omp_task_schedule(void)
     return 0;
 }
 
-# if MPC_OMP_TASK_COMPILE_FIBER
+# if MPC_OMP_TASK_COMPILE_UCONTEXT
 static void
 __taskyield_return(void)
 {
-    assert(MPC_OMP_TASK_FIBER_ENABLED);
+    assert(MPC_OMP_TASK_UCONTEXT_ENABLED);
 
     mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
     mpc_omp_task_t * task = MPC_OMP_TASK_THREAD_GET_CURRENT_TASK(thread);
@@ -3322,16 +3328,16 @@ __taskyield_return(void)
     assert(TASK_STATE(task) == MPC_OMP_TASK_STATE_SCHEDULED);
     TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_SUSPENDED);
 
-    assert(task->fiber->exit == &(thread->task_infos.mctx));
-    assert(task->fiber->magic == TASK_FIBER_MAGIC_NUMBER);
-    if (task->fiber->magic != TASK_FIBER_MAGIC_NUMBER)
+    assert(task->ucontext->exit == &(thread->task_infos.mctx));
+    assert(task->ucontext->magic == TASK_UCONTEXT_MAGIC_NUMBER);
+    if (task->ucontext->magic != TASK_UCONTEXT_MAGIC_NUMBER)
     {
-        fprintf(stderr, "task fiber stack overflow %d (label=%s) - please increase fiber stack size\n", task->uid, task->label);
+        fprintf(stderr, "task ucontext stack overflow %d (label=%s) - please increase ucontext stack size\n", task->uid, task->label);
         exit(1);
     }
-    sctk_swapcontext_no_tls(&(task->fiber->current), task->fiber->exit);
+    sctk_swapcontext_no_tls(&(task->ucontext->current), task->ucontext->exit);
 }
-# endif /* MPC_OMP_TASK_COMPILE_FIBER */
+# endif /* MPC_OMP_TASK_COMPILE_UCONTEXT */
 
 /* Warning : a task may unblock before blocking
  * Note that while only a single thread may block a task at a time,
@@ -3381,9 +3387,9 @@ _mpc_omp_task_unblock(mpc_omp_event_handle_block_t * handle)
             }
             mpc_common_spinlock_unlock(&(list->lock));
 
-            /* if the task has a fiber, check if we should requeue */
-# if MPC_OMP_TASK_COMPILE_FIBER
-            if (MPC_OMP_TASK_FIBER_ENABLED && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_HAS_FIBER))
+            /* if the task has a ucontext, check if we should requeue */
+# if MPC_OMP_TASK_COMPILE_UCONTEXT
+            if (MPC_OMP_TASK_UCONTEXT_ENABLED && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_HAS_UCONTEXT))
             {
                 int requeue = 0;
                 mpc_common_spinlock_lock(&(handle->lock));
@@ -3403,7 +3409,7 @@ _mpc_omp_task_unblock(mpc_omp_event_handle_block_t * handle)
             {
                 /* nothing to do */
             }
-# endif /* MPC_OMP_TASK_COMPILE_FIBER */
+# endif /* MPC_OMP_TASK_COMPILE_UCONTEXT */
         }
         else
         {
@@ -3448,9 +3454,9 @@ mpc_omp_task_block(mpc_omp_event_handle_block_t * handle)
         }
         mpc_common_spinlock_unlock(&(list->lock));
 
-        /* if the task has it own fiber, switch to parent' fiber */
-# if MPC_OMP_TASK_COMPILE_FIBER
-        if (MPC_OMP_TASK_FIBER_ENABLED && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_HAS_FIBER))
+        /* if the task has it own ucontext, switch to parent' ucontext */
+# if MPC_OMP_TASK_COMPILE_UCONTEXT
+        if (MPC_OMP_TASK_UCONTEXT_ENABLED && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_HAS_UCONTEXT))
         {
             if (OPA_load_int(&(handle->status)) == MPC_OMP_EVENT_HANDLE_BLOCK_STATUS_BLOCKED)
             {
@@ -3471,7 +3477,7 @@ mpc_omp_task_block(mpc_omp_event_handle_block_t * handle)
         }
         /* otherwise, busy-loop until unblock */
         else
-# endif /* MPC_OMP_TASK_COMPILE_FIBER */
+# endif /* MPC_OMP_TASK_COMPILE_UCONTEXT */
         {
             while (task->flags.in_blocked_list)
             {
@@ -3502,14 +3508,14 @@ __taskyield_fair(void)
         task->t_elapsed += dt;
         task->priority = INT_MAX - task->t_elapsed / min_sched_time;
 
-# if MPC_OMP_TASK_COMPILE_FIBER
-        if (MPC_OMP_TASK_FIBER_ENABLED && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_HAS_FIBER))
+# if MPC_OMP_TASK_COMPILE_UCONTEXT
+        if (MPC_OMP_TASK_UCONTEXT_ENABLED && mpc_omp_task_property_isset(task->property, MPC_OMP_TASK_PROP_HAS_UCONTEXT))
         {
             __taskyield_return();
         }
         /* otherwise, busy-loop until unblock */
         else
-# endif /* MPC_OMP_TASK_COMPILE_FIBER */
+# endif /* MPC_OMP_TASK_COMPILE_UCONTEXT */
         {
             not_implemented();
         }
@@ -3637,8 +3643,8 @@ _mpc_omp_task_init_attributes(
 #endif
 
     /* extra parameters given to the mpc thread for this task */
-    if (thread->task_infos.incoming.extra_clauses & MPC_OMP_CLAUSE_USE_FIBER)
-        mpc_omp_task_set_property(&task->property, MPC_OMP_TASK_PROP_HAS_FIBER);
+    if (thread->task_infos.incoming.extra_clauses & MPC_OMP_CLAUSE_UCONTEXT)
+        mpc_omp_task_set_property(&task->property, MPC_OMP_TASK_PROP_HAS_UCONTEXT);
     if (thread->task_infos.incoming.extra_clauses & MPC_OMP_CLAUSE_UNTIED)
         mpc_omp_task_set_property(&task->property, MPC_OMP_TASK_PROP_UNTIED);
     if (thread->task_infos.incoming.dependencies)
@@ -3799,13 +3805,9 @@ _mpc_omp_task_deps(mpc_omp_task_t * task, void ** depend, int priority_hint)
 int
 _mpc_omp_task_process(mpc_omp_task_t * task)
 {
-    /* Retrieve the information (microthread structure and current region) */
-    mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
-    assert(thread->instance);
-
     int became_ready = 0;
-# if 0
-    // TODO: find out why a mutex is needed here, shouldn't bellow atomic CaS be sufficient ?
+
+#if 0
     if (OPA_load_int(&(task->dep_node.ref_predecessors)) == 0)
     {
         if (TASK_STATE_TRANSITION_ATOMIC(task, MPC_OMP_TASK_STATE_QUEUABLE, MPC_OMP_TASK_STATE_QUEUED))
@@ -3813,21 +3815,23 @@ _mpc_omp_task_process(mpc_omp_task_t * task)
             became_ready = 1;
         }
     }
-# else
-    if (TASK_STATE(task) < MPC_OMP_TASK_STATE_QUEUED)
+#else
+    if (TASK_STATE(task) == MPC_OMP_TASK_STATE_QUEUABLE)
     {
         mpc_common_spinlock_lock(&(task->state_lock));
         {
-            if (TASK_STATE(task) == MPC_OMP_TASK_STATE_QUEUABLE &&
-                    OPA_load_int(&(task->dep_node.ref_predecessors)) == 0)
+            if (TASK_STATE(task) == MPC_OMP_TASK_STATE_QUEUABLE)
             {
-                TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_QUEUED);
-                became_ready = 1;
+                if (OPA_load_int(&(task->dep_node.ref_predecessors)) == 0)
+                {
+                    TASK_STATE_TRANSITION(task, MPC_OMP_TASK_STATE_QUEUED);
+                    became_ready = 1;
+                }
             }
         }
         mpc_common_spinlock_unlock(&(task->state_lock));
     }
-# endif
+#endif
 
     /* if the task just became ready */
     if (became_ready)
@@ -3838,12 +3842,15 @@ _mpc_omp_task_process(mpc_omp_task_t * task)
                 || mpc_omp_conf_get()->task_sequential)
         {
             /* run it */
-            __task_schedule(task);
+            __task_run(task);
             return 1;
         }
         else
         {
             /* else, differ it */
+            mpc_omp_thread_t * thread = mpc_omp_get_thread_tls();
+            assert(thread->instance);
+
             int type = mpc_omp_conf_get()->task_direct_successor_enabled && task->flags.successor ? MPC_OMP_PQUEUE_TYPE_SUCCESSOR : MPC_OMP_PQUEUE_TYPE_NEW;
             mpc_omp_task_pqueue_t * pqueue = __thread_get_task_pqueue(thread, type);
             __task_pqueue_push(pqueue, task);
@@ -4070,18 +4077,18 @@ static inline void
 __thread_task_init_recyclers(mpc_omp_thread_t * thread)
 {
     const struct mpc_omp_conf_s * config = mpc_omp_conf_get();
-# if MPC_OMP_TASK_COMPILE_FIBER
-    if (MPC_OMP_TASK_FIBER_ENABLED)
+# if MPC_OMP_TASK_COMPILE_UCONTEXT
+    if (MPC_OMP_TASK_UCONTEXT_ENABLED)
     {
         mpc_common_recycler_init (
-            &(thread->task_infos.fiber_recycler),
+            &(thread->task_infos.ucontext_recycler),
             MPC_OMP_TASK_ALLOCATOR,
             MPC_OMP_TASK_DEALLOCATOR,
-            sizeof(mpc_omp_task_fiber_t) + MPC_OMP_TASK_FIBER_STACK_SIZE,
-            config->task_fiber_recycler_capacity
+            sizeof(mpc_omp_task_ucontext_t) + MPC_OMP_TASK_UCONTEXT_STACK_SIZE,
+            config->task_ucontext_recycler_capacity
         );
     }
-# endif /* MPC_OMP_TASK_COMPILE_FIBER */
+# endif /* MPC_OMP_TASK_COMPILE_UCONTEXT */
 
     unsigned int capacities[32];
     unsigned int i;
@@ -4148,12 +4155,12 @@ __thread_task_deinit_initial(mpc_omp_thread_t * thread)
 static void
 __thread_task_deinit_recyclers(mpc_omp_thread_t * thread)
 {
-# if MPC_OMP_TASK_COMPILE_FIBER
-    if (MPC_OMP_TASK_FIBER_ENABLED)
+# if MPC_OMP_TASK_COMPILE_UCONTEXT
+    if (MPC_OMP_TASK_UCONTEXT_ENABLED)
     {
-        mpc_common_recycler_deinit(&(thread->task_infos.fiber_recycler));
+        mpc_common_recycler_deinit(&(thread->task_infos.ucontext_recycler));
     }
-# endif /* MPC_OMP_TASK_COMPILE_FIBER */
+# endif /* MPC_OMP_TASK_COMPILE_UCONTEXT */
     mpc_common_nrecycler_deinit(&(thread->task_infos.task_recycler));
 }
 # endif

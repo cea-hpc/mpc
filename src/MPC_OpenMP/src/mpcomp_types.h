@@ -80,14 +80,14 @@
 # define MPC_OMP_VERSION_MAJOR  4
 # define MPC_OMP_VERSION_MINOR  5
 
-/* FIBER */
-#define MPC_OMP_TASK_COMPILE_FIBER 1
+/* UCONTEXT */
+#define MPC_OMP_TASK_COMPILE_UCONTEXT 1
 
-#if MPC_OMP_TASK_COMPILE_FIBER
-# define MPC_OMP_TASK_FIBER_ENABLED     mpc_omp_conf_get()->task_use_fiber
-# define MPC_OMP_TASK_FIBER_STACK_SIZE  mpc_omp_conf_get()->task_fiber_stack_size
+#if MPC_OMP_TASK_COMPILE_UCONTEXT
+# define MPC_OMP_TASK_UCONTEXT_ENABLED     mpc_omp_conf_get()->task_use_ucontext
+# define MPC_OMP_TASK_UCONTEXT_STACK_SIZE  mpc_omp_conf_get()->task_ucontext_stack_size
 # else
-# define MPC_OMP_TASK_FIBER_ENABLED 0
+# define MPC_OMP_TASK_UCONTEXT_ENABLED 0
 #endif
 
 /* RECYCLER */
@@ -533,18 +533,18 @@ typedef struct mpc_omp_task_dep_list_elt_s
 }               mpc_omp_task_dep_list_elt_t;
 
 /** Task context structure */
-#if MPC_OMP_TASK_COMPILE_FIBER
+#if MPC_OMP_TASK_COMPILE_UCONTEXT
 
-# define TASK_FIBER_MAGIC_NUMBER 0x0207
+# define TASK_UCONTEXT_MAGIC_NUMBER 0x0207
 
-typedef struct  mpc_omp_task_fiber_s
+typedef struct  mpc_omp_task_ucontext_s
 {
     sctk_mctx_t initial;    /* the initial context of this task (for recycling 'makecontext' calls) */
     sctk_mctx_t current;    /* the current context of this task */
     sctk_mctx_t * exit;     /* the context to return when this task is paused or finished */
     int swap_count;         /* number of times this was swapped */
     int magic;              /* magic number to detect stack overflow */
-}               mpc_omp_task_fiber_t;
+}               mpc_omp_task_ucontext_t;
 #endif
 
 struct mpc_omp_task_pqueue_s;
@@ -770,8 +770,8 @@ typedef struct  mpc_omp_task_s
     /* number of existing child for this task */
     OPA_int_t children_count;
 
-#if MPC_OMP_TASK_COMPILE_FIBER
-    mpc_omp_task_fiber_t * fiber;
+#if MPC_OMP_TASK_COMPILE_UCONTEXT
+    mpc_omp_task_ucontext_t * ucontext;
 #endif
 
     /* task properties */
@@ -942,18 +942,18 @@ typedef struct  mpc_omp_task_thread_infos_s
     mpc_common_spinlock_t current_task_spinlock;
     void* opaque;                       /* use mcslock buffered */
 
-# if MPC_OMP_TASK_COMPILE_FIBER
+# if MPC_OMP_TASK_COMPILE_UCONTEXT
     mpc_common_spinlock_t * spinlock_to_unlock; /* a spinlock to be unlocked, see mpc_omp_task_block() */
-    mpc_omp_task_fiber_t * fiber;               /* the fiber to use when running a new task */
+    mpc_omp_task_ucontext_t * ucontext;               /* the ucontext to use when running a new task */
     sctk_mctx_t mctx;                           /* the thread context before the task started */
-# endif /* MPC_OMP_TASK_COMPILE_FIBER */
+# endif /* MPC_OMP_TASK_COMPILE_UCONTEXT */
 
 # if MPC_OMP_TASK_USE_RECYCLERS
     mpc_common_nrecycler_t task_recycler;   /* Recycler for mpc_omp_task_t and its data */
     mpc_common_spinlock_t task_recycler_lock;
-#  if MPC_OMP_TASK_COMPILE_FIBER
-    mpc_common_recycler_t  fiber_recycler;  /* Recycler for mpc_omp_task_fiber_t */
-#  endif /* MPC_OMP_TASK_COMPILE_FIBER */
+#  if MPC_OMP_TASK_COMPILE_UCONTEXT
+    mpc_common_recycler_t  ucontext_recycler;  /* Recycler for mpc_omp_task_ucontext_t */
+#  endif /* MPC_OMP_TASK_COMPILE_UCONTEXT */
 # endif /* MPC_OMP_TASK_USE_RECYCLERS */
 
     /* extra data for incoming task */

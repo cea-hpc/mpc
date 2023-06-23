@@ -16,7 +16,7 @@ MPC_OMP_TASK_PROP = [
     'GRAINSIZE',
     'IF',
     'NOGROUP',
-    'HAS_FIBER',
+    'HAS_UCONTEXT',
     'PERSISTENT',
     'CONTROL_FLOW',
     'DETACH',

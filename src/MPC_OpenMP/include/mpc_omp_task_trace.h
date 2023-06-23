@@ -33,6 +33,7 @@
 # define MPC_OMP_TASK_COMPILE_TRACE 1
 
 /* enable PAPI tracing per tasks */
+// TODO: remove this define, and make it an 'installmpc' parameter, something like '--mpc-openmp-papi'
 # define MPC_OMP_TASK_TRACE_USE_PAPI 1
 # if MPC_OMP_TASK_TRACE_USE_PAPI
 #  define PAPI_LOG(...) do {                                                \
@@ -43,8 +44,8 @@
 # endif
 
 #if MPC_OMP_TASK_COMPILE_TRACE
-# define MPC_OMP_TASK_FIBER_ENABLED mpc_omp_conf_get()->task_use_fiber
-# define MPC_OMP_TASK_TRACE_ENABLED mpc_omp_conf_get()->task_trace
+# define MPC_OMP_TASK_UCONTEXT_ENABLED  mpc_omp_conf_get()->task_use_ucontext
+# define MPC_OMP_TASK_TRACE_ENABLED     mpc_omp_conf_get()->task_trace
 # else
 # define MPC_OMP_TASK_TRACE_ENABLED 0
 #endif

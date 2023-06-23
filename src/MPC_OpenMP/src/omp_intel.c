@@ -3002,7 +3002,8 @@ kmp_int32 __kmpc_omp_task_with_deps( __UNUSED__ ident_t * loc_ref, __UNUSED__ km
     mpc_omp_task_t * task = (mpc_omp_task_t *) ((char *)kmp_task - sizeof(mpc_omp_task_t));
 
     /* convert llvm dependencies format to gomp */
-    void ** depend = (void **)mpc_omp_alloc(sizeof(uintptr_t) * ((int)(ndeps + ndeps_noalias) + 2));
+    // void ** depend = (void **)mpc_omp_alloc(sizeof(uintptr_t) * ((int)(ndeps + ndeps_noalias) + 2));
+    void * depend[ndeps + ndeps_noalias + 2];
     __intel_translate_taskdep_to_gomp(ndeps, dep_list, ndeps_noalias, noalias_dep_list, depend);
     mpc_omp_task_set_property(&task->property, MPC_OMP_TASK_PROP_DEPEND);
 

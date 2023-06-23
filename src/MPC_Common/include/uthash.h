@@ -134,9 +134,13 @@ do {                                                                            
 #define HASH_INITIAL_NUM_BUCKETS 32U     /* initial number of buckets        */
 #define HASH_INITIAL_NUM_BUCKETS_LOG2 5U /* lg2 of initial number of buckets */
 #define HASH_BKT_CAPACITY_THRESH 10U     /* expand when bucket count reaches */
-#else
+#elif 0
 #define HASH_INITIAL_NUM_BUCKETS        65536U  /* initial number of buckets        */
 #define HASH_INITIAL_NUM_BUCKETS_LOG2   16U     /* lg2 of initial number of buckets */
+#define HASH_BKT_CAPACITY_THRESH        16U     /* expand when bucket count reaches */
+#else
+#define HASH_INITIAL_NUM_BUCKETS        256U    /* initial number of buckets        */
+#define HASH_INITIAL_NUM_BUCKETS_LOG2   8U      /* lg2 of initial number of buckets */
 #define HASH_BKT_CAPACITY_THRESH        16U     /* expand when bucket count reaches */
 #endif
 

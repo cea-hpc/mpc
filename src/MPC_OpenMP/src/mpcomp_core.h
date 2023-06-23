@@ -116,10 +116,10 @@ typedef struct  mpc_omp_conf_s
     /* task list policy (LIFO/FIFO) */
     int task_list_policy;
 
-    /* task fiber */
-    int task_use_fiber;
-    int task_fiber_stack_size;
-    int task_fiber_recycler_capacity;
+    /* task ucontext */
+    int task_use_ucontext;
+    int task_ucontext_stack_size;
+    int task_ucontext_recycler_capacity;
 
     /* nested task depth threshold until they are serialized */
     int task_depth_threshold;

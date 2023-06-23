@@ -578,12 +578,13 @@ mpc_omp_task_color(int c)
 # endif /* MPC_OMP_TASK_COMPILE_TRACE */
 }
 
-/** # pragma omp task fiber */
+/** # pragma omp task ucontext */
 void
-mpc_omp_task_fiber(void)
+mpc_omp_task_ucontext(size_t stack_size)
 {
     mpc_omp_thread_t * thread = (mpc_omp_thread_t *)mpc_omp_tls;
-    thread->task_infos.incoming.extra_clauses |= MPC_OMP_CLAUSE_USE_FIBER;
+    thread->task_infos.incoming.extra_clauses |= MPC_OMP_CLAUSE_UCONTEXT;
+    assert(stack_size == 0); // variable stack size not implemented yet
 }
 
 /** # pragma omp task untied */

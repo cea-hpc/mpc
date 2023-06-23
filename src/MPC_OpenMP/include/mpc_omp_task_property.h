@@ -46,7 +46,7 @@
 # define MPC_OMP_TASK_PROP_GRAINSIZE        (1 << 12)
 # define MPC_OMP_TASK_PROP_IF               (1 << 13)
 # define MPC_OMP_TASK_PROP_NOGROUP          (1 << 14)
-# define MPC_OMP_TASK_PROP_HAS_FIBER        (1 << 15) /* if the task has it own fiber */
+# define MPC_OMP_TASK_PROP_HAS_UCONTEXT     (1 << 15) /* if the task has it own ucontext */
 # define MPC_OMP_TASK_PROP_PERSISTENT       (1 << 16) /* if the task is persistent */
 # define MPC_OMP_TASK_PROP_CONTROL_FLOW     (1 << 17) /* this is a 'flow control' fake task */
 # define MPC_OMP_TASK_PROP_DETACH           (1 << 18) /* a 'detach' clause is present */

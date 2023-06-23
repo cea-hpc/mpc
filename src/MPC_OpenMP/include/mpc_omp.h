@@ -197,8 +197,9 @@ extern "C" {
     /** # pragma omp task color(c) */
     void mpc_omp_task_color(int c);
 
-    /** # pragma omp task fiber */
-    void mpc_omp_task_fiber(void);
+    /** # pragma omp task ucontext(stack-size) */
+    void mpc_omp_task_ucontext(size_t stack_size);
+    # define mpc_omp_task_fiber(...) mpc_omp_task_ucontext(0)
 
     /** # pragma omp task untied */
     void mpc_omp_task_untied(void);

@@ -116,11 +116,11 @@ static inline void __omp_conf_set_default(void)
     __omp_conf.pqueue_new_depth                 = 0;
     __omp_conf.pqueue_untied_depth              = 1;
     __omp_conf.task_recycler_capacity           = 8192;
-    __omp_conf.task_fiber_stack_size            = 32768;
-    __omp_conf.task_fiber_recycler_capacity     = 256;
+    __omp_conf.task_ucontext_stack_size            = 32768;
+    __omp_conf.task_ucontext_recycler_capacity     = 256;
     __omp_conf.task_depth_threshold             = 4;
     __omp_conf.task_dry_run                     = 0;
-    __omp_conf.task_use_fiber                   = 1;
+    __omp_conf.task_use_ucontext                   = 1;
     __omp_conf.task_trace                       = 0;
     __omp_conf.task_trace_auto                  = 0;
     __omp_conf.task_trace_mask                  = ~((int)0);
@@ -177,10 +177,10 @@ void __omp_conf_init(void)
             PARAM("newdepth",                           &__omp_conf.pqueue_new_depth,                           MPC_CONF_INT,   "Depth of the new tasks lists in the tree"),
             PARAM("untieddepth",                        &__omp_conf.pqueue_untied_depth,                        MPC_CONF_INT,   "Depth of the untied tasks lists in the tree"),
             PARAM("taskrecyclercapacity",               &__omp_conf.task_recycler_capacity,                     MPC_CONF_INT,   "Task recycler capacity"),
-            PARAM("fiberstacksize",                     &__omp_conf.task_fiber_stack_size,                      MPC_CONF_INT,   "Task fiber stack size (in bytes)"),
-            PARAM("fiberrecyclercapacity",              &__omp_conf.task_fiber_recycler_capacity,               MPC_CONF_INT,   "Task fiber recycler capacity"),
-            PARAM("depththreshold",                     &__omp_conf.task_depth_threshold,                       MPC_CONF_INT,   "Maximum task depth before it is run undeferedly on parent's fiber"),
-            PARAM("fiber",                              &__omp_conf.task_use_fiber,                             MPC_CONF_BOOL,  "Enable task fiber"),
+            PARAM("ucontextstacksize",                     &__omp_conf.task_ucontext_stack_size,                      MPC_CONF_INT,   "Task ucontext stack size (in bytes)"),
+            PARAM("ucontextrecyclercapacity",              &__omp_conf.task_ucontext_recycler_capacity,               MPC_CONF_INT,   "Task ucontext recycler capacity"),
+            PARAM("depththreshold",                     &__omp_conf.task_depth_threshold,                       MPC_CONF_INT,   "Maximum task depth before it is run undeferedly on parent's ucontext"),
+            PARAM("ucontext",                              &__omp_conf.task_use_ucontext,                             MPC_CONF_BOOL,  "Enable task ucontext"),
             PARAM("trace",                              &__omp_conf.task_trace,                                 MPC_CONF_BOOL,  "Enable task tracing"),
             PARAM("traceauto",                          &__omp_conf.task_trace_auto,                            MPC_CONF_BOOL,  "Enable automatic task tracing"),
             PARAM("tracemask",                          &__omp_conf.task_trace_mask,                            MPC_CONF_INT,   "Define events to be traced"),
@@ -902,13 +902,13 @@ static inline void __read_env_variables()
         mpc_common_debug_log("\n");
 
 
-        mpc_common_debug_log("\tTasks fiber");
-# if MPC_OMP_TASK_COMPILE_FIBER
+        mpc_common_debug_log("\tTasks ucontext");
+# if MPC_OMP_TASK_COMPILE_UCONTEXT
         mpc_common_debug_log("\t\tCompiled=yes");
-        mpc_common_debug_log("\t\tEnabled=%s", MPC_OMP_TASK_FIBER_ENABLED ? "yes" : "no");
-# else /* MPC_OMP_TASK_COMPILE_FIBER */
+        mpc_common_debug_log("\t\tEnabled=%s", MPC_OMP_TASK_UCONTEXT_ENABLED ? "yes" : "no");
+# else /* MPC_OMP_TASK_COMPILE_UCONTEXT */
         mpc_common_debug_log("\t\tCompiled=no");
-# endif /* MPC_OMP_TASK_COMPILE_FIBER */
+# endif /* MPC_OMP_TASK_COMPILE_UCONTEXT */
         mpc_common_debug_log("\n");
         mpc_common_debug_log("\tOMP_SCHEDULE %d", OMP_SCHEDULE );
 
