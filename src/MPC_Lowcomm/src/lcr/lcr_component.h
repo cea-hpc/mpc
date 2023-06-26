@@ -43,7 +43,7 @@ typedef struct lcr_component {
 } lcr_component_t;
 
 
-lcr_component_h * lcr_query_component_by_name(const char * name);
+lcr_component_t * lcr_query_component_by_name(const char * name);
 
 int lcr_query_components(lcr_component_h **components_p, 
                          unsigned *num_components_p);

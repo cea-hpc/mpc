@@ -214,12 +214,12 @@ void lcp_context_task_get(lcp_context_h ctx, int tid, lcp_task_h *task_p)
         }
 }
 
-static inline struct lcr_component_t * __resolve_config_to_driver(struct _mpc_lowcomm_config_struct_net_driver_config * driver_config)
+static inline lcr_component_t * __resolve_config_to_driver(struct _mpc_lowcomm_config_struct_net_driver_config * driver_config)
 {
         assume((0 <= driver_config->driver.type) && (driver_config->driver.type < MPC_LOWCOMM_CONFIG_DRIVER_COUNT));
 
         const char * const driver_name = _mpc_lowcomm_config_struct_net_driver_type_name[driver_config->driver.type];
-        lcr_component_h * reference_component = lcr_query_component_by_name(driver_name);
+        lcr_component_t * reference_component = lcr_query_component_by_name(driver_name);
 
         if(!reference_component)
         {
@@ -306,9 +306,6 @@ TODO(understand why it crashes running without networking);
         /* The case of a single process and multiple tasks == TBSM only */
         if( (mpc_common_get_process_count() == 1) && (mpc_common_get_task_count() > 1) )
         {
-
-                unsigned int j = 0;
-
                 for(i=0; i < *rail_count; i++)
                 {
                         struct _mpc_lowcomm_config_struct_net_driver_config *driver_config = _mpc_lowcomm_conf_driver_unfolded_get(rails[i]->config);
@@ -326,7 +323,7 @@ TODO(understand why it crashes running without networking);
 
         /* Now count non-null and reshape */
         int final_count = 0;
-        struct _mpc_lowcomm_config_struct_net_rail *returned_rails[RAIL_BUFFER_SIZE];
+        struct _mpc_lowcomm_config_struct_net_rail *returned_rails[RAIL_BUFFER_SIZE] = {0};
 
         for(i=0; i < *rail_count; i++)
         {
@@ -462,7 +459,7 @@ static inline int __one_component_is(lcp_context_h ctx, const char* name)
         unsigned int i;
         for(i = 0 ; i < ctx->num_cmpts; i++)
         {
-                if(!strcmp(ctx->cmpts[i].name, "name"))
+                if(!strcmp(ctx->cmpts[i].name, name))
                 {
                         return 1;
                 }
@@ -550,11 +547,15 @@ static inline int __check_configuration(lcp_context_h ctx)
                 ctx->config.multirail_enabled = 0;
         }
 
-
-        if( __one_component_is(ctx, "tcp") && (__get_component_device_count(ctx) > 1) && !ctx->config.multirail_enabled)
+        /* No more than 1 device in TCP */
+        if( __one_component_is(ctx, "tcp") && !ctx->config.multirail_enabled)
         {
-                mpc_common_debug_warning("LCP: cannot use multiple device with tcp.");
-                return 1;
+                lcr_component_t *tcp_cmpt = lcr_query_component_by_name("tcp");
+                if(tcp_cmpt->num_devices > 1)
+                {
+                        mpc_common_debug_warning("LCP: cannot use multiple device with tcp.");
+                        return 1;
+                }
         }
 
         return __generate_configuration_summary(ctx);
@@ -591,6 +592,14 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
                 rc = LCP_ERROR;
                 goto out_free_ctx;
         }
+
+
+        /* Get global configuration */
+        struct _mpc_lowcomm_config_struct_protocol * config = _mpc_lowcomm_config_proto_get();
+
+        ctx->config.multirail_enabled    = config->multirail_enabled;
+	ctx->config.rndv_mode            = (lcp_rndv_mode_t)config->rndv_mode;
+        ctx->config.offload              = config->offload;
 
         ctx->process_uid = param->process_uid;
 

@@ -10,7 +10,7 @@
 lcr_component_t *lcr_component_list = NULL; 
 
 
-lcr_component_h * lcr_query_component_by_name(const char * name)
+lcr_component_t * lcr_query_component_by_name(const char * name)
 {
         lcr_component_t * tmp = NULL;
         LL_FOREACH(lcr_component_list, tmp) {
