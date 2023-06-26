@@ -999,12 +999,12 @@ static mpc_conf_config_type_t *__mpc_lowcomm_cli_conf_init(void)
 {
 	mpc_conf_config_type_t *cliopt = mpc_conf_config_type_init("options",
 #ifdef MPC_USE_PORTALS
-	                                                           PARAM("portals4", ___mpc_lowcomm_cli_conf_option_init("portals4", "portalsmpi", NULL), MPC_CONF_TYPE, "Combination of Portals and SHM"),
+	                                                           PARAM("portals4", ___mpc_lowcomm_cli_conf_option_init("portals4", "tbsmmpi", "portalsmpi"), MPC_CONF_TYPE, "Combination of Portals and SHM"),
 #endif
 #ifdef MPC_USE_OFI
-	                                                           PARAM("ofi", ___mpc_lowcomm_cli_conf_option_init("ofi", "ofimpi", NULL), MPC_CONF_TYPE, "OFI Alone"),
+	                                                           PARAM("ofi", ___mpc_lowcomm_cli_conf_option_init("ofi", "tbsmmpi", "ofimpi"), MPC_CONF_TYPE, "OFI Alone"),
 #endif
-	                                                           PARAM("tcp", ___mpc_lowcomm_cli_conf_option_init("tcp", "tcpmpi", NULL), MPC_CONF_TYPE, "TCP Alone"),
+	                                                           PARAM("tcp", ___mpc_lowcomm_cli_conf_option_init("tcp", "tbsmmpi", "tcpmpi"), MPC_CONF_TYPE, "TCP Alone"),
 	                                                           NULL);
 
 	mpc_conf_config_type_t *cli = mpc_conf_config_type_init("cli",
