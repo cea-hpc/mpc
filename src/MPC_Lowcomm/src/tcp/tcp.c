@@ -25,6 +25,7 @@
 #include "msg_cpy.h"
 
 #include <dirent.h>
+#include <string.h>
 #ifdef MPC_LOWCOMM_PROTOCOL
 #include <lcr/lcr_component.h>
 #endif
@@ -507,6 +508,18 @@ int lcr_tcp_query_devices(__UNUSED__ lcr_component_t *component,
 		/* avoid reading entry like . and .. */
 		if(entry->d_type != DT_LNK)
 		{
+			continue;
+		}
+
+		if(!strcmp(entry->d_name, "lo"))
+		{
+			/* Skip loopback */
+			continue;
+		}
+
+		if(strstr(entry->d_name, "docker"))
+		{
+			/* Skip docker */
 			continue;
 		}
 

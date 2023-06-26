@@ -264,7 +264,7 @@ static inline int __init_lcr_component(struct _mpc_lowcomm_config_struct_net_rai
                 unsigned int i = 0;
                 for(i = 0; i < component->num_devices; i++)
                 {
-                        /* TODO(besnardjb): add support for regular expressions */
+                        TODO(Device detection logic is too simple);
                         if(strstr(rail->device, component->devices[i].name))
                         {
                                 memcpy(&filtered_devices[filtered_count], &component->devices[i], sizeof(lcr_device_t));
@@ -290,6 +290,8 @@ static inline int __init_lcr_component(struct _mpc_lowcomm_config_struct_net_rai
 
 static inline int __detect_most_optimal_network_config(struct _mpc_lowcomm_config_struct_net_rail * rails[RAIL_BUFFER_SIZE],  unsigned int * rail_count)
 {
+TODO(understand why it crashes running without networking);
+#if 0
         /* The case of a single rank with a single process  == no networking */
         if( (mpc_common_get_process_count() == 1) && (mpc_common_get_task_count() == 1) )
         {
@@ -297,6 +299,7 @@ static inline int __detect_most_optimal_network_config(struct _mpc_lowcomm_confi
                 *rail_count = 0;
                 return 0;
         }
+#endif
 
         unsigned int i = 0;
 
