@@ -15,6 +15,7 @@
 #include "lcp_task.h"
 #include "lcr/lcr_def.h"
 #include "mpc_common_debug.h"
+#include "mpc_keywords.h"
 #include "mpc_lowcomm.h"
 #include "mpc_thread_accessor.h"
 #include <lcr/lcr_component.h>
@@ -178,7 +179,7 @@ err:
 
 /**
  * @brief Initialize resources with components and device name
- * 
+ *
  * @param resource_p resource to initialize
  * @param component components used to fill the resources
  * @param device used for resource name
@@ -214,6 +215,12 @@ void lcp_context_task_get(lcp_context_h ctx, int tid, lcp_task_h *task_p)
         }
 }
 
+/**
+ * @brief This takes a rail configuration and resolves the corresponding LCP driver name to return its internal configurations
+ *
+ * @param driver_config a driver config to resolve
+ * @return lcr_component_t* The component template matching the driver
+ */
 static inline lcr_component_t * __resolve_config_to_driver(struct _mpc_lowcomm_config_struct_net_driver_config * driver_config)
 {
         assume((0 <= driver_config->driver.type) && (driver_config->driver.type < MPC_LOWCOMM_CONFIG_DRIVER_COUNT));
@@ -229,6 +236,13 @@ static inline lcr_component_t * __resolve_config_to_driver(struct _mpc_lowcomm_c
         return reference_component;
 }
 
+/**
+ * @brief This initializes a LCR component
+ *
+ * @param rail rail matching the component
+ * @param component target component to be initialized (in the components array)
+ * @return int 0 on success
+ */
 static inline int __init_lcr_component(struct _mpc_lowcomm_config_struct_net_rail *rail, struct lcr_component *component)
 {
         /* Get rail and config */
@@ -250,7 +264,7 @@ static inline int __init_lcr_component(struct _mpc_lowcomm_config_struct_net_rai
                                                 &component->num_devices))
         {
                 mpc_common_debug_error("Failed to query devices for %s", rail->name);
-                return 1;
+                return -1;
         }
 
         /* Filter only selected devices (as per rail configuration)
@@ -288,6 +302,13 @@ static inline int __init_lcr_component(struct _mpc_lowcomm_config_struct_net_rai
 
 #define RAIL_BUFFER_SIZE 32
 
+/**
+ * @brief This function is a logic used to filter rails in function of the state of MPC **before** starting them
+ * 
+ * @param rails array of rail pointers to be checked
+ * @param rail_count a pointer to the number of rails (to be changed if needed)
+ * @return int 0 on success
+ */
 static inline int __detect_most_optimal_network_config(struct _mpc_lowcomm_config_struct_net_rail * rails[RAIL_BUFFER_SIZE],  unsigned int * rail_count)
 {
 TODO(understand why it crashes running without networking);
@@ -341,6 +362,13 @@ TODO(understand why it crashes running without networking);
 }
 
 
+/**
+ * @brief This function is used to sort the rail array by priority before unfolding resources
+ * 
+ * @param pa pointer to pointer of rail (qsort)
+ * @param pb pointer to pointer of rail (qsort)
+ * @return int order function result
+ */
 int __sort_rails_by_priority(const void * pa, const void *pb)
 {
         struct _mpc_lowcomm_config_struct_net_rail **a = (struct _mpc_lowcomm_config_struct_net_rail**)pa;
@@ -349,6 +377,12 @@ int __sort_rails_by_priority(const void * pa, const void *pb)
         return (*a)->priority < (*b)->priority;
 }
 
+/**
+ * @brief This is the main function for initializing LCP & Rails
+ *
+ * @param ctx context to intialize
+ * @return int 0 on success
+ */
 static inline int __init_rails(lcp_context_h ctx)
 {
 	char *option_name = _mpc_lowcomm_config_net_get()->cli_default_network;
@@ -454,6 +488,13 @@ static inline int __init_rails(lcp_context_h ctx)
         return 0;
 }
 
+/**
+ * @brief Check if the component is being used in the given context
+ *
+ * @param ctx the context to check
+ * @param name the name of the component
+ * @return int 1 yes 0 no
+ */
 static inline int __one_component_is(lcp_context_h ctx, const char* name)
 {
         unsigned int i;
@@ -461,14 +502,20 @@ static inline int __one_component_is(lcp_context_h ctx, const char* name)
         {
                 if(!strcmp(ctx->cmpts[i].name, name))
                 {
-                        return 1;
+                        return -1;
                 }
         }
 
         return 0;
 }
 
-static inline unsigned int __get_component_device_count(lcp_context_h ctx)
+/**
+ * @brief Helper function to count total numbers of devices on a given context
+ *
+ * @param ctx the context to count from
+ * @return number of devices
+ */
+__UNUSED__ static inline unsigned int __get_component_device_count(lcp_context_h ctx)
 {
         unsigned int ret = 0;
         unsigned int i = 0;
@@ -480,7 +527,12 @@ static inline unsigned int __get_component_device_count(lcp_context_h ctx)
         return ret;
 }
 
-
+/**
+ * @brief This function generates the listing of the network configuration when passing -v to mpcrun
+ * 
+ * @param ctx the context to generate the description of
+ * @return int 0 on success
+ */
 static inline int __generate_configuration_summary(lcp_context_h ctx)
 {
         if(mpc_common_get_flags()->sctk_network_description_string)
@@ -530,13 +582,18 @@ static inline int __generate_configuration_summary(lcp_context_h ctx)
         return 0;
 }
 
-
+/**
+ * @brief This is called after fully initializing drivers to validate final configuration
+ * 
+ * @param ctx the context to validate
+ * @return int 1 on error.
+ */
 static inline int __check_configuration(lcp_context_h ctx)
 {
         /* Does not support heterogeous multirail (tsbm always counted) */
         if(ctx->num_cmpts > 2) {
                 mpc_common_debug_error("LCP: heterogeous multirail not supported");
-                return 1;
+                return -1;
         }
 
         /* Does not support multirail with tcp */
@@ -554,14 +611,20 @@ static inline int __check_configuration(lcp_context_h ctx)
                 if(tcp_cmpt->num_devices > 1)
                 {
                         mpc_common_debug_warning("LCP: cannot use multiple device with tcp.");
-                        return 1;
+                        return -1;
                 }
         }
 
         return __generate_configuration_summary(ctx);
 }
 
-
+/**
+ * @brief This is the main entry point to configure LCP
+ * 
+ * @param ctx_p pointer to the context
+ * @param param configuration params for pack, unpack and getuid
+ * @return int LCP_SUCCESS on success
+ */
 int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
 {
 	int rc = LCP_SUCCESS;
@@ -643,6 +706,7 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
 
 	return LCP_SUCCESS;
 
+TODO("Check how things are released it seems weak");
 out_free_ifaces:
         for (i=0; i<ctx->num_resources; i++) {
                 sctk_rail_info_t *iface = ctx->resources[i].iface;
@@ -664,7 +728,7 @@ err:
 
 /**
  * @brief Release a context.
- * 
+ *
  * @param ctx context to free
  * @return int MPI_SUCCESS in case of success
  */
