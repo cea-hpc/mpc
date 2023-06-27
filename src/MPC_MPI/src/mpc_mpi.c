@@ -425,138 +425,92 @@ static void __sctk_init_mpi_errors()
 
 static int mpi_check_op_type_func_MPI_SUM(MPI_Datatype datatype)
 {
-	switch(datatype)
-	{
-		mpi_check_op_type_func_notavail(MPI_BYTE);
+    mpi_check_op_type_func_notavail(MPI_BYTE);
 
-		default: return 0;
-	}
 	return 0;
 }
 
 static int mpi_check_op_type_func_MPI_MAX(MPI_Datatype datatype)
 {
-	switch(datatype)
-	{
-		mpi_check_op_type_func_notavail(MPI_BYTE);
-	}
+    mpi_check_op_type_func_notavail(MPI_BYTE);
+
 	return 0;
 }
 
 static int mpi_check_op_type_func_MPI_MIN(MPI_Datatype datatype)
 {
-	switch(datatype)
-	{
-		mpi_check_op_type_func_notavail(MPI_BYTE);
+    mpi_check_op_type_func_notavail(MPI_BYTE);
 
-		default: return 0;
-	}
 	return 0;
 }
 
 static int mpi_check_op_type_func_MPI_PROD(MPI_Datatype datatype)
 {
-	switch(datatype)
-	{
-		mpi_check_op_type_func_notavail(MPI_BYTE);
+    mpi_check_op_type_func_notavail(MPI_BYTE);
 
-		default: return 0;
-	}
 	return 0;
 }
 
 static int mpi_check_op_type_func_MPI_LAND(MPI_Datatype datatype)
 {
-	switch(datatype)
-	{
-		mpi_check_op_type_func_float();
-		mpi_check_op_type_func_notavail(MPI_BYTE);
+    mpi_check_op_type_func_float();
+    mpi_check_op_type_func_notavail(MPI_BYTE);
 
-		default: return 0;
-	}
 	return 0;
 }
 
 static int mpi_check_op_type_func_MPI_BAND(MPI_Datatype datatype)
 {
-	switch(datatype)
-	{
-		mpi_check_op_type_func_float();
+    mpi_check_op_type_func_float();
 
-		default: return 0;
-	}
 	return 0;
 }
 
 static int mpi_check_op_type_func_MPI_LOR(MPI_Datatype datatype)
 {
-	switch(datatype)
-	{
-		mpi_check_op_type_func_float();
-		mpi_check_op_type_func_notavail(MPI_BYTE);
+    mpi_check_op_type_func_float();
+    mpi_check_op_type_func_notavail(MPI_BYTE);
 
-		default: return 0;
-	}
 	return 0;
 }
 
 static int mpi_check_op_type_func_MPI_BOR(MPI_Datatype datatype)
 {
-	switch(datatype)
-	{
-		mpi_check_op_type_func_float();
+    mpi_check_op_type_func_float();
 
-		default: return 0;
-	}
 	return 0;
 }
 
 static int mpi_check_op_type_func_MPI_LXOR(MPI_Datatype datatype)
 {
-	switch(datatype)
-	{
-		mpi_check_op_type_func_float();
-		mpi_check_op_type_func_notavail(MPI_BYTE);
+    mpi_check_op_type_func_float();
+    mpi_check_op_type_func_notavail(MPI_BYTE);
 
-		default: return 0;
-	}
 	return 0;
 }
 
 static int mpi_check_op_type_func_MPI_BXOR(MPI_Datatype datatype)
 {
-	switch(datatype)
-	{
-		mpi_check_op_type_func_float();
+    mpi_check_op_type_func_float();
 
-		default: return 0;
-	}
 	return 0;
 }
 
 static int mpi_check_op_type_func_MPI_MINLOC(MPI_Datatype datatype)
 {
-	switch(datatype)
-	{
-		mpi_check_op_type_func_float();
-		mpi_check_op_type_func_integer();
-		mpi_check_op_type_func_notavail(MPI_BYTE);
+    mpi_check_op_type_func_float();
+    mpi_check_op_type_func_integer();
+    mpi_check_op_type_func_notavail(MPI_BYTE);
 
-		default: return 0;
-	}
 	return 0;
 }
 
 static int mpi_check_op_type_func_MPI_MAXLOC(MPI_Datatype datatype)
 {
-	switch(datatype)
-	{
-		mpi_check_op_type_func_float();
-		mpi_check_op_type_func_integer();
-		mpi_check_op_type_func_notavail(MPI_BYTE);
+    mpi_check_op_type_func_float();
+    mpi_check_op_type_func_integer();
+    mpi_check_op_type_func_notavail(MPI_BYTE);
 
-		default: return 0;
-	}
 	return 0;
 }
 
@@ -2267,7 +2221,7 @@ static inline MPI_Datatype *__get_typemask(MPI_Datatype datatype, int *type_mask
 	*type_mask_count = 0;
 
 	_mpc_dt_derived_t *   derived_user_types    = NULL;
-	_mpc_dt_contiguout_t *contiguous_user_types = NULL;
+	_mpc_dt_contiguous_t *contiguous_user_types = NULL;
 
 	switch(_mpc_dt_get_kind(datatype) )
 	{
@@ -6558,12 +6512,11 @@ sctk_op_t *sctk_convert_to_mpc_op(MPI_Op op)
 }
 
 #define ADD_FUNC_HANDLER(func, t, op)           \
-	case t:                                 \
-		op = (sctk_Op_f)func ## _ ## t; \
-		break
+    if(datatype == t)	\
+		op = (sctk_Op_f)func ## _ ## t; 
+
 #define COMPAT_DATA_TYPE(op, func)                                              \
 	if(op == func){                                                         \
-		switch(datatype){                                               \
 			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_SIGNED_CHAR, op);            \
 			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_CHAR, op);                   \
 			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_CHARACTER, op);              \
@@ -6608,14 +6561,11 @@ sctk_op_t *sctk_convert_to_mpc_op(MPI_Op op)
 			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_COUNT, op);                  \
 			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_AINT, op);                   \
 			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_OFFSET, op);                 \
-			default:                                                \
 				not_reachable();                                \
-		}                                                               \
 	}
 
 #define COMPAT_DATA_TYPE2(op, func)                                     \
 	if(op == func){                                                 \
-		switch(datatype){                                       \
 			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_SIGNED_CHAR, op);    \
 			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_CHAR, op);           \
 			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_BYTE, op);           \
@@ -6645,14 +6595,11 @@ sctk_op_t *sctk_convert_to_mpc_op(MPI_Op op)
 			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_AINT, op);           \
 			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_OFFSET, op);         \
 			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_C_BOOL, op);         \
-			default:                                        \
 				not_reachable();                        \
-		}                                                       \
 	}
 
 #define COMPAT_DATA_TYPE3(op, func)                                        \
 	if(op == func){                                                    \
-		switch(datatype){                                          \
 			ADD_FUNC_HANDLER(func, MPC_FLOAT_INT, op);         \
 			ADD_FUNC_HANDLER(func, MPC_LONG_INT, op);          \
 			ADD_FUNC_HANDLER(func, MPC_DOUBLE_INT, op);        \
@@ -6668,9 +6615,7 @@ sctk_op_t *sctk_convert_to_mpc_op(MPI_Op op)
 			ADD_FUNC_HANDLER(func, MPC_COMPLEX16, op);         \
 			ADD_FUNC_HANDLER(func, MPC_DOUBLE_COMPLEX, op);    \
 			ADD_FUNC_HANDLER(func, MPC_COMPLEX32, op);         \
-			default:                                           \
 				not_reachable();                           \
-		}                                                          \
 	}
 
 sctk_Op_f sctk_get_common_function(mpc_lowcomm_datatype_t datatype, sctk_Op op)
@@ -6751,78 +6696,32 @@ sctk_mpi_shared_mem_buffer_collect(union shared_mem_buffer *b,
 	union shared_mem_buffer res = { 0 };
 	size_t tsize = 0;
 
-	switch(type)
-	{
-		case MPI_INT:
-			tsize = sizeof(int);
-			break;
-
-		case MPI_FLOAT:
-			tsize = sizeof(float);
-			break;
-
-		case MPI_CHAR:
-			tsize = sizeof(char);
-			break;
-
-		case MPI_DOUBLE:
-			tsize = sizeof(double);
-			break;
-
-		default:
-			mpc_common_debug_fatal("Unsupported data-type");
-	}
+    if(type == MPI_INT)         tsize = sizeof(int);
+    else if(type == MPI_FLOAT)  tsize = sizeof(float);
+    else if(type == MPI_CHAR)   tsize = sizeof(char);
+    else if(type == MPI_DOUBLE) tsize = sizeof(double);
+    else mpc_common_debug_fatal("Unsupported data-type");
 
 	switch(op)
 	{
 		case MPI_SUM:
-			switch(type)
-			{
-				case MPI_INT:
-					MPI_SHM_OP_SUM(i)
-					break;
-
-				case MPI_FLOAT:
-					MPI_SHM_OP_SUM(f)
-					break;
-
-				case MPI_CHAR:
-					MPI_SHM_OP_SUM(c)
-					break;
-
-				case MPI_DOUBLE:
-					MPI_SHM_OP_SUM(d)
-					break;
-
-				default:
-					mpc_common_debug_fatal("Unsupported data-type");
-			}
+            if(type == MPI_INT)         MPI_SHM_OP_SUM(i)
+            else if(type == MPI_FLOAT)  MPI_SHM_OP_SUM(f)
+            else if(type == MPI_CHAR)   MPI_SHM_OP_SUM(c)
+            else if(type == MPI_DOUBLE) MPI_SHM_OP_SUM(d)
+            else mpc_common_debug_fatal("Unsupported data-type");
+			
 			break;
 
 		case MPI_PROD:
-			switch(type)
-			{
-				case MPI_INT:
-					MPI_SHM_OP_PROD(i)
-					break;
-
-				case MPI_FLOAT:
-					MPI_SHM_OP_PROD(f)
-					break;
-
-				case MPI_CHAR:
-					MPI_SHM_OP_PROD(c)
-					break;
-
-				case MPI_DOUBLE:
-					MPI_SHM_OP_PROD(d)
-					break;
-
-				default:
-					mpc_common_debug_fatal("Unsupported data-type");
-			}
-			break;
-	}
+            if(type == MPI_INT)         MPI_SHM_OP_PROD(i)
+            else if(type == MPI_FLOAT)  MPI_SHM_OP_PROD(f)
+            else if(type == MPI_CHAR)   MPI_SHM_OP_PROD(c)
+            else if(type == MPI_DOUBLE) MPI_SHM_OP_PROD(d)
+            else mpc_common_debug_fatal("Unsupported data-type");
+			
+            break;
+    }
 
 	sctk_mpi_shared_mem_buffer_get(&res, type, count, dest, count * tsize);
 }
@@ -12953,34 +12852,14 @@ int PMPI_Type_extent(MPI_Datatype datatype, MPI_Aint *extent)
 {
 	mpi_check_type_create(datatype, MPI_COMM_SELF);
 
-	switch(datatype)
-	{
-		case MPI_LONG:
-			*extent = sizeof(long);
-			break;
-
-		case MPI_SHORT:
-			*extent = sizeof(short);
-			break;
-
-		case MPI_BYTE:
-		case MPI_CHAR:
-			*extent = sizeof(char);
-			break;
-
-		case MPI_INT:
-			*extent = sizeof(int);
-			break;
-
-		case MPI_FLOAT:
-			*extent = sizeof(float);
-			break;
-
-		case MPI_DOUBLE:
-			*extent = sizeof(double);
-			break;
-
-		default: {
+    if(datatype == MPI_LONG)        *extent = sizeof(long);
+    else if(datatype == MPI_SHORT)  *extent = sizeof(short);
+    else if(datatype == MPI_CHAR ||
+            datatype == MPI_BYTE)   *extent = sizeof(char);
+    else if(datatype == MPI_INT)    *extent = sizeof(int);
+    else if(datatype == MPI_FLOAT)  *extent = sizeof(float);
+    else if(datatype == MPI_DOUBLE) *extent = sizeof(double);
+    else {
 			MPI_Aint UB;
 			MPI_Aint LB;
 
@@ -12994,7 +12873,6 @@ int PMPI_Type_extent(MPI_Datatype datatype, MPI_Aint *extent)
 
 			mpc_common_nodebug("UB %d LB %d EXTENT %d", UB, LB, *extent);
 		}
-	}
 
 	return MPI_SUCCESS;
 }
@@ -13299,7 +13177,7 @@ int PMPI_Type_get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Coun
 		return res;
 	}
 
-	_mpc_dt_contiguout_t *contiguous_user_types = NULL;
+	_mpc_dt_contiguous_t *contiguous_user_types = NULL;
 	_mpc_dt_derived_t *target_type = NULL;
 	int done = 0;
 	struct _mpc_dt_layout *layout = NULL;
@@ -13887,7 +13765,7 @@ int PMPI_Pack_external_size(const char *datarep, int incount, MPI_Datatype datat
 
 	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = NULL;
 	_mpc_dt_derived_t *derived_user_types           = NULL;
-	_mpc_dt_contiguout_t *contiguous_user_types     = NULL;
+	_mpc_dt_contiguous_t *contiguous_user_types     = NULL;
 
 	/* Now generate the final size according to the internal type
 	 * derived or contiguous one */

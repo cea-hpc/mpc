@@ -378,19 +378,17 @@ static inline int sctk_mpi_type_is_shared_mem(MPI_Datatype type, int count) {
     return 0;
   }
 
-  switch (type) {
-  case MPI_INT:
-  case MPI_FLOAT:
-  case MPI_CHAR:
-  case MPI_DOUBLE:
-    return 1;
-
-  default:
-    return 0;
+  if(type == MPI_INT   ||
+     type == MPI_FLOAT ||
+     type == MPI_CHAR  ||
+     type == MPI_DOUBLE) {
+      return 1;
   }
+  
+  return 0;
 }
 
-static inline int sctk_mpi_op_is_shared_mem(MPI_Datatype op) {
+static inline int sctk_mpi_op_is_shared_mem(MPI_Op op) {
   switch (op) {
   case MPI_SUM:
     return 1;
@@ -405,28 +403,28 @@ static inline void sctk_mpi_shared_mem_buffer_fill(union shared_mem_buffer *b,
                                                    void *src) {
   int i;
 
-  switch (type) {
-  case MPI_INT:
+  if(type == MPI_INT) {
     for (i = 0; i < count; i++)
       b->i[i] = ((int *)src)[i];
-    break;
-  case MPI_FLOAT:
+    return;
+  }
+  if(type == MPI_FLOAT) {
     for (i = 0; i < count; i++)
       b->f[i] = ((float *)src)[i];
-    break;
-  case MPI_CHAR:
+    return;
+  }
+  if(type == MPI_CHAR) {
     for (i = 0; i < count; i++)
       b->c[i] = ((char *)src)[i];
-    break;
-
-  case MPI_DOUBLE:
+    return;
+  }
+  if(type == MPI_DOUBLE) {
     for (i = 0; i < count; i++)
       b->d[i] = ((double *)src)[i];
-    break;
-
-  default:
-    mpc_common_debug_fatal("Unsupported data-type");
+    return;
   }
+  
+  mpc_common_debug_fatal("Unsupported data-type");
 }
 
 static inline void sctk_mpi_shared_mem_buffer_get(union shared_mem_buffer *b,
@@ -436,32 +434,33 @@ static inline void sctk_mpi_shared_mem_buffer_get(union shared_mem_buffer *b,
   int i;
   MPI_Aint tsize;
 
-  switch (type) {
-  case MPI_INT:
+  if(type == MPI_INT) {
     for (i = 0; i < count; i++)
       ((int *)dest)[i] = b->i[i];
-    break;
-  case MPI_FLOAT:
+    return;
+  }
+  if(type == MPI_FLOAT) {
     for (i = 0; i < count; i++)
       ((float *)dest)[i] = b->f[i];
-    break;
-  case MPI_CHAR:
+    return;
+  }
+  if(type == MPI_CHAR) {
     for (i = 0; i < count; i++)
       ((char *)dest)[i] = b->c[i];
-    break;
-
-  case MPI_DOUBLE:
+    return;
+  }
+  if(type == MPI_DOUBLE) {
     for (i = 0; i < count; i++)
       ((double *)dest)[i] = b->d[i];
-    break;
-
-  default:
-    /* This is the crazy case contig to derived
-     * when being packed (non uniform types) */
-    PMPI_Type_extent(type, &tsize);
-    int cnt = 0;
-    PMPI_Unpack(b->c, source_size, &cnt, dest, count, type, MPI_COMM_WORLD);
+    return;
   }
+
+  /* This is the crazy case contig to derived
+   * when being packed (non uniform types) */
+  PMPI_Type_extent(type, &tsize);
+  int cnt = 0;
+  PMPI_Unpack(b->c, source_size, &cnt, dest, count, type, MPI_COMM_WORLD);
+
 }
 
 
@@ -604,7 +603,7 @@ int _mpc_mpi_init_counter(int *counter);
 		MPI_ERROR_REPORT(comm, MPI_ERR_TAG, "Error bad tag provided")
 
 #define mpi_check_op_type_func(t)             case t: return mpi_check_op_type_func_ ## t(datatype)
-#define mpi_check_op_type_func_notavail(t)    case t: return 1
+#define mpi_check_op_type_func_notavail(t)    if(datatype == t) return 1
 
 #if 0
 static int mpi_check_op_type_func_MPI_(MPI_Datatype datatype)

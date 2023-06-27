@@ -277,9 +277,9 @@ typedef int MPC_Message;
  * DATATYPES *
  *************/
 
-#define MPC_DATATYPE_NULL ( (mpc_lowcomm_datatype_t) -1 )
-#define MPC_UB ( (mpc_lowcomm_datatype_t) -2 )
-#define MPC_LB ( (mpc_lowcomm_datatype_t) -3 )
+#define MPC_DATATYPE_NULL MPC_LOWCOMM_DATATYPE_NULL
+#define MPC_UB ( (mpc_lowcomm_datatype_t) -2 ) /* Removed from the standard at the 3.0 */
+#define MPC_LB ( (mpc_lowcomm_datatype_t) -3 ) /* Removed from the standard at the 3.0 */
 
 
 /* for comm_split method */
@@ -292,84 +292,84 @@ typedef int MPC_Message;
 #define MPC_COMM_TYPE_APP 7
 #define MPC_COMM_TYPE_NODE 8
 
-/* BE VERY CAREFUL HERE /!\/!\/!\/!\/!\/!\/!\/!\
- *  You have to note that these types
- *  are offseted of SCTK_DERIVED_DATATYPE_BASE
- *  actually making them derived ones.
- *  As common ones they are initialized in
- *  \ref __mpc_common_types_init however
- *  they are derived ones !
- *
- * See how the value is incremented and how MPC_STRUCT_DATATYPE_COUNT
- * is the last value plus 1.
- *
- */
-#define MPC_FLOAT_INT ( SCTK_DERIVED_DATATYPE_BASE )
-#define MPC_LONG_INT ( SCTK_DERIVED_DATATYPE_BASE + 1 )
-#define MPC_DOUBLE_INT ( SCTK_DERIVED_DATATYPE_BASE + 2 )
-#define MPC_SHORT_INT ( SCTK_DERIVED_DATATYPE_BASE + 3 )
-#define MPC_2INT ( SCTK_DERIVED_DATATYPE_BASE + 4 )
-#define MPC_2FLOAT ( SCTK_DERIVED_DATATYPE_BASE + 5 )
-#define MPC_COMPLEX ( SCTK_DERIVED_DATATYPE_BASE + 6 )
-#define MPC_2DOUBLE_PRECISION ( SCTK_DERIVED_DATATYPE_BASE + 7 )
-#define MPC_LONG_DOUBLE_INT ( SCTK_DERIVED_DATATYPE_BASE + 8 )
-#define MPC_COMPLEX8 ( SCTK_DERIVED_DATATYPE_BASE + 9 )
-#define MPC_COMPLEX16 ( SCTK_DERIVED_DATATYPE_BASE + 10 )
-#define MPC_COMPLEX32 ( SCTK_DERIVED_DATATYPE_BASE + 11 )
-#define MPC_DOUBLE_COMPLEX ( SCTK_DERIVED_DATATYPE_BASE + 12 )
-#define MPC_2INTEGER ( SCTK_DERIVED_DATATYPE_BASE + 13 )
-#define MPC_2REAL ( SCTK_DERIVED_DATATYPE_BASE + 14 )
+/************************
+ * Common derived types *
+ ************************/
 
-/* /!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\
- * If you change anything in this section update MPC_STRUCT_DATATYPE_COUNT
- * otherwise the first derived datatype created
- * will overwrite your last datatype
- * /!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\
- */
-#define MPC_STRUCT_DATATYPE_COUNT 15
-#define SCTK_COMMON_DATA_TYPE_COUNT 70
+/* C Types */
+#define MPC_C_COMPLEX             MPC_LOWCOMM_C_COMPLEX
+#define MPC_C_FLOAT_COMPLEX       MPC_LOWCOMM_C_FLOAT_COMPLEX
+#define MPC_C_DOUBLE_COMPLEX      MPC_LOWCOMM_C_DOUBLE_COMPLEX
+#define MPC_C_LONG_DOUBLE_COMPLEX MPC_LOWCOMM_C_LONG_DOUBLE_COMPLEX
+
+/* C++ Types */
+#define MPC_CXX_FLOAT_COMPLEX       MPC_LOWCOMM_CXX_FLOAT_COMPLEX
+#define MPC_CXX_DOUBLE_COMPLEX      MPC_LOWCOMM_CXX_DOUBLE_COMPLEX
+#define MPC_CXX_LONG_DOUBLE_COMPLEX MPC_LOWCOMM_CXX_LONG_DOUBLE_COMPLEX
+
+/* FORTRAN Types */
+#define MPC_COMPLEX        MPC_LOWCOMM_COMPLEX
+#define MPC_DOUBLE_COMPLEX MPC_LOWCOMM_DOUBLE_COMPLEX
+
+/* F08 Types */
+#define MPC_COMPLEX4  MPC_LOWCOMM_COMPLEX4
+#define MPC_COMPLEX8  MPC_LOWCOMM_COMPLEX8
+#define MPC_COMPLEX16 MPC_LOWCOMM_COMPLEX16
+#define MPC_COMPLEX32 MPC_LOWCOMM_COMPLEX32
+
+/* C Struct Types */
+#define MPC_FLOAT_INT         MPC_LOWCOMM_FLOAT_INT
+#define MPC_DOUBLE_INT        MPC_LOWCOMM_DOUBLE_INT
+#define MPC_LONG_INT          MPC_LOWCOMM_LONG_INT
+#define MPC_2INT              MPC_LOWCOMM_2INT
+#define MPC_SHORT_INT         MPC_LOWCOMM_SHORT_INT
+#define MPC_LONG_DOUBLE_INT   MPC_LOWCOMM_LONG_DOUBLE_INT
+
+/* Fortran Struct Types */
+#define MPC_2REAL             MPC_LOWCOMM_2REAL
+#define MPC_2INTEGER          MPC_LOWCOMM_2INTEGER
+#define MPC_2DOUBLE_PRECISION MPC_LOWCOMM_2DOUBLE_PRECISION
+
+/* MPC Types */
+#define MPC_2FLOAT MPC_LOWCOMM_2FLOAT
+
+
+#define MPC_CXX_BOOL MPC_LOWCOMM_CXX_BOOL
+
+/* Common and user types max counts */
+#define SCTK_COMMON_DATA_TYPE_COUNT MPC_LOWCOMM_TYPE_COMMON_LIMIT
 #define SCTK_USER_DATA_TYPES_MAX 4000
-#define SCTK_DERIVED_DATATYPE_BASE ( SCTK_COMMON_DATA_TYPE_COUNT + SCTK_USER_DATA_TYPES_MAX )
-
-/* Aliased struct data-types */
-#define MPC_C_COMPLEX MPC_COMPLEX
-#define MPC_C_FLOAT_COMPLEX MPC_COMPLEX8
-#define MPC_C_DOUBLE_COMPLEX MPC_COMPLEX16
-#define MPC_C_LONG_DOUBLE_COMPLEX MPC_COMPLEX32
-
-/* Predefined MPI datatypes corresponding to both C and Fortran datatypes */
-#define MPC_CXX_BOOL 59
-#define MPC_CXX_FLOAT_COMPLEX MPC_COMPLEX8
-#define MPC_CXX_DOUBLE_COMPLEX MPC_COMPLEX16
-#define MPC_CXX_LONG_DOUBLE_COMPLEX MPC_COMPLEX32
 
 /* Datatype decoders */
-
 typedef enum
 {
-	MPC_COMBINER_UNKNOWN = 0,
-	MPC_COMBINER_NAMED = 1,
-	MPC_COMBINER_DUP = 2,
-	MPC_COMBINER_CONTIGUOUS = 3,
-	MPC_COMBINER_VECTOR = 4,
-	MPC_COMBINER_HVECTOR = 5,
-	MPC_COMBINER_INDEXED = 6,
-	MPC_COMBINER_HINDEXED = 7,
-	MPC_COMBINER_INDEXED_BLOCK = 8,
-	MPC_COMBINER_HINDEXED_BLOCK = 9,
-	MPC_COMBINER_STRUCT = 10,
-	MPC_COMBINER_SUBARRAY = 11,
-	MPC_COMBINER_DARRAY = 12,
-	MPC_COMBINER_F90_REAL = 13,
-	MPC_COMBINER_F90_COMPLEX = 14,
-	MPC_COMBINER_F90_INTEGER = 15,
-	MPC_COMBINER_RESIZED = 16,
+	MPC_COMBINER_CONTIGUOUS = 0,
+	MPC_COMBINER_DARRAY,
+	MPC_COMBINER_DUP,
+	MPC_COMBINER_F90_COMPLEX,
+	MPC_COMBINER_F90_INTEGER,
+	MPC_COMBINER_F90_REAL,
+	MPC_COMBINER_HINDEXED,
+	MPC_COMBINER_HVECTOR,
+	MPC_COMBINER_INDEXED_BLOCK,
+	MPC_COMBINER_HINDEXED_BLOCK,
+	MPC_COMBINER_INDEXED,
+	MPC_COMBINER_NAMED,
+	MPC_COMBINER_RESIZED,
+	MPC_COMBINER_STRUCT,
+	MPC_COMBINER_SUBARRAY,
+	MPC_COMBINER_VECTOR,
+
 	/* *_INTEGER COMBINER ARE DEPRECATED
-	* in MPI 3.0 consequently they
-	* are never returned by get_envelope */
-	MPC_COMBINER_HINDEXED_INTEGER = 17,
-	MPC_COMBINER_STRUCT_INTEGER = 18,
-	MPC_COMBINER_HVECTOR_INTEGER = 19,
+     * They have been removed
+	 * in MPI 3.0 consequently they
+	 * are never returned by get_envelope */
+	MPC_COMBINER_HINDEXED_INTEGER,
+	MPC_COMBINER_STRUCT_INTEGER,
+	MPC_COMBINER_HVECTOR_INTEGER,
+
+    /* Special combiners */
+	MPC_COMBINER_UNKNOWN,
 	MPC_COMBINER_DUMMY,
 	MPC_COMBINER_COUNT__
 } MPC_Type_combiner;

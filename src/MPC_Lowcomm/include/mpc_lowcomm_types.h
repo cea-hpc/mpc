@@ -22,8 +22,10 @@
 #ifndef MPC_LOWCOMM_TYPES_H_
 #define MPC_LOWCOMM_TYPES_H_
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include <mpc_lowcomm_communicator.h>
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,7 +36,9 @@ extern "C" {
  * DATATYPES *
  *************/
 
-typedef int mpc_lowcomm_datatype_t;
+typedef struct MPI_ABI_Datatype *mpc_lowcomm_datatype_t;
+
+
 void mpc_lowcomm_register_type_is_common( int (*type_ptr)(mpc_lowcomm_datatype_t) );
 
 
