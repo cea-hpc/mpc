@@ -201,6 +201,5 @@ struct _sctk_thread_cleanup_buffer
 
 #define SCTK_MAX_MEMORY_SIZE      ( (unsigned long)52776558132224)
 #define SCTK_MAX_MEMORY_OFFSET    ( (unsigned long)2147483648)
-#define SCTK_PAGE_SIZE            (sysconf(_SC_PAGESIZE) )
 
 #endif /* MPC_THREAD_CONFIG_H_ */
