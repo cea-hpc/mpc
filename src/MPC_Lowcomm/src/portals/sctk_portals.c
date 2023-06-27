@@ -428,7 +428,7 @@ err:
 
 lcr_component_t ptl_component = {
         .name = { "ptl" },
-        .rail_name = { "portalsmpi" },
+        .rail_name = { 0 },
         .query_devices = lcr_ptl_query_devices,
         .iface_open = lcr_ptl_iface_open,
         .devices = NULL,

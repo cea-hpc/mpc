@@ -193,8 +193,11 @@ static inline void lcp_context_resource_init(lcp_rsc_desc_t *resource_p,
         /* Fetch configuration */
         lcr_rail_config_t *iface_config = 
                 _mpc_lowcomm_conf_rail_unfolded_get((char *)component->rail_name);
+        assume(iface_config != NULL);
         lcr_driver_config_t *driver_config =
                 _mpc_lowcomm_conf_driver_unfolded_get(iface_config->config);
+        assume(driver_config != NULL);
+
 
         /* Init resource */
         resource_p->iface_config  = iface_config;
@@ -259,6 +262,9 @@ static inline int __init_lcr_component(struct _mpc_lowcomm_config_struct_net_rai
 
         /* Retrieve reference configuration from driver */
         memcpy(component, __resolve_config_to_driver(driver_config), sizeof(struct lcr_component));
+
+        /* Make sure to set the corresponding rail name in the component */
+        (void)snprintf(component->rail_name, LCR_COMPONENT_NAME_MAX, "%s", rail->name);
 
         /* Load devices from component */
         if( lcp_context_query_component_devices(component,

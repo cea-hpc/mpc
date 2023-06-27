@@ -576,7 +576,7 @@ err:
 lcr_component_t tcp_component =
 {
 	.name          = { "tcp"    },
-	.rail_name     = { "tcpmpi" },
+	.rail_name     = { 0 },
 	.query_devices = lcr_tcp_query_devices,
 	.iface_open    = lcr_tcp_iface_open,
 	.devices       = NULL,
