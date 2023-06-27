@@ -1,25 +1,26 @@
 #include "lcp_context.h"
-#include "lcp.h"
-#include "lcp_common.h"
-#include "lcp_ep.h"
 
 #include <alloca.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <uthash.h>
 
-#include <lowcomm_config.h>
-#include <rail.h>
+#include <mpc_common_debug.h>
+#include <mpc_common_rank.h>
+#include <mpc_keywords.h>
 #include <sctk_alloc.h>
 
-#include "lcp_task.h"
-#include "lcr/lcr_def.h"
-#include "mpc_common_debug.h"
-#include "mpc_keywords.h"
+#include "lowcomm_config.h"
 #include "mpc_lowcomm.h"
-#include "mpc_thread_accessor.h"
-#include <lcr/lcr_component.h>
-#include <uthash.h>
+#include "rail.h"
+
+#include "lcp.h"
+#include "lcp_common.h"
+#include "lcp_ep.h"
+#include "lcp_task.h"
+#include "lcr/lcr_component.h"
+#include "lcr/lcr_def.h"
 
 //TODO: memset to 0 all allocated structure (especially those containing
 //      pointers). Creates non-null valid dummy pointers that can segfault 
@@ -61,7 +62,8 @@ static inline int lcp_context_set_am_handler(lcp_context_h ctx,
  */
 static int lcp_context_open_interfaces(lcp_context_h ctx)
 {
-	int rc, i;
+	int rc = 0;
+        int i = 0;
         lcp_rsc_desc_t *rsc = NULL;
 
 	for (i=0; i<ctx->num_resources; i++) {
@@ -497,7 +499,7 @@ static inline int __init_rails(lcp_context_h ctx)
  */
 static inline int __one_component_is(lcp_context_h ctx, const char* name)
 {
-        unsigned int i;
+        unsigned int i = 0;
         for(i = 0 ; i < ctx->num_cmpts; i++)
         {
                 if(!strcmp(ctx->cmpts[i].name, name))
@@ -533,13 +535,14 @@ __UNUSED__ static inline unsigned int __get_component_device_count(lcp_context_h
  * @param ctx the context to generate the description of
  * @return int 0 on success
  */
+#define NETWORK_DESC_BUFFER_SIZE (4*1024llu)
 static inline int __generate_configuration_summary(lcp_context_h ctx)
 {
         if(mpc_common_get_flags()->sctk_network_description_string)
         {
                 free( mpc_common_get_flags()->sctk_network_description_string);
         }
-        mpc_common_get_flags()->sctk_network_description_string = malloc(1024*4);
+        mpc_common_get_flags()->sctk_network_description_string = malloc(NETWORK_DESC_BUFFER_SIZE);
 
 
         unsigned int i = 0;
@@ -550,7 +553,7 @@ static inline int __generate_configuration_summary(lcp_context_h ctx)
 
         if(!ctx->num_cmpts)
         {
-                snprintf(name, 1024*4, "No networking");
+                snprintf(name, NETWORK_DESC_BUFFER_SIZE, "No networking");
                 return 0;
         }
 
@@ -561,22 +564,24 @@ static inline int __generate_configuration_summary(lcp_context_h ctx)
                 lcr_component_t * cmt = &ctx->cmpts[i];
 
                 (void)snprintf(tmp, 512, "\n - %s\n", cmt->name);
-                strncat(name, tmp, 4*1024 - 1);
+                strncat(name, tmp, NETWORK_DESC_BUFFER_SIZE - 1);
 
                 for(j = 0 ; j < cmt->num_devices; j++)
                 {
                         (void)snprintf(tmp, 512, " \t* %s\n", cmt->devices[j].name);
-                        strncat(name, tmp, 4*1024 - 1);
+                        strncat(name, tmp, NETWORK_DESC_BUFFER_SIZE - 1);
                 }
         }
 
-        strncat(name, "\nInitialized ressources:\n", 4*1024 - 1);
+        strncat(name, "\nInitialized ressources:\n", NETWORK_DESC_BUFFER_SIZE - 1);
 
-        for(i=0; i < ctx->num_resources; i++)
+        int k = 0;
+
+        for(k=0; k < ctx->num_resources; k++)
         {
-                lcp_rsc_desc_t *res = &ctx->resources[i];
+                lcp_rsc_desc_t *res = &ctx->resources[k];
                 (void)snprintf(tmp, 512, " - [%d] %s %s (%s, %s)\n", res->priority, res->name, res->component->name, res->iface_config->name, res->driver_config->name);
-                strncat(name, tmp, 4*1024 - 1);
+                strncat(name, tmp, NETWORK_DESC_BUFFER_SIZE- 1);
         }
 
         return 0;
@@ -629,7 +634,7 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
 {
 	int rc = LCP_SUCCESS;
         int i = 0;
-	lcp_context_h ctx;
+	lcp_context_h ctx = {0};
 
         //FIXME: should context creation be thread-safe ?
         if (lcp_context_is_initialized) {
@@ -754,7 +759,7 @@ int lcp_context_fini(lcp_context_h ctx)
 		sctk_free(e_ep);
 	}
 
-	sctk_rail_info_t *iface;
+	sctk_rail_info_t *iface = NULL;
 	for (i=0; i<ctx->num_resources; i++) {
 		iface = ctx->resources[i].iface; 
 		if (iface->driver_finalize)
