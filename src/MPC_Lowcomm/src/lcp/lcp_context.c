@@ -10,6 +10,7 @@
 #include <mpc_common_rank.h>
 #include <mpc_keywords.h>
 #include <sctk_alloc.h>
+#include <mpc_common_flags.h>
 
 #include "lowcomm_config.h"
 #include "mpc_lowcomm.h"
