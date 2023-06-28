@@ -318,8 +318,8 @@ int mpc_ofi_get_attr(sctk_rail_info_t *rail,
 {
 
 	attr->iface.cap.am.max_iovecs = MPC_OFI_IOVEC_SIZE; //FIXME: arbitrary value...
-	attr->iface.cap.am.max_bcopy  = 0;
-	attr->iface.cap.am.max_zcopy  = 0;
+	attr->iface.cap.am.max_bcopy  = MPC_OFI_BSEND_TRSH;
+	attr->iface.cap.am.max_zcopy  = MPC_OFI_DOMAIN_EAGER_SIZE;
 
 	attr->iface.cap.tag.max_bcopy = 0;
 	attr->iface.cap.tag.max_zcopy = 0;

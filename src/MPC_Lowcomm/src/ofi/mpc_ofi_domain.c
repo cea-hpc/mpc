@@ -646,7 +646,7 @@ int mpc_ofi_domain_send(struct mpc_ofi_domain_t * domain,
       return -1;
    }
 
-   (*req)->mr_count = 0;
+   (*req)->mr_count = 1;
 
    fi_addr_t addr = 0;
 
@@ -658,7 +658,7 @@ int mpc_ofi_domain_send(struct mpc_ofi_domain_t * domain,
 
    while(1)
    {
-      ssize_t ret = fi_send(domain->ep, buff, size, NULL, addr, (void *)*req);
+      ssize_t ret = fi_send(domain->ep, buff, size, fi_mr_desc((*req)->mr[0]), addr, (void *)*req);
 
       if(ret == -FI_EAGAIN)
       {
