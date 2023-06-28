@@ -671,10 +671,18 @@ int mpc_ofi_domain_sendv(struct mpc_ofi_domain_t * domain,
                         uint64_t dest,
                         const struct iovec *iov,
                         size_t iovcnt,
-                        struct mpc_ofi_request_t **req,
+                        struct mpc_ofi_request_t **preq,
                         int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
                         void *arg_ext)
 {
+   struct mpc_ofi_request_t ** req = preq;
+   struct mpc_ofi_request_t * __req = NULL;
+
+   if(!req)
+   {
+      req = &__req;
+   }
+
    assume(iovcnt<MPC_OFI_IOVEC_SIZE);
 
    *req = __acquire_request(domain, _mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext);

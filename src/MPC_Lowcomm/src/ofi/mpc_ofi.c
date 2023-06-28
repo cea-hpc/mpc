@@ -134,6 +134,7 @@ static inline int __free_bsend_buffer(__UNUSED__ struct mpc_ofi_request_t *req, 
    return 0;
 }
 
+#define MPC_OFI_BSEND_TRSH 1024
 
 ssize_t mpc_ofi_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
                               uint8_t id,
@@ -145,9 +146,8 @@ ssize_t mpc_ofi_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
 	uint32_t payload_length;
 	ssize_t sent;
 
-
-
-	lcr_ofi_am_hdr_t *hdr = sctk_malloc(4096);
+   TODO("Use the right size from config an provider caps");
+	lcr_ofi_am_hdr_t *hdr = sctk_malloc(MPC_OFI_BSEND_TRSH);
 
 	if (hdr == NULL) {
 	       mpc_common_debug_error("Could not allocate buffer.");
@@ -163,12 +163,29 @@ ssize_t mpc_ofi_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
 
    if( mpc_ofi_view_send(&rail->network.ofi.view, hdr, hdr->length + sizeof(lcr_ofi_am_hdr_t), ep->dest, NULL, __free_bsend_buffer, hdr) )
    {
+      mpc_common_errorpoint("Failed to send a message");
       return -1;
    }
 
 err:
 	return payload_length;
 }
+
+struct mpc_ofi_deffered_completion_s
+{
+   lcr_ofi_am_hdr_t hdr;
+   lcr_completion_t *comp;
+};
+
+
+static inline int __zcopy_completion_cb(struct mpc_ofi_request_t *req, void *pcomp)
+{
+   struct mpc_ofi_deffered_completion_s *comp = (struct mpc_ofi_deffered_completion_s *)pcomp;
+   comp->comp->comp_cb(comp->comp);
+   sctk_free(comp);
+   return 0;
+}
+
 
 int mpc_ofi_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
                                     uint8_t id,
@@ -179,7 +196,57 @@ int mpc_ofi_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
                                     unsigned flags,
                                     lcr_completion_t *comp)
 {
-   mpc_common_debug_abort();
+   struct iovec full_iov[MPC_OFI_IOVEC_SIZE + 2];
+
+	struct mpc_ofi_deffered_completion_s *completion = sctk_malloc(sizeof(struct mpc_ofi_deffered_completion_s));
+
+   completion->hdr.am_id = id;
+   completion->comp = comp;
+
+   assume((iovcnt + 2) < MPC_OFI_IOVEC_SIZE);
+
+   size_t total_size = 0;
+   int total_iov_size = 1;
+
+   full_iov[0].iov_base = &completion->hdr;
+   full_iov[0].iov_len = sizeof(lcr_ofi_am_hdr_t);
+
+   int iov_offset = 1;
+
+   if(header_length)
+   {
+      full_iov[iov_offset].iov_base = (void*)header;
+      full_iov[iov_offset].iov_len = header_length;
+      total_size += full_iov[iov_offset].iov_len;
+      iov_offset++;
+      total_iov_size++;
+   }
+
+   unsigned int i = 0;
+   for(i = 0 ; i < iovcnt; i++)
+   {
+      full_iov[iov_offset].iov_base = iov[i].iov_base;
+      full_iov[iov_offset].iov_len = iov[i].iov_len;
+      total_size += full_iov[iov_offset].iov_len;
+      iov_offset++;
+      total_iov_size++;
+   }
+
+   completion->hdr.length = total_size;
+
+   if(mpc_ofi_view_sendv(&ep->rail->network.ofi.view,
+                         ep->dest,
+                         full_iov,
+                         total_iov_size,
+                         NULL,
+                         __zcopy_completion_cb,
+                         (void*)completion))
+   {
+      mpc_common_errorpoint("Failed to sendv a message");
+      return -1;
+   }
+
+   return MPC_LOWCOMM_SUCCESS;
 }
 
 
@@ -188,7 +255,7 @@ int mpc_ofi_get_attr(sctk_rail_info_t *rail,
 {
 
 	attr->iface.cap.am.max_iovecs = MPC_OFI_IOVEC_SIZE; //FIXME: arbitrary value...
-	attr->iface.cap.am.max_bcopy  = 0;
+	attr->iface.cap.am.max_bcopy  = MPC_OFI_BSEND_TRSH;
 	attr->iface.cap.am.max_zcopy  = MPC_OFI_DOMAIN_EAGER_SIZE;
 
 	attr->iface.cap.tag.max_bcopy = 0;
