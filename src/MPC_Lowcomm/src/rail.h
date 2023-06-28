@@ -37,6 +37,7 @@
 #include "lowcomm_config.h"
 
 #include <mpc_lowcomm_monitor.h>
+#include <stdint.h>
 
 
 /************************************************************************/
@@ -64,14 +65,21 @@ typedef union
 #include "sctk_ptl_types.h"
 #endif
 
+#ifdef MPC_USE_OFI
+#include <rdma/fi_domain.h>
+#endif
+
 
 typedef union
 {
-        struct mpc_lowcomm_tbsm_rma_ctx sm;
-
+	struct mpc_lowcomm_tbsm_rma_ctx sm;
 #ifdef MPC_USE_PORTALS
 	struct sctk_ptl_rdma_ctx       ptl;
 #endif /* MPC_USE_PORTALS */
+#ifdef MPC_USE_OFI
+	struct fid_mr *ofi;
+	uint64_t ofi_remote_mr_key;
+#endif
 }sctk_rail_pin_ctx_internal_t;
 
 struct sctk_rail_pin_ctx_list

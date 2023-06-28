@@ -13,6 +13,7 @@
 #include "ofi/mpc_ofi_domain.h"
 #include "rail.h"
 #include "rdma/fabric.h"
+#include "rdma/fi_domain.h"
 
 
 static inline char *__gen_rail_target_name(sctk_rail_info_t *rail, char *buff, int bufflen)
@@ -249,14 +250,76 @@ int mpc_ofi_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
    return MPC_LOWCOMM_SUCCESS;
 }
 
+void  mpc_ofi_pin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list, void *addr, size_t size)
+{
+   if(mpc_ofi_domain_memory_register(rail->network.ofi.view.domain,
+                                     addr,
+                                     size,
+                                     FI_RMA,
+                                     &list->pin.ofi))
+   {
+      mpc_common_errorpoint("Failed to register memory for RDMA");
+      mpc_common_debug_abort();
+   }
+}
+
+void mpc_ofi_unpin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list)
+{
+   if(mpc_ofi_domain_memory_unregister(list->pin.ofi))
+   {
+      mpc_common_errorpoint("Failed to register memory for RDMA");
+      mpc_common_debug_abort();
+   }
+}
+
+
+int mpc_ofi_pack_rkey(sctk_rail_info_t *rail,
+                      lcr_memp_t *memp, void *dest)
+{
+        UNUSED(rail);
+        void *p = dest;
+        *(uint64_t *)p = fi_mr_key(memp->pin.ofi);
+        return sizeof(uint64_t);
+}
+
+int mpc_ofi_unpack_rkey(sctk_rail_info_t *rail,
+                        lcr_memp_t *memp, void *dest)
+{
+        UNUSED(rail);
+        void *p = dest;
+        memp->pin.ofi_remote_mr_key = *(uint64_t *)p;
+        return sizeof(uint64_t);
+}
+
+int mpc_ofi_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
+                           uint64_t local_addr,
+                           uint64_t remote_offset,
+                           lcr_memp_t *remote_key,
+                           size_t size,
+                           lcr_completion_t *comp) 
+{
+   mpc_common_errorpoint("Not implemented");
+   mpc_common_debug_abort();
+}
+
+int mpc_ofi_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
+                           uint64_t local_addr,
+                           uint64_t remote_offset,
+                           lcr_memp_t *remote_key,
+                           size_t size,
+                           lcr_completion_t *comp) 
+{
+   mpc_common_errorpoint("Not implemented");
+   mpc_common_debug_abort();
+}
 
 int mpc_ofi_get_attr(sctk_rail_info_t *rail,
                      lcr_rail_attr_t *attr)
 {
 
 	attr->iface.cap.am.max_iovecs = MPC_OFI_IOVEC_SIZE; //FIXME: arbitrary value...
-	attr->iface.cap.am.max_bcopy  = MPC_OFI_BSEND_TRSH;
-	attr->iface.cap.am.max_zcopy  = MPC_OFI_DOMAIN_EAGER_SIZE;
+	attr->iface.cap.am.max_bcopy  = 0;
+	attr->iface.cap.am.max_zcopy  = 0;
 
 	attr->iface.cap.tag.max_bcopy = 0;
 	attr->iface.cap.tag.max_zcopy = 0;
@@ -341,11 +404,17 @@ static int __mpc_ofi_context_recv_callback_t(void *buffer, size_t len, struct mp
 	}
 
    /* Complete the recv request */
-   TODO("Is it safe to assume it is complete ?");
    mpc_ofi_request_done(req);
 
-
 	return rc;
+}
+
+void mpc_ofi_release(sctk_rail_info_t *rail)
+{
+   TODO("Check why we get fi_close(&domain->domain->fid) Device or resource busy(-16)");
+   return;
+   mpc_ofi_view_release(&rail->network.ofi.view);
+   mpc_ofi_context_release(&rail->network.ofi.ctx);
 }
 
 
@@ -378,9 +447,18 @@ int mpc_ofi_iface_open(char *device_name, int id,
 	rail->send_am_zcopy  = mpc_ofi_send_am_zcopy;
 	rail->iface_get_attr = mpc_ofi_get_attr;
    rail->iface_progress = mpc_ofi_progress;
+   rail->driver_finalize = mpc_ofi_release;
+
+   rail->get_zcopy = mpc_ofi_send_get_zcopy;
+   rail->put_zcopy = mpc_ofi_send_put_zcopy;
+   rail->rail_pin_region = mpc_ofi_pin;
+   rail->rail_unpin_region = mpc_ofi_unpin;
+   rail->iface_pack_memp = mpc_ofi_pack_rkey;
+   rail->iface_unpack_memp = mpc_ofi_unpack_rkey;
+
 
    /* Init capabilities */
-   rail->cap = LCR_IFACE_CAP_REMOTE;
+   rail->cap = LCR_IFACE_CAP_RMA | LCR_IFACE_CAP_REMOTE;
 
 
 	/* Register our connection handler */

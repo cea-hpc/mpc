@@ -526,6 +526,7 @@ int mpc_ofi_domain_poll(struct mpc_ofi_domain_t * domain, int type)
    return 0;
 }
 
+static mpc_common_spinlock_t mrlock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 int mpc_ofi_domain_memory_register(struct mpc_ofi_domain_t * domain,
                                   void *buff,
@@ -534,6 +535,7 @@ int mpc_ofi_domain_memory_register(struct mpc_ofi_domain_t * domain,
                                   struct fid_mr **mr)
 {
 
+   mpc_common_spinlock_lock(&mrlock);
    int ret = fi_mr_reg(domain->domain,
                               buff,
                               size,
@@ -542,6 +544,7 @@ int mpc_ofi_domain_memory_register(struct mpc_ofi_domain_t * domain,
                               0,
                               mr,
                               NULL);
+   mpc_common_spinlock_unlock(&mrlock);
 
    MPC_OFI_CHECK_RET(ret);
 
@@ -550,7 +553,9 @@ int mpc_ofi_domain_memory_register(struct mpc_ofi_domain_t * domain,
 
 int mpc_ofi_domain_memory_unregister(struct fid_mr *mr)
 {
+   mpc_common_spinlock_lock(&mrlock);
    MPC_OFI_CHECK_RET(fi_close(&mr->fid));
+   mpc_common_spinlock_unlock(&mrlock);
 
    return 0;
 }

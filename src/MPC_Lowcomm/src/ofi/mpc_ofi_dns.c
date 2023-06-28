@@ -750,7 +750,7 @@ struct fid * mpc_ofi_domain_dns_av(struct mpc_ofi_domain_dns_t *ddns)
 int mpc_ofi_domain_dns_release(struct mpc_ofi_domain_dns_t *ddns)
 {
    MPC_OFI_CHECK_RET(fi_close(&ddns->av->fid));
-   mpc_ofi_dns_ht_release(&ddns->cache, free);
+   mpc_ofi_dns_ht_release(&ddns->cache, NULL);
    return 0;
 }
 
