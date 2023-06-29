@@ -115,13 +115,17 @@ int lcp_rndv_rma_progress(lcp_request_t *rndv_req)
         frag_length = rndv_req->ctx->config.rndv_mode == LCP_RNDV_GET ?
                 attr.iface.cap.rndv.max_get_zcopy :
                 attr.iface.cap.rndv.max_put_zcopy;
-        
+
+        assert(attr.iface.cap.rndv.max_get_zcopy);
+        assert(attr.iface.cap.rndv.max_put_zcopy);
+
         while (remaining > 0) {
+
                 if (!MPC_BITMAP_GET(rkey->bm, cc)) {
                         continue;
                 }
 
-                length = remaining < frag_length ? remaining : frag_length;
+                length = (remaining < frag_length) ? remaining : frag_length;
 
                 //FIXME: error managment => NO_RESOURCE not handled
                 if (rndv_req->ctx->config.rndv_mode == LCP_RNDV_GET) {

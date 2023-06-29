@@ -1,6 +1,8 @@
 #include "mpc_ofi.h"
 
 #include <lcr/lcr_component.h>
+#include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <sctk_alloc.h>
@@ -179,7 +181,7 @@ struct mpc_ofi_deffered_completion_s
 };
 
 
-static inline int __zcopy_completion_cb(struct mpc_ofi_request_t *req, void *pcomp)
+static inline int __deffered_completion_cb(struct mpc_ofi_request_t *req, void *pcomp)
 {
    struct mpc_ofi_deffered_completion_s *comp = (struct mpc_ofi_deffered_completion_s *)pcomp;
    comp->comp->comp_cb(comp->comp);
@@ -200,6 +202,7 @@ int mpc_ofi_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
    struct iovec full_iov[MPC_OFI_IOVEC_SIZE + 2];
 
 	struct mpc_ofi_deffered_completion_s *completion = sctk_malloc(sizeof(struct mpc_ofi_deffered_completion_s));
+   assume(completion != NULL);
 
    completion->hdr.am_id = id;
    completion->comp = comp;
@@ -240,7 +243,7 @@ int mpc_ofi_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
                          full_iov,
                          total_iov_size,
                          NULL,
-                         __zcopy_completion_cb,
+                         __deffered_completion_cb,
                          (void*)completion))
    {
       mpc_common_errorpoint("Failed to sendv a message");
@@ -255,7 +258,7 @@ void  mpc_ofi_pin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *
    if(mpc_ofi_domain_memory_register(rail->network.ofi.view.domain,
                                      addr,
                                      size,
-                                     FI_RMA,
+                                     FI_REMOTE_READ | FI_REMOTE_WRITE,
                                      &list->pin.ofi))
    {
       mpc_common_errorpoint("Failed to register memory for RDMA");
@@ -288,18 +291,42 @@ int mpc_ofi_unpack_rkey(sctk_rail_info_t *rail,
         UNUSED(rail);
         void *p = dest;
         memp->pin.ofi_remote_mr_key = *(uint64_t *)p;
+
         return sizeof(uint64_t);
 }
 
-int mpc_ofi_send_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
+
+int mpc_ofi_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t local_addr,
                            uint64_t remote_offset,
                            lcr_memp_t *remote_key,
                            size_t size,
                            lcr_completion_t *comp) 
 {
-   mpc_common_errorpoint("Not implemented");
-   mpc_common_debug_abort();
+	struct mpc_ofi_deffered_completion_s *completion = sctk_malloc(sizeof(struct mpc_ofi_deffered_completion_s));
+   assume(completion != NULL);
+
+   assert(size);
+
+   comp->sent = size;
+
+   completion->comp = comp;
+
+   if(mpc_ofi_domain_get(ep->rail->network.ofi.view.domain,
+                     (void *)local_addr,
+                     size,
+                     ep->dest,
+                     remote_offset,
+                     remote_key->pin.ofi_remote_mr_key,
+                     NULL,
+                     __deffered_completion_cb,
+                     completion))
+   {
+      mpc_common_errorpoint("Failed to issue RDMA read");
+      return -1;
+   }
+
+   return MPC_LOWCOMM_SUCCESS;
 }
 
 int mpc_ofi_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
@@ -318,14 +345,14 @@ int mpc_ofi_get_attr(sctk_rail_info_t *rail,
 {
 
 	attr->iface.cap.am.max_iovecs = MPC_OFI_IOVEC_SIZE; //FIXME: arbitrary value...
-	attr->iface.cap.am.max_bcopy  = MPC_OFI_BSEND_TRSH;
-	attr->iface.cap.am.max_zcopy  = MPC_OFI_DOMAIN_EAGER_SIZE;
+	attr->iface.cap.am.max_bcopy  = MPC_OFI_BSEND_TRSH + 1;
+	attr->iface.cap.am.max_zcopy  = MPC_OFI_DOMAIN_EAGER_SIZE + 1;
 
 	attr->iface.cap.tag.max_bcopy = 0;
 	attr->iface.cap.tag.max_zcopy = 0;
 
-	attr->iface.cap.rndv.max_put_zcopy = 0;
-	attr->iface.cap.rndv.max_get_zcopy = 0;
+	attr->iface.cap.rndv.max_put_zcopy = INT_MAX;
+	attr->iface.cap.rndv.max_get_zcopy = INT_MAX;
 
 	return MPC_LOWCOMM_SUCCESS;
 }
@@ -449,7 +476,7 @@ int mpc_ofi_iface_open(char *device_name, int id,
    rail->iface_progress = mpc_ofi_progress;
    rail->driver_finalize = mpc_ofi_release;
 
-   rail->get_zcopy = mpc_ofi_send_get_zcopy;
+   rail->get_zcopy = mpc_ofi_get_zcopy;
    rail->put_zcopy = mpc_ofi_send_put_zcopy;
    rail->rail_pin_region = mpc_ofi_pin;
    rail->rail_unpin_region = mpc_ofi_unpin;

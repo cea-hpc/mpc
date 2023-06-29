@@ -12,8 +12,10 @@
 #include "rdma/fi_eq.h"
 #include "rdma/fi_errno.h"
 #include <rdma/fi_endpoint.h>
+#include <rdma/fi_rma.h>
 
 #include <pthread.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -205,7 +207,8 @@ int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context
    struct fi_cq_attr cq_attr = {0};
 
    cq_attr.format = FI_CQ_FORMAT_DATA;
-   cq_attr.wait_obj = FI_WAIT_UNSPEC;
+   cq_attr.wait_obj = FI_WAIT_NONE;
+   cq_attr.wait_cond = FI_CQ_COND_NONE;
 
    MPC_OFI_CHECK_RET(fi_cq_open(domain->domain, &cq_attr, &domain->rx_cq, domain));
    MPC_OFI_CHECK_RET(fi_cq_open(domain->domain, &cq_attr, &domain->tx_cq, domain));
@@ -229,7 +232,8 @@ int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context
                     0));
    MPC_OFI_CHECK_RET(fi_ep_bind(domain->ep, &domain->eq->fid, 0));
    MPC_OFI_CHECK_RET(fi_ep_bind(domain->ep, &domain->tx_cq->fid, FI_SEND));
-   MPC_OFI_CHECK_RET(fi_ep_bind(domain->ep, &domain->tx_cq->fid, FI_RECV));
+   MPC_OFI_CHECK_RET(fi_ep_bind(domain->ep, &domain->rx_cq->fid, FI_RECV));
+
 
    /* Finally enable the EP */
    MPC_OFI_CHECK_RET(fi_enable(domain->ep));
@@ -366,6 +370,15 @@ static inline int _ofi_domain_cq_process_event(struct mpc_ofi_domain_t * domain,
       return 0;
    }
 
+   if(evt->flags & FI_RMA)
+   {
+      struct mpc_ofi_request_t *request = (struct mpc_ofi_request_t *)evt->op_context;
+      /* This is a Send */
+      mpc_ofi_request_done(request);
+
+      return 0;
+   }
+
    if( (evt->flags & FI_SEND) && (evt->flags & FI_MSG))
    {
       struct mpc_ofi_request_t *request = (struct mpc_ofi_request_t *)evt->op_context;
@@ -405,45 +418,6 @@ static inline int _ofi_domain_cq_poll(struct mpc_ofi_domain_t * domain, struct f
          return 1;
       }
    }
-#if 0
-   if (comp.flags & FI_RECV) {
-      if (comp.len != opts.transfer_size) {
-         FT_ERR("completion length %lu, expected %lu",
-            comp.len, opts.transfer_size);
-         return -FI_EIO;
-      }
-
-      if (comp.buf < (void *) rx_buf ||
-            comp.buf >=  (void *) (rx_buf + rx_size) ||
-            comp.buf == last_rx_buf) {
-         FT_ERR("returned completion buffer %p out of range",
-            comp.buf);
-         return -FI_EIO;
-      }
-
-      if (ft_check_opts(FT_OPT_VERIFY_DATA | FT_OPT_ACTIVE) &&
-            ft_check_buf(comp.buf, opts.transfer_size))
-         return -FI_EIO;
-
-      per_buf_cnt++;
-      num_completions--;
-      last_rx_buf = comp.buf;
-   }
-
-   if (comp.flags & FI_MULTI_RECV) {
-      if (per_buf_cnt != comp_per_buf) {
-         FT_ERR("Received %d completions per buffer, expected %d",
-            per_buf_cnt, comp_per_buf);
-         return -FI_EIO;
-      }
-      per_buf_cnt = 0;
-      i = comp.op_context == &ctx_multi_recv[1];
-
-      ret = repost_recv(i);
-      if (ret)
-         return ret;
-   }
-#endif
 	return 0;
 }
 
@@ -540,7 +514,7 @@ int mpc_ofi_domain_memory_register(struct mpc_ofi_domain_t * domain,
                               buff,
                               size,
                               acs, 0,
-                              0,
+                              1337,
                               0,
                               mr,
                               NULL);
@@ -734,4 +708,92 @@ int mpc_ofi_domain_sendv(struct mpc_ofi_domain_t * domain,
    }
 
    return 0;
+}
+
+
+
+int mpc_ofi_domain_get(struct mpc_ofi_domain_t *domain,
+                       void *buf,
+                       size_t len,
+                       uint64_t dest,
+                       uint64_t remote_addr,
+                       uint64_t key,
+                       struct mpc_ofi_request_t **preq,
+                       int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
+                       void *arg_ext)
+{
+   struct mpc_ofi_request_t ** req = preq;
+   struct mpc_ofi_request_t * __req = NULL;
+
+   if(!req)
+   {
+      req = &__req;
+   }
+
+   *req = __acquire_request(domain, _mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext);
+
+   if( mpc_ofi_domain_memory_register(domain, buf, len, FI_READ, &(*req)->mr[0]) )
+   {
+      mpc_common_errorpoint("Failed to register send buffer");
+      return -1;
+   }
+
+   (*req)->mr_count = 1;
+
+   fi_addr_t target_addr = 0;
+
+   if(mpc_ofi_domain_dns_resolve(&domain->ddns, dest, &target_addr))
+   {
+      mpc_common_errorpoint("Failed to resolve address");
+      return -1;
+   }
+#if 1
+   struct iovec iov;
+   iov.iov_base = buf;
+   iov.iov_len = len;
+
+   struct fi_rma_iov riov;
+   riov.addr = remote_addr;
+   riov.len = len;
+   riov.key = key;
+
+   struct fi_msg_rma rma_msg = { .msg_iov = &iov,
+                                 .desc = fi_mr_desc((*req)->mr[0]),
+                                 .iov_count = 1,
+                                 .addr = target_addr,
+                                 .rma_iov = &riov,
+                                 .rma_iov_count = 1,
+                                 .context = *req
+   };
+
+
+   while(1)
+   {
+      ssize_t ret = fi_readmsg(domain->ep, &rma_msg, FI_COMPLETION);
+
+      if(ret == -FI_EAGAIN)
+      {
+         continue;
+      }
+
+      MPC_OFI_CHECK_RET(ret);
+      break;
+   }
+#else
+mpc_common_debug_error("len %d", len);
+   while(1)
+   {
+      ssize_t ret = fi_read(domain->ep, buf, len, fi_mr_desc((*req)->mr[0]), 0, remote_addr, key, *req);
+
+      if(ret == -FI_EAGAIN)
+      {
+         continue;
+      }
+
+      MPC_OFI_CHECK_RET(ret);
+      break;
+   }
+#endif
+
+
 }

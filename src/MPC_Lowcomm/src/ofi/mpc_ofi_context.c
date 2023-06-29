@@ -71,7 +71,7 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
    }
 
    /* Flag for Memory Registration */
-   ctx->config->domain_attr->mr_mode = FI_MR_VIRT_ADDR | FI_MR_PROV_KEY | FI_MR_ALLOCATED | FI_MR_RAW;
+   ctx->config->domain_attr->mr_mode = FI_MR_PROV_KEY | FI_MR_ALLOCATED;
    ctx->config->domain_attr->mr_key_size = 0;
 
    fi_freeinfo(hints);
