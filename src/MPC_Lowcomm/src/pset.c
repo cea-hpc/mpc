@@ -359,6 +359,8 @@ int _mpc_lowcomm_pset_bootstrap(void)
 
 	__register_base_comms();
 
+	return MPC_LOWCOMM_SUCCESS;
+
 	/* Application PSETS */
 	int my_app_id;
 
