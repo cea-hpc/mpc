@@ -4,40 +4,48 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <mpc_common_debug.h>
+
 #include <rdma/fabric.h>
 #include <rdma/fi_errno.h>
 
 /***********
- * DEFINES *
- ***********/
+* DEFINES *
+***********/
 
-#define MPC_OFI_ADDRESS_LEN 512
+#define MPC_OFI_ADDRESS_LEN    512
 
 
 /*************
- * PRINTINGS *
- *************/
+* PRINTINGS *
+*************/
 
 int mpc_ofi_decode_cq_flags(uint64_t flags);
 int mpc_ofi_decode_mr_mode(uint64_t flags);
 
 /************
- * RETCODES *
- ************/
+* RETCODES *
+************/
 
+#define MPC_OFI_DUMP_ERROR(a)    do{                                                                                                \
+		int __ret = (a);                                                                                                    \
+		if(__ret < 0){                                                                                                      \
+			mpc_common_errorpoint_fmt("[MPC_OFI]@%s:%d: %s\n%s(%d)\n", __FILE__, __LINE__, #a, fi_strerror(-__ret), __ret); \
+		}                                                                                                                   \
+}while(0)
 
-#define MPC_OFI_CHECK_RET(a)    do{                                                                                      \
-		int __ret = (a);                                                                                 \
-		if(__ret < 0){                                                                                   \
-			(void)fprintf(stderr, "[MPC_OFI]@%s:%d: %s\n%s(%d)\n", __FILE__, __LINE__, #a, fi_strerror(-__ret), __ret); \
-			return __ret;                                                                                \
-		}                                                                                                \
+#define MPC_OFI_CHECK_RET(a)    do{                                                                                                \
+		int __ret = (a);                                                                                                    \
+		if(__ret < 0){                                                                                                      \
+			mpc_common_errorpoint_fmt("[MPC_OFI]@%s:%d: %s\n%s(%d)\n", __FILE__, __LINE__, #a, fi_strerror(-__ret), __ret); \
+			return __ret;                                                                                                    \
+		}                                                                                                                   \
 }while(0)
 
 /*********
- * HINTS *
- *********/
+* HINTS *
+*********/
 
-struct fi_info * mpc_ofi_get_requested_hints(char * provider);
+struct fi_info *mpc_ofi_get_requested_hints(char *provider);
 
 #endif /* MPC_OFI_HELPERS_H */

@@ -107,7 +107,7 @@ int mpc_ofi_domain_memory_register(struct mpc_ofi_domain_t * domain,
                                   uint64_t acs,
                                   struct fid_mr **mr);
 
-int mpc_ofi_domain_memory_unregister(struct fid_mr *mr);
+int mpc_ofi_domain_memory_unregister(struct mpc_ofi_domain_t * domain, struct fid_mr *mr);
 
 
 int mpc_ofi_domain_send(struct mpc_ofi_domain_t * domain,

@@ -12,6 +12,8 @@
 #define MPC_OFI_REQUEST_PAD 64
 
 struct mpc_ofi_request_cache_t;
+struct mpc_ofi_domain_t;
+
 
 struct mpc_ofi_request_t
 {
@@ -29,6 +31,7 @@ struct mpc_ofi_request_t
    /* MR to be freed */
    struct fid_mr *mr[MPC_OFI_IOVEC_SIZE];
    unsigned int mr_count;
+   struct mpc_ofi_domain_t * domain;
 };
 
 __UNUSED__ static int mpc_ofi_request_test(struct mpc_ofi_request_t*req)
@@ -41,10 +44,14 @@ __UNUSED__ static int mpc_ofi_request_test(struct mpc_ofi_request_t*req)
 struct mpc_ofi_request_cache_t
 {
    struct mpc_ofi_request_t requests[MPC_OFI_REQUEST_CACHE_SIZE];
+   struct mpc_ofi_domain_t *domain;
    mpc_common_spinlock_t lock;
 };
 
-int mpc_ofi_request_cache_init(struct mpc_ofi_request_cache_t *cache);
+
+
+
+int mpc_ofi_request_cache_init(struct mpc_ofi_request_cache_t *cache, struct mpc_ofi_domain_t *domain);
 
 
 struct mpc_ofi_request_t * mpc_ofi_request_acquire(struct mpc_ofi_request_cache_t *cache,

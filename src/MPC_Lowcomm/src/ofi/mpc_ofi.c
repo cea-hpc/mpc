@@ -106,6 +106,8 @@ static int __ofi_on_demand_callback(mpc_lowcomm_peer_uid_t from,
 
    struct mpc_ofi_net_infos *infos = (struct mpc_ofi_net_infos*) data;
 
+   mpc_common_debug_error("OD in OFI");
+
    /* Register remote info */
    if( mpc_ofi_dns_register(&ctx->dns, from, infos->addr, infos->size) )
    {
@@ -268,7 +270,8 @@ void  mpc_ofi_pin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *
 
 void mpc_ofi_unpin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list)
 {
-   if(mpc_ofi_domain_memory_unregister(list->pin.ofi))
+
+   if(mpc_ofi_domain_memory_unregister(rail->network.ofi.view.domain, list->pin.ofi))
    {
       mpc_common_errorpoint("Failed to register memory for RDMA");
       mpc_common_debug_abort();

@@ -8,9 +8,11 @@
  * REQUEST CACHE *
  *****************/
 
-int mpc_ofi_request_cache_init(struct mpc_ofi_request_cache_t *cache)
+int mpc_ofi_request_cache_init(struct mpc_ofi_request_cache_t *cache, struct mpc_ofi_domain_t *domain)
 {
    memset(cache->requests, 0, sizeof(struct mpc_ofi_request_t) * MPC_OFI_REQUEST_CACHE_SIZE);
+
+   cache->domain = domain;
 
    int i = 0;
 
@@ -63,6 +65,7 @@ struct mpc_ofi_request_t * mpc_ofi_request_acquire(struct mpc_ofi_request_cache_
 
          req->done = 0;
          req->free = 0;
+         req->domain = cache->domain;
          req->arg = arg;
          req->comptetion_cb = comptetion_cb;
          req->comptetion_cb_ext = comptetion_cb_ext;
