@@ -2331,24 +2331,23 @@ mpc_lowcomm_monitor_response_t mpc_lowcomm_monitor_ondemand(mpc_lowcomm_peer_uid
 	mpc_common_debug_error("Sending OD on CPLANE for net %s for %s (IDX: %llu)", target, mpc_lowcomm_peer_format(dest), cmd->match_key);
 #endif
 
-	if(_mpc_lowcomm_monitor_command_send(cmd, ret) < 0)
+
+	int cnt = 1;
+	_mpc_lowcomm_monitor_wrap_t *resp = NULL;
+
+	do
 	{
-		_mpc_lowcomm_monitor_wrap_free(cmd);
-        *ret = MPC_LOWCOMM_MONITOR_RET_NOT_REACHABLE;
-		mpc_common_debug_error("Failed to send OD on cplane");
-		return NULL;
-	}
+		if(_mpc_lowcomm_monitor_command_send(cmd, ret) < 0)
+		{
+			_mpc_lowcomm_monitor_wrap_free(cmd);
+			*ret = MPC_LOWCOMM_MONITOR_RET_NOT_REACHABLE;
+			mpc_common_debug_error("Failed to send OD on cplane");
+			return NULL;
+		}
 
-
-	_mpc_lowcomm_monitor_wrap_t *resp = _mpc_lowcomm_monitor_command_engine_await_response(cmd->match_key,
-	                                                                                       60);
-
-
-	if(!resp)
-	{
-        //*ret = MPC_LOWCOMM_MONITOR_RET_NOT_REACHABLE;
-		mpc_common_debug_warning("_mpc_lowcomm_monitor_ondemand timed out when targetting %llu", dest);
-	}
+		resp = _mpc_lowcomm_monitor_command_engine_await_response(cmd->match_key, cnt);
+		cnt++;
+	}while(!resp && cnt < 5);
 
 	return (mpc_lowcomm_monitor_response_t)resp;
 }
