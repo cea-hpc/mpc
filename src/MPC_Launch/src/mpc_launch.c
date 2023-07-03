@@ -680,6 +680,18 @@ static void __topology_init()
 	}
 }
 
+
+void __check_for_print_config(void)
+{
+	if(!strcmp(mpc_common_get_flags()->exename, "mpc_print_config"))
+	{
+		mpc_common_get_flags()->process_number = 1;
+		mpc_common_get_flags()->processor_number = 1;
+		mpc_common_get_flags()->node_number = 1;
+	}
+}
+
+
 void mpc_launch_init_runtime()
 {
 	static volatile int __init_already_done = 0;
@@ -698,6 +710,9 @@ void mpc_launch_init_runtime()
 
 	/* WARNING !! NO CONFIG before this point */
 	__register_config();
+
+	/* Run sequential for print config */
+	__check_for_print_config();
 
 	mpc_common_init_trigger("Base Runtime Init");
 
