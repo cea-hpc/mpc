@@ -494,7 +494,7 @@ int mpc_ofi_iface_open(char *device_name, int id,
 	                                                __ofi_on_demand_callback,
 	                                                (void *)rail);
 
-   if(mpc_ofi_context_init(&rail->network.ofi.ctx, 4, driver_config->driver.value.ofi.provider, MPC_OFI_POLICY_RR, __mpc_ofi_context_recv_callback_t, (void*)rail))
+   if(mpc_ofi_context_init(&rail->network.ofi.ctx, 1, driver_config->driver.value.ofi.provider, MPC_OFI_POLICY_RR, __mpc_ofi_context_recv_callback_t, (void*)rail))
    {
       mpc_common_errorpoint("Failed to start OFI context");
       return 1;
