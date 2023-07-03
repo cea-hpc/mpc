@@ -597,14 +597,14 @@ int mpc_ofi_domain_memory_unregister(struct mpc_ofi_domain_t * domain, struct fi
 }
 
 
-static inline int __free_mr(struct fid_mr **mr)
+static inline int __free_mr(struct mpc_ofi_domain_t * domain, struct fid_mr **mr)
 {
    if(!*mr)
    {
       return 0;
    }
 
-   if( mpc_ofi_domain_memory_unregister_no_lock(*mr) )
+   if( mpc_ofi_domain_memory_unregister(domain, *mr) )
    {
       mpc_common_errorpoint("Failed to unregister send buffer");
       return -1;
@@ -622,7 +622,7 @@ int _mpc_ofi_domain_request_complete(struct mpc_ofi_request_t * req, void *dummy
 
    for( i = 0 ; i < req->mr_count; i++)
    {
-      if( __free_mr(&req->mr[i]) )
+      if( __free_mr(req->domain, &req->mr[i]) )
          return -1;
    }
 
