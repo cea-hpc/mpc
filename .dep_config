@@ -1,6 +1,0 @@
-gcc|gdb CLooG:libcloog-ppl-dev
-gcc|gdb ISL:libcloog-isl-dev
-gdb termcap:libncurses5-dev
-gdb makeinfo:texinfo
-infiniband infiniband:libibverbs-dev
-slurm slurm_load_jobs:slurm

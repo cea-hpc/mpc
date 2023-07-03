@@ -1,6 +1,0 @@
-# arch       ;  alias               ; 
-#####################################
-x86_64       ; X86-64               ;
-i686         ;                      ;
-k1om         ; mic MIC knc knl K1OM ; 
-arm          ; armv6l ARM           ;
