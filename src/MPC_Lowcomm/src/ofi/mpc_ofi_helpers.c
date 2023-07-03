@@ -1,11 +1,42 @@
 #include "mpc_ofi_helpers.h"
 
 #include <mpc_common_debug.h>
+#include <mpc_common_helper.h>
+#include <sctk_alloc.h>
+
 
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
+
+/*****************
+ * ALLOC ALIGNED *
+ *****************/
+
+mpc_ofi_aligned_mem_t mpc_ofi_alloc_aligned(size_t size)
+{
+	mpc_ofi_aligned_mem_t ret;
+
+	ret.orig = sctk_malloc(size + MPC_COMMON_PAGE_SIZE);
+
+	if(!ret.orig)
+	{
+		ret.ret = NULL;
+	}
+	else
+	{
+		ret.ret = (void*)((uint64_t)(ret.orig + (MPC_COMMON_PAGE_SIZE - 1)) & -MPC_COMMON_PAGE_SIZE);
+	}
+
+	return ret;
+}
+void mpc_ofi_free_aligned(mpc_ofi_aligned_mem_t * mem)
+{
+	sctk_free(mem->orig);
+}
+
 
 int mpc_ofi_decode_mr_mode(uint64_t flags)
 {

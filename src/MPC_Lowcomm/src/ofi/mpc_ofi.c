@@ -106,8 +106,6 @@ static int __ofi_on_demand_callback(mpc_lowcomm_peer_uid_t from,
 
    struct mpc_ofi_net_infos *infos = (struct mpc_ofi_net_infos*) data;
 
-   mpc_common_debug_error("OD in OFI");
-
    /* Register remote info */
    if( mpc_ofi_dns_register(&ctx->dns, from, infos->addr, infos->size) )
    {
@@ -442,7 +440,6 @@ static int __mpc_ofi_context_recv_callback_t(void *buffer, size_t len, struct mp
 void mpc_ofi_release(sctk_rail_info_t *rail)
 {
    TODO("Check why we get fi_close(&domain->domain->fid) Device or resource busy(-16)");
-   return;
    mpc_ofi_view_release(&rail->network.ofi.view);
    mpc_ofi_context_release(&rail->network.ofi.ctx);
 }

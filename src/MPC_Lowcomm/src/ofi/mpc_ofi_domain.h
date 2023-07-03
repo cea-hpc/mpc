@@ -18,7 +18,7 @@
 /* TODO: move to config */
 #define MPC_OFI_DOMAIN_EAGER_SIZE (size_t)8192
 #define MPC_OFI_DOMAIN_EAGER_PER_BUFF 512
-#define MPC_OFI_NUM_MULTIRECV_BUFF 8
+#define MPC_OFI_NUM_MULTIRECV_BUFF 2
 
 #define MPC_OFI_DOMAIN_NUM_CQ_REQ_TO_POLL 8
 
@@ -30,6 +30,8 @@ struct mpc_ofi_domain_buffer_t
    mpc_common_spinlock_t lock;
    uint32_t pending_operations;
    volatile int is_posted;
+
+   mpc_ofi_aligned_mem_t aligned_mem;
 
    void * buffer;
    size_t size;

@@ -25,7 +25,10 @@ int mpc_ofi_domain_buffer_init(struct mpc_ofi_domain_buffer_t * buff, struct mpc
 {
    buff->domain = domain;
    buff->size = MPC_OFI_DOMAIN_EAGER_PER_BUFF * MPC_OFI_DOMAIN_EAGER_SIZE;
-   buff->buffer = malloc(buff->size);
+
+   buff->aligned_mem = mpc_ofi_alloc_aligned(buff->size);
+
+   buff->buffer = buff->aligned_mem.ret;
 
    if(!buff->buffer)
    {
@@ -121,7 +124,7 @@ int mpc_ofi_domain_buffer_release(struct mpc_ofi_domain_buffer_t * buff)
 {
    MPC_OFI_CHECK_RET(fi_close(&buff->mr->fid));
 
-   free(buff->buffer);
+   mpc_ofi_free_aligned(&buff->aligned_mem);
 
    return 0;
 }
@@ -151,7 +154,6 @@ int mpc_ofi_domain_buffer_manager_init(struct mpc_ofi_domain_buffer_manager_t * 
          return 1;
       }
    }
-
 
    return 0;
 }
@@ -234,6 +236,9 @@ int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context
    MPC_OFI_CHECK_RET(fi_ep_bind(domain->ep, &domain->tx_cq->fid, FI_SEND));
    MPC_OFI_CHECK_RET(fi_ep_bind(domain->ep, &domain->rx_cq->fid, FI_RECV));
 
+   size_t max_eager_size = MPC_OFI_DOMAIN_EAGER_SIZE;
+
+   MPC_OFI_CHECK_RET(fi_setopt(&domain->ep->fid, FI_OPT_ENDPOINT, FI_OPT_MIN_MULTI_RECV, &max_eager_size, sizeof(size_t)));
 
    /* Finally enable the EP */
    MPC_OFI_CHECK_RET(fi_enable(domain->ep));
@@ -275,7 +280,9 @@ int mpc_ofi_domain_release(struct mpc_ofi_domain_t * domain)
    MPC_OFI_CHECK_RET(fi_close(&domain->rx_cq->fid));
    MPC_OFI_CHECK_RET(fi_close(&domain->tx_cq->fid));
    MPC_OFI_CHECK_RET(fi_close(&domain->eq->fid));
-   MPC_OFI_CHECK_RET(fi_close(&domain->domain->fid));
+
+   TODO("Understand why we get -EBUSY");
+   fi_close(&domain->domain->fid);
 
 
    /* release request cache */
@@ -645,7 +652,7 @@ static struct mpc_ofi_request_t * __acquire_request(struct mpc_ofi_domain_t * do
       if(ret)
          break;
 
-#if 1
+#if 0
       if(mpc_ofi_domain_poll(domain, 0))
       {
          mpc_common_errorpoint("Error raised when polling for request");
@@ -675,10 +682,9 @@ int mpc_ofi_domain_send(struct mpc_ofi_domain_t * domain,
       req = &__req;
    }
 
-   *req = __acquire_request(domain, _mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext);
-
    mpc_common_spinlock_lock(&domain->lock);
 
+   *req = __acquire_request(domain, _mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext);
 
    if( mpc_ofi_domain_memory_register_no_lock(domain, buff, size, FI_SEND, &(*req)->mr[0]) )
    {
@@ -741,10 +747,10 @@ int mpc_ofi_domain_sendv(struct mpc_ofi_domain_t * domain,
    }
 
    assume(iovcnt<MPC_OFI_IOVEC_SIZE);
+   mpc_common_spinlock_lock(&domain->lock);
+
 
    *req = __acquire_request(domain, _mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext);
-
-   mpc_common_spinlock_lock(&domain->lock);
 
    unsigned int i = 0;
 
@@ -821,10 +827,9 @@ int mpc_ofi_domain_get(struct mpc_ofi_domain_t *domain,
       req = &__req;
    }
 
-   *req = __acquire_request(domain, _mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext);
-
    mpc_common_spinlock_lock(&domain->lock);
 
+   *req = __acquire_request(domain, _mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext);
 
    if( mpc_ofi_domain_memory_register_no_lock(domain, buf, len, FI_READ, &(*req)->mr[0]) )
    {

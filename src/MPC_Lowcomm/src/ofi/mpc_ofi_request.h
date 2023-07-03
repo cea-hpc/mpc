@@ -39,7 +39,7 @@ __UNUSED__ static int mpc_ofi_request_test(struct mpc_ofi_request_t*req)
    return req->done;
 }
 
-#define MPC_OFI_REQUEST_CACHE_SIZE 16
+#define MPC_OFI_REQUEST_CACHE_SIZE 1024
 
 struct mpc_ofi_request_cache_t
 {

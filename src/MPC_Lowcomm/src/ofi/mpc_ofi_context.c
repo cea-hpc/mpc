@@ -60,7 +60,6 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
    /* Allocate and set libfabric configuration */
 
    struct fi_info * hints = mpc_ofi_get_requested_hints(provider);
-   mpc_ofi_decode_mr_mode(hints->domain_attr->mr_mode);
 
 
    if( fi_getinfo(FI_VERSION(1, 5), NULL, NULL, 0, hints, &ctx->config) < 0)
@@ -103,7 +102,7 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
       }
    }
 
-  	mpc_common_debug_info(stderr, "Using driver relying on %s(%s)\n", ctx->config->fabric_attr->prov_name, ctx->config->fabric_attr->name);
+  	mpc_common_debug_info("Using driver relying on %s(%s)\n", ctx->config->fabric_attr->prov_name, ctx->config->fabric_attr->name);
 
    return 0;
 }
@@ -122,7 +121,8 @@ int mpc_ofi_context_release(struct mpc_ofi_context_t *ctx)
    }
 
    /* Close the fabric (needs all the sub objects to be released)*/
-   MPC_OFI_CHECK_RET(fi_close(&ctx->fabric->fid));
+   TODO("Understand why we get -EBUSY");
+   fi_close(&ctx->fabric->fid);
 
    if(mpc_ofi_dns_release(&ctx->dns))
    {

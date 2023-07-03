@@ -15,6 +15,18 @@
 
 #define MPC_OFI_ADDRESS_LEN    512
 
+/*****************
+ * ALLOC ALIGNED *
+ *****************/
+
+typedef struct mpc_ofi_aligned_mem_s
+{
+	void * orig;
+	void * ret;
+}mpc_ofi_aligned_mem_t;
+
+mpc_ofi_aligned_mem_t mpc_ofi_alloc_aligned(size_t size);
+void mpc_ofi_free_aligned(mpc_ofi_aligned_mem_t * mem);
 
 /*************
 * PRINTINGS *
