@@ -72,41 +72,6 @@ struct _mpc_lowcomm_config_struct_ft
 };
 
 
-/********************************** ENUM ************************************/
-/****/
-enum _mpc_lowcomm_ofi_mode
-{
-	MPC_LOWCOMM_OFI_CONNECTED,
-	MPC_LOWCOMM_OFI_CONNECTIONLESS
-};
-
-/********************************** ENUM ************************************/
-/****/
-enum _mpc_lowcomm_ofi_ep_type
-{
-	MPC_LOWCOMM_OFI_EP_MSG,
-	MPC_LOWCOMM_OFI_EP_RDM,
-	MPC_LOWCOMM_OFI_EP_UNSPEC
-};
-
-/********************************** ENUM ************************************/
-/****/
-enum _mpc_lowcomm_ofi_av_type
-{
-	MPC_LOWCOMM_OFI_AV_TABLE,
-	MPC_LOWCOMM_OFI_AV_MAP,
-	MPC_LOWCOMM_OFI_AV_UNSPEC
-};
-
-/********************************** ENUM ************************************/
-/****/
-enum _mpc_lowcomm_ofi_progress
-{
-	MPC_LOWCOMM_OFI_PROGRESS_MANUAL,
-	MPC_LOWCOMM_OFI_PROGRESS_AUTO,
-	MPC_LOWCOMM_OFI_PROGRESS_UNSPEC
-};
-
 /******************************** STRUCTURE *********************************/
 /****/
 struct _mpc_lowcomm_config_struct_offload_ops_t
@@ -145,6 +110,10 @@ struct _mpc_lowcomm_config_struct_net_driver_portals
 /** OFI-based driver */
 struct _mpc_lowcomm_config_struct_net_driver_ofi
 {
+	unsigned int request_cache_size;
+	unsigned int eager_size;
+	unsigned int eager_per_buff;
+	unsigned int number_of_multi_recv_buff;
 	char provider[MPC_CONF_STRING_SIZE];
 };
 

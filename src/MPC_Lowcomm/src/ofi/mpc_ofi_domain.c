@@ -4,6 +4,7 @@
 #include "mpc_ofi_helpers.h"
 
 #include <mpc_common_debug.h>
+#include <sctk_alloc.h>
 
 #include "mpc_ofi_request.h"
 #include "rdma/fabric.h"
@@ -21,10 +22,10 @@
 #include <string.h>
 
 
-int mpc_ofi_domain_buffer_init(struct mpc_ofi_domain_buffer_t * buff, struct mpc_ofi_domain_t * domain)
+int mpc_ofi_domain_buffer_init(struct mpc_ofi_domain_buffer_t * buff, struct mpc_ofi_domain_t * domain, unsigned int eager_size, unsigned int eager_per_buff)
 {
    buff->domain = domain;
-   buff->size = MPC_OFI_DOMAIN_EAGER_PER_BUFF * MPC_OFI_DOMAIN_EAGER_SIZE;
+   buff->size = (size_t)eager_per_buff * eager_size;
 
    buff->aligned_mem = mpc_ofi_alloc_aligned(buff->size);
 
@@ -130,19 +131,27 @@ int mpc_ofi_domain_buffer_release(struct mpc_ofi_domain_buffer_t * buff)
 }
 
 
-int mpc_ofi_domain_buffer_manager_init(struct mpc_ofi_domain_buffer_manager_t * buffs, struct mpc_ofi_domain_t * domain)
+int mpc_ofi_domain_buffer_manager_init(struct mpc_ofi_domain_buffer_manager_t * buffs, struct mpc_ofi_domain_t * domain,
+                                        unsigned int eager_size, unsigned int eager_per_buff, unsigned int num_recv_buff)
 {
    buffs->domain = domain;
 
-   buffs->pending_repost_count = MPC_OFI_NUM_MULTIRECV_BUFF;
+   buffs->buffer_count = num_recv_buff;
+   buffs->eager_size= eager_size;
+   buffs->eager_per_buff = eager_per_buff;
+
+   buffs->rx_buffers = sctk_malloc(sizeof(struct mpc_ofi_domain_buffer_t) * buffs->buffer_count);
+   assume(buffs->rx_buffers);
+
+   buffs->pending_repost_count = buffs->buffer_count;
 
    mpc_common_spinlock_init(&buffs->pending_repost_count_lock, 0);
 
-   int i = 0;
+   unsigned i = 0;
 
-   for(i = 0 ; i < MPC_OFI_NUM_MULTIRECV_BUFF; i++)
+   for(i = 0 ; i < buffs->buffer_count ; i++)
    {
-      if(mpc_ofi_domain_buffer_init(&buffs->rx_buffers[i], domain))
+      if(mpc_ofi_domain_buffer_init(&buffs->rx_buffers[i], domain, buffs->eager_size, buffs->eager_per_buff))
       {
          mpc_common_errorpoint("Error initializing a RX buff");
          return 1;
@@ -161,9 +170,9 @@ int mpc_ofi_domain_buffer_manager_init(struct mpc_ofi_domain_buffer_manager_t * 
 
 int mpc_ofi_domain_buffer_manager_release(struct mpc_ofi_domain_buffer_manager_t * buffs)
 {
-   int i = 0;
+   unsigned int i = 0;
 
-   for(i = 0 ; i < MPC_OFI_NUM_MULTIRECV_BUFF; i++)
+   for(i = 0 ; i < buffs->buffer_count ; i++)
    {
       if(mpc_ofi_domain_buffer_release(&buffs->rx_buffers[i]))
       {
@@ -171,6 +180,8 @@ int mpc_ofi_domain_buffer_manager_release(struct mpc_ofi_domain_buffer_manager_t
          return 1;
       }
    }
+
+   sctk_free(buffs->rx_buffers);
 
    return 0;
 }
@@ -181,11 +192,12 @@ int mpc_ofi_domain_buffer_manager_release(struct mpc_ofi_domain_buffer_manager_t
  **************/
 
 
-int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context_t *ctx)
+int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context_t *ctx,    struct _mpc_lowcomm_config_struct_net_driver_ofi * config)
 {
    mpc_common_spinlock_init(&domain->lock, 0);
    domain->being_polled = 0;
    domain->ctx = ctx;
+   domain->config = config;
 
    /* Initialize request cache */
    if(mpc_ofi_request_cache_init(&domain->rcache, domain))
@@ -249,7 +261,7 @@ int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context
 
 
    /* Eventually Prepare the Buffers*/
-   if(mpc_ofi_domain_buffer_manager_init(&domain->buffers, domain))
+   if(mpc_ofi_domain_buffer_manager_init(&domain->buffers, domain, config->eager_size, config->eager_per_buff, config->number_of_multi_recv_buff))
    {
       mpc_common_errorpoint("Failed to allocate buffers");
       return 1;
@@ -323,7 +335,7 @@ static struct mpc_ofi_request_t * _ofi_domain_poll_for_recv_request(struct mpc_o
             break;
          }
 
-#if 1
+#if 0
          if(mpc_ofi_domain_poll(domain, 0))
          {
             mpc_common_errorpoint("Error polling for requests");
@@ -472,7 +484,7 @@ static inline int _mpc_ofi_domain_eq_poll(struct mpc_ofi_domain_t * domain)
 	if(rd == -FI_EAVAIL)
 	{
 		struct fi_eq_err_entry err;
-      int ret = fi_eq_readerr(domain->eq, &err, 0);
+      long ret = fi_eq_readerr(domain->eq, &err, 0);
       if(ret < 0)
       {
 		   MPC_OFI_DUMP_ERROR(ret);
@@ -600,7 +612,7 @@ int mpc_ofi_domain_memory_unregister(struct mpc_ofi_domain_t * domain, struct fi
 
    mpc_common_spinlock_unlock(&domain->lock);
 
-   return 0;
+   return ret;
 }
 
 
@@ -647,7 +659,7 @@ static struct mpc_ofi_request_t * __acquire_request(struct mpc_ofi_domain_t * do
 
    do
    {
-      ret = mpc_ofi_request_acquire(&domain->rcache, _mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext );
+      ret = mpc_ofi_request_acquire(&domain->rcache, comptetion_cb, arg, comptetion_cb_ext, arg_ext );
 
       if(ret)
          break;

@@ -6,6 +6,8 @@
 
 #include <mpc_common_spinlock.h>
 
+#include "lowcomm_config.h"
+
 #include <rdma/fi_domain.h>
 #include <rdma/fi_eq.h>
 #include <stdint.h>
@@ -42,7 +44,8 @@ struct mpc_ofi_domain_buffer_t
    struct mpc_ofi_domain_t * domain;
 };
 
-int mpc_ofi_domain_buffer_init(struct mpc_ofi_domain_buffer_t * buff, struct mpc_ofi_domain_t * domain);
+int mpc_ofi_domain_buffer_init(struct mpc_ofi_domain_buffer_t * buff, struct mpc_ofi_domain_t * domain,
+                               unsigned int eager_size, unsigned int eager_per_buff);
 void mpc_ofi_domain_buffer_acquire(struct mpc_ofi_domain_buffer_t * buff);
 int mpc_ofi_domain_buffer_relax(struct mpc_ofi_domain_buffer_t * buff);
 int mpc_ofi_domain_buffer_post(struct mpc_ofi_domain_buffer_t * buff);
@@ -54,16 +57,20 @@ int mpc_ofi_domain_buffer_release(struct mpc_ofi_domain_buffer_t * buff);
 
 struct mpc_ofi_domain_buffer_manager_t
 {
-   struct mpc_ofi_domain_buffer_t rx_buffers[MPC_OFI_NUM_MULTIRECV_BUFF];
+   unsigned int buffer_count;
+   unsigned int eager_size;
+   unsigned int eager_per_buff;
+   struct mpc_ofi_domain_buffer_t *rx_buffers;
 
    struct mpc_ofi_domain_t * domain;
 
-   volatile int pending_repost_count;
+   volatile unsigned int pending_repost_count;
    mpc_common_spinlock_t pending_repost_count_lock;
 
 };
 
-int mpc_ofi_domain_buffer_manager_init( struct mpc_ofi_domain_buffer_manager_t * buffs, struct mpc_ofi_domain_t * domain);
+int mpc_ofi_domain_buffer_manager_init( struct mpc_ofi_domain_buffer_manager_t * buffs, struct mpc_ofi_domain_t * domain,
+                                        unsigned int eager_size, unsigned int eager_per_buff, unsigned int num_recv_buff);
 
 int mpc_ofi_domain_buffer_manager_release(struct mpc_ofi_domain_buffer_manager_t * buffs);
 
@@ -97,9 +104,10 @@ struct mpc_ofi_domain_t{
    struct mpc_ofi_domain_buffer_manager_t buffers;
    /* Requests */
    struct mpc_ofi_request_cache_t rcache;
+   struct _mpc_lowcomm_config_struct_net_driver_ofi * config;
 };
 
-int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context_t *ctx);
+int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context_t *ctx,    struct _mpc_lowcomm_config_struct_net_driver_ofi * config);
 int mpc_ofi_domain_release(struct mpc_ofi_domain_t * domain);
 int mpc_ofi_domain_poll(struct mpc_ofi_domain_t * domain, int type);
 

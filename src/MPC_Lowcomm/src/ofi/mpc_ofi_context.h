@@ -9,6 +9,7 @@
 /* INTERNAL */
 #include "mpc_ofi_dns.h"
 #include "mpc_ofi_request.h"
+#include "lowcomm_config.h"
 
 /* OFI */
 #include <rdma/fabric.h>
@@ -55,13 +56,15 @@ struct mpc_ofi_context_t
    /* Central Callback for Recv */
    mpc_ofi_context_recv_callback_t recv_callback;
    void * callback_arg;
+
+   struct _mpc_lowcomm_config_struct_net_driver_ofi * rail_config;
 };
 
 int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
                         uint32_t domain_count,
                         char * provider,
                         mpc_ofi_context_policy_t policy,
-                        mpc_ofi_context_recv_callback_t recv_callback, void * callback_arg);
+                        mpc_ofi_context_recv_callback_t recv_callback, void * callback_arg, struct _mpc_lowcomm_config_struct_net_driver_ofi * config);
 
 int mpc_ofi_context_release(struct mpc_ofi_context_t *ctx);
 

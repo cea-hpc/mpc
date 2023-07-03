@@ -1,7 +1,12 @@
 #include "mpc_ofi_request.h"
 #include "mpc_common_spinlock.h"
 
+#include "lowcomm_config.h"
 #include <mpc_common_debug.h>
+#include <mpc_ofi_domain.h>
+
+#include <sctk_alloc.h>
+
 #include <string.h>
 
 /*****************
@@ -10,13 +15,16 @@
 
 int mpc_ofi_request_cache_init(struct mpc_ofi_request_cache_t *cache, struct mpc_ofi_domain_t *domain)
 {
-   memset(cache->requests, 0, sizeof(struct mpc_ofi_request_t) * MPC_OFI_REQUEST_CACHE_SIZE);
+   cache->request_count = domain->config->request_cache_size;
+   cache->requests = sctk_malloc(cache->request_count * sizeof(struct mpc_ofi_request_t));
+   assume(cache->requests);
+   memset(cache->requests, 0, sizeof(struct mpc_ofi_request_t) * cache->request_count);
 
    cache->domain = domain;
 
-   int i = 0;
+   unsigned int i = 0;
 
-   for(i = 0 ; i < MPC_OFI_REQUEST_CACHE_SIZE; i++)
+   for(i = 0 ; i < cache->request_count; i++)
    {
       /* All requests are free */
       cache->requests[i].free = 1;
@@ -28,13 +36,15 @@ int mpc_ofi_request_cache_init(struct mpc_ofi_request_cache_t *cache, struct mpc
 
 int mpc_ofi_request_cache_release(struct mpc_ofi_request_cache_t *cache)
 {
-   int i = 0;
+   unsigned int i = 0;
 
-   for(i = 0 ; i < MPC_OFI_REQUEST_CACHE_SIZE; i++)
+   for(i = 0 ; i < cache->request_count; i++)
    {
       /* All requests are free ? */
       assert(cache->requests[i].free);
    }
+
+   free(cache->requests);
 
    return 0;
 }
@@ -45,9 +55,9 @@ struct mpc_ofi_request_t * mpc_ofi_request_acquire(struct mpc_ofi_request_cache_
                                                            int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
                                                            void *arg_ext)
 {
-   int i = 0;
+   unsigned int i = 0;
 
-   for(i = 0 ; i < MPC_OFI_REQUEST_CACHE_SIZE; i++)
+   for(i = 0 ; i < cache->request_count; i++)
    {
       struct mpc_ofi_request_t * req = &cache->requests[i];
 

@@ -23,9 +23,11 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
                         char * provider,
                         mpc_ofi_context_policy_t policy,
                         mpc_ofi_context_recv_callback_t recv_callback,
-                        void * callback_arg)
+                        void * callback_arg, struct _mpc_lowcomm_config_struct_net_driver_ofi * config)
 {
    memset(ctx, 0, sizeof(struct mpc_ofi_context_t));
+
+   ctx->rail_config = config;
 
    /* General parameters initialization */
 
@@ -95,7 +97,7 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
 
    for(i = 0 ; i < ctx->domain_count; i++)
    {
-      if(mpc_ofi_domain_init(&ctx->domains[i], ctx))
+      if(mpc_ofi_domain_init(&ctx->domains[i], ctx, ctx->rail_config))
       {
          mpc_common_errorpoint("Failed to initialize a domain");
          return 1;

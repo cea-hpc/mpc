@@ -207,7 +207,20 @@ static inline mpc_conf_config_type_t *__init_driver_ofi(struct _mpc_lowcomm_conf
 
 	snprintf(driver->value.ofi.provider, MPC_CONF_STRING_SIZE, "%s", provider);
 
+	driver->value.ofi.eager_size = 8192;
+	driver->value.ofi.eager_per_buff = 512;
+	driver->value.ofi.request_cache_size = 1024;
+	driver->value.ofi.number_of_multi_recv_buff = 3;
+
 	return mpc_conf_config_type_init("ofi",
+														PARAM("reqcachesize", &driver->value.ofi.request_cache_size,
+																MPC_CONF_INT, "Number of request to put in the OFI cache"),
+														PARAM("eagersize", &driver->value.ofi.eager_size,
+																MPC_CONF_INT, "Size of eager messages"),
+														PARAM("eagerperbuff", &driver->value.ofi.eager_per_buff,
+																MPC_CONF_INT, "Number of eagers per recv buffer"),
+														PARAM("numrecvbuff", &driver->value.ofi.number_of_multi_recv_buff,
+																MPC_CONF_INT, "Number of receive buffers"),
                                           PARAM("provider",
                                                 driver->value.ofi.provider,
                                                 MPC_CONF_STRING,

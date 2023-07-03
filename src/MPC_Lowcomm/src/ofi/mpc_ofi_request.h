@@ -39,16 +39,13 @@ __UNUSED__ static int mpc_ofi_request_test(struct mpc_ofi_request_t*req)
    return req->done;
 }
 
-#define MPC_OFI_REQUEST_CACHE_SIZE 1024
-
 struct mpc_ofi_request_cache_t
 {
-   struct mpc_ofi_request_t requests[MPC_OFI_REQUEST_CACHE_SIZE];
+   unsigned int request_count;
+   struct mpc_ofi_request_t *requests;
    struct mpc_ofi_domain_t *domain;
    mpc_common_spinlock_t lock;
 };
-
-
 
 
 int mpc_ofi_request_cache_init(struct mpc_ofi_request_cache_t *cache, struct mpc_ofi_domain_t *domain);
