@@ -649,7 +649,7 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_rail_conf_init()
     mpc_conf_config_type_t *tbsm_mpi = __new_rail_conf_instance("tbsmmpi", 99, "any", "ring", 1, 0, 1, 0, 1, "tbsmconfigmpi");
 
 #ifdef MPC_USE_PORTALS
-	mpc_conf_config_type_t *portals_mpi = __new_rail_conf_instance("portalsmpi", 6, "default", "ring", 1, 1, 0, 1, 1, "portalsconfigmpi");
+	mpc_conf_config_type_t *portals_mpi = __new_rail_conf_instance("portalsmpi", 6, "any", "ring", 1, 1, 0, 1, 1, "portalsconfigmpi");
 #endif
 #ifdef MPC_USE_OFI
 	mpc_conf_config_type_t *ofi_mpi = __new_rail_conf_instance("ofimpi", 1, "any", "ring", 1, 1, 0, 0, 0, "oficonfigmpi");

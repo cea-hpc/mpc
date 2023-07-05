@@ -209,7 +209,7 @@ enum _mpc_lowcomm_config_struct_net_driver_type
 static const char * const _mpc_lowcomm_config_struct_net_driver_type_name[MPC_LOWCOMM_CONFIG_DRIVER_COUNT] =
 {
 	"none",
-	"portals",
+	"ptl",
 	"tcp",
 	"tbsm",
 	"ofi"

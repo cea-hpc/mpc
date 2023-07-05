@@ -412,7 +412,7 @@ static inline int __init_rails(lcp_context_h ctx)
 	if(cli_option == NULL)
 	{
 		/* We did not find this name in the network configurations */
-		bad_parameter("No configuration found for the network '%s'. Please check you '-net=' argument"
+		bad_parameter("No configuration found for the network '%s'. Please check your '-net=' argument"
 		              " and your configuration file", option_name);
 	}
 
