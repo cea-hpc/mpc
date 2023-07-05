@@ -630,6 +630,34 @@ static inline int __check_configuration(lcp_context_h ctx)
         return __generate_configuration_summary(ctx);
 }
 
+static int lcp_context_check_offload(lcp_context_h ctx)
+{
+        int rc = LCP_SUCCESS, i;
+        int has_offload = 0;
+        lcp_rsc_desc_t rsc;
+        lcr_rail_config_t *iface_config;
+        lcr_driver_config_t *driver_config;
+
+        for (i = 0; i<ctx->num_resources; i++) {
+                rsc = ctx->resources[i];
+		iface_config = _mpc_lowcomm_conf_rail_unfolded_get(rsc.component->rail_name);
+
+                if (iface_config->offload) {
+                        has_offload = 1;
+                        break;
+                }
+        }
+
+        if (ctx->config.offload && ctx->num_cmpts > 1 && has_offload) {
+                mpc_common_debug_error("LCP CONTEXT: offload interface not "
+                                       "supported with heterogenous multirail");
+                rc = LCP_ERROR;
+                goto err;
+        } 
+err:
+        return rc;
+}
+
 /**
  * @brief This is the main entry point to configure LCP
  * 
@@ -709,6 +737,11 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
 
         rc = lcp_context_init_structures(ctx);
         if (rc != LCP_SUCCESS) {
+                goto out_free_ifaces;
+        }
+
+        rc = lcp_context_check_offload(ctx);
+        if(rc != LCP_SUCCESS){
                 goto out_free_ifaces;
         }
 
