@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file. The format 
 - **SESSIONS** adding sessions support
 - **OMP** 
     - Added fibers to OpenMP tasks
+    - Fix OMP Tool support
     - Added interoperation between MPC-MPI / MPC-OpenMP(tasks) for the « loss of thread issue »
     - Refactored OpenMP task runtime (memory management, dependencies, tasks priorities)
 - **MPI** 
