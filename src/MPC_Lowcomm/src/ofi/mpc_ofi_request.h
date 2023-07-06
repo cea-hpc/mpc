@@ -1,6 +1,7 @@
 #ifndef MPC_OFI_REQUEST
 #define MPC_OFI_REQUEST
 
+#include <sctk_alloc.h>
 #include <mpc_common_spinlock.h>
 #include <mpc_common_debug.h>
 
@@ -32,6 +33,7 @@ struct mpc_ofi_request_t
    struct fid_mr *mr[MPC_OFI_IOVEC_SIZE];
    unsigned int mr_count;
    struct mpc_ofi_domain_t * domain;
+   short was_allocated;
 };
 
 __UNUSED__ static int mpc_ofi_request_test(struct mpc_ofi_request_t*req)
@@ -81,6 +83,11 @@ __UNUSED__ static int mpc_ofi_request_done(struct mpc_ofi_request_t *request)
    request->free = 1;
 
    mpc_common_spinlock_unlock(&request->lock);
+
+   if(request->was_allocated)
+   {
+      sctk_free(request);
+   }
 
    return ret;
 }
