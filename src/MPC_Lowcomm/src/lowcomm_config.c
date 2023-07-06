@@ -987,16 +987,15 @@ static mpc_conf_config_type_t *__mpc_lowcomm_cli_conf_init(void)
 {
 	mpc_conf_config_type_t *cliopt = mpc_conf_config_type_init("options",
 #ifdef MPC_USE_OFI
-	                                                           PARAM("ofi-tcp", ___mpc_lowcomm_cli_conf_option_init("ofi-tcp", "tbsmmpi", "tcp-ofi-rail"), MPC_CONF_TYPE, "Combination of TCP and TBSM"),
+	                                                           PARAM("tcp", ___mpc_lowcomm_cli_conf_option_init("tcp", "tbsmmpi", "tcp-ofi-rail"), MPC_CONF_TYPE, "Combination of TCP and TBSM"),
 	                                                           PARAM("ofi-verbs", ___mpc_lowcomm_cli_conf_option_init("ofi-verbs", "tbsmmpi", "verbs-ofi-rail"), MPC_CONF_TYPE, "Combination of Verbs and TBSM"),
 	                                                           PARAM("ofi-shm", ___mpc_lowcomm_cli_conf_option_init("ofi-shm", "tbsmmpi", "shm-ofi-rail"), MPC_CONF_TYPE, "Combination of TBSM and SHM"),
-
-
+#else
+	                                                           PARAM("tcp", ___mpc_lowcomm_cli_conf_option_init("tcp", "tbsmmpi", "tcpmpi"), MPC_CONF_TYPE, "TCP Alone"),
 #endif
 #ifdef MPC_USE_PORTALS
 	                                                           PARAM("portals4", ___mpc_lowcomm_cli_conf_option_init("portals4", "tbsmmpi", "portalsmpi"), MPC_CONF_TYPE, "Combination of Portals and SHM"),
 #endif
-	                                                           PARAM("tcp", ___mpc_lowcomm_cli_conf_option_init("tcp", "tbsmmpi", "tcpmpi"), MPC_CONF_TYPE, "TCP Alone"),
 	                                                           NULL);
 
 	mpc_conf_config_type_t *cli = mpc_conf_config_type_init("cli",
