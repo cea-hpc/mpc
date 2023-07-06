@@ -6,3 +6,4 @@ mpcalloc                  0.2
 mpc-compiler-additions    0.9.1
 mpc-dmtcp                 2.5.0
 gdb                       7.7
+libfabric                 1.18.1

@@ -5,3 +5,4 @@ hydra                     http://www.mpich.org/static/downloads/3.2/hydra-VERSIO
 mpcalloc                  https://france.paratools.com/mpcalloc-VERSION.tar.gz
 mpc-compiler-additions    https://france.paratools.com/mpc/releases/mpc-compiler-additions-VERSION.tar.gz
 gdb                       https://ftpmirror.gnu.org/gdb/gdb-7.7.tar.gz
+libfabric                 https://github.com/ofiwg/libfabric/releases/download/vVERSION/libfabric-VERSION.tar.bz2

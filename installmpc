@@ -42,6 +42,7 @@ ALL_PACKAGE_ARGS=""
 MPC_COMP_ADD_BUILD_PARAMETERS=""
 OPENPA_BUILD_PARAMETERS=""
 MPCALLOC_BUILD_PARAMETERS=""
+OFI_BUILD_PARAMETERS=""
 HWLOC_BUILD_PARAMETERS="--disable-werror --enable-static"
 HYDRA_BUILD_PARAMETERS=""
 MPC_DMTCP_BUILD_PARAMETERS="--enable-pthread-mutex-wrappers"
@@ -1156,7 +1157,9 @@ You may track issued commands using the "-v" flag.
   --enable-debug                          : Enable maximum debug (symbols, messages)
 
 # Disable sub packages
+  --disable-ofi                           : Disable libfabric support
   --disable-mpc-comp                      : Disable MPC compiler additions support
+  --disable-mpcalloc                      : Disable MPC allocator
   --disable-fortran                       : Disable fortran
   --disable-hydra                         : Disable Hydra
   --disable-romio                         : Disable ROMIO MPI-IO support
@@ -1199,10 +1202,10 @@ You may track issued commands using the "-v" flag.
   --openpa=*                              : Add options to openpa configure
   --hydra=*                               : Add options to Hydra configure
   --hwloc=*                               : Add options to hwloc configure
-  --tbb=*                                 : Add options to TBB configure
+  --mpcalloc=*                            : Add options to MPCALLOC configure
+  --ofi=*                                 : Add options to OFI configure
   --dmtpc=*                               : Add options to DMTCP/HBICT configure
   --mpcframework=*                        : Add options to mpc framework configure
-
 EOF
 }
 
@@ -1224,6 +1227,8 @@ EOF
 OPENPA_PREFIX=""
 
 MPCALLOC_PREFIX=""
+
+OFI_PREFIX=""
 
 MPC_DMTCP_PREFIX="disabled"
 MPC_GDB_PREFIX='disabled'
@@ -1344,6 +1349,16 @@ do
 			;;
 		--disable-mpc-tbb)
 			TBB_PREFIX="disabled"
+			;;
+		#### OFI ##########
+		--enable-ofi|--enable-libfabric)
+			OFI_PREFIX=""
+			;;
+		--disable-ofi|--disable-libfabric)
+			OFI_PREFIX="disabled"
+			;;
+		--ofi=*)
+			extractAndAddPackageOption 'OFI_BUILD_PARAMETERS' 'ofi=' "$arg"
 			;;
 		#### MPC Allocator ##########
 		--enable-mpc-allocator|--enable-mpcalloc)
@@ -1661,6 +1676,13 @@ if test "x${DEP_FOUND}" = "xno" && test "x$MPCALLOC_PREFIX" != "xdisabled"; then
 	build_configure_based_package "mpcalloc" "$(package_version "mpcalloc")" "$MPCALLOC_BUILD_PARAMETERS"
 fi
 
+
+find_in_prefix_or_use_spack "libfabric" "$(package_version "libfabric")" "$OFI_PREFIX"
+
+if test "x${DEP_FOUND}" = "xno" && test "x$OFI_PREFIX" != "xdisabled"; then
+	# Could not use spack now installing manually
+	build_configure_based_package "libfabric" "$(package_version "libfabric")" "$OFI_BUILD_PARAMETERS"
+fi
 
 #
 # Check for avoiding GLIBC 2.28 for GCC 7.3.0
