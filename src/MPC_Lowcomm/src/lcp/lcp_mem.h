@@ -5,10 +5,12 @@
 #include "lcr/lcr_def.h"
 #include "lcp_def.h"
 
+
 /**
  * @brief memory object
  * 
  */
+
 struct lcp_mem {
         uint64_t base_addr;
         size_t length;
@@ -35,5 +37,16 @@ int lcp_mem_reg_from_map(lcp_context_h ctx,
                          void *buffer,
                          size_t length);
 int lcp_mem_unpost(lcp_context_h ctx, lcp_mem_h mem, lcr_tag_t tag);
+
+/************************
+ * INTERFACE TO THE MMU *
+ ************************/
+
+int lcp_pinning_mmu_init();
+int lcp_pinning_mmu_release();
+
+lcp_mem_h lcp_pinning_mmu_pin(lcp_context_h  ctx, void *addr, size_t size, bmap_t bitmap);
+int lcp_pinning_mmu_unpin(lcp_context_h  ctx, lcp_mem_h mem);
+
 
 #endif

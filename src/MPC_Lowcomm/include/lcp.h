@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 
+#include "bitmap.h"
+
 #include "lcp_def.h"
 #include "lcp_common.h"
 
@@ -130,6 +132,11 @@ int lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
 /* Memory registration */
 int lcp_mem_register(lcp_context_h ctx, lcp_mem_h *mem_p, void *buffer, 
                      size_t length);
+int lcp_mem_register_with_bitmap(lcp_context_h ctx,
+                                lcp_mem_h *mem_p,
+                                bmap_t bitmap,
+                                void *buffer,
+                                size_t length);
 int lcp_mem_deregister(lcp_context_h ctx, lcp_mem_h mem);
 int lcp_mem_pack(lcp_context_h ctx, lcp_mem_h mem, 
                     void **rkey_buf_p, size_t *rkey_len);

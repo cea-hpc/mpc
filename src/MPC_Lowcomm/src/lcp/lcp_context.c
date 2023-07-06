@@ -17,6 +17,7 @@
 #include "rail.h"
 
 #include "lcp.h"
+#include "lcp_mem.h"
 #include "lcp_common.h"
 #include "lcp_ep.h"
 #include "lcp_task.h"
@@ -130,6 +131,9 @@ static int lcp_context_init_structures(lcp_context_h ctx)
 	}
 	memset(ctx->tasks, 0, sizeof(lcp_task_table_t));
 	mpc_common_spinlock_init(&ctx->tasks->lock, 0);
+
+
+        lcp_pinning_mmu_init();
 
 	rc = LCP_SUCCESS;
 

@@ -1,5 +1,6 @@
 #include "lcp_ep.h"
 
+#include "mpc_common_debug.h"
 #include "sctk_alloc.h"
 #include "rail.h"
 

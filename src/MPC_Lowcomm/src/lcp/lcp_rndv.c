@@ -10,6 +10,8 @@
 #include "lcp_pending.h"
 #include "lcp_request.h"
 
+#include "mpc_common_debug.h"
+#include "mpc_lowcomm_types.h"
 #include "sctk_alloc.h"
 #include "msg_cpy.h"
 
@@ -167,50 +169,31 @@ int lcp_rndv_reg_send_buffer(lcp_request_t *req)
         int rc = LCP_SUCCESS;
 
         if (req->ctx->config.rndv_mode == LCP_RNDV_GET) {
-                rc = lcp_mem_create(req->ctx, &(req->state.lmem));
-                if (rc != LCP_SUCCESS) {
-                        goto err;
-                }
+
 
                 /* Get source address */
                 void *start = req->datatype & LCP_DATATYPE_CONTIGUOUS ?
                         req->send.buffer : req->state.pack_buf;
 
-                /* Register and pack memory pin context that will be sent to remote */
-                req->state.lmem->bm = req->send.ep->conn_map;
-                rc = lcp_mem_reg_from_map(req->ctx, 
-                                          req->state.lmem,
-                                          req->state.lmem->bm,
-                                          start, 
-                                          req->send.length);
+                req->state.lmem = lcp_pinning_mmu_pin(req->ctx, start, req->send.length,req->send.ep->conn_map);
+                return MPC_LOWCOMM_SUCCESS;
+
         }
-err:
+
         return rc;
 }
 
 int lcp_rndv_reg_recv_buffer(lcp_request_t *rndv_req)
 {
-        int rc;
         lcp_request_t *req = rndv_req->super;
-
-        rc = lcp_mem_create(req->ctx, &(req->state.lmem));
-        if (rc != LCP_SUCCESS) {
-                goto err;
-        }
 
         /* Get source address */
         void *start = req->datatype & LCP_DATATYPE_CONTIGUOUS ?
                 req->recv.buffer : req->state.pack_buf;
 
         /* Register and pack memory pin context that will be sent to remote */
-        req->state.lmem->bm = rndv_req->send.ep->conn_map;
-        rc = lcp_mem_reg_from_map(req->ctx, 
-                                  req->state.lmem,
-                                  req->state.lmem->bm,
-                                  start, 
-                                  req->recv.send_length);
-err:
-        return rc;
+        req->state.lmem = lcp_pinning_mmu_pin(req->ctx, start, req->send.length,req->send.ep->conn_map);
+        return MPC_LOWCOMM_SUCCESS;
 }
 
 /* ============================================== */
@@ -512,7 +495,7 @@ static int lcp_rndv_fin_handler(void *arg, void *data,
 
         /* For both PUT and GET, when receiving a FIN message, we have to
          * unregister the memory */
-        lcp_mem_deregister(req->ctx, req->state.lmem);
+        lcp_pinning_mmu_unpin(req->ctx, req->state.lmem);
 
         //NOTE: rndv request must be completed before the super request so that
         //      it is removed from pending table before another task could

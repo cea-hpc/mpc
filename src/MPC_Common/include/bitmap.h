@@ -3,6 +3,7 @@
 
 #include <limits.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <lcp_common.h>
 
@@ -55,6 +56,7 @@ enum {
                 result; \
         })
 
+
 typedef struct bmap {
        word_t bits[_MPC_BITMAP_BITS_TO_WORDS(64)];
 } bmap_t;
@@ -68,5 +70,12 @@ static inline int mpc_bitmap_is_zero(bmap_t bitmap) {
         }
         return 1;
 }
+
+static inline int mpc_bitmap_equal(bmap_t a, bmap_t b) {
+        return !(memcmp(a.bits, b.bits, sizeof(a.bits)));
+}
+
+
+
 
 #endif 

@@ -1,8 +1,272 @@
 #include "lcp_mem.h"
 
+#include "bitmap.h"
+
+#include <mpc_common_datastructure.h>
+
 #include "lcp_context.h"
+#include "mpc_common_debug.h"
+#include "mpc_common_spinlock.h"
+#include "mpc_lowcomm_types.h"
 #include <sctk_alloc.h>
 #include <rail.h>
+#include <stdint.h>
+#include <stdlib.h>
+
+/*****************************
+ * IMPLEMENTATION OF THE MMU *
+ *****************************/
+
+#define MPC_LCP_MMU_HT_SIZE 4096
+
+#define MPC_LCP_MMU_MAX_ENTRIES 1024
+#define MPC_LCP_MMU_MAX_SIZE (size_t)(1024*1024*1024)
+
+
+struct lcp_pinning_entry
+{
+        void * start;
+        size_t size;
+        lcp_mem_h mem_entry;
+        struct lcp_pinning_entry * next;
+};
+
+struct lcp_pinning_entry * lcp_pinning_entry_new(void * start, size_t size, lcp_mem_h mem_entry)
+{
+        struct lcp_pinning_entry * ret = sctk_malloc(sizeof(struct lcp_pinning_entry));
+        assume(ret);
+
+        ret->start = start;
+        ret->size = size;
+        ret->mem_entry = mem_entry;
+
+        return ret;
+}
+
+int lcp_pinning_entry_contains(struct lcp_pinning_entry *entry, void * start, size_t size, bmap_t bitmap)
+{
+        if(!mpc_bitmap_equal(entry->mem_entry->bm, bitmap))
+        {
+                return 0;
+        }
+
+
+        if( (entry->start <= start) && ((start + size) <= (entry->start + entry->size)) )
+        {
+                return 1;
+        }
+
+        return 0;
+}
+
+
+int lcp_pinning_entry_release(struct lcp_pinning_entry *entry)
+{
+        sctk_free(entry);
+}
+
+
+struct lcp_pinning_list
+{
+        uint64_t key;
+        mpc_common_spinlock_t lock;
+        struct lcp_pinning_entry * head;
+        volatile size_t total_registered_size;
+        volatile uint64_t number_of_buffers;
+};
+
+void * lcp_pinning_list_init(uint64_t key)
+{
+        struct lcp_pinning_list * ret = sctk_malloc(sizeof(struct lcp_pinning_list ));
+        assume(ret);
+
+        mpc_common_spinlock_init(&ret->lock, 0);
+        ret->head = NULL;
+        ret->key = key;
+        ret->total_registered_size = 0;
+        ret->number_of_buffers = 0;
+
+        return ret;
+}
+
+int lcp_pinning_list_release(struct lcp_pinning_list *list)
+{
+        struct lcp_pinning_entry * to_free = NULL;
+        struct lcp_pinning_entry * tmp = list->head;
+        while(tmp)
+        {
+                to_free = tmp;
+                tmp = tmp->next;
+                lcp_pinning_entry_release(to_free);
+        }
+
+        list->head = NULL;
+        list->total_registered_size = 0;
+        list->number_of_buffers = 0;
+
+        sctk_free(list);
+
+        return 0;
+}
+
+
+lcp_mem_h lcp_pinning_list_find_or_create(struct lcp_pinning_list *list, lcp_context_h  ctx, void *addr, size_t size, bmap_t bitmap)
+{
+        lcp_mem_h ret = NULL;
+
+
+        mpc_common_spinlock_lock(&list->lock);
+        struct lcp_pinning_entry * tmp = list->head;
+
+        while(tmp)
+        {
+                if(lcp_pinning_entry_contains(tmp, addr, size, bitmap))
+                {
+                mpc_common_debug("LCP MMU: cache hit %p size %ld", addr, size);
+
+                        ret = tmp->mem_entry;
+                        break;
+                }
+                tmp = tmp->next;
+        }
+
+        if(!ret)
+        {
+                mpc_common_debug("LCP MMU: create new entry %p size %ld", addr, size);
+                /* We need to create */
+                lcp_mem_register_with_bitmap(ctx,
+                                &ret,
+                                bitmap,
+                                addr,
+                                size);
+                if(ret)
+                {
+                        struct lcp_pinning_entry * new = lcp_pinning_entry_new(addr, size, ret);
+                        new->next = list->head;
+                        list->head = new;
+                }
+
+                list->number_of_buffers++;
+                list->total_registered_size += size;
+        }
+
+        mpc_common_spinlock_unlock(&list->lock);
+
+        return ret;
+}
+
+int lcp_pinning_list_relax(struct lcp_pinning_list *list, lcp_context_h  ctx, lcp_mem_h mem)
+{
+        if((list->number_of_buffers < MPC_LCP_MMU_MAX_ENTRIES) && (list->total_registered_size < MPC_LCP_MMU_MAX_SIZE))
+        {
+                mpc_common_debug("LCP MMU: Skip release %p size %ld", mem->base_addr, mem->length);
+                return 0;
+        }
+
+        mpc_common_spinlock_lock(&list->lock);
+
+        if( (list->number_of_buffers >= MPC_LCP_MMU_MAX_ENTRIES) || (list->total_registered_size >= MPC_LCP_MMU_MAX_SIZE) )
+        {
+                struct lcp_pinning_entry * to_free = NULL;
+
+                /* Pop entry */
+                if(list->head)
+                {
+                        /* Element is head */
+                        if(list->head->mem_entry == mem)
+                        {
+                                to_free = list->head;
+                                list->head = list->head->next;
+                                lcp_pinning_entry_release(to_free);
+                        }
+                        else
+                        {
+                                /* We need to walk */
+                                struct lcp_pinning_entry * tmp = list->head;
+
+                                while(tmp)
+                                {
+                                        if(tmp->next)
+                                        {
+                                                if(tmp->next->mem_entry == mem)
+                                                {
+                                                        to_free = tmp->next;
+                                                        tmp->next = tmp->next->next;
+                                                        lcp_pinning_entry_release(to_free);
+                                                }
+                                        }
+                                }
+                        }
+                }
+
+                mpc_common_debug("LCP MMU: Did release %p size %ld", mem->base_addr, mem->length);
+
+                lcp_mem_deregister(ctx, mem);
+
+        }
+
+        mpc_common_spinlock_unlock(&list->lock);
+
+
+        return 0;
+}
+
+
+struct lcp_pinning_mmu
+{
+        struct mpc_common_hashtable ht;
+        size_t total_registered_size;
+        uint64_t number_of_buffers;
+};
+
+static struct lcp_pinning_mmu __mmu;
+
+int lcp_pinning_mmu_init()
+{
+        mpc_common_hashtable_init(&__mmu.ht, MPC_LCP_MMU_HT_SIZE);
+        __mmu.total_registered_size = 0;
+        __mmu.number_of_buffers = 0;
+
+        return 0;
+}
+
+int lcp_pinning_mmu_release()
+{
+        mpc_common_hashtable_release(&__mmu.ht);
+        __mmu.total_registered_size = 0;
+        __mmu.number_of_buffers = 0;
+
+        return 0;
+}
+
+
+lcp_mem_h lcp_pinning_mmu_pin(lcp_context_h  ctx, void *addr, size_t size, bmap_t bitmap)
+{
+        int did_create = 0;
+        void *plist = mpc_common_hashtable_get_or_create( &__mmu.ht, size, lcp_pinning_list_init, &did_create);
+
+        assume(plist != NULL);
+
+        struct lcp_pinning_list *list = (struct lcp_pinning_list *)plist;
+
+        return lcp_pinning_list_find_or_create(list, ctx, addr, size, bitmap);
+}
+
+
+
+int lcp_pinning_mmu_unpin(lcp_context_h  ctx, lcp_mem_h mem)
+{
+        struct lcp_pinning_list *list = (struct lcp_pinning_list *)mpc_common_hashtable_get(&__mmu.ht, mem->length);
+
+        if(!list)
+        {
+                return 0;
+        }
+
+        return lcp_pinning_list_relax(list,  ctx, mem);
+}
+
+
 
 //FIXME: Needs to clarify the management of remote memory keys and interfaces:
 //       - NICs are statically linked (one to one relationship)
@@ -239,6 +503,27 @@ err:
         return rc;
 }
 
+int lcp_mem_register_with_bitmap(lcp_context_h ctx,
+                                lcp_mem_h *mem_p,
+                                bmap_t bitmap,
+                                void *buffer,
+                                size_t length)
+{
+        int rc = lcp_mem_create(ctx, mem_p);
+
+        if (rc != LCP_SUCCESS) {
+                goto err;
+        }
+
+        (*mem_p)->length = length;
+        (*mem_p)->base_addr = (uint64_t)buffer;
+        (*mem_p)->bm = bitmap;
+
+        rc = lcp_mem_reg_from_map(ctx, *mem_p, bitmap, buffer, length); 
+err:
+        return rc;
+}
+
 //FIXME: what append if a memory could not get registered ? Miss error handling:
 //       if a subset could not be registered, perform the communication on the 
 //       successful memory pins ?
@@ -262,28 +547,17 @@ int lcp_mem_register(lcp_context_h ctx,
         lcr_rail_attr_t attr;
         sctk_rail_info_t *iface = ctx->resources[ctx->priority_rail].iface;
 
-        not_implemented();
-        rc = lcp_mem_create(ctx, &mem);
-        if (rc != LCP_SUCCESS) {
-                goto err;
-        }
+        bmap_t bitmap;
 
-        mem->length     = length;
-        mem->base_addr  = (uint64_t)buffer;
+        not_implemented();
 
         iface->iface_get_attr(iface, &attr);
         build_memory_registration_bitmap(length,
                                          attr.iface.cap.rndv.min_frag_size,
                                          ctx->num_resources,
-                                         &mem->bm);
-        rc = lcp_mem_reg_from_map(ctx, mem, mem->bm, buffer, length); 
-        if (rc != LCP_SUCCESS) {
-                goto err;
-        }
+                                         &bitmap);
 
-        *mem_p = mem;
-err:
-        return rc;
+        return lcp_mem_register_with_bitmap(ctx, mem_p, bitmap, buffer,  length);
 }
 
 /**
