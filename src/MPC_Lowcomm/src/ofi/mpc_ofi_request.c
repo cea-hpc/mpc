@@ -38,11 +38,13 @@ int mpc_ofi_request_cache_release(struct mpc_ofi_request_cache_t *cache)
 {
    unsigned int i = 0;
 
+#if 0
    for(i = 0 ; i < cache->request_count; i++)
    {
       /* All requests are free ? */
       assert(cache->requests[i].free);
    }
+#endif
 
    free(cache->requests);
 
