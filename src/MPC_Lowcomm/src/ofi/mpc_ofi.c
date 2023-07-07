@@ -150,7 +150,7 @@ ssize_t mpc_ofi_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
 	ssize_t sent;
 
    TODO("Use the right size from config an provider caps");
-	lcr_ofi_am_hdr_t *hdr = sctk_malloc(MPC_OFI_BSEND_TRSH);
+	lcr_ofi_am_hdr_t *hdr = sctk_malloc(MPC_OFI_BSEND_TRSH + sizeof(lcr_ofi_am_hdr_t));
 
 	if (hdr == NULL) {
 	       mpc_common_debug_error("Could not allocate buffer.");
