@@ -100,7 +100,7 @@ FLAGS="$FLAGS ${OPA_LDFLAGS} ${MPCALLOC_LDFLAGS}"
 FLAGS="$FLAGS ${HWLOC_LDFLAGS}"
 
 # MPC_Launch
-FLAGS="$FLAGS -lmpclaunch -ldl"
+FLAGS="$FLAGS -ldl"
 
 if test "x${MPC_THREAD_ENABLED}" = "xyes"; then
 	# MPC_Thread
