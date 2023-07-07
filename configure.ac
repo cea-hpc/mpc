@@ -2746,7 +2746,6 @@ ALL_MPC_LIBS="${ac_pwd}/src/MPC_Config/src/libmpcconfig.la"
 MPC_MODULE_LIST=""
 
 if test "x${MPC_THREAD_ENABLED}" = "xyes"; then
-        ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_Launch/src/libmpclaunch.la"
         ALL_MPC_LIBS="${ALL_MPC_LIBS} ${ac_pwd}/src/MPC_Threads/src/libmpcthread.la"
         MPC_MODULE_LIST="${MPC_MODULE_LIST} MPC_THREAD_ENABLED"
 fi
