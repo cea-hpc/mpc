@@ -2618,11 +2618,13 @@ int _mpc_lowcomm_monitor_on_demand_callbacks_teardown(void)
 {
 	mpc_common_spinlock_lock(&__on_demand_callbacks_table_lock);
 	struct __on_demand_callback * head = __on_demand_callbacks_table;
+	struct __on_demand_callback * tmp = NULL;
 
 	while(head)
 	{
+		tmp = head;
 		head = head->next;
-		sctk_free(head);
+		sctk_free(tmp);
 	}
 
 	return 0;
