@@ -29,6 +29,7 @@
 #include <mpc_common_rank.h>
 #include <mpc_common_datastructure.h>
 
+#include "mpc_lowcomm_types.h"
 #include "peer.h"
 
 /*******************************
@@ -580,6 +581,12 @@ int mpc_lowcomm_group_rank_for(mpc_lowcomm_group_t *g, int rank, mpc_lowcomm_pee
 	if(g->global_to_local)
 	{
 		int trank = g->global_to_local[rank];
+
+		if(trank == MPC_PROC_NULL)
+		{
+			return MPC_PROC_NULL;
+		}
+
 		if(g->ranks[trank].host_process_uid == uid)
 		{
 			return trank;
