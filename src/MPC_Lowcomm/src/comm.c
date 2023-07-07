@@ -100,11 +100,11 @@ static inline void __mpc_comm_request_init(mpc_lowcomm_request_t *request,
 		request->header.destination_task = MPC_PROC_NULL;
 		request->header.message_tag      = MPC_ANY_TAG;
 		request->header.communicator_id  = _mpc_lowcomm_communicator_id(comm);
-
+		request->truncated = 0;
 		request->request_type        = request_type;
-                request->pointer_to_shadow_request = NULL;
-                request->pointer_to_source_request = NULL;
-                request->msg                       = NULL;
+		request->pointer_to_shadow_request = NULL;
+		request->pointer_to_source_request = NULL;
+		request->msg                       = NULL;
 	}
 }
 
