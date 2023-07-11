@@ -418,7 +418,7 @@ static inline int __init_rails(lcp_context_h ctx)
 	if(cli_option == NULL)
 	{
 		/* We did not find this name in the network configurations */
-		bad_parameter("No configuration found for the network '%s'. Please check your '-net=' argument"
+		bad_parameter("No configuration found for the network '%s'. Please check you '-net=' argument"
 		              " and your configuration file", option_name);
 	}
 
@@ -646,7 +646,7 @@ static int lcp_context_check_offload(lcp_context_h ctx)
 
         for (i = 0; i<ctx->num_resources; i++) {
                 rsc = ctx->resources[i];
-		iface_config = _mpc_lowcomm_conf_rail_unfolded_get(rsc.component->rail_name);
+               iface_config = _mpc_lowcomm_conf_rail_unfolded_get(rsc.component->rail_name);
 
                 if (iface_config->offload) {
                         has_offload = 1;
@@ -740,14 +740,14 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
 	if (rc != LCP_SUCCESS) {
 		goto out_free_resources;
 	}
+        
+	rc = lcp_pending_init();
+	if (rc != LCP_SUCCESS) {
+		goto out_free_resources;
+	}
 
         rc = lcp_context_init_structures(ctx);
         if (rc != LCP_SUCCESS) {
-                goto out_free_ifaces;
-        }
-
-        rc = lcp_context_check_offload(ctx);
-        if(rc != LCP_SUCCESS){
                 goto out_free_ifaces;
         }
 

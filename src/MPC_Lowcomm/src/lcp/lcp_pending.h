@@ -23,6 +23,8 @@ typedef struct
 	lcp_pending_entry_t   *table;
 } lcp_pending_table_t;
 
+int lcp_pending_init();
+
 /*******************************************************
  * Data manager initiator and destructor
  ******************************************************/
