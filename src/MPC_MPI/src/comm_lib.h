@@ -441,11 +441,11 @@ typedef struct mpc_mpi_cl_per_mpi_process_ctx_s
  */
 int _mpc_cl_type_size( mpc_lowcomm_datatype_t datatype, size_t *size );
 
-/** \brief Checks if a datatype has already been released
+/** \brief Checks if a datatype is filled (has not been freed)
  *  \param datatype target datatype
  *  \param flag 1 if the type is allocated [OUT]
  */
-int _mpc_cl_type_is_allocated( mpc_lowcomm_datatype_t datatype, int *flag );
+int _mpc_cl_type_is_allocated( const mpc_lowcomm_datatype_t datatype, bool *flag );
 
 /** \brief Set a Struct datatype as a padded one to return the extent instead of
  * the size
@@ -453,9 +453,11 @@ int _mpc_cl_type_is_allocated( mpc_lowcomm_datatype_t datatype, int *flag );
  */
 int _mpc_cl_type_flag_padded( mpc_lowcomm_datatype_t datatype );
 
-/** \brief This function is the generic initializer for
- * _mpc_dt_contiguout_t
- *  Creates a contiguous datatypes of count data_in while checking for unicity
+/** \brief This function is the generic initializer for contiguous datatypes
+ * 
+ *  Creates a contiguous datatypes of count data_in while checking for unicity.
+ *  The Datatype created is a general one, this function exists only to simplify
+ *  contiguous datatype creation.
  *
  *  \param outtype Output datatype to be created
  *  \param count Number of entries of type data_in
@@ -465,7 +467,14 @@ int _mpc_cl_type_flag_padded( mpc_lowcomm_datatype_t datatype );
 int _mpc_cl_type_hcontiguous( mpc_lowcomm_datatype_t *outtype, size_t count, mpc_lowcomm_datatype_t *data_in );
 
 
-int _mpc_cl_type_free( mpc_lowcomm_datatype_t *datatype );
+/** \brief Release a type
+ *
+ * If the type was freed the datatype_p points on MPC_DATATYPE_NULL
+ *
+ * \param datatype_p Pointer of the datatype to release
+ * \return MPC_LOWCOMM_SUCCESS on success
+ */
+int _mpc_cl_type_free( mpc_lowcomm_datatype_t *datatype_p );
 
 /** \brief Duplicate a  datatype
  *  \param old_type Type to be duplicated
@@ -499,18 +508,18 @@ int _mpc_cl_type_get_name( mpc_lowcomm_datatype_t datatype, char *name, int *res
 int _mpc_cl_type_get_envelope( mpc_lowcomm_datatype_t datatype, int *num_integers, int *num_addresses, int *num_datatypes, int *combiner );
 
 /**
- * @brief Retrieve the internal layout of a datatype (see MPI_Get_contents)
+ * \brief Retrieve the internal layout of a datatype (see MPI_Get_contents)
  *
  * See the description of MPI_Get_contents to decode these arrays
  *
- * @param datatype input datatype to get layout of
- * @param max_integers size of the int array (from get_envelope)
- * @param max_addresses size of the addr array (from get_envelope)
- * @param max_datatypes size of the dt array (from get_envelope)
- * @param array_of_integers Pointer to array of int
- * @param array_of_addresses Pointer to array of addresses
- * @param array_of_datatypes Pointer to array of datatypes
- * @return int MPC_SUCCESS if OK
+ * \param datatype input datatype to get layout of
+ * \param max_integers size of the int array (from get_envelope)
+ * \param max_addresses size of the addr array (from get_envelope)
+ * \param max_datatypes size of the dt array (from get_envelope)
+ * \param array_of_integers Pointer to array of int
+ * \param array_of_addresses Pointer to array of addresses
+ * \param array_of_datatypes Pointer to array of datatypes
+ * \return int MPC_LOWCOMM_SUCCESS if OK
  */
 int _mpc_cl_type_get_contents( mpc_lowcomm_datatype_t datatype,
                                int max_integers,
@@ -520,34 +529,51 @@ int _mpc_cl_type_get_contents( mpc_lowcomm_datatype_t datatype,
                                size_t array_of_addresses[],
                                mpc_lowcomm_datatype_t array_of_datatypes[] );
 
-/**
- * @brief Commit and optimize a datatype
+/** \brief Check for an existing datatype in the task specific datatype array
  *
- * @param type Type to commit
- * @return int MPC_SUCCESS if OK
+ * \warning The lock must been held while calling this function
+ *
+ * \param task_specific A pointer on the task context
+ * \param ctx           A pointer on the datatype context we want to match
+ * \param datatype      [OUT] The datatype if found, the entry otherwise
+ *
+ * \return  true if found, false otherwise
+ */
+bool __mpc_cl_type_general_check_context(mpc_mpi_cl_per_mpi_process_ctx_t *task_specific,
+                                              struct _mpc_dt_context *ctx,
+                                              mpc_lowcomm_datatype_t *datatype);
+
+bool __mpc_cl_type_general_check_footprint(mpc_mpi_cl_per_mpi_process_ctx_t *task_specific,
+                                              struct _mpc_dt_footprint *ref,
+                                              mpc_lowcomm_datatype_t *datatype);
+/**
+ * \brief Commit and optimize a datatype
+ *
+ * \param type Type to commit
+ * \return int MPC_LOWCOMM_SUCCESS if OK
  */
 int _mpc_cl_type_commit( mpc_lowcomm_datatype_t *type );
 
-/** \brief Serialize a derived datatype in a contiguous segment
- *  \param type the derived data-type to be serialized
+/** \brief Serialize a general datatype in a contiguous segment
+ *  \param type the general data-type to be serialized
  *  \param size (OUT) the size of the serialize buffer
  *  \param header_pad offset to allocate for the header (data will be shifted)
  *  \return the allocated buffer of size (size) to be used and freed
  */
-void *_mpc_cl_derived_type_serialize( mpc_lowcomm_datatype_t type, size_t *size,
+void *_mpc_cl_general_type_serialize( mpc_lowcomm_datatype_t type, size_t *size,
                                       size_t header_pad );
 
-/** \brief Deserialize a derived datatype from a contiguous segment
+/** \brief Deserialize a general datatype from a contiguous segment
  *  \param buff the buffer from a previously serialized datatype
  *  \param size size of the input buffer (as generated during serialize)
  *  \param header_pad offset to skip as being the header
  *  \return a new datatype matching the serialized one (to be freed)
  */
-mpc_lowcomm_datatype_t _mpc_cl_derived_type_deserialize( void *buff, size_t size,
+mpc_lowcomm_datatype_t _mpc_cl_general_type_deserialize( void *buff, size_t size,
         size_t header_pad );
 
-/** \brief This function gets the basic type constituing a derived type for RMA
- *  \param type Derived type to be checked
+/** \brief This function gets the basic type constituing a general type for RMA
+ *  \param type general type to be checked
  *  \return -1 if types are differing, the type if not
  */
 mpc_lowcomm_datatype_t _mpc_cl_type_get_inner( mpc_lowcomm_datatype_t type );
@@ -565,43 +591,35 @@ int _mpc_cl_type_get_attr( mpc_lowcomm_datatype_t datatype, int type_keyval,
                            void **attribute_val, int *flag );
 
 struct _mpc_dt_context;
-int _mpc_cl_derived_datatype( mpc_lowcomm_datatype_t *datatype,
-                              long *begins,
-                              long *ends,
-                              mpc_lowcomm_datatype_t *types,
-                              unsigned long count,
-                              long lb, int is_lb,
-                              long ub, int is_ub,
+int _mpc_cl_general_datatype( mpc_lowcomm_datatype_t *datatype,
+                              const long *const begins,
+                              const long *const ends,
+                              const mpc_lowcomm_datatype_t *const types,
+                              const unsigned long count,
+                              const long lb, const bool is_lb,
+                              const long ub, const bool is_ub,
                               struct _mpc_dt_context *ectx );
 
 int _mpc_cl_type_get_true_extent( mpc_lowcomm_datatype_t datatype, size_t *true_lb, size_t *true_extent );
 
-int _mpc_cl_type_convert_to_derived( mpc_lowcomm_datatype_t in_datatype, mpc_lowcomm_datatype_t *out_datatype );
-
 int _mpc_cl_type_use( mpc_lowcomm_datatype_t datatype );
 
-_mpc_dt_contiguout_t *_mpc_cl_per_mpi_process_ctx_contiguous_datatype_ts_get( mpc_mpi_cl_per_mpi_process_ctx_t *task_specific,
-        mpc_lowcomm_datatype_t datatype );
-_mpc_dt_contiguout_t *_mpc_cl_per_mpi_process_ctx_contiguous_datatype_get( mpc_lowcomm_datatype_t datatype );
 
-_mpc_dt_derived_t *_mpc_cl_per_mpi_process_ctx_derived_datatype_ts_get(  mpc_mpi_cl_per_mpi_process_ctx_t *task_specific, mpc_lowcomm_datatype_t datatype );
-_mpc_dt_derived_t *_mpc_cl_per_mpi_process_ctx_derived_datatype_get( mpc_lowcomm_datatype_t datatype );
+_mpc_lowcomm_general_datatype_t *_mpc_cl_per_mpi_process_ctx_general_datatype_ts_get(  mpc_mpi_cl_per_mpi_process_ctx_t *task_specific, const size_t datatype_idx );
+_mpc_lowcomm_general_datatype_t *_mpc_cl_per_mpi_process_ctx_general_datatype_get( const size_t datatype_idx );
+
+
+int _mpc_cl_per_mpi_process_ctx_datatype_lock( void );
+int _mpc_cl_per_mpi_process_ctx_datatype_unlock( void );
+
 
 int _mpc_cl_attach_per_comm(mpc_lowcomm_communicator_t comm, mpc_lowcomm_communicator_t new_comm);
 
 int _mpc_cl_type_hcontiguous_ctx ( mpc_lowcomm_datatype_t *datatype, size_t count, mpc_lowcomm_datatype_t *data_in, struct _mpc_dt_context *ctx );
 
-int _mpc_cl_derived_datatype_try_get_info ( mpc_lowcomm_datatype_t datatype, int *res, _mpc_dt_derived_t *output_datatype );
+int _mpc_cl_general_datatype_try_get_info ( mpc_lowcomm_datatype_t datatype, int *res, _mpc_lowcomm_general_datatype_t *output_datatype );
 
 int _mpc_cl_type_ctx_set( mpc_lowcomm_datatype_t datatype,  struct _mpc_dt_context *dctx );
-
-int _mpc_cl_derived_datatype_on_slot ( int id,
-                                       long *begins,
-                                       long *ends,
-                                       mpc_lowcomm_datatype_t *types,
-                                       unsigned long count,
-                                       long lb, int is_lb,
-                                       long ub, int is_ub );
 
 int _mpc_cl_type_set_size( mpc_lowcomm_datatype_t datatype, size_t size );
 

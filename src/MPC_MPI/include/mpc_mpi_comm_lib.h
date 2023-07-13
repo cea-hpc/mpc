@@ -116,8 +116,8 @@ int mpc_mpi_cl_get_activity( int nb_item, mpc_mpi_cl_activity_t *tab, double *pr
  * STRING SIZES *
  ****************/
 
-#define MPC_MAX_PROCESSOR_NAME 255
-#define MPC_MAX_OBJECT_NAME 256
+#define MPC_MAX_PROCESSOR_NAME 256
+#define MPC_MAX_OBJECT_NAME 128
 #define MPC_MAX_LIBRARY_VERSION_STRING 8192
 
 /*****************
@@ -283,14 +283,16 @@ typedef int MPC_Message;
 
 
 /* for comm_split method */
-#define MPC_COMM_TYPE_SHARED 1
-#define MPC_COMM_TYPE_SOCKET 2
-#define MPC_COMM_TYPE_NUMA 3
-#define MPC_COMM_TYPE_UNIX_PROCESS 4
-#define MPC_COMM_TYPE_HW_UNGUIDED 5
-#define MPC_COMM_TYPE_HW_SUBDOMAIN 6
-#define MPC_COMM_TYPE_APP 7
-#define MPC_COMM_TYPE_NODE 8
+#define MPC_COMM_TYPE_SHARED -100
+#define MPC_COMM_TYPE_HW_UNGUIDED -101
+#define MPC_COMM_TYPE_HW_GUIDED -102       /* Not implemented */
+#define MPC_COMM_TYPE_RESOURCE_GUIDED -103 /* Not implemented */
+#define MPC_COMM_TYPE_SOCKET -104
+#define MPC_COMM_TYPE_NUMA -105
+#define MPC_COMM_TYPE_UNIX_PROCESS -106
+#define MPC_COMM_TYPE_HW_SUBDOMAIN -107
+#define MPC_COMM_TYPE_APP -108
+#define MPC_COMM_TYPE_NODE -109
 
 /************************
  * Common derived types *
@@ -383,7 +385,9 @@ typedef int( MPC_Type_delete_attr_function )( mpc_lowcomm_datatype_t datatype,
         void *attribute_val,
         void *extra_state );
 
-int mpc_mpi_cl_type_is_contiguous(mpc_lowcomm_datatype_t type);
+bool mpc_mpi_cl_type_is_contiguous(mpc_lowcomm_datatype_t type);
+
+mpc_lowcomm_datatype_t _mpc_cl_per_mpi_process_ctx_user_datatype_array_get(void);
 
 /********************
  * THREAD MIGRATION *

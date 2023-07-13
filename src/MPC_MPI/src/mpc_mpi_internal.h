@@ -334,7 +334,7 @@ void __sctk_add_in_mpc_request(MPI_Request *req, void *t,
 void __sctk_delete_mpc_request(MPI_Request *req,
                                MPI_request_struct_t *requests);
 
-_mpc_dt_derived_t *_mpc_cl_per_mpi_process_ctx_derived_datatype_get(mpc_lowcomm_datatype_t datatype);
+mpc_lowcomm_datatype_t _mpc_cl_per_mpi_process_ctx_general_datatype_get(const size_t datatype);
 
 typedef struct {
   sctk_Op op;
@@ -384,7 +384,7 @@ static inline int sctk_mpi_type_is_shared_mem(MPI_Datatype type, int count) {
      type == MPI_DOUBLE) {
       return 1;
   }
-  
+
   return 0;
 }
 
@@ -423,7 +423,7 @@ static inline void sctk_mpi_shared_mem_buffer_fill(union shared_mem_buffer *b,
       b->d[i] = ((double *)src)[i];
     return;
   }
-  
+
   mpc_common_debug_fatal("Unsupported data-type");
 }
 
@@ -522,7 +522,7 @@ int PMPI_Irecv_internal(void *buf, int count, MPI_Datatype datatype, int source,
 		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Bad datatype provided"); }
 
 #define mpi_check_type_create(datatype, comm)                                                                                                                                              \
-	if( (datatype >= SCTK_USER_DATA_TYPES_MAX) && (_mpc_dt_is_derived(datatype) != 1) && (_mpc_dt_is_contiguous(datatype) != 1) && ( (datatype != MPI_UB) && (datatype != MPI_LB) ) ){ \
+	if( (!mpc_dt_is_valid(datatype)) && ( (datatype != MPI_UB) && (datatype != MPI_LB) ) ){ \
 		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, ""); }
 
 int _mpc_mpi_init_counter(int *counter);

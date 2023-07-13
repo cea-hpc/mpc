@@ -31,6 +31,11 @@ int is_mpif_only = 0;
          "PARAMETER (%s=%d)\\n\", \"mpif_only\" : %d, \"value\" : %d , "       \
          "\"type\" : \"%s\"},\n",                                              \
          sa, sa, sa, (int)a, is_mpif_only, (int)a, t)
+#define MPI_TYPEP_VAL(sa, a, t)                                                 \
+  printf("{ \"name\" : \"%s\" , \"decl\" : \"       INTEGER %s\\n       "      \
+         "PARAMETER (%s=%d)\\n\", \"mpif_only\" : %d, \"value\" : %d , "       \
+         "\"type\" : \"%s\"},\n",                                              \
+         sa, sa, sa, (intptr_t)a, is_mpif_only, (intptr_t)a, t)
 #define MPI_TYPEL_VAL(sa, a, t)                                                \
   printf("{ \"name\" : \"%s\" , \"decl\" : \"       INTEGER*8 %s\\n       "    \
          "PARAMETER (%s=%d)\\n\", \"mpif_only\" : %d, \"value\" : %d , "       \
@@ -40,7 +45,7 @@ int is_mpif_only = 0;
   printf("{ \"name\" : \"%s\" , \"decl\" : \"       INTEGER %s\\n       "      \
          "PARAMETER (%s=%d)\\n\", \"mpif_only\" : %d, \"value\" : %d , "       \
          "\"type\" : \"int\"},\n",                                             \
-         sa, sa, sa, (int)a, is_mpif_only, (int)a)
+         sa, sa, sa, (intptr_t)a, is_mpif_only, (intptr_t)a)
 #define MPI_INTEGER_ARRAY_CONV(sa,size) printf("{ \"name\" : \"%s\" , \"decl\" : \"       integer %s(%d)\\n       COMMON %s\\n\", \"mpif_only\" : %d },\n",sa, sa, size, sa, is_mpif_only)
 #define MPI_INTEGER_ARRAY_OF_ARRAY_CONV(sa,size) printf("{ \"name\" : \"%s\" , \"decl\" : \"       integer %s(%d,1)\\n       COMMON %s\\n\", \"mpif_only\" : %d },\n",sa, sa,size, sa, is_mpif_only)
 #define MPI_INTEGER_8_VAL(sa, a)                                               \
@@ -132,8 +137,8 @@ int generate_mpi_fortran_constants()
 
         /* Null handles */
         MPI_TYPE_VAL("MPI_REQUEST_NULL", MPI_REQUEST_NULL, "MPI_Request");
-        MPI_TYPE_VAL("MPI_COMM_NULL", MPI_COMM_NULL, "MPI_Comm");
-        MPI_TYPE_VAL("MPI_DATATYPE_NULL", MPI_DATATYPE_NULL, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_COMM_NULL", MPI_COMM_NULL, "MPI_Comm");
+        MPI_TYPEP_VAL("MPI_DATATYPE_NULL", MPI_DATATYPE_NULL, "MPI_Datatype");
         MPI_TYPE_VAL("MPI_OP_NULL", ((MPI_Op)MPI_OP_NULL), "MPI_Op");
         MPI_TYPE_VAL("MPI_WIN_NULL", ((MPI_Win)MPI_WIN_NULL), "MPI_Win");
 
@@ -241,84 +246,84 @@ int generate_mpi_fortran_constants()
 
         /* Datatypes */
 
-        MPI_TYPE_VAL("MPI_UB", MPI_UB, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_LB", MPI_LB, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_CHAR", MPI_CHAR, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_WCHAR", MPI_WCHAR, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_CHARACTER", MPI_CHARACTER, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_BYTE", MPI_BYTE, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_SHORT", MPI_SHORT, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_INT", MPI_INT, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_INTEGER", MPI_INTEGER, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_2INTEGER", MPI_2INTEGER, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_INTEGER1", MPI_INTEGER1, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_INTEGER2", MPI_INTEGER2, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_INTEGER4", MPI_INTEGER4, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_INTEGER8", MPI_INTEGER8, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_AINT", MPI_AINT, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_UB", MPI_UB, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_LB", MPI_LB, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_CHAR", MPI_CHAR, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_WCHAR", MPI_WCHAR, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_CHARACTER", MPI_CHARACTER, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_BYTE", MPI_BYTE, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_SHORT", MPI_SHORT, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_INT", MPI_INT, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_INTEGER", MPI_INTEGER, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_2INTEGER", MPI_2INTEGER, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_INTEGER1", MPI_INTEGER1, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_INTEGER2", MPI_INTEGER2, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_INTEGER4", MPI_INTEGER4, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_INTEGER8", MPI_INTEGER8, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_AINT", MPI_AINT, "MPI_Datatype");
 
-        MPI_TYPE_VAL("MPI_COMPLEX8", MPI_COMPLEX8, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_COMPLEX16", MPI_COMPLEX16, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_COMPLEX32", MPI_COMPLEX32, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_COMPLEX8", MPI_COMPLEX8, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_COMPLEX16", MPI_COMPLEX16, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_COMPLEX32", MPI_COMPLEX32, "MPI_Datatype");
 
-        MPI_TYPE_VAL("MPI_INT8_T", MPI_INT8_T, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_INT16_T", MPI_INT16_T, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_INT32_T", MPI_INT32_T, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_INT64_T", MPI_INT64_T, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_INT8_T", MPI_INT8_T, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_INT16_T", MPI_INT16_T, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_INT32_T", MPI_INT32_T, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_INT64_T", MPI_INT64_T, "MPI_Datatype");
 
-        MPI_TYPE_VAL("MPI_UINT8_T", MPI_UINT8_T, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_UINT16_T", MPI_UINT16_T, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_UINT32_T", MPI_UINT32_T, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_UINT64_T", MPI_UINT64_T, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_UINT8_T", MPI_UINT8_T, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_UINT16_T", MPI_UINT16_T, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_UINT32_T", MPI_UINT32_T, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_UINT64_T", MPI_UINT64_T, "MPI_Datatype");
 
-        MPI_TYPE_VAL("MPI_C_BOOL", MPI_C_BOOL, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_C_FLOAT_COMPLEX", MPI_C_FLOAT_COMPLEX,
+        MPI_TYPEP_VAL("MPI_C_BOOL", MPI_C_BOOL, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_C_FLOAT_COMPLEX", MPI_C_FLOAT_COMPLEX,
                      "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_C_COMPLEX", MPI_C_COMPLEX, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_C_DOUBLE_COMPLEX", MPI_C_DOUBLE_COMPLEX,
+        MPI_TYPEP_VAL("MPI_C_COMPLEX", MPI_C_COMPLEX, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_C_DOUBLE_COMPLEX", MPI_C_DOUBLE_COMPLEX,
                      "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_C_LONG_DOUBLE_COMPLEX", MPI_C_LONG_DOUBLE_COMPLEX,
+        MPI_TYPEP_VAL("MPI_C_LONG_DOUBLE_COMPLEX", MPI_C_LONG_DOUBLE_COMPLEX,
                      "MPI_Datatype");
 
-        MPI_TYPE_VAL("MPI_LONG", MPI_LONG, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_LONG_INT", MPI_LONG_INT, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_FLOAT", MPI_FLOAT, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_DOUBLE", MPI_DOUBLE, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_DOUBLE_PRECISION", MPI_DOUBLE_PRECISION,
+        MPI_TYPEP_VAL("MPI_LONG", MPI_LONG, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_LONG_INT", MPI_LONG_INT, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_FLOAT", MPI_FLOAT, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_DOUBLE", MPI_DOUBLE, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_DOUBLE_PRECISION", MPI_DOUBLE_PRECISION,
                      "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_UNSIGNED_CHAR", MPI_UNSIGNED_CHAR, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_UNSIGNED_SHORT", MPI_UNSIGNED_SHORT, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_UNSIGNED", MPI_UNSIGNED, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_UNSIGNED_LONG", MPI_UNSIGNED_LONG, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_LONG_DOUBLE", MPI_LONG_DOUBLE, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_LONG_LONG_INT", MPI_LONG_LONG_INT, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_LONG_LONG", MPI_LONG_LONG, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_UNSIGNED_LONG_LONG_INT", MPI_UNSIGNED_LONG_LONG_INT,
+        MPI_TYPEP_VAL("MPI_UNSIGNED_CHAR", MPI_UNSIGNED_CHAR, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_UNSIGNED_SHORT", MPI_UNSIGNED_SHORT, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_UNSIGNED", MPI_UNSIGNED, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_UNSIGNED_LONG", MPI_UNSIGNED_LONG, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_LONG_DOUBLE", MPI_LONG_DOUBLE, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_LONG_LONG_INT", MPI_LONG_LONG_INT, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_LONG_LONG", MPI_LONG_LONG, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_UNSIGNED_LONG_LONG_INT", MPI_UNSIGNED_LONG_LONG_INT,
                      "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_UNSIGNED_LONG_LONG", MPI_UNSIGNED_LONG_LONG,
+        MPI_TYPEP_VAL("MPI_UNSIGNED_LONG_LONG", MPI_UNSIGNED_LONG_LONG,
                      "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_PACKED", MPI_PACKED, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_FLOAT_INT", MPI_FLOAT_INT, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_DOUBLE_INT", MPI_DOUBLE_INT, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_LONG_DOUBLE_INT", MPI_LONG_DOUBLE_INT,
+        MPI_TYPEP_VAL("MPI_PACKED", MPI_PACKED, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_FLOAT_INT", MPI_FLOAT_INT, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_DOUBLE_INT", MPI_DOUBLE_INT, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_LONG_DOUBLE_INT", MPI_LONG_DOUBLE_INT,
                      "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_SHORT_INT", MPI_SHORT_INT, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_2INT", MPI_2INT, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_2FLOAT", MPI_2FLOAT, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_COMPLEX", MPI_COMPLEX, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_DOUBLE_COMPLEX", MPI_DOUBLE_COMPLEX, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_2DOUBLE_PRECISION", MPI_2DOUBLE_PRECISION,
+        MPI_TYPEP_VAL("MPI_SHORT_INT", MPI_SHORT_INT, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_2INT", MPI_2INT, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_2FLOAT", MPI_2FLOAT, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_COMPLEX", MPI_COMPLEX, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_DOUBLE_COMPLEX", MPI_DOUBLE_COMPLEX, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_2DOUBLE_PRECISION", MPI_2DOUBLE_PRECISION,
                      "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_LOGICAL", MPI_LOGICAL, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_2REAL", MPI_2REAL, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_REAL4", MPI_REAL4, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_REAL8", MPI_REAL8, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_REAL16", MPI_REAL16, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_SIGNED_CHAR", MPI_SIGNED_CHAR, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_REAL", MPI_REAL, "MPI_Datatype");
-        MPI_TYPE_VAL("MPI_COUNT", MPI_COUNT, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_LOGICAL", MPI_LOGICAL, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_2REAL", MPI_2REAL, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_REAL4", MPI_REAL4, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_REAL8", MPI_REAL8, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_REAL16", MPI_REAL16, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_SIGNED_CHAR", MPI_SIGNED_CHAR, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_REAL", MPI_REAL, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_COUNT", MPI_COUNT, "MPI_Datatype");
         /*MPI_TYPE_VAL("MPI_AINT", MPI_AINT, "MPI_Datatype");*/
-        MPI_TYPE_VAL("MPI_OFFSET", MPI_OFFSET, "MPI_Datatype");
+        MPI_TYPEP_VAL("MPI_OFFSET", MPI_OFFSET, "MPI_Datatype");
 
         /* Operations */
 

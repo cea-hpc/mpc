@@ -36,7 +36,10 @@ extern "C" {
  * DATATYPES *
  *************/
 
-typedef struct MPI_ABI_Datatype *mpc_lowcomm_datatype_t;
+typedef struct MPI_ABI_Datatype *mpc_lowcomm_datatype_t;       /**< Datatype handle */
+#define MPC_LOWCOMM_DATATYPE_NULL ((mpc_lowcomm_datatype_t) 0) /**< Null datatype handle */
+
+
 
 
 void mpc_lowcomm_register_type_is_common( int (*type_ptr)(mpc_lowcomm_datatype_t) );

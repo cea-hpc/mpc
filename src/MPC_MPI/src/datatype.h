@@ -151,7 +151,7 @@ struct _mpc_dt_context
 	const int *array_of_subsizes;
 	const int *array_of_starts;
 	const int *array_of_displacements;
-	const size_t *array_of_displacements_addr;
+	const ssize_t *array_of_displacements_addr;
 	const mpc_lowcomm_datatype_t *array_of_types;
 };
 
@@ -160,13 +160,15 @@ struct _mpc_dt_context
  */
 void _mpc_dt_context_clear( struct _mpc_dt_context *ctx );
 
+bool _mpc_dt_footprint_check_envelope( struct _mpc_dt_footprint *ref, struct _mpc_dt_footprint *candidate );
+
 /** \brief Function used to factorize data-types by checking their equality
  *
  *  \param ref The datatype external ctx to be checked
  *  \param candidate The datatype we check against
- *  \return 1 if datatypes are equal 0 otherwise
+ *  \return true if datatypes are equal false otherwise
  */
-int _mpc_dt_footprint_match( struct _mpc_dt_context *eref, struct _mpc_dt_footprint *candidate );
+bool _mpc_dt_footprint_match( struct _mpc_dt_context *eref, struct _mpc_dt_footprint *candidate );
 
 /** \brief Setup the datatype context
  *
@@ -220,97 +222,35 @@ struct _mpc_dt_layout *_mpc_dt_get_layout( struct _mpc_dt_footprint *ctx, size_t
 /* Contiguous Datatype                                                  */
 /************************************************************************/
 
-/** \brief This structure describes continuous datatypes
- *  Such datatypes are continuous packs of other datatypes
- *  This structure is initialized in \ref _mpc_cl_type_hcontiguous
- */
-typedef struct
-{
-	size_t id_rank;					  /**< Identifier of the contiguous type which is also its offset in the contiguous type table*/
-	size_t size;					  /**< Total size of the contiguous type */
-	size_t element_size;			  /**< Size of an element of type */
-	size_t count;					  /**< Number of elements of type "datatype" in the type */
-	mpc_lowcomm_datatype_t datatype;		  /**< Type packed within the datatype */
-	unsigned int ref_count;			  /**< Flag telling if the datatype slot is free for use */
-	struct _mpc_dt_footprint context; /**< Saves the creation context for MPI_get_envelope & MPI_Get_contents */
-	struct __mpc_dt_attr_store attrs; /**< ATTR array for this type */
-} _mpc_dt_contiguout_t;
-
-/** \brief _mpc_dt_contiguout_t initializer
- *  this function is called from \ref _mpc_cl_type_hcontiguous
+/** \brief Creates a contiguous datatype
  *
- *  \param type Type to be initialized
- *  \param id_rank unique identifier of the  type which is also its offset in the contiguous type array
- *  \param element_size Size of a datatype element
- *  \param count Number of element
- *  \param source original datatype id
+ * As all the datatypes kind are represented by the same structure,
+ * this function is only a shortcut for the often used contiguous
+ * datatypes. It calls the general initializers (\ref _mpc_dt_general_init)
+ * with parameters of a contiguous one.
  *
+ * \param type          Datatype handle on the new type to initialize
+ * \param id_rank       ID of the user datatype
+ * \param element_size  Size of one element of the contiguous datatype
+ * \param count         Number of elements in the datatype
+ * \param datatype      Datatype embedded in the new datatype
  */
-void _mpc_dt_contiguous_init( _mpc_dt_contiguout_t *type, size_t id_rank, size_t element_size, size_t count, mpc_lowcomm_datatype_t datatype );
-
-/** \brief Releases a contiguous datatype
- *  \param type This is the datatype to be freed
- *
- *	\warning This call does not free the container it empties the content whent the refcounter reaches 0
- */
-void _mpc_dt_contiguous_release( _mpc_dt_contiguout_t *type );
-
-/** \brief Theses macros allow us to manipulate the contiguous datatype refcounter more simply */
-#define _MPC_DT_CONTIGUOUS_IS_FREE( datatype_ptr ) ( datatype_ptr->ref_count == 0 )
-#define _MPC_DT_CONTIGUOUS_IS_USED( datatype_ptr ) ( datatype_ptr->ref_count )
-
-/** \brief Display debug informations about a contiguous datatype
- *  \param target_type Type to be displayed
- */
-void _mpc_dt_contiguous_display( _mpc_dt_contiguout_t *target_type );
+void _mpc_dt_contiguous_create( mpc_lowcomm_datatype_t *type, const size_t id_rank,
+                              const size_t element_size, const size_t count,
+                              const mpc_lowcomm_datatype_t datatype );
 
 /************************************************************************/
-/* Derived Datatype                                                     */
+/* General Datatype                                                     */
 /************************************************************************/
 
-/** \brief More general datatype used to describe more complex datatypes
+/** \brief Theses macros allow us to manipulate the datatype refcounter more simply */
+#define _MPC_DT_USER_IS_FREE( datatype_ptr ) ( datatype_ptr->ref_count == 0 )
+#define _MPC_DT_USER_IS_USED( datatype_ptr ) ( datatype_ptr->ref_count )
+
+/** \brief Create a general datatype
  *
- *  Here a datatype is described as a list of segments which can themselves
- *  gather several types.
+ * This function allocates and fill a general datatype structure
  *
- */
-typedef struct
-{
-	mpc_lowcomm_datatype_t id; /**< Integer ID (useful  for debug) */
-	/* Context */
-	size_t size;			/**< Total size of the datatype */
-	unsigned long count;	/**< Number of elements in the datatype */
-	unsigned int ref_count; /**< Ref counter to manage freeing */
-
-	/* Content */
-	long *begins; /**< Begin offsets */
-	long *ends;   /**< End offsets */
-
-	/* Optimized Content */
-	unsigned long opt_count;				 /**< Number of blocks with optimization */
-	long *opt_begins; /**< Begin offsets with optimization */
-	long *opt_ends;   /**< End offsets with optimization */
-	mpc_lowcomm_datatype_t *datatypes;			 /**< Datatypes for each block */
-
-	/* Bounds */
-	long lb; /**< Lower bound offset  */
-	int is_lb;						/**< Does type has a lower bound */
-	long ub; /**< Upper bound offset */
-	int is_ub;						/**< Does type has an upper bound */
-	int is_a_padded_struct;			/**< Was the type padded with UB during construction ? */
-
-	/* Context */
-	struct _mpc_dt_footprint context; /**< Saves the creation context for MPI_get_envelope & MPI_Get_contents */
-
-	/* Attrs */
-	struct __mpc_dt_attr_store attrs; /**< ATTR array for this type */
-} _mpc_dt_derived_t;
-
-/** \brief Initializes a derived datatype
- *
- * This function allocates a derived datatype
- *
- * \param type Datatype to build
  * \param id Integer id of the new datatype (for debug)
  * \param count number of offsets to store
  * \param begins list of starting offsets in the datatype
@@ -321,144 +261,170 @@ typedef struct
  * \param ub offset for type upper bound
  * \param is_b tells if the type has an upper bound
  *
+ * \return The datatype created on success
+ *         MPC_DATATYPE_NULL otherwise
+ *
  */
-void _mpc_dt_derived_init( _mpc_dt_derived_t *type, mpc_lowcomm_datatype_t id,
-						   unsigned long count,
-						   long *begins,
-						   long *ends,
-						   mpc_lowcomm_datatype_t *datatypes,
-						   long lb, int is_lb,
-						   long ub, int is_ub );
+mpc_lowcomm_datatype_t _mpc_dt_general_create( const unsigned int id,
+						   const unsigned long count,
+						   const long *const begins,
+						   const long *const ends,
+						   const mpc_lowcomm_datatype_t *const datatypes,
+						   const long lb, const bool is_lb,
+						   const long ub, const bool is_ub );
 
-/** \brief Releases a derived datatype
+/** \brief Frees a datatype
+ *
+ * This function frees all the fields of a general datatype structure
+ * If \ref enable_refcounting is true then the embedded datatypes are release.
+ *
+ * \warning This function doesn't lock the datatype storage array.
+ * Make sure it is locked before calling it
+ *
+ * \param type_p Pointer to the datatype to free
+ * The value pointed by type_p is set to MPC_DATATYPE_NULL after freeing the structure.
+ * \param enable_refcounting Should the function release the embedded datatypes
+ *
+ * \return MPC_LOWCOMM_SUCCESS on succes
+ *         the appropriate error code otherwise
+ */
+int _mpc_dt_general_free( _mpc_lowcomm_general_datatype_t **type_p, const bool enable_refcounting );
+
+/** \brief Releases a general datatype
+ *
+ * This function locks the datatype array. Please make sure it isn't already
+ * locked before calling it.
  *
  *  \param type Type to be released
+ *  \return MPC_LOWCOMM_SUCCESS on success
+ *          the appropriate error code otherwise
  *
  *  \warning This call frees the container when the refcounter reaches 0
  *
  */
-int _mpc_dt_derived_release( _mpc_dt_derived_t *type );
+int _mpc_dt_general_release( mpc_lowcomm_datatype_t *type );
 
-/** \brief Get the minimum offset of a derieved datatype (ignoring LB)
+/** \brief Commits a datatype in the task-specific datatype array
+ *
+ * \warning This function holds a lock when performing the commit
+ *
+ * \param datatype_p A pointer on the datatype to commit
+ *                   At exit it contained a commited datatype
+ *                   or MPC_DATATYPE_NULL on error
+ */
+int _mpc_dt_general_on_slot(mpc_lowcomm_datatype_t *datatype_p);
+
+/** \brief Get the minimum offset of a datatype (ignoring LB)
  *  \param type Type which true lb is requested
  *  \param true_lb the true lb of the datatype
  *  \param size size true LB to true UB
  */
-void _mpc_dt_derived_true_extend( _mpc_dt_derived_t *type, long *true_lb, long *true_ub );
+void _mpc_dt_general_true_extend( const _mpc_lowcomm_general_datatype_t *type, long *true_lb, long *true_ub );
 
-/** \brief Try to optimize a derived datatype (called by \ref PMPC_Commit)
+/** \brief Try to optimize a general datatype (called by \ref PMPC_Commit)
+ *
  *  \param target_type Type to be optimized
  */
-int _mpc_dt_derived_optimize( _mpc_dt_derived_t *target_type );
+int _mpc_dt_general_optimize( _mpc_lowcomm_general_datatype_t *target_type );
 
-/** \brief Display debug informations about a derived datatype
+/** \brief Display debug informations about a general datatype
+ *
  *  \param target_type Type to be displayed
  */
-void _mpc_dt_derived_display( _mpc_dt_derived_t *target_type );
+void _mpc_dt_general_display( const mpc_lowcomm_datatype_t target_type );
 
 /************************************************************************/
-/* Datatype ID range calculations                                       */
+/* Datatype range calculations                                       */
 /************************************************************************/
 
 /**
- * Datatypes are identified in function of their position in a contiguous
- * array such as :
+ * Datatypes are pointers on struct stored in two separated array :
  *
- * 	Common datatypes ==> [ 0 , MPC_LOWCOMM_TYPE_COMMON_LIMIT[
- *  Contiguous datatypes => [ MPC_LOWCOMM_TYPE_COMMON_LIMIT, SCTK_USER_DATA_TYPES_MAX[
- *  Derived datatypes => [ SCTK_USER_DATA_TYPES_MAX, SCTK_USER_DATA_TYPES_MAX * 2 [
+ * 	- Common datatypes
+ *  - User Defined datatypes
  *
- *  This layout is useful as we can directly pass around a single int to identify
- *  any datatype, greatly simplifying fortran handling and also avoiding a
- *  lookup each time a datatype is refferenced.
+ *  To check the type of a datatype, we look if its value is in the range of
+ *  one of the arrays. It simplifies greatly checking if a pointer is valid or
+ *  if a datatype can be released...
+ *  The following are funtion to check the kind of datatype and its validness.
  *
  *  Therefore we need some functions to check wether a datatype is of a
- *  given type (meaning having an id in a given range).
- *
- *  We also rely on macros to translate from the global ID to the id
- *  local to each range in order  to manipulate the actual type structure.
+ *  given type (meaning having an address in a given range).
  */
 
 /** \brief List of datatype kinds
  *  Note that as previously described a datatype can directly
- *  be derived from its integer ID. This labelling is provided
+ *  be identified from its value. This labelling is provided
  *  for convenience when "switching" between cases using \ref _mpc_dt_get_kind.
+ *  This is even more relevant as we can't use pointer to switch without casting.
  */
 typedef enum {
+	MPC_DATATYPES_UNKNOWN,	 /**< This key is used to detect faulty datatypes */
 	MPC_DATATYPES_COMMON,	 /**< These are the common datatypes defined in \ref __mpc_common_types_init */
-	MPC_DATATYPES_CONTIGUOUS, /**< These are contiguous datatypes of type \ref _mpc_dt_contiguout_t */
-	MPC_DATATYPES_DERIVED,	/**< These are derived datatypes of type \ref _mpc_dt_derived_t */
-	MPC_DATATYPES_UNKNOWN	 /**< This key is used to detect faulty datatypes IDs */
+	MPC_DATATYPES_USER	     /**< These are user defined datatypes of type \ref _mpc_dt_general_t */
 } mpc_dt_kind_t;
 
-/** \brief Returns 1 if datatype is a contiguous datatype
+/** \brief Returns true if the datatype is a boundary (UB or LB)
+ *
+ * \param data_in Datatype to test
+ * \return true if the datatype is a boundary
+ *         false otherwise
  */
-static inline int _mpc_dt_is_contiguous( mpc_lowcomm_datatype_t datatype )
-{
-	if ( ( MPC_LOWCOMM_TYPE_COMMON_LIMIT <= datatype ) && ( datatype < ( MPC_LOWCOMM_TYPE_COMMON_LIMIT + SCTK_USER_DATA_TYPES_MAX ) ) )
-	{
-		return 1;
-	}
-
-	return 0;
-}
-
-/** \brief Returns 1 if datatype is a derived datatype
- */
-static inline int _mpc_dt_is_derived( mpc_lowcomm_datatype_t data_in )
-{
-	if ( ( data_in >= MPC_LOWCOMM_TYPE_COMMON_LIMIT + SCTK_USER_DATA_TYPES_MAX ) && ( data_in < ( MPC_LOWCOMM_TYPE_COMMON_LIMIT + 2 * SCTK_USER_DATA_TYPES_MAX ) ) )
-	{
-		return 1;
-	}
-
-	return 0;
-}
-
-/** \brief Returns 1 if datatype is a stuct datatype datatype
- */
-static inline int _mpc_dt_is_struct( mpc_lowcomm_datatype_t data_in )
-{
-	if ( ( data_in >= MPC_LOWCOMM_TYPE_COMMON_LIMIT + SCTK_USER_DATA_TYPES_MAX ) && ( data_in < ( MPC_LOWCOMM_TYPE_COMMON_LIMIT + SCTK_USER_DATA_TYPES_MAX + MPC_STRUCT_DATATYPE_COUNT ) ) )
-	{
-		return 1;
-	}
-
-	return 0;
-}
-
-/** \brief Returns 1 if the datatype is a boundary (UB or LB)
- */
-static inline int _mpc_dt_is_boundary( mpc_lowcomm_datatype_t data_in )
+static inline bool _mpc_dt_is_boundary( const mpc_lowcomm_datatype_t data_in )
 {
 	if ( ( data_in == MPC_UB ) || ( data_in == MPC_LB ) )
 	{
-		return 1;
+		return true;
 	}
 
-	return 0;
+	return false;
 }
 
-/** \brief Returns 1 if the datatype is occupying a contiguous memory region
+/** \brief Checks whether a datatype is a user defined one
+ *
+ * \param datatype Datatype to test
+ * \return true if it is user defined, false otherwise
  */
-static inline int _mpc_dt_is_contig_mem( mpc_lowcomm_datatype_t data_in )
-{
-	/* Note that the derived asumption can be optimized
-   * for single segment derived with no LB/UB */
-	if ( _mpc_dt_is_derived( data_in ) || _mpc_dt_is_boundary( data_in ) )
-	{
-		return 0;
-	}
+bool _mpc_dt_is_user_defined( const mpc_lowcomm_datatype_t datatype );
 
-	return 1;
+/** \brief Checks whether a datatype is valid or not
+ *
+ * This means if it is a common or a user defined one
+ *
+ * \param datatype Datatype to test
+ * \return true if datatype is valid, false otherwise
+ * */
+static inline bool mpc_dt_is_valid( const mpc_lowcomm_datatype_t datatype ) {
+
+    return mpc_lowcomm_datatype_is_common(datatype) || _mpc_dt_is_user_defined(datatype);
 }
 
-/** \brief This functions retuns the \ref mpc_dt_kind_t of an mpc_lowcomm_datatype_t
+/** \brief Returns true if the datatype is occupying a contiguous memory region
+ *
+ * \param data_in Datatype to test
+ * \return true if data_in is contiguous in memory
+ *         false otherwise
+ */
+static inline bool _mpc_dt_is_contig_mem( const mpc_lowcomm_datatype_t data_in )
+{
+	/* Note that the general asumption can be optimized
+     * for single segment general with no LB/UB */
+	if ( _mpc_dt_is_user_defined( data_in ) || _mpc_dt_is_boundary( data_in ) )
+	{
+		return false;
+	}
+
+	return true;
+}
+
+/** \brief This functions returns the \ref mpc_dt_kind_t of an mpc_lowcomm_datatype_t
  *
  * 	It is useful to switch between datatypes
  *
+ * 	\param datatype Datatype to determine the kind of
+ * 	\return Kind of the datatype see \ref mpc_dt_kind_t
  */
-static inline mpc_dt_kind_t _mpc_dt_get_kind( mpc_lowcomm_datatype_t datatype )
+static inline mpc_dt_kind_t _mpc_dt_get_kind( const mpc_lowcomm_datatype_t datatype )
 {
 	mpc_dt_kind_t ret = MPC_DATATYPES_UNKNOWN;
 
@@ -466,46 +432,52 @@ static inline mpc_dt_kind_t _mpc_dt_get_kind( mpc_lowcomm_datatype_t datatype )
 	{
 		ret = MPC_DATATYPES_COMMON;
 	}
-	else if ( _mpc_dt_is_contiguous( datatype ) )
+	else if ( _mpc_dt_is_user_defined( datatype ) )
 	{
-		ret = MPC_DATATYPES_CONTIGUOUS;
-	}
-	else if ( _mpc_dt_is_derived( datatype ) )
-	{
-		ret = MPC_DATATYPES_DERIVED;
+		ret = MPC_DATATYPES_USER;
 	}
 
 	return ret;
 }
 
-/** \brief Macros to translate from the global type ID to the ones local to each type (Common , Contiguous and derived)
+/** \brief Returns the inner structure of a datatype
  *
- *  */
+ *  \param datatype Datatype to get the structure of
+ *  \return A pointer to the _mpc_lowomm_general_datatype_t in the datatype if valid
+ *          MPC_LOWCOMM_DATATYPE_NULL otherwise
+ */
+static inline mpc_lowcomm_datatype_t _mpc_dt_get_datatype(const mpc_lowcomm_datatype_t datatype) {
+    mpc_lowcomm_datatype_t type = MPC_LOWCOMM_DATATYPE_NULL;
+    switch(_mpc_dt_get_kind(datatype)) {
+        case MPC_DATATYPES_COMMON:
+            if(mpc_lowcomm_datatype_is_common_predefined(datatype)) {
+                type = mpc_lowcomm_datatype_common_get_type_struct(datatype);
+                break;
+            }
+        case MPC_DATATYPES_USER:
+            type = datatype;
+            break;
+        case MPC_DATATYPES_UNKNOWN:
+            type = MPC_LOWCOMM_DATATYPE_NULL;
+            break;
+    }
 
-/** \brief Takes a global contiguous type and computes its local offset */
-#define _MPC_DT_MAP_TO_CONTIGUOUS( type ) ( type - MPC_LOWCOMM_TYPE_COMMON_LIMIT )
-/** \brief Takes a local contiguous offset and translates it to a local offset */
-#define _MPC_DT_MAP_FROM_CONTIGUOUS( type ) ( type + MPC_LOWCOMM_TYPE_COMMON_LIMIT )
-
-/** \brief Takes a global derived type and computes its local offset */
-#define _MPC_DT_MAP_TO_DERIVED( a ) ( a - SCTK_USER_DATA_TYPES_MAX - MPC_LOWCOMM_TYPE_COMMON_LIMIT )
-/** \brief Takes a local derived offset and translates it to a local offset */
-#define _MPC_DT_MAP_FROM_DERIVED( a ) ( a + SCTK_USER_DATA_TYPES_MAX + MPC_LOWCOMM_TYPE_COMMON_LIMIT )
+    return type;
+}
 
 /************************************************************************/
 /* Datatype  Array                                                      */
 /************************************************************************/
 
-/** \brief This structure gathers contiguous and derived datatypes in the same lockable structure
+/** \brief This structure gathers user defined datatypes in the same lockable structure
  * 
  *  This structure is the entry point for user defined datatypes
  *  it is inintialized in \ref mpc_mpi_cl_per_mpi_process_ctx_t
  */
 struct _mpc_dt_storage
 {
-	_mpc_dt_contiguout_t contiguous_user_types[SCTK_USER_DATA_TYPES_MAX]; /**< Contiguous datatype array */
-	_mpc_dt_derived_t *derived_user_types[SCTK_USER_DATA_TYPES_MAX];	  /**< Derived datatype array */
-	mpc_common_spinlock_t datatype_lock;								  /**< A lock protecting both datatypes types */
+	_mpc_lowcomm_general_datatype_t general_user_types[SCTK_USER_DATA_TYPES_MAX];	  /**< general datatype array */
+	mpc_common_spinlock_t datatype_lock;							  /**< A lock protecting datatypes */
 };
 
 /** \brief Initializes the datatype array
@@ -521,49 +493,39 @@ struct _mpc_dt_storage *_mpc_dt_storage_init();
  *  \param da A pointer to the datatype array
  *  \param datatype The datatype to be freed
  */
-int _mpc_dt_storage_type_can_be_released( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t datatype );
+bool _mpc_dt_storage_type_can_be_released( const mpc_lowcomm_datatype_t datatype );
 
 /** \brief Releases the datatype array and types not previously freed
  *  \param da A pointer to the datatype array
  */
 void _mpc_dt_storage_release( struct _mpc_dt_storage *da );
 
-/** \brief Returns a pointer to a contiguous datatype
- *  \param da A pointer to the datatype array
- *  \param datatype The datatype ID we want to retrieve
- *
- *  \return Returns the cell of the requested datatype (allocated or not !)
- *
- *  \warning The datatype must be a contiguous datatype note that event unallocated datatypes are returned !
- */
-_mpc_dt_contiguout_t *_mpc_dt_storage_get_contiguous_datatype( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t datatype );
-
-/** \brief Returns a pointer to a derived datatype
+/** \brief Returns a pointer to a general datatype
  *  \param da A pointer to the datatype array
  *  \param datatype The datatype ID we want to retrieve
  *
  *  \return NULL id not allocated a valid pointer otherwise
  *
- *  \warning The datatype must be a derived datatype
+ *  \warning The datatype must be a general datatype
  */
-_mpc_dt_derived_t *_mpc_dt_storage_get_derived_datatype( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t datatype );
+_mpc_lowcomm_general_datatype_t *_mpc_dt_storage_get_general_datatype( struct _mpc_dt_storage *da, const size_t datatype_idx );
 
-/** \brief Sets a pointer to a contiguous datatype in the datatype array
+/** \brief Sets a pointer to a datatype in the datatype array
  *  \param da A pointer to the datatype array
  *  \param datatype The datatype ID we want to set
  *  \param value the pointer to the datatype array
  *
  *  \return NULL id not allocated a valid pointer otherwise
  *
- *  \warning The datatype must be a derived datatype
+ *  \warning The datatype must be a general datatype
  */
-void _mpc_dt_storage_set_derived_datatype( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t datatype, _mpc_dt_derived_t *value );
+void _mpc_dt_storage_set_general_datatype( struct _mpc_dt_storage *da, const size_t datatype_idx, const mpc_lowcomm_datatype_t value );
 
 /************************************************************************/
 /* Datatype  Attribute Getters                                          */
 /************************************************************************/
 
-/** \brief Set a Datatype attr in a datatype-store (contained inside DT)
+/** \brief Sets a Datatype attr in a datatype-store (contained inside DT)
  *  \param da A pointer to the datatype array
  * 	\param type Target datatype
  * 	\param type_keyval Referenced keyval
@@ -571,9 +533,9 @@ void _mpc_dt_storage_set_derived_datatype( struct _mpc_dt_storage *da, mpc_lowco
  *  \return MPI_SUCCESS if ok
  */
 int _mpc_dt_attr_set( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
-					  int type_keyval, void *attribute_val );
+					  const int type_keyval, void *attribute_val );
 
-/** \brief Get a Datatype attr in a datatype-store (contained inside DT)
+/** \brief Gets a Datatype attr in a datatype-store (contained inside DT)
  *  \param da A pointer to the datatype array
  * 	\param type Target datatype
  * 	\param type_keyval Referenced keyval
@@ -582,22 +544,22 @@ int _mpc_dt_attr_set( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
  *  \return MPI_SUCCESS if ok
  */
 int _mpc_dt_attr_get( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
-					  int type_keyval, void **attribute_val, int *flag );
+					  const int type_keyval, void **attribute_val, int *flag );
 
-/** \brief Delete a Datatype attr in a datatype-store (contained inside DT)
+/** \brief Deletes a Datatype attr in a datatype-store (contained inside DT)
  *  \param da A pointer to the datatype array
  * 	\param type Target datatype
  * 	\param type_keyval Referenced keyval
  *  \return MPI_SUCCESS if ok
  */
 int _mpc_dt_attr_delete( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type,
-						 int type_keyval );
+						 const int type_keyval );
 
 /************************************************************************/
 /* Datatype  Naming                                                     */
 /************************************************************************/
 
-/** \brief Set a name to a given datatype
+/** \brief Sets a name to a given datatype
  *  \param datatype Type which has to be named
  *  \param name Name we want to give
  *  \return 1 on error 0 otherwise
@@ -607,20 +569,20 @@ int _mpc_dt_attr_delete( struct _mpc_dt_storage *da, mpc_lowcomm_datatype_t type
  *  to allow this behaviour
  *
  */
-int _mpc_dt_name_set_nocheck( mpc_lowcomm_datatype_t datatype, char *name );
+int _mpc_dt_name_set_nocheck( mpc_lowcomm_datatype_t datatype, const char *const name );
 
-/** \brief Set a name to a given datatype
+/** \brief Sets a name to a given datatype
  *  \param datatype Type which has to be named
  *  \param name Name we want to give
  *  \return 1 on error 0 otherwise
  *
  */
-int _mpc_dt_name_set( mpc_lowcomm_datatype_t datatype, const char *name );
+int _mpc_dt_name_set( mpc_lowcomm_datatype_t datatype, const char *const name );
 
 /** \brief Returns the name of a data-type
  *  \param datatype Requested data-type
  *  \return NULL if no name the name otherwise
  */
-char *_mpc_dt_name_get( mpc_lowcomm_datatype_t datatype );
+char *_mpc_dt_name_get( const mpc_lowcomm_datatype_t datatype );
 
 #endif /* MPC_DATATYPES_H */

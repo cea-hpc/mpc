@@ -331,7 +331,7 @@ static inline size_t MPC_Extern32_common_type_size( mpc_lowcomm_datatype_t commo
 	   common_type ==  MPC_LOWCOMM_INT16_T       ||
 	   common_type ==  MPC_LOWCOMM_UINT16_T      ||
 	   common_type ==  MPC_LOWCOMM_INTEGER2      ||
-	   common_type ==  MPC_LOWCOMM_REAL2) { 
+	   common_type ==  MPC_LOWCOMM_REAL2) {
             return 2;
     }
     if(common_type ==  MPC_LOWCOMM_INT           ||
@@ -359,6 +359,7 @@ static inline size_t MPC_Extern32_common_type_size( mpc_lowcomm_datatype_t commo
 	   common_type ==  MPC_LOWCOMM_AINT               ||
 	   common_type ==  MPC_LOWCOMM_COUNT              ||
 	   common_type ==  MPC_LOWCOMM_OFFSET             ||
+       common_type ==  MPC_LOWCOMM_COMPLEX            ||
 	   common_type ==  MPC_LOWCOMM_C_COMPLEX          ||
 	   common_type ==  MPC_LOWCOMM_C_FLOAT_COMPLEX    ||
 	   common_type ==  MPC_LOWCOMM_CXX_FLOAT_COMPLEX  ||

@@ -43,15 +43,13 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
 
   /* Do the optimized RMA only if target datatype is contiguous */
   if (mpc_lowcomm_datatype_is_common(target_datatype) ||
-      _mpc_dt_is_contiguous(target_datatype) ||
-      _mpc_dt_is_struct(target_datatype)) {
+      mpc_mpi_cl_type_is_contiguous(target_datatype) ) {
     can_read_rma = 1;
   }
 
   /* Can the RMA directly target the local buffer (ie contig) ? */
   if (mpc_lowcomm_datatype_is_common(origin_datatype) ||
-      _mpc_dt_is_contiguous(origin_datatype) ||
-      _mpc_dt_is_struct(origin_datatype)) {
+      mpc_mpi_cl_type_is_contiguous(origin_datatype) ) {
     can_write_rma = 1;
   }
 
@@ -159,7 +157,7 @@ static inline int mpc_MPI_Get_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
                 target_rank);
       /* Emit fractionned Read */
       size_t stsize;
-      void *serialized_type = _mpc_cl_derived_type_serialize(
+      void *serialized_type = _mpc_cl_general_type_serialize(
           target_datatype, &stsize, sizeof(struct mpc_MPI_Win_ctrl_message));
 
       struct mpc_MPI_Win_ctrl_message *message =
@@ -271,15 +269,13 @@ static inline int mpc_MPI_Put_RMA(struct mpc_MPI_Win *desc,
 
   /* Do the optimized RMA only if target datatype is contiguous */
   if (mpc_lowcomm_datatype_is_common(target_datatype) ||
-      _mpc_dt_is_contiguous(target_datatype) ||
-      _mpc_dt_is_struct(target_datatype)) {
+      mpc_mpi_cl_type_is_contiguous(target_datatype) ) {
     can_write_rma = 1;
   }
 
   /* Can the RMA directly target the local buffer (ie contig) ? */
   if (mpc_lowcomm_datatype_is_common(origin_datatype) ||
-      _mpc_dt_is_contiguous(origin_datatype) ||
-      _mpc_dt_is_struct(origin_datatype)) {
+      mpc_mpi_cl_type_is_contiguous(origin_datatype)) {
     can_read_rma = 1;
   }
 
@@ -380,7 +376,7 @@ static inline int mpc_MPI_Put_RMA(struct mpc_MPI_Win *desc,
 
     /* Emit fractionned Write */
     size_t stsize;
-    void *serialized_type = _mpc_cl_derived_type_serialize(
+    void *serialized_type = _mpc_cl_general_type_serialize(
         target_datatype, &stsize, sizeof(struct mpc_MPI_Win_ctrl_message));
 
     struct mpc_MPI_Win_ctrl_message *message =
@@ -500,15 +496,13 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
 
   /* Do the optimized RMA only if target datatype is contiguous */
   if (mpc_lowcomm_datatype_is_common(target_datatype) ||
-      _mpc_dt_is_contiguous(target_datatype) ||
-      _mpc_dt_is_struct(target_datatype)) {
+      mpc_mpi_cl_type_is_contiguous(target_datatype)) {
     can_write_rma = 1;
   }
 
   /* Can the RMA directly target the local buffer (ie contig) ? */
   if (mpc_lowcomm_datatype_is_common(origin_datatype) ||
-      _mpc_dt_is_contiguous(origin_datatype) ||
-      _mpc_dt_is_struct(origin_datatype)) {
+      mpc_mpi_cl_type_is_contiguous(origin_datatype)) {
     can_read_rma = 1;
   }
 
@@ -579,7 +573,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
 
   /* Retrieve the Inner target datatype */
 
-  MPI_Datatype inner_type = -1;
+  MPI_Datatype inner_type = MPI_DATATYPE_NULL;
 
   if (mpc_lowcomm_datatype_is_common(target_datatype)) {
     inner_type = target_datatype;
@@ -587,8 +581,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
     inner_type = _mpc_cl_type_get_inner(target_datatype);
   }
 
-  if (!mpc_lowcomm_datatype_is_common(inner_type) &&
-      !_mpc_dt_is_struct(inner_type)) {
+  if (!mpc_lowcomm_datatype_is_common(inner_type) ) {
     mpc_common_debug_warning("MPI_Accumulate : cannot accumulate a derived datatype which "
                  "is not made of a single predefined type");
     mpc_lowcomm_accumulate_op_unlock();
@@ -680,17 +673,17 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
     /* Most Optimal case, all contig on dest side */
     int do_free_target_type = 0;
 
-    if (can_write_rma) {
+    /* if (can_write_rma) { */
       /* If the target type is a contiguous one
        * now create a derived one to simplify code
        * branching (removing cases on target) */
-      _mpc_cl_type_convert_to_derived(target_datatype, &target_datatype);
-      do_free_target_type = 1;
-    }
+      /* _mpc_cl_type_convert_to_derived(target_datatype, &target_datatype); */
+      /* do_free_target_type = 1; */
+    /* } */
 
     /* Serialize the remote type */
     size_t stsize;
-    void *serialized_type = _mpc_cl_derived_type_serialize(
+    void *serialized_type = _mpc_cl_general_type_serialize(
         target_datatype, &stsize, sizeof(struct mpc_MPI_Win_ctrl_message));
 
     struct mpc_MPI_Win_ctrl_message *message =
@@ -724,7 +717,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
                                                  stsize);
 
     if (do_free_target_type &&
-        !_mpc_dt_is_struct(target_datatype)) {
+        _mpc_dt_storage_type_can_be_released(target_datatype)) {
       _mpc_cl_type_free(&target_datatype);
     }
   }
@@ -816,68 +809,33 @@ static inline RDMA_op mpc_RMA_convert_op(MPI_Op op) {
     return RDMA_BXOR;
     break;
   default:
-    return -1;
+    return RDMA_OP_NULL;
   }
 
-  return -1;
+  return RDMA_OP_NULL;
 }
 
 static inline RDMA_type mpc_RMA_convert_type(MPI_Datatype type) {
 
-  switch (type) {
-  case MPI_CHAR:
-    return RDMA_TYPE_CHAR;
-    break;
-  case MPI_DOUBLE:
-    return RDMA_TYPE_DOUBLE;
-    break;
-  case MPI_FLOAT:
-    return RDMA_TYPE_FLOAT;
-    break;
-  case MPI_INT:
-    return RDMA_TYPE_INT;
-    break;
-  case MPI_LONG:
-    return RDMA_TYPE_LONG;
-    break;
-  case MPI_LONG_DOUBLE:
-    return RDMA_TYPE_LONG_DOUBLE;
-    break;
-  case MPI_LONG_LONG:
-    return RDMA_TYPE_LONG_LONG;
-    break;
-  case MPI_LONG_LONG_INT:
-    return RDMA_TYPE_LONG_LONG_INT;
-    break;
-  case MPI_SHORT:
-    return RDMA_TYPE_SHORT;
-    break;
-  case MPI_SIGNED_CHAR:
-    return RDMA_TYPE_SIGNED_CHAR;
-    break;
-  case MPI_UNSIGNED:
-    return RDMA_TYPE_UNSIGNED;
-    break;
-  case MPI_UNSIGNED_CHAR:
-    return RDMA_TYPE_UNSIGNED_CHAR;
-    break;
-  case MPI_UNSIGNED_LONG:
-    return RDMA_TYPE_UNSIGNED_LONG;
-    break;
-  case MPI_UNSIGNED_LONG_LONG:
-    return RDMA_TYPE_UNSIGNED_LONG_LONG;
-    break;
-  case MPI_UNSIGNED_SHORT:
-    return RDMA_TYPE_UNSIGNED_SHORT;
-    break;
-  case MPI_WCHAR:
-    return RDMA_TYPE_WCHAR;
-    break;
-  default:
-    return -1;
-  }
+  /* No switch case with pointers... */
+  if(type == MPI_CHAR)               return RDMA_TYPE_CHAR;
+  if(type == MPI_DOUBLE)             return RDMA_TYPE_DOUBLE;
+  if(type == MPI_FLOAT)              return RDMA_TYPE_FLOAT;
+  if(type == MPI_INT)                return RDMA_TYPE_INT;
+  if(type == MPI_LONG)               return RDMA_TYPE_LONG;
+  if(type == MPI_LONG_DOUBLE)        return RDMA_TYPE_LONG_DOUBLE;
+  if(type == MPI_LONG_LONG)          return RDMA_TYPE_LONG_LONG;
+  if(type == MPI_LONG_LONG_INT)      return RDMA_TYPE_LONG_LONG_INT;
+  if(type == MPI_SHORT)              return RDMA_TYPE_SHORT;
+  if(type == MPI_SIGNED_CHAR)        return RDMA_TYPE_SIGNED_CHAR;
+  if(type == MPI_UNSIGNED)           return RDMA_TYPE_UNSIGNED;
+  if(type == MPI_UNSIGNED_LONG)      return RDMA_TYPE_UNSIGNED_LONG;
+  if(type == MPI_UNSIGNED_LONG_LONG) return RDMA_TYPE_UNSIGNED_LONG_LONG;
+  if(type == MPI_UNSIGNED_SHORT)     return RDMA_TYPE_UNSIGNED_SHORT;
+  if(type == MPI_WCHAR)              return RDMA_TYPE_WCHAR;
+  if(type == MPI_LONG_LONG_INT)      return RDMA_TYPE_LONG_LONG_INT;
 
-  return -1;
+  return RDMA_TYPE_NULL;
 }
 
 /************************************************************************/

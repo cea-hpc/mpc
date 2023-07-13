@@ -56,8 +56,9 @@ typedef struct MPI_ABI_Datatype {
  * Common datatypes *
  * *****************/
 
-#define MPC_LOWCOMM_DATATYPE_NULL ((mpc_lowcomm_datatype_t) 0)
-/* Integers */
+/* The null handles is defined in \ref mpc_lowcomm_types.h */
+
+/** Integers */
 #define MPC_LOWCOMM_CHAR                 ((mpc_lowcomm_datatype_t) 1)
 #define MPC_LOWCOMM_SHORT                ((mpc_lowcomm_datatype_t) 2)
 #define MPC_LOWCOMM_INT                  ((mpc_lowcomm_datatype_t) 3)
@@ -72,12 +73,12 @@ typedef struct MPI_ABI_Datatype {
 #define MPC_LOWCOMM_UNSIGNED_LONG_LONG  ((mpc_lowcomm_datatype_t) 12)
 #define MPC_LOWCOMM_UNSIGNED_LONG_LONG_INT  MPC_LOWCOMM_UNSIGNED_LONG_LONG
 
-/* Floating points */
+/** Floating points */
 #define MPC_LOWCOMM_FLOAT       ((mpc_lowcomm_datatype_t) 13)
 #define MPC_LOWCOMM_DOUBLE      ((mpc_lowcomm_datatype_t) 14)
 #define MPC_LOWCOMM_LONG_DOUBLE ((mpc_lowcomm_datatype_t) 15)
 
-/* stdint and stddef types */
+/** stdint and stddef types */
 #define MPC_LOWCOMM_WCHAR    ((mpc_lowcomm_datatype_t) 16)
 #define MPC_LOWCOMM_C_BOOL   ((mpc_lowcomm_datatype_t) 17)
 #define MPC_LOWCOMM_INT8_T   ((mpc_lowcomm_datatype_t) 18)
@@ -89,28 +90,28 @@ typedef struct MPI_ABI_Datatype {
 #define MPC_LOWCOMM_UINT32_T ((mpc_lowcomm_datatype_t) 24)
 #define MPC_LOWCOMM_UINT64_T ((mpc_lowcomm_datatype_t) 25)
 
-/* MPI integer types */
+/** MPI integer types */
 #define MPC_LOWCOMM_AINT   ((mpc_lowcomm_datatype_t) 26)
 #define MPC_LOWCOMM_COUNT  ((mpc_lowcomm_datatype_t) 27)
 #define MPC_LOWCOMM_OFFSET ((mpc_lowcomm_datatype_t) 28)
 
-/* Complex numbers */
+/** Complex numbers */
 #define MPC_LOWCOMM_C_COMPLEX             ((mpc_lowcomm_datatype_t) 29) /* /!\ derived type */
 #define MPC_LOWCOMM_C_FLOAT_COMPLEX       ((mpc_lowcomm_datatype_t) 30) /* /!\ derived type */
 #define MPC_LOWCOMM_C_DOUBLE_COMPLEX      ((mpc_lowcomm_datatype_t) 31) /* /!\ derived type */
 #define MPC_LOWCOMM_C_LONG_DOUBLE_COMPLEX ((mpc_lowcomm_datatype_t) 32) /* /!\ derived type */
 
-/* Misc */
+/** Misc */
 #define MPC_LOWCOMM_BYTE   ((mpc_lowcomm_datatype_t) 33)
 #define MPC_LOWCOMM_PACKED ((mpc_lowcomm_datatype_t) 34)
 
-/* Predefined MPI datatypes corresponding to C++ datatypes */
-#define MPC_LOWCOMM_CXX_BOOL                ((mpc_lowcomm_datatype_t) 35) 
+/** Predefined MPI datatypes corresponding to C++ datatypes */
+#define MPC_LOWCOMM_CXX_BOOL                ((mpc_lowcomm_datatype_t) 35)
 #define MPC_LOWCOMM_CXX_FLOAT_COMPLEX       ((mpc_lowcomm_datatype_t) 36) /* /!\ derived type */
 #define MPC_LOWCOMM_CXX_DOUBLE_COMPLEX      ((mpc_lowcomm_datatype_t) 37) /* /!\ derived type */
 #define MPC_LOWCOMM_CXX_LONG_DOUBLE_COMPLEX ((mpc_lowcomm_datatype_t) 38) /* /!\ derived type */
 
-/* FORTRAN types */
+/** FORTRAN types */
 #define MPC_LOWCOMM_INTEGER          ((mpc_lowcomm_datatype_t) 39)
 #define MPC_LOWCOMM_REAL             ((mpc_lowcomm_datatype_t) 40)
 #define MPC_LOWCOMM_DOUBLE_PRECISION ((mpc_lowcomm_datatype_t) 41)
@@ -119,7 +120,7 @@ typedef struct MPI_ABI_Datatype {
 #define MPC_LOWCOMM_CHARACTER        ((mpc_lowcomm_datatype_t) 44)
 #define MPC_LOWCOMM_DOUBLE_COMPLEX   ((mpc_lowcomm_datatype_t) 45) /* /!\ derived type */
 
-/* F08 types */
+/** F08 types */
 #define MPC_LOWCOMM_INTEGER1  ((mpc_lowcomm_datatype_t) 46)
 #define MPC_LOWCOMM_INTEGER2  ((mpc_lowcomm_datatype_t) 47)
 #define MPC_LOWCOMM_INTEGER4  ((mpc_lowcomm_datatype_t) 48)
@@ -134,19 +135,19 @@ typedef struct MPI_ABI_Datatype {
 #define MPC_LOWCOMM_COMPLEX16 ((mpc_lowcomm_datatype_t) 57) /* /!\ derived type */
 #define MPC_LOWCOMM_COMPLEX32 ((mpc_lowcomm_datatype_t) 58) /* /!\ derived type */
 
-/* Predefined derived datatypes */
+/** Predefined derived datatypes */
 #define MPC_LOWCOMM_FLOAT_INT         ((mpc_lowcomm_datatype_t) 59) /* /!\ derived type */
-#define MPC_LOWCOMM_DOUBLE_INT        ((mpc_lowcomm_datatype_t) 60) /* /!\ derived type */ 
-#define MPC_LOWCOMM_LONG_INT          ((mpc_lowcomm_datatype_t) 61) /* /!\ derived type */ 
-#define MPC_LOWCOMM_2INT              ((mpc_lowcomm_datatype_t) 62) /* /!\ derived type */ 
-#define MPC_LOWCOMM_SHORT_INT         ((mpc_lowcomm_datatype_t) 63) /* /!\ derived type */ 
+#define MPC_LOWCOMM_DOUBLE_INT        ((mpc_lowcomm_datatype_t) 60) /* /!\ derived type */
+#define MPC_LOWCOMM_LONG_INT          ((mpc_lowcomm_datatype_t) 61) /* /!\ derived type */
+#define MPC_LOWCOMM_2INT              ((mpc_lowcomm_datatype_t) 62) /* /!\ derived type */
+#define MPC_LOWCOMM_SHORT_INT         ((mpc_lowcomm_datatype_t) 63) /* /!\ derived type */
 #define MPC_LOWCOMM_LONG_DOUBLE_INT   ((mpc_lowcomm_datatype_t) 64) /* /!\ derived type */
-#define MPC_LOWCOMM_2REAL             ((mpc_lowcomm_datatype_t) 65) /* /!\ derived type */ 
-#define MPC_LOWCOMM_2DOUBLE_PRECISION ((mpc_lowcomm_datatype_t) 66) /* /!\ derived type */ 
-#define MPC_LOWCOMM_2INTEGER          ((mpc_lowcomm_datatype_t) 67) /* /!\ derived type */ 
+#define MPC_LOWCOMM_2REAL             ((mpc_lowcomm_datatype_t) 65) /* /!\ derived type */
+#define MPC_LOWCOMM_2DOUBLE_PRECISION ((mpc_lowcomm_datatype_t) 66) /* /!\ derived type */
+#define MPC_LOWCOMM_2INTEGER          ((mpc_lowcomm_datatype_t) 67) /* /!\ derived type */
 
-/* MPC specific */ 
-#define MPC_LOWCOMM_2FLOAT ((mpc_lowcomm_datatype_t) 68) /* /!\ derived type */  
+/** MPC specific */
+#define MPC_LOWCOMM_2FLOAT ((mpc_lowcomm_datatype_t) 68) /* /!\ derived type */
 #define MPC_LOWCOMM_TYPE_COMMON_LIMIT  69 /**< Last predefined datatype identifier */
 /*!< This should always be 1 plus the last common type */
 
@@ -155,74 +156,74 @@ typedef struct MPI_ABI_Datatype {
  * ***************************/
 
 /**
- * @brief initializes common datatypes
+ * \brief initializes common datatypes
  *
- * @return MPI_SUCCESS on success
+ * \return MPI_SUCCESS on success
  */
 int mpc_lowcomm_datatype_common_init();
 
 /**
- * @brief get the size of a datatype
+ * \brief get the size of a datatype
  * 
- * @param datatype datatype to get the size of
- * @return the size of the datatype 
+ * \param datatype datatype to get the size of
+ * \return the size of the datatype
  */
 size_t mpc_lowcomm_datatype_common_get_size(const mpc_lowcomm_datatype_t datatype);
 
 /**
- * @brief get the name of a common datatype
+ * \brief get the name of a common datatype
  * 
- * @param datatype datatype to get the name of
- * @return the name of the datatype 
+ * \param datatype datatype to get the name of
+ * \return the name of the datatype
  */
 char* mpc_lowcomm_datatype_common_get_name(const mpc_lowcomm_datatype_t datatype);
 
 /**
- * @brief get the unified type structure of a common datatype
+ * \brief get the unified type structure of a common datatype
  *
- * @param datatype datatype to get the type structure of
- * @return the datatype struct pointer
+ * \param datatype datatype to get the type structure of
+ * \return the datatype struct pointer
  */
 mpc_lowcomm_datatype_t mpc_lowcomm_datatype_common_get_type_struct(const mpc_lowcomm_datatype_t datatype);
 
 /**
- * @brief set the name of a common datatype
+ * \brief set the name of a common datatype
  * 
- * @param datatype datatype to set the name of
- * @param name new name of the datatype
- * @return MPI_SUCCESS on success
+ * \param datatype datatype to set the name of
+ * \param name new name of the datatype
+ * \return MPI_SUCCESS on success
  */
 int mpc_lowcomm_datatype_common_set_name(mpc_lowcomm_datatype_t datatype, const char *const name);
 
 /**
- * @brief set the unified datatype structure of a common datatype
+ * \brief set the unified datatype structure of a common datatype
  *
- * @param datatype datatype to set the structure of
- * @param new_struct new structure of the datatype
- * @return MPI_SUCCESS on success
+ * \param datatype datatype to set the structure of
+ * \param new_struct new structure of the datatype
+ * \return MPI_SUCCESS on success
  */
 int mpc_lowcomm_datatype_common_set_type_struct(mpc_lowcomm_datatype_t datatype, mpc_lowcomm_datatype_t new_struct);
 
 /**
- * @brief Display a common datatype for debug
+ * \brief Display a common datatype for debug
  * 
- * @param datatype the datatype to display
+ * \param datatype the datatype to display
  */
 void mpc_lowcomm_datatype_common_display( const mpc_lowcomm_datatype_t datatype );
 
 /**
- * @brief Check if a given address is the one of a common datatype unified structure
+ * \brief Check if a given address is the one of a common datatype unified structure
  *
- * @param datatype the datatype to check
- * @return true if common else false
+ * \param datatype the datatype to check
+ * \return true if common else false
  */
 bool mpc_lowcomm_datatype_is_common_addr(const mpc_lowcomm_datatype_t datatype);
 
 /**
- * @brief Check if a given datatype is common
+ * \brief Check if a given datatype is common
  * 
- * @param datatype the datatype to check
- * @return true if common else false
+ * \param datatype the datatype to check
+ * \return true if common else false
  */
 static inline bool mpc_lowcomm_datatype_is_common_predefined(const mpc_lowcomm_datatype_t datatype)
 {
@@ -235,12 +236,12 @@ static inline bool mpc_lowcomm_datatype_is_common_predefined(const mpc_lowcomm_d
 }
 
 /**
- * @brief Check if a given datatype is common
+ * \brief Check if a given datatype is common
  * This function checks if the entry is an address to a common
  * or a predefined constants datatype
  *
- * @param datatype the datatype to check
- * @return true if common else false
+ * \param datatype the datatype to check
+ * \return true if common else false
  */
 static inline bool mpc_lowcomm_datatype_is_common(const mpc_lowcomm_datatype_t datatype) {
 

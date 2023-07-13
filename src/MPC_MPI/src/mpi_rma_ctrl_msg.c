@@ -125,7 +125,7 @@ void mpc_MPI_Win_handle_non_contiguous_write(void *data, size_t size) {
   size_t pack_size = message->opt_arg2;
   int target_count = message->opt_arg3;
 
-  mpc_lowcomm_datatype_t target_type = _mpc_cl_derived_type_deserialize(
+  mpc_lowcomm_datatype_t target_type = _mpc_cl_general_type_deserialize(
       data, size, sizeof(struct mpc_MPI_Win_ctrl_message));
 
   struct mpc_lowcomm_rdma_window *low_win = sctk_win_translate(message->target_win);
@@ -189,7 +189,7 @@ void mpc_MPI_Win_handle_non_contiguous_read(void *data, size_t size) {
   size_t pack_size = message->opt_arg2;
   int target_count = message->opt_arg3;
 
-  mpc_lowcomm_datatype_t target_type = _mpc_cl_derived_type_deserialize(
+  mpc_lowcomm_datatype_t target_type = _mpc_cl_general_type_deserialize(
       data, size, sizeof(struct mpc_MPI_Win_ctrl_message));
 
   struct mpc_lowcomm_rdma_window *low_win = sctk_win_translate(message->target_win);
@@ -254,7 +254,7 @@ void mpc_MPI_Win_handle_non_contiguous_accumulate_send(void *data,
   MPI_Datatype inner_type = message->opt_arg4;
   MPI_Op op = (MPI_Op)message->opt_arg5;
 
-  mpc_lowcomm_datatype_t target_type = _mpc_cl_derived_type_deserialize(
+  mpc_lowcomm_datatype_t target_type = _mpc_cl_general_type_deserialize(
       data, size, sizeof(struct mpc_MPI_Win_ctrl_message));
 
   struct mpc_lowcomm_rdma_window *low_win = sctk_win_translate(message->target_win);

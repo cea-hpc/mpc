@@ -204,7 +204,7 @@ int sctk_shared_mem_scatterv_init( struct shared_mem_scatterv *shmsv,
 	shmsv->recv_types = sctk_malloc( nb_task * sizeof( mpc_lowcomm_datatype_t ) );
 
 	/* Root CTX */
-	shmsv->send_type = -1;
+	shmsv->send_type = MPC_LOWCOMM_DATATYPE_NULL;
 
 	shmsv->src_buffs = sctk_malloc( nb_task * sizeof( OPA_ptr_t ) );
 	assume( shmsv->src_buffs != NULL );

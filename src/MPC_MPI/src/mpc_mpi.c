@@ -1265,7 +1265,7 @@ static int __Isend_test_req(const void *buf, int count, MPI_Datatype datatype,
                             MPI_Request *request, int is_valid_request,
                             MPI_request_struct_t *requests)
 {
-	if(_mpc_dt_is_derived(datatype) && (count != 0) )
+	if(_mpc_dt_is_user_defined(datatype) && (count != 0) )
 	{
 		int res;
 
@@ -1295,9 +1295,9 @@ static int __Isend_test_req(const void *buf, int count, MPI_Datatype datatype,
 		else
 		{
 			int derived_ret = 0;
-			_mpc_dt_derived_t derived_datatype;
+			_mpc_lowcomm_general_datatype_t derived_datatype;
 
-			res = _mpc_cl_derived_datatype_try_get_info(datatype, &derived_ret, &derived_datatype);
+			res = _mpc_cl_general_datatype_try_get_info(datatype, &derived_ret, &derived_datatype);
 			if(res != MPI_SUCCESS)
 			{
 				return res;
@@ -1359,7 +1359,7 @@ static int __Irecv_test_req(void *buf, int count, MPI_Datatype datatype,
                             MPI_Request *request, int is_valid_request,
                             struct MPI_request_struct_s *requests)
 {
-	if(_mpc_dt_is_derived(datatype) )
+	if(_mpc_dt_is_user_defined(datatype) )
 	{
 		int res;
 
@@ -1390,9 +1390,9 @@ static int __Irecv_test_req(void *buf, int count, MPI_Datatype datatype,
 		else
 		{
 			int derived_ret = 0;
-			_mpc_dt_derived_t derived_datatype;
+			_mpc_lowcomm_general_datatype_t derived_datatype;
 
-			res = _mpc_cl_derived_datatype_try_get_info(datatype, &derived_ret, &derived_datatype);
+			res = _mpc_cl_general_datatype_try_get_info(datatype, &derived_ret, &derived_datatype);
 			if(res != MPI_SUCCESS)
 			{
 				return res;
@@ -1545,13 +1545,13 @@ static inline int __PMPI_Type_contiguous_inherits(unsigned long count, MPI_Datat
 	}
 
 	/* If source datatype is a derived datatype we have to create a new derived datatype */
-	if(_mpc_dt_is_derived(data_in) )
+	if(_mpc_dt_is_user_defined(data_in) )
 	{
 		int derived_ret = 0;
-		_mpc_dt_derived_t input_datatype;
+		_mpc_lowcomm_general_datatype_t input_datatype;
 
 		/* Retrieve input datatype informations */
-		_mpc_cl_derived_datatype_try_get_info(data_in, &derived_ret, &input_datatype);
+		_mpc_cl_general_datatype_try_get_info(data_in, &derived_ret, &input_datatype);
 
 		/* Compute the total datatype size including boundaries */
 		unsigned long extent;
@@ -1626,7 +1626,7 @@ static inline int __PMPI_Type_contiguous_inherits(unsigned long count, MPI_Datat
 		}
 
 		/* Actually create the new datatype */
-		_mpc_cl_derived_datatype(data_out, begins_out, ends_out, datatypes, count_out, new_lb, input_datatype.is_lb, new_ub, input_datatype.is_ub, dtctx);
+		_mpc_cl_general_datatype(data_out, begins_out, ends_out, datatypes, count_out, new_lb, input_datatype.is_lb, new_ub, input_datatype.is_ub, dtctx);
 
 		/* Free temporary buffers */
 		sctk_free(datatypes);
@@ -2220,8 +2220,7 @@ static inline MPI_Datatype *__get_typemask(MPI_Datatype datatype, int *type_mask
 
 	*type_mask_count = 0;
 
-	_mpc_dt_derived_t *   derived_user_types    = NULL;
-	_mpc_dt_contiguous_t *contiguous_user_types = NULL;
+    bool flag = false;
 
 	switch(_mpc_dt_get_kind(datatype) )
 	{
@@ -2232,33 +2231,26 @@ static inline MPI_Datatype *__get_typemask(MPI_Datatype datatype, int *type_mask
 
 			break;
 
-		case MPC_DATATYPES_CONTIGUOUS:
-			task_specific = mpc_cl_per_mpi_process_ctx_get();
+		case MPC_DATATYPES_USER:
+            _mpc_cl_type_is_allocated(datatype, &flag);
+            if(flag) {
+                if(mpc_mpi_cl_type_is_contiguous(datatype)) {
+                    *type_mask_count = 1;
+                    if(mpc_lowcomm_datatype_is_common(datatype->datatypes[0]) )
+                    {
+                        *static_type = datatype->datatypes[0];
+                        return static_type;
+                    }
+                    else
+                    {
+                        /* We have to continue the unpacking until finding a common type */
+                        return __get_typemask(datatype->datatypes[0], type_mask_count, static_type);
+                    }
+                }
 
-			contiguous_user_types = _mpc_cl_per_mpi_process_ctx_contiguous_datatype_ts_get(task_specific, datatype);
-
-			*type_mask_count = 1;
-
-			if(mpc_lowcomm_datatype_is_common(contiguous_user_types->datatype) )
-			{
-				*static_type = contiguous_user_types->datatype;
-				return static_type;
-			}
-			else
-			{
-				/* We have to continue the unpacking until finding a common type */
-				return __get_typemask(contiguous_user_types->datatype, type_mask_count, static_type);
-			}
-			break;
-
-		case MPC_DATATYPES_DERIVED:
-			task_specific = mpc_cl_per_mpi_process_ctx_get();
-
-			derived_user_types = _mpc_cl_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
-
-			*type_mask_count = derived_user_types->count;
-			return derived_user_types->datatypes;
-
+                *type_mask_count = datatype->count;
+                return datatype->datatypes;
+            }
 			break;
 
 		default:
@@ -2300,30 +2292,30 @@ int __INTERNAL__PMPI_Barrier_intra_shm_sig(MPI_Comm comm)
 
 	int cnt = 0;
 
-	if(__do_yield)
-	{
-		while(*toll != OPA_load_int(&barrier_ctx->fare) )
-		{
-      mpc_thread_yield();
-      MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
-      if( (cnt++ & 0xFF) == 0)
-      {
-        mpc_mpi_cl_egreq_progress_poll();
-      }
-    }
-  }
-  else
-  {
-    while(*toll != OPA_load_int(&barrier_ctx->fare) )
+    if(__do_yield)
     {
-      sctk_cpu_relax();
-      MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
-      if( (cnt++ & 0xFF) == 0)
-      {
-				mpc_mpi_cl_egreq_progress_poll();
-			}
-		}
-	}
+        while(*toll != OPA_load_int(&barrier_ctx->fare) )
+        {
+            mpc_thread_yield();
+            MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+            if( (cnt++ & 0xFF) == 0)
+            {
+                mpc_mpi_cl_egreq_progress_poll();
+            }
+        }
+    }
+    else
+    {
+        while(*toll != OPA_load_int(&barrier_ctx->fare) )
+        {
+            sctk_cpu_relax();
+            MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+            if( (cnt++ & 0xFF) == 0)
+            {
+                mpc_mpi_cl_egreq_progress_poll();
+            }
+        }
+    }
 
 	/* I Own the cell */
 	OPA_store_ptr(&barrier_ctx->sig_points[rank], (void *)&the_signal);
@@ -2353,33 +2345,33 @@ int __INTERNAL__PMPI_Barrier_intra_shm_sig(MPI_Comm comm)
 	}
 	else
 	{
-		if(__do_yield)
-		{
-			while(the_signal == 0)
-      {
-        mpc_thread_yield();
-        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
-        if( (cnt++ & 0xFF) == 0)
+        if(__do_yield)
         {
-          mpc_mpi_cl_egreq_progress_poll();
+            while(the_signal == 0)
+            {
+                mpc_thread_yield();
+                MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+                if( (cnt++ & 0xFF) == 0)
+                {
+                    mpc_mpi_cl_egreq_progress_poll();
+                }
+            }
         }
-      }
-    }
-    else
-    {
-      while(the_signal == 0)
-      {
-        sctk_cpu_relax();
-        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
-        if( (cnt++ & 0xFF) == 0)
+        else
         {
-					mpc_mpi_cl_egreq_progress_poll();
-				}
-			}
-		}
-	}
+            while(the_signal == 0)
+            {
+                sctk_cpu_relax();
+                MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+                if( (cnt++ & 0xFF) == 0)
+                {
+                    mpc_mpi_cl_egreq_progress_poll();
+                }
+            }
+        }
+    }
 
-	return MPI_SUCCESS;
+    return MPI_SUCCESS;
 }
 
 int __MPC_init_node_comm_ctx(struct sctk_comm_coll *coll, MPI_Comm comm)
@@ -2603,24 +2595,24 @@ int __INTERNAL__PMPI_Bcast_intra_shm(void *buffer, int count,
 
 
 	/* First pay the toll gate */
-	if(__do_yield)
-	{
-		while(bcast_ctx->tollgate[rank] !=
-		      OPA_load_int(&bcast_ctx->fare) )
-		{
-			mpc_thread_yield();
-      MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
-    }
-  }
-  else
-  {
-    while(bcast_ctx->tollgate[rank] !=
-        OPA_load_int(&bcast_ctx->fare) )
+    if(__do_yield)
     {
-      sctk_cpu_relax();
-      MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+        while(bcast_ctx->tollgate[rank] !=
+                OPA_load_int(&bcast_ctx->fare) )
+        {
+            mpc_thread_yield();
+            MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+        }
     }
-  }
+    else
+    {
+        while(bcast_ctx->tollgate[rank] !=
+                OPA_load_int(&bcast_ctx->fare) )
+        {
+            sctk_cpu_relax();
+            MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+        }
+    }
 
   /* Reverse state so that only a root done can unlock by
    * also reversing the fare */
@@ -2640,87 +2632,87 @@ int __INTERNAL__PMPI_Bcast_intra_shm(void *buffer, int count,
   /* Now am I the root ? */
   if(root == rank)
   {
-    if(__do_yield)
-    {
-      while(OPA_cas_int(&bcast_ctx->owner, -1, -2) != -1)
+      if(__do_yield)
       {
-        mpc_thread_yield();
-        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+          while(OPA_cas_int(&bcast_ctx->owner, -1, -2) != -1)
+          {
+              mpc_thread_yield();
+              MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+          }
       }
-    }
-    else
-    {
-      while(OPA_cas_int(&bcast_ctx->owner, -1, -2) != -1)
+      else
       {
-        sctk_cpu_relax();
-        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+          while(OPA_cas_int(&bcast_ctx->owner, -1, -2) != -1)
+          {
+              sctk_cpu_relax();
+              MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+          }
       }
-    }
 
-		bcast_ctx->root_in_buff = 0;
+      bcast_ctx->root_in_buff = 0;
 
-		/* Does root need to pack ? */
-		if(!is_contig_type)
-		{
-			/* We have a tmp bufer where to reduce */
-			data_buff = sctk_malloc(count * tsize);
+      /* Does root need to pack ? */
+      if(!is_contig_type)
+      {
+          /* We have a tmp bufer where to reduce */
+          data_buff = sctk_malloc(count * tsize);
 
-			assume(data_buff != NULL);
+          assume(data_buff != NULL);
 
-			/* If non-contig, we need to pack to the TMP buffer
-			 * where the reduction will be operated */
-			int cnt = 0;
-			PMPI_Pack(buffer, count, datatype, data_buff, tsize * count, &cnt, comm);
+          /* If non-contig, we need to pack to the TMP buffer
+           * where the reduction will be operated */
+          int cnt = 0;
+          PMPI_Pack(buffer, count, datatype, data_buff, tsize * count, &cnt, comm);
 
-			/* We had to allocate the segment save it for release by the last */
-			OPA_store_ptr(&bcast_ctx->to_free, data_buff);
+          /* We had to allocate the segment save it for release by the last */
+          OPA_store_ptr(&bcast_ctx->to_free, data_buff);
 
-			/* Set pack as reference */
-			bcast_ctx->target_buff = data_buff;
-		}
-		else
-		{
-			/* Set the ref buffer */
-			bcast_ctx->target_buff = data_buff;
+          /* Set pack as reference */
+          bcast_ctx->target_buff = data_buff;
+      }
+      else
+      {
+          /* Set the ref buffer */
+          bcast_ctx->target_buff = data_buff;
 
-			/* Can we use the SHM buffer ? */
+          /* Can we use the SHM buffer ? */
 
-			if(is_shared_mem_buffer)
-			{
-				/* Set my value in the TMP buffer */
-				sctk_mpi_shared_mem_buffer_fill(&bcast_ctx->buffer, datatype, count,
-				                                data_buff);
-				bcast_ctx->root_in_buff = 1;
-			}
-		}
+          if(is_shared_mem_buffer)
+          {
+              /* Set my value in the TMP buffer */
+              sctk_mpi_shared_mem_buffer_fill(&bcast_ctx->buffer, datatype, count,
+                      data_buff);
+              bcast_ctx->root_in_buff = 1;
+          }
+      }
 
-		/* Save source type infos */
-		bcast_ctx->stype_size = tsize;
-		bcast_ctx->scount     = count;
+      /* Save source type infos */
+      bcast_ctx->stype_size = tsize;
+      bcast_ctx->scount     = count;
 
-		/* Now unleash the others */
-		OPA_store_int(&bcast_ctx->owner, rank);
-	}
-	else
-	{
-		/* Wait for the root */
-		if(__do_yield)
-		{
-			while(OPA_load_int(&bcast_ctx->owner) != root)
-			{
-				mpc_thread_yield();
-        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
-			}
-		}
-		else
-		{
-			while(OPA_load_int(&bcast_ctx->owner) != root)
-			{
-				sctk_cpu_relax();
-        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
-			}
-		}
-	}
+      /* Now unleash the others */
+      OPA_store_int(&bcast_ctx->owner, rank);
+  }
+  else
+  {
+      /* Wait for the root */
+      if(__do_yield)
+      {
+          while(OPA_load_int(&bcast_ctx->owner) != root)
+          {
+              mpc_thread_yield();
+              MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+          }
+      }
+      else
+      {
+          while(OPA_load_int(&bcast_ctx->owner) != root)
+          {
+              sctk_cpu_relax();
+              MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+          }
+      }
+  }
 
 	/* If we are here the root has set its data */
 	if(rank != root)
@@ -3566,7 +3558,7 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(const void *sendbuf, int sendcnt,
 				if(!gv_ctx->disps)
 				{
 					/* Gather case */
-					mpc_common_nodebug("UNPACK %d@%d in %d => %d@%d", gv_ctx->send_count[i],
+					mpc_common_nodebug("UNPACK %d@%d in %d => %d\%d", gv_ctx->send_count[i],
 					                   gv_ctx->send_type_size[i], i, gv_ctx->counts[0],
 					                   gv_ctx->rtype_size);
 					to = gv_ctx->target_buff +
@@ -4113,22 +4105,22 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 			return res;
 		}
 
-		if(__do_yield)
-		{
-			while(OPA_cas_int(&sv_ctx->owner, -1, -2) != -1)
-      {
-        mpc_thread_yield();
-        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
-      }
-    }
-    else
-    {
-      while(OPA_cas_int(&sv_ctx->owner, -1, -2) != -1)
-      {
-        sctk_cpu_relax();
-        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
-      }
-		}
+        if(__do_yield)
+        {
+            while(OPA_cas_int(&sv_ctx->owner, -1, -2) != -1)
+            {
+                mpc_thread_yield();
+                MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+            }
+        }
+        else
+        {
+            while(OPA_cas_int(&sv_ctx->owner, -1, -2) != -1)
+            {
+                sctk_cpu_relax();
+                MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+            }
+        }
 
 		sv_ctx->send_type = sendtype;
 
@@ -4201,22 +4193,22 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 	else
 	{
 		/* Wait for the root */
-		if(__do_yield)
-		{
-			while(OPA_load_int(&sv_ctx->owner) != root)
-      {
-        mpc_thread_yield();
-        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
-      }
-    }
-    else
-    {
-      while(OPA_load_int(&sv_ctx->owner) != root)
-      {
-        sctk_cpu_relax();
-        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
-      }
-    }
+        if(__do_yield)
+        {
+            while(OPA_load_int(&sv_ctx->owner) != root)
+            {
+                mpc_thread_yield();
+                MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+            }
+        }
+        else
+        {
+            while(OPA_load_int(&sv_ctx->owner) != root)
+            {
+                sctk_cpu_relax();
+                MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+            }
+        }
   }
 
 	//if (!_mpc_dt_is_contig_mem(sendtype) && rank != root) {
@@ -4305,22 +4297,22 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 	if(rank == root)
 	{
 		/* Wait for all the others */
-		if(__do_yield)
-		{
-			while(OPA_load_int(&sv_ctx->left_to_pop) != 0)
-      {
-        mpc_thread_yield();
-        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
-      }
-    }
-    else
-    {
-      while(OPA_load_int(&sv_ctx->left_to_pop) != 0)
-      {
-        sctk_cpu_relax();
-        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
-      }
-		}
+        if(__do_yield)
+        {
+            while(OPA_load_int(&sv_ctx->left_to_pop) != 0)
+            {
+                mpc_thread_yield();
+                MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+            }
+        }
+        else
+        {
+            while(OPA_load_int(&sv_ctx->left_to_pop) != 0)
+            {
+                sctk_cpu_relax();
+                MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+            }
+        }
 
 		/* Do we need to free data packed for Scatter case ? */
 		if(!_mpc_dt_is_contig_mem(sendtype) )
@@ -6513,108 +6505,109 @@ sctk_op_t *sctk_convert_to_mpc_op(MPI_Op op)
 
 #define ADD_FUNC_HANDLER(func, t, op)           \
     if(datatype == t)	\
-		op = (sctk_Op_f)func ## _ ## t; 
+		op = (sctk_Op_f)func ## _ ## t; \
+    else
 
 #define COMPAT_DATA_TYPE(op, func)                                              \
 	if(op == func){                                                         \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_SIGNED_CHAR, op);            \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_CHAR, op);                   \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_CHARACTER, op);              \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_BYTE, op);                   \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_SHORT, op);                  \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT, op);                    \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER, op);                \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG, op);                   \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_FLOAT, op);                  \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER1, op);               \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER2, op);               \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER4, op);               \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER8, op);               \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_REAL, op);                   \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_REAL4, op);                  \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_REAL8, op);                  \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_REAL16, op);                 \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_DOUBLE, op);                 \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_DOUBLE_PRECISION, op);       \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_CHAR, op);          \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_SHORT, op);         \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED, op);               \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_LONG, op);          \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_LONG_LONG, op);     \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG_LONG_INT, op);          \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG_DOUBLE, op);            \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG_LONG, op);              \
-			ADD_FUNC_HANDLER(func, MPC_DOUBLE_COMPLEX, op);         \
-			ADD_FUNC_HANDLER(func, MPC_COMPLEX, op);                \
-			ADD_FUNC_HANDLER(func, MPC_COMPLEX8, op);               \
-			ADD_FUNC_HANDLER(func, MPC_COMPLEX16, op);              \
-			ADD_FUNC_HANDLER(func, MPC_COMPLEX32, op);              \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_LONG_LONG_INT, op); \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT8_T, op);                \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT16_T, op);               \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT32_T, op);               \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT64_T, op);               \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT8_T, op);                 \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT16_T, op);                \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT32_T, op);                \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT64_T, op);                \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_COUNT, op);                  \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_AINT, op);                   \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_OFFSET, op);                 \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_SIGNED_CHAR, op)            \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_CHAR, op)                   \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_CHARACTER, op)              \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_BYTE, op)                   \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_SHORT, op)                  \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT, op)                    \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER, op)                \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG, op)                   \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_FLOAT, op)                  \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER1, op)               \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER2, op)               \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER4, op)               \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER8, op)               \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_REAL, op)                   \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_REAL4, op)                  \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_REAL8, op)                  \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_REAL16, op)                 \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_DOUBLE, op)                 \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_DOUBLE_PRECISION, op)       \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_CHAR, op)          \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_SHORT, op)         \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED, op)               \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_LONG, op)          \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_LONG_LONG, op)     \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG_LONG_INT, op)          \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG_DOUBLE, op)            \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG_LONG, op)              \
+			ADD_FUNC_HANDLER(func, MPC_DOUBLE_COMPLEX, op)         \
+			ADD_FUNC_HANDLER(func, MPC_COMPLEX, op)                \
+			ADD_FUNC_HANDLER(func, MPC_COMPLEX8, op)               \
+			ADD_FUNC_HANDLER(func, MPC_COMPLEX16, op)              \
+			ADD_FUNC_HANDLER(func, MPC_COMPLEX32, op)              \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_LONG_LONG_INT, op) \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT8_T, op)                \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT16_T, op)               \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT32_T, op)               \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT64_T, op)               \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT8_T, op)                 \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT16_T, op)                \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT32_T, op)                \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT64_T, op)                \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_COUNT, op)                  \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_AINT, op)                   \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_OFFSET, op)                 \
 				not_reachable();                                \
 	}
 
 #define COMPAT_DATA_TYPE2(op, func)                                     \
 	if(op == func){                                                 \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_SIGNED_CHAR, op);    \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_CHAR, op);           \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_BYTE, op);           \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_SHORT, op);          \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT, op);            \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER, op);        \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER1, op);       \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER2, op);       \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER4, op);       \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER8, op);       \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG, op);           \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG_LONG, op);      \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_CHAR, op);  \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_SHORT, op); \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED, op);       \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_LONG, op);  \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LOGICAL, op);        \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT8_T, op);        \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT16_T, op);       \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT32_T, op);       \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT64_T, op);       \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT8_T, op);         \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT16_T, op);        \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT32_T, op);        \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT64_T, op);        \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_COUNT, op);          \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_AINT, op);           \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_OFFSET, op);         \
-			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_C_BOOL, op);         \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_SIGNED_CHAR, op)    \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_CHAR, op)           \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_BYTE, op)           \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_SHORT, op)          \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT, op)            \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER, op)        \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER1, op)       \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER2, op)       \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER4, op)       \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INTEGER8, op)       \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG, op)           \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LONG_LONG, op)      \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_CHAR, op)  \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_SHORT, op) \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED, op)       \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UNSIGNED_LONG, op)  \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_LOGICAL, op)        \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT8_T, op)        \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT16_T, op)       \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT32_T, op)       \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_UINT64_T, op)       \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT8_T, op)         \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT16_T, op)        \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT32_T, op)        \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_INT64_T, op)        \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_COUNT, op)          \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_AINT, op)           \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_OFFSET, op)         \
+			ADD_FUNC_HANDLER(func, MPC_LOWCOMM_C_BOOL, op)         \
 				not_reachable();                        \
 	}
 
 #define COMPAT_DATA_TYPE3(op, func)                                        \
 	if(op == func){                                                    \
-			ADD_FUNC_HANDLER(func, MPC_FLOAT_INT, op);         \
-			ADD_FUNC_HANDLER(func, MPC_LONG_INT, op);          \
-			ADD_FUNC_HANDLER(func, MPC_DOUBLE_INT, op);        \
-			ADD_FUNC_HANDLER(func, MPC_LONG_DOUBLE_INT, op);   \
-			ADD_FUNC_HANDLER(func, MPC_SHORT_INT, op);         \
-			ADD_FUNC_HANDLER(func, MPC_2INT, op);              \
-			ADD_FUNC_HANDLER(func, MPC_2FLOAT, op);            \
-			ADD_FUNC_HANDLER(func, MPC_2INTEGER, op);          \
-			ADD_FUNC_HANDLER(func, MPC_2REAL, op);             \
-			ADD_FUNC_HANDLER(func, MPC_COMPLEX, op);           \
-			ADD_FUNC_HANDLER(func, MPC_2DOUBLE_PRECISION, op); \
-			ADD_FUNC_HANDLER(func, MPC_COMPLEX8, op);          \
-			ADD_FUNC_HANDLER(func, MPC_COMPLEX16, op);         \
-			ADD_FUNC_HANDLER(func, MPC_DOUBLE_COMPLEX, op);    \
-			ADD_FUNC_HANDLER(func, MPC_COMPLEX32, op);         \
+			ADD_FUNC_HANDLER(func, MPC_FLOAT_INT, op)         \
+			ADD_FUNC_HANDLER(func, MPC_LONG_INT, op)          \
+			ADD_FUNC_HANDLER(func, MPC_DOUBLE_INT, op)        \
+			ADD_FUNC_HANDLER(func, MPC_LONG_DOUBLE_INT, op)   \
+			ADD_FUNC_HANDLER(func, MPC_SHORT_INT, op)         \
+			ADD_FUNC_HANDLER(func, MPC_2INT, op)              \
+			ADD_FUNC_HANDLER(func, MPC_2FLOAT, op)            \
+			ADD_FUNC_HANDLER(func, MPC_2INTEGER, op)          \
+			ADD_FUNC_HANDLER(func, MPC_2REAL, op)             \
+			ADD_FUNC_HANDLER(func, MPC_COMPLEX, op)           \
+			ADD_FUNC_HANDLER(func, MPC_2DOUBLE_PRECISION, op) \
+			ADD_FUNC_HANDLER(func, MPC_COMPLEX8, op)          \
+			ADD_FUNC_HANDLER(func, MPC_COMPLEX16, op)         \
+			ADD_FUNC_HANDLER(func, MPC_DOUBLE_COMPLEX, op)    \
+			ADD_FUNC_HANDLER(func, MPC_COMPLEX32, op)         \
 				not_reachable();                           \
 	}
 
@@ -6710,7 +6703,7 @@ sctk_mpi_shared_mem_buffer_collect(union shared_mem_buffer *b,
             else if(type == MPI_CHAR)   MPI_SHM_OP_SUM(c)
             else if(type == MPI_DOUBLE) MPI_SHM_OP_SUM(d)
             else mpc_common_debug_fatal("Unsupported data-type");
-			
+
 			break;
 
 		case MPI_PROD:
@@ -6719,7 +6712,7 @@ sctk_mpi_shared_mem_buffer_collect(union shared_mem_buffer *b,
             else if(type == MPI_CHAR)   MPI_SHM_OP_PROD(c)
             else if(type == MPI_DOUBLE) MPI_SHM_OP_PROD(d)
             else mpc_common_debug_fatal("Unsupported data-type");
-			
+
             break;
     }
 
@@ -7401,24 +7394,24 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 
 	if(root == rank)
 	{
-		if(__do_yield)
-		{
-			while(OPA_cas_int(&reduce_ctx->owner, -1, -2) != -1)
-      {
-        mpc_thread_yield();
-        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
-      }
-    }
-    else
-    {
-      while(OPA_cas_int(&reduce_ctx->owner, -1, -2) != -1)
-      {
-        sctk_cpu_relax();
-        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
-      }
-		}
+        if(__do_yield)
+        {
+            while(OPA_cas_int(&reduce_ctx->owner, -1, -2) != -1)
+            {
+                mpc_thread_yield();
+                MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+            }
+        }
+        else
+        {
+            while(OPA_cas_int(&reduce_ctx->owner, -1, -2) != -1)
+            {
+                sctk_cpu_relax();
+                MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+            }
+        }
 
-		/* Set the local infos */
+        /* Set the local infos */
 
 		/* Now put in the CTX where we would like to reduce */
 		if(is_contig_type)
@@ -7438,33 +7431,33 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 		OPA_store_int(&reduce_ctx->owner, rank);
 	}
 	else
-	{
-		if(__do_yield)
     {
-      while(OPA_load_int(&reduce_ctx->owner) != root)
-      {
-        mpc_thread_yield();
-        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
-      }
+        if(__do_yield)
+        {
+            while(OPA_load_int(&reduce_ctx->owner) != root)
+            {
+                mpc_thread_yield();
+                MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+            }
+        }
+        else
+        {
+            while(OPA_load_int(&reduce_ctx->owner) != root)
+            {
+                sctk_cpu_relax();
+                MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+            }
+        }
     }
-    else
-    {
-      while(OPA_load_int(&reduce_ctx->owner) != root)
-      {
-        sctk_cpu_relax();
-        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
-      }
-    }
-	}
 
-	/* Get variables */
-	size_t reduce_pipelined_tresh = 0;
-	size_t reduce_force_nocommute = 0;
-	sctk_op_t *mpi_op             = NULL;
-	sctk_Op mpc_op = { 0 };
+    /* Get variables */
+    size_t reduce_pipelined_tresh = 0;
+    size_t reduce_force_nocommute = 0;
+    sctk_op_t *mpi_op             = NULL;
+    sctk_Op mpc_op = { 0 };
 
 
-	/* This is the TMP buffer case fastpath */
+    /* This is the TMP buffer case fastpath */
 	if(will_be_in_shm_buff)
 	{
 		/* Set my value in the TMB buffer */
@@ -7610,66 +7603,66 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
 
 SHM_REDUCE_DONE:
 
-	/* I'm done, notify */
-	OPA_decr_int(&reduce_ctx->left_to_push);
+    /* I'm done, notify */
+    OPA_decr_int(&reduce_ctx->left_to_push);
 
-	/* Do we need to unpack and/or free ? */
+    /* Do we need to unpack and/or free ? */
 
-	if(rank == root)
-	{
-		if(__do_yield)
-		{
-			while(OPA_load_int(&reduce_ctx->left_to_push) != 0)
-			{
-        mpc_thread_yield();
-        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
-      }
+    if(rank == root)
+    {
+        if(__do_yield)
+        {
+            while(OPA_load_int(&reduce_ctx->left_to_push) != 0)
+            {
+                mpc_thread_yield();
+                MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+            }
+        }
+        else
+        {
+            while(OPA_load_int(&reduce_ctx->left_to_push) != 0)
+            {
+                sctk_cpu_relax();
+                MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+            }
+        }
+
+        if(will_be_in_shm_buff)
+        {
+            sctk_mpi_shared_mem_buffer_collect(reduce_ctx->buffer, datatype, count,
+                    op, result_buff, size);
+        }
+        else if(!_mpc_dt_is_contig_mem(datatype) )
+        {
+            /* If non-contig, we need to unpack to the final buffer */
+            int cnt = 0;
+            PMPI_Unpack( (void *)reduce_ctx->target_buff, tsize * count, &cnt, recvbuf, count,
+                    datatype, comm);
+
+            /* We had to allocate the segment */
+            sctk_free(data_buff);
+        }
+        /* Set the counter */
+        OPA_store_int(&reduce_ctx->left_to_push, size);
+
+        reduce_ctx->target_buff = NULL;
+
+        /* Now flag slot as free */
+        OPA_store_int(&reduce_ctx->owner, -1);
+
+        /* And reverse the fare */
+        int current_fare = OPA_load_int(&reduce_ctx->fare);
+        OPA_store_int(&reduce_ctx->fare, !current_fare);
     }
     else
     {
-      while(OPA_load_int(&reduce_ctx->left_to_push) != 0)
-      {
-        sctk_cpu_relax();
-        MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
-      }
-		}
+        if(allocated)
+        {
+            sctk_free(data_buff);
+        }
+    }
 
-		if(will_be_in_shm_buff)
-		{
-			sctk_mpi_shared_mem_buffer_collect(reduce_ctx->buffer, datatype, count,
-			                                   op, result_buff, size);
-		}
-		else if(!_mpc_dt_is_contig_mem(datatype) )
-		{
-			/* If non-contig, we need to unpack to the final buffer */
-			int cnt = 0;
-			PMPI_Unpack( (void *)reduce_ctx->target_buff, tsize * count, &cnt, recvbuf, count,
-			             datatype, comm);
-
-			/* We had to allocate the segment */
-			sctk_free(data_buff);
-		}
-		/* Set the counter */
-		OPA_store_int(&reduce_ctx->left_to_push, size);
-
-		reduce_ctx->target_buff = NULL;
-
-		/* Now flag slot as free */
-		OPA_store_int(&reduce_ctx->owner, -1);
-
-		/* And reverse the fare */
-		int current_fare = OPA_load_int(&reduce_ctx->fare);
-		OPA_store_int(&reduce_ctx->fare, !current_fare);
-	}
-	else
-	{
-		if(allocated)
-		{
-			sctk_free(data_buff);
-		}
-	}
-
-	return MPI_SUCCESS;
+    return MPI_SUCCESS;
 }
 
 int __INTERNAL__PMPI_Reduce_intra(void *sendbuf, void *recvbuf, int count,
@@ -7703,29 +7696,20 @@ int __INTERNAL__PMPI_Reduce_intra(void *sendbuf, void *recvbuf, int count,
       return MPI_SUCCESS;
     }
 
-    if(_mpc_dt_is_contiguous(datatype) )
-    {
-      int tsize;
-      PMPI_Type_size(datatype, &tsize);
-      memcpy(recvbuf, sendbuf, tsize * count);
-    }
-    else
-    {
-      int psize = 0;
-      PMPI_Pack_size(count, datatype, comm, &psize);
+    int psize = 0;
+    PMPI_Pack_size(count, datatype, comm, &psize);
 
-      void *tmp = sctk_malloc(psize);
+    void *tmp = sctk_malloc(psize);
 
-      assume(tmp != NULL);
+    assume(tmp != NULL);
 
-      int pos = 0;
-      PMPI_Pack(sendbuf, count, datatype, tmp, psize, &pos, comm);
+    int pos = 0;
+    PMPI_Pack(sendbuf, count, datatype, tmp, psize, &pos, comm);
 
-      pos = 0;
-      PMPI_Unpack(tmp, psize, &pos, recvbuf, count, datatype, comm);
+    pos = 0;
+    PMPI_Unpack(tmp, psize, &pos, recvbuf, count, datatype, comm);
 
-      sctk_free(tmp);
-    }
+    sctk_free(tmp);
 
     return MPI_SUCCESS;
   }
@@ -8004,9 +7988,31 @@ static int __copy_buffer(void *sendbuf, void *recvbuf, int count,
                          MPI_Datatype datatype)
 {
 	int res = MPI_ERR_INTERN;
+    bool is_allocated = false;
 
-	if(_mpc_dt_is_derived(datatype) && (count != 0) )
+    if(mpc_lowcomm_datatype_is_common(datatype)) {
+        MPI_Aint dsize;
+        res = PMPI_Type_extent(datatype, &dsize);
+        if(res != MPI_SUCCESS)
+        {
+            return res;
+        }
+        memcpy(recvbuf, sendbuf, count * dsize);
+    }
+
+    _mpc_cl_type_is_allocated(datatype, &is_allocated);
+	if(_mpc_dt_is_user_defined(datatype) && (count != 0) && (is_allocated == 1))
 	{
+        if(mpc_mpi_cl_type_is_contiguous(datatype)) {
+            MPI_Aint dsize;
+            res = PMPI_Type_extent(datatype, &dsize);
+            if(res != MPI_SUCCESS)
+            {
+                return res;
+            }
+            memcpy(recvbuf, sendbuf, count * dsize);
+        }
+
 		MPI_Request request_send;
 		MPI_Request request_recv;
 
@@ -8035,16 +8041,6 @@ static int __copy_buffer(void *sendbuf, void *recvbuf, int count,
 		{
 			return res;
 		}
-	}
-	else
-	{
-		MPI_Aint dsize;
-		res = PMPI_Type_extent(datatype, &dsize);
-		if(res != MPI_SUCCESS)
-		{
-			return res;
-		}
-		memcpy(recvbuf, sendbuf, count * dsize);
 	}
 	return res;
 }
@@ -9622,9 +9618,9 @@ int PMPI_Send_internal(const void *buf, int count, MPI_Datatype datatype, int de
 	mpc_lowcomm_status_t status;
 
 	int derived_ret = 0;
-	_mpc_dt_derived_t derived_datatype;
+	_mpc_lowcomm_general_datatype_t derived_datatype;
 
-	res = _mpc_cl_derived_datatype_try_get_info(datatype, &derived_ret, &derived_datatype);
+	res = _mpc_cl_general_datatype_try_get_info(datatype, &derived_ret, &derived_datatype);
 	MPI_HANDLE_ERROR(res, comm, "Could not retrieve datatype info");
 
 	res = mpc_mpi_cl_open_pack(&request);
@@ -9727,9 +9723,9 @@ int PMPI_Recv_internal(void *buf, int count, MPI_Datatype datatype, int source, 
 	memset(&request, 0, sizeof(mpc_lowcomm_request_t) );
 
 	int derived_ret = 0;
-	_mpc_dt_derived_t derived_datatype;
+	_mpc_lowcomm_general_datatype_t derived_datatype;
 
-	res = _mpc_cl_derived_datatype_try_get_info(datatype, &derived_ret,
+	res = _mpc_cl_general_datatype_try_get_info(datatype, &derived_ret,
 	                                            &derived_datatype);
 	MPI_HANDLE_ERROR(res, comm, "Failed retrieving datatype info");
 
@@ -9825,40 +9821,54 @@ int PMPI_Ssend(const void *buf, int count, MPI_Datatype datatype, int dest, int 
 {
 	int res = MPI_ERR_INTERN;
 
-	if(dest == MPC_PROC_NULL)
-	{
-		res = MPI_SUCCESS;
-		MPI_HANDLE_RETURN_VAL(res, comm);
-	}
-	{
-		mpi_check_comm(comm);
-		int size;
-		_mpc_cl_comm_size(comm, &size);
-		mpi_check_rank_send(dest, size, comm);
-		mpi_check_type(datatype, comm);
-		mpi_check_count(count, comm);
-		mpc_common_nodebug("tag %d", tag);
-		mpi_check_tag_send(tag, comm);
+    if(dest == MPC_PROC_NULL)
+    {
+        res = MPI_SUCCESS;
+        MPI_HANDLE_RETURN_VAL(res, comm);
+    }
+    {
+        mpi_check_comm(comm);
+        int size;
+        _mpc_cl_comm_size(comm, &size);
+        mpi_check_rank_send(dest, size, comm);
+        mpi_check_type(datatype, comm);
+        mpi_check_count(count, comm);
+        mpc_common_nodebug("tag %d", tag);
+        mpi_check_tag_send(tag, comm);
 
-		if(count != 0)
-		{
-			mpi_check_buf(buf, comm);
-		}
-	}
+        if(count != 0)
+        {
+            mpi_check_buf(buf, comm);
+        }
+    }
 
-	if(_mpc_dt_is_derived(datatype) && (count != 0) )
-	{
-		res = PMPI_Send_internal(buf, count, datatype, dest, tag, comm);
-	}
-	else
-	{
-		if(buf == NULL && count != 0)
-		{
-			MPI_ERROR_REPORT(comm, MPI_ERR_BUFFER, "");
-		}
+    if(mpc_dt_is_valid(datatype)) {
+        if(_mpc_dt_is_user_defined(datatype) && (count != 0) )
+        {
+            bool is_allocated = false;
+            _mpc_cl_type_is_allocated(datatype, &is_allocated);
+            if(is_allocated) {
+                if(mpc_mpi_cl_type_is_contiguous(datatype)) {
+                    res = _mpc_cl_ssend(buf, count, datatype, dest, tag, comm);
+                }
+                else {
+                    res = PMPI_Send_internal(buf, count, datatype, dest, tag, comm);
+                }
+            }
+        }
+        else if(mpc_lowcomm_datatype_is_common(datatype))
+        {
+            if(buf == NULL && count != 0)
+            {
+                MPI_ERROR_REPORT(comm, MPI_ERR_BUFFER, "");
+            }
 
-		res = _mpc_cl_ssend(buf, count, datatype, dest, tag, comm);
-	}
+            res = _mpc_cl_ssend(buf, count, datatype, dest, tag, comm);
+        }
+    }
+    else {
+        res = MPI_ERR_TYPE;
+    }
 
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
@@ -11745,6 +11755,9 @@ int PMPI_Sendrecv_internal(const void *sendbuf, int sendcount, MPI_Datatype send
 	{
 		mpi_check_buf(recvbuf, comm);
 	}
+    if(sendtype != recvtype) {
+        MPC_REPORT_ERROR(comm, MPI_ERR_TYPE, "Mismatched datatypes");
+    }
 
 	MPI_Request s_request;
 	MPI_Request r_request;
@@ -12027,14 +12040,18 @@ int PMPI_Type_hvector(int count, int blocklen, MPI_Aint stride, MPI_Datatype old
 	dtctx.stride_addr = stride;
 	dtctx.oldtype     = old_type;
 
-	/* Is it a derived data-type ? */
-	if(_mpc_dt_is_derived(old_type) )
+	/* Is it a valid data-type ? */
+	if(mpc_dt_is_valid(old_type) )
 	{
+        /* Retrieve the inner structure */
+        if(mpc_lowcomm_datatype_is_common(old_type)) {
+            old_type = _mpc_dt_get_datatype(old_type);
+        }
 		int derived_ret = 0;
-		_mpc_dt_derived_t input_datatype;
+		_mpc_lowcomm_general_datatype_t input_datatype;
 
 		/* Retrieve input datatype informations */
-		_mpc_cl_derived_datatype_try_get_info(old_type, &derived_ret, &input_datatype);
+		_mpc_cl_general_datatype_try_get_info(old_type, &derived_ret, &input_datatype);
 
 		/* Compute the extent */
 		PMPI_Type_extent(old_type, (MPI_Aint *)&extent);
@@ -12107,7 +12124,7 @@ int PMPI_Type_hvector(int count, int blocklen, MPI_Aint stride, MPI_Datatype old
 		}
 
 		/* Create the derived datatype */
-		_mpc_cl_derived_datatype(newtype_p, begins_out, ends_out, datatypes, count_out, new_lb, input_datatype.is_lb, new_ub, input_datatype.is_ub, &dtctx);
+		_mpc_cl_general_datatype(newtype_p, begins_out, ends_out, datatypes, count_out, new_lb, input_datatype.is_lb, new_ub, input_datatype.is_ub, &dtctx);
 
 		/* Free temporary arrays */
 		sctk_free(begins_out);
@@ -12116,24 +12133,8 @@ int PMPI_Type_hvector(int count, int blocklen, MPI_Aint stride, MPI_Datatype old
 
 		return MPI_SUCCESS;
 	}
-	else
-	{
-		/* Here vector only handles derived data-types*/
-		int res;
-		MPI_Datatype data_out;
 
-		/* Convert the contiguous type to a derived data-type */
-		_mpc_cl_type_convert_to_derived(old_type, &data_out);
-
-		/* Call vector again with the temporary
-		 * derived types */
-		res = PMPI_Type_hvector(count, blocklen, (MPI_Aint)stride_t, data_out, newtype_p);
-
-		/* Free the temporary type */
-		PMPI_Type_free(&data_out);
-
-		return res;
-	}
+    return MPI_ERR_TYPE;
 }
 
 int PMPI_Type_create_hvector(int count, int blocklen, MPI_Aint stride, MPI_Datatype old_type, MPI_Datatype *newtype_p)
@@ -12331,14 +12332,19 @@ int PMPI_Type_create_hindexed(int count, const int blocklens[], const MPI_Aint i
 	dtctx.array_of_displacements_addr = indices;
 	dtctx.oldtype                     = old_type;
 
-	/* Is it a derived data-type ? */
-	if(_mpc_dt_is_derived(old_type) )
+	/* Is it a valid data-type ? */
+	if(mpc_dt_is_valid(old_type) )
 	{
 		int derived_ret = 0;
-		_mpc_dt_derived_t input_datatype;
+        /* Retrieve the inner structure */
+        if(mpc_lowcomm_datatype_is_common(old_type)) {
+            old_type = _mpc_dt_get_datatype(old_type);
+        }
+
+		_mpc_lowcomm_general_datatype_t input_datatype;
 
 		/* Retrieve input datatype informations */
-		_mpc_cl_derived_datatype_try_get_info(old_type, &derived_ret, &input_datatype);
+		_mpc_cl_general_datatype_try_get_info(old_type, &derived_ret, &input_datatype);
 
 		/* Get datatype extent */
 		unsigned long extent;
@@ -12418,7 +12424,7 @@ int PMPI_Type_create_hindexed(int count, const int blocklens[], const MPI_Aint i
 		}
 
 		/* Create the derived datatype */
-		_mpc_cl_derived_datatype(newtype, begins_out, ends_out, datatypes, count_out, new_lb, input_datatype.is_lb, new_ub, input_datatype.is_ub, &dtctx);
+		_mpc_cl_general_datatype(newtype, begins_out, ends_out, datatypes, count_out, new_lb, input_datatype.is_lb, new_ub, input_datatype.is_ub, &dtctx);
 
 
 		/* Free temporary arrays */
@@ -12428,23 +12434,7 @@ int PMPI_Type_create_hindexed(int count, const int blocklens[], const MPI_Aint i
 
 		return MPI_SUCCESS;
 	}
-	else
-	{
-		/* Here type hindexed only handles derived data-types */
-		int res;
-		MPI_Datatype data_out;
-
-		/* Convert the contiguous/common type to a derived one */
-		_mpc_cl_type_convert_to_derived(old_type, &data_out);
-
-		/* Call the hindexed function again */
-		res = PMPI_Type_create_hindexed(count, blocklens, indices, data_out, newtype);
-
-		/* Free the temporary type */
-		PMPI_Type_free(&data_out);
-
-		return res;
-	}
+    return MPI_ERR_TYPE;
 }
 
 int PMPI_Type_struct(int count,
@@ -12501,13 +12491,13 @@ int PMPI_Type_struct(int count,
 		if( (old_types[i] != MPI_UB) && (old_types[i] != MPI_LB) )
 		{
 			int derived_ret = 0;
-			_mpc_dt_derived_t input_datatype;
+			_mpc_lowcomm_general_datatype_t input_datatype;
 
 			int count_in = 0;
 
-			if(_mpc_dt_is_derived(old_types[i]) )
+			if(_mpc_dt_is_user_defined(old_types[i]) )
 			{
-				_mpc_cl_derived_datatype_try_get_info(old_types[i], &derived_ret, &input_datatype);
+				_mpc_cl_general_datatype_try_get_info(old_types[i], &derived_ret, &input_datatype);
 				count_in = input_datatype.count;
 				mpc_common_nodebug("[%d]Derived length %d", old_types[i], count_in);
 				all_common_types = 0;
@@ -12595,12 +12585,12 @@ TODO("VALIDATE");
 
 
 			int derived_ret = 0;
-			_mpc_dt_derived_t input_datatype;
+			_mpc_lowcomm_general_datatype_t input_datatype;
 
 
-			if(_mpc_dt_is_derived(old_types[i]) )
+			if(_mpc_dt_is_user_defined(old_types[i]) )
 			{
-				_mpc_cl_derived_datatype_try_get_info(old_types[i], &derived_ret, &input_datatype);
+				_mpc_cl_general_datatype_try_get_info(old_types[i], &derived_ret, &input_datatype);
 
 				PMPI_Type_extent(old_types[i], (MPI_Aint *)&extent);
 				mpc_common_nodebug("Extend %lu", extent);
@@ -12800,7 +12790,7 @@ TODO("VALIDATE");
 	dtctx.array_of_displacements_addr = indices;
 	dtctx.array_of_types              = old_types;
 
-	res = _mpc_cl_derived_datatype(newtype, begins_out, ends_out, datatypes, glob_count_out, new_lb, new_is_lb, new_ub, new_is_ub, &dtctx);
+	res = _mpc_cl_general_datatype(newtype, begins_out, ends_out, datatypes, glob_count_out, new_lb, new_is_lb, new_ub, new_is_ub, &dtctx);
 	assert(res == MPI_SUCCESS);
 
 
@@ -12972,13 +12962,13 @@ int PMPI_Type_lb(MPI_Datatype datatype, MPI_Aint *displacement)
 	unsigned long i;
 
 	int derived_ret = 0;
-	_mpc_dt_derived_t input_datatype;
+	_mpc_lowcomm_general_datatype_t input_datatype;
 
-	_mpc_cl_derived_datatype_try_get_info(datatype, &derived_ret, &input_datatype);
+	_mpc_cl_general_datatype_try_get_info(datatype, &derived_ret, &input_datatype);
 
 	if(derived_ret)
 	{
-		if( (input_datatype.is_lb == 0) && input_datatype.count)
+		if( (input_datatype.is_lb == false) && input_datatype.count)
 		{
 			*displacement = (MPI_Aint)input_datatype.opt_begins[0];
 			for(i = 0; i < input_datatype.opt_count; i++)
@@ -13015,13 +13005,13 @@ int PMPI_Type_ub(MPI_Datatype datatype, MPI_Aint *displacement)
 	int e;
 
 	int derived_ret = 0;
-	_mpc_dt_derived_t input_datatype;
+	_mpc_lowcomm_general_datatype_t input_datatype;
 
-	_mpc_cl_derived_datatype_try_get_info(datatype, &derived_ret, &input_datatype);
+	_mpc_cl_general_datatype_try_get_info(datatype, &derived_ret, &input_datatype);
 
 	if(derived_ret)
 	{
-		if( (input_datatype.is_ub == 0) && input_datatype.count)
+		if( (input_datatype.is_ub == false) && input_datatype.count)
 		{
 			*displacement = (MPI_Aint)input_datatype.opt_ends[0];
 
@@ -13061,12 +13051,12 @@ int PMPI_Type_create_resized(MPI_Datatype old_type, MPI_Aint lb, MPI_Aint extent
 	mpi_check_type(old_type, comm);
 	mpi_check_type_create(old_type, comm);
 
-	if(_mpc_dt_is_derived(old_type) )
+	if(mpc_dt_is_valid(old_type) )
 	{
 		int derived_ret;
-		_mpc_dt_derived_t input_datatype;
+		_mpc_lowcomm_general_datatype_t input_datatype;
 		/* Retrieve input datatype informations */
-		_mpc_cl_derived_datatype_try_get_info(old_type, &derived_ret, &input_datatype);
+		_mpc_cl_general_datatype_try_get_info(old_type, &derived_ret, &input_datatype);
 
 		struct _mpc_dt_context dtctx;
 		_mpc_dt_context_clear(&dtctx);
@@ -13076,7 +13066,7 @@ int PMPI_Type_create_resized(MPI_Datatype old_type, MPI_Aint lb, MPI_Aint extent
 		dtctx.oldtype  = old_type;
 
 		/* Duplicate it with updated bounds in new_type */
-		_mpc_cl_derived_datatype(new_type,
+		return _mpc_cl_general_datatype(new_type,
 		                         input_datatype.begins,
 		                         input_datatype.ends,
 		                         input_datatype.datatypes,
@@ -13084,49 +13074,31 @@ int PMPI_Type_create_resized(MPI_Datatype old_type, MPI_Aint lb, MPI_Aint extent
 		                         lb, 1,
 		                         lb + extent, 1, &dtctx);
 
-
-		return MPI_SUCCESS;
 	}
-	else
-	{
-		/* Here tPMPI_Type_create_resized only handles derived data-types */
-		int res;
-		MPI_Datatype data_out;
-
-		/* Convert the contiguous/common type to a derived one */
-		_mpc_cl_type_convert_to_derived(old_type, &data_out);
-
-		/* Call the hindexed function again */
-		res = PMPI_Type_create_resized(data_out, lb, extent, new_type);
-
-		/* Free the temporary type */
-		PMPI_Type_free(&data_out);
-
-		return res;
-	}
+    return MPI_ERR_TYPE;
 }
 
 int PMPI_Type_commit(MPI_Datatype *datatype)
 {
-	MPI_Comm comm = MPI_COMM_WORLD;
+	/* MPI_Comm comm = MPI_COMM_WORLD; */
 
 
-	mpi_check_type(*datatype, comm);
-	mpi_check_type_create(*datatype, comm);
+	/* mpi_check_type(*datatype, comm); */
+	/* mpi_check_type_create(*datatype, comm); */
 	return _mpc_cl_type_commit(datatype);
 }
 
 int PMPI_Type_free(MPI_Datatype *datatype)
 {
-	MPI_Comm comm = MPI_COMM_WORLD;
+	/* MPI_Comm comm = MPI_COMM_WORLD; */
 
 
-	mpi_check_type(*datatype, MPI_COMM_WORLD);
+	/* mpi_check_type(*datatype, MPI_COMM_WORLD); */
 
-	if(mpc_lowcomm_datatype_is_common(*datatype) )
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "");
-	}
+	/* if(mpc_lowcomm_datatype_is_common(*datatype) ) */
+	/* { */
+	/* 	MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, ""); */
+	/* } */
 
 	return _mpc_cl_type_free(datatype);
 }
@@ -13155,6 +13127,12 @@ int PMPI_Type_get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Coun
 	/* Now check the data-type */
 	mpi_check_type(datatype, MPI_COMM_WORLD);
 
+    /* If the msg was empty */
+    if(status->size == 0) {
+        *elements = 0;
+        return res;
+    }
+
 	/* Get type size */
 	res = PMPI_Type_size(datatype, &data_size);
 
@@ -13177,45 +13155,17 @@ int PMPI_Type_get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Coun
 		return res;
 	}
 
-	_mpc_dt_contiguous_t *contiguous_user_types = NULL;
-	_mpc_dt_derived_t *target_type = NULL;
 	int done = 0;
+    bool is_allocated = false;
 	struct _mpc_dt_layout *layout = NULL;
 
 	/* If we are here our type has a size
 	 * we can now count the number of elements*/
 	switch(_mpc_dt_get_kind(datatype) )
 	{
-		case MPC_DATATYPES_CONTIGUOUS:
-
-			/* A contiguous datatype is made of several
-			 * elements of a single type next to each other
-			 * we have to find out how many elements of this
-			 * type are here */
-			task_specific = mpc_cl_per_mpi_process_ctx_get();
-
-			/* First retrieve the contiguous type descriptor */
-			contiguous_user_types = _mpc_cl_per_mpi_process_ctx_contiguous_datatype_ts_get(task_specific, datatype);
-			/* Number of entries in the contiguous type */
-			count = contiguous_user_types->count;
-			/* Input type */
-			data_in = contiguous_user_types->datatype;
-
-			/* Retrieve the size of the input type */
-			res = PMPI_Type_size(data_in, &data_in_size);
-
-			/* This is the size we received */
-			size = status->size;
-
-			*elements = size / data_in_size;
-
-			if(res != MPI_SUCCESS)
-			{
-				return res;
-			}
-			break;
-
-		case MPC_DATATYPES_DERIVED:
+        case MPC_DATATYPES_COMMON:
+            datatype = _mpc_dt_get_datatype(datatype);
+		case MPC_DATATYPES_USER:
 
 			task_specific = mpc_cl_per_mpi_process_ctx_get();
 
@@ -13225,47 +13175,46 @@ int PMPI_Type_get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Coun
 			*elements = 0;
 
 			/* Retrieve the derived datatype */
-			assert( (datatype) < SCTK_USER_DATA_TYPES_MAX * 2);
-			target_type = _mpc_cl_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
-			assert(target_type != NULL);
+            _mpc_cl_type_is_allocated(datatype, &is_allocated);
+			assert( is_allocated != 0 );
 
-			/* Try to rely on the datype layout */
-			layout = _mpc_dt_get_layout(&target_type->context, &count);
+			/* Try to rely on the datatype layout */
+			/* layout = _mpc_dt_get_layout(datatype->context, &count); */
 
 			done = 0;
 
 			if(0 /* Do not Use the Layout to compute Get_Element*/)
 			{
-				if(!count)
-				{
-					mpc_common_debug_fatal("We found an empty layout");
-				}
+				/* if(!count) */
+				/* { */
+				/* 	mpc_common_debug_fatal("We found an empty layout"); */
+				/* } */
 
-				while(!done)
-				{
-					mpc_common_debug_error("count : %d  size : %d done : %d", count, size, done);
-					for(i = 0; i < count; i++)
-					{
-						mpc_common_debug_error("BLOCK SIZE  : %d", layout[i].size);
+				/* while(!done) */
+				/* { */
+				/* 	mpc_common_debug_error("count : %d  size : %d done : %d", count, size, done); */
+				/* 	for(i = 0; i < count; i++) */
+				/* 	{ */
+				/* 		mpc_common_debug_error("BLOCK SIZE  : %d", layout[i].size); */
 
-						size -= layout[i].size;
+				/* 		size -= layout[i].size; */
 
-						(*elements)++;
+				/* 		(*elements)++; */
 
-						if(size <= 0)
-						{
-							done = 1;
-							break;
-						}
-					}
-				}
+				/* 		if(size <= 0) */
+				/* 		{ */
+				/* 			done = 1; */
+				/* 			break; */
+				/* 		} */
+				/* 	} */
+				/* } */
 
-				sctk_free(layout);
+				/* sctk_free(layout); */
 			}
 			else
 			{
 				/* Retrieve the number of block in the datatype */
-				count = target_type->count;
+				count = datatype->count;
 
 				while(!done)
 				{
@@ -13273,7 +13222,7 @@ int PMPI_Type_get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Coun
 					 * individual blocks from total size until reaching 0 */
 					for(i = 0; i < count; i++)
 					{
-						size -= target_type->ends[i] - target_type->begins[i] + 1;
+						size -= datatype->ends[i] - datatype->begins[i] + 1;
 
 						(*elements)++;
 
@@ -13284,27 +13233,6 @@ int PMPI_Type_get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Coun
 						}
 					}
 				}
-			}
-			break;
-
-		case MPC_DATATYPES_COMMON:
-			/* This is the size we received */
-			size = status->size;
-
-			mpc_common_nodebug("Normal type : count %d, data_type %d (size %d)", size, datatype, data_size);
-
-			/* Check if we have an exact number of object */
-			if(size % data_size == 0)
-			{
-				/* If so elements can be directly computed */
-				size      = size / data_size;
-				*elements = size;
-			}
-			else
-			{
-				/* Here we can say nothing as the size is not
-				 * a multiple of the data-type size */
-				*elements = MPI_UNDEFINED;
 			}
 			break;
 
@@ -13518,7 +13446,7 @@ int PMPI_Pack(const
 
 	int copied = 0;
 
-	if(_mpc_dt_is_derived(datatype) )
+	if(mpc_dt_is_valid(datatype) )
 	{
 		unsigned long i;
 		int j;
@@ -13527,9 +13455,12 @@ int PMPI_Pack(const
 		PMPI_Type_extent(datatype, (MPI_Aint *)&extent);
 
 		int derived_ret = 0;
-		_mpc_dt_derived_t input_datatype;
+		_mpc_lowcomm_general_datatype_t input_datatype;
 
-		_mpc_cl_derived_datatype_try_get_info(datatype, &derived_ret, &input_datatype);
+		int ierr = _mpc_cl_general_datatype_try_get_info(datatype, &derived_ret, &input_datatype);
+        if(ierr != MPI_SUCCESS) {
+            return MPI_ERR_TYPE;
+        }
 
 		for(j = 0; j < incount; j++)
 		{
@@ -13561,31 +13492,32 @@ int PMPI_Pack(const
 		assume(copied <= outcount);
 		return MPI_SUCCESS;
 	}
-	else
-	{
-		size_t size;
+	/* else */
+	/* { */
+	/* 	size_t size; */
 
-		if(inbuf == NULL)
-		{
-			return MPI_ERR_BUFFER;
-		}
+	/* 	if(inbuf == NULL) */
+	/* 	{ */
+	/* 		return MPI_ERR_BUFFER; */
+	/* 	} */
 
-		if(outbuf == NULL)
-		{
-			return MPI_ERR_BUFFER;
-		}
+	/* 	if(outbuf == NULL) */
+	/* 	{ */
+	/* 		return MPI_ERR_BUFFER; */
+	/* 	} */
 
-		_mpc_cl_type_size(datatype, &size);
-		mpc_common_nodebug("Pack %lu->%lu, ==> %lu %lu", 0, size * incount, *position, size * incount);
-		memcpy(&( ( (char *)outbuf)[*position]), inbuf, size * incount);
-		mpc_common_nodebug("Pack %lu->%lu, ==> %lu %lu done", 0, size * incount, *position, size * incount);
-		*position = *position + size * incount;
-		copied   += size * incount;
-		mpc_common_nodebug("%lu == %lu", copied, outcount);
-		assume(copied <= outcount);
+	/* 	_mpc_cl_type_size(datatype, &size); */
+	/* 	mpc_common_nodebug("Pack %lu->%lu, ==> %lu %lu", 0, size * incount, *position, size * incount); */
+	/* 	memcpy(&( ( (char *)outbuf)[*position]), inbuf, size * incount); */
+	/* 	mpc_common_nodebug("Pack %lu->%lu, ==> %lu %lu done", 0, size * incount, *position, size * incount); */
+	/* 	*position = *position + size * incount; */
+	/* 	copied   += size * incount; */
+	/* 	mpc_common_nodebug("%lu == %lu", copied, outcount); */
+	/* 	assume(copied <= outcount); */
 
-		return MPI_SUCCESS;
-	}
+	/* 	return MPI_SUCCESS; */
+	/* } */
+    return MPI_ERR_TYPE;
 }
 
 int PMPI_Unpack(const void *inbuf,
@@ -13614,7 +13546,7 @@ int PMPI_Unpack(const void *inbuf,
 	int copied = 0;
 
 	mpc_common_nodebug("MPI_Unpack insise = %d, position = %d, outcount = %d, datatype = %d, comm = %d", insize, *position, outcount, datatype, comm);
-	if(_mpc_dt_is_derived(datatype) )
+	if(mpc_dt_is_valid(datatype) )
 	{
 		unsigned long i;
 		int j;
@@ -13623,9 +13555,9 @@ int PMPI_Unpack(const void *inbuf,
 		PMPI_Type_extent(datatype, (MPI_Aint *)&extent);
 
 		int derived_ret = 0;
-		_mpc_dt_derived_t output_datatype;
+		_mpc_lowcomm_general_datatype_t output_datatype;
 
-		_mpc_cl_derived_datatype_try_get_info(datatype, &derived_ret, &output_datatype);
+		_mpc_cl_general_datatype_try_get_info(datatype, &derived_ret, &output_datatype);
 
 
 		size_t lb = 0;
@@ -13659,18 +13591,19 @@ int PMPI_Unpack(const void *inbuf,
 		assume(copied <= insize);
 		return MPI_SUCCESS;
 	}
-	else
-	{
-		size_t size;
-		_mpc_cl_type_size(datatype, &size);
-		mpc_common_nodebug("Unpack %lu %lu, ==> %lu->%lu", *position, size * outcount, 0, size * outcount);
-		memcpy(outbuf, &( ( (char *)inbuf)[*position]), size * outcount);
-		mpc_common_nodebug("Unpack %lu %lu, ==> %lu->%lu done", *position, size * outcount, 0, size * outcount);
-		*position = *position + size * outcount;
-		copied   += size * outcount;
-		assume(copied <= insize);
-		return MPI_SUCCESS;
-	}
+	/* else */
+	/* { */
+	/* 	size_t size; */
+	/* 	_mpc_cl_type_size(datatype, &size); */
+	/* 	mpc_common_nodebug("Unpack %lu %lu, ==> %lu->%lu", *position, size * outcount, 0, size * outcount); */
+	/* 	memcpy(outbuf, &( ( (char *)inbuf)[*position]), size * outcount); */
+	/* 	mpc_common_nodebug("Unpack %lu %lu, ==> %lu->%lu done", *position, size * outcount, 0, size * outcount); */
+	/* 	*position = *position + size * outcount; */
+	/* 	copied   += size * outcount; */
+	/* 	assume(copied <= insize); */
+	/* 	return MPI_SUCCESS; */
+	/* } */
+    return MPI_ERR_TYPE;
 }
 
 int PMPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm, int *size)
@@ -13681,15 +13614,15 @@ int PMPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm, int *size)
 
 	*size = 0;
 	mpc_common_nodebug("incount size %d", incount);
-	if(_mpc_dt_is_derived(datatype) )
+	if(!mpc_mpi_cl_type_is_contiguous(datatype) && mpc_dt_is_valid(datatype) )
 	{
 		unsigned long i;
 		int j;
 
 		int derived_ret = 0;
-		_mpc_dt_derived_t input_datatype;
+		_mpc_lowcomm_general_datatype_t input_datatype;
 
-		_mpc_cl_derived_datatype_try_get_info(datatype, &derived_ret, &input_datatype);
+		_mpc_cl_general_datatype_try_get_info(datatype, &derived_ret, &input_datatype);
 
 		mpc_common_nodebug("derived datatype : res %d, count_in %d, lb %d, is_lb %d, ub %d, is_ub %d", derived_ret, input_datatype.count, input_datatype.lb, input_datatype.is_lb, input_datatype.ub, input_datatype.is_ub);
 
@@ -13716,6 +13649,7 @@ int PMPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm, int *size)
 		mpc_common_nodebug("PACK contiguous size %d", *size);
 		return MPI_SUCCESS;
 	}
+    return MPI_ERR_TYPE;
 }
 
 /* DataType Keyval Management */
@@ -13763,47 +13697,23 @@ int PMPI_Pack_external_size(const char *datarep, int incount, MPI_Datatype datat
 		return MPI_ERR_ARG;
 	}
 
-	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = NULL;
-	_mpc_dt_derived_t *derived_user_types           = NULL;
-	_mpc_dt_contiguous_t *contiguous_user_types     = NULL;
-
+    unsigned int i;
+    MPI_Aint count;
+    MPI_Aint extent;
 	/* Now generate the final size according to the internal type
 	 * derived or contiguous one */
 	switch(_mpc_dt_get_kind(datatype) )
 	{
-		case MPC_DATATYPES_CONTIGUOUS:
-			task_specific         = mpc_cl_per_mpi_process_ctx_get();
-			contiguous_user_types = _mpc_cl_per_mpi_process_ctx_contiguous_datatype_ts_get(task_specific, datatype);
-
-			/* For contiguous it is count times the external extent */
-			if(mpc_lowcomm_datatype_is_common(contiguous_user_types->datatype) )
-			{
-				*size = MPC_Extern32_common_type_size(contiguous_user_types->datatype) * contiguous_user_types->count * incount;
-			}
-			else
-			{
-				/* If the internal type is also a contiguous, continue unfolding */
-				PMPI_Pack_external_size(datarep, contiguous_user_types->count, contiguous_user_types->datatype, size);
-				*size = *size * contiguous_user_types->count;
-			}
-			break;
-
-		case MPC_DATATYPES_DERIVED:
-			task_specific = mpc_cl_per_mpi_process_ctx_get();
-
-			derived_user_types = _mpc_cl_per_mpi_process_ctx_derived_datatype_ts_get(task_specific, datatype);
-
-			unsigned int i;
-			MPI_Aint count;
-			MPI_Aint extent;
-
+		case MPC_DATATYPES_COMMON:
+            datatype = _mpc_dt_get_datatype(datatype);
+		case MPC_DATATYPES_USER:
 			*size = 0;
 
 			/* For derived, we work block by block */
-			for(i = 0; i < derived_user_types->count; i++)
+			for(i = 0; i < datatype->count; i++)
 			{
 				/* Get type extent */
-				PMPI_Type_extent(derived_user_types->datatypes[i], &extent);
+				PMPI_Type_extent(datatype->datatypes[i], &extent);
 
 				if(!extent)
 				{
@@ -13811,18 +13721,13 @@ int PMPI_Pack_external_size(const char *datarep, int incount, MPI_Datatype datat
 				}
 
 				/* Compute count */
-				count = (derived_user_types->ends[i] - derived_user_types->begins[i] + 1) / extent;
+				count = (datatype->ends[i] - datatype->begins[i] + 1) / extent;
 
 				/* Add count times external size */
-				*size += MPC_Extern32_common_type_size(derived_user_types->datatypes[i]) * count;
+				*size += MPC_Extern32_common_type_size(datatype->datatypes[i]) * count;
 			}
 
 			*size = *size * incount;
-			break;
-
-		case MPC_DATATYPES_COMMON:
-			/* For commom we can directly map */
-			*size = MPC_Extern32_common_type_size(datatype) * incount;
 			break;
 
 		default:
@@ -14580,10 +14485,10 @@ static int __split_guided(MPI_Comm comm, int split_type, int key, MPI_Info info,
         *guided_shared_memory = 1;
         return 0;
     }
-	else
-	{
-		*guided_shared_memory = 0;
-	}
+    else
+    {
+        *guided_shared_memory = 0;
+    }
 
     int size = mpc_lowcomm_communicator_size(comm);
 

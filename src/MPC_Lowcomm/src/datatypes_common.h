@@ -5,10 +5,10 @@
 #include <mpc_common_types.h>
 
 
-/** Common datatype structure */
+/** \struct Common datatype structure */
 typedef struct _mpc_lowcomm_datatype_common_s {
-    _mpc_lowcomm_unified_datatype_t type_struct; /**< Unified datatype description */
-    char name[64];                   /**< Type name */
+    _mpc_lowcomm_general_datatype_t type_struct; /**< Unified datatype description */
+    char name[64];                               /**< Type name */
 } _mpc_lowcomm_datatype_common_t;
 
 /* *********************
@@ -36,7 +36,7 @@ typedef struct _mpc_lowcomm_datatype_common_s {
 
 /* C Types */
 #define MPC_LOWCOMM_WCHAR_TYPE sctk_wchar_t
-#define MPC_LOWCOMM_C_BOOL_TYPE bool 
+#define MPC_LOWCOMM_C_BOOL_TYPE bool
 #define MPC_LOWCOMM_INT8_T_TYPE int8_t
 #define MPC_LOWCOMM_INT16_T_TYPE int16_t
 #define MPC_LOWCOMM_INT32_T_TYPE int32_t
