@@ -11,13 +11,13 @@ typedef struct lcp_mp_buffer_s{
 
 typedef struct {
     lcp_mp_buffer *head;
-    int min, max, allocated, available;
+    int min, max, allocated, available, inertia, max_inertia;
     size_t size;
 } lcp_mempool;
 
 void _lcp_mempool_stack(void * buf);
 
-int lcp_mempool_init(lcp_mempool *mp, int min, int max, int size);
+int lcp_mempool_init(lcp_mempool *mp, int min, int max, int size, int max_inertia);
 
 void *lcp_mempool_alloc(lcp_mempool *mempool);
 
