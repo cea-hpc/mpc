@@ -66,24 +66,13 @@ int lcp_mempool_init(lcp_mempool *mp,
     int min, 
     int max, 
     int size, 
-    int max_inertia, 
     void *(*malloc_func)(size_t), 
     void (*free_func)(void *)){
-    
-#ifdef LCP_MP_LOG
-    mpc_common_spinlock_lock(&mp_lock);
-    char title[50];
-    sprintf(title, "log_m%d_M%d_i%d.csv", min, max, max_inertia);
-    logfile = fopen(title, "w+");
-    char *header = "type,allocated,available,inertia\n";
-    fprintf(logfile, "%s", header);
-    mpc_common_spinlock_unlock(&mp_lock);
-#endif
 
     int i;
     mp->size = size;
     mp->allocated = 0;
-    mp->max_inertia = max_inertia;
+    mp->max_inertia = max / 4;
     mp->inertia = 0;
     mp->available = 0;
     mp->head = NULL;
@@ -91,6 +80,16 @@ int lcp_mempool_init(lcp_mempool *mp,
     mp->max = max;
     mp->malloc_func = malloc_func;
     mp->free_func = free_func;
+
+#ifdef LCP_MP_LOG
+    mpc_common_spinlock_lock(&mp_lock);
+    char title[50];
+    sprintf(title, "log_m%d_M%d_i%d.csv", min, max, mp->max_inertia);
+    logfile = fopen(title, "w+");
+    char *header = "type,allocated,available,inertia\n";
+    fprintf(logfile, "%s", header);
+    mpc_common_spinlock_unlock(&mp_lock);
+#endif
 
     for(i = 0 ; i < mp->min ; i ++){
         _lcp_mempool_add(mp, _lcp_mempool_malloc(mp));

@@ -23,7 +23,6 @@ int lcp_mempool_init(lcp_mempool *mp,
     int min, 
     int max, 
     int size, 
-    int max_inertia, 
     void *(*malloc_func)(size_t), 
     void (*free_func)(void *));
 
