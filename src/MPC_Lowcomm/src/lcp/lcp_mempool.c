@@ -18,7 +18,7 @@ void _lcp_mempool_add(lcp_mempool *mp, lcp_mp_buffer *buf){
 }
 
 lcp_mp_buffer *_lcp_mempool_malloc(lcp_mempool *mp){
-    return (lcp_mp_buffer *)malloc(mp->size + sizeof(lcp_mp_buffer));
+    return (lcp_mp_buffer *)mp->malloc_func(mp->size + sizeof(lcp_mp_buffer));
 }
 
 lcp_mp_buffer *_lcp_mempool_pop(lcp_mempool *mp){
@@ -62,7 +62,13 @@ int lcp_mempool_empty(lcp_mempool *mp){
     return 0;
 }
 
-int lcp_mempool_init(lcp_mempool *mp, int min, int max, int size, int max_inertia){
+int lcp_mempool_init(lcp_mempool *mp, 
+    int min, 
+    int max, 
+    int size, 
+    int max_inertia, 
+    void *(*malloc_func)(size_t), 
+    void (*free_func)(void *)){
     
 #ifdef LCP_MP_LOG
     mpc_common_spinlock_lock(&mp_lock);
@@ -83,6 +89,8 @@ int lcp_mempool_init(lcp_mempool *mp, int min, int max, int size, int max_inerti
     mp->head = NULL;
     mp->min = min;
     mp->max = max;
+    mp->malloc_func = malloc_func;
+    mp->free_func = free_func;
 
     for(i = 0 ; i < mp->min ; i ++){
         _lcp_mempool_add(mp, _lcp_mempool_malloc(mp));
@@ -125,11 +133,11 @@ void lcp_mempool_free(lcp_mempool *mp, void *buffer){
     }
     else{
 	    // printf("freeing\n");
-        free(buf);
+        mp->free_func(buf);
         effective_free = 1;
         if(!_lcp_mempool_is_below_minimum(mp) && _lcp_mempool_free_phase(mp) && mp->available){
             lcp_mp_buffer *head = _lcp_mempool_pop(mp);
-            free(head);
+            mp->free_func(head);
         }
     }
 #ifdef LCP_MP_LOG
