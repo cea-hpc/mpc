@@ -1376,7 +1376,7 @@ void _mpc_topology_nvdimm_detection(hwloc_topology_t topology)
 		{
 			if(strcmp(current->subtype, "NVDIMM") == 0)
 			{
-				fprintf(stdout, "<Topology> %s Found ! (OS Device #%d)\n", current->subtype, current->logical_index);
+				mpc_common_debug_log("<Topology> %s Found ! (OS Device #%d)\n", current->subtype, current->logical_index);
 				++__mpc_module_avail_nvdimm;
 			}
 		}
