@@ -1004,7 +1004,7 @@ int mpc_launch_pmi_get( char *value, size_t size, char *key, int remote)
 	assume(val->type == PMIX_STRING);
 	strcpy(value, val->data.string);
 	PMIX_VALUE_RELEASE(val);
-	PMIX_PROC_DESTRUCT(proc);
+	PMIX_PROC_DESTRUCT(&proc);
 	PMI_RETURN( rc );
 #else
 	UNUSED(remote);
