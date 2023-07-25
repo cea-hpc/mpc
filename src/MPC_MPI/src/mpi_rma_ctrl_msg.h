@@ -60,7 +60,7 @@ struct mpc_MPI_Win_ctrl_message {
   MPI_Aint opt_arg1;
   size_t opt_arg2;
   int opt_arg3;
-  int opt_arg4;
+  MPI_Datatype opt_arg4;
   int opt_arg5;
 };
 

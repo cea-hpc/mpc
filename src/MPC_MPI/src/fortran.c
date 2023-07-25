@@ -5,6 +5,8 @@
 #include <mpc_common_flags.h>
 #include <mpc_common_debug.h>
 
+#include <datatype.h>
+
 #include <uthash.h>
 
 #include <mpc_lowcomm_communicator.h>
@@ -170,6 +172,13 @@ void mpc_fortran_comm_delete(__UNUSED__ MPI_Fint comm)
  * TYPES *
  *********/
 
+#define MPC_DT_MAP_TO_F(datatype) \
+    datatype->id + MPC_LOWCOMM_TYPE_COMMON_LIMIT
+
+#define MPC_DT_MAP_FROM_F(datatype) \
+    _mpc_dt_on_slot_get(datatype - MPC_LOWCOMM_TYPE_COMMON_LIMIT)
+
+
 MPI_Datatype PMPI_Type_f2c(__UNUSED__ MPI_Fint datatype)
 {
 #if 0
@@ -181,7 +190,14 @@ MPI_Datatype PMPI_Type_f2c(__UNUSED__ MPI_Fint datatype)
 
 	return ret;
 #else
-	return datatype;
+    if( datatype < MPC_LOWCOMM_TYPE_COMMON_LIMIT) {
+        return (MPI_Datatype) ((long) datatype);
+    }
+    else if( datatype < SCTK_USER_DATA_TYPES_MAX + MPC_LOWCOMM_TYPE_COMMON_LIMIT ) {
+        return  MPC_DT_MAP_FROM_F(datatype);
+    }
+
+	return (MPI_Datatype)((long) datatype);
 #endif
 }
 
@@ -193,14 +209,39 @@ MPI_Fint PMPI_Type_c2f(MPI_Datatype datatype)
 
 	return _mpc_handle_factory_set(&__types_factory, pdatatype);
 #else
-	return datatype;
+    /* Exceptions */
+    if(datatype == MPI_DATATYPE_NULL ||
+       datatype == MPI_LB            ||
+       datatype == MPI_UB) {
+        return (MPI_Fint) (long) datatype;
+    }
+
+    switch(_mpc_dt_get_kind(datatype)) {
+        case MPC_DATATYPES_COMMON:
+            /* Predefined value (stored in the id field) */
+            datatype = _mpc_dt_get_datatype(datatype);
+            return (MPI_Fint) datatype->id;
+        case MPC_DATATYPES_USER:
+            /* Map on the id for fortran index */
+            return MPC_DT_MAP_TO_F(datatype);
+        case MPC_DATATYPES_UNKNOWN:
+            /* Invalid handle => invalid handle */
+            return SCTK_USER_DATA_TYPES_MAX + MPC_LOWCOMM_TYPE_COMMON_LIMIT;
+    }
+
+    /* We should never reach this point */
+    not_reachable();
 #endif
 }
 
-void mpc_fortran_datatype_delete(__UNUSED__ MPI_Fint datatype)
+void mpc_fortran_datatype_delete(__UNUSED__ MPI_Fint *datatype)
 {
 #if 0
 	_mpc_handle_factory_delete(&__types_factory, datatype);
+#else
+    MPI_Datatype type = PMPI_Type_f2c(*datatype);
+    PMPI_Type_free(&type);
+    *datatype = (MPI_Fint) (long) MPI_DATATYPE_NULL;
 #endif
 }
 

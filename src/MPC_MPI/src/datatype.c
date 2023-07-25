@@ -1079,6 +1079,11 @@ int _mpc_dt_general_on_slot( mpc_lowcomm_datatype_t *type_p) {
 	return MPC_ERR_INTERN;
 }
 
+mpc_lowcomm_datatype_t _mpc_dt_on_slot_get(const size_t idx) {
+	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = mpc_cl_per_mpi_process_ctx_get();
+    return _mpc_cl_per_mpi_process_ctx_general_datatype_ts_get( task_specific, idx );
+}
+
 void _mpc_dt_general_true_extend( const _mpc_lowcomm_general_datatype_t *type, long *true_lb, long *true_ub )
 {
 	long min_index = 0, max_index = 0;
@@ -1298,12 +1303,14 @@ bool _mpc_dt_storage_type_can_be_released( const mpc_lowcomm_datatype_t datatype
 	switch( _mpc_dt_get_kind( datatype ) )
 	{
 		case MPC_DATATYPES_COMMON:
+            /* A predefined datatype cannot be released */
 			return false;
 		case MPC_DATATYPES_USER:
 			dt = _mpc_dt_get_datatype( datatype );
             /* The lock has to be taken */
 			return (dt != MPC_DATATYPE_NULL && dt->ref_count != 0) ? true : false;
 		case MPC_DATATYPES_UNKNOWN:
+            /* An unknown datatype can't be released */
 			return false;
 	}
 
@@ -1556,6 +1563,23 @@ int _mpc_dt_name_set( mpc_lowcomm_datatype_t datatype, const char *const name )
 
 char *_mpc_dt_name_get( const mpc_lowcomm_datatype_t datatype )
 {
+    /* Special values */
+    if( datatype == MPC_LOWCOMM_DATATYPE_NULL) {
+        return "MPI_DATATYPE_NULL";
+    }
+    if( datatype == MPC_LB) {
+        return "MPI_LB";
+    }
+    if( datatype == MPC_UB) {
+        return "MPI_UB";
+    }
+
+    /* Common datatypes */
+    if(mpc_lowcomm_datatype_is_common(datatype)) {
+        return mpc_lowcomm_datatype_common_get_name(datatype);
+    }
+
+    /* General datatypes */
 	mpc_common_spinlock_lock( &datatype_names_lock );
 	struct __mpc_dt_name_cell *cell = __mpc_dt_get_name_cell( datatype );
 

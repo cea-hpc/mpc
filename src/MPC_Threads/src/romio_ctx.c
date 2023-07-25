@@ -15,9 +15,9 @@ struct mpc_thread_romio_ctx_s *_mpc_thread_romio_ctx_init(void)
 	/* All default to 0 / NULL */
 	memset(ret, 0, sizeof(struct mpc_thread_romio_ctx_s));
 
-	ret->ADIOI_Flattened_type_keyval = -1 /* KEYVAL_INVALID */;
-	ret->ADIOI_cb_config_list_keyval = -1; /* KEYVAL INVALID */
-	ret->ADIO_Init_keyval = -1 /* KEYVAL_INVALID */;
+	ret->ADIOI_Flattened_type_keyval = -7 /* MPC_KEYVAL_INVALID */;
+	ret->ADIOI_cb_config_list_keyval = -7; /* MPC_KEYVAL INVALID */
+	ret->ADIO_Init_keyval = -7 /* MPC_KEYVAL_INVALID */;
 
 	ret->ADIOI_DFLT_ERR_HANDLER = -6 /* MPC_ERRORS_RETURN */;
 

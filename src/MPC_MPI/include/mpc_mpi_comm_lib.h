@@ -110,7 +110,8 @@ int mpc_mpi_cl_get_activity( int nb_item, mpc_mpi_cl_activity_t *tab, double *pr
  * MISC DEFINES *
  ****************/
 
-#define MPC_KEYVAL_INVALID -1
+/* Propagate changes in \ref romio_ctx.c */
+#define MPC_KEYVAL_INVALID -7
 
 /****************
  * STRING SIZES *

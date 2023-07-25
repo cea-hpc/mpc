@@ -126,6 +126,6 @@ FORTRAN_API void FORT_CALL mpi_file_read_at_all_(MPI_Fint * fh, MPI_Offset * off
     MPI_File fh_c;
 
     fh_c = MPI_File_f2c(*fh);
-    *ierr = MPI_File_read_at_all(fh_c, *offset, buf, *count, (MPI_Datatype) * datatype, status);
+    *ierr = MPI_File_read_at_all(fh_c, *offset, buf, *count, MPI_Type_f2c( *datatype ), status);
 }
 #endif

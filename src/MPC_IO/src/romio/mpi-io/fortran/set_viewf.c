@@ -194,7 +194,7 @@ FORTRAN_API void FORT_CALL mpi_file_set_view_(MPI_Fint * fh, MPI_Offset * disp, 
 
     fh_c = MPI_File_f2c(*fh);
 
-    *ierr = MPI_File_set_view(fh_c, *disp, *etype, *filetype, newstr, info_c);
+    *ierr = MPI_File_set_view(fh_c, *disp, MPI_Type_f2c( *etype ), MPI_Type_f2c( *filetype ), newstr, info_c);
 
     ADIOI_Free(newstr);
 }

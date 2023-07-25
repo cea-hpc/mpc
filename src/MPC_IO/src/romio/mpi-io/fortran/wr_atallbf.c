@@ -123,6 +123,6 @@ FORTRAN_API void FORT_CALL mpi_file_write_at_all_begin_(MPI_Fint * fh, MPI_Offse
     MPI_File fh_c;
 
     fh_c = MPI_File_f2c(*fh);
-    *ierr = MPI_File_write_at_all_begin(fh_c, *offset, buf, *count, (MPI_Datatype) * datatype);
+    *ierr = MPI_File_write_at_all_begin(fh_c, *offset, buf, *count, MPI_Type_f2c( * datatype ));
 }
 #endif

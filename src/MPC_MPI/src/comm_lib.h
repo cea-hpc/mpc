@@ -437,13 +437,13 @@ typedef struct mpc_mpi_cl_per_mpi_process_ctx_s
 
 /** \brief Compute the size of a \ref mpc_lowcomm_datatype_t
  *  \param datatype target datatype
- *  \param size where to write the size of datatype
+ *  \param size     where to write the size of datatype
  */
 int _mpc_cl_type_size( mpc_lowcomm_datatype_t datatype, size_t *size );
 
 /** \brief Checks if a datatype is filled (has not been freed)
  *  \param datatype target datatype
- *  \param flag 1 if the type is allocated [OUT]
+ *  \param          flag 1 if the type is commited [OUT]
  */
 int _mpc_cl_type_is_allocated( const mpc_lowcomm_datatype_t datatype, bool *flag );
 
@@ -459,9 +459,9 @@ int _mpc_cl_type_flag_padded( mpc_lowcomm_datatype_t datatype );
  *  The Datatype created is a general one, this function exists only to simplify
  *  contiguous datatype creation.
  *
- *  \param outtype Output datatype to be created
- *  \param count Number of entries of type data_in
- *  \param data_in Type of the entry to be created
+ *  \param outtype  Output datatype to be created
+ *  \param count    Number of entries of type data_in
+ *  \param data_in  Type of the entry to be created
  *
  */
 int _mpc_cl_type_hcontiguous( mpc_lowcomm_datatype_t *outtype, size_t count, mpc_lowcomm_datatype_t *data_in );
@@ -472,11 +472,13 @@ int _mpc_cl_type_hcontiguous( mpc_lowcomm_datatype_t *outtype, size_t count, mpc
  * If the type was freed the datatype_p points on MPC_DATATYPE_NULL
  *
  * \param datatype_p Pointer of the datatype to release
+ *
  * \return MPC_LOWCOMM_SUCCESS on success
  */
 int _mpc_cl_type_free( mpc_lowcomm_datatype_t *datatype_p );
 
 /** \brief Duplicate a  datatype
+ *
  *  \param old_type Type to be duplicated
  *  \param new_type Copy of old_type
  */
@@ -484,13 +486,13 @@ int _mpc_cl_type_dup( mpc_lowcomm_datatype_t old_type, mpc_lowcomm_datatype_t *n
 
 /** \brief Set a name to an mpc_lowcomm_datatype_t
  *  \param datatype Datatype to be named
- *  \param name Name to be set
+ *  \param name     Name to be set
  */
 int _mpc_cl_type_set_name( mpc_lowcomm_datatype_t datatype, const char *name );
 
 /** \brief Get a name to an mpc_lowcomm_datatype_t
- *  \param datatype Datatype to get the name of
- *  \param name Datatype name (OUT)
+ *  \param datatype  Datatype to get the name of
+ *  \param name      Datatype name (OUT)
  *  \param resultlen Maximum length of the target buffer (OUT)
  */
 int _mpc_cl_type_get_name( mpc_lowcomm_datatype_t datatype, char *name, int *resultlen );
@@ -543,6 +545,16 @@ bool __mpc_cl_type_general_check_context(mpc_mpi_cl_per_mpi_process_ctx_t *task_
                                               struct _mpc_dt_context *ctx,
                                               mpc_lowcomm_datatype_t *datatype);
 
+/** \brief Check for an existing datatype in the task specific datatype array
+ *
+ * \warning The lock must been held while calling this function
+ *
+ * \param task_specific A pointer on the task context
+ * \param ret           A pointer on the datatype footprint we want to match
+ * \param datatype      [OUT] The datatype if matched, the entry otherwise
+ *
+ * \return true if matched, false otherwise
+ */
 bool __mpc_cl_type_general_check_footprint(mpc_mpi_cl_per_mpi_process_ctx_t *task_specific,
                                               struct _mpc_dt_footprint *ref,
                                               mpc_lowcomm_datatype_t *datatype);
@@ -589,8 +601,33 @@ int _mpc_cl_type_set_attr( mpc_lowcomm_datatype_t datatype, int type_keyval,
                            void *attribute_val );
 int _mpc_cl_type_get_attr( mpc_lowcomm_datatype_t datatype, int type_keyval,
                            void **attribute_val, int *flag );
+/***********************
+ * Datatype Management *
+ ***********************/
 
 struct _mpc_dt_context;
+
+/** \brief User defined datatype constructor
+ *
+ * This function calls \ref _mpc_dt_general_create and then set
+ * the context. The given datatype is allocated on the heap but
+ * it is not a valid (ie. in the range). The newly created datatype
+ * needs to be commited to become valid.
+ *
+ * \param datatype  Datatype created
+ * \param begins    Array of blocks begin offsets
+ * \param ends      Array of blocks end offsets
+ * \param types     Array of blocks datatypes
+ * \param count     Number of blocks
+ * \param lb        Lower bound of the datatype
+ * \param is_lb     Does the datatype has a lb
+ * \param lb        Upper bound of the datatype
+ * \param is_ub     Does the datatype has a ub
+ * \param ectx      Context for the newly created datatype
+ *
+ * \return MPC_LOWCOMM_SUCCESS on success
+ *         the appropriate error otherwise
+ */
 int _mpc_cl_general_datatype( mpc_lowcomm_datatype_t *datatype,
                               const long *const begins,
                               const long *const ends,
@@ -609,7 +646,19 @@ _mpc_lowcomm_general_datatype_t *_mpc_cl_per_mpi_process_ctx_general_datatype_ts
 _mpc_lowcomm_general_datatype_t *_mpc_cl_per_mpi_process_ctx_general_datatype_get( const size_t datatype_idx );
 
 
+/** \brief Takes the task specific datatype array lock
+ *
+ * \warning Be careful with recursive function the lock doesn't
+ * allow reentry.
+ *
+ * \return MPC_LOWCOMM_SUCCESS on success
+ */
 int _mpc_cl_per_mpi_process_ctx_datatype_lock( void );
+
+/** \brief Releases the task specific datatype array lock
+ *
+ * \return MPC_LOWCOMM_SUCCESS on success
+ */
 int _mpc_cl_per_mpi_process_ctx_datatype_unlock( void );
 
 

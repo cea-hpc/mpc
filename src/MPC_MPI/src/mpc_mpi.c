@@ -1359,7 +1359,7 @@ static int __Irecv_test_req(void *buf, int count, MPI_Datatype datatype,
                             MPI_Request *request, int is_valid_request,
                             struct MPI_request_struct_s *requests)
 {
-	if(_mpc_dt_is_user_defined(datatype) )
+	if( !_mpc_dt_is_user_defined(datatype) )
 	{
 		int res;
 
@@ -9988,7 +9988,7 @@ int PMPI_Isend_internal(const void *buf, int count, MPI_Datatype datatype, int d
                         MPI_Comm comm, MPI_Request *request)
 {
 # if MPC_ENABLE_INTEROP_MPI_OMP
-    MPC_OMP_TASK_TRACE_SEND(count, (int) datatype, dest, tag, mpc_lowcomm_communicator_id(comm));
+    MPC_OMP_TASK_TRACE_SEND(count, PMPI_Type_c2f(datatype), dest, tag, mpc_lowcomm_communicator_id(comm));
 # endif /* MPC_ENABLE_INTEROP_MPI_OMP */
 
 	int res = MPI_ERR_INTERN;
@@ -10076,7 +10076,7 @@ int PMPI_Irecv_internal(void *buf, int count, MPI_Datatype datatype, int source,
                int tag, MPI_Comm comm, MPI_Request *request)
 {
 # if MPC_ENABLE_INTEROP_MPI_OMP
-    MPC_OMP_TASK_TRACE_RECV(count, (int)datatype, source, tag, mpc_lowcomm_communicator_id(comm));
+    MPC_OMP_TASK_TRACE_RECV(count, PMPI_Type_c2f(datatype), source, tag, mpc_lowcomm_communicator_id(comm));
 # endif /* MPC_ENABLE_INTEROP_MPI_OMP */
 	int res = MPI_ERR_INTERN;
 
@@ -11756,7 +11756,7 @@ int PMPI_Sendrecv_internal(const void *sendbuf, int sendcount, MPI_Datatype send
 		mpi_check_buf(recvbuf, comm);
 	}
     if(sendtype != recvtype) {
-        MPC_REPORT_ERROR(comm, MPI_ERR_TYPE, "Mismatched datatypes");
+        MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Mismatched datatypes");
     }
 
 	MPI_Request s_request;
@@ -12850,11 +12850,9 @@ int PMPI_Type_extent(MPI_Datatype datatype, MPI_Aint *extent)
     else if(datatype == MPI_FLOAT)  *extent = sizeof(float);
     else if(datatype == MPI_DOUBLE) *extent = sizeof(double);
     else {
+			/* Special cases */
 			MPI_Aint UB;
 			MPI_Aint LB;
-
-			/* Special cases */
-			mpi_check_type(datatype, MPI_COMM_WORLD);
 
 			PMPI_Type_lb(datatype, &LB);
 			PMPI_Type_ub(datatype, &UB);
@@ -12862,7 +12860,7 @@ int PMPI_Type_extent(MPI_Datatype datatype, MPI_Aint *extent)
 			*extent = (MPI_Aint)( (unsigned long)UB - (unsigned long)LB);
 
 			mpc_common_nodebug("UB %d LB %d EXTENT %d", UB, LB, *extent);
-		}
+    }
 
 	return MPI_SUCCESS;
 }
@@ -13080,25 +13078,21 @@ int PMPI_Type_create_resized(MPI_Datatype old_type, MPI_Aint lb, MPI_Aint extent
 
 int PMPI_Type_commit(MPI_Datatype *datatype)
 {
-	/* MPI_Comm comm = MPI_COMM_WORLD; */
+	MPI_Comm comm = MPI_COMM_WORLD;
 
 
-	/* mpi_check_type(*datatype, comm); */
-	/* mpi_check_type_create(*datatype, comm); */
+	mpi_check_type(*datatype, comm);
+
 	return _mpc_cl_type_commit(datatype);
 }
 
 int PMPI_Type_free(MPI_Datatype *datatype)
 {
-	/* MPI_Comm comm = MPI_COMM_WORLD; */
+	MPI_Comm comm = MPI_COMM_WORLD;
 
-
-	/* mpi_check_type(*datatype, MPI_COMM_WORLD); */
-
-	/* if(mpc_lowcomm_datatype_is_common(*datatype) ) */
-	/* { */
-	/* 	MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, ""); */
-	/* } */
+	mpi_check_type(*datatype, comm);
+    /* We wanna be able to free uncommited datatypes */
+    /* mpi_check_type_create(*datatype, comm); */
 
 	return _mpc_cl_type_free(datatype);
 }

@@ -707,7 +707,8 @@ _mpc_lowcomm_general_datatype_t *_mpc_cl_per_mpi_process_ctx_general_datatype_ts
                                                                        const size_t datatype_idx)
 {
 	assert(task_specific != NULL);
-	return _mpc_dt_storage_get_general_datatype(task_specific->datatype_array, datatype_idx);
+	mpc_lowcomm_datatype_t ret = _mpc_dt_storage_get_general_datatype(task_specific->datatype_array, datatype_idx);
+    return ret;
 }
 
 /** \brief Retrieves a pointer to a general datatype from its datatype ID
@@ -1394,7 +1395,7 @@ static inline size_t __mpc_cl_datatype_get_size(mpc_lowcomm_datatype_t datatype)
 			/* User datatype size */
 
 			/* Is it initialized ? */
-			if( datatype->ref_count == 0 )
+			if( _MPC_DT_USER_IS_FREE(datatype) )
 			{
 				/* ERROR */
 				mpc_common_debug_fatal("Tried to retrieve an uninitialized datatype %d", datatype);
@@ -1550,7 +1551,7 @@ bool __mpc_cl_type_general_check_footprint(mpc_mpi_cl_per_mpi_process_ctx_t *tas
 		        _mpc_cl_per_mpi_process_ctx_general_datatype_ts_get(task_specific, i );
 
 		/* Is the slot NOT free ? */
-		if( !_MPC_DT_USER_IS_FREE(current_user_type) )
+		if( _MPC_DT_USER_IS_USED(current_user_type) )
 		{
 			/* If types match */
 			if( _mpc_dt_footprint_check_envelope(ref, current_user_type->context) )
@@ -1717,21 +1718,6 @@ int _mpc_cl_type_use(mpc_lowcomm_datatype_t datatype)
 	MPC_ERROR_SUCCESS();
 }
 
-/** \brief User datatype constructor
- *
- * This function seek a free user datatype slot and fills it
- * with a datatype according to the parameters.
- *
- * \param datatype Datatype to build
- * \param begins list of starting offsets in the datatype
- * \param ends list of end offsets in the datatype
- * \param count number of offsets to store
- * \param lb offset of type lower bound
- * \param is_lb tells if the type has a lowerbound
- * \param ub offset for type upper bound
- * \param is_b tells if the type has an upper bound
- *
- */
 int _mpc_cl_general_datatype(mpc_lowcomm_datatype_t *datatype,
                              const long *const begins,
                              const long *const ends,
@@ -1811,6 +1797,11 @@ int _mpc_cl_general_datatype_try_get_info(mpc_lowcomm_datatype_t datatype, int *
 int _mpc_cl_type_ctx_set(mpc_lowcomm_datatype_t datatype,
                          struct _mpc_dt_context *dctx)
 {
+    /* Check if the handle is null */
+    if(datatype == MPC_LOWCOMM_DATATYPE_NULL) {
+        MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_TYPE, "NULL datatype handle provided");
+    }
+
 	switch(_mpc_dt_get_kind(datatype) )
 	{
 		case MPC_DATATYPES_COMMON:
