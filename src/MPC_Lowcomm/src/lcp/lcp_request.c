@@ -16,8 +16,9 @@ __attribute__((constructor)) static void init_mempool(){
 	mpc_mempool_init(request_mempool, 10, 100, sizeof(lcp_request_t), sctk_malloc, sctk_free);
 }
 
-__attribute__((constructor)) static void destroy_mempool(){
+__attribute__((destructor)) static void destroy_mempool(){
 	mpc_mempool_empty(request_mempool);
+	sctk_free(request_mempool);
 }
 
 /**
