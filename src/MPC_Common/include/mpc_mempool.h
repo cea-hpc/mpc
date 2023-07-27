@@ -18,21 +18,21 @@ typedef struct {
     void *(*malloc_func)(size_t size);
     void (*free_func)(void * pointer);
     size_t size;
-} lcp_mempool;
+} mpc_mempool;
 
-void _lcp_mempool_stack(void * buf);
+void _mpc_mempool_stack(void * buf);
 
-int lcp_mempool_init(lcp_mempool *mp, 
+int mpc_mempool_init(mpc_mempool *mp, 
     int min, 
     int max, 
     int size, 
     void *(*malloc_func)(size_t), 
     void (*free_func)(void *));
 
-void *lcp_mempool_alloc(lcp_mempool *mempool);
+void *mpc_mempool_alloc(mpc_mempool *mempool);
 
-void lcp_mempool_free(lcp_mempool *mempool, void *buffer);
+void mpc_mempool_free(mpc_mempool *mempool, void *buffer);
 
-int lcp_mempool_empty(lcp_mempool *mp);
+int mpc_mempool_empty(mpc_mempool *mp);
 
 #endif
