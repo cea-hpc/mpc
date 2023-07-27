@@ -27,13 +27,11 @@
 #include <sctk_alloc.h> 
 
 
-#include "lcp_mempool.h"
 #include "lcp_pending.h"
 #include "lcp_context.h"
 #include "lcp_request.h"
 #include "uthash.h"
 
-// lcp_mempool mp;
 
 /**
  * @brief Create a pending request.
@@ -128,7 +126,6 @@ lcp_request_t *lcp_pending_get_request(lcp_pending_table_t *table,
 int lcp_pending_init()
 {
         /* And rdv list */
-        // lcp_mempool_init(&mp, 10, 100, 8092);
         return MPC_LOWCOMM_SUCCESS;
 }
 

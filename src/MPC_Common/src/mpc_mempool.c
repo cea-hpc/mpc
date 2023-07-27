@@ -1,4 +1,4 @@
-#include "lcp_mempool.h"
+#include "mpc_mempool.h"
 #include "mpc_common_debug.h"
 #include "mpc_common_spinlock.h"
 #include "sctk_alloc.h"
@@ -7,6 +7,7 @@
 #define LCP_MP_LOG
 
 mpc_common_spinlock_t mp_lock;
+int count_inertia;
 
 FILE *logfile;
 
@@ -72,7 +73,7 @@ int lcp_mempool_init(lcp_mempool *mp,
     int i;
     mp->size = size;
     mp->allocated = 0;
-    mp->max_inertia = max / 4;
+    mp->max_inertia = max / 5;
     mp->inertia = 0;
     mp->available = 0;
     mp->head = NULL;
@@ -100,9 +101,8 @@ int lcp_mempool_init(lcp_mempool *mp,
 void *lcp_mempool_alloc(lcp_mempool *mp){
     int effective_malloc = 0;
     mpc_common_spinlock_lock(&mp_lock);
-    if(mp->inertia < mp->max_inertia && !(rand() % 3)){
-        mp->inertia++;
-    }
+    count_inertia++;
+    if(mp->inertia < mp->max_inertia && !(count_inertia % 3 == 0)) mp->inertia++;
     if(mp->available <= 0){
         effective_malloc = 1;
         _lcp_mempool_add(mp, _lcp_mempool_malloc(mp));
@@ -124,14 +124,14 @@ void lcp_mempool_free(lcp_mempool *mp, void *buffer){
         return;
     }
     mpc_common_spinlock_lock(&mp_lock);
-    if(mp->inertia > -mp->max_inertia && !(rand() % 3)) mp->inertia--;
+    count_inertia++;
+    if(mp->inertia > -mp->max_inertia && !(count_inertia % 3 == 0)) mp->inertia--;
     // if mp does not have enough buffers, restack
     // if mp does not have to many buffers and has inertia, restack
     if( _lcp_mempool_is_below_minimum(mp) || (!_lcp_mempool_free_phase(mp) && !_lcp_mempool_is_full(mp) )){
         _lcp_mempool_add(mp, buf);
     }
     else{
-	    // printf("freeing\n");
         mp->free_func(buf);
         effective_free = 1;
         if(!_lcp_mempool_is_below_minimum(mp) && _lcp_mempool_free_phase(mp) && mp->available){

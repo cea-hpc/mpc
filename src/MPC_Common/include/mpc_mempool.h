@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <mpc_common_spinlock.h>
 
+#ifndef LCP_MEMPOOL_H
+#define LCP_MEMPOOL_H
+
 typedef struct lcp_mp_buffer_s{
     struct lcp_mp_buffer_s *next;
     char canary;
@@ -29,3 +32,7 @@ int lcp_mempool_init(lcp_mempool *mp,
 void *lcp_mempool_alloc(lcp_mempool *mempool);
 
 void lcp_mempool_free(lcp_mempool *mempool, void *buffer);
+
+int lcp_mempool_empty(lcp_mempool *mp);
+
+#endif
