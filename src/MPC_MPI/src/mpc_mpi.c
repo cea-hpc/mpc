@@ -1265,7 +1265,7 @@ static int __Isend_test_req(const void *buf, int count, MPI_Datatype datatype,
                             MPI_Request *request, int is_valid_request,
                             MPI_request_struct_t *requests)
 {
-	if(_mpc_dt_is_user_defined(datatype) && (count != 0) )
+	if(!_mpc_dt_is_contig_mem(datatype) && (count != 0) )
 	{
 		int res;
 
@@ -1359,7 +1359,7 @@ static int __Irecv_test_req(void *buf, int count, MPI_Datatype datatype,
                             MPI_Request *request, int is_valid_request,
                             struct MPI_request_struct_s *requests)
 {
-	if( !_mpc_dt_is_user_defined(datatype) )
+	if( !_mpc_dt_is_contig_mem(datatype) )
 	{
 		int res;
 
@@ -1545,7 +1545,7 @@ static inline int __PMPI_Type_contiguous_inherits(unsigned long count, MPI_Datat
 	}
 
 	/* If source datatype is a derived datatype we have to create a new derived datatype */
-	if(_mpc_dt_is_user_defined(data_in) )
+	if( !_mpc_dt_is_contig_mem(data_in) )
 	{
 		int derived_ret = 0;
 		_mpc_lowcomm_general_datatype_t input_datatype;
@@ -1816,6 +1816,7 @@ int sctk_Type_create_darray(int size, int rank, int ndims,
 			{
 				PMPI_Type_free(&type_old);
 			}
+            PMPI_Type_commit(&type_new);
 			type_old = type_new;
 		}
 
@@ -1863,6 +1864,7 @@ int sctk_Type_create_darray(int size, int rank, int ndims,
 			{
 				PMPI_Type_free(&type_old);
 			}
+            PMPI_Type_commit(&type_new);
 			type_old = type_new;
 		}
 
@@ -2127,12 +2129,14 @@ int sctk_Type_create_subarray(int ndims,
 		if(ndims == 1)
 		{
 			PMPI_Type_contiguous(array_of_subsizes[0], oldtype, &tmp1);
+            PMPI_Type_commit(&tmp1);
 		}
 		else
 		{
 			PMPI_Type_vector(array_of_subsizes[1],
 			                 array_of_subsizes[0],
 			                 array_of_sizes[0], oldtype, &tmp1);
+            PMPI_Type_commit(&tmp1);
 
 			size = (MPI_Aint)array_of_sizes[0] * extent;
 			for(i = 2; i < ndims; i++)
@@ -2141,6 +2145,7 @@ int sctk_Type_create_subarray(int ndims,
 				PMPI_Type_hvector(array_of_subsizes[i], 1, size, tmp1, &tmp2);
 				PMPI_Type_free(&tmp1);
 				tmp1 = tmp2;
+                PMPI_Type_commit(&tmp1);
 			}
 		}
 
@@ -2161,12 +2166,14 @@ int sctk_Type_create_subarray(int ndims,
 		if(ndims == 1)
 		{
 			PMPI_Type_contiguous(array_of_subsizes[0], oldtype, &tmp1);
+            PMPI_Type_commit(&tmp1);
 		}
 		else
 		{
 			PMPI_Type_vector(array_of_subsizes[ndims - 2],
 			                 array_of_subsizes[ndims - 1],
 			                 array_of_sizes[ndims - 1], oldtype, &tmp1);
+            PMPI_Type_commit(&tmp1);
 
 			size = (MPI_Aint)array_of_sizes[ndims - 1] * extent;
 			for(i = ndims - 3; i >= 0; i--)
@@ -2175,6 +2182,7 @@ int sctk_Type_create_subarray(int ndims,
 				PMPI_Type_hvector(array_of_subsizes[i], 1, size, tmp1, &tmp2);
 				PMPI_Type_free(&tmp1);
 				tmp1 = tmp2;
+                PMPI_Type_commit(&tmp1);
 			}
 		}
 
@@ -9590,7 +9598,7 @@ int PMPI_Send_internal(const void *buf, int count, MPI_Datatype datatype, int de
 		mpi_check_buf(buf, comm);
 	}
 
-	if(_mpc_dt_is_contig_mem(datatype) )
+	if( _mpc_dt_is_contig_mem(datatype) || count == 0 )
 	{
 		res = _mpc_cl_send(buf, count, datatype, dest, tag, comm);
 		MPI_HANDLE_ERROR(res, comm, "Low level contiguous send failed");
@@ -9693,7 +9701,7 @@ int PMPI_Recv_internal(void *buf, int count, MPI_Datatype datatype, int source, 
 
 
 
-	if(_mpc_dt_is_contig_mem(datatype) )
+	if(_mpc_dt_is_contig_mem(datatype) || count == 0 )
 	{
 		res = _mpc_cl_recv(buf, count, datatype, source, tag, comm, status);
 		MPI_HANDLE_ERROR(res, comm, "Failed low-level contiguous recv");
@@ -9716,7 +9724,7 @@ int PMPI_Recv_internal(void *buf, int count, MPI_Datatype datatype, int source, 
 		res = PMPI_Type_free(&new_datatype);
 		MPI_HANDLE_ERROR(res, comm, "Failed freeing contiguous datatype");
 
-		return res;
+		MPI_HANDLE_RETURN_VAL(res, comm);
 	}
 
 	mpc_lowcomm_request_t request;
@@ -9767,6 +9775,7 @@ int PMPI_Recv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
 int PMPI_Get_count(const MPI_Status *status, MPI_Datatype datatype, int *count)
 {
 	mpi_check_type(datatype, MPI_COMM_WORLD);
+	mpi_check_type_commited(datatype, MPI_COMM_WORLD);
 
 	if(status == NULL)
 	{
@@ -9826,12 +9835,14 @@ int PMPI_Ssend(const void *buf, int count, MPI_Datatype datatype, int dest, int 
         res = MPI_SUCCESS;
         MPI_HANDLE_RETURN_VAL(res, comm);
     }
+
     {
         mpi_check_comm(comm);
         int size;
         _mpc_cl_comm_size(comm, &size);
         mpi_check_rank_send(dest, size, comm);
         mpi_check_type(datatype, comm);
+        mpi_check_type_commited(datatype, comm);
         mpi_check_count(count, comm);
         mpc_common_nodebug("tag %d", tag);
         mpi_check_tag_send(tag, comm);
@@ -9842,28 +9853,14 @@ int PMPI_Ssend(const void *buf, int count, MPI_Datatype datatype, int dest, int 
         }
     }
 
-    if(mpc_dt_is_valid(datatype)) {
-        if(_mpc_dt_is_user_defined(datatype) && (count != 0) )
-        {
-            bool is_allocated = false;
-            _mpc_cl_type_is_allocated(datatype, &is_allocated);
-            if(is_allocated) {
-                if(mpc_mpi_cl_type_is_contiguous(datatype)) {
-                    res = _mpc_cl_ssend(buf, count, datatype, dest, tag, comm);
-                }
-                else {
-                    res = PMPI_Send_internal(buf, count, datatype, dest, tag, comm);
-                }
-            }
-        }
-        else if(mpc_lowcomm_datatype_is_common(datatype))
-        {
-            if(buf == NULL && count != 0)
-            {
-                MPI_ERROR_REPORT(comm, MPI_ERR_BUFFER, "");
-            }
-
+    bool is_allocated = false;
+    _mpc_cl_type_is_allocated(datatype, &is_allocated);
+    if( is_allocated ) {
+        if( mpc_mpi_cl_type_is_contiguous(datatype) ) {
             res = _mpc_cl_ssend(buf, count, datatype, dest, tag, comm);
+        }
+        else {
+            res = PMPI_Send_internal(buf, count, datatype, dest, tag, comm);
         }
     }
     else {
@@ -10044,6 +10041,7 @@ int PMPI_Ibsend(const void *buf, int count, MPI_Datatype datatype, int dest, int
 		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank_send(dest, size, comm);
 		mpi_check_type(datatype, comm);
+		mpi_check_type_commited(datatype, comm);
 		mpi_check_count(count, comm);
 		mpc_common_nodebug("tag %d", tag);
 		mpi_check_tag_send(tag, comm);
@@ -10146,6 +10144,7 @@ int PMPI_Wait(MPI_Request *request, MPI_Status *status)
 
 	mpc_lowcomm_status_t *mpc_status = status;
 	mpc_lowcomm_status_t static_mpc_status;
+    memset( &static_mpc_status, 0, sizeof(mpc_lowcomm_status_t) );
 
 	if(status == MPI_STATUS_IGNORE)
 	{
@@ -11742,6 +11741,8 @@ int PMPI_Sendrecv_internal(const void *sendbuf, int sendcount, MPI_Datatype send
 
 	mpi_check_type(sendtype, comm);
 	mpi_check_type(recvtype, comm);
+	mpi_check_type_commited(sendtype, comm);
+	mpi_check_type_commited(recvtype, comm);
 	mpi_check_count(sendcount, comm);
 	mpi_check_count(recvcount, comm);
 	mpi_check_rank_send(dest, size, comm);
@@ -11755,9 +11756,6 @@ int PMPI_Sendrecv_internal(const void *sendbuf, int sendcount, MPI_Datatype send
 	{
 		mpi_check_buf(recvbuf, comm);
 	}
-    if(sendtype != recvtype) {
-        MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Mismatched datatypes");
-    }
 
 	MPI_Request s_request;
 	MPI_Request r_request;
@@ -11836,7 +11834,11 @@ int PMPI_Sendrecv_replace(void *buf, int count, MPI_Datatype datatype,
 
 	tmp = sctk_malloc(type_size);
 
-	MPI_HANDLE_ERROR(MPI_ERR_INTERN, comm, "Temporary Buffer alloc Failed");
+
+    if( tmp == NULL ) {
+        MPI_ERROR_REPORT( comm, MPI_ERR_INTERN, "Temporary Buffer alloc Failed" );
+    }
+
 	res = PMPI_Pack(buf, count, datatype, tmp, type_size, &position, comm);
 	if(res != MPI_SUCCESS)
 	{
@@ -11942,12 +11944,11 @@ int PMPI_Type_contiguous(int count, MPI_Datatype old_type, MPI_Datatype *new_typ
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 
-	mpi_check_type_create(old_type, comm);
 	mpi_check_count(count, comm);
+	mpi_check_type(old_type, comm);
+	mpi_check_type_commited(old_type, comm);
 
 	*new_type_p = MPC_DATATYPE_NULL;
-
-	mpi_check_type(old_type, MPI_COMM_WORLD);
 
 	/* Here we set the ctx to NULL in order to create a contiguous type (no overriding) */
 	return __PMPI_Type_contiguous_inherits(count, old_type, new_type_p, NULL);
@@ -11958,7 +11959,7 @@ int PMPI_Type_vector(int count, int blocklength, int stride, MPI_Datatype old_ty
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res       = MPI_ERR_INTERN;
 
-	mpi_check_type_create(old_type, comm);
+	mpi_check_type_commited(old_type, comm);
 
 	*newtype_p = MPC_DATATYPE_NULL;
 
@@ -12013,7 +12014,7 @@ int PMPI_Type_hvector(int count, int blocklen, MPI_Aint stride, MPI_Datatype old
 	MPI_Comm comm = MPI_COMM_WORLD;
 
 
-	mpi_check_type_create(old_type, comm);
+	mpi_check_type_commited(old_type, comm);
 	mpi_check_count(count, comm);
 
 	*newtype_p = MPC_DATATYPE_NULL;
@@ -12044,9 +12045,8 @@ int PMPI_Type_hvector(int count, int blocklen, MPI_Aint stride, MPI_Datatype old
 	if(mpc_dt_is_valid(old_type) )
 	{
         /* Retrieve the inner structure */
-        if(mpc_lowcomm_datatype_is_common(old_type)) {
-            old_type = _mpc_dt_get_datatype(old_type);
-        }
+        old_type = _mpc_dt_get_datatype(old_type);
+
 		int derived_ret = 0;
 		_mpc_lowcomm_general_datatype_t input_datatype;
 
@@ -12142,7 +12142,7 @@ int PMPI_Type_create_hvector(int count, int blocklen, MPI_Aint stride, MPI_Datat
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res       = MPI_ERR_INTERN;
 
-	mpi_check_type_create(old_type, comm);
+	mpi_check_type_commited(old_type, comm);
 	mpi_check_count(count, comm);
 
 	*newtype_p = MPC_DATATYPE_NULL;
@@ -12183,7 +12183,7 @@ int PMPI_Type_indexed(int count, const int blocklens[], const int indices[], MPI
 		}
 	}
 
-	mpi_check_type_create(old_type, MPI_COMM_SELF);
+	mpi_check_type_commited(old_type, MPI_COMM_SELF);
 
 	MPI_Aint extent;
 
@@ -12245,7 +12245,7 @@ int PMPI_Type_hindexed(int count, const int blocklens[], const MPI_Aint indices[
 		}
 	}
 
-	mpi_check_type_create(old_type, comm);
+	mpi_check_type_commited(old_type, comm);
 	res = PMPI_Type_create_hindexed(count, blocklens, indices, old_type, newtype);
 
 	MPI_HANDLE_RETURN_VAL(res, comm);
@@ -12269,7 +12269,7 @@ int PMPI_Type_create_indexed_block(int count, int blocklength, const int indices
 	}
 
 
-	mpi_check_type_create(old_type, comm);
+	mpi_check_type_commited(old_type, comm);
 	res = __INTERNAL__PMPI_Type_create_indexed_block(count, blocklength, indices, old_type, newtype);
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
@@ -12291,7 +12291,7 @@ int PMPI_Type_create_hindexed_block(int count, int blocklength, const MPI_Aint i
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "Error negative block lengths provided");
 	}
 
-	mpi_check_type_create(old_type, comm);
+	mpi_check_type_commited(old_type, comm);
 	res = __INTERNAL__PMPI_Type_create_hindexed_block(count, blocklength, indices, old_type, newtype);
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
@@ -12320,7 +12320,7 @@ int PMPI_Type_create_hindexed(int count, const int blocklens[], const MPI_Aint i
 			MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "Error negative block lengths provided");
 		}
 	}
-	mpi_check_type_create(old_type, comm);
+	mpi_check_type_commited(old_type, comm);
 
 	/* Set its context */
 	struct _mpc_dt_context dtctx;
@@ -12461,7 +12461,7 @@ int PMPI_Type_struct(int count,
 	{
 		mpi_check_type(old_types[i], MPI_COMM_WORLD);
 
-		mpi_check_type_create(old_types[i], comm);
+		mpi_check_type_commited(old_types[i], comm);
 
 		if(blocklens[i] < 0)
 		{
@@ -12495,7 +12495,7 @@ int PMPI_Type_struct(int count,
 
 			int count_in = 0;
 
-			if(_mpc_dt_is_user_defined(old_types[i]) )
+			if( !_mpc_dt_is_contig_mem(old_types[i]) )
 			{
 				_mpc_cl_general_datatype_try_get_info(old_types[i], &derived_ret, &input_datatype);
 				count_in = input_datatype.count;
@@ -12588,7 +12588,7 @@ TODO("VALIDATE");
 			_mpc_lowcomm_general_datatype_t input_datatype;
 
 
-			if(_mpc_dt_is_user_defined(old_types[i]) )
+			if( !_mpc_dt_is_contig_mem(old_types[i]) )
 			{
 				_mpc_cl_general_datatype_try_get_info(old_types[i], &derived_ret, &input_datatype);
 
@@ -12840,8 +12840,11 @@ int PMPI_Get_address(const void *location, MPI_Aint *address)
 /* We could add __attribute__((deprecated)) to routines like MPI_Type_extent */
 int PMPI_Type_extent(MPI_Datatype datatype, MPI_Aint *extent)
 {
-	mpi_check_type_create(datatype, MPI_COMM_SELF);
+    MPI_Comm comm = MPI_COMM_WORLD;
+    mpi_check_type(datatype, comm);
+	mpi_check_type_commited(datatype, comm);
 
+    /* Shortcuts for most common datatypes */
     if(datatype == MPI_LONG)        *extent = sizeof(long);
     else if(datatype == MPI_SHORT)  *extent = sizeof(short);
     else if(datatype == MPI_CHAR ||
@@ -12870,7 +12873,7 @@ int PMPI_Type_get_extent(MPI_Datatype datatype, MPI_Aint *lb, MPI_Aint *extent)
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res       = MPI_ERR_INTERN;
 
-	mpi_check_type_create(datatype, comm);
+	mpi_check_type_commited(datatype, comm);
 
 	PMPI_Type_lb(datatype, lb);
 	res = PMPI_Type_extent(datatype, extent);
@@ -12917,7 +12920,7 @@ int PMPI_Type_size(MPI_Datatype datatype, int *size)
 	int res       = MPI_ERR_INTERN;
 
 	mpi_check_type(datatype, comm);
-	mpi_check_type_create(datatype, comm);
+	mpi_check_type_commited(datatype, comm);
 
 	MPI_Count tmp_size;
 	int real_val;
@@ -12936,7 +12939,7 @@ int PMPI_Type_size_x(MPI_Datatype datatype, MPI_Count *size)
 	int res       = MPI_ERR_INTERN;
 
 	mpi_check_type(datatype, comm);
-	mpi_check_type_create(datatype, comm);
+	mpi_check_type_commited(datatype, comm);
 
 	size_t tmp_size;
 	MPI_Count real_val;
@@ -12956,7 +12959,7 @@ int PMPI_Type_lb(MPI_Datatype datatype, MPI_Aint *displacement)
 
 
 	mpi_check_type(datatype, comm);
-	mpi_check_type_create(datatype, comm);
+	mpi_check_type_commited(datatype, comm);
 	unsigned long i;
 
 	int derived_ret = 0;
@@ -12969,7 +12972,7 @@ int PMPI_Type_lb(MPI_Datatype datatype, MPI_Aint *displacement)
 		if( (input_datatype.is_lb == false) && input_datatype.count)
 		{
 			*displacement = (MPI_Aint)input_datatype.opt_begins[0];
-			for(i = 0; i < input_datatype.opt_count; i++)
+			for(i = 1; i < input_datatype.opt_count; i++)
 			{
 				if( (long)*displacement > input_datatype.opt_begins[i])
 				{
@@ -12997,10 +13000,9 @@ int PMPI_Type_ub(MPI_Datatype datatype, MPI_Aint *displacement)
 
 
 	mpi_check_type(datatype, comm);
-	mpi_check_type_create(datatype, comm);
+	mpi_check_type_commited(datatype, comm);
 
 	unsigned long i;
-	int e;
 
 	int derived_ret = 0;
 	_mpc_lowcomm_general_datatype_t input_datatype;
@@ -13013,7 +13015,7 @@ int PMPI_Type_ub(MPI_Datatype datatype, MPI_Aint *displacement)
 		{
 			*displacement = (MPI_Aint)input_datatype.opt_ends[0];
 
-			for(i = 0; i < input_datatype.opt_count; i++)
+			for(i = 1; i < input_datatype.opt_count; i++)
 			{
 				if( (long)*displacement < input_datatype.opt_ends[i])
 				{
@@ -13022,8 +13024,7 @@ int PMPI_Type_ub(MPI_Datatype datatype, MPI_Aint *displacement)
 				mpc_common_nodebug("Current ub %lu, %lu", input_datatype.opt_ends[i], *displacement);
 			}
 
-			e             = 1;
-			*displacement = (MPI_Aint)( (unsigned long)(*displacement) + e);
+			*displacement += (MPI_Aint) 1;
 		}
 		else
 		{
@@ -13047,9 +13048,9 @@ int PMPI_Type_create_resized(MPI_Datatype old_type, MPI_Aint lb, MPI_Aint extent
 
 
 	mpi_check_type(old_type, comm);
-	mpi_check_type_create(old_type, comm);
+	mpi_check_type_commited(old_type, comm);
 
-	if(mpc_dt_is_valid(old_type) )
+	if( mpc_dt_is_valid(old_type) )
 	{
 		int derived_ret;
 		_mpc_lowcomm_general_datatype_t input_datatype;
@@ -13080,8 +13081,10 @@ int PMPI_Type_commit(MPI_Datatype *datatype)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 
-
 	mpi_check_type(*datatype, comm);
+
+    /* We wanna be able to commit uncommited datatypes */
+    /* mpi_check_type_commited(*datatype, comm); */
 
 	return _mpc_cl_type_commit(datatype);
 }
@@ -13091,8 +13094,9 @@ int PMPI_Type_free(MPI_Datatype *datatype)
 	MPI_Comm comm = MPI_COMM_WORLD;
 
 	mpi_check_type(*datatype, comm);
+
     /* We wanna be able to free uncommited datatypes */
-    /* mpi_check_type_create(*datatype, comm); */
+    /* mpi_check_type_commited(*datatype, comm); */
 
 	return _mpc_cl_type_free(datatype);
 }
@@ -13119,7 +13123,7 @@ int PMPI_Type_get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Coun
 	}
 
 	/* Now check the data-type */
-	mpi_check_type(datatype, MPI_COMM_WORLD);
+	mpi_check_type_commited(datatype, MPI_COMM_WORLD);
 
     /* If the msg was empty */
     if(status->size == 0) {
@@ -13138,7 +13142,6 @@ int PMPI_Type_get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Coun
 	MPI_Datatype data_in;
 	int data_in_size = 0;
 	size_t count     = 0;
-	mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = NULL;
 	unsigned long i = 0;
 
 	*elements = 0;
@@ -13153,88 +13156,76 @@ int PMPI_Type_get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Coun
     bool is_allocated = false;
 	struct _mpc_dt_layout *layout = NULL;
 
-	/* If we are here our type has a size
-	 * we can now count the number of elements*/
-	switch(_mpc_dt_get_kind(datatype) )
-	{
-        case MPC_DATATYPES_COMMON:
-            datatype = _mpc_dt_get_datatype(datatype);
-		case MPC_DATATYPES_USER:
 
-			task_specific = mpc_cl_per_mpi_process_ctx_get();
+    datatype = _mpc_dt_get_datatype(datatype);
+    /* If we are here our type has a size
+     * we can now count the number of elements*/
 
-			/* This is the size we received */
-			size = status->size;
+    /* This is the size we received */
+    size = status->size;
 
-			*elements = 0;
+    *elements = 0;
+    done = 0;
 
-			/* Retrieve the derived datatype */
-            _mpc_cl_type_is_allocated(datatype, &is_allocated);
-			assert( is_allocated != 0 );
+    /* Test it is properly existing */
+    _mpc_cl_type_is_allocated(datatype, &is_allocated);
+    assert( is_allocated != 0 );
 
-			/* Try to rely on the datatype layout */
-			/* layout = _mpc_dt_get_layout(datatype->context, &count); */
+    /* Try to rely on the datatype layout */
+    /* layout = _mpc_dt_get_layout(datatype->context, &count); */
 
-			done = 0;
+    if(0 /* Do not Use the Layout to compute Get_Element*/)
+    {
+        /* if(!count) */
+        /* { */
+        /* 	mpc_common_debug_fatal("We found an empty layout"); */
+        /* } */
 
-			if(0 /* Do not Use the Layout to compute Get_Element*/)
-			{
-				/* if(!count) */
-				/* { */
-				/* 	mpc_common_debug_fatal("We found an empty layout"); */
-				/* } */
+        /* while(!done) */
+        /* { */
+        /* 	mpc_common_debug_error("count : %d  size : %d done : %d", count, size, done); */
+        /* 	for(i = 0; i < count; i++) */
+        /* 	{ */
+        /* 		mpc_common_debug_error("BLOCK SIZE  : %d", layout[i].size); */
 
-				/* while(!done) */
-				/* { */
-				/* 	mpc_common_debug_error("count : %d  size : %d done : %d", count, size, done); */
-				/* 	for(i = 0; i < count; i++) */
-				/* 	{ */
-				/* 		mpc_common_debug_error("BLOCK SIZE  : %d", layout[i].size); */
+        /* 		size -= layout[i].size; */
 
-				/* 		size -= layout[i].size; */
+        /* 		(*elements)++; */
 
-				/* 		(*elements)++; */
+        /* 		if(size <= 0) */
+        /* 		{ */
+        /* 			done = 1; */
+        /* 			break; */
+        /* 		} */
+        /* 	} */
+        /* } */
 
-				/* 		if(size <= 0) */
-				/* 		{ */
-				/* 			done = 1; */
-				/* 			break; */
-				/* 		} */
-				/* 	} */
-				/* } */
+        /* sctk_free(layout); */
+    }
+    else
+    {
+        /* Retrieve the number of block in the datatype */
+        count = datatype->count;
 
-				/* sctk_free(layout); */
-			}
-			else
-			{
-				/* Retrieve the number of block in the datatype */
-				count = datatype->count;
+        while(!done)
+        {
+            /* Count the number of elements by substracting
+             * individual blocks from total size until reaching 0 */
+            for(i = 0; i < count; i++)
+            {
+                size -= datatype->ends[i] - datatype->begins[i] + 1;
 
-				while(!done)
-				{
-					/* Count the number of elements by substracting
-					 * individual blocks from total size until reaching 0 */
-					for(i = 0; i < count; i++)
-					{
-						size -= datatype->ends[i] - datatype->begins[i] + 1;
+                (*elements)++;
 
-						(*elements)++;
+                if(size <= 0)
+                {
+                    done = 1;
+                }
+            }
+        }
+    }
 
-						if(size <= 0)
-						{
-							done = 1;
-							break;
-						}
-					}
-				}
-			}
-			break;
-
-		default:
-			not_reachable();
-	}
-
-	MPI_HANDLE_RETURN_VAL(res, comm);
+    MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
 int PMPI_Get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Count *elements)
@@ -13409,10 +13400,12 @@ int PMPI_Pack(const
               void *inbuf,
               int incount,
               MPI_Datatype datatype,
-              void *outbuf, int outcount, int *position, MPI_Comm comm)
+              void *outbuf, int outsize, int *position, MPI_Comm comm)
 {
 	mpi_check_comm(comm);
 	mpi_check_type(datatype, comm);
+	mpi_check_type_commited(datatype, comm);
+
 	if( (NULL == outbuf) || (NULL == position) )
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "wrong outbuf or position");
@@ -13421,26 +13414,19 @@ int PMPI_Pack(const
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COUNT, "wrong incount");
 	}
-	else if(outcount < 0)
+	else if(outsize < 0)
 	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "wrong outcount");
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "wrong outsize");
 	}
 	else if(incount == 0)
 	{
 		return MPI_SUCCESS;
 	}
-
-	if(datatype < SCTK_USER_DATA_TYPES_MAX)
-	{
-		if(outcount < incount)
-		{
-			MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
-		}
-	}
+    mpi_check_buf(inbuf, comm);
 
 	int copied = 0;
 
-	if(mpc_dt_is_valid(datatype) )
+	if( !_mpc_dt_is_contig_mem(datatype) )
 	{
 		unsigned long i;
 		int j;
@@ -13451,10 +13437,8 @@ int PMPI_Pack(const
 		int derived_ret = 0;
 		_mpc_lowcomm_general_datatype_t input_datatype;
 
-		int ierr = _mpc_cl_general_datatype_try_get_info(datatype, &derived_ret, &input_datatype);
-        if(ierr != MPI_SUCCESS) {
-            return MPI_ERR_TYPE;
-        }
+		int res = _mpc_cl_general_datatype_try_get_info(datatype, &derived_ret, &input_datatype);
+        MPI_HANDLE_ERROR(res, comm, "Unknown datatype");
 
 		for(j = 0; j < incount; j++)
 		{
@@ -13462,6 +13446,10 @@ int PMPI_Pack(const
 			{
 				unsigned long size;
 				size = input_datatype.opt_ends[i] - input_datatype.opt_begins[i] + 1;
+
+                if( *position + size > (size_t) outsize) {
+                    MPI_ERROR_REPORT(comm, MPI_ERR_TRUNCATE, "outbuf too small");
+                }
 
 				mpc_common_nodebug("Pack %lu->%lu, ==> %lu %lu", input_datatype.opt_begins[i] + extent * j, input_datatype.opt_ends[i] + extent * j, *position, size);
 
@@ -13473,45 +13461,39 @@ int PMPI_Pack(const
 				copied += size;
 				mpc_common_nodebug("Pack %lu->%lu, ==> %lu %lu done", input_datatype.opt_begins[i] + extent * j, input_datatype.opt_ends[i] + extent * j, *position, size);
 
-
 				*position = *position + size;
-
-				assume(copied <= outcount);
 			}
 
 			inbuf = (char *)inbuf + extent;
 		}
 
-		mpc_common_nodebug("%lu <= %lu", copied, outcount);
-		assume(copied <= outcount);
-		return MPI_SUCCESS;
+		mpc_common_nodebug("%lu <= %lu", copied, outsize);
+		assume(copied <= outsize);
+		MPI_ERROR_SUCCESS();
 	}
-	/* else */
-	/* { */
-	/* 	size_t size; */
+	else
+	{
+		size_t size;
 
-	/* 	if(inbuf == NULL) */
-	/* 	{ */
-	/* 		return MPI_ERR_BUFFER; */
-	/* 	} */
+		_mpc_cl_type_size(datatype, &size);
+		mpc_common_nodebug("Pack %lu->%lu, ==> %lu %lu", 0, size * incount, *position, size * incount);
 
-	/* 	if(outbuf == NULL) */
-	/* 	{ */
-	/* 		return MPI_ERR_BUFFER; */
-	/* 	} */
+        if(incount * size > (size_t) outsize + *position) {
+            size_t trunc_size = ((outsize + *position) / size) * size;
+            memcpy(&( ( (char *)outbuf)[*position]), inbuf, trunc_size);
+            MPI_ERROR_REPORT(comm, MPI_ERR_TRUNCATE, "outbuf too small");
+        }
 
-	/* 	_mpc_cl_type_size(datatype, &size); */
-	/* 	mpc_common_nodebug("Pack %lu->%lu, ==> %lu %lu", 0, size * incount, *position, size * incount); */
-	/* 	memcpy(&( ( (char *)outbuf)[*position]), inbuf, size * incount); */
-	/* 	mpc_common_nodebug("Pack %lu->%lu, ==> %lu %lu done", 0, size * incount, *position, size * incount); */
-	/* 	*position = *position + size * incount; */
-	/* 	copied   += size * incount; */
-	/* 	mpc_common_nodebug("%lu == %lu", copied, outcount); */
-	/* 	assume(copied <= outcount); */
+		memcpy(&( ( (char *)outbuf)[*position]), inbuf, size * incount);
+		mpc_common_nodebug("Pack %lu->%lu, ==> %lu %lu done", 0, size * incount, *position, size * incount);
+		*position = *position + size * incount;
+		copied   += size * incount;
+		mpc_common_nodebug("%lu == %lu", copied, outsize);
+		assume(copied <= outsize);
 
-	/* 	return MPI_SUCCESS; */
-	/* } */
-    return MPI_ERR_TYPE;
+		MPI_ERROR_SUCCESS();
+	}
+    MPI_ERROR_REPORT(comm, MPI_ERR_INTERN, "Not reachable!");
 }
 
 int PMPI_Unpack(const void *inbuf,
@@ -13524,23 +13506,27 @@ int PMPI_Unpack(const void *inbuf,
 {
 	mpi_check_comm(comm);
 	mpi_check_type(datatype, comm);
+	mpi_check_type_commited(datatype, comm);
+
 	if( (NULL == inbuf) || (NULL == position) )
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "wrong outbuff or position");
 	}
-	else if( (outcount < 0) || (insize < 0) )
+
+	if( (outcount < 0) || (insize < 0) )
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_COUNT, "wrong outcount insize");
 	}
-	else if(datatype < 0)
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "wrong datatype");
-	}
+
+    if( outcount == 0 ) {
+        MPI_ERROR_SUCCESS();
+    }
+    mpi_check_buf(outbuf, comm);
 
 	int copied = 0;
 
 	mpc_common_nodebug("MPI_Unpack insise = %d, position = %d, outcount = %d, datatype = %d, comm = %d", insize, *position, outcount, datatype, comm);
-	if(mpc_dt_is_valid(datatype) )
+	if( !_mpc_dt_is_contig_mem(datatype) )
 	{
 		unsigned long i;
 		int j;
@@ -13551,8 +13537,8 @@ int PMPI_Unpack(const void *inbuf,
 		int derived_ret = 0;
 		_mpc_lowcomm_general_datatype_t output_datatype;
 
-		_mpc_cl_general_datatype_try_get_info(datatype, &derived_ret, &output_datatype);
-
+		int res = _mpc_cl_general_datatype_try_get_info(datatype, &derived_ret, &output_datatype);
+        MPI_HANDLE_ERROR(res, comm, "Unknown datatype");
 
 		size_t lb = 0;
 
@@ -13567,14 +13553,21 @@ int PMPI_Unpack(const void *inbuf,
 			{
 				size_t size;
 				size    = output_datatype.opt_ends[i] - output_datatype.opt_begins[i] + 1;
-				copied += size;
+
+                if( *position + size > (size_t) insize) {
+                    MPI_ERROR_REPORT(comm, MPI_ERR_TRUNCATE, "inbuf too small");
+                }
+
 				mpc_common_nodebug("Unpack %lu %lu, ==> %lu->%lu", *position, size, output_datatype.opt_begins[i] + extent * j, output_datatype.ends[i] + extent * j);
 				if(size != 0)
 				{
 					memcpy(&( ( (char *)outbuf + lb)[output_datatype.opt_begins[i]]), &( ( (char *)inbuf)[*position]), size);
 				}
 				mpc_common_nodebug("Unpack %lu %lu, ==> %lu->%lu done", *position, size, output_datatype.opt_begins[i] + extent * j, output_datatype.opt_ends[i] + extent * j);
+
 				*position = *position + size;
+
+				copied += size;
 				/* done */
 				assume(copied <= insize);
 			}
@@ -13583,21 +13576,29 @@ int PMPI_Unpack(const void *inbuf,
 
 		mpc_common_nodebug("%lu <= %lu", copied, insize);
 		assume(copied <= insize);
-		return MPI_SUCCESS;
+		MPI_ERROR_SUCCESS();
 	}
-	/* else */
-	/* { */
-	/* 	size_t size; */
-	/* 	_mpc_cl_type_size(datatype, &size); */
-	/* 	mpc_common_nodebug("Unpack %lu %lu, ==> %lu->%lu", *position, size * outcount, 0, size * outcount); */
-	/* 	memcpy(outbuf, &( ( (char *)inbuf)[*position]), size * outcount); */
-	/* 	mpc_common_nodebug("Unpack %lu %lu, ==> %lu->%lu done", *position, size * outcount, 0, size * outcount); */
-	/* 	*position = *position + size * outcount; */
-	/* 	copied   += size * outcount; */
-	/* 	assume(copied <= insize); */
-	/* 	return MPI_SUCCESS; */
-	/* } */
-    return MPI_ERR_TYPE;
+	else
+	{
+		size_t size;
+		_mpc_cl_type_size(datatype, &size);
+		mpc_common_nodebug("Unpack %lu %lu, ==> %lu->%lu", *position, size * outcount, 0, size * outcount);
+
+        if(outcount * size > (size_t) insize + *position) {
+            size_t trunc_size = ((insize + *position) / size) * size;
+            memcpy(outbuf, &( ( (char *)inbuf)[*position]), trunc_size);
+            MPI_ERROR_REPORT(comm, MPI_ERR_TRUNCATE, "inbuf too small");
+        }
+
+		memcpy(outbuf, &( ( (char *)inbuf)[*position]), size * outcount);
+		mpc_common_nodebug("Unpack %lu %lu, ==> %lu->%lu done", *position, size * outcount, 0, size * outcount);
+		*position = *position + size * outcount;
+		copied   += size * outcount;
+		assume(copied <= insize);
+		MPI_ERROR_SUCCESS();
+	}
+
+    MPI_ERROR_REPORT(comm, MPI_ERR_INTERN, "Not reachable!");
 }
 
 int PMPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm, int *size)
@@ -13608,7 +13609,7 @@ int PMPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm, int *size)
 
 	*size = 0;
 	mpc_common_nodebug("incount size %d", incount);
-	if(!mpc_mpi_cl_type_is_contiguous(datatype) && mpc_dt_is_valid(datatype) )
+	if( mpc_dt_is_valid(datatype) )
 	{
 		unsigned long i;
 		int j;
@@ -13635,14 +13636,7 @@ int PMPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm, int *size)
 		mpc_common_nodebug("PACK derived final size %d", *size);
 		return MPI_SUCCESS;
 	}
-	else
-	{
-		size_t size_t;
-		_mpc_cl_type_size(datatype, &size_t);
-		*size = size_t * incount;
-		mpc_common_nodebug("PACK contiguous size %d", *size);
-		return MPI_SUCCESS;
-	}
+
     return MPI_ERR_TYPE;
 }
 
@@ -13685,48 +13679,42 @@ int PMPI_Type_delete_attr(MPI_Datatype datatype, int type_keyval)
 
 int PMPI_Pack_external_size(const char *datarep, int incount, MPI_Datatype datatype, MPI_Aint *size)
 {
+    MPI_Comm comm = MPI_COMM_WORLD;
+    mpi_check_type(datatype, comm);
 	if(strcmp(datarep, "external32") )
 	{
 		mpc_common_debug_warning("MPI_Pack_external_size: unsuported data-rep %s", datarep);
-		return MPI_ERR_ARG;
+		MPI_ERROR_REPORT( comm, MPI_ERR_ARG, "");
 	}
 
     unsigned int i;
     MPI_Aint count;
     MPI_Aint extent;
-	/* Now generate the final size according to the internal type
-	 * derived or contiguous one */
-	switch(_mpc_dt_get_kind(datatype) )
-	{
-		case MPC_DATATYPES_COMMON:
-            datatype = _mpc_dt_get_datatype(datatype);
-		case MPC_DATATYPES_USER:
-			*size = 0;
 
-			/* For derived, we work block by block */
-			for(i = 0; i < datatype->count; i++)
-			{
-				/* Get type extent */
-				PMPI_Type_extent(datatype->datatypes[i], &extent);
+    datatype = _mpc_dt_get_datatype(datatype);
+    /* Now generate the final size according to the internal type
+     * derived or contiguous one */
+    *size = 0;
 
-				if(!extent)
-				{
-					continue;
-				}
+    /* For derived, we work block by block */
+    for(i = 0; i < datatype->count; i++)
+    {
+        /* Get type extent */
+        PMPI_Type_extent(datatype->datatypes[i], &extent);
 
-				/* Compute count */
-				count = (datatype->ends[i] - datatype->begins[i] + 1) / extent;
+        if(!extent)
+        {
+            continue;
+        }
 
-				/* Add count times external size */
-				*size += MPC_Extern32_common_type_size(datatype->datatypes[i]) * count;
-			}
+        /* Compute count */
+        count = (datatype->ends[i] - datatype->begins[i] + 1) / extent;
 
-			*size = *size * incount;
-			break;
+        /* Add count times external size */
+        *size += MPC_Extern32_common_type_size(datatype->datatypes[i]) * count;
+    }
 
-		default:
-			mpc_common_debug_fatal("PMPI_Pack_external_size unreachable");
-	}
+    *size = *size * incount;
 
 	return MPI_SUCCESS;
 }
@@ -18420,6 +18408,10 @@ int PMPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
 	}
 
+    if(sendtype != recvtype) {
+        MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Mismatched datatypes");
+    }
+
 	/* Error checking */
 	mpi_check_root(root, size, comm);
 	if(rank != root)
@@ -18521,6 +18513,10 @@ int PMPI_Gatherv(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
 	}
 
+    if(sendtype != recvtype) {
+        MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Mismatched datatypes");
+    }
+
 	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
 	                                  mpc_thread_get_progress_basic_prio());
 
@@ -18566,6 +18562,10 @@ int PMPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	{
 		return res;
 	}
+
+    if(sendtype != recvtype) {
+        MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Mismatched datatypes");
+    }
 
 	/* Error checking */
 	mpi_check_root(root, size, comm);
@@ -18657,6 +18657,10 @@ int PMPI_Scatterv(const void *sendbuf, const int *sendcnts, const int *displs,
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
 	}
+
+    if(sendtype != recvtype) {
+        MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Mismatched datatypes");
+    }
 
 	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
@@ -18763,6 +18767,10 @@ int PMPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	mpi_check_count(recvcount, comm);
 	mpi_check_type(recvtype, comm);
 
+    if(sendtype != recvtype) {
+        MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Mismatched datatypes");
+    }
+
 	int is_intercomm = mpc_lowcomm_communicator_is_intercomm(comm);
 
 	if(is_intercomm)
@@ -18843,6 +18851,10 @@ int PMPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	mpi_check_buf(recvbuf, comm);
 	mpi_check_type(recvtype, comm);
 
+    if(sendtype != recvtype) {
+        MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Mismatched datatypes");
+    }
+
 	if(MPI_IN_PLACE == recvbuf)
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "RecvBuff is MPI_IN_PLACE");
@@ -18906,6 +18918,10 @@ int PMPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
 	}
+
+    if(sendtype != recvtype) {
+        MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Mismatched datatypes");
+    }
 
 	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
 	                                  mpc_thread_get_progress_basic_prio());
@@ -18973,6 +18989,10 @@ int PMPI_Alltoallv(const void *sendbuf, const int *sendcnts, const int *sdispls,
 	{
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
 	}
+
+    if(sendtype != recvtype) {
+        MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Mismatched datatypes");
+    }
 
 	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
 	                                  mpc_thread_get_progress_basic_prio());
@@ -19220,8 +19240,8 @@ int PMPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
 		}
 	}
 
-	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
-	                                  mpc_thread_get_progress_basic_prio());
+    MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
+                                      mpc_thread_get_progress_basic_prio());
 
 	int (*allreduce_ptr)(const void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm) = NULL;
 	MPC_MPI_CONFIG_ROUTE_COLL(allreduce_ptr, comm, allreduce);

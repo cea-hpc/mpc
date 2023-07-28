@@ -519,11 +519,11 @@ int PMPI_Irecv_internal(void *buf, int count, MPI_Datatype datatype, int source,
 
 #define mpi_check_type(datatype, comm)     \
 	if(datatype == MPI_DATATYPE_NULL){ \
-		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Bad datatype provided"); }
+		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "NULL datatype handle provided"); }
 
-#define mpi_check_type_create(datatype, comm)                                                                                                                                              \
+#define mpi_check_type_commited(datatype, comm)                                                                                                                                              \
 	if( (!mpc_dt_is_valid(datatype)) && ( (datatype != MPI_UB) && (datatype != MPI_LB) ) ){ \
-		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, ""); }
+		MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Unknown datatype provided! Please check it is commited before use"); }
 
 int _mpc_mpi_init_counter(int *counter);
 

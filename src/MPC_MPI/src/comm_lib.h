@@ -637,7 +637,7 @@ int _mpc_cl_general_datatype( mpc_lowcomm_datatype_t *datatype,
                               const long ub, const bool is_ub,
                               struct _mpc_dt_context *ectx );
 
-int _mpc_cl_type_get_true_extent( mpc_lowcomm_datatype_t datatype, size_t *true_lb, size_t *true_extent );
+int _mpc_cl_type_get_true_extent( const mpc_lowcomm_datatype_t datatype, long *true_lb, long *true_extent );
 
 int _mpc_cl_type_use( mpc_lowcomm_datatype_t datatype );
 

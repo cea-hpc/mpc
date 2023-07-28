@@ -1297,8 +1297,8 @@ int _mpc_cl_type_get_envelope(mpc_lowcomm_datatype_t datatype, int *num_integers
 	MPC_ERROR_SUCCESS();
 }
 
-int _mpc_cl_type_get_contents(mpc_lowcomm_datatype_t datatype, int max_integers,
-                              int max_addresses, int max_datatypes,
+int _mpc_cl_type_get_contents(const mpc_lowcomm_datatype_t datatype, const int max_integers,
+                              const int max_addresses, const int max_datatypes,
                               int array_of_integers[],
                               size_t array_of_addresses[],
                               mpc_lowcomm_datatype_t array_of_datatypes[])
@@ -1420,7 +1420,7 @@ static inline size_t __mpc_cl_datatype_get_size(mpc_lowcomm_datatype_t datatype)
 		case MPC_DATATYPES_UNKNOWN:
 			/* No such datatype */
 			/* ERROR */
-            MPC_ERROR_REPORT(MPC_COMM_SELF, MPC_ERR_TYPE,
+            MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_TYPE,
 			                 "An unknown datatype was provided");
 			break;
 	}
@@ -1430,8 +1430,8 @@ static inline size_t __mpc_cl_datatype_get_size(mpc_lowcomm_datatype_t datatype)
 	return MPC_ERR_INTERN;
 }
 
-int _mpc_cl_type_get_true_extent(mpc_lowcomm_datatype_t datatype, size_t *true_lb,
-                                 size_t *true_extent)
+int _mpc_cl_type_get_true_extent( const mpc_lowcomm_datatype_t datatype, long *true_lb,
+                                 long *true_extent)
 {
 	long tmp_true_lb;
 	long tmp_true_ub;
@@ -1611,35 +1611,6 @@ int _mpc_cl_type_hcontiguous(mpc_lowcomm_datatype_t *datatype, size_t count,
 	return _mpc_cl_type_hcontiguous_ctx(datatype, count, data_in, &dtctx);
 }
 
-int _mpc_cl_type_commit(mpc_lowcomm_datatype_t *datatype_p)
-{
-    /* Dereference for convenience */
-    mpc_lowcomm_datatype_t datatype = *datatype_p;
-
-    int ierr = MPC_LOWCOMM_SUCCESS;
-
-    /* Error cases */
-	if(datatype == MPC_DATATYPE_NULL || datatype == MPC_LB || datatype == MPC_UB)
-	{
-		MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_TYPE,
-		                 "You are trying to commit a NULL data-type");
-	}
-    if(datatype->ref_count != 1) {
-        MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_TYPE,
-                         "You are trying to commit a non created datatype");
-    }
-
-    /* Save it in the task array */
-    ierr = _mpc_dt_general_on_slot(datatype_p);
-    if ( ierr != MPC_LOWCOMM_SUCCESS ) {
-       return ierr;
-    }
-    /* OPTIMIZE */
-    ierr = _mpc_dt_general_optimize(*datatype_p);
-
-    return ierr;
-}
-
 int _mpc_cl_type_debug(mpc_lowcomm_datatype_t datatype)
 {
 	/* mpc_mpi_cl_per_mpi_process_ctx_t *task_specific = _mpc_cl_per_mpi_process_ctx_get(); */
@@ -1680,6 +1651,36 @@ int _mpc_cl_type_debug(mpc_lowcomm_datatype_t datatype)
 
 	MPC_ERROR_SUCCESS();
 }
+
+int _mpc_cl_type_commit(mpc_lowcomm_datatype_t *datatype_p)
+{
+    /* Dereference for convenience */
+    mpc_lowcomm_datatype_t datatype = *datatype_p;
+
+    int ierr = MPC_LOWCOMM_SUCCESS;
+
+    /* Error cases */
+	if(datatype == MPC_DATATYPE_NULL || datatype == MPC_LB || datatype == MPC_UB)
+	{
+		MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_TYPE,
+		                 "You are trying to commit a NULL data-type");
+	}
+    if(datatype->ref_count != 1) {
+        MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_TYPE,
+                         "You are trying to commit a non created datatype");
+    }
+
+    /* Save it in the task array */
+    ierr = _mpc_dt_general_on_slot(datatype_p);
+    if ( ierr != MPC_LOWCOMM_SUCCESS ) {
+       return ierr;
+    }
+    /* OPTIMIZE */
+    ierr = _mpc_dt_general_optimize(*datatype_p);
+
+    return ierr;
+}
+
 
 /** \brief This function increases the refcounter for a datatype
  *
@@ -1809,14 +1810,14 @@ int _mpc_cl_type_ctx_set(mpc_lowcomm_datatype_t datatype,
 			MPC_ERROR_SUCCESS();
 			break;
 
-		case MPC_DATATYPES_USER:
+		default:
+            /* Check if the datatype is created */
+            if(_MPC_DT_USER_IS_FREE(datatype)) {
+                MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_TYPE, "Unknown datatype provided");
+            }
+
 			/* Save the context */
 			_mpc_dt_context_set(datatype->context, dctx);
-			break;
-
-		case MPC_DATATYPES_UNKNOWN:
-			MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_INTERN,
-			                 "This datatype is unknown");
 			break;
 	}
 
@@ -2931,7 +2932,7 @@ int _mpc_cl_status_get_count(const mpc_lowcomm_status_t *status, mpc_lowcomm_dat
 	if(data_size != 0)
 	{
 		size = status->size;
-		mpc_common_nodebug("Get_count : count %d, data_type %d (size %d)", size, datatype,
+		mpc_common_nodebug("Get_count : count %d, data_type %p (size %d)", size, datatype,
 		                   data_size);
 
 		if(size % data_size == 0)

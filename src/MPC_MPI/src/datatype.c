@@ -135,7 +135,7 @@ struct __mpc_dt_keyval
 {
 	MPC_Type_copy_attr_function *copy;	 /**< Keyval copy func */
 	MPC_Type_delete_attr_function *delete; /**< Keyval delete func */
-void *extra_state;			   /**< An extra state to be stored */
+    void *extra_state;			   /**< An extra state to be stored */
 	int free_cell;			   /**< Initally 0, 1 is the keyval is then freed */
 };
 
@@ -483,6 +483,8 @@ static inline void ___mpc_init_composed_common_type( mpc_lowcomm_datatype_t targ
 	/* Create the general data-type */
     mpc_lowcomm_datatype_t new_type = _mpc_dt_general_create((intptr_t) target_type, count, begins, ends, types, 0, false, struct_size, true );
 
+    new_type->size = struct_size;
+
     /* Frees the temporary arrays */
     sctk_free(begins);
     sctk_free(ends);
@@ -724,8 +726,9 @@ static inline void __mpc_composed_common_types_init()
 
 static inline void __mpc_dt_footprint_clear( struct _mpc_dt_footprint *ctx );
 
-void _mpc_dt_contiguous_create( mpc_lowcomm_datatype_t *type, const size_t id_rank, const size_t element_size,
-                              const size_t count, const  mpc_lowcomm_datatype_t datatype )
+void _mpc_dt_contiguous_create( mpc_lowcomm_datatype_t *type, const size_t id_rank,
+                                const size_t element_size, const size_t count,
+                                const  mpc_lowcomm_datatype_t datatype )
 {
 	size_t size = element_size * count;
 
@@ -1010,6 +1013,7 @@ int _mpc_dt_general_on_slot( mpc_lowcomm_datatype_t *type_p) {
     /* Dereference for free purpose */
     mpc_lowcomm_datatype_t old_type = *type_p;
 
+    /* Already commited or common datatype */
     if( mpc_dt_is_valid(old_type) ) {
         return MPC_LOWCOMM_SUCCESS;
     }
@@ -1238,7 +1242,7 @@ void _mpc_dt_general_display( const mpc_lowcomm_datatype_t target_type )
 	mpc_common_debug_error( "INT : [" );
 	for ( i = 0; i < ni; i++ )
 	{
-		mpc_common_debug_error( "[%d] %d , ", i,
+		mpc_common_debug_error( "[%d] %d", i,
 					target_type->context->array_of_integers[i] );
 	}
 	mpc_common_debug_error( "]\n" );
@@ -1246,10 +1250,10 @@ void _mpc_dt_general_display( const mpc_lowcomm_datatype_t target_type )
 	mpc_common_debug_error( "ADD : [" );
 	for ( i = 0; i < na; i++ )
 	{
-		mpc_common_debug_error( "[%d] %ld , ", i,
+		mpc_common_debug_error( "[%d] %ld", i,
 					target_type->context->array_of_addresses[i] );
 	}
-	mpc_common_debug_error( "]\n" );
+	mpc_common_debug_error( "]" );
 
 	mpc_common_debug_error( "TYP : [" );
 	for ( i = 0; i < nd; i++ )
@@ -1258,12 +1262,13 @@ void _mpc_dt_general_display( const mpc_lowcomm_datatype_t target_type )
 			"[%d] %d (%s), ", i, target_type->context->array_of_types[i],
 			_mpc_dt_name_get( target_type->context->array_of_types[i] ) );
 	}
-	mpc_common_debug_error( "]\n" );
+	mpc_common_debug_error( "]" );
 
 	unsigned int j;
+    mpc_common_debug_error( "OPT :" );
 	for ( j = 0; j < target_type->opt_count; j++ )
 	{
-		mpc_common_debug_error( "[%d , %d]\n", target_type->opt_begins[j],
+		mpc_common_debug_error( "[%d , %d]", target_type->opt_begins[j],
 					target_type->opt_ends[j] );
 	}
 

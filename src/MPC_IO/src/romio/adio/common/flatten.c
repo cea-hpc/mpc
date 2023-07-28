@@ -179,6 +179,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node * flat,
                                           ints[3 * dims + 1],   /* order */
                                           types[0],     /* type */
                                           &stype);
+                MPI_Type_commit(&stype);
                 ADIOI_Flatten(stype, flat, st_offset, curr_index);
                 MPI_Type_free(&stype);
             }
@@ -201,6 +202,7 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node * flat,
                                         &ints[3 * dims + 3],    /* psizes */
                                         ints[4 * dims + 3],     /* order */
                                         types[0], &dtype);
+                MPI_Type_commit(&dtype);
 #ifdef FLATTEN_DEBUG
                 DBG_FPRINTF(stderr,
                             "ADIOI_Flatten:: MPI_COMBINER_DARRAY <ADIOI_Flatten(dtype, flat->indices[%#X] %#llX, flat->blocklens[%#X] %#llX, st_offset %#llX, curr_index %#llX);\n",
@@ -896,6 +898,7 @@ MPI_Count ADIOI_Count_contiguous_blocks(MPI_Datatype datatype, MPI_Count * curr_
                                           ints[3 * dims + 1],   /* order */
                                           types[0],     /* type */
                                           &stype);
+                MPI_Type_commit(&stype);
                 count = ADIOI_Count_contiguous_blocks(stype, curr_index);
                 /* curr_index will have already been updated; just pass
                  * count back up.
@@ -919,6 +922,7 @@ MPI_Count ADIOI_Count_contiguous_blocks(MPI_Datatype datatype, MPI_Count * curr_
                                         &ints[3 * dims + 3],    /* psizes */
                                         ints[4 * dims + 3],     /* order */
                                         types[0], &dtype);
+                MPI_Type_commit(&dtype);
                 count = ADIOI_Count_contiguous_blocks(dtype, curr_index);
                 /* curr_index will have already been updated; just pass
                  * count back up.

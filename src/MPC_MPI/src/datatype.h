@@ -251,15 +251,15 @@ void _mpc_dt_contiguous_create( mpc_lowcomm_datatype_t *type, const size_t id_ra
  *
  * This function allocates and fill a general datatype structure
  *
- * \param id Integer id of the new datatype (for debug)
- * \param count number of offsets to store
- * \param begins list of starting offsets in the datatype
- * \param ends list of end offsets in the datatype
+ * \param id        Integer id of the new datatype (for debug)
+ * \param count     Number of offsets to store
+ * \param begins    List of starting offsets in the datatype
+ * \param ends      List of end offsets in the datatype
  * \param datatypes List of datatypes for individual blocks
- * \param lb offset of type lower bound
- * \param is_lb tells if the type has a lowerbound
- * \param ub offset for type upper bound
- * \param is_b tells if the type has an upper bound
+ * \param lb        Offset of type lower bound
+ * \param is_lb     Tells if the type has a lowerbound
+ * \param ub        Offset for type upper bound
+ * \param is_b      Tells if the type has an upper bound
  *
  * \return The datatype created on success
  *         MPC_DATATYPE_NULL otherwise
@@ -281,7 +281,7 @@ mpc_lowcomm_datatype_t _mpc_dt_general_create( const unsigned int id,
  * \warning This function doesn't lock the datatype storage array.
  * Make sure it is locked before calling it
  *
- * \param type_p Pointer to the datatype to free
+ * \param type_p             Pointer to the datatype to free
  * The value pointed by type_p is set to MPC_DATATYPE_NULL after freeing the structure.
  * \param enable_refcounting Should the function release the embedded datatypes
  *
@@ -306,18 +306,26 @@ int _mpc_dt_general_release( mpc_lowcomm_datatype_t *type );
 
 /** \brief Commits a datatype in the task-specific datatype array
  *
- * \warning This function holds a lock when performing the commit
+ *  \warning This function holds a lock when performing the commit
  *
- * \param datatype_p A pointer on the datatype to commit
- *                   At exit it contained a commited datatype
- *                   or MPC_DATATYPE_NULL on error
+ *  \param datatype_p A pointer on the datatype to commit
+ *                    At exit it contained a commited datatype
+ *                    or MPC_DATATYPE_NULL on error
  */
 int _mpc_dt_general_on_slot(mpc_lowcomm_datatype_t *datatype_p);
 
+/** \brief Retrieves a user defined datatype from its id
+ *
+ * \param idx ID of the datatype to retrieve
+ * \return The datatype on success,
+ *         MPI_DATATYPE_NULL otherwise
+ */
+mpc_lowcomm_datatype_t _mpc_dt_on_slot_get(const size_t idx);
+
 /** \brief Get the minimum offset of a datatype (ignoring LB)
- *  \param type Type which true lb is requested
- *  \param true_lb the true lb of the datatype
- *  \param size size true LB to true UB
+ *  \param type     Type which true lb is requested
+ *  \param true_lb  True lb of the datatype
+ *  \param true_ub  True ub of the datatype
  */
 void _mpc_dt_general_true_extend( const _mpc_lowcomm_general_datatype_t *type, long *true_lb, long *true_ub );
 
@@ -332,6 +340,7 @@ int _mpc_dt_general_optimize( _mpc_lowcomm_general_datatype_t *target_type );
  *  \param target_type Type to be displayed
  */
 void _mpc_dt_general_display( const mpc_lowcomm_datatype_t target_type );
+
 
 /************************************************************************/
 /* Datatype range calculations                                       */
@@ -353,6 +362,7 @@ void _mpc_dt_general_display( const mpc_lowcomm_datatype_t target_type );
  */
 
 /** \brief List of datatype kinds
+ *
  *  Note that as previously described a datatype can directly
  *  be identified from its value. This labelling is provided
  *  for convenience when "switching" between cases using \ref _mpc_dt_get_kind.
@@ -389,7 +399,7 @@ bool _mpc_dt_is_user_defined( const mpc_lowcomm_datatype_t datatype );
 
 /** \brief Checks whether a datatype is valid or not
  *
- * This means if it is a common or a user defined one
+ * This means if it is a common or a user defined one that have been commited
  *
  * \param datatype Datatype to test
  * \return true if datatype is valid, false otherwise
@@ -399,23 +409,6 @@ static inline bool mpc_dt_is_valid( const mpc_lowcomm_datatype_t datatype ) {
     return mpc_lowcomm_datatype_is_common(datatype) || _mpc_dt_is_user_defined(datatype);
 }
 
-/** \brief Returns true if the datatype is occupying a contiguous memory region
- *
- * \param data_in Datatype to test
- * \return true if data_in is contiguous in memory
- *         false otherwise
- */
-static inline bool _mpc_dt_is_contig_mem( const mpc_lowcomm_datatype_t data_in )
-{
-	/* Note that the general asumption can be optimized
-     * for single segment general with no LB/UB */
-	if ( _mpc_dt_is_user_defined( data_in ) || _mpc_dt_is_boundary( data_in ) )
-	{
-		return false;
-	}
-
-	return true;
-}
 
 /** \brief This functions returns the \ref mpc_dt_kind_t of an mpc_lowcomm_datatype_t
  *
@@ -448,23 +441,35 @@ static inline mpc_dt_kind_t _mpc_dt_get_kind( const mpc_lowcomm_datatype_t datat
  */
 static inline mpc_lowcomm_datatype_t _mpc_dt_get_datatype(const mpc_lowcomm_datatype_t datatype) {
     mpc_lowcomm_datatype_t type = MPC_LOWCOMM_DATATYPE_NULL;
-    switch(_mpc_dt_get_kind(datatype)) {
-        case MPC_DATATYPES_COMMON:
-            if(mpc_lowcomm_datatype_is_common_predefined(datatype)) {
-                type = mpc_lowcomm_datatype_common_get_type_struct(datatype);
-                break;
-            }
-        case MPC_DATATYPES_USER:
+
+    if(mpc_dt_is_valid(datatype)) {
+        if(mpc_lowcomm_datatype_is_common_predefined(datatype)) {
+            type = mpc_lowcomm_datatype_common_get_type_struct(datatype);
+        }
+        else {
             type = datatype;
-            break;
-        case MPC_DATATYPES_UNKNOWN:
-            type = MPC_LOWCOMM_DATATYPE_NULL;
-            break;
+        }
     }
 
     return type;
 }
 
+/** \brief Returns true if the datatype is occupying a contiguous memory region
+ *
+ * \param data_in Datatype to test
+ * \return true if data_in is contiguous in memory
+ *         false otherwise
+ */
+static inline bool _mpc_dt_is_contig_mem( const mpc_lowcomm_datatype_t data_in ) {
+	/* Note that the general asumption can be optimized
+     * for single segment general with no LB/UB */
+	if ( mpc_dt_is_valid( data_in ) &&
+         _mpc_dt_get_datatype(data_in)->opt_count == 1 ) {
+            return true;
+	}
+
+	return false;
+}
 /************************************************************************/
 /* Datatype  Array                                                      */
 /************************************************************************/
@@ -490,7 +495,7 @@ struct _mpc_dt_storage *_mpc_dt_storage_init();
 
 /** \brief Helper funtion to release only allocated datatypes
  *
- *  \param da A pointer to the datatype array
+ *  \param da       A pointer to the datatype array
  *  \param datatype The datatype to be freed
  */
 bool _mpc_dt_storage_type_can_be_released( const mpc_lowcomm_datatype_t datatype );
@@ -501,7 +506,8 @@ bool _mpc_dt_storage_type_can_be_released( const mpc_lowcomm_datatype_t datatype
 void _mpc_dt_storage_release( struct _mpc_dt_storage *da );
 
 /** \brief Returns a pointer to a general datatype
- *  \param da A pointer to the datatype array
+ *
+ *  \param da       A pointer to the datatype array
  *  \param datatype The datatype ID we want to retrieve
  *
  *  \return NULL id not allocated a valid pointer otherwise
@@ -511,11 +517,10 @@ void _mpc_dt_storage_release( struct _mpc_dt_storage *da );
 _mpc_lowcomm_general_datatype_t *_mpc_dt_storage_get_general_datatype( struct _mpc_dt_storage *da, const size_t datatype_idx );
 
 /** \brief Sets a pointer to a datatype in the datatype array
- *  \param da A pointer to the datatype array
- *  \param datatype The datatype ID we want to set
- *  \param value the pointer to the datatype array
  *
- *  \return NULL id not allocated a valid pointer otherwise
+ *  \param da       A pointer to the datatype array
+ *  \param datatype The datatype ID we want to set
+ *  \param value    The datatype to insert in the array
  *
  *  \warning The datatype must be a general datatype
  */

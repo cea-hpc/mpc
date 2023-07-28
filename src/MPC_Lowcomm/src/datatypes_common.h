@@ -56,7 +56,7 @@ typedef struct _mpc_lowcomm_datatype_common_s {
 #define MPC_LOWCOMM_PACKED_TYPE void
 
 /* C++ Types */
-#define MPC_LOWCOMM_CXX_BOOL_TYPE void
+#define MPC_LOWCOMM_CXX_BOOL_TYPE bool
 
 /* FORTRAN Types */
 #define MPC_LOWCOMM_INTEGER_TYPE int

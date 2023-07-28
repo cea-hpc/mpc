@@ -22,6 +22,7 @@
 
 #include <mpc_mpi.h>
 #include <mpc_thread.h>
+#include <datatype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -409,7 +410,7 @@ static inline int NBC_Copy(const void *src, int srccount, MPI_Datatype srctype, 
 	MPI_Aint ext;
 	void *packbuf;
 
-	if((srctype == tgttype) && NBC_Type_intrinsic(srctype)) {
+	if((srctype == tgttype) && _mpc_dt_is_contig_mem(srctype)) {
 		/* if we have the same types and they are contiguous (intrinsic
 		 * types are contiguous), we can just use a single memcpy */
 		res = MPI_Type_extent(srctype, &ext);
