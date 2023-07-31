@@ -7000,11 +7000,12 @@ void pmpi_type_commit__(MPI_Fint *datatype, int *ierror)
 #pragma weak mpi_type_contiguous_ = pmpi_type_contiguous_
 void pmpi_type_contiguous_(int *count, MPI_Fint *oldtype, MPI_Fint *newtype, int *ierror)
 {
-/* MPI_Type_contiguous */
+    /* MPI_Type_contiguous */
 	MPI_Datatype c_oldtype = PMPI_Type_f2c(*oldtype);
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_contiguous(*count, c_oldtype, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7016,6 +7017,7 @@ void pmpi_type_contiguous__(int *count, MPI_Fint *oldtype, MPI_Fint *newtype, in
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_contiguous(*count, c_oldtype, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7027,6 +7029,7 @@ void pmpi_type_create_darray_(int *size, int *rank, int *ndims, const int array_
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_create_darray(*size, *rank, *ndims, array_of_gsizes, array_of_distribs, array_of_dargs, array_of_psizes, *order, c_oldtype, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7038,6 +7041,7 @@ void pmpi_type_create_darray__(int *size, int *rank, int *ndims, const int array
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_create_darray(*size, *rank, *ndims, array_of_gsizes, array_of_distribs, array_of_dargs, array_of_psizes, *order, c_oldtype, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7048,6 +7052,7 @@ void pmpi_type_create_f90_complex_(int *p, int *r, MPI_Fint *newtype, int *ierro
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_create_f90_complex(*p, *r, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7058,6 +7063,7 @@ void pmpi_type_create_f90_complex__(int *p, int *r, MPI_Fint *newtype, int *ierr
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_create_f90_complex(*p, *r, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7068,6 +7074,7 @@ void pmpi_type_create_f90_integer_(int *r, MPI_Fint *newtype, int *ierror)
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_create_f90_integer(*r, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7078,6 +7085,7 @@ void pmpi_type_create_f90_integer__(int *r, MPI_Fint *newtype, int *ierror)
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_create_f90_integer(*r, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7088,6 +7096,7 @@ void pmpi_type_create_f90_real_(int *p, int *r, MPI_Fint *newtype, int *ierror)
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_create_f90_real(*p, *r, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7098,6 +7107,7 @@ void pmpi_type_create_f90_real__(int *p, int *r, MPI_Fint *newtype, int *ierror)
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_create_f90_real(*p, *r, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7109,6 +7119,7 @@ void pmpi_type_create_hindexed_(int *count, const int array_of_blocklengths[], c
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_create_hindexed(*count, array_of_blocklengths, array_of_displacements, c_oldtype, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7120,6 +7131,7 @@ void pmpi_type_create_hindexed__(int *count, const int array_of_blocklengths[], 
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_create_hindexed(*count, array_of_blocklengths, array_of_displacements, c_oldtype, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7135,6 +7147,7 @@ void pmpi_type_hindexed_(int *count,
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_hindexed(*count, array_of_blocklengths, array_of_displacements, c_oldtype, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7149,6 +7162,7 @@ void pmpi_type_hindexed__(int *count,
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_hindexed(*count, array_of_blocklengths, array_of_displacements, c_oldtype, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7161,6 +7175,7 @@ void pmpi_type_create_hindexed_block_(int *count, int *blocklength, const MPI_Ai
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_create_hindexed_block(*count, *blocklength, array_of_displacements, c_oldtype, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7172,6 +7187,7 @@ void pmpi_type_create_hindexed_block__(int *count, int *blocklength, const MPI_A
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_create_hindexed_block(*count, *blocklength, array_of_displacements, c_oldtype, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7183,6 +7199,7 @@ void pmpi_type_hvector_(int *count, int *blocklength, MPI_Aint *stride, MPI_Fint
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_hvector(*count, *blocklength, *stride, c_oldtype, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7194,6 +7211,7 @@ void pmpi_type_hvector__(int *count, int *blocklength, MPI_Aint *stride, MPI_Fin
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_hvector(*count, *blocklength, *stride, c_oldtype, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7205,6 +7223,7 @@ void pmpi_type_create_hvector_(int *count, int *blocklength, MPI_Aint *stride, M
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_create_hvector(*count, *blocklength, *stride, c_oldtype, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7216,6 +7235,7 @@ void pmpi_type_create_hvector__(int *count, int *blocklength, MPI_Aint *stride, 
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_create_hvector(*count, *blocklength, *stride, c_oldtype, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7227,6 +7247,7 @@ void pmpi_type_create_indexed_block_(int *count, int *blocklength, const int arr
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_create_indexed_block(*count, *blocklength, array_of_displacements, c_oldtype, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7238,6 +7259,7 @@ void pmpi_type_create_indexed_block__(int *count, int *blocklength, const int ar
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_create_indexed_block(*count, *blocklength, array_of_displacements, c_oldtype, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7265,6 +7287,7 @@ void pmpi_type_create_resized_(MPI_Fint *oldtype, MPI_Aint *lb, MPI_Aint *extent
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_create_resized(c_oldtype, *lb, *extent, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7276,6 +7299,7 @@ void pmpi_type_create_resized__(MPI_Fint *oldtype, MPI_Aint *lb, MPI_Aint *exten
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_create_resized(c_oldtype, *lb, *extent, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7296,6 +7320,7 @@ void pmpi_type_create_struct_(int *count, const int array_of_blocklengths[], con
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_create_struct(*count, array_of_blocklengths, array_of_displacements, c_array_of_types, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 	sctk_free(c_array_of_types);
 }
@@ -7317,6 +7342,7 @@ void pmpi_type_create_struct__(int *count, const int array_of_blocklengths[], co
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_create_struct(*count, array_of_blocklengths, array_of_displacements, c_array_of_types, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 	sctk_free(c_array_of_types);
 }
@@ -7351,6 +7377,7 @@ void pmpi_type_create_subarray_(int *ndims, const int array_of_sizes[], const in
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_create_subarray(*ndims, array_of_sizes, array_of_subsizes, array_of_starts, *order, c_oldtype, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
@@ -7362,6 +7389,7 @@ void pmpi_type_create_subarray__(int *ndims, const int array_of_sizes[], const i
 	MPI_Datatype c_newtype;
 
 	*ierror  = MPI_Type_create_subarray(*ndims, array_of_sizes, array_of_subsizes, array_of_starts, *order, c_oldtype, &c_newtype);
+    *ierror  = MPI_Type_commit(&c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
