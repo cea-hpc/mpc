@@ -10,6 +10,7 @@
 #include "mpc_ofi_dns.h"
 #include "mpc_ofi_request.h"
 #include "lowcomm_config.h"
+#include "mpc_mempool.h"
 
 /* OFI */
 #include <rdma/fabric.h>

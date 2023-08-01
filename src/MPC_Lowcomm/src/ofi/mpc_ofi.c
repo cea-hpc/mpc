@@ -137,7 +137,12 @@ static inline int __free_bsend_buffer(__UNUSED__ struct mpc_ofi_request_t *req, 
    return 0;
 }
 
-#define MPC_OFI_BSEND_TRSH 1024
+static inline int __free_bsend_buffer_mempool(__UNUSED__ struct mpc_ofi_request_t *req, void *pbuffer){
+   mpc_mempool_free(NULL, pbuffer);
+   return 0;
+}
+
+#define MPC_OFI_BSEND_TRSH 1024 // dans la config
 
 ssize_t mpc_ofi_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
                               uint8_t id,
@@ -150,7 +155,9 @@ ssize_t mpc_ofi_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
 	ssize_t sent;
 
    TODO("Use the right size from config an provider caps");
-	lcr_ofi_am_hdr_t *hdr = sctk_malloc(MPC_OFI_BSEND_TRSH + sizeof(lcr_ofi_am_hdr_t));
+	// lcr_ofi_am_hdr_t *hdr = sctk_malloc(MPC_OFI_BSEND_TRSH + sizeof(lcr_ofi_am_hdr_t));
+    if(!ep->bcopy_mempool) ep->bcopy_mempool = (mpc_mempool *)sctk_malloc(sizeof(mpc_mempool));
+   lcr_ofi_am_hdr_t *hdr = mpc_mempool_alloc_and_init(ep->bcopy_mempool, 10, 100, MPC_OFI_BSEND_TRSH + sizeof(lcr_ofi_am_hdr_t), sctk_malloc, sctk_free);
 
 	if (hdr == NULL) {
 	       mpc_common_debug_error("Could not allocate buffer.");
@@ -164,7 +171,7 @@ ssize_t mpc_ofi_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
 
    mpc_common_debug("OUT CB %d LEN %lld", hdr->am_id, hdr->length);
 
-   if( mpc_ofi_view_send(&rail->network.ofi.view, hdr, hdr->length + sizeof(lcr_ofi_am_hdr_t), ep->dest, NULL, __free_bsend_buffer, hdr) )
+   if( mpc_ofi_view_send(&rail->network.ofi.view, hdr, hdr->length + sizeof(lcr_ofi_am_hdr_t), ep->dest, NULL, __free_bsend_buffer_mempool, hdr) )
    {
       mpc_common_errorpoint("Failed to send a message");
       return -1;

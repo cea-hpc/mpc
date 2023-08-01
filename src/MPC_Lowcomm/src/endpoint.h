@@ -33,6 +33,7 @@
 #include <mpc_common_types.h>
 #include <mpc_common_datastructure.h>
 #include <mpc_lowcomm_monitor.h>
+#include <mpc_mempool.h>
 
 /* Typedefs for this file are in the central
  * header to allow later references avoiding
@@ -94,6 +95,8 @@ struct _mpc_lowcomm_endpoint_s
 	char                         is_initiator;      /**< Return if the process is the initiator of the remote creation.
 	                                                 *   is set to CHAR_MAX if not set */
 	mpc_common_spinlock_t        lock;              /**< Lock protecting the endpoint */
+	mpc_mempool                  *zcopy_mempool;
+	mpc_mempool                  *bcopy_mempool;
 };
 
 /**
