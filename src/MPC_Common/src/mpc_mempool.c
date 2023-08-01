@@ -7,23 +7,22 @@
 #define LCP_MP_LOG
 
 mpc_common_spinlock_t mp_lock;
-int count_inertia;
+int count_inertia, mempool_number;
 
-FILE *logfile;
-
-void _mpc_mempool_add(mpc_mempool *mp, lcp_mp_buffer *buf){
+void _mpc_mempool_add(mpc_mempool *mp, mpc_mp_buffer *buf){
     buf->next = mp->head;
+    buf->mp = mp;
     buf->canary = 'c';
     mp->head = buf;
     mp->available++;
 }
 
-lcp_mp_buffer *_mpc_mempool_malloc(mpc_mempool *mp){
-    return (lcp_mp_buffer *)mp->malloc_func(mp->size + sizeof(lcp_mp_buffer));
+mpc_mp_buffer *_mpc_mempool_malloc(mpc_mempool *mp){
+    return (mpc_mp_buffer *)mp->malloc_func(mp->size + sizeof(mpc_mp_buffer));
 }
 
-lcp_mp_buffer *_mpc_mempool_pop(mpc_mempool *mp){
-    lcp_mp_buffer *buf = mp->head;
+mpc_mp_buffer *_mpc_mempool_pop(mpc_mempool *mp){
+    mpc_mp_buffer *buf = mp->head;
     mp->head = mp->head->next;
     mp->available--;
     return buf;
@@ -49,16 +48,16 @@ int _mpc_mempool_is_full(mpc_mempool *mp){
     return mp->available>= mp->max;
 }
 
-lcp_mp_buffer *_mpc_mempool_buffer_shift_back(void *buf){
-    return (lcp_mp_buffer *)(buf - sizeof(char) - sizeof(lcp_mp_buffer *));
+mpc_mp_buffer *_mpc_mempool_buffer_shift_back(void *buf){
+    return (mpc_mp_buffer *)(buf - sizeof(char) - sizeof(mpc_mp_buffer *));
 }
 
 int mpc_mempool_empty(mpc_mempool *mp){
-    lcp_mp_buffer *head;
-    fclose(logfile);
+    mpc_mp_buffer *head;
+    fclose(mp->logfile);
     while(mp->head){
             head = _mpc_mempool_pop(mp);
-            free(head);
+            mp->free_func(head);
     }
     return 0;
 }
@@ -71,6 +70,7 @@ int mpc_mempool_init(mpc_mempool *mp,
     void (*free_func)(void *)){
 
     int i;
+    mp->initialized = 1;
     mp->size = size;
     mp->allocated = 0;
     mp->max_inertia = max / 5;
@@ -81,14 +81,15 @@ int mpc_mempool_init(mpc_mempool *mp,
     mp->max = max;
     mp->malloc_func = malloc_func;
     mp->free_func = free_func;
-
 #ifdef LCP_MP_LOG
     mpc_common_spinlock_lock(&mp_lock);
     char title[50];
-    sprintf(title, "log_m%d_M%d_i%d.csv", min, max, mp->max_inertia);
-    logfile = fopen(title, "w+");
+    sprintf(title, "log_m%d_M%d_i%d_%d.csv", min, max, mp->max_inertia, mempool_number);
+    printf("initializing mempool %s\n", title);
+    mempool_number++;
+    mp->logfile = fopen(title, "w+");
     char *header = "type,allocated,available,inertia\n";
-    fprintf(logfile, "%s", header);
+    fprintf(mp->logfile, "%s", header);
     mpc_common_spinlock_unlock(&mp_lock);
 #endif
 
@@ -108,9 +109,9 @@ void *mpc_mempool_alloc(mpc_mempool *mp){
         _mpc_mempool_add(mp, _mpc_mempool_malloc(mp));
     }
 #ifdef LCP_MP_LOG
-    fprintf(logfile, "alloc,%d,%d,%d,%d\n", mp->allocated, mp->available, mp->inertia, effective_malloc);
+    fprintf(mp->logfile, "alloc,%d,%d,%d,%d\n", mp->allocated, mp->available, mp->inertia, effective_malloc);
 #endif
-    lcp_mp_buffer *ret = _mpc_mempool_pop(mp);
+    mpc_mp_buffer *ret = _mpc_mempool_pop(mp);
     if(!ret) printf("error allocating\n");
     mp->allocated++;
     mpc_common_spinlock_unlock(&mp_lock);
@@ -118,11 +119,12 @@ void *mpc_mempool_alloc(mpc_mempool *mp){
 }
 
 void mpc_mempool_free(mpc_mempool *mp, void *buffer){
-    lcp_mp_buffer *buf = _mpc_mempool_buffer_shift_back(buffer);
+    mpc_mp_buffer *buf = _mpc_mempool_buffer_shift_back(buffer);
     int effective_free = 0;
     if ( buf->canary != 'c' ){
         return;
     }
+    if(!mp) mp = buf->mp;
     mpc_common_spinlock_lock(&mp_lock);
     count_inertia++;
     if(mp->inertia > -mp->max_inertia && !(count_inertia % 3 == 0)) mp->inertia--;
@@ -135,13 +137,25 @@ void mpc_mempool_free(mpc_mempool *mp, void *buffer){
         mp->free_func(buf);
         effective_free = 1;
         if(!_mpc_mempool_is_below_minimum(mp) && _mpc_mempool_free_phase(mp) && mp->available){
-            lcp_mp_buffer *head = _mpc_mempool_pop(mp);
+            mpc_mp_buffer *head = _mpc_mempool_pop(mp);
             mp->free_func(head);
         }
     }
 #ifdef LCP_MP_LOG
-    fprintf(logfile, "free,%d,%d,%d,%d\n", mp->allocated, mp->available, mp->inertia, effective_free);
+    fprintf(mp->logfile, "free,%d,%d,%d,%d\n", mp->allocated, mp->available, mp->inertia, effective_free);
 #endif
     mpc_common_spinlock_unlock(&mp_lock);
     mp->allocated--;
+}
+
+void *mpc_mempool_alloc_and_init(mpc_mempool *mp, 
+                            int min, 
+                                int max, 
+                                int size, 
+                                void *(*malloc_func)(size_t), 
+                                void (*free_func)(void *)){
+    if(!mp->initialized){
+        mpc_mempool_init(mp, min, max, size, malloc_func, free_func);
+    }
+    return mpc_mempool_alloc(mp);
 }
