@@ -54,6 +54,7 @@ static inline void _mpc_lowcomm_datatype_init_struct_common ( mpc_lowcomm_dataty
     datatype->is_ub = false;
 
     datatype->is_a_padded_struct = false;
+    datatype->is_commited = true;
 
     datatype->ref_count = 1; /**< Common datatype cannot be freed */
     datatype->context = NULL;

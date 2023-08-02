@@ -18,37 +18,40 @@ extern "C" {
  *
  */
 typedef struct MPI_ABI_Datatype {
-	/* Context */
-	struct _mpc_dt_footprint *context; /**< Saves the creation context for MPI_get_envelope & MPI_Get_contents */
+    /* Context */
+    struct _mpc_dt_footprint *context; /**< Saves the creation context for MPI_get_envelope & MPI_Get_contents */
 
-	/* Attrs */
-	struct __mpc_dt_attr_store *attrs; /**< ATTR array for this type */
+    /* Attrs */
+    struct __mpc_dt_attr_store *attrs; /**< ATTR array for this type */
 
-	/* Basics */
-	size_t size;			   /**< Total size of the datatype */
-	unsigned long count;	   /**< Number of elements in the datatype */
+    /* Basics */
+    size_t size;  /**< Total size of the datatype */
+    size_t count; /**< Number of elements in the datatype */
 
-	/* Content */
-	long *begins; /**< Begin offsets */
-	long *ends;   /**< End offsets */
+    /* Content */
+    long *begins; /**< Begin offsets */
+    long *ends;   /**< End offsets */
 
-	/* Optimized Content */
-	unsigned long opt_count;             /**< Number of blocks with optimization */
-	long *opt_begins;                    /**< Begin offsets with optimization */
-	long *opt_ends;                      /**< End offsets with optimization */
-	mpc_lowcomm_datatype_t *datatypes;	 /**< Datatypes for each block */
+    /* Optimized Content */
+    size_t opt_count;                  /**< Number of blocks with optimization */
+    long *opt_begins;                  /**< Begin offsets with optimization */
+    long *opt_ends;                    /**< End offsets with optimization */
+    mpc_lowcomm_datatype_t *datatypes; /**< Datatypes for each block */
 
-	/* Bounds */
-	long lb;                 /**< Lower bound offset  */
-	long ub;                 /**< Upper bound offset */
+    /* Bounds */
+    long lb; /**< Lower bound offset  */
+    long ub; /**< Upper bound offset */
 
     /* Additionnal informations */
-	unsigned int id;         /**< Integer ID (useful for debug and searching _mpc_dt_storage) */
-	unsigned int ref_count;  /**< Ref counter to manage freeing */
+    unsigned int id;         /**< Integer ID (useful for debug and searching _mpc_dt_storage) */
+    unsigned int ref_count;  /**< Ref counter to manage freeing */
 
-	bool is_lb;               /**< Does type has a lower bound */
-	bool is_ub;               /**< Does type has an upper bound */
-	bool is_a_padded_struct;  /**< Was the type padded with UB during construction ? */
+    bool is_lb;              /**< Does type has a lower bound */
+    bool is_ub;              /**< Does type has an upper bound */
+    bool is_a_padded_struct; /**< Was the type padded with UB during construction ? */
+    bool is_commited;        /**< Does type is commited ? */ 
+
+    char padding[19];        /**< Pad to 128 bytes */
 
 } _mpc_lowcomm_general_datatype_t;
 

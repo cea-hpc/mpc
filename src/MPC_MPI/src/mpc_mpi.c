@@ -9591,6 +9591,7 @@ int PMPI_Send_internal(const void *buf, int count, MPI_Datatype datatype, int de
 	_mpc_cl_comm_size(comm, &size);
 	mpi_check_rank_send(dest, size, comm);
 	mpi_check_type(datatype, comm);
+	mpi_check_type_commited(datatype, comm);
 	mpi_check_count(count, comm);
 
 	if(count != 0)
@@ -9688,6 +9689,7 @@ int PMPI_Recv_internal(void *buf, int count, MPI_Datatype datatype, int source, 
 
 	mpi_check_comm(comm);
 	mpi_check_type(datatype, comm);
+	mpi_check_type_commited(datatype, comm);
 	mpi_check_count(count, comm);
 	mpc_common_nodebug("tag %d", tag);
 	int size;
@@ -9775,7 +9777,7 @@ int PMPI_Recv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
 int PMPI_Get_count(const MPI_Status *status, MPI_Datatype datatype, int *count)
 {
 	mpi_check_type(datatype, MPI_COMM_WORLD);
-	mpi_check_type_commited(datatype, MPI_COMM_WORLD);
+	mpi_check_type_created(datatype, MPI_COMM_WORLD);
 
 	if(status == NULL)
 	{
@@ -9806,6 +9808,7 @@ int PMPI_Bsend(const void *buf, int count, MPI_Datatype datatype, int dest, int 
 		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank_send(dest, size, comm);
 		mpi_check_type(datatype, comm);
+		mpi_check_type_commited(datatype, comm);
 		mpi_check_count(count, comm);
 		mpc_common_nodebug("tag %d", tag);
 		mpi_check_tag_send(tag, comm);
@@ -9886,6 +9889,7 @@ int PMPI_Rsend(const void *buf, int count, MPI_Datatype datatype, int dest, int 
 		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank_send(dest, size, comm);
 		mpi_check_type(datatype, comm);
+		mpi_check_type_commited(datatype, comm);
 		mpi_check_count(count, comm);
 		mpc_common_nodebug("tag %d", tag);
 		mpi_check_tag_send(tag, comm);
@@ -10003,6 +10007,7 @@ int PMPI_Isend_internal(const void *buf, int count, MPI_Datatype datatype, int d
 	_mpc_cl_comm_size(comm, &size);
 	mpi_check_rank_send(dest, size, comm);
 	mpi_check_type(datatype, comm);
+	mpi_check_type_commited(datatype, comm);
 	mpi_check_count(count, comm);
 	mpc_common_nodebug("tag %d", tag);
 
@@ -10089,6 +10094,7 @@ int PMPI_Irecv_internal(void *buf, int count, MPI_Datatype datatype, int source,
 		int size;
 		mpi_check_comm(comm);
 		mpi_check_type(datatype, comm);
+		mpi_check_type_commited(datatype, comm);
 		mpi_check_count(count, comm);
 		mpc_common_nodebug("tag %d", tag);
 		_mpc_cl_comm_size(comm, &size);
@@ -11079,6 +11085,7 @@ int PMPI_Send_init(const void *buf, int count, MPI_Datatype datatype, int dest,
 		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank_send(dest, size, comm);
 		mpi_check_type(datatype, comm);
+		mpi_check_type_commited(datatype, comm);
 		mpi_check_count(count, comm);
 		mpc_common_nodebug("tag %d", tag);
 		mpi_check_tag_send(tag, comm);
@@ -11132,6 +11139,7 @@ int PMPI_Bsend_init(const void *buf, int count, MPI_Datatype datatype,
 		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank_send(dest, size, comm);
 		mpi_check_type(datatype, comm);
+		mpi_check_type_commited(datatype, comm);
 		mpi_check_count(count, comm);
 		mpc_common_nodebug("tag %d", tag);
 		mpi_check_tag_send(tag, comm);
@@ -11186,6 +11194,7 @@ int PMPI_Ssend_init(const void *buf, int count, MPI_Datatype datatype, int dest,
 		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank_send(dest, size, comm);
 		mpi_check_type(datatype, comm);
+		mpi_check_type_commited(datatype, comm);
 		mpi_check_count(count, comm);
 		mpc_common_nodebug("tag %d", tag);
 		mpi_check_tag_send(tag, comm);
@@ -11239,6 +11248,7 @@ int PMPI_Rsend_init(const void *buf, int count, MPI_Datatype datatype, int dest,
 		_mpc_cl_comm_size(comm, &size);
 		mpi_check_rank_send(dest, size, comm);
 		mpi_check_type(datatype, comm);
+		mpi_check_type_commited(datatype, comm);
 		mpi_check_count(count, comm);
 		mpc_common_nodebug("tag %d", tag);
 		mpi_check_tag_send(tag, comm);
@@ -11308,6 +11318,7 @@ int PMPI_Recv_init(void *buf, int count, MPI_Datatype datatype, int source,
 		int size;
 		mpi_check_comm(comm);
 		mpi_check_type(datatype, comm);
+		mpi_check_type_commited(datatype, comm);
 		mpi_check_count(count, comm);
 		mpc_common_nodebug("tag %d", tag);
 		mpi_check_tag(tag, comm);
@@ -11809,6 +11820,7 @@ int PMPI_Sendrecv_replace(void *buf, int count, MPI_Datatype datatype,
 
 	mpi_check_comm(comm);
 	mpi_check_type(datatype, comm);
+	mpi_check_type_commited(datatype, comm);
 	mpi_check_count(count, comm);
 	mpi_check_tag_send(sendtag, comm);
 	mpi_check_tag(recvtag, comm);
@@ -11946,7 +11958,7 @@ int PMPI_Type_contiguous(int count, MPI_Datatype old_type, MPI_Datatype *new_typ
 
 	mpi_check_count(count, comm);
 	mpi_check_type(old_type, comm);
-	mpi_check_type_commited(old_type, comm);
+	mpi_check_type_created(old_type, comm);
 
 	*new_type_p = MPC_DATATYPE_NULL;
 
@@ -11959,7 +11971,7 @@ int PMPI_Type_vector(int count, int blocklength, int stride, MPI_Datatype old_ty
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res       = MPI_ERR_INTERN;
 
-	mpi_check_type_commited(old_type, comm);
+	mpi_check_type_created(old_type, comm);
 
 	*newtype_p = MPC_DATATYPE_NULL;
 
@@ -12013,13 +12025,11 @@ int PMPI_Type_hvector(int count, int blocklen, MPI_Aint stride, MPI_Datatype old
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 
-
-	mpi_check_type_commited(old_type, comm);
+	mpi_check_type(old_type, MPI_COMM_WORLD);
+	mpi_check_type_created(old_type, comm);
 	mpi_check_count(count, comm);
 
 	*newtype_p = MPC_DATATYPE_NULL;
-
-	mpi_check_type(old_type, MPI_COMM_WORLD);
 
 
 	if(blocklen < 0)
@@ -12142,12 +12152,12 @@ int PMPI_Type_create_hvector(int count, int blocklen, MPI_Aint stride, MPI_Datat
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res       = MPI_ERR_INTERN;
 
-	mpi_check_type_commited(old_type, comm);
+	mpi_check_type(old_type, MPI_COMM_WORLD);
+	mpi_check_type_created(old_type, comm);
 	mpi_check_count(count, comm);
 
 	*newtype_p = MPC_DATATYPE_NULL;
 
-	mpi_check_type(old_type, MPI_COMM_WORLD);
 
 	if(blocklen < 0)
 	{
@@ -12183,7 +12193,7 @@ int PMPI_Type_indexed(int count, const int blocklens[], const int indices[], MPI
 		}
 	}
 
-	mpi_check_type_commited(old_type, MPI_COMM_SELF);
+	mpi_check_type_created(old_type, MPI_COMM_SELF);
 
 	MPI_Aint extent;
 
@@ -12245,7 +12255,7 @@ int PMPI_Type_hindexed(int count, const int blocklens[], const MPI_Aint indices[
 		}
 	}
 
-	mpi_check_type_commited(old_type, comm);
+	mpi_check_type_created(old_type, comm);
 	res = PMPI_Type_create_hindexed(count, blocklens, indices, old_type, newtype);
 
 	MPI_HANDLE_RETURN_VAL(res, comm);
@@ -12269,7 +12279,7 @@ int PMPI_Type_create_indexed_block(int count, int blocklength, const int indices
 	}
 
 
-	mpi_check_type_commited(old_type, comm);
+	mpi_check_type_created(old_type, comm);
 	res = __INTERNAL__PMPI_Type_create_indexed_block(count, blocklength, indices, old_type, newtype);
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
@@ -12291,7 +12301,7 @@ int PMPI_Type_create_hindexed_block(int count, int blocklength, const MPI_Aint i
 		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "Error negative block lengths provided");
 	}
 
-	mpi_check_type_commited(old_type, comm);
+	mpi_check_type_created(old_type, comm);
 	res = __INTERNAL__PMPI_Type_create_hindexed_block(count, blocklength, indices, old_type, newtype);
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
@@ -12320,7 +12330,7 @@ int PMPI_Type_create_hindexed(int count, const int blocklens[], const MPI_Aint i
 			MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "Error negative block lengths provided");
 		}
 	}
-	mpi_check_type_commited(old_type, comm);
+	mpi_check_type_created(old_type, comm);
 
 	/* Set its context */
 	struct _mpc_dt_context dtctx;
@@ -12461,7 +12471,7 @@ int PMPI_Type_struct(int count,
 	{
 		mpi_check_type(old_types[i], MPI_COMM_WORLD);
 
-		mpi_check_type_commited(old_types[i], comm);
+		mpi_check_type_created(old_types[i], comm);
 
 		if(blocklens[i] < 0)
 		{
@@ -12842,7 +12852,7 @@ int PMPI_Type_extent(MPI_Datatype datatype, MPI_Aint *extent)
 {
     MPI_Comm comm = MPI_COMM_WORLD;
     mpi_check_type(datatype, comm);
-	mpi_check_type_commited(datatype, comm);
+	mpi_check_type_created(datatype, comm);
 
     /* Shortcuts for most common datatypes */
     if(datatype == MPI_LONG)        *extent = sizeof(long);
@@ -12873,7 +12883,8 @@ int PMPI_Type_get_extent(MPI_Datatype datatype, MPI_Aint *lb, MPI_Aint *extent)
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res       = MPI_ERR_INTERN;
 
-	mpi_check_type_commited(datatype, comm);
+    mpi_check_type(datatype, comm);
+	mpi_check_type_created(datatype, comm);
 
 	PMPI_Type_lb(datatype, lb);
 	res = PMPI_Type_extent(datatype, extent);
@@ -12920,7 +12931,7 @@ int PMPI_Type_size(MPI_Datatype datatype, int *size)
 	int res       = MPI_ERR_INTERN;
 
 	mpi_check_type(datatype, comm);
-	mpi_check_type_commited(datatype, comm);
+	mpi_check_type_created(datatype, comm);
 
 	MPI_Count tmp_size;
 	int real_val;
@@ -12939,7 +12950,7 @@ int PMPI_Type_size_x(MPI_Datatype datatype, MPI_Count *size)
 	int res       = MPI_ERR_INTERN;
 
 	mpi_check_type(datatype, comm);
-	mpi_check_type_commited(datatype, comm);
+	mpi_check_type_created(datatype, comm);
 
 	size_t tmp_size;
 	MPI_Count real_val;
@@ -12959,7 +12970,7 @@ int PMPI_Type_lb(MPI_Datatype datatype, MPI_Aint *displacement)
 
 
 	mpi_check_type(datatype, comm);
-	mpi_check_type_commited(datatype, comm);
+	mpi_check_type_created(datatype, comm);
 	unsigned long i;
 
 	int derived_ret = 0;
@@ -13000,7 +13011,7 @@ int PMPI_Type_ub(MPI_Datatype datatype, MPI_Aint *displacement)
 
 
 	mpi_check_type(datatype, comm);
-	mpi_check_type_commited(datatype, comm);
+	mpi_check_type_created(datatype, comm);
 
 	unsigned long i;
 
@@ -13048,7 +13059,7 @@ int PMPI_Type_create_resized(MPI_Datatype old_type, MPI_Aint lb, MPI_Aint extent
 
 
 	mpi_check_type(old_type, comm);
-	mpi_check_type_commited(old_type, comm);
+	mpi_check_type_created(old_type, comm);
 
 	if( mpc_dt_is_valid(old_type) )
 	{
@@ -13083,8 +13094,7 @@ int PMPI_Type_commit(MPI_Datatype *datatype)
 
 	mpi_check_type(*datatype, comm);
 
-    /* We wanna be able to commit uncommited datatypes */
-    /* mpi_check_type_commited(*datatype, comm); */
+    mpi_check_type_created(*datatype, comm);
 
 	return _mpc_cl_type_commit(datatype);
 }
@@ -13095,8 +13105,7 @@ int PMPI_Type_free(MPI_Datatype *datatype)
 
 	mpi_check_type(*datatype, comm);
 
-    /* We wanna be able to free uncommited datatypes */
-    /* mpi_check_type_commited(*datatype, comm); */
+    mpi_check_type_created(*datatype, comm);
 
 	return _mpc_cl_type_free(datatype);
 }
@@ -13123,7 +13132,7 @@ int PMPI_Type_get_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Coun
 	}
 
 	/* Now check the data-type */
-	mpi_check_type_commited(datatype, MPI_COMM_WORLD);
+	mpi_check_type_created(datatype, MPI_COMM_WORLD);
 
     /* If the msg was empty */
     if(status->size == 0) {
@@ -13239,6 +13248,7 @@ int PMPI_Type_get_elements(MPI_Status *status, MPI_Datatype datatype, int *eleme
 	int res       = MPI_ERR_INTERN;
 
 	mpi_check_type(datatype, comm);
+	mpi_check_type_created(datatype, comm);
 
 	MPI_Count tmp_elements = 0;
 
@@ -13269,6 +13279,7 @@ int PMPI_Type_create_darray(int size,
 	int res       = MPI_ERR_INTERN;
 
 	mpi_check_type(oldtype, comm);
+	mpi_check_type_created(oldtype, comm);
 
 	int csize;
 	_mpc_cl_comm_size(comm, &csize);
@@ -13318,6 +13329,7 @@ int PMPI_Type_create_subarray(int ndims,
 	int res       = MPI_ERR_INTERN;
 
 	mpi_check_type(oldtype, comm);
+	mpi_check_type_created(oldtype, comm);
 
 	/* Create the subarray */
 	res = sctk_Type_create_subarray(ndims, array_of_sizes, array_of_subsizes, array_of_starts, order, oldtype, new_type);
@@ -13404,7 +13416,7 @@ int PMPI_Pack(const
 {
 	mpi_check_comm(comm);
 	mpi_check_type(datatype, comm);
-	mpi_check_type_commited(datatype, comm);
+	mpi_check_type_created(datatype, comm);
 
 	if( (NULL == outbuf) || (NULL == position) )
 	{
@@ -13506,7 +13518,7 @@ int PMPI_Unpack(const void *inbuf,
 {
 	mpi_check_comm(comm);
 	mpi_check_type(datatype, comm);
-	mpi_check_type_commited(datatype, comm);
+	mpi_check_type_created(datatype, comm);
 
 	if( (NULL == inbuf) || (NULL == position) )
 	{
@@ -13605,6 +13617,7 @@ int PMPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm, int *size)
 {
 	mpi_check_comm(comm);
 	mpi_check_type(datatype, comm);
+	mpi_check_type_created(datatype, comm);
 	mpi_check_count(incount, comm);
 
 	*size = 0;
@@ -13681,6 +13694,7 @@ int PMPI_Pack_external_size(const char *datarep, int incount, MPI_Datatype datat
 {
     MPI_Comm comm = MPI_COMM_WORLD;
     mpi_check_type(datatype, comm);
+    mpi_check_type_created(datatype, comm);
 	if(strcmp(datarep, "external32") )
 	{
 		mpc_common_debug_warning("MPI_Pack_external_size: unsuported data-rep %s", datarep);
@@ -18341,6 +18355,7 @@ int PMPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Com
 	mpi_check_buf(buffer, comm);
 	mpi_check_count(count, comm);
 	mpi_check_type(datatype, comm);
+	mpi_check_type_commited(datatype, comm);
 
 
 	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
@@ -18419,6 +18434,7 @@ int PMPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 		mpi_check_buf(sendbuf, comm);
 		mpi_check_count(sendcnt, comm);
 		mpi_check_type(sendtype, comm);
+		mpi_check_type_commited(sendtype, comm);
 	}
 	else
 	{
@@ -18427,10 +18443,11 @@ int PMPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 			mpi_check_buf(sendbuf, comm);
 			mpi_check_count(sendcnt, comm);
 			mpi_check_type(sendtype, comm);
+			mpi_check_type_commited(sendtype, comm);
 		}
 		mpi_check_buf(recvbuf, comm);
 		mpi_check_count(recvcnt, comm);
-		mpi_check_type(recvtype, comm);
+		mpi_check_type_commited(recvtype, comm);
 	}
 
 	if( (0 == sendcnt && MPI_ROOT != root &&
@@ -18499,8 +18516,10 @@ int PMPI_Gatherv(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	mpi_check_buf(sendbuf, comm);
 	mpi_check_count(sendcnt, comm);
 	mpi_check_type(sendtype, comm);
+	mpi_check_type_commited(sendtype, comm);
 	mpi_check_buf(recvbuf, comm);
 	mpi_check_type(recvtype, comm);
+	mpi_check_type_commited(recvtype, comm);
 
 	if(sendbuf == recvbuf && rank == root)
 	{
@@ -18574,6 +18593,7 @@ int PMPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 		mpi_check_buf(sendbuf, comm);
 		mpi_check_count(sendcnt, comm);
 		mpi_check_type(sendtype, comm);
+		mpi_check_type_commited(sendtype, comm);
 		if(recvbuf == sendbuf)
 		{
 			MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
@@ -18584,6 +18604,7 @@ int PMPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 		mpi_check_buf(recvbuf, comm);
 		mpi_check_count(recvcnt, comm);
 		mpi_check_type(recvtype, comm);
+		mpi_check_type_commited(recvtype, comm);
 	}
 
 	if( (rank != root && MPI_IN_PLACE == recvbuf) ||
@@ -18671,6 +18692,7 @@ int PMPI_Scatterv(const void *sendbuf, const int *sendcnts, const int *displs,
 		if(root == MPI_ROOT)
 		{
 			mpi_check_type(sendtype, comm);
+			mpi_check_type_commited(sendtype, comm);
 			for(i = 0; i < size; i++)
 			{
 				mpi_check_buf( (char *)(sendbuf) + displs[i] * extent, comm);
@@ -18682,6 +18704,7 @@ int PMPI_Scatterv(const void *sendbuf, const int *sendcnts, const int *displs,
 			mpi_check_buf(recvbuf, comm);
 			mpi_check_count(recvcnt, comm);
 			mpi_check_type(recvtype, comm);
+			mpi_check_type_commited(recvtype, comm);
 		}
 	}
 	else
@@ -18690,6 +18713,7 @@ int PMPI_Scatterv(const void *sendbuf, const int *sendcnts, const int *displs,
 		if(rank == root)
 		{
 			mpi_check_type(sendtype, comm);
+			mpi_check_type_commited(sendtype, comm);
 			for(i = 0; i < size; i++)
 			{
 				mpi_check_buf( (char *)(sendbuf) + displs[i] * extent, comm);
@@ -18700,6 +18724,7 @@ int PMPI_Scatterv(const void *sendbuf, const int *sendcnts, const int *displs,
 				mpi_check_buf(recvbuf, comm);
 				mpi_check_count(recvcnt, comm);
 				mpi_check_type(recvtype, comm);
+				mpi_check_type_commited(recvtype, comm);
 			}
 		}
 		else
@@ -18707,6 +18732,7 @@ int PMPI_Scatterv(const void *sendbuf, const int *sendcnts, const int *displs,
 			mpi_check_buf(recvbuf, comm);
 			mpi_check_count(recvcnt, comm);
 			mpi_check_type(recvtype, comm);
+			mpi_check_type_commited(recvtype, comm);
 		}
 	}
 
@@ -18757,6 +18783,7 @@ int PMPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 		mpi_check_buf(sendbuf, comm);
 		mpi_check_count(sendcount, comm);
 		mpi_check_type(sendtype, comm);
+		mpi_check_type_commited(sendtype, comm);
 	}
 
 	if(sendbuf == recvbuf)
@@ -18766,6 +18793,7 @@ int PMPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	mpi_check_buf(recvbuf, comm);
 	mpi_check_count(recvcount, comm);
 	mpi_check_type(recvtype, comm);
+	mpi_check_type_commited(recvtype, comm);
 
     if(sendtype != recvtype) {
         MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Mismatched datatypes");
@@ -18841,6 +18869,7 @@ int PMPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 		mpi_check_buf(sendbuf, comm);
 		mpi_check_count(sendcount, comm);
 		mpi_check_type(sendtype, comm);
+        mpi_check_type_commited(sendtype, comm);
 	}
 
 	if(sendbuf == recvbuf)
@@ -18850,6 +18879,7 @@ int PMPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
 	mpi_check_buf(recvbuf, comm);
 	mpi_check_type(recvtype, comm);
+	mpi_check_type_commited(recvtype, comm);
 
     if(sendtype != recvtype) {
         MPI_ERROR_REPORT(comm, MPI_ERR_TYPE, "Mismatched datatypes");
@@ -18903,10 +18933,12 @@ int PMPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 		mpi_check_buf(sendbuf, comm);
 		mpi_check_count(sendcount, comm);
 		mpi_check_type(sendtype, comm);
+        mpi_check_type_commited(sendtype, comm);
 	}
 	mpi_check_buf(recvbuf, comm);
 	mpi_check_count(recvcount, comm);
 	mpi_check_type(recvtype, comm);
+	mpi_check_type_commited(recvtype, comm);
 
 	if(MPI_IN_PLACE == sendbuf)
 	{
@@ -18982,8 +19014,10 @@ int PMPI_Alltoallv(const void *sendbuf, const int *sendcnts, const int *sdispls,
 	}
 	mpi_check_buf(sendbuf, comm);
 	mpi_check_type(sendtype, comm);
+	mpi_check_type_commited(sendtype, comm);
 	mpi_check_buf(recvbuf, comm);
 	mpi_check_type(recvtype, comm);
+	mpi_check_type_commited(recvtype, comm);
 
 	if(MPI_IN_PLACE == recvbuf || recvbuf == sendbuf)
 	{
@@ -19060,6 +19094,7 @@ int PMPI_Alltoallw(const void *sendbuf, const int *sendcnts, const int *sdispls,
 		if(sendbuf != MPI_IN_PLACE)
 		{
 			mpi_check_type(sendtypes[i], comm);
+			mpi_check_type_commited(sendtypes[i], comm);
 			res = PMPI_Type_extent(sendtypes[i], &sextent);
 			if(res != MPI_SUCCESS)
 			{
@@ -19069,6 +19104,7 @@ int PMPI_Alltoallw(const void *sendbuf, const int *sendcnts, const int *sdispls,
 			mpi_check_count(sendcnts[i], comm);
 		}
 		mpi_check_type(recvtypes[i], comm);
+        mpi_check_type_commited(sendtypes[i], comm);
 		res = PMPI_Type_extent(recvtypes[i], &rextent);
 		if(res != MPI_SUCCESS)
 		{
@@ -19139,6 +19175,7 @@ int PMPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype data
 	mpi_check_root(root, size, comm);
 	mpi_check_count(count, comm);
 	mpi_check_type(datatype, comm);
+	mpi_check_type_commited(datatype, comm);
 	mpi_check_op(op, datatype, comm);
 	if(mpc_lowcomm_communicator_is_intercomm(comm) )
 	{
@@ -19221,6 +19258,7 @@ int PMPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
 	mpi_check_buf(recvbuf, comm);
 	mpi_check_count(count, comm);
 	mpi_check_type(datatype, comm);
+	mpi_check_type_commited(datatype, comm);
 	mpi_check_op(op, datatype, comm);
 
 	if(MPI_IN_PLACE == recvbuf)
@@ -19292,6 +19330,7 @@ int PMPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int recvcnts[]
 		mpi_check_count(recvcnts[i], comm);
 	}
 	mpi_check_type(datatype, comm);
+	mpi_check_type_commited(datatype, comm);
 	mpi_check_op(op, datatype, comm);
 
 	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
@@ -19337,6 +19376,7 @@ int PMPI_Reduce_scatter_block(const void *sendbuf, void *recvbuf, int recvcnt,
 	}
 	mpi_check_count(recvcnt, comm);
 	mpi_check_type(datatype, comm);
+	mpi_check_type_commited(datatype, comm);
 	mpi_check_op(op, datatype, comm);
 
 	MPC_GENERIC_THREAD_ENTER_PROGRESS(KIND_MASK_PROGRESS_THREAD,
@@ -19365,6 +19405,7 @@ int PMPI_Scan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype dataty
 	mpi_check_buf(recvbuf, comm);
 	mpi_check_count(count, comm);
 	mpi_check_type(datatype, comm);
+	mpi_check_type_commited(datatype, comm);
 	mpi_check_op(op, datatype, comm);
 
 	/* Invalid operation for intercommunicators */
@@ -19419,6 +19460,7 @@ int PMPI_Exscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype data
 	mpi_check_buf(recvbuf, comm);
 	mpi_check_count(count, comm);
 	mpi_check_type(datatype, comm);
+	mpi_check_type_commited(datatype, comm);
 	mpi_check_op(op, datatype, comm);
 
 

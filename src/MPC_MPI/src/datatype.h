@@ -399,16 +399,33 @@ bool _mpc_dt_is_user_defined( const mpc_lowcomm_datatype_t datatype );
 
 /** \brief Checks whether a datatype is valid or not
  *
- * This means if it is a common or a user defined one that have been commited
+ * This means if it has been created
  *
  * \param datatype Datatype to test
  * \return true if datatype is valid, false otherwise
  * */
 static inline bool mpc_dt_is_valid( const mpc_lowcomm_datatype_t datatype ) {
-
     return mpc_lowcomm_datatype_is_common(datatype) || _mpc_dt_is_user_defined(datatype);
 }
 
+/** \brief Checks whether a datatype has been commited or not
+ *
+ * This means if it is a common or a user defined one that have been commited
+ *
+ * \param datatype Datatype to test
+ * \return true if datatype is commited, false otherwise
+ * */
+static inline bool mpc_dt_is_commited( const mpc_lowcomm_datatype_t datatype ) {
+
+    if( !mpc_dt_is_valid(datatype) ) {
+        return false;
+    }
+    if( _mpc_dt_is_user_defined(datatype) && !datatype->is_commited ) {
+        return false;
+    }
+
+    return true;
+}
 
 /** \brief This functions returns the \ref mpc_dt_kind_t of an mpc_lowcomm_datatype_t
  *

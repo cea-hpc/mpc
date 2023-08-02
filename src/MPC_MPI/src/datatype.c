@@ -509,7 +509,7 @@ static inline void ___mpc_init_composed_common_type( mpc_lowcomm_datatype_t targ
     new_type->ref_count = 1;
 
     /* Put the new type in the common location */
-	mpc_lowcomm_datatype_common_set_type_struct( target_type, new_type);
+	mpc_lowcomm_datatype_common_set_type_struct( target_type, new_type );
 
     /* Free the temporary datatype */
     sctk_free(new_type);
@@ -528,7 +528,7 @@ static inline void __mpc_composed_common_types_init()
     ___mpc_init_composed_common_type( MPC_COMPLEX4, disp, MPC_LOWCOMM_REAL2, MPC_LOWCOMM_REAL2, 4);
     __mpc_common_dt_set_name( MPC_COMPLEX4, "MPI_COMPLEX4" );
     tmp = _mpc_dt_get_datatype(MPC_COMPLEX4);
-    _mpc_cl_type_commit( &tmp);
+    _mpc_cl_type_commit( &tmp );
 
     /* MPC_C_COMPLEX (29) */
 	mpc_float_float foo_0;
@@ -839,6 +839,9 @@ mpc_lowcomm_datatype_t _mpc_dt_general_create(
 	/* We assume 0 this value is set in the Struct constructor afterwards */
 	type->is_a_padded_struct = false;
 
+    /* The datatype isn't commited at first */
+    type->is_commited = false;
+
 	/* Create context */
     type->context = (struct _mpc_dt_footprint *) sctk_malloc(sizeof(struct _mpc_dt_footprint));
     assume( type->context != NULL);
@@ -1008,7 +1011,7 @@ int _mpc_dt_general_release( mpc_lowcomm_datatype_t *type )
     return ret;
 }
 
-int _mpc_dt_general_on_slot( mpc_lowcomm_datatype_t *type_p) {
+int _mpc_dt_general_on_slot( mpc_lowcomm_datatype_t *type_p ) {
 
     /* Dereference for free purpose */
     mpc_lowcomm_datatype_t old_type = *type_p;
@@ -1028,10 +1031,9 @@ int _mpc_dt_general_on_slot( mpc_lowcomm_datatype_t *type_p) {
 	/* We want to know if the datatype already exists */
 	if(__mpc_cl_type_general_check_footprint(task_specific, old_type->context, type_p) )
 	{
-        /* If it already exists, type_p now contains its adress */
+        /* If it already exists, type_p now contains its address */
         /* We have to deallocate the old type */
         mpc_lowcomm_datatype_t tmp_type = old_type;
-        _mpc_dt_general_free(&tmp_type, true);
         /* And free it */
         sctk_free(old_type);
         /* Release the datatype lock */
@@ -1618,13 +1620,24 @@ static inline void __mpc_dt_name_clear()
 
 bool _mpc_dt_footprint_check_envelope( struct _mpc_dt_footprint *ref, struct _mpc_dt_footprint *candidate )
 {
-	int num_integers = 0;
-	int num_addresses = 0;
-	int num_datatypes = 0;
-	int dummy_combiner = MPC_COMBINER_UNKNOWN;
+	int num_integers_ref = 0;
+	int num_addresses_ref = 0;
+	int num_datatypes_ref = 0;
+	int dummy_combiner_ref = MPC_COMBINER_UNKNOWN;
+
+	int num_integers_candidate = 0;
+	int num_addresses_candidate = 0;
+	int num_datatypes_candidate = 0;
+	int dummy_combiner_candidate = MPC_COMBINER_UNKNOWN;
 
 	/* Retrieve envelope */
-	_mpc_dt_fill_envelope( ref, &num_integers, &num_addresses, &num_datatypes, &dummy_combiner );
+	_mpc_dt_fill_envelope( ref, &num_integers_ref, &num_addresses_ref, &num_datatypes_ref, &dummy_combiner_ref );
+	_mpc_dt_fill_envelope( candidate, &num_integers_candidate, &num_addresses_candidate, &num_datatypes_candidate, &dummy_combiner_candidate );
+
+    /* Shorcut */
+    if(num_integers_ref != num_integers_candidate) return false;
+    if(num_addresses_ref != num_addresses_candidate) return false;
+    if(num_datatypes_ref != num_datatypes_candidate) return false;
 
 	/* Now compare each array */
 
@@ -1650,7 +1663,7 @@ bool _mpc_dt_footprint_check_envelope( struct _mpc_dt_footprint *ref, struct _mp
 	}
 	*/
 
-	for ( i = 0; i < num_datatypes; i++ )
+	for ( i = 0; i < num_datatypes_ref; i++ )
 	{
 		if ( ref->array_of_types[i] != candidate->array_of_types[i] )
 		{
@@ -1659,14 +1672,14 @@ bool _mpc_dt_footprint_check_envelope( struct _mpc_dt_footprint *ref, struct _mp
 	}
 
 	/* Now integers */
-	for ( i = 0; i < num_integers; i++ )
+	for ( i = 0; i < num_integers_ref; i++ )
 	{
 		if ( ref->array_of_integers[i] != candidate->array_of_integers[i] )
 			return false;
 	}
 
 	/* And addresses */
-	for ( i = 0; i < num_addresses; i++ )
+	for ( i = 0; i < num_addresses_ref; i++ )
 	{
 		if ( ref->array_of_addresses[i] != candidate->array_of_addresses[i] )
 			return false;

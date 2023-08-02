@@ -173,7 +173,7 @@ void mpc_fortran_comm_delete(__UNUSED__ MPI_Fint comm)
  *********/
 
 #define MPC_DT_MAP_TO_F(datatype) \
-    datatype->id + MPC_LOWCOMM_TYPE_COMMON_LIMIT
+    (MPI_Fint) (datatype->id + MPC_LOWCOMM_TYPE_COMMON_LIMIT)
 
 #define MPC_DT_MAP_FROM_F(datatype) \
     _mpc_dt_on_slot_get(datatype - MPC_LOWCOMM_TYPE_COMMON_LIMIT)
@@ -228,7 +228,6 @@ MPI_Fint PMPI_Type_c2f(MPI_Datatype datatype)
             /* Invalid handle => invalid handle */
             return SCTK_USER_DATA_TYPES_MAX + MPC_LOWCOMM_TYPE_COMMON_LIMIT;
     }
-
     /* We should never reach this point */
     not_reachable();
 #endif

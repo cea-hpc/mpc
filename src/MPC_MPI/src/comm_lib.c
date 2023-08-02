@@ -1576,6 +1576,8 @@ int _mpc_cl_type_hcontiguous_ctx(mpc_lowcomm_datatype_t *datatype, size_t count,
 	size_t size;
 	_mpc_cl_type_size(*data_in, &size);
 
+    int ierr = MPC_LOWCOMM_SUCCESS;
+
     _mpc_dt_contiguous_create(datatype, 0, size, count, *data_in);
 
     if( *datatype == MPC_LOWCOMM_DATATYPE_NULL) {
@@ -1584,9 +1586,11 @@ int _mpc_cl_type_hcontiguous_ctx(mpc_lowcomm_datatype_t *datatype, size_t count,
     }
 
     _mpc_cl_type_ctx_set(*datatype, ctx);
-    SCTK_PROFIL_END(MPC_Type_hcontiguous);
-    return MPC_LOWCOMM_SUCCESS;
 
+    ierr = _mpc_dt_general_on_slot(datatype);
+
+    SCTK_PROFIL_END(MPC_Type_hcontiguous);
+    return ierr;
 }
 
 /** \brief This function is the generic initializer for
@@ -1665,18 +1669,16 @@ int _mpc_cl_type_commit(mpc_lowcomm_datatype_t *datatype_p)
 		MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_TYPE,
 		                 "You are trying to commit a NULL data-type");
 	}
-    if(datatype->ref_count != 1) {
+    if( !mpc_dt_is_valid(datatype) ) {
         MPC_ERROR_REPORT(MPC_COMM_WORLD, MPC_ERR_TYPE,
                          "You are trying to commit a non created datatype");
     }
 
-    /* Save it in the task array */
-    ierr = _mpc_dt_general_on_slot(datatype_p);
-    if ( ierr != MPC_LOWCOMM_SUCCESS ) {
-       return ierr;
-    }
     /* OPTIMIZE */
     ierr = _mpc_dt_general_optimize(*datatype_p);
+
+    /* Commit the datatype */
+    (*datatype_p)->is_commited = true;
 
     return ierr;
 }
@@ -1727,18 +1729,23 @@ int _mpc_cl_general_datatype(mpc_lowcomm_datatype_t *datatype,
                              const long ub, const bool is_ub,
                              struct _mpc_dt_context *ectx)
 {
-	SCTK_PROFIL_START(MPC_general_datatype);
+	SCTK_PROFIL_START(MPC_Create_datatype);
+
+    int ierr = MPC_LOWCOMM_SUCCESS;
 
     *datatype = _mpc_dt_general_create( 0, count, begins, ends, types, lb, is_lb, ub, is_ub );
 
-    if( *datatype == MPC_LOWCOMM_DATATYPE_NULL) {
-        SCTK_PROFIL_END(MPC_general_datatype);
+    if( *datatype == MPC_LOWCOMM_DATATYPE_NULL ) {
+        SCTK_PROFIL_END(MPC_Create_datatype);
         return MPC_ERR_INTERN;
     }
 
     _mpc_dt_context_set((*datatype)->context, ectx);
-    SCTK_PROFIL_END(MPC_general_datatype);
-    return MPC_LOWCOMM_SUCCESS;
+    /* Save it in the task array */
+    ierr = _mpc_dt_general_on_slot(datatype);
+
+    SCTK_PROFIL_END(MPC_Create_datatype);
+    return ierr;
 }
 
 /** \brief Extract general datatype informations
@@ -2018,7 +2025,7 @@ mpc_lowcomm_datatype_t _mpc_cl_type_get_inner(mpc_lowcomm_datatype_t type)
 		return type;
 	}
 
-	if(mpc_mpi_cl_type_is_contiguous(type) )
+	if( _mpc_dt_is_contig_mem(type) )
 	{
 		_mpc_lowcomm_general_datatype_t *ctype = type;
 		assume(ctype != NULL);
