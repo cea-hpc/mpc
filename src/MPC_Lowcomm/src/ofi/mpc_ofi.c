@@ -133,16 +133,16 @@ static int __ofi_on_demand_callback(mpc_lowcomm_peer_uid_t from,
 
 static inline int __free_bsend_buffer(__UNUSED__ struct mpc_ofi_request_t *req, void *pbuffer)
 {
+   printf("freeing normally\n");
    sctk_free(pbuffer);
    return 0;
 }
 
 static inline int __free_bsend_buffer_mempool(__UNUSED__ struct mpc_ofi_request_t *req, void *pbuffer){
+   printf("freeing with mempool\n");
    mpc_mempool_free(NULL, pbuffer);
    return 0;
 }
-
-#define MPC_OFI_BSEND_TRSH 1024 // dans la config
 
 ssize_t mpc_ofi_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
                               uint8_t id,
@@ -153,9 +153,7 @@ ssize_t mpc_ofi_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
    sctk_rail_info_t *rail = ep->rail;
 	uint32_t payload_length;
 	ssize_t sent;
-
-   TODO("Use the right size from config an provider caps");
-	// lcr_ofi_am_hdr_t *hdr = sctk_malloc(MPC_OFI_BSEND_TRSH + sizeof(lcr_ofi_am_hdr_t));
+   unsigned int MPC_OFI_BSEND_TRSH = _mpc_lowcomm_conf_driver_unfolded_get("tcpofi")->driver.value.ofi.bcopy_size;
     if(!ep->bcopy_mempool) ep->bcopy_mempool = (mpc_mempool *)sctk_malloc(sizeof(mpc_mempool));
    lcr_ofi_am_hdr_t *hdr = mpc_mempool_alloc_and_init(ep->bcopy_mempool, 10, 100, MPC_OFI_BSEND_TRSH + sizeof(lcr_ofi_am_hdr_t), sctk_malloc, sctk_free);
 
@@ -351,6 +349,7 @@ int mpc_ofi_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
 int mpc_ofi_get_attr(sctk_rail_info_t *rail,
                      lcr_rail_attr_t *attr)
 {
+   unsigned int MPC_OFI_BSEND_TRSH = _mpc_lowcomm_conf_driver_unfolded_get("tcpofi")->driver.value.ofi.bcopy_size;
 
 	attr->iface.cap.am.max_iovecs = MPC_OFI_IOVEC_SIZE; //FIXME: arbitrary value...
 	attr->iface.cap.am.max_bcopy  = MPC_OFI_BSEND_TRSH + 1;

@@ -211,12 +211,15 @@ static inline mpc_conf_config_type_t *__init_driver_ofi(struct _mpc_lowcomm_conf
 	driver->value.ofi.eager_per_buff = 512;
 	driver->value.ofi.request_cache_size = 2048;
 	driver->value.ofi.number_of_multi_recv_buff = 3;
+	driver->value.ofi.bcopy_size = 1024;
 
 	return mpc_conf_config_type_init("ofi",
 														PARAM("reqcachesize", &driver->value.ofi.request_cache_size,
 																MPC_CONF_INT, "Number of request to put in the OFI cache"),
 														PARAM("eagersize", &driver->value.ofi.eager_size,
 																MPC_CONF_INT, "Size of eager messages"),
+														PARAM("bcopysize", &driver->value.ofi.bcopy_size,
+																MPC_CONF_INT, "Size of bcopy messages"),
 														PARAM("eagerperbuff", &driver->value.ofi.eager_per_buff,
 																MPC_CONF_INT, "Number of eagers per recv buffer"),
 														PARAM("numrecvbuff", &driver->value.ofi.number_of_multi_recv_buff,
@@ -615,7 +618,7 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
 	                                                         PARAM("maxifaces", &ret->max_ifaces, MPC_CONF_INT, "Maximum number of rails instances that can be used for multirail"),
 	                                                         PARAM("config", ret->config, MPC_CONF_STRING, "Name of the rail configuration to be used for this rail"),
 	                                                         PARAM("gates", gates, MPC_CONF_TYPE, "Gates to check before taking this rail"),
-	                                                         NULL);  
+	                                                         NULL); 
 
 
 	__append_new_rail_to_unfolded(ret);

@@ -114,6 +114,7 @@ struct _mpc_lowcomm_config_struct_net_driver_ofi
 	unsigned int eager_size;
 	unsigned int eager_per_buff;
 	unsigned int number_of_multi_recv_buff;
+	unsigned int bcopy_size;
 	char provider[MPC_CONF_STRING_SIZE];
 };
 
