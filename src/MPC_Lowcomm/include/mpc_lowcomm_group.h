@@ -36,8 +36,8 @@ extern "C" {
 /** This defines an unknown integer value */
 #define MPC_UNDEFINED    -32766
 
-struct _mpc_lowcomm_group_s;
-typedef struct _mpc_lowcomm_group_s mpc_lowcomm_group_t;
+struct MPI_ABI_Group;
+typedef struct MPI_ABI_Group mpc_lowcomm_group_t;
 
 /*******************************
 * CONSTRUCTORS AND DESTUCTORS *

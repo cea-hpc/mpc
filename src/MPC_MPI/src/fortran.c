@@ -251,14 +251,14 @@ void mpc_fortran_datatype_delete(__UNUSED__ MPI_Fint *datatype)
 
 MPI_Group PMPI_Group_f2c(MPI_Fint group)
 {
-	if(group == -1)
+	if((MPI_Group) ((long) group) == MPI_GROUP_EMPTY)
 	{
-		return mpc_lowcomm_group_empty();
+        return mpc_lowcomm_group_empty();
 	}
 
-	if(group == 0)
+	if((MPI_Group) ((long) group) == MPI_GROUP_NULL)
 	{
-		return NULL;
+		return MPI_GROUP_NULL;
 	}
 
 	return mpc_lowcomm_group_from_id(group);
@@ -266,24 +266,23 @@ MPI_Group PMPI_Group_f2c(MPI_Fint group)
 
 MPI_Fint PMPI_Group_c2f(MPI_Group group)
 {
-	if(group == NULL)
+	if(group == MPI_GROUP_NULL ||
+       group == MPI_GROUP_EMPTY)
 	{
-		return 0;
-	}
-
-	if(group == mpc_lowcomm_group_empty())
-	{
-		return -1;
+		return (MPI_Fint) ((long)group);
 	}
 
 	return mpc_lowcomm_group_linear_id(group);
 }
 
-void mpc_fortran_group_delete(__UNUSED__ MPI_Fint group)
+void mpc_fortran_group_delete(__UNUSED__ MPI_Fint *group)
 {
 #if 0
 	_mpc_handle_factory_delete(&__groups_factory, group);
 #endif
+    MPI_Group c_group = PMPI_Group_f2c(*group);
+    PMPI_Group_free( &c_group );
+    *group = PMPI_Group_c2f(MPI_GROUP_NULL);
 }
 
 /***********

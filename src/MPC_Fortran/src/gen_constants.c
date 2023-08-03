@@ -345,8 +345,8 @@ int generate_mpi_fortran_constants()
 
         MPI_INTEGER_VAL("MPI_BOTTOM", (intptr_t)(MPI_BOTTOM));
 
-        MPI_INTEGER_VAL("MPI_GROUP_EMPTY", (intptr_t)(-1));
-        MPI_INTEGER_VAL("MPI_GROUP_NULL",  (intptr_t)(0));
+        MPI_INTEGER_VAL("MPI_GROUP_EMPTY", (intptr_t)(MPI_GROUP_EMPTY));
+        MPI_INTEGER_VAL("MPI_GROUP_NULL",  (intptr_t)(MPI_GROUP_NULL));
 
         MPI_INTEGER_VAL("MPI_KEYVAL_INVALID", MPI_KEYVAL_INVALID);
 

@@ -60,7 +60,7 @@ int _mpc_lowcomm_group_rank_descriptor_all_from_local_set(unsigned int size, _mp
 * _MPC_LOWCOMM_GROUP_T *
 ************************/
 
-struct _mpc_lowcomm_group_s
+typedef struct MPI_ABI_Group
 {
 	int                                   id;
 	OPA_int_t                             refcount;
@@ -80,7 +80,7 @@ struct _mpc_lowcomm_group_s
 
 	int                                   is_a_copy;
 	mpc_lowcomm_handle_ctx_t              extra_ctx_ptr;
-};
+} _mpc_lowcomm_group_s;
 
 static inline void _mpc_lowcomm_group_acquire(mpc_lowcomm_group_t *g)
 {

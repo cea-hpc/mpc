@@ -331,8 +331,8 @@ extern "C"
 
 
 /* Group Handling */
-#define MPI_GROUP_EMPTY (mpc_lowcomm_group_empty())
-#define MPI_GROUP_NULL (NULL)
+#define MPI_GROUP_EMPTY ((MPI_Group) 1)
+#define MPI_GROUP_NULL ((MPI_Group) 0)
 
 /* MPI_Info definitions */
 /* Matches the one of MPI_INFO_NULL @ mpc_mpi.h:207 */
@@ -442,7 +442,7 @@ extern "C"
 /*  Type Definitions                                                    */
 /************************************************************************/
 
-typedef mpc_lowcomm_datatype_t MPI_Datatype; /* unsigned int */
+typedef mpc_lowcomm_datatype_t MPI_Datatype; /* ABI compliant pointer */
 typedef mpc_lowcomm_communicator_t MPI_Comm; /* pointer */
 typedef int MPI_Request;
 typedef ssize_t MPI_Aint;
@@ -450,7 +450,7 @@ typedef ssize_t MPI_Count;
 typedef int MPI_Errhandler;
 typedef sctk_Op_User_function MPI_User_function;
 typedef int MPI_Op;
-typedef mpc_lowcomm_group_t* MPI_Group;
+typedef mpc_lowcomm_group_t *MPI_Group; /* ABI compliant pointer */
 typedef mpc_lowcomm_status_t MPI_Status;
 typedef MPC_Handler_function MPI_Handler_function;
 typedef int MPI_Fint;
