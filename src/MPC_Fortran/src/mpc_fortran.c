@@ -848,9 +848,9 @@ void pmpi_attr_get_(MPI_Fint *comm, int *keyval, void *attribute_val, int *flag,
 
 	*ierror = MPI_Attr_get(c_comm, *keyval, &attr, flag);
 
-	if(*flag)
+	if(*flag && (*ierror == MPI_SUCCESS))
 	{
-		*((int*)attribute_val) = *((int*)attr);
+		*((int*)attribute_val) = ((int)((long)attr));
 	}
 }
 
@@ -864,9 +864,9 @@ void pmpi_attr_get__(MPI_Fint *comm, int *keyval, void *attribute_val, int *flag
 
 	*ierror = MPI_Attr_get(c_comm, *keyval, &attr, flag);
 
-	if(*flag)
+	if(*flag && (*ierror == MPI_SUCCESS))
 	{
-		*((int*)attribute_val) = *((int*)attr);
+		*((int*)attribute_val) = ((int)((long)attr));
 	}
 }
 
@@ -1478,6 +1478,7 @@ void pmpi_comm_create_keyval_(MPI_Comm_copy_attr_function *comm_copy_attr_fn, MP
 {
 /* MPI_Comm_create_keyval */
 
+    *comm_keyval = -1; /**< Denotes fortran functions */
 	*ierror = MPI_Comm_create_keyval(comm_copy_attr_fn, comm_delete_attr_fn, comm_keyval, extra_state);
 }
 
@@ -1486,6 +1487,7 @@ void pmpi_comm_create_keyval__(MPI_Comm_copy_attr_function *comm_copy_attr_fn, M
 {
 /* MPI_Comm_create_keyval */
 
+    *comm_keyval = -1; /**< Denotes fortran functions */
 	*ierror = MPI_Comm_create_keyval(comm_copy_attr_fn, comm_delete_attr_fn, comm_keyval, extra_state);
 }
 
@@ -1535,7 +1537,9 @@ void pmpi_comm_dup_(MPI_Fint *comm, MPI_Fint *newcomm, int *ierror)
 	MPI_Comm c_newcomm;
 
 	*ierror  = MPI_Comm_dup(c_comm, &c_newcomm);
-	*newcomm = PMPI_Comm_c2f(c_newcomm);
+    if( *ierror == MPI_SUCCESS ) {
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
+    }
 }
 
 #pragma weak mpi_comm_dup__ = pmpi_comm_dup__
@@ -1546,7 +1550,9 @@ void pmpi_comm_dup__(MPI_Fint *comm, MPI_Fint *newcomm, int *ierror)
 	MPI_Comm c_newcomm;
 
 	*ierror  = MPI_Comm_dup(c_comm, &c_newcomm);
-	*newcomm = PMPI_Comm_c2f(c_newcomm);
+    if( *ierror == MPI_SUCCESS ) {
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
+    }
 }
 
 #pragma weak mpi_comm_dup_with_info_ = pmpi_comm_dup_with_info_
@@ -1558,7 +1564,9 @@ void pmpi_comm_dup_with_info_(MPI_Fint *comm, MPI_Fint *info, MPI_Fint *newcomm,
 	MPI_Comm c_newcomm;
 
 	*ierror  = MPI_Comm_dup_with_info(c_comm, c_info, &c_newcomm);
-	*newcomm = PMPI_Comm_c2f(c_newcomm);
+    if( *ierror == MPI_SUCCESS ) {
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
+    }
 }
 
 #pragma weak mpi_comm_dup_with_info__ = pmpi_comm_dup_with_info__
@@ -1570,7 +1578,9 @@ void pmpi_comm_dup_with_info__(MPI_Fint *comm, MPI_Fint *info, MPI_Fint *newcomm
 	MPI_Comm c_newcomm;
 
 	*ierror  = MPI_Comm_dup_with_info(c_comm, c_info, &c_newcomm);
-	*newcomm = PMPI_Comm_c2f(c_newcomm);
+    if( *ierror == MPI_SUCCESS ) {
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
+    }
 }
 
 #pragma weak mpi_comm_free_ = pmpi_comm_free_
@@ -1719,7 +1729,9 @@ void pmpi_comm_group_(MPI_Fint *comm, MPI_Fint *group, int *ierror)
 	MPI_Group c_group;
 
 	*ierror = MPI_Comm_group(c_comm, &c_group);
-	*group  = PMPI_Group_c2f(c_group);
+    if(*ierror == MPI_SUCCESS) {
+        *group  = PMPI_Group_c2f(c_group);
+    }
 }
 
 #pragma weak mpi_comm_group__ = pmpi_comm_group__
@@ -1730,7 +1742,9 @@ void pmpi_comm_group__(MPI_Fint *comm, MPI_Fint *group, int *ierror)
 	MPI_Group c_group;
 
 	*ierror = MPI_Comm_group(c_comm, &c_group);
-	*group  = PMPI_Group_c2f(c_group);
+    if(*ierror == MPI_SUCCESS) {
+        *group  = PMPI_Group_c2f(c_group);
+    }
 }
 
 #pragma weak mpi_comm_idup_ = pmpi_comm_idup_
@@ -1741,9 +1755,11 @@ void pmpi_comm_idup_(MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *request, int *
 	MPI_Comm    c_newcomm;
 	MPI_Request c_request;
 
-	*ierror  = MPI_Comm_idup(c_comm, &c_newcomm, &c_request);
-	*newcomm = PMPI_Comm_c2f(c_newcomm);
-	*request = PMPI_Request_c2f(c_request);
+    *ierror  = MPI_Comm_idup(c_comm, &c_newcomm, &c_request);
+    if(*ierror == MPI_SUCCESS) {
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
+        *request = PMPI_Request_c2f(c_request);
+    }
 }
 
 #pragma weak mpi_comm_idup__ = pmpi_comm_idup__
@@ -1755,8 +1771,10 @@ void pmpi_comm_idup__(MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *request, int 
 	MPI_Request c_request;
 
 	*ierror  = MPI_Comm_idup(c_comm, &c_newcomm, &c_request);
-	*newcomm = PMPI_Comm_c2f(c_newcomm);
-	*request = PMPI_Request_c2f(c_request);
+    if(*ierror == MPI_SUCCESS) {
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
+        *request = PMPI_Request_c2f(c_request);
+    }
 }
 
 #pragma weak mpi_comm_idup_with_info_ = pmpi_comm_idup_with_info_
@@ -1769,8 +1787,10 @@ void pmpi_comm_idup_with_info_(MPI_Fint *comm, MPI_Fint *info, MPI_Fint *newcomm
 	MPI_Request c_request;
 
 	*ierror  = MPI_Comm_idup_with_info(c_comm, c_info, &c_newcomm, &c_request);
-	*newcomm = PMPI_Comm_c2f(c_newcomm);
-	*request = PMPI_Request_c2f(c_request);
+    if(*ierror == MPI_SUCCESS) {
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
+        *request = PMPI_Request_c2f(c_request);
+    }
 }
 
 #pragma weak mpi_comm_idup_with_info__ = pmpi_comm_idup_with_info__
@@ -1783,8 +1803,10 @@ void pmpi_comm_idup_with_info__(MPI_Fint *comm, MPI_Fint *info, MPI_Fint *newcom
 	MPI_Request c_request;
 
 	*ierror  = MPI_Comm_idup_with_info(c_comm, c_info, &c_newcomm, &c_request);
-	*newcomm = PMPI_Comm_c2f(c_newcomm);
-	*request = PMPI_Request_c2f(c_request);
+    if(*ierror == MPI_SUCCESS) {
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
+        *request = PMPI_Request_c2f(c_request);
+    }
 }
 
 #pragma weak mpi_comm_join_ = pmpi_comm_join_
@@ -1793,8 +1815,10 @@ void pmpi_comm_join_(int *fd, MPI_Fint *intercomm, int *ierror)
 /* MPI_Comm_join */
 	MPI_Comm c_intercomm;
 
-	*ierror    = MPI_Comm_join(*fd, &c_intercomm);
-	*intercomm = PMPI_Comm_c2f(c_intercomm);
+    *ierror    = MPI_Comm_join(*fd, &c_intercomm);
+    if( *ierror == MPI_SUCCESS) {
+        *intercomm = PMPI_Comm_c2f(c_intercomm);
+    }
 }
 
 #pragma weak mpi_comm_join__ = pmpi_comm_join__
@@ -1804,7 +1828,9 @@ void pmpi_comm_join__(int *fd, MPI_Fint *intercomm, int *ierror)
 	MPI_Comm c_intercomm;
 
 	*ierror    = MPI_Comm_join(*fd, &c_intercomm);
-	*intercomm = PMPI_Comm_c2f(c_intercomm);
+    if( *ierror == MPI_SUCCESS) {
+        *intercomm = PMPI_Comm_c2f(c_intercomm);
+    }
 }
 
 #pragma weak mpi_comm_rank_ = pmpi_comm_rank_
@@ -1833,7 +1859,9 @@ void pmpi_comm_remote_group_(MPI_Fint *comm, MPI_Fint *group, int *ierror)
 	MPI_Group c_group;
 
 	*ierror = MPI_Comm_remote_group(c_comm, &c_group);
-	*group  = PMPI_Group_c2f(c_group);
+    if( *ierror == MPI_SUCCESS) {
+        *group  = PMPI_Group_c2f(c_group);
+    }
 }
 
 #pragma weak mpi_comm_remote_group__ = pmpi_comm_remote_group__
@@ -1844,7 +1872,9 @@ void pmpi_comm_remote_group__(MPI_Fint *comm, MPI_Fint *group, int *ierror)
 	MPI_Group c_group;
 
 	*ierror = MPI_Comm_remote_group(c_comm, &c_group);
-	*group  = PMPI_Group_c2f(c_group);
+    if( *ierror == MPI_SUCCESS) {
+        *group  = PMPI_Group_c2f(c_group);
+    }
 }
 
 #pragma weak mpi_comm_remote_size_ = pmpi_comm_remote_size_
@@ -4310,7 +4340,9 @@ void pmpi_intercomm_create_(MPI_Fint *local_comm, int *local_leader, MPI_Fint *p
 	MPI_Comm c_newintercomm;
 
 	*ierror       = MPI_Intercomm_create(c_local_comm, *local_leader, c_peer_comm, *remote_leader, *tag, &c_newintercomm);
-	*newintercomm = PMPI_Comm_c2f(c_newintercomm);
+    if( *ierror == MPI_SUCCESS) {
+        *newintercomm = PMPI_Comm_c2f(c_newintercomm);
+    }
 }
 
 #pragma weak mpi_intercomm_create__ = pmpi_intercomm_create__
@@ -4322,7 +4354,9 @@ void pmpi_intercomm_create__(MPI_Fint *local_comm, int *local_leader, MPI_Fint *
 	MPI_Comm c_newintercomm;
 
 	*ierror       = MPI_Intercomm_create(c_local_comm, *local_leader, c_peer_comm, *remote_leader, *tag, &c_newintercomm);
-	*newintercomm = PMPI_Comm_c2f(c_newintercomm);
+    if( *ierror == MPI_SUCCESS) {
+        *newintercomm = PMPI_Comm_c2f(c_newintercomm);
+    }
 }
 
 #pragma weak mpi_intercomm_merge_ = pmpi_intercomm_merge_
@@ -4332,8 +4366,10 @@ void pmpi_intercomm_merge_(MPI_Fint *intercomm, int *high, MPI_Fint *newintracom
 	MPI_Comm c_intercomm = PMPI_Comm_f2c(*intercomm);
 	MPI_Comm c_newintracomm;
 
-	*ierror       = MPI_Intercomm_merge(c_intercomm, *high, &c_newintracomm);
-	*newintracomm = PMPI_Comm_c2f(c_newintracomm);
+    *ierror       = MPI_Intercomm_merge(c_intercomm, *high, &c_newintracomm);
+    if( *ierror == MPI_SUCCESS) {
+        *newintracomm = PMPI_Comm_c2f(c_newintracomm);
+    }
 }
 
 #pragma weak mpi_intercomm_merge__ = pmpi_intercomm_merge__
@@ -4344,7 +4380,9 @@ void pmpi_intercomm_merge__(MPI_Fint *intercomm, int *high, MPI_Fint *newintraco
 	MPI_Comm c_newintracomm;
 
 	*ierror       = MPI_Intercomm_merge(c_intercomm, *high, &c_newintracomm);
-	*newintracomm = PMPI_Comm_c2f(c_newintracomm);
+    if( *ierror == MPI_SUCCESS) {
+        *newintracomm = PMPI_Comm_c2f(c_newintracomm);
+    }
 }
 
 #pragma weak mpi_iprobe_ = pmpi_iprobe_
@@ -4750,6 +4788,7 @@ void pmpi_keyval_create_(MPI_Copy_function *copy_fn, MPI_Delete_function *delete
 {
 /* MPI_Keyval_create */
 
+    *keyval = -1; /**< Denotes fortran functions */
 	*ierror = MPI_Keyval_create(copy_fn, delete_fn, keyval, extra_state);
 }
 
@@ -4758,6 +4797,7 @@ void pmpi_keyval_create__(MPI_Copy_function *copy_fn, MPI_Delete_function *delet
 {
 /* MPI_Keyval_create */
 
+    *keyval = -1; /**< Denotes fortran functions */
 	*ierror = MPI_Keyval_create(copy_fn, delete_fn, keyval, extra_state);
 }
 

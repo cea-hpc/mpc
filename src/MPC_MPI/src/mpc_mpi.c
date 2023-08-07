@@ -14789,6 +14789,13 @@ int PMPI_Keyval_create(MPI_Copy_function *copy_fn,
 	int res       = MPI_ERR_INTERN;
 
 	int i;
+    int fortran_key;
+    if( *keyval == -1 ) {
+        fortran_key = 1;
+    }
+    else {
+        fortran_key = 0;
+    }
 	mpc_mpi_data_t *tmp = __get_per_task_data();
 
 	mpc_common_nodebug("number = %d, max_number = %d", tmp->number, tmp->max_number);
@@ -14812,7 +14819,7 @@ int PMPI_Keyval_create(MPI_Copy_function *copy_fn,
 	tmp->attrs_fn[*keyval].delete_fn   = delete_fn;
 	tmp->attrs_fn[*keyval].extra_state = extra_state;
 	tmp->attrs_fn[*keyval].used        = 1;
-	tmp->attrs_fn[*keyval].fortran_key = 0;
+	tmp->attrs_fn[*keyval].fortran_key = fortran_key;
 
 	mpc_common_spinlock_unlock(&(tmp->lock) );
 
