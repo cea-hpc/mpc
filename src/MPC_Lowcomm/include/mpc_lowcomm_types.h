@@ -140,6 +140,7 @@ typedef struct
 	int MPC_ERROR;		/**< Did we encounter an error */
 	int cancelled;		/**< Was the message canceled */
 	mpc_lowcomm_msg_count_t size;	/**< Size of the message */
+    int pad[3];         /**< ABI Compliant padding */
 } mpc_lowcomm_status_t;
 
 #define MPC_LOWCOMM_STATUS_NULL NULL
