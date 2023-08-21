@@ -326,6 +326,7 @@ int _mpc_dt_keyval_create( MPC_Type_copy_attr_function *copy,
 	new->copy = copy;
 	new->delete = delete;
 	new->extra_state = extra_state;
+        new->free_cell = 0;
 
 	return MPC_LOWCOMM_SUCCESS;
 }
@@ -717,6 +718,15 @@ static inline void __mpc_composed_common_types_init()
 	__mpc_common_dt_set_name( MPC_2INTEGER, "MPI_2INTEGER" );
 	tmp = _mpc_dt_get_datatype(MPC_2INTEGER);
 	_mpc_cl_type_commit( &tmp );
+
+        for(int i = 1; i < SCTK_COMMON_DATA_TYPE_COUNT; i++) {
+                mpc_lowcomm_datatype_t dt = _mpc_dt_get_datatype((mpc_lowcomm_datatype_t) (long)i);
+                if(dt->attrs == NULL) { 
+                        dt->attrs = (struct __mpc_dt_attr_store * ) sctk_malloc(sizeof(struct __mpc_dt_attr_store));
+                        assume( dt->attrs != NULL);
+                        __mpc_dt_attr_store_init( dt->attrs );
+                }
+        }
 
 }
 
