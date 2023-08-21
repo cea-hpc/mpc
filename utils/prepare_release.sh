@@ -1,6 +1,7 @@
 #!/bin/bash
+USER=$(whoami)
+CREATEOWNER="adduser $USER -p \"\""
 
-set -e -x
 SCRIPTPATH=$(dirname "$(readlink -f "$0")")
 
 ##################### FUNCTION ###################
@@ -106,7 +107,7 @@ check() {
 
 package() {
 	cd "\$srcdir/\$pkgname-\$pkgver/BUILD"
-	 DESTDIR="\$pkgdir/" make -j install
+	DESTDIR="\$pkgdir/" make -j install
 	mv \$pkgdir/usr/local/share/man \$pkgdir/usr/local/man
 }
 EOF
@@ -131,7 +132,7 @@ build_arch()
 
 extract_arch()
 {
-    safe_exec docker run --user root --rm -v $TARGET:/host mpc_release_$DISTRIB cp /root/pkg/mpcframework-1:$VERSION-1-x86_64.pkg.tar.zst /host/mpcframework-"$VERSION"-"$DISTRIB".tar.zst
+    safe_exec docker run --user $USER --rm -v $(readlink -f $TARGET):/host mpc_release_$DISTRIB /bin/sh -c cp /pkg/mpcframework-1:$VERSION-1-x86_64.pkg.tar.zst /host/mpcframework-"$VERSION"-"$DISTRIB".tar.zst
 }
 
 ########### DEB packages ############### 
@@ -142,10 +143,13 @@ FROM $DISTRIB
 COPY debbuild /root/debbuild
 COPY build_deb.sh /root/build_deb.sh
 COPY control /root/control
+RUN $CREATEOWNER 
 RUN apt update
 RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install tzdata
 RUN apt install -y util-linux cmake patch make gcc $CXX $CFORTRAN pkg-config wget git hwloc libhwloc-dev python3 dpkg-dev
 RUN sh /root/build_deb.sh
+RUN chown $USER /root/installmpc.deb ;
+RUN mv /root/installmpc.deb /
 EOF
 }
 
@@ -180,7 +184,7 @@ build_deb()
 
 extract_deb()
 {
-    safe_exec docker run --rm -v $TARGET:/host mpc_release_$DISTRIB cp /root/installmpc.deb /host/mpcframework-"$VERSION"-"$DISTRIB".deb
+    safe_exec docker run --user $USER --rm -v $(readlink -f $TARGET):/host mpc_release_$DISTRIB /bin/sh -c "cp /installmpc.deb /host/mpcframework-"$VERSION"-"$DISTRIB".deb"
 }
 
 ########### RPM packages ###############
@@ -190,8 +194,15 @@ cat << EOF > release/Dockerfile
 FROM $DISTRIB
 COPY rpmbuild /root/rpmbuild
 COPY build_rpm.sh /root/build_rpm.sh
-RUN yum install -y util-linux cmake patch make gcc $CXX $CFORTRAN pkg-config wget rpm rpm-build git hwloc $HWLOC_DEVEL
+RUN $CREATEOWNER 
+RUN yum clean all
+RUN yum check-update || :
+RUN rpm -vv --import /etc/pki/rpm-gpg/*
+RUN dnf update -y --nogpgcheck
+RUN yum install -y util-linux cmake patch make gcc $CXX $CFORTRAN pkg-config wget rpm rpm-build git hwloc $HWLOC_DEVEL || :
 RUN sh /root/build_rpm.sh
+RUN chown -R $USER /root/rpmbuild 
+RUN mv /root/rpmbuild /
 EOF
 }
 
@@ -270,7 +281,7 @@ build_rpm()
 
 extract_rpm()
 {
-    safe_exec docker run --rm -v $TARGET:/host mpc_release_$DISTRIB cp -r /root/rpmbuild/RPMS/x86_64/ /host
+    safe_exec docker run --user $USER --rm -v $(readlink -f $TARGET):/host mpc_release_$DISTRIB /bin/sh -c "cp -r /rpmbuild/RPMS/x86_64/ /host"
 }
 
 clean(){
@@ -303,7 +314,7 @@ Arguments :
 
 Options :
     --extract-only      Look for active image of specified distribution and retreives rpm package.
-    --clean             Clean directories and dockerm, then exits.
+    --clean             Clean directories and docker, then exits.
     --help              Print this documentation string, then exits.
 EOF
     exit 0
