@@ -1230,7 +1230,8 @@ void pmpi_cart_sub_(MPI_Fint *comm, const int remain_dims[], MPI_Fint *newcomm, 
 	MPI_Comm c_newcomm;
 
 	*ierror  = MPI_Cart_sub(c_comm, remain_dims, &c_newcomm);
-	*newcomm = PMPI_Comm_c2f(c_newcomm);
+    if( *ierror== MPI_SUCCESS)
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
 }
 
 #pragma weak mpi_cart_sub__ = pmpi_cart_sub__
@@ -1241,7 +1242,8 @@ void pmpi_cart_sub__(MPI_Fint *comm, const int remain_dims[], MPI_Fint *newcomm,
 	MPI_Comm c_newcomm;
 
 	*ierror  = MPI_Cart_sub(c_comm, remain_dims, &c_newcomm);
-	*newcomm = PMPI_Comm_c2f(c_newcomm);
+    if( *ierror== MPI_SUCCESS)
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
 }
 
 #pragma weak mpi_cartdim_get_ = pmpi_cartdim_get_
@@ -1298,7 +1300,8 @@ void pmpi_comm_accept_(const char *port_name CHAR_MIXED(size_port_name), MPI_Fin
 	MPI_Comm c_newcomm;
 
 	*ierror  = MPI_Comm_accept(tmp_port_name, c_info, *root, c_comm, &c_newcomm);
-	*newcomm = PMPI_Comm_c2f(c_newcomm);
+    if( *ierror== MPI_SUCCESS)
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
 	sctk_free(ptr_port_name);
 }
 
@@ -1314,7 +1317,8 @@ void pmpi_comm_accept__(const char *port_name CHAR_MIXED(size_port_name), MPI_Fi
 	MPI_Comm c_newcomm;
 
 	*ierror  = MPI_Comm_accept(tmp_port_name, c_info, *root, c_comm, &c_newcomm);
-	*newcomm = PMPI_Comm_c2f(c_newcomm);
+    if( *ierror== MPI_SUCCESS)
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
 	sctk_free(ptr_port_name);
 }
 
@@ -1368,7 +1372,8 @@ void pmpi_comm_connect_(const char *port_name CHAR_MIXED(size_port_name), MPI_Fi
 	MPI_Comm c_newcomm;
 
 	*ierror  = MPI_Comm_connect(tmp_port_name, c_info, *root, c_comm, &c_newcomm);
-	*newcomm = PMPI_Comm_c2f(c_newcomm);
+    if( *ierror== MPI_SUCCESS)
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
 	sctk_free(ptr_port_name);
 }
 
@@ -1384,7 +1389,8 @@ void pmpi_comm_connect__(const char *port_name CHAR_MIXED(size_port_name), MPI_F
 	MPI_Comm c_newcomm;
 
 	*ierror  = MPI_Comm_connect(tmp_port_name, c_info, *root, c_comm, &c_newcomm);
-	*newcomm = PMPI_Comm_c2f(c_newcomm);
+    if( *ierror== MPI_SUCCESS)
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
 	sctk_free(ptr_port_name);
 }
 
@@ -1397,7 +1403,8 @@ void pmpi_comm_create_(MPI_Fint *comm, MPI_Fint *group, MPI_Fint *newcomm, int *
 	MPI_Comm  c_newcomm;
 
 	*ierror  = MPI_Comm_create(c_comm, c_group, &c_newcomm);
-	*newcomm = PMPI_Comm_c2f(c_newcomm);
+    if( *ierror== MPI_SUCCESS)
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
 }
 
 #pragma weak mpi_comm_create__ = pmpi_comm_create__
@@ -1409,7 +1416,8 @@ void pmpi_comm_create__(MPI_Fint *comm, MPI_Fint *group, MPI_Fint *newcomm, int 
 	MPI_Comm  c_newcomm;
 
 	*ierror  = MPI_Comm_create(c_comm, c_group, &c_newcomm);
-	*newcomm = PMPI_Comm_c2f(c_newcomm);
+    if( *ierror== MPI_SUCCESS)
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
 }
 
 #pragma weak mpi_errhandler_get_ = pmpi_errhandler_get_
@@ -1458,7 +1466,8 @@ void pmpi_comm_create_group_(MPI_Fint *comm, MPI_Fint *group, int *tag, MPI_Fint
 	MPI_Comm  c_newcomm;
 
 	*ierror  = MPI_Comm_create_group(c_comm, c_group, *tag, &c_newcomm);
-	*newcomm = PMPI_Comm_c2f(c_newcomm);
+    if( *ierror== MPI_SUCCESS)
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
 }
 
 #pragma weak mpi_comm_create_group__ = pmpi_comm_create_group__
@@ -1470,7 +1479,8 @@ void pmpi_comm_create_group__(MPI_Fint *comm, MPI_Fint *group, int *tag, MPI_Fin
 	MPI_Comm  c_newcomm;
 
 	*ierror  = MPI_Comm_create_group(c_comm, c_group, *tag, &c_newcomm);
-	*newcomm = PMPI_Comm_c2f(c_newcomm);
+    if( *ierror== MPI_SUCCESS)
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
 }
 
 #pragma weak mpi_comm_create_keyval_ = pmpi_comm_create_keyval_
@@ -2101,7 +2111,8 @@ void pmpi_comm_split_(MPI_Fint *comm, int *color, int *key, MPI_Fint *newcomm, i
 	MPI_Comm c_newcomm;
 
 	*ierror  = MPI_Comm_split(c_comm, *color, *key, &c_newcomm);
-	*newcomm = PMPI_Comm_c2f(c_newcomm);
+    if( *ierror== MPI_SUCCESS)
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
 }
 
 #pragma weak mpi_comm_split__ = pmpi_comm_split__
@@ -2112,7 +2123,8 @@ void pmpi_comm_split__(MPI_Fint *comm, int *color, int *key, MPI_Fint *newcomm, 
 	MPI_Comm c_newcomm;
 
 	*ierror  = MPI_Comm_split(c_comm, *color, *key, &c_newcomm);
-	*newcomm = PMPI_Comm_c2f(c_newcomm);
+    if( *ierror== MPI_SUCCESS)
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
 }
 
 #pragma weak mpi_comm_split_type_ = pmpi_comm_split_type_
@@ -2124,7 +2136,8 @@ void pmpi_comm_split_type_(MPI_Fint *comm, int *split_type, int *key, MPI_Fint *
 	MPI_Comm c_newcomm;
 
 	*ierror  = MPI_Comm_split_type(c_comm, *split_type, *key, c_info, &c_newcomm);
-	*newcomm = PMPI_Comm_c2f(c_newcomm);
+    if( *ierror== MPI_SUCCESS)
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
 }
 
 #pragma weak mpi_comm_split_type__ = pmpi_comm_split_type__
@@ -2136,7 +2149,8 @@ void pmpi_comm_split_type__(MPI_Fint *comm, int *split_type, int *key, MPI_Fint 
 	MPI_Comm c_newcomm;
 
 	*ierror  = MPI_Comm_split_type(c_comm, *split_type, *key, c_info, &c_newcomm);
-	*newcomm = PMPI_Comm_c2f(c_newcomm);
+    if( *ierror== MPI_SUCCESS)
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
 }
 
 #pragma weak mpi_comm_test_inter_ = pmpi_comm_test_inter_
@@ -3002,7 +3016,8 @@ void pmpi_group_difference_(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgro
 	MPI_Group c_newgroup;
 
 	*ierror   = MPI_Group_difference(c_group1, c_group2, &c_newgroup);
-	*newgroup = PMPI_Group_c2f(c_newgroup);
+    if( *ierror == MPI_SUCCESS)
+        *newgroup = PMPI_Group_c2f(c_newgroup);
 }
 
 #pragma weak mpi_group_difference__ = pmpi_group_difference__
@@ -3014,7 +3029,8 @@ void pmpi_group_difference__(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgr
 	MPI_Group c_newgroup;
 
 	*ierror   = MPI_Group_difference(c_group1, c_group2, &c_newgroup);
-	*newgroup = PMPI_Group_c2f(c_newgroup);
+    if( *ierror == MPI_SUCCESS)
+        *newgroup = PMPI_Group_c2f(c_newgroup);
 }
 
 #pragma weak mpi_group_excl_ = pmpi_group_excl_
@@ -3025,7 +3041,8 @@ void pmpi_group_excl_(MPI_Fint *group, int *n, const int ranks[], MPI_Fint *newg
 	MPI_Group c_newgroup;
 
 	*ierror   = MPI_Group_excl(c_group, *n, ranks, &c_newgroup);
-	*newgroup = PMPI_Group_c2f(c_newgroup);
+    if( *ierror == MPI_SUCCESS)
+        *newgroup = PMPI_Group_c2f(c_newgroup);
 }
 
 #pragma weak mpi_group_excl__ = pmpi_group_excl__
@@ -3036,7 +3053,8 @@ void pmpi_group_excl__(MPI_Fint *group, int *n, const int ranks[], MPI_Fint *new
 	MPI_Group c_newgroup;
 
 	*ierror   = MPI_Group_excl(c_group, *n, ranks, &c_newgroup);
-	*newgroup = PMPI_Group_c2f(c_newgroup);
+    if( *ierror == MPI_SUCCESS)
+        *newgroup = PMPI_Group_c2f(c_newgroup);
 }
 
 #pragma weak mpi_group_free_ = pmpi_group_free_
@@ -3067,7 +3085,8 @@ void pmpi_group_incl_(MPI_Fint *group, int *n, const int ranks[], MPI_Fint *newg
 	MPI_Group c_newgroup;
 
 	*ierror   = MPI_Group_incl(c_group, *n, ranks, &c_newgroup);
-	*newgroup = PMPI_Group_c2f(c_newgroup);
+    if( *ierror == MPI_SUCCESS)
+        *newgroup = PMPI_Group_c2f(c_newgroup);
 }
 
 #pragma weak mpi_group_incl__ = pmpi_group_incl__
@@ -3078,7 +3097,8 @@ void pmpi_group_incl__(MPI_Fint *group, int *n, const int ranks[], MPI_Fint *new
 	MPI_Group c_newgroup;
 
 	*ierror   = MPI_Group_incl(c_group, *n, ranks, &c_newgroup);
-	*newgroup = PMPI_Group_c2f(c_newgroup);
+    if( *ierror == MPI_SUCCESS)
+        *newgroup = PMPI_Group_c2f(c_newgroup);
 }
 
 #pragma weak mpi_group_intersection_ = pmpi_group_intersection_
@@ -3090,7 +3110,8 @@ void pmpi_group_intersection_(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newg
 	MPI_Group c_newgroup;
 
 	*ierror   = MPI_Group_intersection(c_group1, c_group2, &c_newgroup);
-	*newgroup = PMPI_Group_c2f(c_newgroup);
+    if( *ierror == MPI_SUCCESS)
+        *newgroup = PMPI_Group_c2f(c_newgroup);
 }
 
 #pragma weak mpi_group_intersection__ = pmpi_group_intersection__
@@ -3102,7 +3123,8 @@ void pmpi_group_intersection__(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *new
 	MPI_Group c_newgroup;
 
 	*ierror   = MPI_Group_intersection(c_group1, c_group2, &c_newgroup);
-	*newgroup = PMPI_Group_c2f(c_newgroup);
+    if( *ierror == MPI_SUCCESS)
+        *newgroup = PMPI_Group_c2f(c_newgroup);
 }
 
 #pragma weak mpi_group_range_excl_ = pmpi_group_range_excl_
@@ -3113,7 +3135,8 @@ void pmpi_group_range_excl_(MPI_Fint *group, int *n, int ranges[][3], MPI_Fint *
 	MPI_Group c_newgroup;
 
 	*ierror   = MPI_Group_range_excl(c_group, *n, ranges, &c_newgroup);
-	*newgroup = PMPI_Group_c2f(c_newgroup);
+    if( *ierror == MPI_SUCCESS)
+        *newgroup = PMPI_Group_c2f(c_newgroup);
 }
 
 #pragma weak mpi_group_range_excl__ = pmpi_group_range_excl__
@@ -3124,7 +3147,8 @@ void pmpi_group_range_excl__(MPI_Fint *group, int *n, int ranges[][3], MPI_Fint 
 	MPI_Group c_newgroup;
 
 	*ierror   = MPI_Group_range_excl(c_group, *n, ranges, &c_newgroup);
-	*newgroup = PMPI_Group_c2f(c_newgroup);
+    if( *ierror == MPI_SUCCESS)
+        *newgroup = PMPI_Group_c2f(c_newgroup);
 }
 
 #pragma weak mpi_group_range_incl_ = pmpi_group_range_incl_
@@ -3135,7 +3159,8 @@ void pmpi_group_range_incl_(MPI_Fint *group, int *n, int ranges[][3], MPI_Fint *
 	MPI_Group c_newgroup;
 
 	*ierror   = MPI_Group_range_incl(c_group, *n, ranges, &c_newgroup);
-	*newgroup = PMPI_Group_c2f(c_newgroup);
+    if( *ierror == MPI_SUCCESS)
+        *newgroup = PMPI_Group_c2f(c_newgroup);
 }
 
 #pragma weak mpi_group_range_incl__ = pmpi_group_range_incl__
@@ -3146,7 +3171,8 @@ void pmpi_group_range_incl__(MPI_Fint *group, int *n, int ranges[][3], MPI_Fint 
 	MPI_Group c_newgroup;
 
 	*ierror   = MPI_Group_range_incl(c_group, *n, ranges, &c_newgroup);
-	*newgroup = PMPI_Group_c2f(c_newgroup);
+    if( *ierror == MPI_SUCCESS)
+        *newgroup = PMPI_Group_c2f(c_newgroup);
 }
 
 #pragma weak mpi_group_rank_ = pmpi_group_rank_
@@ -3214,7 +3240,8 @@ void pmpi_group_union_(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, i
 	MPI_Group c_newgroup;
 
 	*ierror   = MPI_Group_union(c_group1, c_group2, &c_newgroup);
-	*newgroup = PMPI_Group_c2f(c_newgroup);
+    if( *ierror == MPI_SUCCESS)
+        *newgroup = PMPI_Group_c2f(c_newgroup);
 }
 
 #pragma weak mpi_group_union__ = pmpi_group_union__
@@ -3226,7 +3253,8 @@ void pmpi_group_union__(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, 
 	MPI_Group c_newgroup;
 
 	*ierror   = MPI_Group_union(c_group1, c_group2, &c_newgroup);
-	*newgroup = PMPI_Group_c2f(c_newgroup);
+    if( *ierror == MPI_SUCCESS)
+        *newgroup = PMPI_Group_c2f(c_newgroup);
 }
 
 #pragma weak mpi_iallgather_ = pmpi_iallgather_
@@ -9164,7 +9192,8 @@ void pmpi_group_from_session_pset_(MPI_Fint * session, const char *pset_name  CH
 
 	sctk_free( ptr_string );
 
-	*newgroup = PMPI_Group_c2f( c_group );
+    if( *ierror == MPI_SUCCESS)
+        *newgroup = PMPI_Group_c2f(c_group);
 }
 
 #pragma weak mpi_group_from_session_pset__ = pmpi_group_from_session_pset__
@@ -9181,7 +9210,8 @@ void pmpi_group_from_session_pset__(MPI_Fint * session, const char *pset_name  C
 
 	sctk_free( ptr_string );
 
-	*newgroup = PMPI_Group_c2f( c_group );
+    if( *ierror == MPI_SUCCESS)
+        *newgroup = PMPI_Group_c2f(c_group);
 }
 
 #pragma weak mpi_comm_create_from_group_ = pmpi_comm_create_from_group_
@@ -9202,7 +9232,8 @@ void pmpi_comm_create_from_group_(MPI_Fint * group, const char * stringtag CHAR_
 
 	sctk_free( ptr_string );
 
-	*newcomm = PMPI_Comm_c2f( c_newcomm );
+    if( *ierror== MPI_SUCCESS)
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
 }
 
 #pragma weak mpi_comm_create_from_group__ = pmpi_comm_create_from_group__
@@ -9223,7 +9254,8 @@ void pmpi_comm_create_from_group__(MPI_Fint * group, const char * stringtag CHAR
 
 	sctk_free( ptr_string );
 
-	*newcomm = PMPI_Comm_c2f( c_newcomm );
+    if( *ierror== MPI_SUCCESS)
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
 }
 
 #pragma weak mpi_session_get_pset_info_ = pmpi_session_get_pset_info_
