@@ -48,7 +48,7 @@ typedef struct mpc_lowcomm_topo_comms
  * @brief This is the struct defining a lowcomm communicator
  *
  */
-typedef struct mpc_lowcomm_internal_communicator_s
+typedef struct MPI_ABI_Comm
 {
 	mpc_lowcomm_communicator_id_t               id;				/**< Integer unique identifier of the comm */
 	int                        linear_comm_id;  /** Linear communicator id on int32 used for FORTRAN */
@@ -143,7 +143,8 @@ int _mpc_lowcomm_communicator_world_last_local_task();
  **/
 static inline struct mpc_lowcomm_coll_s *_mpc_comm_get_internal_coll(const mpc_lowcomm_communicator_t comm)
 {
-	return comm->coll;
+    mpc_lowcomm_communicator_t local_comm = __mpc_lowcomm_communicator_from_predefined(comm);
+	return local_comm->coll;
 }
 
 /**
@@ -153,6 +154,7 @@ static inline struct mpc_lowcomm_coll_s *_mpc_comm_get_internal_coll(const mpc_l
  **/
 static inline void _mpc_comm_set_internal_coll(mpc_lowcomm_communicator_t comm, struct mpc_lowcomm_coll_s *coll)
 {
+    comm = __mpc_lowcomm_communicator_from_predefined(comm);
 	comm->coll = coll;
 }
 
@@ -166,6 +168,7 @@ static inline mpc_lowcomm_communicator_id_t _mpc_lowcomm_communicator_id(mpc_low
 {
 	if(comm != MPC_COMM_NULL)
 	{
+        comm = __mpc_lowcomm_communicator_from_predefined(comm);
 		return comm->id;
 	}
 

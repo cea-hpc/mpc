@@ -91,6 +91,8 @@ static inline mpc_per_communicator_t *_mpc_cl_per_communicator_get_no_lock(mpc_m
 {
 	mpc_per_communicator_t *per_communicator;
 
+    comm = __mpc_lowcomm_communicator_from_predefined(comm);
+
 	HASH_FIND(hh, task_specific->per_communicator, &comm,
 	          sizeof(mpc_lowcomm_communicator_t), per_communicator);
 	return per_communicator;
@@ -111,6 +113,7 @@ static inline void __mpc_cl_per_communicator_set(mpc_mpi_cl_per_mpi_process_ctx_
                                                  mpc_per_communicator_t *mpc_per_comm,
                                                  mpc_lowcomm_communicator_t comm)
 {
+    comm = __mpc_lowcomm_communicator_from_predefined(comm);
 	mpc_common_spinlock_lock(&(task_specific->per_communicator_lock) );
 	mpc_per_comm->key = comm;
 	HASH_ADD(hh, task_specific->per_communicator, key,
@@ -122,6 +125,7 @@ static inline void __mpc_cl_per_communicator_set(mpc_mpi_cl_per_mpi_process_ctx_
 static inline void __mpc_cl_per_communicator_delete(mpc_mpi_cl_per_mpi_process_ctx_t *task_specific,
                                                     mpc_lowcomm_communicator_t comm)
 {
+    comm = __mpc_lowcomm_communicator_from_predefined(comm);
 	mpc_common_spinlock_lock(&(task_specific->per_communicator_lock) );
 	mpc_per_communicator_t *per_communicator = _mpc_cl_per_communicator_get_no_lock(task_specific, comm);
 
@@ -444,6 +448,7 @@ int MPCX_Disguise(mpc_lowcomm_communicator_t comm, int target_rank)
 			/* Sorry I'm already wearing a mask */
 			return MPC_ERR_ARG;
 		}
+        comm = __mpc_lowcomm_communicator_from_predefined(comm);
 
 		/* Retrieve the ctx pointer */
 		int cwr         = mpc_lowcomm_communicator_world_rank_of( ( mpc_lowcomm_communicator_t )comm, target_rank);
@@ -852,7 +857,7 @@ static inline int __MPC_ERROR_REPORT__(mpc_lowcomm_communicator_t comm, int erro
 	        ( sctk_handle )comm, _MPC_MPI_HANDLE_COMM);
 	MPC_Handler_function *func = _mpc_mpi_errhandler_resolve(errh);
 
-	comm_id = comm;
+    comm_id = __mpc_lowcomm_communicator_from_predefined(comm);
 	error_id = error;
 	( func )(&comm_id, &error_id, message, function, file, line);
 	return error;

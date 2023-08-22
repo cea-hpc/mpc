@@ -41,8 +41,7 @@ extern "C" {
 * PUBLIC TYPE FOR COMMUNICATORS *
 *********************************/
 
-struct mpc_lowcomm_internal_communicator_s;
-typedef struct mpc_lowcomm_internal_communicator_s *mpc_lowcomm_communicator_t;
+typedef struct MPI_ABI_Comm *mpc_lowcomm_communicator_t;
 typedef uint64_t mpc_lowcomm_communicator_id_t;
 
 
@@ -120,11 +119,25 @@ mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_world_id_gid(mpc_lowcomm_set_
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_self();
 
 /** define the MPI_COMM_WORLD internal communicator number **/
-#define MPC_COMM_WORLD    (mpc_lowcomm_communicator_world() )
+#define MPC_COMM_WORLD    ((mpc_lowcomm_communicator_t) 1)
 /** define the MPI_COMM_SELF internal communicator number **/
-#define MPC_COMM_SELF     (mpc_lowcomm_communicator_self() )
+#define MPC_COMM_SELF     ((mpc_lowcomm_communicator_t) 2)
 /** Define the NULL communicator number */
-#define MPC_COMM_NULL     (NULL)
+#define MPC_COMM_NULL     ((mpc_lowcomm_communicator_t) 0)
+
+static inline mpc_lowcomm_communicator_t __mpc_lowcomm_communicator_to_predefined(const mpc_lowcomm_communicator_t comm) {
+    if(comm < (mpc_lowcomm_communicator_t) 4096) return comm;
+    if(comm == mpc_lowcomm_communicator_world()) return MPC_COMM_WORLD; 
+    if(comm == mpc_lowcomm_communicator_self()) return MPC_COMM_SELF;
+    return comm;
+}
+
+static inline mpc_lowcomm_communicator_t __mpc_lowcomm_communicator_from_predefined(const mpc_lowcomm_communicator_t comm) {
+    if(comm >= (mpc_lowcomm_communicator_t) 4096) return comm;
+    if(comm == MPC_COMM_WORLD) return mpc_lowcomm_communicator_world(); 
+    if(comm == MPC_COMM_SELF) return mpc_lowcomm_communicator_self();
+    return comm;
+}
 
 /**************
 * ID FACTORY *

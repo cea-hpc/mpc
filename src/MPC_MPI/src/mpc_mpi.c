@@ -156,6 +156,7 @@ static inline void fortran_check_binds_resolve()
 
 int _mpc_mpi_report_error(mpc_lowcomm_communicator_t comm, int error, char *message, char * function, char *file, int line)
 {
+    comm = __mpc_lowcomm_communicator_from_predefined(comm);
 	MPI_Errhandler errh = (MPI_Errhandler)_mpc_mpi_handle_get_errhandler(
 		(sctk_handle)comm, _MPC_MPI_HANDLE_COMM);
 
@@ -16161,14 +16162,11 @@ int PMPI_Errhandler_create(MPI_Handler_function *function,
 
 int PMPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhandler)
 {
-	if(comm == MPI_COMM_NULL)
-	{
-		return MPI_ERR_COMM;
-	}
+    mpi_check_comm(comm);
 
 	if(errhandler == MPI_ERRHANDLER_NULL)
 	{
-		return MPI_ERR_ARG;
+		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "Wrong Errhandler");
 	}
 
 	mpi_check_comm(comm);
@@ -17500,16 +17498,19 @@ int PMPI_Comm_create_errhandler(MPI_Comm_errhandler_function *function,
 
 int PMPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler)
 {
+    comm = __mpc_lowcomm_communicator_from_predefined(comm);
 	return _mpc_cl_errhandler_get(comm, errhandler);
 }
 
 int PMPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler)
 {
+    comm = __mpc_lowcomm_communicator_from_predefined(comm);
 	return _mpc_cl_errhandler_set(comm, errhandler);
 }
 
 int PMPI_Comm_call_errhandler(MPI_Comm comm, int errorcode)
 {
+    comm = __mpc_lowcomm_communicator_from_predefined(comm);
 	_mpc_mpi_errhandler_t errh =
 		_mpc_mpi_handle_get_errhandler( (sctk_handle)comm, _MPC_MPI_HANDLE_COMM);
 	_mpc_mpi_generic_errhandler_func_t errf = _mpc_mpi_errhandler_resolve(errh);

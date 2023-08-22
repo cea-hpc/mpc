@@ -228,7 +228,7 @@ static inline void _mpc_comm_ptp_message_set_copy_and_free( mpc_lowcomm_ptp_mess
 #define SCTK_MSG_COMMUNICATOR_SET( msg, comm ) \
 	do                                         \
 	{                                          \
-		msg->body.header.communicator_id = comm->id;  \
+		msg->body.header.communicator_id = (__mpc_lowcomm_communicator_from_predefined(comm))->id;  \
 		msg->tail.communicator = comm;  \
 	} while ( 0 )
 

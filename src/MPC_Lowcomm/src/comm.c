@@ -354,6 +354,7 @@ static inline struct mpc_comm_ptp_s *__mpc_comm_ptp_array_get(mpc_lowcomm_commun
 {
 	mpc_comm_dest_key_t key;
 
+    comm = __mpc_lowcomm_communicator_from_predefined(comm);
 	_mpc_comm_dest_key_init(&key, comm->id, rank);
 	return __mpc_comm_ptp_array_get_key(&key);
 }
@@ -2943,7 +2944,7 @@ __mpc_comm_probe_source_tag_class_func(int destination, int source, int tag,
 	msg->source_task       = world_source;
 	msg->destination_task  = world_destination;
 	msg->message_tag       = tag;
-	msg->communicator_id   = comm->id;
+	msg->communicator_id   = (__mpc_lowcomm_communicator_from_predefined(comm))->id;
 	msg->message_type = class;
 
 	switch ( *status )
