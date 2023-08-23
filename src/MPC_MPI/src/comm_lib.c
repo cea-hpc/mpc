@@ -3117,14 +3117,12 @@ int _mpc_cl_comm_split(mpc_lowcomm_communicator_t comm, int color, int key, mpc_
 int _mpc_cl_errhandler_create(MPC_Handler_function *function,
                               MPC_Errhandler *errhandler)
 {
-	_mpc_mpi_errhandler_register( ( _mpc_mpi_generic_errhandler_func_t )function, ( _mpc_mpi_errhandler_t * )errhandler);
-	MPC_ERROR_SUCCESS();
+	return _mpc_mpi_errhandler_register( ( _mpc_mpi_generic_errhandler_func_t )function, ( _mpc_mpi_errhandler_t * )errhandler);
 }
 
 int _mpc_cl_errhandler_set(mpc_lowcomm_communicator_t comm, MPC_Errhandler errhandler)
 {
-	_mpc_mpi_handle_set_errhandler( ( sctk_handle )comm, _MPC_MPI_HANDLE_COMM, ( _mpc_mpi_errhandler_t )errhandler);
-	MPC_ERROR_SUCCESS();
+    return	_mpc_mpi_handle_set_errhandler( ( sctk_handle )comm, _MPC_MPI_HANDLE_COMM, ( _mpc_mpi_errhandler_t )errhandler);
 }
 
 int _mpc_cl_errhandler_get(mpc_lowcomm_communicator_t comm, MPC_Errhandler *errhandler)
@@ -3258,11 +3256,14 @@ int _mpc_cl_error_init()
 	{
 		error_init_done = 1;
 		_mpc_mpi_errhandler_register_on_slot( ( _mpc_mpi_generic_errhandler_func_t )_mpc_cl_default_error,
-		                                  MPC_ERRHANDLER_NULL);
+		                                  (int) (long)MPC_ERRHANDLER_NULL);
 		_mpc_mpi_errhandler_register_on_slot( ( _mpc_mpi_generic_errhandler_func_t )_mpc_cl_return_error,
-		                                  MPC_ERRORS_RETURN);
+		                                  (int) (long) MPC_ERRORS_RETURN);
 		_mpc_mpi_errhandler_register_on_slot( ( _mpc_mpi_generic_errhandler_func_t )_mpc_cl_abort_error,
-		                                  MPC_ERRORS_ARE_FATAL);
+		                                  (int) (long) MPC_ERRORS_ARE_FATAL);
+        // Not the correct behaviour
+		_mpc_mpi_errhandler_register_on_slot( ( _mpc_mpi_generic_errhandler_func_t )_mpc_cl_abort_error,
+		                                  (int) (long) MPC_ERRORS_ABORT);
 		_mpc_cl_errhandler_set(MPC_COMM_WORLD, MPC_ERRORS_ARE_FATAL);
 		_mpc_cl_errhandler_set(MPC_COMM_SELF, MPC_ERRORS_ARE_FATAL);
 	}

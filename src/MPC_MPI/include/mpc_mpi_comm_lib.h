@@ -139,13 +139,14 @@ int mpc_mpi_cl_get_activity( int nb_item, mpc_mpi_cl_activity_t *tab, double *pr
  ******************/
 
 typedef void( MPC_Handler_function )( void *, int *, ... );
-typedef int MPC_Errhandler;
+typedef struct MPI_ABI_Errhandler *MPC_Errhandler;
+
+#define MPC_ERRHANDLER_NULL   ((MPC_Errhandler) 0)
+#define MPC_ERRORS_ARE_FATAL  ((MPC_Errhandler) 1)
+#define MPC_ERRORS_RETURN     ((MPC_Errhandler) 2)
+#define MPC_ERRORS_ABORT      ((MPC_Errhandler) 3)
 
 #define MPC_MAX_ERROR_STRING 512
-
-#define MPC_ERRHANDLER_NULL -1
-#define MPC_ERRORS_RETURN -6
-#define MPC_ERRORS_ARE_FATAL -7
 
 /* Error Classes */
 enum

@@ -16163,13 +16163,10 @@ int PMPI_Errhandler_create(MPI_Handler_function *function,
 int PMPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhandler)
 {
     mpi_check_comm(comm);
+    mpi_check_errhandler(errhandler, comm);
 
-	if(errhandler == MPI_ERRHANDLER_NULL)
-	{
-		MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "Wrong Errhandler");
-	}
+    comm = __mpc_lowcomm_communicator_from_predefined(comm);
 
-	mpi_check_comm(comm);
 	_mpc_mpi_handle_set_errhandler( (sctk_handle)comm, _MPC_MPI_HANDLE_COMM,
 	                            (_mpc_mpi_errhandler_t)errhandler);
 	MPI_ERROR_SUCCESS();
@@ -16178,6 +16175,8 @@ int PMPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhandler)
 int PMPI_Errhandler_get(MPI_Comm comm, MPI_Errhandler *errhandler)
 {
 	mpi_check_comm(comm);
+
+    comm = __mpc_lowcomm_communicator_from_predefined(comm);
 	*errhandler = (MPI_Errhandler)_mpc_mpi_handle_get_errhandler( (sctk_handle)comm,
 	                                                          _MPC_MPI_HANDLE_COMM);
 
@@ -16188,16 +16187,13 @@ int PMPI_Errhandler_free(MPI_Errhandler *errhandler)
 {
 	if(!errhandler)
 	{
-		return MPI_ERR_ARG;
+        MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_ARG, "Null to pointer to an errhandler");
 	}
 
-	if(*errhandler == MPI_ERRHANDLER_NULL)
-	{
-		return MPI_ERR_ARG;
-	}
+    mpi_check_errhandler(*errhandler, MPI_COMM_WORLD);
 
-	TODO("Refcounting should be implemented for Error handlers");
-	// _mpc_mpi_errhandler_free((_mpc_mpi_errhandler_t)*errhandler);
+	int ierr = _mpc_mpi_errhandler_free(*errhandler);
+    MPI_HANDLE_ERROR(ierr, MPI_COMM_WORLD, "Invalid errhandler");
 	*errhandler = MPI_ERRHANDLER_NULL;
 	MPI_ERROR_SUCCESS();
 }
@@ -16213,6 +16209,7 @@ int PMPI_File_create_errhandler(MPI_File_errhandler_function *file_errhandler_fn
 
 int PMPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler)
 {
+    mpi_check_errhandler(errhandler, MPI_COMM_WORLD);
 	_mpc_mpi_handle_set_errhandler( (sctk_handle)file, _MPC_MPI_HANDLE_FILE,
 	                            (_mpc_mpi_errhandler_t)errhandler);
 	MPI_ERROR_SUCCESS();

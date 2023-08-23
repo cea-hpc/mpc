@@ -356,8 +356,9 @@ extern "C"
 #define MPI_BSEND_OVERHEAD 128 /* Real value (2*sizeof(mpi_buffer_overhead_t)) */ 
 
 #define MPI_ERRHANDLER_NULL MPC_ERRHANDLER_NULL
-#define MPI_ERRORS_RETURN MPC_ERRORS_RETURN       /* 1234 in Fortran */
-#define MPI_ERRORS_ARE_FATAL MPC_ERRORS_ARE_FATAL /* 1235 in Fortran */
+#define MPI_ERRORS_RETURN MPC_ERRORS_RETURN
+#define MPI_ERRORS_ARE_FATAL MPC_ERRORS_ARE_FATAL
+#define MPI_ERRORS_ABORT MPC_ERRORS_ABORT
 
 #define MPI_KEYVAL_INVALID MPC_KEYVAL_INVALID
 
@@ -447,7 +448,7 @@ typedef mpc_lowcomm_communicator_t MPI_Comm; /* pointer */
 typedef int MPI_Request;
 typedef ssize_t MPI_Aint;
 typedef ssize_t MPI_Count;
-typedef int MPI_Errhandler;
+typedef MPC_Errhandler MPI_Errhandler;
 typedef sctk_Op_User_function MPI_User_function;
 typedef int MPI_Op;
 typedef mpc_lowcomm_group_t *MPI_Group; /* ABI compliant pointer */

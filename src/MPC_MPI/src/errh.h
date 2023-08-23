@@ -24,18 +24,45 @@
 
 
 #include <stdio.h>
+#include <stdbool.h>
 
 /************************************************************************/
 /* Error Handler                                                        */
 /************************************************************************/
 
+#define MAX_ERROR_HANDLERS 12 /**< 4 predefined + 8 user */
+
 typedef void (*_mpc_mpi_generic_errhandler_func_t)(void *phandle, int *error_code, ...);
-typedef int _mpc_mpi_errhandler_t;
+typedef struct MPI_ABI_Errhandler {
+    _mpc_mpi_generic_errhandler_func_t eh;
+    unsigned ref_count;
+} *_mpc_mpi_errhandler_t;
+
+/** @brief Retrieves the errhandler at the given index
+ *
+ *  @param idx  The index of the errhandler to retrieve
+ *  @return     A valid errhandler if the index is correct, the entry otherwise
+ */
+_mpc_mpi_errhandler_t _mpc_mpi_errhandler_from_idx (const long idx);
+
+/** @brief Retrieves the index of a given errhandler
+ *
+ *  @param errh  The errhandler of which we want the index in the global table
+ *  @return      A valid index
+ */
+unsigned short _mpc_mpi_errhandler_to_idx (const _mpc_mpi_errhandler_t errh);
+
+/** @brief Checks if an errhandler is valid (registered)
+ *
+ *  @param errh    The errhandler to check
+ *  @return        true if the errhandler is valid, false otherwise
+ */
+bool _mpc_mpi_errhandler_is_valid(const _mpc_mpi_errhandler_t errh);
 
 int _mpc_mpi_errhandler_register(_mpc_mpi_generic_errhandler_func_t eh, _mpc_mpi_errhandler_t *errh);
 
 int _mpc_mpi_errhandler_register_on_slot(_mpc_mpi_generic_errhandler_func_t eh,
-                                         _mpc_mpi_errhandler_t slot);
+                                         const int slot);
 
 _mpc_mpi_generic_errhandler_func_t _mpc_mpi_errhandler_resolve(_mpc_mpi_errhandler_t errh);
 
