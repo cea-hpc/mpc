@@ -6,6 +6,7 @@
 #include <mpc_common_debug.h>
 
 #include <datatype.h>
+#include <errh.h>
 
 #include <uthash.h>
 
@@ -453,7 +454,7 @@ MPI_Errhandler PMPI_Errhandler_f2c(MPI_Fint errhandler)
 
 	return ret;
 #else
-	return errhandler;
+	return _mpc_mpi_errhandler_from_idx(errhandler);
 #endif
 }
 
@@ -465,7 +466,7 @@ MPI_Fint PMPI_Errhandler_c2f(MPI_Errhandler errhandler)
 
 	return _mpc_handle_factory_set(&__errhandlers_factory, perrhandler);
 #else
-	return errhandler;
+	return (MPI_Fint) _mpc_mpi_errhandler_to_idx(errhandler);
 #endif
 }
 

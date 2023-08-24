@@ -1428,7 +1428,8 @@ void pmpi_errhandler_get_(MPI_Fint *comm, MPI_Fint *errhandler, int *ierror)
 	MPI_Errhandler c_errhandler;
 
 	*ierror     = MPI_Errhandler_get(c_comm, &c_errhandler);
-	*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+    if( *ierror == MPI_SUCCESS)
+        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
 }
 
 #pragma weak mpi_errhandler_get__ = pmpi_errhandler_get__
@@ -1440,21 +1441,23 @@ void pmpi_errhandler_get__(MPI_Fint *comm, MPI_Fint *errhandler, int *ierror)
 #pragma weak mpi_comm_create_errhandler_ = pmpi_comm_create_errhandler_
 void pmpi_comm_create_errhandler_(MPI_Comm_errhandler_function *comm_errhandler_fn, MPI_Fint *errhandler, int *ierror)
 {
-/* MPI_Comm_create_errhandler */
+    /* MPI_Comm_create_errhandler */
 	MPI_Errhandler c_errhandler;
 
 	*ierror     = MPI_Comm_create_errhandler(comm_errhandler_fn, &c_errhandler);
-	*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+    if( *ierror == MPI_SUCCESS)
+        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
 }
 
 #pragma weak mpi_comm_create_errhandler__ = pmpi_comm_create_errhandler__
 void pmpi_comm_create_errhandler__(MPI_Comm_errhandler_function *comm_errhandler_fn, MPI_Fint *errhandler, int *ierror)
 {
-/* MPI_Comm_create_errhandler */
+    /* MPI_Comm_create_errhandler */
 	MPI_Errhandler c_errhandler;
 
 	*ierror     = MPI_Comm_create_errhandler(comm_errhandler_fn, &c_errhandler);
-	*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+    if( *ierror == MPI_SUCCESS)
+        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
 }
 
 #pragma weak mpi_comm_create_group_ = pmpi_comm_create_group_
@@ -1655,7 +1658,8 @@ void pmpi_comm_get_errhandler_(MPI_Fint *comm, MPI_Fint *errhandler, int *ierror
 	MPI_Errhandler c_errhandler;
 
 	*ierror     = MPI_Comm_get_errhandler(c_comm, &c_errhandler);
-	*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+    if( *ierror == MPI_SUCCESS)
+        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
 }
 
 #pragma weak mpi_comm_get_errhandler__ = pmpi_comm_get_errhandler__
@@ -1666,7 +1670,8 @@ void pmpi_comm_get_errhandler__(MPI_Fint *comm, MPI_Fint *errhandler, int *ierro
 	MPI_Errhandler c_errhandler;
 
 	*ierror     = MPI_Comm_get_errhandler(c_comm, &c_errhandler);
-	*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+    if( *ierror == MPI_SUCCESS)
+        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
 }
 
 #pragma weak mpi_comm_get_info_ = pmpi_comm_get_info_
@@ -2314,7 +2319,8 @@ void pmpi_errhandler_free_(MPI_Fint *errhandler, int *ierror)
 	MPI_Errhandler c_errhandler = PMPI_Errhandler_f2c(*errhandler);
 
 	*ierror     = MPI_Errhandler_free(&c_errhandler);
-	*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+    if(*ierror == MPI_SUCCESS)
+        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
 }
 
 #pragma weak mpi_errhandler_free__ = pmpi_errhandler_free__
@@ -2324,7 +2330,8 @@ void pmpi_errhandler_free__(MPI_Fint *errhandler, int *ierror)
 	MPI_Errhandler c_errhandler = PMPI_Errhandler_f2c(*errhandler);
 
 	*ierror     = MPI_Errhandler_free(&c_errhandler);
-	*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+    if(*ierror == MPI_SUCCESS)
+        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
 }
 
 #pragma weak mpi_error_class_ = pmpi_error_class_
@@ -8396,7 +8403,8 @@ void pmpi_win_create_errhandler_(MPI_Win_errhandler_function *win_errhandler_fn,
 	MPI_Errhandler c_errhandler;
 
 	*ierror     = MPI_Win_create_errhandler(win_errhandler_fn, &c_errhandler);
-	*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+    if( *ierror == MPI_SUCCESS)
+        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
 }
 
 #pragma weak mpi_win_create_errhandler__ = pmpi_win_create_errhandler__
@@ -8406,7 +8414,8 @@ void pmpi_win_create_errhandler__(MPI_Win_errhandler_function *win_errhandler_fn
 	MPI_Errhandler c_errhandler;
 
 	*ierror     = MPI_Win_create_errhandler(win_errhandler_fn, &c_errhandler);
-	*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+    if( *ierror == MPI_SUCCESS)
+        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
 }
 
 #pragma weak mpi_win_create_keyval_ = pmpi_win_create_keyval_
@@ -8623,7 +8632,8 @@ void pmpi_win_get_errhandler_(MPI_Fint *win, MPI_Fint *errhandler, int *ierror)
 	MPI_Errhandler c_errhandler;
 
 	*ierror     = MPI_Win_get_errhandler(c_win, &c_errhandler);
-	*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+    if( *ierror == MPI_SUCCESS)
+        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
 }
 
 #pragma weak mpi_win_get_errhandler__ = pmpi_win_get_errhandler__
@@ -8634,7 +8644,8 @@ void pmpi_win_get_errhandler__(MPI_Fint *win, MPI_Fint *errhandler, int *ierror)
 	MPI_Errhandler c_errhandler;
 
 	*ierror     = MPI_Win_get_errhandler(c_win, &c_errhandler);
-	*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+    if( *ierror == MPI_SUCCESS)
+        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
 }
 
 #pragma weak mpi_win_get_group_ = pmpi_win_get_group_
@@ -9008,7 +9019,8 @@ void pmpi_session_create_errhandler_(MPI_Session_errhandler_function *session_er
 	MPI_Errhandler c_errhandler;
 
 	*ierror = PMPI_Session_create_errhandler( session_errhandler_fn, &c_errhandler );
-	*errhandler = PMPI_Errhandler_c2f( c_errhandler );
+    if(*ierror == MPI_SUCCESS)
+        *errhandler = PMPI_Errhandler_c2f( c_errhandler );
 }
 
 #pragma weak mpi_session_create_errhandler__ = pmpi_session_create_errhandler__
@@ -9041,7 +9053,8 @@ void pmpi_session_get_errhandler_(MPI_Fint * session, MPI_Fint *errhandler, int 
 
 	*ierror = PMPI_Session_get_errhandler( c_session, &c_errhandler );
 
-	*errhandler = PMPI_Errhandler_c2f( c_errhandler );
+    if(*ierror == MPI_SUCCESS)
+        *errhandler = PMPI_Errhandler_c2f( c_errhandler );
 }
 
 #pragma weak mpi_session_get_errhandler__ = pmpi_session_get_errhandler__
@@ -9073,8 +9086,8 @@ void pmpi_session_init_(MPI_Fint *  info, MPI_Fint *  errhandler, MPI_Fint * ses
 
 	MPI_Session c_session;
 	*ierror = PMPI_Session_init( c_info, c_errh , &c_session);
-
-	*session = PMPI_Session_c2f( c_session );
+    if(*ierror == MPI_SUCCESS)
+        *session = PMPI_Session_c2f( c_session );
 }
 
 #pragma weak mpi_session_init__ = pmpi_session_init__
@@ -9304,7 +9317,8 @@ void pmpi_file_create_errhandler_( MPI_File_errhandler_function *errhandler_fn, 
 	MPI_Errhandler c_errhandler;
 
 	*ierror = PMPI_File_create_errhandler( errhandler_fn, &c_errhandler );
-	*errhandler = PMPI_Errhandler_c2f( c_errhandler );
+    if(*ierror == MPI_SUCCESS)
+        *errhandler = PMPI_Errhandler_c2f( c_errhandler );
 }
 
 #pragma weak mpi_file_create_errhandler__ = pmpi_file_create_errhandler__
@@ -9640,8 +9654,11 @@ void pmpi_address__ ( void*v1, MPI_Fint *v2, MPI_Fint *ierr ){
 }
 
 #pragma weak mpi_errhandler_create_ = pmpi_errhandler_create_
-void pmpi_errhandler_create_ ( MPI_Handler_function*v1, MPI_Fint *v2, MPI_Fint *ierr ){
-     *ierr = MPI_Errhandler_create( v1, v2 );
+void pmpi_errhandler_create_ ( MPI_Handler_function *v1, MPI_Fint *v2, MPI_Fint *ierr ){
+    MPI_Errhandler c_errhandler;
+    *ierr = MPI_Errhandler_create( v1, &c_errhandler );
+    if(*ierr == MPI_SUCCESS)
+        *v2 = PMPI_Errhandler_c2f(c_errhandler);
 }
 
 #pragma weak mpi_errhandler_create__ = pmpi_errhandler_create__

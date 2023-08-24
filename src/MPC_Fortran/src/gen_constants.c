@@ -244,6 +244,7 @@ int generate_mpi_fortran_constants()
         MPI_TYPE_VAL("MPI_ERRORS_RETURN", MPI_ERRORS_RETURN, "MPI_Errhandler");
         MPI_TYPE_VAL("MPI_ERRORS_ARE_FATAL", MPI_ERRORS_ARE_FATAL,
                      "MPI_Errhandler");
+        MPI_TYPE_VAL("MPI_ERRORS_ABORT", MPI_ERRORS_ABORT, "MPI_Errhandler");
 
         /* Datatypes */
 
