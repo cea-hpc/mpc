@@ -50,7 +50,7 @@ _mpc_mpi_errhandler_t _mpc_mpi_errhandler_from_idx (const long idx);
  *  @param errh  The errhandler of which we want the index in the global table
  *  @return      A valid index
  */
-unsigned short _mpc_mpi_errhandler_to_idx (const _mpc_mpi_errhandler_t errh);
+long _mpc_mpi_errhandler_to_idx (const _mpc_mpi_errhandler_t errh);
 
 /** @brief Checks if an errhandler is valid (registered)
  *

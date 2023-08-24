@@ -88,17 +88,21 @@ static void mpc_mpi_err_init_once()
 /************************************************************************/
 
 _mpc_mpi_errhandler_t _mpc_mpi_errhandler_from_idx(const long errh) {
-    if(errh >= 0 && errh <= MAX_ERROR_HANDLERS) {
+    if(errh > 0 && errh <= MAX_ERROR_HANDLERS) {
         return error_handlers + errh;
     }
 
     return (_mpc_mpi_errhandler_t) errh;
 }
 
-unsigned short _mpc_mpi_errhandler_to_idx(const _mpc_mpi_errhandler_t errh) {
-    const unsigned short ret = ((long)error_handlers - (long)errh) / sizeof(struct MPI_ABI_Errhandler);
+long _mpc_mpi_errhandler_to_idx(const _mpc_mpi_errhandler_t errh) {
+    if(errh < (_mpc_mpi_errhandler_t) MAX_ERROR_HANDLERS) return (long) errh;
 
-    return ret;
+    for(unsigned short i = 1; i < MAX_ERROR_HANDLERS; i++) {
+        if(error_handlers + i == errh) return i;
+    }
+
+    return (long) errh;
 }
 
 bool _mpc_mpi_errhandler_is_valid(const _mpc_mpi_errhandler_t errh) {
@@ -339,9 +343,14 @@ _mpc_mpi_errhandler_t _mpc_mpi_handle_get_errhandler(sctk_handle id,
 		return SCTK_ERRHANDLER_NULL;
 	}
 
+    _mpc_mpi_errhandler_t ret = hctx->handler;
+    mpc_common_spinlock_lock(&errorhandlers_lock);
+    ret->ref_count++;
+    mpc_common_spinlock_unlock(&errorhandlers_lock);
+
 	mpc_common_nodebug("GET at %p == %d for %d", hctx, hctx->handler, id);
 
-	return hctx->handler;
+	return ret;
 }
 
 int _mpc_mpi_handle_set_errhandler(sctk_handle id, sctk_handle_type type,

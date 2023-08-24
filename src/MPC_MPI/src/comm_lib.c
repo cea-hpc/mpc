@@ -860,6 +860,8 @@ static inline int __MPC_ERROR_REPORT__(mpc_lowcomm_communicator_t comm, int erro
     comm_id = __mpc_lowcomm_communicator_from_predefined(comm);
 	error_id = error;
 	( func )(&comm_id, &error_id, message, function, file, line);
+
+    _mpc_mpi_errhandler_free(errh);
 	return error;
 }
 
@@ -3261,11 +3263,12 @@ int _mpc_cl_error_init()
 		                                  (int) (long) MPC_ERRORS_RETURN);
 		_mpc_mpi_errhandler_register_on_slot( ( _mpc_mpi_generic_errhandler_func_t )_mpc_cl_abort_error,
 		                                  (int) (long) MPC_ERRORS_ARE_FATAL);
-        // Not the correct behaviour
+        // TODO: Not the correct behaviour
 		_mpc_mpi_errhandler_register_on_slot( ( _mpc_mpi_generic_errhandler_func_t )_mpc_cl_abort_error,
 		                                  (int) (long) MPC_ERRORS_ABORT);
-		_mpc_cl_errhandler_set(MPC_COMM_WORLD, MPC_ERRORS_ARE_FATAL);
-		_mpc_cl_errhandler_set(MPC_COMM_SELF, MPC_ERRORS_ARE_FATAL);
+
+		_mpc_cl_errhandler_set(__mpc_lowcomm_communicator_from_predefined(MPC_COMM_WORLD), MPC_ERRORS_ARE_FATAL);
+		_mpc_cl_errhandler_set(__mpc_lowcomm_communicator_from_predefined(MPC_COMM_SELF), MPC_ERRORS_ARE_FATAL);
 	}
 
 	MPC_ERROR_SUCCESS();

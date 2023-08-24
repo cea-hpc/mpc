@@ -49,10 +49,10 @@ typedef uint64_t mpc_lowcomm_communicator_id_t;
 * COMMON COMMUNICATORS *
 ************************/
 
-/** This is the id of COMM world */
-#define MPC_LOWCOMM_COMM_WORLD_NUMERIC_ID    1
 /** This is the ID of COMM self */
-#define MPC_LOWCOMM_COMM_SELF_NUMERIC_ID     2
+#define MPC_LOWCOMM_COMM_SELF_NUMERIC_ID     1
+/** This is the id of COMM world */
+#define MPC_LOWCOMM_COMM_WORLD_NUMERIC_ID    2
 
 /* Expose communicator init needed for unit test */
 void _mpc_lowcomm_communicator_init(void);
@@ -118,24 +118,40 @@ mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_world_id_gid(mpc_lowcomm_set_
  */
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_self();
 
-/** define the MPI_COMM_WORLD internal communicator number **/
-#define MPC_COMM_WORLD    ((mpc_lowcomm_communicator_t) 1)
-/** define the MPI_COMM_SELF internal communicator number **/
-#define MPC_COMM_SELF     ((mpc_lowcomm_communicator_t) 2)
 /** Define the NULL communicator number */
 #define MPC_COMM_NULL     ((mpc_lowcomm_communicator_t) 0)
+/** define the MPI_COMM_SELF internal communicator number **/
+#define MPC_COMM_SELF     ((mpc_lowcomm_communicator_t) 1)
+/** define the MPI_COMM_WORLD internal communicator number **/
+#define MPC_COMM_WORLD    ((mpc_lowcomm_communicator_t) 2)
 
+/** @brief Converts a generic comm handle in its predefined equivalent
+ *
+ *  @param comm    The handle to convert
+ *  @return        The predefined value of the handle or the handle itself otherwise
+ */
 static inline mpc_lowcomm_communicator_t __mpc_lowcomm_communicator_to_predefined(const mpc_lowcomm_communicator_t comm) {
+    // Already predefined
     if(comm < (mpc_lowcomm_communicator_t) 4096) return comm;
     if(comm == mpc_lowcomm_communicator_world()) return MPC_COMM_WORLD; 
-    if(comm == mpc_lowcomm_communicator_self()) return MPC_COMM_SELF;
+    if(comm == mpc_lowcomm_communicator_self())  return MPC_COMM_SELF;
+
+    // Default return the entry
     return comm;
 }
 
+/** @brief Converts a predefined comm handle into its generic address
+ *
+ *  @param comm    The handle to convert
+ *  @return        A pointer on the communicator
+ */
 static inline mpc_lowcomm_communicator_t __mpc_lowcomm_communicator_from_predefined(const mpc_lowcomm_communicator_t comm) {
+    // Already an non predefined handle
     if(comm >= (mpc_lowcomm_communicator_t) 4096) return comm;
     if(comm == MPC_COMM_WORLD) return mpc_lowcomm_communicator_world(); 
     if(comm == MPC_COMM_SELF) return mpc_lowcomm_communicator_self();
+
+    // Default return the entry
     return comm;
 }
 

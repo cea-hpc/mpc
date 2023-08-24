@@ -1035,7 +1035,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_get_communicator_from_linear_id(int linea
 
 mpc_lowcomm_communicator_t mpc_lowcomm_get_communicator_from_id(mpc_lowcomm_communicator_id_t id)
 {
-	mpc_lowcomm_communicator_t ret = NULL;
+	mpc_lowcomm_communicator_t ret = MPC_COMM_NULL;
 
 	ret = (mpc_lowcomm_communicator_t)mpc_common_hashtable_get(&__id_factory.id_table, id);
 	return ret;

@@ -165,13 +165,14 @@ int _mpc_mpi_report_error(mpc_lowcomm_communicator_t comm, int error, char *mess
 		mpc_common_nodebug("ERRH is %d for %d", errh, comm);
 		MPI_Handler_function *func = _mpc_mpi_errhandler_resolve(errh);
 		int      error_id          = error;
-		MPI_Comm comm_id           = comm;
+		MPI_Comm comm_id           = __mpc_lowcomm_communicator_to_predefined(comm);
 
 		mpc_common_nodebug("CALL %p (%d)", func, errh);
 		if(func)
 		{
 			(func)(&comm_id, &error_id, message, function, file, line);
 		}
+        _mpc_mpi_errhandler_free(errh);
 	}
 	return error;
 }
@@ -14400,6 +14401,7 @@ int PMPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
 	{
 		*newcomm = MPI_COMM_NULL;
 	}
+    _mpc_mpi_errhandler_free(err);
 	return res;
 }
 
@@ -14417,6 +14419,19 @@ int PMPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm)
 		MPI_ERROR_REPORT(comm, MPI_ERR_GROUP, "");
 	}
 	res = _mpc_cl_comm_create(comm, group, newcomm);
+    MPI_HANDLE_ERROR(res, comm, "Comm creation failed");
+
+    if(*newcomm != MPI_COMM_NULL) {
+        MPI_Errhandler errh;
+        res = PMPI_Errhandler_get(comm, &errh);
+        MPI_HANDLE_ERROR(res, comm, "Cannot retrieve errhandler");
+
+        res = PMPI_Errhandler_set(*newcomm, errh);
+        MPI_HANDLE_ERROR(res, comm, "Cannot set errhandler");
+
+        PMPI_Errhandler_free(&errh);
+    }
+
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
@@ -14451,6 +14466,18 @@ int PMPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
 	}
 
 	res = _mpc_cl_intercomm_create(local_comm, local_leader, peer_comm, remote_leader, tag, newintercomm);
+    MPI_HANDLE_ERROR(res, comm, "Failed intercomm creation");
+
+    if(*newintercomm != MPI_COMM_NULL) {
+        MPI_Errhandler errh;
+        res = PMPI_Errhandler_get(local_comm, &errh);
+        MPI_HANDLE_ERROR(res, comm, "Cannot retrieve errhandler");
+
+        res = PMPI_Errhandler_set(*newintercomm, errh);
+        MPI_HANDLE_ERROR(res, comm, "Cannot set errhandler");
+
+        PMPI_Errhandler_free(&errh);
+    }
 
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
@@ -14465,6 +14492,19 @@ int PMPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
 		MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "");
 	}
 	res = _mpc_cl_comm_split(comm, color, key, newcomm);
+    MPI_HANDLE_ERROR(res, comm, "Comm creation failed");
+
+    if(*newcomm != MPI_COMM_NULL) {
+        MPI_Errhandler errh;
+        res = PMPI_Errhandler_get(comm, &errh);
+        MPI_HANDLE_ERROR(res, comm, "Cannot retrieve errhandler");
+
+        res = PMPI_Errhandler_set(*newcomm, errh);
+        MPI_HANDLE_ERROR(res, comm, "Cannot set errhandler");
+
+        PMPI_Errhandler_free(&errh);
+    }
+
 	MPI_HANDLE_RETURN_VAL(res, comm);
 }
 
@@ -14680,6 +14720,11 @@ int PMPI_Comm_free(MPI_Comm *comm)
 
 	mpi_check_comm(*comm);
 
+	MPI_Errhandler errh = (MPI_Errhandler)_mpc_mpi_handle_get_errhandler(
+		(sctk_handle)*comm, _MPC_MPI_HANDLE_COMM);
+
+    res = PMPI_Errhandler_free(&errh);
+    MPI_HANDLE_ERROR(res, MPI_COMM_WORLD, "Failed to free errhandler attached to comm");
 
 	res = SCTK__MPI_Attr_clean_communicator(*comm);
 	if(res != MPI_SUCCESS)
@@ -14773,7 +14818,18 @@ int PMPI_Intercomm_merge(MPI_Comm intercomm, int high, MPI_Comm *newintracomm)
 	 ********************/
 
 	int res =  _mpc_cl_intercommcomm_merge(intercomm, high, newintracomm);
+	MPI_HANDLE_ERROR(res, intercomm, "Failed intercomm merge");
 
+    if(*newintracomm != MPI_COMM_NULL) {
+        MPI_Errhandler errh;
+        res = PMPI_Errhandler_get(local_comm, &errh);
+        MPI_HANDLE_ERROR(res, intercomm, "Cannot retrieve errhandler");
+
+        res = PMPI_Errhandler_set(*newintracomm, errh);
+        MPI_HANDLE_ERROR(res, intercomm, "Cannot set errhandler");
+
+        PMPI_Errhandler_free(&errh);
+    }
 
 	MPI_HANDLE_RETURN_VAL(res, intercomm);
 }
@@ -16239,6 +16295,7 @@ int PMPI_File_call_errhandler(MPI_File file, int errorcode)
 			(hlndr)(file, &errorcode);
 		}
 	}
+    _mpc_mpi_errhandler_free(errh);
 
 	return MPI_SUCCESS;
 }
@@ -17516,6 +17573,7 @@ int PMPI_Comm_call_errhandler(MPI_Comm comm, int errorcode)
 	{
 		(errf)( (void *)&comm, &errorcode);
 	}
+    _mpc_mpi_errhandler_free(errh);
 
 	return MPI_SUCCESS;
 }
@@ -17530,6 +17588,7 @@ int PMPI_Win_call_errhandler(MPI_Win win, int errorcode)
 	{
 		(errf)( (void *)&win, &errorcode);
 	}
+    _mpc_mpi_errhandler_free(errh);
 
 	return MPI_ERR_INTERN;
 }
