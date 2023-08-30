@@ -102,9 +102,9 @@ typedef int MPI_Fint;
 #endif
 #define MPIO_REQUEST_NULL       ((MPIO_Request) 0)
 
-#define MPI_SEEK_SET            600
-#define MPI_SEEK_CUR            602
-#define MPI_SEEK_END            604
+#define MPI_SEEK_CUR            600
+#define MPI_SEEK_END            602
+#define MPI_SEEK_SET            604
 
 /* Open MPI: don't define MPI_MAX_DATAREP_STRING here; it's defined in
    OMPI's mpi.h. */
