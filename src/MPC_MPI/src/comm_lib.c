@@ -853,11 +853,13 @@ static inline int __MPC_ERROR_REPORT__(mpc_lowcomm_communicator_t comm, int erro
 {
 	mpc_lowcomm_communicator_t comm_id;
 	int            error_id;
+
+    comm = __mpc_lowcomm_communicator_from_predefined(comm);
 	MPC_Errhandler errh = ( MPC_Errhandler )_mpc_mpi_handle_get_errhandler(
 	        ( sctk_handle )comm, _MPC_MPI_HANDLE_COMM);
 	MPC_Handler_function *func = _mpc_mpi_errhandler_resolve(errh);
 
-    comm_id = __mpc_lowcomm_communicator_from_predefined(comm);
+    comm_id = __mpc_lowcomm_communicator_to_predefined(comm);
 	error_id = error;
 	( func )(&comm_id, &error_id, message, function, file, line);
 
