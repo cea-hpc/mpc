@@ -30,12 +30,13 @@
 /* Error Handler                                                        */
 /************************************************************************/
 
-#define MAX_ERROR_HANDLERS 12 /**< 4 predefined + 8 user */
+#define MAX_ERROR_HANDLERS    12 /**< 4 predefined + 8 user */
 
 typedef void (*_mpc_mpi_generic_errhandler_func_t)(void *phandle, int *error_code, ...);
-typedef struct MPI_ABI_Errhandler {
-    _mpc_mpi_generic_errhandler_func_t eh;
-    unsigned ref_count;
+typedef struct MPI_ABI_Errhandler
+{
+	_mpc_mpi_generic_errhandler_func_t eh;
+	unsigned                           ref_count;
 } *_mpc_mpi_errhandler_t;
 
 /** @brief Retrieves the errhandler at the given index
@@ -43,14 +44,14 @@ typedef struct MPI_ABI_Errhandler {
  *  @param idx  The index of the errhandler to retrieve
  *  @return     A valid errhandler if the index is correct, the entry otherwise
  */
-_mpc_mpi_errhandler_t _mpc_mpi_errhandler_from_idx (const long idx);
+_mpc_mpi_errhandler_t _mpc_mpi_errhandler_from_idx(const long idx);
 
 /** @brief Retrieves the index of a given errhandler
  *
  *  @param errh  The errhandler of which we want the index in the global table
  *  @return      A valid index
  */
-long _mpc_mpi_errhandler_to_idx (const _mpc_mpi_errhandler_t errh);
+long _mpc_mpi_errhandler_to_idx(const _mpc_mpi_errhandler_t errh);
 
 /** @brief Checks if an errhandler is valid (registered)
  *

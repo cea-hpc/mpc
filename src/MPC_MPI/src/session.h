@@ -25,11 +25,11 @@
 #include <mpc_mpi.h>
 #include <mpc_lowcomm_handle_ctx.h>
 
-typedef struct MPI_ABI_Session 
+typedef struct MPI_ABI_Session
 {
-	int            id;
-	MPI_Errhandler errh;
-	MPI_Info       infos;
+	int                      id;
+	MPI_Errhandler           errh;
+	MPI_Info                 infos;
 	mpc_lowcomm_handle_ctx_t handle_ctx;
 }mpc_mpi_session_t;
 

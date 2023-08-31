@@ -41,8 +41,8 @@ extern "C" {
 * PUBLIC TYPE FOR COMMUNICATORS *
 *********************************/
 
-typedef struct MPI_ABI_Comm *mpc_lowcomm_communicator_t;
-typedef uint64_t mpc_lowcomm_communicator_id_t;
+typedef struct MPI_ABI_Comm * mpc_lowcomm_communicator_t;
+typedef uint64_t              mpc_lowcomm_communicator_id_t;
 
 
 /************************
@@ -57,23 +57,24 @@ typedef uint64_t mpc_lowcomm_communicator_id_t;
 /* Expose communicator init needed for unit test */
 void _mpc_lowcomm_communicator_init(void);
 void _mpc_lowcomm_communicator_release(void);
+
 /**
  * @brief Get COMM_WORLD identifier
- * 
+ *
  * @return mpc_lowcomm_communicator_id_t comm_world communicator ID
  */
 mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_world_id(void);
 
 /**
  * @brief Get COMM_SELF id
- * 
+ *
  * @return mpc_lowcomm_communicator_id_t comm_self communicator ID
  */
 mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_self_id(void);
 
 /**
  * @brief Book a local communicator ID
- * 
+ *
  * @return mpc_lowcomm_communicator_id_t local communicator ID
  */
 mpc_lowcomm_communicator_id_t mpc_lowcomm_communicator_gen_local_id(void);
@@ -81,9 +82,9 @@ mpc_lowcomm_communicator_id_t mpc_lowcomm_communicator_gen_local_id(void);
 /** define the ID of a NULL communicator */
 #define MPC_LOWCOMM_COMM_NULL_ID     0
 /** This is the id of COMM world */
-#define MPC_LOWCOMM_COMM_WORLD_ID    (mpc_lowcomm_get_comm_world_id())
+#define MPC_LOWCOMM_COMM_WORLD_ID    (mpc_lowcomm_get_comm_world_id() )
 /** This is the ID of COMM self */
-#define MPC_LOWCOMM_COMM_SELF_ID     (mpc_lowcomm_get_comm_self_id())
+#define MPC_LOWCOMM_COMM_SELF_ID     (mpc_lowcomm_get_comm_self_id() )
 /** This is the wildcard for COMMs to be used as ANY source/tag */
 #define MPC_ANY_COMM                 3
 
@@ -119,25 +120,35 @@ mpc_lowcomm_communicator_id_t mpc_lowcomm_get_comm_world_id_gid(mpc_lowcomm_set_
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_self();
 
 /** Define the NULL communicator number */
-#define MPC_COMM_NULL     ((mpc_lowcomm_communicator_t) 0)
+#define MPC_COMM_NULL     ( (mpc_lowcomm_communicator_t)0)
 /** define the MPI_COMM_SELF internal communicator number **/
-#define MPC_COMM_SELF     ((mpc_lowcomm_communicator_t) 1)
+#define MPC_COMM_SELF     ( (mpc_lowcomm_communicator_t)1)
 /** define the MPI_COMM_WORLD internal communicator number **/
-#define MPC_COMM_WORLD    ((mpc_lowcomm_communicator_t) 2)
+#define MPC_COMM_WORLD    ( (mpc_lowcomm_communicator_t)2)
 
 /** @brief Converts a generic comm handle in its predefined equivalent
  *
  *  @param comm    The handle to convert
  *  @return        The predefined value of the handle or the handle itself otherwise
  */
-static inline mpc_lowcomm_communicator_t __mpc_lowcomm_communicator_to_predefined(const mpc_lowcomm_communicator_t comm) {
-    // Already predefined
-    if(comm < (mpc_lowcomm_communicator_t) 4096) return comm;
-    if(comm == mpc_lowcomm_communicator_world()) return MPC_COMM_WORLD; 
-    if(comm == mpc_lowcomm_communicator_self())  return MPC_COMM_SELF;
+static inline mpc_lowcomm_communicator_t __mpc_lowcomm_communicator_to_predefined(const mpc_lowcomm_communicator_t comm)
+{
+	// Already predefined
+	if(comm < (mpc_lowcomm_communicator_t)4096)
+	{
+		return comm;
+	}
+	if(comm == mpc_lowcomm_communicator_world() )
+	{
+		return MPC_COMM_WORLD;
+	}
+	if(comm == mpc_lowcomm_communicator_self() )
+	{
+		return MPC_COMM_SELF;
+	}
 
-    // Default return the entry
-    return comm;
+	// Default return the entry
+	return comm;
 }
 
 /** @brief Converts a predefined comm handle into its generic address
@@ -145,14 +156,24 @@ static inline mpc_lowcomm_communicator_t __mpc_lowcomm_communicator_to_predefine
  *  @param comm    The handle to convert
  *  @return        A pointer on the communicator
  */
-static inline mpc_lowcomm_communicator_t __mpc_lowcomm_communicator_from_predefined(const mpc_lowcomm_communicator_t comm) {
-    // Already an non predefined handle
-    if(comm >= (mpc_lowcomm_communicator_t) 4096) return comm;
-    if(comm == MPC_COMM_WORLD) return mpc_lowcomm_communicator_world(); 
-    if(comm == MPC_COMM_SELF) return mpc_lowcomm_communicator_self();
+static inline mpc_lowcomm_communicator_t __mpc_lowcomm_communicator_from_predefined(const mpc_lowcomm_communicator_t comm)
+{
+	// Already an non predefined handle
+	if(comm >= (mpc_lowcomm_communicator_t)4096)
+	{
+		return comm;
+	}
+	if(comm == MPC_COMM_WORLD)
+	{
+		return mpc_lowcomm_communicator_world();
+	}
+	if(comm == MPC_COMM_SELF)
+	{
+		return mpc_lowcomm_communicator_self();
+	}
 
-    // Default return the entry
-    return comm;
+	// Default return the entry
+	return comm;
 }
 
 /**************
@@ -194,7 +215,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_get_communicator_from_linear_id(int linea
 int mpc_lowcomm_communicator_linear_id(mpc_lowcomm_communicator_t comm);
 
 
-int mpc_lowcomm_communicator_scan(void (*callback)(mpc_lowcomm_communicator_t comm, void * arg), void *arg);
+int mpc_lowcomm_communicator_scan(void (*callback)(mpc_lowcomm_communicator_t comm, void *arg), void *arg);
 
 /**************
 * INTRACOMMS *
@@ -216,7 +237,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_create(const mpc_lowcomm_com
 
 /**
  * @brief Create a communicator from a comm subgroup
- * 
+ *
  * @param comm the communicator to use as source
  * @param group the subgroup to create on
  * @param tag the tag to use for ID exchange
@@ -224,7 +245,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_create(const mpc_lowcomm_com
  * @return int MPC_LOWCOMM_SUCCESS if all OK
  */
 int mpc_lowcomm_communicator_create_group(mpc_lowcomm_communicator_t comm,
-                                          mpc_lowcomm_group_t* group,
+                                          mpc_lowcomm_group_t *group,
                                           int tag,
                                           mpc_lowcomm_communicator_t *newcomm);
 
@@ -240,14 +261,14 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_from_group(mpc_lowcomm_commu
 
 /**
  * @brief Creare a communicator with a group using a pre-exchanged ID (see @ref mpc_lowcomm_communicator_gen_local_id)
- * 
+ *
  * @param comm the comm to rely on to build the new comm
  * @param group the group to use for exchange
  * @param forced_id the ID to rely on (same as mpc_lowcomm_communicator_from_group if MPC_LOWCOMM_COMM_NULL_ID)
  * @return mpc_lowcomm_communicator_t  new communicator (if member or MPI_COMM_NULL if not)
  */
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_from_group_forced_id(mpc_lowcomm_group_t *group,
-																		 mpc_lowcomm_communicator_id_t forced_id);
+                                                                         mpc_lowcomm_communicator_id_t forced_id);
 
 
 /**
@@ -537,7 +558,7 @@ mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote(mpc_lowcomm_commu
  */
 mpc_lowcomm_communicator_t mpc_lowcomm_communicator_get_remote_as(mpc_lowcomm_communicator_t comm,
                                                                   int lookup_cw_rank,
-																  mpc_lowcomm_peer_uid_t uid);
+                                                                  mpc_lowcomm_peer_uid_t uid);
 
 /**
  * @brief Get the size for the remote comm
@@ -557,8 +578,8 @@ int mpc_lowcomm_communicator_remote_size(mpc_lowcomm_communicator_t comm);
 int mpc_lowcomm_communicator_remote_world_rank(const mpc_lowcomm_communicator_t communicator, const int rank);
 
 /*****************
- * UNIVERSE COMM *
- *****************/
+* UNIVERSE COMM *
+*****************/
 
 /**
  * @brief Build a given communicator ID as seen by a remote peer
@@ -569,8 +590,8 @@ int mpc_lowcomm_communicator_remote_world_rank(const mpc_lowcomm_communicator_t 
  * @return int MPC_LOWCOMM_SUCCESS if all OK
  */
 int mpc_lowcomm_communicator_build_remote(mpc_lowcomm_peer_uid_t remote,
-										  const mpc_lowcomm_communicator_id_t id,
-										  mpc_lowcomm_communicator_t *outcomm);
+                                          const mpc_lowcomm_communicator_id_t id,
+                                          mpc_lowcomm_communicator_t *outcomm);
 
 /**
  * @brief Build the remote comm_world as seen by the remote group
@@ -583,8 +604,8 @@ int mpc_lowcomm_communicator_build_remote_world(const mpc_lowcomm_set_uid_t gid,
                                                 mpc_lowcomm_communicator_t *comm);
 
 /***********************************
- * COMMUNICATOR CONNECT AND ACCEPT *
- ***********************************/
+* COMMUNICATOR CONNECT AND ACCEPT *
+***********************************/
 
 int mpc_lowcomm_communicator_connect(const char *port_name,
                                      int root,
@@ -597,12 +618,12 @@ int mpc_lowcomm_communicator_accept(const char *port_name,
                                     mpc_lowcomm_communicator_t *new_comm);
 
 /********************
- * CONTEXT POINTERS *
- ********************/
+* CONTEXT POINTERS *
+********************/
 
 /**
  * @brief Attach an extra context pointer to a communicator group
- * 
+ *
  * @param comm the target communicator
  * @param ctxptr the context pointer to attach
  * @return int 0 on success
@@ -611,7 +632,7 @@ int mpc_lowcomm_communicator_set_context_pointer(mpc_lowcomm_communicator_t comm
 
 /**
  * @brief Get the extra context pointer from the communicator object (it is inherited from parents)
- * 
+ *
  * @param comm the communicator to querry
  * @return mpc_lowcomm_handle_ctx_t the context pointer (NULL if none)
  */
@@ -619,8 +640,8 @@ mpc_lowcomm_handle_ctx_t mpc_lowcomm_communicator_get_context_pointer(mpc_lowcom
 
 
 /******************************
- * HANDLE CONTEXT UNIFICATION *
- ******************************/
+* HANDLE CONTEXT UNIFICATION *
+******************************/
 
 /**
  * @brief Initially all sessions have their own context this calls unify them with the same ID
@@ -666,7 +687,7 @@ int mpc_lowcomm_communicator_attributes(const mpc_lowcomm_communicator_t comm,
 /**
  * @brief Check if the communicator is in shared memory
  *
- * @param comm the communicator  
+ * @param comm the communicator
  * @return int true if the comm is shared memory
  */
 int mpc_lowcomm_communicator_is_shared_mem(const mpc_lowcomm_communicator_t comm);
@@ -686,39 +707,38 @@ struct sctk_comm_coll *mpc_communicator_shm_coll_get(const mpc_lowcomm_communica
 
 
 /*****************************
- * TOPOLOGICAL COMMUNICATORS *
- *****************************/
+* TOPOLOGICAL COMMUNICATORS *
+*****************************/
 
 /* used to manage communicators in topological algorithm */
 typedef struct mpc_hardware_split_info_s
 {
-  int highest_local_hardware_level;
-	int deepest_hardware_level;
-	mpc_lowcomm_communicator_t *hwcomm; /* communicator of hardware splited topological level */
-	mpc_lowcomm_communicator_t *rootcomm; /* communicator of master node topological level */
+	int                         highest_local_hardware_level;
+	int                         deepest_hardware_level;
+	mpc_lowcomm_communicator_t *hwcomm;            /* communicator of hardware splited topological level */
+	mpc_lowcomm_communicator_t *rootcomm;          /* communicator of master node topological level */
 
-  int **childs_data_count; /* For each topological level, an array containing the number of ranks under each rank of the same hwcomm of this level in the topological tree. */
-  int *send_data_count; /* For each topological level, the sum of the child_data_count_array. */
+	int **                      childs_data_count; /* For each topological level, an array containing the number of ranks under each rank of the same hwcomm of this level in the topological tree. */
+	int *                       send_data_count;   /* For each topological level, the sum of the child_data_count_array. */
 
-  int topo_rank;
-  int *swap_array; /* Reordering array used to link mpi ranks with the topology. */
-  int *reverse_swap_array; /* Reverse reordering array used to link mpi ranks with the topology. */
-
+	int                         topo_rank;
+	int *                       swap_array;         /* Reordering array used to link mpi ranks with the topology. */
+	int *                       reverse_swap_array; /* Reverse reordering array used to link mpi ranks with the topology. */
 }mpc_hardware_split_info_t;
 
 /**
  * @brief Get the topological communicators associated with the root parameter.
- * 
+ *
  * @param comm Target communicator.
  * @param root Target root.
  *
  * @return The topological communicators or NULL if not found.
  */
-mpc_hardware_split_info_t* mpc_lowcomm_topo_comm_get(mpc_lowcomm_communicator_t comm, int root);
+mpc_hardware_split_info_t * mpc_lowcomm_topo_comm_get(mpc_lowcomm_communicator_t comm, int root);
 
 /**
  * @brief Set the topological communicators associated with the root parameter.
- * 
+ *
  * @param comm Target communicator.
  * @param root Target root.
  */

@@ -46,8 +46,8 @@
 #pragma weak MPI_Group_from_session_pset = PMPI_Group_from_session_pset
 
 /*************************
- * IDENTIFIER GENERATION *
- *************************/
+* IDENTIFIER GENERATION *
+*************************/
 
 static mpc_common_spinlock_t __factory_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 static int __factory_initialization_counter = 0;
@@ -103,7 +103,7 @@ static int __session_new_id(MPI_Session session)
 
 	ret = __session_id;
 
-	mpc_common_hashtable_set(&__id_to_session_ht, __session_id, (void*)session);
+	mpc_common_hashtable_set(&__id_to_session_ht, __session_id, (void *)session);
 
 	mpc_common_spinlock_unlock(&__factory_lock);
 
@@ -118,7 +118,6 @@ static void __session_free_id(int session_id)
 
 	mpc_common_spinlock_unlock(&__factory_lock);
 }
-
 
 MPI_Session mpc_mpi_session_f2c(int session_id)
 {
@@ -212,15 +211,15 @@ int PMPI_Session_call_errhandler(MPI_Session session, int error_code)
 		MPI_ERROR_REPORT(MPI_COMM_SELF, MPI_ERR_ARG, "Failed to resolve errhandler");
 	}
 
-	( (MPI_Session_errhandler_function*)errh)(&session, &error_code);
+	( (MPI_Session_errhandler_function *)errh)(&session, &error_code);
 
 	MPI_ERROR_SUCCESS();
 }
 
-
-static inline int __session_report_error(MPI_Session session, int error_code, char * desc)
+static inline int __session_report_error(MPI_Session session, int error_code, char *desc)
 {
 	MPI_Errhandler errh;
+
 	PMPI_Session_get_errhandler(session, &errh);
 
 	if(errh != MPI_ERRHANDLER_NULL)
@@ -312,7 +311,7 @@ int PMPI_Session_finalize(MPI_Session *session)
 		return __session_report_error(*session, res, "Cannot Free Session Info Object");
 	}
 
-	__session_free_id((*session)->id);
+	__session_free_id( (*session)->id);
 
 	__session_free(*session);
 
@@ -327,8 +326,8 @@ int PMPI_Session_finalize(MPI_Session *session)
 }
 
 /*****************
- * SESSION QUERY *
- *****************/
+* SESSION QUERY *
+*****************/
 
 int PMPI_Session_get_info(MPI_Session session, MPI_Info *info_used)
 {
@@ -408,7 +407,7 @@ int PMPI_Group_from_session_pset(MPI_Session session, const char *pset_name, MPI
 		return __session_report_error(session, MPI_ERR_ARG, "Cannot create group on MPI_GROUP_NULL");
 	}
 
-    *newgroup = mpc_lowcomm_group_copy(pset->group);
+	*newgroup = mpc_lowcomm_group_copy(pset->group);
 
 	/**
 	 * @brief Important note on this context:
@@ -431,7 +430,7 @@ int PMPI_Group_from_session_pset(MPI_Session session, const char *pset_name, MPI
 	session->handle_ctx = hctx;
 
 	/* Register this session in the handle context */
-	mpc_lowcomm_handle_ctx_set_session(hctx, (void*)session);
+	mpc_lowcomm_handle_ctx_set_session(hctx, (void *)session);
 
 	/* Attach handle context to the group handle */
 	mpc_lowcomm_group_set_context_pointer(*newgroup, hctx);

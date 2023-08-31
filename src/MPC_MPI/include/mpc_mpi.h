@@ -38,262 +38,262 @@ extern "C"
 /**
  * @brief This Macro Informs the MPI Code that it is running in MPC
  */
-#define MPC_MESSAGE_PASSING_INTERFACE 1
+#define MPC_MESSAGE_PASSING_INTERFACE    1
 
-#define MPI_VERSION       3
-#define MPI_SUBVERSION    1
+#define MPI_VERSION                      3
+#define MPI_SUBVERSION                   1
 
-#define MPI_GRAPH      (-200)
-#define MPI_CART       (-201)
-#define MPI_DIST_GRAPH (-202)
+#define MPI_GRAPH                        (-200)
+#define MPI_CART                         (-201)
+#define MPI_DIST_GRAPH                   (-202)
 
 /* Results of the compare operations. */
-#define MPI_IDENT     MPC_GROUP_IDENT
-#define MPI_CONGRUENT MPC_GROUP_CONGRUENT
-#define MPI_SIMILAR   MPC_GROUP_SIMILAR
-#define MPI_UNEQUAL   MPC_GROUP_UNEQUAL
+#define MPI_IDENT                        MPC_GROUP_IDENT
+#define MPI_CONGRUENT                    MPC_GROUP_CONGRUENT
+#define MPI_SIMILAR                      MPC_GROUP_SIMILAR
+#define MPI_UNEQUAL                      MPC_GROUP_UNEQUAL
 
-#define MPI_LOCK_EXCLUSIVE  -8 
-#define MPI_LOCK_SHARED     -9 
+#define MPI_LOCK_EXCLUSIVE               -8
+#define MPI_LOCK_SHARED                  -9
 
 /* Other constants */
-#define MPI_UNWEIGHTED ((int *) 2)
-#define MPI_WEIGHTS_EMPTY ((int *) 3)
+#define MPI_UNWEIGHTED                   ( (int *)2)
+#define MPI_WEIGHTS_EMPTY                ( (int *)3)
 
 /************************************************************************/
 /* MPI_* to MPC_* converters                                            */
 /************************************************************************/
 
 /* Misc */
-#define MPI_MAX_PROCESSOR_NAME MPC_MAX_PROCESSOR_NAME
-#define MPI_MAX_NAME_STRING MPC_MAX_OBJECT_NAME
-#define MPI_MAX_OBJECT_NAME MPC_MAX_OBJECT_NAME
-#define MPI_MAX_LIBRARY_VERSION_STRING MPC_MAX_LIBRARY_VERSION_STRING
+#define MPI_MAX_PROCESSOR_NAME            MPC_MAX_PROCESSOR_NAME
+#define MPI_MAX_NAME_STRING               MPC_MAX_OBJECT_NAME
+#define MPI_MAX_OBJECT_NAME               MPC_MAX_OBJECT_NAME
+#define MPI_MAX_LIBRARY_VERSION_STRING    MPC_MAX_LIBRARY_VERSION_STRING
 
-#define MPI_MAX_STRINGTAG_LEN MPC_MAX_STRINGTAG_LEN
-#define MPI_MAX_PSET_NAME_LEN MPC_MAX_PSET_NAME_LEN
+#define MPI_MAX_STRINGTAG_LEN             MPC_MAX_STRINGTAG_LEN
+#define MPI_MAX_PSET_NAME_LEN             MPC_MAX_PSET_NAME_LEN
 
 /* Status Struct Members */
-#define MPI_SOURCE MPC_SOURCE
-#define MPI_TAG MPC_TAG
-#define MPI_ERROR MPC_ERROR
+#define MPI_SOURCE                        MPC_SOURCE
+#define MPI_TAG                           MPC_TAG
+#define MPI_ERROR                         MPC_ERROR
 
 /* Communication Parameters */
-#define MPI_UNDEFINED MPC_UNDEFINED
-#define MPI_REQUEST_NULL ((MPI_Request)-1)
-#define MPI_COMM_WORLD MPC_COMM_WORLD
-#define MPI_STATUS_IGNORE MPC_LOWCOMM_STATUS_NULL
-#define MPI_STATUSES_IGNORE MPC_LOWCOMM_STATUS_NULL
-#define MPI_ANY_TAG MPC_ANY_TAG
-#define MPI_ANY_SOURCE MPC_ANY_SOURCE
-#define MPI_PROC_NULL MPC_PROC_NULL
-#define MPI_COMM_NULL MPC_COMM_NULL
-#define MPI_ROOT MPC_ROOT
-#define MPI_IN_PLACE MPC_IN_PLACE
-#define MPI_BOTTOM ((void*)0)
-#define MPI_COMM_SELF MPC_COMM_SELF
+#define MPI_UNDEFINED                     MPC_UNDEFINED
+#define MPI_REQUEST_NULL                  ( (MPI_Request) - 1)
+#define MPI_COMM_WORLD                    MPC_COMM_WORLD
+#define MPI_STATUS_IGNORE                 MPC_LOWCOMM_STATUS_NULL
+#define MPI_STATUSES_IGNORE               MPC_LOWCOMM_STATUS_NULL
+#define MPI_ANY_TAG                       MPC_ANY_TAG
+#define MPI_ANY_SOURCE                    MPC_ANY_SOURCE
+#define MPI_PROC_NULL                     MPC_PROC_NULL
+#define MPI_COMM_NULL                     MPC_COMM_NULL
+#define MPI_ROOT                          MPC_ROOT
+#define MPI_IN_PLACE                      MPC_IN_PLACE
+#define MPI_BOTTOM                        ( (void *)0)
+#define MPI_COMM_SELF                     MPC_COMM_SELF
 
 /* Error Handling */
-#define MPI_SUCCESS MPC_SUCCESS
+#define MPI_SUCCESS                       MPC_SUCCESS
 
-#define MPI_MAX_ERROR_STRING MPC_MAX_ERROR_STRING
-#define MPI_ERR_BUFFER MPC_ERR_BUFFER
-#define MPI_ERR_COUNT MPC_ERR_COUNT
-#define MPI_ERR_TYPE MPC_ERR_TYPE
-#define MPI_ERR_TAG MPC_ERR_TAG
-#define MPI_ERR_COMM MPC_ERR_COMM
-#define MPI_ERR_RANK MPC_ERR_RANK
-#define MPI_ERR_REQUEST MPC_ERR_REQUEST
-#define MPI_ERR_ROOT MPC_ERR_ROOT
-#define MPI_ERR_GROUP MPC_ERR_GROUP
-#define MPI_ERR_OP MPC_ERR_OP
-#define MPI_ERR_TOPOLOGY MPC_ERR_TOPOLOGY
-#define MPI_ERR_DIMS MPC_ERR_DIMS
-#define MPI_ERR_ARG MPC_ERR_ARG
-#define MPI_ERR_UNKNOWN MPC_ERR_UNKNOWN
-#define MPI_ERR_TRUNCATE MPC_ERR_TRUNCATE
-#define MPI_ERR_OTHER MPC_ERR_OTHER
-#define MPI_ERR_INTERN MPC_ERR_INTERN
-#define MPI_ERR_IN_STATUS MPC_ERR_IN_STATUS
-#define MPI_ERR_PENDING MPC_ERR_PENDING
-#define MPI_ERR_KEYVAL MPC_ERR_KEYVAL
-#define MPI_ERR_NO_MEM MPC_ERR_NO_MEM
-#define MPI_ERR_BASE MPC_ERR_BASE
-#define MPI_ERR_INFO_KEY MPC_ERR_INFO_KEY
-#define MPI_ERR_INFO_VALUE MPC_ERR_INFO_VALUE
-#define MPI_ERR_INFO_NOKEY MPC_ERR_INFO_NOKEY
-#define MPI_ERR_SPAWN MPC_ERR_SPAWN
-#define MPI_ERR_PORT MPC_ERR_PORT
-#define MPI_ERR_SERVICE MPC_ERR_SERVICE
-#define MPI_ERR_NAME MPC_ERR_NAME
-#define MPI_ERR_WIN MPC_ERR_WIN
-#define MPI_ERR_SIZE MPC_ERR_SIZE
-#define MPI_ERR_DISP MPC_ERR_DISP
-#define MPI_ERR_INFO MPC_ERR_INFO
-#define MPI_ERR_LOCKTYPE MPC_ERR_LOCKTYPE
-#define MPI_ERR_ASSERT MPC_ERR_ASSERT
-#define MPI_ERR_RMA_CONFLICT MPC_ERR_RMA_CONFLICT
-#define MPI_ERR_RMA_SYNC MPC_ERR_RMA_SYNC
-#define MPI_ERR_RMA_FLAVOR MPC_ERR_RMA_FLAVOR
-#define MPI_ERR_FILE MPC_ERR_FILE
-#define MPI_ERR_NOT_SAME MPC_ERR_NOT_SAME
-#define MPI_ERR_AMODE MPC_ERR_AMODE
-#define MPI_ERR_UNSUPPORTED_DATAREP MPC_ERR_UNSUPPORTED_DATAREP
-#define MPI_ERR_UNSUPPORTED_OPERATION MPC_ERR_UNSUPPORTED_OPERATION
-#define MPI_ERR_NO_SUCH_FILE MPC_ERR_NO_SUCH_FILE
-#define MPI_ERR_FILE_EXISTS MPC_ERR_FILE_EXISTS
-#define MPI_ERR_BAD_FILE MPC_ERR_BAD_FILE
-#define MPI_ERR_ACCESS MPC_ERR_ACCESS
-#define MPI_ERR_NO_SPACE MPC_ERR_NO_SPACE
-#define MPI_ERR_QUOTA MPC_ERR_QUOTA
-#define MPI_ERR_READ_ONLY MPC_ERR_READ_ONLY
-#define MPI_ERR_FILE_IN_USE MPC_ERR_FILE_IN_USE
-#define MPI_ERR_DUP_DATAREP MPC_ERR_DUP_DATAREP
-#define MPI_ERR_CONVERSION MPC_ERR_CONVERSION
-#define MPI_ERR_IO MPC_ERR_IO
+#define MPI_MAX_ERROR_STRING              MPC_MAX_ERROR_STRING
+#define MPI_ERR_BUFFER                    MPC_ERR_BUFFER
+#define MPI_ERR_COUNT                     MPC_ERR_COUNT
+#define MPI_ERR_TYPE                      MPC_ERR_TYPE
+#define MPI_ERR_TAG                       MPC_ERR_TAG
+#define MPI_ERR_COMM                      MPC_ERR_COMM
+#define MPI_ERR_RANK                      MPC_ERR_RANK
+#define MPI_ERR_REQUEST                   MPC_ERR_REQUEST
+#define MPI_ERR_ROOT                      MPC_ERR_ROOT
+#define MPI_ERR_GROUP                     MPC_ERR_GROUP
+#define MPI_ERR_OP                        MPC_ERR_OP
+#define MPI_ERR_TOPOLOGY                  MPC_ERR_TOPOLOGY
+#define MPI_ERR_DIMS                      MPC_ERR_DIMS
+#define MPI_ERR_ARG                       MPC_ERR_ARG
+#define MPI_ERR_UNKNOWN                   MPC_ERR_UNKNOWN
+#define MPI_ERR_TRUNCATE                  MPC_ERR_TRUNCATE
+#define MPI_ERR_OTHER                     MPC_ERR_OTHER
+#define MPI_ERR_INTERN                    MPC_ERR_INTERN
+#define MPI_ERR_IN_STATUS                 MPC_ERR_IN_STATUS
+#define MPI_ERR_PENDING                   MPC_ERR_PENDING
+#define MPI_ERR_KEYVAL                    MPC_ERR_KEYVAL
+#define MPI_ERR_NO_MEM                    MPC_ERR_NO_MEM
+#define MPI_ERR_BASE                      MPC_ERR_BASE
+#define MPI_ERR_INFO_KEY                  MPC_ERR_INFO_KEY
+#define MPI_ERR_INFO_VALUE                MPC_ERR_INFO_VALUE
+#define MPI_ERR_INFO_NOKEY                MPC_ERR_INFO_NOKEY
+#define MPI_ERR_SPAWN                     MPC_ERR_SPAWN
+#define MPI_ERR_PORT                      MPC_ERR_PORT
+#define MPI_ERR_SERVICE                   MPC_ERR_SERVICE
+#define MPI_ERR_NAME                      MPC_ERR_NAME
+#define MPI_ERR_WIN                       MPC_ERR_WIN
+#define MPI_ERR_SIZE                      MPC_ERR_SIZE
+#define MPI_ERR_DISP                      MPC_ERR_DISP
+#define MPI_ERR_INFO                      MPC_ERR_INFO
+#define MPI_ERR_LOCKTYPE                  MPC_ERR_LOCKTYPE
+#define MPI_ERR_ASSERT                    MPC_ERR_ASSERT
+#define MPI_ERR_RMA_CONFLICT              MPC_ERR_RMA_CONFLICT
+#define MPI_ERR_RMA_SYNC                  MPC_ERR_RMA_SYNC
+#define MPI_ERR_RMA_FLAVOR                MPC_ERR_RMA_FLAVOR
+#define MPI_ERR_FILE                      MPC_ERR_FILE
+#define MPI_ERR_NOT_SAME                  MPC_ERR_NOT_SAME
+#define MPI_ERR_AMODE                     MPC_ERR_AMODE
+#define MPI_ERR_UNSUPPORTED_DATAREP       MPC_ERR_UNSUPPORTED_DATAREP
+#define MPI_ERR_UNSUPPORTED_OPERATION     MPC_ERR_UNSUPPORTED_OPERATION
+#define MPI_ERR_NO_SUCH_FILE              MPC_ERR_NO_SUCH_FILE
+#define MPI_ERR_FILE_EXISTS               MPC_ERR_FILE_EXISTS
+#define MPI_ERR_BAD_FILE                  MPC_ERR_BAD_FILE
+#define MPI_ERR_ACCESS                    MPC_ERR_ACCESS
+#define MPI_ERR_NO_SPACE                  MPC_ERR_NO_SPACE
+#define MPI_ERR_QUOTA                     MPC_ERR_QUOTA
+#define MPI_ERR_READ_ONLY                 MPC_ERR_READ_ONLY
+#define MPI_ERR_FILE_IN_USE               MPC_ERR_FILE_IN_USE
+#define MPI_ERR_DUP_DATAREP               MPC_ERR_DUP_DATAREP
+#define MPI_ERR_CONVERSION                MPC_ERR_CONVERSION
+#define MPI_ERR_IO                        MPC_ERR_IO
 
-#define MPI_ERR_RMA_RANGE MPC_ERR_RMA_RANGE
-#define MPI_ERR_RMA_ATTACH MPC_ERR_RMA_ATTACH
-#define MPI_ERR_RMA_SHARED MPC_ERR_RMA_SHARED
+#define MPI_ERR_RMA_RANGE                 MPC_ERR_RMA_RANGE
+#define MPI_ERR_RMA_ATTACH                MPC_ERR_RMA_ATTACH
+#define MPI_ERR_RMA_SHARED                MPC_ERR_RMA_SHARED
 
-#define MPI_ERR_PROC_ABORTED MPC_ERR_PROC_ABORTED
-#define MPI_ERR_SESSION MPC_ERR_SESSION
-#define MPI_ERR_VALUE_TOO_LARGE MPC_ERR_VALUE_TOO_LARGE
+#define MPI_ERR_PROC_ABORTED              MPC_ERR_PROC_ABORTED
+#define MPI_ERR_SESSION                   MPC_ERR_SESSION
+#define MPI_ERR_VALUE_TOO_LARGE           MPC_ERR_VALUE_TOO_LARGE
 
-#define MPI_ERR_LASTCODE MPC_ERR_LASTCODE
-#define MPI_NOT_IMPLEMENTED MPC_NOT_IMPLEMENTED
-#define MPIR_ERRORS_THROW_EXCEPTIONS MPCR_ERRORS_THROW_EXCEPTIONS
+#define MPI_ERR_LASTCODE                  MPC_ERR_LASTCODE
+#define MPI_NOT_IMPLEMENTED               MPC_NOT_IMPLEMENTED
+#define MPIR_ERRORS_THROW_EXCEPTIONS      MPCR_ERRORS_THROW_EXCEPTIONS
 
 /* MPI_T Errors */
-#define MPI_T_ERR_MEMORY MPC_T_ERR_MEMORY
-#define MPI_T_ERR_CANNOT_INIT MPC_T_ERR_CANNOT_INIT
-#define MPI_T_ERR_NOT_ACCESSIBLE MPC_T_ERR_NOT_ACCESSIBLE
-#define MPI_T_ERR_NOT_INITIALIZED MPC_T_ERR_NOT_INITIALIZED
-#define MPI_T_ERR_NOT_SUPPORTED MPC_T_ERR_NOT_SUPPORTED
-#define MPI_T_ERR_INVALID_INDEX MPC_T_ERR_INVALID_INDEX
-#define MPI_T_ERR_INVALID_ITEM MPC_T_ERR_INVALID_ITEM
-#define MPI_T_ERR_INVALID_HANDLE MPC_T_ERR_INVALID_HANDLE
-#define MPI_T_ERR_OUT_OF_HANDLES MPC_T_ERR_OUT_OF_HANDLES
-#define MPI_T_ERR_OUT_OF_SESSIONS MPC_T_ERR_OUT_OF_SESSIONS
-#define MPI_T_ERR_INVALID_SESSION MPC_T_ERR_INVALID_SESSION
-#define MPI_T_ERR_CVAR_SET_NOT_NOW MPC_T_ERR_CVAR_SET_NOT_NOW
-#define MPI_T_ERR_CVAR_SET_NEVER MPC_T_ERR_CVAR_SET_NEVER
-#define MPI_T_ERR_PVAR_NO_STARTSTOP MPC_T_ERR_PVAR_NO_STARTSTOP
-#define MPI_T_ERR_PVAR_NO_WRITE MPC_T_ERR_PVAR_NO_WRITE
-#define MPI_T_ERR_PVAR_NO_ATOMIC MPC_T_ERR_PVAR_NO_ATOMIC
-#define MPI_T_ERR_INVALID_NAME MPC_T_ERR_INVALID_NAME
-#define MPI_T_ERR_INVALID MPC_T_ERR_INVALID
+#define MPI_T_ERR_MEMORY                  MPC_T_ERR_MEMORY
+#define MPI_T_ERR_CANNOT_INIT             MPC_T_ERR_CANNOT_INIT
+#define MPI_T_ERR_NOT_ACCESSIBLE          MPC_T_ERR_NOT_ACCESSIBLE
+#define MPI_T_ERR_NOT_INITIALIZED         MPC_T_ERR_NOT_INITIALIZED
+#define MPI_T_ERR_NOT_SUPPORTED           MPC_T_ERR_NOT_SUPPORTED
+#define MPI_T_ERR_INVALID_INDEX           MPC_T_ERR_INVALID_INDEX
+#define MPI_T_ERR_INVALID_ITEM            MPC_T_ERR_INVALID_ITEM
+#define MPI_T_ERR_INVALID_HANDLE          MPC_T_ERR_INVALID_HANDLE
+#define MPI_T_ERR_OUT_OF_HANDLES          MPC_T_ERR_OUT_OF_HANDLES
+#define MPI_T_ERR_OUT_OF_SESSIONS         MPC_T_ERR_OUT_OF_SESSIONS
+#define MPI_T_ERR_INVALID_SESSION         MPC_T_ERR_INVALID_SESSION
+#define MPI_T_ERR_CVAR_SET_NOT_NOW        MPC_T_ERR_CVAR_SET_NOT_NOW
+#define MPI_T_ERR_CVAR_SET_NEVER          MPC_T_ERR_CVAR_SET_NEVER
+#define MPI_T_ERR_PVAR_NO_STARTSTOP       MPC_T_ERR_PVAR_NO_STARTSTOP
+#define MPI_T_ERR_PVAR_NO_WRITE           MPC_T_ERR_PVAR_NO_WRITE
+#define MPI_T_ERR_PVAR_NO_ATOMIC          MPC_T_ERR_PVAR_NO_ATOMIC
+#define MPI_T_ERR_INVALID_NAME            MPC_T_ERR_INVALID_NAME
+#define MPI_T_ERR_INVALID                 MPC_T_ERR_INVALID
 
 /* Data-type Handling */
-#define MPI_DATATYPE_NULL MPC_DATATYPE_NULL
-#define MPI_UB MPC_UB
-#define MPI_LB MPC_LB
-#define MPI_CHAR MPC_LOWCOMM_CHAR
-#define MPI_BYTE MPC_LOWCOMM_BYTE
-#define MPI_SHORT MPC_LOWCOMM_SHORT
-#define MPI_INT MPC_LOWCOMM_INT
+#define MPI_DATATYPE_NULL                 MPC_DATATYPE_NULL
+#define MPI_UB                            MPC_UB
+#define MPI_LB                            MPC_LB
+#define MPI_CHAR                          MPC_LOWCOMM_CHAR
+#define MPI_BYTE                          MPC_LOWCOMM_BYTE
+#define MPI_SHORT                         MPC_LOWCOMM_SHORT
+#define MPI_INT                           MPC_LOWCOMM_INT
 
 /* Support for MPI_INTEGER */
-#define MPI_INTEGER MPC_LOWCOMM_INTEGER
+#define MPI_INTEGER                       MPC_LOWCOMM_INTEGER
 #ifndef NOHAVE_ASSERT_H
-#define MPI_INTEGER1 MPC_LOWCOMM_INTEGER1
-#define MPI_INTEGER2 MPC_LOWCOMM_INTEGER2
-#define MPI_INTEGER4 MPC_LOWCOMM_INTEGER4
-#define MPI_INTEGER8 MPC_LOWCOMM_INTEGER8
+#define MPI_INTEGER1                      MPC_LOWCOMM_INTEGER1
+#define MPI_INTEGER2                      MPC_LOWCOMM_INTEGER2
+#define MPI_INTEGER4                      MPC_LOWCOMM_INTEGER4
+#define MPI_INTEGER8                      MPC_LOWCOMM_INTEGER8
 #endif
 
 /* Basic data-types */
-#define MPI_LONG MPC_LOWCOMM_LONG
-#define MPI_LONG_INT MPC_LONG_INT
-#define MPI_FLOAT MPC_LOWCOMM_FLOAT
-#define MPI_DOUBLE MPC_LOWCOMM_DOUBLE
-#define MPI_UNSIGNED_CHAR MPC_LOWCOMM_UNSIGNED_CHAR
-#define MPI_UNSIGNED_SHORT MPC_LOWCOMM_UNSIGNED_SHORT
-#define MPI_UNSIGNED MPC_LOWCOMM_UNSIGNED
-#define MPI_UNSIGNED_LONG MPC_LOWCOMM_UNSIGNED_LONG
-#define MPI_LONG_DOUBLE MPC_LOWCOMM_LONG_DOUBLE
-#define MPI_LONG_LONG_INT MPC_LOWCOMM_LONG_LONG_INT
-#define MPI_LONG_LONG MPC_LOWCOMM_LONG_LONG
-#define MPI_UNSIGNED_LONG_LONG_INT MPC_LOWCOMM_UNSIGNED_LONG_LONG
-#define MPI_UNSIGNED_LONG_LONG MPC_LOWCOMM_UNSIGNED_LONG_LONG
-#define MPI_PACKED MPC_LOWCOMM_PACKED
-#define MPI_FLOAT_INT MPC_FLOAT_INT
-#define MPI_DOUBLE_INT MPC_DOUBLE_INT
-#define MPI_LONG_DOUBLE_INT MPC_LONG_DOUBLE_INT
-#define MPI_SHORT_INT MPC_SHORT_INT
-#define MPI_2INT MPC_2INT
-#define MPI_2FLOAT MPC_2FLOAT
-#define MPI_COMPLEX MPC_COMPLEX
-#define MPI_DOUBLE_COMPLEX MPC_DOUBLE_COMPLEX
-#define MPI_2DOUBLE_PRECISION MPC_2DOUBLE_PRECISION
-#define MPI_LOGICAL MPC_LOWCOMM_LOGICAL
-#define MPI_REAL2 MPC_LOWCOMM_REAL2
-#define MPI_REAL4 MPC_LOWCOMM_REAL4
-#define MPI_REAL8 MPC_LOWCOMM_REAL8
-#define MPI_REAL16 MPC_LOWCOMM_REAL16
-#define MPI_SIGNED_CHAR MPC_LOWCOMM_SIGNED_CHAR
-#define MPI_LONG_DOUBLE_INT MPC_LONG_DOUBLE_INT
-#define MPI_REAL MPC_LOWCOMM_REAL
-#define MPI_INT8_T MPC_LOWCOMM_INT8_T
-#define MPI_UINT8_T MPC_LOWCOMM_UINT8_T
-#define MPI_INT16_T MPC_LOWCOMM_INT16_T
-#define MPI_UINT16_T MPC_LOWCOMM_UINT16_T
-#define MPI_INT32_T MPC_LOWCOMM_INT32_T
-#define MPI_UINT32_T MPC_LOWCOMM_UINT32_T
-#define MPI_INT64_T MPC_LOWCOMM_INT64_T
-#define MPI_UINT64_T MPC_LOWCOMM_UINT64_T
-#define MPI_COMPLEX4 MPC_COMPLEX4
-#define MPI_COMPLEX8 MPC_COMPLEX8
-#define MPI_COMPLEX16 MPC_COMPLEX16
-#define MPI_COMPLEX32 MPC_COMPLEX32
-#define MPI_WCHAR MPC_LOWCOMM_WCHAR
-#define MPI_INTEGER16 MPC_LOWCOMM_INTEGER16
-#define MPI_AINT MPC_LOWCOMM_AINT
-#define MPI_OFFSET MPC_LOWCOMM_OFFSET
-#define MPI_COUNT MPC_LOWCOMM_COUNT
-#define MPI_C_BOOL MPC_LOWCOMM_C_BOOL
-#define MPI_C_COMPLEX MPC_C_COMPLEX
-#define MPI_C_FLOAT_COMPLEX MPC_C_FLOAT_COMPLEX
-#define MPI_C_DOUBLE_COMPLEX MPC_C_DOUBLE_COMPLEX
-#define MPI_C_LONG_DOUBLE_COMPLEX MPC_C_LONG_DOUBLE_COMPLEX
-#define MPI_CHARACTER MPC_LOWCOMM_CHARACTER
-#define MPI_DOUBLE_PRECISION MPC_LOWCOMM_DOUBLE_PRECISION
+#define MPI_LONG                       MPC_LOWCOMM_LONG
+#define MPI_LONG_INT                   MPC_LONG_INT
+#define MPI_FLOAT                      MPC_LOWCOMM_FLOAT
+#define MPI_DOUBLE                     MPC_LOWCOMM_DOUBLE
+#define MPI_UNSIGNED_CHAR              MPC_LOWCOMM_UNSIGNED_CHAR
+#define MPI_UNSIGNED_SHORT             MPC_LOWCOMM_UNSIGNED_SHORT
+#define MPI_UNSIGNED                   MPC_LOWCOMM_UNSIGNED
+#define MPI_UNSIGNED_LONG              MPC_LOWCOMM_UNSIGNED_LONG
+#define MPI_LONG_DOUBLE                MPC_LOWCOMM_LONG_DOUBLE
+#define MPI_LONG_LONG_INT              MPC_LOWCOMM_LONG_LONG_INT
+#define MPI_LONG_LONG                  MPC_LOWCOMM_LONG_LONG
+#define MPI_UNSIGNED_LONG_LONG_INT     MPC_LOWCOMM_UNSIGNED_LONG_LONG
+#define MPI_UNSIGNED_LONG_LONG         MPC_LOWCOMM_UNSIGNED_LONG_LONG
+#define MPI_PACKED                     MPC_LOWCOMM_PACKED
+#define MPI_FLOAT_INT                  MPC_FLOAT_INT
+#define MPI_DOUBLE_INT                 MPC_DOUBLE_INT
+#define MPI_LONG_DOUBLE_INT            MPC_LONG_DOUBLE_INT
+#define MPI_SHORT_INT                  MPC_SHORT_INT
+#define MPI_2INT                       MPC_2INT
+#define MPI_2FLOAT                     MPC_2FLOAT
+#define MPI_COMPLEX                    MPC_COMPLEX
+#define MPI_DOUBLE_COMPLEX             MPC_DOUBLE_COMPLEX
+#define MPI_2DOUBLE_PRECISION          MPC_2DOUBLE_PRECISION
+#define MPI_LOGICAL                    MPC_LOWCOMM_LOGICAL
+#define MPI_REAL2                      MPC_LOWCOMM_REAL2
+#define MPI_REAL4                      MPC_LOWCOMM_REAL4
+#define MPI_REAL8                      MPC_LOWCOMM_REAL8
+#define MPI_REAL16                     MPC_LOWCOMM_REAL16
+#define MPI_SIGNED_CHAR                MPC_LOWCOMM_SIGNED_CHAR
+#define MPI_LONG_DOUBLE_INT            MPC_LONG_DOUBLE_INT
+#define MPI_REAL                       MPC_LOWCOMM_REAL
+#define MPI_INT8_T                     MPC_LOWCOMM_INT8_T
+#define MPI_UINT8_T                    MPC_LOWCOMM_UINT8_T
+#define MPI_INT16_T                    MPC_LOWCOMM_INT16_T
+#define MPI_UINT16_T                   MPC_LOWCOMM_UINT16_T
+#define MPI_INT32_T                    MPC_LOWCOMM_INT32_T
+#define MPI_UINT32_T                   MPC_LOWCOMM_UINT32_T
+#define MPI_INT64_T                    MPC_LOWCOMM_INT64_T
+#define MPI_UINT64_T                   MPC_LOWCOMM_UINT64_T
+#define MPI_COMPLEX4                   MPC_COMPLEX4
+#define MPI_COMPLEX8                   MPC_COMPLEX8
+#define MPI_COMPLEX16                  MPC_COMPLEX16
+#define MPI_COMPLEX32                  MPC_COMPLEX32
+#define MPI_WCHAR                      MPC_LOWCOMM_WCHAR
+#define MPI_INTEGER16                  MPC_LOWCOMM_INTEGER16
+#define MPI_AINT                       MPC_LOWCOMM_AINT
+#define MPI_OFFSET                     MPC_LOWCOMM_OFFSET
+#define MPI_COUNT                      MPC_LOWCOMM_COUNT
+#define MPI_C_BOOL                     MPC_LOWCOMM_C_BOOL
+#define MPI_C_COMPLEX                  MPC_C_COMPLEX
+#define MPI_C_FLOAT_COMPLEX            MPC_C_FLOAT_COMPLEX
+#define MPI_C_DOUBLE_COMPLEX           MPC_C_DOUBLE_COMPLEX
+#define MPI_C_LONG_DOUBLE_COMPLEX      MPC_C_LONG_DOUBLE_COMPLEX
+#define MPI_CHARACTER                  MPC_LOWCOMM_CHARACTER
+#define MPI_DOUBLE_PRECISION           MPC_LOWCOMM_DOUBLE_PRECISION
 
-#define MPI_2INTEGER MPC_2INTEGER
-#define MPI_2REAL MPC_2REAL
+#define MPI_2INTEGER                   MPC_2INTEGER
+#define MPI_2REAL                      MPC_2REAL
 /* Datatype decoders */
 
-#define MPI_COMBINER_UNKNOWN MPC_COMBINER_UNKNOWN
-#define MPI_COMBINER_NAMED MPC_COMBINER_NAMED
-#define MPI_COMBINER_DUP MPC_COMBINER_DUP
-#define MPI_COMBINER_CONTIGUOUS MPC_COMBINER_CONTIGUOUS
-#define MPI_COMBINER_VECTOR MPC_COMBINER_VECTOR
-#define MPI_COMBINER_HVECTOR MPC_COMBINER_HVECTOR
-#define MPI_COMBINER_INDEXED MPC_COMBINER_INDEXED
-#define MPI_COMBINER_HINDEXED MPC_COMBINER_HINDEXED
-#define MPI_COMBINER_INDEXED_BLOCK MPC_COMBINER_INDEXED_BLOCK
-#define MPI_COMBINER_HINDEXED_BLOCK MPC_COMBINER_HINDEXED_BLOCK
-#define MPI_COMBINER_STRUCT MPC_COMBINER_STRUCT
-#define MPI_COMBINER_SUBARRAY MPC_COMBINER_SUBARRAY
-#define MPI_COMBINER_DARRAY MPC_COMBINER_DARRAY
-#define MPI_COMBINER_F90_REAL MPC_COMBINER_F90_REAL
-#define MPI_COMBINER_F90_COMPLEX MPC_COMBINER_F90_COMPLEX
-#define MPI_COMBINER_F90_INTEGER MPC_COMBINER_F90_INTEGER
-#define MPI_COMBINER_RESIZED MPC_COMBINER_RESIZED
+#define MPI_COMBINER_UNKNOWN           MPC_COMBINER_UNKNOWN
+#define MPI_COMBINER_NAMED             MPC_COMBINER_NAMED
+#define MPI_COMBINER_DUP               MPC_COMBINER_DUP
+#define MPI_COMBINER_CONTIGUOUS        MPC_COMBINER_CONTIGUOUS
+#define MPI_COMBINER_VECTOR            MPC_COMBINER_VECTOR
+#define MPI_COMBINER_HVECTOR           MPC_COMBINER_HVECTOR
+#define MPI_COMBINER_INDEXED           MPC_COMBINER_INDEXED
+#define MPI_COMBINER_HINDEXED          MPC_COMBINER_HINDEXED
+#define MPI_COMBINER_INDEXED_BLOCK     MPC_COMBINER_INDEXED_BLOCK
+#define MPI_COMBINER_HINDEXED_BLOCK    MPC_COMBINER_HINDEXED_BLOCK
+#define MPI_COMBINER_STRUCT            MPC_COMBINER_STRUCT
+#define MPI_COMBINER_SUBARRAY          MPC_COMBINER_SUBARRAY
+#define MPI_COMBINER_DARRAY            MPC_COMBINER_DARRAY
+#define MPI_COMBINER_F90_REAL          MPC_COMBINER_F90_REAL
+#define MPI_COMBINER_F90_COMPLEX       MPC_COMBINER_F90_COMPLEX
+#define MPI_COMBINER_F90_INTEGER       MPC_COMBINER_F90_INTEGER
+#define MPI_COMBINER_RESIZED           MPC_COMBINER_RESIZED
 
 /* Predefined MPI datatypes corresponding to both C and Fortran datatypes */
 
-#define MPI_CXX_BOOL MPC_CXX_BOOL
-#define MPI_CXX_FLOAT_COMPLEX MPC_CXX_FLOAT_COMPLEX
-#define MPI_CXX_DOUBLE_COMPLEX MPC_CXX_DOUBLE_COMPLEX
-#define MPI_CXX_LONG_DOUBLE_COMPLEX MPC_CXX_LONG_DOUBLE_COMPLEX
+#define MPI_CXX_BOOL                   MPC_CXX_BOOL
+#define MPI_CXX_FLOAT_COMPLEX          MPC_CXX_FLOAT_COMPLEX
+#define MPI_CXX_DOUBLE_COMPLEX         MPC_CXX_DOUBLE_COMPLEX
+#define MPI_CXX_LONG_DOUBLE_COMPLEX    MPC_CXX_LONG_DOUBLE_COMPLEX
 
 /* These are deprecated MPI 1.0 constants in MPI 3.0
  * however they are never returned by get envelope but as ROMIO uses them */
 
-#define MPI_COMBINER_HINDEXED_INTEGER MPC_COMBINER_HINDEXED_INTEGER
-#define MPI_COMBINER_STRUCT_INTEGER MPC_COMBINER_STRUCT_INTEGER
-#define MPI_COMBINER_HVECTOR_INTEGER MPC_COMBINER_HVECTOR_INTEGER
+#define MPI_COMBINER_HINDEXED_INTEGER    MPC_COMBINER_HINDEXED_INTEGER
+#define MPI_COMBINER_STRUCT_INTEGER      MPC_COMBINER_STRUCT_INTEGER
+#define MPI_COMBINER_HVECTOR_INTEGER     MPC_COMBINER_HVECTOR_INTEGER
 
 
 /************************************************************************/
@@ -301,231 +301,232 @@ extern "C"
 /************************************************************************/
 
 /* Data-type classes */
-#define MPI_TYPECLASS_INTEGER 1
-#define MPI_TYPECLASS_REAL    2
-#define MPI_TYPECLASS_COMPLEX 0
+#define MPI_TYPECLASS_INTEGER    1
+#define MPI_TYPECLASS_REAL       2
+#define MPI_TYPECLASS_COMPLEX    0
 
 /* Threading Level */
-#define MPI_THREAD_SINGLE MPC_THREAD_SINGLE
-#define MPI_THREAD_FUNNELED MPC_THREAD_FUNNELED
-#define MPI_THREAD_SERIALIZED MPC_THREAD_SERIALIZED
-#define MPI_THREAD_MULTIPLE MPC_THREAD_MULTIPLE
+#define MPI_THREAD_SINGLE        MPC_THREAD_SINGLE
+#define MPI_THREAD_FUNNELED      MPC_THREAD_FUNNELED
+#define MPI_THREAD_SERIALIZED    MPC_THREAD_SERIALIZED
+#define MPI_THREAD_MULTIPLE      MPC_THREAD_MULTIPLE
 
 /* Basic Ops */
-#define MPI_SUM             0
-#define MPI_MAX             1
-#define MPI_MIN             2
-#define MPI_PROD            3
-#define MPI_LAND            4
-#define MPI_BAND            5
-#define MPI_LOR             6
-#define MPI_BOR             7
-#define MPI_LXOR            8
-#define MPI_BXOR            9
-#define MPI_MINLOC         10
-#define MPI_MAXLOC         11
-#define MPI_REPLACE        13
-#define MPI_NO_OP          14
-#define MAX_MPI_DEFINED_OP 13
-#define MPI_OP_NULL ((MPI_Op)-1)
+#define MPI_SUM                  0
+#define MPI_MAX                  1
+#define MPI_MIN                  2
+#define MPI_PROD                 3
+#define MPI_LAND                 4
+#define MPI_BAND                 5
+#define MPI_LOR                  6
+#define MPI_BOR                  7
+#define MPI_LXOR                 8
+#define MPI_BXOR                 9
+#define MPI_MINLOC               10
+#define MPI_MAXLOC               11
+#define MPI_REPLACE              13
+#define MPI_NO_OP                14
+#define MAX_MPI_DEFINED_OP       13
+#define MPI_OP_NULL              ( (MPI_Op) - 1)
 
 
 /* Group Handling */
-#define MPI_GROUP_EMPTY ((MPI_Group) 1)
-#define MPI_GROUP_NULL ((MPI_Group) 0)
+#define MPI_GROUP_EMPTY    ( (MPI_Group)1)
+#define MPI_GROUP_NULL     ( (MPI_Group)0)
 
 /* MPI_Info definitions */
 /* Matches the one of MPI_INFO_NULL @ mpc_mpi.h:207 */
-#define MPI_INFO_NULL (-1)
-#define MPI_INFO_ENV  (0)
+#define MPI_INFO_NULL    (-1)
+#define MPI_INFO_ENV     (0)
+
 /* Maximum length for keys and values
-* they are both defined for MPC and MPI variants */
+ * they are both defined for MPC and MPI variants */
 /*1 MB */
-#define MPI_MAX_INFO_VAL 1024
-#define MPI_MAX_INFO_KEY  255
+#define MPI_MAX_INFO_VAL                 1024
+#define MPI_MAX_INFO_KEY                 255
 
 /* Other Null Handles */
-#define MPI_WIN_NULL ((MPI_Win)-1)
-#define MPI_MESSAGE_NULL ((MPI_Message) MPI_REQUEST_NULL)
-#define MPI_MESSAGE_NO_PROC -2
+#define MPI_WIN_NULL                     ( (MPI_Win) - 1)
+#define MPI_MESSAGE_NULL                 ( (MPI_Message)MPI_REQUEST_NULL)
+#define MPI_MESSAGE_NO_PROC              -2
 
 #ifdef ROMIO_COMP
-#define MPI_FILE_NULL ((void *)0)
+#define MPI_FILE_NULL                    ( (void *)0)
 #endif
 
-#define MPI_BSEND_OVERHEAD 128 /* Real value (2*sizeof(mpi_buffer_overhead_t)) */ 
+#define MPI_BSEND_OVERHEAD               128 /* Real value (2*sizeof(mpi_buffer_overhead_t)) */
 
-#define MPI_ERRHANDLER_NULL MPC_ERRHANDLER_NULL
-#define MPI_ERRORS_RETURN MPC_ERRORS_RETURN
-#define MPI_ERRORS_ARE_FATAL MPC_ERRORS_ARE_FATAL
-#define MPI_ERRORS_ABORT MPC_ERRORS_ABORT
+#define MPI_ERRHANDLER_NULL              MPC_ERRHANDLER_NULL
+#define MPI_ERRORS_RETURN                MPC_ERRORS_RETURN
+#define MPI_ERRORS_ARE_FATAL             MPC_ERRORS_ARE_FATAL
+#define MPI_ERRORS_ABORT                 MPC_ERRORS_ABORT
 
-#define MPI_KEYVAL_INVALID MPC_KEYVAL_INVALID
+#define MPI_KEYVAL_INVALID               MPC_KEYVAL_INVALID
 
 /* Environmental Inquiry Keys */
-#define MPI_TAG_UB          0
-#define MPI_IO              1
-#define MPI_HOST            2
-#define MPI_WTIME_IS_GLOBAL 3
+#define MPI_TAG_UB                       0
+#define MPI_IO                           1
+#define MPI_HOST                         2
+#define MPI_WTIME_IS_GLOBAL              3
 /* Predefined Attribute Keys */
-#define MPI_APPNUM           4
-#define MPI_LASTUSEDCODE     5
-#define MPI_UNIVERSE_SIZE    6
-#define MPI_MAX_KEY_DEFINED  7 /* Number of keys defined above */
+#define MPI_APPNUM                       4
+#define MPI_LASTUSEDCODE                 5
+#define MPI_UNIVERSE_SIZE                6
+#define MPI_MAX_KEY_DEFINED              7 /* Number of keys defined above */
 
 /* In addition, there are 5 predefined window attributes that are
  *    defined for every window */
-#define MPI_WIN_BASE           7
-#define MPI_WIN_DISP_UNIT      8
-#define MPI_WIN_SIZE           9
-#define MPI_WIN_CREATE_FLAVOR 10 
-#define MPI_WIN_MODEL         11 
+#define MPI_WIN_BASE                     7
+#define MPI_WIN_DISP_UNIT                8
+#define MPI_WIN_SIZE                     9
+#define MPI_WIN_CREATE_FLAVOR            10
+#define MPI_WIN_MODEL                    11
 
 /* Ordering defines */
-#define MPI_DISTRIBUTE_DFLT_DARG  -1 
-#define MPI_DISTRIBUTE_BLOCK     121
-#define MPI_DISTRIBUTE_CYCLIC    122
-#define MPI_DISTRIBUTE_NONE      123
+#define MPI_DISTRIBUTE_DFLT_DARG         -1
+#define MPI_DISTRIBUTE_BLOCK             121
+#define MPI_DISTRIBUTE_CYCLIC            122
+#define MPI_DISTRIBUTE_NONE              123
 
-#define MPI_ORDER_C       4321 
-#define MPI_ORDER_FORTRAN 1234 
+#define MPI_ORDER_C                      4321
+#define MPI_ORDER_FORTRAN                1234
 
 /* Halo */
-#define MPI_HALO_NULL (-1)
+#define MPI_HALO_NULL                    (-1)
 
 /* for comm_split method */
-#define MPI_COMM_TYPE_SHARED MPC_COMM_TYPE_SHARED
-#define MPI_COMM_TYPE_HW_UNGUIDED MPC_COMM_TYPE_HW_UNGUIDED
-#define MPI_COMM_TYPE_HW_GUIDED MPC_COMM_TYPE_HW_GUIDED
-#define MPI_COMM_TYPE_RESOURCE_GUIDED MPC_COMM_TYPE_RESOURCE_GUIDED
+#define MPI_COMM_TYPE_SHARED             MPC_COMM_TYPE_SHARED
+#define MPI_COMM_TYPE_HW_UNGUIDED        MPC_COMM_TYPE_HW_UNGUIDED
+#define MPI_COMM_TYPE_HW_GUIDED          MPC_COMM_TYPE_HW_GUIDED
+#define MPI_COMM_TYPE_RESOURCE_GUIDED    MPC_COMM_TYPE_RESOURCE_GUIDED
 
-#define MPI_COMM_TYPE_SOCKET MPC_COMM_TYPE_SOCKET
-#define MPI_COMM_TYPE_NUMA MPC_COMM_TYPE_NUMA
-#define MPI_COMM_TYPE_UNIX_PROCESS MPC_COMM_TYPE_UNIX_PROCESS
-#define MPI_COMM_TYPE_APP MPC_COMM_TYPE_APP
-#define MPI_COMM_TYPE_HW_SUBDOMAIN MPC_COMM_TYPE_HW_SUBDOMAIN
-#define MPI_COMM_TYPE_NODE MPC_COMM_TYPE_NODE
+#define MPI_COMM_TYPE_SOCKET             MPC_COMM_TYPE_SOCKET
+#define MPI_COMM_TYPE_NUMA               MPC_COMM_TYPE_NUMA
+#define MPI_COMM_TYPE_UNIX_PROCESS       MPC_COMM_TYPE_UNIX_PROCESS
+#define MPI_COMM_TYPE_APP                MPC_COMM_TYPE_APP
+#define MPI_COMM_TYPE_HW_SUBDOMAIN       MPC_COMM_TYPE_HW_SUBDOMAIN
+#define MPI_COMM_TYPE_NODE               MPC_COMM_TYPE_NODE
 
 /*
-* * MPI-2 One-Sided Communications asserts
-*/
+ * * MPI-2 One-Sided Communications asserts
+ */
 
 /* asserts for one-sided communication */
-#define MPI_MODE_NOCHECK     (1<<15) 
-#define MPI_MODE_NOPRECEDE   (1<<16) 
-#define MPI_MODE_NOPUT       (1<<17) 
-#define MPI_MODE_NOSTORE     (1<<18) 
-#define MPI_MODE_NOSUCCEED   (1<<19) 
+#define MPI_MODE_NOCHECK                (1 << 15)
+#define MPI_MODE_NOPRECEDE              (1 << 16)
+#define MPI_MODE_NOPUT                  (1 << 17)
+#define MPI_MODE_NOSTORE                (1 << 18)
+#define MPI_MODE_NOSUCCEED              (1 << 19)
 
-#define MPI_WIN_FLAVOR_CREATE        1
-#define MPI_WIN_FLAVOR_ALLOCATE      2
-#define MPI_WIN_FLAVOR_DYNAMIC       3
-#define MPI_WIN_FLAVOR_SHARED        4
+#define MPI_WIN_FLAVOR_CREATE           1
+#define MPI_WIN_FLAVOR_ALLOCATE         2
+#define MPI_WIN_FLAVOR_DYNAMIC          3
+#define MPI_WIN_FLAVOR_SHARED           4
 
-#define MPI_WIN_SEPARATE            -300 
-#define MPI_WIN_UNIFIED             -301 
+#define MPI_WIN_SEPARATE                -300
+#define MPI_WIN_UNIFIED                 -301
 
 /* Others definitions */
-#define MPI_MAX_PORT_NAME       1024 
-#define MPI_ARGV_NULL     (char **)0
-#define MPI_ARGVS_NULL   (char ***)0
-#define MPI_ERRCODES_IGNORE (int *)0
+#define MPI_MAX_PORT_NAME               1024
+#define MPI_ARGV_NULL                   (char **)0
+#define MPI_ARGVS_NULL                  (char ***)0
+#define MPI_ERRCODES_IGNORE             (int *)0
 
 /* Error not implemented */
-#define MPIX_ERR_PROC_FAILED          101 /* Process failure */
-#define MPIX_ERR_PROC_FAILED_PENDING  102 /* A failure has caused this request
-                                           * to be pending */
-#define MPIX_ERR_REVOKED              103 /* The communciation object has been revoked */
-#define MPICH_ERR_LAST_MPIX           103
+#define MPIX_ERR_PROC_FAILED            101 /* Process failure */
+#define MPIX_ERR_PROC_FAILED_PENDING    102 /* A failure has caused this request
+	                                     * to be pending */
+#define MPIX_ERR_REVOKED                103 /* The communciation object has been revoked */
+#define MPICH_ERR_LAST_MPIX             103
 
 
 /************************************************************************/
 /*  Type Definitions                                                    */
 /************************************************************************/
 
-typedef mpc_lowcomm_datatype_t MPI_Datatype; /* ABI compliant pointer */
-typedef mpc_lowcomm_communicator_t MPI_Comm; /* pointer */
-typedef int MPI_Request;
-typedef ssize_t MPI_Aint;
-typedef ssize_t MPI_Count;
-typedef MPC_Errhandler MPI_Errhandler;
-typedef sctk_Op_User_function MPI_User_function;
-typedef int MPI_Op;
-typedef mpc_lowcomm_group_t *MPI_Group; /* ABI compliant pointer */
-typedef mpc_lowcomm_status_t MPI_Status;
-typedef MPC_Handler_function MPI_Handler_function;
-typedef int MPI_Fint;
+typedef mpc_lowcomm_datatype_t       MPI_Datatype; /* ABI compliant pointer */
+typedef mpc_lowcomm_communicator_t   MPI_Comm;     /* pointer */
+typedef int                          MPI_Request;
+typedef ssize_t                      MPI_Aint;
+typedef ssize_t                      MPI_Count;
+typedef MPC_Errhandler               MPI_Errhandler;
+typedef sctk_Op_User_function        MPI_User_function;
+typedef int                          MPI_Op;
+typedef mpc_lowcomm_group_t *        MPI_Group; /* ABI compliant pointer */
+typedef mpc_lowcomm_status_t         MPI_Status;
+typedef MPC_Handler_function         MPI_Handler_function;
+typedef int                          MPI_Fint;
 
 /* MPI type combiner */
-typedef MPC_Type_combiner MPI_Type_combiner;
+typedef MPC_Type_combiner            MPI_Type_combiner;
 
 /* MPI_Info Definitions */
 #define HAVE_MPI_INFO
-typedef MPC_Info MPI_Info;
+typedef MPC_Info                     MPI_Info;
 
 /* Copy Functions */
 typedef int (MPI_Copy_function) (MPI_Comm, int, void *, void *, void *, int *);
 typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
 
 /* Generalized requests functions */
-typedef int MPI_Grequest_query_function( void * extra_state, MPI_Status *status );
-typedef int MPI_Grequest_cancel_function( void * extra_state, int complete );
-typedef int MPI_Grequest_free_function( void * extra_state );
+typedef int MPI_Grequest_query_function(void *extra_state, MPI_Status *status);
+typedef int MPI_Grequest_cancel_function(void *extra_state, int complete);
+typedef int MPI_Grequest_free_function(void *extra_state);
 
 /* Extended Generalized Requests Functions */
-typedef int MPIX_Grequest_poll_fn(void * extra_arg, MPI_Status *status);
+typedef int MPIX_Grequest_poll_fn(void *extra_arg, MPI_Status *status);
 
 /* Extended Generalized Request Class */
-typedef int MPIX_Grequest_class;
+typedef int                              MPIX_Grequest_class;
 typedef int MPIX_Grequest_wait_fn(int count, void **array_of_states, double, MPI_Status *status);
 
 /* Halo */
-typedef int MPI_Halo;
-typedef int MPI_Halo_exchange;
+typedef int                              MPI_Halo;
+typedef int                              MPI_Halo_exchange;
 
 /* Checkpoint */
-typedef mpc_lowcomm_checkpoint_state_t MPIX_Checkpoint_state;
+typedef mpc_lowcomm_checkpoint_state_t   MPIX_Checkpoint_state;
 
 /* NOT IMPLEMENTED >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
-typedef mpc_lowcomm_rdma_window_t MPI_Win;
+typedef mpc_lowcomm_rdma_window_t        MPI_Win;
 
 
-typedef MPC_Message MPI_Message;
+typedef MPC_Message                      MPI_Message;
 
 /* added in MPI-2.2 */
 typedef void (MPI_File_errhandler_function)(void *, int *, ...);
 /* names that were added in MPI-2.0 and deprecated in MPI-2.2 */
-typedef MPI_File_errhandler_function MPI_File_errhandler_fn;
+typedef MPI_File_errhandler_function     MPI_File_errhandler_fn;
 
 /* C functions */
 //~ typedef void (MPC_Handler_function) ( MPI_Comm *, int *, ... );
 typedef int (MPI_Comm_copy_attr_function)(MPI_Comm, int, void *, void *, void *, int *);
 typedef int (MPI_Comm_delete_attr_function)(MPI_Comm, int, void *, void *);
 
-typedef MPC_Type_copy_attr_function MPI_Type_copy_attr_function;
-typedef MPC_Type_delete_attr_function MPI_Type_delete_attr_function;
+typedef MPC_Type_copy_attr_function     MPI_Type_copy_attr_function;
+typedef MPC_Type_delete_attr_function   MPI_Type_delete_attr_function;
 
-typedef int (MPI_Win_copy_attr_function)(MPI_Win, int, void *, void *, void *,int *);
+typedef int (MPI_Win_copy_attr_function)(MPI_Win, int, void *, void *, void *, int *);
 typedef int (MPI_Win_delete_attr_function)(MPI_Win, int, void *, void *);
 /* added in MPI-2.2 */
 typedef void (MPI_Comm_errhandler_function)(MPI_Comm *, int *, ...);
 typedef void (MPI_Win_errhandler_function)(MPI_Win *, int *, ...);
 
 /* names that were added in MPI-2.0 and deprecated in MPI-2.2 */
-typedef MPI_Comm_errhandler_function MPI_Comm_errhandler_fn;
-typedef MPI_Win_errhandler_function MPI_Win_errhandler_fn;
+typedef MPI_Comm_errhandler_function   MPI_Comm_errhandler_fn;
+typedef MPI_Win_errhandler_function    MPI_Win_errhandler_fn;
 /* END OF NOT IMPLEMENTED <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 
 typedef struct
 {
-	int size;
+	int         size;
 	MPI_Request request;
 } mpi_buffer_overhead_t;
 
 
 /* MPI File Support */
 #define HAVE_MPI_OFFSET
-typedef MPI_Count MPI_Offset;
+typedef MPI_Count            MPI_Offset;
 
 #define MPI_FILE_DEFINED
 
@@ -544,59 +545,59 @@ typedef int (MPI_Datarep_extent_function)(MPI_Datatype datatype, MPI_Aint *, voi
 
 /** MPI_T Enum */
 
-#define MPI_T_ENUM_NULL ((MPI_T_enum)NULL)
+#define MPI_T_ENUM_NULL    ( (MPI_T_enum)NULL)
 
-typedef enum {
+typedef enum
+{
+	MPC_T_VERBOSITY_NONE = -1,
 
-  MPC_T_VERBOSITY_NONE = -1,
+	MPI_T_VERBOSITY_USER_BASIC,
+	MPI_T_VERBOSITY_USER_DETAIL,
+	MPI_T_VERBOSITY_USER_ALL,
 
-  MPI_T_VERBOSITY_USER_BASIC,
-  MPI_T_VERBOSITY_USER_DETAIL,
-  MPI_T_VERBOSITY_USER_ALL,
+	MPI_T_VERBOSITY_TUNER_BASIC,
+	MPI_T_VERBOSITY_TUNER_DETAIL,
+	MPI_T_VERBOSITY_TUNER_ALL,
 
-  MPI_T_VERBOSITY_TUNER_BASIC,
-  MPI_T_VERBOSITY_TUNER_DETAIL,
-  MPI_T_VERBOSITY_TUNER_ALL,
-
-  MPI_T_VERBOSITY_MPIDEV_BASIC,
-  MPI_T_VERBOSITY_MPIDEV_DETAIL,
-  MPI_T_VERBOSITY_MPIDEV_ALL
-
+	MPI_T_VERBOSITY_MPIDEV_BASIC,
+	MPI_T_VERBOSITY_MPIDEV_DETAIL,
+	MPI_T_VERBOSITY_MPIDEV_ALL
 } MPC_T_verbosity;
 
 /** MPI_T Binding to object */
 
-typedef enum {
-
-  MPI_T_BIND_NO_OBJECT = 0,
-  MPI_T_BIND_MPI_COMM,
-  MPI_T_BIND_MPI_DATATYPE,
-  MPI_T_BIND_MPI_ERRHANDLER,
-  MPI_T_BIND_MPI_FILE,
-  MPI_T_BIND_MPI_GROUP,
-  MPI_T_BIND_MPI_OP,
-  MPI_T_BIND_MPI_REQUEST,
-  MPI_T_BIND_MPI_WIN,
-  MPI_T_BIND_MPI_MESSAGE,
-  MPI_T_BIND_MPI_INFO,
-  MPI_T_BIND_MPI_SESSION
+typedef enum
+{
+	MPI_T_BIND_NO_OBJECT = 0,
+	MPI_T_BIND_MPI_COMM,
+	MPI_T_BIND_MPI_DATATYPE,
+	MPI_T_BIND_MPI_ERRHANDLER,
+	MPI_T_BIND_MPI_FILE,
+	MPI_T_BIND_MPI_GROUP,
+	MPI_T_BIND_MPI_OP,
+	MPI_T_BIND_MPI_REQUEST,
+	MPI_T_BIND_MPI_WIN,
+	MPI_T_BIND_MPI_MESSAGE,
+	MPI_T_BIND_MPI_INFO,
+	MPI_T_BIND_MPI_SESSION
 } MPC_T_binding;
 
 
 /** Performance variables (PVAR) */
 
-typedef enum {
-  MPC_T_PVAR_CLASS_NONE = -1,          /**<< Internal value to catch uninitialized */
-  MPI_T_PVAR_CLASS_STATE,         /**<< A set of discrete states */
-  MPI_T_PVAR_CLASS_LEVEL,         /**<< Utilization of a ressource */
-  MPI_T_PVAR_CLASS_SIZE,          /**<< The size of a ressource */
-  MPI_T_PVAR_CLASS_PERCENTAGE,    /**<< The percentage of a ressource use */
-  MPI_T_PVAR_CLASS_HIGHWATERMARK, /**<< High use of a ressource */
-  MPI_T_PVAR_CLASS_LOWWATERMARK,  /**<< Low use of a ressource */
-  MPI_T_PVAR_CLASS_COUNTER,       /**<< Number of occurences of an event */
-  MPI_T_PVAR_CLASS_AGGREGATE,     /**<< Aggregated value of ressource */
-  MPI_T_PVAR_CLASS_TIMER,  /**<< Aggregate time spent executing something */
-  MPI_T_PVAR_CLASS_GENERIC /**<< A generic class */
+typedef enum
+{
+	MPC_T_PVAR_CLASS_NONE = -1,     /**<< Internal value to catch uninitialized */
+	MPI_T_PVAR_CLASS_STATE,         /**<< A set of discrete states */
+	MPI_T_PVAR_CLASS_LEVEL,         /**<< Utilization of a ressource */
+	MPI_T_PVAR_CLASS_SIZE,          /**<< The size of a ressource */
+	MPI_T_PVAR_CLASS_PERCENTAGE,    /**<< The percentage of a ressource use */
+	MPI_T_PVAR_CLASS_HIGHWATERMARK, /**<< High use of a ressource */
+	MPI_T_PVAR_CLASS_LOWWATERMARK,  /**<< Low use of a ressource */
+	MPI_T_PVAR_CLASS_COUNTER,       /**<< Number of occurences of an event */
+	MPI_T_PVAR_CLASS_AGGREGATE,     /**<< Aggregated value of ressource */
+	MPI_T_PVAR_CLASS_TIMER,         /**<< Aggregate time spent executing something */
+	MPI_T_PVAR_CLASS_GENERIC        /**<< A generic class */
 } MPC_T_pvar_class;
 
 /** MPI Storage (just a pointer as no Fortran) */
@@ -604,16 +605,17 @@ typedef void *MPI_T_enum;
 
 
 /** This defines the scope of a cvar */
-typedef enum {
-  MPI_T_SCOPE_CONSTANT, /*<< Readonly value does not change */
-  MPI_T_SCOPE_READONLY, /*<< Readonly can change but cannot be changed */
-  MPI_T_SCOPE_LOCAL,    /*<< Can be writable as a local operation */
-  MPI_T_SCOPE_GROUP,    /*<< Can be writable in a group of processes */
-  MPI_T_SCOPE_GROUP_EQ, /*<< Can be writable in a group of processes requiring
-                           the same value */
-  MPI_T_SCOPE_ALL,      /*<< Can be writable in all connected processes */
-  MPI_T_SCOPE_ALL_EQ,   /*<< Can be writable in all connected processes with the
-                           same value */
+typedef enum
+{
+	MPI_T_SCOPE_CONSTANT, /*<< Readonly value does not change */
+	MPI_T_SCOPE_READONLY, /*<< Readonly can change but cannot be changed */
+	MPI_T_SCOPE_LOCAL,    /*<< Can be writable as a local operation */
+	MPI_T_SCOPE_GROUP,    /*<< Can be writable in a group of processes */
+	MPI_T_SCOPE_GROUP_EQ, /*<< Can be writable in a group of processes requiring
+	                       * the same value */
+	MPI_T_SCOPE_ALL,      /*<< Can be writable in all connected processes */
+	MPI_T_SCOPE_ALL_EQ,   /*<< Can be writable in all connected processes with the
+	                       * same value */
 } MPC_T_cvar_scope;
 
 
@@ -621,26 +623,26 @@ typedef enum {
 
 /** CVAR Handles */
 
-#define MPI_T_CVAR_HANDLE_NULL ((MPI_T_cvar_handle)-1)
+#define MPI_T_CVAR_HANDLE_NULL    ( (MPI_T_cvar_handle) - 1)
 
 typedef int MPI_T_cvar_handle;
 
 /* Forward declaration of the session container */
 
-#define MPI_T_PVAR_SESSION_NULL (-1)
+#define MPI_T_PVAR_SESSION_NULL    (-1)
 
 typedef int MPI_T_pvar_session;
 
 /** PVAR Handle allocation */
 
-#define MPI_T_PVAR_ALL_HANDLES ((MPI_T_pvar_handle)-2)
-#define MPI_T_PVAR_HANDLE_NULL ((MPI_T_pvar_handle)-1)
+#define MPI_T_PVAR_ALL_HANDLES    ( (MPI_T_pvar_handle) - 2)
+#define MPI_T_PVAR_HANDLE_NULL    ( (MPI_T_pvar_handle) - 1)
 
 typedef int MPI_T_pvar_handle;
 
 /* ######################################
-   #  NULL delete handlers              #
-   ######################################*/
+ #  NULL delete handlers              #
+ ######################################*/
 
 
 /*****************/
@@ -658,7 +660,7 @@ typedef int MPI_T_pvar_handle;
  * @param attribute_val_in
  * @param attribute_val_out
  * @param flag
-
+ *
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise
  */
 int MPI_COMM_DUP_FN(MPI_Comm oldcomm, int comm_keyval, void *extra_state, void *attribute_val_in, void *attribute_val_out, int *flag);
@@ -680,7 +682,7 @@ int PMPI_COMM_DUP_FN(MPI_Comm oldcomm, int comm_keyval, void *extra_state, void 
  * @param attribute_val_in
  * @param attribute_val_out
  * @param flag
-
+ *
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise
  */
 int MPI_COMM_NULL_COPY_FN(MPI_Comm oldcomm, int comm_keyval, void *extra_state, void *attribute_val_in, void *attribute_val_out, int *flag);
@@ -701,7 +703,7 @@ int PMPI_COMM_NULL_COPY_FN(MPI_Comm oldcomm, int comm_keyval, void *extra_state,
  * @param attribute_val
  * @param extra_state
  * @param ierror
-
+ *
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise
  */
 int MPI_COMM_NULL_DELETE_FN(MPI_Comm comm, int comm_keyval, void *attribute_val, void *extra_state);
@@ -724,7 +726,7 @@ int PMPI_COMM_NULL_DELETE_FN(MPI_Comm comm, int comm_keyval, void *attribute_val
  * @param position
  * @param extra_state
  * @param ierror
-
+ *
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise
  */
 int MPI_CONVERSION_FN_NULL(void *userbuf, MPI_Datatype datatype, int count, void *filebuf, MPI_Offset position, void *extra_state);
@@ -744,7 +746,7 @@ int PMPI_CONVERSION_FN_NULL(void *userbuf, MPI_Datatype datatype, int count, voi
  * @param attribute_val_in
  * @param attribute_val_out
  * @param flag
-
+ *
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise
  */
 int MPI_DUP_FN(MPI_Comm oldcomm, int keyval, void *extra_state, void *attribute_val_in, void *attribute_val_out, int *flag);
@@ -765,7 +767,7 @@ int MPI_DUP_FN(MPI_Comm oldcomm, int keyval, void *extra_state, void *attribute_
  * @param attribute_val_in
  * @param attribute_val_out
  * @param flag
-
+ *
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise
  */
 int MPI_NULL_COPY_FN(MPI_Comm oldcomm, int keyval, void *extra_state, void *attribute_val_in, void *attribute_val_out, int *flag);
@@ -785,7 +787,7 @@ int MPI_NULL_COPY_FN(MPI_Comm oldcomm, int keyval, void *extra_state, void *attr
  * @param attribute_val
  * @param extra_state
  * @param ierror
-
+ *
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise
  */
 int MPI_NULL_DELETE_FN(MPI_Comm comm, int keyval, void *attribute_val, void *extra_state);
@@ -807,7 +809,7 @@ int MPI_NULL_DELETE_FN(MPI_Comm comm, int keyval, void *attribute_val, void *ext
  * @param attribute_val_out
  * @param flag
  * @param ierror
-
+ *
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise
  */
 int MPI_TYPE_DUP_FN(MPI_Datatype oldtype, int type_keyval, void *extra_state, void *attribute_val_in, void *attribute_val_out, int *flag);
@@ -829,7 +831,7 @@ int MPI_TYPE_DUP_FN(MPI_Datatype oldtype, int type_keyval, void *extra_state, vo
  * @param attribute_val_out
  * @param flag
  * @param ierror
-
+ *
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise
  */
 int MPI_TYPE_NULL_COPY_FN(MPI_Datatype oldtype, int type_keyval, void *extra_state, void *attribute_val_in, void *attribute_val_out, int *flag);
@@ -849,7 +851,7 @@ int MPI_TYPE_NULL_COPY_FN(MPI_Datatype oldtype, int type_keyval, void *extra_sta
  * @param attribute_val
  * @param extra_state
  * @param ierror
-
+ *
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise
  */
 int MPI_TYPE_NULL_DELETE_FN(MPI_Datatype datatype, int type_keyval, void *attribute_val, void *extra_state);
@@ -871,7 +873,7 @@ int MPI_TYPE_NULL_DELETE_FN(MPI_Datatype datatype, int type_keyval, void *attrib
  * @param attribute_val_out
  * @param flag
  * @param ierror
-
+ *
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise
  */
 int MPI_WIN_DUP_FN(MPI_Win oldwin, int win_keyval, void *extra_state, void *attribute_val_in, void *attribute_val_out, int *flag);
@@ -891,7 +893,7 @@ int MPI_WIN_DUP_FN(MPI_Win oldwin, int win_keyval, void *extra_state, void *attr
  * @param attribute_val_out
  * @param flag
  * @param ierror
-
+ *
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise
  */
 int MPI_WIN_NULL_COPY_FN(MPI_Win oldwin, int win_keyval, void *extra_state, void *attribute_val_in, void *attribute_val_out, int *flag);
@@ -909,24 +911,22 @@ int MPI_WIN_NULL_COPY_FN(MPI_Win oldwin, int win_keyval, void *extra_state, void
  * @param attribute_val
  * @param extra_state
  * @param ierror
-
+ *
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise
  */
 int MPI_WIN_NULL_DELETE_FN(MPI_Win win, int win_keyval, void *attribute_val, void *extra_state);
 
 /* ######################################
-   #  MPI Interface                     #
-   ######################################*/
+#  MPI Interface                     #
+#   ######################################*/
 
-void PMPI_Default_error (MPI_Comm * comm, int *error, char *msg, char *file, int line);
-void PMPI_Abort_error (MPI_Comm * comm, int *error, char *msg, char *file, int line);
-void PMPI_Return_error (MPI_Comm * comm, int *error, ...);
+void PMPI_Default_error(MPI_Comm *comm, int *error, char *msg, char *file, int line);
+void PMPI_Abort_error(MPI_Comm *comm, int *error, char *msg, char *file, int line);
+void PMPI_Return_error(MPI_Comm *comm, int *error, ...);
 
-void MPI_Default_error (MPI_Comm * comm, int *error, char *msg, char *file, int line);
-void MPI_Abort_error (MPI_Comm * comm, int *error, char *msg, char *file, int line);
-void MPI_Return_error (MPI_Comm * comm, int *error, ...);
-
-
+void MPI_Default_error(MPI_Comm *comm, int *error, char *msg, char *file, int line);
+void MPI_Abort_error(MPI_Comm *comm, int *error, char *msg, char *file, int line);
+void MPI_Return_error(MPI_Comm *comm, int *error, ...);
 
 
 
@@ -1015,7 +1015,7 @@ int PMPI_Add_error_string(int errorcode, const char *string);
  * @param disp displacement
  *
  * @return MPI_Aint
-
+ *
  */
 MPI_Aint MPI_Aint_add(MPI_Aint base, MPI_Aint disp);
 MPI_Aint PMPI_Aint_add(MPI_Aint base, MPI_Aint disp);
@@ -1030,7 +1030,7 @@ MPI_Aint PMPI_Aint_add(MPI_Aint base, MPI_Aint disp);
  * @param addr2 subtrahend address
  *
  * @return MPI_Aint
-
+ *
  */
 MPI_Aint MPI_Aint_diff(MPI_Aint addr1, MPI_Aint addr2);
 MPI_Aint PMPI_Aint_diff(MPI_Aint addr1, MPI_Aint addr2);
@@ -1450,7 +1450,7 @@ int PMPI_Bsend_init(const void *buf, int count, MPI_Datatype datatype, int dest,
  * @brief MPI function MPI_Bsend_init
  *
  * @param buf initial address of send buffer
- * @param partitions number of partitions 
+ * @param partitions number of partitions
  * @param count number of elements sent
  * @param datatype type of each element
  * @param dest rank of destination
@@ -1460,11 +1460,11 @@ int PMPI_Bsend_init(const void *buf, int count, MPI_Datatype datatype, int dest,
  *
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise
  */
-int MPI_Psend_init(const void *buf, int partitions, int count, 
-                   MPI_Datatype datatype, int dest, int tag, 
+int MPI_Psend_init(const void *buf, int partitions, int count,
+                   MPI_Datatype datatype, int dest, int tag,
                    MPI_Comm comm, MPI_Info info, MPI_Request *request);
-int PMPI_Psend_init(const void *buf, int partitions, int count, 
-                    MPI_Datatype datatype, int dest, int tag, 
+int PMPI_Psend_init(const void *buf, int partitions, int count,
+                    MPI_Datatype datatype, int dest, int tag,
                     MPI_Comm comm, MPI_Info info, MPI_Request *request);
 
 /*MPI_Buffer_attach*/
@@ -1731,7 +1731,7 @@ int PMPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm);
 
 /**
  * @brief MPI function MPI_Comm_create_from_group
- * 
+ *
  * @param group group
  * @param stringtag matching unique identifier for this operation
  * @param info info object
@@ -1739,8 +1739,8 @@ int PMPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm);
  * @param newcomm new communicator
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise
  */
-int MPI_Comm_create_from_group(MPI_Group group, const char * stringtag, MPI_Info info, MPI_Errhandler errhandler, MPI_Comm *newcomm);
-int PMPI_Comm_create_from_group(MPI_Group group, const char * stringtag, MPI_Info info, MPI_Errhandler errhandler, MPI_Comm *newcomm);
+int MPI_Comm_create_from_group(MPI_Group group, const char *stringtag, MPI_Info info, MPI_Errhandler errhandler, MPI_Comm *newcomm);
+int PMPI_Comm_create_from_group(MPI_Group group, const char *stringtag, MPI_Info info, MPI_Errhandler errhandler, MPI_Comm *newcomm);
 
 
 /*MPI_Comm_create_errhandler*/
@@ -4273,12 +4273,12 @@ int PMPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm, int *size)
  * @brief MPI function MPI_Pcontrol
  *
  * @param level Profiling level
- * @param 
+ * @param
  *
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise
  */
-int MPI_Pcontrol(const int level, ... );
-int PMPI_Pcontrol(const int level, ... );
+int MPI_Pcontrol(const int level, ...);
+int PMPI_Pcontrol(const int level, ...);
 
 
 /*MPI_Probe*/
@@ -4410,7 +4410,7 @@ int PMPI_Recv_init(void *buf, int count, MPI_Datatype datatype, int source, int 
  * @brief MPI function MPI_Recv_init
  *
  * @param buf initial address of receive buffer
- * @param partitions number of partitions 
+ * @param partitions number of partitions
  * @param count number of elements received
  * @param datatype type of each element
  * @param source rank of source or MPI_ANY_SOURCE
@@ -4421,11 +4421,11 @@ int PMPI_Recv_init(void *buf, int count, MPI_Datatype datatype, int source, int 
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise
  */
 
-int MPI_Precv_init(void *buf, int partitions, int count, 
-                   MPI_Datatype datatype, int source, int tag, 
+int MPI_Precv_init(void *buf, int partitions, int count,
+                   MPI_Datatype datatype, int source, int tag,
                    MPI_Comm comm, MPI_Info info, MPI_Request *request);
-int PMPI_Precv_init(void *buf, int partitions, int count, 
-                    MPI_Datatype datatype, int source, int tag, 
+int PMPI_Precv_init(void *buf, int partitions, int count,
+                    MPI_Datatype datatype, int source, int tag,
                     MPI_Comm comm, MPI_Info info, MPI_Request *request);
 
 /*MPI_Reduce*/
@@ -4984,7 +4984,7 @@ int PMPI_Startall(int count, MPI_Request array_of_requests[]);
 /**
  * @brief MPI function MPI_Pready
  *
- * @param partition 
+ * @param partition
  * @param request
  *
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise
@@ -4998,9 +4998,9 @@ int PMPI_Pready(int partition, MPI_Request request);
 /**
  * @brief MPI function MPI_Parrived
  *
- * @param partition 
+ * @param partition
  * @param request
- * @param flag 
+ * @param flag
  *
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise
  */
@@ -5739,11 +5739,11 @@ int PMPI_Type_create_hindexed(int count, const int array_of_blocklengths[], cons
 int MPI_Type_hindexed(int count,
                       const int array_of_blocklengths[],
                       const MPI_Aint array_of_displacements[],
-                      MPI_Datatype oldtype, MPI_Datatype * newtype);
+                      MPI_Datatype oldtype, MPI_Datatype *newtype);
 int PMPI_Type_hindexed(int count,
                        const int array_of_blocklengths[],
                        const MPI_Aint array_of_displacements[],
-                       MPI_Datatype oldtype, MPI_Datatype * newtype);
+                       MPI_Datatype oldtype, MPI_Datatype *newtype);
 
 /*MPI_Type_create_hindexed_block*/
 
@@ -5900,10 +5900,10 @@ int PMPI_Type_ub(MPI_Datatype datatype, MPI_Aint *displacement);
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise
  */
 int MPI_Type_struct(int count,
-                   const int *array_of_blocklengths,
-                   const MPI_Aint *array_of_displacements,
-                   const MPI_Datatype *array_of_types,
-                   MPI_Datatype *newtype);
+                    const int *array_of_blocklengths,
+                    const MPI_Aint *array_of_displacements,
+                    const MPI_Datatype *array_of_types,
+                    MPI_Datatype *newtype);
 
 int PMPI_Type_struct(int count,
                      const int *array_of_blocklengths,
@@ -6119,7 +6119,7 @@ int PMPI_Type_get_extent(MPI_Datatype datatype, MPI_Aint *lb, MPI_Aint *extent);
  *
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise
  */
-int MPI_Type_extent(MPI_Datatype datatype, MPI_Aint * extent);
+int MPI_Type_extent(MPI_Datatype datatype, MPI_Aint *extent);
 int PMPI_Type_extent(MPI_Datatype datatype, MPI_Aint *extent);
 
 /*MPI_Type_get_extent_x*/
@@ -6302,17 +6302,17 @@ int PMPI_Type_vector(int count, int blocklength, int stride, MPI_Datatype oldtyp
  */
 
 int MPI_Type_hvector(
-        int count,
-        int blocklen,
-        MPI_Aint stride,
-        MPI_Datatype old_type,
-        MPI_Datatype *newtype );
+	int count,
+	int blocklen,
+	MPI_Aint stride,
+	MPI_Datatype old_type,
+	MPI_Datatype *newtype);
 int PMPI_Type_hvector(
-        int count,
-        int blocklen,
-        MPI_Aint stride,
-        MPI_Datatype old_type,
-        MPI_Datatype *newtype );
+	int count,
+	int blocklen,
+	MPI_Aint stride,
+	MPI_Datatype old_type,
+	MPI_Datatype *newtype);
 
 /*MPI_Unpack*/
 
@@ -6974,7 +6974,7 @@ int PMPI_Win_wait(MPI_Win win);
  *
  *
  * @return double
-
+ *
  */
 double MPI_Wtick();
 double PMPI_Wtick();
@@ -6988,7 +6988,7 @@ double PMPI_Wtick();
  *
  *
  * @return double
-
+ *
  */
 double MPI_Wtime();
 double PMPI_Wtime();
@@ -7050,12 +7050,12 @@ int MPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler);
 int PMPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler);
 
 /****************
- * MPI SESSIONS *
- ****************/
+* MPI SESSIONS *
+****************/
 
-#define MPI_SESSION_NULL ((MPI_Session) 0) 
+#define MPI_SESSION_NULL    ( (MPI_Session)0)
 
-typedef struct MPI_ABI_Session* MPI_Session;
+typedef struct MPI_ABI_Session *MPI_Session;
 
 typedef void (MPI_Session_errhandler_function)(MPI_Session *session, int *error_code, ...);
 
@@ -7181,15 +7181,15 @@ int PMPI_Session_get_nth_pset(MPI_Session session, MPI_Info info, int n, int *ps
  * @param info info object containing information about the given process set
  * @return int MPI_SUCCESS on success other MPI_* error code otherwise
  */
-int MPI_Session_get_pset_info(MPI_Session session, const char * pset_name, MPI_Info *info);
-int PMPI_Session_get_pset_info(MPI_Session session, const char * pset_name, MPI_Info *info);
+int MPI_Session_get_pset_info(MPI_Session session, const char *pset_name, MPI_Info *info);
+int PMPI_Session_get_pset_info(MPI_Session session, const char *pset_name, MPI_Info *info);
 
 
 /* MPI_Group_from_session_pset */
 
 /**
  * @brief MPI function MPI_Group_from_session_pset
- * 
+ *
  * @param session session handle
  * @param pset_name name of process set to use to create the new group
  * @param newgroup new group derived from supplied session and process set
@@ -7199,114 +7199,114 @@ int MPI_Group_from_session_pset(MPI_Session session, const char *pset_name, MPI_
 int PMPI_Group_from_session_pset(MPI_Session session, const char *pset_name, MPI_Group *newgroup);
 
 /******************************
- * EXTENSIONS TO THE STANDARD *
- ******************************/
+* EXTENSIONS TO THE STANDARD *
+******************************/
 
 /* Checkpointing */
-int MPIX_Checkpoint(MPIX_Checkpoint_state* state);
-int PMPIX_Checkpoint(MPIX_Checkpoint_state* state);
+int MPIX_Checkpoint(MPIX_Checkpoint_state *state);
+int PMPIX_Checkpoint(MPIX_Checkpoint_state *state);
 
 /* Extended Generalized Requests */
 int MPIX_Grequest_start(MPI_Grequest_query_function *query_fn,
-			MPI_Grequest_free_function * free_fn,
-			MPI_Grequest_cancel_function * cancel_fn,
-			MPIX_Grequest_poll_fn * poll_fn,
-			void *extra_state,
-			MPI_Request * request);
+                        MPI_Grequest_free_function *free_fn,
+                        MPI_Grequest_cancel_function *cancel_fn,
+                        MPIX_Grequest_poll_fn *poll_fn,
+                        void *extra_state,
+                        MPI_Request *request);
 int PMPIX_Grequest_start(MPI_Grequest_query_function *query_fn,
-			MPI_Grequest_free_function * free_fn,
-			MPI_Grequest_cancel_function * cancel_fn,
-			MPIX_Grequest_poll_fn * poll_fn,
-			void *extra_state,
-			MPI_Request * request);
+                         MPI_Grequest_free_function *free_fn,
+                         MPI_Grequest_cancel_function *cancel_fn,
+                         MPIX_Grequest_poll_fn *poll_fn,
+                         void *extra_state,
+                         MPI_Request *request);
 
 /* Extended Generalized Request Class */
-int MPIX_Grequest_class_create( MPI_Grequest_query_function * query_fn,
-				MPI_Grequest_free_function * free_fn,
-				MPI_Grequest_cancel_function * cancel_fn,
-				MPIX_Grequest_poll_fn * poll_fn,
-				MPIX_Grequest_wait_fn * wait_fn,
-				MPIX_Grequest_class * new_class );
-int PMPIX_Grequest_class_create( MPI_Grequest_query_function * query_fn,
-				MPI_Grequest_free_function * free_fn,
-				MPI_Grequest_cancel_function * cancel_fn,
-				MPIX_Grequest_poll_fn * poll_fn,
-				MPIX_Grequest_wait_fn * wait_fn,
-				MPIX_Grequest_class * new_class );
+int MPIX_Grequest_class_create(MPI_Grequest_query_function *query_fn,
+                               MPI_Grequest_free_function *free_fn,
+                               MPI_Grequest_cancel_function *cancel_fn,
+                               MPIX_Grequest_poll_fn *poll_fn,
+                               MPIX_Grequest_wait_fn *wait_fn,
+                               MPIX_Grequest_class *new_class);
+int PMPIX_Grequest_class_create(MPI_Grequest_query_function *query_fn,
+                                MPI_Grequest_free_function *free_fn,
+                                MPI_Grequest_cancel_function *cancel_fn,
+                                MPIX_Grequest_poll_fn *poll_fn,
+                                MPIX_Grequest_wait_fn *wait_fn,
+                                MPIX_Grequest_class *new_class);
 
-int MPIX_Grequest_class_allocate( MPIX_Grequest_class  target_class, void *extra_state, MPI_Request *request );
-int PMPIX_Grequest_class_allocate( MPIX_Grequest_class  target_class, void *extra_state, MPI_Request *request );
+int MPIX_Grequest_class_allocate(MPIX_Grequest_class target_class, void *extra_state, MPI_Request *request);
+int PMPIX_Grequest_class_allocate(MPIX_Grequest_class target_class, void *extra_state, MPI_Request *request);
 
 /* Halo Cells */
 
-int MPIX_Swap(void **sendrecv_buf , int remote_rank, MPI_Count size , MPI_Comm comm);
-int PMPIX_Swap(void **sendrecv_buf , int remote_rank, MPI_Count size , MPI_Comm comm);
+int MPIX_Swap(void **sendrecv_buf, int remote_rank, MPI_Count size, MPI_Comm comm);
+int PMPIX_Swap(void **sendrecv_buf, int remote_rank, MPI_Count size, MPI_Comm comm);
 
-int MPIX_Exchange(void **send_buf , void **recvbuff, int remote_rank, MPI_Count size , MPI_Comm comm);
-int PMPIX_Exchange(void **send_buf , void **recvbuff, int remote_rank, MPI_Count size , MPI_Comm comm);
-
-
-int MPIX_Halo_cell_init( MPI_Halo * halo, char * label, MPI_Datatype type, int count );
-int PMPIX_Halo_cell_init( MPI_Halo * halo, char * label, MPI_Datatype type, int count );
-
-int MPIX_Halo_cell_release( MPI_Halo * halo );
-int PMPIX_Halo_cell_release( MPI_Halo * halo );
+int MPIX_Exchange(void **send_buf, void **recvbuff, int remote_rank, MPI_Count size, MPI_Comm comm);
+int PMPIX_Exchange(void **send_buf, void **recvbuff, int remote_rank, MPI_Count size, MPI_Comm comm);
 
 
-int MPIX_Halo_cell_set( MPI_Halo halo, void * ptr );
-int PMPIX_Halo_cell_set( MPI_Halo halo, void * ptr );
+int MPIX_Halo_cell_init(MPI_Halo *halo, char *label, MPI_Datatype type, int count);
+int PMPIX_Halo_cell_init(MPI_Halo *halo, char *label, MPI_Datatype type, int count);
+
+int MPIX_Halo_cell_release(MPI_Halo *halo);
+int PMPIX_Halo_cell_release(MPI_Halo *halo);
 
 
-int MPIX_Halo_cell_get( MPI_Halo halo, void ** ptr );
-int PMPIX_Halo_cell_get( MPI_Halo halo, void ** ptr );
+int MPIX_Halo_cell_set(MPI_Halo halo, void *ptr);
+int PMPIX_Halo_cell_set(MPI_Halo halo, void *ptr);
 
-int MPIX_Halo_exchange_init( MPI_Halo_exchange * ex );
-int PMPIX_Halo_exchange_init( MPI_Halo_exchange * ex );
 
-int MPIX_Halo_exchange_release( MPI_Halo_exchange * ex );
-int PMPIX_Halo_exchange_release( MPI_Halo_exchange * ex );
+int MPIX_Halo_cell_get(MPI_Halo halo, void **ptr);
+int PMPIX_Halo_cell_get(MPI_Halo halo, void **ptr);
 
-int MPIX_Halo_exchange_commit( MPI_Halo_exchange ex );
-int PMPIX_Halo_exchange_commit( MPI_Halo_exchange ex );
+int MPIX_Halo_exchange_init(MPI_Halo_exchange *ex);
+int PMPIX_Halo_exchange_init(MPI_Halo_exchange *ex);
 
-int MPIX_Halo_exchange( MPI_Halo_exchange ex );
-int PMPIX_Halo_exchange( MPI_Halo_exchange ex );
+int MPIX_Halo_exchange_release(MPI_Halo_exchange *ex);
+int PMPIX_Halo_exchange_release(MPI_Halo_exchange *ex);
 
-int MPIX_Halo_iexchange( MPI_Halo_exchange ex );
-int PMPIX_Halo_iexchange( MPI_Halo_exchange ex );
+int MPIX_Halo_exchange_commit(MPI_Halo_exchange ex);
+int PMPIX_Halo_exchange_commit(MPI_Halo_exchange ex);
 
-int MPIX_Halo_iexchange_wait( MPI_Halo_exchange ex );
-int PMPIX_Halo_iexchange_wait( MPI_Halo_exchange ex );
+int MPIX_Halo_exchange(MPI_Halo_exchange ex);
+int PMPIX_Halo_exchange(MPI_Halo_exchange ex);
 
-int MPIX_Halo_cell_bind_local( MPI_Halo_exchange ex, MPI_Halo halo );
-int PMPIX_Halo_cell_bind_local( MPI_Halo_exchange ex, MPI_Halo halo );
+int MPIX_Halo_iexchange(MPI_Halo_exchange ex);
+int PMPIX_Halo_iexchange(MPI_Halo_exchange ex);
 
-int MPIX_Halo_cell_bind_remote( MPI_Halo_exchange ex, MPI_Halo halo, int remote, char * remote_label );
-int PMPIX_Halo_cell_bind_remote( MPI_Halo_exchange ex, MPI_Halo halo, int remote, char * remote_label );
+int MPIX_Halo_iexchange_wait(MPI_Halo_exchange ex);
+int PMPIX_Halo_iexchange_wait(MPI_Halo_exchange ex);
+
+int MPIX_Halo_cell_bind_local(MPI_Halo_exchange ex, MPI_Halo halo);
+int PMPIX_Halo_cell_bind_local(MPI_Halo_exchange ex, MPI_Halo halo);
+
+int MPIX_Halo_cell_bind_remote(MPI_Halo_exchange ex, MPI_Halo halo, int remote, char *remote_label);
+int PMPIX_Halo_cell_bind_remote(MPI_Halo_exchange ex, MPI_Halo halo, int remote, char *remote_label);
 
 /* ULFM agreement FT */
 
-int MPIX_Comm_failure_ack( MPI_Comm  );
-int PMPIX_Comm_failure_ack( MPI_Comm  );
+int MPIX_Comm_failure_ack(MPI_Comm);
+int PMPIX_Comm_failure_ack(MPI_Comm);
 
-int MPIX_Comm_failure_get_acked( MPI_Comm , MPI_Group * );
-int PMPIX_Comm_failure_get_acked( MPI_Comm , MPI_Group * );
+int MPIX_Comm_failure_get_acked(MPI_Comm, MPI_Group *);
+int PMPIX_Comm_failure_get_acked(MPI_Comm, MPI_Group *);
 
-int MPIX_Comm_agree(MPI_Comm , int *);
-int PMPIX_Comm_agree(MPI_Comm , int *);
+int MPIX_Comm_agree(MPI_Comm, int *);
+int PMPIX_Comm_agree(MPI_Comm, int *);
 
-int MPIX_Comm_revoke(MPI_Comm );
-int PMPIX_Comm_revoke(MPI_Comm );
+int MPIX_Comm_revoke(MPI_Comm);
+int PMPIX_Comm_revoke(MPI_Comm);
 
-int MPIX_Comm_shrink(MPI_Comm , MPI_Comm *);
-int PMPIX_Comm_shrink(MPI_Comm , MPI_Comm *);
+int MPIX_Comm_shrink(MPI_Comm, MPI_Comm *);
+int PMPIX_Comm_shrink(MPI_Comm, MPI_Comm *);
 
 /********************
- * OTHER INTERFACES *
- ********************/
+* OTHER INTERFACES *
+********************/
 
-#define MPICH_ATTR_POINTER_WITH_TYPE_TAG(a,b)
-#define MPI_AINT_FMT_HEX_SPEC "%X"
+#define MPICH_ATTR_POINTER_WITH_TYPE_TAG(a, b)
+#define MPI_AINT_FMT_HEX_SPEC    "%X"
 
 #ifdef MPC_MPIIO_ENABLED
 #include <mpio.h>

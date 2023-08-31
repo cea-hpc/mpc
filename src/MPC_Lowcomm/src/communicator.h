@@ -31,16 +31,17 @@
 #include "coll.h"
 #include "shm_coll.h"
 
-#define MPC_INITIAL_TOPO_COMMS_SIZE 10
+#define MPC_INITIAL_TOPO_COMMS_SIZE    10
+
 /**
  * @brief This is the struct for the informations needed for topological collectives
  */
 typedef struct mpc_lowcomm_topo_comms
 {
-  int size;                               /**< Size of the arrays. */
+	int                         size;     /**< Size of the arrays. */
 
-  int *roots;                             /**< Array of roots used in collectives. */
-  mpc_hardware_split_info_t **hw_infos;   /**< Array of the structure containing topological communicators. */
+	int *                       roots;    /**< Array of roots used in collectives. */
+	mpc_hardware_split_info_t **hw_infos; /**< Array of the structure containing topological communicators. */
 } mpc_lowcomm_topo_comms;
 
 
@@ -50,21 +51,21 @@ typedef struct mpc_lowcomm_topo_comms
  */
 typedef struct MPI_ABI_Comm
 {
-	mpc_lowcomm_communicator_id_t               id;				/**< Integer unique identifier of the comm */
-	int                        linear_comm_id;  /** Linear communicator id on int32 used for FORTRAN */
-	mpc_lowcomm_group_t *      group;			/**< Group supporting the comm */
-	OPA_int_t                  refcount;		/**< Number of ref to the comm freed when 0 */
+	mpc_lowcomm_communicator_id_t id;             /**< Integer unique identifier of the comm */
+	int                           linear_comm_id; /** Linear communicator id on int32 used for FORTRAN */
+	mpc_lowcomm_group_t *         group;          /**< Group supporting the comm */
+	OPA_int_t                     refcount;       /**< Number of ref to the comm freed when 0 */
 
-	OPA_int_t                  free_count;      /**< Local synchronization for free */
+	OPA_int_t                     free_count;     /**< Local synchronization for free */
 
-	unsigned int               process_span;	/**< Number of UNIX processes in the group */
-	int *                      process_array;	/**< Array of the processes in the group */
+	unsigned int                  process_span;   /**< Number of UNIX processes in the group */
+	int *                         process_array;  /**< Array of the processes in the group */
 
-	int                        is_comm_self;	/**< 1 if the group is comm_self */
+	int                           is_comm_self;   /**< 1 if the group is comm_self */
 
 	/* Collective comm */
-	struct mpc_lowcomm_coll_s *coll;			/**< This holds the collectives for this comm */
-	struct sctk_comm_coll *    shm_coll;		/**< This holds the SHM collectives for this comm */
+	struct mpc_lowcomm_coll_s *   coll;             /**< This holds the collectives for this comm */
+	struct sctk_comm_coll *       shm_coll;         /**< This holds the SHM collectives for this comm */
 
 	/* Intercomms */
 
@@ -72,14 +73,14 @@ typedef struct MPI_ABI_Comm
 	 * intercomms. If the group is NULL
 	 * it means the communicator is an intercomm
 	 * and then functions will refer to this functions */
-	mpc_lowcomm_communicator_t left_comm;		/**< The left comm for intercomms */
-	mpc_lowcomm_communicator_t right_comm;		/**< The right comm for intercomms */
+	mpc_lowcomm_communicator_t    left_comm;        /**< The left comm for intercomms */
+	mpc_lowcomm_communicator_t    right_comm;       /**< The right comm for intercomms */
 
 	/* Topological comm */
-	mpc_lowcomm_topo_comms *topo_comms;  /**< Topological communicators. */
-  
+	mpc_lowcomm_topo_comms *      topo_comms; /**< Topological communicators. */
+
 	/* Extra context (sessions) */
-	mpc_lowcomm_handle_ctx_t extra_ctx_ptr;
+	mpc_lowcomm_handle_ctx_t      extra_ctx_ptr;
 }mpc_lowcomm_internal_communicator_t;
 
 /*********************************
@@ -143,7 +144,8 @@ int _mpc_lowcomm_communicator_world_last_local_task();
  **/
 static inline struct mpc_lowcomm_coll_s *_mpc_comm_get_internal_coll(const mpc_lowcomm_communicator_t comm)
 {
-    mpc_lowcomm_communicator_t local_comm = __mpc_lowcomm_communicator_from_predefined(comm);
+	mpc_lowcomm_communicator_t local_comm = __mpc_lowcomm_communicator_from_predefined(comm);
+
 	return local_comm->coll;
 }
 
@@ -154,13 +156,13 @@ static inline struct mpc_lowcomm_coll_s *_mpc_comm_get_internal_coll(const mpc_l
  **/
 static inline void _mpc_comm_set_internal_coll(mpc_lowcomm_communicator_t comm, struct mpc_lowcomm_coll_s *coll)
 {
-    comm = __mpc_lowcomm_communicator_from_predefined(comm);
+	comm       = __mpc_lowcomm_communicator_from_predefined(comm);
 	comm->coll = coll;
 }
 
 /**
  * @brief Inline version of the communicator ID getter
- * 
+ *
  * @param comm the communicator
  * @return mpc_lowcomm_communicator_id_t the corresponding ID of the given comm
  */
@@ -168,7 +170,7 @@ static inline mpc_lowcomm_communicator_id_t _mpc_lowcomm_communicator_id(mpc_low
 {
 	if(comm != MPC_COMM_NULL)
 	{
-        comm = __mpc_lowcomm_communicator_from_predefined(comm);
+		comm = __mpc_lowcomm_communicator_from_predefined(comm);
 		return comm->id;
 	}
 

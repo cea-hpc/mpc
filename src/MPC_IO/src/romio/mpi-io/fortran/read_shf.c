@@ -1,4 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
+
 /*
  *
  *   Copyright (C) 1997 University of Chicago.
@@ -16,18 +17,22 @@
 #if defined(FORTRANCAPS)
 extern FORTRAN_API void FORT_CALL MPI_FILE_READ_SHARED(MPI_Fint *, void *, MPI_Fint *, MPI_Fint *,
                                                        MPI_Status *, MPI_Fint *);
+
 #pragma weak MPI_FILE_READ_SHARED = PMPI_FILE_READ_SHARED
 #elif defined(FORTRANDOUBLEUNDERSCORE)
 extern FORTRAN_API void FORT_CALL mpi_file_read_shared__(MPI_Fint *, void *, MPI_Fint *, MPI_Fint *,
                                                          MPI_Status *, MPI_Fint *);
+
 #pragma weak mpi_file_read_shared__ = pmpi_file_read_shared__
 #elif !defined(FORTRANUNDERSCORE)
 extern FORTRAN_API void FORT_CALL mpi_file_read_shared(MPI_Fint *, void *, MPI_Fint *, MPI_Fint *,
                                                        MPI_Status *, MPI_Fint *);
+
 #pragma weak mpi_file_read_shared = pmpi_file_read_shared
 #else
 extern FORTRAN_API void FORT_CALL mpi_file_read_shared_(MPI_Fint *, void *, MPI_Fint *, MPI_Fint *,
                                                         MPI_Status *, MPI_Fint *);
+
 #pragma weak mpi_file_read_shared_ = pmpi_file_read_shared_
 #endif
 
@@ -60,32 +65,32 @@ extern FORTRAN_API void FORT_CALL mpi_file_read_shared_(MPI_Fint *, void *, MPI_
 #endif
 
 #ifdef FORTRANCAPS
-#define mpi_file_read_shared_ PMPI_FILE_READ_SHARED
+#define mpi_file_read_shared_    PMPI_FILE_READ_SHARED
 #elif defined(FORTRANDOUBLEUNDERSCORE)
-#define mpi_file_read_shared_ pmpi_file_read_shared__
+#define mpi_file_read_shared_    pmpi_file_read_shared__
 #elif !defined(FORTRANUNDERSCORE)
 #if defined(HPUX) || defined(SPPUX)
 #pragma _HP_SECONDARY_DEF pmpi_file_read_shared pmpi_file_read_shared_
 #endif
-#define mpi_file_read_shared_ pmpi_file_read_shared
+#define mpi_file_read_shared_    pmpi_file_read_shared
 #else
 #if defined(HPUX) || defined(SPPUX)
 #pragma _HP_SECONDARY_DEF pmpi_file_read_shared_ pmpi_file_read_shared
 #endif
-#define mpi_file_read_shared_ pmpi_file_read_shared_
+#define mpi_file_read_shared_    pmpi_file_read_shared_
 #endif
 
 #else
 
 #ifdef FORTRANCAPS
-#define mpi_file_read_shared_ MPI_FILE_READ_SHARED
+#define mpi_file_read_shared_    MPI_FILE_READ_SHARED
 #elif defined(FORTRANDOUBLEUNDERSCORE)
-#define mpi_file_read_shared_ mpi_file_read_shared__
+#define mpi_file_read_shared_    mpi_file_read_shared__
 #elif !defined(FORTRANUNDERSCORE)
 #if defined(HPUX) || defined(SPPUX)
 #pragma _HP_SECONDARY_DEF mpi_file_read_shared mpi_file_read_shared_
 #endif
-#define mpi_file_read_shared_ mpi_file_read_shared
+#define mpi_file_read_shared_    mpi_file_read_shared
 #else
 #if defined(HPUX) || defined(SPPUX)
 #pragma _HP_SECONDARY_DEF mpi_file_read_shared_ mpi_file_read_shared
@@ -95,31 +100,35 @@ extern FORTRAN_API void FORT_CALL mpi_file_read_shared_(MPI_Fint *, void *, MPI_
 
 #if defined(MPIHP)
 /* Prototype to keep compiler happy */
-void mpi_file_read_shared_(MPI_Fint * fh, void *buf, MPI_Fint * count,
-                           MPI_Fint * datatype, MPI_Status * status, MPI_Fint * ierr);
-void mpi_file_read_shared_(MPI_Fint * fh, void *buf, MPI_Fint * count,
-                           MPI_Fint * datatype, MPI_Status * status, MPI_Fint * ierr)
+void mpi_file_read_shared_(MPI_Fint *fh, void *buf, MPI_Fint *count,
+                           MPI_Fint *datatype, MPI_Status *status, MPI_Fint *ierr);
+
+void mpi_file_read_shared_(MPI_Fint *fh, void *buf, MPI_Fint *count,
+                           MPI_Fint *datatype, MPI_Status *status, MPI_Fint *ierr)
 {
-    MPI_File fh_c;
-    MPI_Datatype datatype_c;
+	MPI_File     fh_c;
+	MPI_Datatype datatype_c;
 
-    fh_c = MPI_File_f2c(*fh);
-    datatype_c = MPI_Type_f2c(*datatype);
+	fh_c       = MPI_File_f2c(*fh);
+	datatype_c = MPI_Type_f2c(*datatype);
 
-    *ierr = MPI_File_read_shared(fh_c, buf, *count, datatype_c, status);
+	*ierr = MPI_File_read_shared(fh_c, buf, *count, datatype_c, status);
 }
+
 #else
 /* Prototype to keep compiler happy */
-FORTRAN_API void FORT_CALL mpi_file_read_shared_(MPI_Fint * fh, void *buf, MPI_Fint * count,
-                                                 MPI_Fint * datatype, MPI_Status * status,
-                                                 MPI_Fint * ierr);
-FORTRAN_API void FORT_CALL mpi_file_read_shared_(MPI_Fint * fh, void *buf, MPI_Fint * count,
-                                                 MPI_Fint * datatype, MPI_Status * status,
-                                                 MPI_Fint * ierr)
-{
-    MPI_File fh_c;
+FORTRAN_API void FORT_CALL mpi_file_read_shared_(MPI_Fint *fh, void *buf, MPI_Fint *count,
+                                                 MPI_Fint *datatype, MPI_Status *status,
+                                                 MPI_Fint *ierr);
 
-    fh_c = MPI_File_f2c(*fh);
-    *ierr = MPI_File_read_shared(fh_c, buf, *count, MPI_Type_f2c( *datatype ), status);
+FORTRAN_API void FORT_CALL mpi_file_read_shared_(MPI_Fint *fh, void *buf, MPI_Fint *count,
+                                                 MPI_Fint *datatype, MPI_Status *status,
+                                                 MPI_Fint *ierr)
+{
+	MPI_File fh_c;
+
+	fh_c  = MPI_File_f2c(*fh);
+	*ierr = MPI_File_read_shared(fh_c, buf, *count, MPI_Type_f2c(*datatype), status);
 }
+
 #endif

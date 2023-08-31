@@ -43,7 +43,7 @@ static mpc_common_spinlock_t init_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 /* Error handlers */
 static OPA_int_t current_errhandler; /* MPC_Errhandler */
 static struct MPI_ABI_Errhandler error_handlers[MAX_ERROR_HANDLERS];
-static mpc_common_spinlock_t errorhandlers_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
+static mpc_common_spinlock_t     errorhandlers_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 /* Handles */
 static OPA_int_t current_handle;
@@ -58,7 +58,7 @@ static void _mpc_mpi_err_init()
 {
 	/* Error handlers */
 	OPA_store_int(&current_errhandler, 4);
-    memset(error_handlers, 0, MAX_ERROR_HANDLERS*sizeof(struct MPI_ABI_Errhandler));
+	memset(error_handlers, 0, MAX_ERROR_HANDLERS * sizeof(struct MPI_ABI_Errhandler) );
 
 	/* Handles */
 	OPA_store_int(&current_handle, SCTK_BOOKED_HANDLES);
@@ -87,66 +87,84 @@ static void mpc_mpi_err_init_once()
 /* Error Handler                                                        */
 /************************************************************************/
 
-_mpc_mpi_errhandler_t _mpc_mpi_errhandler_from_idx(const long errh) {
-    if(errh > 0 && errh <= MAX_ERROR_HANDLERS) {
-        return error_handlers + errh;
-    }
+_mpc_mpi_errhandler_t _mpc_mpi_errhandler_from_idx(const long errh)
+{
+	if(errh > 0 && errh <= MAX_ERROR_HANDLERS)
+	{
+		return error_handlers + errh;
+	}
 
-    return (_mpc_mpi_errhandler_t) errh;
+	return (_mpc_mpi_errhandler_t)errh;
 }
 
-long _mpc_mpi_errhandler_to_idx(const _mpc_mpi_errhandler_t errh) {
-    if(errh < (_mpc_mpi_errhandler_t) MAX_ERROR_HANDLERS) return (long) errh;
+long _mpc_mpi_errhandler_to_idx(const _mpc_mpi_errhandler_t errh)
+{
+	if(errh < (_mpc_mpi_errhandler_t)MAX_ERROR_HANDLERS)
+	{
+		return (long)errh;
+	}
 
-    for(unsigned short i = 1; i < MAX_ERROR_HANDLERS; i++) {
-        if(error_handlers + i == errh) return i;
-    }
+	for(unsigned short i = 1; i < MAX_ERROR_HANDLERS; i++)
+	{
+		if(error_handlers + i == errh)
+		{
+			return i;
+		}
+	}
 
-    return (long) errh;
+	return (long)errh;
 }
 
-bool _mpc_mpi_errhandler_is_valid(const _mpc_mpi_errhandler_t errh) {
-    if(errh == (_mpc_mpi_errhandler_t) 1 || errh == (_mpc_mpi_errhandler_t) 2 || errh == (_mpc_mpi_errhandler_t) 3) return true;
-    return (errh >= error_handlers && errh < error_handlers+MAX_ERROR_HANDLERS);
+bool _mpc_mpi_errhandler_is_valid(const _mpc_mpi_errhandler_t errh)
+{
+	if(errh == (_mpc_mpi_errhandler_t)1 || errh == (_mpc_mpi_errhandler_t)2 || errh == (_mpc_mpi_errhandler_t)3)
+	{
+		return true;
+	}
+	return errh >= error_handlers && errh < error_handlers + MAX_ERROR_HANDLERS;
 }
 
 int _mpc_mpi_errhandler_register(_mpc_mpi_generic_errhandler_func_t eh, _mpc_mpi_errhandler_t *errh)
 {
 	mpc_mpi_err_init_once();
 
-    mpc_common_spinlock_lock(&errorhandlers_lock);
-    /* Does it already exist ? */
-    for(int i = 0; i < MAX_ERROR_HANDLERS; i++) {
-        if(error_handlers[i].eh == eh) {
-            *errh = error_handlers + i;
-            error_handlers[i].ref_count++;
-            mpc_common_spinlock_unlock(&errorhandlers_lock);
-            return MPC_LOWCOMM_SUCCESS;
-        }
-    }
+	mpc_common_spinlock_lock(&errorhandlers_lock);
+	/* Does it already exist ? */
+	for(int i = 0; i < MAX_ERROR_HANDLERS; i++)
+	{
+		if(error_handlers[i].eh == eh)
+		{
+			*errh = error_handlers + i;
+			error_handlers[i].ref_count++;
+			mpc_common_spinlock_unlock(&errorhandlers_lock);
+			return MPC_LOWCOMM_SUCCESS;
+		}
+	}
 
 	/* Find a new slot */
-    for(int i = 4; i < MAX_ERROR_HANDLERS; i++) {
-        if(error_handlers[i].eh == NULL) {
-            error_handlers[i].eh = eh;
-            error_handlers[i].ref_count = 1;
-            *errh = error_handlers + i;
-            mpc_common_spinlock_unlock(&errorhandlers_lock);
-            return MPC_LOWCOMM_SUCCESS;
-        }
-    }
+	for(int i = 4; i < MAX_ERROR_HANDLERS; i++)
+	{
+		if(error_handlers[i].eh == NULL)
+		{
+			error_handlers[i].eh        = eh;
+			error_handlers[i].ref_count = 1;
+			*errh = error_handlers + i;
+			mpc_common_spinlock_unlock(&errorhandlers_lock);
+			return MPC_LOWCOMM_SUCCESS;
+		}
+	}
 
-    mpc_common_spinlock_unlock(&errorhandlers_lock);
+	mpc_common_spinlock_unlock(&errorhandlers_lock);
 	return 17; /**< MPI_ERR_INTERN */
 }
 
 int _mpc_mpi_errhandler_register_on_slot(_mpc_mpi_generic_errhandler_func_t eh,
-                                        const int slot)
+                                         const int slot)
 {
 	mpc_mpi_err_init_once();
 	/* Save in the HT */
-    error_handlers[slot].eh = eh;
-    error_handlers[slot].ref_count = 1;
+	error_handlers[slot].eh        = eh;
+	error_handlers[slot].ref_count = 1;
 	/* All ok */
 	return 0;
 }
@@ -155,17 +173,19 @@ _mpc_mpi_generic_errhandler_func_t _mpc_mpi_errhandler_resolve(_mpc_mpi_errhandl
 {
 	mpc_mpi_err_init_once();
 
-    _mpc_mpi_generic_errhandler_func_t ret = NULL;
+	_mpc_mpi_generic_errhandler_func_t ret = NULL;
+
 	/* Direct table lookup */
-    if(_mpc_mpi_errhandler_is_valid(errh)) {
-        errh = _mpc_mpi_errhandler_from_idx((long)errh);
-        ret = errh->eh;
-    }
+	if(_mpc_mpi_errhandler_is_valid(errh) )
+	{
+		errh = _mpc_mpi_errhandler_from_idx( (long)errh);
+		ret  = errh->eh;
+	}
 	/* _mpc_mpi_generic_errhandler_func_t ret = mpc_common_hashtable_get(&error_handlers, errh); */
 
 	mpc_common_nodebug("RET Is %p for %d", ret, errh);
 
-    return ret;
+	return ret;
 }
 
 /** @brief Checks if an errhandler can be freed (valid and not a predefined)
@@ -173,37 +193,42 @@ _mpc_mpi_generic_errhandler_func_t _mpc_mpi_errhandler_resolve(_mpc_mpi_errhandl
  *  @param errh    The errhandler to check
  *  @return        true if the errhandler is valid, false otherwise
  */
-static inline bool _mpc_mpi_errhandler_can_be_released(const _mpc_mpi_errhandler_t errh) {
-    // In the array but not a predefined errhandler
-    return (errh >= (error_handlers + 4) && errh < error_handlers+MAX_ERROR_HANDLERS);
+static inline bool _mpc_mpi_errhandler_can_be_released(const _mpc_mpi_errhandler_t errh)
+{
+	// In the array but not a predefined errhandler
+	return errh >= (error_handlers + 4) && errh < error_handlers + MAX_ERROR_HANDLERS;
 }
 
 int _mpc_mpi_errhandler_free(_mpc_mpi_errhandler_t errh)
 {
 	mpc_mpi_err_init_once();
-    mpc_common_spinlock_lock(&errorhandlers_lock);
+	mpc_common_spinlock_lock(&errorhandlers_lock);
 
-    errh = _mpc_mpi_errhandler_from_idx((long) errh);
+	errh = _mpc_mpi_errhandler_from_idx( (long)errh);
 	/* Does it is valid ? */
-	if(!_mpc_mpi_errhandler_is_valid(errh))
+	if(!_mpc_mpi_errhandler_is_valid(errh) )
 	{
 		/* No then error */
-        mpc_common_spinlock_unlock(&errorhandlers_lock);
+		mpc_common_spinlock_unlock(&errorhandlers_lock);
 		return 17; /**< May be MPI_ERR_ERRHANDLER instead or MPI_ERR_ARG*/
 	}
 
-    if(errh->ref_count > 0)
-        errh->ref_count--;
+	if(errh->ref_count > 0)
+	{
+		errh->ref_count--;
+	}
 
 	/* If no more references*/
-    if(errh->ref_count == 0) {
-        if(_mpc_mpi_errhandler_can_be_released(errh)) {
-            memset(errh, 0, sizeof(struct MPI_ABI_Errhandler));
-        }
-    }
+	if(errh->ref_count == 0)
+	{
+		if(_mpc_mpi_errhandler_can_be_released(errh) )
+		{
+			memset(errh, 0, sizeof(struct MPI_ABI_Errhandler) );
+		}
+	}
 
 	/* All done */
-    mpc_common_spinlock_unlock(&errorhandlers_lock);
+	mpc_common_spinlock_unlock(&errorhandlers_lock);
 	return 0;
 }
 
@@ -212,7 +237,7 @@ int _mpc_mpi_errhandler_free(_mpc_mpi_errhandler_t errh)
 /************************************************************************/
 
 static inline uint64_t __handle_hash(sctk_handle id,
-                                           sctk_handle_type type)
+                                     sctk_handle_type type)
 {
 	uint64_t rank = mpc_common_get_task_rank();
 
@@ -240,7 +265,7 @@ struct _mpc_mpi_handle_ctx_s *_mpc_mpi_handle_ctx_new(sctk_handle id)
 
 static mpc_common_spinlock_t handle_mod_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
-static inline  struct _mpc_mpi_handle_ctx_s *__ctx_get_no_lock(sctk_handle id, sctk_handle_type type)
+static inline struct _mpc_mpi_handle_ctx_s *__ctx_get_no_lock(sctk_handle id, sctk_handle_type type)
 {
 	return (struct _mpc_mpi_handle_ctx_s *)mpc_common_hashtable_get(&handle_context, __handle_hash(id, type) );
 }
@@ -334,7 +359,7 @@ int _mpc_mpi_handle_ctx_release(struct _mpc_mpi_handle_ctx_s *hctx)
 }
 
 _mpc_mpi_errhandler_t _mpc_mpi_handle_get_errhandler(sctk_handle id,
-                                             sctk_handle_type type)
+                                                     sctk_handle_type type)
 {
 	struct _mpc_mpi_handle_ctx_s *hctx = __ctx_get(id, type);
 
@@ -343,10 +368,11 @@ _mpc_mpi_errhandler_t _mpc_mpi_handle_get_errhandler(sctk_handle id,
 		return SCTK_ERRHANDLER_NULL;
 	}
 
-    _mpc_mpi_errhandler_t ret = hctx->handler;
-    mpc_common_spinlock_lock(&errorhandlers_lock);
-    ret->ref_count++;
-    mpc_common_spinlock_unlock(&errorhandlers_lock);
+	_mpc_mpi_errhandler_t ret = hctx->handler;
+
+	mpc_common_spinlock_lock(&errorhandlers_lock);
+	ret->ref_count++;
+	mpc_common_spinlock_unlock(&errorhandlers_lock);
 
 	mpc_common_nodebug("GET at %p == %d for %d", hctx, hctx->handler, id);
 
@@ -354,7 +380,7 @@ _mpc_mpi_errhandler_t _mpc_mpi_handle_get_errhandler(sctk_handle id,
 }
 
 int _mpc_mpi_handle_set_errhandler(sctk_handle id, sctk_handle_type type,
-                               _mpc_mpi_errhandler_t errh)
+                                   _mpc_mpi_errhandler_t errh)
 {
 	struct _mpc_mpi_handle_ctx_s *hctx = __ctx_get(id, type);
 
@@ -363,13 +389,13 @@ int _mpc_mpi_handle_set_errhandler(sctk_handle id, sctk_handle_type type,
 		return 1;
 	}
 
-    errh = _mpc_mpi_errhandler_from_idx((long) errh);
+	errh = _mpc_mpi_errhandler_from_idx( (long)errh);
 
-    _mpc_mpi_errhandler_free(hctx->handler);
+	_mpc_mpi_errhandler_free(hctx->handler);
 	hctx->handler = errh;
-    mpc_common_spinlock_lock(&errorhandlers_lock);
-    errh->ref_count++;
-    mpc_common_spinlock_unlock(&errorhandlers_lock);
+	mpc_common_spinlock_lock(&errorhandlers_lock);
+	errh->ref_count++;
+	mpc_common_spinlock_unlock(&errorhandlers_lock);
 
 	mpc_common_nodebug("SET %d at %p <= %p for %d", errh, hctx, hctx->handler, id);
 

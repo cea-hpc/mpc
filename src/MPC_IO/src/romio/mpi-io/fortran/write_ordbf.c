@@ -1,4 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
+
 /*
  *
  *   Copyright (C) 1997 University of Chicago.
@@ -16,18 +17,22 @@
 #if defined(FORTRANCAPS)
 extern FORTRAN_API void FORT_CALL MPI_FILE_WRITE_ORDERED_BEGIN(MPI_Fint *, void *, MPI_Fint *,
                                                                MPI_Fint *, MPI_Fint *);
+
 #pragma weak MPI_FILE_WRITE_ORDERED_BEGIN = PMPI_FILE_WRITE_ORDERED_BEGIN
 #elif defined(FORTRANDOUBLEUNDERSCORE)
 extern FORTRAN_API void FORT_CALL mpi_file_write_ordered_begin__(MPI_Fint *, void *, MPI_Fint *,
                                                                  MPI_Fint *, MPI_Fint *);
+
 #pragma weak mpi_file_write_ordered_begin__ = pmpi_file_write_ordered_begin__
 #elif !defined(FORTRANUNDERSCORE)
 extern FORTRAN_API void FORT_CALL mpi_file_write_ordered_begin(MPI_Fint *, void *, MPI_Fint *,
                                                                MPI_Fint *, MPI_Fint *);
+
 #pragma weak mpi_file_write_ordered_begin = pmpi_file_write_ordered_begin
 #else
 extern FORTRAN_API void FORT_CALL mpi_file_write_ordered_begin_(MPI_Fint *, void *, MPI_Fint *,
                                                                 MPI_Fint *, MPI_Fint *);
+
 #pragma weak mpi_file_write_ordered_begin_ = pmpi_file_write_ordered_begin_
 #endif
 
@@ -60,32 +65,32 @@ extern FORTRAN_API void FORT_CALL mpi_file_write_ordered_begin_(MPI_Fint *, void
 #endif
 
 #ifdef FORTRANCAPS
-#define mpi_file_write_ordered_begin_ PMPI_FILE_WRITE_ORDERED_BEGIN
+#define mpi_file_write_ordered_begin_    PMPI_FILE_WRITE_ORDERED_BEGIN
 #elif defined(FORTRANDOUBLEUNDERSCORE)
-#define mpi_file_write_ordered_begin_ pmpi_file_write_ordered_begin__
+#define mpi_file_write_ordered_begin_    pmpi_file_write_ordered_begin__
 #elif !defined(FORTRANUNDERSCORE)
 #if defined(HPUX) || defined(SPPUX)
 #pragma _HP_SECONDARY_DEF pmpi_file_write_ordered_begin pmpi_file_write_ordered_begin_
 #endif
-#define mpi_file_write_ordered_begin_ pmpi_file_write_ordered_begin
+#define mpi_file_write_ordered_begin_    pmpi_file_write_ordered_begin
 #else
 #if defined(HPUX) || defined(SPPUX)
 #pragma _HP_SECONDARY_DEF pmpi_file_write_ordered_begin_ pmpi_file_write_ordered_begin
 #endif
-#define mpi_file_write_ordered_begin_ pmpi_file_write_ordered_begin_
+#define mpi_file_write_ordered_begin_    pmpi_file_write_ordered_begin_
 #endif
 
 #else
 
 #ifdef FORTRANCAPS
-#define mpi_file_write_ordered_begin_ MPI_FILE_WRITE_ORDERED_BEGIN
+#define mpi_file_write_ordered_begin_    MPI_FILE_WRITE_ORDERED_BEGIN
 #elif defined(FORTRANDOUBLEUNDERSCORE)
-#define mpi_file_write_ordered_begin_ mpi_file_write_ordered_begin__
+#define mpi_file_write_ordered_begin_    mpi_file_write_ordered_begin__
 #elif !defined(FORTRANUNDERSCORE)
 #if defined(HPUX) || defined(SPPUX)
 #pragma _HP_SECONDARY_DEF mpi_file_write_ordered_begin mpi_file_write_ordered_begin_
 #endif
-#define mpi_file_write_ordered_begin_ mpi_file_write_ordered_begin
+#define mpi_file_write_ordered_begin_    mpi_file_write_ordered_begin
 #else
 #if defined(HPUX) || defined(SPPUX)
 #pragma _HP_SECONDARY_DEF mpi_file_write_ordered_begin_ mpi_file_write_ordered_begin
@@ -95,31 +100,33 @@ extern FORTRAN_API void FORT_CALL mpi_file_write_ordered_begin_(MPI_Fint *, void
 
 #if defined(MPIHP)
 /* Prototype to keep compiler happy */
-void mpi_file_write_ordered_begin_(MPI_Fint * fh, void *buf, MPI_Fint * count,
-                                   MPI_Fint * datatype, MPI_Fint * ierr);
+void mpi_file_write_ordered_begin_(MPI_Fint *fh, void *buf, MPI_Fint *count,
+                                   MPI_Fint *datatype, MPI_Fint *ierr);
 
-void mpi_file_write_ordered_begin_(MPI_Fint * fh, void *buf, MPI_Fint * count,
-                                   MPI_Fint * datatype, MPI_Fint * ierr)
+void mpi_file_write_ordered_begin_(MPI_Fint *fh, void *buf, MPI_Fint *count,
+                                   MPI_Fint *datatype, MPI_Fint *ierr)
 {
-    MPI_File fh_c;
-    MPI_Datatype datatype_c;
+	MPI_File     fh_c;
+	MPI_Datatype datatype_c;
 
-    fh_c = MPI_File_f2c(*fh);
-    datatype_c = MPI_Type_f2c(*datatype);
+	fh_c       = MPI_File_f2c(*fh);
+	datatype_c = MPI_Type_f2c(*datatype);
 
-    *ierr = MPI_File_write_ordered_begin(fh_c, buf, *count, datatype_c);
+	*ierr = MPI_File_write_ordered_begin(fh_c, buf, *count, datatype_c);
 }
+
 #else
 /* Prototype to keep compiler happy */
-FORTRAN_API void FORT_CALL mpi_file_write_ordered_begin_(MPI_Fint * fh, void *buf, MPI_Fint * count,
-                                                         MPI_Fint * datatype, MPI_Fint * ierr);
+FORTRAN_API void FORT_CALL mpi_file_write_ordered_begin_(MPI_Fint *fh, void *buf, MPI_Fint *count,
+                                                         MPI_Fint *datatype, MPI_Fint *ierr);
 
-FORTRAN_API void FORT_CALL mpi_file_write_ordered_begin_(MPI_Fint * fh, void *buf, MPI_Fint * count,
-                                                         MPI_Fint * datatype, MPI_Fint * ierr)
+FORTRAN_API void FORT_CALL mpi_file_write_ordered_begin_(MPI_Fint *fh, void *buf, MPI_Fint *count,
+                                                         MPI_Fint *datatype, MPI_Fint *ierr)
 {
-    MPI_File fh_c;
+	MPI_File fh_c;
 
-    fh_c = MPI_File_f2c(*fh);
-    *ierr = MPI_File_write_ordered_begin(fh_c, buf, *count, MPI_Type_f2c( *datatype ));
+	fh_c  = MPI_File_f2c(*fh);
+	*ierr = MPI_File_write_ordered_begin(fh_c, buf, *count, MPI_Type_f2c(*datatype) );
 }
+
 #endif

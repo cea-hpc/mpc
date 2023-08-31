@@ -693,6 +693,7 @@ void pmpi_alltoallw__(const void *sendbuf, const int sendcounts[], const int sdi
 	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
 	int alltoallwlen = 0;
+
 	PMPI_Comm_size(c_comm, &alltoallwlen);
 	if(buffer_is_bottom( (void *)sendbuf) )
 	{
@@ -732,8 +733,8 @@ void pmpi_alltoallw__(const void *sendbuf, const int sendcounts[], const int sdi
 void pmpi_alltoallw_init_(const void *sendbuf, const int sendcounts[], const int sdispls[], const MPI_Fint sendtypes[], void *recvbuf, const int recvcounts[], const int rdispls[], const MPI_Fint recvtypes[], MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, int *ierror)
 {
 /* MPI_Alltoallw_init */
-	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
-	int alltoallwlen = 0;
+	MPI_Comm c_comm       = PMPI_Comm_f2c(*comm);
+	int      alltoallwlen = 0;
 
 	PMPI_Comm_size(c_comm, &alltoallwlen);
 	if(buffer_is_bottom( (void *)sendbuf) )
@@ -778,8 +779,8 @@ void pmpi_alltoallw_init_(const void *sendbuf, const int sendcounts[], const int
 void pmpi_alltoallw_init__(const void *sendbuf, const int sendcounts[], const int sdispls[], const MPI_Fint sendtypes[], void *recvbuf, const int recvcounts[], const int rdispls[], const MPI_Fint recvtypes[], MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, int *ierror)
 {
 /* MPI_Alltoallw_init */
-	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
-	int alltoallwlen = 0;
+	MPI_Comm c_comm       = PMPI_Comm_f2c(*comm);
+	int      alltoallwlen = 0;
 
 	PMPI_Comm_size(c_comm, &alltoallwlen);
 	if(buffer_is_bottom( (void *)sendbuf) )
@@ -844,13 +845,13 @@ void pmpi_attr_get_(MPI_Fint *comm, int *keyval, void *attribute_val, int *flag,
 /* MPI_Attr_get */
 	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
-	void * attr = NULL;
+	void *attr = NULL;
 
 	*ierror = MPI_Attr_get(c_comm, *keyval, &attr, flag);
 
-	if(*flag && (*ierror == MPI_SUCCESS))
+	if(*flag && (*ierror == MPI_SUCCESS) )
 	{
-		*((int*)attribute_val) = ((int)((long)attr));
+		*( (int *)attribute_val) = ( (int)( (long)attr) );
 	}
 }
 
@@ -860,13 +861,13 @@ void pmpi_attr_get__(MPI_Fint *comm, int *keyval, void *attribute_val, int *flag
 /* MPI_Attr_get */
 	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
-	void * attr = NULL;
+	void *attr = NULL;
 
 	*ierror = MPI_Attr_get(c_comm, *keyval, &attr, flag);
 
-	if(*flag && (*ierror == MPI_SUCCESS))
+	if(*flag && (*ierror == MPI_SUCCESS) )
 	{
-		*((int*)attribute_val) = ((int)((long)attr));
+		*( (int *)attribute_val) = ( (int)( (long)attr) );
 	}
 }
 
@@ -1229,9 +1230,11 @@ void pmpi_cart_sub_(MPI_Fint *comm, const int remain_dims[], MPI_Fint *newcomm, 
 	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 	MPI_Comm c_newcomm;
 
-	*ierror  = MPI_Cart_sub(c_comm, remain_dims, &c_newcomm);
-    if( *ierror== MPI_SUCCESS)
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
+	*ierror = MPI_Cart_sub(c_comm, remain_dims, &c_newcomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+	}
 }
 
 #pragma weak mpi_cart_sub__ = pmpi_cart_sub__
@@ -1241,9 +1244,11 @@ void pmpi_cart_sub__(MPI_Fint *comm, const int remain_dims[], MPI_Fint *newcomm,
 	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 	MPI_Comm c_newcomm;
 
-	*ierror  = MPI_Cart_sub(c_comm, remain_dims, &c_newcomm);
-    if( *ierror== MPI_SUCCESS)
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
+	*ierror = MPI_Cart_sub(c_comm, remain_dims, &c_newcomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+	}
 }
 
 #pragma weak mpi_cartdim_get_ = pmpi_cartdim_get_
@@ -1299,9 +1304,11 @@ void pmpi_comm_accept_(const char *port_name CHAR_MIXED(size_port_name), MPI_Fin
 	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 	MPI_Comm c_newcomm;
 
-	*ierror  = MPI_Comm_accept(tmp_port_name, c_info, *root, c_comm, &c_newcomm);
-    if( *ierror== MPI_SUCCESS)
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
+	*ierror = MPI_Comm_accept(tmp_port_name, c_info, *root, c_comm, &c_newcomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+	}
 	sctk_free(ptr_port_name);
 }
 
@@ -1316,9 +1323,11 @@ void pmpi_comm_accept__(const char *port_name CHAR_MIXED(size_port_name), MPI_Fi
 	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 	MPI_Comm c_newcomm;
 
-	*ierror  = MPI_Comm_accept(tmp_port_name, c_info, *root, c_comm, &c_newcomm);
-    if( *ierror== MPI_SUCCESS)
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
+	*ierror = MPI_Comm_accept(tmp_port_name, c_info, *root, c_comm, &c_newcomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+	}
 	sctk_free(ptr_port_name);
 }
 
@@ -1371,9 +1380,11 @@ void pmpi_comm_connect_(const char *port_name CHAR_MIXED(size_port_name), MPI_Fi
 	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 	MPI_Comm c_newcomm;
 
-	*ierror  = MPI_Comm_connect(tmp_port_name, c_info, *root, c_comm, &c_newcomm);
-    if( *ierror== MPI_SUCCESS)
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
+	*ierror = MPI_Comm_connect(tmp_port_name, c_info, *root, c_comm, &c_newcomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+	}
 	sctk_free(ptr_port_name);
 }
 
@@ -1388,9 +1399,11 @@ void pmpi_comm_connect__(const char *port_name CHAR_MIXED(size_port_name), MPI_F
 	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 	MPI_Comm c_newcomm;
 
-	*ierror  = MPI_Comm_connect(tmp_port_name, c_info, *root, c_comm, &c_newcomm);
-    if( *ierror== MPI_SUCCESS)
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
+	*ierror = MPI_Comm_connect(tmp_port_name, c_info, *root, c_comm, &c_newcomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+	}
 	sctk_free(ptr_port_name);
 }
 
@@ -1402,9 +1415,11 @@ void pmpi_comm_create_(MPI_Fint *comm, MPI_Fint *group, MPI_Fint *newcomm, int *
 	MPI_Group c_group = PMPI_Group_f2c(*group);
 	MPI_Comm  c_newcomm;
 
-	*ierror  = MPI_Comm_create(c_comm, c_group, &c_newcomm);
-    if( *ierror== MPI_SUCCESS)
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
+	*ierror = MPI_Comm_create(c_comm, c_group, &c_newcomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+	}
 }
 
 #pragma weak mpi_comm_create__ = pmpi_comm_create__
@@ -1415,21 +1430,25 @@ void pmpi_comm_create__(MPI_Fint *comm, MPI_Fint *group, MPI_Fint *newcomm, int 
 	MPI_Group c_group = PMPI_Group_f2c(*group);
 	MPI_Comm  c_newcomm;
 
-	*ierror  = MPI_Comm_create(c_comm, c_group, &c_newcomm);
-    if( *ierror== MPI_SUCCESS)
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
+	*ierror = MPI_Comm_create(c_comm, c_group, &c_newcomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+	}
 }
 
 #pragma weak mpi_errhandler_get_ = pmpi_errhandler_get_
 void pmpi_errhandler_get_(MPI_Fint *comm, MPI_Fint *errhandler, int *ierror)
 {
 /* MPI_Comm_create_errhandler */
-	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
+	MPI_Comm       c_comm = PMPI_Comm_f2c(*comm);
 	MPI_Errhandler c_errhandler;
 
-	*ierror     = MPI_Errhandler_get(c_comm, &c_errhandler);
-    if( *ierror == MPI_SUCCESS)
-        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	*ierror = MPI_Errhandler_get(c_comm, &c_errhandler);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	}
 }
 
 #pragma weak mpi_errhandler_get__ = pmpi_errhandler_get__
@@ -1441,23 +1460,27 @@ void pmpi_errhandler_get__(MPI_Fint *comm, MPI_Fint *errhandler, int *ierror)
 #pragma weak mpi_comm_create_errhandler_ = pmpi_comm_create_errhandler_
 void pmpi_comm_create_errhandler_(MPI_Comm_errhandler_function *comm_errhandler_fn, MPI_Fint *errhandler, int *ierror)
 {
-    /* MPI_Comm_create_errhandler */
+	/* MPI_Comm_create_errhandler */
 	MPI_Errhandler c_errhandler;
 
-	*ierror     = MPI_Comm_create_errhandler(comm_errhandler_fn, &c_errhandler);
-    if( *ierror == MPI_SUCCESS)
-        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	*ierror = MPI_Comm_create_errhandler(comm_errhandler_fn, &c_errhandler);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	}
 }
 
 #pragma weak mpi_comm_create_errhandler__ = pmpi_comm_create_errhandler__
 void pmpi_comm_create_errhandler__(MPI_Comm_errhandler_function *comm_errhandler_fn, MPI_Fint *errhandler, int *ierror)
 {
-    /* MPI_Comm_create_errhandler */
+	/* MPI_Comm_create_errhandler */
 	MPI_Errhandler c_errhandler;
 
-	*ierror     = MPI_Comm_create_errhandler(comm_errhandler_fn, &c_errhandler);
-    if( *ierror == MPI_SUCCESS)
-        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	*ierror = MPI_Comm_create_errhandler(comm_errhandler_fn, &c_errhandler);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	}
 }
 
 #pragma weak mpi_comm_create_group_ = pmpi_comm_create_group_
@@ -1468,9 +1491,11 @@ void pmpi_comm_create_group_(MPI_Fint *comm, MPI_Fint *group, int *tag, MPI_Fint
 	MPI_Group c_group = PMPI_Group_f2c(*group);
 	MPI_Comm  c_newcomm;
 
-	*ierror  = MPI_Comm_create_group(c_comm, c_group, *tag, &c_newcomm);
-    if( *ierror== MPI_SUCCESS)
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
+	*ierror = MPI_Comm_create_group(c_comm, c_group, *tag, &c_newcomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+	}
 }
 
 #pragma weak mpi_comm_create_group__ = pmpi_comm_create_group__
@@ -1481,9 +1506,11 @@ void pmpi_comm_create_group__(MPI_Fint *comm, MPI_Fint *group, int *tag, MPI_Fin
 	MPI_Group c_group = PMPI_Group_f2c(*group);
 	MPI_Comm  c_newcomm;
 
-	*ierror  = MPI_Comm_create_group(c_comm, c_group, *tag, &c_newcomm);
-    if( *ierror== MPI_SUCCESS)
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
+	*ierror = MPI_Comm_create_group(c_comm, c_group, *tag, &c_newcomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+	}
 }
 
 #pragma weak mpi_comm_create_keyval_ = pmpi_comm_create_keyval_
@@ -1491,8 +1518,8 @@ void pmpi_comm_create_keyval_(MPI_Comm_copy_attr_function *comm_copy_attr_fn, MP
 {
 /* MPI_Comm_create_keyval */
 
-    *comm_keyval = -1; /**< Denotes fortran functions */
-	*ierror = MPI_Comm_create_keyval(comm_copy_attr_fn, comm_delete_attr_fn, comm_keyval, extra_state);
+	*comm_keyval = -1; /**< Denotes fortran functions */
+	*ierror      = MPI_Comm_create_keyval(comm_copy_attr_fn, comm_delete_attr_fn, comm_keyval, extra_state);
 }
 
 #pragma weak mpi_comm_create_keyval__ = pmpi_comm_create_keyval__
@@ -1500,8 +1527,8 @@ void pmpi_comm_create_keyval__(MPI_Comm_copy_attr_function *comm_copy_attr_fn, M
 {
 /* MPI_Comm_create_keyval */
 
-    *comm_keyval = -1; /**< Denotes fortran functions */
-	*ierror = MPI_Comm_create_keyval(comm_copy_attr_fn, comm_delete_attr_fn, comm_keyval, extra_state);
+	*comm_keyval = -1; /**< Denotes fortran functions */
+	*ierror      = MPI_Comm_create_keyval(comm_copy_attr_fn, comm_delete_attr_fn, comm_keyval, extra_state);
 }
 
 #pragma weak mpi_comm_delete_attr_ = pmpi_comm_delete_attr_
@@ -1549,10 +1576,11 @@ void pmpi_comm_dup_(MPI_Fint *comm, MPI_Fint *newcomm, int *ierror)
 	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 	MPI_Comm c_newcomm;
 
-	*ierror  = MPI_Comm_dup(c_comm, &c_newcomm);
-    if( *ierror == MPI_SUCCESS ) {
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
-    }
+	*ierror = MPI_Comm_dup(c_comm, &c_newcomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+	}
 }
 
 #pragma weak mpi_comm_dup__ = pmpi_comm_dup__
@@ -1562,10 +1590,11 @@ void pmpi_comm_dup__(MPI_Fint *comm, MPI_Fint *newcomm, int *ierror)
 	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 	MPI_Comm c_newcomm;
 
-	*ierror  = MPI_Comm_dup(c_comm, &c_newcomm);
-    if( *ierror == MPI_SUCCESS ) {
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
-    }
+	*ierror = MPI_Comm_dup(c_comm, &c_newcomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+	}
 }
 
 #pragma weak mpi_comm_dup_with_info_ = pmpi_comm_dup_with_info_
@@ -1576,10 +1605,11 @@ void pmpi_comm_dup_with_info_(MPI_Fint *comm, MPI_Fint *info, MPI_Fint *newcomm,
 	MPI_Info c_info = PMPI_Info_f2c(*info);
 	MPI_Comm c_newcomm;
 
-	*ierror  = MPI_Comm_dup_with_info(c_comm, c_info, &c_newcomm);
-    if( *ierror == MPI_SUCCESS ) {
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
-    }
+	*ierror = MPI_Comm_dup_with_info(c_comm, c_info, &c_newcomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+	}
 }
 
 #pragma weak mpi_comm_dup_with_info__ = pmpi_comm_dup_with_info__
@@ -1590,10 +1620,11 @@ void pmpi_comm_dup_with_info__(MPI_Fint *comm, MPI_Fint *info, MPI_Fint *newcomm
 	MPI_Info c_info = PMPI_Info_f2c(*info);
 	MPI_Comm c_newcomm;
 
-	*ierror  = MPI_Comm_dup_with_info(c_comm, c_info, &c_newcomm);
-    if( *ierror == MPI_SUCCESS ) {
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
-    }
+	*ierror = MPI_Comm_dup_with_info(c_comm, c_info, &c_newcomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+	}
 }
 
 #pragma weak mpi_comm_free_ = pmpi_comm_free_
@@ -1657,9 +1688,11 @@ void pmpi_comm_get_errhandler_(MPI_Fint *comm, MPI_Fint *errhandler, int *ierror
 	MPI_Comm       c_comm = PMPI_Comm_f2c(*comm);
 	MPI_Errhandler c_errhandler;
 
-	*ierror     = MPI_Comm_get_errhandler(c_comm, &c_errhandler);
-    if( *ierror == MPI_SUCCESS)
-        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	*ierror = MPI_Comm_get_errhandler(c_comm, &c_errhandler);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	}
 }
 
 #pragma weak mpi_comm_get_errhandler__ = pmpi_comm_get_errhandler__
@@ -1669,9 +1702,11 @@ void pmpi_comm_get_errhandler__(MPI_Fint *comm, MPI_Fint *errhandler, int *ierro
 	MPI_Comm       c_comm = PMPI_Comm_f2c(*comm);
 	MPI_Errhandler c_errhandler;
 
-	*ierror     = MPI_Comm_get_errhandler(c_comm, &c_errhandler);
-    if( *ierror == MPI_SUCCESS)
-        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	*ierror = MPI_Comm_get_errhandler(c_comm, &c_errhandler);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	}
 }
 
 #pragma weak mpi_comm_get_info_ = pmpi_comm_get_info_
@@ -1744,9 +1779,10 @@ void pmpi_comm_group_(MPI_Fint *comm, MPI_Fint *group, int *ierror)
 	MPI_Group c_group;
 
 	*ierror = MPI_Comm_group(c_comm, &c_group);
-    if(*ierror == MPI_SUCCESS) {
-        *group  = PMPI_Group_c2f(c_group);
-    }
+	if(*ierror == MPI_SUCCESS)
+	{
+		*group = PMPI_Group_c2f(c_group);
+	}
 }
 
 #pragma weak mpi_comm_group__ = pmpi_comm_group__
@@ -1757,9 +1793,10 @@ void pmpi_comm_group__(MPI_Fint *comm, MPI_Fint *group, int *ierror)
 	MPI_Group c_group;
 
 	*ierror = MPI_Comm_group(c_comm, &c_group);
-    if(*ierror == MPI_SUCCESS) {
-        *group  = PMPI_Group_c2f(c_group);
-    }
+	if(*ierror == MPI_SUCCESS)
+	{
+		*group = PMPI_Group_c2f(c_group);
+	}
 }
 
 #pragma weak mpi_comm_idup_ = pmpi_comm_idup_
@@ -1770,11 +1807,12 @@ void pmpi_comm_idup_(MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *request, int *
 	MPI_Comm    c_newcomm;
 	MPI_Request c_request;
 
-    *ierror  = MPI_Comm_idup(c_comm, &c_newcomm, &c_request);
-    if(*ierror == MPI_SUCCESS) {
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
-        *request = PMPI_Request_c2f(c_request);
-    }
+	*ierror = MPI_Comm_idup(c_comm, &c_newcomm, &c_request);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+		*request = PMPI_Request_c2f(c_request);
+	}
 }
 
 #pragma weak mpi_comm_idup__ = pmpi_comm_idup__
@@ -1785,11 +1823,12 @@ void pmpi_comm_idup__(MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *request, int 
 	MPI_Comm    c_newcomm;
 	MPI_Request c_request;
 
-	*ierror  = MPI_Comm_idup(c_comm, &c_newcomm, &c_request);
-    if(*ierror == MPI_SUCCESS) {
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
-        *request = PMPI_Request_c2f(c_request);
-    }
+	*ierror = MPI_Comm_idup(c_comm, &c_newcomm, &c_request);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+		*request = PMPI_Request_c2f(c_request);
+	}
 }
 
 #pragma weak mpi_comm_idup_with_info_ = pmpi_comm_idup_with_info_
@@ -1801,11 +1840,12 @@ void pmpi_comm_idup_with_info_(MPI_Fint *comm, MPI_Fint *info, MPI_Fint *newcomm
 	MPI_Comm    c_newcomm;
 	MPI_Request c_request;
 
-	*ierror  = MPI_Comm_idup_with_info(c_comm, c_info, &c_newcomm, &c_request);
-    if(*ierror == MPI_SUCCESS) {
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
-        *request = PMPI_Request_c2f(c_request);
-    }
+	*ierror = MPI_Comm_idup_with_info(c_comm, c_info, &c_newcomm, &c_request);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+		*request = PMPI_Request_c2f(c_request);
+	}
 }
 
 #pragma weak mpi_comm_idup_with_info__ = pmpi_comm_idup_with_info__
@@ -1817,11 +1857,12 @@ void pmpi_comm_idup_with_info__(MPI_Fint *comm, MPI_Fint *info, MPI_Fint *newcom
 	MPI_Comm    c_newcomm;
 	MPI_Request c_request;
 
-	*ierror  = MPI_Comm_idup_with_info(c_comm, c_info, &c_newcomm, &c_request);
-    if(*ierror == MPI_SUCCESS) {
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
-        *request = PMPI_Request_c2f(c_request);
-    }
+	*ierror = MPI_Comm_idup_with_info(c_comm, c_info, &c_newcomm, &c_request);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+		*request = PMPI_Request_c2f(c_request);
+	}
 }
 
 #pragma weak mpi_comm_join_ = pmpi_comm_join_
@@ -1830,10 +1871,11 @@ void pmpi_comm_join_(int *fd, MPI_Fint *intercomm, int *ierror)
 /* MPI_Comm_join */
 	MPI_Comm c_intercomm;
 
-    *ierror    = MPI_Comm_join(*fd, &c_intercomm);
-    if( *ierror == MPI_SUCCESS) {
-        *intercomm = PMPI_Comm_c2f(c_intercomm);
-    }
+	*ierror = MPI_Comm_join(*fd, &c_intercomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*intercomm = PMPI_Comm_c2f(c_intercomm);
+	}
 }
 
 #pragma weak mpi_comm_join__ = pmpi_comm_join__
@@ -1842,10 +1884,11 @@ void pmpi_comm_join__(int *fd, MPI_Fint *intercomm, int *ierror)
 /* MPI_Comm_join */
 	MPI_Comm c_intercomm;
 
-	*ierror    = MPI_Comm_join(*fd, &c_intercomm);
-    if( *ierror == MPI_SUCCESS) {
-        *intercomm = PMPI_Comm_c2f(c_intercomm);
-    }
+	*ierror = MPI_Comm_join(*fd, &c_intercomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*intercomm = PMPI_Comm_c2f(c_intercomm);
+	}
 }
 
 #pragma weak mpi_comm_rank_ = pmpi_comm_rank_
@@ -1874,9 +1917,10 @@ void pmpi_comm_remote_group_(MPI_Fint *comm, MPI_Fint *group, int *ierror)
 	MPI_Group c_group;
 
 	*ierror = MPI_Comm_remote_group(c_comm, &c_group);
-    if( *ierror == MPI_SUCCESS) {
-        *group  = PMPI_Group_c2f(c_group);
-    }
+	if(*ierror == MPI_SUCCESS)
+	{
+		*group = PMPI_Group_c2f(c_group);
+	}
 }
 
 #pragma weak mpi_comm_remote_group__ = pmpi_comm_remote_group__
@@ -1887,9 +1931,10 @@ void pmpi_comm_remote_group__(MPI_Fint *comm, MPI_Fint *group, int *ierror)
 	MPI_Group c_group;
 
 	*ierror = MPI_Comm_remote_group(c_comm, &c_group);
-    if( *ierror == MPI_SUCCESS) {
-        *group  = PMPI_Group_c2f(c_group);
-    }
+	if(*ierror == MPI_SUCCESS)
+	{
+		*group = PMPI_Group_c2f(c_group);
+	}
 }
 
 #pragma weak mpi_comm_remote_size_ = pmpi_comm_remote_size_
@@ -1992,7 +2037,7 @@ void pmpi_comm_set_info__(MPI_Fint *comm, MPI_Fint *info, int *ierror)
 void pmpi_comm_set_name_(MPI_Fint *comm, const char *comm_name CHAR_MIXED(size_comm_name), int *ierror CHAR_END(size_comm_name) )
 {
 /* MPI_Comm_set_name */
-	MPI_Comm c_comm        = PMPI_Comm_f2c(*comm);
+	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 	char *   tmp_comm_name = NULL, *ptr_comm_name = NULL;
 
 	tmp_comm_name = char_fortran_to_c( (char *)comm_name, size_comm_name, &ptr_comm_name);
@@ -2005,7 +2050,7 @@ void pmpi_comm_set_name_(MPI_Fint *comm, const char *comm_name CHAR_MIXED(size_c
 void pmpi_comm_set_name__(MPI_Fint *comm, const char *comm_name CHAR_MIXED(size_comm_name), int *ierror CHAR_END(size_comm_name) )
 {
 /* MPI_Comm_set_name */
-	MPI_Comm c_comm        = PMPI_Comm_f2c(*comm);
+	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 	char *   tmp_comm_name = NULL, *ptr_comm_name = NULL;
 
 	tmp_comm_name = char_fortran_to_c( (char *)comm_name, size_comm_name, &ptr_comm_name);
@@ -2115,9 +2160,11 @@ void pmpi_comm_split_(MPI_Fint *comm, int *color, int *key, MPI_Fint *newcomm, i
 	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 	MPI_Comm c_newcomm;
 
-	*ierror  = MPI_Comm_split(c_comm, *color, *key, &c_newcomm);
-    if( *ierror== MPI_SUCCESS)
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
+	*ierror = MPI_Comm_split(c_comm, *color, *key, &c_newcomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+	}
 }
 
 #pragma weak mpi_comm_split__ = pmpi_comm_split__
@@ -2127,9 +2174,11 @@ void pmpi_comm_split__(MPI_Fint *comm, int *color, int *key, MPI_Fint *newcomm, 
 	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 	MPI_Comm c_newcomm;
 
-	*ierror  = MPI_Comm_split(c_comm, *color, *key, &c_newcomm);
-    if( *ierror== MPI_SUCCESS)
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
+	*ierror = MPI_Comm_split(c_comm, *color, *key, &c_newcomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+	}
 }
 
 #pragma weak mpi_comm_split_type_ = pmpi_comm_split_type_
@@ -2140,9 +2189,11 @@ void pmpi_comm_split_type_(MPI_Fint *comm, int *split_type, int *key, MPI_Fint *
 	MPI_Info c_info = PMPI_Info_f2c(*info);
 	MPI_Comm c_newcomm;
 
-	*ierror  = MPI_Comm_split_type(c_comm, *split_type, *key, c_info, &c_newcomm);
-    if( *ierror== MPI_SUCCESS)
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
+	*ierror = MPI_Comm_split_type(c_comm, *split_type, *key, c_info, &c_newcomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+	}
 }
 
 #pragma weak mpi_comm_split_type__ = pmpi_comm_split_type__
@@ -2153,9 +2204,11 @@ void pmpi_comm_split_type__(MPI_Fint *comm, int *split_type, int *key, MPI_Fint 
 	MPI_Info c_info = PMPI_Info_f2c(*info);
 	MPI_Comm c_newcomm;
 
-	*ierror  = MPI_Comm_split_type(c_comm, *split_type, *key, c_info, &c_newcomm);
-    if( *ierror== MPI_SUCCESS)
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
+	*ierror = MPI_Comm_split_type(c_comm, *split_type, *key, c_info, &c_newcomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+	}
 }
 
 #pragma weak mpi_comm_test_inter_ = pmpi_comm_test_inter_
@@ -2318,9 +2371,11 @@ void pmpi_errhandler_free_(MPI_Fint *errhandler, int *ierror)
 /* MPI_Errhandler_free */
 	MPI_Errhandler c_errhandler = PMPI_Errhandler_f2c(*errhandler);
 
-	*ierror     = MPI_Errhandler_free(&c_errhandler);
-    if(*ierror == MPI_SUCCESS)
-        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	*ierror = MPI_Errhandler_free(&c_errhandler);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	}
 }
 
 #pragma weak mpi_errhandler_free__ = pmpi_errhandler_free__
@@ -2329,9 +2384,11 @@ void pmpi_errhandler_free__(MPI_Fint *errhandler, int *ierror)
 /* MPI_Errhandler_free */
 	MPI_Errhandler c_errhandler = PMPI_Errhandler_f2c(*errhandler);
 
-	*ierror     = MPI_Errhandler_free(&c_errhandler);
-    if(*ierror == MPI_SUCCESS)
-        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	*ierror = MPI_Errhandler_free(&c_errhandler);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	}
 }
 
 #pragma weak mpi_error_class_ = pmpi_error_class_
@@ -3022,9 +3079,11 @@ void pmpi_group_difference_(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgro
 	MPI_Group c_group2 = PMPI_Group_f2c(*group2);
 	MPI_Group c_newgroup;
 
-	*ierror   = MPI_Group_difference(c_group1, c_group2, &c_newgroup);
-    if( *ierror == MPI_SUCCESS)
-        *newgroup = PMPI_Group_c2f(c_newgroup);
+	*ierror = MPI_Group_difference(c_group1, c_group2, &c_newgroup);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newgroup = PMPI_Group_c2f(c_newgroup);
+	}
 }
 
 #pragma weak mpi_group_difference__ = pmpi_group_difference__
@@ -3035,9 +3094,11 @@ void pmpi_group_difference__(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgr
 	MPI_Group c_group2 = PMPI_Group_f2c(*group2);
 	MPI_Group c_newgroup;
 
-	*ierror   = MPI_Group_difference(c_group1, c_group2, &c_newgroup);
-    if( *ierror == MPI_SUCCESS)
-        *newgroup = PMPI_Group_c2f(c_newgroup);
+	*ierror = MPI_Group_difference(c_group1, c_group2, &c_newgroup);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newgroup = PMPI_Group_c2f(c_newgroup);
+	}
 }
 
 #pragma weak mpi_group_excl_ = pmpi_group_excl_
@@ -3047,9 +3108,11 @@ void pmpi_group_excl_(MPI_Fint *group, int *n, const int ranks[], MPI_Fint *newg
 	MPI_Group c_group = PMPI_Group_f2c(*group);
 	MPI_Group c_newgroup;
 
-	*ierror   = MPI_Group_excl(c_group, *n, ranks, &c_newgroup);
-    if( *ierror == MPI_SUCCESS)
-        *newgroup = PMPI_Group_c2f(c_newgroup);
+	*ierror = MPI_Group_excl(c_group, *n, ranks, &c_newgroup);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newgroup = PMPI_Group_c2f(c_newgroup);
+	}
 }
 
 #pragma weak mpi_group_excl__ = pmpi_group_excl__
@@ -3059,9 +3122,11 @@ void pmpi_group_excl__(MPI_Fint *group, int *n, const int ranks[], MPI_Fint *new
 	MPI_Group c_group = PMPI_Group_f2c(*group);
 	MPI_Group c_newgroup;
 
-	*ierror   = MPI_Group_excl(c_group, *n, ranks, &c_newgroup);
-    if( *ierror == MPI_SUCCESS)
-        *newgroup = PMPI_Group_c2f(c_newgroup);
+	*ierror = MPI_Group_excl(c_group, *n, ranks, &c_newgroup);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newgroup = PMPI_Group_c2f(c_newgroup);
+	}
 }
 
 #pragma weak mpi_group_free_ = pmpi_group_free_
@@ -3091,9 +3156,11 @@ void pmpi_group_incl_(MPI_Fint *group, int *n, const int ranks[], MPI_Fint *newg
 	MPI_Group c_group = PMPI_Group_f2c(*group);
 	MPI_Group c_newgroup;
 
-	*ierror   = MPI_Group_incl(c_group, *n, ranks, &c_newgroup);
-    if( *ierror == MPI_SUCCESS)
-        *newgroup = PMPI_Group_c2f(c_newgroup);
+	*ierror = MPI_Group_incl(c_group, *n, ranks, &c_newgroup);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newgroup = PMPI_Group_c2f(c_newgroup);
+	}
 }
 
 #pragma weak mpi_group_incl__ = pmpi_group_incl__
@@ -3103,9 +3170,11 @@ void pmpi_group_incl__(MPI_Fint *group, int *n, const int ranks[], MPI_Fint *new
 	MPI_Group c_group = PMPI_Group_f2c(*group);
 	MPI_Group c_newgroup;
 
-	*ierror   = MPI_Group_incl(c_group, *n, ranks, &c_newgroup);
-    if( *ierror == MPI_SUCCESS)
-        *newgroup = PMPI_Group_c2f(c_newgroup);
+	*ierror = MPI_Group_incl(c_group, *n, ranks, &c_newgroup);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newgroup = PMPI_Group_c2f(c_newgroup);
+	}
 }
 
 #pragma weak mpi_group_intersection_ = pmpi_group_intersection_
@@ -3116,9 +3185,11 @@ void pmpi_group_intersection_(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newg
 	MPI_Group c_group2 = PMPI_Group_f2c(*group2);
 	MPI_Group c_newgroup;
 
-	*ierror   = MPI_Group_intersection(c_group1, c_group2, &c_newgroup);
-    if( *ierror == MPI_SUCCESS)
-        *newgroup = PMPI_Group_c2f(c_newgroup);
+	*ierror = MPI_Group_intersection(c_group1, c_group2, &c_newgroup);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newgroup = PMPI_Group_c2f(c_newgroup);
+	}
 }
 
 #pragma weak mpi_group_intersection__ = pmpi_group_intersection__
@@ -3129,9 +3200,11 @@ void pmpi_group_intersection__(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *new
 	MPI_Group c_group2 = PMPI_Group_f2c(*group2);
 	MPI_Group c_newgroup;
 
-	*ierror   = MPI_Group_intersection(c_group1, c_group2, &c_newgroup);
-    if( *ierror == MPI_SUCCESS)
-        *newgroup = PMPI_Group_c2f(c_newgroup);
+	*ierror = MPI_Group_intersection(c_group1, c_group2, &c_newgroup);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newgroup = PMPI_Group_c2f(c_newgroup);
+	}
 }
 
 #pragma weak mpi_group_range_excl_ = pmpi_group_range_excl_
@@ -3141,9 +3214,11 @@ void pmpi_group_range_excl_(MPI_Fint *group, int *n, int ranges[][3], MPI_Fint *
 	MPI_Group c_group = PMPI_Group_f2c(*group);
 	MPI_Group c_newgroup;
 
-	*ierror   = MPI_Group_range_excl(c_group, *n, ranges, &c_newgroup);
-    if( *ierror == MPI_SUCCESS)
-        *newgroup = PMPI_Group_c2f(c_newgroup);
+	*ierror = MPI_Group_range_excl(c_group, *n, ranges, &c_newgroup);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newgroup = PMPI_Group_c2f(c_newgroup);
+	}
 }
 
 #pragma weak mpi_group_range_excl__ = pmpi_group_range_excl__
@@ -3153,9 +3228,11 @@ void pmpi_group_range_excl__(MPI_Fint *group, int *n, int ranges[][3], MPI_Fint 
 	MPI_Group c_group = PMPI_Group_f2c(*group);
 	MPI_Group c_newgroup;
 
-	*ierror   = MPI_Group_range_excl(c_group, *n, ranges, &c_newgroup);
-    if( *ierror == MPI_SUCCESS)
-        *newgroup = PMPI_Group_c2f(c_newgroup);
+	*ierror = MPI_Group_range_excl(c_group, *n, ranges, &c_newgroup);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newgroup = PMPI_Group_c2f(c_newgroup);
+	}
 }
 
 #pragma weak mpi_group_range_incl_ = pmpi_group_range_incl_
@@ -3165,9 +3242,11 @@ void pmpi_group_range_incl_(MPI_Fint *group, int *n, int ranges[][3], MPI_Fint *
 	MPI_Group c_group = PMPI_Group_f2c(*group);
 	MPI_Group c_newgroup;
 
-	*ierror   = MPI_Group_range_incl(c_group, *n, ranges, &c_newgroup);
-    if( *ierror == MPI_SUCCESS)
-        *newgroup = PMPI_Group_c2f(c_newgroup);
+	*ierror = MPI_Group_range_incl(c_group, *n, ranges, &c_newgroup);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newgroup = PMPI_Group_c2f(c_newgroup);
+	}
 }
 
 #pragma weak mpi_group_range_incl__ = pmpi_group_range_incl__
@@ -3177,9 +3256,11 @@ void pmpi_group_range_incl__(MPI_Fint *group, int *n, int ranges[][3], MPI_Fint 
 	MPI_Group c_group = PMPI_Group_f2c(*group);
 	MPI_Group c_newgroup;
 
-	*ierror   = MPI_Group_range_incl(c_group, *n, ranges, &c_newgroup);
-    if( *ierror == MPI_SUCCESS)
-        *newgroup = PMPI_Group_c2f(c_newgroup);
+	*ierror = MPI_Group_range_incl(c_group, *n, ranges, &c_newgroup);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newgroup = PMPI_Group_c2f(c_newgroup);
+	}
 }
 
 #pragma weak mpi_group_rank_ = pmpi_group_rank_
@@ -3246,9 +3327,11 @@ void pmpi_group_union_(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, i
 	MPI_Group c_group2 = PMPI_Group_f2c(*group2);
 	MPI_Group c_newgroup;
 
-	*ierror   = MPI_Group_union(c_group1, c_group2, &c_newgroup);
-    if( *ierror == MPI_SUCCESS)
-        *newgroup = PMPI_Group_c2f(c_newgroup);
+	*ierror = MPI_Group_union(c_group1, c_group2, &c_newgroup);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newgroup = PMPI_Group_c2f(c_newgroup);
+	}
 }
 
 #pragma weak mpi_group_union__ = pmpi_group_union__
@@ -3259,9 +3342,11 @@ void pmpi_group_union__(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, 
 	MPI_Group c_group2 = PMPI_Group_f2c(*group2);
 	MPI_Group c_newgroup;
 
-	*ierror   = MPI_Group_union(c_group1, c_group2, &c_newgroup);
-    if( *ierror == MPI_SUCCESS)
-        *newgroup = PMPI_Group_c2f(c_newgroup);
+	*ierror = MPI_Group_union(c_group1, c_group2, &c_newgroup);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newgroup = PMPI_Group_c2f(c_newgroup);
+	}
 }
 
 #pragma weak mpi_iallgather_ = pmpi_iallgather_
@@ -3478,8 +3563,8 @@ void pmpi_ialltoallv__(const void *sendbuf, const int sendcounts[], const int sd
 void pmpi_ialltoallw_(const void *sendbuf, const int sendcounts[], const int sdispls[], const MPI_Fint sendtypes[], void *recvbuf, const int recvcounts[], const int rdispls[], const MPI_Fint recvtypes[], MPI_Fint *comm, MPI_Fint *request, int *ierror)
 {
 /* MPI_Ialltoallw */
-	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
-	int alltoallwlen = 0;
+	MPI_Comm c_comm       = PMPI_Comm_f2c(*comm);
+	int      alltoallwlen = 0;
 
 	PMPI_Comm_size(c_comm, &alltoallwlen);
 	if(buffer_is_bottom( (void *)sendbuf) )
@@ -3523,8 +3608,8 @@ void pmpi_ialltoallw_(const void *sendbuf, const int sendcounts[], const int sdi
 void pmpi_ialltoallw__(const void *sendbuf, const int sendcounts[], const int sdispls[], const MPI_Fint sendtypes[], void *recvbuf, const int recvcounts[], const int rdispls[], const MPI_Fint recvtypes[], MPI_Fint *comm, MPI_Fint *request, int *ierror)
 {
 /* MPI_Ialltoallw */
-	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
-	int alltoallwlen = 0;
+	MPI_Comm c_comm       = PMPI_Comm_f2c(*comm);
+	int      alltoallwlen = 0;
 
 	PMPI_Comm_size(c_comm, &alltoallwlen);
 	if(buffer_is_bottom( (void *)sendbuf) )
@@ -3980,8 +4065,8 @@ void pmpi_ineighbor_alltoallv__(const void *sendbuf, const int sendcounts[], con
 void pmpi_ineighbor_alltoallw_(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[], const MPI_Fint sendtypes[], void *recvbuf, const int recvcounts[], const MPI_Aint rdispls[], const MPI_Fint recvtypes[], MPI_Fint *comm, MPI_Fint *request, int *ierror)
 {
 /* MPI_Ineighbor_alltoallw */
-	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
-	int alltoallwlen = 0;
+	MPI_Comm c_comm       = PMPI_Comm_f2c(*comm);
+	int      alltoallwlen = 0;
 
 	PMPI_Comm_size(c_comm, &alltoallwlen);
 	if(buffer_is_bottom( (void *)sendbuf) )
@@ -4025,8 +4110,8 @@ void pmpi_ineighbor_alltoallw_(const void *sendbuf, const int sendcounts[], cons
 void pmpi_ineighbor_alltoallw__(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[], const MPI_Fint sendtypes[], void *recvbuf, const int recvcounts[], const MPI_Aint rdispls[], const MPI_Fint recvtypes[], MPI_Fint *comm, MPI_Fint *request, int *ierror)
 {
 /* MPI_Ineighbor_alltoallw */
-	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
-	int alltoallwlen = 0;
+	MPI_Comm c_comm       = PMPI_Comm_f2c(*comm);
+	int      alltoallwlen = 0;
 
 	PMPI_Comm_size(c_comm, &alltoallwlen);
 	if(buffer_is_bottom( (void *)sendbuf) )
@@ -4090,7 +4175,7 @@ void pmpi_info_create__(MPI_Fint *info, int *ierror)
 void pmpi_info_delete_(MPI_Fint *info, const char *key CHAR_MIXED(size_key), int *ierror CHAR_END(size_key) )
 {
 /* MPI_Info_delete */
-	MPI_Info c_info  = PMPI_Info_f2c(*info);
+	MPI_Info c_info = PMPI_Info_f2c(*info);
 	char *   tmp_key = NULL, *ptr_key = NULL;
 
 	tmp_key = char_fortran_to_c( (char *)key, size_key, &ptr_key);
@@ -4103,7 +4188,7 @@ void pmpi_info_delete_(MPI_Fint *info, const char *key CHAR_MIXED(size_key), int
 void pmpi_info_delete__(MPI_Fint *info, const char *key CHAR_MIXED(size_key), int *ierror CHAR_END(size_key) )
 {
 /* MPI_Info_delete */
-	MPI_Info c_info  = PMPI_Info_f2c(*info);
+	MPI_Info c_info = PMPI_Info_f2c(*info);
 	char *   tmp_key = NULL, *ptr_key = NULL;
 
 	tmp_key = char_fortran_to_c( (char *)key, size_key, &ptr_key);
@@ -4158,7 +4243,7 @@ void pmpi_info_free__(MPI_Fint *info, int *ierror)
 void pmpi_info_get_(MPI_Fint *info, const char *key CHAR_MIXED(size_key), int *valuelen, char *value CHAR_MIXED(size_value), int *flag, int *ierror CHAR_END(size_key)CHAR_END(size_value) )
 {
 /* MPI_Info_get */
-	MPI_Info c_info  = PMPI_Info_f2c(*info);
+	MPI_Info c_info = PMPI_Info_f2c(*info);
 	char *   tmp_key = NULL, *ptr_key = NULL;
 
 	tmp_key = char_fortran_to_c( (char *)key, size_key, &ptr_key);
@@ -4172,7 +4257,7 @@ void pmpi_info_get_(MPI_Fint *info, const char *key CHAR_MIXED(size_key), int *v
 void pmpi_info_get__(MPI_Fint *info, const char *key CHAR_MIXED(size_key), int *valuelen, char *value CHAR_MIXED(size_value), int *flag, int *ierror CHAR_END(size_key)CHAR_END(size_value) )
 {
 /* MPI_Info_get */
-	MPI_Info c_info  = PMPI_Info_f2c(*info);
+	MPI_Info c_info = PMPI_Info_f2c(*info);
 	char *   tmp_key = NULL, *ptr_key = NULL;
 
 	tmp_key = char_fortran_to_c( (char *)key, size_key, &ptr_key);
@@ -4224,7 +4309,7 @@ void pmpi_info_get_nthkey__(MPI_Fint *info, int *n, char *key CHAR_MIXED(size_ke
 void pmpi_info_get_string_(MPI_Fint *info, const char *key CHAR_MIXED(size_key), int *buflen, char *value CHAR_MIXED(size_value), int *flag, int *ierror CHAR_END(size_key)CHAR_END(size_value) )
 {
 /* MPI_Info_get_string */
-	MPI_Info c_info  = PMPI_Info_f2c(*info);
+	MPI_Info c_info = PMPI_Info_f2c(*info);
 	char *   tmp_key = NULL, *ptr_key = NULL;
 
 	tmp_key = char_fortran_to_c( (char *)key, size_key, &ptr_key);
@@ -4238,7 +4323,7 @@ void pmpi_info_get_string_(MPI_Fint *info, const char *key CHAR_MIXED(size_key),
 void pmpi_info_get_string__(MPI_Fint *info, const char *key CHAR_MIXED(size_key), int *buflen, char *value CHAR_MIXED(size_value), int *flag, int *ierror CHAR_END(size_key)CHAR_END(size_value) )
 {
 /* MPI_Info_get_string */
-	MPI_Info c_info  = PMPI_Info_f2c(*info);
+	MPI_Info c_info = PMPI_Info_f2c(*info);
 	char *   tmp_key = NULL, *ptr_key = NULL;
 
 	tmp_key = char_fortran_to_c( (char *)key, size_key, &ptr_key);
@@ -4252,7 +4337,7 @@ void pmpi_info_get_string__(MPI_Fint *info, const char *key CHAR_MIXED(size_key)
 void pmpi_info_get_valuelen_(MPI_Fint *info, const char *key CHAR_MIXED(size_key), int *valuelen, int *flag, int *ierror CHAR_END(size_key) )
 {
 /* MPI_Info_get_valuelen */
-	MPI_Info c_info  = PMPI_Info_f2c(*info);
+	MPI_Info c_info = PMPI_Info_f2c(*info);
 	char *   tmp_key = NULL, *ptr_key = NULL;
 
 	tmp_key = char_fortran_to_c( (char *)key, size_key, &ptr_key);
@@ -4265,7 +4350,7 @@ void pmpi_info_get_valuelen_(MPI_Fint *info, const char *key CHAR_MIXED(size_key
 void pmpi_info_get_valuelen__(MPI_Fint *info, const char *key CHAR_MIXED(size_key), int *valuelen, int *flag, int *ierror CHAR_END(size_key) )
 {
 /* MPI_Info_get_valuelen */
-	MPI_Info c_info  = PMPI_Info_f2c(*info);
+	MPI_Info c_info = PMPI_Info_f2c(*info);
 	char *   tmp_key = NULL, *ptr_key = NULL;
 
 	tmp_key = char_fortran_to_c( (char *)key, size_key, &ptr_key);
@@ -4278,11 +4363,12 @@ void pmpi_info_get_valuelen__(MPI_Fint *info, const char *key CHAR_MIXED(size_ke
 void pmpi_info_set_(MPI_Fint *info, const char *key CHAR_MIXED(size_key), const char *value CHAR_MIXED(size_value), int *ierror CHAR_END(size_key)CHAR_END(size_value) )
 {
 /* MPI_Info_set */
-	MPI_Info c_info  = PMPI_Info_f2c(*info);
+	MPI_Info c_info = PMPI_Info_f2c(*info);
 	char *   tmp_key = NULL, *ptr_key = NULL;
 
 	tmp_key = char_fortran_to_c( (char *)key, size_key, &ptr_key);
 	char *tmp_value = NULL, *ptr_value = NULL;
+
 	tmp_value = char_fortran_to_c( (char *)value, size_value, &ptr_value);
 
 	*ierror = MPI_Info_set(c_info, tmp_key, tmp_value);
@@ -4294,11 +4380,12 @@ void pmpi_info_set_(MPI_Fint *info, const char *key CHAR_MIXED(size_key), const 
 void pmpi_info_set__(MPI_Fint *info, const char *key CHAR_MIXED(size_key), const char *value CHAR_MIXED(size_value), int *ierror CHAR_END(size_key)CHAR_END(size_value) )
 {
 /* MPI_Info_set */
-	MPI_Info c_info  = PMPI_Info_f2c(*info);
+	MPI_Info c_info = PMPI_Info_f2c(*info);
 	char *   tmp_key = NULL, *ptr_key = NULL;
 
 	tmp_key = char_fortran_to_c( (char *)key, size_key, &ptr_key);
 	char *tmp_value = NULL, *ptr_value = NULL;
+
 	tmp_value = char_fortran_to_c( (char *)value, size_value, &ptr_value);
 
 	*ierror = MPI_Info_set(c_info, tmp_key, tmp_value);
@@ -4374,10 +4461,11 @@ void pmpi_intercomm_create_(MPI_Fint *local_comm, int *local_leader, MPI_Fint *p
 	MPI_Comm c_peer_comm  = PMPI_Comm_f2c(*peer_comm);
 	MPI_Comm c_newintercomm;
 
-	*ierror       = MPI_Intercomm_create(c_local_comm, *local_leader, c_peer_comm, *remote_leader, *tag, &c_newintercomm);
-    if( *ierror == MPI_SUCCESS) {
-        *newintercomm = PMPI_Comm_c2f(c_newintercomm);
-    }
+	*ierror = MPI_Intercomm_create(c_local_comm, *local_leader, c_peer_comm, *remote_leader, *tag, &c_newintercomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newintercomm = PMPI_Comm_c2f(c_newintercomm);
+	}
 }
 
 #pragma weak mpi_intercomm_create__ = pmpi_intercomm_create__
@@ -4388,10 +4476,11 @@ void pmpi_intercomm_create__(MPI_Fint *local_comm, int *local_leader, MPI_Fint *
 	MPI_Comm c_peer_comm  = PMPI_Comm_f2c(*peer_comm);
 	MPI_Comm c_newintercomm;
 
-	*ierror       = MPI_Intercomm_create(c_local_comm, *local_leader, c_peer_comm, *remote_leader, *tag, &c_newintercomm);
-    if( *ierror == MPI_SUCCESS) {
-        *newintercomm = PMPI_Comm_c2f(c_newintercomm);
-    }
+	*ierror = MPI_Intercomm_create(c_local_comm, *local_leader, c_peer_comm, *remote_leader, *tag, &c_newintercomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newintercomm = PMPI_Comm_c2f(c_newintercomm);
+	}
 }
 
 #pragma weak mpi_intercomm_merge_ = pmpi_intercomm_merge_
@@ -4401,10 +4490,11 @@ void pmpi_intercomm_merge_(MPI_Fint *intercomm, int *high, MPI_Fint *newintracom
 	MPI_Comm c_intercomm = PMPI_Comm_f2c(*intercomm);
 	MPI_Comm c_newintracomm;
 
-    *ierror       = MPI_Intercomm_merge(c_intercomm, *high, &c_newintracomm);
-    if( *ierror == MPI_SUCCESS) {
-        *newintracomm = PMPI_Comm_c2f(c_newintracomm);
-    }
+	*ierror = MPI_Intercomm_merge(c_intercomm, *high, &c_newintracomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newintracomm = PMPI_Comm_c2f(c_newintracomm);
+	}
 }
 
 #pragma weak mpi_intercomm_merge__ = pmpi_intercomm_merge__
@@ -4414,10 +4504,11 @@ void pmpi_intercomm_merge__(MPI_Fint *intercomm, int *high, MPI_Fint *newintraco
 	MPI_Comm c_intercomm = PMPI_Comm_f2c(*intercomm);
 	MPI_Comm c_newintracomm;
 
-	*ierror       = MPI_Intercomm_merge(c_intercomm, *high, &c_newintracomm);
-    if( *ierror == MPI_SUCCESS) {
-        *newintracomm = PMPI_Comm_c2f(c_newintracomm);
-    }
+	*ierror = MPI_Intercomm_merge(c_intercomm, *high, &c_newintracomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newintracomm = PMPI_Comm_c2f(c_newintracomm);
+	}
 }
 
 #pragma weak mpi_iprobe_ = pmpi_iprobe_
@@ -4823,7 +4914,7 @@ void pmpi_keyval_create_(MPI_Copy_function *copy_fn, MPI_Delete_function *delete
 {
 /* MPI_Keyval_create */
 
-    *keyval = -1; /**< Denotes fortran functions */
+	*keyval = -1; /**< Denotes fortran functions */
 	*ierror = MPI_Keyval_create(copy_fn, delete_fn, keyval, extra_state);
 }
 
@@ -4832,7 +4923,7 @@ void pmpi_keyval_create__(MPI_Copy_function *copy_fn, MPI_Delete_function *delet
 {
 /* MPI_Keyval_create */
 
-    *keyval = -1; /**< Denotes fortran functions */
+	*keyval = -1; /**< Denotes fortran functions */
 	*ierror = MPI_Keyval_create(copy_fn, delete_fn, keyval, extra_state);
 }
 
@@ -5248,8 +5339,8 @@ void pmpi_neighbor_alltoallv_init__(const void *sendbuf, const int sendcounts[],
 void pmpi_neighbor_alltoallw_(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[], const MPI_Fint sendtypes[], void *recvbuf, const int recvcounts[], const MPI_Aint rdispls[], const MPI_Fint recvtypes[], MPI_Fint *comm, int *ierror)
 {
 /* MPI_Neighbor_alltoallw */
-	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
-	int alltoallwlen = 0;
+	MPI_Comm c_comm       = PMPI_Comm_f2c(*comm);
+	int      alltoallwlen = 0;
 
 	PMPI_Comm_size(c_comm, &alltoallwlen);
 	if(buffer_is_bottom( (void *)sendbuf) )
@@ -5291,8 +5382,8 @@ void pmpi_neighbor_alltoallw_(const void *sendbuf, const int sendcounts[], const
 void pmpi_neighbor_alltoallw__(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[], const MPI_Fint sendtypes[], void *recvbuf, const int recvcounts[], const MPI_Aint rdispls[], const MPI_Fint recvtypes[], MPI_Fint *comm, int *ierror)
 {
 /* MPI_Neighbor_alltoallw */
-	MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
-	int alltoallwlen = 0;
+	MPI_Comm c_comm       = PMPI_Comm_f2c(*comm);
+	int      alltoallwlen = 0;
 
 	PMPI_Comm_size(c_comm, &alltoallwlen);
 	if(buffer_is_bottom( (void *)sendbuf) )
@@ -5334,8 +5425,8 @@ void pmpi_neighbor_alltoallw__(const void *sendbuf, const int sendcounts[], cons
 void pmpi_neighbor_alltoallw_init_(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[], const MPI_Fint sendtypes[], void *recvbuf, const int recvcounts[], const MPI_Aint rdispls[], const MPI_Fint recvtypes[], MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, int *ierror)
 {
 /* MPI_Neighbor_alltoallw_init */
-	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
-	int alltoallwlen = 0;
+	MPI_Comm c_comm       = PMPI_Comm_f2c(*comm);
+	int      alltoallwlen = 0;
 
 	PMPI_Comm_size(c_comm, &alltoallwlen);
 	if(buffer_is_bottom( (void *)sendbuf) )
@@ -5380,8 +5471,8 @@ void pmpi_neighbor_alltoallw_init_(const void *sendbuf, const int sendcounts[], 
 void pmpi_neighbor_alltoallw_init__(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[], const MPI_Fint sendtypes[], void *recvbuf, const int recvcounts[], const MPI_Aint rdispls[], const MPI_Fint recvtypes[], MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, int *ierror)
 {
 /* MPI_Neighbor_alltoallw_init */
-	MPI_Comm    c_comm = PMPI_Comm_f2c(*comm);
-	int alltoallwlen = 0;
+	MPI_Comm c_comm       = PMPI_Comm_f2c(*comm);
+	int      alltoallwlen = 0;
 
 	PMPI_Comm_size(c_comm, &alltoallwlen);
 	if(buffer_is_bottom( (void *)sendbuf) )
@@ -5633,8 +5724,9 @@ void pmpi_publish_name_(const char *service_name CHAR_MIXED(size_service_name), 
 	char *tmp_service_name = NULL, *ptr_service_name = NULL;
 
 	tmp_service_name = char_fortran_to_c( (char *)service_name, size_service_name, &ptr_service_name);
-	MPI_Info c_info        = PMPI_Info_f2c(*info);
+	MPI_Info c_info = PMPI_Info_f2c(*info);
 	char *   tmp_port_name = NULL, *ptr_port_name = NULL;
+
 	tmp_port_name = char_fortran_to_c( (char *)port_name, size_port_name, &ptr_port_name);
 
 	*ierror = MPI_Publish_name(tmp_service_name, c_info, tmp_port_name);
@@ -5649,8 +5741,9 @@ void pmpi_publish_name__(const char *service_name CHAR_MIXED(size_service_name),
 	char *tmp_service_name = NULL, *ptr_service_name = NULL;
 
 	tmp_service_name = char_fortran_to_c( (char *)service_name, size_service_name, &ptr_service_name);
-	MPI_Info c_info        = PMPI_Info_f2c(*info);
+	MPI_Info c_info = PMPI_Info_f2c(*info);
 	char *   tmp_port_name = NULL, *ptr_port_name = NULL;
+
 	tmp_port_name = char_fortran_to_c( (char *)port_name, size_port_name, &ptr_port_name);
 
 	*ierror = MPI_Publish_name(tmp_service_name, c_info, tmp_port_name);
@@ -7075,7 +7168,7 @@ void pmpi_type_commit__(MPI_Fint *datatype, int *ierror)
 #pragma weak mpi_type_contiguous_ = pmpi_type_contiguous_
 void pmpi_type_contiguous_(int *count, MPI_Fint *oldtype, MPI_Fint *newtype, int *ierror)
 {
-    /* MPI_Type_contiguous */
+	/* MPI_Type_contiguous */
 	MPI_Datatype c_oldtype = PMPI_Type_f2c(*oldtype);
 	MPI_Datatype c_newtype;
 
@@ -7198,12 +7291,11 @@ void pmpi_type_create_hindexed__(int *count, const int array_of_blocklengths[], 
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
 
-
 #pragma weak mpi_type_hindexed_ = pmpi_type_hindexed_
 void pmpi_type_hindexed_(int *count,
-                       const int array_of_blocklengths[],
-                       const MPI_Aint array_of_displacements[],
-                       MPI_Fint * oldtype, MPI_Fint * newtype, int *ierror)
+                         const int array_of_blocklengths[],
+                         const MPI_Aint array_of_displacements[],
+                         MPI_Fint *oldtype, MPI_Fint *newtype, int *ierror)
 {
 /* MPI_Type_hindexed */
 	MPI_Datatype c_oldtype = PMPI_Type_f2c(*oldtype);
@@ -7215,9 +7307,9 @@ void pmpi_type_hindexed_(int *count,
 
 #pragma weak mpi_type_hindexed__ = pmpi_type_hindexed__
 void pmpi_type_hindexed__(int *count,
-                        const int array_of_blocklengths[],
-                        const MPI_Aint array_of_displacements[],
-                        MPI_Fint * oldtype, MPI_Fint * newtype, int *ierror)
+                          const int array_of_blocklengths[],
+                          const MPI_Aint array_of_displacements[],
+                          MPI_Fint *oldtype, MPI_Fint *newtype, int *ierror)
 {
 /* MPI_Type_hindexed */
 	MPI_Datatype c_oldtype = PMPI_Type_f2c(*oldtype);
@@ -7226,7 +7318,6 @@ void pmpi_type_hindexed__(int *count,
 	*ierror  = MPI_Type_hindexed(*count, array_of_blocklengths, array_of_displacements, c_oldtype, &c_newtype);
 	*newtype = PMPI_Type_c2f(c_newtype);
 }
-
 
 #pragma weak mpi_type_create_hindexed_block_ = pmpi_type_create_hindexed_block_
 void pmpi_type_create_hindexed_block_(int *count, int *blocklength, const MPI_Aint array_of_displacements[], MPI_Fint *oldtype, MPI_Fint *newtype, int *ierror)
@@ -7398,22 +7489,22 @@ void pmpi_type_create_struct__(int *count, const int array_of_blocklengths[], co
 
 #pragma weak mpi_type_struct_ = pmpi_type_struct_
 void pmpi_type_struct_(int *count,
-							 const int array_of_blocklengths[],
-							 const MPI_Aint array_of_displacements[],
-							 const MPI_Fint array_of_types[],
-							 MPI_Fint *newtype,
-							 int *ierror)
+                       const int array_of_blocklengths[],
+                       const MPI_Aint array_of_displacements[],
+                       const MPI_Fint array_of_types[],
+                       MPI_Fint *newtype,
+                       int *ierror)
 {
 	pmpi_type_create_struct_(count, array_of_blocklengths, array_of_displacements, array_of_types, newtype, ierror);
 }
 
 #pragma weak mpi_type_struct__ = pmpi_type_struct__
 void pmpi_type_struct__(int *count,
-							 const int array_of_blocklengths[],
-							 const MPI_Aint array_of_displacements[],
-							 const MPI_Fint array_of_types[],
-							 MPI_Fint *newtype,
-							 int *ierror)
+                        const int array_of_blocklengths[],
+                        const MPI_Aint array_of_displacements[],
+                        const MPI_Fint array_of_types[],
+                        MPI_Fint *newtype,
+                        int *ierror)
 {
 	pmpi_type_struct_(count, array_of_blocklengths, array_of_displacements, array_of_types, newtype, ierror);
 }
@@ -7872,7 +7963,7 @@ void pmpi_type_set_attr__(MPI_Fint *datatype, int *type_keyval, void *attribute_
 void pmpi_type_set_name_(MPI_Fint *datatype, const char *type_name CHAR_MIXED(size_type_name), int *ierror CHAR_END(size_type_name) )
 {
 /* MPI_Type_set_name */
-	MPI_Datatype c_datatype    = PMPI_Type_f2c(*datatype);
+	MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
 	char *       tmp_type_name = NULL, *ptr_type_name = NULL;
 
 	tmp_type_name = char_fortran_to_c( (char *)type_name, size_type_name, &ptr_type_name);
@@ -7885,7 +7976,7 @@ void pmpi_type_set_name_(MPI_Fint *datatype, const char *type_name CHAR_MIXED(si
 void pmpi_type_set_name__(MPI_Fint *datatype, const char *type_name CHAR_MIXED(size_type_name), int *ierror CHAR_END(size_type_name) )
 {
 /* MPI_Type_set_name */
-	MPI_Datatype c_datatype    = PMPI_Type_f2c(*datatype);
+	MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
 	char *       tmp_type_name = NULL, *ptr_type_name = NULL;
 
 	tmp_type_name = char_fortran_to_c( (char *)type_name, size_type_name, &ptr_type_name);
@@ -8021,8 +8112,9 @@ void pmpi_unpublish_name_(const char *service_name CHAR_MIXED(size_service_name)
 	char *tmp_service_name = NULL, *ptr_service_name = NULL;
 
 	tmp_service_name = char_fortran_to_c( (char *)service_name, size_service_name, &ptr_service_name);
-	MPI_Info c_info        = PMPI_Info_f2c(*info);
+	MPI_Info c_info = PMPI_Info_f2c(*info);
 	char *   tmp_port_name = NULL, *ptr_port_name = NULL;
+
 	tmp_port_name = char_fortran_to_c( (char *)port_name, size_port_name, &ptr_port_name);
 
 	*ierror = MPI_Unpublish_name(tmp_service_name, c_info, tmp_port_name);
@@ -8037,8 +8129,9 @@ void pmpi_unpublish_name__(const char *service_name CHAR_MIXED(size_service_name
 	char *tmp_service_name = NULL, *ptr_service_name = NULL;
 
 	tmp_service_name = char_fortran_to_c( (char *)service_name, size_service_name, &ptr_service_name);
-	MPI_Info c_info        = PMPI_Info_f2c(*info);
+	MPI_Info c_info = PMPI_Info_f2c(*info);
 	char *   tmp_port_name = NULL, *ptr_port_name = NULL;
+
 	tmp_port_name = char_fortran_to_c( (char *)port_name, size_port_name, &ptr_port_name);
 
 	*ierror = MPI_Unpublish_name(tmp_service_name, c_info, tmp_port_name);
@@ -8402,9 +8495,11 @@ void pmpi_win_create_errhandler_(MPI_Win_errhandler_function *win_errhandler_fn,
 /* MPI_Win_create_errhandler */
 	MPI_Errhandler c_errhandler;
 
-	*ierror     = MPI_Win_create_errhandler(win_errhandler_fn, &c_errhandler);
-    if( *ierror == MPI_SUCCESS)
-        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	*ierror = MPI_Win_create_errhandler(win_errhandler_fn, &c_errhandler);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	}
 }
 
 #pragma weak mpi_win_create_errhandler__ = pmpi_win_create_errhandler__
@@ -8413,9 +8508,11 @@ void pmpi_win_create_errhandler__(MPI_Win_errhandler_function *win_errhandler_fn
 /* MPI_Win_create_errhandler */
 	MPI_Errhandler c_errhandler;
 
-	*ierror     = MPI_Win_create_errhandler(win_errhandler_fn, &c_errhandler);
-    if( *ierror == MPI_SUCCESS)
-        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	*ierror = MPI_Win_create_errhandler(win_errhandler_fn, &c_errhandler);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	}
 }
 
 #pragma weak mpi_win_create_keyval_ = pmpi_win_create_keyval_
@@ -8631,9 +8728,11 @@ void pmpi_win_get_errhandler_(MPI_Fint *win, MPI_Fint *errhandler, int *ierror)
 	MPI_Win        c_win = PMPI_Win_f2c(*win);
 	MPI_Errhandler c_errhandler;
 
-	*ierror     = MPI_Win_get_errhandler(c_win, &c_errhandler);
-    if( *ierror == MPI_SUCCESS)
-        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	*ierror = MPI_Win_get_errhandler(c_win, &c_errhandler);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	}
 }
 
 #pragma weak mpi_win_get_errhandler__ = pmpi_win_get_errhandler__
@@ -8643,9 +8742,11 @@ void pmpi_win_get_errhandler__(MPI_Fint *win, MPI_Fint *errhandler, int *ierror)
 	MPI_Win        c_win = PMPI_Win_f2c(*win);
 	MPI_Errhandler c_errhandler;
 
-	*ierror     = MPI_Win_get_errhandler(c_win, &c_errhandler);
-    if( *ierror == MPI_SUCCESS)
-        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	*ierror = MPI_Win_get_errhandler(c_win, &c_errhandler);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	}
 }
 
 #pragma weak mpi_win_get_group_ = pmpi_win_get_group_
@@ -8830,7 +8931,7 @@ void pmpi_win_set_info__(MPI_Fint *win, MPI_Fint *info, int *ierror)
 void pmpi_win_set_name_(MPI_Fint *win, const char *win_name CHAR_MIXED(size_win_name), int *ierror CHAR_END(size_win_name) )
 {
 /* MPI_Win_set_name */
-	MPI_Win c_win        = PMPI_Win_f2c(*win);
+	MPI_Win c_win = PMPI_Win_f2c(*win);
 	char *  tmp_win_name = NULL, *ptr_win_name = NULL;
 
 	tmp_win_name = char_fortran_to_c( (char *)win_name, size_win_name, &ptr_win_name);
@@ -8843,7 +8944,7 @@ void pmpi_win_set_name_(MPI_Fint *win, const char *win_name CHAR_MIXED(size_win_
 void pmpi_win_set_name__(MPI_Fint *win, const char *win_name CHAR_MIXED(size_win_name), int *ierror CHAR_END(size_win_name) )
 {
 /* MPI_Win_set_name */
-	MPI_Win c_win        = PMPI_Win_f2c(*win);
+	MPI_Win c_win = PMPI_Win_f2c(*win);
 	char *  tmp_win_name = NULL, *ptr_win_name = NULL;
 
 	tmp_win_name = char_fortran_to_c( (char *)win_name, size_win_name, &ptr_win_name);
@@ -9014,143 +9115,152 @@ double pmpi_wtime__()
 
 #pragma weak mpi_session_create_errhandler_ = pmpi_session_create_errhandler_
 void pmpi_session_create_errhandler_(MPI_Session_errhandler_function *session_errhandler_fn,
-                                   MPI_Fint *errhandler, int *ierror)
+                                     MPI_Fint *errhandler, int *ierror)
 {
 	MPI_Errhandler c_errhandler;
 
-	*ierror = PMPI_Session_create_errhandler( session_errhandler_fn, &c_errhandler );
-    if(*ierror == MPI_SUCCESS)
-        *errhandler = PMPI_Errhandler_c2f( c_errhandler );
+	*ierror = PMPI_Session_create_errhandler(session_errhandler_fn, &c_errhandler);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	}
 }
 
 #pragma weak mpi_session_create_errhandler__ = pmpi_session_create_errhandler__
 void pmpi_session_create_errhandler__(MPI_Session_errhandler_function *session_errhandler_fn,
-                                   MPI_Fint *errhandler, int *ierror)
+                                      MPI_Fint *errhandler, int *ierror)
 {
-	pmpi_session_create_errhandler_( session_errhandler_fn, errhandler, ierror );
+	pmpi_session_create_errhandler_(session_errhandler_fn, errhandler, ierror);
 }
 
 #pragma weak mpi_session_set_errhandler_ = pmpi_session_set_errhandler_
-void pmpi_session_set_errhandler_(MPI_Fint * session, MPI_Fint * errhandler, int *ierror)
+void pmpi_session_set_errhandler_(MPI_Fint *session, MPI_Fint *errhandler, int *ierror)
 {
-	MPI_Errhandler c_errhandler = PMPI_Errhandler_f2c( *errhandler );
-	MPI_Session c_session = PMPI_Session_f2c( *session );
-	*ierror = PMPI_Session_set_errhandler( c_session, c_errhandler );
+	MPI_Errhandler c_errhandler = PMPI_Errhandler_f2c(*errhandler);
+	MPI_Session    c_session    = PMPI_Session_f2c(*session);
+
+	*ierror = PMPI_Session_set_errhandler(c_session, c_errhandler);
 }
 
 #pragma weak mpi_session_set_errhandler__ = pmpi_session_set_errhandler__
-void pmpi_session_set_errhandler__(MPI_Fint * session, MPI_Fint * errhandler, int *ierror)
+void pmpi_session_set_errhandler__(MPI_Fint *session, MPI_Fint *errhandler, int *ierror)
 {
-	pmpi_session_set_errhandler_( session, errhandler, ierror );
+	pmpi_session_set_errhandler_(session, errhandler, ierror);
 }
 
 #pragma weak mpi_session_get_errhandler_ = pmpi_session_get_errhandler_
-void pmpi_session_get_errhandler_(MPI_Fint * session, MPI_Fint *errhandler, int * ierror)
+void pmpi_session_get_errhandler_(MPI_Fint *session, MPI_Fint *errhandler, int *ierror)
 {
-	MPI_Session c_session = PMPI_Session_f2c( *session );
+	MPI_Session c_session = PMPI_Session_f2c(*session);
 
 	MPI_Errhandler c_errhandler;
 
-	*ierror = PMPI_Session_get_errhandler( c_session, &c_errhandler );
+	*ierror = PMPI_Session_get_errhandler(c_session, &c_errhandler);
 
-    if(*ierror == MPI_SUCCESS)
-        *errhandler = PMPI_Errhandler_c2f( c_errhandler );
+	if(*ierror == MPI_SUCCESS)
+	{
+		*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	}
 }
 
 #pragma weak mpi_session_get_errhandler__ = pmpi_session_get_errhandler__
-void pmpi_session_get_errhandler__(MPI_Fint * session, MPI_Fint *errhandler, int * ierror)
+void pmpi_session_get_errhandler__(MPI_Fint *session, MPI_Fint *errhandler, int *ierror)
 {
-	pmpi_session_get_errhandler_( session, errhandler, ierror );
+	pmpi_session_get_errhandler_(session, errhandler, ierror);
 }
 
 #pragma weak mpi_session_call_errhandler_ = pmpi_session_call_errhandler_
-void pmpi_session_call_errhandler_(MPI_Fint *  session, MPI_Fint *  error_code, int *ierror)
+void pmpi_session_call_errhandler_(MPI_Fint *session, MPI_Fint *error_code, int *ierror)
 {
-	int c_error_code = *error_code;
-	MPI_Session c_session = PMPI_Session_f2c( *session );
+	int         c_error_code = *error_code;
+	MPI_Session c_session    = PMPI_Session_f2c(*session);
 
-	*ierror = PMPI_Session_call_errhandler( c_session, c_error_code );
+	*ierror = PMPI_Session_call_errhandler(c_session, c_error_code);
 }
 
 #pragma weak mpi_session_call_errhandler__ = pmpi_session_call_errhandler__
-void pmpi_session_call_errhandler__(MPI_Fint *  session, MPI_Fint *  error_code, int *ierror)
+void pmpi_session_call_errhandler__(MPI_Fint *session, MPI_Fint *error_code, int *ierror)
 {
-	pmpi_session_call_errhandler_( session, error_code, ierror );
+	pmpi_session_call_errhandler_(session, error_code, ierror);
 }
 
 #pragma weak mpi_session_init_ = pmpi_session_init_
-void pmpi_session_init_(MPI_Fint *  info, MPI_Fint *  errhandler, MPI_Fint * session, int *ierror)
+void pmpi_session_init_(MPI_Fint *info, MPI_Fint *errhandler, MPI_Fint *session, int *ierror)
 {
-	MPI_Info c_info = PMPI_Info_f2c( *info );
+	MPI_Info       c_info = PMPI_Info_f2c(*info);
 	MPI_Errhandler c_errh = PMPI_Errhandler_f2c(*errhandler);
 
 	MPI_Session c_session;
-	*ierror = PMPI_Session_init( c_info, c_errh , &c_session);
-    if(*ierror == MPI_SUCCESS)
-        *session = PMPI_Session_c2f( c_session );
+
+	*ierror = PMPI_Session_init(c_info, c_errh, &c_session);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*session = PMPI_Session_c2f(c_session);
+	}
 }
 
 #pragma weak mpi_session_init__ = pmpi_session_init__
-void pmpi_session_init__(MPI_Fint *  info, MPI_Fint *  errhandler, MPI_Fint * session, int *ierror)
+void pmpi_session_init__(MPI_Fint *info, MPI_Fint *errhandler, MPI_Fint *session, int *ierror)
 {
-	pmpi_session_init_( info, errhandler, session, ierror );
+	pmpi_session_init_(info, errhandler, session, ierror);
 }
 
 #pragma weak mpi_session_finalize_ = pmpi_session_finalize_
 void pmpi_session_finalize_(MPI_Fint *session, int *ierror)
 {
-	MPI_Session c_session = PMPI_Session_f2c( *session );
-	*ierror = PMPI_Session_finalize( &c_session );
-	*session = PMPI_Session_c2f( c_session );
+	MPI_Session c_session = PMPI_Session_f2c(*session);
+
+	*ierror  = PMPI_Session_finalize(&c_session);
+	*session = PMPI_Session_c2f(c_session);
 }
 
 #pragma weak mpi_session_finalize__ = pmpi_session_finalize__
 void pmpi_session_finalize__(MPI_Fint *session, int *ierror)
 {
-	pmpi_session_finalize_( session, ierror );
+	pmpi_session_finalize_(session, ierror);
 }
 
 #pragma weak mpi_session_get_info_ = pmpi_session_get_info_
-void pmpi_session_get_info_(MPI_Fint * session, MPI_Fint * info_used, int *ierror)
+void pmpi_session_get_info_(MPI_Fint *session, MPI_Fint *info_used, int *ierror)
 {
-	MPI_Info c_info;
-	MPI_Session c_session = PMPI_Session_f2c( *session );
+	MPI_Info    c_info;
+	MPI_Session c_session = PMPI_Session_f2c(*session);
 
 	*ierror = PMPI_Session_get_info(c_session, &c_info);
 
-	*info_used = PMPI_Info_c2f( c_info );
+	*info_used = PMPI_Info_c2f(c_info);
 }
 
 #pragma weak mpi_session_get_num_psets_ = pmpi_session_get_num_psets_
-void pmpi_session_get_num_psets_(MPI_Fint * session, MPI_Fint *  info, MPI_Fint *npset_names, int *ierror)
+void pmpi_session_get_num_psets_(MPI_Fint *session, MPI_Fint *info, MPI_Fint *npset_names, int *ierror)
 {
-	MPI_Session c_session = PMPI_Session_f2c( *session );
-	MPI_Info c_info = PMPI_Info_f2c( *info);
+	MPI_Session c_session = PMPI_Session_f2c(*session);
+	MPI_Info    c_info    = PMPI_Info_f2c(*info);
 
 	int num;
 
-	*ierror = PMPI_Session_get_num_psets( c_session, c_info, &num );
+	*ierror = PMPI_Session_get_num_psets(c_session, c_info, &num);
 
 	*npset_names = num;
 }
 
 #pragma weak mpi_session_get_num_psets__ = pmpi_session_get_num_psets__
-void pmpi_session_get_num_psets__(MPI_Fint * session, MPI_Fint *  info, MPI_Fint *npset_names, int *ierror)
+void pmpi_session_get_num_psets__(MPI_Fint *session, MPI_Fint *info, MPI_Fint *npset_names, int *ierror)
 {
-	pmpi_session_get_num_psets_( session, info, npset_names, ierror );
+	pmpi_session_get_num_psets_(session, info, npset_names, ierror);
 }
 
 #pragma weak mpi_session_get_nth_pset_ = pmpi_session_get_nth_pset_
-void pmpi_session_get_nth_pset_(MPI_Fint * session, MPI_Fint * info, MPI_Fint * n, MPI_Fint *pset_len, char *pset_name CHAR_MIXED(size_string), int *ierror CHAR_END(size_string) )
+void pmpi_session_get_nth_pset_(MPI_Fint *session, MPI_Fint *info, MPI_Fint *n, MPI_Fint *pset_len, char *pset_name CHAR_MIXED(size_string), int *ierror CHAR_END(size_string) )
 {
-	MPI_Session c_session = PMPI_Session_f2c( *session );
-	MPI_Info c_info = PMPI_Info_f2c( *info );
+	MPI_Session c_session = PMPI_Session_f2c(*session);
+	MPI_Info    c_info    = PMPI_Info_f2c(*info);
 
 	int len = *pset_len;
 	int c_n = *n;
 
 
-	int ret = PMPI_Session_get_nth_pset( c_session, c_info, c_n, &len, pset_name );
+	int ret = PMPI_Session_get_nth_pset(c_session, c_info, c_n, &len, pset_name);
 
 	kill(0, 2);
 
@@ -9168,15 +9278,15 @@ void pmpi_session_get_nth_pset_(MPI_Fint * session, MPI_Fint * info, MPI_Fint * 
 }
 
 #pragma weak mpi_session_get_nth_pset__ = pmpi_session_get_nth_pset__
-void pmpi_session_get_nth_pset__(MPI_Fint * session, MPI_Fint * info, MPI_Fint * n, MPI_Fint *pset_len, char *pset_name CHAR_MIXED(size_string), int *ierror CHAR_END(size_string) )
+void pmpi_session_get_nth_pset__(MPI_Fint *session, MPI_Fint *info, MPI_Fint *n, MPI_Fint *pset_len, char *pset_name CHAR_MIXED(size_string), int *ierror CHAR_END(size_string) )
 {
-	MPI_Session c_session = PMPI_Session_f2c( *session );
-	MPI_Info c_info = PMPI_Info_f2c( *info );
+	MPI_Session c_session = PMPI_Session_f2c(*session);
+	MPI_Info    c_info    = PMPI_Info_f2c(*info);
 
 	int len = *pset_len;
 	int c_n = *n;
 
-	int ret = PMPI_Session_get_nth_pset( c_session, c_info, c_n, &len, pset_name );
+	int ret = PMPI_Session_get_nth_pset(c_session, c_info, c_n, &len, pset_name);
 
 	if(ierror)
 	{
@@ -9192,47 +9302,51 @@ void pmpi_session_get_nth_pset__(MPI_Fint * session, MPI_Fint * info, MPI_Fint *
 }
 
 #pragma weak mpi_group_from_session_pset_ = pmpi_group_from_session_pset_
-void pmpi_group_from_session_pset_(MPI_Fint * session, const char *pset_name  CHAR_MIXED(size_string), MPI_Fint * newgroup, int *ierror CHAR_END(size_string))
+void pmpi_group_from_session_pset_(MPI_Fint *session, const char *pset_name  CHAR_MIXED(size_string), MPI_Fint *newgroup, int *ierror CHAR_END(size_string) )
 {
-	MPI_Session c_session = PMPI_Session_f2c( *session );
-	MPI_Group c_group;
+	MPI_Session c_session = PMPI_Session_f2c(*session);
+	MPI_Group   c_group;
 
 	char *tmp_string = NULL, *ptr_string = NULL;
 
 	tmp_string = char_fortran_to_c( (char *)pset_name, size_string, &ptr_string);
 
-	*ierror = PMPI_Group_from_session_pset( c_session, tmp_string, &c_group );
+	*ierror = PMPI_Group_from_session_pset(c_session, tmp_string, &c_group);
 
-	sctk_free( ptr_string );
+	sctk_free(ptr_string);
 
-    if( *ierror == MPI_SUCCESS)
-        *newgroup = PMPI_Group_c2f(c_group);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newgroup = PMPI_Group_c2f(c_group);
+	}
 }
 
 #pragma weak mpi_group_from_session_pset__ = pmpi_group_from_session_pset__
-void pmpi_group_from_session_pset__(MPI_Fint * session, const char *pset_name  CHAR_MIXED(size_string), MPI_Fint * newgroup, int *ierror CHAR_END(size_string))
+void pmpi_group_from_session_pset__(MPI_Fint *session, const char *pset_name  CHAR_MIXED(size_string), MPI_Fint *newgroup, int *ierror CHAR_END(size_string) )
 {
-	MPI_Session c_session = PMPI_Session_f2c( *session );
-	MPI_Group c_group;
+	MPI_Session c_session = PMPI_Session_f2c(*session);
+	MPI_Group   c_group;
 
 	char *tmp_string = NULL, *ptr_string = NULL;
 
 	tmp_string = char_fortran_to_c( (char *)pset_name, size_string, &ptr_string);
 
-	*ierror = PMPI_Group_from_session_pset( c_session, tmp_string, &c_group );
+	*ierror = PMPI_Group_from_session_pset(c_session, tmp_string, &c_group);
 
-	sctk_free( ptr_string );
+	sctk_free(ptr_string);
 
-    if( *ierror == MPI_SUCCESS)
-        *newgroup = PMPI_Group_c2f(c_group);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newgroup = PMPI_Group_c2f(c_group);
+	}
 }
 
 #pragma weak mpi_comm_create_from_group_ = pmpi_comm_create_from_group_
-void pmpi_comm_create_from_group_(MPI_Fint * group, const char * stringtag CHAR_MIXED(size_string), MPI_Fint * info, MPI_Fint * errhandler, MPI_Fint *newcomm, int *ierror CHAR_END(size_string) )
+void pmpi_comm_create_from_group_(MPI_Fint *group, const char * stringtag CHAR_MIXED(size_string), MPI_Fint *info, MPI_Fint *errhandler, MPI_Fint *newcomm, int *ierror CHAR_END(size_string) )
 {
-	MPI_Group c_group = PMPI_Group_f2c( *group );
-	MPI_Info c_info = PMPI_Info_f2c( *info );
-	MPI_Errhandler c_errhandler = PMPI_Errhandler_f2c( *errhandler );
+	MPI_Group      c_group      = PMPI_Group_f2c(*group);
+	MPI_Info       c_info       = PMPI_Info_f2c(*info);
+	MPI_Errhandler c_errhandler = PMPI_Errhandler_f2c(*errhandler);
 
 
 	char *tmp_string = NULL, *ptr_string = NULL;
@@ -9243,18 +9357,20 @@ void pmpi_comm_create_from_group_(MPI_Fint * group, const char * stringtag CHAR_
 
 	*ierror = PMPI_Comm_create_from_group(c_group, tmp_string, c_info, c_errhandler, &c_newcomm);
 
-	sctk_free( ptr_string );
+	sctk_free(ptr_string);
 
-    if( *ierror== MPI_SUCCESS)
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+	}
 }
 
 #pragma weak mpi_comm_create_from_group__ = pmpi_comm_create_from_group__
-void pmpi_comm_create_from_group__(MPI_Fint * group, const char * stringtag CHAR_MIXED(size_string), MPI_Fint * info, MPI_Fint * errhandler, MPI_Fint *newcomm, int *ierror CHAR_END(size_string) )
+void pmpi_comm_create_from_group__(MPI_Fint *group, const char * stringtag CHAR_MIXED(size_string), MPI_Fint *info, MPI_Fint *errhandler, MPI_Fint *newcomm, int *ierror CHAR_END(size_string) )
 {
-	MPI_Group c_group = PMPI_Group_f2c( *group );
-	MPI_Info c_info = PMPI_Info_f2c( *info );
-	MPI_Errhandler c_errhandler = PMPI_Errhandler_f2c( *errhandler );
+	MPI_Group      c_group      = PMPI_Group_f2c(*group);
+	MPI_Info       c_info       = PMPI_Info_f2c(*info);
+	MPI_Errhandler c_errhandler = PMPI_Errhandler_f2c(*errhandler);
 
 
 	char *tmp_string = NULL, *ptr_string = NULL;
@@ -9265,66 +9381,70 @@ void pmpi_comm_create_from_group__(MPI_Fint * group, const char * stringtag CHAR
 
 	*ierror = PMPI_Comm_create_from_group(c_group, tmp_string, c_info, c_errhandler, &c_newcomm);
 
-	sctk_free( ptr_string );
+	sctk_free(ptr_string);
 
-    if( *ierror== MPI_SUCCESS)
-        *newcomm = PMPI_Comm_c2f(c_newcomm);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*newcomm = PMPI_Comm_c2f(c_newcomm);
+	}
 }
 
 #pragma weak mpi_session_get_pset_info_ = pmpi_session_get_pset_info_
-void pmpi_session_get_pset_info_(MPI_Fint *  session, const char *pset_name  CHAR_MIXED(size_string), MPI_Fint *info, int * ierror CHAR_END(size_string) )
+void pmpi_session_get_pset_info_(MPI_Fint *session, const char *pset_name  CHAR_MIXED(size_string), MPI_Fint *info, int * ierror CHAR_END(size_string) )
 {
-	MPI_Session c_session = PMPI_Session_f2c( *session );
-	MPI_Info c_info;
+	MPI_Session c_session = PMPI_Session_f2c(*session);
+	MPI_Info    c_info;
 
 	char *tmp_string = NULL, *ptr_string = NULL;
 
 	tmp_string = char_fortran_to_c( (char *)pset_name, size_string, &ptr_string);
 
-	*ierror = PMPI_Session_get_pset_info( c_session, tmp_string, &c_info );
+	*ierror = PMPI_Session_get_pset_info(c_session, tmp_string, &c_info);
 
-	sctk_free( ptr_string );
+	sctk_free(ptr_string);
 
-	*info = PMPI_Info_c2f( c_info );
+	*info = PMPI_Info_c2f(c_info);
 }
 
 #pragma weak mpi_session_get_pset_info__ = pmpi_session_get_pset_info__
-void pmpi_session_get_pset_info__(MPI_Fint *  session, const char *pset_name  CHAR_MIXED(size_string), MPI_Fint *info, int * ierror CHAR_END(size_string) )
+void pmpi_session_get_pset_info__(MPI_Fint *session, const char *pset_name  CHAR_MIXED(size_string), MPI_Fint *info, int * ierror CHAR_END(size_string) )
 {
-	MPI_Session c_session = PMPI_Session_f2c( *session );
-	MPI_Info c_info;
+	MPI_Session c_session = PMPI_Session_f2c(*session);
+	MPI_Info    c_info;
 
 	char *tmp_string = NULL, *ptr_string = NULL;
 
 	tmp_string = char_fortran_to_c( (char *)pset_name, size_string, &ptr_string);
 
-	*ierror = PMPI_Session_get_pset_info( c_session, tmp_string, &c_info );
+	*ierror = PMPI_Session_get_pset_info(c_session, tmp_string, &c_info);
 
-	sctk_free( ptr_string );
+	sctk_free(ptr_string);
 
-	*info = PMPI_Info_c2f( c_info );
+	*info = PMPI_Info_c2f(c_info);
 }
 
 #pragma weak mpi_session_get_info__ = pmpi_session_get_info__
-void pmpi_session_get_info__(MPI_Fint * session, MPI_Fint * info_used, int *ierror)
+void pmpi_session_get_info__(MPI_Fint *session, MPI_Fint *info_used, int *ierror)
 {
-	pmpi_session_get_info_( session, info_used, ierror );
+	pmpi_session_get_info_(session, info_used, ierror);
 }
 
 #pragma weak mpi_file_create_errhandler_ = pmpi_file_create_errhandler_
-void pmpi_file_create_errhandler_( MPI_File_errhandler_function *errhandler_fn, MPI_Fint *errhandler, int *ierror )
+void pmpi_file_create_errhandler_(MPI_File_errhandler_function *errhandler_fn, MPI_Fint *errhandler, int *ierror)
 {
 	MPI_Errhandler c_errhandler;
 
-	*ierror = PMPI_File_create_errhandler( errhandler_fn, &c_errhandler );
-    if(*ierror == MPI_SUCCESS)
-        *errhandler = PMPI_Errhandler_c2f( c_errhandler );
+	*ierror = PMPI_File_create_errhandler(errhandler_fn, &c_errhandler);
+	if(*ierror == MPI_SUCCESS)
+	{
+		*errhandler = PMPI_Errhandler_c2f(c_errhandler);
+	}
 }
 
 #pragma weak mpi_file_create_errhandler__ = pmpi_file_create_errhandler__
-void pmpi_file_create_errhandler__( MPI_File_errhandler_function *errhandler_fn, MPI_Fint *errhandler, int *ierror )
+void pmpi_file_create_errhandler__(MPI_File_errhandler_function *errhandler_fn, MPI_Fint *errhandler, int *ierror)
 {
-	pmpi_file_create_errhandler__( errhandler_fn, errhandler, ierror );
+	pmpi_file_create_errhandler__(errhandler_fn, errhandler, ierror);
 }
 
 MPI_File PMPI_File_f2c(int file);
@@ -9350,10 +9470,10 @@ void pmpi_file_call_errhandler__(MPI_Fint *file, int *errorcode, int *ierror)
 /* NULL Functions */
 
 #pragma weak mpi_null_delete_fn_ = pmpi_null_delete_fn_
-void pmpi_null_delete_fn_( MPI_Fint *v1, MPI_Fint *v2,
-						  void *v3,
-						  void *v4,
-						  int *ierr )
+void pmpi_null_delete_fn_(MPI_Fint *v1, MPI_Fint *v2,
+                          void *v3,
+                          void *v4,
+                          int *ierr)
 {
 	*ierr = MPI_SUCCESS;
 	UNUSED(v1);
@@ -9363,10 +9483,10 @@ void pmpi_null_delete_fn_( MPI_Fint *v1, MPI_Fint *v2,
 }
 
 #pragma weak mpi_null_delete_fn__ = pmpi_null_delete_fn__
-void pmpi_null_delete_fn__( MPI_Fint *v1, MPI_Fint *v2,
-						   void *v3,
-						   void *v4,
-						   int *ierr )
+void pmpi_null_delete_fn__(MPI_Fint *v1, MPI_Fint *v2,
+                           void *v3,
+                           void *v4,
+                           int *ierr)
 {
 	*ierr = MPI_SUCCESS;
 	UNUSED(v1);
@@ -9376,10 +9496,10 @@ void pmpi_null_delete_fn__( MPI_Fint *v1, MPI_Fint *v2,
 }
 
 #pragma weak mpi_comm_null_delete_fn_ = pmpi_comm_null_delete_fn_
-void pmpi_comm_null_delete_fn_( MPI_Fint *v1, MPI_Fint *v2,
-							   void *v3,
-							   void *v4,
-							   int *ierr )
+void pmpi_comm_null_delete_fn_(MPI_Fint *v1, MPI_Fint *v2,
+                               void *v3,
+                               void *v4,
+                               int *ierr)
 {
 	*ierr = MPI_SUCCESS;
 	UNUSED(v1);
@@ -9389,10 +9509,10 @@ void pmpi_comm_null_delete_fn_( MPI_Fint *v1, MPI_Fint *v2,
 }
 
 #pragma weak mpi_comm_null_delete_fn__ = pmpi_comm_null_delete_fn__
-void pmpi_comm_null_delete_fn__( MPI_Fint *v1, MPI_Fint *v2,
-								void *v3,
-								void *v4,
-								int *ierr )
+void pmpi_comm_null_delete_fn__(MPI_Fint *v1, MPI_Fint *v2,
+                                void *v3,
+                                void *v4,
+                                int *ierr)
 {
 	*ierr = MPI_SUCCESS;
 	UNUSED(v1);
@@ -9402,10 +9522,10 @@ void pmpi_comm_null_delete_fn__( MPI_Fint *v1, MPI_Fint *v2,
 }
 
 #pragma weak mpi_comm_null_copy_fn_ = pmpi_comm_null_copy_fn_
-void pmpi_comm_null_copy_fn_( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, void *v5, MPI_Fint *v6, int *ierr )
+void pmpi_comm_null_copy_fn_(MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, void *v5, MPI_Fint *v6, int *ierr)
 {
 	*ierr = MPI_SUCCESS;
-	*v6 = 0;
+	*v6   = 0;
 	UNUSED(v1);
 	UNUSED(v2);
 	UNUSED(v3);
@@ -9414,10 +9534,10 @@ void pmpi_comm_null_copy_fn_( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, vo
 }
 
 #pragma weak mpi_comm_null_copy_fn__ = pmpi_comm_null_copy_fn__
-void pmpi_comm_null_copy_fn__( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, void *v5, MPI_Fint *v6, int *ierr )
+void pmpi_comm_null_copy_fn__(MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, void *v5, MPI_Fint *v6, int *ierr)
 {
 	*ierr = MPI_SUCCESS;
-	*v6 = 0;
+	*v6   = 0;
 	UNUSED(v1);
 	UNUSED(v2);
 	UNUSED(v3);
@@ -9426,9 +9546,10 @@ void pmpi_comm_null_copy_fn__( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, v
 }
 
 #pragma weak mpi_dup_fn_ = pmpi_dup_fn__
-void pmpi_dup_fn_ ( MPI_Fint v1, MPI_Fint*v2, void*v3, void**v4, void**v5, MPI_Fint*v6, MPI_Fint *ierr ){
-	*v5 = *v4;
-	*v6 = (1);
+void pmpi_dup_fn_(MPI_Fint v1, MPI_Fint *v2, void *v3, void **v4, void **v5, MPI_Fint *v6, MPI_Fint *ierr)
+{
+	*v5   = *v4;
+	*v6   = (1);
 	*ierr = MPI_SUCCESS;
 	UNUSED(v1);
 	UNUSED(v2);
@@ -9437,9 +9558,10 @@ void pmpi_dup_fn_ ( MPI_Fint v1, MPI_Fint*v2, void*v3, void**v4, void**v5, MPI_F
 }
 
 #pragma weak mpi_dup_fn__ = pmpi_dup_fn_
-void pmpi_dup_fn__ ( MPI_Fint v1, MPI_Fint*v2, void*v3, void**v4, void**v5, MPI_Fint*v6, MPI_Fint *ierr ){
-	*v5 = *v4;
-	*v6 = (1);
+void pmpi_dup_fn__(MPI_Fint v1, MPI_Fint *v2, void *v3, void **v4, void **v5, MPI_Fint *v6, MPI_Fint *ierr)
+{
+	*v5   = *v4;
+	*v6   = (1);
 	*ierr = MPI_SUCCESS;
 	UNUSED(v1);
 	UNUSED(v2);
@@ -9448,10 +9570,10 @@ void pmpi_dup_fn__ ( MPI_Fint v1, MPI_Fint*v2, void*v3, void**v4, void**v5, MPI_
 }
 
 #pragma weak mpi_comm_dup_fn_ = pmpi_comm_dup_fn_
-void pmpi_comm_dup_fn_( MPI_Fint v1, MPI_Fint *v2, void *v3, void **v4, void **v5, MPI_Fint *v6, int *ierr )
+void pmpi_comm_dup_fn_(MPI_Fint v1, MPI_Fint *v2, void *v3, void **v4, void **v5, MPI_Fint *v6, int *ierr)
 {
-	*v5 = *v4;
-	*v6 = 1;
+	*v5   = *v4;
+	*v6   = 1;
 	*ierr = MPI_SUCCESS;
 	UNUSED(v1);
 	UNUSED(v2);
@@ -9460,10 +9582,10 @@ void pmpi_comm_dup_fn_( MPI_Fint v1, MPI_Fint *v2, void *v3, void **v4, void **v
 }
 
 #pragma weak mpi_comm_dup_fn__ = pmpi_comm_dup_fn__
-void pmpi_comm_dup_fn__( MPI_Fint v1, MPI_Fint *v2, void *v3, void **v4, void **v5, MPI_Fint *v6, int *ierr )
+void pmpi_comm_dup_fn__(MPI_Fint v1, MPI_Fint *v2, void *v3, void **v4, void **v5, MPI_Fint *v6, int *ierr)
 {
-	*v5 = *v4;
-	*v6 = 1;
+	*v5   = *v4;
+	*v6   = 1;
 	*ierr = MPI_SUCCESS;
 	UNUSED(v1);
 	UNUSED(v2);
@@ -9472,10 +9594,10 @@ void pmpi_comm_dup_fn__( MPI_Fint v1, MPI_Fint *v2, void *v3, void **v4, void **
 }
 
 #pragma weak mpi_null_copy_fn_ = pmpi_null_copy_fn_
-void pmpi_null_copy_fn_( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, void *v5, MPI_Fint *v6, int *ierr )
+void pmpi_null_copy_fn_(MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, void *v5, MPI_Fint *v6, int *ierr)
 {
 	*ierr = MPI_SUCCESS;
-	*v6 = 0;
+	*v6   = 0;
 	UNUSED(v1);
 	UNUSED(v2);
 	UNUSED(v3);
@@ -9484,10 +9606,10 @@ void pmpi_null_copy_fn_( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, void *v
 }
 
 #pragma weak mpi_null_copy_fn__ = pmpi_null_copy_fn__
-void pmpi_null_copy_fn__( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, void *v5, MPI_Fint *v6, int *ierr )
+void pmpi_null_copy_fn__(MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, void *v5, MPI_Fint *v6, int *ierr)
 {
 	*ierr = MPI_SUCCESS;
-	*v6 = 0;
+	*v6   = 0;
 	UNUSED(v1);
 	UNUSED(v2);
 	UNUSED(v3);
@@ -9496,7 +9618,7 @@ void pmpi_null_copy_fn__( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, void *
 }
 
 #pragma weak mpi_type_null_delete_fn_ = pmpi_type_null_delete_fn_
-void pmpi_type_null_delete_fn_( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, int *ierr )
+void pmpi_type_null_delete_fn_(MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, int *ierr)
 {
 	*ierr = MPI_SUCCESS;
 	UNUSED(v1);
@@ -9506,7 +9628,7 @@ void pmpi_type_null_delete_fn_( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, 
 }
 
 #pragma weak mpi_type_null_delete_fn__ = pmpi_type_null_delete_fn__
-void pmpi_type_null_delete_fn__( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, int *ierr )
+void pmpi_type_null_delete_fn__(MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, int *ierr)
 {
 	*ierr = MPI_SUCCESS;
 	UNUSED(v1);
@@ -9516,10 +9638,10 @@ void pmpi_type_null_delete_fn__( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4,
 }
 
 #pragma weak mpi_type_dup_fn_ = pmpi_type_dup_fn_
-void pmpi_type_dup_fn_( MPI_Fint v1, MPI_Fint *v2, void *v3, void **v4, void **v5, MPI_Fint *v6, int *ierr )
+void pmpi_type_dup_fn_(MPI_Fint v1, MPI_Fint *v2, void *v3, void **v4, void **v5, MPI_Fint *v6, int *ierr)
 {
-	*v5 = *v4;
-	*v6 = 1;
+	*v5   = *v4;
+	*v6   = 1;
 	*ierr = MPI_SUCCESS;
 	UNUSED(v1);
 	UNUSED(v2);
@@ -9528,10 +9650,10 @@ void pmpi_type_dup_fn_( MPI_Fint v1, MPI_Fint *v2, void *v3, void **v4, void **v
 }
 
 #pragma weak mpi_type_dup_fn__ = pmpi_type_dup_fn__
-void pmpi_type_dup_fn__( MPI_Fint v1, MPI_Fint *v2, void *v3, void **v4, void **v5, MPI_Fint *v6, int *ierr )
+void pmpi_type_dup_fn__(MPI_Fint v1, MPI_Fint *v2, void *v3, void **v4, void **v5, MPI_Fint *v6, int *ierr)
 {
-	*v5 = *v4;
-	*v6 = 1;
+	*v5   = *v4;
+	*v6   = 1;
 	*ierr = MPI_SUCCESS;
 	UNUSED(v1);
 	UNUSED(v2);
@@ -9540,10 +9662,10 @@ void pmpi_type_dup_fn__( MPI_Fint v1, MPI_Fint *v2, void *v3, void **v4, void **
 }
 
 #pragma weak mpi_type_null_copy_fn_ = pmpi_type_null_copy_fn_
-void pmpi_type_null_copy_fn_( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, void *v5, MPI_Fint *v6, int *ierr )
+void pmpi_type_null_copy_fn_(MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, void *v5, MPI_Fint *v6, int *ierr)
 {
 	*ierr = MPI_SUCCESS;
-	*v6 = 0;
+	*v6   = 0;
 	UNUSED(v1);
 	UNUSED(v2);
 	UNUSED(v3);
@@ -9552,10 +9674,10 @@ void pmpi_type_null_copy_fn_( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, vo
 }
 
 #pragma weak mpi_type_null_copy_fn__ = pmpi_type_null_copy_fn__
-void pmpi_type_null_copy_fn__( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, void *v5, MPI_Fint *v6, int *ierr )
+void pmpi_type_null_copy_fn__(MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, void *v5, MPI_Fint *v6, int *ierr)
 {
 	*ierr = MPI_SUCCESS;
-	*v6 = 0;
+	*v6   = 0;
 	UNUSED(v1);
 	UNUSED(v2);
 	UNUSED(v3);
@@ -9564,7 +9686,7 @@ void pmpi_type_null_copy_fn__( MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, v
 }
 
 #pragma weak mpi_win_null_delete_fn_ = pmpi_win_null_delete_fn_
-void pmpi_win_null_delete_fn_ ( MPI_Fint*v1, MPI_Fint*v2, void*v3, void*v4, int *ierr )
+void pmpi_win_null_delete_fn_(MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, int *ierr)
 {
 	*ierr = MPI_SUCCESS;
 	UNUSED(v1);
@@ -9574,9 +9696,9 @@ void pmpi_win_null_delete_fn_ ( MPI_Fint*v1, MPI_Fint*v2, void*v3, void*v4, int 
 }
 
 #pragma weak mpi_win_null_delete_fn__ = pmpi_win_null_delete_fn__
-void pmpi_win_null_delete_fn__ ( MPI_Fint*v1, MPI_Fint*v2, void*v3, void*v4, int *ierr )
+void pmpi_win_null_delete_fn__(MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, int *ierr)
 {
-    *ierr = MPI_SUCCESS;
+	*ierr = MPI_SUCCESS;
 	UNUSED(v1);
 	UNUSED(v2);
 	UNUSED(v3);
@@ -9584,10 +9706,10 @@ void pmpi_win_null_delete_fn__ ( MPI_Fint*v1, MPI_Fint*v2, void*v3, void*v4, int
 }
 
 #pragma weak mpi_win_dup_fn_ = pmpi_win_dup_fn_
-void pmpi_win_dup_fn_ ( MPI_Fint v1, MPI_Fint*v2, void*v3, void**v4, void**v5, MPI_Fint*v6, int *ierr )
+void pmpi_win_dup_fn_(MPI_Fint v1, MPI_Fint *v2, void *v3, void **v4, void **v5, MPI_Fint *v6, int *ierr)
 {
-	*v5 = *v4;
-	*v6 = 1;
+	*v5   = *v4;
+	*v6   = 1;
 	*ierr = MPI_SUCCESS;
 	UNUSED(v1);
 	UNUSED(v2);
@@ -9596,10 +9718,10 @@ void pmpi_win_dup_fn_ ( MPI_Fint v1, MPI_Fint*v2, void*v3, void**v4, void**v5, M
 }
 
 #pragma weak mpi_win_dup_fn__ = pmpi_win_dup_fn__
-void pmpi_win_dup_fn__ ( MPI_Fint v1, MPI_Fint*v2, void*v3, void**v4, void**v5, MPI_Fint*v6, int *ierr )
+void pmpi_win_dup_fn__(MPI_Fint v1, MPI_Fint *v2, void *v3, void **v4, void **v5, MPI_Fint *v6, int *ierr)
 {
-	*v5 = *v4;
-	*v6 = 1;
+	*v5   = *v4;
+	*v6   = 1;
 	*ierr = MPI_SUCCESS;
 	UNUSED(v1);
 	UNUSED(v2);
@@ -9608,10 +9730,10 @@ void pmpi_win_dup_fn__ ( MPI_Fint v1, MPI_Fint*v2, void*v3, void**v4, void**v5, 
 }
 
 #pragma weak mpi_win_null_copy_fn_ = pmpi_win_null_copy_fn_
-void pmpi_win_null_copy_fn_ ( MPI_Fint*v1, MPI_Fint*v2, void*v3, void*v4, void*v5, MPI_Fint *v6, int *ierr )
+void pmpi_win_null_copy_fn_(MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, void *v5, MPI_Fint *v6, int *ierr)
 {
 	*ierr = MPI_SUCCESS;
-	*v6 = 0;
+	*v6   = 0;
 	UNUSED(v1);
 	UNUSED(v2);
 	UNUSED(v3);
@@ -9620,10 +9742,10 @@ void pmpi_win_null_copy_fn_ ( MPI_Fint*v1, MPI_Fint*v2, void*v3, void*v4, void*v
 }
 
 #pragma weak mpi_win_null_copy_fn__ = pmpi_win_null_copy_fn__
-void pmpi_win_null_copy_fn__ ( MPI_Fint*v1, MPI_Fint*v2, void*v3, void*v4, void*v5, MPI_Fint *v6, int *ierr )
+void pmpi_win_null_copy_fn__(MPI_Fint *v1, MPI_Fint *v2, void *v3, void *v4, void *v5, MPI_Fint *v6, int *ierr)
 {
 	*ierr = MPI_SUCCESS;
-	*v6 = 0;
+	*v6   = 0;
 	UNUSED(v1);
 	UNUSED(v2);
 	UNUSED(v3);
@@ -9632,36 +9754,46 @@ void pmpi_win_null_copy_fn__ ( MPI_Fint*v1, MPI_Fint*v2, void*v3, void*v4, void*
 }
 
 #pragma weak mpi_pcontrol_ = pmpi_pcontrol_
-void pmpi_pcontrol_ ( MPI_Fint *v1, MPI_Fint *ierr ){
-     *ierr = MPI_Pcontrol( (int)*v1 );
+void pmpi_pcontrol_(MPI_Fint *v1, MPI_Fint *ierr)
+{
+	*ierr = MPI_Pcontrol( (int)*v1);
 }
 
 #pragma weak mpi_pcontrol__ = pmpi_pcontrol__
-void pmpi_pcontrol__ ( MPI_Fint *v1, MPI_Fint *ierr ){
-     pmpi_pcontrol_(v1, ierr);
+void pmpi_pcontrol__(MPI_Fint *v1, MPI_Fint *ierr)
+{
+	pmpi_pcontrol_(v1, ierr);
 }
 
 #pragma weak mpi_address_ = pmpi_address_
-void pmpi_address_ ( void*v1, MPI_Fint *v2, MPI_Fint *ierr ){
-     MPI_Aint a;
-     *ierr = MPI_Address( v1, &a );
-     *v2 = (MPI_Fint)( a );
+void pmpi_address_(void *v1, MPI_Fint *v2, MPI_Fint *ierr)
+{
+	MPI_Aint a;
+
+	*ierr = MPI_Address(v1, &a);
+	*v2   = (MPI_Fint)(a);
 }
 
 #pragma weak mpi_address__ = pmpi_address__
-void pmpi_address__ ( void*v1, MPI_Fint *v2, MPI_Fint *ierr ){
+void pmpi_address__(void *v1, MPI_Fint *v2, MPI_Fint *ierr)
+{
 	pmpi_address_(v1, v2, ierr);
 }
 
 #pragma weak mpi_errhandler_create_ = pmpi_errhandler_create_
-void pmpi_errhandler_create_ ( MPI_Handler_function *v1, MPI_Fint *v2, MPI_Fint *ierr ){
-    MPI_Errhandler c_errhandler;
-    *ierr = MPI_Errhandler_create( v1, &c_errhandler );
-    if(*ierr == MPI_SUCCESS)
-        *v2 = PMPI_Errhandler_c2f(c_errhandler);
+void pmpi_errhandler_create_(MPI_Handler_function *v1, MPI_Fint *v2, MPI_Fint *ierr)
+{
+	MPI_Errhandler c_errhandler;
+
+	*ierr = MPI_Errhandler_create(v1, &c_errhandler);
+	if(*ierr == MPI_SUCCESS)
+	{
+		*v2 = PMPI_Errhandler_c2f(c_errhandler);
+	}
 }
 
 #pragma weak mpi_errhandler_create__ = pmpi_errhandler_create__
-void pmpi_errhandler_create__ ( MPI_Handler_function*v1, MPI_Fint *v2, MPI_Fint *ierr ){
-     pmpi_errhandler_create_( v1, v2, ierr );
+void pmpi_errhandler_create__(MPI_Handler_function *v1, MPI_Fint *v2, MPI_Fint *ierr)
+{
+	pmpi_errhandler_create_(v1, v2, ierr);
 }

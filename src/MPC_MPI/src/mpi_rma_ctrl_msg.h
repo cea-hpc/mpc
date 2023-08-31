@@ -41,27 +41,29 @@ void mpc_MPI_Win_handle_non_contiguous_read(void *data, size_t size);
 /* Window Control Message Engine                                        */
 /************************************************************************/
 
-typedef enum {
-  MPC_MPI_WIN_CTRL_MSG_LOCK,
-  MPC_MPI_WIN_CTRL_MSG_UNLOCK,
-  MPC_MPI_WIN_CTRL_MSG_LOCKALL,
-  MPC_MPI_WIN_CTRL_MSG_UNLOCKALL,
-  MPC_MPI_WIN_CTRL_NONCONTIG_SEND,
-  MPC_MPI_WIN_CTRL_NONCONTIG_RECV,
-  MPC_MPI_WIN_CTRL_ACCUMULATE_SEND,
-  MPC_MPI_WIN_CTRL_FLUSH
+typedef enum
+{
+	MPC_MPI_WIN_CTRL_MSG_LOCK,
+	MPC_MPI_WIN_CTRL_MSG_UNLOCK,
+	MPC_MPI_WIN_CTRL_MSG_LOCKALL,
+	MPC_MPI_WIN_CTRL_MSG_UNLOCKALL,
+	MPC_MPI_WIN_CTRL_NONCONTIG_SEND,
+	MPC_MPI_WIN_CTRL_NONCONTIG_RECV,
+	MPC_MPI_WIN_CTRL_ACCUMULATE_SEND,
+	MPC_MPI_WIN_CTRL_FLUSH
 } mpc_MPI_Win_ctrl_message_t;
 
-struct mpc_MPI_Win_ctrl_message {
-  int source_rank;
-  int source_win;
-  mpc_MPI_Win_ctrl_message_t type;
-  MPI_Win target_win;
-  MPI_Aint opt_arg1;
-  size_t opt_arg2;
-  int opt_arg3;
-  MPI_Datatype opt_arg4;
-  int opt_arg5;
+struct mpc_MPI_Win_ctrl_message
+{
+	int                        source_rank;
+	int                        source_win;
+	mpc_MPI_Win_ctrl_message_t type;
+	MPI_Win                    target_win;
+	MPI_Aint                   opt_arg1;
+	size_t                     opt_arg2;
+	int                        opt_arg3;
+	MPI_Datatype               opt_arg4;
+	int                        opt_arg5;
 };
 
 void mpc_MPI_Win_control_message_handler(void *data, size_t size);
@@ -70,8 +72,8 @@ void mpc_MPI_Win_control_message_send(MPI_Win win, int rank,
                                       struct mpc_MPI_Win_ctrl_message *message);
 
 void mpc_MPI_Win_control_message_send_piggybacked(
-    MPI_Win win, int rank, struct mpc_MPI_Win_ctrl_message *message,
-    size_t size);
+	MPI_Win win, int rank, struct mpc_MPI_Win_ctrl_message *message,
+	size_t size);
 
 int mpc_MPI_Win_init_lock_message(struct mpc_MPI_Win_ctrl_message *message,
                                   MPI_Win win, int rank, int lock_type);

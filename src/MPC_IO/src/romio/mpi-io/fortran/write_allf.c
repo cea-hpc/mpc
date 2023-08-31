@@ -1,4 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
+
 /*
  *
  *   Copyright (C) 1997 University of Chicago.
@@ -16,18 +17,22 @@
 #if defined(FORTRANCAPS)
 extern FORTRAN_API void FORT_CALL MPI_FILE_WRITE_ALL(MPI_Fint *, void *, MPI_Fint *, MPI_Fint *,
                                                      MPI_Status *, MPI_Fint *);
+
 #pragma weak MPI_FILE_WRITE_ALL = PMPI_FILE_WRITE_ALL
 #elif defined(FORTRANDOUBLEUNDERSCORE)
 extern FORTRAN_API void FORT_CALL mpi_file_write_all__(MPI_Fint *, void *, MPI_Fint *, MPI_Fint *,
                                                        MPI_Status *, MPI_Fint *);
+
 #pragma weak mpi_file_write_all__ = pmpi_file_write_all__
 #elif !defined(FORTRANUNDERSCORE)
 extern FORTRAN_API void FORT_CALL mpi_file_write_all(MPI_Fint *, void *, MPI_Fint *, MPI_Fint *,
                                                      MPI_Status *, MPI_Fint *);
+
 #pragma weak mpi_file_write_all = pmpi_file_write_all
 #else
 extern FORTRAN_API void FORT_CALL mpi_file_write_all_(MPI_Fint *, void *, MPI_Fint *, MPI_Fint *,
                                                       MPI_Status *, MPI_Fint *);
+
 #pragma weak mpi_file_write_all_ = pmpi_file_write_all_
 #endif
 
@@ -60,32 +65,32 @@ extern FORTRAN_API void FORT_CALL mpi_file_write_all_(MPI_Fint *, void *, MPI_Fi
 #endif
 
 #ifdef FORTRANCAPS
-#define mpi_file_write_all_ PMPI_FILE_WRITE_ALL
+#define mpi_file_write_all_    PMPI_FILE_WRITE_ALL
 #elif defined(FORTRANDOUBLEUNDERSCORE)
-#define mpi_file_write_all_ pmpi_file_write_all__
+#define mpi_file_write_all_    pmpi_file_write_all__
 #elif !defined(FORTRANUNDERSCORE)
 #if defined(HPUX) || defined(SPPUX)
 #pragma _HP_SECONDARY_DEF pmpi_file_write_all pmpi_file_write_all_
 #endif
-#define mpi_file_write_all_ pmpi_file_write_all
+#define mpi_file_write_all_    pmpi_file_write_all
 #else
 #if defined(HPUX) || defined(SPPUX)
 #pragma _HP_SECONDARY_DEF pmpi_file_write_all_ pmpi_file_write_all
 #endif
-#define mpi_file_write_all_ pmpi_file_write_all_
+#define mpi_file_write_all_    pmpi_file_write_all_
 #endif
 
 #else
 
 #ifdef FORTRANCAPS
-#define mpi_file_write_all_ MPI_FILE_WRITE_ALL
+#define mpi_file_write_all_    MPI_FILE_WRITE_ALL
 #elif defined(FORTRANDOUBLEUNDERSCORE)
-#define mpi_file_write_all_ mpi_file_write_all__
+#define mpi_file_write_all_    mpi_file_write_all__
 #elif !defined(FORTRANUNDERSCORE)
 #if defined(HPUX) || defined(SPPUX)
 #pragma _HP_SECONDARY_DEF mpi_file_write_all mpi_file_write_all_
 #endif
-#define mpi_file_write_all_ mpi_file_write_all
+#define mpi_file_write_all_    mpi_file_write_all
 #else
 #if defined(HPUX) || defined(SPPUX)
 #pragma _HP_SECONDARY_DEF mpi_file_write_all_ mpi_file_write_all
@@ -95,33 +100,35 @@ extern FORTRAN_API void FORT_CALL mpi_file_write_all_(MPI_Fint *, void *, MPI_Fi
 
 #if defined(MPIHP)
 /* Prototype to keep compiler happy */
-void mpi_file_write_all_(MPI_Fint * fh, void *buf, MPI_Fint * count,
-                         MPI_Fint * datatype, MPI_Status * status, MPI_Fint * ierr);
+void mpi_file_write_all_(MPI_Fint *fh, void *buf, MPI_Fint *count,
+                         MPI_Fint *datatype, MPI_Status *status, MPI_Fint *ierr);
 
-void mpi_file_write_all_(MPI_Fint * fh, void *buf, MPI_Fint * count,
-                         MPI_Fint * datatype, MPI_Status * status, MPI_Fint * ierr)
+void mpi_file_write_all_(MPI_Fint *fh, void *buf, MPI_Fint *count,
+                         MPI_Fint *datatype, MPI_Status *status, MPI_Fint *ierr)
 {
-    MPI_File fh_c;
-    MPI_Datatype datatype_c;
+	MPI_File     fh_c;
+	MPI_Datatype datatype_c;
 
-    fh_c = MPI_File_f2c(*fh);
-    datatype_c = MPI_Type_f2c(*datatype);
+	fh_c       = MPI_File_f2c(*fh);
+	datatype_c = MPI_Type_f2c(*datatype);
 
-    *ierr = MPI_File_write_all(fh_c, buf, *count, datatype_c, status);
+	*ierr = MPI_File_write_all(fh_c, buf, *count, datatype_c, status);
 }
+
 #else
 /* Prototype to keep compiler happy */
-FORTRAN_API void FORT_CALL mpi_file_write_all_(MPI_Fint * fh, void *buf, MPI_Fint * count,
-                                               MPI_Fint * datatype, MPI_Status * status,
-                                               MPI_Fint * ierr);
+FORTRAN_API void FORT_CALL mpi_file_write_all_(MPI_Fint *fh, void *buf, MPI_Fint *count,
+                                               MPI_Fint *datatype, MPI_Status *status,
+                                               MPI_Fint *ierr);
 
-FORTRAN_API void FORT_CALL mpi_file_write_all_(MPI_Fint * fh, void *buf, MPI_Fint * count,
-                                               MPI_Fint * datatype, MPI_Status * status,
-                                               MPI_Fint * ierr)
+FORTRAN_API void FORT_CALL mpi_file_write_all_(MPI_Fint *fh, void *buf, MPI_Fint *count,
+                                               MPI_Fint *datatype, MPI_Status *status,
+                                               MPI_Fint *ierr)
 {
-    MPI_File fh_c;
+	MPI_File fh_c;
 
-    fh_c = MPI_File_f2c(*fh);
-    *ierr = MPI_File_write_all(fh_c, buf, *count, MPI_Type_f2c( *datatype ), status);
+	fh_c  = MPI_File_f2c(*fh);
+	*ierr = MPI_File_write_all(fh_c, buf, *count, MPI_Type_f2c(*datatype), status);
 }
+
 #endif
