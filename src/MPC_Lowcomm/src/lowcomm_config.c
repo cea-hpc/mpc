@@ -1147,12 +1147,16 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_protocol_conf_init(void)
 	proto->multirail_enabled    = 1; /* default multirail enabled */
 	proto->rndv_mode            = 1; /* default rndv get */
 	proto->offload              = 0; /* default no offload */
+	proto->max_mmu_entries = 1024;
+	proto->mmu_max_size = 4294967296ull;
 
 	mpc_conf_config_type_t *ret = mpc_conf_config_type_init("protocol",
 	                                                        PARAM("verbosity", &mpc_common_get_flags()->verbosity, MPC_CONF_INT, "Debug level message (1-3)"),
 	                                                        PARAM("rndvmode", &proto->rndv_mode, MPC_CONF_INT, "Type of rendez-vous to use (default: mode get)"),
 	                                                        PARAM("offload", &proto->offload, MPC_CONF_INT, "Force offload if possible (ie offload interface available)"),
 	                                                        PARAM("multirailenabled", &proto->multirail_enabled, MPC_CONF_INT, "Is multirail enabled ?"),
+	                                                        PARAM("maxmmuentries", &proto->max_mmu_entries, MPC_CONF_INT, "Maximum number of entries in the pinning cache"),
+	                                                        PARAM("maxmmusize", &proto->mmu_max_size, MPC_CONF_LONG_INT, "Maximum size of the pinning cache"),
 	                                                        NULL);
 
 	return ret;
@@ -1375,10 +1379,10 @@ static inline mpc_conf_config_type_t *__init_workshare_conf(void)
 	                                                        PARAM("enablestealing", &ws->enable_stealing, MPC_CONF_INT, "Defines if workshare stealing is enabled."),
 	                                                        PARAM("stealmode", &ws->steal_mode, MPC_CONF_INT, "Workshare stealing mode"),
 	                                                        PARAM("stealfromend", &ws->steal_from_end, MPC_CONF_INT, "Stealing from end or not"),
-	                                                        PARAM("schedule", &ws->schedule, MPC_CONF_LONG_INT, "Workshare schedule"),
-	                                                        PARAM("stealschedule", &ws->steal_schedule, MPC_CONF_LONG_INT, "Workshare steal schedule"),
-	                                                        PARAM("chunksize", &ws->chunk_size, MPC_CONF_LONG_INT, "Workshare chunk size"),
-	                                                        PARAM("stealchunksize", &ws->steal_chunk_size, MPC_CONF_LONG_INT, "Workshare chunk size"),
+	                                                        PARAM("schedule", &ws->schedule, MPC_CONF_INT, "Workshare schedule"),
+	                                                        PARAM("stealschedule", &ws->steal_schedule, MPC_CONF_INT, "Workshare steal schedule"),
+	                                                        PARAM("chunksize", &ws->chunk_size, MPC_CONF_INT, "Workshare chunk size"),
+	                                                        PARAM("stealchunksize", &ws->steal_chunk_size, MPC_CONF_INT, "Workshare chunk size"),
 	                                                        NULL);
 
 	assume(ret != NULL);

@@ -335,6 +335,10 @@ struct _mpc_lowcomm_config_struct_protocol
 	int  rndv_mode;
 	/**Force offload if possible (ie offload interface available)**/
 	int  offload;
+	/** Maximum number of entries in the MMU */
+	int max_mmu_entries;
+	/** Maximum size of pinned memory in the MMU */
+	size_t mmu_max_size;
 };
 typedef struct _mpc_lowcomm_config_struct_protocol lcr_protocol_config_t;
 
