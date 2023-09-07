@@ -18,6 +18,8 @@ struct lcp_mem {
         lcr_memp_t *mems; /* table of memp pointers */
         bmap_t bm;
         unsigned flags;
+        /* When handled by the MMU this points to the management slot */
+        void * pointer_to_mmu_ctx;
 };
 
 int lcp_mem_create(lcp_context_h ctx, lcp_mem_h *mem_p);

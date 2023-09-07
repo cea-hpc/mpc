@@ -32,7 +32,6 @@ struct mpc_ofi_deffered_completion_s
 
 static inline void __init_ofi_endpoint(sctk_rail_info_t *rail, _mpc_lowcomm_ofi_endpoint_info_t *ofi_data)
 {
-   mpc_common_debug_error("INIT MEMPOOL %ld", rail->runtime_config_driver_config->driver.value.ofi.bcopy_size);
    mpc_mempool_init(&ofi_data->bsend, 10, 100, rail->runtime_config_driver_config->driver.value.ofi.bcopy_size + sizeof(lcr_ofi_am_hdr_t), sctk_malloc, sctk_free);
    mpc_mempool_init(&ofi_data->deffered, 10, 100, sizeof(struct mpc_ofi_deffered_completion_s), sctk_malloc, sctk_free);
 }
@@ -354,7 +353,7 @@ int mpc_ofi_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
 int mpc_ofi_get_attr(sctk_rail_info_t *rail,
                      lcr_rail_attr_t *attr)
 {
-	attr->iface.cap.am.max_iovecs = rail->runtime_config_driver_config->driver.value.ofi.eager_size; //FIXME: arbitrary value...
+	attr->iface.cap.am.max_iovecs = rail->runtime_config_driver_config->driver.value.ofi.eager_size;
 	attr->iface.cap.am.max_bcopy  = rail->runtime_config_driver_config->driver.value.ofi.bcopy_size;
 	attr->iface.cap.am.max_zcopy  = MPC_OFI_DOMAIN_EAGER_SIZE + 1;
 

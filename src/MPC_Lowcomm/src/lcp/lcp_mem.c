@@ -48,6 +48,8 @@ struct lcp_pinning_entry * lcp_pinning_entry_new(void * start, size_t size, lcp_
         ret->size = size;
         ret->ctx = ctx;
         ret->mem_entry = mem_entry;
+        /* Backlink to the MMU CTX here */
+        mem_entry->pointer_to_mmu_ctx = ret;
 
         return ret;
 }
@@ -308,7 +310,11 @@ lcp_mem_h lcp_pinning_mmu_pin(lcp_context_h  ctx, void *addr, size_t size, bmap_
 
 int lcp_pinning_mmu_unpin(lcp_context_h  ctx, lcp_mem_h mem)
 {
+        struct lcp_pinning_entry * mmu_entry = (struct lcp_pinning_entry *)mem->pointer_to_mmu_ctx;
+        assert(mmu_entry != NULL);
+        lcp_pinning_entry_relax(mmu_entry);
 
+        return 0;
 }
 
 
@@ -493,6 +499,7 @@ int lcp_mem_create(lcp_context_h ctx, lcp_mem_h *mem_p)
 
         mem->mems       = sctk_malloc(ctx->num_resources * sizeof(lcr_memp_t));
         mem->num_ifaces = 0;
+        mem->pointer_to_mmu_ctx = NULL;
         if (mem->mems == NULL) {
                 mpc_common_debug_error("LCP: could not allocate memory pins");
                 rc = LCP_ERROR;
