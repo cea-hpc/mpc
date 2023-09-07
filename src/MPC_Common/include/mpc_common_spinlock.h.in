@@ -96,7 +96,7 @@ typedef struct
 		MPC_COMMON_SPINLOCK_INITIALIZER, OPA_INT_T_INITIALIZER( 0 ) \
 	}
 
-#define sctk_spin_rwlock_init( a )                      \
+#define mpc_common_rw_lock_init( a )                      \
 	do                                                  \
 	{                                                   \
                 mpc_common_spinlock_init(&( a )->writer_lock , 0); \

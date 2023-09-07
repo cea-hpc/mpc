@@ -484,7 +484,7 @@ int mpc_MPI_win_locks_init(struct mpc_MPI_win_locks *locks) {
   locks->head = NULL;
   mpc_common_spinlock_init(&locks->lock, 0);
 
-  sctk_spin_rwlock_init(&locks->win_lock);
+  mpc_common_rw_lock_init(&locks->win_lock);
 
   return 0;
 }
@@ -599,7 +599,7 @@ int mpc_Win_target_ctx_init(struct mpc_Win_target_ctx *ctx, MPI_Comm comm) {
   mpc_MPI_Win_request_array_init(&ctx->requests, comm);
   mpc_MPI_Win_tmp_init(&ctx->tmp_buffs);
 
-  sctk_spin_rwlock_init(&ctx->active_epoch_lock);
+  mpc_common_rw_lock_init(&ctx->active_epoch_lock);
 
   return 0;
 }

@@ -201,7 +201,7 @@ void mpc_common_hashtable_init( struct mpc_common_hashtable *ht, uint64_t size )
 
 	for ( i = 0; i < size; i++ )
 	{
-		sctk_spin_rwlock_init( &( ht->rwlocks[i] ) );
+		mpc_common_rw_lock_init( &( ht->rwlocks[i] ) );
 	}
 }
 void mpc_common_hashtable_release( struct mpc_common_hashtable *ht )
