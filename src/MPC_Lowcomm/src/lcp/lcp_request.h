@@ -144,7 +144,7 @@ struct lcp_request {
                 size_t           offset;
                 size_t           remaining;
                 lcr_completion_t comp;
-                lcp_mem_h        lmem; 
+                lcp_mem_h        lmem;
                 int              offloaded;
 	} state;
 };

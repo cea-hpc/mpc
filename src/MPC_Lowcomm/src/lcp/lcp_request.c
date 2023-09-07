@@ -9,16 +9,14 @@
 
 #include <sctk_alloc.h>
 
-mpc_mempool *request_mempool;
+mpc_mempool request_mempool;
 
 __attribute__((constructor)) static void init_mempool(){
-	request_mempool = (void *)sctk_malloc(sizeof(mpc_mempool));
-	mpc_mempool_init(request_mempool, 10, 100, sizeof(lcp_request_t), sctk_malloc, sctk_free);
+	mpc_mempool_init(&request_mempool, 10, 100, sizeof(lcp_request_t), sctk_malloc, sctk_free);
 }
 
 __attribute__((destructor)) static void destroy_mempool(){
-	mpc_mempool_empty(request_mempool);
-	sctk_free(request_mempool);
+	mpc_mempool_empty(&request_mempool);
 }
 
 /**
@@ -30,7 +28,7 @@ __attribute__((destructor)) static void destroy_mempool(){
 int lcp_request_create(lcp_request_t **req_p)
 {
 	lcp_request_t *req;
-	req = mpc_mempool_alloc(request_mempool);
+	req = mpc_mempool_alloc(&request_mempool);
 	// req = (lcp_request_t *)sctk_malloc(sizeof(lcp_request_t));
 	if (req == NULL) {
 		mpc_common_debug_error("LCP: could not allocate recv request.");
@@ -104,7 +102,7 @@ int lcp_request_complete(lcp_request_t *req)
                 lcp_pending_delete(req->ctx->match_ht, req->msg_id);
         }
 
-	mpc_mempool_free(request_mempool, req);
+	mpc_mempool_free(NULL, req);
 	// sctk_free(req);
 
 	return LCP_SUCCESS;

@@ -28,6 +28,7 @@ struct mpc_ofi_deffered_completion_s
 {
    lcr_ofi_am_hdr_t hdr;
    lcr_completion_t *comp;
+   struct iovec full_iov[MPC_OFI_IOVEC_SIZE + 2];
 };
 
 static inline void __init_ofi_endpoint(sctk_rail_info_t *rail, _mpc_lowcomm_ofi_endpoint_info_t *ofi_data)
@@ -174,11 +175,11 @@ ssize_t mpc_ofi_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
 	       goto err;
 	}
 
+   memset(hdr, 0, sizeof(lcr_ofi_am_hdr_t));
+
 	hdr->am_id = id;
 	hdr->length = payload_length = pack(hdr->data, arg);
    payload_length = hdr->length;
-
-   mpc_common_debug("OUT CB %d LEN %lld", hdr->am_id, hdr->length);
 
    if( mpc_ofi_view_send(&rail->network.ofi.view, hdr, hdr->length + sizeof(lcr_ofi_am_hdr_t), ep->dest, NULL, __free_bsend_buffer_mempool, hdr) )
    {
@@ -208,8 +209,6 @@ int mpc_ofi_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
                                     unsigned flags,
                                     lcr_completion_t *comp)
 {
-   struct iovec full_iov[MPC_OFI_IOVEC_SIZE + 2];
-
 	struct mpc_ofi_deffered_completion_s *completion =  mpc_mempool_alloc(&ep->data.ofi.deffered);
    assume(completion != NULL);
 
@@ -221,16 +220,16 @@ int mpc_ofi_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
    size_t total_size = 0;
    int total_iov_size = 1;
 
-   full_iov[0].iov_base = &completion->hdr;
-   full_iov[0].iov_len = sizeof(lcr_ofi_am_hdr_t);
+   completion->full_iov[0].iov_base = &completion->hdr;
+   completion->full_iov[0].iov_len = sizeof(lcr_ofi_am_hdr_t);
 
    int iov_offset = 1;
 
    if(header_length)
    {
-      full_iov[iov_offset].iov_base = (void*)header;
-      full_iov[iov_offset].iov_len = header_length;
-      total_size += full_iov[iov_offset].iov_len;
+      completion->full_iov[iov_offset].iov_base = (void*)header;
+      completion->full_iov[iov_offset].iov_len = header_length;
+      total_size += completion->full_iov[iov_offset].iov_len;
       iov_offset++;
       total_iov_size++;
    }
@@ -238,9 +237,9 @@ int mpc_ofi_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
    unsigned int i = 0;
    for(i = 0 ; i < iovcnt; i++)
    {
-      full_iov[iov_offset].iov_base = iov[i].iov_base;
-      full_iov[iov_offset].iov_len = iov[i].iov_len;
-      total_size += full_iov[iov_offset].iov_len;
+      completion->full_iov[iov_offset].iov_base = iov[i].iov_base;
+      completion->full_iov[iov_offset].iov_len = iov[i].iov_len;
+      total_size += completion->full_iov[iov_offset].iov_len;
       iov_offset++;
       total_iov_size++;
    }
@@ -249,7 +248,7 @@ int mpc_ofi_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
    if(mpc_ofi_view_sendv(&ep->rail->network.ofi.view,
                          ep->dest,
-                         full_iov,
+                         completion->full_iov,
                          total_iov_size,
                          NULL,
                          __deffered_completion_cb,
@@ -319,7 +318,6 @@ int mpc_ofi_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
    assert(size);
 
    comp->sent = size;
-
    completion->comp = comp;
 
    if(mpc_ofi_domain_get(ep->rail->network.ofi.view.domain,

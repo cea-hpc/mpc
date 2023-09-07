@@ -59,8 +59,9 @@ struct lcp_pinning_entry * lcp_pinning_entry_new(void * start, size_t size, lcp_
 
 int lcp_pinning_entry_contains(struct lcp_pinning_entry *entry, void * start, size_t size)
 {
-        if( (entry->start <= start) && ((start + size) <= (entry->start + entry->size)) )
+        if( (entry->start <= start) && ((start + size) <= (entry->start + entry->size)) && (entry->size == size))
         {
+                mpc_common_nodebug("(%p - %lld) is in (%p -- %lld)", start, size, entry->start, entry->size);
                 return 1;
         }
 

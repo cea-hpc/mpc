@@ -19,7 +19,7 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 	lcp_unexp_ctnr_t *match;
 	sctk_rail_info_t *iface;
 	lcp_request_t *req;
-        lcp_context_h ctx = task->ctx;
+	lcp_context_h ctx = task->ctx;
 
 	// create a request to be matched with the received message
 	rc = lcp_request_create(&req);

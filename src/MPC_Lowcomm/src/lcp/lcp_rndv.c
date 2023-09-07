@@ -176,6 +176,9 @@ int lcp_rndv_reg_send_buffer(lcp_request_t *req)
                         req->send.buffer : req->state.pack_buf;
 
                 req->state.lmem = lcp_pinning_mmu_pin(req->ctx, start, req->send.length,req->send.ep->conn_map);
+                req->state.offset = (size_t)(start - req->state.lmem->base_addr);
+                assume(req->state.offset == 0);
+
                 return MPC_LOWCOMM_SUCCESS;
 
         }
@@ -193,6 +196,9 @@ int lcp_rndv_reg_recv_buffer(lcp_request_t *rndv_req)
 
         /* Register and pack memory pin context that will be sent to remote */
         req->state.lmem = lcp_pinning_mmu_pin(req->ctx, start, req->send.length,req->send.ep->conn_map);
+        req->state.offset = (size_t)(start - req->state.lmem->base_addr);
+        assume(req->state.offset == 0);
+
         return MPC_LOWCOMM_SUCCESS;
 }
 
