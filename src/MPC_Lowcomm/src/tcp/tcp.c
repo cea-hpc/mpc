@@ -30,13 +30,8 @@
 #include <lcr/lcr_component.h>
 #endif
 #include <sys/socket.h> /* shutdown() */
-
-// #include <lcp/mpc_mempool.h>
 #include <mpc_common_debug.h>
 #include <sctk_alloc.h>
-
-
-// mpc_mempool tcp_mempool;
 
 /********************************************************************/
 /* Inter Thread Comm Hooks                                          */

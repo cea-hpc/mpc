@@ -61,6 +61,9 @@ typedef union
 #ifdef MPC_USE_PORTALS
 	_mpc_lowcomm_endpoint_info_portals_t ptl;    /*< Portals route info */
 #endif
+#ifdef MPC_USE_OFI
+	_mpc_lowcomm_ofi_endpoint_info_t ofi;
+#endif
 } _mpc_lowcomm_endpoint_info_t;
 
 /** @brief State of the Route */
@@ -95,8 +98,6 @@ struct _mpc_lowcomm_endpoint_s
 	char                         is_initiator;      /**< Return if the process is the initiator of the remote creation.
 	                                                 *   is set to CHAR_MAX if not set */
 	mpc_common_spinlock_t        lock;              /**< Lock protecting the endpoint */
-	mpc_mempool                  *zcopy_mempool;
-	mpc_mempool                  *bcopy_mempool;
 };
 
 /**

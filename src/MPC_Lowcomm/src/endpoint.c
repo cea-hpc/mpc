@@ -60,9 +60,6 @@ void _mpc_lowcomm_endpoint_init(_mpc_lowcomm_endpoint_t *edp, mpc_lowcomm_peer_u
 	edp->is_initiator = CHAR_MAX;
 	mpc_common_spinlock_init(&edp->lock, 0);
 
-	edp->bcopy_mempool = NULL;
-	edp->zcopy_mempool = NULL;
-
 	edp->type = type;
 }
 

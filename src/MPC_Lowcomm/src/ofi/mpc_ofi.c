@@ -24,11 +24,26 @@ static inline char *__gen_rail_target_name(sctk_rail_info_t *rail, char *buff, i
 	return buff;
 }
 
+struct mpc_ofi_deffered_completion_s
+{
+   lcr_ofi_am_hdr_t hdr;
+   lcr_completion_t *comp;
+};
+
+static inline void __init_ofi_endpoint(sctk_rail_info_t *rail, _mpc_lowcomm_ofi_endpoint_info_t *ofi_data)
+{
+   mpc_common_debug_error("INIT MEMPOOL %ld", rail->runtime_config_driver_config->driver.value.ofi.bcopy_size);
+   mpc_mempool_init(&ofi_data->bsend, 10, 100, rail->runtime_config_driver_config->driver.value.ofi.bcopy_size + sizeof(lcr_ofi_am_hdr_t), sctk_malloc, sctk_free);
+   mpc_mempool_init(&ofi_data->deffered, 10, 100, sizeof(struct mpc_ofi_deffered_completion_s), sctk_malloc, sctk_free);
+}
+
 static void __add_route(mpc_lowcomm_peer_uid_t dest_uid, sctk_rail_info_t *rail)
 {
 	_mpc_lowcomm_endpoint_t *new_route = sctk_malloc(sizeof(_mpc_lowcomm_endpoint_t) );
 	assume(new_route != NULL);
 	_mpc_lowcomm_endpoint_init(new_route, dest_uid, rail, _MPC_LOWCOMM_ENDPOINT_DYNAMIC);
+
+   __init_ofi_endpoint(rail, &new_route->data.ofi);
 
 	/* Make sure the route is flagged connected */
 	_mpc_lowcomm_endpoint_set_state(new_route, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
@@ -142,6 +157,7 @@ static inline int __free_bsend_buffer_mempool(__UNUSED__ struct mpc_ofi_request_
    return 0;
 }
 
+
 ssize_t mpc_ofi_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
                               uint8_t id,
                               lcr_pack_callback_t pack,
@@ -149,21 +165,9 @@ ssize_t mpc_ofi_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
                               unsigned flags)
 {
    sctk_rail_info_t *rail = ep->rail;
-	uint32_t payload_length;
-	ssize_t sent;
-   printf("driver %s\n", rail->runtime_config_driver_config->name);
-   unsigned int mpc_ofi_bsend_trsh;
-   if(strcmp(rail->runtime_config_driver_config->name, "tcpofi") == 0)
-      mpc_ofi_bsend_trsh = _mpc_lowcomm_conf_driver_unfolded_get("tcpofi")->driver.value.ofi.bcopy_size;
-   else if(strcmp(rail->runtime_config_driver_config->name, "verbsofi") == 0)
-      mpc_ofi_bsend_trsh = _mpc_lowcomm_conf_driver_unfolded_get("verbsofi")->driver.value.ofi.bcopy_size;
-   else if(strcmp(rail->runtime_config_driver_config->name, "shmofi") == 0)
-      mpc_ofi_bsend_trsh = _mpc_lowcomm_conf_driver_unfolded_get("shmofi")->driver.value.ofi.bcopy_size;
-   else
-      mpc_common_debug_error("error unknown rail in ofi bsend");
+	uint32_t payload_length = 0;
 
-    if(!ep->bcopy_mempool) ep->bcopy_mempool = (mpc_mempool *)sctk_malloc(sizeof(mpc_mempool));
-   lcr_ofi_am_hdr_t *hdr = mpc_mempool_alloc_and_init(ep->bcopy_mempool, 10, 100, mpc_ofi_bsend_trsh + sizeof(lcr_ofi_am_hdr_t), sctk_malloc, sctk_free);
+   lcr_ofi_am_hdr_t *hdr = mpc_mempool_alloc(&ep->data.ofi.bsend);
 
 	if (hdr == NULL) {
 	       mpc_common_debug_error("Could not allocate buffer.");
@@ -187,18 +191,11 @@ err:
 	return payload_length;
 }
 
-struct mpc_ofi_deffered_completion_s
-{
-   lcr_ofi_am_hdr_t hdr;
-   lcr_completion_t *comp;
-};
-
-
 static inline int __deffered_completion_cb(struct mpc_ofi_request_t *req, void *pcomp)
 {
    struct mpc_ofi_deffered_completion_s *comp = (struct mpc_ofi_deffered_completion_s *)pcomp;
    comp->comp->comp_cb(comp->comp);
-   sctk_free(comp);
+   mpc_mempool_free(NULL, comp);
    return 0;
 }
 
@@ -214,7 +211,7 @@ int mpc_ofi_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
 {
    struct iovec full_iov[MPC_OFI_IOVEC_SIZE + 2];
 
-	struct mpc_ofi_deffered_completion_s *completion = sctk_malloc(sizeof(struct mpc_ofi_deffered_completion_s));
+	struct mpc_ofi_deffered_completion_s *completion =  mpc_mempool_alloc(&ep->data.ofi.deffered);
    assume(completion != NULL);
 
    completion->hdr.am_id = id;
@@ -317,7 +314,7 @@ int mpc_ofi_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            size_t size,
                            lcr_completion_t *comp) 
 {
-	struct mpc_ofi_deffered_completion_s *completion = sctk_malloc(sizeof(struct mpc_ofi_deffered_completion_s));
+	struct mpc_ofi_deffered_completion_s *completion =  mpc_mempool_alloc(&ep->data.ofi.deffered);
    assume(completion != NULL);
 
    assert(size);
@@ -357,20 +354,8 @@ int mpc_ofi_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
 int mpc_ofi_get_attr(sctk_rail_info_t *rail,
                      lcr_rail_attr_t *attr)
 {
-   printf("driver %s\n", rail->network_name);
-   // _mpc_lowcomm_config_struct_net_driver_config *config = _mpc_lowcomm_conf_driver_unfolded_get("tcpofi");
-   unsigned int mpc_ofi_bsend_trsh;
-   if(strcmp(rail->runtime_config_driver_config->name, "tcpofi") == 0)
-      mpc_ofi_bsend_trsh = _mpc_lowcomm_conf_driver_unfolded_get("tcpofi")->driver.value.ofi.bcopy_size;
-   else if(strcmp(rail->runtime_config_driver_config->name, "verbsofi") == 0)
-      mpc_ofi_bsend_trsh = _mpc_lowcomm_conf_driver_unfolded_get("verbsofi")->driver.value.ofi.bcopy_size;
-   else if(strcmp(rail->runtime_config_driver_config->name, "shmofi") == 0)
-      mpc_ofi_bsend_trsh = _mpc_lowcomm_conf_driver_unfolded_get("shmofi")->driver.value.ofi.bcopy_size;
-   else
-      mpc_common_debug_error("error unknown rail in ofi bsend");
-
-	attr->iface.cap.am.max_iovecs = MPC_OFI_IOVEC_SIZE; //FIXME: arbitrary value...
-	attr->iface.cap.am.max_bcopy  = mpc_ofi_bsend_trsh + 1;
+	attr->iface.cap.am.max_iovecs = rail->runtime_config_driver_config->driver.value.ofi.eager_size; //FIXME: arbitrary value...
+	attr->iface.cap.am.max_bcopy  = rail->runtime_config_driver_config->driver.value.ofi.bcopy_size;
 	attr->iface.cap.am.max_zcopy  = MPC_OFI_DOMAIN_EAGER_SIZE + 1;
 
 	attr->iface.cap.tag.max_bcopy = 0;
@@ -511,7 +496,6 @@ int mpc_ofi_iface_open(char *device_name, int id,
 
    /* Init capabilities */
    rail->cap = LCR_IFACE_CAP_RMA | LCR_IFACE_CAP_REMOTE;
-
 
 	/* Register our connection handler */
 	char my_net_name[128];

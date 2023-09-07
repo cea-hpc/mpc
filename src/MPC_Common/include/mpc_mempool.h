@@ -21,6 +21,7 @@ typedef struct mpc_mempool_s {
     void *(*malloc_func)(size_t size);
     void (*free_func)(void * pointer);
     size_t size;
+    mpc_common_spinlock_t lock;
 } mpc_mempool;
 
 /**

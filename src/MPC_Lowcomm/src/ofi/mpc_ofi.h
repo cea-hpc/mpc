@@ -3,12 +3,19 @@
 
 #include "mpc_ofi_context.h"
 #include <stdint.h>
+#include <mpc_mempool.h>
 
 typedef struct _mpc_lowcomm_ofi_rail_info_s
 {
    struct mpc_ofi_context_t ctx;
    struct mpc_ofi_view_t view;
 }_mpc_lowcomm_ofi_rail_info_t;
+
+typedef struct _mpc_lowcomm_ofi_endpoint_info_s
+{
+   mpc_mempool bsend;
+   mpc_mempool deffered;
+}_mpc_lowcomm_ofi_endpoint_info_t;
 
 
 typedef struct lcr_ofi_am_hdr {
