@@ -28,6 +28,7 @@
 
 #include "communicator.h"
 #include "lowcomm.h"
+#include "mpc_lowcomm_communicator.h"
 
 #ifdef MPC_Threads
 /* This is needed to rewrite pthread primitives
@@ -1700,6 +1701,7 @@ static void _mpc_coll_noalloc_allreduce_intern( const void *buffer_in, void *buf
 {
 	int allreduce_arity_max = _mpc_lowcomm_coll_conf_get()->allreduce_max_arity;
 	size_t allreduce_max_size = _mpc_lowcomm_coll_conf_get()->allreduce_max_size;
+        mpc_lowcomm_communicator_id_t comm_id = mpc_lowcomm_communicator_id(communicator);
 
 	int myself;
 	int total;
@@ -1731,7 +1733,7 @@ static void _mpc_coll_noalloc_allreduce_intern( const void *buffer_in, void *buf
 		ALLREDUCE_ARRITY = allreduce_arity_max;
 	}
 
-	if ( ( buffer_used == 1 ) || ( communicator->id >= ALLREDUCE_ALLOC_BUFFER_COMMUNICATORS ) )
+	if ( ( buffer_used == 1 ) || ( comm_id >= ALLREDUCE_ALLOC_BUFFER_COMMUNICATORS ) )
 	{
 		buffer_tmp = sctk_malloc( size * ( ALLREDUCE_ARRITY - 1 ) );
 		buffer_table = sctk_malloc( ( ALLREDUCE_ARRITY - 1 ) * sizeof( void * ) );
@@ -1746,22 +1748,22 @@ static void _mpc_coll_noalloc_allreduce_intern( const void *buffer_in, void *buf
 		need_free = 0;
 		buffer_used = 1;
 
-		if ( size * ( ALLREDUCE_ARRITY - 1 ) > buffer_tmp_loc_size[communicator->id] )
+		if ( size * ( ALLREDUCE_ARRITY - 1 ) > buffer_tmp_loc_size[comm_id] )
 		{
-			buffer_tmp_loc_size[communicator->id] = size * ( ALLREDUCE_ARRITY - 1 );
-			sctk_free( buffer_tmp_loc[communicator->id] );
-			buffer_tmp_loc[communicator->id] = sctk_malloc( buffer_tmp_loc_size[communicator->id] );
+			buffer_tmp_loc_size[comm_id] = size * ( ALLREDUCE_ARRITY - 1 );
+			sctk_free( buffer_tmp_loc[comm_id] );
+			buffer_tmp_loc[comm_id] = sctk_malloc( buffer_tmp_loc_size[comm_id] );
 		}
 
-		if ( ( ALLREDUCE_ARRITY - 1 ) * sizeof( void * ) > buffer_table_loc_size[communicator->id] )
+		if ( ( ALLREDUCE_ARRITY - 1 ) * sizeof( void * ) > buffer_table_loc_size[comm_id] )
 		{
-			buffer_table_loc_size[communicator->id] = ( ALLREDUCE_ARRITY - 1 ) * sizeof( void * );
-			sctk_free( buffer_table_loc[communicator->id] );
-			buffer_table_loc[communicator->id] = sctk_malloc( buffer_table_loc_size[communicator->id] );
+			buffer_table_loc_size[comm_id] = ( ALLREDUCE_ARRITY - 1 ) * sizeof( void * );
+			sctk_free( buffer_table_loc[comm_id] );
+			buffer_table_loc[comm_id] = sctk_malloc( buffer_table_loc_size[comm_id] );
 		}
 
-		buffer_tmp = buffer_tmp_loc[communicator->id];
-		buffer_table = buffer_table_loc[communicator->id];
+		buffer_tmp = buffer_tmp_loc[comm_id];
+		buffer_table = buffer_table_loc[comm_id];
 	}
 
 	{
