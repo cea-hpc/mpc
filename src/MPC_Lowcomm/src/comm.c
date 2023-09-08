@@ -3114,7 +3114,7 @@ void mpc_lowcomm_request_init_struct(mpc_lowcomm_request_t *request,
 	request->header.destination_task = dest_task;
 	request->header.source_task      = src_task;
 	request->header.message_tag      = tag;
-	request->header.communicator_id  = comm->id;
+	request->header.communicator_id  = mpc_lowcomm_communicator_id(comm);
 	request->is_null = 0;
 
 	request->request_completion_fn = cb;
@@ -3658,6 +3658,7 @@ int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destinat
 	lcp_tag_recv_info_t  recv_info   = { 0 };
 	mpc_lowcomm_status_t status_init = MPC_LOWCOMM_STATUS_INIT;
 	int                  has_status  = 1;
+        mpc_lowcomm_communicator_id_t comm_id = mpc_lowcomm_communicator_id(comm);
 
 	if(status == MPC_LOWCOMM_STATUS_NULL)
 	{
@@ -3676,7 +3677,7 @@ int mpc_lowcomm_iprobe_src_dest(const int world_source, const int world_destinat
 	}
 
 	rc = lcp_tag_probe_nb(task, world_source, tag,
-	                      comm->id, &recv_info);
+	                      comm_id, &recv_info);
 
 	/* Progress communications to check if event has been raised. */
 	lcp_progress(lcp_ctx_loc);
