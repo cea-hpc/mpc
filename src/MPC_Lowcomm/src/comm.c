@@ -4118,14 +4118,11 @@ static void __lowcomm_init_per_task()
 
 		mpc_lowcomm_init_per_task(task_rank);
 
-		//FIXME: set configuration is slowing down the run.
-		//       Shouldn't it be optional ?
-		//_mpc_lowcomm_monitor_setup_per_task();
 
 #ifdef MPC_LOWCOMM_PROTOCOL
 		lcp_task_h task;
-		int        rc = lcp_task_create(lcp_ctx_loc, task_rank, &task);
-		if(rc != MPC_LOWCOMM_SUCCESS)
+		int rc = lcp_task_create(lcp_ctx_loc, task_rank, &task);
+		if (rc != MPC_LOWCOMM_SUCCESS) {
 		{
 			mpc_common_debug_fatal("LCP: could not create task "
 			                       "tid=%d", task_rank);

@@ -6,29 +6,65 @@
 #include "mpc_common_debug.h"
 #include "mpc_common_spinlock.h"
 #include "mpc_mempool.h"
+#include "mpc_thread_accessor.h"
+
+#include <mpc_common_rank.h>
 
 #include <sctk_alloc.h>
 
-mpc_mempool request_mempool;
+static mpc_mempool *__request_mempool = NULL;
+static unsigned int __request_mempool_count = 0;
 
-__attribute__((constructor)) static void init_mempool(){
-	mpc_mempool_init(&request_mempool, 10, 100, sizeof(lcp_request_t), sctk_malloc, sctk_free);
+void lcp_request_storage_init()
+{
+	assume(__request_mempool_count == 0);
+
+	__request_mempool_count = mpc_common_get_local_task_count();
+	assume(__request_mempool_count >= 1);
+	__request_mempool = sctk_malloc(sizeof(mpc_mempool) * __request_mempool_count);
+	assume(__request_mempool != NULL);
+
+	unsigned int i = 0;
+
+	for(i = 0 ; i < __request_mempool_count; i++)
+	{
+		/* We allocate 0 by default to avoid bad numa */
+		mpc_mempool_init(&__request_mempool[i], 0, 100, sizeof(lcp_request_t), sctk_malloc, sctk_free);
+	}
 }
 
-__attribute__((destructor)) static void destroy_mempool(){
-	mpc_mempool_empty(&request_mempool);
+void lcp_request_storage_release()
+{
+	unsigned int i;
+
+	for(i = 0 ; i < __request_mempool_count; i++)
+	{
+		mpc_mempool_empty(&__request_mempool[i]);
+	}
+
+	sctk_free(__request_mempool);
+	__request_mempool = NULL;
+	__request_mempool_count = 0;
 }
 
 /**
  * @brief Create a request.
- * 
+ *
  * @param req_p pointer to the request to be created
  * @return int LCP_SUCCESS in case of success
  */
 int lcp_request_create(lcp_request_t **req_p)
 {
-	lcp_request_t *req;
-	req = mpc_mempool_alloc(&request_mempool);
+	lcp_request_t *req = NULL;
+	int local_rank = mpc_common_get_local_task_rank();
+
+	if(local_rank < 0)
+	{
+		/* If the request is allocated outside of a task context default to 0*/
+		local_rank = 0;
+	}
+
+	req = mpc_mempool_alloc(&__request_mempool[local_rank]);
 	// req = (lcp_request_t *)sctk_malloc(sizeof(lcp_request_t));
 	if (req == NULL) {
 		mpc_common_debug_error("LCP: could not allocate recv request.");
@@ -103,7 +139,6 @@ int lcp_request_complete(lcp_request_t *req)
         }
 
 	mpc_mempool_free(NULL, req);
-	// sctk_free(req);
 
 	return LCP_SUCCESS;
 }

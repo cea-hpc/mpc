@@ -300,6 +300,11 @@ static inline int lcp_request_send(lcp_request_t *req)
         }
         return rc;
 }
+
+void lcp_request_storage_init();
+void lcp_request_storage_release();
+
+
 int lcp_request_create(lcp_request_t **req_p);
 int lcp_request_complete(lcp_request_t *req);
 int lcp_request_init_unexp_ctnr(lcp_unexp_ctnr_t **ctnr_p, void *data, 

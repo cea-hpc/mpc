@@ -816,5 +816,7 @@ int lcp_context_fini(lcp_context_h ctx)
 
 	sctk_free(ctx);
 
+        lcp_pinning_mmu_release();
+
 	return LCP_SUCCESS;
 }

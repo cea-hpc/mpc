@@ -5,7 +5,11 @@
 
 #include "lcp_def.h"
 #include "lcp_context.h"
+#include "mpc_thread_accessor.h"
 #include "sctk_alloc.h"
+
+#include "lcp_request.h"
+
 
 #include "uthash.h"
 
@@ -30,6 +34,12 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
         lcp_task_h task;
 
         assert(ctx); assert(tid >= 0);
+
+        /* This is what we want to be initialized once per Process (in task context)*/
+        if(mpc_common_get_local_task_rank() == 0)
+        {
+                lcp_request_storage_init();
+        }
 
         /* Check if tid already in context */
         mpc_common_spinlock_lock(&(ctx->ctx_lock));
@@ -108,6 +118,12 @@ err:
 int lcp_task_fini(lcp_task_h task) {
 
         lcp_fini_matching_engine(task->umq_table, task->prq_table);
+
+        if(task->tid == 0)
+        {
+                lcp_request_storage_release();
+        }
+
         sctk_free(task->umq_table);
         sctk_free(task->prq_table);
 
