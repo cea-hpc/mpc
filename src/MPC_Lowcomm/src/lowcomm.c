@@ -30,6 +30,7 @@
 #include <mpc_lowcomm.h>
 #include <mpc_topology_device.h>
 #include <sctk_alloc.h>
+#include <stdlib.h>
 
 #include "alloc_mem.h"
 #include "mpc_common_debug.h"

@@ -64,6 +64,7 @@ typedef union
 #ifdef MPC_USE_OFI
 	_mpc_lowcomm_ofi_endpoint_info_t ofi;
 #endif
+	_mpc_lowcomm_shm_endpoint_info_t shm;
 } _mpc_lowcomm_endpoint_info_t;
 
 /** @brief State of the Route */

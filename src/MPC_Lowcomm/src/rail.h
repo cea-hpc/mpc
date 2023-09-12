@@ -55,6 +55,7 @@ typedef union
 #ifdef MPC_USE_OFI
 	_mpc_lowcomm_ofi_rail_info_t ofi;
 #endif
+	_mpc_lowcomm_shm_rail_info_t shm;
 } sctk_rail_info_spec_t;
 
 /************************************************************************/
@@ -80,6 +81,7 @@ typedef union
 	struct fid_mr *ofi;
 	uint64_t ofi_remote_mr_key;
 #endif
+	uint64_t shm;
 }sctk_rail_pin_ctx_internal_t;
 
 struct sctk_rail_pin_ctx_list

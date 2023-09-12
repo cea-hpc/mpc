@@ -33,6 +33,8 @@
 
 #include <tbsm/tbsm.h>
 
+#include <shm/mpc_shm.h>
+
 #ifdef MPC_USE_OFI
 #include <mpc_ofi.h>
 #endif

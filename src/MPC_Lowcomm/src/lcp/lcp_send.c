@@ -8,6 +8,7 @@
 #include "lcp_tag.h"
 #include "lcp_tag_offload.h"
 
+#include "mpc_common_debug.h"
 #include "opa_primitives.h"
 
 //FIXME: static inline ?

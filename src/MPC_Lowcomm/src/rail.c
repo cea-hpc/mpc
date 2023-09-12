@@ -31,6 +31,7 @@
 #include "mpc_lowcomm_monitor.h"
 #include "lowcomm.h"
 #include <sctk_alloc.h>
+#include <stdlib.h>
 
 
 /************************************************************************/

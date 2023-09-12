@@ -150,6 +150,7 @@ enum _mpc_lowcomm_config_struct_net_driver_type
 	MPC_LOWCOMM_CONFIG_DRIVER_TCP,
 	MPC_LOWCOMM_CONFIG_DRIVER_TBSM,
 	MPC_LOWCOMM_CONFIG_DRIVER_OFI,
+	MPC_LOWCOMM_CONFIG_DRIVER_SHM,
 	MPC_LOWCOMM_CONFIG_DRIVER_COUNT
 };
 
@@ -159,7 +160,8 @@ static const char * const _mpc_lowcomm_config_struct_net_driver_type_name[MPC_LO
 	"ptl",
 	"tcp",
 	"tbsm",
-	"ofi"
+	"ofi",
+	"shm"
 };
 
 /******************************** STRUCTURE *********************************/

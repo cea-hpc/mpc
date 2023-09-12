@@ -609,7 +609,7 @@ static inline int __generate_configuration_summary(lcp_context_h ctx)
 static inline int __check_configuration(lcp_context_h ctx)
 {
         /* Does not support heterogeous multirail (tsbm always counted) */
-        if(ctx->num_cmpts > 2) {
+        if(ctx->num_cmpts > 3) {
                 mpc_common_debug_error("LCP: heterogeous multirail not supported");
                 return -1;
         }
