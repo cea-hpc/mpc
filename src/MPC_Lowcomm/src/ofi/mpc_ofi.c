@@ -351,9 +351,9 @@ int mpc_ofi_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
 int mpc_ofi_get_attr(sctk_rail_info_t *rail,
                      lcr_rail_attr_t *attr)
 {
-	attr->iface.cap.am.max_iovecs = rail->runtime_config_driver_config->driver.value.ofi.eager_size;
+	attr->iface.cap.am.max_iovecs = MPC_OFI_IOVEC_SIZE;
 	attr->iface.cap.am.max_bcopy  = rail->runtime_config_driver_config->driver.value.ofi.bcopy_size;
-	attr->iface.cap.am.max_zcopy  = MPC_OFI_DOMAIN_EAGER_SIZE + 1;
+	attr->iface.cap.am.max_zcopy  = rail->runtime_config_driver_config->driver.value.ofi.eager_size;
 
 	attr->iface.cap.tag.max_bcopy = 0;
 	attr->iface.cap.tag.max_zcopy = 0;
