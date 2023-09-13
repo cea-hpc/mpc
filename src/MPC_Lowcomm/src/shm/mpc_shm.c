@@ -17,6 +17,7 @@
 #include "mpc_common_rank.h"
 #include "mpc_common_spinlock.h"
 #include "mpc_lowcomm_types.h"
+#include "mpc_thread_accessor.h"
 #include "rail.h"
 #include "uthash.h"
 
@@ -222,11 +223,11 @@ static inline struct _mpc_shm_cell * _mpc_shm_list_head_try_get(struct _mpc_shm_
  ***************/
 
 
-static size_t _mpc_shm_storage_get_size(unsigned int process_count, unsigned int freelist_count)
+static size_t _mpc_shm_storage_get_size(unsigned int process_count, unsigned int task_count, unsigned int freelist_count)
 {
    size_t ret = process_count * SHM_PROCESS_ARITY * sizeof(struct _mpc_shm_list_head);
    ret += freelist_count * sizeof(struct _mpc_shm_list_head);
-   ret += SHM_CELL_COUNT_PER_PROC * process_count * sizeof(struct _mpc_shm_cell);
+   ret += SHM_CELL_COUNT_PER_PROC * task_count * sizeof(struct _mpc_shm_cell);
 
    mpc_common_debug_error("SHM segment is %g MB", (double)ret / (1024 * 1024));
 
@@ -248,9 +249,10 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
 
    assume(0 < process_count);
 
-   storage->freelist_count = process_count * SHM_FREELIST_PER_PROC;
+   int mpi_task_count = mpc_common_get_task_count();
 
-   size_t segment_size = _mpc_shm_storage_get_size(process_count, storage->freelist_count);
+   storage->freelist_count = mpi_task_count * SHM_FREELIST_PER_PROC;
+   size_t segment_size = _mpc_shm_storage_get_size(process_count, mpi_task_count, storage->freelist_count);
 
    storage->shm_buffer = mpc_launch_shm_map(segment_size, MPC_LAUNCH_SHM_USE_PMI, NULL);
 
