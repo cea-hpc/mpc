@@ -41,7 +41,7 @@ enum {
 #define MPC_BITMAP_UNSET(_bitmap, _bit_index) \
         ({ \
          _bitmap.bits[MPC_WORD_OFFSET(_bit_index)] &= ~(1 << MPC_BIT_OFFSET(_bit_index)); \
-         )}
+         })
 
 #define MPC_BITMAP_GET(_bitmap, _bit_index) \
         (!!(_bitmap.bits[MPC_WORD_OFFSET(_bit_index)] & (1 << MPC_BIT_OFFSET(_bit_index))))

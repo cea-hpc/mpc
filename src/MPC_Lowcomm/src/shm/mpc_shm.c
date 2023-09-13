@@ -650,7 +650,6 @@ int mpc_shm_progress(sctk_rail_info_t *rail)
       if(cell)
       {
          rc = __handle_incoming_message(&rail->network.shm.storage, rail, cell);
-         break;
       }
    }
 

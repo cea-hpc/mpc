@@ -164,6 +164,7 @@ ssize_t mpc_ofi_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
                               void *arg,
                               unsigned flags)
 {
+
    sctk_rail_info_t *rail = ep->rail;
 	uint32_t payload_length = 0;
 
