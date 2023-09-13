@@ -226,7 +226,7 @@ static size_t _mpc_shm_storage_get_size(unsigned int process_count, unsigned int
 {
    size_t ret = process_count * SHM_PROCESS_ARITY * sizeof(struct _mpc_shm_list_head);
    ret += freelist_count * sizeof(struct _mpc_shm_list_head);
-   ret += SHM_CELL_COUNT * sizeof(struct _mpc_shm_cell);
+   ret += SHM_CELL_COUNT_PER_PROC * process_count * sizeof(struct _mpc_shm_cell);
 
    mpc_common_debug_error("SHM segment is %g MB", (double)ret / (1024 * 1024));
 
@@ -243,7 +243,7 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
    }
 
    storage->process_count = process_count;
-   storage->cell_count = SHM_CELL_COUNT;
+   storage->cell_count = SHM_CELL_COUNT_PER_PROC * process_count;
    storage->process_arity = SHM_PROCESS_ARITY;
 
    assume(0 < process_count);

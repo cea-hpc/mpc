@@ -8,12 +8,12 @@
 #include <mpc_lowcomm_monitor.h>
 #include <sys/types.h>
 
-#define MPC_SHM_EAGER_SIZE 8300
+#define MPC_SHM_EAGER_SIZE 4000
 
 #define MPC_SHM_BCOPY_SIZE MPC_SHM_EAGER_SIZE
 #define SHM_PROCESS_ARITY 16ull
 #define SHM_FREELIST_PER_PROC 4ull
-#define SHM_CELL_COUNT 4096
+#define SHM_CELL_COUNT_PER_PROC 8192ull
 
 /**************
  * AM HEADERS *
