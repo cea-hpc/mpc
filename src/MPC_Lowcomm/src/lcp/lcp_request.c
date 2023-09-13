@@ -11,6 +11,7 @@
 #include <mpc_common_rank.h>
 
 #include <sctk_alloc.h>
+#include <string.h>
 
 static mpc_mempool *__request_mempool = NULL;
 static unsigned int __request_mempool_count = 0;
@@ -71,7 +72,8 @@ int lcp_request_create(lcp_request_t **req_p)
 		return LCP_ERROR;
 	}
 
-	req->flags = 0;
+	memset(req, 0, sizeof(struct lcp_request));
+	TODO("Find a way not to clear this request");
 
 	*req_p = req;
 

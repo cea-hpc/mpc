@@ -98,7 +98,7 @@ lcp_task_table_t * lcp_task_table_init()
         assume(ret != NULL);
 	memset(ret, 0, sizeof(lcp_task_table_t));
 	mpc_common_spinlock_init(&ret->lock, 0);
-        mpc_common_hashtable_init(&ret->task_table, 1024);
+        mpc_common_hashtable_init(&ret->task_table, 128);
 
         return ret;
 }
@@ -818,6 +818,10 @@ err:
 int lcp_context_fini(lcp_context_h ctx)
 {
 	int i;
+
+
+        lcp_pinning_mmu_release();
+
         lcp_pending_fini(ctx->pend);
 	sctk_free(ctx->pend);
 
@@ -852,8 +856,6 @@ int lcp_context_fini(lcp_context_h ctx)
 	sctk_free(ctx->resources);
 
 	sctk_free(ctx);
-
-        lcp_pinning_mmu_release();
 
 	return LCP_SUCCESS;
 }

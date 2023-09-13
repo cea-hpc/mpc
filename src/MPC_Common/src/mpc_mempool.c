@@ -149,8 +149,7 @@ void mpc_mempool_free(mpc_mempool *mp, void *buffer)
 
 	if(buf->canary != 'c')
 	{
-		mpc_common_debug_error("mempool memory corrupted");
-		return;
+		mpc_common_debug_fatal("mempool memory corrupted");
 	}
 	if(!mp)
 	{
