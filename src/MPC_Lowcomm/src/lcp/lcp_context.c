@@ -90,6 +90,19 @@ err:
 	return rc;
 }
 
+
+
+lcp_task_table_t * lcp_task_table_init()
+{
+        lcp_task_table_t * ret = sctk_malloc(sizeof(lcp_task_table_t));
+        assume(ret != NULL);
+	memset(ret, 0, sizeof(lcp_task_table_t));
+	mpc_common_spinlock_init(&ret->lock, 0);
+        mpc_common_hashtable_init(&ret->task_table, 1024);
+
+        return ret;
+}
+
 /**
  * @brief Alloc and initialize structures in context
  * 
@@ -120,14 +133,12 @@ static int lcp_context_init_structures(lcp_context_h ctx)
 	}
 
         /* Init hash table of tasks */
-	ctx->tasks = sctk_malloc(sizeof(lcp_task_table_t));
+	ctx->tasks = lcp_task_table_init();
 	if (ctx->tasks == NULL) {
 		mpc_common_debug_error("LCP: Could not allocate tasks table.");
 		rc = LCP_ERROR;
 		goto out_free_pending_tables;
 	}
-	memset(ctx->tasks, 0, sizeof(lcp_task_table_t));
-	mpc_common_spinlock_init(&ctx->tasks->lock, 0);
 
         mpc_common_hashtable_init(&ctx->ep_htable, 1024);
 
@@ -214,9 +225,8 @@ static inline void lcp_context_resource_init(lcp_rsc_desc_t *resource_p,
 
 void lcp_context_task_get(lcp_context_h ctx, int tid, lcp_task_h *task_p)
 {
-        lcp_task_entry_t *item = NULL;
+        lcp_task_entry_t *item = mpc_common_hashtable_get(&ctx->tasks->task_table, tid);
 
-	HASH_FIND(hh, ctx->tasks->table, &tid, sizeof(int), item);
 	if (item == NULL) {
                 *task_p = NULL;
 
@@ -811,12 +821,15 @@ int lcp_context_fini(lcp_context_h ctx)
         lcp_pending_fini(ctx->pend);
 	sctk_free(ctx->pend);
 
-	lcp_task_entry_t *e_task = NULL, *e_task_tmp = NULL;
-	HASH_ITER(hh, ctx->tasks->table, e_task, e_task_tmp) {
+	lcp_task_entry_t *e_task = NULL;
+
+	MPC_HT_ITER(&ctx->tasks->task_table, e_task)
+        {
                 lcp_task_fini(e_task->task);
-		HASH_DELETE(hh, ctx->tasks->table, e_task);
                 sctk_free(e_task);
 	}
+        MPC_HT_ITER_END(&ctx->tasks->task_table);
+
         sctk_free(ctx->tasks);
 
 	/* Free allocated endpoints */

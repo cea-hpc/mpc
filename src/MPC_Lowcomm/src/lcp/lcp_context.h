@@ -57,8 +57,6 @@ typedef struct lcp_match_ctx
 
 typedef struct lcp_task_entry
 {
-	UT_hash_handle hh;
-
 	int            task_key;
 	lcp_task_h     task;
 } lcp_task_entry_t;
@@ -66,7 +64,7 @@ typedef struct lcp_task_entry
 typedef struct lcp_task_table
 {
 	mpc_common_spinlock_t lock;
-	lcp_task_entry_t *    table;
+	struct mpc_common_hashtable task_table;
 } lcp_task_table_t;
 
 typedef struct lcp_rsc_desc

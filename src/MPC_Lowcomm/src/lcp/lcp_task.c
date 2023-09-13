@@ -1,6 +1,8 @@
 #include "lcp_task.h"
 
 #include "lcp_common.h"
+#include "mpc_common_datastructure.h"
+#include "mpc_common_debug.h"
 #include "mpc_lowcomm_types.h"
 
 #include "lcp_def.h"
@@ -27,6 +29,7 @@ int lcp_am_set_handler_callback(lcp_task_h task, uint8_t am_id,
 }
 
 
+
 int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
 {
         int rc = LCP_SUCCESS;
@@ -42,8 +45,7 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
         }
 
         /* Check if tid already in context */
-        mpc_common_spinlock_lock(&(ctx->ctx_lock));
-	HASH_FIND(hh, ctx->tasks->table, &tid, sizeof(int), item);
+        item = mpc_common_hashtable_get(&ctx->tasks->task_table, tid);
         if (item != NULL) {
                 *task_p = item->task;
                 mpc_common_spinlock_unlock(&(ctx->ctx_lock));
@@ -51,7 +53,6 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
                                          "created.", tid);
                 goto err;
         }
-        mpc_common_spinlock_unlock(&(ctx->ctx_lock));
 
         task = sctk_malloc(sizeof(struct lcp_task));
         if (task == NULL) {
@@ -100,11 +101,7 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
         item->task_key = tid;
         item->task = *task_p = task;
 
-        //FIXME: which lock take ? Context lock or task table lock ?
-        //       one of them is redundant.
-        mpc_common_spinlock_lock(&(ctx->ctx_lock));
-        HASH_ADD(hh, ctx->tasks->table, task_key, sizeof(int), item);
-        mpc_common_spinlock_unlock(&(ctx->ctx_lock));
+        mpc_common_hashtable_set(&ctx->tasks->task_table, item->task_key, item);
 
         mpc_common_debug_info("LCP: created task tid=%d", tid);
 err:
