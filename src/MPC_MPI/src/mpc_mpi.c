@@ -739,12 +739,6 @@ inline void sctk_check_auto_free_list(MPI_request_struct_t *requests)
 	}
 }
 
-/** \brief Initialize an \ref MPI_internal_request_t */
-inline void __sctk_init_mpc_request_internal(MPI_internal_request_t *tmp)
-{
-	memset(&(tmp->req), 0, sizeof(mpc_lowcomm_request_t) );
-}
-
 /** \brief Create a new \ref MPI_internal_request_t
  *
  *  \param req Request to allocate (will be written with the ID of the request)
@@ -837,9 +831,6 @@ MPI_internal_request_t *__sctk_new_mpc_request_internal(MPI_Request *req,
 	/* Set request to be the id in the tab array (rank) */
 	*req = tmp->rank;
 
-	/* Intialize request content */
-	__sctk_init_mpc_request_internal(tmp);
-
 	return tmp;
 }
 
@@ -852,7 +843,6 @@ mpc_lowcomm_request_t *__sctk_new_mpc_request(MPI_Request *req, MPI_request_stru
 	/* Acquire a free MPI_Iternal request */
 	tmp = __sctk_new_mpc_request_internal(req, requests);
 
-	memset(&tmp->req, 0, sizeof(mpc_lowcomm_request_t) );
 	/* Return its inner mpc_lowcomm_request_t */
 	return &(tmp->req);
 }

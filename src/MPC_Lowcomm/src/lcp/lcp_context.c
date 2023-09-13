@@ -13,6 +13,7 @@
 #include <mpc_common_flags.h>
 
 #include "lowcomm_config.h"
+#include "mpc_common_datastructure.h"
 #include "mpc_lowcomm.h"
 #include "rail.h"
 
@@ -103,24 +104,20 @@ static int lcp_context_init_structures(lcp_context_h ctx)
 	mpc_common_spinlock_init(&(ctx->ctx_lock), 0);
 
         /* Init pending matching message request table */
-	ctx->match_ht = sctk_malloc(sizeof(lcp_pending_table_t));
+	ctx->match_ht = lcp_pending_init();
 	if (ctx->match_ht == NULL) {
 		mpc_common_debug_error("LCP: Could not allocate matching pending tables.");
 		rc = LCP_ERROR;
 		goto err;
 	}
-	memset(ctx->match_ht, 0, sizeof(lcp_pending_table_t));
-	mpc_common_spinlock_init(&ctx->match_ht->table_lock, 0);
 
         /* Init pending active message request table */
-	ctx->pend = sctk_malloc(sizeof(lcp_pending_table_t));
+	ctx->pend = lcp_pending_init();
 	if (ctx->pend == NULL) {
 		mpc_common_debug_error("LCP: Could not allocate am pending tables.");
 		rc = LCP_ERROR;
 		goto err;
 	}
-	memset(ctx->pend, 0, sizeof(lcp_pending_table_t));
-	mpc_common_spinlock_init(&ctx->pend->table_lock, 0);
 
         /* Init hash table of tasks */
 	ctx->tasks = sctk_malloc(sizeof(lcp_task_table_t));
@@ -132,6 +129,7 @@ static int lcp_context_init_structures(lcp_context_h ctx)
 	memset(ctx->tasks, 0, sizeof(lcp_task_table_t));
 	mpc_common_spinlock_init(&ctx->tasks->lock, 0);
 
+        mpc_common_hashtable_init(&ctx->ep_htable, 1024);
 
         lcp_pinning_mmu_init();
 
@@ -769,11 +767,6 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
 	if (rc != LCP_SUCCESS) {
 		goto out_free_resources;
 	}
-        
-	rc = lcp_pending_init();
-	if (rc != LCP_SUCCESS) {
-		goto out_free_resources;
-	}
 
         rc = lcp_context_init_structures(ctx);
         if (rc != LCP_SUCCESS) {
@@ -827,12 +820,14 @@ int lcp_context_fini(lcp_context_h ctx)
         sctk_free(ctx->tasks);
 
 	/* Free allocated endpoints */
-	lcp_ep_ctx_t *e_ep = NULL, *e_ep_tmp = NULL; 
-	HASH_ITER(hh, ctx->ep_ht, e_ep, e_ep_tmp) {
+	lcp_ep_ctx_t *e_ep = NULL;
+
+	MPC_HT_ITER(&ctx->ep_htable, e_ep)
+        {
                 lcp_ep_delete(e_ep->ep);
-		HASH_DELETE(hh, ctx->ep_ht, e_ep);
 		sctk_free(e_ep);
 	}
+        MPC_HT_ITER_END(&ctx->ep_htable);
 
 	sctk_rail_info_t *iface = NULL;
 	for (i=0; i<ctx->num_resources; i++) {

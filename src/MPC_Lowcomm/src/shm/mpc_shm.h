@@ -11,9 +11,9 @@
 #define MPC_SHM_EAGER_SIZE 8300
 
 #define MPC_SHM_BCOPY_SIZE MPC_SHM_EAGER_SIZE
-#define SHM_PROCESS_ARITY 4ull
-#define SHM_FREELIST_COUNT 16ull
-#define SHM_CELL_COUNT 16384
+#define SHM_PROCESS_ARITY 16ull
+#define SHM_FREELIST_PER_PROC 4ull
+#define SHM_CELL_COUNT 4096
 
 /**************
  * AM HEADERS *
@@ -70,7 +70,7 @@ struct _mpc_shm_list_head
    mpc_common_spinlock_t lock;
    struct _mpc_shm_cell * head;
    struct _mpc_shm_cell * tail;
-   char __pad[128];
+   char __pad[512];
 };
 
 struct _mpc_shm_storage

@@ -248,20 +248,14 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
 
    assume(0 < process_count);
 
-   unsigned int freelist_count = SHM_FREELIST_COUNT;
+   storage->freelist_count = process_count * SHM_FREELIST_PER_PROC;
 
-   if(process_count < freelist_count)
-   {
-      freelist_count = process_count;
-   }
-
-   size_t segment_size = _mpc_shm_storage_get_size(process_count, freelist_count);
+   size_t segment_size = _mpc_shm_storage_get_size(process_count, storage->freelist_count);
 
    storage->shm_buffer = mpc_launch_shm_map(segment_size, MPC_LAUNCH_SHM_USE_PMI, NULL);
 
    assume(storage != NULL);
 
-   storage->freelist_count = freelist_count;
 
    assume(0 < storage->freelist_count);
    assume(storage->freelist_count < 255);
@@ -293,6 +287,7 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
 
    if(proc_rank < storage->freelist_count)
    {
+      int rr_counter = 0;
       unsigned int per_list = storage->cell_count / storage->freelist_count;
       unsigned int leftover = storage->cell_count - (per_list * storage->freelist_count);
 
@@ -302,8 +297,9 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
          {
             cells[i].next = NULL;
             cells[i].prev = NULL;
-            _mpc_shm_list_head_push(&storage->free_lists[0], &cells[i]);
+            _mpc_shm_list_head_push(&storage->free_lists[0 + rr_counter], &cells[i]);
             cells[i].free_list = 0;
+            rr_counter = (rr_counter + 1)% (int)SHM_FREELIST_PER_PROC;
          }
       }
 
@@ -311,8 +307,9 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
       {
          cells[i].next = NULL;
          cells[i].prev = NULL;
-         _mpc_shm_list_head_push(&storage->free_lists[proc_rank], &cells[i]);
+         _mpc_shm_list_head_push(&storage->free_lists[proc_rank * SHM_FREELIST_PER_PROC + rr_counter], &cells[i]);
          cells[i].free_list = (char)proc_rank;
+         rr_counter = (rr_counter + 1)% (int)SHM_FREELIST_PER_PROC;
       }
 
    }
@@ -342,9 +339,6 @@ struct _mpc_shm_cell * _mpc_shm_storage_get_free_cell(struct _mpc_shm_storage *s
             target_list = (target_list + 1) % storage->freelist_count;
             cnt = 0;
       }
-      else {
-         mpc_thread_yield();
-      }
    }
 
    return ret;
@@ -362,13 +356,25 @@ void _mpc_shm_storage_send_cell(struct _mpc_shm_storage * storage,
    assume(mpc_lowcomm_monitor_get_gid() == mpc_lowcomm_peer_get_set(uid));
 
    unsigned int target_rank = mpc_lowcomm_peer_get_rank(uid);
+   unsigned int target_list = (size_t)target_rank * storage->process_arity +  (my_rank % storage->process_arity);
+
 
    /* Pick one of the ARIRY incoming list */
-   unsigned int target_list = (size_t)target_rank * storage->process_arity +  (my_rank % storage->process_arity);
    struct _mpc_shm_list_head * list = &storage->per_process[target_list];
+   unsigned int cnt = 0;
 
-   /* And push */
-   _mpc_shm_list_head_push(list, cell);
+   while(1)
+   {
+      if(mpc_common_spinlock_trylock(&list->lock) == 0)
+      {
+         ___mpc_shm_list_head_push_no_lock(list, cell);
+         mpc_common_spinlock_unlock(&list->lock);
+         break;
+      }
+
+      cnt++;
+      target_list = (size_t)target_rank * storage->process_arity +  ((my_rank + cnt) % storage->process_arity);
+   }
 }
 
 void _mpc_shm_storage_free_cell(struct _mpc_shm_storage * storage,
@@ -384,7 +390,6 @@ void _mpc_shm_storage_free_cell(struct _mpc_shm_storage * storage,
       {
          did_push = 1;
       }
-      mpc_thread_yield();
       dest = (dest + 1) % storage->freelist_count;
    }while(!did_push);
 }

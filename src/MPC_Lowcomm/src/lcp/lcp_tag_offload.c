@@ -513,7 +513,7 @@ int lcp_rndv_offload_process_rts(lcp_request_t *rreq)
 {
         int rc; 
         lcp_request_t *rndv_req;
-        lcp_ep_ctx_t *ctx_ep;
+        lcp_ep_h ctx_ep;
 
         /* Rendez-vous request used for RTR (PUT) or RMA (GET) */
         rc = lcp_request_create(&rndv_req);
@@ -537,7 +537,9 @@ int lcp_rndv_offload_process_rts(lcp_request_t *rreq)
         /* Get endpoint */
         uint64_t puid = lcp_get_process_uid(rreq->ctx->process_uid,
                                             rreq->recv.tag.src_uid);
-        HASH_FIND(hh, rndv_req->ctx->ep_ht, &puid, sizeof(uint64_t), ctx_ep);
+
+        lcp_ep_get(rndv_req->ctx, puid, &ctx_ep);
+
         if (ctx_ep == NULL) {
                 rc = lcp_ep_create(rndv_req->ctx, &(rndv_req->send.ep), puid, 0);
                 if (rc != LCP_SUCCESS) {
@@ -545,7 +547,7 @@ int lcp_rndv_offload_process_rts(lcp_request_t *rreq)
                         goto err;
                 }
         } else {
-                rndv_req->send.ep = ctx_ep->ep;
+                rndv_req->send.ep = ctx_ep;
         }
 
         switch (rreq->ctx->config.rndv_mode) {

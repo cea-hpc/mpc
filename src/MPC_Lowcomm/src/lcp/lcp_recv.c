@@ -27,9 +27,9 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 		mpc_common_debug_error("LCP: could not create request.");
 		return  LCP_ERROR;
 	}
-        req->flags |= LCP_REQUEST_MPI_COMPLETE;
-        LCP_REQUEST_INIT_TAG_RECV(req, ctx, task, request, param->recv_info,
-                                  count, buffer, param->datatype);
+	req->flags |= LCP_REQUEST_MPI_COMPLETE;
+	LCP_REQUEST_INIT_TAG_RECV(req, ctx, task, request, param->recv_info,
+										count, buffer, param->datatype);
 
 	// get interface for the request to go through
 	iface = ctx->resources[ctx->priority_rail].iface;

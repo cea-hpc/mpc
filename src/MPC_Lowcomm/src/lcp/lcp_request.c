@@ -70,7 +70,8 @@ int lcp_request_create(lcp_request_t **req_p)
 		mpc_common_debug_error("LCP: could not allocate recv request.");
 		return LCP_ERROR;
 	}
-	memset(req, 0, sizeof(lcp_request_t));
+
+	req->flags = 0;
 
 	*req_p = req;
 

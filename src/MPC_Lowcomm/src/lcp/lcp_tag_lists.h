@@ -2,6 +2,7 @@
 #define LCP_TAG_LISTS_H
 
 #include <mpc_common.h>
+#include <mpc_mempool.h>
 
 /*******************************************************
  * Data structures - Matching lists
@@ -20,6 +21,7 @@ typedef struct lcp_mtch_prq_elem_s
 typedef struct  
 {
 	mpc_common_spinlock_t lock;
+	mpc_mempool elem_pool;
 	lcp_mtch_prq_elem_t *list;
 	int size;
 } lcp_mtch_prq_list_t;
@@ -43,6 +45,7 @@ typedef struct lcp_mtch_umq_elem_s
 typedef struct  
 {
 	mpc_common_spinlock_t lock;
+	mpc_mempool elem_pool;
 	lcp_mtch_umq_elem_t *list;
 	int size;
 } lcp_mtch_umq_list_t;

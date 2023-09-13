@@ -22,7 +22,7 @@ int lcp_prq_cancel(lcp_mtch_prq_list_t *list, void *req)
 	DL_FOREACH_SAFE(list->list, elem, tmp){
 		if (req == elem->value) {
 			DL_DELETE(list->list, elem);
-			sctk_free(elem);
+			mpc_mempool_free(NULL, elem);
 			list->size--;
 			return 1;
 		}
@@ -72,7 +72,9 @@ void *lcp_prq_find_dequeue(lcp_mtch_prq_list_t *list, int tag, uint64_t peer)
 		if (result) {
 			DL_DELETE(list->list, elem);	
 			list->size--;
-			return elem->value;
+			void * ret = elem->value;
+			mpc_mempool_free(NULL, elem);
+			return ret;
 		}
 	}
 	return 0;
@@ -104,8 +106,7 @@ void lcp_prq_append(lcp_mtch_prq_list_t *list, void *payload, int tag, uint64_t 
 		mask_tag = ~0;
 	}
 	
-	lcp_mtch_prq_elem_t *elem = sctk_malloc(
-			sizeof(lcp_mtch_prq_elem_t));
+	lcp_mtch_prq_elem_t *elem = mpc_mempool_alloc(&list->elem_pool);
 
 	elem->tag = tag;
 	elem->tmask = mask_tag;
@@ -130,6 +131,7 @@ lcp_mtch_prq_list_t *lcp_prq_init()
 	memset(list, 0, sizeof(lcp_mtch_prq_list_t));
 
 	list->size = 0;
+	mpc_mempool_init(&list->elem_pool, 10, 1024, sizeof(lcp_mtch_prq_elem_t), sctk_malloc, sctk_free);
 
 	mpc_common_spinlock_init(&list->lock, 0);
 	return list;
@@ -145,8 +147,11 @@ void lcp_mtch_prq_destroy(lcp_mtch_prq_list_t *list)
 
 	DL_FOREACH_SAFE(list->list, elem, tmp){
 		DL_DELETE(list->list, elem);
-		sctk_free(elem);
+		mpc_mempool_free(NULL, elem);
 	}
+
+	mpc_mempool_empty(&list->elem_pool);
+
 	sctk_free(list->list);
 }
 
@@ -167,7 +172,7 @@ int lcp_umq_cancel(lcp_mtch_umq_list_t *list, void *req)
 	DL_FOREACH_SAFE(list->list, elem, tmp){
 		if (req == elem->value) {
 			DL_DELETE(list->list, elem);
-			sctk_free(elem);
+			mpc_mempool_free(NULL, elem);
 			list->size--;
 			return 1;
 		}
@@ -202,7 +207,9 @@ void *lcp_umq_find(lcp_mtch_umq_list_t *list, int tag, uint64_t peer)
 		result = ((elem->tag == tag) || (!tmask && elem->tag >= 0)) &&
 			((elem->src & smask) == (peer & smask));
 		if (result) {
-			return elem->value;
+			void * ret = elem->value;
+			mpc_mempool_free(NULL, elem);
+			return ret;
 		}
 	}
 	return 0;
@@ -254,8 +261,7 @@ void *lcp_umq_find_dequeue(lcp_mtch_umq_list_t *list, int tag, uint64_t peer)
  */
 void lcp_umq_append(lcp_mtch_umq_list_t *list, void *payload, int tag, uint64_t source)
 {
-	lcp_mtch_umq_elem_t *elem = sctk_malloc(
-			sizeof(lcp_mtch_umq_elem_t));
+	lcp_mtch_umq_elem_t *elem = mpc_mempool_alloc(&list->elem_pool);
 
 	elem->tag = tag;
 	elem->src = source;
@@ -276,6 +282,8 @@ lcp_mtch_umq_list_t *lcp_umq_init()
 			sizeof(lcp_mtch_umq_list_t));
 	memset(list, 0, sizeof(lcp_mtch_umq_list_t));
 
+	mpc_mempool_init(&list->elem_pool, 10, 1024, sizeof(lcp_mtch_umq_elem_t), sctk_malloc, sctk_free);
+
 	list->size = 0;
 	mpc_common_spinlock_init(&list->lock, 0);
 	return list;
@@ -292,7 +300,7 @@ void lcp_mtch_umq_destroy(lcp_mtch_umq_list_t *list)
 
 	DL_FOREACH_SAFE(list->list, elem, tmp){
 		DL_DELETE(list->list, elem);
-		sctk_free(elem);
+		mpc_mempool_free(NULL, elem);
 	}
 	sctk_free(list->list);
 }

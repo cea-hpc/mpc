@@ -3,6 +3,21 @@
 
 #include "lcp_tag_matching.h"
 #include "lcp_request.h"
+#include "mpc_common_datastructure.h"
+#include "mpc_common_debug.h"
+#include "mpc_common_spinlock.h"
+
+
+lcp_prq_match_table_t * lcp_prq_match_table_init()
+{
+	lcp_prq_match_table_t * ret = sctk_malloc(sizeof(lcp_prq_match_table_t));
+	assume(ret != NULL);
+
+	mpc_common_spinlock_init(&ret->lock, 0);
+	mpc_common_hashtable_init(&ret->ht, 2048);
+
+	return ret;
+}
 
 /**
  * @brief Finalize the matching engine by deleting the posted/receive and unexpected queues.
@@ -13,23 +28,36 @@
 void lcp_fini_matching_engine(lcp_umq_match_table_t *umq, 
 			      lcp_prq_match_table_t *prq)
 {
-	lcp_prq_match_entry_t *prq_entry = NULL, *prq_tmp = NULL;
-	lcp_umq_match_entry_t *umq_entry = NULL, *umq_tmp = NULL;
+	lcp_prq_match_entry_t *prq_entry = NULL;
+	lcp_umq_match_entry_t *umq_entry = NULL;
 
-	HASH_ITER(hh, prq->table, prq_entry, prq_tmp) {
+	MPC_HT_ITER( &prq->ht, prq_entry ) {
 		lcp_mtch_prq_destroy(prq_entry->pr_queue);
-		HASH_DELETE(hh, prq->table, prq_entry);
 		sctk_free(prq_entry->pr_queue);
 		sctk_free(prq_entry);
 	}
+	MPC_HT_ITER_END(&prq->ht)
 
-	HASH_ITER(hh, umq->table, umq_entry, umq_tmp) {
+	MPC_HT_ITER( &umq->ht, umq_entry ) {
 		lcp_mtch_umq_destroy(umq_entry->um_queue);
-		HASH_DELETE(hh, umq->table, umq_entry);
 		sctk_free(umq_entry->um_queue);
 		sctk_free(umq_entry);
 	}
+	MPC_HT_ITER_END(&umq->ht)
+
 }
+
+void* _prq_match_create_entry( uint64_t key )
+{
+	lcp_prq_match_entry_t *item = sctk_malloc(sizeof(lcp_prq_match_entry_t));
+	assume(item != NULL);
+
+	item->comm_key = key;
+	item->pr_queue = lcp_prq_init();
+
+	return item;
+}
+
 
 /**
  * @brief Get a posted receive matching queue
@@ -42,26 +70,22 @@ lcp_prq_match_entry_t *lcp_get_prq_entry(
 		 lcp_prq_match_table_t *table,
 		 uint64_t comm)
 {
-	lcp_prq_match_entry_t *item;
-	mpc_common_spinlock_lock(&table->lock);
-	HASH_FIND(hh, table->table, &comm, sizeof(uint64_t), item);
+	int did_create = 0;
+	return mpc_common_hashtable_get_or_create( &table->ht, comm, _prq_match_create_entry, &did_create);;
+}
 
-	if (item == NULL)
-	{
-		item = sctk_malloc(sizeof(lcp_prq_match_entry_t));
-		assume(item != NULL);
-		memset(item, 0, sizeof(lcp_prq_match_entry_t));
 
-		item->comm_key = comm;
-		item->pr_queue = lcp_prq_init();
-		/* Add the entry */
-		HASH_ADD(hh, table->table, comm_key, sizeof(uint64_t), item);
-		mpc_common_debug("LCP: prq communicator comm=%llu.", comm);
-	}
-	mpc_common_spinlock_unlock(&table->lock);
+void* _umq_match_create_entry( uint64_t key )
+{
+	lcp_umq_match_entry_t *item = sctk_malloc(sizeof(lcp_umq_match_entry_t));
+	assume(item != NULL);
+
+	item->comm_key = key;
+	item->um_queue = lcp_umq_init();
 
 	return item;
 }
+
 
 /**
  * @brief Get an unexpected message queue
@@ -74,25 +98,8 @@ lcp_umq_match_entry_t *lcp_get_umq_entry(
 		 lcp_umq_match_table_t *table,
 		 uint64_t comm)
 {
-	lcp_umq_match_entry_t *item;
-	mpc_common_spinlock_lock(&table->lock);
-	HASH_FIND(hh, table->table, &comm, sizeof(uint64_t), item);
-
-	if (item == NULL)
-	{
-		item = sctk_malloc(sizeof(lcp_umq_match_entry_t));
-		assume(item != NULL);
-		memset(item, 0, sizeof(lcp_umq_match_entry_t));
-
-		item->comm_key = comm;
-		item->um_queue = lcp_umq_init();
-		/* Add the entry */
-		HASH_ADD(hh, table->table, comm_key, sizeof(uint64_t), item);
-		mpc_common_debug("LCP: umq communicator comm=%llu", comm);
-	}
-	mpc_common_spinlock_unlock(&table->lock);
-
-	return item;
+	int did_create = 0;
+	return mpc_common_hashtable_get_or_create( &table->ht, comm, _umq_match_create_entry, &did_create);;
 }
 
 /**
@@ -119,28 +126,6 @@ void lcp_append_prq(lcp_prq_match_table_t *prq, lcp_request_t *req,
 	mpc_common_spinlock_unlock(&(entry->pr_queue->lock));
 }
 
-//TODO: add return value because we have heap allocation
-/**
- * @brief Add a request to an unexpected message queue
- * 
- * @param umq hash table containing UMQs
- * @param req request to add
- * @param comm comm corresponding to the target umq
- * @param tag tag of the request
- * @param src request source
- */
-void lcp_append_umq(lcp_umq_match_table_t *umq, void *req,
-		    uint64_t comm, int tag, uint64_t src)
-{
-	lcp_umq_match_entry_t *entry;
-
-	entry = lcp_get_umq_entry(umq, comm);
-	mpc_common_spinlock_lock(&(entry->um_queue->lock));
-	lcp_umq_append(entry->um_queue, req, tag, src);
-	mpc_common_debug("LCP: umq added req=%p, comm_id=%llu, tag=%d, "
-			 "src=%llu.", req, comm, tag, src);
-	mpc_common_spinlock_unlock(&(entry->um_queue->lock));
-}
 
 /**
  * @brief Dequeue a posted receive request from a prq list matched with a tag
@@ -167,6 +152,43 @@ lcp_request_t *lcp_match_prq(lcp_prq_match_table_t *prq,
 	mpc_common_spinlock_unlock(&(entry->pr_queue->lock));
 
 	return found;
+}
+
+
+//TODO: add return value because we have heap allocation
+/**
+ * @brief Add a request to an unexpected message queue
+ * 
+ * @param umq hash table containing UMQs
+ * @param req request to add
+ * @param comm comm corresponding to the target umq
+ * @param tag tag of the request
+ * @param src request source
+ */
+void lcp_append_umq(lcp_umq_match_table_t *umq, void *req,
+		    uint64_t comm, int tag, uint64_t src)
+{
+	lcp_umq_match_entry_t *entry;
+
+	entry = lcp_get_umq_entry(umq, comm);
+	mpc_common_spinlock_lock(&(entry->um_queue->lock));
+	lcp_umq_append(entry->um_queue, req, tag, src);
+	mpc_common_debug("LCP: umq added req=%p, comm_id=%llu, tag=%d, "
+			 "src=%llu.", req, comm, tag, src);
+	mpc_common_spinlock_unlock(&(entry->um_queue->lock));
+}
+
+
+
+lcp_umq_match_table_t * lcp_umq_match_table_init()
+{
+	lcp_umq_match_table_t * ret = sctk_malloc(sizeof(lcp_umq_match_table_t));
+	assume(ret != NULL);
+
+	mpc_common_spinlock_init(&ret->lock, 0);
+	mpc_common_hashtable_init(&ret->ht, 128);
+
+	return ret;
 }
 
 /**

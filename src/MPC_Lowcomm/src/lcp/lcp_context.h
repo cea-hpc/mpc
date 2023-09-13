@@ -10,6 +10,7 @@
 #include "lcp_types.h"
 #include "uthash.h"
 #include "opa_primitives.h"
+#include <mpc_common_datastructure.h>
 
 #define LCP_CONTEXT_LOCK(_ctx) \
 	mpc_common_spinlock_lock_yield(&( (_ctx)->ctx_lock) )
@@ -119,7 +120,7 @@ struct lcp_context
 	mpc_common_spinlock_t ctx_lock;      /* Context lock */
 
 	int                   num_eps;       /* number of endpoints created */
-	lcp_ep_ctx_t *        ep_ht;         /* Hash table of created endpoint */
+	struct mpc_common_hashtable  ep_htable;         /* Hash table of created endpoint */
 
 	uint64_t              process_uid;   /* process uid used for endpoint creation */
 

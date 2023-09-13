@@ -1,5 +1,6 @@
 #include "lcp_ep.h"
 
+#include "mpc_common_datastructure.h"
 #include "mpc_common_debug.h"
 #include "sctk_alloc.h"
 #include "rail.h"
@@ -181,7 +182,8 @@ int lcp_ep_insert(lcp_context_h ctx, lcp_ep_h ep)
 	/* Init table entry */
 	elem->ep_key = ep->uid;
 	elem->ep = ep;
-	HASH_ADD(hh, ctx->ep_ht, ep_key, sizeof(mpc_lowcomm_peer_uid_t), elem);
+
+	mpc_common_hashtable_set(&ctx->ep_htable, elem->ep_key, elem);
 
 	/* Update context */
 	ctx->num_eps++;
@@ -370,35 +372,35 @@ int lcp_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p,
 	lcp_ep_h ep = NULL;	
 	int rc = LCP_SUCCESS;
 
+	LCP_CONTEXT_LOCK(ctx);
+
 	lcp_ep_get(ctx, uid, &ep);
 	if (ep != NULL) {
 		mpc_common_debug_warning("LCP: ep already exists. uid=%llu.", 
                                          uid);
 		*ep_p = ep;
-                goto ep_exist;
+      goto unlock;
 	}
 
-	LCP_CONTEXT_LOCK(ctx);
 	/* Create and connect endpoint */
 	rc = lcp_context_ep_create(ctx, &ep, uid, flags);
 	if (rc != LCP_SUCCESS) {
 		mpc_common_debug_error("LCP: could not create endpoint. "
 				       "uid=%llu.", uid);
-		goto err_and_unlock;
+		goto unlock;
 	}
 
 	/* Insert endpoint in the context table, only once */
 	rc = lcp_ep_insert(ctx, ep);
 	if (rc != LCP_SUCCESS) {
-		goto err_and_unlock;
+		goto unlock;
 	}
 	mpc_common_debug_info("LCP: created ep : %p towards : %lu", ep, uid);
 
 	*ep_p = ep;
 
-err_and_unlock:
+unlock:
 	LCP_CONTEXT_UNLOCK(ctx);
-ep_exist:
 	return rc;
 }
 
@@ -422,15 +424,11 @@ void lcp_ep_delete(lcp_ep_h ep)
 
 void lcp_ep_get(lcp_context_h ctx, mpc_lowcomm_peer_uid_t uid, lcp_ep_h *ep_p)
 {
-	lcp_ep_ctx_t *elem = NULL;
+	lcp_ep_ctx_t *elem = mpc_common_hashtable_get(&ctx->ep_htable, uid);
 
-        LCP_CONTEXT_LOCK(ctx);
-	HASH_FIND(hh, ctx->ep_ht, &uid, sizeof(mpc_lowcomm_peer_uid_t), elem);
 	if (elem == NULL) {
-                LCP_CONTEXT_UNLOCK(ctx);
 		*ep_p = NULL;
 	} else {
-                LCP_CONTEXT_UNLOCK(ctx);
 		*ep_p = elem->ep;
 	}
 }
@@ -474,7 +472,7 @@ __UNUSED__ static int lcp_ep_connection_handler(void *arg, void *data,
 
 	mpc_common_spinlock_lock(&(ctx->ctx_lock));
 
-	HASH_FIND(hh, ctx->ep_ht, dest, sizeof(mpc_lowcomm_peer_uid_t), ctx_ep);
+	ctx_ep = mpc_common_hashtable_get(&ctx->ep_htable, dest);
 
 	if (ctx_ep != NULL) {
 		rc = LCP_SUCCESS;

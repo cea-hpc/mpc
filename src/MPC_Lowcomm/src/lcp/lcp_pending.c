@@ -53,12 +53,12 @@ lcp_pending_entry_t *lcp_pending_create(lcp_pending_table_t *table,
 	if(req->send.ep == NULL)
 		MPC_CRASH();
         if (entry == NULL) {
-                entry = sctk_malloc(sizeof(lcp_pending_entry_t));
+                entry = mpc_mempool_alloc(&table->pending_pool);
                 if (entry == NULL) {
                         mpc_common_debug_error("LCP: could not allocate pending request.");	
                         return entry;
                 }
-                memset(entry, 0, sizeof(lcp_pending_entry_t));
+                //memset(entry, 0, sizeof(lcp_pending_entry_t));
 
                 entry->msg_key = msg_key;
                 entry->req = req;
@@ -94,7 +94,7 @@ void lcp_pending_delete(lcp_pending_table_t *table,
         }
 
         HASH_DELETE(hh, table->table, entry);
-        sctk_free(entry);
+        mpc_mempool_free(NULL, entry);
         mpc_common_debug_info("LCP: del pending request msg_id=%llu", 
                               msg_key);
         mpc_common_spinlock_unlock(&(table->table_lock));
@@ -123,10 +123,16 @@ lcp_request_t *lcp_pending_get_request(lcp_pending_table_t *table,
  * @brief Init pending list.
  * 
  */
-int lcp_pending_init()
+lcp_pending_table_t * lcp_pending_init()
 {
+        lcp_pending_table_t * ret = sctk_malloc(sizeof(lcp_pending_table_t));
+        assume(ret != NULL);
         /* And rdv list */
-        return MPC_LOWCOMM_SUCCESS;
+        ret->table = NULL;
+        mpc_mempool_init(&ret->pending_pool, 10, 512, sizeof(lcp_pending_entry_t), sctk_malloc, sctk_free);
+        mpc_common_spinlock_init(&ret->table_lock, 0);
+
+        return ret;
 }
 
 /**
@@ -142,7 +148,7 @@ void lcp_pending_fini(lcp_pending_table_t *table)
         if (HASH_COUNT(table->table) > 0) {
                 HASH_ITER(hh, table->table, entry, e_tmp) {
                         HASH_DELETE(hh, table->table, entry);
-                        sctk_free(entry);
+                        mpc_mempool_free(NULL, entry);
                 }
         }
 }

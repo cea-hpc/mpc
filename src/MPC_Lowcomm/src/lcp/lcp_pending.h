@@ -2,6 +2,7 @@
 #define LCP_PENDING_H 
 
 #include <uthash.h>
+#include <mpc_mempool.h>
 #include <mpc_common_spinlock.h>
 
 /* forward reference */
@@ -20,14 +21,16 @@ typedef struct
 typedef struct 
 {
 	mpc_common_spinlock_t  table_lock;
+	mpc_mempool pending_pool;
 	lcp_pending_entry_t   *table;
 } lcp_pending_table_t;
 
-int lcp_pending_init();
 
 /*******************************************************
  * Data manager initiator and destructor
  ******************************************************/
+
+lcp_pending_table_t * lcp_pending_init();
 void lcp_pending_fini(lcp_pending_table_t *table);
 
 /*******************************************************
