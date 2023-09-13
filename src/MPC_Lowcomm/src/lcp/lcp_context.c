@@ -600,6 +600,35 @@ static inline int __generate_configuration_summary(lcp_context_h ctx)
         return 0;
 }
 
+
+/**
+ * @brief Count non composable rails (TBSM and SHM only are composable)
+ * 
+ * @param ctx context to count from
+ * @return unsigned number of rails not counting TBSM and SHM
+ */
+unsigned int __count_non_composable_rails(lcp_context_h ctx)
+{
+        unsigned int num_composable = 0;
+
+        int i;
+
+        for(i =  0; i < ctx->num_cmpts; i++)
+        {
+                struct lcr_component * comp = &ctx->cmpts[i];
+
+                if(!strcmp(comp->name, "shm") || !strcmp(comp->name, "tbsm"))
+                        continue;
+        
+                num_composable++;
+        }
+
+        return num_composable;
+}
+
+
+
+
 /**
  * @brief This is called after fully initializing drivers to validate final configuration
  * 
@@ -608,8 +637,8 @@ static inline int __generate_configuration_summary(lcp_context_h ctx)
  */
 static inline int __check_configuration(lcp_context_h ctx)
 {
-        /* Does not support heterogeous multirail (tsbm always counted) */
-        if(ctx->num_cmpts > 3) {
+        /* Does not support heterogeous multirail (tsbm and shm not counted) */
+        if(__count_non_composable_rails(ctx) > 1) {
                 mpc_common_debug_error("LCP: heterogeous multirail not supported");
                 return -1;
         }

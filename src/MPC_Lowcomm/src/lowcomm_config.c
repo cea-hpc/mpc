@@ -1032,6 +1032,7 @@ static mpc_conf_config_type_t *__mpc_lowcomm_cli_conf_init(void)
 	                                                           PARAM("tcpshm", ___mpc_lowcomm_cli_conf_option_init("tcpshm", "tbsmmpi", "shmmpi", "tcpofirail"), MPC_CONF_TYPE, "Combination of TCP and TBSM"),
 	                                                           PARAM("tcp", ___mpc_lowcomm_cli_conf_option_init("tcp", "tbsmmpi", "tcpofirail", NULL), MPC_CONF_TYPE, "Combination of TCP and TBSM"),
 	                                                           PARAM("verbs", ___mpc_lowcomm_cli_conf_option_init("verbs", "tbsmmpi", "verbsofirail", NULL), MPC_CONF_TYPE, "Combination of Verbs and TBSM"),
+	                                                           PARAM("verbsshm", ___mpc_lowcomm_cli_conf_option_init("verbsshm", "tbsmmpi", "shmmpi", "verbsofirail"), MPC_CONF_TYPE, "Combination of Verbs and TBSM"),
 #else
 	                                                           PARAM("tcp", ___mpc_lowcomm_cli_conf_option_init("tcp", "tbsmmpi", "tcpmpi"), MPC_CONF_TYPE, "TCP Alone"),
 #endif
