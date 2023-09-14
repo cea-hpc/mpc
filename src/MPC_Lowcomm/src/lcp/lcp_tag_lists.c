@@ -208,7 +208,6 @@ void *lcp_umq_find(lcp_mtch_umq_list_t *list, int tag, uint64_t peer)
 			((elem->src & smask) == (peer & smask));
 		if (result) {
 			void * ret = elem->value;
-			mpc_mempool_free(NULL, elem);
 			return ret;
 		}
 	}
@@ -244,7 +243,9 @@ void *lcp_umq_find_dequeue(lcp_mtch_umq_list_t *list, int tag, uint64_t peer)
 		if (result) {
 			DL_DELETE(list->list, elem);	
 			list->size--;
-			return elem->value;
+			void * ret = elem->value;
+			mpc_mempool_free(NULL, elem);
+			return ret;
 		}
 	}
 	return 0;
