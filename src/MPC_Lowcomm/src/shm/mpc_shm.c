@@ -244,7 +244,7 @@ static size_t _mpc_shm_storage_get_size(unsigned int process_count, unsigned int
    /* End CMA context */
    ret += SHM_CELL_COUNT_PER_PROC * task_count * sizeof(struct _mpc_shm_cell);
 
-   mpc_common_debug_error("SHM segment is %g MB", (double)ret / (1024 * 1024));
+   mpc_common_debug_info("SHM: segment is %g MB", (double)ret / (1024 * 1024));
 
    return ret;
 }
@@ -923,7 +923,6 @@ void __add_route(mpc_lowcomm_peer_uid_t dest_uid, sctk_rail_info_t *rail)
 	/* Make sure the route is flagged connected */
 	_mpc_lowcomm_endpoint_set_state(new_route, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
    sctk_rail_add_dynamic_route(rail, new_route);
-   mpc_common_debug_error("Add route to %llu", dest_uid);
 }
 
 void __add_node_local_routes(sctk_rail_info_t *rail)
@@ -1031,8 +1030,6 @@ int mpc_shm_iface_open(char *device_name, int id,
       mpc_common_debug_error("Failed to initalize fragment factory");
       return MPC_LOWCOMM_ERROR;
    }
-
-   mpc_common_debug_error("Process %d over %d", mpc_common_get_local_process_rank(), mpc_common_get_local_process_count());
 
    rail->connect_on_demand = mpc_shm_connect_on_demand;
    rail->send_am_bcopy = mpc_shm_send_am_bcopy;
