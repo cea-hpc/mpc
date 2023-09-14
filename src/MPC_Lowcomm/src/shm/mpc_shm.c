@@ -12,24 +12,24 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
-
-#include <lcr/lcr_component.h>
-#include "mpc_common_datastructure.h"
-#include "mpc_common_debug.h"
-#include <sctk_alloc.h>
-
-#include <mpc_lowcomm_monitor.h>
-#include <mpc_launch_shm.h>
-#include <mpc_launch_pmi.h>
 #include <string.h>
 
 
-#include "mpc_common_rank.h"
-#include "mpc_common_spinlock.h"
-#include "mpc_lowcomm_types.h"
-#include "mpc_thread_accessor.h"
+#include <sctk_alloc.h>
+
+#include <mpc_common_datastructure.h>
+#include <mpc_common_debug.h>
+#include <mpc_common_rank.h>
+#include <mpc_common_spinlock.h>
+#include <mpc_launch_pmi.h>
+#include <mpc_launch_shm.h>
+#include <mpc_lowcomm_monitor.h>
+#include <mpc_lowcomm_types.h>
+
+
+
 #include "rail.h"
-#include "uthash.h"
+#include <lcr/lcr_component.h>
 
 /*************************
  * FRAGMENTED OPERATIONS *
@@ -686,13 +686,16 @@ int mpc_shm_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            size_t size,
                            lcr_completion_t *comp) 
 {
+
  #if MPC_USE_CMA
+
    int cma = mpc_shm_has_cma_support(&ep->rail->network.shm.storage);
 
    if(cma)
    {
          return __get_zcopy_over_cma(ep, local_addr, remote_offset, remote_key, size, comp);
    }
+
 #endif
 
    return __get_zcopy_over_frag(ep, local_addr, remote_offset, remote_key, size, comp);
@@ -884,7 +887,11 @@ void __add_node_local_routes(sctk_rail_info_t *rail)
 int mpc_shm_get_attr(sctk_rail_info_t *rail,
                      lcr_rail_attr_t *attr)
 {
+#if MPC_USE_CMA
+	attr->iface.cap.am.max_iovecs = sysconf(_SC_IOV_MAX);
+#else
 	attr->iface.cap.am.max_iovecs = 1;
+#endif
 	attr->iface.cap.am.max_bcopy  = MPC_SHM_BCOPY_SIZE - sizeof(_mpc_shm_am_hdr_t);
    /* We only have bcopy */
 	attr->iface.cap.am.max_zcopy  = 0;

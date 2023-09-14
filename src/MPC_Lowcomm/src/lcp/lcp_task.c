@@ -1,5 +1,8 @@
 #include "lcp_task.h"
 
+#include <mpc_common_rank.h>
+
+
 #include "lcp_common.h"
 #include "mpc_common_datastructure.h"
 #include "mpc_common_debug.h"
@@ -7,7 +10,8 @@
 
 #include "lcp_def.h"
 #include "lcp_context.h"
-#include "mpc_thread_accessor.h"
+
+
 #include "sctk_alloc.h"
 
 #include "lcp_request.h"

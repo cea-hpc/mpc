@@ -1,4 +1,7 @@
 #include "lcp_request.h"
+
+#include <mpc_common_rank.h>
+
 #include "lcp_def.h"
 #include "lcp_ep.h"
 #include "lcp_pending.h"
@@ -6,9 +9,7 @@
 #include "mpc_common_debug.h"
 #include "mpc_common_spinlock.h"
 #include "mpc_mempool.h"
-#include "mpc_thread_accessor.h"
 
-#include <mpc_common_rank.h>
 
 #include <sctk_alloc.h>
 #include <string.h>
