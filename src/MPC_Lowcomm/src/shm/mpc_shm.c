@@ -1,3 +1,12 @@
+#include <mpc_config.h>
+#ifdef MPC_USE_CMA
+#define _GNU_SOURCE
+#include <sys/uio.h>
+#include <sys/types.h>
+#include <unistd.h>
+#endif
+
+
 #include "mpc_shm.h"
 
 #include <stddef.h>
@@ -13,6 +22,7 @@
 #include <mpc_launch_shm.h>
 #include <mpc_launch_pmi.h>
 #include <string.h>
+
 
 #include "mpc_common_rank.h"
 #include "mpc_common_spinlock.h"
@@ -227,6 +237,11 @@ static size_t _mpc_shm_storage_get_size(unsigned int process_count, unsigned int
 {
    size_t ret = process_count * SHM_PROCESS_ARITY * sizeof(struct _mpc_shm_list_head);
    ret += freelist_count * sizeof(struct _mpc_shm_list_head);
+   /* Begin CMA context */
+   ret += process_count * sizeof(mpc_lowcomm_peer_uid_t *);
+   ret += process_count * sizeof(pid_t);
+   ret += process_count * sizeof(mpc_lowcomm_peer_uid_t);
+   /* End CMA context */
    ret += SHM_CELL_COUNT_PER_PROC * task_count * sizeof(struct _mpc_shm_cell);
 
    mpc_common_debug_error("SHM segment is %g MB", (double)ret / (1024 * 1024));
@@ -243,13 +258,15 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
       return 1;
    }
 
+   storage->cma_state = MPC_SHM_CMA_UNCHECKED;
+
    storage->process_count = process_count;
    storage->cell_count = SHM_CELL_COUNT_PER_PROC * process_count;
    storage->process_arity = SHM_PROCESS_ARITY;
 
    assume(0 < process_count);
 
-   int mpi_task_count = mpc_common_get_task_count();
+   unsigned int mpi_task_count = mpc_common_get_task_count();
 
    storage->freelist_count = mpi_task_count * SHM_FREELIST_PER_PROC;
    size_t segment_size = _mpc_shm_storage_get_size(process_count, mpi_task_count, storage->freelist_count);
@@ -270,8 +287,27 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
    assume((void*)storage->per_process < (void*)storage->free_lists);
    assume((void*)storage->free_lists < ((void*)storage->shm_buffer + segment_size));
 
+   /* Begin CMA context */
+
+   storage->remote_uid_addresses = (mpc_lowcomm_peer_uid_t **)(storage->free_lists + storage->freelist_count);
+   assume(((void*)storage->free_lists < (void*)storage->remote_uid_addresses) && ((void*)storage->remote_uid_addresses < ((void*)storage->shm_buffer + segment_size)));
+
+   storage->pids = (pid_t *)(storage->remote_uid_addresses + process_count);
+   assume(((void*)storage->remote_uid_addresses < (void*)storage->pids) && ((void*)storage->pids < ((void*)storage->shm_buffer + segment_size)));
+
+   storage->uids = (mpc_lowcomm_peer_uid_t*)(storage->pids + process_count);
+   assume(((void*)storage->pids < (void*)storage->uids) && ((void*)storage->uids < ((void*)storage->shm_buffer + segment_size)));
+
 
    unsigned int proc_rank = mpc_common_get_local_process_rank();
+
+   /* Set my address and my value and my pid */
+   storage->my_uid = mpc_lowcomm_monitor_get_uid();
+   storage->remote_uid_addresses[proc_rank] = &storage->my_uid;
+   storage->pids[proc_rank] = getpid();
+   storage->uids[proc_rank] = mpc_lowcomm_monitor_get_uid();
+
+   /* End CMA context */
 
    /* Per process head do init */
    unsigned int i = 0;
@@ -281,9 +317,8 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
       _mpc_shm_list_head_init(&storage->per_process[i]);
    }
 
-   struct _mpc_shm_cell * cells = (struct _mpc_shm_cell*)(storage->free_lists + storage->freelist_count);
+   struct _mpc_shm_cell * cells = (struct _mpc_shm_cell*)(storage->uids + process_count);
    assume(((void*)storage->free_lists < (void*)cells) && ((void*)cells < ((void*)storage->shm_buffer + segment_size)));
-
 
    /* Only the first rank matching  the freelist does the freelist pushed to avoid bad numa effects */
 
@@ -320,6 +355,21 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
 }
 
 int _mpc_shm_storage_release(struct _mpc_shm_storage *storage);
+
+
+pid_t _mpc_shm_storage_uid_to_pid(struct _mpc_shm_storage * storage, mpc_lowcomm_peer_uid_t uid)
+{
+   unsigned int i = 0;
+   for(i = 0 ; i < storage->process_count; i++)
+   {
+      if(storage->uids[i] == uid)
+      {
+         return storage->pids[i];
+      }
+   }
+
+   return -1;
+}
 
 
 #define MPC_SHM_MAX_GET_TRY 16
@@ -402,12 +452,13 @@ void _mpc_shm_storage_free_cell(struct _mpc_shm_storage * storage,
 
 void  mpc_shm_pin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list, void *addr, size_t size)
 {
-   list->pin.shm = _mpc_shm_fragment_factory_register_segment(&rail->network.shm.frag_factory, addr, size);
+   list->pin.shm.addr = addr;
+   list->pin.shm.id = _mpc_shm_fragment_factory_register_segment(&rail->network.shm.frag_factory, addr, size);
 }
 
 void mpc_shm_unpin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list)
 {
-   _mpc_shm_fragment_factory_unregister_segment(&rail->network.shm.frag_factory, list->pin.shm);
+   _mpc_shm_fragment_factory_unregister_segment(&rail->network.shm.frag_factory, list->pin.shm.id);
 }
 
 
@@ -415,23 +466,102 @@ int mpc_shm_pack_rkey(sctk_rail_info_t *rail,
                       lcr_memp_t *memp, void *dest)
 {
         UNUSED(rail);
-        void *p = dest;
-        *(uint64_t *)p = memp->pin.shm;
-        return sizeof(uint64_t);
+        memcpy(dest, &memp->pin.shm, sizeof(_mpc_lowcomm_shm_pinning_ctx_t));
+        return sizeof(_mpc_lowcomm_shm_pinning_ctx_t);
 }
 
 int mpc_shm_unpack_rkey(sctk_rail_info_t *rail,
                         lcr_memp_t *memp, void *dest)
 {
         UNUSED(rail);
-        void *p = dest;
-        memp->pin.shm = *(uint64_t *)p;
+        memcpy( &memp->pin.shm, dest, sizeof(_mpc_lowcomm_shm_pinning_ctx_t));
+        return sizeof(_mpc_lowcomm_shm_pinning_ctx_t);
+}
 
-        return sizeof(uint64_t);
+/***********************
+ * CROSS MEMORY ATTACH *
+ ***********************/
+
+ #if MPC_USE_CMA
+
+int __do_cma_read(pid_t pid, void * src, void *dest, size_t size)
+{
+   struct iovec local;
+   struct iovec remote;
+   
+   local.iov_base=dest;
+   local.iov_len = size;
+
+   remote.iov_base = src;
+   remote.iov_len = size;
+
+   ssize_t ret = process_vm_readv(pid,
+                    &local,
+                    1,
+                    &remote,
+                    1,
+                    0);
+
+
+   if(ret != (ssize_t)size)
+   {
+      return 1;
+   }
+
+   return 0;
 }
 
 
+int mpc_shm_has_cma_support(struct _mpc_shm_storage * storage)
+{
+   if(storage->cma_state == MPC_SHM_CMA_OK)
+   {
+      return 1;
+   }
 
+   if(storage->cma_state == MPC_SHM_CMA_NOK)
+   {
+      return 0;
+   }
+
+   /* We are unknown */
+   int i;
+   int local_pcount = mpc_common_get_local_process_count();
+   int my_rank = mpc_common_get_local_process_rank();
+
+   for(i = 0 ; i < local_pcount; i++)
+   {
+      if(i == my_rank)
+      {
+         continue;
+      }
+
+      pid_t remote_pid = storage->pids[i];
+      mpc_lowcomm_peer_uid_t *remote_uid_addresses = storage->remote_uid_addresses[i];
+      mpc_lowcomm_peer_uid_t remote_uid_cma = 0;
+      mpc_lowcomm_peer_uid_t remote_uid_value = mpc_lowcomm_monitor_local_uid_of(i);
+
+      if( __do_cma_read(remote_pid, remote_uid_addresses, &remote_uid_cma, sizeof(mpc_lowcomm_peer_uid_t)) )
+      {
+         goto error_cma;
+      }
+
+      if(remote_uid_value != remote_uid_cma)
+      {
+         goto error_cma;
+      }
+
+   }
+
+   storage->cma_state = MPC_SHM_CMA_OK;
+   return 1;
+
+error_cma:
+   storage->cma_state = MPC_SHM_CMA_NOK;
+   return 0;
+}
+
+#endif
 
 /***********************
  * MESSAGING FUNCTIONS *
@@ -483,7 +613,8 @@ static inline void __deffered_completion_cb(void *pcomp)
    comp->comp_cb(comp);
 }
 
-int mpc_shm_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
+
+int __get_zcopy_over_frag(_mpc_lowcomm_endpoint_t *ep,
                            uint64_t local_addr,
                            uint64_t remote_offset,
                            lcr_memp_t *remote_key,
@@ -495,7 +626,7 @@ int mpc_shm_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
    comp->sent = size;
 
    uint64_t fragment_id = _mpc_shm_fragment_init(&rail->network.shm.frag_factory, 
-                                              remote_key->pin.shm,
+                                              remote_key->pin.shm.id,
                                               (void*)local_addr,
                                               size,
                                               __deffered_completion_cb,
@@ -514,7 +645,7 @@ int mpc_shm_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
    get->source = mpc_lowcomm_monitor_get_uid();
    get->frag_id = fragment_id;
-   get->segment_id = remote_key->pin.shm;
+   get->segment_id = remote_key->pin.shm.id;
    get->offset = remote_offset;
    get->size = size;
 
@@ -523,6 +654,48 @@ int mpc_shm_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
                               cell);
 
    return MPC_LOWCOMM_SUCCESS;
+}
+
+#ifdef MPC_USE_CMA
+int __get_zcopy_over_cma(_mpc_lowcomm_endpoint_t *ep,
+                           uint64_t local_addr,
+                           uint64_t remote_offset,
+                           lcr_memp_t *remote_key,
+                           size_t size,
+                           lcr_completion_t *comp)
+{
+   pid_t target_pid = _mpc_shm_storage_uid_to_pid(&ep->rail->network.shm.storage, ep->dest);
+   assume(0 <= target_pid);
+   int ret = __do_cma_read(target_pid, remote_key->pin.shm.addr + remote_offset, (void*)local_addr, size);
+   assume(ret == 0);
+
+   comp->sent = size;
+   comp->comp_cb(comp);
+
+   return MPC_LOWCOMM_SUCCESS;
+}
+
+#endif
+
+
+
+int mpc_shm_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
+                           uint64_t local_addr,
+                           uint64_t remote_offset,
+                           lcr_memp_t *remote_key,
+                           size_t size,
+                           lcr_completion_t *comp) 
+{
+ #if MPC_USE_CMA
+   int cma = mpc_shm_has_cma_support(&ep->rail->network.shm.storage);
+
+   if(cma)
+   {
+         return __get_zcopy_over_cma(ep, local_addr, remote_offset, remote_key, size, comp);
+   }
+#endif
+
+   return __get_zcopy_over_frag(ep, local_addr, remote_offset, remote_key, size, comp);
 }
 
 

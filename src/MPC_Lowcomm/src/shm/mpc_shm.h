@@ -8,8 +8,7 @@
 #include <mpc_lowcomm_monitor.h>
 #include <sys/types.h>
 
-#define MPC_SHM_EAGER_SIZE 4000
-
+#define MPC_SHM_EAGER_SIZE 4200
 #define MPC_SHM_BCOPY_SIZE MPC_SHM_EAGER_SIZE
 #define SHM_PROCESS_ARITY 8ull
 #define SHM_FREELIST_PER_PROC 4ull
@@ -34,6 +33,7 @@ typedef struct
 	size_t length;
    char * data[0];
 }_mpc_shm_am_hdr_t;
+
 
 typedef struct
 {
@@ -73,15 +73,28 @@ struct _mpc_shm_list_head
    char __pad[512];
 };
 
+typedef enum
+{
+   MPC_SHM_CMA_NOK = 0,
+   MPC_SHM_CMA_OK = 1,
+   MPC_SHM_CMA_UNCHECKED = 2   
+}mpc_shm_cma_state_t;
+
+
 struct _mpc_shm_storage
 {
    struct _mpc_shm_list_head * per_process;
    struct _mpc_shm_list_head * free_lists;
+   mpc_lowcomm_peer_uid_t ** remote_uid_addresses;
+   pid_t * pids;
+   mpc_lowcomm_peer_uid_t * uids;
    unsigned int process_count;
    unsigned int process_arity;
    unsigned int freelist_count;
    unsigned int cell_count;
    void * shm_buffer;
+   mpc_lowcomm_peer_uid_t my_uid;
+   mpc_shm_cma_state_t cma_state;
 };
 
 /**************
@@ -117,6 +130,15 @@ struct _mpc_shm_fragment_factory
    mpc_mempool reg_pool;
 };
 
+/*******************
+ * PINNING CONTEXT *
+ *******************/
+
+typedef struct
+{
+   uint64_t id;
+   void * addr;
+}_mpc_lowcomm_shm_pinning_ctx_t;
 
 /************************
  * SHM ENDPOINT CONTEXT *

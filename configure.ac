@@ -2923,7 +2923,7 @@ if test "x${mpc_shell_color}" = "xyes"; then
 fi
 
 #### CMA support
-MPC_ENABLE_CMA="no"
+MPC_ENABLE_CMA="yes"
 AC_ARG_ENABLE([cma], [AS_HELP_STRING([--enable-cma], [Activate Cross Memory Attach for SHM communications])],
 [MPC_ENABLE_CMA=$enableval], [])
 
@@ -2943,8 +2943,11 @@ if test "x${MPC_ENABLE_CMA}" = "xyes"; then
                 fi
         fi
 
+        # Check the uio header
+        AC_CHECK_HEADER([sys/uio.h],[HAVE_UIO_H=1],[HAVE_UIO_H=0])
+
         AC_MSG_CHECKING([enabling CMA])
-        if test "x$MPC_ENABLE_CMA" = "xyes"; then
+        if test "x$MPC_ENABLE_CMA" = "xyes" -a "x${HAVE_UIO_H}" = "x1"; then
                 AC_MSG_RESULT([yes])
                 AC_DEFINE([MPC_USE_CMA], [1], [MPC CMA for SHM drive is enabled])
         else

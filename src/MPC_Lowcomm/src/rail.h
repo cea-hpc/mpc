@@ -81,7 +81,7 @@ typedef union
 	struct fid_mr *ofi;
 	uint64_t ofi_remote_mr_key;
 #endif
-	uint64_t shm;
+	_mpc_lowcomm_shm_pinning_ctx_t shm;
 }sctk_rail_pin_ctx_internal_t;
 
 struct sctk_rail_pin_ctx_list
