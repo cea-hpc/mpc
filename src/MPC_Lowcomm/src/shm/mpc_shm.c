@@ -511,6 +511,33 @@ int __do_cma_read(pid_t pid, void * src, void *dest, size_t size)
    return 0;
 }
 
+int __do_cma_write(pid_t pid, void * src, void *dest, size_t size)
+{
+   struct iovec local;
+   struct iovec remote;
+   
+   local.iov_base=dest;
+   local.iov_len = size;
+
+   remote.iov_base = src;
+   remote.iov_len = size;
+
+   ssize_t ret = process_vm_writev(pid,
+                    &local,
+                    1,
+                    &remote,
+                    1,
+                    0);
+
+
+   if(ret != (ssize_t)size)
+   {
+      return 1;
+   }
+
+   return 0;
+}
+
 
 int mpc_shm_has_cma_support(struct _mpc_shm_storage * storage)
 {
@@ -675,8 +702,25 @@ int __get_zcopy_over_cma(_mpc_lowcomm_endpoint_t *ep,
    return MPC_LOWCOMM_SUCCESS;
 }
 
-#endif
+int __put_zcopy_over_cma(_mpc_lowcomm_endpoint_t *ep,
+                           uint64_t local_addr,
+                           uint64_t remote_offset,
+                           lcr_memp_t *remote_key,
+                           size_t size,
+                           lcr_completion_t *comp)
+{
+   pid_t target_pid = _mpc_shm_storage_uid_to_pid(&ep->rail->network.shm.storage, ep->dest);
+   assume(0 <= target_pid);
+   int ret = __do_cma_write(target_pid, remote_key->pin.shm.addr + remote_offset, (void*)local_addr, size);
+   assume(ret == 0);
 
+   comp->sent = size;
+   comp->comp_cb(comp);
+
+   return MPC_LOWCOMM_SUCCESS;
+}
+
+#endif
 
 
 int mpc_shm_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
@@ -701,6 +745,28 @@ int mpc_shm_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
    return __get_zcopy_over_frag(ep, local_addr, remote_offset, remote_key, size, comp);
 }
 
+
+
+
+int mpc_shm_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
+                        uint64_t local_addr,
+                        uint64_t remote_offset,
+                        lcr_memp_t *remote_key,
+                        size_t size,
+                        lcr_completion_t *comp)
+{
+ #if MPC_USE_CMA
+
+   int cma = mpc_shm_has_cma_support(&ep->rail->network.shm.storage);
+
+   if(cma)
+   {
+         return __put_zcopy_over_cma(ep, local_addr, remote_offset, remote_key, size, comp);
+   }
+
+#endif
+   not_implemented();
+}
 
 
 
@@ -977,12 +1043,10 @@ int mpc_shm_iface_open(char *device_name, int id,
    rail->iface_unpack_memp = mpc_shm_unpack_rkey;
    rail->get_zcopy = mpc_shm_get_zcopy;
    rail->send_am_zcopy = mpc_shm_send_am_zcopy;
+   rail->put_zcopy = mpc_shm_put_zcopy;
 
 #if 0
    rail->driver_finalize = mpc_ofi_release;
-
-   rail->put_zcopy = mpc_ofi_send_put_zcopy;
-
 #endif
 
    /* Init capabilities */
