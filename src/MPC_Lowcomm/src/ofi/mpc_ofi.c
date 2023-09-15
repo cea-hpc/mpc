@@ -335,6 +335,9 @@ int mpc_ofi_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
       return -1;
    }
 
+   mpc_ofi_domain_poll(ep->rail->network.ofi.view.domain, FI_SEND);
+
+
    return MPC_LOWCOMM_SUCCESS;
 }
 

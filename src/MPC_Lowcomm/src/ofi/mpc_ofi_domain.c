@@ -898,7 +898,6 @@ int mpc_ofi_domain_get(struct mpc_ofi_domain_t *domain,
       break;
    }
 #else
-mpc_common_debug_error("len %d", len);
    while(1)
    {
       ssize_t ret = fi_read(domain->ep, buf, len, fi_mr_desc((*req)->mr[0]), 0, remote_addr, key, *req);
