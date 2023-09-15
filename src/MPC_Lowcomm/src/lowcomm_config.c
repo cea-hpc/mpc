@@ -1037,7 +1037,7 @@ static mpc_conf_config_type_t *__mpc_lowcomm_cli_conf_init(void)
 	                                                           PARAM("tcp", ___mpc_lowcomm_cli_conf_option_init("tcp", "tbsmmpi", "tcpmpi"), MPC_CONF_TYPE, "TCP Alone"),
 #endif
 #ifdef MPC_USE_PORTALS
-	                                                           PARAM("portals4", ___mpc_lowcomm_cli_conf_option_init("portals4", "tbsmmpi", "portalsmpi"), MPC_CONF_TYPE, "Combination of Portals and SHM"),
+	                                                           PARAM("portals4", ___mpc_lowcomm_cli_conf_option_init("portals4", "tbsmmpi", "portalsmpi", NULL), MPC_CONF_TYPE, "Combination of Portals and SHM"),
 #endif
 	                                                           NULL);
 
