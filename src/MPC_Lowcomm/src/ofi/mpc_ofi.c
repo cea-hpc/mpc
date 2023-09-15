@@ -369,11 +369,11 @@ int mpc_ofi_get_attr(sctk_rail_info_t *rail,
 }
 
 
-int mpc_ofi_query_devices(__UNUSED__ lcr_component_t *component,
+int mpc_ofi_query_devices(lcr_component_t *component,
                           lcr_device_t **devices_p,
                           unsigned int *num_devices_p)
 {
-   struct fi_info * hints = mpc_ofi_get_requested_hints("tcp");
+   struct fi_info * hints = mpc_ofi_get_requested_hints(component->driver_config->driver.value.ofi.provider);
 
    struct fi_info *config = NULL;
 

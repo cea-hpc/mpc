@@ -28,6 +28,7 @@ typedef struct lcr_device {
 typedef struct lcr_component {
         char                  name[LCR_COMPONENT_NAME_MAX];
         char                  rail_name[LCR_COMPONENT_NAME_MAX];
+        lcr_driver_config_t   *driver_config;
         lcr_device_t         *devices;
         unsigned              num_devices;
         int                   count; /* Number of current instance */

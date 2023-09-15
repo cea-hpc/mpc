@@ -278,6 +278,8 @@ static inline int __init_lcr_component(struct _mpc_lowcomm_config_struct_net_rai
         /* Retrieve reference configuration from driver */
         memcpy(component, __resolve_config_to_driver(driver_config), sizeof(struct lcr_component));
 
+        component->driver_config = driver_config;
+
         /* Make sure to set the corresponding rail name in the component */
         (void)snprintf(component->rail_name, LCR_COMPONENT_NAME_MAX, "%s", rail->name);
 
