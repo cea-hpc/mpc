@@ -50,15 +50,13 @@ lcp_pending_entry_t *lcp_pending_create(lcp_pending_table_t *table,
         mpc_common_spinlock_lock(&(table->table_lock));
 
         HASH_FIND(hh, table->table, &msg_key, sizeof(uint64_t), entry);
-	if(req->send.ep == NULL)
-		MPC_CRASH();
+
         if (entry == NULL) {
                 entry = mpc_mempool_alloc(&table->pending_pool);
                 if (entry == NULL) {
                         mpc_common_debug_error("LCP: could not allocate pending request.");	
                         return entry;
                 }
-                //memset(entry, 0, sizeof(lcp_pending_entry_t));
 
                 entry->msg_key = msg_key;
                 entry->req = req;
