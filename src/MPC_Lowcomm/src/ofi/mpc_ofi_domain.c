@@ -922,3 +922,88 @@ get_unlock:
 
    return retcode;
 }
+
+
+int mpc_ofi_domain_put(struct mpc_ofi_domain_t *domain,
+                       void *buf,
+                       size_t len,
+                       uint64_t dest,
+                       uint64_t remote_addr,
+                       uint64_t key,
+                       struct mpc_ofi_request_t **preq,
+                       int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
+                       void *arg_ext)
+{
+   struct mpc_ofi_request_t ** req = preq;
+   struct mpc_ofi_request_t * __req = NULL;
+   int retcode = 0;
+
+   if(!req)
+   {
+      req = &__req;
+   }
+
+   mpc_common_spinlock_lock(&domain->lock);
+
+   *req = __acquire_request(domain, _mpc_ofi_domain_request_complete, NULL, comptetion_cb_ext, arg_ext);
+
+   if( mpc_ofi_domain_memory_register_no_lock(domain, buf, len, FI_READ, &(*req)->mr[0]) )
+   {
+      mpc_common_errorpoint("Failed to register send buffer");
+      retcode = -1;
+      goto get_unlock;
+   }
+
+   (*req)->mr_count = 1;
+
+   fi_addr_t target_addr = 0;
+
+   if(mpc_ofi_domain_dns_resolve(&domain->ddns, dest, &target_addr))
+   {
+      mpc_common_errorpoint("Failed to resolve address");
+      retcode = -1;
+      goto get_unlock;
+   }
+
+   struct iovec iov;
+   iov.iov_base = buf;
+   iov.iov_len = len;
+
+   struct fi_rma_iov riov;
+   riov.addr = remote_addr;
+   riov.len = len;
+   riov.key = key;
+
+   struct fi_msg_rma rma_msg = { .msg_iov = &iov,
+                                 .desc = fi_mr_desc((*req)->mr[0]),
+                                 .iov_count = 1,
+                                 .addr = target_addr,
+                                 .rma_iov = &riov,
+                                 .rma_iov_count = 1,
+                                 .context = *req
+   };
+
+
+   while(1)
+   {
+      ssize_t ret = fi_writemsg(domain->ep, &rma_msg, FI_COMPLETION);
+
+      if(ret == -FI_EAGAIN)
+      {
+         continue;
+      }
+
+      if(ret < 0)
+      {
+         MPC_OFI_DUMP_ERROR(ret);
+         retcode = (int)ret;
+         goto get_unlock;
+      }
+      break;
+   }
+
+get_unlock:
+   mpc_common_spinlock_unlock(&domain->lock);
+
+   return retcode;
+}

@@ -146,4 +146,14 @@ int mpc_ofi_domain_get(struct mpc_ofi_domain_t *domain,
                        int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
                        void *arg_ext);
 
+int mpc_ofi_domain_put(struct mpc_ofi_domain_t *domain,
+                       void *buf,
+                       size_t len,
+                       uint64_t dest,
+                       uint64_t remote_addr,
+                       uint64_t key,
+                       struct mpc_ofi_request_t **preq,
+                       int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
+                       void *arg_ext);
+
 #endif /* MPC_OFI_DOMAIN */

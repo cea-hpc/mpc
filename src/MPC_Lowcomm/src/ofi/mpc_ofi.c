@@ -348,8 +348,32 @@ int mpc_ofi_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
                            size_t size,
                            lcr_completion_t *comp) 
 {
-   mpc_common_errorpoint("Not implemented");
-   mpc_common_debug_abort();
+	struct mpc_ofi_deffered_completion_s *completion =  mpc_mempool_alloc(&ep->data.ofi.deffered);
+   assume(completion != NULL);
+
+   assert(size);
+
+   comp->sent = size;
+   completion->comp = comp;
+
+   if(mpc_ofi_domain_put(ep->rail->network.ofi.view.domain,
+                     (void*)local_addr,
+                     size,
+                     ep->dest,
+                     remote_offset,
+                     remote_key->pin.ofi_remote_mr_key,
+                     NULL,
+                     __deffered_completion_cb,
+                     completion))
+   {
+      mpc_common_errorpoint("Failed to issue RDMA write");
+      return -1;
+   }
+
+   mpc_ofi_domain_poll(ep->rail->network.ofi.view.domain, FI_SEND);
+
+
+   return MPC_LOWCOMM_SUCCESS;
 }
 
 int mpc_ofi_get_attr(sctk_rail_info_t *rail,
