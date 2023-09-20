@@ -34,7 +34,7 @@ static size_t lcp_rndv_rtr_pack(void *dest, void *data)
         lcp_request_t *rndv_req = data;
         lcp_request_t *super    = rndv_req->super;
 
-        hdr->msg_id = rndv_req->msg_id;
+        hdr->msg_id = rndv_req->send.rndv.msg_id;
         packed_size = lcp_mem_rkey_pack(super->ctx, 
                                         super->state.lmem,
                                         hdr + 1);
@@ -195,7 +195,8 @@ int lcp_rndv_reg_recv_buffer(lcp_request_t *rndv_req)
                 req->recv.buffer : req->state.pack_buf;
 
         /* Register and pack memory pin context that will be sent to remote */
-        req->state.lmem = lcp_pinning_mmu_pin(req->ctx, start, req->send.length,req->send.ep->conn_map);
+        req->state.lmem = lcp_pinning_mmu_pin(req->ctx, start, req->recv.send_length,
+                                              rndv_req->send.ep->conn_map);
         req->state.offset = (size_t)(start - req->state.lmem->base_addr);
         assume(req->state.offset == 0);
 
@@ -374,7 +375,6 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
 
         switch (rreq->ctx->config.rndv_mode) {
         case LCP_RNDV_PUT:
-                not_implemented();
                 /* Append request to request hash table */
                 if (lcp_pending_create(rreq->ctx->pend, rndv_req, 
                                        rreq->msg_id) == NULL) {
