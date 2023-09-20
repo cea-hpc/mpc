@@ -150,41 +150,44 @@ int _mpc_shm_fragment_notify(struct _mpc_shm_fragment_factory *factory, uint64_t
  * LIST MANIPULATION *
  *********************/
 
-static inline void ___mpc_shm_list_head_push_no_lock(struct _mpc_shm_list_head * list, struct _mpc_shm_cell *cell)
+static inline void ___mpc_shm_list_head_push_no_lock(struct _mpc_shm_list_head * list, struct _mpc_shm_cell *cell, void * base)
 {
    assert(cell->next == NULL);
    assert(cell->prev == NULL);
 
+   void * relative_cell_addr = (void *)cell - (uint64_t)base;
+
    if(!list->head)
    {
-      list->tail = cell;
+      list->tail = relative_cell_addr;
    }
    else
    {
-      list->head->prev = cell;
+	  struct _mpc_shm_cell * phead = (struct _mpc_shm_cell *)((void *)list->head + (uint64_t)base); 
+      phead->prev = relative_cell_addr;
    }
 
    cell->prev = NULL;
    cell->next = list->head;
-   list->head = cell;
+   list->head = relative_cell_addr;
 }
 
 
-static inline void _mpc_shm_list_head_push(struct _mpc_shm_list_head * list, struct _mpc_shm_cell *cell)
+static inline void _mpc_shm_list_head_push(struct _mpc_shm_list_head * list, struct _mpc_shm_cell *cell, void *base)
 {
    mpc_common_spinlock_lock(&list->lock);
 
-   ___mpc_shm_list_head_push_no_lock(list, cell);
+   ___mpc_shm_list_head_push_no_lock(list, cell, base);
 
    mpc_common_spinlock_unlock(&list->lock);
 }
 
-static inline int _mpc_shm_list_head_try_push(struct _mpc_shm_list_head * list, struct _mpc_shm_cell *cell)
+static inline int _mpc_shm_list_head_try_push(struct _mpc_shm_list_head * list, struct _mpc_shm_cell *cell, void *base)
 {
    if( mpc_common_spinlock_trylock(&list->lock) == 0)
    {
 
-      ___mpc_shm_list_head_push_no_lock(list, cell);
+      ___mpc_shm_list_head_push_no_lock(list, cell, base);
 
       mpc_common_spinlock_unlock(&list->lock);
 
@@ -202,16 +205,16 @@ void _mpc_shm_list_head_init(struct _mpc_shm_list_head *head)
    head->tail = NULL;
 }
 
-static inline struct _mpc_shm_cell * _mpc_shm_list_head_try_get(struct _mpc_shm_list_head * list)
+static inline struct _mpc_shm_cell * _mpc_shm_list_head_try_get(struct _mpc_shm_list_head * list, void * base)
 {
    struct _mpc_shm_cell * ret = NULL;
 
    if( mpc_common_spinlock_trylock(&list->lock) == 0)
    {
-      ret = list->tail;
 
-      if(ret)
+      if(list->tail)
       {
+      	 ret = (struct _mpc_shm_cell*)((char*)list->tail + (uint64_t)base);
          list->tail = ret->prev;
          ret->next = NULL;
          ret->prev = NULL;
@@ -270,7 +273,7 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
 
    storage->freelist_count = process_count * SHM_FREELIST_PER_PROC;
    size_t segment_size = _mpc_shm_storage_get_size(process_count, mpi_task_count, storage->freelist_count);
-
+   storage->segment_size = segment_size;
    storage->shm_buffer = mpc_launch_shm_map(segment_size, MPC_LAUNCH_SHM_USE_PMI, NULL);
 
    assume(storage != NULL);
@@ -314,7 +317,7 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
 
    for( i = proc_rank * SHM_PROCESS_ARITY; i < (proc_rank + 1) * SHM_PROCESS_ARITY; i++)
    {
-      _mpc_shm_list_head_init(&storage->per_process[i]);
+	   _mpc_shm_list_head_init(&storage->per_process[i]);
    }
 
    struct _mpc_shm_cell * cells = (struct _mpc_shm_cell*)(storage->uids + process_count);
@@ -329,7 +332,7 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
 		 assume(i < storage->cell_count);
          cells[i].next = NULL;
          cells[i].prev = NULL;
-         _mpc_shm_list_head_push(&storage->free_lists[proc_rank * SHM_FREELIST_PER_PROC + rr_counter], &cells[i]);
+         _mpc_shm_list_head_push(&storage->free_lists[proc_rank * SHM_FREELIST_PER_PROC + rr_counter], &cells[i],  storage->shm_buffer);
          cells[i].free_list = (char)proc_rank;
          rr_counter = (rr_counter + 1)% (int)SHM_FREELIST_PER_PROC;
       }
@@ -367,7 +370,7 @@ struct _mpc_shm_cell * _mpc_shm_storage_get_free_cell(struct _mpc_shm_storage *s
    unsigned int target_list = my_rank % storage->freelist_count;
    int cnt = 0;
 
-   while( !(ret = _mpc_shm_list_head_try_get(&storage->free_lists[target_list])))
+   while( !(ret = _mpc_shm_list_head_try_get(&storage->free_lists[target_list], storage->shm_buffer)))
    {
       cnt++;
       if(cnt > MPC_SHM_MAX_GET_TRY)
@@ -399,11 +402,13 @@ void _mpc_shm_storage_send_cell(struct _mpc_shm_storage * storage,
    struct _mpc_shm_list_head * list = &storage->per_process[target_list];
    unsigned int cnt = 0;
 
+   assume( (storage->shm_buffer < cell) && (cell < (storage->shm_buffer + storage->segment_size)));
+
    while(1)
    {
       if(mpc_common_spinlock_trylock(&list->lock) == 0)
       {
-         ___mpc_shm_list_head_push_no_lock(list, cell);
+         ___mpc_shm_list_head_push_no_lock(list, cell, storage->shm_buffer);
          mpc_common_spinlock_unlock(&list->lock);
          break;
       }
@@ -422,7 +427,7 @@ void _mpc_shm_storage_free_cell(struct _mpc_shm_storage * storage,
 
    do
    {
-      if(_mpc_shm_list_head_try_push(&storage->free_lists[dest], cell) == 0)
+      if(_mpc_shm_list_head_try_push(&storage->free_lists[dest], cell, storage->shm_buffer) == 0)
       {
          did_push = 1;
       }
@@ -598,7 +603,7 @@ ssize_t mpc_shm_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
                               unsigned flags)
 {
    sctk_rail_info_t *rail = ep->rail;
-	uint32_t payload_length = 0;
+   uint32_t payload_length = 0;
 
    struct _mpc_shm_cell * cell = _mpc_shm_storage_get_free_cell(&rail->network.shm.storage);
 
@@ -607,8 +612,8 @@ ssize_t mpc_shm_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
    _mpc_shm_am_hdr_t *hdr = (_mpc_shm_am_hdr_t *)cell->data;
 
    hdr->op = MPC_SHM_AM_EAGER;
-	hdr->am_id = id;
-	hdr->length = payload_length = pack(hdr->data, arg);
+   hdr->am_id = id;
+   hdr->length = payload_length = pack(hdr->data, arg);
    payload_length = hdr->length;
 
    _mpc_shm_storage_send_cell(&rail->network.shm.storage,
@@ -873,7 +878,7 @@ int mpc_shm_progress(sctk_rail_info_t *rail)
 
    for( i = my_rank * SHM_PROCESS_ARITY; i < (my_rank + 1) * SHM_PROCESS_ARITY; i++)
    {
-      struct _mpc_shm_cell * cell = _mpc_shm_list_head_try_get(&rail->network.shm.storage.per_process[i]);
+      struct _mpc_shm_cell * cell = _mpc_shm_list_head_try_get(&rail->network.shm.storage.per_process[i], rail->network.shm.storage.shm_buffer);
 
       if(cell)
       {

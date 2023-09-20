@@ -93,6 +93,7 @@ struct _mpc_shm_storage
    unsigned int freelist_count;
    unsigned int cell_count;
    void * shm_buffer;
+   size_t segment_size;
    mpc_lowcomm_peer_uid_t my_uid;
    mpc_shm_cma_state_t cma_state;
 };
