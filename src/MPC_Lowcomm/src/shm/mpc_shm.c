@@ -268,7 +268,7 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
 
    unsigned int mpi_task_count = mpc_common_get_task_count();
 
-   storage->freelist_count = mpi_task_count * SHM_FREELIST_PER_PROC;
+   storage->freelist_count = process_count * SHM_FREELIST_PER_PROC;
    size_t segment_size = _mpc_shm_storage_get_size(process_count, mpi_task_count, storage->freelist_count);
 
    storage->shm_buffer = mpc_launch_shm_map(segment_size, MPC_LAUNCH_SHM_USE_PMI, NULL);
@@ -320,28 +320,13 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
    struct _mpc_shm_cell * cells = (struct _mpc_shm_cell*)(storage->uids + process_count);
    assume(((void*)storage->free_lists < (void*)cells) && ((void*)cells < ((void*)storage->shm_buffer + segment_size)));
 
-   /* Only the first rank matching  the freelist does the freelist pushed to avoid bad numa effects */
-
-   if(proc_rank < storage->freelist_count)
-   {
       int rr_counter = 0;
-      unsigned int per_list = storage->cell_count / storage->freelist_count;
-      unsigned int leftover = storage->cell_count - (per_list * storage->freelist_count);
+      unsigned int per_proc = storage->cell_count / process_count;
 
-      if(!proc_rank)
+      for( i = proc_rank * per_proc ; i < (proc_rank + 1) * per_proc; i++)
       {
-         for(i = 0; i < leftover; i++)
-         {
-            cells[i].next = NULL;
-            cells[i].prev = NULL;
-            _mpc_shm_list_head_push(&storage->free_lists[0 + rr_counter], &cells[i]);
-            cells[i].free_list = 0;
-            rr_counter = (rr_counter + 1)% (int)SHM_FREELIST_PER_PROC;
-         }
-      }
 
-      for( i = leftover + proc_rank * per_list ; i < (proc_rank + 1) * per_list + leftover; i++)
-      {
+		 assume(i < storage->cell_count);
          cells[i].next = NULL;
          cells[i].prev = NULL;
          _mpc_shm_list_head_push(&storage->free_lists[proc_rank * SHM_FREELIST_PER_PROC + rr_counter], &cells[i]);
@@ -349,7 +334,6 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
          rr_counter = (rr_counter + 1)% (int)SHM_FREELIST_PER_PROC;
       }
 
-   }
 
    return 0;
 }
