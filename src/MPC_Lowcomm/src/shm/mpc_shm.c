@@ -1,8 +1,8 @@
 #include <mpc_config.h>
 #ifdef MPC_USE_CMA
 #define _GNU_SOURCE
-#include <sys/uio.h>
 #include <sys/types.h>
+#include <sys/uio.h>
 #include <unistd.h>
 #endif
 
@@ -35,20 +35,38 @@
  * FRAGMENTED OPERATIONS *
  *************************/
 
+#define SHM_FRAG_HT_SIZE 64
+#define SHM_MEMPOOL_BASE_SIZE 32
+
+/**
+ * @brief This initializes a fragment factory. This allows the copy of the incoming fragments
+ * and manages the total size to call a callback on completion.
+ * 
+ * @param factory the factory to initialize.
+ * @return int 0 on success
+ */
 int _mpc_shm_fragment_factory_init(struct _mpc_shm_fragment_factory *factory)
 {
    mpc_common_spinlock_init(&factory->lock, 0);
    factory->fragment_id = 1;
    factory->segment_id = 1;
-   mpc_common_hashtable_init(&factory->frags, 64);
-   mpc_common_hashtable_init(&factory->regs, 64);
+   mpc_common_hashtable_init(&factory->frags, SHM_FRAG_HT_SIZE);
+   mpc_common_hashtable_init(&factory->regs, SHM_FRAG_HT_SIZE);
 
-   mpc_mempool_init(&factory->frag_pool, 1, 32, sizeof(struct _mpc_shm_fragment), sctk_malloc, sctk_free);
-   mpc_mempool_init(&factory->reg_pool, 1, 32, sizeof(struct _mpc_shm_region), sctk_malloc, sctk_free);
+   mpc_mempool_init(&factory->frag_pool, 1, SHM_MEMPOOL_BASE_SIZE, sizeof(struct _mpc_shm_fragment), sctk_malloc, sctk_free);
+   mpc_mempool_init(&factory->reg_pool, 1, SHM_MEMPOOL_BASE_SIZE, sizeof(struct _mpc_shm_region), sctk_malloc, sctk_free);
 
    return 0;
 }
 
+/**
+ * @brief This registers a new segment for tracking and returns a segment ID
+ * 
+ * @param factory the factory to register in
+ * @param addr the base address of the segment
+ * @param size the size of the segment
+ * @return uint64_t the segment ID which uniquely describes the segment
+ */
 uint64_t _mpc_shm_fragment_factory_register_segment(struct _mpc_shm_fragment_factory *factory, void * addr, size_t size)
 {
    uint64_t reg_id = 0;
@@ -68,6 +86,13 @@ uint64_t _mpc_shm_fragment_factory_register_segment(struct _mpc_shm_fragment_fac
    return reg_id;
 }
 
+/**
+ * @brief Remove a previously registered segment from the factory
+ * 
+ * @param factory the factory to manage
+ * @param regid the registration ID as returned from @ref _mpc_shm_fragment_factory_register_segment
+ * @return int 0 on success 1 if the segment is not known
+ */
 int _mpc_shm_fragment_factory_unregister_segment(struct _mpc_shm_fragment_factory *factory, uint64_t regid)
 {
    struct _mpc_shm_region * reg = mpc_common_hashtable_get(&factory->regs, regid);
@@ -84,11 +109,29 @@ int _mpc_shm_fragment_factory_unregister_segment(struct _mpc_shm_fragment_factor
    return 0;
 }
 
+/**
+ * @brief Get the segment matching a registration ID (see @ref _mpc_shm_fragment_factory_register_segment)
+ * 
+ * @param factory the factory to get from
+ * @param id the registration id
+ * @return struct _mpc_shm_region* the segment NULL if not found 
+ */
 struct _mpc_shm_region * _mpc_shm_fragment_factory_get_segment(struct _mpc_shm_fragment_factory *factory, uint64_t id)
 {
    return mpc_common_hashtable_get(&factory->regs, id);
 }
 
+/**
+ * @brief This initializes a fragmented operation over a factory. A fragment is a write to a segment relying on multiple copies
+ * 
+ * @param factory the factory to manipulate
+ * @param segment_id the id of the segment to reference (@ref _mpc_shm_fragment_factory_register_segment)
+ * @param base_addr the base address of where to copy the data
+ * @param size the size of the whole local segement
+ * @param completion the callback to call when completed
+ * @param arg the argument to pass to the callback to call
+ * @return uint64_t registration ID of the fragmented operation
+ */
 uint64_t _mpc_shm_fragment_init(struct _mpc_shm_fragment_factory *factory, uint64_t segment_id, void * base_addr, size_t size, void (*completion)(void * arg), void *arg)
 {
    uint64_t reg_id = 0;
@@ -112,7 +155,16 @@ uint64_t _mpc_shm_fragment_init(struct _mpc_shm_fragment_factory *factory, uint6
    return reg_id;
 }
 
-
+/**
+ * @brief Notify incoming data on a fragment. This copies the data in the target buffers and tracks completion (calling the callback)
+ * 
+ * @param factory the factory to manipulate
+ * @param frag_id the fragment ID
+ * @param buffer the buffer to inject in the fragment
+ * @param offset the offset of the buffer
+ * @param size the size of the fragment
+ * @return int 0 on success
+ */
 int _mpc_shm_fragment_notify(struct _mpc_shm_fragment_factory *factory, uint64_t frag_id, void * buffer, size_t offset, size_t size)
 {
    struct _mpc_shm_fragment * frag = mpc_common_hashtable_get(&factory->frags, frag_id);
@@ -132,8 +184,6 @@ int _mpc_shm_fragment_notify(struct _mpc_shm_fragment_factory *factory, uint64_t
    sizeleft = frag->sizeleft = frag->sizeleft - size;
    mpc_common_spinlock_unlock(&frag->lock);
 
-   assume(0 <= sizeleft);
-
    if(sizeleft == 0)
    {
       (frag->completion)(frag->arg);
@@ -144,17 +194,37 @@ int _mpc_shm_fragment_notify(struct _mpc_shm_fragment_factory *factory, uint64_t
    return 0;
 }
 
-
-
 /*********************
  * LIST MANIPULATION *
  *********************/
 
+/**
+ * @brief This initializes an SHM list
+ * 
+ * @param head the list to initialize
+ */
+void _mpc_shm_list_head_init(struct _mpc_shm_list_head *head)
+{
+   mpc_common_spinlock_init(&head->lock, 0);
+   head->head = NULL;
+   head->tail = NULL;
+}
+
+
+/**
+ * @brief Add a segment in the SHM list using segment-local offsets only
+ * @warning call with no locks
+ * 
+ * @param list the target list object
+ * @param cell the cell to push in (must be in the segment)
+ * @param base the base address of the SHM segment
+ */
 static inline void ___mpc_shm_list_head_push_no_lock(struct _mpc_shm_list_head * list, struct _mpc_shm_cell *cell, void * base)
 {
    assert(cell->next == NULL);
    assert(cell->prev == NULL);
 
+   /* Work with relative addresses */
    void * relative_cell_addr = (void *)cell - (uint64_t)base;
 
    if(!list->head)
@@ -163,7 +233,8 @@ static inline void ___mpc_shm_list_head_push_no_lock(struct _mpc_shm_list_head *
    }
    else
    {
-	  struct _mpc_shm_cell * phead = (struct _mpc_shm_cell *)((void *)list->head + (uint64_t)base); 
+      /* Need the true address to modify the target cell */
+      struct _mpc_shm_cell * phead = (struct _mpc_shm_cell *)((void *)list->head + (uint64_t)base); 
       phead->prev = relative_cell_addr;
    }
 
@@ -172,7 +243,13 @@ static inline void ___mpc_shm_list_head_push_no_lock(struct _mpc_shm_list_head *
    list->head = relative_cell_addr;
 }
 
-
+/**
+ * @brief Add a segment in the SHM list (threadsafe)
+ * 
+ * @param list the target list object
+ * @param cell the cell to push in (must be in the segment)
+ * @param base the base address of the SHM segment
+ */
 static inline void _mpc_shm_list_head_push(struct _mpc_shm_list_head * list, struct _mpc_shm_cell *cell, void *base)
 {
    mpc_common_spinlock_lock(&list->lock);
@@ -182,6 +259,15 @@ static inline void _mpc_shm_list_head_push(struct _mpc_shm_list_head * list, str
    mpc_common_spinlock_unlock(&list->lock);
 }
 
+/**
+ * @brief Try to add a segment in the SHM list using segment-local offsets only
+ * @warning call with no locks
+ * 
+ * @param list the target list object
+ * @param cell the cell to push in (must be in the segment)
+ * @param base the base address of the SHM segment
+ * @return 1 if the push succeeded 0 otherwise
+ */
 static inline int _mpc_shm_list_head_try_push(struct _mpc_shm_list_head * list, struct _mpc_shm_cell *cell, void *base)
 {
    if( mpc_common_spinlock_trylock(&list->lock) == 0)
@@ -197,14 +283,13 @@ static inline int _mpc_shm_list_head_try_push(struct _mpc_shm_list_head * list, 
    return 1;
 }
 
-
-void _mpc_shm_list_head_init(struct _mpc_shm_list_head *head)
-{
-   mpc_common_spinlock_init(&head->lock, 0);
-   head->head = NULL;
-   head->tail = NULL;
-}
-
+/**
+ * @brief Try to get a cell from a list
+ * 
+ * @param list the list to query
+ * @param base the base address of the SHM segment
+ * @return struct _mpc_shm_cell* the cell if queried (NULL otherwise either list empty already locked)
+ */
 static inline struct _mpc_shm_cell * _mpc_shm_list_head_try_get(struct _mpc_shm_list_head * list, void * base)
 {
    struct _mpc_shm_cell * ret = NULL;
@@ -260,6 +345,33 @@ static size_t _mpc_shm_storage_get_size(unsigned int process_count,
    return ret;
 }
 
+/*
+SEGMENT Layout:
+
+List heads
+
+[SHM_PROCESS_ARITY  x (LIST HEAD)] x LOCAL PROCESS COUNT
+[SHM_FREELIST_PER_PROC x (LIST HEAD)] x LOCAL PROCESS COUNT
+
+For CMA checks, we read from local memory and use
+the tables of UIDs and PID to convert to PID
+
+[address of UID in local mem] x LOCAL PROCESS COUNT
+[PID of each process] x LOCAL PROCESS COUNT
+[UID for each process] x LOCAL PROCESS COUNT
+
+Cells used for transfer
+
+[SHM_CELL_COUNT_PER_PROC shm cell] x LOCAL PROCESS COUNT
+*/
+
+/**
+ * @brief This function is central in SHM it defines the layout of the SHM segment
+ * all operations on the SHM segment are done using structures located in this segment
+ * 
+ * @param storage the storage to initialize
+ * @return int 0 on success
+ */
 int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
 {
    unsigned int process_count = mpc_common_get_local_process_count();
@@ -346,9 +458,18 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
    return 0;
 }
 
-int _mpc_shm_storage_release(struct _mpc_shm_storage *storage);
+int _mpc_shm_storage_release(struct _mpc_shm_storage *storage)
+{
+   not_implemented();
+}
 
-
+/**
+ * @brief This is used for CMA to convert from UID to PID it relies on a table in SHM segment
+ * 
+ * @param storage storage to rely on
+ * @param uid UID to get pid of
+ * @return pid_t the PID (-1 if not found)
+ */
 pid_t _mpc_shm_storage_uid_to_pid(struct _mpc_shm_storage * storage, mpc_lowcomm_peer_uid_t uid)
 {
    unsigned int i = 0;
@@ -396,8 +517,7 @@ void _mpc_shm_storage_send_cell(struct _mpc_shm_storage * storage,
    int my_rank = mpc_common_get_local_process_rank();
 
    assert(0 <= my_rank);
-
-   assume(mpc_lowcomm_monitor_get_gid() == mpc_lowcomm_peer_get_set(uid));
+   assert(mpc_lowcomm_monitor_get_gid() == mpc_lowcomm_peer_get_set(uid));
 
    unsigned int target_rank = mpc_lowcomm_peer_get_rank(uid);
    unsigned int target_list = (size_t)target_rank * storage->process_arity +  (my_rank % storage->process_arity);
@@ -407,7 +527,7 @@ void _mpc_shm_storage_send_cell(struct _mpc_shm_storage * storage,
    struct _mpc_shm_list_head * list = &storage->per_process[target_list];
    unsigned int cnt = 0;
 
-   assume( (storage->shm_buffer < cell) && (cell < (storage->shm_buffer + storage->segment_size)));
+   assert( (storage->shm_buffer < (void*)cell) && ((void*)cell < (storage->shm_buffer + storage->segment_size)));
 
    while(1)
    {
@@ -546,7 +666,7 @@ int mpc_shm_has_cma_support(struct _mpc_shm_storage * storage)
    }
 
    /* We are unknown */
-   int i;
+   int i = 0;
    int local_pcount = mpc_common_get_local_process_count();
    int my_rank = mpc_common_get_local_process_rank();
 
@@ -588,14 +708,14 @@ error_cma:
  * MESSAGING FUNCTIONS *
  ***********************/
 
-int mpc_shm_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
-                                    uint8_t id,
-                                    const void *header,
-                                    unsigned header_length,
-                                    const struct iovec *iov,
-                                    size_t iovcnt,
-                                    unsigned flags,
-                                    lcr_completion_t *comp)
+int mpc_shm_send_am_zcopy(__UNUSED__ _mpc_lowcomm_endpoint_t *ep,
+                          __UNUSED__ uint8_t id,
+                          __UNUSED__ const void *header,
+                          __UNUSED__ unsigned header_length,
+                          __UNUSED__ const struct iovec *iov,
+                          __UNUSED__ size_t iovcnt,
+                          __UNUSED__ unsigned flags,
+                          __UNUSED__ lcr_completion_t *comp)
 {
    not_implemented();
 }
@@ -605,7 +725,7 @@ ssize_t mpc_shm_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
                               uint8_t id,
                               lcr_pack_callback_t pack,
                               void *arg,
-                              unsigned flags)
+                              __UNUSED__ unsigned flags)
 {
    sctk_rail_info_t *rail = ep->rail;
    uint32_t payload_length = 0;
@@ -770,7 +890,7 @@ int mpc_shm_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
  *****************************/
 
 
-int ____handle_incoming_eager(struct _mpc_shm_storage * storage, sctk_rail_info_t *rail, _mpc_shm_am_hdr_t *hdr )
+int ____handle_incoming_eager(__UNUSED__ struct _mpc_shm_storage * storage, sctk_rail_info_t *rail, _mpc_shm_am_hdr_t *hdr )
 {
    //mpc_common_debug_error("IN CB %d LEN %lld", hdr->am_id, hdr->length);
 
@@ -789,7 +909,7 @@ int ____handle_incoming_eager(struct _mpc_shm_storage * storage, sctk_rail_info_
 }
 
 
-int ____handle_incoming_get(struct _mpc_shm_storage * storage, sctk_rail_info_t *rail, _mpc_shm_am_hdr_t *hdr)
+int ____handle_incoming_get(__UNUSED__ struct _mpc_shm_storage * storage, sctk_rail_info_t *rail, _mpc_shm_am_hdr_t *hdr)
 {
    _mpc_shm_am_get * get = (_mpc_shm_am_get*)hdr->data;
 
@@ -838,7 +958,7 @@ int ____handle_incoming_get(struct _mpc_shm_storage * storage, sctk_rail_info_t 
    return MPC_LOWCOMM_SUCCESS;
 }
 
-int ____handle_incoming_frag(struct _mpc_shm_storage * storage, sctk_rail_info_t *rail, _mpc_shm_am_hdr_t *hdr)
+int ____handle_incoming_frag(__UNUSED__ struct _mpc_shm_storage * storage, sctk_rail_info_t *rail, _mpc_shm_am_hdr_t *hdr)
 {
    _mpc_shm_frag * frag = (_mpc_shm_frag*)hdr->data;
    return _mpc_shm_fragment_notify(&rail->network.shm.frag_factory, frag->frag_id, frag->data, frag->offset, frag->size);
@@ -899,7 +1019,7 @@ int mpc_shm_progress(sctk_rail_info_t *rail)
  ********************/
 
 
-void mpc_shm_connect_on_demand(struct sctk_rail_info_s *rail, mpc_lowcomm_peer_uid_t dest)
+void mpc_shm_connect_on_demand(__UNUSED__ struct sctk_rail_info_s *rail, mpc_lowcomm_peer_uid_t dest)
 {
    mpc_common_debug_error("On demand to %llu", dest);
    not_available();
@@ -943,7 +1063,7 @@ void __add_node_local_routes(sctk_rail_info_t *rail)
 
 }
 
-int mpc_shm_get_attr(sctk_rail_info_t *rail,
+int mpc_shm_get_attr(__UNUSED__ sctk_rail_info_t *rail,
                      lcr_rail_attr_t *attr)
 {
 #if MPC_USE_CMA
@@ -979,7 +1099,7 @@ int mpc_shm_query_devices(__UNUSED__ lcr_component_t *component,
    }
 
    *devices_p = sctk_malloc(sizeof(lcr_device_t));
-   snprintf((*devices_p)->name, LCR_DEVICE_NAME_MAX, "shmsegment");
+   (void)snprintf((*devices_p)->name, LCR_DEVICE_NAME_MAX, "shmsegment");
    *num_devices_p = 1;
 
    return MPC_LOWCOMM_SUCCESS;
