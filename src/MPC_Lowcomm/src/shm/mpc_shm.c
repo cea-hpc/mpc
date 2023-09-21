@@ -235,8 +235,16 @@ static inline struct _mpc_shm_cell * _mpc_shm_list_head_try_get(struct _mpc_shm_
  * SHM STORAGE *
  ***************/
 
-
-static size_t _mpc_shm_storage_get_size(unsigned int process_count, unsigned int task_count, unsigned int freelist_count)
+/**
+ * @brief This internal function computes the size of the SHM segment
+ * 
+ * @param process_count Number of processes on the node
+ * @param task_count Number of tasks on the node
+ * @param freelist_count 
+ * @return size_t 
+ */
+static size_t _mpc_shm_storage_get_size(unsigned int process_count,
+                                        unsigned int freelist_count)
 {
    size_t ret = process_count * SHM_PROCESS_ARITY * sizeof(struct _mpc_shm_list_head);
    ret += freelist_count * sizeof(struct _mpc_shm_list_head);
@@ -245,7 +253,7 @@ static size_t _mpc_shm_storage_get_size(unsigned int process_count, unsigned int
    ret += process_count * sizeof(pid_t);
    ret += process_count * sizeof(mpc_lowcomm_peer_uid_t);
    /* End CMA context */
-   ret += SHM_CELL_COUNT_PER_PROC * task_count * sizeof(struct _mpc_shm_cell);
+   ret += SHM_CELL_COUNT_PER_PROC * process_count * sizeof(struct _mpc_shm_cell);
 
    mpc_common_debug_info("SHM: segment is %g MB", (double)ret / (1024 * 1024));
 
@@ -264,21 +272,18 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
    storage->cma_state = MPC_SHM_CMA_UNCHECKED;
 
    storage->process_count = process_count;
-   storage->cell_count = SHM_CELL_COUNT_PER_PROC * process_count;
    storage->process_arity = SHM_PROCESS_ARITY;
 
    assume(0 < process_count);
 
-   unsigned int mpi_task_count = mpc_common_get_task_count();
+   storage->cell_count = SHM_CELL_COUNT_PER_PROC * process_count;
 
    storage->freelist_count = process_count * SHM_FREELIST_PER_PROC;
-   size_t segment_size = _mpc_shm_storage_get_size(process_count, mpi_task_count, storage->freelist_count);
+   size_t segment_size = _mpc_shm_storage_get_size(process_count, storage->freelist_count);
    storage->segment_size = segment_size;
    storage->shm_buffer = mpc_launch_shm_map(segment_size, MPC_LAUNCH_SHM_USE_PMI, NULL);
 
    assume(storage != NULL);
-
-
    assume(0 < storage->freelist_count);
    assume(storage->freelist_count < 255);
 
