@@ -484,7 +484,7 @@ pid_t _mpc_shm_storage_uid_to_pid(struct _mpc_shm_storage * storage, mpc_lowcomm
 }
 
 
-#define MPC_SHM_MAX_GET_TRY 16
+#define MPC_SHM_MAX_GET_TRY 2
 
 struct _mpc_shm_cell * _mpc_shm_storage_get_free_cell(struct _mpc_shm_storage *storage)
 {
