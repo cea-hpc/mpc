@@ -342,9 +342,11 @@ static int lcp_send_rndv_tag_rts_progress(lcp_request_t *req)
         lcp_ep_h ep = req->send.ep;
         lcp_chnl_idx_t cc = lcp_ep_get_next_cc(ep);
 
-        mpc_common_debug("LCP TAG: start rndv. src=%d, dest=%d, tag=%d",
-                         req->send.tag.src_tid, req->send.tag.dest_tid,
-                         req->send.tag.tag);
+        mpc_common_debug("LCP TAG: send am rndv tag bcopy. comm=%d, src=%d, "
+                         "dest=%d, tag=%d, length=%d, seqn=%d, buf=%p, req=%p", 
+                         req->send.tag.comm, req->send.tag.src_tid, 
+                         req->send.tag.dest_tid, req->send.tag.tag,
+                         req->send.length, req->seqn, req->send.buffer, req);
 
         payload_size = lcp_send_do_am_bcopy(ep->lct_eps[cc], 
                                             LCP_AM_ID_RTS_TAG,
@@ -376,6 +378,8 @@ int lcp_send_rndv_tag_start(lcp_request_t *req)
 
         req->send.func = lcp_send_rndv_tag_rts_progress;
         /* Register memory if GET protocol */
+        //FIXME: should be inside rndv. Tag layer should not be responsible for
+        //       registering memory
         rc = lcp_rndv_reg_send_buffer(req);
 
 err:
@@ -427,6 +431,7 @@ void lcp_recv_rndv_tag_data(lcp_request_t *req, void *data)
         req->recv.tag.dest_tid = hdr->tag.dest_tid;
         req->seqn              = hdr->tag.seqn;
         req->recv.send_length  = hdr->size;
+        req->msg_id            = hdr->msg_id;
         req->state.comp        = (lcr_completion_t) {
                 .comp_cb = lcp_tag_recv_complete,
         };

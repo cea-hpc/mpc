@@ -267,6 +267,13 @@ void sctk_network_init_ptl (sctk_rail_info_t *rail)
 	mpc_common_debug("rank %d mapped to Portals ID (nid/pid): %llu/%llu", mpc_common_get_process_rank(), rail->network.ptl.id.phys.nid, rail->network.ptl.id.phys.pid);
 }
 
+int lcr_ptl_iface_is_reachable(sctk_rail_info_t *rail, uint64_t uid) {
+        //FIXME: check whether getting connection info should be done here. For
+        //       now just return true.
+        UNUSED(rail); UNUSED(uid);
+        return 1;
+}
+
 int lcr_ptl_get_attr(sctk_rail_info_t *rail,
                      lcr_rail_attr_t *attr)
 {
@@ -420,6 +427,7 @@ int lcr_ptl_iface_open(char *device_name, int id,
         iface->rail_unpin_region   = lcr_ptl_mem_unregister;
         /* Interface progess */
         iface->iface_progress      = lcr_ptl_iface_progress;
+        iface->iface_is_reachable  = lcr_ptl_iface_is_reachable;
 
         *iface_p = iface;
 err:

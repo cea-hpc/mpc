@@ -208,18 +208,34 @@ err:
 int lcp_ep_init_channels(lcp_context_h ctx, lcp_ep_h ep)
 {
 	int rc, i;
-        int is_self = (ep->uid == ctx->process_uid);
+        int selected_prio = -1;
 
 	//NOTE: by default all resources are used except if communications are
         //      shared, in which cases only shared memory resource is used
+        //NOTE: ctx->resources are sorted in descending order of priority
+        //      already.
+        //NOTE: rail homogeneity implies only one type of rail may be chosen.
+        //      With multirail, this is true only if two heterogeneous rails
+        //      have different priority. As a consequence, having heterogenous
+        //      rails with same priority would result in heterogeneous
+        //      multirail.
 	for (i=0; i<ctx->num_resources; i++) {
 		_mpc_lowcomm_endpoint_t *lcr_ep;
 		lcp_rsc_desc_t if_desc = ctx->resources[i];
 
-                if ((is_self && !(if_desc.iface->cap & LCR_IFACE_CAP_SELF)) ||
-                    (!is_self && !(if_desc.iface->cap & LCR_IFACE_CAP_REMOTE)))
+                /* If uid cannot be reached through this interface, continue */
+                if (!if_desc.iface->iface_is_reachable(if_desc.iface, ep->uid)) {
                         continue;
+                }
 
+                /* Set selected rail priority */
+                if (if_desc.priority >= selected_prio) {
+                        selected_prio = if_desc.priority;
+                } else {
+                        /* Homogeneous rails with highest priority have been
+                         * selected */
+                        break;
+                }
                 /* Resource can be used for communication. */
                 MPC_BITMAP_SET(ep->avail_map, i);
 

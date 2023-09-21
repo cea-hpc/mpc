@@ -220,6 +220,14 @@ void sctk_network_init_tcp(sctk_rail_info_t *rail)
 	sctk_network_init_tcp_all(rail, interface, __tcp_thread_loop);
 }
 
+#ifdef MPC_LOWCOMM_PROTOCOL
+int lcr_tcp_iface_is_reachable(sctk_rail_info_t *rail, uint64_t uid) {
+        //FIXME: check whether getting connection info should be done here. For
+        //       now just return true.
+        UNUSED(rail); UNUSED(uid);
+        return 1;
+}
+
 int lcr_tcp_get_attr(sctk_rail_info_t *rail,
                      lcr_rail_attr_t *attr)
 {
@@ -243,8 +251,6 @@ int lcr_tcp_get_attr(sctk_rail_info_t *rail,
 
 	return MPC_LOWCOMM_SUCCESS;
 }
-
-#ifdef MPC_LOWCOMM_PROTOCOL
 /**
  * Function called by each started polling thread, processing message on the given route.
  * \param[in] tmp the route to progress
@@ -430,9 +436,10 @@ int lcr_tcp_init_iface(sctk_rail_info_t *rail)
 
 
 	/* New API */
-	rail->send_am_bcopy  = lcr_tcp_send_am_bcopy;
-	rail->send_am_zcopy  = lcr_tcp_send_am_zcopy;
-	rail->iface_get_attr = lcr_tcp_get_attr;
+	rail->send_am_bcopy      = lcr_tcp_send_am_bcopy;
+	rail->send_am_zcopy      = lcr_tcp_send_am_zcopy;
+	rail->iface_get_attr     = lcr_tcp_get_attr;
+        rail->iface_is_reachable = lcr_tcp_iface_is_reachable;
 
 	/* init config */
 	rail->network.tcp.max_iov        = 8;

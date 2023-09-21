@@ -1,6 +1,7 @@
 #ifndef LCR_IFACE_H
 #define LCR_IFACE_H
 
+#include <stdint.h>
 #include <sys/uio.h>
 
 #include "lcr_def.h"
@@ -94,4 +95,6 @@ typedef int (*lcr_iface_unpack_memp_func_t)(sctk_rail_info_t *rail,
                                             lcr_memp_t *memp, 
                                             void *dest);
 
+typedef int (*lcr_iface_is_reachable_func_t)(sctk_rail_info_t *rail,
+                                             uint64_t uid);
 #endif

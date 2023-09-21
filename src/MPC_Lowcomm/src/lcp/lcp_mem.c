@@ -57,9 +57,10 @@ struct lcp_pinning_entry * lcp_pinning_entry_new(void * start, size_t size, lcp_
         return ret;
 }
 
-int lcp_pinning_entry_contains(struct lcp_pinning_entry *entry, void * start, size_t size)
+int lcp_pinning_entry_contains(struct lcp_pinning_entry *entry, void * start, size_t size, bmap_t bitmap)
 {
-        if( (entry->start <= start) && ((start + size) <= (entry->start + entry->size)) && (entry->size == size))
+        if( (entry->start <= start) && ((start + size) <= (entry->start + entry->size)) 
+            && (entry->size == size) && MPC_BITMAP_AND(entry->mem_entry->bm, bitmap))
         {
                 mpc_common_nodebug("(%p - %lld) is in (%p -- %lld)", start, size, entry->start, entry->size);
                 return 1;
@@ -135,10 +136,13 @@ int lcp_pinning_entry_list_release(struct lcp_pinning_entry_list *list, void (*f
 
                 sctk_free(to_free);
         }
+
+        return 0;
 }
 
 
-struct lcp_pinning_entry * lcp_pinning_entry_list_find_no_lock(struct lcp_pinning_entry_list * list, void * start, size_t size)
+struct lcp_pinning_entry * lcp_pinning_entry_list_find_no_lock(struct lcp_pinning_entry_list * list, 
+                                                               void * start, size_t size, bmap_t bitmap)
 {
         struct lcp_pinning_entry * ret = NULL;
 
@@ -146,7 +150,7 @@ struct lcp_pinning_entry * lcp_pinning_entry_list_find_no_lock(struct lcp_pinnin
 
         while(tmp)
         {
-                if(lcp_pinning_entry_contains(tmp, start, size))
+                if(lcp_pinning_entry_contains(tmp, start, size, bitmap))
                 {
                         ret = tmp;
                         /* We acquire in the read lock to avoid races */
@@ -160,13 +164,14 @@ struct lcp_pinning_entry * lcp_pinning_entry_list_find_no_lock(struct lcp_pinnin
         return ret;
 }
 
-struct lcp_pinning_entry * lcp_pinning_entry_list_find(struct lcp_pinning_entry_list * list, void * start, size_t size)
+struct lcp_pinning_entry * lcp_pinning_entry_list_find(struct lcp_pinning_entry_list * list, void * start, 
+                                                       size_t size, bmap_t bitmap)
 {
         struct lcp_pinning_entry * ret = NULL;
 
         mpc_common_spinlock_read_lock(&list->lock);
 
-        ret = lcp_pinning_entry_list_find_no_lock(list, start, size);
+        ret = lcp_pinning_entry_list_find_no_lock(list, start, size, bitmap);
 
         mpc_common_spinlock_read_unlock(&list->lock);
 
@@ -265,7 +270,7 @@ struct lcp_pinning_entry * lcp_pinning_entry_list_push(struct lcp_pinning_entry_
 
         mpc_common_spinlock_write_lock(&list->lock);
 
-        ret = lcp_pinning_entry_list_find_no_lock(list, buffer, len);
+        ret = lcp_pinning_entry_list_find_no_lock(list, buffer, len, bitmap);
 
         if(!ret)
         {
@@ -346,11 +351,13 @@ int lcp_pinning_mmu_release()
 
 lcp_mem_h lcp_pinning_mmu_pin(lcp_context_h  ctx, void *addr, size_t size, bmap_t bitmap)
 {
-        struct lcp_pinning_entry * exists = lcp_pinning_entry_list_find(&__mmu.list, addr, size);
+        struct lcp_pinning_entry * exists = lcp_pinning_entry_list_find(&__mmu.list, addr, size, bitmap);
 
         if(exists)
         {
                 /* Was acquired in the find */
+                mpc_common_debug("MEM: pinning entry exists: addr=%p, "
+                                 "size=%llu, bitmap=%x", addr, size, bitmap);
                 return exists->mem_entry;
         }
 
@@ -362,6 +369,7 @@ lcp_mem_h lcp_pinning_mmu_pin(lcp_context_h  ctx, void *addr, size_t size, bmap_
 
 int lcp_pinning_mmu_unpin(lcp_context_h  ctx, lcp_mem_h mem)
 {
+        UNUSED(ctx);
         struct lcp_pinning_entry * mmu_entry = (struct lcp_pinning_entry *)mem->pointer_to_mmu_ctx;
         assert(mmu_entry != NULL);
         lcp_pinning_entry_relax(mmu_entry);
@@ -646,8 +654,6 @@ int lcp_mem_register(lcp_context_h ctx,
                      void *buffer, 
                      size_t length)
 {
-        int rc = LCP_SUCCESS;
-        lcp_mem_h mem;
         lcr_rail_attr_t attr;
         sctk_rail_info_t *iface = ctx->resources[ctx->priority_rail].iface;
 

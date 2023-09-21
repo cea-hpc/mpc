@@ -171,6 +171,8 @@ int lcp_rndv_reg_send_buffer(lcp_request_t *req)
         if (req->ctx->config.rndv_mode == LCP_RNDV_GET) {
 
 
+                mpc_common_debug("LCP: register send buffer. Conn map=%x", 
+                                 req->send.ep->conn_map);
                 /* Get source address */
                 void *start = req->datatype & LCP_DATATYPE_CONTIGUOUS ?
                         req->send.buffer : req->state.pack_buf;
@@ -194,6 +196,8 @@ int lcp_rndv_reg_recv_buffer(lcp_request_t *rndv_req)
         void *start = req->datatype & LCP_DATATYPE_CONTIGUOUS ?
                 req->recv.buffer : req->state.pack_buf;
 
+        mpc_common_debug("LCP: register recv buffer. Conn map=%x", 
+                         rndv_req->send.ep->conn_map);
         /* Register and pack memory pin context that will be sent to remote */
         req->state.lmem = lcp_pinning_mmu_pin(req->ctx, start, req->recv.send_length,
                                               rndv_req->send.ep->conn_map);
@@ -322,6 +326,9 @@ err:
         return rc;
 }
 
+//FIXME: should data be the actual rndv data which is the memory key or the rndv
+//       header ? Some necessary info are in the tag/am part of the request.
+//       Acceeding them here would break rndv modularity
 int lcp_rndv_process_rts(lcp_request_t *rreq,
                          void *data, size_t length) 
 {
@@ -344,7 +351,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
         rndv_req->state.offset    = 0;
 
         /* Set message identifiers from incomming message */
-        rndv_req->send.rndv.msg_id = hdr->msg_id;
+        rndv_req->send.rndv.msg_id = rreq->msg_id;
 
         /* Buffer must be allocated and data packed to make it contiguous
          * and use zcopy and memory registration. */
@@ -377,7 +384,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
         case LCP_RNDV_PUT:
                 /* Append request to request hash table */
                 if (lcp_pending_create(rreq->ctx->pend, rndv_req, 
-                                       rreq->msg_id) == NULL) {
+                                       hdr->msg_id) == NULL) {
                         mpc_common_debug_error("LCP: could not add pending "
                                                "message");
                         rc = LCP_ERROR;

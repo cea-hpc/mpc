@@ -376,6 +376,14 @@ int mpc_ofi_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
    return MPC_LOWCOMM_SUCCESS;
 }
 
+int mpc_ofi_iface_is_reachable(sctk_rail_info_t *rail, uint64_t uid) {
+        //FIXME: check whether getting connection info should be done here. For
+        //       now just return true.
+        UNUSED(rail); UNUSED(uid);
+        return 1;
+}
+
+
 int mpc_ofi_get_attr(sctk_rail_info_t *rail,
                      lcr_rail_attr_t *attr)
 {
@@ -517,6 +525,7 @@ int mpc_ofi_iface_open(char *device_name, int id,
    rail->rail_unpin_region = mpc_ofi_unpin;
    rail->iface_pack_memp = mpc_ofi_pack_rkey;
    rail->iface_unpack_memp = mpc_ofi_unpack_rkey;
+   rail->iface_is_reachable = mpc_ofi_iface_is_reachable;
 
 
    /* Init capabilities */

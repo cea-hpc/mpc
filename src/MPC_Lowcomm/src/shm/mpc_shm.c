@@ -1021,8 +1021,10 @@ int mpc_shm_progress(sctk_rail_info_t *rail)
 
 void mpc_shm_connect_on_demand(__UNUSED__ struct sctk_rail_info_s *rail, mpc_lowcomm_peer_uid_t dest)
 {
-   mpc_common_debug_error("On demand to %llu", dest);
-   not_available();
+        UNUSED(rail);
+        //NOTE: nothing to be done since all transport endpoints were created at
+        //      init.
+        mpc_common_debug("On demand to %llu", dest);
 }
 
 
@@ -1056,11 +1058,21 @@ void __add_node_local_routes(sctk_rail_info_t *rail)
 
    int i = 0;
 
+   uint64_t my_uid = mpc_lowcomm_monitor_get_uid();
    for(i = 0 ; i < my_node->nb_process; i++)
    {
-      __add_route(mpc_lowcomm_monitor_local_uid_of(my_node->process_list[i]), rail);
+           uint64_t dest_uid = mpc_lowcomm_monitor_local_uid_of(my_node->process_list[i]);
+           if (!(dest_uid == my_uid)) {
+                   __add_route(dest_uid, rail);
+           }
    }
 
+}
+
+int mpc_shm_iface_is_reachable(sctk_rail_info_t *rail, uint64_t uid) {
+        /* If the transport endpoint hase been created, it means the UID is
+         * reachable */
+        return sctk_rail_get_any_route_to_process(rail, uid) != NULL;
 }
 
 int mpc_shm_get_attr(__UNUSED__ sctk_rail_info_t *rail,
@@ -1148,6 +1160,7 @@ int mpc_shm_iface_open(char *device_name, int id,
    rail->connect_on_demand = mpc_shm_connect_on_demand;
    rail->send_am_bcopy = mpc_shm_send_am_bcopy;
    rail->iface_progress = mpc_shm_progress;
+   rail->iface_is_reachable = mpc_shm_iface_is_reachable;
    rail->rail_pin_region = mpc_shm_pin;
    rail->rail_unpin_region = mpc_shm_unpin;
    rail->iface_pack_memp = mpc_shm_pack_rkey;

@@ -251,6 +251,11 @@ int lcr_tbsm_get_attr(sctk_rail_info_t *rail,
         return MPC_LOWCOMM_SUCCESS;
 }
 
+int lcr_tbsm_is_reachable(sctk_rail_info_t *rail, uint64_t uid) {
+        UNUSED(rail);
+        return uid == mpc_lowcomm_monitor_get_uid();
+}
+
 
 int lcr_tbsm_iface_init(sctk_rail_info_t *iface)
 {
@@ -279,13 +284,14 @@ int lcr_tbsm_iface_init(sctk_rail_info_t *iface)
         iface->get_zcopy     = lcr_tbsm_send_get_zcopy;
 
         /* Interface functions */
-        iface->iface_pack_memp   = lcr_tbsm_pack_rkey; 
-        iface->iface_unpack_memp = lcr_tbsm_unpack_rkey; 
-        iface->rail_pin_region   = lcr_tbsm_mem_register;
-        iface->rail_unpin_region = lcr_tbsm_mem_unregister;
-        iface->iface_get_attr    = lcr_tbsm_get_attr;
-        iface->iface_progress    = lcr_tbsm_iface_progress;
-        iface->connect_on_demand = lcr_tbsm_connect_on_demand;
+        iface->iface_pack_memp    = lcr_tbsm_pack_rkey; 
+        iface->iface_unpack_memp  = lcr_tbsm_unpack_rkey; 
+        iface->rail_pin_region    = lcr_tbsm_mem_register;
+        iface->rail_unpin_region  = lcr_tbsm_mem_unregister;
+        iface->iface_get_attr     = lcr_tbsm_get_attr;
+        iface->iface_progress     = lcr_tbsm_iface_progress;
+        iface->connect_on_demand  = lcr_tbsm_connect_on_demand;
+        iface->iface_is_reachable = lcr_tbsm_is_reachable;
 
         return rc;
 }

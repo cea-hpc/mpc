@@ -258,6 +258,7 @@ struct sctk_rail_info_s
 	lcr_iface_progress_func_t                            iface_progress;
 	lcr_iface_pack_memp_func_t                           iface_pack_memp;
 	lcr_iface_unpack_memp_func_t                         iface_unpack_memp;
+        lcr_iface_is_reachable_func_t                        iface_is_reachable;
 
 	/* Task Init and release */
 	void                                                 ( *finalize_task ) (struct sctk_rail_info_s *, int taskid, int rank);
