@@ -397,7 +397,6 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
 
    assume(storage != NULL);
    assume(0 < storage->freelist_count);
-   assume(storage->freelist_count < 255);
 
    storage->per_process = storage->shm_buffer;
    assume((void*)storage->per_process < ((void*)storage->shm_buffer + segment_size));

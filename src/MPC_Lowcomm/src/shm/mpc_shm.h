@@ -62,7 +62,7 @@ struct _mpc_shm_cell
    char data[MPC_SHM_EAGER_SIZE];
    struct _mpc_shm_cell * next;
    struct _mpc_shm_cell * prev;
-   unsigned char free_list;
+   unsigned int free_list;
 };
 
 struct _mpc_shm_list_head
