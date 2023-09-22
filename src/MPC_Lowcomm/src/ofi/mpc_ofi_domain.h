@@ -17,12 +17,7 @@
  * THE OFI CL DOMAIN *
  *********************/
 
-/* TODO: move to config */
-#define MPC_OFI_DOMAIN_EAGER_SIZE (size_t)8192
-#define MPC_OFI_DOMAIN_EAGER_PER_BUFF 512
-#define MPC_OFI_NUM_MULTIRECV_BUFF 2
-
-#define MPC_OFI_DOMAIN_NUM_CQ_REQ_TO_POLL 8
+#define MPC_OFI_DOMAIN_NUM_CQ_REQ_TO_POLL 4
 
 
 struct mpc_ofi_domain_t;
