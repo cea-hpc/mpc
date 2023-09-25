@@ -212,6 +212,7 @@ static inline mpc_conf_config_type_t *__init_driver_ofi(struct _mpc_lowcomm_conf
 	driver->value.ofi.request_cache_size = 2048;
 	driver->value.ofi.number_of_multi_recv_buff = 3;
 	driver->value.ofi.bcopy_size = 1024;
+	driver->value.ofi.enable_multi_recv = 1;
 
 	return mpc_conf_config_type_init("ofi",
 														PARAM("reqcachesize", &driver->value.ofi.request_cache_size,
@@ -222,8 +223,10 @@ static inline mpc_conf_config_type_t *__init_driver_ofi(struct _mpc_lowcomm_conf
 																MPC_CONF_INT, "Size of bcopy messages"),
 														PARAM("eagerperbuff", &driver->value.ofi.eager_per_buff,
 																MPC_CONF_INT, "Number of eagers per recv buffer"),
+														PARAM("multirecv", &driver->value.ofi.enable_multi_recv,
+																MPC_CONF_INT, "Activate multi recv support FI_MULTI_RECV capability required"),
 														PARAM("numrecvbuff", &driver->value.ofi.number_of_multi_recv_buff,
-																MPC_CONF_INT, "Number of receive buffers"),
+																MPC_CONF_INT, "Number of receive buffers (only for multirecv == True)"),
                                           PARAM("provider",
                                                 driver->value.ofi.provider,
                                                 MPC_CONF_STRING,

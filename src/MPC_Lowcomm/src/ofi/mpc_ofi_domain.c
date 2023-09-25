@@ -22,11 +22,11 @@
 #include <string.h>
 
 
-int mpc_ofi_domain_buffer_init(struct mpc_ofi_domain_buffer_t * buff, struct mpc_ofi_domain_t * domain, unsigned int eager_size, unsigned int eager_per_buff)
+int mpc_ofi_domain_buffer_init(struct mpc_ofi_domain_buffer_t * buff, struct mpc_ofi_domain_t * domain, unsigned int eager_size, unsigned int eager_per_buff, short has_multi_recv)
 {
    buff->domain = domain;
    buff->size = (size_t)eager_per_buff * eager_size;
-
+   buff->has_multi_recv = has_multi_recv;
    buff->aligned_mem = mpc_ofi_alloc_aligned(buff->size);
 
    buff->buffer = buff->aligned_mem.ret;
@@ -61,26 +61,37 @@ int mpc_ofi_domain_buffer_init(struct mpc_ofi_domain_buffer_t * buff, struct mpc
 void mpc_ofi_domain_buffer_acquire(struct mpc_ofi_domain_buffer_t * buff)
 {
    assert(buff);
-   mpc_common_spinlock_lock(&buff->lock);
-   buff->pending_operations++;
-   mpc_common_spinlock_unlock(&buff->lock);
-
+   if(buff->has_multi_recv)
+   {
+      mpc_common_spinlock_lock(&buff->lock);
+      buff->pending_operations++;
+      mpc_common_spinlock_unlock(&buff->lock);
+   }
 }
 
 int mpc_ofi_domain_buffer_relax(struct mpc_ofi_domain_buffer_t * buff)
 {
    int ret = 0;
-   mpc_common_spinlock_lock(&buff->lock);
 
-   assert(buff->pending_operations > 0);
-   buff->pending_operations--;
-
-   if(!buff->pending_operations && !buff->is_posted)
+   if(buff->has_multi_recv)
    {
+      mpc_common_spinlock_lock(&buff->lock);
+
+      assert(buff->pending_operations > 0);
+      buff->pending_operations--;
+
+      if(!buff->pending_operations && !buff->is_posted)
+      {
+         ret = mpc_ofi_domain_buffer_post(buff);
+      }
+
+      mpc_common_spinlock_unlock(&buff->lock);
+   }
+   else
+   {
+      buff->is_posted = 0;
       ret = mpc_ofi_domain_buffer_post(buff);
    }
-
-   mpc_common_spinlock_unlock(&buff->lock);
 
    return ret;
 }
@@ -104,7 +115,7 @@ int mpc_ofi_domain_buffer_post(struct mpc_ofi_domain_buffer_t * buff)
 
    buff->is_posted = 1;
 
-   MPC_OFI_CHECK_RET(fi_recvmsg(buff->domain->ep, &msg, FI_MULTI_RECV));
+   MPC_OFI_CHECK_RET(fi_recvmsg(buff->domain->ep, &msg, buff->has_multi_recv?FI_MULTI_RECV:0));
 
    return 0;
 }
@@ -132,13 +143,23 @@ int mpc_ofi_domain_buffer_release(struct mpc_ofi_domain_buffer_t * buff)
 
 
 int mpc_ofi_domain_buffer_manager_init(struct mpc_ofi_domain_buffer_manager_t * buffs, struct mpc_ofi_domain_t * domain,
-                                        unsigned int eager_size, unsigned int eager_per_buff, unsigned int num_recv_buff)
+                                        unsigned int eager_size, unsigned int eager_per_buff, unsigned int num_recv_buff,
+                                        int has_multi_recv)
 {
    buffs->domain = domain;
 
-   buffs->buffer_count = num_recv_buff;
    buffs->eager_size= eager_size;
-   buffs->eager_per_buff = eager_per_buff;
+
+   if(has_multi_recv)
+   {
+      buffs->buffer_count = num_recv_buff;
+      buffs->eager_per_buff = eager_per_buff;
+   }
+   else
+   {
+      buffs->eager_per_buff = 1;
+      buffs->buffer_count = eager_per_buff;
+   }
 
    buffs->rx_buffers = sctk_malloc(sizeof(struct mpc_ofi_domain_buffer_t) * buffs->buffer_count);
    assume(buffs->rx_buffers);
@@ -151,7 +172,7 @@ int mpc_ofi_domain_buffer_manager_init(struct mpc_ofi_domain_buffer_manager_t * 
 
    for(i = 0 ; i < buffs->buffer_count ; i++)
    {
-      if(mpc_ofi_domain_buffer_init(&buffs->rx_buffers[i], domain, buffs->eager_size, buffs->eager_per_buff))
+      if(mpc_ofi_domain_buffer_init(&buffs->rx_buffers[i], domain, buffs->eager_size, buffs->eager_per_buff, has_multi_recv))
       {
          mpc_common_errorpoint("Error initializing a RX buff");
          return 1;
@@ -248,9 +269,13 @@ int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context
    MPC_OFI_CHECK_RET(fi_ep_bind(domain->ep, &domain->tx_cq->fid, FI_SEND));
    MPC_OFI_CHECK_RET(fi_ep_bind(domain->ep, &domain->rx_cq->fid, FI_RECV));
 
-   size_t max_eager_size = config->eager_size;
+   int has_multi_recv = !!(ctx->config->caps & FI_MULTI_RECV) && config->enable_multi_recv;
 
-   MPC_OFI_CHECK_RET(fi_setopt(&domain->ep->fid, FI_OPT_ENDPOINT, FI_OPT_MIN_MULTI_RECV, &max_eager_size, sizeof(size_t)));
+   if(has_multi_recv)
+   {
+      size_t max_eager_size = config->eager_size;
+      MPC_OFI_CHECK_RET(fi_setopt(&domain->ep->fid, FI_OPT_ENDPOINT, FI_OPT_MIN_MULTI_RECV, &max_eager_size, sizeof(size_t)));
+   }
 
    /* Finally enable the EP */
    MPC_OFI_CHECK_RET(fi_enable(domain->ep));
@@ -261,7 +286,12 @@ int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context
 
 
    /* Eventually Prepare the Buffers*/
-   if(mpc_ofi_domain_buffer_manager_init(&domain->buffers, domain, config->eager_size, config->eager_per_buff, config->number_of_multi_recv_buff))
+   if(mpc_ofi_domain_buffer_manager_init(&domain->buffers,
+                                         domain,
+                                         config->eager_size,
+                                         config->eager_per_buff,
+                                         config->number_of_multi_recv_buff,
+                                         has_multi_recv))
    {
       mpc_common_errorpoint("Failed to allocate buffers");
       return 1;

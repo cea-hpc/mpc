@@ -27,6 +27,7 @@ struct mpc_ofi_domain_buffer_t
    mpc_common_spinlock_t lock;
    uint32_t pending_operations;
    volatile int is_posted;
+   short has_multi_recv;
 
    mpc_ofi_aligned_mem_t aligned_mem;
 
@@ -40,7 +41,7 @@ struct mpc_ofi_domain_buffer_t
 };
 
 int mpc_ofi_domain_buffer_init(struct mpc_ofi_domain_buffer_t * buff, struct mpc_ofi_domain_t * domain,
-                               unsigned int eager_size, unsigned int eager_per_buff);
+                               unsigned int eager_size, unsigned int eager_per_buff, short has_multi_recv);
 void mpc_ofi_domain_buffer_acquire(struct mpc_ofi_domain_buffer_t * buff);
 int mpc_ofi_domain_buffer_relax(struct mpc_ofi_domain_buffer_t * buff);
 int mpc_ofi_domain_buffer_post(struct mpc_ofi_domain_buffer_t * buff);
@@ -65,7 +66,7 @@ struct mpc_ofi_domain_buffer_manager_t
 };
 
 int mpc_ofi_domain_buffer_manager_init( struct mpc_ofi_domain_buffer_manager_t * buffs, struct mpc_ofi_domain_t * domain,
-                                        unsigned int eager_size, unsigned int eager_per_buff, unsigned int num_recv_buff);
+                                        unsigned int eager_size, unsigned int eager_per_buff, unsigned int num_recv_buff, int has_multi_recv);
 
 int mpc_ofi_domain_buffer_manager_release(struct mpc_ofi_domain_buffer_manager_t * buffs);
 
