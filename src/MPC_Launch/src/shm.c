@@ -20,7 +20,7 @@ static inline char *__get_per_node_unique_name(char *buff, int len)
 	buff[0] = '\0';
 
 	char local_buff[128];
-	snprintf(local_buff, 128, "/tmp/mpc-shm-XXXXXX");
+	snprintf(local_buff, 128, "/dev/shm/mpc-shm-XXXXXX");
 	int fd = mkstemp(local_buff);
 
 	if(fd < 0)
