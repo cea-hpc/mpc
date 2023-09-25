@@ -762,8 +762,8 @@ int mpc_ofi_domain_dns_resolve(struct mpc_ofi_domain_dns_t * dns, uint64_t rank,
 
    if(!found)
    {
-      char buff[512];
-      size_t len = 512;
+      char buff[MPC_OFI_ADDRESS_LEN];
+      size_t len = MPC_OFI_ADDRESS_LEN;
 
       /* We need to insert it */
       if(mpc_ofi_dns_resolve(dns->main_dns, rank, buff, &len))

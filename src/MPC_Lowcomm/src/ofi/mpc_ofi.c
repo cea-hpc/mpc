@@ -55,7 +55,7 @@ static void __add_route(mpc_lowcomm_peer_uid_t dest_uid, sctk_rail_info_t *rail)
 
 struct mpc_ofi_net_infos
 {
-   char addr[512];
+   char addr[MPC_OFI_ADDRESS_LEN];
    size_t size;
 };
 
@@ -63,7 +63,7 @@ void mpc_ofi_connect_on_demand(struct sctk_rail_info_s *rail, mpc_lowcomm_peer_u
 {
 
    struct mpc_ofi_net_infos my_infos = { 0 };
-   my_infos.size = 512;
+   my_infos.size = MPC_OFI_ADDRESS_LEN;
 
    struct mpc_ofi_context_t * ctx = &rail->network.ofi.ctx;
 
@@ -131,7 +131,7 @@ static int __ofi_on_demand_callback(mpc_lowcomm_peer_uid_t from,
    /* Now send local info */
    assume(sizeof(struct mpc_ofi_net_infos) < return_data_len);
    struct mpc_ofi_net_infos *my_infos = return_data;
-   my_infos->size = 512;
+   my_infos->size = MPC_OFI_ADDRESS_LEN;
 
 
    if( mpc_ofi_dns_resolve(&ctx->dns, mpc_lowcomm_monitor_get_uid(), my_infos->addr, &my_infos->size) )
