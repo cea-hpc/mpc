@@ -276,7 +276,6 @@ void sctk_ft_checkpoint_finalize()
 #endif
 	}
 	/* recall driver init function & update mpc_common_get_flags()->sctk_network_description_string string */
-        sctk_rail_commit();
 	
 	mpc_common_spinlock_write_unlock(&checkpoint_lock);
 }

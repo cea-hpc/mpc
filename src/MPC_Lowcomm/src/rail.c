@@ -44,12 +44,6 @@ static struct sctk_rail_array __rails = { NULL, 0, 0, 0 };
 /* Rail Init and Getters                                                */
 /************************************************************************/
 
-void sctk_rail_allocate(int count)
-{
-	__rails.rails = sctk_calloc(count, sizeof(sctk_rail_info_t) );
-	assume(__rails.rails != NULL);
-	__rails.rail_number = count;
-}
 
 int lcr_rail_init(lcr_rail_config_t *rail_config,
                   lcr_driver_config_t *driver_config,
@@ -101,72 +95,6 @@ err:
 	return rc;
 }
 
-static inline sctk_rail_info_t *sctk_rail_register_with_parent(struct _mpc_lowcomm_config_struct_net_rail *runtime_config_rail,
-                                                               struct _mpc_lowcomm_config_struct_net_driver_config *runtime_config_driver_config,
-                                                               int reuse_id)
-{
-	/* Store rail */
-
-	sctk_rail_info_t *new_rail = NULL;
-
-	if(reuse_id < 0)
-	{
-		/* This avoid dynamic rail creation (rail array is statically sized) */
-		if(__rails.rail_current_id == sctk_rail_count() )
-		{
-			mpc_common_debug_fatal("Error : Rail overflow detected\n");
-		}
-
-		/* Set rail Number */
-		new_rail = &__rails.rails[__rails.rail_current_id];
-		new_rail->rail_number = __rails.rail_current_id;
-		__rails.rail_current_id++;
-		assert(new_rail->state == SCTK_RAIL_ST_INIT);
-	}
-	else
-	{
-		new_rail = &__rails.rails[reuse_id];
-		assert(new_rail->state == SCTK_RAIL_ST_DISABLED);
-		memset(new_rail, 0, sizeof(sctk_rail_info_t) );
-		new_rail->rail_number = reuse_id;
-	}
-
-
-	/* Load Config */
-	new_rail->runtime_config_rail          = runtime_config_rail;
-	new_rail->runtime_config_driver_config = runtime_config_driver_config;
-
-	/* Init Empty route table */
-	assert(!new_rail->route_table);
-	new_rail->route_table = _mpc_lowcomm_endpoint_table_new();
-
-	/* Load and save Rail Device (NULL if not found) */
-	new_rail->rail_device = mpc_topology_device_get_from_handle(runtime_config_rail->device);
-
-	if(!new_rail->rail_device)
-	{
-		if((strcmp(runtime_config_rail->device, "default") != 0) && runtime_config_rail->device[0] != '!')
-		{
-			mpc_common_debug_fatal("No such device %s", runtime_config_rail->device);
-		}
-	}
-
-	/* Checkout is RDMA */
-	new_rail->is_rdma = (char)runtime_config_rail->rdma;;
-
-	/* Retrieve priority */
-	new_rail->priority = runtime_config_rail->priority;
-
-	sctk_rail_init_driver(new_rail, runtime_config_driver_config->driver.type);
-
-	return new_rail;
-}
-
-sctk_rail_info_t *sctk_rail_register(struct _mpc_lowcomm_config_struct_net_rail *runtime_config_rail,
-                                     struct _mpc_lowcomm_config_struct_net_driver_config *runtime_config_driver_config)
-{
-	return sctk_rail_register_with_parent(runtime_config_rail, runtime_config_driver_config, -1);
-}
 
 void sctk_rail_disable(sctk_rail_info_t *rail)
 {
@@ -195,7 +123,6 @@ void sctk_rail_enable(sctk_rail_info_t *rail)
 	{
 		return;
 	}
-	sctk_rail_register_with_parent(rail->runtime_config_rail, rail->runtime_config_driver_config, rail->rail_number);
 }
 
 int sctk_rail_count()
@@ -358,23 +285,6 @@ size_t sctk_rail_print_topology(char *start, size_t sz)
 	return cur_sz;
 }
 
-/* Finalize Rails (call the rail route init func ) */
-void sctk_rail_commit()
-{
-	/* First proceed with the RDMA rail ellection */
-	rdma_rail_ellection();
-
-	/* Display network context */
-	char * net_name = NULL;
-	int    i = 0;
-	size_t sz = 0;
-
-	net_name = sctk_malloc((size_t)sctk_rail_count() * 1024);
-
-	sz = sctk_rail_print_topology(net_name, (size_t)sctk_rail_count() * 1024);
-	assert(sz <= (size_t)sctk_rail_count() * 1024);
-	mpc_common_get_flags()->sctk_network_description_string = net_name;
-}
 
 struct sctk_rail_dump_context
 {

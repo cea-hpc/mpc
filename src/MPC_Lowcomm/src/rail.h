@@ -347,19 +347,14 @@ struct sctk_rail_array
 
 
 
-void sctk_rail_allocate(int count);
-
-sctk_rail_info_t *sctk_rail_register(struct _mpc_lowcomm_config_struct_net_rail *runtime_config_rail,
-                                     struct _mpc_lowcomm_config_struct_net_driver_config *runtime_config_driver_config);
-void sctk_rail_unregister(sctk_rail_info_t *rail);
 int sctk_rail_count();
 sctk_rail_info_t *sctk_rail_get_by_id(int i);
 int sctk_rail_get_rdma_id();
 sctk_rail_info_t *sctk_rail_get_rdma();
-void sctk_rail_commit();
-int sctk_rail_committed();
+
 void sctk_rail_enable(sctk_rail_info_t *rail);
 void sctk_rail_disable(sctk_rail_info_t *rail);
+
 void sctk_rail_dump_routes();
 
 /** Retrieve the HWLOC device associated with a rail */

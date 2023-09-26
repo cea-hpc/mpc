@@ -4121,7 +4121,7 @@ static void __lowcomm_init_per_task()
 #ifdef MPC_LOWCOMM_PROTOCOL
 		lcp_task_h task;
 		int rc = lcp_task_create(lcp_ctx_loc, task_rank, &task);
-		if (rc != MPC_LOWCOMM_SUCCESS) {
+		if (rc != MPC_LOWCOMM_SUCCESS)
 		{
 			mpc_common_debug_fatal("LCP: could not create task "
 			                       "tid=%d", task_rank);
@@ -4155,11 +4155,61 @@ static void __lowcomm_release_per_task()
 	}
 }
 
+/********************************************************************/
+/* Memory Allocator                                                 */
+/********************************************************************/
+
+#ifdef MPC_Allocator
+
+static inline size_t __align_allocation_to_ib_and_page(size_t size)
+{
+	if(size > (256ull * 1024ull)) /* RDMA threshold */
+	{
+		/* Page size */
+		return (size + ((4096ull) - 1) ) & (~((4096ull) - 1) );
+	}
+
+	return 0;
+}
+
+
+static size_t __mpc_memory_allocation_hook(size_t size_origin)
+{
+	UNUSED(size_origin);
+	return 0;
+}
+
+void __mpc_memory_free_hook(void *ptr, size_t size)
+{
+	//mpc_common_debug_error("FREE %p size %ld", ptr, size);
+
+	if(mpc_lowcomm_allocmem_is_in_pool(ptr))
+	{
+		//mpc_common_debug_error("FREE pool");
+		mpc_lowcomm_allocmem_pool_free_size(ptr, size);
+	}
+
+	UNUSED(ptr);
+	UNUSED(size);
+}
+
+#endif
+
+
 static void __initialize_drivers()
 {
+
+
+#ifdef MPC_Allocator
+	sctk_net_memory_allocation_hook_register(__mpc_memory_allocation_hook);
+	sctk_net_memory_free_hook_register(__mpc_memory_free_hook);
+#endif
+
+
 	int rc;
 
 	_mpc_lowcomm_monitor_setup();
+	_mpc_lowcomm_checksum_init();
 
 #ifdef MPC_LOWCOMM_PROTOCOL
 	lcp_context_param_t param =
@@ -4176,7 +4226,7 @@ static void __initialize_drivers()
 	rc = lcp_context_create(&lcp_ctx_loc, &param);
 	if(rc != MPC_LOWCOMM_SUCCESS)
 	{
-		mpc_common_debug_fatal("LCP: context creation failed");
+	mpc_common_debug_fatal("LCP: context creation failed");
 	}
 #else
 	if(mpc_common_get_process_count() > 1)
