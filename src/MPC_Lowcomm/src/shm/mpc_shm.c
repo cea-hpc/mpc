@@ -924,11 +924,6 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
 {
    unsigned int process_count = mpc_common_get_local_process_count();
 
-   if(process_count == 1)
-   {
-      return 1;
-   }
-
    storage->cma_state = MPC_SHM_CMA_UNCHECKED;
 
    storage->process_count = process_count;
@@ -1000,7 +995,8 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
          rr_counter = (rr_counter + 1)% (int)SHM_FREELIST_PER_PROC;
       }
 
- #if MPC_USE_CMA
+ #if 0
+   /* This leads to deadlocks in the monitor */
    mpc_launch_pmi_barrier();
    mpc_shm_has_cma_support(storage);
 #endif
@@ -1122,12 +1118,13 @@ int mpc_shm_query_devices(__UNUSED__ lcr_component_t *component,
                           lcr_device_t **devices_p,
                           unsigned int *num_devices_p)
 {
-
+#if 0
    if(mpc_common_get_local_process_count() == 1)
    {
       *num_devices_p = 0;
       return MPC_LOWCOMM_SUCCESS;
    }
+#endif
 
    *devices_p = sctk_malloc(sizeof(lcr_device_t));
    (void)snprintf((*devices_p)->name, LCR_DEVICE_NAME_MAX, "shmsegment");
