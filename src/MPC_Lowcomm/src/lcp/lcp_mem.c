@@ -613,6 +613,28 @@ err:
         return rc;
 }
 
+
+//FIXME: what append if a memory could not get registered ? Miss error handling:
+//       if a subset could not be registered, perform the communication on the
+//       successful memory pins ?
+/**
+ * @brief Register memory.
+ *
+ * @param ctx context
+ * @param mem_p memory object to register (out)
+ * @param buffer data to store
+ * @param length length of the data
+ * @param memp_map
+ * @return int LCP_SUCCESS in case of success
+ */
+int lcp_mem_register(lcp_context_h ctx,
+                     lcp_mem_h *mem_p,
+                     void *buffer,
+                     size_t length)
+{
+        not_implemented();
+}
+
 /**
  * @brief Post a buffer
  * 
