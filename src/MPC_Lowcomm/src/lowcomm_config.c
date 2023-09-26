@@ -208,7 +208,7 @@ static inline mpc_conf_config_type_t *__init_driver_ofi(struct _mpc_lowcomm_conf
 	snprintf(driver->value.ofi.provider, MPC_CONF_STRING_SIZE, "%s", provider);
 
 	driver->value.ofi.eager_size = 8192;
-	driver->value.ofi.eager_per_buff = 512;
+	driver->value.ofi.eager_per_buff = 100;
 	driver->value.ofi.request_cache_size = 2048;
 	driver->value.ofi.number_of_multi_recv_buff = 3;
 	driver->value.ofi.bcopy_size = 1024;

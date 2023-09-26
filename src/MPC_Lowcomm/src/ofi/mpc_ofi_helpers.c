@@ -186,11 +186,11 @@ struct fi_info * mpc_ofi_get_requested_hints(char * provider)
 		}
 	}
 
-   hints->mode = FI_CONTEXT;
-	hints->caps = FI_MSG | FI_RMA | FI_MULTI_RECV;
-   //hints->ep_attr->type          = FI_EP_RDM;
+	hints->mode = FI_CONTEXT | FI_LOCAL_MR;
+	hints->caps = FI_MSG | FI_RMA;
+	hints->ep_attr->type          = FI_EP_RDM;
 	hints->fabric_attr->prov_name = provider?strdup(provider):NULL;
-   hints->domain_attr->threading = FI_THREAD_DOMAIN;
+	hints->domain_attr->threading = FI_THREAD_DOMAIN;
 
 	return hints;
 }
