@@ -435,7 +435,7 @@ int mpc_ofi_query_devices(lcr_component_t *component,
    tmp = config;
    while(tmp)
    {
-      snprintf((*devices_p)[device_count].name, LCR_DEVICE_NAME_MAX, "%s @ %s", tmp->fabric_attr->name, tmp->domain_attr->name);
+      snprintf((*devices_p)[device_count].name, LCR_DEVICE_NAME_MAX, "%s : %s @ %s", tmp->fabric_attr->prov_name, tmp->fabric_attr->name, tmp->domain_attr->name);
       device_count++;
       TODO("We only keep the first device for now -- trusting OFI");
       break;
