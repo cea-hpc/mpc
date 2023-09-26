@@ -349,6 +349,7 @@ int lcp_pinning_mmu_release()
 }
 
 
+//NOTE: implements a FIFO like caching algorithm.
 lcp_mem_h lcp_pinning_mmu_pin(lcp_context_h  ctx, void *addr, size_t size, bmap_t bitmap)
 {
         struct lcp_pinning_entry * exists = lcp_pinning_entry_list_find(&__mmu.list, addr, size, bitmap);
@@ -375,30 +376,6 @@ int lcp_pinning_mmu_unpin(lcp_context_h  ctx, lcp_mem_h mem)
         lcp_pinning_entry_relax(mmu_entry);
 
         return 0;
-}
-
-
-
-//FIXME: Needs to clarify the management of remote memory keys and interfaces:
-//       - NICs are statically linked (one to one relationship)
-//       - add the mem bitmap when sending the rkey to identify to which
-//       interface the rkey belongs to.
-//FIXME: this function is also needed for rget 
-static inline void build_memory_registration_bitmap(size_t length, 
-                                                    size_t min_frag_size, 
-                                                    int max_iface,
-                                                    bmap_t *bmap_p)
-{
-        bmap_t bmap = MPC_BITMAP_INIT;
-        int num_used_ifaces = 0;
-
-        while ((length > num_used_ifaces * min_frag_size) &&
-               (num_used_ifaces < max_iface)) {
-                MPC_BITMAP_SET(bmap, num_used_ifaces);
-                num_used_ifaces++;
-        }
-
-        *bmap_p = bmap;
 }
 
 /**
@@ -636,40 +613,6 @@ err:
         return rc;
 }
 
-//FIXME: what append if a memory could not get registered ? Miss error handling:
-//       if a subset could not be registered, perform the communication on the 
-//       successful memory pins ?
-/**
- * @brief Register memory.
- * 
- * @param ctx context
- * @param mem_p memory object to register (out)
- * @param buffer data to store
- * @param length length of the data
- * @param memp_map 
- * @return int LCP_SUCCESS in case of success
- */
-int lcp_mem_register(lcp_context_h ctx, 
-                     lcp_mem_h *mem_p, 
-                     void *buffer, 
-                     size_t length)
-{
-        lcr_rail_attr_t attr;
-        sctk_rail_info_t *iface = ctx->resources[ctx->priority_rail].iface;
-
-        bmap_t bitmap;
-
-        not_implemented();
-
-        iface->iface_get_attr(iface, &attr);
-        build_memory_registration_bitmap(length,
-                                         attr.iface.cap.rndv.min_frag_size,
-                                         ctx->num_resources,
-                                         &bitmap);
-
-        return lcp_mem_register_with_bitmap(ctx, mem_p, bitmap, buffer,  length);
-}
-
 /**
  * @brief Post a buffer
  * 
@@ -779,6 +722,8 @@ err:
  * @param mem memory to unpin
  * @return int LCP_SUCCESS in case of success
  */
+//FIXME: this is not used anymore since deregistration is performed by the mmu.
+//       What happen a deregistration is explicitely needed? 
 int lcp_mem_deregister(lcp_context_h ctx, lcp_mem_h mem)
 {
         int i;

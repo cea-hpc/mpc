@@ -125,7 +125,7 @@ int lcp_am_recv_nb(lcp_task_h task, void *data_ctnr, void *buffer,
 /* Put/Get */
 int lcp_put_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer, 
                size_t length, uint64_t remote_addr, lcp_mem_h rkey,
-               lcp_request_param_t *param); 
+               const lcp_request_param_t *param); 
 
 /* Memory registration */
 int lcp_mem_register(lcp_context_h ctx, lcp_mem_h *mem_p, void *buffer, 

@@ -264,7 +264,7 @@ struct lcp_request {
 static inline void lcp_request_init_rma_put(lcp_request_t *req, 
                                             uint64_t remote_addr,
                                             lcp_mem_h rkey,
-                                            lcp_request_param_t *param)
+                                            const lcp_request_param_t *param)
 {
         req->send.rma.remote_addr = remote_addr;
         req->send.rma.rkey        = rkey; 
