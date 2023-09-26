@@ -315,6 +315,554 @@ static inline struct _mpc_shm_cell * _mpc_shm_list_head_try_get(struct _mpc_shm_
    return ret;
 }
 
+/***********************
+ * CROSS MEMORY ATTACH *
+ ***********************/
+
+ #if MPC_USE_CMA
+
+int __do_cma_read(pid_t pid, void * src, void *dest, size_t size)
+{
+   struct iovec local;
+   struct iovec remote;
+   
+   local.iov_base=dest;
+   local.iov_len = size;
+
+   remote.iov_base = src;
+   remote.iov_len = size;
+
+   ssize_t ret = process_vm_readv(pid,
+                    &local,
+                    1,
+                    &remote,
+                    1,
+                    0);
+
+
+   if(ret != (ssize_t)size)
+   {
+      return 1;
+   }
+
+   return 0;
+}
+
+int __do_cma_write(pid_t pid, void * src, void *dest, size_t size)
+{
+   struct iovec local;
+   struct iovec remote;
+   
+   local.iov_base=dest;
+   local.iov_len = size;
+
+   remote.iov_base = src;
+   remote.iov_len = size;
+
+   ssize_t ret = process_vm_writev(pid,
+                    &local,
+                    1,
+                    &remote,
+                    1,
+                    0);
+
+
+   if(ret != (ssize_t)size)
+   {
+      return 1;
+   }
+
+   return 0;
+}
+
+
+int mpc_shm_has_cma_support(struct _mpc_shm_storage * storage)
+{
+   if(storage->cma_state == MPC_SHM_CMA_OK)
+   {
+      return 1;
+   }
+
+   if(storage->cma_state == MPC_SHM_CMA_NOK)
+   {
+      return 0;
+   }
+
+   /* We are unknown */
+   int i = 0;
+   int local_pcount = mpc_common_get_local_process_count();
+   int my_rank = mpc_common_get_local_process_rank();
+
+   for(i = 0 ; i < local_pcount; i++)
+   {
+      if(i == my_rank)
+      {
+         continue;
+      }
+
+      pid_t remote_pid = storage->pids[i];
+      mpc_lowcomm_peer_uid_t *remote_uid_addresses = storage->remote_uid_addresses[i];
+      mpc_lowcomm_peer_uid_t remote_uid_cma = 0;
+      mpc_lowcomm_peer_uid_t remote_uid_value = mpc_lowcomm_monitor_local_uid_of(i);
+
+      if( __do_cma_read(remote_pid, remote_uid_addresses, &remote_uid_cma, sizeof(mpc_lowcomm_peer_uid_t)) )
+      {
+         goto error_cma;
+      }
+
+      if(remote_uid_value != remote_uid_cma)
+      {
+         goto error_cma;
+      }
+
+   }
+
+   storage->cma_state = MPC_SHM_CMA_OK;
+   return 1;
+
+error_cma:
+   storage->cma_state = MPC_SHM_CMA_NOK;
+   return 0;
+}
+
+#endif
+
+
+int _mpc_shm_get_local_rank(struct _mpc_shm_storage *storage, mpc_lowcomm_peer_uid_t uid)
+{
+   int i;
+   for(i = 0 ; i < storage->process_count; i++)
+   {
+      if(storage->uids[i] == uid)
+      {
+         return i;
+      }
+   }
+
+   return -1;
+}
+
+
+
+struct _mpc_shm_cell * _mpc_shm_storage_get_free_cell(struct _mpc_shm_storage *storage)
+{
+   int my_rank = mpc_common_get_local_process_rank();
+
+   struct _mpc_shm_cell * ret = NULL;
+
+   unsigned int target_list = (my_rank * SHM_FREELIST_PER_PROC) % storage->freelist_count;
+
+   while( !(ret = _mpc_shm_list_head_try_get(&storage->free_lists[target_list], storage->shm_buffer)))
+   {
+      target_list = (target_list + 1) % storage->freelist_count;
+   }
+
+   return ret;
+}
+
+
+void _mpc_shm_storage_send_cell_local_rank(struct _mpc_shm_storage * storage,
+                                           int local_rank,
+                                           struct _mpc_shm_cell * cell)
+{
+   int my_rank = mpc_common_get_local_process_rank();
+
+   unsigned int target_rank = local_rank;
+   unsigned int target_list = (size_t)target_rank * storage->process_arity +  (my_rank % storage->process_arity);
+
+   /* Pick one of the ARIRY incoming list */
+   struct _mpc_shm_list_head * list = &storage->per_process[target_list];
+   unsigned int cnt = 0;
+
+   assert( (storage->shm_buffer < (void*)cell) && ((void*)cell < (storage->shm_buffer + storage->segment_size)));
+
+   while(1)
+   {
+      if(mpc_common_spinlock_trylock(&list->lock) == 0)
+      {
+         ___mpc_shm_list_head_push_no_lock(list, cell, storage->shm_buffer);
+         mpc_common_spinlock_unlock(&list->lock);
+         break;
+      }
+
+      cnt++;
+      target_list = (size_t)target_rank * storage->process_arity +  ((my_rank + cnt) % storage->process_arity);
+   }
+}
+
+
+void _mpc_shm_storage_send_cell(struct _mpc_shm_storage * storage,
+                               _mpc_lowcomm_endpoint_t * endpoint,
+                               struct _mpc_shm_cell * cell)
+{
+   unsigned int target_rank = endpoint->data.shm.local_rank;
+   _mpc_shm_storage_send_cell_local_rank(storage,
+                                         target_rank,
+                                         cell);
+}
+
+void _mpc_shm_storage_free_cell(struct _mpc_shm_storage * storage,
+                                struct _mpc_shm_cell * cell)
+{
+   unsigned char dest = cell->free_list;
+
+   int did_push = 0;
+
+   do
+   {
+      if(_mpc_shm_list_head_try_push(&storage->free_lists[dest], cell, storage->shm_buffer) == 0)
+      {
+         did_push = 1;
+      }
+      dest = (dest + 1) % storage->freelist_count;
+   }while(!did_push);
+}
+
+/*********************
+ * PINNING FUNCTIONS *
+ *********************/
+
+void  mpc_shm_pin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list, void *addr, size_t size)
+{
+   list->pin.shm.addr = addr;
+   list->pin.shm.id = _mpc_shm_fragment_factory_register_segment(&rail->network.shm.frag_factory, addr, size);
+}
+
+void mpc_shm_unpin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list)
+{
+   _mpc_shm_fragment_factory_unregister_segment(&rail->network.shm.frag_factory, list->pin.shm.id);
+}
+
+
+int mpc_shm_pack_rkey(sctk_rail_info_t *rail,
+                      lcr_memp_t *memp, void *dest)
+{
+        UNUSED(rail);
+        memcpy(dest, &memp->pin.shm, sizeof(_mpc_lowcomm_shm_pinning_ctx_t));
+        return sizeof(_mpc_lowcomm_shm_pinning_ctx_t);
+}
+
+int mpc_shm_unpack_rkey(sctk_rail_info_t *rail,
+                        lcr_memp_t *memp, void *dest)
+{
+        UNUSED(rail);
+        memcpy( &memp->pin.shm, dest, sizeof(_mpc_lowcomm_shm_pinning_ctx_t));
+        return sizeof(_mpc_lowcomm_shm_pinning_ctx_t);
+}
+
+
+
+/***********************
+ * MESSAGING FUNCTIONS *
+ ***********************/
+
+int mpc_shm_send_am_zcopy(__UNUSED__ _mpc_lowcomm_endpoint_t *ep,
+                          __UNUSED__ uint8_t id,
+                          __UNUSED__ const void *header,
+                          __UNUSED__ unsigned header_length,
+                          __UNUSED__ const struct iovec *iov,
+                          __UNUSED__ size_t iovcnt,
+                          __UNUSED__ unsigned flags,
+                          __UNUSED__ lcr_completion_t *comp)
+{
+   not_implemented();
+}
+
+
+ssize_t mpc_shm_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
+                              uint8_t id,
+                              lcr_pack_callback_t pack,
+                              void *arg,
+                              __UNUSED__ unsigned flags)
+{
+   sctk_rail_info_t *rail = ep->rail;
+   uint32_t payload_length = 0;
+
+   struct _mpc_shm_cell * cell = _mpc_shm_storage_get_free_cell(&rail->network.shm.storage);
+
+   assume(cell);
+
+   _mpc_shm_am_hdr_t *hdr = (_mpc_shm_am_hdr_t *)cell->data;
+
+   hdr->op = MPC_SHM_AM_EAGER;
+   hdr->am_id = id;
+   hdr->length = payload_length = pack(hdr->data, arg);
+   payload_length = hdr->length;
+
+   _mpc_shm_storage_send_cell(&rail->network.shm.storage,
+                              ep,
+                              cell);
+
+   return payload_length;
+}
+
+static inline void __deffered_completion_cb(void *pcomp)
+{
+   lcr_completion_t *comp = (lcr_completion_t *)pcomp;
+   comp->comp_cb(comp);
+}
+
+
+int __get_zcopy_over_frag(_mpc_lowcomm_endpoint_t *ep,
+                           uint64_t local_addr,
+                           uint64_t remote_offset,
+                           lcr_memp_t *remote_key,
+                           size_t size,
+                           lcr_completion_t *comp) 
+{
+   sctk_rail_info_t *rail = ep->rail;
+
+   comp->sent = size;
+
+   uint64_t fragment_id = _mpc_shm_fragment_init(&rail->network.shm.frag_factory, 
+                                              remote_key->pin.shm.id,
+                                              (void*)local_addr,
+                                              size,
+                                              __deffered_completion_cb,
+                                              comp);
+
+   struct _mpc_shm_cell * cell = _mpc_shm_storage_get_free_cell(&rail->network.shm.storage);
+   assume(cell);
+
+   _mpc_shm_am_hdr_t *hdr = (_mpc_shm_am_hdr_t *)cell->data;
+
+   hdr->op = MPC_SHM_AM_GET;
+   hdr->am_id = 0;
+   hdr->length = sizeof(_mpc_shm_am_get);
+
+   _mpc_shm_am_get * get = (_mpc_shm_am_get*)hdr->data;
+
+   get->source = mpc_lowcomm_monitor_get_uid();
+   get->frag_id = fragment_id;
+   get->segment_id = remote_key->pin.shm.id;
+   get->offset = remote_offset;
+   get->size = size;
+
+   _mpc_shm_storage_send_cell(&rail->network.shm.storage,
+                              ep,
+                              cell);
+
+   return MPC_LOWCOMM_SUCCESS;
+}
+
+#ifdef MPC_USE_CMA
+int __get_zcopy_over_cma(_mpc_lowcomm_endpoint_t *ep,
+                           uint64_t local_addr,
+                           uint64_t remote_offset,
+                           lcr_memp_t *remote_key,
+                           size_t size,
+                           lcr_completion_t *comp)
+{
+   pid_t target_pid = ep->data.shm.cma_pid;
+   assume(0 <= target_pid);
+   int ret = __do_cma_read(target_pid, remote_key->pin.shm.addr + remote_offset, (void*)local_addr, size);
+   assume(ret == 0);
+
+   comp->sent = size;
+   comp->comp_cb(comp);
+
+   return MPC_LOWCOMM_SUCCESS;
+}
+
+int __put_zcopy_over_cma(_mpc_lowcomm_endpoint_t *ep,
+                           uint64_t local_addr,
+                           uint64_t remote_offset,
+                           lcr_memp_t *remote_key,
+                           size_t size,
+                           lcr_completion_t *comp)
+{
+   pid_t target_pid = ep->data.shm.cma_pid;
+   assume(0 <= target_pid);
+   int ret = __do_cma_write(target_pid, remote_key->pin.shm.addr + remote_offset, (void*)local_addr, size);
+   assume(ret == 0);
+
+   comp->sent = size;
+   comp->comp_cb(comp);
+
+   return MPC_LOWCOMM_SUCCESS;
+}
+
+#endif
+
+
+int mpc_shm_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
+                           uint64_t local_addr,
+                           uint64_t remote_offset,
+                           lcr_memp_t *remote_key,
+                           size_t size,
+                           lcr_completion_t *comp) 
+{
+
+ #if MPC_USE_CMA
+
+   int cma = mpc_shm_has_cma_support(&ep->rail->network.shm.storage);
+
+   if(cma)
+   {
+         return __get_zcopy_over_cma(ep, local_addr, remote_offset, remote_key, size, comp);
+   }
+
+#endif
+
+   return __get_zcopy_over_frag(ep, local_addr, remote_offset, remote_key, size, comp);
+}
+
+
+
+
+int mpc_shm_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
+                        uint64_t local_addr,
+                        uint64_t remote_offset,
+                        lcr_memp_t *remote_key,
+                        size_t size,
+                        lcr_completion_t *comp)
+{
+ #if MPC_USE_CMA
+
+   int cma = mpc_shm_has_cma_support(&ep->rail->network.shm.storage);
+
+   if(cma)
+   {
+         return __put_zcopy_over_cma(ep, local_addr, remote_offset, remote_key, size, comp);
+   }
+
+#endif
+   not_implemented();
+}
+
+
+
+
+/*****************************
+ * INCOMING MESSAGE HANDLING *
+ *****************************/
+
+
+int ____handle_incoming_eager(__UNUSED__ struct _mpc_shm_storage * storage, sctk_rail_info_t *rail, _mpc_shm_am_hdr_t *hdr )
+{
+   //mpc_common_debug_error("IN CB %d LEN %lld", hdr->am_id, hdr->length);
+
+	lcr_am_handler_t handler = rail->am[hdr->am_id];
+	if (handler.cb == NULL) {
+		mpc_common_debug_fatal("LCP: handler id %d not supported.", hdr->am_id);
+	}
+
+	int rc = handler.cb(handler.arg, hdr->data, hdr->length, 0);
+
+	if (rc != MPC_LOWCOMM_SUCCESS) {
+		mpc_common_debug_error("LCP: handler id %d failed.", hdr->am_id);
+	}
+
+   return rc;
+}
+
+
+int ____handle_incoming_get(__UNUSED__ struct _mpc_shm_storage * storage, sctk_rail_info_t *rail, _mpc_shm_am_hdr_t *hdr)
+{
+   _mpc_shm_am_get * get = (_mpc_shm_am_get*)hdr->data;
+
+   struct _mpc_shm_region * region = _mpc_shm_fragment_factory_get_segment(&rail->network.shm.frag_factory, get->segment_id);
+
+   if(!region)
+   {
+      mpc_common_debug_fatal("No such SHM region %lld registered", get->segment_id);
+   }
+
+   size_t block_size = MPC_SHM_EAGER_SIZE - sizeof(_mpc_shm_am_hdr_t) - sizeof(_mpc_shm_frag);
+   size_t sent = 0;
+
+   assume(region->size <= (get->offset + get->size));
+
+
+   while(sent < get->size)
+   {
+      size_t sizeleft = (get->size - sent);
+      size_t to_send = (sizeleft < block_size)?sizeleft:block_size;
+
+      struct _mpc_shm_cell * cell = _mpc_shm_storage_get_free_cell(&rail->network.shm.storage);
+      assume(cell);
+
+      _mpc_shm_am_hdr_t *hdr = (_mpc_shm_am_hdr_t *)cell->data;
+
+      hdr->op = MPC_SHM_AM_FRAG;
+      hdr->length = sizeof(_mpc_shm_frag);
+
+      _mpc_shm_frag * frag = (_mpc_shm_frag *)hdr->data;
+
+      frag->frag_id = get->frag_id;
+      frag->segment_id = get->segment_id;
+      frag->size = to_send;
+      frag->offset = sent;
+      memcpy(frag->data, region->addr + get->offset + sent, to_send);
+
+      _mpc_shm_storage_send_cell_local_rank(&rail->network.shm.storage,
+                                 _mpc_shm_get_local_rank(storage, get->source),
+                                          cell);
+
+
+      sent += to_send;
+   }
+
+   return MPC_LOWCOMM_SUCCESS;
+}
+
+int ____handle_incoming_frag(__UNUSED__ struct _mpc_shm_storage * storage, sctk_rail_info_t *rail, _mpc_shm_am_hdr_t *hdr)
+{
+   _mpc_shm_frag * frag = (_mpc_shm_frag*)hdr->data;
+   return _mpc_shm_fragment_notify(&rail->network.shm.frag_factory, frag->frag_id, frag->data, frag->offset, frag->size);
+}
+
+
+int __handle_incoming_message(struct _mpc_shm_storage * storage, sctk_rail_info_t *rail, struct _mpc_shm_cell * cell)
+{
+   _mpc_shm_am_hdr_t *hdr = (_mpc_shm_am_hdr_t*)cell->data;
+
+   int rc = MPC_LOWCOMM_SUCCESS;
+
+   switch (hdr->op) {
+      case MPC_SHM_AM_EAGER:
+         rc = ____handle_incoming_eager(storage, rail, hdr);
+      break;
+      case MPC_SHM_AM_GET:
+         rc = ____handle_incoming_get(storage, rail, hdr);
+      break;
+      case MPC_SHM_AM_FRAG:
+         rc = ____handle_incoming_frag(storage, rail, hdr);
+      break;
+      default:
+         not_implemented();
+   }
+
+   _mpc_shm_storage_free_cell(storage, cell);
+
+   return rc;
+}
+
+
+int mpc_shm_progress(sctk_rail_info_t *rail)
+{
+   int my_rank = mpc_common_get_local_process_rank();
+
+   assume(0 <= my_rank);
+
+   int rc = MPC_LOWCOMM_SUCCESS;
+
+   unsigned int i = 0;
+
+   for( i = my_rank * SHM_PROCESS_ARITY; i < (my_rank + 1) * SHM_PROCESS_ARITY; i++)
+   {
+      struct _mpc_shm_cell * cell = _mpc_shm_list_head_try_get(&rail->network.shm.storage.per_process[i], rail->network.shm.storage.shm_buffer);
+
+      if(cell)
+      {
+         rc = __handle_incoming_message(&rail->network.shm.storage, rail, cell);
+      }
+   }
+
+   return rc;
+}
+
+
 
 /***************
  * SHM STORAGE *
@@ -440,12 +988,11 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
    assume(((void*)storage->free_lists < (void*)cells) && ((void*)cells < ((void*)storage->shm_buffer + segment_size)));
 
       int rr_counter = 0;
-      unsigned int per_proc = storage->cell_count / process_count;
 
-      for( i = proc_rank * per_proc ; i < (proc_rank + 1) * per_proc; i++)
+      for( i = proc_rank * SHM_CELL_COUNT_PER_PROC ; i < (proc_rank + 1) * SHM_CELL_COUNT_PER_PROC; i++)
       {
 
-		 assume(i < storage->cell_count);
+         assume(i < storage->cell_count);
          cells[i].next = NULL;
          cells[i].prev = NULL;
          _mpc_shm_list_head_push(&storage->free_lists[proc_rank * SHM_FREELIST_PER_PROC + rr_counter], &cells[i],  storage->shm_buffer);
@@ -453,6 +1000,10 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
          rr_counter = (rr_counter + 1)% (int)SHM_FREELIST_PER_PROC;
       }
 
+ #if MPC_USE_CMA
+   mpc_launch_pmi_barrier();
+   mpc_shm_has_cma_support(storage);
+#endif
 
    return 0;
 }
@@ -462,556 +1013,7 @@ int _mpc_shm_storage_release(struct _mpc_shm_storage *storage)
    not_implemented();
 }
 
-/**
- * @brief This is used for CMA to convert from UID to PID it relies on a table in SHM segment
- * 
- * @param storage storage to rely on
- * @param uid UID to get pid of
- * @return pid_t the PID (-1 if not found)
- */
-pid_t _mpc_shm_storage_uid_to_pid(struct _mpc_shm_storage * storage, mpc_lowcomm_peer_uid_t uid)
-{
-   unsigned int i = 0;
-   for(i = 0 ; i < storage->process_count; i++)
-   {
-      if(storage->uids[i] == uid)
-      {
-         return storage->pids[i];
-      }
-   }
 
-   return -1;
-}
-
-
-#define MPC_SHM_MAX_GET_TRY 2
-
-struct _mpc_shm_cell * _mpc_shm_storage_get_free_cell(struct _mpc_shm_storage *storage)
-{
-   int my_rank = mpc_common_get_local_process_rank();
-
-   struct _mpc_shm_cell * ret = NULL;
-
-   unsigned int target_list = my_rank % storage->freelist_count;
-   int cnt = 0;
-
-   while( !(ret = _mpc_shm_list_head_try_get(&storage->free_lists[target_list], storage->shm_buffer)))
-   {
-      cnt++;
-      if(cnt > MPC_SHM_MAX_GET_TRY)
-      {
-            target_list = (target_list + 1) % storage->freelist_count;
-            cnt = 0;
-      }
-   }
-
-   return ret;
-}
-
-
-void _mpc_shm_storage_send_cell(struct _mpc_shm_storage * storage,
-                               mpc_lowcomm_peer_uid_t uid,
-                               struct _mpc_shm_cell * cell)
-{
-   int my_rank = mpc_common_get_local_process_rank();
-
-   assert(0 <= my_rank);
-   assert(mpc_lowcomm_monitor_get_gid() == mpc_lowcomm_peer_get_set(uid));
-
-   unsigned int target_rank = mpc_lowcomm_peer_get_rank(uid);
-   unsigned int target_list = (size_t)target_rank * storage->process_arity +  (my_rank % storage->process_arity);
-
-
-   /* Pick one of the ARIRY incoming list */
-   struct _mpc_shm_list_head * list = &storage->per_process[target_list];
-   unsigned int cnt = 0;
-
-   assert( (storage->shm_buffer < (void*)cell) && ((void*)cell < (storage->shm_buffer + storage->segment_size)));
-
-   while(1)
-   {
-      if(mpc_common_spinlock_trylock(&list->lock) == 0)
-      {
-         ___mpc_shm_list_head_push_no_lock(list, cell, storage->shm_buffer);
-         mpc_common_spinlock_unlock(&list->lock);
-         break;
-      }
-
-      cnt++;
-      target_list = (size_t)target_rank * storage->process_arity +  ((my_rank + cnt) % storage->process_arity);
-   }
-}
-
-void _mpc_shm_storage_free_cell(struct _mpc_shm_storage * storage,
-                                struct _mpc_shm_cell * cell)
-{
-   unsigned char dest = cell->free_list;
-
-   int did_push = 0;
-
-   do
-   {
-      if(_mpc_shm_list_head_try_push(&storage->free_lists[dest], cell, storage->shm_buffer) == 0)
-      {
-         did_push = 1;
-      }
-      dest = (dest + 1) % storage->freelist_count;
-   }while(!did_push);
-}
-
-/*********************
- * PINNING FUNCTIONS *
- *********************/
-
-void  mpc_shm_pin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list, void *addr, size_t size)
-{
-   list->pin.shm.addr = addr;
-   list->pin.shm.id = _mpc_shm_fragment_factory_register_segment(&rail->network.shm.frag_factory, addr, size);
-}
-
-void mpc_shm_unpin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list)
-{
-   _mpc_shm_fragment_factory_unregister_segment(&rail->network.shm.frag_factory, list->pin.shm.id);
-}
-
-
-int mpc_shm_pack_rkey(sctk_rail_info_t *rail,
-                      lcr_memp_t *memp, void *dest)
-{
-        UNUSED(rail);
-        memcpy(dest, &memp->pin.shm, sizeof(_mpc_lowcomm_shm_pinning_ctx_t));
-        return sizeof(_mpc_lowcomm_shm_pinning_ctx_t);
-}
-
-int mpc_shm_unpack_rkey(sctk_rail_info_t *rail,
-                        lcr_memp_t *memp, void *dest)
-{
-        UNUSED(rail);
-        memcpy( &memp->pin.shm, dest, sizeof(_mpc_lowcomm_shm_pinning_ctx_t));
-        return sizeof(_mpc_lowcomm_shm_pinning_ctx_t);
-}
-
-/***********************
- * CROSS MEMORY ATTACH *
- ***********************/
-
- #if MPC_USE_CMA
-
-int __do_cma_read(pid_t pid, void * src, void *dest, size_t size)
-{
-   struct iovec local;
-   struct iovec remote;
-   
-   local.iov_base=dest;
-   local.iov_len = size;
-
-   remote.iov_base = src;
-   remote.iov_len = size;
-
-   ssize_t ret = process_vm_readv(pid,
-                    &local,
-                    1,
-                    &remote,
-                    1,
-                    0);
-
-
-   if(ret != (ssize_t)size)
-   {
-      return 1;
-   }
-
-   return 0;
-}
-
-int __do_cma_write(pid_t pid, void * src, void *dest, size_t size)
-{
-   struct iovec local;
-   struct iovec remote;
-   
-   local.iov_base=dest;
-   local.iov_len = size;
-
-   remote.iov_base = src;
-   remote.iov_len = size;
-
-   ssize_t ret = process_vm_writev(pid,
-                    &local,
-                    1,
-                    &remote,
-                    1,
-                    0);
-
-
-   if(ret != (ssize_t)size)
-   {
-      return 1;
-   }
-
-   return 0;
-}
-
-
-int mpc_shm_has_cma_support(struct _mpc_shm_storage * storage)
-{
-   if(storage->cma_state == MPC_SHM_CMA_OK)
-   {
-      return 1;
-   }
-
-   if(storage->cma_state == MPC_SHM_CMA_NOK)
-   {
-      return 0;
-   }
-
-   /* We are unknown */
-   int i = 0;
-   int local_pcount = mpc_common_get_local_process_count();
-   int my_rank = mpc_common_get_local_process_rank();
-
-   for(i = 0 ; i < local_pcount; i++)
-   {
-      if(i == my_rank)
-      {
-         continue;
-      }
-
-      pid_t remote_pid = storage->pids[i];
-      mpc_lowcomm_peer_uid_t *remote_uid_addresses = storage->remote_uid_addresses[i];
-      mpc_lowcomm_peer_uid_t remote_uid_cma = 0;
-      mpc_lowcomm_peer_uid_t remote_uid_value = mpc_lowcomm_monitor_local_uid_of(i);
-
-      if( __do_cma_read(remote_pid, remote_uid_addresses, &remote_uid_cma, sizeof(mpc_lowcomm_peer_uid_t)) )
-      {
-         goto error_cma;
-      }
-
-      if(remote_uid_value != remote_uid_cma)
-      {
-         goto error_cma;
-      }
-
-   }
-
-   storage->cma_state = MPC_SHM_CMA_OK;
-   return 1;
-
-error_cma:
-   storage->cma_state = MPC_SHM_CMA_NOK;
-   return 0;
-}
-
-#endif
-
-/***********************
- * MESSAGING FUNCTIONS *
- ***********************/
-
-int mpc_shm_send_am_zcopy(__UNUSED__ _mpc_lowcomm_endpoint_t *ep,
-                          __UNUSED__ uint8_t id,
-                          __UNUSED__ const void *header,
-                          __UNUSED__ unsigned header_length,
-                          __UNUSED__ const struct iovec *iov,
-                          __UNUSED__ size_t iovcnt,
-                          __UNUSED__ unsigned flags,
-                          __UNUSED__ lcr_completion_t *comp)
-{
-   not_implemented();
-}
-
-
-ssize_t mpc_shm_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
-                              uint8_t id,
-                              lcr_pack_callback_t pack,
-                              void *arg,
-                              __UNUSED__ unsigned flags)
-{
-   sctk_rail_info_t *rail = ep->rail;
-   uint32_t payload_length = 0;
-
-   struct _mpc_shm_cell * cell = _mpc_shm_storage_get_free_cell(&rail->network.shm.storage);
-
-   assume(cell);
-
-   _mpc_shm_am_hdr_t *hdr = (_mpc_shm_am_hdr_t *)cell->data;
-
-   hdr->op = MPC_SHM_AM_EAGER;
-   hdr->am_id = id;
-   hdr->length = payload_length = pack(hdr->data, arg);
-   payload_length = hdr->length;
-
-   _mpc_shm_storage_send_cell(&rail->network.shm.storage,
-                              ep->dest,
-                              cell);
-
-   return payload_length;
-}
-
-static inline void __deffered_completion_cb(void *pcomp)
-{
-   lcr_completion_t *comp = (lcr_completion_t *)pcomp;
-   comp->comp_cb(comp);
-}
-
-
-int __get_zcopy_over_frag(_mpc_lowcomm_endpoint_t *ep,
-                           uint64_t local_addr,
-                           uint64_t remote_offset,
-                           lcr_memp_t *remote_key,
-                           size_t size,
-                           lcr_completion_t *comp) 
-{
-   sctk_rail_info_t *rail = ep->rail;
-
-   comp->sent = size;
-
-   uint64_t fragment_id = _mpc_shm_fragment_init(&rail->network.shm.frag_factory, 
-                                              remote_key->pin.shm.id,
-                                              (void*)local_addr,
-                                              size,
-                                              __deffered_completion_cb,
-                                              comp);
-
-   struct _mpc_shm_cell * cell = _mpc_shm_storage_get_free_cell(&rail->network.shm.storage);
-   assume(cell);
-
-   _mpc_shm_am_hdr_t *hdr = (_mpc_shm_am_hdr_t *)cell->data;
-
-   hdr->op = MPC_SHM_AM_GET;
-   hdr->am_id = 0;
-   hdr->length = sizeof(_mpc_shm_am_get);
-
-   _mpc_shm_am_get * get = (_mpc_shm_am_get*)hdr->data;
-
-   get->source = mpc_lowcomm_monitor_get_uid();
-   get->frag_id = fragment_id;
-   get->segment_id = remote_key->pin.shm.id;
-   get->offset = remote_offset;
-   get->size = size;
-
-   _mpc_shm_storage_send_cell(&rail->network.shm.storage,
-                              ep->dest,
-                              cell);
-
-   return MPC_LOWCOMM_SUCCESS;
-}
-
-#ifdef MPC_USE_CMA
-int __get_zcopy_over_cma(_mpc_lowcomm_endpoint_t *ep,
-                           uint64_t local_addr,
-                           uint64_t remote_offset,
-                           lcr_memp_t *remote_key,
-                           size_t size,
-                           lcr_completion_t *comp)
-{
-   pid_t target_pid = _mpc_shm_storage_uid_to_pid(&ep->rail->network.shm.storage, ep->dest);
-   assume(0 <= target_pid);
-   int ret = __do_cma_read(target_pid, remote_key->pin.shm.addr + remote_offset, (void*)local_addr, size);
-   assume(ret == 0);
-
-   comp->sent = size;
-   comp->comp_cb(comp);
-
-   return MPC_LOWCOMM_SUCCESS;
-}
-
-int __put_zcopy_over_cma(_mpc_lowcomm_endpoint_t *ep,
-                           uint64_t local_addr,
-                           uint64_t remote_offset,
-                           lcr_memp_t *remote_key,
-                           size_t size,
-                           lcr_completion_t *comp)
-{
-   pid_t target_pid = _mpc_shm_storage_uid_to_pid(&ep->rail->network.shm.storage, ep->dest);
-   assume(0 <= target_pid);
-   int ret = __do_cma_write(target_pid, remote_key->pin.shm.addr + remote_offset, (void*)local_addr, size);
-   assume(ret == 0);
-
-   comp->sent = size;
-   comp->comp_cb(comp);
-
-   return MPC_LOWCOMM_SUCCESS;
-}
-
-#endif
-
-
-int mpc_shm_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
-                           uint64_t local_addr,
-                           uint64_t remote_offset,
-                           lcr_memp_t *remote_key,
-                           size_t size,
-                           lcr_completion_t *comp) 
-{
-
- #if MPC_USE_CMA
-
-   int cma = mpc_shm_has_cma_support(&ep->rail->network.shm.storage);
-
-   if(cma)
-   {
-         return __get_zcopy_over_cma(ep, local_addr, remote_offset, remote_key, size, comp);
-   }
-
-#endif
-
-   return __get_zcopy_over_frag(ep, local_addr, remote_offset, remote_key, size, comp);
-}
-
-
-
-
-int mpc_shm_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
-                        uint64_t local_addr,
-                        uint64_t remote_offset,
-                        lcr_memp_t *remote_key,
-                        size_t size,
-                        lcr_completion_t *comp)
-{
- #if MPC_USE_CMA
-
-   int cma = mpc_shm_has_cma_support(&ep->rail->network.shm.storage);
-
-   if(cma)
-   {
-         return __put_zcopy_over_cma(ep, local_addr, remote_offset, remote_key, size, comp);
-   }
-
-#endif
-   not_implemented();
-}
-
-
-
-
-/*****************************
- * INCOMING MESSAGE HANDLING *
- *****************************/
-
-
-int ____handle_incoming_eager(__UNUSED__ struct _mpc_shm_storage * storage, sctk_rail_info_t *rail, _mpc_shm_am_hdr_t *hdr )
-{
-   //mpc_common_debug_error("IN CB %d LEN %lld", hdr->am_id, hdr->length);
-
-	lcr_am_handler_t handler = rail->am[hdr->am_id];
-	if (handler.cb == NULL) {
-		mpc_common_debug_fatal("LCP: handler id %d not supported.", hdr->am_id);
-	}
-
-	int rc = handler.cb(handler.arg, hdr->data, hdr->length, 0);
-
-	if (rc != MPC_LOWCOMM_SUCCESS) {
-		mpc_common_debug_error("LCP: handler id %d failed.", hdr->am_id);
-	}
-
-   return rc;
-}
-
-
-int ____handle_incoming_get(__UNUSED__ struct _mpc_shm_storage * storage, sctk_rail_info_t *rail, _mpc_shm_am_hdr_t *hdr)
-{
-   _mpc_shm_am_get * get = (_mpc_shm_am_get*)hdr->data;
-
-   struct _mpc_shm_region * region = _mpc_shm_fragment_factory_get_segment(&rail->network.shm.frag_factory, get->segment_id);
-
-   if(!region)
-   {
-      mpc_common_debug_fatal("No such SHM region %lld registered", get->segment_id);
-   }
-
-   size_t block_size = MPC_SHM_EAGER_SIZE - sizeof(_mpc_shm_am_hdr_t) - sizeof(_mpc_shm_frag);
-   size_t sent = 0;
-
-   assume(region->size <= (get->offset + get->size));
-
-
-   while(sent < get->size)
-   {
-      size_t sizeleft = (get->size - sent);
-      size_t to_send = (sizeleft < block_size)?sizeleft:block_size;
-
-      struct _mpc_shm_cell * cell = _mpc_shm_storage_get_free_cell(&rail->network.shm.storage);
-      assume(cell);
-
-      _mpc_shm_am_hdr_t *hdr = (_mpc_shm_am_hdr_t *)cell->data;
-
-      hdr->op = MPC_SHM_AM_FRAG;
-      hdr->length = sizeof(_mpc_shm_frag);
-
-      _mpc_shm_frag * frag = (_mpc_shm_frag *)hdr->data;
-
-      frag->frag_id = get->frag_id;
-      frag->segment_id = get->segment_id;
-      frag->size = to_send;
-      frag->offset = sent;
-      memcpy(frag->data, region->addr + get->offset + sent, to_send);
-
-      _mpc_shm_storage_send_cell(&rail->network.shm.storage,
-                                 get->source,
-                                     cell);
-
-
-      sent += to_send;
-   }
-
-   return MPC_LOWCOMM_SUCCESS;
-}
-
-int ____handle_incoming_frag(__UNUSED__ struct _mpc_shm_storage * storage, sctk_rail_info_t *rail, _mpc_shm_am_hdr_t *hdr)
-{
-   _mpc_shm_frag * frag = (_mpc_shm_frag*)hdr->data;
-   return _mpc_shm_fragment_notify(&rail->network.shm.frag_factory, frag->frag_id, frag->data, frag->offset, frag->size);
-}
-
-
-int __handle_incoming_message(struct _mpc_shm_storage * storage, sctk_rail_info_t *rail, struct _mpc_shm_cell * cell)
-{
-   _mpc_shm_am_hdr_t *hdr = (_mpc_shm_am_hdr_t*)cell->data;
-
-   int rc = MPC_LOWCOMM_SUCCESS;
-
-   switch (hdr->op) {
-      case MPC_SHM_AM_EAGER:
-         rc = ____handle_incoming_eager(storage, rail, hdr);
-      break;
-      case MPC_SHM_AM_GET:
-         rc = ____handle_incoming_get(storage, rail, hdr);
-      break;
-      case MPC_SHM_AM_FRAG:
-         rc = ____handle_incoming_frag(storage, rail, hdr);
-      break;
-      default:
-         not_implemented();
-   }
-
-   _mpc_shm_storage_free_cell(storage, cell);
-
-   return rc;
-}
-
-
-int mpc_shm_progress(sctk_rail_info_t *rail)
-{
-   int my_rank = mpc_common_get_local_process_rank();
-
-   assume(0 <= my_rank);
-
-   int rc = MPC_LOWCOMM_SUCCESS;
-
-   unsigned int i = 0;
-
-   for( i = my_rank * SHM_PROCESS_ARITY; i < (my_rank + 1) * SHM_PROCESS_ARITY; i++)
-   {
-      struct _mpc_shm_cell * cell = _mpc_shm_list_head_try_get(&rail->network.shm.storage.per_process[i], rail->network.shm.storage.shm_buffer);
-
-      if(cell)
-      {
-         rc = __handle_incoming_message(&rail->network.shm.storage, rail, cell);
-      }
-   }
-
-   return rc;
-}
 
 /********************
  * INIT AND RELEASE *
@@ -1026,6 +1028,24 @@ void mpc_shm_connect_on_demand(__UNUSED__ struct sctk_rail_info_s *rail, mpc_low
         mpc_common_debug("On demand to %llu", dest);
 }
 
+void _mpc_lowcomm_shm_endpoint_info_init(_mpc_lowcomm_shm_endpoint_info_t * infos, mpc_lowcomm_peer_uid_t uid, struct _mpc_shm_storage *storage)
+{
+   int i;
+   int local_proc_count = mpc_common_get_local_process_count();
+
+   for(i = 0 ; i < local_proc_count; i++)
+   {
+      if(storage->uids[i] == uid)
+      {
+         infos->cma_pid = storage->pids[i];
+         infos->local_rank = i;
+         return;
+      }
+   }
+
+   mpc_common_debug_fatal("Route UID not found in SHM segment");
+}
+
 
 void __add_route(mpc_lowcomm_peer_uid_t dest_uid, sctk_rail_info_t *rail)
 {
@@ -1033,7 +1053,7 @@ void __add_route(mpc_lowcomm_peer_uid_t dest_uid, sctk_rail_info_t *rail)
 	assume(new_route != NULL);
 	_mpc_lowcomm_endpoint_init(new_route, dest_uid, rail, _MPC_LOWCOMM_ENDPOINT_DYNAMIC);
 
-   //mpc_mempool_init(&new_route->data.shm.zcopy, 10, 100, sizeof(struct mpc_shm_deffered_completion_s), sctk_malloc, sctk_free);
+   _mpc_lowcomm_shm_endpoint_info_init(&new_route->data.shm, dest_uid, &rail->network.shm.storage);
 
 	/* Make sure the route is flagged connected */
 	_mpc_lowcomm_endpoint_set_state(new_route, _MPC_LOWCOMM_ENDPOINT_CONNECTED);

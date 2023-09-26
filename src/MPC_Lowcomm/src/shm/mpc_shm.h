@@ -147,8 +147,11 @@ typedef struct
 
 typedef struct _mpc_lowcomm_shm_endpoint_info_s
 {
-   //mpc_mempool zcopy;
+   pid_t cma_pid;
+   unsigned int local_rank;
 }_mpc_lowcomm_shm_endpoint_info_t;
+
+void _mpc_lowcomm_shm_endpoint_info_init(_mpc_lowcomm_shm_endpoint_info_t * infos, mpc_lowcomm_peer_uid_t uid, struct _mpc_shm_storage *storage);
 
 /********************
  * SHM RAIL CONTEXT *
