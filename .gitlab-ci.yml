@@ -19,7 +19,7 @@ variables:
   GL_INSTALL_DIR: $GL_PIPELINE_PATH/install
   GIT_DEPTH: 1 # No need to clone the whole history
   GIT_CLONE_PATH: $GL_PIPELINE_PATH/$CI_RUNNER_ID/$CI_CONCURRENT_ID
-  PCVS_COMMAND: pcvs -v run --override --profile mpc --print errors
+  PCVS_COMMAND: pcvs -v run --override --profile mpc --print errors -S
 
 .pcvs_prepare: &pcvs_prepare
   - export CI_PCVS_DIR="$GL_PIPELINE_PATH/step_$(echo "$CI_JOB_NAME" | sed -e "s/ /_/g")/"
