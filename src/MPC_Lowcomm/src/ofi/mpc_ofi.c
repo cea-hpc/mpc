@@ -78,7 +78,7 @@ void mpc_ofi_connect_on_demand(struct sctk_rail_info_s *rail, mpc_lowcomm_peer_u
    char my_net_name[128];
 	mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_ondemand(dest,
 	                                                                   __gen_rail_target_name(rail, my_net_name, 128),
-	                                                                   &my_infos,
+	                                                                   (char*)&my_infos,
 	                                                                   sizeof(struct mpc_ofi_net_infos),
 	                                                                   &ret);
 
@@ -130,7 +130,7 @@ static int __ofi_on_demand_callback(mpc_lowcomm_peer_uid_t from,
 
    /* Now send local info */
    assume(sizeof(struct mpc_ofi_net_infos) < return_data_len);
-   struct mpc_ofi_net_infos *my_infos = return_data;
+   struct mpc_ofi_net_infos *my_infos = (struct mpc_ofi_net_infos *)return_data;
    my_infos->size = MPC_OFI_ADDRESS_LEN;
 
 
