@@ -1733,7 +1733,9 @@ int mpc_lowcomm_monitor_response_free(mpc_lowcomm_monitor_response_t response)
 
 int _mpc_lowcomm_monitor_command_send(_mpc_lowcomm_monitor_wrap_t *cmd, mpc_lowcomm_monitor_retcode_t *ret)
 {
-	//_mpc_lowcomm_monitor_wrap_print(cmd, "SENDING");
+#ifdef MONITOR_DEBUG
+	_mpc_lowcomm_monitor_wrap_print(cmd, "SENDING");
+#endif
 
 	cmd->ttl--;
 
@@ -2365,7 +2367,7 @@ _mpc_lowcomm_monitor_wrap_t *_mpc_lowcomm_monitor_command_process_ondemand(mpc_l
 
 	if(!cb)
 	{
-		mpc_common_debug_error("No CB for %s (IDX %llu)", ondemand->on_demand.target, response_index);
+		mpc_common_debug_error("[MONITOR] No on-demand callback registered for driver %s (IDX %llu)", ondemand->on_demand.target, response_index);
 		resp->content->on_demand.retcode = MPC_LOWCOMM_MONITOR_RET_ERROR;
 	}
 	else

@@ -13,7 +13,7 @@
 * DEFINES *
 ***********/
 
-#define MPC_OFI_ADDRESS_LEN    1024
+#define MPC_OFI_ADDRESS_LEN    512
 
 /*****************
  * ALLOC ALIGNED *
