@@ -262,7 +262,7 @@ int lcp_ep_init_channels(lcp_context_h ctx, lcp_ep_h ep)
 		ctx->resources[i].used = 1;
 
 
-		mpc_common_debug_error("Route to %llu using %s", ep->uid, if_desc.name);
+		mpc_common_debug("Route to %llu using %s", ep->uid, if_desc.name);
 
 		/* Check transport endpoint availability */
 		lcr_ep = sctk_rail_get_any_route_to_process(if_desc.iface, ep->uid);

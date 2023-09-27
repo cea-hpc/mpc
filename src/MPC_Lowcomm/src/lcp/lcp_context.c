@@ -548,7 +548,7 @@ static inline int __init_rails(lcp_context_h ctx)
         for(k = 0; k < ctx->num_resources; ++k)
 	{
                 ctx->progress_counter[k] = ctx->progress_counter[k] * 256 / max_prio;
-                mpc_common_debug_error("%s has polling frequency %d", ctx->resources[k].name, ctx->progress_counter[k]);
+                mpc_common_debug("%s has polling frequency %d", ctx->resources[k].name, ctx->progress_counter[k]);
         }
 
         /* It is this value which will wrap around to elect progressed rails */
