@@ -246,6 +246,8 @@ struct fi_info * mpc_ofi_get_requested_hints(const char * provider, const char *
 	hints->ep_attr->type          = mpc_ofi_encode_endpoint_type(endpoint_type);
 	hints->fabric_attr->prov_name = provider?strdup(provider):NULL;
 	hints->domain_attr->threading = FI_THREAD_DOMAIN;
+	hints->domain_attr->data_progress = FI_PROGRESS_MANUAL;
+	hints->domain_attr->control_progress = FI_PROGRESS_MANUAL;
 
 	return hints;
 }
