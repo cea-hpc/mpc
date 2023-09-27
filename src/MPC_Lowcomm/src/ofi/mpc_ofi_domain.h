@@ -84,8 +84,10 @@ struct mpc_ofi_domain_t{
    struct mpc_ofi_context_t *ctx;
    /* The OFI domain */
    struct fid_domain *domain;
+#ifdef EQ_ENABLED
    /* Event queue */
    struct fid_eq * eq;
+#endif
    /* Completion queues */
    struct fid_cq * rx_cq;
    struct fid_cq * tx_cq;

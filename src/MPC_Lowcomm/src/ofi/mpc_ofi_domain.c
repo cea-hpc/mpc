@@ -236,7 +236,9 @@ int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context
 
    eq_attrs.wait_obj = FI_WAIT_UNSPEC;
 
+#ifdef EQ_ENABLED
    MPC_OFI_CHECK_RET(fi_eq_open(ctx->fabric, &eq_attrs, &domain->eq, domain));
+#endif
 
    /* Now create two CQs per domain */
    struct fi_cq_attr cq_attr = {0};
@@ -265,7 +267,9 @@ int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context
    MPC_OFI_CHECK_RET(fi_ep_bind(domain->ep,
                     mpc_ofi_domain_dns_av(&domain->ddns),
                     0));
+#ifdef EQ_ENABLED
    MPC_OFI_CHECK_RET(fi_ep_bind(domain->ep, &domain->eq->fid, 0));
+#endif
    MPC_OFI_CHECK_RET(fi_ep_bind(domain->ep, &domain->tx_cq->fid, FI_SEND));
    MPC_OFI_CHECK_RET(fi_ep_bind(domain->ep, &domain->rx_cq->fid, FI_RECV));
 
@@ -321,7 +325,9 @@ int mpc_ofi_domain_release(struct mpc_ofi_domain_t * domain)
 
    MPC_OFI_CHECK_RET(fi_close(&domain->rx_cq->fid));
    MPC_OFI_CHECK_RET(fi_close(&domain->tx_cq->fid));
+#ifdef EQ_ENABLED
    MPC_OFI_CHECK_RET(fi_close(&domain->eq->fid));
+#endif
 
    TODO("Understand why we get -EBUSY");
    fi_close(&domain->domain->fid);
@@ -493,6 +499,7 @@ unlock_cq_poll:
 	return return_code;
 }
 
+#ifdef EQ_ENABLED
 
 static inline int _mpc_ofi_domain_eq_poll(struct mpc_ofi_domain_t * domain)
 {
@@ -543,7 +550,7 @@ unlock_eq_poll:
    mpc_common_spinlock_unlock(&domain->lock);
    return return_code;
 }
-
+#endif
 
 
 int mpc_ofi_domain_poll(struct mpc_ofi_domain_t * domain, int type)
@@ -555,12 +562,14 @@ int mpc_ofi_domain_poll(struct mpc_ofi_domain_t * domain, int type)
 
    domain->being_polled = 1;
 
+#ifdef EQ_ENABLED
    if( _mpc_ofi_domain_eq_poll(domain) )
    {
       domain->being_polled = 0;
       mpc_common_errorpoint("CQ reported an error");
       return 1;
    }
+#endif
 
    if( (!type) | (type & FI_RECV) )
    {
