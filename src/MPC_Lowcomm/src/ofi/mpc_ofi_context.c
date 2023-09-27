@@ -61,7 +61,7 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
 
    /* Allocate and set libfabric configuration */
 
-   struct fi_info * hints = mpc_ofi_get_requested_hints(provider);
+   struct fi_info * hints = mpc_ofi_get_requested_hints(provider, config->endpoint_type);
 
 
    if( fi_getinfo(FI_VERSION(1, 5), NULL, NULL, 0, hints, &ctx->config) < 0)

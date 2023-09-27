@@ -213,6 +213,7 @@ static inline mpc_conf_config_type_t *__init_driver_ofi(struct _mpc_lowcomm_conf
 	driver->value.ofi.number_of_multi_recv_buff = 3;
 	driver->value.ofi.bcopy_size = 1024;
 	driver->value.ofi.enable_multi_recv = 1;
+	(void)snprintf(driver->value.ofi.endpoint_type, MPC_CONF_STRING_SIZE, "FI_EP_RDM");
 
 	return mpc_conf_config_type_init("ofi",
 														PARAM("reqcachesize", &driver->value.ofi.request_cache_size,
@@ -227,6 +228,10 @@ static inline mpc_conf_config_type_t *__init_driver_ofi(struct _mpc_lowcomm_conf
 																MPC_CONF_INT, "Activate multi recv support FI_MULTI_RECV capability required"),
 														PARAM("numrecvbuff", &driver->value.ofi.number_of_multi_recv_buff,
 																MPC_CONF_INT, "Number of receive buffers (only for multirecv == True)"),
+                                          PARAM("eptype",
+                                                driver->value.ofi.endpoint_type,
+                                                MPC_CONF_STRING,
+                                                "Type of OFI endpoint to use (FI_EP_UNSPEC, FI_EP_MSG, FI_EP_DGRAM, FI_EP_RDM, FI_EP_SOCK_STREAM, FI_EP_SOCK_DGRAM,)."),
                                           PARAM("provider",
                                                 driver->value.ofi.provider,
                                                 MPC_CONF_STRING,

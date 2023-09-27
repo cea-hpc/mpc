@@ -96,6 +96,61 @@ int mpc_ofi_decode_mr_mode(uint64_t flags)
 	return 0;
 }
 
+const char * const mpc_ofi_decode_endpoint_type(enum fi_ep_type type)
+{
+	switch (type)
+	{
+		case FI_EP_UNSPEC:
+			return "FI_EP_UNSPEC";
+		case FI_EP_MSG:
+			return "FI_EP_MSG";
+		case FI_EP_DGRAM:
+			return "FI_EP_DGRAM";
+		case FI_EP_RDM:
+			return "FI_EP_RDM";
+		case FI_EP_SOCK_STREAM:
+			return "FI_EP_SOCK_STREAM";
+		case FI_EP_SOCK_DGRAM:
+			return "FI_EP_SOCK_DGRAM";
+	}
+
+	return "UNKNOWN Endpoint type";
+}
+
+enum fi_ep_type mpc_ofi_encode_endpoint_type(const char * type)
+{
+	if(!strcmp(type, "FI_EP_UNSPEC"))
+	{
+		return FI_EP_UNSPEC;
+	}
+
+	if(!strcmp(type, "FI_EP_MSG"))
+	{
+		return FI_EP_MSG;
+	}
+	
+	if(!strcmp(type, "FI_EP_DGRAM"))
+	{
+		return FI_EP_DGRAM;
+	}
+
+	if(!strcmp(type, "FI_EP_RDM"))
+	{
+		return FI_EP_RDM;
+	}
+
+	if(!strcmp(type, "FI_EP_SOCK_STREAM"))
+	{
+		return FI_EP_SOCK_STREAM;
+	}
+
+	if(!strcmp(type, "FI_EP_SOCK_DGRAM"))
+	{
+		return FI_EP_SOCK_DGRAM;
+	}
+
+	mpc_common_debug_fatal("Failed to decode OFI endpoint type from '%s'", type);
+}
 
 
 int mpc_ofi_decode_cq_flags(uint64_t flags)
@@ -167,7 +222,7 @@ int mpc_ofi_decode_cq_flags(uint64_t flags)
 }
 
 
-struct fi_info * mpc_ofi_get_requested_hints(char * provider)
+struct fi_info * mpc_ofi_get_requested_hints(const char * provider, const char *endpoint_type)
 {
 	struct fi_info * hints = fi_allocinfo();
 
@@ -188,7 +243,7 @@ struct fi_info * mpc_ofi_get_requested_hints(char * provider)
 
 	hints->mode = FI_CONTEXT | FI_LOCAL_MR;
 	hints->caps = FI_MSG | FI_RMA;
-	hints->ep_attr->type          = FI_EP_RDM;
+	hints->ep_attr->type          = mpc_ofi_encode_endpoint_type(endpoint_type);
 	hints->fabric_attr->prov_name = provider?strdup(provider):NULL;
 	hints->domain_attr->threading = FI_THREAD_DOMAIN;
 

@@ -116,6 +116,7 @@ struct _mpc_lowcomm_config_struct_net_driver_ofi
 	int enable_multi_recv;
 	unsigned int number_of_multi_recv_buff;
 	unsigned int bcopy_size;
+	char endpoint_type[MPC_CONF_STRING_SIZE];
 	char provider[MPC_CONF_STRING_SIZE];
 };
 

@@ -405,7 +405,7 @@ int mpc_ofi_query_devices(lcr_component_t *component,
                           lcr_device_t **devices_p,
                           unsigned int *num_devices_p)
 {
-   struct fi_info * hints = mpc_ofi_get_requested_hints(component->driver_config->driver.value.ofi.provider);
+   struct fi_info * hints = mpc_ofi_get_requested_hints(component->driver_config->driver.value.ofi.provider, component->driver_config->driver.value.ofi.endpoint_type);
 
    struct fi_info *config = NULL;
 
@@ -435,7 +435,10 @@ int mpc_ofi_query_devices(lcr_component_t *component,
    tmp = config;
    while(tmp)
    {
-      snprintf((*devices_p)[device_count].name, LCR_DEVICE_NAME_MAX, "%s : %s @ %s", tmp->fabric_attr->prov_name, tmp->fabric_attr->name, tmp->domain_attr->name);
+      (void)snprintf((*devices_p)[device_count].name, LCR_DEVICE_NAME_MAX, "%s (%s) : %s @ %s", tmp->fabric_attr->prov_name,
+                                                                                                                  mpc_ofi_decode_endpoint_type(tmp->ep_attr->type),
+                                                                                                                  tmp->fabric_attr->name,
+                                                                                                                  tmp->domain_attr->name);
       device_count++;
       TODO("We only keep the first device for now -- trusting OFI");
       break;
