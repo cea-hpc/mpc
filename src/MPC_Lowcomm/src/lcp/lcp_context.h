@@ -75,6 +75,7 @@ typedef struct lcp_rsc_desc
 	lcr_rail_config_t *  iface_config;
 	lcr_driver_config_t *driver_config;
 	lcr_component_h      component;
+	short       used;          /* Is the resource used in any endpoint (used to determine if progress needed)*/
 } lcp_rsc_desc_t;
 
 /**
@@ -114,6 +115,9 @@ struct lcp_context
 
 	int                   num_resources; /* number of resources (iface) */
 	lcp_rsc_desc_t *      resources;     /* opened resources (iface) */
+	unsigned int *        progress_counter; /* Add a counter for priority-based polling */
+	unsigned char         current_progress_value; /* This is the counter for progress calls */
+
 
 	mpc_common_spinlock_t ctx_lock;      /* Context lock */
 

@@ -18,11 +18,22 @@ int lcp_progress(lcp_context_h ctx)
 {
 	int i, rc = LCP_SUCCESS;
 
+        unsigned char progress_counter = ctx->current_progress_value;
+
         for (i=0; i<ctx->num_resources; i++) {
+                /* This implements progress in function of rail priority */
+                unsigned int ressource_cnt = ctx->progress_counter[i];
+                if(!ctx->resources[i].used)
+                        ressource_cnt = 1;
+                if( ressource_cnt < progress_counter  )
+                        continue;
                 sctk_rail_info_t *iface = ctx->resources[i].iface;
+
                 if (iface->iface_progress != NULL)
                         iface->iface_progress(iface);
         }
+
+        ctx->current_progress_value++;
 
         /* Loop to try sending requests within the pending queue only once. */
         size_t nb_pending = mpc_queue_length(&ctx->pending_queue); 

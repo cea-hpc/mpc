@@ -221,6 +221,7 @@ static inline void lcp_context_resource_init(lcp_rsc_desc_t *resource_p,
         resource_p->priority      = iface_config->priority;
         resource_p->component     = component;
         strcpy(resource_p->name, device->name);
+        resource_p->used = 0;
 }
 
 void lcp_context_task_get(lcp_context_h ctx, int tid, lcp_task_h *task_p)
@@ -493,6 +494,8 @@ static inline int __init_rails(lcp_context_h ctx)
         ctx->num_resources = resource_count;
         ctx->resources = malloc(sizeof(lcp_rsc_desc_t) * resource_count);
         assume(ctx->resources);
+        ctx->progress_counter = malloc(sizeof(int) * resource_count);
+        assume(ctx->progress_counter);
 
         /* Walk again to initialize each ressource */
         resource_count = 0;
@@ -505,9 +508,51 @@ static inline int __init_rails(lcp_context_h ctx)
                         lcp_context_resource_init(&ctx->resources[resource_count],
                                                   tmp,
                                                   &tmp->devices[l]);
+                        ctx->progress_counter[resource_count] = ctx->resources[resource_count].iface_config->priority;
                         resource_count++;
                 }
         }
+
+
+        /* Compute total priorities */
+
+        unsigned int total_priorities = 0;
+
+        for(k = 0; k < ctx->num_resources; ++k)
+	{
+                total_priorities += ctx->progress_counter[k]; 
+        }
+
+        unsigned int max_prio = 0;
+
+        /* Normalize priorities */
+        for(k = 0; k < ctx->num_resources; ++k)
+	{
+                ctx->progress_counter[k] = ctx->progress_counter[k] * 100 / total_priorities;
+                /* And minimum 1 */
+                if(ctx->progress_counter[k] == 0)
+                {
+                        ctx->progress_counter[k] = 1;
+                }
+
+                if(max_prio < ctx->progress_counter[k])
+                {
+                        max_prio = ctx->progress_counter[k];
+                }
+        
+        }
+
+        assume(max_prio > 0);
+
+        /* Make Max Prio to be 256 (max of unsigned char) and scale others */
+        for(k = 0; k < ctx->num_resources; ++k)
+	{
+                ctx->progress_counter[k] = ctx->progress_counter[k] * 256 / max_prio;
+                mpc_common_debug_error("%s has polling frequency %d", ctx->resources[k].name, ctx->progress_counter[k]);
+        }
+
+        /* It is this value which will wrap around to elect progressed rails */
+        ctx->current_progress_value = 0;
 
 
         return 0;
