@@ -53,7 +53,7 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
 
    ctx->ctx_policy = policy;
 
-   if(mpc_ofi_dns_init(&ctx->dns, MPC_OFI_DNS_RESOLUTION_CPLANE))
+   if(mpc_ofi_dns_init(&ctx->dns))
    {
       mpc_common_errorpoint("Failed to initialize central DNS");
       return 1;
@@ -173,10 +173,6 @@ static inline struct mpc_ofi_domain_t * __mpc_ofi_context_get_next_domain(struct
  * THE OFI CL VIEW *
  **************************/
 
-
-
-
-
 int mpc_ofi_view_init(struct mpc_ofi_view_t *view, struct mpc_ofi_context_t *ctx, uint64_t rank)
 {
    view->domain = __mpc_ofi_context_get_next_domain(ctx);
@@ -189,8 +185,15 @@ int mpc_ofi_view_init(struct mpc_ofi_view_t *view, struct mpc_ofi_context_t *ctx
 
    view->rank = rank;
 
-   /* Now register my rank as bound to this address */
-   if( mpc_ofi_dns_register(&ctx->dns, rank, view->domain->address, view->domain->address_len) < 0 )
+   struct fid_ep * ep = NULL;
+
+   if(!view->domain->is_passive_endpoint)
+   {
+      ep = view->domain->ep;
+   }
+
+   /* Now register my rank as bound to this address (possibly with a NULL endpoint for passive case ) */
+   if( mpc_ofi_dns_register(&ctx->dns, rank, view->domain->address, view->domain->address_len, ep) < 0 )
    {
       mpc_common_errorpoint("Failed to register new view's address");
       return -1;
@@ -208,8 +211,8 @@ int mpc_ofi_view_wait_for_rank_registration(struct mpc_ofi_view_t *view,
 
    do
    {
-      int ret = mpc_ofi_dns_resolve(view->domain->ddns.main_dns, rank, buff, &len);
-      if(ret == 0)
+      struct fid_ep * ep = mpc_ofi_dns_resolve(view->domain->ddns.main_dns, rank, buff, &len);
+      if(ep)
       {
          return 0;
       }
@@ -224,7 +227,7 @@ int mpc_ofi_view_test(struct mpc_ofi_view_t *view,  struct mpc_ofi_request_t *re
 {
    *done = mpc_ofi_request_test(req);
 
-   //if(!*done)
+   if(!*done)
    {
       if(mpc_ofi_domain_poll(view->domain, 0))
       {
@@ -251,6 +254,15 @@ int mpc_ofi_view_wait(struct mpc_ofi_view_t *view,  struct mpc_ofi_request_t *re
    return 0;
 }
 
+struct fid_ep * mpc_ofi_view_connect(struct mpc_ofi_view_t *view, void *addr)
+{
+   return mpc_ofi_domain_connect(view->domain, addr);
+}
+
+struct fid_ep * mpc_ofi_view_accept(struct mpc_ofi_view_t *view, void *addr)
+{
+   return mpc_ofi_domain_accept(view->domain, addr);
+}
 
 int mpc_ofi_view_send(struct mpc_ofi_view_t *view, void * buffer, size_t size, uint64_t dest, struct mpc_ofi_request_t **req,
                         int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),

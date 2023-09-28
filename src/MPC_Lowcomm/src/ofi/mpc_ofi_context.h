@@ -96,6 +96,10 @@ int mpc_ofi_view_sendv(struct mpc_ofi_view_t *view,
                         int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
                         void *arg_ext);
 
+struct fid_ep * mpc_ofi_view_connect(struct mpc_ofi_view_t *view, void *addr);
+
+struct fid_ep * mpc_ofi_view_accept(struct mpc_ofi_view_t *view, void *addr);
+
 
 int mpc_ofi_view_test(struct mpc_ofi_view_t *view,  struct mpc_ofi_request_t *req, int *done);
 

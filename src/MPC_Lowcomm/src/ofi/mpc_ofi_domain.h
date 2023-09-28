@@ -27,7 +27,7 @@ struct mpc_ofi_domain_buffer_t
    mpc_common_spinlock_t lock;
    uint32_t pending_operations;
    volatile int is_posted;
-   short has_multi_recv;
+   bool has_multi_recv;
 
    mpc_ofi_aligned_mem_t aligned_mem;
 
@@ -35,13 +35,16 @@ struct mpc_ofi_domain_buffer_t
    size_t size;
 
    struct fid_mr * mr;
+   struct fid_ep * endpoint;
    struct fi_context context;
-
-   struct mpc_ofi_domain_t * domain;
 };
 
-int mpc_ofi_domain_buffer_init(struct mpc_ofi_domain_buffer_t * buff, struct mpc_ofi_domain_t * domain,
-                               unsigned int eager_size, unsigned int eager_per_buff, short has_multi_recv);
+int mpc_ofi_domain_buffer_init(struct mpc_ofi_domain_buffer_t * buff,
+                               struct mpc_ofi_domain_t * domain,
+                               struct fid_ep * endpoint,
+                               unsigned int eager_size,
+                               unsigned int eager_per_buff,
+                               bool has_multi_recv);
 void mpc_ofi_domain_buffer_acquire(struct mpc_ofi_domain_buffer_t * buff);
 int mpc_ofi_domain_buffer_relax(struct mpc_ofi_domain_buffer_t * buff);
 int mpc_ofi_domain_buffer_post(struct mpc_ofi_domain_buffer_t * buff);
@@ -65,10 +68,21 @@ struct mpc_ofi_domain_buffer_manager_t
 
 };
 
-int mpc_ofi_domain_buffer_manager_init( struct mpc_ofi_domain_buffer_manager_t * buffs, struct mpc_ofi_domain_t * domain,
-                                        unsigned int eager_size, unsigned int eager_per_buff, unsigned int num_recv_buff, int has_multi_recv);
+int mpc_ofi_domain_buffer_manager_init(struct mpc_ofi_domain_buffer_manager_t * buffs,
+                                       struct mpc_ofi_domain_t * domain,
+                                       struct fid_ep * endpoint,
+                                       unsigned int eager_size,
+                                       unsigned int eager_per_buff,
+                                       unsigned int num_recv_buff,
+                                       bool has_multi_recv);
 
 int mpc_ofi_domain_buffer_manager_release(struct mpc_ofi_domain_buffer_manager_t * buffs);
+
+
+/*********************
+ * THE ENDPOINT LIST *
+ *********************/
+
 
 
 
@@ -84,17 +98,27 @@ struct mpc_ofi_domain_t{
    struct mpc_ofi_context_t *ctx;
    /* The OFI domain */
    struct fid_domain *domain;
-#ifdef EQ_ENABLED
    /* Event queue */
    struct fid_eq * eq;
-#endif
    /* Completion queues */
    struct fid_cq * rx_cq;
    struct fid_cq * tx_cq;
    /* Local DNS */
    struct mpc_ofi_domain_dns_t ddns;
-   /* Endpoint */
+
+   /* Is multirecv supported ?*/
+   bool has_multi_recv;
+
+   /* Is it a passive endpoint mode*/
+   bool is_passive_endpoint;
+
+   /* Connectionless Endpoint */
    struct fid_ep * ep;
+
+   /* Passive endpoint */
+   struct fid_pep * pep;
+
+
    /* Address for this EP */
    char address[MPC_OFI_ADDRESS_LEN];
    size_t address_len;
@@ -153,5 +177,10 @@ int mpc_ofi_domain_put(struct mpc_ofi_domain_t *domain,
                        struct mpc_ofi_request_t **preq,
                        int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
                        void *arg_ext);
+
+struct fid_ep * mpc_ofi_domain_connect(struct mpc_ofi_domain_t *domain, void *addr);
+
+struct fid_ep * mpc_ofi_domain_accept(struct mpc_ofi_domain_t *domain, void *addr);
+
 
 #endif /* MPC_OFI_DOMAIN */
