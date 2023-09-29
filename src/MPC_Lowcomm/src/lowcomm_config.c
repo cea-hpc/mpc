@@ -599,12 +599,11 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
 	char *name,
 	int priority,
 	char *device,
-	char *topology,
 	int ondemand,
 	int rdma,
-        int self,
-        int offload,
-        int max_ifaces,
+	int self,
+	int offload,
+	int max_ifaces,
 	char *config)
 {
 	struct _mpc_lowcomm_config_struct_net_rail *ret = sctk_malloc(sizeof(struct _mpc_lowcomm_config_struct_net_rail) );
@@ -624,27 +623,22 @@ mpc_conf_config_type_t *__new_rail_conf_instance(
 	snprintf(ret->name, MPC_CONF_STRING_SIZE, name);
 	ret->priority = priority;
 	snprintf(ret->device, MPC_CONF_STRING_SIZE, device);
-	snprintf(ret->topology, MPC_CONF_STRING_SIZE, topology);
 	ret->ondemand   = ondemand;
 	ret->rdma       = rdma;
 	ret->offload    = offload;
 	ret->max_ifaces = max_ifaces;
 	snprintf(ret->config, MPC_CONF_STRING_SIZE, config);
 
-	mpc_conf_config_type_t *gates = mpc_conf_config_type_init("gates", NULL);
-
 	/* This fills in a rail definition */
 	mpc_conf_config_type_t *rail = mpc_conf_config_type_init(name,
 	                                                         PARAM("priority", &ret->priority, MPC_CONF_INT, "How rails should be sorted (taken in decreasing order)"),
 	                                                         PARAM("device", ret->device, MPC_CONF_STRING, "Name of the device to use can be a regular expression if starting with '!'"),
-	                                                         PARAM("topology", ret->topology, MPC_CONF_STRING, "Topology to be bootstrapped on this network"),
 	                                                         PARAM("ondemand", &ret->ondemand, MPC_CONF_BOOL, "Are on-demmand connections allowed on this network"),
 	                                                         PARAM("rdma", &ret->rdma, MPC_CONF_BOOL, "Can this rail provide RDMA capabilities"),
 	                                                         PARAM("sm", &ret->self, MPC_CONF_BOOL, "Can this rail provide SHM capabilities"),
 	                                                         PARAM("offload", &ret->offload, MPC_CONF_BOOL, "Can this rail provide tag offload capabilities"),
 	                                                         PARAM("maxifaces", &ret->max_ifaces, MPC_CONF_INT, "Maximum number of rails instances that can be used for multirail"),
 	                                                         PARAM("config", ret->config, MPC_CONF_STRING, "Name of the rail configuration to be used for this rail"),
-	                                                         PARAM("gates", gates, MPC_CONF_TYPE, "Gates to check before taking this rail"),
 	                                                         NULL); 
 
 
@@ -658,18 +652,18 @@ static inline mpc_conf_config_type_t *__mpc_lowcomm_rail_conf_init()
 	__mpc_lowcomm_rail_conf_default();
 
 	/* Here we instanciate default rails */
-	mpc_conf_config_type_t *shm_mpi = __new_rail_conf_instance("shmmpi", 99, "any", "ring", 0, 1, 0, 0, 1, "shmconfigmpi");
-	mpc_conf_config_type_t *tcp_mpi = __new_rail_conf_instance("tcpmpi", 1, "any", "ring", 1, 0, 0, 0, 1, "tcpconfigmpi");
-   mpc_conf_config_type_t *tbsm_mpi = __new_rail_conf_instance("tbsmmpi", 100, "any", "ring", 1, 0, 1, 0, 1, "tbsmconfigmpi");
+	mpc_conf_config_type_t *shm_mpi = __new_rail_conf_instance("shmmpi", 99, "any", 0, 1, 0, 0, 1, "shmconfigmpi");
+	mpc_conf_config_type_t *tcp_mpi = __new_rail_conf_instance("tcpmpi", 1, "any", 1, 0, 0, 0, 1, "tcpconfigmpi");
+   mpc_conf_config_type_t *tbsm_mpi = __new_rail_conf_instance("tbsmmpi", 100, "any", 1, 0, 1, 0, 1, "tbsmconfigmpi");
 
 #ifdef MPC_USE_PORTALS
-	mpc_conf_config_type_t *portals_mpi = __new_rail_conf_instance("portalsmpi", 21, "any", "ring", 1, 1, 0, 1, 1, "portalsconfigmpi");
+	mpc_conf_config_type_t *portals_mpi = __new_rail_conf_instance("portalsmpi", 21, "any", 1, 1, 0, 1, 1, "portalsconfigmpi");
 #endif
 
 #ifdef MPC_USE_OFI
-	mpc_conf_config_type_t *shm_ofi = __new_rail_conf_instance("shmofirail", 98, "any", "ring", 1, 1, 0, 0, 1, "shmofi");
-	mpc_conf_config_type_t *verbs_ofi = __new_rail_conf_instance("verbsofirail", 21, "any", "ring", 1, 1, 0, 0, 1, "verbsofi");
-	mpc_conf_config_type_t *tcp_ofi = __new_rail_conf_instance("tcpofirail", 20, "any", "ring", 1, 1, 0, 0, 1, "tcpofi");
+	mpc_conf_config_type_t *shm_ofi = __new_rail_conf_instance("shmofirail", 98, "any", 1, 1, 0, 0, 1, "shmofi");
+	mpc_conf_config_type_t *verbs_ofi = __new_rail_conf_instance("verbsofirail", 21, "any", 1, 1, 0, 0, 1, "verbsofi");
+	mpc_conf_config_type_t *tcp_ofi = __new_rail_conf_instance("tcpofirail", 20, "any", 1, 1, 0, 0, 1, "tcpofi");
 #endif
 
 	mpc_conf_config_type_t *rails = mpc_conf_config_type_init("rails",
@@ -695,7 +689,6 @@ mpc_conf_config_type_t *___new_default_rail(char *name)
 	return __new_rail_conf_instance(name,
 	                                1,
 	                                "default",
-	                                "ring",
 	                                1,
 	                                0,
 									0,
@@ -724,189 +717,6 @@ static inline mpc_conf_config_type_t *___mpc_lowcomm_rail_instanciate_from_defau
 	return mpc_conf_config_type_elem_update(default_rail, current_rail, 1);
 }
 
-static inline void ___assert_single_elem_in_gate(mpc_conf_config_type_t *gate, char *elem_name)
-{
-	if(mpc_conf_config_type_count(gate) != 1)
-	{
-		bad_parameter("Gate definition '%s' expects only a single element '%s'.", gate->name, elem_name);
-	}
-}
-
-static inline long int __gate_get_long_int(mpc_conf_config_type_t *gate, char *val_key, char *doc)
-{
-	mpc_conf_config_type_elem_t *val = mpc_conf_config_type_get(gate, val_key);
-
-	if(!val)
-	{
-		mpc_conf_config_type_print(gate, MPC_CONF_FORMAT_XML);
-		bad_parameter("'%s' gate should contain a '%s' value", gate->name, val_key);
-	}
-
-	if(doc)
-	{
-		mpc_conf_config_type_elem_set_doc(val, doc);
-	}
-
-	long int ret = 0;
-
-	if(val->type == MPC_CONF_INT)
-	{
-		int *ival = (int *)val->addr;
-		ret = *ival;
-	}
-	else if(val->type == MPC_CONF_LONG_INT)
-	{
-		ret = *( (long int *)val->addr);
-	}
-	else
-	{
-		mpc_conf_config_type_print(gate, MPC_CONF_FORMAT_XML);
-		bad_parameter("In gate '%s' entry '%s' should be either INT or LONG_INT not '%s'", gate->name, val_key, mpc_conf_type_name(val->type) );
-	}
-
-	return ret;
-}
-
-static inline int __gate_get_bool(mpc_conf_config_type_t *gate, char *val_key, char *doc)
-{
-	mpc_conf_config_type_elem_t *val = mpc_conf_config_type_get(gate, val_key);
-
-	if(!val)
-	{
-		mpc_conf_config_type_print(gate, MPC_CONF_FORMAT_XML);
-		bad_parameter("'%s' gate should contain a '%s' value", gate->name, val_key);
-	}
-
-	if(doc)
-	{
-		mpc_conf_config_type_elem_set_doc(val, doc);
-	}
-
-	long int ret = 0;
-
-	if(val->type == MPC_CONF_BOOL)
-	{
-		int *ival = (int *)val->addr;
-		ret = *ival;
-	}
-	else
-	{
-		mpc_conf_config_type_print(gate, MPC_CONF_FORMAT_XML);
-		bad_parameter("In gate '%s' entry '%s' should be BOOL (true or false) not '%s'", gate->name, val_key, mpc_conf_type_name(val->type) );
-	}
-
-	return ret;
-}
-
-static inline int ___parse_rail_gate(struct _mpc_lowcomm_config_struct_net_gate *cur_unfolded_gate,
-                                     mpc_conf_config_type_elem_t *tgate)
-{
-	mpc_conf_config_type_t *gate = mpc_conf_config_type_elem_get_inner(tgate);
-
-	char *name = gate->name;
-
-	cur_unfolded_gate->type = MPC_CONF_RAIL_GATE_NONE;
-
-	if(!strcmp(name, "boolean") )
-	{
-		cur_unfolded_gate->type = MPC_CONF_RAIL_GATE_BOOLEAN;
-	}
-	else if(!strcmp(name, "probabilistic") )
-	{
-		mpc_conf_config_type_elem_set_doc(tgate, "A gate defining a propability of taking the rail (0-100)");
-		cur_unfolded_gate->type = MPC_CONF_RAIL_GATE_PROBABILISTIC;
-		long int proba = __gate_get_long_int(gate, "probability", "Probability of taking the rail");
-		___assert_single_elem_in_gate(gate, "probability");
-		cur_unfolded_gate->value.probabilistic.probability = proba;
-	}
-	else if(!strcmp(name, "minsize") )
-	{
-		mpc_conf_config_type_elem_set_doc(tgate, "A gate defining a minimum size in bytes for taking the rail");
-		cur_unfolded_gate->type = MPC_CONF_RAIL_GATE_MINSIZE;
-		long int minsize = __gate_get_long_int(gate, "value", "Minimum size to use this rail");
-		___assert_single_elem_in_gate(gate, "value");
-		cur_unfolded_gate->value.minsize.value = minsize;
-	}
-	else if(!strcmp(name, "maxsize") )
-	{
-		mpc_conf_config_type_elem_set_doc(tgate, "A gate defining a maximum size in bytes for taking the rail");
-		cur_unfolded_gate->type = MPC_CONF_RAIL_GATE_MAXSIZE;
-		long int maxsize = __gate_get_long_int(gate, "value", "Maximum size to use this rail");
-		___assert_single_elem_in_gate(gate, "value");
-		cur_unfolded_gate->value.maxsize.value = maxsize;
-	}
-	else if(!strcmp(name, "msgtype") )
-	{
-		mpc_conf_config_type_elem_set_doc(tgate, "A gate filtering message types (process, task, emulated_rma, common)");
-
-		cur_unfolded_gate->type = MPC_CONF_RAIL_GATE_MSGTYPE;
-
-		cur_unfolded_gate->value.msgtype.process = __gate_get_bool(gate, "process", 
-		                                                           "Process Specific Messages can use this rail");
-		cur_unfolded_gate->value.msgtype.task = __gate_get_bool(gate, "task",
-		                                                        "Task specific messages can use this rail");
-		cur_unfolded_gate->value.msgtype.emulated_rma = __gate_get_bool(gate, "emulatedrma",
-		                                                                "Emulated RDMA can use this rail");
-		cur_unfolded_gate->value.msgtype.common = __gate_get_bool(gate, "common",
-		                                                          "Common messages (MPI) can use this raill");
-	}
-	else if(!strcmp(name, "user") )
-	{
-		mpc_conf_config_type_elem_set_doc(tgate, "A gate filtering message types using a custom function");
-
-		cur_unfolded_gate->type = MPC_CONF_RAIL_GATE_USER;
-		
-		mpc_conf_config_type_elem_t *fname = mpc_conf_config_type_get(gate, "funcname");
-
-		if(!fname)
-		{
-			bad_parameter("Gate %s requires a function name to be passed in as 'funcname'", name);
-		}
-
-		mpc_conf_config_type_elem_set_doc(fname, "Function used to filter our messages int func( sctk_rail_info_t * rail, mpc_lowcomm_ptp_message_t * message , void * gate_config )");
-
-		if(fname->type != MPC_CONF_STRING)
-		{
-			bad_parameter("In gate '%s' entry 'funcname' should be STRING not '%s'", name, mpc_conf_type_name(fname->type) );
-		}
-
-		char *gate_name = mpc_conf_type_elem_get_as_string(fname);
-
-		cur_unfolded_gate->value.user.gatefunc.name = strdup(gate_name);
-
-		void *ptr = dlsym(NULL, gate_name);
-		cur_unfolded_gate->value.user.gatefunc.value = ptr;
-	}
-	else
-	{
-		bad_parameter("Cannot parse gate type '%s' available types are:\n[%s]", name, "boolean, probabilistic, minsize, maxsize, msgtype, user");
-	}
-
-	return 0;
-}
-
-static inline void __mpc_lowcomm_rail_unfold_gates(struct _mpc_lowcomm_config_struct_net_rail *unfolded_rail,
-                                                   mpc_conf_config_type_t *gates_type)
-{
-	int i;
-
-	for(i = 0; i < mpc_conf_config_type_count(gates_type); i++)
-	{
-		mpc_conf_config_type_elem_t *gate = mpc_conf_config_type_nth(gates_type, i);
-		struct _mpc_lowcomm_config_struct_net_gate *cur_unfolded_gate = &unfolded_rail->gates[unfolded_rail->gates_size];
-
-		if(___parse_rail_gate(cur_unfolded_gate, gate) == 0)
-		{
-			/* Gate  is ok continue */
-			unfolded_rail->gates_size++;	
-		}
-		else
-		{
-			bad_parameter("Failed parsing gate %s in rail %s", gate->name, unfolded_rail->name);
-		}
-	}
-}
-
 static inline void ___mpc_lowcomm_rail_conf_validate(void)
 {
 	/* Now we need to populate rails with possibly new instances
@@ -926,26 +736,6 @@ static inline void ___mpc_lowcomm_rail_conf_validate(void)
 			mpc_conf_config_type_t *new_rail = ___mpc_lowcomm_rail_instanciate_from_default(rail);
 			mpc_conf_config_type_release( (mpc_conf_config_type_t **)&all_rails->elems[i]->addr);
 			all_rails->elems[i]->addr = new_rail;
-		}
-	}
-
-	/* It is now time to unpack gates values for each rail */
-	for(i = 0; i < mpc_conf_config_type_count(all_rails); i++)
-	{
-		mpc_conf_config_type_elem_t *rail      = mpc_conf_config_type_nth(all_rails, i);
-		mpc_conf_config_type_t *     rail_type = mpc_conf_config_type_elem_get_inner(rail);
-
-		mpc_conf_config_type_elem_t *gates = mpc_conf_config_type_get(rail_type, "gates");
-
-		if(gates)
-		{
-			struct _mpc_lowcomm_config_struct_net_rail *unfolded_rail = _mpc_lowcomm_conf_rail_unfolded_get(rail->name);
-			mpc_conf_config_type_t *gates_type = mpc_conf_config_type_elem_get_inner(gates);
-			__mpc_lowcomm_rail_unfold_gates(unfolded_rail, gates_type);
-		}
-		else
-		{
-			bad_parameter("There should be a gate entry in rail %s", rail->name);
 		}
 	}
 

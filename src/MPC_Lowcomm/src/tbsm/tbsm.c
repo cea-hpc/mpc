@@ -322,7 +322,7 @@ err:
         return rc;
 }
 
-int lcr_tbsm_iface_open(char *device_name, int id,
+int lcr_tbsm_iface_open(__UNUSED__ const char *device_name, int id,
                         lcr_rail_config_t *rail_config, 
                         lcr_driver_config_t *driver_config,
                         sctk_rail_info_t **iface_p)
@@ -337,7 +337,7 @@ int lcr_tbsm_iface_open(char *device_name, int id,
                 rc = MPC_LOWCOMM_ERROR;
                 goto err;
         }
-        strcpy(iface->device_name, "tbsm");
+
 	iface->rail_number = id;
 
         lcr_tbsm_iface_init(iface);

@@ -236,8 +236,6 @@ struct sctk_rail_info_s
 	/* Route table */
 	_mpc_lowcomm_endpoint_table_t *                      route_table;
 
-	char                                                 device_name[LCR_DEVICE_NAME_MAX];
-
 	/* rail capabilities */
 	unsigned cap;
 

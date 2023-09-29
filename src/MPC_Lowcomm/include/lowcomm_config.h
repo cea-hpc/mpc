@@ -206,90 +206,6 @@ struct sctk_runtime_config_funcptr
 
 
 /******************************** STRUCTURE *********************************/
-/**This gate applies given thruth value to messages.**/
-struct _mpc_lowcomm_config_struct_gate_boolean
-{
-	/**whereas to accept input messages or not**/
-	int value;
-};
-
-/******************************** STRUCTURE *********************************/
-/**This gate uses a given rail with a parametrized probability.**/
-struct _mpc_lowcomm_config_struct_gate_probabilistic
-{
-	/**Probability to choose this rail in percents (ralatively to this single rail, integer)**/
-	int probability;
-};
-
-/******************************** STRUCTURE *********************************/
-/**This gate uses a given rail if size is at least a given value.**/
-struct _mpc_lowcomm_config_struct_gate_min_size
-{
-	/**Minimum size to choose this rail (with units)**/
-	size_t value;
-};
-
-/******************************** STRUCTURE *********************************/
-/**This gate uses a given rail if size is at most a given value.**/
-struct _mpc_lowcomm_config_struct_gate_max_size
-{
-	/**Maximum size to choose this rail (with units)**/
-	size_t value;
-};
-
-/******************************** STRUCTURE *********************************/
-/**This gate can be used define which type of message can use a given rail.**/
-struct _mpc_lowcomm_config_struct_gate_message_type
-{
-	/**Process Specific Messages can use this rail**/
-	int process;
-	/**Task specific messages can use this rail**/
-	int task;
-	/**Task specific messages can use this rail**/
-	int emulated_rma;
-	/**Common messages (MPI) can use this rail**/
-	int common;
-};
-
-/******************************** STRUCTURE *********************************/
-/**This gate uses a given rail with a user defined function.**/
-struct _mpc_lowcomm_config_struct_gate_user
-{
-	/**Function to be called for this gate**/
-	struct sctk_runtime_config_funcptr gatefunc;
-};
-
-/********************************** ENUM ************************************/
-/**Defines gates and their configuration.**/
-enum _mpc_lowcomm_config_struct_net_gate_type
-{
-	MPC_CONF_RAIL_GATE_NONE,
-	MPC_CONF_RAIL_GATE_BOOLEAN,
-	MPC_CONF_RAIL_GATE_PROBABILISTIC,
-	MPC_CONF_RAIL_GATE_MINSIZE,
-	MPC_CONF_RAIL_GATE_MAXSIZE,
-	MPC_CONF_RAIL_GATE_MSGTYPE,
-	MPC_CONF_RAIL_GATE_USER,
-};
-
-/******************************** STRUCTURE *********************************/
-/**Defines gates and their configuration.**/
-struct _mpc_lowcomm_config_struct_net_gate
-{
-	enum _mpc_lowcomm_config_struct_net_gate_type type;
-	union
-	{
-		struct _mpc_lowcomm_config_struct_gate_boolean       boolean;
-		struct _mpc_lowcomm_config_struct_gate_probabilistic probabilistic;
-		struct _mpc_lowcomm_config_struct_gate_min_size      minsize;
-		struct _mpc_lowcomm_config_struct_gate_max_size      maxsize;
-		struct _mpc_lowcomm_config_struct_gate_message_type  msgtype;
-		struct _mpc_lowcomm_config_struct_gate_user          user;
-	}                                             value;
-};
-
-
-/******************************** STRUCTURE *********************************/
 /**Define a rail which is a name, a device associate to a driver and a routing topology.**/
 
 #define MPC_CONF_MAX_RAIL_GATE 16
@@ -302,8 +218,6 @@ struct _mpc_lowcomm_config_struct_net_rail
 	int                                                   priority;
 	/**Define the name of the device to use in this rail.**/
 	char                                                 device[MPC_CONF_STRING_SIZE];
-	/**Define the network topology to apply on this rail.**/
-	char                                                  topology[MPC_CONF_STRING_SIZE];
 	/**Define if on-demand connections are allowed on this rail.**/
 	int                                                   ondemand;
 	/**Defines if the rail has RDMA enabled.**/
@@ -312,10 +226,6 @@ struct _mpc_lowcomm_config_struct_net_rail
 	int                                                   self;
 	/**Define the driver config to use for this rail.**/
 	char                                                 config[MPC_CONF_STRING_SIZE];
-	/**List of gates to be applied in this config.**/
-	struct _mpc_lowcomm_config_struct_net_gate            gates[MPC_CONF_MAX_RAIL_GATE];
-	/** Number of elements in gates array. **/
-	int                                                   gates_size;
 	/** Max number of rail instance. **/
         int                                                   max_ifaces;
 	/** Define if rail has tag offloading capabilities. **/

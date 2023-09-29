@@ -33,8 +33,8 @@ struct mpc_ofi_deffered_completion_s
 
 static inline void __init_ofi_endpoint(sctk_rail_info_t *rail, _mpc_lowcomm_ofi_endpoint_info_t *ofi_data)
 {
-   mpc_mempool_init(&ofi_data->bsend, 10, 100, rail->runtime_config_driver_config->driver.value.ofi.bcopy_size + sizeof(lcr_ofi_am_hdr_t), sctk_malloc, sctk_free);
-   mpc_mempool_init(&ofi_data->deffered, 10, 100, sizeof(struct mpc_ofi_deffered_completion_s), sctk_malloc, sctk_free);
+   mpc_mempool_init(&ofi_data->bsend, MPC_OFI_EP_MEMPOOL_MIN, MPC_OFI_EP_MEMPOOL_MAX, rail->runtime_config_driver_config->driver.value.ofi.bcopy_size + sizeof(lcr_ofi_am_hdr_t), sctk_malloc, sctk_free);
+   mpc_mempool_init(&ofi_data->deffered, MPC_OFI_EP_MEMPOOL_MIN, MPC_OFI_EP_MEMPOOL_MAX, sizeof(struct mpc_ofi_deffered_completion_s), sctk_malloc, sctk_free);
 }
 
 static void __add_route(mpc_lowcomm_peer_uid_t dest_uid, sctk_rail_info_t *rail)
@@ -135,7 +135,7 @@ static int __ofi_on_demand_callback(mpc_lowcomm_peer_uid_t from,
    }
 
    /* Now send local info */
-   assume(sizeof(struct mpc_ofi_net_infos) < return_data_len);
+   assume(sizeof(struct mpc_ofi_net_infos) < (unsigned int)return_data_len);
    struct mpc_ofi_net_infos *my_infos = (struct mpc_ofi_net_infos *)return_data;
    my_infos->size = MPC_OFI_ADDRESS_LEN;
 
@@ -155,13 +155,6 @@ static int __ofi_on_demand_callback(mpc_lowcomm_peer_uid_t from,
 	return 0;
 }
 
-
-static inline int __free_bsend_buffer(__UNUSED__ struct mpc_ofi_request_t *req, void *pbuffer)
-{
-   sctk_free(pbuffer);
-   return 0;
-}
-
 static inline int __free_bsend_buffer_mempool(__UNUSED__ struct mpc_ofi_request_t *req, void *pbuffer){
    mpc_mempool_free(NULL, pbuffer);
    return 0;
@@ -172,7 +165,7 @@ ssize_t mpc_ofi_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
                               uint8_t id,
                               lcr_pack_callback_t pack,
                               void *arg,
-                              unsigned flags)
+                              __UNUSED__ unsigned flags)
 {
 
    sctk_rail_info_t *rail = ep->rail;
@@ -202,7 +195,7 @@ err:
 	return payload_length;
 }
 
-static inline int __deffered_completion_cb(struct mpc_ofi_request_t *req, void *pcomp)
+static inline int __deffered_completion_cb(__UNUSED__ struct mpc_ofi_request_t *req, void *pcomp)
 {
    struct mpc_ofi_deffered_completion_s *comp = (struct mpc_ofi_deffered_completion_s *)pcomp;
    comp->comp->comp_cb(comp->comp);
@@ -217,7 +210,7 @@ int mpc_ofi_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
                                     unsigned header_length,
                                     const struct iovec *iov,
                                     size_t iovcnt,
-                                    unsigned flags,
+                                    __UNUSED__  unsigned flags,
                                     lcr_completion_t *comp)
 {
 	struct mpc_ofi_deffered_completion_s *completion =  mpc_mempool_alloc(&ep->data.ofi.deffered);
@@ -464,9 +457,10 @@ int mpc_ofi_query_devices(lcr_component_t *component,
 int mpc_ofi_progress(sctk_rail_info_t *rail)
 {
    mpc_ofi_domain_poll(rail->network.ofi.view.domain, 0);
+   return 0;
 }
 
-static int __mpc_ofi_context_recv_callback_t(void *buffer, size_t len, struct mpc_ofi_request_t * req, void * prail)
+static int __mpc_ofi_context_recv_callback_t(void *buffer, __UNUSED__ size_t len, struct mpc_ofi_request_t * req, void * prail)
 {
    sctk_rail_info_t *rail = (sctk_rail_info_t *)prail;
 
@@ -501,15 +495,13 @@ void mpc_ofi_release(sctk_rail_info_t *rail)
 }
 
 
-int mpc_ofi_iface_open(char *device_name, int id,
+int mpc_ofi_iface_open(__UNUSED__ const char *device_name, int id,
                        lcr_rail_config_t *rail_config,
                        lcr_driver_config_t *driver_config,
                        sctk_rail_info_t **iface_p)
 {
 	int rc = MPC_LOWCOMM_SUCCESS;
 	sctk_rail_info_t *rail = NULL;
-
-	UNUSED(device_name);
 
 	lcr_rail_init(rail_config, driver_config, &rail);
 	if(rail == NULL)
@@ -519,7 +511,6 @@ int mpc_ofi_iface_open(char *device_name, int id,
 		goto err;
 	}
 
-	strcpy(rail->device_name, "default");
 	rail->rail_number = id;
 
 	//FIXME: to pass the assert in sctk_network_init_tcp_all
@@ -545,8 +536,8 @@ int mpc_ofi_iface_open(char *device_name, int id,
    rail->cap = LCR_IFACE_CAP_RMA | LCR_IFACE_CAP_REMOTE;
 
 	/* Register our connection handler */
-	char my_net_name[128];
-	mpc_lowcomm_monitor_register_on_demand_callback(__gen_rail_target_name(rail, my_net_name, 128),
+	char my_net_name[MPC_COMMON_MAX_STRING_SIZE];
+	mpc_lowcomm_monitor_register_on_demand_callback(__gen_rail_target_name(rail, my_net_name, MPC_COMMON_MAX_STRING_SIZE),
 	                                                __ofi_on_demand_callback,
 	                                                (void *)rail);
 

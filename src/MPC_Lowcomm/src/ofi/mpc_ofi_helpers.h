@@ -34,7 +34,7 @@ void mpc_ofi_free_aligned(mpc_ofi_aligned_mem_t * mem);
 
 int mpc_ofi_decode_cq_flags(uint64_t flags);
 int mpc_ofi_decode_mr_mode(uint64_t flags);
-const char * const mpc_ofi_decode_endpoint_type(enum fi_ep_type);
+const char * mpc_ofi_decode_endpoint_type(enum fi_ep_type);
 enum fi_ep_type mpc_ofi_encode_endpoint_type(const char * type);
 
 /************

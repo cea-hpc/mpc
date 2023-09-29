@@ -96,7 +96,7 @@ int mpc_ofi_decode_mr_mode(uint64_t flags)
 	return 0;
 }
 
-const char * const mpc_ofi_decode_endpoint_type(enum fi_ep_type type)
+const char * mpc_ofi_decode_endpoint_type(enum fi_ep_type type)
 {
 	switch (type)
 	{

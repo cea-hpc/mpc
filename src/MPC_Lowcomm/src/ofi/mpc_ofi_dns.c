@@ -8,7 +8,9 @@
 #include "mpc_ofi_helpers.h"
 #include "rdma/fabric.h"
 
+//#define DEBUG_DNS_ADDR
 
+#ifdef DEBUG_DNS_ADDR
 static void __dump_addr(char *p, size_t len)
 {
 	size_t i = 0;
@@ -19,6 +21,7 @@ static void __dump_addr(char *p, size_t len)
 	}
 	printf("\n");
 }
+#endif
 
 /*******************
  * THE CENTRAL DNS *
@@ -112,7 +115,7 @@ int mpc_ofi_dns_register(struct mpc_ofi_dns_t * dns, uint64_t rank, char * buff,
    /* Copy address out of the input buff for persistence */
    struct mpc_ofi_dns_name_entry_t *entry = mpc_ofi_dns_name_entry(buff, len, endpoint);
 
-#if 0
+#ifdef DEBUG_DNS_ADDR
    (void)fprintf(stderr, "New address for %ld @", rank);
    __dump_addr(buff, len);
 #endif

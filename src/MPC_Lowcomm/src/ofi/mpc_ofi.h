@@ -11,6 +11,8 @@ typedef struct _mpc_lowcomm_ofi_rail_info_s
    struct mpc_ofi_view_t view;
 }_mpc_lowcomm_ofi_rail_info_t;
 
+#define MPC_OFI_EP_MEMPOOL_MIN 10
+#define MPC_OFI_EP_MEMPOOL_MAX 100
 typedef struct _mpc_lowcomm_ofi_endpoint_info_s
 {
    mpc_mempool bsend;

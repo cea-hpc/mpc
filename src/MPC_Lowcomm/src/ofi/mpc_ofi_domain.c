@@ -220,7 +220,7 @@ int mpc_ofi_domain_buffer_manager_release(struct mpc_ofi_domain_buffer_manager_t
  * ENPOINT CREATION *
  ********************/
 
-int mpc_ofi_domain_create_passive_endpoint(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context_t *ctx, struct _mpc_lowcomm_config_struct_net_driver_ofi * config)
+int mpc_ofi_domain_create_passive_endpoint(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context_t *ctx, __UNUSED__ struct _mpc_lowcomm_config_struct_net_driver_ofi * config)
 {
    MPC_OFI_CHECK_RET(fi_passive_ep(ctx->fabric, ctx->config, &domain->pep, domain));
 
@@ -231,6 +231,8 @@ int mpc_ofi_domain_create_passive_endpoint(struct mpc_ofi_domain_t * domain, str
    /* Retrieve the local address */
    domain->address_len = MPC_OFI_ADDRESS_LEN;
 	MPC_OFI_CHECK_RET(fi_getname(&domain->pep->fid, domain->address, &domain->address_len) );
+
+   return 0;
 }
 
 int mpc_ofi_domain_create_connectionless_endpoint(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context_t *ctx, struct _mpc_lowcomm_config_struct_net_driver_ofi * config)
@@ -263,7 +265,7 @@ int mpc_ofi_domain_create_connectionless_endpoint(struct mpc_ofi_domain_t * doma
    domain->address_len = MPC_OFI_ADDRESS_LEN;
 	MPC_OFI_CHECK_RET(fi_getname(&domain->ep->fid, domain->address, &domain->address_len) );
 
-  
+  return 0;
 }
 
 
@@ -398,7 +400,7 @@ int mpc_ofi_domain_release(struct mpc_ofi_domain_t * domain)
    return 0;
 }
 
-static int _ofi_domain_per_req_recv_completion_callback(struct mpc_ofi_request_t *req, void * arg)
+static int _ofi_domain_per_req_recv_completion_callback(__UNUSED__ struct mpc_ofi_request_t *req, void * arg)
 {
    struct mpc_ofi_domain_buffer_t * buff = (struct mpc_ofi_domain_buffer_t *)arg;
    return mpc_ofi_domain_buffer_relax(buff);
@@ -554,6 +556,7 @@ unlock_cq_poll:
 	return return_code;
 }
 
+#define OFI_ERROR_BUFF_SIZE 1024
 
 static inline int _mpc_ofi_domain_eq_poll(struct mpc_ofi_domain_t * domain)
 {
@@ -582,9 +585,9 @@ static inline int _mpc_ofi_domain_eq_poll(struct mpc_ofi_domain_t * domain)
          return_code = (int)ret;
          goto unlock_eq_poll;
       }
-		char err_buff[1024];
+		char err_buff[OFI_ERROR_BUFF_SIZE];
 		err_buff[0] = '\0';
-		fi_eq_strerror(domain->eq, err.prov_errno, err.err_data, err_buff, 1024);
+		fi_eq_strerror(domain->eq, err.prov_errno, err.err_data, err_buff, OFI_ERROR_BUFF_SIZE);
 		mpc_common_errorpoint_fmt("%d : Got eq error on %p %s == %s\n", err.err,  err.fid,
 				fi_strerror(err.err),
 				err_buff);
@@ -654,6 +657,8 @@ int mpc_ofi_domain_poll(struct mpc_ofi_domain_t * domain, int type)
    return 0;
 }
 
+#define MPC_OFI_DOMAIN_MR_INTERNAL_KEY 1337
+
 int mpc_ofi_domain_memory_register_no_lock(struct mpc_ofi_domain_t * domain,
                                            void *buff,
                                            size_t size,
@@ -664,7 +669,7 @@ int mpc_ofi_domain_memory_register_no_lock(struct mpc_ofi_domain_t * domain,
                               buff,
                               size,
                               acs, 0,
-                              1337,
+                              MPC_OFI_DOMAIN_MR_INTERNAL_KEY,
                               0,
                               mr,
                               NULL);
@@ -730,7 +735,7 @@ static inline int __free_mr(struct mpc_ofi_domain_t * domain, struct fid_mr **mr
 }
 
 
-int _mpc_ofi_domain_request_complete(struct mpc_ofi_request_t * req, void *dummy)
+int _mpc_ofi_domain_request_complete(struct mpc_ofi_request_t * req, __UNUSED__ void *dummy)
 {
    unsigned int i = 0;
 
@@ -914,7 +919,7 @@ int mpc_ofi_domain_sendv(struct mpc_ofi_domain_t * domain,
 
 sendv_unlock:
    mpc_common_spinlock_unlock(&domain->lock);
-   return 0;
+   return retcode;
 }
 
 
@@ -1112,7 +1117,7 @@ get_unlock:
 }
 
 
-struct fid_ep * mpc_ofi_domain_connect(struct mpc_ofi_domain_t *domain, void *addr)
+struct fid_ep * mpc_ofi_domain_connect(struct mpc_ofi_domain_t *domain, __UNUSED__ void *addr)
 {
    if(domain->is_passive_endpoint)
    {
@@ -1124,7 +1129,7 @@ struct fid_ep * mpc_ofi_domain_connect(struct mpc_ofi_domain_t *domain, void *ad
    }
 }
 
-struct fid_ep * mpc_ofi_domain_accept(struct mpc_ofi_domain_t *domain, void *addr)
+struct fid_ep * mpc_ofi_domain_accept(struct mpc_ofi_domain_t *domain, __UNUSED__ void *addr)
 {
    if(!domain->is_passive_endpoint)
    {

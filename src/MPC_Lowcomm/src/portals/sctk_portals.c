@@ -380,7 +380,7 @@ out:
         return rc;
 }
 
-int lcr_ptl_iface_open(char *device_name, int id,
+int lcr_ptl_iface_open(__UNUSED__ const char *device_name, int id,
 		       lcr_rail_config_t *rail_config, 
 		       lcr_driver_config_t *driver_config,
 		       sctk_rail_info_t **iface_p)
@@ -395,7 +395,6 @@ int lcr_ptl_iface_open(char *device_name, int id,
                 goto err;
         }
 
-	strcpy(iface->device_name, device_name);
 	iface->rail_number = id; /* used as tag for pmi registration */
 
         sctk_network_init_ptl(iface);

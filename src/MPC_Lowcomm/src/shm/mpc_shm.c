@@ -1135,7 +1135,7 @@ int mpc_shm_query_devices(__UNUSED__ lcr_component_t *component,
 
 
 
-int mpc_shm_iface_open(char *device_name, int id,
+int mpc_shm_iface_open(__UNUSED__ const char *device_name, int id,
                        lcr_rail_config_t *rail_config,
                        lcr_driver_config_t *driver_config,
                        sctk_rail_info_t **iface_p)
@@ -1152,8 +1152,6 @@ int mpc_shm_iface_open(char *device_name, int id,
 		rc = MPC_LOWCOMM_ERROR;
 		goto err;
 	}
-
-	strcpy(rail->device_name, "default");
 	rail->rail_number = id;
 
 

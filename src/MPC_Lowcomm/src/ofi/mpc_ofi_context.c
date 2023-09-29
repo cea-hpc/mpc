@@ -202,6 +202,8 @@ int mpc_ofi_view_init(struct mpc_ofi_view_t *view, struct mpc_ofi_context_t *ctx
    return 0;
 }
 
+#define ONESEC 1e6
+
 int mpc_ofi_view_wait_for_rank_registration(struct mpc_ofi_view_t *view,
                                            uint64_t rank, uint32_t timeout_sec)
 {
@@ -216,7 +218,7 @@ int mpc_ofi_view_wait_for_rank_registration(struct mpc_ofi_view_t *view,
       {
          return 0;
       }
-      sleep(1);
+      usleep(ONESEC);
       cnt++;
    }while(cnt < timeout_sec);
 
