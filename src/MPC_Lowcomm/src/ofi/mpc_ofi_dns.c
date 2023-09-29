@@ -35,9 +35,6 @@ int mpc_ofi_dns_init(struct mpc_ofi_dns_t * dns)
 }
 int mpc_ofi_dns_release(struct mpc_ofi_dns_t * dns)
 {
-   dns->op_lookup = NULL;
-   dns->op_register = NULL;
-
    struct mpc_ofi_dns_name_entry_t * tmp = NULL;
 
    MPC_HT_ITER(&dns->cache, tmp )
@@ -87,7 +84,7 @@ void mpc_ofi_dns_name_entry_release(void *pentry)
 
 
 
-struct fid_ep * mpc_ofi_dns_resolve(struct mpc_ofi_dns_t * dns, uint64_t rank, char * outbuff, size_t *outlen)
+struct fid_ep * mpc_ofi_dns_resolve(struct mpc_ofi_dns_t * dns, uint64_t rank, char * outbuff, size_t *outlen, int * found)
 {
    /* First look in local cache */
    struct mpc_ofi_dns_name_entry_t *entry = (struct mpc_ofi_dns_name_entry_t *)mpc_common_hashtable_get(&dns->cache, rank);
@@ -104,8 +101,22 @@ struct fid_ep * mpc_ofi_dns_resolve(struct mpc_ofi_dns_t * dns, uint64_t rank, c
       memcpy(outbuff, entry->value, entry->len);
       *outlen = entry->len;
 
+
+      #ifdef DEBUG_DNS_ADDR
+         (void)fprintf(stderr, "Resovled address for %lu @", rank);
+         __dump_addr(outbuff, *outlen);
+      #endif
+
+      *found = 1;
+
       return entry->endpoint;
    }
+
+   *found = 0;
+
+#ifdef DEBUG_DNS_ADDR
+      mpc_common_debug_warning("Failed to resolve %lu", rank);
+#endif
 
    return NULL;
 }
@@ -116,7 +127,7 @@ int mpc_ofi_dns_register(struct mpc_ofi_dns_t * dns, uint64_t rank, char * buff,
    struct mpc_ofi_dns_name_entry_t *entry = mpc_ofi_dns_name_entry(buff, len, endpoint);
 
 #ifdef DEBUG_DNS_ADDR
-   (void)fprintf(stderr, "New address for %ld @", rank);
+   (void)fprintf(stderr, "New address for %lu @", rank);
    __dump_addr(buff, len);
 #endif
 
@@ -182,6 +193,13 @@ int mpc_ofi_domain_dns_release(struct mpc_ofi_domain_dns_t *ddns)
    MPC_HT_ITER(&ddns->cache, tmp )
    {
       mpc_ofi_dns_name_entry_release(tmp);
+
+      if(tmp->endpoint && ddns->is_passive)
+      {
+         TODO("Understand why we get -EBUSY");
+         fi_close(&tmp->endpoint->fid);
+      }
+
    }
    MPC_HT_ITER_END(&ddns->cache)
 
@@ -200,8 +218,14 @@ struct fid_ep * mpc_ofi_domain_dns_resolve(struct mpc_ofi_domain_dns_t * ddns, u
       char *buff = _buff;
       size_t len = MPC_OFI_ADDRESS_LEN;
 
+      int addr_found = 0;
+
       /* We need to insert it */
-      struct fid_ep * ep = mpc_ofi_dns_resolve(ddns->main_dns, rank, buff, &len);
+      struct fid_ep * ep = mpc_ofi_dns_resolve(ddns->main_dns, rank, buff, &len, &addr_found);
+
+      /* We need to make sure the endpoint exists prior to trying to sending messages on it
+         it means the central DNS MUST know this endpoint */
+      assume(addr_found == 1);
 
       if(!ddns->is_passive)
       {

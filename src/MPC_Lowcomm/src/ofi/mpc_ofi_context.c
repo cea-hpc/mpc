@@ -1,5 +1,6 @@
 #include "mpc_ofi_context.h"
 
+#include "mpc_common_datastructure.h"
 #include "mpc_lowcomm_monitor.h"
 #include "mpc_ofi_dns.h"
 #include "mpc_ofi_domain.h"
@@ -23,7 +24,10 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
                         char * provider,
                         mpc_ofi_context_policy_t policy,
                         mpc_ofi_context_recv_callback_t recv_callback,
-                        void * callback_arg, struct _mpc_lowcomm_config_struct_net_driver_ofi * config)
+                        void * callback_arg,
+                        mpc_ofi_context_accept_callback_t accept_cb,
+                        void *accept_cb_arg,
+                        struct _mpc_lowcomm_config_struct_net_driver_ofi * config)
 {
    memset(ctx, 0, sizeof(struct mpc_ofi_context_t));
 
@@ -41,6 +45,8 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
    ctx->recv_callback = recv_callback;
    ctx->callback_arg = callback_arg;
 
+   ctx->accept_cb = accept_cb;
+   ctx->accept_cb_arg = accept_cb_arg;
 
    ctx->numa_count = 1;
 
@@ -168,7 +174,6 @@ static inline struct mpc_ofi_domain_t * __mpc_ofi_context_get_next_domain(struct
    return NULL;
 }
 
-
 /**************************
  * THE OFI CL VIEW *
  **************************/
@@ -211,10 +216,12 @@ int mpc_ofi_view_wait_for_rank_registration(struct mpc_ofi_view_t *view,
    size_t len = MPC_OFI_ADDRESS_LEN;
    uint32_t cnt = 0;
 
+   int found = 0;
+
    do
    {
-      struct fid_ep * ep = mpc_ofi_dns_resolve(view->domain->ddns.main_dns, rank, buff, &len);
-      if(ep)
+      mpc_ofi_dns_resolve(view->domain->ddns.main_dns, rank, buff, &len, &found);
+      if(found)
       {
          return 0;
       }
@@ -256,14 +263,14 @@ int mpc_ofi_view_wait(struct mpc_ofi_view_t *view,  struct mpc_ofi_request_t *re
    return 0;
 }
 
-struct fid_ep * mpc_ofi_view_connect(struct mpc_ofi_view_t *view, void *addr)
+struct fid_ep * mpc_ofi_view_connect(struct mpc_ofi_view_t *view, mpc_lowcomm_peer_uid_t uid, void *addr)
 {
-   return mpc_ofi_domain_connect(view->domain, addr);
+   return mpc_ofi_domain_connect(view->domain, uid, addr);
 }
 
-struct fid_ep * mpc_ofi_view_accept(struct mpc_ofi_view_t *view, void *addr)
+struct fid_ep * mpc_ofi_view_accept(struct mpc_ofi_view_t *view, mpc_lowcomm_peer_uid_t uid, void *addr)
 {
-   return mpc_ofi_domain_accept(view->domain, addr);
+   return mpc_ofi_domain_accept(view->domain, uid, addr);
 }
 
 int mpc_ofi_view_send(struct mpc_ofi_view_t *view, void * buffer, size_t size, uint64_t dest, struct mpc_ofi_request_t **req,

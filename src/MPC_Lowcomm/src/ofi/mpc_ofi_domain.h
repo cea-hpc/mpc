@@ -80,12 +80,19 @@ int mpc_ofi_domain_buffer_manager_release(struct mpc_ofi_domain_buffer_manager_t
 
 
 /*********************
- * THE ENDPOINT LIST *
+ * THE BUFFER   LIST *
  *********************/
 
+struct mpc_ofi_domain_t;
 
+struct mpc_ofi_domain_buffer_entry_t
+{
+   struct mpc_ofi_domain_buffer_manager_t buff;
+   struct mpc_ofi_domain_buffer_entry_t * next;
+};
 
-
+int mpc_ofi_domain_buffer_entry_add(struct mpc_ofi_domain_t * domain, struct fid_ep * endpoint);
+int mpc_ofi_domain_buffer_entry_release(struct mpc_ofi_domain_t * domain);
 
 /**************
  * THE DOMAIN *
@@ -106,6 +113,9 @@ struct mpc_ofi_domain_t{
    /* Local DNS */
    struct mpc_ofi_domain_dns_t ddns;
 
+   /* State tracking for ongoing connections */
+   struct mpc_common_hashtable pending_connections;
+
    /* Is multirecv supported ?*/
    bool has_multi_recv;
 
@@ -123,7 +133,8 @@ struct mpc_ofi_domain_t{
    char address[MPC_OFI_ADDRESS_LEN];
    size_t address_len;
    /* Buffers */
-   struct mpc_ofi_domain_buffer_manager_t buffers;
+   mpc_common_spinlock_t buffer_lock;
+   struct mpc_ofi_domain_buffer_entry_t *buffers;
    /* Requests */
    struct mpc_ofi_request_cache_t rcache;
    struct _mpc_lowcomm_config_struct_net_driver_ofi * config;
@@ -178,9 +189,37 @@ int mpc_ofi_domain_put(struct mpc_ofi_domain_t *domain,
                        int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
                        void *arg_ext);
 
-struct fid_ep * mpc_ofi_domain_connect(struct mpc_ofi_domain_t *domain, void *addr);
+struct fid_ep * mpc_ofi_domain_connect(struct mpc_ofi_domain_t *domain, mpc_lowcomm_peer_uid_t uid, void *addr);
 
-struct fid_ep * mpc_ofi_domain_accept(struct mpc_ofi_domain_t *domain, void *addr);
+struct fid_ep * mpc_ofi_domain_accept(struct mpc_ofi_domain_t *domain, mpc_lowcomm_peer_uid_t uid, void *addr);
+
+/*************************
+ * CONNECTION MANAGEMENT *
+ *************************/
+typedef enum
+{
+   MPC_OFI_DOMAIN_ENDPOINT_NO_STATE,
+   MPC_OFI_DOMAIN_ENDPOINT_REFUSED,
+   MPC_OFI_DOMAIN_ENDPOINT_CONNECTING,
+   MPC_OFI_DOMAIN_ENDPOINT_ACCEPTING,
+   MPC_OFI_DOMAIN_ENDPOINT_CONNECTED
+}mpc_ofi_domain_async_connection_state_t;
+
+typedef struct 
+{
+   uint64_t key;
+   mpc_lowcomm_peer_uid_t target_rank;
+   mpc_ofi_domain_async_connection_state_t state;
+   mpc_ofi_domain_async_connection_state_t *notification_address;
+}mpc_ofi_domain_connection_state_t;
+
+
+int mpc_ofi_domain_add_pending_connection(struct mpc_ofi_domain_t *domain, uint64_t key, mpc_lowcomm_peer_uid_t uid, mpc_ofi_domain_async_connection_state_t state,  mpc_ofi_domain_async_connection_state_t * notification_addr);
+int mpc_ofi_domain_insert_pending_connection(struct mpc_ofi_domain_t *domain, uint64_t key, mpc_ofi_domain_connection_state_t * conn);
+int mpc_ofi_domain_clear_pending_connection(struct mpc_ofi_domain_t *domain, uint64_t key);
+mpc_ofi_domain_connection_state_t * mpc_ofi_domain_get_pending_connection(struct mpc_ofi_domain_t *domain, uint64_t key);
+int mpc_ofi_domain_connection_state_update(mpc_ofi_domain_connection_state_t * state, mpc_ofi_domain_async_connection_state_t new_state);
+
 
 
 #endif /* MPC_OFI_DOMAIN */

@@ -281,6 +281,12 @@ int lcp_ep_init_channels(lcp_context_h ctx, lcp_ep_h ep)
 			}
 		}
 
+		/* Make sure only to use connected endpoints (OFI may add connecting endpoints on the listen side with FI_EP_MSG)*/
+		while (_mpc_lowcomm_endpoint_get_state(lcr_ep) == _MPC_LOWCOMM_ENDPOINT_CONNECTING)
+		{
+			lcp_progress(ctx);
+		}
+
 		/* Add endpoint to list and set bitmap entry */
 		ep->lct_eps[i] = lcr_ep;
 		ep->num_chnls++;

@@ -1,12 +1,14 @@
 #include "mpc_ofi.h"
 
-#include <lcr/lcr_component.h>
+
 #include <limits.h>
+#include <sctk_alloc.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <sctk_alloc.h>
 
+#include "endpoint.h"
+#include "lcr/lcr_component.h"
 #include "mpc_common_debug.h"
 #include "mpc_lowcomm_monitor.h"
 #include "mpc_ofi_helpers.h"
@@ -20,7 +22,7 @@
 
 static inline char *__gen_rail_target_name(sctk_rail_info_t *rail, char *buff, int bufflen)
 {
-	snprintf(buff, bufflen, "ofi-%d", rail->rail_number);
+	(void)snprintf(buff, bufflen, "ofi-%d", rail->rail_number);
 	return buff;
 }
 
@@ -37,7 +39,7 @@ static inline void __init_ofi_endpoint(sctk_rail_info_t *rail, _mpc_lowcomm_ofi_
    mpc_mempool_init(&ofi_data->deffered, MPC_OFI_EP_MEMPOOL_MIN, MPC_OFI_EP_MEMPOOL_MAX, sizeof(struct mpc_ofi_deffered_completion_s), sctk_malloc, sctk_free);
 }
 
-static void __add_route(mpc_lowcomm_peer_uid_t dest_uid, sctk_rail_info_t *rail)
+static void __add_route(mpc_lowcomm_peer_uid_t dest_uid, sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_state_t state)
 {
 	_mpc_lowcomm_endpoint_t *new_route = sctk_malloc(sizeof(_mpc_lowcomm_endpoint_t) );
 	assume(new_route != NULL);
@@ -46,12 +48,10 @@ static void __add_route(mpc_lowcomm_peer_uid_t dest_uid, sctk_rail_info_t *rail)
    __init_ofi_endpoint(rail, &new_route->data.ofi);
 
 	/* Make sure the route is flagged connected */
-	_mpc_lowcomm_endpoint_set_state(new_route, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
+	_mpc_lowcomm_endpoint_set_state(new_route, state);
 
    sctk_rail_add_dynamic_route(rail, new_route);
 }
-
-
 
 struct mpc_ofi_net_infos
 {
@@ -67,7 +67,11 @@ void mpc_ofi_connect_on_demand(struct sctk_rail_info_s *rail, mpc_lowcomm_peer_u
 
    struct mpc_ofi_context_t * ctx = &rail->network.ofi.ctx;
 
-   if( mpc_ofi_dns_resolve(&ctx->dns, mpc_lowcomm_monitor_get_uid(), my_infos.addr, &my_infos.size) == NULL )
+   int addr_found = 0;
+
+   mpc_ofi_dns_resolve(&ctx->dns, mpc_lowcomm_monitor_get_uid(), my_infos.addr, &my_infos.size, &addr_found);
+
+   if( !addr_found )
    {
       mpc_common_debug_fatal("Failed to resolve OFI address for local UID %d", mpc_lowcomm_monitor_get_uid());
    }
@@ -96,9 +100,8 @@ void mpc_ofi_connect_on_demand(struct sctk_rail_info_s *rail, mpc_lowcomm_peer_u
 
    struct mpc_ofi_net_infos * remote_info = (struct mpc_ofi_net_infos *)content->on_demand.data;
 
-
    /* May create a new endpoint if the endpoint is passive (returns the connectionless endpoint otherwise) */
-   struct fid_ep * related_endpoint = mpc_ofi_view_connect(&rail->network.ofi.view, remote_info->addr);
+   struct fid_ep * related_endpoint = mpc_ofi_view_connect(&rail->network.ofi.view, dest, remote_info->addr);
 
    /* Now add the response to the DNS */
    if( mpc_ofi_dns_register(&ctx->dns, dest, remote_info->addr, remote_info->size, related_endpoint) )
@@ -109,10 +112,8 @@ void mpc_ofi_connect_on_demand(struct sctk_rail_info_s *rail, mpc_lowcomm_peer_u
 	mpc_lowcomm_monitor_response_free(resp);
 
    /* Now add route as remote is in the DNS */
-   __add_route(dest, rail);
+   __add_route(dest, rail, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
 }
-
-
 
 static int __ofi_on_demand_callback(mpc_lowcomm_peer_uid_t from,
                                     char *data,
@@ -125,7 +126,7 @@ static int __ofi_on_demand_callback(mpc_lowcomm_peer_uid_t from,
 
    struct mpc_ofi_net_infos *infos = (struct mpc_ofi_net_infos*) data;
 
-   struct fid_ep * related_endpoint = mpc_ofi_view_accept(&rail->network.ofi.view, infos->addr);
+   struct fid_ep * related_endpoint = mpc_ofi_view_accept(&rail->network.ofi.view, from, infos->addr);
 
    /* Register remote info */
    if( mpc_ofi_dns_register(&ctx->dns, from, infos->addr, infos->size, related_endpoint) )
@@ -139,17 +140,24 @@ static int __ofi_on_demand_callback(mpc_lowcomm_peer_uid_t from,
    struct mpc_ofi_net_infos *my_infos = (struct mpc_ofi_net_infos *)return_data;
    my_infos->size = MPC_OFI_ADDRESS_LEN;
 
+   int addr_found = 0;
+   mpc_ofi_dns_resolve(&ctx->dns, mpc_lowcomm_monitor_get_uid(), my_infos->addr, &my_infos->size, &addr_found); 
 
-   if( mpc_ofi_dns_resolve(&ctx->dns, mpc_lowcomm_monitor_get_uid(), my_infos->addr, &my_infos->size) == NULL )
+   if( !addr_found )
    {
       mpc_common_debug_fatal("Failed to resolve OFI address for local UID %d", mpc_lowcomm_monitor_get_uid());
    }
+
 
    if(related_endpoint)
    {
       /* Now add route as remote is in the DNS and we have a related endpoint
          at current state, meaning the endpoint is a connectionless one */
-      __add_route(from, rail);
+      __add_route(from, rail, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
+   }
+   else
+   {
+      __add_route(from, rail, _MPC_LOWCOMM_ENDPOINT_CONNECTING);
    }
 
 	return 0;
@@ -387,6 +395,18 @@ int mpc_ofi_iface_is_reachable(sctk_rail_info_t *rail, uint64_t uid) {
 }
 
 
+int __passive_endpoint_did_accept_a_connection(mpc_lowcomm_peer_uid_t uid, void * prail)
+{
+   sctk_rail_info_t *rail = (sctk_rail_info_t *)prail;
+   _mpc_lowcomm_endpoint_t * ep = sctk_rail_get_any_route_to_process(rail, uid);
+   assume(ep != NULL);
+   mpc_common_debug("[OFI] enabling incoming connection endpoint from %lu = %s", uid, mpc_lowcomm_peer_format(uid));
+
+   _mpc_lowcomm_endpoint_set_state(ep, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
+   return 0;
+}
+
+
 int mpc_ofi_get_attr(sctk_rail_info_t *rail,
                      lcr_rail_attr_t *attr)
 {
@@ -541,7 +561,15 @@ int mpc_ofi_iface_open(__UNUSED__ const char *device_name, int id,
 	                                                __ofi_on_demand_callback,
 	                                                (void *)rail);
 
-   if(mpc_ofi_context_init(&rail->network.ofi.ctx, 1, driver_config->driver.value.ofi.provider, MPC_OFI_POLICY_RR, __mpc_ofi_context_recv_callback_t, (void*)rail, &driver_config->driver.value.ofi))
+   if(mpc_ofi_context_init(&rail->network.ofi.ctx,
+                           1,
+                           driver_config->driver.value.ofi.provider,
+                           MPC_OFI_POLICY_RR,
+                           __mpc_ofi_context_recv_callback_t,
+                           (void*)rail,
+                           __passive_endpoint_did_accept_a_connection,
+                           rail,
+                           &driver_config->driver.value.ofi))
    {
       mpc_common_errorpoint("Failed to start OFI context");
       return 1;

@@ -80,7 +80,7 @@ int mpc_mempool_empty(mpc_mempool *mp)
 int mpc_mempool_init(mpc_mempool *mp,
                      int min,
                      int max,
-                     int size,
+                     size_t size,
                      void *(*malloc_func)(size_t),
                      void (*free_func)(void *) )
 {

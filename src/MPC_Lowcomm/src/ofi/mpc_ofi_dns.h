@@ -27,13 +27,6 @@ Here we need to persist two kind of info
  * THE CENTRAL DNS *
  *******************/
 
-typedef enum
-{
-   MPC_OFI_DNS_RESOLUTION_SOCKET,
-   MPC_OFI_DNS_RESOLUTION_CPLANE,
-   MPC_OFI_DNS_RESOLUTION_COUNT
-}mpc_ofi_dns_resolution_t;
-
 struct mpc_ofi_dns_name_entry_t
 {
    char * value;
@@ -50,18 +43,13 @@ typedef struct fid_ep * (*mpc_ofi_dns_operation_t)(void * first_arg, uint64_t ra
 struct mpc_ofi_dns_t
 {
    struct mpc_common_hashtable cache;
-   /* External resolver*/
-   mpc_ofi_dns_resolution_t resolution_type;
-   void *operation_first_arg;
-   mpc_ofi_dns_operation_t op_lookup;
-   mpc_ofi_dns_operation_t op_register;
 };
 
 
 int mpc_ofi_dns_init(struct mpc_ofi_dns_t * dns);
 int mpc_ofi_dns_release(struct mpc_ofi_dns_t * dns);
 
-struct fid_ep * mpc_ofi_dns_resolve(struct mpc_ofi_dns_t * dns, uint64_t rank, char * outbuff, size_t *outlen);
+struct fid_ep * mpc_ofi_dns_resolve(struct mpc_ofi_dns_t * dns, uint64_t rank, char * outbuff, size_t *outlen, int * found);
 int mpc_ofi_dns_register(struct mpc_ofi_dns_t * dns, uint64_t rank, char * buff, size_t len, struct fid_ep * endpoint);
 
 /**********************

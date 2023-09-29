@@ -1,5 +1,7 @@
 #include "mpc_ofi_domain.h"
+#include "mpc_common_datastructure.h"
 #include "mpc_common_spinlock.h"
+#include "mpc_lowcomm_monitor.h"
 #include "mpc_ofi_dns.h"
 #include "mpc_ofi_helpers.h"
 
@@ -20,6 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 
 int mpc_ofi_domain_buffer_init(struct mpc_ofi_domain_buffer_t * buff,
@@ -220,9 +223,37 @@ int mpc_ofi_domain_buffer_manager_release(struct mpc_ofi_domain_buffer_manager_t
  * ENPOINT CREATION *
  ********************/
 
-int mpc_ofi_domain_create_passive_endpoint(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context_t *ctx, __UNUSED__ struct _mpc_lowcomm_config_struct_net_driver_ofi * config)
+
+struct fid_ep * __new_endpoint(struct mpc_ofi_domain_t *domain, struct fi_info * info)
 {
-   MPC_OFI_CHECK_RET(fi_passive_ep(ctx->fabric, ctx->config, &domain->pep, domain));
+   struct fi_info * pinfo = (info)?info:domain->ctx->config;
+
+   struct fid_ep * ret = NULL;
+   /* And the endpoint */
+   MPC_OFI_CHECK_RET_OR_NULL(fi_endpoint(domain->domain, pinfo, &ret, domain));
+
+   /* Now bind all cqs , av and eqs */
+   if(domain->has_multi_recv )
+   {
+      size_t max_eager_size = domain->ctx->rail_config->eager_size;
+      MPC_OFI_CHECK_RET_OR_NULL(fi_setopt(&ret->fid, FI_OPT_ENDPOINT, FI_OPT_MIN_MULTI_RECV, &max_eager_size, sizeof(size_t)));
+   }
+
+   MPC_OFI_CHECK_RET_OR_NULL(fi_ep_bind(ret, &domain->eq->fid, 0));
+   MPC_OFI_CHECK_RET_OR_NULL(fi_ep_bind(ret, &domain->tx_cq->fid, FI_SEND));
+   MPC_OFI_CHECK_RET_OR_NULL(fi_ep_bind(ret, &domain->rx_cq->fid, FI_RECV));
+
+   mpc_ofi_domain_buffer_entry_add(domain, ret);
+
+   return ret;
+}
+
+
+
+
+int mpc_ofi_domain_create_passive_endpoint(struct mpc_ofi_domain_t * domain)
+{
+   MPC_OFI_CHECK_RET(fi_passive_ep(domain->ctx->fabric, domain->ctx->config, &domain->pep, domain));
 
    MPC_OFI_CHECK_RET(fi_pep_bind(domain->pep, &domain->eq->fid, 0));
  
@@ -235,23 +266,9 @@ int mpc_ofi_domain_create_passive_endpoint(struct mpc_ofi_domain_t * domain, str
    return 0;
 }
 
-int mpc_ofi_domain_create_connectionless_endpoint(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context_t *ctx, struct _mpc_lowcomm_config_struct_net_driver_ofi * config)
+int mpc_ofi_domain_create_connectionless_endpoint(struct mpc_ofi_domain_t * domain)
 {
-
-   /* And the endpoint */
-   MPC_OFI_CHECK_RET(fi_endpoint(domain->domain, ctx->config, &domain->ep, domain));
-
-   /* Now bind all cqs , av and eqs */
-
-   if(domain->has_multi_recv )
-   {
-      size_t max_eager_size = config->eager_size;
-      MPC_OFI_CHECK_RET(fi_setopt(&domain->ep->fid, FI_OPT_ENDPOINT, FI_OPT_MIN_MULTI_RECV, &max_eager_size, sizeof(size_t)));
-   }
-
-   MPC_OFI_CHECK_RET(fi_ep_bind(domain->ep, &domain->eq->fid, 0));
-   MPC_OFI_CHECK_RET(fi_ep_bind(domain->ep, &domain->tx_cq->fid, FI_SEND));
-   MPC_OFI_CHECK_RET(fi_ep_bind(domain->ep, &domain->rx_cq->fid, FI_RECV));
+   domain->ep = __new_endpoint(domain, NULL);
 
    /* Only for connectionless endpoints */
    MPC_OFI_CHECK_RET(fi_ep_bind(domain->ep,
@@ -269,18 +286,72 @@ int mpc_ofi_domain_create_connectionless_endpoint(struct mpc_ofi_domain_t * doma
 }
 
 
+/*********************
+ * THE BUFFER   LIST *
+ *********************/
+
+int mpc_ofi_domain_buffer_entry_add(struct mpc_ofi_domain_t * domain, struct fid_ep * endpoint)
+{
+   struct mpc_ofi_domain_buffer_entry_t * new = sctk_malloc(sizeof(struct mpc_ofi_domain_buffer_entry_t));
+   assume(new);
+
+   if(mpc_ofi_domain_buffer_manager_init(&new->buff,
+                                       domain,
+                                       endpoint,
+                                       domain->config->eager_size,
+                                       domain->config->eager_per_buff,
+                                       domain->config->number_of_multi_recv_buff,
+                                       domain->has_multi_recv ))
+   {
+      mpc_common_errorpoint("Failed to allocate buffers");
+      return 1;
+   }
+
+
+   mpc_common_spinlock_lock(&domain->buffer_lock);
+   new->next = domain->buffers;
+   domain->buffers = new;
+   mpc_common_spinlock_unlock(&domain->buffer_lock);
+
+   return 0;
+}
+
+int mpc_ofi_domain_buffer_entry_release(struct mpc_ofi_domain_t * domain)
+{
+   struct mpc_ofi_domain_buffer_entry_t * tmp = domain->buffers;
+   struct mpc_ofi_domain_buffer_entry_t * to_free = NULL;
+
+   while (tmp)
+   {
+      to_free = tmp;
+      tmp = tmp->next;
+      if(mpc_ofi_domain_buffer_manager_release(&to_free->buff))
+      {
+         mpc_common_errorpoint("Failed to release per domain buffers");
+      }
+      sctk_free(to_free);
+   }
+
+   return 0;
+}
+
 
 /**************
  * THE DOMAIN *
  **************/
 
+#define MPC_OFI_DOMAIN_CONNECTION_HT_SIZE 16
 
 int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context_t *ctx, struct _mpc_lowcomm_config_struct_net_driver_ofi * config)
 {
    mpc_common_spinlock_init(&domain->lock, 0);
+   mpc_common_spinlock_init(&domain->buffer_lock, 0);
+
    domain->being_polled = 0;
    domain->ctx = ctx;
    domain->config = config;
+
+   mpc_common_hashtable_init(&domain->pending_connections, MPC_OFI_DOMAIN_CONNECTION_HT_SIZE);
 
    domain->ep = NULL;
    domain->pep = NULL;
@@ -314,6 +385,20 @@ int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context
    MPC_OFI_CHECK_RET(fi_cq_open(domain->domain, &cq_attr, &domain->tx_cq, domain));
 
 
+   /* Are we using passive endpoints ? */
+   if( (ctx->config->ep_attr->type == FI_EP_RDM) || (ctx->config->ep_attr->type == FI_EP_DGRAM))
+   {
+      domain->is_passive_endpoint = false;
+   }
+   else if(ctx->config->ep_attr->type == FI_EP_MSG)
+   {
+      domain->is_passive_endpoint = true;
+   }
+   else
+   {
+      not_implemented();
+   }
+
    /* And the local DNS */
    if( mpc_ofi_domain_dns_init(&domain->ddns,
                               &ctx->dns,
@@ -324,35 +409,24 @@ int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context
       return -1;
    }
 
-   domain->has_multi_recv = !!(ctx->config->caps & FI_MULTI_RECV) && config->enable_multi_recv;
 
    /* Create a connectionless endpoint */
-   if( (ctx->config->ep_attr->type == FI_EP_RDM) || (ctx->config->ep_attr->type == FI_EP_DGRAM))
+   if( domain->is_passive_endpoint )
    {
-      MPC_OFI_CHECK_RET(mpc_ofi_domain_create_connectionless_endpoint(domain, ctx, config));
-      domain->is_passive_endpoint = false;
-   }
-   else if(ctx->config->ep_attr->type == FI_EP_MSG)
-   {
-      MPC_OFI_CHECK_RET(mpc_ofi_domain_create_passive_endpoint(domain, ctx, config));
-      domain->is_passive_endpoint = true;
+      MPC_OFI_CHECK_RET(mpc_ofi_domain_create_passive_endpoint(domain));
    }
    else
    {
-      not_implemented();
+      MPC_OFI_CHECK_RET(mpc_ofi_domain_create_connectionless_endpoint(domain));
    }
 
+   /* Is multi-recv supported ? */
+   domain->has_multi_recv = !!(ctx->config->caps & FI_MULTI_RECV) && config->enable_multi_recv;
 
    if(!domain->is_passive_endpoint)
    {
       /* Eventually Prepare the Buffers directly if the domain is connectionless */
-      if(mpc_ofi_domain_buffer_manager_init(&domain->buffers,
-                                          domain,
-                                          domain->ep,
-                                          config->eager_size,
-                                          config->eager_per_buff,
-                                          config->number_of_multi_recv_buff,
-                                          domain->has_multi_recv ))
+      if(mpc_ofi_domain_buffer_entry_add(domain, domain->ep))
       {
          mpc_common_errorpoint("Failed to allocate buffers");
          return 1;
@@ -367,13 +441,12 @@ int mpc_ofi_domain_release(struct mpc_ofi_domain_t * domain)
 {
    domain->ctx = NULL;
 
-   if(mpc_ofi_domain_buffer_manager_release(&domain->buffers))
-   {
-      mpc_common_errorpoint("Failed to release per domain buffers");
-      return 1;
-   }
+   mpc_ofi_domain_buffer_entry_release(domain);
 
-   MPC_OFI_CHECK_RET(fi_close(&domain->ep->fid));
+   if(!domain->is_passive_endpoint)
+   {
+      MPC_OFI_CHECK_RET(fi_close(&domain->ep->fid));
+   }
 
    if( mpc_ofi_domain_dns_release(&domain->ddns) < 0)
    {
@@ -381,11 +454,11 @@ int mpc_ofi_domain_release(struct mpc_ofi_domain_t * domain)
       return -1;
    }
 
-   MPC_OFI_CHECK_RET(fi_close(&domain->rx_cq->fid));
-   MPC_OFI_CHECK_RET(fi_close(&domain->tx_cq->fid));
-   MPC_OFI_CHECK_RET(fi_close(&domain->eq->fid));
-
    TODO("Understand why we get -EBUSY");
+
+   fi_close(&domain->rx_cq->fid);
+   fi_close(&domain->tx_cq->fid);
+   fi_close(&domain->eq->fid);
    fi_close(&domain->domain->fid);
 
 
@@ -395,6 +468,8 @@ int mpc_ofi_domain_release(struct mpc_ofi_domain_t * domain)
       mpc_common_errorpoint("Failed to release request cache");
       return -1;
    }
+
+   mpc_common_hashtable_release(&domain->pending_connections);
 
 
    return 0;
@@ -442,9 +517,6 @@ static struct mpc_ofi_request_t * _ofi_domain_poll_for_recv_request(struct mpc_o
 
 static inline int _ofi_domain_cq_process_event(struct mpc_ofi_domain_t * domain, struct fi_cq_data_entry*evt)
 {
-
-   //mpc_ofi_decode_cq_flags(evt->flags);
-
    if(evt->flags & FI_MULTI_RECV)
    {
       struct mpc_ofi_domain_buffer_t * buff = (struct mpc_ofi_domain_buffer_t *)evt->op_context;
@@ -501,6 +573,9 @@ static inline int _ofi_domain_cq_process_event(struct mpc_ofi_domain_t * domain,
       return 0;
    }
 
+   /* Leave it here for unhandled events */
+   mpc_ofi_decode_cq_flags(evt->flags);
+
    return 0;
 }
 
@@ -556,13 +631,55 @@ unlock_cq_poll:
 	return return_code;
 }
 
-#define OFI_ERROR_BUFF_SIZE 1024
+
+int _mpc_ofi_domain_handle_incoming_connection(struct mpc_ofi_domain_t * domain, struct fi_eq_cm_entry *cm_data )
+{
+
+   mpc_lowcomm_peer_uid_t *pfrom = (mpc_lowcomm_peer_uid_t*)cm_data->data;
+
+   struct fid_ep * new_ep = __new_endpoint(domain, cm_data->info);
+
+   mpc_lowcomm_peer_uid_t uid = mpc_lowcomm_monitor_get_uid();
+
+   mpc_ofi_domain_add_pending_connection(domain, (uint64_t)new_ep->fid.context, *pfrom, MPC_OFI_DOMAIN_ENDPOINT_ACCEPTING,  NULL);
+
+   MPC_OFI_CHECK_RET(fi_accept(new_ep, &uid, sizeof(mpc_lowcomm_peer_uid_t)));
+
+   return 0;
+}
+
+int _mpc_ofi_domain_notify_connection(struct mpc_ofi_domain_t * domain, struct fi_eq_cm_entry *cm_data )
+{
+
+   mpc_ofi_domain_connection_state_t * conn_info = mpc_ofi_domain_get_pending_connection(domain, (uint64_t) cm_data->fid->context);
+   assume(conn_info != NULL);
+   mpc_common_debug("[OFI] Connected to %s", mpc_lowcomm_peer_format(conn_info->target_rank));
+
+   mpc_ofi_domain_async_connection_state_t prev_state = conn_info->state;
+   mpc_ofi_domain_connection_state_update(conn_info, MPC_OFI_DOMAIN_ENDPOINT_CONNECTED);
+
+   /* If we are on the listening side we forward the event to the UID key (from the context key to the UID)*/
+   if(prev_state == MPC_OFI_DOMAIN_ENDPOINT_ACCEPTING)
+   {
+      /* Add the new endpoint to the context's DNS */
+      mpc_ofi_dns_register(&domain->ctx->dns, (uint64_t)conn_info->target_rank, NULL, 0, (struct fid_ep*)cm_data->fid);
+      /* Notify the passive callback to update the endpoint state in the rail once connected */
+      (domain->ctx->accept_cb)(conn_info->target_rank, domain->ctx->accept_cb_arg);
+      mpc_ofi_domain_clear_pending_connection(domain, (uint64_t)cm_data->fid->context);
+   }
+
+   return 0;
+}
+
+
+
+#define OFI_DATA_BUFF_SIZE 1024
 
 static inline int _mpc_ofi_domain_eq_poll(struct mpc_ofi_domain_t * domain)
 {
    int return_code = 0;
 
-	struct fi_eq_entry entry;
+   char data_buff[OFI_DATA_BUFF_SIZE];
 
 	uint32_t event = 0;
 	ssize_t rd = 0;
@@ -573,7 +690,7 @@ static inline int _mpc_ofi_domain_eq_poll(struct mpc_ofi_domain_t * domain)
    }
 
 
-   rd = fi_eq_read(domain->eq, &event, &entry, sizeof(entry), 0);
+   rd = fi_eq_read(domain->eq, &event, data_buff, OFI_DATA_BUFF_SIZE, 0);
 
 	if(rd == -FI_EAVAIL)
 	{
@@ -585,12 +702,11 @@ static inline int _mpc_ofi_domain_eq_poll(struct mpc_ofi_domain_t * domain)
          return_code = (int)ret;
          goto unlock_eq_poll;
       }
-		char err_buff[OFI_ERROR_BUFF_SIZE];
-		err_buff[0] = '\0';
-		fi_eq_strerror(domain->eq, err.prov_errno, err.err_data, err_buff, OFI_ERROR_BUFF_SIZE);
+		data_buff[0] = '\0';
+		fi_eq_strerror(domain->eq, err.prov_errno, err.err_data, data_buff, OFI_DATA_BUFF_SIZE);
 		mpc_common_errorpoint_fmt("%d : Got eq error on %p %s == %s\n", err.err,  err.fid,
 				fi_strerror(err.err),
-				err_buff);
+				data_buff);
       return_code = -1;
 		goto unlock_eq_poll;
 	}
@@ -601,7 +717,36 @@ static inline int _mpc_ofi_domain_eq_poll(struct mpc_ofi_domain_t * domain)
       goto unlock_eq_poll;
    }
 
-   (void)fprintf(stderr, "EQ event %s\n", fi_tostr(&event, FI_TYPE_EQ_EVENT));
+   if(event & FI_CONNREQ)
+   {
+      struct fi_eq_cm_entry *cm_data = (struct fi_eq_cm_entry*)data_buff;
+      assume((ssize_t)sizeof(struct fi_eq_cm_entry) <= rd);
+
+
+      if( _mpc_ofi_domain_handle_incoming_connection(domain, cm_data) != 0)
+      {
+         mpc_common_debug_fatal("Failed to accept connection");
+      }
+
+   }
+   else if(event & FI_CONNECTED)
+   {
+      struct fi_eq_cm_entry *cm_data = (struct fi_eq_cm_entry*)data_buff;
+      assume((ssize_t)sizeof(struct fi_eq_cm_entry) <= rd);
+
+      if( _mpc_ofi_domain_notify_connection(domain, cm_data) != 0)
+      {
+         mpc_common_debug_fatal("Failed to accept connection");
+      }
+   }
+   else
+   {
+      /* Print unmanaged events */
+      (void)fprintf(stderr, "EQ event %s\n", fi_tostr(&event, FI_TYPE_EQ_EVENT));
+   }
+
+
+
 
 unlock_eq_poll:
    mpc_common_spinlock_unlock(&domain->lock);
@@ -988,7 +1133,7 @@ int mpc_ofi_domain_get(struct mpc_ofi_domain_t *domain,
 
    while(1)
    {
-      ssize_t ret = fi_readmsg(domain->ep, &rma_msg, FI_COMPLETION);
+      ssize_t ret = fi_readmsg(ep, &rma_msg, FI_COMPLETION);
 
       if(ret == -FI_EAGAIN)
       {
@@ -1117,19 +1262,110 @@ get_unlock:
 }
 
 
-struct fid_ep * mpc_ofi_domain_connect(struct mpc_ofi_domain_t *domain, __UNUSED__ void *addr)
+
+/*****************************
+ * CONNECTION STATE TRACKING *
+ *****************************/
+
+int mpc_ofi_domain_insert_pending_connection(struct mpc_ofi_domain_t *domain, uint64_t key, mpc_ofi_domain_connection_state_t * conn)
 {
-   if(domain->is_passive_endpoint)
+   conn->key = key;
+   mpc_common_hashtable_set(&domain->pending_connections, key, conn);
+   return 0;
+}
+
+
+int mpc_ofi_domain_add_pending_connection(struct mpc_ofi_domain_t *domain, uint64_t key, mpc_lowcomm_peer_uid_t uid, mpc_ofi_domain_async_connection_state_t state,  mpc_ofi_domain_async_connection_state_t * notification_addr)
+{
+   mpc_ofi_domain_connection_state_t * new = sctk_malloc(sizeof(mpc_ofi_domain_connection_state_t));
+   assume(new != NULL);
+
+   new->notification_address = notification_addr;
+   new->state = state;
+   new->target_rank = uid;
+
+   if(new->notification_address)
    {
-      not_implemented();
+      /* To detect corrupdted states as we store on the stack */
+      assume(*new->notification_address == new->state);
    }
-   else
+
+   return mpc_ofi_domain_insert_pending_connection(domain, key, new);
+}
+
+
+int mpc_ofi_domain_clear_pending_connection(struct mpc_ofi_domain_t *domain, uint64_t key)
+{
+   mpc_ofi_domain_connection_state_t *conn = mpc_ofi_domain_get_pending_connection(domain, key);
+
+   if(!conn)
+   {
+      mpc_common_debug_error("Cannot free connection entry %lu", key);
+      return 1;
+   }
+
+   sctk_free(conn);
+
+   mpc_common_hashtable_delete(&domain->pending_connections, key);
+
+   return 0;
+}
+
+mpc_ofi_domain_connection_state_t * mpc_ofi_domain_get_pending_connection(struct mpc_ofi_domain_t *domain, uint64_t key)
+{
+   return mpc_common_hashtable_get(&domain->pending_connections, key);
+}
+
+int mpc_ofi_domain_connection_state_update(mpc_ofi_domain_connection_state_t * state, mpc_ofi_domain_async_connection_state_t new_state)
+{
+   if(state->notification_address)
+   {
+      assume(*state->notification_address == state->state);
+      *(state->notification_address) = new_state;
+   }
+
+   state->state = new_state;
+
+   return 0;
+}
+
+struct fid_ep * mpc_ofi_domain_connect(struct mpc_ofi_domain_t *domain, mpc_lowcomm_peer_uid_t uid, void *addr)
+{
+   if(!domain->is_passive_endpoint)
    {
       return domain->ep;
    }
+
+   mpc_ofi_domain_async_connection_state_t connection_state = MPC_OFI_DOMAIN_ENDPOINT_CONNECTING;
+
+
+   struct fid_ep * new_ep = __new_endpoint(domain, NULL);
+
+   mpc_common_debug("[OFI] Connecting to %s", mpc_lowcomm_peer_format(uid));
+
+   mpc_ofi_domain_add_pending_connection(domain, (uint64_t)new_ep->fid.context, uid, MPC_OFI_DOMAIN_ENDPOINT_CONNECTING, &connection_state);
+
+   mpc_lowcomm_peer_uid_t my_uid = mpc_lowcomm_monitor_get_uid();
+
+   MPC_OFI_CHECK_RET_OR_NULL(fi_connect(new_ep, addr, &my_uid, sizeof(mpc_lowcomm_peer_uid_t)));
+
+   while(connection_state == MPC_OFI_DOMAIN_ENDPOINT_CONNECTING)
+   {
+      mpc_ofi_domain_poll(domain, -1);
+   }
+
+   if(connection_state != MPC_OFI_DOMAIN_ENDPOINT_CONNECTED)
+   {
+      mpc_common_debug_fatal("Endpoint failed to connect");
+   }
+
+   mpc_ofi_domain_clear_pending_connection(domain, (uint64_t)new_ep->fid.context);
+
+   return new_ep;
+
 }
 
-struct fid_ep * mpc_ofi_domain_accept(struct mpc_ofi_domain_t *domain, __UNUSED__ void *addr)
+struct fid_ep * mpc_ofi_domain_accept(struct mpc_ofi_domain_t *domain, __UNUSED__ mpc_lowcomm_peer_uid_t uid, __UNUSED__ void *addr)
 {
    if(!domain->is_passive_endpoint)
    {

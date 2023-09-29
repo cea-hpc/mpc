@@ -1,8 +1,9 @@
 #ifndef MPC_OFI_H
 #define MPC_OFI_H
 
-#include "mpc_ofi_context.h"
 #include <stdint.h>
+
+#include "mpc_ofi_context.h"
 #include <mpc_mempool.h>
 
 typedef struct _mpc_lowcomm_ofi_rail_info_s
@@ -13,6 +14,8 @@ typedef struct _mpc_lowcomm_ofi_rail_info_s
 
 #define MPC_OFI_EP_MEMPOOL_MIN 10
 #define MPC_OFI_EP_MEMPOOL_MAX 100
+
+struct mpc_ofi_domain_buffer_manager_t;
 typedef struct _mpc_lowcomm_ofi_endpoint_info_s
 {
    mpc_mempool bsend;

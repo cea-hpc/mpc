@@ -31,6 +31,7 @@
 #include <limits.h>
 #include <sctk_alloc.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "endpoint.h"
 

@@ -54,7 +54,6 @@
 #include "lcp_ep.h"
 #include "lcp_task.h"
 #include "lcr/lcr_component.h"
-#include "mpc_common_debug.h"
 #include "lcr/lcr_def.h"
 
 //TODO: memset to 0 all allocated structure (especially those containing
