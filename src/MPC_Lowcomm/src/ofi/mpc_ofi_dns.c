@@ -192,14 +192,12 @@ int mpc_ofi_domain_dns_release(struct mpc_ofi_domain_dns_t *ddns)
 
    MPC_HT_ITER(&ddns->cache, tmp )
    {
-      mpc_ofi_dns_name_entry_release(tmp);
-
       if(tmp->endpoint && ddns->is_passive)
       {
          TODO("Understand why we get -EBUSY");
          fi_close(&tmp->endpoint->fid);
       }
-
+      mpc_ofi_dns_name_entry_release(tmp);
    }
    MPC_HT_ITER_END(&ddns->cache)
 
