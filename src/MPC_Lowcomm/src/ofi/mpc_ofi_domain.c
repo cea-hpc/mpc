@@ -111,11 +111,12 @@ int mpc_ofi_domain_buffer_post(struct mpc_ofi_domain_buffer_t * buff)
    struct fi_msg msg;
    struct iovec msg_iov;
 
+   void * mr_desc = fi_mr_desc(buff->mr);
+
    msg_iov.iov_base = buff->buffer;
    msg_iov.iov_len = buff->size;
-
    msg.msg_iov = &msg_iov;
-   msg.desc = fi_mr_desc(buff->mr);
+   msg.desc = &mr_desc;
    msg.iov_count = 1;
    msg.addr = 0;
    msg.data = 0;
@@ -1121,8 +1122,10 @@ int mpc_ofi_domain_get(struct mpc_ofi_domain_t *domain,
    riov.len = len;
    riov.key = key;
 
+   void * mr_desc = fi_mr_desc((*req)->mr[0]);
+
    struct fi_msg_rma rma_msg = { .msg_iov = &iov,
-                                 .desc = fi_mr_desc((*req)->mr[0]),
+                                 .desc = &mr_desc,
                                  .iov_count = 1,
                                  .addr = target_addr,
                                  .rma_iov = &riov,
@@ -1227,8 +1230,10 @@ int mpc_ofi_domain_put(struct mpc_ofi_domain_t *domain,
    riov.len = len;
    riov.key = key;
 
+   void * mr_desc = fi_mr_desc((*req)->mr[0]);
+
    struct fi_msg_rma rma_msg = { .msg_iov = &iov,
-                                 .desc = fi_mr_desc((*req)->mr[0]),
+                                 .desc = &mr_desc,
                                  .iov_count = 1,
                                  .addr = target_addr,
                                  .rma_iov = &riov,
