@@ -189,7 +189,7 @@ int mpc_ofi_domain_put(struct mpc_ofi_domain_t *domain,
                        int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
                        void *arg_ext);
 
-struct fid_ep * mpc_ofi_domain_connect(struct mpc_ofi_domain_t *domain, mpc_lowcomm_peer_uid_t uid, void *addr);
+struct fid_ep * mpc_ofi_domain_connect(struct mpc_ofi_domain_t *domain, mpc_lowcomm_peer_uid_t uid, void *addr, size_t addrlen);
 
 struct fid_ep * mpc_ofi_domain_accept(struct mpc_ofi_domain_t *domain, mpc_lowcomm_peer_uid_t uid, void *addr);
 

@@ -61,11 +61,11 @@ struct mpc_ofi_net_infos
 
 void mpc_ofi_connect_on_demand(struct sctk_rail_info_s *rail, mpc_lowcomm_peer_uid_t dest)
 {
+   struct mpc_ofi_context_t * ctx = &rail->network.ofi.ctx;
 
    struct mpc_ofi_net_infos my_infos = { 0 };
    my_infos.size = MPC_OFI_ADDRESS_LEN;
 
-   struct mpc_ofi_context_t * ctx = &rail->network.ofi.ctx;
 
    int addr_found = 0;
 
@@ -101,7 +101,7 @@ void mpc_ofi_connect_on_demand(struct sctk_rail_info_s *rail, mpc_lowcomm_peer_u
    struct mpc_ofi_net_infos * remote_info = (struct mpc_ofi_net_infos *)content->on_demand.data;
 
    /* May create a new endpoint if the endpoint is passive (returns the connectionless endpoint otherwise) */
-   struct fid_ep * related_endpoint = mpc_ofi_view_connect(&rail->network.ofi.view, dest, remote_info->addr);
+   struct fid_ep * related_endpoint = mpc_ofi_view_connect(&rail->network.ofi.view, dest, remote_info->addr, remote_info->size);
 
    /* Now add the response to the DNS */
    if( mpc_ofi_dns_register(&ctx->dns, dest, remote_info->addr, remote_info->size, related_endpoint) )
@@ -487,8 +487,6 @@ static int __mpc_ofi_context_recv_callback_t(void *buffer, __UNUSED__ size_t len
 	int rc = MPC_LOWCOMM_SUCCESS;
 
    lcr_ofi_am_hdr_t *hdr = (lcr_ofi_am_hdr_t*)buffer;
-
-   mpc_common_debug("IN CB %d LEN %lld", hdr->am_id, hdr->length);
 
 	lcr_am_handler_t handler = rail->am[hdr->am_id];
 	if (handler.cb == NULL) {

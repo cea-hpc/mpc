@@ -1329,7 +1329,7 @@ int mpc_ofi_domain_connection_state_update(mpc_ofi_domain_connection_state_t * s
    return 0;
 }
 
-struct fid_ep * mpc_ofi_domain_connect(struct mpc_ofi_domain_t *domain, mpc_lowcomm_peer_uid_t uid, void *addr)
+struct fid_ep * mpc_ofi_domain_connect(struct mpc_ofi_domain_t *domain, mpc_lowcomm_peer_uid_t uid, void *addr, size_t addrlen)
 {
    if(!domain->is_passive_endpoint)
    {
@@ -1338,8 +1338,14 @@ struct fid_ep * mpc_ofi_domain_connect(struct mpc_ofi_domain_t *domain, mpc_lowc
 
    mpc_ofi_domain_async_connection_state_t connection_state = MPC_OFI_DOMAIN_ENDPOINT_CONNECTING;
 
+   struct fi_info * infos = fi_dupinfo(domain->ctx->config);
 
-   struct fid_ep * new_ep = __new_endpoint(domain, NULL);
+   infos->dest_addr = addr;
+   infos->dest_addrlen = addrlen;
+
+   struct fid_ep * new_ep = __new_endpoint(domain, infos);
+
+   fi_freeinfo(infos);
 
    mpc_common_debug("[OFI] Connecting to %s", mpc_lowcomm_peer_format(uid));
 
