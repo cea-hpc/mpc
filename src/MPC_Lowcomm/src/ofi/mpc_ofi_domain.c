@@ -409,6 +409,8 @@ int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context
       return -1;
    }
 
+   /* Is multi-recv supported ? */
+   domain->has_multi_recv = !!(ctx->config->caps & FI_MULTI_RECV) && config->enable_multi_recv;
 
    /* Create a connectionless endpoint */
    if( domain->is_passive_endpoint )
@@ -420,8 +422,6 @@ int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context
       MPC_OFI_CHECK_RET(mpc_ofi_domain_create_connectionless_endpoint(domain));
    }
 
-   /* Is multi-recv supported ? */
-   domain->has_multi_recv = !!(ctx->config->caps & FI_MULTI_RECV) && config->enable_multi_recv;
 
    if(!domain->is_passive_endpoint)
    {
