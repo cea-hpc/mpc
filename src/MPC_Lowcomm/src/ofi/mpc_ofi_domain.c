@@ -1,7 +1,7 @@
 #include "mpc_ofi_domain.h"
+
 #include "mpc_common_datastructure.h"
 #include "mpc_common_spinlock.h"
-#include "mpc_lowcomm_monitor.h"
 #include "mpc_ofi_dns.h"
 #include "mpc_ofi_helpers.h"
 
@@ -234,7 +234,7 @@ struct fid_ep * __new_endpoint(struct mpc_ofi_domain_t *domain, struct fi_info *
    MPC_OFI_CHECK_RET_OR_NULL(fi_endpoint(domain->domain, pinfo, &ret, domain));
 
    /* Now bind all cqs , av and eqs */
-   if(domain->has_multi_recv )
+   if(domain->has_multi_recv)
    {
       size_t max_eager_size = domain->ctx->rail_config->eager_size;
       MPC_OFI_CHECK_RET_OR_NULL(fi_setopt(&ret->fid, FI_OPT_ENDPOINT, FI_OPT_MIN_MULTI_RECV, &max_eager_size, sizeof(size_t)));
@@ -243,8 +243,6 @@ struct fid_ep * __new_endpoint(struct mpc_ofi_domain_t *domain, struct fi_info *
    MPC_OFI_CHECK_RET_OR_NULL(fi_ep_bind(ret, &domain->eq->fid, 0));
    MPC_OFI_CHECK_RET_OR_NULL(fi_ep_bind(ret, &domain->tx_cq->fid, FI_SEND));
    MPC_OFI_CHECK_RET_OR_NULL(fi_ep_bind(ret, &domain->rx_cq->fid, FI_RECV));
-
-   mpc_ofi_domain_buffer_entry_add(domain, ret);
 
    return ret;
 }
@@ -532,7 +530,13 @@ static inline int _ofi_domain_cq_process_event(struct mpc_ofi_domain_t * domain,
 
       /* This is a RECV */
       size_t size = evt->len;
-      void * addr = evt->buf;
+      void * addr = buff->buffer;
+
+      if(domain->has_multi_recv)
+      {
+         /* Use the offset as part of the Cq event */
+         addr = evt->buf;
+      }
 
 
       /* Flag the buffer as in flight
@@ -580,6 +584,7 @@ static inline int _ofi_domain_cq_process_event(struct mpc_ofi_domain_t * domain,
    return 0;
 }
 
+#define OFI_DATA_BUFF_SIZE 64
 
 static inline int _ofi_domain_cq_poll(struct mpc_ofi_domain_t * domain, struct fid_cq * cq, int * did_poll)
 {
@@ -599,6 +604,27 @@ static inline int _ofi_domain_cq_poll(struct mpc_ofi_domain_t * domain, struct f
    {
       goto unlock_cq_poll;
    }
+
+
+	if(rd == -FI_EAVAIL)
+	{
+		struct fi_cq_err_entry err;
+      long ret = fi_cq_readerr(cq, &err, 0);
+      if(ret < 0)
+      {
+		   MPC_OFI_DUMP_ERROR(ret);
+         return_code = (int)ret;
+         goto unlock_cq_poll;
+      }
+      char data_buff[OFI_DATA_BUFF_SIZE];
+		data_buff[0] = '\0';
+		fi_cq_strerror(cq, err.prov_errno, err.err_data, data_buff, OFI_DATA_BUFF_SIZE);
+		mpc_common_debug_fatal("%d : Got cq error on %s message of len %d over buffer %p == %s", err.err,
+				fi_strerror(err.err), err.buf, err.len, data_buff);
+      return_code = -1;
+		goto unlock_cq_poll;
+	}
+
 
    if(rd < 0)
    {
@@ -663,18 +689,17 @@ int _mpc_ofi_domain_notify_connection(struct mpc_ofi_domain_t * domain, struct f
    if(prev_state == MPC_OFI_DOMAIN_ENDPOINT_ACCEPTING)
    {
       /* Add the new endpoint to the context's DNS */
-      mpc_ofi_dns_register(&domain->ctx->dns, (uint64_t)conn_info->target_rank, NULL, 0, (struct fid_ep*)cm_data->fid);
+      mpc_ofi_dns_set_endpoint(&domain->ctx->dns, (uint64_t)conn_info->target_rank, (struct fid_ep*)cm_data->fid);
       /* Notify the passive callback to update the endpoint state in the rail once connected */
       (domain->ctx->accept_cb)(conn_info->target_rank, domain->ctx->accept_cb_arg);
       mpc_ofi_domain_clear_pending_connection(domain, (uint64_t)cm_data->fid->context);
    }
 
+   mpc_ofi_domain_buffer_entry_add(domain, (struct fid_ep*)cm_data->fid);
+
    return 0;
 }
 
-
-
-#define OFI_DATA_BUFF_SIZE 1024
 
 static inline int _mpc_ofi_domain_eq_poll(struct mpc_ofi_domain_t * domain)
 {
@@ -728,7 +753,6 @@ static inline int _mpc_ofi_domain_eq_poll(struct mpc_ofi_domain_t * domain)
       {
          mpc_common_debug_fatal("Failed to accept connection");
       }
-
    }
    else if(event & FI_CONNECTED)
    {
@@ -1350,7 +1374,8 @@ struct fid_ep * mpc_ofi_domain_connect(struct mpc_ofi_domain_t *domain, mpc_lowc
 
    struct fid_ep * new_ep = __new_endpoint(domain, infos);
 
-   fi_freeinfo(infos);
+   TODO("Do not know why it crash yet");
+   //fi_freeinfo(infos);
 
    mpc_common_debug("[OFI] Connecting to %s", mpc_lowcomm_peer_format(uid));
 

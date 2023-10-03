@@ -51,6 +51,8 @@ int mpc_ofi_dns_release(struct mpc_ofi_dns_t * dns);
 
 struct fid_ep * mpc_ofi_dns_resolve(struct mpc_ofi_dns_t * dns, uint64_t rank, char * outbuff, size_t *outlen, int * found);
 int mpc_ofi_dns_register(struct mpc_ofi_dns_t * dns, uint64_t rank, char * buff, size_t len, struct fid_ep * endpoint);
+void mpc_ofi_dns_dump_addr(char * context, char * buff, size_t len);
+int mpc_ofi_dns_set_endpoint(struct mpc_ofi_dns_t * dns, uint64_t rank, struct fid_ep * endpoint);
 
 /**********************
  * THE PER DOMAIN DNS *

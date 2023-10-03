@@ -4,6 +4,7 @@
 #include "mpc_ofi_context.h"
 #include "mpc_ofi_request.h"
 
+#include <mpc_lowcomm_monitor.h>
 #include <mpc_common_spinlock.h>
 
 #include "lowcomm_config.h"

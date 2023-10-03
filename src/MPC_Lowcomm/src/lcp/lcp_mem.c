@@ -342,7 +342,7 @@ struct lcp_pinning_entry * lcp_pinning_entry_list_push(struct lcp_pinning_entry_
                 list->entries_count++;
                 list->total_size += len;
 
-                mpc_common_debug("PINNING new segment for size %ld @ %p [MMU count : %llu, MMU TOTAL %g MB]", buffer, len, list->entries_count, (double)list->total_size/(1024.0*1024.0));
+                mpc_common_debug("PINNING new segment for size %ld @ %p [MMU count : %llu, MMU TOTAL %g MB]", len, buffer, list->entries_count, (double)list->total_size/(1024.0*1024.0));
 
         }
 

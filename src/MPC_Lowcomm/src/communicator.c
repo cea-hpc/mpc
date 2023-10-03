@@ -699,15 +699,9 @@ mpc_hardware_split_info_t * mpc_lowcomm_topo_comm_get(mpc_lowcomm_communicator_t
 
 	if(index != -1)
 	{
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-		mpc_common_debug_log("GET | TASK %d | ROOT %d -> INDEX %d | ADR %p", task_rank, root, index, comm->topo_comms[task_rank].hw_infos[index]);
-#endif
 		return comm->topo_comms[task_rank].hw_infos[index];
 	}
 
-#ifdef MPC_ENABLE_DEBUG_MESSAGES
-	mpc_common_debug_log("GET | TASK %d | ROOT %d -> NULL | ADR %p", task_rank, root, NULL);
-#endif
 	return NULL;
 }
 

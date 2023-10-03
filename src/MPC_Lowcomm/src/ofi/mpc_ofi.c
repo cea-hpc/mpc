@@ -411,8 +411,8 @@ int mpc_ofi_get_attr(sctk_rail_info_t *rail,
                      lcr_rail_attr_t *attr)
 {
 	attr->iface.cap.am.max_iovecs = MPC_OFI_IOVEC_SIZE;
-	attr->iface.cap.am.max_bcopy  = rail->runtime_config_driver_config->driver.value.ofi.bcopy_size;
-	attr->iface.cap.am.max_zcopy  = rail->runtime_config_driver_config->driver.value.ofi.eager_size;
+	attr->iface.cap.am.max_bcopy  = rail->runtime_config_driver_config->driver.value.ofi.bcopy_size - sizeof(lcr_ofi_am_hdr_t);
+	attr->iface.cap.am.max_zcopy  = rail->runtime_config_driver_config->driver.value.ofi.eager_size - sizeof(lcr_ofi_am_hdr_t);
 
 	attr->iface.cap.tag.max_bcopy = 0;
 	attr->iface.cap.tag.max_zcopy = 0;
@@ -492,6 +492,8 @@ static int __mpc_ofi_context_recv_callback_t(void *buffer, __UNUSED__ size_t len
 	if (handler.cb == NULL) {
 		mpc_common_debug_fatal("LCP: handler id %d not supported.", hdr->am_id);
 	}
+
+   mpc_common_tracepoint_fmt("[OFI] callback for a payload of %lu", len);
 
 	rc = handler.cb(handler.arg, hdr->data, hdr->length, 0);
 

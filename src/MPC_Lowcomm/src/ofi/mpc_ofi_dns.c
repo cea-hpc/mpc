@@ -3,25 +3,39 @@
 #include <mpc_common_debug.h>
 #include <mpc_common_helper.h>
 #include <mpc_common_spinlock.h>
+#include <stdio.h>
+#include <string.h>
 
+
+#include "mpc_lowcomm_monitor.h"
 #include "mpc_common_datastructure.h"
 #include "mpc_ofi_helpers.h"
 #include "rdma/fabric.h"
 
 //#define DEBUG_DNS_ADDR
 
-#ifdef DEBUG_DNS_ADDR
-static void __dump_addr(char *p, size_t len)
+static char * __dump_addr(char * buff, int outlen, char *p, size_t len)
 {
 	size_t i = 0;
 
+   buff[0] = '\0';
+
 	for(i = 0; i < len; i++)
 	{
-		printf("%x", p[i]);
+      char tmp[8];
+		snprintf(tmp, 8, "%x", p[i]);
+      strncat(buff, tmp, outlen - 1);
 	}
-	printf("\n");
+
+   return buff;
 }
-#endif
+
+void mpc_ofi_dns_dump_addr(char * context, char * buff, size_t len)
+{
+   char outbuff[512];
+   mpc_common_debug_error("[OFI DNS] %s OFI ADDR len %d : %s", context, len, __dump_addr(outbuff, 512, buff, len));
+}
+
 
 /*******************
  * THE CENTRAL DNS *
@@ -98,13 +112,14 @@ struct fid_ep * mpc_ofi_dns_resolve(struct mpc_ofi_dns_t * dns, uint64_t rank, c
          return NULL;
       }
 
+      assume(entry->len < *outlen);
+
       memcpy(outbuff, entry->value, entry->len);
       *outlen = entry->len;
 
-
       #ifdef DEBUG_DNS_ADDR
-         (void)fprintf(stderr, "Resovled address for %lu @", rank);
-         __dump_addr(outbuff, *outlen);
+         char buff[512];
+         mpc_common_debug_error("[OFI DNS]  Resolved address for %s len: %ld @ %s in %p", mpc_lowcomm_peer_format(rank), *outlen, __dump_addr(buff, 512, outbuff, *outlen), outbuff);
       #endif
 
       *found = 1;
@@ -115,11 +130,24 @@ struct fid_ep * mpc_ofi_dns_resolve(struct mpc_ofi_dns_t * dns, uint64_t rank, c
    *found = 0;
 
 #ifdef DEBUG_DNS_ADDR
-      mpc_common_debug_warning("Failed to resolve %lu", rank);
+      mpc_common_debug_warning("[OFI DNS]  Failed to resolve %s", mpc_lowcomm_peer_format(rank));
 #endif
 
    return NULL;
 }
+
+int mpc_ofi_dns_set_endpoint(struct mpc_ofi_dns_t * dns, uint64_t rank, struct fid_ep * endpoint)
+{
+   struct mpc_ofi_dns_name_entry_t *entry = (struct mpc_ofi_dns_name_entry_t *)mpc_common_hashtable_get(&dns->cache, rank);
+
+   assume(entry != NULL);
+   assume(entry->endpoint == NULL);
+
+   entry->endpoint = endpoint;
+
+   return 0;
+}
+
 
 int mpc_ofi_dns_register(struct mpc_ofi_dns_t * dns, uint64_t rank, char * buff, size_t len, struct fid_ep * endpoint)
 {
@@ -127,8 +155,8 @@ int mpc_ofi_dns_register(struct mpc_ofi_dns_t * dns, uint64_t rank, char * buff,
    struct mpc_ofi_dns_name_entry_t *entry = mpc_ofi_dns_name_entry(buff, len, endpoint);
 
 #ifdef DEBUG_DNS_ADDR
-   (void)fprintf(stderr, "New address for %lu @", rank);
-   __dump_addr(buff, len);
+   char outbuff[512];
+   mpc_common_debug_error("[OFI DNS] New address for %s len: %ld @ %s", mpc_lowcomm_peer_format(rank), len, __dump_addr(outbuff, 512, buff, len));
 #endif
 
    /* Add to cache */
