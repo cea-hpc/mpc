@@ -78,7 +78,15 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
    }
 
    /* Flag for Memory Registration */
-   ctx->config->domain_attr->mr_key_size = 0;
+
+   if(!strcmp(provider, "tcp"))
+   {
+      /* TCP does not like VIRT address offsetting and needs to be reset here */
+      ctx->config->domain_attr->mr_mode = FI_MR_LOCAL | FI_MR_PROV_KEY | FI_MR_ALLOCATED;
+      ctx->config->domain_attr->mr_key_size = 0;
+   }
+
+
    ctx->config->domain_attr->control_progress = FI_PROGRESS_MANUAL;
    ctx->config->domain_attr->data_progress = FI_PROGRESS_MANUAL;
 
