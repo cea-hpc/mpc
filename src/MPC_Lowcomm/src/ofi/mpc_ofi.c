@@ -33,6 +33,7 @@ struct mpc_ofi_deffered_completion_s
    struct iovec full_iov[MPC_OFI_IOVEC_SIZE + 2];
 };
 
+
 static inline void __init_ofi_endpoint(sctk_rail_info_t *rail, _mpc_lowcomm_ofi_endpoint_info_t *ofi_data)
 {
    mpc_mempool_init(&ofi_data->bsend, MPC_OFI_EP_MEMPOOL_MIN, MPC_OFI_EP_MEMPOOL_MAX, rail->runtime_config_driver_config->driver.value.ofi.bcopy_size + sizeof(lcr_ofi_am_hdr_t), sctk_malloc, sctk_free);
@@ -279,17 +280,22 @@ void  mpc_ofi_pin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *
                                      addr,
                                      size,
                                      FI_REMOTE_READ | FI_REMOTE_WRITE,
-                                     &list->pin.ofi))
+                                     &list->pin.ofipin.ofi))
    {
       mpc_common_errorpoint("Failed to register memory for RDMA");
       mpc_common_debug_abort();
    }
+
+   /* And get the key */
+   list->pin.ofipin.shared.ofi_remote_mr_key = fi_mr_key(list->pin.ofipin.ofi);
+   list->pin.ofipin.shared.addr = addr;
+   list->pin.ofipin.shared.size = size;
 }
 
 void mpc_ofi_unpin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list)
 {
 
-   if(mpc_ofi_domain_memory_unregister(rail->network.ofi.view.domain, list->pin.ofi))
+   if(mpc_ofi_domain_memory_unregister(rail->network.ofi.view.domain, list->pin.ofipin.ofi))
    {
       mpc_common_errorpoint("Failed to register memory for RDMA");
       mpc_common_debug_abort();
@@ -300,20 +306,31 @@ void mpc_ofi_unpin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list 
 int mpc_ofi_pack_rkey(sctk_rail_info_t *rail,
                       lcr_memp_t *memp, void *dest)
 {
-        UNUSED(rail);
-        void *p = dest;
-        *(uint64_t *)p = fi_mr_key(memp->pin.ofi);
-        return sizeof(uint64_t);
+   UNUSED(rail);
+   memcpy(dest, &memp->pin.ofipin.shared, sizeof(struct mpc_ofi_shared_pinning_context));
+   return sizeof(struct mpc_ofi_shared_pinning_context);
 }
 
 int mpc_ofi_unpack_rkey(sctk_rail_info_t *rail,
                         lcr_memp_t *memp, void *dest)
 {
         UNUSED(rail);
-        void *p = dest;
-        memp->pin.ofi_remote_mr_key = *(uint64_t *)p;
+        memcpy(&memp->pin.ofipin.shared, dest, sizeof(struct mpc_ofi_shared_pinning_context));
+        return sizeof(struct mpc_ofi_shared_pinning_context);
+}
 
-        return sizeof(uint64_t);
+uint64_t __convert_rma_offset(struct mpc_ofi_domain_t *domain, void * buff_base_addr, uint64_t remote_offset)
+{
+   //mpc_ofi_decode_mr_mode(domain->ctx->config->domain_attr->mr_mode);
+
+   if(domain->ctx->config->domain_attr->mr_mode & FI_MR_VIRT_ADDR)
+   {
+      mpc_common_tracepoint_fmt("returning converted %lu %lu %lu", buff_base_addr, remote_offset, buff_base_addr + remote_offset);
+      return (uint64_t)buff_base_addr + remote_offset;
+   }
+
+   mpc_common_tracepoint_fmt("returning offset %lu", remote_offset);
+   return remote_offset;
 }
 
 
@@ -332,12 +349,14 @@ int mpc_ofi_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
    comp->sent = size;
    completion->comp = comp;
 
+   uint64_t network_offset = __convert_rma_offset(ep->rail->network.ofi.view.domain, remote_key->pin.ofipin.shared.addr, remote_offset);
+
    if(mpc_ofi_domain_get(ep->rail->network.ofi.view.domain,
                      (void *)local_addr,
                      size,
                      ep->dest,
-                     remote_offset,
-                     remote_key->pin.ofi_remote_mr_key,
+                     network_offset,
+                     remote_key->pin.ofipin.shared.ofi_remote_mr_key,
                      NULL,
                      __deffered_completion_cb,
                      completion))
@@ -367,12 +386,15 @@ int mpc_ofi_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
    comp->sent = size;
    completion->comp = comp;
 
+   uint64_t network_offset = __convert_rma_offset(ep->rail->network.ofi.view.domain, remote_key->pin.ofipin.shared.addr, remote_offset);
+
+
    if(mpc_ofi_domain_put(ep->rail->network.ofi.view.domain,
                      (void*)local_addr,
                      size,
                      ep->dest,
-                     remote_offset,
-                     remote_key->pin.ofi_remote_mr_key,
+                     network_offset,
+                     remote_key->pin.ofipin.shared.ofi_remote_mr_key,
                      NULL,
                      __deffered_completion_cb,
                      completion))
@@ -428,6 +450,7 @@ int mpc_ofi_query_devices(lcr_component_t *component,
                           lcr_device_t **devices_p,
                           unsigned int *num_devices_p)
 {
+
    struct fi_info * hints = mpc_ofi_get_requested_hints(component->driver_config->driver.value.ofi.provider, component->driver_config->driver.value.ofi.endpoint_type);
 
    struct fi_info *config = NULL;

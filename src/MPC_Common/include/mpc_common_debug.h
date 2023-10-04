@@ -36,6 +36,7 @@ extern "C"
 #include <mpc_config.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "mpc_common_types.h"
@@ -106,11 +107,17 @@ static inline void mpc_common_debug(const char *fmt, ...)
 	#endif
 #endif
 
-#define mpc_common_tracepoint(FMT) mpc_common_debug("%s:%d [%s] : "FMT, __FILE__, __LINE__, __FUNCTION__);
-#define mpc_common_tracepoint_fmt(FMT, ...) mpc_common_debug("%s:%d [%s] : "FMT, __FILE__, __LINE__, __FUNCTION__, __VA_ARGS__);
+static const char * mpc_common_debug_get_basename(const char * path)
+{
+	char * ret = strrchr(path, '/');
+	return ret?(ret + 1):path;
+} 
 
-#define mpc_common_errorpoint(FMT) mpc_common_debug_error("%s:%d [%s] : "FMT, __FILE__, __LINE__, __FUNCTION__);
-#define mpc_common_errorpoint_fmt(FMT, ...) mpc_common_debug_error("%s:%d [%s] : "FMT, __FILE__, __LINE__, __FUNCTION__, __VA_ARGS__);
+#define mpc_common_tracepoint(FMT) mpc_common_debug("[%s] %s:%d  : "FMT, __FUNCTION__, mpc_common_debug_get_basename(__FILE__), __LINE__);
+#define mpc_common_tracepoint_fmt(FMT, ...) mpc_common_debug("[%s] %s:%d : "FMT, __FUNCTION__, mpc_common_debug_get_basename(__FILE__),__LINE__, __VA_ARGS__);
+
+#define mpc_common_errorpoint(FMT) mpc_common_debug_error("[%s] %s:%d : "FMT, __FUNCTION__, mpc_common_debug_get_basename(__FILE__), __LINE__);
+#define mpc_common_errorpoint_fmt(FMT, ...) mpc_common_debug_error("[%s] %s:%d : "FMT, __FUNCTION__, mpc_common_debug_get_basename(__FILE__), __LINE__, __VA_ARGS__);
 
 
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)

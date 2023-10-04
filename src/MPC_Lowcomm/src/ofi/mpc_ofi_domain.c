@@ -453,14 +453,6 @@ int mpc_ofi_domain_release(struct mpc_ofi_domain_t * domain)
       return -1;
    }
 
-   TODO("Understand why we get -EBUSY");
-
-   fi_close(&domain->rx_cq->fid);
-   fi_close(&domain->tx_cq->fid);
-   fi_close(&domain->eq->fid);
-   fi_close(&domain->domain->fid);
-
-
    /* release request cache */
    if(mpc_ofi_request_cache_release(&domain->rcache))
    {
@@ -470,6 +462,15 @@ int mpc_ofi_domain_release(struct mpc_ofi_domain_t * domain)
 
    mpc_common_hashtable_release(&domain->pending_connections);
 
+
+   return 0;
+
+   TODO("Understand why we get -EBUSY");
+
+   fi_close(&domain->rx_cq->fid);
+   fi_close(&domain->tx_cq->fid);
+   fi_close(&domain->eq->fid);
+   fi_close(&domain->domain->fid);
 
    return 0;
 }

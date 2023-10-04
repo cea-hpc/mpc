@@ -29,7 +29,18 @@ typedef struct lcr_ofi_am_hdr {
    char * data[0];
 } lcr_ofi_am_hdr_t;
 
+struct mpc_ofi_shared_pinning_context
+{
+	uint64_t ofi_remote_mr_key;
+   void * addr;
+   size_t size;
+};
 
+struct mpc_ofi_pinning_context
+{
+	struct fid_mr *ofi;
+   struct mpc_ofi_shared_pinning_context shared;
+};
 
 
 
