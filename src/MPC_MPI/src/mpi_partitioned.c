@@ -136,7 +136,7 @@ int mpi_partitioned_complete_tag(mpc_lowcomm_request_t *req)
 
                 /* Send both rkeys to origin process */
                 lcp_request_param_t param_rkeys = { 0 };
-                lcp_ep_get(ctx, prtd->rkey_req.header.destination, &ep);
+                ep = lcp_ep_get(ctx, prtd->rkey_req.header.destination);
                 rc = lcp_tag_send_nb(ep, task, prtd->recv.rkeys_buf, 
                                      prtd->recv.rkeys_buf_size,
                                      &prtd->rkey_req, &param_rkeys);
@@ -225,7 +225,7 @@ int mpi_partitioned_complete_put_partition(mpc_lowcomm_request_t *req)
                                 .request = &mpi_req->req,
                                 .flags   = LCP_REQUEST_USER_REQUEST
                         };
-                        lcp_ep_get(ctx, mpi_req->req.header.destination, &ep);
+                        ep = lcp_ep_get(ctx, mpi_req->req.header.destination);
                         rc = lcp_put_nb(ep, task, &mpi_req->partitioned.complete, 
                                         sizeof(int), i * sizeof(int), 
                                         mpi_req->partitioned.rkey_prtd, 
@@ -244,7 +244,7 @@ int mpi_partitioned_complete_put_partition(mpc_lowcomm_request_t *req)
         if (OPA_fetch_and_decr_int(&mpi_req->partitioned.counter) == 0) {
                 lcp_request_param_t param = { 0 };
                 mpi_req->partitioned.fin = 1;
-                lcp_ep_get(ctx, mpi_req->req.header.destination, &ep);
+                ep = lcp_ep_get(ctx, mpi_req->req.header.destination);
                 rc = lcp_tag_send_nb(ep, task, &mpi_req->partitioned.fin, 
                                      sizeof(int), &mpi_req->partitioned.fin_req, 
                                      &param);
@@ -417,7 +417,7 @@ int mpi_pstart(MPI_internal_request_t *req)
 
         switch (req->req.request_type) {
         case REQUEST_SEND:
-                lcp_ep_get(ctx, prtd->tag_req.header.destination, &ep);
+                ep = lcp_ep_get(ctx, prtd->tag_req.header.destination);
                 param = (lcp_request_param_t) { 0 };
                 rc = lcp_tag_send_nb(ep, task, &req->partitioned.partitions, 
                                      sizeof(int), &prtd->tag_req, 
@@ -506,7 +506,7 @@ int mpi_pready(int partition, MPI_internal_request_t *req)
                 .request = &req->req,
                 .flags   = LCP_REQUEST_USER_REQUEST
         };
-        lcp_ep_get(ctx, prtd->tag_req.header.destination, &ep);
+        ep = lcp_ep_get(ctx, prtd->tag_req.header.destination);
         rc = lcp_put_nb(ep, task, local_addr, partition_length, remote_offset, 
                         prtd->rkey_prtd, &param);
         if (rc != MPC_LOWCOMM_SUCCESS) {

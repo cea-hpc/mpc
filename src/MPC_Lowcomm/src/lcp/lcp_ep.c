@@ -1,3 +1,4 @@
+
 #include "lcp_ep.h"
 
 #include "mpc_common_datastructure.h"
@@ -434,7 +435,7 @@ int lcp_ep_create(lcp_context_h ctx, lcp_ep_h *ep_p,
 
 	LCP_CONTEXT_LOCK(ctx);
 
-	lcp_ep_get(ctx, uid, &ep);
+	ep = lcp_ep_get(ctx, uid);
 	if(ep != NULL)
 	{
 		mpc_common_debug_warning("LCP: ep already exists. uid=%llu.",
@@ -487,17 +488,17 @@ void lcp_ep_delete(lcp_ep_h ep)
 	ep = NULL;
 }
 
-void lcp_ep_get(lcp_context_h ctx, mpc_lowcomm_peer_uid_t uid, lcp_ep_h *ep_p)
+lcp_ep_h lcp_ep_get(lcp_context_h ctx, mpc_lowcomm_peer_uid_t uid)
 {
 	lcp_ep_ctx_t *elem = mpc_common_hashtable_get(&ctx->ep_htable, uid);
 
 	if(elem == NULL)
 	{
-		*ep_p = NULL;
+		return NULL;
 	}
 	else
 	{
-		*ep_p = elem->ep;
+		return elem->ep;
 	}
 }
 
@@ -513,8 +514,7 @@ void lcp_ep_get(lcp_context_h ctx, mpc_lowcomm_peer_uid_t uid, lcp_ep_h *ep_p)
  */
 int lcp_ep_get_or_create(lcp_context_h ctx, mpc_lowcomm_peer_uid_t uid, lcp_ep_h *ep_p, unsigned flags)
 {
-	lcp_ep_get(ctx, uid, ep_p);
-	if(!*ep_p)
+	if(!(*ep_p = lcp_ep_get(ctx, uid)))
 	{
 		return lcp_ep_create(ctx, ep_p, uid, flags);
 	}

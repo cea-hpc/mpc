@@ -1,3 +1,4 @@
+
 #ifndef LCP_DEF_H
 #define LCP_DEF_H
 

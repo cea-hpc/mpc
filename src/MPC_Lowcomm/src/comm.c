@@ -2742,8 +2742,7 @@ void _mpc_comm_ptp_message_send_check(mpc_lowcomm_ptp_message_t *msg, int poll_r
 		}
 		lcp_ep_h ep;
 
-		lcp_ep_get(lcp_ctx_loc, uid, &ep);
-		if(ep == NULL)
+		if(!(ep = lcp_ep_get(lcp_ctx_loc, uid)))
 		{
 			rc = lcp_ep_create(lcp_ctx_loc, &ep, uid, 0);
 			if(rc != MPC_LOWCOMM_SUCCESS)

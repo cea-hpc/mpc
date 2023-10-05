@@ -49,9 +49,8 @@ int lcp_ep_create(lcp_context_h ctx,
                   lcp_ep_h *ep_p, 
 		  uint64_t uid, 
                   unsigned flags);
-void lcp_ep_get(lcp_context_h ctx, 
-                uint64_t uid, 
-		lcp_ep_h *ep);
+lcp_ep_h lcp_ep_get(lcp_context_h ctx, 
+                uint64_t uid);
 
 int lcp_ep_get_or_create(lcp_context_h ctx, 
                 uint64_t uid, lcp_ep_h *ep_p, 

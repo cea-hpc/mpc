@@ -1,3 +1,34 @@
+/* ############################# MPC License ############################## */
+/* # Thu May  6 10:26:16 CEST 2021                                        # */
+/* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* #                                                                      # */
+/* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
+/* # This file is part of the MPC Runtime.                                # */
+/* #                                                                      # */
+/* # This software is governed by the CeCILL-C license under French law   # */
+/* # and abiding by the rules of distribution of free software.  You can  # */
+/* # use, modify and/ or redistribute the software under the terms of     # */
+/* # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # */
+/* # following URL http://www.cecill.info.                                # */
+/* #                                                                      # */
+/* # The fact that you are presently reading this means that you have     # */
+/* # had knowledge of the CeCILL-C license and that you accept its        # */
+/* # terms.                                                               # */
+/* #                                                                      # */
+/* # Maintainers:                                                         # */
+/* # - CARRIBAULT Patrick patrick.carribault@cea.fr                       # */
+/* # - JAEGER Julien julien.jaeger@cea.fr                                 # */
+/* # - PERACHE Marc marc.perache@cea.fr                                   # */
+/* # - ROUSSEL Adrien adrien.roussel@cea.fr                               # */
+/* # - TABOADA Hugo hugo.taboada@cea.fr                                   # */
+/* #                                                                      # */
+/* # Authors:                                                             # */
+/* # - CANAT Paul pcanat@paratools.fr                                     # */
+/* # - BESNARD Jean-Baptiste jbbesnard@paratools.com                      # */
+/* # - MOREAU Gilles gilles.moreau@cea.fr                                 # */
+/* #                                                                      # */
+/* ######################################################################## */
+
 #include "lcp_rndv.h"
 
 #include "lcp_ep.h"
@@ -335,7 +366,6 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
         int rc; 
         lcp_request_t *rndv_req;
         lcp_rndv_hdr_t *hdr = data;
-        lcp_ep_h ctx_ep;
 
         /* Rendez-vous request used for RTR (PUT) or RMA (GET) */
         rc = lcp_request_create(&rndv_req);
@@ -366,9 +396,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
         }
 
         /* Get endpoint */
-        lcp_ep_get(rndv_req->ctx, hdr->src_uid, &ctx_ep);
-
-        if (ctx_ep == NULL) {
+        if (!(rndv_req->send.ep = lcp_ep_get(rndv_req->ctx, hdr->src_uid))) {
                 rc = lcp_ep_create(rndv_req->ctx, &(rndv_req->send.ep), 
                                    hdr->src_uid, 0);
                 if (rc != LCP_SUCCESS) {
@@ -376,9 +404,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
                                                "after match.");
                         goto err;
                 }
-        } else {
-                rndv_req->send.ep = ctx_ep;
-        }
+        } 
 
         switch (rreq->ctx->config.rndv_mode) {
         case LCP_RNDV_PUT:
