@@ -275,11 +275,6 @@ struct fid_ep * mpc_ofi_view_connect(struct mpc_ofi_view_t *view, mpc_lowcomm_pe
    return mpc_ofi_domain_connect(view->domain, uid, addr, addrlen);
 }
 
-struct fid_ep * mpc_ofi_view_accept(struct mpc_ofi_view_t *view, mpc_lowcomm_peer_uid_t uid, void *addr)
-{
-   return mpc_ofi_domain_accept(view->domain, uid, addr);
-}
-
 int mpc_ofi_view_send(struct mpc_ofi_view_t *view, void * buffer, size_t size, uint64_t dest, struct mpc_ofi_request_t **req,
                         int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
                         void *arg_ext)

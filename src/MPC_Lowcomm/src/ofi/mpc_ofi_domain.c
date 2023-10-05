@@ -17,7 +17,6 @@
 #include <rdma/fi_endpoint.h>
 #include <rdma/fi_rma.h>
 
-#include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -350,7 +349,7 @@ int mpc_ofi_domain_init(struct mpc_ofi_domain_t * domain, struct mpc_ofi_context
    domain->ctx = ctx;
    domain->config = config;
 
-   mpc_common_hashtable_init(&domain->pending_connections, MPC_OFI_DOMAIN_CONNECTION_HT_SIZE);
+	mpc_ofi_domain_connection_tracker_init(&domain->conntrack);
 
    domain->ep = NULL;
    domain->pep = NULL;
@@ -460,8 +459,7 @@ int mpc_ofi_domain_release(struct mpc_ofi_domain_t * domain)
       return -1;
    }
 
-   mpc_common_hashtable_release(&domain->pending_connections);
-
+	mpc_ofi_domain_connection_tracker_release(&domain->conntrack);
 
    return 0;
 
@@ -669,7 +667,11 @@ int _mpc_ofi_domain_handle_incoming_connection(struct mpc_ofi_domain_t * domain,
 
    mpc_lowcomm_peer_uid_t uid = mpc_lowcomm_monitor_get_uid();
 
-   mpc_ofi_domain_add_pending_connection(domain, (uint64_t)new_ep->fid.context, *pfrom, MPC_OFI_DOMAIN_ENDPOINT_ACCEPTING,  NULL);
+	struct mpc_ofi_domain_connection_state * cstate = mpc_ofi_domain_connection_tracker_get_by_remote(&domain->conntrack, *pfrom);
+	assume(cstate != NULL);
+
+
+	mpc_ofi_domain_connection_state_endpoint_set(cstate, new_ep);
 
    MPC_OFI_CHECK_RET(fi_accept(new_ep, &uid, sizeof(mpc_lowcomm_peer_uid_t)));
 
@@ -678,23 +680,31 @@ int _mpc_ofi_domain_handle_incoming_connection(struct mpc_ofi_domain_t * domain,
 
 int _mpc_ofi_domain_notify_connection(struct mpc_ofi_domain_t * domain, struct fi_eq_cm_entry *cm_data )
 {
-
-   mpc_ofi_domain_connection_state_t * conn_info = mpc_ofi_domain_get_pending_connection(domain, (uint64_t) cm_data->fid->context);
+   struct mpc_ofi_domain_connection_state * conn_info = mpc_ofi_domain_connection_tracker_get_by_endpoint(&domain->conntrack, (struct fid_ep*)cm_data->fid);
    assume(conn_info != NULL);
-   mpc_common_debug("[OFI] Connected to %s", mpc_lowcomm_peer_format(conn_info->target_rank));
+	mpc_common_tracepoint_fmt("[OFI] Connected to %s", mpc_lowcomm_peer_format(conn_info->remote_uid));
+
 
    mpc_ofi_domain_async_connection_state_t prev_state = conn_info->state;
-   mpc_ofi_domain_connection_state_update(conn_info, MPC_OFI_DOMAIN_ENDPOINT_CONNECTED);
 
-   /* If we are on the listening side we forward the event to the UID key (from the context key to the UID)*/
-   if(prev_state == MPC_OFI_DOMAIN_ENDPOINT_ACCEPTING)
-   {
-      /* Add the new endpoint to the context's DNS */
-      mpc_ofi_dns_set_endpoint(&domain->ctx->dns, (uint64_t)conn_info->target_rank, (struct fid_ep*)cm_data->fid);
-      /* Notify the passive callback to update the endpoint state in the rail once connected */
-      (domain->ctx->accept_cb)(conn_info->target_rank, domain->ctx->accept_cb_arg);
-      mpc_ofi_domain_clear_pending_connection(domain, (uint64_t)cm_data->fid->context);
-   }
+	/* If we are on the listening side we forward the event to the UID key (from the context key to the UID)*/
+	if(prev_state == MPC_OFI_DOMAIN_ENDPOINT_ACCEPTING)
+	{
+		/* Now add the response to the DNS */
+		if( mpc_ofi_dns_register(&domain->ctx->dns, (uint64_t)conn_info->remote_uid, NULL, 0, (struct fid_ep*)cm_data->fid))
+		{
+			mpc_common_errorpoint_fmt("Failed to register OFI address for remote UID %d", conn_info->remote_uid);
+		}
+
+		mpc_ofi_domain_connection_state_set(conn_info, MPC_OFI_DOMAIN_ENDPOINT_CONNECTED);
+
+		/* Notify the passive callback to update the endpoint state in the rail once connected */
+		(domain->ctx->accept_cb)(conn_info->remote_uid, domain->ctx->accept_cb_arg);
+	}
+	else
+	{
+		mpc_ofi_domain_connection_state_set(conn_info, MPC_OFI_DOMAIN_ENDPOINT_CONNECTED);
+	}
 
    mpc_ofi_domain_buffer_entry_add(domain, (struct fid_ep*)cm_data->fid);
 
@@ -1297,67 +1307,197 @@ get_unlock:
  * CONNECTION STATE TRACKING *
  *****************************/
 
-int mpc_ofi_domain_insert_pending_connection(struct mpc_ofi_domain_t *domain, uint64_t key, mpc_ofi_domain_connection_state_t * conn)
+struct mpc_ofi_domain_connection_state * mpc_ofi_domain_connection_state_new( uint64_t key, mpc_lowcomm_peer_uid_t remote_uid, mpc_ofi_domain_async_connection_state_t state)
 {
-   conn->key = key;
-   mpc_common_hashtable_set(&domain->pending_connections, key, conn);
-   return 0;
+   struct mpc_ofi_domain_connection_state * ret = sctk_malloc(sizeof(struct mpc_ofi_domain_connection_state));
+   assume(ret != NULL);
+
+   ret->key = key;
+   ret->remote_uid = remote_uid;
+   ret->state = state;
+   ret->endpoint = NULL;
+
+   ret->next = NULL;
+
+   return ret;
 }
 
-
-int mpc_ofi_domain_add_pending_connection(struct mpc_ofi_domain_t *domain, uint64_t key, mpc_lowcomm_peer_uid_t uid, mpc_ofi_domain_async_connection_state_t state,  mpc_ofi_domain_async_connection_state_t * notification_addr)
+int mpc_ofi_domain_connection_state_release(struct mpc_ofi_domain_connection_state * cstate)
 {
-   mpc_ofi_domain_connection_state_t * new = sctk_malloc(sizeof(mpc_ofi_domain_connection_state_t));
-   assume(new != NULL);
-
-   new->notification_address = notification_addr;
-   new->state = state;
-   new->target_rank = uid;
-
-   if(new->notification_address)
-   {
-      /* To detect corrupdted states as we store on the stack */
-      assume(*new->notification_address == new->state);
-   }
-
-   return mpc_ofi_domain_insert_pending_connection(domain, key, new);
+   sctk_free(cstate);
+	return 0;
 }
 
-
-int mpc_ofi_domain_clear_pending_connection(struct mpc_ofi_domain_t *domain, uint64_t key)
+int mpc_ofi_domain_connection_state_set(struct mpc_ofi_domain_connection_state * cstate, mpc_ofi_domain_async_connection_state_t new_state)
 {
-   mpc_ofi_domain_connection_state_t *conn = mpc_ofi_domain_get_pending_connection(domain, key);
-
-   if(!conn)
-   {
-      mpc_common_debug_error("Cannot free connection entry %lu", key);
-      return 1;
-   }
-
-   sctk_free(conn);
-
-   mpc_common_hashtable_delete(&domain->pending_connections, key);
+   assume(cstate != NULL);
+   mpc_common_spinlock_lock(&cstate->lock);
+   cstate->state = new_state;
+   mpc_common_spinlock_unlock(&cstate->lock);
 
    return 0;
 }
 
-mpc_ofi_domain_connection_state_t * mpc_ofi_domain_get_pending_connection(struct mpc_ofi_domain_t *domain, uint64_t key)
+mpc_ofi_domain_async_connection_state_t mpc_ofi_domain_connection_state_get(struct mpc_ofi_domain_connection_state * cstate)
 {
-   return mpc_common_hashtable_get(&domain->pending_connections, key);
+   mpc_ofi_domain_async_connection_state_t ret = MPC_OFI_DOMAIN_ENDPOINT_NO_STATE;
+   assume(cstate != NULL);
+   mpc_common_spinlock_lock(&cstate->lock);
+   ret = cstate->state;
+   mpc_common_spinlock_unlock(&cstate->lock);
+
+   return ret;
 }
 
-int mpc_ofi_domain_connection_state_update(mpc_ofi_domain_connection_state_t * state, mpc_ofi_domain_async_connection_state_t new_state)
+int mpc_ofi_domain_connection_state_key_set(struct mpc_ofi_domain_connection_state * cstate, uint64_t key)
 {
-   if(state->notification_address)
-   {
-      assume(*state->notification_address == state->state);
-      *(state->notification_address) = new_state;
-   }
-
-   state->state = new_state;
+   assume(cstate != NULL);
+   mpc_common_spinlock_lock(&cstate->lock);
+   cstate->key = key;
+   mpc_common_spinlock_unlock(&cstate->lock);
 
    return 0;
 }
+
+
+int mpc_ofi_domain_connection_state_endpoint_set(struct mpc_ofi_domain_connection_state * cstate, struct fid_ep * ep)
+{
+   assume(cstate != NULL);
+   mpc_common_spinlock_lock(&cstate->lock);
+	assume(cstate->endpoint == NULL);
+   cstate->endpoint = ep;
+   mpc_common_spinlock_unlock(&cstate->lock);
+
+   return 0;
+}
+
+struct fid_ep * mpc_ofi_domain_connection_state_endpoint_get(struct mpc_ofi_domain_connection_state * cstate)
+{
+   struct fid_ep * ret = NULL;
+   assume(cstate != NULL);
+   mpc_common_spinlock_lock(&cstate->lock);
+   ret = cstate->endpoint;
+   mpc_common_spinlock_unlock(&cstate->lock);
+
+   return ret;
+}
+
+int mpc_ofi_domain_connection_tracker_init(struct mpc_ofi_domain_connection_tracker * tracker)
+{
+   tracker->connections = NULL;
+   mpc_common_spinlock_init(&tracker->lock, 0);
+   return 0;
+}
+
+int mpc_ofi_domain_connection_tracker_release(struct mpc_ofi_domain_connection_tracker * tracker)
+{
+   assume(tracker->connections == NULL);
+   return 0;
+}
+
+struct mpc_ofi_domain_connection_state * _tracker_get_by_remote_no_lock(struct mpc_ofi_domain_connection_tracker * tracker, mpc_lowcomm_peer_uid_t remote_uid)
+{
+   struct mpc_ofi_domain_connection_state * ret = tracker->connections;
+
+   while (ret)
+   {
+      if(ret->remote_uid == remote_uid)
+      {
+         return ret;
+      }
+
+      ret = ret->next;
+   }
+
+   return NULL;
+}
+
+
+struct mpc_ofi_domain_connection_state * mpc_ofi_domain_connection_tracker_get_by_remote(struct mpc_ofi_domain_connection_tracker * tracker, mpc_lowcomm_peer_uid_t remote_uid)
+{
+   struct mpc_ofi_domain_connection_state * ret = NULL;
+
+   mpc_common_spinlock_lock(&tracker->lock);
+
+   ret = _tracker_get_by_remote_no_lock(tracker, remote_uid);
+
+   mpc_common_spinlock_unlock(&tracker->lock);
+
+   return ret;
+}
+
+struct mpc_ofi_domain_connection_state * _tracker_get_by_key_no_lock(struct mpc_ofi_domain_connection_tracker * tracker, struct fid_ep * ep)
+{
+   struct mpc_ofi_domain_connection_state * ret = tracker->connections;
+
+   while (ret)
+   {
+      if(ret->endpoint == ep)
+      {
+         return ret;
+      }
+
+      ret = ret->next;
+   }
+
+   return NULL;
+}
+
+struct mpc_ofi_domain_connection_state * mpc_ofi_domain_connection_tracker_get_by_endpoint(struct mpc_ofi_domain_connection_tracker * tracker, struct fid_ep * ep)
+{
+   struct mpc_ofi_domain_connection_state * ret = NULL;
+
+   mpc_common_spinlock_lock(&tracker->lock);
+
+   ret = _tracker_get_by_key_no_lock(tracker, ep);
+
+   mpc_common_spinlock_unlock(&tracker->lock);
+
+   return ret;
+}
+
+struct mpc_ofi_domain_connection_state * mpc_ofi_domain_connection_tracker_add(struct mpc_ofi_domain_connection_tracker * tracker,
+                                                                               uint64_t key,
+                                                                               mpc_lowcomm_peer_uid_t remote_uid,
+                                                                               mpc_ofi_domain_async_connection_state_t state,
+                                                                               int * is_first)
+{
+
+   struct mpc_ofi_domain_connection_state * ret = NULL;
+
+   mpc_common_spinlock_lock(&tracker->lock);
+
+   struct mpc_ofi_domain_connection_state * previous = _tracker_get_by_remote_no_lock(tracker, remote_uid);
+
+   if(previous)
+   {
+      ret = previous;
+      *is_first = 0;
+      goto unlock; 
+   }
+   else
+   {
+      *is_first = 1;
+   }
+
+
+   ret = mpc_ofi_domain_connection_state_new( key, remote_uid, state);
+
+   /* Insert in List */
+   ret->next = tracker->connections;
+   tracker->connections = ret;
+	
+
+unlock:
+   mpc_common_spinlock_unlock(&tracker->lock);
+   return ret;
+}
+
+
+
+/************************
+ * CONNECTION TO DOMAIN *
+ ************************/
 
 struct fid_ep * mpc_ofi_domain_connect(struct mpc_ofi_domain_t *domain, mpc_lowcomm_peer_uid_t uid, void *addr, size_t addrlen)
 {
@@ -1366,8 +1506,6 @@ struct fid_ep * mpc_ofi_domain_connect(struct mpc_ofi_domain_t *domain, mpc_lowc
       return domain->ep;
    }
 
-   mpc_ofi_domain_async_connection_state_t connection_state = MPC_OFI_DOMAIN_ENDPOINT_CONNECTING;
-
    struct fi_info * infos = fi_dupinfo(domain->ctx->config);
 
    infos->dest_addr = addr;
@@ -1375,43 +1513,22 @@ struct fid_ep * mpc_ofi_domain_connect(struct mpc_ofi_domain_t *domain, mpc_lowc
 
    struct fid_ep * new_ep = __new_endpoint(domain, infos);
 
+
+	struct mpc_ofi_domain_connection_state * cstate = mpc_ofi_domain_connection_tracker_get_by_remote(&domain->conntrack, uid);
+	assume(cstate != NULL);
+	assume(mpc_ofi_domain_connection_state_get(cstate) == MPC_OFI_DOMAIN_ENDPOINT_CONNECTING);
+	mpc_ofi_domain_connection_state_endpoint_set(cstate, new_ep);
+
    TODO("Do not know why it crash yet");
    //fi_freeinfo(infos);
 
    mpc_common_debug("[OFI] Connecting to %s", mpc_lowcomm_peer_format(uid));
 
-   mpc_ofi_domain_add_pending_connection(domain, (uint64_t)new_ep->fid.context, uid, MPC_OFI_DOMAIN_ENDPOINT_CONNECTING, &connection_state);
-
    mpc_lowcomm_peer_uid_t my_uid = mpc_lowcomm_monitor_get_uid();
 
    MPC_OFI_CHECK_RET_OR_NULL(fi_connect(new_ep, addr, &my_uid, sizeof(mpc_lowcomm_peer_uid_t)));
-
-   while(connection_state == MPC_OFI_DOMAIN_ENDPOINT_CONNECTING)
-   {
-      mpc_ofi_domain_poll(domain, -1);
-   }
-
-   if(connection_state != MPC_OFI_DOMAIN_ENDPOINT_CONNECTED)
-   {
-      mpc_common_debug_fatal("Endpoint failed to connect");
-   }
-
-   mpc_ofi_domain_clear_pending_connection(domain, (uint64_t)new_ep->fid.context);
 
    return new_ep;
 
 }
 
-struct fid_ep * mpc_ofi_domain_accept(struct mpc_ofi_domain_t *domain, __UNUSED__ mpc_lowcomm_peer_uid_t uid, __UNUSED__ void *addr)
-{
-   if(!domain->is_passive_endpoint)
-   {
-      /* Here we can directly return the connectionless endpoint as the value has been
-         inserted in the address vector in the on demand callback in mpc_ofi.c*/
-      return domain->ep;
-   }
-
-   /* This is the case of connected endpoints we need to add the new process only when
-       we will process the EQ CONNREQ event and domain accept might be too early */
-   return NULL;
-}

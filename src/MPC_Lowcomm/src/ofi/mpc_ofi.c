@@ -58,31 +58,54 @@ struct mpc_ofi_net_infos
 {
    char addr[MPC_OFI_ADDRESS_LEN];
    size_t size;
+   mpc_lowcomm_peer_uid_t my_uid;
+   int can_initiate_connection;
 };
 
-void mpc_ofi_connect_on_demand(struct sctk_rail_info_s *rail, mpc_lowcomm_peer_uid_t dest)
+void mpc_ofi_wait_for_connection(struct sctk_rail_info_s *rail, struct mpc_ofi_domain_connection_state * cstate)
+{
+	mpc_common_tracepoint_fmt("wait start to %s", mpc_lowcomm_peer_format(cstate->remote_uid));
+
+   while(mpc_ofi_domain_connection_state_get(cstate) != MPC_OFI_DOMAIN_ENDPOINT_CONNECTED)
+   {
+      mpc_ofi_domain_poll(rail->network.ofi.view.domain, 0);
+   }
+
+	mpc_common_tracepoint_fmt("wait DONE to %s", mpc_lowcomm_peer_format(cstate->remote_uid));
+
+
+	/* The route will be added when moving to connected in the EQ polling */
+}
+
+#define RAIL_NAME_LEN 128
+
+void mpc_ofi_connect_on_demand_passive(struct sctk_rail_info_s *rail, mpc_lowcomm_peer_uid_t dest)
 {
    struct mpc_ofi_context_t * ctx = &rail->network.ofi.ctx;
 
+
    struct mpc_ofi_net_infos my_infos = { 0 };
    my_infos.size = MPC_OFI_ADDRESS_LEN;
+   my_infos.my_uid =mpc_lowcomm_monitor_get_uid();
+   my_infos.can_initiate_connection = 0;
 
+
+	mpc_common_tracepoint_fmt("connectionless connect to %s", mpc_lowcomm_peer_format(dest));
 
    int addr_found = 0;
 
-   mpc_ofi_dns_resolve(&ctx->dns, mpc_lowcomm_monitor_get_uid(), my_infos.addr, &my_infos.size, &addr_found);
+   mpc_ofi_dns_resolve(&ctx->dns, my_infos.my_uid, my_infos.addr, &my_infos.size, &addr_found);
 
    if( !addr_found )
    {
       mpc_common_debug_fatal("Failed to resolve OFI address for local UID %d", mpc_lowcomm_monitor_get_uid());
    }
 
-
 	mpc_lowcomm_monitor_retcode_t ret = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
 
-   struct mpc_ofi_net_infos __netinfos;
+	char rail_name[RAIL_NAME_LEN];
 	mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_ondemand(dest,
-	                                                                   __gen_rail_target_name(rail, (char *)&__netinfos, sizeof(struct mpc_ofi_net_infos)),
+	                                                                   __gen_rail_target_name(rail, rail_name, RAIL_NAME_LEN),
 	                                                                   (char*)&my_infos,
 	                                                                   sizeof(struct mpc_ofi_net_infos),
 	                                                                   &ret);
@@ -101,14 +124,12 @@ void mpc_ofi_connect_on_demand(struct sctk_rail_info_s *rail, mpc_lowcomm_peer_u
 
    struct mpc_ofi_net_infos * remote_info = (struct mpc_ofi_net_infos *)content->on_demand.data;
 
-   /* May create a new endpoint if the endpoint is passive (returns the connectionless endpoint otherwise) */
-   struct fid_ep * related_endpoint = mpc_ofi_view_connect(&rail->network.ofi.view, dest, remote_info->addr, remote_info->size);
 
-   /* Now add the response to the DNS */
-   if( mpc_ofi_dns_register(&ctx->dns, dest, remote_info->addr, remote_info->size, related_endpoint) )
-   {
-      mpc_common_errorpoint_fmt("Failed to register OFI address for remote UID %d", dest);
-   }
+	/* Now add the response to the DNS */
+	if( mpc_ofi_dns_register(&ctx->dns, dest, remote_info->addr, remote_info->size, ctx->domains[0].ep /* The Connectionless EP*/) )
+	{
+		mpc_common_errorpoint_fmt("Failed to register OFI address for remote UID %d", dest);
+	}
 
 	mpc_lowcomm_monitor_response_free(resp);
 
@@ -116,21 +137,111 @@ void mpc_ofi_connect_on_demand(struct sctk_rail_info_s *rail, mpc_lowcomm_peer_u
    __add_route(dest, rail, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
 }
 
-static int __ofi_on_demand_callback(mpc_lowcomm_peer_uid_t from,
-                                    char *data,
-                                    char *return_data,
-                                    int return_data_len,
-                                    void *prail)
+
+
+void mpc_ofi_connect_on_demand(struct sctk_rail_info_s *rail, mpc_lowcomm_peer_uid_t dest)
 {
-	sctk_rail_info_t *rail = prail;
    struct mpc_ofi_context_t * ctx = &rail->network.ofi.ctx;
 
-   struct mpc_ofi_net_infos *infos = (struct mpc_ofi_net_infos*) data;
+	if(!ctx->domains[0].is_passive_endpoint)
+	{
+		/* Here we just want to share addresses and add them in  the DNS
+		   No connect/accept and connection mitigation*/
+		mpc_ofi_connect_on_demand_passive(rail, dest);
+		return;
+	}
 
-   struct fid_ep * related_endpoint = mpc_ofi_view_accept(&rail->network.ofi.view, from, infos->addr);
+	/* Here we start the passive endpoint case */
+	mpc_common_tracepoint_fmt("passive endpoint connect to %s", mpc_lowcomm_peer_format(dest));
+
+
+	int is_first_to_connect = 0;
+
+	/* First make sure we are not already being connected to */
+	struct mpc_ofi_domain_connection_state * cstate = mpc_ofi_domain_connection_tracker_add(&ctx->domains[0].conntrack,
+                                                                              				 0,
+                                                                              				 dest,
+                                                                              				 MPC_OFI_DOMAIN_ENDPOINT_BOOTSTRAP,
+																														 &is_first_to_connect);
+	if(!is_first_to_connect)
+	{
+		mpc_ofi_wait_for_connection(rail, cstate);
+		return;
+	}
+
+	/* I attempt to bootstrap the connection */
+
+   struct mpc_ofi_net_infos my_infos = { 0 };
+   my_infos.size = 0; 
+   my_infos.my_uid =mpc_lowcomm_monitor_get_uid();
+   my_infos.can_initiate_connection = 0;
+
+	mpc_lowcomm_monitor_retcode_t ret = MPC_LOWCOMM_MONITOR_RET_SUCCESS;
+
+   char rail_name[RAIL_NAME_LEN];
+	mpc_lowcomm_monitor_response_t resp = mpc_lowcomm_monitor_ondemand(dest,
+	                                                                   __gen_rail_target_name(rail, rail_name, RAIL_NAME_LEN),
+	                                                                   (char*)&my_infos,
+	                                                                   sizeof(struct mpc_ofi_net_infos),
+	                                                                   &ret);
+
+	if(!resp)
+	{
+		mpc_common_debug_fatal("Could not connect to UID %lu (timeout)", dest);
+	}
+
+	mpc_lowcomm_monitor_args_t *content = mpc_lowcomm_monitor_response_get_content(resp);
+
+	if(content->on_demand.retcode != MPC_LOWCOMM_MONITOR_RET_SUCCESS)
+	{
+		mpc_common_debug_fatal("Could not connect to UID %lu", dest);
+	}
+
+	struct mpc_ofi_net_infos * remote_info = (struct mpc_ofi_net_infos *)content->on_demand.data;
+
+	if(remote_info->can_initiate_connection)
+	{
+		mpc_common_tracepoint_fmt("Initiating the connection to %s", mpc_lowcomm_peer_format(dest));
+
+		mpc_ofi_domain_connection_state_set(cstate, MPC_OFI_DOMAIN_ENDPOINT_CONNECTING);
+
+		/* We were ellected as the initiator */
+		/* May create a new endpoint if the endpoint is passive (returns the connectionless endpoint otherwise) */
+		struct fid_ep * related_endpoint = mpc_ofi_view_connect(&rail->network.ofi.view, dest, remote_info->addr, remote_info->size);
+
+		mpc_ofi_wait_for_connection(rail, cstate);
+
+		/* Now add the response to the DNS */
+		if( mpc_ofi_dns_register(&ctx->dns, dest, NULL, 0, related_endpoint) )
+		{
+			mpc_common_errorpoint_fmt("Failed to register OFI address for remote UID %d", dest);
+		}
+
+		/* Now add route as remote is in the DNS */
+		__add_route(dest, rail, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
+
+	}
+	else
+	{
+		mpc_common_tracepoint_fmt("Inhibiting the connection to %s", mpc_lowcomm_peer_format(dest));
+
+		/* We are waiting for the remote endpoint to join us */
+		mpc_ofi_wait_for_connection(rail, cstate);
+	}
+
+	mpc_lowcomm_monitor_response_free(resp);
+}
+
+static int __ofi_on_demand_callback_connectionless(mpc_lowcomm_peer_uid_t from,
+																	struct mpc_ofi_net_infos *infos,
+																	char *return_data,
+																	int return_data_len,
+																	sctk_rail_info_t * rail)
+{
+   struct mpc_ofi_context_t * ctx = &rail->network.ofi.ctx;
 
    /* Register remote info */
-   if( mpc_ofi_dns_register(&ctx->dns, from, infos->addr, infos->size, related_endpoint) )
+   if( mpc_ofi_dns_register(&ctx->dns, from, infos->addr, infos->size, ctx->domains[0].ep) )
    {
       mpc_common_errorpoint_fmt("CALLBACK Failed to register OFI address for remote UID %d", from);
       return 1;
@@ -149,17 +260,86 @@ static int __ofi_on_demand_callback(mpc_lowcomm_peer_uid_t from,
       mpc_common_debug_fatal("Failed to resolve OFI address for local UID %d", mpc_lowcomm_monitor_get_uid());
    }
 
+	/* Now add route as remote is in the DNS and we have a related endpoint
+		at current state, meaning the endpoint is a connectionless one */
+	__add_route(from, rail, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
 
-   if(related_endpoint)
+	return 0;
+}
+
+
+static int __ofi_on_demand_callback(mpc_lowcomm_peer_uid_t from,
+                                    char *data,
+                                    char *return_data,
+                                    int return_data_len,
+                                    void *prail)
+{
+	sctk_rail_info_t *rail = prail;
+   struct mpc_ofi_context_t * ctx = &rail->network.ofi.ctx;
+   struct mpc_ofi_net_infos *infos = (struct mpc_ofi_net_infos*) data;
+
+	if(!ctx->domains[0].is_passive_endpoint)
+	{
+		/* This is the connectionless mode */
+		return __ofi_on_demand_callback_connectionless(from, infos, return_data, return_data_len, prail);
+	}
+
+	int is_first = 0;
+	int is_connecting = 0;
+
+	/* If we are here our main concern in to acquire the lock to ourselves */
+	struct mpc_ofi_domain_connection_state * cstate = mpc_ofi_domain_connection_tracker_add(&ctx->domains[0].conntrack,
+                                                                              				 0,
+                                                                              				 from,
+                                                                              				 MPC_OFI_DOMAIN_ENDPOINT_ACCEPTING,
+																														 &is_first);
+   struct mpc_ofi_net_infos *my_infos = (struct mpc_ofi_net_infos *)return_data;
+   /* Now send local info */
+   assume(sizeof(struct mpc_ofi_net_infos) < (unsigned int)return_data_len);
+
+
+
+	mpc_common_tracepoint_fmt("Incoming on-demand from %s is_first: %d", mpc_lowcomm_peer_format(cstate->remote_uid), is_first);
+
+	if(!is_first)
+	{
+
+		if(mpc_ofi_domain_connection_state_get(cstate) == MPC_OFI_DOMAIN_ENDPOINT_BOOTSTRAP )
+		{
+			/* Here both endpoints are connecting concurently we only keep the largest UID one */
+			if(mpc_lowcomm_monitor_get_uid() < from)
+			{
+				is_connecting = 0;
+			}
+			mpc_common_tracepoint_fmt("Incoming on-demand from %s already BOOTSTRAPING decision is %d", mpc_lowcomm_peer_format(cstate->remote_uid), is_connecting);
+
+		}
+		else
+		{
+			mpc_common_debug_fatal("Non coherent endpoint state");
+		}
+
+	}
+	else
+	{
+		is_connecting = 1;
+	}
+
+
+
+   my_infos->size = MPC_OFI_ADDRESS_LEN;
+	my_infos->can_initiate_connection = is_connecting;
+
+   int addr_found = 0;
+   mpc_ofi_dns_resolve(&ctx->dns, mpc_lowcomm_monitor_get_uid(), my_infos->addr, &my_infos->size, &addr_found); 
+
+   if( !addr_found )
    {
-      /* Now add route as remote is in the DNS and we have a related endpoint
-         at current state, meaning the endpoint is a connectionless one */
-      __add_route(from, rail, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
+      mpc_common_debug_fatal("Failed to resolve OFI address for local UID %d", mpc_lowcomm_monitor_get_uid());
    }
-   else
-   {
-      __add_route(from, rail, _MPC_LOWCOMM_ENDPOINT_CONNECTING);
-   }
+
+		mpc_common_tracepoint_fmt("Returning to %s can_connect: %d", mpc_lowcomm_peer_format(cstate->remote_uid), is_connecting);
+
 
 	return 0;
 }
@@ -420,11 +600,9 @@ int mpc_ofi_iface_is_reachable(sctk_rail_info_t *rail, uint64_t uid) {
 int __passive_endpoint_did_accept_a_connection(mpc_lowcomm_peer_uid_t uid, void * prail)
 {
    sctk_rail_info_t *rail = (sctk_rail_info_t *)prail;
-   _mpc_lowcomm_endpoint_t * ep = sctk_rail_get_any_route_to_process(rail, uid);
-   assume(ep != NULL);
-   mpc_common_debug("[OFI] enabling incoming connection endpoint from %lu = %s", uid, mpc_lowcomm_peer_format(uid));
+	__add_route(uid, rail, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
+   mpc_common_tracepoint_fmt("[OFI] enabling incoming connection endpoint from %lu = %s", uid, mpc_lowcomm_peer_format(uid));
 
-   _mpc_lowcomm_endpoint_set_state(ep, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
    return 0;
 }
 

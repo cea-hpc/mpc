@@ -107,11 +107,7 @@ static inline void mpc_common_debug(const char *fmt, ...)
 	#endif
 #endif
 
-static const char * mpc_common_debug_get_basename(const char * path)
-{
-	char * ret = strrchr(path, '/');
-	return ret?(ret + 1):path;
-} 
+const char * mpc_common_debug_get_basename(const char * path);
 
 #define mpc_common_tracepoint(FMT) mpc_common_debug("[%s] %s:%d  : "FMT, __FUNCTION__, mpc_common_debug_get_basename(__FILE__), __LINE__);
 #define mpc_common_tracepoint_fmt(FMT, ...) mpc_common_debug("[%s] %s:%d : "FMT, __FUNCTION__, mpc_common_debug_get_basename(__FILE__),__LINE__, __VA_ARGS__);
@@ -200,7 +196,7 @@ void mpc_common_debug_log_file(FILE *file, const char *fmt, ...);
 
 
 
-void mpc_common_debug_assert_print(FILE *stream, const int line,
+void mpc_common_debug_assert_print(FILE *stream, int line,
                                    const char *file, const char *func,
                                    const char *fmt, ...);
 

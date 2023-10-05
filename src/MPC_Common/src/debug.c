@@ -108,6 +108,14 @@ void mpc_common_debug_abort( void )
 /*Messages                                                            */
 /**********************************************************************/
 
+
+const char * mpc_common_debug_get_basename(const char * path)
+{
+	char * ret = strrchr(path, '/');
+	return ret?(ret + 1):path;
+} 
+
+
 int MPC_check_compatibility_lib( int major, int minor, int patch, char *pre )
 {
 	static char errro_msg[4096];
@@ -280,7 +288,7 @@ void mpc_common_debug_error( const char *fmt, ... )
 	va_end( ap );
 }
 
-void mpc_common_debug_assert_print( FILE *stream, const int line, const char *file,
+void mpc_common_debug_assert_print( FILE *stream, int line, const char *file,
                                  const char *func, const char *fmt, ... )
 {
 	va_list ap;
@@ -289,15 +297,19 @@ void mpc_common_debug_assert_print( FILE *stream, const int line, const char *fi
 
 	if ( func == NULL )
 		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
-		                                "%s Assertion %s fail at line %d file %s\n",
+		                                "%s %s:%d : Assertion %s\n",
 		                                __debug_print_info( debug_info ),
-		                                fmt, line,
-		                                file );
+												  mpc_common_debug_get_basename(file),
+												  line,
+		                                fmt);
 	else
 		mpc_common_io_noalloc_snprintf( buff, SMALL_BUFFER_SIZE,
-		                                "%s Assertion %s fail at line %d file %s func %s\n",
+		                                "%s [%s] %s:%d : Assertion %s\n",
 		                                __debug_print_info( debug_info ),
-		                                fmt, line, file, func );
+												  func,
+												  mpc_common_debug_get_basename(file),
+												  line,
+		                                fmt);
 
 	va_start( ap, fmt );
 	mpc_common_io_noalloc_vfprintf( stream, buff, ap );

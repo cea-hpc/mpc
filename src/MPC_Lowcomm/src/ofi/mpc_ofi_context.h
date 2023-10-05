@@ -111,8 +111,6 @@ int mpc_ofi_view_sendv(struct mpc_ofi_view_t *view,
 
 struct fid_ep * mpc_ofi_view_connect(struct mpc_ofi_view_t *view, mpc_lowcomm_peer_uid_t uid, void *addr, size_t addrlen);
 
-struct fid_ep * mpc_ofi_view_accept(struct mpc_ofi_view_t *view, mpc_lowcomm_peer_uid_t uid, void *addr);
-
 
 int mpc_ofi_view_test(struct mpc_ofi_view_t *view,  struct mpc_ofi_request_t *req, int *done);
 
