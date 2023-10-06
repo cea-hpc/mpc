@@ -42,16 +42,35 @@ static inline void __init_ofi_endpoint(sctk_rail_info_t *rail, _mpc_lowcomm_ofi_
 
 static void __add_route(mpc_lowcomm_peer_uid_t dest_uid, sctk_rail_info_t *rail, _mpc_lowcomm_endpoint_state_t state)
 {
-	_mpc_lowcomm_endpoint_t *new_route = sctk_malloc(sizeof(_mpc_lowcomm_endpoint_t) );
-	assume(new_route != NULL);
-	_mpc_lowcomm_endpoint_init(new_route, dest_uid, rail, _MPC_LOWCOMM_ENDPOINT_DYNAMIC);
+	static mpc_common_spinlock_t add_route_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
-   __init_ofi_endpoint(rail, &new_route->data.ofi);
+	mpc_common_spinlock_lock(&add_route_lock);
 
-	/* Make sure the route is flagged connected */
-	_mpc_lowcomm_endpoint_set_state(new_route, state);
 
-   sctk_rail_add_dynamic_route(rail, new_route);
+	_mpc_lowcomm_endpoint_t * previous_ep = sctk_rail_get_any_route_to_process(rail, dest_uid);
+
+	if(!previous_ep)
+	{
+		_mpc_lowcomm_endpoint_t *new_route = sctk_malloc(sizeof(_mpc_lowcomm_endpoint_t) );
+		assume(new_route != NULL);
+		_mpc_lowcomm_endpoint_init(new_route, dest_uid, rail, _MPC_LOWCOMM_ENDPOINT_DYNAMIC);
+
+		__init_ofi_endpoint(rail, &new_route->data.ofi);
+
+		/* Make sure the route is flagged connected */
+		_mpc_lowcomm_endpoint_set_state(new_route, state);
+
+		sctk_rail_add_dynamic_route(rail, new_route);
+
+	}
+	else
+	{
+		mpc_common_tracepoint_fmt("Set state %d", state);
+		/* Just update the state */
+		_mpc_lowcomm_endpoint_set_state(previous_ep, state);
+	}
+
+	mpc_common_spinlock_unlock(&add_route_lock);
 }
 
 struct mpc_ofi_net_infos
@@ -66,10 +85,16 @@ void mpc_ofi_wait_for_connection(struct sctk_rail_info_s *rail, struct mpc_ofi_d
 {
 	mpc_common_tracepoint_fmt("wait start to %s", mpc_lowcomm_peer_format(cstate->remote_uid));
 
+	/* First create a non-connected route */
+	__add_route(cstate->remote_uid, rail, _MPC_LOWCOMM_ENDPOINT_CONNECTING);
+
    while(mpc_ofi_domain_connection_state_get(cstate) != MPC_OFI_DOMAIN_ENDPOINT_CONNECTED)
    {
-      mpc_ofi_domain_poll(rail->network.ofi.view.domain, 0);
+      mpc_ofi_domain_poll(rail->network.ofi.view.domain, -1);
    }
+
+	/* The route is now connected */
+	__add_route(cstate->remote_uid, rail, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
 
 	mpc_common_tracepoint_fmt("wait DONE to %s", mpc_lowcomm_peer_format(cstate->remote_uid));
 
@@ -205,20 +230,16 @@ void mpc_ofi_connect_on_demand(struct sctk_rail_info_s *rail, mpc_lowcomm_peer_u
 
 		mpc_ofi_domain_connection_state_set(cstate, MPC_OFI_DOMAIN_ENDPOINT_CONNECTING);
 
+		/* Now add route as remote connecting */
+		__add_route(dest, rail, _MPC_LOWCOMM_ENDPOINT_CONNECTING);
+
 		/* We were ellected as the initiator */
 		/* May create a new endpoint if the endpoint is passive (returns the connectionless endpoint otherwise) */
 		struct fid_ep * related_endpoint = mpc_ofi_view_connect(&rail->network.ofi.view, dest, remote_info->addr, remote_info->size);
 
 		mpc_ofi_wait_for_connection(rail, cstate);
 
-		/* Now add the response to the DNS */
-		if( mpc_ofi_dns_register(&ctx->dns, dest, NULL, 0, related_endpoint) )
-		{
-			mpc_common_errorpoint_fmt("Failed to register OFI address for remote UID %d", dest);
-		}
 
-		/* Now add route as remote is in the DNS */
-		__add_route(dest, rail, _MPC_LOWCOMM_ENDPOINT_CONNECTED);
 
 	}
 	else
@@ -311,7 +332,11 @@ static int __ofi_on_demand_callback(mpc_lowcomm_peer_uid_t from,
 			{
 				is_connecting = 0;
 			}
-			mpc_common_tracepoint_fmt("Incoming on-demand from %s already BOOTSTRAPING decision is %d", mpc_lowcomm_peer_format(cstate->remote_uid), is_connecting);
+			else
+			{
+				is_connecting = 1;
+			}
+			mpc_common_tracepoint_fmt("Incoming on-demand from %s already BOOTSTRAPING decision is %d (%lu < %lu)", mpc_lowcomm_peer_format(cstate->remote_uid), is_connecting, mpc_lowcomm_monitor_get_uid(), from);
 
 		}
 		else

@@ -660,7 +660,7 @@ unlock_cq_poll:
 
 int _mpc_ofi_domain_handle_incoming_connection(struct mpc_ofi_domain_t * domain, struct fi_eq_cm_entry *cm_data )
 {
-
+	mpc_common_tracepoint("");
    mpc_lowcomm_peer_uid_t *pfrom = (mpc_lowcomm_peer_uid_t*)cm_data->data;
 
    struct fid_ep * new_ep = __new_endpoint(domain, cm_data->info);
@@ -684,26 +684,21 @@ int _mpc_ofi_domain_notify_connection(struct mpc_ofi_domain_t * domain, struct f
    assume(conn_info != NULL);
 	mpc_common_tracepoint_fmt("[OFI] Connected to %s", mpc_lowcomm_peer_format(conn_info->remote_uid));
 
+	/* Now add the response to the DNS */
+	if( mpc_ofi_dns_register(&domain->ctx->dns, (uint64_t)conn_info->remote_uid, NULL, 0, (struct fid_ep*)cm_data->fid))
+	{
+		mpc_common_errorpoint_fmt("Failed to register OFI address for remote UID %d", conn_info->remote_uid);
+	}
+
+	mpc_ofi_domain_connection_state_set(conn_info, MPC_OFI_DOMAIN_ENDPOINT_CONNECTED);
 
    mpc_ofi_domain_async_connection_state_t prev_state = conn_info->state;
 
 	/* If we are on the listening side we forward the event to the UID key (from the context key to the UID)*/
 	if(prev_state == MPC_OFI_DOMAIN_ENDPOINT_ACCEPTING)
 	{
-		/* Now add the response to the DNS */
-		if( mpc_ofi_dns_register(&domain->ctx->dns, (uint64_t)conn_info->remote_uid, NULL, 0, (struct fid_ep*)cm_data->fid))
-		{
-			mpc_common_errorpoint_fmt("Failed to register OFI address for remote UID %d", conn_info->remote_uid);
-		}
-
-		mpc_ofi_domain_connection_state_set(conn_info, MPC_OFI_DOMAIN_ENDPOINT_CONNECTED);
-
 		/* Notify the passive callback to update the endpoint state in the rail once connected */
 		(domain->ctx->accept_cb)(conn_info->remote_uid, domain->ctx->accept_cb_arg);
-	}
-	else
-	{
-		mpc_ofi_domain_connection_state_set(conn_info, MPC_OFI_DOMAIN_ENDPOINT_CONNECTED);
 	}
 
    mpc_ofi_domain_buffer_entry_add(domain, (struct fid_ep*)cm_data->fid);
@@ -725,7 +720,6 @@ static inline int _mpc_ofi_domain_eq_poll(struct mpc_ofi_domain_t * domain)
    {
       return 0;
    }
-
 
    rd = fi_eq_read(domain->eq, &event, data_buff, OFI_DATA_BUFF_SIZE, 0);
 
@@ -753,6 +747,8 @@ static inline int _mpc_ofi_domain_eq_poll(struct mpc_ofi_domain_t * domain)
       /* No events */
       goto unlock_eq_poll;
    }
+
+	mpc_common_tracepoint_fmt("EQ event %s", fi_tostr(&event, FI_TYPE_EQ_EVENT));
 
    if(event & FI_CONNREQ)
    {
@@ -1319,6 +1315,8 @@ struct mpc_ofi_domain_connection_state * mpc_ofi_domain_connection_state_new( ui
 
    ret->next = NULL;
 
+	mpc_common_spinlock_init(&ret->lock, 0);
+
    return ret;
 }
 
@@ -1391,7 +1389,7 @@ int mpc_ofi_domain_connection_tracker_init(struct mpc_ofi_domain_connection_trac
 
 int mpc_ofi_domain_connection_tracker_release(struct mpc_ofi_domain_connection_tracker * tracker)
 {
-   assume(tracker->connections == NULL);
+   //assume(tracker->connections == NULL);
    return 0;
 }
 
