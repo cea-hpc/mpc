@@ -9,7 +9,6 @@
 typedef struct _mpc_lowcomm_ofi_rail_info_s
 {
    struct mpc_ofi_context_t ctx;
-   struct mpc_ofi_view_t view;
 }_mpc_lowcomm_ofi_rail_info_t;
 
 #define MPC_OFI_EP_MEMPOOL_MIN 10

@@ -20,7 +20,6 @@
 
 
 int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
-                        uint32_t domain_count,
                         char * provider,
                         mpc_ofi_context_policy_t policy,
                         mpc_ofi_context_recv_callback_t recv_callback,
@@ -98,26 +97,36 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
 
    /* Setup domains */
 
-   ctx->domain_count = domain_count;
 
-   ctx->domains = calloc(ctx->domain_count, sizeof(struct mpc_ofi_domain_t));
+   ctx->domain = calloc(1, sizeof(struct mpc_ofi_domain_t));
 
-   if(ctx->domains == NULL)
+   if(ctx->domain == NULL)
    {
       perror("calloc");
       return 1;
    }
 
-   unsigned int i = 0;
+	if(mpc_ofi_domain_init(ctx->domain, ctx, ctx->rail_config))
+	{
+		mpc_common_errorpoint("Failed to initialize a domain");
+		return 1;
+	}
 
-   for(i = 0 ; i < ctx->domain_count; i++)
+
+   struct fid_ep * ep = NULL;
+
+   if(!ctx->domain->is_passive_endpoint)
    {
-      if(mpc_ofi_domain_init(&ctx->domains[i], ctx, ctx->rail_config))
-      {
-         mpc_common_errorpoint("Failed to initialize a domain");
-         return 1;
-      }
+      ep = ctx->domain->ep;
    }
+
+   /* Now register my rank as bound to this address (possibly with a NULL endpoint for passive case ) */
+   if( mpc_ofi_dns_register(&ctx->dns, mpc_lowcomm_monitor_get_uid(), ctx->domain->address, ctx->domain->address_len, ep) < 0 )
+   {
+      mpc_common_errorpoint("Failed to register new view's address");
+      return -1;
+   }
+
 
   	mpc_common_debug_info("Using driver relying on %s(%s)\n", ctx->config->fabric_attr->prov_name, ctx->config->fabric_attr->name);
 
@@ -127,15 +136,11 @@ int mpc_ofi_context_init(struct mpc_ofi_context_t *ctx,
 
 int mpc_ofi_context_release(struct mpc_ofi_context_t *ctx)
 {
-   unsigned int i = 0;
 
-   for( i = 0 ; i < ctx->domain_count; i++)
-   {
-      if(mpc_ofi_domain_release(&ctx->domains[i]))
-      {
-         mpc_common_errorpoint("Failed to release a domain");
-      }
-   }
+	if(mpc_ofi_domain_release(ctx->domain))
+	{
+		mpc_common_errorpoint("Failed to release a domain");
+	}
 
    /* Close the fabric (needs all the sub objects to be released)*/
    TODO("Understand why we get -EBUSY");
@@ -151,152 +156,6 @@ int mpc_ofi_context_release(struct mpc_ofi_context_t *ctx)
    {
       free(ctx->provider);
    }
-
-   return 0;
-}
-
-static inline struct mpc_ofi_domain_t * __mpc_ofi_context_get_next_domain_rr(struct mpc_ofi_context_t *ctx)
-{
-   int target = 0;
-   mpc_common_spinlock_lock(&ctx->lock);
-   target = ctx->current_domain;
-   ctx->current_domain = (ctx->current_domain + 1)%ctx->domain_count;
-   mpc_common_spinlock_unlock(&ctx->lock);
-
-   return &ctx->domains[target];
-}
-
-
-static inline struct mpc_ofi_domain_t * __mpc_ofi_context_get_next_domain(struct mpc_ofi_context_t *ctx)
-{
-   switch (ctx->ctx_policy)
-   {
-      case MPC_OFI_POLICY_RR:
-         return __mpc_ofi_context_get_next_domain_rr(ctx);
-      default:
-         mpc_common_errorpoint("Not implemented");
-         return NULL;
-   }
-
-   return NULL;
-}
-
-/**************************
- * THE OFI CL VIEW *
- **************************/
-
-int mpc_ofi_view_init(struct mpc_ofi_view_t *view, struct mpc_ofi_context_t *ctx, uint64_t rank)
-{
-   view->domain = __mpc_ofi_context_get_next_domain(ctx);
-
-   if(!view->domain)
-   {
-      mpc_common_errorpoint("Could not acquire domain from CTX");
-      return -1;
-   }
-
-   view->rank = rank;
-
-   struct fid_ep * ep = NULL;
-
-   if(!view->domain->is_passive_endpoint)
-   {
-      ep = view->domain->ep;
-   }
-
-   /* Now register my rank as bound to this address (possibly with a NULL endpoint for passive case ) */
-   if( mpc_ofi_dns_register(&ctx->dns, rank, view->domain->address, view->domain->address_len, ep) < 0 )
-   {
-      mpc_common_errorpoint("Failed to register new view's address");
-      return -1;
-   }
-
-   return 0;
-}
-
-#define ONESEC 1e6
-
-int mpc_ofi_view_wait_for_rank_registration(struct mpc_ofi_view_t *view,
-                                           uint64_t rank, uint32_t timeout_sec)
-{
-   char buff[MPC_OFI_ADDRESS_LEN];
-   size_t len = MPC_OFI_ADDRESS_LEN;
-   uint32_t cnt = 0;
-
-   int found = 0;
-
-   do
-   {
-      mpc_ofi_dns_resolve(view->domain->ddns.main_dns, rank, buff, &len, &found);
-      if(found)
-      {
-         return 0;
-      }
-      usleep(ONESEC);
-      cnt++;
-   }while(cnt < timeout_sec);
-
-   return -1;
-}
-
-int mpc_ofi_view_test(struct mpc_ofi_view_t *view,  struct mpc_ofi_request_t *req, int *done)
-{
-   *done = mpc_ofi_request_test(req);
-
-   if(!*done)
-   {
-      if(mpc_ofi_domain_poll(view->domain, 0))
-      {
-         mpc_common_errorpoint("Error polling for send");
-         return -1;
-      }
-   }
-
-   return 0;
-}
-
-int mpc_ofi_view_wait(struct mpc_ofi_view_t *view,  struct mpc_ofi_request_t *req)
-{
-   int done = 0;
-   do
-   {
-      if( mpc_ofi_view_test(view,  req, &done) )
-      {
-         mpc_common_errorpoint("Error waiting for request");
-         return -1;
-      }
-   }while(!done);
-
-   return 0;
-}
-
-struct fid_ep * mpc_ofi_view_connect(struct mpc_ofi_view_t *view, mpc_lowcomm_peer_uid_t uid, void *addr, size_t addrlen)
-{
-   return mpc_ofi_domain_connect(view->domain, uid, addr, addrlen);
-}
-
-int mpc_ofi_view_send(struct mpc_ofi_view_t *view, void * buffer, size_t size, uint64_t dest, struct mpc_ofi_request_t **req,
-                        int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
-                        void *arg_ext)
-{
-   return mpc_ofi_domain_send(view->domain, dest, buffer, size, req, comptetion_cb_ext, arg_ext);
-}
-
-int mpc_ofi_view_sendv(struct mpc_ofi_view_t *view,
-                        uint64_t dest,
-                        const struct iovec *iov,
-                        size_t iovcnt,
-                        struct mpc_ofi_request_t **req,
-                        int (*comptetion_cb_ext)(struct mpc_ofi_request_t *, void *),
-                        void *arg_ext)
-{
-   return mpc_ofi_domain_sendv(view->domain, dest, iov, iovcnt, req, comptetion_cb_ext, arg_ext);
-}
-
-
-int mpc_ofi_view_release(struct mpc_ofi_view_t *view)
-{
-   view->rank = 0;
 
    return 0;
 }

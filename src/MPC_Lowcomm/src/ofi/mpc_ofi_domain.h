@@ -135,6 +135,8 @@ struct mpc_ofi_domain_connection_tracker
 int mpc_ofi_domain_connection_tracker_init(struct mpc_ofi_domain_connection_tracker *tracker);
 int mpc_ofi_domain_connection_tracker_release(struct mpc_ofi_domain_connection_tracker *tracker);
 
+int mpc_ofi_domain_connection_tracker_pop_endpoint(struct mpc_ofi_domain_connection_tracker * tracker, struct fid_ep * ep);
+
 struct mpc_ofi_domain_connection_state *mpc_ofi_domain_connection_tracker_add(struct mpc_ofi_domain_connection_tracker *tracker,
                                                                               uint64_t key,
                                                                               mpc_lowcomm_peer_uid_t remote_uid,

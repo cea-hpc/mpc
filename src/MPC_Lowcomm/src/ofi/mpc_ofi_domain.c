@@ -461,8 +461,6 @@ int mpc_ofi_domain_release(struct mpc_ofi_domain_t * domain)
 
 	mpc_ofi_domain_connection_tracker_release(&domain->conntrack);
 
-   return 0;
-
    TODO("Understand why we get -EBUSY");
 
    fi_close(&domain->rx_cq->fid);
@@ -1389,7 +1387,16 @@ int mpc_ofi_domain_connection_tracker_init(struct mpc_ofi_domain_connection_trac
 
 int mpc_ofi_domain_connection_tracker_release(struct mpc_ofi_domain_connection_tracker * tracker)
 {
-   //assume(tracker->connections == NULL);
+	struct mpc_ofi_domain_connection_state * ret = tracker->connections;
+	struct mpc_ofi_domain_connection_state * to_free = NULL;
+
+	while(ret)
+	{
+		to_free = ret;
+		ret = ret->next;
+		mpc_ofi_domain_connection_state_release(to_free);
+	}
+
    return 0;
 }
 
@@ -1491,6 +1498,46 @@ unlock:
    return ret;
 }
 
+
+int mpc_ofi_domain_connection_tracker_pop_endpoint(struct mpc_ofi_domain_connection_tracker * tracker, struct fid_ep * ep)
+{
+   mpc_common_spinlock_lock(&tracker->lock);
+
+	struct mpc_ofi_domain_connection_state * tmp = NULL;
+	struct mpc_ofi_domain_connection_state * to_free = NULL;
+
+
+	if(tracker->connections)
+	{
+		if(tracker->connections->endpoint == ep)
+		{
+			to_free = tracker->connections;
+			tracker->connections = tracker->connections->next;
+			mpc_ofi_domain_connection_state_release(to_free);
+		}
+	}
+
+	tmp = tracker->connections;
+
+	while (tmp)
+	{
+		if(tmp->next)
+		{
+			if(tmp->next->endpoint == ep)
+			{
+				to_free = tmp->next;
+				tmp->next = tmp->next->next;
+				mpc_ofi_domain_connection_state_release(to_free);
+			}
+		}
+	}
+
+
+   mpc_common_spinlock_unlock(&tracker->lock);
+
+
+	return 0;
+}
 
 
 /************************

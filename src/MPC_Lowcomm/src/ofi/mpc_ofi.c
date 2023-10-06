@@ -90,7 +90,7 @@ void mpc_ofi_wait_for_connection(struct sctk_rail_info_s *rail, struct mpc_ofi_d
 
    while(mpc_ofi_domain_connection_state_get(cstate) != MPC_OFI_DOMAIN_ENDPOINT_CONNECTED)
    {
-      mpc_ofi_domain_poll(rail->network.ofi.view.domain, -1);
+      mpc_ofi_domain_poll(rail->network.ofi.ctx.domain, -1);
    }
 
 	/* The route is now connected */
@@ -151,7 +151,7 @@ void mpc_ofi_connect_on_demand_passive(struct sctk_rail_info_s *rail, mpc_lowcom
 
 
 	/* Now add the response to the DNS */
-	if( mpc_ofi_dns_register(&ctx->dns, dest, remote_info->addr, remote_info->size, ctx->domains[0].ep /* The Connectionless EP*/) )
+	if( mpc_ofi_dns_register(&ctx->dns, dest, remote_info->addr, remote_info->size, ctx->domain->ep /* The Connectionless EP*/) )
 	{
 		mpc_common_errorpoint_fmt("Failed to register OFI address for remote UID %d", dest);
 	}
@@ -168,7 +168,7 @@ void mpc_ofi_connect_on_demand(struct sctk_rail_info_s *rail, mpc_lowcomm_peer_u
 {
    struct mpc_ofi_context_t * ctx = &rail->network.ofi.ctx;
 
-	if(!ctx->domains[0].is_passive_endpoint)
+	if(!ctx->domain->is_passive_endpoint)
 	{
 		/* Here we just want to share addresses and add them in  the DNS
 		   No connect/accept and connection mitigation*/
@@ -183,7 +183,7 @@ void mpc_ofi_connect_on_demand(struct sctk_rail_info_s *rail, mpc_lowcomm_peer_u
 	int is_first_to_connect = 0;
 
 	/* First make sure we are not already being connected to */
-	struct mpc_ofi_domain_connection_state * cstate = mpc_ofi_domain_connection_tracker_add(&ctx->domains[0].conntrack,
+	struct mpc_ofi_domain_connection_state * cstate = mpc_ofi_domain_connection_tracker_add(&ctx->domain->conntrack,
                                                                               				 0,
                                                                               				 dest,
                                                                               				 MPC_OFI_DOMAIN_ENDPOINT_BOOTSTRAP,
@@ -235,12 +235,8 @@ void mpc_ofi_connect_on_demand(struct sctk_rail_info_s *rail, mpc_lowcomm_peer_u
 
 		/* We were ellected as the initiator */
 		/* May create a new endpoint if the endpoint is passive (returns the connectionless endpoint otherwise) */
-		struct fid_ep * related_endpoint = mpc_ofi_view_connect(&rail->network.ofi.view, dest, remote_info->addr, remote_info->size);
-
+		mpc_ofi_domain_connect(rail->network.ofi.ctx.domain, dest, remote_info->addr, remote_info->size);
 		mpc_ofi_wait_for_connection(rail, cstate);
-
-
-
 	}
 	else
 	{
@@ -262,7 +258,7 @@ static int __ofi_on_demand_callback_connectionless(mpc_lowcomm_peer_uid_t from,
    struct mpc_ofi_context_t * ctx = &rail->network.ofi.ctx;
 
    /* Register remote info */
-   if( mpc_ofi_dns_register(&ctx->dns, from, infos->addr, infos->size, ctx->domains[0].ep) )
+   if( mpc_ofi_dns_register(&ctx->dns, from, infos->addr, infos->size, ctx->domain->ep) )
    {
       mpc_common_errorpoint_fmt("CALLBACK Failed to register OFI address for remote UID %d", from);
       return 1;
@@ -299,7 +295,7 @@ static int __ofi_on_demand_callback(mpc_lowcomm_peer_uid_t from,
    struct mpc_ofi_context_t * ctx = &rail->network.ofi.ctx;
    struct mpc_ofi_net_infos *infos = (struct mpc_ofi_net_infos*) data;
 
-	if(!ctx->domains[0].is_passive_endpoint)
+	if(!ctx->domain->is_passive_endpoint)
 	{
 		/* This is the connectionless mode */
 		return __ofi_on_demand_callback_connectionless(from, infos, return_data, return_data_len, prail);
@@ -309,7 +305,7 @@ static int __ofi_on_demand_callback(mpc_lowcomm_peer_uid_t from,
 	int is_connecting = 0;
 
 	/* If we are here our main concern in to acquire the lock to ourselves */
-	struct mpc_ofi_domain_connection_state * cstate = mpc_ofi_domain_connection_tracker_add(&ctx->domains[0].conntrack,
+	struct mpc_ofi_domain_connection_state * cstate = mpc_ofi_domain_connection_tracker_add(&ctx->domain->conntrack,
                                                                               				 0,
                                                                               				 from,
                                                                               				 MPC_OFI_DOMAIN_ENDPOINT_ACCEPTING,
@@ -399,7 +395,7 @@ ssize_t mpc_ofi_send_am_bcopy(_mpc_lowcomm_endpoint_t *ep,
 	hdr->length = payload_length = pack(hdr->data, arg);
    payload_length = hdr->length;
 
-   if( mpc_ofi_view_send(&rail->network.ofi.view, hdr, hdr->length + sizeof(lcr_ofi_am_hdr_t), ep->dest, NULL, __free_bsend_buffer_mempool, hdr) )
+   if( mpc_ofi_domain_send(rail->network.ofi.ctx.domain, ep->dest, hdr, hdr->length + sizeof(lcr_ofi_am_hdr_t), NULL, __free_bsend_buffer_mempool, hdr) )
    {
       mpc_common_errorpoint("Failed to send a message");
       return -1;
@@ -464,7 +460,7 @@ int mpc_ofi_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
    completion->hdr.length = total_size;
 
-   if(mpc_ofi_view_sendv(&ep->rail->network.ofi.view,
+   if(mpc_ofi_domain_sendv(ep->rail->network.ofi.ctx.domain,
                          ep->dest,
                          completion->full_iov,
                          total_iov_size,
@@ -481,7 +477,7 @@ int mpc_ofi_send_am_zcopy(_mpc_lowcomm_endpoint_t *ep,
 
 void  mpc_ofi_pin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list, void *addr, size_t size)
 {
-   if(mpc_ofi_domain_memory_register(rail->network.ofi.view.domain,
+   if(mpc_ofi_domain_memory_register(rail->network.ofi.ctx.domain,
                                      addr,
                                      size,
                                      FI_REMOTE_READ | FI_REMOTE_WRITE,
@@ -500,7 +496,7 @@ void  mpc_ofi_pin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *
 void mpc_ofi_unpin(struct sctk_rail_info_s *rail, struct sctk_rail_pin_ctx_list *list)
 {
 
-   if(mpc_ofi_domain_memory_unregister(rail->network.ofi.view.domain, list->pin.ofipin.ofi))
+   if(mpc_ofi_domain_memory_unregister(rail->network.ofi.ctx.domain, list->pin.ofipin.ofi))
    {
       mpc_common_errorpoint("Failed to register memory for RDMA");
       mpc_common_debug_abort();
@@ -554,9 +550,9 @@ int mpc_ofi_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
    comp->sent = size;
    completion->comp = comp;
 
-   uint64_t network_offset = __convert_rma_offset(ep->rail->network.ofi.view.domain, remote_key->pin.ofipin.shared.addr, remote_offset);
+   uint64_t network_offset = __convert_rma_offset(ep->rail->network.ofi.ctx.domain, remote_key->pin.ofipin.shared.addr, remote_offset);
 
-   if(mpc_ofi_domain_get(ep->rail->network.ofi.view.domain,
+   if(mpc_ofi_domain_get(ep->rail->network.ofi.ctx.domain,
                      (void *)local_addr,
                      size,
                      ep->dest,
@@ -570,7 +566,7 @@ int mpc_ofi_get_zcopy(_mpc_lowcomm_endpoint_t *ep,
       return -1;
    }
 
-   mpc_ofi_domain_poll(ep->rail->network.ofi.view.domain, FI_SEND);
+   mpc_ofi_domain_poll(ep->rail->network.ofi.ctx.domain, FI_SEND);
 
 
    return MPC_LOWCOMM_SUCCESS;
@@ -591,10 +587,10 @@ int mpc_ofi_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
    comp->sent = size;
    completion->comp = comp;
 
-   uint64_t network_offset = __convert_rma_offset(ep->rail->network.ofi.view.domain, remote_key->pin.ofipin.shared.addr, remote_offset);
+   uint64_t network_offset = __convert_rma_offset(ep->rail->network.ofi.ctx.domain, remote_key->pin.ofipin.shared.addr, remote_offset);
 
 
-   if(mpc_ofi_domain_put(ep->rail->network.ofi.view.domain,
+   if(mpc_ofi_domain_put(ep->rail->network.ofi.ctx.domain,
                      (void*)local_addr,
                      size,
                      ep->dest,
@@ -608,7 +604,7 @@ int mpc_ofi_send_put_zcopy(_mpc_lowcomm_endpoint_t *ep,
       return -1;
    }
 
-   mpc_ofi_domain_poll(ep->rail->network.ofi.view.domain, FI_SEND);
+   mpc_ofi_domain_poll(ep->rail->network.ofi.ctx.domain, FI_SEND);
 
 
    return MPC_LOWCOMM_SUCCESS;
@@ -672,7 +668,7 @@ int mpc_ofi_query_devices(lcr_component_t *component,
    while(tmp)
    {
       device_count++;
-      TODO("We only keep the first device for now -- trusting OFI");
+      //We only keep the first device for now -- trusting OFI
       break;
       tmp = tmp->next;
    }
@@ -689,7 +685,7 @@ int mpc_ofi_query_devices(lcr_component_t *component,
                                                                                                                   tmp->fabric_attr->name,
                                                                                                                   tmp->domain_attr->name);
       device_count++;
-      TODO("We only keep the first device for now -- trusting OFI");
+      //We only keep the first device for now -- trusting OFI
       break;
       tmp = tmp->next;
    }
@@ -702,7 +698,7 @@ int mpc_ofi_query_devices(lcr_component_t *component,
 
 int mpc_ofi_progress(sctk_rail_info_t *rail)
 {
-   mpc_ofi_domain_poll(rail->network.ofi.view.domain, 0);
+   mpc_ofi_domain_poll(rail->network.ofi.ctx.domain, 0);
    return 0;
 }
 
@@ -736,8 +732,7 @@ static int __mpc_ofi_context_recv_callback_t(void *buffer, __UNUSED__ size_t len
 void mpc_ofi_release(sctk_rail_info_t *rail)
 {
    TODO("Check why we get fi_close(&domain->domain->fid) Device or resource busy(-16)");
-   mpc_ofi_view_release(&rail->network.ofi.view);
-   mpc_ofi_context_release(&rail->network.ofi.ctx);
+  mpc_ofi_context_release(&rail->network.ofi.ctx);
 }
 
 
@@ -788,7 +783,6 @@ int mpc_ofi_iface_open(__UNUSED__ const char *device_name, int id,
 	                                                (void *)rail);
 
    if(mpc_ofi_context_init(&rail->network.ofi.ctx,
-                           1,
                            driver_config->driver.value.ofi.provider,
                            MPC_OFI_POLICY_RR,
                            __mpc_ofi_context_recv_callback_t,
@@ -801,12 +795,6 @@ int mpc_ofi_iface_open(__UNUSED__ const char *device_name, int id,
       return 1;
    }
 
-   /* Now initialize a view for each local rank*/
-   if(mpc_ofi_view_init(&rail->network.ofi.view, &rail->network.ofi.ctx, mpc_lowcomm_monitor_get_uid()))
-   {
-      mpc_common_errorpoint("Failed to start OFI view");
-      return 1;
-   }
 
 	*iface_p = rail;
 err:
