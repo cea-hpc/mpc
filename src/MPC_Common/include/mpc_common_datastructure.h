@@ -344,6 +344,7 @@ void mpc_common_hashtable_release( struct mpc_common_hashtable *ht );
  * @return void* queried element or NULL if not found
  */
 void *mpc_common_hashtable_get( struct mpc_common_hashtable *ht, uint64_t key );
+void *mpc_common_hashtable_get_no_lock( struct mpc_common_hashtable *ht, uint64_t key );
 
 /**
  * @brief Get an element in the HT or create it

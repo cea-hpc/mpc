@@ -54,7 +54,7 @@ static OPA_int_t current_error_class;
 static OPA_int_t current_error_code;
 static struct mpc_common_hashtable error_strings;
 
-static void _mpc_mpi_err_init()
+void mpc_mpi_err_init()
 {
 	/* Error handlers */
 	OPA_store_int(&current_errhandler, 4);
@@ -76,7 +76,7 @@ static void mpc_mpi_err_init_once()
 
 	if(!init_done)
 	{
-		_mpc_mpi_err_init();
+		mpc_mpi_err_init();
 		init_done = 1;
 	}
 

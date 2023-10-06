@@ -34,6 +34,7 @@
 #include <mpc_common_rank.h>
 
 
+#include "lcp.h"
 #include "lcp_common.h"
 #include "mpc_common_datastructure.h"
 #include "mpc_common_debug.h"
@@ -48,6 +49,7 @@
 #include "lcp_request.h"
 
 
+#include "sctk_alloc_posix.h"
 #include "uthash.h"
 
 int lcp_am_set_handler_callback(lcp_task_h task, uint8_t am_id,
@@ -68,26 +70,13 @@ int lcp_am_set_handler_callback(lcp_task_h task, uint8_t am_id,
 int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
 {
         int rc = LCP_SUCCESS;
-        lcp_task_entry_t *item = NULL;
+        int task_idx;
         lcp_task_h task;
 
         assert(ctx); assert(tid >= 0);
 
-        /* This is what we want to be initialized once per Process (in task context)*/
-        if(mpc_common_get_local_task_rank() == 0)
-        {
-                lcp_request_storage_init();
-        }
-
-        /* Check if tid already in context */
-        item = mpc_common_hashtable_get(&ctx->tasks->task_table, tid);
-        if (item != NULL) {
-                *task_p = item->task;
-                mpc_common_spinlock_unlock(&(ctx->ctx_lock));
-                mpc_common_debug_warning("LCP: task with tid=%d already "
-                                         "created.", tid);
-                goto err;
-        }
+        //NOTE: In current MPC configuration, a task cannot be already 
+        //      created since done by init task func in comm.c 
 
         task = sctk_malloc(sizeof(struct lcp_task));
         if (task == NULL) {
@@ -112,16 +101,38 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
 
         /* Init task lock used for matching lists */
 	mpc_common_spinlock_init(&task->task_lock, 0);
-        
-        /* Insert task in context table */
-        item = sctk_malloc(sizeof(lcp_task_entry_t));
-        if (item == NULL) {
-                mpc_common_debug_error("LCP: could not allocate "
-                                       " task item");
-                rc = LCP_ERROR;
+
+        /* Init memory pool of requests */
+        task->req_mp = sctk_malloc(sizeof(ck_stack_t));
+        mpc_mpool_param_t mp_req_params = {
+                .alignment = MPC_SYS_CACHE_LINE_SIZE,
+                .elem_per_chunk = 512,
+                .elem_size = sizeof(lcp_request_t),
+                .max_elems = 2048,
+                .malloc_func = sctk_malloc,
+                .free_func = sctk_free
+        };
+                
+        rc = mpc_mpool_init(task->req_mp, &mp_req_params);
+        if (rc != LCP_SUCCESS) {
                 goto err;
         }
-        memset(item, 0, sizeof(lcp_task_entry_t));
+
+        /* Init memory pool of requests */
+        task->unexp_mp = sctk_malloc(sizeof(ck_stack_t));
+        mpc_mpool_param_t mp_unexp_params = {
+                .alignment = MPC_SYS_CACHE_LINE_SIZE,
+                .elem_per_chunk = 64,
+                .elem_size = 8192,
+                .max_elems = 512,
+                .malloc_func = sctk_malloc,
+                .free_func = sctk_free
+        };
+                
+        rc = mpc_mpool_init(task->unexp_mp, &mp_unexp_params);
+        if (rc != LCP_SUCCESS) {
+                goto err;
+        }
 
         /* Init table of user AM callbacks */
         task->am = sctk_malloc(LCP_AM_ID_USER_MAX * sizeof(lcp_am_user_handler_t));
@@ -132,13 +143,12 @@ int lcp_task_create(lcp_context_h ctx, int tid, lcp_task_h *task_p)
         }
         memset(task->am, 0, LCP_AM_ID_USER_MAX * sizeof(lcp_am_user_handler_t));
 
+        /* Compute task index used in */
+        task_idx = tid % ctx->num_tasks;
+        ctx->tasks[task_idx] = task;
 
-        item->task_key = tid;
-        item->task = *task_p = task;
-
-        mpc_common_hashtable_set(&ctx->tasks->task_table, item->task_key, item);
-
-        mpc_common_debug_info("LCP: created task tid=%d", tid);
+        *task_p = task;
+        mpc_common_debug_info("LCP: created task tid=%d with idx=%d", tid, task_idx);
 err:
         return rc;
 }
@@ -147,13 +157,10 @@ int lcp_task_fini(lcp_task_h task) {
 
         lcp_fini_matching_engine(task->umq_table, task->prq_table);
 
-        if(task->tid == 0)
-        {
-                lcp_request_storage_release();
-        }
-
         sctk_free(task->umq_table);
         sctk_free(task->prq_table);
+
+        mpc_mpool_fini(task->req_mp);
 
         sctk_free(task);
         task = NULL;

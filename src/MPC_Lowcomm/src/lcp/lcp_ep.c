@@ -496,7 +496,7 @@ void lcp_ep_delete(lcp_ep_h ep)
 
 lcp_ep_h lcp_ep_get(lcp_context_h ctx, mpc_lowcomm_peer_uid_t uid)
 {
-	lcp_ep_ctx_t *elem = mpc_common_hashtable_get(&ctx->ep_htable, uid);
+	lcp_ep_ctx_t *elem = mpc_common_hashtable_get_no_lock(&ctx->ep_htable, uid);
 
 	if(elem == NULL)
 	{
@@ -548,7 +548,7 @@ __UNUSED__ static int lcp_ep_connection_handler(void *arg, void *data,
 
 	mpc_common_spinlock_lock(&(ctx->ctx_lock) );
 
-	ctx_ep = mpc_common_hashtable_get(&ctx->ep_htable, dest);
+	//ctx_ep = mpc_common_hashtable_get(&ctx->ep_htable, dest);
 
 	if(ctx_ep != NULL)
 	{

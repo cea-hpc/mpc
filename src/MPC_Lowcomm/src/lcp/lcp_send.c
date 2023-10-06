@@ -38,6 +38,7 @@
 #include "lcp_header.h"
 #include "lcp_tag.h"
 #include "lcp_tag_offload.h"
+#include "lcp_task.h"
 
 #include "mpc_common_debug.h"
 #include "opa_primitives.h"
@@ -106,8 +107,8 @@ int lcp_tag_send_start(lcp_ep_h ep, lcp_request_t *req,
         return rc;
 }
 
-//FIXME: It is not clear wether count is the number of element or the length in
-//       bites. For now, the actual length in bites is given taking into account
+//FIXME: It is not clear whether count is the number of elements or the length in
+//       bytes. For now, the actual length in bytes is given taking into account
 //       the datatypes and stuff...
 /**
  * @brief Send a message.
@@ -128,8 +129,8 @@ int lcp_tag_send_nb(lcp_ep_h ep, lcp_task_h task, const void *buffer,
         lcp_request_t *req;
 
         // create the request to send
-        rc = lcp_request_create(&req);
-        if (rc != LCP_SUCCESS) {
+        req = lcp_request_get(task);
+        if (req == NULL) {
                 mpc_common_debug_error("LCP: could not create request.");
                 return LCP_ERROR;
         }

@@ -55,6 +55,7 @@
 #include "lcp_task.h"
 #include "lcr/lcr_component.h"
 #include "lcr/lcr_def.h"
+#include "sctk_alloc_posix.h"
 
 //TODO: memset to 0 all allocated structure (especially those containing
 //      pointers). Creates non-null valid dummy pointers that can segfault 
@@ -120,19 +121,6 @@ err:
 	return rc;
 }
 
-
-
-lcp_task_table_t * lcp_task_table_init()
-{
-        lcp_task_table_t * ret = sctk_malloc(sizeof(lcp_task_table_t));
-        assume(ret != NULL);
-	memset(ret, 0, sizeof(lcp_task_table_t));
-	mpc_common_spinlock_init(&ret->lock, 0);
-        mpc_common_hashtable_init(&ret->task_table, 128);
-
-        return ret;
-}
-
 /**
  * @brief Alloc and initialize structures in context
  * 
@@ -154,16 +142,8 @@ static int lcp_context_init_structures(lcp_context_h ctx)
 		goto err;
 	}
 
-        /* Init pending active message request table */
-	ctx->pend = lcp_pending_init();
-	if (ctx->pend == NULL) {
-		mpc_common_debug_error("LCP: Could not allocate am pending tables.");
-		rc = LCP_ERROR;
-		goto err;
-	}
-
         /* Init hash table of tasks */
-	ctx->tasks = lcp_task_table_init();
+	ctx->tasks = sctk_malloc(ctx->num_tasks * sizeof(lcp_task_h));
 	if (ctx->tasks == NULL) {
 		mpc_common_debug_error("LCP: Could not allocate tasks table.");
 		rc = LCP_ERROR;
@@ -179,7 +159,7 @@ static int lcp_context_init_structures(lcp_context_h ctx)
         return rc;
 
 out_free_pending_tables:
-        sctk_free(ctx->pend); 
+        sctk_free(ctx->match_ht); 
 err:
 	return rc;
 }
@@ -256,14 +236,7 @@ static inline void lcp_context_resource_init(lcp_rsc_desc_t *resource_p,
 
 void lcp_context_task_get(lcp_context_h ctx, int tid, lcp_task_h *task_p)
 {
-        lcp_task_entry_t *item = mpc_common_hashtable_get(&ctx->tasks->task_table, tid);
-
-	if (item == NULL) {
-                *task_p = NULL;
-
-        } else {
-                *task_p = item->task;
-        }
+        *task_p = ctx->tasks[tid % ctx->num_tasks];
 }
 
 /**
@@ -575,7 +548,7 @@ static inline int __init_rails(lcp_context_h ctx)
         assume(max_prio > 0);
 
         /* Make Max Prio to be 256 (max of unsigned char) and scale others */
-        for(k = 0; k < ctx->num_resources; ++k)
+        for(k = 0; k < (unsigned int)ctx->num_resources; ++k)
 	{
                 ctx->progress_counter[k] = ctx->progress_counter[k] * 256 / max_prio;
                 mpc_common_debug("%s has polling frequency %d", ctx->resources[k].name, ctx->progress_counter[k]);
@@ -698,7 +671,7 @@ unsigned int __count_non_composable_rails(lcp_context_h ctx)
 
         int i;
 
-        for(i =  0; i < ctx->num_cmpts; i++)
+        for(i =  0; i < (int)ctx->num_cmpts; i++)
         {
                 struct lcr_component * comp = &ctx->cmpts[i];
 
@@ -756,7 +729,6 @@ static int lcp_context_check_offload(lcp_context_h ctx)
         int has_offload = 0;
         lcp_rsc_desc_t rsc;
         lcr_rail_config_t *iface_config;
-        lcr_driver_config_t *driver_config;
 
         for (i = 0; i<ctx->num_resources; i++) {
                 rsc = ctx->resources[i];
@@ -816,6 +788,13 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
                 goto out_free_ctx;
         }
 
+        //FIXME: set in config variable.
+        ctx->config.max_num_tasks        = 512;
+        if (param->num_tasks <= 0) {
+                mpc_common_debug_error("LCP: wrong number of tasks");
+                rc = LCP_ERROR;
+                goto out_free_ctx;
+        }
 
         /* Get global configuration */
         struct _mpc_lowcomm_config_struct_protocol * config = _mpc_lowcomm_config_proto_get();
@@ -823,8 +802,8 @@ int lcp_context_create(lcp_context_h *ctx_p, lcp_context_param_t *param)
         ctx->config.multirail_enabled    = config->multirail_enabled;
 	ctx->config.rndv_mode            = (lcp_rndv_mode_t)config->rndv_mode;
         ctx->config.offload              = config->offload;
-
-        ctx->process_uid = param->process_uid;
+        ctx->process_uid                 = param->process_uid;
+        ctx->num_tasks                   = param->num_tasks;
 
 	/* init random seed to generate unique msg_id */
 	rand_seed_init();
@@ -899,18 +878,12 @@ int lcp_context_fini(lcp_context_h ctx)
 
         lcp_pinning_mmu_release();
 
-        lcp_pending_fini(ctx->pend);
-	sctk_free(ctx->pend);
-
-	lcp_task_entry_t *e_task = NULL;
-
-	MPC_HT_ITER(&ctx->tasks->task_table, e_task)
-        {
-                lcp_task_fini(e_task->task);
-                sctk_free(e_task);
-	}
-        MPC_HT_ITER_END(&ctx->tasks->task_table);
-
+        /* Free task table */
+        for (i = 0; i < ctx->num_tasks; i++) {
+                if (ctx->tasks[i] != NULL) {
+                        lcp_task_fini(ctx->tasks[i]);
+                }
+        }
         sctk_free(ctx->tasks);
 
 	/* Free allocated endpoints */

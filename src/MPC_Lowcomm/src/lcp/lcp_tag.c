@@ -30,6 +30,7 @@
 /* ######################################################################## */
 
 #include <alloca.h>
+#include <stdint.h>
 
 #include "lcp_ep.h"
 #include "lcp_header.h"
@@ -41,6 +42,7 @@
 #include "lcp_eager.h"
 #include "lcp_rndv.h"
 
+#include "mpc_common_debug.h"
 #include "sctk_alloc.h"
 #include "msg_cpy.h"
 
@@ -131,11 +133,9 @@ static size_t lcp_send_tag_rndv_pack(void *dest, void *data)
         hdr->tag.dest_tid = req->send.tag.dest_tid;
         hdr->tag.seqn     = req->seqn;
 
-        hdr->msg_id        = req->msg_id;
-        hdr->size          = req->send.length;
-        hdr->src_uid       = req->send.tag.src_uid;
+        hdr->src_uid      = req->send.tag.src_uid;
 
-        rkey_packed_size   = lcp_rndv_rts_pack(req, hdr + 1);
+        rkey_packed_size  = lcp_rndv_rts_pack(req, hdr);
 
         return sizeof(*hdr) + rkey_packed_size;
 }
@@ -206,11 +206,6 @@ int lcp_send_eager_tag_bcopy(lcp_request_t *req)
                 am_id   = LCP_AM_ID_EAGER_TAG_SYNC;
 
                 req->msg_id = (uint64_t)req;
-                if (lcp_pending_create(req->ctx->pend, 
-                                       req, 
-                                       req->msg_id) == NULL) {
-                        rc = LCP_ERROR;
-                }
         } else {
                 pack_cb     = lcp_send_tag_eager_pack;
 		am_id       = LCP_AM_ID_EAGER_TAG;
@@ -287,11 +282,6 @@ int lcp_send_eager_tag_zcopy(lcp_request_t *req)
                 hdr_sync->src_uid       = req->send.tag.src_uid;
 
                 am_id = LCP_AM_ID_EAGER_TAG_SYNC;
-                if (lcp_pending_create(req->ctx->pend, 
-                                       req, 
-                                       req->msg_id) == NULL) {
-                        rc = LCP_ERROR;
-                }
         } else {
                 lcp_tag_hdr_t *hdr_tag;
                 hdr_size = sizeof(lcp_tag_hdr_t);
@@ -400,7 +390,7 @@ int lcp_send_rndv_tag_start(lcp_request_t *req)
 	req->state.comp = (lcr_completion_t) {
                 .comp_cb = lcp_tag_send_complete
         };
-        req->msg_id = (uint64_t)req;
+        req->msg_id = (uint64_t)req->msg_id;
 
         rc = lcp_send_rndv_start(req);
         if (rc != LCP_SUCCESS) {
@@ -466,6 +456,8 @@ void lcp_recv_rndv_tag_data(lcp_request_t *req, void *data)
         req->state.comp        = (lcr_completion_t) {
                 .comp_cb = lcp_tag_recv_complete,
         };
+
+        mpc_common_debug("LCP RNDV: rndv request=%p", req->msg_id);
 }
        
 /* ============================================== */
@@ -509,7 +501,7 @@ static int lcp_eager_tag_sync_handler(void *arg, void *data,
 	if (req == NULL) {
                 mpc_common_debug("LCP: recv unexp tag sync src=%d, length=%d, sequence=%d",
                                  hdr->base.src_tid, length, hdr->base.seqn);
-		rc = lcp_request_init_unexp_ctnr(&ctnr, hdr, length, 
+		rc = lcp_request_init_unexp_ctnr(task, &ctnr, hdr, length, 
                                                  LCP_RECV_CONTAINER_UNEXP_EAGER_TAG_SYNC |
                                                  LCP_RECV_CONTAINER_UNEXP_EAGER_TAG);
 		if (rc != LCP_SUCCESS) {
@@ -570,7 +562,7 @@ static int lcp_eager_tag_handler(void *arg, void *data,
                                       "length=%d, sequence=%d", hdr->src_tid, 
                                       hdr->tag, hdr->dest_tid, length - sizeof(lcp_tag_hdr_t), 
                                       hdr->seqn);
-		rc = lcp_request_init_unexp_ctnr(&ctnr, hdr, length, 
+		rc = lcp_request_init_unexp_ctnr(task, &ctnr, hdr, length, 
                                                  LCP_RECV_CONTAINER_UNEXP_EAGER_TAG);
 		if (rc != LCP_SUCCESS) {
 			goto err;
@@ -596,31 +588,29 @@ static int lcp_eager_tag_sync_ack_handler(void *arg, void *data,
                                           size_t length, 
                                           unsigned flags)
 {
+        UNUSED(arg);
         UNUSED(length);
         UNUSED(flags);
 	int rc = LCP_SUCCESS;
 	
 	lcp_request_t *req;
-	lcp_context_h ctx = arg;
 	lcp_ack_hdr_t *hdr = (lcp_ack_hdr_t *)data;
 
         mpc_common_debug_info("LCP: recv ack header src=%d, msg_id=%lu",
                               hdr->src, hdr->msg_id);
+
 	/* Retrieve request */
-	LCP_CONTEXT_LOCK(ctx);
-	req = lcp_pending_get_request(ctx->pend, hdr->msg_id);
+	req = (lcp_request_t *)(hdr->msg_id);
 	if (req == NULL) {
                 mpc_common_debug_error("LCP: could not find ack ctrl msg: "
                                        "msg id=%llu.", hdr->msg_id);
 			rc = LCP_ERROR;
 			goto err;
 	}
-	LCP_CONTEXT_UNLOCK(ctx);
 
         /* Set remote flag so that request can be actually completed */
 	req->flags |= LCP_REQUEST_REMOTE_COMPLETED;
 
-        lcp_pending_delete(req->ctx->pend, req->msg_id);
 	lcp_tag_send_complete(&(req->state.comp));
 err:
         return rc;
@@ -653,7 +643,7 @@ static int lcp_rndv_tag_handler(void *arg, void *data,
 	if (req == NULL) {
                 mpc_common_debug("LCP: recv unexp tag src=%d, comm=%d, tag=%d, length=%d, seqn=%d",
                                  hdr->tag.src_tid, hdr->tag.comm, hdr->tag.tag, length, hdr->tag.seqn);
-		rc = lcp_request_init_unexp_ctnr(&ctnr, hdr, length, 
+		rc = lcp_request_init_unexp_ctnr(task, &ctnr, hdr, length, 
 						 LCP_RECV_CONTAINER_UNEXP_RNDV_TAG);
 		if (rc != LCP_SUCCESS) {
                         LCP_TASK_UNLOCK(task);

@@ -974,6 +974,9 @@ fi
 
 AM_CONDITIONAL([MPC_BUILD_OPENPA], [test "x$build_openpa" = "xyes"])
 
+MPC_DETECT_DEPENDENCY([ck_stack.h],[ck], [ck_stack_pop_upmc], [CK], [], [], [ck])
+MPC_REQUIRED_DEPENDENCY([ck], [$mpc_dep_found])
+
 #
 # Detect MPC Allocator
 #

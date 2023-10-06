@@ -23,6 +23,7 @@
 #include <comm.h>
 
 #include <mpc_arch.h>
+#include "lcp/lcp_task.h"
 #include "lowcomm.h"
 #include <mpc_common_helper.h>
 #include <mpc_common_debug.h>
@@ -1597,7 +1598,7 @@ void mpc_lowcomm_init_per_task(int rank)
 		/* Initialize the internal ptp lists */
 		__mpc_comm_ptp_message_list_init(&(tmp->lists) );
 		/* And insert them */
-		__mpc_comm_ptp_array_insert(tmp);
+		//__mpc_comm_ptp_array_insert(tmp);
 	}
 }
 
@@ -2691,7 +2692,9 @@ static inline void __mpc_comm_ptp_msg_wait(struct mpc_lowcomm_ptp_msg_progress_s
 /* This is the exported version */
 void mpc_lowcomm_ptp_msg_progress(struct mpc_lowcomm_ptp_msg_progress_s *wait)
 {
-	return __mpc_comm_ptp_msg_wait(wait);
+        lcp_progress(lcp_ctx_loc);
+        return;
+	//return __mpc_comm_ptp_msg_wait(wait);
 }
 
 /********************************************************************/
@@ -3343,7 +3346,7 @@ static int mpc_lowcomm_init_request_header(const int tag,
 	/* Fill in Source and Dest Process Informations (convert from task) */
 
 	/* SOURCE */
-	int isource = mpc_lowcomm_peer_get_rank(src);
+	int isource = src;
 
 	if(mpc_lowcomm_peer_get_rank(src) != MPC_ANY_SOURCE)
 	{
@@ -3375,7 +3378,7 @@ static int mpc_lowcomm_init_request_header(const int tag,
 	}
 
 	/* DEST Handling */
-	int idestination = mpc_lowcomm_peer_get_rank(dest);
+	int idestination = dest;
 
 	if(is_intercomm)
 	{
@@ -3441,12 +3444,17 @@ int _mpc_lowcomm_isend(int dest, const void *data, size_t size, int tag,
 #ifdef MPC_LOWCOMM_PROTOCOL
 	int      src;
 	int      tid = mpc_common_get_task_rank();
-	lcp_ep_h ep; lcp_task_h task;
+	lcp_ep_h ep; 
+        lcp_task_h task;
 	//FIXME: how to handle task rank? Using only get_task_rank for now.
 	src = mpc_lowcomm_communicator_rank_of(comm, tid);
 	mpc_lowcomm_init_request_header(tag, comm, src, dest,
 	                                size, MPC_DATATYPE_IGNORE,
 	                                REQUEST_SEND, req);
+        
+        if (req->header.destination == req->header.source) {
+                req->header.destination |= (uint16_t) req->header.destination_task;
+        }
 
 	lcp_ep_get_or_create(lcp_ctx_loc, req->header.destination, &ep, 0);
 	if(ep == NULL)
@@ -4213,6 +4221,9 @@ static void __initialize_drivers()
 	_mpc_lowcomm_checksum_init();
 
 #ifdef MPC_LOWCOMM_PROTOCOL
+        //FIXME: task count is number of MPI task while ctx->num_tasks should be
+        //       the number of local tasks. At this point,
+        //       mpc_common_get_locak_task_count() is not setup yet. 
 	lcp_context_param_t param =
 	{
 		.flags          = LCP_CONTEXT_DATATYPE_OPS |
@@ -4222,7 +4233,8 @@ static void __initialize_drivers()
 			.pack   = mpc_lowcomm_request_pack,
 			.unpack = mpc_lowcomm_request_unpack,
 		},
-		.process_uid    = mpc_lowcomm_monitor_get_uid()
+		.process_uid    = mpc_lowcomm_monitor_get_uid(),
+                .num_tasks      = mpc_common_get_task_count()
 	};
 	rc = lcp_context_create(&lcp_ctx_loc, &param);
 	if(rc != MPC_LOWCOMM_SUCCESS)

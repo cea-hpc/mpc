@@ -663,6 +663,10 @@ int lcp_mem_register(lcp_context_h ctx,
                      void *buffer,
                      size_t length)
 {
+        UNUSED(ctx);
+        UNUSED(mem_p);
+        UNUSED(buffer);
+        UNUSED(length);
         not_implemented();
 }
 

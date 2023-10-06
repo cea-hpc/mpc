@@ -50,7 +50,7 @@ int lcp_tag_probe_nb(lcp_task_h task, const int src,
 
 	iface = ctx->resources[ctx->priority_rail].iface;
 	if (LCR_IFACE_IS_TM(iface) && ctx->config.offload) {
-                rc = lcp_recv_tag_probe(iface, src, tag, comm, recv_info);
+                rc = lcp_recv_tag_probe(task, iface, src, tag, comm, recv_info);
 
                 return rc;
         }

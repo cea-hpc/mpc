@@ -99,6 +99,8 @@ typedef enum
 	_MPC_MPI_HANDLE_SESSION
 } sctk_handle_type;
 
+void mpc_mpi_err_init();
+
 struct _mpc_mpi_handle_ctx_s *_mpc_mpi_handle_ctx_new(sctk_handle id);
 
 int _mpc_mpi_handle_ctx_release(struct _mpc_mpi_handle_ctx_s *hctx);

@@ -35,11 +35,10 @@
 #include "lcp_tag.h"
 #include "lcp_tag_offload.h"
 #include "lcp_rndv.h"
-#include "lcp_datatype.h"
 #include "lcp_task.h"
+#include "mpc_mempool.h"
 
 #include "mpc_common_debug.h"
-#include "sctk_alloc.h"
 #include "lcp_tag.h"
 
 int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count, 
@@ -53,11 +52,11 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 	lcp_context_h ctx = task->ctx;
 
 	// create a request to be matched with the received message
-	rc = lcp_request_create(&req);
-	if (rc != LCP_SUCCESS) {
-		mpc_common_debug_error("LCP: could not create request.");
-		return  LCP_ERROR;
-	}
+        req = lcp_request_get(task);
+        if (req == NULL) {
+                mpc_common_debug_error("LCP: could not create request.");
+                return LCP_ERROR;
+        }
 	req->flags |= LCP_REQUEST_MPI_COMPLETE;
 	LCP_REQUEST_INIT_TAG_RECV(req, ctx, task, request, param->recv_info,
 										count, buffer, param->datatype);
@@ -131,7 +130,8 @@ int lcp_tag_recv_nb(lcp_task_h task, void *buffer, size_t count,
 		mpc_common_debug_error("LCP: unkown match flag=%x.", match->flags);
 		rc = LCP_ERROR;
 	}
-	sctk_free(match);
+
+        mpc_mpool_push(match);
 
 	return rc;
 }

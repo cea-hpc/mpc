@@ -208,11 +208,6 @@ int lcp_send_eager_am_bcopy(lcp_request_t *req)
         pack_cb = lcp_send_am_eager_pack;
         if (req->is_sync) {
                 am_id   = LCP_AM_ID_EAGER_AM_SYNC;
-                if (lcp_pending_create(req->ctx->pend, 
-                                       req, 
-                                       req->msg_id) == NULL) {
-                        rc = LCP_ERROR;
-                }
         } else {
 		am_id       = LCP_AM_ID_EAGER_AM;
                 req->flags |= LCP_REQUEST_REMOTE_COMPLETED;
@@ -277,11 +272,6 @@ int lcp_send_eager_am_zcopy(lcp_request_t *req)
 
 	if(req->is_sync) {
                 am_id = LCP_AM_ID_EAGER_AM_SYNC;
-                if (lcp_pending_create(req->ctx->pend, 
-                                       req, 
-                                       req->msg_id) == NULL) {
-                        rc = LCP_ERROR;
-                }
         } else {
                 am_id       = LCP_AM_ID_EAGER_AM;
                 req->flags |= LCP_REQUEST_REMOTE_COMPLETED;
@@ -525,7 +515,7 @@ static int lcp_rndv_am_handler(void *arg, void *data,
                 goto err;
         }
 
-        rc = lcp_request_init_unexp_ctnr(&ctnr, hdr, length, 
+        rc = lcp_request_init_unexp_ctnr(task, &ctnr, hdr, length, 
                                          LCP_RECV_CONTAINER_UNEXP_RNDV_AM);
         if (rc != LCP_SUCCESS) {
                 goto err;

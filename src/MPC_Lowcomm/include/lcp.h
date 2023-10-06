@@ -29,6 +29,7 @@ typedef struct lcp_dt_ops {
 typedef struct lcp_context_param {
         uint32_t     flags;
         uint64_t     process_uid;
+        int          num_tasks;
         lcp_dt_ops_t dt_ops;
 } lcp_context_param_t;
 

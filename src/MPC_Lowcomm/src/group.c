@@ -114,8 +114,10 @@ int mpc_lowcomm_group_process_rank_from_world(int comm_world_rank)
 		/* World is not ready yet use computation */
 		return mpc_lowcomm_peer_get_rank(___process_rank_from_world_rank(comm_world_rank) );
 	}
+        
+        mpc_lowcomm_peer_uid_t uid = mpc_lowcomm_group_process_uid_for_rank(gworld, comm_world_rank);
 
-	return mpc_lowcomm_group_process_uid_for_rank(gworld, comm_world_rank);
+        return mpc_lowcomm_peer_get_rank(uid);
 }
 
 static inline int __compar_uid(const void *pa, const void *pb)

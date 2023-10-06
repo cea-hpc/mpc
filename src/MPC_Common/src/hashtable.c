@@ -227,6 +227,37 @@ void mpc_common_hashtable_release( struct mpc_common_hashtable *ht )
 	ht->table_size = 0;
 }
 
+void *mpc_common_hashtable_get_no_lock( struct mpc_common_hashtable *ht, uint64_t key )
+{
+	uint64_t bucket = murmur_hash( key ) % ht->table_size;
+	struct _mpc_ht_cell *head = &ht->cells[bucket];
+
+	if ( !head->use_flag )
+	{
+		/* The static header cell is empty */
+		return NULL;
+	}
+
+	if ( head->key == key )
+	{
+		/* Direct match */
+		void *ret = head->data;
+		return ret;
+	}
+
+	/* Now walk sibblings */
+	struct _mpc_ht_cell *cell = _mpc_ht_cell_get( head->next, key );
+	void *ret = NULL;
+
+	if ( cell )
+	{
+		ret = cell->data;
+	}
+
+	return ret;
+
+}
+
 void *mpc_common_hashtable_get( struct mpc_common_hashtable *ht, uint64_t key )
 {
 	uint64_t bucket = murmur_hash( key ) % ht->table_size;

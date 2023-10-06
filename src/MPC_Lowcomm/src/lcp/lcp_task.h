@@ -35,6 +35,7 @@
 #include "lcp_def.h"
 
 #include "lcp_tag_matching.h"
+#include "mpc_mempool.h"
 
 #define LCP_TASK_LOCK(_task) \
 	mpc_common_spinlock_lock(&((_task)->task_lock))
@@ -61,6 +62,8 @@ struct lcp_task {
 
         lcp_am_user_handler_t *am; /* Table of user AM callbacks */
 
+        mpc_mpool_t *req_mp;   /* Request memory pool */
+        mpc_mpool_t *unexp_mp; /* Unexpected memory pool */
 };
 
 int lcp_task_fini(lcp_task_h task);

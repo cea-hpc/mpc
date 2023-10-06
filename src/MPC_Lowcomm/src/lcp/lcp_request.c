@@ -62,7 +62,7 @@ void lcp_request_storage_init()
 	for(i = 0 ; i < __request_mempool_count; i++)
 	{
 		/* We allocate 0 by default to avoid bad numa */
-		mpc_mempool_init(&__request_mempool[i], 0, 100, sizeof(lcp_request_t), sctk_malloc, sctk_free);
+		//mpc_mempool_init(&__request_mempool[i], 0, 0, 100, sizeof(lcp_request_t), sctk_malloc, sctk_free);
 	}
 }
 
@@ -98,7 +98,7 @@ int lcp_request_create(lcp_request_t **req_p)
 	}
 
 	req = mpc_mempool_alloc(&__request_mempool[local_rank]);
-	// req = (lcp_request_t *)sctk_malloc(sizeof(lcp_request_t));
+	//req = (lcp_request_t *)sctk_malloc(sizeof(lcp_request_t));
 	if (req == NULL) {
 		mpc_common_debug_error("LCP: could not allocate recv request.");
 		return LCP_ERROR;
@@ -121,12 +121,12 @@ int lcp_request_create(lcp_request_t **req_p)
  * @param flags flag of the message
  * @return int LCP_SUCCESS in case of success
  */
-int lcp_request_init_unexp_ctnr(lcp_unexp_ctnr_t **ctnr_p, void *data, 
+int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p, void *data, 
 				size_t length, unsigned flags)
 {
 	lcp_unexp_ctnr_t *ctnr;
 
-	ctnr = sctk_malloc(sizeof(lcp_unexp_ctnr_t) + length);
+	ctnr = (lcp_unexp_ctnr_t *)mpc_mpool_pop(task->unexp_mp);
 	if (ctnr == NULL) {
 		mpc_common_debug_error("LCP: could not allocate recv "
 				       "container.");
@@ -173,7 +173,9 @@ int lcp_request_complete(lcp_request_t *req)
                 lcp_pending_delete(req->ctx->match_ht, req->msg_id);
         }
 
-	mpc_mempool_free(NULL, req);
+	//mpc_mempool_free(NULL, req);
+        lcp_request_put(req);
+        req = NULL;
 
 	return LCP_SUCCESS;
 }

@@ -37,7 +37,6 @@
 #include "lcr/lcr_def.h"
 #include "lcp_types.h"
 #include "lcp_pending.h"
-#include "lcp_tag_matching.h"
 #include "lcp_types.h"
 #include "uthash.h"
 #include "opa_primitives.h"
@@ -86,18 +85,6 @@ typedef struct lcp_match_ctx
 	lcp_request_t *req;
 } lcp_match_ctx_t;
 
-typedef struct lcp_task_entry
-{
-	int            task_key;
-	lcp_task_h     task;
-} lcp_task_entry_t;
-
-typedef struct lcp_task_table
-{
-	mpc_common_spinlock_t lock;
-	struct mpc_common_hashtable task_table;
-} lcp_task_table_t;
-
 typedef struct lcp_rsc_desc
 {
 	int                  priority;
@@ -119,6 +106,7 @@ typedef struct lcp_context_config
 	int             multirail_heterogeneous_enabled;
 	lcp_rndv_mode_t rndv_mode;
 	int             offload;
+        int             max_num_tasks;
 } lcp_context_config_t;
 
 /**
@@ -158,9 +146,9 @@ struct lcp_context
 	uint64_t              process_uid;   /* process uid used for endpoint creation */
 
 	mpc_queue_head_t      pending_queue; /* Queue of pending requests to be sent */
-	lcp_pending_table_t * pend;          /* LCP send requests */
 
-	lcp_task_table_t *    tasks;         /* LCP tasks (per thread data) */
+	lcp_task_h *          tasks;         /* LCP tasks (per thread data) */
+        int                   num_tasks;     /* Number of tasks */
 
 	lcp_dt_ops_t          dt_ops;        /* pack/unpack functions */
 };

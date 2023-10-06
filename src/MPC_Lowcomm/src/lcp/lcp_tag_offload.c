@@ -29,6 +29,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#include "lcp.h"
 #include "lcp_prototypes.h"
 
 #include "lcp_ep.h"
@@ -40,6 +41,7 @@
 #include "lcp_datatype.h"
 #include "lcp_pending.h"
 
+#include "mpc_common_debug.h"
 #include "sctk_alloc.h"
 #include "msg_cpy.h"
 
@@ -393,7 +395,7 @@ static int lcp_send_rndv_tag_rts_progress(lcp_request_t *req)
  */
 int lcp_send_rndv_offload_start(lcp_request_t *req)
 {
-        int rc;
+        int rc = LCP_SUCCESS;
 
         req->state.offloaded = 1;
         
@@ -422,8 +424,11 @@ int lcp_send_rndv_offload_start(lcp_request_t *req)
         lcp_request_t *rndv_req;
 
         /* Create rendez-vous request */
-        rc = lcp_request_create(&rndv_req);
-        if (rc != LCP_SUCCESS) {
+        rndv_req = lcp_request_get(req->task);
+        if (rndv_req == NULL) {
+                rc = LCP_ERROR;
+                mpc_common_debug_error("LCP OFFLOAD: could not allocate "
+                                       "rndv request.");
                 goto err;
         }
         rndv_req->super = req;
@@ -546,8 +551,11 @@ int lcp_rndv_offload_process_rts(lcp_request_t *rreq)
         lcp_request_t *rndv_req;
 
         /* Rendez-vous request used for RTR (PUT) or RMA (GET) */
-        rc = lcp_request_create(&rndv_req);
-        if (rc != LCP_SUCCESS) {
+        rndv_req = lcp_request_get(rreq->task);
+        if (rndv_req == NULL) {
+                rc = LCP_ERROR;
+                mpc_common_debug_error("LCP OFFLOAD: could not allocate "
+                                       "rndv request.");
                 goto err;
         }
         rndv_req->super = rreq;
@@ -778,7 +786,7 @@ err:
         return rc;
 }
 
-int lcp_recv_tag_probe(sctk_rail_info_t *rail, const int src, const int tag, 
+int lcp_recv_tag_probe(lcp_task_h task, sctk_rail_info_t *rail, const int src, const int tag, 
                        const uint64_t comm, lcp_tag_recv_info_t *recv_info) 
 {
         int rc = LCP_SUCCESS; 
@@ -799,8 +807,11 @@ int lcp_recv_tag_probe(sctk_rail_info_t *rail, const int src, const int tag,
         iov[0].iov_base = NULL;
         iov[0].iov_base = 0;
 
-        rc = lcp_request_create(&probe_req);
-        if (rc != LCP_SUCCESS) {
+        probe_req = lcp_request_get(task);
+        if (probe_req == NULL) {
+                rc = LCP_ERROR;
+                mpc_common_debug_error("LCP OFFLOAD: could not allocate "
+                                       "rndv request.");
                 goto err;
         }
 

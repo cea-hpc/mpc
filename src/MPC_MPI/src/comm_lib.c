@@ -225,7 +225,7 @@ static inline void __mpc_cl_request_progress(mpc_lowcomm_request_t *request)
 
 	struct mpc_lowcomm_ptp_msg_progress_s _wait;
 
-	mpc_lowcomm_ptp_msg_wait_init(&_wait, request, 0);
+	//mpc_lowcomm_ptp_msg_wait_init(&_wait, request, 0);
 
 	mpc_lowcomm_ptp_msg_progress(&_wait);
 }
@@ -2765,55 +2765,55 @@ int _mpc_cl_waitallp(mpc_lowcomm_msg_count_t count, mpc_lowcomm_request_t *parra
 	/* Here we force the local polling because of generalized requests
 	*      This will happen only if classical and generalized requests are
 	*      mixed or if the wait_fn is not the same for all requests */
-	do
-	{
-		flag = 1;
+	//do
+	//{
+	//	flag = 1;
 
-		for(i = 0; i < count; i++)
-		{
-			int tmp_flag = 0;
-			mpc_lowcomm_status_t * status;
-			mpc_lowcomm_request_t *request;
+	//	for(i = 0; i < count; i++)
+	//	{
+	//		int tmp_flag = 0;
+	//		mpc_lowcomm_status_t * status;
+	//		mpc_lowcomm_request_t *request;
 
-			if(array_of_statuses != NULL)
-			{
-				status = &(array_of_statuses[i]);
-			}
-			else
-			{
-				status = MPC_LOWCOMM_STATUS_NULL;
-			}
+	//		if(array_of_statuses != NULL)
+	//		{
+	//			status = &(array_of_statuses[i]);
+	//		}
+	//		else
+	//		{
+	//			status = MPC_LOWCOMM_STATUS_NULL;
+	//		}
 
-			request = parray_of_requests[i];
+	//		request = parray_of_requests[i];
 
-			if(mpc_lowcomm_request_is_null(request) )
-			{
-				continue;
-			}
+	//		if(mpc_lowcomm_request_is_null(request) )
+	//		{
+	//			continue;
+	//		}
 
-			mpc_lowcomm_test(request, &tmp_flag, status);
+	//		mpc_lowcomm_test(request, &tmp_flag, status);
 
-			/* We set this flag in order to prevent the status
-			 * from being updated repetitivelly in mpc_lowcomm_test */
-			if(tmp_flag)
-			{
-				mpc_lowcomm_request_set_null(request, 1);
-			}
+	//		/* We set this flag in order to prevent the status
+	//		 * from being updated repetitivelly in mpc_lowcomm_test */
+	//		if(tmp_flag)
+	//		{
+	//			mpc_lowcomm_request_set_null(request, 1);
+	//		}
 
-			flag = flag & tmp_flag;
-		}
+	//		flag = flag & tmp_flag;
+	//	}
 
-		if(flag == 1)
-		{
-			MPC_ERROR_SUCCESS();
-		}
-		else
-		{
-			MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
-		}
+	//	if(flag == 1)
+	//	{
+	//		MPC_ERROR_SUCCESS();
+	//	}
+	//	else
+	//	{
+	//		MPC_LOWCOMM_WORKSHARE_CHECK_CONFIG_AND_STEAL();
+	//	}
 
-		direct_pass_count--;
-	}while( (flag == 0) && (direct_pass_count != 0) );
+	//	direct_pass_count--;
+	//}while( (flag == 0) && (direct_pass_count != 0) );
 
 	/* XXX: Waitall has been ported for using wait_for_value_and_poll
 	 * because it provides better results than thread_yield.
@@ -3308,24 +3308,27 @@ void _mpc_cl_abort_error(mpc_lowcomm_communicator_t *comm, int *error, char *mes
 	mpc_common_debug_abort();
 }
 
-static volatile int error_init_done = 0;
+static mpc_common_spinlock_t mpi_error_lock = MPC_COMMON_SPINLOCK_INITIALIZER;
 
 int _mpc_cl_error_init()
 {
-	if(error_init_done == 0)
-	{
-		error_init_done = 1;
-		_mpc_mpi_errhandler_register_on_slot( ( _mpc_mpi_generic_errhandler_func_t )_mpc_cl_default_error,
-		                                      (int)(long)MPC_ERRHANDLER_NULL);
-		_mpc_mpi_errhandler_register_on_slot( ( _mpc_mpi_generic_errhandler_func_t )_mpc_cl_return_error,
-		                                      (int)(long)MPC_ERRORS_RETURN);
-		_mpc_mpi_errhandler_register_on_slot( ( _mpc_mpi_generic_errhandler_func_t )_mpc_cl_abort_error,
-		                                      (int)(long)MPC_ERRORS_ARE_FATAL);
-		// TODO: Not the correct behaviour
-		_mpc_mpi_errhandler_register_on_slot( ( _mpc_mpi_generic_errhandler_func_t )_mpc_cl_abort_error,
-		                                      (int)(long)MPC_ERRORS_ABORT);
+	mpc_common_spinlock_lock(&mpi_error_lock);
+        mpc_mpi_err_init();
+	mpc_common_spinlock_unlock(&mpi_error_lock);
+        
+        //NOTE: next are common to all tasks, so must be initialized only once
+        if (mpc_common_get_local_task_rank() == 0) {
+                _mpc_mpi_errhandler_register_on_slot( ( _mpc_mpi_generic_errhandler_func_t )_mpc_cl_default_error,
+                                                      (int)(long)MPC_ERRHANDLER_NULL);
+                _mpc_mpi_errhandler_register_on_slot( ( _mpc_mpi_generic_errhandler_func_t )_mpc_cl_return_error,
+                                                      (int)(long)MPC_ERRORS_RETURN);
+                _mpc_mpi_errhandler_register_on_slot( ( _mpc_mpi_generic_errhandler_func_t )_mpc_cl_abort_error,
+                                                      (int)(long)MPC_ERRORS_ARE_FATAL);
+                // TODO: Not the correct behaviour
+                _mpc_mpi_errhandler_register_on_slot( ( _mpc_mpi_generic_errhandler_func_t )_mpc_cl_abort_error,
+                                                      (int)(long)MPC_ERRORS_ABORT);
+        }
 
-	}
         _mpc_cl_errhandler_set(__mpc_lowcomm_communicator_from_predefined(MPC_COMM_WORLD), MPC_ERRORS_ARE_FATAL);
         _mpc_cl_errhandler_set(__mpc_lowcomm_communicator_from_predefined(MPC_COMM_SELF), MPC_ERRORS_ARE_FATAL);
 

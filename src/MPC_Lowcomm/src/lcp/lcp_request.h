@@ -32,6 +32,7 @@
 #ifndef LCP_REQUEST_H
 #define LCP_REQUEST_H
 
+#include "lcp_def.h"
 #include "lcp_types.h"
 
 #include "lcp.h"
@@ -41,6 +42,8 @@
 #include "lcp_context.h"
 #include "lcp_header.h"
 #include "lcp_pending.h"
+#include "mpc_mempool.h"
+#include "lcp_task.h"
 
 #include "rail.h"
 
@@ -110,7 +113,6 @@ struct lcp_request {
                                 } am;
 
                                 struct {
-                                        uint64_t  msg_id;
                                         uint64_t  addr;
                                         lcp_mem_h rkey;
                                 } rndv;
@@ -157,13 +159,14 @@ struct lcp_request {
 	};
 
 	//NOTE: break LCP modularity
-	mpc_lowcomm_request_t *request; /* Upper layer request */
+	mpc_lowcomm_request_t *request;   /* Upper layer request */
         lcp_tag_recv_info_t   *info;
         void                  *user_data;
-	int16_t                seqn;    /* Sequence number */
-	uint64_t               msg_id;  /* Unique message identifier */
-        struct lcp_request    *super;   /* master request */
-        mpc_queue_elem_t       queue;   /* element in pending queue */
+	int16_t                seqn;      /* Sequence number */
+	uint64_t               msg_id;    /* Unique message identifier */
+        struct lcp_request    *super;     /* master request */
+        struct lcp_request    *rndv_req;  /* rndv request */
+        mpc_queue_elem_t       queue;     /* element in pending queue */
         
         struct {
                 lcr_tag_t imm;
@@ -194,6 +197,7 @@ struct lcp_request {
 	(_req)->seqn              = _seqn;                                   \
 	(_req)->ctx               = _ctx;                                    \
 	(_req)->task              = _task;                                   \
+	(_req)->msg_id            = (uint64_t)(_req);                        \
 	(_req)->datatype          = _dt;                                     \
 	\
 	(_req)->send.buffer       = _buf;                                    \
@@ -291,6 +295,23 @@ struct lcp_request {
         _msg_id  = (_msg_id << 32);                 \
         _msg_id |= (_seqn & 0xffffffffull);
 
+#define LCP_REQUEST_INVALID 0
+#define lcp_request_get(_task) \
+        ({ \
+                lcp_request_t *__req = mpc_mpool_pop((_task)->req_mp); \
+                if (__req != NULL) { \
+                        lcp_request_reset(__req); \
+                } \
+                __req; \
+         }) 
+
+#define lcp_request_put(_req) \
+        mpc_mpool_push(_req); 
+
+static inline void lcp_request_reset(lcp_request_t *req) 
+{
+        req->flags = 0;
+}
 
 static inline void lcp_request_init_rma_put(lcp_request_t *req, 
                                             uint64_t remote_addr,
@@ -338,7 +359,7 @@ void lcp_request_storage_release();
 
 int lcp_request_create(lcp_request_t **req_p);
 int lcp_request_complete(lcp_request_t *req);
-int lcp_request_init_unexp_ctnr(lcp_unexp_ctnr_t **ctnr_p, void *data, 
+int lcp_request_init_unexp_ctnr(lcp_task_h task, lcp_unexp_ctnr_t **ctnr_p, void *data, 
 				size_t length, unsigned flags);
 
 #endif

@@ -55,7 +55,7 @@ static inline mpc_queue_elem_t *mpc_queue_pull(mpc_queue_head_t *queue) {
         mpc_queue_elem_t *elem;
 
         if (mpc_queue_is_empty(queue))
-                NULL;
+                return NULL;
 
         elem = queue->head;
         queue->head = queue->head->next;

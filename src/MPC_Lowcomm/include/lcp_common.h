@@ -3,7 +3,22 @@
 
 #include <stdint.h>
 
+//FIXME: should be arch dependant
+#define MPC_SYS_CACHE_LINE_SIZE 64
+
 #define LCP_BIT(i) (1ul << (i))
+
+#define mpc_padding(_n, _alignment) \
+        ( ((_alignment) - ((_n) % (_alignment))) % (_alignment) )
+
+#define mpc_is_pow2(_n) \
+        (((_n) > 0) && !((_n) & ((_n) - 1)))
+
+#define mpc_align_down_pow2(_n, _alignment) \
+        ( (_n) & ~((_alignment) - 1) ) 
+
+#define mpc_align_up_pow2(_n, _alignment) \
+        mpc_align_down_pow2( (_n) + (_alignment) - 1, _alignment)
 
 //FIXME: redefine unicity
 #define MPC_PP_UNIQUE_ID __LINE__

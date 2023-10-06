@@ -31,6 +31,7 @@
 
 #include "lcp_rndv.h"
 
+#include "lcp_def.h"
 #include "lcp_ep.h"
 #include "lcp_prototypes.h"
 #include "lcp_mem.h"
@@ -65,7 +66,7 @@ static size_t lcp_rndv_rtr_pack(void *dest, void *data)
         lcp_request_t *rndv_req = data;
         lcp_request_t *super    = rndv_req->super;
 
-        hdr->msg_id = rndv_req->send.rndv.msg_id;
+        hdr->msg_id = rndv_req->msg_id;
         packed_size = lcp_mem_rkey_pack(super->ctx, 
                                         super->state.lmem,
                                         hdr + 1);
@@ -81,14 +82,20 @@ static size_t lcp_rndv_rtr_pack(void *dest, void *data)
  * @return size_t size of packed data
  */
 //FIXME: change return type to ssize_t
-size_t lcp_rndv_rts_pack(lcp_request_t *req, void *dest)
+size_t lcp_rndv_rts_pack(lcp_request_t *super, void *dest)
 {
+        lcp_request_t *rndv_req = super->rndv_req;
+        lcp_rndv_hdr_t *hdr = (lcp_rndv_hdr_t *)dest;
         size_t packed_size = 0; 
 
-        if (req->ctx->config.rndv_mode == LCP_RNDV_GET) {
-                packed_size = lcp_mem_rkey_pack(req->ctx, 
-                                                req->state.lmem,
-                                                dest);
+        hdr->size   = rndv_req->send.length; 
+        hdr->msg_id = rndv_req->msg_id; 
+
+        if (super->ctx->config.rndv_mode == LCP_RNDV_GET) {
+                /* Pack remote key from super request */
+                packed_size = lcp_mem_rkey_pack(super->ctx, 
+                                                super->state.lmem,
+                                                hdr + 1);
         }
 
         return packed_size;
@@ -107,7 +114,7 @@ static size_t lcp_rndv_fin_pack(void *dest, void *data)
         lcp_ack_hdr_t *hdr = dest;
         lcp_request_t *rndv_req = data;
 
-        hdr->msg_id = rndv_req->send.rndv.msg_id;
+        hdr->msg_id = rndv_req->msg_id;
 
         return sizeof(*hdr);
 }
@@ -304,10 +311,12 @@ int lcp_send_rndv_start(lcp_request_t *req)
         }
 
         /* Create rendez-vous request */
-        rc = lcp_request_create(&rndv_req);
-        if (rc != LCP_SUCCESS) {
-                goto err;
+        rndv_req = lcp_request_get(req->task);
+        if (rndv_req == NULL) {
+                mpc_common_debug_error("LCP: could not create request.");
+                return LCP_ERROR;
         }
+        req->flags |= LCP_REQUEST_MPI_COMPLETE;
         rndv_req->super = req;
 
         rndv_req->ctx             = req->ctx;
@@ -321,14 +330,9 @@ int lcp_send_rndv_start(lcp_request_t *req)
                 .comp_cb = lcp_rndv_complete,
         };
 
-        /* Set message identifiers */
-        rndv_req->send.rndv.msg_id = req->msg_id; 
-
-        if (lcp_pending_create(req->ctx->pend, rndv_req, req->msg_id) == NULL) {
-                mpc_common_debug_error("LCP: could not add pending message");
-                rc = LCP_ERROR;
-                goto err;
-        }
+        /* Set pointer to rndv request to be used when packing */
+        req->rndv_req    = rndv_req;
+        rndv_req->msg_id = (uint64_t)rndv_req; 
 
 err:
         return rc;
@@ -343,6 +347,8 @@ static int lcp_rndv_progress_rtr(lcp_request_t *rndv_req)
         lcp_ep_h ep        = rndv_req->send.ep;
         lcp_chnl_idx_t cc  = lcp_ep_get_next_cc(ep);
 
+        mpc_common_debug("LCP RNDV: progress rtr request=%p",
+                         rndv_req);
         payload = lcp_send_do_am_bcopy(ep->lct_eps[cc],
                                        LCP_AM_ID_RTR,
                                        lcp_rndv_rtr_pack,
@@ -368,9 +374,10 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
         lcp_rndv_hdr_t *hdr = data;
 
         /* Rendez-vous request used for RTR (PUT) or RMA (GET) */
-        rc = lcp_request_create(&rndv_req);
-        if (rc != LCP_SUCCESS) {
-                goto err;
+        rndv_req = lcp_request_get(rreq->task);
+        if (rndv_req == NULL) {
+                mpc_common_debug_error("LCP: could not create request.");
+                return LCP_ERROR;
         }
         rndv_req->super = rreq;
 
@@ -381,7 +388,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
         rndv_req->state.offset    = 0;
 
         /* Set message identifiers from incomming message */
-        rndv_req->send.rndv.msg_id = rreq->msg_id;
+        rndv_req->msg_id = rreq->msg_id;
 
         /* Buffer must be allocated and data packed to make it contiguous
          * and use zcopy and memory registration. */
@@ -408,17 +415,10 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
 
         switch (rreq->ctx->config.rndv_mode) {
         case LCP_RNDV_PUT:
-                /* Append request to request hash table */
-                if (lcp_pending_create(rreq->ctx->pend, rndv_req, 
-                                       hdr->msg_id) == NULL) {
-                        mpc_common_debug_error("LCP: could not add pending "
-                                               "message");
-                        rc = LCP_ERROR;
-                        goto err;
-                }
-
                 /* Register memory through rndv request since we need the
                  * endpoint connection map stored in the endpoint */ 
+                mpc_common_debug("LCP RNDV: process rts put request=%p",
+                                 rndv_req);
                 rc = lcp_rndv_reg_recv_buffer(rndv_req);
                 if (rc != LCP_SUCCESS) {
                         goto err;
@@ -433,6 +433,7 @@ int lcp_rndv_process_rts(lcp_request_t *rreq,
                         .comp_cb = lcp_rndv_complete
                 };
 
+                mpc_common_debug("LCP RNDV: process rts get request=%p", rndv_req);
                 /* Unpack remote key */
                 rc = lcp_mem_unpack(rreq->ctx, &(rndv_req->send.rndv.rkey), 
                                     hdr + 1, length);
@@ -469,15 +470,12 @@ static int lcp_rndv_rtr_handler(void *arg, void *data,
         lcp_request_t *rndv_req;
 
         /* Retrieve request */
-        rndv_req = lcp_pending_get_request(ctx->pend, hdr->msg_id);
-        if (rndv_req == NULL) {
-                mpc_common_debug_error("LCP: could not find ctrl msg: "
-                                       "msg id=%llu.", hdr->msg_id);
-                rc = LCP_ERROR;
-                goto err;
-        }
+        rndv_req = (lcp_request_t *)hdr->msg_id;
+        //FIXME: add a flags to specify when a request is valid since the not
+        //       null test may not be enough
+        assume(rndv_req != NULL);
 
-        rc = lcp_mem_unpack(rndv_req->ctx, &(rndv_req->send.rndv.rkey), hdr + 1, 
+        rc = lcp_mem_unpack(ctx, &(rndv_req->send.rndv.rkey), hdr + 1, 
                             size - sizeof(lcp_ack_hdr_t));
         if (rc < 0) {
                 goto err;
@@ -512,13 +510,7 @@ static int lcp_rndv_fin_handler(void *arg, void *data,
         lcp_request_t *rndv_req, *req;
 
         /* Retrieve request */
-        rndv_req = lcp_pending_get_request(ctx->pend, hdr->msg_id);
-        if (rndv_req == NULL) {
-                mpc_common_debug_error("LCP: could not find ctrl msg: "
-                                       "msg id=%llu.", hdr->msg_id);
-                rc = LCP_ERROR;
-                goto err;
-        }
+        rndv_req = (lcp_request_t *)hdr->msg_id;
         req = rndv_req->super;
 
         mpc_common_debug_info("LCP: recv rfin header msg_id=%llu, req=%p",
@@ -536,17 +528,13 @@ static int lcp_rndv_fin_handler(void *arg, void *data,
          * unregister the memory */
         lcp_pinning_mmu_unpin(req->ctx, req->state.lmem);
 
-        //NOTE: rndv request must be completed before the super request so that
-        //      it is removed from pending table before another task could
-        //      allocate a lcp_request_t at that address.
-        lcp_pending_delete(req->ctx->pend, req->msg_id);
-        lcp_request_complete(rndv_req);
-
         /* Call completion of super request */
         req->state.comp.comp_cb(&(req->state.comp));
 
+        lcp_request_complete(rndv_req);
+
 	LCP_CONTEXT_UNLOCK(ctx);
-err:
+
         return rc;
 }
 
