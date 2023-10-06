@@ -457,9 +457,10 @@ error_cma:
 #endif
 
 
-int _mpc_shm_get_local_rank(struct _mpc_shm_storage *storage, mpc_lowcomm_peer_uid_t uid)
+unsigned int _mpc_shm_get_local_rank(struct _mpc_shm_storage *storage, mpc_lowcomm_peer_uid_t uid)
 {
-   int i;
+   unsigned int i = 0;
+
    for(i = 0 ; i < storage->process_count; i++)
    {
       if(storage->uids[i] == uid)
@@ -491,7 +492,7 @@ struct _mpc_shm_cell * _mpc_shm_storage_get_free_cell(struct _mpc_shm_storage *s
 
 
 void _mpc_shm_storage_send_cell_local_rank(struct _mpc_shm_storage * storage,
-                                           int local_rank,
+                                           unsigned int local_rank,
                                            struct _mpc_shm_cell * cell)
 {
    int my_rank = mpc_common_get_local_process_rank();
@@ -1020,7 +1021,7 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
          cells[i].next = NULL;
          cells[i].prev = NULL;
          _mpc_shm_list_head_push(&storage->free_lists[proc_rank * SHM_FREELIST_PER_PROC + rr_counter], &cells[i],  storage->shm_buffer);
-         cells[i].free_list = (char)proc_rank;
+         cells[i].free_list = (unsigned char)proc_rank;
          rr_counter = (rr_counter + 1)% (int)SHM_FREELIST_PER_PROC;
       }
 
@@ -1033,7 +1034,7 @@ int _mpc_shm_storage_init(struct _mpc_shm_storage * storage)
    return 0;
 }
 
-int _mpc_shm_storage_release(struct _mpc_shm_storage *storage)
+int _mpc_shm_storage_release(__UNUSED__ struct _mpc_shm_storage *storage)
 {
    not_implemented();
 }
@@ -1045,7 +1046,7 @@ int _mpc_shm_storage_release(struct _mpc_shm_storage *storage)
  ********************/
 
 
-void mpc_shm_connect_on_demand(__UNUSED__ struct sctk_rail_info_s *rail, mpc_lowcomm_peer_uid_t dest)
+void mpc_shm_connect_on_demand(__UNUSED__ struct sctk_rail_info_s *rail, __UNUSED__ mpc_lowcomm_peer_uid_t dest)
 {
         UNUSED(rail);
         //NOTE: nothing to be done since all transport endpoints were created at
@@ -1055,7 +1056,7 @@ void mpc_shm_connect_on_demand(__UNUSED__ struct sctk_rail_info_s *rail, mpc_low
 
 void _mpc_lowcomm_shm_endpoint_info_init(_mpc_lowcomm_shm_endpoint_info_t * infos, mpc_lowcomm_peer_uid_t uid, struct _mpc_shm_storage *storage)
 {
-   int i;
+   int i = 0;
    int local_proc_count = mpc_common_get_local_process_count();
 
    for(i = 0 ; i < local_proc_count; i++)

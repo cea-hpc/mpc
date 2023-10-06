@@ -29,9 +29,9 @@
 #ifndef MPC_OFI_REQUEST
 #define MPC_OFI_REQUEST
 
-#include <sctk_alloc.h>
-#include <mpc_common_spinlock.h>
 #include <mpc_common_debug.h>
+#include <mpc_common_spinlock.h>
+#include <sctk_alloc.h>
 
 /*********************
  * THE REQUEST CACHE *

@@ -35,12 +35,14 @@
 #include <string.h>
 
 
-#include "mpc_lowcomm_monitor.h"
 #include "mpc_common_datastructure.h"
+#include "mpc_lowcomm_monitor.h"
 #include "mpc_ofi_helpers.h"
 #include "rdma/fabric.h"
 
 //#define DEBUG_DNS_ADDR
+
+#define SMALL_BUFF 8
 
 static char * __dump_addr(char * buff, int outlen, char *p, size_t len)
 {
@@ -50,18 +52,20 @@ static char * __dump_addr(char * buff, int outlen, char *p, size_t len)
 
 	for(i = 0; i < len; i++)
 	{
-      char tmp[8];
-		snprintf(tmp, 8, "%x", p[i]);
+      char tmp[SMALL_BUFF];
+		(void)snprintf(tmp, SMALL_BUFF, "%x", p[i]);
       strncat(buff, tmp, outlen - 1);
 	}
 
    return buff;
 }
 
+#define LARGE_BUFF 512
+
 void _mpc_ofi_dns_dump_addr(char * context, char * buff, size_t len)
 {
-   char outbuff[512];
-   mpc_common_debug_error("[OFI DNS] %s OFI ADDR len %d : %s", context, len, __dump_addr(outbuff, 512, buff, len));
+   char outbuff[LARGE_BUFF];
+   mpc_common_debug_error("[OFI DNS] %s OFI ADDR len %d : %s", context, len, __dump_addr(outbuff, LARGE_BUFF, buff, len));
 }
 
 

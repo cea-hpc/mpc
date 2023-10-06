@@ -59,7 +59,7 @@ void mpc_common_debug_abort(void) __attribute__( (__noreturn__) );
 		mpc_common_debug_abort();                                           \
 	}
 
-void mpc_common_debug_abort_log(FILE *stream, const int line,
+void mpc_common_debug_abort_log(FILE *stream, int line,
                                 const char *file, const char *func,
                                 const char *fmt, ...) __attribute__( (__noreturn__) );
 

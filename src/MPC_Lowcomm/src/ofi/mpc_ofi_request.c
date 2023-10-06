@@ -65,9 +65,9 @@ int _mpc_ofi_request_cache_init(struct _mpc_ofi_request_cache_t *cache, struct _
 
 int _mpc_ofi_request_cache_release(struct _mpc_ofi_request_cache_t *cache)
 {
+#if 0
    unsigned int i = 0;
 
-#if 0
    for(i = 0 ; i < cache->request_count; i++)
    {
       /* All requests are free ? */

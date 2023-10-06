@@ -29,11 +29,11 @@
 #ifndef MPC_SHM_H_
 #define MPC_SHM_H_
 
-#include <mpc_common_spinlock.h>
 #include <mpc_common_datastructure.h>
+#include <mpc_common_spinlock.h>
+#include <mpc_lowcomm_monitor.h>
 #include <mpc_mempool.h>
 #include <stdint.h>
-#include <mpc_lowcomm_monitor.h>
 #include <sys/types.h>
 
 #define MPC_SHM_EAGER_SIZE 4200
@@ -93,12 +93,14 @@ struct _mpc_shm_cell
    unsigned int free_list;
 };
 
+#define LIST_HEAD_PAD 4096
+
 struct _mpc_shm_list_head
 {
    mpc_common_spinlock_t lock;
    struct _mpc_shm_cell * head;
    struct _mpc_shm_cell * tail;
-   char __pad[512];
+   char __pad[LIST_HEAD_PAD];
 };
 
 typedef enum
